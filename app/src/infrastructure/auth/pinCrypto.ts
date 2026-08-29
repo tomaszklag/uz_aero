@@ -1,11 +1,11 @@
 /**
- * UZ Aero — ADAPTER `PinCryptoPort`: solony SHA-256 (§3.0).
+ * UZ Aero - ADAPTER `PinCryptoPort`: solony SHA-256 (§3.0).
  *
  * Model zagrożeń opisuje port: 4-cyfrowego PIN-u nie obroni żaden KDF przy wycieku
  * magazynu (10 000 kombinacji), a magazyn i tak trzyma refresh token. Hash z solą
  * chroni przed odczytem PIN-u wprost i przed tęczową tablicą wspólną dla urządzeń.
  *
- * Sól z `Math.random` jest tu wystarczająca — nie jest sekretem (leży obok hasha),
+ * Sól z `Math.random` jest tu wystarczająca - nie jest sekretem (leży obok hasha),
  * ma tylko różnicować urządzenia; kryptograficzne RNG wymagałoby modułu natywnego.
  */
 

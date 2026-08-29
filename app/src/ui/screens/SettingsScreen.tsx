@@ -1,5 +1,5 @@
 /**
- * UZ Aero — 13 USTAWIENIA (mockup `design/13-ustawienia.html`).
+ * UZ Aero - 13 USTAWIENIA (mockup `design/13-ustawienia.html`).
  *
  * Sześć sekcji: motyw → bezpieczeństwo (PIN) → konto → synchronizacja → diagnostyka
  * GPS → o aplikacji.
@@ -8,18 +8,18 @@
  * widokiem tej samej sesji (tabela lotów i „dane dnia" = ekran 10) i drugim wskaźnikiem
  * sieci (kolejka i ostatnia wysyłka = arkusz pod SyncChipem), a jego „SYNCHRONIZUJ
  * TERAZ" przeczyło regule, którą sam arkusz zapisuje: outbox wysyła się sam. Zostały
- * tu dwie rzeczy, których naprawdę nie ma nigdzie indziej — **uwagi serwera** (§4.5)
+ * tu dwie rzeczy, których naprawdę nie ma nigdzie indziej - **uwagi serwera** (§4.5)
  * i **awaryjne ponaglenie synchronizacji** (od issue #55 OBU kierunków: dopycha
- * kolejkę wysyłki i pobiera dane referencyjne z pominięciem bramy wieku — pilot
+ * kolejkę wysyłki i pobiera dane referencyjne z pominięciem bramy wieku - pilot
  * sięgający po ten przycisk pyta „co serwer wie teraz", nie „co wiedział kwadrans
  * temu"). Mieszkają w Ustawieniach, bo Ustawienia widać
  * ZAWSZE: SyncChip pojawia się wyłącznie offline, więc flaga wystawiona przez serwer
  * po udanej wysyłce nie miałaby się gdzie pokazać.
- * Wszystko, co tu można zrobić, DZIAŁA OFFLINE — jedyny wyjątek (ponowne logowanie po
+ * Wszystko, co tu można zrobić, DZIAŁA OFFLINE - jedyny wyjątek (ponowne logowanie po
  * wylogowaniu) jest opisany przy przycisku, a sam przycisk przy niepustym outboxie
  * stoi zablokowany Z POWODEM i amber-boxem (§3.0, wzorzec `.outbox-guard` z 00).
  *
- * Diagnostyka GPS to CZUJNIK, nie sieć — mockup celowo pokazuje zdrowy fix przy
+ * Diagnostyka GPS to CZUJNIK, nie sieć - mockup celowo pokazuje zdrowy fix przy
  * chipie `Offline · 3`: dwie niezależne osie. Utratę fixa w locie pokazuje kokpit
  * (wariant 05g); tu jest warsztat do sprawdzenia „czy GPS w ogóle żyje" na ziemi.
  */
@@ -80,7 +80,7 @@ export function SettingsScreen({
   const [pinSheet, setPinSheet] = useState(false);
   const [pinChanged, setPinChanged] = useState(false);
 
-  // ── stempel cache referencyjnego — czytany na wejściu i po ręcznym syncu ──
+  // ── stempel cache referencyjnego - czytany na wejściu i po ręcznym syncu ──
   const [refCheckedAt, setRefCheckedAt] = useState<number | null>(null);
   const readRefStamp = useCallback(async (): Promise<void> => {
     if (repo == null) return;
@@ -91,7 +91,7 @@ export function SettingsScreen({
   // ── synchronizacja: awaryjne ponaglenie OBU kierunków ─────────────────────
   // „SYNCHRONIZUJ TERAZ" dopycha kolejkę wysyłki I pobiera świeże dane referencyjne
   // z pominięciem bramy wieku (issue #55): pilot, który sięga po ten przycisk, pyta
-  // „co serwer wie teraz" — sama wysyłka odpowiadała na pół pytania, a świeżo dodany
+  // „co serwer wie teraz" - sama wysyłka odpowiadała na pół pytania, a świeżo dodany
   // przez administratora samolot czekał na bramę. Stempel wieku czytamy ponownie,
   // żeby wiersz w „O aplikacji" pokazał skutek od razu.
   const [syncing, setSyncing] = useState(false);
@@ -105,7 +105,7 @@ export function SettingsScreen({
       setSyncing(false);
     }
   }, [readRefStamp, refreshReferenceNow, syncNow]);
-  // „Offline" znamy wyłącznie z wyniku OSTATNIEJ próby (§4.3) — innego pojęcia o sieci
+  // „Offline" znamy wyłącznie z wyniku OSTATNIEJ próby (§4.3) - innego pojęcia o sieci
   // aplikacja nie ma i nie udaje, że ma.
   const offline = lastSync?.kind === 'offline';
 
@@ -165,10 +165,10 @@ export function SettingsScreen({
   const doLogout = useCallback(async () => {
     const block = await logout(outboxCount);
     if (block != null) {
-      setLogoutError('Wylogowanie zablokowane — kolejka wysyłki nie jest pusta.');
+      setLogoutError('Wylogowanie zablokowane - kolejka wysyłki nie jest pusta.');
       return;
     }
-    // Wylogowanie czyści też stan sesji w pamięci (dane w SQLite zostają — to rejestr
+    // Wylogowanie czyści też stan sesji w pamięci (dane w SQLite zostają - to rejestr
     // samolotu, nie pilota); bramka w App.tsx sama przełączy na 00a-login.
     sessionReset();
   }, [logout, outboxCount, sessionReset]);
@@ -202,9 +202,9 @@ export function SettingsScreen({
         <Card title="Motyw wyświetlacza" header="inline">
           <ThemePicker detailed />
           <GhostAction label="Podgląd motywów w kokpicie" onPress={() => navigation.navigate('StyleGuide')} />
-          {/* Decyzja 2026-07-29: motyw jest preferencją PILOTA — rekord per pilot
+          {/* Decyzja 2026-07-29: motyw jest preferencją PILOTA - rekord per pilot
               w AsyncStorage, sync przez /me/prefs (LWW). Mockup 13 mówi to samo. */}
-          <SectionNote text="Motyw zapisuje się w profilu pilota i wędruje między urządzeniami — zmiana działa offline." />
+          <SectionNote text="Motyw zapisuje się w profilu pilota i wędruje między urządzeniami - zmiana działa offline." />
         </Card>
 
         {/* ── bezpieczeństwo ────────────────────────────────────────────────── */}
@@ -219,9 +219,9 @@ export function SettingsScreen({
             }}
           />
           {pinChanged && (
-            <Banner kind="status" tone="green" icon="check" title="PIN zmieniony" text="Nowy PIN obowiązuje od teraz — stary przestał działać." />
+            <Banner kind="status" tone="green" icon="check" title="PIN zmieniony" text="Nowy PIN obowiązuje od teraz - stary przestał działać." />
           )}
-          <SectionNote text="PIN sprawdzany lokalnie na telefonie — zmiana działa w 100% offline." />
+          <SectionNote text="PIN sprawdzany lokalnie na telefonie - zmiana działa w 100% offline." />
         </Card>
 
         {/* ── konto (§3.0: ochrona wylogowania) ─────────────────────────────── */}
@@ -232,7 +232,7 @@ export function SettingsScreen({
             name="Wyloguj i zmień konto"
             sub={
               logoutBlocked
-                ? `niedostępne — ${eventsCount(outboxCount)} czeka na wysyłkę`
+                ? `niedostępne - ${eventsCount(outboxCount)} czeka na wysyłkę`
                 : 'ponowne logowanie wymaga internetu'
             }
             disabled={logoutBlocked}
@@ -242,11 +242,11 @@ export function SettingsScreen({
           {logoutError != null && (
             <Banner kind="warning" tone="red" icon="warning" title="Nie wylogowano" text={logoutError} />
           )}
-          <SectionNote text="Ponowne logowanie wymaga internetu — konta zakłada administrator." />
+          <SectionNote text="Ponowne logowanie wymaga internetu - konta zakłada administrator." />
         </Card>
 
         {/* ── synchronizacja: STAN, nie osobny ekran ────────────────────────
-            Ekran 11 usunięty (2026-08-12) — patrz docblock modułu. Trzy wiersze
+            Ekran 11 usunięty (2026-08-12) - patrz docblock modułu. Trzy wiersze
             i jeden przycisk awaryjny; niczego tu nie ma o danych sesji, bo od tego
             jest rozliczenie (10). */}
         <Card title="Synchronizacja" header="inline">
@@ -262,7 +262,7 @@ export function SettingsScreen({
             value={lastSyncAt != null ? `${timeUtc(lastSyncAt)} UTC` : 'jeszcze żadnej'}
           />
           {/* Wiersz stoi ZAWSZE, także z „brak uwag": inaczej pilot nie odróżni
-              „serwer nic nie zgłasza" od „serwer nic nie sprawdził" (§6 pkt 2 —
+              „serwer nic nie zgłasza" od „serwer nic nie sprawdził" (§6 pkt 2 -
               cisza nie może znaczyć dwóch rzeczy naraz). */}
           <KeyValueRow
             divider
@@ -270,7 +270,7 @@ export function SettingsScreen({
             value={serverNoticeLabel(serverFlags.length, lastSyncAt != null)}
             valueTone={serverFlags.length > 0 ? 'amber' : 'green'}
           />
-          {/* Jedna flaga potrafi objąć kilka sesji (§4.5), więc wiersz mówi ILE —
+          {/* Jedna flaga potrafi objąć kilka sesji (§4.5), więc wiersz mówi ILE -
               bez tego pilot nie wie, czy chodzi o dzisiejszy lot, czy o cały tydzień. */}
           {serverFlags.map((flag) => (
             <KeyValueRow
@@ -288,18 +288,18 @@ export function SettingsScreen({
             size="md"
             icon="sync"
             busy={syncing}
-            hint="Synchronizacja działa sama w tle — to awaryjne ponaglenie"
+            hint="Synchronizacja działa sama w tle - to awaryjne ponaglenie"
             disabledReason={
-              offline ? 'Brak połączenia — synchronizacja ruszy sama, gdy wróci zasięg' : null
+              offline ? 'Brak połączenia - synchronizacja ruszy sama, gdy wróci zasięg' : null
             }
             onPress={() => void runManualSync()}
           />
-          <SectionNote text="Kolejka opróżnia się sama, gdy jest sieć — nie musisz jej pilnować. Przycisk dopycha kolejkę i pobiera świeże dane referencyjne (flota, przekazania). Uwagi serwera pochodzą z ostatniej wysyłki; rozwiązuje je administrator w panelu." />
+          <SectionNote text="Kolejka opróżnia się sama, gdy jest sieć - nie musisz jej pilnować. Przycisk dopycha kolejkę i pobiera świeże dane referencyjne (flota, przekazania). Uwagi serwera pochodzą z ostatniej wysyłki; rozwiązuje je administrator w panelu." />
         </Card>
 
-        {/* ── diagnostyka GPS (czujnik — oś niezależna od sieci) ────────────── */}
+        {/* ── diagnostyka GPS (czujnik - oś niezależna od sieci) ────────────── */}
         <Card title="Diagnostyka GPS" header="inline">
-          {/* `.diag-row` — wiersze klucz/wartość z DS (KeyValueRow). */}
+          {/* `.diag-row` - wiersze klucz/wartość z DS (KeyValueRow). */}
           <KeyValueRow
             divider
             label="Status"
@@ -309,21 +309,21 @@ export function SettingsScreen({
           <KeyValueRow
             divider
             label="Ostatni fix"
-            value={fix != null ? `${timeUtc(fix.time)} UTC · ${fixAge(fix.time, now)}` : '—'}
+            value={fix != null ? `${timeUtc(fix.time)} UTC · ${fixAge(fix.time, now)}` : '-'}
           />
           <KeyValueRow
             divider
             label="Dokładność"
-            value={fix?.accuracyM != null ? `± ${Math.round(fix.accuracyM)} m` : '—'}
+            value={fix?.accuracyM != null ? `± ${Math.round(fix.accuracyM)} m` : '-'}
           />
           <KeyValueRow
             divider
             label="Pozycja"
-            value={fix?.lat != null && fix.lon != null ? formatLatLon(fix.lat, fix.lon) : '—'}
+            value={fix?.lat != null && fix.lon != null ? formatLatLon(fix.lat, fix.lon) : '-'}
           />
           <TraceRow />
           <GhostAction label="Odśwież" onPress={() => void subscribe()} />
-          <SectionNote text="Czujnik lokalny — odczyt działa bez zasięgu. Brak fixa w locie zobaczysz w kokpicie jako czerwony baner." />
+          <SectionNote text="Czujnik lokalny - odczyt działa bez zasięgu. Brak fixa w locie zobaczysz w kokpicie jako czerwony baner." />
         </Card>
 
         {/* ── o aplikacji ───────────────────────────────────────────────────── */}
@@ -335,7 +335,7 @@ export function SettingsScreen({
             value={
               projection.aircraftId != null
                 ? `${projection.aircraftId}${aircraftType != null ? ` · ${aircraftType}` : ''}`
-                : '—'
+                : '-'
             }
           />
           <RefDataStamp checkedAt={refCheckedAt} style={styles.refRow} />
@@ -362,7 +362,7 @@ export function SettingsScreen({
 
 /**
  * Wiersz rejestratora śladu (faza 5): ile surowych fixów czeka i od kiedy.
- * Rejestrator jest zawsze włączony (decyzja 2026-07-29) — wiersz mówi, że działa,
+ * Rejestrator jest zawsze włączony (decyzja 2026-07-29) - wiersz mówi, że działa,
  * i uczciwie pokazuje zaległość wysyłki; retencja 14 dni sprząta sama.
  */
 function TraceRow() {
@@ -394,7 +394,7 @@ function TraceRow() {
   );
 }
 
-/** `.section-note` — przypis sekcji (mono, muted). */
+/** `.section-note` - przypis sekcji (mono, muted). */
 function SectionNote({ text }: { text: string }) {
   return (
     <AppText variant="mono" tone="muted" style={styles.note}>

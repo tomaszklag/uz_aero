@@ -1,9 +1,9 @@
 /**
- * UZ Aero — panel: PULPIT RENDEROWANY NAPRAWDĘ (`A01`, `A01a`).
+ * UZ Aero - panel: PULPIT RENDEROWANY NAPRAWDĘ (`A01`, `A01a`).
  *
  * ══ PO CO TEN PLIK ISTNIEJE OBOK TESTÓW MODUŁÓW CZYSTYCH ══
  * Trzy razy w tym projekcie zdarzyła się ta sama wada: moduł czysty liczył poprawnie,
- * miał zielony test — a EKRAN i tak pokazywał co innego, bo albo go nie wołał, albo
+ * miał zielony test - a EKRAN i tak pokazywał co innego, bo albo go nie wołał, albo
  * wołał i sklejał wynik z czymś innym. Najdroższy przykład: `A07` liczył trzy stany
  * świeżości, testy przechodziły, a w DOM-ie lądowała klasa `fresh-stale`, której nie
  * definiuje żaden arkusz. Stany były policzone, przetestowane i NIEWIDOCZNE.
@@ -13,7 +13,7 @@
  * przeglądarka dostałaby przy pierwszym renderze. Asercje dotyczą więc tego, co widać,
  * a nie tego, co policzone.
  *
- * Ekran renderujemy CAŁY — z prawdziwym `DashboardScreen`, prawdziwym `useDashboard`
+ * Ekran renderujemy CAŁY - z prawdziwym `DashboardScreen`, prawdziwym `useDashboard`
  * i cache'em TanStacka wypełnionym odpowiedzią serwera. Dzięki temu test upadnie także
  * wtedy, gdy ktoś przestanie wołać moduł czysty z ekranu.
  *
@@ -63,7 +63,7 @@ const cssOf = (...parts: string[]): string =>
 const SZABLON = (): string =>
   readFileSync(join(__dirname, '..', '..', 'design', 'admin', 'SZABLON.html'), 'utf8');
 
-describe('pulpit: render — kontrola samego testu', () => {
+describe('pulpit: render - kontrola samego testu', () => {
   it('renderer faktycznie produkuje ekran, a nie pusty napis', () => {
     // Bez tego wszystkie asercje `toContain` niżej przechodziłyby na pustce.
     const html = render(dashboardFixture());
@@ -79,7 +79,7 @@ describe('pulpit: trzy stany świeżości docierają AŻ DO KLASY CSS', () => {
 
   it('wiersz floty niesie modyfikator stanu z modułu czystego', () => {
     // Samolot w powietrzu z świeżym syncem, samolot z milczącym telefonem i samolot
-    // wolny — trzy różne wiersze, trzy różne klasy. Gdyby ekran przestał brać
+    // wolny - trzy różne wiersze, trzy różne klasy. Gdyby ekran przestał brać
     // `row.rowClass`, zostałaby jedna.
     expect(html).toContain('class="fleet-row flying"');
     expect(html).toContain('class="fleet-row stale"');
@@ -104,12 +104,12 @@ describe('pulpit: trzy stany świeżości docierają AŻ DO KLASY CSS', () => {
     for (const selector of ['.fresh-val', '.fresh-val.amber', '.fresh-val.dim']) {
       expect(css).toContain(`${selector} {`);
     }
-    // Bursztyn jest CAŁĄ treścią stanu „telefon milczy" — bez niego wiersz świeży
+    // Bursztyn jest CAŁĄ treścią stanu „telefon milczy" - bez niego wiersz świeży
     // i wiersz sprzed godziny wyglądają identycznie.
     expect(css).toMatch(/\.fresh-val\.amber\s*\{\s*color:\s*var\(--amber\)/);
   });
 
-  it('nazwy modyfikatorów są DOSŁOWNIE te z `SZABLON.html` — mockup wygrywa', () => {
+  it('nazwy modyfikatorów są DOSŁOWNIE te z `SZABLON.html` - mockup wygrywa', () => {
     const szablon = SZABLON();
     for (const selector of ['.fleet-row.flying', '.fleet-row.stale', '.fleet-row.free']) {
       expect(szablon).toContain(selector);
@@ -125,7 +125,7 @@ describe('pulpit: „W locie" jest prawdziwe, a brak danych to kreska', () => {
 
   it('plakietka fazy lotu pochodzi z projekcji serwera, nie z claimu', () => {
     // `A02` i `A07` mówią w tym miejscu „Zajęty", bo nie mają czym powiedzieć więcej.
-    // Pulpit ma — i to jest cała różnica tego przekroju.
+    // Pulpit ma - i to jest cała różnica tego przekroju.
     expect(html).toContain('W locie');
     expect(html).toContain('Na ziemi');
     expect(html).toContain('Dane w drodze');
@@ -133,7 +133,7 @@ describe('pulpit: „W locie" jest prawdziwe, a brak danych to kreska', () => {
     expect(html).toContain('class="dot live"');
   });
 
-  it('samolot bez odczytu pokazuje „—", nigdy zera', () => {
+  it('samolot bez odczytu pokazuje „-", nigdy zera', () => {
     const noReading = dashboardFixture();
     for (const row of noReading.fleet) row.aircraft.reading = null;
     const bare = render(noReading);
@@ -144,16 +144,16 @@ describe('pulpit: „W locie" jest prawdziwe, a brak danych to kreska', () => {
   });
 });
 
-describe('pulpit: brak odpowiedzi daje „—", a nie zero', () => {
+describe('pulpit: brak odpowiedzi daje „-", a nie zero', () => {
   it('bez danych wszystkie cztery kafle mówią „nie wiemy"', () => {
     // Najdroższa możliwa pomyłka narzędzia nadzoru: „0 otwartych flag" przy awarii
     // pobrania wygląda jak dobra wiadomość.
     const html = render(null);
-    expect(html).toContain('Nie wiadomo — pulpit się nie pobrał.');
+    expect(html).toContain('Nie wiadomo - pulpit się nie pobrał.');
     expect(html).not.toContain('class="tile-val green">0');
     expect(html).not.toContain('class="tile-val amber">0');
-    // Kreska jest w kaflach cztery razy — po jednej na kafel.
-    expect(html.split('—').length - 1).toBeGreaterThanOrEqual(4);
+    // Kreska jest w kaflach cztery razy - po jednej na kafel.
+    expect(html.split('-').length - 1).toBeGreaterThanOrEqual(4);
   });
 });
 
@@ -228,7 +228,7 @@ describe('pulpit: wariant CISZA wygląda jak potwierdzenie, nie jak awaria', () 
     const html = render(quiet());
     expect(html).toContain('Cisza spodziewana czy podejrzana');
     expect(html).toContain('Próg podejrzenia');
-    // Zamiast dzisiejszych zer — podsumowanie OSTATNIEGO dnia lotnego.
+    // Zamiast dzisiejszych zer - podsumowanie OSTATNIEGO dnia lotnego.
     expect(html).toContain('Ostatni dzień lotny');
   });
 
@@ -259,7 +259,7 @@ describe('pulpit: wariant CISZA wygląda jak potwierdzenie, nie jak awaria', () 
   });
 });
 
-describe('pulpit: przejścia — zero martwych linków', () => {
+describe('pulpit: przejścia - zero martwych linków', () => {
   const html = render(dashboardFixture());
 
   it('każdy kafel prowadzi do listy zawężonej tak, jak policzona jest jego liczba', () => {
@@ -272,7 +272,7 @@ describe('pulpit: przejścia — zero martwych linków', () => {
   it('przejście do rejestru zdarzeń (`A04`) jest ŻYWYM linkiem, nie blokadą z powodem', () => {
     // Do 2026-08-02 stał tu przycisk zablokowany z powodem „rejestr zdarzeń (A04)
     // jeszcze nie powstał", bo `#/zdarzenia` renderowało stronę „w budowie". Ekran
-    // powstał, więc przycisk prowadzi do rejestru — i to w stanie DOMYŚLNYM, czyli
+    // powstał, więc przycisk prowadzi do rejestru - i to w stanie DOMYŚLNYM, czyli
     // w tym samym porządku (`received_at` malejąco), który pokazuje karta obok.
     expect(html).toContain('href="/zdarzenia"');
     expect(html).not.toContain('jeszcze nie powstał');

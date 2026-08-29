@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 15 Lot ręczny · krok 1/4 · data i samolot</title>
+<title>UZ Aero - 15 Lot ręczny · krok 1/4 · data i samolot</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -53,16 +53,16 @@
   .nav-strip a.active { color:var(--green); }
   .nav-strip span { color:var(--border-strong); }
 
-  /* ===== Nagłówek kroku — wzorzec formularza wieloetapowego (02/02E/02A) =====
+  /* ===== Nagłówek kroku - wzorzec formularza wieloetapowego (02/02E/02A) =====
      Wyśrodkowany układ „Wróć ← tytuł → badge kroku" jest jedynym wyjątkiem od reguły
      nagłówka z issue #23 (tytuł do lewej) i obowiązuje właśnie tutaj: to krok formularza
      z powrotem, a nie ekran samodzielny.
 
-     PODTYTUŁU „wpis po fakcie" NIE MA (zgłoszenie z urządzenia, 2026-08-16) — powtarzał
+     PODTYTUŁU „wpis po fakcie" NIE MA (zgłoszenie z urządzenia, 2026-08-16) - powtarzał
      tytuł. DATY W NAGŁÓWKU TEŻ NIE MA: stała tam data DZISIEJSZA z zegara, więc przy
      wpisie sprzed tygodnia mówiła nieprawdę o tym, czego wpis dotyczy. Data lotu jest
      odtąd POLEM (niżej), a od kroku 2 wraca do podtytułu jako kontekst tego, co pilot
-     już wybrał — czyli jako fakt o wpisie, nie o zegarze. */
+     już wybrał - czyli jako fakt o wpisie, nie o zegarze. */
   .app-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 12px; border-bottom:1px solid var(--border); flex-shrink:0; }
   .app-header .header-center { flex:1; text-align:center; }
   .back-btn, .step-badge { min-width:56px; }
@@ -79,7 +79,7 @@
   /* ===== Sekcje =====
      PLAKIETKI „WYMAGANE" ZNIKŁY ZE WSZYSTKICH SEKCJI (zgłoszenie z urządzenia,
      2026-08-16). Wymagalność jest stanem DOMYŚLNYM formularza, więc plakietka przy
-     każdej sekcji świeciła wszędzie i nie odróżniała niczego od niczego — dokładnie
+     każdej sekcji świeciła wszędzie i nie odróżniała niczego od niczego - dokładnie
      tak, jak SyncChip online (issue #12). Oznaczamy WYŁĄCZNIE to, co opcjonalne. */
   .section { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:14px; display:flex; flex-direction:column; gap:12px; }
   .section-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
@@ -91,9 +91,9 @@
   .field-input { background:var(--surface-raised); border:1px solid var(--border-strong); border-radius:12px; padding:12px 14px; display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:46px; cursor:pointer; text-decoration:none; }
   .field-input:hover { border-color:var(--green-border); }
   /* Metryka wartości = pole wpisu z arkusza (issue #58 pkt 5 i 9): mono 16 / 1.5.
-     Kontrolka formularza jest tym samym polem oglądanym w spoczynku — 20 px robiło
+     Kontrolka formularza jest tym samym polem oglądanym w spoczynku - 20 px robiło
      z każdej wartości bohatera ekranu. PLACEHOLDER JEST ZAWSZE SKŁADEM TEKSTOWYM
-     (trzecia tura #58): body 15 w --text-placeholder, jak w arkuszu notatki — to
+     (trzecia tura #58): body 15 w --text-placeholder, jak w arkuszu notatki - to
      instrukcja, nie wartość, więc nie dziedziczy kroju liczb. Wysokość trzyma
      min-height kontrolki, więc osobny skład niczym nie skacze. */
   .field-input-val { font-size:15px; line-height:20px; color:var(--text-primary); }
@@ -102,7 +102,7 @@
   .field-icon { display:flex; color:var(--text-muted); flex-shrink:0; }
   .field-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); line-height:1.5; }
 
-  /* Samolot — lista kart, nigdy natywny select (reguła z CLAUDE.md) */
+  /* Samolot - lista kart, nigdy natywny select (reguła z CLAUDE.md) */
   .ac-list { display:flex; flex-direction:column; gap:8px; }
   .ac-option { display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:52px; padding:10px 14px; border-radius:12px; background:var(--surface-raised); border:1px solid var(--border); text-decoration:none; cursor:pointer; }
   .ac-option:hover { border-color:var(--border-strong); }
@@ -131,12 +131,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 15</span>
+  <span class="film-strip">UZ AERO - 15</span>
   <span class="slug">lot ręczny · data i samolot · krok 1 / 4</span>
   <span class="canvas-meta">Z ekranu 01</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Lot ręczny, krok 1: data i samolot">
+<main class="phone" role="region" aria-label="Mockup - Lot ręczny, krok 1: data i samolot">
   <div class="status-bar">
     <span>16:20</span>
     <span class="status-right">
@@ -152,11 +152,11 @@
            w formularzu cokolwiek jest: ten sam arkusz, co przy porzuceniu preflightu
            (`design/02h-preflight-rezygnacja.html`), z tytułem „ZREZYGNOWAĆ Z WPISU
            RĘCZNEGO?" i nazwą przycisku zapisu „ZAPISZ LOT". Pusty formularz wychodzi
-           bez pytania — arkusz nad niczym pytałby o zgodę na nic.
+           bez pytania - arkusz nad niczym pytałby o zgodę na nic.
 
            Z KROKÓW 2–4 „wstecz" cofa O KROK, a nie na „Mój dzień". Strzałka robiła to
            dobrze od początku, ale przycisk sprzętowy i gest krawędziowy zdejmowały ze
-           stosu cały wpis — bo stepper jest JEDNYM ekranem nawigacji, a krok to jego
+           stosu cały wpis - bo stepper jest JEDNYM ekranem nawigacji, a krok to jego
            stan. Łapie je `usePreventRemove`, tak samo jak przy blokadzie kokpitu (04D). -->
       <a href="01-moj-dzien.html" class="back-btn">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -177,7 +177,7 @@
            i zapisywał sesję UBOŻSZĄ od każdej normalnej: bez rodzaju operacji
            (twardo „inne"), bez lotnisk, bez Duala, bez zrzutów, bez tankowań,
            z dokładnie jedną parą start–lądowanie i bez odczytu SPRZED uruchomienia.
-           Wpis po fakcie ma opisywać ten sam lot, co zapis automatyczny — więc pyta
+           Wpis po fakcie ma opisywać ten sam lot, co zapis automatyczny - więc pyta
            o to samo i tymi samymi kontrolkami.
 
            EDU-BANER „Wpis trafi na listę dnia…" USUNIĘTY: opisywał budowę rejestru
@@ -185,15 +185,15 @@
            z kartki. To ta sama kategoria napisów, którą wyrzuciło issue #43. -->
 
 <!-- DATA LOTU PIERWSZA (issue #58 pkt 1), JAKO POLE, domyślnie DZISIEJSZA.
-           Wpis ręczny zaczyna się od pytania „którego to było?" — dopiero potem czym.
+           Wpis ręczny zaczyna się od pytania „którego to było?" - dopiero potem czym.
            Powstaje najczęściej tego samego dnia („telefon został w hangarze"), więc
-           dziś jest trafną wartością domyślną — ale lot sprzed tygodnia musi dać się
+           dziś jest trafną wartością domyślną - ale lot sprzed tygodnia musi dać się
            wpisać bez proszenia administratora, a do 2026-08-16 nie dawał się w ogóle:
            czasy szły z arkusza liczącego godziny od „teraz".
 
            PRZYPISU O DOBIE TU NIE MA (issue #58 pkt 3): „doba liczy się od
-           uruchomienia silnika" stoi w arkuszu daty (15E) — przy kontrolce, której
-           dotyczy — jako zwykłe zdanie. Kotwica doby (`sessionDay`) bez zmian:
+           uruchomienia silnika" stoi w arkuszu daty (15E) - przy kontrolce, której
+           dotyczy - jako zwykłe zdanie. Kotwica doby (`sessionDay`) bez zmian:
            bieg spod północy trafia w ten sam dzień, co na 01 i 12. -->
       <div class="section">
         <div class="section-head"><span class="section-label">Data lotu · UTC</span></div>
@@ -234,24 +234,24 @@
         </div>
       </div>
 
-      <!-- DUAL — zwykle OPCJONALNY i dlatego jedyny z plakietką na tym ekranie.
+      <!-- DUAL - zwykle OPCJONALNY i dlatego jedyny z plakietką na tym ekranie.
            Do 2026-08-16 wpis ręczny zapisywał `dualId: null` na sztywno, więc lot
            szkolny wpisany z kartki gubił drugiego pilota bezpowrotnie.
 
            SAMOLOT Z WYMOGIEM ZAŁOGI DWUOSOBOWEJ egzekwuje go TAKŻE TUTAJ (issue #58
-           pkt 4 — wpis ręczny opisuje ten sam lot tym samym prawem, co preflight):
+           pkt 4 - wpis ręczny opisuje ten sam lot tym samym prawem, co preflight):
            po wybraniu SP-ANK plakietka zmienia się w bursztynowe „wymagany · załoga
-           2-os.", a w „DALEJ" staje powód — „Wybierz drugiego pilota — ten samolot
+           2-os.", a w „DALEJ" staje powód - „Wybierz drugiego pilota - ten samolot
            wymaga załogi dwuosobowej".
 
            BANERA POD LISTĄ NIE MA (uwaga z urządzenia, 2026-08-29). Do tej pory to
-           on niósł powód, a przycisk dostawał samo wyszarzenie — jedyny taki wyjątek
+           on niósł powód, a przycisk dostawał samo wyszarzenie - jedyny taki wyjątek
            w aplikacji. Powód blokady ma JEDNO miejsce: wnętrze przycisku, który nie
-           działa (issue #55). Plakietka zostaje, bo mówi o WŁAŚCIWOŚCI maszyny —
+           działa (issue #55). Plakietka zostaje, bo mówi o WŁAŚCIWOŚCI maszyny -
            także wtedy, gdy Dual jest już wskazany i nic nie blokuje.
 
            WYBÓR DUALA PRZEŻYWA WYBÓR I ZMIANĘ SAMOLOTU (druga tura z urządzenia:
-           pilot wybrany przed samolotem znikał po tapnięciu w maszynę) — wymóg jest
+           pilot wybrany przed samolotem znikał po tapnięciu w maszynę) - wymóg jest
            właściwością samolotu, ale wybrana OSOBA nie traci ważności przy zmianie
            maszyny; lista Duali nie zależy od samolotu. Tak samo na 02. -->
       <div class="section">
@@ -281,34 +281,34 @@
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Kroki wpisu ręcznego — co gdzie</div>
+  <div class="vp-title">Kroki wpisu ręcznego - co gdzie</div>
   <a class="vp-item active" href="15-reczny-lot.html">
     <span class="vp-badge">15</span>
     <span class="vp-body">
-      <span class="vp-name">Krok 1 — data i samolot</span>
-      <span class="vp-when">Data lotu pierwsza (domyślnie dzisiejsza), maszyna z listy kart i Dual — opcjonalny, chyba że samolot wymaga załogi dwuosobowej. Jedyne pola, bez których nie wiadomo, CZEGO wpis dotyczy.</span>
+      <span class="vp-name">Krok 1 - data i samolot</span>
+      <span class="vp-when">Data lotu pierwsza (domyślnie dzisiejsza), maszyna z listy kart i Dual - opcjonalny, chyba że samolot wymaga załogi dwuosobowej. Jedyne pola, bez których nie wiadomo, CZEGO wpis dotyczy.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
   <a class="vp-item" href="15a-reczny-zadanie.html">
     <span class="vp-badge">15A</span>
     <span class="vp-body">
-      <span class="vp-name">Krok 2 — zadanie</span>
-      <span class="vp-when">Rodzaj operacji, lotniska i notatka — te same pola, co na 02E przy locie normalnym. Rodzaj operacji decyduje, czy krok 3 pyta o zrzuty.</span>
+      <span class="vp-name">Krok 2 - zadanie</span>
+      <span class="vp-when">Rodzaj operacji, lotniska i notatka - te same pola, co na 02E przy locie normalnym. Rodzaj operacji decyduje, czy krok 3 pyta o zrzuty.</span>
     </span>
   </a>
   <a class="vp-item" href="15b-reczny-czasy.html">
     <span class="vp-badge">15B</span>
     <span class="vp-body">
-      <span class="vp-name">Krok 3 — czasy</span>
+      <span class="vp-name">Krok 3 - czasy</span>
       <span class="vp-when">Bieg silnika, LOTY (dowolnie wiele par start–lądowanie) i zrzuty w dniu skokowym. Każda godzina przez ten sam stepper, co korekty.</span>
     </span>
   </a>
   <a class="vp-item" href="15c-reczny-liczniki.html">
     <span class="vp-badge">15C</span>
     <span class="vp-body">
-      <span class="vp-name">Krok 4 — liczniki i paliwo</span>
-      <span class="vp-when">Paliwo przed uruchomieniem, dolewki i stan po locie; motogodziny przed i po. Tu też stoją ostrzeżenia o nieścisłościach — nie blokują zapisu.</span>
+      <span class="vp-name">Krok 4 - liczniki i paliwo</span>
+      <span class="vp-when">Paliwo przed uruchomieniem, dolewki i stan po locie; motogodziny przed i po. Tu też stoją ostrzeżenia o nieścisłościach - nie blokują zapisu.</span>
     </span>
   </a>
   <a class="vp-item" href="15d-reczny-czas-arkusz.html">

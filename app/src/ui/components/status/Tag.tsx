@@ -1,12 +1,12 @@
 /**
- * UZ Aero — Tag
+ * UZ Aero - Tag
  *
  * Mała etykieta mono UPPERCASE z mockupów: `.optional-tag`, `.required-tag`,
  * `.grounded-tag`, `.pic-lock-tag`, `.step-badge`, `.role-badge`. Wszystkie mają ten sam
- * kształt — różnią się wyłącznie tonem i rozmiarem, więc to jeden komponent.
+ * kształt - różnią się wyłącznie tonem i rozmiarem, więc to jeden komponent.
  *
  * Czym różni się od `StatusChip`: chip to **stan sesji** (pill z kropką, tekst 13 px,
- * czytany z drugiego końca kokpitu — GROUND, RUNNING, dane z cache). Tag to **przypis
+ * czytany z drugiego końca kokpitu - GROUND, RUNNING, dane z cache). Tag to **przypis
  * do pozycji listy albo nagłówka** (8–11 px, prostokątny, bez kropki): „PIC: KRZ · od 07:10",
  * „opcjonalne", „1 / 3". Zlanie ich w jedno dałoby albo za duże chipy w liście samolotów,
  * albo nieczytelne statusy w kokpicie.
@@ -28,7 +28,7 @@ export interface TagProps {
   /** `sm` = przypis w wierszu listy (8 px), `md` = badge nagłówka (11 px). */
   size?: TagSize;
   /**
-   * Ikona przed napisem — dla plakietek, które muszą być czytelne kątem oka
+   * Ikona przed napisem - dla plakietek, które muszą być czytelne kątem oka
    * (stan wysyłki na karcie sesji, mockup 12). Bez niej tag zostaje samym tekstem.
    */
   icon?: IconName;

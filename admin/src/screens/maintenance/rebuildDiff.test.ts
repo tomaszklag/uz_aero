@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: różnice projekcji → wiersze tabeli (`A11`).
+ * UZ Aero - panel: różnice projekcji → wiersze tabeli (`A11`).
  *
  * Najważniejsze dwa przypadki: **milisekundy nie trafiają na ekran surowe** (mockup
  * pokazuje `05:41`, nie `20460000`) i **sesja bez wiersza projekcji daje JEDEN wiersz**,
@@ -29,7 +29,7 @@ const report = (over: Partial<RebuildReportDto> = {}): RebuildReportDto => ({
   ...over,
 });
 
-/** Sesja rozjechana w `fields` polach — materiał na dowolnie długą tabelę. */
+/** Sesja rozjechana w `fields` polach - materiał na dowolnie długą tabelę. */
 const diffOf = (i: number, fields: number): ProjectionRowDiffDto => ({
   sessionUuid: `sess-${String(i).padStart(4, '0')}`,
   aircraftId: 'SP-KLM',
@@ -44,7 +44,7 @@ const diffOf = (i: number, fields: number): ProjectionRowDiffDto => ({
 
 describe('formatowanie wartości pola projekcji', () => {
   it('czas blokowy i lotu jadą jako HH:MM, nie jako milisekundy', () => {
-    // `20460000` w komórce tabeli jest technicznie prawdziwe i praktycznie nieczytelne —
+    // `20460000` w komórce tabeli jest technicznie prawdziwe i praktycznie nieczytelne -
     // a mockup pokazuje dokładnie ten sam zapis, co ekran 10 telefonu i karta arkusza.
     expect(fieldValue('blockMs', (5 * 60 + 41) * 60_000)).toBe('05:41');
     expect(fieldValue('flightMs', 62 * 60_000)).toBe('01:02');
@@ -57,10 +57,10 @@ describe('formatowanie wartości pola projekcji', () => {
 
   it('`null` to KRESKA, nigdy zero ani „null"', () => {
     // Zero jest twierdzeniem o świecie („nie było ani jednego lotu"), brak wartości nim
-    // nie jest — a `null` wypisany dosłownie wygląda jak usterka panelu.
-    expect(fieldValue('flightsCount', null)).toBe('—');
-    expect(fieldValue('blockMs', null)).toBe('—');
-    expect(fieldValue('operation', undefined)).toBe('—');
+    // nie jest - a `null` wypisany dosłownie wygląda jak usterka panelu.
+    expect(fieldValue('flightsCount', null)).toBe('-');
+    expect(fieldValue('blockMs', null)).toBe('-');
+    expect(fieldValue('operation', undefined)).toBe('-');
   });
 
   it('wartość spoza spodziewanego kształtu jedzie DOSŁOWNIE, zamiast wywalić ekran', () => {
@@ -73,7 +73,7 @@ describe('formatowanie wartości pola projekcji', () => {
 });
 
 describe('spłaszczenie raportu do wierszy tabeli', () => {
-  it('bez raportu nie ma wierszy — ekran nie zgaduje, czego nie policzył', () => {
+  it('bez raportu nie ma wierszy - ekran nie zgaduje, czego nie policzył', () => {
     expect(diffRows(undefined)).toEqual([]);
     expect(diffRows(report())).toEqual([]);
   });
@@ -108,7 +108,7 @@ describe('spłaszczenie raportu do wierszy tabeli', () => {
       missing: false,
     });
     expect(rows[1]).toMatchObject({ field: 'blockMs', stored: '05:41', computed: '05:58' });
-    // Klucze wierszy muszą być różne — inaczej React renderuje jeden z dwóch.
+    // Klucze wierszy muszą być różne - inaczej React renderuje jeden z dwóch.
     expect(new Set(rows.map((r) => r.key)).size).toBe(2);
   });
 
@@ -134,11 +134,11 @@ describe('spłaszczenie raportu do wierszy tabeli', () => {
       field: 'CAŁY WIERSZ',
       stored: 'brak w sessions',
       // Sesja bez claimu nie ma dnia i panel mówi to wprost, zamiast wnioskować.
-      day: '—',
+      day: '-',
     });
   });
 
-  it('zachowuje KOLEJNOŚĆ serwera — panel nie sortuje raportu po swojemu', () => {
+  it('zachowuje KOLEJNOŚĆ serwera - panel nie sortuje raportu po swojemu', () => {
     const rows = diffRows(
       report({
         diffs: [
@@ -151,12 +151,12 @@ describe('spłaszczenie raportu do wierszy tabeli', () => {
   });
 });
 
-describe('objętość tabeli — bezpiecznik jest, i nie jest cichy', () => {
-  it('tabela ma GRANICĘ — bez niej jeden render to tysiące wierszy', () => {
+describe('objętość tabeli - bezpiecznik jest, i nie jest cichy', () => {
+  it('tabela ma GRANICĘ - bez niej jeden render to tysiące wierszy', () => {
     // ══ SCENARIUSZ, KTÓRY TO WYMUSIŁ ══
     // Zmiana reguły liczenia w wydaniu domeny rozjeżdża KAŻDĄ sesję w bazie, i to
     // w kilku polach naraz. Do audytu szło `slice(0, AUDIT_UUID_LIMIT)`, czyli objętość
-    // dziennika była przemyślana — objętość odpowiedzi i tabeli nie była wcale.
+    // dziennika była przemyślana - objętość odpowiedzi i tabeli nie była wcale.
     // Ekran, po który sięga się przy awarii, dostawał wtedy tysiące wierszy w jednym
     // renderze.
     const big = report({
@@ -170,7 +170,7 @@ describe('objętość tabeli — bezpiecznik jest, i nie jest cichy', () => {
     expect(diffRows(big)).toHaveLength(DIFF_ROW_LIMIT);
   });
 
-  it('mówi, ILE pominięto — w obu wymiarach naraz', () => {
+  it('mówi, ILE pominięto - w obu wymiarach naraz', () => {
     // Dwa niezależne obcięcia: sesje, których nie zmieścił SERWER (`remaining`),
     // i wiersze, których nie zmieściła TABELA. Lista przycięta po cichu wygląda na
     // komplet, więc odpowiedź „projekcja rozjechała się o tyle" brzmi tak samo, jak
@@ -214,7 +214,7 @@ describe('podpis i nagłówki tabeli po ZAPISIE', () => {
     });
   });
 
-  it('bez raportu zachowuje się jak porównanie — nagłówki nie znikają z pustej tabeli', () => {
+  it('bez raportu zachowuje się jak porównanie - nagłówki nie znikają z pustej tabeli', () => {
     expect(diffValueHeaders(undefined)).toEqual({
       stored: 'W sessions',
       computed: 'Z przeliczenia',

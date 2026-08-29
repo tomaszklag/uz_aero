@@ -1,9 +1,9 @@
 /**
- * UZ Aero — DROBNA AKCJA IKONĄ (issue #43, uwaga z urządzenia 2026-08-14).
+ * UZ Aero - DROBNA AKCJA IKONĄ (issue #43, uwaga z urządzenia 2026-08-14).
  *
  * ══ PO CO ══
  * Bo nie każda akcja zasługuje na przycisk. Unieważnienie zdarzenia stało w arkuszu
- * korekty jako pełnowymiarowy czerwony przycisk pod separatorem — i wyglądało jak
+ * korekty jako pełnowymiarowy czerwony przycisk pod separatorem - i wyglądało jak
  * akcja główna ekranu, choć intencją wchodzącego w korektę jest POPRAWKA, nie
  * kasowanie. Zgłoszenie brzmiało wprost: „krzyczy… raczej moją intencją nie jest
  * wejście i usunięcie".
@@ -25,7 +25,7 @@ import { toneColors, type Tone } from '../tone';
 
 export interface IconActionProps {
   name: IconName;
-  /** Do czytnika ekranu — ikona nie niesie napisu, więc etykieta jest obowiązkowa. */
+  /** Do czytnika ekranu - ikona nie niesie napisu, więc etykieta jest obowiązkowa. */
   accessibilityLabel: string;
   onPress: () => void;
   tone?: Tone;
@@ -52,7 +52,7 @@ export function IconAction({
       disabled={disabled}
       onPress={onPress}
       /* 36 dp rysunku + 4 dp zapasu = próg 44 dp dla rękawic. Docblock obiecywał ten
-         zapas od issue #43, ale `hitSlop` nigdy nie było w kodzie — złapane przy
+         zapas od issue #43, ale `hitSlop` nigdy nie było w kodzie - złapane przy
          issue #62, gdy ikona trafiła do 48-dp wiersza listy. */
       hitSlop={4}
       style={({ pressed }) => [

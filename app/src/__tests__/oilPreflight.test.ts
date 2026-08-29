@@ -1,5 +1,5 @@
 /**
- * UZ Aero — test sekcji OLEJU na kroku liczników (02a, issue #60).
+ * UZ Aero - test sekcji OLEJU na kroku liczników (02a, issue #60).
  *
  * Logika jest czysta i mieszka poza ekranem, bo niesie trzy rachunki, które muszą
  * być testowalne bez urządzenia:
@@ -8,7 +8,7 @@
  *  • degradacje: brak historii, brak normy, brak kotwicy MH, licznik cofnięty.
  *
  * Pomiar jest krokiem WYMAGANYM przejęcia (decyzja 2026-08-27), ale bramkę trzyma
- * `preflightGate.ts` — ta logika wyłącznie podpowiada i ostrzega, wspólnie dla 02a
+ * `preflightGate.ts` - ta logika wyłącznie podpowiada i ostrzega, wspólnie dla 02a
  * i wpisu ręcznego (15), który bramki świadomie nie ma.
  */
 
@@ -47,7 +47,7 @@ function input(over: Partial<OilClaimInput> = {}): OilClaimInput {
   };
 }
 
-describe('sekcja oleju — przed pomiarem', () => {
+describe('sekcja oleju - przed pomiarem', () => {
   it('wartość pusta, świeżość live, szlak: ostatni pomiar + oczekiwanie z normy', () => {
     const v = oilClaimView(input());
     expect(v.value).toBeNull();
@@ -69,7 +69,7 @@ describe('sekcja oleju — przed pomiarem', () => {
     const v = oilClaimView(input({ lastOil: { ...LAST, addedSinceL: 1.0 } }));
     // 10,6 + 1,0 − 0,48 ≈ 11,1 L
     expect(v.trail[1]!.meta).toContain(oilLitres(11.12));
-    // dolewka jest też faktem szlaku — pilot ma wiedzieć, że rachunek ją widzi
+    // dolewka jest też faktem szlaku - pilot ma wiedzieć, że rachunek ją widzi
     expect(v.trail[0]!.meta).toContain(`+${oilLitres(1.0)}`);
   });
 
@@ -102,7 +102,7 @@ describe('sekcja oleju — przed pomiarem', () => {
   });
 });
 
-describe('sekcja oleju — po wpisie', () => {
+describe('sekcja oleju - po wpisie', () => {
   it('wartość z pomiaru, świeżość manual, podpis z rachunkiem dolewki', () => {
     const v = oilClaimView(input({ enteredL: 8.2, addedL: 1.0 }));
     expect(v.value).toBe('8,2');
@@ -121,7 +121,7 @@ describe('sekcja oleju — po wpisie', () => {
     const below = oilClaimView(input({ enteredL: 7.8 }));
     expect(below.warning).toContain(`dolej co najmniej ${oilLitres(0.7)}`);
 
-    // Dolewka domyka minimum, ale POMIAR 7,8 wobec oczekiwania 10,1 zostaje faktem —
+    // Dolewka domyka minimum, ale POMIAR 7,8 wobec oczekiwania 10,1 zostaje faktem -
     // podejrzenia ubytku nie da się dolać (rachunek diagnostyczny liczy się z pomiaru).
     const topped = oilClaimView(input({ enteredL: 7.8, addedL: 1.0 }));
     expect(topped.warning).not.toContain('dolej co najmniej');
@@ -129,7 +129,7 @@ describe('sekcja oleju — po wpisie', () => {
   });
 
   it('odchył w dół od oczekiwania ostrzega diagnostycznie (możliwy ubytek)', () => {
-    // 9,0 ≥ minimum, ale 1,1 L poniżej oczekiwania 10,1 — próg 0,5 L przekroczony
+    // 9,0 ≥ minimum, ale 1,1 L poniżej oczekiwania 10,1 - próg 0,5 L przekroczony
     const v = oilClaimView(input({ enteredL: 9.0 }));
     expect(v.warning).toContain('sprawdź, czy silnik nie traci oleju');
     expect(v.warning).not.toContain('dolej co najmniej');
@@ -149,12 +149,12 @@ describe('sekcja oleju — po wpisie', () => {
 });
 
 describe('ostrzeżenia wpisu (arkusz i sekcja liczą TĄ SAMĄ funkcją)', () => {
-  it('ponad zbiornik wygrywa ze wszystkim — to wpis do poprawienia, nie do rozważań', () => {
+  it('ponad zbiornik wygrywa ze wszystkim - to wpis do poprawienia, nie do rozważań', () => {
     expect(oilEntryWarning(12, null, CONFIG, 10.12)).toContain('przekracza zbiornik');
     expect(oilEntryWarning(10.6, 1.5, CONFIG, 10.12)).toContain('przekracza zbiornik');
   });
 
-  it('bez konfiguracji i bez oczekiwania milczy — nie ma o czym orzekać', () => {
+  it('bez konfiguracji i bez oczekiwania milczy - nie ma o czym orzekać', () => {
     expect(oilEntryWarning(2, null, NO_CONFIG, null)).toBeNull();
     expect(oilEntryWarning(null, null, CONFIG, null)).toBeNull();
   });
@@ -177,12 +177,12 @@ describe('wiersz „Po dolewce"', () => {
     expect(oilAfterRow(null, 1.0, CONFIG)).toBeNull();
   });
 
-  it('poniżej minimum zostaje neutralny — ostrzega osobne ostrzeżenie, nie kolor wiersza', () => {
+  it('poniżej minimum zostaje neutralny - ostrzega osobne ostrzeżenie, nie kolor wiersza', () => {
     expect(oilAfterRow(7.0, 1.0, CONFIG)).toEqual({
       label: 'Po dolewce',
       value: oilLitres(8.0),
     });
-    // bez skonfigurowanego minimum nie ma do czego porównać — sam rachunek
+    // bez skonfigurowanego minimum nie ma do czego porównać - sam rachunek
     expect(oilAfterRow(8.2, 1.0, NO_CONFIG)).toEqual({
       label: 'Po dolewce',
       value: oilLitres(9.2),

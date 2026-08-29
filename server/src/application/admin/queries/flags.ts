@@ -1,9 +1,9 @@
 /**
- * UZ Aero (serwer) — strona ODCZYTU skrzynki flag (`A03`).
+ * UZ Aero (serwer) - strona ODCZYTU skrzynki flag (`A03`).
  *
  * Cienka warstwa: port oddaje flagi ze złączeniami w porządku skrzynki, ta klasa mapuje
  * je na kontrakt panelu. Porządek („blokujące eksport → najstarsze") jest własnością
- * PORTU, a nie tego pliku — bo wynika z indeksu i z `ORDER BY`, a nie z sortowania
+ * PORTU, a nie tego pliku - bo wynika z indeksu i z `ORDER BY`, a nie z sortowania
  * w pamięci: lista przycięta limitem musi być przycięta po WŁAŚCIWEJ stronie porządku.
  */
 

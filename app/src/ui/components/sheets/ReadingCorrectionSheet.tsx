@@ -1,15 +1,15 @@
 /**
- * UZ Aero — ReadingCorrectionSheet (mockup `design/10f` „Korekta odczytu")
+ * UZ Aero - ReadingCorrectionSheet (mockup `design/10f` „Korekta odczytu")
  *
  * Poprawka paliwa i motogodzin przy PRZEJĘCIU albo ZDANIU samolotu. Dwa pola obok
- * siebie, bo spisuje się je jednym spojrzeniem na tablicę i poprawia zwykle razem —
+ * siebie, bo spisuje się je jednym spojrzeniem na tablicę i poprawia zwykle razem -
  * pilot wraca do maszyny i przepisuje oba. Rozdzielone na dwa arkusze kazałyby
  * przechodzić tę samą drogę dwa razy.
  *
  * ══ CZEGO TU NIE MA I DLACZEGO ══
- *  • **czasu** — godzinę przejęcia i zdania wyznacza fakt o dwóch pilotach (kto komu
+ *  • **czasu** - godzinę przejęcia i zdania wyznacza fakt o dwóch pilotach (kto komu
  *    oddał maszynę), a nie odczyt; domena odrzuca na tych zdarzeniach `retime`;
- *  • **unieważnienia** — sesja bez liczb przy zdaniu nie ma jak przekazać maszyny dalej.
+ *  • **unieważnienia** - sesja bez liczb przy zdaniu nie ma jak przekazać maszyny dalej.
  *    Brak przycisku jest tu decyzją, więc mówimy o niej wprost w podpisie (§6 pkt 3:
  *    nigdy „nie da się" bez powiedzenia, co zamiast tego).
  *
@@ -32,12 +32,12 @@ import { TimeStepper } from '../input/TimeStepper';
 import { toneColors } from '../tone';
 import { Sheet, type SheetRow } from './Sheet';
 
-/** Wynik korekty — pola pominięte znaczą „nie ruszaj tej wartości". */
+/** Wynik korekty - pola pominięte znaczą „nie ruszaj tej wartości". */
 export interface ReadingCorrection {
   fuelL?: number;
   mh?: number;
   /**
-   * Pomiar / dolewka oleju (issue #60); `null` to WARTOŚĆ — „tego wpisu nie było"
+   * Pomiar / dolewka oleju (issue #60); `null` to WARTOŚĆ - „tego wpisu nie było"
    * (wyczyszczone pole kasuje omyłkowy pomiar), inaczej niż pominięcie klucza.
    */
   oilL?: number | null;
@@ -46,7 +46,7 @@ export interface ReadingCorrection {
   newTime?: number;
 }
 
-/** Pola oleju — TYLKO przy przejęciu (issue #60): zdanie samolotu oleju nie mierzy. */
+/** Pola oleju - TYLKO przy przejęciu (issue #60): zdanie samolotu oleju nie mierzy. */
 export interface ReadingOilFields {
   /** Wartości w mocy, już sformatowane; pusty tekst = wpisu nie było. */
   levelText: string;
@@ -62,7 +62,7 @@ export interface ReadingTimeField {
   max: number;
   format: (t: number) => string;
   /**
-   * Co się stanie przy TEJ godzinie — `null`, gdy nic nadzwyczajnego.
+   * Co się stanie przy TEJ godzinie - `null`, gdy nic nadzwyczajnego.
    *
    * Tu mieszka ostrzeżenie o kaskadzie: przejęcie przesunięte za uruchomienie silnika
    * pociąga za sobą cały bieg. Treść liczy ekran (`logic/claimRetime.ts`), bo to jest
@@ -73,17 +73,17 @@ export interface ReadingTimeField {
 
 export interface ReadingCorrectionSheetProps {
   visible: boolean;
-  /** Nazwa korygowanego zdarzenia („Przejęcie samolotu") — pełnym stopniem, nie przypisem. */
+  /** Nazwa korygowanego zdarzenia („Przejęcie samolotu") - pełnym stopniem, nie przypisem. */
   title: string;
   /** Druga linia karty celu: godzina i kontekst („zapisano 08:04 UTC"). */
   subtitle?: string | null;
   /**
-   * Czas zdarzenia do POPRAWIENIA — dziś wyłącznie przejęcie (issue #43, uwaga
+   * Czas zdarzenia do POPRAWIENIA - dziś wyłącznie przejęcie (issue #43, uwaga
    * z urządzenia). Pominięty = arkusz nie pokazuje pola czasu.
    *
    * Zdanie samolotu go NIE MA i to jest decyzja: od `day_close` liczy się 24-godzinne
    * okno korekty, więc przesuwanie go własną poprawką pozwalałoby pilotowi przedłużyć
-   * sobie termin — regułę, która ma go ograniczać.
+   * sobie termin - regułę, która ma go ograniczać.
    */
   time?: ReadingTimeField | null;
   /** Odczyty w mocy TERAZ (po wcześniejszych korektach), już sformatowane. */
@@ -104,7 +104,7 @@ export interface ReadingCorrectionSheetProps {
   oil?: ReadingOilFields | null;
   /** Wiersze odniesienia: pojemność zbiorników, wpływ na zużycie, format licznika. */
   rows?: SheetRow[];
-  /** Ostrzeżenie o skutku — łańcuch MH, przekazanie następnemu pilotowi. */
+  /** Ostrzeżenie o skutku - łańcuch MH, przekazanie następnemu pilotowi. */
   warning?: string;
   historyCount?: number;
   onOpenHistory?: () => void;
@@ -147,7 +147,7 @@ export function ReadingCorrectionSheet({
   const [at, setAt] = useState(time?.value ?? 0);
   const [reason, setReason] = useState('');
 
-  // Każde otwarcie startuje od wartości W MOCY — arkusz nie pamięta porzuconej edycji.
+  // Każde otwarcie startuje od wartości W MOCY - arkusz nie pamięta porzuconej edycji.
   useEffect(() => {
     if (!visible) return;
     setFuel(fuelText);
@@ -179,19 +179,19 @@ export function ReadingCorrectionSheet({
   /**
    * POWÓD W PRZYCISKU, ZAMIAST ZNIKAJĄCEGO PRZYCISKU (uwaga z urządzenia, 2026-08-29:
    * „walidacja jest na przycisku, jest on disabled i na przycisku na żółto piszemy
-   * czemu — taki pattern powinien być wszędzie").
+   * czemu - taki pattern powinien być wszędzie").
    *
    * Do tej pory arkusz podawał `onConfirm: undefined`, a `Sheet` przy braku akcji nie
    * rysuje przycisku WCALE. Znikające „ZAPISZ KOREKTĘ" jest tu gorsze od wyszarzonego:
    * brak akcji ma sens tam, gdzie akcji nie ma z definicji (podgląd po oknie korekty
-   * 10B, pusta flota 02G), a nie w formularzu, który pilot właśnie wypełnia — tam
+   * 10B, pusta flota 02G), a nie w formularzu, który pilot właśnie wypełnia - tam
    * zniknięcie czyta się jak usterka, a nie jak odpowiedź.
    *
    * Powody padają pojedynczo, w kolejności czynności: najpierw popraw to, czego nie
    * da się przeczytać, potem zmień cokolwiek, na końcu ustąp twardej regule czasu.
    */
   const blocker = !readable
-    ? 'Nie rozumiem którejś z wartości — popraw wpis'
+    ? 'Nie rozumiem którejś z wartości - popraw wpis'
     : !changed
       ? 'Zmień którąś z wartości, żeby zapisać korektę'
       : blocked
@@ -222,7 +222,7 @@ export function ReadingCorrectionSheet({
     >
       {/* Karta celu jak w arkuszu czasu (10E): ikona, NAZWA ZDARZENIA pełnym stopniem
           i godzina pod spodem. Mono 9 px wersalikami czytało się jak przypis, a to jest
-          odpowiedź na pierwsze pytanie otwierającego arkusz — co ja właściwie poprawiam. */}
+          odpowiedź na pierwsze pytanie otwierającego arkusz - co ja właściwie poprawiam. */}
       <View
         style={[
           styles.targetCard,
@@ -245,7 +245,7 @@ export function ReadingCorrectionSheet({
         </View>
       </View>
 
-      {/* CZAS zdarzenia — tylko przy przejęciu (patrz `time` w propsach). Stepper,
+      {/* CZAS zdarzenia - tylko przy przejęciu (patrz `time` w propsach). Stepper,
           nie pole tekstowe: to ta sama czynność, co korekta czasu na osi (10E), więc ma
           ten sam kształt. Ostrzeżenie pod spodem mówi, co pociągnie za sobą godzina
           wykraczająca poza uruchomienie silnika. */}
@@ -277,7 +277,7 @@ export function ReadingCorrectionSheet({
           onChangeText={setFuel}
           keyboardType="decimal-pad"
           /* Podpowiedź TYLKO po zmianie („było 171 L"). Napisy w rodzaju „litry
-             z paliwomierza" opisywały pole, które i tak nazywa się „Paliwo" — i zajmowały
+             z paliwomierza" opisywały pole, które i tak nazywa się „Paliwo" - i zajmowały
              linię pod każdym z dwóch pól, przez cały czas. */
           hint={fuelChanged ? `było ${fuelText}` : undefined}
           style={styles.cell}
@@ -286,7 +286,7 @@ export function ReadingCorrectionSheet({
           label="Motogodziny"
           value={mh}
           onChangeText={(text) => setMh(maskMh ? maskMh(text) : text)}
-          /* Klawiatura NUMERYCZNA także przy liczniku hh:mm — dwukropka na niej nie ma,
+          /* Klawiatura NUMERYCZNA także przy liczniku hh:mm - dwukropka na niej nie ma,
              ale stawia go maska (zgłoszenie z urządzenia). Pełna QWERTY zajmowała pół
              ekranu i podsuwała podpowiedzi słownikowe pod liczbę z tarczy. */
           keyboardType="decimal-pad"
@@ -295,28 +295,28 @@ export function ReadingCorrectionSheet({
         />
       </View>
 
-      {/* OLEJ — tylko przy przejęciu (issue #60): pomiar żyje tam, gdzie powstał.
-          Wyczyszczone pole jest korektą „tego wpisu nie było" — dlatego puste
-          przechodzi, a podpowiedź po zmianie mówi „było —" przy braku oryginału. */}
+      {/* OLEJ - tylko przy przejęciu (issue #60): pomiar żyje tam, gdzie powstał.
+          Wyczyszczone pole jest korektą „tego wpisu nie było" - dlatego puste
+          przechodzi, a podpowiedź po zmianie mówi „było -" przy braku oryginału. */}
       {oil != null && (
         <View style={styles.grid}>
           <TextField
-            label="Olej — pomiar"
+            label="Olej - pomiar"
             value={oilLevel}
             onChangeText={setOilLevel}
             keyboardType="decimal-pad"
             hint={
-              oilLevelChanged ? `było ${oil.levelText.trim() === '' ? '—' : oil.levelText}` : undefined
+              oilLevelChanged ? `było ${oil.levelText.trim() === '' ? '-' : oil.levelText}` : undefined
             }
             style={styles.cell}
           />
           <TextField
-            label="Olej — dolewka"
+            label="Olej - dolewka"
             value={oilAdded}
             onChangeText={setOilAdded}
             keyboardType="decimal-pad"
             hint={
-              oilAddedChanged ? `było ${oil.addedText.trim() === '' ? '—' : oil.addedText}` : undefined
+              oilAddedChanged ? `było ${oil.addedText.trim() === '' ? '-' : oil.addedText}` : undefined
             }
             style={styles.cell}
           />
@@ -325,7 +325,7 @@ export function ReadingCorrectionSheet({
 
       {changed && !readable && (
         <AppText variant="mono" tone="red" style={styles.error}>
-          Nie umiem odczytać wpisanej wartości — sprawdź format.
+          Nie umiem odczytać wpisanej wartości - sprawdź format.
         </AppText>
       )}
 

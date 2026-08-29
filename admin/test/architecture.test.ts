@@ -1,12 +1,12 @@
 /**
- * UZ Aero — panel: GRANICE, KTÓRYCH NIE PILNUJE KOMPILATOR.
+ * UZ Aero - panel: GRANICE, KTÓRYCH NIE PILNUJE KOMPILATOR.
  *
  * Lustro `server/test/architecture.test.ts` i `app/src/__tests__/architecture.test.ts`,
  * z tą samą doktryną: reguła architektury jest warta tyle, ile jej egzekucja.
  * Dokument może się zdezaktualizować; ten plik nie.
  *
  * Pilnuje tabeli kierunków zależności z `docs/architektura-panelu-frontend.md` §2.1
- * oraz trzech reguł z §2.2 — z których najważniejsza brzmi: **panel nie liczy po
+ * oraz trzech reguł z §2.2 - z których najważniejsza brzmi: **panel nie liczy po
  * swojemu**. Nie zaczyna się to od `SELECT SUM` we froncie, tylko od `toFixed(1)`
  * w komórce tabeli.
  */
@@ -34,7 +34,7 @@ function filesUnder(dir: string): string[] {
 
 const read = (file: string): string => readFileSync(join(SRC, file), 'utf8');
 
-/** Treść pliku BEZ komentarzy — skaner szuka kodu, nie prozy o kodzie. */
+/** Treść pliku BEZ komentarzy - skaner szuka kodu, nie prozy o kodzie. */
 const codeOf = (file: string): string =>
   read(file)
     .replace(/\/\*[\s\S]*?\*\//g, ' ')
@@ -73,11 +73,11 @@ function valueImportsFrom(code: string, module: string): boolean {
 }
 
 /**
- * Wyrażenia z `className={…}` — z BILANSEM KLAMER, nie regexem do pierwszej `}`.
+ * Wyrażenia z `className={…}` - z BILANSEM KLAMER, nie regexem do pierwszej `}`.
  *
  * Regex musiałby uciąć `` className={`pill ${map[k] ?? 'dim'}`} `` na klamrze zamykającej
  * interpolację, czyli przestałby widzieć drugą połowę wyrażenia. Klamry wewnątrz literałów
- * napisowych mogłyby ten licznik przekręcić — w panelu nie ma ani jednego takiego miejsca,
+ * napisowych mogłyby ten licznik przekręcić - w panelu nie ma ani jednego takiego miejsca,
  * a udawanie parsera TSX byłoby kosztem większym od reguły, której broni.
  */
 function classNameExpressions(code: string): string[] {
@@ -183,7 +183,7 @@ describe('granice warstw panelu', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('`ui/` NIE zna `api/` ani `queries/` — komponent dostaje dane propsami', () => {
+  it('`ui/` NIE zna `api/` ani `queries/` - komponent dostaje dane propsami', () => {
     // To jest reguła, która trzyma bibliotekę komponentów przy życiu: komponent
     // sięgający po dane sam nie da się użyć drugi raz w innym kontekście, a wtedy
     // „design system" zamienia się w zbiór jednorazowych kawałków ekranu.
@@ -221,10 +221,10 @@ describe('granice warstw panelu', () => {
     //
     // JEDEN wyjątek, dopisany 2026-08-03 razem z mapą śladu (`A02c`): odwzorowanie
     // Web Mercator przelicza stopnie na PIKSELE i nie dotyka ani jednej liczby
-    // domenowej — dystans, wysokości i czasy nadal przychodzą policzone z serwera.
+    // domenowej - dystans, wysokości i czasy nadal przychodzą policzone z serwera.
     // Ten moduł nie może więc „policzyć po swojemu" niczego, o co ten zakaz chodzi.
     // Alternatywą była kopia tej matematyki w panelu, a kopia znaczy, że ślad prędzej
-    // czy później wygląda inaczej w panelu niż w telefonie — przy narzędziu, którego
+    // czy później wygląda inaczej w panelu niż w telefonie - przy narzędziu, którego
     // wartość polega na wspólnej rozmowie o TYM SAMYM locie, to gorsze niż wyjątek.
     const MAP_PROJECTION = 'screens/track/trackChart.ts';
 
@@ -238,14 +238,14 @@ describe('granice warstw panelu', () => {
     expect(valueImportsFrom(codeOf(MAP_PROJECTION), '@uzaero/domain')).toBe(true);
   });
 
-  it('nigdzie nie importujemy z `server/src` — panel nie widzi wnętrza serwera', () => {
+  it('nigdzie nie importujemy z `server/src` - panel nie widzi wnętrza serwera', () => {
     const offenders = filesUnder('.').filter((f) =>
       importedFrom(codeOf(f)).some((from) => from.includes('server/src') || from.includes('@uzaero/server')),
     );
     expect(offenders).toEqual([]);
   });
 
-  it('arytmetyka NIE mieszka w widoku — `toFixed`, `Math.round`, `Intl.NumberFormat`', () => {
+  it('arytmetyka NIE mieszka w widoku - `toFixed`, `Math.round`, `Intl.NumberFormat`', () => {
     // Najtańszy sposób złapania momentu, w którym panel zaczyna liczyć po swojemu:
     // zaczyna się od zaokrąglenia w komórce tabeli. Liczby przychodzą z serwera,
     // formaty z `@uzaero/format`.
@@ -258,21 +258,21 @@ describe('granice warstw panelu', () => {
 
   it('plik .tsx eksportuje WYŁĄCZNIE komponenty (granica Fast Refresh)', () => {
     // Reguła narzędziowa, nie estetyczna. Fast Refresh podmienia moduł w miejscu tylko
-    // wtedy, gdy WSZYSTKIE jego eksporty są komponentami; jeden eksport obok — hook,
-    // stała, tablica — i Vite odrzuca cały moduł jako granicę odświeżania:
+    // wtedy, gdy WSZYSTKIE jego eksporty są komponentami; jeden eksport obok - hook,
+    // stała, tablica - i Vite odrzuca cały moduł jako granicę odświeżania:
     //
     //     [vite] hmr invalidate /src/auth/SessionProvider.tsx:
     //     Could not Fast Refresh ("useSessionState" export is incompatible)
     //
     // Unieważnienie idzie wtedy w górę drzewa importów aż do `main.tsx`, który niczego
-    // nie przyjmuje — więc kończy się PRZEŁADOWANIEM CAŁEJ STRONY. W panelu znaczy to
+    // nie przyjmuje - więc kończy się PRZEŁADOWANIEM CAŁEJ STRONY. W panelu znaczy to
     // utratę stanu ekranu i ponowne `GET /me` przy każdym zapisie pliku. Kosztu nie
     // widać w testach ani w buildzie, tylko w pracy człowieka, dlatego pilnuje go test.
     //
     // Stąd `auth/sessionContext.ts` osobno od `auth/SessionProvider.tsx`.
     const EXCEPTIONS = new Set([
       // Tablice KONFIGURACJI, które zawierają JSX (elementy tras, ikony pozycji), więc
-      // muszą być `.tsx` — ale komponentami nie są i odświeżyć się nie mogą. Pełne
+      // muszą być `.tsx` - ale komponentami nie są i odświeżyć się nie mogą. Pełne
       // przeładowanie po edycji mapy tras albo nawigacji jest tu zachowaniem POPRAWNYM:
       // zmienia się szkielet aplikacji, a nie ciało komponentu.
       'routes.tsx',
@@ -298,7 +298,7 @@ describe('granice warstw panelu', () => {
       for (const { kind, name } of exportsOf(file)) {
         // Komponent w tym panelu to ZAWSZE `export function` z wielkiej litery.
         // `export const` bywa komponentem (`memo`, `forwardRef`), ale tutaj nie ma
-        // ani jednego takiego — więc reguła zostaje wąska i czytelna.
+        // ani jednego takiego - więc reguła zostaje wąska i czytelna.
         if (kind !== 'function' || !/^[A-Z]/.test(name)) offenders.push(`${file} → ${kind} ${name}`);
       }
     }
@@ -310,20 +310,20 @@ describe('granice warstw panelu', () => {
     //
     //     className={`cell-sub fresh-${row.mh.freshness}`}
     //
-    // czyli wypisywał `fresh-stale` — klasę, której nie definiuje ani `SZABLON.html`,
+    // czyli wypisywał `fresh-stale` - klasę, której nie definiuje ani `SZABLON.html`,
     // ani żaden arkusz panelu. Trzy stany świeżości były policzone, przetestowane
     // (`fleetRows.test.ts`) i NIEWIDOCZNE: odczyt sprzed trzech minut i sprzed dwóch dni
     // wyglądały identycznie. Ani kompilator, ani testy modułu czystego nie mają jak
-    // tego zobaczyć — nazwa klasy powstaje dopiero w przeglądarce.
+    // tego zobaczyć - nazwa klasy powstaje dopiero w przeglądarce.
     //
     // Reguła: nazwa klasy w `className` musi być CAŁYM tokenem. `` `pill ${tone}` `` jest
     // w porządku (podstawiamy nazwę klasy), `` `fresh-${x}` `` nie jest (sklejamy nazwę
-    // z fragmentu). Nazwa klasy jest decyzją o treści, więc — jak każda inna — mieszka
+    // z fragmentu). Nazwa klasy jest decyzją o treści, więc - jak każda inna - mieszka
     // w module czystym z testem, który może sprawdzić ją wobec arkusza i wobec mockupu.
     //
     // ══ TRZY SPOSOBY SKLEJENIA, NIE JEDEN (rozszerzenie 2026-08-01) ══
     // Do tej pory reguła widziała wyłącznie literał szablonowy, więc `'fresh-' + x`
-    // i `['fresh', x].join('-')` przechodziły bez śladu — a produkują dokładnie tę samą
+    // i `['fresh', x].join('-')` przechodziły bez śladu - a produkują dokładnie tę samą
     // niewidzialną klasę. Skaner czyta więc CAŁE wyrażenie `className={…}` (z bilansem
     // klamer, żeby `${…}` w środku nie ucinało go w połowie) i sprawdza wszystkie trzy.
     const offenders = classNameOffenders(
@@ -334,7 +334,7 @@ describe('granice warstw panelu', () => {
   });
 
   it('skaner nazw klas faktycznie łapie sklejenia (kontrola samego testu)', () => {
-    // Jedyny przypadek w tym pliku, który do 2026-08-01 nie miał asercji kontrolnej —
+    // Jedyny przypadek w tym pliku, który do 2026-08-01 nie miał asercji kontrolnej -
     // a jest jedynym opartym na skanerze WŁASNEJ konstrukcji (bilans klamer), więc
     // najłatwiej go po cichu zepsuć. Bez tego „zero naruszeń" mogłoby znaczyć „zero
     // znalezionych wyrażeń".
@@ -344,24 +344,24 @@ describe('granice warstw panelu', () => {
     // Skaner w ogóle coś widzi w prawdziwym panelu.
     expect(classNameExpressions(codeOf('ui/components/Pill.tsx')).length).toBeGreaterThan(0);
 
-    // ZŁE — trzy postaci tego samego błędu.
+    // ZŁE - trzy postaci tego samego błędu.
     expect(sample('<i className={`fresh-${x}`} />')).toHaveLength(1);
     expect(sample("<i className={'fresh-' + x} />")).toHaveLength(1);
     expect(sample("<i className={['fresh', x].join('-')} />")).toHaveLength(1);
 
-    // DOBRE — podstawiamy CAŁE nazwy klas, nie ich kawałki.
+    // DOBRE - podstawiamy CAŁE nazwy klas, nie ich kawałki.
     expect(sample('<i className={`pill ${tone}`} />')).toEqual([]);
     expect(sample("<i className={[a, b].filter(Boolean).join(' ')} />")).toEqual([]);
     expect(sample("<i className={live ? 'dot live' : 'dot'} />")).toEqual([]);
-    // Zagnieżdżone klamry w interpolacji nie ucinają wyrażenia w połowie — inaczej
+    // Zagnieżdżone klamry w interpolacji nie ucinają wyrażenia w połowie - inaczej
     // skaner przestawałby widzieć wszystko, co po nich następuje.
     expect(classNameExpressions('<i className={`pill ${map[k] ?? "dim"}`} />')).toEqual([
       '`pill ${map[k] ?? "dim"}`',
     ]);
   });
 
-  it('kolory wchodzą WYŁĄCZNIE przez zmienne CSS — zero hexów w kodzie', () => {
-    // `CLAUDE.md`: „Nie wpisuj hardcoded kolorów — tylko zmienne CSS". W panelu
+  it('kolory wchodzą WYŁĄCZNIE przez zmienne CSS - zero hexów w kodzie', () => {
+    // `CLAUDE.md`: „Nie wpisuj hardcoded kolorów - tylko zmienne CSS". W panelu
     // wszystkie pochodzą z generowanego `tokens.css`.
     const offenders = filesUnder('.').filter((f) => /#[0-9a-fA-F]{3,8}\b/.test(codeOf(f)));
     expect(offenders).toEqual([]);

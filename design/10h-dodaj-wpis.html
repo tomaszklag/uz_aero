@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 10H Dodaj wpis</title>
+<title>UZ Aero - 10H Dodaj wpis</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -78,7 +78,7 @@
 
   /* ===== SIATKA TYPÓW =====
      Karty z ikonami, nie natywny `<select>` (CLAUDE.md). Sześć pozycji to KOMPLET
-     faktów operacyjnych, które da się dopisać po fakcie — dokładnie ta lista, którą
+     faktów operacyjnych, które da się dopisać po fakcie - dokładnie ta lista, którą
      domena uznaje za korygowalną. Klamry silnika tu nie ma i mówi o tym przypis:
      uruchomienie i wyłączenie zapisuje przycisk w kokpicie, a sesja ma jeden bieg. */
   .type-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; }
@@ -92,13 +92,13 @@
   .type-card.selected { border-color:var(--green-border); background:var(--green-muted); color:var(--green); box-shadow:0 0 0 3px rgba(46,204,113,0.06); }
   .type-card .tc-label { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; }
   /* Zrzut i załadunek ISTNIEJĄ tylko w dniu skokowym (issue #19): przy przelocie czy
-     egzaminie tych dwóch kart po prostu nie ma — to brak akcji, nie blokada z powodem. */
+     egzaminie tych dwóch kart po prostu nie ma - to brak akcji, nie blokada z powodem. */
   .type-note { font-family:var(--font-mono); font-size:8px; letter-spacing:0.5px; color:var(--text-muted); line-height:1.6; }
 
   .time-stepper { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--green-border); border-radius:14px; padding:9px 11px; }
   .min-btn { min-width:62px; padding:0 10px; white-space:nowrap; height:44px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border-radius:12px; border:1px solid var(--border-strong); background:var(--surface-raised); color:var(--text-primary); font-family:var(--font-mono); font-size:12px; cursor:pointer; }
   .min-btn:hover { border-color:var(--green-border); background:var(--green-muted); }
-  /* Godzina do WPISANIA z klawiatury — patrz komentarz w 10E. Krok jest JEDEN (minuta)
+  /* Godzina do WPISANIA z klawiatury - patrz komentarz w 10E. Krok jest JEDEN (minuta)
      także tutaj: dopisywany fakt bywa odległy o kwadranse, ale od tego jest wpis
      z klawiatury, a nie drugi rząd przycisków. */
   .time-val { flex:1; text-align:center; font-family:var(--font-mono); font-size:28px; font-weight:700; letter-spacing:2px; color:var(--text-primary); cursor:text; }
@@ -113,7 +113,7 @@
      nie treść, i ma zejść z oka po pierwszym znaku (uwaga z urządzenia). */
   .reason-input::placeholder { color:var(--text-placeholder); }
 
-  /* Informacja o metodzie — wpis dostanie w rejestrze znacznik `manual`. Pilotowi
+  /* Informacja o metodzie - wpis dostanie w rejestrze znacznik `manual`. Pilotowi
      mówimy to RAZ, tutaj, a nie plakietką przy każdym wierszu osi (issue #40 pkt 6):
      sposób powstania zapisu jest sprawą rejestru i panelu, nie codziennego czytania. */
   .method-note { display:flex; align-items:flex-start; gap:9px; background:var(--blue-muted); border:1px solid var(--blue-border); border-radius:12px; padding:11px 13px; }
@@ -149,12 +149,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 10H</span>
+  <span class="film-strip">UZ AERO - 10H</span>
   <span class="slug">dodaj wpis · fakt operacyjny</span>
   <span class="canvas-meta"><span class="pulse"></span>Arkusz 10D</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Dodawanie brakującego wpisu">
+<main class="phone" role="region" aria-label="Mockup - Dodawanie brakującego wpisu">
   <div class="status-bar">
     <span>9:41</span>
     <span class="status-right">
@@ -189,7 +189,7 @@
         </div>
         <div class="issue-row">
           <span class="issue-dot"></span>
-          <span class="issue-text"><b>Lot 2 nie ma lądowania.</b> Silnik stanął o 09:55, a ostatni start był o 09:12 — dopisz lądowanie.</span>
+          <span class="issue-text"><b>Lot 2 nie ma lądowania.</b> Silnik stanął o 09:55, a ostatni start był o 09:12 - dopisz lądowanie.</span>
         </div>
       </div>
     </div>
@@ -228,7 +228,7 @@
               <span class="tc-label">Tankowanie</span>
             </a>
           </div>
-          <div class="type-note" style="margin-top:7px;">Uruchomienia i wyłączenia silnika tu nie ma — zapisuje je przycisk w kokpicie, a sesja ma dokładnie jeden bieg. Jeśli czas klamry jest zły, popraw go ołówkiem na osi.</div>
+          <div class="type-note" style="margin-top:7px;">Uruchomienia i wyłączenia silnika tu nie ma - zapisuje je przycisk w kokpicie, a sesja ma dokładnie jeden bieg. Jeśli czas klamry jest zły, popraw go ołówkiem na osi.</div>
         </div>
 
         <div>
@@ -246,7 +246,7 @@
 
              TANKOWANIE ma dodatkowo DWA POLA (stan przed · dolano), bo niesie trójkę
              przed/dolane/po (§3.4), a domena pilnuje jej arytmetyki (`FUEL_ARITHMETIC`).
-             Stan PO liczymy sami z tej pary — wpisywanie wszystkich trzech liczb to
+             Stan PO liczymy sami z tej pary - wpisywanie wszystkich trzech liczb to
              zaproszenie do wpisu, który reguła odrzuci. „Stan przed" podpowiada ostatni
              odczyt paliwomierza z sesji. -->
         <div class="modal-ref">
@@ -264,12 +264,12 @@
 
         <div class="reason-box">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          <input class="reason-input" type="text" placeholder="Uwaga (opcjonalnie) — np. telefon stracił fixa na pasie" />
+          <input class="reason-input" type="text" placeholder="Uwaga (opcjonalnie) - np. telefon stracił fixa na pasie" />
         </div>
 
         <div class="method-note">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-          <span class="method-text">Wpis dostanie w rejestrze znacznik <b>ręcznie</b> — na osi sesji wygląda jak każdy inny, a metodę widzi administrator w panelu.</span>
+          <span class="method-text">Wpis dostanie w rejestrze znacznik <b>ręcznie</b> - na osi sesji wygląda jak każdy inny, a metodę widzi administrator w panelu.</span>
         </div>
 
         <div class="modal-actions">
@@ -285,12 +285,12 @@
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Arkusze trybu edycji — kiedy który?</div>
+  <div class="vp-title">Arkusze trybu edycji - kiedy który?</div>
   <a class="vp-item" href="10e-korekta-zdarzenia.html">
     <span class="vp-badge blue">10E</span>
     <span class="vp-body">
       <span class="vp-name">Korekta zdarzenia (czas)</span>
-      <span class="vp-when">Zdarzenie JEST w logu, ale ma zły czas — albo nie zaszło wcale.</span>
+      <span class="vp-when">Zdarzenie JEST w logu, ale ma zły czas - albo nie zaszło wcale.</span>
     </span>
   </a>
   <a class="vp-item" href="10f-korekta-odczytu.html">
@@ -311,7 +311,7 @@
     <span class="vp-badge">10H</span>
     <span class="vp-body">
       <span class="vp-name">Dodaj wpis</span>
-      <span class="vp-when">Zdarzenia NIE MA w logu w ogóle: GPS zgubił lądowanie, zrzut nie został zapisany, tankowanie umknęło. Sześć typów = komplet faktów operacyjnych, które domena uznaje za korygowalne; zrzut i załadunek pojawiają się tylko w dniu skokowym. Wybór typu zmienia dolną część arkusza: lądowanie pokazuje, który lot domyka, tankowanie dokłada parę pól (stan przed · dolano) i samo liczy stan po. Wejście: przycisk „DODAJ WPIS" w pasie akcji trybu edycji (10D) — także wprost z banera niespójności.</span>
+      <span class="vp-when">Zdarzenia NIE MA w logu w ogóle: GPS zgubił lądowanie, zrzut nie został zapisany, tankowanie umknęło. Sześć typów = komplet faktów operacyjnych, które domena uznaje za korygowalne; zrzut i załadunek pojawiają się tylko w dniu skokowym. Wybór typu zmienia dolną część arkusza: lądowanie pokazuje, który lot domyka, tankowanie dokłada parę pól (stan przed · dolano) i samo liczy stan po. Wejście: przycisk „DODAJ WPIS" w pasie akcji trybu edycji (10D) - także wprost z banera niespójności.</span>
     </span>
     <span class="vp-tag">ten arkusz</span>
   </a>
@@ -319,7 +319,7 @@
     <span class="vp-badge">15</span>
     <span class="vp-body">
       <span class="vp-name">Ręczny wpis całego lotu</span>
-      <span class="vp-when">Gdy brakuje nie zdarzenia, tylko CAŁEJ sesji — telefon był wyłączony, lot poszedł na papier. Osobne wejście z „Mój dzień" (01), bo tworzy nową sesję zamiast poprawiać istniejącą.</span>
+      <span class="vp-when">Gdy brakuje nie zdarzenia, tylko CAŁEJ sesji - telefon był wyłączony, lot poszedł na papier. Osobne wejście z „Mój dzień" (01), bo tworzy nową sesję zamiast poprawiać istniejącą.</span>
     </span>
   </a>
 </aside>

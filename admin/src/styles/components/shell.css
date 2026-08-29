@@ -1,9 +1,9 @@
 /**
- * UZ Aero — panel: RAMA APLIKACJI (sidebar + topbar).
+ * UZ Aero - panel: RAMA APLIKACJI (sidebar + topbar).
  *
  * Klasy i wartości przepisane 1:1 z `design/admin/SZABLON.html`. Rama jest jedyną
  * częścią panelu widoczną na KAŻDYM ekranie, więc rozjazd z mockupem byłby tu
- * najbardziej kosztowny — i najłatwiejszy do przeoczenia, bo „przecież działa".
+ * najbardziej kosztowny - i najłatwiejszy do przeoczenia, bo „przecież działa".
  */
 
 /* ── sidebar ── */
@@ -136,7 +136,7 @@
   border-color: var(--red-border);
 }
 
-/* Pozycja niedostępna dla roli — WIDOCZNA, ale wyjaśniona (nie chowamy, żeby nie
+/* Pozycja niedostępna dla roli - WIDOCZNA, ale wyjaśniona (nie chowamy, żeby nie
    zgadywał). Powód odmowy niesie `title` i tekst pod pozycją, nigdy sam wygląd. */
 .nav-item.locked {
   opacity: 0.4;
@@ -244,7 +244,7 @@
   gap: 10px;
 }
 
-/* Zegar UTC — w panelu, jak w aplikacji, czas nieoznaczony = UTC. LT w panelu
+/* Zegar UTC - w panelu, jak w aplikacji, czas nieoznaczony = UTC. LT w panelu
    nie występuje w ogóle (`CLAUDE.md`, sekcja „Strefa czasowa"). */
 .utc-clock {
   font-family: var(--font-mono);

@@ -1,5 +1,5 @@
 /**
- * UZ Aero — task lokalizacji usługi pierwszoplanowej (`expo-task-manager`).
+ * UZ Aero - task lokalizacji usługi pierwszoplanowej (`expo-task-manager`).
  *
  * `defineTask` MUSI wykonać się na poziomie modułu: w starcie headless (Android
  * wskrzesza proces po jego śmierci, bo usługa ma `killServiceOnDestroy: false`)
@@ -8,7 +8,7 @@
  * (pilnuje tego test architektury).
  *
  * JEDYNY importer `expo-task-manager` (exact-list w teście architektury liczy też
- * `require`). Celowo bez importu `expo-location` — kształt odczytu opisuje
+ * `require`). Celowo bez importu `expo-location` - kształt odczytu opisuje
  * strukturalny `RawLocation`.
  */
 
@@ -20,19 +20,19 @@ import { appendHeadlessFixes, closeHeadlessStorage } from './headlessTraceWriter
 import { locationToFix, type RawLocation } from './locationToFix';
 
 /**
- * Nazwa jest trwałym kontraktem z SYSTEMEM — Android trzyma zarejestrowany task
+ * Nazwa jest trwałym kontraktem z SYSTEMEM - Android trzyma zarejestrowany task
  * pod tą nazwą także po aktualizacji aplikacji. Zmiana nazwy osierociłaby usługę.
  */
 export const BACKGROUND_LOCATION_TASK = 'uzaero-location';
 
 export type BackgroundFixSink = (fixes: readonly GpsFix[]) => void;
 
-/** Żywy odbiorca — adapter GPS działającej aplikacji. Null = jesteśmy headless. */
+/** Żywy odbiorca - adapter GPS działającej aplikacji. Null = jesteśmy headless. */
 let sink: BackgroundFixSink | null = null;
 
 export function setBackgroundFixSink(next: BackgroundFixSink): void {
   sink = next;
-  // Aplikacja ożyła — writer headless oddaje plik bazy (dwa żywe połączenia do
+  // Aplikacja ożyła - writer headless oddaje plik bazy (dwa żywe połączenia do
   // tego samego pliku potrafią unieważnić główne; patrz `closeHeadlessStorage`).
   void closeHeadlessStorage();
 }
@@ -42,12 +42,12 @@ try {
   // `expo-task-manager` robi twardy `requireNativeModule` w chwili ładowania, więc
   // zwykły import wywracałby CAŁĄ aplikację na starym dev clencie i w środowiskach
   // bez modułu (Expo Go na Androidzie nie wspiera lokalizacji w tle). Brak taska
-  // nie może odbierać pilotowi zwykłego nasłuchu — degradację dopina fallback
+  // nie może odbierać pilotowi zwykłego nasłuchu - degradację dopina fallback
   // w `expoLocationAdapter.armService`.
   const TaskManager = require('expo-task-manager') as typeof import('expo-task-manager');
 
   TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
-    // Task nie ma prawa rzucić — wyjątek w callbacku to crash procesu usługi.
+    // Task nie ma prawa rzucić - wyjątek w callbacku to crash procesu usługi.
     // Błąd platformy zostawiamy bez śladu (konwencja śladu: materiał badawczy,
     // nie rejestr; fire-and-forget jak w `TraceRecorder`).
     if (error != null || data == null) return;
@@ -63,11 +63,11 @@ try {
       return;
     }
     if (AppState.currentState === 'active') {
-      // Brak sinka, ale aplikacja jest NA EKRANIE — to okno startu/reloadu (bundle już
+      // Brak sinka, ale aplikacja jest NA EKRANIE - to okno startu/reloadu (bundle już
       // się wykonuje, React i adapter jeszcze nie wstały), nie prawdziwy headless.
       // Otwarcie tu drugiego połączenia SQLite unieważniało główne połączenie
       // bootstrapu (NPE w `prepareAsync` przy każdym zapisie zdarzeń). Paczka idzie
-      // do kosza — za chwilę sink wstanie i przejmie strumień bez dziury.
+      // do kosza - za chwilę sink wstanie i przejmie strumień bez dziury.
       return;
     }
     // Proces wskrzeszony headless: prosto do `gps_trace` (sesję ustali writer z meta).

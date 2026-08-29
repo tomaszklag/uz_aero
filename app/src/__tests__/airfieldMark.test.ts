@@ -1,8 +1,8 @@
 /**
- * UZ Aero — test oznaczenia kodu spoza katalogu (issue #62 pkt 1).
+ * UZ Aero - test oznaczenia kodu spoza katalogu (issue #62 pkt 1).
  *
  * Pilnuje jednej rzeczy, którą łatwo zgubić przy następnej zmianie: nazwa i plakietka
- * WYKLUCZAJĄ SIĘ. Kod z katalogu ma nazwę i nie ma plakietki, kod spoza — odwrotnie.
+ * WYKLUCZAJĄ SIĘ. Kod z katalogu ma nazwę i nie ma plakietki, kod spoza - odwrotnie.
  * Oba naraz mówiłyby to samo dwa razy w kontrolce, której prawa krawędź niesie
  * dokładnie jedną rzecz.
  */
@@ -18,14 +18,14 @@ describe('oznaczenie wybranego lotniska', () => {
   });
 
   it('kod spoza katalogu jest OZNACZONY i nie udaje, że ma nazwę', () => {
-    // Przelot do Berlina jest normalnym dniem — katalog obejmuje Polskę, więc jego
+    // Przelot do Berlina jest normalnym dniem - katalog obejmuje Polskę, więc jego
     // milczenie nie jest błędem pilota. Ale wybór ma zostać widoczny.
     const mark = airfieldMark('EDDB');
     expect(mark.foreign).toBe(true);
     expect(mark.meta).toBeNull();
   });
 
-  it('pusty kod nie jest ani znany, ani obcy — pole czeka na wybór', () => {
+  it('pusty kod nie jest ani znany, ani obcy - pole czeka na wybór', () => {
     for (const empty of ['', null, undefined]) {
       expect(airfieldMark(empty)).toEqual({ meta: null, foreign: false });
     }

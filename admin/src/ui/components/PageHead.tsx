@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: nagłówek strony (`.page-head` z `SZABLON.html`).
+ * UZ Aero - panel: nagłówek strony (`.page-head` z `SZABLON.html`).
  *
  * Tytuł display, akapit wyjaśniający i akcje po prawej. `sub` nie jest opcjonalny
  * z tego samego powodu, dla którego `note` jest wymagane w stanie pustym: ekran

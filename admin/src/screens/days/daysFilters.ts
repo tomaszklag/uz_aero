@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: FILTRY LISTY DNI ↔ query string (moduł CZYSTY, testowany w Node).
+ * UZ Aero - panel: FILTRY LISTY DNI ↔ query string (moduł CZYSTY, testowany w Node).
  *
  * Filtry mieszkają w URL-u, nie w stanie komponentu
  * (`docs/architektura-panelu-frontend.md` §4.4): „wklej mi link do tych dni" jest
@@ -9,12 +9,12 @@
  * ══ DLACZEGO STAN JEST JEDNYM CHIPEM, A NA SERWERZE TRZEMA PARAMETRAMI ══
  * Pasek „Stan" z `A02-dni.html` miesza trzy niezależne warunki bazy: `status`
  * (`active`/`closed`), `flagged` i `exported`. Dla człowieka to jednak JEDNO pytanie
- * — „co jest z tym dniem" — i chipy są wzajemnie wykluczające się także w mockupie.
+ * - „co jest z tym dniem" - i chipy są wzajemnie wykluczające się także w mockupie.
  * Tłumaczenie jednego wyboru na właściwy parametr trasy jest więc treścią tego pliku,
  * a nie pominiętym uogólnieniem.
  *
  * **Chipa „W locie" nie ma i nie będzie, dopóki nie zapadnie decyzja człowieka.**
- * Projekcja `sessions` niesie `status`, nie niesie „silnik pracuje" — a lista celowo
+ * Projekcja `sessions` niesie `status`, nie niesie „silnik pracuje" - a lista celowo
  * nie woła `projectSession` (§7.1 architektury serwera). Chip, który filtrowałby po
  * `status=active` pod nazwą „W locie", kłamałby o każdym dniu, w którym samolot stoi.
  */
@@ -25,7 +25,7 @@ import type { SessionListQuery } from '../../api/sessions';
 import { isOperationType } from './operations';
 
 /**
- * Stan dnia jako JEDEN wybór. `all` to brak zawężenia, a nie szósty stan — dlatego
+ * Stan dnia jako JEDEN wybór. `all` to brak zawężenia, a nie szósty stan - dlatego
  * nie jest wartością żadnego pola serwera.
  */
 export type StateFilter = 'all' | 'open' | 'flagged' | 'closed' | 'exported';
@@ -36,7 +36,7 @@ export interface DaysFilter {
   /** Dzień UTC `YYYY-MM-DD` włącznie; `null` = bez ograniczenia zakresu. */
   from: string | null;
   to: string | null;
-  /** Identyfikator samolotu z rejestru floty — dopasowanie DOKŁADNE, nie prefiks. */
+  /** Identyfikator samolotu z rejestru floty - dopasowanie DOKŁADNE, nie prefiks. */
   aircraftId: string | null;
   /** Identyfikator konta pilota; dopasowuje PIC-a ALBO Duala (reguła serwera). */
   pilotId: string | null;
@@ -62,7 +62,7 @@ export const DEFAULT_DAYS_FILTER: DaysFilter = {
 };
 
 /**
- * Ile dni pobieramy jedną stroną. Tyle samo, co domyślny `limit` trasy — kolejne
+ * Ile dni pobieramy jedną stroną. Tyle samo, co domyślny `limit` trasy - kolejne
  * strony dokłada KURSOR (`useSessions`), więc ta liczba nie ogranicza tego, co da się
  * zobaczyć; ogranicza tylko wielkość jednego żądania.
  */
@@ -78,7 +78,7 @@ const isState = (value: string | null): value is StateFilter =>
 const isSort = (value: string | null): value is SortDirection =>
   value === 'asc' || value === 'desc';
 
-/** `YYYY-MM-DD` i nic innego — wpis nieczytelny traktujemy jak brak filtra. */
+/** `YYYY-MM-DD` i nic innego - wpis nieczytelny traktujemy jak brak filtra. */
 const isDay = (value: string | null): value is string =>
   value != null && /^\d{4}-\d{2}-\d{2}$/.test(value);
 
@@ -109,7 +109,7 @@ export function filterFromParams(params: URLSearchParams): DaysFilter {
 
 /**
  * Filtr → query string. Wartości domyślne POMIJAMY, żeby adres pełnej listy był po
- * prostu `#/dni` — link, który da się przeczytać i przepisać.
+ * prostu `#/dni` - link, który da się przeczytać i przepisać.
  */
 export function paramsFromFilter(filter: DaysFilter): Record<string, string> {
   const params: Record<string, string> = {};
@@ -125,7 +125,7 @@ export function paramsFromFilter(filter: DaysFilter): Record<string, string> {
 
 /**
  * Jeden wybór stanu → parametry trasy. `flagged`/`exported` jadą jako `true`, nigdy
- * jako `false`: chip „Z flagą" pyta o dni z flagą, a nie o zaprzeczenie — stronę
+ * jako `false`: chip „Z flagą" pyta o dni z flagą, a nie o zaprzeczenie - stronę
  * negatywną filtra serwer umie, ale w mockupie nie ma na nią chipa i nie wymyślamy go.
  */
 function stateQuery(state: StateFilter): Partial<SessionListQuery> {
@@ -145,7 +145,7 @@ function stateQuery(state: StateFilter): Partial<SessionListQuery> {
 
 /**
  * Filtr ekranu → parametry trasy. Zakres dat jedzie jako DZIEŃ (`YYYY-MM-DD`), bo tak
- * przyjmuje go trasa i tak wygląda kalendarz na A02 — a górną granicę domyka serwer
+ * przyjmuje go trasa i tak wygląda kalendarz na A02 - a górną granicę domyka serwer
  * do końca doby, żeby „od 25 do 31" nie gubiło ostatniego dnia.
  */
 export function sessionListQuery(filter: DaysFilter): SessionListQuery {
@@ -164,16 +164,16 @@ export function sessionListQuery(filter: DaysFilter): SessionListQuery {
 /**
  * Zapytanie o SAM LICZNIK dni w danym stanie, przy zachowanym pozostałym zawężeniu.
  *
- * Kafle nad tabelą muszą mówić o tym samym wycinku, co lista pod nią — inaczej
+ * Kafle nad tabelą muszą mówić o tym samym wycinku, co lista pod nią - inaczej
  * „2 dni z flagą" obok listy jednego samolotu byłoby zdaniem o czymś innym niż to,
  * na co człowiek patrzy. Stan podmieniamy, reszty filtra nie ruszamy.
  */
 export function sessionCountQuery(filter: DaysFilter, state: StateFilter): SessionListQuery {
-  // `limit: 1`, bo trasa wymaga liczby dodatniej — liczy się wyłącznie `total`.
+  // `limit: 1`, bo trasa wymaga liczby dodatniej - liczy się wyłącznie `total`.
   return { ...sessionListQuery({ ...filter, state }), limit: 1 };
 }
 
-/** Czy filtr zawęża cokolwiek — pusta lista mówi wtedy co innego (patrz `daysEmpty`). */
+/** Czy filtr zawęża cokolwiek - pusta lista mówi wtedy co innego (patrz `daysEmpty`). */
 export function isNarrowed(filter: DaysFilter): boolean {
   return (
     filter.from != null ||

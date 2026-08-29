@@ -1,21 +1,21 @@
 /**
- * UZ Aero — DropSheet (mockup 05e „Zrzut")
+ * UZ Aero - DropSheet (mockup 05e „Zrzut")
  *
  * Arkusz zapisu wyniesienia: wysokość z GPS, trzy liczniki typów skoków, suma
  * i informacja, do jakiego klienta trafi rozliczenie.
  *
  * Dlaczego arkusz nad kokpitem, a nie osobny ekran: zrzut zapisuje się **w powietrzu**,
  * między jednym wyniesieniem a drugim. Pilot nie może stracić z oczu fazy lotu ani
- * parametrów GPS — mockup dosłownie pokazuje kokpit prześwitujący nad arkuszem.
+ * parametrów GPS - mockup dosłownie pokazuje kokpit prześwitujący nad arkuszem.
  *
  * Wysokość jest **odczytem z GPS, nie polem do wpisania** (`CLAUDE.md`: dane z pomiaru
- * mają pierwszeństwo) — od issue #21 pkt 2 to ŚREDNIA z okna czasu
+ * mają pierwszeństwo) - od issue #21 pkt 2 to ŚREDNIA z okna czasu
  * (`detection/dropAltitude.ts`), nie ostatni fix, bo pojedynczy odczyt niesie
  * kilkadziesiąt stóp szumu.
  *
  * Liczniki skoczków są OPCJONALNE (issue #21 pkt 4–5): gdy pilot zadeklarował skład
  * przy załadunku, arkusz otwiera się WYPEŁNIONY i w locie wystarczy potwierdzenie;
- * bez deklaracji zapis bez liczb też przechodzi — zrzut jest znacznikiem faktu,
+ * bez deklaracji zapis bez liczb też przechodzi - zrzut jest znacznikiem faktu,
  * a raportowanie składu bywa odłożone. Dlatego przycisk zapisu nie ma stanu
  * zablokowanego (napis „Ustaw liczbę skoczków" skakał layoutem i wyleciał).
  */
@@ -42,12 +42,12 @@ export interface JumperCounts {
 export interface DropSheetProps {
   visible: boolean;
   /**
-   * Numer LOTU, w którym dzieje się zrzut — mockup 05e ma w tytule „ZRZUT · LOT 6",
+   * Numer LOTU, w którym dzieje się zrzut - mockup 05e ma w tytule „ZRZUT · LOT 6",
    * spójnie z podpisem fazy („Lot 6 · nad zrzutowiskiem").
    *
    * To NIE jest numer wyniesienia: w jednym locie bywa ich kilka, a numer zrzutu nadaje
    * komenda (`DropInput.dropNumber` domyślnie kolejny). Ekran liczy go helperem
-   * `logic/flightNumber.ts` — wpisanie tu wzoru „na piechotę" skończyło się „LOT 2"
+   * `logic/flightNumber.ts` - wpisanie tu wzoru „na piechotę" skończyło się „LOT 2"
    * w pierwszym locie (issue #21 pkt 1).
    */
   flightNumber: number;
@@ -55,15 +55,15 @@ export interface DropSheetProps {
   time: string;
   /** Wysokość z GPS (średnia z okna); `null` = brak danych, zapisujemy zrzut bez niej. */
   altitudeFt: number | null;
-  /** Klient z preflightu — dziedziczy go zdarzenie zrzutu (denormalizacja dla arkusza). */
+  /** Klient z preflightu - dziedziczy go zdarzenie zrzutu (denormalizacja dla arkusza). */
   client?: string | null;
   /**
-   * Skład zadeklarowany przy załadunku (issue #21 pkt 5) — liczniki otwierają się
+   * Skład zadeklarowany przy załadunku (issue #21 pkt 5) - liczniki otwierają się
    * z tymi wartościami i pilot tylko POTWIERDZA. `null` = załadunku nie było albo
    * był bez liczb: liczniki startują od zera, zapis bez nich też jest legalny.
    */
   initialJumpers?: JumperCounts | null;
-  /** Czas załadunku (sformatowany, UTC) — podpis prefillu; `null` gdy brak. */
+  /** Czas załadunku (sformatowany, UTC) - podpis prefillu; `null` gdy brak. */
   boardingTime?: string | null;
   busy?: boolean;
   onConfirm: (jumpers: JumperCounts) => void;
@@ -89,9 +89,9 @@ export function DropSheet({
   const keyboardHeight = useKeyboardHeight();
   const [jumpers, setJumpers] = useState<JumperCounts>(EMPTY);
 
-  // Każde otwarcie zaczyna od składu z załadunku (a bez niego — od zera): arkusz nie
+  // Każde otwarcie zaczyna od składu z załadunku (a bez niego - od zera): arkusz nie
   // pamięta poprzedniego wyniesienia, bo tamten skład już wyskoczył. Skład
-  // w zależnościach domyka rzadki wyścig arkusz-otwarty-podczas-zapisu-załadunku —
+  // w zależnościach domyka rzadki wyścig arkusz-otwarty-podczas-zapisu-załadunku -
   // ale jako KLUCZ LICZB, nie identyczność obiektu (`jumpersKey`): projekcja wraca
   // ze strumienia po każdym zdarzeniu, a przeładowanie prefillu przy niezmienionym
   // składzie kasowałoby liczniki pod palcami pilota.
@@ -146,12 +146,12 @@ export function DropSheet({
         </AppText>
       </View>
 
-      {/* Wysokość z GPS — odczyt, nie pole. */}
+      {/* Wysokość z GPS - odczyt, nie pole. */}
       <View
         style={[
           styles.altRow,
           {
-            // Mockup 05e daje `.alt-row` promień 13 — znormalizowany do kanonu
+            // Mockup 05e daje `.alt-row` promień 13 - znormalizowany do kanonu
             // `radius.btn`; dryf 13/14 ubity celowo, wzorem `colors.overlay`.
             borderRadius: theme.radius.btn,
             borderWidth: theme.borderWidth,
@@ -171,7 +171,7 @@ export function DropSheet({
             color: altitudeFt != null ? blue.accent : theme.colors.textMuted,
           }}
         >
-          {altitudeFt != null ? `${Math.round(altitudeFt)} ft` : '— ft'}
+          {altitudeFt != null ? `${Math.round(altitudeFt)} ft` : '- ft'}
         </AppText>
         <AppText variant="mono" tone="muted" style={styles.altTag}>
           {altitudeFt != null ? 'wysokość z GPS' : 'brak sygnału GPS'}
@@ -192,14 +192,14 @@ export function DropSheet({
         onChange={set('solo')}
       />
 
-      {/* `.total-row` — wypełniona karta w tonie zrzutu, nie przypis pod licznikami.
+      {/* `.total-row` - wypełniona karta w tonie zrzutu, nie przypis pod licznikami.
           Suma jest tym, co faktycznie trafi do rozliczenia, więc ma wagę równą
           polom, z których powstała. */}
       <View
         style={[
           styles.total,
           {
-            // Mockup 05e: `.total-row` też ma 13 — znormalizowane do `radius.btn` jak `.alt-row`.
+            // Mockup 05e: `.total-row` też ma 13 - znormalizowane do `radius.btn` jak `.alt-row`.
             borderRadius: theme.radius.btn,
             borderWidth: theme.borderWidth,
             borderColor: blue.border,
@@ -215,13 +215,13 @@ export function DropSheet({
         </AppText>
       </View>
 
-      {/* Podpis prefillu — skąd wzięły się liczby, zanim pilot czegokolwiek dotknął.
+      {/* Podpis prefillu - skąd wzięły się liczby, zanim pilot czegokolwiek dotknął.
           Bez niego wypełnione liczniki wyglądają jak resztki po poprzednim zrzucie. */}
       {initialJumpers != null && (
         <AppText variant="mono" tone="muted" style={styles.client}>
           {boardingTime != null
-            ? `Skład z załadunku ${boardingTime} UTC — potwierdź albo popraw`
-            : 'Skład z załadunku — potwierdź albo popraw'}
+            ? `Skład z załadunku ${boardingTime} UTC - potwierdź albo popraw`
+            : 'Skład z załadunku - potwierdź albo popraw'}
         </AppText>
       )}
 

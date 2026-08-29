@@ -1,9 +1,9 @@
 /**
- * UZ Aero — panel: pasek filtrów (`.filters` z `SZABLON.html`).
+ * UZ Aero - panel: pasek filtrów (`.filters` z `SZABLON.html`).
  *
  * Wiersz zawijalny; treść wstawia ekran, bo to ekran wie, co da się filtrować.
  * Mockup `A03` używa dwóch takich pasków jeden pod drugim (status i zakres,
- * potem typy) — komponent nie zna tej liczby i nie powinien.
+ * potem typy) - komponent nie zna tej liczby i nie powinien.
  */
 
 import type { ReactNode } from 'react';

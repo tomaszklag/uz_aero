@@ -1,10 +1,10 @@
 /**
- * UZ Aero — panel: ODPOWIEDŹ `GET /admin/api/stats` do testów renderu (`A10`).
+ * UZ Aero - panel: ODPOWIEDŹ `GET /admin/api/stats` do testów renderu (`A10`).
  *
  * Liczby są przepisane ze scenariusza mockupu `A10-statystyki.html` (lipiec 2026,
- * trzy jednostki, pięciu pilotów, SKY CAMP jako główny klient) — dzięki temu asercje
+ * trzy jednostki, pięciu pilotów, SKY CAMP jako główny klient) - dzięki temu asercje
  * renderu porównują się z tym samym obrazem, który zatwierdzono w designie.
- * Kształt: `StatsReportDto` — wszystkie ilorazy policzone „przez serwer".
+ * Kształt: `StatsReportDto` - wszystkie ilorazy policzone „przez serwer".
  */
 
 import type { StatsDailyPointDto, StatsReportDto } from '../../src/api/dto';
@@ -14,9 +14,9 @@ const HOUR_MS = 60 * MIN_MS;
 const hm = (h: number, m: number): number => h * HOUR_MS + m * MIN_MS;
 
 /**
- * Lipiec 2026 dzień po dniu; zera 05/11/18/26 JUL — dni bez sesji, jak w mockupie.
+ * Lipiec 2026 dzień po dniu; zera 05/11/18/26 JUL - dni bez sesji, jak w mockupie.
  * Szereg SUMUJE SIĘ do nalotu z kafli (186:39): 24 dni po 7:04, 3 lipca 6:51
- * i maksimum 10:12 27 lipca — plakietka „suma" i kafel muszą mówić jedną liczbę.
+ * i maksimum 10:12 27 lipca - plakietka „suma" i kafel muszą mówić jedną liczbę.
  */
 function july(): StatsDailyPointDto[] {
   const zeroDays = new Set([5, 11, 18, 26]);

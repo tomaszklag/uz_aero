@@ -1,15 +1,15 @@
 /**
- * UZ Aero — panel: GEOMETRIA EKRANOWA śladu i profilu (moduł CZYSTY).
+ * UZ Aero - panel: GEOMETRIA EKRANOWA śladu i profilu (moduł CZYSTY).
  *
  * Cała arytmetyka mapy i wykresu mieszka tutaj, a nie w `.tsx`, i to nie jest kaprys
  * porządkowy: reguła panelu („arytmetyka NIE mieszka w widoku", `test/architecture.test.ts`)
  * istnieje po to, żeby złapać moment, w którym panel zaczyna liczyć po swojemu. Ten moduł
- * jej nie łamie — bo NIE liczy niczego domenowego. Przelicza stopnie na piksele, czyli
+ * jej nie łamie - bo NIE liczy niczego domenowego. Przelicza stopnie na piksele, czyli
  * robi dokładnie to samo, co arkusz stylów robi z jednostkami: układa istniejące dane
  * na powierzchni o znanym rozmiarze.
  *
  * Dlatego jest to zarazem JEDYNE miejsce w panelu, któremu wolno importować z domeny
- * WARTOŚCI (odwzorowanie Merkatora), a nie tylko typy — z jawnym wyjątkiem wpisanym
+ * WARTOŚCI (odwzorowanie Merkatora), a nie tylko typy - z jawnym wyjątkiem wpisanym
  * do testu architektury. Alternatywą była kopia tej matematyki obok, a kopia oznacza,
  * że ślad prędzej czy później wygląda inaczej w panelu niż w telefonie. Przy narzędziu,
  * którego cała wartość polega na wspólnej rozmowie administratora z pilotem o TYM SAMYM
@@ -27,7 +27,7 @@ import {
   type TrackVertex,
 } from '@uzaero/domain';
 
-// Kształty wyników mieszkają PRZY komponentach, które je konsumują — warstwa `ui/`
+// Kształty wyników mieszkają PRZY komponentach, które je konsumują - warstwa `ui/`
 // nie zna `screens/`, więc kierunek zależności biegnie tędy, a nie odwrotnie.
 import type { MapPlot } from '../../ui/components/TrackMap';
 import type { ProfileGridRow, ProfilePlot } from '../../ui/components/VerticalProfile';
@@ -41,11 +41,11 @@ export interface MapMarkerInput {
 
 /**
  * Układa ślad, lotniska i znaczniki na płótnie `width`×`height`.
- * `null`, gdy nie ma ani jednego punktu — wtedy ekran pokazuje stan pusty, nie pustą mapę.
+ * `null`, gdy nie ma ani jednego punktu - wtedy ekran pokazuje stan pusty, nie pustą mapę.
  *
  * Kafelków NIE MA (decyzja 2026-08-04): tłem jest siatka współrzędnych, a odniesienie
  * w terenie dają pasy startowe lotnisk z katalogu. Skala pod mapą przestaje więc być
- * ozdobą — to jedyna rzecz, która mówi, czy krąg ma dwa kilometry, czy dwadzieścia.
+ * ozdobą - to jedyna rzecz, która mówi, czy krąg ma dwa kilometry, czy dwadzieścia.
  */
 export function mapPlot(
   line: readonly TrackVertex[],
@@ -72,7 +72,7 @@ export function mapPlot(
 
     airfields: airfieldsInView(bounds, { preferredIcao: departureIcao }).map((airfield) => {
       const p = toScreen(airfield, view);
-      // Pas krótszy niż kilka pikseli jest nieczytelny — wtedy zostaje sam znacznik.
+      // Pas krótszy niż kilka pikseli jest nieczytelny - wtedy zostaje sam znacznik.
       const lengthPx =
         airfield.runway != null && metersPerPixel != null
           ? airfield.runway.lengthM / metersPerPixel
@@ -83,7 +83,7 @@ export function mapPlot(
         x: p.x,
         y: p.y,
         // Kurs geograficzny liczy się od północy zgodnie z ruchem wskazówek,
-        // a obrót w układzie ekranu od osi X — stąd −90°.
+        // a obrót w układzie ekranu od osi X - stąd −90°.
         runway:
           lengthPx >= 10 && airfield.runway != null
             ? { lengthPx, rotateDeg: airfield.runway.headingDeg - 90 }
@@ -179,7 +179,7 @@ export function profilePlot(
   };
 }
 
-/** Zaokrąglone wartości do podpisów — widok nie ma prawa liczyć nawet tego. */
+/** Zaokrąglone wartości do podpisów - widok nie ma prawa liczyć nawet tego. */
 export function profileFooter(profile: FlightProfile): {
   climb: string | null;
   descent: string | null;
@@ -196,13 +196,13 @@ export function profileFooter(profile: FlightProfile): {
   };
 }
 
-/** Podpis szczytu na profilu — pusty napis, gdy profil go nie zna. */
+/** Podpis szczytu na profilu - pusty napis, gdy profil go nie zna. */
 export function peakLabel(profile: FlightProfile): string {
   if (profile.peakAt == null || profile.peakAltitudeFt == null) return '';
   return `szczyt ${Math.round(profile.peakAltitudeFt).toLocaleString('pl-PL')} ft`;
 }
 
-/** Liczby kafli nad mapą — formatowanie w module czystym, jak reszta napisów panelu. */
+/** Liczby kafli nad mapą - formatowanie w module czystym, jak reszta napisów panelu. */
 export function trackTiles(track: {
   distanceNm: number;
   maxAltitudeFt: number | null;
@@ -212,7 +212,7 @@ export function trackTiles(track: {
   return {
     distance: track.distanceNm.toFixed(1),
     maxAltitude:
-      track.maxAltitudeFt != null ? Math.round(track.maxAltitudeFt).toLocaleString('pl-PL') : '—',
+      track.maxAltitudeFt != null ? Math.round(track.maxAltitudeFt).toLocaleString('pl-PL') : '-',
     usable: track.usableCount.toLocaleString('pl-PL'),
     total: track.totalCount.toLocaleString('pl-PL'),
     rejected: (track.totalCount - track.usableCount).toLocaleString('pl-PL'),

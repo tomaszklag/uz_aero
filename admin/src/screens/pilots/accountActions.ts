@@ -1,16 +1,16 @@
 /**
- * UZ Aero — panel: DOSTĘPNOŚĆ AKCJI na koncie i komunikaty odmowy (moduł CZYSTY).
+ * UZ Aero - panel: DOSTĘPNOŚĆ AKCJI na koncie i komunikaty odmowy (moduł CZYSTY).
  *
  * Dwie rzeczy naraz, bo to jest jedna decyzja widziana z dwóch stron:
- *  • **przed kliknięciem** — czy przycisk działa i co napisać obok kłódki;
- *  • **po kliknięciu** — co powiedzieć, gdy serwer odmówił.
+ *  • **przed kliknięciem** - czy przycisk działa i co napisać obok kłódki;
+ *  • **po kliknięciu** - co powiedzieć, gdy serwer odmówił.
  * Rozdzielenie ich do dwóch plików rozjechałoby powody: przycisk mówiłby jedno,
  * a odmowa drugie, o tej samej zasadzie.
  *
  * ══ PRZYCISK JEST WIDOCZNY I ZABLOKOWANY, NIGDY UKRYTY ══
  * Reguła z mockupu A06 („Szef wyszkolenia widzi tę listę, ale bez przycisków") znaczy
  * WYSZARZONE, a nie nieobecne. Ukrycie zmusza człowieka do zgadywania, czy funkcji nie
- * ma w produkcie, czy nie ma jej ON — a to dwie różne rozmowy z administratorem.
+ * ma w produkcie, czy nie ma jej ON - a to dwie różne rozmowy z administratorem.
  *
  * **To nie jest zabezpieczenie.** Egzekwuje serwer, przy każdym żądaniu, świeżą rolą
  * z konta (`server/src/http/authorize.ts`). Tutaj rozstrzygamy wyłącznie, co widzi oko.
@@ -21,7 +21,7 @@ import { can, denialReason } from '../../auth/can';
 
 export interface AccountAction {
   enabled: boolean;
-  /** Powód blokady — WIDOCZNY przy przycisku; `null` = akcja dostępna. */
+  /** Powód blokady - WIDOCZNY przy przycisku; `null` = akcja dostępna. */
   reason: string | null;
 }
 
@@ -38,9 +38,9 @@ export function canManage(capabilities: readonly Capability[] | undefined): bool
 }
 
 /**
- * Reset hasła. Konto NIEAKTYWNE odpada, bo hasło i tak nie zaloguje — serwer odmawia
+ * Reset hasła. Konto NIEAKTYWNE odpada, bo hasło i tak nie zaloguje - serwer odmawia
  * tak samo (`inactive_account`), a mockup A06 wyszarza ten przycisk w wierszu
- * z podpowiedzią „Konto nieaktywne — najpierw aktywuj".
+ * z podpowiedzią „Konto nieaktywne - najpierw aktywuj".
  */
 export function resetAction(
   pilot: PilotListItemDto,
@@ -48,13 +48,13 @@ export function resetAction(
 ): AccountAction {
   if (!canManage(capabilities)) return NEEDS_CAPABILITY;
   if (!pilot.active) {
-    return { enabled: false, reason: 'Konto nieaktywne — najpierw aktywuj' };
+    return { enabled: false, reason: 'Konto nieaktywne - najpierw aktywuj' };
   }
   return ALLOWED;
 }
 
 /**
- * Deaktywacja i aktywacja. Blokujemy WYŁĄCZNIE własne konto — „ostatniego
+ * Deaktywacja i aktywacja. Blokujemy WYŁĄCZNIE własne konto - „ostatniego
  * administratora" panel policzyłby po swojemu i mógłby się pomylić (lista bywa
  * zawężona filtrem), a serwer i tak zna prawdę. Odmowa serwera ma wtedy komunikat
  * w `refusalText`, a przycisk zostaje klikalny: lepiej dostać jasne „nie, bo jesteś
@@ -67,12 +67,12 @@ export function activeAction(
 ): AccountAction {
   if (!canManage(capabilities)) return NEEDS_CAPABILITY;
   if (pilot.active && pilot.id === selfId) {
-    return { enabled: false, reason: 'To Twoje konto — nie odetniesz sam siebie' };
+    return { enabled: false, reason: 'To Twoje konto - nie odetniesz sam siebie' };
   }
   return ALLOWED;
 }
 
-/** Zmiana tożsamości i roli — jedyny warunek to zdolność. */
+/** Zmiana tożsamości i roli - jedyny warunek to zdolność. */
 export function editAction(capabilities: readonly Capability[] | undefined): AccountAction {
   return canManage(capabilities) ? ALLOWED : NEEDS_CAPABILITY;
 }
@@ -84,11 +84,11 @@ export function editAction(capabilities: readonly Capability[] | undefined): Acc
  */
 const REFUSAL_TEXT: Record<PilotRefusalDto, string> = {
   self_deactivate:
-    'To Twoje konto. Deaktywacja odcięłaby Cię od panelu, a ścieżki powrotu nie ma — konta zakłada i odblokowuje wyłącznie administrator z panelu.',
+    'To Twoje konto. Deaktywacja odcięłaby Cię od panelu, a ścieżki powrotu nie ma - konta zakłada i odblokowuje wyłącznie administrator z panelu.',
   self_demote:
     'To Twoje konto. Odebranie sobie roli administratora działa dokładnie jak deaktywacja: stracisz tę sekcję i nie będzie komu jej odzyskać.',
   last_admin:
-    'To ostatnie aktywne konto z rolą administratora. Klub zostałby bez nikogo, kto zarządza kontami, flotą i progami — najpierw nadaj tę rolę komuś jeszcze.',
+    'To ostatnie aktywne konto z rolą administratora. Klub zostałby bez nikogo, kto zarządza kontami, flotą i progami - najpierw nadaj tę rolę komuś jeszcze.',
   inactive_account:
     'Konto jest nieaktywne, więc hasło i tak nikogo nie zaloguje. Najpierw aktywuj konto, potem zresetuj hasło.',
 };
@@ -124,7 +124,7 @@ export interface AccountFailure {
  * Odpowiedź serwera → komunikat odmowy.
  *
  * Przyjmuje STATUS i CIAŁO, a nie wyjątek: pytanie „co powiedzieć człowiekowi" nie ma
- * nic wspólnego z tym, jakiej klasy błąd rzucił klient HTTP — i dzięki temu ten plik
+ * nic wspólnego z tym, jakiej klasy błąd rzucił klient HTTP - i dzięki temu ten plik
  * testuje się w Node, bez sieci (wzorzec `flagResolve.ts`, `correctionResult.ts`).
  */
 export function accountFailure(status: number | null, body: ApiErrorDto | null): AccountFailure {
@@ -144,7 +144,7 @@ export function accountFailure(status: number | null, body: ApiErrorDto | null):
       title: `Ten ${field} jest już zajęty.`,
       detail:
         field === 'kod pilota'
-          ? 'Kod pilota musi być unikalny w całym systemie — widać go w logu dnia i w kartach arkusza. Wybierz inny.'
+          ? 'Kod pilota musi być unikalny w całym systemie - widać go w logu dnia i w kartach arkusza. Wybierz inny.'
           : 'E-mail jest loginem, więc może należeć tylko do jednego konta. Sprawdź, czy pilot nie ma już konta w klubie.',
       final: false,
     };
@@ -174,7 +174,7 @@ export function accountFailure(status: number | null, body: ApiErrorDto | null):
     return {
       tone: 'warn',
       title: 'Twoja rola nie obejmuje zarządzania kontami.',
-      detail: `${denialReason('accounts.manage')}. Listę kont czyta każdy, kto ma wejście do panelu — zmienia ją węższa zdolność.`,
+      detail: `${denialReason('accounts.manage')}. Listę kont czyta każdy, kto ma wejście do panelu - zmienia ją węższa zdolność.`,
       final: true,
     };
   }
@@ -184,7 +184,7 @@ export function accountFailure(status: number | null, body: ApiErrorDto | null):
       tone: 'danger',
       title: 'Twoja sesja panelu wygasła albo konto zostało wyłączone.',
       detail:
-        'Panel czyta rolę i status konta przy KAŻDYM żądaniu, więc odebranie dostępu działa natychmiast. Zaloguj się ponownie — jeśli to nie pomoże, poproś drugiego administratora.',
+        'Panel czyta rolę i status konta przy KAŻDYM żądaniu, więc odebranie dostępu działa natychmiast. Zaloguj się ponownie - jeśli to nie pomoże, poproś drugiego administratora.',
       final: true,
     };
   }
@@ -194,7 +194,7 @@ export function accountFailure(status: number | null, body: ApiErrorDto | null):
       tone: 'warn',
       title: 'Tego konta nie ma w bazie.',
       detail:
-        'Adres wskazuje identyfikator, którego serwer nie zna. Kont nie kasujemy — deaktywacja zostawia wiersz — więc pomyłka jest raczej w adresie. Wróć do listy i otwórz konto z tabeli.',
+        'Adres wskazuje identyfikator, którego serwer nie zna. Kont nie kasujemy - deaktywacja zostawia wiersz - więc pomyłka jest raczej w adresie. Wróć do listy i otwórz konto z tabeli.',
       final: true,
     };
   }
@@ -204,7 +204,7 @@ export function accountFailure(status: number | null, body: ApiErrorDto | null):
       tone: 'danger',
       title: 'Brak połączenia z serwerem.',
       detail:
-        'Panel działa wyłącznie online, a zmiana konta musi zapisać się razem ze śladem audytu. Nie wiadomo, czy żądanie doszło — odśwież listę, zanim spróbujesz ponownie.',
+        'Panel działa wyłącznie online, a zmiana konta musi zapisać się razem ze śladem audytu. Nie wiadomo, czy żądanie doszło - odśwież listę, zanim spróbujesz ponownie.',
       final: false,
     };
   }
@@ -212,7 +212,7 @@ export function accountFailure(status: number | null, body: ApiErrorDto | null):
   return {
     tone: 'danger',
     title: 'Zmiana konta nie powiodła się.',
-    detail: `Serwer odpowiedział kodem ${status}. Jeśli to się powtarza, sprawdź dziennik audytu — zmiana albo się zapisała, albo nie zaszła w ogóle.`,
+    detail: `Serwer odpowiedział kodem ${status}. Jeśli to się powtarza, sprawdź dziennik audytu - zmiana albo się zapisała, albo nie zaszła w ogóle.`,
     final: false,
   };
 }
@@ -220,10 +220,10 @@ export function accountFailure(status: number | null, body: ApiErrorDto | null):
 /**
  * ══ DWA RODZAJE SESJI I DLACZEGO LICZBA OPISUJE TYLKO JEDEN ══
  *
- * `revokedSessions` z odpowiedzi serwera liczy WYŁĄCZNIE refresh tokeny telefonu —
+ * `revokedSessions` z odpowiedzi serwera liczy WYŁĄCZNIE refresh tokeny telefonu -
  * bo tylko one mają wiersz w bazie, który dało się skasować i policzyć. Sesja panelu
  * to podpisany JWT w ciasteczku `HttpOnly`: nie ma jej w żadnej tabeli, więc nikt jej
- * nie zliczał i zliczyć nie może. Odbiera ją znacznik `credentials_valid_from` — brama
+ * nie zliczał i zliczyć nie może. Odbiera ją znacznik `credentials_valid_from` - brama
  * odrzuca token wydany przed resetem albo deaktywacją (`pilots.credentials_valid_from`).
  *
  * Dlatego komunikaty niżej mówią o obu rodzajach OSOBNO i pozostają prawdziwe także
@@ -245,7 +245,7 @@ export interface ActiveChangeCopy {
  *
  * Mieszka TUTAJ, a nie w JSX-ie szuflady, z tego samego powodu co `secretCopy`:
  * składanie napisu z liczby jest decyzją o treści, a nie układem. Do 2026-08-01
- * ekran sklejał to w `.tsx` i wychodziło z tego „Unieważniono 1 sesji" — mimo że
+ * ekran sklejał to w `.tsx` i wychodziło z tego „Unieważniono 1 sesji" - mimo że
  * funkcja odmieniająca stała obok, miała test i jednego użytkownika.
  */
 export function activeChangeCopy(active: boolean, revokedSessions: number): ActiveChangeCopy {
@@ -254,13 +254,13 @@ export function activeChangeCopy(active: boolean, revokedSessions: number): Acti
       title: 'Konto aktywowane.',
       note:
         'Pilot zaloguje się swoim dotychczasowym hasłem; jeśli go nie pamięta, zresetuj je niżej. ' +
-        'Sesje sprzed deaktywacji zostają martwe — przywrócenie dostępu nie ożywia poświadczeń, ' +
+        'Sesje sprzed deaktywacji zostają martwe - przywrócenie dostępu nie ożywia poświadczeń, ' +
         'które ktoś mógł w międzyczasie skopiować.',
     };
   }
 
   return {
-    title: 'Konto deaktywowane — dostęp zniknął natychmiast.',
+    title: 'Konto deaktywowane - dostęp zniknął natychmiast.',
     note:
       `${phoneSessions(revokedSessions)} Sesja panelu (jeśli ten pilot ją miał) przestała działać ` +
       'w tej samej chwili: serwer odrzuca poświadczenie wydane przed deaktywacją, więc odcięcie ' +
@@ -268,7 +268,7 @@ export function activeChangeCopy(active: boolean, revokedSessions: number): Acti
   };
 }
 
-/** Zdanie o sesjach TELEFONU — jedyne, które opiera się na liczbie z serwera. */
+/** Zdanie o sesjach TELEFONU - jedyne, które opiera się na liczbie z serwera. */
 function phoneSessions(revokedSessions: number): string {
   if (revokedSessions === 0) return 'Ten pilot nie miał żywych sesji telefonu.';
   return `Unieważniono ${revokedSessions} ${sessionWord(revokedSessions)} telefonu tego pilota.`;
@@ -283,19 +283,19 @@ export function secretCopy(kind: 'create' | 'reset', revokedSessions: number): S
   if (kind === 'create') {
     return {
       title: 'Konto założone. Hasło startowe widzisz tylko teraz.',
-      note: 'Przekaż je pilotowi kanałem, któremu ufasz. Przy pierwszym logowaniu w aplikacji pilot ustawia własny PIN — od tego momentu wchodzi PIN-em i offline.',
+      note: 'Przekaż je pilotowi kanałem, któremu ufasz. Przy pierwszym logowaniu w aplikacji pilot ustawia własny PIN - od tego momentu wchodzi PIN-em i offline.',
     };
   }
   return {
     title: 'Hasło zresetowane. Widzisz je tylko teraz.',
     note:
-      `${phoneSessions(revokedSessions)} Sesja panelu — jeśli ją miał — przestała działać tak samo: ` +
+      `${phoneSessions(revokedSessions)} Sesja panelu - jeśli ją miał - przestała działać tak samo: ` +
       'stare poświadczenie nie przeżywa zmiany hasła, niezależnie od tego, ile sesji dało się ' +
       'policzyć. Pilot potrzebuje pełnego logowania przy sieci i ustawia PIN od nowa.',
   };
 }
 
-/** Odmiana rzeczownika „sesja" — trzy formy, jak wymaga polszczyzna. */
+/** Odmiana rzeczownika „sesja" - trzy formy, jak wymaga polszczyzna. */
 function sessionWord(n: number): string {
   if (n === 1) return 'sesję';
   const tens = n % 100;

@@ -1,22 +1,22 @@
 /**
- * UZ Aero — ZAPYTANIE o ŚLAD SESJI (ekran 14, miniatura na 10).
+ * UZ Aero - ZAPYTANIE o ŚLAD SESJI (ekran 14, miniatura na 10).
  *
  * ══ ŚLAD OPISUJE SESJĘ, NIE LOT (issue #38) ══
- * Zapis GPS powstaje w jednym ciągu — od uruchomienia do zatrzymania silnika — więc
+ * Zapis GPS powstaje w jednym ciągu - od uruchomienia do zatrzymania silnika - więc
  * krojenie go na loty gubiło kołowanie i przerwy między wyniesieniami, czyli dokładnie
  * ten czas, który wchodzi wprost do normy zużycia. Loty są ZNACZNIKAMI na wspólnej linii.
  *
  * ══ GEOMETRIA Z SERWERA, RESZTA Z REJESTRU (issue #47) ══
  * Do issue #47 wszystko liczyło się z zapisu na telefonie, a nagranie znikało po 14 dniach
- * — bo tyle wytrzymywała pamięć urządzenia, nie dlatego, że traciło wartość. Odtąd telefon
+ * - bo tyle wytrzymywała pamięć urządzenia, nie dlatego, że traciło wartość. Odtąd telefon
  * nagranie ODDAJE i kasuje, a ekran pobiera gotową geometrię (`SessionTrackSource`).
  *
  * Podział jest ostry i to on trzyma offline-first przy życiu:
- *  • **z sieci** — linia, profil, log punktów, statystyki (`SessionTrackPayload`),
- *  • **z lokalnego rejestru** — rejestracja maszyny, lotnisko, okno biegu silnika, lista
+ *  • **z sieci** - linia, profil, log punktów, statystyki (`SessionTrackPayload`),
+ *  • **z lokalnego rejestru** - rejestracja maszyny, lotnisko, okno biegu silnika, lista
  *    lotów, czas w powietrzu i CZASY wszystkich znaczników (§6 pkt 1).
  * Dlatego wariant bez zasięgu (14C) nadal pokazuje komplet czasów: brakuje mu rysunku,
- * nie wiedzy. I dlatego znaczniki są tu, a nie w kopercie serwera — ich czasy pochodzą
+ * nie wiedzy. I dlatego znaczniki są tu, a nie w kopercie serwera - ich czasy pochodzą
  * z rejestru PO korektach, a pozycję dobiera się do nich z pobranej linii.
  */
 
@@ -38,21 +38,21 @@ import type { EventsRepo } from '../eventsRepo';
 import type { TracePort } from '../ports';
 import type { SessionTrackSource } from '../sync/sessionTrackFetch';
 
-/** Powód, dla którego sesja nie ma trasy — ekran tłumaczy go wprost (14B / 14C). */
+/** Powód, dla którego sesja nie ma trasy - ekran tłumaczy go wprost (14B / 14C). */
 export type MissingTrackReason =
   /** Sesja wpisana ręcznie: GPS nie pracował albo detekcja jej nie złapała. */
   | 'manual'
   /** Serwer nagrania nie ma i sam z siebie mieć nie będzie (14B). */
   | 'no-record'
-  /** Nagranie CZEKA W KOLEJCE na tym telefonie — pójdzie przy najbliższej okazji. */
+  /** Nagranie CZEKA W KOLEJCE na tym telefonie - pójdzie przy najbliższej okazji. */
   | 'pending-upload'
-  /** Ślad jest na serwerze, brakuje drogi do niego (14C — jedyny stan wymagający sieci). */
+  /** Ślad jest na serwerze, brakuje drogi do niego (14C - jedyny stan wymagający sieci). */
   | 'offline';
 
 /**
  * Punkt na trasie, który coś znaczy: start, lądowanie, zrzut albo szczyt.
  *
- * `position: null` znaczy „zapis nie sięga tej chwili" — trasa bywa dziurawa (utrata
+ * `position: null` znaczy „zapis nie sięga tej chwili" - trasa bywa dziurawa (utrata
  * fixa w hangarze, wyczerpana bateria), a znacznik postawiony w najbliższym punkcie
  * kilometry dalej kłamałby na mapie. Brak znacznika jest uczciwszy niż zły znacznik.
  */
@@ -62,7 +62,7 @@ export interface SessionTrackMarker {
   index: number;
   at: number;
   position: TrackVertex | null;
-  /** Wysokość — niesie ją WYŁĄCZNIE szczyt, bo tylko on jest o niej (issue #47 pkt 2). */
+  /** Wysokość - niesie ją WYŁĄCZNIE szczyt, bo tylko on jest o niej (issue #47 pkt 2). */
   altitudeFt?: number | null;
   /**
    * Maksimum wypadło w tej samej chwili co ten znacznik, więc dopisuje się do JEGO
@@ -73,10 +73,10 @@ export interface SessionTrackMarker {
 
 /** Ślad całej sesji gotowy do narysowania. */
 export interface SessionTrackView {
-  /** Rejestracja maszyny — podtytuł nagłówka („SP-AXA · 06 SIE · 2 loty"). */
+  /** Rejestracja maszyny - podtytuł nagłówka („SP-AXA · 06 SIE · 2 loty"). */
   aircraftId: string | null;
   /**
-   * Kod ICAO z preflightu. Mapa rysuje to lotnisko ZAWSZE, także gdy wypada poza kadr —
+   * Kod ICAO z preflightu. Mapa rysuje to lotnisko ZAWSZE, także gdy wypada poza kadr -
    * pilot podał je ręcznie, więc jest odpowiedzią na pytanie „gdzie to było", a nie
    * przypadkowym sąsiadem trasy. `null`, gdy preflight go nie niósł.
    */
@@ -85,12 +85,12 @@ export interface SessionTrackView {
   fromAt: number;
   toAt: number | null;
   flights: Flight[];
-  /** Suma zamkniętych lotów (ms) — kafelek „W powietrzu" pod mapą. */
+  /** Suma zamkniętych lotów (ms) - kafelek „W powietrzu" pod mapą. */
   flightTimeMs: number;
   markers: SessionTrackMarker[];
   track: FlightTrack;
   profile: FlightProfile;
-  /** Statystyki lotu (issue #47 pkt 3) — każdy blok gaśnie osobno. */
+  /** Statystyki lotu (issue #47 pkt 3) - każdy blok gaśnie osobno. */
   stats: TrackStats;
   /** Null = trasa jest. Wartość = nie ma czego rysować i to jest powód. */
   missing: MissingTrackReason | null;
@@ -103,7 +103,7 @@ export interface SessionTrackView {
  *
  * Zapis idzie co kilka sekund, więc przy zdrowym śladzie każdy start trafia w punkt
  * odległy o sekundy. Dwie minuty to granica, po której „najbliższy punkt" przestaje
- * opisywać to samo miejsce — przy 90 kt to już trzy mile morskie.
+ * opisywać to samo miejsce - przy 90 kt to już trzy mile morskie.
  */
 const MARKER_TOLERANCE_MS = 120_000;
 
@@ -124,7 +124,7 @@ export class FlightTrackQueries {
   ) {}
 
   /**
-   * @returns `null`, gdy sesji nie ma w rejestrze — ekran nie ma wtedy tematu.
+   * @returns `null`, gdy sesji nie ma w rejestrze - ekran nie ma wtedy tematu.
    */
   async bySession(sessionUuid: string): Promise<SessionTrackView | null> {
     const events = await this.repo.getSessionEvents(sessionUuid);
@@ -153,7 +153,7 @@ export class FlightTrackQueries {
 
     if (payload.usableCount === 0) {
       // Sesja złożona z samych wpisów ręcznych NIGDY śladu nie miała; sesja z detekcją,
-      // której nagranie jeszcze nie doleciało — miała i doleci. Trzy różne zdania.
+      // której nagranie jeszcze nie doleciało - miała i doleci. Trzy różne zdania.
       const manualOnly =
         state.flights.length > 0 && state.flights.every((flight) => flight.method === 'manual');
       const pending = await this.pending(sessionUuid, fromAt, toAt);
@@ -198,7 +198,7 @@ export class FlightTrackQueries {
 
   /** Ile wierszy nagrania tej sesji leży jeszcze na telefonie (czyli nie poszło). */
   private async pending(sessionUuid: string, fromAt: number, toAt: number | null): Promise<number> {
-    // Po issue #47 wysłane wiersze są kasowane, więc cokolwiek zostało — czeka.
+    // Po issue #47 wysłane wiersze są kasowane, więc cokolwiek zostało - czeka.
     const rows = await this.trace.readTraceFixes(sessionUuid, fromAt, toAt ?? Date.now());
     return rows.length;
   }
@@ -231,7 +231,7 @@ export class FlightTrackQueries {
  * Znaczniki: każdy start, każde lądowanie, każdy zrzut i SZCZYT lotu (issue #47 pkt 2).
  *
  * Czasy startów i lądowań pochodzą z projekcji, a zrzuty ze strumienia EFEKTYWNEGO
- * (po korektach) — zrzut unieważniony nie zaszedł i nie ma prawa stać na mapie.
+ * (po korektach) - zrzut unieważniony nie zaszedł i nie ma prawa stać na mapie.
  * Szczyt jest jedynym znacznikiem liczonym z NAGRANIA, bo tylko ono wie, kiedy
  * samolot był najwyżej.
  */

@@ -1,9 +1,9 @@
 /**
- * UZ Aero — panel: UJĘCIE „PER SAMOLOT" → wiersze tabeli (moduł CZYSTY).
+ * UZ Aero - panel: UJĘCIE „PER SAMOLOT" → wiersze tabeli (moduł CZYSTY).
  *
  * Wiersz RAZEM jest częścią widoku, nie sumą liczoną tutaj: wszystkie jego liczby
  * przychodzą z `totals` serwera. Kolumny „Śr. L/h", „MH start → koniec"
- * i „Wykorzystanie" dostają w RAZEM kreskę ŚWIADOMIE — średnia ze średnich nie jest
+ * i „Wykorzystanie" dostają w RAZEM kreskę ŚWIADOMIE - średnia ze średnich nie jest
  * średnią (hint mockupu), a odczyty skrajne floty nie istnieją jako jedna liczba.
  */
 
@@ -16,7 +16,7 @@ export interface AircraftRowView {
   key: string;
   total: boolean;
   /**
-   * Identyfikator jednostki — cel przejścia do analityki zużycia (`A10a`).
+   * Identyfikator jednostki - cel przejścia do analityki zużycia (`A10a`).
    * `null` w wierszu RAZEM: analityka opisuje SAMOLOT, a nie flotę, bo stawka L/h
    * Caravana i AT-3 nie składa się w jedną liczbę (ten sam powód, dla którego
    * kolumna „Śr. L/h" ma tam kreskę).
@@ -28,12 +28,12 @@ export interface AircraftRowView {
   days: string;
   block: string;
   flight: string;
-  /** `186 / 186` — z kolumn projekcji; kreska przy wierszach sprzed kolumn statystyk. */
+  /** `186 / 186` - z kolumn projekcji; kreska przy wierszach sprzed kolumn statystyk. */
   takeoffsLandings: string;
   fuel: string;
   avgLph: string;
   mhRange: string;
-  /** `licznik dziesiętny` / `licznik hh:mm` — podpis formatu pod odczytem. */
+  /** `licznik dziesiętny` / `licznik hh:mm` - podpis formatu pod odczytem. */
   mhRangeSub: string | null;
   mhDelta: string;
   utilization: string;
@@ -94,12 +94,12 @@ export function aircraftRows(
     flight: duration(totals.flightMs),
     takeoffsLandings: pair(totals.takeoffs, totals.landings),
     fuel: litresThousands(totals.fuelConsumedL),
-    // Średnia ze średnich nie jest średnią — kreska zamiast liczby, która wygląda
+    // Średnia ze średnich nie jest średnią - kreska zamiast liczby, która wygląda
     // na sensowną (hint mockupu przytacza dokładnie ten rachunek).
     avgLph: DASH,
     mhRange: DASH,
     mhRangeSub: null,
-    // Formaty liczników bywają różne per jednostka — suma idzie w godzinach dziesiętnych.
+    // Formaty liczników bywają różne per jednostka - suma idzie w godzinach dziesiętnych.
     mhDelta: totals.mhDeltaH == null ? DASH : `${dot1(totals.mhDeltaH)} h`,
     utilization: DASH,
     blockClass: 'cell-green',

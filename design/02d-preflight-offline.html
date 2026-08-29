@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 02D Nowy lot · offline (cache)</title>
+<title>UZ Aero - 02D Nowy lot · offline (cache)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -89,15 +89,15 @@
     color: var(--green);
   }
   .sync-chip.offline { background: var(--amber-muted); border-color: var(--amber-border); color: var(--amber); }
-  /* SyncChip = SAM pill `OFFLINE · n` (issue #23 pkt 5) — stempla pod chipem NIE MA.
+  /* SyncChip = SAM pill `OFFLINE · n` (issue #23 pkt 5) - stempla pod chipem NIE MA.
      Szczegóły (kolejka, ostatni udany sync, wiek danych referencyjnych) otwiera
-     tapnięcie pilla — wzorzec 01c; wiek danych TEGO formularza mówi pasek cache niżej. */
+     tapnięcie pilla - wzorzec 01c; wiek danych TEGO formularza mówi pasek cache niżej. */
 
   /* Scroll area */
   .scroll { flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; scrollbar-width: none; padding-bottom: 24px; }
   .scroll::-webkit-scrollbar { display: none; }
 
-  /* Cache strip — adnotacja wieku danych referencyjnych (stan `cache`) */
+  /* Cache strip - adnotacja wieku danych referencyjnych (stan `cache`) */
   .cache-strip {
     display: flex; align-items: center; gap: 8px;
     background: var(--amber-muted); border: 1px solid var(--amber-border);
@@ -127,7 +127,7 @@
   .field-placeholder { color: var(--text-placeholder); font-size: 15px; }
   .field-hint { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.5px; color: var(--text-muted); }
 
-  /* Bez `.route-row` / `.route-arrow` — wybrane są skoki, więc trasa to jedno pole
+  /* Bez `.route-row` / `.route-arrow` - wybrane są skoki, więc trasa to jedno pole
      na pełną szerokość (issue #13). Parę kodów ze strzałką pokazuje 02F. */
 
   .fuel-warning {
@@ -158,7 +158,7 @@
   .btn-primary.disabled { background: var(--surface-hover); color: var(--text-muted); box-shadow: none; pointer-events: none; cursor: not-allowed; }
 
   /* BEZ modala przejęcia (2026-08-06): samolot prowadzony przez innego PIC otwiera
-     podgląd 04B — tam stoi ostrzeżenie i przycisk PRZEJMIJ SAMOLOT, również offline. */
+     podgląd 04B - tam stoi ostrzeżenie i przycisk PRZEJMIJ SAMOLOT, również offline. */
 
   /* Optional tag */
   .optional-tag {
@@ -224,7 +224,7 @@
     color: var(--red); background: var(--red-muted); border: 1px solid var(--red-border);
     border-radius: 4px; padding: 2px 6px; white-space: nowrap;
   }
-  /* Pozycja prowadzona przez innego PIC — dwa wiersze zamiast ciasnej plakietki:
+  /* Pozycja prowadzona przez innego PIC - dwa wiersze zamiast ciasnej plakietki:
      rejestracja z typem u góry, adnotacja amber pod spodem, wyrównana do lewej. */
   .aircraft-option.locked { text-decoration: none; }
   .aircraft-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
@@ -233,7 +233,7 @@
     font-family: var(--font-mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
     color: var(--amber);
   }
-  /* Oko stoi DOKŁADNIE w miejscu kółka wyboru — ta pozycja nie jest wybieralna,
+  /* Oko stoi DOKŁADNIE w miejscu kółka wyboru - ta pozycja nie jest wybieralna,
      więc kółka nie ma; jedyne wyjście z niej to podgląd read-only (04B). */
   .aircraft-peek {
     display: flex; align-items: center; justify-content: center;
@@ -278,7 +278,7 @@
     background: rgba(46,204,113,0.07); border-color: var(--green-border);
     box-shadow: 0 0 0 1px rgba(46,204,113,0.08);
   }
-  /* W kwadracie stoi KOD pilota (mono), nie inicjały — kod jest jego identyfikatorem
+  /* W kwadracie stoi KOD pilota (mono), nie inicjały - kod jest jego identyfikatorem
      w arkuszu, więc nie ma powodu powtarzać go drugi raz po prawej stronie wiersza. */
   .crew-avatar {
     width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
@@ -296,7 +296,7 @@
     border-radius: 5px; padding: 2px 6px; white-space: nowrap;
   }
 
-  /* ===== VARIANTS PANEL (canvas — skróty do wariantów ekranu) ===== */
+  /* ===== VARIANTS PANEL (canvas - skróty do wariantów ekranu) ===== */
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
   .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
   .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; transition:all .15s; }
@@ -314,12 +314,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 02D</span>
+  <span class="film-strip">UZ AERO - 02D</span>
   <span class="slug">przejęcie · offline · dane z cache · interaktywny</span>
   <span class="canvas-meta"><span class="pulse"></span>Wariant 02</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Preflight offline">
+<main class="phone" role="region" aria-label="Mockup - Preflight offline">
   <div class="status-bar">
     <span>9:41</span>
     <span class="status-right">
@@ -331,9 +331,9 @@
 
   <div class="screen">
     <!-- App Header -->
-    <!-- Chip łączności pokazujemy WYŁĄCZNIE offline (reguła 2026-08-06) — online
+    <!-- Chip łączności pokazujemy WYŁĄCZNIE offline (reguła 2026-08-06) - online
          „zsynchronizowano" jest stanem domyślnym i plakietki nie dostaje. SAM pill
-         `OFFLINE · n` (issue #23 pkt 5): szczegóły — w tym wiek danych referencyjnych —
+         `OFFLINE · n` (issue #23 pkt 5): szczegóły - w tym wiek danych referencyjnych -
          pod tapnięciem (wzorzec 01c), a o świeżości listy samolotów mówi pasek cache
          w treści formularza. -->
     <div class="app-header">
@@ -342,7 +342,7 @@
       </div>
       <div class="header-right">
         <div class="step-badge">1 / 3</div>
-        <div class="sync-chip offline" title="Brak sieci — zdarzenia zapiszą się lokalnie i wyślą po odzyskaniu zasięgu; tapnięcie otwiera arkusz szczegółów synchronizacji">
+        <div class="sync-chip offline" title="Brak sieci - zdarzenia zapiszą się lokalnie i wyślą po odzyskaniu zasięgu; tapnięcie otwiera arkusz szczegółów synchronizacji">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
           OFFLINE · 0
         </div>
@@ -352,18 +352,18 @@
     <!-- Scroll Content -->
     <div class="scroll">
 
-      <!-- ZALOGOWANY PILOT (profil lokalny — bez zmian offline) -->
+      <!-- ZALOGOWANY PILOT (profil lokalny - bez zmian offline) -->
       <div class="pilot-strip">
         <div class="pilot-avatar">M</div>
         <div class="pilot-info">
           <div class="pilot-name">Tomasz Małkiewicz</div>
           <div class="pilot-sub">tomasz@uzaero.pl</div>
         </div>
-        <span class="role-badge" title="Pilot in command — pilot zalogowany w aplikacji">PIC</span>
+        <span class="role-badge" title="Pilot in command - pilot zalogowany w aplikacji">PIC</span>
       </div>
 
-      <!-- ADNOTACJA CACHE — stan `cache` danych referencyjnych -->
-      <div class="cache-strip" title="Brak łączności — lista samolotów, konfiguracje i piloci pochodzą z ostatniego pobrania. Stan mógł się zmienić.">
+      <!-- ADNOTACJA CACHE - stan `cache` danych referencyjnych -->
+      <div class="cache-strip" title="Brak łączności - lista samolotów, konfiguracje i piloci pochodzą z ostatniego pobrania. Stan mógł się zmienić.">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         Ostatnie pobrane dane
         <span class="cs-detail">21 CZE · 17:30</span>
@@ -382,10 +382,10 @@
           </div>
           <!-- SP-FGK prowadzi inny PIC: cała karta jest LINKIEM do podglądu 04B, a nie
                pozycją do zaznaczenia. Przejęcie (§4.4) odbiera poprzedniemu PIC prawo
-               zapisu, więc tej decyzji nie podejmuje się z listy — dopiero na 04B, po
+               zapisu, więc tej decyzji nie podejmuje się z listy - dopiero na 04B, po
                zobaczeniu stanu samolotu. Offline dochodzi drugi powód: tu nie wiemy nawet,
                czy KRZ nadal lata, więc adnotacja mówi wprost, z kiedy jest ta wiedza. -->
-          <a class="aircraft-option locked" href="04b-cockpit-readonly.html" title="Podgląd read-only — offline pokaże ostatni znany stan z cache; stamtąd przejmujesz samolot (04B)">
+          <a class="aircraft-option locked" href="04b-cockpit-readonly.html" title="Podgląd read-only - offline pokaże ostatni znany stan z cache; stamtąd przejmujesz samolot (04B)">
             <div class="aircraft-body">
               <div class="aircraft-row">
                 <div class="aircraft-reg">SP-FGK</div>
@@ -435,11 +435,11 @@
         </div>
         <div class="fuel-warning" id="crew-warning" style="display: none;">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          An-2 wymaga załogi 2-osobowej — wybierz drugiego pilota
+          An-2 wymaga załogi 2-osobowej - wybierz drugiego pilota
         </div>
       </div>
 
-      <!-- SEKCJA: RODZAJ OPERACJI (dane sesji — bez zmian offline) -->
+      <!-- SEKCJA: RODZAJ OPERACJI (dane sesji - bez zmian offline) -->
       <div class="section">
         <div class="section-label">Rodzaj operacji</div>
         <div class="op-grid">
@@ -476,9 +476,9 @@
         </div>
       </div>
 
-      <!-- SEKCJA: MIEJSCE SKOKÓW (dane sesji — bez zmian offline).
+      <!-- SEKCJA: MIEJSCE SKOKÓW (dane sesji - bez zmian offline).
            Kształt trasy idzie za rodzajem operacji (issue #13): wybrane są skoki, więc
-           pytamy o JEDNO lotnisko — samolot krąży nad polem i ląduje tam, skąd wystartował.
+           pytamy o JEDNO lotnisko - samolot krąży nad polem i ląduje tam, skąd wystartował.
            Ta sekcja to znany dług 02D (całość kroku 1 przeniosła się na 02E), ale para pól
            opisywałaby dzień skoków trasą, której nie da się polecieć, więc kształt musi być
            poprawny nawet w wariancie czekającym na modernizację. -->
@@ -494,7 +494,7 @@
       </div>
 
       <!-- Czas meldowania USUNIĘTY (przebudowa flow; od issue #23 razem z całą
-           klamrą służby) — tak samo jak w wariancie online (02). Dzień pilota to
+           klamrą służby) - tak samo jak w wariancie online (02). Dzień pilota to
            lista sesji, więc brak sieci nie ma tu na co wpływać. -->
 
       <!-- SEKCJA: OPCJONALNIE -->
@@ -521,19 +521,19 @@
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Warianty kroku 1 (samolot i załoga) — kiedy który?</div>
+  <div class="vp-title">Warianty kroku 1 (samolot i załoga) - kiedy który?</div>
   <a class="vp-item" href="02-preflight.html">
     <span class="vp-badge">02</span>
     <span class="vp-body">
       <span class="vp-name">Online</span>
-      <span class="vp-when">Jest sieć — stany claim i dane referencyjne na żywo z serwera. Bez plakietki łączności: online jest stanem domyślnym.</span>
+      <span class="vp-when">Jest sieć - stany claim i dane referencyjne na żywo z serwera. Bez plakietki łączności: online jest stanem domyślnym.</span>
     </span>
   </a>
   <a class="vp-item active" href="02d-preflight-offline.html">
     <span class="vp-badge amber">02D</span>
     <span class="vp-body">
-      <span class="vp-name">Offline — dane z cache</span>
-      <span class="vp-when">Brak sieci — lista samolotów i claimy z ostatniej synchronizacji (adnotacja wieku); zajęty samolot podglądasz na 04B i stamtąd przejmujesz, claim trafia do outboxa. Chip OFFLINE to SAM pill `OFFLINE · n` — szczegóły syncu (w tym wiek danych referencyjnych) pod tapnięciem (issue #23 pkt 5).</span>
+      <span class="vp-name">Offline - dane z cache</span>
+      <span class="vp-when">Brak sieci - lista samolotów i claimy z ostatniej synchronizacji (adnotacja wieku); zajęty samolot podglądasz na 04B i stamtąd przejmujesz, claim trafia do outboxa. Chip OFFLINE to SAM pill `OFFLINE · n` - szczegóły syncu (w tym wiek danych referencyjnych) pod tapnięciem (issue #23 pkt 5).</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -541,14 +541,14 @@
     <span class="vp-badge amber">02G</span>
     <span class="vp-body">
       <span class="vp-name">Brak floty w pamięci</span>
-      <span class="vp-when">Cache referencyjny przeczytany i PUSTY — zamiast formularza warning na cały ekran, bez DALEJ (issue #55). Stan `brak` jest niezależny od łączności (§4.8): offline dochodzi tylko standardowy pill OFFLINE.</span>
+      <span class="vp-when">Cache referencyjny przeczytany i PUSTY - zamiast formularza warning na cały ekran, bez DALEJ (issue #55). Stan `brak` jest niezależny od łączności (§4.8): offline dochodzi tylko standardowy pill OFFLINE.</span>
     </span>
   </a>
   <a class="vp-item" href="02h-preflight-rezygnacja.html">
     <span class="vp-badge blue">02H</span>
     <span class="vp-body">
       <span class="vp-name">Rezygnacja z nowego lotu</span>
-      <span class="vp-when">„Wstecz" przy niepustym formularzu — arkusz pyta o rezygnację; potwierdzenie czyści szkic (issue #55). Działa tak samo offline: szkic żyje w pamięci UI, nie w rejestrze.</span>
+      <span class="vp-when">„Wstecz" przy niepustym formularzu - arkusz pyta o rezygnację; potwierdzenie czyści szkic (issue #55). Działa tak samo offline: szkic żyje w pamięci UI, nie w rejestrze.</span>
     </span>
   </a>
 </aside>
@@ -570,7 +570,7 @@
   // - dane referencyjne i stany claim z cache (adnotacja wieku nad listą samolotów)
   // - claim optymistyczny: przejęcie działa bez serwera; zdarzenie session_claim trafia do outboxa
   // - samolot zajęty przez innego PIC (.aircraft-option.locked) nie jest pozycją do zaznaczenia,
-  //   tylko linkiem do podglądu 04B — dlatego pętla czyszcząca musi znieść brak kółka wyboru
+  //   tylko linkiem do podglądu 04B - dlatego pętla czyszcząca musi znieść brak kółka wyboru
   function selectAircraft(el) {
     document.querySelectorAll('.aircraft-option').forEach(o => {
       o.classList.remove('selected');

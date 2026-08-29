@@ -1,5 +1,5 @@
 /**
- * UZ Aero — stan synchronizacji → sekcja „Synchronizacja" w Ustawieniach (13).
+ * UZ Aero - stan synchronizacji → sekcja „Synchronizacja" w Ustawieniach (13).
  *
  * Ten sam podział co `statsDay.ts`: logika prezentacji w czystych funkcjach,
  * testowalnych bez React Native.
@@ -15,22 +15,22 @@
 
 import type { FlagType } from '../../../domain';
 
-// Odmiana liczebników awansowała do `ui/format.ts` (używają jej też komponenty DS) —
+// Odmiana liczebników awansowała do `ui/format.ts` (używają jej też komponenty DS) -
 // re-eksport trzyma dotychczasowe importy ekranów i testów w mocy.
 export { eventsCount, plural } from '../../format';
 
 /**
- * Flagi §4.5 po polsku — KOMPLET sześciu typów, tymi samymi słowami co panel.
+ * Flagi §4.5 po polsku - KOMPLET sześciu typów, tymi samymi słowami co panel.
  *
  * Napisy są przepisane z `admin/src/screens/flags/flagTypes.ts` (pole `short`) i to nie
  * jest kosmetyka: pilot dzwoni do administratora, żeby zapytać o uwagę, którą zobaczył
  * w Ustawieniach. Jeśli telefon mówi „nakładka czasowa", a panel „pilot rzekomo na dwóch
  * maszynach naraz", rozmawiają o dwóch różnych rzeczach. Kopia zamiast importu, bo
- * warstwa UI telefonu nie ma prawa importować z klienta panelu — pilnuje tego
+ * warstwa UI telefonu nie ma prawa importować z klienta panelu - pilnuje tego
  * `Record<FlagType, …>` niżej: dopisanie siódmego typu w domenie WYWALA KOMPILACJĘ
  * tego pliku.
  *
- * Do 2026-08-08 katalog znał trzy typy, w tym `session_overlap` skasowany w etapie D4 —
+ * Do 2026-08-08 katalog znał trzy typy, w tym `session_overlap` skasowany w etapie D4 -
  * pilot widział więc surowe `aircraft_overlap` i `fuel_mismatch`, a jedyna „ładna" nazwa
  * opisywała flagę, której serwer już nie wystawia. Nieznany typ nadal wraca surowy:
  * techniczny kod jest lepszy od zgadywanej etykiety.
@@ -49,12 +49,12 @@ export function flagLabel(type: string): string {
 }
 
 /**
- * Wiersz „Uwagi serwera" w Ustawieniach — trzy stany, bo trzy różne rzeczy.
+ * Wiersz „Uwagi serwera" w Ustawieniach - trzy stany, bo trzy różne rzeczy.
  *
  * Cisza nie może znaczyć dwóch rzeczy naraz (§6 pkt 2): „serwer nic nie zgłasza" i
  * „serwer jeszcze nic nie widział" to zupełnie inne wiadomości dla pilota, który
  * właśnie zastanawia się, czy dzwonić do administratora. Flagi przychodzą w odpowiedzi
- * na wysyłkę, więc bez ani jednej udanej wysyłki nie wiemy NIC — i tak to nazywamy.
+ * na wysyłkę, więc bez ani jednej udanej wysyłki nie wiemy NIC - i tak to nazywamy.
  */
 export function serverNoticeLabel(count: number, everSynced: boolean): string {
   if (!everSynced) return 'jeszcze nie sprawdzone';

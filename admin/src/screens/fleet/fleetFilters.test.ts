@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: filtry floty ↔ query string.
+ * UZ Aero - panel: filtry floty ↔ query string.
  *
  * Filtr mieszka w URL-u, więc jego tłumaczenie w obie strony jest tym, co decyduje,
  * czy „wklej mi link do wyłączonych jednostek" w ogóle działa.
@@ -36,7 +36,7 @@ describe('query string → filtr', () => {
     });
   });
 
-  it('wartość nieznana jest POMIJANA — adres z literówką pokazuje listę, nie błąd', () => {
+  it('wartość nieznana jest POMIJANA - adres z literówką pokazuje listę, nie błąd', () => {
     expect(filterFromParams(params('zakres=nie-ma-takiego')).scope).toBe('all');
   });
 
@@ -46,7 +46,7 @@ describe('query string → filtr', () => {
 });
 
 describe('filtr → query string', () => {
-  it('wartości domyślne POMIJAMY — adres pełnej listy to po prostu `#/flota`', () => {
+  it('wartości domyślne POMIJAMY - adres pełnej listy to po prostu `#/flota`', () => {
     expect(paramsFromFilter(DEFAULT_FLEET_FILTER)).toEqual({});
   });
 
@@ -64,7 +64,7 @@ describe('filtr → parametry trasy', () => {
   it('stan służby jedzie jako `status`, a claim jako osobne pole', () => {
     expect(fleetListQuery({ scope: 'active', search: null })).toEqual({ status: 'active' });
     expect(fleetListQuery({ scope: 'disabled', search: null })).toEqual({ status: 'disabled' });
-    // `claimed` NIE jest wartością `service_status` — to dwa niezależne warunki bazy
+    // `claimed` NIE jest wartością `service_status` - to dwa niezależne warunki bazy
     // złożone dla człowieka w jedno pytanie „co jest z tym samolotem".
     expect(fleetListQuery({ scope: 'claimed', search: null })).toEqual({ claimed: 'true' });
   });
@@ -96,7 +96,7 @@ describe('zawężenie i adresy', () => {
     expect(newAircraftHref(DEFAULT_FLEET_FILTER)).toBe(`/flota/${NEW_AIRCRAFT_SEGMENT}`);
   });
 
-  it('identyfikator w adresie jest KODOWANY — id jest nieprzezroczyste', () => {
+  it('identyfikator w adresie jest KODOWANY - id jest nieprzezroczyste', () => {
     expect(aircraftHref(DEFAULT_FLEET_FILTER, 'a/b c')).toBe('/flota/a%2Fb%20c');
   });
 
@@ -111,14 +111,14 @@ describe('zawężenie i adresy', () => {
 });
 
 describe('przejście z wiersza floty do dni', () => {
-  it('jednostka WOLNA też je ma — i to ona jest przypadkiem najczęstszym', () => {
+  it('jednostka WOLNA też je ma - i to ona jest przypadkiem najczęstszym', () => {
     // Do 2026-08-01 przycisk pojawiał się wyłącznie przy otwartym claimie, mimo że
     // prowadził na listę zawężoną do samolotu. Skutek: z tabeli floty nie dało się
-    // dojść do historii jednostki, która akurat stoi na płycie — czyli prawie zawsze.
+    // dojść do historii jednostki, która akurat stoi na płycie - czyli prawie zawsze.
     expect(dayLink('ac-1', null)).toEqual({ to: '/dni?samolot=ac-1', label: 'Dni lotne' });
   });
 
-  it('jednostka ZAJĘTA celuje w kartę tego dnia — to jedyny konsument `sessionUuid`', () => {
+  it('jednostka ZAJĘTA celuje w kartę tego dnia - to jedyny konsument `sessionUuid`', () => {
     expect(dayLink('ac-1', 'sess-9')).toEqual({ to: '/dni/sess-9', label: 'Otwarty dzień' });
   });
 });

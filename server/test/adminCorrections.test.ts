@@ -1,19 +1,19 @@
 /**
- * UZ Aero (serwer) — korekta administratora po oknie 24 h
+ * UZ Aero (serwer) - korekta administratora po oknie 24 h
  * (`POST /admin/api/sessions/:uuid/corrections`, mockup `A02b-korekta.html`).
  *
  * Ten sam wzorzec co reszta: PGlite w procesie, prawdziwe klasy, `app.inject`, zero
- * atrap. Dzień powstaje tak, jak powstaje w produkcji — z PRAWDZIWEGO `POST /events`
+ * atrap. Dzień powstaje tak, jak powstaje w produkcji - z PRAWDZIWEGO `POST /events`
  * przysłanego przez telefon PIC-a, bo test, który wstawia zdarzenia `INSERT`-em,
  * przybija własne wyobrażenie o rejestrze, a nie zachowanie systemu.
  *
  * Scenariusz jest scenariuszem z mockupu: silnik wyłączono o 10:34, ale bez fixa GPS
- * czas spadł na zegar telefonu, który spieszył 12 minut. Pilot zauważa to za późno —
- * jego okno korekty (04c) już minęło — więc godzinę prostuje administrator.
+ * czas spadł na zegar telefonu, który spieszył 12 minut. Pilot zauważa to za późno -
+ * jego okno korekty (04c) już minęło - więc godzinę prostuje administrator.
  *
  * Najważniejsze przypadki to dwa: (1) korekta ląduje w rejestrze ostemplowana PIC-em
  * SESJI, nie administratorem, a jego tożsamość żyje w audycie; (2) liczby dnia
- * i karta arkusza faktycznie się zmieniają — bez tego korekta byłaby wpisem do
+ * i karta arkusza faktycznie się zmieniają - bez tego korekta byłaby wpisem do
  * dziennika i niczym więcej.
  */
 
@@ -28,7 +28,7 @@ const HOUR_MS = 3_600_000;
 /** Sesja dnia: PIC to KRZ (zwykły pilot), administratorem panelu jest TMK. */
 const SESSION = 'sess-1';
 const PIC = 'KRZ';
-/** `events.source_device` paczki telefonu — dowolny napis z aplikacji, jak w A02b. */
+/** `events.source_device` paczki telefonu - dowolny napis z aplikacji, jak w A02b. */
 const DEVICE = 'Pixel 7a · a41f9c';
 
 /** Uuid zdarzeń są jawne, bo test celuje w nie `targetUuid`-em (koperta: min. 8 znaków). */
@@ -181,7 +181,7 @@ async function exportRevisions(db: Harness['db']) {
 /**
  * Dzień zamknięty i wyeksportowany, zegar przesunięty POZA okno korekty pilota.
  *
- * `closed: false` zostawia samolot NIEZDANY — od 2026-08-07 to już nie odmowa, tylko
+ * `closed: false` zostawia samolot NIEZDANY - od 2026-08-07 to już nie odmowa, tylko
  * powód ostrzeżenia `ADMIN_EDIT_SESSION_ACTIVE`. `advanceMs` steruje drugą kolizją:
  * krótszy skok zostawia okno 24 h sesji otwarte (`ADMIN_EDIT_PILOT_WINDOW_OPEN`).
  */
@@ -196,7 +196,7 @@ async function flownDay(options: { closed?: boolean; advanceMs?: number } = {}) 
     url: '/events',
     headers: { authorization: `Bearer ${pic}` },
     // `sourceDevice` jest tu naprawdę wysyłany, bo podgląd korekty go pokazuje
-    // („Zapisane przez: telefon PIC-a") — a pole odczytane z pustej bazy nie
+    // („Zapisane przez: telefon PIC-a") - a pole odczytane z pustej bazy nie
     // udowodniłoby, że trasa czyta właściwą kolumnę.
     payload: { events: payload, sourceDevice: DEVICE },
   });
@@ -233,7 +233,7 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
       sessionUuid: SESSION,
       targetUuid: UUID.engineStop,
       action: 'retime',
-      // Stan dnia PO korekcie liczy serwer — panel nie ma czego liczyć sam.
+      // Stan dnia PO korekcie liczy serwer - panel nie ma czego liczyć sam.
       state: { blockTimeMs: BLOCK_MS - 12 * 60_000, flightTimeMs: FLIGHT_MS },
       reexport: { exported: true, tab: '2026-06-22_SP-AXA', revision: 2 },
     });
@@ -259,9 +259,9 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
       reason: 'Zegar telefonu spieszył 12 min; godzinę potwierdza książka samolotu.',
       source: 'admin',
     });
-    // Tożsamość w rejestrze to PIC SESJI — inaczej `WRITER_MISMATCH`, i słusznie.
-    // Kto to zrobił, mówią TRZY rzeczy: `source_device`, dziennik audytu i — od issue
-    // #43 — `payload.source`, jedyna z nich widoczna dla telefonu.
+    // Tożsamość w rejestrze to PIC SESJI - inaczej `WRITER_MISMATCH`, i słusznie.
+    // Kto to zrobił, mówią TRZY rzeczy: `source_device`, dziennik audytu i - od issue
+    // #43 - `payload.source`, jedyna z nich widoczna dla telefonu.
     expect(correction.pic_id).toBe(PIC);
     expect(correction.source_device).toBe('admin:TMK');
 
@@ -317,7 +317,7 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
       body: {
         targetUuid: UUID.landing,
         action: 'void',
-        reason: 'Przelot nad pasem zaliczony jako lądowanie — potwierdzone z pilotem.',
+        reason: 'Przelot nad pasem zaliczony jako lądowanie - potwierdzone z pilotem.',
       },
     });
 
@@ -328,7 +328,7 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
       reexport: { exported: true, revision: 2 },
     });
 
-    // Wiersz oryginału ZOSTAJE — „cofnięcie" pomyłki samo jest udokumentowane.
+    // Wiersz oryginału ZOSTAJE - „cofnięcie" pomyłki samo jest udokumentowane.
     const rows = await eventRows(db);
     expect(rows.find((r) => r.uuid === UUID.landing)).toBeDefined();
     // Payload niesie od issue #43 dwa pola więcej: POWÓD (czyta go pilot w historii
@@ -337,14 +337,14 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
     expect(rows.find((r) => r.type === 'event_correction')!.payload).toEqual({
       targetUuid: UUID.landing,
       action: 'void',
-      reason: 'Przelot nad pasem zaliczony jako lądowanie — potwierdzone z pilotem.',
+      reason: 'Przelot nad pasem zaliczony jako lądowanie - potwierdzone z pilotem.',
       source: 'admin',
     });
 
     expect(await sessionRow(db)).toMatchObject({ flightMs: 0, blockMs: BLOCK_MS });
   });
 
-  it('szef wyszkolenia NIE MOŻE pisać w cudzym rejestrze — 403 z wymaganą zdolnością', async () => {
+  it('szef wyszkolenia NIE MOŻE pisać w cudzym rejestrze - 403 z wymaganą zdolnością', async () => {
     // Rozstrzyganie flag ma (`adminFlags.test.ts`), korekty nie: wyjaśnianie
     // rozbieżności to inna odpowiedzialność niż dopisywanie zdarzeń.
     const { app, db } = await flownDay();
@@ -361,7 +361,7 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
     expect(await auditRows(db)).toEqual([]);
   });
 
-  it('pilot NIE MOŻE — nawet PIC tej sesji, bo po 24 h ścieżką jest panel', async () => {
+  it('pilot NIE MOŻE - nawet PIC tej sesji, bo po 24 h ścieżką jest panel', async () => {
     const { app, db } = await flownDay();
     const pic = await login(app, PIC);
 
@@ -375,7 +375,7 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
     expect(await eventRows(db)).toHaveLength(7);
   });
 
-  it('bez tokenu → 401, nie 403 — to dwie różne wiadomości', async () => {
+  it('bez tokenu → 401, nie 403 - to dwie różne wiadomości', async () => {
     const { app, db } = await flownDay();
 
     const res = await correct(app, SESSION, {
@@ -391,7 +391,7 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
     ['brak pola', undefined],
     ['pusty napis', ''],
     ['same spacje', '   '],
-  ])('powód wymagany — %s daje 400 i nie rusza rejestru', async (_case, reason) => {
+  ])('powód wymagany - %s daje 400 i nie rusza rejestru', async (_case, reason) => {
     const { app, db } = await flownDay();
     const admin = await login(app, 'TMK');
 
@@ -472,7 +472,7 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
   });
 
   /**
-   * `amend` (issue #43) — jedyna korekta dopuszczona na odczytach. Po zamknięciu okna
+   * `amend` (issue #43) - jedyna korekta dopuszczona na odczytach. Po zamknięciu okna
    * 24 h administrator jest JEDYNYM, kto może poprawić paliwo albo licznik, a baner
    * na ekranie pilota obiecuje właśnie to („dalsze poprawki wprowadza administrator").
    */
@@ -486,13 +486,13 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
         targetUuid: UUID.dayClose,
         action: 'amend',
         fields: { fuelL: 96 },
-        reason: 'Pilot przepisał 88 zamiast 96 — zdjęcie tarczy w załączniku sprawy.',
+        reason: 'Pilot przepisał 88 zamiast 96 - zdjęcie tarczy w załączniku sprawy.',
       },
     });
 
     expect(res.statusCode).toBe(200);
     expect(res.json()).toMatchObject({ action: 'amend', targetUuid: UUID.dayClose });
-    // Stan dnia PO korekcie liczy serwer i oddaje w odpowiedzi — panel nie liczy sam.
+    // Stan dnia PO korekcie liczy serwer i oddaje w odpowiedzi - panel nie liczy sam.
     expect(res.json().state.fuel).toMatchObject({ endL: 96, consumedL: 150 - 96 });
     // Karta arkusza składa się od nowa: poprawka odczytu zmienia liczby doby samolotu,
     // więc rewizja musi pójść w górę tak samo jak po `retime` (§4.7).
@@ -501,7 +501,7 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
     const rows = await eventRows(db);
     const correction = rows.find((r) => r.type === 'event_correction')!;
     // Nagłówek nosi PIC-a SESJI (single-writer §4.4), więc autorstwo administratora
-    // musi stać w payloadzie — inaczej historia zmian na telefonie przypisze jego
+    // musi stać w payloadzie - inaczej historia zmian na telefonie przypisze jego
     // decyzję pilotowi.
     expect(correction.pic_id).toBe(PIC);
     expect(correction.payload).toMatchObject({
@@ -515,18 +515,18 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
 
   /**
    * REGRESJA (znaleziona w przeglądzie spójności, issue #43): do tej zmiany komenda
-   * korekty świadomie NIE przeliczała flag łańcucha — „ich wejściem są odczyty
+   * korekty świadomie NIE przeliczała flag łańcucha - „ich wejściem są odczyty
    * z `preflight_confirm` i `day_close`, a te są niekorygowalne". `amend` unieważnił
    * to założenie, więc administrator mógłby poprawić licznik i zostawić system bez
    * flagi opisującej dziurę, którą właśnie stworzył.
    */
-  it('amend odczytu MH otwiera flagę łańcucha — przeliczamy je po korekcie', async () => {
+  it('amend odczytu MH otwiera flagę łańcucha - przeliczamy je po korekcie', async () => {
     const { app, db } = await flownDay();
     const pic = await login(app, PIC);
 
     // Anomalia łańcucha dotyczy PARY sesji, więc jedna nie wystarcza: dokładamy drugą
     // sesję tej maszyny, która podejmuje licznik dokładnie tam, gdzie skończyła
-    // pierwsza (1236.87). Tak wygląda poprawny łańcuch — i to on ma się zepsuć.
+    // pierwsza (1236.87). Tak wygląda poprawny łańcuch - i to on ma się zepsuć.
     const NEXT = 'sess-2';
     const nextDay = DAY + 24 * HOUR_MS;
     const nextEvents = [
@@ -568,7 +568,7 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
     );
     expect(before.rows.map((r) => r.type)).not.toContain('mh_gap');
 
-    // Administrator poprawia licznik przy zdaniu PIERWSZEJ sesji — między ogniwami
+    // Administrator poprawia licznik przy zdaniu PIERWSZEJ sesji - między ogniwami
     // robi się prawie siedem godzin dziury.
     const admin = await login(app, 'TMK');
     const res = await correct(app, SESSION, {
@@ -577,7 +577,7 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
         targetUuid: UUID.dayClose,
         action: 'amend',
         fields: { mh: 1230.0 },
-        reason: 'Odczyt przepisany z niewłaściwej tarczy — poprawiam na wskazanie z książki.',
+        reason: 'Odczyt przepisany z niewłaściwej tarczy - poprawiam na wskazanie z książki.',
       },
     });
     expect(res.statusCode).toBe(200);
@@ -632,7 +632,7 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
     // równości „brak `day_close` = dzień trwa", a §3.6a ją unieważnił: zdanie samolotu
     // jest OPCJONALNE, więc sesja sprzed tygodnia wygląda dokładnie tak samo jak ta
     // z dzisiejszego poranka. Bramka odmawiałaby więc korekty przede wszystkim tam,
-    // gdzie jest naprawdę potrzebna. Administrator nie jest NIGDY blokowany — dostaje
+    // gdzie jest naprawdę potrzebna. Administrator nie jest NIGDY blokowany - dostaje
     // ostrzeżenie i decyduje sam.
     const { app, db } = await flownDay({ closed: false });
     const admin = await login(app, 'TMK');
@@ -645,7 +645,7 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
     expect(res.statusCode).toBe(200);
     // Kolizja jedzie w odpowiedzi POZYTYWNEJ, bo korekta JEST w rejestrze.
     expect(res.json().warnings).toMatchObject([{ code: 'ADMIN_EDIT_SESSION_ACTIVE' }]);
-    // Zdarzenie dopisane (6 → 7) i ślad w audycie zostawiony — jedno i drugie
+    // Zdarzenie dopisane (6 → 7) i ślad w audycie zostawiony - jedno i drugie
     // odróżnia „zapisano mimo kolizji" od dawnej odmowy.
     expect(await eventRows(db)).toHaveLength(7);
     expect(await auditRows(db)).toHaveLength(1);
@@ -653,7 +653,7 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
 
   it('sesja ZDANA, ale okno sesji jeszcze biegnie → ostrzeżenie o kolizji z pilotem', async () => {
     // Druga z dwóch kolizji, całkiem niezależna od pierwszej: samolot jest zdany
-    // (`day_close` o 16:45), więc `ADMIN_EDIT_SESSION_ACTIVE` się nie należy — ale od
+    // (`day_close` o 16:45), więc `ADMIN_EDIT_SESSION_ACTIVE` się nie należy - ale od
     // ZDANIA nie minęła doba (okno 24 h liczy się od `day_close`, model 2026-08-10),
     // więc pilot może tę sesję poprawić SAM na 04c. Obie strony pisałyby wtedy naraz
     // i administrator ma o tym wiedzieć.
@@ -685,7 +685,7 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
     expect(res.json().warnings).toEqual([]);
   });
 
-  it('druga korekta tego samego celu wygrywa — i obie zostają w rejestrze', async () => {
+  it('druga korekta tego samego celu wygrywa - i obie zostają w rejestrze', async () => {
     // „Ostatnia wygrywa" jest własnością projekcji (`applyCorrections`), nie panelu.
     // Test przybija, że przekrój administratora tego nie obchodzi po swojemu.
     const { app, db } = await flownDay();
@@ -719,12 +719,12 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
 });
 
 /**
- * PODGLĄD KOREKTY (`POST …/corrections/preview`) — karta „Wpływ na liczby dnia ·
+ * PODGLĄD KOREKTY (`POST …/corrections/preview`) - karta „Wpływ na liczby dnia ·
  * przed → po" z `A02b`.
  *
  * Podgląd istnieje, bo panel nie ma prawa policzyć skutku sam: z domeny wolno mu
  * importować wyłącznie typy. Dwie własności są tu warte testu bardziej niż reszta:
- * (1) `void` NIE skraca cyklu o różnicę czasów, tylko zostawia go OTWARTYM — to jest
+ * (1) `void` NIE skraca cyklu o różnicę czasów, tylko zostawia go OTWARTYM - to jest
  * teza amber-banera z mockupu i najłatwiejsza rzecz do zgadnięcia źle; (2) podgląd
  * NICZEGO nie zapisuje, także dziennika audytu, bo obejrzenie skutku nie jest zmianą.
  */
@@ -748,7 +748,7 @@ describe('podgląd korekty przed zapisem (A02b, dry-run)', () => {
         gpsTime: at(10, 34),
         effectiveTime: at(10, 34),
         voided: false,
-        // Kolumna techniczna rejestru — panel mówi, CZYM zapisano odczyt.
+        // Kolumna techniczna rejestru - panel mówi, CZYM zapisano odczyt.
         sourceDevice: DEVICE,
       },
       before: { blockTimeMs: BLOCK_MS, flightTimeMs: FLIGHT_MS },
@@ -756,16 +756,16 @@ describe('podgląd korekty przed zapisem (A02b, dry-run)', () => {
       violations: [],
     });
 
-    // Rejestr, projekcja, audyt i arkusz — wszystko dokładnie tak, jak przed podglądem.
+    // Rejestr, projekcja, audyt i arkusz - wszystko dokładnie tak, jak przed podglądem.
     expect(await eventRows(db)).toHaveLength(7);
     expect(await sessionRow(db)).toMatchObject({ blockMs: BLOCK_MS });
     expect(await auditRows(db)).toEqual([]);
     expect(await exportRevisions(db)).toEqual([{ session_uuid: SESSION, revision: 1 }]);
   });
 
-  it('void na engine_stop zostawia cykl OTWARTY — blok wypada w całości, nie skraca się', async () => {
+  it('void na engine_stop zostawia cykl OTWARTY - blok wypada w całości, nie skraca się', async () => {
     // To jest dowód tezy amber-banera z mockupu: `void` jest tu ZŁYM narzędziem.
-    // Silnik został wyłączony, pomylona jest tylko godzina — a unieważnienie
+    // Silnik został wyłączony, pomylona jest tylko godzina - a unieważnienie
     // `engine_stop` nie skraca cyklu o 12 minut, tylko usuwa go z czasu blokowego
     // w całości. Panel nie umiałby tego wyliczyć: reguła mieszka w projekcji.
     const { app, db } = await flownDay();
@@ -783,7 +783,7 @@ describe('podgląd korekty przed zapisem (A02b, dry-run)', () => {
       blockTimeMs: 0,
       engineRunning: true,
       openEngineStartAt: at(8, 12),
-      // Loty się nie zmieniają — korekta dotyczy silnika, nie startów i lądowań.
+      // Loty się nie zmieniają - korekta dotyczy silnika, nie startów i lądowań.
       flightTimeMs: FLIGHT_MS,
     });
     expect(body.violations).toEqual([]);
@@ -844,7 +844,7 @@ describe('podgląd korekty przed zapisem (A02b, dry-run)', () => {
 
   it('podgląd zdarzenia JUŻ unieważnionego mówi o tym wprost', async () => {
     // Ponowna korekta unieważnionego jest legalna („ostatnia wygrywa"), więc podgląd
-    // musi umieć opisać taki cel — inaczej administrator nie wie, od jakiego stanu
+    // musi umieć opisać taki cel - inaczej administrator nie wie, od jakiego stanu
     // startuje.
     const { app } = await flownDay();
     const admin = await login(app, 'TMK');
@@ -866,13 +866,13 @@ describe('podgląd korekty przed zapisem (A02b, dry-run)', () => {
       // Zdarzenie nie wchodzi dziś do żadnej liczby, więc nie ma „czasu w projekcji".
       effectiveTime: null,
     });
-    // `retime` przywraca zdarzenie do życia — stąd lądowanie z powrotem w bilansie.
+    // `retime` przywraca zdarzenie do życia - stąd lądowanie z powrotem w bilansie.
     expect(res.json().after).toMatchObject({ landingCount: 1 });
     expect(res.json().violations).toEqual([]);
   });
 
   it('sesja OTWARTA → podgląd DZIAŁA i uprzedza, tak samo jak zapis', async () => {
-    // Podgląd i zapis muszą odmawiać tego samego i przepuszczać to samo — inaczej panel
+    // Podgląd i zapis muszą odmawiać tego samego i przepuszczać to samo - inaczej panel
     // wystawia formularz tam, gdzie zapis odmówi (albo odwrotnie). Bramka `day_open`
     // znikła po OBU stronach naraz, więc i tu jest 200 razem z ostrzeżeniem.
     const { app } = await flownDay({ closed: false });
@@ -901,7 +901,7 @@ describe('podgląd korekty przed zapisem (A02b, dry-run)', () => {
     expect(res.json()).toEqual({ error: 'not_found' });
   });
 
-  it('szef wyszkolenia NIE zobaczy podglądu — ta sama zdolność, co przy zapisie', async () => {
+  it('szef wyszkolenia NIE zobaczy podglądu - ta sama zdolność, co przy zapisie', async () => {
     const { app } = await flownDay();
     const trainingLead = await login(app, 'AKO');
 
@@ -914,9 +914,9 @@ describe('podgląd korekty przed zapisem (A02b, dry-run)', () => {
     expect(res.json()).toEqual({ error: 'forbidden', required: 'events.correct' });
   });
 
-  it('podgląd NIE przyjmuje `reason` — i nie wymaga go, żeby odpowiedzieć', async () => {
+  it('podgląd NIE przyjmuje `reason` - i nie wymaga go, żeby odpowiedzieć', async () => {
     // Kolejność jest celowa: najpierw zobacz skutek, potem wytłumacz decyzję.
-    // Ciało bez uzasadnienia MUSI więc przejść, a `retime` bez czasu — nie.
+    // Ciało bez uzasadnienia MUSI więc przejść, a `retime` bez czasu - nie.
     const { app } = await flownDay();
     const admin = await login(app, 'TMK');
 

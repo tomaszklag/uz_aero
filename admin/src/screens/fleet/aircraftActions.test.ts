@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: dostępność akcji na flocie i komunikaty odmowy.
+ * UZ Aero - panel: dostępność akcji na flocie i komunikaty odmowy.
  *
  * Dwie własności, których złamanie widzi użytkownik natychmiast: przycisk jest
  * WIDOCZNY i zablokowany Z POWODEM (nigdy ukryty), a odmowa serwera niesie ZASADĘ,
@@ -81,7 +81,7 @@ describe('wyłączenie ze służby', () => {
 });
 
 describe('odmowa serwera → zdanie dla człowieka', () => {
-  it('rozpoznaje WYŁĄCZNIE kody floty — koperta `409 refused` jest wspólna', () => {
+  it('rozpoznaje WYŁĄCZNIE kody floty - koperta `409 refused` jest wspólna', () => {
     expect(isFleetRefusal('open_session')).toBe(true);
     // `last_admin` należy do ekranu kont; wzięcie go tutaj dałoby `undefined` w miejscu
     // wyjaśnienia zasady.
@@ -94,7 +94,7 @@ describe('odmowa serwera → zdanie dla człowieka', () => {
     expect(refusalText('capacity_not_positive')).toContain('FUEL_MISMATCH');
   });
 
-  it('`open_session` jest KOŃCOWA — druga próba nic nie zmieni bez zamknięcia dnia', () => {
+  it('`open_session` jest KOŃCOWA - druga próba nic nie zmieni bez zamknięcia dnia', () => {
     const failure = fleetFailure(409, { error: 'refused', reason: 'open_session' });
     expect(failure.final).toBe(true);
     expect(failure.tone).toBe('warn');
@@ -117,7 +117,7 @@ describe('odmowa serwera → zdanie dla człowieka', () => {
     expect(fleetFailure(null, null).detail).toContain('Nie wiadomo');
   });
 
-  it('nieznany status nie udaje, że rozumie — podaje kod i kieruje do audytu', () => {
+  it('nieznany status nie udaje, że rozumie - podaje kod i kieruje do audytu', () => {
     expect(fleetFailure(503, null).detail).toContain('503');
   });
 });
@@ -135,7 +135,7 @@ describe('komunikat po zapisie', () => {
 describe('stan pobrania floty', () => {
   const ok = { pending: false, error: false };
 
-  it('AWARIA wygrywa z ładowaniem — druga lista może się jeszcze kręcić', () => {
+  it('AWARIA wygrywa z ładowaniem - druga lista może się jeszcze kręcić', () => {
     expect(fleetLoad({ pending: true, error: false }, { pending: false, error: true })).toBe(
       'error',
     );
@@ -152,13 +152,13 @@ describe('stan pobrania floty', () => {
   });
 });
 
-describe('jednostka spoza listy — trzy komunikaty, nie dwa', () => {
-  it('BŁĄD pobrania NIE mówi „zdejmij filtr" — to była rada o filtrze, którego serwer nie zastosował', () => {
+describe('jednostka spoza listy - trzy komunikaty, nie dwa', () => {
+  it('BŁĄD pobrania NIE mówi „zdejmij filtr" - to była rada o filtrze, którego serwer nie zastosował', () => {
     const copy = missingAircraftCopy('error');
     expect(copy.tone).toBe('danger');
     expect(copy.note).not.toContain('Zdejmij filtr');
     expect(copy.note).not.toContain('zawężeni');
-    // Musi powiedzieć wprost, czego NIE WIADOMO — inaczej człowiek przyjmie, że
+    // Musi powiedzieć wprost, czego NIE WIADOMO - inaczej człowiek przyjmie, że
     // samolotu nie ma, i założy go drugi raz.
     expect(copy.title).toContain('Nie wiadomo');
     expect(copy.sub).not.toContain('zawężeniu');
@@ -176,7 +176,7 @@ describe('jednostka spoza listy — trzy komunikaty, nie dwa', () => {
     expect(copy.sub).toContain('wczytywanie');
   });
 
-  it('trzy stany dają trzy RÓŻNE komunikaty — żaden nie jest kopią sąsiada', () => {
+  it('trzy stany dają trzy RÓŻNE komunikaty - żaden nie jest kopią sąsiada', () => {
     const notes = (['loading', 'error', 'ready'] as const).map((s) => missingAircraftCopy(s).note);
     expect(new Set(notes).size).toBe(3);
     const subs = (['loading', 'error', 'ready'] as const).map((s) => missingAircraftCopy(s).sub);

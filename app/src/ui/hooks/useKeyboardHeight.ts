@@ -1,8 +1,8 @@
 /**
- * UZ Aero — wysokość klawiatury ekranowej.
+ * UZ Aero - wysokość klawiatury ekranowej.
  *
  * Potrzebna, bo arkusze (`Sheet`) żyją w `Modal` z `statusBarTranslucent`, a takie okno
- * NIE kurczy się przy wysuwaniu klawiatury — systemowy `adjustResize` zmienia rozmiar
+ * NIE kurczy się przy wysuwaniu klawiatury - systemowy `adjustResize` zmienia rozmiar
  * okna aplikacji, nie okna modalnego. Efekt: arkusz przyklejony do dołu ląduje pod
  * klawiaturą i pilot nie widzi pola, w które właśnie wpisuje odczyt.
  *
@@ -12,9 +12,9 @@
  * systemach i nie zależy od trybu `windowSoftInputMode`.
  *
  * iOS emituje `keyboardWill*` przed animacją (ruch jest płynny), Android tylko
- * `keyboardDid*` — stąd dobór zdarzeń per platforma.
+ * `keyboardDid*` - stąd dobór zdarzeń per platforma.
  *
- * Sama `height` ze zdarzenia nie wystarcza na Androidzie edge-to-edge — dlaczego,
+ * Sama `height` ze zdarzenia nie wystarcza na Androidzie edge-to-edge - dlaczego,
  * i skąd bierze się druga miara, mówi `keyboardBottomOffset`.
  */
 
@@ -31,7 +31,7 @@ export function useKeyboardHeight(): number {
     const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
 
     const show = Keyboard.addListener(showEvent, (e) => {
-      // Wysokość okna czytamy przy każdym zdarzeniu, nie raz — obrót ekranu i tryb
+      // Wysokość okna czytamy przy każdym zdarzeniu, nie raz - obrót ekranu i tryb
       // wielookienny zmieniają ją bez odmontowania hooka.
       const windowHeight = Dimensions.get('window').height;
       setHeight(

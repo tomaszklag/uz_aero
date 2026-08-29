@@ -1,17 +1,17 @@
 /**
- * UZ Aero — KeyboardCollapse
+ * UZ Aero - KeyboardCollapse
  *
  * Płynnie zwija dekorację, gdy wysuwa się klawiatura (issue #54 pkt 4). Ekran kurczy
  * się o wysokość klawiatury (`Screen` + `useKeyboardHeight`), więc wyśrodkowana
- * kolumna logowania przestawała się mieścić i znak marki wjeżdżał pod status bar —
+ * kolumna logowania przestawała się mieścić i znak marki wjeżdżał pod status bar -
  * przycięty, bo górnej krawędzi nikt nie przewija. Zamiast przycinać, element oddaje
  * miejsce formularzowi: zwija się do zera (wysokość + przezroczystość) i wraca po
  * schowaniu klawiatury.
  *
- * Wysokość naturalną mierzy treść (`onLayout` na widoku, którego kontener nie ściska —
+ * Wysokość naturalną mierzy treść (`onLayout` na widoku, którego kontener nie ściska -
  * zwijana jest tylko rama z `overflow: hidden`), animacja bez `useNativeDriver`,
  * bo wysokość jest własnością układu, nie transformacji. Źródłem stanu klawiatury
- * jest wyłącznie `useKeyboardHeight` — reguły z `docs/architektura-kodu.md` §2,
+ * jest wyłącznie `useKeyboardHeight` - reguły z `docs/architektura-kodu.md` §2,
  * żadnych własnych nasłuchów zdarzeń klawiatury.
  */
 
@@ -25,7 +25,7 @@ export interface KeyboardCollapseProps {
   style?: ViewStyle;
 }
 
-/** Czas zwijania — w rytmie krótkich przejść aplikacji (pasek ActionButton: 120 ms). */
+/** Czas zwijania - w rytmie krótkich przejść aplikacji (pasek ActionButton: 120 ms). */
 const DURATION_MS = 220;
 
 export function KeyboardCollapse({ children, style }: KeyboardCollapseProps) {
@@ -46,7 +46,7 @@ export function KeyboardCollapse({ children, style }: KeyboardCollapseProps) {
       style={[
         styles.clip,
         style,
-        // Przed pierwszym pomiarem rama nie przybija wysokości — treść renderuje się
+        // Przed pierwszym pomiarem rama nie przybija wysokości - treść renderuje się
         // naturalnie i `onLayout` dopiero wtedy ma co zmierzyć.
         contentHeight != null && {
           height: progress.interpolate({ inputRange: [0, 1], outputRange: [0, contentHeight] }),

@@ -1,13 +1,13 @@
 /**
- * UZ Aero — panel: CO unieważnia ponowienie eksportu.
+ * UZ Aero - panel: CO unieważnia ponowienie eksportu.
  *
  * Test idzie przez PRAWDZIWY `QueryClient`, bez atrapy sieci i bez renderu: pytanie
  * „czy klucz A unieważnia klucz B" jest własnością kluczy, więc `mutationFn` nie musi
- * się tu w ogóle wykonać (`docs/architektura-panelu-frontend.md` §8 — nie testujemy
+ * się tu w ogóle wykonać (`docs/architektura-panelu-frontend.md` §8 - nie testujemy
  * hooków Query na zamockowanym `fetch`).
  *
  * Rzecz, którą ten plik przybija: **korzeń `exports` obejmuje TAKŻE podgląd karty
- * i historię rewizji**. To nie jest oczywiste — przy flocie taki szeroki korzeń był
+ * i historię rewizji**. To nie jest oczywiste - przy flocie taki szeroki korzeń był
  * usterką, bo pod jednym prefiksem żyły dwa pytania o różnej naturze. Tutaj wszystkie
  * trzy starzeją się od tej samej rzeczy: od wysyłki karty. Wąskie unieważnienie
  * zostawiłoby otwarty podgląd pokazujący treść sprzed regeneracji.
@@ -55,7 +55,7 @@ describe('unieważnienia po ponowieniu eksportu', () => {
     for (const key of rest) expect(invalidated(qc, key)).toBe(true);
   });
 
-  it('NIE rusza flag ani kont — ponowienie ich nie dotyka', () => {
+  it('NIE rusza flag ani kont - ponowienie ich nie dotyka', () => {
     // Ponowienie nie rozstrzyga flagi i nie omija bramki; skrzynka wygląda po nim
     // dokładnie tak samo. Odświeżanie jej sugerowałoby, że coś się w niej zmieniło.
     const qc = client();

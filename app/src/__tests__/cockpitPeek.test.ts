@@ -1,8 +1,8 @@
 /**
- * UZ Aero — test treści podglądu cudzej sesji (ekran 04b).
+ * UZ Aero - test treści podglądu cudzej sesji (ekran 04b).
  *
  * Ten ekran jest jedynym miejscem, w którym pilot ocenia CUDZY samolot przed decyzją
- * o przejęciu — a przejęcie odbiera poprzednikowi prawo zapisu (§4.4). Jedyne
+ * o przejęciu - a przejęcie odbiera poprzednikowi prawo zapisu (§4.4). Jedyne
  * zabezpieczenie przed złą decyzją to uczciwy opis wieku danych: różnica między
  * „silnik wyłączony (pobrano minutę temu)" a „silnik wyłączony (stan sprzed doby)"
  * jest tu całą informacją.
@@ -15,7 +15,7 @@
  */
 
 import {
-  LIVE_MAX_AGE_MS,
+  LIVE_MAX_AGE_MS,
   peekBanner,
   peekFreshness,
   peekLogTitle,
@@ -65,7 +65,7 @@ const snapshot: PeekSnapshot = { events: krzEvents, fetchedAt: at(9, 41) };
 const krzState: SessionState = projectSession(krzEvents);
 
 describe('stan świeżości migawki', () => {
-  it('bez migawki nie ma czego pokazać — stan „brak"', () => {
+  it('bez migawki nie ma czego pokazać - stan „brak"', () => {
     expect(peekFreshness(null, true, at(9, 41))).toBe('brak');
   });
 
@@ -118,7 +118,7 @@ describe('baner podglądu', () => {
     expect(model.warning).toContain('ostatni znany stan');
   });
 
-  it('brak: mówi wprost, że przebiegu dnia nie znamy — zamiast pustego logu', () => {
+  it('brak: mówi wprost, że przebiegu dnia nie znamy - zamiast pustego logu', () => {
     const model = peekBanner({ ...base, freshness: 'brak', fetchedAt: null, lastActivityAt: null });
     expect(model.meta).toContain('Brak danych z serwera');
     expect(model.warning).not.toBeNull();
@@ -143,19 +143,19 @@ describe('nagłówek logu', () => {
   // kilka samolotów. „Log dnia KRZ" obiecywał przekrój, którego ten ekran nie pokazuje.
   it('odwzorowuje mockup 04b: „Log SP-FGK · KRZ · UTC"', () => {
     // Bez liczb (issue #44): starty widać na samej osi, a „1 cykl" był pozostałością
-    // po modelu wielu biegów silnika — po pivocie 2026-08-10 ta liczba zawsze wynosi 1.
+    // po modelu wielu biegów silnika - po pivocie 2026-08-10 ta liczba zawsze wynosi 1.
     expect(peekLogTitle('SP-FGK', 'KRZ', krzState)).toBe('Log SP-FGK · KRZ · UTC');
   });
 
   it('bez migawki nie udaje pustej sesji', () => {
-    // Jedyny stan, który nagłówek nadal niesie — bo osi wtedy nie ma czym zapełnić,
+    // Jedyny stan, który nagłówek nadal niesie - bo osi wtedy nie ma czym zapełnić,
     // a puste miejsce po logu czyta się jak „pilot nic nie zrobił".
     expect(peekLogTitle('SP-FGK', 'KRZ', null)).toBe('Log SP-FGK · KRZ · UTC · brak danych');
   });
 });
 
 describe('chip stanu', () => {
-  it('po zamkniętym cyklu: ziemia, silnik wyłączony — zawsze z adnotacją „wg serwera"', () => {
+  it('po zamkniętym cyklu: ziemia, silnik wyłączony - zawsze z adnotacją „wg serwera"', () => {
     expect(peekStatusChip(krzState)).toEqual({
       label: 'Ground · silnik wyłączony · wg serwera',
       tone: 'neutral',
@@ -167,13 +167,13 @@ describe('chip stanu', () => {
     expect(peekStatusChip(running).label).toContain('Running');
   });
 
-  it('otwarty lot bije otwarty cykl — pilot ma wiedzieć, że samolot jest w powietrzu', () => {
+  it('otwarty lot bije otwarty cykl - pilot ma wiedzieć, że samolot jest w powietrzu', () => {
     const airborne = projectSession(krzEvents.slice(0, 3));
     expect(peekStatusChip(airborne)).toEqual({ label: 'W powietrzu · wg serwera', tone: 'blue' });
   });
 
   it('sesja zamknięta mówi o SAMOLOCIE, nie o dniu poprzednika', () => {
-    // §3.6a: `day_close` zdaje MASZYNĘ i nie kończy dnia pilota — KRZ może za chwilę
+    // §3.6a: `day_close` zdaje MASZYNĘ i nie kończy dnia pilota - KRZ może za chwilę
     // wziąć drugi samolot. Napis „Dzień zamknięty" mówił o cudzej służbie coś, czego
     // ten strumień nie wie, i to na ekranie, którego tematem jest jedna maszyna.
     const released = projectSession([
@@ -198,7 +198,7 @@ describe('przejęcie samolotu z podglądu (issue #12)', () => {
     expect(takeoverWarning('live', 'KRZ')).toContain('KRZ');
   });
 
-  it('offline mówi wprost, że przejęcie DZIAŁA — claim jest optymistyczny (§4.4)', () => {
+  it('offline mówi wprost, że przejęcie DZIAŁA - claim jest optymistyczny (§4.4)', () => {
     expect(takeoverWarning('cache', 'KRZ')).toContain('bez sieci');
     expect(takeoverWarning('brak', 'KRZ')).toContain('bez sieci');
   });
@@ -211,7 +211,7 @@ describe('przejęcie samolotu z podglądu (issue #12)', () => {
     const hint = takeoverHint('SP-FGK');
     expect(hint).toContain('SP-FGK');
     // „nowego lotu", nie „preflightu": flow nazywa się tak, jak przycisk na 01
-    // („ROZPOCZNIJ LOT", decyzja 2026-08-12) — słowo „przejęcie" zostało wyłącznie
+    // („ROZPOCZNIJ LOT", decyzja 2026-08-12) - słowo „przejęcie" zostało wyłącznie
     // przy odbieraniu maszyny INNEMU pilotowi, czyli przy samym przycisku wyżej.
     expect(hint).toContain('nowego lotu');
     expect(hint).toContain('po potwierdzeniu');

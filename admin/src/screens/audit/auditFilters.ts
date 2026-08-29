@@ -1,8 +1,8 @@
 /**
- * UZ Aero — panel: FILTRY DZIENNIKA AUDYTU ↔ query string (moduł CZYSTY).
+ * UZ Aero - panel: FILTRY DZIENNIKA AUDYTU ↔ query string (moduł CZYSTY).
  *
  * Filtry mieszkają w URL-u, nie w stanie komponentu
- * (`docs/architektura-panelu-frontend.md` §4.4) — i akurat na tym ekranie to nie jest
+ * (`docs/architektura-panelu-frontend.md` §4.4) - i akurat na tym ekranie to nie jest
  * wygoda, tylko WYMAGANIE. Ekran korekty obiecuje „ślad w audycie → A09", a karta dnia
  * odsyła do śladu konkretnej flagi; obie drogi prowadzą do dziennika ODFILTROWANEGO
  * po obiekcie. Filtr trzymany w `useState` uczyniłby z tych linków wejście na surową
@@ -10,7 +10,7 @@
  *
  * ══ JEDEN PARAMETR NA PASEK AKCJI, DWA ZNACZENIA ══
  * `?akcje=konta` to GRUPA (cztery kody katalogu), `?akcje=flag.resolve` to POJEDYNCZY
- * kod. Jeden parametr, bo dla człowieka to jedno pytanie — „czego dotyczyła zmiana" —
+ * kod. Jeden parametr, bo dla człowieka to jedno pytanie - „czego dotyczyła zmiana" -
  * a dwa parametry pozwalałyby zadać je dwa razy naraz i wymagałyby reguły rozstrzygania,
  * której nikt by nie pamiętał. Wartość nieznana jest POMIJANA: adres z literówką ma
  * pokazać pełny dziennik, a nie stronę błędu.
@@ -29,11 +29,11 @@ export type SortDirection = 'asc' | 'desc';
 
 export interface AuditFilter {
   scope: AuditScope | null;
-  /** Identyfikator konta działającego — dopasowanie DOKŁADNE, nie po nazwisku. */
+  /** Identyfikator konta działającego - dopasowanie DOKŁADNE, nie po nazwisku. */
   actor: string | null;
   /** Typ obiektu (`flag`, `event`, `pilot`, `aircraft`, `sheet`). */
   targetType: string | null;
-  /** Identyfikator obiektu — to jest wejście z kontekstem z `A02a` i `A02b`. */
+  /** Identyfikator obiektu - to jest wejście z kontekstem z `A02a` i `A02b`. */
   targetId: string | null;
   /** Dzień UTC `YYYY-MM-DD` włącznie; `null` = bez ograniczenia zakresu. */
   from: string | null;
@@ -42,7 +42,7 @@ export interface AuditFilter {
 }
 
 /**
- * Domyślnie BEZ zawężenia i najnowsze na górze — jak nagłówek „Czas · UTC ↓"
+ * Domyślnie BEZ zawężenia i najnowsze na górze - jak nagłówek „Czas · UTC ↓"
  * w mockupie. Panel nie ustawia domyślnego zakresu dat: ukryte zawężenie do ostatniego
  * tygodnia sprawiłoby, że kafel „wpisy w zawężeniu" i pusta lista mówiłyby o czymś,
  * czego nie widać w adresie.
@@ -66,7 +66,7 @@ export const AUDIT_PAGE_LIMIT = 50;
 const isSort = (value: string | null): value is SortDirection =>
   value === 'asc' || value === 'desc';
 
-/** `YYYY-MM-DD` i nic innego — wpis nieczytelny traktujemy jak brak filtra. */
+/** `YYYY-MM-DD` i nic innego - wpis nieczytelny traktujemy jak brak filtra. */
 const isDay = (value: string | null): value is string =>
   value != null && /^\d{4}-\d{2}-\d{2}$/.test(value);
 
@@ -103,7 +103,7 @@ export function filterFromParams(params: URLSearchParams): AuditFilter {
 
 /**
  * Filtr → query string. Wartości domyślne POMIJAMY, żeby adres pełnego dziennika był
- * po prostu `#/audyt` — link, który da się przeczytać i przepisać.
+ * po prostu `#/audyt` - link, który da się przeczytać i przepisać.
  */
 export function paramsFromFilter(filter: AuditFilter): Record<string, string> {
   const params: Record<string, string> = {};
@@ -118,7 +118,7 @@ export function paramsFromFilter(filter: AuditFilter): Record<string, string> {
 }
 
 /**
- * Adres ekranu dla danego filtra — JEDNO miejsce, w którym powstaje link do audytu.
+ * Adres ekranu dla danego filtra - JEDNO miejsce, w którym powstaje link do audytu.
  *
  * Używają go: kolumna „Kto" (zawęź do tego konta), plakietka akcji, karta dnia
  * (`A02a`, ślad flagi) i szuflada korekty (`A02b`, ślad zdarzenia). Rozjazd między
@@ -139,13 +139,13 @@ export function targetHref(targetType: string, targetId: string): string {
  *
  * ══ DLACZEGO FUNKCJA, A NIE NAPIS W EKRANIE ══
  * Do 2026-08-02 `A11` składał ten adres u siebie i wychodziło mu `?akcja=konserwacja`
- * — w liczbie pojedynczej. Filtr czyta `akcje`, więc parametr był PO CICHU pomijany
+ * - w liczbie pojedynczej. Filtr czyta `akcje`, więc parametr był PO CICHU pomijany
  * (`filterFromParams` traktuje nieznaną wartość jak jej brak) i oba linki „Ślad akcji
  * w audycie" prowadziły na pełną listę wszystkich akcji panelu pod etykietą zawężenia.
  * Ani kompilator, ani żaden test nie miał jak tego zobaczyć: literówka w napisie nie
  * jest błędem typów.
  *
- * Poprawienie samej literówki wróciłoby przy następnym ekranie. Ta funkcja nie wróci —
+ * Poprawienie samej literówki wróciłoby przy następnym ekranie. Ta funkcja nie wróci -
  * i dlatego link do audytu powstaje TYLKO tutaj, tak jak zapowiada nagłówek pliku.
  */
 export function groupHref(id: AuditGroupId): string {
@@ -160,7 +160,7 @@ export function actionsOf(scope: AuditScope | null): AdminAction[] | undefined {
 
 /**
  * Filtr ekranu → parametry trasy. Zakres dat jedzie jako DZIEŃ (`YYYY-MM-DD`), bo tak
- * przyjmuje go trasa — a górną granicę domyka serwer do końca doby, żeby „od 25 do 31"
+ * przyjmuje go trasa - a górną granicę domyka serwer do końca doby, żeby „od 25 do 31"
  * nie gubiło ostatniego dnia.
  */
 export function auditListQuery(filter: AuditFilter): AuditListQuery {
@@ -177,7 +177,7 @@ export function auditListQuery(filter: AuditFilter): AuditListQuery {
   };
 }
 
-/** Czy filtr cokolwiek zawęża — pusta lista mówi wtedy co innego (`auditPages`). */
+/** Czy filtr cokolwiek zawęża - pusta lista mówi wtedy co innego (`auditPages`). */
 export function isNarrowed(filter: AuditFilter): boolean {
   return (
     filter.scope != null ||

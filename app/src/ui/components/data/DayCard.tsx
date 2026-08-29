@@ -1,21 +1,21 @@
 /**
- * UZ Aero — DayCard (`.day-card` z mockupów 12 i 01)
+ * UZ Aero - DayCard (`.day-card` z mockupów 12 i 01)
  *
  * Karta SESJI: nagłówek display + samolot, godziny biegu silnika, rząd statystyk,
  * opcjonalna stopka z tagami i pas akcji.
  *
  * JEDEN KOMPONENT NA OBA EKRANY (issue #42, 2026-08-13): „Poprzednie dni" (12) i „Mój
  * dzień" (01). Do 2026-08-13 ekran domowy rysował te same trzy wielkości własną tabelą
- * `.leg-row` — dwa układy jednej rzeczy w aplikacji, która ma ich w sumie kilkanaście.
+ * `.leg-row` - dwa układy jednej rzeczy w aplikacji, która ma ich w sumie kilkanaście.
  * Stąd `title` zamiast `date`: nagłówkiem jest data (12, kafelki z różnych dni) albo
  * numer sesji w dobie (01, gdzie data stoi w nagłówku ekranu).
  *
- * Dwa warianty pasa: `editable` (sesja w oknie korekty) jest niebieski — kolor
+ * Dwa warianty pasa: `editable` (sesja w oknie korekty) jest niebieski - kolor
  * informacyjny, bo korekta to opcja, a nie następny krok procedury; wariant neutralny
  * to PODGLĄD sesji po oknie (issue #35 pkt 2) ORAZ cała lista na 01, gdzie wszystkie
  * sesje są w oknie i błękit przy każdej przestałby cokolwiek znaczyć (ta sama reguła,
- * dla której SyncChip online nie rysuje nic — issue #12). Kartę bez pasa też wolno
- * kliknąć, ale pas mówi wprost, co się stanie — bez niego karta wygląda na martwą.
+ * dla której SyncChip online nie rysuje nic - issue #12). Kartę bez pasa też wolno
+ * kliknąć, ale pas mówi wprost, co się stanie - bez niego karta wygląda na martwą.
  */
 
 import React from 'react';
@@ -37,18 +37,18 @@ export interface DayCardProps {
   /** Rząd statystyk (Loty / Blok / Lot). */
   stats: { k: string; v: string }[];
   /**
-   * Plakietka przy tytule — dziś wyłącznie „RĘCZNIE" dla sesji wpisanej po fakcie
+   * Plakietka przy tytule - dziś wyłącznie „RĘCZNIE" dla sesji wpisanej po fakcie
    * (ekran 15, decyzja 2026-08-16). Przy tytule, bo mówi o CAŁEJ sesji; wiersze osi
    * znaczników nie dostają (issue #40 pkt 6).
    */
   titleTag?: string;
   /** Stopka: tagi stanu i przypisy. Pominięta = karta kończy się na statystykach. */
   foot?: React.ReactNode;
-  /** Sesja w oknie korekty — niebieska ramka i niebieski pas akcji. */
+  /** Sesja w oknie korekty - niebieska ramka i niebieski pas akcji. */
   editable?: boolean;
   /** Etykieta pasa akcji; bez niej pasa nie ma. */
   ctaLabel?: string;
-  /** Ikona pasa akcji — ołówek dla korekty, oko dla podglądu. */
+  /** Ikona pasa akcji - ołówek dla korekty, oko dla podglądu. */
   ctaIcon?: IconName;
   onPress?: () => void;
   style?: ViewStyle;
@@ -132,7 +132,7 @@ export function DayCard({
         ))}
       </View>
 
-      {/* Stopka tylko wtedy, gdy ma co powiedzieć — pusty pas z kreską nad nim wygląda
+      {/* Stopka tylko wtedy, gdy ma co powiedzieć - pusty pas z kreską nad nim wygląda
           jak treść, która się nie doczytała (issue #35 pkt 3 i 4 zabrały jej oba
           domyślne tagi: „Wysłane" i „Okno minęło"). */}
       {foot != null && (
@@ -163,7 +163,7 @@ export function DayCard({
             color={editable ? blue.accent : theme.colors.textSecondary}
           />
           {/* `buttonSmall`, nie `display` z ręcznym rozmiarem: to token etykiety
-              przycisku (Bebas 16 / ls 2) — dokładnie ten, którym pisze `ActionButton`
+              przycisku (Bebas 16 / ls 2) - dokładnie ten, którym pisze `ActionButton`
               w rozmiarze `md`, czyli przyciski pod listą na 01. Liczby są te same, co
               wpisane wcześniej ręcznie; nazwa mówi, dlaczego akurat te (issue #42). */}
           <AppText
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
   top: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 10 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 },
   title: { fontSize: 21, lineHeight: 22, letterSpacing: 1.5 },
-  // Plakietka-przypis: mały mono w ramce, bez wypełnienia — fakt o pochodzeniu
+  // Plakietka-przypis: mały mono w ramce, bez wypełnienia - fakt o pochodzeniu
   // zapisu, nie stan ostrzegawczy, więc bez amber.
   titleTag: {
     fontSize: 7.5,
@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   aircraft: { fontSize: 11, letterSpacing: 1.5 },
-  /** `.day-times` — dosunięte do daty ujemnym marginesem, tak jak w mockupie. */
+  /** `.day-times` - dosunięte do daty ujemnym marginesem, tak jak w mockupie. */
   times: { fontSize: 10, lineHeight: 13, letterSpacing: 0.5, marginTop: -5 },
   stats: { flexDirection: 'row', gap: 14, flexWrap: 'wrap' },
   stat: { gap: 2 },

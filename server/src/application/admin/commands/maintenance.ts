@@ -1,32 +1,32 @@
 /**
- * UZ Aero (serwer) — operacje serwisowe, które ZMIENIAJĄ stan (`A11-konserwacja.html`).
+ * UZ Aero (serwer) - operacje serwisowe, które ZMIENIAJĄ stan (`A11-konserwacja.html`).
  *
  * Dwie komendy i dwie różne natury ryzyka:
  *
- *  1. **Przebudowa projekcji `sessions`** — odwracalna z definicji. `sessions` nie jest
+ *  1. **Przebudowa projekcji `sessions`** - odwracalna z definicji. `sessions` nie jest
  *     źródłem prawdy, tylko zrzutem `projectSession(events)`, więc każdy jej wiersz da
  *     się odtworzyć; skasowanie całej tabeli też nie zniszczyłoby informacji. Ryzyko
  *     leży w tym, CO ROBIMY Z WYNIKIEM PORÓWNANIA: niezerowa różnica to INCYDENT, a nie
- *     zadanie do sprzątnięcia — projekcja jest odświeżana w tej samej transakcji, w której
+ *     zadanie do sprzątnięcia - projekcja jest odświeżana w tej samej transakcji, w której
  *     przyjmujemy zdarzenia, więc w normalnej pracy różnicy być NIE MOŻE. Zapis wyrówna
  *     liczby i tym samym skasuje jedyny ślad po tym, co je rozjechało. Stąd wymóg powodu.
- *  2. **Sprzątanie wygasłych refresh tokenów** — jedyna operacja panelu, która naprawdę
+ *  2. **Sprzątanie wygasłych refresh tokenów** - jedyna operacja panelu, która naprawdę
  *     KASUJE dane. Stąd wymóg jawnego potwierdzenia W ŻĄDANIU (nie tylko w przeglądarce)
  *     i predykat `expires_at <= at` po stronie SQL-a.
  *
  * ══ CZEGO TU NIE MA ══
  * **Trybu `dry_run`.** Porównanie bez zapisu jest ZAPYTANIEM (`queries/maintenance.ts`)
- * i nie ma prawa dopisywać do `admin_audit` — dziennik nadzoru nie może opisywać rzeczy,
+ * i nie ma prawa dopisywać do `admin_audit` - dziennik nadzoru nie może opisywać rzeczy,
  * które się nie wydarzyły. Ocena jest wspólna (`../projectionScan.ts`), więc podgląd
  * i zapis nie mogą powiedzieć dwóch różnych rzeczy o tej samej bazie.
  *
- * **Ponowienia eksportu.** Kolejka na `A11` używa `AdminExportCommands.retry` z `A05` —
+ * **Ponowienia eksportu.** Kolejka na `A11` używa `AdminExportCommands.retry` z `A05` -
  * druga implementacja tej samej operacji byłaby gorsza niż brak drugiego przycisku.
  *
  * **Uruchamiania migracji.** Schemat wprowadza `migrate()` przy starcie serwera:
  * wdrożenie schematu jest wydaniem, nie akcją administratora.
  *
- * Konstruktor bez `Database`/`Queryable` — komenda nie ma jak zapisać z pominięciem
+ * Konstruktor bez `Database`/`Queryable` - komenda nie ma jak zapisać z pominięciem
  * śladu audytu (`auditedWrite.ts`, `test/architecture.test.ts`).
  */
 
@@ -38,14 +38,14 @@ import type { Actor, MaintenanceAdminPort } from '../ports.ts';
 import { scanProjections } from '../projectionScan.ts';
 
 /**
- * Uchwyt do bazy TAKI, JAKI WRĘCZA `AuditedWrite` — typ wyprowadzony z jego sygnatury,
+ * Uchwyt do bazy TAKI, JAKI WRĘCZA `AuditedWrite` - typ wyprowadzony z jego sygnatury,
  * a nie zaimportowany z portów.
  *
  * Różnica jest merytoryczna, nie kosmetyczna. Komenda panelu nie ma prawa znać bazy
  * „skądinąd": `test/architecture.test.ts` wywala się, gdy plik w `commands/` importuje
  * `Database` albo `Queryable`, bo to jest druga połowa mechanizmu audytu (pierwsza to
  * `Audited<T>` wymuszony typem). Rozbicie długiej pętli na metody wymaga jednak nazwania
- * tego, co dostaliśmy WEWNĄTRZ bramy — i taki właśnie jest ten typ: „to, co wręczył
+ * tego, co dostaliśmy WEWNĄTRZ bramy - i taki właśnie jest ten typ: „to, co wręczył
  * `AuditedWrite`", a nie „baza".
  */
 type AuditedTx = Parameters<Parameters<AuditedWrite['run']>[1]>[0];
@@ -60,17 +60,17 @@ export interface RebuildInput {
 
 export type RebuildOutcome =
   | { ok: true; report: RebuildReport }
-  /** Zapis bez uzasadnienia — wada ŻĄDANIA, nie stanu świata. */
+  /** Zapis bez uzasadnienia - wada ŻĄDANIA, nie stanu świata. */
   | { ok: false; reason: 'reason_required' }
   /**
-   * Nie ma ani jednej różnicy — więc nie ma operacji.
+   * Nie ma ani jednej różnicy - więc nie ma operacji.
    *
    * ══ TO NIE JEST NADGORLIWOŚĆ, TYLKO TA SAMA ZASADA, CO PRZY PODGLĄDZIE ══
    * Nadpisanie zera wierszy niczego nie zmienia, a przechodząc przez `AuditedWrite`
-   * zostawiałoby w `admin_audit` wpis „administrator przebudował projekcję" — czyli
+   * zostawiałoby w `admin_audit` wpis „administrator przebudował projekcję" - czyli
    * dziennik nadzoru opisywałby rzecz, która się nie wydarzyła. Dokładnie z tego
    * powodu podgląd korekty (`A02b`) i porównanie projekcji nie idą przez bramę
-   * audytu. Odmowa jest wariantem stanu ŚWIATA, nie wadą żądania — stąd 409 na trasie.
+   * audytu. Odmowa jest wariantem stanu ŚWIATA, nie wadą żądania - stąd 409 na trasie.
    *
    * Realny scenariusz, który to wywołuje: drugie kliknięcie „Nadpisz" zaraz po
    * pierwszym, udanym. Pierwsze wyrównało liczby, drugie nie ma czego wyrównać.
@@ -79,7 +79,7 @@ export type RebuildOutcome =
 
 /**
  * Sygnał przerwania transakcji. Musi być WYJĄTKIEM, bo tylko wyjątek wycofuje
- * transakcję `AuditedWrite.run` — zwrócenie wartości zostawiłoby wpis audytu
+ * transakcję `AuditedWrite.run` - zwrócenie wartości zostawiłoby wpis audytu
  * o operacji, która się nie zdarzyła (wzorzec `commands/flags.ts`). Poza ten plik
  * nie wychodzi: `rebuildProjections` łapie go i zamienia na wariant wyniku.
  */
@@ -89,7 +89,7 @@ class NothingToRebuild extends Error {}
  * Jawne wyrażenie intencji, którego serwer wymaga przy jedynej operacji kasującej dane.
  *
  * ══ DLACZEGO SERWER, A NIE SAM PANEL ══
- * Mockup każe wpisać słowo w formularzu — i to jest bramka dla CZŁOWIEKA. Bramka dla
+ * Mockup każe wpisać słowo w formularzu - i to jest bramka dla CZŁOWIEKA. Bramka dla
  * MASZYNY musi stać po stronie serwera, z tego samego powodu, dla którego rola nie
  * siedzi w tokenie: „panel bramkuje" znaczy „nie bramkuje nic", bo `POST` da się wysłać
  * bez panelu. Gołe żądanie bez tego pola jest odrzucane.
@@ -106,7 +106,7 @@ export interface PruneTokensInput {
 
 export type PruneTokensOutcome =
   | { ok: true; report: TokenPurgeReport }
-  /** Brak jawnej intencji w żądaniu — wada ŻĄDANIA, nie stanu świata. */
+  /** Brak jawnej intencji w żądaniu - wada ŻĄDANIA, nie stanu świata. */
   | { ok: false; reason: 'confirmation_required' };
 
 /**
@@ -131,7 +131,7 @@ export class AdminMaintenanceCommands {
    * Różnice liczymy PONOWNIE, a nie przyjmujemy z podglądu, i to nie jest nadmiarowa
    * praca: między porównaniem a decyzją człowieka mija czas, w którym telefony dosyłają
    * paczki. Raport z podglądu opisywałby wtedy świat sprzed kilku minut, a wpis w audycie
-   * — nadpisanie, którego nie było. Wołający dostaje liczby z chwili ZAPISU.
+   * - nadpisanie, którego nie było. Wołający dostaje liczby z chwili ZAPISU.
    */
   async rebuildProjections(actor: Actor, input: RebuildInput = {}): Promise<RebuildOutcome> {
     const reason = input.reason?.trim() ?? '';
@@ -145,7 +145,7 @@ export class AdminMaintenanceCommands {
           result,
           audit: {
             action: 'maintenance.rebuild_projections' as const,
-            // Celem jest CAŁA projekcja, nie pojedynczy wiersz — `targetId: null` mówi
+            // Celem jest CAŁA projekcja, nie pojedynczy wiersz - `targetId: null` mówi
             // to wprost, zamiast udawać, że akcja dotyczyła którejś sesji.
             targetType: 'projection',
             targetId: null,
@@ -156,7 +156,7 @@ export class AdminMaintenanceCommands {
               fieldsDiffering: result.fieldsDiffering,
               written: result.written,
               // Ile sesji ZOSTAŁO na kolejny przebieg. Dziennik ma powiedzieć, że
-              // ta przebudowa była częściowa — inaczej wpis „nadpisano 200" przy
+              // ta przebudowa była częściowa - inaczej wpis „nadpisano 200" przy
               // 1291 rozjechanych wierszach czytałoby się jak komplet.
               remaining: result.remaining,
               sessionUuids: result.diffs.slice(0, AUDIT_UUID_LIMIT).map((d) => d.sessionUuid),
@@ -177,7 +177,7 @@ export class AdminMaintenanceCommands {
    * Przeliczenie całego rejestru i nadpisanie wierszy, które się rozjechały.
    *
    * Nadpisujemy DOKŁADNIE te sesje, które opisuje raport (`scan.diffs`, najwyżej
-   * `PROJECTION_DIFF_LIMIT`) — ani jednej więcej. Dzięki temu „co zapisano" i „co
+   * `PROJECTION_DIFF_LIMIT`) - ani jednej więcej. Dzięki temu „co zapisano" i „co
    * widać w raporcie" jest jedną listą, a `remaining` znaczy jednocześnie „czego
    * raport nie wypisał" i „czego ten przebieg nie ruszył". Uzasadnienie samego
    * limitu stoi przy stałej (`../projectionScan.ts`).
@@ -210,27 +210,27 @@ export class AdminMaintenanceCommands {
   }
 
   /**
-   * Nadpisanie JEDNEGO wiersza — z blokadą advisory i PONOWNYM odczytem strumienia.
+   * Nadpisanie JEDNEGO wiersza - z blokadą advisory i PONOWNYM odczytem strumienia.
    *
    * ══ KOLEJNOŚĆ JEST CAŁĄ TREŚCIĄ TEJ METODY ══
    * Blokada idzie PRZED odczytem, w tej samej transakcji. Bez tego przebudowa mogłaby
    * wyścignąć się z paczką, którą właśnie dosyła telefon: nasz strumień byłby sprzed jej
-   * przyjęcia, a `upsert` cofnąłby liczby dnia PO CICHU — czyli narzędzie do wykrywania
+   * przyjęcia, a `upsert` cofnąłby liczby dnia PO CICHU - czyli narzędzie do wykrywania
    * dryfu samo by go tworzyło. To ta sama blokada i ten sam klucz (`hashtext(session_uuid)`),
    * co w `IngestCommands` i `AdminCorrectionCommands`, więc obie strony ustawiają się
    * w jednej kolejce.
    *
-   * Blokujemy WYŁĄCZNIE sesje faktycznie nadpisywane — blokada na każdą sesję w bazie
+   * Blokujemy WYŁĄCZNIE sesje faktycznie nadpisywane - blokada na każdą sesję w bazie
    * trzymałaby tysiące wpisów do końca transakcji, czyli zatrzymywałaby ingest na czas
    * całego skanu. Samych nadpisywanych też nie może być dowolnie wiele: liczbę ogranicza
    * `PROJECTION_DIFF_LIMIT`, bo scenariusz, dla którego ta funkcja powstała (kolumny
-   * dołożone migracją, zmiana reguły liczenia), rozjeżdża WSZYSTKIE sesje naraz —
+   * dołożone migracją, zmiana reguły liczenia), rozjeżdża WSZYSTKIE sesje naraz -
    * uzasadnienie limitu stoi przy stałej.
    *
    * **Ograniczenie testowe, nazwane zamiast udawanego pokrycia:** PGlite ma JEDNO
    * połączenie, więc prawdziwej równoległości nie odtworzy i żaden test nie zobaczy tu
    * wyścigu. Testowalna jest kolejność (blokada przed odczytem, oba w jednej transakcji)
-   * i tyle test przybija — dokładnie jak przy `ExportLogPort.lock` i `uq_export_log_card_revision`.
+   * i tyle test przybija - dokładnie jak przy `ExportLogPort.lock` i `uq_export_log_card_revision`.
    */
   private async rewrite(tx: AuditedTx, sessionUuid: string): Promise<boolean> {
     await tx.query('SELECT pg_advisory_xact_lock(hashtext($1))', [sessionUuid]);
@@ -241,11 +241,11 @@ export class AdminMaintenanceCommands {
   }
 
   /**
-   * Sprzątanie wygasłych refresh tokenów — JEDYNA operacja panelu, która kasuje dane.
+   * Sprzątanie wygasłych refresh tokenów - JEDYNA operacja panelu, która kasuje dane.
    *
    * ══ CO TRAFIA DO DZIENNIKA, A CO NIGDY ══
    * Do `admin_audit.details` idzie liczba skasowanych wierszy i zakres dat wygaśnięcia
-   * — nigdy same tokeny. Nie ma czego zapisać (w bazie leżą wyłącznie skróty SHA-256,
+   * - nigdy same tokeny. Nie ma czego zapisać (w bazie leżą wyłącznie skróty SHA-256,
    * a wartości nie zna nawet serwer), ale reguła obowiązuje niezależnie od tego, co
    * akurat leży w kolumnie: `A09` wymienia tokeny na liście rzeczy, które nie opuszczają
    * swojej tabeli. To ta sama granica, co przy haśle startowym w `commands/pilots.ts`.

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 02H Nowy lot · Rezygnacja („wstecz" z formularza)</title>
+<title>UZ Aero - 02H Nowy lot · Rezygnacja („wstecz" z formularza)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -158,9 +158,9 @@
   }
 
   /* ===== ARKUSZ REZYGNACJI =====
-     Tokeny 1:1 z arkusza blokady wyjścia z kokpitu (04D) — ten sam prymityw
+     Tokeny 1:1 z arkusza blokady wyjścia z kokpitu (04D) - ten sam prymityw
      `.modal-overlay` / `.modal-sheet`, inna treść i inny ton potwierdzenia:
-     bursztyn zamiast czerwieni, bo nic się nie psuje — pilot po prostu odkłada
+     bursztyn zamiast czerwieni, bo nic się nie psuje - pilot po prostu odkłada
      start na później, a do rejestru nie trafiło jeszcze nic. */
   .modal-overlay { position:absolute; inset:0; z-index:50; background:rgba(0,0,0,0.72); display:flex; flex-direction:column; justify-content:flex-end; }
   .modal-sheet { background:var(--surface-raised); border-radius:24px 24px 0 0; padding:18px 18px 30px; display:flex; flex-direction:column; gap:13px; border-top:1px solid var(--border-strong); max-height:calc(100% - 56px); overflow-y:auto; }
@@ -172,7 +172,7 @@
   .btn-cancel { display:flex; align-items:center; justify-content:center; padding:14px; border-radius:14px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text-secondary); font-family:var(--font-display); font-size:16px; letter-spacing:2px; text-decoration:none; cursor:pointer; }
   .btn-abandon { display:flex; align-items:center; justify-content:center; gap:8px; padding:14px; border-radius:14px; border:none; background:var(--amber); color:#0D0D0D; font-family:var(--font-display); font-size:16px; letter-spacing:2px; text-decoration:none; cursor:pointer; box-shadow:0 0 20px rgba(243,156,18,0.25); }
 
-  /* ===== VARIANTS PANEL (canvas — skróty do wariantów ekranu) ===== */
+  /* ===== VARIANTS PANEL (canvas - skróty do wariantów ekranu) ===== */
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
   .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
   .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; transition:all .15s; }
@@ -190,12 +190,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 02H</span>
+  <span class="film-strip">UZ AERO - 02H</span>
   <span class="slug">nowy lot · rezygnacja („wstecz")</span>
   <span class="canvas-meta"><span class="pulse"></span>Wariant 02</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Rezygnacja z nowego lotu">
+<main class="phone" role="region" aria-label="Mockup - Rezygnacja z nowego lotu">
   <div class="status-bar">
     <span>9:41</span>
     <span class="status-right">
@@ -207,7 +207,7 @@
 
   <div class="screen">
     <!-- KIEDY TEN ARKUSZ (issue #55 pkt 3): pilot nacisnął sprzętowy „wstecz" (albo
-         cofnął gestem krawędziowym) na kroku 1, a formularz NIE jest pusty — jest już
+         cofnął gestem krawędziowym) na kroku 1, a formularz NIE jest pusty - jest już
          wybrany samolot albo drugi pilot. Ta sama mechanika co blokada kokpitu (04D):
          `usePreventRemove`, więc gest i przycisk łapią się tak samo.
 
@@ -215,12 +215,12 @@
          „na pewno rezygnujesz?" nad niewypełnionym formularzem pytałby o zgodę na nic.
 
          POTWIERDZENIE CZYŚCI SZKIC: następne wejście w „ROZPOCZNIJ LOT" zaczyna od
-         nowa — bez zapamiętanego samolotu i Duala. To druga połowa tej samej decyzji:
+         nowa - bez zapamiętanego samolotu i Duala. To druga połowa tej samej decyzji:
          skoro rezygnacja przepada świadomie (jest arkusz), wolno jej naprawdę przepaść;
          wcześniej porzucony formularz wracał z cudzym stanem sprzed godziny i czytał
          się jak podpowiedź, którą nie był.
 
-         Bursztyn, nie czerwień: nic się nie psuje i nic nie znika z rejestru — do
+         Bursztyn, nie czerwień: nic się nie psuje i nic nie znika z rejestru - do
          rejestru nie trafiło jeszcze nic (zapis robi dopiero „ROZPOCZNIJ LOT" na 02A). -->
     <div class="app-header">
       <div class="header-left">
@@ -290,11 +290,11 @@
         </div>
 
         <!-- BANERA TU NIE MA (uwaga z urządzenia, 2026-08-29). Stało tu zdanie „Do
-             rejestru nie trafiło jeszcze nic — zapis robi dopiero «ROZPOCZNIJ LOT».
+             rejestru nie trafiło jeszcze nic - zapis robi dopiero «ROZPOCZNIJ LOT».
              Po rezygnacji formularz zaczyna następnym razem od nowa": „nic nie wnosi
              i zamiast tłumaczyć stawia jeszcze więcej pytań".
 
-             Słusznie — opowiadało o REJESTRZE komuś, kto chce tylko wyjść z formularza,
+             Słusznie - opowiadało o REJESTRZE komuś, kto chce tylko wyjść z formularza,
              a przy okazji podsuwało myśl, że coś jednak mogło się zapisać. Ta sama
              kategoria przypisów, którą issue #43 wyrzuciło z arkuszy korekty
              („korekta nie kasuje historii…", „wiersz zostaje w rejestrze").
@@ -311,7 +311,7 @@
         </div>
         <!-- PODPISU POD AKCJAMI TEŻ NIE MA (2026-08-29, ta sama uwaga co baner wyżej).
              Stało tu „Tapnięcie w tło albo «wstecz» jeszcze raz zostawia Cię
-             w formularzu" — zdanie o ZACHOWANIU APLIKACJI, nie odpowiedź na pytanie
+             w formularzu" - zdanie o ZACHOWANIU APLIKACJI, nie odpowiedź na pytanie
              pilota. Bezpieczne wyjście jest w arkuszu domyślne i pilot i tak je odkryje
              pierwszym tapnięciem obok; pisanie o nim zajmowało trzecią linię w arkuszu,
              którego całą treścią jest jedno pytanie. „ZOSTAŃ" mówi to samo, przyciskiem. -->
@@ -321,33 +321,33 @@
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Warianty kroku 1 (samolot i załoga) — kiedy który?</div>
+  <div class="vp-title">Warianty kroku 1 (samolot i załoga) - kiedy który?</div>
   <a class="vp-item" href="02-preflight.html">
     <span class="vp-badge">02</span>
     <span class="vp-body">
       <span class="vp-name">Online</span>
-      <span class="vp-when">Jest sieć — stany claim i dane referencyjne na żywo z serwera. Bez plakietki łączności: online jest stanem domyślnym.</span>
+      <span class="vp-when">Jest sieć - stany claim i dane referencyjne na żywo z serwera. Bez plakietki łączności: online jest stanem domyślnym.</span>
     </span>
   </a>
   <a class="vp-item" href="02d-preflight-offline.html">
     <span class="vp-badge amber">02D</span>
     <span class="vp-body">
-      <span class="vp-name">Offline — dane z cache</span>
-      <span class="vp-when">Brak sieci — lista samolotów i claimy z ostatniej synchronizacji (adnotacja wieku); chip OFFLINE ze stemplem ostatniego synca.</span>
+      <span class="vp-name">Offline - dane z cache</span>
+      <span class="vp-when">Brak sieci - lista samolotów i claimy z ostatniej synchronizacji (adnotacja wieku); chip OFFLINE ze stemplem ostatniego synca.</span>
     </span>
   </a>
   <a class="vp-item" href="02g-preflight-brak-floty.html">
     <span class="vp-badge amber">02G</span>
     <span class="vp-body">
       <span class="vp-name">Brak floty w pamięci</span>
-      <span class="vp-when">Cache referencyjny przeczytany i pusty — zamiast formularza warning na cały ekran, bez DALEJ.</span>
+      <span class="vp-when">Cache referencyjny przeczytany i pusty - zamiast formularza warning na cały ekran, bez DALEJ.</span>
     </span>
   </a>
   <a class="vp-item active" href="02h-preflight-rezygnacja.html">
     <span class="vp-badge blue">02H</span>
     <span class="vp-body">
       <span class="vp-name">Rezygnacja z nowego lotu</span>
-      <span class="vp-when">„Wstecz" z kroku 1 przy niepustym formularzu (wybrany samolot albo Dual). Potwierdzenie wychodzi na 01 i CZYŚCI szkic — następne wejście zaczyna od nowa; „Zostań", tło i drugie „wstecz" zostawiają formularz nietknięty. Pusty formularz wychodzi bez pytania.</span>
+      <span class="vp-when">„Wstecz" z kroku 1 przy niepustym formularzu (wybrany samolot albo Dual). Potwierdzenie wychodzi na 01 i CZYŚCI szkic - następne wejście zaczyna od nowa; „Zostań", tło i drugie „wstecz" zostawiają formularz nietknięty. Pusty formularz wychodzi bez pytania.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>

@@ -1,15 +1,15 @@
 /**
- * UZ Aero (serwer) — strona ODCZYTU dni lotnych panelu (`A02`, `A02a`).
+ * UZ Aero (serwer) - strona ODCZYTU dni lotnych panelu (`A02`, `A02a`).
  *
  * **Reguła twarda, której pilnuje `test/contract.test.ts`:** listy NIE wołają
- * `projectSession`. Czytają wyłącznie kolumny projekcji `sessions` — bo wczytanie
+ * `projectSession`. Czytają wyłącznie kolumny projekcji `sessions` - bo wczytanie
  * pełnego strumienia dla każdego z 500 wierszy strony to jedyna rzecz, która mogłaby
  * tu być naprawdę wolna, a policzenie liczb „po swojemu" SQL-em to jedyna rzecz, która
  * mogłaby tu naprawdę skłamać (`docs/architektura-panelu-serwer.md` §7.1).
  *
  * Karta jednego dnia woła `projectSession` RAZ, na jednym strumieniu (dziesiątki
  * zdarzeń), i oddaje `SessionState` w całości. Dzięki temu panel formatuje liczby
- * policzone TYM SAMYM kodem, co telefon — i nie może pokazać innego czasu blokowego
+ * policzone TYM SAMYM kodem, co telefon - i nie może pokazać innego czasu blokowego
  * niż ekran 10.
  */
 
@@ -29,7 +29,7 @@ import { sessionListItem } from '../mappers/sessionListItem.ts';
 
 /**
  * Odmowa jest wariantem wyniku, nie wyjątkiem na granicy HTTP (wzorzec
- * `ResolveFlagOutcome`). Nieczytelny kursor przychodzi z zewnątrz — to 400, nie 500.
+ * `ResolveFlagOutcome`). Nieczytelny kursor przychodzi z zewnątrz - to 400, nie 500.
  */
 export type SessionListOutcome =
   | { ok: true; page: AdminSessionPage }
@@ -50,7 +50,7 @@ export class AdminSessionQueries {
     private readonly flags: FlagsAdminPort,
     /**
      * Metadane rejestru, których `Event` nie niesie. Karta dnia potrzebuje dokładnie
-     * jednej: czy korektę dopisał panel, czy telefon pilota — bo tylko po tej pierwszej
+     * jednej: czy korektę dopisał panel, czy telefon pilota - bo tylko po tej pierwszej
      * zostaje wiersz w `admin_audit`, a więc tylko przy niej link „ślad w audycie"
      * ma co pokazać.
      */

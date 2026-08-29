@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 14C Ślad bez zasięgu</title>
+<title>UZ Aero - 14C Ślad bez zasięgu</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -67,7 +67,7 @@
   }
   .screen-title { font-family:var(--font-display); font-size:20px; letter-spacing:2px; color:var(--text-primary); }
   .header-subtitle { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
-  /* SyncChip: SAM pill, bez stempla pod spodem — online nie rysuje nic (issue #12) */
+  /* SyncChip: SAM pill, bez stempla pod spodem - online nie rysuje nic (issue #12) */
   .sync-chip {
     display:inline-flex; align-items:center; gap:5px;
     min-height:34px; padding:3px 11px; border-radius:999px;
@@ -105,8 +105,8 @@
   .empty-text b { color:var(--text-secondary); font-weight:600; }
 
   /* Akcja WYMAGAJĄCA SIECI: nieaktywna z podanym powodem, nigdy cichy błąd (§ offline-first
-     pkt 3). Powodu NIE widać z ekranu — pill w nagłówku mówi „offline", ale nie mówi,
-     czego ten przycisk od sieci chce — więc `disabledReason` zostaje (issue #43). */
+     pkt 3). Powodu NIE widać z ekranu - pill w nagłówku mówi „offline", ale nie mówi,
+     czego ten przycisk od sieci chce - więc `disabledReason` zostaje (issue #43). */
   .btn-primary-off {
     display:flex; align-items:center; justify-content:center; gap:8px;
     width:100%; padding:15px; border-radius:12px;
@@ -124,7 +124,7 @@
   .fallback-key { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
   .fallback-val { font-family:var(--font-mono); font-size:12px; color:var(--text-primary); }
 
-  /* Baner STATUSU — opisuje stan przyrządu, nie jednorazową wskazówkę, więc bez `×` */
+  /* Baner STATUSU - opisuje stan przyrządu, nie jednorazową wskazówkę, więc bez `×` */
   .status-banner {
     display:flex; align-items:flex-start; gap:9px;
     background:var(--amber-muted); border:1px solid var(--amber-border);
@@ -199,7 +199,7 @@
           <div class="empty-title">ŚLAD JEST NA SERWERZE</div>
           <div class="empty-text">
             Telefon nagrał tę trasę i oddał ją serwerowi, ale <b>nie ma teraz jak jej
-            pobrać</b>. Wróć na ten ekran z zasięgiem — trasa, profil i statystyki
+            pobrać</b>. Wróć na ten ekran z zasięgiem - trasa, profil i statystyki
             wczytają się w całości.
           </div>
         </div>
@@ -208,7 +208,7 @@
       <button class="btn-primary-off" disabled>POBIERZ ŚLAD</button>
       <div class="btn-reason">wymaga połączenia z serwerem</div>
 
-      <!-- Co JEDNAK wiadomo — liczy się z rejestru na telefonie, więc jest zawsze.
+      <!-- Co JEDNAK wiadomo - liczy się z rejestru na telefonie, więc jest zawsze.
            Ekran 14 stracił przez issue #47 wyłącznie GEOMETRIĘ; czasy sesji nigdy nie
            zależały od śladu i nie zaczynają zależeć teraz. -->
       <div class="section-card">
@@ -242,7 +242,7 @@
           <circle cx="7" cy="7" r="6"/><path d="M7 6.5v4M7 4h.01"/>
         </svg>
         <div class="status-text">
-          <b>Ślad nie zajmuje już pamięci telefonu</b> — nagranie idzie na serwer i tam
+          <b>Ślad nie zajmuje już pamięci telefonu</b> - nagranie idzie na serwer i tam
           zostaje na stałe, także po reinstalacji aplikacji i na nowym telefonie. Ceną
           jest ten ekran: sama trasa wymaga zasięgu. Wszystko inne w aplikacji działa
           offline tak samo jak dotąd.
@@ -254,11 +254,11 @@
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Warianty tego ekranu — kiedy który?</div>
+  <div class="vp-title">Warianty tego ekranu - kiedy który?</div>
   <a class="vp-item" href="14-slad.html">
     <span class="vp-badge">14</span>
     <span class="vp-body">
-      <span class="vp-name">Ślad sesji — pełny</span>
+      <span class="vp-name">Ślad sesji - pełny</span>
       <span class="vp-when">Serwer odpowiedział: trasa, profil pionowy ze znacznikami, statystyki lotu i log punktów.</span>
     </span>
   </a>
@@ -266,7 +266,7 @@
     <span class="vp-badge amber">14C</span>
     <span class="vp-body">
       <span class="vp-name">Bez zasięgu</span>
-      <span class="vp-when">Telefon nie ma jak pobrać śladu. JEDYNY stan, w którym ekran 14 potrzebuje sieci — i dlatego mówi to wprost zamiast pokazywać pustą mapę albo udawać, że trasy nie ma. Czasy sesji zostają, bo liczą się z lokalnego rejestru. Nie mylić z 14B: tam trasy nie ma i nie będzie.</span>
+      <span class="vp-when">Telefon nie ma jak pobrać śladu. JEDYNY stan, w którym ekran 14 potrzebuje sieci - i dlatego mówi to wprost zamiast pokazywać pustą mapę albo udawać, że trasy nie ma. Czasy sesji zostają, bo liczą się z lokalnego rejestru. Nie mylić z 14B: tam trasy nie ma i nie będzie.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -281,7 +281,7 @@
     <span class="vp-badge dim">14B</span>
     <span class="vp-body">
       <span class="vp-name">Brak śladu</span>
-      <span class="vp-when">Sesja wpisana ręcznie albo nagranie, które nigdy nie powstało — zasięg tu nic nie zmieni.</span>
+      <span class="vp-when">Sesja wpisana ręcznie albo nagranie, które nigdy nie powstało - zasięg tu nic nie zmieni.</span>
     </span>
   </a>
 </aside>

@@ -1,9 +1,9 @@
 /**
- * UZ Aero — ADAPTER `ServerPort` na fetch (kontrakt §4.6).
+ * UZ Aero - ADAPTER `ServerPort` na fetch (kontrakt §4.6).
  *
  * Tłumaczy świat HTTP na dwa rodzaje niepowodzeń portu:
- *  • wyjątek fetch / timeout → `ServerUnreachableError` — normalny stan pracy w terenie,
- *  • odpowiedź poza 2xx → `ServerRejectedError(status, code)` — serwer żyje i odmawia.
+ *  • wyjątek fetch / timeout → `ServerUnreachableError` - normalny stan pracy w terenie,
+ *  • odpowiedź poza 2xx → `ServerRejectedError(status, code)` - serwer żyje i odmawia.
  *
  * Timeout jest krótki (8 s): pętla synca woła nas przy każdej okazji, więc lepiej
  * szybko powiedzieć „offline" i wrócić za chwilę, niż wisieć na słabym zasięgu
@@ -39,7 +39,7 @@ export class HttpServerApi implements ServerPort {
   }
 
   pushEvents(token: string, events: Event[], sourceDevice: string | null): Promise<PushResult> {
-    // `syncedAt` jest księgowością TEGO telefonu — kopercie serwera nic po nim.
+    // `syncedAt` jest księgowością TEGO telefonu - kopercie serwera nic po nim.
     const wire = events.map(({ syncedAt: _local, ...event }) => event);
     return this.request('POST', '/events', {
       token,
@@ -48,7 +48,7 @@ export class HttpServerApi implements ServerPort {
   }
 
   /**
-   * `GET /me/events` (§4.9) — strona własnego rejestru. Kursor jedzie w query stringu
+   * `GET /me/events` (§4.9) - strona własnego rejestru. Kursor jedzie w query stringu
    * ZAKODOWANY (`encodeURIComponent`), bo jest base64url z serwera i nie mamy prawa
    * zakładać, że każdy jego znak przetrwa sklejenie adresu.
    */
@@ -65,7 +65,7 @@ export class HttpServerApi implements ServerPort {
 
   /**
    * `GET /reference` z ETagiem (§4.8): przy zgodnym `If-None-Match` serwer odpowiada
-   * 304 bez ciała — wtedy `data: null`, a cache telefonu zostaje uznany za aktualny.
+   * 304 bez ciała - wtedy `data: null`, a cache telefonu zostaje uznany za aktualny.
    */
   async getReference(token: string, etag: string | null = null): Promise<ReferenceFetch> {
     const response = await this.send('GET', '/reference', {
@@ -82,7 +82,7 @@ export class HttpServerApi implements ServerPort {
   }
 
   /**
-   * `GET /aircraft/:id/readings-chain?at=…` (issue #62) — sąsiedzi w łańcuchu odczytów
+   * `GET /aircraft/:id/readings-chain?at=…` (issue #62) - sąsiedzi w łańcuchu odczytów
    * (paliwo, motogodziny) i kotwica pomiaru oleju na tę chwilę.
    *
    * `except` wysyłamy tylko przy poprawianiu istniejącego wpisu: bez tego sesja byłaby
@@ -147,7 +147,7 @@ export class HttpServerApi implements ServerPort {
 
   /**
    * Surowe wysłanie żądania: mapuje wyłącznie awarie SIECI (`ServerUnreachableError`);
-   * interpretację statusu zostawia wołającemu — `getReference` musi odróżnić 304 od błędu.
+   * interpretację statusu zostawia wołającemu - `getReference` musi odróżnić 304 od błędu.
    */
   private async send(
     method: 'GET' | 'POST' | 'PUT',

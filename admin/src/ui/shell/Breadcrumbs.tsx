@@ -1,9 +1,9 @@
 /**
- * UZ Aero — panel: okruszki w topbarze (`.crumbs` z `SZABLON.html`).
+ * UZ Aero - panel: okruszki w topbarze (`.crumbs` z `SZABLON.html`).
  *
  * Ostatni człon jest bieżącą stroną i to on jest wyróżniony (`<b>`), jak w mockupie.
  * Okruszki NIE SĄ linkami w v1: mają dwa poziomy („Panel / Dni lotne"), a link
- * na pierwszym poziomie prowadziłby donikąd — „Panel" nie jest ekranem.
+ * na pierwszym poziomie prowadziłby donikąd - „Panel" nie jest ekranem.
  */
 
 import { Fragment } from 'react';

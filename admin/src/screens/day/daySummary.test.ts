@@ -1,11 +1,11 @@
 /**
- * UZ Aero — panel: kafle i karty karty dnia (moduł czysty).
+ * UZ Aero - panel: kafle i karty karty dnia (moduł czysty).
  *
  * Dwie reguły, których nie widać w typach:
- *  • **samolot nieoddany pokazuje „—" i nic poza tym** — sesja bez `day_close` nie ma
+ *  • **samolot nieoddany pokazuje „-" i nic poza tym** - sesja bez `day_close` nie ma
  *    odczytów końcowych, więc nie ma zużycia paliwa, delty motogodzin ani domkniętego
  *    czasu zajęcia; panel nie ekstrapoluje ich ani z ostatniego odczytu, ani z „teraz";
- *  • **na tej karcie NIE MA czasu służby** — karta opisuje sesję jednej maszyny,
+ *  • **na tej karcie NIE MA czasu służby** - karta opisuje sesję jednej maszyny,
  *    a służba należy do pilota i potrafi objąć kilka maszyn (§3.6a).
  */
 
@@ -27,7 +27,7 @@ function closedState(over: Partial<SessionState> = {}): SessionState {
     picId: 'AWR',
     dualId: null,
     sessionPicId: 'AWR',
-    // Znacznik wpisu ręcznego (`session_claim.manualEntry`, ekran 15) — pole doszło
+    // Znacznik wpisu ręcznego (`session_claim.manualEntry`, ekran 15) - pole doszło
     // do `SessionState` 2026-08-25, a ta fixture powstała wcześniej; sesja z A02a
     // powstała na żywo.
     manualEntry: false,
@@ -36,21 +36,21 @@ function closedState(over: Partial<SessionState> = {}): SessionState {
     arrivalIcao: 'EPRA',
     client: 'SKY CAMP',
     notes: null,
-    // Domyślny skład skoczków z zadania (02e) — pole doszło 2026-08-25 (dzień skokowy);
+    // Domyślny skład skoczków z zadania (02e) - pole doszło 2026-08-25 (dzień skokowy);
     // karta dnia go nie czyta, więc kanoniczna fixture zostaje bez deklaracji składu.
     jumperDefaults: null,
     mhFormat: 'decimal',
-    // Chwila PRZEJĘCIA maszyny — oś samolotu. Klamra służby zniknęła z modelu
-    // w całości (issue #23, 2026-08-11) — karta i tak nigdy jej nie dotyczyła.
+    // Chwila PRZEJĘCIA maszyny - oś samolotu. Klamra służby zniknęła z modelu
+    // w całości (issue #23, 2026-08-11) - karta i tak nigdy jej nie dotyczyła.
     claimedAt: at(5, 45),
     preflightAt: at(5, 45),
     engineRunning: false,
     inFlight: false,
-    // Doszło do `SessionState` razem z detekcją kołowania — dzień zamknięty nie kołuje.
+    // Doszło do `SessionState` razem z detekcją kołowania - dzień zamknięty nie kołuje.
     taxiing: false,
     openEngineStartAt: null,
     openTakeoffAt: null,
-    // Fixture sprzed pivotu 2026-08-10 (trzy biegi w jednej sesji) — zostaje ŚWIADOMIE:
+    // Fixture sprzed pivotu 2026-08-10 (trzy biegi w jednej sesji) - zostaje ŚWIADOMIE:
     // podsumowanie dnia musi opisać także strumień złamany, a czas blokowy bierze się
     // z cykli silnika niezależnie od reguł.
     legs: [
@@ -65,18 +65,18 @@ function closedState(over: Partial<SessionState> = {}): SessionState {
     landingCount: 9,
     fuel: { startL: 780, addedL: 379, endL: 153, consumedL: 1006, lastReadingL: 153 },
     mh: { start: 3902.1, end: 3907.8, deltaH: 5.7 },
-    // Olej (issue #60) — kanoniczna sesja z A02a powstała bez pomiaru.
+    // Olej (issue #60) - kanoniczna sesja z A02a powstała bez pomiaru.
     oil: { levelL: null, addedL: 0, afterL: null },
     drops: {
       count: 9,
       jumpers: { tandem: 21, aff: 9, solo: 17 },
       totalJumpers: 47,
-      // Osiem z dziewięciu zrzutów miało fix — średnia liczy się WYŁĄCZNIE z nich.
+      // Osiem z dziewięciu zrzutów miało fix - średnia liczy się WYŁĄCZNIE z nich.
       altitudeSumFt: 102850,
       altitudeFixCount: 8,
       avgAltitudeFt: 12856.25,
     },
-    // Ostatni zrzut skonsumował załadunek — tak wygląda domknięta sesja (issue #21).
+    // Ostatni zrzut skonsumował załadunek - tak wygląda domknięta sesja (issue #21).
     boarding: null,
     closed: true,
     closedAt: at(13, 22),
@@ -115,7 +115,7 @@ const tile = (state: SessionState, label: string, mhFormat: 'decimal' | 'hhmm' |
 const row = (rows: { label: string; value: string }[], label: string) =>
   rows.find((r) => r.label === label)!;
 
-describe('dayTiles — dzień zamknięty', () => {
+describe('dayTiles - dzień zamknięty', () => {
   it('przepisuje liczby projekcji, formatując je z wiodącym zerem', () => {
     expect(tile(closedState(), 'Czas blokowy').value).toBe('05:53');
     expect(tile(closedState(), 'Czas lotu').value).toBe('03:35');
@@ -130,7 +130,7 @@ describe('dayTiles — dzień zamknięty', () => {
     expect(held.note).toContain('05:45:00 → 13:22:00 UTC');
   });
 
-  it('NIE MA kafla czasu służby — to nie jest wielkość sesji', () => {
+  it('NIE MA kafla czasu służby - to nie jest wielkość sesji', () => {
     expect(dayTiles(closedState(), 'decimal').map((t) => t.label)).not.toContain(
       'Czas służby (duty)',
     );
@@ -146,41 +146,41 @@ describe('dayTiles — dzień zamknięty', () => {
 
   it('liczy cykle silnika po polsku i wyróżnia cykl TRWAJĄCY', () => {
     expect(tile(closedState(), 'Czas blokowy').note).toContain('3 cykle silnika');
-    // Cykl otwarty nie wchodzi do sumy — projekcja liczy tylko zamknięte.
+    // Cykl otwarty nie wchodzi do sumy - projekcja liczy tylko zamknięte.
     expect(tile(openState(), 'Czas blokowy').note).toContain('+ 1 trwający (nie wchodzi do sumy)');
   });
 });
 
-describe('dayTiles — SAMOLOT NIEODDANY: „—" i nic poza tym', () => {
+describe('dayTiles - SAMOLOT NIEODDANY: „-" i nic poza tym', () => {
   it('paliwo zużyte, delta MH i czas zajęcia są puste, a przypis mówi co je wypełni', () => {
     const open = openState();
 
-    expect(tile(open, 'Paliwo zużyte').value).toBe('—');
+    expect(tile(open, 'Paliwo zużyte').value).toBe('-');
     expect(tile(open, 'Paliwo zużyte').note).toContain('day_close');
 
-    expect(tile(open, 'Δ motogodzin').value).toBe('—');
+    expect(tile(open, 'Δ motogodzin').value).toBe('-');
     expect(tile(open, 'Δ motogodzin').note).toContain('odczytu końcowego');
 
     const held = tile(open, 'Samolot zajęty');
-    expect(held.value).toBe('—');
+    expect(held.value).toBe('-');
     expect(held.note).toContain('maszyny jeszcze nie zdano');
   });
 
-  it('to, co JUŻ dotarło, pokazuje normalnie — nieoddany ≠ niekompletny', () => {
+  it('to, co JUŻ dotarło, pokazuje normalnie - nieoddany ≠ niekompletny', () => {
     // Sumy dnia otwartego są prawdziwe: opisują to, co przyszło. Ukrycie ich byłoby
     // drugim rodzajem kłamstwa, obok ekstrapolacji.
     expect(tile(openState(), 'Czas blokowy').value).toBe('05:53');
     expect(tile(openState(), 'Starty / lądowania').value).toBe('9 / 9');
   });
 
-  it('NIE ma kafla „Średnie zużycie" — projekcja nie liczy tej wielkości', () => {
+  it('NIE ma kafla „Średnie zużycie" - projekcja nie liczy tej wielkości', () => {
     // Policzenie go w panelu (zużycie ÷ czas blokowy) byłoby pierwszą liczbą
     // na ekranie, której serwer nigdy nie wysłał.
     expect(dayTiles(closedState(), 'decimal').map((t) => t.label)).not.toContain('Średnie zużycie');
   });
 });
 
-describe('dayTiles — motogodziny wg formatu licznika', () => {
+describe('dayTiles - motogodziny wg formatu licznika', () => {
   it('delta idzie w formacie TEGO samolotu, a jednostka za nią', () => {
     const decimal = tile(closedState(), 'Δ motogodzin', 'decimal');
     expect(decimal.value).toBe('5.7');
@@ -209,28 +209,28 @@ describe('mhRows', () => {
 
   it('dzień otwarty ma pusty koniec i pustą deltę', () => {
     const rows = mhRows(openState(), 'decimal');
-    expect(row(rows, 'Koniec').value).toBe('—');
-    expect(row(rows, 'Delta').value).toBe('—');
+    expect(row(rows, 'Koniec').value).toBe('-');
+    expect(row(rows, 'Delta').value).toBe('-');
   });
 });
 
 describe('fuelRows', () => {
-  it('dzień zamknięty domyka bilans, otwarty — nie', () => {
+  it('dzień zamknięty domyka bilans, otwarty - nie', () => {
     expect(row(fuelRows(closedState()), 'Zużyte').value).toBe('1006 L');
-    expect(row(fuelRows(openState()), 'Zużyte').value).toBe('—');
+    expect(row(fuelRows(openState()), 'Zużyte').value).toBe('-');
     // Ostatni odczyt ŻYJE w trakcie dnia (np. po tankowaniu) i to nie to samo,
     // co odczyt końcowy z przekazania.
     expect(row(fuelRows(openState()), 'Ostatni odczyt').value).toBe('788 L');
-    expect(row(fuelRows(openState()), 'Końcowe').value).toBe('—');
+    expect(row(fuelRows(openState()), 'Końcowe').value).toBe('-');
   });
 });
 
 describe('dropRows', () => {
-  it('średnią wysokość zaokrągla do pełnych stóp — GPS nie ma tam ułamków', () => {
+  it('średnią wysokość zaokrągla do pełnych stóp - GPS nie ma tam ułamków', () => {
     expect(row(dropRows(closedState()), 'Śr. wysokość').value).toBe('12856');
   });
 
-  it('brak wysokości w ogóle (żaden zrzut jej nie miał) to „—", nie zero', () => {
+  it('brak wysokości w ogóle (żaden zrzut jej nie miał) to „-", nie zero', () => {
     const state = closedState({
       drops: {
         count: 2,
@@ -241,7 +241,7 @@ describe('dropRows', () => {
         avgAltitudeFt: null,
       },
     });
-    expect(row(dropRows(state), 'Śr. wysokość').value).toBe('—');
+    expect(row(dropRows(state), 'Śr. wysokość').value).toBe('-');
   });
 });
 
@@ -258,7 +258,7 @@ describe('sessionRows', () => {
 
   it('sesja zdana podaje stempel UTC i WIEK, ale nie odlicza okna korekty', () => {
     // Próg doby jest wartością domeny (`rules/tolerances.ts`), a panelowi wolno
-    // importować z domeny wyłącznie typy — kopia progu tutaj rozjechałaby się po cichu
+    // importować z domeny wyłącznie typy - kopia progu tutaj rozjechałaby się po cichu
     // z regułą, którą serwer naprawdę egzekwuje przy zapisie. Po B3 okno i tak nie
     // kotwiczy się w tym stemplu, tylko w zamknięciu WZLOTU.
     const rows = sessionRows(session(), closedState(), timeline, NOW);
@@ -270,14 +270,14 @@ describe('sessionRows', () => {
   it('wiersz tożsamości mówi o PRZEJĘCIU, nie o meldunku', () => {
     // „Meldunek · duty start" opisywał wielkość, która po §3.6a jest opcjonalna
     // i należy do pilota, a nie do tej sesji. Zadeklarowaną godzinę widać na osi
-    // zdarzeń przy `preflight_confirm` — tam, gdzie jest treścią zdarzenia.
+    // zdarzeń przy `preflight_confirm` - tam, gdzie jest treścią zdarzenia.
     const rows = sessionRows(session(), closedState(), timeline, NOW);
     expect(row(rows, 'Przejęcie samolotu').value).toBe('30 JUL 2026 05:45:00');
     expect(rows.some((r) => r.label.toLowerCase().includes('duty'))).toBe(false);
   });
 
-  it('nieczytelny stempel paczki mówi „—" zamiast „NaN"', () => {
+  it('nieczytelny stempel paczki mówi „-" zamiast „NaN"', () => {
     const rows = sessionRows(session({ updatedAt: 'nie-data' }), closedState(), timeline, NOW);
-    expect(row(rows, 'Ostatnia paczka').value).toBe('—');
+    expect(row(rows, 'Ostatnia paczka').value).toBe('-');
   });
 });

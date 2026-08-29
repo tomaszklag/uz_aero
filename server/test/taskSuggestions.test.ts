@@ -1,13 +1,13 @@
 /**
- * UZ Aero (serwer) — testy `GET /me/task-suggestions` (issue #14, ekran 02e).
+ * UZ Aero (serwer) - testy `GET /me/task-suggestions` (issue #14, ekran 02e).
  *
  * Sedno kontraktu to DWA RÓŻNE ZAKRESY w jednej odpowiedzi: oznaczenia klientów
- * pochodzą z sesji CAŁEGO klubu (kontrahent jest wspólny — nowy pilot lecący dla
+ * pochodzą z sesji CAŁEGO klubu (kontrahent jest wspólny - nowy pilot lecący dla
  * SKY CAMP ma je zobaczyć), notatki wyłącznie z sesji TEGO pilota (to jego osobista
  * uwaga o okolicznościach dnia). Rozjazd tych zakresów byłby cichy: odpowiedź dalej
  * wyglądałaby poprawnie, tylko podpowiadałaby cudze zdania.
  *
- * Dane wjeżdżają PRAWDZIWĄ drogą — przez `POST /events` — więc test przechodzi całą
+ * Dane wjeżdżają PRAWDZIWĄ drogą - przez `POST /events` - więc test przechodzi całą
  * ścieżkę telefonu: koperta, projekcja `sessions`, odczyt podpowiedzi.
  */
 
@@ -18,7 +18,7 @@ import { TEST_PASSWORD, testHarness } from './helpers.ts';
 type App = Awaited<ReturnType<typeof testHarness>>['app'];
 
 const DAY = Date.UTC(2026, 5, 22);
-/** Przejęcie samolotu `d`-tego dnia o godzinie `h` UTC — steruje `claim_time` w projekcji. */
+/** Przejęcie samolotu `d`-tego dnia o godzinie `h` UTC - steruje `claim_time` w projekcji. */
 const at = (d: number, h: number): number => DAY + d * 86_400_000 + h * 3_600_000;
 
 let seq = 0;
@@ -26,7 +26,7 @@ let seq = 0;
 interface PreflightSpec {
   session: string;
   pic: string;
-  /** Chwila przejęcia samolotu — steruje `claim_time`, czyli porządkiem podpowiedzi. */
+  /** Chwila przejęcia samolotu - steruje `claim_time`, czyli porządkiem podpowiedzi. */
   claimedAt: number;
   client?: string | null;
   notes?: string | null;
@@ -35,13 +35,13 @@ interface PreflightSpec {
 }
 
 /**
- * Przejęcie + preflight — dwa zdarzenia, bo tak wygląda KAŻDA sesja (§4.4: `session_claim`
+ * Przejęcie + preflight - dwa zdarzenia, bo tak wygląda KAŻDA sesja (§4.4: `session_claim`
  * jest pierwszym zdarzeniem). Dzień bez lotu jest realnym stanem (pilot wziął samolot
  * i nie poleciał), więc fixture nie udaje, że podpowiedź wymaga zamkniętego dnia.
  *
  * Do 2026-08-07 wystarczał tu sam `preflight_confirm`, bo porządek szedł po meldunku.
  * Odkąd niesie go chwila przejęcia (decyzja 2026-08-07), strumień bez claimu nie ma znacznika
- * dnia — i słusznie, bo taki strumień nie powstaje w normalnej pracy.
+ * dnia - i słusznie, bo taki strumień nie powstaje w normalnej pracy.
  */
 function preflight(spec: PreflightSpec) {
   const head = {
@@ -67,7 +67,7 @@ function preflight(spec: PreflightSpec) {
     ...head,
     uuid: `e-${seq}-preflight`,
     type: 'preflight_confirm',
-    // Preflight minutę po przejęciu — bliżej prawdy niż ta sama sekunda i przy okazji
+    // Preflight minutę po przejęciu - bliżej prawdy niż ta sama sekunda i przy okazji
     // pokazuje, że porządek podpowiedzi bierze się z CLAIMU, a nie z preflightu.
     deviceTime: spec.claimedAt + 60_000,
     gpsTime: spec.claimedAt + 60_000,
@@ -92,7 +92,7 @@ async function login(app: App, who: string): Promise<string> {
   return res.json().token as string;
 }
 
-/** Wysyła sesje JAKO ich PIC — single-writer §4.4 nie ma tu wyjątków. */
+/** Wysyła sesje JAKO ich PIC - single-writer §4.4 nie ma tu wyjątków. */
 async function send(app: App, pic: string, specs: PreflightSpec[]): Promise<void> {
   const token = await login(app, pic);
   const res = await app.inject({
@@ -122,7 +122,7 @@ describe('GET /me/task-suggestions', () => {
 
   it('pusta historia → 200 i dwie puste tablice, nie 404', async () => {
     // Brak historii jest normalnym stanem nowego klubu i pierwszego dnia pilota.
-    // 404 mówiłoby „zasobu nie ma", a zasób jest — po prostu nic jeszcze nie zawiera.
+    // 404 mówiłoby „zasobu nie ma", a zasób jest - po prostu nic jeszcze nie zawiera.
     const { app } = await testHarness();
     const res = await suggestions(app, await login(app, 'TMK'));
 
@@ -147,20 +147,20 @@ describe('GET /me/task-suggestions', () => {
 
     const body = (await suggestions(app, await login(app, 'TMK'))).json();
 
-    // Klient wpisany przez KRZ-a jest kontrahentem KLUBU — TMK ma go zobaczyć.
+    // Klient wpisany przez KRZ-a jest kontrahentem KLUBU - TMK ma go zobaczyć.
     expect(body.clients).toEqual([
       { value: 'SKY CAMP', operation: 'skoki', lastUsedAt: iso(at(0, 8)) },
     ]);
-    // Notatka KRZ-a jest jego uwagą o jego dniu — do podpowiedzi TMK nie wchodzi.
+    // Notatka KRZ-a jest jego uwagą o jego dniu - do podpowiedzi TMK nie wchodzi.
     expect(body.notes).toEqual([{ value: 'lot z uczniem', lastUsedAt: iso(at(1, 8)) }]);
   });
 
-  it('najnowsze pierwsze i BEZ duplikatów — powtórzona wartość to jedna pozycja', async () => {
+  it('najnowsze pierwsze i BEZ duplikatów - powtórzona wartość to jedna pozycja', async () => {
     const { app } = await testHarness();
     await send(app, 'TMK', [
       { session: 's1', pic: 'TMK', claimedAt: at(0, 8), client: 'SKY CAMP', notes: 'stara' },
       { session: 's2', pic: 'TMK', claimedAt: at(1, 8), client: 'AEROKLUB', notes: 'nowsza' },
-      // Ten sam klient i ta sama notatka co w `s1`, ale najświeższego dnia — wartość
+      // Ten sam klient i ta sama notatka co w `s1`, ale najświeższego dnia - wartość
       // ma zostać JEDNA, z podbitym stemplem, a nie trafić na listę drugi raz.
       { session: 's3', pic: 'TMK', claimedAt: at(2, 8), client: 'SKY CAMP', notes: 'stara' },
     ]);
@@ -179,7 +179,7 @@ describe('GET /me/task-suggestions', () => {
 
   it('rodzaj operacji przy kliencie pochodzi z jego NAJNOWSZEJ sesji', async () => {
     // Klient bywa obsługiwany różnie (skoki, a potem ferry). Podpowiedź ma nieść to,
-    // co robiono ostatnio — starsza operacja podpowiadałaby wczorajszy kontekst.
+    // co robiono ostatnio - starsza operacja podpowiadałaby wczorajszy kontekst.
     const { app } = await testHarness();
     await send(app, 'TMK', [
       { session: 's1', pic: 'TMK', claimedAt: at(0, 8), client: 'SKY CAMP', operation: 'skoki' },
@@ -194,7 +194,7 @@ describe('GET /me/task-suggestions', () => {
 
   it('puste i białoznakowe wartości nie są podpowiedzią', async () => {
     // Pilot, który przeszedł przez pole i nic nie wpisał, nie tworzy pozycji na liście
-    // — pusty wiersz do wyboru byłby gorszy niż brak listy.
+    // - pusty wiersz do wyboru byłby gorszy niż brak listy.
     const { app } = await testHarness();
     await send(app, 'TMK', [
       { session: 's1', pic: 'TMK', claimedAt: at(0, 8), client: '', notes: '   ' },
@@ -207,7 +207,7 @@ describe('GET /me/task-suggestions', () => {
     });
   });
 
-  it('obie listy są ucięte do 20 pozycji — to podpowiedź, nie wyszukiwarka', async () => {
+  it('obie listy są ucięte do 20 pozycji - to podpowiedź, nie wyszukiwarka', async () => {
     const { app } = await testHarness();
     const specs: PreflightSpec[] = [];
     for (let i = 0; i < 25; i += 1) {
@@ -231,10 +231,10 @@ describe('GET /me/task-suggestions', () => {
     expect(body.notes[0]).toMatchObject({ value: 'notatka 24' });
   });
 
-  it('sesja bez meldunku nie wywraca porządku — znacznikiem jest wtedy wiersz projekcji', async () => {
+  it('sesja bez meldunku nie wywraca porządku - znacznikiem jest wtedy wiersz projekcji', async () => {
     // `sessions.claim_time` niesie duty start z preflightu, więc sesja z samym
     // `session_claim` ma tam NULL. Taki dzień nie ma ani klienta, ani notatki, ale
-    // MUSI przejść przez zapytanie bez błędu — `COALESCE` na stempel projekcji jest
+    // MUSI przejść przez zapytanie bez błędu - `COALESCE` na stempel projekcji jest
     // po to, żeby porządek nie miał dziury.
     const { app } = await testHarness();
     const token = await login(app, 'TMK');

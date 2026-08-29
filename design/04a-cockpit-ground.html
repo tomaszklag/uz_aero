@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 04A Cockpit · przed uruchomieniem silnika</title>
+<title>UZ Aero - 04A Cockpit · przed uruchomieniem silnika</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -63,7 +63,7 @@
   .scroll { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:14px; scrollbar-width:none; }
   .scroll::-webkit-scrollbar { display:none; }
   /* Karty z `overflow:hidden` zapadaja sie w kolumnie flex zamiast wyjechac poza
-     ekran do przewiniecia — ta sama wada, co naprawiona w 01 i 10. */
+     ekran do przewiniecia - ta sama wada, co naprawiona w 01 i 10. */
   .scroll > * { flex-shrink:0; }
 
   .start-engine {
@@ -80,13 +80,13 @@
   .start-engine-label { font-family:var(--font-display); font-size:32px; letter-spacing:4px; color:var(--green); text-align:center; position:relative; z-index:1; text-shadow:0 0 20px rgba(46,204,113,0.3); }
   .start-engine-hint { font-family:var(--font-mono); font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); text-align:center; position:relative; z-index:1; }
 
-  /* Reguły `.claim-strip` / `.claim-*` usunięte razem z paskiem sesji (2026-08-10) —
+  /* Reguły `.claim-strip` / `.claim-*` usunięte razem z paskiem sesji (2026-08-10) -
      pasek został wyłącznie w 04B, gdzie opisuje CUDZĄ maszynę. `.strip-left`
      i `.strip-label` zostają: używa ich pasek paliwa niżej. */
   .strip-left { display:flex; align-items:center; gap:8px; }
   .strip-label { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
 
-  /* Pasek paliwa — tokeny 1:1 z 04, bo to ten sam komponent na innym etapie sesji. */
+  /* Pasek paliwa - tokeny 1:1 z 04, bo to ten sam komponent na innym etapie sesji. */
   .fuel-strip { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
   .fuel-strip-icon { color:var(--amber); }
   .fuel-strip-val { font-family:var(--font-mono); font-size:16px; font-weight:400; letter-spacing:2px; color:var(--text-primary); }
@@ -98,9 +98,9 @@
   .session-log-header { display:flex; align-items:center; justify-content:space-between; padding:9px 12px; border-bottom:1px solid var(--border); background:var(--surface-raised); }
   .session-log-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
 
-  /* OŚ SESJI (issue #44) — ten sam inwentarz, co na 04 i na 10; pełny komentarz przy
+  /* OŚ SESJI (issue #44) - ten sam inwentarz, co na 04 i na 10; pełny komentarz przy
      nim stoi w 04. Tu oś ma jeden wiersz i to nie jest stan pusty: sesja zaczyna się
-     PRZEJĘCIEM, więc log od pierwszej sekundy ma co pokazać — godzinę i odczyt, który
+     PRZEJĘCIEM, więc log od pierwszej sekundy ma co pokazać - godzinę i odczyt, który
      pilot spisał na 02a.
 
      `.session-log-empty` (kubek z kluczem i „Brak wpisów") USUNIĘTY: mówił „nic tu nie
@@ -141,7 +141,7 @@
   .nav-strip a.active { color:var(--green); }
   .nav-strip span { color:var(--border-strong); }
 
-  /* ===== VARIANTS PANEL (canvas — skróty do wariantów ekranu) ===== */
+  /* ===== VARIANTS PANEL (canvas - skróty do wariantów ekranu) ===== */
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
   .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
   .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; transition:all .15s; }
@@ -158,12 +158,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 04A</span>
+  <span class="film-strip">UZ AERO - 04A</span>
   <span class="slug">cockpit · przed uruchomieniem silnika</span>
   <span class="canvas-meta"><span class="pulse"></span>Brak lotów</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Ground state, świeżo przejęty samolot">
+<main class="phone" role="region" aria-label="Mockup - Ground state, świeżo przejęty samolot">
   <div class="status-bar">
     <span>9:41</span>
     <span class="status-right">
@@ -180,7 +180,7 @@
           <span class="aircraft-code">SP-AXA</span>
         </div>
         <!-- TRASA DNIA WEDŁUG RODZAJU OPERACJI (issue #13): przy skokach pasek pisze
-             JEDEN kod ICAO — samolot wraca tam, skąd wystartował, więc oba kody w rekordzie
+             JEDEN kod ICAO - samolot wraca tam, skąd wystartował, więc oba kody w rekordzie
              są równe, a „EPKK → EPKK" czytałoby się jak pomyłka. -->
         <div class="route-line">
           <span class="icao">EPKK</span>
@@ -189,7 +189,7 @@
         </div>
       </div>
       <div class="app-bar-right">
-        <a href="13-ustawienia.html" class="settings-btn" style="text-decoration:none;" title="Ustawienia — motyw, PIN, konto, diagnostyka GPS">
+        <a href="13-ustawienia.html" class="settings-btn" style="text-decoration:none;" title="Ustawienia - motyw, PIN, konto, diagnostyka GPS">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         </a>
       </div>
@@ -197,11 +197,11 @@
 
     <div class="scroll">
 
-      <!-- Bez chipa „GROUND · SILNIK WYŁĄCZONY" — hero START ENGINE mówi to samo mocniej
+      <!-- Bez chipa „GROUND · SILNIK WYŁĄCZONY" - hero START ENGINE mówi to samo mocniej
            (decyzja 2026-08-04, jak na 04). Chip stanu zostaje tylko na 04b („wg serwera"). -->
-      <!-- START ENGINE — główna akcja, bardziej prominentna niż w trakcie dnia.
+      <!-- START ENGINE - główna akcja, bardziej prominentna niż w trakcie dnia.
            Prowadzi do 05H (Engine idle): zaraz po uruchomieniu samolot STOI, a pasek
-           akcji podpowiada Taxi — stany lotu (05) przychodzą później, z sekwencją. -->
+           akcji podpowiada Taxi - stany lotu (05) przychodzą później, z sekwencją. -->
       <a href="05h-cockpit-idle.html" class="start-engine">
         <div class="start-icon">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0D0D0D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
@@ -210,14 +210,14 @@
         <div class="start-engine-hint">Przytrzymaj 2 sekundy aby potwierdzić</div>
       </a>
 
-      <!-- TU STAŁ PASEK SESJI — USUNIĘTY 2026-08-10 (patrz komentarz w 04).
+      <!-- TU STAŁ PASEK SESJI - USUNIĘTY 2026-08-10 (patrz komentarz w 04).
            Ten wariant był jego najgorszym przypadkiem: świeżo przejęta maszyna nie ma
            czego pokazać, więc najmocniejszy typograficznie wiersz ekranu mówił „jeszcze
-           żadnego wzlotu" — trzeci raz to samo, obok „0 cykli · 0 T/O" i „Brak zdarzeń".
+           żadnego wzlotu" - trzeci raz to samo, obok „0 cykli · 0 T/O" i „Brak zdarzeń".
            Kokpit jest stanem modalnym: wyjście prowadzi przez „Zdaj samolot". -->
 
-      <!-- FUEL STRIP — jest tu OD RAZU po przejęciu (2026-08-10), bo odczyt paliwa właśnie
-           powstał: pilot wpisał go na 02a. Warunek jest ten sam co na 04 — pasek pojawia
+      <!-- FUEL STRIP - jest tu OD RAZU po przejęciu (2026-08-10), bo odczyt paliwa właśnie
+           powstał: pilot wpisał go na 02a. Warunek jest ten sam co na 04 - pasek pojawia
            się, gdy maszyna ma normę zużycia, czyli gdy ma czym być przyrządem. Bez normy
            paska nie ma i litry niesie podpis kafelka „Tankowanie". -->
       <div class="fuel-strip">
@@ -232,14 +232,14 @@
         </div>
         <div class="fuel-strip-est">
           wystarczy na <b>~6 wyniesień</b> do rezerwy 45 min<br>
-          <span class="fuel-strip-src">szacunek z normy samolotu (90 dni) — decyduje paliwomierz</span>
+          <span class="fuel-strip-src">szacunek z normy samolotu (90 dni) - decyduje paliwomierz</span>
         </div>
       </div>
 
       <!-- LOG SESJI ZARAZ PO PRZEJĘCIU (issue #44)
            Stan pusty („Brak wpisów · Uruchom silnik…") ZNIKŁ, bo przestał być prawdą:
            oś zaczyna się PRZEJĘCIEM, a ono właśnie się wydarzyło. Wiersz niesie godzinę
-           i odczyt spisany na 02a — czyli dokładnie to, co pilot zaraz porówna z tarczą.
+           i odczyt spisany na 02a - czyli dokładnie to, co pilot zaraz porówna z tarczą.
            Stopki sum nie ma: silnik nie pracował, więc nie ma czego sumować. -->
       <div class="session-log">
         <div class="session-log-header">
@@ -263,17 +263,17 @@
           </div>
           <div>
             <div class="action-label">Tankowanie</div>
-            <!-- Litry mówi pasek wyżej, więc kafelek ich nie powtarza (2026-08-10) —
+            <!-- Litry mówi pasek wyżej, więc kafelek ich nie powtarza (2026-08-10) -
                  patrz komentarz przy siatce akcji w 04. -->
             <div class="action-sub">Dolej i zapisz odczyt</div>
           </div>
         </a>
         <!-- DOLEJ OLEJ (issue #60, decyzja 2026-08-27): dolewka zdarza się także PO
-             przejęciu, więc sam krok liczników nie wystarcza. Jak tankowanie — przy
+             przejęciu, więc sam krok liczników nie wystarcza. Jak tankowanie - przy
              zatrzymanym śmigle, przed uruchomieniem i po wyłączeniu. Otwiera ARKUSZ
              jednej liczby (wzorzec 02B), nie ekran: poziomu po dolewce nie ma jak
              uczciwie zmierzyć, pyta się o samą ilość. Podpis niesie minimum
-             z konfiguracji — pomiar z przejęcia stoi w logu wyżej (stan modalny). -->
+             z konfiguracji - pomiar z przejęcia stoi w logu wyżej (stan modalny). -->
         <a href="04a-cockpit-ground.html" class="action-card">
           <div class="action-icon">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
@@ -283,7 +283,7 @@
             <div class="action-sub">Minimum 8,5 L</div>
           </div>
         </a>
-        <!-- ZAŁADUNEK (issue #21) — TYLKO dzień skokowy i TYLKO przed startem: pierwszy
+        <!-- ZAŁADUNEK (issue #21) - TYLKO dzień skokowy i TYLKO przed startem: pierwszy
              skład wsiada zwykle przy wyłączonym silniku, a zadeklarowane tu liczby
              wypełnią arkusz zrzutu 05E. Podpis jest STAŁY: zapisany załadunek widać
              w logu sesji wyżej, a kokpit nie powtarza tego, co mówi log. -->
@@ -325,12 +325,12 @@
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Warianty kokpitu ground — kiedy który?</div>
+  <div class="vp-title">Warianty kokpitu ground - kiedy który?</div>
   <a class="vp-item active" href="04a-cockpit-ground.html">
     <span class="vp-badge">04A</span>
     <span class="vp-body">
       <span class="vp-name">Przed uruchomieniem silnika</span>
-      <span class="vp-when">Zaraz po przejęciu — pusty log sesji, START ENGINE, tankowanie i zmiana załogi. Jedyny stan ground PRZED startem; nie „start dnia" — dzień pilota mógł zacząć się wcześniej, na innej maszynie.</span>
+      <span class="vp-when">Zaraz po przejęciu - pusty log sesji, START ENGINE, tankowanie i zmiana załogi. Jedyny stan ground PRZED startem; nie „start dnia" - dzień pilota mógł zacząć się wcześniej, na innej maszynie.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -338,28 +338,28 @@
     <span class="vp-badge">04</span>
     <span class="vp-body">
       <span class="vp-name">Po zatrzymaniu silnika</span>
-      <span class="vp-when">Sesja zakończona (sesja = jeden bieg silnika, 2026-08-10): hero ZDAJ SAMOLOT — drugiego START ENGINE nie ma, log jednej sesji, tankowanie dozwolone przed zdaniem.</span>
+      <span class="vp-when">Sesja zakończona (sesja = jeden bieg silnika, 2026-08-10): hero ZDAJ SAMOLOT - drugiego START ENGINE nie ma, log jednej sesji, tankowanie dozwolone przed zdaniem.</span>
     </span>
   </a>
   <a class="vp-item" href="04b-cockpit-readonly.html">
     <span class="vp-badge blue">04B</span>
     <span class="vp-body">
       <span class="vp-name">Podgląd read-only</span>
-      <span class="vp-when">Cudzy samolot — inny pilot ma aktywny claim: stan i log samolotu z serwera, zero możliwości zapisu, akcja „Przejmij".</span>
+      <span class="vp-when">Cudzy samolot - inny pilot ma aktywny claim: stan i log samolotu z serwera, zero możliwości zapisu, akcja „Przejmij".</span>
     </span>
   </a>
   <a class="vp-item" href="10d-edycja.html">
     <span class="vp-badge blue">10D</span>
     <span class="vp-body">
       <span class="vp-name">Popraw dane sesji (tryb edycji)</span>
-      <span class="vp-when">Czasy zdarzeń, odczyty paliwa i MH, skład zrzutu, brakujące wpisy. Przed uruchomieniem silnika kafelka jeszcze nie ma — pusta sesja nie ma czego poprawiać; wchodzi do paska akcji po zatrzymaniu silnika (04).</span>
+      <span class="vp-when">Czasy zdarzeń, odczyty paliwa i MH, skład zrzutu, brakujące wpisy. Przed uruchomieniem silnika kafelka jeszcze nie ma - pusta sesja nie ma czego poprawiać; wchodzi do paska akcji po zatrzymaniu silnika (04).</span>
     </span>
   </a>
   <a class="vp-item" href="04d-wyjscie-z-kokpitu.html">
     <span class="vp-badge blue">04D</span>
     <span class="vp-body">
       <span class="vp-name">Blokada wyjścia z kokpitu</span>
-      <span class="vp-when">Pilot trzyma samolot i nacisnął „wstecz" (albo cofnął gestem). Kokpit jest stanem modalnym: arkusz mówi, co go tu trzyma, i pokazuje jedyne wyjście — zdanie maszyny.</span>
+      <span class="vp-when">Pilot trzyma samolot i nacisnął „wstecz" (albo cofnął gestem). Kokpit jest stanem modalnym: arkusz mówi, co go tu trzyma, i pokazuje jedyne wyjście - zdanie maszyny.</span>
     </span>
   </a>
 </aside>

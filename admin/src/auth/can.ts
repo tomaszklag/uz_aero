@@ -1,8 +1,8 @@
 /**
- * UZ Aero — panel: czy zalogowany ma daną zdolność, a jeśli nie — POWÓD do pokazania.
+ * UZ Aero - panel: czy zalogowany ma daną zdolność, a jeśli nie - POWÓD do pokazania.
  *
  * Moduł CZYSTY (bez Reacta, bez sieci), bo to jest decyzja o treści ekranu, a nie
- * o jego układzie — i dlatego ma test obok.
+ * o jego układzie - i dlatego ma test obok.
  *
  * **To nie jest zabezpieczenie.** Egzekwuje serwer, przy każdym żądaniu, mapą
  * `server/src/domain/roles.ts`. Tutaj rozstrzygamy wyłącznie, czy pozycja nawigacji
@@ -11,7 +11,7 @@
  *
  * Reguła z mockupu jest twarda: pozycja niedostępna dla roli zostaje **WIDOCZNA
  * i wyszarzona** (`.nav-item.locked`), nigdy ukryta. Ukrywanie zmusza człowieka do
- * zgadywania, czy funkcji nie ma, czy nie ma jej ON — a to dwie różne rozmowy
+ * zgadywania, czy funkcji nie ma, czy nie ma jej ON - a to dwie różne rozmowy
  * z administratorem.
  */
 
@@ -25,13 +25,13 @@ export function can(
 }
 
 /**
- * Kogo prosić o daną zdolność — TEKST DLA CZŁOWIEKA, nie mapa uprawnień.
+ * Kogo prosić o daną zdolność - TEKST DLA CZŁOWIEKA, nie mapa uprawnień.
  *
  * Odpowiada na pytanie, które zadaje sobie ktoś patrzący na wyszarzoną pozycję:
  * „to awaria czy tak ma być, i co mam z tym zrobić". Bez tej odpowiedzi kłódka
  * jest tylko informacją, że coś nie działa.
  *
- * Lustro mapy z serwera — świadome i opisane w `api/dto.ts` przy typie `Capability`.
+ * Lustro mapy z serwera - świadome i opisane w `api/dto.ts` przy typie `Capability`.
  * Rozjazd nie może niczego otworzyć ani zamknąć: najgorszy możliwy skutek to zdanie
  * wskazujące złą rolę, i taką cenę płacimy do czasu decyzji z §11 pkt 6 o przeniesieniu
  * `roles.ts` do `@uzaero/domain`.
@@ -47,7 +47,7 @@ const GRANTED_BY: Record<Capability, string> = {
   'maintenance.run': 'administrator',
 };
 
-/** „Wymaga roli: administrator" — dokładnie ten napis nosi `title` w `SZABLON.html`. */
+/** „Wymaga roli: administrator" - dokładnie ten napis nosi `title` w `SZABLON.html`. */
 export function denialReason(required: Capability): string {
   return `Wymaga roli: ${GRANTED_BY[required]}`;
 }

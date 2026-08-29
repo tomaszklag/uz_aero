@@ -1,8 +1,8 @@
 /**
- * UZ Aero — panel: sidebar (`.sidebar` z `SZABLON.html`).
+ * UZ Aero - panel: sidebar (`.sidebar` z `SZABLON.html`).
  *
  * Znak marki, cztery grupy nawigacji, stopka z tożsamością. Komponent NIE ZNA
- * `queries/` ani `api/` — zdolności i pilota dostaje propsami, tak jak każdy inny
+ * `queries/` ani `api/` - zdolności i pilota dostaje propsami, tak jak każdy inny
  * element `ui/` (`docs/architektura-panelu-frontend.md` §2.1, pilnuje test architektury).
  */
 

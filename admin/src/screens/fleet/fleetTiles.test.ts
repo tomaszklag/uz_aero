@@ -1,9 +1,9 @@
 /**
- * UZ Aero — panel: kafle, chipy i karta progów floty (`A07`).
+ * UZ Aero - panel: kafle, chipy i karta progów floty (`A07`).
  *
  * Dwie własności, których złamanie widać dopiero na ekranie: kafel opisuje FLOTĘ,
- * a chip — to, co człowiek zobaczy po kliknięciu. Trzecia: brak odpowiedzi serwera
- * daje „—", nigdy zero.
+ * a chip - to, co człowiek zobaczy po kliknięciu. Trzecia: brak odpowiedzi serwera
+ * daje „-", nigdy zero.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -45,17 +45,17 @@ const labelled = (label: string, tiles: ReturnType<typeof fleetTiles>) => {
 };
 
 describe('kafle floty', () => {
-  it('„W służbie" pokazuje ile z ilu — obie liczby z serwera', () => {
+  it('„W służbie" pokazuje ile z ilu - obie liczby z serwera', () => {
     const tile = labelled('W służbie', fleetTiles(counts, [], NOW));
     expect(tile.value).toBe('4');
     expect(tile.unit).toBe('/ 5');
   });
 
-  it('bez odpowiedzi serwera kafel mówi „—", a NIE zero', () => {
-    // Zero jest twierdzeniem „klub nie ma ani jednego samolotu w służbie" — a to
+  it('bez odpowiedzi serwera kafel mówi „-", a NIE zero', () => {
+    // Zero jest twierdzeniem „klub nie ma ani jednego samolotu w służbie" - a to
     // zdanie tuż obok banera o błędzie byłoby po prostu nieprawdą.
     const tiles = fleetTiles(null, [], NOW);
-    expect(tiles.map((t) => t.value)).toEqual(['—', '—', '—', '—']);
+    expect(tiles.map((t) => t.value)).toEqual(['-', '-', '-', '-']);
   });
 
   it('kafel claimu wypisuje jednostkę z nazwiska, gdy jest jedna', () => {
@@ -85,7 +85,7 @@ describe('kafle floty', () => {
     };
     const items = [dto({ claim }), dto({ id: 'ac-2', reg: 'SP-FGK', claim })];
     expect(labelled('Z aktywnym claimem', fleetTiles(counts, items, NOW)).note).toBe(
-      'SP-AXA · SP-FGK — dni w toku.',
+      'SP-AXA · SP-FGK - dni w toku.',
     );
   });
 
@@ -99,7 +99,7 @@ describe('kafle floty', () => {
     expect(tile.note).toContain('SP-DEF');
   });
 
-  it('jednostki BEZ ani jednego zdarzenia są pomijane — to inny stan niż „dawno"', () => {
+  it('jednostki BEZ ani jednego zdarzenia są pomijane - to inny stan niż „dawno"', () => {
     const items = [
       dto({ id: 'a', reg: 'SP-NOWY', lastEventAt: null }),
       dto({ id: 'b', reg: 'SP-DEF', lastEventAt: new Date(NOW - HOUR).toISOString() }),
@@ -107,9 +107,9 @@ describe('kafle floty', () => {
     expect(labelled('Najstarszy odczyt', fleetTiles(counts, items, NOW)).note).toContain('SP-DEF');
   });
 
-  it('gdy żadna jednostka nic nie przysłała — kafel przyznaje się do braku', () => {
+  it('gdy żadna jednostka nic nie przysłała - kafel przyznaje się do braku', () => {
     const tile = labelled('Najstarszy odczyt', fleetTiles(counts, [dto()], NOW));
-    expect(tile.value).toBe('—');
+    expect(tile.value).toBe('-');
     expect(tile.note).toContain('nie przysłała');
   });
 });
@@ -150,7 +150,7 @@ describe('karta „Progi zależne od pojemności"', () => {
     ]);
   });
 
-  it('pomija jednostki wyłączone — nie wygenerują już żadnego zdarzenia', () => {
+  it('pomija jednostki wyłączone - nie wygenerują już żadnego zdarzenia', () => {
     const items = [dto({ id: 'a' }), dto({ id: 'b', reg: 'SP-KWA', serviceStatus: 'disabled' })];
     expect(toleranceRows(items).map((r) => r.id)).toEqual(['a']);
   });

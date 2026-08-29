@@ -1,11 +1,11 @@
 /**
- * UZ Aero — panel: KAFLE STATYSTYK (moduł CZYSTY) — sześć kafli mockupu `A10`.
+ * UZ Aero - panel: KAFLE STATYSTYK (moduł CZYSTY) - sześć kafli mockupu `A10`.
  *
- * Każda liczba jest PRZEPISANA z odpowiedzi serwera (`StatsTotalsDto`) — także
+ * Każda liczba jest PRZEPISANA z odpowiedzi serwera (`StatsTotalsDto`) - także
  * procenty i rozjazd Δ MH vs blok, które policzył serwer. Moduł składa wyłącznie
  * NAPISY: formatuje, odmienia i dobiera przypis do stanu danych.
  *
- * `null` z serwera zostaje kreską z przypisem mówiącym DLACZEGO — dwa różne powody
+ * `null` z serwera zostaje kreską z przypisem mówiącym DLACZEGO - dwa różne powody
  * („wiersze sprzed kolumn statystyk" vs „dni bez bilansu") dostają dwa różne zdania,
  * bo pierwsze naprawia przebudowa, a drugiego nie naprawi nic.
  */
@@ -25,13 +25,13 @@ export interface StatsTile {
   note: string;
 }
 
-const UNKNOWN_NOTE = 'Nie wiadomo — raport się nie pobrał.';
+const UNKNOWN_NOTE = 'Nie wiadomo - raport się nie pobrał.';
 
-/** Przypis kafli unieważnionych wierszami sprzed kolumn statystyk — kieruje na `A11`. */
+/** Przypis kafli unieważnionych wierszami sprzed kolumn statystyk - kieruje na `A11`. */
 const staleNote = (rows: number): string =>
-  `${rows} ${plural(rows, 'wiersz projekcji jest', 'wiersze projekcji są', 'wierszy projekcji jest')} sprzed kolumn statystyk — uruchom przebudowę na ekranie Konserwacja.`;
+  `${rows} ${plural(rows, 'wiersz projekcji jest', 'wiersze projekcji są', 'wierszy projekcji jest')} sprzed kolumn statystyk - uruchom przebudowę na ekranie Konserwacja.`;
 
-/** Sześć kafli mockupu, w tej samej kolejności. `data === null` = wszystkie „—". */
+/** Sześć kafli mockupu, w tej samej kolejności. `data === null` = wszystkie „-". */
 export function statsTiles(data: StatsReportDto | null): StatsTile[] {
   if (data == null) {
     return [
@@ -59,8 +59,8 @@ export function statsTiles(data: StatsReportDto | null): StatsTile[] {
       value: duration(t.flightMs),
       note:
         t.flightVsBlockPct == null
-          ? 'Zakres bez nalotu blokowego — nie ma czego porównywać.'
-          : `${comma1(t.flightVsBlockPct)} % nalotu blokowego — reszta to kołowanie i postoje z pracującym silnikiem.`,
+          ? 'Zakres bez nalotu blokowego - nie ma czego porównywać.'
+          : `${comma1(t.flightVsBlockPct)} % nalotu blokowego - reszta to kołowanie i postoje z pracującym silnikiem.`,
     },
     takeoffsTile(t.takeoffs, t.landings, t.staleRows),
     {
@@ -106,7 +106,7 @@ function takeoffsTile(
     value: String(takeoffs),
     unit: `/ ${landings}`,
     // Rozjazd startów z lądowaniami to nie kosmetyka: samolot, który wystartował
-    // i „nie wylądował" w rejestrze, to dziura w danych — kafel ma ją nazwać.
+    // i „nie wylądował" w rejestrze, to dziura w danych - kafel ma ją nazwać.
     ...(takeoffs === landings ? {} : { tone: 'amber' as const }),
     note:
       takeoffs === landings
@@ -116,7 +116,7 @@ function takeoffsTile(
 }
 
 /**
- * Przypis kafla MH. Blok w zdaniu to blok dni ZE ZNANYM Δ (`mhBlockHours`) — ten sam
+ * Przypis kafla MH. Blok w zdaniu to blok dni ZE ZNANYM Δ (`mhBlockHours`) - ten sam
  * zbiór dni co suma Δ, inaczej „rozjazd" mierzyłby brakujące odczyty, nie liczniki.
  * Dni bez pary odczytów są POLICZONE w adnotacji, jak przy paliwie.
  */
@@ -126,7 +126,7 @@ function mhNote(t: StatsReportDto['totals']): string {
       ? staleNote(t.staleRows)
       : 'Żaden dzień zakresu nie ma pary odczytów licznika.';
   }
-  const base = `Δ liczników fizycznych · blok ${dot2(t.mhBlockHours)} h — rozjazd ${dot2(Math.abs(t.mhVsBlockH))} h`;
+  const base = `Δ liczników fizycznych · blok ${dot2(t.mhBlockHours)} h - rozjazd ${dot2(Math.abs(t.mhVsBlockH))} h`;
   if (t.mhUnknownSessions === 0) return `${base}.`;
   return `${base} · ${t.mhUnknownSessions} ${plural(t.mhUnknownSessions, 'dzień', 'dni', 'dni')} bez pary odczytów nie ${plural(t.mhUnknownSessions, 'wchodzi', 'wchodzą', 'wchodzi')} do porównania.`;
 }

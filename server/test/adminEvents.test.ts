@@ -1,21 +1,21 @@
 /**
- * UZ Aero (serwer) — REJESTR ZDARZEŃ (`GET /admin/api/events`, mockup `A04`).
+ * UZ Aero (serwer) - REJESTR ZDARZEŃ (`GET /admin/api/events`, mockup `A04`).
  *
  * Ekran jest narzędziem śledczym: sięga się po niego wtedy, gdy liczby się nie zgadzają
  * i trzeba odpowiedzieć na pytanie „skąd się wzięła ta wartość", „co dokładnie przyszło
  * z telefonu" albo „czy to zdarzenie w ogóle dotarło". Z tego wynika, czego pilnuje ten
- * plik — i dlaczego akurat tego:
+ * plik - i dlaczego akurat tego:
  *
  *  1. **Nic z bazy nie ma prawa wywrócić listy.** Nieznany typ zdarzenia, payload
  *     niebędący obiektem, klucz kolidujący z `Object.prototype`, brak samolotu, brak
- *     konta — wszystko jedzie do panelu DOSŁOWNIE. Rejestr, który wywraca się na
+ *     konta - wszystko jedzie do panelu DOSŁOWNIE. Rejestr, który wywraca się na
  *     własnej historii, jest bezużyteczny dokładnie wtedy, gdy jest potrzebny.
  *  2. **Dwa zegary są sednem, nie kolumną obok.** Brak fixa GPS daje `driftMs: null`,
- *     a nie zero — zero jest twierdzeniem, że zegary się zgadzały.
+ *     a nie zero - zero jest twierdzeniem, że zegary się zgadzały.
  *  3. **Liczniki opisują ZAKRES, nie okno.** `limit=1` nie ma prawa zmienić kafla.
- *  4. **Granica strony na kursorze przy IDENTYCZNYM `received_at`** — cała paczka
+ *  4. **Granica strony na kursorze przy IDENTYCZNYM `received_at`** - cała paczka
  *     z jednego synca ma ten sam stempel, bo `now()` zwraca czas rozpoczęcia transakcji.
- *  5. **Porządek daje INDEKS, nie sortowanie w pamięci** — sprawdzone `EXPLAIN`-em.
+ *  5. **Porządek daje INDEKS, nie sortowanie w pamięci** - sprawdzone `EXPLAIN`-em.
  *
  * Zapisu tu nie ma i nie będzie: `events` jest append-only, a braku `UPDATE`/`DELETE`
  * pilnuje `test/architecture.test.ts`.
@@ -86,7 +86,7 @@ const BASE: EventBase = {
   dualId: null,
 };
 
-/** Dzień lotny wysłany TOKENEM PIC-a — single-writer §4.4 odmawia każdemu innemu. */
+/** Dzień lotny wysłany TOKENEM PIC-a - single-writer §4.4 odmawia każdemu innemu. */
 async function ingest(app: Harness['app'], events: { picId: string }[]): Promise<void> {
   const pic = events[0]?.picId;
   if (pic == null) throw new Error('pusta paczka zdarzeń');
@@ -127,10 +127,10 @@ function flyingDay(base: EventBase = BASE, gpsShift = 0) {
 /**
  * Wiersz wstawiony WPROST do bazy, z pominięciem `POST /events`.
  *
- * To nie jest obejście walidacji dla wygody — to jest odtworzenie stanu, którego
+ * To nie jest obejście walidacji dla wygody - to jest odtworzenie stanu, którego
  * walidacja wejścia NIE BRONI: wiersz wpisany ręcznie w psql, zapis ze starszej wersji
  * telefonu, typ wycofany z katalogu. Kolumna `events.type` celowo nie ma `CHECK`-a,
- * a `payload` jest `JSONB` dowolnego kształtu — więc taki wiersz istnieje i rejestr
+ * a `payload` jest `JSONB` dowolnego kształtu - więc taki wiersz istnieje i rejestr
  * ma go pokazać.
  */
 async function rawEvent(
@@ -211,7 +211,7 @@ const entry = (page: PageDto, uuid: string): EntryDto => {
 // ── uprawnienia ─────────────────────────────────────────────────────────────────
 
 describe('rejestr zdarzeń: kto może patrzeć', () => {
-  it('bez tokenu 401, konto pilota 403 — dwa różne komunikaty', async () => {
+  it('bez tokenu 401, konto pilota 403 - dwa różne komunikaty', async () => {
     const { app } = await testHarness();
 
     const anon = await app.inject({ method: 'GET', url: '/admin/api/events' });
@@ -221,8 +221,8 @@ describe('rejestr zdarzeń: kto może patrzeć', () => {
     expect(pilot.statusCode).toBe(403);
   });
 
-  it('szef wyszkolenia CZYTA rejestr — to jest odczyt, nie zapis', async () => {
-    // `ANALIZA.md`: „Rejestr zdarzeń — przeglądarka (A04) | admin ✅ | szef wyszkolenia
+  it('szef wyszkolenia CZYTA rejestr - to jest odczyt, nie zapis', async () => {
+    // `ANALIZA.md`: „Rejestr zdarzeń - przeglądarka (A04) | admin ✅ | szef wyszkolenia
     // ✅ (odczyt)". Zdolnością jest `panel.access`, a nie nowa `events.read`, bo ta
     // nie odrzuciłaby ani jednego żądania, które przechodzi dziś.
     const { app } = await testHarness();
@@ -233,7 +233,7 @@ describe('rejestr zdarzeń: kto może patrzeć', () => {
 
 // ── surowość: nic nie ma prawa wywrócić listy ───────────────────────────────────
 
-describe('rejestr pokazuje to, co przyszło — bez interpretacji', () => {
+describe('rejestr pokazuje to, co przyszło - bez interpretacji', () => {
   it('NIEZNANY typ zdarzenia przechodzi CAŁY tor i jedzie dosłownie', async () => {
     // Kolumna `events.type` nie ma `CHECK`-a, a walidacja katalogu zachodzi na wejściu.
     // Wiersz z typem spoza katalogu (wycofany, ze starszego telefonu) MUSI być widoczny:
@@ -248,7 +248,7 @@ describe('rejestr pokazuje to, co przyszło — bez interpretacji', () => {
 
   it('payload NIEBĘDĄCY obiektem (tablica, liczba, null) jedzie bez zmiany kształtu', async () => {
     // `JSONB` przyjmuje też tablicę, liczbę i `null`. Obietnica „payload to zawsze
-    // obiekt" jest obietnicą, której baza nie składa — a rejestr, który wywraca się
+    // obiekt" jest obietnicą, której baza nie składa - a rejestr, który wywraca się
     // na kształcie payloadu, nie odpowiada na pytanie „co przyszło z telefonu".
     const { app, db } = await testHarness();
     await rawEvent(db, { uuid: 'ev-tab', type: 'taxi', payload: [1, 'dwa', null] });
@@ -258,7 +258,7 @@ describe('rejestr pokazuje to, co przyszło — bez interpretacji', () => {
     const page = (await getEvents(app, await token(app, 'TMK'))).json() as PageDto;
     expect(entry(page, 'ev-tab').payload).toEqual([1, 'dwa', null]);
     expect(entry(page, 'ev-num').payload).toBe(42);
-    // `null` NIE zamienia się w pusty obiekt — to dwie różne odpowiedzi na pytanie
+    // `null` NIE zamienia się w pusty obiekt - to dwie różne odpowiedzi na pytanie
     // „co zapisał telefon".
     expect(entry(page, 'ev-nul').payload).toBeNull();
   });
@@ -266,7 +266,7 @@ describe('rejestr pokazuje to, co przyszło — bez interpretacji', () => {
   it('klucze kolidujące z `Object.prototype` nie gubią się ani nie zatruwają wyniku', async () => {
     // Wada z dziennika audytu, tam złapana: `LABELS['toString']` nie jest `undefined`,
     // tylko funkcją z prototypu. Tutaj payload pochodzi WPROST z telefonu, więc może
-    // nieść dowolny klucz — a serwer nie ma prawa go zgubić.
+    // nieść dowolny klucz - a serwer nie ma prawa go zgubić.
     const { app, db } = await testHarness();
     await rawEvent(db, {
       uuid: 'ev-proto',
@@ -326,7 +326,7 @@ describe('dwa zegary: brak fixa to nie zero', () => {
       uuid: 'ev-rozjazd',
       type: 'day_close',
       payload: {},
-      // Telefon SPIESZY o 720 s — dokładnie przypadek z mockupu A04.
+      // Telefon SPIESZY o 720 s - dokładnie przypadek z mockupu A04.
       deviceTime: at(13, 34, 47),
       gpsTime: at(13, 22, 47),
     });
@@ -362,7 +362,7 @@ describe('liczniki opisują ZAKRES ZAPYTANIA, nie widoczne okno', () => {
       deviceTime: at(9, 0),
       gpsTime: at(9, 0) - 121_000,
     });
-    // Rozjazd DOKŁADNIE równy progowi nie jest rozjazdem — reguła domeny mówi `>`,
+    // Rozjazd DOKŁADNIE równy progowi nie jest rozjazdem - reguła domeny mówi `>`,
     // nie `>=`, i licznik ma o tym wiedzieć.
     await rawEvent(harness.db, {
       uuid: 'ev-c4',
@@ -374,7 +374,7 @@ describe('liczniki opisują ZAKRES ZAPYTANIA, nie widoczne okno', () => {
     return harness;
   }
 
-  it('`limit=1` obcina STRONĘ, a nie pytanie — kafle się nie ruszają', async () => {
+  it('`limit=1` obcina STRONĘ, a nie pytanie - kafle się nie ruszają', async () => {
     // Wada z A05 w czystej postaci: zawężenie stało PO `LIMIT`-cie, więc chip pokazywał
     // zero i wyglądało to na dobrą wiadomość.
     const { app } = await withCounts();
@@ -418,7 +418,7 @@ describe('liczniki opisują ZAKRES ZAPYTANIA, nie widoczne okno', () => {
     const second = (
       await getEvents(app, t, `?limit=2&cursor=${encodeURIComponent(first.nextCursor!)}`)
     ).json() as PageDto;
-    // `null` znaczy „nie pytaliśmy", a nie „nic nie ma" — panel niesie liczbę
+    // `null` znaczy „nie pytaliśmy", a nie „nic nie ma" - panel niesie liczbę
     // z pierwszej strony.
     expect(second.counts).toBeNull();
   });
@@ -429,7 +429,7 @@ describe('liczniki opisują ZAKRES ZAPYTANIA, nie widoczne okno', () => {
 describe('kursor keyset: granica strony przy IDENTYCZNYM `received_at`', () => {
   it('cała paczka z jednego synca dzieli się na strony bez gubienia i dublowania', async () => {
     // `received_at` nadaje baza (`DEFAULT now()`), a `now()` w Postgresie zwraca czas
-    // ROZPOCZĘCIA TRANSAKCJI — więc sześć zdarzeń jednej paczki ma identyczny stempel.
+    // ROZPOCZĘCIA TRANSAKCJI - więc sześć zdarzeń jednej paczki ma identyczny stempel.
     // Bez tie-breakera po `uuid` granica strony wypadałaby w środku paczki i wiersze
     // wypadałyby z porządku: administrator szukający konkretnego zdarzenia mógłby nie
     // zobaczyć akurat tego, którego szuka.
@@ -470,7 +470,7 @@ describe('kursor keyset: granica strony przy IDENTYCZNYM `received_at`', () => {
       expect(res.statusCode).toBe(400);
     }
 
-    // Kursor wydany dla `desc`, użyty przy `asc`, opisuje pozycję w INNYM porządku —
+    // Kursor wydany dla `desc`, użyty przy `asc`, opisuje pozycję w INNYM porządku -
     // strona byłaby wewnętrznie niespójna, a niespójna strona wygląda jak dane.
     const { nextCursor } = (await getEvents(app, t, '?limit=1')).json() as PageDto;
     if (nextCursor != null) {
@@ -491,7 +491,7 @@ describe('filtry: nieznana wartość to 400, nie ciche zignorowanie', () => {
     expect(res.statusCode).toBe(400);
   });
 
-  it('typ jest parametrem POWTARZALNYM — chip bywa grupą', async () => {
+  it('typ jest parametrem POWTARZALNYM - chip bywa grupą', async () => {
     const { app } = await testHarness();
     await ingest(app, flyingDay());
 
@@ -501,7 +501,7 @@ describe('filtry: nieznana wartość to 400, nie ciche zignorowanie', () => {
     expect(page.items.map((i) => i.type).sort()).toEqual(['landing', 'takeoff']);
   });
 
-  it('pilot dopasowuje PIC-a ALBO Duala — dzień szkolny należy do obu', async () => {
+  it('pilot dopasowuje PIC-a ALBO Duala - dzień szkolny należy do obu', async () => {
     const { app, db } = await testHarness();
     await rawEvent(db, { uuid: 'ev-dual', type: 'taxi', payload: {}, picId: 'KRZ', dualId: 'JSE' });
     const t = await token(app, 'TMK');
@@ -545,7 +545,7 @@ describe('filtry: nieznana wartość to 400, nie ciche zignorowanie', () => {
     });
     const t = await token(app, 'TMK');
 
-    // `do=2026-01-05` obejmuje CAŁĄ dobę — inaczej „od 1 do 5" gubiłoby ostatni dzień.
+    // `do=2026-01-05` obejmuje CAŁĄ dobę - inaczej „od 1 do 5" gubiłoby ostatni dzień.
     const inside = (await getEvents(app, t, '?from=2026-01-05&to=2026-01-05')).json() as PageDto;
     expect(inside.items.map((i) => i.uuid)).toEqual(['ev-stare']);
 
@@ -557,7 +557,7 @@ describe('filtry: nieznana wartość to 400, nie ciche zignorowanie', () => {
 // ── korekty ─────────────────────────────────────────────────────────────────────
 
 describe('rejestr jest append-only: korekta przekreśla, nie usuwa', () => {
-  it('zdarzenie UNIEWAŻNIONE zostaje na liście, oznaczone — a sama korekta nie', async () => {
+  it('zdarzenie UNIEWAŻNIONE zostaje na liście, oznaczone - a sama korekta nie', async () => {
     const { app, db } = await testHarness();
     await ingest(app, flyingDay());
     const target = uuidOf('landing');
@@ -573,13 +573,13 @@ describe('rejestr jest append-only: korekta przekreśla, nie usuwa', () => {
     const page = (await getEvents(app, await token(app, 'TMK'), '?limit=500')).json() as PageDto;
     expect(entry(page, target).voided).toBe(true);
     expect(entry(page, target).adminCorrected).toBe(true);
-    // Korekta korekty nie istnieje — wiersz `event_correction` nigdy nie jest
+    // Korekta korekty nie istnieje - wiersz `event_correction` nigdy nie jest
     // unieważniony. Bez tego rozróżnienia wypadałby z wyniku `applyCorrections`
     // i wyglądał na skreślony.
     expect(entry(page, 'ev-void').voided).toBe(false);
   });
 
-  it('`retime` nadaje czas i NIE unieważnia — a „ostatnia wygrywa" liczy DOMENA', async () => {
+  it('`retime` nadaje czas i NIE unieważnia - a „ostatnia wygrywa" liczy DOMENA', async () => {
     const { app, db } = await testHarness();
     await ingest(app, flyingDay());
     const target = uuidOf('takeoff');
@@ -613,7 +613,7 @@ describe('rejestr jest append-only: korekta przekreśla, nie usuwa', () => {
 
   it('korekta SPOZA zawężenia i tak przekreśla swój cel', async () => {
     // Zdarzenie sprzed miesiąca unieważnione wczoraj musi być przekreślone także wtedy,
-    // gdy sama korekta wypadła poza filtr — inaczej rejestr pokazywałby jako ważne coś,
+    // gdy sama korekta wypadła poza filtr - inaczej rejestr pokazywałby jako ważne coś,
     // czego projekcja już nie liczy.
     const { app, db } = await testHarness();
     await rawEvent(db, {
@@ -636,12 +636,12 @@ describe('rejestr jest append-only: korekta przekreśla, nie usuwa', () => {
     expect(entry(page, 'ev-daleki').voided).toBe(true);
   });
 
-  it('`effectiveTime` mówi to, czym liczy PROJEKCJA — czyli czas PO korekcie', async () => {
+  it('`effectiveTime` mówi to, czym liczy PROJEKCJA - czyli czas PO korekcie', async () => {
     // Scenariusz flagowy `A04`: ekran odsyła administratora do korekty `A02b`, a zaraz
     // po jej wykonaniu zaczynał o tym zdarzeniu mówić nieprawdę. Wiersz bez fixa GPS
     // z nadanym czasem pisał „czas efektywny 13:13:33 · z zegara telefonu" i baner
     // „projekcja spadła na `device_time`", podczas gdy projekcja liczyła już czasem
-    // nadanym — w narzędziu, którego jedynym zadaniem jest wyjaśnić, skąd wzięła się
+    // nadanym - w narzędziu, którego jedynym zadaniem jest wyjaśnić, skąd wzięła się
     // liczba.
     const { app, db } = await testHarness();
     await rawEvent(db, {
@@ -673,14 +673,14 @@ describe('rejestr jest append-only: korekta przekreśla, nie usuwa', () => {
     );
     expect(after.effectiveTime).toBe(at(13, 20));
     expect(after.effectiveClock).toBe('gps');
-    // Surowe zegary ZOSTAJĄ nietknięte — rejestr pamięta, co przyszło z telefonu.
+    // Surowe zegary ZOSTAJĄ nietknięte - rejestr pamięta, co przyszło z telefonu.
     expect(after.deviceTime).toBe(at(13, 13, 33));
     expect(after.gpsTime).toBeNull();
   });
 
   it('para `void` → `retime` na czas PIERWOTNY zostawia ślad, choć nie zmienia liczby', async () => {
     // „Skorygowane" wynika z ISTNIENIA korekty, nie z nierówności wartości. Liczone
-    // porównaniem dawało tu wiersz nieodróżnialny od nietkniętego — i sprzeczność
+    // porównaniem dawało tu wiersz nieodróżnialny od nietkniętego - i sprzeczność
     // na jednym ekranie: `source_device` mówił o korekcie z panelu, a rozwinięcie
     // „zdarzenia nikt nie ruszał".
     const { app, db } = await testHarness();
@@ -709,7 +709,7 @@ describe('rejestr jest append-only: korekta przekreśla, nie usuwa', () => {
       target,
     );
     expect(row.voided).toBe(false);
-    // Czasu nikt nie NADAŁ (wrócił pierwotny), ale zdarzenie ktoś RUSZAŁ — i to jest
+    // Czasu nikt nie NADAŁ (wrócił pierwotny), ale zdarzenie ktoś RUSZAŁ - i to jest
     // fakt, który ekran ma pokazać.
     expect(row.correctedTime).toBeNull();
     expect(row.corrected).toBe(true);
@@ -717,7 +717,7 @@ describe('rejestr jest append-only: korekta przekreśla, nie usuwa', () => {
   });
 
   it('„zapisał panel" i „korektę zapisał panel" to DWA różne fakty', async () => {
-    // `writtenByPanel` opisuje POCHODZENIE wiersza, `adminCorrected` — pochodzenie jego
+    // `writtenByPanel` opisuje POCHODZENIE wiersza, `adminCorrected` - pochodzenie jego
     // korekty. Sklejone w jedno dawały w kolumnie `source_device` podpis „korekta
     // z panelu" pod nazwą telefonu, a sam wiersz korekty zapisany przez panel takiego
     // podpisu nie dostawał.
@@ -748,10 +748,10 @@ describe('rejestr jest append-only: korekta przekreśla, nie usuwa', () => {
   it('REMIS czasu dwóch korekt rozstrzyga porządek zapytania, nie układ sterty', async () => {
     // `applyCorrections` sortuje STABILNIE po czasie zdarzenia, więc przy równym czasie
     // o zwycięzcy decyduje kolejność wierszy z bazy. Bez `ORDER BY` daje ją układ sterty:
-    // ta sama para korekt dawała raz wiersz przekreślony, raz nie — i zmieniało się to
+    // ta sama para korekt dawała raz wiersz przekreślony, raz nie - i zmieniało się to
     // po `VACUUM`. Wstawiamy je tak, żeby kolejność wstawienia była ODWROTNA do
     // `received_at`: z jawnym porządkiem wygrywa korekta przyjęta później (`retime`),
-    // bez niego — ta wstawiona później (`void`).
+    // bez niego - ta wstawiona później (`void`).
     const { app, db } = await testHarness();
     const tie = at(20, 0);
     await rawEvent(db, {
@@ -787,7 +787,7 @@ describe('rejestr jest append-only: korekta przekreśla, nie usuwa', () => {
   it('korekta z payloadem `null` NIE ZABIERA listy wszystkim pozostałym', async () => {
     // Najgorszy możliwy tryb awarii narzędzia śledczego: JEDEN wiersz wpisany ręcznie
     // do bazy wywracał `applyCorrections` (`TypeError` na `payload.targetUuid`), więc
-    // trasa oddawała 500 z CAŁEGO rejestru — i nie dało się tego obejść filtrem, bo
+    // trasa oddawała 500 z CAŁEGO rejestru - i nie dało się tego obejść filtrem, bo
     // taki wiersz wchodzi na każdą stronę w swoim zakresie. Garda stoi w domenie
     // (`packages/domain/src/projections/corrections.ts`), a tu sprawdzamy, że skutek
     // dojeżdża aż do odpowiedzi HTTP.
@@ -805,7 +805,7 @@ describe('rejestr jest append-only: korekta przekreśla, nie usuwa', () => {
     expect(res.statusCode).toBe(200);
 
     const page = res.json() as PageDto;
-    // Wiersz nieczytelny jedzie DOSŁOWNIE, jak każdy inny — z `payload: null`.
+    // Wiersz nieczytelny jedzie DOSŁOWNIE, jak każdy inny - z `payload: null`.
     expect(entry(page, 'ev-korekta-null').payload).toBeNull();
     // …a dzień lotny zostaje nietknięty: nikt nie zgadł, co ta korekta miała znaczyć.
     expect(entry(page, uuidOf('landing')).voided).toBe(false);
@@ -815,7 +815,7 @@ describe('rejestr jest append-only: korekta przekreśla, nie usuwa', () => {
   it('NIEZNANA akcja korekty nie jest po cichu traktowana jak `retime`', async () => {
     // Rejestr obiecuje pokazywać nieznane kształty dosłownie, więc nie ma prawa
     // podejmować za nie decyzji. Gałąź „wszystko, co nie jest `void`" brała `newTime`
-    // z KAŻDEJ akcji — czyli kształt z przyszłej wersji telefonu przestawiłby czas
+    // z KAŻDEJ akcji - czyli kształt z przyszłej wersji telefonu przestawiłby czas
     // zdarzenia, choć nikt nie wie, co ta akcja miała znaczyć.
     const { app, db } = await testHarness();
     await ingest(app, flyingDay());
@@ -839,7 +839,7 @@ describe('rejestr jest append-only: korekta przekreśla, nie usuwa', () => {
 
 describe('porządek rejestru daje INDEKS, nie sortowanie w pamięci', () => {
   /**
-   * Wsyp dużo wierszy i `ANALYZE` — bez jednego i drugiego planer wybiera `Seq Scan`
+   * Wsyp dużo wierszy i `ANALYZE` - bez jednego i drugiego planer wybiera `Seq Scan`
    * niezależnie od indeksów (na kilku wierszach jest po prostu tańszy), więc test
    * przechodziłby albo padał z powodu, który nie ma nic wspólnego z badaną własnością.
    */
@@ -881,14 +881,14 @@ describe('porządek rejestru daje INDEKS, nie sortowanie w pamięci', () => {
   }
 
   /**
-   * CZTERY kombinacje, a nie dwie — i to jest sedno tego przekroju.
+   * CZTERY kombinacje, a nie dwie - i to jest sedno tego przekroju.
    *
    * Poprzednia wersja tego testu badała wyłącznie `desc`, więc `idx_events_correction_target` przeszła
    * z wadą: dopisanie `NULLS LAST` do `idx_events_received` naprawiło jeden kierunek
    * i zabrało indeks drugiemu (indeks `DESC NULLS LAST` skanowany wstecz daje
    * `ASC NULLS FIRST`, a `keysetOrderBy` prosił o `ASC NULLS LAST`). Zmierzone na 5 000
    * wierszy: `?sort=asc` sortował CAŁY rejestr przed `LIMIT`-em, koszt 442 zamiast 11,3
-   * — i wystarczał do tego jeden klik w nagłówek kolumny.
+   * - i wystarczał do tego jeden klik w nagłówek kolumny.
    *
    * Dziś indeks stoi w postaci DOMYŚLNEJ `(received_at DESC, uuid DESC)`,
    * a `keysetOrderBy` nie dopisuje `NULLS` dla klucza `NOT NULL`. Jeden indeks obsługuje
@@ -900,7 +900,7 @@ describe('porządek rejestru daje INDEKS, nie sortowanie w pamięci', () => {
     ['asc', 'pierwsza strona', false],
     ['asc', 'strona kursorowa', true],
   ] as const)(
-    '`?sort=%s`, %s — plan idzie `idx_events_received`, BEZ węzła `Sort`',
+    '`?sort=%s`, %s - plan idzie `idx_events_received`, BEZ węzła `Sort`',
     async (direction, _label, withCursor) => {
       const { db } = await bigRegistry();
       const repo = new PgAdminEventsReadRepo();
@@ -920,7 +920,7 @@ describe('porządek rejestru daje INDEKS, nie sortowanie w pamięci', () => {
 
   it('kontrola samego testu: `Sort` w planie faktycznie DA SIĘ zobaczyć', async () => {
     // Bez tego cztery asercje wyżej przechodziłyby też wtedy, gdyby wzorzec `\bSort\b`
-    // nigdy nie mógł trafić — a to jest test, który raz już przepuścił wadę.
+    // nigdy nie mógł trafić - a to jest test, który raz już przepuścił wadę.
     const { db } = await bigRegistry();
     const { rows } = await db.query<Record<string, string>>(
       `EXPLAIN SELECT uuid FROM events ORDER BY payload::text, uuid LIMIT 50`,

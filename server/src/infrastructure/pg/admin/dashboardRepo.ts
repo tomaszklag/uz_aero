@@ -1,26 +1,26 @@
 /**
- * UZ Aero (serwer) — adapter PULSU SYSTEMU (`DashboardAdminPort`, mockupy `A01`/`A01a`).
+ * UZ Aero (serwer) - adapter PULSU SYSTEMU (`DashboardAdminPort`, mockupy `A01`/`A01a`).
  *
  * Trzy pytania, których nie zadaje żadna inna powierzchnia, i wszystkie chodzą po
- * `events.received_at` — czyli po ZEGARZE SERWERA. To jest jedyna uczciwa oś dla
+ * `events.received_at` - czyli po ZEGARZE SERWERA. To jest jedyna uczciwa oś dla
  * pulpitu: `device_time` mówi, kiedy coś się stało, a pulpit pyta, kiedy się o tym
  * dowiedzieliśmy. Pusty słupek na wykresie znaczy „nic nie przyszło", nigdy „nikt nie
- * latał" — i mockup opisuje ten przypadek wprost.
+ * latał" - i mockup opisuje ten przypadek wprost.
  *
  * ══ INDEKS NIE JEST OPTYMALIZACJĄ, TYLKO WARUNKIEM ══
  * `idx_events_received` obsługuje oba wzorce tego pliku: `ORDER BY received_at DESC
  * LIMIT 6` (karta „Ostatnio przyjęte") i zakres `received_at >= …` (histogram, licznik
  * doby). Bez niego każde wejście na pulpit skanowałoby CAŁY rejestr, który rośnie bez
- * granicy — pulpit działałby świetnie w pierwszym miesiącu i coraz gorzej w każdym
+ * granicy - pulpit działałby świetnie w pierwszym miesiącu i coraz gorzej w każdym
  * następnym, czyli w sposób najtrudniejszy do zauważenia.
  *
  * **`ORDER BY` niżej jest BEZ `NULLS LAST` i to jest decyzja, nie przeoczenie.**
- * `events.received_at` jest `NOT NULL`, więc dopisek nie zmienia wyniku — a planer
+ * `events.received_at` jest `NOT NULL`, więc dopisek nie zmienia wyniku - a planer
  * dopasowuje porządek SKŁADNIOWO i o ograniczeniu kolumny nie wnioskuje.
  * `idx_events_received` stoi jako `(received_at DESC, uuid DESC)`, czyli w postaci
  * DOMYŚLNEJ, którą ten sam indeks obsługuje w obie strony. Zapytanie z `NULLS LAST`
  * przestałoby do niego pasować i „ostatnie sześć zdarzeń" zaczęłoby sortować cały
- * rejestr — pulpit ładowałby się natychmiast w pierwszym miesiącu i coraz wolniej
+ * rejestr - pulpit ładowałby się natychmiast w pierwszym miesiącu i coraz wolniej
  * w każdym następnym. Trzy podejścia do tej pomyłki opisuje
  * `docs/architektura-panelu-serwer.md` §7.8.
  */
@@ -66,7 +66,7 @@ export class PgAdminDashboardRepo implements DashboardAdminPort {
     // Numer wiadra liczymy w SQL-u z milisekund epoki, a nie funkcjami kalendarzowymi
     // (`date_trunc('hour', …)`): podziałka wykresu jest OKNEM RUCHOMYM zakotwiczonym
     // w „teraz", a nie siatką pełnych godzin. `date_trunc` dałby dwanaście wiader,
-    // z których pierwsze i ostatnie byłyby niepełne — czyli słupki różnej długości
+    // z których pierwsze i ostatnie byłyby niepełne - czyli słupki różnej długości
     // opisane jako równe.
     const { rows } = await db.query<InflowRow>(
       `SELECT floor((EXTRACT(EPOCH FROM received_at) * 1000 - $1) / $3)::bigint AS bucket,
@@ -83,7 +83,7 @@ export class PgAdminDashboardRepo implements DashboardAdminPort {
   async recent(db: Queryable, limit: number): Promise<AdminRecentEventRow[]> {
     // `LEFT JOIN`, nie `JOIN`: zdarzenie samolotu wykreślonego z rejestru albo pilota
     // z usuniętym kontem MUSI zostać widoczne. Rejestr jest append-only i to on jest
-    // prawdą — brak wiersza w tabeli referencyjnej odbiera nazwę, nie fakt.
+    // prawdą - brak wiersza w tabeli referencyjnej odbiera nazwę, nie fakt.
     const { rows } = await db.query<RecentRow>(
       `SELECT e.uuid, e.session_uuid, e.aircraft_id, e.type,
               e.device_time, e.gps_time, e.received_at, e.pic_id,
@@ -117,11 +117,11 @@ export class PgAdminDashboardRepo implements DashboardAdminPort {
     db: Queryable,
     range: { fromMs: number; toMs: number },
   ): Promise<AdminDayTotalsRow> {
-    // Sumy jadą z KOLUMN PROJEKCJI, nigdy z ponownego liczenia po zdarzeniach — to ta
+    // Sumy jadą z KOLUMN PROJEKCJI, nigdy z ponownego liczenia po zdarzeniach - to ta
     // sama reguła, co na liście dni: „agreguj wartości projekcji, nigdy nie odtwarzaj
-    // projekcji SQL-em". Sesja bez `session_claim` (`claim_time IS NULL` — od 2026-08-07
+    // projekcji SQL-em". Sesja bez `session_claim` (`claim_time IS NULL` - od 2026-08-07
     // ta kolumna niesie chwilę PRZEJĘCIA, nie godzinę meldunku) nie ma daty, więc wypada
-    // z zakresu — tak samo jak na `A02`.
+    // z zakresu - tak samo jak na `A02`.
     const { rows } = await db.query<TotalsRow>(
       `SELECT COUNT(*)                                  AS sessions,
               COUNT(DISTINCT aircraft_id)               AS aircraft,

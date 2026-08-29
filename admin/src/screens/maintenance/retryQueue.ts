@@ -1,14 +1,14 @@
 /**
- * UZ Aero — panel: KOLEJKA PONOWIEŃ EKSPORTU (moduł CZYSTY, Node).
+ * UZ Aero - panel: KOLEJKA PONOWIEŃ EKSPORTU (moduł CZYSTY, Node).
  *
  * ══ TO NIE JEST DRUGI MONITOR EKSPORTU ══
  * Wiersz powstaje TĄ SAMĄ funkcją, co na `A05` (`exportRows`), a ponowienie idzie TĄ
  * SAMĄ mutacją (`useRetryExport`) i tą samą trasą. Rozjazd między „ponów" na monitorze
- * a „ponów" w konserwacji byłby gorszy niż brak drugiego przycisku — zwłaszcza że
+ * a „ponów" w konserwacji byłby gorszy niż brak drugiego przycisku - zwłaszcza że
  * dotyczyłby warunku „czy w ogóle warto próbować".
  *
  * Ten plik dokłada dokładnie jedno: ZŁĄCZENIE dwóch zawężeń serwera (dni bez karty
- * i dni zablokowanych flagą) w jedną listę „co czeka na uwagę" — i porządek, w jakim
+ * i dni zablokowanych flagą) w jedną listę „co czeka na uwagę" - i porządek, w jakim
  * się je czyta.
  *
  * ══ CZEGO TA KOLEJKA NIE POKAZUJE ══
@@ -16,7 +16,7 @@
  * `sheets_write_timeout`" z mockupu). Nieudany eksport NIE zostawia śladu w żadnej
  * tabeli: wiersz `export_log` powstaje dopiero PO udanym zapisie karty, bo odwrotna
  * kolejność pokazywałaby na ekranie 11 telefonu link do arkusza, którego nie ma.
- * Kolejki z ponawianiem system nie ma — jej dołożenie to decyzja o schemacie, a nie
+ * Kolejki z ponawianiem system nie ma - jej dołożenie to decyzja o schemacie, a nie
  * pole do wypełnienia. Mockup sam to przyznaje („Zaległość, którą ten ekran zakłada
  * za wykonaną") i ekran mówi to wprost, zamiast wypisywać wymyślone liczby.
  */
@@ -30,21 +30,21 @@ import { exportRows, type ExportRow } from '../exports/exportsRows';
  * Liczniki kolejki.
  *
  * ══ POCHODZĄ Z SERWERA, NIE Z WIERSZY ══
- * Do 2026-08-02 liczyła je czysta funkcja nad tablicą wierszy — czyli nad sumą dwóch
+ * Do 2026-08-02 liczyła je czysta funkcja nad tablicą wierszy - czyli nad sumą dwóch
  * stron JUŻ OBCIĘTYCH `QUEUE_LIMIT`-em. Klub ze 137 dniami bez karty dostawał 50
  * wierszy, plakietka mówiła „50", o 87 schowanych nie mówiła nic, a `A05` na to samo
  * pytanie odpowiadał „137". Odpowiedź trasy niesie `matched` (ile dni PASUJE do
  * zawężenia, także poza `limit`-em) i `truncated`, więc liczba nie musi być zgadywana
- * z widocznego okna — i nie ma prawa być. To dokładnie ta sama naprawa, którą `A05`
- * przeszedł 2026-08-01 (`contracts/exports.ts`: „ekran, który kłamie — a to nie jest
+ * z widocznego okna - i nie ma prawa być. To dokładnie ta sama naprawa, którą `A05`
+ * przeszedł 2026-08-01 (`contracts/exports.ts`: „ekran, który kłamie - a to nie jest
  * tańsze, tylko ciche").
  */
 export interface QueueCounts {
-  /** Wszystkie dni czekające na uwagę — suma obu zawężeń, z serwera. */
+  /** Wszystkie dni czekające na uwagę - suma obu zawężeń, z serwera. */
   total: number;
-  /** Dni zamknięte BEZ karty — jedyne, których ponowienie ma sens. */
+  /** Dni zamknięte BEZ karty - jedyne, których ponowienie ma sens. */
   failed: number;
-  /** Dni, których kartę trzyma otwarta flaga — droga wiedzie przez skrzynkę flag. */
+  /** Dni, których kartę trzyma otwarta flaga - droga wiedzie przez skrzynkę flag. */
   blocked: number;
   /** Ile wierszy widać w tabeli po obcięciu `limit`-em. */
   shown: number;
@@ -56,7 +56,7 @@ export interface QueueCounts {
  * Odpowiedzi obu zawężeń → liczniki. `null` = któreś z zapytań jeszcze nie wróciło.
  *
  * `null`, a nie zera: „kolejka pusta" przy braku odpowiedzi jest twierdzeniem o świecie
- * („każdy zamknięty dzień ma kartę"), a brak odpowiedzi nim nie jest — i akurat na tym
+ * („każdy zamknięty dzień ma kartę"), a brak odpowiedzi nim nie jest - i akurat na tym
  * ekranie ta pomyłka brzmi jak dobra wiadomość.
  */
 export function queueCounts(
@@ -80,7 +80,7 @@ export function queueCounts(
  * **Porządek jest decyzją panelu i dlatego jest tu nazwany:** najpierw to, co da się
  * ponowić (`missing`), potem to, co odbije się o tę samą bramkę (`blocked`). Odwrotna
  * kolejność stawiałaby na górze wiersze z wyszarzonym przyciskiem, czyli listę zaczynałby
- * rząd rzeczy, których zrobić nie można. Wewnątrz każdej grupy zostaje porządek serwera —
+ * rząd rzeczy, których zrobić nie można. Wewnątrz każdej grupy zostaje porządek serwera -
  * przesortowanie go tutaj rozjechałoby listę z tym, co opisują liczniki.
  *
  * Duplikat po `sessionUuid` jest niemożliwy z konstrukcji (stany się wykluczają), ale
@@ -111,7 +111,7 @@ export interface QueueLabel {
 }
 
 /**
- * Plakietki nad kolejką: „1 bez karty", „2 zablokowane flagą" — dokładnie jak w mockupie.
+ * Plakietki nad kolejką: „1 bez karty", „2 zablokowane flagą" - dokładnie jak w mockupie.
  *
  * Plakietka jest OBIETNICĄ o kolejce, a nie o tabeli: mówi, ile dni czeka, nawet jeśli
  * `limit` pokazał ich mniej. Rozjazd między liczbą a listą nazywa osobne zdanie
@@ -119,7 +119,7 @@ export interface QueueLabel {
  * plakietkę kosztowałoby prawdziwość którejś z nich.
  */
 export function queueLabels(counts: QueueCounts | null): QueueLabel[] {
-  // Brak odczytu to nie jest pusta kolejka — a zielone „kolejka pusta" w trakcie
+  // Brak odczytu to nie jest pusta kolejka - a zielone „kolejka pusta" w trakcie
   // pobierania wygląda dokładnie jak odpowiedź, na którą się czeka.
   if (counts == null) return [{ text: 'brak odczytu', tone: 'dim' }];
 
@@ -141,11 +141,11 @@ export function queueLabels(counts: QueueCounts | null): QueueLabel[] {
 }
 
 /**
- * Zdanie „widzisz mniej, niż jest" — `null`, gdy lista jest kompletna.
+ * Zdanie „widzisz mniej, niż jest" - `null`, gdy lista jest kompletna.
  *
  * Lustro `truncationNotice` z `A05` i z tego samego powodu: `limit` jest tu
  * bezpiecznikiem („kolejka ma być krótka z natury"), a bezpiecznik, który po cichu
- * ucina listę, zamienia narzędzie nadzoru w narzędzie mylące — bo przycięta lista
+ * ucina listę, zamienia narzędzie nadzoru w narzędzie mylące - bo przycięta lista
  * wygląda na komplet i odpowiedź „tyle zostało do zrobienia" brzmi tak samo, jak
  * gdyby była prawdziwa.
  */
@@ -153,17 +153,17 @@ export function queueTruncationNotice(counts: QueueCounts | null, limit: number)
   if (counts == null || !counts.truncated) return null;
   const hidden = counts.total - counts.shown;
   return (
-    `Widzisz ${counts.shown} z ${counts.total} ${plural(counts.total, 'dnia', 'dni', 'dni')} czekających na kartę — ` +
+    `Widzisz ${counts.shown} z ${counts.total} ${plural(counts.total, 'dnia', 'dni', 'dni')} czekających na kartę - ` +
     `${hidden} ${plural(hidden, 'dzień', 'dni', 'dni')} poza listą, bo panel pobiera najwyżej ${limit} wierszy na zawężenie. ` +
     'Plakietki nad tabelą opisują CAŁĄ kolejkę, więc mówią też o tym, czego tu nie widać. ' +
     'Pełny obraz razem z zakresem dat i chipami stanu jest w monitorze eksportu.'
   );
 }
 
-/** Stan pusty kolejki — potwierdzenie, nie awaria (`A01a`: „cisza spodziewana"). */
+/** Stan pusty kolejki - potwierdzenie, nie awaria (`A01a`: „cisza spodziewana"). */
 export function queueEmpty(): { title: string; note: string } {
   return {
     title: 'KAŻDA ZDANA MASZYNA MA KARTĘ',
-    note: 'Ani jedna sesja nie czeka na eksport i żadna flaga nie wycina zmiany z karty doby. Pusta kolejka jest tu wynikiem oczekiwanym — pozycje pojawiają się same, gdy eksport nie dojdzie do skutku.',
+    note: 'Ani jedna sesja nie czeka na eksport i żadna flaga nie wycina zmiany z karty doby. Pusta kolejka jest tu wynikiem oczekiwanym - pozycje pojawiają się same, gdy eksport nie dojdzie do skutku.',
   };
 }

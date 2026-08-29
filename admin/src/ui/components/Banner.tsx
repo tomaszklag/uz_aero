@@ -1,12 +1,12 @@
 /**
- * UZ Aero — panel: baner (`.banner` z `SZABLON.html`, typy z `docs/design-notes.md`).
+ * UZ Aero - panel: baner (`.banner` z `SZABLON.html`, typy z `docs/design-notes.md`).
  *
  * **Ikona wynika z TONU, nigdy z propsa.** To nie jest oszczędność API: baner
- * ostrzegawczy z ikoną informacji uczy, że kolor nic nie znaczy — a w panelu kolor
+ * ostrzegawczy z ikoną informacji uczy, że kolor nic nie znaczy - a w panelu kolor
  * jest jedyną rzeczą, którą widać kątem oka.
  *
- * Cztery tony: `status` (przyrząd — stan świata), `warn` (ostrzeżenie warunkowe),
- * `danger` (błąd), `ok` (potwierdzenie). Banery panelu NIE SĄ zamykalne — trzeci typ
+ * Cztery tony: `status` (przyrząd - stan świata), `warn` (ostrzeżenie warunkowe),
+ * `danger` (błąd), `ok` (potwierdzenie). Banery panelu NIE SĄ zamykalne - trzeci typ
  * z `design-notes.md` (pouczający jednorazowy) należy do aplikacji pilota.
  */
 

@@ -1,13 +1,13 @@
 /**
- * UZ Aero (serwer) — adapter statystyk zakresu (`StatsAdminPort`, mockup `A10`).
+ * UZ Aero (serwer) - adapter statystyk zakresu (`StatsAdminPort`, mockup `A10`).
  *
  * ══ CO TU WOLNO, A CZEGO NIE ══
- * Każde zapytanie tego pliku AGREGUJE kolumny projekcji `sessions` — wartości, które
+ * Każde zapytanie tego pliku AGREGUJE kolumny projekcji `sessions` - wartości, które
  * wyprodukował `sessionRowFrom(projectSession(stream))`. Niczego nie liczymy ze
  * strumienia zdarzeń i nie odtwarzamy reguł projekcji SQL-em: `SUM(mh_end - mh_start)`
- * zamiast `SUM(mh_delta_h)` byłoby DRUGĄ implementacją bilansu dnia — i skłamałoby
+ * zamiast `SUM(mh_delta_h)` byłoby DRUGĄ implementacją bilansu dnia - i skłamałoby
  * przy pierwszym dniu bez odczytu początkowego (`docs/architektura-panelu-serwer.md` §7.5).
- * Ilorazy (średnie, udziały) liczy mapper warstwy aplikacji, nie SQL — żeby były
+ * Ilorazy (średnie, udziały) liczy mapper warstwy aplikacji, nie SQL - żeby były
  * testowalne bez bazy.
  *
  * ══ ZAKRES PO DNIU ZAMKNIĘCIA ══
@@ -19,9 +19,9 @@
  * ══ `NULL` W KOLUMNACH MIGRACJI 18 ══
  * `SUM` po cichu pomija `NULL`, więc sama suma nie odróżnia „zera" od „wiersza sprzed
  * migracji". Dlatego każdy agregat jedzie z licznikami: `stale_rows` (wiersz
- * nieprzeliczony — `takeoff_count IS NULL`, kolumny wypełnia się razem) oraz
+ * nieprzeliczony - `takeoff_count IS NULL`, kolumny wypełnia się razem) oraz
  * `fuel_known`/`mh_known` (ile wierszy faktycznie weszło do sumy bilansu). Wnioski
- * z tych liczników wyciąga mapper — tu są wyłącznie fakty.
+ * z tych liczników wyciąga mapper - tu są wyłącznie fakty.
  */
 
 import { isOperationType, type MhFormat, type OperationType } from '@uzaero/domain';
@@ -41,14 +41,14 @@ import type {
   StatsRange,
 } from '../../../application/admin/ports.ts';
 
-/** Doba UTC w ms — mianownik numeru doby (`close_time / 86400000`, dzielenie całkowite). */
+/** Doba UTC w ms - mianownik numeru doby (`close_time / 86400000`, dzielenie całkowite). */
 const DAY_MS = 86_400_000;
 
-/** Wspólny predykat zakresu — jedna definicja, żeby ujęcia nie mogły się rozjechać. */
+/** Wspólny predykat zakresu - jedna definicja, żeby ujęcia nie mogły się rozjechać. */
 const CLOSED_IN_RANGE = `s.status = 'closed' AND s.close_time BETWEEN $1 AND $2`;
 
 /**
- * Wspólna część SELECT-a agregatów — te same wyrażenia w każdym ujęciu, bo sumy
+ * Wspólna część SELECT-a agregatów - te same wyrażenia w każdym ujęciu, bo sumy
  * MUSZĄ się zgadzać między ujęciami (mockup przełącza je w miejscu, żeby dało się
  * je porównać).
  */
@@ -90,7 +90,7 @@ const toGroupSums = (r: GroupSumsDbRow): AdminStatsGroupRow => ({
   fuelConsumedL: Number(r.fuel_l ?? 0),
   fuelKnownSessions: Number(r.fuel_known),
   // Iloraz (średnia, rozjazd) musi dzielić przez blok TEGO SAMEGO zbioru dni,
-  // z którego pochodzi licznik — mieszany mianownik systematycznie ZANIŻA wynik.
+  // z którego pochodzi licznik - mieszany mianownik systematycznie ZANIŻA wynik.
   fuelBlockMs: Number(r.fuel_block_ms),
   mhDeltaH: Number(r.mh_delta ?? 0),
   mhKnownSessions: Number(r.mh_known),
@@ -138,10 +138,10 @@ export class PgAdminStatsRepo implements StatsAdminPort {
 
   async openSessions(db: Queryable, range: StatsRange): Promise<AdminStatsOpenSessionsRow> {
     // Sesja niezdana nie ma `close_time`, więc jedyną jej datą jest CHWILA PRZEJĘCIA
-    // (`claim_time`) — tak samo lokuje ją w czasie lista dni `A02`. Od 2026-08-07 ta
+    // (`claim_time`) - tak samo lokuje ją w czasie lista dni `A02`. Od 2026-08-07 ta
     // kolumna niesie czas `session_claim`, a NIE godzinę meldunku z preflightu; sesja
     // bez `session_claim` nie istnieje (§4.4), więc `claim_time IS NULL` jest stanem
-    // wyłącznie awaryjnym — strumień połamany albo przyjęty poza kolejnością. Taka
+    // wyłącznie awaryjnym - strumień połamany albo przyjęty poza kolejnością. Taka
     // sesja nie należy do ŻADNEGO zakresu, więc liczymy ją ZAWSZE i osobno: to licznik
     // rzeczy wymagających uwagi, a uczciwiej ją pokazać, niż schować za `BETWEEN`.
     const { rows } = await db.query<{ in_range: string; undated: string }>(
@@ -159,7 +159,7 @@ export class PgAdminStatsRepo implements StatsAdminPort {
   }
 
   async daily(db: Queryable, range: StatsRange): Promise<AdminStatsDailyRow[]> {
-    // Numer doby to dzielenie CAŁKOWITE epoki przez długość doby — bez funkcji
+    // Numer doby to dzielenie CAŁKOWITE epoki przez długość doby - bez funkcji
     // kalendarzowych i stref: `close_time` jest w UTC, a `BIGINT / BIGINT` w Postgresie
     // obcina w stronę zera (epoka jest dodatnia, więc to jest podłoga).
     const { rows } = await db.query<{ day_index: string; block_ms: string }>(
@@ -186,9 +186,9 @@ export class PgAdminStatsRepo implements StatsAdminPort {
     }
 
     // `LEFT JOIN`: jednostka wykreślona z rejestru floty zostaje w statystykach
-    // z pustą rejestracją — nalot jest faktem rejestru, nie konfiguracji.
+    // z pustą rejestracją - nalot jest faktem rejestru, nie konfiguracji.
     // Odczyty skrajne: remis po `close_time` (dwie sesje domknięte w tej samej
-    // milisekundzie) rozstrzyga `session_uuid` — bez tie-breakera wynik zależałby
+    // milisekundzie) rozstrzyga `session_uuid` - bez tie-breakera wynik zależałby
     // od planu zapytania, nie od danych.
     const { rows } = await db.query<Row>(
       `SELECT ${GROUP_SUMS},
@@ -235,11 +235,11 @@ export class PgAdminStatsRepo implements StatsAdminPort {
       regs: (string | null)[] | null;
     }
 
-    // Atrybucja po PIC-u — jedynym, którego projekcja zna PEWNIE dla całej sesji
+    // Atrybucja po PIC-u - jedynym, którego projekcja zna PEWNIE dla całej sesji
     // (single-writer). Bloku Duala tu NIE MA i nie wolno go policzyć z `dual_id`:
     // kolumna niesie OSTATNIEGO duala dnia, a zmiana załogi w środku dnia przypisałaby
     // mu cudze godziny. Atrybucja per członek załogi wymaga projekcji domenowej
-    // (`docs/architektura-panelu-serwer.md` §10 poz. 8) — decyzja poza tym przekrojem.
+    // (`docs/architektura-panelu-serwer.md` §10 poz. 8) - decyzja poza tym przekrojem.
     const { rows } = await db.query<Row>(
       `SELECT s.pic_id,
               p.code AS code,
@@ -319,7 +319,7 @@ export class PgAdminStatsRepo implements StatsAdminPort {
     // dzień z `operation IS NULL` (bez rozpoznanej operacji albo bez preflightu) MÓGŁ być
     // dniem skokowym, więc zawężenie `operation = 'skoki'` nie ma prawa wyrzucić go
     // ze zbioru nawet jako „nieznany". Do czasu przebudowy projekcji (`A11`) to jest
-    // DOMYŚLNY stan bazy migrującej ze starego schematu — sekcja mówi wtedy „nie
+    // DOMYŚLNY stan bazy migrującej ze starego schematu - sekcja mówi wtedy „nie
     // wiem", zamiast podać sumę z części wierszy jako całość.
     const { rows } = await db.query<Row>(
       `SELECT COUNT(*)                    FILTER (WHERE s.operation = 'skoki') AS sessions,
@@ -364,7 +364,7 @@ export class PgAdminStatsRepo implements StatsAdminPort {
     }
 
     // Wiersze sprzed kolumn statystyk (`drop_count IS NULL`) są tu ODFILTROWANE, a nie
-    // liczone jako zero — o tym, że tabela klientów przy takich wierszach w ogóle
+    // liczone jako zero - o tym, że tabela klientów przy takich wierszach w ogóle
     // nie ma prawa się pokazać, rozstrzyga mapper (`drops.staleRows`).
     const { rows } = await db.query<Row>(
       `SELECT s.client,
@@ -397,7 +397,7 @@ export class PgAdminStatsRepo implements StatsAdminPort {
 }
 
 /**
- * Wartość spoza katalogu rzuca, a nie jest po cichu zerowana — `sessions_operation_known` pilnuje
+ * Wartość spoza katalogu rzuca, a nie jest po cichu zerowana - `sessions_operation_known` pilnuje
  * jej `CHECK`, więc obecność innej znaczy ręczną ingerencję (ten sam argument, co
  * w `sessionDbRow.ts`).
  */

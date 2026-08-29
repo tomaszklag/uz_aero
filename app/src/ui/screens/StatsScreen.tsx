@@ -1,5 +1,5 @@
 /**
- * UZ Aero — 10 SESJA (mockupy `design/10-statystyki.html`, `10a`, `10b`, `10c`).
+ * UZ Aero - 10 SESJA (mockupy `design/10-statystyki.html`, `10a`, `10b`, `10c`).
  *
  * Opisuje JEDNĄ SESJĘ SAMOLOTU (przejęcie → zdanie), a nie dzień pilota: dzień pilota to
  * LISTA SESJI na różnych maszynach (issue #23) i mieszka na „Mój dzień" (01).
@@ -9,35 +9,35 @@
  * powtarzały czas blokowy, a raz twierdziły nieprawdę („Δ sesji = czas blokowy"). Dziś:
  *  • **ślad całego biegu silnika stoi WPROST tutaj**, ze znacznikami startów i lądowań;
  *    ekran 16 (szczegóły jednego lotu) został usunięty, bo dublował to, co widać piętro
- *    wyżej — jego treść wróciła na oś czasu
+ *    wyżej - jego treść wróciła na oś czasu
  *  • **oś czasu zamiast tabeli lotów**: przejęcie → uruchomienie → starty, zrzuty
  *    i lądowania → wyłączenie → zdanie. Czas blokowy pada dokładnie RAZ, w stopce osi
  *  • **paliwo i motogodziny w jednej formie**: rachunek → wynik → oczekiwanie dla TEJ
  *    mieszanki faz → werdykt. Motogodziny mają odtąd własną normę
- *  • **plakietka „AUTO" znikła** — detekcja jest stanem domyślnym, więc oznaczamy
+ *  • **plakietka „AUTO" znikła** - detekcja jest stanem domyślnym, więc oznaczamy
  *    wyłącznie wpis ręczny (ta sama reguła, co SyncChip po issue #12)
  *
  * ══ CO ZMIENIŁ ISSUE #43 ══
- * Ekran ma odtąd DWA STANY. W odczycie jest tym, czym był — opisem sesji, który nie
+ * Ekran ma odtąd DWA STANY. W odczycie jest tym, czym był - opisem sesji, który nie
  * emituje ani jednego zdarzenia. Po „EDYTUJ DANE" wchodzi w TRYB EDYCJI: każdy wiersz
  * osi staje się celem 44 px z ołówkiem, na górze pojawiają się wykryte niespójności
  * logu, a w pasie akcji „DODAJ WPIS". Przycisk nie prowadzi już na osobny ekran (lista
- * ręczna 08 została skasowana) — poprawia się TAM, gdzie się patrzy.
+ * ręczna 08 została skasowana) - poprawia się TAM, gdzie się patrzy.
  *
  * ══ CO ZMIENIŁ ISSUE #40 (uwagi z urządzenia) ══
- *  • **kołowanie wchodzi na oś** (pkt 4) — było jedyną dziurą tego zestawienia wobec
+ *  • **kołowanie wchodzi na oś** (pkt 4) - było jedyną dziurą tego zestawienia wobec
  *    logu kokpitu
  *  • **korekta ma JEDNE drzwi** (pkt 1): „EDYTUJ DANE" pod ekranem. Ołówek przy każdym
  *    z kilkunastu wierszy dawał kilkanaście identycznych celów i zabierał prawą kolumnę
- *    jedynej liczbie, która coś w niej znaczy — czasowi trwania (pkt 2)
+ *    jedynej liczbie, która coś w niej znaczy - czasowi trwania (pkt 2)
  *  • **plakietka „RĘCZNIE" znikła** (pkt 6): sposób powstania zapisu nie jest pytaniem
  *    pilota. Reguła z issue #38 dociągnięta do końca
- *  • **„Czas lotu" zamiast „W powietrzu"** (pkt 3) — dwa słowa łamały stopkę na telefonie
+ *  • **„Czas lotu" zamiast „W powietrzu"** (pkt 3) - dwa słowa łamały stopkę na telefonie
  *  • **notatki pilota mają wreszcie swoje miejsce** (pkt 5)
  *  • **z rachunków zostaje SAMA plakietka werdyktu** (pkt 7 i 8); pasmo, stawki normy
  *    i rozpisane działanie otwiera tapnięcie w nią (`design/10c-norma-detale.html`)
  *
- * Wszystko, co ekran pokazuje, jest projekcją ze strumienia lokalnego (§5.2) — JEDYNYM
+ * Wszystko, co ekran pokazuje, jest projekcją ze strumienia lokalnego (§5.2) - JEDYNYM
  * wyjątkiem jest norma zużycia, która przychodzi z serwera i dlatego ma stan świeżości
  * (§4.8). W trybie odczytu ekran nie emituje ani jednego zdarzenia; w trybie edycji
  * emituje wyłącznie korekty i dopisane fakty, każdy przez `useSessionEdit`.
@@ -85,7 +85,7 @@ import { fuelBalance, mhBalance } from './logic/sessionBalance';
 import { missingSessionNote, noteTargetUuid, sessionNotes } from './logic/sessionNotes';
 import { operationTag } from './logic/operations';
 
-/** Wysokość miniatury śladu — proporcje z mockupu 10 przy szerokości telefonu. */
+/** Wysokość miniatury śladu - proporcje z mockupu 10 przy szerokości telefonu. */
 const THUMB_HEIGHT = 168;
 
 export function StatsScreen({
@@ -94,8 +94,8 @@ export function StatsScreen({
 }: {
   navigation: { navigate: (screen: string, params?: object) => void };
   /**
-   * `edit` — wejść od razu w tryb edycji (kafelek „Popraw dane sesji" w kokpicie),
-   * `from` — dokąd wraca nagłówek. Kokpit jest stanem modalnym, więc wejście stamtąd
+   * `edit` - wejść od razu w tryb edycji (kafelek „Popraw dane sesji" w kokpicie),
+   * `from` - dokąd wraca nagłówek. Kokpit jest stanem modalnym, więc wejście stamtąd
    * musi wracać DO KOKPITU, a nie na „Mój dzień": inaczej pilot trzymający samolot
    * wychodziłby z niego bokiem (`CLAUDE.md`, sekcja o modalności).
    */
@@ -112,13 +112,13 @@ export function StatsScreen({
   const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
   const currentPilotId = useCurrentPilot((s) => s.id);
 
-  // Norma zużycia z cache'u referencyjnego — jedyna dana z serwera na tym ekranie.
+  // Norma zużycia z cache'u referencyjnego - jedyna dana z serwera na tym ekranie.
   // Reszta liczb jest projekcją lokalnych zdarzeń, więc zawsze świeża (§5.2).
   const aircraftRef = useAircraft(projection.aircraftId);
   const norm = aircraftRef?.consumption ?? null;
 
   /**
-   * Piloci z cache'u referencyjnego (§4.8) — dwa zastosowania, jeden odczyt.
+   * Piloci z cache'u referencyjnego (§4.8) - dwa zastosowania, jeden odczyt.
    * Karty załogi pokazują KOD (TMK/AKO), a tryb edycji potrzebuje pełnej listy jako
    * wyboru Duala. Osobny odczyt dla arkusza byłby drugim zapytaniem o to samo.
    */
@@ -143,7 +143,7 @@ export function StatsScreen({
   );
 
   /**
-   * Ślad sesji — jedyny odczyt tego ekranu, który idzie do OSOBNEGO magazynu (setki
+   * Ślad sesji - jedyny odczyt tego ekranu, który idzie do OSOBNEGO magazynu (setki
    * punktów), więc jako jedyny dostaje plamkę skeletonu (issue #33). Reszta liczy się
    * z rejestru w pamięci i jest na ekranie od pierwszej klatki.
    */
@@ -175,16 +175,16 @@ export function StatsScreen({
 
   /**
    * Okno korekty (§decyzja 2026-07-23). Termin jest wartością BEZWZGLĘDNĄ, więc nie
-   * potrzebuje tykającego zegara — liczymy go raz na zmianę projekcji.
+   * potrzebuje tykającego zegara - liczymy go raz na zmianę projekcji.
    */
   const window24h = useMemo(() => correctionWindow(projection, Date.now()), [projection]);
 
   /**
    * Sesja po oknie 24 h = PODGLĄD (issue #35 pkt 2, mockup `design/10b`).
    *
-   * Ekran zostaje ten sam — te same liczby, ta sama kolejność sekcji — ale znika z niego
+   * Ekran zostaje ten sam - te same liczby, ta sama kolejność sekcji - ale znika z niego
    * wszystko, co pisze. Od issue #40 jest to dokładnie JEDNA rzecz: przycisk „EDYTUJ
-   * DANE". Wyszarzony przycisk byłby gorszy od jego braku — obiecywałby akcję, którą
+   * DANE". Wyszarzony przycisk byłby gorszy od jego braku - obiecywałby akcję, którą
    * reguły domeny i tak odrzucą (§6 pkt 3). Powód stoi w banerze nad wszystkim.
    *
    * Werdykty zostają KLIKALNE także tutaj: arkusz normy niczego nie zapisuje, a zamknięte
@@ -192,13 +192,13 @@ export function StatsScreen({
    */
   const readOnly = !window24h.open;
   /**
-   * Po oknie wchodzi się tu wyłącznie z „Poprzednich dni" — tam też prowadzi wyjście.
+   * Po oknie wchodzi się tu wyłącznie z „Poprzednich dni" - tam też prowadzi wyjście.
    * Wejście z kokpitu (issue #43) podaje `from` i wraca dokładnie tam, skąd przyszło.
    */
   const backScreen = route?.params?.from ?? (readOnly ? 'History' : 'MyDay');
 
   /**
-   * Tryb edycji (issue #43). Po oknie 24 h nie da się w niego wejść — nie ma przycisku,
+   * Tryb edycji (issue #43). Po oknie 24 h nie da się w niego wejść - nie ma przycisku,
    * który by go włączył, a `editing` i tak sprowadzamy do `false`: parametr trasy
    * przychodzi z zewnątrz i nie może obchodzić reguły.
    */
@@ -208,7 +208,7 @@ export function StatsScreen({
   const aircraftLimits = useMemo(() => aircraftLimitsFrom(aircraftRef), [aircraftRef]);
 
   /**
-   * Niespójności logu — liczone TYLKO w trybie edycji.
+   * Niespójności logu - liczone TYLKO w trybie edycji.
    *
    * Nie dlatego, że w odczycie są nieprawdziwe, ale dlatego, że w odczycie nie ma czym
    * na nie odpowiedzieć: baner mówiący „lot nie ma lądowania" bez możliwości dopisania
@@ -233,17 +233,17 @@ export function StatsScreen({
   );
 
   const notes = useMemo(() => sessionNotes(projection, events), [projection, events]);
-  /** Gdzie wpisać notatkę, której jeszcze nie ma — patrz `noteTargetUuid`. */
+  /** Gdzie wpisać notatkę, której jeszcze nie ma - patrz `noteTargetUuid`. */
   const noteTarget = useMemo(() => noteTargetUuid(events), [events]);
   /**
    * Dopisanie notatki ma sens TYLKO przy jej braku: notatka sesji jest jedna, więc
    * przy istniejącej „dodanie" znaczyłoby nadpisanie. Reguła mieszka w logice, żeby
-   * miała test — ten warunek już raz był w JSX i już raz był zły.
+   * miała test - ten warunek już raz był w JSX i już raz był zły.
    */
   const canAddNote = editing && noteTarget != null && missingSessionNote(notes);
   /**
    * Ile razy poprawiano DRUGIEGO PILOTA (issue #43, uwaga z urządzenia). Dual mieszka
-   * w payloadzie `preflight_confirm` — tam, gdzie notatka i odczyty — więc licznik
+   * w payloadzie `preflight_confirm` - tam, gdzie notatka i odczyty - więc licznik
    * musi pytać o samo pole; inaczej korekta paliwa zapalałaby „popr." przy załodze.
    */
   const dualChanges = useMemo(
@@ -252,7 +252,7 @@ export function StatsScreen({
   );
 
   /**
-   * Wiek normy — jedyna dana z serwera na tym ekranie, więc jedyna z adnotacją świeżości
+   * Wiek normy - jedyna dana z serwera na tym ekranie, więc jedyna z adnotacją świeżości
    * (§4.8). Od issue #40 stoi W ARKUSZU normy, przy liczbach, których dotyczy: na karcie
    * została sama plakietka werdyktu, a adnotacja o cache'u bez liczb obok nie ma czego
    * kwalifikować. Stan `live` nie rysuje nic, więc online arkusz zostaje bez niej.
@@ -270,7 +270,7 @@ export function StatsScreen({
   );
   const mh = useMemo(() => mhBalance(projection, norm), [projection, norm]);
 
-  // Dzień bez sesji nie ma czego podsumowywać — pokazujemy to wprost, zamiast
+  // Dzień bez sesji nie ma czego podsumowywać - pokazujemy to wprost, zamiast
   // rysować siatkę myślników.
   if (projection.sessionUuid == null) {
     return (
@@ -280,7 +280,7 @@ export function StatsScreen({
             BRAK DANYCH SESJI
           </AppText>
           <AppText variant="body" tone="muted" style={{ textAlign: 'center' }}>
-            Ten ekran opisuje jeden bieg silnika. Zacznij lot, a wszystko wróci tu samo —
+            Ten ekran opisuje jeden bieg silnika. Zacznij lot, a wszystko wróci tu samo -
             również bez zasięgu.
           </AppText>
         </View>
@@ -289,7 +289,7 @@ export function StatsScreen({
   }
 
   const flightCount = projection.flights.length;
-  // Sekcję zrzutów pokazujemy także przy zerze, gdy dzień był zadeklarowany jako skokowy —
+  // Sekcję zrzutów pokazujemy także przy zerze, gdy dzień był zadeklarowany jako skokowy -
   // brak wyniesień jest wtedy informacją dla klienta, nie ciszą.
   const showDrops =
     projection.drops.count > 0 ||
@@ -310,9 +310,9 @@ export function StatsScreen({
           subtitle={subtitle(projection.aircraftId, projection.claimedAt, projection.operation)}
           right={
             <>
-              {/* „RĘCZNIE" — fakt o pochodzeniu CAŁEJ sesji (wpis z ekranu 15,
+              {/* „RĘCZNIE" - fakt o pochodzeniu CAŁEJ sesji (wpis z ekranu 15,
                   decyzja 2026-08-16). W nagłówku, bo mówi o sesji jako całości;
-                  wiersze osi znaczników nie dostają (issue #40 pkt 6 — przy wpisie
+                  wiersze osi znaczników nie dostają (issue #40 pkt 6 - przy wpisie
                   ręcznym świeciłyby wszystkie naraz). Neutralna: to proweniencja,
                   nie ostrzeżenie. */}
               {projection.manualEntry && (
@@ -325,7 +325,7 @@ export function StatsScreen({
               )}
               {/* Liczby lotów w nagłówku NIE MA (issue #40): stopka osi mówi „STARTY 2"
                   trzy centymetry niżej. Nie ma tu też plakietki „bez lotu" (uwaga
-                  z urządzenia, 2026-08-14) — sesja bez startu opisuje się sama: oś nie
+                  z urządzenia, 2026-08-14) - sesja bez startu opisuje się sama: oś nie
                   ma ani jednego lotu, stopka pokazuje zero, a przy zdaniu bez lotu stoi
                   jego POWÓD. Plakietka powtarzała to czwarty raz, w rogu, w którym reszta
                   ekranu trzyma stan TRYBU. */}
@@ -339,7 +339,7 @@ export function StatsScreen({
                   style={{ borderRadius: theme.radius.pill }}
                 />
               )}
-              {/* Plakietka trybu edycji (issue #43) — JEDYNY sposób, w jaki ekran mówi
+              {/* Plakietka trybu edycji (issue #43) - JEDYNY sposób, w jaki ekran mówi
                   „teraz piszesz". Amber, bo to stan odchylony od normalnego (odczytu),
                   a nie sukces. */}
               {editing && (
@@ -365,12 +365,12 @@ export function StatsScreen({
        *
        * Zielone „WRÓĆ DO DNIA" zostało usunięte (issue #42, uwaga użytkownika): powrót
        * stoi w nagłówku („‹ Dzień" / „‹ Dni") i jest tam na każdym ekranie aplikacji,
-       * a drugi powrót — w dodatku w kolorze akcji głównej, na miejscu, w którym reszta
-       * aplikacji stawia „dalej" — obiecywał czynność, której ten ekran nie ma: sesję
+       * a drugi powrót - w dodatku w kolorze akcji głównej, na miejscu, w którym reszta
+       * aplikacji stawia „dalej" - obiecywał czynność, której ten ekran nie ma: sesję
        * potwierdziło zdanie samolotu (09B), tutaj się ją ogląda.
        *
        * W trybie podglądu (po oknie 24 h) nie zostaje nic, więc stopki nie ma wcale.
-       * „EDYTUJ DANE" znika tam razem z ołówkami — to ta sama możliwość zapisu, tylko
+       * „EDYTUJ DANE" znika tam razem z ołówkami - to ta sama możliwość zapisu, tylko
        * innymi drzwiami (lista ręczna 08 / zdanie bez lotu 09C).
        */
       footer={
@@ -385,7 +385,7 @@ export function StatsScreen({
            *
            * Pod pasem stało kiedyś zdanie tłumaczące to wprost („korekty zapisują się
            * od razu…") i zostało USUNIĘTE: opisywało wewnętrzną budowę rejestru komuś,
-           * kto o nią nie pytał, i tłumaczyło brak przycisku, którego nikt nie szukał —
+           * kto o nią nie pytał, i tłumaczyło brak przycisku, którego nikt nie szukał -
            * ta sama reguła, przez którą wyleciał przypis „odczytu nie da się unieważnić"
            * z arkuszy korekty.
            */
@@ -424,7 +424,7 @@ export function StatsScreen({
         {/* ── niespójności logu (issue #43) ────────────────────────────────
             Stoją NAD terminem korekty, bo wymagają czynności, a termin jest tylko
             informacją. Baner typu `warning`: znika sam, gdy log przestaje być
-            sprzeczny — zamknięcie go niczego by nie naprawiło. */}
+            sprzeczny - zamknięcie go niczego by nie naprawiło. */}
         {issues.length > 0 && (
           <Banner
             kind="warning"
@@ -436,7 +436,7 @@ export function StatsScreen({
         )}
 
         {/* ── okno korekty ─────────────────────────────────────────────────
-            Baner typu `status`: to odliczanie terminu, a nie pouczenie — nie wolno
+            Baner typu `status`: to odliczanie terminu, a nie pouczenie - nie wolno
             go zamknąć, bo razem z nim zniknąłby jedyny widoczny termin dnia. */}
         <CorrectionWindowBanner
           confirmed={window24h.confirmed}
@@ -483,15 +483,15 @@ export function StatsScreen({
           {/* W trybie ODCZYTU oś jest czysto opisowa (issue #40 pkt 1): korekta wychodzi
               jednymi drzwiami, przyciskiem „EDYTUJ DANE" pod ekranem. Ołówek przy każdym
               z kilkunastu wierszy dawał kilkanaście identycznych celów i zabierał miejsce
-              jedynej liczbie, która w tej kolumnie coś znaczy — czasowi trwania.
-              W trybie EDYCJI (issue #43) wiersz staje się przyciskiem i ołówek wraca —
+              jedynej liczbie, która w tej kolumnie coś znaczy - czasowi trwania.
+              W trybie EDYCJI (issue #43) wiersz staje się przyciskiem i ołówek wraca -
               bo wtedy jest jedyną treścią tej kolumny. */}
           <SessionAxis
             rows={axisRows}
             foot={axis.foot}
             emptyText="Ta sesja nie ma jeszcze ani jednego zdarzenia."
             onCorrect={editing ? edit.openRow : undefined}
-            /* Historia otwiera się z plakietki „popr." w OBU trybach — patrz
+            /* Historia otwiera się z plakietki „popr." w OBU trybach - patrz
                `CorrectedTag`. W odczycie to jedyne wejście, bo arkusza korekty
                (który ją niesie) tam nie ma. */
             onHistory={edit.openRowHistory}
@@ -500,7 +500,7 @@ export function StatsScreen({
           {/*
             „DODAJ WPIS" jako OSTATNIA POZYCJA OSI, nie przycisk na dnie ekranu (uwaga
             z urządzenia, 2026-08-14). Dopisywany fakt trafia do tej listy i zwykle na
-            jej koniec, więc wejście stoi tam, gdzie skończy się jego skutek — a nie
+            jej koniec, więc wejście stoi tam, gdzie skończy się jego skutek - a nie
             o pół ekranu niżej, za rachunkami paliwa i motogodzin.
           */}
           {editing && (
@@ -572,14 +572,14 @@ export function StatsScreen({
               value={
                 projection.drops.avgAltitudeFt != null
                   ? `${Math.round(projection.drops.avgAltitudeFt)} FT`
-                  : '—'
+                  : '-'
               }
               tone="neutral"
               style={styles.row}
             />
             <ResultRow
               label="Klient"
-              value={projection.client ?? '—'}
+              value={projection.client ?? '-'}
               tone="neutral"
               style={styles.row}
             />
@@ -588,12 +588,12 @@ export function StatsScreen({
 
         {/* ── załoga ───────────────────────────────────────────────────────
             Jeden wiersz na osobę zamiast dwóch kafli (issue #38 pkt 9): obie karty
-            niosły ten sam czas blokowy, a Dual dodatkowo „0 / 0" startów — liczbę,
+            niosły ten sam czas blokowy, a Dual dodatkowo „0 / 0" startów - liczbę,
             która nic nie znaczy poza tym, że rejestr ma jednego autora. */}
         {/*
-          Ołówek stoi przy WIERSZU „Dual", tak samo jak na osi i przy notatce — nie
+          Ołówek stoi przy WIERSZU „Dual", tak samo jak na osi i przy notatce - nie
           w nagłówku karty. Nagłówkowa pigułka była wypełnionym, zielonym przyciskiem,
-          czyli najmocniejszym elementem ekranu — a otwarcie korekty załogi nie jest
+          czyli najmocniejszym elementem ekranu - a otwarcie korekty załogi nie jest
           tu akcją główną, tylko jednym z kilku ołówków. PIC pencila NIE MA i to jest
           precyzja, nie niedoróbka: jego zmiana to przelogowanie, nie korekta
           (`PIC_CHANGE_NOT_ALLOWED`).
@@ -618,7 +618,7 @@ export function StatsScreen({
             value={
               projection.dualId != null
                 ? crewLabel(projection.dualId, currentPilotId, codeOf)
-                : 'brak — sesja jednoosobowa'
+                : 'brak - sesja jednoosobowa'
             }
             onCorrect={edit.openCrew}
             onHistory={edit.openCrewHistory}
@@ -628,11 +628,11 @@ export function StatsScreen({
         {/* ── notatki ───────────────────────────────────────────────────────
             Wszystko, co pilot NAPISAŁ o tej sesji: notatka z kroku „zadanie" (02e)
             i uwagi wpisów ręcznych (08, 15). Do issue #40 ten tekst nie wracał do
-            autora nigdzie — widział go tylko administrator w panelu.
+            autora nigdzie - widział go tylko administrator w panelu.
             Karta stoi na końcu, bo jest komentarzem do liczb wyżej.
 
-            W trybie ODCZYTU istnieje tylko z treścią (issue #40: „Notatki —" byłoby
-            wierszem o niczym). W trybie EDYCJI dochodzi drugie wejście — dopisanie
+            W trybie ODCZYTU istnieje tylko z treścią (issue #40: „Notatki -" byłoby
+            wierszem o niczym). W trybie EDYCJI dochodzi drugie wejście - dopisanie
             notatki sesji, której jeszcze nie ma: bez niego affordancja gasłaby
             dokładnie w stanie, w którym jest potrzebna. */}
         {(notes.length > 0 || canAddNote) && (
@@ -643,10 +643,10 @@ export function StatsScreen({
               const body = (
                 <>
                   {/* Górny wiersz istnieje tylko wtedy, gdy ma co nieść.
-                      Podpis — TYLKO tam, gdzie coś rozróżnia, czyli przy uwagach wpisów
+                      Podpis - TYLKO tam, gdzie coś rozróżnia, czyli przy uwagach wpisów
                       ręcznych: notatka sesji jest jedna, a stempel „Zadanie · 08:04"
                       mówił o godzinie preflightu, nie o niej.
-                      „popr." — plakietka poprawionej treści, ta sama co przy wierszach
+                      „popr." - plakietka poprawionej treści, ta sama co przy wierszach
                       osi i z tego samego powodu: widoczna TAKŻE w trybie odczytu, bo to
                       fakt o danych, a nie akcja. Tekst, który ktoś zmienił, nie jest
                       tym, który pilot wpisał. */}
@@ -716,12 +716,12 @@ export function StatsScreen({
               );
             })}
 
-            {/* Dopisanie notatki — plus, nie ołówek: ołówek obiecuje poprawianie
+            {/* Dopisanie notatki - plus, nie ołówek: ołówek obiecuje poprawianie
                 istniejącej wartości, a tu jeszcze niczego nie ma (ta sama zasada, co
                 w katalogu ikon).
 
                 Wiersz istnieje WYŁĄCZNIE wtedy, gdy notatki sesji jeszcze nie ma.
-                Jest ona jedna — jedno pole w payloadzie preflightu — więc obok
+                Jest ona jedna - jedno pole w payloadzie preflightu - więc obok
                 istniejącej obiecywałby drugą, a naprawdę nadpisałby pierwszą. Gdy
                 notatka jest, jedyną czynnością zostaje jej poprawienie (ołówek wyżej). */}
             {canAddNote && (
@@ -748,14 +748,14 @@ export function StatsScreen({
         )}
       </View>
 
-      {/* Arkusze trybu edycji — korekta czasu, odczytu, zrzutu, dopisanie wpisu
+      {/* Arkusze trybu edycji - korekta czasu, odczytu, zrzutu, dopisanie wpisu
           i historia zmian. Renderują się same, gdy `useSessionEdit` ma otwarty cel. */}
       {edit.sheets}
     </Screen>
   );
 }
 
-/** „2 niespójności w logu" — liczebnik idzie za polską odmianą, nie za angielską. */
+/** „2 niespójności w logu" - liczebnik idzie za polską odmianą, nie za angielską. */
 function issuesTitle(count: number): string {
   const form = count === 1 ? 'niespójność' : count < 5 ? 'niespójności' : 'niespójności';
   return `${count} ${form} w logu`;
@@ -764,7 +764,7 @@ function issuesTitle(count: number): string {
 /**
  * Podtytuł: „SP-AXA · 06 SIE · SKOKI" (mockup 10).
  *
- * Godzin tu nie ma — przejęcie i zdanie stoją na osi czasu razem z odczytami, a trzeci
+ * Godzin tu nie ma - przejęcie i zdanie stoją na osi czasu razem z odczytami, a trzeci
  * napis w nagłówku walczyłby z nimi o tę samą linię.
  */
 function subtitle(
@@ -781,13 +781,13 @@ function subtitle(
     .join(' · ');
 }
 
-/** „TMK · zalogowany (Ty)" — kod pilota z cache'u referencyjnego. */
+/** „TMK · zalogowany (Ty)" - kod pilota z cache'u referencyjnego. */
 function crewLabel(
   pilotId: string | null,
   currentPilotId: string | null,
   codeOf: (id: string) => string,
 ): string {
-  if (pilotId == null) return '—';
+  if (pilotId == null) return '-';
   return pilotId === currentPilotId ? `${codeOf(pilotId)} (Ty)` : codeOf(pilotId);
 }
 
@@ -795,7 +795,7 @@ function crewLabel(
  * Wiersz „Dual" karty załogi.
  *
  * Osobny komponent, bo jeden wiersz musi obsłużyć dwa tryby i dwa niezależne cele
- * dotknięcia: cały wiersz otwiera korektę (tylko w edycji), a plakietka „popr." —
+ * dotknięcia: cały wiersz otwiera korektę (tylko w edycji), a plakietka „popr." -
  * historię zmian (w OBU trybach). Napisane wprost w JSX ekranu było trzema zagnieżdżonymi
  * warunkami wokół tej samej treści.
  *
@@ -852,7 +852,7 @@ function CrewRow({
   );
 }
 
-/** Nagłówek kafelka „bez śladu" — dwa różne powody znaczą dla pilota co innego. */
+/** Nagłówek kafelka „bez śladu" - dwa różne powody znaczą dla pilota co innego. */
 function noTrackTitle(track: SessionTrackView | null): string {
   return track?.missing === 'manual' ? 'BEZ ZAPISU GPS' : 'ŚLAD NIEDOSTĘPNY';
 }
@@ -861,17 +861,17 @@ function noTrackText(track: SessionTrackView | null): string {
   if (track?.missing === 'manual') {
     return (
       'Ta sesja została wpisana ręcznie, więc nie ma z czego narysować trasy. ' +
-      'Czasy poniżej są pełnoprawne — pochodzą z Twojego wpisu, nie z odbiornika.'
+      'Czasy poniżej są pełnoprawne - pochodzą z Twojego wpisu, nie z odbiornika.'
     );
   }
   return (
-    'Nie ma zapisu GPS dla tej sesji. Ślad to materiał roboczy z retencją 14 dni — ' +
+    'Nie ma zapisu GPS dla tej sesji. Ślad to materiał roboczy z retencją 14 dni - ' +
     'starsze sesje mają komplet czasów i liczb, ale trasy już nie.'
   );
 }
 
 /**
- * `.correction-window` — pudełko z terminem samodzielnej korekty.
+ * `.correction-window` - pudełko z terminem samodzielnej korekty.
  *
  * Trzy stany, bo trzy różne rzeczy trzeba powiedzieć: sesja jeszcze niezdana (termin
  * dopiero zacznie biec), okno otwarte (konkretna data i godzina) i okno zamknięte
@@ -883,13 +883,13 @@ function CorrectionWindowBanner({
   open,
   closesAt,
 }: {
-  /** Czy sesja jest już zatwierdzona zdaniem — dopiero wtedy okno w ogóle tyka. */
+  /** Czy sesja jest już zatwierdzona zdaniem - dopiero wtedy okno w ogóle tyka. */
   confirmed: boolean;
   open: boolean;
   closesAt: number | null;
 }) {
   /*
-   * Baner mówi, KTO poprawia po oknie — i tyle (uwaga z urządzenia, 2026-08-14).
+   * Baner mówi, KTO poprawia po oknie - i tyle (uwaga z urządzenia, 2026-08-14).
    * Zdanie „czasy zdarzeń poprawisz przyciskiem »EDYTUJ DANE« na dole ekranu"
    * przestało być prawdą dwa razy: przycisk nie prowadzi już na listę ręczną, tylko
    * przełącza tryb, a poprawia się w nim nie same czasy, lecz także odczyty, skład
@@ -928,20 +928,20 @@ function CorrectionWindowBanner({
       tone="amber"
       icon="clock"
       title="Okno korekty zamknięte"
-      text="Minęły 24 godziny od zdania samolotu — dalsze poprawki wprowadza administrator."
+      text="Minęły 24 godziny od zdania samolotu - dalsze poprawki wprowadza administrator."
     />
   );
 }
 
 /**
  * `ResultRow` jest projektowany do wnętrza karty z paddingiem; tu karty są `flush`,
- * bo oś i rachunki dociągają się do krawędzi — wcięcie wiersza dokładamy stylem.
+ * bo oś i rachunki dociągają się do krawędzi - wcięcie wiersza dokładamy stylem.
  */
 const row = { paddingHorizontal: 12, marginTop: 0 };
 
 const styles = StyleSheet.create({
   row,
-  /** Pierwszy wiersz sekcji styka się z linią nagłówka karty — własnej nie potrzebuje. */
+  /** Pierwszy wiersz sekcji styka się z linią nagłówka karty - własnej nie potrzebuje. */
   firstRow: { ...row, borderTopWidth: 0 },
   thumbFrame: { overflow: 'hidden' },
   noTrack: {
@@ -968,7 +968,7 @@ const styles = StyleSheet.create({
   crewLabel: { fontSize: 8, letterSpacing: 1.5 },
   crewValue: { flex: 1, fontSize: 11, textAlign: 'right' },
   // Wiersz dopisania na końcu osi: 44 px celu dotknięcia i kreska oddzielająca go od
-  // stopki z sumami — inaczej czytałby się jak kolejne zdarzenie sesji.
+  // stopki z sumami - inaczej czytałby się jak kolejne zdarzenie sesji.
   axisAdd: {
     flexDirection: 'row',
     alignItems: 'center',

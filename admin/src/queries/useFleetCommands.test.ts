@@ -1,15 +1,15 @@
 /**
- * UZ Aero — panel: CZEGO mutacja floty nie unieważnia.
+ * UZ Aero - panel: CZEGO mutacja floty nie unieważnia.
  *
  * ══ DLACZEGO TO JEST TEST, A NIE KOMENTARZ ══
- * `useFleetCommands` deklarował w docblocku: „czego tu NIE MA — unieważnienia progu".
+ * `useFleetCommands` deklarował w docblocku: „czego tu NIE MA - unieważnienia progu".
  * Kod robił coś innego: unieważniał `keys.fleet.all`, a `invalidateQueries` dopasowuje
  * PREFIKSOWO, więc `['fleet','tolerance',1100]` leciał razem z listami. Zdanie o kodzie
  * nie jest własnością kodu; ta asercja jest.
  *
  * Test idzie przez PRAWDZIWY `QueryClient`, bez atrapy sieci i bez renderu: pytanie
  * „czy klucz A unieważnia klucz B" jest własnością kluczy, więc `mutationFn` nie musi
- * się tu w ogóle wykonać (`docs/architektura-panelu-frontend.md` §8 — nie testujemy
+ * się tu w ogóle wykonać (`docs/architektura-panelu-frontend.md` §8 - nie testujemy
  * hooków Query na zamockowanym `fetch`).
  */
 
@@ -25,7 +25,7 @@ const invalidated = (qc: QueryClient, key: readonly unknown[]): boolean =>
   qc.getQueryState(key)?.isInvalidated ?? false;
 
 describe('unieważnienia po zapisie konfiguracji floty', () => {
-  it('LISTA floty się starzeje, a PRÓG nie — mimo wspólnego prefiksu `fleet`', () => {
+  it('LISTA floty się starzeje, a PRÓG nie - mimo wspólnego prefiksu `fleet`', () => {
     const qc = client();
     const list = keys.fleet.list({});
     const tolerance = keys.fleet.tolerance(1100);
@@ -40,7 +40,7 @@ describe('unieważnienia po zapisie konfiguracji floty', () => {
     invalidateFleet(qc);
 
     expect(invalidated(qc, list)).toBe(true);
-    // `max(10 L, 5% pojemności)` jest funkcją czystą — odpowiedź dla 1100 L nie starzeje
+    // `max(10 L, 5% pojemności)` jest funkcją czystą - odpowiedź dla 1100 L nie starzeje
     // się od tego, że ktoś zapisał samolot. Unieważnienie kosztowałoby żądanie o liczbę,
     // która nie może się zmienić, i to w chwili, gdy szuflada zapisu stoi otwarta,
     // czyli gdy to zapytanie jest AKTYWNE.

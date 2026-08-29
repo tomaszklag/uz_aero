@@ -1,11 +1,11 @@
 /**
- * UZ Aero — LevelBar (pasek poziomu z mockupu 02a)
+ * UZ Aero - LevelBar (pasek poziomu z mockupu 02a)
  *
- * Wąski pasek pokazujący wypełnienie w stosunku do pojemności — przy paliwie stoi
+ * Wąski pasek pokazujący wypełnienie w stosunku do pojemności - przy paliwie stoi
  * pod wartością i odpowiada na pytanie „dużo to czy mało", którego same litry nie
  * rozstrzygają (150 L to pełny zbiornik w Cessnie i ćwiartka w An-2).
  *
- * Nie jest kontrolką — wartość zmienia się przez `Stepper` albo arkusz odczytu.
+ * Nie jest kontrolką - wartość zmienia się przez `Stepper` albo arkusz odczytu.
  * Suwak w tym miejscu przegrał audyt użyteczności (rękawice), więc pasek jest
  * świadomie **tylko wskaźnikiem**.
  */

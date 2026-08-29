@@ -1,7 +1,7 @@
 /**
- * UZ Aero — panel: sprzątanie wygasłych refresh tokenów (moduł CZYSTY, Node).
+ * UZ Aero - panel: sprzątanie wygasłych refresh tokenów (moduł CZYSTY, Node).
  *
- * **Jedyna operacja panelu, która naprawdę kasuje dane** — stąd osobna strefa na ekranie
+ * **Jedyna operacja panelu, która naprawdę kasuje dane** - stąd osobna strefa na ekranie
  * i potwierdzenie przez wpisanie słowa.
  *
  * ══ DWIE BRAMKI, DWIE RÓŻNE ROLE ══
@@ -21,7 +21,7 @@ import type { RefreshTokenScanDto, TokenPurgeReportDto } from '../../api/dto';
 import type { BannerTone } from '../../ui/components/Banner';
 import type { KeyValueTone } from '../../ui/components/KeyValue';
 
-/** Słowo z mockupu. Wielkość liter i spacje wokół nie mają znaczenia — literówka ma. */
+/** Słowo z mockupu. Wielkość liter i spacje wokół nie mają znaczenia - literówka ma. */
 export const PURGE_WORD = 'USUŃ';
 
 export function isPurgeConfirmed(typed: string): boolean {
@@ -35,24 +35,24 @@ export interface TokenFact {
   tone?: KeyValueTone;
 }
 
-const show = (value: number | undefined): string => (value === undefined ? '—' : String(value));
+const show = (value: number | undefined): string => (value === undefined ? '-' : String(value));
 
 /**
- * Stempel + wiek („12 MAR 03:41 · 4 mies. temu") albo „—".
+ * Stempel + wiek („12 MAR 03:41 · 4 mies. temu") albo „-".
  *
  * Wiek jest tu równie ważny, co data: administrator ocenia, czy tabela zbiera śmieci
  * od miesięcy, czy od wczoraj. `nowMs` przychodzi z odpowiedzi serwera (`scan.at`),
- * a nie z `Date.now()` przeglądarki — porównujemy stemple bazy, więc zegar przeglądarki
+ * a nie z `Date.now()` przeglądarki - porównujemy stemple bazy, więc zegar przeglądarki
  * byłby w tym równaniu trzecim i jedynym niesprawdzonym.
  */
 function stamp(iso: string | null, nowMs: number): { value: string; unit?: string } {
-  if (iso == null) return { value: '—' };
+  if (iso == null) return { value: '-' };
   const at = Date.parse(iso);
-  if (Number.isNaN(at)) return { value: '—', unit: 'stempel nieczytelny' };
+  if (Number.isNaN(at)) return { value: '-', unit: 'stempel nieczytelny' };
   return { value: `${dateUtcShort(at)} ${timeUtc(at)}`, unit: `UTC · ${relativeAge(nowMs - at)} temu` };
 }
 
-/** Liczby i daty z karty „Wygasłe refresh tokeny" — dokładnie te z mockupu. */
+/** Liczby i daty z karty „Wygasłe refresh tokeny" - dokładnie te z mockupu. */
 export function tokenFacts(scan: RefreshTokenScanDto | undefined): TokenFact[] {
   const nowMs = scan == null ? 0 : Date.parse(scan.at);
   const oldest = stamp(scan?.oldestExpiredAt ?? null, nowMs);
@@ -65,7 +65,7 @@ export function tokenFacts(scan: RefreshTokenScanDto | undefined): TokenFact[] {
       value: show(scan?.expired),
       tone: scan != null && scan.expired > 0 ? 'red' : undefined,
     },
-    { label: 'Ważnych — bez zmian', value: show(scan?.valid), tone: 'green' },
+    { label: 'Ważnych - bez zmian', value: show(scan?.valid), tone: 'green' },
     { label: 'Najstarszy wygasł', value: oldest.value, unit: oldest.unit },
     { label: 'Najświeższy wygasł', value: newest.value, unit: newest.unit },
     {
@@ -96,7 +96,7 @@ export interface PurgeGateInput {
  *
  * Etykieta niesie LICZBĘ, a nie samo „Usuń": przycisk kasujący dane ma powiedzieć, ile
  * ich skasuje, zanim zostanie kliknięty. Przy braku odpowiedzi serwera etykieta traci
- * liczbę zamiast pokazywać zero — zero byłoby obietnicą, że nic się nie stanie.
+ * liczbę zamiast pokazywać zero - zero byłoby obietnicą, że nic się nie stanie.
  */
 export function purgeGate(input: PurgeGateInput): PurgeGate {
   const expired = input.scan?.expired;
@@ -108,7 +108,7 @@ export function purgeGate(input: PurgeGateInput): PurgeGate {
   if (!input.mayPurge) {
     return {
       disabled: true,
-      reason: 'Wymaga roli: administrator — to jedyna operacja panelu, która kasuje dane',
+      reason: 'Wymaga roli: administrator - to jedyna operacja panelu, która kasuje dane',
       label,
     };
   }
@@ -120,9 +120,9 @@ export function purgeGate(input: PurgeGateInput): PurgeGate {
   if (!isPurgeConfirmed(input.typed)) {
     // Powód NIE POWTARZA słowa `USUŃ` i to nie jest przeoczenie: `Button` dopisuje powód
     // do etykiety `toLowerCase()`, więc instrukcja „wpisz USUŃ" wyszłaby na ekran jako
-    // „wpisz usuń" — czyli panel podawałby inne słowo, niż sam sprawdza. Słowo stoi
+    // „wpisz usuń" - czyli panel podawałby inne słowo, niż sam sprawdza. Słowo stoi
     // w etykiecie pola, gdzie jest napisane wielkimi literami i tam zostaje.
-    return { disabled: true, reason: 'brak potwierdzenia — wpisz słowo z pola obok', label };
+    return { disabled: true, reason: 'brak potwierdzenia - wpisz słowo z pola obok', label };
   }
   return { disabled: false, reason: null, label };
 }
@@ -134,8 +134,8 @@ export interface PurgeMessage {
 }
 
 /**
- * Zdanie po wykonaniu czyszczenia. Mówi obie liczby naraz — ile zniknęło i ile ŻYWYCH
- * zostało — bo to drugie jest odpowiedzią na jedyne pytanie, które się tu zadaje: czy
+ * Zdanie po wykonaniu czyszczenia. Mówi obie liczby naraz - ile zniknęło i ile ŻYWYCH
+ * zostało - bo to drugie jest odpowiedzią na jedyne pytanie, które się tu zadaje: czy
  * ktoś przez to wypadł z sesji.
  */
 export function purgeMessage(report: TokenPurgeReportDto | undefined): PurgeMessage | null {
@@ -145,7 +145,7 @@ export function purgeMessage(report: TokenPurgeReportDto | undefined): PurgeMess
     return {
       tone: 'status',
       title: 'Nie było czego kasować.',
-      body: `Ani jeden wiersz nie miał daty wygaśnięcia w przeszłości. Tokenów ważnych: ${report.remainingValid} — nietkniętych.`,
+      body: `Ani jeden wiersz nie miał daty wygaśnięcia w przeszłości. Tokenów ważnych: ${report.remainingValid} - nietkniętych.`,
     };
   }
 
@@ -157,6 +157,6 @@ export function purgeMessage(report: TokenPurgeReportDto | undefined): PurgeMess
   return {
     tone: 'ok',
     title: `Skasowano ${report.deleted} ${plural(report.deleted, 'wygasły token', 'wygasłe tokeny', 'wygasłych tokenów')}.`,
-    body: `Tokenów ważnych: ${report.remainingValid} — żaden z nich nie został ruszony, więc nikt nie stracił sesji.${range} Do dziennika audytu poszły te same liczby i ten sam zakres dat — nigdy same tokeny.`,
+    body: `Tokenów ważnych: ${report.remainingValid} - żaden z nich nie został ruszony, więc nikt nie stracił sesji.${range} Do dziennika audytu poszły te same liczby i ten sam zakres dat - nigdy same tokeny.`,
   };
 }

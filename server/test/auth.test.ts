@@ -1,8 +1,8 @@
 /**
- * UZ Aero (serwer) — testy uwierzytelnienia przez PRAWDZIWE endpointy.
+ * UZ Aero (serwer) - testy uwierzytelnienia przez PRAWDZIWE endpointy.
  *
  * `app.inject()` przechodzi pełną ścieżkę Fastify (routing, walidacja, handler) bez
- * otwierania portu. Baza to PGlite, hasła to prawdziwy scrypt — atrap nie ma wcale.
+ * otwierania portu. Baza to PGlite, hasła to prawdziwy scrypt - atrap nie ma wcale.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -33,7 +33,7 @@ describe('POST /auth/login', () => {
       pilotId: 'TMK',
       code: 'TMK',
       role: 'admin',
-      // CHWILA WYDANIA (`iat`, sekundy epoki) — dołożona 2026-08-01 razem
+      // CHWILA WYDANIA (`iat`, sekundy epoki) - dołożona 2026-08-01 razem
       // z `pilots.credentials_valid_from`.
       // Bez niej brama panelu nie umiałaby odpowiedzieć na pytanie „czy to poświadczenie
       // jest starsze niż reset hasła", bo JWT nie ma jak unieważnić inaczej.
@@ -54,7 +54,7 @@ describe('POST /auth/login', () => {
   });
 
   it('złe hasło i nieistniejące konto dają IDENTYCZNĄ odpowiedź', async () => {
-    // Różnica treści zdradzałaby, które loginy istnieją — enumeracja kont.
+    // Różnica treści zdradzałaby, które loginy istnieją - enumeracja kont.
     const { app } = await testHarness();
 
     const wrongPass = await app.inject({
@@ -80,7 +80,7 @@ describe('POST /auth/login', () => {
   });
 });
 
-describe('POST /auth/refresh — rotacja', () => {
+describe('POST /auth/refresh - rotacja', () => {
   it('zużycie refresha wydaje NOWĄ parę i unieważnia stary token', async () => {
     const { app } = await testHarness();
     const login = await app.inject({
@@ -98,7 +98,7 @@ describe('POST /auth/refresh — rotacja', () => {
     expect(rotated.statusCode).toBe(200);
     expect(rotated.json().refreshToken).not.toBe(first);
 
-    // Stary token po rotacji jest martwy — skradziony-i-użyty unieważnia się sam.
+    // Stary token po rotacji jest martwy - skradziony-i-użyty unieważnia się sam.
     const replay = await app.inject({
       method: 'POST',
       url: '/auth/refresh',
@@ -127,7 +127,7 @@ describe('POST /auth/refresh — rotacja', () => {
 });
 
 describe('JWT', () => {
-  it('wygasa po ACCESS_TTL_SEC — weryfikacja zależy od zegara, nie od łaski', async () => {
+  it('wygasa po ACCESS_TTL_SEC - weryfikacja zależy od zegara, nie od łaski', async () => {
     const { app, clock, tokens } = await testHarness();
     const login = await app.inject({
       method: 'POST',

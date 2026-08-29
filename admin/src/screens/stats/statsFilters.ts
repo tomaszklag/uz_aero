@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: FILTRY STATYSTYK ↔ query string (moduł CZYSTY, testowany w Node).
+ * UZ Aero - panel: FILTRY STATYSTYK ↔ query string (moduł CZYSTY, testowany w Node).
  *
  * Filtry mieszkają w URL-u (`docs/architektura-panelu-frontend.md` §4.4): raport
  * „lipiec, ujęcie per pilot" ma być linkiem do wklejenia, nie stanem, który ginie
@@ -7,7 +7,7 @@
  * `/statystyki?od=2026-07-01&do=2026-07-30&ujecie=samolot`.
  *
  * ══ BRAK `od`/`do` ≠ „panel wybiera zakres" ══
- * Zakres domyślny (ostatnie 30 dni) liczy SERWER od swojego zegara — panel bez
+ * Zakres domyślny (ostatnie 30 dni) liczy SERWER od swojego zegara - panel bez
  * parametrów wysyła zapytanie bez zakresu i pokazuje ten, który wrócił w odpowiedzi.
  * „Dziś" jest pytaniem o zegar, a zegar przeglądarki jest trzecim, niesprawdzonym
  * zegarem w równaniu (ten sam argument, co przy wiekach na pulpicie).
@@ -15,7 +15,7 @@
 
 import type { StatsQuery } from '../../api/stats';
 
-/** Ujęcie raportu — trzy przekroje TEGO SAMEGO zbioru dni. */
+/** Ujęcie raportu - trzy przekroje TEGO SAMEGO zbioru dni. */
 export type StatsView = 'aircraft' | 'pilot' | 'operation';
 
 export interface StatsFilter {
@@ -31,7 +31,7 @@ export const DEFAULT_STATS_FILTER: StatsFilter = {
   view: 'aircraft',
 };
 
-/** Wartości parametru `ujecie` — po polsku, bo takie stoją w mockupie w pasku adresu. */
+/** Wartości parametru `ujecie` - po polsku, bo takie stoją w mockupie w pasku adresu. */
 const VIEW_PARAM: Record<StatsView, string> = {
   aircraft: 'samolot',
   pilot: 'pilot',
@@ -45,7 +45,7 @@ const viewFromParam = (value: string | null): StatsView | null => {
   return null;
 };
 
-/** `YYYY-MM-DD` i nic innego — wpis nieczytelny traktujemy jak brak filtra. */
+/** `YYYY-MM-DD` i nic innego - wpis nieczytelny traktujemy jak brak filtra. */
 const isDay = (value: string | null): value is string =>
   value != null && /^\d{4}-\d{2}-\d{2}$/.test(value);
 
@@ -58,7 +58,7 @@ export function filterFromParams(params: URLSearchParams): StatsFilter {
   };
 }
 
-/** Filtr → query string. Wartości domyślne POMIJAMY — pełny raport to `#/statystyki`. */
+/** Filtr → query string. Wartości domyślne POMIJAMY - pełny raport to `#/statystyki`. */
 export function paramsFromFilter(filter: StatsFilter): Record<string, string> {
   const params: Record<string, string> = {};
   if (filter.from != null) params.od = filter.from;
@@ -89,7 +89,7 @@ const DAY_MS = 86_400_000;
 const dayOf = (ms: number): string => new Date(ms).toISOString().slice(0, 10);
 
 /**
- * Trzy presety z mockupu, liczone od DZIŚ zegara SERWERA (`report.at`) — nie od
+ * Trzy presety z mockupu, liczone od DZIŚ zegara SERWERA (`report.at`) - nie od
  * zegara przeglądarki. Tydzień zaczyna się w poniedziałek (ISO), „rok do dziś"
  * od 1 stycznia.
  */
@@ -98,7 +98,7 @@ export function statsPresets(atIso: string): StatsPreset[] {
   const today = Math.floor(nowMs / DAY_MS) * DAY_MS;
   const d = new Date(today);
 
-  // `getUTCDay()` daje 0 dla niedzieli — przesuwamy na poniedziałek jako początek.
+  // `getUTCDay()` daje 0 dla niedzieli - przesuwamy na poniedziałek jako początek.
   const sinceMonday = (d.getUTCDay() + 6) % 7;
   const monday = today - sinceMonday * DAY_MS;
 
@@ -118,7 +118,7 @@ export function statsPresets(atIso: string): StatsPreset[] {
   ];
 }
 
-/** Czy preset jest AKTYWNY — dokładna równość obu granic z filtrem. */
+/** Czy preset jest AKTYWNY - dokładna równość obu granic z filtrem. */
 export function isPresetActive(filter: StatsFilter, preset: StatsPreset): boolean {
   return filter.from === preset.from && filter.to === preset.to;
 }

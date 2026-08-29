@@ -1,8 +1,8 @@
 /**
- * UZ Aero — RefDataStamp (`.ref-sync` z mockupów 01 i 13)
+ * UZ Aero - RefDataStamp (`.ref-sync` z mockupów 01 i 13)
  *
  * Stempel cache referencyjnego (§4.8): kropka stanu + „Dane referencyjne · sync HH:MM
- * UTC" albo uczciwe „jeszcze bez synca". Jeden byt na splashu i w ustawieniach —
+ * UTC" albo uczciwe „jeszcze bez synca". Jeden byt na splashu i w ustawieniach -
  * kopiowanie ternary'ego per ekran rozjechałoby brzmienie przy pierwszej zmianie.
  */
 

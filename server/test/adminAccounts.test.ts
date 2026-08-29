@@ -1,17 +1,17 @@
 /**
- * UZ Aero (serwer) — konta pilotów w panelu (`/admin/api/pilots*`, `A06` i `A06a`).
+ * UZ Aero (serwer) - konta pilotów w panelu (`/admin/api/pilots*`, `A06` i `A06a`).
  *
  * Przekrój, który powstał z awarii: 2026-08-01 administrator nie mógł się zalogować,
  * bo w produkcie nie było ŻADNEJ ścieżki zmiany hasła. Ten plik pilnuje, żeby ścieżka
- * istniała — i żeby przy okazji nie dało się nią odciąć całego klubu.
+ * istniała - i żeby przy okazji nie dało się nią odciąć całego klubu.
  *
  * Cztery własności, których złamanie jest luką, a nie usterką:
- *  1. **hasło nie występuje nigdzie poza jedną odpowiedzią** — ani w `admin_audit`,
+ *  1. **hasło nie występuje nigdzie poza jedną odpowiedzią** - ani w `admin_audit`,
  *     ani w bazie (tam jest hash), a mimo to DZIAŁA przy logowaniu;
- *  2. **deaktywacja i reset zrywają sesje** — a liczba zerwanych trafia do audytu;
- *  3. **administrator nie odcina sam siebie ani ostatniego administratora** — odmowa
+ *  2. **deaktywacja i reset zrywają sesje** - a liczba zerwanych trafia do audytu;
+ *  3. **administrator nie odcina sam siebie ani ostatniego administratora** - odmowa
  *     jest jawna i z powodem;
- *  4. **szef wyszkolenia widzi listę, ale nie zmienia kont** — 403 z podaną zdolnością.
+ *  4. **szef wyszkolenia widzi listę, ale nie zmienia kont** - 403 z podaną zdolnością.
  *
  * Zero atrap: PGlite, prawdziwe klasy, `app.inject`, prawdziwy scrypt i prawdziwy
  * generator hasła.
@@ -83,7 +83,7 @@ const resetPassword = (app: Harness['app'], token: string, id: string) =>
   });
 
 /**
- * Sesja PRZEGLĄDARKOWA panelu — ta, której nie da się skasować z bazy, bo jej tam nie
+ * Sesja PRZEGLĄDARKOWA panelu - ta, której nie da się skasować z bazy, bo jej tam nie
  * ma. Zwraca gotowy nagłówek `cookie`, czyli dokładnie to, co odeśle przeglądarka.
  */
 async function panelSession(app: Harness['app'], who: string): Promise<{ cookie: string }> {
@@ -105,14 +105,14 @@ const panelMe = (app: Harness['app'], session: { cookie: string }) =>
  * Komenda kont złożona z TYCH SAMYCH klas co produkcja, ale wołana poza HTTP.
  *
  * Potrzebna do dwóch przypadków, których przez `app.inject` postawić się nie da:
- *  • **wyścig o unikalność** — sprawdzenie przed zapisem trzeba wtedy oślepić
+ *  • **wyścig o unikalność** - sprawdzenie przed zapisem trzeba wtedy oślepić
  *    (`blindConflictCheck`), bo inaczej złapie kolizję pierwsze i do bazy nic nie
  *    dojedzie; a to właśnie zachowanie BAZY jest tu przedmiotem testu;
- *  • **druga transakcja w kolejce po blokadzie advisory** — jej `Actor` jest kontem,
+ *  • **druga transakcja w kolejce po blokadzie advisory** - jej `Actor` jest kontem,
  *    które w międzyczasie przestało być administratorem, więc brama HTTP odbiłaby je
  *    wcześniej (403) i test nigdy nie dotknąłby reguły.
  *
- * `queries` (gdy podane) zbiera SQL wykonany W TRANSAKCJI — dekorujemy OBSERWACJĘ,
+ * `queries` (gdy podane) zbiera SQL wykonany W TRANSAKCJI - dekorujemy OBSERWACJĘ,
  * nie zachowanie, dokładnie jak `options.events` w `helpers.ts`.
  */
 function pilotCommands(
@@ -149,7 +149,7 @@ function pilotCommands(
   );
 }
 
-/** `Actor` administratora — komenda pyta o `pilotId`, resztę dokłada dziennik audytu. */
+/** `Actor` administratora - komenda pyta o `pilotId`, resztę dokłada dziennik audytu. */
 const actor = (pilotId: string) => ({ pilotId, role: 'admin' as const, ip: null });
 
 async function auditRows(db: Harness['db']) {
@@ -167,7 +167,7 @@ async function auditRows(db: Harness['db']) {
   return rows;
 }
 
-describe('GET /admin/api/pilots — lista kont i dane referencyjne', () => {
+describe('GET /admin/api/pilots - lista kont i dane referencyjne', () => {
   it('administrator dostaje komplet kont z licznikami po CAŁYM klubie', async () => {
     const { app } = await testHarness();
     const res = await listPilots(app, await tokenOf(app, 'TMK'));
@@ -187,12 +187,12 @@ describe('GET /admin/api/pilots — lista kont i dane referencyjne', () => {
       flyingDays: 0,
     });
     // Okno „dni lotnych" jedzie w odpowiedzi, żeby nagłówek kolumny w panelu opisywał
-    // to, co serwer NAPRAWDĘ policzył — a nie miesiąc, który panel sobie założył.
+    // to, co serwer NAPRAWDĘ policzył - a nie miesiąc, który panel sobie założył.
     expect(body.daysFrom).toMatch(/^\d{4}-\d{2}-01$/);
     expect(body.daysTo).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 
-  it('nie oddaje hasła ani hasha — w żadnym polu, w żadnym wierszu', async () => {
+  it('nie oddaje hasła ani hasha - w żadnym polu, w żadnym wierszu', async () => {
     const { app } = await testHarness();
     const res = await listPilots(app, await tokenOf(app, 'TMK'));
 
@@ -212,7 +212,7 @@ describe('GET /admin/api/pilots — lista kont i dane referencyjne', () => {
     }
   });
 
-  it('SZEF WYSZKOLENIA listę czyta — potrzebuje jej do statystyk i flag', async () => {
+  it('SZEF WYSZKOLENIA listę czyta - potrzebuje jej do statystyk i flag', async () => {
     const { app } = await testHarness();
     const res = await listPilots(app, await tokenOf(app, 'AKO'));
     expect(res.statusCode).toBe(200);
@@ -224,7 +224,7 @@ describe('GET /admin/api/pilots — lista kont i dane referencyjne', () => {
     const token = await tokenOf(app, 'TMK');
 
     expect((await listPilots(app, token, '?role=admin')).json().items).toHaveLength(1);
-    // Chip „Z rolą panelu" to DWIE role naraz — parametr jest powtarzalny.
+    // Chip „Z rolą panelu" to DWIE role naraz - parametr jest powtarzalny.
     expect(
       (await listPilots(app, token, '?role=admin&role=training_lead')).json().items,
     ).toHaveLength(2);
@@ -236,12 +236,12 @@ describe('GET /admin/api/pilots — lista kont i dane referencyjne', () => {
     expect((await listPilots(app, token, '?q=PIOTR@')).json().items).toEqual([
       expect.objectContaining({ code: 'PWI' }),
     ]);
-    // Metaznak `LIKE` jest w tym polu ZWYKŁYM znakiem — inaczej „%" pokazywałoby
+    // Metaznak `LIKE` jest w tym polu ZWYKŁYM znakiem - inaczej „%" pokazywałoby
     // wszystko pod etykietą zawężenia.
     expect((await listPilots(app, token, '?q=%25')).json().items).toEqual([]);
   });
 
-  it('liczniki są niezależne od filtra — kafel opisuje klub, nie zawężenie', async () => {
+  it('liczniki są niezależne od filtra - kafel opisuje klub, nie zawężenie', async () => {
     const { app } = await testHarness();
     const body = (await listPilots(app, await tokenOf(app, 'TMK'), '?role=admin')).json();
 
@@ -250,7 +250,7 @@ describe('GET /admin/api/pilots — lista kont i dane referencyjne', () => {
     expect(body.counts.total).toBe(5);
   });
 
-  it('LICZNIKI CHIPÓW respektują wyszukiwanie, a kafle nie — to dwa różne pytania', async () => {
+  it('LICZNIKI CHIPÓW respektują wyszukiwanie, a kafle nie - to dwa różne pytania', async () => {
     // Chip z liczbą jest obietnicą „tyle wierszy zobaczysz po kliknięciu". Do
     // 2026-08-01 chipy nosiły liczby kafli, więc po wpisaniu frazy tabela miała jeden
     // wiersz, a chip „Nieaktywni" nadal pokazywał 2 i po kliknięciu dawał zero wierszy.
@@ -258,7 +258,7 @@ describe('GET /admin/api/pilots — lista kont i dane referencyjne', () => {
     const token = await tokenOf(app, 'TMK');
     await setActive(app, token, 'JSE', false);
 
-    // Bez wyszukiwania chipy zgadzają się z kaflami — to ta sama populacja.
+    // Bez wyszukiwania chipy zgadzają się z kaflami - to ta sama populacja.
     const all = (await listPilots(app, token)).json();
     expect(all.scopes).toEqual({ total: 5, active: 4, inactive: 1, panel: 2 });
     expect(all.counts).toMatchObject({ total: 5, active: 4, inactive: 1 });
@@ -276,7 +276,7 @@ describe('GET /admin/api/pilots — lista kont i dane referencyjne', () => {
   });
 });
 
-describe('POST /admin/api/pilots — zakładanie konta', () => {
+describe('POST /admin/api/pilots - zakładanie konta', () => {
   it('serwer generuje hasło, oddaje je RAZ i tym hasłem da się zalogować', async () => {
     const { app } = await testHarness();
     const token = await tokenOf(app, 'TMK');
@@ -293,7 +293,7 @@ describe('POST /admin/api/pilots — zakładanie konta', () => {
     // Kod normalizuje się do wersalików: „kza" i „KZA" to w intencji ten sam kod.
     expect(pilot.code).toBe('KZA');
     expect(pilot.active).toBe(true);
-    // `id` NIE jest kodem — zdarzenia wiążą się z `id`, więc zmiana kodu nie może
+    // `id` NIE jest kodem - zdarzenia wiążą się z `id`, więc zmiana kodu nie może
     // odrywać konta od jego nalotu (mockup A06: „kod jest etykietą, nie kluczem").
     expect(pilot.id).not.toBe(pilot.code);
     expect(password).toMatch(/^[a-z2-9]{4}-[a-z2-9]{4}-[a-z2-9]{4}$/);
@@ -304,7 +304,7 @@ describe('POST /admin/api/pilots — zakładanie konta', () => {
     expect(logged.json().pilot.role).toBe('pilot');
   });
 
-  it('hasła nie ma w dzienniku audytu ANI w bazie — w bazie jest hash', async () => {
+  it('hasła nie ma w dzienniku audytu ANI w bazie - w bazie jest hash', async () => {
     const { app, db } = await testHarness();
     const created = await createPilot(app, await tokenOf(app, 'TMK'), {
       code: 'KZA',
@@ -323,7 +323,7 @@ describe('POST /admin/api/pilots — zakładanie konta', () => {
       target_type: 'pilot',
       target_id: pilot.id,
     });
-    // Wpis mówi, ŻE hasło wydano — nie jakie.
+    // Wpis mówi, ŻE hasło wydano - nie jakie.
     expect(rows[0]?.details).toMatchObject({ code: 'KZA', role: 'pilot', passwordIssued: true });
     expect(JSON.stringify(rows[0]?.details)).not.toContain(password);
 
@@ -369,7 +369,7 @@ describe('POST /admin/api/pilots — zakładanie konta', () => {
     expect(await auditRows(db)).toEqual([]);
   });
 
-  it('szef wyszkolenia NIE zakłada kont — 403 z podaną zdolnością', async () => {
+  it('szef wyszkolenia NIE zakłada kont - 403 z podaną zdolnością', async () => {
     const { app, db } = await testHarness();
     const res = await createPilot(app, await tokenOf(app, 'AKO'), {
       code: 'NEW',
@@ -397,7 +397,7 @@ describe('POST /admin/api/pilots — zakładanie konta', () => {
   });
 });
 
-describe('PATCH /admin/api/pilots/:id — tożsamość i rola', () => {
+describe('PATCH /admin/api/pilots/:id - tożsamość i rola', () => {
   it('zapisuje zmianę i wpisuje do audytu DIFF, nie stan po zmianie', async () => {
     const { app, db } = await testHarness();
     const res = await patchPilot(app, await tokenOf(app, 'TMK'), 'PWI', {
@@ -436,7 +436,7 @@ describe('PATCH /admin/api/pilots/:id — tożsamość i rola', () => {
     expect(await auditRows(db)).toEqual([]);
   });
 
-  it('zmiana kodu NIE odrywa konta od historii — `id` zostaje ten sam', async () => {
+  it('zmiana kodu NIE odrywa konta od historii - `id` zostaje ten sam', async () => {
     const { app, db } = await testHarness();
     const res = await patchPilot(app, await tokenOf(app, 'TMK'), 'PWI', { code: 'PWN' });
 
@@ -451,7 +451,7 @@ describe('PATCH /admin/api/pilots/:id — tożsamość i rola', () => {
     expect(rows[0]).toEqual({ id: 'PWI', code: 'PWN' });
   });
 
-  it('administrator nie odbiera roli SOBIE — 409 z powodem, nie ciche 200', async () => {
+  it('administrator nie odbiera roli SOBIE - 409 z powodem, nie ciche 200', async () => {
     const { app, db } = await testHarness();
     const res = await patchPilot(app, await tokenOf(app, 'TMK'), 'TMK', { role: 'pilot' });
 
@@ -465,9 +465,9 @@ describe('PATCH /admin/api/pilots/:id — tożsamość i rola', () => {
     expect(await auditRows(db)).toEqual([]);
   });
 
-  it('administrator, który został SAM, nie odbierze roli sobie — `self_demote`', async () => {
+  it('administrator, który został SAM, nie odbierze roli sobie - `self_demote`', async () => {
     // Nazwa mówi teraz to, co przypadek robi. Do 2026-08-01 nazywał się „OSTATNI
-    // aktywny administrator nie traci roli — nawet cudzą ręką" i asertował
+    // aktywny administrator nie traci roli - nawet cudzą ręką" i asertował
     // `self_demote`, czyli nie dotykał gałęzi `last_admin` w ogóle: nie umiałby upaść
     // przy jej usunięciu, a pilnował jej z nazwy. Przez gałąź `last_admin` przechodzi
     // osobny przypadek niżej („wyścig o populację administratorów").
@@ -480,7 +480,7 @@ describe('PATCH /admin/api/pilots/:id — tożsamość i rola', () => {
     const second = await tokenOf(app, 'PWI');
     expect((await patchPilot(app, second, 'TMK', { role: 'pilot' })).statusCode).toBe(200);
 
-    // PWI został sam. Odmowa jest tu `self_demote`, bo to on sam wykonuje ruch —
+    // PWI został sam. Odmowa jest tu `self_demote`, bo to on sam wykonuje ruch -
     // i to jest jedyna droga, jaką ten stan da się osiągnąć jednym żądaniem.
     const refused = await patchPilot(app, second, 'PWI', { role: 'pilot' });
     expect(refused.statusCode).toBe(409);
@@ -499,7 +499,7 @@ describe('wyścig o populację administratorów', () => {
    * administratora i bez ścieżki ratunkowej.
    *
    * `SELECT COUNT(*)` niczego nie blokuje, transakcje jadą w READ COMMITTED, a dwie
-   * degradacje piszą do RÓŻNYCH wierszy — więc nic ich nie serializuje. Dwóch
+   * degradacje piszą do RÓŻNYCH wierszy - więc nic ich nie serializuje. Dwóch
    * administratorów odbierających sobie rolę równolegle: obaj widzą „jest dwóch",
    * obaj commitują, zostaje zero. Serializuje je dopiero blokada advisory na stałym
    * kluczu, wzięta PRZED odczytem licznika.
@@ -520,7 +520,7 @@ describe('wyścig o populację administratorów', () => {
     expect(lock).toBeLessThan(count);
   });
 
-  it('deaktywacja też staje w tej kolejce — aktywacja zmienia populację tak samo', async () => {
+  it('deaktywacja też staje w tej kolejce - aktywacja zmienia populację tak samo', async () => {
     const harness = await testHarness();
     const queries: string[] = [];
     const commands = pilotCommands(harness, { queries });
@@ -535,7 +535,7 @@ describe('wyścig o populację administratorów', () => {
     // Stan odtwarza dokładnie to, co po naprawie widzi druga transakcja: obaj
     // administratorzy ruszyli naraz, pierwsza degradacja zdążyła, a druga wchodzi do
     // reguły z licznikiem przeczytanym PO niej. Jej `Actor` (TMK) nie jest już wtedy
-    // administratorem, więc brama HTTP odbiłaby żądanie wcześniej — dlatego komendę
+    // administratorem, więc brama HTTP odbiłaby żądanie wcześniej - dlatego komendę
     // wołamy wprost, tak jak robi to `rebuildProjectionsCli`.
     const harness = await testHarness();
     const commands = pilotCommands(harness);
@@ -543,7 +543,7 @@ describe('wyścig o populację administratorów', () => {
     // Dwóch administratorów: TMK (seed) i PWI.
     expect((await commands.update(actor('TMK'), 'PWI', { role: 'admin' })).ok).toBe(true);
 
-    // Pierwsza transakcja wyścigu: PWI odbiera rolę TMK. Przechodzi — jest dwóch.
+    // Pierwsza transakcja wyścigu: PWI odbiera rolę TMK. Przechodzi - jest dwóch.
     expect((await commands.update(actor('PWI'), 'TMK', { role: 'pilot' })).ok).toBe(true);
 
     // Druga transakcja wyścigu, wpuszczona przez blokadę dopiero teraz.
@@ -578,7 +578,7 @@ describe('wyścig o unikalność kodu i e-maila', () => {
   /**
    * Sprawdzenie przed zapisem i `INSERT` to dwa kroki, a między nimi mieści się druga
    * transakcja z tym samym kodem. Do 2026-08-01 przegrany wyścig wychodził z komendy
-   * jako nieznany błąd i lądował jako **500** — czyli „coś się zepsuło" na zdarzenie,
+   * jako nieznany błąd i lądował jako **500** - czyli „coś się zepsuło" na zdarzenie,
    * które ma gotowe wyjaśnienie i gotowy formularz do poprawienia.
    *
    * Wyścigu na PGlite (jedno połączenie) rozegrać się nie da, więc oślepiamy
@@ -612,7 +612,7 @@ describe('wyścig o unikalność kodu i e-maila', () => {
   });
 
   it('rozpoznaje 23505 po nazwie ograniczenia i po `detail`, a reszty NIE zgaduje', async () => {
-    // Sterowniki podają raz jedno, raz drugie — a nierozpoznane ograniczenie ma
+    // Sterowniki podają raz jedno, raz drugie - a nierozpoznane ograniczenie ma
     // zostać awarią (500), bo `pilots_pkey` znaczyłoby kolizję uuid-ów, nie zajęty kod.
     expect(uniqueConflictField({ code: '23505', constraint: 'pilots_code_key' })).toBe('code');
     expect(uniqueConflictField({ code: '23505', constraint: 'pilots_email_key' })).toBe('email');
@@ -626,12 +626,12 @@ describe('wyścig o unikalność kodu i e-maila', () => {
   });
 });
 
-describe('POST /admin/api/pilots/:id/active — deaktywacja i aktywacja', () => {
+describe('POST /admin/api/pilots/:id/active - deaktywacja i aktywacja', () => {
   it('deaktywacja ZRYWA sesje pilota i zapisuje ich liczbę w audycie', async () => {
     const { app, db } = await testHarness();
     const token = await tokenOf(app, 'TMK');
 
-    // Pilot loguje się z dwóch urządzeń — dwa żywe refresh tokeny.
+    // Pilot loguje się z dwóch urządzeń - dwa żywe refresh tokeny.
     const first = await login(app, 'PWI');
     await login(app, 'PWI');
     expect(
@@ -683,10 +683,10 @@ describe('POST /admin/api/pilots/:id/active — deaktywacja i aktywacja', () => 
     expect(panel.statusCode).toBe(401);
   });
 
-  it('DEAKTYWACJA ODCINA PANEL NATYCHMIAST — nie po ośmiu godzinach sesji', async () => {
+  it('DEAKTYWACJA ODCINA PANEL NATYCHMIAST - nie po ośmiu godzinach sesji', async () => {
     // Sedno rozstrzygnięcia „rola i aktywność przy każdym żądaniu". Token szefa
     // wyszkolenia jest ważny kryptograficznie jeszcze przez godzinę, a mimo to kolejne
-    // żądanie panelu dostaje 401 — bo za poświadczeniem nie stoi już nikt.
+    // żądanie panelu dostaje 401 - bo za poświadczeniem nie stoi już nikt.
     const { app } = await testHarness();
     const leadToken = await tokenOf(app, 'AKO');
     expect((await listPilots(app, leadToken)).statusCode).toBe(200);
@@ -698,7 +698,7 @@ describe('POST /admin/api/pilots/:id/active — deaktywacja i aktywacja', () => 
     expect(after.json()).toEqual({ error: 'unauthorized' });
   });
 
-  it('administrator nie deaktywuje SIEBIE — 409 z powodem', async () => {
+  it('administrator nie deaktywuje SIEBIE - 409 z powodem', async () => {
     const { app, db } = await testHarness();
     const res = await setActive(app, await tokenOf(app, 'TMK'), 'TMK', false);
 
@@ -712,7 +712,7 @@ describe('POST /admin/api/pilots/:id/active — deaktywacja i aktywacja', () => 
     expect(await auditRows(db)).toEqual([]);
   });
 
-  it('aktywacja wraca jako `pilot.update` — katalog akcji nie ma `pilot.activate`', async () => {
+  it('aktywacja wraca jako `pilot.update` - katalog akcji nie ma `pilot.activate`', async () => {
     const { app, db } = await testHarness();
     const token = await tokenOf(app, 'TMK');
 
@@ -741,7 +741,7 @@ describe('POST /admin/api/pilots/:id/active — deaktywacja i aktywacja', () => 
   });
 });
 
-describe('POST /admin/api/pilots/:id/password-reset — jedyna ścieżka zmiany hasła', () => {
+describe('POST /admin/api/pilots/:id/password-reset - jedyna ścieżka zmiany hasła', () => {
   it('nowe hasło działa, stare przestaje, sesje są zerwane', async () => {
     const { app, db } = await testHarness();
     const token = await tokenOf(app, 'TMK');
@@ -772,12 +772,12 @@ describe('POST /admin/api/pilots/:id/password-reset — jedyna ścieżka zmiany 
     expect(JSON.stringify(rows[0]?.details)).not.toContain(password);
   });
 
-  it('RESET ZABIJA SESJĘ PANELU — tę, której nie ma w żadnej tabeli', async () => {
+  it('RESET ZABIJA SESJĘ PANELU - tę, której nie ma w żadnej tabeli', async () => {
     // Najcięższa własność tego przekroju. Sesja panelu to podpisany JWT w ciasteczku
-    // `uzaero_admin` z TTL 8 h — `revokeAllFor` kasuje `refresh_tokens`, czyli sesje
+    // `uzaero_admin` z TTL 8 h - `revokeAllFor` kasuje `refresh_tokens`, czyli sesje
     // TELEFONU, i nie ma czego skasować tutaj. Przed `pilots.credentials_valid_from` wykradzione
     // poświadczenie panelu przeżywało reset hasła o cały TTL, a ekran A06a pisał
-    // „Aktywne sesje pilota — unieważnione".
+    // „Aktywne sesje pilota - unieważnione".
     const { app, clock } = await testHarness();
     const admin = await tokenOf(app, 'TMK');
 
@@ -795,7 +795,7 @@ describe('POST /admin/api/pilots/:id/password-reset — jedyna ścieżka zmiany 
     expect(after.statusCode).toBe(401);
     expect(after.json()).toEqual({ error: 'unauthorized' });
 
-    // Konto NIE jest zablokowane — droga powrotna działa nowym hasłem.
+    // Konto NIE jest zablokowane - droga powrotna działa nowym hasłem.
     expect((await panelMe(app, await panelSession(app, 'TMK'))).statusCode).toBe(200);
   });
 
@@ -819,7 +819,7 @@ describe('POST /admin/api/pilots/:id/password-reset — jedyna ścieżka zmiany 
     expect((await panelMe(app, await panelSession(app, 'AKO'))).statusCode).toBe(200);
   });
 
-  it('administrator może zresetować hasło SOBIE — to jest ścieżka ratunkowa', async () => {
+  it('administrator może zresetować hasło SOBIE - to jest ścieżka ratunkowa', async () => {
     // Scenariusz z 2026-08-01: hasło administratora przepadło. Blokada „nie sobie"
     // dotyczy ODEBRANIA dostępu, nie jego odzyskania.
     const { app } = await testHarness();
@@ -829,7 +829,7 @@ describe('POST /admin/api/pilots/:id/password-reset — jedyna ścieżka zmiany 
     expect((await login(app, 'TMK', res.json().password)).statusCode).toBe(200);
   });
 
-  it('kolejny reset daje INNE hasło — nie ma trasy „pokaż poprzednie"', async () => {
+  it('kolejny reset daje INNE hasło - nie ma trasy „pokaż poprzednie"', async () => {
     const { app } = await testHarness();
     const token = await tokenOf(app, 'TMK');
 
@@ -841,7 +841,7 @@ describe('POST /admin/api/pilots/:id/password-reset — jedyna ścieżka zmiany 
     expect((await login(app, 'PWI', second)).statusCode).toBe(200);
   });
 
-  it('konta NIEAKTYWNEGO nie resetujemy — 409 `inactive_account`', async () => {
+  it('konta NIEAKTYWNEGO nie resetujemy - 409 `inactive_account`', async () => {
     const { app } = await testHarness();
     const token = await tokenOf(app, 'TMK');
     await setActive(app, token, 'PWI', false);
@@ -851,7 +851,7 @@ describe('POST /admin/api/pilots/:id/password-reset — jedyna ścieżka zmiany 
     expect(res.json()).toEqual({ error: 'refused', reason: 'inactive_account' });
   });
 
-  it('szef wyszkolenia nie resetuje cudzych haseł — 403', async () => {
+  it('szef wyszkolenia nie resetuje cudzych haseł - 403', async () => {
     const { app } = await testHarness();
     const res = await resetPassword(app, await tokenOf(app, 'AKO'), 'PWI');
     expect(res.statusCode).toBe(403);

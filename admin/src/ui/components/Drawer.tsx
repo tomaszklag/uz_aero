@@ -1,13 +1,13 @@
 /**
- * UZ Aero — panel: szuflada szczegółu (`.drawer` z `SZABLON.html`).
+ * UZ Aero - panel: szuflada szczegółu (`.drawer` z `SZABLON.html`).
  *
- * Szuflada istnieje po to, żeby wejście w sprawę NIE KOSZTOWAŁO kontekstu listy —
+ * Szuflada istnieje po to, żeby wejście w sprawę NIE KOSZTOWAŁO kontekstu listy -
  * lista zostaje pod spodem, a adres jest deep-linkowalny (`#/flagi/1046`). Stąd dwa
  * zachowania, których mockup nie mógł mieć, bo jest statycznym plikiem:
  *
  *  • **Esc zamyka.** Otwarta warstwa nad treścią musi mieć wyjście z klawiatury.
  *  • **Fokus wraca tam, skąd przyszedł.** Bez tego użytkownik klawiatury po zamknięciu
- *    szuflady ląduje na początku dokumentu i traci miejsce w tabeli — czyli dokładnie
+ *    szuflady ląduje na początku dokumentu i traci miejsce w tabeli - czyli dokładnie
  *    ten kontekst, dla którego szuflada powstała.
  *  • **Fokus NIE WYCHODZI szufladą `Tab`** (dołożone 2026-08-01). Lista zostaje pod
  *    spodem w drzewie DOM, więc bez pułapki `Tab` z ostatniego pola formularza schodzi
@@ -19,7 +19,7 @@
  * a akcja ma być osiągalna tak samo dla myszy i dla czytnika ekranu.
  */
 
-// `KeyboardEvent` Reacta pod własną nazwą — globalny `KeyboardEvent` DOM-u jest w tym
+// `KeyboardEvent` Reacta pod własną nazwą - globalny `KeyboardEvent` DOM-u jest w tym
 // pliku potrzebny obok, przy nasłuchu `Esc` na dokumencie.
 import { useEffect, useRef, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
 
@@ -27,11 +27,11 @@ import { trapTarget } from './focusTrap';
 import { CloseIcon } from './icons';
 
 /**
- * Elementy, które mogą dostać fokus — w kolejności dokumentu.
+ * Elementy, które mogą dostać fokus - w kolejności dokumentu.
  *
  * `:not([disabled])` i `tabindex="-1"` odsiewamy w selektorze, bo przycisk zablokowany
  * z powodem (wzorzec całego panelu) zostaje w DOM-ie i zawijanie na nim zatrzymałoby
- * `Tab` w martwym punkcie. `offsetParent` odsiewa to, co jest schowane — element
+ * `Tab` w martwym punkcie. `offsetParent` odsiewa to, co jest schowane - element
  * niewidoczny, na który skacze fokus, wygląda jak zawieszona klawiatura.
  */
 const FOCUSABLE =
@@ -47,10 +47,10 @@ function focusablesIn(root: HTMLElement | null): HTMLElement[] {
 interface DrawerProps {
   title: string;
   sub: ReactNode;
-  /** Stopka z akcjami (`.drawer-foot`) — kolejność jak w mockupie: anuluj, potem akcja. */
+  /** Stopka z akcjami (`.drawer-foot`) - kolejność jak w mockupie: anuluj, potem akcja. */
   footer?: ReactNode;
   /**
-   * Szuflada 660 px zamiast 520 (`.drawer.wide`) — dla szuflady, która jest
+   * Szuflada 660 px zamiast 520 (`.drawer.wide`) - dla szuflady, która jest
    * FORMULARZEM, a nie podglądem. Korekta administratora (`A02b`) niesie kartę
    * „przed → po", pole powodu i pełny opis skutków; w wąskiej szufladzie każdy wiersz
    * klucz–wartość łamie się na dwie linie i karta przestaje się czytać kolumnami.
@@ -83,7 +83,7 @@ export function Drawer({ title, sub, footer, wide = false, onClose, children }: 
 
   // Nasłuch na PANELU, nie na dokumencie: pułapka ma działać wtedy i tylko wtedy, gdy
   // fokus jest w środku. Nasłuch globalny przejmowałby `Tab` także wtedy, gdy człowiek
-  // wrócił myszą do listy — czyli więziłby go w szufladzie zamiast pilnować jej granicy.
+  // wrócił myszą do listy - czyli więziłby go w szufladzie zamiast pilnować jej granicy.
   const onTab = (event: ReactKeyboardEvent<HTMLDivElement>): void => {
     if (event.key !== 'Tab') return;
 

@@ -1,16 +1,16 @@
 /**
- * UZ Aero — panel: mapa śladu lotu (`A02c-slad.html`, sekcja „Trasa").
+ * UZ Aero - panel: mapa śladu lotu (`A02c-slad.html`, sekcja „Trasa").
  *
  * Komponent jest CZYSTYM UKŁADEM: nie liczy nic, dostaje gotowe piksele z `mapPlot`
- * (`screens/track/trackChart.ts`). To ta sama zasada, co w karcie dnia — decyzja
+ * (`screens/track/trackChart.ts`). To ta sama zasada, co w karcie dnia - decyzja
  * o treści mieszka w module testowalnym w Node, a `.tsx` odpowiada za rozmieszczenie.
  *
  * **Bez kafelków** (decyzja 2026-08-04): tłem jest siatka współrzędnych, a odniesienie
- * w terenie dają lotniska z katalogu — pas startowy z podpisem ICAO. Panel nie pobiera
+ * w terenie dają lotniska z katalogu - pas startowy z podpisem ICAO. Panel nie pobiera
  * więc niczego z zewnątrz, dokładnie tak samo jak telefon.
  *
  * Typy kształtów mieszkają TUTAJ, a nie przy module liczącym, bo warstwa `ui/` nie zna
- * `screens/` (reguła `test/architecture.test.ts`) — kierunek zależności biegnie od
+ * `screens/` (reguła `test/architecture.test.ts`) - kierunek zależności biegnie od
  * ekranu do komponentu i tylko tak.
  */
 
@@ -46,7 +46,7 @@ interface TrackMapProps {
   height: number;
 }
 
-/** Odstęp siatki (px) — ten sam co w aplikacji, żeby oba ekrany czytało się tak samo. */
+/** Odstęp siatki (px) - ten sam co w aplikacji, żeby oba ekrany czytało się tak samo. */
 const GRID_STEP = 60;
 
 export function TrackMap({ plot, width, height }: TrackMapProps) {
@@ -158,7 +158,7 @@ export function TrackMap({ plot, width, height }: TrackMapProps) {
         <span className="map-scale-bar" style={{ width: plot.scale.pixels }} />
       </div>
 
-      {/* Atrybucja ODbL — część pasów w katalogu pochodzi z OpenStreetMap. */}
+      {/* Atrybucja ODbL - część pasów w katalogu pochodzi z OpenStreetMap. */}
       <div className="map-attrib">lotniska: OurAirports · © OpenStreetMap</div>
     </div>
   );

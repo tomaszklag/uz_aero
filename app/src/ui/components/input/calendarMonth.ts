@@ -1,13 +1,13 @@
 /**
- * UZ Aero — matematyka kalendarza miesięcznego (arkusz daty lotu, issue #58).
+ * UZ Aero - matematyka kalendarza miesięcznego (arkusz daty lotu, issue #58).
  *
- * Czysta arytmetyka na dobach UTC — zero Reacta, zero zegara systemowego. Komponent
+ * Czysta arytmetyka na dobach UTC - zero Reacta, zero zegara systemowego. Komponent
  * `CalendarGrid` tylko rysuje to, co stąd dostanie; testowalne jest wszystko, co
  * w kalendarzu potrafi się pomylić: wyrównanie pierwszego dnia do poniedziałku,
  * długość lutego w roku przestępnym, przejście grudzień → styczeń.
  *
  * Tydzień zaczyna się w PONIEDZIAŁEK (tak czyta kalendarz polski pilot), a wszystkie
- * doby są północami UTC — tą samą kotwicą, którą trzyma cały model (`utcDayStart`).
+ * doby są północami UTC - tą samą kotwicą, którą trzyma cały model (`utcDayStart`).
  */
 
 import type { EpochMillis } from '../../../domain';
@@ -28,7 +28,7 @@ export function addMonthsUtc(monthStart: EpochMillis, delta: number): EpochMilli
 
 /**
  * Tygodnie miesiąca jako wiersze po 7 komórek (poniedziałek → niedziela).
- * Komórka to północ UTC dnia albo `null` — wyrównanie na skrajach; dni sąsiednich
+ * Komórka to północ UTC dnia albo `null` - wyrównanie na skrajach; dni sąsiednich
  * miesięcy NIE rysujemy, bo tapnięcie w nie zmieniałoby dobę i miesiąc naraz.
  */
 export function calendarWeeks(monthStart: EpochMillis): (EpochMillis | null)[][] {

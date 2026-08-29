@@ -1,38 +1,38 @@
 /**
- * UZ Aero — arkusz wpisu tekstowego z podpowiedziami (oznaczenie klienta, notatka dnia).
+ * UZ Aero - arkusz wpisu tekstowego z podpowiedziami (oznaczenie klienta, notatka dnia).
  *
  * Ten sam ruch, co przy trasie (issue #14): pole w formularzu jest PRZYCISKIEM
  * z wartością, a wpisywanie dzieje się w arkuszu.
- * Zysk jest tu jednak inny niż przy lotnisku — nie chodzi o to, żeby było widać
+ * Zysk jest tu jednak inny niż przy lotnisku - nie chodzi o to, żeby było widać
  * przeszukiwanie, tylko o to, żeby pilot NIE MUSIAŁ przepisywać tego samego
  * z pamięci: nad polem stoi lista wartości, których klub i on sam używali ostatnio.
  *
- * ARKUSZ ROŚNIE W GÓRĘ, WIĘC POLE WPISU JEST NA DOLE — dokładnie jak w arkuszu lotniska
+ * ARKUSZ ROŚNIE W GÓRĘ, WIĘC POLE WPISU JEST NA DOLE - dokładnie jak w arkuszu lotniska
  * i z tego samego powodu (zgłoszenie z urządzenia): arkusz stoi przyklejony do dolnej
  * krawędzi, a jego wysokość zmienia się razem z długością listy podpowiedzi. Pole na górze
- * przeskakiwało przy każdej literze, która listę zawężała — pisało się do celu, który
+ * przeskakiwało przy każdej literze, która listę zawężała - pisało się do celu, który
  * ucieka pod palcem. W stopce (`Sheet` → `footer`, poza obszarem przewijania) ma stałą
  * odległość od klawiatury, a lista rośnie i kurczy się NAD nim.
  *
  * OTWIERA SIĘ Z DOTYCHCZASOWĄ WARTOŚCIĄ, inaczej niż arkusz lotniska (tam pole startuje
  * puste). To nie jest niekonsekwencja: lotnisko się WYBIERA, a oznaczenie klienta i notatkę
  * często się POPRAWIA („zlec. 2026/114" → „…/118"), więc kasowanie wpisu przy otwarciu
- * kazałoby przepisywać całość od nowa. Lista startuje wtedy nieprzefiltrowana — filtr
+ * kazałoby przepisywać całość od nowa. Lista startuje wtedy nieprzefiltrowana - filtr
  * włącza się przy pierwszej zmianie tekstu, bo dopiero ona jest pytaniem pilota.
  *
- * ARKUSZ SZUKA W HISTORII PRZY KAŻDEJ LITERZE. Wpis nie jest tylko nową wartością — jest
+ * ARKUSZ SZUKA W HISTORII PRZY KAŻDEJ LITERZE. Wpis nie jest tylko nową wartością - jest
  * też zapytaniem do listy ostatnio używanych: „SKY" zawęża ją do zleceń tego klienta,
  * a pełna nazwa zwykle trafia w tę samą pozycję, którą pilot i tak chciał wybrać. Szukamy
- * LOKALNIE (`searchSuggestions`), po liście pobranej raz przy wejściu na ekran — bez ani
+ * LOKALNIE (`searchSuggestions`), po liście pobranej raz przy wejściu na ekran - bez ani
  * jednego dodatkowego zapytania do serwera i bez opóźnienia. Wpis, którego w historii nie
  * ma, zapisuje się normalnie: to wciąż pole tekstowe, a nie lista zamknięta.
  *
- * PODPOWIEDZI SĄ TYLKO ONLINE — i to jest decyzja, nie brak. Bez zasięgu arkusz działa
+ * PODPOWIEDZI SĄ TYLKO ONLINE - i to jest decyzja, nie brak. Bez zasięgu arkusz działa
  * dokładnie tak jak wcześniej działało pole tekstowe: wpisujesz i potwierdzasz. Lista
  * to wygoda, nie warunek pracy (`CLAUDE.md`: „brak sieci NIGDY nie blokuje pracy pilota"),
- * dlatego jej braku NIE ogłaszamy (issue #58 pkt 8 — zdanie „podpowiedzi wymagają
+ * dlatego jej braku NIE ogłaszamy (issue #58 pkt 8 - zdanie „podpowiedzi wymagają
  * połączenia" opisywało budowę aplikacji komuś, kto chce coś wpisać; ta sama kategoria
- * przypisów, którą wyrzuciło issue #43) — i dlatego nie trzymamy jej w cache, którego
+ * przypisów, którą wyrzuciło issue #43) - i dlatego nie trzymamy jej w cache, którego
  * i tak nie mielibyśmy jak unieważnić.
  *
  * Tryb `multiline` obsługuje notatkę dnia: to jedyne pole w preflightcie, w którym pilot
@@ -60,7 +60,7 @@ export interface TextEntrySheetProps {
   title: string;
   initialText: string;
   placeholder?: string;
-  /** Notatka dnia — pole na kilka linii zamiast jednej. */
+  /** Notatka dnia - pole na kilka linii zamiast jednej. */
   multiline?: boolean;
   maxLength?: number;
   /**
@@ -71,7 +71,7 @@ export interface TextEntrySheetProps {
   suggestions: readonly TextSuggestion[] | null | undefined;
   suggestionsLabel?: string;
   /**
-   * Ile razy ten tekst był już poprawiany (issue #43). Zero — a taki jest domyślnie —
+   * Ile razy ten tekst był już poprawiany (issue #43). Zero - a taki jest domyślnie -
    * nie rysuje niczego, więc arkusz w roli „napisz notatkę" (02e) o historii nie wie.
    * Wejście pojawia się dopiero tam, gdzie tekst ma przeszłość: w trybie edycji sesji.
    */
@@ -103,7 +103,7 @@ export function TextEntrySheet({
   /**
    * Wynik ostatniego przeszukania historii + jego pamięć („od którego wpisu było pusto").
    * Trzymamy je w stanie, a nie liczymy w renderze, bo krótkie spięcie z `searchSuggestions`
-   * ma sens tylko wtedy, gdy pamięta poprzedni wpis — a render tego nie pamięta.
+   * ma sens tylko wtedy, gdy pamięta poprzedni wpis - a render tego nie pamięta.
    */
   const [matches, setMatches] = useState<TextSuggestion[]>([]);
   const search = useRef<SuggestionSearchState>(EMPTY_SEARCH);
@@ -134,10 +134,10 @@ export function TextEntrySheet({
       confirmLabel="ZAPISZ"
       onConfirm={() => onConfirm(text.trim())}
       onCancel={onCancel}
-      /* Klawiatura od otwarcia — drabinka prób z `useSheetInputFocus` (issue #58
+      /* Klawiatura od otwarcia - drabinka prób z `useSheetInputFocus` (issue #58
          pkt 8, druga tura: pojedynczy focus w onShow bywał nadal za wcześnie). */
       onShow={onShow}
-      /* POLE WPISU NA DOLE — patrz nota „ARKUSZ ROŚNIE W GÓRĘ" na górze pliku. */
+      /* POLE WPISU NA DOLE - patrz nota „ARKUSZ ROŚNIE W GÓRĘ" na górze pliku. */
       footer={
         <TextInput
           ref={inputRef}
@@ -171,27 +171,27 @@ export function TextEntrySheet({
       }
     >
       {/* Historia PRZED podpowiedziami: „co tu już zmieniano" jest pytaniem o TEN tekst,
-          a lista ostatnio używanych — o cudze wpisy. Wiersz znika sam przy zerze
+          a lista ostatnio używanych - o cudze wpisy. Wiersz znika sam przy zerze
           (`HistoryLink`), więc arkusz w roli pisania notatki zostaje bez zmian. */}
       {onOpenHistory != null && <HistoryLink count={historyCount} onPress={onOpenHistory} />}
 
       {/* PUSTA LISTA MÓWI COŚ TYLKO WTEDY, GDY HISTORIA ISTNIEJE. Podczas pytania
-          (`undefined`) i bez odpowiedzi serwera (`null` — offline, wpis ręczny) arkusz
+          (`undefined`) i bez odpowiedzi serwera (`null` - offline, wpis ręczny) arkusz
           MILCZY: pole działa wtedy jak zwykłe pole tekstowe, a zdanie „podpowiedzi
           wymagają połączenia" opisywało budowę aplikacji komuś, kto chce coś wpisać
-          (issue #58 pkt 8 — ta sama kategoria przypisów, którą wyrzuciło issue #43).
+          (issue #58 pkt 8 - ta sama kategoria przypisów, którą wyrzuciło issue #43).
           Odpowiedź dostają tylko stany, w których lista istnieje, a nie pomaga:
           historia pusta i wpis bez trafienia. */}
       {suggestions == null ? null : suggestions.length === 0 ? (
         // Serwer odpowiedział, tylko nie ma czym: pierwszy dzień klubu albo pierwsza notatka.
         <AppText variant="mono" tone="muted" style={styles.note}>
-          Historia jest pusta — to będzie pierwszy wpis
+          Historia jest pusta - to będzie pierwszy wpis
         </AppText>
       ) : matches.length === 0 ? (
-        // Historia jest, ale wpis do niczego nie pasuje — wartość zapisze się jako nowa.
+        // Historia jest, ale wpis do niczego nie pasuje - wartość zapisze się jako nowa.
         text.trim().length > 0 && (
           <AppText variant="mono" tone="muted" style={styles.note}>
-            Brak w historii — zapisze się jako nowy wpis
+            Brak w historii - zapisze się jako nowy wpis
           </AppText>
         )
       ) : (

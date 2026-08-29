@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 10B Sesja (podgląd)</title>
+<title>UZ Aero - 10B Sesja (podgląd)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -60,17 +60,17 @@
     display:flex; align-items:center; justify-content:space-between;
     padding:8px 14px; border-bottom:1px solid var(--border); flex-shrink:0;
   }
-  /* `min-width:0` — bez tego długi podtytuł rozpycha kolumnę i wchodzi pod „Dzień" */
+  /* `min-width:0` - bez tego długi podtytuł rozpycha kolumnę i wchodzi pod „Dzień" */
   .app-header-center { display:flex; flex-direction:column; align-items:center; gap:1px; flex:1; min-width:0; }
   .app-header-right { display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
-  /* Powrót do „Mój dzień" — ten ekran jest odnogą osi pilota, nie etapem flow */
+  /* Powrót do „Mój dzień" - ten ekran jest odnogą osi pilota, nie etapem flow */
   .back-btn {
     display:inline-flex; align-items:center; gap:5px; min-height:34px;
     font-family:var(--font-mono); font-size:11px; color:var(--text-muted);
     text-decoration:none; padding:5px 8px; border-radius:6px; border:1px solid var(--border);
   }
   .back-btn:hover { color:var(--text-secondary); border-color:var(--border-strong); }
-  /* Okno korekty po ZDANIU samolotu (jedno na sesję) — 24 h samodzielnie, potem administrator */
+  /* Okno korekty po ZDANIU samolotu (jedno na sesję) - 24 h samodzielnie, potem administrator */
   .correction-window {
     display:flex; align-items:flex-start; gap:9px;
     background:var(--blue-muted); border:1px solid rgba(52,152,219,0.28);
@@ -79,7 +79,7 @@
   .cw-icon { color:var(--blue); flex-shrink:0; margin-top:1px; }
   .cw-text { font-size:11px; color:var(--text-secondary); line-height:1.55; }
   .cw-text b { color:var(--blue); font-weight:600; }
-  /* Okno zamknięte: ten sam baner, inny ton. Nadal typu STATUS — nie da się go zamknąć,
+  /* Okno zamknięte: ten sam baner, inny ton. Nadal typu STATUS - nie da się go zamknąć,
      bo razem z nim zniknęłoby jedyne wyjaśnienie, dlaczego ekran nie ma ołówków. */
   .correction-window.closed { background:var(--amber-muted); border-color:var(--amber-border); }
   .correction-window.closed .cw-icon { color:var(--amber); }
@@ -102,7 +102,7 @@
   .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
   .scroll::-webkit-scrollbar { display:none; }
   /* Karty mają `overflow:hidden` (zaokrąglone rogi), co w kolumnie flex zeruje ich
-     minimalną wysokość — bez tego sekcje zapadają się do samych nagłówków. */
+     minimalną wysokość - bez tego sekcje zapadają się do samych nagłówków. */
   .scroll > * { flex-shrink:0; }
 
   /* Section card */
@@ -128,7 +128,7 @@
   /* ===== ŚLAD SESJI =====
      Ślad rysuje CAŁY BIEG SILNIKA (issue #38 pkt 2): kołowanie jaśniejszą linią,
      loty pełną, a każdy start i każde lądowanie ma na trasie swój znacznik.
-     Do issue #38 mapy tu nie było w ogóle — ślad mieszkał piętro niżej, na
+     Do issue #38 mapy tu nie było w ogóle - ślad mieszkał piętro niżej, na
      szczegółach lotu, i pilot oglądał go dopiero po dwóch wejściach. */
   .track-thumb {
     display:block; text-decoration:none; position:relative;
@@ -143,7 +143,7 @@
     color:var(--green); background:rgba(13,13,13,0.72);
     border:1px solid var(--green-border); border-radius:999px; padding:4px 9px;
   }
-  /* Legenda zastępuje podpisy przy znacznikach — cztery etykiety na jednym placu
+  /* Legenda zastępuje podpisy przy znacznikach - cztery etykiety na jednym placu
      zlewały się w plamę, a przy dziesięciu wyniesieniach dnia skokowego byłoby ich
      dwadzieścia. Tłumaczy KSZTAŁT znaku raz, a nie przy każdym wystąpieniu. */
   .track-legend {
@@ -167,7 +167,7 @@
   /* Oba końce osi oddychają: PRZEJĘCIE nie klei się do śladu ani do linii nagłówka,
      a ZDANIE nie styka się ze stopką sum (czytałoby się jak jej pierwszy wiersz). */
   .axis { padding:12px 0; }
-  /* Wiersz niski (28 px) — patrz komentarz na 10: oś nie ma celów dotknięcia, więc nie
+  /* Wiersz niski (28 px) - patrz komentarz na 10: oś nie ma celów dotknięcia, więc nie
      musi trzymać rytmu 44 px, a numer lotu po prawej zdejmuje drugą linię. */
   .axis-row {
     display:grid; grid-template-columns:52px 14px 1fr auto;
@@ -191,10 +191,10 @@
   .axis-dot.green { background:var(--green); }
   .axis-dot.red { background:var(--red); }
   .axis-dot.blue { background:var(--blue); }
-  /* Tankowanie i zmiana załogi — zdarzenia POZA pracą silnika (issue #44); ta sesja
+  /* Tankowanie i zmiana załogi - zdarzenia POZA pracą silnika (issue #44); ta sesja
      akurat żadnego nie ma, ale inwentarz osi jest jeden dla wszystkich ekranów. */
   .axis-dot.amber { background:var(--amber); }
-  /* Otoczka 2 px w kolorze karty — ta sama, którą ma kropka wypełniona: kreska osi
+  /* Otoczka 2 px w kolorze karty - ta sama, którą ma kropka wypełniona: kreska osi
      ma urywać się PRZED obrysem, a nie wchodzić do środka i wychodzić drugą stroną
      (zgłoszenie z urządzenia, 2026-08-14). Dotyczy PRZEJĘCIA i ZDANIA, jedynych
      pustych punktów osi. */
@@ -203,21 +203,21 @@
   .axis-name { font-family:var(--font-mono); font-size:10px; letter-spacing:1.4px; text-transform:uppercase; color:var(--text-primary); }
   .axis-name.muted { color:var(--text-secondary); }
   /* Znacznik „poprawione" i JEDYNY cel dotknięcia tego ekranu: otwiera historię zmian
-     (10I). Podgląd nie ma ani jednego elementu zapisu — a historia zapisem nie jest. */
+     (10I). Podgląd nie ma ani jednego elementu zapisu - a historia zapisem nie jest. */
   .tag-corrected {
     font-family:var(--font-mono); font-size:7.5px; letter-spacing:1px; text-transform:uppercase;
     color:var(--amber); background:var(--amber-muted); border:1px solid var(--amber-border);
     border-radius:4px; padding:1px 5px; text-decoration:none;
   }
   .axis-sub { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
-  /* Prawa kolumna niesie sam czas trwania — plakietka RĘCZNIE wypadła z osi razem
+  /* Prawa kolumna niesie sam czas trwania - plakietka RĘCZNIE wypadła z osi razem
      z ołówkami (issue #40 pkt 1 i 6). Po oknie korekty ten ekran i tak nie miał
      ołówków; od issue #40 wygląda tak SAM ZE SIEBIE, a nie przez tryb podglądu. */
-  /* Prawa krawędź: numer lotu przy starcie ALBO czas trwania — patrz komentarz na 10. */
+  /* Prawa krawędź: numer lotu przy starcie ALBO czas trwania - patrz komentarz na 10. */
   .axis-right { display:flex; align-items:center; justify-content:flex-end; gap:8px; }
   .axis-flight { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
   .axis-dur { font-family:var(--font-mono); font-size:11px; color:var(--green); }
-  /* Stopka osi — JEDYNE miejsce, w którym pada czas blokowy (issue #38 pkt 9).
+  /* Stopka osi - JEDYNE miejsce, w którym pada czas blokowy (issue #38 pkt 9).
      Wcześniej stał w bohaterze ekranu, w obu kartach załogi, w podpisie średniego
      zużycia i w wierszu Δ motogodzin: pięć razy ta sama liczba. */
   .axis-foot {
@@ -229,9 +229,9 @@
   .axis-foot-val.green { color:var(--green); }
   .axis-foot-key { font-family:var(--font-mono); font-size:7px; letter-spacing:1.2px; text-transform:uppercase; color:var(--text-muted); }
 
-  /* ===== RACHUNEK (paliwo i motogodziny — JEDNA forma) =====
+  /* ===== RACHUNEK (paliwo i motogodziny - JEDNA forma) =====
      Issue #38 pkt 5: to są te same pytania („ile ubyło i czy tyle powinno"), więc
-     dostają ten sam układ — przesłanki, kreska, wynik, werdykt. Paliwo miało wcześniej
+     dostają ten sam układ - przesłanki, kreska, wynik, werdykt. Paliwo miało wcześniej
      siatkę 2×2 wielkich kafli, motogodziny trzy wiersze tekstu; nic tego nie
      uzasadniało poza kolejnością powstawania. */
   .calc-row {
@@ -250,7 +250,7 @@
   .calc-total-val.amber { color:var(--amber); }
   .calc-total-val.green { color:var(--green); }
   /* Werdykt: liczba pilota kontra to, czego model się spodziewał po TEJ sesji.
-     Pasmo pochodzi z rozrzutu obserwacji, nie z przedziału ufności — patrz
+     Pasmo pochodzi z rozrzutu obserwacji, nie z przedziału ufności - patrz
      `packages/domain/src/consumption/expectation.ts`. */
   /* Na karcie sama plakietka; pasmo, stawki i działanie w arkuszu (issue #40 pkt 7 i 8).
      Werdykt zostaje KLIKALNY także po oknie korekty: arkusz normy niczego nie zapisuje,
@@ -271,14 +271,14 @@
   .verdict:hover .verdict-more { color:var(--text-secondary); }
 
   /* Miejsce werdyktu, gdy porównywać nie ma z czym: pusta ramka byłaby cichą kreską,
-     a zero udające normę — kłamstwem. Mówimy wprost, DLACZEGO nie orzekamy (§6 pkt 3). */
+     a zero udające normę - kłamstwem. Mówimy wprost, DLACZEGO nie orzekamy (§6 pkt 3). */
   .verdict-na {
     padding:9px 12px; border-top:1px solid var(--border);
     font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; line-height:1.5;
     color:var(--text-muted);
   }
 
-  /* Kafelek zamiast śladu — ten sam wzorzec, co „bez zapisu GPS": powód zamiast pustki. */
+  /* Kafelek zamiast śladu - ten sam wzorzec, co „bez zapisu GPS": powód zamiast pustki. */
   .no-track {
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
     padding:26px 18px; background:#0F1216; border-bottom:1px solid var(--border); text-align:center;
@@ -297,7 +297,7 @@
   .info-val.blue { color:var(--blue); }
   .info-note { font-family:var(--font-mono); font-size:8px; letter-spacing:0.5px; color:var(--text-muted); margin-top:3px; }
 
-  /* ===== NOTATKI (issue #40 pkt 5) — patrz komentarz na 10 ===== */
+  /* ===== NOTATKI (issue #40 pkt 5) - patrz komentarz na 10 ===== */
   .note-block { padding:10px 12px; display:flex; flex-direction:column; gap:4px; }
   .note-block + .note-block { border-top:1px solid var(--border); }
   .note-when {
@@ -306,7 +306,7 @@
   }
   .note-text { font-size:12px; color:var(--text-secondary); line-height:1.55; }
 
-  /* Buttons — BRAK. Podgląd sesji po oknie korekty nie ma ani jednej akcji zapisu,
+  /* Buttons - BRAK. Podgląd sesji po oknie korekty nie ma ani jednej akcji zapisu,
      a powrót mieszka w nagłówku (issue #42, 2026-08-13). Klasy `.btn-row`,
      `.btn-secondary` i `.btn-primary` zostały usunięte razem z pasem akcji, żeby
      nikt nie odtworzył go „bo styl już jest". */
@@ -328,7 +328,7 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 10B</span>
+  <span class="film-strip">UZ AERO - 10B</span>
   <span class="slug">sesja po oknie · podgląd</span>
   <span class="canvas-meta"><span class="pulse"></span>Ekran 10B</span>
 </header>
@@ -366,10 +366,10 @@
 
       <!-- Baner amber z kłódką zamiast niebieskiego terminu: okno minęło, więc nie ma
            już czego odliczać. Nigdy nie mówimy „nie da się" bez powiedzenia, co zamiast
-           tego (§6 pkt 3) — stąd zdanie o administratorze. -->
+           tego (§6 pkt 3) - stąd zdanie o administratorze. -->
       <div class="correction-window closed">
         <svg class="cw-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
-        <span class="cw-text">Minęły <b>24 godziny od zdania samolotu</b> — dane są zamknięte i tego ekranu nie da się już edytować. Poprawkę wprowadza administrator; zgłoś ją szefowi wyszkolenia.</span>
+        <span class="cw-text">Minęły <b>24 godziny od zdania samolotu</b> - dane są zamknięte i tego ekranu nie da się już edytować. Poprawkę wprowadza administrator; zgłoś ją szefowi wyszkolenia.</span>
       </div>
 
       <div class="section-card">
@@ -380,7 +380,7 @@
         </div>
 
         <!-- Ślad zostaje klikalny: oglądanie to nie zapis. Zapis GPS ma retencję 14 dni,
-             więc przy starszych sesjach 14 pokaże wariant „ślad niedostępny" (14B) —
+             więc przy starszych sesjach 14 pokaże wariant „ślad niedostępny" (14B) -
              i to jest inna sprawa niż zamknięte okno korekty. -->
         <a href="14-slad.html" class="track-thumb" title="Otwórz pełny ślad sesji">
           <svg viewBox="0 0 365 168" preserveAspectRatio="xMidYMid meet">
@@ -391,7 +391,7 @@
             <path d="M300 44 L318 40" fill="none" stroke="var(--text-muted)" stroke-width="1.6"
                   stroke-dasharray="3 3" stroke-linecap="round" opacity="0.7"/>
 
-            <!-- Przelot: jedna linia z punktu do punktu, bez pętli nad lotniskiem —
+            <!-- Przelot: jedna linia z punktu do punktu, bez pętli nad lotniskiem -
                  inny kształt operacji niż dzień skokowy na 10. -->
             <path d="M86 126 C130 116, 168 104, 206 88 C244 72, 274 58, 300 44"
                   fill="none" stroke="var(--green)" stroke-width="2.5"
@@ -415,10 +415,10 @@
           </span>
         </a>
 
-        <!-- Oś jest tu identyczna jak na 10 — od issue #40 ołówków nie ma NIGDZIE, więc
+        <!-- Oś jest tu identyczna jak na 10 - od issue #40 ołówków nie ma NIGDZIE, więc
              podgląd przestał się różnić od trybu edycji przebiegiem sesji. Różnica
              została jedna i mocniejsza: nie ma przycisku „EDYTUJ DANE" pod ekranem.
-             (Wyszarzony ołówek pozostaje zakazany — issue #35 pkt 5.) -->
+             (Wyszarzony ołówek pozostaje zakazany - issue #35 pkt 5.) -->
         <div class="axis">
           <div class="axis-row">
             <span class="axis-time dim">13:40</span>
@@ -434,7 +434,7 @@
             <span class="axis-right"></span>
           </div>
 
-          <!-- Kołowanie (issue #40 pkt 4) — przelot kołuje raz, przed jedynym startem. -->
+          <!-- Kołowanie (issue #40 pkt 4) - przelot kołuje raz, przed jedynym startem. -->
           <div class="axis-row">
             <span class="axis-time dim">13:47</span>
             <span class="axis-mark"><span class="axis-dot"></span></span>
@@ -454,7 +454,7 @@
           <!-- Wiersz PO KOREKCIE również w PODGLĄDZIE, i plakietka jest tu tak samo
                klikalna jak w odczycie (10): zamknięte okno odbiera prawo do ZMIANY
                danych, nie do ich zrozumienia. Historia zmian (10I) niczego nie zapisuje,
-               więc nie ma powodu, żeby po oknie znikała — a poprawki administratora
+               więc nie ma powodu, żeby po oknie znikała - a poprawki administratora
                wracają na telefon (§4.9), więc to jedyne miejsce, w którym pilot je zobaczy. -->
           <div class="axis-row">
             <span class="axis-time">15:03</span>
@@ -565,7 +565,7 @@
         <div class="info-row">
           <span class="info-key">Dual</span>
           <span>
-            <span class="info-val">—</span>
+            <span class="info-val">-</span>
             <div class="info-note">sesja jednoosobowa</div>
           </span>
         </div>
@@ -575,18 +575,18 @@
            tłumaczy liczby wyżej, a podgląd odbiera prawo do zmiany, nie do czytania. -->
       <div class="section-card">
         <div class="section-card-head">Notatki</div>
-        <!-- Bez stempla — patrz komentarz w 10: notatka sesji jest jedna. -->
+        <!-- Bez stempla - patrz komentarz w 10: notatka sesji jest jedna. -->
         <div class="note-block">
-          <span class="note-text">Przebazowanie do Poznania na przegląd — powrót innym pilotem.</span>
+          <span class="note-text">Przebazowanie do Poznania na przegląd - powrót innym pilotem.</span>
         </div>
       </div>
 
-      <!-- „EDYTUJ DANE" znika — po oknie korekty nie ma czego edytować, a droga przez
+      <!-- „EDYTUJ DANE" znika - po oknie korekty nie ma czego edytować, a droga przez
            listę ręczną (08) prowadziłaby do ekranu, który i tak odmówi zapisu.
            Zielone „WRÓĆ DO DNI" też znika (issue #42, 2026-08-13): powrót stoi
            w nagłówku („‹ Dni"), a przycisk akcji głównej, który wyłącznie wychodzi
            z ekranu, obiecuje czynność, której nie ma. Ekran w trybie podglądu nie ma
-           zatem ŻADNEGO pasa akcji na dole — i tak ma być: nie da się tu nic zapisać. -->
+           zatem ŻADNEGO pasa akcji na dole - i tak ma być: nie da się tu nic zapisać. -->
 
 
     </div>
@@ -594,41 +594,41 @@
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Warianty tego ekranu — kiedy który?</div>
+  <div class="vp-title">Warianty tego ekranu - kiedy który?</div>
   <a class="vp-item" href="10-statystyki.html">
     <span class="vp-badge">10</span>
     <span class="vp-body">
-      <span class="vp-name">Sesja — z lotami</span>
+      <span class="vp-name">Sesja - z lotami</span>
       <span class="vp-when">Okno korekty otwarte (sesja jeszcze niezdana albo zdana mniej niż 24 h temu): ta sama oś czasu, ale pod ekranem stoi „EDYTUJ DANE", a baner jest niebieski i niesie termin.</span>
     </span>
   </a>
   <a class="vp-item" href="10a-statystyki-zero.html">
     <span class="vp-badge amber">10A</span>
     <span class="vp-body">
-      <span class="vp-name">Sesja — bez lotu</span>
+      <span class="vp-name">Sesja - bez lotu</span>
       <span class="vp-when">Samolot zdany bez ani jednego lotu: oś ma dwa punkty, werdykty milczą, wielką liczbą stoi czas trzymania maszyny.</span>
     </span>
   </a>
   <a class="vp-item active" href="10b-rozliczenie-zamkniete.html">
     <span class="vp-badge amber">10B</span>
     <span class="vp-body">
-      <span class="vp-name">Sesja — po oknie (podgląd)</span>
-      <span class="vp-when">Minęły 24 h od zdania samolotu. Te same liczby i ta sama kolejność sekcji, ale bez ani jednego elementu zapisu: znika „Edytuj dane", a amber baner z kłódką zastępuje termin. Ślad i arkusz normy zostają klikalne — oglądanie to nie zapis. Wejście: karta z grupy „Zamknięte" na 12.</span>
+      <span class="vp-name">Sesja - po oknie (podgląd)</span>
+      <span class="vp-when">Minęły 24 h od zdania samolotu. Te same liczby i ta sama kolejność sekcji, ale bez ani jednego elementu zapisu: znika „Edytuj dane", a amber baner z kłódką zastępuje termin. Ślad i arkusz normy zostają klikalne - oglądanie to nie zapis. Wejście: karta z grupy „Zamknięte" na 12.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
   <a class="vp-item" href="10c-norma-detale.html">
     <span class="vp-badge">10C</span>
     <span class="vp-body">
-      <span class="vp-name">Sesja — arkusz normy</span>
+      <span class="vp-name">Sesja - arkusz normy</span>
       <span class="vp-when">Po tapnięciu w plakietkę werdyktu: stawki normy, średnia tej sesji, rozpisane działanie i pasmo. Otwiera się także w podglądzie.</span>
     </span>
   </a>
   <a class="vp-item" href="10d-edycja.html">
     <span class="vp-badge amber">10D</span>
     <span class="vp-body">
-      <span class="vp-name">Sesja — tryb edycji</span>
-      <span class="vp-when">Stan, w który TEN ekran przechodzi w oknie 24 h. Po oknie jest nieosiągalny: nie ma przycisku, który by go włączył, a wyszarzony byłby obietnicą akcji, którą reguły i tak odrzucą. Znaczniki „popr." przy poprawionych wierszach zostają widoczne, bo mówią o danych, nie o prawie zapisu — a historia zmian (10I) otwiera się także tutaj.</span>
+      <span class="vp-name">Sesja - tryb edycji</span>
+      <span class="vp-when">Stan, w który TEN ekran przechodzi w oknie 24 h. Po oknie jest nieosiągalny: nie ma przycisku, który by go włączył, a wyszarzony byłby obietnicą akcji, którą reguły i tak odrzucą. Znaczniki „popr." przy poprawionych wierszach zostają widoczne, bo mówią o danych, nie o prawie zapisu - a historia zmian (10I) otwiera się także tutaj.</span>
     </span>
   </a>
 </aside>

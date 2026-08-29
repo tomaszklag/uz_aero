@@ -1,20 +1,20 @@
 /**
- * UZ Aero — panel: wiersz skrzynki flag, DTO → treść komórek (moduł CZYSTY).
+ * UZ Aero - panel: wiersz skrzynki flag, DTO → treść komórek (moduł CZYSTY).
  *
  * ══ PORZĄDEK LISTY NIE JEST WŁASNOŚCIĄ TEGO PLIKU ══
  * Skrzynka przychodzi posortowana przez serwer: **flagi blokujące eksport na górze,
  * potem od najstarszych** (`pg/admin/flagsRepo.ts`, `ORDER BY`). Ta funkcja MAPUJE
- * i nie sortuje — i to jest reguła, nie przeoczenie:
+ * i nie sortuje - i to jest reguła, nie przeoczenie:
  *
  *  • lista jest przycinana `LIMIT`-em po stronie bazy, więc przesortowanie tego,
  *    co przyszło, przestawiłoby wiersze wewnątrz przypadkowego wycinka;
- *  • pierwszy klucz porządku pochodzi z `EXPORT_BLOCKING_FLAG_TYPES` — z tego samego
+ *  • pierwszy klucz porządku pochodzi z `EXPORT_BLOCKING_FLAG_TYPES` - z tego samego
  *    miejsca, co bramka `DayExporter`. Powtórzenie warunku tutaj dałoby panel, który
  *    mówi „blokuje", podczas gdy eksporter przepuszcza, i nikt by tego nie zauważył,
  *    bo obie strony byłyby „poprawne" osobno.
  *
  * Otwarta `aircraft_overlap` wstrzymuje kartę doby, więc jest INNYM RODZAJEM SPRAWY
- * niż `mh_gap` sprzed godziny — i dlatego stoi wyżej niezależnie od wieku. `pilot_overlap`
+ * niż `mh_gap` sprzed godziny - i dlatego stoi wyżej niezależnie od wieku. `pilot_overlap`
  * mimo podobnej nazwy stoi po drugiej stronie tej granicy: opisuje grafik człowieka
  * i arkusza nie dotyka.
  */
@@ -29,7 +29,7 @@ import { FLAG_TYPE_META } from './flagTypes';
 
 /**
  * Od kiedy wiek sam w sobie jest problemem. Dwie doby, bo tyle wystarczy, żeby dzień
- * lotny zdążył się zamknąć, zsynchronizować i przejść przez eksport — sprawa starsza
+ * lotny zdążył się zamknąć, zsynchronizować i przejść przez eksport - sprawa starsza
  * nie czeka już na dane, tylko na człowieka.
  */
 export const STALE_AGE_MS = 2 * 24 * 60 * 60 * 1000;
@@ -37,29 +37,29 @@ export const STALE_AGE_MS = 2 * 24 * 60 * 60 * 1000;
 export interface FlagPill {
   tone: PillTone;
   text: string;
-  /** Kropka tylko przy stanie, który TRWA — tu: blokadzie karty dnia. */
+  /** Kropka tylko przy stanie, który TRWA - tu: blokadzie karty dnia. */
   dot: boolean;
 }
 
 export interface FlagRow {
   id: number;
-  /** Adres szuflady szczegółu — wiersz jest linkiem, nie tylko obszarem klikalnym. */
+  /** Adres szuflady szczegółu - wiersz jest linkiem, nie tylko obszarem klikalnym. */
   href: string;
   effect: FlagPill;
-  /** Plakietka typu pokazuje KOD Z BAZY — ten sam napis, co w SQL-u i w mockupie. */
+  /** Plakietka typu pokazuje KOD Z BAZY - ten sam napis, co w SQL-u i w mockupie. */
   type: { tone: PillTone; code: FlagType; short: string };
   age: { text: string; stale: boolean };
   aircraft: { reg: string; type: string | null };
   discrepancy: Discrepancy;
-  /** Skrócone UUID-y sesji — pełne stoją w szufladzie. */
+  /** Skrócone UUID-y sesji - pełne stoją w szufladzie. */
   sessions: string[];
   created: { text: string; sub: string };
-  /** Wypełnione wyłącznie dla spraw zamkniętych — historia rozwiązanych. */
+  /** Wypełnione wyłącznie dla spraw zamkniętych - historia rozwiązanych. */
   resolution: { by: string; at: string; note: string } | null;
 }
 
 /**
- * Skutek dla arkusza — pierwsza kolumna skrzynki.
+ * Skutek dla arkusza - pierwsza kolumna skrzynki.
  *
  * Bierzemy WYŁĄCZNIE `blocksExport`, bo to jedyne pole, które serwer wylicza tą samą
  * funkcją, co bramka eksportera. Rozróżnień z mockupu („karta poszła · rew. 2",
@@ -75,7 +75,7 @@ function effectOf(flag: FlagListItemDto): FlagPill {
 
 /**
  * `5d02a1f8-…-1f7a` → `5d02…1f7a`. UUID w tabeli służy do ROZPOZNANIA wiersza,
- * a nie do przepisania — pełny stoi w szufladzie. Napisy krótkie zostawiamy
+ * a nie do przepisania - pełny stoi w szufladzie. Napisy krótkie zostawiamy
  * w całości, bo skrócenie ich niczego nie oszczędza, a zabiera znaczenie.
  */
 export function shortUuid(uuid: string): string {
@@ -83,7 +83,7 @@ export function shortUuid(uuid: string): string {
 }
 
 /**
- * Ile ta sprawa leży. Dla flagi otwartej — do „teraz"; dla rozwiązanej — do chwili
+ * Ile ta sprawa leży. Dla flagi otwartej - do „teraz"; dla rozwiązanej - do chwili
  * rozstrzygnięcia, bo wtedy pytanie brzmi „ile leżała", a nie „ile ma lat".
  */
 function ageMsOf(flag: FlagListItemDto, nowMs: number): number {
@@ -110,7 +110,7 @@ export function flagRows(items: readonly FlagListItemDto[], nowMs: number): Flag
       discrepancy: discrepancyOf(flag),
       sessions: flag.sessionUuids.map(shortUuid),
       created: {
-        text: Number.isNaN(created) ? '—' : `${dateUtcShort(created)} ${timeUtc(created)}`,
+        text: Number.isNaN(created) ? '-' : `${dateUtcShort(created)} ${timeUtc(created)}`,
         sub: `#${flag.id}`,
       },
       resolution: resolutionOf(flag),
@@ -121,7 +121,7 @@ export function flagRows(items: readonly FlagListItemDto[], nowMs: number): Flag
 /**
  * Podpis pod rozstrzygnięciem: KTO, KIEDY i CZYM je uzasadnił.
  *
- * `resolvedBy` jest identyfikatorem konta, a nie nazwiskiem — trasa listy nie
+ * `resolvedBy` jest identyfikatorem konta, a nie nazwiskiem - trasa listy nie
  * złącza flag z pilotami. Pokazujemy więc to, co przyszło, zamiast dopisywać
  * imię, którego nikt nam nie podał.
  */
@@ -129,8 +129,8 @@ function resolutionOf(flag: FlagListItemDto): { by: string; at: string; note: st
   if (flag.status !== 'resolved') return null;
   const at = flag.resolvedAt == null ? null : Date.parse(flag.resolvedAt);
   return {
-    by: flag.resolvedBy ?? '—',
-    at: at == null || Number.isNaN(at) ? '—' : `${dateUtcShort(at)} ${timeUtc(at)}`,
+    by: flag.resolvedBy ?? '-',
+    at: at == null || Number.isNaN(at) ? '-' : `${dateUtcShort(at)} ${timeUtc(at)}`,
     note: flag.resolutionNote ?? '',
   };
 }

@@ -1,25 +1,25 @@
 /**
- * UZ Aero — panel: STATYSTYKI FLOTY I PILOTÓW (`design/admin/A10-statystyki.html`).
+ * UZ Aero - panel: STATYSTYKI FLOTY I PILOTÓW (`design/admin/A10-statystyki.html`).
  *
  * ══ KONSTYTUCJA EKRANU ══
- * Każda liczba to złożenie projekcji `projectSession` z pojedynczych sesji — panel
+ * Każda liczba to złożenie projekcji `projectSession` z pojedynczych sesji - panel
  * SUMUJE GOTOWE WYNIKI, nie liczy własnych metryk. Wszystkie sumy, średnie i procenty
  * przychodzą w `GET /admin/api/stats`; moduły czyste obok liczą wyłącznie NAPISY
  * i GEOMETRIĘ wykresów (szerokości pasków, punkty polyline). Dni jeszcze otwarte są
- * celowo poza zakresem — ich sumy zmieniłyby się po zamknięciu — a ekran mówi, ile
+ * celowo poza zakresem - ich sumy zmieniłyby się po zamknięciu - a ekran mówi, ile
  * takich dni pominął.
  *
  * ══ TRZY UJĘCIA, JEDNA ODPOWIEDŹ ══
  * Przełącznik „per samolot / pilot / operacja" wybiera tabelę z TEJ SAMEJ odpowiedzi
- * serwera — sumy muszą się zgadzać między ujęciami i dlatego porównuje się je,
+ * serwera - sumy muszą się zgadzać między ujęciami i dlatego porównuje się je,
  * przełączając w miejscu (komentarz w mockupie). Ujęcie i zakres żyją w URL-u
  * (`?od=…&do=…&ujecie=…`), żeby raport dało się wkleić w wiadomości.
  *
  * ══ CZEGO TEN EKRAN ŚWIADOMIE NIE POKAZUJE ══
- *  1. **Kolumny „Blok jako Dual"** — backend nie ma jej z czego uczciwie policzyć
+ *  1. **Kolumny „Blok jako Dual"** - backend nie ma jej z czego uczciwie policzyć
  *     (projekcja niesie ostatniego duala dnia); wyjaśnienie pod tabelą pilotów.
- *  2. **Zer w miejscach niewiedzy** — wiersze projekcji sprzed kolumn statystyk unieważniają
- *     agregaty jej kolumn: kafle mówią „—", a baner kieruje na przebudowę (`A11`).
+ *  2. **Zer w miejscach niewiedzy** - wiersze projekcji sprzed kolumn statystyk unieważniają
+ *     agregaty jej kolumn: kafle mówią „-", a baner kieruje na przebudowę (`A11`).
  */
 
 import { Link, useSearchParams } from 'react-router-dom';
@@ -65,7 +65,7 @@ import { statsPageSub, rangeChipLabel, rangeChipTitle } from './statsSummary';
 import { statsTiles } from './statsTiles';
 import { trendView } from './statsTrend';
 
-/** Kolumny ujęcia „per samolot" — 1:1 z `thead` mockupu. */
+/** Kolumny ujęcia „per samolot" - 1:1 z `thead` mockupu. */
 const AIRCRAFT_COLUMNS: Column<AircraftRowView>[] = [
   {
     key: 'aircraft',
@@ -123,7 +123,7 @@ const AIRCRAFT_COLUMNS: Column<AircraftRowView>[] = [
   },
   {
     // Przejście do analityki zużycia (`A10a`): rozbicie „Śr. L/h" na fazy, przelicznik
-    // motogodzin i interwały ze źródłami. Wiersz RAZEM go nie ma — stawki floty nie
+    // motogodzin i interwały ze źródłami. Wiersz RAZEM go nie ma - stawki floty nie
     // składają się w jedną liczbę.
     key: 'analytics',
     header: '',
@@ -300,7 +300,7 @@ export function StatsScreen() {
       {report.isError ? (
         <Banner tone="danger" live>
           <b>Nie udało się pobrać statystyk.</b> Panel działa wyłącznie online. Kafle
-          poniżej pokazują <b>„—", a nie zero</b> — „0 startów w lipcu" przy awarii
+          poniżej pokazują <b>„-", a nie zero</b> - „0 startów w lipcu" przy awarii
           pobrania byłoby fałszywym twierdzeniem o świecie.{' '}
           <Button variant="ghost" size="sm" onClick={() => void report.refetch()}>
             Ponów
@@ -313,7 +313,7 @@ export function StatsScreen() {
           <b>
             {data.totals.staleRows} wierszy projekcji w zakresie pochodzi sprzed kolumn statystyk.
           </b>{' '}
-          Sumy startów i lądowań, paliwa, Δ MH oraz cała sekcja zrzutów jadą jako kreski —
+          Sumy startów i lądowań, paliwa, Δ MH oraz cała sekcja zrzutów jadą jako kreski -
           suma po części wierszy podana jako całość byłaby kłamstwem. Przelicz projekcję
           na ekranie Konserwacja.{' '}
           <LinkButton to="/konserwacja" variant="ghost" size="sm">
@@ -385,7 +385,7 @@ export function StatsScreen() {
         }
       >
         {trend == null ? (
-          <span className="hint">Brak danych — raport się nie pobrał.</span>
+          <span className="hint">Brak danych - raport się nie pobrał.</span>
         ) : (
           <>
             <TrendChart
@@ -411,7 +411,7 @@ export function StatsScreen() {
           }
         >
           {duos.length === 0 ? (
-            <span className="hint">Zakres bez zamkniętych dni — nie ma czego porównywać.</span>
+            <span className="hint">Zakres bez zamkniętych dni - nie ma czego porównywać.</span>
           ) : (
             duos.map((row) => (
               <DuoRow
@@ -425,7 +425,7 @@ export function StatsScreen() {
             ))
           )}
           <span className="hint">
-            Różnica między słupkami to czas z pracującym silnikiem poza lotem — kołowanie,
+            Różnica między słupkami to czas z pracującym silnikiem poza lotem - kołowanie,
             załadunek skoczków, oczekiwanie. Przy operacji skokowej bywa duża i to jest
             normalna charakterystyka operacji, nie błąd danych.
           </span>
@@ -434,11 +434,11 @@ export function StatsScreen() {
         <Card
           title="Wykorzystanie floty"
           actions={
-            <Pill tone="dim">{`dni lotne / ${data?.range.calendarDays ?? '—'}`}</Pill>
+            <Pill tone="dim">{`dni lotne / ${data?.range.calendarDays ?? '-'}`}</Pill>
           }
         >
           {meters.length === 0 ? (
-            <span className="hint">Zakres bez zamkniętych dni — nie ma czego mierzyć.</span>
+            <span className="hint">Zakres bez zamkniętych dni - nie ma czego mierzyć.</span>
           ) : (
             meters.map((row) => (
               <MeterRow
@@ -452,7 +452,7 @@ export function StatsScreen() {
           )}
           <span className="hint">
             Wykorzystanie liczymy jako liczbę dni z co najmniej jedną zamkniętą sesją, nie
-            jako godziny na dobę — samolot stojący cały dzień z jednym lotem jest
+            jako godziny na dobę - samolot stojący cały dzień z jednym lotem jest
             wykorzystany, choć nalot ma mały. Do godzin służy wykres obok.
           </span>
         </Card>
@@ -468,7 +468,7 @@ export function StatsScreen() {
             caption="Statystyki zakresu w ujęciu per samolot, razem z wierszem RAZEM"
           />
           <span className="hint table-hint">
-            Kolumna „Śr. L/h" nie sumuje się do wiersza RAZEM — średnia ze średnich nie
+            Kolumna „Śr. L/h" nie sumuje się do wiersza RAZEM - średnia ze średnich nie
             jest średnią. Dla całej floty wyszłaby liczba, która wygląda na sensowną,
             a nie znaczy nic, bo jednostki palą w innych skalach. Dlatego panel stawia
             tam kreskę.
@@ -499,7 +499,7 @@ export function StatsScreen() {
             caption="Statystyki zakresu w ujęciu per operacja, razem z wierszem RAZEM"
           />
           <span className="hint table-hint">
-            Podpisy wierszy niosą rejestracje i liczbę klientów z projekcji — list lotnisk
+            Podpisy wierszy niosą rejestracje i liczbę klientów z projekcji - list lotnisk
             projekcja nie ma i panel ich nie zmyśla.
           </span>
         </div>
@@ -543,7 +543,7 @@ export function StatsScreen() {
                 label="Rozbicie skoczków na typy: tandem, AFF i solo"
               />
               <span className="hint">
-                Rozbicie bierze się wprost z payloadu `drop.jumpers` — panel nie dokłada tu
+                Rozbicie bierze się wprost z payloadu `drop.jumpers` - panel nie dokłada tu
                 cennika, bo cennik nie jest danymi lotniczymi i nie ma go w rejestrze.
               </span>
             </>
@@ -564,12 +564,12 @@ export function StatsScreen() {
   );
 }
 
-/** Wiersz RAZEM pogrubia komórki — zwykły zostaje przy wadze tabeli. */
+/** Wiersz RAZEM pogrubia komórki - zwykły zostaje przy wadze tabeli. */
 function strong(value: string, total: boolean) {
   return total ? <span className="cell-strong">{value}</span> : value;
 }
 
-/** Sklejenie LISTY klas (nie nazwy klasy) — wzorzec dozwolony przez architekturę. */
+/** Sklejenie LISTY klas (nie nazwy klasy) - wzorzec dozwolony przez architekturę. */
 function joined(...classes: (string | undefined)[]): string | undefined {
   const joined = classes.filter((c) => c != null).join(' ');
   return joined === '' ? undefined : joined;

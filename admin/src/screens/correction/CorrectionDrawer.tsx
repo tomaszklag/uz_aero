@@ -1,7 +1,7 @@
 /**
- * UZ Aero — panel: KOREKTA ADMINISTRATORA (`design/admin/A02b-korekta.html`).
+ * UZ Aero - panel: KOREKTA ADMINISTRATORA (`design/admin/A02b-korekta.html`).
  *
- * Szuflada NAD kartą dnia, adres `#/dni/<sesja>/korekta/<zdarzenie>` — kontekst dnia
+ * Szuflada NAD kartą dnia, adres `#/dni/<sesja>/korekta/<zdarzenie>` - kontekst dnia
  * zostaje pod spodem, bo po zapisie wraca się dokładnie do niego. Wyboru zdarzenia
  * dokonuje oś zdarzeń karty dnia; osobnego ekranu wyboru nie ma i nie będzie.
  *
@@ -9,7 +9,7 @@
  *
  *  1. **Ten formularz niczego nie edytuje.** Dopisuje NOWE zdarzenie
  *     `event_correction` z `targetUuid` wskazującym oryginał. Odczyt zostaje w bazie
- *     na zawsze i dalej widać go na osi — projekcja przestaje go uwzględniać (`void`)
+ *     na zawsze i dalej widać go na osi - projekcja przestaje go uwzględniać (`void`)
  *     albo liczy z nowym czasem (`retime`).
  *  2. **Wszystkie liczby są z serwera.** Karta „przed → po" pochodzi z podglądu
  *     (`POST …/corrections/preview`), który liczy `projectSession` na strumieniu
@@ -101,7 +101,7 @@ export function CorrectionDrawer({
 /**
  * Głęboki link do zdarzenia, którego na tej osi nie ma.
  *
- * Mockup nie ma na to stanu — projektujemy go w duchu reszty panelu: konkretnie
+ * Mockup nie ma na to stanu - projektujemy go w duchu reszty panelu: konkretnie
  * i z podaniem, co dalej. Korekta celuje w uuid, więc wklejony link z literówką
  * musi powiedzieć „nie ma takiego zdarzenia w tym dniu", a nie pokazać pusty formularz,
  * który po zapisie i tak odbije się od `CORRECTION_TARGET_NOT_FOUND`.
@@ -110,7 +110,7 @@ function MissingTarget({ targetUuid, onClose }: { targetUuid: string; onClose: (
   return (
     <Drawer
       title="KOREKTA ADMINISTRATORA"
-      sub={`cel ${targetUuid} — nie ma go w rejestrze tego dnia`}
+      sub={`cel ${targetUuid} - nie ma go w rejestrze tego dnia`}
       onClose={onClose}
       footer={
         <Button variant="primary" onClick={onClose}>
@@ -122,7 +122,7 @@ function MissingTarget({ targetUuid, onClose }: { targetUuid: string; onClose: (
         <b>Tego zdarzenia nie ma na osi tego dnia.</b> Korekta zawsze celuje w konkretny
         <code> uuid</code>, a serwer nie znalazł go w rejestrze sesji <code>{targetUuid}</code>.
         Najczęstsza przyczyna to niekompletny albo przekłamany identyfikator z wklejonego
-        linku — wybierz zdarzenie z osi zdarzeń dnia, wtedy adres składa panel.
+        linku - wybierz zdarzenie z osi zdarzeń dnia, wtedy adres składa panel.
       </Banner>
     </Drawer>
   );
@@ -139,14 +139,14 @@ function CorrectionForm({
 }: CorrectionDrawerProps & { entry: TimelineEntryDto }) {
   /**
    * Akcje dozwolone dla TEGO typu celu (issue #43). Zdanie samolotu ma wyłącznie
-   * `amend`, więc `retime` nie może być stanem początkowym — formularz otwierałby się
+   * `amend`, więc `retime` nie może być stanem początkowym - formularz otwierałby się
    * na operacji, którą domena odrzuci.
    */
   const allowedActions = correctionActionsFor(entry.event.type);
   const [action, setAction] = useState<CorrectionActionId>(allowedActions[0] ?? 'retime');
   const [timeText, setTimeText] = useState(() => initialTimeText(entry));
   const [reason, setReason] = useState('');
-  // Pola `amend` (issue #43). Puste znaczy „nie ruszaj tej wartości" — administrator
+  // Pola `amend` (issue #43). Puste znaczy „nie ruszaj tej wartości" - administrator
   // poprawia zwykle jedną liczbę i nie ma przepisywać drugiej tylko dlatego, że
   // formularz ją pokazuje.
   const [fuelText, setFuelText] = useState('');
@@ -155,7 +155,7 @@ function CorrectionForm({
   // Podgląd pytamy o czas USTALONY, a nie o każdy naciśnięty klawisz: poprawianie
   // „13:13:33" na „13:01:33" przechodzi po drodze przez kilka zapisów czytelnych dla
   // parsera, a każdy z nich byłby osobnym żądaniem o liczby, których nikt nie zdąży
-  // przeczytać. Komunikat pod polem zostaje NATYCHMIASTOWY — opóźniamy zapytanie,
+  // przeczytać. Komunikat pod polem zostaje NATYCHMIASTOWY - opóźniamy zapytanie,
   // nie informację zwrotną.
   const [settledTime, setSettledTime] = useState(timeText);
   useEffect(() => {
@@ -180,7 +180,7 @@ function CorrectionForm({
   const reasonCheck = reasonState(reason);
   const violations = violationMessages(preview.data?.violations ?? []);
   // Kolizje z pilotem: po zapisie bierzemy je z ODPOWIEDZI (opisują chwilę zapisu),
-  // wcześniej z podglądu. Baner NIE wchodzi do `blocked` — administrator może edytować
+  // wcześniej z podglądu. Baner NIE wchodzi do `blocked` - administrator może edytować
   // zawsze i to jest cała treść decyzji z 2026-08-07.
   const warnings = correctionWarningBanner(
     save.data?.warnings ?? preview.data?.warnings ?? [],
@@ -210,7 +210,7 @@ function CorrectionForm({
           {sessionUuid}
           <br />
           {state.closedAt == null
-            ? 'samolot nieoddany — sesja wciąż otwarta'
+            ? 'samolot nieoddany - sesja wciąż otwarta'
             : `samolot zdany ${dateUtcShort(state.closedAt)} ${timeUtcSeconds(state.closedAt)} UTC`}
         </>
       }
@@ -269,7 +269,7 @@ function CorrectionForm({
           {warnings.items.map((item) => (
             <span key={item.code}>
               <br />
-              <code>{item.code}</code> — {item.text}
+              <code>{item.code}</code> - {item.text}
               {item.consequence == null ? null : ` ${item.consequence}`}
             </span>
           ))}
@@ -277,10 +277,10 @@ function CorrectionForm({
       )}
 
       <Banner tone="danger">
-        <b>Rejestr zdarzeń jest append-only — nie ma tu edycji ani kasowania.</b> Ten formularz
+        <b>Rejestr zdarzeń jest append-only - nie ma tu edycji ani kasowania.</b> Ten formularz
         nie zmienia zdarzenia <code>{entry.event.type}</code>. Dopisuje <b>nowe</b> zdarzenie{' '}
         <code>event_correction</code> z <code>targetUuid</code> wskazującym oryginał. Oryginalny
-        odczyt zostaje w bazie na zawsze i dalej widać go na osi zdarzeń — projekcja tylko
+        odczyt zostaje w bazie na zawsze i dalej widać go na osi zdarzeń - projekcja tylko
         przestaje go uwzględniać albo liczy z nowym czasem.
       </Banner>
 
@@ -290,7 +290,7 @@ function CorrectionForm({
       >
         {preview.data?.target == null ? (
           <span className="hint">
-            Opis odczytu pochodzi z podglądu serwera —{' '}
+            Opis odczytu pochodzi z podglądu serwera -{' '}
             {preview.isError
               ? 'nie udało się go pobrać (patrz baner niżej).'
               : 'trwa pobieranie.'}
@@ -314,12 +314,12 @@ function CorrectionForm({
       <div className="field">
         {/* Pokazujemy WYŁĄCZNIE akcje mające sens dla tego typu: karta „retime" przy
             zdaniu samolotu obiecywałaby operację, którą reguła odrzuci
-            (`CORRECTION_TARGET_NOT_ALLOWED`), a wyszarzona byłaby jeszcze gorsza —
+            (`CORRECTION_TARGET_NOT_ALLOWED`), a wyszarzona byłaby jeszcze gorsza -
             zapraszałaby do zgadywania, dlaczego nie działa. */}
         <span className="label">
           {allowedActions.length === 1
-            ? 'Akcja — dla tego zdarzenia dozwolona jest jedna'
-            : `Akcja — ${allowedActions.length === 3 ? 'dokładnie trzy' : 'dwie'}, każda dopisuje zdarzenie`}
+            ? 'Akcja - dla tego zdarzenia dozwolona jest jedna'
+            : `Akcja - ${allowedActions.length === 3 ? 'dokładnie trzy' : 'dwie'}, każda dopisuje zdarzenie`}
         </span>
         <OptionList ariaLabel="Akcja korekty">
           {ACTION_OPTIONS.filter((option) => allowedActions.includes(option.id)).map((option) => (
@@ -353,7 +353,7 @@ function CorrectionForm({
         </Field>
       )}
 
-      {/* Pola `amend` (issue #43) — pokazujemy WYŁĄCZNIE te, które biała lista domeny
+      {/* Pola `amend` (issue #43) - pokazujemy WYŁĄCZNIE te, które biała lista domeny
           dopuszcza dla tego typu celu. Formularz z polem, którego reguła i tak odrzuci,
           obiecuje zmianę niemożliwą do wykonania. */}
       {action !== 'amend' ? null : amendable.length === 0 ? (
@@ -400,7 +400,7 @@ function CorrectionForm({
           {amendable.includes('jumpers') && (
             <Banner tone="status">
               Skład zrzutu poprawia <b>pilot</b> w trybie edycji sesji (ekran 10G aplikacji).
-              Panel zmienia tu odczyty paliwa i motogodzin — liczby, których pilot po zamknięciu
+              Panel zmienia tu odczyty paliwa i motogodzin - liczby, których pilot po zamknięciu
               okna 24 h nie ruszy już sam.
             </Banner>
           )}
@@ -415,7 +415,7 @@ function CorrectionForm({
           Jeżeli zdarzenie zaszło, a pomylona jest tylko godzina, właściwym narzędziem jest{' '}
           <code>retime</code>. Unieważnienie <code>engine_stop</code> zostawia cykl silnika{' '}
           <b>otwarty</b>, więc jego czas wypada z czasu blokowego <b>w całości</b>, zamiast
-          skrócić się o różnicę — kartę „przed → po" niżej warto wtedy przeczytać uważnie.{' '}
+          skrócić się o różnicę - kartę „przed → po" niżej warto wtedy przeczytać uważnie.{' '}
           <code>void</code> jest dla zdarzeń, których nie było, jak fałszywe lądowanie zaliczone
           przez detektor.
         </Banner>
@@ -427,7 +427,7 @@ function CorrectionForm({
         hint={
           reasonCheck.reason ?? (
             <>
-              Powód idzie do <b>audytu</b>, nie do rejestru — zdarzenie opisuje lot, a nie
+              Powód idzie do <b>audytu</b>, nie do rejestru - zdarzenie opisuje lot, a nie
               motywację człowieka przy biurku. Po roku to jedyna rzecz, która wyjaśni, dlaczego
               liczby dnia różnią się od tego, co zapisał telefon.
             </>
@@ -455,7 +455,7 @@ function CorrectionForm({
       >
         {preview.isError ? (
           <Banner tone="danger" live>
-            <b>Nie udało się policzyć wpływu korekty.</b> Panel nie policzy go sam — liczby dnia
+            <b>Nie udało się policzyć wpływu korekty.</b> Panel nie policzy go sam - liczby dnia
             mają jedno źródło i jest nim <code>projectSession</code> po stronie serwera. Bez
             podglądu zapis jest zablokowany, żeby nikt nie dopisywał do rejestru zmiany, której
             skutku nie widział.{' '}
@@ -465,7 +465,7 @@ function CorrectionForm({
           </Banner>
         ) : draft == null ? (
           <span className="hint">
-            Uzupełnij czytelny czas w UTC — wtedy serwer policzy, jak zmienią się liczby dnia.
+            Uzupełnij czytelny czas w UTC - wtedy serwer policzy, jak zmienią się liczby dnia.
           </span>
         ) : preview.data == null ? (
           <span className="hint">Serwer liczy dzień przed korektą i po niej…</span>
@@ -491,7 +491,7 @@ function CorrectionForm({
               ),
             )}
             <span className="hint">
-              Obie kolumny liczy <code>projectSession</code> — ta sama funkcja, którą telefon
+              Obie kolumny liczy <code>projectSession</code> - ta sama funkcja, którą telefon
               liczy statystyki dnia i którą serwer buduje kartę arkusza. Wierszy{' '}
               <b>„Średnie zużycie L/h"</b> i <b>„Blok − Δ MH"</b> z mockupu tu nie ma i to jest
               decyzja, nie przeoczenie: projekcja nie niesie tych wielkości, a policzenie ich
@@ -504,7 +504,7 @@ function CorrectionForm({
       {violations.length === 0 ? null : (
         <Banner tone="danger">
           <b>Domena odmówi zapisu tej korekty.</b> Uchylenie 24-godzinnego okna pilota jest
-          jedynym przywilejem administratora — reszta inwariantów rejestru obowiązuje go tak samo.
+          jedynym przywilejem administratora - reszta inwariantów rejestru obowiązuje go tak samo.
           {violations.map((message) => (
             <span key={message}>
               <br />
@@ -522,13 +522,13 @@ function CorrectionForm({
         />
         <KeyValue
           label="Wykonał"
-          value={pilot == null ? '—' : pilot.name}
+          value={pilot == null ? '-' : pilot.name}
           tone="green"
           {...(pilot == null ? {} : { unit: roleLabel(pilot.role).toLowerCase() })}
         />
         {/* Obietnica z mockupu („Ślad → A09") jest tu LINKIEM, a nie zdaniem: dziennik
             odfiltrowany po uuid-zie tego zdarzenia pokazuje wszystkie korekty, które
-            już na nim zrobiono — razem z powodami, których w rejestrze nie ma.
+            już na nim zrobiono - razem z powodami, których w rejestrze nie ma.
             Wejście na surową listę wszystkiego byłoby odesłaniem po igłę. */}
         <KeyValue
           label="Ślad"
@@ -541,19 +541,19 @@ function CorrectionForm({
         />
         <span className="hint">
           Zdarzenie <code>event_correction</code> musi nieść <code>picId</code> <b>PIC-a tej
-          sesji</b>, nie administratora — do jednej sesji pisze jedna tożsamość (single-writer),
+          sesji</b>, nie administratora - do jednej sesji pisze jedna tożsamość (single-writer),
           więc korekta ostemplowana Twoim kontem zostałaby odrzucona jako <b>WRITER_MISMATCH</b>.
           Dlatego oś zdarzeń przy Twojej korekcie pokaże nazwisko pilota. Fakt, że zrobił to
-          administrator, żyje w audycie i w <code>events.source_device</code> — i tylko tam.
+          administrator, żyje w audycie i w <code>events.source_device</code> - i tylko tam.
         </span>
       </Card>
 
       <Banner tone="warn">
-        <b>Ta korekta nie wróci na telefon pilota.</b> Synchronizacja jest dziś jednokierunkowa —
+        <b>Ta korekta nie wróci na telefon pilota.</b> Synchronizacja jest dziś jednokierunkowa -
         kontrakt API nie ma endpointu, który oddawałby zdarzenia do aplikacji. Poprawiasz rejestr
         na serwerze i kartę arkusza; telefon zostanie ze <b>swoją, starą wersją</b> i na ekranie
         historii dni dalej pokaże stary czas blokowy. Rozjazd utrzyma się, dopóki nie powstanie
-        pobieranie zdarzeń. Jeśli różnica ma dla pilota znaczenie — powiedz mu o niej poza aplikacją.
+        pobieranie zdarzeń. Jeśli różnica ma dla pilota znaczenie - powiedz mu o niej poza aplikacją.
       </Banner>
 
       <Card title="Co się stanie po zapisie">
@@ -570,7 +570,7 @@ function CorrectionForm({
           Re-eksport jest <b>wymuszony</b>, nie opcjonalny: karta arkusza pokazuje aktualny stan
           dnia, więc po zmianie liczb serwer regeneruje ją i dopisuje wiersz w{' '}
           <code>export_log</code> z podbitą rewizją. Eksport idzie <b>po</b> zatwierdzeniu
-          transakcji, żeby awaria arkusza nie cofała decyzji człowieka — i dlatego odpowiedź może
+          transakcji, żeby awaria arkusza nie cofała decyzji człowieka - i dlatego odpowiedź może
           powiedzieć „korekta zapisana, karta nie".
         </span>
       </Card>

@@ -1,14 +1,14 @@
 /**
- * UZ Aero — konfiguracja i norma samolotu z cache'u referencyjnego.
+ * UZ Aero - konfiguracja i norma samolotu z cache'u referencyjnego.
  *
  * Wzorzec „useState + useEffect + strażnik `alive`" powtarzał się w dwóch ekranach
- * (tankowanie, preflight), a wraz z normą zużycia doszedł trzeci — kokpit. Trzecia kopia
+ * (tankowanie, preflight), a wraz z normą zużycia doszedł trzeci - kokpit. Trzecia kopia
  * tego samego kodu jest momentem, w którym staje się on hookiem: strażnik przed zapisem
  * do odmontowanego ekranu łatwo pominąć przy kopiowaniu, a jego brak objawia się dopiero
  * ostrzeżeniem w konsoli przy szybkim przechodzeniu między ekranami.
  *
  * Dane pochodzą WYŁĄCZNIE z lokalnego cache'u (`reference_aircraft` + `reference_consumption`),
- * więc hook działa offline i nigdy nie czeka na sieć. Świeżość niesie `fetchedAt` rekordu —
+ * więc hook działa offline i nigdy nie czeka na sieć. Świeżość niesie `fetchedAt` rekordu -
  * ocenia ją ekran, nie ten hook (§4.8: trzy stany świeżości to sprawa prezentacji).
  */
 

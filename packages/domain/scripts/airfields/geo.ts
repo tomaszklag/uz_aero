@@ -1,11 +1,11 @@
 /**
- * UZ Aero — geometria na potrzeby generatora katalogu lotnisk.
+ * UZ Aero - geometria na potrzeby generatora katalogu lotnisk.
  *
  * Skala jest tu lokalna (pojedyncze lotnisko, kilka kilometrów), więc płaskie
  * przybliżenie wystarcza z zapasem: błąd rzutowania na tym dystansie jest mniejszy
  * niż rozdzielczość, z jaką rysujemy pas na mapie śladu.
  *
- * To NIE jest duplikat `packages/domain/src/detection/geo.ts` — tamten liczy dystanse
+ * To NIE jest duplikat `packages/domain/src/detection/geo.ts` - tamten liczy dystanse
  * w milach morskich dla detekcji lotu i jest częścią runtime'u. Ten moduł żyje wyłącznie
  * w narzędziu budującym dane i mówi w metrach, bo w metrach podaje się pasy.
  */
@@ -42,14 +42,14 @@ export function bearingDeg(a: LatLon, b: LatLon): number {
 /**
  * Oś pasa: kurs sprowadzony do 0–180.
  *
- * Pas 09/27 to jedna i ta sama płyta — 90° i 270° opisują ją tak samo dobrze. Do
+ * Pas 09/27 to jedna i ta sama płyta - 90° i 270° opisują ją tak samo dobrze. Do
  * grupowania odcinków interesuje nas OŚ, a nie kierunek, w którym ktoś narysował linię.
  */
 export function axisDeg(headingDeg: number): number {
   return ((headingDeg % 180) + 180) % 180;
 }
 
-/** Różnica dwóch osi (0–90) — z zawinięciem przez 180°, więc 179° i 1° dzieli 2°. */
+/** Różnica dwóch osi (0–90) - z zawinięciem przez 180°, więc 179° i 1° dzieli 2°. */
 export function axisDifference(a: number, b: number): number {
   const d = Math.abs(axisDeg(a) - axisDeg(b)) % 180;
   return d > 90 ? 180 - d : d;
@@ -69,7 +69,7 @@ export function toMeters(point: LatLon, origin: LatLon): { x: number; y: number 
 }
 
 /**
- * Rzut punktu na oś o zadanym kursie — współrzędna WZDŁUŻ pasa.
+ * Rzut punktu na oś o zadanym kursie - współrzędna WZDŁUŻ pasa.
  *
  * Dzięki temu długość liczy się z rozrzutu na osi, a nie z odległości między skrajnymi
  * punktami: dwa równoległe pasy obok siebie dają ten sam rozrzut wzdłużny co jeden,

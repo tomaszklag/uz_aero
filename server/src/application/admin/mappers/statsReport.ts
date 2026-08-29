@@ -1,20 +1,20 @@
 /**
- * UZ Aero (serwer) — wiersze agregatów → raport statystyk (`A10`), funkcja CZYSTA.
+ * UZ Aero (serwer) - wiersze agregatów → raport statystyk (`A10`), funkcja CZYSTA.
  *
- * Tu — i tylko tu — powstają ILORAZY ekranu: średnie L/h, udział w nalocie,
+ * Tu - i tylko tu - powstają ILORAZY ekranu: średnie L/h, udział w nalocie,
  * wykorzystanie floty, skoczkowie na godzinę lotu, średnia wysokość zrzutu. Mapper
  * jest czystą funkcją nad sumami z portu (wzorzec `sessionRowFrom`), więc każdy
  * iloraz testuje się bez bazy. SQL oddaje FAKTY (sumy i liczniki), mapper wyciąga
- * z nich WNIOSKI — a panel już tylko formatuje.
+ * z nich WNIOSKI - a panel już tylko formatuje.
  *
  * ══ DWIE RÓŻNE NIEWIEDZE, DWA RÓŻNE `null` ══
- *  1. `staleRows > 0` — w grupie są wiersze projekcji sprzed kolumn statystyk. Suma po
+ *  1. `staleRows > 0` - w grupie są wiersze projekcji sprzed kolumn statystyk. Suma po
  *     części wierszy podana jako całość byłaby kłamstwem, więc KAŻDY agregat kolumn
  *     tej migracji jedzie wtedy jako `null`, a `staleRows` mówi, ile wierszy czeka
  *     na przebudowę (`A11`).
- *  2. `fuelKnownSessions === 0` przy niezerowej liczbie dni — bilansu nie da się
+ *  2. `fuelKnownSessions === 0` przy niezerowej liczbie dni - bilansu nie da się
  *     policzyć dla ŻADNEGO dnia grupy (np. dni bez odczytu początkowego). Suma zero
- *     wierszy nie jest zerem litrów — jest brakiem odpowiedzi.
+ *     wierszy nie jest zerem litrów - jest brakiem odpowiedzi.
  * Zero pozostaje zerem tam, gdzie jest twierdzeniem prawdziwym: zakres bez ani
  * jednego zamkniętego dnia MA zero startów i zero litrów.
  */
@@ -45,7 +45,7 @@ import type {
 const DAY_MS = 86_400_000;
 const HOUR_MS = 3_600_000;
 
-/** Wszystko, co zebrały zapytania portu — wejście raportu. */
+/** Wszystko, co zebrały zapytania portu - wejście raportu. */
 export interface StatsReportInput {
   at: Date;
   range: AdminStatsRange;
@@ -74,17 +74,17 @@ export function statsReport(input: StatsReportInput): AdminStatsReport {
   };
 }
 
-/** Iloraz z pilnowanym mianownikiem — dzielenie przez zero to `null`, nie `Infinity`. */
+/** Iloraz z pilnowanym mianownikiem - dzielenie przez zero to `null`, nie `Infinity`. */
 const over = (numerator: number | null, denominator: number): number | null =>
   numerator == null || denominator <= 0 ? null : numerator / denominator;
 
-/** Agregat kolumn statystyk — `null`, gdy w grupie są wiersze nieprzeliczone. */
+/** Agregat kolumn statystyk - `null`, gdy w grupie są wiersze nieprzeliczone. */
 const unlessStale = (staleRows: number, value: number): number | null =>
   staleRows > 0 ? null : value;
 
 /**
  * Suma bilansu (paliwo / Δ MH): `null` przy wierszach nieprzeliczonych ORAZ wtedy,
- * gdy żaden dzień grupy bilansu nie ma — patrz nagłówek pliku.
+ * gdy żaden dzień grupy bilansu nie ma - patrz nagłówek pliku.
  */
 const balanceSum = (row: AdminStatsGroupRow, sum: number, known: number): number | null => {
   if (row.staleRows > 0) return null;
@@ -92,7 +92,7 @@ const balanceSum = (row: AdminStatsGroupRow, sum: number, known: number): number
   return sum;
 };
 
-/** Dni zamknięte bez bilansu wśród wierszy PRZELICZONYCH — nie wchodzą do sumy. */
+/** Dni zamknięte bez bilansu wśród wierszy PRZELICZONYCH - nie wchodzą do sumy. */
 const unknownSessions = (row: AdminStatsGroupRow, known: number): number =>
   Math.max(0, row.sessions - row.staleRows - known);
 
@@ -128,9 +128,9 @@ function totalsFrom(
 }
 
 /**
- * Pełny kalendarz zakresu. Dzień bez sesji dostaje ZERO — i to zero jest prawdziwe:
+ * Pełny kalendarz zakresu. Dzień bez sesji dostaje ZERO - i to zero jest prawdziwe:
  * „dzień bez ani jednej sesji", nie „brak danych" (hint z mockupu). Dopełnienie
- * zachodzi tutaj, nie w SQL-u — dokładnie jak `fillBuckets` na pulpicie.
+ * zachodzi tutaj, nie w SQL-u - dokładnie jak `fillBuckets` na pulpicie.
  */
 function fillDaily(rows: AdminStatsDailyRow[], range: AdminStatsRange): AdminStatsDailyPoint[] {
   const byIndex = new Map(rows.map((row) => [row.dayIndex, row.blockMs]));
@@ -161,7 +161,7 @@ function aircraftItem(row: AdminStatsAircraftRow, calendarDays: number): AdminSt
     landings: unlessStale(row.staleRows, row.landings),
     fuelConsumedL: fuel,
     fuelUnknownSessions: unknownSessions(row, row.fuelKnownSessions),
-    // Na godzinę BLOKOWĄ, nie lotu — tak liczy mockup (19 240 L / 112.6 h = 170.8).
+    // Na godzinę BLOKOWĄ, nie lotu - tak liczy mockup (19 240 L / 112.6 h = 170.8).
     // Blok TYLKO dni z bilansem paliwa: licznik i mianownik z jednego zbioru dni.
     avgLitresPerBlockHour: over(fuel, row.fuelBlockMs / HOUR_MS),
     mhFirstStart: row.mhFirstStart,
@@ -211,8 +211,8 @@ function operationItem(row: AdminStatsOperationRow, totalBlockMs: number): Admin
 
 function dropsFrom(row: AdminStatsDropsRow, clients: AdminStatsClientRow[]): AdminStatsDrops {
   // Wiersze nieprzeliczone LUB bez rodzaju operacji unieważniają CAŁĄ sekcję zrzutów:
-  // częściowa suma wyniesień wyglądałaby na kompletną, a tabela klientów — na pełne
-  // rozliczenie przychodu (semantyka `staleRows` — patrz `AdminStatsDropsRow`).
+  // częściowa suma wyniesień wyglądałaby na kompletną, a tabela klientów - na pełne
+  // rozliczenie przychodu (semantyka `staleRows` - patrz `AdminStatsDropsRow`).
   if (row.staleRows > 0) {
     return {
       sessions: row.sessions,
@@ -244,10 +244,10 @@ function dropsFrom(row: AdminStatsDropsRow, clients: AdminStatsClientRow[]): Adm
     solo: row.solo,
     liftsPerSession: over(row.lifts, row.sessions),
     jumpersPerLift: over(jumpers, row.lifts),
-    // Średnia WYŁĄCZNIE ze zrzutów z fixem — zrzut bez wysokości nie wchodzi ani do
+    // Średnia WYŁĄCZNIE ze zrzutów z fixem - zrzut bez wysokości nie wchodzi ani do
     // sumy, ani do licznika (mockup: „7 bez wysokości nie wchodzi do średniej").
     avgAltitudeFt: over(row.altSumFt, row.altCount),
-    // Oba liczniki jadą w odpowiedzi — panel nie odtwarza żadnego odejmowaniem.
+    // Oba liczniki jadą w odpowiedzi - panel nie odtwarza żadnego odejmowaniem.
     dropsWithAltitude: row.altCount,
     dropsWithoutAltitude: row.lifts - row.altCount,
     jumpersPerFlightHour: over(jumpers, row.flightMs / HOUR_MS),

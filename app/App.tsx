@@ -1,13 +1,13 @@
 /**
- * UZ Aero — punkt wejścia aplikacji.
+ * UZ Aero - punkt wejścia aplikacji.
  *
  * Odpowiada za rzeczy poziomu aplikacji, i tylko za nie:
  *   • dostawcy kontekstu (safe area, motyw),
  *   • ładowanie fontów Design Systemu,
- *   • composition root — otwarcie bazy i podłączenie warstw do store'u,
+ *   • composition root - otwarcie bazy i podłączenie warstw do store'u,
  *   • nawigacja.
  *
- * Ekrany nie wiedzą, skąd biorą się zależności — dostają je gotowe (§5 architektury).
+ * Ekrany nie wiedzą, skąd biorą się zależności - dostają je gotowe (§5 architektury).
  */
 
 import React, { useEffect } from 'react';
@@ -44,16 +44,16 @@ import { LoginScreen } from './src/ui/screens/LoginScreen';
 import { PinScreen } from './src/ui/screens/PinScreen';
 
 /**
- * Tło okna natywnego — jedyna warstwa, której nie da się pomalować widokiem RN.
+ * Tło okna natywnego - jedyna warstwa, której nie da się pomalować widokiem RN.
  *
  * Widać ją przez ułamek sekundy podczas animacji przejścia między ekranami
  * (`react-native-screens` animuje fragmenty, a pod nimi jest okno Androida, domyślnie
  * białe). Dopóki ekrany miały natywny pasek nawigacji, przykrywał on tę dziurę;
- * po jego wyłączeniu — zgodnie z mockupami, które takiego paska nie mają — błysk wyszedł
+ * po jego wyłączeniu - zgodnie z mockupami, które takiego paska nie mają - błysk wyszedł
  * na wierzch. Statyczny `backgroundColor` w `app.json` załatwia start aplikacji;
  * to ustawienie dokłada zgodność z **wybranym motywem** (mamy ich pięć).
  *
- * Wymaga modułu natywnego, więc zadziała dopiero po przebudowie dev clienta —
+ * Wymaga modułu natywnego, więc zadziała dopiero po przebudowie dev clienta -
  * do tego czasu wywołanie po cichu przepada, zamiast wywracać aplikację.
  */
 function useSystemBackground(color: string): void {
@@ -63,7 +63,7 @@ function useSystemBackground(color: string): void {
         const SystemUI = require('expo-system-ui') as typeof import('expo-system-ui');
         await SystemUI.setBackgroundColorAsync(color);
       } catch {
-        // Stary dev client bez modułu — zostaje kolor z `app.json`.
+        // Stary dev client bez modułu - zostaje kolor z `app.json`.
       }
     })();
   }, [color]);
@@ -101,8 +101,8 @@ function AppRoot() {
   const fontsReady = fontsLoaded || fontError != null;
 
   // Bramka startu (issue #33): fonty i baza. Skeleton zamiast spinnera, a bramka
-  // pilnuje, żeby na ciepłym starcie — kiedy jedno i drugie jest gotowe w kilkadziesiąt
-  // milisekund — nie mrugnął ani przez klatkę.
+  // pilnuje, żeby na ciepłym starcie - kiedy jedno i drugie jest gotowe w kilkadziesiąt
+  // milisekund - nie mrugnął ani przez klatkę.
   const booting = !themeReady || !fontsReady || boot.phase !== 'ready';
   const bootSkeleton = useSkeleton(booting);
 
@@ -125,7 +125,7 @@ function AppRoot() {
     );
   }
 
-  // `|| bootSkeleton`: plamki, które już weszły na ekran, dotrzymują swojego minimum —
+  // `|| bootSkeleton`: plamki, które już weszły na ekran, dotrzymują swojego minimum -
   // inaczej dane, które przyszły tuż po progu, kasowałyby je w połowie pierwszego pulsu.
   if (booting || bootSkeleton) {
     return bootSkeleton ? (
@@ -143,7 +143,7 @@ function AppRoot() {
 
         Bez niego przy cofaniu widać biały błysk: `react-native-screens` w trakcie animacji
         przez moment nie ma nad sobą żadnej nieprzezroczystej warstwy, więc prześwituje
-        tło okna Androida (domyślnie białe). Ta ramka zamyka dziurę od strony JS —
+        tło okna Androida (domyślnie białe). Ta ramka zamyka dziurę od strony JS -
         natywne tło okna ustawia dodatkowo `backgroundColor` w `app.json`.
       */}
       <View style={[styles.flex, { backgroundColor: theme.colors.bg }]}>
@@ -154,8 +154,8 @@ function AppRoot() {
 }
 
 /**
- * Bramka tożsamości (§3.0): bez profilu — 00a-login; z profilem bez PIN-u — „Ustaw
- * PIN"; z PIN-em — zamek 00; odblokowane — aplikacja. Pętla synca żyje TUTAJ, nad
+ * Bramka tożsamości (§3.0): bez profilu - 00a-login; z profilem bez PIN-u - „Ustaw
+ * PIN"; z PIN-em - zamek 00; odblokowane - aplikacja. Pętla synca żyje TUTAJ, nad
  * nawigatorem: okazje do wysyłki nie mogą zależeć od tego, który ekran jest otwarty
  * (silnik i bramkę `signed_in` pętla czyta sama ze store'ów).
  */
@@ -166,7 +166,7 @@ function AuthGate() {
   useSyncLoop();
 
   // Magazyn poświadczeń czyta się zwykle szybciej niż próg bramki, więc skeleton
-  // najczęściej nie pojawia się tu wcale — i o to chodzi.
+  // najczęściej nie pojawia się tu wcale - i o to chodzi.
   const reading = status === 'loading';
   const skeleton = useSkeleton(reading);
 
@@ -189,7 +189,7 @@ function AuthGate() {
  *
  * Trzyma maszynę → prosto do kokpitu, bo restart w środku dnia lotnego nie może kosztować
  * tapnięcia w drodze do STOP ENGINE. Zdał ją albo nie ma sesji → „Mój dzień" (01).
- * Sama decyzja mieszka w `resumeTarget` — jest regułą flow, nie szczegółem montowania,
+ * Sama decyzja mieszka w `resumeTarget` - jest regułą flow, nie szczegółem montowania,
  * i ma test (`claimStrip.test.ts`).
  */
 function ResumeGate() {
@@ -210,7 +210,7 @@ function ResumeGate() {
           return;
         }
       } catch {
-        // Uszkodzone meta nie może zablokować wejścia — najwyżej zaczniemy od 01.
+        // Uszkodzone meta nie może zablokować wejścia - najwyżej zaczniemy od 01.
       }
       if (alive) setInitial('MyDay');
     })();
@@ -239,11 +239,11 @@ function ResumeGate() {
 
 /**
  * Usługa GPS w tle chodzi za `engineRunning` (start silnika = start usługi, stop =
- * stop). Binder montuje się CELOWO tutaj, obok nawigatora — czyli dopiero po
- * `loadSession` — bo jego pierwszy odczyt stanu też jest komendą: zamontowany wyżej
+ * stop). Binder montuje się CELOWO tutaj, obok nawigatora - czyli dopiero po
+ * `loadSession` - bo jego pierwszy odczyt stanu też jest komendą: zamontowany wyżej
  * (AppRoot) widziałby jeszcze `engineRunning=false` i przy każdym otwarciu aplikacji
  * w locie gasiłby adoptowaną usługę (mrugnięcie powiadomienia + dziura w śladzie).
- * Ekran blokady PIN usługi nie dotyka — binder żyje dopiero za bramką tożsamości.
+ * Ekran blokady PIN usługi nie dotyka - binder żyje dopiero za bramką tożsamości.
  */
 function BackgroundTrackingBinder() {
   useBackgroundTracking(useGps());

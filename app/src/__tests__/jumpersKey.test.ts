@@ -1,8 +1,8 @@
 /**
- * UZ Aero — klucz składu w zależnościach prefillu (issue #28).
+ * UZ Aero - klucz składu w zależnościach prefillu (issue #28).
  *
  * Arkusze skokowe dostają skład z PROJEKCJI, a ta wraca ze strumienia po każdym
- * zdarzeniu sesji — więc te same liczby przychodzą jako nowy obiekt. Gdyby effect
+ * zdarzeniu sesji - więc te same liczby przychodzą jako nowy obiekt. Gdyby effect
  * prefillu zależał od identyczności, kołowanie wykryte w chwili, gdy pilot ustawia
  * liczniki, skasowałoby mu je do wartości z deklaracji.
  */
@@ -16,7 +16,7 @@ describe('jumpersKey', () => {
     );
   });
 
-  it('zmiana choćby jednego typu zmienia klucz — prefill ma się przeładować', () => {
+  it('zmiana choćby jednego typu zmienia klucz - prefill ma się przeładować', () => {
     expect(jumpersKey({ tandem: 2, aff: 1, solo: 1 })).not.toBe(
       jumpersKey({ tandem: 2, aff: 2, solo: 1 }),
     );

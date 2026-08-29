@@ -1,7 +1,7 @@
 /**
- * UZ Aero — panel: nagłówek karty dnia, baner stanu i brama korekty (moduł czysty).
+ * UZ Aero - panel: nagłówek karty dnia, baner stanu i brama korekty (moduł czysty).
  *
- * Najważniejszy przypadek tego pliku: **przycisk korekty NIGDY nie znika — jest
+ * Najważniejszy przypadek tego pliku: **przycisk korekty NIGDY nie znika - jest
  * wyszarzony Z PODANYM POWODEM.** Ukrycie zmusiłoby szefa wyszkolenia do zgadywania,
  * czy funkcji nie ma w produkcie, czy nie ma jej on; a to dwie różne rozmowy
  * z administratorem.
@@ -73,7 +73,7 @@ describe('dayHeader', () => {
     expect(lines).toContain('EPRA → EPRA');
   });
 
-  it('pomija człony, których nie ma — zamiast wypisywać puste etykiety', () => {
+  it('pomija człony, których nie ma - zamiast wypisywać puste etykiety', () => {
     const lines = dayHeader(
       session({ aircraftType: null, operation: null, client: null }),
       state({ departureIcao: null, arrivalIcao: null }),
@@ -95,7 +95,7 @@ describe('dayBanner', () => {
     expect(banner.title).toContain('Samolot nieoddany');
     expect(banner.body).toContain('24 min temu');
     expect(banner.body).toContain('stanem na ostatni sync');
-    // Cała treść tego stanu: panel pokazuje „—" i nie ekstrapoluje.
+    // Cała treść tego stanu: panel pokazuje „-" i nie ekstrapoluje.
     expect(banner.body).toContain('zamiast zgadywać');
   });
 
@@ -111,7 +111,7 @@ describe('dayBanner', () => {
   it('mówi, że okno korekty liczy się od ZDANIA samolotu i jest jedno na sesję', () => {
     // Model 2026-08-10 (zdanie = zatwierdzenie logu): okno jest JEDNO, per sesja,
     // kotwiczone w `day_close`. Wcześniejsze kotwice per wzlot (etap B3) odeszły
-    // razem z `leg_close` — baner nie ma prawa ich obiecywać.
+    // razem z `leg_close` - baner nie ma prawa ich obiecywać.
     const banner = dayBanner(session(), state(), NOW);
     expect(banner.body).toContain('`day_close`');
     expect(banner.body).toContain('JEDNO na sesję');
@@ -127,7 +127,7 @@ describe('dayBanner', () => {
 });
 
 describe('correctionAccess', () => {
-  it('administrator ma korektę DOSTĘPNĄ — bez adresu, bo cel wybiera oś dnia', () => {
+  it('administrator ma korektę DOSTĘPNĄ - bez adresu, bo cel wybiera oś dnia', () => {
     // Adresu tu nie ma i to jest treść zmiany: korekta dotyczy KONKRETNEGO zdarzenia,
     // a wyboru dokonuje się na osi. Link bez celu prowadziłby w ekran, który nie wie,
     // co poprawia.
@@ -140,13 +140,13 @@ describe('correctionAccess', () => {
 
   it('szef wyszkolenia dostaje POWÓD, nigdy ciche ukrycie akcji', () => {
     // `events.correct` ma TYLKO administrator: korekta dopisuje zdarzenie do cudzego
-    // rejestru. Ukrycie nigdy nie było ochroną i tym się nie staje — egzekwuje serwer,
+    // rejestru. Ukrycie nigdy nie było ochroną i tym się nie staje - egzekwuje serwer,
     // przy każdym żądaniu.
     const access = correctionAccess(TRAINING_LEAD);
 
     expect(access.allowed).toBe(false);
     expect(access.reason).toBe('Wymaga roli: administrator');
-    // Etykieta zostaje TA SAMA — człowiek ma widzieć tę samą akcję, tylko zablokowaną.
+    // Etykieta zostaje TA SAMA - człowiek ma widzieć tę samą akcję, tylko zablokowaną.
     expect(access.label).toBe('Korekta administratora');
   });
 
@@ -156,7 +156,7 @@ describe('correctionAccess', () => {
     expect(access.reason).not.toBeNull();
   });
 
-  it('OTWARTA SESJA NIE blokuje już korekty — bramka `day_open` znikła', () => {
+  it('OTWARTA SESJA NIE blokuje już korekty - bramka `day_open` znikła', () => {
     // ODWRÓCENIE testu z 2026-08-01 („DZIEŃ OTWARTY blokuje korektę"). Reguła lustrzyła
     // bramkę serwera, a ta opierała się na równości „brak `day_close` = dzień trwa",
     // którą §3.6a unieważnił: zdanie samolotu jest OPCJONALNE, więc warunek odmawiałby
@@ -165,7 +165,7 @@ describe('correctionAccess', () => {
     //
     // Widać to także w SYGNATURZE: funkcja nie pyta już o `SessionState`, bo stan sesji
     // przestał mieć wpływ na dostęp. Gdyby pytała, warunek dałoby się dopisać z powrotem
-    // bez zmiany wywołań — a tak nie da się tego zrobić po cichu.
+    // bez zmiany wywołań - a tak nie da się tego zrobić po cichu.
     expect(correctionAccess(ADMIN).allowed).toBe(true);
   });
 });
@@ -177,7 +177,7 @@ describe('correctionPath', () => {
     );
   });
 
-  it('koduje uuid-y — trasa jest częścią adresu, nie napisem do sklejenia', () => {
+  it('koduje uuid-y - trasa jest częścią adresu, nie napisem do sklejenia', () => {
     expect(correctionPath('a/b', 'c d')).toBe('/dni/a%2Fb/korekta/c%20d');
   });
 });

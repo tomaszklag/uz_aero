@@ -1,13 +1,13 @@
 /**
- * UZ Aero — panel: katalog akcji audytu MUSI być tym, co zna serwer.
+ * UZ Aero - panel: katalog akcji audytu MUSI być tym, co zna serwer.
  *
  * `admin/src/api/dto.ts` trzyma lustro unii `AdminAction` z
- * `server/src/domain/adminActions.ts` — bo panel nigdy nie importuje z wnętrza serwera
+ * `server/src/domain/adminActions.ts` - bo panel nigdy nie importuje z wnętrza serwera
  * (`docs/architektura-panelu-frontend.md` §5.2), a `Record<AdminAction, …>` w ekranie
  * `A09` musi mieć komplet kodów, żeby wymuszać komplet opisów.
  *
  * Lustro bez testu to kopia, która rozjeżdża się przy pierwszej nowej komendzie panelu
- * — i objawia dopiero wtedy, gdy ktoś tej akcji szuka w dzienniku. Ten plik czyta
+ * - i objawia dopiero wtedy, gdy ktoś tej akcji szuka w dzienniku. Ten plik czyta
  * katalog serwera z DYSKU (tak samo jak `tokens.generated.test.ts` czyta generator)
  * i porównuje go z listą, którą zna panel.
  *
@@ -31,7 +31,7 @@ const CATALOG = join(__dirname, '..', '..', 'server', 'src', 'domain', 'adminAct
 function serverActions(): string[] {
   const source = readFileSync(CATALOG, 'utf8');
   const block = /export const ADMIN_ACTIONS = \[([\s\S]*?)\] as const;/.exec(source);
-  if (block == null) throw new Error('Nie znaleziono tablicy ADMIN_ACTIONS — zmienił się kształt pliku');
+  if (block == null) throw new Error('Nie znaleziono tablicy ADMIN_ACTIONS - zmienił się kształt pliku');
 
   return [...block[1]!.matchAll(/'([a-z_]+\.[a-z_]+)'/g)].map((m) => m[1]!);
 }

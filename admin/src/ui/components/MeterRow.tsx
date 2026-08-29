@@ -1,9 +1,9 @@
 /**
- * UZ Aero — panel: MIERNIK UDZIAŁU (`.meter` z `SZABLON.html`).
+ * UZ Aero - panel: MIERNIK UDZIAŁU (`.meter` z `SZABLON.html`).
  *
  * „Wykorzystanie floty" z mockupu `A10`: tor z wypełnieniem zakończonym twardą
  * krawędzią i wartością `21 · 70 %` po prawej. Bursztyn sygnalizuje jednostkę
- * stojącą częściej, niż lata — próg rozstrzyga moduł czysty, nie komponent.
+ * stojącą częściej, niż lata - próg rozstrzyga moduł czysty, nie komponent.
  */
 
 interface MeterRowProps {

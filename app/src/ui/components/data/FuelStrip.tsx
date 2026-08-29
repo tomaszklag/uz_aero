@@ -1,11 +1,11 @@
 /**
- * UZ Aero — FuelStrip (`.fuel-strip` z mockupu 04)
+ * UZ Aero - FuelStrip (`.fuel-strip` z mockupu 04)
  *
  * Pasek paliwa w kokpicie ground: ostatni odczyt po lewej, szacunek wystarczalności
  * po prawej.
  *
  * ══ DLACZEGO TO NIE JEST PRZYRZĄD ══
- * Świadomie bez paska postępu, bez skali i bez alarmów — mimo że dane by na nie
+ * Świadomie bez paska postępu, bez skali i bez alarmów - mimo że dane by na nie
  * pozwalały. Wskaźnik ze skalą czyta się jak pomiar, a to jest SZACUNEK ze statystyki:
  * „ile zwykle wychodziło", nie „ile masz". Rezerwa jest wliczona w liczbę, a nie
  * narysowana jako czerwona strefa, bo strefa sugerowałaby, że ktoś tu pilnuje granicy.
@@ -29,7 +29,7 @@ export interface FuelStripProps {
   fuel: string;
   /**
    * Ton odczytu (issue #19). `neutral` = paliwa jest dużo; `amber` godzinę przed rezerwą,
-   * `red` na rezerwie — decyduje `fuelTone` z szacunku czasu lotu.
+   * `red` na rezerwie - decyduje `fuelTone` z szacunku czasu lotu.
    *
    * Do issue #19 pasek był amber ZAWSZE, także przy pełnych zbiornikach. Kolor
    * ostrzegawczy, który nigdy nie gaśnie, przestaje być ostrzeżeniem, a wtedy nie działa
@@ -40,7 +40,7 @@ export interface FuelStripProps {
   label?: string;
   /** Zdanie szacunku („wystarczy na ~6 wyniesień do rezerwy 45 min"); `null` = brak normy. */
   endurance?: string | null;
-  /** Podpis źródła szacunku — pokazywany tylko razem z `endurance`. */
+  /** Podpis źródła szacunku - pokazywany tylko razem z `endurance`. */
   source?: string | null;
   style?: ViewStyle;
 }
@@ -89,7 +89,7 @@ export function FuelStrip({
         </View>
       </View>
 
-      {/* Bez normy pasek pokazuje sam odczyt — nie ma tu miejsca na „—" ani na zero,
+      {/* Bez normy pasek pokazuje sam odczyt - nie ma tu miejsca na „-" ani na zero,
           bo brak podpowiedzi nie jest wartością do wyświetlenia. */}
       {endurance != null && (
         <View style={styles.right}>

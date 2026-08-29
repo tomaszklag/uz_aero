@@ -1,5 +1,5 @@
 /**
- * UZ Aero — ActionGrid (`.action-grid` z mockupu 04)
+ * UZ Aero - ActionGrid (`.action-grid` z mockupu 04)
  *
  * Siatka 2×2 akcji naziemnych: tankowanie, zmiana załogi, lista ręczna, zakończenie dnia.
  *
@@ -8,7 +8,7 @@
  * w ekran i wracania. Kafelek bez podpisu zmuszałby do nawigowania „na próbę".
  *
  * Ton koduje wagę: amber = zmienia paliwo, red = kończy dzień (nieodwracalne),
- * neutral = reszta. „Zakończ dzień" jest czerwony celowo — to jedyna akcja z tej siatki,
+ * neutral = reszta. „Zakończ dzień" jest czerwony celowo - to jedyna akcja z tej siatki,
  * po której nie ma powrotu do latania.
  */
 
@@ -24,11 +24,11 @@ export interface ActionCardSpec {
   id: string;
   icon: IconName;
   label: string;
-  /** Podpis ze stanem — co pilot zobaczy po wejściu. */
+  /** Podpis ze stanem - co pilot zobaczy po wejściu. */
   sub?: string;
   tone?: Tone;
   onPress: () => void;
-  /** Blokada z podanym powodem — nigdy wyszarzenie bez wyjaśnienia (§6 pkt 3). */
+  /** Blokada z podanym powodem - nigdy wyszarzenie bez wyjaśnienia (§6 pkt 3). */
   disabledReason?: string;
 }
 

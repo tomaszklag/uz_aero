@@ -1,12 +1,12 @@
 /**
- * UZ Aero (serwer) — wspólny zestaw testowy: PGlite + prawdziwe warstwy.
+ * UZ Aero (serwer) - wspólny zestaw testowy: PGlite + prawdziwe warstwy.
  *
- * PGlite to Postgres skompilowany do WASM, działający W PROCESIE testu — ten sam trik,
+ * PGlite to Postgres skompilowany do WASM, działający W PROCESIE testu - ten sam trik,
  * co `node:sqlite` w aplikacji: prawdziwy silnik (parser, planner, JSONB), zero Dockera
  * i zero atrap. Testy składają serwer z TYCH SAMYCH klas co produkcja; podmieniamy
  * wyłącznie bazę i zegar.
  *
- * Zegar jest sterowany ręcznie — bez tego testy wygasania tokenów musiałyby spać.
+ * Zegar jest sterowany ręcznie - bez tego testy wygasania tokenów musiałyby spać.
  */
 
 import { randomUUID } from 'node:crypto';
@@ -111,7 +111,7 @@ export const ADMIN_CSRF_HEADERS = { 'x-uz-admin': '1' } as const;
 
 export const TEST_SECRET = 'test-secret-o-dlugosci-co-najmniej-32-znakow';
 export const TEST_PASSWORD = 'poprawne-haslo-testowe';
-/** Celowo sztuczny host — nic tu nie nasłuchuje; testy przybijają PEŁNE URL-e kart. */
+/** Celowo sztuczny host - nic tu nie nasłuchuje; testy przybijają PEŁNE URL-e kart. */
 export const TEST_BASE_URL = 'http://uzaero.test';
 
 /**
@@ -119,10 +119,10 @@ export const TEST_BASE_URL = 'http://uzaero.test';
  * że skutek komendy cofa się razem z nim (`adminAudit.test.ts`). Poza tym testem
  * jedzie prawdziwy `PgAdminAuditRepo`, jak wszystko inne tutaj.
  *
- * `events` — z jednego, równie wąskiego powodu: `contract.test.ts` LICZY wywołania
+ * `events` - z jednego, równie wąskiego powodu: `contract.test.ts` LICZY wywołania
  * `sessionEvents`, żeby przybić maszynowo regułę „listy panelu nie odtwarzają
  * projekcji ze strumienia". Dekorator opakowuje PRAWDZIWY adapter, więc test nadal
- * jedzie na prawdziwym SQL-u — podmieniamy obserwację, nie zachowanie.
+ * jedzie na prawdziwym SQL-u - podmieniamy obserwację, nie zachowanie.
  */
 export async function testHarness(
   options: {
@@ -130,7 +130,7 @@ export async function testHarness(
     audit?: AdminAuditPort;
     events?: (real: EventsStorePort) => EventsStorePort;
     /**
-     * Podmiana katalogu buildu panelu — wyłącznie `adminStatic.test.ts`. Bez podmiany
+     * Podmiana katalogu buildu panelu - wyłącznie `adminStatic.test.ts`. Bez podmiany
      * rejestracja (bezwarunkowa od 2026-08-26) wskazuje realne `admin/dist`, którego
      * w testach zwykle nie ma → `/admin/` odpowiada 404 i żaden test na tym nie polega.
      */
@@ -139,7 +139,7 @@ export async function testHarness(
 ) {
   const pglite = new PGlite();
   // PGlite spełnia `Queryable` wprost, a transakcje ma własne (`transaction(cb)` daje
-  // obiekt z `query`) — opakowanie dopasowuje tylko kształt do portu `Database`.
+  // obiekt z `query`) - opakowanie dopasowuje tylko kształt do portu `Database`.
   const db: Database & { exec: (sql: string) => Promise<unknown> } = {
     query: (text, params) => pglite.query(text, params as never) as never,
     // Runner migracji szuka `exec` dla SQL-a wielopoleceniowego (patrz `migrate.ts`).
@@ -147,7 +147,7 @@ export async function testHarness(
     transaction: (fn) => pglite.transaction((tx) => fn(tx as unknown as Queryable)) as never,
   };
   await migrate(db);
-  // Świat referencyjny testów (dawny produkcyjny seed) — produkcyjny `seed()` stawia
+  // Świat referencyjny testów (dawny produkcyjny seed) - produkcyjny `seed()` stawia
   // od issue #50 wyłącznie konto administratora i ma własny `seed.test.ts`.
   await seedTestWorld(db, new ScryptHasher(), TEST_PASSWORD);
 
@@ -162,10 +162,10 @@ export async function testHarness(
   const pilots = new PgPilotsRepo(db);
 
   // Jak w produkcyjnym composition root: eksporter §4.7 jest domyślnie WŁĄCZONY
-  // i pisze karty bazodanowym `PgSheets` — te same klasy co produkcja. Testy trybu
+  // i pisze karty bazodanowym `PgSheets` - te same klasy co produkcja. Testy trybu
   // awarii/atrap podają własny `SheetsPort` przez `options.sheets`; odczyt
   // `GET /sheets/:tab` ZAWSZE czyta z bazy (atrapa pisze poza nią, więc trasa
-  // odpowie 404 — zgodnie z prawdą).
+  // odpowie 404 - zgodnie z prawdą).
   const pgSheets = new PgSheets(db, TEST_BASE_URL, clock);
   const exporter = new DayExporter(
     db,
@@ -178,30 +178,30 @@ export async function testHarness(
     clock,
   );
 
-  // Zrzut śladu (faza 5) — prawdziwy adapter plikowy na katalogu tymczasowym;
+  // Zrzut śladu (faza 5) - prawdziwy adapter plikowy na katalogu tymczasowym;
   // testy trasy zaglądają do NDJSON dokładnie tak, jak zrobi to skrypt replay.
   const tracesDir = mkdtempSync(join(tmpdir(), 'uzaero-traces-'));
-  // Osie faz pionowych czytają ślady z TEGO SAMEGO katalogu, co ich zapis — pliki
+  // Osie faz pionowych czytają ślady z TEGO SAMEGO katalogu, co ich zapis - pliki
   // poboczne lądują obok nagrań i znikają razem z katalogiem tymczasowym testu.
   const phaseTimeline = new FsPhaseTimeline(tracesDir, new FsTraceSource(tracesDir));
 
   const aircraftConfig = new PgAircraftConfigRepo();
   const auditedWrite = new AuditedWrite(db, options.audit ?? new PgAdminAuditRepo(), clock);
-  // Jeden adapter flag dla komend i zapytań — tak jak w produkcyjnym composition root.
+  // Jeden adapter flag dla komend i zapytań - tak jak w produkcyjnym composition root.
   const adminFlagsRepo = new PgAdminFlagsRepo();
   // Konta mają DWA adaptery, jak w produkcji: logowanie czyta `PgPilotsRepo` (hash),
   // panel pisze `PgAdminPilotsRepo` (transakcja śladu audytu).
   const adminPilotsRepo = new PgAdminPilotsRepo();
-  // Flota ma własny adapter obok `PgReferenceRepo` i `PgAircraftConfigRepo` — jak
+  // Flota ma własny adapter obok `PgReferenceRepo` i `PgAircraftConfigRepo` - jak
   // w produkcyjnym composition root.
   const adminFleetRepo = new PgAdminFleetRepo();
-  // Monitor eksportu ma własny adapter obok `PgExportLogRepo` — jak w produkcyjnym
+  // Monitor eksportu ma własny adapter obok `PgExportLogRepo` - jak w produkcyjnym
   // composition root.
   const adminExportsRepo = new PgAdminExportsRepo();
-  // Konserwacja (A11) — jeden adapter na dwie drogi (podgląd i zapis), jak w produkcji.
+  // Konserwacja (A11) - jeden adapter na dwie drogi (podgląd i zapis), jak w produkcji.
   const adminMaintenanceRepo = new PgAdminMaintenanceRepo();
   const hasher = new ScryptHasher();
-  // Zapytania floty mają DWÓCH konsumentów (trasy `A07` i pulpit) — jak w produkcyjnym
+  // Zapytania floty mają DWÓCH konsumentów (trasy `A07` i pulpit) - jak w produkcyjnym
   // composition root, więc stoją w zmiennej, a nie w literale.
   const adminFleetQueries = new AdminFleetQueries(db, adminFleetRepo, sessions, adminPilotsRepo);
 
@@ -209,23 +209,23 @@ export async function testHarness(
     auth: new AuthCommands(pilots, new PgRefreshTokens(db, clock), hasher, tokens, clock),
     reference: new ReferenceQueries(new PgReferenceRepo(db), db, sessions, consumptionNorms),
     ingest: new IngestCommands(db, events, sessions, flags, aircraftConfig, exporter, { events, norms: consumptionNorms, phases: phaseTimeline }, clock),
-    // Odtworzenie rejestru telefonu (§4.9, issue #32) — prawdziwy adapter, więc test
+    // Odtworzenie rejestru telefonu (§4.9, issue #32) - prawdziwy adapter, więc test
     // wysyła zdarzenia przez `POST /events` i odbiera je przez `GET /me/events`,
     // czyli przechodzi dokładnie drogę telefonu po czyszczeniu pamięci.
     myEvents: new MyEventQueries(db, new PgMyEventsRepo()),
     state: new StateQueries(db, events, sessions, flags, exportLog),
     sheets: new SheetQueries(pgSheets),
     traces: new FsTraceSink(tracesDir),
-    // Droga POWROTNA nagrania (issue #47) — ten sam katalog co zapis, więc test wysyła
+    // Droga POWROTNA nagrania (issue #47) - ten sam katalog co zapis, więc test wysyła
     // ślad przez `POST /traces` i odbiera go przez `GET /me/sessions/:uuid/track`,
     // czyli przechodzi dokładnie drogę telefonu po skasowaniu lokalnej kopii.
     sessionTrack: new SessionTrackQueries(db, events, new FsTraceSource(tracesDir)),
-    // Odczyt śladu wskazuje na TEN SAM katalog co zapis — dzięki temu test może wysłać
+    // Odczyt śladu wskazuje na TEN SAM katalog co zapis - dzięki temu test może wysłać
     // ślad przez `POST /traces` i przeczytać go przez trasę mapy, czyli przejść dokładnie
     // tę drogę, którą przechodzą dane w produkcji.
     adminFlightTrackQueries: new AdminFlightTrackQueries(db, events, new FsTraceSource(tracesDir)),
     prefs: new PrefsCommands(new PgPilotPrefsRepo(db)),
-    // Podpowiedzi zadania dnia (issue #14) — PRAWDZIWY adapter nad projekcją, jak
+    // Podpowiedzi zadania dnia (issue #14) - PRAWDZIWY adapter nad projekcją, jak
     // w produkcyjnym composition root: test wysyła preflighty przez `POST /events`
     // i czyta podpowiedzi tą samą drogą, którą przejdą dane telefonu.
     taskSuggestions: new TaskSuggestionQueries(db, new PgTaskSuggestionsRepo()),
@@ -243,7 +243,7 @@ export async function testHarness(
     ),
     adminFlagQueries: new AdminFlagQueries(db, adminFlagsRepo),
     adminMeQueries: new AdminMeQueries(pilots),
-    // Konta (A06/A06a). Hasło startowe jedzie PRAWDZIWYM generatorem — testy czytają
+    // Konta (A06/A06a). Hasło startowe jedzie PRAWDZIWYM generatorem - testy czytają
     // wartość z odpowiedzi, a jeden z przypadków sprawdza właśnie to, że nie ma jej
     // nigdzie indziej (ani w `details` audytu, ani w bazie poza hashem).
     adminPilots: new AdminPilotCommands(
@@ -256,17 +256,17 @@ export async function testHarness(
       clock,
     ),
     adminPilotQueries: new AdminPilotQueries(db, adminPilotsRepo, clock),
-    // Flota (A07/A07a) — `randomUUID` jak w produkcji: identyfikator jednostki testy
+    // Flota (A07/A07a) - `randomUUID` jak w produkcji: identyfikator jednostki testy
     // czytają z odpowiedzi, więc udawany generator kupiłby wyłącznie rozjazd
     // z composition rootem.
     adminFleet: new AdminFleetCommands(auditedWrite, adminFleetRepo, randomUUID),
     adminFleetQueries,
     // Eksporty (A05). Komenda ponowienia dostaje TEN SAM `exporter`, którym jedzie
-    // ingest — także wtedy, gdy `options.sheets` podmienia arkusze na atrapę awarii.
+    // ingest - także wtedy, gdy `options.sheets` podmienia arkusze na atrapę awarii.
     // Podgląd karty czyta ZAWSZE z bazy (`pgSheets`), tak jak `GET /sheets/:tab`.
     adminExports: new AdminExportCommands(auditedWrite, adminExportsRepo, exporter, clock),
     adminExportQueries: new AdminExportQueries(db, adminExportsRepo, pgSheets),
-    // `randomUUID` jak w produkcji — uuid korekty testy czytają z odpowiedzi, więc
+    // `randomUUID` jak w produkcji - uuid korekty testy czytają z odpowiedzi, więc
     // udawany generator nie kupiłby nic poza rozjazdem z composition rootem.
     adminCorrections: new AdminCorrectionCommands(
       auditedWrite,
@@ -289,15 +289,15 @@ export async function testHarness(
     // podmienia stronę zapisu na rzucającą: test „awaria audytu cofa skutek" ma
     // sprawdzać transakcję, a nie odbierać listę temu, co się faktycznie zapisało.
     adminAuditQueries: new AdminAuditQueries(db, new PgAdminAuditReadRepo()),
-    // Rejestr zdarzeń (A04) — trzeci adapter nad `events`, jak w produkcyjnym
+    // Rejestr zdarzeń (A04) - trzeci adapter nad `events`, jak w produkcyjnym
     // composition root: ingest, metadane karty dnia i lista śledcza to trzy różne
     // pytania. Jedzie tu PRAWDZIWY adapter także wtedy, gdy `options.events`
-    // podmienia magazyn ingestu — rejestr czyta kolumny, nie strumień.
+    // podmienia magazyn ingestu - rejestr czyta kolumny, nie strumień.
     adminEventQueries: new AdminEventQueries(db, new PgAdminEventsReadRepo()),
-    // Pulpit (A01/A01a) — składany z TYCH SAMYCH zapytań i adapterów, co ekrany
+    // Pulpit (A01/A01a) - składany z TYCH SAMYCH zapytań i adapterów, co ekrany
     // docelowe. `events` jedzie tu przez dekorator z `options.events`, więc
     // `contract.test.ts` widzi także odczyty strumienia robione przez pulpit.
-    // Konserwacja (A11) — PORÓWNANIE jedzie zapytaniem bez `AuditedWrite` (zero
+    // Konserwacja (A11) - PORÓWNANIE jedzie zapytaniem bez `AuditedWrite` (zero
     // zapisów, zero wpisów w dzienniku), NADPISANIE komendą przez bramę audytu.
     // `options.events` obejmuje obie drogi, więc `contract.test.ts` widzi odczyty
     // strumienia robione przez przebudowę.
@@ -326,10 +326,10 @@ export async function testHarness(
       adminPilotsRepo,
       clock,
     ),
-    // Statystyki (A10) — jak w produkcyjnym composition root: czysty odczyt agregatów
+    // Statystyki (A10) - jak w produkcyjnym composition root: czysty odczyt agregatów
     // kolumn projekcji, zegar rozstrzyga zakres domyślny.
     adminStatsQueries: new AdminStatsQueries(db, new PgAdminStatsRepo(), clock),
-    // Analityka zużycia (A10a/A10b) — dostaje TEN SAM `events`, co reszta harnessu,
+    // Analityka zużycia (A10a/A10b) - dostaje TEN SAM `events`, co reszta harnessu,
     // więc dekorator liczący odczyty strumienia widzi też jej wywołania.
     adminConsumptionQueries: new AdminConsumptionQueries(
       db,

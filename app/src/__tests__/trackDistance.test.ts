@@ -1,7 +1,7 @@
 /**
- * UZ Aero — droga przebyta do danej chwili (issue #47, trzecia tura przeglądu).
+ * UZ Aero - droga przebyta do danej chwili (issue #47, trzecia tura przeglądu).
  *
- * Podziałka profilu podaje obok czasu DYSTANS — i to jest miejsce, w którym najłatwiej
+ * Podziałka profilu podaje obok czasu DYSTANS - i to jest miejsce, w którym najłatwiej
  * skłamać: na osi czasu droga nie jest proporcjonalna (pięć minut wznoszenia to inna
  * droga niż pięć minut przelotu, a pięć minut postoju to zero). Test pilnuje, że odczyt
  * jest faktem o konkretnej parze chwil, a nie średnią udającą skalę.
@@ -13,7 +13,7 @@ import type { TrackVertex } from '../domain';
 const T0 = Date.UTC(2026, 7, 14, 8, 0, 0);
 const min = (n: number): number => T0 + n * 60_000;
 
-/** 1 minuta szerokości to 1 NM — łatwo sprawdzić w pamięci. */
+/** 1 minuta szerokości to 1 NM - łatwo sprawdzić w pamięci. */
 const NM_IN_DEG_LAT = 1 / 60;
 
 function vertex(atMin: number, nmNorth: number): TrackVertex {
@@ -41,7 +41,7 @@ describe('droga przebyta', () => {
     expect(at(min(5))).toBeCloseTo(5, 1);
   });
 
-  it('NIE jest proporcjonalna do czasu — o to w tym odczycie chodzi', () => {
+  it('NIE jest proporcjonalna do czasu - o to w tym odczycie chodzi', () => {
     // Pierwsze 10 min: 10 NM (przelot). Kolejne 10: 1 NM (krążenie nad polem).
     const at = buildDistanceLookup([vertex(0, 0), vertex(10, 10), vertex(20, 11)]);
 

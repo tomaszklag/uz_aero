@@ -1,15 +1,15 @@
 /**
- * UZ Aero — panel: PULPIT (`design/admin/A01-pulpit.html` i `A01a-pulpit-cisza.html`).
+ * UZ Aero - panel: PULPIT (`design/admin/A01-pulpit.html` i `A01a-pulpit-cisza.html`).
  *
  * ══ CZYM TEN EKRAN JEST W SYSTEMIE ══
- * Jedyny ekran panelu z GWARANTOWANĄ PUBLICZNOŚCIĄ — każdy zalogowany ląduje tu
+ * Jedyny ekran panelu z GWARANTOWANĄ PUBLICZNOŚCIĄ - każdy zalogowany ląduje tu
  * pierwszy. Odpowiada na jedno pytanie: *czy coś wymaga mojej uwagi teraz*. Niczego nie
  * rozstrzyga; kieruje w miejsce, gdzie się to robi. Dlatego każdy kafel i każdy wiersz
  * ma dokąd prowadzić, a adresy z zawężeniem powstają w `dashboardLinks.ts`.
  *
  * ══ WARIANT „CISZA" JEST RÓWNIE WAŻNY JAK WARIANT Z RUCHEM ══
  * `A01a` nie jest stanem pustym na doczepkę. Pulpit, który zawsze coś krzyczy,
- * przestaje być czytany — a wtedy przestaje działać także wtedy, gdy naprawdę krzyczy.
+ * przestaje być czytany - a wtedy przestaje działać także wtedy, gdy naprawdę krzyczy.
  * Gdy nic nie lata, ekran wygląda jak POTWIERDZENIE, że jest dobrze: zielony baner
  * zamiast czerwonego, karta rozstrzygająca jedyne pytanie, jakie zostaje na pustym
  * pulpicie („czy to »dziś nikt nie lata«, czy »nic do nas nie dociera«"), i podsumowanie
@@ -19,13 +19,13 @@
  * `.tsx` bez arytmetyki: kafle, wiersze floty, kolejka uwagi, słupki wykresu, oś
  * ostatnio przyjętych, werdykt ciszy i sumy doby pochodzą z czystych modułów obok,
  * każdy z testem w Node. Wieki („sync 2 min temu") liczymy względem `data.at`, czyli
- * ZEGARA SERWERA — nie `Date.now()` przeglądarki, bo stemple po drugiej stronie
+ * ZEGARA SERWERA - nie `Date.now()` przeglądarki, bo stemple po drugiej stronie
  * porównania nadaje baza.
  *
  * ══ CZEGO TEN EKRAN ŚWIADOMIE NIE POKAZUJE (i mówi o tym wprost) ══
- *  1. **Zrzutów i skoczków** w „Dziś w liczbach" — projekcja `sessions` nie ma takich
+ *  1. **Zrzutów i skoczków** w „Dziś w liczbach" - projekcja `sessions` nie ma takich
  *     kolumn. Komórka stoi z kreską, nie z zerem.
- *  2. **Pełnej treści zdarzenia** w karcie „Ostatnio przyjęte" — oś pokazuje nagłówek,
+ *  2. **Pełnej treści zdarzenia** w karcie „Ostatnio przyjęte" - oś pokazuje nagłówek,
  *     a surowy payload stoi w rejestrze (`A04`, przycisk „Rejestr"). Wiersze prowadzą
  *     na kartę DNIA, bo tam zdarzenie ma kontekst; rejestr ma jego zapis.
  *     Do 2026-08-02 przycisk „Rejestr" był zablokowany z powodem, bo `A04` nie istniał.
@@ -68,7 +68,7 @@ import { dashboardTiles } from './dashboardTiles';
 import { TODO_EMPTY, todoTasks, type TaskKind } from './dashboardTodo';
 import { dayView } from './dashboardToday';
 
-/** Ikona wiersza kolejki wg rodzaju sprawy — mapa, nie `if` w JSX-ie. */
+/** Ikona wiersza kolejki wg rodzaju sprawy - mapa, nie `if` w JSX-ie. */
 const TASK_ICON: Record<TaskKind, ReactNode> = {
   flag: <WarningIcon size={14} />,
   export: <ExportIcon size={14} />,
@@ -92,7 +92,7 @@ export function DashboardScreen() {
   const spark = data == null ? null : sparkView(data.inflow);
   const recent = data == null ? [] : recentRows(data.recent);
   // W ciszy pokazujemy OSTATNI dzień lotny, bo dzisiejsze zera nie odpowiadają na
-  // żadne pytanie. Poza ciszą — dziś, bo o to właśnie się wtedy pyta.
+  // żadne pytanie. Poza ciszą - dziś, bo o to właśnie się wtedy pyta.
   const day =
     data == null ? null : dayView(quiet ? (data.lastFlyingDay ?? data.today) : data.today);
 
@@ -102,8 +102,8 @@ export function DashboardScreen() {
         title="PULPIT"
         sub={
           quiet
-            ? 'Dziś nikt nie lata. Pulpit nie ma wtedy nic do pokazania — ma za to jedno pytanie do rozstrzygnięcia: czy ta pustka bierze się stąd, że nic się nie dzieje, czy stąd, że nic do nas nie dociera.'
-            : 'Stan floty i kolejka rzeczy do wyjaśnienia. Pulpit niczego nie rozstrzyga — kieruje w miejsce, gdzie się to robi. Czasy UTC.'
+            ? 'Dziś nikt nie lata. Pulpit nie ma wtedy nic do pokazania - ma za to jedno pytanie do rozstrzygnięcia: czy ta pustka bierze się stąd, że nic się nie dzieje, czy stąd, że nic do nas nie dociera.'
+            : 'Stan floty i kolejka rzeczy do wyjaśnienia. Pulpit niczego nie rozstrzyga - kieruje w miejsce, gdzie się to robi. Czasy UTC.'
         }
         actions={
           <>
@@ -130,9 +130,9 @@ export function DashboardScreen() {
 
       {dashboard.isError ? (
         <Banner tone="danger" live>
-          <b>Nie udało się pobrać pulpitu.</b> Panel działa wyłącznie online — to jedyne
+          <b>Nie udało się pobrać pulpitu.</b> Panel działa wyłącznie online - to jedyne
           miejsce w systemie, w którym brak sieci wolno pokazać jako blokadę. Kafle poniżej
-          pokazują <b>„—", a nie zero</b>: „0 otwartych flag" przy awarii pobrania byłoby
+          pokazują <b>„-", a nie zero</b>: „0 otwartych flag" przy awarii pobrania byłoby
           najgorszym możliwym komunikatem, bo wygląda jak dobra wiadomość.{' '}
           <Button variant="ghost" size="sm" onClick={() => void dashboard.refetch()}>
             Ponów
@@ -145,7 +145,7 @@ export function DashboardScreen() {
       ) : (
         <Banner tone="status">
           <b>To nie jest podgląd lotu na żywo.</b> Panel pokazuje ostatnie zdarzenia, które
-          dotarły z telefonów. Pilot pracuje offline-first — brak zasięgu nie zatrzymuje
+          dotarły z telefonów. Pilot pracuje offline-first - brak zasięgu nie zatrzymuje
           jego pracy, tylko opóźnia jej widoczność tutaj. Przy każdym samolocie stoi wiek
           ostatniej synchronizacji.
         </Banner>
@@ -194,7 +194,7 @@ export function DashboardScreen() {
                   <b>Wszystkie cztery warunki spełnione.</b> Żaden samolot nie ma otwartego
                   claimu, żaden dzień nie stoi bez <code>day_close</code> dłużej niż dobę,
                   ostatnie zdarzenie jest świeższe niż próg podejrzenia, a każda karta dnia
-                  jest w arkuszu. <b>Pustka jest zgodna z projektem</b> — telefony nie mają
+                  jest w arkuszu. <b>Pustka jest zgodna z projektem</b> - telefony nie mają
                   czego wysłać i nie meldują się „na wszelki wypadek".
                 </Banner>
               ) : (
@@ -210,7 +210,7 @@ export function DashboardScreen() {
               )}
               <span className="hint">
                 <b>Sam brak wierszy nie rozstrzyga niczego.</b> „Dziś nikt nie lata"
-                i „wszystkie telefony milczą od doby" zapisują się w bazie identycznie —
+                i „wszystkie telefony milczą od doby" zapisują się w bazie identycznie -
                 jako nic. Dlatego pulpit nie liczy zdarzeń, tylko patrzy,{' '}
                 <b>czym skończył się ostatni strumień</b>: domknięty dzień to cisza, urwany
                 claim to alarm, nawet jeśli licznik w obu przypadkach pokazuje zero.
@@ -252,8 +252,8 @@ export function DashboardScreen() {
             )}
             <span className="hint">
               <b>Liczniki fizyczne wygrywają.</b> MH i FOB w tej tabeli są podpowiedzią dla
-              pilota na preflight, nie prawdą — pilot patrzy na licznik i to jego odczyt
-              trafia do rejestru. Brak odczytu to <b>„—"</b>, nigdy zero.{' '}
+              pilota na preflight, nie prawdą - pilot patrzy na licznik i to jego odczyt
+              trafia do rejestru. Brak odczytu to <b>„-"</b>, nigdy zero.{' '}
               <b>„W locie" liczy serwer</b> z projekcji strumienia otwartej sesji; wiek
               synchronizacji obok mówi, ile ta wiedza jest warta.
             </span>
@@ -295,7 +295,7 @@ export function DashboardScreen() {
         <div className="cols-stack">
           <Card title="Napływ zdarzeń" actions={<Pill tone="dim">12 h</Pill>}>
             {spark == null ? (
-              <span className="hint">Brak danych — pulpit się nie pobrał.</span>
+              <span className="hint">Brak danych - pulpit się nie pobrał.</span>
             ) : (
               <>
                 <Sparkline
@@ -312,10 +312,10 @@ export function DashboardScreen() {
             title="Ostatnio przyjęte"
             actions={
               // Rejestr zdarzeń (`A04`) powstał 2026-08-02, więc przycisk prowadzi tam,
-              // gdzie obiecuje mockup — i to w stanie DOMYŚLNYM, czyli po czasie
+              // gdzie obiecuje mockup - i to w stanie DOMYŚLNYM, czyli po czasie
               // przyjęcia, najnowsze na górze. Karta pokazuje sześć ostatnio przyjętych
               // zdarzeń; rejestr otwiera te same wiersze w pełnej postaci. Wiersze karty
-              // nadal prowadzą na kartę DNIA — tam zdarzenie ma kontekst, tu ma zapis.
+              // nadal prowadzą na kartę DNIA - tam zdarzenie ma kontekst, tu ma zapis.
               <LinkButton to={eventsRegisterHref()} variant="ghost" size="sm">
                 Rejestr
               </LinkButton>
@@ -341,7 +341,7 @@ export function DashboardScreen() {
               </Timeline>
             )}
             <span className="hint">
-              Kolumna czasu to <b>czas zdarzenia</b>, a porządek listy — <b>czas przyjęcia</b>{' '}
+              Kolumna czasu to <b>czas zdarzenia</b>, a porządek listy - <b>czas przyjęcia</b>{' '}
               przez serwer. Przy pilocie pracującym offline te dwie wielkości potrafią
               dzielić godziny; różnicę wypisujemy przy wierszu, gdy przekroczy pięć minut.
             </span>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 10F Korekta odczytu</title>
+<title>UZ Aero - 10F Korekta odczytu</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -72,7 +72,7 @@
   .axis-row:first-child .axis-mark::before { top:50%; }
   .axis-row:last-child .axis-mark::before { bottom:50%; }
   .axis-dot { position:relative; align-self:center; width:9px; height:9px; border-radius:50%; background:var(--border-strong); border:2px solid var(--surface); box-shadow:0 0 0 2px var(--surface); }
-  /* Otoczka 2 px w kolorze karty — ta sama, którą ma kropka wypełniona: kreska osi
+  /* Otoczka 2 px w kolorze karty - ta sama, którą ma kropka wypełniona: kreska osi
      ma urywać się PRZED obrysem, a nie wchodzić do środka i wychodzić drugą stroną
      (zgłoszenie z urządzenia, 2026-08-14). Dotyczy PRZEJĘCIA i ZDANIA, jedynych
      pustych punktów osi. */
@@ -117,7 +117,7 @@
   .modal-ref { display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:10px; color:var(--text-muted); padding:0 2px; }
   .modal-ref-val { color:var(--text-secondary); }
 
-  /* Ostrzeżenie warunkowe (Typ B): znika samo, gdy wartości wracają w zakres —
+  /* Ostrzeżenie warunkowe (Typ B): znika samo, gdy wartości wracają w zakres -
      nie ma „×", bo zamknięcie niczego by nie naprawiło. Mówi o SKUTKU, nie o błędzie:
      odczyt przy zdaniu jest ogniwem łańcucha motogodzin i punktem startowym
      następnej sesji tej maszyny. */
@@ -143,15 +143,15 @@
   .modal-actions { display:grid; grid-template-columns:1fr 2fr; gap:8px; }
   .btn-cancel { display:flex; align-items:center; justify-content:center; padding:14px; border-radius:14px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text-secondary); font-family:var(--font-display); font-size:16px; letter-spacing:2px; text-decoration:none; cursor:pointer; }
   .btn-save { display:flex; align-items:center; justify-content:center; padding:14px; border-radius:14px; border:none; background:var(--green); color:#0D0D0D; font-family:var(--font-display); font-size:16px; letter-spacing:2px; text-decoration:none; cursor:pointer; box-shadow:0 0 20px rgba(46,204,113,0.25); }
-  /* BRAK strefy destrukcyjnej — i to jest decyzja, nie przeoczenie. Wyjaśniamy ją
+  /* BRAK strefy destrukcyjnej - i to jest decyzja, nie przeoczenie. Wyjaśniamy ją
      wprost, bo w arkuszu obok („10E") ten przycisk jest, a milczące pominięcie
      wyglądałoby na niedokończony ekran. */
-  /* Stepper godziny — ten sam kształt co w arkuszu czasu (10E): cele 44 px, wartość
+  /* Stepper godziny - ten sam kształt co w arkuszu czasu (10E): cele 44 px, wartość
      mono pośrodku. Ta sama czynność musi wyglądać tak samo. */
   .time-stepper { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--amber-border); border-radius:14px; padding:9px 11px; }
   .min-btn { min-width:62px; padding:0 10px; white-space:nowrap; height:44px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border-radius:12px; border:1px solid var(--border-strong); background:var(--surface-raised); color:var(--text-primary); font-family:var(--font-mono); font-size:12px; cursor:pointer; }
   .min-btn:hover { border-color:var(--amber-border); background:var(--amber-muted); }
-  /* Godzina do WPISANIA z klawiatury — patrz komentarz w 10E. Kroków ±10 min tu nie ma
+  /* Godzina do WPISANIA z klawiatury - patrz komentarz w 10E. Kroków ±10 min tu nie ma
      i mieć nie będzie: korekta przejęcia to poprawka o minuty, a dalszy skok wpisuje się. */
   .time-val { flex:1; text-align:center; font-family:var(--font-mono); font-size:26px; font-weight:700; letter-spacing:2px; color:var(--text-primary); cursor:text; }
 
@@ -179,12 +179,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 10F</span>
+  <span class="film-strip">UZ AERO - 10F</span>
   <span class="slug">korekta odczytu · paliwo i motogodziny</span>
   <span class="canvas-meta"><span class="pulse"></span>Arkusz 10D</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Korekta odczytu przy zdaniu samolotu">
+<main class="phone" role="region" aria-label="Mockup - Korekta odczytu przy zdaniu samolotu">
   <div class="status-bar">
     <span>9:41</span>
     <span class="status-right">
@@ -215,7 +215,7 @@
         <div class="section-card-head">Przebieg sesji</div>
         <div class="axis">
           <!-- Podświetlony wiersz to CEL arkusza: przejęcie. Tło i arkusz muszą mówić
-               o tym samym zdarzeniu — inaczej pilot poprawia jedno, a patrzy na drugie. -->
+               o tym samym zdarzeniu - inaczej pilot poprawia jedno, a patrzy na drugie. -->
           <div class="axis-row target">
             <span class="axis-time amber">08:04</span>
             <span class="axis-mark"><span class="axis-dot hollow amber"></span></span>
@@ -243,12 +243,12 @@
         <div class="modal-handle"></div>
         <div class="modal-title">KOREKTA ODCZYTU</div>
 
-        <!-- Karta celu: NAZWA ZDARZENIA pełnym stopniem — odpowiedź na pierwsze pytanie
+        <!-- Karta celu: NAZWA ZDARZENIA pełnym stopniem - odpowiedź na pierwsze pytanie
              otwierającego arkusz, czyli „co ja właściwie poprawiam".
 
              BEZ GODZINY pod spodem (zgłoszenie z urządzenia, 2026-08-14): ta sama
              godzina stoi dwa centymetry niżej, w kontrolce, którą się ją zmienia.
-             Podpis „zapisano 08:04 UTC" ZOSTAJE w arkuszu ZDANIA samolotu — tam pola
+             Podpis „zapisano 08:04 UTC" ZOSTAJE w arkuszu ZDANIA samolotu - tam pola
              czasu nie ma (`day_close` nie przyjmuje `retime`), więc jest jedynym
              miejscem, w którym widać, czego dotyczy poprawka. -->
         <div class="evt-card">
@@ -262,12 +262,12 @@
 
         <!-- ══ GODZINA PRZEJĘCIA (uwaga z urządzenia) ═══════════════════════
              Zwykły fakt („wziąłem samolot o 9:00, nie o 8:04") i pilot musi umieć go
-             sprostować. Stepper, nie pole tekstowe — ta sama czynność co korekta czasu
+             sprostować. Stepper, nie pole tekstowe - ta sama czynność co korekta czasu
              na osi (10E), więc ten sam kształt.
 
              ZDANIE SAMOLOTU tego pola NIE MA i to jest decyzja: od `day_close` liczy się
              24-godzinne okno korekty, więc przesuwanie go własną poprawką pozwalałoby
-             pilotowi przedłużyć sobie termin — regułę, która ma go ograniczać. -->
+             pilotowi przedłużyć sobie termin - regułę, która ma go ograniczać. -->
         <div>
           <div class="field-label">Godzina przejęcia (UTC)</div>
           <div class="time-stepper">
@@ -278,11 +278,11 @@
         </div>
 
         <!-- Kaskada: przejęcie wypadło ZA uruchomieniem silnika, więc cały bieg jedzie
-             za nim. Ostrzeżenie pada PRZED zapisem i mówi dokładnie, co się stanie —
+             za nim. Ostrzeżenie pada PRZED zapisem i mówi dokładnie, co się stanie -
              `logic/claimRetime.ts` liczy tę samą treść, którą potem wykonuje. -->
         <div class="warn-box">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <span class="warn-text"><b>Przesuniemy cały bieg silnika.</b> Przejęcie wypada po uruchomieniu, więc wszystkie zdarzenia pojadą o <b>48 min</b>: uruchomienie stanie się 09:00, a starty, lądowania i zrzuty za nim. Czasy trwania zostają — przesuwamy, nie skracamy. Zdanie samolotu bez zmian.</span>
+          <span class="warn-text"><b>Przesuniemy cały bieg silnika.</b> Przejęcie wypada po uruchomieniu, więc wszystkie zdarzenia pojadą o <b>48 min</b>: uruchomienie stanie się 09:00, a starty, lądowania i zrzuty za nim. Czasy trwania zostają - przesuwamy, nie skracamy. Zdanie samolotu bez zmian.</span>
         </div>
 
         <div>
@@ -310,12 +310,12 @@
           </div>
         </div>
 
-        <!-- OLEJ (issue #60) — para TYLKO przy PRZEJĘCIU: zdanie samolotu oleju nie
+        <!-- OLEJ (issue #60) - para TYLKO przy PRZEJĘCIU: zdanie samolotu oleju nie
              mierzy (bagnet tuż po locie kłamie), więc jego arkusz tych pól nie ma.
-             Wyczyszczone pole jest korektą „tego wpisu nie było" — puste przechodzi,
-             a podpowiedź po zmianie mówi „było —" przy braku oryginału. -->
+             Wyczyszczone pole jest korektą „tego wpisu nie było" - puste przechodzi,
+             a podpowiedź po zmianie mówi „było -" przy braku oryginału. -->
         <div>
-          <div class="field-label">Olej — pomiar i dolewka</div>
+          <div class="field-label">Olej - pomiar i dolewka</div>
           <div class="reading-grid">
             <div class="reading-field">
               <span class="reading-val">
@@ -325,7 +325,7 @@
             </div>
             <div class="reading-field">
               <span class="reading-val">
-                <input class="reading-input" type="text" value="" placeholder="—" inputmode="decimal" aria-label="Dolewka oleju w litrach" />
+                <input class="reading-input" type="text" value="" placeholder="-" inputmode="decimal" aria-label="Dolewka oleju w litrach" />
                 <span class="reading-unit">L</span>
               </span>
             </div>
@@ -351,7 +351,7 @@
 
         <div class="reason-box">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          <input class="reason-input" type="text" placeholder="Powód (opcjonalnie) — np. pomyłka przy przepisywaniu z tarczy" />
+          <input class="reason-input" type="text" placeholder="Powód (opcjonalnie) - np. pomyłka przy przepisywaniu z tarczy" />
         </div>
 
         <a href="10i-historia-zmian.html" class="history-link">
@@ -375,7 +375,7 @@
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Arkusze trybu edycji — kiedy który?</div>
+  <div class="vp-title">Arkusze trybu edycji - kiedy który?</div>
   <a class="vp-item" href="10e-korekta-zdarzenia.html">
     <span class="vp-badge blue">10E</span>
     <span class="vp-body">
@@ -387,7 +387,7 @@
     <span class="vp-badge amber">10F</span>
     <span class="vp-body">
       <span class="vp-name">Korekta odczytu</span>
-      <span class="vp-when">Ołówek przy PRZEJĘCIU albo ZDANIU: paliwo i motogodziny w jednym arkuszu, bo spisuje się je jednym spojrzeniem na tablicę. Przy PRZEJĘCIU dochodzi godzina — a jeśli wypadnie po uruchomieniu silnika, cały bieg przesuwa się za nią (ostrzeżenie mówi o ile i co się stanie). ZDANIE godziny nie ma: od niego liczy się okno 24 h, więc przesuwanie go własną poprawką przedłużałoby sobie termin. Unieważnienia nie ma po żadnej stronie.</span>
+      <span class="vp-when">Ołówek przy PRZEJĘCIU albo ZDANIU: paliwo i motogodziny w jednym arkuszu, bo spisuje się je jednym spojrzeniem na tablicę. Przy PRZEJĘCIU dochodzi godzina - a jeśli wypadnie po uruchomieniu silnika, cały bieg przesuwa się za nią (ostrzeżenie mówi o ile i co się stanie). ZDANIE godziny nie ma: od niego liczy się okno 24 h, więc przesuwanie go własną poprawką przedłużałoby sobie termin. Unieważnienia nie ma po żadnej stronie.</span>
     </span>
     <span class="vp-tag">ten arkusz</span>
   </a>
@@ -409,7 +409,7 @@
     <span class="vp-badge blue">10I</span>
     <span class="vp-body">
       <span class="vp-name">Historia zmian</span>
-      <span class="vp-when">Kto, kiedy i z czego na co zmienił — razem z zapisem pierwotnym.</span>
+      <span class="vp-when">Kto, kiedy i z czego na co zmienił - razem z zapisem pierwotnym.</span>
     </span>
   </a>
 </aside>

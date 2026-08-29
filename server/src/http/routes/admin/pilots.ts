@@ -1,13 +1,13 @@
 /**
- * UZ Aero (serwer) — trasy kont pilotów (`/admin/api/pilots*`, mockupy `A06`, `A06a`).
+ * UZ Aero (serwer) - trasy kont pilotów (`/admin/api/pilots*`, mockupy `A06`, `A06a`).
  *
  * Cienkie jak reszta repo: zod → komenda → status. Trasa nie zna ani transakcji, ani
- * audytu, ani reguły „kto nie może odciąć kogo" — to wszystko jest w komendzie
+ * audytu, ani reguły „kto nie może odciąć kogo" - to wszystko jest w komendzie
  * i w `domain/accountGuards.ts`.
  *
  * ══ ZDOLNOŚĆ JEST TU ROZSZCZEPIONA I TO JEST TREŚĆ EKRANU ══
- * `GET` wymaga `panel.access`, każda mutacja — `accounts.manage`. Mockup A06 mówi to
- * wprost: „Szef wyszkolenia widzi tę listę, ale bez przycisków — potrzebuje jej do
+ * `GET` wymaga `panel.access`, każda mutacja - `accounts.manage`. Mockup A06 mówi to
+ * wprost: „Szef wyszkolenia widzi tę listę, ale bez przycisków - potrzebuje jej do
  * statystyk i flag, nie do zarządzania dostępem". Przyciski w panelu są wtedy WIDOCZNE
  * i zablokowane z powodem, a nie ukryte; serwer i tak odmawia, bo ukrycie przycisku
  * nigdy nie było zabezpieczeniem.
@@ -30,7 +30,7 @@ import { dayParam, endOfDay } from './dayRange.ts';
  * Wielkość liter normalizujemy, a nie odrzucamy: „kza" i „KZA" to w intencji
  * administratora ten sam kod, a logowanie i tak dopasowuje bez rozróżniania wielkości
  * (`PgPilotsRepo.findByLogin`). Kod jedzie do kart arkusza i do logu dnia, więc krótki
- * i mono — dłuższy rozjechałby kolumnę w dokumencie klubu.
+ * i mono - dłuższy rozjechałby kolumnę w dokumencie klubu.
  */
 const code = z
   .string()
@@ -47,7 +47,7 @@ const name = z.string().trim().min(2).max(100);
 /**
  * E-mail jest OPCJONALNY, bo kolumna `pilots.email` jest `NULL`-owalna od schematu bazowego,
  * a loginem bywa sam kod pilota. Pusty napis znaczy „bez e-maila" (`null`), a nie
- * „e-mail o zerowej długości" — inaczej wyczyszczone pole w formularzu wjechałoby do
+ * „e-mail o zerowej długości" - inaczej wyczyszczone pole w formularzu wjechałoby do
  * bazy jako wartość i zajęło unikalny indeks.
  */
 const email = z
@@ -59,7 +59,7 @@ const role = z.enum(PILOT_ROLES);
 /**
  * Parametr POWTARZALNY (`?role=admin&role=training_lead`), bo chip „Z rolą panelu"
  * z mockupu A06 to DWIE role naraz. Fastify oddaje powtórzony parametr tablicą,
- * pojedynczy — napisem; unia obsługuje oba i oddaje zawsze tablicę, żeby dalsza część
+ * pojedynczy - napisem; unia obsługuje oba i oddaje zawsze tablicę, żeby dalsza część
  * kodu nie znała tej różnicy. Wzorzec z `?action=` w dzienniku audytu.
  */
 const roles = z
@@ -69,7 +69,7 @@ const roles = z
 const listQuery = z.object({
   active: z.enum(['true', 'false']).optional(),
   role: roles.optional(),
-  /** Fragment kodu, nazwiska albo e-maila — dopasowanie zawierające, nie dokładne. */
+  /** Fragment kodu, nazwiska albo e-maila - dopasowanie zawierające, nie dokładne. */
   q: z.string().trim().min(1).max(100).optional(),
   sort: z.enum(['asc', 'desc']).default('asc'),
   limit: z.coerce.number().int().positive().max(PAGE_LIMIT_MAX).default(200),
@@ -82,7 +82,7 @@ const createBody = z.object({ code, name, email: email.optional(), role: role.de
 
 /**
  * Wszystkie pola opcjonalne, bo `PATCH` opisuje ZMIANĘ, nie stan docelowy. Pusty obiekt
- * przejdzie walidację i odbije się o `no_changes` w komendzie — i tak ma być: to jest
+ * przejdzie walidację i odbije się o `no_changes` w komendzie - i tak ma być: to jest
  * pytanie o świat („czy coś się zmienia"), a nie o kształt żądania.
  */
 const patchBody = z.object({
@@ -163,7 +163,7 @@ export function registerAdminPilotRoutes(
       });
       if (!outcome.ok) return refusal(reply, outcome);
 
-      // 201 i hasło W CIELE odpowiedzi — jedyny raz. Nie w nagłówku `Location`, nie
+      // 201 i hasło W CIELE odpowiedzi - jedyny raz. Nie w nagłówku `Location`, nie
       // w URL-u, nie w logu: adresy i nagłówki bywają zapisywane po drodze.
       return reply.code(201).send({
         pilot: accountToWire(outcome.result.account, new Date()),
@@ -241,7 +241,7 @@ export function registerAdminPilotRoutes(
  * `authorize.ts`.
  *
  * **409 `refused` niesie POWÓD.** „Nie można" bez wyjaśnienia przy przycisku
- * „Deaktywuj" kazałoby administratorowi zgadywać, czy to awaria, czy zasada —
+ * „Deaktywuj" kazałoby administratorowi zgadywać, czy to awaria, czy zasada -
  * a to jest dokładnie ta chwila, w której człowiek sięga po `UPDATE` w psql.
  */
 function refusal(

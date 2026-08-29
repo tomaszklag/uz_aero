@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 15E Lot ręczny · arkusz daty lotu</title>
+<title>UZ Aero - 15E Lot ręczny · arkusz daty lotu</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -82,15 +82,15 @@
   .modal-title { font-family:var(--font-display); font-size:22px; letter-spacing:2px; color:var(--text-primary); }
 
   /* ===== KALENDARZ MIESIĘCZNY (issue #58 pkt 2) =====
-     Zastąpił stepper ±1 dzień z wpisem z klawiatury — zgłoszenie z urządzenia
+     Zastąpił stepper ±1 dzień z wpisem z klawiatury - zgłoszenie z urządzenia
      odwróciło decyzję z 2026-08-16 (wtedy: „siatka 42 kratek to element, którego
      pilot musi się dopiero nauczyć"). W praktyce było odwrotnie: kalendarz jest
-     kontrolką, którą pilot ZNA, a odklikiwanie daty przyciskiem ±1 dzień — tą,
+     kontrolką, którą pilot ZNA, a odklikiwanie daty przyciskiem ±1 dzień - tą,
      której musiał się uczyć.
       • tydzień od PONIEDZIAŁKU, doby = północe UTC (jak `sessionDay`);
       • dni przyszłe wygaszone (lot w przyszłości to nonsens), „dziś" ma obwódkę
         także niewybrane;
-      • dni sąsiednich miesięcy NIE rysujemy — tapnięcie w nie zmieniałoby dobę
+      • dni sąsiednich miesięcy NIE rysujemy - tapnięcie w nie zmieniałoby dobę
         i miesiąc naraz;
       • strzałka „nowszy miesiąc" gaśnie na miesiącu dzisiejszym.
      W kodzie: `CalendarGrid` + czysta matematyka w `calendarMonth.ts` (z testami). */
@@ -108,11 +108,11 @@
   .cal-day.selected { border-color:var(--green-border); background:var(--green-muted); color:var(--green); font-weight:700; }
   .cal-day.future { color:var(--text-placeholder); pointer-events:none; }
   .cal-day.blank { pointer-events:none; }
-  /* Zwykłe zdanie, nie wersalikowa etykieta (issue #58 pkt 3) — przypis o znaczeniu
+  /* Zwykłe zdanie, nie wersalikowa etykieta (issue #58 pkt 3) - przypis o znaczeniu
      wyboru, nie nazwa pola. Na formularzu kroku 1 tego zdania NIE MA. */
   .cal-note { font-size:11px; line-height:1.4; color:var(--text-muted); }
 
-  /* Skróty — dwa dni, w których powstaje niemal każdy wpis ręczny; stoją NAD
+  /* Skróty - dwa dni, w których powstaje niemal każdy wpis ręczny; stoją NAD
      kalendarzem, bo zwykle siatki nie trzeba nawet dotykać. */
   .quick-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
   .quick { display:flex; align-items:center; justify-content:center; min-height:44px; border-radius:12px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text-secondary); font-family:var(--font-mono); font-size:11px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; }
@@ -140,12 +140,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 15E</span>
+  <span class="film-strip">UZ AERO - 15E</span>
   <span class="slug">lot ręczny · arkusz daty lotu</span>
   <span class="canvas-meta">Nad krokiem 1</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Lot ręczny: arkusz daty lotu">
+<main class="phone" role="region" aria-label="Mockup - Lot ręczny: arkusz daty lotu">
   <div class="status-bar">
     <span>16:20</span>
     <span class="status-right">
@@ -170,7 +170,7 @@
     </div>
 
     <div class="scroll">
-      <!-- Data pierwsza — jak na kroku 1 (issue #58 pkt 1). -->
+      <!-- Data pierwsza - jak na kroku 1 (issue #58 pkt 1). -->
       <div class="section">
         <div class="section-label">Data lotu · UTC</div>
         <div class="field">
@@ -262,26 +262,26 @@
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Arkusze wpisu ręcznego — kiedy który</div>
+  <div class="vp-title">Arkusze wpisu ręcznego - kiedy który</div>
   <a class="vp-item" href="15d-reczny-czas-arkusz.html">
     <span class="vp-badge blue">15D</span>
     <span class="vp-body">
       <span class="vp-name">Czas zdarzenia</span>
-      <span class="vp-when">Godziny kroku 3 — krok ±1 min.</span>
+      <span class="vp-when">Godziny kroku 3 - krok ±1 min.</span>
     </span>
   </a>
   <a class="vp-item active" href="15e-reczny-data.html">
     <span class="vp-badge blue">15E</span>
     <span class="vp-body">
       <span class="vp-name">Data lotu</span>
-      <span class="vp-when">Krok 1. Kalendarz miesięczny (issue #58): skróty „Wczoraj" i „Dzisiaj" nad siatką (starsze po lewej, issue #62), dni przyszłe wygaszone, tydzień od poniedziałku. Wiersz „Sesje w tej dobie" mówi od razu, co pilot ma już w tym dniu — czyli materiał do ostrzeżenia o kolizji z kroku 4.</span>
+      <span class="vp-when">Krok 1. Kalendarz miesięczny (issue #58): skróty „Wczoraj" i „Dzisiaj" nad siatką (starsze po lewej, issue #62), dni przyszłe wygaszone, tydzień od poniedziałku. Wiersz „Sesje w tej dobie" mówi od razu, co pilot ma już w tym dniu - czyli materiał do ostrzeżenia o kolizji z kroku 4.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
   <a class="vp-item" href="15-reczny-lot.html">
     <span class="vp-badge">15</span>
     <span class="vp-body">
-      <span class="vp-name">Krok 1 — samolot i data</span>
+      <span class="vp-name">Krok 1 - samolot i data</span>
       <span class="vp-when">Ekran pod tym arkuszem.</span>
     </span>
   </a>

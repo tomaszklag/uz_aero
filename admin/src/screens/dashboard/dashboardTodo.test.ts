@@ -1,7 +1,7 @@
 /**
- * UZ Aero — panel: testy kolejki „Wymaga uwagi" (`A01`).
+ * UZ Aero - panel: testy kolejki „Wymaga uwagi" (`A01`).
  *
- * Kolejka jest jedynym miejscem panelu, które STAWIA ZADANIA — więc jej porządek jest
+ * Kolejka jest jedynym miejscem panelu, które STAWIA ZADANIA - więc jej porządek jest
  * treścią, nie kosmetyką: sprawa trzymająca dokument klubu poza arkuszem jest pilniejsza
  * od sprawy, która „tylko" czeka.
  */
@@ -20,7 +20,7 @@ const attention = (): DashboardAttentionDto => dashboardFixture().attention;
 
 describe('porządek: blokujące arkusz przodem, dalej najstarsze', () => {
   it('flaga blokująca wyprzedza STARSZY dzień bez zamknięcia', () => {
-    // Flaga ma 2 dni, dzień otwarty 3 — a mimo to flaga jest pierwsza, bo bez jej
+    // Flaga ma 2 dni, dzień otwarty 3 - a mimo to flaga jest pierwsza, bo bez jej
     // rozstrzygnięcia karta dnia nie powstanie.
     const tasks = todoTasks(attention(), NOW, DAY);
     expect(tasks.map((t) => t.kind)).toEqual(['flag', 'open_day']);
@@ -36,7 +36,7 @@ describe('porządek: blokujące arkusz przodem, dalej najstarsze', () => {
   });
 
   it('nieudany eksport traktujemy tak samo pilnie jak flagę blokującą', () => {
-    // Karta, której nie ma, to dokument klubu, którego nie ma — i nic o tym nie mówi
+    // Karta, której nie ma, to dokument klubu, którego nie ma - i nic o tym nie mówi
     // poza tym wierszem, bo nieudany eksport nie zostawia śladu w żadnej tabeli.
     const data = attention();
     data.failedExports = [
@@ -73,7 +73,7 @@ describe('porządek: blokujące arkusz przodem, dalej najstarsze', () => {
 
 describe('wiek sprawy jest własną kolumną', () => {
   it('sprawa starsza niż okno korekty dostaje bursztyn', () => {
-    // Flaga leżąca trzeci dzień to inny problem niż ta sprzed godziny — i wiersz ma
+    // Flaga leżąca trzeci dzień to inny problem niż ta sprzed godziny - i wiersz ma
     // to pokazać, a nie zostawić do policzenia w głowie.
     const tasks = todoTasks(attention(), NOW, DAY);
     expect(tasks.find((t) => t.kind === 'flag')?.age).toBe('2 dni');
@@ -81,7 +81,7 @@ describe('wiek sprawy jest własną kolumną', () => {
   });
 
   it('próg jest PARAMETREM z serwera, nie stałą w panelu', () => {
-    // `correctionWindowMs` przychodzi z `@uzaero/domain` przez odpowiedź pulpitu —
+    // `correctionWindowMs` przychodzi z `@uzaero/domain` przez odpowiedź pulpitu -
     // panel nie ma prawa trzymać drugiej kopii tej reguły.
     const young = todoTasks(attention(), NOW, 10 * DAY);
     expect(young.every((t) => !t.old)).toBe(true);
@@ -89,7 +89,7 @@ describe('wiek sprawy jest własną kolumną', () => {
 
   it('nieoddany samolot liczy wiek od CHWILI PRZEJĘCIA, nie od ostatniej paczki', () => {
     // Pytanie brzmi „jak długo ta maszyna jest zajęta", a nie „kiedy ostatnio coś do
-    // niej dotarło" — te dwie liczby różnią się o cały czas ciszy telefonu.
+    // niej dotarło" - te dwie liczby różnią się o cały czas ciszy telefonu.
     const task = todoTasks(attention(), NOW, DAY).find((t) => t.kind === 'open_day');
     expect(task?.age).toBe('3 dni');
     expect(task?.to).toBe('/dni/sess-stale');
@@ -104,7 +104,7 @@ describe('treść wiersza', () => {
     expect(task?.to).toBe('/flagi/1046');
   });
 
-  it('samolot bez rejestracji nie znika — wiersz pokazuje identyfikator', () => {
+  it('samolot bez rejestracji nie znika - wiersz pokazuje identyfikator', () => {
     // Rejestracja jest etykietą, nie kluczem; jednostka wykreślona z rejestru zostawia
     // flagę, która nadal wymaga rozstrzygnięcia.
     const data = attention();
@@ -114,7 +114,7 @@ describe('treść wiersza', () => {
 
   it('nieoddany samolot NIE obiecuje odliczania okna korekty', () => {
     // Sprostowanie mockupu, po etapie B3 podwójne: okno korekty kotwiczy się
-    // w ZDANIU SAMOLOTU (`day_close`) — dzień bez zdania nie ma kotwicy okna,
+    // w ZDANIU SAMOLOTU (`day_close`) - dzień bez zdania nie ma kotwicy okna,
     // a samo zdanie jest opcjonalne i niczego nie odlicza.
     const task = todoTasks(attention(), NOW, DAY).find((t) => t.kind === 'open_day');
     expect(task?.name).toContain('Samolot nieoddany');

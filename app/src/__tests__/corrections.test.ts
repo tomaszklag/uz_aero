@@ -1,8 +1,8 @@
 /**
- * UZ Aero — test KOREKT ZDARZEŃ (04c) w modelu append-only.
+ * UZ Aero - test KOREKT ZDARZEŃ (04c) w modelu append-only.
  *
  * Korekta to jedyne miejsce, gdzie „prawda" projekcji odkleja się od surowego rejestru
- * — i właśnie dlatego musi być żelazna: unieważnione lądowanie, które dalej liczyłoby
+ * - i właśnie dlatego musi być żelazna: unieważnione lądowanie, które dalej liczyłoby
  * czas lotu, albo poprawiony czas, który nie przestawia porządku cykli, to błędy
  * niewidoczne na ekranie, a widoczne w arkuszu na koniec miesiąca.
  */
@@ -60,7 +60,7 @@ function correction(
 }
 
 /**
- * Korekta o SUROWYM, niesprawdzonym payloadzie — tak, jak potrafi leżeć w bazie:
+ * Korekta o SUROWYM, niesprawdzonym payloadzie - tak, jak potrafi leżeć w bazie:
  * `events.payload` to `JSONB` bez `CHECK`-a, więc wiersz wpisany ręcznie w psql,
  * odtworzony ze zrzutu albo przysłany przez starszą wersję telefonu może mieć
  * dowolny kształt. Typ jest obietnicą WEJŚCIA, nie faktem odczytu.
@@ -101,7 +101,7 @@ describe('nakładanie korekt na strumień', () => {
     const effective = applyCorrections(stream);
     const corrected = effective.find((e) => e.uuid === landing.uuid)!;
     expect(corrected.gpsTime).toBe(at(9, 21));
-    // `deviceTime` zostaje — to ślad chwili pierwotnego zapisu (§5.1, dwa zegary).
+    // `deviceTime` zostaje - to ślad chwili pierwotnego zapisu (§5.1, dwa zegary).
     expect(corrected.deviceTime).toBe(at(9, 18));
     // Rejestr wejściowy nienaruszony.
     expect(landing.gpsTime).toBe(at(9, 18));
@@ -112,14 +112,14 @@ describe('nakładanie korekt na strumień', () => {
     const stream = [...events, correction(landing, at(10, 40), { action: 'void' })];
 
     expect(applyCorrections(stream).some((e) => e.uuid === landing.uuid)).toBe(false);
-    // Unieważnione wciąż jest celem — ponowna korekta może je przywrócić.
+    // Unieważnione wciąż jest celem - ponowna korekta może je przywrócić.
     expect(buildEventIndex(stream)[landing.uuid]?.type).toBe('landing');
-    // Indeks niesie też CZAS — reguła okna korekty potrzebuje go, żeby ustalić,
+    // Indeks niesie też CZAS - reguła okna korekty potrzebuje go, żeby ustalić,
     // do którego wzlotu należy korygowane zdarzenie (§3.6a).
     expect(buildEventIndex(stream)[landing.uuid]?.at).toBe(landing.gpsTime ?? landing.deviceTime);
   });
 
-  it('ostatnia korekta wygrywa — retime po void przywraca zdarzenie', () => {
+  it('ostatnia korekta wygrywa - retime po void przywraca zdarzenie', () => {
     const { events, landing } = day();
     const stream = [
       ...events,
@@ -140,7 +140,7 @@ describe('nakładanie korekt na strumień', () => {
     expect(projectSession(stream).flightTimeMs).toBe(56 * 60_000);
   });
 
-  it('lot w projekcji niesie uuid zdarzeń źródłowych — adres dla ołówka korekty', () => {
+  it('lot w projekcji niesie uuid zdarzeń źródłowych - adres dla ołówka korekty', () => {
     const { events, takeoff, landing } = day();
     const flight = projectSession(events).flights[0]!;
     expect(flight.takeoffUuid).toBe(takeoff.uuid);
@@ -153,21 +153,21 @@ describe('nakładanie korekt na strumień', () => {
 
     const state = projectSession(stream);
     expect(state.landingCount).toBe(0);
-    expect(state.takeoffCount).toBe(1); // start pozostał — pilot uzupełni albo unieważni osobno
+    expect(state.takeoffCount).toBe(1); // start pozostał - pilot uzupełni albo unieważni osobno
   });
 });
 
 /**
- * Wiersz `event_correction`, którego payloadu nie da się przeczytać, jest POMIJANY —
+ * Wiersz `event_correction`, którego payloadu nie da się przeczytać, jest POMIJANY -
  * nie wywraca strumienia i nie zgaduje się za niego akcji.
  *
  * To nie jest przypadek teoretyczny: `applyCorrections` jest jedyną drogą, którą
  * rejestr zdarzeń panelu (`A04`) nakłada korekty na CAŁĄ stronę naraz. Wyjątek na
- * jednym wierszu znaczył tam 500 z całej listy — narzędzie śledcze przestawało się
+ * jednym wierszu znaczył tam 500 z całej listy - narzędzie śledcze przestawało się
  * otwierać przez własną historię, dokładnie wtedy, gdy było potrzebne.
  */
 describe('korekta nieczytelna jest pomijana, a nie wywraca strumienia', () => {
-  it('korekta, która nie adresuje celu, nie rzuca — strumień wraca w całości', () => {
+  it('korekta, która nie adresuje celu, nie rzuca - strumień wraca w całości', () => {
     const { events, landing } = day();
     // Payload równy JSON-owemu `null` to ten kształt, który wywracał CAŁY rejestr:
     // sięgnięcie po `targetUuid` dawało `TypeError`, czyli 500 z listy.
@@ -183,7 +183,7 @@ describe('korekta nieczytelna jest pomijana, a nie wywraca strumienia', () => {
   });
 
   it('NIEZNANA akcja nie jest po cichu traktowana jak `retime`', () => {
-    // Gałąź „wszystko, co nie jest `void`" brała `newTime` z KAŻDEJ akcji — więc
+    // Gałąź „wszystko, co nie jest `void`" brała `newTime` z KAŻDEJ akcji - więc
     // kształt z przyszłej wersji telefonu przestawiłby czas lądowania, choć nikt
     // nie wie, co ta akcja miała znaczyć.
     const { events, landing } = day();
@@ -290,14 +290,14 @@ describe('reguły korekty', () => {
     const state = projectSession(closed);
     const retime = { action: 'retime', newTime: at(9, 21) } as const;
 
-    // 15 minut po zamknięciu — dokładnie po to okno istnieje (decyzja 2026-07-23).
+    // 15 minut po zamknięciu - dokładnie po to okno istnieje (decyzja 2026-07-23).
     const inWindow = checkAppend(
       state,
       candidateFor(closed, landing.uuid, retime, closedAt + 15 * 60_000),
     );
     expect(inWindow.filter((x) => x.severity === 'error')).toHaveLength(0);
 
-    // 25 godzin po zamknięciu — samodzielna korekta już niedostępna (tylko administrator).
+    // 25 godzin po zamknięciu - samodzielna korekta już niedostępna (tylko administrator).
     const afterWindow = checkAppend(
       state,
       candidateFor(closed, landing.uuid, retime, closedAt + 25 * 3_600_000),

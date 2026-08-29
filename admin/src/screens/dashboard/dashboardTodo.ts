@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: KOLEJKA „WYMAGA UWAGI" (moduł CZYSTY).
+ * UZ Aero - panel: KOLEJKA „WYMAGA UWAGI" (moduł CZYSTY).
  *
  * ══ JEDYNE MIEJSCE PANELU, KTÓRE STAWIA ZADANIA ══
  * Reszta panelu opisuje stan; ta lista mówi, co ZROBIĆ. Dlatego każdy wiersz jest
@@ -8,13 +8,13 @@
  *
  * ══ SERWER PODAJE TRZY LISTY, PANEL SKŁADA JEDEN PORZĄDEK ══
  * Spłaszczenie tego na serwerze wymagałoby CZWARTEJ definicji „sprawy" obok flagi,
- * karty dnia i sesji — czyli dokładnie tego rozjazdu definicji, którego pulpit ma
+ * karty dnia i sesji - czyli dokładnie tego rozjazdu definicji, którego pulpit ma
  * unikać. Panel dostaje trzy kontrakty ekranów docelowych w stanie nietkniętym
  * i podejmuje jedną decyzję: w jakiej kolejności je pokazać. To jest decyzja
- * O TREŚCI EKRANU, więc mieszka w module czystym z testem — nie w `.tsx`.
+ * O TREŚCI EKRANU, więc mieszka w module czystym z testem - nie w `.tsx`.
  *
  * Porządek: **blokujące arkusz przodem, dalej najstarsze**. Ten sam klucz, co
- * w skrzynce flag `A03` — bo to jest ta sama myśl: sprawa, która trzyma dokument klubu
+ * w skrzynce flag `A03` - bo to jest ta sama myśl: sprawa, która trzyma dokument klubu
  * poza arkuszem, jest pilniejsza od sprawy, która „tylko" czeka.
  */
 
@@ -33,7 +33,7 @@ import { dayCardLink, missingExportsHref, flagHref } from './dashboardLinks';
 export type TaskTone = 'amber' | 'red' | 'blue';
 
 /**
- * Rodzaj sprawy — decyduje o ikonie i o tym, dokąd wiersz prowadzi. Trzymany jako
+ * Rodzaj sprawy - decyduje o ikonie i o tym, dokąd wiersz prowadzi. Trzymany jako
  * dana, a nie jako `if` w JSX-ie: ikona jest decyzją o treści.
  */
 export type TaskKind = 'flag' | 'export' | 'open_day';
@@ -46,7 +46,7 @@ export interface TodoTask {
   name: string;
   /** Druga linia: dlaczego to jest zadanie. Renderowana jako TEKST, nigdy jako HTML. */
   meta: string;
-  /** „3 dni" / „18 h" — wiek sprawy, nie znacznik czasu. */
+  /** „3 dni" / „18 h" - wiek sprawy, nie znacznik czasu. */
   age: string;
   /** `true` = wiek przekroczył dobę; wiersz dostaje bursztyn (`.todo-age.old`). */
   old: boolean;
@@ -60,7 +60,7 @@ export interface TodoTask {
 /**
  * Od kiedy wiek sprawy dostaje bursztyn (`.todo-age.old`).
  *
- * Doba, czyli tyle samo, co okno samodzielnej korekty pilota — ta liczba przychodzi
+ * Doba, czyli tyle samo, co okno samodzielnej korekty pilota - ta liczba przychodzi
  * z serwera (`DashboardDto.correctionWindowMs`) i jest tu parametrem właśnie po to,
  * żeby panel nie trzymał drugiej kopii reguły domeny.
  */
@@ -77,7 +77,7 @@ export function todoTasks(
 
   // Stabilne sortowanie: najpierw to, co blokuje arkusz, potem najstarsze. `sort` w JS
   // jest stabilny od ES2019, więc pozycje o równym kluczu zachowują porządek serwera
-  // — a ten jest w każdej z trzech list przemyślany osobno.
+  // - a ten jest w każdej z trzech list przemyślany osobno.
   return tasks.sort((a, b) => {
     if (a.blocking !== b.blocking) return a.blocking ? -1 : 1;
     return a.since - b.since;
@@ -105,7 +105,7 @@ function flagTask(flag: FlagListItemDto, nowMs: number, windowMs: number): TodoT
     // Opis bierzemy z katalogu skrzynki (`FLAG_TYPE_META`), a nie piszemy drugi raz:
     // to ta sama flaga i ma znaczyć na obu ekranach to samo.
     meta: flag.blocksExport
-      ? `${meta.short} — karta dnia nie powstanie, dopóki flaga jest otwarta.`
+      ? `${meta.short} - karta dnia nie powstanie, dopóki flaga jest otwarta.`
       : meta.short,
     age,
     old,
@@ -117,7 +117,7 @@ function flagTask(flag: FlagListItemDto, nowMs: number, windowMs: number): TodoT
 
 function exportTask(row: ExportListItemDto, nowMs: number, windowMs: number): TodoTask {
   // Wiek liczymy od OSTATNIEJ PACZKI tej sesji (`updatedAt`), bo nieudany eksport nie
-  // zostawia po sobie ani wiersza, ani stempla — nie ma innego momentu, od którego
+  // zostawia po sobie ani wiersza, ani stempla - nie ma innego momentu, od którego
   // dałoby się uczciwie liczyć „jak długo to leży".
   const at = Date.parse(row.updatedAt);
   const sinceMs = Number.isNaN(at) ? nowMs : at;
@@ -130,12 +130,12 @@ function exportTask(row: ExportListItemDto, nowMs: number, windowMs: number): To
     name: `Karta dnia bez arkusza · ${row.reg ?? row.aircraftId}${row.day == null ? '' : ` · ${row.day}`}`,
     meta:
       row.revision == null
-        ? 'Dzień zamknięty, w dzienniku eksportu ani jednego wiersza — próba zapisu odbiła się awarią.'
+        ? 'Dzień zamknięty, w dzienniku eksportu ani jednego wiersza - próba zapisu odbiła się awarią.'
         : `Ostatnia rewizja ${row.revision}; bieżąca karta nie powstała.`,
     age,
     old,
     since,
-    // Brakująca karta to dokument klubu, którego nie ma — traktujemy ją tak samo
+    // Brakująca karta to dokument klubu, którego nie ma - traktujemy ją tak samo
     // pilnie jak flagę blokującą.
     blocking: true,
     to: missingExportsHref(row.sessionUuid),
@@ -154,13 +154,13 @@ function openDayTask(row: SessionListItemDto, nowMs: number, windowMs: number): 
     tone: 'blue',
     // Po §3.6a sesja to PRZEJĘCIE → ZDANIE jednej maszyny, nie „dzień lotny": pilot
     // potrafi w jednej dobie zdać jedną maszynę i wziąć drugą. Otwarta sesja znaczy
-    // więc dokładnie tyle, że samolot nie wrócił do puli — i tak ma się nazywać.
+    // więc dokładnie tyle, że samolot nie wrócił do puli - i tak ma się nazywać.
     name: `Samolot nieoddany · ${row.reg ?? row.aircraftId}`,
     // Mockup pisze tu „okno samodzielnej korekty pilota mija za 4 h". To nieprawda:
     // okno rusza dopiero W CHWILI zdania samolotu (`day_close`, model 2026-08-10),
     // a sesja bez `day_close` żadnego okna nie odlicza. Doba jest tu MIARĄ tego,
     // jak długo maszyna stoi zajęta, a nie odliczaniem.
-    meta: `Brak \`day_close\` — maszyna stoi zajęta dłużej niż dobę, więc nikt inny jej nie przejmie, a łańcuch motogodzin nie ma ogniwa zamykającego. Karta doby powstaje po zdaniu samolotu.`,
+    meta: `Brak \`day_close\` - maszyna stoi zajęta dłużej niż dobę, więc nikt inny jej nie przejmie, a łańcuch motogodzin nie ma ogniwa zamykającego. Karta doby powstaje po zdaniu samolotu.`,
     age,
     old,
     since,
@@ -175,7 +175,7 @@ export interface TodoEmptyCopy {
 }
 
 /**
- * Pusta kolejka to POTWIERDZENIE, nie pustka po błędzie — i to jest cała treść
+ * Pusta kolejka to POTWIERDZENIE, nie pustka po błędzie - i to jest cała treść
  * wariantu `A01a`. Stan pusty musi więc powiedzieć, co się tu w ogóle pojawia i skąd,
  * bo inaczej administrator nie odróżni „nie ma zadań" od „nie działa".
  */

@@ -2,7 +2,7 @@
   "name": "uzaero",
   "private": true,
   "version": "0.0.0",
-  "description": "UZ Aero — elektroniczny chronometraż lotów: aplikacja (Expo) + serwer (Fastify) + wspólna domena",
+  "description": "UZ Aero - elektroniczny chronometraż lotów: aplikacja (Expo) + serwer (Fastify) + wspólna domena",
   "workspaces": [
     "app",
     "admin",

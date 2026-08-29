@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: FILTRY LISTY KONT ↔ query string (moduł CZYSTY).
+ * UZ Aero - panel: FILTRY LISTY KONT ↔ query string (moduł CZYSTY).
  *
  * Filtry mieszkają w URL-u, nie w stanie komponentu
  * (`docs/architektura-panelu-frontend.md` §4.4): lista kont jest miejscem, z którego
@@ -8,7 +8,7 @@
  *
  * ══ JEDEN PARAMETR NA CZTERY CHIPY ══
  * Mockup A06 ma chipy „Wszyscy · Aktywni · Nieaktywni · Z rolą panelu". To jest jedno
- * pytanie — „na które konta patrzę" — więc jeden parametr `?stan=`. Dwa parametry
+ * pytanie - „na które konta patrzę" - więc jeden parametr `?stan=`. Dwa parametry
  * (osobno status, osobno rola) pozwalałyby zadać je dwa razy naraz („nieaktywni
  * ORAZ z rolą panelu") i wymagałyby reguły rozstrzygania, której nikt by nie pamiętał.
  * Wartość nieznana jest POMIJANA: adres z literówką ma pokazać pełną listę, a nie
@@ -27,7 +27,7 @@ export interface PilotsFilter {
   scope: PilotScope;
   /** Fragment kodu, nazwiska albo e-maila; `null` = bez wyszukiwania. */
   search: string | null;
-  /** Kierunek sortowania po NAZWISKU — konta nieaktywne i tak lądują na końcu. */
+  /** Kierunek sortowania po NAZWISKU - konta nieaktywne i tak lądują na końcu. */
   sort: SortDirection;
 }
 
@@ -44,7 +44,7 @@ export const DEFAULT_PILOTS_FILTER: PilotsFilter = {
 
 /**
  * Ile kont pobieramy jednym żądaniem. Trasa nie ma kursora, bo klub ma kilkanaście
- * kont — a lista referencyjna, którą trzeba doładowywać, nie nadaje się na słownik
+ * kont - a lista referencyjna, którą trzeba doładowywać, nie nadaje się na słownik
  * filtra innego ekranu. Limit jest zabezpieczeniem przed nieprzewidzianym rozrostem,
  * nie stronicowaniem; gdy zacznie ucinać, ekran mówi o tym wprost.
  */
@@ -76,7 +76,7 @@ export function filterFromParams(params: URLSearchParams): PilotsFilter {
 
 /**
  * Filtr → query string. Wartości domyślne POMIJAMY, żeby adres pełnej listy był po
- * prostu `#/piloci` — link, który da się przeczytać i przepisać.
+ * prostu `#/piloci` - link, który da się przeczytać i przepisać.
  */
 export function paramsFromFilter(filter: PilotsFilter): Record<string, string> {
   const params: Record<string, string> = {};
@@ -86,7 +86,7 @@ export function paramsFromFilter(filter: PilotsFilter): Record<string, string> {
   return params;
 }
 
-/** Adres listy dla danego filtra — JEDNO miejsce, w którym powstaje link do A06. */
+/** Adres listy dla danego filtra - JEDNO miejsce, w którym powstaje link do A06. */
 export function pilotsHref(filter: PilotsFilter): string {
   const query = new URLSearchParams(paramsFromFilter(filter)).toString();
   return query === '' ? '/piloci' : `/piloci?${query}`;
@@ -97,7 +97,7 @@ export function pilotsHref(filter: PilotsFilter): string {
  *
  * `akcja=haslo` otwiera szufladę w wariancie „reset hasła" z mockupu A06a (tożsamość
  * zablokowana, aktywna sekcja hasła). To jest jedna szuflada z dwoma wejściami, a nie
- * dwa ekrany — bo to ta sama decyzja: kto ma dostęp i z jakim hasłem wchodzi.
+ * dwa ekrany - bo to ta sama decyzja: kto ma dostęp i z jakim hasłem wchodzi.
  */
 export function accountHref(filter: PilotsFilter, id: string, action?: 'haslo'): string {
   const params = new URLSearchParams(paramsFromFilter(filter));
@@ -106,7 +106,7 @@ export function accountHref(filter: PilotsFilter, id: string, action?: 'haslo'):
   return query === '' ? `/piloci/${id}` : `/piloci/${id}?${query}`;
 }
 
-/** Adres szuflady NOWEGO konta — segment `nowe`, jak w pasku adresu mockupu A06a. */
+/** Adres szuflady NOWEGO konta - segment `nowe`, jak w pasku adresu mockupu A06a. */
 export const NEW_ACCOUNT_SEGMENT = 'nowe';
 
 export function newAccountHref(filter: PilotsFilter): string {
@@ -118,7 +118,7 @@ export function newAccountHref(filter: PilotsFilter): string {
  *
  * Chip „Z rolą panelu" jedzie jako DWIE role (`?role=admin&role=training_lead`), bo
  * tak wygląda pytanie „kto w ogóle wejdzie do panelu". Sklejanie tego z dwóch żądań
- * po stronie panelu dałoby listę, której serwer nigdy nie wysłał — razem z licznikiem,
+ * po stronie panelu dałoby listę, której serwer nigdy nie wysłał - razem z licznikiem,
  * którego nie policzył.
  */
 export function pilotListQuery(filter: PilotsFilter): PilotListQuery {
@@ -144,7 +144,7 @@ export function accountsAuditHref(): string {
   return auditHref({ ...DEFAULT_AUDIT_FILTER, targetType: 'pilot' });
 }
 
-/** Czy filtr cokolwiek zawęża — pusta lista mówi wtedy co innego (`pilotsRows`). */
+/** Czy filtr cokolwiek zawęża - pusta lista mówi wtedy co innego (`pilotsRows`). */
 export function isNarrowed(filter: PilotsFilter): boolean {
   return filter.scope !== 'all' || filter.search != null;
 }

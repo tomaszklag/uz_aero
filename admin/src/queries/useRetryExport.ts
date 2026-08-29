@@ -1,22 +1,22 @@
 /**
- * UZ Aero — panel: PONOWIENIE eksportu karty dnia (`A05`).
+ * UZ Aero - panel: PONOWIENIE eksportu karty dnia (`A05`).
  *
  * **Mutacja deklaruje swoje unieważnienia TUTAJ, nie na ekranie**
  * (`docs/architektura-panelu-frontend.md` §4.3).
  *
  * Co przestaje być prawdą po udanym ponowieniu:
- *  • **monitor eksportu** — doszła rewizja, zmienił się stan i treść karty (`exports.all`
+ *  • **monitor eksportu** - doszła rewizja, zmienił się stan i treść karty (`exports.all`
  *    obejmuje listę, historię i podgląd, bo wszystkie starzeją się od tej samej rzeczy);
- *  • **listy dni** — kolumna „Arkusz" na `A02` niesie `exportRevision`;
- *  • **karta dnia** — ten sam numer stoi w nagłówku `A02a`;
- *  • **dziennik audytu** — `AuditedWrite` dopisał wpis TĄ SAMĄ transakcją;
- *  • **pulpit** — unieważnia go każda mutacja panelu.
+ *  • **listy dni** - kolumna „Arkusz" na `A02` niesie `exportRevision`;
+ *  • **karta dnia** - ten sam numer stoi w nagłówku `A02a`;
+ *  • **dziennik audytu** - `AuditedWrite` dopisał wpis TĄ SAMĄ transakcją;
+ *  • **pulpit** - unieważnia go każda mutacja panelu.
  *
- * ══ UNIEWAŻNIAMY TAKŻE PO ODMOWIE — I TO NIE JEST NADMIAROWE ══
+ * ══ UNIEWAŻNIAMY TAKŻE PO ODMOWIE - I TO NIE JEST NADMIAROWE ══
  * Odmowa („flaga trzyma kartę", „dzień jeszcze otwarty") wraca jako 200, więc `onSuccess`
  * dostaje ją tak samo jak sukces. Wygląda to na unieważnianie bez powodu, ale powód jest:
  * odmowa oznacza, że wiersz, który administrator widział, opisywał NIEAKTUALNY stan
- * świata — dzień zdążył zostać zamknięty, flaga rozstrzygnięta, karta wysłana przez
+ * świata - dzień zdążył zostać zamknięty, flaga rozstrzygnięta, karta wysłana przez
  * automat. Odświeżenie jest wtedy dokładnie tym, czego trzeba, a rozróżnianie „kiedy
  * warto" byłoby zgadywaniem po stronie klienta.
  *
@@ -33,7 +33,7 @@ import { retryExport } from '../api/exports';
 import { keys } from './keys';
 
 /**
- * Eksportowana, żeby dało się ją sprawdzić na PRAWDZIWYM `QueryClient` bez renderu —
+ * Eksportowana, żeby dało się ją sprawdzić na PRAWDZIWYM `QueryClient` bez renderu -
  * „co ta mutacja unieważnia" jest własnością kluczy, nie ekranu, więc test na atrapie
  * sieci byłby testem atrapy, a test przez UI testowałby Reacta.
  */

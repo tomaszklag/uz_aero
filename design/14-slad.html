@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 14 Ślad sesji</title>
+<title>UZ Aero - 14 Ślad sesji</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -76,7 +76,7 @@
   .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
   .scroll::-webkit-scrollbar { display:none; }
   /* Karty z `overflow:hidden` zapadaja sie w kolumnie flex zamiast wyjechac poza
-     ekran do przewiniecia — ta sama wada, co naprawiona w 01 i 10. */
+     ekran do przewiniecia - ta sama wada, co naprawiona w 01 i 10. */
   .scroll > * { flex-shrink:0; }
 
   /* Section card (wspólne z ekranem 10) */
@@ -100,7 +100,7 @@
   /* ===== MAPA ===== */
   /* BEZ kafelków (decyzja 2026-08-04): tłem jest siatka współrzędnych, a odniesienie
      w terenie dają lotniska z katalogu wbudowanego w aplikację. Ekran nie pobiera
-     niczego z sieci — działa tak samo w hangarze bez zasięgu, jak w domu. */
+     niczego z sieci - działa tak samo w hangarze bez zasięgu, jak w domu. */
   .map-wrap { position:relative; height:300px; background:#0F1216; }
   .map-wrap svg { display:block; width:100%; height:100%; }
   .map-scale {
@@ -131,7 +131,7 @@
   /* ===== PROFIL PIONOWY ===== */
   .profile-wrap { position:relative; height:204px; padding:10px 10px 4px; background:#0F1216; }
   .profile-wrap svg { display:block; width:100%; height:100%; overflow:visible; }
-  /* Podziałka CZASU — wskaźnik przybliżenia profilu, dokładnie jak podziałka
+  /* Podziałka CZASU - wskaźnik przybliżenia profilu, dokładnie jak podziałka
      odległości na mapie: po zoomie czyta „2 min" zamiast „15 min". Bez niej
      między dwoma znacznikami nie ma ani jednej liczby o czasie. */
   .profile-scale { position:absolute; left:8px; bottom:6px; display:flex; flex-direction:column; gap:2px; }
@@ -156,7 +156,7 @@
   .stat-block-head .spacer { flex:1; }
   .stat-block-head .sub { font-size:8px; letter-spacing:1px; color:var(--text-muted); text-transform:none; }
 
-  /* Czasy faz jako PASEK, nie cztery liczby: proporcja jest tu treścią — dzień skokowy
+  /* Czasy faz jako PASEK, nie cztery liczby: proporcja jest tu treścią - dzień skokowy
      to prawie samo wznoszenie i zniżanie, i to widać jednym spojrzeniem. Kolory te same,
      co na profilu i mapie (pełna zieleń = wznoszenie, jaśniejsza = zejście, szary =
      ziemia), więc pasek nie wprowadza nowego języka. */
@@ -213,7 +213,7 @@
 
     <div class="app-header">
       <!-- Powrót do SESJI (10). Do issue #38 ślad otwierał się ze szczegółów lotu (16)
-           i opisywał JEDEN lot — ale zapis GPS powstaje w jednym ciągu, od uruchomienia
+           i opisywał JEDEN lot - ale zapis GPS powstaje w jednym ciągu, od uruchomienia
            do wyłączenia silnika, więc dzielenie go na loty było krojeniem nagrania na
            kawałki po to, żeby pilot oglądał je po kolei. Ekran 16 został usunięty. -->
       <a href="10-statystyki.html" class="back-btn">
@@ -258,7 +258,7 @@
 
             <!-- LOTNISKO z katalogu (`packages/domain/src/airfields.ts`, dane OurAirports
                  uzupełnione o pasy z OpenStreetMap): pas w skali mapy, obrócony o kurs progu,
-                 i kod ICAO. Bez kafelków to jedyne odniesienie w terenie — mówi też,
+                 i kod ICAO. Bez kafelków to jedyne odniesienie w terenie - mówi też,
                  z której strony było podejście. -->
             <g transform="rotate(-25 152 218)">
               <rect x="110" y="216" width="84" height="4" fill="#3A424C" rx="1"/>
@@ -267,7 +267,7 @@
                  tej mapie ~130 jednostek z 365 i wchodziła pod podpis lądowania. -->
             <text x="196" y="232" class="axis-label" fill="#5A646E" font-size="8">EPZG</text>
 
-            <!-- KOŁOWANIE — przerywana, szara. Zapis obejmuje CAŁY bieg silnika
+            <!-- KOŁOWANIE - przerywana, szara. Zapis obejmuje CAŁY bieg silnika
                  (issue #38), więc na trasie widać też drogę z płyty na pas i z powrotem;
                  bez tego rysunek zaczynałby się w powietrzu. -->
             <path d="M126 236 L152 218" fill="none" stroke="#5A646E" stroke-width="1.8"
@@ -287,7 +287,7 @@
                      C246 134, 240 104, 218 90"
                   fill="none" stroke="var(--green)" stroke-width="2.5"
                   stroke-linecap="round" stroke-linejoin="round" opacity="0.92"/>
-            <!-- zejście po zrzucie (jaśniejsze — schodzenie) -->
+            <!-- zejście po zrzucie (jaśniejsze - schodzenie) -->
             <path d="M218 90 C194 74, 156 78, 138 98 C120 118, 124 148, 144 163 C160 176, 150 196, 156 214"
                   fill="none" stroke="var(--green)" stroke-width="2.5"
                   stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/>
@@ -304,12 +304,12 @@
                   fill="none" stroke="var(--green)" stroke-width="2.5"
                   stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/>
 
-            <!-- ZRZUTY — podpis niesie CZAS zdarzenia (issue #47 pkt 2), nie wysokość:
+            <!-- ZRZUTY - podpis niesie CZAS zdarzenia (issue #47 pkt 2), nie wysokość:
                  wysokość mówi profil pionowy, który ma po to oś, a na mapie ta sama liczba
                  byłaby drugą odpowiedzią na pytanie, którego mapa nie zadaje. -->
             <circle cx="218" cy="90" r="5" fill="none" stroke="var(--blue)" stroke-width="1.8"/>
             <circle cx="218" cy="90" r="1.8" fill="var(--blue)"/>
-            <!-- MAX WYSOKOŚĆ wypadła w tej samej chwili, co zrzut 1 — i tak jest prawie
+            <!-- MAX WYSOKOŚĆ wypadła w tej samej chwili, co zrzut 1 - i tak jest prawie
                  zawsze w dniu skokowym. Dwa znaczniki na jednym punkcie to dwa podpisy
                  zachodzące na siebie, więc REGUŁA jest taka: maksimum bliższe niż 2 min
                  od innego znacznika dopisuje się do JEGO podpisu jako „MAX", a osobnym
@@ -319,7 +319,7 @@
             <circle cx="88" cy="158" r="1.8" fill="var(--blue)"/>
             <text x="26" y="152" class="axis-label" fill="#3498DB" font-size="7.5">ZRZUT 2 · 09:33</text>
 
-            <!-- STARTY I LĄDOWANIA — wszystkie cztery, bo sesja miała dwa loty
+            <!-- STARTY I LĄDOWANIA - wszystkie cztery, bo sesja miała dwa loty
                  (issue #38 pkt 2). Podpisy z numerem, żeby dało się je przypisać
                  do wierszy osi czasu na 10. -->
             <circle cx="152" cy="218" r="6" fill="var(--green)"/>
@@ -384,7 +384,7 @@
 
             <!-- SIATKA PIONOWA co jeden krok podziałki: jedna kratka = to, co mówi
                  pasek na dole („15 min"). Dzięki temu siatka jest odczytem, a nie
-                 tłem — garb o dwóch kratkach trwał pół godziny. -->
+                 tłem - garb o dwóch kratkach trwał pół godziny. -->
             <line x1="78"  y1="8" x2="78"  y2="126" class="grid-line vertical"/>
             <line x1="122" y1="8" x2="122" y2="126" class="grid-line vertical"/>
             <line x1="166" y1="8" x2="166" y2="126" class="grid-line vertical"/>
@@ -399,7 +399,7 @@
             <!-- DWA WYNIESIENIA, jeden wykres: profil rysuje się w osi CZASU SESJI,
                  więc przerwa między lądowaniem a kolejnym startem (kołowanie, załadunek)
                  jest jego częścią. To ona pokazuje, ile maszyna stała z pracującym
-                 silnikiem — a od issue #38 ta liczba wchodzi wprost do normy zużycia. -->
+                 silnikiem - a od issue #38 ta liczba wchodzi wprost do normy zużycia. -->
 
             <!-- obszar pod krzywą: lot 1 -->
             <path d="M40 119 C58 114, 70 100, 84 82 C98 62, 110 38, 130 24 L130 119 Z"
@@ -423,19 +423,19 @@
                   fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
 
             <!-- PRZERWA NA ZIEMI: silnik pracuje, samolot stoi. Kreska przy samej ziemi,
-                 szara — bo to nie jest lot, ale nie jest też dziurą w zapisie. -->
+                 szara - bo to nie jest lot, ale nie jest też dziurą w zapisie. -->
             <line x1="192" y1="119" x2="228" y2="119" stroke="#5A646E" stroke-width="1.6" stroke-dasharray="4 4"/>
             <text x="196" y="112" class="axis-label" fill="#5A646E">ziemia 11 min</text>
 
-            <!-- ZNACZNIKI: te same cztery rodzaje, co na mapie (issue #47 pkt 2) —
-                 start, zrzut, maksimum, lądowanie — i każdy z CZASEM. Do issue #47 profil
+            <!-- ZNACZNIKI: te same cztery rodzaje, co na mapie (issue #47 pkt 2) -
+                 start, zrzut, maksimum, lądowanie - i każdy z CZASEM. Do issue #47 profil
                  pokazywał sam szczyt, więc dwa wykresy jednej sesji podpisywały co innego
                  i nie dało się przełożyć zdarzenia z jednego na drugie. -->
-            <!-- PODPIS TO SAMA GODZINA, a rodzaj niesie KOLOR — ten sam, co w legendzie
+            <!-- PODPIS TO SAMA GODZINA, a rodzaj niesie KOLOR - ten sam, co w legendzie
                  mapy nad wykresem: zielony start, czerwone lądowanie, błękitny zrzut.
                  Pełne nazwy („T/O 1 · 08:20") mają na tym wykresie po ~60 jednostek
                  z 302 dostępnych, więc cztery znaczniki lotu nie mieszczą się w jednym
-                 rzędzie i zachodzą na siebie — sprawdzone na geometrii, nie na oko. -->
+                 rzędzie i zachodzą na siebie - sprawdzone na geometrii, nie na oko. -->
             <line x1="130" y1="18" x2="130" y2="126" stroke="#3498DB" stroke-width="1" stroke-dasharray="3 3"/>
             <circle cx="130" cy="24" r="3.5" fill="var(--blue)"/>
             <text x="124" y="16" class="axis-label" fill="#3498DB" text-anchor="end">08:52</text>
@@ -446,7 +446,7 @@
             <circle cx="304" cy="28" r="3.5" fill="var(--blue)"/>
             <text x="298" y="20" class="axis-label" fill="#3498DB" text-anchor="end">09:33</text>
 
-            <!-- starty i lądowania obu lotów — godziny POD osią, żeby nie zderzały się
+            <!-- starty i lądowania obu lotów - godziny POD osią, żeby nie zderzały się
                  z podpisem przerwy na ziemi ani z krzywą -->
             <circle cx="40" cy="119" r="3.5" fill="var(--green)"/>
             <circle cx="192" cy="119" r="3.5" fill="var(--red)"/>
@@ -460,13 +460,13 @@
             <text x="336" y="138" class="axis-label" fill="#E74C3C" text-anchor="end">09:47</text>
           </svg>
         </div>
-        <!-- Średnie wznoszenie i zejście stały tu jako podpis wykresu — zeszły do
+        <!-- Średnie wznoszenie i zejście stały tu jako podpis wykresu - zeszły do
              „Statystyk lotu", obok maksimów tych samych wielkości. To liczby o CAŁYM
              locie, a nie objaśnienie rysunku. -->
       </div>
 
       <!-- ══ STATYSTYKI (issue #47 pkt 3) ══════════════════════════════════ -->
-      <!-- Wszystko liczy się z TEGO SAMEGO śladu, co linia i profil wyżej — żadna
+      <!-- Wszystko liczy się z TEGO SAMEGO śladu, co linia i profil wyżej - żadna
            z tych liczb nie wchodzi do rejestru ani do rozliczenia. To opis lotu, nie
            dokument: dlatego stoi na ekranie śladu, a nie na ekranie sesji (10). -->
       <div class="section-card">
@@ -478,7 +478,7 @@
 
         <!-- Sumy CAŁEJ sesji: dwa loty to jeden zapis, więc dystans i czas liczą się
              przez oba. Rozbicie per lot stoi na osi czasu ekranu 10. Stały tu do
-             issue #47 pod mapą — zeszły niżej, żeby profil przylegał do trasy. -->
+             issue #47 pod mapą - zeszły niżej, żeby profil przylegał do trasy. -->
         <div class="stat-block">
           <div class="stat-block-head">Podsumowanie</div>
           <div class="metric-grid three">
@@ -542,7 +542,7 @@
 
         <div class="stat-block">
           <!-- Prędkość pionowa liczy się TĄ SAMĄ regresją w oknie, co faza w kokpicie
-               (`detection/flightPhase.ts`) — druga definicja „wznoszenia" rozjechałaby
+               (`detection/flightPhase.ts`) - druga definicja „wznoszenia" rozjechałaby
                się z napisem, który pilot widział w locie, i nikt by tego nie zauważył. -->
           <div class="stat-block-head">
             Czasy faz
@@ -586,7 +586,7 @@
         </div>
 
         <div class="stat-block">
-          <!-- „Odchylenie od poziomego lotu" z issue #47 — liczone WYŁĄCZNIE na odcinkach
+          <!-- „Odchylenie od poziomego lotu" z issue #47 - liczone WYŁĄCZNIE na odcinkach
                przelotowych, bo na wznoszeniu wahanie wysokości nie jest wadą, tylko
                celem. Przy dniu skokowym przelotu bywa kilka minut, a poniżej progu
                (2 min) blok znika w całości, zamiast orzekać o trzech odczytach. -->
@@ -617,7 +617,7 @@
 
       <!-- LOGU PUNKTÓW NIE MA (przegląd issue #47): tabela surowych fixów ze stanem
            bramki jakości jest materiałem do STROJENIA PROGÓW, a nie odpowiedzią na
-           pytanie pilota — została w panelu (A02c) i w nagraniu czytanym przez
+           pytanie pilota - została w panelu (A02c) i w nagraniu czytanym przez
            server/scripts/replay.ts. Liczbę punktów przyjętych i odrzuconych niesie
            podsumowanie w statystykach. -->
 
@@ -631,12 +631,12 @@
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Warianty tego ekranu — kiedy który?</div>
+  <div class="vp-title">Warianty tego ekranu - kiedy który?</div>
   <a class="vp-item active" href="14-slad.html">
     <span class="vp-badge">14</span>
     <span class="vp-body">
-      <span class="vp-name">Ślad sesji — pełny</span>
-      <span class="vp-when">Standard: serwer ma ślad tej sesji. Wejście miniaturą śladu z ekranu sesji (10). Rysuje CAŁY bieg silnika — kołowanie, oba wyniesienia i wszystkie starty oraz lądowania — bo zapis powstaje w jednym ciągu i dzielenie go na loty było krojeniem nagrania na kawałki (issue #38). Trasa na siatce współrzędnych z pasami lotnisk z katalogu, profil pionowy ze znacznikami i czasami, statystyki lotu, log punktów ze stanem bramki jakości.</span>
+      <span class="vp-name">Ślad sesji - pełny</span>
+      <span class="vp-when">Standard: serwer ma ślad tej sesji. Wejście miniaturą śladu z ekranu sesji (10). Rysuje CAŁY bieg silnika - kołowanie, oba wyniesienia i wszystkie starty oraz lądowania - bo zapis powstaje w jednym ciągu i dzielenie go na loty było krojeniem nagrania na kawałki (issue #38). Trasa na siatce współrzędnych z pasami lotnisk z katalogu, profil pionowy ze znacznikami i czasami, statystyki lotu, log punktów ze stanem bramki jakości.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -644,21 +644,21 @@
     <span class="vp-badge amber">14C</span>
     <span class="vp-body">
       <span class="vp-name">Bez zasięgu</span>
-      <span class="vp-when">Ślad jest na serwerze, ale telefon nie ma jak go pobrać. Jedyny stan, w którym ekran 14 potrzebuje sieci — i dlatego mówi to wprost, zamiast udawać, że śladu nie ma. Czasy i liczby sesji zostają, bo liczą się z rejestru na telefonie.</span>
+      <span class="vp-when">Ślad jest na serwerze, ale telefon nie ma jak go pobrać. Jedyny stan, w którym ekran 14 potrzebuje sieci - i dlatego mówi to wprost, zamiast udawać, że śladu nie ma. Czasy i liczby sesji zostają, bo liczą się z rejestru na telefonie.</span>
     </span>
   </a>
   <a class="vp-item" href="14d-slad-kursor.html">
     <span class="vp-badge">14D</span>
     <span class="vp-body">
       <span class="vp-name">Kursor i przybliżenie</span>
-      <span class="vp-when">Stan W TRAKCIE gestu: palec na jednym wykresie stawia kursor na obu, a mapa jest przybliżona dwoma palcami. Nie jest osobnym ekranem — pokazuje, co widać w czasie przeciągania (issue #47 pkt 7 i 8).</span>
+      <span class="vp-when">Stan W TRAKCIE gestu: palec na jednym wykresie stawia kursor na obu, a mapa jest przybliżona dwoma palcami. Nie jest osobnym ekranem - pokazuje, co widać w czasie przeciągania (issue #47 pkt 7 i 8).</span>
     </span>
   </a>
   <a class="vp-item" href="14b-slad-brak.html">
     <span class="vp-badge dim">14B</span>
     <span class="vp-body">
       <span class="vp-name">Brak śladu</span>
-      <span class="vp-when">Sesja wpisana ręcznie (15 / 05F) albo nagranie, które nigdy nie dotarło na serwer. Nie ma czego rysować — stan pusty tłumaczy powód zamiast pokazywać pustą mapę.</span>
+      <span class="vp-when">Sesja wpisana ręcznie (15 / 05F) albo nagranie, które nigdy nie dotarło na serwer. Nie ma czego rysować - stan pusty tłumaczy powód zamiast pokazywać pustą mapę.</span>
     </span>
   </a>
 </aside>

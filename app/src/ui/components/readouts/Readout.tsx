@@ -1,16 +1,16 @@
 /**
- * UZ Aero — Readout (sekcja odczytu z mockupu 02a)
+ * UZ Aero - Readout (sekcja odczytu z mockupu 02a)
  *
  * Blok „jedna wartość z licznika": etykieta, duża liczba z jednostką, adnotacja
  * świeżości, podpis konfiguracyjny i przycisk korekty po prawej. Pod spodem opcjonalna
  * oś czasu (`Trail`) i dowolna wstawka (pasek poziomu paliwa).
  *
- * W 02a występuje dwa razy — paliwo i motogodziny — i wróci przy zamknięciu dnia (09)
+ * W 02a występuje dwa razy - paliwo i motogodziny - i wróci przy zamknięciu dnia (09)
  * oraz tankowaniu (06). Dlatego jest komponentem, a nie dwoma kopiami w ekranie.
  *
  * Zasada `CLAUDE.md`, którą ten blok realizuje: **liczniki fizyczne > dane z serwera**.
  * Wartość z przekazania jest pokazana jako podpowiedź (z adnotacją wieku), a korekta
- * jest zawsze o jedno tapnięcie — nigdy nie trzeba „walczyć" z tym, co podpowiedział
+ * jest zawsze o jedno tapnięcie - nigdy nie trzeba „walczyć" z tym, co podpowiedział
  * serwer. Gdy danych brak, przycisk zmienia się w wezwanie („Wpisz odczyt", amber),
  * bo to wtedy jedyna droga naprzód.
  */
@@ -28,7 +28,7 @@ import { toneColors, type Tone } from '../tone';
 export interface ReadoutProps {
   /** Etykieta sekcji, np. „Paliwo na pokładzie". */
   label: string;
-  /** Sformatowana wartość; `null` = brak danych (mockup: „— —"). */
+  /** Sformatowana wartość; `null` = brak danych (mockup: „- -"). */
   value: string | null;
   unit: string;
   /** Ton wartości: `amber` dla paliwa, `neutral` dla motogodzin. */
@@ -38,7 +38,7 @@ export interface ReadoutProps {
   syncedAt?: string | null;
   /** Podpis pod wartością, np. „45% pojemności · zbiorniki 330 L". */
   caption?: string;
-  /** Wstawka między adnotacją a podpisem — pasek poziomu paliwa. */
+  /** Wstawka między adnotacją a podpisem - pasek poziomu paliwa. */
   gauge?: React.ReactNode;
   /** Korekta odczytu. Przy `freshness === 'brak'` przycisk sam zmienia się w wezwanie. */
   onCorrect: () => void;
@@ -48,13 +48,13 @@ export interface ReadoutProps {
   missingNote?: string;
   manualNote?: string;
   /**
-   * Jawny stan „brak danych" — nadpisuje wywiedziony (issue #60).
+   * Jawny stan „brak danych" - nadpisuje wywiedziony (issue #60).
    *
    * Domyślnie pusta wartość ZNACZY brak danych, bo paliwo i MH zawsze niosą liczbę
    * (z przekazania albo z palca). Olej łamie to founderskie założenie: wartość zaczyna
    * pusta W KAŻDYM stanie świeżości (pomiar jest aktem pilota, prefill fabrykowałby
    * dane), a szlak podpowiedzi i podpis konfiguracji mają stać obok pustej wartości.
-   * `missing={false}` mówi: pusto, ale to nie jest brak — pokaż resztę sekcji.
+   * `missing={false}` mówi: pusto, ale to nie jest brak - pokaż resztę sekcji.
    */
   missing?: boolean;
   /** Historia prowadząca do tej wartości. */
@@ -113,7 +113,7 @@ export function Readout({
                 fontSize: 30,
                 lineHeight: 32,
                 // Pusta wartość jest wyciszona także, gdy sekcja NIE jest w stanie
-                // „brak" (olej przed pomiarem) — „— —" w kolorze akcentu wyglądałoby
+                // „brak" (olej przed pomiarem) - „- -" w kolorze akcentu wyglądałoby
                 // jak odczyt, a jest jego brakiem.
                 color: missing || value == null
                   ? theme.colors.textMuted
@@ -122,7 +122,7 @@ export function Readout({
                     : c.accent,
               }}
             >
-              {value ?? '— —'}
+              {value ?? '- -'}
             </AppText>
             <AppText variant="body" tone="secondary" style={styles.unit}>
               {unit}
@@ -145,7 +145,7 @@ export function Readout({
           )}
         </View>
 
-        {/* Cel dotykowy 44 px — próg dla rękawic (ten sam co w `ActionButton`). */}
+        {/* Cel dotykowy 44 px - próg dla rękawic (ten sam co w `ActionButton`). */}
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`${missing ? missingLabel : correctLabel}: ${label}`}

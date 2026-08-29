@@ -1,9 +1,9 @@
 /**
- * UZ Aero (serwer) — `AdminPilotJoin` → kontrakt listy kont (`A06`).
+ * UZ Aero (serwer) - `AdminPilotJoin` → kontrakt listy kont (`A06`).
  *
  * Czysta funkcja, jak `sessionListItem.ts` i `auditEntry.ts`: port oddaje model
  * warstwy aplikacji, a mapowanie na kształt „na drucie" jest testowalne bez bazy.
- * Tutaj mieszka jedyna rzecz, którą trzeba pamiętać przy tej trasie — **hash hasła
+ * Tutaj mieszka jedyna rzecz, którą trzeba pamiętać przy tej trasie - **hash hasła
  * nie ma dokąd wjechać, bo port go nie niesie** (`AdminPilotAccount` jest osobnym
  * typem od `PilotAccount` właśnie po to).
  */
@@ -30,7 +30,7 @@ export function pilotListItem(join: AdminPilotJoin): AdminPilotListItem {
  * `PilotCounts.byRole` (mapa po katalogu ról) → płaskie pola kontraktu.
  *
  * Płasko, a nie mapą, bo kontrakt panelu ma być czytelny bez znajomości katalogu ról
- * serwera — a dopisanie czwartej roli i tak wymaga decyzji o tym, jak nazwać ją
+ * serwera - a dopisanie czwartej roli i tak wymaga decyzji o tym, jak nazwać ją
  * w karcie „Rola w panelu", czyli zmiany po obu stronach.
  */
 export function pilotCounts(counts: PilotCounts): AdminPilotCounts {
@@ -46,7 +46,7 @@ export function pilotCounts(counts: PilotCounts): AdminPilotCounts {
 }
 
 /**
- * Liczniki chipów — przepisanie 1:1, bo port i kontrakt odpowiadają tu na dokładnie
+ * Liczniki chipów - przepisanie 1:1, bo port i kontrakt odpowiadają tu na dokładnie
  * to samo pytanie. Mapper istnieje mimo to, żeby kontrakt nie był typem PORTU: to
  * dwie rzeczy, które zmieniają się z różnych powodów (kształt SQL-a vs kształt drutu).
  */

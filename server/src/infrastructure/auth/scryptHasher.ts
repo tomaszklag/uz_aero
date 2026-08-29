@@ -1,13 +1,13 @@
 /**
- * UZ Aero (serwer) — hasła przez scrypt z `node:crypto`.
+ * UZ Aero (serwer) - hasła przez scrypt z `node:crypto`.
  *
  * DLACZEGO NIE argon2: pakiet `argon2` to natywny addon (node-gyp), który musi się
- * skompilować na każdej maszynie — w tym na Windowsie dewelopera. Scrypt jest wbudowany
+ * skompilować na każdej maszynie - w tym na Windowsie dewelopera. Scrypt jest wbudowany
  * w Node, jest uznanym KDF-em (RFC 7914) i przy kilkunastu kontach klubu różnica
  * odporności wobec argon2id nie ma praktycznego znaczenia. Zero zależności > odrobina
  * teoretycznej przewagi.
  *
- * Format zapisu: `scrypt$N$r$p$saltB64$hashB64` — parametry W ZAPISIE, żeby dało się
+ * Format zapisu: `scrypt$N$r$p$saltB64$hashB64` - parametry W ZAPISIE, żeby dało się
  * je podnieść w przyszłości bez unieważniania istniejących haseł (stare wpisy weryfikują
  * się po swoich parametrach, nowe dostają mocniejsze).
  */
@@ -66,7 +66,7 @@ export class ScryptHasher implements PasswordHasher {
     const salt = Buffer.from(saltB64!, 'base64');
     const expected = Buffer.from(hashB64!, 'base64');
 
-    // Pusty/ucięty hash: `timingSafeEqual(empty, empty)` zwraca true — fail-open,
+    // Pusty/ucięty hash: `timingSafeEqual(empty, empty)` zwraca true - fail-open,
     // w którym uszkodzony rekord przyjmuje KAŻDE hasło. Minimalna długość zamyka to.
     if (expected.length < 32 || salt.length < 8) return false;
 
@@ -77,7 +77,7 @@ export class ScryptHasher implements PasswordHasher {
         p,
         maxmem: 128 * N * r * 2,
       });
-      // Porównanie stałoczasowe — zwykłe `equals` przecieka długością wspólnego prefiksu.
+      // Porównanie stałoczasowe - zwykłe `equals` przecieka długością wspólnego prefiksu.
       return actual.length === expected.length && timingSafeEqual(actual, expected);
     } catch {
       return false; // uszkodzony wpis ≠ wyjątek na ścieżce logowania

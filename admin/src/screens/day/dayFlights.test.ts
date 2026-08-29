@@ -1,7 +1,7 @@
 /**
- * UZ Aero — panel: tabela lotów karty dnia (moduł czysty).
+ * UZ Aero - panel: tabela lotów karty dnia (moduł czysty).
  *
- * Loty i ich czasy policzyła projekcja — tutaj sprawdzamy wyłącznie to, czego typy
+ * Loty i ich czasy policzyła projekcja - tutaj sprawdzamy wyłącznie to, czego typy
  * nie pilnują: przypisanie lotu do cyklu silnika, lot trwający (który nie ma jeszcze
  * czego mierzyć) i lot spoza cykli (wpis ręczny).
  */
@@ -16,7 +16,7 @@ const at = (h: number, m: number): number => DAY + (h * 60 + m) * 60_000;
 
 let legSeq = 0;
 
-/** Wzlot bez potwierdzenia — ten test bada wyłącznie przypisanie lotów do cykli. */
+/** Wzlot bez potwierdzenia - ten test bada wyłącznie przypisanie lotów do cykli. */
 const run = (from: [number, number], to: [number, number] | null) => ({
   index: ++legSeq,
   startedAt: at(from[0], from[1]),
@@ -72,17 +72,17 @@ describe('flightRows', () => {
     expect(rows[0]!.cycle).toBe('1');
   });
 
-  it('lot POZA cyklami mówi „—" i to jest prawdziwa odpowiedź', () => {
+  it('lot POZA cyklami mówi „-" i to jest prawdziwa odpowiedź', () => {
     // Wpis ręczny (`manual_log_entry`) wnosi lot bez pary zdarzeń silnika, więc do
-    // żadnego cyklu nie należy. „1" byłoby zmyśleniem, a puste pole — brakiem danych.
+    // żadnego cyklu nie należy. „1" byłoby zmyśleniem, a puste pole - brakiem danych.
     const rows = flightRows(
       state({ legs: [run([6, 31], [8, 41])], flights: [flight(9, [12, 35], [12, 59], 'manual')] }),
     );
-    expect(rows[0]!.cycle).toBe('—');
+    expect(rows[0]!.cycle).toBe('-');
     expect(rows[0]!.method).toEqual({ label: 'ręcznie', tone: 'amber' });
   });
 
-  it('lot W POWIETRZU nie pokazuje „00:00" — nie ma jeszcze czego mierzyć', () => {
+  it('lot W POWIETRZU nie pokazuje „00:00" - nie ma jeszcze czego mierzyć', () => {
     // Projekcja trzyma `durationMs === 0` dla lotu otwartego („wartości na żywo NIE
     // wchodzą do sum"). Wypisanie zera sugerowałoby lot zerowej długości.
     const rows = flightRows(
@@ -90,8 +90,8 @@ describe('flightRows', () => {
     );
 
     expect(rows[0]!.open).toBe(true);
-    expect(rows[0]!.landing).toBe('—');
-    expect(rows[0]!.duration).toBe('—');
+    expect(rows[0]!.landing).toBe('-');
+    expect(rows[0]!.duration).toBe('-');
   });
 
   it('czasy lotów mają sekundy i wiodące zero, jak reszta karty dnia', () => {

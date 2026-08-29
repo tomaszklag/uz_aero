@@ -1,11 +1,11 @@
 /**
- * UZ Aero — panel: testy wierszy „Flota teraz" (`A01`).
+ * UZ Aero - panel: testy wierszy „Flota teraz" (`A01`).
  *
  * Cztery własności, których złamanie jest usterką produktu, a nie kosmetyką ekranu:
  *  1. plakietka fazy lotu pochodzi ze STANU SILNIKA, a nie z istnienia claimu;
- *  2. milczący telefon wygrywa nad fazą lotu — „w locie" przy syncu sprzed godziny
+ *  2. milczący telefon wygrywa nad fazą lotu - „w locie" przy syncu sprzed godziny
  *     nie jest wiedzą o locie;
- *  3. brak odczytu to „—", nigdy zero;
+ *  3. brak odczytu to „-", nigdy zero;
  *  4. jednostka WOLNA nie świeci na bursztyn od samego wieku odczytu.
  */
 
@@ -132,7 +132,7 @@ describe('plakietka fazy lotu pochodzi ze stanu SILNIKA', () => {
   });
 
   it('jednostka wyłączona ze służby ma własny stan, nie „Wolny"', () => {
-    // „Wolny" znaczyłoby, że ktoś ją może wziąć — a nie może, bo nie ma jej na liście.
+    // „Wolny" znaczyłoby, że ktoś ją może wziąć - a nie może, bo nie ma jej na liście.
     const view = one(row({ engine: null, serviceStatus: 'disabled' }));
     expect(view.badge).toEqual({ text: 'Poza służbą', tone: 'dim' });
     expect(view.freshNote).toBe('historia zostaje');
@@ -157,7 +157,7 @@ describe('milczący telefon WYGRYWA nad fazą lotu', () => {
     expect(view.freshClass).toBe('fresh-val amber');
   });
 
-  it('sync dokładnie NA progu jest jeszcze świeży — granica jest ostra', () => {
+  it('sync dokładnie NA progu jest jeszcze świeży - granica jest ostra', () => {
     const view = one(
       row({
         engine: engine({ inFlight: true, engineRunning: true }),
@@ -169,7 +169,7 @@ describe('milczący telefon WYGRYWA nad fazą lotu', () => {
   });
 
   it('otwarty claim BEZ ani jednego zdarzenia mówi to wprost', () => {
-    // Warunek „cisza podejrzana" z `A01a` — z projekcji `sessions` niewidoczny.
+    // Warunek „cisza podejrzana" z `A01a` - z projekcji `sessions` niewidoczny.
     const view = one(row({ engine: engine({ eventCount: 0 }), lastEventAt: null }));
     expect(view.freshNote).toBe('claim bez ani jednego zdarzenia');
     expect(view.freshText).toBe('brak zdarzeń w rejestrze');
@@ -178,12 +178,12 @@ describe('milczący telefon WYGRYWA nad fazą lotu', () => {
   });
 });
 
-describe('brak danych to „—", nigdy zero', () => {
+describe('brak danych to „-", nigdy zero', () => {
   it('jednostka bez odczytu nie pokazuje ani `0 L`, ani `0.0`', () => {
     // `0 L` byłoby twierdzeniem o pustym zbiorniku, a brak odczytu nim nie jest.
     const view = one(row({ engine: null, reading: null }));
-    expect(view.mh).toBe('—');
-    expect(view.fuel).toBe('—');
+    expect(view.mh).toBe('-');
+    expect(view.fuel).toBe('-');
     expect(view.since).toBe('nigdy nie przejmowany');
     expect(view.freshNote).toBe('brak danych z telefonu');
   });
@@ -228,7 +228,7 @@ describe('opis sesji i przejście wiersza', () => {
   it('linia opisu składa claim, czas zajęcia MASZYNY, lotnisko i drugiego pilota', () => {
     // Do etapu D stało tu „duty 6:24". Po §3.6a to pomyłka kategorii: wiersz floty
     // mierzy, jak długo MASZYNA jest w czyichś rękach, a służba należy do PILOTA
-    // i potrafi objąć kilka maszyn — więc jednej z nich nie opisuje.
+    // i potrafi objąć kilka maszyn - więc jednej z nich nie opisuje.
     const view = one(
       row({
         engine: engine({
@@ -245,20 +245,20 @@ describe('opis sesji i przejście wiersza', () => {
   });
 
   it('sesja bez claimu NIE UDAJE daty przejęcia', () => {
-    // Rejestr bez `session_claim` jest niekompletny (§4.4) — liczenie „zajęty 0:00"
+    // Rejestr bez `session_claim` jest niekompletny (§4.4) - liczenie „zajęty 0:00"
     // byłoby wymyśleniem wielkości, której nie ma.
     const view = one(row({ engine: engine({ claimedAt: null, departureIcao: null }) }));
     expect(view.since).toBe('claim bez daty w rejestrze');
   });
 
-  it('wiersz z otwartym dniem prowadzi na KARTĘ DNIA, wolny — do szuflady jednostki', () => {
+  it('wiersz z otwartym dniem prowadzi na KARTĘ DNIA, wolny - do szuflady jednostki', () => {
     expect(one(row({ engine: engine({ sessionUuid: 'sess-7' }) })).to).toBe('/dni/sess-7');
     expect(one(row({ engine: null })).to).toBe('/flota/ac-1');
   });
 });
 
 describe('klasy CSS są PEŁNYMI literałami', () => {
-  it('nazwa klasy nie powstaje przez sklejenie — cztery nastroje, cztery napisy', () => {
+  it('nazwa klasy nie powstaje przez sklejenie - cztery nastroje, cztery napisy', () => {
     // Wada, przed którą to broni: `A07` wypisywał `fresh-stale`, czyli klasę, której
     // nie definiuje żaden arkusz. Stany były policzone i niewidoczne.
     expect(rowClass('flying')).toBe('fleet-row flying');

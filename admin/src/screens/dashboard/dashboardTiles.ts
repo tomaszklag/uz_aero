@@ -1,14 +1,14 @@
 /**
- * UZ Aero — panel: KAFLE PULPITU (moduł CZYSTY).
+ * UZ Aero - panel: KAFLE PULPITU (moduł CZYSTY).
  *
  * ══ KAFEL JEST PRZEJŚCIEM, WIĘC JEGO LICZBA JEST OBIETNICĄ ══
  * Każdy kafel prowadzi do listy zawężonej dokładnie tak, jak policzona jest jego
- * liczba — i każda z tych liczb pochodzi z zapytania EKRANU DOCELOWEGO, nie z drugiej
+ * liczba - i każda z tych liczb pochodzi z zapytania EKRANU DOCELOWEGO, nie z drugiej
  * definicji na pulpicie (`server/src/application/admin/queries/dashboard.ts`). Pulpit
  * bez przejść jest tablicą ogłoszeń.
  *
  * ══ `null` TO „NIE WIEMY", NIGDY `0` ══
- * Przy braku odpowiedzi z serwera kafel pokazuje „—". Zero jest twierdzeniem o świecie
+ * Przy braku odpowiedzi z serwera kafel pokazuje „-". Zero jest twierdzeniem o świecie
  * i na pulpicie kosztuje najwięcej: „0 otwartych flag" przy awarii pobrania to
  * najgorszy możliwy komunikat w narzędziu nadzoru, bo wygląda jak dobra wiadomość.
  */
@@ -26,34 +26,34 @@ import {
 } from './dashboardLinks';
 
 export interface DashboardTile {
-  /** Klucz Reacta i identyfikator w teście — nie etykieta. */
+  /** Klucz Reacta i identyfikator w teście - nie etykieta. */
   key: string;
   label: string;
   value: string;
   unit?: string;
   tone?: TileTone;
   note: string;
-  /** Dokąd prowadzi kafel. Każdy kafel ma cel — to jest reguła, nie ozdoba. */
+  /** Dokąd prowadzi kafel. Każdy kafel ma cel - to jest reguła, nie ozdoba. */
   to: string;
 }
 
 /** Wartość kafla przy braku odpowiedzi serwera. */
-const UNKNOWN = '—';
+const UNKNOWN = '-';
 
 /**
  * Przypis kafla, którego nie udało się policzyć.
  *
  * Jeden napis dla wszystkich czterech i to jest świadome: przy braku odpowiedzi
  * NIE PODAJEMY nawet definicji („aktywny claim z niezamkniętą sesją"). Definicja pod
- * kreską czyta się jak opis stanu, który znamy — a nie znamy żadnego.
+ * kreską czyta się jak opis stanu, który znamy - a nie znamy żadnego.
  */
-const UNKNOWN_NOTE = 'Nie wiadomo — pulpit się nie pobrał.';
+const UNKNOWN_NOTE = 'Nie wiadomo - pulpit się nie pobrał.';
 
 /**
  * Cztery kafle mockupu `A01`, w tej samej kolejności.
  *
- * `data === null` znaczy „pulpit się nie pobrał" — wtedy WSZYSTKIE cztery mówią „—",
- * bez jednostki i BEZ TONU: zielone „—" sugerowałoby, że jest dobrze, a czerwone, że
+ * `data === null` znaczy „pulpit się nie pobrał" - wtedy WSZYSTKIE cztery mówią „-",
+ * bez jednostki i BEZ TONU: zielone „-" sugerowałoby, że jest dobrze, a czerwone, że
  * jest źle. Przejścia zostają czynne, bo lista docelowa może się pobrać, nawet gdy
  * pulpit nie.
  */
@@ -80,7 +80,7 @@ export function dashboardTiles(data: DashboardDto | null): DashboardTile[] {
       key: 'flagi',
       label: 'Flagi otwarte',
       value: counts == null ? UNKNOWN : String(counts.openFlags),
-      // Zero flag NIE jest awarią, więc nie ma prawa świecić na bursztyn — kolor
+      // Zero flag NIE jest awarią, więc nie ma prawa świecić na bursztyn - kolor
       // zmienia się dopiero wtedy, gdy jest co rozstrzygać (mockup `A03b`).
       ...(counts == null
         ? {}
@@ -117,7 +117,7 @@ function exportTile(data: DashboardDto | null): DashboardTile {
       value: String(exports.missing),
       unit: plural(exports.missing, 'błąd', 'błędy', 'błędów'),
       tone: 'red',
-      note: 'Dzień zamknięty, a karty nie ma w arkuszu — eksport odbił się awarią.',
+      note: 'Dzień zamknięty, a karty nie ma w arkuszu - eksport odbił się awarią.',
       to: missingExportsHref(),
     };
   }
@@ -153,7 +153,7 @@ function openDaysNote(data: DashboardDto | null): string {
   if (data == null) return UNKNOWN_NOTE;
   const stale = data.attention.staleOpenDays.length;
   if (data.counts.openDays === 0) return 'Każdy dzień lotny ma `day_close`.';
-  if (stale === 0) return 'Wszystkie z dzisiaj — to normalna praca, nie zaległość.';
+  if (stale === 0) return 'Wszystkie z dzisiaj - to normalna praca, nie zaległość.';
   return `W tym ${stale} bez \`day_close\` dłużej niż doba.`;
 }
 
@@ -165,5 +165,5 @@ function flagsNote(data: DashboardDto | null): string {
   if (blocking > 0) {
     return `${blocking} ${plural(blocking, 'trzyma', 'trzymają', 'trzyma')} kartę dnia poza arkuszem.`;
   }
-  return 'Żadna nie blokuje arkusza — ale każda czeka na rozstrzygnięcie.';
+  return 'Żadna nie blokuje arkusza - ale każda czeka na rozstrzygnięcie.';
 }

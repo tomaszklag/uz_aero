@@ -1,8 +1,8 @@
 /**
- * UZ Aero (serwer) — odczyt śladu jednej sesji z plików NDJSON (`TraceSourcePort`).
+ * UZ Aero (serwer) - odczyt śladu jednej sesji z plików NDJSON (`TraceSourcePort`).
  *
  * Bliźniak `FsTraceSink`: ten sam katalog, ta sama konwencja nazw, przeciwny kierunek.
- * Nazwa pliku powstaje TĄ SAMĄ funkcją `safeName` co przy zapisie — gdyby te dwie
+ * Nazwa pliku powstaje TĄ SAMĄ funkcją `safeName` co przy zapisie - gdyby te dwie
  * ścieżki rozjechały się choćby o jeden znak, panel czytałby pusty ślad dla sesji,
  * której zapis leży na dysku obok.
  *
@@ -13,7 +13,7 @@
  *
  * Wiersz nieparsowalny POMIJAMY zamiast wywracać odczyt: NDJSON jest dopisywany
  * współbieżnie przez wiele telefonów, więc obcięty ostatni wiersz po nagłym zamknięciu
- * procesu jest scenariuszem realnym — i nie jest powodem, żeby cały lot przestał się
+ * procesu jest scenariuszem realnym - i nie jest powodem, żeby cały lot przestał się
  * rysować. Ślad to materiał badawczy; jeden zgubiony fix nic nie znaczy.
  */
 
@@ -47,7 +47,7 @@ export class FsTraceSource implements TraceSourcePort {
           entries.push(parsed as Record<string, unknown>);
         }
       } catch {
-        // Wiersz obcięty przy współbieżnym dopisywaniu — pomijamy (patrz nagłówek).
+        // Wiersz obcięty przy współbieżnym dopisywaniu - pomijamy (patrz nagłówek).
       }
     }
     return entries;

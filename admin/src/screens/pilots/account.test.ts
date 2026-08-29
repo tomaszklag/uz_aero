@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: które konto pokazuje szuflada `A06a`.
+ * UZ Aero - panel: które konto pokazuje szuflada `A06a`.
  *
  * Własność, dla której ten moduł powstał: **skutku mutacji nie wolno zgubić przez
  * filtr listy**. Jednorazowe hasło i potwierdzenie akcji nieodwracalnej są jedynymi
@@ -25,7 +25,7 @@ const account = (over: Partial<PilotListItemDto> = {}): PilotListItemDto => ({
 
 describe('konto pokazywane w szufladzie', () => {
   it('wiersz listy wygrywa, dopóki na liście jest', () => {
-    // Lista wraca świeża po unieważnieniu, a skutek mutacji z czasem się starzeje —
+    // Lista wraca świeża po unieważnieniu, a skutek mutacji z czasem się starzeje -
     // więc źródłem prawdy jest lista, nie ostatnia odpowiedź serwera.
     const fromList = account({ name: 'Piotr Wiśniewski-Nowak' });
     const stale = { pilot: account({ name: 'Piotr Wiśniewski' }), at: 10 };
@@ -43,11 +43,11 @@ describe('konto pokazywane w szufladzie', () => {
     const renamed = { pilot: account({ name: 'Nowe Nazwisko' }), at: 10 };
     const deactivated = { pilot: account({ active: false }), at: 30 };
     expect(drawerAccount(null, [renamed, deactivated])?.active).toBe(false);
-    // Kolejność argumentów nie może rozstrzygać — rozstrzyga znacznik czasu.
+    // Kolejność argumentów nie może rozstrzygać - rozstrzyga znacznik czasu.
     expect(drawerAccount(null, [deactivated, renamed])?.active).toBe(false);
   });
 
-  it('bez wiersza i bez mutacji — nie ma czego pokazać', () => {
+  it('bez wiersza i bez mutacji - nie ma czego pokazać', () => {
     expect(drawerAccount(null, [])).toBeNull();
     expect(drawerAccount(null, [null, null])).toBeNull();
     expect(latestEffect([null])).toBeNull();

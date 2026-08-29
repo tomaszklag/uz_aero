@@ -1,7 +1,7 @@
 /**
- * UZ Aero — CheckIcon (prymityw DS)
+ * UZ Aero - CheckIcon (prymityw DS)
  *
- * Ptaszek „✓" rysowany dwiema krawędziami obróconego prostokąta — bez `react-native-svg`
+ * Ptaszek „✓" rysowany dwiema krawędziami obróconego prostokąta - bez `react-native-svg`
  * i bez fontu ikon. DLACZEGO tak: obie te zależności to moduły natywne, a dokładanie
  * ich do kompilacji tylko po to, by narysować jedną kreskę, kosztowałoby przebudowę
  * dev clienta przy każdej instalacji. Ten kształt jest czystym layoutem RN.
@@ -10,7 +10,7 @@
  * krótsze ramię ~0,42 wysokości, grubość ~0,18, obrót 45°. Przesunięcie `top`
  * kompensuje fakt, że po obrocie „tusz" leży poniżej środka ramki.
  *
- * Kolor jest zawsze podawany przez wywołującego (z tokenów motywu) — komponent nie zna
+ * Kolor jest zawsze podawany przez wywołującego (z tokenów motywu) - komponent nie zna
  * palety, więc nie ma tu ryzyka hardcoded hex.
  */
 
@@ -18,7 +18,7 @@ import React from 'react';
 import { View, type ViewStyle } from 'react-native';
 
 export interface CheckIconProps {
-  /** Bok kwadratowej ramki ikony (px). Domyślnie 12 — tyle mieści się w kółku 20 px. */
+  /** Bok kwadratowej ramki ikony (px). Domyślnie 12 - tyle mieści się w kółku 20 px. */
   size?: number;
   /** Kolor kreski. Na wypełnionym akcencie użyj `theme.colors.bg` (kontrast w każdym motywie). */
   color: string;
@@ -32,7 +32,7 @@ export function CheckIcon({ size = 12, color, thickness, style }: CheckIconProps
 
   return (
     <View
-      // Ikona jest dekoracją stanu — stan czyta czytnik ekranu z `accessibilityState`
+      // Ikona jest dekoracją stanu - stan czyta czytnik ekranu z `accessibilityState`
       // elementu nadrzędnego, więc tutaj wyciszamy.
       accessible={false}
       importantForAccessibility="no-hide-descendants"

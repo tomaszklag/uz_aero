@@ -1,10 +1,10 @@
 /**
- * UZ Aero (serwer) — zapytania strony odczytu (M2): stan samolotu i status synca.
+ * UZ Aero (serwer) - zapytania strony odczytu (M2): stan samolotu i status synca.
  *
  * `GET /aircraft/:id/state` (§4.6) odpowiada na dwa pytania preflightu:
  * „kto teraz prowadzi ten samolot" (claim z sesji NIEZAMKNIĘTEJ) i „jakie są ostatnie
  * znane odczyty" (przekazanie z ostatniego `day_close` ALBO świeższe odczyty z dnia
- * w toku — np. tankowanie). Kształt odpowiedzi = pola `ReferenceAircraft` z domeny,
+ * w toku - np. tankowanie). Kształt odpowiedzi = pola `ReferenceAircraft` z domeny,
  * bo telefon wkłada ją wprost do cache referencyjnego (§4.8).
  */
 
@@ -36,7 +36,7 @@ export interface AircraftState {
 
 export interface SyncStatus {
   sessionUuid: string;
-  /** Ile zdarzeń sesji serwer przyjął — telefon porówna ze swoim licznikiem. */
+  /** Ile zdarzeń sesji serwer przyjął - telefon porówna ze swoim licznikiem. */
   received: number;
   status: 'active' | 'closed' | 'unknown';
   flags: FlagRecord[];
@@ -69,7 +69,7 @@ export class StateQueries {
   /**
    * Ciągłość odczytów wokół chwili `at` na tej maszynie (issue #62, piąta tura).
    *
-   * Czyta TĘ SAMĄ listę sesji, co `aircraftState` — `listByAircraft` i tak wczytuje
+   * Czyta TĘ SAMĄ listę sesji, co `aircraftState` - `listByAircraft` i tak wczytuje
    * całą historię maszyny, bo łańcuch MH potrzebuje sąsiedztwa przez lata. Nowe jest
    * wyłącznie pytanie zadane tym wierszom; SQL zostaje bez zmian.
    */
@@ -87,7 +87,7 @@ export class StateQueries {
       this.sessions.get(this.db, sessionUuid),
       this.events.countForSession(this.db, sessionUuid),
       this.flags.openForSession(this.db, sessionUuid),
-      // Ostatnia rewizja eksportu — na ekranie 11 staje się pudełkiem
+      // Ostatnia rewizja eksportu - na ekranie 11 staje się pudełkiem
       // „Serwer zaktualizował arkusz" z linkiem.
       this.exportLog.latest(this.db, sessionUuid),
     ]);

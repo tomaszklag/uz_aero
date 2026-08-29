@@ -1,8 +1,8 @@
 /**
- * UZ Aero — panel: formaty liczb statystyk.
+ * UZ Aero - panel: formaty liczb statystyk.
  *
  * Najważniejsza własność jest jedna i powtarza się w każdym przypadku: `null`
- * ZAWSZE staje się kreską, nigdy zerem — zaokrąglenie nie ma prawa zamienić
+ * ZAWSZE staje się kreską, nigdy zerem - zaokrąglenie nie ma prawa zamienić
  * niewiedzy w liczbę.
  */
 
@@ -23,7 +23,7 @@ import {
 } from './statsFormat';
 
 describe('thousands', () => {
-  it('grupuje po trzy cyfry odstępem — zapis mockupu „21 436"', () => {
+  it('grupuje po trzy cyfry odstępem - zapis mockupu „21 436"', () => {
     expect(thousands(21436)).toBe('21 436');
     expect(thousands(962)).toBe('962');
     expect(thousands(1_234_567)).toBe('1 234 567');
@@ -41,7 +41,7 @@ describe('thousands', () => {
 });
 
 describe('ułamki i procenty', () => {
-  it('kropka do tabel, przecinek do prozy — dokładnie jak w mockupie', () => {
+  it('kropka do tabel, przecinek do prozy - dokładnie jak w mockupie', () => {
     expect(dot1(170.83)).toBe('170.8');
     expect(dot2(186.65)).toBe('186.65');
     expect(comma1(71.66)).toBe('71,7');

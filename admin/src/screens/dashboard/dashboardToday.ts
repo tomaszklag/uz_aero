@@ -1,7 +1,7 @@
 /**
- * UZ Aero — panel: „DZIŚ W LICZBACH" i „OSTATNI DZIEŃ LOTNY" (moduł CZYSTY).
+ * UZ Aero - panel: „DZIŚ W LICZBACH" i „OSTATNI DZIEŃ LOTNY" (moduł CZYSTY).
  *
- * Obie karty pokazują TĘ SAMĄ dobę w tym samym kształcie (`DayTotalsDto`) — różni je
+ * Obie karty pokazują TĘ SAMĄ dobę w tym samym kształcie (`DayTotalsDto`) - różni je
  * wyłącznie to, o którą dobę pytamy. Wariant z ruchem pyta o dziś, wariant „cisza"
  * o ostatni dzień, w którym cokolwiek się działo.
  *
@@ -10,10 +10,10 @@
  * nie dostarcza i nie jest to przeoczenie: `DropSummary` liczy `projectSession`
  * W PAMIĘCI, a projekcja `sessions` takich kolumn NIE MA. Podanie tej liczby wymagałoby
  * albo migracji projekcji (czyli zmiany ścieżki ingestu telefonu), albo wywołania
- * `projectSession` na każdej dzisiejszej sesji — drugiego powodu czytania strumieni na
+ * `projectSession` na każdej dzisiejszej sesji - drugiego powodu czytania strumieni na
  * ekranie, który ma się otwierać natychmiast.
  *
- * Komórka zostaje więc na swoim miejscu z wartością „—" i jawnym wyjaśnieniem pod
+ * Komórka zostaje więc na swoim miejscu z wartością „-" i jawnym wyjaśnieniem pod
  * siatką. To jest reguła, nie wymówka: **`null` znaczy „nie wiemy", a zero byłoby
  * twierdzeniem, że nikt dziś nie skakał.**
  */
@@ -33,17 +33,17 @@ export interface DayCell {
 }
 
 export interface DayView {
-  /** `YYYY-MM-DD` UTC — nagłówek karty i cel przejścia. */
+  /** `YYYY-MM-DD` UTC - nagłówek karty i cel przejścia. */
   day: string;
   cells: DayCell[];
-  /** Lista dni zawężona do TEJ doby — kafel liczy i prowadzi do tego samego. */
+  /** Lista dni zawężona do TEJ doby - kafel liczy i prowadzi do tego samego. */
   to: string;
   /** Zdanie pod siatką: co dokładnie te liczby obejmują i czego w nich nie ma. */
   note: string;
 }
 
-/** Brak danych. Nigdy zero — patrz nagłówek pliku. */
-const DASH = '—';
+/** Brak danych. Nigdy zero - patrz nagłówek pliku. */
+const DASH = '-';
 
 export function dayView(totals: DayTotalsDto): DayView {
   return {
@@ -65,7 +65,7 @@ export function dayView(totals: DayTotalsDto): DayView {
       {
         key: 'zrzuty',
         label: 'Zrzuty · skoczkowie',
-        // Świadomie „—", nie „0" — projekcja dni nie niesie zrzutów (patrz nagłówek).
+        // Świadomie „-", nie „0" - projekcja dni nie niesie zrzutów (patrz nagłówek).
         value: DASH,
       },
     ],

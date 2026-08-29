@@ -1,10 +1,10 @@
 /**
- * UZ Aero — NOTATKI SESJI na ekranie 10 (mockup `design/10-statystyki.html`, karta
+ * UZ Aero - NOTATKI SESJI na ekranie 10 (mockup `design/10-statystyki.html`, karta
  * „Notatki"; issue #40 pkt 5).
  *
  * ══ PO CO TO ISTNIEJE ══
- * Pilot pisze o sesji w dwóch miejscach — w kroku „zadanie" (02e, `preflight_confirm.notes`)
- * i przy wpisie ręcznym (08 i 15, `manual_log_entry.notes`) — a do issue #40 ten tekst
+ * Pilot pisze o sesji w dwóch miejscach - w kroku „zadanie" (02e, `preflight_confirm.notes`)
+ * i przy wpisie ręcznym (08 i 15, `manual_log_entry.notes`) - a do issue #40 ten tekst
  * NIE WRACAŁ do niego nigdzie. Widział go administrator w panelu, autor już nie: po
  * zdaniu samolotu nie dało się sprawdzić, co właściwie zostało zapisane.
  *
@@ -14,7 +14,7 @@
  * Podpis wiersza mówi skąd notatka pochodzi, i to wystarczy.
  *
  * ══ PUSTA LISTA ZNACZY „NIC NIE NAPISANO" ══
- * I ekran wtedy karty nie rysuje w ogóle. „Notatki —" byłoby wierszem o niczym; brak
+ * I ekran wtedy karty nie rysuje w ogóle. „Notatki -" byłoby wierszem o niczym; brak
  * notatki nie jest brakiem DANYCH, tylko normalnym stanem większości sesji.
  */
 
@@ -26,25 +26,25 @@ import { preflightUuid } from './sessionEdit';
 
 /** Jedna notatka: skąd pochodzi, o której powstała i co mówi. */
 export interface SessionNote {
-  /** Klucz listy — uuid zdarzenia albo `preflight` dla notatki z zadania. */
+  /** Klucz listy - uuid zdarzenia albo `preflight` dla notatki z zadania. */
   id: string;
   /**
-   * `session` — notatka CAŁEJ sesji (payload preflightu). Jest DOKŁADNIE JEDNA, więc
-   * kiedy istnieje, da się ją tylko poprawić — nie dopisać drugiej.
-   * `entry` — uwaga przypięta do konkretnego wpisu ręcznego; tych bywa wiele.
+   * `session` - notatka CAŁEJ sesji (payload preflightu). Jest DOKŁADNIE JEDNA, więc
+   * kiedy istnieje, da się ją tylko poprawić - nie dopisać drugiej.
+   * `entry` - uwaga przypięta do konkretnego wpisu ręcznego; tych bywa wiele.
    */
   kind: 'session' | 'entry';
   /**
-   * Podpis wiersza — „Wpis ręczny · 09:12", czyli DO CZEGO ta uwaga należy.
+   * Podpis wiersza - „Wpis ręczny · 09:12", czyli DO CZEGO ta uwaga należy.
    *
    * `null` dla notatki sesji: nie ma jej od czego odróżnić (jest jedna), a stempel
-   * „Zadanie · 08:04" mówił o godzinie potwierdzenia PREFLIGHTU, nie o notatce —
+   * „Zadanie · 08:04" mówił o godzinie potwierdzenia PREFLIGHTU, nie o notatce -
    * i po pierwszej poprawce zaczynał wprost kłamać, bo tekst zmieniał się bez niego.
    */
   when: string | null;
   text: string;
   /**
-   * UUID zdarzenia NIOSĄCEGO tekst — adres korekty `amend` (issue #43).
+   * UUID zdarzenia NIOSĄCEGO tekst - adres korekty `amend` (issue #43).
    *
    * Nie zawsze równy `id`: notatka z zadania ma klucz `preflight`, bo jej treść
    * i czas bierzemy z PROJEKCJI (żyje także wtedy, gdy zdarzenia nie ma w podanym
@@ -56,13 +56,13 @@ export interface SessionNote {
    * Ile razy TREŚĆ tej notatki była poprawiana (issue #43, uwaga z urządzenia).
    *
    * Zero = notatka jest taka, jak ją napisano. Powyżej zera wiersz dostaje plakietkę
-   * „popr." — widoczną TAKŻE w trybie odczytu, dokładnie jak przy wierszach osi: to
+   * „popr." - widoczną TAKŻE w trybie odczytu, dokładnie jak przy wierszach osi: to
    * fakt o danych, a nie akcja. Tekst, który ktoś zmienił, nie jest tym, który pilot
    * wpisał, i ma prawo to widzieć bez wchodzenia w edycję.
    *
    * Liczymy WYŁĄCZNIE pole `notes`: `preflight_confirm` niesie obok niej paliwo, licznik
    * i Duala, a poprawka odczytu nie jest poprawką notatki. Ta sama liczba zasila licznik
-   * przy „Historii zmian" w arkuszu — jedno źródło, więc plakietka i arkusz nie mają
+   * przy „Historii zmian" w arkuszu - jedno źródło, więc plakietka i arkusz nie mają
    * jak powiedzieć czegoś innego.
    */
   changes: number;
@@ -75,7 +75,7 @@ const at = (e: Event): number => e.gpsTime ?? e.deviceTime;
  * Gdzie WPISAĆ notatkę, której jeszcze nie ma (issue #43, zgłoszenie z urządzenia).
  *
  * Karta „Notatki" pojawia się w trybie odczytu tylko wtedy, gdy jest treść (issue #40:
- * „Notatki —" byłoby wierszem o niczym) — i to zostaje. Ale w trybie EDYCJI ta sama
+ * „Notatki -" byłoby wierszem o niczym) - i to zostaje. Ale w trybie EDYCJI ta sama
  * reguła odbierała jedyne wejście: sesja bez notatki nie miała karty, więc nie miała jak
  * notatki dostać. Wejście znikało w stanie, w którym jest potrzebne.
  *
@@ -88,7 +88,7 @@ export function noteTargetUuid(events: readonly Event[]): string | null {
 }
 
 /**
- * Czy sesji wolno DOPISAĆ notatkę — czyli czy jeszcze żadnej nie ma.
+ * Czy sesji wolno DOPISAĆ notatkę - czyli czy jeszcze żadnej nie ma.
  *
  * Notatka sesji jest jedna (jedno pole w payloadzie preflightu), więc gdy istnieje,
  * jedyną sensowną czynnością jest jej POPRAWIENIE. Wiersz „Dodaj notatkę do sesji"
@@ -102,11 +102,11 @@ export function missingSessionNote(notes: readonly SessionNote[]): boolean {
 }
 
 /**
- * Ile poprawek dotknęło TREŚCI notatki — patrz `SessionNote.changes`.
+ * Ile poprawek dotknęło TREŚCI notatki - patrz `SessionNote.changes`.
  *
  * Nazwana obudowa na `fieldChanges`, bo notatka pyta o to w trzech miejscach (plakietka,
  * arkusz, karta) i wszystkie mają dostać tę samą liczbę. Filtr po polu jest tu istotą
- * rzeczy — bez niego notatka świeciłaby „popr." po korekcie paliwa, bo obie wartości
+ * rzeczy - bez niego notatka świeciłaby „popr." po korekcie paliwa, bo obie wartości
  * niesie ten sam preflight.
  */
 export function noteChanges(events: readonly Event[], targetUuid: string | null): number {
@@ -119,10 +119,10 @@ export function noteChanges(events: readonly Event[], targetUuid: string | null)
  * Notatka z preflightu bierze czas z projekcji (`preflightAt`), a nie ze strumienia:
  * to ta sama chwila, ale projekcja zna ją także wtedy, gdy zdarzenie zostało
  * skorygowane. Kolejność jest chronologiczna, bo notatki czyta się jak resztę tego
- * ekranu — z góry na dół, w czasie sesji.
+ * ekranu - z góry na dół, w czasie sesji.
  *
  * @param projection stan sesji (notatka z zadania i jej czas).
- * @param events surowy strumień sesji — korekty nakładamy tutaj, tak jak na osi czasu.
+ * @param events surowy strumień sesji - korekty nakładamy tutaj, tak jak na osi czasu.
  */
 export function sessionNotes(projection: SessionState, events: Event[]): SessionNote[] {
   const dated: { at: number; note: SessionNote }[] = [];
@@ -138,7 +138,7 @@ export function sessionNotes(projection: SessionState, events: Event[]): Session
       note: {
         id: 'preflight',
         kind: 'session',
-        // Bez stempla — patrz docblock pola `when`.
+        // Bez stempla - patrz docblock pola `when`.
         when: null,
         text: fromTask,
         targetUuid: target,
@@ -174,7 +174,7 @@ function stamp(label: string, when: number | null): string {
 
 /**
  * Pusty napis to nie notatka. Pole jest wolnym tekstem, więc dochodzą do niego same
- * spacje z klawiatury — a wiersz z pustą treścią wygląda jak utracona dana.
+ * spacje z klawiatury - a wiersz z pustą treścią wygląda jak utracona dana.
  */
 function trim(value: string | null | undefined): string | null {
   const text = value?.trim() ?? '';

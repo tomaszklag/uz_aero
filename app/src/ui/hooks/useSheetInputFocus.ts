@@ -1,16 +1,16 @@
 /**
- * UZ Aero — fokus pola wpisu w arkuszu, Z klawiaturą (issue #58 pkt 7/8).
+ * UZ Aero - fokus pola wpisu w arkuszu, Z klawiaturą (issue #58 pkt 7/8).
  *
  * Dlaczego drabinka prób i dlaczego rusza dopiero, gdy okno modala JEST pokazane
- * ORAZ pole JEST zamontowane — historia trzech tur zgłoszenia w docblockach
+ * ORAZ pole JEST zamontowane - historia trzech tur zgłoszenia w docblockach
  * `keyboardFocus.ts`. Tu jest tylko zegar i RN: hook oddaje `inputRef` (callback
  * ref do zawieszenia na `TextInput`) i `onShow` do podania RAMIE arkusza
  * (`Sheet`/`SheetSurface` → `Modal.onShow`). KAŻDY arkusz z polem wpisu idzie tą
- * drogą — kolejna ręczna kopia `focus()` w `onShow` odtworzy któryś z błędów,
+ * drogą - kolejna ręczna kopia `focus()` w `onShow` odtworzy któryś z błędów,
  * które ten hook właśnie zdejmuje.
  *
  * Sprzątanie: zamknięcie arkusza odmontowuje dzieci modala, więc callback ref
- * dostaje `null` — to gasi bramkę (`shown` wraca na start) i kasuje wiszące
+ * dostaje `null` - to gasi bramkę (`shown` wraca na start) i kasuje wiszące
  * ponowienia, żeby nie celowały w pole, którego już nie ma.
  */
 
@@ -37,7 +37,7 @@ export function useSheetInputFocus(): {
   /*
    * KLAWIATURA ODWOŁUJE DRABINKĘ W CHWILI, W KTÓREJ WYJDZIE (uwaga z urządzenia,
    * 2026-08-29). Do tej pory ponowienia pytały o `Keyboard.isVisible()` dopiero
-   * w swoim terminie — a między `focus()` a `keyboardDidShow` mija cała animacja
+   * w swoim terminie - a między `focus()` a `keyboardDidShow` mija cała animacja
    * wysunięcia, więc rung wypadający w środku tej animacji widział jeszcze fałsz
    * i robił `blur()` + `focus()`: chował klawiaturę, którą sam przed chwilą wywołał.
    *
@@ -61,7 +61,7 @@ export function useSheetInputFocus(): {
     field.focus();
   }, []);
 
-  /** Start drabinki — woła je PÓŹNIEJSZE z dwóch zdarzeń (patrz `shouldStartLadder`). */
+  /** Start drabinki - woła je PÓŹNIEJSZE z dwóch zdarzeń (patrz `shouldStartLadder`). */
   const startLadder = useCallback(() => {
     clearTimers();
     attempt(0);

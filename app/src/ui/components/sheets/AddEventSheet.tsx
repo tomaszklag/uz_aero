@@ -1,16 +1,16 @@
 /**
- * UZ Aero — AddEventSheet (mockup `design/10h` „Dodaj wpis")
+ * UZ Aero - AddEventSheet (mockup `design/10h` „Dodaj wpis")
  *
  * Dopisanie zdarzenia, którego w logu NIE MA: GPS zgubił lądowanie, zrzut nie został
  * zapisany, tankowanie umknęło. Różni się tym od `CorrectionSheet`, który poprawia
- * zdarzenie już istniejące — i dlatego jest osobnym arkuszem, mimo podobnego kształtu:
+ * zdarzenie już istniejące - i dlatego jest osobnym arkuszem, mimo podobnego kształtu:
  * tam mówi się „było inaczej", tu „w ogóle tego nie zapisałem".
  *
  * ══ CZEGO NIE MA NA LIŚCIE ══
  * Klamry silnika (`engine_start`/`engine_stop`). Sesja ma dokładnie jeden bieg
  * (`SESSION_ALREADY_RAN`), więc dopisanie drugiego łamałoby model, a czas istniejącej
  * klamry poprawia się ołówkiem na osi. Zrzut i załadunek pojawiają się WYŁĄCZNIE
- * w dniu skokowym (issue #19) — to brak akcji, nie blokada z powodem.
+ * w dniu skokowym (issue #19) - to brak akcji, nie blokada z powodem.
  *
  * Wpis dostaje w rejestrze metodę `manual`. Mówimy o tym RAZ, tutaj, a nie plakietką
  * przy każdym wierszu osi (issue #40 pkt 6): sposób powstania zapisu jest sprawą
@@ -29,7 +29,7 @@ import { TimeStepper } from '../input/TimeStepper';
 import { Field, TextField } from '../input/Field';
 import { Sheet, type SheetRow } from './Sheet';
 
-/** Typ zdarzenia, które wolno dopisać — lista pochodzi z `logic/sessionEdit.ts`. */
+/** Typ zdarzenia, które wolno dopisać - lista pochodzi z `logic/sessionEdit.ts`. */
 export interface AddEventOption {
   id: string;
   label: string;
@@ -39,24 +39,24 @@ export interface AddEventOption {
 export interface AddEventSheetProps {
   visible: boolean;
   options: AddEventOption[];
-  /** Czas startowy suwaka — zwykle koniec biegu silnika albo „teraz". */
+  /** Czas startowy suwaka - zwykle koniec biegu silnika albo „teraz". */
   initialTime: number;
   formatTime: (t: number) => string;
-  /** Górna granica — dopisanie zdarzenia z przyszłości nie jest wpisem, tylko planem. */
+  /** Górna granica - dopisanie zdarzenia z przyszłości nie jest wpisem, tylko planem. */
   maxTime: number;
   /** Wiersze odniesienia zależne od wybranego typu (który lot domyka, zakres biegu). */
   refsFor?: (typeId: string, time: number) => SheetRow[];
-  /** Stan paliwa W CHWILI otwarcia arkusza — podpowiedź „przed" dla tankowania. */
+  /** Stan paliwa W CHWILI otwarcia arkusza - podpowiedź „przed" dla tankowania. */
   fuelBeforeL?: number | null;
   busy?: boolean;
   onConfirm: (typeId: string, time: number, note: string | null, extra?: AddEventExtra) => void;
   onCancel: () => void;
 }
 
-/** Pola specyficzne dla typu — tankowanie (trójka) i dolewka oleju (jedna liczba). */
+/** Pola specyficzne dla typu - tankowanie (trójka) i dolewka oleju (jedna liczba). */
 export interface AddEventExtra {
   refuel?: { beforeL: number; addedL: number; afterL: number };
-  /** Dolewka oleju (issue #60) — sama ilość: poziomu po dolewce nie ma jak zmierzyć. */
+  /** Dolewka oleju (issue #60) - sama ilość: poziomu po dolewce nie ma jak zmierzyć. */
   oilAddedL?: number;
 }
 
@@ -76,7 +76,7 @@ export function AddEventSheet({
   const [time, setTime] = useState(initialTime);
   const [note, setNote] = useState('');
   // Tankowanie niesie TRÓJKĘ przed/dolane/po (§3.4) i domena pilnuje jej arytmetyki
-  // (`FUEL_ARITHMETIC`). Pytamy więc o dwie liczby, a trzecią LICZYMY — wpisywanie
+  // (`FUEL_ARITHMETIC`). Pytamy więc o dwie liczby, a trzecią LICZYMY - wpisywanie
   // wszystkich trzech to zaproszenie do wpisu, który reguła odrzuci.
   const [beforeText, setBeforeText] = useState('');
   const [addedText, setAddedText] = useState('');
@@ -135,7 +135,7 @@ export function AddEventSheet({
 
       {/* Bez `originalTime`: dopisywany fakt nie ma godziny sprzed edycji, więc nie ma
           względem czego mierzyć przesunięcia. Rząd ±10 min istniał tu, dopóki przyciski
-          były jedyną drogą do godziny — od chwili, gdy da się ją WPISAĆ, jest gorszą
+          były jedyną drogą do godziny - od chwili, gdy da się ją WPISAĆ, jest gorszą
           wersją klawiatury i zabiera wysokość arkusza. */}
       <TimeStepper value={time} onChange={setTime} format={formatTime} max={maxTime} />
 
@@ -161,13 +161,13 @@ export function AddEventSheet({
           </View>
           <AppText variant="mono" tone="muted" style={styles.note}>
             {after == null
-              ? 'Podaj stan przed tankowaniem i ilość dolaną — stan po policzymy sami.'
+              ? 'Podaj stan przed tankowaniem i ilość dolaną - stan po policzymy sami.'
               : `Stan po tankowaniu: ${after} L. Liczymy go z pary wyżej, żeby wpis nie mógł być wewnętrznie sprzeczny.`}
           </AppText>
         </>
       )}
 
-      {/* Dolewka oleju (issue #60): JEDNA liczba — poziomu po dolewce nie ma jak
+      {/* Dolewka oleju (issue #60): JEDNA liczba - poziomu po dolewce nie ma jak
           uczciwie zmierzyć (silnik zwykle gorący), a rachunek traktuje dolewkę jako
           składnik interwału pomiar→pomiar, nie granicę. */}
       {isOilAdd && (
@@ -190,7 +190,7 @@ export function AddEventSheet({
         kind="edu"
         tone="blue"
         text={
-          'Wpis dostanie w rejestrze znacznik „ręcznie" — na osi sesji wygląda jak każdy ' +
+          'Wpis dostanie w rejestrze znacznik „ręcznie" - na osi sesji wygląda jak każdy ' +
           'inny, a metodę widzi administrator w panelu.'
         }
         collapsedLabel="Skąd wiadomo, że wpis jest ręczny?"
@@ -198,7 +198,7 @@ export function AddEventSheet({
 
       <View style={styles.spacer} />
       <AppText variant="mono" tone="muted" style={styles.note}>
-        Uruchomienia i wyłączenia silnika tu nie ma — zapisuje je przycisk w kokpicie,
+        Uruchomienia i wyłączenia silnika tu nie ma - zapisuje je przycisk w kokpicie,
         a sesja ma dokładnie jeden bieg. Jeśli czas klamry jest zły, popraw go na osi.
       </AppText>
     </Sheet>

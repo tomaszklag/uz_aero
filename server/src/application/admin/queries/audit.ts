@@ -1,13 +1,13 @@
 /**
- * UZ Aero (serwer) — strona ODCZYTU dziennika audytu (`A09`).
+ * UZ Aero (serwer) - strona ODCZYTU dziennika audytu (`A09`).
  *
- * Dziennik zapisuje się od przekroju 1 i do tej pory nikt go nie przeczytał — to jest
+ * Dziennik zapisuje się od przekroju 1 i do tej pory nikt go nie przeczytał - to jest
  * pierwszy czytelnik. Scenariusz, dla którego powstaje: administrator patrzy na dzień
  * lotny, którego liczby nie zgadzają się z tym, co pamięta pilot, i musi odpowiedzieć
  * na pytanie „kto to ruszał, kiedy i dlaczego".
  *
  * Klasa jest cienka celowo: porządek i filtrowanie są własnością PORTU (indeks
- * i `ORDER BY`), mapowanie na kontrakt — czystej funkcji. Tutaj zostaje wyłącznie
+ * i `ORDER BY`), mapowanie na kontrakt - czystej funkcji. Tutaj zostaje wyłącznie
  * rozstrzygnięcie, że nieczytelny kursor jest wariantem WYNIKU, a nie wyjątkiem
  * (wzorzec `AdminSessionQueries.list`): kursor przychodzi z zewnątrz, więc jego
  * uszkodzenie to 400, a nie 500.

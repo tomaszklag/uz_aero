@@ -1,11 +1,11 @@
 /**
- * UZ Aero — PALETY MOTYWÓW.
+ * UZ Aero - PALETY MOTYWÓW.
  *
  * ŹRÓDŁO PRAWDY: `design/05-themes.html`. Motyw Night pochodzi z bloku `:root`,
- * pozostałe cztery z `.phone[data-theme="…"]` — w pliku HTML nadpisują tylko część
+ * pozostałe cztery z `.phone[data-theme="…"]` - w pliku HTML nadpisują tylko część
  * zmiennych, a reszta kaskaduje z Night. Odwzorowujemy to spreadem `nightColors`
  * i nadpisaniem dokładnie tych samych tokenów, które nadpisuje CSS. Wartości są
- * SKOPIOWANE z mockupu — nie wymyślone.
+ * SKOPIOWANE z mockupu - nie wymyślone.
  *
  * Zasada twarda (`CLAUDE.md`): kolory wyłącznie stąd, zero hardcoded hex w komponentach.
  */
@@ -26,12 +26,12 @@ export interface ThemeColors {
   textSecondary: string;
   textMuted: string;
   /**
-   * Podpowiedź w pustym polu (`placeholder`) — o stopień SŁABSZA niż `textMuted`.
+   * Podpowiedź w pustym polu (`placeholder`) - o stopień SŁABSZA niż `textMuted`.
    *
    * Osobny token, bo to nie jest treść, tylko instrukcja, którą pilot przeczyta raz
    * i która ma zniknąć z oka po pierwszym znaku (uwaga z urządzenia, 2026-08-14:
    * „placeholdery powinny być bardziej subtelne"). W `textMuted` konkurowały wagą
-   * z wpisaną wartością obok — a puste pole wyglądało jak wypełnione.
+   * z wpisaną wartością obok - a puste pole wyglądało jak wypełnione.
    *
    * Rozmiaru nie różnicujemy: `placeholder` dziedziczy stopień pisma pola i inaczej
    * się nie da, więc cała różnica siedzi w kontraście.
@@ -53,14 +53,14 @@ export interface ThemeColors {
   blue: string;
   blueMuted: string;
   blueBorder: string;
-  /** Przyciemnienie pod arkuszami (scrim) — jedna wartość, koniec dryfu 0.7/0.74. */
+  /** Przyciemnienie pod arkuszami (scrim) - jedna wartość, koniec dryfu 0.7/0.74. */
   overlay: string;
   /**
    * Tło zaznaczonego tekstu w polach edycji.
    *
    * NEUTRALNE z premedytacją, choć akcent byłby „w tonie": wartości w arkuszach są
    * pisane kolorem tonu (paliwo bursztynem, godzina błękitem), a zaznaczenie w tym samym
-   * odcieniu zlewa się z cyframi w jednolity prostokąt — pilot nie widzi ani wartości,
+   * odcieniu zlewa się z cyframi w jednolity prostokąt - pilot nie widzi ani wartości,
    * ani tego, że jest zaznaczona (zgłoszenie z urządzenia, 2026-07-30). Szara przepuszczalna
    * podkładka zostawia glify czytelne w każdym tonie.
    */
@@ -68,7 +68,7 @@ export interface ThemeColors {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// NIGHT — motyw domyślny (05-themes.html :root)
+// NIGHT - motyw domyślny (05-themes.html :root)
 // ─────────────────────────────────────────────────────────────────────────────
 export const nightColors: ThemeColors = {
   bg: '#0D0D0D',
@@ -104,7 +104,7 @@ export const nightColors: ThemeColors = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PAPER — jasny, ciepła biel "papierowej mapy" ([data-theme="paper"])
+// PAPER - jasny, ciepła biel "papierowej mapy" ([data-theme="paper"])
 // ─────────────────────────────────────────────────────────────────────────────
 export const paperColors: ThemeColors = {
   ...nightColors,
@@ -114,7 +114,7 @@ export const paperColors: ThemeColors = {
   surfaceRaised: '#EFE8D6',
   // 05-themes.html nie nadpisuje `--surface-hover` w motywach jasnych, bo na webie to
   // stan `:hover`, którego na telefonie nie ma. My używamy tego tokenu jako powierzchni
-  // „przygaszonej" — bez wartości per motyw dziedziczyłby czerń z Night i dawał
+  // „przygaszonej" - bez wartości per motyw dziedziczyłby czerń z Night i dawał
   // prawie czarny prostokąt na jasnym tle. Wartość: o stopień ciemniejsza od `raised`.
   surfaceHover: '#E4DAC4',
   border: '#D9CEB6',
@@ -141,7 +141,7 @@ export const paperColors: ThemeColors = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SOLAR — jasny, maksymalny kontrast, ostre słońce ([data-theme="solar"])
+// SOLAR - jasny, maksymalny kontrast, ostre słońce ([data-theme="solar"])
 // ─────────────────────────────────────────────────────────────────────────────
 export const solarColors: ThemeColors = {
   ...nightColors,
@@ -174,7 +174,7 @@ export const solarColors: ThemeColors = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SKY — jasny, chłodna tonacja błękitno-szara ([data-theme="sky"])
+// SKY - jasny, chłodna tonacja błękitno-szara ([data-theme="sky"])
 // ─────────────────────────────────────────────────────────────────────────────
 export const skyColors: ThemeColors = {
   ...nightColors,
@@ -207,9 +207,9 @@ export const skyColors: ThemeColors = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// AMBER / NVG — ciemny, bursztyn na czerni, zero błękitu ([data-theme="amber"])
+// AMBER / NVG - ciemny, bursztyn na czerni, zero błękitu ([data-theme="amber"])
 // W pliku HTML nadpisuje tylko amber/blue + bg/surface/border/text; green i red
-// (oraz ich warianty) kaskadują z Night — dlatego tu również dziedziczą.
+// (oraz ich warianty) kaskadują z Night - dlatego tu również dziedziczą.
 // ─────────────────────────────────────────────────────────────────────────────
 export const amberColors: ThemeColors = {
   ...nightColors,
@@ -231,6 +231,6 @@ export const amberColors: ThemeColors = {
   blueMuted: 'rgba(96,160,240,0.10)',
   blueBorder: 'rgba(96,160,240,0.32)',
   overlay: 'rgba(0,0,0,0.74)',
-  // Motyw NVG nie dopuszcza białego światła — podkładka też jest bursztynowa.
+  // Motyw NVG nie dopuszcza białego światła - podkładka też jest bursztynowa.
   selection: 'rgba(255,176,32,0.22)',
 };

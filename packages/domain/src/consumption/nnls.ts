@@ -1,9 +1,9 @@
 /**
- * UZ Aero — regresja liniowa z więzem nieujemności (NNLS).
+ * UZ Aero - regresja liniowa z więzem nieujemności (NNLS).
  *
  * ══ PO CO WIĘZ ══
  * Szukamy stawek zużycia per faza z równań „zużycie = Σ stawka · czas". Zwykła metoda
- * najmniejszych kwadratów potrafi oddać stawkę UJEMNĄ — matematycznie poprawne dopasowanie,
+ * najmniejszych kwadratów potrafi oddać stawkę UJEMNĄ - matematycznie poprawne dopasowanie,
  * fizycznie bzdura („na ziemi silnik produkuje paliwo"). Ujemna stawka nie jest drobnym
  * artefaktem do zaokrąglenia: pojawia się dokładnie wtedy, gdy dwie fazy są trudne do
  * rozdzielenia, i wtedy jedna wychodzi wysoko, druga poniżej zera, a suma się zgadza.
@@ -14,17 +14,17 @@
  * Przy `n ≤ 4` podzbiorów „które zmienne siedzą na zerze" jest najwyżej 16. Dla każdego
  * rozwiązujemy zwykły układ normalny na zmiennych wolnych i sprawdzamy dwa warunki KKT.
  * Rozwiązanie NNLS jest przy pełnym rzędzie jedyne, więc wynik jest IDENTYCZNY jak
- * z Lawsona-Hansona — za to bez pętli iteracyjnej, bez tolerancji zbieżności i bez
+ * z Lawsona-Hansona - za to bez pętli iteracyjnej, bez tolerancji zbieżności i bez
  * pytania „czy zbiegło". Metody iteracyjne (gradient rzutowany, coordinate descent)
- * odpadły z innego powodu: na złe uwarunkowanie — nasz główny tryb awarii — reagują
+ * odpadły z innego powodu: na złe uwarunkowanie - nasz główny tryb awarii - reagują
  * cichym, wolnym pełzaniem zamiast błędu, a my potrzebujemy tu twardego `null`.
  *
- * Przy `n > 6` (64 podzbiory) ta arytmetyka przestaje się opłacać — wtedy wróć do
+ * Przy `n > 6` (64 podzbiory) ta arytmetyka przestaje się opłacać - wtedy wróć do
  * Lawsona-Hansona, nie do metody iteracyjnej.
  *
  * ══ NORMALIZACJA KOLUMN ══
  * Kolumny (czasy faz w godzinach) mają różne skale: kołowanie to dziesiąte części
- * godziny, przelot — godziny. Rozwiązujemy na kolumnach o normie 1 i skalujemy wynik
+ * godziny, przelot - godziny. Rozwiązujemy na kolumnach o normie 1 i skalujemy wynik
  * z powrotem. Poprawia to uwarunkowanie, a przy okazji daje za darmo `gramInverse`,
  * którego przekątna jest miarą rozdzielności faz (patrz `matrix.ts`).
  */
@@ -49,7 +49,7 @@ export interface NnlsSolution {
   residuals: number[];
   /** Suma kwadratów reszt. */
   rss: number;
-  /** Indeksy kolumn WOLNYCH — mapowanie pozycji w `gramInverse`. */
+  /** Indeksy kolumn WOLNYCH - mapowanie pozycji w `gramInverse`. */
   freeIndices: number[];
   /**
    * Odwrotność znormalizowanej macierzy Grama zmiennych WOLNYCH. Przekątna niesie
@@ -57,14 +57,14 @@ export interface NnlsSolution {
    * stawki: `SE(x_j) = σ · √((G⁻¹)_kk) / ‖a_j‖`.
    */
   gramInverse: number[][];
-  /** Normy kolumn wejścia — drugi składnik powyższego wzoru. */
+  /** Normy kolumn wejścia - drugi składnik powyższego wzoru. */
   columnNorms: number[];
 }
 
 /**
  * Rozwiązuje `min ‖Ax − b‖²` przy `x ≥ 0`.
  *
- * `null`, gdy układu nie da się rozwiązać dla ŻADNEGO dopuszczalnego podzbioru —
+ * `null`, gdy układu nie da się rozwiązać dla ŻADNEGO dopuszczalnego podzbioru -
  * w praktyce: kolumny współliniowe (faz nie da się rozdzielić) albo równań mniej niż
  * niewiadomych. To nie jest awaria, tylko odpowiedź „z tych danych tego nie wiadomo";
  * wywołujący schodzi wtedy na model z mniejszą liczbą faz.
@@ -82,14 +82,14 @@ export function solveNnls(
 
   const norms = computeColumnNorms(a, columns);
   // Kolumna o zerowej normie to faza nieobecna we WSZYSTKICH równaniach. Nie ma o niej
-  // czego powiedzieć, więc nie bierze udziału w układzie — inaczej zerowałaby pivot
+  // czego powiedzieć, więc nie bierze udziału w układzie - inaczej zerowałaby pivot
   // i przewracała rozkład za każdym razem.
   const usable = norms.map((n) => n > 0);
   const normalized = a.map((row) =>
     row.map((value, j) => (usable[j] === true ? value / norms[j]! : 0)),
   );
 
-  // Osobliwość PEŁNEGO zbioru kolumn użytecznych kończy pracę od razu — i to jest
+  // Osobliwość PEŁNEGO zbioru kolumn użytecznych kończy pracę od razu - i to jest
   // rozróżnienie, dla którego ten warunek tu stoi. Bez niego solver schodziłby po cichu
   // do mniejszego podzbioru i oddawał rozwiązanie z fazą przypiętą do zera, czyli mylił
   // „ta faza nic nie pali" (odpowiedź na podstawie danych) z „tych faz nie da się od
@@ -107,7 +107,7 @@ export function solveNnls(
     const submatrix = normalized.map((row) => free.map((j) => row[j]!));
     const gram = gramMatrix(submatrix, free.length);
     const l = cholesky(gram);
-    if (l == null) continue; // podzbiór osobliwy — spróbuj mniejszego
+    if (l == null) continue; // podzbiór osobliwy - spróbuj mniejszego
 
     const rhs = transposeMultiply(submatrix, b, free.length);
     const solved = choleskySolve(l, rhs);
@@ -126,7 +126,7 @@ export function solveNnls(
 
     // (2) dopuszczalność dualna: dla zmiennych przypiętych do zera gradient nie może
     // wskazywać, że opłacałoby się je podnieść. Tolerancja bierze skalę zadania,
-    // bo gradient ma jednostkę litrów — próg absolutny kłamałby przy innym samolocie.
+    // bo gradient ma jednostkę litrów - próg absolutny kłamałby przy innym samolocie.
     const tolerance = 1e-9 * Math.max(1, ...residuals.map(Math.abs));
     const dualOk = gradient.every(
       (value, j) => free.includes(j) || !usable[j] || value >= -tolerance,
@@ -155,7 +155,7 @@ export function solveNnls(
  *
  * Kolejność jest częścią kontraktu, nie szczegółem: przy danych zdegenerowanych
  * (dwa podzbiory dają tę samą sumę kwadratów) wybieramy ten, który przypina do zera
- * MNIEJ zmiennych — czyli mówi mniej rzeczy, których nie sprawdziliśmy. Dzięki temu
+ * MNIEJ zmiennych - czyli mówi mniej rzeczy, których nie sprawdziliśmy. Dzięki temu
  * wynik jest deterministyczny i niezależny od kolejności równań.
  */
 function subsetsBySizeDesc(columns: number, usable: readonly boolean[]): number[][] {

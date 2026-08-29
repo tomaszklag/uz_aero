@@ -3,20 +3,20 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — Panel admina · A05 Eksporty</title>
+<title>UZ Aero - Panel admina · A05 Eksporty</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   /* ══════════════════════════════════════════════════════════════════════
-     UZ AERO — PANEL ADMINA · SZABLON
+     UZ AERO - PANEL ADMINA · SZABLON
      Ten plik jest ŹRÓDŁEM dla wszystkich mockupów `design/admin/A*.html`.
      Kopiuj <head> w całości; nie zmieniaj tokenów ani ramy okna.
 
      Czym się różni od mockupów telefonu (`design/*.html`):
-     — ramka to OKNO PRZEGLĄDARKI 1440×900, nie telefon 393×852;
-     — skalowanie `--app-scale` działa identycznie jak `--phone-scale`;
-     — tokeny kolorów i czcionki są TE SAME, bo to ten sam produkt.
+     - ramka to OKNO PRZEGLĄDARKI 1440×900, nie telefon 393×852;
+     - skalowanie `--app-scale` działa identycznie jak `--phone-scale`;
+     - tokeny kolorów i czcionki są TE SAME, bo to ten sam produkt.
      ══════════════════════════════════════════════════════════════════════ */
   :root {
     --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
@@ -27,7 +27,7 @@
     --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28);
     --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
     --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
-    /* wymiary shellu — stałe, żeby wszystkie ekrany siadały w tej samej siatce */
+    /* wymiary shellu - stałe, żeby wszystkie ekrany siadały w tej samej siatce */
     --sidebar-w: 236px; --topbar-h: 56px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -42,7 +42,7 @@
     min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 44px 24px 80px; gap: 26px;
   }
 
-  /* ── canvas: etykieta, panel wariantów, nav-strip — jak w design/*.html, tylko szersze ── */
+  /* ── canvas: etykieta, panel wariantów, nav-strip - jak w design/*.html, tylko szersze ── */
   .canvas-label { width:100%; max-width:1440px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
   .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
   .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
@@ -67,7 +67,7 @@
   .nav-strip a:hover, .nav-strip a.active { color:var(--green); }
   .nav-strip span { color:var(--border-strong); }
 
-  /* ══ RAMA OKNA PRZEGLĄDARKI — desktopowy odpowiednik `.phone` ══ */
+  /* ══ RAMA OKNA PRZEGLĄDARKI - desktopowy odpowiednik `.phone` ══ */
   .browser {
     width:1440px; height:900px; border-radius:14px; background:var(--bg);
     border:1px solid #1C1E24;
@@ -103,7 +103,7 @@
   .nav-count { margin-left:auto; font-family:var(--font-mono); font-size:9.5px; font-weight:700; padding:1px 6px; border-radius:999px; background:var(--surface-raised); color:var(--text-muted); border:1px solid var(--border); }
   .nav-count.amber { background:var(--amber-muted); color:var(--amber); border-color:var(--amber-border); }
   .nav-count.red { background:var(--red-muted); color:var(--red); border-color:var(--red-border); }
-  /* pozycja niedostępna dla roli — widoczna, ale wyjaśniona (nie chowamy, żeby nie zgadywał) */
+  /* pozycja niedostępna dla roli - widoczna, ale wyjaśniona (nie chowamy, żeby nie zgadywał) */
   .nav-item.locked { opacity:0.4; cursor:not-allowed; }
   .nav-item.locked .nav-count { background:transparent; border-color:transparent; }
 
@@ -120,13 +120,13 @@
   .crumbs b { color:var(--text-primary); font-weight:500; }
   .crumbs span { color:var(--border-strong); }
   .topbar-right { display:flex; align-items:center; gap:10px; }
-  /* zegar UTC — w panelu, jak w aplikacji, czas nieoznaczony = UTC */
+  /* zegar UTC - w panelu, jak w aplikacji, czas nieoznaczony = UTC */
   .utc-clock { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); display:inline-flex; align-items:center; gap:7px; }
   .utc-clock b { color:var(--text-primary); font-weight:700; }
   .utc-clock i { font-style:normal; color:var(--blue); font-size:9px; letter-spacing:1.5px; }
 
   .content { flex:1; overflow-y:auto; padding:22px; display:flex; flex-direction:column; gap:18px; }
-  /* Kolumna scrollowana: dzieci NIE mogą się kurczyć — inaczej .table-wrap z overflow:hidden obcina wiersze, zamiast pozwolić .content przewinąć. */
+  /* Kolumna scrollowana: dzieci NIE mogą się kurczyć - inaczej .table-wrap z overflow:hidden obcina wiersze, zamiast pozwolić .content przewinąć. */
   .content > *, .drawer-body > * { flex-shrink:0; }
   .content::-webkit-scrollbar { width:10px; }
   .content::-webkit-scrollbar-thumb { background:var(--border-strong); border-radius:99px; border:3px solid var(--bg); }
@@ -154,7 +154,7 @@
   .card-title .spacer { margin-left:auto; }
 
   .tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
-  /* Kafel bywa linkiem w głąb (pulpit) i zwykłym pudełkiem (podsumowania) — jedna
+  /* Kafel bywa linkiem w głąb (pulpit) i zwykłym pudełkiem (podsumowania) - jedna
      definicja obsługuje oba, bo `text-decoration`/`color` na nie-linku nic nie robi. */
   .tile { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; display:flex; flex-direction:column; gap:6px; text-decoration:none; color:inherit; }
   .tile:hover { border-color:var(--border-strong); }
@@ -176,7 +176,7 @@
   .chip.on { background:var(--green-muted); border-color:var(--green-border); color:var(--green); }
   .chip.on.amber { background:var(--amber-muted); border-color:var(--amber-border); color:var(--amber); }
 
-  /* ── TABELA — kręgosłup panelu; liczby zawsze mono ── */
+  /* ── TABELA - kręgosłup panelu; liczby zawsze mono ── */
   .table-wrap { border:1px solid var(--border); border-radius:14px; overflow:hidden; background:var(--surface); }
   table { width:100%; border-collapse:collapse; }
   thead th { text-align:left; font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.8px; text-transform:uppercase; color:var(--text-muted); font-weight:500; padding:11px 14px; background:#101010; border-bottom:1px solid var(--border); white-space:nowrap; }
@@ -214,7 +214,7 @@
   .input::placeholder { color:var(--text-muted); }
   .hint { font-size:11px; color:var(--text-secondary); line-height:1.5; }
   .hint b { color:var(--amber); font-weight:600; }
-  /* ZAKAZ natywnego <select> (CLAUDE.md) — wybór to zawsze lista kart */
+  /* ZAKAZ natywnego <select> (CLAUDE.md) - wybór to zawsze lista kart */
   .opt-list { display:flex; flex-direction:column; gap:8px; }
   .opt { display:flex; align-items:center; gap:11px; background:var(--surface-raised); border:1px solid var(--border); border-radius:12px; padding:10px 13px; cursor:pointer; min-height:50px; }
   .opt:hover { background:var(--surface-hover); }
@@ -226,7 +226,7 @@
   .opt.selected .opt-check { opacity:1; }
   .opt-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:8px; }
 
-  /* ── banery (3 typy — docs/design-notes.md) ── */
+  /* ── banery (3 typy - docs/design-notes.md) ── */
   .banner { display:flex; align-items:flex-start; gap:10px; border-radius:12px; padding:11px 14px; font-size:12.5px; line-height:1.55; border:1px solid; }
   .banner svg { flex-shrink:0; margin-top:2px; }
   .banner b { font-weight:700; }
@@ -248,7 +248,7 @@
   @keyframes shimmer { 0% { background-position:200% 0; } 100% { background-position:-200% 0; } }
   .no-access { display:flex; flex-direction:column; align-items:center; gap:12px; padding:60px 20px; text-align:center; }
 
-  /* ── szuflada szczegółu (drawer) — otwiera wiersz tabeli bez utraty kontekstu listy ── */
+  /* ── szuflada szczegółu (drawer) - otwiera wiersz tabeli bez utraty kontekstu listy ── */
   .drawer-scrim { position:absolute; inset:0; background:rgba(0,0,0,0.55); z-index:60; }
   .drawer { position:absolute; top:0; right:0; bottom:0; width:520px; background:var(--surface); border-left:1px solid var(--border-strong); z-index:61; display:flex; flex-direction:column; box-shadow:-24px 0 60px rgba(0,0,0,0.5); }
   .drawer-head { flex-shrink:0; padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:flex-start; justify-content:space-between; gap:14px; }
@@ -266,7 +266,7 @@
   .kv-v.green { color:var(--green); } .kv-v.amber { color:var(--amber); } .kv-v.red { color:var(--red); }
   .kv-v small { font-size:9.5px; font-weight:400; color:var(--text-secondary); }
 
-  /* ── oś zdarzeń (log dnia w panelu — czyta się jak rejestr, nie jak lista) ── */
+  /* ── oś zdarzeń (log dnia w panelu - czyta się jak rejestr, nie jak lista) ── */
   .tl { display:flex; flex-direction:column; }
   .tl-row { display:grid; grid-template-columns:74px 20px 1fr auto; align-items:start; gap:10px; padding:8px 0; border-bottom:1px solid var(--hairline); }
   .tl-time { font-family:var(--font-mono); font-size:11.5px; font-weight:700; color:var(--text-primary); letter-spacing:0.5px; }
@@ -279,7 +279,7 @@
   .tl-row:last-child { border-bottom:none; }
   .tl-row.voided .tl-name { text-decoration:line-through; color:var(--text-muted); }
   .tl-row.voided .tl-time { color:var(--text-muted); text-decoration:line-through; }
-  /* Wariant KOMPAKTOWY — oś w wąskiej kolumnie bocznej (pulpit), bez plakietki
+  /* Wariant KOMPAKTOWY - oś w wąskiej kolumnie bocznej (pulpit), bez plakietki
      zamykającej wiersz. Pełna oś jest projektowana pod szeroką kolumnę karty dnia
      i w 400 px robi się rozstrzelona, stąd stopień mniejsze rozmiary i trzy tory
      siatki zamiast czterech. Modyfikator, nie osobny komponent: zachowanie, znaczenie
@@ -297,14 +297,14 @@
   /* Szersza kolumna boczna (400 px) tam, gdzie niesie ona własną treść, a nie
      przypis do lewej: puls systemu na pulpicie, dowód z replaya przy progach.
      Modyfikator zamiast zmiany bazy, bo szersza prawa = węższa lewa, a w lewej
-     stoją tabele — 20 px mniej potrafi przyciąć kolumnę w `.table-wrap`. */
+     stoją tabele - 20 px mniej potrafi przyciąć kolumnę w `.table-wrap`. */
   .cols.wide { grid-template-columns:1fr 400px; }
 
-  /* ══ FLOTA — wiersz samolotu niosący DWIE warstwy naraz ══
+  /* ══ FLOTA - wiersz samolotu niosący DWIE warstwy naraz ══
      Co samolot robi (faza) i SKĄD to wiemy (świeżość). Druga warstwa jest równie
      ważna jak pierwsza: „w locie" przy syncu sprzed 47 minut to nie jest wiedza
      o locie, tylko ostatnia znana pozycja. Klasa stanu na wierszu (`flying`/`stale`)
-     mówi o JAKOŚCI danych, nie o fazie lotu — `stale` nosi samolot, który leci,
+     mówi o JAKOŚCI danych, nie o fazie lotu - `stale` nosi samolot, który leci,
      ale którego telefon milczy. §4.8 stany świeżości. */
   .fleet { display:flex; flex-direction:column; gap:8px; }
   .fleet-row { display:grid; grid-template-columns:96px 1fr 132px 118px 150px; align-items:center; gap:14px; padding:12px 14px; border-radius:12px; background:var(--surface-raised); border:1px solid var(--border); text-decoration:none; color:inherit; }
@@ -320,7 +320,7 @@
   .fleet-nums .k { color:var(--text-muted); font-size:8.5px; letter-spacing:1.2px; }
   .fleet-state { display:flex; justify-content:flex-end; }
 
-  /* Świeżość — jedyne miejsce, w którym panel przyznaje się do NIEWIEDZY.
+  /* Świeżość - jedyne miejsce, w którym panel przyznaje się do NIEWIEDZY.
      Wiek podajemy względnie („3 min temu", „2 dni temu"), nie znacznikiem czasu:
      administrator ocenia, czy dane są aktualne, a nie o której dotarły. */
   .fresh { display:flex; flex-direction:column; align-items:flex-end; gap:3px; }
@@ -329,7 +329,7 @@
   .fresh-val.dim { color:var(--text-muted); }
   .fresh-note { font-family:var(--font-mono); font-size:8px; letter-spacing:0.8px; color:var(--text-muted); text-align:right; }
 
-  /* ══ KOLEJKA „WYMAGA UWAGI" — jedyne miejsce mówiące, co ZROBIĆ ══
+  /* ══ KOLEJKA „WYMAGA UWAGI" - jedyne miejsce mówiące, co ZROBIĆ ══
      Reszta panelu opisuje stan; ta lista stawia zadania. Dlatego wiersz jest linkiem
      w głąb, a wiek pozycji ma własną kolumnę: flaga leżąca trzeci dzień to inny
      problem niż ta sprzed godziny. */
@@ -347,7 +347,7 @@
   .todo-age { font-family:var(--font-mono); font-size:9.5px; font-weight:700; color:var(--text-secondary); flex-shrink:0; text-align:right; }
   .todo-age.old { color:var(--amber); }
 
-  /* ══ NAPŁYW ZDARZEŃ — puls systemu ══
+  /* ══ NAPŁYW ZDARZEŃ - puls systemu ══
      Słupek `zero` jest osobną klasą, a nie słupkiem o wysokości zero, bo cisza
      w rejestrze wymaga podpisu: nie znaczy „nikt nie latał", tylko „nic nie dotarło". */
   .spark { display:flex; align-items:flex-end; gap:3px; height:56px; }
@@ -356,10 +356,10 @@
   .spark i.zero { background:var(--surface-raised); border-color:var(--border); }
   .spark-axis { display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:8px; letter-spacing:1px; color:var(--text-muted); margin-top:6px; }
 
-  /* ══ PRÓG — wiersz w dwóch odmianach: przybity w kodzie vs. dana serwera ══
+  /* ══ PRÓG - wiersz w dwóch odmianach: przybity w kodzie vs. dana serwera ══
      Trzecia kolumna (`thr-src`) niesie różnicę, która jest tu najważniejsza: czy
      wartość da się w ogóle zmienić z panelu. Progi detekcji liczą się na telefonie
-     offline, więc są tylko do odczytu — pole `thr-input` pojawia się wyłącznie tam,
+     offline, więc są tylko do odczytu - pole `thr-input` pojawia się wyłącznie tam,
      gdzie zmiana ma skutek. */
   .thr { display:grid; grid-template-columns:1fr 128px 96px; align-items:center; gap:14px; padding:11px 0; border-bottom:1px solid var(--hairline); }
   .thr:last-of-type { border-bottom:none; }
@@ -373,7 +373,7 @@
   .thr-input:focus { border-color:var(--green-border); }
   .thr-input.changed { border-color:var(--amber-border); color:var(--amber); background:rgba(243,156,18,0.06); }
 
-  /* ══ DOWÓD ZMIANY — „przed → po" na danych historycznych ══
+  /* ══ DOWÓD ZMIANY - „przed → po" na danych historycznych ══
      Amber obramowanie nie jest ostrzeżeniem o błędzie, tylko sygnałem, że to blok
      WARUNKOWY: bez wypełnionego dowodu zapis nie ma prawa dojść do skutku. */
   .proof { border:1px solid var(--amber-border); background:rgba(243,156,18,0.05); border-radius:12px; padding:13px 15px; display:flex; flex-direction:column; gap:11px; }
@@ -385,7 +385,7 @@
   .diff-n { font-size:11px; color:var(--text-secondary); line-height:1.5; }
   .diff-arrow { color:var(--text-muted); font-family:var(--font-mono); font-size:16px; }
 
-  /* Odwołanie do pliku źródłowego — panel bywa czytany razem z repozytorium. */
+  /* Odwołanie do pliku źródłowego - panel bywa czytany razem z repozytorium. */
   .code-ref { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); background:var(--surface-raised); border:1px solid var(--border); border-radius:7px; padding:3px 8px; letter-spacing:0.3px; }
 
   /* ── sekcja demonstracyjna szablonu (TYLKO w tym pliku) ── */
@@ -395,12 +395,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — PANEL · A05 EKSPORTY</span>
+  <span class="film-strip">UZ AERO - PANEL · A05 EKSPORTY</span>
   <span class="slug">monitor kart doby samolotu · export_log vs exported_sheets</span>
   <span class="canvas-meta"><span class="pulse"></span>2 sesje wycięte z kart flagą · 1 błąd regeneracji</span>
 </header>
 
-<main class="browser" role="region" aria-label="Panel administracyjny — monitor eksportu arkuszy">
+<main class="browser" role="region" aria-label="Panel administracyjny - monitor eksportu arkuszy">
 
   <div class="chrome">
     <span class="chrome-dots"><i></i><i></i><i></i></span>
@@ -503,7 +503,7 @@
         <div class="page-head">
           <div>
             <h1 class="page-title">EKSPORT KART DOBY</h1>
-            <p class="page-sub"><b>Karta = DOBA SAMOLOTU</b> (<code>YYYY-MM-DD_SP-XXX</code>), a sesje są jej WIERSZAMI, spiętymi kolumną <code>Sesja</code> (S1, S2…). Dobę wyznacza chwila PRZEJĘCIA (<code>claim_time</code>), więc sesja przejęta o 23:50 i zdana po północy należy do doby swojego przejęcia. Karta powstaje po pierwszym <code>day_close</code> tej doby i jest przebudowywana przy każdym kolejnym zdaniu maszyny (§4.7). Eksport jest <b>skutkiem</b> przyjęcia zdarzeń, nigdy warunkiem — telefon dostał 200 zanim karta powstała, więc błąd tutaj niczego pilotowi nie cofa. Ten ekran jest jedynym miejscem, w którym widać, że arkusz i rejestr się rozjechały.</p>
+            <p class="page-sub"><b>Karta = DOBA SAMOLOTU</b> (<code>YYYY-MM-DD_SP-XXX</code>), a sesje są jej WIERSZAMI, spiętymi kolumną <code>Sesja</code> (S1, S2…). Dobę wyznacza chwila PRZEJĘCIA (<code>claim_time</code>), więc sesja przejęta o 23:50 i zdana po północy należy do doby swojego przejęcia. Karta powstaje po pierwszym <code>day_close</code> tej doby i jest przebudowywana przy każdym kolejnym zdaniu maszyny (§4.7). Eksport jest <b>skutkiem</b> przyjęcia zdarzeń, nigdy warunkiem - telefon dostał 200 zanim karta powstała, więc błąd tutaj niczego pilotowi nie cofa. Ten ekran jest jedynym miejscem, w którym widać, że arkusz i rejestr się rozjechały.</p>
           </div>
           <div class="page-actions">
             <a class="btn ghost" href="#slownik">Czym różni się dziennik od karty</a>
@@ -516,7 +516,7 @@
 
         <div class="banner danger">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-          <span><b>Dwie sesje są wycięte z kart, dopóki nie zamknie się flag.</b> <code>dayExporter</code> pomija sesję, dla której otwarta jest flaga <code>aircraft_overlap</code> — <b>i tylko ją</b>. Od 2026-08-07 bramka obejmuje SESJE, nie cały dokument (§4.7): pozostałe zmiany doby idą do arkusza, a karta wychodzi z adnotacją <b>„niekompletna"</b>. Powód zawężenia: po skróceniu sesji nakładki są częstsze, więc blokowanie całej doby uczyniłoby z bramki stan domyślny. Ponowienie bramki <b>nie omija</b>: rozstrzygnięcie flagi jest jedyną drogą i wykonuje je człowiek. <a href="A03-flagi.html" style="color:var(--red);font-weight:700;">Skrzynka flag →</a></span>
+          <span><b>Dwie sesje są wycięte z kart, dopóki nie zamknie się flag.</b> <code>dayExporter</code> pomija sesję, dla której otwarta jest flaga <code>aircraft_overlap</code> - <b>i tylko ją</b>. Od 2026-08-07 bramka obejmuje SESJE, nie cały dokument (§4.7): pozostałe zmiany doby idą do arkusza, a karta wychodzi z adnotacją <b>„niekompletna"</b>. Powód zawężenia: po skróceniu sesji nakładki są częstsze, więc blokowanie całej doby uczyniłoby z bramki stan domyślny. Ponowienie bramki <b>nie omija</b>: rozstrzygnięcie flagi jest jedyną drogą i wykonuje je człowiek. <a href="A03-flagi.html" style="color:var(--red);font-weight:700;">Skrzynka flag →</a></span>
         </div>
 
         <div class="tiles">
@@ -559,30 +559,30 @@
                 <td class="mono">31 JUL 2026<span class="cell-sub">przejęcie 12:08 UTC</span></td>
                 <td><span class="reg">SP-ABC</span><span class="cell-sub">Cessna 182</span></td>
                 <td class="mono dim">2026-07-31_SP-ABC<span class="cell-sub">doba samolotu · nazwa z <code>claim_time</code></span></td>
-                <td class="num dim">—</td>
-                <td class="num dim">—</td>
+                <td class="num dim">-</td>
+                <td class="num dim">-</td>
                 <td><span class="pill blue"><span class="dot live"></span>Czeka · sesja w toku</span><span class="cell-sub">wiersz karty domknie zdanie samolotu · sesja d7e5…3081 · A. Wrzosek</span></td>
-                <td><div class="row-actions"><button class="btn sm ghost disabled" disabled title="Samolot nie został zdany — wiersz karty domknie day_close">Podgląd</button></div></td>
+                <td><div class="row-actions"><button class="btn sm ghost disabled" disabled title="Samolot nie został zdany - wiersz karty domknie day_close">Podgląd</button></div></td>
               </tr>
 
               <tr>
                 <td class="mono">31 JUL 2026<span class="cell-sub">przejęcie 09:20 UTC</span></td>
                 <td><span class="reg">SP-XYZ</span><span class="cell-sub">Aero AT-3</span></td>
                 <td class="mono dim">2026-07-31_SP-XYZ</td>
-                <td class="num dim">—</td>
-                <td class="num dim">—</td>
+                <td class="num dim">-</td>
+                <td class="num dim">-</td>
                 <td><span class="pill blue"><span class="dot live"></span>Czeka · sesja w toku</span><span class="cell-sub">wiersz karty domknie zdanie samolotu · sesja 6f30…b52e · P. Czarnecki</span></td>
-                <td><div class="row-actions"><button class="btn sm ghost disabled" disabled title="Samolot nie został zdany — wiersz karty domknie day_close">Podgląd</button></div></td>
+                <td><div class="row-actions"><button class="btn sm ghost disabled" disabled title="Samolot nie został zdany - wiersz karty domknie day_close">Podgląd</button></div></td>
               </tr>
 
               <tr style="background:var(--red-muted);">
                 <td class="mono">30 JUL 2026<span class="cell-sub">przejęcie 05:41 UTC</span></td>
                 <td><span class="reg">SP-KLM</span><span class="cell-sub">Cessna 208 Caravan</span></td>
                 <td class="mono dim">2026-07-30_SP-KLM</td>
-                <td class="num dim">—<span class="cell-sub">nigdy nie powstała</span></td>
-                <td class="num dim">—</td>
-                <td><span class="pill red"><span class="dot"></span>Zablokowana</span><span class="cell-sub">aircraft_overlap — ta sesja wypada z karty doby<br />flaga <a href="A03a-flaga.html" style="color:var(--red);">#1046</a> · od 30 JUL 18:41</span></td>
-                <td><div class="row-actions"><a class="btn sm ghost" href="A03a-flaga.html">Do flagi</a><button class="btn sm ghost disabled" disabled title="Bramka dayExporter — najpierw rozwiąż flagę #1046">Ponów</button></div></td>
+                <td class="num dim">-<span class="cell-sub">nigdy nie powstała</span></td>
+                <td class="num dim">-</td>
+                <td><span class="pill red"><span class="dot"></span>Zablokowana</span><span class="cell-sub">aircraft_overlap - ta sesja wypada z karty doby<br />flaga <a href="A03a-flaga.html" style="color:var(--red);">#1046</a> · od 30 JUL 18:41</span></td>
+                <td><div class="row-actions"><a class="btn sm ghost" href="A03a-flaga.html">Do flagi</a><button class="btn sm ghost disabled" disabled title="Bramka dayExporter - najpierw rozwiąż flagę #1046">Ponów</button></div></td>
               </tr>
 
               <tr>
@@ -619,7 +619,7 @@
                         <span class="pill blue">rew. 3</span>
                       </div>
                     </div>
-                    <span class="hint"><b>Trzy wiersze w <code>export_log</code>, jeden w <code>exported_sheets</code>.</b> Dziennik pamięta każdą z trzech wysyłek z osobna (append-only), karta trzyma wyłącznie treść rewizji 3 — dokładnie jak zakładka w Google Sheets, którą kolejny zapis nadpisuje. Treść rewizji 1 i 2 nie jest nigdzie kopiowana: odtwarza się ją ze strumienia zdarzeń, bo pełne kopie dublowałyby rejestr bez zysku.</span>
+                    <span class="hint"><b>Trzy wiersze w <code>export_log</code>, jeden w <code>exported_sheets</code>.</b> Dziennik pamięta każdą z trzech wysyłek z osobna (append-only), karta trzyma wyłącznie treść rewizji 3 - dokładnie jak zakładka w Google Sheets, którą kolejny zapis nadpisuje. Treść rewizji 1 i 2 nie jest nigdzie kopiowana: odtwarza się ją ze strumienia zdarzeń, bo pełne kopie dublowałyby rejestr bez zysku.</span>
                   </div>
                 </td>
               </tr>
@@ -628,10 +628,10 @@
                 <td class="mono">29 JUL 2026<span class="cell-sub">przejęcie 13:33 UTC</span></td>
                 <td><span class="reg">SP-XYZ</span><span class="cell-sub">Aero AT-3</span></td>
                 <td class="mono dim">2026-07-29_SP-XYZ</td>
-                <td class="num dim">—<span class="cell-sub">nigdy nie powstała</span></td>
-                <td class="num dim">—</td>
-                <td><span class="pill red"><span class="dot"></span>Zablokowana</span><span class="cell-sub">aircraft_overlap — ta sesja wypada z karty doby<br />flaga <a href="A03-flagi.html" style="color:var(--red);">#1043</a> · od 29 JUL 13:50</span></td>
-                <td><div class="row-actions"><a class="btn sm ghost" href="A03-flagi.html">Do flagi</a><button class="btn sm ghost disabled" disabled title="Bramka dayExporter — najpierw rozwiąż flagę #1043">Ponów</button></div></td>
+                <td class="num dim">-<span class="cell-sub">nigdy nie powstała</span></td>
+                <td class="num dim">-</td>
+                <td><span class="pill red"><span class="dot"></span>Zablokowana</span><span class="cell-sub">aircraft_overlap - ta sesja wypada z karty doby<br />flaga <a href="A03-flagi.html" style="color:var(--red);">#1043</a> · od 29 JUL 13:50</span></td>
+                <td><div class="row-actions"><a class="btn sm ghost" href="A03-flagi.html">Do flagi</a><button class="btn sm ghost disabled" disabled title="Bramka dayExporter - najpierw rozwiąż flagę #1043">Ponów</button></div></td>
               </tr>
 
               <tr>
@@ -645,10 +645,10 @@
               </tr>
 
               <!-- DWIE SESJE, JEDNA KARTA (§4.7). Oba wiersze niosą tę samą nazwę
-                   `2026-07-28_SP-KLM` i ten sam numer rewizji — i to NIE jest duplikat:
+                   `2026-07-28_SP-KLM` i ten sam numer rewizji - i to NIE jest duplikat:
                    są WIERSZAMI jednego dokumentu, spiętymi kolumną `Sesja` (S1, S2).
                    `export_log` dostaje po jednym wierszu na sesję wchodzącą do rewizji,
-                   wszystkie z tym samym numerem — bo `GET /sessions/:uuid/sync-status`
+                   wszystkie z tym samym numerem - bo `GET /sessions/:uuid/sync-status`
                    (ekran 11 telefonu) pyta o link PO SESJI i każda zmiana musi go
                    znaleźć, także ta, która eksportu nie wyzwoliła. Kolumna „Dzień"
                    niesie godzinę przejęcia, bo bez niej te dwa wiersze są nieodróżnialne. -->
@@ -700,7 +700,7 @@
 
           <div class="card" id="podglad">
             <!-- KARTA = DOBA SAMOLOTU (§4.7, migracja 23). Do 2026-08-07 karta była
-                 budowana z JEDNEJ sesji i nazywana `YYYY-MM-DD_SP-XXX` — po skróceniu
+                 budowana z JEDNEJ sesji i nazywana `YYYY-MM-DD_SP-XXX` - po skróceniu
                  sesji ta nazwa przestała być kluczem unikalnym i druga zmiana dnia
                  NADPISYWAŁA pierwszą. Dziś jednostką jest doba, a zmiany są jej wierszami,
                  spiętymi kolumną `Sesja`: numer lotu liczy się w obrębie sesji, więc
@@ -709,7 +709,7 @@
             <div class="table-wrap" style="border:none;border-radius:0;background:none;">
               <table>
                 <tbody>
-                  <tr><td class="cell-strong">UZ Aero — doba samolotu</td><td class="mono" colspan="5">2026-07-28 (UTC)</td></tr>
+                  <tr><td class="cell-strong">UZ Aero - doba samolotu</td><td class="mono" colspan="5">2026-07-28 (UTC)</td></tr>
                   <tr><td class="dim">Samolot</td><td class="mono" colspan="5">SP-KLM · Cessna 208 Caravan</td></tr>
                   <tr><td class="dim">Zmiany w dobie</td><td class="mono" colspan="5">2</td></tr>
                   <tr><td class="dim">Czas blokowy doby</td><td class="mono" colspan="5">09:53</td></tr>
@@ -723,7 +723,7 @@
                     <td class="dim mono" style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;">Block</td>
                     <td class="dim mono" style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;">Stan</td>
                   </tr>
-                  <tr><td class="mono">S1</td><td class="mono">MBK · —</td><td class="mono">SKOKI</td><td class="mono">06:05 → 10:34</td><td class="mono">03:41</td><td class="mono">ZDANY</td></tr>
+                  <tr><td class="mono">S1</td><td class="mono">MBK · -</td><td class="mono">SKOKI</td><td class="mono">06:05 → 10:34</td><td class="mono">03:41</td><td class="mono">ZDANY</td></tr>
                   <tr><td class="mono">S2</td><td class="mono">AWR · MBK</td><td class="mono">SKOKI</td><td class="mono">10:34 → 17:26</td><td class="mono">06:12</td><td class="mono">ZDANY</td></tr>
 
                   <tr><td class="cell-strong" colspan="6" style="padding-top:16px;">Loty · czasy UTC</td></tr>
@@ -760,9 +760,9 @@
                 </tbody>
               </table>
             </div>
-            <span class="hint">Karta to <b>dosłowne wiersze dokumentu</b> (<code>rows</code> jako <code>string[][]</code>), nie projekcja do dalszego liczenia — dlatego motogodziny są sformatowane wg <code>mh_format</code> samolotu, a nie surową liczbą. Panel jej NIE interpretuje: nie szuka nagłówków, nie parsuje liczb, wyświetla to, co poszło do klubu, znak w znak.
-              <b style="display:block;padding-top:7px;color:var(--text-secondary);">Sumy doby nie są sumą wszystkiego.</b> Paliwo startowe to odczyt PIERWSZEJ zmiany, a końcowe — OSTATNIEJ, bo poziom w zbiorniku nie jest wielkością addytywną. Motogodziny doby to <b>RUCH LICZNIKA</b> od pierwszego do ostatniego odczytu; rozjazd wobec sumy delt per sesja ma zgłosić <code>mh_gap</code>, a nie zamaskować go arytmetyka karty.
-              <b style="display:block;padding-top:7px;color:var(--text-secondary);">Sesja jeszcze niezdana jest w karcie</b> ze stanem „W TOKU" — karta odzwierciedla aktualny stan doby i jest przebudowywana przy każdym kolejnym zdaniu maszyny.</span>
+            <span class="hint">Karta to <b>dosłowne wiersze dokumentu</b> (<code>rows</code> jako <code>string[][]</code>), nie projekcja do dalszego liczenia - dlatego motogodziny są sformatowane wg <code>mh_format</code> samolotu, a nie surową liczbą. Panel jej NIE interpretuje: nie szuka nagłówków, nie parsuje liczb, wyświetla to, co poszło do klubu, znak w znak.
+              <b style="display:block;padding-top:7px;color:var(--text-secondary);">Sumy doby nie są sumą wszystkiego.</b> Paliwo startowe to odczyt PIERWSZEJ zmiany, a końcowe - OSTATNIEJ, bo poziom w zbiorniku nie jest wielkością addytywną. Motogodziny doby to <b>RUCH LICZNIKA</b> od pierwszego do ostatniego odczytu; rozjazd wobec sumy delt per sesja ma zgłosić <code>mh_gap</code>, a nie zamaskować go arytmetyka karty.
+              <b style="display:block;padding-top:7px;color:var(--text-secondary);">Sesja jeszcze niezdana jest w karcie</b> ze stanem „W TOKU" - karta odzwierciedla aktualny stan doby i jest przebudowywana przy każdym kolejnym zdaniu maszyny.</span>
           </div>
 
           <div style="display:flex;flex-direction:column;gap:16px;">
@@ -777,13 +777,13 @@
               <div class="kv"><span class="kv-k">Następna próba</span><span class="kv-v">14:38 <small>UTC · za 16 min</small></span></div>
               <div class="banner warn">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                <span><b>Nieudanej próby nie ma w <code>export_log</code>.</b> Dziennik dostaje wiersz dopiero po udanym zapisie karty — odwrotna kolejność pokazywałaby na ekranie 11 telefonu link do arkusza, którego nie ma. Historia porażek żyje więc tylko w tej kolejce, i to jest jedyne miejsce, gdzie ją widać.</span>
+                <span><b>Nieudanej próby nie ma w <code>export_log</code>.</b> Dziennik dostaje wiersz dopiero po udanym zapisie karty - odwrotna kolejność pokazywałaby na ekranie 11 telefonu link do arkusza, którego nie ma. Historia porażek żyje więc tylko w tej kolejce, i to jest jedyne miejsce, gdzie ją widać.</span>
               </div>
               <button class="btn primary">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
                 Ponów teraz
               </button>
-              <span class="hint">Ręczne ponowienie jest akcją administratora — trafia do <a href="A09-audyt.html" style="color:var(--green)">audytu</a> z kartą, numerem próby i treścią błędu. Szef wyszkolenia widzi ten ekran w trybie odczytu.</span>
+              <span class="hint">Ręczne ponowienie jest akcją administratora - trafia do <a href="A09-audyt.html" style="color:var(--green)">audytu</a> z kartą, numerem próby i treścią błędu. Szef wyszkolenia widzi ten ekran w trybie odczytu.</span>
             </div>
 
             <div class="card">
@@ -803,37 +803,37 @@
 
           <div class="banner ok">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="8 12.5 11 15.5 16 9.5"/></svg>
-            <span><b>Sprostowanie z 2026-08-01: ekran jest wdrożony, ale KOLEJKI PONOWIEŃ nie ma i nie da się jej dziś pokazać.</b> Karta „Kolejka ponowień" wyżej wymienia numer próby (<code>3 / 6</code>), czas następnej próby i treść błędu (<code>sheets_write_timeout</code>) — <b>żadnej z tych trzech rzeczy system nie zapisuje</b>. Wiersz <code>export_log</code> powstaje DOPIERO po udanym zapisie karty (i tak ma być: odwrotna kolejność pokazywałaby na ekranie 11 telefonu link do arkusza, którego nie ma), a tabeli kolejki, licznika prób ani backoffu w schemacie nie ma. Nieudany eksport nie zostawia więc śladu NIGDZIE. Wdrożony ekran pokazuje zamiast tego <b>skutek</b> tych awarii — dzień w stanie „Brak karty" — oraz wynik pojedynczego ponowienia zaraz po kliknięciu (<code>outcome: null</code> znaczy „eksport rzucił"). Kolejka z backoffem jest osobną decyzją, opisaną w <a href="A11-konserwacja.html" style="color:var(--green)">A11 Konserwacja</a>, a nie polem do wypełnienia na tym ekranie.</span>
+            <span><b>Sprostowanie z 2026-08-01: ekran jest wdrożony, ale KOLEJKI PONOWIEŃ nie ma i nie da się jej dziś pokazać.</b> Karta „Kolejka ponowień" wyżej wymienia numer próby (<code>3 / 6</code>), czas następnej próby i treść błędu (<code>sheets_write_timeout</code>) - <b>żadnej z tych trzech rzeczy system nie zapisuje</b>. Wiersz <code>export_log</code> powstaje DOPIERO po udanym zapisie karty (i tak ma być: odwrotna kolejność pokazywałaby na ekranie 11 telefonu link do arkusza, którego nie ma), a tabeli kolejki, licznika prób ani backoffu w schemacie nie ma. Nieudany eksport nie zostawia więc śladu NIGDZIE. Wdrożony ekran pokazuje zamiast tego <b>skutek</b> tych awarii - dzień w stanie „Brak karty" - oraz wynik pojedynczego ponowienia zaraz po kliknięciu (<code>outcome: null</code> znaczy „eksport rzucił"). Kolejka z backoffem jest osobną decyzją, opisaną w <a href="A11-konserwacja.html" style="color:var(--green)">A11 Konserwacja</a>, a nie polem do wypełnienia na tym ekranie.</span>
           </div>
 
           <div class="banner ok">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="8 12.5 11 15.5 16 9.5"/></svg>
-            <span><b>Sprostowanie z 2026-08-01: karty „Zdrowie eksportu" też nie da się policzyć uczciwie.</b> „Mediana opóźnienia od <code>day_close</code>" i „najdłuższe opóźnienie" wymagają stempla SERWEROWEGO przyjęcia zamknięcia dnia, a projekcja niesie <code>close_time</code> — czas z TELEFONU. Telefon bez zasięgu zapisuje zamknięcie o 18:00, serwer widzi je o 22:00 i eksportuje 22:00:01; różnica <code>exported_at − close_time</code> nazywałaby się „opóźnieniem eksportu", a mierzyła <b>długość ciszy telefonu</b>. Z tego samego powodu wdrożony ekran nie ma stanu „NIEAKTUALNY" z <code>ANALIZA.md</code> §A07: porównanie <code>export_log.exported_at</code> z <code>sessions.updated_at</code> zestawia zegar aplikacji z zegarem Postgresa. Zamknięcie obu spraw wymaga jednej kolumny w <code>export_log</code> („do którego miejsca strumienia zbudowano kartę"), czyli decyzji o schemacie.</span>
+            <span><b>Sprostowanie z 2026-08-01: karty „Zdrowie eksportu" też nie da się policzyć uczciwie.</b> „Mediana opóźnienia od <code>day_close</code>" i „najdłuższe opóźnienie" wymagają stempla SERWEROWEGO przyjęcia zamknięcia dnia, a projekcja niesie <code>close_time</code> - czas z TELEFONU. Telefon bez zasięgu zapisuje zamknięcie o 18:00, serwer widzi je o 22:00 i eksportuje 22:00:01; różnica <code>exported_at − close_time</code> nazywałaby się „opóźnieniem eksportu", a mierzyła <b>długość ciszy telefonu</b>. Z tego samego powodu wdrożony ekran nie ma stanu „NIEAKTUALNY" z <code>ANALIZA.md</code> §A07: porównanie <code>export_log.exported_at</code> z <code>sessions.updated_at</code> zestawia zegar aplikacji z zegarem Postgresa. Zamknięcie obu spraw wymaga jednej kolumny w <code>export_log</code> („do którego miejsca strumienia zbudowano kartę"), czyli decyzji o schemacie.</span>
           </div>
 
           <div class="banner ok">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="8 12.5 11 15.5 16 9.5"/></svg>
-            <span><b>Sprostowanie z 2026-08-01: podgląd karty w panelu NIE jedzie przez <code>GET /sheets/:tab</code>.</b> Podpis pod podglądem mówił „ten sam endpoint co link z ekranu 11; autoryzacja Bearer" — i to był właśnie powód, dla którego panel z niej nie skorzysta (dziś w plakietce podglądu stoi już trasa panelu). Sesja panelu to ciasteczko <code>uzaero_admin</code> z <code>Path=/admin</code>, którego przeglądarka do <code>/sheets/*</code> po prostu nie wyśle; poszerzenie ścieżki ciasteczka posłałoby poświadczenie back-office'u razem z KAŻDYM żądaniem telefonu, czyli byłoby odwrotnością tego, co ma osiągnąć. Trasa telefonu zostaje nietknięta, a panel czyta tę samą treść tym samym portem pod <code>GET /admin/api/exports/&lt;uuid sesji&gt;/sheet</code>. Nazwę karty liczy przy tym SERWER — panel nigdy nie skleja <code>YYYY-MM-DD_SP-XXX</code> u siebie, bo druga konwencja nazw znaczyłaby link do karty, której w bazie nie ma.</span>
+            <span><b>Sprostowanie z 2026-08-01: podgląd karty w panelu NIE jedzie przez <code>GET /sheets/:tab</code>.</b> Podpis pod podglądem mówił „ten sam endpoint co link z ekranu 11; autoryzacja Bearer" - i to był właśnie powód, dla którego panel z niej nie skorzysta (dziś w plakietce podglądu stoi już trasa panelu). Sesja panelu to ciasteczko <code>uzaero_admin</code> z <code>Path=/admin</code>, którego przeglądarka do <code>/sheets/*</code> po prostu nie wyśle; poszerzenie ścieżki ciasteczka posłałoby poświadczenie back-office'u razem z KAŻDYM żądaniem telefonu, czyli byłoby odwrotnością tego, co ma osiągnąć. Trasa telefonu zostaje nietknięta, a panel czyta tę samą treść tym samym portem pod <code>GET /admin/api/exports/&lt;uuid sesji&gt;/sheet</code>. Nazwę karty liczy przy tym SERWER - panel nigdy nie skleja <code>YYYY-MM-DD_SP-XXX</code> u siebie, bo druga konwencja nazw znaczyłaby link do karty, której w bazie nie ma.</span>
           </div>
 
           <div class="banner ok">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="8 12.5 11 15.5 16 9.5"/></svg>
             <span><b>DECYZJA ZAPADŁA (2026-08-07, migracja 23): karta arkusza to DOBA SAMOLOTU, a sesje są jej wierszami.</b> <span class="pill green" style="margin:0 0 0 4px;">WDROŻONE</span>
-              <span style="display:block;padding-top:7px;">Problem, który to zamyka: nazwa <code>YYYY-MM-DD_SP-XXX</code> niesie dzień i samolot, ale <b>nie sesję</b>, a <code>exported_sheets</code> trzyma jedną treść na nazwę — więc po skróceniu sesji (§3.6a) zmiana popołudniowa <b>nadpisywała</b> kartę porannej i poranny lot znikał z dokumentu klubu. Nazwa nie była już kluczem unikalnym, bo w typowym dniu skokowym tą samą maszyną lata dwóch pilotów. Flaga nakładki tego nie łapała i nie miała prawa: obie sesje są zdane poprawnie, więc sporu nie ma.</span>
-              <span style="display:block;padding-top:7px;">Wybrano <b>scalanie wszystkich sesji doby w jedną kartę</b>, a nie wpuszczenie sesji do nazwy — bo klub czyta dzień per SAMOLOT, nie per zmianę pilota. Zmiany dostają etykiety <code>S1</code>, <code>S2</code>… chronologicznie, a <code>Sesja</code> jest pierwszą kolumną tabeli lotów, bo numer lotu liczy się w obrębie sesji i w dobie z dwiema zmianami się powtarza.</span>
-              <span style="display:block;padding-top:7px;"><b>Rewizja należy do pary (doba, samolot)</b>, nie do sesji: <code>export_log</code> dostaje po jednym wierszu na sesję wchodzącą do rewizji, wszystkie z tym samym numerem — bo <code>GET /sessions/:uuid/sync-status</code> (ekran 11 telefonu) pyta o link PO SESJI i każda zmiana musi go znaleźć, także ta, która eksportu nie wyzwoliła. Blokada advisory obejmuje ten sam klucz (<code>export_log:&lt;doba&gt;:&lt;samolot&gt;</code>). Stan „Karta nadpisana", który monitor pokazywał przed decyzją, <b>przestał być możliwy</b>.</span>
+              <span style="display:block;padding-top:7px;">Problem, który to zamyka: nazwa <code>YYYY-MM-DD_SP-XXX</code> niesie dzień i samolot, ale <b>nie sesję</b>, a <code>exported_sheets</code> trzyma jedną treść na nazwę - więc po skróceniu sesji (§3.6a) zmiana popołudniowa <b>nadpisywała</b> kartę porannej i poranny lot znikał z dokumentu klubu. Nazwa nie była już kluczem unikalnym, bo w typowym dniu skokowym tą samą maszyną lata dwóch pilotów. Flaga nakładki tego nie łapała i nie miała prawa: obie sesje są zdane poprawnie, więc sporu nie ma.</span>
+              <span style="display:block;padding-top:7px;">Wybrano <b>scalanie wszystkich sesji doby w jedną kartę</b>, a nie wpuszczenie sesji do nazwy - bo klub czyta dzień per SAMOLOT, nie per zmianę pilota. Zmiany dostają etykiety <code>S1</code>, <code>S2</code>… chronologicznie, a <code>Sesja</code> jest pierwszą kolumną tabeli lotów, bo numer lotu liczy się w obrębie sesji i w dobie z dwiema zmianami się powtarza.</span>
+              <span style="display:block;padding-top:7px;"><b>Rewizja należy do pary (doba, samolot)</b>, nie do sesji: <code>export_log</code> dostaje po jednym wierszu na sesję wchodzącą do rewizji, wszystkie z tym samym numerem - bo <code>GET /sessions/:uuid/sync-status</code> (ekran 11 telefonu) pyta o link PO SESJI i każda zmiana musi go znaleźć, także ta, która eksportu nie wyzwoliła. Blokada advisory obejmuje ten sam klucz (<code>export_log:&lt;doba&gt;:&lt;samolot&gt;</code>). Stan „Karta nadpisana", który monitor pokazywał przed decyzją, <b>przestał być możliwy</b>.</span>
             </span>
           </div>
 
           <div class="banner status">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            <span>Rozdzielenie dziennika od treści karty jest <b>jedynym śladem rozjazdu arkusz↔rejestr</b>. Gdyby regeneracja nadpisywała wiersz dziennika, nie dałoby się już odpowiedzieć na pytanie „co widział skarbnik klubu, kiedy zamykał miesiąc" — a to jedyne pytanie, które przy sporze naprawdę pada.</span>
+            <span>Rozdzielenie dziennika od treści karty jest <b>jedynym śladem rozjazdu arkusz↔rejestr</b>. Gdyby regeneracja nadpisywała wiersz dziennika, nie dałoby się już odpowiedzieć na pytanie „co widział skarbnik klubu, kiedy zamykał miesiąc" - a to jedyne pytanie, które przy sporze naprawdę pada.</span>
           </div>
           <div class="cols even">
             <div class="card" style="background:var(--surface-raised);">
               <div class="card-title"><code style="font-family:var(--font-mono);color:var(--text-primary);">export_log</code> <span class="spacer"></span><span class="pill green">append-only</span></div>
               <div class="kv"><span class="kv-k">Pytanie</span><span class="kv-v"><small>co i kiedy poszło do arkusza</small></span></div>
-              <div class="kv"><span class="kv-k">Klucz</span><span class="kv-v"><small>id SERIAL — wiersz na wysyłkę</small></span></div>
+              <div class="kv"><span class="kv-k">Klucz</span><span class="kv-v"><small>id SERIAL - wiersz na wysyłkę</small></span></div>
               <div class="kv"><span class="kv-k">Kolumny</span><span class="kv-v"><small>session_uuid · day · aircraft_id<br />sheet_url · revision · exported_at</small></span></div>
               <div class="kv"><span class="kv-k">Regeneracja</span><span class="kv-v green"><small>NOWY wiersz, rewizja +1</small></span></div>
               <div class="kv"><span class="kv-k">UPDATE / DELETE</span><span class="kv-v red"><small>nigdy</small></span></div>
@@ -842,14 +842,14 @@
             <div class="card" style="background:var(--surface-raised);">
               <div class="card-title"><code style="font-family:var(--font-mono);color:var(--text-primary);">exported_sheets</code> <span class="spacer"></span><span class="pill amber">nadpisywana</span></div>
               <div class="kv"><span class="kv-k">Pytanie</span><span class="kv-v"><small>jak karta wygląda TERAZ</small></span></div>
-              <div class="kv"><span class="kv-k">Klucz</span><span class="kv-v"><small>tab PRIMARY KEY — wiersz na kartę</small></span></div>
+              <div class="kv"><span class="kv-k">Klucz</span><span class="kv-v"><small>tab PRIMARY KEY - wiersz na kartę</small></span></div>
               <div class="kv"><span class="kv-k">Kolumny</span><span class="kv-v"><small>tab · rows (JSONB) · updated_at</small></span></div>
-              <div class="kv"><span class="kv-k">Regeneracja</span><span class="kv-v amber"><small>UPSERT — treść nadpisana</small></span></div>
+              <div class="kv"><span class="kv-k">Regeneracja</span><span class="kv-v amber"><small>UPSERT - treść nadpisana</small></span></div>
               <div class="kv"><span class="kv-k">Historia rewizji</span><span class="kv-v red"><small>nie ma i nie wolno dodać</small></span></div>
-              <span class="hint">Semantyka jeden do jednego z kartą w Google Sheets: jedna nazwa = jedna zakładka, kolejny zapis nadpisuje poprzedni. Czytelnik linku z ekranu 11 ma widzieć wyłącznie aktualny stan dnia — dokładnie to, co zobaczyłby w arkuszu. Treść starszej rewizji odtwarza się ze strumienia zdarzeń.</span>
+              <span class="hint">Semantyka jeden do jednego z kartą w Google Sheets: jedna nazwa = jedna zakładka, kolejny zapis nadpisuje poprzedni. Czytelnik linku z ekranu 11 ma widzieć wyłącznie aktualny stan dnia - dokładnie to, co zobaczyłby w arkuszu. Treść starszej rewizji odtwarza się ze strumienia zdarzeń.</span>
             </div>
           </div>
-          <span class="hint">Docelowy adapter Google Sheets to podmiana portu <code>SheetsPort</code> — dopóki klucza serwisowego nie ma, karty mieszkają w naszej bazie i czyta je <code>GET /sheets/:tab</code>. Dla tego ekranu nic się wtedy nie zmieni: dziennik i tak zostaje po naszej stronie, bo arkusz Google historii rewizji nie prowadzi.</span>
+          <span class="hint">Docelowy adapter Google Sheets to podmiana portu <code>SheetsPort</code> - dopóki klucza serwisowego nie ma, karty mieszkają w naszej bazie i czyta je <code>GET /sheets/:tab</code>. Dla tego ekranu nic się wtedy nie zmieni: dziennik i tak zostaje po naszej stronie, bo arkusz Google historii rewizji nie prowadzi.</span>
         </div>
 
       </div>

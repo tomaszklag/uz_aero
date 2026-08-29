@@ -1,7 +1,7 @@
 /**
- * UZ Aero — panel: sklejanie stron kursorowych (moduł czysty).
+ * UZ Aero - panel: sklejanie stron kursorowych (moduł czysty).
  *
- * To jest test PAGINACJI KEYSET widzianej od strony panelu — pierwszego konsumenta
+ * To jest test PAGINACJI KEYSET widzianej od strony panelu - pierwszego konsumenta
  * `infrastructure/pg/keyset.ts` w tym repo. Zachowania, których pilnuje, nie widać
  * w typach i żadne z nich nie jest oczywiste:
  *
@@ -31,7 +31,7 @@ describe('dayPages', () => {
     // ktokolwiek cokolwiek pokazał.
     //
     // `total: null`, a nie `0`: braku odpowiedzi nie da się odróżnić od pustego
-    // rejestru, jeśli oba wyglądają jak zero — a `undefined` przychodzi tu również
+    // rejestru, jeśli oba wyglądają jak zero - a `undefined` przychodzi tu również
     // wtedy, gdy pobranie się NIE UDAŁO. Zero jest twierdzeniem o świecie i nie ma
     // prawa stanąć obok banera „nie udało się pobrać listy dni".
     expect(dayPages(undefined)).toEqual({ items: [], shown: 0, total: null, hasMore: false });
@@ -41,7 +41,7 @@ describe('dayPages', () => {
   it('GRANICA STRONY nie ma szwu: żadnego wiersza dwa razy, żadnego pominiętego', () => {
     // Kursor koduje OSTATNI wiersz strony, a predykat serwera jest ostry (`<`, nie
     // `<=`), więc pierwszy wiersz następnej strony jest kolejnym, a nie powtórzonym.
-    // Konkatenacja jest tu POPRAWNA — i dlatego nie odsiewamy duplikatów `Set`-em:
+    // Konkatenacja jest tu POPRAWNA - i dlatego nie odsiewamy duplikatów `Set`-em:
     // taki „bezpiecznik" maskowałby zepsuty predykat po stronie bazy.
     const state = dayPages([
       page(['sess-5', 'sess-4'], 'kursor-po-sess-4', 5),
@@ -60,7 +60,7 @@ describe('dayPages', () => {
     expect(new Set(state.items.map((i) => i.sessionUuid)).size).toBe(5);
   });
 
-  it('„czy jest więcej" pyta OSTATNIĄ stronę — kursor pierwszej jest już zużyty', () => {
+  it('„czy jest więcej" pyta OSTATNIĄ stronę - kursor pierwszej jest już zużyty', () => {
     // Czytanie `nextCursor` pierwszej strony dałoby przycisk, który po dojściu
     // do końca listy nigdy nie gaśnie.
     expect(dayPages([page(['a'], 'kursor', 3)]).hasMore).toBe(true);
@@ -68,7 +68,7 @@ describe('dayPages', () => {
     expect(dayPages([page(['a'], 'kursor', 3), page(['b'], null, 3)]).hasMore).toBe(false);
   });
 
-  it('`total` z serwera przyjmuje ZERO — pusty rejestr to odpowiedź, a nie jej brak', () => {
+  it('`total` z serwera przyjmuje ZERO - pusty rejestr to odpowiedź, a nie jej brak', () => {
     // Odwrotna strona reguły wyżej: gdyby moduł zamieniał zero na `null` „dla
     // bezpieczeństwa", kafel przestałby umieć powiedzieć, że w tym zawężeniu
     // naprawdę nic nie ma.
@@ -77,7 +77,7 @@ describe('dayPages', () => {
 
   it('`total` bierze z ostatniej odpowiedzi, bo jest najświeższy', () => {
     // Serwer liczy `total` tym samym filtrem przy każdym żądaniu. Jeśli w trakcie
-    // przeglądania telefon dośle nowy dzień, licznik ma to pokazać — sklejona lista
+    // przeglądania telefon dośle nowy dzień, licznik ma to pokazać - sklejona lista
     // i tak nie udaje migawki.
     const state = dayPages([page(['a'], 'kursor', 5), page(['b'], null, 7)]);
     expect(state.total).toBe(7);
@@ -100,10 +100,10 @@ describe('pagesSummary', () => {
     expect(pagesSummary(dayPages([page([], null, 0)]))).toBe('Brak dni w tym zawężeniu.');
   });
 
-  it('BRAK odpowiedzi nie mówi „brak dni" — to zdanie o świecie, nie o pobraniu', () => {
+  it('BRAK odpowiedzi nie mówi „brak dni" - to zdanie o świecie, nie o pobraniu', () => {
     // „Brak dni w tym zawężeniu." przy nieudanym pobraniu byłoby odpowiedzią na
     // pytanie, na które nie mamy danych; podpis ma powiedzieć, czego nie wiemy.
-    expect(pagesSummary(dayPages(undefined))).toBe('Liczba dni nieznana — serwer nie odpowiedział.');
+    expect(pagesSummary(dayPages(undefined))).toBe('Liczba dni nieznana - serwer nie odpowiedział.');
   });
 });
 

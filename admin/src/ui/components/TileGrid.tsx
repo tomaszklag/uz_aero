@@ -1,8 +1,8 @@
 /**
- * UZ Aero — panel: siatka kafli (`.tiles` z `SZABLON.html`).
+ * UZ Aero - panel: siatka kafli (`.tiles` z `SZABLON.html`).
  *
  * Osobny plik od `Tile`, bo to osobna odpowiedzialność: siatka odpowiada za układ
- * (`auto-fit`, `minmax(180px, 1fr)`), kafel — za treść. Dzięki temu kafle da się
+ * (`auto-fit`, `minmax(180px, 1fr)`), kafel - za treść. Dzięki temu kafle da się
  * ustawić także poza siatką, gdy ekran tego wymaga.
  */
 

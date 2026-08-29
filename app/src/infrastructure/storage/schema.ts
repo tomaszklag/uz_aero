@@ -1,28 +1,28 @@
 /**
- * UZ Aero — schemat lokalnej bazy (DDL) jako czysty tekst.
+ * UZ Aero - schemat lokalnej bazy (DDL) jako czysty tekst.
  *
  * DLACZEGO OSOBNY MODUŁ: adapter importuje `expo-sqlite`, którego nie ma w Node, więc
- * schemat był jedyną warstwą bez testów — i to właśnie w nim ukrył się błąd, który
+ * schemat był jedyną warstwą bez testów - i to właśnie w nim ukrył się błąd, który
  * wyszedł dopiero na urządzeniu (`rowid` na liście kolumn indeksu; SQLite tego nie
  * przyjmuje, choć w `ORDER BY` jest legalny).
  *
  * Trzymając DDL tutaj, uruchamiamy go w teście na prawdziwym silniku SQLite
  * (`node:sqlite`, wbudowany w Node) i wyłapujemy takie rzeczy w sekundę, bez telefonu.
- * Adapter i test korzystają z tego samego źródła — nie da się poprawić jednego,
+ * Adapter i test korzystają z tego samego źródła - nie da się poprawić jednego,
  * zapominając o drugim.
  *
  * Model danych: §5.2 dokumentacji. `events` jest append-only; `synced_at IS NULL`
  * wyznacza outbox (§4.3).
  */
 
-/** Wersja schematu — sterowana `PRAGMA user_version`. Podnieś przy każdej migracji. */
+/** Wersja schematu - sterowana `PRAGMA user_version`. Podnieś przy każdej migracji. */
 export const SCHEMA_VERSION = 5;
 
 /**
  * Migracja 0 → 1: pełny schemat początkowy.
  *
  * Uwaga o indeksach: NIE wymieniamy `rowid` na liście kolumn (SQLite odrzuca to błędem
- * „no such column: rowid"). Nie trzeba go zresztą podawać — rowid jest lokalizatorem
+ * „no such column: rowid"). Nie trzeba go zresztą podawać - rowid jest lokalizatorem
  * wiersza w każdym indeksie, więc po trafieniu w `session_uuid` / `synced_at`
  * sortowanie po rowid nadal idzie po indeksie.
  */
@@ -75,11 +75,11 @@ export const MIGRATION_1 = `
 /**
  * Migracja 1 → 2: ślad kalibracyjny GPS (faza 5).
  *
- * SUROWE fixy sprzed kwarantanny + markery (detekcja / COFNIJ) — materiał do
+ * SUROWE fixy sprzed kwarantanny + markery (detekcja / COFNIJ) - materiał do
  * kalibracji progów i replayu przez `runDetector`. To NIE są zdarzenia domenowe:
  * tabela żyje obok rejestru, nigdy nie przechodzi przez outbox (ma WŁASNĄ wysyłkę
  * na `POST /traces` z własną księgowością `uploaded_at`) i jest przycinana do
- * `TRACE_RETENTION_DAYS` — rejestr jest wieczny, ślad jest materiałem roboczym.
+ * `TRACE_RETENTION_DAYS` - rejestr jest wieczny, ślad jest materiałem roboczym.
  */
 export const MIGRATION_2 = `
   CREATE TABLE IF NOT EXISTS gps_trace (
@@ -104,16 +104,16 @@ export const MIGRATION_2 = `
  * Migracja 2 → 3: kurs nad ziemią + kanały czujników pokładowych w śladzie.
  *
  * DLACZEGO `DROP` I `CREATE`, A NIE `ALTER TABLE ADD COLUMN`: SQLite nie zna
- * `ADD COLUMN IF NOT EXISTS`, więc migracja z `ALTER` przestałaby być idempotentna —
+ * `ADD COLUMN IF NOT EXISTS`, więc migracja z `ALTER` przestałaby być idempotentna -
  * a idempotencję kompletu migracji pilnuje `sqliteSchema.test.ts` dla realnego
  * scenariusza „telefon z przerwanym pierwszym startem dostaje wszystko jeszcze raz".
  * Nie chcę osłabiać tego testu, a mam tu wyjątkowy komfort: `gps_trace` to JEDYNA
  * tabela, której wolno zniknąć. Ślad jest materiałem roboczym z 14-dniową retencją,
- * poza outboxem, nigdy źródłem prawdy — utrata niewysłanego nagrania przy jednej
+ * poza outboxem, nigdy źródłem prawdy - utrata niewysłanego nagrania przy jednej
  * aktualizacji aplikacji nie kosztuje nic, czego nie da się nadrobić następnym lotem.
  * Gdyby to była tabela `events`, rozmowa byłaby zupełnie inna.
  *
- * Kolumny czujników są NULL w wierszach `fix` i odwrotnie — to celowe. Ślad analizujemy
+ * Kolumny czujników są NULL w wierszach `fix` i odwrotnie - to celowe. Ślad analizujemy
  * kolumnowo (`replay.ts`, przyszłe zapytania po NDJSON), a nie przez rozpakowywanie JSON-a
  * z jednego pola; typy trzymają się wtedy end-to-end.
  */
@@ -147,21 +147,21 @@ export const MIGRATION_3 = `
 `;
 
 /**
- * Migracja 4: norma zużycia samolotu z analityki (`A10a`) — wejście dla ekranów 04, 06 i 10.
+ * Migracja 4: norma zużycia samolotu z analityki (`A10a`) - wejście dla ekranów 04, 06 i 10.
  *
  * ══ DLACZEGO OSOBNA TABELA, A NIE KOLUMNA W `reference_aircraft` ══
  * Z konieczności i z wygody naraz.
  *
  * Konieczność: SQLite nie zna `ALTER TABLE … ADD COLUMN IF NOT EXISTS`, a komplet migracji
- * musi dać się przepuścić PONOWNIE bez błędu — pilnuje tego `sqliteSchema.test.ts` na
+ * musi dać się przepuścić PONOWNIE bez błędu - pilnuje tego `sqliteSchema.test.ts` na
  * prawdziwym silniku. `CREATE TABLE IF NOT EXISTS` tę własność ma, `ADD COLUMN` nie.
  *
  * Wygoda: to są dwa różne cykle życia. Konfiguracja samolotu zmienia się, gdy ktoś ją
- * zmieni w panelu — czyli raz na kwartał. Norma przelicza się po każdym zamkniętym dniu.
+ * zmieni w panelu - czyli raz na kwartał. Norma przelicza się po każdym zamkniętym dniu.
  * Trzymanie ich w jednym wierszu kazałoby przepisywać konfigurację przy każdym syncu.
  *
  * `model` jako JSON, a nie rozbite kolumny: telefon tej struktury NIE LICZY ani nie
- * filtruje — przepisuje ją z odpowiedzi i oddaje ekranowi. Rozbicie na osiem kolumn
+ * filtruje - przepisuje ją z odpowiedzi i oddaje ekranowi. Rozbicie na osiem kolumn
  * dałoby osiem miejsc do zapomnienia przy następnym polu.
  */
 export const MIGRATION_4 = `
@@ -173,12 +173,12 @@ export const MIGRATION_4 = `
 `;
 
 /**
- * Migracja 5: konfiguracja OLEJU samolotu (issue #60) — minimum, zbiornik i norma
+ * Migracja 5: konfiguracja OLEJU samolotu (issue #60) - minimum, zbiornik i norma
  * nominalna dla sekcji oleju na kroku liczników (02a).
  *
  * Osobna tabela z DOKŁADNIE tych powodów, co `reference_consumption` (docblock wyżej):
  * `ADD COLUMN` nie jest idempotentne, a komplet migracji musi przejść ponownie bez
- * błędu. Do Etapu D serwer tych pól nie wysyła — tabela stoi pusta i sekcja oleju
+ * błędu. Do Etapu D serwer tych pól nie wysyła - tabela stoi pusta i sekcja oleju
  * działa bez podpowiedzi konfiguracji, dokładnie jak przy samolocie nieskonfigurowanym.
  * Trzy kolumny zamiast JSON-a, bo to trzy niezależne liczby KONFIGURACJI (siostry
  * `capacity_l`), a nie przepisywany w całości model.

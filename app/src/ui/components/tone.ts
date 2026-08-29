@@ -1,9 +1,9 @@
 /**
- * UZ Aero — tony akcentu wspólne dla komponentów Design Systemu.
+ * UZ Aero - tony akcentu wspólne dla komponentów Design Systemu.
  *
  * W mockupach akcent zawsze występuje jako trójka: kolor tekstu/ikony, tło `-muted`
  * i obramowanie `-border`. Zamiast powtarzać ten `switch` w każdym komponencie,
- * mamy jedno miejsce — dzięki temu nowy komponent od razu jest spójny, a zmiana
+ * mamy jedno miejsce - dzięki temu nowy komponent od razu jest spójny, a zmiana
  * palety przechodzi przez cały system.
  *
  * Znaczenia (z designu): green = stan aktywny/OK · amber = uwaga, paliwo, offline

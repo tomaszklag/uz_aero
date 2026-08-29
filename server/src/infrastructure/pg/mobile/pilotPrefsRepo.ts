@@ -1,8 +1,8 @@
 /**
- * UZ Aero (serwer) — adapter preferencji pilota (`PilotPrefsPort`).
+ * UZ Aero (serwer) - adapter preferencji pilota (`PilotPrefsPort`).
  *
  * LWW egzekwowany W ZAPYTANIU (`WHERE theme_updated_at IS NULL OR < $3`), nie
- * porównaniem po odczycie — dwie równoległe rotacje z dwóch urządzeń tego samego
+ * porównaniem po odczycie - dwie równoległe rotacje z dwóch urządzeń tego samego
  * pilota rozstrzyga baza, a nie kolejność wątków. Starszy stempel po prostu nie
  * trafia do wiersza; odpowiedź autorytatywną składa komenda z ponownego `get`.
  */
@@ -26,7 +26,7 @@ export class PgPilotPrefsRepo implements PilotPrefsPort {
     if (row == null) return null;
     return {
       theme: row.theme,
-      // `pg` zwraca TIMESTAMPTZ jako Date, PGlite potrafi jako string — normalizujemy.
+      // `pg` zwraca TIMESTAMPTZ jako Date, PGlite potrafi jako string - normalizujemy.
       themeUpdatedAt: row.theme_updated_at == null ? null : new Date(row.theme_updated_at),
     };
   }

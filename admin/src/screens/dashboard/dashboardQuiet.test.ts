@@ -1,13 +1,13 @@
 /**
- * UZ Aero — panel: testy werdyktu ciszy (`A01a`).
+ * UZ Aero - panel: testy werdyktu ciszy (`A01a`).
  *
  * ══ CO TU TAK NAPRAWDĘ TESTUJEMY ══
- * Że panel odróżnia dwie rzeczy, które w bazie offline-first zapisują się IDENTYCZNIE —
+ * Że panel odróżnia dwie rzeczy, które w bazie offline-first zapisują się IDENTYCZNIE -
  * jako nic: „dziś nikt nie lata" od „nic do nas nie dociera". Sam brak wierszy nie
  * rozstrzyga niczego; rozstrzyga to, CZYM SKOŃCZYŁ SIĘ OSTATNI STRUMIEŃ.
  *
  * Każdy z czterech warunków ma własny przypadek, bo pęknięcie każdego z osobna musi
- * wystarczyć do zmiany werdyktu — werdykt reagujący tylko na koniunkcję byłby
+ * wystarczyć do zmiany werdyktu - werdykt reagujący tylko na koniunkcję byłby
  * bezużyteczny dokładnie wtedy, gdy jest potrzebny.
  */
 
@@ -21,7 +21,7 @@ const NOW = Date.UTC(2026, 6, 31, 14, 22, 0);
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
 
-/** Klub, w którym poprzedni dzień urwał się CZYSTO — wzorzec ciszy spodziewanej. */
+/** Klub, w którym poprzedni dzień urwał się CZYSTO - wzorzec ciszy spodziewanej. */
 function quiet(): DashboardDto {
   const data = dashboardFixture();
   data.counts.aircraftClaimed = 0;
@@ -82,7 +82,7 @@ describe('cisza SPODZIEWANA', () => {
     expect(view.headline).toContain('nie dlatego, że coś przestało działać');
   });
 
-  it('fakty są ZIELONE — to potwierdzenie, że sprawdziliśmy, a nie brak treści', () => {
+  it('fakty są ZIELONE - to potwierdzenie, że sprawdziliśmy, a nie brak treści', () => {
     const tones = Object.fromEntries(view.facts.map((f) => [f.key, f.tone]));
     expect(tones['ostatnie-zdarzenie']).toBe('green');
     expect(tones['bez-day-close']).toBe('green');
@@ -98,7 +98,7 @@ describe('cisza SPODZIEWANA', () => {
   });
 });
 
-describe('cisza PODEJRZANA — cztery warunki, każdy osobno wystarcza', () => {
+describe('cisza PODEJRZANA - cztery warunki, każdy osobno wystarcza', () => {
   it('1. claim otwarty, a od niego zero zdarzeń', () => {
     const data = quiet();
     data.fleet[0]!.engine = {
@@ -141,13 +141,13 @@ describe('cisza PODEJRZANA — cztery warunki, każdy osobno wystarcza', () => {
     expect(view.facts.find((f) => f.key === 'ostatnie-zdarzenie')?.tone).toBe('amber');
   });
 
-  it('3a. dokładnie NA progu cisza jest jeszcze spodziewana — granica jest ostra', () => {
+  it('3a. dokładnie NA progu cisza jest jeszcze spodziewana - granica jest ostra', () => {
     const data = quiet();
     data.recent[0]!.receivedAt = new Date(NOW - SUSPICIOUS_AFTER_MS).toISOString();
     expect(quietView(data).verdict).toBe('expected');
   });
 
-  it('4. karta dnia bez arkusza — i osobno: karta zablokowana flagą', () => {
+  it('4. karta dnia bez arkusza - i osobno: karta zablokowana flagą', () => {
     const missing = quiet();
     missing.counts.exports.missing = 1;
     expect(quietView(missing).reasons.map((r) => r.key)).toContain('karta-bez-arkusza');
@@ -187,7 +187,7 @@ describe('pusty rejestr to TRZECI stan, nie cisza', () => {
     expect(view.label).toBe('Rejestr pusty');
     expect(view.headline).toContain('sprzed pierwszego synchronizowania');
     expect(view.facts.find((f) => f.key === 'ostatnie-zdarzenie')?.value).toBe(
-      'brak — rejestr pusty',
+      'brak - rejestr pusty',
     );
     expect(view.facts.find((f) => f.key === 'ostatni-dzien')?.value).toContain(
       'żaden dzień lotny jeszcze nie powstał',

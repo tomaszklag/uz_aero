@@ -1,7 +1,7 @@
 /**
- * UZ Aero (serwer) — mapper raportu analityki zużycia (`A10a`, `A10b`).
+ * UZ Aero (serwer) - mapper raportu analityki zużycia (`A10a`, `A10b`).
  *
- * Funkcja CZYSTA: dostaje wiersze i strumienie, oddaje DTO. Bez bazy, bez zegara —
+ * Funkcja CZYSTA: dostaje wiersze i strumienie, oddaje DTO. Bez bazy, bez zegara -
  * dzięki temu każdy iloraz da się przetestować bez stawiania Postgresa, tak samo jak
  * `statsReport.ts`.
  *
@@ -43,14 +43,14 @@ export interface ConsumptionReportInput {
   aircraft: ConsumptionAircraftRow;
   /** Dni zamknięte, które weszły do analizy (już przycięte limitem). */
   sessions: readonly ConsumptionSessionRef[];
-  /** Dni zamknięte w oknie łącznie — do wykrycia przycięcia. */
+  /** Dni zamknięte w oknie łącznie - do wykrycia przycięcia. */
   sessionsInRange: number;
   openSessions: number;
   /** Strumienie tych samych sesji, po `sessionUuid`. */
   streams: ReadonlyMap<string, Event[]>;
   /**
    * Osie faz pionowych ze śladu GPS, po `sessionUuid`. Sesja bez wpisu (albo z pustą
-   * osią) nie dostaje rozbicia lotu na wznoszenie/przelot/zniżanie — jej interwały
+   * osią) nie dostaje rozbicia lotu na wznoszenie/przelot/zniżanie - jej interwały
    * wchodzą do modelu dwufazowego, a `fuel.tracedIntervals` mówi, ilu wierszy to dotyczy.
    */
   timelines?: ReadonlyMap<string, PhaseSegment[]>;
@@ -101,7 +101,7 @@ export function consumptionReport(input: ConsumptionReportInput): AdminConsumpti
 
 /**
  * Kafle nagłówkowe. Trzy pierwsze liczby biorą się z interwałów (czyli ze strumienia),
- * czwarta — z KOLUMN PROJEKCJI, bo przyrost licznika jest wartością, którą projekcja
+ * czwarta - z KOLUMN PROJEKCJI, bo przyrost licznika jest wartością, którą projekcja
  * już policzyła i nie ma powodu odtwarzać go po raz drugi.
  */
 function headline(
@@ -111,7 +111,7 @@ function headline(
   let mhDelta = 0;
   let blockMs = 0;
   for (const session of sessions) {
-    // Dzień bez przyrostu licznika NIE wchodzi też mianownikiem — inaczej iloraz
+    // Dzień bez przyrostu licznika NIE wchodzi też mianownikiem - inaczej iloraz
     // dzieliłby sumę z części dni przez blok wszystkich i systematycznie zaniżał wynik.
     // Ta sama zasada, co przy `fuelBlockMs` w statystykach zakresu.
     if (session.mhDeltaH == null) continue;

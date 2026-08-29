@@ -1,9 +1,9 @@
 /**
- * UZ Aero — testy wyboru IP LAN dla runnera `npm start` (`scripts/pick-lan-ip.js`).
+ * UZ Aero - testy wyboru IP LAN dla runnera `npm start` (`scripts/pick-lan-ip.js`).
  *
  * Kontekst: po zmianie dzierżawy DHCP telefon dostawał QR z martwym adresem
  * („invalid URL host: \"\""). Wybór karty musi omijać adaptery wirtualne
- * (WSL, Hyper-V, VPN) — przez nie telefon nigdy do Metro nie dojdzie.
+ * (WSL, Hyper-V, VPN) - przez nie telefon nigdy do Metro nie dojdzie.
  */
 
 import { isForcedHostUsable, pickLanIp } from '../../scripts/pick-lan-ip';
@@ -13,7 +13,7 @@ type Addr = { family: string | number; address: string; internal: boolean };
 const v4 = (address: string, internal = false): Addr => ({ family: 'IPv4', address, internal });
 const v6 = (address: string): Addr => ({ family: 'IPv6', address, internal: false });
 
-describe('pickLanIp — wybór adresu dla telefonu', () => {
+describe('pickLanIp - wybór adresu dla telefonu', () => {
   it('trasa domyślna wskazująca kartę fizyczną wygrywa z rankingiem podsieci', () => {
     const picked = pickLanIp(
       {
@@ -59,7 +59,7 @@ describe('pickLanIp — wybór adresu dla telefonu', () => {
     expect(picked).toEqual({ address: '192.168.1.7', interfaceName: 'Wi-Fi' });
   });
 
-  it('bez kart fizycznych używa trasy domyślnej — Hyper-V External Switch trzyma IP hosta na vEthernet', () => {
+  it('bez kart fizycznych używa trasy domyślnej - Hyper-V External Switch trzyma IP hosta na vEthernet', () => {
     const picked = pickLanIp(
       { 'vEthernet (External Switch)': [v4('192.168.1.30')] },
       '192.168.1.30'
@@ -89,7 +89,7 @@ describe('pickLanIp — wybór adresu dla telefonu', () => {
   });
 });
 
-describe('isForcedHostUsable — walidacja ręcznie przypiętego REACT_NATIVE_PACKAGER_HOSTNAME', () => {
+describe('isForcedHostUsable - walidacja ręcznie przypiętego REACT_NATIVE_PACKAGER_HOSTNAME', () => {
   const machine = {
     'Wi-Fi': [v4('192.168.1.11'), v6('fe80::1')],
     'vEthernet (WSL (Hyper-V firewall))': [v4('172.17.240.1')],

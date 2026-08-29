@@ -1,8 +1,8 @@
 /**
- * UZ Aero — panel: odpowiedź `GET /admin/api/events` do testu renderu (`A04`).
+ * UZ Aero - panel: odpowiedź `GET /admin/api/events` do testu renderu (`A04`).
  *
  * Scenariusz jest ten sam, co w mockupie `A04-zdarzenia.html`, z jedną różnicą: dokładamy
- * przypadki, których mockup nie rysuje, bo są brzydkie — a to właśnie one łamią ekrany.
+ * przypadki, których mockup nie rysuje, bo są brzydkie - a to właśnie one łamią ekrany.
  * Fixture jest FUNKCJĄ, żeby każdy przypadek dostał własną kopię i mógł ją popsuć bez
  * wpływu na sąsiadów.
  */
@@ -59,14 +59,14 @@ export function eventsFixture(): EventsPageDto {
           position: { lat: 51.4013, lon: 21.1948, accuracyM: 6 },
         },
       }),
-      // 2. Zegar telefonu spieszy 720 s — przypadek, przez który powstaje `CLOCK_DRIFT`.
+      // 2. Zegar telefonu spieszy 720 s - przypadek, przez który powstaje `CLOCK_DRIFT`.
       entry({
         uuid: '1c93be40-0000-0000-0000-00000000005f',
         type: 'day_close',
         deviceTime: at(13, 34, 47),
         gpsTime: at(13, 22, 47),
       }),
-      // 3. BRAK FIXA — różnica nie istnieje, projekcja spadła na zegar telefonu.
+      // 3. BRAK FIXA - różnica nie istnieje, projekcja spadła na zegar telefonu.
       entry({
         uuid: 'b8d41f27-6c0a-4e93-a15b-2f7d9e604c18',
         type: 'engine_stop',
@@ -74,7 +74,7 @@ export function eventsFixture(): EventsPageDto {
         gpsTime: null,
         payload: { position: null },
       }),
-      // 4. Zdarzenie UNIEWAŻNIONE korektą z panelu — wiersz zostaje, przekreślony.
+      // 4. Zdarzenie UNIEWAŻNIONE korektą z panelu - wiersz zostaje, przekreślony.
       entry({
         uuid: '5e2b91c7-0000-0000-0000-0000000000ab',
         type: 'landing',
@@ -82,7 +82,7 @@ export function eventsFixture(): EventsPageDto {
         corrected: true,
         adminCorrected: true,
       }),
-      // 4a. Zdarzenie z korektą `retime` — czas NADANY, wiersz NIE unieważniony.
+      // 4a. Zdarzenie z korektą `retime` - czas NADANY, wiersz NIE unieważniony.
       //     Bez tego przypadku w fixture test renderu nie łapał najdroższej pomyłki
       //     tego ekranu: stanu policzonego, przetestowanego i NIEWIDOCZNEGO w tabeli.
       entry({
@@ -97,7 +97,7 @@ export function eventsFixture(): EventsPageDto {
         correctedTime: at(12, 44, 0),
         adminCorrected: true,
       }),
-      // 4b. Sam WIERSZ KOREKTY zapisany przez panel — to jego zapisał panel, a jego
+      // 4b. Sam WIERSZ KOREKTY zapisany przez panel - to jego zapisał panel, a jego
       //     samego nikt nie poprawiał. Dwa różne fakty w dwóch różnych polach.
       entry({
         uuid: 'ac10f4b6-0000-0000-0000-000000000d31',
@@ -106,7 +106,7 @@ export function eventsFixture(): EventsPageDto {
         writtenByPanel: true,
         payload: { targetUuid: '3a71dd08-0000-0000-0000-00000000c2e5', action: 'retime' },
       }),
-      // 5. Typ SPOZA katalogu i payload NIEBĘDĄCY obiektem — dwa kształty naraz,
+      // 5. Typ SPOZA katalogu i payload NIEBĘDĄCY obiektem - dwa kształty naraz,
       //    których panel nie zna i nie ma prawa się na nich wywrócić.
       entry({
         uuid: '00000000-obcy-0000-0000-000000000000',
@@ -119,7 +119,7 @@ export function eventsFixture(): EventsPageDto {
         picId: 'XXX',
         sourceDevice: null,
       }),
-      // 6. Lot szkolny — Dual w drugiej linii komórki „Pilot".
+      // 6. Lot szkolny - Dual w drugiej linii komórki „Pilot".
       entry({
         uuid: '8c04ef15-0000-0000-0000-0000000007b9',
         type: 'crew_change',

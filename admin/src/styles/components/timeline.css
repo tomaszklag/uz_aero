@@ -1,19 +1,19 @@
 /**
- * UZ Aero — panel: OŚ ZDARZEŃ DNIA (`.tl` z `design/admin/SZABLON.html`).
+ * UZ Aero - panel: OŚ ZDARZEŃ DNIA (`.tl` z `design/admin/SZABLON.html`).
  *
  * Klasy i wartości 1:1 z szablonu (sekcja „oś zdarzeń"). Reguła, której nie wolno tu
- * zgubić: **wiersz unieważniony jest PRZEKREŚLONY, nie ukryty** — rejestr jest
+ * zgubić: **wiersz unieważniony jest PRZEKREŚLONY, nie ukryty** - rejestr jest
  * append-only i karta dnia ma to widać, bo to właśnie te wiersze tłumaczą różnicę
  * między tym, co zapisał telefon, a tym, co liczy projekcja.
  *
- * Warianty `.tl.compact` (wąska kolumna pulpitu) tu NIE MA — dojdzie razem z ekranem
+ * Warianty `.tl.compact` (wąska kolumna pulpitu) tu NIE MA - dojdzie razem z ekranem
  * `A01`, który jako jedyny go używa.
  */
 
 .tl {
   display: flex;
   flex-direction: column;
-  /* Oś jest `<ol>` (porządek ma znaczenie), więc zdejmujemy numerację listy —
+  /* Oś jest `<ol>` (porządek ma znaczenie), więc zdejmujemy numerację listy -
      wygląd zostaje dokładnie taki, jak w szablonie opartym o `<div>`. */
   list-style: none;
   margin: 0;
@@ -73,7 +73,7 @@
   background: var(--blue);
 }
 
-/* Szyna między kropkami — rysuje ją KAŻDY wiersz poza ostatnim, więc oś kończy się
+/* Szyna między kropkami - rysuje ją KAŻDY wiersz poza ostatnim, więc oś kończy się
    kropką, a nie wiszącą kreską. */
 .tl-row:not(:last-child) .tl-rail::after {
   content: '';
@@ -99,7 +99,7 @@
   line-height: 1.5;
 }
 
-/* ZDARZENIE UNIEWAŻNIONE — zostaje na osi na zawsze, przekreślone.
+/* ZDARZENIE UNIEWAŻNIONE - zostaje na osi na zawsze, przekreślone.
    Ukrycie go byłoby najgorszą możliwą uprzejmością narzędzia, którego jedynym
    zadaniem jest pokazywać rejestr takim, jaki jest. */
 .tl-row.voided .tl-name {
@@ -115,7 +115,7 @@
 /* Zamknięcie wiersza, gdy niesie PLAKIETKĘ I AKCJĘ naraz. Czwarty tor siatki przyjmuje
    jedno dziecko, więc bez tego kontenera przycisk spadłby do nowego wiersza.
    Potrzebne od korekty administratora (`A02b`): oś karty dnia JEST wyborem zdarzenia
-   do poprawienia — zna uuid-y i wie, które typy w ogóle podlegają korekcie. */
+   do poprawienia - zna uuid-y i wie, które typy w ogóle podlegają korekcie. */
 .tl-act {
   display: flex;
   align-items: center;
@@ -123,7 +123,7 @@
   gap: 7px;
 }
 
-/* Wariant KOMPAKTOWY — oś w wąskiej kolumnie bocznej (pulpit), bez plakietki
+/* Wariant KOMPAKTOWY - oś w wąskiej kolumnie bocznej (pulpit), bez plakietki
    zamykającej wiersz. Pełna oś jest projektowana pod szeroką kolumnę karty dnia
    i w 400 px robi się rozstrzelona, stąd stopień mniejsze rozmiary i trzy tory siatki
    zamiast czterech. Modyfikator, nie osobny komponent: zachowanie, znaczenie kolorów

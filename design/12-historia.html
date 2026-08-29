@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 12 Poprzednie dni</title>
+<title>UZ Aero - 12 Poprzednie dni</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -51,7 +51,7 @@
 
   .group-lbl { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:2px 2px 0; }
 
-  /* karta SESJI (nie doby — patrz komentarz przy pierwszej karcie) */
+  /* karta SESJI (nie doby - patrz komentarz przy pierwszej karcie) */
   .day-card {
     background:var(--surface); border:1px solid var(--border); border-radius:14px;
     padding:13px 14px; display:flex; flex-direction:column; gap:9px;
@@ -63,26 +63,26 @@
   .day-top { display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
   .day-date { font-family:var(--font-display); font-size:21px; letter-spacing:1.5px; color:var(--text-primary); line-height:1; }
   .day-ac { font-family:var(--font-mono); font-size:11px; letter-spacing:1.5px; color:var(--green); }
-  /* Godziny biegu silnika — bez nich dwie sesje tej samej doby różnią się wyłącznie
+  /* Godziny biegu silnika - bez nich dwie sesje tej samej doby różnią się wyłącznie
      rejestracją, a pilot latający dwa razy tą samą maszyną nie odróżniłby ich wcale. */
   .day-times { font-family:var(--font-mono); font-size:10px; letter-spacing:0.5px; color:var(--text-muted); margin-top:-4px; }
   .day-stats { display:flex; gap:14px; flex-wrap:wrap; }
   .stat { display:flex; flex-direction:column; gap:2px; }
   .stat-k { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
   .stat-v { font-family:var(--font-mono); font-size:13px; font-weight:700; color:var(--text-secondary); }
-  /* Stopka istnieje TYLKO wtedy, gdy ma co powiedzieć — pusty pas z kreską nad nim
+  /* Stopka istnieje TYLKO wtedy, gdy ma co powiedzieć - pusty pas z kreską nad nim
      wyglądałby jak brakująca treść. */
   .day-foot { display:flex; align-items:center; flex-wrap:wrap; gap:8px; border-top:1px solid var(--border); padding-top:8px; }
   .tag { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.2px; text-transform:uppercase; padding:4px 8px; border-radius:6px; white-space:nowrap; display:inline-flex; align-items:center; gap:5px; }
   .tag.win { color:var(--blue); background:var(--blue-muted); border:1px solid var(--blue-border); }
   /* Wysyłka: plakietka pojawia się WYŁĄCZNIE, gdy coś czeka w kolejce. „Wysłane" nie
-     istnieje — to stan domyślny (ta sama reguła, co SyncChip online: issue #12). */
+     istnieje - to stan domyślny (ta sama reguła, co SyncChip online: issue #12). */
   .tag.pending { color:var(--amber); background:var(--amber-muted); border:1px solid var(--amber-border); }
   .foot-note { font-family:var(--font-mono); font-size:9px; color:var(--text-muted); }
 
   .cta-correct { display:flex; align-items:center; justify-content:center; gap:8px; min-height:44px; border-radius:11px; border:1px solid var(--blue-border); background:var(--blue-muted); color:var(--blue); font-family:var(--font-display); font-size:16px; letter-spacing:2px; text-decoration:none; }
   .cta-correct:hover { background:rgba(52,152,219,0.18); }
-  /* Podgląd sesji po oknie — ten sam kształt pasa, ton neutralny: to oglądanie,
+  /* Podgląd sesji po oknie - ten sam kształt pasa, ton neutralny: to oglądanie,
      nie akcja. Bez niego karta wyglądała na martwą i pilot nie miał jak sprawdzić,
      co właściwie zapisał (issue #35 pkt 2). */
   .cta-view { display:flex; align-items:center; justify-content:center; gap:8px; min-height:44px; border-radius:11px; border:1px solid var(--border-strong); background:var(--surface-raised); color:var(--text-secondary); font-family:var(--font-display); font-size:16px; letter-spacing:2px; text-decoration:none; }
@@ -113,12 +113,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 12</span>
+  <span class="film-strip">UZ AERO - 12</span>
   <span class="slug">poprzednie dni · sesje zamknięte</span>
   <span class="canvas-meta"><span class="pulse"></span>Ekran 12</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Poprzednie dni">
+<main class="phone" role="region" aria-label="Mockup - Poprzednie dni">
   <div class="status-bar">
     <span>9:41</span>
     <span class="status-right">
@@ -146,11 +146,11 @@
 
       <!-- KARTA = SESJA, nie doba (decyzja przy issue #35).
            Jedna sesja to jeden bieg silnika, więc doba z dwiema sesjami daje TU dwie
-           karty z tą samą datą — i o to chodzi: kafelek otwiera rozliczenie (10),
+           karty z tą samą datą - i o to chodzi: kafelek otwiera rozliczenie (10),
            a rozliczenie opisuje JEDNĄ maszynę. Kafelek-doba nie miałby czego otworzyć,
            bo paliwo i motogodziny dwóch maszyn nie sumują się w jedną liczbę.
 
-           DZISIEJSZYCH SESJI TU NIE MA (issue #35 pkt 1) — stoją na „Mój dzień" (01),
+           DZISIEJSZYCH SESJI TU NIE MA (issue #35 pkt 1) - stoją na „Mój dzień" (01),
            na TAKICH SAMYCH kafelkach (issue #42: jeden komponent na oba ekrany, tam
            z numerem sesji zamiast daty). Ekran nazywa się „Poprzednie dni” i pokazuje
            dokładnie to.
@@ -166,7 +166,7 @@
           <!-- Te same trzy wielkości i te same nazwy, co na kafelku sesji na „Mój dzień"
                (issue #35 pkt 6; od issue #42 to dosłownie ten sam komponent):
                liczba lotów, czas blokowy, czas w powietrzu.
-               Skoczkowie wypadli — są w szczegółach lotu, a na kafelku zajmowali
+               Skoczkowie wypadli - są w szczegółach lotu, a na kafelku zajmowali
                miejsce wielkości, której pilot szuka naprawdę. -->
           <span class="stat"><span class="stat-k">Loty</span><span class="stat-v">2</span></span>
           <span class="stat"><span class="stat-k">Blok</span><span class="stat-v">1:42</span></span>
@@ -182,10 +182,10 @@
         </div>
       </a>
 
-      <!-- Druga sesja TEJ SAMEJ doby, inna maszyna — i z zaległością wysyłki.
+      <!-- Druga sesja TEJ SAMEJ doby, inna maszyna - i z zaległością wysyłki.
            Plakietka mówi, co się z zapisem dzieje: „oczekuje na przesłanie" (kolejka
            czeka na sieć) albo „w trakcie wysyłania" (pętla synca właśnie pracuje).
-           Trzeciego napisu nie ma — sesja wysłana nie pokazuje NICZEGO, bo to stan
+           Trzeciego napisu nie ma - sesja wysłana nie pokazuje NICZEGO, bo to stan
            domyślny (issue #35 pkt 3). -->
       <a href="10-statystyki.html" class="day-card editable">
         <div class="day-top">
@@ -214,7 +214,7 @@
       <div class="group-lbl" style="margin-top:4px;">Zamknięte</div>
 
       <!-- SESJE PO OKNIE 24 H.
-           Karta jest klikalna tak samo jak ta z okna korekty — prowadzi do TEGO SAMEGO
+           Karta jest klikalna tak samo jak ta z okna korekty - prowadzi do TEGO SAMEGO
            rozliczenia, tylko w wariancie bez edycji (10B): bez ołówków przy lotach
            i bez „Edytuj dane". Tag „Okno minęło" USUNIĘTY (issue #35 pkt 4): mówił to
            samo, co etykieta grupy nad kartami i przypis z kłódką pod nimi. -->
@@ -229,15 +229,15 @@
           <span class="stat"><span class="stat-k">Blok</span><span class="stat-v">1:18</span></span>
           <span class="stat"><span class="stat-k">Lot</span><span class="stat-v">1:07</span></span>
         </div>
-        <!-- Bez stopki: wszystko wysłane, okno minęło — nie ma o czym pisać. -->
+        <!-- Bez stopki: wszystko wysłane, okno minęło - nie ma o czym pisać. -->
         <div class="cta-view">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
           ZOBACZ SZCZEGÓŁY
         </div>
       </a>
 
-      <!-- Sesja zdana BEZ LOTU (09C) — pogoda, usterka, odwołane zadanie.
-           Silnik chodził 14 minut, w powietrze nikt nie poszedł: „Lot — —", nie zero.
+      <!-- Sesja zdana BEZ LOTU (09C) - pogoda, usterka, odwołane zadanie.
+           Silnik chodził 14 minut, w powietrze nikt nie poszedł: „Lot - -", nie zero.
            Kafelek istnieje, bo maszyna była zajęta i to jest fakt do obejrzenia. -->
       <a href="10b-rozliczenie-zamkniete.html" class="day-card">
         <div class="day-top">
@@ -248,7 +248,7 @@
         <div class="day-stats">
           <span class="stat"><span class="stat-k">Loty</span><span class="stat-v">0</span></span>
           <span class="stat"><span class="stat-k">Blok</span><span class="stat-v">0:14</span></span>
-          <!-- „0:00", nie „— —": kafelek powtarza dokładnie to, co kafelek sesji na 01,
+          <!-- „0:00", nie „- -": kafelek powtarza dokładnie to, co kafelek sesji na 01,
                a tam czas lotu jest wyliczoną sumą i przy braku lotów wynosi zero. -->
           <span class="stat"><span class="stat-k">Lot</span><span class="stat-v">0:00</span></span>
         </div>
@@ -260,7 +260,7 @@
 
       <div class="locked-note">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        <span>Sesje po oknie 24 h możesz oglądać, ale nie zmieniać. Jeśli znalazłeś błąd — zgłoś go administratorowi; poprawka zostanie dopisana jako korekta, bez kasowania oryginalnego zapisu.</span>
+        <span>Sesje po oknie 24 h możesz oglądać, ale nie zmieniać. Jeśli znalazłeś błąd - zgłoś go administratorowi; poprawka zostanie dopisana jako korekta, bez kasowania oryginalnego zapisu.</span>
       </div>
 
     </div>
@@ -273,21 +273,21 @@
     <span class="vp-badge">12</span>
     <span class="vp-body">
       <span class="vp-name">Poprzednie dni</span>
-      <span class="vp-when">Wejście z „Mój dzień". Kafelek = JEDNA SESJA (bieg silnika), więc doba z dwiema sesjami daje dwie karty — kafelek otwiera ekran sesji, a ten opisuje jedną maszynę. Dzisiejszych sesji tu nie ma: te stoją na 01. Sesja w oknie 24 h jest niebieska i prowadzi do korekty; sesja po oknie — do podglądu bez edycji.</span>
+      <span class="vp-when">Wejście z „Mój dzień". Kafelek = JEDNA SESJA (bieg silnika), więc doba z dwiema sesjami daje dwie karty - kafelek otwiera ekran sesji, a ten opisuje jedną maszynę. Dzisiejszych sesji tu nie ma: te stoją na 01. Sesja w oknie 24 h jest niebieska i prowadzi do korekty; sesja po oknie - do podglądu bez edycji.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
   <a class="vp-item" href="10-statystyki.html">
     <span class="vp-badge">10</span>
     <span class="vp-body">
-      <span class="vp-name">Sesja — w oknie korekty</span>
-      <span class="vp-when">Bilans jednej sesji (paliwo, MH, zrzuty) z ołówkami przy lotach — tu prowadzi karta z grupy „Możesz jeszcze poprawić".</span>
+      <span class="vp-name">Sesja - w oknie korekty</span>
+      <span class="vp-when">Bilans jednej sesji (paliwo, MH, zrzuty) z ołówkami przy lotach - tu prowadzi karta z grupy „Możesz jeszcze poprawić".</span>
     </span>
   </a>
   <a class="vp-item" href="10b-rozliczenie-zamkniete.html">
     <span class="vp-badge amber">10B</span>
     <span class="vp-body">
-      <span class="vp-name">Sesja — po oknie (podgląd)</span>
+      <span class="vp-name">Sesja - po oknie (podgląd)</span>
       <span class="vp-when">Ten sam ekran bez jednego elementu edycji: brak ołówków w tabeli lotów, brak „Edytuj dane". Cel karty z grupy „Zamknięte" (issue #35 pkt 2).</span>
     </span>
   </a>
@@ -295,7 +295,7 @@
     <span class="vp-badge">10D</span>
     <span class="vp-body">
       <span class="vp-name">Popraw dane sesji (tryb edycji)</span>
-      <span class="vp-when">Czasy zdarzeń, odczyty paliwa i MH, skład zrzutu i brakujące wpisy. Append-only. Osiągalny wyłącznie z sesji w oknie 24 h — karta z grupy „Zamknięte" otwiera podgląd (10B), w którym przycisku „Edytuj dane" nie ma.</span>
+      <span class="vp-when">Czasy zdarzeń, odczyty paliwa i MH, skład zrzutu i brakujące wpisy. Append-only. Osiągalny wyłącznie z sesji w oknie 24 h - karta z grupy „Zamknięte" otwiera podgląd (10B), w którym przycisku „Edytuj dane" nie ma.</span>
     </span>
   </a>
 </aside>

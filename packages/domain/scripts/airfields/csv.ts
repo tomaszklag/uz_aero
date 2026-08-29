@@ -1,9 +1,9 @@
 /**
- * UZ Aero — parser CSV dla generatora katalogu lotnisk.
+ * UZ Aero - parser CSV dla generatora katalogu lotnisk.
  *
  * Własny, bo pliki OurAirports mają przecinki i cudzysłowy WEWNĄTRZ pól (nazwy w rodzaju
  * `"Zielona Góra-Babimost Airport, EPZG"`), a generator jest jedynym miejscem w repo,
- * które czyta CSV — dokładanie zależności pakietowej dla trzydziestu linii byłoby
+ * które czyta CSV - dokładanie zależności pakietowej dla trzydziestu linii byłoby
  * gorszym interesem niż ten parser.
  */
 
@@ -48,7 +48,7 @@ export type CsvRecord = Readonly<Record<string, string | undefined>>;
 
 /**
  * Wiersze na rekordy wg nagłówka. Wiersze o innej liczbie kolumn niż nagłówek
- * pomijamy — w plikach OurAirports zdarzają się urwane linie, a rekord przesunięty
+ * pomijamy - w plikach OurAirports zdarzają się urwane linie, a rekord przesunięty
  * o jedną kolumnę oznaczałby szerokość pasa wpisaną jako długość.
  */
 export function toObjects(rows: readonly string[][]): CsvRecord[] {

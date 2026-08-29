@@ -1,7 +1,7 @@
 /**
- * UZ Aero — test OSI CZASU sesji (ekran 10, issue #38 pkt 7 i 8; issue #40 pkt 1, 3, 4, 6).
+ * UZ Aero - test OSI CZASU sesji (ekran 10, issue #38 pkt 7 i 8; issue #40 pkt 1, 3, 4, 6).
  *
- * Oś zastąpiła tabelę lotów i opisuje CAŁY bieg silnika — od issue #40 razem
+ * Oś zastąpiła tabelę lotów i opisuje CAŁY bieg silnika - od issue #40 razem
  * z kołowaniem, bez kolumny ołówka i bez plakietki „RĘCZNIE".
  *
  * Scenariusz jest ten sam, co w mockupie 10: przejęcie 08:04, silnik 08:12 → 09:55,
@@ -18,7 +18,7 @@ const at = (h: number, m: number): number => DAY + (h * 60 + m) * 60_000;
 
 let seq = 0;
 
-/** Zdarzenie w strumieniu sesji — nagłówek minimalny, tyle ile czyta projekcja. */
+/** Zdarzenie w strumieniu sesji - nagłówek minimalny, tyle ile czyta projekcja. */
 function event<T extends EventType>(
   type: T,
   time: number,
@@ -41,7 +41,7 @@ function event<T extends EventType>(
   } as Event;
 }
 
-/** Kanoniczna sesja z mockupu 10 — dwa loty, dwa zrzuty, komplet odczytów. */
+/** Kanoniczna sesja z mockupu 10 - dwa loty, dwa zrzuty, komplet odczytów. */
 function sessionEvents(): Event[] {
   seq = 0;
   return [
@@ -112,7 +112,7 @@ describe('oś sesji', () => {
   it('oś nie niesie już ani ołówka, ani plakietki wpisu ręcznego (issue #40 pkt 1 i 6)', () => {
     // Sposób powstania zapisu i prawo do korekty przestały być sprawą tego ekranu:
     // korekta wychodzi przyciskiem „EDYTUJ DANE", a metoda zostaje w rejestrze.
-    // Wiersz `to-2` jest w scenariuszu wpisem RĘCZNYM — i wygląda jak każdy inny.
+    // Wiersz `to-2` jest w scenariuszu wpisem RĘCZNYM - i wygląda jak każdy inny.
     const { rows } = axis();
 
     for (const row of rows) {
@@ -121,7 +121,7 @@ describe('oś sesji', () => {
     }
   });
 
-  it('kołowanie niesie samą godzinę — czasu trwania nie liczymy', () => {
+  it('kołowanie niesie samą godzinę - czasu trwania nie liczymy', () => {
     // „Ile trwało kołowanie" jest ciekawostką w rozliczeniu sesji: do bloku i tak
     // wchodzi cały bieg silnika. Czas zostaje w kokpicie, gdzie pilot patrzy na zegar
     // w trakcie przygotowania do startu.
@@ -143,7 +143,7 @@ describe('oś sesji', () => {
     );
   });
 
-  it('numer lotu idzie w prawą kolumnę i pada RAZ — przy starcie', () => {
+  it('numer lotu idzie w prawą kolumnę i pada RAZ - przy starcie', () => {
     // Druga linia w połowie wierszy kosztowała wysokość, którą sesja skokowa zamienia
     // w przewijanie. Przy lądowaniu numeru nie ma: prawą kolumnę zajmuje tam czas lotu,
     // czyli liczba, po którą pilot sięga, a para start → lądowanie czyta się w pionie.
@@ -151,11 +151,11 @@ describe('oś sesji', () => {
     const { rows } = axis();
     const flights = rows.filter((row) => row.kind === 'takeoff' || row.kind === 'landing');
 
-    expect(flights.map((row) => `${row.kind} ${row.flight ?? '—'}`)).toEqual([
+    expect(flights.map((row) => `${row.kind} ${row.flight ?? '-'}`)).toEqual([
       'takeoff lot 1',
-      'landing —',
+      'landing -',
       'takeoff lot 2',
-      'landing —',
+      'landing -',
     ]);
     expect(flights.every((row) => row.sub == null)).toBe(true);
     expect(rows.find((row) => row.id === 'drop-1')!.flight).toBeNull();
@@ -169,7 +169,7 @@ describe('oś sesji', () => {
     expect(rows.find((row) => row.kind === 'release')!.sub).toBe('odczyt 171 L · 1236:05');
   });
 
-  it('pomiar oleju wchodzi do podpisu przejęcia — zdanie oleju nie mierzy (issue #60)', () => {
+  it('pomiar oleju wchodzi do podpisu przejęcia - zdanie oleju nie mierzy (issue #60)', () => {
     const withOil = sessionEvents().map((e) =>
       e.type === 'preflight_confirm'
         ? ({ ...e, payload: { ...e.payload, oilL: 8.2, oilAddedL: 1.0 } } as Event)
@@ -179,7 +179,7 @@ describe('oś sesji', () => {
     expect(rows.find((row) => row.kind === 'claim')!.sub).toBe(
       'odczyt 150 L · 1234:30 · olej 8,2 L (+1,0 L)',
     );
-    // zdanie samolotu zostaje bez oleju — bagnet tuż po locie kłamie
+    // zdanie samolotu zostaje bez oleju - bagnet tuż po locie kłamie
     expect(rows.find((row) => row.kind === 'release')!.sub).toBe('odczyt 171 L · 1236:05');
   });
 
@@ -195,7 +195,7 @@ describe('oś sesji', () => {
     expect(axis(bezSkladu).rows.find((row) => row.id === 'drop-1')!.sub).toBeNull();
   });
 
-  it('lot w powietrzu nie znika z osi — brakuje mu tylko lądowania', () => {
+  it('lot w powietrzu nie znika z osi - brakuje mu tylko lądowania', () => {
     const wPowietrzu = sessionEvents().filter(
       (e) => e.uuid !== 'ldg-2' && e.uuid !== 'engine-off' && e.type !== 'day_close',
     );
@@ -219,11 +219,11 @@ describe('oś sesji', () => {
 });
 
 /**
- * ZDARZENIA NAZIEMNE (issue #44) — tankowanie, załadunek i zmiana załogi.
+ * ZDARZENIA NAZIEMNE (issue #44) - tankowanie, załadunek i zmiana załogi.
  *
  * Oś ich nie znała, a to był błąd, nie decyzja: rachunek paliwa na tym samym ekranie
  * mówi „dolane · 2 tankowania", arkusz 10H pozwala tankowanie DOPISAĆ, a wpis znikał
- * bez śladu. Log kokpitu pokazywał je od zawsze — pełnoszerokim pasem, bo miał własny
+ * bez śladu. Log kokpitu pokazywał je od zawsze - pełnoszerokim pasem, bo miał własny
  * komponent; teraz komponent jest jeden.
  */
 describe('zdarzenia naziemne', () => {
@@ -243,7 +243,7 @@ describe('zdarzenia naziemne', () => {
   });
 
   it('tankowanie po zdaniu ustawia się na końcu, przed niczym', () => {
-    // Sortuje CZAS, nie typ — dolewka po zamknięciu sesji nie ma prawa wskoczyć
+    // Sortuje CZAS, nie typ - dolewka po zamknięciu sesji nie ma prawa wskoczyć
     // między loty tylko dlatego, że jest zdarzeniem naziemnym.
     const zTankowaniem = [
       ...sessionEvents(),
@@ -281,7 +281,7 @@ describe('zdarzenia naziemne', () => {
     const oil = rows.find((r) => r.kind === 'oilAdd')!;
 
     expect(oil.name).toBe('Dolewka oleju');
-    // Sama ilość — poziomu po dolewce nie ma jak zmierzyć (silnik zwykle gorący),
+    // Sama ilość - poziomu po dolewce nie ma jak zmierzyć (silnik zwykle gorący),
     // a pomiar z przejęcia stoi wyżej na tej samej osi.
     expect(oil.sub).toBe('+1,0 L');
     expect(oil.targetUuid).toBe('oil-1');
@@ -292,7 +292,7 @@ describe('zdarzenia naziemne', () => {
     expect(kinds.indexOf('refuel')).toBeLessThan(kinds.indexOf('oilAdd'));
   });
 
-  it('załadunek niesie skład, a bez deklaracji — sam fakt', () => {
+  it('załadunek niesie skład, a bez deklaracji - sam fakt', () => {
     const zZaladunkiem = [
       ...sessionEvents(),
       event('boarding', at(8, 14), { jumpers: { tandem: 2, aff: 1, solo: 1 } }, 'boarding-1'),
@@ -301,7 +301,7 @@ describe('zdarzenia naziemne', () => {
     const rows = axis(zZaladunkiem).rows;
 
     expect(rows.find((r) => r.id === 'boarding-1')!.sub).toBe('4 skoczków');
-    // `null` to „nie podano", a nie zero — wiersz mówi tyle, ile wiemy (issue #21).
+    // `null` to „nie podano", a nie zero - wiersz mówi tyle, ile wiemy (issue #21).
     expect(rows.find((r) => r.id === 'boarding-2')!.sub).toBeNull();
   });
 
@@ -315,12 +315,12 @@ describe('zdarzenia naziemne', () => {
     expect(row.kind).toBe('crew');
     expect(row.name).toBe('Zmiana załogi');
     // Myślnik = fotela nie było zajętego (dołączenie Duala), a nie „nie wiemy kto".
-    expect(row.sub).toBe('DUAL: — → AKO');
+    expect(row.sub).toBe('DUAL: - → AKO');
   });
 
   it('uwaga bez czasów (wpis ręczny z samą notatką) nie jest punktem osi', () => {
     // `manual_log_entry` niesie dziś sam tekst i mieszka w karcie „Notatki" (issue #40
-    // pkt 5). Na osi byłby zdarzeniem bez przebiegu — czymś, co się nie wydarzyło.
+    // pkt 5). Na osi byłby zdarzeniem bez przebiegu - czymś, co się nie wydarzyło.
     const zNotatka = [
       ...sessionEvents(),
       event('manual_log_entry', at(10, 0), { notes: 'Drugi zbiornik nie trzyma wskazania' }),
@@ -346,7 +346,7 @@ describe('stopka osi', () => {
 
   it('sesja bez pracy silnika zamienia blok na czas TRZYMANIA maszyny', () => {
     // 09C: pilot wziął samolot, pogoda go zatrzymała, zdał bez uruchamiania silnika.
-    // Zero w wielkiej cyfrze nie jest odpowiedzią na żadne pytanie — zajętość jest.
+    // Zero w wielkiej cyfrze nie jest odpowiedzią na żadne pytanie - zajętość jest.
     const bezLotu: Event[] = [
       event('session_claim', at(9, 10), { mode: 'free' }),
       event('preflight_confirm', at(9, 10), {
@@ -408,7 +408,7 @@ describe('stopka osi', () => {
 });
 
 /**
- * Plakietka „popr." (issue #43) — jedyny ślad edycji widoczny także w trybie ODCZYTU.
+ * Plakietka „popr." (issue #43) - jedyny ślad edycji widoczny także w trybie ODCZYTU.
  * To fakt o danych, nie akcja: liczba obok nie jest tą, którą zapisał przyrząd.
  */
 describe('znacznik poprawki', () => {
@@ -457,7 +457,7 @@ describe('znacznik poprawki', () => {
   it('korekta NIECZYTELNA nie kłamie o stanie zapisu', () => {
     const events = [
       ...sessionEvents(),
-      // Payload, którego domena nie rozumie — nic nie zmienił, więc nie ma o czym mówić.
+      // Payload, którego domena nie rozumie - nic nie zmienił, więc nie ma o czym mówić.
       correction('ldg-1', { action: 'unknown-action', newTime: at(9, 3) }),
     ];
     expect(axis(events).rows.find((r) => r.id === 'ldg-1')?.corrected).toBe(false);

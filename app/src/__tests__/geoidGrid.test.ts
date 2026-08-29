@@ -1,5 +1,5 @@
 /**
- * UZ Aero — interpolacja dwuliniowa siatki undulacji (`geoid/grid.ts`).
+ * UZ Aero - interpolacja dwuliniowa siatki undulacji (`geoid/grid.ts`).
  *
  * Siatki syntetyczne, bo tu testujemy GEOMETRIĘ: trafienie w węzeł, uśrednianie
  * wewnątrz oczka, domknięte krawędzie i uczciwe `null` poza pokryciem. Wartości
@@ -18,7 +18,7 @@ const grid: GeoidGrid = {
   valuesCm: [100, 200, 300, 400, 500, 600, 700, 800, 900],
 };
 
-describe('bilinearUndulationM — wewnątrz pokrycia', () => {
+describe('bilinearUndulationM - wewnątrz pokrycia', () => {
   it('punkt dokładnie w węźle zwraca wartość węzła', () => {
     expect(bilinearUndulationM(grid, { lat: 50, lon: 10 })).toBeCloseTo(1.0, 9);
     expect(bilinearUndulationM(grid, { lat: 49.5, lon: 10.5 })).toBeCloseTo(5.0, 9);
@@ -42,7 +42,7 @@ describe('bilinearUndulationM — wewnątrz pokrycia', () => {
   });
 });
 
-describe('bilinearUndulationM — poza pokryciem null, nigdy ekstrapolacja', () => {
+describe('bilinearUndulationM - poza pokryciem null, nigdy ekstrapolacja', () => {
   it.each([
     ['na północ', { lat: 50.01, lon: 10.5 }],
     ['na południe', { lat: 48.99, lon: 10.5 }],

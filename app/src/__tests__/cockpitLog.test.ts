@@ -1,11 +1,11 @@
 /**
- * UZ Aero — test LOGU KOKPITU (mockupy 04, 04B, 05).
+ * UZ Aero - test LOGU KOKPITU (mockupy 04, 04B, 05).
  *
- * Log jest jedynym potwierdzeniem zapisu, jakie widzi pilot — jeśli pokaże złe czasy,
+ * Log jest jedynym potwierdzeniem zapisu, jakie widzi pilot - jeśli pokaże złe czasy,
  * błąd nie objawi się niczym innym niż niepoprawnym wpisem w arkuszu na koniec miesiąca.
  *
  * Od issue #44 kokpit rysuje TĘ SAMĄ oś, co rozliczenie (10): kształt wierszy pilnuje
- * `sessionAxis.test.ts`, a ten plik sprawdza wyłącznie to, co kokpit dokłada od siebie —
+ * `sessionAxis.test.ts`, a ten plik sprawdza wyłącznie to, co kokpit dokłada od siebie -
  * wiersz „na żywo", znaczniki outboxa, stopkę sum i bramkę karty logu.
  */
 
@@ -68,7 +68,7 @@ function axis(events: Event[], now = at(12, 40)) {
 describe('log kokpitu = oś sesji (issue #44)', () => {
   it('zaczyna się PRZEJĘCIEM z odczytem, a nie chipami przy uruchomieniu silnika', () => {
     // Do issue #44 kokpit pomijał przejęcie, a odczyt startowy wisiał jako chipy „MH …"
-    // i „112 L" przy „Start engine" — przy zdarzeniu, które go nie wykonało.
+    // i „112 L" przy „Start engine" - przy zdarzeniu, które go nie wykonało.
     const { rows } = axis(sessionEvents());
 
     expect(rows[0]!.kind).toBe('claim');
@@ -165,7 +165,7 @@ describe('znacznik outboxa', () => {
 
   it('sięga też końców osi, bo one też są zdarzeniami rejestru', () => {
     // Przejęcie ma własne `id` (pochodzi z projekcji), ale niesie je `preflight_confirm`
-    // — i to jego stan wysyłki opisujemy, przez `targetUuid`.
+    // - i to jego stan wysyłki opisujemy, przez `targetUuid`.
     const zKolejka = sessionEvents().map((e) =>
       e.type === 'preflight_confirm' ? ({ ...e, syncedAt: null } as Event) : e,
     );
@@ -187,7 +187,7 @@ describe('stopka i bramka karty', () => {
     ]);
   });
 
-  it('stopka NIE powtarza trasy — ta stoi w pasku górnym kokpitu', () => {
+  it('stopka NIE powtarza trasy - ta stoi w pasku górnym kokpitu', () => {
     expect(axis(sessionEvents()).foot.some((i) => i.id === 'route')).toBe(false);
   });
 

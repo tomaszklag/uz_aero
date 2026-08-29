@@ -1,8 +1,8 @@
 /**
- * UZ Aero — panel: CHIPY FILTRA listy kont na `A06` (moduł CZYSTY).
+ * UZ Aero - panel: CHIPY FILTRA listy kont na `A06` (moduł CZYSTY).
  *
  * ══ CHIP Z LICZBĄ JEST OBIETNICĄ, NIE OZDOBĄ ══
- * Napis „Nieaktywni 2" znaczy „po kliknięciu zobaczysz dwa wiersze" — i to jest jedyna
+ * Napis „Nieaktywni 2" znaczy „po kliknięciu zobaczysz dwa wiersze" - i to jest jedyna
  * rzecz, którą ten moduł ma utrzymać. Do 2026-08-01 chipy nosiły liczby KAFLI, czyli
  * liczby po całym klubie: po wpisaniu frazy tabela miała jeden wiersz, chip „Nieaktywni"
  * nadal pokazywał 2, a kliknięcie w niego dawało pustą tabelę. Liczba na chipie
@@ -12,7 +12,7 @@
  * opisuje KLUB i ma nie drgać przy wpisywaniu w wyszukiwarkę, chip opisuje TRAFIENIA
  * i musi drgać. Jeden plik na dwie sprzeczne zasady byłby zaproszeniem do pomylenia ich.
  *
- * Chipy NIE zawężają się wybranym chipem — tylko wyszukiwaniem. Inaczej liczby na
+ * Chipy NIE zawężają się wybranym chipem - tylko wyszukiwaniem. Inaczej liczby na
  * czterech chipach przestałyby być porównywalne między sobą, a chip aktywny pokazywałby
  * zawsze tyle, ile właśnie widać.
  */
@@ -38,7 +38,7 @@ const CHIPS: readonly { scope: PilotScope; label: string; of: keyof PilotScopeCo
 /**
  * `null` = serwer jeszcze nie odpowiedział. Chip zostaje wtedy BEZ liczby zamiast
  * pokazać zero: zero jest twierdzeniem o świecie („nie ma ani jednego nieaktywnego
- * konta"), a brak odpowiedzi nim nie jest. Ta sama zasada, co „—" na kaflach.
+ * konta"), a brak odpowiedzi nim nie jest. Ta sama zasada, co „-" na kaflach.
  */
 export function pilotChips(scopes: PilotScopeCountsDto | null): PilotChip[] {
   return CHIPS.map((chip) => ({

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 09C Zdaj samolot · bez lotu</title>
+<title>UZ Aero - 09C Zdaj samolot · bez lotu</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -75,7 +75,7 @@
   .scroll::-webkit-scrollbar { display:none; }
   .scroll > * { flex-shrink:0; }
 
-  /* Stan pusty — mówi wprost, że nie było lotu */
+  /* Stan pusty - mówi wprost, że nie było lotu */
   .empty-card {
     background:var(--surface); border:1px solid var(--border); border-radius:14px;
     padding:24px 20px; display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center;
@@ -97,7 +97,7 @@
   }
   .form-section-title .unchanged { color:var(--text-muted); letter-spacing:1.5px; }
 
-  /* Liczniki bez zmian — read-only z furtką korekty (licznik fizyczny > nasza rachuba) */
+  /* Liczniki bez zmian - read-only z furtką korekty (licznik fizyczny > nasza rachuba) */
   .counter-row { display:flex; align-items:center; gap:10px; padding:0 6px 0 12px; border-bottom:1px solid var(--border); }
   .counter-row:last-child { border-bottom:none; }
   .counter-key { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); width:88px; flex-shrink:0; }
@@ -111,7 +111,7 @@
   }
   .edit-btn:hover { border-color:var(--amber-border); color:var(--amber); }
 
-  /* Powód — siatka kart z ikonami, nigdy natywny select */
+  /* Powód - siatka kart z ikonami, nigdy natywny select */
   .reason-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:12px; }
   .reason-card {
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
@@ -123,7 +123,7 @@
   .reason-card.selected { border-color:var(--green-border); background:var(--green-muted); color:var(--green); }
   .reason-label { font-family:var(--font-mono); font-size:9.5px; letter-spacing:1px; text-transform:uppercase; }
 
-  /* Baner statusu (Typ A — przyrząd, niezamykalny) */
+  /* Baner statusu (Typ A - przyrząd, niezamykalny) */
   .status-box {
     background:var(--blue-muted); border:1px solid var(--blue-border);
     border-radius:12px; padding:11px 13px; display:flex; align-items:flex-start; gap:9px;
@@ -168,12 +168,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 09C</span>
+  <span class="film-strip">UZ AERO - 09C</span>
   <span class="slug">zdaj samolot · bez lotu</span>
   <span class="canvas-meta"><span class="pulse"></span>Wariant 09</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Zdaj samolot bez lotu">
+<main class="phone" role="region" aria-label="Mockup - Zdaj samolot bez lotu">
   <div class="status-bar">
     <span>12:25</span>
     <span class="status-right">
@@ -210,7 +210,7 @@
       </div>
 
       <!-- Liczniki bez zmian: nie każemy przepisywać tego samego. Ale furtka korekty
-           zostaje, bo licznik fizyczny jest ważniejszy od naszej rachuby (§4.1 pkt 5) —
+           zostaje, bo licznik fizyczny jest ważniejszy od naszej rachuby (§4.1 pkt 5) -
            ktoś mógł ruszyć samolot poza aplikacją. -->
       <div class="form-section">
         <div class="form-section-title">
@@ -235,7 +235,7 @@
         </div>
       </div>
 
-      <!-- Jedyne pytanie tego ekranu — siatka kart, nie natywny select -->
+      <!-- Jedyne pytanie tego ekranu - siatka kart, nie natywny select -->
       <div class="form-section">
         <div class="form-section-title"><span>Dlaczego nie poleciałeś?</span></div>
         <div class="reason-grid">
@@ -260,7 +260,7 @@
 
       <div class="status-box">
         <svg class="status-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        <span class="status-text">Przejęcie samolotu <b>zostaje w rejestrze</b> — administrator widzi, że
+        <span class="status-text">Przejęcie samolotu <b>zostaje w rejestrze</b> - administrator widzi, że
         SP-ANK był zajęty od 09:10 i dlaczego nie poleciał. Twój dzień liczy się dalej: to nie był lot,
         ale był na miejscu.</span>
       </div>
@@ -270,15 +270,15 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h14M13 6l6 6-6 6"/></svg>
       </a>
 
-      <a href="04a-cockpit-ground.html" class="btn-later">JESZCZE NIE — WRÓĆ DO KOKPITU</a>
+      <a href="04a-cockpit-ground.html" class="btn-later">JESZCZE NIE - WRÓĆ DO KOKPITU</a>
 
     </div>
   </div>
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Warianty tego ekranu — kiedy który?</div>
-  <!-- 09 i 09A usunięte 2026-08-10 — patrz komentarz w 09B. -->
+  <div class="vp-title">Warianty tego ekranu - kiedy który?</div>
+  <!-- 09 i 09A usunięte 2026-08-10 - patrz komentarz w 09B. -->
   <a class="vp-item" href="09b-zdaj-samolot.html">
     <span class="vp-badge red">09B</span>
     <span class="vp-body">
@@ -290,7 +290,7 @@
     <span class="vp-badge amber">09C</span>
     <span class="vp-body">
       <span class="vp-name">Zdanie bez lotu</span>
-      <span class="vp-when">Pilot przejął samolot i nie poleciał — pogoda, usterka, odwołany skok. Silnik nie ruszył, więc nie ma czasów ani zużycia; odczyty wypełnione wartościami z przejęcia (MH bez zmian) z furtką korekty, a jedyne pytanie to powód. Wejście: kafelek „Zdaj samolot" w stanie PRZED uruchomieniem silnika (04A).</span>
+      <span class="vp-when">Pilot przejął samolot i nie poleciał - pogoda, usterka, odwołany skok. Silnik nie ruszył, więc nie ma czasów ani zużycia; odczyty wypełnione wartościami z przejęcia (MH bez zmian) z furtką korekty, a jedyne pytanie to powód. Wejście: kafelek „Zdaj samolot" w stanie PRZED uruchomieniem silnika (04A).</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>

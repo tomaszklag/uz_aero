@@ -1,15 +1,15 @@
 /**
- * UZ Aero — panel: LISTA SESJI SAMOLOTÓW (`design/admin/A02-dni.html`).
+ * UZ Aero - panel: LISTA SESJI SAMOLOTÓW (`design/admin/A02-dni.html`).
  *
  * Jeden wiersz = jedna sesja (`session_claim` → `day_close`). Wszystkie liczby są
- * projekcją `projectSession` przepisaną przez serwer — panel je FORMATUJE i niczego
+ * projekcją `projectSession` przepisaną przez serwer - panel je FORMATUJE i niczego
  * nie przelicza.
  *
  * ══ „DZIEŃ LOTNY" TO NIE JEST JEDNOSTKA TEJ LISTY (§3.6a) ══
  * Nazwa ekranu i mockupu jest historyczna. Sesja to odcinek PRZEJĘCIE → ZDANIE jednej
  * maszyny, a po przebudowie flow bywa krótka: dwie zmiany dziennie na samolocie to
  * norma, więc jedna doba UTC daje dwa wiersze o tej samej dacie i tej samej rejestracji
- * (odróżnia je godzina przejęcia — patrz `daysRows.dayCell`). Klamra służby nie jest
+ * (odróżnia je godzina przejęcia - patrz `daysRows.dayCell`). Klamra służby nie jest
  * właściwością żadnego z tych wierszy: należy do PILOTA i potrafi objąć kilka maszyn,
  * więc kolumny „duty" tu nie ma i nie może być.
  *
@@ -19,19 +19,19 @@
  * z komponentami.
  *
  * ══ CZEGO TEN EKRAN ŚWIADOMIE NIE POKAZUJE ══
- *  1. **Plakietki „W locie"** — wymaga wiedzy, czy silnik pracuje; projekcja jej nie
+ *  1. **Plakietki „W locie"** - wymaga wiedzy, czy silnik pracuje; projekcja jej nie
  *     niesie, a lista celowo nie woła `projectSession` (§7.1 architektury serwera).
- *  2. **Kalendarza** — trasa filtruje po dniach (`?od=`/`?do=`), ale komponentu wyboru
+ *  2. **Kalendarza** - trasa filtruje po dniach (`?od=`/`?do=`), ale komponentu wyboru
  *     dat panel jeszcze nie ma; zakres przychodzi z adresu i daje się z niego zdjąć.
- *  3. **Eksportu CSV** z nagłówka mockupu — nie ma trasy, która by go budował.
+ *  3. **Eksportu CSV** z nagłówka mockupu - nie ma trasy, która by go budował.
  * Wszystkie trzy są opisane na ekranie, a nie przemilczane.
  *
  * ══ CO DOSZŁO 2026-08-01 ══
  * **Filtry po samolocie i po pilocie przestały być martwe.** Serwer miał je od pierwszej
  * wersji listy (`SessionListFilter.aircraftId`, `.pilotId`), ale panel nie miał skąd
- * wziąć nazw — jedyną drogą było ręczne sklejenie adresu. Oba słowniki dostarczają
+ * wziąć nazw - jedyną drogą było ręczne sklejenie adresu. Oba słowniki dostarczają
  * teraz `GET /admin/api/fleet` (`A07`) i `GET /admin/api/pilots` (`A06`), a chipy
- * składa czysty `daysPickers.ts`. Chip niesie IDENTYFIKATOR do trasy — skład listy
+ * składa czysty `daysPickers.ts`. Chip niesie IDENTYFIKATOR do trasy - skład listy
  * ustala serwer, panel dokłada wyłącznie etykietę.
  */
 
@@ -81,14 +81,14 @@ export function DaysScreen() {
   const days = useSessions(sessionListQuery(filter));
 
   // Liczniki kafli pytają serwer TYM SAMYM zawężeniem, tylko z podmienionym stanem.
-  // Policzenie ich z pobranych stron dałoby liczbę, której serwer nigdy nie wysłał —
+  // Policzenie ich z pobranych stron dałoby liczbę, której serwer nigdy nie wysłał -
   // i fałszywą, dopóki nie dociągnie się wszystkich stron kursora.
   const openCount = useSessionCount(sessionCountQuery(filter, 'open'));
   const flaggedCount = useSessionCount(sessionCountQuery(filter, 'flagged'));
   const exportedCount = useSessionCount(sessionCountQuery(filter, 'exported'));
 
   // Słowniki filtrów. Obie listy są KOMPLETNE i bez kursora, właśnie po to, żeby dało
-  // się z nich zbudować chipy — dlatego trasy floty i kont mają taki kształt. Cache
+  // się z nich zbudować chipy - dlatego trasy floty i kont mają taki kształt. Cache
   // TanStacka dzieli je z ekranami `A06`/`A07`, więc przejście między listami nie
   // pobiera ich drugi raz.
   const fleet = useFleet({});
@@ -98,7 +98,7 @@ export function DaysScreen() {
 
   // Wpis w wyszukiwarce żyje lokalnie do naciśnięcia Entera: filtrem jest URL, ale
   // przeładowywanie listy po każdej literze rejestracji byłoby serią żądań, z których
-  // żadne nie ma sensu — trasa dopasowuje identyfikator DOKŁADNIE, nie prefiksem.
+  // żadne nie ma sensu - trasa dopasowuje identyfikator DOKŁADNIE, nie prefiksem.
   const [aircraftDraft, setAircraftDraft] = useState(filter.aircraftId ?? '');
   useEffect(() => {
     setAircraftDraft(filter.aircraftId ?? '');
@@ -116,7 +116,7 @@ export function DaysScreen() {
         sub={
           <>
             Jeden wiersz = jedna sesja (<code>session_claim</code> → <code>day_close</code>).
-            Wszystkie liczby to projekcja <code>projectSession</code> ze strumienia zdarzeń — ta
+            Wszystkie liczby to projekcja <code>projectSession</code> ze strumienia zdarzeń - ta
             sama funkcja, która liczy statystyki w telefonie pilota. Panel niczego nie przelicza
             po swojemu. Czasy UTC.
           </>
@@ -134,8 +134,8 @@ export function DaysScreen() {
       />
 
       <TileGrid>
-        {/* Warunkiem „—" jest OBECNOŚĆ danych, nie faza ładowania. `isPending` jest
-            `false` także wtedy, gdy pobranie się NIE UDAŁO — a `dayPages` bez odpowiedzi
+        {/* Warunkiem „-" jest OBECNOŚĆ danych, nie faza ładowania. `isPending` jest
+            `false` także wtedy, gdy pobranie się NIE UDAŁO - a `dayPages` bez odpowiedzi
             oddaje wtedy `total: null`, czyli „nie wiemy". Postawienie tu zera kazałoby
             ekranowi twierdzić, tuż obok banera o błędzie, że klub nie ma ani jednego
             dnia lotnego. */}
@@ -156,7 +156,7 @@ export function DaysScreen() {
         <SearchInput
           value={aircraftDraft}
           ariaLabel="Filtruj po identyfikatorze samolotu"
-          placeholder={'Identyfikator samolotu, np. SP-ABC — Enter filtruje, „/" ustawia fokus'}
+          placeholder={'Identyfikator samolotu, np. SP-ABC - Enter filtruje, „/" ustawia fokus'}
           onChange={setAircraftDraft}
           onSubmit={() =>
             apply({
@@ -169,13 +169,13 @@ export function DaysScreen() {
           <FilterChip
             label={`${filter.from ?? '…'} → ${filter.to ?? '…'} · zdejmij`}
             active
-            title="Zakres dat pochodzi z adresu — panel nie ma jeszcze kalendarza (patrz podpis pod tabelą)."
+            title="Zakres dat pochodzi z adresu - panel nie ma jeszcze kalendarza (patrz podpis pod tabelą)."
             onClick={() => apply({ ...filter, from: null, to: null })}
           />
         )}
       </FilterBar>
 
-      {/* Rząd samolotów 1:1 z mockupu A02. Chip niesie IDENTYFIKATOR do trasy — panel
+      {/* Rząd samolotów 1:1 z mockupu A02. Chip niesie IDENTYFIKATOR do trasy - panel
           nie odsiewa wierszy sam, dokłada wyłącznie etykietę, bo `?samolot=ac_7b21…`
           da się wkleić, ale nie da się przeczytać. */}
       <FilterBar>
@@ -192,17 +192,17 @@ export function DaysScreen() {
         !aircraftOptions.some((chip) => chip.id === filter.aircraftId) ? (
           // Adres wskazuje jednostkę spoza słownika (wklejony link, samolot usunięty
           // z rejestru). Pokazujemy surowy identyfikator zamiast udawać, że filtra nie
-          // ma — inaczej lista byłaby zawężona bez widocznego powodu.
+          // ma - inaczej lista byłaby zawężona bez widocznego powodu.
           <FilterChip
             label={`${pickerLabel(aircraftOptions, filter.aircraftId)} · zdejmij`}
             active
-            title="Ta jednostka nie jest w rejestrze floty — zawężenie pochodzi z adresu."
+            title="Ta jednostka nie jest w rejestrze floty - zawężenie pochodzi z adresu."
             onClick={() => apply({ ...filter, aircraftId: null })}
           />
         ) : null}
       </FilterBar>
 
-      {/* Rząd pilotów — mockup A02 zapowiada ten filtr w wyszukiwarce („Pilot,
+      {/* Rząd pilotów - mockup A02 zapowiada ten filtr w wyszukiwarce („Pilot,
           rejestracja albo session_uuid…"), ale trasa dopasowuje DOKŁADNY identyfikator,
           nie frazę. Chipy ze słownika kont są tym, co panel może obiecać uczciwie:
           każdy z nich na pewno coś zawęża, a wyszukiwanie po nazwisku wymagałoby
@@ -221,7 +221,7 @@ export function DaysScreen() {
           <FilterChip
             label={`${pickerLabel(pilotOptions, filter.pilotId)} · zdejmij`}
             active
-            title="Tego konta nie ma w słowniku — zawężenie pochodzi z adresu."
+            title="Tego konta nie ma w słowniku - zawężenie pochodzi z adresu."
             onClick={() => apply({ ...filter, pilotId: null })}
           />
         ) : null}
@@ -268,7 +268,7 @@ export function DaysScreen() {
 
       {days.isPending ? null : days.isError ? (
         <Banner tone="danger" live>
-          <b>Nie udało się pobrać listy dni.</b> Panel działa wyłącznie online — to jedyne
+          <b>Nie udało się pobrać listy dni.</b> Panel działa wyłącznie online - to jedyne
           miejsce w systemie, w którym brak sieci wolno pokazać jako blokadę.{' '}
           <Button variant="ghost" size="sm" onClick={() => void days.refetch()}>
             Ponów
@@ -285,7 +285,7 @@ export function DaysScreen() {
       ) : (
         <>
           <DataTable
-            caption="Dni lotne — porządek serwera po dniu służby, czasy UTC"
+            caption="Dni lotne - porządek serwera po dniu służby, czasy UTC"
             columns={columns(filter, apply)}
             rows={rows}
             rowKey={(row) => row.sessionUuid}
@@ -298,7 +298,7 @@ export function DaysScreen() {
               {pagesSummary(pages)}{' '}
               {pages.hasMore ? (
                 <>
-                  Kolejne dni dokłada <b>kursor keyset</b>, nie <code>OFFSET</code> — dopisanie
+                  Kolejne dni dokłada <b>kursor keyset</b>, nie <code>OFFSET</code> - dopisanie
                   nowego dnia w trakcie przeglądania nie przesuwa granicy strony i nie gubi
                   wierszy.
                 </>
@@ -321,7 +321,7 @@ export function DaysScreen() {
 
       <Banner tone="status">
         <b>Dzień otwarty ≠ dzień niekompletny.</b> Sesja bez <code>day_close</code> pokazuje sumy
-        z tego, co dotarło — telefon dosyła zdarzenia w miarę zasięgu, a kolumny „koniec"
+        z tego, co dotarło - telefon dosyła zdarzenia w miarę zasięgu, a kolumny „koniec"
         (MH, FOB) wypełnia dopiero zamknięcie dnia. Do czasu <code>day_close</code> panel niczego
         nie domyśla i nie ekstrapoluje.
       </Banner>
@@ -329,9 +329,9 @@ export function DaysScreen() {
       <Banner tone="warn">
         <b>Czego ta lista jeszcze nie umie.</b> Serwer nie przyjmuje filtra po kliencie ani
         wyszukiwania tekstowego po nazwisku pilota i po <code>session_uuid</code>, a sortować da
-        się wyłącznie po dniu — kursor keyset jedzie po <code>claim_time</code>. Zakres dat
+        się wyłącznie po dniu - kursor keyset jedzie po <code>claim_time</code>. Zakres dat
         ustawia się więc z adresu (<code>?od=2026-07-25&amp;do=2026-07-31</code>), bo kalendarza
-        panel jeszcze nie ma. <b>Filtry po samolocie i po pilocie już działają</b> — chipy wyżej
+        panel jeszcze nie ma. <b>Filtry po samolocie i po pilocie już działają</b> - chipy wyżej
         biorą słowniki z <code>GET /admin/api/fleet</code> i <code>GET /admin/api/pilots</code>,
         a zawężenie robi serwer. Plakietki „W locie" nie ma z innego powodu i to nie jest brak
         w API: projekcja niesie <code>status</code>, nie niesie „silnik pracuje", a to jest
@@ -344,7 +344,7 @@ export function DaysScreen() {
 /**
  * Ile kont pobieramy jako SŁOWNIK do chipów pilotów.
  *
- * Trasa kont nie ma kursora i domyślnie oddaje 200 wierszy — tyle wystarczy klubowi
+ * Trasa kont nie ma kursora i domyślnie oddaje 200 wierszy - tyle wystarczy klubowi
  * z zapasem, a liczba stoi tu jawnie, żeby nie brać jej z domyślnej wartości serwera:
  * słownik obcięty po cichu dałby filtr, w którym brakuje kilku pilotów i nikt nie wie
  * dlaczego.
@@ -356,7 +356,7 @@ const STATE_CHIPS: { value: StateFilter; label: string; title?: string }[] = [
   {
     value: 'open',
     label: 'Dzień otwarty',
-    title: 'Sesje bez `day_close`. Nie znaczy „w locie" — projekcja nie niesie stanu silnika.',
+    title: 'Sesje bez `day_close`. Nie znaczy „w locie" - projekcja nie niesie stanu silnika.',
   },
   { value: 'flagged', label: 'Z flagą', title: 'Dni z co najmniej jedną OTWARTĄ flagą.' },
   { value: 'closed', label: 'Zamknięte', title: 'Sesje z `day_close` w rejestrze.' },
@@ -369,7 +369,7 @@ const STATE_CHIPS: { value: StateFilter; label: string; title?: string }[] = [
 
 /**
  * Który licznik z serwera podpisuje który chip. Chipy bez licznika (`all`, `closed`)
- * go nie dostają, bo panel NIE liczy plakietek sam — a osobne zapytanie dla każdego
+ * go nie dostają, bo panel NIE liczy plakietek sam - a osobne zapytanie dla każdego
  * chipa byłoby pięcioma żądaniami na każdą zmianę filtra.
  */
 const COUNT_OF: Partial<
@@ -384,11 +384,11 @@ const COUNT_OF: Partial<
 };
 
 /**
- * Kolumny listy — dokładnie te z `A02-dni.html`.
+ * Kolumny listy - dokładnie te z `A02-dni.html`.
  *
  * Sortowanie dostaje WYŁĄCZNIE kolumna „Dzień", bo tylko po niej serwer umie
  * stronicować kursorem. Strzałka przy innym nagłówku obiecywałaby zachowanie,
- * którego trasa nie ma — a nagłówek, który po kliknięciu nic nie robi, jest gorszy
+ * którego trasa nie ma - a nagłówek, który po kliknięciu nic nie robi, jest gorszy
  * od nagłówka bez strzałki.
  */
 function columns(filter: DaysFilter, apply: (next: DaysFilter) => void): Column<DayRow>[] {
@@ -424,8 +424,8 @@ function columns(filter: DaysFilter, apply: (next: DaysFilter) => void): Column<
       render: (row) =>
         row.operation == null ? (
           // Sesja bez `preflight_confirm` nie zadeklarowała operacji. Kreska, nie
-          // zgadywanie z reszty dnia — „inne" byłoby wpisaniem czegoś za pilota.
-          <>—</>
+          // zgadywanie z reszty dnia - „inne" byłoby wpisaniem czegoś za pilota.
+          <>-</>
         ) : (
           <>
             <Pill tone={row.operation.tone}>{row.operation.badge}</Pill>

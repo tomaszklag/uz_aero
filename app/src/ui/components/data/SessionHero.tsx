@@ -1,5 +1,5 @@
 /**
- * UZ Aero — SessionHero (`.duty-hero` z mockupu 10 „Rozliczenie samolotu")
+ * UZ Aero - SessionHero (`.duty-hero` z mockupu 10 „Rozliczenie samolotu")
  *
  * Wyśrodkowana karta z jedną liczbą podaną wielkim krojem: czas blokowy SESJI, pod nim
  * zakres, z którego powstał („przejęty 08:04 → zdany 11:20 UTC · 2 loty").
@@ -7,7 +7,7 @@
  * Bohaterem był tu czas służby, dopóki dzień pilota i sesja samolotu były tym samym.
  * Dziś nie są: dzień pilota to lista sesji na różnych maszynach (issue #23) i mieszka
  * na 01, więc na ekranie rozliczającym JEDEN samolot nie ma czego szukać. Zostaje wielkość, która
- * naprawdę opisuje tę maszynę i którą przepisuje się do dokumentów — czas blokowy.
+ * naprawdę opisuje tę maszynę i którą przepisuje się do dokumentów - czas blokowy.
  * Zakres pod spodem pozwala sprawdzić, czy przejęcie i zdanie mają właściwe godziny.
  *
  * Czym różni się od `ClaimStrip` (04): tam licznik **bieżący** tyka w pasku obok innych
@@ -60,7 +60,7 @@ export function SessionHero({
     >
       {/* Mockup ma tu gradient „transparent → akcent → transparent". Bez dodatkowej
           biblioteki gradientów (a `expo-linear-gradient` to kolejna zależność natywna)
-          zostaje pełna kreska w tonie akcentu — ta sama rola, jeden kolor mniej. */}
+          zostaje pełna kreska w tonie akcentu - ta sama rola, jeden kolor mniej. */}
       <View style={[styles.accent, { backgroundColor: c.accent }]} />
 
       <AppText variant="mono" tone="muted" style={styles.label}>

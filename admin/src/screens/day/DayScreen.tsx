@@ -1,10 +1,10 @@
 /**
- * UZ Aero — panel: KARTA JEDNEGO DNIA LOTNEGO (`design/admin/A02a-dzien.html`).
+ * UZ Aero - panel: KARTA JEDNEGO DNIA LOTNEGO (`design/admin/A02a-dzien.html`).
  *
  * Jeden widok, dwa stany: dzień ZAMKNIĘTY (komplet liczb, `day_close` w rejestrze)
- * i dzień OTWARTY (sumy są stanem na ostatni sync). To nie są dwa ekrany — różnica
+ * i dzień OTWARTY (sumy są stanem na ostatni sync). To nie są dwa ekrany - różnica
  * jest w danych, nie w układzie: sesja bez `day_close` po prostu nie ma odczytów
- * końcowych, więc panel pokazuje „—" zamiast ekstrapolować.
+ * końcowych, więc panel pokazuje „-" zamiast ekstrapolować.
  *
  * Ekran jest `.tsx` BEZ arytmetyki: wszystkie liczby przychodzą z `projectSession`
  * policzonego przez serwer, a wszystkie napisy powstają w czystych modułach obok
@@ -49,7 +49,7 @@ import { dayTiles, dropRows, fuelRows, mhRows, sessionRows, utcStamp } from './d
 import { timelineRows, timelineSummary } from './dayTimeline';
 
 export function DayScreen() {
-  // `targetUuid` jest obecny wyłącznie pod trasą korekty (`A02b`) — ta sama trasa,
+  // `targetUuid` jest obecny wyłącznie pod trasą korekty (`A02b`) - ta sama trasa,
   // ten sam ekran, szuflada NAD kartą dnia. Karta zostaje pod spodem, bo po zapisie
   // wraca się dokładnie do niej, żeby zobaczyć nowy wpis na osi zdarzeń.
   const { sessionUuid, targetUuid } = useParams();
@@ -63,7 +63,7 @@ export function DayScreen() {
     return (
       <Banner tone="danger" live>
         <b>Nie udało się wczytać karty dnia.</b> Panel działa wyłącznie online. Jeżeli adres
-        pochodzi z wklejonego linku, sprawdź też, czy <code>session_uuid</code> jest kompletny —
+        pochodzi z wklejonego linku, sprawdź też, czy <code>session_uuid</code> jest kompletny -
         serwer odpowiada „nie znaleziono" na sesję, której nie ma w projekcji.{' '}
         <Button variant="ghost" size="sm" onClick={() => void day.refetch()}>
           Ponów
@@ -94,14 +94,14 @@ export function DayScreen() {
                 <br />
               </span>
             ))}
-            Wszystkie liczby na tym ekranie pochodzą z <code>projectSession</code> — tej samej
+            Wszystkie liczby na tym ekranie pochodzą z <code>projectSession</code> - tej samej
             funkcji, którą telefon liczy statystyki dnia. Czasy UTC.
           </>
         }
         actions={
           <>
             {/* Prowadzi do MONITORA EKSPORTU zawężonego do tej sesji (`A05`), a nie do
-                samej treści karty — i to jest wybór, nie skrót. Pytanie zadawane przy tym
+                samej treści karty - i to jest wybór, nie skrót. Pytanie zadawane przy tym
                 przycisku brzmi „co się stało z arkuszem tego dnia", a odpowiadają na nie
                 trzy rzeczy naraz: stan karty, historia rewizji i dopiero potem jej treść.
                 Monitor pokazuje wszystkie trzy w jednym miejscu i ma tam przycisk
@@ -109,7 +109,7 @@ export function DayScreen() {
                 z którego i tak trzeba by wrócić po kontekst.
 
                 Adres jest AKTYWNY także dla dnia bez karty: „dlaczego karty nie ma" jest
-                pytaniem, na które ten ekran odpowiada — wyszarzenie przycisku odbierałoby
+                pytaniem, na które ten ekran odpowiada - wyszarzenie przycisku odbierałoby
                 dostęp do odpowiedzi dokładnie wtedy, gdy jest potrzebna. */}
             <LinkButton to={`/eksporty/${session.sessionUuid}`} variant="ghost">
               {session.exportRevision == null
@@ -117,7 +117,7 @@ export function DayScreen() {
                 : `Karta arkusza · rewizja ${session.exportRevision}`}
             </LinkButton>
             {/* Korekta NIE MA tu przycisku „wejdź", bo nie ma dokąd wejść bez wskazania
-                zdarzenia — wyborem jest oś zdarzeń niżej. Zostaje sama informacja:
+                zdarzenia - wyborem jest oś zdarzeń niżej. Zostaje sama informacja:
                 dostępna czy nie, a jeśli nie, to dlaczego. */}
             <LinkButton
               to=""
@@ -165,7 +165,7 @@ export function DayScreen() {
             <EmptyState
               icon={<DaysIcon size={22} />}
               title="REJESTR TEJ SESJI JEST PUSTY"
-              note="Wiersz projekcji istnieje, ale nie ma do niego ani jednego zdarzenia. To stan, którego nie powinno być — zgłoś go administratorowi razem z UUID-em sesji."
+              note="Wiersz projekcji istnieje, ale nie ma do niego ani jednego zdarzenia. To stan, którego nie powinno być - zgłoś go administratorowi razem z UUID-em sesji."
             />
           ) : (
             <Timeline>
@@ -177,7 +177,7 @@ export function DayScreen() {
                   name={row.name}
                   voided={row.voided}
                   badge={<Pill tone={row.badgeTone}>{row.badge}</Pill>}
-                  // Oś JEST wyborem zdarzenia do korekty (`A02b`) — zna uuid-y i wie,
+                  // Oś JEST wyborem zdarzenia do korekty (`A02b`) - zna uuid-y i wie,
                   // które typy w ogóle jej podlegają. Przy zdarzeniu niekorygowalnym
                   // przycisku NIE MA w ogóle: wyszarzony w każdym drugim wierszu
                   // zamieniłby oś w płot z powodami, a powód jest tu zawsze ten sam
@@ -189,7 +189,7 @@ export function DayScreen() {
                             DZIENNIKA AUDYTU: `target_id` wpisu `event.correct` jest
                             uuid-em zdarzenia poprawianego, więc to jedyne miejsce,
                             w którym widać, KTO i DLACZEGO zmienił tę liczbę. Powód
-                            korekty żyje wyłącznie w audycie — do rejestru nie trafia. */}
+                            korekty żyje wyłącznie w audycie - do rejestru nie trafia. */}
                         {row.audited ? (
                           <LinkButton to={targetHref('event', row.uuid)} variant="ghost" size="sm">
                             Audyt
@@ -220,12 +220,12 @@ export function DayScreen() {
           {correction.allowed ? null : (
             <span className="hint">
               <b>Korekta administratora jest tu niedostępna:</b> {correction.reason}. Dlatego przy
-              wierszach osi nie ma przejścia do niej — nie jest ukryte, tylko nie ma czego
+              wierszach osi nie ma przejścia do niej - nie jest ukryte, tylko nie ma czego
               proponować.
             </span>
           )}
           <span className="hint">
-            Oś pokazuje <b>surowy rejestr</b>, w porządku chronologicznym nadanym przez serwer —
+            Oś pokazuje <b>surowy rejestr</b>, w porządku chronologicznym nadanym przez serwer -
             panel jej nie przesortowuje. Zdarzenie unieważnione zostaje na niej{' '}
             <b>przekreślone, nie ukryte</b>: to właśnie te wiersze tłumaczą, dlaczego liczby dnia
             różnią się od tego, co zapisał telefon. Korekty stoją tu jako zwykłe wpisy, bo poprawia
@@ -254,7 +254,7 @@ export function DayScreen() {
               <KeyValue key={row.label} label={row.label} value={row.value} tone={row.tone} />
             ))}
             <span className="hint">
-              Wartości są w formacie licznika <b>tego samolotu</b> — panel nie przelicza ich na
+              Wartości są w formacie licznika <b>tego samolotu</b> - panel nie przelicza ich na
               własną konwencję. W bazie motogodziny zawsze są liczbą dziesiętną; <code>hh:mm</code>{' '}
               to wyłącznie prezentacja, żeby zgadzała się z tym, co pilot widzi w kabinie.
             </span>
@@ -272,7 +272,7 @@ export function DayScreen() {
                 />
               ))}
               <span className="hint">
-                Średnia wysokość liczy się wyłącznie z wyniesień, które ją mają — zrzut bez fixa
+                Średnia wysokość liczy się wyłącznie z wyniesień, które ją mają - zrzut bez fixa
                 GPS nie zaniża jej zerem, tylko wypada z próby.
               </span>
             </Card>
@@ -283,7 +283,7 @@ export function DayScreen() {
       {flights.length === 0 ? null : (
         <>
           <DataTable
-            caption="Loty dnia — czasy UTC, po nałożeniu korekt"
+            caption="Loty dnia - czasy UTC, po nałożeniu korekt"
             columns={FLIGHT_COLUMNS}
             rows={flights}
             rowKey={(row) => row.index}
@@ -291,10 +291,10 @@ export function DayScreen() {
           <span className="hint">
             Loty pochodzą z projekcji, czyli ze strumienia <b>po nałożeniu korekt</b>: lot, którego
             fałszywe lądowanie unieważniono, ma tu już właściwy czas. Kolumn „Zrzut" i „Uwagi"
-            z mockupu <b>nie ma</b> i to jest decyzja, nie przeoczenie — rozbicia skoczków na loty
+            z mockupu <b>nie ma</b> i to jest decyzja, nie przeoczenie - rozbicia skoczków na loty
             projekcja nie liczy, a odtworzenie go w panelu znaczyłoby wyprodukowanie liczby
             przychodowej, której serwer nigdy nie wysłał. Zrzuty widać na osi zdarzeń i w karcie
-            obok; korekty — na osi, razem z powodem.
+            obok; korekty - na osi, razem z powodem.
           </span>
         </>
       )}
@@ -309,7 +309,7 @@ export function DayScreen() {
       >
         {flags.length === 0 ? (
           <span className="hint">
-            Serwer nie znalazł w tym dniu żadnej rozbieżności — ani w łańcuchu motogodzin, ani
+            Serwer nie znalazł w tym dniu żadnej rozbieżności - ani w łańcuchu motogodzin, ani
             w paliwie, ani w zegarze, ani w nakładce sesji. Flagi zakłada wyłącznie ingest,
             przy przyjmowaniu zdarzeń; człowiek nie może ich tu dopisać.
           </span>
@@ -350,11 +350,11 @@ export function DayScreen() {
                         )}
                       </td>
                       <td className="num">
-                        {Number.isNaN(created) ? '—' : utcStamp(created)}
+                        {Number.isNaN(created) ? '-' : utcStamp(created)}
                         <span className="cell-sub">
                           {flag.sessionUuids.length > 1
                             ? `spina ${flag.sessionUuids.length} sesje`
-                            : shortUuid(flag.sessionUuids[0] ?? '—')}
+                            : shortUuid(flag.sessionUuids[0] ?? '-')}
                         </span>
                       </td>
                       <td>
@@ -367,7 +367,7 @@ export function DayScreen() {
                       </td>
                       <td>
                         <div className="row-actions">
-                          {/* Wejście z kontekstem do dziennika audytu — ale TYLKO przy
+                          {/* Wejście z kontekstem do dziennika audytu - ale TYLKO przy
                               sprawie rozstrzygniętej: wpis `flag.resolve` powstaje
                               dopiero w chwili rozstrzygnięcia, więc przy fladze otwartej
                               dziennik jest pusty z definicji (`dayFlagAudit.ts`). */}
@@ -389,7 +389,7 @@ export function DayScreen() {
           </div>
         )}
         <span className="hint">
-          Flaga <b>nie blokuje dnia i nie zmienia liczb</b> — opisuje rozbieżność, którą ma
+          Flaga <b>nie blokuje dnia i nie zmienia liczb</b> - opisuje rozbieżność, którą ma
           obejrzeć człowiek. Karta pokazuje też sprawy już <b>rozwiązane</b>, bo historia decyzji
           jest potrzebna dokładnie tam, gdzie widać jej powód. Rozstrzyga się je w skrzynce flag,
           osobno, każdą z własnym komentarzem i własnym śladem w audycie.
@@ -404,7 +404,7 @@ export function DayScreen() {
           state={state}
           entry={timeline.find((item) => item.event.uuid === targetUuid) ?? null}
           pilot={panelSession?.pilot ?? null}
-          // Zamknięcie zdejmuje z adresu cel korekty i zostawia kartę dnia — a nie
+          // Zamknięcie zdejmuje z adresu cel korekty i zostawia kartę dnia - a nie
           // cofa w historii: po zapisie „wstecz" wróciłoby do formularza z tym samym
           // zdarzeniem, czyli zapraszało do dopisania drugiej korekty.
           onClose={() => void navigate(`/dni/${encodeURIComponent(session.sessionUuid)}`)}

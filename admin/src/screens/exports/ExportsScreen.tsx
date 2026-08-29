@@ -1,7 +1,7 @@
 /**
- * UZ Aero — panel: MONITOR EKSPORTU KART DZIENNYCH (`design/admin/A05-eksporty.html`).
+ * UZ Aero - panel: MONITOR EKSPORTU KART DZIENNYCH (`design/admin/A05-eksporty.html`).
  *
- * Odpowiada na jedno pytanie: czy każdy dzień lotny ma aktualny arkusz — a jeśli nie,
+ * Odpowiada na jedno pytanie: czy każdy dzień lotny ma aktualny arkusz - a jeśli nie,
  * dlaczego. Ekran istnieje, bo §4.7 mówi, że **karta jest SKUTKIEM, nie warunkiem**:
  * telefon dostaje 200, zanim karta powstanie, więc nieudany eksport niczego pilotowi nie
  * cofa i nie zgłasza się sam. To jedyne miejsce, w którym widać, że arkusz i rejestr
@@ -20,7 +20,7 @@
  *     nie ma. Tabeli kolejki system nie ma, a jej dołożenie to decyzja z `A11`, nie
  *     pole do wypełnienia. Widać za to SKUTEK tych awarii: dzień w stanie „Brak karty".
  *  2. **„Zdrowia eksportu" z medianą opóźnienia.** Wymagałoby różnicy między przyjęciem
- *     `day_close` a wysyłką, a `sessions` nie ma stempla SERWEROWEGO przyjęcia —
+ *     `day_close` a wysyłką, a `sessions` nie ma stempla SERWEROWEGO przyjęcia -
  *     `close_time` jest czasem z telefonu i bywa starszy o dobę bez zasięgu. Liczba
  *     nazywałaby się „opóźnieniem eksportu", a mierzyłaby długość ciszy telefonu.
  *  3. **Stanu „karta nieaktualna".** Wymagałby porównania stempla eksportu ze stemplem
@@ -171,10 +171,10 @@ export function ExportsScreen() {
         sub={
           <>
             Karta jest <b>DOBĄ SAMOLOTU</b> (<code>YYYY-MM-DD_SP-XXX</code>, §4.7), a sesje
-            tej maszyny są jej WIERSZAMI — dwie zmiany tego samego dnia trafiają do jednego
+            tej maszyny są jej WIERSZAMI - dwie zmiany tego samego dnia trafiają do jednego
             dokumentu, spięte kolumną <code>Sesja</code>. Ta lista pokazuje jednak SESJE, bo
             to one mają stan: pytanie brzmi „której zmiany brakuje w karcie". Eksport jest{' '}
-            <b>skutkiem</b> przyjęcia zdarzeń, nigdy warunkiem — telefon dostał 200, zanim
+            <b>skutkiem</b> przyjęcia zdarzeń, nigdy warunkiem - telefon dostał 200, zanim
             karta powstała, więc błąd tutaj niczego pilotowi nie cofa. Ten ekran jest jedynym
             miejscem, w którym widać, że arkusz i rejestr się rozjechały.
           </>
@@ -191,7 +191,7 @@ export function ExportsScreen() {
         <b>append-only</b>: każda regeneracja dopisuje wiersz z podbitą rewizją i to jedyny
         ślad, którym da się wyjaśnić rozjazd między arkuszem a rejestrem.{' '}
         <code>exported_sheets</code> trzyma wyłącznie treść <b>bieżącą</b> (UPSERT po nazwie
-        karty), bo czytelnik linku z ekranu 11 ma widzieć aktualny stan dnia — dokładnie to,
+        karty), bo czytelnik linku z ekranu 11 ma widzieć aktualny stan dnia - dokładnie to,
         co zobaczyłby w arkuszu. Gdyby regeneracja nadpisywała wiersz dziennika, nie dałoby
         się już odpowiedzieć na pytanie „co widział skarbnik klubu, kiedy zamykał miesiąc".
       </Banner>
@@ -204,7 +204,7 @@ export function ExportsScreen() {
               : `${counts.blocked} sesje wypadają z kart doby, dopóki nie zamkną się flagi.`}
           </b>{' '}
           <code>dayExporter</code> pomija sesję, dla której otwarta jest flaga{' '}
-          <code>aircraft_overlap</code> — §4.7: sporna zmiana nie ma prawa utrwalić się
+          <code>aircraft_overlap</code> - §4.7: sporna zmiana nie ma prawa utrwalić się
           w dokumencie klubu. Reszta doby idzie do arkusza z adnotacją „niekompletna",
           więc maszyna nie znika z rejestru przez jedną sporną zmianę. Ponowienie tej
           bramki <b>nie omija</b>.{' '}
@@ -236,7 +236,7 @@ export function ExportsScreen() {
         <SearchInput
           value={searchDraft}
           ariaLabel="Filtruj po rejestracji albo identyfikatorze sesji"
-          placeholder="Szukaj: rejestracja, identyfikator samolotu, UUID sesji — Enter filtruje"
+          placeholder="Szukaj: rejestracja, identyfikator samolotu, UUID sesji - Enter filtruje"
           onChange={setSearchDraft}
           onSubmit={() =>
             apply({ ...filter, search: searchDraft.trim() === '' ? null : searchDraft.trim() })
@@ -246,7 +246,7 @@ export function ExportsScreen() {
           <FilterChip
             label={`${filter.from ?? '…'} → ${filter.to ?? '…'} · zdejmij`}
             active
-            title="Zakres dat UTC z adresu — panel nie ma jeszcze kalendarza (patrz baner pod tabelą)."
+            title="Zakres dat UTC z adresu - panel nie ma jeszcze kalendarza (patrz baner pod tabelą)."
             onClick={() => apply({ ...filter, from: null, to: null })}
           />
         )}
@@ -286,7 +286,7 @@ export function ExportsScreen() {
 
       {page.isPending ? null : page.isError ? (
         <Banner tone="danger" live>
-          <b>Nie udało się pobrać monitora eksportu.</b> Panel działa wyłącznie online — to
+          <b>Nie udało się pobrać monitora eksportu.</b> Panel działa wyłącznie online - to
           jedyne miejsce w systemie, w którym brak sieci wolno pokazać jako blokadę.{' '}
           <Button variant="ghost" size="sm" onClick={() => void page.refetch()}>
             Ponów
@@ -299,7 +299,7 @@ export function ExportsScreen() {
       ) : (
         <>
           <DataTable
-            caption="Monitor eksportu kart dziennych — porządek serwera od najnowszego dnia, czasy UTC"
+            caption="Monitor eksportu kart dziennych - porządek serwera od najnowszego dnia, czasy UTC"
             columns={columns(mayRetry, retryingUuid, (row) => void retry.mutate(row.sessionUuid))}
             rows={rows}
             rowKey={(row) => row.sessionUuid}
@@ -355,7 +355,7 @@ export function ExportsScreen() {
               <span className="hint">
                 <b>Tej karty nie ma w bazie.</b> Dzień jeszcze nie został wyeksportowany albo
                 karty nie da się nazwać (sesja bez preflightu). Podgląd czyta{' '}
-                <code>exported_sheets</code> — tę samą treść, którą telefon dostaje linkiem
+                <code>exported_sheets</code> - tę samą treść, którą telefon dostaje linkiem
                 z ekranu 11.
               </span>
             ) : (
@@ -380,7 +380,7 @@ export function ExportsScreen() {
               ) : (
                 <>
                   {history.data.revisions.length === 0 ? (
-                    <KeyValue label="Wysyłki" value="—" tone="red" unit="karta nigdy nie poszła" />
+                    <KeyValue label="Wysyłki" value="-" tone="red" unit="karta nigdy nie poszła" />
                   ) : (
                     <Timeline>
                       {revisionEntries(history.data.revisions).map((entry) => (
@@ -407,7 +407,7 @@ export function ExportsScreen() {
               <KeyValue label="Mediana opóźnienia" value="nie do policzenia" tone="amber" />
               <span className="hint">
                 <b>Nieudanej próby nie ma w <code>export_log</code>.</b> Dziennik dostaje wiersz
-                dopiero po udanym zapisie karty — odwrotna kolejność pokazywałaby na ekranie 11
+                dopiero po udanym zapisie karty - odwrotna kolejność pokazywałaby na ekranie 11
                 telefonu link do arkusza, którego nie ma. Historia porażek nie żyje więc nigdzie:
                 widać wyłącznie ich SKUTEK, czyli dzień w stanie „Brak karty", i wynik
                 pojedynczego ponowienia zaraz po kliknięciu. Kolejka z backoffem to osobna
@@ -416,7 +416,7 @@ export function ExportsScreen() {
               </span>
               <span className="hint">
                 <b>Opóźnienia eksportu też nie policzymy.</b> Wymagałoby stempla przyjęcia{' '}
-                <code>day_close</code> po stronie serwera, a projekcja niesie czas z telefonu —
+                <code>day_close</code> po stronie serwera, a projekcja niesie czas z telefonu -
                 telefon bez zasięgu zapisuje zamknięcie o 18:00, a serwer widzi je o 22:00.
                 Liczba nazywałaby się „opóźnieniem eksportu", a mierzyła długość ciszy telefonu.
               </span>
@@ -427,12 +427,12 @@ export function ExportsScreen() {
 
       <Banner tone="status">
         <b>Czym różni się ponowienie od naprawy.</b> „Ponów" powtarza dokładnie tę samą
-        operację, którą wykonuje automat po przyjęciu zdarzeń — <b>nie omija żadnej bramki</b>.
+        operację, którą wykonuje automat po przyjęciu zdarzeń - <b>nie omija żadnej bramki</b>.
         Doba, w której nikt jeszcze nie zdał samolotu, sesja bez <code>session_claim</code>{' '}
         i otwarta flaga <code>aircraft_overlap</code> odmówią tak samo. Jeśli karta ma powstać, najpierw musi
         zniknąć powód; przycisk służy do sytuacji, w której powodu już nie ma, a eksport nie
         wrócił sam. Każde kliknięcie trafia do{' '}
-        <CellLink to="/audyt?typ=sheet" title="Dziennik audytu — akcje na kartach arkusza">
+        <CellLink to="/audyt?typ=sheet" title="Dziennik audytu - akcje na kartach arkusza">
           dziennika audytu
         </CellLink>{' '}
         z nazwą karty, rewizją przed i po oraz wynikiem próby.
@@ -442,7 +442,7 @@ export function ExportsScreen() {
 }
 
 /**
- * Karta arkusza jako tabela — DOSŁOWNE komórki dokumentu, bez interpretacji.
+ * Karta arkusza jako tabela - DOSŁOWNE komórki dokumentu, bez interpretacji.
  *
  * Wiersze puste z `buildDaySheet` są separatorami sekcji i muszą zostać, bo bez nich
  * karta zlewa się w jeden blok; pusty `<tr>` bez komórek jest w HTML-u niepoprawny,
@@ -479,7 +479,7 @@ function SheetTable({ tab, rows }: { tab: string; rows: string[][] }) {
       </div>
       <span className="hint">
         Karta to <b>dosłowne wiersze dokumentu</b> (<code>rows</code> jako{' '}
-        <code>string[][]</code>), nie projekcja do dalszego liczenia — dlatego motogodziny są
+        <code>string[][]</code>), nie projekcja do dalszego liczenia - dlatego motogodziny są
         sformatowane wg <code>mh_format</code> samolotu, a nie surową liczbą. Panel niczego
         tu nie interpretuje i nie przelicza.
       </span>
@@ -488,7 +488,7 @@ function SheetTable({ tab, rows }: { tab: string; rows: string[][] }) {
 }
 
 /**
- * Kolumny monitora — dokładnie te z `A05-eksporty.html`.
+ * Kolumny monitora - dokładnie te z `A05-eksporty.html`.
  *
  * Sortowania nie ma na żadnej kolumnie i to jest świadome: trasa oddaje jeden porządek
  * (po chwili przejęcia, malejąco), więc nagłówek ze strzałką, który po kliknięciu nic nie
@@ -566,7 +566,7 @@ function columns(
             {row.state.text}
           </Pill>
           {/* Druga plakietka, nie inny stan: dziennik TEGO dnia ma własne rewizje, więc
-              „W arkuszu" jest prawdą — nadpisana została TREŚĆ pod nazwą karty. Link
+              „W arkuszu" jest prawdą - nadpisana została TREŚĆ pod nazwą karty. Link
               prowadzi do sesji, która nadpisała, bo bez niego administrator ma nazwę
               karty, dwie sesje i żadnej drogi między nimi. */}
           {row.overwritten == null ? null : (
@@ -599,10 +599,10 @@ function columns(
           )}
           {/* Przycisk zostaje WIDOCZNY i wyszarzony z powodem, nigdy ukryty: człowiek
               ma nie zgadywać, czy funkcji nie ma w produkcie, czy nie ma jej w tej
-              sytuacji. Serwer i tak odmówi tak samo — to nie jest zabezpieczenie. */}
+              sytuacji. Serwer i tak odmówi tak samo - to nie jest zabezpieczenie. */}
           {/* Stan zajętości należy do WIERSZA, nie do tabeli. Do 2026-08-01 i napis,
               i wyszarzenie szły z `retry.isPending`, więc jedno kliknięcie kazało
-              dwustu wierszom twierdzić, że są ponawiane — a wyszarzało je BEZ POWODU,
+              dwustu wierszom twierdzić, że są ponawiane - a wyszarzało je BEZ POWODU,
               czyli łamało zasadę tego ekranu („widoczny i wyszarzony z powodem, nigdy
               ukryty"): tooltip był pusty, bo `retryReason` tych wierszy jest `null`. */}
           <Button
@@ -612,11 +612,11 @@ function columns(
             reason={
               mayRetry
                 ? (row.retryReason ?? undefined)
-                : 'Wymaga roli: administrator — ponowienie nadpisuje dokument klubu'
+                : 'Wymaga roli: administrator - ponowienie nadpisuje dokument klubu'
             }
             onClick={(clickEvent) => {
               // Wiersz jest klikalny (otwiera rozwinięcie), więc bez tego kliknięcie
-              // „Ponów" zmieniałoby przy okazji zaznaczenie — czyli akcja robiłaby
+              // „Ponów" zmieniałoby przy okazji zaznaczenie - czyli akcja robiłaby
               // dwie rzeczy naraz, z których jednej nikt nie prosił.
               clickEvent.stopPropagation();
               onRetry(row);

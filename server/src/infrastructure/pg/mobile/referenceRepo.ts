@@ -1,11 +1,11 @@
 /**
- * UZ Aero (serwer) — adapter `ReferencePort` na Postgres.
+ * UZ Aero (serwer) - adapter `ReferencePort` na Postgres.
  *
- * Zwraca flotę i pilotów w KSZTAŁTACH DOMENY (`ReferenceAircraft`, `ReferencePilot`) —
+ * Zwraca flotę i pilotów w KSZTAŁTACH DOMENY (`ReferenceAircraft`, `ReferencePilot`) -
  * tych samych, które aplikacja trzyma w cache referencyjnym. Serwer i telefon mówią
  * jednym typem, więc kontrakt `GET /reference` nie ma osobnej, trzeciej definicji.
  *
- * `claim*` i `handover` to pola wyliczane ze strumienia zdarzeń (M2) — do tego czasu
+ * `claim*` i `handover` to pola wyliczane ze strumienia zdarzeń (M2) - do tego czasu
  * świadomie `null`: brak przekazania to pełnoprawny stan §4.8 („brak"), nie błąd.
  */
 
@@ -61,7 +61,7 @@ export class PgReferenceRepo implements ReferencePort {
       mhFormat: r.mh_format as MhFormat,
       dualRequired: r.dual_required,
       serviceStatus: r.service_status as ServiceStatus,
-      // Konfiguracja oleju (issue #60) — `null` = administrator nie skonfigurował;
+      // Konfiguracja oleju (issue #60) - `null` = administrator nie skonfigurował;
       // moduł dla tej jednostki milczy (podpowiedzi i ostrzeżenia śpią, pomiar działa).
       oilMinL: r.oil_min_l != null ? Number(r.oil_min_l) : null,
       oilCapacityL: r.oil_capacity_l != null ? Number(r.oil_capacity_l) : null,
@@ -69,7 +69,7 @@ export class PgReferenceRepo implements ReferencePort {
       claimPicId: null,
       claimSince: null,
       handover: null,
-      // Normę, tak jak claim i przekazanie, dokłada warstwa aplikacji — adapter oddaje
+      // Normę, tak jak claim i przekazanie, dokłada warstwa aplikacji - adapter oddaje
       // wyłącznie to, co stoi w `aircraft`.
       consumption: null,
       fetchedAt: touch(r.updated_at),

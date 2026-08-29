@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: treść całej skrzynki (moduł czysty).
+ * UZ Aero - panel: treść całej skrzynki (moduł czysty).
  *
  * Dwie decyzje: co powiedzieć, gdy na liście stoją sprawy trzymające karty dnia,
  * i co powiedzieć zamiast listy, gdy nie ma jej wcale.
@@ -44,7 +44,7 @@ describe('blockingFlags', () => {
     ]);
   });
 
-  it('brak spraw blokujących daje pustą listę — baner ma wtedy zniknąć', () => {
+  it('brak spraw blokujących daje pustą listę - baner ma wtedy zniknąć', () => {
     expect(blockingFlags([flag({ id: 1 })])).toEqual([]);
   });
 });

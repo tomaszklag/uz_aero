@@ -1,8 +1,8 @@
 /**
- * UZ Aero — generator wycinka siatki undulacji EGM96 (`scripts/geoid/`).
+ * UZ Aero - generator wycinka siatki undulacji EGM96 (`scripts/geoid/`).
  *
  * Parser dostaje syntetyczny plik o PEŁNYCH wymiarach świata (721×1441), bo jego
- * kontrakt jest z definicji światowy — nagłówek i liczność są częścią walidacji.
+ * kontrakt jest z definicji światowy - nagłówek i liczność są częścią walidacji.
  * Wycinanie i render testujemy na małych siatkach: `subsetGrid` jest ogólny.
  */
 

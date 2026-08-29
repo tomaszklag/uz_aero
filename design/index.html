@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — Spis widoków</title>
+<title>UZ Aero - Spis widoków</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -294,7 +294,7 @@
   </div>
   <h1>UZ <span>AERO</span></h1>
   <div class="hero-sub">Automatyczny logbook lotniczy · Design System v0.2</div>
-  <div class="hero-tag"><span class="dot"></span> Specyfikacja UI — zatwierdzona, wdrażana w app/</div>
+  <div class="hero-tag"><span class="dot"></span> Specyfikacja UI - zatwierdzona, wdrażana w app/</div>
 </div>
 
 <div class="section-title">Screen flow</div>
@@ -319,10 +319,10 @@
   <span class="flow-sep">→</span>
   <a href="01-moj-dzien.html" class="flow-step">01 Mój dzień</a>
 </div>
-<!-- SESJA = JEDEN BIEG SILNIKA (2026-08-10): po STOP ENGINE nie ma drugiego startu —
+<!-- SESJA = JEDEN BIEG SILNIKA (2026-08-10): po STOP ENGINE nie ma drugiego startu -
      kokpit (04) prowadzi wyłącznie do zdania z obowiązkowymi odczytami (09B), a kolejny
      lot to NOWE przejęcie. Ekrany 09 i 09A usunięte. Statystyki (10) i status
-     synchronizacji (11) wiszą pod „Mój dzień" — nie są etapem dnia. -->
+     synchronizacji (11) wiszą pod „Mój dzień" - nie są etapem dnia. -->
 <div class="flow-arrow" style="margin-top:10px;">
   <a href="01-moj-dzien.html" class="flow-step">01 Mój dzień</a>
   <span class="flow-sep">→</span>
@@ -338,7 +338,7 @@
     <div class="card-num">00</div>
     <div class="card-body">
       <div class="card-title">00-login</div>
-      <div class="card-desc">Logowanie — codzienne odblokowanie PIN-em (działa offline); konto nadaje administrator. Tożsamość PIC znana dla całej sesji</div>
+      <div class="card-desc">Logowanie - codzienne odblokowanie PIN-em (działa offline); konto nadaje administrator. Tożsamość PIC znana dla całej sesji</div>
       <div class="card-tags"><span class="tag">PIN offline</span><span class="tag green">PIC</span></div>
     </div>
   </a>
@@ -346,7 +346,7 @@
     <div class="card-num">01</div>
     <div class="card-body">
       <div class="card-title">01-moj-dzien</div>
-      <div class="card-desc">Ekran domowy pilota — płaska oś czasu SESJI dnia (kafelek = jeden bieg silnika z lotami w środku, rejestracja jako informacja kafelka), sumy Blok / Loty. Kafelek to TEN SAM komponent, co na „Poprzednich dniach" (issue #42), z numerem sesji zamiast daty. Klamry służby i „Zamknij dzień" nie ma (issue #23): dzień to lista sesji, niczego się nie otwiera ani nie zamyka. Stąd przejęcie samolotu, ręczny wpis lotu (15) i okno korekty 24 h</div>
+      <div class="card-desc">Ekran domowy pilota - płaska oś czasu SESJI dnia (kafelek = jeden bieg silnika z lotami w środku, rejestracja jako informacja kafelka), sumy Blok / Loty. Kafelek to TEN SAM komponent, co na „Poprzednich dniach" (issue #42), z numerem sesji zamiast daty. Klamry służby i „Zamknij dzień" nie ma (issue #23): dzień to lista sesji, niczego się nie otwiera ani nie zamyka. Stąd przejęcie samolotu, ręczny wpis lotu (15) i okno korekty 24 h</div>
       <div class="card-tags"><span class="tag green">home</span><span class="tag">log dnia</span><span class="tag">sesje dnia</span></div>
     </div>
   </a>
@@ -354,7 +354,7 @@
     <div class="card-num">02</div>
     <div class="card-body">
       <div class="card-title">02-preflight</div>
-      <div class="card-desc">Nowy lot krok 1/3 — czym i z kim: samolot (karty + blokada PIC + przejęcie) i drugi pilot (Dual). Czasu meldowania TU NIE MA — dzień pilota to lista sesji (issue #23), więc żadnej godziny „od kiedy" się nie deklaruje</div>
+      <div class="card-desc">Nowy lot krok 1/3 - czym i z kim: samolot (karty + blokada PIC + przejęcie) i drugi pilot (Dual). Czasu meldowania TU NIE MA - dzień pilota to lista sesji (issue #23), więc żadnej godziny „od kiedy" się nie deklaruje</div>
       <div class="card-tags"><span class="tag">formularz</span><span class="tag amber">blokada PIC</span><span class="tag">Dual</span></div>
     </div>
   </a>
@@ -362,7 +362,7 @@
     <div class="card-num">02E</div>
     <div class="card-body">
       <div class="card-title">02e-preflight-zadanie</div>
-      <div class="card-desc">Nowy lot krok 2/3 — co teraz robimy: rodzaj operacji, trasa, klient i notatka do dnia; pola uzupełnione z ostatniego dnia (operacja i klient per pilot, trasa per samolot). Operacja wyznacza kształt trasy: skoki = jedno lotnisko, pozostałe = dwa pola start / lądowanie — a przy skokach dochodzi „Domyślny skład skoczków" (wartość startowa każdego załadunku bez własnej deklaracji, 2026-08-17). Pola nie są inputami — to przyciski z wartością (lupa przy trasie, ołówek przy tekstach), a wpisywanie dzieje się w arkuszu wysuwanym od dołu</div>
+      <div class="card-desc">Nowy lot krok 2/3 - co teraz robimy: rodzaj operacji, trasa, klient i notatka do dnia; pola uzupełnione z ostatniego dnia (operacja i klient per pilot, trasa per samolot). Operacja wyznacza kształt trasy: skoki = jedno lotnisko, pozostałe = dwa pola start / lądowanie - a przy skokach dochodzi „Domyślny skład skoczków" (wartość startowa każdego załadunku bez własnej deklaracji, 2026-08-17). Pola nie są inputami - to przyciski z wartością (lupa przy trasie, ołówek przy tekstach), a wpisywanie dzieje się w arkuszu wysuwanym od dołu</div>
       <div class="card-tags"><span class="tag">formularz</span><span class="tag">pamięć</span><span class="tag">arkusze</span></div>
     </div>
   </a>
@@ -370,7 +370,7 @@
     <div class="card-num">02F</div>
     <div class="card-body">
       <div class="card-title">02f-preflight-lotnisko</div>
-      <div class="card-desc">Arkusz wyboru lotniska w stanie otwartym — to tutaj dzieje się szukanie. Pilot wpisał nazwę („ZIELONA"), lista pokazuje trafienia: kod, nazwa, kurs pasa (magnetyczny) i elewacja. Wariant z operacją „Przelot", czyli parą pól start / lądowanie pod nakładką. Podpowiedź, nie bramka — kod spoza katalogu (przelot za granicę) wpisuje się normalnie. Bez sieci</div>
+      <div class="card-desc">Arkusz wyboru lotniska w stanie otwartym - to tutaj dzieje się szukanie. Pilot wpisał nazwę („ZIELONA"), lista pokazuje trafienia: kod, nazwa, kurs pasa (magnetyczny) i elewacja. Wariant z operacją „Przelot", czyli parą pól start / lądowanie pod nakładką. Podpowiedź, nie bramka - kod spoza katalogu (przelot za granicę) wpisuje się normalnie. Bez sieci</div>
       <div class="card-tags"><span class="tag">formularz</span><span class="tag">katalog</span><span class="tag green">offline</span></div>
     </div>
   </a>
@@ -378,7 +378,7 @@
     <div class="card-num">02A</div>
     <div class="card-body">
       <div class="card-title">02a-preflight</div>
-      <div class="card-desc">Nowy lot krok 3/3 (ostatni) — paliwo na pokładzie i motogodziny z historią, korekty odczytów; niżej WYMAGANY pomiar oleju z sugestią z normy (issue #60, decyzja 2026-08-27: krok obowiązkowy, wyjątkiem wpis ręczny). CTA „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu: ekranu podsumowania (dawny 03) nie ma, bo powtarzał to, co pilot przed chwilą wpisał</div>
+      <div class="card-desc">Nowy lot krok 3/3 (ostatni) - paliwo na pokładzie i motogodziny z historią, korekty odczytów; niżej WYMAGANY pomiar oleju z sugestią z normy (issue #60, decyzja 2026-08-27: krok obowiązkowy, wyjątkiem wpis ręczny). CTA „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu: ekranu podsumowania (dawny 03) nie ma, bo powtarzał to, co pilot przed chwilą wpisał</div>
       <div class="card-tags"><span class="tag amber">paliwo</span><span class="tag">motogodziny</span><span class="tag">olej</span></div>
     </div>
   </a>
@@ -386,7 +386,7 @@
     <div class="card-num">04A</div>
     <div class="card-body">
       <div class="card-title">04a-cockpit-ground</div>
-      <div class="card-desc">Kokpit PRZED uruchomieniem silnika — pusty log sesji, START ENGINE, tankowanie, załadunek skoczków (dzień skokowy, issue #21) i zmiana załogi; zdanie bez lotu prowadzi na 09C. Kokpit jest stanem modalnym bez wyjścia na „Mój dzień", a sesja = jeden bieg silnika: po STOP wraca się do 04, nie tutaj</div>
+      <div class="card-desc">Kokpit PRZED uruchomieniem silnika - pusty log sesji, START ENGINE, tankowanie, załadunek skoczków (dzień skokowy, issue #21) i zmiana załogi; zdanie bez lotu prowadzi na 09C. Kokpit jest stanem modalnym bez wyjścia na „Mój dzień", a sesja = jeden bieg silnika: po STOP wraca się do 04, nie tutaj</div>
       <div class="card-tags"><span class="tag green">ground state</span><span class="tag">przed startem</span></div>
     </div>
   </a>
@@ -394,7 +394,7 @@
     <div class="card-num">04</div>
     <div class="card-body">
       <div class="card-title">04-cockpit-ground</div>
-      <div class="card-desc">Kokpit PO zatrzymaniu silnika — sesja zakończona: hero ZDAJ SAMOLOT (drugiego START ENGINE nie ma), log sesji jako ta sama oś, co w rozliczeniu (10), ze stopką sum; tankowanie dozwolone przed zdaniem</div>
+      <div class="card-desc">Kokpit PO zatrzymaniu silnika - sesja zakończona: hero ZDAJ SAMOLOT (drugiego START ENGINE nie ma), log sesji jako ta sama oś, co w rozliczeniu (10), ze stopką sum; tankowanie dozwolone przed zdaniem</div>
       <div class="card-tags"><span class="tag green">ground state</span><span class="tag">główny</span></div>
     </div>
   </a>
@@ -402,7 +402,7 @@
     <div class="card-num">05</div>
     <div class="card-body">
       <div class="card-title">05-cockpit-running</div>
-      <div class="card-desc">Kokpit — silnik uruchomiony (RUNNING). Timery, GPS live, liczniki startów i lądowań, buforowanie offline</div>
+      <div class="card-desc">Kokpit - silnik uruchomiony (RUNNING). Timery, GPS live, liczniki startów i lądowań, buforowanie offline</div>
       <div class="card-tags"><span class="tag green">running state</span><span class="tag green">w locie</span></div>
     </div>
   </a>
@@ -414,7 +414,7 @@
     <div class="card-num">00A</div>
     <div class="card-body">
       <div class="card-title">00a-login-full</div>
-      <div class="card-desc">Pełne logowanie — login + hasło od administratora (bez samodzielnej rejestracji), tworzy lokalny profil; wymaga internetu</div>
+      <div class="card-desc">Pełne logowanie - login + hasło od administratora (bez samodzielnej rejestracji), tworzy lokalny profil; wymaga internetu</div>
       <div class="card-tags"><span class="tag">logowanie</span><span class="tag">nowy profil</span></div>
     </div>
   </a>
@@ -422,7 +422,7 @@
     <div class="card-num">00B</div>
     <div class="card-body">
       <div class="card-title">00b-login-offline</div>
-      <div class="card-desc">Logowanie offline bez profilu — twarda granica: komunikat z instrukcją, formularz nieaktywny, auto-ponawianie</div>
+      <div class="card-desc">Logowanie offline bez profilu - twarda granica: komunikat z instrukcją, formularz nieaktywny, auto-ponawianie</div>
       <div class="card-tags"><span class="tag amber">offline</span><span class="tag">stan</span></div>
     </div>
   </a>
@@ -430,7 +430,7 @@
     <div class="card-num">01A</div>
     <div class="card-body">
       <div class="card-title">01a-moj-dzien-pusty</div>
-      <div class="card-desc">Mój dzień przed pierwszą sesją — pusty log dnia („— —", nigdy zera), cały ekran prowadzi do przejęcia samolotu. Niczego się nie otwiera: dzień zaczyna się pierwszą sesją (issue #23)</div>
+      <div class="card-desc">Mój dzień przed pierwszą sesją - pusty log dnia („- -", nigdy zera), cały ekran prowadzi do przejęcia samolotu. Niczego się nie otwiera: dzień zaczyna się pierwszą sesją (issue #23)</div>
       <div class="card-tags"><span class="tag">stan pusty</span></div>
     </div>
   </a>
@@ -438,7 +438,7 @@
     <div class="card-num">01C</div>
     <div class="card-body">
       <div class="card-title">01c-moj-dzien-offline</div>
-      <div class="card-desc">Mój dzień bez sieci — amber pill „OFFLINE · n" przed zębatką jako jedyny ślad sieci; tapnięcie otwiera arkusz szczegółów synchronizacji (kolejka, ostatni udany sync, wiek danych referencyjnych — issue #23 pkt 5). Wzorzec obowiązuje każdy ekran z SyncChipem</div>
+      <div class="card-desc">Mój dzień bez sieci - amber pill „OFFLINE · n" przed zębatką jako jedyny ślad sieci; tapnięcie otwiera arkusz szczegółów synchronizacji (kolejka, ostatni udany sync, wiek danych referencyjnych - issue #23 pkt 5). Wzorzec obowiązuje każdy ekran z SyncChipem</div>
       <div class="card-tags"><span class="tag amber">offline</span><span class="tag">arkusz syncu</span></div>
     </div>
   </a>
@@ -446,7 +446,7 @@
     <div class="card-num">02D</div>
     <div class="card-body">
       <div class="card-title">02d-preflight-offline</div>
-      <div class="card-desc">Preflight offline — chip OFFLINE, dane z cache z adnotacją wieku, claim "wg cache", modal przejęcia w wariancie offline (liczniki jako prawda)</div>
+      <div class="card-desc">Preflight offline - chip OFFLINE, dane z cache z adnotacją wieku, claim "wg cache", modal przejęcia w wariancie offline (liczniki jako prawda)</div>
       <div class="card-tags"><span class="tag amber">offline</span><span class="tag">cache</span><span class="tag amber">przejęcie</span></div>
     </div>
   </a>
@@ -454,7 +454,7 @@
     <div class="card-num">02G</div>
     <div class="card-body">
       <div class="card-title">02g-preflight-brak-floty</div>
-      <div class="card-desc">Nowy lot bez floty w pamięci — cache referencyjny przeczytany i pusty: zamiast formularza warning na cały ekran (bez sekcji i bez DALEJ); formularz wraca sam, gdy sync dowiezie listę (issue #55)</div>
+      <div class="card-desc">Nowy lot bez floty w pamięci - cache referencyjny przeczytany i pusty: zamiast formularza warning na cały ekran (bez sekcji i bez DALEJ); formularz wraca sam, gdy sync dowiezie listę (issue #55)</div>
       <div class="card-tags"><span class="tag amber">warning</span><span class="tag">stan brak</span></div>
     </div>
   </a>
@@ -462,7 +462,7 @@
     <div class="card-num">02H</div>
     <div class="card-body">
       <div class="card-title">02h-preflight-rezygnacja</div>
-      <div class="card-desc">Rezygnacja z nowego lotu — „wstecz" przy niepustym formularzu otwiera arkusz z pytaniem; potwierdzenie czyści szkic i następne wejście zaczyna od nowa, pusty formularz wychodzi bez pytania (issue #55)</div>
+      <div class="card-desc">Rezygnacja z nowego lotu - „wstecz" przy niepustym formularzu otwiera arkusz z pytaniem; potwierdzenie czyści szkic i następne wejście zaczyna od nowa, pusty formularz wychodzi bez pytania (issue #55)</div>
       <div class="card-tags"><span class="tag amber">arkusz</span><span class="tag">blokada „wstecz"</span></div>
     </div>
   </a>
@@ -470,7 +470,7 @@
     <div class="card-num">02B</div>
     <div class="card-body">
       <div class="card-title">02b-preflight-paliwo</div>
-      <div class="card-desc">Modal odczytu paliwa — rozbieżność z szacunkiem, walidacja do pojemności zbiorników</div>
+      <div class="card-desc">Modal odczytu paliwa - rozbieżność z szacunkiem, walidacja do pojemności zbiorników</div>
       <div class="card-tags"><span class="tag amber">modal</span><span class="tag">walidacja</span></div>
     </div>
   </a>
@@ -478,7 +478,7 @@
     <div class="card-num">02C</div>
     <div class="card-body">
       <div class="card-title">02c-preflight-motogodziny</div>
-      <div class="card-desc">Modal odczytu motogodzin — rozbieżność z szacunkiem, format licznika z konfiguracji</div>
+      <div class="card-desc">Modal odczytu motogodzin - rozbieżność z szacunkiem, format licznika z konfiguracji</div>
       <div class="card-tags"><span class="tag amber">modal</span><span class="tag">motogodziny</span></div>
     </div>
   </a>
@@ -486,7 +486,7 @@
     <div class="card-num">02I</div>
     <div class="card-body">
       <div class="card-title">02i-preflight-olej</div>
-      <div class="card-desc">Modal pomiaru oleju (issue #60) — bagnet + dolewka w jednym arkuszu, oczekiwanie z normy, ostrzeżenie poniżej minimum z konfiguracji samolotu; stan po dolewce jest rachunkiem, nie trzecim polem. Pomiar WYMAGANY (bez niego ROZPOCZNIJ LOT stoi z powodem); dolewka opcjonalna</div>
+      <div class="card-desc">Modal pomiaru oleju (issue #60) - bagnet + dolewka w jednym arkuszu, oczekiwanie z normy, ostrzeżenie poniżej minimum z konfiguracji samolotu; stan po dolewce jest rachunkiem, nie trzecim polem. Pomiar WYMAGANY (bez niego ROZPOCZNIJ LOT stoi z powodem); dolewka opcjonalna</div>
       <div class="card-tags"><span class="tag amber">modal</span><span class="tag">olej</span><span class="tag">walidacja</span></div>
     </div>
   </a>
@@ -494,7 +494,7 @@
     <div class="card-num">04B</div>
     <div class="card-body">
       <div class="card-title">04b-cockpit-readonly</div>
-      <div class="card-desc">Podgląd zajętego samolotu — banner read-only, log i stan z serwera na żywo, akcje zablokowane z powodem (single-writer), przycisk Przejmij</div>
+      <div class="card-desc">Podgląd zajętego samolotu - banner read-only, log i stan z serwera na żywo, akcje zablokowane z powodem (single-writer), przycisk Przejmij</div>
       <div class="card-tags"><span class="tag">read-only</span><span class="tag">single-writer</span></div>
     </div>
   </a>
@@ -502,7 +502,7 @@
     <div class="card-num">04D</div>
     <div class="card-body">
       <div class="card-title">04d-wyjscie-z-kokpitu</div>
-      <div class="card-desc">Pilot trzyma samolot i nacisnął „wstecz" — kokpit jest stanem modalnym, więc arkusz mówi, co go tu trzyma, i pokazuje jedyne wyjście: zdanie maszyny. Blokada z podanym powodem, nie martwy przycisk</div>
+      <div class="card-desc">Pilot trzyma samolot i nacisnął „wstecz" - kokpit jest stanem modalnym, więc arkusz mówi, co go tu trzyma, i pokazuje jedyne wyjście: zdanie maszyny. Blokada z podanym powodem, nie martwy przycisk</div>
       <div class="card-tags"><span class="tag">blokada</span><span class="tag">stan modalny</span></div>
     </div>
   </a>
@@ -510,7 +510,7 @@
     <div class="card-num">05H</div>
     <div class="card-body">
       <div class="card-title">05h-cockpit-idle</div>
-      <div class="card-desc">Kokpit — Engine idle zaraz po START ENGINE: samolot stoi, pasek akcji podpowiada Taxi (sekwencja idle → Taxi → Take off → Landing); bez karty logu (nic operacyjnego się jeszcze nie wydarzyło) i bez Zrzutu</div>
+      <div class="card-desc">Kokpit - Engine idle zaraz po START ENGINE: samolot stoi, pasek akcji podpowiada Taxi (sekwencja idle → Taxi → Take off → Landing); bez karty logu (nic operacyjnego się jeszcze nie wydarzyło) i bez Zrzutu</div>
       <div class="card-tags"><span class="tag green">idle</span><span class="tag">sekwencja akcji</span></div>
     </div>
   </a>
@@ -518,7 +518,7 @@
     <div class="card-num">05A</div>
     <div class="card-body">
       <div class="card-title">05a-cockpit-taxi</div>
-      <div class="card-desc">Kokpit — taxi przed startem, silnik ON, 0 lotów</div>
+      <div class="card-desc">Kokpit - taxi przed startem, silnik ON, 0 lotów</div>
       <div class="card-tags"><span class="tag green">taxi</span></div>
     </div>
   </a>
@@ -526,7 +526,7 @@
     <div class="card-num">05B</div>
     <div class="card-body">
       <div class="card-title">05b-cockpit-inflight-toast</div>
-      <div class="card-desc">Toast autodetekcji startu (GPS) — 4 s na korektę przed zapisem</div>
+      <div class="card-desc">Toast autodetekcji startu (GPS) - 4 s na korektę przed zapisem</div>
       <div class="card-tags"><span class="tag green">autodetect T/O</span><span class="tag">toast</span></div>
     </div>
   </a>
@@ -534,7 +534,7 @@
     <div class="card-num">05C</div>
     <div class="card-body">
       <div class="card-title">05c-cockpit-toast-ldg</div>
-      <div class="card-desc">Toast autodetekcji lądowania — GPS wykrywa GS ≤ 30 KT podczas lotu</div>
+      <div class="card-desc">Toast autodetekcji lądowania - GPS wykrywa GS ≤ 30 KT podczas lotu</div>
       <div class="card-tags"><span class="tag green">autodetect LDG</span><span class="tag">toast</span></div>
     </div>
   </a>
@@ -542,7 +542,7 @@
     <div class="card-num">05D</div>
     <div class="card-body">
       <div class="card-title">05d-cockpit-taxi-post</div>
-      <div class="card-desc">Kokpit — taxi po lądowaniu, lot ukończony, silnik nadal ON</div>
+      <div class="card-desc">Kokpit - taxi po lądowaniu, lot ukończony, silnik nadal ON</div>
       <div class="card-tags"><span class="tag green">taxi</span></div>
     </div>
   </a>
@@ -550,7 +550,7 @@
     <div class="card-num">05E</div>
     <div class="card-body">
       <div class="card-title">05e-zrzut</div>
-      <div class="card-desc">Zapis zrzutu — wysokość z GPS (średnia z okna 15 s), liczniki wypełnione składem z załadunku do potwierdzenia; liczby opcjonalne, przycisk zapisu nigdy nie jest zablokowany (issue #21)</div>
+      <div class="card-desc">Zapis zrzutu - wysokość z GPS (średnia z okna 15 s), liczniki wypełnione składem z załadunku do potwierdzenia; liczby opcjonalne, przycisk zapisu nigdy nie jest zablokowany (issue #21)</div>
       <div class="card-tags"><span class="tag">rozliczenie</span><span class="tag">skoki</span></div>
     </div>
   </a>
@@ -558,7 +558,7 @@
     <div class="card-num">05I</div>
     <div class="card-body">
       <div class="card-title">05i-zaladunek</div>
-      <div class="card-desc">Załadunek skoczków (issue #21) — znacznik wejścia składu na pokład: przed startem serii (kafelek 04A) albo po wykołowaniu z pasa (slot paska akcji); skład opcjonalny, wypełnia arkusz zrzutu</div>
+      <div class="card-desc">Załadunek skoczków (issue #21) - znacznik wejścia składu na pokład: przed startem serii (kafelek 04A) albo po wykołowaniu z pasa (slot paska akcji); skład opcjonalny, wypełnia arkusz zrzutu</div>
       <div class="card-tags"><span class="tag">skoki</span><span class="tag">ziemia</span></div>
     </div>
   </a>
@@ -566,7 +566,7 @@
     <div class="card-num">05F</div>
     <div class="card-body">
       <div class="card-title">05f-zdarzenie-reczne</div>
-      <div class="card-desc">GPS nie wykrył startu/lądowania — ręczny zapis z cofalnym czasem (stepper ±1 min), bo pilot orientuje się po fakcie. Domyka warstwę korekty w locie</div>
+      <div class="card-desc">GPS nie wykrył startu/lądowania - ręczny zapis z cofalnym czasem (stepper ±1 min), bo pilot orientuje się po fakcie. Domyka warstwę korekty w locie</div>
       <div class="card-tags"><span class="tag amber">korekta</span><span class="tag">fallback GPS</span></div>
     </div>
   </a>
@@ -574,17 +574,17 @@
     <div class="card-num">05G</div>
     <div class="card-body">
       <div class="card-title">05g-cockpit-no-gps</div>
-      <div class="card-desc">Kokpit bez fixa GPS — degradacja czujnika (nie sieci!): amberowy baner statusowy (jeden kolor dla wszystkich trzech stanów GPS), parametry „— —" z wiekiem fixa, autodetekcja wstrzymana, zapis z paska akcji jak zawsze; SyncChip osobno pokazuje sieć (tu: zielony SYNC)</div>
+      <div class="card-desc">Kokpit bez fixa GPS - degradacja czujnika (nie sieci!): amberowy baner statusowy (jeden kolor dla wszystkich trzech stanów GPS), parametry „- -" z wiekiem fixa, autodetekcja wstrzymana, zapis z paska akcji jak zawsze; SyncChip osobno pokazuje sieć (tu: zielony SYNC)</div>
       <div class="card-tags"><span class="tag amber">no GPS</span><span class="tag">degradacja czujnika</span><span class="tag amber">fallback ręczny</span></div>
     </div>
   </a>
-  <!-- Karta 09A (seria skokowa) usunięta 2026-08-10 — seria z gorącym załadunkiem
+  <!-- Karta 09A (seria skokowa) usunięta 2026-08-10 - seria z gorącym załadunkiem
        to dziś JEDNA sesja z wieloma lotami, potwierdzana raz, przy zdaniu. -->
   <a href="09c-zdaj-bez-lotu.html" class="card amber">
     <div class="card-num">09C</div>
     <div class="card-body">
       <div class="card-title">09c-zdaj-bez-lotu</div>
-      <div class="card-desc">Zdanie samolotu bez lotu — pogoda, usterka, odwołany skok. Silnik nie ruszył, więc nie ma czasów ani zużycia; liczniki zostają bez zmian (z furtką korekty), a jedyne pytanie to powód jako siatka kart. Zastępuje dawny „dzień bez lotów"</div>
+      <div class="card-desc">Zdanie samolotu bez lotu - pogoda, usterka, odwołany skok. Silnik nie ruszył, więc nie ma czasów ani zużycia; liczniki zostają bez zmian (z furtką korekty), a jedyne pytanie to powód jako siatka kart. Zastępuje dawny „dzień bez lotów"</div>
       <div class="card-tags"><span class="tag amber">stan zerowy</span><span class="tag">powód</span></div>
     </div>
   </a>
@@ -592,7 +592,7 @@
     <div class="card-num">10A</div>
     <div class="card-body">
       <div class="card-title">10a-statystyki-zero (sesja bez lotu)</div>
-      <div class="card-desc">Sesja bez ani jednego lotu — oś ma dwa punkty (przejęcie i zdanie), w miejscu śladu stoi powód, a werdykty paliwa i MH MILCZĄ: norma opisuje godzinę pracy silnika, więc przy zerze nie ma z czym porównywać. Wielką liczbą stoi czas TRZYMANIA maszyny. Edycja wraca do zdania samolotu (09C)</div>
+      <div class="card-desc">Sesja bez ani jednego lotu - oś ma dwa punkty (przejęcie i zdanie), w miejscu śladu stoi powód, a werdykty paliwa i MH MILCZĄ: norma opisuje godzinę pracy silnika, więc przy zerze nie ma z czym porównywać. Wielką liczbą stoi czas TRZYMANIA maszyny. Edycja wraca do zdania samolotu (09C)</div>
       <div class="card-tags"><span class="tag amber">stan zerowy</span><span class="tag">rozliczenie</span></div>
     </div>
   </a>
@@ -600,7 +600,7 @@
     <div class="card-num">10B</div>
     <div class="card-body">
       <div class="card-title">10b-rozliczenie-zamkniete (podgląd)</div>
-      <div class="card-desc">Sesja po oknie 24 h — te same liczby, zero elementów zapisu: bez „Edytuj dane", amber baner z kłódką zamiast terminu korekty. Ślad i arkusz normy zostają klikalne, bo oglądanie to nie zapis. Cel karty z grupy „Zamknięte" na 12</div>
+      <div class="card-desc">Sesja po oknie 24 h - te same liczby, zero elementów zapisu: bez „Edytuj dane", amber baner z kłódką zamiast terminu korekty. Ślad i arkusz normy zostają klikalne, bo oglądanie to nie zapis. Cel karty z grupy „Zamknięte" na 12</div>
       <div class="card-tags"><span class="tag amber">tylko odczyt</span><span class="tag">okno minęło</span></div>
     </div>
   </a>
@@ -608,7 +608,7 @@
     <div class="card-num">10C</div>
     <div class="card-body">
       <div class="card-title">10c-norma-detale (arkusz normy)</div>
-      <div class="card-desc">Arkusz pod plakietką werdyktu na ekranie sesji (issue #40) — stawka w locie i na ziemi, średnia TEJ sesji, rozpisane działanie, pasmo i podstawa normy razem z jej wiekiem. Na karcie rachunku została sama plakietka: „czy dobrze" odpowiada ekran, „dlaczego tak" — arkusz. Wyłącznie informacyjny, bez ani jednej akcji zapisu</div>
+      <div class="card-desc">Arkusz pod plakietką werdyktu na ekranie sesji (issue #40) - stawka w locie i na ziemi, średnia TEJ sesji, rozpisane działanie, pasmo i podstawa normy razem z jej wiekiem. Na karcie rachunku została sama plakietka: „czy dobrze" odpowiada ekran, „dlaczego tak" - arkusz. Wyłącznie informacyjny, bez ani jednej akcji zapisu</div>
       <div class="card-tags"><span class="tag">arkusz</span><span class="tag">norma</span><span class="tag">tylko odczyt</span></div>
     </div>
   </a>
@@ -616,7 +616,7 @@
     <div class="card-num">10D</div>
     <div class="card-body">
       <div class="card-title">10d-edycja (tryb edycji sesji)</div>
-      <div class="card-desc">Ekran sesji po „EDYTUJ DANE" (issue #43) — wiersz osi rośnie do 44 px i dostaje ołówek, na górze wchodzą wykryte niespójności logu, na dole „DODAJ WPIS". Zastąpił listę ręczną (08) i arkusz 04C: korekta ma jedne drzwi i jeden kształt. Wejście także z kokpitu po STOP ENGINE — kafelkiem „Popraw dane sesji", z powrotem do kokpitu</div>
+      <div class="card-desc">Ekran sesji po „EDYTUJ DANE" (issue #43) - wiersz osi rośnie do 44 px i dostaje ołówek, na górze wchodzą wykryte niespójności logu, na dole „DODAJ WPIS". Zastąpił listę ręczną (08) i arkusz 04C: korekta ma jedne drzwi i jeden kształt. Wejście także z kokpitu po STOP ENGINE - kafelkiem „Popraw dane sesji", z powrotem do kokpitu</div>
       <div class="card-tags"><span class="tag amber">tryb edycji</span><span class="tag">niespójności</span><span class="tag">okno 24 h</span></div>
     </div>
   </a>
@@ -624,7 +624,7 @@
     <div class="card-num">10E</div>
     <div class="card-body">
       <div class="card-title">10e-korekta-zdarzenia</div>
-      <div class="card-desc">Arkusz korekty zdarzenia czasowego (uruchomienie, kołowanie, start, lądowanie, wyłączenie) — czas krokami ±1 min, wpływ na czas lotu liczony podwójną projekcją, opcjonalny powód, wejście w historię zmian i strefa destrukcyjna „tego lądowania nie było". Następca 04C</div>
+      <div class="card-desc">Arkusz korekty zdarzenia czasowego (uruchomienie, kołowanie, start, lądowanie, wyłączenie) - czas krokami ±1 min, wpływ na czas lotu liczony podwójną projekcją, opcjonalny powód, wejście w historię zmian i strefa destrukcyjna „tego lądowania nie było". Następca 04C</div>
       <div class="card-tags"><span class="tag">korekta</span><span class="tag">append-only</span></div>
     </div>
   </a>
@@ -632,7 +632,7 @@
     <div class="card-num">10F</div>
     <div class="card-body">
       <div class="card-title">10f-korekta-odczytu</div>
-      <div class="card-desc">Arkusz korekty paliwa i motogodzin przy PRZEJĘCIU albo ZDANIU — dwa pola obok siebie (spisuje się je jednym spojrzeniem na tablicę), wpływ na zużycie sesji, ostrzeżenie o łańcuchu MH i przekazaniu następnemu pilotowi. Bez zmiany czasu i bez unieważnienia</div>
+      <div class="card-desc">Arkusz korekty paliwa i motogodzin przy PRZEJĘCIU albo ZDANIU - dwa pola obok siebie (spisuje się je jednym spojrzeniem na tablicę), wpływ na zużycie sesji, ostrzeżenie o łańcuchu MH i przekazaniu następnemu pilotowi. Bez zmiany czasu i bez unieważnienia</div>
       <div class="card-tags"><span class="tag amber">odczyt</span><span class="tag">łańcuch MH</span></div>
     </div>
   </a>
@@ -640,7 +640,7 @@
     <div class="card-num">10G</div>
     <div class="card-body">
       <div class="card-title">10g-korekta-zrzutu</div>
-      <div class="card-desc">Arkusz korekty wyniesienia — czas plus skład (tandem / AFF / solo) w jednym miejscu, bo przy zrzucie „o której" i „ilu wyskoczyło" mylą się tak samo często. Wysokość zostaje odczytem z GPS (średnia z 15 s), skład pozostaje opcjonalny</div>
+      <div class="card-desc">Arkusz korekty wyniesienia - czas plus skład (tandem / AFF / solo) w jednym miejscu, bo przy zrzucie „o której" i „ilu wyskoczyło" mylą się tak samo często. Wysokość zostaje odczytem z GPS (średnia z 15 s), skład pozostaje opcjonalny</div>
       <div class="card-tags"><span class="tag">zrzut</span><span class="tag">skład</span></div>
     </div>
   </a>
@@ -648,7 +648,7 @@
     <div class="card-num">10H</div>
     <div class="card-body">
       <div class="card-title">10h-dodaj-wpis</div>
-      <div class="card-desc">Dopisanie zdarzenia, którego w logu nie ma — siatka sześciu typów (start, lądowanie, kołowanie, zrzut, załadunek, tankowanie), czas krokami ±1 min i wiersze odniesienia zależne od typu. Klamry silnika na liście NIE MA: sesja ma jeden bieg, a jej czasy poprawia się ołówkiem</div>
+      <div class="card-desc">Dopisanie zdarzenia, którego w logu nie ma - siatka sześciu typów (start, lądowanie, kołowanie, zrzut, załadunek, tankowanie), czas krokami ±1 min i wiersze odniesienia zależne od typu. Klamry silnika na liście NIE MA: sesja ma jeden bieg, a jej czasy poprawia się ołówkiem</div>
       <div class="card-tags"><span class="tag">wpis ręczny</span><span class="tag">fallback GPS</span></div>
     </div>
   </a>
@@ -656,7 +656,7 @@
     <div class="card-num">10J</div>
     <div class="card-body">
       <div class="card-title">10j-korekta-zalogi</div>
-      <div class="card-desc">Poprawka drugiego pilota CAŁEJ sesji — lista kart z cache'u referencyjnego (bez PIC-a, bo `DUAL_IS_PIC`), opcja „bez Duala", powód i historia zmian. Działa wstecz: czas blokowy przypisuje się wskazanej osobie. Zmiana załogi w TRAKCIE to inne zdarzenie i inny ekran (07)</div>
+      <div class="card-desc">Poprawka drugiego pilota CAŁEJ sesji - lista kart z cache'u referencyjnego (bez PIC-a, bo `DUAL_IS_PIC`), opcja „bez Duala", powód i historia zmian. Działa wstecz: czas blokowy przypisuje się wskazanej osobie. Zmiana załogi w TRAKCIE to inne zdarzenie i inny ekran (07)</div>
       <div class="card-tags"><span class="tag amber">załoga</span><span class="tag">cała sesja</span></div>
     </div>
   </a>
@@ -664,7 +664,7 @@
     <div class="card-num">10K</div>
     <div class="card-body">
       <div class="card-title">10k-korekta-notatki</div>
-      <div class="card-desc">Poprawka notatki — TEN SAM arkusz, w którym notatka powstała (02e), plus jedno: wiersz historii zmian. Pusty tekst kasuje notatkę. Powodu tu nie ma, bo wyjaśnieniem jest sam nowy tekst; poprawiona notatka dostaje na ekranie sesji plakietkę „popr.", widoczną także w trybie odczytu</div>
+      <div class="card-desc">Poprawka notatki - TEN SAM arkusz, w którym notatka powstała (02e), plus jedno: wiersz historii zmian. Pusty tekst kasuje notatkę. Powodu tu nie ma, bo wyjaśnieniem jest sam nowy tekst; poprawiona notatka dostaje na ekranie sesji plakietkę „popr.", widoczną także w trybie odczytu</div>
       <div class="card-tags"><span class="tag amber">notatka</span><span class="tag">historia zmian</span></div>
     </div>
   </a>
@@ -672,7 +672,7 @@
     <div class="card-num">10I</div>
     <div class="card-body">
       <div class="card-title">10i-historia-zmian</div>
-      <div class="card-desc">Historia poprawek pola albo zdarzenia — „było → jest", kto (pilot czy administrator), kiedy i z jakim powodem, a na dole zapis pierwotny. Lista jest kompletna z definicji, bo rejestr jest append-only; sam odczyt, także w trybie podglądu (10B)</div>
+      <div class="card-desc">Historia poprawek pola albo zdarzenia - „było → jest", kto (pilot czy administrator), kiedy i z jakim powodem, a na dole zapis pierwotny. Lista jest kompletna z definicji, bo rejestr jest append-only; sam odczyt, także w trybie podglądu (10B)</div>
       <div class="card-tags"><span class="tag">historia</span><span class="tag">append-only</span><span class="tag">tylko odczyt</span></div>
     </div>
   </a>
@@ -680,7 +680,7 @@
     <div class="card-num">15A</div>
     <div class="card-body">
       <div class="card-title">15a-reczny-zadanie</div>
-      <div class="card-desc">Wpis ręczny, KROK 2/4 — zadanie: rodzaj operacji, lotniska, klient i notatka. Te same pola, co na 02E przy locie normalnym: wpis po fakcie opisuje ten sam lot, więc pyta o to samo (2026-08-16). Rodzaj operacji decyduje o liczbie pól trasy i o sekcji zrzutów w kroku 3</div>
+      <div class="card-desc">Wpis ręczny, KROK 2/4 - zadanie: rodzaj operacji, lotniska, klient i notatka. Te same pola, co na 02E przy locie normalnym: wpis po fakcie opisuje ten sam lot, więc pyta o to samo (2026-08-16). Rodzaj operacji decyduje o liczbie pól trasy i o sekcji zrzutów w kroku 3</div>
       <div class="card-tags"><span class="tag">krok 2/4</span><span class="tag">parita z 02E</span></div>
     </div>
   </a>
@@ -688,7 +688,7 @@
     <div class="card-num">15B</div>
     <div class="card-body">
       <div class="card-title">15b-reczny-czasy</div>
-      <div class="card-desc">Wpis ręczny, KROK 3/4 — od issue #62 OŚ SESJI, ta sama co w kokpicie i w rozliczeniu, zamiast dwóch płaskich list („Loty" i „Zrzuty"). Zrzut stoi w SWOIM locie i nosi jego numer, bo przynależność jest zawieraniem się w czasie — dokładnie tak, jak definiuje ją domena. Zrzut poza każdym lotem dostaje bursztynową kropkę i baner, ale nie blokuje zapisu</div>
+      <div class="card-desc">Wpis ręczny, KROK 3/4 - od issue #62 OŚ SESJI, ta sama co w kokpicie i w rozliczeniu, zamiast dwóch płaskich list („Loty" i „Zrzuty"). Zrzut stoi w SWOIM locie i nosi jego numer, bo przynależność jest zawieraniem się w czasie - dokładnie tak, jak definiuje ją domena. Zrzut poza każdym lotem dostaje bursztynową kropkę i baner, ale nie blokuje zapisu</div>
       <div class="card-tags"><span class="tag">krok 3/4</span><span class="tag">oś sesji</span></div>
     </div>
   </a>
@@ -696,7 +696,7 @@
     <div class="card-num">15H</div>
     <div class="card-body">
       <div class="card-title">15h-reczny-czasy-bez-biegu</div>
-      <div class="card-desc">Krok 3 w stanie wejścia — TEN SAM układ, co 15B. Oś już jest, ale oba jej końce mają „--:--" i to one są wejściem w wpisanie godzin; osobnej karty „Bieg silnika" nie ma, bo niosła te same dwie godziny, co pierwszy i ostatni wiersz osi. „DODAJ LOT" pojawia się dopiero z biegiem silnika (issue #62 pkt 10) — nie stoi wyszarzone, bo wyszarzony przycisk obiecywałby akcję, którą reguły i tak odrzucą</div>
+      <div class="card-desc">Krok 3 w stanie wejścia - TEN SAM układ, co 15B. Oś już jest, ale oba jej końce mają „--:--" i to one są wejściem w wpisanie godzin; osobnej karty „Bieg silnika" nie ma, bo niosła te same dwie godziny, co pierwszy i ostatni wiersz osi. „DODAJ LOT" pojawia się dopiero z biegiem silnika (issue #62 pkt 10) - nie stoi wyszarzone, bo wyszarzony przycisk obiecywałby akcję, którą reguły i tak odrzucą</div>
       <div class="card-tags"><span class="tag">wariant</span><span class="tag">brak akcji</span></div>
     </div>
   </a>
@@ -704,7 +704,7 @@
     <div class="card-num">15C</div>
     <div class="card-body">
       <div class="card-title">15c-reczny-liczniki</div>
-      <div class="card-desc">Wpis ręczny, KROK 4/4 — paliwo to TRZY LICZBY i ani jedna godzina (issue #62): zastane (wykryte z poprzedniego lotu, korygowalne) → dolane → po locie. Lista dolewek z osobnymi godzinami zniknęła: minuta nie ważyła nigdzie, a pozwalała wpisać dolewkę na środek biegu, czyli w stan, który domena odrzuca. Licznik przed uruchomieniem wykrywa się TĄ SAMĄ odpowiedzią, co paliwo — każda wykryta liczba niesie źródło przy polu i gaśnie ono po poprawce. Do tego motogodziny po locie, werdykt normy i ostrzeżenia, które nigdy nie blokują</div>
+      <div class="card-desc">Wpis ręczny, KROK 4/4 - paliwo to TRZY LICZBY i ani jedna godzina (issue #62): zastane (wykryte z poprzedniego lotu, korygowalne) → dolane → po locie. Lista dolewek z osobnymi godzinami zniknęła: minuta nie ważyła nigdzie, a pozwalała wpisać dolewkę na środek biegu, czyli w stan, który domena odrzuca. Licznik przed uruchomieniem wykrywa się TĄ SAMĄ odpowiedzią, co paliwo - każda wykryta liczba niesie źródło przy polu i gaśnie ono po poprawce. Do tego motogodziny po locie, werdykt normy i ostrzeżenia, które nigdy nie blokują</div>
       <div class="card-tags"><span class="tag">krok 4/4</span><span class="tag">trzy liczby</span><span class="tag">wykryte odczyty</span><span class="tag">norma</span></div>
     </div>
   </a>
@@ -712,7 +712,7 @@
     <div class="card-num">15D</div>
     <div class="card-body">
       <div class="card-title">15d-reczny-czas-arkusz</div>
-      <div class="card-desc">Arkusz czasu zdarzenia wpisu ręcznego — ta sama kontrolka, co w korektach (10E) i w kokpicie (05F): krok ±1 min, tapnięcie w wartość otwiera klawiaturę numeryczną. Od issue #62 bez daty (niesie ją podtytuł ekranu), UTC w etykiecie pola, czas lokalny drobnym drukiem pod godziną. Usunięcie lotu jest koszem w linii tytułu</div>
+      <div class="card-desc">Arkusz czasu zdarzenia wpisu ręcznego - ta sama kontrolka, co w korektach (10E) i w kokpicie (05F): krok ±1 min, tapnięcie w wartość otwiera klawiaturę numeryczną. Od issue #62 bez daty (niesie ją podtytuł ekranu), UTC w etykiecie pola, czas lokalny drobnym drukiem pod godziną. Usunięcie lotu jest koszem w linii tytułu</div>
       <div class="card-tags"><span class="tag">arkusz</span><span class="tag">TimeStepper</span></div>
     </div>
   </a>
@@ -720,7 +720,7 @@
     <div class="card-num">15F</div>
     <div class="card-body">
       <div class="card-title">15f-reczny-czas-pusty</div>
-      <div class="card-desc">Ten sam arkusz w STANIE OTWARCIA (issue #62 pkt 3): godzin nie ma, bo nikt ich nie wpisał — koniec z podstawianiem 10:00 i 11:00, które wyglądało jak wpis pilota, było punktem odniesienia podpisu i bazą kroku ±1 min. Przyciski ± wygaszone, „ZAPISZ" z powodem w środku</div>
+      <div class="card-desc">Ten sam arkusz w STANIE OTWARCIA (issue #62 pkt 3): godzin nie ma, bo nikt ich nie wpisał - koniec z podstawianiem 10:00 i 11:00, które wyglądało jak wpis pilota, było punktem odniesienia podpisu i bazą kroku ±1 min. Przyciski ± wygaszone, „ZAPISZ" z powodem w środku</div>
       <div class="card-tags"><span class="tag">wariant</span><span class="tag">stan pusty</span></div>
     </div>
   </a>
@@ -728,7 +728,7 @@
     <div class="card-num">15G</div>
     <div class="card-body">
       <div class="card-title">15g-reczny-czas-kolejnosc</div>
-      <div class="card-desc">Odwrócona para godzin (issue #62 pkt 5): wyłączenie wcześniejsze niż uruchomienie. Do #62 arkusz przyjmował ją bez słowa, a odmowa padała dopiero przy „DALEJ" — gdy pilot nie widział już żadnej z tych godzin. Powód mówi o skutku („blok wychodzi ujemny"), bo nazwy pól są w mianowniku</div>
+      <div class="card-desc">Odwrócona para godzin (issue #62 pkt 5): wyłączenie wcześniejsze niż uruchomienie. Do #62 arkusz przyjmował ją bez słowa, a odmowa padała dopiero przy „DALEJ" - gdy pilot nie widział już żadnej z tych godzin. Powód mówi o skutku („blok wychodzi ujemny"), bo nazwy pól są w mianowniku</div>
       <div class="card-tags"><span class="tag">wariant</span><span class="tag">blokada</span></div>
     </div>
   </a>
@@ -736,7 +736,7 @@
     <div class="card-num">15E</div>
     <div class="card-body">
       <div class="card-title">15e-reczny-data</div>
-      <div class="card-desc">Arkusz daty lotu — KALENDARZ MIESIĘCZNY (issue #58): skróty „Dzisiaj" i „Wczoraj" nad siatką, dni przyszłe wygaszone, tydzień od poniedziałku. Wiersz „Sesje w tej dobie" zapowiada ostrzeżenie o kolizji z kroku 4</div>
+      <div class="card-desc">Arkusz daty lotu - KALENDARZ MIESIĘCZNY (issue #58): skróty „Dzisiaj" i „Wczoraj" nad siatką, dni przyszłe wygaszone, tydzień od poniedziałku. Wiersz „Sesje w tej dobie" zapowiada ostrzeżenie o kolizji z kroku 4</div>
       <div class="card-tags"><span class="tag">arkusz</span><span class="tag">data lotu</span></div>
     </div>
   </a>
@@ -744,7 +744,7 @@
     <div class="card-num">14B</div>
     <div class="card-body">
       <div class="card-title">14b-slad-brak</div>
-      <div class="card-desc">Trasy nie ma i nie będzie: sesja wpisana ręcznie albo nagranie, które nigdy nie powstało lub nie dotarło na serwer. Podaje POWÓD i czasy, które mimo wszystko są. Retencja zniknęła z powodów przy issue #47 — ślad trzyma serwer, a limit 14 dni był limitem pamięci telefonu</div>
+      <div class="card-desc">Trasy nie ma i nie będzie: sesja wpisana ręcznie albo nagranie, które nigdy nie powstało lub nie dotarło na serwer. Podaje POWÓD i czasy, które mimo wszystko są. Retencja zniknęła z powodów przy issue #47 - ślad trzyma serwer, a limit 14 dni był limitem pamięci telefonu</div>
       <div class="card-tags"><span class="tag">stan pusty</span><span class="tag">powód</span></div>
     </div>
   </a>
@@ -752,11 +752,11 @@
     <div class="card-num">05T</div>
     <div class="card-body">
       <div class="card-title">05-themes</div>
-      <div class="card-desc">Theme picker kokpitu — 5 wariantów (night / paper / solar / sky / amber), w tym tryby do pracy w pełnym słońcu</div>
+      <div class="card-desc">Theme picker kokpitu - 5 wariantów (night / paper / solar / sky / amber), w tym tryby do pracy w pełnym słońcu</div>
       <div class="card-tags"><span class="tag">eksperyment</span><span class="tag">themes</span></div>
     </div>
   </a>
-  <!-- Arkusz WZORCA, nie ekran flow — stąd nazwa wersalikami, jak `admin/SZABLON.html` -->
+  <!-- Arkusz WZORCA, nie ekran flow - stąd nazwa wersalikami, jak `admin/SZABLON.html` -->
   <a href="LOADERY.html" class="card">
     <div class="card-num">SKEL</div>
     <div class="card-body">
@@ -773,7 +773,7 @@
     <div class="card-num">06</div>
     <div class="card-body">
       <div class="card-title">06-tankowanie</div>
-      <div class="card-desc">Formularz tankowania — stan przed/po, ilość dolana, kalkulacja zużycia L/h</div>
+      <div class="card-desc">Formularz tankowania - stan przed/po, ilość dolana, kalkulacja zużycia L/h</div>
       <div class="card-tags"><span class="tag amber">paliwo</span><span class="tag">formularz</span></div>
     </div>
   </a>
@@ -781,7 +781,7 @@
     <div class="card-num">07</div>
     <div class="card-body">
       <div class="card-title">07-zmiana-zalogi</div>
-      <div class="card-desc">Zmiana PIC i/lub Dual — czas zmiany, osobne liczniki czasu blokowego; zmiana PIC = przelogowanie</div>
+      <div class="card-desc">Zmiana PIC i/lub Dual - czas zmiany, osobne liczniki czasu blokowego; zmiana PIC = przelogowanie</div>
       <div class="card-tags"><span class="tag">załoga</span><span class="tag green">PIC / Dual</span></div>
     </div>
   </a>
@@ -789,7 +789,7 @@
     <div class="card-num">13</div>
     <div class="card-body">
       <div class="card-title">13-ustawienia</div>
-      <div class="card-desc">Ustawienia (zębatka w app-barze kokpitu) — motyw (5 kart), zmiana PIN offline, konto z ochroną wylogowania przy niewysłanych zapisach, status synchronizacji (wejście do 11), diagnostyka GPS, o aplikacji ze stemplem danych referencyjnych</div>
+      <div class="card-desc">Ustawienia (zębatka w app-barze kokpitu) - motyw (5 kart), zmiana PIN offline, konto z ochroną wylogowania przy niewysłanych zapisach, status synchronizacji (wejście do 11), diagnostyka GPS, o aplikacji ze stemplem danych referencyjnych</div>
       <div class="card-tags"><span class="tag">ustawienia</span><span class="tag green">offline OK</span><span class="tag amber">ochrona wylogowania</span></div>
     </div>
   </a>
@@ -797,13 +797,13 @@
 
 <div class="section-title">Zdanie samolotu i rozliczenie</div>
 <div class="grid">
-  <!-- Karta 09 (zamknięcie wzlotu) usunięta 2026-08-10 — przegląd czasów przeszedł
+  <!-- Karta 09 (zamknięcie wzlotu) usunięta 2026-08-10 - przegląd czasów przeszedł
        na 09B, odczyty z opcjonalnych stały się obowiązkowe. -->
   <a href="09b-zdaj-samolot.html" class="card red">
     <div class="card-num">09B</div>
     <div class="card-body">
       <div class="card-title">09b-zdaj-samolot</div>
-      <div class="card-desc">Zdanie samolotu po STOP ENGINE — przegląd lotów sesji (czasy z detekcji) + odczyty paliwa i MH OBOWIĄZKOWE: stają się przekazaniem, ogniwem łańcucha MH i zatwierdzeniem logu całej sesji. Zdajesz samolot, nie kończysz dnia — kolejna maszyna dopisze się do listy sesji</div>
+      <div class="card-desc">Zdanie samolotu po STOP ENGINE - przegląd lotów sesji (czasy z detekcji) + odczyty paliwa i MH OBOWIĄZKOWE: stają się przekazaniem, ogniwem łańcucha MH i zatwierdzeniem logu całej sesji. Zdajesz samolot, nie kończysz dnia - kolejna maszyna dopisze się do listy sesji</div>
       <div class="card-tags"><span class="tag red">zdanie</span><span class="tag">przekazanie</span><span class="tag">łańcuch MH</span></div>
     </div>
   </a>
@@ -811,7 +811,7 @@
     <div class="card-num">10</div>
     <div class="card-body">
       <div class="card-title">10-statystyki (sesja)</div>
-      <div class="card-desc">Detale JEDNEJ sesji (oś SAMOLOTU, nie doby) — ślad całego biegu silnika ze znacznikami startów i lądowań, oś czasu od przejęcia do zdania (uruchomienie, kołowanie, starty, zrzuty, lądowania, wyłączenie), rachunek paliwa i motogodzin zakończony plakietką werdyktu (szczegóły normy pod tapnięciem — 10C), zrzuty i notatki pilota. Wywoływane kafelkiem sesji w logu dnia (01) i takim samym kafelkiem w historii (12). Korekta ma JEDNE drzwi: „EDYTUJ DANE" pod ekranem przełącza ten sam ekran w tryb edycji (10D) — czasy zdarzeń, odczyty paliwa i MH, skład zrzutu i brakujące wpisy</div>
+      <div class="card-desc">Detale JEDNEJ sesji (oś SAMOLOTU, nie doby) - ślad całego biegu silnika ze znacznikami startów i lądowań, oś czasu od przejęcia do zdania (uruchomienie, kołowanie, starty, zrzuty, lądowania, wyłączenie), rachunek paliwa i motogodzin zakończony plakietką werdyktu (szczegóły normy pod tapnięciem - 10C), zrzuty i notatki pilota. Wywoływane kafelkiem sesji w logu dnia (01) i takim samym kafelkiem w historii (12). Korekta ma JEDNE drzwi: „EDYTUJ DANE" pod ekranem przełącza ten sam ekran w tryb edycji (10D) - czasy zdarzeń, odczyty paliwa i MH, skład zrzutu i brakujące wpisy</div>
       <div class="card-tags"><span class="tag">sesja</span><span class="tag">oś samolotu</span><span class="tag">norma</span></div>
     </div>
   </a>
@@ -819,7 +819,7 @@
     <div class="card-num">12</div>
     <div class="card-body">
       <div class="card-title">12-historia (poprzednie dni)</div>
-      <div class="card-desc">Sesje z dni WCZEŚNIEJSZYCH — dzisiejsze stoją na „Mój dzień" i tam się je otwiera (issue #35). Kafelek = jedna sesja z metrykami wiersza z 01 (Loty · Blok · Lot); w oknie 24 h prowadzi do korekty (10), po oknie — do podglądu bez edycji (10B). Plakietka wysyłki pojawia się tylko wtedy, gdy coś czeka w kolejce</div>
+      <div class="card-desc">Sesje z dni WCZEŚNIEJSZYCH - dzisiejsze stoją na „Mój dzień" i tam się je otwiera (issue #35). Kafelek = jedna sesja z metrykami wiersza z 01 (Loty · Blok · Lot); w oknie 24 h prowadzi do korekty (10), po oknie - do podglądu bez edycji (10B). Plakietka wysyłki pojawia się tylko wtedy, gdy coś czeka w kolejce</div>
       <div class="card-tags"><span class="tag">historia</span><span class="tag">okno 24 h</span><span class="tag">podgląd</span></div>
     </div>
   </a>
@@ -827,7 +827,7 @@
     <div class="card-num">14</div>
     <div class="card-body">
       <div class="card-title">14-slad (ślad sesji)</div>
-      <div class="card-desc">Ślad CAŁEGO biegu silnika — kołowanie, wszystkie starty i lądowania, zrzuty; trasa na siatce współrzędnych z pasami lotnisk z katalogu, profil pionowy ze znacznikami i czasami, statystyki lotu (prędkość i pion, czasy faz, trzymanie wysokości) oraz log punktów ze stanem bramki jakości. Wejście miniaturą z ekranu sesji (10). Od issue #47 ślad przychodzi z SERWERA — telefon nagrywa go i oddaje, po czym kasuje kopię</div>
+      <div class="card-desc">Ślad CAŁEGO biegu silnika - kołowanie, wszystkie starty i lądowania, zrzuty; trasa na siatce współrzędnych z pasami lotnisk z katalogu, profil pionowy ze znacznikami i czasami, statystyki lotu (prędkość i pion, czasy faz, trzymanie wysokości) oraz log punktów ze stanem bramki jakości. Wejście miniaturą z ekranu sesji (10). Od issue #47 ślad przychodzi z SERWERA - telefon nagrywa go i oddaje, po czym kasuje kopię</div>
       <div class="card-tags"><span class="tag">mapa</span><span class="tag">profil</span><span class="tag">statystyki</span><span class="tag">z serwera</span></div>
     </div>
   </a>
@@ -835,7 +835,7 @@
     <div class="card-num">14C</div>
     <div class="card-body">
       <div class="card-title">14c-slad-offline</div>
-      <div class="card-desc">Ślad JEST na serwerze, tylko telefon nie ma jak go pobrać — jedyny stan w aplikacji, w którym ekran potrzebuje sieci (issue #47). Mówi to wprost, pokazuje czasy sesji z lokalnego rejestru i nieaktywne „POBIERZ ŚLAD" z podanym powodem. Nie mylić z 14B: tam trasy nie ma i nie będzie</div>
+      <div class="card-desc">Ślad JEST na serwerze, tylko telefon nie ma jak go pobrać - jedyny stan w aplikacji, w którym ekran potrzebuje sieci (issue #47). Mówi to wprost, pokazuje czasy sesji z lokalnego rejestru i nieaktywne „POBIERZ ŚLAD" z podanym powodem. Nie mylić z 14B: tam trasy nie ma i nie będzie</div>
       <div class="card-tags"><span class="tag">offline</span><span class="tag">stan pusty</span><span class="tag">wymaga sieci</span></div>
     </div>
   </a>
@@ -843,7 +843,7 @@
     <div class="card-num">14D</div>
     <div class="card-body">
       <div class="card-title">14d-slad-kursor</div>
-      <div class="card-desc">Stan W TRAKCIE gestu, nie osobny ekran: palec na jednym wykresie stawia kursor na obu (biały — nie jest zdarzeniem rejestru), a odczyt staje w stałym rogu każdego z nich. Mapa przybliżona dwoma palcami; wskaźnikiem przybliżenia jest podziałka, dwuklik wraca do całego śladu (issue #47 pkt 7 i 8)</div>
+      <div class="card-desc">Stan W TRAKCIE gestu, nie osobny ekran: palec na jednym wykresie stawia kursor na obu (biały - nie jest zdarzeniem rejestru), a odczyt staje w stałym rogu każdego z nich. Mapa przybliżona dwoma palcami; wskaźnikiem przybliżenia jest podziałka, dwuklik wraca do całego śladu (issue #47 pkt 7 i 8)</div>
       <div class="card-tags"><span class="tag">gesty</span><span class="tag">zoom</span><span class="tag">sprzężenie</span></div>
     </div>
   </a>
@@ -851,7 +851,7 @@
     <div class="card-num">15</div>
     <div class="card-body">
       <div class="card-title">15-reczny-lot</div>
-      <div class="card-desc">Ręczny wpis CAŁEGO lotu z listy dziennej (model 2026-08-10) — KROK 1/4: DATA LOTU pierwsza (domyślnie dzisiejsza), samolot i Dual — opcjonalny, chyba że samolot wymaga załogi 2-os. (issue #58). Dla lotów zapisanych poza telefonem: papier, rozładowana bateria. Tworzy kompletną sesję z oknem korekty 24 h</div>
+      <div class="card-desc">Ręczny wpis CAŁEGO lotu z listy dziennej (model 2026-08-10) - KROK 1/4: DATA LOTU pierwsza (domyślnie dzisiejsza), samolot i Dual - opcjonalny, chyba że samolot wymaga załogi 2-os. (issue #58). Dla lotów zapisanych poza telefonem: papier, rozładowana bateria. Tworzy kompletną sesję z oknem korekty 24 h</div>
       <div class="card-tags"><span class="tag">wpis po fakcie</span><span class="tag">pełna sesja</span><span class="tag">krok 1/4</span></div>
     </div>
   </a>
@@ -862,58 +862,58 @@
   <a href="ikona-aplikacji.html" class="card amber">
     <div class="card-num">IK</div>
     <div class="card-body">
-      <div class="card-title">ikona-aplikacji — 6 wariantów</div>
-      <div class="card-desc">Propozycje ikony aplikacji: ślad, delta, karta, slot, sygnał, horyzont. Każdy wariant w rozmiarach launchera (64–28 px), na jasnym tle i w wersji monochrome, ze strefą bezpieczną adaptive icon. Znak neutralny nazwowo — produkt docelowo wychodzi poza UZ Aero. Do wyboru</div>
+      <div class="card-title">ikona-aplikacji - 6 wariantów</div>
+      <div class="card-desc">Propozycje ikony aplikacji: ślad, delta, karta, slot, sygnał, horyzont. Każdy wariant w rozmiarach launchera (64–28 px), na jasnym tle i w wersji monochrome, ze strefą bezpieczną adaptive icon. Znak neutralny nazwowo - produkt docelowo wychodzi poza UZ Aero. Do wyboru</div>
       <div class="card-tags"><span class="tag amber">propozycja</span><span class="tag">ikona</span><span class="tag">6 wariantów</span></div>
     </div>
   </a>
   <a href="ikona-aplikacji-2.html" class="card amber">
     <div class="card-num">IK2</div>
     <div class="card-body">
-      <div class="card-title">ikona-aplikacji-2 — runda 2</div>
-      <div class="card-desc">Zawężenie do dwóch kierunków z rundy 1: rodzina SLOT (grafik, z którego coś startuje) i rodzina SYGNAŁ (maszyna nadająca pozycję), po trzy warianty każda, plus dwie syntezy „plan i wykonanie” — kreska przerywana = odcinek zarezerwowany, ciągła = przelatany. Pasek porównawczy z oryginałami 04 i 05. Do wyboru</div>
+      <div class="card-title">ikona-aplikacji-2 - runda 2</div>
+      <div class="card-desc">Zawężenie do dwóch kierunków z rundy 1: rodzina SLOT (grafik, z którego coś startuje) i rodzina SYGNAŁ (maszyna nadająca pozycję), po trzy warianty każda, plus dwie syntezy „plan i wykonanie” - kreska przerywana = odcinek zarezerwowany, ciągła = przelatany. Pasek porównawczy z oryginałami 04 i 05. Do wyboru</div>
       <div class="card-tags"><span class="tag amber">propozycja</span><span class="tag">ikona</span><span class="tag">8 wariantów</span></div>
     </div>
   </a>
   <a href="ikona-aplikacji-3.html" class="card amber">
     <div class="card-num">IK3</div>
     <div class="card-body">
-      <div class="card-title">ikona-aplikacji-3 — runda 3</div>
-      <div class="card-desc">Wskazany wariant 05 SYGNAŁ w dwóch formatach (standard i negatyw — zielony kafel z wyciętym znakiem) plus cztery pomysły z innego budulca: śmigło, pas startowy, tarcza doby, odcinek czasu blokowego. Każdy z wersją negatywową, jasną i monochrome. Do wyboru</div>
+      <div class="card-title">ikona-aplikacji-3 - runda 3</div>
+      <div class="card-desc">Wskazany wariant 05 SYGNAŁ w dwóch formatach (standard i negatyw - zielony kafel z wyciętym znakiem) plus cztery pomysły z innego budulca: śmigło, pas startowy, tarcza doby, odcinek czasu blokowego. Każdy z wersją negatywową, jasną i monochrome. Do wyboru</div>
       <div class="card-tags"><span class="tag amber">propozycja</span><span class="tag">ikona</span><span class="tag">negatyw</span></div>
     </div>
   </a>
   <a href="ikona-aplikacji-4.html" class="card amber">
     <div class="card-num">IK4</div>
     <div class="card-body">
-      <div class="card-title">ikona-aplikacji-4 — runda 4</div>
-      <div class="card-desc">Zmiana środka wyrazu zamiast motywu: powidok (powtórzenie), cień (głębia), punkt na polu (tekstura z akcentem), kadr (rama). Cztery mechanizmy, których nie było w rundach 1–3 — każdy w standardzie i w negatywie. Do wyboru</div>
+      <div class="card-title">ikona-aplikacji-4 - runda 4</div>
+      <div class="card-desc">Zmiana środka wyrazu zamiast motywu: powidok (powtórzenie), cień (głębia), punkt na polu (tekstura z akcentem), kadr (rama). Cztery mechanizmy, których nie było w rundach 1–3 - każdy w standardzie i w negatywie. Do wyboru</div>
       <div class="card-tags"><span class="tag amber">propozycja</span><span class="tag">ikona</span><span class="tag">inny mechanizm</span></div>
     </div>
   </a>
   <a href="ikona-aplikacji-5.html" class="card amber">
     <div class="card-num">IK5</div>
     <div class="card-body">
-      <div class="card-title">ikona-aplikacji-5 — cień z sylwetką</div>
+      <div class="card-title">ikona-aplikacji-5 - cień z sylwetką</div>
       <div class="card-desc">Rozwinięcie wariantu z cieniem: zamiast abstrakcyjnej delty realna sylwetka wysokopłata z góry. Sama sylwetka jako punkt odniesienia plus trzy sposoby podania cienia (spłaszczona kopia, owal, kopia odsunięta) i wersja w skręcie. Do wyboru</div>
       <div class="card-tags"><span class="tag amber">propozycja</span><span class="tag">ikona</span><span class="tag">sylwetka</span></div>
     </div>
   </a>
 </div>
 
-<div class="section-title">Panel administracyjny — aplikacja web</div>
+<div class="section-title">Panel administracyjny - aplikacja web</div>
 <div class="grid">
   <a href="admin/index.html" class="card amber">
     <div class="card-num">A</div>
     <div class="card-body">
-      <div class="card-title">admin/ — 20 ekranów</div>
-      <div class="card-desc">Back-office dla administratora i szefa wyszkolenia: konta, flota, skrzynka flag, korekty po oknie 24 h, monitor eksportu, audyt, statystyki. Osobna ramka (okno 1440×900), te same tokeny i czcionki — inne urządzenie, nie inny produkt. Projekt do zatwierdzenia</div>
+      <div class="card-title">admin/ - 20 ekranów</div>
+      <div class="card-desc">Back-office dla administratora i szefa wyszkolenia: konta, flota, skrzynka flag, korekty po oknie 24 h, monitor eksportu, audyt, statystyki. Osobna ramka (okno 1440×900), te same tokeny i czcionki - inne urządzenie, nie inny produkt. Projekt do zatwierdzenia</div>
       <div class="card-tags"><span class="tag amber">projekt</span><span class="tag">desktop</span><span class="tag">dwie role</span></div>
     </div>
   </a>
 </div>
 
-<footer>UZ Aero · Design System v0.2 · zatwierdzona specyfikacja — wdrażana w app/</footer>
+<footer>UZ Aero · Design System v0.2 · zatwierdzona specyfikacja - wdrażana w app/</footer>
 
 </body>
 </html>

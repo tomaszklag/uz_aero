@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 10E Korekta zdarzenia</title>
+<title>UZ Aero - 10E Korekta zdarzenia</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -75,7 +75,7 @@
   .axis-dot { position:relative; align-self:center; width:9px; height:9px; border-radius:50%; background:var(--border-strong); border:2px solid var(--surface); box-shadow:0 0 0 2px var(--surface); }
   .axis-dot.green { background:var(--green); }
   .axis-dot.red { background:var(--red); }
-  /* Otoczka 2 px w kolorze karty — ta sama, którą ma kropka wypełniona: kreska osi
+  /* Otoczka 2 px w kolorze karty - ta sama, którą ma kropka wypełniona: kreska osi
      ma urywać się PRZED obrysem, a nie wchodzić do środka i wychodzić drugą stroną
      (zgłoszenie z urządzenia, 2026-08-14). Dotyczy PRZEJĘCIA i ZDANIA, jedynych
      pustych punktów osi. */
@@ -97,20 +97,20 @@
   /* Kosz w linii tytułu: dostępny, nie eksponowany. */
   .icon-void { width:36px; height:36px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border-radius:12px; color:var(--red); text-decoration:none; }
   .icon-void:hover { background:var(--red-muted); }
-  /* Cel korekty jednym wierszem — bez ramki, ikony i plakietki. */
+  /* Cel korekty jednym wierszem - bez ramki, ikony i plakietki. */
   .target-label { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
   .modal-title { font-family:var(--font-display); font-size:22px; letter-spacing:2px; color:var(--text-primary); flex:1; }
 
 
   .field-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); margin-bottom:5px; }
-  /* Czas krokami ±1 min, nie polem tekstowym — wzorzec 05f, wygrał audyt rękawic.
+  /* Czas krokami ±1 min, nie polem tekstowym - wzorzec 05f, wygrał audyt rękawic.
      Przyciski mają 46 px: to próg, poniżej którego kciuk w rękawicy chybia. */
   .time-stepper { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--green-border); border-radius:14px; padding:10px 12px; }
   .step-btn { min-width:66px; padding:0 10px; white-space:nowrap; height:46px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border-radius:12px; border:1px solid var(--border-strong); background:var(--surface-raised); color:var(--text-primary); font-family:var(--font-mono); font-size:13px; cursor:pointer; }
   .step-btn:hover { border-color:var(--green-border); background:var(--green-muted); }
   /* Godzina jest CELEM DOTKNIĘCIA: tapnięcie otwiera klawiaturę numeryczną i pozwala
      wpisać ją wprost (dwukropek stawia maska). Przyciski ±1 min zostają do poprawki
-     o krok — godzina odległa o czterdzieści minut to czterdzieści dotknięć. Przerywana
+     o krok - godzina odległa o czterdzieści minut to czterdzieści dotknięć. Przerywana
      kreska pod spodem jest jedynym znakiem, że pole da się wpisać; ramki nie dostaje,
      bo nie jest formularzem, tylko wartością stepera. */
   .time-val { flex:1; text-align:center; font-family:var(--font-mono); font-size:30px; font-weight:700; letter-spacing:2px; color:var(--text-primary); cursor:text; }
@@ -120,7 +120,7 @@
   .modal-ref-val { color:var(--text-secondary); }
 
   /* ===== POWÓD (issue #43) =====
-     OPCJONALNY i jednolinijkowy. Wymagany byłby tarciem w polu — pilot poprawia
+     OPCJONALNY i jednolinijkowy. Wymagany byłby tarciem w polu - pilot poprawia
      literówkę w minucie, nie pisze uzasadnienia do protokołu. Ale gdy powód jest,
      administrator patrzący na zmieniony odczyt nie musi dzwonić i pytać. */
   .reason-box { display:flex; align-items:center; gap:9px; background:var(--surface); border:1px solid var(--border-strong); border-radius:12px; padding:11px 13px; }
@@ -171,12 +171,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 10E</span>
+  <span class="film-strip">UZ AERO - 10E</span>
   <span class="slug">korekta zdarzenia · czas albo unieważnienie</span>
   <span class="canvas-meta"><span class="pulse"></span>Arkusz 10D</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Korekta zdarzenia na osi sesji">
+<main class="phone" role="region" aria-label="Mockup - Korekta zdarzenia na osi sesji">
   <div class="status-bar">
     <span>9:41</span>
     <span class="status-right">
@@ -236,7 +236,7 @@
     <div class="modal-overlay">
       <div class="modal-sheet">
         <div class="modal-handle"></div>
-        <!-- SAM TYTUŁ. Baner „korekta nie kasuje historii — zapisujemy osobne zdarzenie
+        <!-- SAM TYTUŁ. Baner „korekta nie kasuje historii - zapisujemy osobne zdarzenie
              korygujące…" i chip „Jak to działa?", którym się zwijał, USUNIĘTE
              (zgłoszenie z urządzenia, 2026-08-14): tłumaczyły budowę rejestru komuś,
              kto o nią nie pytał. Ta sama reguła zdjęła przypis spod pasa edycji (10D)
@@ -244,7 +244,7 @@
         <!-- KOSZ W LINII TYTUŁU, nie czerwony przycisk pod akcjami (uwaga z urządzenia,
              2026-08-14). Separator miał odsunąć unieważnienie od „Zapisz", a skutek był
              odwrotny: pełnowymiarowy przycisk w czerwieni krzyczał jak akcja główna
-             arkusza. Intencją wchodzącego w korektę jest POPRAWKA — kasowanie to rzadki
+             arkusza. Intencją wchodzącego w korektę jest POPRAWKA - kasowanie to rzadki
              wyjątek, który ma być dostępny, nie eksponowany. -->
         <div class="modal-title-row">
           <div class="modal-title">KOREKTA ZDARZENIA</div>
@@ -255,7 +255,7 @@
 
         <!-- CEL KOREKTY jednym wierszem, jak w arkuszu zrzutu i notatki (uwaga
              z urządzenia). Stała tu karta w kolorowej ramce, z ikoną typu zdarzenia
-             i plakietką metody — trzy ozdoby wokół jednej informacji, z których ramka
+             i plakietką metody - trzy ozdoby wokół jednej informacji, z których ramka
              i ikona niosły ton arkusza, a nie stan danych, a plakietka „auto · GPS"
              powtarzała wiersz „Metoda wykrycia" dwa centymetry niżej. Godzina odpadła
              razem z nimi: stoi w kontrolce, którą się ją zmienia. -->
@@ -277,7 +277,7 @@
           <span>Metoda wykrycia</span>
           <span class="modal-ref-val">GPS · GS &lt; 30 kt</span>
         </div>
-        <!-- Wpływ liczony PODWÓJNĄ PROJEKCJĄ (przed / po), nie ręcznym odejmowaniem —
+        <!-- Wpływ liczony PODWÓJNĄ PROJEKCJĄ (przed / po), nie ręcznym odejmowaniem -
              podgląd nie ma prawa rozjechać się z tym, co korekta faktycznie zrobi. -->
         <div class="modal-ref">
           <span>Wpływ na czas lotu</span>
@@ -286,7 +286,7 @@
 
         <div class="reason-box">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          <input class="reason-input" type="text" placeholder="Powód (opcjonalnie) — np. GPS wykrył lądowanie za późno" />
+          <input class="reason-input" type="text" placeholder="Powód (opcjonalnie) - np. GPS wykrył lądowanie za późno" />
         </div>
 
         <a href="10i-historia-zmian.html" class="history-link">
@@ -308,12 +308,12 @@
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Arkusze trybu edycji — kiedy który?</div>
+  <div class="vp-title">Arkusze trybu edycji - kiedy który?</div>
   <a class="vp-item active" href="10e-korekta-zdarzenia.html">
     <span class="vp-badge blue">10E</span>
     <span class="vp-body">
       <span class="vp-name">Korekta zdarzenia (czas)</span>
-      <span class="vp-when">Ołówek przy uruchomieniu, kołowaniu, starcie, lądowaniu i wyłączeniu silnika. Zmienia CZAS albo unieważnia zdarzenie — obie akcje są dopisaniem korekty, nie edycją zapisu. Działa offline.</span>
+      <span class="vp-when">Ołówek przy uruchomieniu, kołowaniu, starcie, lądowaniu i wyłączeniu silnika. Zmienia CZAS albo unieważnia zdarzenie - obie akcje są dopisaniem korekty, nie edycją zapisu. Działa offline.</span>
     </span>
     <span class="vp-tag">ten arkusz</span>
   </a>
@@ -321,7 +321,7 @@
     <span class="vp-badge amber">10F</span>
     <span class="vp-body">
       <span class="vp-name">Korekta odczytu</span>
-      <span class="vp-when">Ołówek przy przejęciu i zdaniu: paliwo i motogodziny. Bez unieważnienia — sesja bez odczytu przy zdaniu nie ma jak przekazać maszyny dalej.</span>
+      <span class="vp-when">Ołówek przy przejęciu i zdaniu: paliwo i motogodziny. Bez unieważnienia - sesja bez odczytu przy zdaniu nie ma jak przekazać maszyny dalej.</span>
     </span>
   </a>
   <a class="vp-item" href="10g-korekta-zrzutu.html">
@@ -335,7 +335,7 @@
     <span class="vp-badge amber">10H</span>
     <span class="vp-body">
       <span class="vp-name">Dodaj wpis</span>
-      <span class="vp-when">Gdy zdarzenia nie ma w ogóle — autodetekcja go nie zapisała albo pilot zapomniał o tankowaniu.</span>
+      <span class="vp-when">Gdy zdarzenia nie ma w ogóle - autodetekcja go nie zapisała albo pilot zapomniał o tankowaniu.</span>
     </span>
   </a>
   <a class="vp-item" href="10i-historia-zmian.html">

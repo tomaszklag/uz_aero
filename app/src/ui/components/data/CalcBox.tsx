@@ -1,12 +1,12 @@
 /**
- * UZ Aero — CalcBox (`.calc-box` z mockupu 06)
+ * UZ Aero - CalcBox (`.calc-box` z mockupu 06)
  *
  * Tonowane pudełko z rozpisanym RACHUNKIEM: kilka wierszy „skąd to wiemy", linia,
  * wyróżniony wiersz wyniku i przypis mówiący, co z tym wynikiem zrobić.
  *
  * Dlaczego osobny komponent, a nie `StatGrid`: siatka bilansowa odpowiada na
  * pytanie „co zapiszę" (klucz nad wartością, komórki równorzędne).
- * Tutaj wiersze są **przesłankami**, a nie danymi do zapisu — jeden z nich jest
+ * Tutaj wiersze są **przesłankami**, a nie danymi do zapisu - jeden z nich jest
  * wnioskiem i musi się wyróżniać, a całość niesie zastrzeżenie („punkt kontrolny,
  * zweryfikuj z dokumentacją"). Wartości z CalcBox-a nie trafiają wprost do rejestru:
  * to szacunek pomocniczy, obliczony z odczytów, a nie zmierzony.
@@ -27,11 +27,11 @@ export interface CalcRow {
 export interface CalcBoxProps {
   /** Nagłówek rachunku, np. „Kalkulacja zużycia". */
   title: string;
-  /** Przesłanki — po jednej w wierszu. */
+  /** Przesłanki - po jednej w wierszu. */
   rows: CalcRow[];
   /** Wniosek: po linii, wartość wyróżniona akcentem. */
   total?: CalcRow | null;
-  /** Przypis pod rachunkiem — co pilot ma z tym zrobić. */
+  /** Przypis pod rachunkiem - co pilot ma z tym zrobić. */
   note?: string | null;
   tone?: Tone;
   style?: ViewStyle;
@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 10 },
   rowLabel: { flexShrink: 1, fontSize: 12, lineHeight: 17 },
   rowValue: { fontSize: 13, letterSpacing: 0.5, lineHeight: 18 },
-  // Linia oddzielająca przesłanki od wniosku (`.calc-divider`) — cieńsza od obramowania
+  // Linia oddzielająca przesłanki od wniosku (`.calc-divider`) - cieńsza od obramowania
   // pudełka, bo dzieli treść wewnątrz, a nie odgradza od reszty ekranu.
   divider: { height: 1, marginVertical: 2, opacity: 0.4 },
   note: { fontSize: 10, lineHeight: 14 },

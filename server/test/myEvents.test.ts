@@ -1,18 +1,18 @@
 /**
- * UZ Aero (serwer) — testy `GET /me/events` (§4.9, issue #32).
+ * UZ Aero (serwer) - testy `GET /me/events` (§4.9, issue #32).
  *
  * Scenariusz, dla którego ta trasa istnieje: pilot wyczyścił pamięć aplikacji i stracił
  * na telefonie WSZYSTKO, choć jego dni leżą kompletne na serwerze. Trasa oddaje mu
- * własny rejestr — i to jest cała jej treść, więc testy pilnują dokładnie trzech rzeczy:
+ * własny rejestr - i to jest cała jej treść, więc testy pilnują dokładnie trzech rzeczy:
  *
- *  • **zakres** — wyłącznie sesje, w których pilot jest PIC-em (cudze dni nie mają prawa
+ *  • **zakres** - wyłącznie sesje, w których pilot jest PIC-em (cudze dni nie mają prawa
  *    trafić do jego lokalnej historii, bo tam dałoby się je „otworzyć i poprawić");
- *  • **koperta** — to, co wyszło przez `POST /events`, wraca w kształcie, który ten sam
+ *  • **koperta** - to, co wyszło przez `POST /events`, wraca w kształcie, który ten sam
  *    endpoint przyjmie z powrotem (jedna definicja zdarzenia w obie strony);
- *  • **kursor** — strona po stronie, bez gubienia i bez dublowania, także gdy rejestr
+ *  • **kursor** - strona po stronie, bez gubienia i bez dublowania, także gdy rejestr
  *    rośnie w trakcie odtwarzania.
  *
- * Dane wjeżdżają PRAWDZIWĄ drogą — przez `POST /events` — więc test przechodzi całą
+ * Dane wjeżdżają PRAWDZIWĄ drogą - przez `POST /events` - więc test przechodzi całą
  * ścieżkę telefonu: koperta, rejestr, odczyt kursorem.
  */
 
@@ -35,7 +35,7 @@ interface EventSpec {
   payload?: Record<string, unknown>;
 }
 
-/** Koperta §5.1 — dokładnie ta, którą wysyła telefon. */
+/** Koperta §5.1 - dokładnie ta, którą wysyła telefon. */
 function envelope(spec: EventSpec) {
   const at = spec.at ?? DAY + 8 * 3_600_000;
   return {
@@ -61,7 +61,7 @@ async function login(app: App, who: string): Promise<string> {
   return res.json().token as string;
 }
 
-/** Wysyła paczkę JAKO jej PIC — single-writer §4.4 nie ma tu wyjątków. */
+/** Wysyła paczkę JAKO jej PIC - single-writer §4.4 nie ma tu wyjątków. */
 async function send(app: App, pic: string, specs: EventSpec[]): Promise<void> {
   const token = await login(app, pic);
   const res = await app.inject({
@@ -82,7 +82,7 @@ const pull = (app: App, token: string, query = '') =>
 
 /**
  * Przechodzi CAŁY rejestr kursorem, tak jak robi to telefon przy odtwarzaniu.
- * Zwraca uuidy w kolejności, w jakiej przyszły — łącznie z ewentualnymi powtórzeniami,
+ * Zwraca uuidy w kolejności, w jakiej przyszły - łącznie z ewentualnymi powtórzeniami,
  * bo to właśnie one byłyby dowodem, że kursor stoi w miejscu.
  */
 async function pullAll(app: App, token: string, limit: number): Promise<string[]> {
@@ -104,7 +104,7 @@ async function pullAll(app: App, token: string, limit: number): Promise<string[]
     if (!body.hasMore) return seen;
   }
 
-  throw new Error('kursor nie doszedł do końca w 20 stronach — pętla');
+  throw new Error('kursor nie doszedł do końca w 20 stronach - pętla');
 }
 
 describe('GET /me/events (odtworzenie rejestru telefonu)', () => {
@@ -116,7 +116,7 @@ describe('GET /me/events (odtworzenie rejestru telefonu)', () => {
 
   it('pilot bez ani jednej sesji → 200 i pusta strona, nie 404', async () => {
     // Pierwszy dzień w klubie jest stanem normalnym. 404 mówiłoby „zasobu nie ma",
-    // a zasób jest — rejestr tego pilota jest po prostu pusty.
+    // a zasób jest - rejestr tego pilota jest po prostu pusty.
     const { app } = await testHarness();
     const res = await pull(app, await login(app, 'TMK'));
 
@@ -127,7 +127,7 @@ describe('GET /me/events (odtworzenie rejestru telefonu)', () => {
   it('oddaje WYŁĄCZNIE zdarzenia, w których pilot jest PIC-em', async () => {
     // Sesje, w których pilot był Dualem, do jego lokalnego strumienia NIE wchodzą:
     // „Historia dni" pokazuje wszystko, co leży w rejestrze telefonu, więc dopisanie
-    // cudzej sesji dałoby pilotowi dzień, którego nie prowadził — z ołówkiem korekty.
+    // cudzej sesji dałoby pilotowi dzień, którego nie prowadził - z ołówkiem korekty.
     const { app } = await testHarness();
     await send(app, 'TMK', [{ uuid: 'evt-moje-1', session: 's-tmk', pic: 'TMK' }]);
     await send(app, 'KRZ', [
@@ -141,7 +141,7 @@ describe('GET /me/events (odtworzenie rejestru telefonu)', () => {
 
   it('koperta wraca w kształcie, który `POST /events` przyjmie z powrotem', async () => {
     // Jedna definicja zdarzenia w obie strony: pobrane zdarzenie jest tym samym bytem,
-    // co wysłane. Dowód nie z porównania pól, tylko z DZIAŁANIA — odesłane wraca
+    // co wysłane. Dowód nie z porównania pól, tylko z DZIAŁANIA - odesłane wraca
     // jako duplikat (dedup po uuid, §4.3), a nie jako `400 bad_payload`.
     const { app } = await testHarness();
     const sent = envelope({
@@ -186,7 +186,7 @@ describe('GET /me/events (odtworzenie rejestru telefonu)', () => {
     const { app } = await testHarness();
     // Trzy paczki, bo `received_at` nadaje baza w chwili PRZYJĘCIA: paczka to jedna
     // transakcja, więc jej wiersze mają wspólny stempel i rozstrzyga je dopiero uuid.
-    // Granica strony wypada wtedy w ŚRODKU paczki — i to jest przypadek, dla którego
+    // Granica strony wypada wtedy w ŚRODKU paczki - i to jest przypadek, dla którego
     // tie-breaker w kursorze w ogóle istnieje.
     await send(app, 'TMK', [
       { uuid: 'evt-a1xx', session: 's1', pic: 'TMK' },
@@ -210,7 +210,7 @@ describe('GET /me/events (odtworzenie rejestru telefonu)', () => {
     // Odtworzenie nie jest jednorazową operacją: ten sam kursor jedzie przy każdej
     // okazji synchronizacji i ma dowozić dosyłkę z drugiego urządzenia albo korektę
     // dopisaną przez administratora. Dlatego kursor jest wypełniony TAKŻE na ostatniej
-    // stronie — inaczej telefon nie miałby czego zapamiętać i przy każdej okazji
+    // stronie - inaczej telefon nie miałby czego zapamiętać i przy każdej okazji
     // ściągałby ogon rejestru od nowa.
     const { app } = await testHarness();
     await send(app, 'TMK', [
@@ -239,7 +239,7 @@ describe('GET /me/events (odtworzenie rejestru telefonu)', () => {
 
   it('uszkodzony kursor → 400, nie cicha pierwsza strona', async () => {
     // Ciche zaczęcie od początku byłoby gorsze niż błąd: telefon uznałby, że posunął
-    // się naprzód, a stanąłby w miejscu — i robiłby to przy każdej okazji synca.
+    // się naprzód, a stanąłby w miejscu - i robiłby to przy każdej okazji synca.
     const { app } = await testHarness();
     await send(app, 'TMK', [{ uuid: 'evt-e1xx', session: 's1', pic: 'TMK' }]);
 

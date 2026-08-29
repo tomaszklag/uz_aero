@@ -1,5 +1,5 @@
 /**
- * UZ Aero — kadr mapy śladu: przybliżenie i przesunięcie (issue #47 pkt 8).
+ * UZ Aero - kadr mapy śladu: przybliżenie i przesunięcie (issue #47 pkt 8).
  *
  * Trzy reguły, które na urządzeniu psują się najciszej i najbardziej wkurzająco:
  * ognisko szczypty ucieka spod palców, mapa daje się odsunąć w pustkę, a powrót do
@@ -19,7 +19,7 @@ import {
 
 const SIZE = { width: 340, height: 300 };
 
-describe('kadr mapy — szczypta', () => {
+describe('kadr mapy - szczypta', () => {
   it('punkt między palcami zostaje NIERUCHOMY', () => {
     const focus = { x: 120, y: 90 };
     const before = unapplyViewport(focus, IDENTITY_VIEWPORT);
@@ -49,14 +49,14 @@ describe('kadr mapy — szczypta', () => {
 
     for (let i = 0; i < 20; i++) vp = pinchViewport(vp, focus, 0.5, SIZE);
     expect(vp.scale).toBe(1);
-    // Powrót do całości MUSI wrócić do zera — inaczej mapa zostaje przesunięta
+    // Powrót do całości MUSI wrócić do zera - inaczej mapa zostaje przesunięta
     // w bok i pilot widzi pustkę zamiast trasy.
     expect(vp.offsetX).toBe(0);
     expect(vp.offsetY).toBe(0);
   });
 });
 
-describe('kadr mapy — przesuwanie', () => {
+describe('kadr mapy - przesuwanie', () => {
   it('bez przybliżenia mapa stoi w miejscu', () => {
     const moved = panViewport(IDENTITY_VIEWPORT, 60, -40, SIZE);
 
@@ -82,7 +82,7 @@ describe('kadr mapy — przesuwanie', () => {
   });
 });
 
-describe('kadr mapy — stan', () => {
+describe('kadr mapy - stan', () => {
   it('rozpoznaje przybliżenie z zapasem na błąd zmiennoprzecinkowy', () => {
     expect(isZoomed(IDENTITY_VIEWPORT)).toBe(false);
     expect(isZoomed({ scale: 1.0005, offsetX: 0, offsetY: 0 })).toBe(false);

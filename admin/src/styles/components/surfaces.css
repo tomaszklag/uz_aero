@@ -1,14 +1,14 @@
 /**
- * UZ Aero — panel: karty, plakietki, banery i stany puste.
+ * UZ Aero - panel: karty, plakietki, banery i stany puste.
  *
  * Klasy i wartości 1:1 z `design/admin/SZABLON.html`. Jeden plik dla całej rodziny
- * „powierzchni i etykiet", bo to jedna warstwa wizualna i jeden zestaw tonów —
+ * „powierzchni i etykiet", bo to jedna warstwa wizualna i jeden zestaw tonów -
  * rozbicie na pięć plików po kilkanaście linii utrudniałoby porównanie z szablonem,
  * a to porównanie jest tu jedyną formą kontroli.
  *
  * Są tu WYŁĄCZNIE klasy komponentów, które już istnieją. Reszta inwentarza szablonu
  * (`.page-head`, `.no-access`, `.table-wrap`, `.drawer`, `.tl`, `.kv`, `.tiles`…)
- * dochodzi razem z ekranem, który jej wymaga — arkusz stylów dla komponentu,
+ * dochodzi razem z ekranem, który jej wymaga - arkusz stylów dla komponentu,
  * którego nie ma, jest martwym kodem udającym postęp.
  */
 
@@ -276,18 +276,18 @@
 }
 
 /* Wartość SPRZED zmiany w zestawieniu „przed → po" (`A02b`). Wygaszona, bo czyta się
-   ją jako punkt odniesienia, a nie jako liczbę do zapamiętania — uwaga ma zostać przy
+   ją jako punkt odniesienia, a nie jako liczbę do zapamiętania - uwaga ma zostać przy
    wartości po prawej stronie strzałki. */
 .kv-v .was {
   color: var(--text-muted);
   font-weight: 400;
 }
 
-/* ══ LISTA SZCZEGÓŁÓW — pola workowatego JSON-a w komórce tabeli (`A09`) ══
+/* ══ LISTA SZCZEGÓŁÓW - pola workowatego JSON-a w komórce tabeli (`A09`) ══
    Osobny komponent od `.kv`, a nie jego wariant, bo odpowiada na inne pytanie. `.kv`
    jest zestawieniem liczb w karcie: wartość stoi po prawej i wytłuszczona, żeby czytało
    się kolumnę. Tu wartością bywa całe zdanie (komentarz do flagi, powód korekty),
-   a kluczy jest tyle, ile akurat zapisała komenda — prawe wyrównanie rozjechałoby
+   a kluczy jest tyle, ile akurat zapisała komenda - prawe wyrównanie rozjechałoby
    akapit, a dwa tory pozwalają czytać w dół po nazwach pól. */
 .det {
   display: flex;
@@ -315,13 +315,13 @@
   font-size: 11px;
   line-height: 1.55;
   color: var(--text-secondary);
-  /* UUID-y i base64 nie mają spacji, a kolumna „Szczegóły" jest wąska — bez tego
+  /* UUID-y i base64 nie mają spacji, a kolumna „Szczegóły" jest wąska - bez tego
      jeden identyfikator rozpycha całą tabelę. */
   overflow-wrap: anywhere;
 }
 
 /* Pole, którego panel nie umie NAZWAĆ: zostaje pokazane z surowym kluczem i surową
-   wartością, wygaszone — ale obecne. Dziennik audytu, który ukrywa pole, bo go nie zna,
+   wartością, wygaszone - ale obecne. Dziennik audytu, który ukrywa pole, bo go nie zna,
    przestaje być narzędziem nadzoru. */
 .det-v.raw {
   color: var(--text-muted);
@@ -346,7 +346,7 @@
   text-align: center;
 }
 
-/* Odwołanie do pliku źródłowego — panel bywa czytany razem z repozytorium. */
+/* Odwołanie do pliku źródłowego - panel bywa czytany razem z repozytorium. */
 .code-ref {
   font-family: var(--font-mono);
   font-size: 10px;

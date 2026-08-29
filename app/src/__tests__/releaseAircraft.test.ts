@@ -1,9 +1,9 @@
 /**
- * UZ Aero — model widoku ekranu 09B/09C „Zdaj samolot".
+ * UZ Aero - model widoku ekranu 09B/09C „Zdaj samolot".
  *
  * Test pilnuje czterech rzeczy, na których stoi ten ekran: rozpoznania wariantu
  * (są wzloty czy nie), podpowiedzi liczonych z wartości WPISYWANEJ (projekcja nie zna
- * ich przed `day_close`), rozliczenia sesji i — przede wszystkim — blokady zapisu.
+ * ich przed `day_close`), rozliczenia sesji i - przede wszystkim - blokady zapisu.
  * Odczyt jest tu WYMAGANY (§3.6) i to jest jedyne miejsce w nowym flow, gdzie tak jest.
  */
 
@@ -112,7 +112,7 @@ beforeEach(() => {
   legSeq = 0;
 });
 
-describe('buildRelease — który wariant i co wiemy', () => {
+describe('buildRelease - który wariant i co wiemy', () => {
   it('sesja z biegiem to 09B: pasek wyniku, przegląd lotów i godzina przejęcia', () => {
     const vm = buildRelease(session(), at('17:40'))!;
 
@@ -131,7 +131,7 @@ describe('buildRelease — który wariant i co wiemy', () => {
     ]);
   });
 
-  it('sesja bez wzlotu to 09C — z miarą, jak długo samolot był zajęty', () => {
+  it('sesja bez wzlotu to 09C - z miarą, jak długo samolot był zajęty', () => {
     const vm = buildRelease(session({ legs: [], blockTimeMs: 0, flightTimeMs: 0 }), at('15:35'))!;
 
     expect(vm.withoutLeg).toBe(true);
@@ -141,7 +141,7 @@ describe('buildRelease — który wariant i co wiemy', () => {
   it('bez zdarzenia przejęcia nie zmyślamy godziny', () => {
     const vm = buildRelease(session({ legs: [], claimedAt: null }), at('15:35'))!;
 
-    expect(vm.summary.heldAt).toBe('—');
+    expect(vm.summary.heldAt).toBe('-');
     expect(vm.heldLabel).toBeNull();
   });
 
@@ -150,7 +150,7 @@ describe('buildRelease — który wariant i co wiemy', () => {
   });
 
   it('podpowiedź startowa bierze OSTATNI znany stan: paliwomierz z tankowań, MH z przejęcia', () => {
-    // Po 2026-08-10 wewnątrz sesji nie ma pośrednich odczytów (leg_close znikł) —
+    // Po 2026-08-10 wewnątrz sesji nie ma pośrednich odczytów (leg_close znikł) -
     // paliwo zna ostatnią granicę (np. tankowanie), a MH wyłącznie stan z przejęcia.
     const state = session({
       legs: [leg('10:00', '11:00')],
@@ -175,11 +175,11 @@ describe('podpowiedzi pod odczytem końcowym', () => {
     expect(finalFuelHint(state, 100)).toBe('przy przejęciu 96 L · dolane 40 L · zużyte 36 L');
   });
 
-  it('paliwo: przyrost mówi wprost, że coś się nie zgadza — zamiast ujemnego zużycia', () => {
-    expect(finalFuelHint(session(), 120)).toContain('przybyło 24 L — sprawdź odczyt');
+  it('paliwo: przyrost mówi wprost, że coś się nie zgadza - zamiast ujemnego zużycia', () => {
+    expect(finalFuelHint(session(), 120)).toContain('przybyło 24 L - sprawdź odczyt');
   });
 
-  it('motogodziny: Δ i czas bloku obok siebie — inwariant §4.5 do sprawdzenia wzrokiem', () => {
+  it('motogodziny: Δ i czas bloku obok siebie - inwariant §4.5 do sprawdzenia wzrokiem', () => {
     // 1239.65 → 1241.15 to +1:30, dokładnie tyle, ile czas blokowy.
     expect(finalMhHint(session(), 1241.15)).toBe(
       'format hh:mm · przy przejęciu 1239:39 · Δ +1:30 · blok 1:30',
@@ -190,11 +190,11 @@ describe('podpowiedzi pod odczytem końcowym', () => {
     const state = session({ mh: { start: null, end: null, deltaH: null } });
 
     expect(finalMhHint(state, 1241)).toBe(
-      'format hh:mm · brak odczytu przy przejęciu — wpisz z licznika',
+      'format hh:mm · brak odczytu przy przejęciu - wpisz z licznika',
     );
   });
 
-  it('baner przekazania wypisuje obie wartości — to one są ogniwem łańcucha', () => {
+  it('baner przekazania wypisuje obie wartości - to one są ogniwem łańcucha', () => {
     const text = handoverText('SP-KLM', { fuelL: 62, mh: 1241.15 }, 'hhmm');
 
     expect(text).toContain('62 L');
@@ -215,16 +215,16 @@ describe('rozliczenie sesji', () => {
     ]);
   });
 
-  it('bez normy z serwera zostaje sam wynik — nie zmyślamy pasma', () => {
+  it('bez normy z serwera zostaje sam wynik - nie zmyślamy pasma', () => {
     const rows = balanceRows(session(), { fuelL: 62, mh: 1241.15 }, null);
 
     expect(rows.find((r) => r.key === 'Średnie zużycie')!.value).toBe('22,7 L/h');
   });
 
-  it('zero czasu blokowego nie daje średniej — dzielenie przez zero to nie statystyka', () => {
+  it('zero czasu blokowego nie daje średniej - dzielenie przez zero to nie statystyka', () => {
     const rows = balanceRows(session({ blockTimeMs: 0 }), { fuelL: 62, mh: 1241.15 }, norm());
 
-    expect(rows.find((r) => r.key === 'Średnie zużycie')!.value).toBe('—');
+    expect(rows.find((r) => r.key === 'Średnie zużycie')!.value).toBe('-');
   });
 
   it('zużycie: zero jest wynikiem, brak danych nie jest', () => {
@@ -234,7 +234,7 @@ describe('rozliczenie sesji', () => {
   });
 });
 
-describe('releaseBlocker — odczyt jest tu WYMAGANY (§3.6)', () => {
+describe('releaseBlocker - odczyt jest tu WYMAGANY (§3.6)', () => {
   it('brak paliwa i brak MH blokują z osobnym powodem', () => {
     expect(releaseBlocker(session(), { fuelL: null, mh: 1241 })).toContain('paliwomierz');
     expect(releaseBlocker(session(), { fuelL: 62, mh: null })).toContain('licznik motogodzin');
@@ -242,17 +242,17 @@ describe('releaseBlocker — odczyt jest tu WYMAGANY (§3.6)', () => {
 
   it('cofnięty licznik jest zatrzymany PRZED zapisem, a nie odrzucony po fakcie', () => {
     expect(releaseBlocker(session(), { fuelL: 62, mh: 1200 })).toBe(
-      'Licznik nie może się cofnąć — przy przejęciu 1239:39.',
+      'Licznik nie może się cofnąć - przy przejęciu 1239:39.',
     );
   });
 
-  it('progiem jest stan przy przejęciu — jedyny znany punkt łańcucha wewnątrz sesji', () => {
+  it('progiem jest stan przy przejęciu - jedyny znany punkt łańcucha wewnątrz sesji', () => {
     // Ekran musi ostrzegać dokładnie tam, gdzie komenda odmówi. Po 2026-08-10 nie ma
     // pośrednich odczytów per wzlot, więc próg to zawsze odczyt z przejęcia.
     const state = session({ legs: [leg('13:40', '15:10')] });
 
     expect(releaseBlocker(state, { fuelL: 62, mh: 1239 })).toBe(
-      'Licznik nie może się cofnąć — przy przejęciu 1239:39.',
+      'Licznik nie może się cofnąć - przy przejęciu 1239:39.',
     );
     expect(releaseBlocker(state, { fuelL: 62, mh: 1242 })).toBeNull();
   });
@@ -261,7 +261,7 @@ describe('releaseBlocker — odczyt jest tu WYMAGANY (§3.6)', () => {
     expect(releaseBlocker(session(), { fuelL: 62, mh: 1241.15 })).toBeNull();
   });
 
-  it('bez odczytu startowego nie blokujemy — nie ma z czym porównać', () => {
+  it('bez odczytu startowego nie blokujemy - nie ma z czym porównać', () => {
     const state = session({ mh: { start: null, end: null, deltaH: null } });
 
     expect(releaseBlocker(state, { fuelL: 62, mh: 5 })).toBeNull();
@@ -269,7 +269,7 @@ describe('releaseBlocker — odczyt jest tu WYMAGANY (§3.6)', () => {
 
   it('09C: bez powodu nie ma zapisu, choć odczyt jest kompletny', () => {
     // Powód jest JEDYNYM pytaniem tego wariantu. Domena przyjęłaby zdarzenie bez niego
-    // (miękka flaga), ale pilot stoi przy samolocie i odpowie w sekundę — administrator
+    // (miękka flaga), ale pilot stoi przy samolocie i odpowie w sekundę - administrator
     // czytający rejestr tydzień później nie ma już kogo zapytać.
     const empty = session({ legs: [], blockTimeMs: 0, flightTimeMs: 0 });
     const reading = { fuelL: 96, mh: 1239.65 };
@@ -278,15 +278,15 @@ describe('releaseBlocker — odczyt jest tu WYMAGANY (§3.6)', () => {
     expect(releaseBlocker(empty, reading, 'weather')).toBeNull();
   });
 
-  it('sesja ZE WZLOTAMI nie pyta o powód — nie ma o co pytać', () => {
+  it('sesja ZE WZLOTAMI nie pyta o powód - nie ma o co pytać', () => {
     expect(releaseBlocker(session(), { fuelL: 62, mh: 1241.15 }, null)).toBeNull();
   });
 });
 
-describe('payload i napisy zdania (issue #23 — jedna intencja)', () => {
+describe('payload i napisy zdania (issue #23 - jedna intencja)', () => {
   const reading = { fuelL: 88, mh: 1241.15 };
 
-  it('payload niesie odczyt i powód — klamry służby nie ma w ogóle', () => {
+  it('payload niesie odczyt i powód - klamry służby nie ma w ogóle', () => {
     // `ReleaseIntent` z drugą odnogą „ZAMKNIJ DZIEŃ" (dutyEnd) żył do 2026-08-11
     // i został usunięty razem z klamrą służby (issue #23).
     const payload = releasePayload(reading, null);
@@ -298,8 +298,8 @@ describe('payload i napisy zdania (issue #23 — jedna intencja)', () => {
     expect(releasePayload(reading, 'weather').noFlightReason).toBe('weather');
   });
 
-  it('CTA i baner mówią, co się zaraz stanie — nie odwrotnie', () => {
-    // Zdanie = zatwierdzenie logu sesji (2026-08-10) — napis to zapowiada,
+  it('CTA i baner mówią, co się zaraz stanie - nie odwrotnie', () => {
+    // Zdanie = zatwierdzenie logu sesji (2026-08-10) - napis to zapowiada,
     // a baner niesie najważniejsze zdanie przebudowy flow.
     expect(RELEASE_CTA).toBe('ZDAJ I ZATWIERDŹ LOG');
     expect(RELEASE_NOTICE).toContain('nie kończysz dnia');

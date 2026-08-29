@@ -1,15 +1,15 @@
 /**
- * UZ Aero (serwer) — adapter kont pilotów po stronie PANELU (`PilotsAdminPort`, `A06`).
+ * UZ Aero (serwer) - adapter kont pilotów po stronie PANELU (`PilotsAdminPort`, `A06`).
  *
  * Drugi adapter tej samej tabeli i to jest wzorzec, nie niedopatrzenie: `flags` ma
  * dokładnie tak samo `common/flagsRepo.ts` (ingest) i `admin/flagsRepo.ts` (panel).
- * `common/pilotsRepo.ts` obsługuje LOGOWANIE — dwa `SELECT`-y, własny uchwyt do bazy,
- * hash w wyniku. Ten obsługuje ZARZĄDZANIE — pisze, liczy i bierze `tx` z zewnątrz,
+ * `common/pilotsRepo.ts` obsługuje LOGOWANIE - dwa `SELECT`-y, własny uchwyt do bazy,
+ * hash w wyniku. Ten obsługuje ZARZĄDZANIE - pisze, liczy i bierze `tx` z zewnątrz,
  * bo każdy zapis panelu jedzie transakcją śladu audytu. Ścieżka logowania nie ma jak
  * zregresować od zmian w panelu kont.
  *
  * ══ `flying_days` JEST AGREGATEM PROJEKCJI, NIE JEJ ODTWORZENIEM ══
- * Liczymy wiersze `sessions` (projekcja `projectSession`), a nie zdarzenia z `events` —
+ * Liczymy wiersze `sessions` (projekcja `projectSession`), a nie zdarzenia z `events` -
  * reguła twarda z `docs/architektura-panelu-serwer.md` §7.1. Sesja liczy się pilotowi,
  * gdy był PIC-em ALBO Dualem: dzień szkolny należy do obu, a nie tylko do dowodzącego.
  */
@@ -36,7 +36,7 @@ interface PilotDbRow {
   active: boolean;
   role: string;
   updated_at: string | Date;
-  /** `COUNT(*)` — sterownik oddaje `int8` NAPISEM, nie liczbą. */
+  /** `COUNT(*)` - sterownik oddaje `int8` NAPISEM, nie liczbą. */
   flying_days: string | number;
 }
 
@@ -66,13 +66,13 @@ const toJoin = (r: PilotDbRow): AdminPilotJoin => ({
 
 /**
  * Dni lotne w oknie, per pilot. Podzapytanie zamiast dwóch `LEFT JOIN`-ów, bo dzień
- * szkolny ma w wierszu `sessions` DWA konta (`pic_id` i `dual_id`) — złączenie po
+ * szkolny ma w wierszu `sessions` DWA konta (`pic_id` i `dual_id`) - złączenie po
  * jednym z nich gubiłoby Duala, a po obu naraz liczyłoby wiersz dwa razy temu, kto
  * był w nim jednocześnie… czyli nikomu, ale kosztem warunku, który trzeba pamiętać.
  * `UNION ALL` z `GROUP BY` mówi to wprost: jedna sesja = jeden dzień dla każdego
  * z jej pilotów.
  *
- * `status = 'closed'` — mockup A06 liczy „dni z zamkniętymi sesjami". Dzień otwarty
+ * `status = 'closed'` - mockup A06 liczy „dni z zamkniętymi sesjami". Dzień otwarty
  * jeszcze trwa i jego liczby nie są ostateczne.
  */
 const flyingDaysSql = (from: string, to: string): string => `
@@ -160,7 +160,7 @@ export class PgAdminPilotsRepo implements PilotsAdminPort {
   }
 
   /**
-   * Liczniki CHIPÓW — te same cztery zawężenia, w bieżącym wyszukiwaniu.
+   * Liczniki CHIPÓW - te same cztery zawężenia, w bieżącym wyszukiwaniu.
    *
    * Osobne zapytanie od `counts`, mimo podobieństwa SQL-a, bo odpowiada na inne
    * pytanie: `counts` opisuje klub (kafle), a to jest obietnica chipa („tyle
@@ -168,7 +168,7 @@ export class PgAdminPilotsRepo implements PilotsAdminPort {
    * wpisywaniu w wyszukiwarkę, czyli odebrałoby im ich jedyną treść.
    *
    * `role IN (…)` wypisane wprost zamiast sumy dwóch `FILTER`-ów: chip „Z rolą panelu"
-   * pyta o KONTA MAJĄCE WEJŚCIE, a nie o sumę dwóch liczb — konto nie może mieć dwóch
+   * pyta o KONTA MAJĄCE WEJŚCIE, a nie o sumę dwóch liczb - konto nie może mieć dwóch
    * ról, ale to jest własność dzisiejszego modelu, a nie treść tego pytania.
    */
   async scopeCounts(db: Queryable, filter: { search?: string }): Promise<PilotScopeCounts> {
@@ -238,7 +238,7 @@ export class PgAdminPilotsRepo implements PilotsAdminPort {
 
   async update(tx: Queryable, id: string, patch: PilotPatch): Promise<void> {
     // `COALESCE` zamiast budowania `SET` z obecnych pól: `undefined` znaczy „bez
-    // zmian", a `null` przy e-mailu znaczy „wyczyść" — i te dwa przypadki muszą
+    // zmian", a `null` przy e-mailu znaczy „wyczyść" - i te dwa przypadki muszą
     // zostać rozróżnione aż do SQL-a. Stąd jawny znacznik `$5` dla e-maila.
     await tx.query(
       `UPDATE pilots
@@ -263,7 +263,7 @@ export class PgAdminPilotsRepo implements PilotsAdminPort {
    * Deaktywacja przesuwa `credentials_valid_from`; AKTYWACJA go nie rusza.
    *
    * `GREATEST` zamiast przypisania: znacznik ma iść wyłącznie do przodu. Zegar
-   * (a przy replayu — kolejność wołań) mógłby cofnąć datę, a cofnięty znacznik
+   * (a przy replayu - kolejność wołań) mógłby cofnąć datę, a cofnięty znacznik
    * OŻYWIŁBY tokeny, które ktoś świadomie unieważnił wcześniej.
    */
   async setActive(tx: Queryable, id: string, active: boolean, at: Date): Promise<void> {
@@ -305,7 +305,7 @@ export class PgAdminPilotsRepo implements PilotsAdminPort {
 
   /**
    * Klucz jest STAŁY, bo chroniony zasób jest jeden na cały klub: „ilu jest aktywnych
-   * administratorów". Blokada per wiersz nie działa — dwie transakcje odbierające rolę
+   * administratorów". Blokada per wiersz nie działa - dwie transakcje odbierające rolę
    * DWÓM RÓŻNYM administratorom nie dotykają wspólnego wiersza, więc nic ich nie
    * serializuje, obie odczytują „jest dwóch" i obie commitują. Zostaje zero.
    *
@@ -320,7 +320,7 @@ export class PgAdminPilotsRepo implements PilotsAdminPort {
   }
 }
 
-/** Nazwa chronionego zasobu — jedna, dla wszystkich mutacji zmieniających jego stan. */
+/** Nazwa chronionego zasobu - jedna, dla wszystkich mutacji zmieniających jego stan. */
 const ADMIN_POPULATION_LOCK = 'pilots:admin-population';
 
 /**

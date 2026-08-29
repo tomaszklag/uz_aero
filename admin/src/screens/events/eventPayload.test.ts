@@ -1,10 +1,10 @@
 /**
- * UZ Aero — panel: wypis surowego `payload`-u zdarzenia (`A04`).
+ * UZ Aero - panel: wypis surowego `payload`-u zdarzenia (`A04`).
  *
  * Ten moduł ma jedno zadanie i jeden zakaz. Zadanie: pokazać treść, którą przysłał
  * telefon, DOSŁOWNIE. Zakaz: cokolwiek pominąć, przestawić albo zgadnąć.
  *
- * Testy niżej są wykonywalną postacią tego zdania — a najważniejsze z nich dotyczą
+ * Testy niżej są wykonywalną postacią tego zdania - a najważniejsze z nich dotyczą
  * kształtów, których panel NIE ZNA: tablicy zamiast obiektu, wartości prostej zamiast
  * struktury, klucza kolidującego z `Object.prototype`. Rejestr, który wywraca się
  * na nieznanym payloadzie, jest bezużyteczny dokładnie wtedy, gdy jest potrzebny.
@@ -14,7 +14,7 @@ import { describe, expect, it } from 'vitest';
 
 import { payloadLines, payloadNote } from './eventPayload';
 
-/** Cały wypis jako jeden napis — tak, jak zobaczy go człowiek. */
+/** Cały wypis jako jeden napis - tak, jak zobaczy go człowiek. */
 const flat = (payload: unknown): string =>
   payloadLines(payload)
     .map((l) => `${l.indent}${l.key == null ? '' : `${l.key}: `}${l.value}${l.comma ? ',' : ''}`)
@@ -42,7 +42,7 @@ describe('payload: wypis odtwarza JSON-a, który da się skopiować', () => {
 });
 
 describe('payload: kształt, którego panel NIE ZNA, i tak się wyświetla', () => {
-  it('tablica w korzeniu — bez wywracania się i bez udawania obiektu', () => {
+  it('tablica w korzeniu - bez wywracania się i bez udawania obiektu', () => {
     expect(flat([1, 'dwa', null])).toBe(['[', '  1,', '  "dwa",', '  null', ']'].join('\n'));
     expect(payloadNote([1])).toContain('tablica');
   });
@@ -54,7 +54,7 @@ describe('payload: kształt, którego panel NIE ZNA, i tak się wyświetla', () 
     expect(payloadNote(42)).toContain('wartość prosta');
   });
 
-  it('`null` w korzeniu to NIE pusty obiekt — i podpis to rozróżnia', () => {
+  it('`null` w korzeniu to NIE pusty obiekt - i podpis to rozróżnia', () => {
     // Dwie różne odpowiedzi na pytanie „co zapisał telefon": „nic" i „jawnie nic".
     expect(flat(null)).toBe('null');
     expect(payloadNote(null)).toContain('jawny null');
@@ -69,7 +69,7 @@ describe('payload: kształt, którego panel NIE ZNA, i tak się wyświetla', () 
 
   it('klucze kolidujące z `Object.prototype` jadą jak każde inne pole', () => {
     // Wada złapana wcześniej w dzienniku audytu: odczyt przez `MAPA[key]` uznawał
-    // `toString` za wpis znany i wstawiał funkcję w drzewo Reacta — biały ekran.
+    // `toString` za wpis znany i wstawiał funkcję w drzewo Reacta - biały ekran.
     // Tutaj czytamy `Object.entries`, więc z prototypu nie wchodzi nic, a własne
     // klucze o tych nazwach wychodzą normalnie.
     const payload = JSON.parse('{"constructor":"tekst","hasOwnProperty":1,"toString":null}');
@@ -94,13 +94,13 @@ describe('payload: tony są NAZWAMI KLAS, nie kolorami', () => {
     expect(tones.get('"n"')).toBe('blue');
     expect(tones.get('"b"')).toBe('blue');
     expect(tones.get('"z"')).toBe('red');
-    // Klamry to struktura, nie wartość — ton na nich sugerowałby znaczenie.
+    // Klamry to struktura, nie wartość - ton na nich sugerowałby znaczenie.
     expect(tones.get(null)).toBeNull();
   });
 });
 
 describe('payload: głębokie zagnieżdżenie nie wywraca wypisu', () => {
-  it('powyżej progu wypis MÓWI, że dalej jest treść — zamiast urwać po cichu', () => {
+  it('powyżej progu wypis MÓWI, że dalej jest treść - zamiast urwać po cichu', () => {
     // Rejestr ma się otworzyć ZAWSZE, także na wierszu wpisanym ręcznie. Ciche
     // ucięcie byłoby ukryciem danych w narzędziu, które istnieje po to, żeby ich
     // niczego nie ukrywać.
@@ -112,7 +112,7 @@ describe('payload: głębokie zagnieżdżenie nie wywraca wypisu', () => {
     expect(text).not.toContain('dno');
   });
 
-  it('identyfikatory linii są UNIKALNE — inaczej React gubi wiersze przy przerysowaniu', () => {
+  it('identyfikatory linii są UNIKALNE - inaczej React gubi wiersze przy przerysowaniu', () => {
     const lines = payloadLines({ a: { x: 1 }, b: [1, 2], c: 'y' });
     expect(new Set(lines.map((l) => l.id)).size).toBe(lines.length);
   });

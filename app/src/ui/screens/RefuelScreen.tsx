@@ -1,5 +1,5 @@
 /**
- * UZ Aero — 06 TANKOWANIE
+ * UZ Aero - 06 TANKOWANIE
  *
  * Odwzorowanie mockupu `design/06-tankowanie.html`, sekcja po sekcji:
  * [nagłówek TANKOWANIE + SyncChip] → [karta FOB przed tankowaniem] → [sekcja DOLANO:
@@ -7,16 +7,16 @@
  *
  * Ekran zapisuje jedno zdarzenie `refuel` z TRZEMA liczbami (przed / dolano / po),
  * a domena odrzuca je, gdy się nie sumują albo gdy stan po tankowaniu przekracza
- * pojemność (§3.4). Dlatego pilot widzi rachunek, zanim naciśnie zapis — komunikat
+ * pojemność (§3.4). Dlatego pilot widzi rachunek, zanim naciśnie zapis - komunikat
  * o odrzuceniu ma być potwierdzeniem tego, co już widać, a nie zaskoczeniem.
  *
  * Trzy rzeczy wynikają z zasad projektu, nie z mockupu:
- *  • **suwak zastąpił Stepper** — audyt użyteczności odrzucił uchwyt 16 px na torze
+ *  • **suwak zastąpił Stepper** - audyt użyteczności odrzucił uchwyt 16 px na torze
  *    312 px (≈1,4 L na piksel w rękawicach); pasek został wyłącznie wskaźnikiem
  *    (patrz `Stepper` i `ScaleBar`);
- *  • **stan przed tankowaniem da się skorygować** — nasza rachuba to ostatni odczyt
+ *  • **stan przed tankowaniem da się skorygować** - nasza rachuba to ostatni odczyt
  *    paliwomierza, a licznik fizyczny bije rachubę (`CLAUDE.md`);
- *  • **brak sieci niczego nie blokuje** — zdarzenie idzie do outboxa, a jedynym
+ *  • **brak sieci niczego nie blokuje** - zdarzenie idzie do outboxa, a jedynym
  *    wskaźnikiem łączności jest SyncChip.
  */
 
@@ -84,7 +84,7 @@ export function RefuelScreen({
   const [busy, setBusy] = useState(false);
 
   // Silnik przy tankowaniu jest wyłączony (reguła REFUEL_ENGINE_RUNNING), więc czas pracy
-  // silnika już się nie zmienia — chwila otwarcia ekranu w zupełności wystarcza za „teraz".
+  // silnika już się nie zmienia - chwila otwarcia ekranu w zupełności wystarcza za „teraz".
   const [openedAt] = useState(() => Date.now());
 
   const aircraftId = projection.aircraftId;
@@ -99,7 +99,7 @@ export function RefuelScreen({
     };
   }, [queries, aircraftId]);
 
-  const reg = aircraft?.reg ?? aircraftId ?? '—';
+  const reg = aircraft?.reg ?? aircraftId ?? '-';
   const capacityL = aircraft?.capacityL ?? null;
   const computedBeforeL = projection.fuel.lastReadingL;
   const beforeL = beforeOverride ?? computedBeforeL ?? 0;
@@ -112,7 +112,7 @@ export function RefuelScreen({
     [events, projection, beforeL, openedAt],
   );
 
-  // Norma tego samolotu (serwer, ekran `A10a`) — punkt odniesienia dla dzisiejszego
+  // Norma tego samolotu (serwer, ekran `A10a`) - punkt odniesienia dla dzisiejszego
   // wyniku. `null` znaczy „model poniżej progu publikacji"; wiersz wtedy nie powstaje.
   const norm = aircraft?.consumption ?? null;
   const normRow = useMemo(() => {
@@ -132,7 +132,7 @@ export function RefuelScreen({
       });
       navigation.goBack();
     } catch {
-      // Powód twardego odrzucenia siedzi w `lastError` — pokazujemy go banerem niżej.
+      // Powód twardego odrzucenia siedzi w `lastError` - pokazujemy go banerem niżej.
       // Ekran zostaje otwarty, żeby pilot mógł poprawić odczyt (§6 pkt 3).
     } finally {
       setBusy(false);
@@ -144,7 +144,7 @@ export function RefuelScreen({
       <Screen header={<ScreenHeader title="TANKOWANIE" backLabel="Kokpit" onBack={navigation.goBack} />}>
         <View style={{ flex: 1, justifyContent: 'center', gap: theme.spacing.md }}>
           <AppText variant="body" tone="muted" style={{ textAlign: 'center' }}>
-            Tankowanie zapisujemy w otwartym dniu lotnym — najpierw preflight.
+            Tankowanie zapisujemy w otwartym dniu lotnym - najpierw preflight.
           </AppText>
         </View>
       </Screen>
@@ -161,16 +161,16 @@ export function RefuelScreen({
       ? 'Odczyt z paliwomierza'
       : referenceLabel != null
         ? `Ostatni odczyt: ${referenceLabel}`
-        : 'Brak odczytu w tej sesji — wpisz stan z paliwomierza';
+        : 'Brak odczytu w tej sesji - wpisz stan z paliwomierza';
 
-  // ── blokada zapisu — zawsze z podanym powodem, nigdy ciche wyszarzenie ─────────
+  // ── blokada zapisu - zawsze z podanym powodem, nigdy ciche wyszarzenie ─────────
   const disabledReason =
     projection.engineRunning
-      ? 'Wyłącz silnik — tankowania przy pracującym silniku nie zapiszemy'
+      ? 'Wyłącz silnik - tankowania przy pracującym silniku nie zapiszemy'
       : addedL <= 0
-        ? 'Ustaw ilość dolaną — zapis bez dolewki nie miałby czego rejestrować'
+        ? 'Ustaw ilość dolaną - zapis bez dolewki nie miałby czego rejestrować'
         : capacityL != null && afterL > capacityL
-          ? `Stan po tankowaniu (${litres(afterL)}) przekracza pojemność ${litres(capacityL)} — popraw odczyt przed tankowaniem`
+          ? `Stan po tankowaniu (${litres(afterL)}) przekracza pojemność ${litres(capacityL)} - popraw odczyt przed tankowaniem`
           : null;
 
   const overCapacity = capacityL != null && afterL > capacityL;
@@ -200,7 +200,7 @@ export function RefuelScreen({
           }
         />
       }
-      /* `.btn-amber` z mockupu — na końcu treści, a przy krótkim formularzu dosunięty
+      /* `.btn-amber` z mockupu - na końcu treści, a przy krótkim formularzu dosunięty
          do dolnej krawędzi (patrz `Screen.footer`). */
       footer={
         <ActionButton
@@ -209,7 +209,7 @@ export function RefuelScreen({
           variant="solid"
           size="lg"
           icon="check"
-          hint={synced ? undefined : 'Zapis lokalny — wyśle się, gdy wróci sieć'}
+          hint={synced ? undefined : 'Zapis lokalny - wyśle się, gdy wróci sieć'}
           busy={busy}
           disabledReason={disabledReason}
           onPress={() => void save()}
@@ -238,8 +238,8 @@ export function RefuelScreen({
               maxAdd != null
                 ? `maks. dolewka: ${Math.round(maxAdd)} L (do pełna) · zbiorniki ${capacityL} L`
                 // Tu „konfiguracja" zostaje: to nie ozdobnik, tylko POWÓD, dla którego
-                // ekran nie zna pojemności — pilot ma wiedzieć, że pilnuje jej sam.
-                : 'brak konfiguracji w cache — pojemności nie znamy, kontroluj dolewkę z paliwomierza'
+                // ekran nie zna pojemności - pilot ma wiedzieć, że pilnuje jej sam.
+                : 'brak konfiguracji w cache - pojemności nie znamy, kontroluj dolewkę z paliwomierza'
             }
           >
             <Stepper
@@ -255,7 +255,7 @@ export function RefuelScreen({
             />
           </Field>
 
-          {/* Pasek jest WSKAŹNIKIEM, nie kontrolką — wartość ustawia Stepper wyżej. */}
+          {/* Pasek jest WSKAŹNIKIEM, nie kontrolką - wartość ustawia Stepper wyżej. */}
           {maxAdd != null && maxAdd > 0 && (
             <ScaleBar ratio={addedL / maxAdd} tone="amber" scale={refuelScale(maxAdd)} />
           )}
@@ -284,7 +284,7 @@ export function RefuelScreen({
                 value: hoursMinutes(consumption.engineMs),
               },
               { label: 'Zużycie w tym czasie', value: `~${Math.round(consumption.usedL)} L` },
-              // Porównanie z normą samolotu — wiersz pojawia się TYLKO wtedy, gdy serwer
+              // Porównanie z normą samolotu - wiersz pojawia się TYLKO wtedy, gdy serwer
               // ją przysłał. Bez normy nie ma tu kreski ani zera: brak podpowiedzi nie
               // jest wartością do pokazania (mockup 06).
               ...(normRow == null ? [] : [normRow]),
@@ -294,8 +294,8 @@ export function RefuelScreen({
             total={{ label: 'Średnie zużycie', value: `~${Math.round(consumption.lPerH)} L/h` }}
             note={
               norm == null
-                ? 'Punkt kontrolny — zweryfikuj z dokumentacją samolotu'
-                : 'Punkt kontrolny — zweryfikuj z dokumentacją samolotu. Norma uczy się z historii odczytów; wynik wyraźnie poza nią to powód, żeby sprawdzić odczyt. Paliwomierz wygrywa.'
+                ? 'Punkt kontrolny - zweryfikuj z dokumentacją samolotu'
+                : 'Punkt kontrolny - zweryfikuj z dokumentacją samolotu. Norma uczy się z historii odczytów; wynik wyraźnie poza nią to powód, żeby sprawdzić odczyt. Paliwomierz wygrywa.'
             }
           />
         ) : (
@@ -307,7 +307,7 @@ export function RefuelScreen({
             text={
               reference == null
                 ? 'Kalkulacja zużycia pojawi się po pierwszym odczycie paliwa w tej sesji.'
-                : 'Silnik nie pracował od ostatniego odczytu (albo paliwa jest więcej niż wtedy) — nie ma z czego policzyć średniego zużycia.'
+                : 'Silnik nie pracował od ostatniego odczytu (albo paliwa jest więcej niż wtedy) - nie ma z czego policzyć średniego zużycia.'
             }
           />
         )}
@@ -320,7 +320,7 @@ export function RefuelScreen({
           <Banner
             kind="warning"
             icon="warning"
-            title="Zapisane — sprawdź"
+            title="Zapisane - sprawdź"
             text={warnings.map((w) => w.message).join('\n')}
           />
         )}
@@ -340,7 +340,7 @@ export function RefuelScreen({
             value: computedBeforeL != null ? litres(computedBeforeL) : 'brak odczytu',
           },
           {
-            // Rejestracja zostaje tylko w arkuszu — on zasłania nagłówek (jak na 02a/02b).
+            // Rejestracja zostaje tylko w arkuszu - on zasłania nagłówek (jak na 02a/02b).
             label: `Pojemność zbiorników · ${reg}`,
             value: capacityL != null ? litres(capacityL) : 'brak danych',
           },
@@ -353,14 +353,14 @@ export function RefuelScreen({
           if (computedBeforeL != null && v > computedBeforeL) {
             return (
               `Paliwa jest więcej niż przy ostatnim odczycie (${litres(computedBeforeL)}). ` +
-              'Sprawdź, czy ktoś nie tankował poza aplikacją — zapis dostanie flagę do wyjaśnienia.'
+              'Sprawdź, czy ktoś nie tankował poza aplikacją - zapis dostanie flagę do wyjaśnienia.'
             );
           }
           return null;
         }}
         onConfirm={(v) => {
           setBeforeOverride(v);
-          // Nowy stan „przed" zmienia drogę do pełna — dolewka nie może jej przekroczyć.
+          // Nowy stan „przed" zmienia drogę do pełna - dolewka nie może jej przekroczyć.
           const nextMax = maxAddableL(v, capacityL);
           if (nextMax != null) setAddedL((a) => Math.min(a, nextMax));
           setEditingBefore(false);

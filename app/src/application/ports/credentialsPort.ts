@@ -1,16 +1,16 @@
 /**
- * UZ Aero — PORT bezpiecznego magazynu poświadczeń (§3.0, §5.2).
+ * UZ Aero - PORT bezpiecznego magazynu poświadczeń (§3.0, §5.2).
  *
  * Trzyma to, czego NIE wolno położyć w zwykłym storage: parę tokenów i profil pilota
  * z provisioning. Sekrety mieszkają w `expo-secure-store` (Keystore Androida), nie
- * w SQLite ani AsyncStorage — wyciągnięcie bazy z urządzenia nie może dać sesji.
+ * w SQLite ani AsyncStorage - wyciągnięcie bazy z urządzenia nie może dać sesji.
  *
  * Port zamiast bezpośredniego importu, bo (a) pętla synca i logowanie testują się
- * w Node bez natywnego modułu, (b) wygasły token ≠ wylogowanie (§3.0) — decyzje
+ * w Node bez natywnego modułu, (b) wygasły token ≠ wylogowanie (§3.0) - decyzje
  * o cyklu życia poświadczeń podejmuje warstwa aplikacji, magazyn tylko przechowuje.
  */
 
-/** Solony skrót PIN-u (§3.0) — nigdy sam PIN; weryfikację robi `PinCryptoPort`. */
+/** Solony skrót PIN-u (§3.0) - nigdy sam PIN; weryfikację robi `PinCryptoPort`. */
 export interface PinRecord {
   salt: string;
   hash: string;
@@ -22,7 +22,7 @@ export interface StoredCredentials {
   refreshToken: string;
   pilot: { id: string; code: string; name: string };
   /**
-   * PIN codziennego odblokowania — ustawiany PO logowaniu (krok „Ustaw PIN").
+   * PIN codziennego odblokowania - ustawiany PO logowaniu (krok „Ustaw PIN").
    * Brak pola = profil sprzed ustawienia PIN-u → bramka kieruje do konfiguracji.
    */
   pin?: PinRecord | null;
@@ -31,6 +31,6 @@ export interface StoredCredentials {
 export interface CredentialsPort {
   load(): Promise<StoredCredentials | null>;
   save(credentials: StoredCredentials): Promise<void>;
-  /** Czyszczenie przy wylogowaniu — wołający MUSI wcześniej sprawdzić pusty outbox. */
+  /** Czyszczenie przy wylogowaniu - wołający MUSI wcześniej sprawdzić pusty outbox. */
   clear(): Promise<void>;
 }

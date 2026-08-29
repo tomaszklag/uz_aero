@@ -1,18 +1,18 @@
 /**
- * UZ Aero — BalanceCard (karta rachunku z mockupu `10-statystyki.html`).
+ * UZ Aero - BalanceCard (karta rachunku z mockupu `10-statystyki.html`).
  *
  * Rachunek jednej wielkości: przesłanki („odczyt przy przejęciu", „dolane"), kreska,
  * wynik dużą cyfrą, a pod nim oczekiwanie i werdykt. Ten sam komponent obsługuje paliwo
- * i motogodziny — o to chodziło w issue #38 pkt 5: podobne zagadnienia mają wyglądać
+ * i motogodziny - o to chodziło w issue #38 pkt 5: podobne zagadnienia mają wyglądać
  * podobnie, a nie każde inaczej, zależnie od kolejności powstawania.
  *
  * ══ CZYM RÓŻNI SIĘ OD `CalcBox` (06) ══
  * `CalcBox` jest tonowanym pudełkiem WEWNĄTRZ formularza i mówi „to zapiszesz za chwilę"
- * — jego wynik jest szacunkiem sprzed zapisu. Tutaj rachunek opisuje fakt już zapisany
+ * - jego wynik jest szacunkiem sprzed zapisu. Tutaj rachunek opisuje fakt już zapisany
  * i stoi jako pełnoprawna sekcja ekranu, więc ma nagłówek karty, wynik w skali nagłówka
  * i wiersz werdyktu, którego tamten nie ma.
  *
- * ══ WERDYKT ALBO POWÓD JEGO BRAKU — NIGDY CISZA ══
+ * ══ WERDYKT ALBO POWÓD JEGO BRAKU - NIGDY CISZA ══
  * Gdy nie ma z czym porównać (silnik nie pracował, brak odczytu, samolot bez normy),
  * karta pisze o tym zdaniem. Pusty pasek albo kreska wyglądałyby jak awaria aplikacji
  * (§6 pkt 3), a przy liczbach z licznika to najgorsze możliwe wrażenie.
@@ -21,7 +21,7 @@
  * Do issue #40 pod każdym rachunkiem stało pasmo („Oczekiwane po tej sesji: 23 – 35 L")
  * i rozpisane działanie drobnym monospace'em. Przy normalnej sesji nie mówiły nic ponad
  * to, co mówi jedno słowo „w normie". Zostaje więc sama plakietka, a liczby przenoszą się
- * do arkusza (`design/10c-norma-detale.html`) — dla tego, kto zapyta „dlaczego tak".
+ * do arkusza (`design/10c-norma-detale.html`) - dla tego, kto zapyta „dlaczego tak".
  * Celem dotknięcia jest CAŁY wiersz: plakietka ma dziewięciopunktową czcionkę i sama
  * w sobie byłaby celem poniżej progu dostępności.
  */
@@ -51,14 +51,14 @@ export interface BalanceCardVerdict {
   tone: Tone;
 }
 
-/** Treść arkusza normy — otwieranego plakietką werdyktu. */
+/** Treść arkusza normy - otwieranego plakietką werdyktu. */
 export interface BalanceCardDetails {
   /** „NORMA PALIWA". */
   title: string;
   /** Zdanie streszczające werdykt, nad wierszami. */
   summary: string;
   rows: { label: string; value: string }[];
-  /** „Jak to liczymy: …" — pod wierszami, drobnym monospace. */
+  /** „Jak to liczymy: …" - pod wierszami, drobnym monospace. */
   note: string;
 }
 
@@ -72,7 +72,7 @@ export interface BalanceCardProps {
   /** Szczegóły normy pod plakietką; bez nich plakietka jest sama i nie reaguje. */
   details?: BalanceCardDetails | null;
   /**
-   * Adnotacja wieku normy (§4.8) — pokazywana W ARKUSZU, przy liczbach, których dotyczy.
+   * Adnotacja wieku normy (§4.8) - pokazywana W ARKUSZU, przy liczbach, których dotyczy.
    * Ekran podaje gotowy `FreshnessNote`, bo tylko on wie, kiedy cache się odświeżył.
    * Stan `live` nie rysuje nic, więc online arkusz zostaje bez adnotacji.
    */
@@ -103,7 +103,7 @@ export function BalanceCard({
       {rows.map((row) => (
         <View key={row.id} style={styles.row}>
           <View style={styles.key}>
-            {/* Stała szerokość znaku działania — bez niej etykiety w kolejnych wierszach
+            {/* Stała szerokość znaku działania - bez niej etykiety w kolejnych wierszach
                 zaczynają się w różnych miejscach i rachunek przestaje wyglądać jak rachunek. */}
             <AppText variant="mono" tone="muted" style={styles.op}>
               {row.op}
@@ -137,7 +137,7 @@ export function BalanceCard({
         <Pressable
           accessibilityRole={details != null ? 'button' : undefined}
           accessibilityLabel={
-            details != null ? `${verdict.label} — szczegóły normy` : verdict.label
+            details != null ? `${verdict.label} - szczegóły normy` : verdict.label
           }
           disabled={details == null}
           onPress={() => setDetailsOpen(true)}
@@ -148,7 +148,7 @@ export function BalanceCard({
           ]}
         >
           <Tag label={verdict.label} tone={verdict.tone} size="md" />
-          {/* Znak „są szczegóły" — bez niego plakietka wygląda na sam napis i nikt jej
+          {/* Znak „są szczegóły" - bez niego plakietka wygląda na sam napis i nikt jej
               nie dotknie. Ikona, nie napis: słowo w tym wierszu przekrzykiwałoby werdykt,
               który jest tu jedyną treścią. */}
           {details != null && (

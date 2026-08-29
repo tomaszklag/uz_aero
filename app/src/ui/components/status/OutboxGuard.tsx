@@ -1,12 +1,12 @@
 /**
- * UZ Aero — OutboxGuard (`.outbox-guard` z mockupów 00 i 13)
+ * UZ Aero - OutboxGuard (`.outbox-guard` z mockupów 00 i 13)
  *
  * Amber-box ochrony konta (§3.0): tłumaczy, DLACZEGO zmiana konta jest zablokowana
  * przy niepustym outboxie i co się stanie samo (wysyłka po powrocie zasięgu).
- * Jeden komponent zamiast kopii per ekran — wzorzec wraca przy każdej ścieżce
+ * Jeden komponent zamiast kopii per ekran - wzorzec wraca przy każdej ścieżce
  * prowadzącej do wylogowania (zamek 00, ustawienia 13, przyszłe warianty).
  *
- * Język pilota, nie systemu: bez słowa „outbox" — mówimy o zapisach dnia.
+ * Język pilota, nie systemu: bez słowa „outbox" - mówimy o zapisach dnia.
  */
 
 import React from 'react';
@@ -27,7 +27,7 @@ export interface OutboxGuardProps {
 
 export function OutboxGuard({
   count,
-  tail = ' nie dotarły jeszcze na serwer — wylogowanie by je osierociło. Wróć do zasięgu: wyślą się same i przycisk się odblokuje.',
+  tail = ' nie dotarły jeszcze na serwer - wylogowanie by je osierociło. Wróć do zasięgu: wyślą się same i przycisk się odblokuje.',
   style,
 }: OutboxGuardProps) {
   const { theme } = useTheme();

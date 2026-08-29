@@ -1,11 +1,11 @@
 /**
- * UZ Aero (serwer, testy) — świat referencyjny harnessu: 4 samoloty i 5 kont.
+ * UZ Aero (serwer, testy) - świat referencyjny harnessu: 4 samoloty i 5 kont.
  *
  * Do issue #50 ten scenariusz zakładał produkcyjny seed (`infrastructure/pg/seed.ts`)
  * i był wspólny z zaślepką telefonu. Produkcyjny seed stawia odtąd wyłącznie konto
  * administratora, więc scenariusz mieszka TU: testy dalej stoją na SP-AXA (wolny),
  * SP-FGK (zajmowany przez KRZ), SP-ANK (An-2 z wymogiem Duala) i SP-KWA (wyłączony)
- * oraz na kontach TMK/AKO/PWI/JSE/KRZ — a zmiany bootstrapu wdrożenia ich nie ruszają.
+ * oraz na kontach TMK/AKO/PWI/JSE/KRZ - a zmiany bootstrapu wdrożenia ich nie ruszają.
  *
  * Świeża PGlite na harness ⇒ zwykłe INSERTy, bez upsertu produkcyjnego seeda.
  */
@@ -22,7 +22,7 @@ const AIRCRAFT = [
 
 /**
  * Po jednym koncie każdej roli, żeby trasy panelu dało się przetestować bez ręcznego
- * UPDATE-u; reszta to zwykli piloci — stan domyślny konta bez dostępu do back-office'u.
+ * UPDATE-u; reszta to zwykli piloci - stan domyślny konta bez dostępu do back-office'u.
  */
 const PILOTS = [
   ['TMK', 'TMK', 'Tomasz Małkiewicz', 'tomasz@uzaero.pl', 'admin'],
@@ -45,7 +45,7 @@ export async function seedTestWorld(
     );
   }
 
-  // JEDEN hash na wszystkie konta — scrypt kosztuje ~100 ms na wywołanie, a pięć
+  // JEDEN hash na wszystkie konta - scrypt kosztuje ~100 ms na wywołanie, a pięć
   // identycznych haseł w świecie testowym niczego nie zdradza (inaczej niż w produkcji,
   // gdzie dawny seed liczył hash per konto właśnie po to, żeby tego nie ujawniać).
   const hash = await hasher.hash(password);

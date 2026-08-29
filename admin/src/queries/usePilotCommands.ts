@@ -1,18 +1,18 @@
 /**
- * UZ Aero — panel: MUTACJE kont pilotów (`A06`, `A06a`).
+ * UZ Aero - panel: MUTACJE kont pilotów (`A06`, `A06a`).
  *
  * **Mutacja deklaruje swoje unieważnienia TUTAJ, nie na ekranie**
  * (`docs/architektura-panelu-frontend.md` §4.3). Cztery operacje z tego pliku zmieniają
- * różne rzeczy, ale unieważniają ten sam zestaw — i lepiej, żeby ten zestaw miał jedno
+ * różne rzeczy, ale unieważniają ten sam zestaw - i lepiej, żeby ten zestaw miał jedno
  * miejsce, niż żeby cztery hooki pamiętały cztery listy.
  *
  * Co się zmienia po KAŻDEJ z nich:
- *  • **lista kont** — skład (nowe konto, zmiana statusu) i liczniki kafli; składu nie
+ *  • **lista kont** - skład (nowe konto, zmiana statusu) i liczniki kafli; składu nie
  *    symulujemy na kliencie, bo wymagałoby to powtórzenia serwerowego filtrowania
  *    i sortowania, a po pierwszym filtrze różnica jest gwarantowana;
- *  • **dziennik audytu** — `AuditedWrite` dopisał wpis TĄ SAMĄ transakcją, więc ekran
+ *  • **dziennik audytu** - `AuditedWrite` dopisał wpis TĄ SAMĄ transakcją, więc ekran
  *    `A09` otwarty obok jest nieaktualny dokładnie od tej chwili;
- *  • **pulpit** — unieważnia go każda mutacja panelu, bo alternatywą jest plakietka
+ *  • **pulpit** - unieważnia go każda mutacja panelu, bo alternatywą jest plakietka
  *    kłamiąca zaraz po zmianie.
  *
  * Czego tu NIE MA:
@@ -76,7 +76,7 @@ export function useSetPilotActive() {
     mutationFn: ({ id, active }) => setPilotActive(id, active),
     onSuccess: () => {
       invalidateAccounts(qc);
-      // Deaktywacja zrywa WSZYSTKIE sesje pilota — także tę, z której właśnie patrzysz,
+      // Deaktywacja zrywa WSZYSTKIE sesje pilota - także tę, z której właśnie patrzysz,
       // jeśli deaktywowano konto, którym jesteś zalogowany. Serwer tego nie dopuszcza
       // (`self_deactivate`), ale drugi administrator już tak: wtedy `['me']` musi
       // dostać 401 i zaprowadzić na ekran logowania, zamiast zostawić martwy panel.
@@ -91,7 +91,7 @@ export function useResetPilotPassword() {
     mutationFn: (id) => resetPilotPassword(id),
     onSuccess: () => {
       invalidateAccounts(qc);
-      // Reset zrywa sesje tak samo jak deaktywacja — łącznie z własną, gdy administrator
+      // Reset zrywa sesje tak samo jak deaktywacja - łącznie z własną, gdy administrator
       // resetuje hasło sobie (ścieżka ratunkowa z A06a). Sesja PANELU jedzie osobnym
       // ciasteczkiem i przeżywa, ale `['me']` i tak warto sprawdzić.
       void qc.invalidateQueries({ queryKey: keys.me });

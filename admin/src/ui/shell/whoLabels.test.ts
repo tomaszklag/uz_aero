@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: napisy stopki sidebara (moduł czysty).
+ * UZ Aero - panel: napisy stopki sidebara (moduł czysty).
  */
 
 import { describe, expect, it } from 'vitest';
@@ -7,12 +7,12 @@ import { describe, expect, it } from 'vitest';
 import { initials, roleLabel } from './whoLabels';
 
 describe('initials', () => {
-  it('dwa pierwsze człony, wielkimi — „TM" jak w mockupie', () => {
+  it('dwa pierwsze człony, wielkimi - „TM" jak w mockupie', () => {
     expect(initials('Tomasz Małkiewicz')).toBe('TM');
     expect(initials('anna kowalska')).toBe('AK');
   });
 
-  it('trzeci człon nie wchodzi — awatar ma 30 px, nie trzy litery', () => {
+  it('trzeci człon nie wchodzi - awatar ma 30 px, nie trzy litery', () => {
     expect(initials('Jan Maria Rokita')).toBe('JM');
   });
 

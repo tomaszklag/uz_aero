@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 05 Cockpit / Running</title>
+<title>UZ Aero - 05 Cockpit / Running</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -135,22 +135,22 @@
   .param-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--text-muted); }
   .param-value { font-family: var(--font-mono); font-size: 28px; font-weight: 400; letter-spacing: 2px; line-height: 1; color: var(--text-primary); }
   .param-unit { font-family: var(--font-mono); font-size: 11px; letter-spacing: 1px; color: var(--text-secondary); }
-  /* PALIWO KOLOROWANE WARUNKOWO (issue #19) — te dwie klasy to WARIANT OSTRZEGAWCZY,
+  /* PALIWO KOLOROWANE WARUNKOWO (issue #19) - te dwie klasy to WARIANT OSTRZEGAWCZY,
      nie domyślny wygląd komórki. Nakładamy je dopiero, gdy szacunek czasu lotu z FOB
      spadnie do ~1h45 (godzina zapasu nad rezerwą 45 min); na samej rezerwie 45 min ta
-     sama komórka idzie na czerwono. Powyżej progu — jak tutaj, przy ~92 L — paliwo jest
+     sama komórka idzie na czerwono. Powyżej progu - jak tutaj, przy ~92 L - paliwo jest
      neutralne. Powód: kolor ostrzegawczy świecący zawsze przestaje być ostrzeżeniem.
      `.param-cell.green-bg` została USUNIĘTA razem z zielenią „Flight Time". */
   .param-value.amber { color: var(--amber); }
   .param-cell.amber-bg { background: rgba(243,156,18,0.04); }
 
   /* ===== LOG SESJI = OŚ SESJI (issue #44) =====
-     Ten sam inwentarz klas, co na 04 i na 10 — pełne uzasadnienie stoi w 04. W skrócie:
+     Ten sam inwentarz klas, co na 04 i na 10 - pełne uzasadnienie stoi w 04. W skrócie:
      kokpit i rozliczenie pokazują TĘ SAMĄ sesję i nie ma powodu, żeby raz wyglądała jak
      szyna z ikonami i chipami, a raz jak kolumna czasu z kropkami.
 
      W locie różnice są DWIE i obie wymuszone stanem:
-      • oś kończy się wierszem „NA ŻYWO" — zielona kropka, bez godziny w lewej kolumnie
+      • oś kończy się wierszem „NA ŻYWO" - zielona kropka, bez godziny w lewej kolumnie
         (to nie jest zdarzenie rejestru, więc nie ma czasu zapisu) i z licznikiem po
         PRAWEJ, czyli tam, gdzie ta oś trzyma wszystkie czasy trwania;
       • karta przewija się sama i ma przyklejony nagłówek, bo w locie rośnie z każdym
@@ -202,7 +202,7 @@
   .axis-dot.blue { background: var(--blue); }
   .axis-dot.amber { background: var(--amber); }
   .axis-dot.hollow { background: var(--surface); border: 1.5px solid var(--text-muted); box-shadow: 0 0 0 2px var(--surface); }
-  /* ZIELEŃ NALEŻY WYŁĄCZNIE DO TERAŹNIEJSZOŚCI (issue #19) — stąd puls tylko tutaj.
+  /* ZIELEŃ NALEŻY WYŁĄCZNIE DO TERAŹNIEJSZOŚCI (issue #19) - stąd puls tylko tutaj.
      Uruchomienie silnika sprzed dwóch godzin nie wymaga uwagi bardziej niż starty
      i lądowania, które po nim nastąpiły. */
   .axis-dot.live { background: var(--green); animation: pulse 1.5s ease-in-out infinite; }
@@ -216,7 +216,7 @@
   .axis-flight { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.5px; color: var(--text-muted); }
   .axis-dur { font-family: var(--font-mono); font-size: 11px; color: var(--green); }
 
-  /* ===== BOTTOM ACTION ROW — next event primary, Zrzut middle, STOP right ===== */
+  /* ===== BOTTOM ACTION ROW - next event primary, Zrzut middle, STOP right ===== */
   .action-row {
     display: grid; grid-template-columns: 1fr auto auto;
     gap: 10px; padding: 12px 14px;
@@ -239,7 +239,7 @@
   }
   .zrzut-btn-lbl { font-family: var(--font-mono); font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase; white-space: nowrap; }
 
-  /* STOP ENGINE — wymaganie 3.2: jedyna akcja zawsze inicjowana ręcznie.
+  /* STOP ENGINE - wymaganie 3.2: jedyna akcja zawsze inicjowana ręcznie.
      Aktywny wyłącznie na ziemi (GS < 5 kt); w locie disabled z podanym powodem. */
   .stop-btn {
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
@@ -293,12 +293,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 05</span>
+  <span class="film-strip">UZ AERO - 05</span>
   <span class="slug">cockpit · running / in flight</span>
   <span class="canvas-meta"><span class="pulse"></span>Ekran 5</span>
 </header>
 
-<div class="phone-wrap"><main class="phone" role="region" aria-label="Mockup — Cockpit Running State">
+<div class="phone-wrap"><main class="phone" role="region" aria-label="Mockup - Cockpit Running State">
   <div class="status-bar">
     <span>10:34</span>
     <span class="status-right">
@@ -316,13 +316,13 @@
         <span class="compact-aircraft">SP-AXA</span>
         <span class="compact-sep">·</span>
         <!-- Dzień skoków: JEDEN kod ICAO, nie para (issue #13). Samolot wraca tam, skąd
-             wystartował, więc oba kody w rekordzie są równe — para start → lądowanie
+             wystartował, więc oba kody w rekordzie są równe - para start → lądowanie
              opisywałaby trasę, której w tym dniu nie da się polecieć. Para zostaje na
              paskach dni z operacją inną niż skoki. -->
         <span>EPKK · SKOKI</span>
       </div>
       <div class="compact-right">
-        <div class="offline-badge" title="Brak sieci — zdarzenia zapisują się lokalnie, wysyłka automatyczna po odzyskaniu zasięgu">
+        <div class="offline-badge" title="Brak sieci - zdarzenia zapisują się lokalnie, wysyłka automatyczna po odzyskaniu zasięgu">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
           Offline · 12
         </div>
@@ -330,7 +330,7 @@
           <span class="live-dot"></span>
           RUNNING
         </div>
-        <a href="13-ustawienia.html" class="gear-btn" style="text-decoration:none;" title="Ustawienia — motyw, PIN, konto, diagnostyka GPS">
+        <a href="13-ustawienia.html" class="gear-btn" style="text-decoration:none;" title="Ustawienia - motyw, PIN, konto, diagnostyka GPS">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         </a>
       </div>
@@ -341,16 +341,16 @@
     <div class="phase-hero">
       <div class="phase-body">
         <div class="phase-hero-icon">
-          <!-- dziób w prawo, poziomo — przelot; wznoszenie/zniżanie mają własne glify -->
+          <!-- dziób w prawo, poziomo - przelot; wznoszenie/zniżanie mają własne glify -->
           <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><g transform="rotate(90 12 12)"><path d="M21,16V14L13,9V3.5A1.5,1.5 0 0,0 11.5,2A1.5,1.5 0 0,0 10,3.5V9L2,14V16L10,13.5V19L8,20.5V22L11.5,21L15,22V20.5L13,19V13.5L21,16Z"/></g></svg>
         </div>
         <div class="phase-text">
           <!-- CRUISE, nie Climb (2026-08-11): ten mockup pokazuje AKTYWNY przycisk
-               zrzutu, a zrzut jest aktywny wyłącznie w locie poziomym — wyniesienie
+               zrzutu, a zrzut jest aktywny wyłącznie w locie poziomym - wyniesienie
                w Climb pokazuje 05B, z przygaszonym przyciskiem. -->
           <div class="phase-hero-name air">Cruise</div>
           <!-- Bez prędkości wznoszenia (2026-08-04): aplikacja to rejestrator, nie
-               przyrząd — wariometr jest na tablicy, a trend niesie nazwa fazy.
+               przyrząd - wariometr jest na tablicy, a trend niesie nazwa fazy.
                Linia `.phase-hero-sub` wraca tylko w kontekstach statusowych (05f/05g). -->
         </div>
       </div>
@@ -372,7 +372,7 @@
           <div class="param-unit">FT</div>
         </div>
       </div>
-      <!-- Paliwo neutralne, bo do rezerwy daleko (issue #19) — patrz komentarz przy
+      <!-- Paliwo neutralne, bo do rezerwy daleko (issue #19) - patrz komentarz przy
            `.param-cell.amber-bg`. Czas lotu też bez wyróżnienia: to odczyt, jak Ground
            Speed i Altitude, a nie stan wymagający uwagi. -->
       <div class="param-cell">
@@ -384,7 +384,7 @@
       </div>
       <!-- FLIGHT TIME = CZAS LOTU CAŁEJ SESJI, nie bieżącego wyniesienia (zgłoszenie
            z urządzenia, 2026-08-12): 0:44 + 0:42 z logu niżej plus 0:53 lotu otwartego.
-           Wcześniej kafelek pokazywał sam licznik lotu bieżącego — wtedy każdy
+           Wcześniej kafelek pokazywał sam licznik lotu bieżącego - wtedy każdy
            poprzedni lot znikał z przyrządu w chwili oderwania, a lot DOPISANY RĘCZNIE
            (05F, 08) nie ruszał go w ogóle i wyglądał jak zgubiony zapis. Czas
            bieżącego lotu stoi w logu sesji („W locie… 00:53:14"), więc kafelek go
@@ -398,13 +398,13 @@
     </div>
 
 
-    <!-- LOG SESJI (issue #44 — ta sama oś, co na 04 i 10)
+    <!-- LOG SESJI (issue #44 - ta sama oś, co na 04 i 10)
          KARTA POJAWIA SIĘ DOPIERO, GDY W SESJI COŚ ZASZŁO (issue #19): potrzebne jest
-         zdarzenie operacyjne — kołowanie, start, lądowanie albo zrzut. Zaraz po START
+         zdarzenie operacyjne - kołowanie, start, lądowanie albo zrzut. Zaraz po START
          ENGINE oś składałaby się z przejęcia, uruchomienia i wiersza „na żywo", czyli
          z rzeczy, które ekran mówi już gdzie indziej; kokpit wygląda wtedy tak jak 05A
          przed wykryciem kołowania, tylko bez tej karty.
-         Sumy sesji (Blok, Czas lotu) w locie NIE MAJĄ jeszcze wartości — silnik pracuje,
+         Sumy sesji (Blok, Czas lotu) w locie NIE MAJĄ jeszcze wartości - silnik pracuje,
          więc stopki osi tu nie ma; pojawia się po jego zatrzymaniu, na 04. -->
     <div class="session-log">
       <div class="session-log-header">
@@ -504,7 +504,7 @@
           <span class="axis-right"></span>
         </div>
 
-        <!-- WIERSZ „NA ŻYWO" — bez godziny po lewej, bo nie jest zdarzeniem rejestru;
+        <!-- WIERSZ „NA ŻYWO" - bez godziny po lewej, bo nie jest zdarzeniem rejestru;
              licznik biegnie po PRAWEJ, tam gdzie oś trzyma czasy trwania. Do issue #44
              ta sama informacja stała w kolumnie czasu i rozpychała ją do 64 px. -->
         <div class="axis-row">
@@ -518,17 +518,17 @@
 
     <!-- BOTTOM ACTIONS
          PRZYCISK „ZRZUT" ISTNIEJE TYLKO W DNIU SKOKOWYM (issue #19): przy przelocie,
-         egzaminie, locie technicznym i „innych" NIE MA GO W OGÓLE — nie ma czego
+         egzaminie, locie technicznym i „innych" NIE MA GO W OGÓLE - nie ma czego
          wynosić, więc zdarzenie `drop` nie może się wydarzyć, a wyszarzenie mówiłoby
          „teraz nie, ale kiedyś tak".
          W dniu skokowym przycisk żyje WYŁĄCZNIE w powietrzu (w stanach naziemnych
          05H/05A/05C/05D nie ma go wcale) i jest AKTYWNY tylko w locie poziomym
          (decyzja 2026-08-11): wyniesienie dzieje się w Cruise, więc w Climb i Descent
-         stoi przygaszony (patrz 05B) — w locie pasek musi trzymać stałą geometrię,
+         stoi przygaszony (patrz 05B) - w locie pasek musi trzymać stałą geometrię,
          bo pilot sięga po przyciski nie patrząc.
          Bramka fazy działa TYLKO na pozytywnej wiedzy detektora (poprawka 2026-08-11
          z urządzenia): przygasza wyłącznie Climb/Descent, które GPS aktywnie widzi.
-         Po starcie zapisanym RĘCZNIE detektor dalej twierdzi, że samolot stoi — taki
+         Po starcie zapisanym RĘCZNIE detektor dalej twierdzi, że samolot stoi - taki
          brak wiedzy nie przygasza niczego, inaczej zamykałby zrzut na cały lot.
          Z tego samego powodu bez GPS (05G) przycisk zostaje aktywny: faza nieznana,
          a ręczny zapis to jedyna droga.
@@ -537,15 +537,15 @@
          gdzie pilot ZAPISUJE zdarzenie, a skrót oszczędzał znaki na przycisku o dwóch
          trzecich szerokości ekranu. -->
     <div class="action-row">
-      <a href="05f-zdarzenie-reczne.html" class="primary-btn" title="Zapisz ręcznie — GPS nie wykrył zdarzenia albo wykrył za późno">
+      <a href="05f-zdarzenie-reczne.html" class="primary-btn" title="Zapisz ręcznie - GPS nie wykrył zdarzenia albo wykrył za późno">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="18 13 12 19 6 13"/></svg>
         Landing
       </a>
-      <a href="05e-zrzut.html" class="zrzut-btn" title="Zapis zrzutu — wysokość z GPS (średnia 15 s), skład wypełniony z załadunku do potwierdzenia · aktywny w locie poziomym (Cruise)">
+      <a href="05e-zrzut.html" class="zrzut-btn" title="Zapis zrzutu - wysokość z GPS (średnia 15 s), skład wypełniony z załadunku do potwierdzenia · aktywny w locie poziomym (Cruise)">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8 2 5 5 5 8c0 5 7 14 7 14s7-9 7-14c0-3-2.5-6-7-6z"/><circle cx="12" cy="8" r="2" fill="currentColor" stroke="none"/></svg>
         <span class="zrzut-btn-lbl">Zrzut</span>
       </a>
-      <span class="stop-btn disabled" title="Silnik zatrzymasz po wylądowaniu i zakończeniu dobiegu — engine_stop w locie byłby fałszywym wpisem">
+      <span class="stop-btn disabled" title="Silnik zatrzymasz po wylądowaniu i zakończeniu dobiegu - engine_stop w locie byłby fałszywym wpisem">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
         STOP
         <span class="stop-btn-lbl">po LDG</span>
@@ -556,14 +556,14 @@
 </main>
 <nav class="state-sidebar">
   <div class="state-sidebar-lbl">Kokpit</div>
-  <a href="05h-cockpit-idle.html" title="Kiedy: silnik ON, samolot jeszcze stoi — przycisk Taxi otwiera sekwencję; ruch zapisze też autodetekcja"><span class="dot"></span>Engine idle</a>
-  <a href="05a-cockpit-taxi.html" title="Kiedy: kołowanie trwa (zapisane przez autodetekcję albo przycisk Taxi) — przycisk podpowiada Take off"><span class="dot"></span>Taxi przed T/O</a>
-  <a href="05-cockpit-running.html" class="active" title="Kiedy: w locie — phase hero (Climb/Cruise/Descent), GPS live, log zdarzeń, buforowanie offline"><span class="dot"></span>In Flight</a>
-  <a href="05b-cockpit-inflight-toast.html" title="Kiedy: GPS wykrył start (GS > 50 kt) — toast z odliczaniem, 5 s na Cofnij"><span class="dot"></span>Toast Takeoff</a>
-  <a href="05c-cockpit-toast-ldg.html" title="Kiedy: GPS wykrył lądowanie (GS < 30 kt + niska wysokość) — toast z Cofnij podczas rolloutu"><span class="dot"></span>Toast Landing</a>
-  <a href="05d-cockpit-taxi-post.html" title="Kiedy: lot ukończony, silnik nadal ON — kołowanie; kolejny T/O albo STOP ENGINE"><span class="dot"></span>Taxi po LDG</a>
-  <a href="05i-zaladunek.html" title="Kiedy: na ziemi dnia skokowego — skoczkowie wsiadają; skład opcjonalny, wypełni arkusz zrzutu (issue #21)"><span class="dot"></span>Załadunek</a>
-  <a href="05g-cockpit-no-gps.html" title="Kiedy: GPS stracił fixa — parametry — —, autodetekcja wstrzymana, wejścia ręczne aktywne; sieć osobno (SYNC może być zielony)"><span class="dot"></span>No GPS</a>
+  <a href="05h-cockpit-idle.html" title="Kiedy: silnik ON, samolot jeszcze stoi - przycisk Taxi otwiera sekwencję; ruch zapisze też autodetekcja"><span class="dot"></span>Engine idle</a>
+  <a href="05a-cockpit-taxi.html" title="Kiedy: kołowanie trwa (zapisane przez autodetekcję albo przycisk Taxi) - przycisk podpowiada Take off"><span class="dot"></span>Taxi przed T/O</a>
+  <a href="05-cockpit-running.html" class="active" title="Kiedy: w locie - phase hero (Climb/Cruise/Descent), GPS live, log zdarzeń, buforowanie offline"><span class="dot"></span>In Flight</a>
+  <a href="05b-cockpit-inflight-toast.html" title="Kiedy: GPS wykrył start (GS > 50 kt) - toast z odliczaniem, 5 s na Cofnij"><span class="dot"></span>Toast Takeoff</a>
+  <a href="05c-cockpit-toast-ldg.html" title="Kiedy: GPS wykrył lądowanie (GS < 30 kt + niska wysokość) - toast z Cofnij podczas rolloutu"><span class="dot"></span>Toast Landing</a>
+  <a href="05d-cockpit-taxi-post.html" title="Kiedy: lot ukończony, silnik nadal ON - kołowanie; kolejny T/O albo STOP ENGINE"><span class="dot"></span>Taxi po LDG</a>
+  <a href="05i-zaladunek.html" title="Kiedy: na ziemi dnia skokowego - skoczkowie wsiadają; skład opcjonalny, wypełni arkusz zrzutu (issue #21)"><span class="dot"></span>Załadunek</a>
+  <a href="05g-cockpit-no-gps.html" title="Kiedy: GPS stracił fixa - parametry - -, autodetekcja wstrzymana, wejścia ręczne aktywne; sieć osobno (SYNC może być zielony)"><span class="dot"></span>No GPS</a>
 </nav>
 </div>
 

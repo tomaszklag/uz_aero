@@ -1,15 +1,15 @@
 /**
- * UZ Aero — panel: FORMULARZ KONTA (`A06a`) — walidacja i szkic (moduł CZYSTY).
+ * UZ Aero - panel: FORMULARZ KONTA (`A06a`) - walidacja i szkic (moduł CZYSTY).
  *
  * Serwer sprawdza dokładnie to samo (`http/routes/admin/pilots.ts`), więc to NIE JEST
  * zabezpieczenie. To różnica między „przycisk mówi, czego brakuje" a „serwer odbija
- * 400 bez wyjaśnienia" — i dlatego reguły są tu LUSTREM reguł serwera, wypisanym obok
+ * 400 bez wyjaśnienia" - i dlatego reguły są tu LUSTREM reguł serwera, wypisanym obok
  * z podaniem, czego dotyczą.
  *
  * ══ CZEGO W TYM FORMULARZU NIE MA ══
  * **Pola hasła.** Panel nigdy hasła nie wysyła: generuje je serwer i oddaje jeden raz
  * w odpowiedzi (`A06a`: „Hasło startowe · pokazane raz"). Formularz opisuje wyłącznie
- * tożsamość i rolę — a to, że nie ma tu czego wpisać, jest treścią rozstrzygnięcia,
+ * tożsamość i rolę - a to, że nie ma tu czego wpisać, jest treścią rozstrzygnięcia,
  * nie brakiem funkcji.
  */
 
@@ -33,7 +33,7 @@ export const EMAIL_MAX = 200;
 
 export interface FieldState {
   ok: boolean;
-  /** Powód odmowy — WIDOCZNY tekst pod polem, nigdy tooltip; `null` = pole w porządku. */
+  /** Powód odmowy - WIDOCZNY tekst pod polem, nigdy tooltip; `null` = pole w porządku. */
   message: string | null;
 }
 
@@ -42,7 +42,7 @@ const OK: FieldState = { ok: true, message: null };
 export function nameState(value: string): FieldState {
   const text = value.trim();
   if (text.length === 0) {
-    return { ok: false, message: 'Imię i nazwisko jest wymagane — bez niego wiersz w logu dnia nie ma podpisu.' };
+    return { ok: false, message: 'Imię i nazwisko jest wymagane - bez niego wiersz w logu dnia nie ma podpisu.' };
   }
   if (text.length < NAME_MIN || text.length > NAME_MAX) {
     return { ok: false, message: `Imię i nazwisko: od ${NAME_MIN} do ${NAME_MAX} znaków.` };
@@ -53,7 +53,7 @@ export function nameState(value: string): FieldState {
 /**
  * Kod normalizujemy do WERSALIKÓW, a nie odrzucamy małych liter: „kza" i „KZA" to
  * w intencji administratora ten sam kod, a logowanie dopasowuje bez rozróżniania
- * wielkości. Serwer robi dokładnie to samo — panel pokazuje wynik od razu, żeby
+ * wielkości. Serwer robi dokładnie to samo - panel pokazuje wynik od razu, żeby
  * wielka litera w polu nie była niespodzianką po zapisie.
  */
 export function normalizeCode(value: string): string {
@@ -63,7 +63,7 @@ export function normalizeCode(value: string): string {
 export function codeState(value: string): FieldState {
   const code = normalizeCode(value);
   if (code.length === 0) {
-    return { ok: false, message: 'Kod pilota jest wymagany — widać go w logu dnia i w karcie arkusza.' };
+    return { ok: false, message: 'Kod pilota jest wymagany - widać go w logu dnia i w karcie arkusza.' };
   }
   if (code.length < CODE_MIN || code.length > CODE_MAX) {
     return { ok: false, message: `Kod pilota: od ${CODE_MIN} do ${CODE_MAX} znaków.` };
@@ -87,7 +87,7 @@ export function emailState(value: string): FieldState {
   if (text.length === 0) return OK;
   if (text.length > EMAIL_MAX) return { ok: false, message: `E-mail: najwyżej ${EMAIL_MAX} znaków.` };
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text)) {
-    return { ok: false, message: 'E-mail musi wyglądać jak adres — to on jest loginem do aplikacji.' };
+    return { ok: false, message: 'E-mail musi wyglądać jak adres - to on jest loginem do aplikacji.' };
   }
   return OK;
 }
@@ -98,7 +98,7 @@ export interface FormState {
   email: FieldState;
   /** Czy wolno wysłać. */
   ok: boolean;
-  /** Powód blokady przycisku — WIDOCZNY tekst, nigdy sam wyszarzony przycisk. */
+  /** Powód blokady przycisku - WIDOCZNY tekst, nigdy sam wyszarzony przycisk. */
   reason: string | null;
 }
 
@@ -113,7 +113,7 @@ export function formState(draft: AccountDraft): FormState {
     code,
     email,
     ok,
-    reason: ok ? null : 'Popraw pola oznaczone niżej — serwer odrzuci ten zapis.',
+    reason: ok ? null : 'Popraw pola oznaczone niżej - serwer odrzuci ten zapis.',
   };
 }
 
@@ -162,7 +162,7 @@ export function updateBody(before: PilotListItemDto, draft: AccountDraft): Updat
   return body;
 }
 
-/** Czy formularz w ogóle coś zmienia — bez tego przycisk „Zapisz" prosi o 400. */
+/** Czy formularz w ogóle coś zmienia - bez tego przycisk „Zapisz" prosi o 400. */
 export function hasChanges(before: PilotListItemDto, draft: AccountDraft): boolean {
   return Object.keys(updateBody(before, draft)).length > 0;
 }
@@ -174,7 +174,7 @@ export interface RoleOption {
 }
 
 /**
- * Opisy ról 1:1 z mockupu `A06a` — to jest jedyne miejsce w produkcie, w którym
+ * Opisy ról 1:1 z mockupu `A06a` - to jest jedyne miejsce w produkcie, w którym
  * człowiek czyta, co rola oznacza PRZED jej nadaniem. Kolejność od najmniejszych
  * uprawnień, żeby wybór w górę był świadomy.
  */
@@ -192,6 +192,6 @@ export const ROLE_OPTIONS: readonly RoleOption[] = [
   {
     id: 'admin',
     name: 'Administrator',
-    desc: 'Panel w całości: konta, flota, progi detekcji, korekty po oknie 24 h. Rola nie daje niczego w aplikacji — administrator lata na tych samych zasadach.',
+    desc: 'Panel w całości: konta, flota, progi detekcji, korekty po oknie 24 h. Rola nie daje niczego w aplikacji - administrator lata na tych samych zasadach.',
   },
 ];

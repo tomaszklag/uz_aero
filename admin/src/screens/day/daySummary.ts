@@ -1,9 +1,9 @@
 /**
- * UZ Aero — panel: KAFLE I KARTY KARTY DNIA, `SessionState` → napisy (moduł CZYSTY).
+ * UZ Aero - panel: KAFLE I KARTY KARTY DNIA, `SessionState` → napisy (moduł CZYSTY).
  *
  * ══ TEN PLIK NIE LICZY DNIA ══
  * Każda wielkość (`blockTimeMs`, `flightTimeMs`, `fuel.consumedL`, `mh.deltaH`,
- * `drops.*`) przychodzi POLICZONA przez `projectSession` — tę samą funkcję, którą
+ * `drops.*`) przychodzi POLICZONA przez `projectSession` - tę samą funkcję, którą
  * telefon liczy ekran 10 i którą serwer buduje kartę arkusza. Tutaj jest wyłącznie
  * formatowanie przez `@uzaero/format` i wybór słów.
  *
@@ -14,14 +14,14 @@
  *
  * ══ KARTA OPISUJE SESJĘ SAMOLOTU, NIE DZIEŃ PILOTA ══
  * Nie ma tu i nie może być czasu służby: klamra służby nie istnieje w modelu w ogóle
- * (issue #23 — dzień pilota to lista sesji), a na karcie jednej maszyny byłaby pomyłką
+ * (issue #23 - dzień pilota to lista sesji), a na karcie jednej maszyny byłaby pomyłką
  * kategorii także wcześniej (patrz `heldTile`). Jednostką jest odcinek
  * PRZEJĘCIE → ZDANIE.
  *
- * ══ SAMOLOT NIEODDANY: „—" I KONIEC ══
+ * ══ SAMOLOT NIEODDANY: „-" I KONIEC ══
  * Sesja bez `day_close` nie ma odczytów końcowych, więc nie ma zużycia paliwa, delty
  * motogodzin ani domkniętego czasu zajęcia. Panel pokazuje kreskę i mówi, co ją wypełni.
- * **Nie ekstrapoluje** — ani z ostatniego odczytu, ani z tempa dnia, ani z „teraz".
+ * **Nie ekstrapoluje** - ani z ostatniego odczytu, ani z tempa dnia, ani z „teraz".
  * To jest cała treść tego stanu i nic poza nią nie jest prawdą.
  */
 
@@ -48,15 +48,15 @@ export interface KvRow {
   tone?: KeyValueTone;
 }
 
-/** „30 JUL 2026 14:22:07" — stempel bezwzględny, zawsze UTC i zawsze oznaczony. */
+/** „30 JUL 2026 14:22:07" - stempel bezwzględny, zawsze UTC i zawsze oznaczony. */
 export function utcStamp(t: number | null): string {
-  return t == null ? '—' : `${dateUtcShort(t)} ${timeUtcSeconds(t)}`;
+  return t == null ? '-' : `${dateUtcShort(t)} ${timeUtcSeconds(t)}`;
 }
 
 /** ISO z serwera → stempel UTC; napis nieczytelny mówi to wprost zamiast „NaN". */
 function isoStamp(iso: string): string {
   const at = Date.parse(iso);
-  return Number.isNaN(at) ? '—' : utcStamp(at);
+  return Number.isNaN(at) ? '-' : utcStamp(at);
 }
 
 /**
@@ -75,7 +75,7 @@ function deltaUnit(format: MhFormat | null): string | undefined {
  *
  * Czego tu NIE MA i dlaczego: kafla **„Średnie zużycie L/h"** z mockupu. `SessionState`
  * nie niesie tej wielkości, a policzenie jej tutaj (zużycie ÷ czas blokowy) byłoby
- * dokładnie tym „panelem, który liczy po swojemu" — pierwszą liczbą na ekranie, której
+ * dokładnie tym „panelem, który liczy po swojemu" - pierwszą liczbą na ekranie, której
  * serwer nigdy nie wysłał, i pierwszą, która rozjedzie się z arkuszem, gdy ktoś zmieni
  * definicję (na blok czy na czas lotu?). Wchodzi wtedy, gdy policzy ją `projectSession`.
  */
@@ -104,7 +104,7 @@ export function dayTiles(state: SessionState, mhFormat: MhFormat | null): DayTil
       tone: balanced ? 'green' : 'amber',
       note: balanced
         ? 'Bilans się domyka. Zdarzenia unieważnione nie wchodzą do liczb.'
-        : 'Bilans się NIE domyka — brakuje lądowania albo startu. Sprawdź oś zdarzeń.',
+        : 'Bilans się NIE domyka - brakuje lądowania albo startu. Sprawdź oś zdarzeń.',
     },
     {
       label: 'Paliwo zużyte',
@@ -112,7 +112,7 @@ export function dayTiles(state: SessionState, mhFormat: MhFormat | null): DayTil
       tone: state.fuel.consumedL == null ? undefined : 'amber',
       note: state.closed
         ? 'Startowe + dolane − końcowe, z odczytów paliwomierza.'
-        : 'Bilans domknie odczyt końcowy z `day_close`. Do tego czasu — nic.',
+        : 'Bilans domknie odczyt końcowy z `day_close`. Do tego czasu - nic.',
     },
     {
       label: 'Δ motogodzin',
@@ -131,11 +131,11 @@ export function dayTiles(state: SessionState, mhFormat: MhFormat | null): DayTil
  *
  * ══ TU STAŁ KAFEL „CZAS SŁUŻBY (DUTY)" I BYŁA TO POMYŁKA KATEGORII ══
  * Karta opisuje SESJĘ JEDNEGO SAMOLOTU, a służba należała do PILOTA i potrafiła objąć
- * kilka maszyn — więc jej upływ nigdy nie był własnością tej karty. Od issue #23
+ * kilka maszyn - więc jej upływ nigdy nie był własnością tej karty. Od issue #23
  * (2026-08-11) klamra służby nie istnieje w modelu w ogóle: payloady nie niosą
  * `dutyStart`/`dutyEnd`, więc i oś zdarzeń nie ma czego pokazywać.
  *
- * Zostaje **odjęcie dwóch stempli** — to samo działanie, co wiek sprawy w skrzynce flag
+ * Zostaje **odjęcie dwóch stempli** - to samo działanie, co wiek sprawy w skrzynce flag
  * (`flagRows.ts`): upływ między dwiema chwilami, które podał serwer, a nie druga wersja
  * liczby dnia. `SessionState` nie ma pola `heldMs`, bo zajętość maszyny nie wchodzi do
  * żadnego bilansu.
@@ -144,14 +144,14 @@ function heldTile(state: SessionState): DayTile {
   if (state.claimedAt == null) {
     return {
       label: 'Samolot zajęty',
-      value: '—',
-      note: 'Rejestr bez `session_claim` — nie ma chwili przejęcia, od której liczy się sesja.',
+      value: '-',
+      note: 'Rejestr bez `session_claim` - nie ma chwili przejęcia, od której liczy się sesja.',
     };
   }
   if (state.closedAt == null) {
     return {
       label: 'Samolot zajęty',
-      value: '—',
+      value: '-',
       note: `Przejęty ${timeUtcSeconds(state.claimedAt)} UTC · maszyny jeszcze nie zdano.`,
     };
   }
@@ -163,7 +163,7 @@ function heldTile(state: SessionState): DayTile {
   };
 }
 
-/** Karta „Sesja" — tożsamość dnia i to, co o nim wie serwer poza liczbami. */
+/** Karta „Sesja" - tożsamość dnia i to, co o nim wie serwer poza liczbami. */
 export function sessionRows(
   session: SessionListItemDto,
   state: SessionState,
@@ -174,7 +174,7 @@ export function sessionRows(
     { label: 'session_uuid', value: session.sessionUuid },
     // Przejęcie, a nie meldunek: to `session_claim` otwiera sesję i przypisuje ją do
     // doby. Zadeklarowana godzina meldunku (jeśli w ogóle padła) stoi na osi zdarzeń
-    // przy `preflight_confirm` — jest treścią zdarzenia, nie właściwością sesji.
+    // przy `preflight_confirm` - jest treścią zdarzenia, nie właściwością sesji.
     { label: 'Przejęcie samolotu', value: utcStamp(state.claimedAt) },
   ];
 
@@ -202,7 +202,7 @@ export function sessionRows(
   return rows;
 }
 
-/** Karta „Paliwo" — wszystko w litrach, z odczytów paliwomierza. */
+/** Karta „Paliwo" - wszystko w litrach, z odczytów paliwomierza. */
 export function fuelRows(state: SessionState): KvRow[] {
   return [
     { label: 'Startowe', value: litres(state.fuel.startL) },
@@ -217,7 +217,7 @@ export function fuelRows(state: SessionState): KvRow[] {
   ];
 }
 
-/** Karta „Motogodziny" — wartości licznika W FORMACIE TEGO SAMOLOTU. */
+/** Karta „Motogodziny" - wartości licznika W FORMACIE TEGO SAMOLOTU. */
 export function mhRows(state: SessionState, mhFormat: MhFormat | null): KvRow[] {
   return [
     { label: 'Początek', value: motoHours(state.mh.start, mhFormat) },
@@ -234,7 +234,7 @@ export function mhRows(state: SessionState, mhFormat: MhFormat | null): KvRow[] 
           ? 'hh:mm'
           : mhFormat === 'decimal'
             ? 'dziesiętny'
-            : 'nieznany — pokazane dziesiętnie',
+            : 'nieznany - pokazane dziesiętnie',
       ...(mhFormat == null ? { tone: 'amber' as const } : {}),
     },
   ];
@@ -244,7 +244,7 @@ export function mhRows(state: SessionState, mhFormat: MhFormat | null): KvRow[] 
  * Karta „Zrzuty · strona przychodowa".
  *
  * Średnia wysokość przychodzi z projekcji jako liczba zmiennoprzecinkowa i tutaj jest
- * **zaokrąglana do pełnych stóp wyłącznie do wyświetlenia** — wysokość zrzutu z GPS
+ * **zaokrąglana do pełnych stóp wyłącznie do wyświetlenia** - wysokość zrzutu z GPS
  * nie ma sensownej części ułamkowej, a „12856.25 ft" sugerowałoby dokładność, której
  * nie ma. To jest formatowanie liczby serwera, nie jej wyliczenie.
  */
@@ -259,9 +259,9 @@ export function dropRows(state: SessionState): KvRow[] {
     },
     {
       label: 'Śr. wysokość',
-      value: d.avgAltitudeFt == null ? '—' : String(Math.round(d.avgAltitudeFt)),
+      value: d.avgAltitudeFt == null ? '-' : String(Math.round(d.avgAltitudeFt)),
       ...(d.avgAltitudeFt == null ? {} : { unit: 'ft' }),
     },
-    { label: 'Klient', value: state.client ?? '—' },
+    { label: 'Klient', value: state.client ?? '-' },
   ];
 }

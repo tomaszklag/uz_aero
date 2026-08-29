@@ -1,27 +1,27 @@
 /**
- * UZ Aero — UPRAWNIENIE ZAPISU: `checkAppend(…, 'administrative')` vs `'pilot'`.
+ * UZ Aero - UPRAWNIENIE ZAPISU: `checkAppend(…, 'administrative')` vs `'pilot'`.
  *
- * Ten plik nie testuje „czy administrator może poprawić dzień po 24 h" — to sprawdza
+ * Ten plik nie testuje „czy administrator może poprawić dzień po 24 h" - to sprawdza
  * przekrój serwerowy (`server/test/adminCorrections.test.ts`). Tu przybijamy własność
  * WĘŻSZĄ i ważniejszą: **różnica między trybami to DOKŁADNIE gałąź
  * `CORRECTION_WINDOW_EXPIRED` i nic poza nią**.
  *
  * Po co osobny plik i tak żmudna bateria przypadków: parametr uprawnienia jest jedynym
  * miejscem w domenie, w którym reguła daje się wyłączyć. Taka konstrukcja rozlewa się
- * po kodzie sama — ktoś dopisze drugie `authority === 'pilot' &&` przy `WRITER_MISMATCH`
+ * po kodzie sama - ktoś dopisze drugie `authority === 'pilot' &&` przy `WRITER_MISMATCH`
  * („przecież administrator pisze w cudzej sesji"), potem trzecie, a po roku nikt nie
  * wie, ile reguł obowiązuje panel. Test niżej wywala się przy KAŻDYM takim dopisku,
  * bo porównuje pełne listy naruszeń obu trybów, przypadek po przypadku.
  *
- * PRZEPISANY 2026-08-07 (etap B3) — dwie rzeczy zmieniły się w modelu:
+ * PRZEPISANY 2026-08-07 (etap B3) - dwie rzeczy zmieniły się w modelu:
  *
  * 1. **Okno kotwiczy się we WZLOCIE, nie w zamknięciu dnia** (§3.6a). W tym scenariuszu
- *    wzlot kończy się o `min(154)`, a samolot jest zdawany dopiero o `min(300)` — okno
+ *    wzlot kończy się o `min(154)`, a samolot jest zdawany dopiero o `min(300)` - okno
  *    biegnie więc od wcześniejszej z tych chwil, bo dotyczy DANYCH LOTU, nie przekazania
  *    maszyny.
  * 2. **Administrator nie jest NIGDY blokowany** (decyzja użytkownika), ale przy kolizji
  *    z pilotem dostaje OSTRZEŻENIA. Właściwość, której pilnuje ten plik, jest więc dziś
- *    mocniejsza i czystsza: **TWARDE reguły (`error`) są w obu trybach IDENTYCZNE — bez
+ *    mocniejsza i czystsza: **TWARDE reguły (`error`) są w obu trybach IDENTYCZNE - bez
  *    wyjątku, także dla okna. Różnica mieści się wyłącznie w miękkich ostrzeżeniach
  *    i wyłącznie w dwóch kodach `ADMIN_EDIT_*`.**
  *
@@ -29,10 +29,10 @@
  * przy jakiejkolwiek regule wywali grupę A, bo porównuje pełne listy błędów obu trybów.
  *
  * Trzy grupy:
- *  A — okno NIE minęło: twarde reguły identyczne, ostrzeżenia admina wyłącznie `ADMIN_EDIT_*`,
- *  B — okno minęło: administrator traci wyłącznie `CORRECTION_WINDOW_EXPIRED`,
+ *  A - okno NIE minęło: twarde reguły identyczne, ostrzeżenia admina wyłącznie `ADMIN_EDIT_*`,
+ *  B - okno minęło: administrator traci wyłącznie `CORRECTION_WINDOW_EXPIRED`,
  *      a wszystkie pozostałe reguły dalej go odrzucają,
- *  C — pominięcie argumentu = `'pilot'`, czyli komplet reguł.
+ *  C - pominięcie argumentu = `'pilot'`, czyli komplet reguł.
  */
 
 import {
@@ -54,14 +54,14 @@ const PIC = 'pic-1';
 /** Konfiguracja SP-AXA: Cessna 182, zbiorniki 330 L (jak w `rules.test.ts`). */
 const LIMITS: AircraftLimits = { capacityL: 330, oilMinL: null, oilCapacityL: null };
 
-/** 22 JUNE 2026, 08:00 UTC — początek kanonicznego dnia. */
+/** 22 JUNE 2026, 08:00 UTC - początek kanonicznego dnia. */
 const T0 = Date.UTC(2026, 5, 22, 8, 0, 0);
 const min = (m: number): number => T0 + m * 60_000;
 const MH_START = 1234.5;
 /**
- * Samolot zdany o 13:00 UTC (min 300) — i TO jest kotwica okna korekty
+ * Samolot zdany o 13:00 UTC (min 300) - i TO jest kotwica okna korekty
  * (model 2026-08-10: zdanie = zatwierdzenie logu, okno 24 h liczy się od niego).
- * Silnik zgasł o 10:34 (min 154); różnica 146 minut jest w tym teście celowa —
+ * Silnik zgasł o 10:34 (min 154); różnica 146 minut jest w tym teście celowa -
  * gdyby okno dalej wisiało na zgaszeniu silnika, asercje granicy przeszłyby
  * przez przypadek.
  */
@@ -121,7 +121,7 @@ const inFlight = (): Event[] => [...running(), ev('takeoff', { method: 'auto' },
 const LANDING = ev('landing', { method: 'auto' }, { t: min(78) });
 const afterCycle = (): Event[] => [...inFlight(), LANDING, ev('engine_stop', {}, { t: min(154) })];
 
-/** Ten sam dzień, ale ZAMKNIĘTY o 13:00 — materiał na okno korekty. */
+/** Ten sam dzień, ale ZAMKNIĘTY o 13:00 - materiał na okno korekty. */
 const CLOSED_STREAM: Event[] = [
   ...afterCycle(),
   ev(
@@ -130,11 +130,11 @@ const CLOSED_STREAM: Event[] = [
     { t: CLOSED_AT },
   ),
 ];
-/** Zdarzenia, w które celują korekty — muszą pochodzić z TEGO strumienia. */
+/** Zdarzenia, w które celują korekty - muszą pochodzić z TEGO strumienia. */
 const CLOSED_LANDING = CLOSED_STREAM.find((e) => e.type === 'landing')!;
 const CLOSED_PREFLIGHT = CLOSED_STREAM.find((e) => e.type === 'preflight_confirm')!;
 
-/** Korekta zapisana o `recordedAt` — `t` decyduje, czy okno 24 h już minęło. */
+/** Korekta zapisana o `recordedAt` - `t` decyduje, czy okno 24 h już minęło. */
 function correction(
   targetUuid: string,
   recordedAt: number,
@@ -160,7 +160,7 @@ const asAdmin = (stream: Event[], candidate: Event): RuleViolation[] =>
 
 /**
  * Bateria przypadków, w których okno korekty NIE minęło (dzień otwarty albo zamknięty
- * mniej niż 24 h temu). Każdy trafia w inną gwardię — razem pokrywają cały słownik
+ * mniej niż 24 h temu). Każdy trafia w inną gwardię - razem pokrywają cały słownik
  * `ViolationCode` poza samym `CORRECTION_WINDOW_EXPIRED`, co pilnuje test kontrolny
  * na końcu tej grupy.
  */
@@ -251,7 +251,7 @@ const SAME_IN_BOTH_MODES: Array<[string, Event[], Event]> = [
   // (Przypadek „koniec służby przed meldunkiem" usunięty 2026-08-11 razem z regułą
   //  DUTY_END_BEFORE_START i klamrą służby, issue #23.)
   [
-    // Skład jest opcjonalny (issue #21) — twarda gwardia została wyłącznie na
+    // Skład jest opcjonalny (issue #21) - twarda gwardia została wyłącznie na
     // składzie NIEMOŻLIWYM, więc baterię zasila ujemna liczba, nie zero.
     'zrzut z ujemnym składem',
     inFlight(),
@@ -365,7 +365,7 @@ const SAME_IN_BOTH_MODES: Array<[string, Event[], Event]> = [
   ],
 ];
 
-/** Jedyne dwa kody, o które administratorowi wolno się różnić — i to MIĘKKO. */
+/** Jedyne dwa kody, o które administratorowi wolno się różnić - i to MIĘKKO. */
 const ADMIN_ONLY_WARNINGS: ViolationCode[] = [
   'ADMIN_EDIT_SESSION_ACTIVE',
   'ADMIN_EDIT_PILOT_WINDOW_OPEN',
@@ -375,20 +375,20 @@ const hard = (v: RuleViolation[]): RuleViolation[] => v.filter((x) => x.severity
 const soft = (v: RuleViolation[]): RuleViolation[] => v.filter((x) => x.severity === 'warning');
 
 describe('A · dopóki okno korekty trwa, oba tryby są nierozróżnialne', () => {
-  it.each(SAME_IN_BOTH_MODES)('%s — twarde reguły identyczne', (_name, stream, candidate) => {
+  it.each(SAME_IN_BOTH_MODES)('%s - twarde reguły identyczne', (_name, stream, candidate) => {
     // Porównujemy PEŁNE obiekty, nie same kody: gdyby uprawnienie zmieniało wagę albo
     // treść komunikatu, byłaby to równie realna zmiana zachowania.
     expect(hard(asAdmin(stream, candidate))).toEqual(hard(asPilot(stream, candidate)));
   });
 
-  it.each(SAME_IN_BOTH_MODES)('%s — admin różni się WYŁĄCZNIE ostrzeżeniami ADMIN_EDIT_*', (_name, stream, candidate) => {
+  it.each(SAME_IN_BOTH_MODES)('%s - admin różni się WYŁĄCZNIE ostrzeżeniami ADMIN_EDIT_*', (_name, stream, candidate) => {
     const pilotSoft = soft(asPilot(stream, candidate));
     const adminSoft = soft(asAdmin(stream, candidate));
 
     // Wszystko, co pilot dostaje miękko, administrator dostaje też.
     expect(adminSoft).toEqual(expect.arrayContaining(pilotSoft));
 
-    // A nadwyżka administratora mieści się w dwóch dozwolonych kodach — nigdy
+    // A nadwyżka administratora mieści się w dwóch dozwolonych kodach - nigdy
     // w żadnym innym. To jest bariera przed rozlaniem się uprawnienia.
     const extra = adminSoft.filter((a) => !pilotSoft.some((p) => p.code === a.code));
     for (const w of extra) expect(ADMIN_ONLY_WARNINGS).toContain(w.code);
@@ -480,11 +480,11 @@ describe('B · po oknie 24 h administrator traci wyłącznie CORRECTION_WINDOW_E
     const past = correction(CLOSED_LANDING.uuid, WINDOW_ANCHOR + CORRECTION_WINDOW_MS + 1);
     expect(codes(asPilot(CLOSED_STREAM, past))).toEqual(['CORRECTION_WINDOW_EXPIRED']);
     // Milisekundę po granicy okno pilota jest zamknięte, więc administrator nie ma
-    // już z kim kolidować — przechodzi zupełnie czysto.
+    // już z kim kolidować - przechodzi zupełnie czysto.
     expect(asAdmin(CLOSED_STREAM, past)).toEqual([]);
   });
 
-  it('naruszenia koperty obowiązują administratora — znika sam kod okna, nic więcej', () => {
+  it('naruszenia koperty obowiązują administratora - znika sam kod okna, nic więcej', () => {
     // Koperta zbiera naruszenia razem, więc tu widać RÓŻNICĘ list wprost: to jedyny
     // układ, w którym oba tryby zwracają niepustą listę, a admin ma ją krótszą o jeden.
     const foreignWriter = ev(
@@ -522,7 +522,7 @@ describe('B · po oknie 24 h administrator traci wyłącznie CORRECTION_WINDOW_E
       correction(CLOSED_LANDING.uuid, LATE, { action: 'retime', newTime: LATE + 60_000 }),
       'CORRECTION_TIME_IN_FUTURE',
     ],
-  ])('reguły per typ dalej odrzucają administratora — %s', (_name, candidate, code) => {
+  ])('reguły per typ dalej odrzucają administratora - %s', (_name, candidate, code) => {
     // Własność wyrażona ODPORNIE na to, czy okno w danym przypadku w ogóle zapada:
     // od 2026-08-07 reguła okna budzi się tylko wtedy, gdy korekta da się przypisać
     // do konkretnego wzlotu (§3.6a). Cel spoza sesji albo cel sprzed pierwszego cyklu
@@ -534,12 +534,12 @@ describe('B · po oknie 24 h administrator traci wyłącznie CORRECTION_WINDOW_E
     const pilotHard = codes(hard(asPilot(CLOSED_STREAM, candidate as Event)));
     const adminHard = codes(hard(asAdmin(CLOSED_STREAM, candidate as Event)));
 
-    // ADMINISTRATOR ZAWSZE DOCHODZI DO REGUŁY PER TYP — to jest cała pointa.
+    // ADMINISTRATOR ZAWSZE DOCHODZI DO REGUŁY PER TYP - to jest cała pointa.
     expect(adminHard).toEqual([code]);
 
     // Pilot dochodzi tam tylko wtedy, gdy okno go wcześniej nie odbiło. Twarda koperta
     // zwraca się sama (§„JEDEN konkretny powód"), więc pilot widzi ALBO okno, ALBO
-    // regułę właściwą — nigdy obu naraz.
+    // regułę właściwą - nigdy obu naraz.
     expect(pilotHard).toHaveLength(1);
     expect(['CORRECTION_WINDOW_EXPIRED', code]).toContain(pilotHard[0]);
   });
@@ -561,7 +561,7 @@ describe('B · po oknie 24 h administrator traci wyłącznie CORRECTION_WINDOW_E
 
   it('wpis ręczny po 24 h przechodzi administratorowi, ale nadal musi być poprawny', () => {
     // Wpis BEZ ANI JEDNEGO CZASU nie da się przypisać do żadnego wzlotu, więc okno
-    // się nie budzi — pilot wpada od razu na regułę treści. To jest poprawne:
+    // się nie budzi - pilot wpada od razu na regułę treści. To jest poprawne:
     // wpis, który niczego nie poprawia, nie jest korektą wzlotu.
     const empty = ev('manual_log_entry', { notes: 'nic' }, { t: LATE });
     expect(codes(hard(asPilot(CLOSED_STREAM, empty)))).toEqual(['MANUAL_ENTRY_EMPTY']);

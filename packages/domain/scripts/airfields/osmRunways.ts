@@ -1,7 +1,7 @@
 /**
- * UZ Aero — pasy startowe z OpenStreetMap (`aeroway=runway`).
+ * UZ Aero - pasy startowe z OpenStreetMap (`aeroway=runway`).
  *
- * PO CO: OurAirports nie ma ani jednego wiersza pasa dla 37 polskich lotnisk — akurat
+ * PO CO: OurAirports nie ma ani jednego wiersza pasa dla 37 polskich lotnisk - akurat
  * tych aeroklubowych i lądowisk, z których lata lotnictwo ogólne (EPJG, EPOP, EPZR, EPJS…).
  * OSM ma je wszystkie, z oznaczeniem progu i nawierzchnią.
  *
@@ -9,21 +9,21 @@
  *
  * 1. Pas bywa w OSM ROZBITY na kilka wayów (odcinek utwardzony osobno od trawiastego,
  *    przecięcie z drogą kołowania osobno). Długość pojedynczego waya zaniża wtedy pas
- *    nawet dwukrotnie — EPJS wychodziło 357 m przy realnych ~700 m. Dlatego odcinki
+ *    nawet dwukrotnie - EPJS wychodziło 357 m przy realnych ~700 m. Dlatego odcinki
  *    o wspólnej osi łączymy i mierzymy ROZRZUT WZDŁUŻ OSI, a nie długość odcinka.
  *
- * 2. Kierunek waya jest przypadkowy — rysujący mógł prowadzić linię od progu 24 do 06.
+ * 2. Kierunek waya jest przypadkowy - rysujący mógł prowadzić linię od progu 24 do 06.
  *    Dla prostokąta na mapie to bez znaczenia (ta sama linia), ale wartość w katalogu ma
  *    dać się porównać z oznaczeniem pasa okiem, więc obracamy ją do progu z tagu `ref`.
  *
- * LICENCJA: dane OSM są na ODbL — wygenerowany katalog jest bazą pochodną i musi być
+ * LICENCJA: dane OSM są na ODbL - wygenerowany katalog jest bazą pochodną i musi być
  * udostępniony na tej samej licencji, a aplikacja podaje atrybucję. Szczegóły i powód
  * odrzucenia AIP PAŻP: `docs/dane-lotnisk.md`.
  */
 
 import { axisDeg, axisDifference, bearingDeg, distanceM, projectOnAxis, type LatLon } from './geo';
 
-/** Way z Overpass API (`out geom`) — tylko to, czego używamy. */
+/** Way z Overpass API (`out geom`) - tylko to, czego używamy. */
 export interface OverpassWay {
   readonly id: number;
   readonly tags?: Readonly<Record<string, string>>;
@@ -48,7 +48,7 @@ const AXIS_TOLERANCE_DEG = 10;
  * Sama zgodność osi nie wystarcza: Krosno ma dwa pasy równoległe (11R/29L asfalt
  * i 11L/29R trawa) przesunięte względem siebie WZDŁUŻ osi, więc bez tego warunku
  * skleiły się w jedną płytę o długości 1939 m, której tam nie ma. Najszersze pasy
- * mają ~60 m, a pasy równoległe rozdziela się o co najmniej 150 m — próg trafia
+ * mają ~60 m, a pasy równoległe rozdziela się o co najmniej 150 m - próg trafia
  * w środek tej przerwy.
  */
 const MAX_LATERAL_OFFSET_M = 80;
@@ -73,7 +73,7 @@ export function headingFromRef(ref: string | null | undefined): number | null {
  * który koniec nazwiemy początkiem, więc wybieramy wariant deterministyczny zamiast
  * przypadkowego kierunku rysowania w OSM.
  *
- * Oznaczenia są MAGNETYCZNE, a geometria geograficzna — w Polsce różnica to ~6°, czyli
+ * Oznaczenia są MAGNETYCZNE, a geometria geograficzna - w Polsce różnica to ~6°, czyli
  * dużo mniej niż połowa zakresu, więc wybór bliższego wariantu jest jednoznaczny.
  */
 export function alignHeadingToRef(headingDeg: number, ref: string | null | undefined): number {
@@ -134,7 +134,7 @@ function belongsToSameRunway(lead: Segment, segment: Segment): boolean {
 /**
  * Pasy JEDNEGO lotniska, od najdłuższego.
  *
- * Wejściem są waye przypisane wcześniej do tego lotniska (`osmAssignment.ts`) — moduł
+ * Wejściem są waye przypisane wcześniej do tego lotniska (`osmAssignment.ts`) - moduł
  * celowo nie zna pojęcia odległości od punktu odniesienia, żeby grupowanie po osi dało
  * się sprawdzić testem bez wymyślania współrzędnych lotniska.
  */

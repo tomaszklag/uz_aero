@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) — `AdminAircraftJoin` + stan z telefonów → kontrakt floty (`A07`).
+ * UZ Aero (serwer) - `AdminAircraftJoin` + stan z telefonów → kontrakt floty (`A07`).
  *
  * Czysta funkcja, jak `pilotListItem.ts` i `sessionListItem.ts`: port oddaje model
  * warstwy aplikacji, a kształt „na drucie" powstaje tutaj i testuje się bez bazy.
@@ -8,7 +8,7 @@
  * `fuelToleranceL(capacityL)` woła się DOKŁADNIE tu i tylko tu po stronie floty.
  * Panelowi wolno importować z `@uzaero/domain` wyłącznie typy, więc gdyby ta liczba
  * nie wyszła z serwera, ekran musiałby albo ją pominąć (tak było przez cztery
- * przekroje), albo policzyć własnym `Math.max` — czyli zacząć trzymać drugą kopię
+ * przekroje), albo policzyć własnym `Math.max` - czyli zacząć trzymać drugą kopię
  * reguły §4.5. Jedno wywołanie w mapperze zamyka obie te drogi.
  */
 
@@ -33,7 +33,7 @@ export interface PilotLabel {
 /**
  * Wejście mappera poza samym wierszem konfiguracji.
  *
- * `claim` i `handover` przychodzą z `application/common/aircraftStateView.ts` — tych
+ * `claim` i `handover` przychodzą z `application/common/aircraftStateView.ts` - tych
  * samych funkcji, którymi liczy je `GET /reference` dla telefonu. Dublowanie tej
  * reguły w panelu dałoby drugi wybór przekazania (po `closeTime` zamiast po łańcuchu
  * MH) i dwie różne odpowiedzi na to samo pytanie na dwóch ekranach jednego produktu.
@@ -44,7 +44,7 @@ export interface AircraftStateInput {
   /**
    * `true`, gdy `latestHandover` wziął odczyt z sesji NIEZAMKNIĘTEJ (np. po tankowaniu
    * w trwającym dniu). Rozróżnienie jest treścią podpisu w tabeli i nie da się go
-   * odczytać z samego `Handover` — ten niesie wartości, nie ich pochodzenie.
+   * odczytać z samego `Handover` - ten niesie wartości, nie ich pochodzenie.
    */
   readingFromOpenSession: boolean;
   /** Nazwiska do claimu i odczytu; klucz = `pilotId`. */

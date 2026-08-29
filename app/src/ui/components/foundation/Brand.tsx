@@ -1,9 +1,9 @@
 /**
- * UZ Aero — Brand (`.brand` z 00/00a i `.app-icon`+`.app-name` z 01)
+ * UZ Aero - Brand (`.brand` z 00/00a i `.app-icon`+`.app-name` z 01)
  *
- * Znak marki: kafel z ikoną, „UZ AERO" (AERO zielone — jedyne miejsce łamiące zasadę
+ * Znak marki: kafel z ikoną, „UZ AERO" (AERO zielone - jedyne miejsce łamiące zasadę
  * „display bez akcentu", celowo, bo to logo) i tagline. Dwa rozmiary z mockupów:
- * `md` — ekrany logowania (ikona 72, napis 40), `hero` — splash (ikona 88, napis 56).
+ * `md` - ekrany logowania (ikona 72, napis 40), `hero` - splash (ikona 88, napis 56).
  */
 
 import React from 'react';
@@ -16,7 +16,7 @@ import { toneColors } from '../tone';
 
 export interface BrandProps {
   size?: 'md' | 'hero';
-  /** Tagline pod nazwą — splash go ma, PIN nie (mockupy 01 vs 00). */
+  /** Tagline pod nazwą - splash go ma, PIN nie (mockupy 01 vs 00). */
   tagline?: boolean;
   style?: ViewStyle;
 }

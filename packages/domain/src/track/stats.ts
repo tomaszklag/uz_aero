@@ -1,22 +1,22 @@
 /**
- * UZ Aero — STATYSTYKI ŚLADU (issue #47 pkt 3, mockup `design/14-slad.html`).
+ * UZ Aero - STATYSTYKI ŚLADU (issue #47 pkt 3, mockup `design/14-slad.html`).
  *
  * Trzy bloki karty „Statystyki lotu" i nic ponadto: prędkość z pionem, czasy faz
- * i trzymanie wysokości w przelocie. To OPIS lotu, nie dokument — żadna z tych liczb
+ * i trzymanie wysokości w przelocie. To OPIS lotu, nie dokument - żadna z tych liczb
  * nie wchodzi do rejestru, do rozliczenia ani do normy zużycia. Dlatego stoją na
  * ekranie śladu, a nie na ekranie sesji.
  *
  * ══ CO JEST STĄD, A CO Z REJESTRU ══
  * Ślad wie „jak", rejestr wie „co i kiedy". Podział na ziemię i powietrze przychodzi
- * więc Z REJESTRU (`airborne` — starty i lądowania po korektach), a wszystko, co dzieje
+ * więc Z REJESTRU (`airborne` - starty i lądowania po korektach), a wszystko, co dzieje
  * się wewnątrz tych odcinków, liczy się z nagrania. Wysokość GPS na płycie potrafi
  * dryfować o kilkadziesiąt stóp, więc bez tego przecięcia postój przy pracującym
- * silniku produkowałby „wznoszenie" — ta sama pułapka, którą opisuje `phaseTimeline.ts`.
+ * silniku produkowałby „wznoszenie" - ta sama pułapka, którą opisuje `phaseTimeline.ts`.
  *
  * ══ `null` ZNACZY „NIE MA CZEGO POKAZAĆ" ══
  * Każdy blok gaśnie osobno i ekran wtedy o nim MILCZY (reguła z issue #38). Nagranie
  * bez prędkości nie unieważnia czasów faz, a dzień skokowy prawie bez przelotu nie
- * unieważnia reszty — po prostu nie ma o czym orzekać.
+ * unieważnia reszty - po prostu nie ma o czym orzekać.
  */
 
 import { TAXI_MIN_KT } from '../detection/flightPhase';
@@ -39,8 +39,8 @@ import { isUsablePoint, type TrackPoint } from './point';
  * Tolerancja „lotu równego" (stopy).
  *
  * 100 ft to działka wysokościomierza, w jakiej mówi się o utrzymaniu poziomu w szkoleniu
- * i na egzaminie praktycznym. Próg jest PREZENTACYJNY — nie wchodzi do żadnej reguły
- * domenowej ani do rozliczenia — więc wolno go zmienić bez kalibracji na nagraniach,
+ * i na egzaminie praktycznym. Próg jest PREZENTACYJNY - nie wchodzi do żadnej reguły
+ * domenowej ani do rozliczenia - więc wolno go zmienić bez kalibracji na nagraniach,
  * inaczej niż progi z `detection/thresholds.ts`.
  */
 export const LEVEL_TOLERANCE_FT = 100;
@@ -48,7 +48,7 @@ export const LEVEL_TOLERANCE_FT = 100;
 /**
  * Poniżej tylu minut przelotu blok „trzymanie wysokości" znika w całości.
  *
- * Dzień skokowy to prawie samo wznoszenie i zniżanie — przelotu bywa w nim kilkadziesiąt
+ * Dzień skokowy to prawie samo wznoszenie i zniżanie - przelotu bywa w nim kilkadziesiąt
  * sekund, a pasmo wahań policzone z trzech odczytów wygląda jak wiedza i nią nie jest.
  */
 export const LEVEL_MIN_CRUISE_MS = 120_000;
@@ -65,7 +65,7 @@ export const LEVEL_MIN_CRUISE_MS = 120_000;
  * Reguła nie tworzy drugiej definicji fazy: odcinki nadal pochodzą z JEDNEJ osi
  * (`buildPhaseTimeline`), a scalanie tylko domyka w nich dziury. Konsekwencja jest
  * zamierzona i warto ją nazwać: lot falujący o ±300 ft w półtorej minuty to według osi
- * naprzemienne wznoszenie i zniżanie — i tak go pokaże blok czasów faz, zamiast
+ * naprzemienne wznoszenie i zniżanie - i tak go pokaże blok czasów faz, zamiast
  * meldować „przelot z dużym pasmem".
  */
 export const LEVEL_MERGE_GAP_MS = 60_000;
@@ -75,12 +75,12 @@ export const LEVEL_MERGE_GAP_MS = 60_000;
  *
  * Średnia prędkość i czas kołowania liczą się trapezami między sąsiednimi punktami.
  * Dziura po utracie fixa (tunel hangaru, zapchany odbiornik) nie jest odcinkiem
- * o znanej prędkości, więc jej nie wliczamy — reszta bilansu i tak domyka się czasem
+ * o znanej prędkości, więc jej nie wliczamy - reszta bilansu i tak domyka się czasem
  * biegu silnika.
  */
 const MAX_INTEGRATION_GAP_MS = 60_000;
 
-/** Prędkość i pion — pierwszy blok karty. */
+/** Prędkość i pion - pierwszy blok karty. */
 export interface TrackSpeedStats {
   /** Największa prędkość względem ziemi (kt), po odsianiu pojedynczych szpilek. */
   maxGroundSpeedKt: number;
@@ -92,20 +92,20 @@ export interface TrackSpeedStats {
 }
 
 /**
- * Czasy faz — drugi blok. Suma pięciu składników RÓWNA SIĘ czasowi biegu silnika,
+ * Czasy faz - drugi blok. Suma pięciu składników RÓWNA SIĘ czasowi biegu silnika,
  * bo pasek pod nimi rysuje proporcje i musi domykać się do całości.
  */
 export interface TrackPhaseStats {
   /** Ziemia w ruchu (GS ≥ `TAXI_MIN_KT`). */
   taxiMs: number;
-  /** Ziemia bez ruchu — tu trafia też czas, którego nagranie nie obejmuje. */
+  /** Ziemia bez ruchu - tu trafia też czas, którego nagranie nie obejmuje. */
   standingMs: number;
   climbMs: number;
   cruiseMs: number;
   descentMs: number;
 }
 
-/** Trzymanie wysokości w przelocie — trzeci blok. */
+/** Trzymanie wysokości w przelocie - trzeci blok. */
 export interface LevelFlightStats {
   /** Pasmo wahań wokół wysokości utrzymywanej (± stopy, centyl 90 odchyleń). */
   bandFt: number;
@@ -114,7 +114,7 @@ export interface LevelFlightStats {
   /** Najdłuższy nieprzerwany odcinek w tolerancji (ms). */
   longestSteadyMs: number;
   /**
-   * Ile trwał analizowany LOT POZIOMY — mianownik dwóch liczb wyżej.
+   * Ile trwał analizowany LOT POZIOMY - mianownik dwóch liczb wyżej.
    *
    * To NIE jest `cruiseMs` z bloku czasów faz i dlatego nazywa się inaczej: tam liczy się
    * czysty przelot z osi faz, tutaj odcinki sklejone przez krótkie wahnięcia
@@ -148,7 +148,7 @@ export function emptyTrackStats(): TrackStats {
 /**
  * Buduje komplet statystyk z punktów śladu po bramce jakości.
  *
- * @param points punkty CAŁEJ sesji (z odrzuconymi — odsiewamy je tutaj).
+ * @param points punkty CAŁEJ sesji (z odrzuconymi - odsiewamy je tutaj).
  */
 export function buildTrackStats(
   points: readonly TrackPoint[],
@@ -177,7 +177,7 @@ function speedStats(
   if (maxGroundSpeedKt == null && averageInFlightKt == null && vertical == null) return null;
 
   return {
-    // Blok istnieje, gdy JEST prędkość — bez niej zostaje sam pion i wtedy nagłówek
+    // Blok istnieje, gdy JEST prędkość - bez niej zostaje sam pion i wtedy nagłówek
     // „Prędkość i pion" kłamałby połową. Stąd maksimum jest polem wymaganym.
     maxGroundSpeedKt: maxGroundSpeedKt ?? 0,
     averageInFlightKt,
@@ -231,7 +231,7 @@ function averageSpeedInFlight(
     const dt = current.time - previous.time;
     if (dt <= 0 || dt > MAX_INTEGRATION_GAP_MS) continue;
 
-    // Odcinek liczy się tylko w tej części, która wypadła w powietrzu — start dzieli
+    // Odcinek liczy się tylko w tej części, która wypadła w powietrzu - start dzieli
     // parę punktów na pół i przypisanie całej pary do lotu zawyżałoby średnią o kołowanie.
     const inFlight = spanTimeInWindow(airborne, previous.time, current.time);
     if (inFlight <= 0) continue;
@@ -243,7 +243,7 @@ function averageSpeedInFlight(
   return totalMs > 0 ? weighted / totalMs : null;
 }
 
-/** Skrajne prędkości pionowe W POWIETRZU — z tej samej serii, co oś faz. */
+/** Skrajne prędkości pionowe W POWIETRZU - z tej samej serii, co oś faz. */
 function verticalExtremes(
   usable: readonly TrackPoint[],
   input: TrackStatsInput,
@@ -263,7 +263,7 @@ function verticalExtremes(
   }
 
   // Regresja w oknie `VS_WINDOW_SEC` wygładza szum, ale przy locie bez ani jednego
-  // wznoszenia zwróciłaby wartości wokół zera — i to jest prawda o takim locie,
+  // wznoszenia zwróciłaby wartości wokół zera - i to jest prawda o takim locie,
   // więc nie zerujemy ich do `null`.
   if (maxClimb == null && maxDescent == null) return null;
   return { maxClimb, maxDescent };
@@ -289,7 +289,7 @@ function phaseStats(
 
   return {
     taxiMs,
-    // Reszta ziemi to POSTÓJ — także minuty, których nagranie nie obejmuje. Pasek
+    // Reszta ziemi to POSTÓJ - także minuty, których nagranie nie obejmuje. Pasek
     // rysuje proporcje biegu silnika, więc musi się domykać do całości, a samolot,
     // o którym nic nie wiadomo, na pewno nie kołował.
     standingMs: Math.max(0, groundMs - taxiMs),
@@ -299,7 +299,7 @@ function phaseStats(
   };
 }
 
-/** Czas na ziemi w ruchu — trapezy poza odcinkami lotu, próg `TAXI_MIN_KT`. */
+/** Czas na ziemi w ruchu - trapezy poza odcinkami lotu, próg `TAXI_MIN_KT`. */
 function taxiTime(
   usable: readonly TrackPoint[],
   airborne: readonly Span[],
@@ -320,7 +320,7 @@ function taxiTime(
     const to = Math.min(current.time, input.engineTo);
     if (to <= from) continue;
 
-    // Z odcinka odejmujemy część spędzoną w powietrzu — para punktów wokół startu
+    // Z odcinka odejmujemy część spędzoną w powietrzu - para punktów wokół startu
     // należy do obu stron i bez tego rozbiegówka liczyłaby się dwa razy.
     taxiMs += to - from - spanTimeInWindow(airborne, from, to);
   }
@@ -421,7 +421,7 @@ function levelStats(
 
 /* ── wspólne ───────────────────────────────────────────────────────────────── */
 
-/** Odcinki lotu domknięte końcem okna — lot bez lądowania trwa do wyłączenia silnika. */
+/** Odcinki lotu domknięte końcem okna - lot bez lądowania trwa do wyłączenia silnika. */
 function closedAirborne(input: TrackStatsInput): ClosedSpan[] {
   const closed: ClosedSpan[] = [];
   for (const span of input.airborne) {

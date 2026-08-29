@@ -1,21 +1,21 @@
 /**
- * UZ Aero — SessionAxis (`.axis` z mockupów `10-statystyki.html`, `04` i `05`).
+ * UZ Aero - SessionAxis (`.axis` z mockupów `10-statystyki.html`, `04` i `05`).
  *
  * Oś czasu jednej sesji: przejęcie → uruchomienie → starty, zrzuty i lądowania →
  * wyłączenie → zdanie, w jednej kolumnie, z pionową kreską łączącą punkty.
  *
  * ══ JEDEN LOG NA CAŁĄ APLIKACJĘ (issue #44) ══
- * Do issue #44 istniał obok tego komponentu `EventLog` — log kokpitu z szyną ikon
+ * Do issue #44 istniał obok tego komponentu `EventLog` - log kokpitu z szyną ikon
  * w plakietkach, chipami licznika i paliwa oraz pełnoszerokimi pasami tankowania.
  * Nagłówek tego pliku bronił wtedy podziału: „log kokpitu jest potwierdzeniem zapisu,
  * a oś opisuje sesję zamkniętą, wspólny komponent musiałby obsłużyć obie role
  * przełącznikami". Próba na urządzeniu pokazała, że to rozróżnienie kosztuje więcej,
- * niż daje: TA SAMA sesja czytała się dwa razy inaczej — inne nazwy zdarzeń, inne kolory
+ * niż daje: TA SAMA sesja czytała się dwa razy inaczej - inne nazwy zdarzeń, inne kolory
  * tego samego lądowania, inne miejsce na te same liczby. Komponent jest więc jeden,
  * a role rozstrzyga to, co wywołujący ma do pokazania:
  *  • kokpit dokłada wiersz `live` i znacznik outboxa (`pending`), bo opisuje TERAZ;
  *  • rozliczenie dokłada stopkę sum i (w edycji) ołówki, bo opisuje CAŁOŚĆ.
- * Żadne z tego nie jest przełącznikiem trybu — to obecność albo brak danych.
+ * Żadne z tego nie jest przełącznikiem trybu - to obecność albo brak danych.
  *
  * ══ KRESKA RYSUJE SIĘ Z WIERSZY ══
  * Pion osi to `::before` każdego wiersza, a nie jedna linia w tle: wiersze mają różną
@@ -25,14 +25,14 @@
  *
  * ══ W TRYBIE ODCZYTU OŚ NICZEGO NIE URUCHAMIA (issue #40 pkt 1) ══
  * Do issue #40 każdy wiersz kończył się ołówkiem korekty. Dwanaście identycznych celów
- * w jednej kolumnie czytało się jak szum — a korekta ma jedne drzwi: „EDYTUJ DANE" pod
+ * w jednej kolumnie czytało się jak szum - a korekta ma jedne drzwi: „EDYTUJ DANE" pod
  * ekranem. Bez `onCorrect` komponent jest więc czysto opisowy: bez `Pressable`, bez
  * plakietki „RĘCZNIE" (pkt 6) i bez wiedzy o oknie korekty.
  *
  * ══ …ALE W TRYBIE EDYCJI JEST PRZYCISKIEM (issue #43) ══
  * Podany `onCorrect` zamienia każdy KORYGOWALNY wiersz w cel dotknięcia: ołówek w stałej
  * kolumnie po prawej i wysokość 44 px. To nie jest cofnięcie decyzji z #40, tylko jej
- * druga połowa — tam wiersz NIE BYŁ przyciskiem i rytm 44 px marnował kolumnę, tutaj
+ * druga połowa - tam wiersz NIE BYŁ przyciskiem i rytm 44 px marnował kolumnę, tutaj
  * jest, więc cel poniżej progu rękawic byłby wadą.
  *
  * ══ WIERSZ JEST KOMPAKTOWY, BO MOŻE BYĆ ══
@@ -41,8 +41,8 @@
  * skokowa na jednym ekranie. Warunkiem są jawne `lineHeight`: wariant `mono` niesie
  * domyślnie 18 px, więc jednolinijkowy wiersz zajmował tyle, co dwulinijkowy.
  *
- * Prawa krawędź niesie DOKŁADNIE JEDNĄ rzecz na wiersz — numer lotu przy starcie albo
- * czas trwania przy lądowaniu i kołowaniu — więc wszystko dosuwa się do prawej i stoi
+ * Prawa krawędź niesie DOKŁADNIE JEDNĄ rzecz na wiersz - numer lotu przy starcie albo
+ * czas trwania przy lądowaniu i kołowaniu - więc wszystko dosuwa się do prawej i stoi
  * w jednej linii pionowej, bez rezerwowania miejsca na to, czego w wierszu nie ma.
  */
 
@@ -57,11 +57,11 @@ import type { Tone } from '../tone';
 import { toneColors } from '../tone';
 
 /**
- * Rodzaj punktu — steruje kolorem kropki i tonem napisu.
+ * Rodzaj punktu - steruje kolorem kropki i tonem napisu.
  *
  * Zdarzenia naziemne (`refuel`, `boarding`, `crew`) i wiersz `live` weszły tu razem
  * z logiem kokpitu (issue #44). Pierwsze trzy trafiają też na oś rozliczenia: rachunek
- * paliwa na 10 mówił „dolane · 2 tankowania", a oś nie pokazywała ani jednego — mimo że
+ * paliwa na 10 mówił „dolane · 2 tankowania", a oś nie pokazywała ani jednego - mimo że
  * arkusz dopisania (10H) pozwala tankowanie dodać.
  */
 export type SessionAxisKind =
@@ -85,31 +85,31 @@ export interface SessionAxisRow {
   kind: SessionAxisKind;
   time: string;
   name: string;
-  /** Druga linia — TYLKO tam, gdzie treść jest opisem: odczyty, skład zrzutu. */
+  /** Druga linia - TYLKO tam, gdzie treść jest opisem: odczyty, skład zrzutu. */
   sub?: string | null;
-  /** Numer lotu („lot 1") — po PRAWEJ, przed czasem trwania. */
+  /** Numer lotu („lot 1") - po PRAWEJ, przed czasem trwania. */
   flight?: string | null;
-  /** Czas lotu przy lądowaniu („00:41") — jedyna liczba tej kolumny, stąd zieleń. */
+  /** Czas lotu przy lądowaniu („00:41") - jedyna liczba tej kolumny, stąd zieleń. */
   duration?: string | null;
   /**
-   * Wiersz był poprawiany — plakietka „popr." przy nazwie (issue #43).
+   * Wiersz był poprawiany - plakietka „popr." przy nazwie (issue #43).
    *
    * Widoczna TAKŻE w trybie odczytu: to fakt o danych, nie akcja. Liczba obok nie jest
    * tą, którą zapisał przyrząd, i pilot ma prawo to widzieć, nie wchodząc w edycję.
    */
   corrected?: boolean;
   /**
-   * Wiersz ma NIESPÓJNOŚĆ — kropka i podpis w tonie amber (issue #43).
+   * Wiersz ma NIESPÓJNOŚĆ - kropka i podpis w tonie amber (issue #43).
    * Baner nad osią wymienia je wszystkie; ten znacznik mówi, którego wiersza dotyczą.
    */
   warned?: boolean;
   /**
-   * Czy wiersz da się poprawić. Domyślnie tak — wyjątkiem jest wiersz bez zdarzenia
+   * Czy wiersz da się poprawić. Domyślnie tak - wyjątkiem jest wiersz bez zdarzenia
    * w rejestrze (np. przejęcie sesji odtworzonej bez `preflight_confirm`).
    */
   editable?: boolean;
   /**
-   * Zdarzenie czeka w outboxie (issue #44, wcześniej `EventLog`). Strzałka przy nazwie —
+   * Zdarzenie czeka w outboxie (issue #44, wcześniej `EventLog`). Strzałka przy nazwie -
    * jedyne miejsce, w którym stan wysyłki schodzi do POJEDYNCZEGO zdarzenia; SyncChip
    * mówi o kolejce jako całości. Znacznik stawia wyłącznie kokpit: podgląd cudzej sesji
    * (04B) dostaje zdarzenia z serwera, więc opisywałby kolejkę, której nie zna.
@@ -125,12 +125,12 @@ export interface SessionAxisFootItem {
 
 /**
  * Kolor kropki. Przejęcie i zdanie są PUSTE (obrys, nie wypełnienie), bo nie są pracą
- * silnika — a nie szare-wypełnione, bo wtedy zlewałyby się z uruchomieniem.
+ * silnika - a nie szare-wypełnione, bo wtedy zlewałyby się z uruchomieniem.
  *
- * Tankowanie jest AMBER, bo amber jest w tym systemie kolorem paliwa — to znaczenie,
+ * Tankowanie jest AMBER, bo amber jest w tym systemie kolorem paliwa - to znaczenie,
  * nie wyróżnienie. Zmiana załogi zostaje neutralna: nie dotyczy ani paliwa, ani lotu.
  * ZIELEŃ NALEŻY WYŁĄCZNIE DO TERAŹNIEJSZOŚCI (issue #19), stąd `live` i `takeoff`:
- * pierwsze to stan trwający, drugie — jedyny punkt, od którego cokolwiek jeszcze biegnie.
+ * pierwsze to stan trwający, drugie - jedyny punkt, od którego cokolwiek jeszcze biegnie.
  */
 const KIND_TONE: Record<SessionAxisKind, Tone> = {
   claim: 'neutral',
@@ -148,7 +148,7 @@ const KIND_TONE: Record<SessionAxisKind, Tone> = {
   live: 'green',
 };
 
-/** Które punkty rysujemy obrysem — końce sesji, czyli to, co nie jest pracą silnika. */
+/** Które punkty rysujemy obrysem - końce sesji, czyli to, co nie jest pracą silnika. */
 const HOLLOW: Record<SessionAxisKind, boolean> = {
   claim: true,
   engineStart: false,
@@ -165,7 +165,7 @@ const HOLLOW: Record<SessionAxisKind, boolean> = {
   live: false,
 };
 
-/** Wiersze rysowane napisem drugoplanowym — tło sesji, a nie jej oś zdarzeń lotu. */
+/** Wiersze rysowane napisem drugoplanowym - tło sesji, a nie jej oś zdarzeń lotu. */
 const DIMMED: Record<SessionAxisKind, boolean> = {
   claim: true,
   engineStart: false,
@@ -187,7 +187,7 @@ export interface SessionAxisProps {
   foot?: SessionAxisFootItem[];
   emptyText?: string;
   /**
-   * Tryb edycji (issue #43): wiersz staje się przyciskiem z ołówkiem. Pominięty — oś
+   * Tryb edycji (issue #43): wiersz staje się przyciskiem z ołówkiem. Pominięty - oś
    * jest czysto opisowa i nie ma ani jednego celu dotknięcia (issue #40 pkt 1).
    */
   onCorrect?: (rowId: string) => void;
@@ -195,7 +195,7 @@ export interface SessionAxisProps {
    * Tapnięcie plakietki „popr." (issue #43, uwaga z urządzenia). Działa w OBU trybach:
    * znacznik poprawki mówi, że liczba obok nie jest tą, którą zapisał przyrząd, a
    * naturalnym następnym pytaniem jest „to co w niej zmieniono". W trybie odczytu jest
-   * to jedyne wejście w historię — arkusza korekty, który ją niesie, tam nie ma.
+   * to jedyne wejście w historię - arkusza korekty, który ją niesie, tam nie ma.
    */
   onHistory?: (rowId: string) => void;
   style?: ViewStyle;
@@ -233,7 +233,7 @@ export function SessionAxis({
         const first = index === 0;
         const last = index === rows.length - 1;
         const warned = row.warned === true;
-        // Wiersza „na żywo" nie da się poprawić — nie ma go w rejestrze.
+        // Wiersza „na żywo" nie da się poprawić - nie ma go w rejestrze.
         const editable = editing && row.editable !== false && !live;
 
         const content = (
@@ -262,7 +262,7 @@ export function SessionAxis({
 
                 Wypełniona robi to sama: jej 2 px obramowania jest w kolorze karty, więc
                 linia urywa się kawałek PRZED nią. Pusta nie miała ani tej otoczki, ani
-                wypełnienia — kreska wchodziła jej do środka i wychodziła drugą stroną,
+                wypełnienia - kreska wchodziła jej do środka i wychodziła drugą stroną,
                 co przy PRZEJĘCIU i ZDANIU (jedyne puste punkty osi) wyglądało jak
                 przekłuta obrączka. Stąd dwie warstwy: zewnętrzny krążek w kolorze karty
                 ucina linię, wewnętrzny rysuje sam obrys.
@@ -301,7 +301,7 @@ export function SessionAxis({
                 >
                   {row.name.toUpperCase()}
                 </AppText>
-                {/* Strzałka outboxa przy NAZWIE, obok „popr." — obie mówią o wpisie,
+                {/* Strzałka outboxa przy NAZWIE, obok „popr." - obie mówią o wpisie,
                     a nie o czasie trwania, więc obie zostają po lewej stronie wiersza. */}
                 {row.pending === true && (
                   <AppText
@@ -316,11 +316,11 @@ export function SessionAxis({
                 {/* „popr." zostaje przy NAZWIE, nie w prawej kolumnie: prawa niesie
                     liczbę (czas trwania), a plakietka odbierałaby jej miejsce.
 
-                    Sama plakietka ma 7,5 px i celem dotknięcia być nie może — od tego
+                    Sama plakietka ma 7,5 px i celem dotknięcia być nie może - od tego
                     jest `hitSlop`, który rozciąga jej obszar do rozmiaru kciuka, nie
                     ruszając rytmu wiersza (28 px w odczycie, issue #40). Wiersza NIE
                     robimy przyciskiem: w odczycie oś nie ma ani jednego celu i to
-                    zostaje w mocy — tapnąć da się znacznik, nie zdarzenie. */}
+                    zostaje w mocy - tapnąć da się znacznik, nie zdarzenie. */}
                 {row.corrected === true && (
                   <CorrectedTag
                     accessibilityContext={`${row.name} ${row.time}`}
@@ -341,7 +341,7 @@ export function SessionAxis({
 
             {/* Prawa krawędź niesie DOKŁADNIE JEDNĄ rzecz na wiersz: numer lotu przy
                 starcie albo czas lotu przy lądowaniu. Dlatego nic tu nie trzeba
-                rezerwować — wszystko dosuwa się do prawej i stoi w jednej linii
+                rezerwować - wszystko dosuwa się do prawej i stoi w jednej linii
                 pionowej przez całą oś. */}
             {row.flight != null && (
               <AppText variant="mono" tone="muted" style={styles.flight}>
@@ -357,7 +357,7 @@ export function SessionAxis({
               </AppText>
             )}
 
-            {/* Ołówek jest KOLUMNĄ, nie ozdobą wiersza — stoi w tym samym pionie przez
+            {/* Ołówek jest KOLUMNĄ, nie ozdobą wiersza - stoi w tym samym pionie przez
                 całą oś, więc kciuk wie, gdzie celować, zanim przeczyta wiersz. Wiersz
                 nieedytowalny zostawia ją PUSTĄ zamiast przesuwać treść w prawo. */}
             {editing && (
@@ -371,7 +371,7 @@ export function SessionAxis({
         // Oba końce osi oddychają: górny, żeby PRZEJĘCIE nie kleiło się do śladu
         // (albo do linii nagłówka karty), dolny, żeby ZDANIE nie czytało się jak
         // pierwszy wiersz stopki z sumami. Kreska osi zaczyna się i kończy na
-        // kropce niezależnie od tego — jest dzieckiem wiersza, więc padding jej
+        // kropce niezależnie od tego - jest dzieckiem wiersza, więc padding jej
         // nie wydłuża.
         const rowStyle = [
           styles.row,
@@ -440,7 +440,7 @@ const styles = StyleSheet.create({
   /**
    * Wiersz jest NISKI (28 px zamiast 40) i to jest możliwe dopiero od issue #40: oś
    * nie ma już celów dotknięcia, więc nie musi trzymać rytmu 44 px. Wysokość biorą
-   * jawne `lineHeight` — wariant `mono` niesie domyślnie 18 px, przez co pojedyncza
+   * jawne `lineHeight` - wariant `mono` niesie domyślnie 18 px, przez co pojedyncza
    * linia zajmowała tyle, co dwie. Sesja skokowa (kilkanaście wierszy) mieści się
    * dzięki temu na ekranie zamiast wymuszać przewijanie.
    */
@@ -456,7 +456,7 @@ const styles = StyleSheet.create({
   railLine: { position: 'absolute', width: 1 },
   dot: { width: 9, height: 9, borderRadius: 5, borderWidth: 2 },
   /**
-   * Otoczka pustej kropki — te same 2 px, którymi wypełniona ucina kreskę osi
+   * Otoczka pustej kropki - te same 2 px, którymi wypełniona ucina kreskę osi
    * (9 + 2 × 2 = 13). Rysowana kolorem karty, więc jest niewidoczna i robi jedno:
    * odsuwa linię od obrysu.
    */

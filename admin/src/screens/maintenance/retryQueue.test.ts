@@ -1,9 +1,9 @@
 /**
- * UZ Aero — panel: kolejka ponowień eksportu (`A11`).
+ * UZ Aero - panel: kolejka ponowień eksportu (`A11`).
  *
  * Kolejka jest ZŁĄCZENIEM dwóch zawężeń serwera, więc przypadki dotyczą tego, czego
  * serwer o niej nie wie: porządku, deduplikacji i liczników plakietek. Treść wiersza
- * (stan, nazwa karty, „czy warto ponawiać") pochodzi z `exportsRows` i ma testy tam —
+ * (stan, nazwa karty, „czy warto ponawiać") pochodzi z `exportsRows` i ma testy tam -
  * powtarzanie ich tutaj utrwaliłoby DRUGĄ definicję tego samego.
  */
 
@@ -73,7 +73,7 @@ const blocked = item({
 });
 
 describe('złączenie dwóch zawężeń serwera', () => {
-  it('najpierw to, co DA SIĘ ponowić — potem to, co odbije się o flagę', () => {
+  it('najpierw to, co DA SIĘ ponowić - potem to, co odbije się o flagę', () => {
     // Odwrotna kolejność stawiałaby na górze wiersze z wyszarzonym przyciskiem, czyli
     // listę zaczynałby rząd rzeczy, których zrobić nie można.
     const rows = queueRows([failed], [blocked], NOW);
@@ -106,7 +106,7 @@ describe('złączenie dwóch zawężeń serwera', () => {
 });
 
 describe('liczniki i plakietki', () => {
-  it('rozdziela „bez karty" od „zablokowane flagą" — to dwie różne sprawy', () => {
+  it('rozdziela „bez karty" od „zablokowane flagą" - to dwie różne sprawy', () => {
     const rows = queueRows([failed], [blocked], NOW);
     expect(queueCounts(page([failed]), page([blocked]), rows.length)).toEqual({
       total: 2,
@@ -121,17 +121,17 @@ describe('liczniki i plakietki', () => {
     expect(labels.map((l) => l.tone)).toEqual(['red', 'amber']);
   });
 
-  it('pusta kolejka dostaje plakietkę ZIELONĄ — brak pozycji nie jest awarią', () => {
+  it('pusta kolejka dostaje plakietkę ZIELONĄ - brak pozycji nie jest awarią', () => {
     expect(queueLabels(queueCounts(page([]), page([]), 0))).toEqual([
       { text: 'kolejka pusta', tone: 'green' },
     ]);
   });
 
-  it('LICZY Z SERWERA, nie z listy po obcięciu — 137 dni bez karty to „137", nie „50"', () => {
+  it('LICZY Z SERWERA, nie z listy po obcięciu - 137 dni bez karty to „137", nie „50"', () => {
     // ══ WADA, KTÓRA TO WYMUSIŁA ══
     // Liczniki powstawały z tablicy WIERSZY, czyli z sumy dwóch stron już przyciętych
     // `QUEUE_LIMIT`-em. Klub ze 137 dniami bez karty widział plakietkę „50", tabelę na
-    // 50 wierszy i ani słowa o 87 schowanych — a `A05` na to samo pytanie odpowiadał
+    // 50 wierszy i ani słowa o 87 schowanych - a `A05` na to samo pytanie odpowiadał
     // „137". Dwa ekrany, jedna baza, dwie liczby.
     const window = Array.from({ length: 50 }, (_, i) => item({ sessionUuid: `s-${i}` }));
     const counts = queueCounts(page(window, 137), page([blocked]), 51)!;
@@ -143,13 +143,13 @@ describe('liczniki i plakietki', () => {
     expect(queueLabels(counts)[0]!.text).toBe('137 bez kart');
   });
 
-  it('OBCIĘCIE jest widoczne — lista przycięta po cichu wygląda na komplet', () => {
+  it('OBCIĘCIE jest widoczne - lista przycięta po cichu wygląda na komplet', () => {
     const counts = queueCounts(page(Array.from({ length: 50 }, (_, i) => item({ sessionUuid: `s-${i}` })), 137), page([]), 50)!;
     const notice = queueTruncationNotice(counts, 50)!;
 
     expect(notice).toContain('50 z 137');
     expect(notice).toContain('87 dni poza listą');
-    // Zdanie ma powiedzieć, gdzie iść po resztę — inaczej jest samą złą wiadomością.
+    // Zdanie ma powiedzieć, gdzie iść po resztę - inaczej jest samą złą wiadomością.
     expect(notice).toContain('monitorze eksportu');
   });
 
@@ -158,9 +158,9 @@ describe('liczniki i plakietki', () => {
     expect(queueTruncationNotice(counts, 50)).toBeNull();
   });
 
-  it('BRAK ODCZYTU to nie jest pusta kolejka — plakietka mówi „brak odczytu"', () => {
+  it('BRAK ODCZYTU to nie jest pusta kolejka - plakietka mówi „brak odczytu"', () => {
     // Zielone „kolejka pusta" w trakcie pobierania wygląda dokładnie jak odpowiedź,
-    // na którą się czeka — a jest jej brakiem. Ta sama reguła, co kreski zamiast zer.
+    // na którą się czeka - a jest jej brakiem. Ta sama reguła, co kreski zamiast zer.
     expect(queueCounts(undefined, page([]), 0)).toBeNull();
     expect(queueCounts(page([]), undefined, 0)).toBeNull();
     expect(queueLabels(null)).toEqual([{ text: 'brak odczytu', tone: 'dim' }]);

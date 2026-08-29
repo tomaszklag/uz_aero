@@ -1,21 +1,21 @@
 /**
- * UZ Aero — NORMA ZUŻYCIA DLA WPISU RĘCZNEGO (issue #62, piąta tura z urządzenia).
+ * UZ Aero - NORMA ZUŻYCIA DLA WPISU RĘCZNEGO (issue #62, piąta tura z urządzenia).
  *
  * „W oparciu o te dane oraz dane z czasu lotu powinniśmy przeliczyć normę i sprawdzić,
- * czy się zgadza" — do tej tury krok 4 pokazywał samo zużycie („76 L") i nie mówił
+ * czy się zgadza" - do tej tury krok 4 pokazywał samo zużycie („76 L") i nie mówił
  * ani słowa o tym, czy to dużo. Pilot dowiadywał się tego dopiero na ekranie rozliczenia,
- * po zapisaniu — czyli wtedy, gdy poprawka kosztuje już wejście w tryb edycji.
+ * po zapisaniu - czyli wtedy, gdy poprawka kosztuje już wejście w tryb edycji.
  *
  * ══ TA SAMA ARYTMETYKA, CO NA EKRANIE SESJI ══
  * Oczekiwanie i pasmo liczy DOMENA (`consumption/expectation.ts`) z normy, którą serwer
  * policzył z historii tej maszyny; ten moduł zamienia wynik na napisy. Gdyby liczył sam,
  * wpis ręczny i rozliczenie tej samej sesji odpowiadałyby na to samo pytanie dwiema
- * arytmetykami — a to jest dokładnie ta wada, którą issue #38 usuwało z ekranu 10.
+ * arytmetykami - a to jest dokładnie ta wada, którą issue #38 usuwało z ekranu 10.
  *
  * ══ DZIAŁA OFFLINE ══
  * Norma mieszka w cache referencyjnym (`ReferenceAircraft.consumption`), więc werdykt
  * powstaje bez sieci. Jest to jednak DANA Z SERWERA, więc obowiązuje ją triada świeżości
- * (§4.8) — wiek cache podaje wołający, tak samo jak przy ostrzeżeniach łańcucha.
+ * (§4.8) - wiek cache podaje wołający, tak samo jak przy ostrzeżeniach łańcucha.
  *
  * ══ `null` ZNACZY „NIE MA CZEGO POKAZAĆ" ══
  * I ekran wtedy MILCZY, zamiast pokazywać zero albo kreskę bez wyjaśnienia. Brak normy
@@ -38,7 +38,7 @@ import { litres, motoHours } from '../../format';
 import type { ManualFlightDraft } from './manualFlight';
 import { fuelUsedL, sortedFlights } from './manualFlight';
 
-/** Werdykt normy — plakietka przy wyniku, ten sam napis co na ekranie sesji. */
+/** Werdykt normy - plakietka przy wyniku, ten sam napis co na ekranie sesji. */
 export interface ManualVerdict {
   label: string;
   tone: Tone;
@@ -64,7 +64,7 @@ const VERDICT_LABEL: Record<NormVerdict, string> = {
 /**
  * Czasy faz sesji ze szkicu; `null` = biegu silnika nie ma, więc nie ma czego liczyć.
  *
- * Czas w powietrzu to suma lotów, a ziemię domena wylicza sama z różnicy — patrz
+ * Czas w powietrzu to suma lotów, a ziemię domena wylicza sama z różnicy - patrz
  * `SessionPhaseTimes`. Ujemnego bloku nie przepuszczamy: para godzin w odwrotnej
  * kolejności jest blokadą arkusza, a tu byłaby oczekiwaniem policzonym z bzdury.
  */
@@ -81,7 +81,7 @@ export function manualPhaseTimes(draft: ManualFlightDraft): SessionPhaseTimes | 
 }
 
 /**
- * Zużycie paliwa wobec normy. `null`, gdy nie ma kompletu odczytów albo biegu silnika —
+ * Zużycie paliwa wobec normy. `null`, gdy nie ma kompletu odczytów albo biegu silnika -
  * ekran nie pokazuje wtedy karty w ogóle.
  */
 export function manualFuelBalance(
@@ -106,7 +106,7 @@ export function manualFuelBalance(
  *
  * ══ PRZYROST NIE RÓWNA SIĘ CZASOWI BLOKOWEMU ══
  * I nie ma prawa się równać: obrotomierz na wolnych obrotach przyrasta wolniej niż zegar
- * (`consumption/mhModel.ts`). Dlatego porównujemy z NORMĄ tej maszyny, a nie z blokiem —
+ * (`consumption/mhModel.ts`). Dlatego porównujemy z NORMĄ tej maszyny, a nie z blokiem -
  * ta sama poprawka, którą issue #38 wprowadziło na ekranie 10.
  */
 export function manualMhBalance(
@@ -128,7 +128,7 @@ export function manualMhBalance(
   };
 }
 
-/** „oczekiwane 68 L · pasmo 58 – 79 L" — wynik i to, co jeszcze uchodzi za normalne. */
+/** „oczekiwane 68 L · pasmo 58 – 79 L" - wynik i to, co jeszcze uchodzi za normalne. */
 function expectedText(expectation: Expectation, format: (v: number) => string): string {
   return `oczekiwane ${format(expectation.value)} · pasmo ${format(expectation.low)} – ${format(
     expectation.high,

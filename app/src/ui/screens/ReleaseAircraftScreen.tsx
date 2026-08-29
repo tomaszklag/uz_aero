@@ -1,26 +1,26 @@
 /**
- * UZ Aero — 09B ZDAJ SAMOLOT (mockupy `design/09b-zdaj-samolot.html` + `09c-zdaj-bez-lotu.html`).
+ * UZ Aero - 09B ZDAJ SAMOLOT (mockupy `design/09b-zdaj-samolot.html` + `09c-zdaj-bez-lotu.html`).
  *
- * Koniec pracy z TĄ maszyną — i **nie koniec dnia pilota** (§3.6a). Loty zostają
+ * Koniec pracy z TĄ maszyną - i **nie koniec dnia pilota** (§3.6a). Loty zostają
  * w „Mój dzień", a kolejny samolot dopisze się do listy sesji tej samej doby.
  * To najważniejsze zdanie całej przebudowy flow i dlatego stoi na ekranie banerem
  * typu STATUS (przyrząd, niezamykalny), a nie w komentarzu do kodu.
  *
  * Jeden ekran, dwa stany rozstrzygane DANYMI, nie parametrem nawigacji:
  *
- *   • 09B — sesja ma loty: **odczyt liczników jest WYMAGANY**, bo staje się
+ *   • 09B - sesja ma loty: **odczyt liczników jest WYMAGANY**, bo staje się
  *     przekazaniem dla następnego pilota i ogniwem łańcucha MH (§4.5). Pod odczytem
  *     stoi rozliczenie sesji: loty, paliwo start → koniec, średnie zużycie na tle
  *     normy samolotu i przyrost licznika;
- *   • 09C — sesja bez ani jednego biegu (pogoda, usterka): silnik nie ruszył, więc nie
+ *   • 09C - sesja bez ani jednego biegu (pogoda, usterka): silnik nie ruszył, więc nie
  *     ma czasów do potwierdzenia ani zużycia do rozliczenia. Liczniki zostają bez zmian
- *     — z furtką korekty, bo licznik fizyczny jest ważniejszy od naszej rachuby (§4.1
- *     pkt 5) — a jedyne pytanie brzmi „dlaczego nie poleciałeś".
+ *     - z furtką korekty, bo licznik fizyczny jest ważniejszy od naszej rachuby (§4.1
+ *     pkt 5) - a jedyne pytanie brzmi „dlaczego nie poleciałeś".
  *
  * Ekran NICZEGO NIE LICZY: napisy, sumy i blokady przychodzą z `buildRelease`
  * i funkcji obok niego (`logic/releaseAircraft.ts`).
  *
- * Payload niesie odczyt końcowy i (na 09C) powód — dawny `dutyEnd` odszedł razem
+ * Payload niesie odczyt końcowy i (na 09C) powód - dawny `dutyEnd` odszedł razem
  * z klamrą służby (issue #23, 2026-08-11).
  */
 
@@ -72,7 +72,7 @@ import {
 import type { NoFlightReason } from '../../domain';
 
 /**
- * Siatka powodów (`.reason-grid` z 09C) — karty z ikonami, nigdy natywny `<select>`
+ * Siatka powodów (`.reason-grid` z 09C) - karty z ikonami, nigdy natywny `<select>`
  * (`CLAUDE.md`). Wartości po angielsku, napisy po polsku: tę samą regułę trzyma
  * `OperationType` od issue #13.
  */
@@ -84,7 +84,7 @@ const REASONS: GridOption<NoFlightReason>[] = [
 ];
 
 /**
- * Tick co pół minuty — podpis „Trzymany 09:10 → 10:25 · 1:15" na 09C liczy DO TERAZ.
+ * Tick co pół minuty - podpis „Trzymany 09:10 → 10:25 · 1:15" na 09C liczy DO TERAZ.
  * Rozdzielczość `duration` to minuta, więc sekundowy zegar budziłby ekran 30 razy
  * bez zmiany napisu (ta sama reguła co na „Mój dzień").
  */
@@ -98,7 +98,7 @@ function useHalfMinuteTicker(): number {
 }
 
 /*
- * `ReleaseAircraftParams` (`closeDuty`) żyło tu do 2026-08-11 — parametr nawigacji
+ * `ReleaseAircraftParams` (`closeDuty`) żyło tu do 2026-08-11 - parametr nawigacji
  * niósł intencję „ZAMKNIJ DZIEŃ" z 01. Usunięty razem z klamrą służby (issue #23):
  * ekran ma jedno znaczenie, a wariant 09B/09C nadal rozstrzygają DANE (są loty czy nie).
  */
@@ -115,7 +115,7 @@ export function ReleaseAircraftScreen({
   const lastError = useSessionStore((s) => s.lastError);
   const releaseAircraft = useSessionStore((s) => s.releaseAircraft);
 
-  // Norma zużycia z cache'u referencyjnego — jedyna dana z serwera na tym ekranie
+  // Norma zużycia z cache'u referencyjnego - jedyna dana z serwera na tym ekranie
   // i jedyna, bez której ekran po prostu milczy o normie (`fuelNorm.ts`).
   const aircraft = useAircraft(projection.aircraftId);
 
@@ -130,7 +130,7 @@ export function ReleaseAircraftScreen({
   const now = useHalfMinuteTicker();
   const vm = buildRelease(projection, now);
 
-  // Wartość pola podąża za rejestrem, dopóki pilot jej nie nadpisze — dzięki temu
+  // Wartość pola podąża za rejestrem, dopóki pilot jej nie nadpisze - dzięki temu
   // późne wczytanie sesji nie zostawia pustego formularza z pustym stanem startowym.
   const reading = {
     fuelL: fuelEdit ?? vm?.initial.fuelL ?? null,
@@ -146,7 +146,7 @@ export function ReleaseAircraftScreen({
       // a dzień pilota trwa dalej.
       navigation.navigate('MyDay');
     } catch {
-      // Powód jest w `lastError` — pokazany banerem niżej.
+      // Powód jest w `lastError` - pokazany banerem niżej.
     } finally {
       setBusy(false);
     }
@@ -179,7 +179,7 @@ export function ReleaseAircraftScreen({
           />
           {/* Bilans sesji zostaje na ekranie, gdy pilot przewija formularz: to z nim
               porównuje przyrost licznika, który właśnie przepisuje. Sesja bez lotu
-              nie ma czego podsumowywać — paska po prostu nie ma. */}
+              nie ma czego podsumowywać - paska po prostu nie ma. */}
           {!withoutLeg && (
             <SummaryStrip
               items={[
@@ -206,7 +206,7 @@ export function ReleaseAircraftScreen({
             onPress={release}
           />
           <ActionButton
-            label="JESZCZE NIE — WRÓĆ DO KOKPITU"
+            label="JESZCZE NIE - WRÓĆ DO KOKPITU"
             tone="neutral"
             variant="secondary"
             size="md"
@@ -223,12 +223,12 @@ export function ReleaseAircraftScreen({
 
             {/* ── liczniki bez zmian ─────────────────────────────────────────
                 Nie każemy przepisywać tego samego. Ale furtka korekty zostaje, bo
-                licznik fizyczny jest ważniejszy od naszej rachuby (§4.1 pkt 5) —
+                licznik fizyczny jest ważniejszy od naszej rachuby (§4.1 pkt 5) -
                 ktoś mógł ruszyć samolot poza aplikacją. */}
             <Card title="Liczniki" flush headerRight={<Tag label="bez zmian" />}>
               <UnchangedRow
                 label="Paliwo"
-                value={reading.fuelL != null ? `${Math.round(reading.fuelL)}` : '—'}
+                value={reading.fuelL != null ? `${Math.round(reading.fuelL)}` : '-'}
                 unit="L"
                 onEdit={() => setEditing('fuel')}
               />
@@ -244,7 +244,7 @@ export function ReleaseAircraftScreen({
                 Powód jedzie do rejestru w `day_close.noFlightReason` (§5.1, etap B5)
                 i pokazuje go oś zdarzeń w panelu. Blokada CTA jest ostrzejsza od domeny
                 świadomie: domena flaguje brak powodu MIĘKKO (`NO_FLIGHT_WITHOUT_REASON`),
-                bo fakt zajęcia maszyny jest cenniejszy od kompletności formularza —
+                bo fakt zajęcia maszyny jest cenniejszy od kompletności formularza -
                 ale pilot stoi przy samolocie i odpowie w sekundę, a administrator
                 czytający rejestr tydzień później nie ma już kogo zapytać. */}
             <Card title="Dlaczego nie poleciałeś?" flush>
@@ -258,7 +258,7 @@ export function ReleaseAircraftScreen({
               tone="blue"
               icon="info"
               text={
-                `Przejęcie samolotu zostaje w rejestrze — administrator widzi, że ` +
+                `Przejęcie samolotu zostaje w rejestrze - administrator widzi, że ` +
                 `${vm.aircraftId} był zajęty i dlaczego nie poleciał. Twój dzień liczy się ` +
                 'dalej: to nie był lot, ale byłeś na miejscu.'
               }
@@ -266,7 +266,7 @@ export function ReleaseAircraftScreen({
           </>
         ) : (
           <>
-            {/* ── PRZEGLĄD LOTÓW — sekcja przejęta z dawnego ekranu 09 (2026-08-10).
+            {/* ── PRZEGLĄD LOTÓW - sekcja przejęta z dawnego ekranu 09 (2026-08-10).
                 Czasy z detekcji są TYLKO do przejrzenia: poprawki robi się korektą
                 w logu kokpitu (04c), zanim zapis tego ekranu zatwierdzi log. Stoi NAD
                 odczytami, bo kolejność pytań brzmi: najpierw „czy to się zgadza",
@@ -279,7 +279,7 @@ export function ReleaseAircraftScreen({
               </View>
             </Card>
 
-            {/* ── odczyt końcowy: wymagany — zapis ZATWIERDZA log sesji ── */}
+            {/* ── odczyt końcowy: wymagany - zapis ZATWIERDZA log sesji ── */}
             <Card
               title="Odczyt końcowy"
               flush
@@ -294,7 +294,7 @@ export function ReleaseAircraftScreen({
                   tone="amber"
                   actionIcon="edit"
                   onPress={() => setEditing('fuel')}
-                  accessibilityLabel="Paliwo na pokładzie — wpisz odczyt końcowy"
+                  accessibilityLabel="Paliwo na pokładzie - wpisz odczyt końcowy"
                 />
               </Field>
 
@@ -306,7 +306,7 @@ export function ReleaseAircraftScreen({
                   tone="amber"
                   actionIcon="edit"
                   onPress={() => setEditing('mh')}
-                  accessibilityLabel="Motogodziny — wpisz odczyt końcowy"
+                  accessibilityLabel="Motogodziny - wpisz odczyt końcowy"
                 />
               </Field>
             </Card>
@@ -392,7 +392,7 @@ export function ReleaseAircraftScreen({
 }
 
 /**
- * `.empty-card` (09C) — sesja, w której silnik ani razu nie ruszył.
+ * `.empty-card` (09C) - sesja, w której silnik ani razu nie ruszył.
  *
  * Mówi to wprost, zamiast rysować tabelę czasów bez wierszy. Plakietka pod spodem jest
  * jedyną miarą takiej sesji: JAK DŁUGO samolot był zablokowany dla innych.
@@ -435,12 +435,12 @@ function EmptySession({ heldLabel }: { heldLabel: string | null }) {
 }
 
 /**
- * `.counter-row` (09C) — licznik, którego nie ruszamy, z furtką korekty.
+ * `.counter-row` (09C) - licznik, którego nie ruszamy, z furtką korekty.
  *
  * Świadomie INNY kształt niż pole odczytu na 09B, choć obie rzeczy dają się poprawić:
  * tam pilot ma coś wpisać, tu ma tylko potwierdzić wzrokiem, że nic się nie zmieniło.
  * Gdyby wyglądały tak samo, „bez zmian" czytałoby się jak pusty formularz do wypełnienia.
- * Ołówek mimo to zostaje — licznik fizyczny bije naszą rachubę (§4.1 pkt 5), bo ktoś mógł
+ * Ołówek mimo to zostaje - licznik fizyczny bije naszą rachubę (§4.1 pkt 5), bo ktoś mógł
  * ruszyć samolot poza aplikacją.
  */
 function UnchangedRow({
@@ -475,7 +475,7 @@ function UnchangedRow({
       <View style={styles.spacer} />
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`${label} ${value} ${unit} — popraw, jeśli różni się od stanu przy przejęciu`}
+        accessibilityLabel={`${label} ${value} ${unit} - popraw, jeśli różni się od stanu przy przejęciu`}
         onPress={onEdit}
         style={({ pressed }) => [
           styles.editButton,
@@ -493,7 +493,7 @@ function UnchangedRow({
 }
 
 /**
- * Pilot nie trzyma żadnej maszyny — nie ma czego zdawać.
+ * Pilot nie trzyma żadnej maszyny - nie ma czego zdawać.
  *
  * `buildRelease` zwraca wtedy `null` i to jest stan pełnoprawny: samolot mógł zostać
  * zdany na innym urządzeniu albo sesja jeszcze się nie wczytała.
@@ -508,7 +508,7 @@ function NoAircraft({ onBack }: { onBack: () => void }) {
           NIE TRZYMASZ SAMOLOTU
         </AppText>
         <AppText variant="body" tone="muted" style={styles.emptyDesc}>
-          Zdanie dotyczy maszyny, którą masz w ręce. Żadnej teraz nie ma — zacznij
+          Zdanie dotyczy maszyny, którą masz w ręce. Żadnej teraz nie ma - zacznij
           od przejęcia.
         </AppText>
         <ActionButton
@@ -538,7 +538,7 @@ const styles = StyleSheet.create({
   counterValue: { fontSize: 24, lineHeight: 28, letterSpacing: 1 },
   counterUnit: { fontSize: 10, lineHeight: 14 },
   spacer: { flex: 1 },
-  // Cel dotykowy 44 px mimo drobnej ikony — ołówek stoi w gęstym wierszu.
+  // Cel dotykowy 44 px mimo drobnej ikony - ołówek stoi w gęstym wierszu.
   editButton: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
 
   // ── stan pusty 09C ─────────────────────────────────────────────────────────

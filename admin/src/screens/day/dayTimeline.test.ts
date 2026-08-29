@@ -1,8 +1,8 @@
 /**
- * UZ Aero — panel: oś zdarzeń karty dnia (moduł czysty).
+ * UZ Aero - panel: oś zdarzeń karty dnia (moduł czysty).
  *
  * Trzy reguły, których nie widać w typach i które są całym sensem tego ekranu:
- *  1. panel NIE PRZESORTOWUJE osi — porządek chronologiczny nadał serwer,
+ *  1. panel NIE PRZESORTOWUJE osi - porządek chronologiczny nadał serwer,
  *  2. zdarzenie unieważnione jest PRZEKREŚLONE, nie ukryte,
  *  3. `voided` i `correctedTime` czytamy z odpowiedzi, a nie odtwarzamy z payloadów.
  */
@@ -43,11 +43,11 @@ const entry = (e: Event, over: Partial<TimelineEntryDto> = {}): TimelineEntryDto
 const takeoff = (time: number, uuid = `to-${time}`) =>
   event({ type: 'takeoff', payload: { method: 'auto' }, gpsTime: time, deviceTime: time, uuid } as Partial<Event> & Pick<Event, 'type' | 'payload'>);
 
-describe('timelineRows — porządek', () => {
-  it('ODDAJE WIERSZE W KOLEJNOŚCI, W KTÓREJ PRZYSZŁY — nawet gdy czasy są nie po kolei', () => {
+describe('timelineRows - porządek', () => {
+  it('ODDAJE WIERSZE W KOLEJNOŚCI, W KTÓREJ PRZYSZŁY - nawet gdy czasy są nie po kolei', () => {
     // Porządek chronologiczny nadaje serwer (`eventTimeline.ts`: sort po czasie
     // zdarzenia, GPS przed zegarem telefonu). Drugie sortowanie tutaj UKRYŁOBY regres,
-    // gdyby tamto się zepsuło — a to właśnie ten regres zdarzył się w produkcji:
+    // gdyby tamto się zepsuło - a to właśnie ten regres zdarzył się w produkcji:
     // cała paczka ma identyczny `received_at`, więc kolejność z bazy była losowa.
     const entries = [
       entry(takeoff(at(9, 0), 'trzeci')),
@@ -71,15 +71,15 @@ describe('timelineRows — porządek', () => {
     expect(device.time).toBe('13:13:33');
   });
 
-  it('czas ma SEKUNDY — rejestr czyta się inaczej niż arkusz', () => {
+  it('czas ma SEKUNDY - rejestr czyta się inaczej niż arkusz', () => {
     // Różnica między `landing 08:14:09` a `landing 08:14:52` rozstrzyga, które
     // zdarzenie unieważniła korekta. Obcięcie sekund odbiera osi jej sens.
     expect(timelineRows([entry(takeoff(at(8, 14, 9)))])[0]!.time).toBe('08:14:09');
   });
 });
 
-describe('timelineRows — zdarzenie unieważnione', () => {
-  it('ZOSTAJE NA OSI, przekreślone — nigdy nie znika', () => {
+describe('timelineRows - zdarzenie unieważnione', () => {
+  it('ZOSTAJE NA OSI, przekreślone - nigdy nie znika', () => {
     // Rejestr jest append-only i to właśnie ten wiersz tłumaczy, dlaczego liczby dnia
     // różnią się od tego, co zapisał telefon. Ukrycie go byłoby najgorszą możliwą
     // uprzejmością narzędzia, którego zadaniem jest pokazywać rejestr takim, jaki jest.
@@ -97,13 +97,13 @@ describe('timelineRows — zdarzenie unieważnione', () => {
   });
 });
 
-describe('timelineRows — zdarzenie poprawione (`retime`)', () => {
+describe('timelineRows - zdarzenie poprawione (`retime`)', () => {
   it('pokazuje OBA czasy i mówi, który liczy projekcja', () => {
     const row = timelineRows([
       entry(takeoff(at(9, 18)), { correctedTime: at(9, 30) }),
     ])[0]!;
 
-    // Wiersz NIE jest przekreślony — `retime` poprawia czas, nie unieważnia faktu.
+    // Wiersz NIE jest przekreślony - `retime` poprawia czas, nie unieważnia faktu.
     expect(row.voided).toBe(false);
     // Kolumna pokazuje czas ZAPISANY, bo to po nim serwer ułożył oś.
     expect(row.time).toBe('09:18:00');
@@ -114,11 +114,11 @@ describe('timelineRows — zdarzenie poprawione (`retime`)', () => {
   });
 });
 
-describe('timelineRows — wejście do dziennika audytu (`audited`)', () => {
+describe('timelineRows - wejście do dziennika audytu (`audited`)', () => {
   it('oznacza WYŁĄCZNIE zdarzenia poprawione przez ADMINISTRATORA', () => {
     // `target_id` wpisu `event.correct` jest uuid-em zdarzenia POPRAWIANEGO, więc tylko
     // przy takim wierszu link „Audyt" ma co pokazać. Przy nietkniętym prowadziłby do
-    // pustej listy — a link do pustki jest gorszy od jego braku.
+    // pustej listy - a link do pustki jest gorszy od jego braku.
     const rows = timelineRows([
       entry(takeoff(at(8, 0), 'nietknięte')),
       entry(takeoff(at(8, 14), 'unieważnione przez admina'), { voided: true, adminCorrected: true }),
@@ -131,12 +131,12 @@ describe('timelineRows — wejście do dziennika audytu (`audited`)', () => {
     expect(rows.map((row) => row.audited)).toEqual([false, true, true]);
   });
 
-  it('KOREKTA PILOTA z okna 24 h NIE daje linku — w dzienniku nie ma po niej śladu', () => {
+  it('KOREKTA PILOTA z okna 24 h NIE daje linku - w dzienniku nie ma po niej śladu', () => {
     // To jest przypadek NORMALNY, nie brzegowy: `event_correction` emituje też telefon
     // (ekran 12, okno 24 h) i idzie ona przez `POST /events`, czyli Z POMINIĘCIEM
     // `AuditedWrite`. Wiersz w `admin_audit` po niej NIE POWSTAJE. Wiersz osi wygląda
-    // wtedy identycznie jak po korekcie administratora — przekreślony albo z nowym
-    // czasem — więc link oparty na `voided`/`correctedTime` prowadził do pustej listy
+    // wtedy identycznie jak po korekcie administratora - przekreślony albo z nowym
+    // czasem - więc link oparty na `voided`/`correctedTime` prowadził do pustej listy
     // dokładnie tam, gdzie korekty zdarzają się najczęściej.
     const rows = timelineRows([
       entry(takeoff(at(8, 14), 'unieważnione przez pilota'), { voided: true }),
@@ -151,7 +151,7 @@ describe('timelineRows — wejście do dziennika audytu (`audited`)', () => {
   });
 });
 
-describe('timelineRows — korekta jako zwykły wpis', () => {
+describe('timelineRows - korekta jako zwykły wpis', () => {
   it('sama `event_correction` stoi na osi i wskazuje swój cel', () => {
     // Poprawia się fakt, nie poprawkę: korekta nie bywa unieważniona i nie znika.
     const row = timelineRows([
@@ -185,7 +185,7 @@ describe('timelineRows — korekta jako zwykły wpis', () => {
   });
 });
 
-describe('timelineRows — payload w opisie', () => {
+describe('timelineRows - payload w opisie', () => {
   it('preflight niesie odczyt W FORMACIE LICZNIKA i log korekt odczytu', () => {
     const row = timelineRows([
       entry(
@@ -210,12 +210,12 @@ describe('timelineRows — payload w opisie', () => {
     expect(text).toContain('780 L');
     expect(text).toContain('3902.1');
     expect(text).toContain('SKY CAMP');
-    // Korekta odczytu jest LOGIEM, nie nadpisaniem — widać oba końce i powód.
+    // Korekta odczytu jest LOGIEM, nie nadpisaniem - widać oba końce i powód.
     expect(text).toContain('3901.4 → 3902.1');
     expect(text).toContain('licznik pokazuje więcej niż przekazanie');
   });
 
-  it('zdanie BEZ LOTU podaje powód po polsku — to jedyny ślad po zajętej maszynie', () => {
+  it('zdanie BEZ LOTU podaje powód po polsku - to jedyny ślad po zajętej maszynie', () => {
     // Ekran 09C pyta o powód, a domena go tylko flaguje (`NO_FLIGHT_WITHOUT_REASON`),
     // bo twarda reguła skasowałaby fakt, że samolot stał zajęty. Panel MUSI ten powód
     // pokazać: bez niego administrator widzi sesję z zerowym czasem blokowym i nie ma
@@ -230,12 +230,12 @@ describe('timelineRows — payload w opisie', () => {
     ])[0]!;
 
     const text = row.meta.join(' | ');
-    expect(text).toContain('bez lotu — powód: pogoda');
-    // Wiersza „koniec służby: …" nie ma — klamra służby usunięta (issue #23).
+    expect(text).toContain('bez lotu - powód: pogoda');
+    // Wiersza „koniec służby: …" nie ma - klamra służby usunięta (issue #23).
     expect(text).not.toContain('koniec służby');
   });
 
-  it('sesja Z LOTAMI nie dostaje wiersza o powodzie — nie ma o co pytać', () => {
+  it('sesja Z LOTAMI nie dostaje wiersza o powodzie - nie ma o co pytać', () => {
     const row = timelineRows([
       entry(
         event({
@@ -290,10 +290,10 @@ describe('timelineRows — payload w opisie', () => {
     expect(text).toContain('sortuje po czasie zdarzenia, nie zapisu');
   });
 
-  it('opis jest listą NAPISÓW — payload nigdy nie wraca jako znaczniki', () => {
+  it('opis jest listą NAPISÓW - payload nigdy nie wraca jako znaczniki', () => {
     // Payloady pochodzą z telefonów i zawierają dowolne teksty wpisane przez pilota.
     // Ten moduł oddaje je jako zwykłe napisy, a komponent renderuje je jako dzieci
-    // Reacta — nigdy przez `dangerouslySetInnerHTML`.
+    // Reacta - nigdy przez `dangerouslySetInnerHTML`.
     const row = timelineRows([
       entry(
         event({
@@ -304,15 +304,15 @@ describe('timelineRows — payload w opisie', () => {
     ])[0]!;
 
     expect(row.meta.every((line) => typeof line === 'string')).toBe(true);
-    // Napis przechodzi DOSŁOWNIE, bez ucieczek i bez wycinania — to zadanie Reacta.
+    // Napis przechodzi DOSŁOWNIE, bez ucieczek i bez wycinania - to zadanie Reacta.
     expect(row.meta.join(' ')).toContain('<img src=x onerror=alert(1)>');
   });
 });
 
-describe('timelineRows — wejście w korektę (A02b)', () => {
-  it('typy niekorygowalne są oznaczone — lista jest lustrem reguły domeny', () => {
+describe('timelineRows - wejście w korektę (A02b)', () => {
+  it('typy niekorygowalne są oznaczone - lista jest lustrem reguły domeny', () => {
     // `CORRECTION_TARGET_NOT_ALLOWED` w `packages/domain/src/rules/sessionRules.ts`:
-    // claim to tożsamość sesji, a korekty się nie poprawia — poprawia się fakt.
+    // claim to tożsamość sesji, a korekty się nie poprawia - poprawia się fakt.
     const entries = [
       entry(event({ type: 'session_claim', payload: { mode: 'free', previousPicId: null } })),
       entry(event({ type: 'event_correction', payload: { targetUuid: 'x', action: 'void' } })),
@@ -322,11 +322,11 @@ describe('timelineRows — wejście w korektę (A02b)', () => {
     expect(timelineRows(entries).map((row) => row.correctable)).toEqual([false, false, true]);
   });
 
-  it('ZDANIE SAMOLOTU jest korygowalne od issue #43 — ale wyłącznie przez `amend`', () => {
+  it('ZDANIE SAMOLOTU jest korygowalne od issue #43 - ale wyłącznie przez `amend`', () => {
     // Wcześniej `day_close` miał flagę `correctable: false` i to była PEŁNA prawda:
     // obie ówczesne akcje dotyczyły faktu zajścia zdarzenia. Odkąd `amend` poprawia
     // WARTOŚĆ, binarna flaga odbierała administratorowi jedyne wejście w poprawkę
-    // odczytów po zamknięciu okna pilota — a to on ma je wtedy nanieść.
+    // odczytów po zamknięciu okna pilota - a to on ma je wtedy nanieść.
     const entries = [
       entry(event({ type: 'day_close', payload: { finalReading: { fuelL: 1, mh: 1 } } })),
       entry(
@@ -345,7 +345,7 @@ describe('timelineRows — wejście w korektę (A02b)', () => {
     expect(EVENT_META.drop.corrections).toEqual(['retime', 'void', 'amend']);
   });
 
-  it('zdarzenie UNIEWAŻNIONE zostaje korygowalne — retime przywraca je do życia', () => {
+  it('zdarzenie UNIEWAŻNIONE zostaje korygowalne - retime przywraca je do życia', () => {
     // „Ostatnia korekta wygrywa", a `void` → `retime` cofa unieważnienie. Ukrycie
     // przejścia przy przekreślonym wierszu odebrałoby administratorowi jedyną drogę
     // wycofania cudzej pomyłki.
@@ -359,8 +359,8 @@ describe('timelineRows — wejście w korektę (A02b)', () => {
 describe('timelineSummary', () => {
   it('liczy REJESTR, nie strumień efektywny', () => {
     // `state.eventCount` liczy zdarzenia PO nałożeniu korekt (bez unieważnionych
-    // i bez samych korekt). Mockup pyta o rejestr — „84 zdarzenia, w tym 1 korekta"
-    // — więc odpowiadamy o rejestrze. Obie liczby są poprawne i mówią o czym innym.
+    // i bez samych korekt). Mockup pyta o rejestr - „84 zdarzenia, w tym 1 korekta"
+    // - więc odpowiadamy o rejestrze. Obie liczby są poprawne i mówią o czym innym.
     const entries = [
       entry(takeoff(at(8, 2), 'a')),
       entry(takeoff(at(8, 14), 'b'), { voided: true }),

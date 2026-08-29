@@ -1,10 +1,10 @@
 /**
- * UZ Aero (serwer) — ślad lotu w panelu (`GET /admin/api/sessions/:uuid/track/:flight`,
+ * UZ Aero (serwer) - ślad lotu w panelu (`GET /admin/api/sessions/:uuid/track/:flight`,
  * mockup `A02c-slad.html`).
  *
  * Ten sam wzorzec co reszta: PGlite w procesie, prawdziwe klasy, `app.inject`, zero atrap.
  * Ślad wysyłamy PRAWDZIWYM `POST /traces` i czytamy z tego samego katalogu NDJSON, do
- * którego zapisał go adapter — czyli przechodzimy dokładnie tę drogę, którą przechodzą
+ * którego zapisał go adapter - czyli przechodzimy dokładnie tę drogę, którą przechodzą
  * dane w produkcji. Test, który wstawiałby wiersze śladu obok tej drogi, potwierdzałby
  * wyłącznie własne wyobrażenie o formacie zapisu.
  *
@@ -120,7 +120,7 @@ async function flownDayWithTrace(entries: Record<string, unknown>[]) {
 }
 
 describe('GET /admin/api/sessions/:uuid/track/:flight', () => {
-  it('bierze wyłącznie fixy z okna lotu — kołowanie zostaje poza trasą', async () => {
+  it('bierze wyłącznie fixy z okna lotu - kołowanie zostaje poza trasą', async () => {
     const { app, token, harness } = await flownDayWithTrace([
       fix(at(8, 15)), // kołowanie przed startem
       fix(at(8, 30), { lat: BASE.lat + NM }),
@@ -191,7 +191,7 @@ describe('GET /admin/api/sessions/:uuid/track/:flight', () => {
     expect(body.line).toHaveLength(0);
     expect(body.log).toHaveLength(0);
     expect(body.totalCount).toBe(0);
-    // Okno lotu ZOSTAJE — czasy są prawdziwe, brakuje wyłącznie geometrii.
+    // Okno lotu ZOSTAJE - czasy są prawdziwe, brakuje wyłącznie geometrii.
     expect(body.takeoffAt).toBe(at(8, 25));
 
     await harness.app.close();

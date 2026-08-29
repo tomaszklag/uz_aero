@@ -1,9 +1,9 @@
 /**
- * UZ Aero (serwer) — `Database` na puli `pg`.
+ * UZ Aero (serwer) - `Database` na puli `pg`.
  *
  * KLUCZOWE: transakcja musi jechać na JEDNYM połączeniu. `pool.query` bierze za każdym
  * razem losowego klienta, więc `BEGIN` i `COMMIT` przez pulę trafiałyby w różne
- * połączenia — transakcja tylko z nazwy. Stąd jawne `connect()` i klient przekazywany
+ * połączenia - transakcja tylko z nazwy. Stąd jawne `connect()` i klient przekazywany
  * do środka jako `Queryable`.
  */
 

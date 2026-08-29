@@ -1,15 +1,15 @@
 /**
- * UZ Aero — progi analityki zużycia: co wchodzi do modelu i kiedy wolno go pokazać.
+ * UZ Aero - progi analityki zużycia: co wchodzi do modelu i kiedy wolno go pokazać.
  *
  * ══ WSZYSTKIE WARTOŚCI SĄ DO KALIBRACJI ══
  * Bazowe pochodzą z rozumowania o dokładności paliwomierza i o tym, ile równań
- * potrzeba, żeby regresja o czterech niewiadomych cokolwiek znaczyła — nie z danych
+ * potrzeba, żeby regresja o czterech niewiadomych cokolwiek znaczyła - nie z danych
  * z lotów. Kalibrujemy je na realnej historii klubu PO wdrożeniu etapu 1, tą samą
  * metodą co progi detekcji (`docs/algorytm-detekcji.md` §15: „progów NIE stroimy
  * na wyczucie"). Zmiana któregokolwiek z nich zmienia liczby na ekranie A10a.
  *
  * ══ DLACZEGO PROGI PUBLIKACJI W OGÓLE ISTNIEJĄ ══
- * Stawka policzona z dwóch odczytów paliwomierza jest liczbą — ale nie jest wiedzą.
+ * Stawka policzona z dwóch odczytów paliwomierza jest liczbą - ale nie jest wiedzą.
  * Ekran, który ją pokaże, skłamie skuteczniej niż ekran, który powie „za mało danych",
  * bo liczba wygląda na wynik pomiaru. Poniżej progu pokazujemy więc postęp zbierania
  * i surowe interwały (mockup `A10b`), nigdy stawkę „wstępną".
@@ -17,7 +17,7 @@
 
 import { isUsableInterval, type FuelInterval, type IntervalRejection } from './interval';
 
-/** Godzina w milisekundach — mianownik wszystkich stawek. */
+/** Godzina w milisekundach - mianownik wszystkich stawek. */
 export const HOUR_MS = 3_600_000;
 
 /**
@@ -26,7 +26,7 @@ export const HOUR_MS = 3_600_000;
  * Paliwomierz ma błąd odczytu rzędu kilku litrów NIEZALEŻNIE od długości odcinka, więc
  * przy dziesięciu minutach ten błąd jest całym sygnałem: 3 L pomyłki na 0,2 h daje 15 L/h
  * czystego szumu wpisanego w równanie. Dłuższe interwały rozkładają ten sam błąd na
- * większy mianownik — i dlatego regresja waży je mocniej (patrz `nnls.ts`).
+ * większy mianownik - i dlatego regresja waży je mocniej (patrz `nnls.ts`).
  */
 export const MIN_INTERVAL_ENGINE_MS = 30 * 60_000;
 
@@ -34,12 +34,12 @@ export const MIN_INTERVAL_ENGINE_MS = 30 * 60_000;
  * Górny próg długości interwału (16 h pracy silnika).
  *
  * Znaleziony przebiegiem po realnej historii (2026-08-05): w rejestrze stała sesja
- * z `engine_start` 27 lipca 19:00 i `engine_stop` 29 lipca 11:33 — czterdzieści godzin
+ * z `engine_start` 27 lipca 19:00 i `engine_stop` 29 lipca 11:33 - czterdzieści godzin
  * „pracy silnika" przez dwie noce. To nie jest lot, tylko zapomniane wyłączenie, więc
- * czas w takim interwale jest fikcją, a stawka z niego — fikcją pomnożoną przez paliwo.
+ * czas w takim interwale jest fikcją, a stawka z niego - fikcją pomnożoną przez paliwo.
  *
  * Próg jest lustrem `MIN_INTERVAL_ENGINE_MS`: tam odcinamy odcinki, w których błąd
- * odczytu przeważa nad sygnałem, tu — takie, w których mianownik nie opisuje niczego
+ * odczytu przeważa nad sygnałem, tu - takie, w których mianownik nie opisuje niczego
  * rzeczywistego. Szesnaście godzin jest wyraźnie ponad najdłuższym realnym dniem
  * lotnym (Antonow przy skokach robi 8–10 h), więc prawdziwego dnia nie utnie.
  */
@@ -57,7 +57,7 @@ export const MIN_PUBLISH_ENGINE_MS = 10 * HOUR_MS;
  * Osobny próg od paliwowego, bo model MH ma inne wejście: jedno równanie na DZIEŃ
  * (licznik odczytujemy dwa razy dziennie), nie na interwał. Trzy dni dałyby jeden
  * stopień swobody i przedział szerszy od samej wartości; przy pięciu zaczyna to
- * cokolwiek znaczyć — a `k` są stałymi maszyny, więc zbiegają się szybko.
+ * cokolwiek znaczyć - a `k` są stałymi maszyny, więc zbiegają się szybko.
  */
 export const MIN_PUBLISH_MH_DAYS = 5;
 
@@ -66,7 +66,7 @@ export const MIN_PUBLISH_MH_DAYS = 5;
  *
  * Odstający NIE ZNIKA: wypada z regresji i trafia na listę z powodem (mockup A10a,
  * plakietka „Odstaje"). Interwał, którego model nie tłumaczy, jest zwykle śladem
- * czegoś realnego — pomyłki w odczycie albo dolewki spoza aplikacji — więc ukrycie go
+ * czegoś realnego - pomyłki w odczycie albo dolewki spoza aplikacji - więc ukrycie go
  * kosztowałoby dokładnie tę informację, dla której ten ekran powstał.
  */
 export const OUTLIER_SIGMA = 3;
@@ -84,24 +84,24 @@ export const OUTLIER_SIGMA = 3;
 export const MAX_RELATIVE_CI = 0.5;
 
 /**
- * Górny próg współczynnika inflacji wariancji — DRUGA, niezależna bramka rozdzielności.
+ * Górny próg współczynnika inflacji wariancji - DRUGA, niezależna bramka rozdzielności.
  *
  * ══ DLACZEGO SAM PRZEDZIAŁ NIE WYSTARCZA (przebieg z 2026-08-05) ══
  * Pierwsza wersja pilnowała wyłącznie `MAX_RELATIVE_CI` i przepuściła model, w którym
- * stawka ziemi wyszła WYŻSZA niż stawka lotu (52 vs 37 L/h dla Cessny 182) — fizyczny
+ * stawka ziemi wyszła WYŻSZA niż stawka lotu (52 vs 37 L/h dla Cessny 182) - fizyczny
  * absurd. Przedziały wyglądały wtedy przyzwoicie (±21% i ±14%), bo dane były wewnętrznie
  * spójne, więc σ reszt było maleńkie. Iloczyn `σ · √VIF` może być mały nawet przy VIF
- * rzędu tysiąca — czyli przy kolumnach praktycznie nierozróżnialnych.
+ * rzędu tysiąca - czyli przy kolumnach praktycznie nierozróżnialnych.
  *
  * To są dwie różne rzeczy i muszą mieć dwie bramki: przedział mówi, JAK DOKŁADNIE znamy
- * stawkę przy tych danych, a VIF — czy dane w ogóle niosą informację o tym podziale.
+ * stawkę przy tych danych, a VIF - czy dane w ogóle niosą informację o tym podziale.
  * Model idealnie dopasowany do danych, których proporcje faz są prawie stałe, podaje
  * podział dowolny, a nie wyznaczony.
  *
  * Wartość 100 znaczy „niepewność najwyżej dziesięciokrotnie większa niż przy fazach
  * idealnie rozdzielonych" (VIF wchodzi pod pierwiastek). Klasyczny podręcznikowy próg
  * to 10, ale kolumny czasów są nieujemne i niecentrowane, więc ich cosinusy są z natury
- * wysokie — 10 wycinałoby modele, które jeszcze coś znaczą.
+ * wysokie - 10 wycinałoby modele, które jeszcze coś znaczą.
  */
 export const MAX_VARIANCE_INFLATION = 100;
 
@@ -109,21 +109,21 @@ export const MAX_VARIANCE_INFLATION = 100;
 export const CI_LEVEL = 0.95;
 
 /**
- * DOLNA GRANICA pasma oczekiwania dla paliwa (L) — issue #38.
+ * DOLNA GRANICA pasma oczekiwania dla paliwa (L) - issue #38.
  *
  * Pasmo liczy się z rozrzutu obserwacji (`ratio.ts`), a ten przy danych wewnętrznie
- * spójnych potrafi zejść do zera — dokładnie tak, jak przedziały w `mhModel.ts` przy
+ * spójnych potrafi zejść do zera - dokładnie tak, jak przedziały w `mhModel.ts` przy
  * historii bez szumu. Werdykt „powyżej normy" zapalałby się wtedy na różnicy mniejszej
  * niż to, co paliwomierz w ogóle umie pokazać.
  *
  * Sześć litrów, bo zużycie sesji jest RÓŻNICĄ dwóch odczytów, a każdy z nich ma błąd
  * rzędu trzech litrów (to samo rozumowanie, co przy `MIN_INTERVAL_ENGINE_MS`).
- * DO KALIBRACJI razem z resztą progów tego pliku — `server/scripts/consumptionReplay.ts`.
+ * DO KALIBRACJI razem z resztą progów tego pliku - `server/scripts/consumptionReplay.ts`.
  */
 export const FUEL_BAND_FLOOR_L = 6;
 
 /**
- * DOLNA GRANICA pasma oczekiwania dla motogodzin (h) — issue #38.
+ * DOLNA GRANICA pasma oczekiwania dla motogodzin (h) - issue #38.
  *
  * Ten sam argument co wyżej, tylko jednostką jest podziałka licznika: przyrost MH to
  * różnica dwóch odczytów po 0,05 h rozdzielczości, więc 0,1 h to czysta arytmetyka
@@ -132,7 +132,7 @@ export const FUEL_BAND_FLOOR_L = 6;
 export const MH_BAND_FLOOR_H = 0.1;
 
 /**
- * Dlaczego interwał nie wchodzi do regresji — bez odstających, bo te rozstrzyga
+ * Dlaczego interwał nie wchodzi do regresji - bez odstających, bo te rozstrzyga
  * dopiero dopasowany model (`model.ts`), a ta funkcja działa przed nim.
  */
 export function intervalRejection(interval: FuelInterval): IntervalRejection | null {
@@ -145,7 +145,7 @@ export function intervalRejection(interval: FuelInterval): IntervalRejection | n
   return null;
 }
 
-/** Stan bramki publikacji — pod mierniki postępu na `A10b`. */
+/** Stan bramki publikacji - pod mierniki postępu na `A10b`. */
 export interface PublicationGate {
   published: boolean;
   /** Ile interwałów przyjęto (po odrzuceniach). */

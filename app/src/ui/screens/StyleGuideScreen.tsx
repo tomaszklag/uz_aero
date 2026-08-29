@@ -1,10 +1,10 @@
 /**
- * UZ Aero — ekran DEMO / style guide (Faza 1, fundament Design System).
+ * UZ Aero - ekran DEMO / style guide (Faza 1, fundament Design System).
  *
  * Dowód, że system motywów działa: przełącznik motywów na górze przemalowuje
  * na żywo wszystkie próbki kolorów, warianty typografii i SyncChip.
  *
- * To NIE jest ekran aplikacji — to katalog tokenów i prymitywów.
+ * To NIE jest ekran aplikacji - to katalog tokenów i prymitywów.
  */
 
 import React from 'react';
@@ -16,7 +16,7 @@ import { AppText, Screen, SyncChip, ThemePicker } from '../components';
 
 
 export function StyleGuideScreen() {
-  // Fonty i gotowość motywu ładuje App (poziom aplikacji) — ekran zakłada, że są gotowe.
+  // Fonty i gotowość motywu ładuje App (poziom aplikacji) - ekran zakłada, że są gotowe.
   const { theme } = useTheme();
 
   const colorEntries = Object.entries(theme.colors) as [string, string][];
@@ -36,13 +36,13 @@ export function StyleGuideScreen() {
       {/* ── Przełącznik motywów ── */}
       <ThemePicker style={styles.block} />
       <AppText variant="body" tone="secondary" style={styles.caption}>
-        Dotknij motywu — cały ekran przemalowuje się z tokenów. Wybór zapisuje się w profilu pilota.
+        Dotknij motywu - cały ekran przemalowuje się z tokenów. Wybór zapisuje się w profilu pilota.
       </AppText>
 
       {/* ── SyncChip ── */}
       <SectionTitle>SyncChip · wskaźnik łączności</SectionTitle>
       <View style={styles.chipRow}>
-        {/* Stan `synced` NIE RYSUJE NIC (issue #12) — puste miejsce obok jest pełnoprawną
+        {/* Stan `synced` NIE RYSUJE NIC (issue #12) - puste miejsce obok jest pełnoprawną
             pozycją katalogu, a nie brakiem przykładu. */}
         <SyncChip status="synced" />
         <SyncChip status="offline" outboxCount={7} lastSyncAt={Date.now() - 3 * 3_600_000} />
@@ -76,7 +76,7 @@ export function StyleGuideScreen() {
         </TypeRow>
         <TypeRow label="body · Archivo">
           <AppText variant="body">
-            Brak sieci nigdy nie blokuje pracy pilota — sieć to okazja do synca.
+            Brak sieci nigdy nie blokuje pracy pilota - sieć to okazja do synca.
           </AppText>
         </TypeRow>
         <TypeRow label="label · Archivo SemiBold">

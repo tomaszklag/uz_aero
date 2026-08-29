@@ -1,5 +1,5 @@
 /**
- * UZ Aero — profil pionowy sesji (mockup `14-slad.html`, sekcja „Profil pionowy").
+ * UZ Aero - profil pionowy sesji (mockup `14-slad.html`, sekcja „Profil pionowy").
  *
  * Wykres wysokości w czasie, rysowany tą samą techniką co ślad na mapie: łamana
  * z obróconych `<View>` (patrz `TrackPolyline`). Zero zależności natywnych.
@@ -9,11 +9,11 @@
  * przebieg w pasek przy górnej krawędzi.
  *
  * ══ ZNACZNIKI NA OBU WYKRESACH (issue #47 pkt 2) ══
- * Do issue #47 profil pokazywał sam szczyt, a mapa starty, lądowania i zrzuty — więc
+ * Do issue #47 profil pokazywał sam szczyt, a mapa starty, lądowania i zrzuty - więc
  * dwa rysunki tej samej sesji podpisywały co innego i nie dało się przełożyć zdarzenia
  * z jednego na drugi. Odtąd oba niosą ten sam komplet, z CZASEM przy każdym znaczniku.
  * Podpisem jest sama godzina: rodzaj niesie kolor (ten sam, co w legendzie mapy), bo
- * pełne nazwy przy czterech znacznikach nie mieszczą się w szerokości telefonu —
+ * pełne nazwy przy czterech znacznikach nie mieszczą się w szerokości telefonu -
  * sprawdzone na geometrii mockupu, nie na oko.
  */
 
@@ -30,11 +30,11 @@ import { distanceScaleBar } from './distanceScaleBar';
 import { timeScaleBar } from './timeScaleBar';
 import { TrackPolyline, type Point2D } from './TrackPolyline';
 
-/** Miejsce na etykiety osi — pod wykresem czas, po lewej wysokość. */
+/** Miejsce na etykiety osi - pod wykresem czas, po lewej wysokość. */
 const AXIS_LEFT = 42;
 
 /**
- * Dolny pas wykresu, rozpisany na składniki — bo mieszka w nim więcej niż jedna rzecz
+ * Dolny pas wykresu, rozpisany na składniki - bo mieszka w nim więcej niż jedna rzecz
  * i sumowanie „na oko" już raz kosztowało ucięte podpisy.
  *
  * Od dołu ku górze: margines, podziałka czasu (podpis + pasek), odstęp, do dwóch rzędów
@@ -46,7 +46,7 @@ const LABEL_ROWS = 2;
 const SCALE_GAP = 8;
 /** Podpis (~9) + odstęp (2) + pasek (4). */
 const SCALE_H = 15;
-/** Te same wartości, co podziałka mapy (`TrackMap.styles.scale`) — ten sam róg ekranu. */
+/** Te same wartości, co podziałka mapy (`TrackMap.styles.scale`) - ten sam róg ekranu. */
 const SCALE_LEFT = 8;
 const SCALE_BOTTOM = 6;
 
@@ -57,17 +57,17 @@ const AXIS_BOTTOM =
  * Oddech na obu końcach osi czasu (px).
  *
  * Bez niego krzywa zaczynała się DOKŁADNIE na krawędzi pola i tak samo kończyła, a
- * podpis pierwszego i ostatniego znacznika — wyśrodkowany na swoim punkcie — wychodził
+ * podpis pierwszego i ostatniego znacznika - wyśrodkowany na swoim punkcie - wychodził
  * połową poza przycięte pole i był ucinany. Uruchomienie i wyłączenie silnika to dwie
  * najważniejsze godziny tego wykresu i akurat one traciły po pół napisu.
  */
 const PLOT_PAD_X = 16;
 
-/** Szerokość podpisu „08:20" w `micro` — do rozsuwania rzędów. */
+/** Szerokość podpisu „08:20" w `micro` - do rozsuwania rzędów. */
 const TIME_LABEL_W = 36;
 
 /**
- * Znacznik na profilu. Kolor i podpis dobiera EKRAN — komponent nie zna rodzajów
+ * Znacznik na profilu. Kolor i podpis dobiera EKRAN - komponent nie zna rodzajów
  * zdarzeń, tak samo jak `TrackMap` (`TrackMapMarker`).
  */
 export interface VerticalProfileMarker {
@@ -75,11 +75,11 @@ export interface VerticalProfileMarker {
   color: string;
   /**
    * Znacznik siedzi NA KRZYWEJ (zrzut, szczyt) zamiast przy ziemi (start, lądowanie).
-   * Ten na krzywej dostaje pionową kreskę prowadzącą do osi — bez niej nie da się
+   * Ten na krzywej dostaje pionową kreskę prowadzącą do osi - bez niej nie da się
    * odczytać, w którym miejscu osi czasu wypadł.
    */
   onCurve?: boolean;
-  /** Podpis dodatkowy przy znaczniku na krzywej — dziś wyłącznie „MAX 12 840 ft". */
+  /** Podpis dodatkowy przy znaczniku na krzywej - dziś wyłącznie „MAX 12 840 ft". */
   note?: string | null;
 }
 
@@ -89,14 +89,14 @@ export interface VerticalProfileProps {
   height: number;
   markers?: readonly VerticalProfileMarker[];
   /**
-   * Chwila pod palcem (issue #47 pkt 7) — kursor sprzężony z mapą. `null` = brak gestu.
+   * Chwila pod palcem (issue #47 pkt 7) - kursor sprzężony z mapą. `null` = brak gestu.
    * Kursorem na profilu jest CHWILA, więc rysuje się pionową kreską przez cały wykres.
    */
   cursorAt?: number | null;
   /** Palec na profilu wskazał chwilę (albo zszedł: `null`). */
   onCursorChange?: (at: number | null) => void;
   /**
-   * Droga narastająco (NM) w danej chwili — z geometrii śladu. Bez niej podziałka
+   * Droga narastająco (NM) w danej chwili - z geometrii śladu. Bez niej podziałka
    * podaje sam czas; z nią dokłada dystans dla odcinka, który obejmuje (patrz niżej).
    */
   distanceNmAt?: (at: number) => number | null;
@@ -142,7 +142,7 @@ export function VerticalProfile({
     const lowAlt = minAlt - pad;
     const spanAlt = Math.max(1, maxAlt + pad - lowAlt);
 
-    /** Szerokość NA KRZYWĄ — pole minus oddech z obu stron. */
+    /** Szerokość NA KRZYWĄ - pole minus oddech z obu stron. */
     const spanW = Math.max(1, plotW - 2 * PLOT_PAD_X);
 
     const toPoint = (time: number, altitudeFt: number): Point2D => ({
@@ -150,7 +150,7 @@ export function VerticalProfile({
       y: 8 + plotH - ((altitudeFt - lowAlt) / spanAlt) * plotH,
     });
 
-    /** Wysokość w dowolnej chwili — interpolacja liniowa między próbkami. */
+    /** Wysokość w dowolnej chwili - interpolacja liniowa między próbkami. */
     const altitudeAt = (time: number): number => {
       if (time <= samples[0]!.time) return samples[0]!.altitudeFt;
       const last = samples[samples.length - 1]!;
@@ -186,7 +186,7 @@ export function VerticalProfile({
   /**
    * Gest siedzi na POLU WYKRESU, nie na całym komponencie: dzięki temu współrzędne
    * dotknięcia są od razu w układzie pola (bez `AXIS_LEFT`), a przybliżenie ma ten sam
-   * mianownik, co przycinanie. Zoom jest wyłącznie POZIOMY — rozciąga czas, bo to on
+   * mianownik, co przycinanie. Zoom jest wyłącznie POZIOMY - rozciąga czas, bo to on
    * rozdziela zdarzenia leżące na sobie; wysokość jest już dobrana do zakresu lotu.
    */
   const gesture = useChartGesture({
@@ -266,14 +266,14 @@ export function VerticalProfile({
     );
   }
 
-  // Cztery poziomy siatki — tyle mieści się czytelnie na wysokości telefonu.
+  // Cztery poziomy siatki - tyle mieści się czytelnie na wysokości telefonu.
   const gridSteps = [0, 1, 2, 3];
   let groundIndex = -1;
 
   const { scale, offsetX } = gesture.viewport;
 
   /**
-   * Podziałka czasu — wskaźnik przybliżenia profilu, dokładnie jak podziałka odległości
+   * Podziałka czasu - wskaźnik przybliżenia profilu, dokładnie jak podziałka odległości
    * na mapie: przy przybliżeniu czyta „2 min" zamiast „15 min". Bez niej po zoomie
    * między dwoma znacznikami nie było ani jednej liczby o czasie.
    */
@@ -283,7 +283,7 @@ export function VerticalProfile({
   );
 
   /**
-   * SIATKA PIONOWA co jeden krok podziałki — czyli jedna kratka = to, co mówi pasek.
+   * SIATKA PIONOWA co jeden krok podziałki - czyli jedna kratka = to, co mówi pasek.
    * Dzięki temu siatka nie jest tłem dla ozdoby, tylko odczytem: „ten garb ma dwie
    * kratki, czyli pół godziny". Linie jadą razem z wykresem (są w przyciętym polu),
    * bo opisują CZAS, a nie ramkę.
@@ -291,7 +291,7 @@ export function VerticalProfile({
   const timeGrid: Array<{ at: number; x: number }> = [];
   if (timeScale != null) {
     const step = timeScale.ms;
-    // Zaczynamy od okrągłej wielokrotności kroku — linie padają na pełne kwadranse
+    // Zaczynamy od okrągłej wielokrotności kroku - linie padają na pełne kwadranse
     // i minuty, a nie na przypadkową godzinę początku nagrania.
     for (let at = Math.ceil(plot.t0 / step) * step; at <= plot.t1; at += step) {
       const x = timeX(at);
@@ -300,13 +300,13 @@ export function VerticalProfile({
   }
 
   /**
-   * Droga dla ODCINKA, który obejmuje pasek — nie „NM na piksel".
+   * Droga dla ODCINKA, który obejmuje pasek - nie „NM na piksel".
    *
    * Na osi czasu dystans nie jest proporcjonalny (pięć minut wznoszenia to inna droga
    * niż pięć minut przelotu, a pięć minut postoju to zero), więc jedyną uczciwą
    * odpowiedzią jest droga między DWIEMA KONKRETNYMI chwilami: początkiem paska tam,
    * gdzie stoi, i końcem o krok dalej. Liczba zmienia się przy przesuwaniu wykresu
-   * i tak ma być — w innym miejscu lotu samolot leciał inaczej.
+   * i tak ma być - w innym miejscu lotu samolot leciał inaczej.
    */
   const distanceScale =
     distanceNmAt == null
@@ -347,17 +347,17 @@ export function VerticalProfile({
         );
       })}
 
-      {/* POLE WYKRESU: wszystko, co jedzie z czasem, siedzi w przyciętym pudełku —
+      {/* POLE WYKRESU: wszystko, co jedzie z czasem, siedzi w przyciętym pudełku -
           przy przybliżeniu trasa i podpisy wyjeżdżają poza kadr zamiast wchodzić
           na podpisy wysokości po lewej. */}
       <View
         style={[styles.plotBox, { left: AXIS_LEFT, width: plot.plotW, height }]}
         {...gesture.panHandlers}
       >
-        {/* Siatka pionowa co JEDEN KROK PODZIAŁKI — jedna kratka to dokładnie tyle,
+        {/* Siatka pionowa co JEDEN KROK PODZIAŁKI - jedna kratka to dokładnie tyle,
             ile mówi pasek na dole. Dzięki temu siatka jest odczytem („ten garb ma dwie
             kratki, czyli pół godziny"), a nie tłem. Jedzie razem z wykresem, bo opisuje
-            czas, a nie ramkę — tak samo jak siatka współrzędnych na mapie opisuje teren. */}
+            czas, a nie ramkę - tak samo jak siatka współrzędnych na mapie opisuje teren. */}
         {timeGrid.map((line) => (
           <View
             key={line.at}
@@ -377,7 +377,7 @@ export function VerticalProfile({
             const y = plot.toPoint(marker.at, plot.altitudeAt(marker.at)).y;
             return (
               <View key={`${marker.at}-${index}`} pointerEvents="none">
-                {/* Kreska prowadząca do osi — bez niej nie widać, kiedy to było. */}
+                {/* Kreska prowadząca do osi - bez niej nie widać, kiedy to było. */}
                 <View
                   style={[
                     styles.guide,
@@ -446,7 +446,7 @@ export function VerticalProfile({
           );
         })}
 
-        {/* Kursor sprzężony z mapą — biały, bo nie jest zdarzeniem rejestru. */}
+        {/* Kursor sprzężony z mapą - biały, bo nie jest zdarzeniem rejestru. */}
         {cursorAt != null && (
           <View pointerEvents="none">
             <View
@@ -473,10 +473,10 @@ export function VerticalProfile({
         )}
       </View>
 
-      {/* PODZIAŁKA — poza polem wykresu, w tym samym rogu i o tych samych odstępach,
+      {/* PODZIAŁKA - poza polem wykresu, w tym samym rogu i o tych samych odstępach,
           co podziałka odległości na mapie (`TrackMap.styles.scale`). Dwa wykresy
           jednego ekranu trzymają skale w jednym miejscu, więc oko szuka ich raz.
-          Dystans dotyczy ODCINKA obejmowanego przez pasek, a nie „NM na piksel" —
+          Dystans dotyczy ODCINKA obejmowanego przez pasek, a nie „NM na piksel" -
           na osi czasu proporcji między czasem a drogą po prostu nie ma. */}
       {distanceScale != null && (
         <View pointerEvents="none" style={styles.timeScale}>
@@ -517,7 +517,7 @@ const styles = StyleSheet.create({
   curveNote: { position: 'absolute' },
   groundTime: { position: 'absolute', width: TIME_LABEL_W, textAlign: 'center' },
   timeGridLine: { position: 'absolute', top: 8, width: 1 },
-  // LEWY DOLNY róg — te same `left`/`bottom`, co podziałka mapy.
+  // LEWY DOLNY róg - te same `left`/`bottom`, co podziałka mapy.
   timeScale: { position: 'absolute', left: SCALE_LEFT, bottom: SCALE_BOTTOM, gap: 2 },
   timeScaleBar: { height: 4, borderWidth: 1, borderTopWidth: 0 },
   cursor: { position: 'absolute', top: 8, width: 1, opacity: 0.5 },

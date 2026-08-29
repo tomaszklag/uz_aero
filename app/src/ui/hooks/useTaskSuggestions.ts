@@ -1,12 +1,12 @@
 /**
- * UZ Aero — ostatnio używane oznaczenia klientów i notatki (`GET /me/task-suggestions`).
+ * UZ Aero - ostatnio używane oznaczenia klientów i notatki (`GET /me/task-suggestions`).
  *
- * Jedyna treść formularza zadania, która przychodzi Z SERWERA — i jedyna, której brak
+ * Jedyna treść formularza zadania, która przychodzi Z SERWERA - i jedyna, której brak
  * niczego nie zmienia: bez zasięgu pilot wpisuje wartość z palca dokładnie jak dotąd
  * (issue #14: „to nie musi działać offline").
  *
  * ══ PYTAMY DOPIERO PRZY OTWARCIU ARKUSZA ══
- * Pierwsza wersja pytała przy wejściu na ekran, „żeby lista była gotowa" — i było to
+ * Pierwsza wersja pytała przy wejściu na ekran, „żeby lista była gotowa" - i było to
  * pobranie na zapas: oznaczenie klienta i notatka są opcjonalne, więc w większości dni
  * pilot nie otwiera tych arkuszy w ogóle. Płacił za to każdym wejściem na krok 2 jednym
  * żądaniem, a przy otwarciu arkusza dochodziło drugie (zgłoszenie: „pobiera się 2×").
@@ -14,7 +14,7 @@
  *
  * ══ ŚWIEŻOŚĆ ZAMIAST CACHE ══
  * Udana odpowiedź żyje `FRESH_MS`, czyli tyle, ile trwa wypełnianie jednego formularza.
- * Dzięki temu otwarcie klienta, a zaraz potem notatki, to jedno żądanie, a nie dwa —
+ * Dzięki temu otwarcie klienta, a zaraz potem notatki, to jedno żądanie, a nie dwa -
  * historia klubu nie zmienia się w ciągu minuty. To NIE jest cache między sesjami:
  * po wyjściu z ekranu stan znika razem z hookiem, bo podpowiedź sprzed tygodnia nie
  * jest warta magazynu, który trzeba by unieważniać.
@@ -23,9 +23,9 @@
  * odzyskał zasięg, ma dostać listę przy następnym otwarciu arkusza.
  *
  * ══ TRZY STANY ══
- *  • `undefined` — jeszcze nie pytaliśmy albo właśnie pytamy (arkusz milczy o sieci),
- *  • `null`      — nie mamy listy (offline, wygasła sesja, odmowa serwera),
- *  • dane        — mamy; PUSTE TABLICE też są odpowiedzią („klub nie ma jeszcze historii").
+ *  • `undefined` - jeszcze nie pytaliśmy albo właśnie pytamy (arkusz milczy o sieci),
+ *  • `null`      - nie mamy listy (offline, wygasła sesja, odmowa serwera),
+ *  • dane        - mamy; PUSTE TABLICE też są odpowiedzią („klub nie ma jeszcze historii").
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -38,7 +38,7 @@ const FRESH_MS = 60_000;
 
 export interface TaskSuggestionsResult {
   suggestions: RemoteTaskSuggestions | null | undefined;
-  /** Woła to ekran przy OTWIERANIU arkusza — patrz nota wyżej. */
+  /** Woła to ekran przy OTWIERANIU arkusza - patrz nota wyżej. */
   reload: () => void;
 }
 
@@ -59,7 +59,7 @@ export function useTaskSuggestions(): TaskSuggestionsResult {
   }, []);
 
   const reload = useCallback(() => {
-    // Bez podłączonego synca (testy, StyleGuide) nie ma kogo pytać — i nie ma listy.
+    // Bez podłączonego synca (testy, StyleGuide) nie ma kogo pytać - i nie ma listy.
     if (sync == null) {
       setSuggestions(null);
       return;

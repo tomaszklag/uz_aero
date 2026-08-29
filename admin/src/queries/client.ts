@@ -1,10 +1,10 @@
 /**
- * UZ Aero — panel: `QueryClient` i jego ustawienia domyślne.
+ * UZ Aero - panel: `QueryClient` i jego ustawienia domyślne.
  *
  * Panel NIE MA globalnego store'u i to jest decyzja, nie przeoczenie
  * (`docs/architektura-panelu-frontend.md` §4.1): aplikacja pilota trzyma Zustanda,
  * bo liczy projekcję dnia lokalnie i musi działać offline. Panel nie robi ani jednego,
- * ani drugiego — serwer jest jedynym źródłem prawdy, więc CAŁY stan panelu to cache
+ * ani drugiego - serwer jest jedynym źródłem prawdy, więc CAŁY stan panelu to cache
  * odpowiedzi HTTP, czyli dokładnie problem, który Query rozwiązuje.
  */
 

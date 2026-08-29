@@ -1,5 +1,5 @@
 /**
- * UZ Aero — ADAPTER `StoragePort` na `expo-sqlite` (docs/_main.md.txt §5.2).
+ * UZ Aero - ADAPTER `StoragePort` na `expo-sqlite` (docs/_main.md.txt §5.2).
  *
  * Schemat: `events` (append-only + `synced_at` NULL = outbox), `reference_aircraft`,
  * `reference_pilots`, `session_meta`. Payloady i `handover` trzymamy jako JSON w TEXT,
@@ -9,7 +9,7 @@
  * TEXT, więc niejawny `rowid` rośnie z każdym INSERT). Idempotencja: `INSERT OR IGNORE`
  * + sprawdzenie `changes` (0 = duplikat `uuid`).
  *
- * ⚠️ Ten plik importuje `expo-sqlite` (moduł natywny) — NIE jest importowany w testach
+ * ⚠️ Ten plik importuje `expo-sqlite` (moduł natywny) - NIE jest importowany w testach
  * Node/Jest (te używają `InMemoryAdapter`). Podłączamy go w warstwie aplikacji.
  */
 
@@ -39,7 +39,7 @@ import type {
   TraceStats,
 } from '../../application/ports';
 // Schemat trzymamy osobno, bo dzięki temu da się go uruchomić w Node i przetestować
-// na prawdziwym silniku SQLite — patrz `schema.ts` i `sqliteSchema.test.ts`.
+// na prawdziwym silniku SQLite - patrz `schema.ts` i `sqliteSchema.test.ts`.
 import { MIGRATIONS, SCHEMA_VERSION } from './schema';
 
 const DB_NAME = 'uzaero.db';
@@ -74,12 +74,12 @@ interface AircraftRow {
   handover: string | null;
   fetched_at: number;
   /**
-   * JSON normy zużycia z `reference_consumption` (migracja 4) — dołączany `LEFT JOIN`-em.
+   * JSON normy zużycia z `reference_consumption` (migracja 4) - dołączany `LEFT JOIN`-em.
    * `null` znaczy „model poniżej progu publikacji albo nigdy nie pobrany", a nie zero.
    */
   consumption: string | null;
   /**
-   * Konfiguracja oleju z `reference_oil` (migracja 5, issue #60) — `LEFT JOIN`-em.
+   * Konfiguracja oleju z `reference_oil` (migracja 5, issue #60) - `LEFT JOIN`-em.
    * `null` w każdej kolumnie = administrator nie skonfigurował albo serwer sprzed
    * Etapu D; sekcja oleju działa wtedy bez podpowiedzi.
    */
@@ -107,26 +107,26 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort {
     await db.execAsync('PRAGMA journal_mode = WAL;');
     // Dwa połączenia współistnieją przez chwilę przy zimnym starcie z działającą
     // usługą GPS w tle (writer headless + bootstrap aplikacji). Oba robią pojedyncze
-    // INSERT-y — krótki czekacz zamienia rzadki SQLITE_BUSY w niezauważalną pauzę.
+    // INSERT-y - krótki czekacz zamienia rzadki SQLITE_BUSY w niezauważalną pauzę.
     await db.execAsync('PRAGMA busy_timeout = 2000;');
 
     const versionRow = await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version;');
     const current = versionRow?.user_version ?? 0;
 
-    // Migracje stosujemy po kolei od bieżącej wersji — jedno źródło DDL (`schema.ts`),
+    // Migracje stosujemy po kolei od bieżącej wersji - jedno źródło DDL (`schema.ts`),
     // wspólne z testem schematu.
     for (let v = current; v < MIGRATIONS.length; v += 1) {
       await db.execAsync(MIGRATIONS[v]);
     }
 
-    // PRAGMA nie przyjmuje parametrów — wartość to nasza stała liczbowa (bezpieczne).
+    // PRAGMA nie przyjmuje parametrów - wartość to nasza stała liczbowa (bezpieczne).
     await db.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION};`);
   }
 
 
   /**
    * Zamyka połączenie. Potrzebne wyłącznie writerowi headless: gdy aplikacja wstaje,
-   * jej bootstrap otwiera własne połączenie do TEGO SAMEGO pliku — drugie żywe
+   * jej bootstrap otwiera własne połączenie do TEGO SAMEGO pliku - drugie żywe
    * połączenie potrafi unieważnić pierwsze po stronie natywnej
    * (`NativeDatabase.prepareAsync → NullPointerException` na głównym zapisie).
    */
@@ -259,7 +259,7 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort {
           );
         }
 
-        // Konfiguracja oleju (migracja 5, issue #60) — ta sama reguła co przy normie:
+        // Konfiguracja oleju (migracja 5, issue #60) - ta sama reguła co przy normie:
         // brak konfiguracji z serwera KASUJE wpis, żeby wykreślone w panelu minimum
         // nie ostrzegało pilota do końca życia telefonu.
         const oilConfigured = a.oilMinL != null || a.oilCapacityL != null || a.oilNormLPerH != null;

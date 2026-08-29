@@ -1,20 +1,20 @@
 /**
- * UZ Aero — panel: KONSERWACJA RENDEROWANA NAPRAWDĘ (`A11`).
+ * UZ Aero - panel: KONSERWACJA RENDEROWANA NAPRAWDĘ (`A11`).
  *
  * ══ PO CO TEN PLIK ISTNIEJE OBOK TESTÓW MODUŁÓW CZYSTYCH ══
  * Czterokrotnie w tym projekcie zdarzyła się ta sama wada: moduł czysty liczył poprawnie,
- * miał zielony test — a EKRAN i tak pokazywał co innego, bo albo go nie wołał, albo wołał
+ * miał zielony test - a EKRAN i tak pokazywał co innego, bo albo go nie wołał, albo wołał
  * i sklejał wynik z czymś innym. Najdroższy przykład: `A07` liczył trzy stany świeżości,
  * testy przechodziły, a w DOM-ie lądowała klasa, której nie definiuje żaden arkusz.
  *
  * `renderToStaticMarkup` działa w czystym Node i daje DOKŁADNIE ten napis HTML, który
- * przeglądarka dostałaby przy pierwszym renderze — asercje dotyczą więc tego, co widać.
+ * przeglądarka dostałaby przy pierwszym renderze - asercje dotyczą więc tego, co widać.
  * Ekran renderujemy CAŁY, z prawdziwymi hookami i cache'em wypełnionym odpowiedzią
  * serwera, więc test upadnie także wtedy, gdy ktoś przestanie wołać moduł czysty.
  *
  * Ten ekran ma jeszcze jeden powód, żeby być sprawdzanym W DOM-ie: bramki przycisków.
  * „Nadpisz" odblokowane bez powodu i „Usuń" odblokowane bez wpisanego słowa to nie są
- * usterki wyglądu — to są usterki, które kasują dane.
+ * usterki wyglądu - to są usterki, które kasują dane.
  */
 
 import { readFileSync } from 'node:fs';
@@ -77,7 +77,7 @@ interface RenderOptions {
   schema?: SchemaStateDto;
   failed?: boolean;
   blocked?: boolean;
-  /** Ile dni bez karty PASUJE do zawężenia na serwerze — rozjazd z `items` = obcięcie. */
+  /** Ile dni bez karty PASUJE do zawężenia na serwerze - rozjazd z `items` = obcięcie. */
   failedMatched?: number;
 }
 
@@ -87,7 +87,7 @@ interface RenderOptions {
  * `cache → hook → ekran → moduły czyste → DOM`.
  *
  * ══ CACHE WYPEŁNIAMY WYŁĄCZNIE TAM, GDZIE KONTO MA PRAWO PYTAĆ ══
- * `useQuery({ enabled: false })` oddaje to, co leży w cache'u — więc zaseedowanie
+ * `useQuery({ enabled: false })` oddaje to, co leży w cache'u - więc zaseedowanie
  * odpowiedzi dla konta, które nie ma zdolności ją pobrać, dawało test przechodzący
  * na danych, których produkt NIGDY by nie miał. Dokładnie tak przechodził trywialnie
  * przypadek „brak odczytu daje KRESKI": szef wyszkolenia dostawał w HTML-u pełne
@@ -154,7 +154,7 @@ function render(options: RenderOptions = {}): string {
 const SZABLON = (): string =>
   readFileSync(join(__dirname, '..', '..', 'design', 'admin', 'SZABLON.html'), 'utf8');
 
-describe('konserwacja: render — kontrola samego testu', () => {
+describe('konserwacja: render - kontrola samego testu', () => {
   it('renderer faktycznie produkuje ekran, a nie pusty napis', () => {
     // Bez tego wszystkie asercje `toContain` niżej przechodziłyby na pustce.
     const html = render({ compare: rebuildFixture() });
@@ -186,7 +186,7 @@ describe('konserwacja: rejestr `events` jest nietykalny i ekran to MÓWI', () =>
   });
 });
 
-describe('konserwacja: przebudowa — dwa kroki widoczne w DOM-ie', () => {
+describe('konserwacja: przebudowa - dwa kroki widoczne w DOM-ie', () => {
   it('bez porównania przycisk „Nadpisz" jest ZABLOKOWANY z powodem', () => {
     // Reguła z mockupu („Nadpisanie odblokowuje się dopiero po świeżym porównaniu")
     // policzona w module czystym i NIEWIDOCZNA byłaby usterką kasującą dane.
@@ -202,7 +202,7 @@ describe('konserwacja: przebudowa — dwa kroki widoczne w DOM-ie', () => {
 
     expect(html).toContain('class="banner warn"');
     expect(html).toContain('incydent');
-    // Wartości sformatowane, nie surowe milisekundy — to samo, co widzi pilot i arkusz.
+    // Wartości sformatowane, nie surowe milisekundy - to samo, co widzi pilot i arkusz.
     expect(html).toContain('05:41');
     expect(html).toContain('05:58');
     expect(html).toContain('flightsCount');
@@ -210,7 +210,7 @@ describe('konserwacja: przebudowa — dwa kroki widoczne w DOM-ie', () => {
     expect(html).toContain('href="/dni/9f21aaaa-bbbb-cccc-dddd-eeeeeeeec04e"');
   });
 
-  it('zero różnic świeci ZIELONO — bo to jest wynik oczekiwany', () => {
+  it('zero różnic świeci ZIELONO - bo to jest wynik oczekiwany', () => {
     const html = render({
       compare: { ...rebuildFixture(), rowsDiffering: 0, fieldsDiffering: 0, diffs: [] },
     });
@@ -227,10 +227,10 @@ describe('konserwacja: przebudowa — dwa kroki widoczne w DOM-ie', () => {
     expect(html).toContain('maintenance.rebuild_projections');
   });
 
-  it('pokazuje STEMPEL raportu — inaczej „przelicz i porównaj" czyta się jak „tak jest teraz"', () => {
+  it('pokazuje STEMPEL raportu - inaczej „przelicz i porównaj" czyta się jak „tak jest teraz"', () => {
     const html = render({ compare: rebuildFixture() });
     expect(html).toContain('Raport z porównania');
-    // Data, godzina UTC i wiek — przy `staleTime: Infinity` raport wisi bez terminu
+    // Data, godzina UTC i wiek - przy `staleTime: Infinity` raport wisi bez terminu
     // ważności, więc sama godzina nie mówi, czy to było przed chwilą, czy rano.
     expect(html).toMatch(/\d{1,2} [A-Z]{3} \d{4} \d{2}:\d{2}<small> UTC/);
     expect(html).toContain('temu');
@@ -243,12 +243,12 @@ describe('konserwacja: PO ZAPISIE ekran opisuje skutek, a nie bazę, której ju�
    * `renderToStaticMarkup` nie wykona mutacji, a droga, którą sprawdzamy, zaczyna się
    * dopiero PRZY raporcie (`report → currentReport → werdykt/bramka/tabela → DOM`).
    * Ograniczenie nazywamy zamiast udawać pokrycie: ten przypadek NIE dowodzi, że
-   * `rebuild.submittedAt` trafia do `currentReport` — to przybija `rebuildRun.test.ts`.
+   * `rebuild.submittedAt` trafia do `currentReport` - to przybija `rebuildRun.test.ts`.
    */
   const afterWrite = (): string => render({ compare: writtenFixture() });
 
   it('baner mówi „nadpisano", a nie „to incydent, ustal przyczynę"', () => {
-    // Wada: po UDANYM nadpisaniu baner dalej wołał o ustalenie przyczyny — nad
+    // Wada: po UDANYM nadpisaniu baner dalej wołał o ustalenie przyczyny - nad
     // wierszami, które właśnie przestały się różnić, i po operacji, która zatarła
     // jedyny ślad po tej przyczynie.
     const html = afterWrite();
@@ -267,7 +267,7 @@ describe('konserwacja: PO ZAPISIE ekran opisuje skutek, a nie bazę, której ju�
     expect(html).toContain('Nadpisz projekcję');
   });
 
-  it('tabela opisuje SKUTEK — nagłówki mówią „przed zapisem" i „zapisano"', () => {
+  it('tabela opisuje SKUTEK - nagłówki mówią „przed zapisem" i „zapisano"', () => {
     const html = afterWrite();
     expect(html).toContain('nadpisane w tym przebiegu');
     expect(html).toContain('Przed zapisem');
@@ -275,7 +275,7 @@ describe('konserwacja: PO ZAPISIE ekran opisuje skutek, a nie bazę, której ju�
     expect(html).not.toContain('Z przeliczenia');
   });
 
-  it('zapis CZĘŚCIOWY mówi, ile zostało — limit przebiegu nie jest sekretem', () => {
+  it('zapis CZĘŚCIOWY mówi, ile zostało - limit przebiegu nie jest sekretem', () => {
     const html = render({ compare: partialWriteFixture() });
     expect(html).toContain('class="banner warn"');
     expect(html).toContain('1091');
@@ -287,7 +287,7 @@ describe('konserwacja: linki do audytu FAKTYCZNIE zawężają', () => {
   it('oba prowadzą pod `?akcje=konserwacja`, a nie na pełną listę wszystkiego', () => {
     // Wada: ekran składał adres u siebie i wychodziło mu `?akcja=konserwacja`
     // (liczba pojedyncza). Filtr czyta `akcje`, więc parametr był po cichu pomijany
-    // i oba linki „Ślad akcji w audycie" prowadziły na dziennik BEZ zawężenia —
+    // i oba linki „Ślad akcji w audycie" prowadziły na dziennik BEZ zawężenia -
     // czyli tam, skąd miały odesłać. To jedyne odesłanie, którym ten ekran nadrabia
     // świadomie pominięty czas przebiegu i datę ostatniej przebudowy.
     const html = render({ compare: rebuildFixture() });
@@ -298,7 +298,7 @@ describe('konserwacja: linki do audytu FAKTYCZNIE zawężają', () => {
   });
 });
 
-describe('konserwacja: tokeny — jedyna operacja, która kasuje', () => {
+describe('konserwacja: tokeny - jedyna operacja, która kasuje', () => {
   it('bez wpisanego słowa przycisk jest ZABLOKOWANY i podaje słowo', () => {
     const html = render();
     expect(html).toContain('Wpisz USUŃ, żeby odblokować');
@@ -307,14 +307,14 @@ describe('konserwacja: tokeny — jedyna operacja, która kasuje', () => {
     expect(html).toContain('Usuń 37 wygasłych tokenów');
   });
 
-  it('pokazuje OBIE liczby — martwe i żywe — bo druga jest obietnicą', () => {
+  it('pokazuje OBIE liczby - martwe i żywe - bo druga jest obietnicą', () => {
     const html = render();
     expect(html).toContain('class="kv-v red">37');
     expect(html).toContain('class="kv-v green">15');
     expect(html).toContain('Żaden pilot nie zostanie przez to wylogowany');
   });
 
-  it('mówi, że do audytu idą liczby i daty — nigdy tokeny', () => {
+  it('mówi, że do audytu idą liczby i daty - nigdy tokeny', () => {
     const html = render();
     expect(html).toContain('nigdy same tokeny');
     expect(html).toContain('maintenance.prune_tokens');
@@ -325,17 +325,17 @@ describe('konserwacja: tokeny — jedyna operacja, która kasuje', () => {
     //
     // ══ TEN PRZYPADEK DO 2026-08-02 NIE MÓGŁ UPAŚĆ ══
     // Helper renderu seedował odpowiedź tokenów NIEZALEŻNIE od zdolności konta,
-    // a `useQuery({ enabled: false })` oddaje dane z cache'u — więc HTML zawierał
+    // a `useQuery({ enabled: false })` oddaje dane z cache'u - więc HTML zawierał
     // pełne `37`, `15` i całą tabelę migracji, a asercja „nie ma zer" przechodziła
     // trywialnie, bo zer faktycznie nie było: były prawdziwe liczby. Produkt
-    // zachowywał się poprawnie; wadliwy był test — w pliku, którego docblock obiecuje
+    // zachowywał się poprawnie; wadliwy był test - w pliku, którego docblock obiecuje
     // bronić przed „modułem czystym z zielonym testem i ekranem pokazującym co innego".
     const html = render({ capabilities: TRAINING_LEAD });
 
     expect(html).not.toContain('class="kv-v red">0');
     expect(html).toContain('accounts.manage');
     // Asercje POZYTYWNE: kreski są na ekranie, a liczb z fixture'u tam nie ma.
-    expect(html).toContain('class="kv-v">—');
+    expect(html).toContain('class="kv-v">-');
     expect(html).not.toContain('>37<');
     expect(html).not.toContain('Usuń 37');
     // …i to samo po stronie schematu: tabela migracji jest pusta Z POWODU.
@@ -346,7 +346,7 @@ describe('konserwacja: tokeny — jedyna operacja, która kasuje', () => {
 describe('konserwacja: kolejka ponowień korzysta z maszynerii `A05`', () => {
   const html = render();
 
-  it('dzień bez karty ma CZYNNY przycisk, dzień z flagą — wyszarzony z powodem', () => {
+  it('dzień bez karty ma CZYNNY przycisk, dzień z flagą - wyszarzony z powodem', () => {
     expect(html).toContain('2026-07-29_SP-KLM');
     expect(html).toContain('2026-07-30_SP-KLM');
     // Powód blokady jest WIDOCZNYM tekstem, nie tylko tooltipem.
@@ -354,7 +354,7 @@ describe('konserwacja: kolejka ponowień korzysta z maszynerii `A05`', () => {
     expect(html).toContain('href="/flagi/1046"');
   });
 
-  it('wiersz z flagą prowadzi do flagi, a wiersz bez karty — do karty na `A05`', () => {
+  it('wiersz z flagą prowadzi do flagi, a wiersz bez karty - do karty na `A05`', () => {
     expect(html).toContain('href="/eksporty/sess-bez-karty"');
   });
 
@@ -375,7 +375,7 @@ describe('konserwacja: kolejka ponowień korzysta z maszynerii `A05`', () => {
   it('PLAKIETKA liczy z serwera, a obcięcie listy jest widoczne', () => {
     // Wada: plakietki liczyły z sumy dwóch stron JUŻ OBCIĘTYCH `QUEUE_LIMIT`-em.
     // Przy 137 dniach bez karty plakietka mówiła „50", tabela pokazywała 50, o 87
-    // schowanych nie było ani słowa — a `A05` na to samo pytanie odpowiadał „137".
+    // schowanych nie było ani słowa - a `A05` na to samo pytanie odpowiadał „137".
     const html = render({ failedMatched: 137 });
 
     expect(html).toContain('137 bez kart');
@@ -409,12 +409,12 @@ describe('konserwacja: stan schematu', () => {
   });
 });
 
-describe('konserwacja: zdolności — wyszarzone Z POWODEM, nigdy ukryte', () => {
+describe('konserwacja: zdolności - wyszarzone Z POWODEM, nigdy ukryte', () => {
   it('szef wyszkolenia widzi ekran, ale każda akcja jest zablokowana z powodem', () => {
     const html = render({ capabilities: TRAINING_LEAD });
 
     expect(html).toContain('KONSERWACJA');
-    // Trzy różne powody, bo trzy różne zdolności — a nie jeden ogólny komunikat.
+    // Trzy różne powody, bo trzy różne zdolności - a nie jeden ogólny komunikat.
     expect(html).toContain('porównanie czyta cały rejestr zdarzeń');
     expect(html).toContain('to jedyna operacja panelu, która kasuje dane');
     expect(html).toContain('maintenance.run');
@@ -445,10 +445,10 @@ describe('konserwacja: klasy CSS są DOSŁOWNIE te z `SZABLON.html`', () => {
     expect(used.has('table-wrap')).toBe(true);
 
     // Jedyny wyjątek: `visually-hidden` to klasa DOSTĘPNOŚCI z `base.css`, a nie
-    // komponent back-office'u — szablon jej nie definiuje i definiować nie ma po co.
+    // komponent back-office'u - szablon jej nie definiuje i definiować nie ma po co.
     // `cols-stack` i `list-spacer` z tej listy WYPADŁY 2026-08-02: obie mają reguły
     // w `SZABLON.html` (linie `.cols-stack` i `.list-spacer`), więc wyjątek na nie był
-    // wyjątkiem bez powodu — a taki osłabia test na przyszłość, bo przepuszcza również
+    // wyjątkiem bez powodu - a taki osłabia test na przyszłość, bo przepuszcza również
     // klasę, która regułę straci.
     const missing = [...used]
       .filter((c) => c !== 'visually-hidden')

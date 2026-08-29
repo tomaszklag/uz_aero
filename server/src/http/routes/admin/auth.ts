@@ -1,7 +1,7 @@
 /**
- * UZ Aero (serwer) — sesja przeglądarkowa panelu (`/admin/api/auth/*`, mockupy A00/A00a).
+ * UZ Aero (serwer) - sesja przeglądarkowa panelu (`/admin/api/auth/*`, mockupy A00/A00a).
  *
- * JEDYNE trasy panelu, które nie przechodzą przez `adminRoute` — i muszą takie być,
+ * JEDYNE trasy panelu, które nie przechodzą przez `adminRoute` - i muszą takie być,
  * bo logowanie jest z definicji publiczne (test architektury wymienia ten plik
  * imiennie, żeby wyjątek był decyzją, a nie luką). Wszystko poza logowaniem
  * i wylogowaniem rejestruje się z bramą uprawnień.
@@ -9,7 +9,7 @@
  * **Token jedzie WYŁĄCZNIE do ciasteczka `HttpOnly`, nigdy do ciała odpowiedzi.**
  * Gdyby ciało niosło token, panel mógłby go odłożyć „na chwilę" do `localStorage`,
  * a wtedy cała ochrona przed XSS-em z §8.2 kończy się na pierwszym takim `const`.
- * Panel dostaje w zamian tożsamość i listę zdolności — dokładnie tyle, ile potrzebuje
+ * Panel dostaje w zamian tożsamość i listę zdolności - dokładnie tyle, ile potrzebuje
  * do narysowania sidebara.
  */
 
@@ -28,10 +28,10 @@ const loginBody = z.object({
 
 /**
  * Atrybuty ciasteczka sesji panelu (§8.2). Stoją w JEDNEJ stałej, bo `clearCookie`
- * musi podać te same `path`/`sameSite`, żeby w ogóle trafić w to ciasteczko —
+ * musi podać te same `path`/`sameSite`, żeby w ogóle trafić w to ciasteczko -
  * rozjazd atrybutów daje wylogowanie, które nic nie wylogowuje.
  *
- * `path: '/admin'` — ciasteczko nie jedzie z żądaniami telefonu (`/events`, `/reference`).
+ * `path: '/admin'` - ciasteczko nie jedzie z żądaniami telefonu (`/events`, `/reference`).
  * `secure` bez warunku na środowisko: przeglądarki traktują `http://localhost` jako
  * kontekst bezpieczny, więc dev działa, a produkcja nie ma jak dostać wersji bez flagi.
  */
@@ -42,7 +42,7 @@ const COOKIE_OPTIONS = {
   path: '/admin',
 } as const;
 
-/** Tożsamość + zdolności — ten sam kształt zwraca `GET /admin/api/me` (patrz `me.ts`). */
+/** Tożsamość + zdolności - ten sam kształt zwraca `GET /admin/api/me` (patrz `me.ts`). */
 export const panelSessionToWire = (pilot: PanelPilot) => ({
   pilot: { id: pilot.id, code: pilot.code, name: pilot.name, role: pilot.role },
   capabilities: capabilitiesOf(pilot.role),
@@ -56,7 +56,7 @@ export function registerAdminAuthRoutes(app: FastifyInstance, auth: AuthCommands
     const result = await auth.panelLogin(parsed.data.login, parsed.data.password);
     if (!result.ok) {
       // 401 dla złych poświadczeń i konta wyłączonego (A00a: jeden komunikat, żeby
-      // nie zdradzać, które loginy istnieją) — ale 403 dla konta bez roli panelu:
+      // nie zdradzać, które loginy istnieją) - ale 403 dla konta bez roli panelu:
       // tam hasło było poprawne i człowiek ma prawo wiedzieć, dlaczego go nie wpuszczamy.
       const status = result.reason === 'no_panel_access' ? 403 : 401;
       return reply.code(status).send({ error: result.reason });
@@ -73,7 +73,7 @@ export function registerAdminAuthRoutes(app: FastifyInstance, auth: AuthCommands
   /**
    * Wylogowanie kasuje ciasteczko i nie pyta o nic więcej. Nie wymaga ważnej sesji
    * celowo: sesja wygasła albo uszkodzona to dokładnie ten stan, w którym użytkownik
-   * klika „Wyloguj" — odbicie go 401 zostawiłoby martwe ciasteczko w przeglądarce.
+   * klika „Wyloguj" - odbicie go 401 zostawiłoby martwe ciasteczko w przeglądarce.
    * Bramą przed wylogowaniem z cudzej strony jest nagłówek CSRF (`http/adminCsrf.ts`).
    */
   app.post(`${ADMIN_API_PREFIX}/auth/logout`, async (_req, reply) =>

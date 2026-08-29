@@ -1,15 +1,15 @@
 /**
- * UZ Aero — szkic preflightu (stan UI, nie domena).
+ * UZ Aero - szkic preflightu (stan UI, nie domena).
  *
  * Przejęcie to trzy ekrany (02 → 02e → 02a), które wspólnie budują JEDNO zdarzenie
  * `preflight_confirm`. Dopóki pilot nie naciśnie „PRZEJMIJ I LEĆ" na kroku 3, **nic nie
- * jest zapisane** — dlatego szkic żyje w pamięci UI, a nie w rejestrze zdarzeń.
+ * jest zapisane** - dlatego szkic żyje w pamięci UI, a nie w rejestrze zdarzeń.
  *
  * To rozróżnienie jest celowe: rejestr jest append-only, więc nie wolno do niego
  * wpisywać stanów pośrednich, które pilot może jeszcze zmienić albo porzucić.
  *
  * GODZINY MELDUNKU TU NIE MA i to jest decyzja (§3.6a, 2026-08-06; domknięta issue #23,
- * 2026-08-11): dzień pilota to LISTA SESJI — klamra służby nie istnieje w modelu
+ * 2026-08-11): dzień pilota to LISTA SESJI - klamra służby nie istnieje w modelu
  * w ogóle, więc nie ma godziny, którą szkic miałby zbierać. Pytanie o nią przy
  * przejęciu kosztowało krok w drodze do kokpitu i sugerowało, że bez odpowiedzi
  * nie wolno lecieć.
@@ -28,16 +28,16 @@ export interface PreflightDraft {
   dualId: string | null;
   client: string | null;
   /**
-   * Notatka pilota do dnia (issue #14) — wolny tekst, wielolinijkowy.
+   * Notatka pilota do dnia (issue #14) - wolny tekst, wielolinijkowy.
    *
    * Świadomie POZA `TASK_FIELDS` i poza pamięcią zadania: klient i trasa powtarzają się
    * z dnia na dzień (ten sam klub, ten sam plac), a notatka opisuje JEDEN dzień
    * („lot z uczniem", „drugi zbiornik nie działa"). Podpowiadanie jej wczorajszej treści
-   * byłoby podpowiadaniem nieprawdy — podpowiedzi w arkuszu pilot wybiera sam.
+   * byłoby podpowiadaniem nieprawdy - podpowiedzi w arkuszu pilot wybiera sam.
    */
   notes: string | null;
   /**
-   * Domyślny skład skoczków sesji (operacja Skoki, 2026-08-17) — ustawiany na kroku
+   * Domyślny skład skoczków sesji (operacja Skoki, 2026-08-17) - ustawiany na kroku
    * „zadanie" (02e), zanim padnie pierwszy `boarding`. Ma sens WYŁĄCZNIE przy operacji
    * skoki; `confirmPreflight` filtruje go po `isJumpOperation`, więc odręczna zmiana
    * operacji po ustawieniu defaultu nie wysyła sierocej wartości.
@@ -49,7 +49,7 @@ export interface PreflightDraft {
   /** Odczyt licznika motogodzin (godziny dziesiętne). */
   mh: number;
   /**
-   * Pomiar oleju z bagnetu (L) — issue #60. `null` = JESZCZE nie zmierzono: pomiar
+   * Pomiar oleju z bagnetu (L) - issue #60. `null` = JESZCZE nie zmierzono: pomiar
    * jest krokiem wymaganym (bramka `preflightBlocker` trzyma ROZPOCZNIJ LOT, dopóki
    * pilot go nie wpisze), a zera nie podstawiamy, bo zero to odczyt.
    */
@@ -62,7 +62,7 @@ export interface PreflightDraft {
    * Czy w formularzu STOJĄ wartości z podpowiedzi (uwaga z urządzenia, 2026-08-27).
    *
    * Banerowi „Skąd te dane?" nie wystarcza „pamięć zadania istnieje": po `clearTask()`
-   * dane już nie stoją, a po powrocie na ekran podpowiedź nie wraca (`taskTouched`) —
+   * dane już nie stoją, a po powrocie na ekran podpowiedź nie wraca (`taskTouched`) -
    * baner oparty o samą pamięć opowiadałby wtedy o podstawieniu, którego nie widać.
    * Flagę podnosi `suggestTask` (gdy faktycznie coś podstawił), opuszczają `clearTask`
    * i `reset`.
@@ -78,7 +78,7 @@ export interface PreflightDraft {
   taskTouched: boolean;
 }
 
-/** Pola opisujące ZADANIE dnia — ich zmiana wyłącza podpowiadanie (patrz `taskTouched`). */
+/** Pola opisujące ZADANIE dnia - ich zmiana wyłącza podpowiadanie (patrz `taskTouched`). */
 const TASK_FIELDS: readonly (keyof PreflightDraft)[] = [
   'operation',
   'departureIcao',
@@ -89,12 +89,12 @@ const TASK_FIELDS: readonly (keyof PreflightDraft)[] = [
 /**
  * Trasa skoków to JEDNA wartość w dwóch polach rekordu (issue #13).
  *
- * Formularz pyta o jedno lotnisko — bo skoki startują i lądują na tym samym placu
- * (`isSameFieldOperation`) — ale szkic trzyma obie wartości równe. Dzięki temu ani
+ * Formularz pyta o jedno lotnisko - bo skoki startują i lądują na tym samym placu
+ * (`isSameFieldOperation`) - ale szkic trzyma obie wartości równe. Dzięki temu ani
  * projekcja, ani karta arkusza, ani panel nie muszą znać wyjątku „przy skokach patrz
  * tylko na start": `departureIcao` i `arrivalIcao` znaczą zawsze to samo co dotąd.
  *
- * Egzekwowane w JEDNYM miejscu — przy każdym zapisie do szkicu — bo inwariant pilnowany
+ * Egzekwowane w JEDNYM miejscu - przy każdym zapisie do szkicu - bo inwariant pilnowany
  * przez pamiętanie o nim w trzech miejscach ekranu jest inwariantem tylko do pierwszej
  * zmiany w tym ekranie.
  */
@@ -109,24 +109,24 @@ interface PreflightDraftStore extends PreflightDraft {
   set<K extends keyof PreflightDraft>(key: K, value: PreflightDraft[K]): void;
   /**
    * Wypełnienie zadania podpowiedzią z ostatniego dnia. Osobno od `set`, bo NIE liczy
-   * się jako dotknięcie pól przez pilota — inaczej podpowiedź zablokowałaby samą siebie.
+   * się jako dotknięcie pól przez pilota - inaczej podpowiedź zablokowałaby samą siebie.
    */
   suggestTask(task: Pick<PreflightDraft, 'operation' | 'client'>, route: Pick<PreflightDraft, 'departureIcao' | 'arrivalIcao'>): void;
   /**
-   * Czyści pola ZADANIA do stanu początkowego — przycisk „Wyczyść formularz" w banerze
+   * Czyści pola ZADANIA do stanu początkowego - przycisk „Wyczyść formularz" w banerze
    * „Skąd te dane?" (uwaga z urządzenia, 2026-08-27). Wyczyszczenie jest świadomym
    * wyborem pilota, więc liczy się jako dotknięcie zadania: podpowiedź nie wraca przy
-   * następnym wejściu na ekran. Notatki NIE rusza — nigdy nie była podpowiedzią.
+   * następnym wejściu na ekran. Notatki NIE rusza - nigdy nie była podpowiedzią.
    */
   clearTask(): void;
   reset(): void;
-  /** Format MH wybranego samolotu — steruje wyświetlaniem (§5.4). */
+  /** Format MH wybranego samolotu - steruje wyświetlaniem (§5.4). */
   mhFormat(): MhFormat;
   /** Czy krok 1 jest kompletny (m.in. wymóg Duala dla An-2). */
   step1Valid(): boolean;
   /**
    * Czy w szkicu jest jakikolwiek WYBÓR pilota do obrony (issue #55): bramka
-   * „wstecz" na kroku 1 pyta o rezygnację tylko wtedy, gdy jest czego bronić —
+   * „wstecz" na kroku 1 pyta o rezygnację tylko wtedy, gdy jest czego bronić -
    * pusty formularz wychodzi bez pytania, a arkusz nad niczym pytałby o zgodę
    * na nic. Pyta o samolot i Duala, bo tylko te dwa da się ustawić na kroku 1;
    * pola zadania (krok 2) są nieosiągalne bez wybranego samolotu.
@@ -158,20 +158,20 @@ export const usePreflightDraft = create<PreflightDraftStore>((set, get) => ({
   ...initial(),
 
   setAircraft(aircraft) {
-    // Wybór samolotu podstawia odczyty z przekazania (jeśli są) — to one, a nie
+    // Wybór samolotu podstawia odczyty z przekazania (jeśli są) - to one, a nie
     // wpisy z palca, są punktem odniesienia łańcucha MH (§4.5). Gdy przekazania brak,
     // zostawiamy zera i UI mówi wprost „wpisz z licznika".
     //
     // Wybór Duala ZOSTAJE (issue #58, zgłoszenie z urządzenia: pilot wybrany przed
     // samolotem znikał po tapnięciu w maszynę). WYMÓG załogi 2-os. jest właściwością
-    // samolotu, ale wybrana OSOBA nie traci ważności przy zmianie maszyny — lista
+    // samolotu, ale wybrana OSOBA nie traci ważności przy zmianie maszyny - lista
     // Duali nie zależy od samolotu, a znikające bez słowa pole czyta się jak błąd.
     const handover = aircraft.handover;
     set({
       aircraft,
       fuelL: handover?.reading.fuelL ?? 0,
       mh: handover?.reading.mh ?? 0,
-      // Pomiar oleju należy do KONKRETNEJ maszyny — po zmianie samolotu wpis sprzed
+      // Pomiar oleju należy do KONKRETNEJ maszyny - po zmianie samolotu wpis sprzed
       // zmiany opisywałby cudzy bagnet (issue #60).
       oilL: null,
       oilAddedL: null,
@@ -181,7 +181,7 @@ export const usePreflightDraft = create<PreflightDraftStore>((set, get) => ({
 
   set(key, value) {
     set((state) => withRouteShape({ ...state, [key]: value }));
-    // Dotknięcie zadania zamyka drogę podpowiedzi — od tej chwili obowiązuje wpis pilota.
+    // Dotknięcie zadania zamyka drogę podpowiedzi - od tej chwili obowiązuje wpis pilota.
     if (TASK_FIELDS.includes(key)) set({ taskTouched: true });
   },
 
@@ -200,7 +200,7 @@ export const usePreflightDraft = create<PreflightDraftStore>((set, get) => ({
       arrivalIcao: empty.arrivalIcao,
       client: empty.client,
       suggested: false,
-      // Świadoma decyzja pilota — podpowiedź nie ma prawa wrócić i wypełnić od nowa.
+      // Świadoma decyzja pilota - podpowiedź nie ma prawa wrócić i wypełnić od nowa.
       taskTouched: true,
     });
   },

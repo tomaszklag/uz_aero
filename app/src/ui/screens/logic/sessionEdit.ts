@@ -1,19 +1,19 @@
 /**
- * UZ Aero — logika TRYBU EDYCJI sesji (issue #43, mockupy `design/10d`–`10h`).
+ * UZ Aero - logika TRYBU EDYCJI sesji (issue #43, mockupy `design/10d`–`10h`).
  *
  * Ekran 10 ma dwa stany: odczyt i edycję. Ten moduł odpowiada na wszystkie pytania,
- * które w edycji trzeba rozstrzygnąć, i robi to POZA JSX — bo każde z nich ma regułę,
+ * które w edycji trzeba rozstrzygnąć, i robi to POZA JSX - bo każde z nich ma regułę,
  * a reguła w widoku jest regułą, której nikt nie przetestuje:
  *
- *  • KTÓRY arkusz otworzyć — zależy od typu zdarzenia, nie od wyglądu wiersza;
- *  • CO da się dopisać — zależy od rodzaju operacji (zrzut istnieje tylko w dniu
+ *  • KTÓRY arkusz otworzyć - zależy od typu zdarzenia, nie od wyglądu wiersza;
+ *  • CO da się dopisać - zależy od rodzaju operacji (zrzut istnieje tylko w dniu
  *    skokowym, issue #19);
- *  • KTÓRY wiersz jest podejrzany — wynik `sessionInconsistencies` trzeba przypiąć
+ *  • KTÓRY wiersz jest podejrzany - wynik `sessionInconsistencies` trzeba przypiąć
  *    do konkretnego punktu osi, inaczej baner mówi „coś jest nie tak" i tyle.
  *
  * Napisy są tutaj, a nie w domenie: domena zwraca KODY (`DROP_ON_GROUND`), bo ten sam
  * kod czyta panel administratora po angielsku i eksport arkusza. Skrót przy wierszu osi
- * („na ziemi — sprawdź czas") jest sprawą tego ekranu.
+ * („na ziemi - sprawdź czas") jest sprawą tego ekranu.
  */
 
 import type { Event, EventType, OperationType, RuleViolation } from '../../../domain';
@@ -21,7 +21,7 @@ import { isJumpOperation } from '../../../domain';
 import type { AxisRow } from './sessionAxis';
 
 /**
- * Adres faktów o CAŁEJ sesji — notatki i drugiego pilota (issue #43).
+ * Adres faktów o CAŁEJ sesji - notatki i drugiego pilota (issue #43).
  *
  * Oba mieszkają w payloadzie `preflight_confirm`, bo nie są zdarzeniami w czasie: nie
  * stoją na osi i nie mają własnej godziny. Dual musiał tam trafić, bo w nagłówkach
@@ -58,7 +58,7 @@ const SHEET_BY_TYPE: Partial<Record<EventType, EditSheet>> = {
   drop: 'drop',
 };
 
-/** Nazwy zdarzeń w nagłówku arkusza — słownik ekranu, nie rejestru. */
+/** Nazwy zdarzeń w nagłówku arkusza - słownik ekranu, nie rejestru. */
 const EVENT_LABEL: Partial<Record<EventType, string>> = {
   preflight_confirm: 'Przejęcie samolotu',
   day_close: 'Zdanie samolotu',
@@ -123,23 +123,23 @@ function flightNumberOf(events: readonly Event[], target: Event): number | null 
 /**
  * Skróty niespójności przy wierszu osi.
  *
- * Pełne zdanie stoi w banerze nad osią — przy wierszu musi zmieścić się w jednej linii
+ * Pełne zdanie stoi w banerze nad osią - przy wierszu musi zmieścić się w jednej linii
  * podpisu, więc mówi tylko, CZEGO dotyczy problem. Kod bez skrótu (np. dołożony później
  * w domenie) po prostu nie oznacza wiersza: lepszy brak podpisu niż podpis „nieznany
  * problem", który niczego nie kwalifikuje.
  */
 const ISSUE_HINT: Record<string, string> = {
-  FLIGHT_WITHOUT_LANDING: 'lot bez lądowania — dopisz je',
+  FLIGHT_WITHOUT_LANDING: 'lot bez lądowania - dopisz je',
   ZERO_LENGTH_FLIGHT: 'lądowanie nie później niż start',
-  EVENT_OUTSIDE_RUN: 'poza pracą silnika — sprawdź czas',
-  DROP_ON_GROUND: 'na ziemi — sprawdź czas',
+  EVENT_OUTSIDE_RUN: 'poza pracą silnika - sprawdź czas',
+  DROP_ON_GROUND: 'na ziemi - sprawdź czas',
   MH_REGRESSION: 'licznik niższy niż przy przejęciu',
   MH_DELTA_MISMATCH: 'przyrost licznika ponad czas pracy silnika',
   FUEL_OVER_CAPACITY: 'odczyt ponad pojemność zbiorników',
   FUEL_INCREASE_WITHOUT_REFUEL: 'więcej paliwa, niż mogło zostać',
 };
 
-/** Niespójności przypięte do uuid zdarzenia — po jednym skrócie na wiersz. */
+/** Niespójności przypięte do uuid zdarzenia - po jednym skrócie na wiersz. */
 export function issueHints(issues: readonly RuleViolation[]): Map<string, string> {
   const out = new Map<string, string>();
   for (const issue of issues) {
@@ -154,12 +154,12 @@ export function issueHints(issues: readonly RuleViolation[]): Map<string, string
 /**
  * Nakłada niespójności na wiersze osi: kropka amber i podpis mówiący, co jest nie tak.
  *
- * Podpis ZASTĘPUJE dotychczasowy (skład zrzutu, odczyty) — nie dokleja się do niego.
+ * Podpis ZASTĘPUJE dotychczasowy (skład zrzutu, odczyty) - nie dokleja się do niego.
  * Wiersz ma jedną linię opisu i w chwili, gdy coś się nie zgadza, ważniejsze jest to,
  * co się nie zgadza, niż to, ile skoczków wyszło.
  *
  * Niespójności BEZ adresu (np. rachunek paliwa całej sesji) nie oznaczają żadnego
- * wiersza — zostają w banerze, gdzie mówią o sesji jako całości.
+ * wiersza - zostają w banerze, gdzie mówią o sesji jako całości.
  */
 export function withIssues(rows: AxisRow[], issues: readonly RuleViolation[]): AxisRow[] {
   if (issues.length === 0) return rows;
@@ -187,10 +187,10 @@ export interface AddableType {
  * Lista to KOMPLET faktów operacyjnych, czyli dokładnie te typy, które domena uznaje za
  * korygowalne. Nie ma tu klamry silnika (`engine_start`/`engine_stop`): sesja ma jeden
  * bieg (`SESSION_ALREADY_RAN`), więc dopisanie drugiego łamałoby model, a czas istniejącej
- * klamry poprawia się ołówkiem. Nie ma też przejęcia ani zdania — te tworzą sesję.
+ * klamry poprawia się ołówkiem. Nie ma też przejęcia ani zdania - te tworzą sesję.
  *
  * Zrzut i załadunek istnieją WYŁĄCZNIE w dniu skokowym (issue #19): przy przelocie czy
- * egzaminie ich po prostu nie ma. To brak akcji, nie blokada z powodem — `drop` nie może
+ * egzaminie ich po prostu nie ma. To brak akcji, nie blokada z powodem - `drop` nie może
  * się tam wydarzyć.
  */
 export function addableTypes(operation: OperationType | null): AddableType[] {

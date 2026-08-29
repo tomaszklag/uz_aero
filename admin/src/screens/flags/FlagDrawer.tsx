@@ -1,23 +1,23 @@
 /**
- * UZ Aero — panel: SZCZEGÓŁ FLAGI I JEJ ROZSTRZYGNIĘCIE
+ * UZ Aero - panel: SZCZEGÓŁ FLAGI I JEJ ROZSTRZYGNIĘCIE
  * (`design/admin/A03a-flaga.html`).
  *
- * Szuflada nad listą, adres `#/flagi/<id>` — kontekst skrzynki zostaje pod spodem.
+ * Szuflada nad listą, adres `#/flagi/<id>` - kontekst skrzynki zostaje pod spodem.
  *
  * Dwie rzeczy, których nie wolno tu zgubić:
  *
  *  1. **Rozwiązanie flagi to komentarz i zmiana statusu, NIGDY edycja danych.**
  *     Rejestr `events` jest append-only i panel nie ma przycisku „popraw 3906.9".
  *     Jeżeli błędna jest sama liczba, poprawia ją nowe zdarzenie `event_correction`
- *     na ekranie korekty — a oryginał zostaje w rejestrze na zawsze.
+ *     na ekranie korekty - a oryginał zostaje w rejestrze na zawsze.
  *  2. **Zdolności są ROZŁĄCZNE.** `flags.resolve` ma administrator **oraz** szef
- *     wyszkolenia — skrzynka jest jego głównym narzędziem. `events.correct` ma
+ *     wyszkolenia - skrzynka jest jego głównym narzędziem. `events.correct` ma
  *     **tylko administrator**, więc przycisk korekty jest dla szefa wyszkolenia
  *     widoczny i wyszarzony Z PODANYM POWODEM, nigdy cicho ukryty.
  *
  * Treści, których szuflada NIE pokazuje mimo mockupu (oś zdarzeń, nazwa i rewizja
  * karty dnia, ostatni sync sesji, powiązane flagi tego samolotu), nie mają dziś skąd
- * przyjść — DTO skrzynki ich nie niesie. Zgadnięcie ich byłoby najgorszą możliwą
+ * przyjść - DTO skrzynki ich nie niesie. Zgadnięcie ich byłoby najgorszą możliwą
  * treścią ekranu, który istnieje po to, żeby wykrywać rozjazdy.
  */
 
@@ -48,7 +48,7 @@ interface FlagDrawerProps {
   pilot: PanelPilotDto | null;
   capabilities: Capability[] | undefined;
   onClose: () => void;
-  /** Rozszerza filtr do „wszystkie" — jedyna droga do flagi spoza bieżącej listy. */
+  /** Rozszerza filtr do „wszystkie" - jedyna droga do flagi spoza bieżącej listy. */
   onWiden: () => void;
 }
 
@@ -67,7 +67,7 @@ export function FlagDrawer({ flagId, flag, pilot, capabilities, onClose, onWiden
         <Banner tone="warn">
           <b>Tej flagi nie ma wśród spraw pobranych bieżącym filtrem.</b> Serwer nie wystawia
           dziś odczytu pojedynczej flagi (<code>GET /admin/api/flags/:id</code>), a filtr listy
-          nie przyjmuje numeru — szuflada bierze więc sprawę z wiersza, który masz na ekranie.
+          nie przyjmuje numeru - szuflada bierze więc sprawę z wiersza, który masz na ekranie.
           Najczęstsza przyczyna: link prowadzi do flagi już rozwiązanej, a lista pokazuje
           otwarte.
         </Banner>
@@ -134,7 +134,7 @@ export function FlagDrawer({ flagId, flag, pilot, capabilities, onClose, onWiden
         </Banner>
       )}
 
-      {/* PRZEGRANY WYŚCIG (409). Mockup nie ma na to stanu — projektujemy go tak, jak
+      {/* PRZEGRANY WYŚCIG (409). Mockup nie ma na to stanu - projektujemy go tak, jak
           reszta ekranu mówi o odmowach: konkretnie i z podaniem, KTO był pierwszy.
           Komentarz zwycięzcy cytujemy w całości, bo to on jest teraz uzasadnieniem
           zamknięcia sprawy i to z nim, a nie z panelem, można się nie zgadzać. */}
@@ -155,7 +155,7 @@ export function FlagDrawer({ flagId, flag, pilot, capabilities, onClose, onWiden
 
       <Banner tone="danger">
         <b>Rejestr zdarzeń jest append-only.</b> Rozwiązanie flagi to komentarz i zmiana
-        statusu — <u>nie</u> edycja odczytów. Panel nie ma i nie będzie miał przycisku
+        statusu - <u>nie</u> edycja odczytów. Panel nie ma i nie będzie miał przycisku
         „popraw wartość". Jeśli liczba jest błędna, poprawia ją nowe zdarzenie{' '}
         <code>event_correction</code>, a oryginał zostaje w rejestrze na zawsze.
       </Banner>
@@ -184,7 +184,7 @@ export function FlagDrawer({ flagId, flag, pilot, capabilities, onClose, onWiden
             </>
           ) : (
             <>
-              Ten typ flagi <b>nie jest bramką</b> w <code>dayExporter</code> — karta dnia
+              Ten typ flagi <b>nie jest bramką</b> w <code>dayExporter</code> - karta dnia
               powstaje normalnie, a sprawa zostaje do wyjaśnienia. Rozstrzygnięcie nie uruchomi
               więc żadnego re-eksportu.
             </>
@@ -205,7 +205,7 @@ export function FlagDrawer({ flagId, flag, pilot, capabilities, onClose, onWiden
           ))}
         </OptionList>
         <span className="hint">
-          Karta dnia każdej sesji jest osobnym ekranem. Flagi rozwiązuje się <b>osobno</b> —
+          Karta dnia każdej sesji jest osobnym ekranem. Flagi rozwiązuje się <b>osobno</b> -
           każda ma własny wpis, własny komentarz i własny ślad w audycie.
         </span>
       </Card>
@@ -222,7 +222,7 @@ export function FlagDrawer({ flagId, flag, pilot, capabilities, onClose, onWiden
         >
           <div className="field">
             <label className="label" htmlFor="flag-note">
-              Komentarz — wymagany
+              Komentarz - wymagany
             </label>
             <TextArea
               id="flag-note"
@@ -244,18 +244,18 @@ export function FlagDrawer({ flagId, flag, pilot, capabilities, onClose, onWiden
           <KeyValue
             label="Rozwiąże"
             value={
-              pilot == null ? '—' : <small>{`${pilot.name} · ${roleLabel(pilot.role).toLowerCase()}`}</small>
+              pilot == null ? '-' : <small>{`${pilot.name} · ${roleLabel(pilot.role).toLowerCase()}`}</small>
             }
           />
           <KeyValue label="Chwila zapisu" value={<small>resolved_at ustala serwer</small>} />
         </Card>
       ) : (
         <Card title="Rozstrzygnięcie" actions={<Pill tone="green">resolved</Pill>}>
-          <KeyValue label="Kto" value={flag.resolvedBy ?? '—'} />
+          <KeyValue label="Kto" value={flag.resolvedBy ?? '-'} />
           <KeyValue label="Kiedy · UTC" value={utcStamp(flag.resolvedAt)} />
           <span className="hint">
             {flag.resolutionNote == null || flag.resolutionNote === ''
-              ? 'Bez komentarza — wpis powstał przed wdrożeniem endpointu rozstrzygnięcia.'
+              ? 'Bez komentarza - wpis powstał przed wdrożeniem endpointu rozstrzygnięcia.'
               : `„${flag.resolutionNote}"`}
           </span>
         </Card>
@@ -267,14 +267,14 @@ export function FlagDrawer({ flagId, flag, pilot, capabilities, onClose, onWiden
           {flag.blocksExport ? (
             <>
               Bramka <code>dayExporter</code> przestaje wycinać sesje objęte flagą, a karta
-              doby generuje się od razu po zatwierdzeniu transakcji — tym razem KOMPLETNA,
+              doby generuje się od razu po zatwierdzeniu transakcji - tym razem KOMPLETNA,
               i odpowiedź serwera poda numer rewizji. Eksport idzie PO commicie, żeby dokument
               klubu nigdy nie opisał stanu, który się nie zapisał.
             </>
           ) : (
             <>
               Zmieni się status flagi i przybędzie wpis w audycie. Re-eksportu <b>nie
-              będzie</b> — serwer ponawia karty wyłącznie dla <code>aircraft_overlap</code>,
+              będzie</b> - serwer ponawia karty wyłącznie dla <code>aircraft_overlap</code>,
               bo tylko ten typ jest bramką eksportera, a odpowiedź z rewizją po akcji, która
               na kartę nie wpłynęła, uczyłaby nieufności do narzędzia.
             </>
@@ -287,7 +287,7 @@ export function FlagDrawer({ flagId, flag, pilot, capabilities, onClose, onWiden
         <span className="hint">
           Zamknięcie flagi nie zmienia ani jednej liczby w rejestrze. Jeżeli odczyt jest po
           prostu błędny albo brakuje zdarzenia, dopisuje je administrator <b>nowym zdarzeniem</b>{' '}
-          <code>event_correction</code> na ekranie korekty dnia — oryginały zostają, a łańcuch
+          <code>event_correction</code> na ekranie korekty dnia - oryginały zostają, a łańcuch
           MH przelicza się od nowa. Dopiero potem wracasz tutaj i zamykasz flagę komentarzem.
         </span>
         <div>
@@ -302,7 +302,7 @@ export function FlagDrawer({ flagId, flag, pilot, capabilities, onClose, onWiden
         <KeyValue label="Rozwiązanie flagi" value="administrator · szef wyszkolenia" tone="green" />
         <KeyValue label="Korekta zdarzenia" value="tylko administrator" tone="amber" />
         <span className="hint">
-          Skrzynka flag jest <b>głównym narzędziem szefa wyszkolenia</b> — komentarz i zamknięcie
+          Skrzynka flag jest <b>głównym narzędziem szefa wyszkolenia</b> - komentarz i zamknięcie
           sprawy (a więc też odblokowanie karty dnia) należą do niego tak samo jak do
           administratora. Korekta dopisuje zdarzenie do rejestru, więc zostaje przy
           administratorze. Przycisku nie chowamy: szef wyszkolenia widzi go wyszarzonego
@@ -316,7 +316,7 @@ export function FlagDrawer({ flagId, flag, pilot, capabilities, onClose, onWiden
 /**
  * `HttpError` → komunikat. Rozpakowanie wyjątku należy do ekranu, a nie do modułu
  * czystego: `resolveFailure` przyjmuje STATUS i CIAŁO, żeby dało się je przetestować
- * bez klienta HTTP — dokładnie jak `loginMessage` przy logowaniu.
+ * bez klienta HTTP - dokładnie jak `loginMessage` przy logowaniu.
  */
 function failureOf(error: unknown) {
   if (isHttpError(error)) return resolveFailure(error.status, error.body as ApiErrorDto);
@@ -325,7 +325,7 @@ function failureOf(error: unknown) {
 
 /** ISO z serwera → „31 JUL 2026 14:07". Kreska, gdy pola nie ma albo jest nieczytelne. */
 function utcStamp(iso: string | null): string {
-  if (iso == null) return '—';
+  if (iso == null) return '-';
   const at = Date.parse(iso);
-  return Number.isNaN(at) ? '—' : `${dateUtcShort(at)} ${timeUtc(at)}`;
+  return Number.isNaN(at) ? '-' : `${dateUtcShort(at)} ${timeUtc(at)}`;
 }

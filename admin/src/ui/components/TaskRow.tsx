@@ -1,7 +1,7 @@
 /**
- * UZ Aero — panel: WIERSZ KOLEJKI „WYMAGA UWAGI" (`.todo-row` z `SZABLON.html`).
+ * UZ Aero - panel: WIERSZ KOLEJKI „WYMAGA UWAGI" (`.todo-row` z `SZABLON.html`).
  *
- * Jedyny wzorzec w panelu, który STAWIA ZADANIE, a nie opisuje stan — stąd wiersz jest
+ * Jedyny wzorzec w panelu, który STAWIA ZADANIE, a nie opisuje stan - stąd wiersz jest
  * linkiem w głąb, a wiek sprawy ma własną kolumnę: flaga leżąca trzeci dzień to inny
  * problem niż ta sprzed godziny.
  *
@@ -19,7 +19,7 @@ interface TaskRowProps {
   tone: TaskTone;
   icon: ReactNode;
   name: string;
-  /** Zawsze TEKST, nigdy HTML — opis niesie treść payloadów z telefonów. */
+  /** Zawsze TEKST, nigdy HTML - opis niesie treść payloadów z telefonów. */
   meta: string;
   age: string;
   /** `true` = sprawa czeka dłużej niż dobę; wiek dostaje bursztyn. */

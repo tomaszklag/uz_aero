@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: FILTRY SKRZYNKI ↔ query string (moduł CZYSTY, testowany w Node).
+ * UZ Aero - panel: FILTRY SKRZYNKI ↔ query string (moduł CZYSTY, testowany w Node).
  *
  * Filtry mieszkają w URL-u, nie w stanie komponentu
  * (`docs/architektura-panelu-frontend.md` §4.4): „wklej mi link do tych flag" jest
@@ -7,7 +7,7 @@
  * którego nie da się wkleić, i lista, która gubi się po `F5`.
  *
  * Domyślny status to `open` i ustawia go PANEL, jawnie. Serwer celowo nie zawęża nic
- * sam — domyślne zawężenie w API byłoby niewidoczną regułą, przez którą liczniki
+ * sam - domyślne zawężenie w API byłoby niewidoczną regułą, przez którą liczniki
  * przestałyby się zgadzać z tym, co widać na ekranie.
  */
 
@@ -16,14 +16,14 @@ import type { FlagStatus, FlagType } from '@uzaero/domain';
 import type { FlagListQuery } from '../../api/flags';
 import { FLAG_TYPE_META } from './flagTypes';
 
-/** `all` to brak filtra statusu, a nie trzeci status — dlatego nie jest `FlagStatus`. */
+/** `all` to brak filtra statusu, a nie trzeci status - dlatego nie jest `FlagStatus`. */
 export type StatusFilter = FlagStatus | 'all';
 
 export interface FlagFilter {
   status: StatusFilter;
   /** `null` = wszystkie typy. */
   type: FlagType | null;
-  /** Dokładny UUID sesji — jedyne wyszukiwanie, jakie umie dziś trasa listy. */
+  /** Dokładny UUID sesji - jedyne wyszukiwanie, jakie umie dziś trasa listy. */
   sessionUuid: string | null;
   /** Dzień UTC `YYYY-MM-DD` włącznie; `null` = bez ograniczenia. */
   from: string | null;
@@ -51,7 +51,7 @@ const isStatus = (value: string | null): value is StatusFilter =>
 const isType = (value: string | null): value is FlagType =>
   value != null && Object.hasOwn(FLAG_TYPE_META, value);
 
-/** `YYYY-MM-DD` i nic innego — wpis nieczytelny traktujemy jak brak filtra. */
+/** `YYYY-MM-DD` i nic innego - wpis nieczytelny traktujemy jak brak filtra. */
 const isDay = (value: string | null): value is string =>
   value != null && /^\d{4}-\d{2}-\d{2}$/.test(value);
 
@@ -77,7 +77,7 @@ export function filterFromParams(params: URLSearchParams): FlagFilter {
 
 /**
  * Filtr → query string. Wartości domyślne POMIJAMY, żeby adres skrzynki otwartej
- * spraw był po prostu `#/flagi` — link, który da się przeczytać i przepisać.
+ * spraw był po prostu `#/flagi` - link, który da się przeczytać i przepisać.
  */
 export function paramsFromFilter(filter: FlagFilter): Record<string, string> {
   const params: Record<string, string> = {};
@@ -93,7 +93,7 @@ export function paramsFromFilter(filter: FlagFilter): Record<string, string> {
 const startOfDayMs = (day: string | null): number | undefined =>
   day == null ? undefined : Date.parse(`${day}T00:00:00.000Z`);
 
-/** Koniec dnia UTC — zakres z mockupu jest obustronnie DOMKNIĘTY. */
+/** Koniec dnia UTC - zakres z mockupu jest obustronnie DOMKNIĘTY. */
 const endOfDayMs = (day: string | null): number | undefined =>
   day == null ? undefined : Date.parse(`${day}T23:59:59.999Z`);
 
@@ -112,7 +112,7 @@ export function flagListQuery(filter: FlagFilter): FlagListQuery {
   };
 }
 
-/** Czy filtr zawęża cokolwiek ponad domyślny status — stan pusty mówi wtedy co innego. */
+/** Czy filtr zawęża cokolwiek ponad domyślny status - stan pusty mówi wtedy co innego. */
 export function isNarrowed(filter: FlagFilter): boolean {
   return filter.type != null || filter.sessionUuid != null || filter.from != null || filter.to != null;
 }

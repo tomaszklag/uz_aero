@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — Panel administracyjny · spis widoków</title>
+<title>UZ Aero - Panel administracyjny · spis widoków</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -96,26 +96,26 @@
   <div class="hero-icon">
     <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
   </div>
-  <h1>UZ AERO — <span>PANEL</span></h1>
+  <h1>UZ AERO - <span>PANEL</span></h1>
   <div class="hero-sub">Aplikacja web dla administratora i szefa wyszkolenia · 23 ekrany</div>
   <div class="hero-tag"><span class="dot"></span> Projekt zatwierdzony · backend i klient web wdrożone (A01–A11)</div>
 </div>
 
 <div class="note">
-  <div class="note-title">Model, który te ekrany opisują — po pivocie 2026-08-10 i issue #23 (2026-08-11)</div>
+  <div class="note-title">Model, który te ekrany opisują - po pivocie 2026-08-10 i issue #23 (2026-08-11)</div>
   <p>
     Panel opisuje <b>dwie osie</b>. <b>SESJA SAMOLOTU</b> to odcinek przejęcie (<code>session_claim</code>) →
     zdanie (<code>day_close</code>) i dokładnie <b>jeden bieg silnika</b> z dowolną liczbą <b>LOTÓW</b>
-    (start → lądowanie) w środku — słowo „wzlot" jest wycofane (pivot 2026-08-10), a <code>leg_close</code>
+    (start → lądowanie) w środku - słowo „wzlot" jest wycofane (pivot 2026-08-10), a <code>leg_close</code>
     nie istnieje: sesję zatwierdzają obowiązkowe odczyty przy zdaniu i od zdania liczy się JEDNO
     24-godzinne okno korekty tej sesji. To sesja jest wierszem list A02 i A05.
-    <b>DZIEŃ PILOTA</b> to lista sesji per pilot per doba UTC (issue #23; klamra służby nie istnieje) —
+    <b>DZIEŃ PILOTA</b> to lista sesji per pilot per doba UTC (issue #23; klamra służby nie istnieje) -
     <b>obejmuje kilka maszyn</b>, dlatego
     <span class="warn">nie ma go na żadnym ekranie opisującym pojedynczą sesję ani pojedynczy samolot</span>:
     tam byłby pomyłką kategorii. Z tego wynika reszta: karta arkusza to <b>DOBA SAMOLOTU</b> (sesje są jej
     wierszami, spięte kolumną <code>Sesja</code>), dawny <code>session_overlap</code> jest rozdzielony na
     <code>aircraft_overlap</code> (jedyna bramka arkusza) i <code>pilot_overlap</code> (grafik pilota, arkusza nie
-    bramkuje), a bramka <code>400 day_open</code> przy korekcie <b>nie istnieje</b> — administrator nie jest nigdy
+    bramkuje), a bramka <code>400 day_open</code> przy korekcie <b>nie istnieje</b> - administrator nie jest nigdy
     blokowany, kolizja jest ostrzeżeniem. Pełny opis: <code>docs/_main.md.txt</code> §3.6, §3.6a, §4.5, §4.7.
   </p>
 </div>
@@ -123,23 +123,23 @@
 <div class="note">
   <div class="note-title">Zanim przeczytasz ekrany</div>
   <p>
-    Panel odwraca decyzję z <b>2026-07-24</b> („Panel administratora — nie teraz"), która zostawiła zakładanie kont, resety haseł,
+    Panel odwraca decyzję z <b>2026-07-24</b> („Panel administratora - nie teraz"), która zostawiła zakładanie kont, resety haseł,
     rozwiązywanie flag i korekty administratora jako proces ręczny w SQL. Zakres v1: pełny back-office, dwie role
     (<b>administrator</b> i <b>szef wyszkolenia</b>), stan floty na żywo oraz dane po fakcie.
   </p>
   <p>
-    <b>Rola konta — zrobiona 2026-07-31</b>: migracja 7 dokłada <code>pilots.role</code>, JWT niesie trzeci claim,
+    <b>Rola konta - zrobiona 2026-07-31</b>: migracja 7 dokłada <code>pilots.role</code>, JWT niesie trzeci claim,
     a mapa ról na zdolności mieszka w <code>server/src/domain/roles.ts</code>.
-    <b>Cykl życia flagi — wdrożony</b>: <code>POST /admin/api/flags/:id/resolve</code> zamyka flagę komentarzem i sam
+    <b>Cykl życia flagi - wdrożony</b>: <code>POST /admin/api/flags/:id/resolve</code> zamyka flagę komentarzem i sam
     wyzwala re-eksport karty, więc <code>aircraft_overlap</code> (dawny <code>session_overlap</code>, rozdzielony 2026-08-07) przestał trzymać sesje poza dokumentem klubu bezterminowo.
-    Wpis do dziennika <code>admin_audit</code> powstaje tą samą transakcją co skutek, a mechanizm wymusza go TYPEM —
+    Wpis do dziennika <code>admin_audit</code> powstaje tą samą transakcją co skutek, a mechanizm wymusza go TYPEM -
     komenda panelu bez śladu nie kompiluje się. <b>Katalog flag kompletny</b>: <code>fuel_mismatch</code>
     i <code>clock_drift</code> serwer liczy od 2026-07-31.
-    <span class="warn">Zostaje jeden brak</span>: reszta endpointów <code>/admin/api/*</code> — listy, filtry, konta,
+    <span class="warn">Zostaje jeden brak</span>: reszta endpointów <code>/admin/api/*</code> - listy, filtry, konta,
     flota, korekty administratora. Bez nich te ekrany nie mają skąd wziąć danych.
   </p>
   <p>
-    Pełna analiza — role, mapowanie każdego ekranu na endpoint, braki serwera z wyceną, ryzyka:
+    Pełna analiza - role, mapowanie każdego ekranu na endpoint, braki serwera z wyceną, ryzyka:
     <b>ANALIZA.md</b> w tym katalogu. Rama okna, tokeny i inwentarz komponentów: <b>SZABLON.html</b>.
   </p>
 </div>
@@ -150,7 +150,7 @@
     <div class="card-num">A00</div>
     <div class="card-body">
       <div class="card-title">A00-login</div>
-      <div class="card-desc">Logowanie do panelu — login + hasło → JWT. Bez samodzielnej rejestracji i bez OAuth; konta zakłada administrator. Konto bez roli panelu odbija się z wyjaśnieniem.</div>
+      <div class="card-desc">Logowanie do panelu - login + hasło → JWT. Bez samodzielnej rejestracji i bez OAuth; konta zakłada administrator. Konto bez roli panelu odbija się z wyjaśnieniem.</div>
       <div class="card-tags"><span class="tag green">auth</span><span class="tag red">brak roli w bazie</span></div>
     </div>
   </a>
@@ -158,7 +158,7 @@
     <div class="card-num">A00A</div>
     <div class="card-body">
       <div class="card-title">A00a-login-blad</div>
-      <div class="card-desc">Wariant po 401 — odpowiedź identyczna dla złego hasła i nieistniejącego konta (żeby nie zdradzać, kto ma konto), plus limit prób.</div>
+      <div class="card-desc">Wariant po 401 - odpowiedź identyczna dla złego hasła i nieistniejącego konta (żeby nie zdradzać, kto ma konto), plus limit prób.</div>
       <div class="card-tags"><span class="tag amber">wariant</span><span class="tag amber">progi wymyślone</span></div>
     </div>
   </a>
@@ -166,7 +166,7 @@
     <div class="card-num">A01</div>
     <div class="card-body">
       <div class="card-title">A01-pulpit</div>
-      <div class="card-desc">Ekran startowy: flota teraz — każdy samolot z fazą ORAZ wiekiem synchronizacji, bo „w locie" przy syncu sprzed 47 minut to nie wiedza o locie. Kolejka „wymaga uwagi" i napływ zdarzeń.</div>
+      <div class="card-desc">Ekran startowy: flota teraz - każdy samolot z fazą ORAZ wiekiem synchronizacji, bo „w locie" przy syncu sprzed 47 minut to nie wiedza o locie. Kolejka „wymaga uwagi" i napływ zdarzeń.</div>
       <div class="card-tags"><span class="tag green">live</span><span class="tag">świeżość danych</span><span class="tag">kolejka</span></div>
     </div>
   </a>
@@ -174,7 +174,7 @@
     <div class="card-num">A01A</div>
     <div class="card-body">
       <div class="card-title">A01a-pulpit-cisza</div>
-      <div class="card-desc">Nic nie lata, zero flag, zero zaległych eksportów. Ekran rozstrzyga to, co w bazie wygląda identycznie: <b>„dziś nikt nie lata"</b> kontra <b>„nic do nas nie dotarło"</b> — werdykt stoi na czterech sprawdzalnych warunkach, a nie na samym braku danych.</div>
+      <div class="card-desc">Nic nie lata, zero flag, zero zaległych eksportów. Ekran rozstrzyga to, co w bazie wygląda identycznie: <b>„dziś nikt nie lata"</b> kontra <b>„nic do nas nie dotarło"</b> - werdykt stoi na czterech sprawdzalnych warunkach, a nie na samym braku danych.</div>
       <div class="card-tags"><span class="tag">wariant</span><span class="tag green">zero ≠ awaria</span></div>
     </div>
   </a>
@@ -186,7 +186,7 @@
     <div class="card-num">A02</div>
     <div class="card-body">
       <div class="card-title">A02-dni</div>
-      <div class="card-desc">Lista SESJI SAMOLOTÓW (przejęcie → zdanie) z projekcji <code>sessions</code> — samolot, PIC, blok, czas lotu, MH i FOB start→koniec. Jedna maszyna może mieć w dobie kilka wierszy, odróżnia je godzina przejęcia. Filtry po dacie, samolocie, pilocie i stanie.</div>
+      <div class="card-desc">Lista SESJI SAMOLOTÓW (przejęcie → zdanie) z projekcji <code>sessions</code> - samolot, PIC, blok, czas lotu, MH i FOB start→koniec. Jedna maszyna może mieć w dobie kilka wierszy, odróżnia je godzina przejęcia. Filtry po dacie, samolocie, pilocie i stanie.</div>
       <div class="card-tags"><span class="tag">tabela</span><span class="tag">UTC</span></div>
     </div>
   </a>
@@ -194,7 +194,7 @@
     <div class="card-num">A02A</div>
     <div class="card-body">
       <div class="card-title">A02a-dzien</div>
-      <div class="card-desc">Karta jednej SESJI SAMOLOTU — kafle podsumowania, pełna oś zdarzeń z payloadami (w tym <code>leg_close</code>), lista lotów, flagi. Zdarzenie unieważnione jest przekreślone, nie usunięte. Czasu służby tu nie ma: klamra należy do PILOTA i obejmuje kilka maszyn.</div>
+      <div class="card-desc">Karta jednej SESJI SAMOLOTU - kafle podsumowania, pełna oś zdarzeń z payloadami (w tym <code>leg_close</code>), lista lotów, flagi. Zdarzenie unieważnione jest przekreślone, nie usunięte. Czasu służby tu nie ma: klamra należy do PILOTA i obejmuje kilka maszyn.</div>
       <div class="card-tags"><span class="tag green">oś zdarzeń</span><span class="tag">append-only</span></div>
     </div>
   </a>
@@ -202,7 +202,7 @@
     <div class="card-num">A02B</div>
     <div class="card-body">
       <div class="card-title">A02b-korekta</div>
-      <div class="card-desc">Korekta administratora — dostępna ZAWSZE (bramka <code>400 day_open</code> usunięta 2026-08-07); kolizja z pilotem to baner ostrzegawczy, nie odmowa. Nie ma edycji ani kasowania — są trzy akcje dopisujące <code>event_correction</code>: <code>retime</code>, <code>void</code> i <code>amend</code> (wartość zamiast czasu, issue #43). Korekta WRACA na telefon pilota (§4.9) i pokazuje się w jego historii zmian z nazwiskiem i powodem.</div>
+      <div class="card-desc">Korekta administratora - dostępna ZAWSZE (bramka <code>400 day_open</code> usunięta 2026-08-07); kolizja z pilotem to baner ostrzegawczy, nie odmowa. Nie ma edycji ani kasowania - są trzy akcje dopisujące <code>event_correction</code>: <code>retime</code>, <code>void</code> i <code>amend</code> (wartość zamiast czasu, issue #43). Korekta WRACA na telefon pilota (§4.9) i pokazuje się w jego historii zmian z nazwiskiem i powodem.</div>
       <div class="card-tags"><span class="tag red">append-only</span><span class="tag">trzy akcje</span></div>
     </div>
   </a>
@@ -210,7 +210,7 @@
     <div class="card-num">A02C</div>
     <div class="card-body">
       <div class="card-title">A02c-slad</div>
-      <div class="card-desc">Ślad lotu — trasa na siatce współrzędnych z pasami lotnisk z katalogu, profil pionowy i log przeliczonych punktów z powodem odrzucenia przez bramkę jakości. Loty dnia przełącza pasek nad mapą. Materiał diagnostyczny, nie rejestr: czasy rozliczeniowe zawsze z rejestru zdarzeń.</div>
+      <div class="card-desc">Ślad lotu - trasa na siatce współrzędnych z pasami lotnisk z katalogu, profil pionowy i log przeliczonych punktów z powodem odrzucenia przez bramkę jakości. Loty dnia przełącza pasek nad mapą. Materiał diagnostyczny, nie rejestr: czasy rozliczeniowe zawsze z rejestru zdarzeń.</div>
       <div class="card-tags"><span class="tag">mapa</span><span class="tag">profil</span><span class="tag amber">diagnostyka detekcji</span></div>
     </div>
   </a>
@@ -230,7 +230,7 @@
     <div class="card-num">A03</div>
     <div class="card-body">
       <div class="card-title">A03-flagi</div>
-      <div class="card-desc">Skrzynka niespójności — główne narzędzie szefa wyszkolenia. Bramkujące arkusz na górze, potem po wieku. Sześć typów: <code>aircraft_overlap</code> (jedyna bramka arkusza) i <code>pilot_overlap</code> po rozdzieleniu dawnego <code>session_overlap</code>, <code>mh_gap</code>, <code>mh_regression</code>, <code>fuel_mismatch</code>, <code>clock_drift</code>.</div>
+      <div class="card-desc">Skrzynka niespójności - główne narzędzie szefa wyszkolenia. Bramkujące arkusz na górze, potem po wieku. Sześć typów: <code>aircraft_overlap</code> (jedyna bramka arkusza) i <code>pilot_overlap</code> po rozdzieleniu dawnego <code>session_overlap</code>, <code>mh_gap</code>, <code>mh_regression</code>, <code>fuel_mismatch</code>, <code>clock_drift</code>.</div>
       <div class="card-tags"><span class="tag amber">kolejka</span><span class="tag red">blokuje arkusz</span></div>
     </div>
   </a>
@@ -238,7 +238,7 @@
     <div class="card-num">A03A</div>
     <div class="card-body">
       <div class="card-title">A03a-flaga</div>
-      <div class="card-desc">Szczegół i rozstrzygnięcie: liczby rozbieżności, obie sesje, oś wokół problemu. Rozwiązanie to komentarz i zmiana statusu — nie edycja danych; wpuszcza sporne sesje z powrotem do karty doby.</div>
+      <div class="card-desc">Szczegół i rozstrzygnięcie: liczby rozbieżności, obie sesje, oś wokół problemu. Rozwiązanie to komentarz i zmiana statusu - nie edycja danych; wpuszcza sporne sesje z powrotem do karty doby.</div>
       <div class="card-tags"><span class="tag amber">wariant</span><span class="tag red">endpointu brak</span></div>
     </div>
   </a>
@@ -246,7 +246,7 @@
     <div class="card-num">A03B</div>
     <div class="card-body">
       <div class="card-title">A03b-flagi-zero</div>
-      <div class="card-desc">Stan pusty — brak otwartych flag. Licznik w nawigacji spada do neutralnego zera; historia rozwiązanych zostaje.</div>
+      <div class="card-desc">Stan pusty - brak otwartych flag. Licznik w nawigacji spada do neutralnego zera; historia rozwiązanych zostaje.</div>
       <div class="card-tags"><span class="tag">stan pusty</span></div>
     </div>
   </a>
@@ -274,7 +274,7 @@
     <div class="card-num">A10A</div>
     <div class="card-body">
       <div class="card-title">A10a-analityka</div>
-      <div class="card-desc">Analityka zużycia jednego samolotu: stawki fazowe paliwa z regresji na interwałach (odczyt → odczyt), przelicznik motogodzin na godzinę zegara per faza (licznik obrotomierzowy vs godzinowy — model wykrywa sam), trend miesięczny i tabela interwałów z resztami. Każda liczba klika się do dnia i zdarzeń źródłowych; estymaty zawsze z przedziałem ufności.</div>
+      <div class="card-desc">Analityka zużycia jednego samolotu: stawki fazowe paliwa z regresji na interwałach (odczyt → odczyt), przelicznik motogodzin na godzinę zegara per faza (licznik obrotomierzowy vs godzinowy - model wykrywa sam), trend miesięczny i tabela interwałów z resztami. Każda liczba klika się do dnia i zdarzeń źródłowych; estymaty zawsze z przedziałem ufności.</div>
       <div class="card-tags"><span class="tag green">analityka</span><span class="tag">NNLS</span><span class="tag amber">estymata ≠ pomiar</span></div>
     </div>
   </a>
@@ -294,7 +294,7 @@
     <div class="card-num">A06</div>
     <div class="card-body">
       <div class="card-title">A06-piloci</div>
-      <div class="card-desc">Konta pilotów — kod, nazwisko, e-mail, rola, status, ostatnie logowanie. Akcje: szczegóły, reset hasła, deaktywacja.</div>
+      <div class="card-desc">Konta pilotów - kod, nazwisko, e-mail, rola, status, ostatnie logowanie. Akcje: szczegóły, reset hasła, deaktywacja.</div>
       <div class="card-tags"><span class="tag">konta</span><span class="tag red">rola do dorobienia</span></div>
     </div>
   </a>
@@ -326,7 +326,7 @@
     <div class="card-num">A08</div>
     <div class="card-body">
       <div class="card-title">A08-progi</div>
-      <div class="card-desc">Dwie klasy progów. Detekcja lotu liczy się na telefonie offline — <b>tylko do odczytu</b>, bo suwak nie dotarłby do samolotu w powietrzu. Tolerancje flag: edytowalne, ale wyłącznie z dowodem z replaya.</div>
+      <div class="card-desc">Dwie klasy progów. Detekcja lotu liczy się na telefonie offline - <b>tylko do odczytu</b>, bo suwak nie dotarłby do samolotu w powietrzu. Tolerancje flag: edytowalne, ale wyłącznie z dowodem z replaya.</div>
       <div class="card-tags"><span class="tag red">tylko odczyt</span><span class="tag amber">replay wymagany</span></div>
     </div>
   </a>
@@ -334,7 +334,7 @@
     <div class="card-num">A11</div>
     <div class="card-body">
       <div class="card-title">A11-konserwacja</div>
-      <div class="card-desc">Przebudowa projekcji <code>sessions</code> (bezpieczna z definicji — to zrzut <code>projectSession(events)</code>, rejestr zostaje nietknięty; dry-run domyślnie, a różnica po przeliczeniu to <b>incydent do zbadania</b>), kolejka ponowień eksportu, sprzątanie wygasłych tokenów, stan migracji.</div>
+      <div class="card-desc">Przebudowa projekcji <code>sessions</code> (bezpieczna z definicji - to zrzut <code>projectSession(events)</code>, rejestr zostaje nietknięty; dry-run domyślnie, a różnica po przeliczeniu to <b>incydent do zbadania</b>), kolejka ponowień eksportu, sprzątanie wygasłych tokenów, stan migracji.</div>
       <div class="card-tags"><span class="tag red">operacje na danych</span><span class="tag">dry-run</span><span class="tag">audyt</span></div>
     </div>
   </a>
@@ -346,7 +346,7 @@
     <div class="card-num">A09</div>
     <div class="card-body">
       <div class="card-title">A09-audyt</div>
-      <div class="card-desc">Dziennik akcji administratorów — kto, co, kiedy, na czym. Projekt tabeli <code>admin_audit</code> z niezmiennością wymuszoną uprawnieniami bazy (tylko INSERT i SELECT), nie dyscypliną programisty.</div>
+      <div class="card-desc">Dziennik akcji administratorów - kto, co, kiedy, na czym. Projekt tabeli <code>admin_audit</code> z niezmiennością wymuszoną uprawnieniami bazy (tylko INSERT i SELECT), nie dyscypliną programisty.</div>
       <div class="card-tags"><span class="tag blue">niezmienny</span><span class="tag red">tabela do dorobienia</span></div>
     </div>
   </a>
@@ -374,7 +374,7 @@
     <div class="card-num">↩</div>
     <div class="card-body">
       <div class="card-title">Mockupy telefonu</div>
-      <div class="card-desc">Ekrany pilota (00–13) — ramka 393×852, te same tokeny i czcionki. Panel jest ich rozszerzeniem na inne urządzenie i innego użytkownika, nie osobnym produktem.</div>
+      <div class="card-desc">Ekrany pilota (00–13) - ramka 393×852, te same tokeny i czcionki. Panel jest ich rozszerzeniem na inne urządzenie i innego użytkownika, nie osobnym produktem.</div>
       <div class="card-tags"><span class="tag">aplikacja RN</span></div>
     </div>
   </a>

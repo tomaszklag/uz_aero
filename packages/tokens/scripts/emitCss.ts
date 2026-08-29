@@ -1,16 +1,16 @@
 /**
- * UZ Aero — generator `admin/src/styles/tokens.css` z `@uzaero/tokens`.
+ * UZ Aero - generator `admin/src/styles/tokens.css` z `@uzaero/tokens`.
  *
  * Uruchomienie (z katalogu `admin/`):
  *     npm run tokens:css --workspace admin
  *
  * Ścieżka wyjściowa jest ARGUMENTEM, a nie stałą w tym pliku: pakiet tokenów nie ma
- * powodu wiedzieć, że istnieje workspace `admin/`. Zależność idzie w drugą stronę —
+ * powodu wiedzieć, że istnieje workspace `admin/`. Zależność idzie w drugą stronę -
  * to panel konsumuje tokeny, nie odwrotnie.
  *
  * Motyw jest przybity na `night` i to jest decyzja, nie uproszczenie: panel ma jeden
  * motyw (§1.6). Emiter (`themeCssBlock`) zostaje parametryczny, więc drugi motyw
- * kiedyś kosztuje jeden dodatkowy blok — ale przełącznika „na zapas" nie budujemy.
+ * kiedyś kosztuje jeden dodatkowy blok - ale przełącznika „na zapas" nie budujemy.
  */
 
 import { mkdirSync, writeFileSync } from 'node:fs';

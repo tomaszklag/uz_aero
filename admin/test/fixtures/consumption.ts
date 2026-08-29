@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: fixture raportu analityki zużycia.
+ * UZ Aero - panel: fixture raportu analityki zużycia.
  *
  * Liczby odwzorowują scenariusz mockupu `A10a` (SP-ABC, okno 90 dni, model dwufazowy),
  * żeby testy modułów ekranu sprawdzały ZGODNOŚĆ Z DESIGNEM, a nie własne wymysły.

@@ -1,5 +1,5 @@
 /**
- * UZ Aero — podziałka czasu profilu (issue #47, trzecia tura przeglądu).
+ * UZ Aero - podziałka czasu profilu (issue #47, trzecia tura przeglądu).
  *
  * Podziałka jest WSKAŹNIKIEM PRZYBLIŻENIA: ma zmieniać podpis razem z zoomem, tak jak
  * podziałka odległości na mapie („500 m" zamiast „2 km"). Test pilnuje trzech rzeczy,
@@ -23,7 +23,7 @@ describe('podziałka czasu profilu', () => {
     expect(scale.pixels).toBeGreaterThan(0);
   });
 
-  it('przybliżenie schodzi na KRÓTSZY krok — po to ta podziałka jest', () => {
+  it('przybliżenie schodzi na KRÓTSZY krok - po to ta podziałka jest', () => {
     const rest = timeScaleBar(SESSION_MS / SPAN_PX, 70)!;
     const zoomed = timeScaleBar(SESSION_MS / (SPAN_PX * 8), 70)!;
 

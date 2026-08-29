@@ -1,4 +1,4 @@
-# UZ Aero — algorytm detekcji stanów lotu i progi
+# UZ Aero - algorytm detekcji stanów lotu i progi
 
 > Dokumentacja referencyjna automatu, który z odczytów GPS wyznacza **kołowanie, start
 > i lądowanie**. Opisuje stan, kolejność decyzji, każdy próg i skutek jego zmiany.
@@ -6,8 +6,8 @@
 > Kontekst architektoniczny: `docs/architektura-kodu.md` §8.1–8.2.
 > Wymagania produktowe: `docs/_main.md.txt` §3.3.
 > Kod: `packages/domain/src/detection/`.
-> Stan na 2026-08-12 (rejestr steruje fazą automatu — §2.2; wcześniej 2026-08-11:
-> korekta geoidalna wysokości w adapterze — §4a; 2026-08-04: odczulenie kanału ruchu
+> Stan na 2026-08-12 (rejestr steruje fazą automatu - §2.2; wcześniej 2026-08-11:
+> korekta geoidalna wysokości w adapterze - §4a; 2026-08-04: odczulenie kanału ruchu
 > + gwardia `ALREADY_TAXIING`).
 
 ---
@@ -22,51 +22,51 @@ Automat odpowiada na trzy pytania i **na żadne inne**:
 | `takeoff` | początek czasu lotu |
 | `landing` | koniec czasu lotu |
 
-Czasy blokowe liczą `engine_start` / `engine_stop` — zdarzenia **zawsze ręczne**, poza
+Czasy blokowe liczą `engine_start` / `engine_stop` - zdarzenia **zawsze ręczne**, poza
 zasięgiem tego algorytmu. Faza wyświetlana w kokpicie (Taxi / Climb / Cruise / Descent)
 też nie jest tutaj: to osobny, bezstanowy moduł (§10).
 
 **Detekcja nie zapisuje zdarzenia.** Zwraca sygnał; UI pokazuje toast z odliczaniem
 „COFNIJ" (`AUTODETECT_TOAST_SEC`), a komenda leci dopiero po jego upływie. Rejestr jest
 append-only, więc gdyby zdarzenie powstawało w chwili detekcji, cofnięcie musiałoby je
-kasować. Wyjątek: **kołowanie zapisuje się od razu, bez okna** — nie wyznacza żadnego
+kasować. Wyjątek: **kołowanie zapisuje się od razu, bez okna** - nie wyznacza żadnego
 czasu, więc fałszywy wpis dokłada wiersz w logu, a nie psuje rozliczenia. Ta asymetria
 mieszka w `useFlightDetection`, nie w automacie.
 
 Automat jest **funkcją czystą**: `stepDetector(stan, fix, progi) → { stan, detection, detectedAt }`.
-Ten sam stan i ten sam fix zawsze dają ten sam wynik — dzięki temu cały algorytm da się
+Ten sam stan i ten sam fix zawsze dają ten sam wynik - dzięki temu cały algorytm da się
 odtworzyć na nagraniu z lotu (`server/scripts/replay.ts`) i przetestować w Node bez samolotu.
 
 ### 1.1 Dwa pytania, nie jedno
 
 Kluczowa decyzja projektowa. Automat rozdziela:
 
-- **CZY** się wydarzyło — decyzja może zapaść **późno** i na mocnych przesłankach;
-- **KIEDY** się wydarzyło — odpowiedź szukana **wstecz w buforze historii**, po fakcie.
+- **CZY** się wydarzyło - decyzja może zapaść **późno** i na mocnych przesłankach;
+- **KIEDY** się wydarzyło - odpowiedź szukana **wstecz w buforze historii**, po fakcie.
 
 Do rejestru trafia `detectedAt` (retro-datowane), nie czas fixa, który warunek potwierdził.
 Bez tego rozdzielenia każde wydłużenie okna potwierdzenia było jednocześnie wydłużeniem
-kłamstwa w dokumentach — i dlatego progi były kompromisem, który nie służył ani czułości,
+kłamstwa w dokumentach - i dlatego progi były kompromisem, który nie służył ani czułości,
 ani dokładności.
 
 ---
 
 ## 2. Model stanu
 
-`DetectorState` (`flightDetector.ts`) — wszystko, co automat pamięta między fixami:
+`DetectorState` (`flightDetector.ts`) - wszystko, co automat pamięta między fixami:
 
 | Pole | Typ | Rola |
 |---|---|---|
 | `phase` | `'ground' \| 'airborne'` | jedyne źródło prawdy o tym, czy samolot jest w powietrzu |
 | `taxiing` | `boolean` | czy kołowanie tego lotu już odnotowano (jeden wpis, nie jeden na fix) |
-| `fieldElevationFt` | `number \| null` | elewacja lotniska; **wysokość GPS z chwili ENGINE START**, a w jej braku — z pierwszego fixa na POSTOJU (§2.1) |
+| `fieldElevationFt` | `number \| null` | elewacja lotniska; **wysokość GPS z chwili ENGINE START**, a w jej braku - z pierwszego fixa na POSTOJU (§2.1) |
 | `candidateSince` | `EpochMillis \| null` | odkąd nieprzerwanie trzyma się warunek ZMIANY FAZY |
 | `cooldownUntil` | `EpochMillis \| null` | do kiedy histereza blokuje zmiany fazy |
 | `lastFixAt` | `EpochMillis \| null` | czas ostatniego **dobrego** fixa (wykrywanie przerw) |
 | `lastPosition` | `LatLon \| null` | pozycja ostatniego dobrego fixa (test plauzybilności) |
-| `fieldPosition` | `LatLon \| null` | pozycja pola — odniesienie geofence'u lądowania |
+| `fieldPosition` | `LatLon \| null` | pozycja pola - odniesienie geofence'u lądowania |
 | `sameFieldOnly` | `boolean` | operacja lata Z i NA to samo lotnisko (skoki) → geofence włączony |
-| `history` | `FixHistory` | okno obserwacji `HISTORY_SPAN_SEC` — podstawa cech i retro-datowania |
+| `history` | `FixHistory` | okno obserwacji `HISTORY_SPAN_SEC` - podstawa cech i retro-datowania |
 | `motion` | `MotionState` | podautomat „stoi / jedzie" (§7) |
 
 `MotionState` (`motion.ts`):
@@ -83,32 +83,32 @@ ani dokładności.
 Z dwóch źródeł, w tej kolejności:
 
 1. **Wysokość GPS w chwili ENGINE START**, zapisana do payloadu zdarzenia
-   (`engine_start.fieldElevationFt`), a nie trzymana w pamięci — musi przetrwać restart
+   (`engine_start.fieldElevationFt`), a nie trzymana w pamięci - musi przetrwać restart
    aplikacji. Kokpit odczytuje ją z rejestru (`CockpitScreen.tsx`).
 2. **Wysokość pierwszego fixa na POSTOJU**, gdy przy starcie silnika jej nie było
    (dobierana w `stepDetector`, krok 4).
 
 Drugie źródło doszło przy issue #5 i zamyka dziurę, która wcześniej kosztowała cały lot:
 silnik odpalony w hangarze albo przy zimnym odbiorniku zostawiał elewację `null`, a wtedy
-`heightAboveField()` zwracał `null` **do końca lotu** — start wykrywał się jeszcze po
+`heightAboveField()` zwracał `null` **do końca lotu** - start wykrywał się jeszcze po
 prędkości, ale **lądowanie nie wykrywało się wcale** (§8.2).
 
 **Warunek dobrania jest mocniejszy niż „faza `ground` i nie w ruchu"** i to jest jego
 sedno. `moving` wymaga potwierdzenia przez `TAXI_CONFIRM_SEC`, więc na pierwszym fixie
-jest fałszywe niezależnie od tego, co samolot naprawdę robi — sama ta para wzięłaby za
+jest fałszywe niezależnie od tego, co samolot naprawdę robi - sama ta para wzięłaby za
 „elewację lotniska" wysokość przelotową odbiornika ożywionego w powietrzu, a stąd AGL ≈ 0
 i natychmiastowe fałszywe lądowanie. Dlatego wymagamy **zmierzonego postoju**: prędkość
 musi być znana i niższa od `TAXI_SPEED_KT`.
 
-**Wartość zostaje z GPS — nigdy z katalogu lotnisk** (`airfields.ts`), i to również jest
+**Wartość zostaje z GPS - nigdy z katalogu lotnisk** (`airfields.ts`), i to również jest
 wynik issue #5. Wysokość fixa i elewacja pola **odejmują się** w `heightAboveField()`, więc
 muszą pochodzić z tego samego układu odniesienia: wspólny błąd odbiornika się skraca.
 Historycznie głównym składnikiem rozjazdu była undulacja geoidy (~35 m w Polsce, czyli
-**~115 ft stałego błędu AGL** — więcej niż `TAKEOFF_ALT_DIFF_FT` i `LANDING_ALT_DIFF_FT`
+**~115 ft stałego błędu AGL** - więcej niż `TAKEOFF_ALT_DIFF_FT` i `LANDING_ALT_DIFF_FT`
 razem wzięte): katalog jest AMSL, a `expo-location` na Androidzie podaje wysokość nad
 elipsoidą WGS84. Od 2026-08-11 adapter tę undulację odejmuje (§4a), ale zasada NIE
 słabnie: zostaje dzienny błąd pionowy odbiornika (±10–20 m), a poza pokryciem
-wkompilowanej siatki korekty nie ma wcale — samo-odniesienie „GPS minus GPS" jest odporne
+wkompilowanej siatki korekty nie ma wcale - samo-odniesienie „GPS minus GPS" jest odporne
 na jedno i drugie. Podstawienie elewacji z mapy dałoby fałszywy start na postoju
 i lądowanie, które nigdy nie zapada.
 
@@ -120,9 +120,9 @@ Weryfikacja na nagraniach (`server/traces/`, 6 sesji, w tym pełny lot z 6671 fi
 przebieg z elewacją `null` daje **identyczne** detekcje co przebieg z elewacją podaną
 z góry, a dobrana wartość zgadza się co do cyfry z medianą wysokości postojowych, której
 używa `server/scripts/replay.ts`. Narzędzie kalibracyjne liczyło elewację „z ziemi" od
-początku — teraz robi to samo runtime.
+początku - teraz robi to samo runtime.
 
-### 2.2 Automat a rejestr — kto ma pierwszeństwo (issue #30, 2026-08-12)
+### 2.2 Automat a rejestr - kto ma pierwszeństwo (issue #30, 2026-08-12)
 
 `DetectorState.phase` żyje w pamięci zamontowanego kokpitu i zna wyłącznie własne
 detekcje. Rejestr zdarzeń przeżywa restart, zbiera także zapisy pilota i to on trafia do
@@ -132,26 +132,26 @@ spoza automatu:
 | Skąd rozjazd | Automat | Rejestr |
 |---|---|---|
 | pilot zapisał start ręcznie (przycisk w kokpicie, 05f) | `ground` | w locie |
-| „COFNIJ" w toaście — faza już się zmieniła, zdarzenie z rozmysłem NIE powstało | `airborne` | na ziemi |
+| „COFNIJ" w toaście - faza już się zmieniła, zdarzenie z rozmysłem NIE powstało | `airborne` | na ziemi |
 | powrót na ekran albo restart aplikacji w locie | `ground` | w locie |
 
 Rozjazd nie jest kosmetyczny, bo faza wybiera, **czego automat szuka** (§8): stojąc
 w `airborne` wypatruje wyłącznie lądowania i po cofniętym fałszywym starcie przegapiłby
-prawdziwy start — a z nim cały lot.
+prawdziwy start - a z nim cały lot.
 
 **Pierwszeństwo ma rejestr.** `syncDetectorPhase(state, inFlight)` prostuje fazę przed
 każdym krokiem, z jednym wyjątkiem: w oknie „COFNIJ" różnica jest zamierzona (faza już się
 zmieniła, zdarzenia jeszcze nie ma), więc uzgadnianie jest wtedy wyłączone. Uzgodnienie
 zeruje `candidateSince` (kandydat zbierał się pod porzucony warunek) i `taxiing`, ale
 **`cooldownUntil` zostawia nietknięty**: „COFNIJ" znaczy „to nie był start", a warunek,
-który detekcję wywołał, zwykle jeszcze się trzyma — wyzerowana histereza wystawiłaby
+który detekcję wywołał, zwykle jeszcze się trzyma - wyzerowana histereza wystawiłaby
 ten sam toast na następnym fixie.
 
 **Konsekwencja dla banerów:** odmowa reguły dla zdarzenia z **autodetekcji** nie idzie na
 ekran (nie trafia do `lastError` w store). Zasada „nigdy cichy błąd" (§6 pkt 3
-`docs/_main.md.txt`) broni pilota przed martwym przyciskiem — nacisnął, nic się nie stało,
+`docs/_main.md.txt`) broni pilota przed martwym przyciskiem - nacisnął, nic się nie stało,
 nie wie dlaczego. Tutaj pilot nie nacisnął niczego: czerwone „Nie zapisano" opisywałoby
-pomyłkę MASZYNY językiem jego straty. Wyjątek jest wąski z rozmysłem — dotyczy wyłącznie
+pomyłkę MASZYNY językiem jego straty. Wyjątek jest wąski z rozmysłem - dotyczy wyłącznie
 odmowy reguły; każda inna awaria zapisu (baza, magazyn) zostaje widoczna, bo cisza
 o nieudanym zapisie to utrata danych.
 
@@ -161,7 +161,7 @@ o nieudanym zapisie to utrata danych.
 
 Kolejność jest częścią algorytmu, nie szczegółem implementacji. Numeracja odpowiada
 komentarzom w `stepDetector`. Uzgodnienie fazy z rejestrem (§2.2) dzieje się **przed**
-tym przepływem, w spoinie — automat dostaje fix, gdy jego faza jest już aktualna.
+tym przepływem, w spoinie - automat dostaje fix, gdy jego faza jest już aktualna.
 
 ```
                         ┌─────────────────────────────┐
@@ -212,11 +212,11 @@ Dwie rzeczy w tej kolejności są nieoczywiste i obie były źródłem błędów
 
 **Śmieciowy fix nie wchodzi do historii.** Gdyby wchodził, cechy trendowe liczyłyby się
 ze śmiecia i wyglądałyby wiarygodnie. `lastFixAt` zostaje przy ostatnim **dobrym** fixie,
-więc ciągłość dalej mierzy `MAX_FIX_GAP_SEC` — strumień samych śmieci wygasza `gpsAvailable`
+więc ciągłość dalej mierzy `MAX_FIX_GAP_SEC` - strumień samych śmieci wygasza `gpsAvailable`
 watchdogiem i kokpit uczciwie pokazuje 05g „autodetekcja wstrzymana".
 
 **Kołowanie rozpatrujemy DOPIERO, gdy w tym kroku nie zaszła zmiana fazy.** Gdyby szło
-pierwsze, jego wykrycie kończyłoby krok i „zjadało" tick, w którym potwierdzał się start —
+pierwsze, jego wykrycie kończyłoby krok i „zjadało" tick, w którym potwierdzał się start -
 start przesuwałby się o jeden fix. Ten defekt wyszedł z testu i został naprawiony
 kolejnością, nie obejściem w teście.
 
@@ -228,9 +228,9 @@ kolejnością, nie obejściem w teście.
 
 | Pole | Jednostka | Uwagi |
 |---|---|---|
-| `time` | epoch ms | zegar **GPS**, nie telefonu (§4.5 — zegar telefonu bywa przestawiony) |
+| `time` | epoch ms | zegar **GPS**, nie telefonu (§4.5 - zegar telefonu bywa przestawiony) |
 | `groundSpeedKt` | węzły | `null` = brak pomiaru; patrz niżej |
-| `altitudeFt` | stopy AMSL | po korekcie geoidalnej w adapterze (§4a); `null` częściej niż pozycja — GPS kłamie na wysokości najbardziej |
+| `altitudeFt` | stopy AMSL | po korekcie geoidalnej w adapterze (§4a); `null` częściej niż pozycja - GPS kłamie na wysokości najbardziej |
 | `trackDeg` | stopnie 0–360 | kurs nad ziemią; na postoju zwykle `null` albo losowy |
 | `lat` / `lon` | stopnie dziesiętne | |
 | `accuracyM` | metry | deklarowana dokładność pozioma |
@@ -241,31 +241,31 @@ na `null`.
 > **To była realna przyczyna spóźnionego wykrywania kołowania.** Poprzednia wersja robiła
 > `coords.speed ?? 0`. Android przy małych prędkościach albo prędkości nie podaje wcale, albo
 > zeruje ją filtrem **static-hold** w układzie GNSS (żeby zaparkowany telefon nie dryfował po
-> mapie). Detektor dostawał twarde „0 kt" — pomiar, którego nikt nie wykonał, w przebraniu
-> pomiaru wiarygodnego — i miał rację co do liczby, a nie co do rzeczywistości.
+> mapie). Detektor dostawał twarde „0 kt" - pomiar, którego nikt nie wykonał, w przebraniu
+> pomiaru wiarygodnego - i miał rację co do liczby, a nie co do rzeczywistości.
 
 ### 4a. Wysokość: elipsoida → AMSL (korekta geoidalna, 2026-08-11)
 
 Android podaje wysokość nad **elipsoidą WGS84**, a lotnictwo mierzy **AMSL** (nad geoidą).
-Różnica — undulacja geoidy — wynosi w Polsce ~30–40 m i była widoczna gołym okiem: na EPNL
+Różnica - undulacja geoidy - wynosi w Polsce ~30–40 m i była widoczna gołym okiem: na EPNL
 (elewacja 830 ft) loger wskazywał ~950 ft. Adapter (`locationToFix`) odejmuje więc od
 wysokości platformy undulację EGM96, interpolowaną dwuliniowo z wkompilowanego wycinka
 oficjalnej siatki NGA 15′×15′ (`packages/domain/src/geoid/`, pokrycie 41–62°N, 5°W–35°E;
 generator `packages/domain/scripts/generateGeoid.ts` waliduje pobrany plik na wzorcach NGA
-`OUTINTPT.DAT`, zanim cokolwiek wytnie). Undulacja na EPNL to 38,9 m ≈ 128 ft — zgadza się
+`OUTINTPT.DAT`, zanim cokolwiek wytnie). Undulacja na EPNL to 38,9 m ≈ 128 ft - zgadza się
 ze zgłoszonym rozjazdem co do szumu GPS.
 
 Konsekwencje dla detekcji: **żadnych mechanicznych**. AGL liczy się względem wysokości
 z chwili ENGINE START (§2), więc stały składnik skracał się przed korektą i skraca się po
 niej. Poza pokryciem siatki korekta uczciwie znika (`geoidUndulationM` → `null`, wysokość
-zostaje elipsoidalna) — kolejny powód, żeby elewacji pola nigdy nie brać z katalogu.
-Ślady nagrane PRZED 2026-08-11 niosą wysokość elipsoidalną, nowsze — AMSL; `replay.ts`
+zostaje elipsoidalna) - kolejny powód, żeby elewacji pola nigdy nie brać z katalogu.
+Ślady nagrane PRZED 2026-08-11 niosą wysokość elipsoidalną, nowsze - AMSL; `replay.ts`
 liczy różnicowo, więc detekcje na starych nagraniach nie drgną, ale bezwzględne wysokości
 w starych śladach czyta się z tą świadomością. Po korekcie zostaje zwykły szum pionowy
-GNSS (±10–25 m) — pełną stabilność wskazań dałby dopiero barometr (§12).
+GNSS (±10–25 m) - pełną stabilność wskazań dałby dopiero barometr (§12).
 
 Gdyby kiedyś doszedł iOS: CoreLocation podaje AMSL od razu i korekta musiałaby dostać
-bramkę platformy — bez niej odjęlibyśmy undulację podwójnie (docblock adaptera).
+bramkę platformy - bez niej odjęlibyśmy undulację podwójnie (docblock adaptera).
 
 ---
 
@@ -274,13 +274,13 @@ bramkę platformy — bez niej odjęlibyśmy undulację podwójnie (docblock ada
 Zasada wspólna dla wszystkich trzech: **odcinamy wyłącznie dowód POZYTYWNIE zły**. Brak
 pomiaru nigdy nie dyskwalifikuje fixa.
 
-### 5.1 Bramka jakości — `fixUsable()`
+### 5.1 Bramka jakości - `fixUsable()`
 
 Fix odrzucamy, gdy:
 
-- `accuracyM > MAX_FIX_ACCURACY_M` — zdrowy telefon trzyma 3–10 m; zagłuszany odbiornik
+- `accuracyM > MAX_FIX_ACCURACY_M` - zdrowy telefon trzyma 3–10 m; zagłuszany odbiornik
   raportuje setki metrów;
-- `groundSpeedKt > MAX_PLAUSIBLE_SPEED_KT` — deklarowana prędkość spoza możliwości maszyny.
+- `groundSpeedKt > MAX_PLAUSIBLE_SPEED_KT` - deklarowana prędkość spoza możliwości maszyny.
 
 Powód istnienia: **jamming to częściej DEGRADACJA niż cisza**. Zanik sygnału łapie watchdog;
 gorszy przypadek to fixy, które przychodzą i kłamią. Strumień „wolno i nisko" z dokładnością
@@ -295,7 +295,7 @@ impliedKt = distanceNm(lastPosition, here) / ((fix.time − lastFixAt) / 3 600 0
 ```
 
 Powyżej `MAX_PLAUSIBLE_SPEED_KT` fix odpada. Łapie spoofing i multipath, które
-„teleportują" odbiornik przy **niewinnie wyglądającej** deklarowanej prędkości — profilu
+„teleportują" odbiornik przy **niewinnie wyglądającej** deklarowanej prędkości - profilu
 nie do odróżnienia od rozbiegu, gdyby patrzeć tylko na `groundSpeedKt`.
 
 ### 5.3 Przerwa w sygnale
@@ -306,7 +306,7 @@ signalBroken = (fix.time − lastFixAt) / 1000 > MAX_FIX_GAP_SEC
 
 Przerwa **zeruje kandydatów** (`candidateSince`, `speedCandidateSince`). Bez tego GPS mógłby
 zamilknąć na minutę, wrócić ze spełnionym warunkiem, a licznik „utrzymania" wciąż wskazywałby
-moment sprzed przerwy — detekcja odpalałaby natychmiast, choć nikt nie obserwował tego, co
+moment sprzed przerwy - detekcja odpalałaby natychmiast, choć nikt nie obserwował tego, co
 działo się w środku.
 
 Przemieszczenia to **nie dotyczy** i jest to celowe: ono jest odporne z natury. Jeśli po
@@ -318,12 +318,12 @@ przerwie samolot jest 200 m od stanowiska, to naprawdę tam jest.
 
 Bufor `FixHistory` (`history.ts`) trzyma `HISTORY_SPAN_SEC` sekund wstecz, przycinany
 czasem, nie liczbą wpisów (strumień potrafi zwolnić przy oszczędzaniu energii). Fix starszy
-od najnowszego jest odrzucany — chronologia jest niepisanym założeniem każdej funkcji niżej,
+od najnowszego jest odrzucany - chronologia jest niepisanym założeniem każdej funkcji niżej,
 a regresja po przemieszanych czasach zwraca liczbę, która wygląda sensownie i jest nieprawdziwa.
 
 Wszystkie cechy (`trends.ts`) są czystymi funkcjami okna i zwracają `null`, gdy danych brakuje.
 
-### 6.1 Prędkość — `groundSpeed(fixes)`
+### 6.1 Prędkość - `groundSpeed(fixes)`
 
 | Źródło | Kiedy | Jak |
 |---|---|---|
@@ -333,12 +333,12 @@ Wszystkie cechy (`trends.ts`) są czystymi funkcjami okna i zwracają `null`, gd
 Mediana, nie średnia: odrzuca pojedynczą szpilkę **bez wygładzania narastania** (średnia
 opóźniałaby rozbieg).
 
-Ścieżka pozycyjna nie jest gorszym zamiennikiem — przy prędkościach kołowania bywa
+Ścieżka pozycyjna nie jest gorszym zamiennikiem - przy prędkościach kołowania bywa
 **dokładniejsza** od dopplera, bo mierzy przebytą drogę zamiast różnicy częstotliwości na
 granicy czułości. Jest za to bezużyteczna w zakręcie (odległość po cięciwie, nie po łuku),
 więc do decyzji w locie służy doppler.
 
-### 6.2 Przyspieszenie podłużne — `speedTrendKtPerSec(fixes)`
+### 6.2 Przyspieszenie podłużne - `speedTrendKtPerSec(fixes)`
 
 Nachylenie regresji liniowej prędkości po czasie, w kt/s. Wymaga rozpiętości
 `TREND_MIN_SPAN_SEC`; liczone **tylko z punktów dopplerowskich**.
@@ -351,15 +351,15 @@ Nachylenie regresji liniowej prędkości po czasie, w kt/s. Wymaga rozpiętości
 
 Ta jedna liczba rozdziela rozbieg od dobiegu, czego próg na samej prędkości rozdzielić nie umie.
 
-### 6.3 Przemieszczenie netto — `pathDisplacementNm(fixes)`
+### 6.3 Przemieszczenie netto - `pathDisplacementNm(fixes)`
 
 Odległość między **najstarszą i najnowszą** pozycją w oknie. Świadomie netto, nie długość
 trasy: suma odcinków między kolejnymi fixami sumowałaby też dryf odbiornika, więc samolot
 stojący przez minutę „przejeżdżałby" kilkadziesiąt metrów.
 
-### 6.4 Prędkość kątowa — `turnRateDps(fixes)`
+### 6.4 Prędkość kątowa - `turnRateDps(fixes)`
 
-Z `trackDeg`, czyli **za darmo** — kurs nad ziemią jest w każdym odczycie lokalizacji.
+Z `trackDeg`, czyli **za darmo** - kurs nad ziemią jest w każdym odczycie lokalizacji.
 
 ```
 total = Σ headingDeltaDeg(track[i−1], track[i])     // różnica kołowa −180…180
@@ -371,7 +371,7 @@ o 350° i weto zakrętu unieważniałoby lądowania na kursach północnych. Sum
 kolejnych** kursów, a nie modułów, sprawia, że obrót w jedną stronę się kumuluje, a szum
 wokół stałego kursu znosi się nawzajem.
 
-Zwraca `null`, gdy fixy nie niosą kursu — a wtedy nic nie wetujemy.
+Zwraca `null`, gdy fixy nie niosą kursu - a wtedy nic nie wetujemy.
 
 ---
 
@@ -383,16 +383,16 @@ Pytanie „czy samolot ruszył ze stanowiska" jest z natury pytaniem o **położ
 
 | Metoda | Sygnał | Szum | Stosunek |
 |---|---|---|---|
-| prędkość chwilowa, próg 4 kt | 2 m/s | ~0,3 m/s (doppler) | **~7 : 1** — i static-hold zbija do zera |
+| prędkość chwilowa, próg 4 kt | 2 m/s | ~0,3 m/s (doppler) | **~7 : 1** - i static-hold zbija do zera |
 | przemieszczenie w oknie 30 s | ~120 m (8 kt) | ~5 m (dryf) | **~24 : 1** |
 
-To samo zjawisko, kilkukrotnie lepszy kontrast — i odporność na tryb porażki, w którym
+To samo zjawisko, kilkukrotnie lepszy kontrast - i odporność na tryb porażki, w którym
 prędkości nie ma w ogóle.
 
 ### 7.2 Kotwica postoju
 
 `anchor` to **centroid** pozycji z okna `ANCHOR_WINDOW_SEC` (uśrednienie zjada dryf), a nie
-pojedynczy fix. Odświeżany, **dopóki samolot jest bezspornie na stanowisku** — w promieniu
+pojedynczy fix. Odświeżany, **dopóki samolot jest bezspornie na stanowisku** - w promieniu
 `TAXI_ANCHOR_RADIUS_M` od bieżącej kotwicy. Gdy zacznie się oddalać, kotwica zostaje tam,
 gdzie stał; bez tego warunku goniłaby samolot i próg ruchu nigdy by nie padł.
 
@@ -403,16 +403,16 @@ gdzie stał; bez tego warunku goniłaby samolot i próg ruchu nigdy by nie padł
 - **kanał główny:** `distanceM(here, anchor) > TAXI_DISPLACEMENT_M + accuracyM` utrzymane
   `TAXI_CONFIRM_SEC` (fixy bez `accuracyM` liczą sam próg). Obie części dopisano po
   zgłoszeniu z terenu 2026-08-04 („telefon odłożony na stole kołował"):
-  - **margines niepewności** — bramka jakości wpuszcza fixy o dokładności do
+  - **margines niepewności** - bramka jakości wpuszcza fixy o dokładności do
     `MAX_FIX_ACCURACY_M` = 50 m, a próg ruchu to 25 m; pojedynczy słaby fix umiał
     „przenieść" odbiornik za próg. Fix przyznający się do ±40 m nie może dowodzić
     ruchu o 25 m;
-  - **utrzymanie warunku** — odskok multipathu wraca do kotwicy po paru sekundach,
+  - **utrzymanie warunku** - odskok multipathu wraca do kotwicy po paru sekundach,
     prawdziwe kołowanie tylko się oddala. Późniejsza decyzja nic nie kosztuje, bo do
     rejestru idzie moment retro-datowany (`taxiOnset`), nie moment potwierdzenia
-    (pierwsza wersja — „25 m samo w sobie jest potwierdzeniem" — została przez teren
+    (pierwsza wersja - „25 m samo w sobie jest potwierdzeniem" - została przez teren
     sfalsyfikowana);
-- **kanał wsparcia:** `groundSpeed ≥ TAXI_SPEED_KT` utrzymane `TAXI_CONFIRM_SEC` —
+- **kanał wsparcia:** `groundSpeed ≥ TAXI_SPEED_KT` utrzymane `TAXI_CONFIRM_SEC` -
   **wyłącznie gdy fix nie ma pozycji** (przemieszczenia nie da się policzyć). Gdy pozycja
   jest i mówi „przy kotwicy", szum dopplera nie ma prawa jej przegłosować: kanał
   o kontraście ~24:1 nie może przegrywać z kanałem ~7:1 (§7.1).
@@ -424,7 +424,7 @@ gdzie stał; bez tego warunku goniłaby samolot i próg ruchu nigdy by nie padł
 
 Koniunkcja, bo każdy warunek osobno ma swój tryb porażki: prędkość potrafi chwilowo zniknąć
 w szumie na wolnym kołowaniu, a przemieszczenie netto jest małe także w ciasnym zakręcie.
-Zatrzymanie ustawia **nową kotwicę** — poprzednia opisywała stanowisko sprzed lotu.
+Zatrzymanie ustawia **nową kotwicę** - poprzednia opisywała stanowisko sprzed lotu.
 
 **Zdarzenie `taxi`** emituje `stepDetector`, gdy `phase === 'ground'`, `!taxiing`
 i `motion.moving`. Flaga `taxiing` zeruje się przy starcie i przy lądowaniu, więc kołowanie
@@ -433,9 +433,9 @@ jest **jednym wpisem otwierającym lot**.
 **Druga linia obrony mieszka w domenie** (decyzja 2026-08-04): projekcja sesji prowadzi
 własny stan `taxiing` (otwiera `taxi`, zamyka dopiero `takeoff` albo `engine_stop`),
 a gwardia `ALREADY_TAXIING` w `sessionRules.ts` twardo odrzuca drugie `taxi` z rzędu.
-Flaga detektora żyje bowiem tylko tak długo, jak zamontowany ekran kokpitu — po powrocie
+Flaga detektora żyje bowiem tylko tak długo, jak zamontowany ekran kokpitu - po powrocie
 na ekran albo restarcie aplikacji odrodzony detektor emitował kołowanie jeszcze raz.
-Spoina dodatkowo pomija emisję **po cichu**, gdy projekcja już kołuje — duplikat
+Spoina dodatkowo pomija emisję **po cichu**, gdy projekcja już kołuje - duplikat
 z odrodzonego detektora nie jest błędem pilota i nie ma czego pokazywać w `lastError`.
 Od issue #30 rozstrzyga to tablica `taxiWrite` (`app/src/ui/hooks/taxiWrite.ts`), która
 obok duplikatu zna też dobieg wstrzymany oknem „COFNIJ" (§7.4).
@@ -444,7 +444,7 @@ obok duplikatu zna też dobieg wstrzymany oknem „COFNIJ" (§7.4).
 
 Po lądowaniu automat ustawia `motion = { anchor: punkt przyziemienia, moving: true }`,
 a `taxiing = false`. Na kolejnym fixie emituje się więc `taxi` z momentem tuż po kołach na
-pasie — zgodnie z logiem w mockupie 05: „14:08 Landing", „14:08 Taxi". Dobieg **jest** ruchem
+pasie - zgodnie z logiem w mockupie 05: „14:08 Landing", „14:08 Taxi". Dobieg **jest** ruchem
 po ziemi, więc jest to poprawne semantycznie, nie obejście.
 
 Kotwica na punkcie przyziemienia, a nie liczona od nowa z okna: gdyby liczyła się z okna,
@@ -452,11 +452,11 @@ jej centroid siedziałby gdzieś na prostej do lądowania i retro-datowanie koł
 wskazywałoby moment na finalu.
 
 **Dobieg czeka na rozstrzygnięcie okna „COFNIJ"** (issue #30). Kołowanie zapisuje się
-natychmiast, ale `landing` leży wtedy jeszcze w toaście z odliczaniem — rejestr mówi więc
+natychmiast, ale `landing` leży wtedy jeszcze w toaście z odliczaniem - rejestr mówi więc
 „w powietrzu" i twardo odrzuca dobieg (`ALREADY_IN_FLIGHT`). Tak powstawał czerwony baner
-„Nie zapisano — samolot jest w powietrzu, kołowanie nie ma sensu" za zdarzenie, którego
+„Nie zapisano - samolot jest w powietrzu, kołowanie nie ma sensu" za zdarzenie, którego
 pilot nie wywołał. Spoina wstrzymuje więc kołowanie do końca okna: po zapisie lądowania
-dopisuje je z zachowanym momentem retro-datowanym, a po „COFNIJ" porzuca — nie było
+dopisuje je z zachowanym momentem retro-datowanym, a po „COFNIJ" porzuca - nie było
 lądowania, to i dobiegu nie było.
 
 ---
@@ -466,7 +466,7 @@ lądowania, to i dobiegu nie było.
 Warunek musi się **utrzymać** przez odpowiednie `CONFIRM_SEC`; `candidateSince` pamięta,
 odkąd trzyma się nieprzerwanie, i zeruje się przy każdym niespełnieniu.
 
-### 8.1 Start — alternatywa
+### 8.1 Start - alternatywa
 
 ```
    ( groundSpeed > TAKEOFF_SPEED_KT  AND  NIE hamuje )
@@ -480,18 +480,18 @@ accel = null  OR  accel >= −TAKEOFF_MAX_DECEL_KT_PER_SEC
 ```
 
 **Alternatywa**, bo start bywa widoczny najpierw w prędkości (rozbieg), a przy słabym fixie
-prędkość potrafi kłamać — wtedy ratuje wysokość.
+prędkość potrafi kłamać - wtedy ratuje wysokość.
 
 **Weto hamowania** zamyka konkretną dziurę: po lądowaniu faza wraca na `ground`, histereza
 trwa `COOLDOWN_AFTER_LANDING_SEC` = 30 s, a dobieg z prędkości przyziemienia do kołowania
 bywa dłuższy. Samolot przechodzi wtedy przez próg startu **z góry**, przy wygasającej
 histerezie, i po samej prędkości wygląda identycznie jak rozbieg.
 
-Sformułowane jako **weto na hamowanie**, a nie wymóg przyspieszania — różnica jest istotna:
+Sformułowane jako **weto na hamowanie**, a nie wymóg przyspieszania - różnica jest istotna:
 ustabilizowane wznoszenie ma przyspieszenie około zera, więc wymóg dodatniego wyciąłby
 prawdziwy start, gdyby ten nie zdążył potwierdzić się w fazie rozpędzania.
 
-### 8.2 Lądowanie — koniunkcja
+### 8.2 Lądowanie - koniunkcja
 
 ```
     groundSpeed < LANDING_SPEED_KT
@@ -504,23 +504,23 @@ AND ( NOT sameFieldOnly  OR  przy polu )            (geofence)
 z niską wysokością znaczy „jestem na ziemi".
 
 **Bez wysokości świadomie milczymy.** Sam niski GS to za mało, a zmyślona detekcja kosztuje
-więcej niż jej brak. Tę lukę domknie dopiero niezależny tor pionowy z barometru — po
+więcej niż jej brak. Tę lukę domknie dopiero niezależny tor pionowy z barometru - po
 kalibracji w fazie 5 (§12).
 
 **Weto zakrętu** to druga, niezależna obrona przed ryzykiem 🔴 z §8 dokumentacji („ciasny
 zakręt udający lądowanie"), do tej pory pilnowanym wyłącznie warunkiem wysokości.
 Przyziemienie ma kurs stabilny; krąg nadlotniskowy trzyma 3–5 °/s przez kilkanaście sekund.
-Działa **tylko wtedy, gdy prędkość kątową da się zmierzyć** — na dobiegu odbiornik kursu nie
+Działa **tylko wtedy, gdy prędkość kątową da się zmierzyć** - na dobiegu odbiornik kursu nie
 podaje i wtedy nic nie unieważniamy.
 
 **Geofence** dotyczy operacji latających Z i NA to samo lotnisko (`sameFieldOnly`, czyli
 skoki): lądowanie uznajemy tylko w promieniu `LANDING_FIELD_VICINITY_NM` od `fieldPosition`.
 „Wolno i nisko" 20 km od pola jest w dniu skokowym artefaktem, nie przyziemieniem. Dla
-**przelotu i egzaminu bramka jest WYŁĄCZONA** — tam lądowanie gdzie indziej jest
+**przelotu i egzaminu bramka jest WYŁĄCZONA** - tam lądowanie gdzie indziej jest
 normą, nie anomalią, a bramka odcięłaby prawdziwe przyziemienie.
 
 Od 2026-08-06 (issue #13) o tym, które operacje są `sameFieldOnly`, orzeka JEDEN predykat
-domeny — `isSameFieldOperation` (`packages/domain/src/events/operations.ts`). Ten sam
+domeny - `isSameFieldOperation` (`packages/domain/src/events/operations.ts`). Ten sam
 rozstrzyga, czy preflight pyta o jedno lotnisko, czy o parę kodów: dzień opisany jako skoki
 z trasą „EPKK → EPWA" był wcześniej możliwy do wpisania, a bramka i tak zakładała powrót
 na to samo pole.
@@ -528,14 +528,14 @@ na to samo pole.
 ### 8.3 Histereza
 
 Po detekcji `cooldownUntil = fix.time + COOLDOWN_AFTER_*_SEC`. Dotyczy **wyłącznie zmian
-fazy** — kołowanie fazy nie zmienia, więc histereza go nie blokuje. Gdyby blokowała, wpis po
+fazy** - kołowanie fazy nie zmienia, więc histereza go nie blokuje. Gdyby blokowała, wpis po
 lądowaniu spóźniałby się o pół minuty.
 
 ---
 
 ## 9. Retro-datowanie (`onset.ts`)
 
-Każda funkcja szuka **wstecz** w buforze i zwraca `null`, gdy nie ma na czym się oprzeć —
+Każda funkcja szuka **wstecz** w buforze i zwraca `null`, gdy nie ma na czym się oprzeć -
 wtedy automat zostaje przy czasie fixa potwierdzającego (`resolveOnset`). Onset nigdy nie
 może być z przyszłości.
 
@@ -558,11 +558,11 @@ bo tu nie chodzi o wykrycie zjawiska, tylko o wskazanie jego momentu możliwie b
 
 ---
 
-## 10. Faza wyświetlana — osobny moduł
+## 10. Faza wyświetlana - osobny moduł
 
 `flightPhase.ts` liczy napis w `PhaseHero` (mockup 05) i **nie generuje żadnych zdarzeń**.
 
-`airborne` bierze **z automatu detekcji** — świadomie nie wyliczamy go drugi raz. Jeden
+`airborne` bierze **z automatu detekcji** - świadomie nie wyliczamy go drugi raz. Jeden
 automat decyduje, czy samolot jest w powietrzu; tutaj tylko nazywamy to, co robi. Dwa
 niezależne źródła tej samej prawdy prędzej czy później by się rozjechały.
 
@@ -572,7 +572,7 @@ niezależne źródła tej samej prawdy prędzej czy później by się rozjechał
 | `taxi` | na ziemi, `groundSpeed ≥ TAXI_MIN_KT` |
 | `climb` | w powietrzu, `VS ≥ +VS_THRESHOLD_FPM` |
 | `descent` | w powietrzu, `VS ≤ −VS_THRESHOLD_FPM` |
-| `cruise` | w powietrzu, pozostałe — **także gdy VS nieznane** (stan domyślny, nie zgadywanie wznoszenia) |
+| `cruise` | w powietrzu, pozostałe - **także gdy VS nieznane** (stan domyślny, nie zgadywanie wznoszenia) |
 
 Prędkość pionowa to **nachylenie regresji** wysokości w oknie `VS_WINDOW_SEC`, nie różnica
 skrajnych punktów. Metoda „ostatni minus pierwszy" dawała pojedynczemu artefaktowi GPS pełną
@@ -580,19 +580,19 @@ wagę: jeden fix wyżej o 30 ft przy 5 s historii produkował **360 ft/min**, cz
 „Climb" z szumu. Regresja rozkłada ten sam błąd na całe okno (~275 ft/min, poniżej progu),
 a `VS_MIN_SPAN_SEC` odcina okna zbyt ciasne w czasie.
 
-### 10.1 Wysokość zrzutu — średnia z okna (issue #21, 2026-08-11)
+### 10.1 Wysokość zrzutu - średnia z okna (issue #21, 2026-08-11)
 
 `dropAltitude.ts` liczy wysokość zapisywaną w zdarzeniu `drop` (arkusz 05e). Tak jak
-`flightPhase.ts` **nie generuje zdarzeń i nie wpływa na żadną decyzję automatu** — to
+`flightPhase.ts` **nie generuje zdarzeń i nie wpływa na żadną decyzję automatu** - to
 odczyt dla dokumentów.
 
 Do issue #21 arkusz brał **ostatni fix**, czyli wpisywał do rozliczenia szum pojedynczego
 odczytu (kilkadziesiąt stóp). Teraz to **średnia arytmetyczna** wysokości z okna
-`DROP_ALT_WINDOW_SEC` liczonego wstecz od najnowszego fixa historii detektora — tej samej
+`DROP_ALT_WINDOW_SEC` liczonego wstecz od najnowszego fixa historii detektora - tej samej
 historii, z której idzie prędkość pionowa (jedna prawda o tym, co widział algorytm).
 
 Średnia, **nie regresja jak przy VS**, bo pytanie jest inne: VS to trend (nachylenie),
-wysokość zrzutu to **poziom** — a wyniesienie dzieje się w locie poziomym (bramka fazy
+wysokość zrzutu to **poziom** - a wyniesienie dzieje się w locie poziomym (bramka fazy
 przycisku zrzutu), więc uśrednianie poziomu nie goni trendu. Fixy bez wysokości są
 pomijane; brak jakiejkolwiek wysokości w oknie daje `null` (zapis zrzutu bez wysokości),
 nigdy zero.
@@ -602,14 +602,14 @@ nigdy zero.
 ## 11. Pełna tablica progów
 
 Wszystkie w `packages/domain/src/detection/thresholds.ts`, wstrzykiwane jako `GPS_THRESHOLDS`
-— nadpisywalne w testach i w `replay.ts`.
+- nadpisywalne w testach i w `replay.ts`.
 
 > ⚠️ **Wszystkie wartości są DO KALIBRACJI w fazie 5** (testy z pilotami). Bazowe pochodzą
 > z `docs/_main.md.txt` §3.3 i z rozumowania o fizyce czujników, nie z danych z lotów.
 >
 > **Ten dokument jest źródłem prawdy o stanie implementacji.** `_main.md.txt` §3.3 opisuje
 > wymaganie produktowe i wartości WYJŚCIOWE (start: 3 s, lądowanie: 5 s, tylko kanał
-> prędkościowy kołowania) — po przebudowie 2026-07-30 rozeszły się z kodem, bo §3.3
+> prędkościowy kołowania) - po przebudowie 2026-07-30 rozeszły się z kodem, bo §3.3
 > z założenia dopuszcza kalibrację progów. Przy sprzeczności obowiązuje tablica niżej.
 
 ### 11.1 Kołowanie
@@ -627,7 +627,7 @@ Wszystkie w `packages/domain/src/detection/thresholds.ts`, wstrzykiwane jako `GP
 
 > **Dlaczego `TAXI_SPEED_KT` zostało przy 4 kt**, choć czułość kanału przemieszczeniowego
 > kusiła, żeby zejść niżej: ten tor obsługuje sytuacje, w których przemieszczenia policzyć się
-> **nie da** — czyli fixy bez pozycji, a więc dane najgorszej jakości, jakie dostajemy.
+> **nie da** - czyli fixy bez pozycji, a więc dane najgorszej jakości, jakie dostajemy.
 > Obniżanie progu akurat tam, gdzie wiemy najmniej, jest odwrotnością tego, co należy zrobić.
 > Czułość bierzemy z przemieszczenia, nie z rozluźnienia zabezpieczenia.
 
@@ -637,7 +637,7 @@ Wszystkie w `packages/domain/src/detection/thresholds.ts`, wstrzykiwane jako `GP
 |---|---|---|---|---|
 | `TAKEOFF_SPEED_KT` | 50 kt | próg gałęzi prędkościowej startu | start dopiero po rotacji; ryzyko przegapienia przy słabym fixie | szybkie kołowanie może udać rozbieg |
 | `TAKEOFF_ALT_DIFF_FT` | 50 ft | próg gałęzi wysokościowej | odporniej na turbulencję przy ziemi, później | turbulencja ±30 ft zaczyna udawać start |
-| `TAKEOFF_CONFIRM_SEC` | 5 s | utrzymanie warunku startu | mniej fałszywek (**bez** kosztu czasu — patrz §1.1) | więcej fałszywek ze szpilek |
+| `TAKEOFF_CONFIRM_SEC` | 5 s | utrzymanie warunku startu | mniej fałszywek (**bez** kosztu czasu - patrz §1.1) | więcej fałszywek ze szpilek |
 | `TAKEOFF_MAX_DECEL_KT_PER_SEC` | 0,5 kt/s | weto: hamuje szybciej niż to ⇒ nie rozbieg | weto słabsze, dobieg może udać rozbieg | weto agresywniejsze, ryzyko wycięcia startu z lekko zmiennym GS |
 | `LANDING_SPEED_KT` | 35 kt | próg prędkości lądowania | wcześniejsze lądowanie, ryzyko przy wolnym przelocie nisko | późniejsze; szybki dobieg może nie wejść w okno |
 | `LANDING_ALT_DIFF_FT` | 30 ft | próg wysokości lądowania | odporniej na błąd wysokości GPS, więcej fałszywek | ryzyko przegapienia przy dodatnim biasie wysokości |
@@ -669,11 +669,11 @@ Wszystkie w `packages/domain/src/detection/thresholds.ts`, wstrzykiwane jako `GP
 | `VS_MIN_SPAN_SEC` | 5 s | poniżej tej rozpiętości nie podajemy VS |
 | `VS_THRESHOLD_FPM` | 300 ft/min | granica Climb / Cruise / Descent |
 | `TAXI_MIN_KT` | 3 kt | granica Idle / Taxi w napisie fazy |
-| `DROP_ALT_WINDOW_SEC` | 15 s | okno średniej wysokości zrzutu (§10.1) — dłużej = gładszy odczyt, ale w dolocie ze wznoszeniem ciągnie wynik w dół; krócej = bliżej chwili, więcej szumu |
+| `DROP_ALT_WINDOW_SEC` | 15 s | okno średniej wysokości zrzutu (§10.1) - dłużej = gładszy odczyt, ale w dolocie ze wznoszeniem ciągnie wynik w dół; krócej = bliżej chwili, więcej szumu |
 
 ---
 
-## 12. Czujniki pokładowe — nagrywane, nie używane do decyzji
+## 12. Czujniki pokładowe - nagrywane, nie używane do decyzji
 
 Barometr, akcelerometr i żyroskop są podłączone (`SensorPort`, `expoSensorsAdapter`,
 `useSensorTrace`), ale **detekcja ich nie czyta**. Progi mają wyjść z nagrań fazy 5;
@@ -697,14 +697,14 @@ Do śladu idą **agregaty sekundowe** (`IMU_AGGREGATE_SEC`), nie surowe próbki:
 
 Rzeczywisty przebieg z odtworzenia nagrania (`replay.ts`, elewacja 800 ft; sekcja kołowania
 przeliczona pod reguły 2026-08-04 przy założeniu `accuracyM` ≈ 5 m). Odbiornik w trybie
-static-hold — **deklaruje 0 kt przez cały postój i całe kołowanie**.
+static-hold - **deklaruje 0 kt przez cały postój i całe kołowanie**.
 
 ```
 t=0…29 s   postój, pozycja pływa ±3 m, gs = 0
            → kotwica = centroid ≈ 0 m
 t=30 s     samolot rusza, 8 kt (4,1 m/s), gs NADAL 0
-t=32 s     8,2 m od kotwicy — wciąż w promieniu 10 m
-t=33 s     12,3 m — kotwica przestaje się odświeżać, zamarza
+t=32 s     8,2 m od kotwicy - wciąż w promieniu 10 m
+t=33 s     12,3 m - kotwica przestaje się odświeżać, zamarza
 t=38 s     32,9 m > próg efektywny 30 m (25 m + accuracyM 5 m)
            ⇒  licznik utrzymania warunku ruchu startuje
 t=42 s     warunek trzyma się 4 s = TAXI_CONFIRM_SEC  ⇒  DETEKCJA taxi
@@ -713,8 +713,8 @@ t=42 s     warunek trzyma się 4 s = TAXI_CONFIRM_SEC  ⇒  DETEKCJA taxi
 t=55…64 s  rozbieg, gs 15 → 69 kt, AGL 0
 t=63 s     mediana gs w oknie 5 s = 51 > 50  ⇒  candidateSince
            accel = +6 kt/s ≥ −0,5  ⇒  weto hamowania nie blokuje
-t=65 s     AGL wciąż 0 — ostatni fix przy ziemi
-t=66 s     AGL 80 ft — samolot w powietrzu
+t=65 s     AGL wciąż 0 - ostatni fix przy ziemi
+t=66 s     AGL 80 ft - samolot w powietrzu
 t=68 s     warunek trzyma się 5 s = TAKEOFF_CONFIRM_SEC  ⇒  DETEKCJA takeoff
            onset = ostatni fix z AGL ≤ 25 ft = t=65
            → zapisane 08:01:05, potwierdzone 08:01:08
@@ -722,10 +722,10 @@ t=68 s     warunek trzyma się 5 s = TAKEOFF_CONFIRM_SEC  ⇒  DETEKCJA takeoff
 
 Dwa wnioski, które ta oś pokazuje wprost:
 
-- **kołowanie zostało wykryte przy `gs = 0`** — poprzedni algorytm nie wykryłby go wcale,
+- **kołowanie zostało wykryte przy `gs = 0`** - poprzedni algorytm nie wykryłby go wcale,
   bo jego jedynym kanałem była prędkość, a odbiornik jej nie podawał;
 - **retro-datowanie odjęło 10 s kołowaniu i 3 s startowi.** Rezydualny błąd kołowania to +2 s
-  (samolot ruszył w t=30, onset wskazał t=32) — ograniczony rozdzielczością kotwicy
+  (samolot ruszył w t=30, onset wskazał t=32) - ograniczony rozdzielczością kotwicy
   i odstępem fixów, nie progiem. Margines dokładności i utrzymanie warunku (2026-08-04)
   opóźniły wyłącznie POTWIERDZENIE (t=37 → t=42); czas zapisany do rejestru nie drgnął.
 
@@ -748,7 +748,7 @@ Co bronimy, czym i gdzie jest test.
 | Słaby fix „przenosi" odbiornik (accuracy 25–50 m) | fałszywe kołowanie 🔴 | próg ruchu powiększany o `accuracyM` | `flightDetector.test.ts` |
 | Szum dopplera przy dostępnej pozycji | fałszywe kołowanie | kanał wsparcia głosuje tylko bez pozycji | `flightDetector.test.ts` |
 | Odrodzony detektor (powrót na ekran, restart) | zdublowane `taxi` | projekcja `taxiing` + gwardia `ALREADY_TAXIING`; spoina pomija duplikat po cichu | `rules.test.ts`, `taxiWrite.test.ts` |
-| Faza automatu rozjechana z rejestrem (COFNIJ, wpis ręczny, restart w locie) | **przegapiony start albo lądowanie — cały lot** 🔴 | rejestr prostuje fazę: `syncDetectorPhase` (§2.2) | `flightDetector.test.ts` |
+| Faza automatu rozjechana z rejestrem (COFNIJ, wpis ręczny, restart w locie) | **przegapiony start albo lądowanie - cały lot** 🔴 | rejestr prostuje fazę: `syncDetectorPhase` (§2.2) | `flightDetector.test.ts` |
 | Dobieg emitowany, gdy `landing` jest jeszcze w oknie „COFNIJ" | baner „Nie zapisano" bez winy pilota | wstrzymanie kołowania do końca okna (§7.4) | `taxiWrite.test.ts` |
 | Jamming (dokładność 120 m) | fałszywe lądowanie w locie | bramka jakości; fix nie wchodzi do historii | `flightDetector.test.ts` |
 | Spoofing / multipath (teleportacja) | fałszywy start | plauzybilność skoku pozycji | `flightDetector.test.ts` |
@@ -767,8 +767,8 @@ Co bronimy, czym i gdzie jest test.
 ## 15. Jak kalibrować
 
 Progi zmieniamy **na nagraniach**, nie w dyskusji. Materiał zbiera rejestrator śladu
-(zawsze włączony przy pracującym silniku): surowe fixy **sprzed** bramki jakości —
-bo śmieci to najcenniejszy materiał do progów bramki — plus markery `detection` (toast
+(zawsze włączony przy pracującym silniku): surowe fixy **sprzed** bramki jakości -
+bo śmieci to najcenniejszy materiał do progów bramki - plus markery `detection` (toast
 pokazany) i `undo` (COFNIJ pilota, czyli **fałszywa detekcja oznaczona przez człowieka**,
 której rejestr zdarzeń nie widzi) oraz agregaty czujników.
 
@@ -778,14 +778,14 @@ cd server && npx tsx scripts/replay.ts traces/sesja.ndjson 800
 
 Skrypt puszcza nagranie przez **ten sam `runDetector`**, który działa w telefonie, i zestawia
 wynik z markerami z lotu. Dla każdej detekcji pokazuje `at` (kiedy się wydarzyło) i opóźnienie
-do `confirmedAt` (kiedy algorytm się dowiedział) — to drugie mówi, ile okna potwierdzenia da
+do `confirmedAt` (kiedy algorytm się dowiedział) - to drugie mówi, ile okna potwierdzenia da
 się jeszcze wydłużyć bez kosztu. Progi do eksperymentów nadpisuje się w `overrides` na
 początku skryptu.
 
 Pętla pracy:
 
 1. zebrać nagrania z realnych lotów (faza 5),
-2. odtworzyć z progami produkcyjnymi — sprawdzić rozjazd z markerami i wszystkie `undo`,
+2. odtworzyć z progami produkcyjnymi - sprawdzić rozjazd z markerami i wszystkie `undo`,
 3. nadpisać podejrzany próg, odtworzyć ponownie, porównać,
 4. najlepsze nagrania **przypiąć jako złote ślady-testy**.
 

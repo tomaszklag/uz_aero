@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 09B Zdaj samolot</title>
+<title>UZ Aero - 09B Zdaj samolot</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -84,7 +84,7 @@
   .scroll::-webkit-scrollbar { display:none; }
   .scroll > * { flex-shrink:0; }
 
-  /* ===== Liczniki — TU są wymagane ===== */
+  /* ===== Liczniki - TU są wymagane ===== */
   .form-section { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
   .form-section-title {
     padding:8px 12px; background:var(--surface-raised); border-bottom:1px solid var(--border);
@@ -101,13 +101,13 @@
     text-decoration:none; cursor:pointer;
   }
   /* Metryka wartości = pole wpisu z arkusza (issue #58 pkt 5 i 9): mono 16 / 1.5.
-     Kontrolka odczytu jest tą samą kontrolką, co na 15C i w trasie 02E — „jedna rzecz
+     Kontrolka odczytu jest tą samą kontrolką, co na 15C i w trasie 02E - „jedna rzecz
      ma w aplikacji JEDEN kształt" (issue #42); wielkość edycji zostaje w arkuszu 02B. */
   .field-value { color:var(--amber); font-family:var(--font-mono); font-size:16px; font-weight:700; letter-spacing:1.5px; line-height:22px; }
   .field-unit { font-family:var(--font-mono); font-size:12px; color:var(--text-secondary); }
   .field-sub { font-family:var(--font-mono); font-size:9px; color:var(--text-muted); margin-top:5px; letter-spacing:0.5px; }
 
-  /* Rozliczenie sesji — policzone, nie do wpisania */
+  /* Rozliczenie sesji - policzone, nie do wpisania */
   .balance-row {
     display:flex; align-items:center; justify-content:space-between;
     padding:9px 12px; border-bottom:1px solid var(--border);
@@ -117,7 +117,7 @@
   .balance-val { font-family:var(--font-mono); font-size:13px; color:var(--text-secondary); letter-spacing:0.5px; }
   .balance-val.amber { color:var(--amber); }
 
-  /* Przekazanie (Typ C — pouczający, zamykalny → mini) */
+  /* Przekazanie (Typ C - pouczający, zamykalny → mini) */
   .handover-box {
     position:relative;
     background:var(--green-muted); border:1px solid var(--green-border);
@@ -131,7 +131,7 @@
   .edu-dismiss:hover { color:var(--text-secondary); background:rgba(255,255,255,0.05); }
   .edu-mini { display:none; align-items:center; gap:6px; align-self:flex-start; padding:7px 12px; min-height:34px; border-radius:999px; border:1px solid var(--green-border); background:var(--green-muted); color:var(--green); font-family:var(--font-mono); font-size:10px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; }
 
-  /* Baner statusu (Typ A — przyrząd, niezamykalny): co się NIE dzieje przy zdaniu */
+  /* Baner statusu (Typ A - przyrząd, niezamykalny): co się NIE dzieje przy zdaniu */
   .status-box {
     background:var(--blue-muted); border:1px solid var(--blue-border);
     border-radius:12px; padding:11px 13px; display:flex; align-items:flex-start; gap:9px;
@@ -176,12 +176,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 09B</span>
+  <span class="film-strip">UZ AERO - 09B</span>
   <span class="slug">zdaj samolot · zatwierdzenie logu sesji</span>
   <span class="canvas-meta"><span class="pulse"></span>Po locie</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Zdaj samolot">
+<main class="phone" role="region" aria-label="Mockup - Zdaj samolot">
   <div class="status-bar">
     <span>17:40</span>
     <span class="status-right">
@@ -217,10 +217,10 @@
 
     <div class="scroll">
 
-      <!-- PRZEGLĄD LOTÓW — sekcja przejęta z dawnego ekranu 09 (scalenie 2026-08-10).
+      <!-- PRZEGLĄD LOTÓW - sekcja przejęta z dawnego ekranu 09 (scalenie 2026-08-10).
            Czasy pochodzą z detekcji i są TYLKO do przejrzenia: poprawki robi się
            korektą w logu kokpitu (04C), zanim pilot zatwierdzi sesję tym ekranem.
-           Zdanie samolotu jest zatwierdzeniem CAŁEGO logu — dlatego przegląd stoi
+           Zdanie samolotu jest zatwierdzeniem CAŁEGO logu - dlatego przegląd stoi
            nad odczytami: najpierw „czy to się zgadza", potem „ile zostało". -->
       <div class="form-section">
         <div class="form-section-title"><span>Loty tej sesji · czasy UTC · z detekcji</span></div>
@@ -238,7 +238,7 @@
         </div>
       </div>
 
-      <!-- Liczniki: odczyt WYMAGANY — zapis tego ekranu zatwierdza log sesji -->
+      <!-- Liczniki: odczyt WYMAGANY - zapis tego ekranu zatwierdza log sesji -->
       <div class="form-section">
         <div class="form-section-title">
           <span>Odczyt końcowy</span>
@@ -266,13 +266,13 @@
 
       <div class="handover-box" id="eduHandover">
         <!-- Pytajnik zamiast strzałek przekazania (uwaga z urządzenia, 2026-08-27):
-             pouczający PYTA i nosi TĘ SAMĄ ikonę co zwinięty chip — reguła DS dla
+             pouczający PYTA i nosi TĘ SAMĄ ikonę co zwinięty chip - reguła DS dla
              banerów typu C, jednakowa na 02E, 05F, 07 i tutaj. -->
         <svg class="handover-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        <span class="handover-text">Te odczyty — <b>62 L</b> i <b>1 241:09 MH</b> — zobaczy następny pilot jako
+        <span class="handover-text">Te odczyty - <b>62 L</b> i <b>1 241:09 MH</b> - zobaczy następny pilot jako
         <strong>przekazanie</strong>. Stają się ogniwem łańcucha SP-KLM: serwer porównuje z nimi start
         kolejnej sesji i flaguje dziury albo cofnięcia licznika.</span>
-        <button class="edu-dismiss" onclick="eduCollapse('eduHandover')" title="Rozumiem — schowaj wyjaśnienie">
+        <button class="edu-dismiss" onclick="eduCollapse('eduHandover')" title="Rozumiem - schowaj wyjaśnienie">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
@@ -301,7 +301,7 @@
         </div>
       </div>
 
-      <!-- Typ A: przyrząd. Najważniejsze zdanie całej przebudowy — zdanie samolotu
+      <!-- Typ A: przyrząd. Najważniejsze zdanie całej przebudowy - zdanie samolotu
            NIE jest końcem dnia pilota. -->
       <div class="status-box">
         <svg class="status-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
@@ -314,23 +314,23 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h14M13 6l6 6-6 6"/></svg>
       </a>
 
-      <a href="04-cockpit-ground.html" class="btn-later">JESZCZE NIE — WRÓĆ DO KOKPITU</a>
+      <a href="04-cockpit-ground.html" class="btn-later">JESZCZE NIE - WRÓĆ DO KOKPITU</a>
 
     </div>
   </div>
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Warianty tego ekranu — kiedy który?</div>
+  <div class="vp-title">Warianty tego ekranu - kiedy który?</div>
   <!-- Ekrany 09 (zamknięcie wzlotu) i 09A (seria skokowa) USUNIĘTE 2026-08-10:
-       sesja = jeden bieg silnika, więc nie ma już osobnego „zamknięcia wzlotu" —
+       sesja = jeden bieg silnika, więc nie ma już osobnego „zamknięcia wzlotu" -
        przegląd czasów przeszedł na ten ekran, a odczyty z opcjonalnych stały się
        obowiązkowe. Seria skokowa to dziś JEDNA sesja z wieloma lotami. -->
   <a class="vp-item active" href="09b-zdaj-samolot.html">
     <span class="vp-badge red">09B</span>
     <span class="vp-body">
       <span class="vp-name">Zdanie samolotu</span>
-      <span class="vp-when">Po STOP ENGINE (kokpit 04 prowadzi tu hero „ZDAJ SAMOLOT"). Odczyty paliwa i MH są OBOWIĄZKOWE — stają się przekazaniem i ogniwem łańcucha MH, a zapis ZATWIERDZA log całej sesji. Dzień pilota trwa dalej.</span>
+      <span class="vp-when">Po STOP ENGINE (kokpit 04 prowadzi tu hero „ZDAJ SAMOLOT"). Odczyty paliwa i MH są OBOWIĄZKOWE - stają się przekazaniem i ogniwem łańcucha MH, a zapis ZATWIERDZA log całej sesji. Dzień pilota trwa dalej.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>

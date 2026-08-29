@@ -1,8 +1,8 @@
 /**
- * UZ Aero — testy katalogu lotnisk i wyboru tych widocznych na mapie.
+ * UZ Aero - testy katalogu lotnisk i wyboru tych widocznych na mapie.
  *
  * Sedno: mapa śladu nie ma kafelków, więc lotniska są JEDYNYM odniesieniem w terenie.
- * Dwie rzeczy mogą to zepsuć i obie są tu sprawdzone — pokazanie zbyt wielu lądowisk
+ * Dwie rzeczy mogą to zepsuć i obie są tu sprawdzone - pokazanie zbyt wielu lądowisk
  * (mapa zamienia się w listę nazw, przez którą nie widać śladu) oraz pominięcie tego
  * jednego, które pilot wpisał w preflighcie.
  */
@@ -15,7 +15,7 @@ import {
   type Airfield,
 } from '../domain';
 
-/** Kadr wokół Zielonej Góry — obszar typowego lotu lokalnego. */
+/** Kadr wokół Zielonej Góry - obszar typowego lotu lokalnego. */
 const AROUND_EPZG = { north: 52.35, south: 51.95, east: 16.05, west: 15.55 };
 
 function airfield(icao: string, lat: number, lon: number): Airfield {
@@ -30,7 +30,7 @@ describe('katalog lotnisk', () => {
 
   it('współrzędne mieszczą się w granicach Polski', () => {
     // Gdyby generator pomylił kolumny CSV (lat/lon zamienione), ślad rysowałby się
-    // setki kilometrów od lotniska — a na siatce bez kafelków nikt by nie zgadł dlaczego.
+    // setki kilometrów od lotniska - a na siatce bez kafelków nikt by nie zgadł dlaczego.
     for (const a of POLISH_AIRFIELDS) {
       expect(a.lat).toBeGreaterThan(48.9);
       expect(a.lat).toBeLessThan(55.0);
@@ -49,7 +49,7 @@ describe('katalog lotnisk', () => {
     }
   });
 
-  it('prawie każde lotnisko ma pas — bez tego mapa daje samą kropkę', () => {
+  it('prawie każde lotnisko ma pas - bez tego mapa daje samą kropkę', () => {
     // Do issue #3 pas miało 68 ze 106 lotnisk, a brakowało akurat aeroklubowych,
     // czyli tych, z których lata się najczęściej. Uzupełnia je OSM.
     const withRunway = POLISH_AIRFIELDS.filter((a) => a.runway != null);
@@ -66,7 +66,7 @@ describe('katalog lotnisk', () => {
 
   it('kursy znanych pasów zgadzają się z ich oznaczeniem', () => {
     // Test na FAKTY, nie na kształt danych: to jedyny rodzaj sprawdzenia, który łapie
-    // błąd z issue #3. Pusta komórka CSV dawała `Number('') === 0` i EPZP — pas 06/24 —
+    // błąd z issue #3. Pusta komórka CSV dawała `Number('') === 0` i EPZP - pas 06/24 -
     // trafiało do katalogu z kursem 0°, czyli narysowane na północ.
     const known: Record<string, number> = {
       EPZP: 60, // Zielona Góra-Przylep, 06/24
@@ -81,7 +81,7 @@ describe('katalog lotnisk', () => {
       const runway = airfieldByIcao(icao)?.runway;
       expect(runway).not.toBeNull();
       // Oznaczenie progu jest magnetyczne i zaokrąglone do 10°, katalog trzyma kurs
-      // geograficzny — 15° zapasu mieści deklinację i zaokrąglenie, a wyłapuje pomyłkę
+      // geograficzny - 15° zapasu mieści deklinację i zaokrąglenie, a wyłapuje pomyłkę
       // o rząd wielkości.
       expect(Math.abs(runway!.headingDeg - expected)).toBeLessThanOrEqual(15);
     }
@@ -105,7 +105,7 @@ describe('airfieldsInView', () => {
   it('bierze lotniska leżące w kadrze', () => {
     const found = airfieldsInView(AROUND_EPZG);
     expect(found.some((a) => a.icao === 'EPZG')).toBe(true);
-    // Kraków leży 400 km dalej — nie ma prawa się pojawić.
+    // Kraków leży 400 km dalej - nie ma prawa się pojawić.
     expect(found.some((a) => a.icao === 'EPKK')).toBe(false);
   });
 
@@ -116,7 +116,7 @@ describe('airfieldsInView', () => {
     expect(found.map((a) => a.icao)).toEqual(['EPAA']);
   });
 
-  it('nigdy nie pokazuje więcej niż limit — mapa ma zostać czytelna', () => {
+  it('nigdy nie pokazuje więcej niż limit - mapa ma zostać czytelna', () => {
     // Dwanaście lądowisk stłoczonych w kadrze; wolno pokazać najwyżej sześć.
     const catalogue = Array.from({ length: 12 }, (_, i) =>
       airfield(`EP${String.fromCharCode(65 + i)}X`, 52.1 + i * 0.005, 15.8 + i * 0.005),
@@ -139,7 +139,7 @@ describe('airfieldsInView', () => {
     expect(found.map((a) => a.icao)).not.toContain('EPFA');
   });
 
-  it('lotnisko z preflightu wchodzi ZAWSZE i jako pierwsze — także spoza kadru', () => {
+  it('lotnisko z preflightu wchodzi ZAWSZE i jako pierwsze - także spoza kadru', () => {
     // Pilot wpisał je ręcznie, więc jest odpowiedzią na „gdzie to było",
     // a nie przypadkowym sąsiadem trasy.
     const daleko = airfield('EPRA', 51.39, 21.21);

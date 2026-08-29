@@ -1,17 +1,17 @@
 /**
- * UZ Aero (serwer) — ODCZYT śladu jednego lotu dla panelu (`A02c-slad.html`).
+ * UZ Aero (serwer) - ODCZYT śladu jednego lotu dla panelu (`A02c-slad.html`).
  *
  * Składa dwie rzeczy, które nigdzie indziej się nie spotykają:
- *  1. **rejestr** — strumień zdarzeń sesji → `projectSession` → okno lotu (`takeoffAt`,
+ *  1. **rejestr** - strumień zdarzeń sesji → `projectSession` → okno lotu (`takeoffAt`,
  *     `landingAt`) już PO korektach administratora,
- *  2. **ślad** — pliki NDJSON przysłane przez telefon, czyli materiał badawczy obok
+ *  2. **ślad** - pliki NDJSON przysłane przez telefon, czyli materiał badawczy obok
  *     rejestru.
  *
  * Kolejność jest istotna: okno bierzemy z rejestru, nie ze śladu. Gdyby administrator
- * poprawił czas startu, mapa ma pokazać lot tak, jak go dziś rozumie rejestr — inaczej
+ * poprawił czas startu, mapa ma pokazać lot tak, jak go dziś rozumie rejestr - inaczej
  * ekran diagnostyczny zaprzeczałby dokumentowi, który diagnozuje.
  *
- * `projectSession` wołamy RAZ, na jednym strumieniu (dziesiątki zdarzeń) — to ta sama
+ * `projectSession` wołamy RAZ, na jednym strumieniu (dziesiątki zdarzeń) - to ta sama
  * zasada co w karcie dnia (`queries/sessions.ts`) i tak samo nie dotyczy jej zakaz
  * projektowania w listach.
  */
@@ -56,7 +56,7 @@ export class AdminFlightTrackQueries {
     const flight = state.flights.find((f) => f.index === flightIndex);
     if (flight == null) return { ok: false, reason: 'no_flight' };
 
-    // Lot ręczny nie ma zapisu GPS z definicji — nie ma po co czytać plików.
+    // Lot ręczny nie ma zapisu GPS z definicji - nie ma po co czytać plików.
     // To nie jest błąd, tylko wariant 14B: pusty ślad z wypełnionym oknem lotu.
     if (flight.method === 'manual') {
       return { ok: true, track: emptyTrack(sessionUuid, flight) };
@@ -90,7 +90,7 @@ export class AdminFlightTrackQueries {
   }
 }
 
-/** Ślad, którego nie ma — lot ręczny. Okno lotu zostaje, bo czasy SĄ prawdziwe. */
+/** Ślad, którego nie ma - lot ręczny. Okno lotu zostaje, bo czasy SĄ prawdziwe. */
 function emptyTrack(sessionUuid: string, flight: Flight): AdminFlightTrack {
   return {
     sessionUuid,

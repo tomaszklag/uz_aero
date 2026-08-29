@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 00 Logowanie · PIN</title>
+<title>UZ Aero - 00 Logowanie · PIN</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -131,7 +131,7 @@
      przypis o budowie aplikacji pod klawiaturą, której pilot używa codziennie.
      Ograniczenie mówi o sobie samo tam, gdzie ma znaczenie: wariant 00B (offline
      bez profilu) i nazwany błąd po nieudanej próbie logowania. */
-  /* Ochrona wylogowania (sekcja 3.0): zmiana konta zablokowana przy niepustym outboxie —
+  /* Ochrona wylogowania (sekcja 3.0): zmiana konta zablokowana przy niepustym outboxie -
      jedyne miejsce w aplikacji, gdzie pilot mógłby bezpowrotnie stracić zdarzenia. */
   .link-item.locked { color: var(--text-muted); opacity: 0.5; cursor: not-allowed; text-decoration: none; }
   .outbox-guard {
@@ -144,7 +144,7 @@
   .outbox-guard svg { flex-shrink: 0; margin-top: 1px; color: var(--amber); }
   .outbox-guard b { color: var(--amber); font-weight: 600; }
 
-  /* ===== VARIANTS PANEL (canvas — skróty do wariantów ekranu) ===== */
+  /* ===== VARIANTS PANEL (canvas - skróty do wariantów ekranu) ===== */
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
   .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
   .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; transition:all .15s; }
@@ -168,12 +168,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 00</span>
+  <span class="film-strip">UZ AERO - 00</span>
   <span class="slug">logowanie · odblokowanie PIN · interaktywny</span>
   <span class="canvas-meta"><span class="pulse"></span>Ekran 0</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Odblokowanie PIN">
+<main class="phone" role="region" aria-label="Mockup - Odblokowanie PIN">
   <div class="status-bar">
     <span>9:41</span>
     <span class="status-right">
@@ -222,7 +222,7 @@
         <div class="num-btn" onclick="press()">7</div>
         <div class="num-btn" onclick="press()">8</div>
         <div class="num-btn" onclick="press()">9</div>
-        <div class="num-btn ghost" onclick="location.href='01-moj-dzien.html'" title="Biometria — opcjonalne szybkie odblokowanie">
+        <div class="num-btn ghost" onclick="location.href='01-moj-dzien.html'" title="Biometria - opcjonalne szybkie odblokowanie">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/><path d="M14 13.12c0 2.38 0 6.38-1 8.88"/><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/><path d="M2 12a10 10 0 0 1 18-6"/><path d="M2 16h.01"/><path d="M21.8 16c.2-2 .131-5.354 0-6"/><path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"/><path d="M8.65 22c.21-.66.45-1.32.57-2"/><path d="M9 6.8a6 6 0 0 1 9 5.2v2"/></svg>
         </div>
         <div class="num-btn" onclick="press()">0</div>
@@ -231,7 +231,7 @@
         </div>
       </div>
 
-      <!-- LINKS — sam link, bez przypisu „Pełne logowanie wymaga internetu"
+      <!-- LINKS - sam link, bez przypisu „Pełne logowanie wymaga internetu"
            (issue #55): ograniczenie sieci mówi o sobie na 00A/00B, gdy naprawdę
            zagradza drogę, a nie codziennie pod klawiaturą PIN. -->
       <div class="links-row">
@@ -243,12 +243,12 @@
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Warianty ekranu logowania — kiedy który?</div>
+  <div class="vp-title">Warianty ekranu logowania - kiedy który?</div>
   <a class="vp-item active" href="00-login.html">
     <span class="vp-badge">00</span>
     <span class="vp-body">
       <span class="vp-name">Odblokowanie PIN</span>
-      <span class="vp-when">Codzienne wejście — na telefonie jest już profil pilota.</span>
+      <span class="vp-when">Codzienne wejście - na telefonie jest już profil pilota.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>

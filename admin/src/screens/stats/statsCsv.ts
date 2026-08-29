@@ -1,12 +1,12 @@
 /**
- * UZ Aero — panel: EKSPORT ZESTAWIENIA DO CSV (moduł CZYSTY).
+ * UZ Aero - panel: EKSPORT ZESTAWIENIA DO CSV (moduł CZYSTY).
  *
- * Plik powstaje z TYCH SAMYCH modeli wierszy, które widać w tabeli — CSV jest zrzutem
+ * Plik powstaje z TYCH SAMYCH modeli wierszy, które widać w tabeli - CSV jest zrzutem
  * ekranu do arkusza, nie czwartym wyliczeniem. Serializujemy wartości sformatowane
  * („112:38", „21 436 L"): odbiorcą jest człowiek w Excelu, a surowe milisekundy ma
  * rejestr i API.
  *
- * Średnik jako separator — polskie ustawienia Excela traktują przecinek jako
+ * Średnik jako separator - polskie ustawienia Excela traktują przecinek jako
  * separator dziesiętny i plik z przecinkami otwierają jedną kolumną. Z tego samego
  * powodu plik zaczyna się od BOM: bez niego ten sam Excel czyta UTF-8 jako
  * Windows-1250 i wysypuje polskie znaki w „Śr. L/h" i w nazwiskach.
@@ -22,10 +22,10 @@ const BOM = '\uFEFF';
 
 /**
  * Pole CSV, dwie warstwy ochrony:
- *  1. treść zaczynająca się jak formuła (`=`, `+`, `-`, `@`) dostaje apostrof —
+ *  1. treść zaczynająca się jak formuła (`=`, `+`, `-`, `@`) dostaje apostrof -
  *     nazwiska wpisuje wprawdzie administrator, ale to nadal wejście człowieka,
  *     a Excel wykonuje formuły z CSV bez pytania;
- *  2. cudzysłów tylko wtedy, gdy treść tego wymaga (separator, cudzysłów, CR/LF) —
+ *  2. cudzysłów tylko wtedy, gdy treść tego wymaga (separator, cudzysłów, CR/LF) -
  *     czytelniej w diffach.
  */
 const field = (value: string): string => {
@@ -49,7 +49,7 @@ export function statsCsvFilename(input: StatsCsvInput): string {
   return `statystyki_${input.range.fromDay}_${input.range.toDay}_${view}.csv`;
 }
 
-/** Treść CSV BIEŻĄCEGO ujęcia — razem z wierszem RAZEM, dokładnie jak tabela. */
+/** Treść CSV BIEŻĄCEGO ujęcia - razem z wierszem RAZEM, dokładnie jak tabela. */
 export function statsCsv(input: StatsCsvInput): string {
   return BOM + body(input);
 }

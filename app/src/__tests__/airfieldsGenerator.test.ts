@@ -1,10 +1,10 @@
 /**
- * UZ Aero — testy generatora katalogu lotnisk (`packages/domain/scripts/airfields/`).
+ * UZ Aero - testy generatora katalogu lotnisk (`packages/domain/scripts/airfields/`).
  *
  * Generator jest narzędziem, ale jego wynik jest DANYMI, które pilot ogląda na mapie
  * śladu i bierze za prawdę. Issue #3 pokazało, ile kosztuje brak tych testów: pusta
  * komórka w CSV przechodziła przez `Number('')` na `0` i dwadzieścia lotnisk dostało
- * pas narysowany na północ — w tym EPZP, które w rzeczywistości ma 06/24.
+ * pas narysowany na północ - w tym EPZP, które w rzeczywistości ma 06/24.
  *
  * Stąd trzy grupy przypadków: odczyt z CSV (pusta komórka to BRAK, nie zero), geometria
  * OSM (pas rozbity na waye musi się skleić, pasy równoległe nie mogą się wydłużyć)
@@ -67,7 +67,7 @@ describe('odczyt z CSV', () => {
     expect(runway).toBeNull();
   });
 
-  it('pas bez długości też odpada — rekord ma być kompletny albo żaden', () => {
+  it('pas bez długości też odpada - rekord ma być kompletny albo żaden', () => {
     expect(ourAirportsRunway([runwayRow({ length_ft: '' })])).toBeNull();
     expect(ourAirportsRunway([runwayRow({ length_ft: '0' })])).toBeNull();
   });
@@ -108,7 +108,7 @@ describe('odczyt z CSV', () => {
     ]);
 
     expect(seeds.map((s) => s.icao)).toEqual(['EPZG', 'EPZP']);
-    // Brak elewacji zostaje brakiem — nie zerem nad poziomem morza.
+    // Brak elewacji zostaje brakiem - nie zerem nad poziomem morza.
     expect(seeds[0]!.elevationFt).toBeNull();
     expect(seeds[1]!.elevationFt).toBe(249);
   });
@@ -126,7 +126,7 @@ describe('oznaczenie pasa', () => {
   });
 
   it('obraca oś do progu, gdy way narysowano od drugiej strony', () => {
-    // Geometria mówi 241° (od progu 24), oznaczenie mówi 06 — w katalogu ma być 61°.
+    // Geometria mówi 241° (od progu 24), oznaczenie mówi 06 - w katalogu ma być 61°.
     expect(alignHeadingToRef(241, '06/24')).toBe(61);
     expect(alignHeadingToRef(61, '06/24')).toBe(61);
   });
@@ -221,7 +221,7 @@ describe('przypisanie pasów do lotnisk', () => {
     expect(assigned.has('EPZG')).toBe(false);
   });
 
-  it('pas daleko od wszystkiego wypada — to nie nasze lotnisko', () => {
+  it('pas daleko od wszystkiego wypada - to nie nasze lotnisko', () => {
     const somewhereElse = way(2, { lat: 50.0, lon: 20.0 }, { lat: 50.001, lon: 20.01 });
 
     expect(assignWaysToAirfields([somewhereElse], airfields).size).toBe(0);
@@ -231,7 +231,7 @@ describe('przypisanie pasów do lotnisk', () => {
 describe('kolejność źródeł', () => {
   const osmWay = [way(1, { lat: 52.0, lon: 15.0 }, { lat: 52.0, lon: 15.01 }, { ref: '09/27' })];
 
-  it('OurAirports ma pierwszeństwo — ślad ODbL zostaje możliwie mały', () => {
+  it('OurAirports ma pierwszeństwo - ślad ODbL zostaje możliwie mały', () => {
     const runway = pickRunway([runwayRow({ length_ft: '2887', le_heading_degT: '61' })], osmWay);
 
     expect(runway).toEqual({ headingDeg: 61, lengthM: 880, source: 'ourairports' });
@@ -245,7 +245,7 @@ describe('kolejność źródeł', () => {
   });
 
   it('długość poza granicami rozsądku odpada do następnego źródła', () => {
-    // 40 000 stóp to 12 km pasa — pomyłka w źródle, nie dane słabej jakości.
+    // 40 000 stóp to 12 km pasa - pomyłka w źródle, nie dane słabej jakości.
     const runway = pickRunway([runwayRow({ length_ft: '40000' })], osmWay);
 
     expect(runway?.source).toBe('osm');

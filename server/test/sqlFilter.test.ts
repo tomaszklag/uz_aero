@@ -1,9 +1,9 @@
 /**
- * UZ Aero (serwer) — składanie `WHERE` z filtrów opcjonalnych.
+ * UZ Aero (serwer) - składanie `WHERE` z filtrów opcjonalnych.
  *
  * Ten moduł zastępuje query builder, więc jego testy muszą pokrywać to, czego builder
  * by nie pozwolił zepsuć: NUMERACJĘ parametrów. Przesunięcie `$n` o jeden nie jest
- * błędem typów ani składni — jest cichym porównaniem złej kolumny ze złą wartością,
+ * błędem typów ani składni - jest cichym porównaniem złej kolumny ze złą wartością,
  * które przechodzi każdy test „czy zwraca wiersze".
  */
 
@@ -32,7 +32,7 @@ describe('SqlFilter', () => {
     expect(filter.params()).toEqual(['A', 10, 20, 'C']);
   });
 
-  it('filtr NIEUSTAWIONY jest pomijany — razem ze swoim miejscem w numeracji', () => {
+  it('filtr NIEUSTAWIONY jest pomijany - razem ze swoim miejscem w numeracji', () => {
     const filter = new SqlFilter()
       .addOptional('a = ?', undefined)
       .addOptional('b = ?', 'B')
@@ -44,7 +44,7 @@ describe('SqlFilter', () => {
     expect(filter.params()).toEqual(['B', 'D']);
   });
 
-  it('`null` jest WARTOŚCIĄ, `undefined` brakiem — to nie to samo', () => {
+  it('`null` jest WARTOŚCIĄ, `undefined` brakiem - to nie to samo', () => {
     // Rozróżnienie „nie ustawiono filtra" od „ustawiono na nic" jest jedynym powodem,
     // dla którego `addOptional` istnieje osobno od `add`.
     const nieustawiony = new SqlFilter().addOptional('dual_id = ?', undefined);
@@ -87,7 +87,7 @@ describe('SqlFilter', () => {
     expect(filter.params()).toEqual(['A', 50, 'B']);
   });
 
-  it('niezgodna liczba miejsc i wartości RZUCA — to pomyłka autora, nie stan świata', () => {
+  it('niezgodna liczba miejsc i wartości RZUCA - to pomyłka autora, nie stan świata', () => {
     expect(() => new SqlFilter().add('a = ? AND b = ?', 'A')).toThrow(/2 miejsc/);
     expect(() => new SqlFilter().add('a = ?', 'A', 'B')).toThrow(/podano 2/);
   });

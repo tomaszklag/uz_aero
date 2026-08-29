@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: rozstrzygnięcie flagi (moduł czysty).
+ * UZ Aero - panel: rozstrzygnięcie flagi (moduł czysty).
  *
  * Cztery zachowania, których nie widać w typach i których nie sprawdzi serwer:
  * blokada pustego komentarza PRZED żądaniem, treść przegranego wyścigu (409),
@@ -35,7 +35,7 @@ const flag: FlagListItemDto = {
 
 describe('komentarz jest wymagany', () => {
   it('pusty i sam biały znak są ODRZUCANE, zanim poleci żądanie', () => {
-    // Serwer sprawdza to samo (`.trim().min(1)`), więc to nie jest zabezpieczenie —
+    // Serwer sprawdza to samo (`.trim().min(1)`), więc to nie jest zabezpieczenie -
     // to różnica między „przycisk mówi, czego brakuje" a „400 bez wyjaśnienia".
     for (const bad of ['', '   ', '\n\t ']) {
       const state = noteState(bad);
@@ -45,7 +45,7 @@ describe('komentarz jest wymagany', () => {
   });
 
   it('przepuszcza treść i nie zostawia powodu odmowy', () => {
-    expect(noteState('Nakładka pozorna — day_close dotarł 31 JUL.')).toEqual({
+    expect(noteState('Nakładka pozorna - day_close dotarł 31 JUL.')).toEqual({
       ok: true,
       reason: null,
     });
@@ -70,24 +70,24 @@ describe('przegrany wyścig (409)', () => {
         status: 'resolved',
         resolvedAt: '2026-07-31T08:15:00.000Z',
         resolvedBy: 'TMK',
-        resolutionNote: 'Telefon dosłał day_close — nakładka pozorna.',
+        resolutionNote: 'Telefon dosłał day_close - nakładka pozorna.',
       },
     });
 
     expect(failure.winner).toEqual({
       by: 'TMK',
       at: '31 JUL 2026 08:15 UTC',
-      note: 'Telefon dosłał day_close — nakładka pozorna.',
+      note: 'Telefon dosłał day_close - nakładka pozorna.',
     });
     // Nie „coś poszło nie tak": drugi klikający ma wiedzieć, że decyzja zapadła,
     // i nie dopisywać własnego uzasadnienia do cudzego rozstrzygnięcia.
     expect(failure.title).not.toMatch(/błąd|nie powiodło/i);
     expect(failure.detail).toMatch(/nie został zapisany/i);
-    // Ponawianie nie ma sensu — świat się zmienił, a nie żądanie się zgubiło.
+    // Ponawianie nie ma sensu - świat się zmienił, a nie żądanie się zgubiło.
     expect(failure.final).toBe(true);
   });
 
-  it('409 bez ciała nadal jest zrozumiały — po prostu bez nazwiska', () => {
+  it('409 bez ciała nadal jest zrozumiały - po prostu bez nazwiska', () => {
     const failure = resolveFailure(409, { error: 'already_resolved' });
     expect(failure.winner).toBeNull();
     expect(failure.final).toBe(true);
@@ -100,7 +100,7 @@ describe('przegrany wyścig (409)', () => {
     const conflict = resolveFailure(409, { error: 'already_resolved' });
 
     expect(new Set([forbidden.title, offline.title, conflict.title]).size).toBe(3);
-    expect(offline.final).toBe(false); // sieć wraca; rola i cudza decyzja — nie
+    expect(offline.final).toBe(false); // sieć wraca; rola i cudza decyzja - nie
     expect(forbidden.final).toBe(true);
   });
 
@@ -161,7 +161,7 @@ describe('skutek rozstrzygnięcia', () => {
   });
 
   it('awaria samego eksportu NIE udaje, że flaga się nie zamknęła', () => {
-    // Flaga JEST rozwiązana — transakcja się zatwierdziła, a eksport idzie po niej.
+    // Flaga JEST rozwiązana - transakcja się zatwierdziła, a eksport idzie po niej.
     // Komunikat błędu w tym miejscu sugerowałby, że decyzja przepadła.
     const outcome = resolveOutcome(result([{ sessionUuid: 'sess-2', outcome: null }]));
     expect(outcome.tone).toBe('warn');
@@ -170,8 +170,8 @@ describe('skutek rozstrzygnięcia', () => {
   });
 });
 
-describe('korekta zdarzenia — zdolności są rozłączne', () => {
-  it('administrator idzie na KARTĘ DNIA — to oś zdarzeń wybiera cel korekty', () => {
+describe('korekta zdarzenia - zdolności są rozłączne', () => {
+  it('administrator idzie na KARTĘ DNIA - to oś zdarzeń wybiera cel korekty', () => {
     // Flaga wskazuje sesję, nie zdarzenie (`aircraft_overlap` opisuje dwie nakładki,
     // a nie pojedynczy odczyt). Korekta celuje w konkretny uuid, więc wybór musi
     // zapaść tam, gdzie uuid-y są widoczne.
@@ -189,9 +189,9 @@ describe('korekta zdarzenia — zdolności są rozłączne', () => {
     expect(action.reason).toMatch(/administrator/i);
   });
 
-  it('brak zdolności WYSZARZA z powodem — nigdy nie ukrywa', () => {
+  it('brak zdolności WYSZARZA z powodem - nigdy nie ukrywa', () => {
     // Ukrycie zmusza człowieka do zgadywania, czy funkcji nie ma w produkcie,
-    // czy nie ma jej ON — a to dwie różne rozmowy z administratorem.
+    // czy nie ma jej ON - a to dwie różne rozmowy z administratorem.
     const action = correctionAction(flag, undefined);
     expect(action.disabled).toBe(true);
     expect(action.label).toBe('Korekta zdarzenia');

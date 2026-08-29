@@ -1,7 +1,7 @@
 /**
- * UZ Aero — test FAZY LOTU i prędkości pionowej (mockup 05 `.phase-hero`).
+ * UZ Aero - test FAZY LOTU i prędkości pionowej (mockup 05 `.phase-hero`).
  *
- * Faza jest najbardziej wyeksponowaną informacją w kokpicie w locie — napis 54 px,
+ * Faza jest najbardziej wyeksponowaną informacją w kokpicie w locie - napis 54 px,
  * który pilot czyta jednym spojrzeniem. Jeśli będzie migotał między „Climb" a „Descent"
  * na szumie GPS, przestanie znaczyć cokolwiek.
  *
@@ -49,7 +49,7 @@ describe('prędkość pionowa', () => {
   });
 
   it('nie domyka wyliczenia po przerwie w sygnale', () => {
-    // Fix sprzed 5 minut jest poza oknem — nie wolno go użyć jako punktu odniesienia.
+    // Fix sprzed 5 minut jest poza oknem - nie wolno go użyć jako punktu odniesienia.
     const fixes = [fix(0, 90, 1000), fix(300, 90, 5000)];
     expect(verticalSpeedFpm(fixes)).toBeNull();
   });
@@ -90,7 +90,7 @@ describe('faza lotu', () => {
   });
 
   it('nie przełącza fazy na wartości tuż poniżej progu', () => {
-    // ~200 ft/min to wciąż przelot — inaczej napis migotałby przez cały lot.
+    // ~200 ft/min to wciąż przelot - inaczej napis migotałby przez cały lot.
     const gentle = [fix(22, 100, 3067), fix(26, 100, 3080), fix(30, 100, 3100)];
     const reading = flightPhase(true, gentle);
     expect(Math.abs(reading.verticalSpeedFpm!)).toBeLessThan(VS_THRESHOLD_FPM);

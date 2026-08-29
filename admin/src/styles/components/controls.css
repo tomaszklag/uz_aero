@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: przyciski i pola formularza.
+ * UZ Aero - panel: przyciski i pola formularza.
  *
  * Klasy i wartości 1:1 z `design/admin/SZABLON.html` (sekcje „przyciski"
  * i „formularze"). Wzorzec pól jest ten sam co w aplikacji pilota:
@@ -52,7 +52,7 @@
   color: var(--text-secondary);
 }
 
-/* Zielona OBRAMÓWKA, nie zielone wypełnienie — akcja PRZYWRACAJĄCA („Aktywuj" konta
+/* Zielona OBRAMÓWKA, nie zielone wypełnienie - akcja PRZYWRACAJĄCA („Aktywuj" konta
    na A06), czyli odwrotność `.btn.danger` i o tej samej wadze wizualnej. `.primary`
    zostaje zarezerwowana dla akcji głównej ekranu; w kolumnie tabeli byłoby jej
    kilkanaście naraz i żadna nie byłaby główna. */
@@ -75,7 +75,7 @@
   border-radius: 8px;
 }
 
-/* Przycisk na całą szerokość karty — A00: „Zaloguj się" ma `width:100%` i wyższy
+/* Przycisk na całą szerokość karty - A00: „Zaloguj się" ma `width:100%` i wyższy
    cel niż standardowe 36 px. W mockupie stoi to inline; tutaj dostaje modyfikator,
    bo jest własnością WZORCA formularza, a nie tego jednego ekranu. */
 .btn.block {
@@ -125,14 +125,14 @@
 }
 
 /* Pole odrzucone przez serwer (A00a: obramowanie i tło w czerwieni). Modyfikator,
-   nie styl inline — stan błędu pola wróci na każdym formularzu panelu. */
+   nie styl inline - stan błędu pola wróci na każdym formularzu panelu. */
 .input.invalid {
   border-color: var(--red-border);
   background: var(--red-muted);
 }
 
 /* Pole wieloliniowe (komentarz rozstrzygnięcia flagi, A03a). Mockup używa na nim
-   klasy `.input`; modyfikator dokłada tylko to, czego `<input>` nie ma — pionową
+   klasy `.input`; modyfikator dokłada tylko to, czego `<input>` nie ma - pionową
    zmianę rozmiaru i interlinię akapitu. Komentarz do flagi bywa dłuższy niż linijka,
    a przycinanie go do czterech wierszy zniechęcałoby do napisania tego, co za pół
    roku będzie jedynym śladem decyzji. */
@@ -153,7 +153,7 @@
   font-weight: 600;
 }
 
-/* Pole z przyciskami W JEDNEJ LINII — hasło startowe + „kopiuj" (A06a). Przyciski są
+/* Pole z przyciskami W JEDNEJ LINII - hasło startowe + „kopiuj" (A06a). Przyciski są
    RODZEŃSTWEM pola, a nie jego zawartością, bo `<input>` nie ma dzieci; wysokości
    równa `align-items: stretch`, żeby 40 px pola i 36 px przycisku nie rozjeżdżały się
    w pionie. */
@@ -168,7 +168,7 @@
 }
 
 /* ── wybór jako lista kart ──
-   ZAKAZ natywnego `<select>` (`CLAUDE.md`) — wybór to zawsze widoczna lista kart.
+   ZAKAZ natywnego `<select>` (`CLAUDE.md`) - wybór to zawsze widoczna lista kart.
    W szufladzie flagi ta sama lista służy do nawigacji w głąb (sesje objęte sprawą). */
 .opt-list {
   display: flex;
@@ -176,9 +176,9 @@
   gap: 8px;
 }
 
-/* Siatka zamiast kolumny — dwie karty wyboru obok siebie ALBO dwa pola formularza
+/* Siatka zamiast kolumny - dwie karty wyboru obok siebie ALBO dwa pola formularza
    w jednym rzędzie (`A07a`: „Rok produkcji" + „Pojemność zbiorników"). Klasa jest
-   w `SZABLON.html` przy wyborze kart, a mockup floty używa jej dla pól — bo to jest
+   w `SZABLON.html` przy wyborze kart, a mockup floty używa jej dla pól - bo to jest
    ta sama rzecz: rząd, który zwija się na wąskim ekranie. `auto-fit` z minimum 200 px
    robi to bez media query. */
 .opt-grid {
@@ -190,7 +190,7 @@
 /* `font`, `text-align` i `width` obsługują wariant `<button>` (wybór akcji korekty,
    A02b): przeglądarka narzuca przyciskowi własną czcionkę i wyśrodkowanie, a karta
    ma wyglądać identycznie niezależnie od znacznika. `<label>` z mockupu nie jest
-   osiągalny z klawiatury, więc w panelu wybór jest przyciskiem — i to on dyktuje
+   osiągalny z klawiatury, więc w panelu wybór jest przyciskiem - i to on dyktuje
    te trzy właściwości. */
 .opt {
   display: flex;
@@ -256,7 +256,7 @@
   opacity: 1;
 }
 
-/* Szewron pozycji prowadzącej w głąb — zajmuje miejsce `.opt-check`, bo mówi to
+/* Szewron pozycji prowadzącej w głąb - zajmuje miejsce `.opt-check`, bo mówi to
    samo („to jest do kliknięcia”), tylko o ruchu, a nie o zaznaczeniu. */
 .opt-go {
   color: var(--text-muted);

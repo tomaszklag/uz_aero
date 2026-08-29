@@ -1,15 +1,15 @@
 /**
- * UZ Aero — CrewCard i CrewGrid (`.crew-card` / `.crew-grid` z mockupu 10)
+ * UZ Aero - CrewCard i CrewGrid (`.crew-card` / `.crew-grid` z mockupu 10)
  *
- * Kto latał i z jakim wynikiem — jedna karta na rolę, dwie obok siebie.
+ * Kto latał i z jakim wynikiem - jedna karta na rolę, dwie obok siebie.
  *
  * Karty stoją w siatce, a nie w liście, bo to jedyne miejsce w aplikacji, gdzie dwie
  * osoby są porównywane wprost: pilot przepisuje te liczby do własnej książki lotów
  * i musi jednym spojrzeniem zobaczyć, co przypada jemu, a co drugiemu pilotowi.
- * Karta zalogowanego jest wyróżniona (`active`) — nie dla ozdoby, tylko dlatego że
+ * Karta zalogowanego jest wyróżniona (`active`) - nie dla ozdoby, tylko dlatego że
  * kody trzyliterowe (TMK/AKO) mylą się przy przepisywaniu.
  *
- * Kod pilota, nie nazwisko: tak jest w mockupie i tak wygląda wpis w dokumentach —
+ * Kod pilota, nie nazwisko: tak jest w mockupie i tak wygląda wpis w dokumentach -
  * `shortName` byłby tu tłumaczeniem na język, którego formularze nie używają.
  */
 
@@ -34,9 +34,9 @@ export interface CrewCardProps {
   stats?: CrewStat[];
   /** Przypis pod statystykami („Cała sesja"). */
   tag?: string | null;
-  /** Karta zalogowanego pilota — zielona obramówka i zielony kod. */
+  /** Karta zalogowanego pilota - zielona obramówka i zielony kod. */
   active?: boolean;
-  /** Miejsce nieobsadzone — zamiast kodu i statystyk pokazujemy adnotację. */
+  /** Miejsce nieobsadzone - zamiast kodu i statystyk pokazujemy adnotację. */
   emptyText?: string | null;
   style?: ViewStyle;
 }
@@ -109,7 +109,7 @@ export function CrewCard({
   );
 }
 
-/** Siatka dwóch kart załogi — sztywne dwie kolumny, tak jak `.crew-grid`. */
+/** Siatka dwóch kart załogi - sztywne dwie kolumny, tak jak `.crew-grid`. */
 export function CrewGrid({ children, style }: { children: React.ReactNode; style?: ViewStyle }) {
   const { theme } = useTheme();
   return <View style={[styles.grid, { gap: theme.spacing.sm }, style]}>{children}</View>;
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
   statKey: { fontSize: 8, lineHeight: 12, letterSpacing: 0.5 },
   statValue: { fontSize: 11, lineHeight: 14, letterSpacing: 0.5 },
   // Mockup ma tu kursywę. Na Androidzie `fontStyle: 'italic'` przy własnym kroju bez
-  // wariantu italic (a takiego JetBrains Mono nie ładujemy) podmienia font na systemowy —
+  // wariantu italic (a takiego JetBrains Mono nie ładujemy) podmienia font na systemowy -
   // czyli psuje więcej, niż daje. Odrębność niesie ton `muted` i sam brak kodu.
   empty: { fontSize: 11, lineHeight: 16, marginTop: 4 },
 });

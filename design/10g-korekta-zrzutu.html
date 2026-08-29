@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 10G Korekta zrzutu</title>
+<title>UZ Aero - 10G Korekta zrzutu</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -98,18 +98,18 @@
   .time-stepper { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--green-border); border-radius:14px; padding:9px 11px; }
   .min-btn { min-width:62px; padding:0 10px; white-space:nowrap; height:44px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border-radius:12px; border:1px solid var(--border-strong); background:var(--surface-raised); color:var(--text-primary); font-family:var(--font-mono); font-size:12px; cursor:pointer; }
   .min-btn:hover { border-color:var(--green-border); background:var(--green-muted); }
-  /* Godzina do WPISANIA z klawiatury — patrz komentarz w 10E. */
+  /* Godzina do WPISANIA z klawiatury - patrz komentarz w 10E. */
   .time-val { flex:1; text-align:center; font-family:var(--font-mono); font-size:26px; font-weight:700; letter-spacing:2px; color:var(--text-primary); cursor:text; }
   .time-delta { font-family:var(--font-mono); font-size:9px; color:var(--amber); letter-spacing:0.5px; margin-top:5px; }
 
-  /* WYSOKOŚĆ — odczyt, nie pole (CLAUDE.md: dane z pomiaru mają pierwszeństwo).
+  /* WYSOKOŚĆ - odczyt, nie pole (CLAUDE.md: dane z pomiaru mają pierwszeństwo).
      To ŚREDNIA z okna 15 s wokół zrzutu, nie ostatni fix, więc wpisanie jej ręcznie
      zastąpiłoby pomiar zgadywaniem. Przy wpisie ręcznym wysokości po prostu nie ma. */
   .alt-row { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--blue-border); border-radius:13px; padding:10px 13px; }
   .alt-val { font-family:var(--font-mono); font-size:22px; font-weight:700; letter-spacing:1px; color:var(--blue); flex:1; }
   .alt-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.2px; text-transform:uppercase; color:var(--text-muted); }
 
-  /* Liczniki składu — te same cele 46 px co na 05e (arkusz zrzutu w locie). */
+  /* Liczniki składu - te same cele 46 px co na 05e (arkusz zrzutu w locie). */
   .type-row { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--border); border-radius:13px; padding:7px 11px; }
   .type-name { flex:1; display:flex; flex-direction:column; gap:2px; }
   .type-lbl { font-size:13px; font-weight:700; color:var(--text-primary); letter-spacing:0.5px; }
@@ -166,12 +166,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 10G</span>
+  <span class="film-strip">UZ AERO - 10G</span>
   <span class="slug">korekta zrzutu · czas i skład</span>
   <span class="canvas-meta"><span class="pulse"></span>Arkusz 10D</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Korekta zrzutu">
+<main class="phone" role="region" aria-label="Mockup - Korekta zrzutu">
   <div class="status-bar">
     <span>9:41</span>
     <span class="status-right">
@@ -255,7 +255,7 @@
           <span class="alt-tag">z GPS · średnia z 15 s</span>
         </div>
 
-        <div class="field-label" style="margin-top:2px;">Skład — ilu wyskoczyło</div>
+        <div class="field-label" style="margin-top:2px;">Skład - ilu wyskoczyło</div>
         <div class="type-row">
           <div class="type-name">
             <span class="type-lbl">Tandem</span>
@@ -298,13 +298,13 @@
 
         <div class="reason-box">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          <input class="reason-input" type="text" placeholder="Powód (opcjonalnie) — np. piąty skoczek doliczony po locie" />
+          <input class="reason-input" type="text" placeholder="Powód (opcjonalnie) - np. piąty skoczek doliczony po locie" />
         </div>
 
         <!-- Ten zrzut nie był jeszcze poprawiany, więc wiersza historii NIE MA:
              „Historia zmian · brak" byłoby wierszem o niczym (reguła z issue #40,
-             ta sama, którą wyleciało „Notatki —"). Z pierwszą poprawką wiersz wchodzi
-             sam, z licznikiem — jak na 10E. -->
+             ta sama, którą wyleciało „Notatki -"). Z pierwszą poprawką wiersz wchodzi
+             sam, z licznikiem - jak na 10E. -->
 
         <div class="modal-actions">
           <a href="10d-edycja.html" class="btn-cancel">Anuluj</a>
@@ -317,7 +317,7 @@
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Arkusze trybu edycji — kiedy który?</div>
+  <div class="vp-title">Arkusze trybu edycji - kiedy który?</div>
   <a class="vp-item" href="10e-korekta-zdarzenia.html">
     <span class="vp-badge blue">10E</span>
     <span class="vp-body">
@@ -336,7 +336,7 @@
     <span class="vp-badge blue">10G</span>
     <span class="vp-body">
       <span class="vp-name">Korekta zrzutu</span>
-      <span class="vp-when">Ołówek przy wyniesieniu w dniu skokowym: czas i skład (tandem / AFF / solo) w jednym arkuszu. Wysokość zostaje odczytem z GPS — jest średnią z okna 15 s, więc wpisanie jej ręcznie zamieniłoby pomiar na zgadywanie. Skład jest OPCJONALNY: brak liczby znaczy „nie podano", nie zero.</span>
+      <span class="vp-when">Ołówek przy wyniesieniu w dniu skokowym: czas i skład (tandem / AFF / solo) w jednym arkuszu. Wysokość zostaje odczytem z GPS - jest średnią z okna 15 s, więc wpisanie jej ręcznie zamieniłoby pomiar na zgadywanie. Skład jest OPCJONALNY: brak liczby znaczy „nie podano", nie zero.</span>
     </span>
     <span class="vp-tag">ten arkusz</span>
   </a>
@@ -344,7 +344,7 @@
     <span class="vp-badge amber">10H</span>
     <span class="vp-body">
       <span class="vp-name">Dodaj wpis</span>
-      <span class="vp-when">Zrzut, którego w logu nie ma w ogóle — razem z resztą faktów operacyjnych.</span>
+      <span class="vp-when">Zrzut, którego w logu nie ma w ogóle - razem z resztą faktów operacyjnych.</span>
     </span>
   </a>
   <a class="vp-item" href="10i-historia-zmian.html">

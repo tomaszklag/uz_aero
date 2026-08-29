@@ -1,9 +1,9 @@
 /**
- * UZ Aero — panel: formularz korekty administratora (moduł czysty).
+ * UZ Aero - panel: formularz korekty administratora (moduł czysty).
  *
  * Najważniejszy przypadek w tym pliku dotyczy STREFY CZASOWEJ. Wartość z tego pola
  * jedzie do rejestru klubu, a `new Date('2026-07-30 13:01:33')` w przeglądarce znaczy
- * czas LOKALNY — w Warszawie latem przesunięty o dwie godziny, bez błędu i bez
+ * czas LOKALNY - w Warszawie latem przesunięty o dwie godziny, bez błędu i bez
  * ostrzeżenia. Korekta czasu, która sama przesuwa czas, wygląda poprawnie i zapisuje
  * kłamstwo, więc test pilnuje, że parsowanie idzie przez `parseDateTimeUtc`.
  */
@@ -28,7 +28,7 @@ const at = (h: number, m: number, s = 0): number => DAY + ((h * 60 + m) * 60 + s
 
 /**
  * Wpis osi w kształcie, którego wymaga formularz. Pola podajemy PŁASKO (a nie jako
- * `Partial<Event>`), bo `Event` jest unią dyskryminowaną po `type` — częściowy obiekt
+ * `Partial<Event>`), bo `Event` jest unią dyskryminowaną po `type` - częściowy obiekt
  * nie należy do żadnego jej wariantu i kompilator ma rację, odmawiając.
  */
 interface EntryOverride {
@@ -52,7 +52,7 @@ const entry = (over: EntryOverride = {}): TimelineEntryDto =>
   }) as unknown as TimelineEntryDto;
 
 describe('czas odniesienia i wartość początkowa pola', () => {
-  it('bierze czas, którym projekcja liczy dzień DZIŚ — GPS przed zegarem telefonu', () => {
+  it('bierze czas, którym projekcja liczy dzień DZIŚ - GPS przed zegarem telefonu', () => {
     expect(referenceTime(entry())).toBe(at(13, 13, 33));
     expect(referenceTime(entry({ gpsTime: at(13, 1, 33) }))).toBe(at(13, 1, 33));
   });
@@ -65,7 +65,7 @@ describe('czas odniesienia i wartość początkowa pola', () => {
   });
 
   it('pole startuje od korygowanego odczytu, nie od „teraz" i nie od pustki', () => {
-    // Pusty formularz kazałby przepisać całą datę z osi — czyli dołożyłby okazję
+    // Pusty formularz kazałby przepisać całą datę z osi - czyli dołożyłby okazję
     // do literówki tam, gdzie chodzi o minuty.
     expect(initialTimeText(entry())).toBe('2026-07-30 13:13:33');
   });
@@ -87,13 +87,13 @@ describe('pole nowego czasu', () => {
     expect(state.message).toContain('00:07:00');
   });
 
-  it('mówi wprost, gdy czas jest ten sam — korekta bez zmiany to nie korekta', () => {
+  it('mówi wprost, gdy czas jest ten sam - korekta bez zmiany to nie korekta', () => {
     const state = timeFieldState('2026-07-30 13:13:33', at(13, 13, 33));
     expect(state.ok).toBe(true);
     expect(state.message).toContain('Ten sam czas');
   });
 
-  it('pusty wpis NIE jest błędem pola — to stan początkowy, nie pomyłka', () => {
+  it('pusty wpis NIE jest błędem pola - to stan początkowy, nie pomyłka', () => {
     const state = timeFieldState('   ', at(13, 13, 33));
     expect(state.ok).toBe(false);
     expect(state.invalid).toBe(false);
@@ -112,7 +112,7 @@ describe('pole nowego czasu', () => {
 
 describe('powód korekty', () => {
   it('pusty i sam biały znak są ODRZUCANE, zanim poleci żądanie', () => {
-    // Serwer sprawdza to samo (`.trim().min(1)`), więc to nie jest zabezpieczenie —
+    // Serwer sprawdza to samo (`.trim().min(1)`), więc to nie jest zabezpieczenie -
     // to różnica między „przycisk mówi, czego brakuje" a „400 bez wyjaśnienia".
     for (const bad of ['', '   ', '\n\t ']) {
       const state = reasonState(bad);
@@ -144,12 +144,12 @@ describe('szkic korekty', () => {
     expect(correctionDraft('void', 'cel-1', time)).toEqual({ targetUuid: 'cel-1', action: 'void' });
   });
 
-  it('`retime` bez czytelnego czasu NIE POWSTAJE — brak podglądu zamiast złego podglądu', () => {
+  it('`retime` bez czytelnego czasu NIE POWSTAJE - brak podglądu zamiast złego podglądu', () => {
     const broken = timeFieldState('wczoraj', at(13, 13, 33));
     expect(correctionDraft('retime', 'cel-1', broken)).toBeNull();
   });
 
-  it('`void` działa nawet z zepsutym polem czasu — nie używa go w ogóle', () => {
+  it('`void` działa nawet z zepsutym polem czasu - nie używa go w ogóle', () => {
     const broken = timeFieldState('wczoraj', at(13, 13, 33));
     expect(correctionDraft('void', 'cel-1', broken)).toEqual({
       targetUuid: 'cel-1',
@@ -161,9 +161,9 @@ describe('szkic korekty', () => {
     expect(correctionDraft('void', '', time)).toBeNull();
   });
 
-  it('szkic NIE NIESIE powodu — ten należy wyłącznie do zapisu i do audytu', () => {
+  it('szkic NIE NIESIE powodu - ten należy wyłącznie do zapisu i do audytu', () => {
     // Ten sam obiekt jedzie do podglądu i do zapisu; gdyby niósł `reason`, podgląd
-    // wymagałby uzasadnienia, żeby pokazać liczby — czyli odwracałby kolejność
+    // wymagałby uzasadnienia, żeby pokazać liczby - czyli odwracałby kolejność
     // myślenia: najpierw rozumiesz skutek, potem tłumaczysz decyzję.
     expect(Object.keys(correctionDraft('retime', 'cel-1', time)!).sort()).toEqual([
       'action',
@@ -174,13 +174,13 @@ describe('szkic korekty', () => {
 });
 
 describe('lista akcji', () => {
-  it('ma DOKŁADNIE trzy pozycje — tyle, ile zna domena', () => {
+  it('ma DOKŁADNIE trzy pozycje - tyle, ile zna domena', () => {
     expect(ACTION_OPTIONS.map((option) => option.id)).toEqual(['retime', 'void', 'amend']);
   });
 });
 
 /**
- * `amend` (issue #43) — korekta WARTOŚCI. Panel musi umieć poprawić odczyt paliwa
+ * `amend` (issue #43) - korekta WARTOŚCI. Panel musi umieć poprawić odczyt paliwa
  * i motogodzin, bo po zamknięciu okna 24 h jest jedynym, kto może: baner na ekranie
  * pilota obiecuje właśnie to („dalsze poprawki wprowadza administrator").
  */
@@ -193,7 +193,7 @@ describe('korekta wartości', () => {
     expect(correctionDraft('amend', 'cel-1', time, state)).toBeNull();
   });
 
-  it('jedno pole wystarczy — drugiej liczby nie trzeba przepisywać', () => {
+  it('jedno pole wystarczy - drugiej liczby nie trzeba przepisywać', () => {
     const state = amendState('168', '');
     expect(state.fields).toEqual({ fuelL: 168 });
     expect(correctionDraft('amend', 'cel-1', time, state)).toEqual({
@@ -203,7 +203,7 @@ describe('korekta wartości', () => {
     });
   });
 
-  it('przecinek dziesiętny jest wpisem legalnym — klawiatura bywa polska', () => {
+  it('przecinek dziesiętny jest wpisem legalnym - klawiatura bywa polska', () => {
     expect(amendState('', '3907,8').fields).toEqual({ mh: 3907.8 });
   });
 
@@ -214,13 +214,13 @@ describe('korekta wartości', () => {
     expect(correctionDraft('amend', 'cel-1', time, state)).toBeNull();
   });
 
-  it('biała lista pól jest lustrem domeny — czego nie ma, tego formularz nie pokaże', () => {
+  it('biała lista pól jest lustrem domeny - czego nie ma, tego formularz nie pokaże', () => {
     expect(amendFieldsFor('day_close')).toEqual(['fuelL', 'mh']);
-    // Preflight niesie ODCZYT i NOTATKĘ z kroku „zadanie" (02e) — obie do poprawienia.
+    // Preflight niesie ODCZYT i NOTATKĘ z kroku „zadanie" (02e) - obie do poprawienia.
     expect(amendFieldsFor('preflight_confirm')).toEqual(['fuelL', 'mh', 'notes']);
     expect(amendFieldsFor('drop')).toEqual(['jumpers']);
     expect(amendFieldsFor('manual_log_entry')).toEqual(['notes']);
-    // Zdarzenie bez wartości do poprawienia — zostaje `retime`.
+    // Zdarzenie bez wartości do poprawienia - zostaje `retime`.
     expect(amendFieldsFor('engine_stop')).toEqual([]);
     expect(amendFieldsFor('landing')).toEqual([]);
   });

@@ -1,7 +1,7 @@
 /**
- * UZ Aero — panel: SZUFLADA KONTA (`design/admin/A06a-konto.html`).
+ * UZ Aero - panel: SZUFLADA KONTA (`design/admin/A06a-konto.html`).
  *
- * **Jedna szuflada, trzy wejścia** — dokładnie jak mówi mockup: „Nowe konto"
+ * **Jedna szuflada, trzy wejścia** - dokładnie jak mówi mockup: „Nowe konto"
  * (wszystkie pola aktywne), „Szczegóły" z wiersza (edycja tożsamości i roli) oraz
  * „Reset hasła" z wiersza (`?akcja=haslo`: tożsamość zablokowana, aktywna sekcja
  * hasła). Nie rozdzielamy tego na ekrany, bo to ta sama decyzja: kto ma dostęp
@@ -11,12 +11,12 @@
  *
  *  1. **Hasła nie ma w formularzu i nigdy nie będzie.** Generuje je serwer i oddaje
  *     JEDEN RAZ w odpowiedzi; panel pokazuje wartość w szufladzie i zapomina razem
- *     z jej zamknięciem. Nie ma trasy „pokaż ponownie" — kolejny reset generuje nowe.
+ *     z jej zamknięciem. Nie ma trasy „pokaż ponownie" - kolejny reset generuje nowe.
  *  2. **Deaktywacja zrywa sesje.** Nie „wyloguje przy najbliższej okazji": serwer
  *     kasuje refresh tokeny w tej samej transakcji, a panel pokazuje ICH LICZBĘ,
  *     bo to jest odpowiedź na pytanie „czy ktoś jeszcze na tym koncie pracował".
  *  3. **Odmowa niesie ZASADĘ, nie kod.** `last_admin` znaczy „klub zostałby bez
- *     nikogo, kto zarządza kontami" — i tak ma to przeczytać człowiek, bo to jest
+ *     nikogo, kto zarządza kontami" - i tak ma to przeczytać człowiek, bo to jest
  *     ta chwila, w której sięga się po `UPDATE` w psql.
  *
  * Szuflada jest `.tsx` bez decyzji o treści: walidacja, komunikaty i dostępność akcji
@@ -70,23 +70,23 @@ interface AccountDrawerProps {
   /** Konto z listy; `null` przy zakładaniu nowego albo przy nieznanym identyfikatorze. */
   pilot: PilotListItemDto | null;
   creating: boolean;
-  /** Wejście „Reset hasła" — tożsamość zablokowana (mockup A06a). */
+  /** Wejście „Reset hasła" - tożsamość zablokowana (mockup A06a). */
   passwordMode: boolean;
   capabilities: readonly Capability[] | undefined;
-  /** Identyfikator konta ZALOGOWANEGO — do blokady „nie odetniesz sam siebie". */
+  /** Identyfikator konta ZALOGOWANEGO - do blokady „nie odetniesz sam siebie". */
   selfId: string | null;
   loading: boolean;
   onClose: () => void;
 }
 
 /**
- * Szuflada jest KLUCZOWANA identyfikatorem konta w `PilotsScreen` — więc zmiana konta
+ * Szuflada jest KLUCZOWANA identyfikatorem konta w `PilotsScreen` - więc zmiana konta
  * montuje ją od nowa i żaden szkic ani hasło nie przechodzi między kontami.
  *
  * Tutaj rozstrzyga się druga połowa tej samej sprawy: **wiersz może zniknąć spod
  * szuflady, która została otwarta.** Lista jest zawężona filtrem i wyszukiwaniem, a
  * mutacja potrafi wyrzucić konto spod bieżącego chipa (deaktywacja przy chipie
- * „Aktywni" robi to zawsze). Wtedy `props.pilot` staje się `null` — a odmontowanie
+ * „Aktywni" robi to zawsze). Wtedy `props.pilot` staje się `null` - a odmontowanie
  * szuflady zabrałoby ze sobą jednorazowe hasło i potwierdzenie akcji nieodwracalnej.
  * Dlatego, gdy wiersz był już raz znany, `ExistingAccount` zostaje zamontowany, a co
  * ma pokazać, rozstrzyga czysty `drawerAccount`.
@@ -94,7 +94,7 @@ interface AccountDrawerProps {
 export function AccountDrawer(props: AccountDrawerProps) {
   // Ostatni wiersz, jaki lista pokazała dla TEGO konta (szuflada jest kluczowana jego
   // identyfikatorem, więc ref nie może przenieść wartości na inne konto). Służy
-  // wyłącznie do pierwszego montażu — szkic formularza powstaje z jego wartości.
+  // wyłącznie do pierwszego montażu - szkic formularza powstaje z jego wartości.
   const known = useRef(props.pilot);
   if (props.pilot != null) known.current = props.pilot;
 
@@ -109,7 +109,7 @@ export function AccountDrawer(props: AccountDrawerProps) {
  * Głęboki link do konta, którego nie ma na liście.
  *
  * Dwie przyczyny i obie trzeba rozróżnić: lista jeszcze się nie pobrała (wtedy to nie
- * jest błąd) albo konto wypadło spod zawężenia — bo trasa `GET /pilots/:id` nie
+ * jest błąd) albo konto wypadło spod zawężenia - bo trasa `GET /pilots/:id` nie
  * istnieje, a lista jest jedynym źródłem wierszy. Mockup nie ma na to stanu;
  * projektujemy go w duchu reszty panelu: konkretnie i z podaniem, co dalej.
  */
@@ -127,14 +127,14 @@ function MissingAccount({ loading, onClose }: { loading: boolean; onClose: () =>
     >
       {loading ? (
         <Banner tone="status">
-          <b>Lista kont jeszcze się pobiera.</b> Szuflada otwiera wiersz, który jest na liście —
+          <b>Lista kont jeszcze się pobiera.</b> Szuflada otwiera wiersz, który jest na liście -
           serwer nie ma osobnej trasy dla pojedynczego konta, bo klub ma ich kilkanaście
           i pobranie całości jest tańsze niż druga trasa.
         </Banner>
       ) : (
         <Banner tone="warn">
           <b>Tego konta nie ma w bieżącym zawężeniu.</b> Zdejmij filtr albo wyszukiwanie na
-          liście i otwórz konto z tabeli. Kont nie kasujemy — deaktywacja zostawia wiersz —
+          liście i otwórz konto z tabeli. Kont nie kasujemy - deaktywacja zostawia wiersz -
           więc konto najczęściej po prostu wypadło spod chipa, którym patrzysz.
         </Banner>
       )}
@@ -162,12 +162,12 @@ function NewAccount({ capabilities, onClose }: AccountDrawerProps) {
     <Drawer
       wide
       title="NOWE KONTO PILOTA"
-      sub="konto zakłada administrator — aplikacja nie ma samodzielnej rejestracji"
+      sub="konto zakłada administrator - aplikacja nie ma samodzielnej rejestracji"
       onClose={onClose}
       footer={
         done ? (
           <Button variant="primary" onClick={onClose}>
-            Gotowe — wróć do listy
+            Gotowe - wróć do listy
           </Button>
         ) : (
           <>
@@ -195,7 +195,7 @@ function NewAccount({ capabilities, onClose }: AccountDrawerProps) {
           <Banner tone="status">
             <b>Hasło startowe wygeneruje serwer przy zapisie</b> i pokaże je tutaj{' '}
             <b>jeden raz</b>. Panel nigdy hasła nie wysyła i nie ma pola, w które dałoby się je
-            wpisać — dlatego w tym formularzu ustawiasz wyłącznie tożsamość i rolę.
+            wpisać - dlatego w tym formularzu ustawiasz wyłącznie tożsamość i rolę.
           </Banner>
 
           <IdentityFields draft={draft} onChange={setDraft} disabled={!edit.enabled} />
@@ -213,7 +213,7 @@ function NewAccount({ capabilities, onClose }: AccountDrawerProps) {
 /**
  * Szuflada istniejącego konta: tożsamość, rola, hasło, strefa deaktywacji.
  *
- * `initial` to wiersz Z CHWILI OTWARCIA — jedyne, do czego służy, to szkic formularza
+ * `initial` to wiersz Z CHWILI OTWARCIA - jedyne, do czego służy, to szkic formularza
  * i ostatnia deska ratunku, gdy konto wypadło z zawężenia, zanim cokolwiek zmieniono
  * (np. człowiek przestawił chip przy otwartej szufladzie). Co szuflada POKAZUJE,
  * rozstrzyga `drawerAccount`: wiersz listy, dopóki na niej jest, a potem skutek
@@ -233,7 +233,7 @@ function ExistingAccount({
   const reset = useResetPilotPassword();
   const setActive = useSetPilotActive();
 
-  // Skutki udanych mutacji razem z chwilą, w której serwer odpowiedział — kolejność
+  // Skutki udanych mutacji razem z chwilą, w której serwer odpowiedział - kolejność
   // rozstrzyga `drawerAccount`, bo dwie różne mutacje oddają dwa różne stany konta.
   const pilot =
     drawerAccount(fromList, [
@@ -256,7 +256,7 @@ function ExistingAccount({
       : null;
 
   const busy = update.isPending || reset.isPending || setActive.isPending;
-  // Tożsamość jest zablokowana w wariancie „Reset hasła" (mockup A06a) — po to, żeby
+  // Tożsamość jest zablokowana w wariancie „Reset hasła" (mockup A06a) - po to, żeby
   // dwie decyzje nie jechały jednym kliknięciem: reset hasła i zmiana nazwiska to
   // różne wpisy w dzienniku audytu i różne rozmowy z pilotem.
   const identityLocked = passwordMode || !edit.enabled;
@@ -275,7 +275,7 @@ function ExistingAccount({
       footer={
         <>
           {identityLocked && passwordMode ? (
-            <span className="drawer-note">tożsamość zablokowana — to wejście „reset hasła"</span>
+            <span className="drawer-note">tożsamość zablokowana - to wejście „reset hasła"</span>
           ) : null}
           <Button variant="ghost" onClick={onClose}>
             Zamknij
@@ -294,16 +294,16 @@ function ExistingAccount({
       {failure == null ? null : <FailureBanner failure={failure} />}
       {!update.isSuccess ? null : (
         <Banner tone="ok" live>
-          <b>Zapisano zmiany konta.</b> Wpis w dzienniku audytu powstał tą samą transakcją —
+          <b>Zapisano zmiany konta.</b> Wpis w dzienniku audytu powstał tą samą transakcją -
           widać w nim, co dokładnie się zmieniło.
         </Banner>
       )}
       {setActive.data == null ? null : <ActiveChangeBanner change={setActive.data} />}
 
       <Banner tone="status">
-        <b>Jedna szuflada, trzy wejścia.</b> „Szczegóły" — tożsamość i rola do zmiany.{' '}
-        „Reset hasła" z wiersza listy — tożsamość zablokowana, aktywna tylko sekcja hasła
-        startowego. „Nowe konto" — wszystkie pola puste. To ta sama decyzja: kto ma dostęp
+        <b>Jedna szuflada, trzy wejścia.</b> „Szczegóły" - tożsamość i rola do zmiany.{' '}
+        „Reset hasła" z wiersza listy - tożsamość zablokowana, aktywna tylko sekcja hasła
+        startowego. „Nowe konto" - wszystkie pola puste. To ta sama decyzja: kto ma dostęp
         i z jakim hasłem wchodzi.
       </Banner>
 
@@ -320,7 +320,7 @@ function ExistingAccount({
       >
         <span className="hint">
           Hasło generuje <b>serwer</b> i pokazuje je w tym oknie <b>jeden raz</b>. Nie trafia
-          do adresu URL, do logów serwera ani do dziennika audytu — w bazie zostaje wyłącznie
+          do adresu URL, do logów serwera ani do dziennika audytu - w bazie zostaje wyłącznie
           hash (<code>password_hash</code>), a audyt zapisuje sam fakt: kto, komu i kiedy
           ustawił hasło. Po zamknięciu szuflady nie da się go odczytać; jedyne wyjście to
           kolejny reset.
@@ -335,7 +335,7 @@ function ExistingAccount({
           </Button>
           {resetGate.reason == null ? null : <span className="hint">{resetGate.reason}</span>}
         </div>
-        {/* Dwa rodzaje sesji, dwa różne mechanizmy — i dlatego stoją tu osobno.
+        {/* Dwa rodzaje sesji, dwa różne mechanizmy - i dlatego stoją tu osobno.
             Refresh tokeny telefonu serwer KASUJE z tabeli i potrafi policzyć; sesji
             panelu nie ma w żadnej tabeli (podpisany JWT w ciasteczku), więc odbiera ją
             znacznik unieważnienia poświadczeń. Jedno zdanie „unieważnione" o obu
@@ -350,7 +350,7 @@ function ExistingAccount({
         <KeyValue label="PIN na telefonie" value="do ustawienia od nowa" tone="amber" />
         <KeyValue label="Zdarzenia w rejestrze" value="bez zmian" tone="green" />
         <span className="hint">
-          Reset wymaga od pilota <b>pełnego logowania przy sieci</b> — to jedyny świadomy
+          Reset wymaga od pilota <b>pełnego logowania przy sieci</b> - to jedyny świadomy
           wyjątek od offline-first. Nie resetuj hasła pilotowi, który jest w tej chwili
           w powietrzu z niepustym outboxem.
         </span>
@@ -362,7 +362,7 @@ function ExistingAccount({
       >
         {pilot.active ? (
           <Banner tone="warn">
-            <b>Konto nieaktywne nie loguje się w aplikacji ani w panelu</b> — znika też z listy
+            <b>Konto nieaktywne nie loguje się w aplikacji ani w panelu</b> - znika też z listy
             wyboru Duala, a jego <b>aktywne sesje są zrywane w tej samej transakcji</b>. Ale{' '}
             <b>jego zdarzenia zostają w rejestrze</b> (append-only, nic tu nie kasujemy) i dalej
             liczą się w statystykach, w kartach dnia i w łańcuchu motogodzin samolotu.
@@ -371,7 +371,7 @@ function ExistingAccount({
         ) : (
           <Banner tone="status">
             <b>Konto jest wyłączone.</b> Aktywacja przywraca logowanie tym samym hasłem, które
-            konto miało wcześniej. Jeśli pilot go nie pamięta — najpierw aktywuj, potem
+            konto miało wcześniej. Jeśli pilot go nie pamięta - najpierw aktywuj, potem
             zresetuj hasło (reset konta nieaktywnego serwer odrzuca, bo hasło i tak nikogo
             nie zaloguje).
           </Banner>
@@ -407,14 +407,14 @@ function ExistingAccount({
         <span className="hint">
           Zmiana kodu pilota <b>nie przepisuje historii</b>: zdarzenia wiążą się z{' '}
           <code>id</code> konta. W kartach arkusza wyeksportowanych wcześniej zostaje jednak
-          stary kod — dlatego kod zmienia się świadomie, a nie „przy okazji".
+          stary kod - dlatego kod zmienia się świadomie, a nie „przy okazji".
         </span>
       </Card>
     </Drawer>
   );
 }
 
-/** Pola tożsamości — wspólne dla obu wariantów szuflady. */
+/** Pola tożsamości - wspólne dla obu wariantów szuflady. */
 function IdentityFields({
   draft,
   onChange,
@@ -445,7 +445,7 @@ function IdentityFields({
           form.code.message ?? (
             <>
               Unikalny w całym systemie. Widoczny w logu dnia, na liście lotów i w kartach
-              arkusza — dlatego krótki i mono. Zapisujemy go WERSALIKAMI niezależnie od tego,
+              arkusza - dlatego krótki i mono. Zapisujemy go WERSALIKAMI niezależnie od tego,
               jak go wpiszesz.
             </>
           )
@@ -467,7 +467,7 @@ function IdentityFields({
         hint={
           form.email.message ?? (
             <>
-              Służy jako login — do aplikacji na telefonie i (jeśli rola pozwala) do panelu.
+              Służy jako login - do aplikacji na telefonie i (jeśli rola pozwala) do panelu.
               Pole może zostać puste: wtedy loginem jest sam kod pilota.
             </>
           )
@@ -486,7 +486,7 @@ function IdentityFields({
   );
 }
 
-/** Wybór roli — lista kart, jedyny dozwolony „select" w produkcie. */
+/** Wybór roli - lista kart, jedyny dozwolony „select" w produkcie. */
 function RoleChoice({
   role,
   disabled,
@@ -520,7 +520,7 @@ function RoleChoice({
 /**
  * Hasło pokazane RAZ.
  *
- * Pole jest `readonly` i mono — nie ma tu czego wpisać, bo wartość przyszła z serwera.
+ * Pole jest `readonly` i mono - nie ma tu czego wpisać, bo wartość przyszła z serwera.
  * Kopiowanie do schowka jest wygodą, a nie warunkiem: gdy przeglądarka odmówi dostępu
  * do schowka, hasło i tak stoi na ekranie do przepisania.
  */
@@ -559,9 +559,9 @@ function SecretCard({
 
       <Banner tone="danger">
         <b>Hasło widzisz wyłącznie teraz, w tym oknie.</b> Nie trafia do adresu URL, do logów
-        serwera ani do dziennika audytu — w bazie zostaje wyłącznie hash
+        serwera ani do dziennika audytu - w bazie zostaje wyłącznie hash
         (<code>password_hash</code>). Audyt zapisuje sam fakt: „ustawiono hasło", kto to zrobił
-        i kiedy. Po zamknięciu szuflady nie da się go odczytać — jedyne wyjście to kolejny
+        i kiedy. Po zamknięciu szuflady nie da się go odczytać - jedyne wyjście to kolejny
         reset i nowe hasło.
       </Banner>
     </Card>
@@ -571,8 +571,8 @@ function SecretCard({
 /**
  * Potwierdzenie zmiany dostępu do konta.
  *
- * Cała treść — łącznie z odmianą liczebnika i z rozróżnieniem sesji telefonu od sesji
- * panelu — pochodzi z `activeChangeCopy`. Składanie tego napisu w JSX-ie dawało
+ * Cała treść - łącznie z odmianą liczebnika i z rozróżnieniem sesji telefonu od sesji
+ * panelu - pochodzi z `activeChangeCopy`. Składanie tego napisu w JSX-ie dawało
  * „Unieważniono 1 sesji" i milczało o sesji panelu, której serwer nie potrafi zliczyć.
  */
 function ActiveChangeBanner({ change }: { change: PilotChangeDto }) {

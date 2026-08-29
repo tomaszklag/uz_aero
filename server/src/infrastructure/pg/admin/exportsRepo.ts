@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) — adapter monitora eksportu (`ExportsAdminPort`, `A05`).
+ * UZ Aero (serwer) - adapter monitora eksportu (`ExportsAdminPort`, `A05`).
  *
  * Osobny plik od `pg/common/exportLogRepo.ts` z tego samego powodu, dla którego port
  * jest osobny: tamten obsługuje ŚCIEŻKĘ EKSPORTU (`latest`, `append`, blokada rewizji)
@@ -8,24 +8,24 @@
  *
  * ══ LISTA JEDZIE Z `sessions`, NIE Z `export_log` ══
  * Pytanie ekranu brzmi „czy każdy dzień ma aktualny arkusz", więc dzień BEZ ani jednego
- * wpisu w dzienniku musi być na liście — a lista budowana z `export_log` nie umiałaby go
+ * wpisu w dzienniku musi być na liście - a lista budowana z `export_log` nie umiałaby go
  * zobaczyć. To jest ta sama zasada, co przy `MaintenanceAdminPort.sessionUuids`:
  * najcięższe przypadki dryfu to te, których w tabeli docelowej po prostu nie ma.
  *
- * ══ STAN KARTY JEST TU DRUGI RAZ — ŚWIADOMIE, OD 2026-08-01 ══
+ * ══ STAN KARTY JEST TU DRUGI RAZ - ŚWIADOMIE, OD 2026-08-01 ══
  * `CASE` niżej powtarza `exportState` z `application/admin/mappers/exportListItem.ts`.
  * Do 2026-08-01 tego wyrażenia tu NIE BYŁO i było to uzasadnione („jedna definicja
  * wniosku"), tyle że konsekwencją było zawężanie i liczenie w JS nad tablicą JUŻ
  * OBCIĘTĄ `LIMIT`-em: klub z 250 zamkniętymi dniami dostawał 200 najnowszych, a chip
- * „Bez karty" pokazywał zero — nad rejestrem, w którym dzień bez karty leżał od
+ * „Bez karty" pokazywał zero - nad rejestrem, w którym dzień bez karty leżał od
  * dziewięciu miesięcy. Ekran, którego jedyne pytanie brzmi „czy KAŻDY dzień ma arkusz",
  * odpowiadał o oknie i milczał o reszcie.
  *
- * Wybór jest więc między dwoma wyrażeniami jednej reguły a ekranem, który kłamie —
+ * Wybór jest więc między dwoma wyrażeniami jednej reguły a ekranem, który kłamie -
  * i pada na to pierwsze, bo rozjazd DA SIĘ złapać testem, a kłamstwo licznika nie.
  * Pilnuje go `test/adminExports.test.ts`: liczniki muszą zgadzać się z policzonymi
  * wierszami odpowiedzi, a `?state=X` musi oddać dokładnie te dni, którym mapper nadał
- * `X`. **Zmieniasz `CASE` — zmień `exportState` w tym samym commicie.**
+ * `X`. **Zmieniasz `CASE` - zmień `exportState` w tym samym commicie.**
  */
 
 import { EXPORT_BLOCKING_FLAG_TYPES } from '../../../application/common/export/dayExporter.ts';
@@ -49,7 +49,7 @@ interface ExportJoinDbRow {
   pic_code: string | null;
   pic_name: string | null;
   status: string;
-  /** `BIGINT` — sterownik oddaje `int8` NAPISEM, nie liczbą. */
+  /** `BIGINT` - sterownik oddaje `int8` NAPISEM, nie liczbą. */
   claim_time: string | number | null;
   updated_at: string | Date;
   /** `int[]`; `COALESCE` w zapytaniu gwarantuje pustą tablicę zamiast `NULL`. */
@@ -79,21 +79,21 @@ interface RevisionDbRow {
 
 /**
  * Zapytanie listy i szczegółu. `blockingTypes` to gotowe miejsca `$n` na typy flag
- * blokujących — numerację nadaje `SqlFilter`, żeby nie było jej w tym pliku wcale.
+ * blokujących - numerację nadaje `SqlFilter`, żeby nie było jej w tym pliku wcale.
  *
  * `LEFT JOIN LATERAL` po ostatnią rewizję zamiast `GROUP BY` z `max()`: potrzebujemy
  * TRZECH pól z tego samego, najświeższego wiersza (`revision`, `exported_at`,
- * `sheet_url`), a agregat oddałby maksimum każdego z osobna — czyli mógłby skleić numer
+ * `sheet_url`), a agregat oddałby maksimum każdego z osobna - czyli mógłby skleić numer
  * z jednej wysyłki z adresem z innej. Przy `ORDER BY revision DESC LIMIT 1` planer
  * schodzi po `uq_export_log_card_revision`.
  *
  * Flagi blokujące jadą podzapytaniem agregującym IDENTYFIKATORY, nie samą liczbą: wiersz
  * ma prowadzić DO KONKRETNEJ flagi („Do flagi #1046"), a licznik kazałby administratorowi
  * szukać jej po omacku w skrzynce. Lista typów blokujących jest PARAMETREM
- * z `EXPORT_BLOCKING_FLAG_TYPES` — tego samego miejsca, co bramka `DayExporter`.
+ * z `EXPORT_BLOCKING_FLAG_TYPES` - tego samego miejsca, co bramka `DayExporter`.
  * Rozwijamy ją na osobne `$n` zamiast `= ANY ($n)` z tablicą, bo serializacja tablicy
  * do literału Postgresa jest zachowaniem STEROWNIKA, a testy jadą na PGlite i produkcja
- * na `pg` — kilka `$n` znaczy to samo w obu.
+ * na `pg` - kilka `$n` znaczy to samo w obu.
  *
  * `LEFT JOIN pilots` i `LEFT JOIN aircraft`, nigdy `INNER`: konto skasowane albo samolot
  * wycofany z rejestru nie mogą usuwać dnia lotnego z monitora eksportu.
@@ -107,18 +107,18 @@ interface RevisionDbRow {
  * Wada, dla której to pole powstało, ZNIKNĘŁA z konstrukcji: karta jest dobą samolotu,
  * więc poranna i popołudniowa zmiana są dziś WIERSZAMI jednego dokumentu, a nie dwoma
  * dokumentami o wspólnej nazwie. Wszystkie sesje jednej rewizji mają ten sam numer, więc
- * `o.revision > e.revision` nie zapali się między nimi — i o to chodzi.
+ * `o.revision > e.revision` nie zapali się między nimi - i o to chodzi.
  *
  * Pole zostaje z dwóch powodów. Po pierwsze, dalej ma realną treść: sesja WYŁĄCZONA
- * z karty otwartą flagą (§4.7 — bramka obejmuje sesję, nie kartę) zostaje przy swojej
+ * z karty otwartą flagą (§4.7 - bramka obejmuje sesję, nie kartę) zostaje przy swojej
  * ostatniej rewizji, a doba idzie dalej bez niej; wtedy `overwrittenBy` mówi dokładnie to,
- * co powinno — „treść leżąca dziś pod tą nazwą nie opisuje tego wiersza". Po drugie jest
+ * co powinno - „treść leżąca dziś pod tą nazwą nie opisuje tego wiersza". Po drugie jest
  * SYGNALIZATOREM: gdyby kiedykolwiek zapaliło się dla dwóch sesji tej samej doby, znaczyłoby,
- * że powstały dwie karty jednego dokumentu — czyli że zmiana z 2026-08-07 gdzieś się cofnęła.
+ * że powstały dwie karty jednego dokumentu - czyli że zmiana z 2026-08-07 gdzieś się cofnęła.
  *
  * Porównanie idzie po REWIZJI, a nie po parze `(exported_at, id)` jak do 2026-08-07.
  * Stempel czasu przestał rozstrzygać: wiersze jednej rewizji dzielą `exported_at` z tego
- * samego `Clock`, a `id` rośnie w obrębie jednego `INSERT`-a — porównanie po `id` uznałoby
+ * samego `Clock`, a `id` rośnie w obrębie jednego `INSERT`-a - porównanie po `id` uznałoby
  * pierwszą sesję karty za nadpisaną przez drugą sesję TEJ SAMEJ karty. Numer rewizji jest
  * jedyną osią, która opisuje kolejność DOKUMENTÓW, a nie kolejność wierszy.
  */
@@ -168,7 +168,7 @@ const selectSql = (blockingTypes: string): string => `
     ) ow ON TRUE`;
 
 /**
- * Stan karty wyrażony w SQL-u — BLIŹNIAK `exportState` z
+ * Stan karty wyrażony w SQL-u - BLIŹNIAK `exportState` z
  * `application/admin/mappers/exportListItem.ts`, wiersz po wierszu, w tej samej
  * kolejności (kolejność JEST regułą: pierwsze dopasowanie wygrywa).
  *
@@ -188,7 +188,7 @@ const STATE_SQL = `
 /**
  * `scanned` = wiersze surowe, `stated` = te same wiersze z dołożoną kolumną `state`.
  *
- * Dwa poziomy, bo `CASE` czyta `blocking_flag_ids` — kolumnę powstającą z podzapytania
+ * Dwa poziomy, bo `CASE` czyta `blocking_flag_ids` - kolumnę powstającą z podzapytania
  * agregującego. Powtórzenie tamtego podzapytania wewnątrz `CASE` byłoby drugim
  * wyliczeniem tej samej listy flag, a przy okazji drugim miejscem, w którym mieszka
  * `EXPORT_BLOCKING_FLAG_TYPES`.
@@ -208,7 +208,7 @@ const toJoin = (r: ExportJoinDbRow): AdminExportJoin => ({
   // Kolumna jest wolnym tekstem z `DEFAULT 'active'`; monitor rozróżnia wyłącznie
   // „zamknięty czy nie", bo tylko to jest bramką eksportera.
   status: r.status === 'closed' ? 'closed' : 'active',
-  // `claim_time` niesie chwilę przejęcia samolotu (decyzja 2026-08-07) — dobę karty liczymy
+  // `claim_time` niesie chwilę przejęcia samolotu (decyzja 2026-08-07) - dobę karty liczymy
   // z niej, bo karta jest DOBĄ SAMOLOTU (§4.7), a nie służbą pilota.
   claimedAt: r.claim_time == null ? null : Number(r.claim_time),
   updatedAt: new Date(r.updated_at),
@@ -237,7 +237,7 @@ export class PgAdminExportsRepo implements ExportsAdminPort {
    * DWA zapytania nad tymi samymi warunkami: strona ma `LIMIT`, licznik nie.
    *
    * Ten sam wzorzec, co `PgAdminFlagsRepo.list` („`total` musi opisywać CAŁY wynik
-   * filtra, nie stronę"). Zawężenie po stanie stoi PRZED `LIMIT`-em, a nie po nim —
+   * filtra, nie stronę"). Zawężenie po stanie stoi PRZED `LIMIT`-em, a nie po nim -
    * to jest cała poprawka z 2026-08-01: dzień z awarią eksportu sprzed dziewięciu
    * miesięcy musi dać się znaleźć chipem „Bez karty", a nie znikać przy obcięciu.
    *
@@ -267,14 +267,14 @@ export class PgAdminExportsRepo implements ExportsAdminPort {
 
     const counts = await this.countByState(db, filter);
     // `matched` opisuje zapytanie RAZEM z zawężeniem: bez chipa to cały zakres, z chipem
-    // — ta jedna liczba, którą chip obiecuje. Stąd trasa wie, czy limit obciął listę.
+    // - ta jedna liczba, którą chip obiecuje. Stąd trasa wie, czy limit obciął listę.
     const matched = filter.state === undefined ? counts.total : counts[filter.state];
 
     return { items: rows.map(toJoin), counts, matched };
   }
 
   /**
-   * Liczniki per stan nad CAŁYM zakresem filtra — bez `LIMIT`-u i bez zawężenia po
+   * Liczniki per stan nad CAŁYM zakresem filtra - bez `LIMIT`-u i bez zawężenia po
    * stanie (chip pokazujący własną liczbę i zera na wszystkich pozostałych byłby
    * bezużyteczny: po jednym kliknięciu przestałoby być widać, ile jeszcze zostało).
    *
@@ -312,7 +312,7 @@ export class PgAdminExportsRepo implements ExportsAdminPort {
       counts.total += n;
       counts.revised += Number(row.revised);
       counts.overwritten += Number(row.overwritten);
-      // Stan spoza katalogu znaczyłby, że `STATE_SQL` rozjechał się z `ExportState` —
+      // Stan spoza katalogu znaczyłby, że `STATE_SQL` rozjechał się z `ExportState` -
       // ciche pominięcie dałoby licznik `total` większy od sumy stanów i nikt by tego
       // nie zauważył, bo obie liczby byłyby „poprawne" osobno.
       if (!isExportState(row.state)) {
@@ -338,7 +338,7 @@ export class PgAdminExportsRepo implements ExportsAdminPort {
   async history(db: Queryable, sessionUuid: string): Promise<AdminExportRevision[]> {
     // `day::text`, nie `day`: sterowniki parsują `DATE` do JS `Date` o północy LOKALNEJ,
     // a `toISOString()` na takiej dacie cofa dzień w każdej strefie na wschód od
-    // Greenwich — czyli u nas. Ten sam powód, co w `pg/common/exportLogRepo.ts`.
+    // Greenwich - czyli u nas. Ten sam powód, co w `pg/common/exportLogRepo.ts`.
     //
     // Porządek ROSNĄCY, odwrotnie niż na listach panelu: to jest oś czasu jednej karty
     // („rewizja 1 · pierwszy eksport" → „rewizja 3 · korekta"), a historię czyta się od
@@ -362,10 +362,10 @@ export class PgAdminExportsRepo implements ExportsAdminPort {
 /**
  * Wszystkie filtry OPCJONALNE i pomijane, gdy nieustawione.
  *
- * Zakres dat idzie po `claim_time`, czyli po CZASIE PRZEJĘCIA — tej samej osi, co lista dni
+ * Zakres dat idzie po `claim_time`, czyli po CZASIE PRZEJĘCIA - tej samej osi, co lista dni
  * (`A02`) i tej samej, z której powstaje nazwa karty. Filtrowanie po `exported_at`
  * odpowiadałoby na inne pytanie („co wysłano w tym tygodniu") i gubiłoby dokładnie te
- * dni, dla których karta nigdy nie powstała — czyli te, dla których ekran istnieje.
+ * dni, dla których karta nigdy nie powstała - czyli te, dla których ekran istnieje.
  */
 function applyFilters(sql: SqlFilter, filter: ExportListFilter): void {
   sql.addOptional('s.claim_time >= ?', filter.fromMs);

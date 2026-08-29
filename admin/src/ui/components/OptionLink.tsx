@@ -1,9 +1,9 @@
 /**
- * UZ Aero — panel: pozycja listy kart prowadząca w głąb (`.opt` jako `<a>`).
+ * UZ Aero - panel: pozycja listy kart prowadząca w głąb (`.opt` jako `<a>`).
  *
  * Wariant NAWIGACYJNY karty wyboru: mockup `A03a` używa `.opt` do wypisania sesji
  * objętych flagą, każda jako link do karty dnia. Szewron po prawej zajmuje miejsce
- * `.opt-check`, bo mówi to samo co on — „to jest do kliknięcia" — tylko o ruchu
+ * `.opt-check`, bo mówi to samo co on - „to jest do kliknięcia" - tylko o ruchu
  * w głąb, a nie o zaznaczeniu.
  */
 
@@ -14,7 +14,7 @@ import { ChevronRightIcon } from './icons';
 interface OptionLinkProps {
   to: string;
   name: string;
-  /** Druga linia: mono, drobna — identyfikatory i liczby, nie zdania. */
+  /** Druga linia: mono, drobna - identyfikatory i liczby, nie zdania. */
   desc: string;
 }
 

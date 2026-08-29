@@ -1,16 +1,16 @@
 /**
- * UZ Aero — CockpitActions (`.action-row` z mockupów 05, 05a–05d)
+ * UZ Aero - CockpitActions (`.action-row` z mockupów 05, 05a–05d)
  *
  * Pasek trzech akcji przyklejony do dołu ekranu w locie: zapis ręczny (szeroki),
  * zrzut (wąski, niebieski) i STOP ENGINE (wąski, czerwony).
  *
  * Proporcje nie są przypadkowe. Zapis ręczny jest najszerszy, bo to **ratunek na fałszywą
- * detekcję** — GPS klasy konsumenckiej gubi starty i lądowania (§8), a poprawka nie może
+ * detekcję** - GPS klasy konsumenckiej gubi starty i lądowania (§8), a poprawka nie może
  * być trudniejsza niż błąd. STOP jest najwęższy i przez większość lotu zablokowany:
  * `engine_stop` w powietrzu byłby fałszywym wpisem, więc pokazujemy powód zamiast
  * chować przycisk (§6 pkt 3).
  *
- * Pasek stoi w stałym miejscu niezależnie od tego, jak długi jest log — w locie pilot
+ * Pasek stoi w stałym miejscu niezależnie od tego, jak długi jest log - w locie pilot
  * sięga po te przyciski, nie patrząc.
  */
 
@@ -24,10 +24,10 @@ import { toneColors } from '../tone';
 
 export interface CockpitActionsProps {
   /**
-   * Akcja szeroka po lewej — następne zdarzenie sekwencji (Taxi / Take off / Landing).
+   * Akcja szeroka po lewej - następne zdarzenie sekwencji (Taxi / Take off / Landing).
    *
    * Bez tonu (decyzja 2026-08-12): do 2026-08-12 przy utracie GPS przycisk awansował
-   * na AMBER, żeby powiedzieć „teraz zapisujesz sam". Kolor niczego nie rozróżniał —
+   * na AMBER, żeby powiedzieć „teraz zapisujesz sam". Kolor niczego nie rozróżniał -
    * pilot sięga po ten przycisk zawsze z tego samego powodu (logger nie rozpoznał
    * stanu), a czy zawinił brak fixa, czy zła detekcja przy zdrowym odbiorniku, nie
    * zmienia ani czynności, ani zapisu. O czujniku mówi baner 05g i siatka parametrów.
@@ -36,12 +36,12 @@ export interface CockpitActionsProps {
   primaryIcon?: IconName;
   onPrimary: () => void;
   /**
-   * Zrzut — istnieje tylko w powietrzu dnia skokowego, AKTYWNY tylko w Cruise
+   * Zrzut - istnieje tylko w powietrzu dnia skokowego, AKTYWNY tylko w Cruise
    * (reguły i wyjątek bez GPS: `logic/cockpitActions.ts`, decyzja 2026-08-11).
    *
    * `undefined` = przycisku NIE MA. To nie jest blokada z powodem, tylko brak akcji:
    * w dniu przelotu czy egzaminu nie ma czego wynosić, więc `drop` nie może się wydarzyć
-   * (issue #19 — pilot zgłosił zrzut dostępny przy operacji „Przelot"). Wyszarzony
+   * (issue #19 - pilot zgłosił zrzut dostępny przy operacji „Przelot"). Wyszarzony
    * przycisk mówiłby „teraz nie, ale kiedyś tak", a to nieprawda o tym dniu.
    * W locie natomiast przycisk STOI przygaszony zamiast znikać: pasek trzyma stałą
    * geometrię, bo pilot sięga po niego nie patrząc.
@@ -49,7 +49,7 @@ export interface CockpitActionsProps {
   onDrop?: () => void;
   dropDisabledReason?: string | null;
   /**
-   * Załadunek skoczków (issue #21 pkt 7) — naziemna połowa pary zrzut/załadunek:
+   * Załadunek skoczków (issue #21 pkt 7) - naziemna połowa pary zrzut/załadunek:
    * na ziemi dnia skokowego zajmuje slot, w którym w powietrzu stoi zrzut, więc pasek
    * trzyma stałą geometrię w obu stanach. `undefined` = przycisku NIE MA (ta sama
    * zasada „brak akcji, nie blokada" co przy zrzucie).
@@ -107,7 +107,7 @@ export function CockpitActions({
 
       {/* Zrzut bez podpisu „w locie" (issue #19): przy operacji skokowej to jedyny stan,
           w jakim ten przycisk bywa zablokowany, a wyniesienie w powietrzu jest dla pilota
-          oczywistością — podpis tłumaczył mu jego własną robotę. Powód zostaje
+          oczywistością - podpis tłumaczył mu jego własną robotę. Powód zostaje
           w `accessibilityHint`, więc czytnik ekranu nadal go poda. */}
       {onDrop != null && (
         <SideButton
@@ -119,7 +119,7 @@ export function CockpitActions({
         />
       )}
 
-      {/* Naziemna połowa pary zrzut/załadunek — ten sam slot, ten sam ton: wsiadanie
+      {/* Naziemna połowa pary zrzut/załadunek - ten sam slot, ten sam ton: wsiadanie
           i wynoszenie to jedna historia opowiedziana w dwóch stanach samolotu. */}
       {onBoarding != null && (
         <SideButton
@@ -179,7 +179,7 @@ function SideButton({
           borderWidth: theme.borderWidth,
           borderColor: colors.border,
           backgroundColor: colors.muted,
-          // Mockup przygasza zablokowany STOP zamiast go chować — powód jest w podpisie.
+          // Mockup przygasza zablokowany STOP zamiast go chować - powód jest w podpisie.
           opacity: disabled ? 0.35 : pressed ? 0.75 : 1,
         },
       ]}

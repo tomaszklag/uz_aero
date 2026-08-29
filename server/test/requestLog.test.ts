@@ -1,9 +1,9 @@
 /**
- * UZ Aero (serwer) — testy DZIENNIKA ŻĄDAŃ (`http/requestLog.ts`).
+ * UZ Aero (serwer) - testy DZIENNIKA ŻĄDAŃ (`http/requestLog.ts`).
  *
  * Dziennik jest narzędziem do patrzenia na żywy serwer, więc jego jedyna twarda reguła
  * dotyczy tego, czego w nim NIE MA: query stringu. Dziś nie nosi on sekretów, ale linia
- * loga bywa kopiowana do zgłoszenia i wklejana w czacie — a `?token=…` skopiowany razem
+ * loga bywa kopiowana do zgłoszenia i wklejana w czacie - a `?token=…` skopiowany razem
  * z nią jest tokenem oddanym. Reszta testów pilnuje, żeby linia dała się czytać kolumnami.
  */
 
@@ -32,7 +32,7 @@ describe('linia dziennika żądań', () => {
     expect(line).toContain('1.3 kB');
   });
 
-  it('NIE pokazuje query stringu — tam pierwszy sekret wyciekłby po cichu', () => {
+  it('NIE pokazuje query stringu - tam pierwszy sekret wyciekłby po cichu', () => {
     const line = requestLine({
       at: AT,
       method: 'GET',
@@ -62,7 +62,7 @@ describe('linia dziennika żądań', () => {
     expect(line.endsWith('2 ms')).toBe(true);
   });
 
-  it('czas jest w UTC, a nie w strefie serwera — inaczej nie zestawi się ze zdarzeniami', () => {
+  it('czas jest w UTC, a nie w strefie serwera - inaczej nie zestawi się ze zdarzeniami', () => {
     // 23:59 UTC to w Polsce następny dzień; dziennik ma mówić tym samym zegarem,
     // co czasy w rejestrze zdarzeń (`CLAUDE.md`, sekcja „Strefa czasowa").
     const line = requestLine({

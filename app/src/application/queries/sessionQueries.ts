@@ -1,13 +1,13 @@
 /**
- * UZ Aero — ZAPYTANIA (strona odczytu).
+ * UZ Aero - ZAPYTANIA (strona odczytu).
  *
- * Strona zapisu to zdarzenia (`commands`), strona odczytu to projekcje — CQRS w wersji
+ * Strona zapisu to zdarzenia (`commands`), strona odczytu to projekcje - CQRS w wersji
  * dla tej aplikacji: **jedna baza, jeden strumień, dwa wejścia**. Świadomie NIE ma
  * osobnego magazynu read-model (§5.2: „przy kilkuset zdarzeniach dziennie tabele
- * agregujące są zbędne") — projekcja liczy się w pamięci przy każdym odczycie.
+ * agregujące są zbędne") - projekcja liczy się w pamięci przy każdym odczycie.
  *
  * Zapytania nigdy nie zapisują i nie sprawdzają reguł. Jeśli ekran potrzebuje danych,
- * bierze je stąd; jeśli chce coś zmienić — przez komendę.
+ * bierze je stąd; jeśli chce coś zmienić - przez komendę.
  */
 
 import {
@@ -45,12 +45,12 @@ export class SessionQueries {
     return this.repo.getSessionEvents(sessionUuid);
   }
 
-  /** Stan i statystyki dnia — projekcja ze strumienia (§3.7, §5.2). */
+  /** Stan i statystyki dnia - projekcja ze strumienia (§3.7, §5.2). */
   async sessionState(sessionUuid: string): Promise<SessionState> {
     return projectSession(await this.repo.getSessionEvents(sessionUuid));
   }
 
-  /** Ile zdarzeń czeka w outboxie — jedyne źródło wskaźnika łączności (§6). */
+  /** Ile zdarzeń czeka w outboxie - jedyne źródło wskaźnika łączności (§6). */
   async outboxStatus(): Promise<OutboxStatus> {
     const count = await this.repo.getOutboxCount();
     return { count, synced: count === 0 };
@@ -78,21 +78,21 @@ export class SessionQueries {
     return this.repo.getPilots();
   }
 
-  /** Sesja zapamiętana w `session_meta` — do wznowienia dnia po restarcie (§5.2). */
+  /** Sesja zapamiętana w `session_meta` - do wznowienia dnia po restarcie (§5.2). */
   currentSession(): Promise<CurrentSession | null> {
     return this.repo.getCurrentSession();
   }
 
   /**
    * Wszystkie dni z lokalnego strumienia (ekran 12): grupowanie po `sessionUuid`
-   * i projekcja per sesja TYM SAMYM `projectSession`, co ekran 10 — liczby na karcie
+   * i projekcja per sesja TYM SAMYM `projectSession`, co ekran 10 - liczby na karcie
    * historii nie mają prawa różnić się od statystyk dnia.
    *
-   * Liczy się w pamięci przy każdym odczycie — jak wszystkie projekcje (§5.2: sezon
+   * Liczy się w pamięci przy każdym odczycie - jak wszystkie projekcje (§5.2: sezon
    * klubu to tysiące zdarzeń, nie miliony; tabela agregująca byłaby przedwczesna).
    * Kolejność: najnowsze PRZEJĘCIE pierwsze (`claimedAt`). Do 2026-08-07 sortowaliśmy
    * po `dutyStart`, ale gdy godzina meldunku stała się opcjonalna (§3.6a; od issue #23
-   * nie istnieje w ogóle), było to sortowanie po wartości, której prawie nigdy nie ma —
+   * nie istnieje w ogóle), było to sortowanie po wartości, której prawie nigdy nie ma -
    * czyli po zerze. `session_claim` jest pierwszym zdarzeniem KAŻDEJ sesji (§4.4).
    */
   async historyDays(): Promise<HistoryDay[]> {

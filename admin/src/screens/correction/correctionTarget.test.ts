@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: karta „zdarzenie korygowane · oryginalny odczyt" (moduł czysty).
+ * UZ Aero - panel: karta „zdarzenie korygowane · oryginalny odczyt" (moduł czysty).
  *
  * Cała treść scenariusza z mockupu mieści się w jednej różnicy: `gps_time` puste
  * (brak fixa), więc czas spadł na `device_time`, a ten spieszył dwanaście minut.
@@ -38,14 +38,14 @@ describe('odczyt bez fixa GPS', () => {
     expect(find(rows, 'gps_time')).toMatchObject({ value: 'brak fixa', tone: 'red' });
   });
 
-  it('nazywa fallback po imieniu — to on tłumaczy złą liczbę dnia', () => {
+  it('nazywa fallback po imieniu - to on tłumaczy złą liczbę dnia', () => {
     const row = find(rows, 'Czas użyty w projekcji');
     expect(row.value).toBe('13:13:33');
     expect(row.note).toContain('fallback na device_time');
     expect(row.tone).toBe('amber');
   });
 
-  it('pokazuje pełną datę przy zegarze telefonu — korekta bywa przez północ UTC', () => {
+  it('pokazuje pełną datę przy zegarze telefonu - korekta bywa przez północ UTC', () => {
     expect(find(rows, 'device_time').value).toBe('2026-07-30 13:13:33');
   });
 });
@@ -74,7 +74,7 @@ describe('zdarzenie już unieważnione', () => {
 });
 
 describe('urządzenie zapisujące', () => {
-  it('przechodzi DOSŁOWNIE — to napis z telefonu, nie tożsamość konta', () => {
+  it('przechodzi DOSŁOWNIE - to napis z telefonu, nie tożsamość konta', () => {
     const row = find(targetRows(target()), 'Zapisane przez');
     expect(row.value).toBe('Pixel 7a · a41f9c');
     expect(row.note).toContain('nie tożsamość konta');
@@ -82,12 +82,12 @@ describe('urządzenie zapisujące', () => {
 
   it('brak pola przyznaje się do niewiedzy zamiast zgadywać', () => {
     const row = find(targetRows(target({ sourceDevice: null })), 'Zapisane przez');
-    expect(row.value).toBe('—');
+    expect(row.value).toBe('-');
     expect(row.note).toContain('sprzed wprowadzenia');
   });
 
   it('wpis z panelu jest rozpoznawalny po treści, którą zapisał serwer', () => {
-    // `admin:<pilotId>` stawia `AdminCorrectionCommands` — panel go nie interpretuje
+    // `admin:<pilotId>` stawia `AdminCorrectionCommands` - panel go nie interpretuje
     // i nie ma powodu: administrator czyta to jako napis i wie, co znaczy.
     expect(find(targetRows(target({ sourceDevice: 'admin:TMK' })), 'Zapisane przez').value).toBe(
       'admin:TMK',

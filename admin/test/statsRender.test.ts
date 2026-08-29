@@ -1,10 +1,10 @@
 /**
- * UZ Aero — panel: STATYSTYKI RENDEROWANE NAPRAWDĘ (`A10`).
+ * UZ Aero - panel: STATYSTYKI RENDEROWANE NAPRAWDĘ (`A10`).
  *
  * Ten sam wzorzec i ten sam powód, co `dashboardRender.test.ts`: pułapka „policzone,
- * przetestowane, NIEWIDOCZNE" złapała projekt czterokrotnie. Ekran renderujemy CAŁY —
+ * przetestowane, NIEWIDOCZNE" złapała projekt czterokrotnie. Ekran renderujemy CAŁY -
  * prawdziwy `StatsScreen`, prawdziwy `useStats`, cache TanStacka wypełniony
- * odpowiedzią serwera — więc test upada także wtedy, gdy ktoś przestanie wołać moduł
+ * odpowiedzią serwera - więc test upada także wtedy, gdy ktoś przestanie wołać moduł
  * czysty z ekranu albo klasa przestanie istnieć w arkuszu.
  */
 
@@ -24,7 +24,7 @@ import { statsFixture } from './fixtures/stats';
 
 /**
  * Render z odpowiedzią WSTRZYKNIĘTĄ do cache'u pod kluczem, który zbuduje ekran
- * z adresu — droga `URL → filtr → klucz → cache → moduły czyste → DOM` w całości.
+ * z adresu - droga `URL → filtr → klucz → cache → moduły czyste → DOM` w całości.
  */
 function render(data: StatsReportDto | null, url = '/statystyki'): string {
   const client = new QueryClient({
@@ -58,7 +58,7 @@ const statsCss = (): string =>
 const SZABLON = (): string =>
   readFileSync(join(__dirname, '..', '..', 'design', 'admin', 'SZABLON.html'), 'utf8');
 
-describe('statystyki: render — kontrola samego testu', () => {
+describe('statystyki: render - kontrola samego testu', () => {
   it('renderer faktycznie produkuje ekran, a nie pusty napis', () => {
     const html = render(statsFixture());
     expect(html.length).toBeGreaterThan(2000);
@@ -80,7 +80,7 @@ describe('statystyki: liczby serwera docierają do DOM-u', () => {
   });
 
   it('podtytuł mówi o SESJACH otwartych POZA zakresem', () => {
-    // Jednostką jest sesja (przejęcie → zdanie), nie „dzień lotny" — po §3.6a jedna
+    // Jednostką jest sesja (przejęcie → zdanie), nie „dzień lotny" - po §3.6a jedna
     // maszyna bierze w dobie dwie zmiany, a jeden pilot potrafi objąć dwie maszyny.
     expect(html).toContain('2 sesje są celowo poza zakresem');
   });
@@ -94,12 +94,12 @@ describe('statystyki: liczby serwera docierają do DOM-u', () => {
     expect(html).toContain('4 dni bez nalotu (05 JUL, 11 JUL, 18 JUL, 26 JUL)');
   });
 
-  it('para pasków i miernik wykorzystania — z klasami z szablonu', () => {
+  it('para pasków i miernik wykorzystania - z klasami z szablonu', () => {
     expect(html).toContain('class="duo"');
     expect(html).toContain('class="duo-bar green"');
     expect(html).toContain('class="duo-bar blue"');
     expect(html).toContain('class="meter-fill"');
-    // 46.7 % wykorzystania SP-XYZ — poniżej połowy zakresu, więc bursztyn.
+    // 46.7 % wykorzystania SP-XYZ - poniżej połowy zakresu, więc bursztyn.
     expect(html).toContain('class="meter-fill amber"');
     expect(html).toContain('21 · 70 %');
   });
@@ -111,7 +111,7 @@ describe('statystyki: liczby serwera docierają do DOM-u', () => {
     expect(html).toContain('class="row-total"');
     expect(html).toContain('cell-green');
     expect(html).toContain('186.3 h');
-    // Średnia ze średnich nie jest średnią — hint stoi pod tabelą.
+    // Średnia ze średnich nie jest średnią - hint stoi pod tabelą.
     expect(html).toContain('nie sumuje się do wiersza RAZEM');
   });
 
@@ -128,7 +128,7 @@ describe('statystyki: liczby serwera docierają do DOM-u', () => {
 });
 
 describe('statystyki: ujęcia przełącza URL, nie stan komponentu', () => {
-  it('domyślnie per samolot — kolumny mockupu', () => {
+  it('domyślnie per samolot - kolumny mockupu', () => {
     const html = render(statsFixture());
     expect(html).toContain('MH start → koniec');
     expect(html).not.toContain('Blok jako PIC');
@@ -152,12 +152,12 @@ describe('statystyki: ujęcia przełącza URL, nie stan komponentu', () => {
   });
 });
 
-describe('statystyki: `null` to „nie wiemy", nigdy zero — aż do DOM-u', () => {
-  it('bez odpowiedzi wszystkie kafle mówią „—"', () => {
+describe('statystyki: `null` to „nie wiemy", nigdy zero - aż do DOM-u', () => {
+  it('bez odpowiedzi wszystkie kafle mówią „-"', () => {
     const html = render(null);
-    expect(html).toContain('Nie wiadomo — raport się nie pobrał.');
+    expect(html).toContain('Nie wiadomo - raport się nie pobrał.');
     expect(html).not.toContain('class="tile-val green">0');
-    expect(html.split('—').length - 1).toBeGreaterThanOrEqual(6);
+    expect(html.split('-').length - 1).toBeGreaterThanOrEqual(6);
   });
 
   it('wiersze sprzed kolumn statystyk: baner, kreski w kaflach i pusta sekcja zrzutów', () => {
@@ -178,7 +178,7 @@ describe('statystyki: `null` to „nie wiemy", nigdy zero — aż do DOM-u', () 
     expect(html).toContain('sprzed kolumn statystyk');
     expect(html).toContain('Konserwacja');
     expect(html).toContain('twierdziłyby, że nikt nie skakał');
-    // Sekcja zrzutów bez wstęgi i bez tabeli klientów — częściowa wyglądałaby na pełną.
+    // Sekcja zrzutów bez wstęgi i bez tabeli klientów - częściowa wyglądałaby na pełną.
     expect(html).not.toContain('class="ribbon"');
     expect(html).not.toContain('SKY CAMP');
     // Stare kolumny projekcji dalej są liczbami.
@@ -225,7 +225,7 @@ describe('statystyki: każda wypisana klasa MA regułę w arkuszu i w SZABLONIE'
     for (const selector of CLASSES) expect(css).toContain(selector);
   });
 
-  it('nazwy są DOSŁOWNIE te z `SZABLON.html` — mockup wygrywa', () => {
+  it('nazwy są DOSŁOWNIE te z `SZABLON.html` - mockup wygrywa', () => {
     const szablon = SZABLON();
     for (const selector of CLASSES) expect(szablon).toContain(selector);
   });

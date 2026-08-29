@@ -1,29 +1,29 @@
 /**
- * UZ Aero — słownik naruszeń reguł domenowych.
+ * UZ Aero - słownik naruszeń reguł domenowych.
  *
  * Każda gwardia z `sessionRules.ts` zwraca `RuleViolation` o jednej z dwóch wag:
  *
- *  - `error`   — **twarde odrzucenie**. Zdarzenie NIE trafia do strumienia; pilot dostaje
+ *  - `error`   - **twarde odrzucenie**. Zdarzenie NIE trafia do strumienia; pilot dostaje
  *                natychmiastowy, zrozumiały komunikat i poprawia wpis. Stosujemy tam, gdzie
  *                zdarzenie zepsułoby maszynę stanów, na której stoi arytmetyka dnia
  *                (cykle silnika, loty, block time, łańcuch MH) albo gdzie liczby są
  *                wewnętrznie sprzeczne (np. `after ≠ before + added`).
- *  - `warning` — **miękka flaga**. Zdarzenie ZOSTAJE zapisane, ale komenda zwraca ostrzeżenie
+ *  - `warning` - **miękka flaga**. Zdarzenie ZOSTAJE zapisane, ale komenda zwraca ostrzeżenie
  *                do pokazania pilotowi. Stosujemy tam, gdzie dane są tylko podejrzane, a nie
- *                niemożliwe (nieprecyzyjny paliwomierz, rozjazd zegarów) — zgodnie z §4.5
+ *                niemożliwe (nieprecyzyjny paliwomierz, rozjazd zegarów) - zgodnie z §4.5
  *                rozstrzyga to serwer flagą, klient nie ma prawa zjeść faktu z terenu.
  *
  * ZASADA NADRZĘDNA (CLAUDE.md, §4.1): brak sieci nigdy nie blokuje pracy pilota, ale
- * *bzdura wpisana lokalnie* jest czymś innym niż *brak sieci* — dlatego lokalnie mamy
+ * *bzdura wpisana lokalnie* jest czymś innym niż *brak sieci* - dlatego lokalnie mamy
  * twarde błędy, których serwer (§4.5) świadomie nie ma. Serwer nie może odrzucić danych
- * z terenu (byłyby stracone), aplikacja może — bo pilot stoi obok i poprawi w 3 sekundy.
+ * z terenu (byłyby stracone), aplikacja może - bo pilot stoi obok i poprawi w 3 sekundy.
  */
 
 /** Waga naruszenia: twarde odrzucenie vs miękka flaga. */
 export type Severity = 'error' | 'warning';
 
 /**
- * Kody naruszeń. Nazwy pokrywające się z flagami serwera (§4.5) są celowe —
+ * Kody naruszeń. Nazwy pokrywające się z flagami serwera (§4.5) są celowe -
  * `MH_REGRESSION`, `FUEL_MISMATCH`, `CLOCK_DRIFT` to ten sam fenomen widziany lokalnie.
  */
 export type ViolationCode =
@@ -65,17 +65,17 @@ export type ViolationCode =
   | 'MH_NEGATIVE'
   | 'MH_REGRESSION'
   | 'MH_DELTA_MISMATCH'
-  // ── olej (issue #60) — pomiar przy przejęciu jest krokiem WYMAGANYM w aplikacji
+  // ── olej (issue #60) - pomiar przy przejęciu jest krokiem WYMAGANYM w aplikacji
   //    (bramka ekranu 02a), ale domena przyjmuje strumienie bez niego (sprzed modułu,
   //    wpis ręczny) i twarda jest tylko arytmetyka; „poniżej minimum" flaguje miękko,
   //    bo PIC decyduje, a konfiguracja minimum bywa błędna (filozofia FUEL_MISMATCH) ──
   | 'OIL_NEGATIVE'
   | 'OIL_OVER_CAPACITY'
   | 'OIL_BELOW_MIN'
-  /** Dolewka z kokpitu przy pracującym silniku — jak `REFUEL_ENGINE_RUNNING`. */
+  /** Dolewka z kokpitu przy pracującym silniku - jak `REFUEL_ENGINE_RUNNING`. */
   | 'OIL_ADD_ENGINE_RUNNING'
   // ── zrzuty i załadunek ─────────────────────────────────────────────────────
-  // (`DROP_NO_JUMPERS` usunięty 2026-08-11, issue #21 pkt 5: skład jest opcjonalny —
+  // (`DROP_NO_JUMPERS` usunięty 2026-08-11, issue #21 pkt 5: skład jest opcjonalny -
   //  zrzut bez liczb to legalny znacznik faktu, nie błąd formularza)
   | 'DROP_NEGATIVE_JUMPERS'
   | 'DROP_ON_GROUND'
@@ -86,7 +86,7 @@ export type ViolationCode =
   // ── załoga ─────────────────────────────────────────────────────────────────
   | 'PIC_CHANGE_NOT_ALLOWED'
   | 'DUAL_IS_PIC'
-  // (kody LEG_CLOSE_* usunięte 2026-08-10 razem z `leg_close` — sesję zatwierdza
+  // (kody LEG_CLOSE_* usunięte 2026-08-10 razem z `leg_close` - sesję zatwierdza
   //  `day_close`, patrz sekcja niżej)
   // ── wpis ręczny i zdanie samolotu ──────────────────────────────────────────
   | 'MANUAL_ENTRY_EMPTY'
@@ -98,7 +98,7 @@ export type ViolationCode =
   | 'CORRECTION_TARGET_NOT_FOUND'
   | 'CORRECTION_TARGET_NOT_ALLOWED'
   | 'CORRECTION_TIME_IN_FUTURE'
-  /** `amend` wskazał pole, którego ten typ zdarzenia nie ma (issue #43 — biała lista). */
+  /** `amend` wskazał pole, którego ten typ zdarzenia nie ma (issue #43 - biała lista). */
   | 'CORRECTION_FIELD_NOT_ALLOWED'
   // ── korekta administracyjna: OSTRZEŻENIA, nigdy blokada (decyzja 2026-08-07) ──
   | 'ADMIN_EDIT_SESSION_ACTIVE'
@@ -106,7 +106,7 @@ export type ViolationCode =
   // ── zegary ─────────────────────────────────────────────────────────────────
   | 'CLOCK_DRIFT';
 
-/** Pojedyncze naruszenie reguły. `message` jest po polsku — trafia wprost do pilota. */
+/** Pojedyncze naruszenie reguły. `message` jest po polsku - trafia wprost do pilota. */
 export interface RuleViolation {
   code: ViolationCode;
   severity: Severity;
@@ -145,7 +145,7 @@ export const warningsOf = (v: RuleViolation[]): RuleViolation[] =>
  * Niesie WSZYSTKIE twarde naruszenia (pilot ma zobaczyć komplet, nie pierwsze z brzegu).
  */
 export class DomainRuleError extends Error {
-  /** Kod pierwszego naruszenia — wygodny do rozgałęzień w UI. */
+  /** Kod pierwszego naruszenia - wygodny do rozgałęzień w UI. */
   readonly code: ViolationCode;
   readonly violations: RuleViolation[];
 

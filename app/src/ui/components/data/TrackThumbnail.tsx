@@ -1,18 +1,18 @@
 /**
- * UZ Aero — miniatura śladu SESJI (mockup `10-statystyki.html`, `.track-thumb`).
+ * UZ Aero - miniatura śladu SESJI (mockup `10-statystyki.html`, `.track-thumb`).
  *
  * Uproszczony zapis całego biegu silnika na ekranie sesji: linia i znaczniki startów,
- * lądowań oraz zrzutów. To jest szkic kształtu — „zapis istnieje, tyle było wyniesień
- * i tak z grubsza wyglądały" — a nie mapa do czytania.
+ * lądowań oraz zrzutów. To jest szkic kształtu - „zapis istnieje, tyle było wyniesień
+ * i tak z grubsza wyglądały" - a nie mapa do czytania.
  *
  * Czym różni się od `TrackMap` (14) i dlaczego to osobny komponent, a nie tryb tamtego:
  *  • **nie ma siatki, podziałki ani lotnisk.** W 168 px wysokości pas startowy schodzi
  *    do dwóch pikseli, a podziałka mówiłaby o skali rysunku, którego nikt nie mierzy.
- *  • **nie ma atrybucji** — i to jest konsekwencja powyższego, nie przeoczenie: podpis
+ *  • **nie ma atrybucji** - i to jest konsekwencja powyższego, nie przeoczenie: podpis
  *    „© OpenStreetMap" jest wymogiem licencji dla PASÓW LOTNISK. Bez tych danych nie ma
  *    czego podpisywać, a podpis pod rysunkiem, który ich nie używa, byłby myleniem.
  *  • **znaczniki nie mają podpisów.** Przy skokach wszystkie starty i lądowania wypadają
- *    na tym samym placu, więc etykiety zlałyby się w plamę — godziny stoją wiersz niżej,
+ *    na tym samym placu, więc etykiety zlałyby się w plamę - godziny stoją wiersz niżej,
  *    na osi czasu. Rysunek mówi „ile ich było i gdzie", oś mówi „o której".
  *
  * Rysunek bez modułów natywnych: łamana z obróconych `<View>` (`TrackPolyline`), tak samo
@@ -29,7 +29,7 @@ import { Icon } from '../foundation/Icon';
 import { TrackPolyline, type Point2D } from './TrackPolyline';
 
 /**
- * Znacznik do narysowania — ten sam zestaw rodzajów, co na pełnej mapie.
+ * Znacznik do narysowania - ten sam zestaw rodzajów, co na pełnej mapie.
  *
  * `peak` przyjmujemy w typie, ale NIE rysujemy (patrz `dots`): miniatura nie ma miejsca
  * na podpisy, a maksimum bez liczby jest kropką, która niczego nie mówi.
@@ -49,7 +49,7 @@ export interface TrackThumbnailProps {
   onPress?: () => void;
 }
 
-/** Margines kadru (px) — mniejszy niż na 14, bo i rysunek jest mniejszy. */
+/** Margines kadru (px) - mniejszy niż na 14, bo i rysunek jest mniejszy. */
 const PADDING = 18;
 
 export function TrackThumbnail({ line, height, width, markers, onPress }: TrackThumbnailProps) {
@@ -72,7 +72,7 @@ export function TrackThumbnail({ line, height, width, markers, onPress }: TrackT
   /**
    * Znaczniki rysujemy z POZYCJI ZDARZEŃ, nie z końców linii.
    *
-   * Do issue #38 miniatura stawiała kropkę na pierwszym i ostatnim punkcie zapisu —
+   * Do issue #38 miniatura stawiała kropkę na pierwszym i ostatnim punkcie zapisu -
    * co przy jednym locie było przybliżeniem, a przy trzech kłamstwem: pokazywała jeden
    * start i jedno lądowanie na sesję, która miała ich po trzy. Znacznik bez pozycji
    * (zapis nie sięga tej chwili) po prostu nie powstaje.
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     opacity: 0.4,
   },
-  /** Zrzut: sam pierścień, pełna krycie — ten sam język znaków, co na pełnej mapie. */
+  /** Zrzut: sam pierścień, pełna krycie - ten sam język znaków, co na pełnej mapie. */
   dropRing: { width: 10, height: 10, borderRadius: 5, borderWidth: 1.6, opacity: 1 },
   cta: {
     position: 'absolute',

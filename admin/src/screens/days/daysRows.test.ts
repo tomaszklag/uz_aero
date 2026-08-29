@@ -1,10 +1,10 @@
 /**
- * UZ Aero — panel: wiersz listy dni (moduł czysty).
+ * UZ Aero - panel: wiersz listy dni (moduł czysty).
  *
  * Testujemy REGUŁY, nie brzmienie napisów. Cztery z nich nie są widoczne w typach:
  *  • mapowanie NIE MA PRAWA przestawić kolejności (porządek należy do serwera),
  *  • motogodziny formatuje się WEDŁUG FORMATU LICZNIKA TEGO SAMOLOTU,
- *  • otwarta sesja pokazuje „—" w odczytach końcowych i niczego nie ekstrapoluje,
+ *  • otwarta sesja pokazuje „-" w odczytach końcowych i niczego nie ekstrapoluje,
  *  • dwie zmiany tej samej maszyny w jednej dobie muszą dać się ODRÓŻNIĆ (§3.6a).
  */
 
@@ -48,8 +48,8 @@ function day(over: Partial<SessionListItemDto> = {}): SessionListItemDto {
   };
 }
 
-describe('dayRows — porządek', () => {
-  it('NIE SORTUJE — oddaje wiersze w kolejności, w której przyszły z serwera', () => {
+describe('dayRows - porządek', () => {
+  it('NIE SORTUJE - oddaje wiersze w kolejności, w której przyszły z serwera', () => {
     // Porządek jest własnością `ORDER BY` serwera i kursora keyset, który opisuje
     // pozycję w TYM porządku. Przesortowanie na kliencie przestawiłoby wiersze
     // wewnątrz przypadkowego wycinka, bo lista jest sklejona z kolejnych stron.
@@ -63,7 +63,7 @@ describe('dayRows — porządek', () => {
   });
 });
 
-describe('dayRows — kolumna „Dzień"', () => {
+describe('dayRows - kolumna „Dzień"', () => {
   it('bierze datę z CHWILI PRZEJĘCIA, a podpis niesie CAŁY odcinek sesji', () => {
     expect(dayRows([day()], NOW)[0]!.day).toEqual({
       text: '30 JUL 2026',
@@ -100,14 +100,14 @@ describe('dayRows — kolumna „Dzień"', () => {
 
   it('sesja bez claimu NIE MA daty i mówi to wprost', () => {
     // Wywnioskowanie daty z `closeTime` albo z pierwszego zdarzenia byłoby zgadywaniem
-    // — i rozjechałoby się z filtrem zakresu, który takich sesji po prostu nie widzi.
+    // - i rozjechałoby się z filtrem zakresu, który takich sesji po prostu nie widzi.
     const row = dayRows([day({ claimedAt: null })], NOW)[0]!;
-    expect(row.day.text).toBe('—');
+    expect(row.day.text).toBe('-');
     expect(row.day.sub).toContain('bez claimu');
   });
 });
 
-describe('dayRows — motogodziny', () => {
+describe('dayRows - motogodziny', () => {
   it('formatuje WEDŁUG `mhFormat` samolotu, nie własną konwencją', () => {
     // Ta sama liczba w bazie (godziny dziesiętne), dwa różne liczniki w kabinie.
     const decimal = dayRows([day({ mhFormat: 'decimal', mhStart: 3902.1, mhEnd: 3907.8 })], NOW)[0]!;
@@ -121,20 +121,20 @@ describe('dayRows — motogodziny', () => {
 
   it('brak formatu przyznaje się do NIEWIEDZY, choć liczbę i tak pokazuje', () => {
     // `motoHours(x, null)` wypisuje dziesiętnie, bo czymś musi. Podpis odróżnia
-    // ten przypadek od samolotu z licznikiem dziesiętnym — administrator porównujący
+    // ten przypadek od samolotu z licznikiem dziesiętnym - administrator porównujący
     // wartość z licznikiem ma prawo wiedzieć, który właśnie ogląda.
     const row = dayRows([day({ mhFormat: null })], NOW)[0]!;
     expect(row.mh.sub).toBe('format licznika nieznany');
   });
 
-  it('dzień otwarty ma „—" po strzałce — panel nie ekstrapoluje odczytu końcowego', () => {
+  it('dzień otwarty ma „-" po strzałce - panel nie ekstrapoluje odczytu końcowego', () => {
     const row = dayRows([day({ status: 'active', mhEnd: null, fuelEndL: null })], NOW)[0]!;
-    expect(row.mh.text).toBe('3902.1 → —');
-    expect(row.fuel).toBe('780 L → —');
+    expect(row.mh.text).toBe('3902.1 → -');
+    expect(row.fuel).toBe('780 L → -');
   });
 });
 
-describe('dayRows — kolumna „Stan"', () => {
+describe('dayRows - kolumna „Stan"', () => {
   it('otwarta flaga wygrywa z KAŻDYM innym stanem, także z „wyeksportowany"', () => {
     // Dzień z rozbieżnością jest sprawą dla człowieka niezależnie od tego, czy karta
     // poszła do arkusza.
@@ -168,7 +168,7 @@ describe('dayRows — kolumna „Stan"', () => {
 
     expect(row.state.text).toBe('Samolot zajęty');
     expect(row.state.tone).toBe('blue');
-    // Świeżość podana WZGLĘDNIE — administrator ocenia, czy dane są aktualne,
+    // Świeżość podana WZGLĘDNIE - administrator ocenia, czy dane są aktualne,
     // a nie o której dotarły.
     expect(row.state.sub).toBe('dane w drodze · sync 24 min temu');
   });
@@ -194,7 +194,7 @@ describe('dayRows — kolumna „Stan"', () => {
   });
 });
 
-describe('dayRows — reszta kolumn', () => {
+describe('dayRows - reszta kolumn', () => {
   it('czasy dnia mają WIODĄCE ZERO, tak jak karta arkusza tego samego dnia', () => {
     // Kolumna „Blok" i wyeksportowana karta opisują tę samą wielkość; różnica zapisu
     // („2:14" vs „02:14") byłaby rozjazdem widocznym na sąsiednich ekranach.
@@ -207,7 +207,7 @@ describe('dayRows — reszta kolumn', () => {
     const row = dayRows([day({ dualId: 'KNO', dualCode: 'KNO', dualName: 'Karolina Nowak' })], NOW)[0]!;
     expect(row.crew).toEqual({ pic: 'Anna Wrzosek', sub: 'AWR · dual: K. Nowak' });
 
-    expect(dayRows([day()], NOW)[0]!.crew.sub).toBe('AWR · dual: —');
+    expect(dayRows([day()], NOW)[0]!.crew.sub).toBe('AWR · dual: -');
   });
 
   it('samolot spoza rejestru floty zostaje widoczny z identyfikatorem zamiast rejestracji', () => {

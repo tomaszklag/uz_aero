@@ -1,8 +1,8 @@
 /**
- * UZ Aero (serwer) — trasy stanu floty: `GET /aircraft/:id/state`
+ * UZ Aero (serwer) - trasy stanu floty: `GET /aircraft/:id/state`
  * i `GET /sessions/:uuid/sync-status` (§4.6).
  *
- * Oba czyste odczyty projekcji — telefon odpytuje je przy starcie, po opróżnieniu
+ * Oba czyste odczyty projekcji - telefon odpytuje je przy starcie, po opróżnieniu
  * outboxa i na ekranach stanu floty (preflight, read-only, ekran 11). Pushów nie ma
  * z decyzji, nie z lenistwa.
  */
@@ -28,7 +28,7 @@ export function registerStateRoutes(
   });
 
   /**
-   * Ciągłość odczytów wokół chwili (paliwo, motogodziny, olej) `at` (issue #62, piąta tura) — czym maszyna została
+   * Ciągłość odczytów wokół chwili (paliwo, motogodziny, olej) `at` (issue #62, piąta tura) - czym maszyna została
    * zdana PRZED tym lotem i co zastał ten, kto ją przejął PO nim.
    *
    * Materiał podpowiedzi wpisu ręcznego: lot sprzed tygodnia opisuje maszynę, którą
@@ -44,7 +44,7 @@ export function registerStateRoutes(
     }
     const { id } = req.params as { id: string };
     const query = req.query as { at?: string; except?: string };
-    /* `Number('')` daje 0, czyli rok 1970 — poprawną liczbę i całkiem nie tę chwilę,
+    /* `Number('')` daje 0, czyli rok 1970 - poprawną liczbę i całkiem nie tę chwilę,
        o którą pytano. Pusty parametr jest brakiem pytania, nie pytaniem o epokę. */
     const at = query.at != null && query.at !== '' ? Number(query.at) : Number.NaN;
     if (!Number.isFinite(at)) {

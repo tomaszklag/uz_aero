@@ -1,13 +1,13 @@
 /**
- * UZ Aero — JumperDefaultsSheet (arkusz „Domyślny skład skoczków", 02e)
+ * UZ Aero - JumperDefaultsSheet (arkusz „Domyślny skład skoczków", 02e)
  *
  * Skład ustawiony TU staje się wartością startową każdego załadunku bez własnej
- * deklaracji w tej sesji (`boardingInitialJumpers`, `logic/boardingPrefill.ts`) —
+ * deklaracji w tej sesji (`boardingInitialJumpers`, `logic/boardingPrefill.ts`) -
  * pilot dnia skokowego z powtarzalnym składem (np. zawsze 4 tandemy) nie wpisuje go
  * przy każdym załadunku od nowa, tylko raz, na kroku „zadanie".
  *
  * Te same trzy liczniki co `BoardingSheet`/`DropSheet`, ale inny, lżejszy arkusz
- * (generyczny `Sheet`, bez czasu ani numeru lotu — na tym kroku żadna sesja jeszcze
+ * (generyczny `Sheet`, bez czasu ani numeru lotu - na tym kroku żadna sesja jeszcze
  * nie istnieje): to tylko wartość szkicu preflightu (`usePreflightDraft.jumperDefaults`),
  * nic się jeszcze nie zapisuje do rejestru.
  */
@@ -24,7 +24,7 @@ export interface JumperDefaultsSheetProps {
   visible: boolean;
   /** Bieżący default (szkic preflightu); `null` = jeszcze nie ustawiono. */
   initialJumpers: JumperCounts | null;
-  /** Surowe liczniki — normalizację „suma zero = brak deklaracji" robi wołający. */
+  /** Surowe liczniki - normalizację „suma zero = brak deklaracji" robi wołający. */
   onConfirm: (jumpers: JumperCounts) => void;
   onCancel: () => void;
 }
@@ -39,7 +39,7 @@ export function JumperDefaultsSheet({
 }: JumperDefaultsSheetProps) {
   const [jumpers, setJumpers] = useState<JumperCounts>(EMPTY);
 
-  // Klucz składu, nie identyczność obiektu — ta sama zasada co w `BoardingSheet`
+  // Klucz składu, nie identyczność obiektu - ta sama zasada co w `BoardingSheet`
   // (issue #28): `initialJumpers` bywa nowym obiektem o tych samych liczbach.
   const prefillKey = jumpersKey(initialJumpers);
   useEffect(() => {
@@ -63,7 +63,7 @@ export function JumperDefaultsSheet({
       <CounterRow label="Solo" hint="licencjonowani" value={jumpers.solo} onChange={set('solo')} />
 
       <AppText variant="mono" tone="muted" style={{ fontSize: 9, letterSpacing: 0.5, lineHeight: 13 }}>
-        Ten skład podstawi się przy każdym załadunku tego lotu bez własnej deklaracji —
+        Ten skład podstawi się przy każdym załadunku tego lotu bez własnej deklaracji -
         przy konkretnym załadunku nadal można go zmienić.
       </AppText>
     </Sheet>

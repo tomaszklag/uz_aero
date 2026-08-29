@@ -1,5 +1,5 @@
 # Pliki GENEROWANE porównywane w testach bajt-w-bajt z wyjściem generatora
 # (admin/test/tokens.generated.test.ts). `core.autocrlf=true` na Windowsie potrafi
-# przy checkoucie zamienić im LF na CRLF — a wtedy test „jest DOKŁADNIE wynikiem
+# przy checkoucie zamienić im LF na CRLF - a wtedy test „jest DOKŁADNIE wynikiem
 # generatora" pada, choć treść się zgadza. Przypięcie eol=lf zdejmuje konwersję.
 admin/src/styles/tokens.css text eol=lf

@@ -1,8 +1,8 @@
 /**
- * UZ Aero — panel: treść ekranu analityki zużycia.
+ * UZ Aero - panel: treść ekranu analityki zużycia.
  *
  * Dwie własności konstytucji tego ekranu. Pierwsza jest wspólna z resztą panelu: liczby
- * są PRZEPISANE z odpowiedzi, nie liczone tutaj. Druga jest tylko tutaj — **stawka bez
+ * są PRZEPISANE z odpowiedzi, nie liczone tutaj. Druga jest tylko tutaj - **stawka bez
  * niepewności nie ma prawa wyglądać jak pomiar**, więc każdy stan „nie wiem" (przypięcie
  * do zera, brak stopni swobody, bramka publikacji) musi mieć własne zdanie na ekranie.
  */
@@ -61,9 +61,9 @@ describe('kafle nagłówkowe', () => {
       },
     });
 
-    expect(tile('flight-hour', empty).value).toBe('—');
-    expect(tile('per-flight', empty).value).toBe('—');
-    expect(tile('mh', empty).value).toBe('—');
+    expect(tile('flight-hour', empty).value).toBe('-');
+    expect(tile('per-flight', empty).value).toBe('-');
+    expect(tile('mh', empty).value).toBe('-');
   });
 });
 
@@ -77,7 +77,7 @@ describe('karty stawek', () => {
   });
 
   it('stawka przypięta do zera dostaje granicę JEDNOSTRONNĄ, nie ±', () => {
-    // Symetryczny przedział sięgałby poniżej zera, czyli poza dziedzinę — a to jest
+    // Symetryczny przedział sięgałby poniżej zera, czyli poza dziedzinę - a to jest
     // dokładnie ta sytuacja, w której model mówi „nie odróżniam tej fazy od zera".
     const base = consumptionFixture();
     const pinned = consumptionFixture({
@@ -125,7 +125,7 @@ describe('wstęga podziału czasu', () => {
 });
 
 describe('bramka publikacji (A10b)', () => {
-  it('poniżej progu tłumaczy, czego brakuje — nie „coś poszło nie tak"', () => {
+  it('poniżej progu tłumaczy, czego brakuje - nie „coś poszło nie tak"', () => {
     const base = consumptionFixture();
     const scarce = consumptionFixture({
       fuel: {
@@ -196,8 +196,8 @@ describe('tabela interwałów', () => {
   });
 
   it('fazy pionowe bez śladu pokazują kreski, nie zera', () => {
-    // Zero znaczyłoby „nie wznosił się ani sekundy" — a my po prostu nie wiemy.
-    expect(intervalRows(consumptionFixture())[0]!.phases).toBe('0:14 / — / — / —');
+    // Zero znaczyłoby „nie wznosił się ani sekundy" - a my po prostu nie wiemy.
+    expect(intervalRows(consumptionFixture())[0]!.phases).toBe('0:14 / - / - / -');
   });
 
   it('interwał odstający i odrzucony mają różne stany i własne powody', () => {

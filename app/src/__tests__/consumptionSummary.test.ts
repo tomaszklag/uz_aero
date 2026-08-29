@@ -1,9 +1,9 @@
 /**
- * UZ Aero — test metryk zbiorczych zużycia.
+ * UZ Aero - test metryk zbiorczych zużycia.
  *
  * Najważniejsza rzecz, której ten plik pilnuje, mieści się w jednym zdaniu: średnią okna
  * liczymy jako iloraz sum, a nie jako średnią z dziennych L/h. Różnica bywa kilkukrotna
- * i nie widać jej po wyniku — dlatego pierwszy test stawia przypadek, w którym obie
+ * i nie widać jej po wyniku - dlatego pierwszy test stawia przypadek, w którym obie
  * metody rozjeżdżają się drastycznie.
  */
 
@@ -54,7 +54,7 @@ describe('średnia okna', () => {
     expect(summary.litersPerBlockHour).not.toBeCloseTo((10 + 2) / 2, 3);
   });
 
-  it('nie dzieli przez zero — brak pracy silnika to null, nie nieskończoność', () => {
+  it('nie dzieli przez zero - brak pracy silnika to null, nie nieskończoność', () => {
     const summary = consumptionSummary([
       interval({ consumedL: 5, engineMs: 0, flightMs: 0, rejected: 'no-engine' }),
     ]);
@@ -103,7 +103,7 @@ describe('interwały odrzucone nie wchodzą do żadnej sumy', () => {
   });
 });
 
-describe('pasmo rozrzutu — norma dla aplikacji', () => {
+describe('pasmo rozrzutu - norma dla aplikacji', () => {
   it('obejmuje typowe stawki i odcina skrajne', () => {
     // Dziewięć interwałów po 2 h: stawki 10…18 L/h. Pasmo 10–90% ma zostawić skraje poza.
     const rates = [10, 11, 12, 13, 14, 15, 16, 17, 18];
@@ -116,7 +116,7 @@ describe('pasmo rozrzutu — norma dla aplikacji', () => {
     expect(summary.blockLPerHP10!).toBeLessThan(summary.blockLPerHP90!);
   });
 
-  it('przy jednym interwale pasmo jest punktem — i taka jest prawda o tych danych', () => {
+  it('przy jednym interwale pasmo jest punktem - i taka jest prawda o tych danych', () => {
     const summary = consumptionSummary([interval({ consumedL: 30, engineMs: 2 * HOUR })]);
 
     expect(summary.blockLPerHP10).toBeCloseTo(15, 9);

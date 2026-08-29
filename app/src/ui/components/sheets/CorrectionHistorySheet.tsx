@@ -1,13 +1,13 @@
 /**
- * UZ Aero — CorrectionHistorySheet (mockup `design/10i` „Historia zmian")
+ * UZ Aero - CorrectionHistorySheet (mockup `design/10i` „Historia zmian")
  *
  * Lista poprawek jednego zdarzenia: „było → jest", kto, kiedy i z jakim powodem, a na
- * dole kotwica — zapis pierwotny. Arkusz jest WYŁĄCZNIE do czytania: cofnięcie korekty
+ * dole kotwica - zapis pierwotny. Arkusz jest WYŁĄCZNIE do czytania: cofnięcie korekty
  * robi się kolejną korektą, nie kasowaniem wiersza z tej listy (rejestr jest append-only,
  * więc taki przycisk obiecywałby operację, której model nie zna).
  *
- * Kolejność: NAJNOWSZA na górze. Domena zwraca chronologiczną — bo tak wychodzi ze
- * składania „było → jest" — a ekran odwraca ją u siebie, żeby stan aktualny czytało się
+ * Kolejność: NAJNOWSZA na górze. Domena zwraca chronologiczną - bo tak wychodzi ze
+ * składania „było → jest" - a ekran odwraca ją u siebie, żeby stan aktualny czytało się
  * bez przewijania do końca.
  *
  * Otwiera się także w trybie PODGLĄDU (10B): zamknięte okno korekty odbiera prawo do
@@ -22,7 +22,7 @@ import { AppText } from '../foundation/AppText';
 import { Tag } from '../status/Tag';
 import { Sheet } from './Sheet';
 
-/** Jeden wiersz historii — złożony przez `logic/sessionEdit.ts` z wpisów domeny. */
+/** Jeden wiersz historii - złożony przez `logic/sessionEdit.ts` z wpisów domeny. */
 export interface CorrectionHistoryItem {
   id: string;
   /** „07 SIE · 12:05 UTC". */
@@ -31,13 +31,13 @@ export interface CorrectionHistoryItem {
   who: string;
   /** `true` = korektę zapisał administrator w panelu, nie pilot na telefonie. */
   byAdmin?: boolean;
-  /** Nazwa pola („czas", „paliwo") — `null` przy unieważnieniu i przywróceniu. */
+  /** Nazwa pola („czas", „paliwo") - `null` przy unieważnieniu i przywróceniu. */
   field: string | null;
   /** Wartość przed; `null` = nie było czego zastąpić. */
   from: string | null;
   /** Wartość po; `null` przy wpisach o samym FAKCIE (unieważnienie). */
   to: string | null;
-  /** Zdanie zamiast pary wartości — „unieważnione", „przywrócone". */
+  /** Zdanie zamiast pary wartości - „unieważnione", „przywrócone". */
   verdict?: string | null;
   /** Ton werdyktu: czerwień dla unieważnienia. */
   verdictTone?: 'red' | 'green';
@@ -48,9 +48,9 @@ export interface CorrectionHistorySheetProps {
   visible: boolean;
   /** Cel („Lądowanie · lot 1"). */
   title: string;
-  /** Wpisy — najnowszy PIERWSZY (ekran dostaje je już odwrócone). */
+  /** Wpisy - najnowszy PIERWSZY (ekran dostaje je już odwrócone). */
   items: CorrectionHistoryItem[];
-  /** Zapis pierwotny jako kotwica pod listą — kiedy i co, bez podpisu o źródle. */
+  /** Zapis pierwotny jako kotwica pod listą - kiedy i co, bez podpisu o źródle. */
   origin: { when: string; value: string } | null;
   onClose: () => void;
 }
@@ -110,7 +110,7 @@ export function CorrectionHistorySheet({
                 </AppText>
               )}
               <AppText variant="mono" style={[styles.to, { color: theme.colors.textPrimary }]}>
-                {item.to ?? '—'}
+                {item.to ?? '-'}
               </AppText>
             </View>
           )}
@@ -122,7 +122,7 @@ export function CorrectionHistorySheet({
             {item.byAdmin === true && <Tag label="administrator" tone="amber" />}
           </View>
 
-          {/* Brak powodu widać jako BRAK, a nie jako pustą linię — pole jest opcjonalne
+          {/* Brak powodu widać jako BRAK, a nie jako pustą linię - pole jest opcjonalne
               i pilot ma prawo wiedzieć, że nikt go nie wypełnił. */}
           <AppText
             variant={item.reason != null ? 'body' : 'mono'}
@@ -136,7 +136,7 @@ export function CorrectionHistorySheet({
 
       {/* KOTWICA: co niosło zdarzenie, zanim ktokolwiek je poprawił. Sama para
           „kiedy → co", bez podpisu o źródle („autodetekcja · GPS", „zapis sesji"):
-          prowenienecja nie jest pytaniem pilota — ta sama reguła, przez którą issue #40
+          prowenienecja nie jest pytaniem pilota - ta sama reguła, przez którą issue #40
           zdjęło plakietki „AUTO" i „RĘCZNIE" z osi sesji. */}
       {origin != null && (
         <View style={[styles.item, { borderTopColor: theme.colors.border }]}>

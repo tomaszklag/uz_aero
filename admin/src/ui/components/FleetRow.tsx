@@ -1,12 +1,12 @@
 /**
- * UZ Aero — panel: WIERSZ FLOTY NA PULPICIE (`.fleet-row` z `SZABLON.html`).
+ * UZ Aero - panel: WIERSZ FLOTY NA PULPICIE (`.fleet-row` z `SZABLON.html`).
  *
  * Wiersz jest LINKIEM, a nie klikalnym `<div>`: da się go otworzyć w nowej karcie,
- * skopiować i wkleić — czyli obsługuje scenariusz, dla którego panel istnieje
+ * skopiować i wkleić - czyli obsługuje scenariusz, dla którego panel istnieje
  * („wklej mi link do tego dnia"). Jest też z definicji osiągalny z klawiatury.
  *
  * Struktura znaczników jest DOSŁOWNIE ta z mockupu (`<span>` z `<div>`ami w środku),
- * bo od niej zależą reguły `.fleet-nums` i `.fleet-*` — a reguła „wdrażamy 1:1" znaczy
+ * bo od niej zależą reguły `.fleet-nums` i `.fleet-*` - a reguła „wdrażamy 1:1" znaczy
  * technicznie właśnie tyle, że recenzent porówna DOM z plikiem HTML linia w linię.
  *
  * Komponent NIE PODEJMUJE ŻADNEJ DECYZJI: klasa wiersza, klasa świeżości, plakietka
@@ -20,7 +20,7 @@ import { Pill, type PillTone } from './Pill';
 
 interface FleetRowProps {
   to: string;
-  /** Gotowa klasa wiersza (`fleet-row`, `fleet-row flying`, …) — nigdy sklejana tutaj. */
+  /** Gotowa klasa wiersza (`fleet-row`, `fleet-row flying`, …) - nigdy sklejana tutaj. */
   className: string;
   reg: string;
   type: string;
@@ -57,7 +57,7 @@ export function FleetRow({
       </span>
       <span>
         {/* Nazwiska i opisy idą jako DZIECI REACTA, nigdy przez `dangerouslySetInnerHTML`
-            — te napisy pochodzą z kont i z payloadów zdarzeń wysyłanych z telefonów. */}
+            - te napisy pochodzą z kont i z payloadów zdarzeń wysyłanych z telefonów. */}
         <div className="fleet-who">{who}</div>
         <div className="fleet-since">{since}</div>
       </span>

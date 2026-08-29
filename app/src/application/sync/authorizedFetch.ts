@@ -1,9 +1,9 @@
 /**
- * UZ Aero — wspólny wzorzec ODCZYTU z serwera pod tokenem (§3.0).
+ * UZ Aero - wspólny wzorzec ODCZYTU z serwera pod tokenem (§3.0).
  *
  * Świeży token → wywołanie → przy 401 JEDNA rotacja i ponowienie. Każdy inny
  * nieszczęśliwy koniec (offline, martwy refresh, odmowa merytoryczna) zwija się
- * do `null` — „nie wiadomo TERAZ" — bo każda z tych przyczyn ma dla odczytu tę samą
+ * do `null` - „nie wiadomo TERAZ" - bo każda z tych przyczyn ma dla odczytu tę samą
  * odpowiedź: zostań przy tym, co masz w cache, i spróbuj przy następnej okazji.
  *
  * NIE używa go `SyncEngine.drain` (wysyłka outboxa): tam rozróżnienie
@@ -38,7 +38,7 @@ export async function authorizedFetch<T>(
         continue;
       }
       if (error instanceof ServerRejectedError) return null;
-      throw error; // błąd programistyczny — nie udawaj, że to offline
+      throw error; // błąd programistyczny - nie udawaj, że to offline
     }
   }
 }

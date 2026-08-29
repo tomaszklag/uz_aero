@@ -1,9 +1,9 @@
 /**
- * UZ Aero — panel: SKRZYNKA FLAG (`design/admin/A03-flagi.html` + `A03b-flagi-zero.html`).
+ * UZ Aero - panel: SKRZYNKA FLAG (`design/admin/A03-flagi.html` + `A03b-flagi-zero.html`).
  *
  * Jeden widok, dwa stany: `A03b` nie jest osobnym ekranem, tylko tą samą skrzynką bez
  * otwartych spraw. Szuflada szczegółu (`A03a`) otwiera się NAD listą pod adresem
- * `#/flagi/<id>` — lista zostaje pod spodem, bo po zamknięciu sprawy wraca się do niej,
+ * `#/flagi/<id>` - lista zostaje pod spodem, bo po zamknięciu sprawy wraca się do niej,
  * a nie do początku.
  *
  * Ekran jest `.tsx` BEZ arytmetyki i bez decyzji o treści: każdy napis, plakietka
@@ -14,7 +14,7 @@
  * Porządku listy NIE RUSZAMY. Serwer sortuje skrzynkę „blokujące eksport → najstarsze"
  * (`pg/admin/flagsRepo.ts`) i to jest część kontraktu: otwarta `aircraft_overlap`
  * wstrzymuje kartę doby, więc jest innym rodzajem sprawy niż `mh_gap` sprzed godziny.
- * `pilot_overlap` mimo bliźniaczej nazwy stoi po drugiej stronie tej granicy — opisuje
+ * `pilot_overlap` mimo bliźniaczej nazwy stoi po drugiej stronie tej granicy - opisuje
  * grafik człowieka i arkusza nie dotyka (rozdzielenie z 2026-08-07, §4.7).
  */
 
@@ -67,7 +67,7 @@ export function FlagsScreen() {
 
   // Wpis w wyszukiwarce żyje lokalnie do naciśnięcia Entera: filtrem jest URL,
   // ale przeładowywanie listy po każdej literze UUID-a byłoby serią żądań, z których
-  // żadne nie ma sensu — UUID jest dopasowaniem DOKŁADNYM, nie prefiksem.
+  // żadne nie ma sensu - UUID jest dopasowaniem DOKŁADNYM, nie prefiksem.
   const [sessionDraft, setSessionDraft] = useState(filter.sessionUuid ?? '');
   useEffect(() => {
     setSessionDraft(filter.sessionUuid ?? '');
@@ -94,7 +94,7 @@ export function FlagsScreen() {
         sub={
           <>
             Rozbieżności wykryte przez serwer przy scalaniu zdarzeń (§4.5). Flaga nigdy nie
-            zablokowała pilota w terenie — jest do wyjaśnienia po fakcie. Sortowanie: najpierw
+            zablokowała pilota w terenie - jest do wyjaśnienia po fakcie. Sortowanie: najpierw
             sprawy blokujące kartę dnia, potem po wieku, bo flaga leżąca trzeci dzień jest
             problemem sama w sobie.
           </>
@@ -110,7 +110,7 @@ export function FlagsScreen() {
         <Banner tone="danger">
           <b>Na tej liście stoją sprawy, które wycinają sesje z kart doby.</b>{' '}
           <code>dayExporter</code> pomija sesję, dla której otwarta jest flaga{' '}
-          <code>aircraft_overlap</code> — jedyny typ bramkujący arkusz. Doba maszyny
+          <code>aircraft_overlap</code> - jedyny typ bramkujący arkusz. Doba maszyny
           wychodzi wtedy z adnotacją „niekompletna", a nie zostaje w całości poza
           dokumentem (§4.7). Dotyczy to spraw{' '}
           {blocking.map((flag, index) => (
@@ -128,21 +128,21 @@ export function FlagsScreen() {
       <TileGrid>
         <Tile
           label="Otwarte flagi"
-          value={openCount.data ?? '—'}
+          value={openCount.data ?? '-'}
           tone={openCount.data == null ? undefined : openCount.data === 0 ? 'green' : 'amber'}
           note={
             openCount.data === 0
               ? 'Żadna sesja nie czeka na odblokowanie karty doby.'
-              : 'Liczba z serwera — niezależna od filtra, którym patrzysz na listę.'
+              : 'Liczba z serwera - niezależna od filtra, którym patrzysz na listę.'
           }
         />
         <Tile
           label="W tym filtrze"
-          value={flags.data?.total ?? '—'}
+          value={flags.data?.total ?? '-'}
           note={
             flags.data != null && flags.data.total > flags.data.items.length ? (
               <>
-                Pokazano {flags.data.items.length} z {flags.data.total} — lista jest przycięta na{' '}
+                Pokazano {flags.data.items.length} z {flags.data.total} - lista jest przycięta na{' '}
                 {FLAG_PAGE_LIMIT} pozycjach. Zawęź filtr, żeby zobaczyć resztę.
               </>
             ) : (
@@ -156,7 +156,7 @@ export function FlagsScreen() {
         <SearchInput
           value={sessionDraft}
           ariaLabel="Filtruj po UUID sesji"
-          placeholder={'UUID sesji — Enter filtruje, „/" ustawia fokus'}
+          placeholder={'UUID sesji - Enter filtruje, „/" ustawia fokus'}
           onChange={setSessionDraft}
           onSubmit={() =>
             apply({ ...filter, sessionUuid: sessionDraft.trim() === '' ? null : sessionDraft.trim() })
@@ -176,7 +176,7 @@ export function FlagsScreen() {
           <FilterChip
             label={`${filter.from ?? '…'} → ${filter.to ?? '…'} · zdejmij`}
             active
-            title="Zakres dat pochodzi z adresu — panel nie ma jeszcze kalendarza (patrz raport)."
+            title="Zakres dat pochodzi z adresu - panel nie ma jeszcze kalendarza (patrz raport)."
             onClick={() => apply({ ...filter, from: null, to: null })}
           />
         )}
@@ -201,7 +201,7 @@ export function FlagsScreen() {
 
       {flags.isPending ? null : flags.isError ? (
         <Banner tone="danger" live>
-          <b>Nie udało się pobrać skrzynki.</b> Panel działa wyłącznie online — to jedyne
+          <b>Nie udało się pobrać skrzynki.</b> Panel działa wyłącznie online - to jedyne
           miejsce w systemie, w którym brak sieci wolno pokazać jako blokadę.{' '}
           <Button variant="ghost" size="sm" onClick={() => void flags.refetch()}>
             Ponów
@@ -217,7 +217,7 @@ export function FlagsScreen() {
         </div>
       ) : (
         <DataTable
-          caption="Skrzynka flag — porządek serwera: blokujące eksport, potem od najstarszych"
+          caption="Skrzynka flag - porządek serwera: blokujące eksport, potem od najstarszych"
           columns={columnsFor(filter.status)}
           rows={rows}
           rowKey={(row) => row.id}
@@ -229,7 +229,7 @@ export function FlagsScreen() {
       )}
 
       <Card
-        title="Typy flag — co serwer liczy dziś"
+        title="Typy flag - co serwer liczy dziś"
         actions={
           <>
             <Pill tone="green">5 typów w kodzie</Pill>
@@ -261,7 +261,7 @@ export function FlagsScreen() {
           </table>
         </div>
         <span className="hint">
-          Serwer porządkuje sesje samolotu <b>po liczniku MH, nie po zegarze</b> — licznik jest
+          Serwer porządkuje sesje samolotu <b>po liczniku MH, nie po zegarze</b> - licznik jest
           monotoniczny i niezależny od tego, co pilot ma ustawione w telefonie. Progi tolerancji
           są wspólne z aplikacją (<code className="code-ref">packages/domain/src/rules/tolerances.ts</code>
           ), więc pilot dostaje ostrzeżenie od razu, a nie dzień później. Panel ich nie kopiuje
@@ -292,7 +292,7 @@ const STATUS_CHIPS: { value: StatusFilter; label: string }[] = [
 
 /**
  * Kolumny skrzynki. Widok spraw ZAMKNIĘTYCH dokłada trzy: kto, kiedy i czym je
- * zamknął — bo o rozwiązanej fladze pyta się o co innego niż o otwartej. Przy
+ * zamknął - bo o rozwiązanej fladze pyta się o co innego niż o otwartej. Przy
  * `wszystkie` zostaje zestaw podstawowy: kolumna „Kto rozwiązał" pusta w połowie
  * wierszy niesie mniej niż plakietka „Rozwiązana" w kolumnie „Skutek".
  */
@@ -350,7 +350,7 @@ function columnsFor(status: StatusFilter): Column<FlagRow>[] {
       cellClass: 'mono dim',
       render: (row) => (
         <>
-          {row.sessions[0] ?? '—'}
+          {row.sessions[0] ?? '-'}
           {row.sessions.slice(1).map((uuid) => (
             <span className="cell-sub" key={uuid}>
               {uuid}
@@ -380,13 +380,13 @@ function columnsFor(status: StatusFilter): Column<FlagRow>[] {
             key: 'resolvedAt',
             header: 'Rozwiązana · UTC',
             align: 'num',
-            render: (row) => row.resolution?.at ?? '—',
+            render: (row) => row.resolution?.at ?? '-',
           },
           {
             key: 'resolvedBy',
             header: 'Kto rozwiązał',
             cellClass: 'mono',
-            render: (row) => row.resolution?.by ?? '—',
+            render: (row) => row.resolution?.by ?? '-',
           },
           {
             key: 'note',

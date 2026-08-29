@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: wiersze ujęcia „per operacja".
+ * UZ Aero - panel: wiersze ujęcia „per operacja".
  */
 
 import { describe, expect, it } from 'vitest';
@@ -11,7 +11,7 @@ describe('operationRows', () => {
   const data = statsFixture();
   const rows = operationRows(data.operations, data.totals);
 
-  it('SKOKI dostają niebieską plakietkę i niebieski pasek — strona przychodowa', () => {
+  it('SKOKI dostają niebieską plakietkę i niebieski pasek - strona przychodowa', () => {
     expect(rows[0]).toMatchObject({
       pill: { label: 'SKOKI', tone: 'blue' },
       sub: 'SP-KLM · 3 klientów',
@@ -51,7 +51,7 @@ describe('operationRows', () => {
       (r) => r.pill.label === 'BEZ PREFLIGHTU',
     )!;
     expect(row.sub).toBe('dni bez `preflight_confirm`');
-    expect(row.fuel).toBe('—');
+    expect(row.fuel).toBe('-');
   });
 
   it('RAZEM: sumy z serwera, udział jako napis „100 %" bez paska', () => {
@@ -61,7 +61,7 @@ describe('operationRows', () => {
       days: '53',
       block: '186:39',
       fuel: '21 436 L',
-      avgLph: '—',
+      avgLph: '-',
       share: null,
       shareText: '100 %',
     });

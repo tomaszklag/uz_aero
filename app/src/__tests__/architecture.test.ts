@@ -1,8 +1,8 @@
 /**
- * UZ Aero — test GRANIC WARSTW.
+ * UZ Aero - test GRANIC WARSTW.
  *
  * Reguła architektury jest warta tyle, ile jej egzekucja. Projekt nie ma jeszcze ESLinta
- * (patrz `docs/architektura-kodu.md` — gotowa konfiguracja `no-restricted-imports` czeka
+ * (patrz `docs/architektura-kodu.md` - gotowa konfiguracja `no-restricted-imports` czeka
  * na jego wprowadzenie), więc kierunek zależności pilnuje test: skanuje pliki źródłowe
  * i sprawdza, czego importują.
  *
@@ -11,7 +11,7 @@
  *   ui  →  application  →  domain
  *   infrastructure  →  application/ports  →  domain
  *
- * Test celowo czyta pliki z dysku zamiast polegać na module graph — dzięki temu wyłapuje
+ * Test celowo czyta pliki z dysku zamiast polegać na module graph - dzięki temu wyłapuje
  * też importy typów (`import type`), które w runtime znikają, a i tak wiążą warstwy.
  */
 
@@ -21,7 +21,7 @@ import { join, relative, sep } from 'node:path';
 const SRC = join(__dirname, '..');
 
 /**
- * Domena mieszka od Fazy 2 w `packages/domain` (współdzielona z serwerem) — skanujemy
+ * Domena mieszka od Fazy 2 w `packages/domain` (współdzielona z serwerem) - skanujemy
  * ją tam. W `app/src/domain` został wyłącznie shim zgodności (`export * from '@uzaero/domain'`).
  */
 const DOMAIN_SRC = join(__dirname, '..', '..', '..', 'packages', 'domain', 'src');
@@ -116,7 +116,7 @@ describe('granice warstw', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('domain nie importuje ŻADNEGO pakietu — czysty TS, zero zależności', () => {
+  it('domain nie importuje ŻADNEGO pakietu - czysty TS, zero zależności', () => {
     // Mocniejsze niż w aplikacji: domena jest współdzielona z serwerem, więc każdy
     // import pakietu (choćby dev-owego) wiązałby OBIE strony z jego obecnością.
     const offenders: string[] = [];
@@ -213,7 +213,7 @@ describe('granice warstw', () => {
   });
 
   it('plik .tsx eksportuje WYŁĄCZNIE komponenty (granica Fast Refresh)', () => {
-    // Reguła narzędziowa i — przy kontekstach — reguła POPRAWNOŚCI. Fast Refresh
+    // Reguła narzędziowa i - przy kontekstach - reguła POPRAWNOŚCI. Fast Refresh
     // podmienia moduł w miejscu tylko wtedy, gdy wszystkie jego eksporty są
     // komponentami; jeden eksport obok (hook, stała, funkcja pomocnicza) odbiera
     // modułowi status granicy odświeżania.
@@ -221,9 +221,9 @@ describe('granice warstw', () => {
     // Przy zwykłym komponencie kosztem jest utrata stanu ekranu. Przy pliku, który
     // woła `createContext`, kosztem jest BŁĄD: kontekst re-ewaluuje się razem
     // z komponentami, zamontowany provider podaje stary obiekt, odświeżony ekran
-    // szuka nowego — i `useContext` zwraca `undefined`. Na ekranie stojącym wewnątrz
+    // szuka nowego - i `useContext` zwraca `undefined`. Na ekranie stojącym wewnątrz
     // providera pojawia się „useTheme() musi być użyty wewnątrz <ThemeProvider>",
-    // albo — ciszej i gorzej — `useGps()` zwraca `null` przy działającym odbiorniku.
+    // albo - ciszej i gorzej - `useGps()` zwraca `null` przy działającym odbiorniku.
     //
     // Stąd `ui/theme/themeContext.ts` i `ui/bootstrap/servicesContext.ts` osobno
     // od swoich providerów. Lustro reguły panelu: `admin/test/architecture.test.ts`
@@ -231,7 +231,7 @@ describe('granice warstw', () => {
     const EXCEPTIONS = new Set([
       // Hook zwracający GOTOWE elementy (`sheets`), więc plik musi być `.tsx`, choć
       // komponentu nie eksportuje. Kontekstu nie tworzy, więc jedynym skutkiem jest
-      // propagacja odświeżenia do ekranu, który go woła — bez utraty tożsamości
+      // propagacja odświeżenia do ekranu, który go woła - bez utraty tożsamości
       // czegokolwiek. Świadomie zostawione (poprzednik: `useEventCorrection.tsx`,
       // skasowany razem z ekranem 08 przy issue #43).
       'ui/hooks/useSessionEdit.tsx',
@@ -272,8 +272,8 @@ describe('granice warstw', () => {
  * chwyt, którym panel pilnuje kształtu banera korekt, żeby bramka `day_open` nie
  * wróciła (`admin/test/correctionWarnings.test.ts`).
  */
-describe('nawigacja — decyzje zapisane w mockupach', () => {
-  it('ŻADEN ekran nie kasuje stosu nawigacji — dzień pilota nie ma „końca drogi"', () => {
+describe('nawigacja - decyzje zapisane w mockupach', () => {
+  it('ŻADEN ekran nie kasuje stosu nawigacji - dzień pilota nie ma „końca drogi"', () => {
     // Reguła pilnowała ekranu 11 („synchronizacja jest statusem, nie końcem drogi"),
     // a po jego usunięciu (2026-08-12) dotyczy WSZYSTKICH ekranów: po issue #23 dnia
     // się nie zamyka, więc nie ma czynności, po której stos byłby już niepotrzebny.

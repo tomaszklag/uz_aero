@@ -1,21 +1,21 @@
 /**
- * UZ Aero — panel: karta „SKUTKI ZMIANY" (`A07a`) — moduł CZYSTY.
+ * UZ Aero - panel: karta „SKUTKI ZMIANY" (`A07a`) - moduł CZYSTY.
  *
  * ══ PO CO TA KARTA W OGÓLE ISTNIEJE ══
  * Realny scenariusz z mockupu: administrator poprawia błędnie wpisaną pojemność SP-KLM
  * z 1257 na 1100 L. **Musi przed zapisem zobaczyć, że próg flagi przesunie się
- * z ±62.9 na ±55.0 L** — bo to jest jedyny widoczny skutek tej liczby, a bez niego
- * zmiana wygląda na kosmetykę wpisu. I musi wiedzieć, ILU spraw ta zmiana dotyczy —
+ * z ±62.9 na ±55.0 L** - bo to jest jedyny widoczny skutek tej liczby, a bez niego
+ * zmiana wygląda na kosmetykę wpisu. I musi wiedzieć, ILU spraw ta zmiana dotyczy -
  * łącznie z tymi, które dopiero wyjdą z przeszłości (patrz `openFlagsRow`).
  *
  * ══ SKĄD BIORĄ SIĘ TE LICZBY ══
  * Obie tolerancje przychodzą Z SERWERA: „przed" jedzie w wierszu listy
- * (`fuelToleranceL`), „po" — z `GET /admin/api/fleet/tolerance?capacityL=…`. Panel nie
+ * (`fuelToleranceL`), „po" - z `GET /admin/api/fleet/tolerance?capacityL=…`. Panel nie
  * mnoży tu niczego przez 0.05 i nie może: z `@uzaero/domain` wolno mu importować
  * wyłącznie typy (`docs/architektura-panelu-frontend.md` §5.1). Dopóki serwer nie
  * odpowie, wiersz progu mówi „liczy serwer…", a nie pokazuje wartości zgadniętej.
  *
- * Reszta wierszy to PORÓWNANIA, nie arytmetyka — równość napisów i wartości logicznych.
+ * Reszta wierszy to PORÓWNANIA, nie arytmetyka - równość napisów i wartości logicznych.
  * To jest dokładnie ta granica, którą stawia §2.2: decyzja o treści mieszka w module
  * czystym z testem, a `.tsx` wyłącznie ją renderuje.
  */
@@ -36,7 +36,7 @@ export interface ImpactRow {
 }
 
 export interface ImpactCard {
-  /** Ile pól formularza faktycznie się zmienia — plakietka „1 zmiana" w nagłówku. */
+  /** Ile pól formularza faktycznie się zmienia - plakietka „1 zmiana" w nagłówku. */
   changeCount: number;
   /** Odmieniona etykieta plakietki: „1 zmiana" / „2 zmiany" / „5 zmian". */
   changeLabel: string;
@@ -63,7 +63,7 @@ export function impactCard(
     openFlagsRow(before),
   ];
 
-  // Wiersz progu i wiersz otwartych flag to KOMENTARZ do zmian, nie zmiany — liczymy
+  // Wiersz progu i wiersz otwartych flag to KOMENTARZ do zmian, nie zmiany - liczymy
   // wyłącznie pola formularza, żeby plakietka „1 zmiana" znaczyła to, co mówi.
   const changeCount = countChanges(before, draft);
 
@@ -109,7 +109,7 @@ function capacityRow(before: AircraftListItemDto, draft: AircraftDraft): ImpactR
 }
 
 /**
- * Próg flagi — jedyny wiersz, który CZEKA na serwer.
+ * Próg flagi - jedyny wiersz, który CZEKA na serwer.
  *
  * `toleranceAfter == null` przy zmienionej pojemności znaczy „serwer jeszcze nie
  * odpowiedział". Pokazujemy to wprost, zamiast zostawić stary próg jako wartość „po":
@@ -159,7 +159,7 @@ function mhFormatRow(before: AircraftListItemDto, draft: AircraftDraft): ImpactR
   return {
     label: 'Format MH',
     value: `${shortFormat(before.mhFormat)} → ${shortFormat(draft.mhFormat)}`,
-    // Przykład na wartości, którą administrator właśnie widzi w tabeli — inaczej
+    // Przykład na wartości, którą administrator właśnie widzi w tabeli - inaczej
     // „decimal → hh:mm" nie mówi nic o tym, co zobaczy pilot na preflight.
     unit: exampleOf(before, draft),
     tone: 'amber',
@@ -197,12 +197,12 @@ function serviceRow(before: AircraftListItemDto, draft: AircraftDraft): ImpactRo
 }
 
 /**
- * Otwarte flagi tej jednostki — i to, co się z nimi stanie.
+ * Otwarte flagi tej jednostki - i to, co się z nimi stanie.
  *
  * To jest wiersz, dla którego serwer w ogóle wysyła `openFlags`. Do 2026-08-01 nosił
  * adnotację „bez przeliczenia" i było to zdanie NIEPRAWDZIWE o systemie: żadna z tych
  * flag rzeczywiście się nie zmieni ani nie zniknie (panel nie przepisuje rejestru,
- * a próg zapisany w `details` zostaje taki, jaki był w chwili wykrycia) — ale przy
+ * a próg zapisany w `details` zostaje taki, jaki był w chwili wykrycia) - ale przy
  * NIŻSZYM progu ich może przybyć, bo `POST /events` przelicza łańcuch z całej historii
  * samolotu, biorąc pojemność bieżącą. Adnotacja mówi więc dokładnie tyle, ile jest
  * prawdą: te wpisy zostają nietknięte, a liczba jest DOLNĄ granicą, nie sufitem.

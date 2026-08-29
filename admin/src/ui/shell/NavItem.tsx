@@ -1,8 +1,8 @@
 /**
- * UZ Aero — panel: pozycja nawigacji (`.nav-item` z `SZABLON.html`).
+ * UZ Aero - panel: pozycja nawigacji (`.nav-item` z `SZABLON.html`).
  *
  * Pozycja niedostępna dla roli jest **WIDOCZNA, wyszarzona i NIEKLIKALNA, z podanym
- * powodem** — nie ukryta. Ukrywanie zmusza człowieka do zgadywania, czy funkcji nie
+ * powodem** - nie ukryta. Ukrywanie zmusza człowieka do zgadywania, czy funkcji nie
  * ma w produkcie, czy nie ma jej ON.
  *
  * Zablokowana pozycja przestaje być linkiem (`<span>`, nie `<a>`), a nie „linkiem
@@ -17,7 +17,7 @@ import type { NavItemSpec } from './navItems';
 
 interface NavItemProps extends NavItemSpec {
   locked: boolean;
-  /** Powód blokady — widoczny jako `title`, wymagany, gdy `locked`. */
+  /** Powód blokady - widoczny jako `title`, wymagany, gdy `locked`. */
   lockReason?: string;
   /** Licznik po prawej (`.nav-count`); o tonie rozstrzyga `navCounts.ts`. */
   count?: NavCount;

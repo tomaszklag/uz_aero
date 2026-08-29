@@ -1,13 +1,13 @@
 /**
- * UZ Aero (serwer) — PODGLĄD korekty administratora (`A02b`, karta „przed → po").
+ * UZ Aero (serwer) - PODGLĄD korekty administratora (`A02b`, karta „przed → po").
  *
- * ══ TO JEST ZAPYTANIE, NIE KOMENDA — I TO JEST NAJWAŻNIEJSZE ZDANIE TEGO PLIKU ══
+ * ══ TO JEST ZAPYTANIE, NIE KOMENDA - I TO JEST NAJWAŻNIEJSZE ZDANIE TEGO PLIKU ══
  * Podgląd NIE przechodzi przez `AuditedWrite`. Tamta brama z definicji typu wymusza
  * wpis do `admin_audit`, a dziennik audytu nie może opisywać rzeczy, które się nie
  * wydarzyły: „administrator obejrzał skutek" to nie jest zmiana w rejestrze, a wpis
  * o niej rozmyłby jedyny dokument odpowiadający na pytanie „kto co zmienił".
  * Stąd konstruktor bez `AuditedWrite`, bez `SessionsProjectionPort` i bez `DayExporter`
- * — zero zapisów, zero re-eksportu, zero skutków ubocznych.
+ * - zero zapisów, zero re-eksportu, zero skutków ubocznych.
  *
  * ══ DLACZEGO PODGLĄD W OGÓLE ISTNIEJE ══
  * Mockup pokazuje liczby dnia PRZED zapisem („czas blokowy 05:53 → 05:41", „cykl
@@ -15,7 +15,7 @@
  * mu importować wyłącznie typy, więc `projectSession` jest dla niego nieosiągalne.
  * Gdyby policzył je „na piechotę", pierwszą ofiarą byłby `void`: unieważnienie
  * `engine_stop` NIE skraca cyklu o różnicę czasów, tylko zostawia go OTWARTYM, przez
- * co wypada z czasu blokowego w całości. Tej reguły nie da się odgadnąć z payloadu —
+ * co wypada z czasu blokowego w całości. Tej reguły nie da się odgadnąć z payloadu -
  * mieszka w projekcji i tylko projekcja umie ją zastosować.
  *
  * ══ TA SAMA OCENA, CO PRZY ZAPISIE ══
@@ -26,7 +26,7 @@
  * `POST`, a nie `GET`, mimo że to zapytanie: parametry podglądu są kształtem korekty
  * (unia dyskryminowana z opcjonalnym `newTime`), a nie filtrem listy. Wciskanie ich
  * w query string oznaczałoby drugą, ręczną serializację tego samego payloadu, który
- * chwilę później jedzie w ciele `POST /corrections` — czyli dwie okazje do rozjazdu
+ * chwilę później jedzie w ciele `POST /corrections` - czyli dwie okazje do rozjazdu
  * zamiast jednej definicji.
  */
 
@@ -52,21 +52,21 @@ import type {
 } from '../../common/ports.ts';
 import type { EventsAdminPort } from '../ports.ts';
 
-/** Wejście podglądu: co poprawić. BEZ `reason` — patrz docblock kontraktu. */
+/** Wejście podglądu: co poprawić. BEZ `reason` - patrz docblock kontraktu. */
 export interface CorrectionPreviewInput {
   sessionUuid: string;
-  /** Kształt bierzemy z domeny — podgląd nie modeluje korekty po raz drugi. */
+  /** Kształt bierzemy z domeny - podgląd nie modeluje korekty po raz drugi. */
   correction: EventCorrectionPayload;
 }
 
 /**
- * Odmowy IDENTYCZNE z komendą — czyli od 2026-08-07 **dokładnie jedna**
+ * Odmowy IDENTYCZNE z komendą - czyli od 2026-08-07 **dokładnie jedna**
  * (`session_not_found` → 404). Bramka `day_open` znikła po obu stronach naraz i to jest
  * warunek sensu tego zapytania: podgląd łaskawszy albo surowszy od zapisu wystawiałby
- * formularz tam, gdzie zapis odmówi (albo odwrotnie — odmawiał tam, gdzie zapis idzie).
+ * formularz tam, gdzie zapis odmówi (albo odwrotnie - odmawiał tam, gdzie zapis idzie).
  *
  * Naruszenia reguł NIE SĄ tu odmową: to treść odpowiedzi. Administrator ma zobaczyć,
- * że `void` na `day_close` jest niemożliwy, RAZEM z powodem — a nie dostać pustą
+ * że `void` na `day_close` jest niemożliwy, RAZEM z powodem - a nie dostać pustą
  * kartę i kod błędu. Tak samo ostrzeżenia o kolizji z pilotem.
  */
 export type CorrectionPreviewOutcome =
@@ -99,7 +99,7 @@ export class AdminCorrectionQueries {
 
     // Nie ma tu już bramki na sesję otwartą (decyzja 2026-08-07, patrz komenda).
     // Otwarta sesja jest dziś stanem NORMALNYM, a nie znakiem, że pilot siedzi
-    // w kokpicie — i podgląd ma o niej opowiedzieć w `warnings`, a nie odmówić.
+    // w kokpicie - i podgląd ma o niej opowiedzieć w `warnings`, a nie odmówić.
     const candidate = correctionCandidate(
       before,
       stream,
@@ -109,7 +109,7 @@ export class AdminCorrectionQueries {
     );
     const limits: AircraftLimits = {
       capacityL: await this.aircraft.capacityL(this.db, candidate.aircraftId),
-      // Kolumny konfiguracji oleju dochodzą w Etapie D (issue #60) — do tego czasu
+      // Kolumny konfiguracji oleju dochodzą w Etapie D (issue #60) - do tego czasu
       // reguły olejowe przy korekcie administratora śpią, jak przy nieznanym samolocie.
       oilMinL: null,
       oilCapacityL: null,
@@ -121,7 +121,7 @@ export class AdminCorrectionQueries {
         sessionUuid: input.sessionUuid,
         target: await this.targetOf(stream, input.correction.targetUuid),
         before,
-        // Projekcja liczona z PEŁNEGO strumienia z doklejonym kandydatem — dokładnie
+        // Projekcja liczona z PEŁNEGO strumienia z doklejonym kandydatem - dokładnie
         // tak, jak zrobi to komenda po zapisie (`projectSession` na całości, nigdy
         // „dodaj różnicę"). Kandydat idzie na koniec, bo tam trafiłby w bazie:
         // porządek strumienia to kolejność przyjęcia paczek.
@@ -136,7 +136,7 @@ export class AdminCorrectionQueries {
    * Opis zdarzenia korygowanego; `null` = celu NIE MA w tej sesji.
    *
    * Kreska zamiast zmyślonego wiersza: cel spoza sesji jest jednocześnie naruszeniem
-   * (`CORRECTION_TARGET_NOT_FOUND`), więc panel ma co pokazać — powód, a nie pustą
+   * (`CORRECTION_TARGET_NOT_FOUND`), więc panel ma co pokazać - powód, a nie pustą
    * kartę z zerami udającymi odczyt.
    */
   private async targetOf(
@@ -149,7 +149,7 @@ export class AdminCorrectionQueries {
     // Czas użyty W PROJEKCJI bierzemy z `applyCorrections`, a nie z payloadów korekt:
     // reguła „ostatnia wygrywa" (razem z `void` → `retime`, który przywraca zdarzenie
     // do życia) ma jedną implementację, w domenie. Druga kopia tutaj rozjechałaby się
-    // przy pierwszej zmianie — i to na ekranie, który istnieje po to, żeby pokazywać
+    // przy pierwszej zmianie - i to na ekranie, który istnieje po to, żeby pokazywać
     // prawdę o rejestrze.
     const effective = applyCorrections(stream).find((event) => event.uuid === targetUuid);
     const meta = await this.adminEvents.sourceDeviceOf(this.db, targetUuid);

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 10K Korekta notatki</title>
+<title>UZ Aero - 10K Korekta notatki</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -82,7 +82,7 @@
   .history-text { flex:1; font-size:12px; color:var(--text-secondary); }
   .history-count { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; color:var(--blue); background:var(--blue-muted); border:1px solid var(--blue-border); border-radius:999px; padding:2px 8px; align-self:center; }
 
-  /* POLE WPISU NA DOLE — arkusz rośnie w górę, a klawiatura stoi pod nim. Pole nad
+  /* POLE WPISU NA DOLE - arkusz rośnie w górę, a klawiatura stoi pod nim. Pole nad
      listą przeskakiwałoby przy każdej literze (zgłoszenie z urządzenia, issue #14). */
   .text-field {
     background:var(--surface); border:1px solid var(--border-strong); border-radius:12px;
@@ -120,12 +120,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 10K</span>
+  <span class="film-strip">UZ AERO - 10K</span>
   <span class="slug">korekta notatki · ten sam arkusz co 02e</span>
   <span class="canvas-meta"><span class="pulse"></span>Arkusz 10D</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Korekta notatki sesji">
+<main class="phone" role="region" aria-label="Mockup - Korekta notatki sesji">
   <div class="status-bar">
     <span>9:41</span>
     <span class="status-right">
@@ -157,14 +157,14 @@
         <div class="note-row">
           <span class="note-body">
             <span class="note-head"><span class="tag-corrected">popr.</span></span>
-            <span class="note-text">Drugi zbiornik nie trzyma wskazania — tankować z jednej strony.</span>
+            <span class="note-text">Drugi zbiornik nie trzyma wskazania - tankować z jednej strony.</span>
           </span>
         </div>
       </div>
     </div>
 
     <!-- ══ ARKUSZ NOTATKI ══════════════════════════════════════════════════
-         TEN SAM arkusz, w którym notatka powstała (02e) — to ta sama czynność, więc
+         TEN SAM arkusz, w którym notatka powstała (02e) - to ta sama czynność, więc
          nie ma powodu, żeby wyglądała inaczej. Różnica jest DOKŁADNIE JEDNA: wiersz
          historii zmian, którego przy pisaniu nowej notatki nie ma czego pokazać. -->
     <div class="modal-overlay">
@@ -176,10 +176,10 @@
         <div class="modal-title">NOTATKA SESJI</div>
 
         <!-- HISTORIA PRZED POLEM: „co tu już zmieniano" jest pytaniem o TEN tekst,
-             a lista podpowiedzi (02e) — o cudze wpisy.
+             a lista podpowiedzi (02e) - o cudze wpisy.
              Wiersz istnieje WYŁĄCZNIE z historią: zerowy licznik to szum, nie
-             informacja (ta sama zasada, którą issue #40 wyrzuciło „Notatki —").
-             Licznik liczy poprawki SAMEJ notatki — `preflight_confirm` niesie obok
+             informacja (ta sama zasada, którą issue #40 wyrzuciło „Notatki -").
+             Licznik liczy poprawki SAMEJ notatki - `preflight_confirm` niesie obok
              niej paliwo, licznik motogodzin i Duala, a każde z nich ma własny arkusz
              i własne pytanie. -->
         <a href="10i-historia-zmian.html" class="history-link">
@@ -193,7 +193,7 @@
              tłumaczy liczbę, której nikt inny nie umie wyjaśnić, a przy notatce
              wyjaśnieniem jest sam NOWY TEKST. Drugie pole na zdanie obok pola na
              zdanie kazałoby pilotowi wybierać, w którym z nich napisać to samo. -->
-        <div class="text-field">Drugi zbiornik nie trzyma wskazania — tankować z jednej strony.<span class="caret"></span></div>
+        <div class="text-field">Drugi zbiornik nie trzyma wskazania - tankować z jednej strony.<span class="caret"></span></div>
 
         <div class="modal-actions">
           <a href="10d-edycja.html" class="btn-cancel">Anuluj</a>
@@ -201,7 +201,7 @@
         </div>
 
         <div class="note">
-          Pusty tekst KASUJE notatkę — „usuń" i „wyczyść pole" to dla pilota jedno.
+          Pusty tekst KASUJE notatkę - „usuń" i „wyczyść pole" to dla pilota jedno.
           Ślad po skasowanej zostaje w historii zmian, bo rejestru nie da się cofnąć.
         </div>
       </div>
@@ -210,12 +210,12 @@
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Arkusze trybu edycji — kiedy który?</div>
+  <div class="vp-title">Arkusze trybu edycji - kiedy który?</div>
   <a class="vp-item active" href="10k-korekta-notatki.html">
     <span class="vp-badge">10K</span>
     <span class="vp-body">
       <span class="vp-name">Korekta notatki</span>
-      <span class="vp-when">Wiersz karty „Notatki" w trybie edycji. Ten sam arkusz co przy pisaniu (02e) plus wejście w historię zmian. Technicznie: `amend` pola `notes` — w `preflight_confirm` dla notatki sesji, w `manual_log_entry` dla uwagi wpisu ręcznego.</span>
+      <span class="vp-when">Wiersz karty „Notatki" w trybie edycji. Ten sam arkusz co przy pisaniu (02e) plus wejście w historię zmian. Technicznie: `amend` pola `notes` - w `preflight_confirm` dla notatki sesji, w `manual_log_entry` dla uwagi wpisu ręcznego.</span>
     </span>
     <span class="vp-tag">ten arkusz</span>
   </a>
@@ -223,7 +223,7 @@
     <span class="vp-badge">02E</span>
     <span class="vp-body">
       <span class="vp-name">Notatka przy zadaniu</span>
-      <span class="vp-when">Miejsce, w którym notatka POWSTAJE — bez wiersza historii, bo świeży tekst nie ma przeszłości. Tam arkusz podpowiada ostatnio używane wartości.</span>
+      <span class="vp-when">Miejsce, w którym notatka POWSTAJE - bez wiersza historii, bo świeży tekst nie ma przeszłości. Tam arkusz podpowiada ostatnio używane wartości.</span>
     </span>
   </a>
   <a class="vp-item" href="10j-korekta-zalogi.html">

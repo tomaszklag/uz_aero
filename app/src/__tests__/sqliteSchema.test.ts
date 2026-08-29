@@ -1,5 +1,5 @@
 /**
- * UZ Aero — test SCHEMATU lokalnej bazy na PRAWDZIWYM silniku SQLite.
+ * UZ Aero - test SCHEMATU lokalnej bazy na PRAWDZIWYM silniku SQLite.
  *
  * DLACZEGO ten plik istnieje: DDL był jedyną warstwą bez testów, bo adapter importuje
  * `expo-sqlite` (moduł natywny, niedostępny w Node). Efekt: błąd `no such column: rowid`
@@ -7,7 +7,7 @@
  * dopiero przy pierwszym uruchomieniu na telefonie.
  *
  * Rozwiązanie bez nowych zależności: DDL mieszka w `schema.ts` (czysty tekst, zero
- * importów natywnych), a tutaj uruchamiamy go na `node:sqlite` — silniku SQLite
+ * importów natywnych), a tutaj uruchamiamy go na `node:sqlite` - silniku SQLite
  * wbudowanym w Node 24. Ten sam parser i ten sam planer zapytań co na urządzeniu,
  * więc błędy składni i braki kolumn wychodzą w sekundę.
  *
@@ -19,7 +19,7 @@ import { DatabaseSync } from 'node:sqlite';
 
 import { MIGRATIONS, SCHEMA_VERSION } from '../infrastructure/storage/schema';
 
-/** Świeża baza w pamięci z zastosowanymi wszystkimi migracjami — jak po `init()`. */
+/** Świeża baza w pamięci z zastosowanymi wszystkimi migracjami - jak po `init()`. */
 function migratedDb(): DatabaseSync {
   const db = new DatabaseSync(':memory:');
   for (const migration of MIGRATIONS) db.exec(migration);
@@ -58,7 +58,7 @@ describe('schemat lokalnej bazy (node:sqlite)', () => {
     expect(SCHEMA_VERSION).toBe(MIGRATIONS.length);
   });
 
-  it('jest idempotentny — ponowne zastosowanie migracji niczego nie psuje', () => {
+  it('jest idempotentny - ponowne zastosowanie migracji niczego nie psuje', () => {
     // Scenariusz z życia: telefon z bazą w wersji 0 (przerwany pierwszy start) dostaje
     // komplet migracji jeszcze raz.
     const db = migratedDb();
@@ -79,7 +79,7 @@ describe('schemat lokalnej bazy (node:sqlite)', () => {
 
   // Listy kolumn są KONTRAKTEM z interfejsami wierszy w `expoSqliteAdapter.ts`
   // (`EventRow`, `AircraftRow`, `PilotRow`). Adapter mapuje snake_case → camelCase ręcznie,
-  // więc literówka w nazwie kolumny nie jest błędem typów — tylko `undefined` w runtime.
+  // więc literówka w nazwie kolumny nie jest błędem typów - tylko `undefined` w runtime.
   it.each([
     [
       'events',
@@ -158,7 +158,7 @@ describe('schemat lokalnej bazy (node:sqlite)', () => {
     db.close();
   });
 
-  it('uuid jest kluczem głównym — INSERT OR IGNORE odrzuca duplikat (idempotencja syncu)', () => {
+  it('uuid jest kluczem głównym - INSERT OR IGNORE odrzuca duplikat (idempotencja syncu)', () => {
     const db = migratedDb();
     const sql = `INSERT OR IGNORE INTO events
         (uuid, session_uuid, aircraft_id, pic_id, dual_id, type,

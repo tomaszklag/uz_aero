@@ -1,10 +1,10 @@
 /**
- * UZ Aero — testy logiki wpisu ręcznego (ekrany 15 → 15C, przebudowa 2026-08-16).
+ * UZ Aero - testy logiki wpisu ręcznego (ekrany 15 → 15C, przebudowa 2026-08-16).
  *
  * Dwa moduły, dwa pytania:
- *  • `manualFlight.ts` — „czy zapis w ogóle przejdzie przez domenę" (blokada
+ *  • `manualFlight.ts` - „czy zapis w ogóle przejdzie przez domenę" (blokada
  *    z powodem przy przycisku, budowa wejścia komendy);
- *  • `manualFlightWarnings.ts` — „czy dane wyglądają na prawdziwe" (ostrzeżenia,
+ *  • `manualFlightWarnings.ts` - „czy dane wyglądają na prawdziwe" (ostrzeżenia,
  *    które NIGDY nie blokują).
  * Granica między nimi jest treścią decyzji z 2026-08-16: twarde reguły domeny
  * mówią przy przycisku, wszystko miękkie jest amber banerem na kroku 4.
@@ -30,7 +30,7 @@ import { emptyPilotDay, utcDayStart, type PilotDay } from '../domain';
 const DAY = Date.UTC(2026, 7, 16); // 16 SIE 2026, północ UTC
 const t = (h: number, m = 0): number => DAY + (h * 60 + m) * 60_000;
 
-/** Szkic kompletny — punkt wyjścia; testy psują pojedyncze pola. */
+/** Szkic kompletny - punkt wyjścia; testy psują pojedyncze pola. */
 function draft(over: Partial<ManualFlightDraft> = {}): ManualFlightDraft {
   return {
     ...emptyManualFlightDraft(t(16)),
@@ -43,14 +43,14 @@ function draft(over: Partial<ManualFlightDraft> = {}): ManualFlightDraft {
       { id: 'f1', takeoff: t(9, 48), landing: t(10, 14) },
       { id: 'f2', takeoff: t(10, 26), landing: t(10, 52) },
     ],
-    /* Zadanie to SKOKI, więc szkic „kompletny" musi mieć zrzut — bez niego jest
+    /* Zadanie to SKOKI, więc szkic „kompletny" musi mieć zrzut - bez niego jest
        niekompletny i od 2026-08-29 mówi to ostrzeżenie (`jumpDayWithoutDrop`).
        Zrzut siedzi w pierwszym locie, żeby nie zapalał też `drop-outside-flight`. */
     drops: [
       { id: 'd0', at: t(10, 2), jumpers: { tandem: 2, aff: 1, solo: 1 }, altitudeFt: 4000 },
     ],
     // Paliwo: zastane 64 L, dolane 48 L przed startem, po locie 76 L (issue #62,
-    // siódma tura — trzy liczby i ani jednej godziny).
+    // siódma tura - trzy liczby i ani jednej godziny).
     fuel: { foundL: 64, addedL: 48, afterL: 76 },
     mhBefore: 1306.35,
     mhAfter: 1307.88,
@@ -65,19 +65,19 @@ const emptyCtx: ManualFlightWarningContext = {
   fetchedAt: null,
 };
 
-describe('emptyManualFlightDraft — wartości startowe', () => {
+describe('emptyManualFlightDraft - wartości startowe', () => {
   it('data lotu jest DOMYŚLNIE dzisiejsza (dobą UTC), reszta pusta', () => {
     const d = emptyManualFlightDraft(t(16, 20));
 
     expect(d.day).toBe(utcDayStart(t(16, 20)));
     expect(d.aircraftId).toBeNull();
-    // Operacja bez wartości podstawionej — wybór ma być świadomy.
+    // Operacja bez wartości podstawionej - wybór ma być świadomy.
     expect(d.operation).toBeNull();
     expect(d.flights).toEqual([]);
   });
 });
 
-describe('manualFlightStepBlocker — bramki kroków', () => {
+describe('manualFlightStepBlocker - bramki kroków', () => {
   it('krok 1 wymaga samolotu', () => {
     expect(manualFlightStepBlocker('aircraft', draft({ aircraftId: null }))).toContain('samolot');
     expect(manualFlightStepBlocker('aircraft', draft())).toBeNull();
@@ -94,7 +94,7 @@ describe('manualFlightStepBlocker — bramki kroków', () => {
    * Kształt wymogu idzie za rodzajem operacji (issue #13): skoki = jedno lotnisko,
    * reszta = para start → lądowanie.
    */
-  it('krok 2 wymaga lotniska; przy operacji z parą — obu', () => {
+  it('krok 2 wymaga lotniska; przy operacji z parą - obu', () => {
     // Skoki (jedno pole): bez lotniska stoi.
     expect(manualFlightStepBlocker('task', draft({ departureIcao: null }))).toContain(
       'lotnisko',
@@ -113,7 +113,7 @@ describe('manualFlightStepBlocker — bramki kroków', () => {
   });
 
   it('krok 3 wymaga biegu silnika', () => {
-    // Napis wprost ze zgłoszenia z urządzenia (issue #62, szósta tura) — nie „godziny
+    // Napis wprost ze zgłoszenia z urządzenia (issue #62, szósta tura) - nie „godziny
     // biegu silnika: uruchomienie i wyłączenie", tylko to, czego pilot ma poszukać.
     expect(manualFlightStepBlocker('times', draft({ engineStart: null }))).toBe(
       'Wpisz godzinę uruchomienia i wyłączenia silnika.',
@@ -121,9 +121,9 @@ describe('manualFlightStepBlocker — bramki kroków', () => {
     expect(manualFlightStepBlocker('times', draft())).toBeNull();
   });
 
-  it('ale NIE wymaga lotu — bieg bez lotu jest legalny (uwaga z urządzenia, 2026-08-29)', () => {
+  it('ale NIE wymaga lotu - bieg bez lotu jest legalny (uwaga z urządzenia, 2026-08-29)', () => {
     /* „Mogła być taka sytuacja, że uruchomiłem i wyłączyłem, ale nie wykonałem żadnego
-       lotu" — dokładnie ten stan flow na żywo ma jako 09C, a domena traktuje go miękko
+       lotu" - dokładnie ten stan flow na żywo ma jako 09C, a domena traktuje go miękko
        (`NO_FLIGHT_WITHOUT_REASON` to flaga, nie odmowa). Blokada odbierała pilotowi
        zapisanie czasu, w którym maszyna była zajęta. */
     const noFlights = draft({ flights: [], drops: [] });
@@ -174,7 +174,7 @@ describe('manualFlightStepBlocker — bramki kroków', () => {
     expect(manualFlightStepBlocker('readings', draft())).toBeNull();
   });
 
-  it('krok 4 blokuje cofnięty licznik — twarda reguła domeny mówi przy przycisku', () => {
+  it('krok 4 blokuje cofnięty licznik - twarda reguła domeny mówi przy przycisku', () => {
     expect(
       manualFlightStepBlocker('readings', draft({ mhAfter: 1306.0 })),
     ).toContain('cofnąć');
@@ -183,7 +183,7 @@ describe('manualFlightStepBlocker — bramki kroków', () => {
   /**
    * DOLEWKA PRZY PRACUJĄCYM SILNIKU JEST OD SIÓDMEJ TURY NIEWYRAŻALNA (issue #62).
    *
-   * Do niej dolewka niosła własną godzinę i dało się ją ustawić na środek biegu —
+   * Do niej dolewka niosła własną godzinę i dało się ją ustawić na środek biegu -
    * bramka musiała więc pilnować `REFUEL_ENGINE_RUNNING`. Odkąd paliwo to trzy liczby
    * bez godzin, a zdarzenie składa się przy zapisie minutę przed uruchomieniem, tego
    * stanu nie da się w ogóle zbudować. Test pilnuje właśnie tego: bramka MILCZY, bo
@@ -201,7 +201,7 @@ describe('wymóg załogi dwuosobowej na kroku 1 (issue #58 pkt 4)', () => {
   // 2026-08-29): powód blokady stoi w przycisku, więc musi być zdaniem, nie boolem.
   const limits = (dualRequired: boolean) => ({ capacityL: null, dualRequired });
 
-  it('samolot z wymogiem Duala blokuje krok 1 bez drugiego pilota — i mówi czym', () => {
+  it('samolot z wymogiem Duala blokuje krok 1 bez drugiego pilota - i mówi czym', () => {
     // An-2 z kartki podlega temu samemu prawu, co An-2 na preflightcie (§3.1).
     expect(manualFlightStepBlocker('aircraft', draft({ dualId: null }), limits(true))).toBe(
       DUAL_REQUIRED_REASON,
@@ -211,20 +211,20 @@ describe('wymóg załogi dwuosobowej na kroku 1 (issue #58 pkt 4)', () => {
     ).toBeNull();
   });
 
-  it('bez wymogu — Dual pozostaje opcjonalny', () => {
+  it('bez wymogu - Dual pozostaje opcjonalny', () => {
     expect(manualFlightStepBlocker('aircraft', draft({ dualId: null }), limits(false))).toBeNull();
     // Bez podanych granic bramka wymogu nie zgaduje: nie wie, jaka to maszyna.
     expect(manualFlightStepBlocker('aircraft', draft({ dualId: null }))).toBeNull();
   });
 
-  it('przed wyborem samolotu odpowiada o SAMOLOCIE — powody padają pojedynczo', () => {
+  it('przed wyborem samolotu odpowiada o SAMOLOCIE - powody padają pojedynczo', () => {
     expect(
       manualFlightStepBlocker('aircraft', draft({ aircraftId: null, dualId: null }), limits(true)),
     ).toBe('Wybierz samolot, którego dotyczy lot.');
   });
 });
 
-describe('toManualFlightInput — szkic → wejście komendy', () => {
+describe('toManualFlightInput - szkic → wejście komendy', () => {
   it('oddaje null, dopóki blokada czegoś nie puszcza', () => {
     expect(toManualFlightInput(draft({ aircraftId: null }), ids())).toBeNull();
   });
@@ -242,7 +242,7 @@ describe('toManualFlightInput — szkic → wejście komendy', () => {
 
     expect(input.flights.map((f) => f.takeoff)).toEqual([t(9, 48), t(10, 26)]);
     /* Trójka `refuel` domyka się z definicji, bo wszystkie trzy liczby biorą się
-       z tej samej pary: zastane (64) i dolane (48). Godzina wyprowadza się z biegu —
+       z tej samej pary: zastane (64) i dolane (48). Godzina wyprowadza się z biegu -
        minutę przed uruchomieniem, żeby odczyt przy przejęciu opisywał stan PO
        zatankowaniu. */
     expect(input.refuels).toEqual([
@@ -251,7 +251,7 @@ describe('toManualFlightInput — szkic → wejście komendy', () => {
   });
 
   /**
-   * ODCZYT POCZĄTKOWY TO WPROST ZASTANE — bez arytmetyki (issue #62, siódma tura).
+   * ODCZYT POCZĄTKOWY TO WPROST ZASTANE - bez arytmetyki (issue #62, siódma tura).
    *
    * Do niej szkic trzymał stan PO porannym tankowaniu i rachunek musiał go cofać
    * o dolewki sprzed niego (112 − 48 = 64), inaczej litry liczyły się podwójnie: raz
@@ -261,10 +261,10 @@ describe('toManualFlightInput — szkic → wejście komendy', () => {
   it('odczyt początkowy = zastane, wprost i bez cofania', () => {
     const input = toManualFlightInput(draft(), ids())!;
     expect(input.initialReading).toEqual({ fuelL: 64, mh: 1306.35 });
-    // Zużycie z projekcji: 64 + 48 − 76 = 36 L — tyle, ile silnik naprawdę spalił.
+    // Zużycie z projekcji: 64 + 48 − 76 = 36 L - tyle, ile silnik naprawdę spalił.
   });
 
-  it('bez tankowania nie ma zdarzenia dolewki — zero litrów nie jest zdarzeniem', () => {
+  it('bez tankowania nie ma zdarzenia dolewki - zero litrów nie jest zdarzeniem', () => {
     const input = toManualFlightInput(
       draft({ fuel: { foundL: 112, addedL: 0, afterL: 76 } }),
       ids(),
@@ -278,7 +278,7 @@ describe('toManualFlightInput — szkic → wejście komendy', () => {
     expect(withOil.oilL).toBe(8.2);
     expect(withOil.oilAddedL).toBe(1.0);
 
-    // Bez wpisu kluczy NIE MA — sesja bez pomiaru nie niesie pustych pól.
+    // Bez wpisu kluczy NIE MA - sesja bez pomiaru nie niesie pustych pól.
     const without = toManualFlightInput(draft(), ids())!;
     expect('oilL' in without).toBe(false);
     expect('oilAddedL' in without).toBe(false);
@@ -286,7 +286,7 @@ describe('toManualFlightInput — szkic → wejście komendy', () => {
 
   /**
    * Issue #13 w wpisie ręcznym: skoki startują i lądują na tym samym placu, więc
-   * jedno pole trasy wypełnia OBIE role — formularz i domena nie mają jak się rozjechać.
+   * jedno pole trasy wypełnia OBIE role - formularz i domena nie mają jak się rozjechać.
    */
   it('operacja jednopolowa (skoki) niesie to samo lotnisko w obu rolach', () => {
     const jump = toManualFlightInput(draft(), ids())!;
@@ -305,12 +305,12 @@ describe('toManualFlightInput — szkic → wejście komendy', () => {
   }
 });
 
-describe('manualFlightWarnings — ostrzegają, nigdy nie blokują', () => {
+describe('manualFlightWarnings - ostrzegają, nigdy nie blokują', () => {
   it('kompletny, spójny szkic bez kontekstu = zero ostrzeżeń', () => {
     expect(manualFlightWarnings(draft(), emptyCtx)).toEqual([]);
   });
 
-  it('kolizja czasów z własną sesją doby — z lokalnego rejestru', () => {
+  it('kolizja czasów z własną sesją doby - z lokalnego rejestru', () => {
     const day: PilotDay = {
       ...emptyPilotDay('tmk', DAY),
       sessions: [
@@ -355,7 +355,7 @@ describe('manualFlightWarnings — ostrzegają, nigdy nie blokują', () => {
     expect(manualFlightWarnings(draft(), { ...emptyCtx, pilotDay: day })).toEqual([]);
   });
 
-  it('łańcuch MH wobec przekazania — z adnotacją wieku cache', () => {
+  it('łańcuch MH wobec przekazania - z adnotacją wieku cache', () => {
     const warnings = manualFlightWarnings(draft({ mhBefore: 1306.35 }), {
       ...emptyCtx,
       handover: { reading: { fuelL: 112, mh: 1308.17 }, byPilotId: 'inny', at: t(8) },
@@ -371,7 +371,7 @@ describe('manualFlightWarnings — ostrzegają, nigdy nie blokują', () => {
     expect(
       manualFlightWarnings(draft({ mhBefore: 1306.35 }), {
         ...emptyCtx,
-        /* 64 L, czyli ZASTANE ze szkicu — a nie 112 L, czyli stan po zatankowaniu.
+        /* 64 L, czyli ZASTANE ze szkicu - a nie 112 L, czyli stan po zatankowaniu.
            To jest cała różnica, którą wprowadziła siódma tura issue #62: łańcuch
            porównuje się z tym, co poprzedni pilot zostawił, a nie z tym, co ten
            zobaczył na paliwomierzu po dolaniu 48 L. */
@@ -382,14 +382,14 @@ describe('manualFlightWarnings — ostrzegają, nigdy nie blokują', () => {
   });
 
   /**
-   * Ogniwem łańcucha jest ZASTANE — dokładnie to, co poprzedni pilot zostawił.
+   * Ogniwem łańcucha jest ZASTANE - dokładnie to, co poprzedni pilot zostawił.
    * Do siódmej tury issue #62 trzeba je było odtwarzać z odczytu „przed uruchomieniem"
    * minus poranne dolewki; teraz szkic trzyma je wprost, więc porównanie jest jedną
    * odejmowaniem prostsze i nie ma jak się rozjechać z porannym tankowaniem.
    */
   it('łańcuch paliwa liczy się od ZASTANEGO, nie od stanu po tankowaniu', () => {
     const warnings = manualFlightWarnings(
-      // Zastane 64, dolane 48 — przekazanie mówi 64, więc łańcuch się zgadza.
+      // Zastane 64, dolane 48 - przekazanie mówi 64, więc łańcuch się zgadza.
       draft({ fuel: { foundL: 64, addedL: 48, afterL: 76 } }),
       {
         ...emptyCtx,
@@ -407,7 +407,7 @@ describe('manualFlightWarnings — ostrzegają, nigdy nie blokują', () => {
    * mówi o nim BLOKADA, a nie baner. Dwa zdania o jednej liczbie, raz miękko i raz
    * twardo, byłyby szumem.
    */
-  it('paliwo, którego przybyło, jest BLOKADĄ — nie ostrzeżeniem', () => {
+  it('paliwo, którego przybyło, jest BLOKADĄ - nie ostrzeżeniem', () => {
     const tooMuch = draft({ fuel: { foundL: 64, addedL: 48, afterL: 200 } });
 
     expect(manualFlightWarnings(tooMuch, emptyCtx).map((w) => w.id)).not.toContain(
@@ -416,7 +416,7 @@ describe('manualFlightWarnings — ostrzegają, nigdy nie blokują', () => {
     expect(manualFlightStepBlocker('readings', tooMuch)).toContain('brakuje dolewki');
   });
 
-  it('zrzut poza każdym lotem — miękko, jak DROP_ON_GROUND w domenie', () => {
+  it('zrzut poza każdym lotem - miękko, jak DROP_ON_GROUND w domenie', () => {
     const warnings = manualFlightWarnings(
       draft({ drops: [{ id: 'd1', at: t(10, 20), jumpers: null, altitudeFt: null }] }),
       emptyCtx,
@@ -439,10 +439,10 @@ describe('manualFlightWarnings — ostrzegają, nigdy nie blokują', () => {
  * DZIEŃ SKOKOWY BEZ ZRZUTU (zgłoszenie z urządzenia, 2026-08-29).
  *
  * Na żywo zrzut zapisuje się przyciskiem w chwili wyniesienia, więc problem nie
- * istnieje. Z kartki trzeba go dopisać z pamięci — a zapomniany zrzut nie odtworzy
+ * istnieje. Z kartki trzeba go dopisać z pamięci - a zapomniany zrzut nie odtworzy
  * się z niczego: skład i wysokość zna wyłącznie ten, kto leciał.
  */
-describe('jumpDayWithoutDrop — skoki z pustym logiem zrzutów', () => {
+describe('jumpDayWithoutDrop - skoki z pustym logiem zrzutów', () => {
   it('zadanie skokowe z lotami i bez zrzutu OSTRZEGA', () => {
     expect(jumpDayWithoutDrop(draft({ drops: [] }))).toBe(true);
     expect(manualFlightWarnings(draft({ drops: [] }), emptyCtx).map((w) => w.id)).toContain(
@@ -450,20 +450,20 @@ describe('jumpDayWithoutDrop — skoki z pustym logiem zrzutów', () => {
     );
   });
 
-  it('ale NIE BLOKUJE — lot skokowy bez wyniesienia zdarza się naprawdę', () => {
+  it('ale NIE BLOKUJE - lot skokowy bez wyniesienia zdarza się naprawdę', () => {
     // Chmura, powrót z pełną kabiną, oblot wpisany na zadanie skokowe. Fakt lotu
     // jest cenniejszy niż kompletność formularza.
     expect(manualFlightStepBlocker('times', draft({ drops: [] }))).toBeNull();
     expect(manualFlightBlocker(draft({ drops: [] }))).toBeNull();
   });
 
-  it('zadanie NIESKOKOWE milczy — zrzut nie ma się tam z czego wziąć', () => {
+  it('zadanie NIESKOKOWE milczy - zrzut nie ma się tam z czego wziąć', () => {
     expect(
       jumpDayWithoutDrop(draft({ operation: 'ferry', drops: [], arrivalIcao: 'EPKK' })),
     ).toBe(false);
   });
 
-  it('bez ani jednego lotu MILCZY — mówi wtedy ostrzeżenie o braku lotu', () => {
+  it('bez ani jednego lotu MILCZY - mówi wtedy ostrzeżenie o braku lotu', () => {
     // Dwa zdania o pustym logu naraz byłyby szumem, a zrzut nie ma jeszcze do czego
     // należeć.
     const noFlights = draft({ flights: [], drops: [] });
@@ -478,9 +478,9 @@ describe('jumpDayWithoutDrop — skoki z pustym logiem zrzutów', () => {
 
 /**
  * BRAMKA „WSTECZ" (uwaga z urządzenia, 2026-08-29). Pusty formularz wychodzi bez
- * pytania — arkusz „na pewno rezygnujesz?" nad niczym pytałby o zgodę na nic (issue #55).
+ * pytania - arkusz „na pewno rezygnujesz?" nad niczym pytałby o zgodę na nic (issue #55).
  */
-describe('manualFlightDirty — czy jest co stracić', () => {
+describe('manualFlightDirty - czy jest co stracić', () => {
   const DAY = utcDayStart(t(16));
 
   it('świeży szkic jest czysty', () => {
@@ -497,7 +497,7 @@ describe('manualFlightDirty — czy jest co stracić', () => {
     expect(manualFlightDirty({ ...fresh, mhBefore: 1306.35 }, DAY)).toBe(true);
   });
 
-  it('ZMIANA DATY też brudzi — to pierwsze pytanie kroku 1, nie tło', () => {
+  it('ZMIANA DATY też brudzi - to pierwsze pytanie kroku 1, nie tło', () => {
     const fresh = emptyManualFlightDraft(t(16));
     expect(manualFlightDirty({ ...fresh, day: DAY - 24 * 60 * 60_000 }, DAY)).toBe(true);
   });
@@ -519,7 +519,7 @@ describe('manualFlightDirty — czy jest co stracić', () => {
    * koniunkcję, pierwsze dopisane pole przestałoby brudzić i nikt by tego nie zauważył
    * (bramka nawigacji nie ma jak krzyknąć).
    */
-  it('rachunek obejmuje KAŻDE pole szkicu — także dopisane w przyszłości', () => {
+  it('rachunek obejmuje KAŻDE pole szkicu - także dopisane w przyszłości', () => {
     const fresh = emptyManualFlightDraft(t(16));
     const dirtyValue = (v: unknown): unknown => {
       if (Array.isArray(v)) return ['cokolwiek'];
@@ -537,7 +537,7 @@ describe('manualFlightDirty — czy jest co stracić', () => {
   });
 });
 
-describe('sortedFlights — kolejność dnia, nie formularza', () => {
+describe('sortedFlights - kolejność dnia, nie formularza', () => {
   it('sortuje po starcie niezależnie od kolejności dopisywania', () => {
     const d = draft({
       flights: [
@@ -550,7 +550,7 @@ describe('sortedFlights — kolejność dnia, nie formularza', () => {
   });
 });
 
-describe('manualFlightBlocker — bramka zapisu widzi wszystkie kroki', () => {
+describe('manualFlightBlocker - bramka zapisu widzi wszystkie kroki', () => {
   it('błąd wcześniejszego kroku blokuje też zapis na ostatnim', () => {
     expect(manualFlightBlocker(draft({ operation: null }))).toContain('operacji');
     expect(manualFlightBlocker(draft())).toBeNull();

@@ -1,8 +1,8 @@
 /**
- * UZ Aero — Numpad (`.numpad` z mockupu 00)
+ * UZ Aero - Numpad (`.numpad` z mockupu 00)
  *
  * Klawiatura PIN: siatka 3×4, przyciski 58 px (rękawice), cyfry mono. Dolny rząd:
- * pusty slot-duch (w mockupie biometria — opcja odłożona, patrz docblock ekranu),
+ * pusty slot-duch (w mockupie biometria - opcja odłożona, patrz docblock ekranu),
  * zero, kasowanie. Własna klawiatura zamiast systemowej, bo systemowa zasłania pół
  * ekranu i nie trzyma języka wizualnego kokpitu.
  */
@@ -73,7 +73,7 @@ export function Numpad({ onDigit, onBackspace, disabled = false, style }: Numpad
         </View>
       ))}
       <View style={styles.row}>
-        {/* Slot biometrii z mockupu — celowo pusty do czasu decyzji o expo-local-authentication. */}
+        {/* Slot biometrii z mockupu - celowo pusty do czasu decyzji o expo-local-authentication. */}
         <View style={styles.key} />
         {digit('0')}
         {key(<Icon name="back" size={20} color={theme.colors.textMuted} />, onBackspace, true)}

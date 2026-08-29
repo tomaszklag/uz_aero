@@ -1,10 +1,10 @@
 /**
- * UZ Aero — ile silnik pracował, a ile samolot leciał, w DOWOLNYM oknie czasu.
+ * UZ Aero - ile silnik pracował, a ile samolot leciał, w DOWOLNYM oknie czasu.
  *
  * ══ DLACZEGO TEN MODUŁ POWSTAŁ ══
  * Analityka zużycia potrzebuje mianownika: „ile silnik pracował między dwoma odczytami
  * paliwomierza". Projekcja sesji daje sumy CAŁEGO dnia (`blockTimeMs`, `flightTimeMs`),
- * a interwał paliwowy zaczyna się i kończy w środku dnia — często w środku cyklu.
+ * a interwał paliwowy zaczyna się i kończy w środku dnia - często w środku cyklu.
  *
  * ══ BŁĄD, KTÓRY TEN MODUŁ NAPRAWIA (2026-08-05) ══
  * Ekran 06 liczył czas pracy silnika wyłącznie z `state.legs` (dawniej `engineRuns`)
@@ -12,7 +12,7 @@
  * `manual_log_entry` (fallback GPS, ekran 08) INACZEJ niż parę `engine_start`/`engine_stop`:
  * dokłada czas off-block→on-block wprost do `blockTimeMs` i **nie tworzy wpisu
  * w `legs`** (patrz `projections/session.ts`, gałąź `manual_log_entry`).
- * Skutek: w dniu z wpisem ręcznym mianownik był za mały, a średnia L/h — zawyżona,
+ * Skutek: w dniu z wpisem ręcznym mianownik był za mały, a średnia L/h - zawyżona,
  * i wyglądała dokładnie tak samo jak prawidłowa. Dokładnie ten tryb awarii, przed
  * którym ostrzega docblok `refuelMath.ts`: „zła średnia wygląda jak dobra".
  *
@@ -20,7 +20,7 @@
  * Czas pracy silnika to miara SUMY MNOGOŚCIOWEJ odcinków, nie suma ich długości.
  * Ręczny wpis potrafi nachodzić na zarejestrowany cykl (pilot dopisał lot, który
  * aplikacja też złapała), a wtedy dodanie długości policzyłoby te same minuty dwa razy:
- * mianownik rośnie, L/h spada, i znowu — nic tego nie widać. `projectSession` sumuje
+ * mianownik rośnie, L/h spada, i znowu - nic tego nie widać. `projectSession` sumuje
  * oba źródła bez scalania (`blockTimeMs += …`), więc dla nakładających się wpisów
  * WYNIK TEGO MODUŁU JEST MNIEJSZY od `state.blockTimeMs`. To jest różnica zamierzona:
  * tam suma opisuje „ile czasu zaraportowano", tu miara opisuje „ile silnik pracował".
@@ -36,7 +36,7 @@ export interface Span {
   to: EpochMillis | null;
 }
 
-/** Odcinek domknięty — wynik przycięcia do okna. */
+/** Odcinek domknięty - wynik przycięcia do okna. */
 export interface ClosedSpan {
   from: EpochMillis;
   to: EpochMillis;
@@ -47,7 +47,7 @@ export interface ClosedSpan {
  * off-block/on-block z `manual_log_entry`.
  *
  * @param state projekcja policzona z TEGO SAMEGO strumienia co `events`.
- * @param events strumień sesji. Może być surowy albo już efektywny — korekty
+ * @param events strumień sesji. Może być surowy albo już efektywny - korekty
  *   nakładamy tutaj, a `applyCorrections` na strumieniu bez korekt jest tożsamością,
  *   więc podwójne wywołanie niczego nie psuje. Bez tego kroku odcinek unieważniony
  *   korektą (`void` na wpisie ręcznym) dalej powiększałby mianownik.
@@ -61,7 +61,7 @@ export function blockSpans(state: SessionState, events: readonly Event[]): Span[
   for (const event of applyCorrections(events)) {
     if (event.type !== 'manual_log_entry') continue;
     const { offBlock, onBlock } = event.payload;
-    // Wpis niepełny (sam start bez końca) nie wyznacza odcinka — pilot uzupełni go
+    // Wpis niepełny (sam start bez końca) nie wyznacza odcinka - pilot uzupełni go
     // korektą albo drugim wpisem. Zgadywanie końca zmyśliłoby czas pracy silnika.
     if (offBlock == null || onBlock == null) continue;
     if (onBlock <= offBlock) continue;
@@ -74,7 +74,7 @@ export function blockSpans(state: SessionState, events: readonly Event[]): Span[
 /**
  * Odcinki lotu (takeoff → landing). Bierzemy je z projekcji, a nie ze strumienia,
  * bo to ona rozstrzyga, który `takeoff` otwiera lot (drugi start w powietrzu podbija
- * licznik, ale nie otwiera drugiego lotu) — i obejmuje też loty z wpisu ręcznego.
+ * licznik, ale nie otwiera drugiego lotu) - i obejmuje też loty z wpisu ręcznego.
  */
 export function flightSpans(state: SessionState): Span[] {
   return state.flights.map((flight) => ({ from: flight.takeoffAt, to: flight.landingAt }));
@@ -107,7 +107,7 @@ export function mergeSpans(spans: readonly ClosedSpan[]): ClosedSpan[] {
  *
  * Odcinki PRZYCINAMY do okna zamiast filtrować po początku, bo okno interwału
  * paliwowego regularnie zaczyna się w środku cyklu (odczyt korygowany na postoju
- * między lotami). Odcinek otwarty (`to == null`) domykamy do `until` — dla bieżącego
+ * między lotami). Odcinek otwarty (`to == null`) domykamy do `until` - dla bieżącego
  * cyklu znaczy to „licz do teraz".
  */
 export function spanTimeInWindow(

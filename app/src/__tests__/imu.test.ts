@@ -1,5 +1,5 @@
 /**
- * UZ Aero — testy matematyki czujników inercyjnych (`domain/detection/imu.ts`).
+ * UZ Aero - testy matematyki czujników inercyjnych (`domain/detection/imu.ts`).
  *
  * Ten moduł istnieje, bo naturalny pomysł „weźmy moduł przyspieszenia, będzie niezależny
  * od ułożenia telefonu" jest jednocześnie SŁUSZNY i BEZUŻYTECZNY: moduł faktycznie nie
@@ -9,7 +9,7 @@
  *
  * Reszta testów pilnuje dwóch rzeczy, na których stoi cały kanał: że po odjęciu grawitacji
  * wynik NIE ZALEŻY od ułożenia telefonu, i że filtr grawitacji nie daje się nabrać na
- * długie przyspieszenie (zasada równoważności — akcelerometr z definicji nie odróżni
+ * długie przyspieszenie (zasada równoważności - akcelerometr z definicji nie odróżni
  * pochylenia od przyspieszania).
  */
 
@@ -36,7 +36,7 @@ const add = (a: Vec3, b: Vec3): Vec3 => ({ x: a.x + b.x, y: a.y + b.y, z: a.z + 
 
 /**
  * Trzy ułożenia telefonu w uchwycie. `down` to kierunek grawitacji w układzie telefonu,
- * `forward` — prostopadły do niego kierunek ruchu. Oba jednostkowe.
+ * `forward` - prostopadły do niego kierunek ruchu. Oba jednostkowe.
  */
 const ORIENTATIONS: { name: string; down: Vec3; forward: Vec3 }[] = [
   { name: 'płasko na desce', down: { x: 0, y: 0, z: 1 }, forward: { x: 1, y: 0, z: 0 } },
@@ -61,7 +61,7 @@ function settled(down: Vec3, sampleHz = 50): ImuAccumulator {
 }
 
 describe('dlaczego sam moduł przyspieszenia nie wystarcza', () => {
-  it('rozbieg podnosi |a| z 9,81 do 10,11 m/s² — o TRZY PROCENT', () => {
+  it('rozbieg podnosi |a| z 9,81 do 10,11 m/s² - o TRZY PROCENT', () => {
     const rest = { x: 0, y: 0, z: G };
     const rolling = add(rest, { x: ROLL_MPS2, y: 0, z: 0 });
 
@@ -88,14 +88,14 @@ describe('niezmienniczość względem ułożenia telefonu', () => {
       const acc = settled(down);
       const rolling = add(scale(down, G), scale(forward, ROLL_MPS2));
 
-      // Estymata grawitacji zbiegła do kierunku „w dół" TEGO telefonu — bez żadnej
+      // Estymata grawitacji zbiegła do kierunku „w dół" TEGO telefonu - bez żadnej
       // wiedzy o tym, jak on leży. Stąd wynik nie zależy od ułożenia.
       const linear = linearAccelMps2(rolling, acc.gravity!);
       expect(linear).toBeCloseTo(ROLL_MPS2, 1);
     },
   );
 
-  it('spoczynek daje ~0, a nie 9,81 — grawitacja naprawdę wyszła', () => {
+  it('spoczynek daje ~0, a nie 9,81 - grawitacja naprawdę wyszła', () => {
     const acc = settled({ x: 0, y: 0, z: 1 });
     expect(linearAccelMps2({ x: 0, y: 0, z: G }, acc.gravity!)).toBeLessThan(0.05);
   });
@@ -104,7 +104,7 @@ describe('niezmienniczość względem ułożenia telefonu', () => {
 describe('zamrożenie filtra grawitacji (zasada równoważności)', () => {
   it('30 s STAŁEGO przyspieszenia nie zostaje uznane za nowy pion', () => {
     // Bez zamrożenia filtr o stałej 30 s przesunąłby się o ~63 % w kierunek ruchu
-    // i przyspieszenie rozbiegu „wyparowałoby" pod koniec rozbiegu — czyli dokładnie
+    // i przyspieszenie rozbiegu „wyparowałoby" pod koniec rozbiegu - czyli dokładnie
     // wtedy, gdy jest najbardziej potrzebne.
     const down = { x: 0, y: 0, z: 1 };
     const forward = { x: 1, y: 0, z: 0 };
@@ -123,7 +123,7 @@ describe('zamrożenie filtra grawitacji (zasada równoważności)', () => {
     // Regresja z prawdziwej dziury w pierwszej wersji: warunek „to musi być manewr"
     // spełniał się po przełożeniu telefonu NA ZAWSZE (skok pionu o ~13,9 m/s² nigdy nie
     // spada pod próg), więc estymata grawitacji zostawała przy starym ułożeniu do końca
-    // dnia i każdy kolejny odczyt przyspieszenia był śmieciem — bez żadnego sygnału.
+    // dnia i każdy kolejny odczyt przyspieszenia był śmieciem - bez żadnego sygnału.
     let acc = drainImu(settled({ x: 0, y: 0, z: 1 })).next;
 
     const newRest = { x: G, y: 0, z: 0 };
@@ -136,7 +136,7 @@ describe('zamrożenie filtra grawitacji (zasada równoważności)', () => {
     expect(linearAccelMps2(newRest, acc.gravity!)).toBeLessThan(0.05);
   });
 
-  it('budżet zamrożenia jest DŁUŻSZY niż każdy rozbieg — prawdziwy start pionu nie rusza', () => {
+  it('budżet zamrożenia jest DŁUŻSZY niż każdy rozbieg - prawdziwy start pionu nie rusza', () => {
     // Tu leży cały kompromis: 60 s > 30 s rozbiegu, więc manewr mieści się w budżecie,
     // a trwała zmiana ułożenia go wyczerpuje.
     expect(GRAVITY_FREEZE_MAX_SEC).toBeGreaterThan(30);
@@ -149,7 +149,7 @@ describe('zamrożenie filtra grawitacji (zasada równoważności)', () => {
 });
 
 describe('agregat okna', () => {
-  it('sygnał stały ma zerową miarę wibracji, sygnał zmienny — niezerową', () => {
+  it('sygnał stały ma zerową miarę wibracji, sygnał zmienny - niezerową', () => {
     const down = { x: 0, y: 0, z: 1 };
     const dt = 1 / 50;
 
@@ -170,7 +170,7 @@ describe('agregat okna', () => {
   it('moduł prędkości kątowej: średnia i maksimum, bez patrzenia na osie', () => {
     let acc = createImuAccumulator();
     const rest = { x: 0, y: 0, z: G };
-    // 3-4-5: moduł (3,4,0) = 5 °/s. Która oś jest którą — bez znaczenia.
+    // 3-4-5: moduł (3,4,0) = 5 °/s. Która oś jest którą - bez znaczenia.
     acc = pushImuSample(acc, rest, { x: 3, y: 4, z: 0 }, 0.02);
     acc = pushImuSample(acc, rest, { x: 0, y: 0, z: 15 }, 0.02);
 
@@ -179,7 +179,7 @@ describe('agregat okna', () => {
     expect(aggregate!.gyroMaxDps).toBeCloseTo(15, 6);
   });
 
-  it('okno bez próbek daje null, nie zera — „nie wiem" to nie „zero"', () => {
+  it('okno bez próbek daje null, nie zera - „nie wiem" to nie „zero"', () => {
     expect(drainImu(createImuAccumulator()).aggregate).toBeNull();
   });
 
@@ -210,7 +210,7 @@ describe('barometryczny tor pionowy', () => {
   });
 
   it('rozdzielczość czujnika w telefonie odpowiada mniej niż stopie', () => {
-    // 0,02 hPa to typowa rozdzielczość — i to jest cała przewaga nad GPS-em,
+    // 0,02 hPa to typowa rozdzielczość - i to jest cała przewaga nad GPS-em,
     // który na wysokości myli się o 15–50 ft.
     expect(pressureToRelativeFt(1013.23, 1013.25)).toBeGreaterThan(-1);
     expect(pressureToRelativeFt(1013.23, 1013.25)).toBeLessThan(1);

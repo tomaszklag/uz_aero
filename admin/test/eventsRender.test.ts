@@ -1,21 +1,21 @@
 /**
- * UZ Aero — panel: REJESTR ZDARZEŃ RENDEROWANY NAPRAWDĘ (`A04`).
+ * UZ Aero - panel: REJESTR ZDARZEŃ RENDEROWANY NAPRAWDĘ (`A04`).
  *
  * ══ PO CO TEN PLIK ISTNIEJE OBOK TESTÓW MODUŁÓW CZYSTYCH ══
  * Trzy razy w tym projekcie zdarzyła się ta sama wada: moduł czysty liczył poprawnie,
- * miał zielony test — a EKRAN i tak pokazywał co innego, bo albo go nie wołał, albo
+ * miał zielony test - a EKRAN i tak pokazywał co innego, bo albo go nie wołał, albo
  * wołał i sklejał wynik z czymś innym. Najdroższy przykład: `A07` liczył trzy stany
  * świeżości, testy przechodziły, a w DOM-ie lądowała klasa `fresh-stale`, której nie
  * definiuje żaden arkusz. Stany były policzone, przetestowane i NIEWIDOCZNE.
  *
  * `renderToStaticMarkup` z `react-dom/server` działa w czystym Node i daje DOKŁADNIE
- * ten napis HTML, który przeglądarka dostałaby przy pierwszym renderze — więc asercje
+ * ten napis HTML, który przeglądarka dostałaby przy pierwszym renderze - więc asercje
  * dotyczą tego, co widać, a nie tego, co policzone. Ekran renderujemy CAŁY, z prawdziwym
  * `EventsScreen`, prawdziwym `useEvents` i cache'em TanStacka wypełnionym odpowiedzią
  * serwera; test upadnie także wtedy, gdy ktoś przestanie wołać moduł czysty z ekranu.
  *
  * Na tym ekranie zamykamy tę pułapkę OD RAZU, bo rejestr jest narzędziem śledczym:
- * wiersz, który nie dojechał do DOM-u, jest gorszy niż brak ekranu — wygląda jak
+ * wiersz, który nie dojechał do DOM-u, jest gorszy niż brak ekranu - wygląda jak
  * dowód, że zdarzenia nie było.
  */
 
@@ -58,7 +58,7 @@ function session(capabilities: Capability[]): PanelSessionDto {
  * `fetch`. Różnica jest istotna: mock `fetch` sprawdzałby mock, a tu sprawdzamy drogę
  * `cache → hook → ekran → moduły czyste → DOM`, czyli wszystko poza siecią.
  *
- * `path` niesie adres wraz z zawężeniem, bo filtry tego ekranu mieszkają w URL-u —
+ * `path` niesie adres wraz z zawężeniem, bo filtry tego ekranu mieszkają w URL-u -
  * render z domyślnej ścieżki nie pokazałby ani jednego stanu zawężonego.
  */
 function render(
@@ -75,7 +75,7 @@ function render(
     client.setQueryData(keys.events.list(query), { pages: [data], pageParams: [null] });
   }
   // Słowniki chipów: bez nich `useFleet`/`usePilots` byłyby w stanie „w drodze",
-  // a pasek filtrów miałby wyłącznie chipy „wszystkie" — czyli test nie widziałby
+  // a pasek filtrów miałby wyłącznie chipy „wszystkie" - czyli test nie widziałby
   // tego, co widzi człowiek.
   client.setQueryData(keys.fleet.list({}), {
     items: [
@@ -129,7 +129,7 @@ const cssOf = (...parts: string[]): string =>
 const SZABLON = (): string =>
   readFileSync(join(__dirname, '..', '..', 'design', 'admin', 'SZABLON.html'), 'utf8');
 
-describe('rejestr: render — kontrola samego testu', () => {
+describe('rejestr: render - kontrola samego testu', () => {
   it('renderer faktycznie produkuje ekran, a nie pusty napis', () => {
     // Bez tego wszystkie asercje `toContain` niżej przechodziłyby na pustce.
     const html = render(eventsFixture());
@@ -143,7 +143,7 @@ describe('rejestr: render — kontrola samego testu', () => {
 describe('rejestr: dwa zegary docierają AŻ DO KLASY CSS', () => {
   const html = render(eventsFixture());
 
-  it('brak fixa daje „brak fixa" i CZERWONY ton — nigdy zera', () => {
+  it('brak fixa daje „brak fixa" i CZERWONY ton - nigdy zera', () => {
     // Zero powiedziałoby, że zegary się zgadzały, czyli wpisałoby telefonowi
     // dokładność, której nie miał. To jest ta wielkość, przez którą w ogóle powstaje
     // korekta administratora.
@@ -189,7 +189,7 @@ describe('rejestr: nic z bazy nie wywraca widoku', () => {
 
   it('payload NIEBĘDĄCY obiektem renderuje się bez wywrotki', () => {
     // Wiersz z tablicą w payloadzie jest rozwinięty adresem, więc wypis MUSI być
-    // w DOM-ie — a nie tylko poprawnie policzony.
+    // w DOM-ie - a nie tylko poprawnie policzony.
     const open = render(eventsFixture(), {
       path: '/zdarzenia/00000000-obcy-0000-0000-000000000000',
     });
@@ -218,7 +218,7 @@ describe('rejestr: korekta przekreśla, nie usuwa', () => {
 
   it('wiersz unieważniony NIESIE modyfikator `voided` i zostaje na liście', () => {
     expect(html).toContain('class="clickable voided"');
-    // Wiersz nadal ma swój uuid w tabeli — rejestr jest append-only.
+    // Wiersz nadal ma swój uuid w tabeli - rejestr jest append-only.
     expect(html).toContain('5e2b…00ab');
   });
 
@@ -239,11 +239,11 @@ describe('rejestr: korekta przekreśla, nie usuwa', () => {
   it('zdarzenie z `retime` jest ODRÓŻNIALNE W TABELI, nie tylko w rozwinięciu', () => {
     // Najdroższa pomyłka tego ekranu miałaby dokładnie ten kształt: stan policzony,
     // przetestowany w module czystym i NIEWIDOCZNY. Wiersz z korektą `retime` wyglądał
-    // jak nietknięty — bez przekreślenia, z wartościami surowymi w kolumnach, a jedyna
+    // jak nietknięty - bez przekreślenia, z wartościami surowymi w kolumnach, a jedyna
     // wzmianka mieszkała w rozwinięciu otwieranym osobno dla każdego wiersza.
     expect(html).toContain('class="clock-val struck"');
     expect(html).toContain('korekta → 12:44:00');
-    // Wartość SUROWA zostaje widoczna obok — rejestr pamięta, co przysłał telefon.
+    // Wartość SUROWA zostaje widoczna obok - rejestr pamięta, co przysłał telefon.
     expect(html).toContain('12:41:05');
   });
 
@@ -255,7 +255,7 @@ describe('rejestr: korekta przekreśla, nie usuwa', () => {
 
   it('kolumna `source_device` mówi o POCHODZENIU wiersza, nie o jego korekcie', () => {
     // Zdarzenie z telefonu, którego korektę zapisał panel, dostawało pod nazwą telefonu
-    // podpis „korekta z panelu"; sam wiersz korekty zapisany przez panel — żadnego.
+    // podpis „korekta z panelu"; sam wiersz korekty zapisany przez panel - żadnego.
     // Dwa różne fakty, dwa różne pola.
     expect(html).toContain('admin:TMK');
     expect(html).toContain('zapis z panelu');
@@ -273,11 +273,11 @@ describe('rejestr: kafle i braki, o których mówimy wprost', () => {
     expect(html).toContain('ON CONFLICT DO NOTHING');
   });
 
-  it('bez odpowiedzi kafle mówią „—", nigdy zera', () => {
+  it('bez odpowiedzi kafle mówią „-", nigdy zera', () => {
     // Najdroższa możliwa pomyłka narzędzia nadzoru: „0 zdarzeń bez fixa" przy awarii
     // pobrania wygląda jak dobra wiadomość.
     const html = render(null);
-    expect(html).toContain('Nie wiadomo — rejestr się nie pobrał.');
+    expect(html).toContain('Nie wiadomo - rejestr się nie pobrał.');
     expect(html).not.toContain('class="tile-val amber">0');
     expect(html).not.toContain('class="tile-val green">0');
   });
@@ -289,7 +289,7 @@ describe('rejestr: kafle i braki, o których mówimy wprost', () => {
 });
 
 describe('rejestr: rozwinięcie wiersza', () => {
-  it('bez adresu wiersza NIE MA rozwinięcia; z adresem — jest', () => {
+  it('bez adresu wiersza NIE MA rozwinięcia; z adresem - jest', () => {
     expect(render(eventsFixture())).not.toContain('class="row-expand"');
 
     const open = render(eventsFixture(), {
@@ -331,7 +331,7 @@ describe('rejestr: rozwinięcie wiersza', () => {
 describe('rejestr: uprawnienia widoczne, nie ukryte', () => {
   it('szef wyszkolenia CZYTA rejestr, ale „Popraw" jest zablokowane z powodem', () => {
     // Reguła z mockupu jest twarda: przycisk niedostępny dla roli zostaje WIDOCZNY
-    // i wyjaśniony, nigdy ukryty — inaczej człowiek zgaduje, czy funkcji nie ma
+    // i wyjaśniony, nigdy ukryty - inaczej człowiek zgaduje, czy funkcji nie ma
     // w produkcie, czy nie ma jej jego konto.
     const html = render(eventsFixture(), { capabilities: TRAINING_LEAD });
     expect(html).toContain('REJESTR ZDARZEŃ');
@@ -339,11 +339,11 @@ describe('rejestr: uprawnienia widoczne, nie ukryte', () => {
     expect(html).toContain('wymaga roli: administrator');
   });
 
-  it('administrator dostaje „Popraw" jako LINK — i tylko przy typie korygowalnym', () => {
+  it('administrator dostaje „Popraw" jako LINK - i tylko przy typie korygowalnym', () => {
     const html = render(eventsFixture());
     // `landing` podlega korekcie…
     expect(html).toContain('/dni/sess-klm/korekta/5e2b91c7-0000-0000-0000-0000000000ab');
-    // …a `day_close` nie — domena go nie pozwala ruszać.
+    // …a `day_close` nie - domena go nie pozwala ruszać.
     expect(html).toContain('domena nie pozwala korygować');
   });
 
@@ -354,7 +354,7 @@ describe('rejestr: uprawnienia widoczne, nie ukryte', () => {
   });
 });
 
-describe('rejestr: przejścia i paginacja — zero martwych linków', () => {
+describe('rejestr: przejścia i paginacja - zero martwych linków', () => {
   const html = render(eventsFixture());
 
   it('wiersz prowadzi na kartę DNIA i do zawężenia po uuid-zie', () => {
@@ -363,7 +363,7 @@ describe('rejestr: przejścia i paginacja — zero martwych linków', () => {
   });
 
   it('kursor daje przycisk „pokaż starsze", a podpis mówi, ile widać', () => {
-    // Lista przycięta po cichu wygląda na komplet — najgorszy tryb awarii narzędzia
+    // Lista przycięta po cichu wygląda na komplet - najgorszy tryb awarii narzędzia
     // śledczego.
     expect(html).toContain('Pokaż starsze zdarzenia');
     expect(html).toContain('Pokazano 8 z 247.');

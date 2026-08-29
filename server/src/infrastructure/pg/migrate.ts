@@ -1,7 +1,7 @@
 /**
- * UZ Aero (serwer) — aplikowanie migracji.
+ * UZ Aero (serwer) - aplikowanie migracji.
  *
- * `schema_migrations` trzyma numer ostatniej zastosowanej — ten sam mechanizm co
+ * `schema_migrations` trzyma numer ostatniej zastosowanej - ten sam mechanizm co
  * `PRAGMA user_version` w aplikacji, tylko tabelą, bo Postgres nie ma pragm.
  * Runner jest idempotentny: wołanie na aktualnej bazie nic nie robi.
  *
@@ -11,12 +11,12 @@
  * kontenera, deploy, OOM) zostawiała bazę ZMIGROWANĄ, ale NIEODNOTOWANĄ, więc przy
  * następnym starcie runner puszczał ten sam skrypt drugi raz. Migracje oparte na
  * `CREATE TABLE IF NOT EXISTS` to przeżywały, ale `ADD CONSTRAINT`
- * i 6 (`ADD COLUMN`) nie mają takiego zabezpieczenia — powtórka kończyła się błędem
+ * i 6 (`ADD COLUMN`) nie mają takiego zabezpieczenia - powtórka kończyła się błędem
  * i serwer NIE WSTAWAŁ, aż ktoś ręcznie poprawił bazę.
  *
  * Teraz albo dzieje się jedno i drugie, albo nic: przerwany proces zostawia stan
  * sprzed migracji, a ponowny start po prostu ją powtarza. To zdejmuje też presję
- * pisania każdej migracji idempotentnie — `ADD CONSTRAINT`, którego nie da się
+ * pisania każdej migracji idempotentnie - `ADD CONSTRAINT`, którego nie da się
  * sensownie ubrać w `IF NOT EXISTS`, przestaje być pułapką.
  */
 
@@ -26,12 +26,12 @@ import { MIGRATIONS } from './schema.ts';
 /**
  * Migracja to jedyne miejsce z SQL-em WIELOPOLECENIOWYM. `pg` wykonuje go zwykłym
  * `query` (simple protocol), ale PGlite w `query` używa extended protocol (prepared
- * statement), który przyjmuje dokładnie jedno polecenie — i wywala się na średniku.
+ * statement), który przyjmuje dokładnie jedno polecenie - i wywala się na średniku.
  * PGlite ma od tego `exec`; używamy go, gdy jest.
  *
  * Ta sama właściwość wymusza kształt transakcji niżej: skoro całość i tak jedzie
  * jednym łańcuchem, `BEGIN`/`COMMIT` piszemy w SQL-u, a nie przez `db.transaction()`
- * — port `Queryable` transakcji nie ma, a obiekt transakcji PGlite nie ma `exec`.
+ * - port `Queryable` transakcji nie ma, a obiekt transakcji PGlite nie ma `exec`.
  */
 async function runScript(db: Queryable, sql: string): Promise<void> {
   const maybeExec = (db as { exec?: (sql: string) => Promise<unknown> }).exec;
@@ -44,7 +44,7 @@ async function runScript(db: Queryable, sql: string): Promise<void> {
 
 /**
  * `migrations` jest parametrem wyłącznie po to, żeby dało się przetestować zachowanie
- * przy NIEUDANEJ migracji — produkcja woła `migrate(db)` i dostaje `MIGRATIONS`.
+ * przy NIEUDANEJ migracji - produkcja woła `migrate(db)` i dostaje `MIGRATIONS`.
  */
 export async function migrate(
   db: Queryable,
@@ -61,12 +61,12 @@ export async function migrate(
 
   // ── Baza NOWSZA niż kod = odmowa startu ──────────────────────────────────────
   // Runner pyta o `MAX(version)`, więc gdy baza odnotowała więcej pozycji, niż zna kod,
-  // pętla niżej nie ma ANI JEDNEJ iteracji — także wtedy, gdy dojdzie kolejna migracja
+  // pętla niżej nie ma ANI JEDNEJ iteracji - także wtedy, gdy dojdzie kolejna migracja
   // (`for (v = 23; v < 2; …)`). Serwer wstałby wtedy na bazie bez nowej kolumny, a
   // pierwszym objawem byłby błąd zapytania w losowym miejscu. Cisza jest tu gorsza niż
   // odmowa startu.
   //
-  // Dwie drogi do tego stanu: WYCOFANIE wdrożenia na starszy kod oraz — jednorazowo —
+  // Dwie drogi do tego stanu: WYCOFANIE wdrożenia na starszy kod oraz - jednorazowo -
   // zgniecenie 23 migracji w jedną bazową (2026-08-08). Bazy deweloperskie założone przed
   // zgnieceniem mają w `schema_migrations` numery do 23; schemat jest identyczny, więc
   // naprawą jest `DELETE FROM schema_migrations WHERE version > 1`, a nie migracja.
@@ -94,7 +94,7 @@ COMMIT;`,
       );
     } catch (err) {
       // Jawne `BEGIN` znaczy, że po błędzie transakcja ZOSTAJE OTWARTA w stanie
-      // aborted — `COMMIT` z końca łańcucha już się nie wykonał. Każde następne
+      // aborted - `COMMIT` z końca łańcucha już się nie wykonał. Każde następne
       // polecenie na tym połączeniu dostałoby wtedy „current transaction is aborted",
       // czyli awaria jednej migracji zatruwałaby połączenie na resztę jego życia.
       // Sprzątamy jawnie; błąd samego ROLLBACK-u tłumimy, bo to już tylko sprzątanie

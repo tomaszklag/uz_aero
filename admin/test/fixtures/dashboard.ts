@@ -1,16 +1,16 @@
 /**
- * UZ Aero — panel: ODPOWIEDŹ PULPITU jako dane testowe (`GET /admin/api/dashboard`).
+ * UZ Aero - panel: ODPOWIEDŹ PULPITU jako dane testowe (`GET /admin/api/dashboard`).
  *
  * Jeden scenariusz obsługujący wszystkie warianty ekranu, bo wszystkie muszą być
- * widoczne NARAZ — inaczej test świeżości sprawdzałby jeden stan zamiast trzech:
+ * widoczne NARAZ - inaczej test świeżości sprawdzałby jeden stan zamiast trzech:
  *
- *  • `SP-ABC` — w powietrzu, telefon zsynchronizowany przed chwilą  → wiersz `flying`,
- *  • `SP-KLM` — dzień otwarty, telefon milczy od 47 minut           → wiersz `stale`,
- *  • `SP-XYZ` — dzień otwarty, silnik wyłączony, sync świeży        → wiersz bez modyfikatora,
- *  • `SP-DEF` — wolny, po `day_close` z wczoraj                     → wiersz `free`.
+ *  • `SP-ABC` - w powietrzu, telefon zsynchronizowany przed chwilą  → wiersz `flying`,
+ *  • `SP-KLM` - dzień otwarty, telefon milczy od 47 minut           → wiersz `stale`,
+ *  • `SP-XYZ` - dzień otwarty, silnik wyłączony, sync świeży        → wiersz bez modyfikatora,
+ *  • `SP-DEF` - wolny, po `day_close` z wczoraj                     → wiersz `free`.
  *
  * Kolejka „wymaga uwagi" niesie sprawę BLOKUJĄCĄ arkusz (flaga) i sprawę STARSZĄ,
- * ale nieblokującą (dzień bez `day_close`) — po to, żeby porządek dało się sprawdzić
+ * ale nieblokującą (dzień bez `day_close`) - po to, żeby porządek dało się sprawdzić
  * w obie strony, a nie tylko przy jednej pozycji.
  *
  * Funkcja, a nie stała: każdy test dostaje ŚWIEŻĄ kopię i wolno mu ją popsuć na swój
@@ -20,7 +20,7 @@
 
 import type { DashboardDto } from '../../src/api/dto';
 
-/** Chwila „teraz" wg zegara SERWERA — wszystkie wieki liczą się względem niej. */
+/** Chwila „teraz" wg zegara SERWERA - wszystkie wieki liczą się względem niej. */
 export const NOW = Date.UTC(2026, 6, 31, 14, 22, 0);
 
 const MINUTE = 60_000;
@@ -77,7 +77,7 @@ export function dashboardFixture(): DashboardDto {
         id: 'ac-stale',
         reg: 'SP-KLM',
         type: 'Cessna 208 Caravan',
-        // Telefon milczy od 47 minut — ponad próg `OPEN_DAY_STALE_AFTER_MS`.
+        // Telefon milczy od 47 minut - ponad próg `OPEN_DAY_STALE_AFTER_MS`.
         lastEventAt: iso(NOW - 47 * MINUTE),
         claimSince: NOW - 7 * HOUR - 42 * MINUTE,
         engine: {
@@ -141,7 +141,7 @@ export function dashboardFixture(): DashboardDto {
           resolvedAt: null,
           resolvedBy: null,
           resolutionNote: null,
-          // Sprawa BLOKUJĄCA arkusz — mimo że młodsza od dnia niżej, idzie na górę.
+          // Sprawa BLOKUJĄCA arkusz - mimo że młodsza od dnia niżej, idzie na górę.
           blocksExport: true,
         },
       ],
@@ -182,7 +182,7 @@ export function dashboardFixture(): DashboardDto {
       fromMs: NOW - 12 * HOUR,
       toMs: NOW,
       bucketMs: HOUR,
-      // Dwa puste słupki w środku — cisza, która NIE znaczy „nikt nie latał".
+      // Dwa puste słupki w środku - cisza, która NIE znaczy „nikt nie latał".
       buckets: [12, 21, 35, 26, 44, 32, 0, 0, 19, 39, 28, 24],
     },
 

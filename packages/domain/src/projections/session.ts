@@ -1,18 +1,18 @@
 /**
- * UZ Aero — projekcje sesji (docs/_main.md.txt §5.2, §3.7).
+ * UZ Aero - projekcje sesji (docs/_main.md.txt §5.2, §3.7).
  *
  * „Stan bieżącej sesji i statystyki dnia to PROJEKCJE liczone w pamięci ze strumienia
- * zdarzeń — przy kilkuset zdarzeniach dziennie tabele agregujące są zbędne" (§5.2).
+ * zdarzeń - przy kilkuset zdarzeniach dziennie tabele agregujące są zbędne" (§5.2).
  *
  * Ten moduł to CZYSTE, DETERMINISTYCZNE funkcje: `projectSession(events) → SessionState`.
- * Bez DB, bez Zustand, bez zegara systemowego — dzięki temu jest rdzeniem testów.
+ * Bez DB, bez Zustand, bez zegara systemowego - dzięki temu jest rdzeniem testów.
  *
  * Zasady liczenia:
- *  - czas zdarzenia = `gpsTime ?? deviceTime` — preferujemy GPS (niezależny od zegara
+ *  - czas zdarzenia = `gpsTime ?? deviceTime` - preferujemy GPS (niezależny od zegara
  *    telefonu, §4.1 pkt 6, mitygacja CLOCK_DRIFT), z fallbackiem na zegar urządzenia,
  *  - kolejność = kolejność w tablicy (repo zwraca kolejność wstawienia = chronologię),
  *  - block time i MH liczymy z ODCZYTÓW/zdarzeń; wartości „na żywo" (bieżący, jeszcze
- *    otwarty cykl / lot) NIE wchodzą do sum — do tego są selektory `live*` z `now`.
+ *    otwarty cykl / lot) NIE wchodzą do sum - do tego są selektory `live*` z `now`.
  */
 
 import type { EpochMillis } from '../time';
@@ -29,12 +29,12 @@ import type {
 import { applyCorrections, buildEventIndex, type IndexedEvent } from './corrections';
 
 /**
- * WZLOT — cykl pracy silnika (engine_start → engine_stop) wraz z jego potwierdzeniem.
+ * WZLOT - cykl pracy silnika (engine_start → engine_stop) wraz z jego potwierdzeniem.
  * `stoppedAt: null` = silnik wciąż pracuje.
  *
  * Nazwa zmieniona z `EngineRun` w etapie B2: od 2026-08-06 to nie jest już tylko
  * „silnik chodził", tylko **jednostka potwierdzania danych** (§3.6). Nie dokładamy
- * osobnej tablicy `Leg[]` obok `engineRuns` — wzlot i cykl silnika to w tym modelu
+ * osobnej tablicy `Leg[]` obok `engineRuns` - wzlot i cykl silnika to w tym modelu
  * ten sam byt, a dwie tablice opisujące jedną rzecz rozjechałyby się przy pierwszej
  * korekcie.
  *
@@ -44,13 +44,13 @@ import { applyCorrections, buildEventIndex, type IndexedEvent } from './correcti
  *
  * Od 2026-08-10 sesja ma NAJWYŻEJ JEDEN bieg (`SESSION_ALREADY_RAN`), więc lista
  * `legs` to w praktyce zero albo jeden element. Zostaje listą, bo reducer musi
- * przeżyć także strumień ZŁAMANY (np. duplikat z dwóch telefonów przed syncem) —
+ * przeżyć także strumień ZŁAMANY (np. duplikat z dwóch telefonów przed syncem) -
  * projekcja opisuje to, co się wydarzyło, reguły mówią, co było wolno.
  * Pola potwierdzenia (`confirmed`/`confirmedAt`/`reading`/`notes`) znikły razem
  * z `leg_close`: sesję zatwierdza `day_close.finalReading`.
  */
 export interface Leg {
-  /** Numer biegu w sesji (1-based) — historycznie; po 2026-08-10 zawsze 1. */
+  /** Numer biegu w sesji (1-based) - historycznie; po 2026-08-10 zawsze 1. */
   index: number;
   startedAt: EpochMillis;
   stoppedAt: EpochMillis | null;
@@ -60,7 +60,7 @@ export interface Leg {
 
 /** Lot (takeoff → landing). `landingAt: null` = w powietrzu. */
 export interface Flight {
-  /** Numer lotu w dniu (1-based) — separator „Lot N" w logu. */
+  /** Numer lotu w dniu (1-based) - separator „Lot N" w logu. */
   index: number;
   method: DetectionMethod;
   takeoffAt: EpochMillis;
@@ -68,12 +68,22 @@ export interface Flight {
   /** Czas lotu (ms); 0 dopóki w powietrzu. */
   durationMs: number;
   /**
-   * Uuid zdarzeń źródłowych — adres celu dla korekty (04c). Tabela lotów na ekranie
+   * Uuid zdarzeń źródłowych - adres celu dla korekty (04c). Tabela lotów na ekranie
    * statystyk otwiera nimi arkusz korekty; bez nich wiersz wiedziałby „kiedy", ale
    * nie „które zdarzenie poprawić".
    */
   takeoffUuid: string;
   landingUuid: string | null;
+  /**
+   * Kręgi (touch and go) zamknięte lądowaniem tego lotu — patrz `LandingPayload`.
+   * Pole jest NIEOBECNE przy zwykłym locie, żeby czytelnik nie musiał odróżniać
+   * „zero kręgów" od „nie dotyczy": jedno i drugie znaczy jeden start i jedno lądowanie.
+   *
+   * Lot z kręgami niesie JEDEN przedział czasu (start → OSTATNIE lądowanie), bo maszyna
+   * nie zatrzymała się między nimi — `durationMs` jest więc czasem całej serii i tak
+   * ma być.
+   */
+  touchAndGo?: number;
 }
 
 /** Bilans paliwa dnia (§3.7): start + dolane − zużyte. */
@@ -99,10 +109,10 @@ export interface MhState {
 }
 
 /**
- * Olej silnikowy (issue #60) — pomiar żyje WYŁĄCZNIE przy przejęciu, bo bagnet mówi
+ * Olej silnikowy (issue #60) - pomiar żyje WYŁĄCZNIE przy przejęciu, bo bagnet mówi
  * prawdę tylko na zimnym silniku; zdanie samolotu oleju nie mierzy. Sesja nie ma więc
  * własnego bilansu zużycia (interwał biegnie pomiar→pomiar przez wiele sesji, kotwicą
- * jest MH) — stan niesie sam fakt: co zmierzono i co dolano.
+ * jest MH) - stan niesie sam fakt: co zmierzono i co dolano.
  */
 export interface OilState {
   /** Pomiar z bagnetu przy przejęciu (L); `null` = pomiaru nie było. */
@@ -113,7 +123,7 @@ export interface OilState {
   afterL: number | null;
 }
 
-/** Rozliczenie zrzutów (§3.7 — strona przychodowa dnia). */
+/** Rozliczenie zrzutów (§3.7 - strona przychodowa dnia). */
 export interface DropSummary {
   /** Liczba wyniesień (zdarzeń drop). */
   count: number;
@@ -126,12 +136,12 @@ export interface DropSummary {
    * Para istnieje obok `avgAltitudeFt`, bo średnich nie da się składać: statystyki
    * zakresu (panel `A10`) sumują gotowe wyniki wielu sesji, a średnia policzona ze
    * średnich per sesja ważyłaby każdą sesję tak samo, niezależnie od liczby zrzutów.
-   * Zrzut bez fixa GPS nie wchodzi ani do sumy, ani do licznika — brak wysokości to
+   * Zrzut bez fixa GPS nie wchodzi ani do sumy, ani do licznika - brak wysokości to
    * niewiedza, nie zero.
    */
   altitudeSumFt: number;
   altitudeFixCount: number;
-  /** Średnia wysokość zrzutu (ft) — null, gdy żaden drop nie miał wysokości. */
+  /** Średnia wysokość zrzutu (ft) - null, gdy żaden drop nie miał wysokości. */
   avgAltitudeFt: number | null;
 }
 
@@ -139,14 +149,14 @@ export interface DropSummary {
  * Ostatni załadunek CZEKAJĄCY na zrzut (issue #21 pkt 5+7).
  *
  * Prefill arkusza zrzutu 05e: pilot deklaruje skład na ziemi, w locie tylko potwierdza.
- * Zrzut konsumuje stan (projekcja czyści go na `drop`) — ci skoczkowie już wyszli,
+ * Zrzut konsumuje stan (projekcja czyści go na `drop`) - ci skoczkowie już wyszli,
  * więc drugi zrzut w tym samym locie zaczyna od pustych liczników. Kolejny załadunek
  * nadpisuje poprzedni: liczy się skład faktycznie siedzący na pokładzie.
  */
 export interface BoardingState {
   /** Zadeklarowany skład; `null` = załadunek odnotowany bez liczb. */
   jumpers: JumperCounts | null;
-  /** Czas załadunku — arkusz zrzutu podpisuje nim prefill („skład z załadunku 09:12"). */
+  /** Czas załadunku - arkusz zrzutu podpisuje nim prefill („skład z załadunku 09:12"). */
   at: EpochMillis;
 }
 
@@ -158,13 +168,13 @@ export interface SessionState {
   dualId: string | null;
   /**
    * PIC ustalony przy otwarciu sesji (nagłówek pierwszego zdarzenia = `session_claim`).
-   * To jest **jedyny uprawniony piszący** tej sesji (single-writer, §4.1 pkt 3) — reguła
+   * To jest **jedyny uprawniony piszący** tej sesji (single-writer, §4.1 pkt 3) - reguła
    * `WRITER_MISMATCH` porównuje z tą wartością, nie z `picId` (który jest „bieżący").
    */
   sessionPicId: string | null;
 
   /**
-   * Sesja wpisana ręcznie po fakcie (`session_claim.manualEntry`, ekran 15) —
+   * Sesja wpisana ręcznie po fakcie (`session_claim.manualEntry`, ekran 15) -
    * zasila plakietkę „RĘCZNIE" na kafelku (01/12) i w nagłówku rozliczenia (10).
    */
   manualEntry: boolean;
@@ -173,18 +183,18 @@ export interface SessionState {
   departureIcao: string | null;
   arrivalIcao: string | null;
   client: string | null;
-  /** Notatka pilota do dnia (issue #14) — wolny tekst z preflightu. */
+  /** Notatka pilota do dnia (issue #14) - wolny tekst z preflightu. */
   notes: string | null;
   mhFormat: MhFormat | null;
   /**
-   * Domyślny skład skoczków sesji (`preflight_confirm.jumperDefaults`, 2026-08-17) —
+   * Domyślny skład skoczków sesji (`preflight_confirm.jumperDefaults`, 2026-08-17) -
    * wartość startowa KAŻDEGO załadunku bez własnej deklaracji, także po tym, jak `drop`
    * skonsumował poprzedni skład. `null` = nie ustawiono, liczniki wracają do zera.
    */
   jumperDefaults: JumperCounts | null;
 
   /**
-   * Chwila przejęcia samolotu (`session_claim`) — początek sesji tej maszyny.
+   * Chwila przejęcia samolotu (`session_claim`) - początek sesji tej maszyny.
    *
    * To jest OŚ SAMOLOTU, nie oś służby: mówi, od kiedy maszyna jest zajęta, i tym samym
    * jak długo stała zablokowana, gdy pilot nigdzie nie poleciał (09C). Sesja bez claimu
@@ -192,11 +202,11 @@ export interface SessionState {
    */
   claimedAt: EpochMillis | null;
   /**
-   * Chwila potwierdzenia preflightu — JEDYNY uprawniony znacznik „preflight był".
+   * Chwila potwierdzenia preflightu - JEDYNY uprawniony znacznik „preflight był".
    *
    * Do 2026-08-07 tę rolę pełnił `dutyStart` (godzina meldunku) i było to poprawne
    * tylko dopóty, dopóki była obowiązkowa. Potem stała się opcjonalna, a 2026-08-11
-   * klamra służby znikła z modelu W CAŁOŚCI (issue #23) — razem z polami
+   * klamra służby znikła z modelu W CAŁOŚCI (issue #23) - razem z polami
    * `dutyStart`/`dutyEnd`, które tu stały.
    */
   preflightAt: EpochMillis | null;
@@ -205,7 +215,7 @@ export interface SessionState {
   inFlight: boolean;
   /**
    * Czy trwa kołowanie: `taxi` bez późniejszego startu/wyłączenia silnika.
-   * Gwardia `ALREADY_TAXIING` blokuje tym stanem drugie `taxi` z rzędu — po kołowaniu
+   * Gwardia `ALREADY_TAXIING` blokuje tym stanem drugie `taxi` z rzędu - po kołowaniu
    * legalny jest wyłącznie `takeoff` albo `engine_stop` (decyzja 2026-08-04).
    */
   taxiing: boolean;
@@ -236,12 +246,12 @@ export interface SessionState {
   closed: boolean;
   /**
    * Czas zdarzenia `day_close` (null dopóki dzień otwarty). Od niego liczy się
-   * 24-godzinne okno korekty (decyzja 2026-07-23) — patrz `domain/rules`.
+   * 24-godzinne okno korekty (decyzja 2026-07-23) - patrz `domain/rules`.
    */
   closedAt: EpochMillis | null;
   eventCount: number;
   /**
-   * Indeks zdarzeń korygowalnych (uuid → typ) — z SUROWEGO strumienia, sprzed nałożenia
+   * Indeks zdarzeń korygowalnych (uuid → typ) - z SUROWEGO strumienia, sprzed nałożenia
    * korekt. Reguły walidują nim cel `event_correction`; obejmuje też zdarzenia już
    * unieważnione, bo ponowna korekta unieważnionego jest legalna („ostatnia wygrywa").
    */
@@ -254,7 +264,7 @@ export function eventTime(event: Event): EpochMillis {
   return event.gpsTime ?? event.deviceTime;
 }
 
-/** Świeży, pusty stan sesji — początek redukcji i stan startowy store'u. */
+/** Świeży, pusty stan sesji - początek redukcji i stan startowy store'u. */
 export function emptySessionState(): SessionState {
   return {
     sessionUuid: null,
@@ -310,20 +320,20 @@ export function emptySessionState(): SessionState {
 export function projectSession(events: Event[]): SessionState {
   const state = emptySessionState();
 
-  // Indeks celów korekty budujemy z SUROWEGO strumienia — reguły muszą widzieć także
+  // Indeks celów korekty budujemy z SUROWEGO strumienia - reguły muszą widzieć także
   // zdarzenia unieważnione (ponowna korekta unieważnionego jest legalna).
   state.eventIndex = buildEventIndex(events);
 
-  // Korekty (04c) nakładamy PRZED liczeniem: dalej płynie strumień efektywny — czasy
+  // Korekty (04c) nakładamy PRZED liczeniem: dalej płynie strumień efektywny - czasy
   // po poprawce, bez zdarzeń unieważnionych i bez samych `event_correction`.
   const effective = applyCorrections(events);
 
   // Suma i licznik wysokości akumulują się wprost w stanie (`drops.altitudeSumFt` /
-  // `drops.altitudeFixCount`) — średnią liczymy z nich na końcu. Osobny bufor lokalny
+  // `drops.altitudeFixCount`) - średnią liczymy z nich na końcu. Osobny bufor lokalny
   // byłby drugą kopią tych samych liczb.
 
   // Kolejność WSTAWIENIA ≠ kolejność ZDARZEŃ. Wpis ręczny (05f) niesie czas cofnięty
-  // („4 min temu"), a korekta (04c) zmienia czas istniejącego zdarzenia — oba trafiają
+  // („4 min temu"), a korekta (04c) zmienia czas istniejącego zdarzenia - oba trafiają
   // do rejestru po zdarzeniach późniejszych. Arytmetyka cykli i lotów wymaga porządku
   // chronologicznego, więc sortujemy po czasie zdarzenia (GPS → fallback zegar telefonu).
   // Sort jest stabilny (ES2019+), więc zdarzenia równoczesne zachowują kolejność zapisu.
@@ -333,7 +343,7 @@ export function projectSession(events: Event[]): SessionState {
    * Dual ZADEKLAROWANY w preflightcie (`preflight_confirm.dualId`, issue #43).
    *
    * Opakowany w obiekt, bo `null` jest tu WARTOŚCIĄ („sesja jednoosobowa"), a nie
-   * brakiem deklaracji — te dwa stany znaczą co innego i muszą dać się odróżnić.
+   * brakiem deklaracji - te dwa stany znaczą co innego i muszą dać się odróżnić.
    * `undefined` (brak obiektu) = nikt nie deklarował, więc obowiązuje nagłówek.
    */
   let declaredDual: { value: string | null } | undefined;
@@ -371,7 +381,7 @@ export function projectSession(events: Event[]): SessionState {
         state.oil.levelL = p.oilL ?? null;
         state.oil.addedL = p.oilAddedL ?? 0;
         state.oil.afterL = p.oilL != null ? p.oilL + (p.oilAddedL ?? 0) : null;
-        // Dual ZADEKLAROWANY dla całej sesji (issue #43) — patrz `declaredDualId` niżej.
+        // Dual ZADEKLAROWANY dla całej sesji (issue #43) - patrz `declaredDualId` niżej.
         if ('dualId' in p) declaredDual = { value: p.dualId ?? null };
         break;
       }
@@ -421,12 +431,23 @@ export function projectSession(events: Event[]): SessionState {
       }
 
       case 'landing': {
-        state.landingCount += 1;
+        /* KRĘGI ROSNĄ OBA LICZNIKI (uwaga z urządzenia, 2026-08-29). `touchAndGo: n`
+           znaczy, że między startem tego lotu a tym lądowaniem maszyna przyziemiła
+           i wystartowała n razy — czyli lądowań jest n + 1 (te kręgi plus to lądowanie),
+           a startów n WIĘCEJ niż policzył `takeoff` otwierający lot.
+
+           Brak pola daje n = 0, więc ścieżka automatyczna liczy dokładnie jak przed
+           dołożeniem kręgów: detekcja GPS wystawia własną parę zdarzeń na każdy krąg
+           i o `touchAndGo` nie wie. */
+        const circuits = event.payload.touchAndGo ?? 0;
+        state.landingCount += 1 + circuits;
+        state.takeoffCount += circuits;
         const flight = lastOpen(state.flights, (f) => f.landingAt == null);
         if (flight) {
           flight.landingAt = t;
           flight.durationMs = Math.max(0, t - flight.takeoffAt);
           flight.landingUuid = event.uuid;
+          if (circuits > 0) flight.touchAndGo = circuits;
           state.flightTimeMs += flight.durationMs;
         }
         state.inFlight = false;
@@ -438,7 +459,7 @@ export function projectSession(events: Event[]): SessionState {
       }
 
       case 'oil_add': {
-        // Dolewka z kokpitu (issue #60) — SKŁADNIK stanu oleju, nie granica rachunku:
+        // Dolewka z kokpitu (issue #60) - SKŁADNIK stanu oleju, nie granica rachunku:
         // dokłada się do sumy dolanego obok pary z przejęcia, a stan po dolewce
         // przelicza się, o ile w ogóle był pomiar (dolewka poziomu nie zna).
         state.oil.addedL += event.payload.addedL;
@@ -458,7 +479,7 @@ export function projectSession(events: Event[]): SessionState {
         const p = event.payload;
         state.drops.count += 1;
         // Skład jest opcjonalny (issue #21 pkt 5): zrzut bez liczb liczy się do
-        // `count`, ale nie dokłada zer do sum — brak deklaracji to niewiedza, nie zero
+        // `count`, ale nie dokłada zer do sum - brak deklaracji to niewiedza, nie zero
         // (ta sama zasada, co przy wysokości niżej).
         if (p.jumpers != null) {
           state.drops.jumpers.tandem += p.jumpers.tandem;
@@ -470,7 +491,7 @@ export function projectSession(events: Event[]): SessionState {
           state.drops.altitudeFixCount += 1;
         }
         if (state.client == null && p.client != null) state.client = p.client;
-        // Zrzut konsumuje załadunek — ci skoczkowie już wyszli; kolejny arkusz 05e
+        // Zrzut konsumuje załadunek - ci skoczkowie już wyszli; kolejny arkusz 05e
         // zaczyna od pustych liczników, dopóki nie będzie nowego załadunku.
         state.boarding = null;
         break;
@@ -494,7 +515,7 @@ export function projectSession(events: Event[]): SessionState {
             takeoffAt: p.takeoff,
             landingAt: p.landing,
             durationMs,
-            // Cały lot pochodzi z JEDNEGO wpisu ręcznego — korekta celuje w niego,
+            // Cały lot pochodzi z JEDNEGO wpisu ręcznego - korekta celuje w niego,
             // niezależnie od tego, czy pilot poprawia start, czy lądowanie.
             takeoffUuid: event.uuid,
             landingUuid: event.uuid,
@@ -517,12 +538,12 @@ export function projectSession(events: Event[]): SessionState {
         break;
       }
 
-      // `leg_close` obsługiwane tu między 2026-08-06 a 2026-08-10 — usunięte razem
+      // `leg_close` obsługiwane tu między 2026-08-06 a 2026-08-10 - usunięte razem
       // z pojęciem wzlotu: sesję zatwierdza `day_close.finalReading`.
 
       case 'session_claim':
         // Tożsamość aktualizowana z nagłówka (wyżej), payload w większości
-        // informacyjny. Zostaje czas (od kiedy samolot zajęty — 09C, `claim_time`
+        // informacyjny. Zostaje czas (od kiedy samolot zajęty - 09C, `claim_time`
         // panelu) i znacznik wpisu ręcznego (plakietka „RĘCZNIE", 2026-08-16).
         state.claimedAt = t;
         if ((event.payload as SessionClaimPayload).manualEntry === true) {
@@ -536,20 +557,20 @@ export function projectSession(events: Event[]): SessionState {
 
       case 'taxi':
         // Kołowanie nie wpływa na ŻADEN bilans: czas blokowy wyznaczają `engine_start`
-        // i `engine_stop`, czas lotu — `takeoff` i `landing`. Jedyne, co niesie, to
-        // stan „kołowanie trwa" dla gwardii ALREADY_TAXIING — zamyka go dopiero start
+        // i `engine_stop`, czas lotu - `takeoff` i `landing`. Jedyne, co niesie, to
+        // stan „kołowanie trwa" dla gwardii ALREADY_TAXIING - zamyka go dopiero start
         // albo wyłączenie silnika. Sam wpis jest opisowy, odczytywany wprost ze
         // strumienia przy budowaniu logu cyklu (mockup 05).
         state.taxiing = true;
         break;
 
       case 'event_correction':
-        // Strumień efektywny nie zawiera korekt (nałożone w `applyCorrections` wyżej) —
+        // Strumień efektywny nie zawiera korekt (nałożone w `applyCorrections` wyżej) -
         // ten przypadek istnieje dla wyczerpującego pokrycia unii przez kompilator.
         break;
 
       default:
-        // Wyczerpujące pokrycie unii — kompilator pilnuje kompletności `switch`.
+        // Wyczerpujące pokrycie unii - kompilator pilnuje kompletności `switch`.
         assertNever(event);
     }
   }
@@ -571,7 +592,7 @@ export function projectSession(events: Event[]): SessionState {
   /**
    * DEKLARACJA ZAŁOGI WYGRYWA Z NAGŁÓWKIEM (issue #43).
    *
-   * W pętli `state.dualId` bierze się z nagłówka OSTATNIEGO zdarzenia — i tak zostaje
+   * W pętli `state.dualId` bierze się z nagłówka OSTATNIEGO zdarzenia - i tak zostaje
    * dla każdej sesji, w której nikt załogi nie poprawiał. Gdy jednak preflight niesie
    * `dualId`, to on opisuje CAŁĄ sesję: nagłówki zdarzeń zapisanych przed korektą nadal
    * noszą starą osobę i nigdy nie przestaną (rejestr jest append-only), więc bez tego
@@ -606,7 +627,7 @@ export function liveFlightTimeMs(state: SessionState, now: EpochMillis): number 
   return state.flightTimeMs;
 }
 
-/** Ostatni element spełniający predykat (od końca) — bez mutacji tablicy. */
+/** Ostatni element spełniający predykat (od końca) - bez mutacji tablicy. */
 function lastOpen<T>(items: T[], predicate: (item: T) => boolean): T | undefined {
   for (let i = items.length - 1; i >= 0; i--) {
     if (predicate(items[i]!)) return items[i];
@@ -614,7 +635,7 @@ function lastOpen<T>(items: T[], predicate: (item: T) => boolean): T | undefined
   return undefined;
 }
 
-/** Strażnik wyczerpania unii — nieosiągalny w runtime dla poprawnych danych. */
+/** Strażnik wyczerpania unii - nieosiągalny w runtime dla poprawnych danych. */
 function assertNever(value: never): never {
   throw new Error(`Nieobsłużony typ zdarzenia: ${JSON.stringify(value)}`);
 }

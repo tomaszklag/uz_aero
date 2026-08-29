@@ -1,11 +1,11 @@
 /**
- * UZ Aero (serwer) — trasy monitora eksportu (`/admin/api/exports*`, mockup `A05`).
+ * UZ Aero (serwer) - trasy monitora eksportu (`/admin/api/exports*`, mockup `A05`).
  *
  * Cienkie jak reszta repo: zod → zapytanie/komenda → status. Trasa nie zna ani stanu
- * karty, ani bramek eksportera — jedno mieszka w mapperze, drugie w `DayExporter`.
+ * karty, ani bramek eksportera - jedno mieszka w mapperze, drugie w `DayExporter`.
  *
  * ══ ZDOLNOŚĆ JEST TU ROZSZCZEPIONA ══
- * `GET` wymaga `panel.access` — monitor jest ODCZYTEM i szef wyszkolenia ogląda go
+ * `GET` wymaga `panel.access` - monitor jest ODCZYTEM i szef wyszkolenia ogląda go
  * w całości (`ANALIZA` A07: „Kto ma dostęp: oboje (ponowienie: admin)"). Ponowienie
  * wymaga `fleet.manage`, czyli zdolności, którą ma wyłącznie administrator.
  *
@@ -16,7 +16,7 @@
  * i pojemność jadą wprost do treści arkusza), więc „kto steruje dokumentem klubu" ma
  * dalej jedną odpowiedź w jednym pliku. Gdyby ponowienie miało trafić do szefa
  * wyszkolenia, właściwym ruchem jest osobna zdolność `exports.retry`, a nie
- * rozszerzenie `fleet.manage` — bo tamta niesie też edycję floty.
+ * rozszerzenie `fleet.manage` - bo tamta niesie też edycję floty.
  */
 
 import type { FastifyInstance } from 'fastify';
@@ -31,7 +31,7 @@ import { dayParam, endOfDay } from './dayRange.ts';
 
 /**
  * Stany karty jako ENUM, nie wolny tekst: filtr jest PYTANIEM klienta, a pytanie
- * o stan, którego system nie zna, nie ma poprawnej odpowiedzi — ciche zignorowanie
+ * o stan, którego system nie zna, nie ma poprawnej odpowiedzi - ciche zignorowanie
  * takiego parametru pokazałoby PEŁNĄ listę pod etykietą zawężenia. Ta sama decyzja,
  * co przy `?action=` w dzienniku audytu.
  *
@@ -72,7 +72,7 @@ export function registerAdminExportRoutes(
         await queries.list({
           fromMs: q.from,
           // Zakres obustronnie DOMKNIĘTY: `do=2026-07-31` obejmuje cały 31 lipca.
-          // Inaczej „od 25 do 31" gubiłoby ostatni dzień — czyli zwykle ten, o który
+          // Inaczej „od 25 do 31" gubiłoby ostatni dzień - czyli zwykle ten, o który
           // się pyta.
           toMs: endOfDay(q.to),
           aircraftId: q.aircraftId,
@@ -102,11 +102,11 @@ export function registerAdminExportRoutes(
   );
 
   /**
-   * Podgląd treści karty — istnieje OBOK `GET /sheets/:tab`, nie zamiast niej.
+   * Podgląd treści karty - istnieje OBOK `GET /sheets/:tab`, nie zamiast niej.
    *
    * Tamta trasa jest celem linków `export_log.sheet_url` czytanych z TELEFONU (ekran 11,
    * nagłówek `Bearer`) i zostaje nietknięta. Panel loguje się ciasteczkiem
-   * `uzaero_admin` o `Path=/admin`, które do `/sheets/*` po prostu NIE JEDZIE —
+   * `uzaero_admin` o `Path=/admin`, które do `/sheets/*` po prostu NIE JEDZIE -
    * poszerzenie ścieżki ciasteczka posłałoby sesję panelu razem z każdym żądaniem
    * telefonu, więc byłoby odwrotnością tego, co ma osiągnąć.
    */
@@ -148,10 +148,10 @@ export function registerAdminExportRoutes(
 
       const result = await commands.retry(actor, sessionUuid);
 
-      // 200 także przy odmowie — i to jest treść tej trasy, nie ustępstwo. Odmowa
+      // 200 także przy odmowie - i to jest treść tej trasy, nie ustępstwo. Odmowa
       // eksportera („dzień jeszcze otwarty", „flaga trzyma kartę") jest poprawną
       // odpowiedzią o stanie świata; 500 kazałoby administratorowi zgadywać, czy to
-      // awaria, czy zasada — czyli dokładnie w tej chwili sięgnąć po `psql`.
+      // awaria, czy zasada - czyli dokładnie w tej chwili sięgnąć po `psql`.
       return reply.send({ retry: result, row: await queries.item(sessionUuid) });
     },
   );

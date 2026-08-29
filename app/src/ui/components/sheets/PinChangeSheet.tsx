@@ -1,12 +1,12 @@
 /**
- * UZ Aero — PinChangeSheet (arkusz „Zmień PIN" z mockupu 13)
+ * UZ Aero - PinChangeSheet (arkusz „Zmień PIN" z mockupu 13)
  *
  * Trzy kroki w jednym arkuszu: obecny PIN → nowy → powtórz. W pełni OFFLINE (§3.0:
  * PIN sprawdzany lokalnie). Odmowa (zły obecny PIN albo rozjazd powtórki) mówi tym
  * samym językiem co zamek 00: czerwone kropki + potrząśnięcie, i cofa do właściwego
- * kroku — bez tekstów błędów, które zdradzałyby więcej, niż trzeba.
+ * kroku - bez tekstów błędów, które zdradzałyby więcej, niż trzeba.
  *
- * Auto-zatwierdzanie po 4. cyfrze — jak na zamku; osobny przycisk „Zatwierdź" byłby
+ * Auto-zatwierdzanie po 4. cyfrze - jak na zamku; osobny przycisk „Zatwierdź" byłby
  * drugim ruchem kciuka bez żadnej dodatkowej informacji.
  */
 
@@ -34,11 +34,11 @@ const STEP_LABEL: Record<Step, string> = {
 
 export interface PinChangeSheetProps {
   visible: boolean;
-  /** Weryfikacja obecnego PIN-u (krok 1) — offline, bez zapisu. */
+  /** Weryfikacja obecnego PIN-u (krok 1) - offline, bez zapisu. */
   verifyCurrent: (pin: string) => Promise<boolean>;
   /** Zapis pary obecny→nowy po zgodnej powtórce (krok 3). */
   save: (current: string, next: string) => Promise<void>;
-  /** Wołane po udanym zapisie — ekran pokazuje potwierdzenie i chowa arkusz. */
+  /** Wołane po udanym zapisie - ekran pokazuje potwierdzenie i chowa arkusz. */
   onDone: () => void;
   onCancel: () => void;
 }
@@ -60,7 +60,7 @@ export function PinChangeSheet({
   const [busy, setBusy] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Każde otwarcie zaczyna od czystego kroku 1 — arkusz nie pamięta porzuconej próby.
+  // Każde otwarcie zaczyna od czystego kroku 1 - arkusz nie pamięta porzuconej próby.
   useEffect(() => {
     if (!visible) return;
     setStep('current');
@@ -114,7 +114,7 @@ export function PinChangeSheet({
         onDone();
         return;
       }
-      // Rozjazd powtórki — nowy PIN ustawiamy od początku.
+      // Rozjazd powtórki - nowy PIN ustawiamy od początku.
       reject('next');
     },
     [advance, current, firstPass, onDone, reject, save, step, verifyCurrent],
@@ -165,7 +165,7 @@ export function PinChangeSheet({
 
       <Numpad onDigit={onDigit} onBackspace={onBackspace} disabled={busy && error === 0} />
 
-      {/* `.sheet-offline-note` — zmiana PIN-u nie dotyka sieci, mówimy to wprost. */}
+      {/* `.sheet-offline-note` - zmiana PIN-u nie dotyka sieci, mówimy to wprost. */}
       <View style={styles.noteRow}>
         <Icon name="check" size={10} color={theme.colors.green} />
         <AppText variant="mono" style={[styles.note, { color: theme.colors.green }]}>

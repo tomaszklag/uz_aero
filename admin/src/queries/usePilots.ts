@@ -1,10 +1,10 @@
 /**
- * UZ Aero — panel: odczyt listy kont (`A06`).
+ * UZ Aero - panel: odczyt listy kont (`A06`).
  *
  * ══ DLACZEGO ZWYKŁE `useQuery`, A NIE `useInfiniteQuery` ══
  * Bo trasa nie ma kursora i mieć go nie musi: klub ma kilkanaście kont, a lista jest
  * jednocześnie SŁOWNIKIEM pilotów dla filtrów innych ekranów. Lista, którą trzeba
- * doładowywać stronami, nie nadaje się do rozwijanego filtra — i to jest powód,
+ * doładowywać stronami, nie nadaje się do rozwijanego filtra - i to jest powód,
  * dla którego kształt tej trasy różni się od dni lotnych i dziennika audytu.
  *
  * Hook jest cienki z zasady: decyzja o treści ekranu mieszka w czystych modułach

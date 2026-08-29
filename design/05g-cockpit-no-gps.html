@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 05G Cockpit / brak GPS</title>
+<title>UZ Aero - 05G Cockpit / brak GPS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -80,15 +80,15 @@
   }
   .running-badge .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 1.5s ease-in-out infinite; }
 
-  /* ===== BANER GPS — Typ A (żywy status / przyrząd, NIGDY zamykalny) =====
+  /* ===== BANER GPS - Typ A (żywy status / przyrząd, NIGDY zamykalny) =====
      Klasa .no-gps istniała w 05 jako nieużyty mini-chip; tu awansuje do pełnego
      banera statusowego.
      AMBER, nie czerwień (2026-08-12). Czerwień była tu do 2026-08-12 z rejestru ryzyk
      (sekcja 8 klasyfikuje przegapione detekcje jako 🔴: w locie niezauważony brak fixa
-     = niezapisane lądowanie) — ale rejestr stopniuje SKUTKI, a nie banery. Stan „GPS
+     = niezapisane lądowanie) - ale rejestr stopniuje SKUTKI, a nie banery. Stan „GPS
      nie pracuje" ma trzy odmiany (rozruch odbiornika, utrata fixa, brak uprawnienia)
      i dla pilota wszystkie znaczą jedno: autodetekcja stoi, zapisujesz sam z paska
-     akcji. Różni je TREŚĆ, nie kolor — jeden stan, jeden kolor, a ostrzeżenie mówi
+     akcji. Różni je TREŚĆ, nie kolor - jeden stan, jeden kolor, a ostrzeżenie mówi
      „weź to w swoje ręce", nie „stało się nieodwracalne". */
   .no-gps {
     display: flex; flex-direction: column; gap: 8px;
@@ -100,7 +100,7 @@
   .no-gps-title { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--amber); flex: 1; }
   .no-gps-sub { font-size: 11px; color: var(--text-secondary); line-height: 1.5; }
   .no-gps-sub b { color: var(--text-primary); font-weight: 600; }
-  /* `.no-gps-actions` / `.no-gps-link` — USUNIĘTE 2026-08-12 razem z przyciskami
+  /* `.no-gps-actions` / `.no-gps-link` - USUNIĘTE 2026-08-12 razem z przyciskami
      banera (patrz komentarz przy samym banerze niżej). */
 
   /* ===== PHASE HERO ===== */
@@ -129,7 +129,7 @@
   }
   /* Ton z FAZY, nie ze stanu odbiornika (2026-08-12): lot znany ze zdarzeń dostaje
      kolor lotu, tak jak nazwę i ikonę. Wariant `.warn` (amber) malował hero na kolor
-     awarii czujnika — sygnał o GPS-ie doklejony do napisu o locie. Że fazy nie znamy,
+     awarii czujnika - sygnał o GPS-ie doklejony do napisu o locie. Że fazy nie znamy,
      mówi linia niżej („FAZA NIEZNANA · BEZ FIXA OD…") i baner nad hero. */
   .phase-hero-name.air { color: var(--blue); text-shadow: 0 0 30px rgba(52,152,219,0.35); }
   .phase-hero-sub {
@@ -138,7 +138,7 @@
   }
   .phase-hero-sub b { color: var(--amber); font-weight: 700; }
 
-  /* ===== GPS PARAM GRID — bez fixa ===== */
+  /* ===== GPS PARAM GRID - bez fixa ===== */
   .param-grid {
     display: grid; grid-template-columns: 1fr 1fr;
     gap: 1px; background: var(--border);
@@ -154,20 +154,20 @@
   .param-unit { font-family: var(--font-mono); font-size: 11px; letter-spacing: 1px; color: var(--text-secondary); }
   /* WARIANT OSTRZEGAWCZY paliwa (issue #19), nie domyślny wygląd komórki: amber dopiero,
      gdy szacunek czasu lotu z FOB spadnie do ~1h45 (godzina zapasu nad rezerwą 45 min),
-     czerwony na samej rezerwie. Powyżej — jak tutaj — paliwo jest neutralne, bo kolor
+     czerwony na samej rezerwie. Powyżej - jak tutaj - paliwo jest neutralne, bo kolor
      świecący zawsze przestaje być ostrzeżeniem, a na tym ekranie ostrzeżeń i tak jest
      komplet. `.param-cell.green-bg` usunięta razem z zielenią „Flight Time". */
   .param-value.amber { color: var(--amber); }
   .param-cell.amber-bg { background: rgba(243,156,18,0.04); }
-  /* wartości z martwego czujnika: — — plus stempel, od kiedy nie ma fixa */
+  /* wartości z martwego czujnika: - - plus stempel, od kiedy nie ma fixa */
   .param-value.stale { color: var(--text-muted); letter-spacing: 4px; }
-  /* AMBER jak baner (2026-08-12): to ten sam stan, więc ten sam kolor — czerwony
-     przypis pod „— —" świecił mocniej niż baner, który go tłumaczy. */
+  /* AMBER jak baner (2026-08-12): to ten sam stan, więc ten sam kolor - czerwony
+     przypis pod „- -" świecił mocniej niż baner, który go tłumaczy. */
   .param-stale-note { font-family: var(--font-mono); font-size: 8px; letter-spacing: 1px; text-transform: uppercase; color: var(--amber); opacity: 0.85; }
 
-  /* OŚ SESJI (issue #44) — ten sam inwentarz, co na 04, 05 i 10; pełny komentarz stoi
+  /* OŚ SESJI (issue #44) - ten sam inwentarz, co na 04, 05 i 10; pełny komentarz stoi
      w 04. W locie oś kończy się wierszem „na żywo": zielona kropka, bez godziny po
-     lewej (to nie jest zdarzenie rejestru), licznik po prawej — tam, gdzie ta oś trzyma
+     lewej (to nie jest zdarzenie rejestru), licznik po prawej - tam, gdzie ta oś trzyma
      wszystkie czasy trwania. */
   .session-log { flex:1; overflow-y:auto; scrollbar-width:none; background:var(--surface); border-bottom:1px solid var(--border); }
   .session-log::-webkit-scrollbar { display:none; }
@@ -188,7 +188,7 @@
   .axis-dot.blue { background:var(--blue); }
   .axis-dot.amber { background:var(--amber); }
   .axis-dot.hollow { background:var(--surface); border:1.5px solid var(--text-muted); box-shadow:0 0 0 2px var(--surface); }
-  /* ZIELEŃ NALEŻY WYŁĄCZNIE DO TERAŹNIEJSZOŚCI (issue #19) — stąd puls tylko tutaj. */
+  /* ZIELEŃ NALEŻY WYŁĄCZNIE DO TERAŹNIEJSZOŚCI (issue #19) - stąd puls tylko tutaj. */
   .axis-dot.live { background:var(--green); animation:pulse 1.5s ease-in-out infinite; }
   .axis-label { display:flex; flex-direction:column; gap:1px; min-width:0; }
   .axis-name { font-family:var(--font-mono); font-size:10px; letter-spacing:1.4px; text-transform:uppercase; color:var(--text-primary); display:flex; align-items:center; gap:6px; }
@@ -199,13 +199,13 @@
   .axis-flight { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
   .axis-dur { font-family:var(--font-mono); font-size:11px; color:var(--green); }
 
-  /* ===== BOTTOM ACTION ROW — wejścia ręczne przejmują robotę autodetekcji ===== */
+  /* ===== BOTTOM ACTION ROW - wejścia ręczne przejmują robotę autodetekcji ===== */
   .action-row {
     display: grid; grid-template-columns: 1fr auto auto;
     gap: 10px; padding: 12px 14px;
     background: var(--bg); flex-shrink: 0; align-items: stretch;
   }
-  /* IDENTYCZNY jak w 05/05A/05D (2026-08-12). Do 2026-08-12 stał tu w amber —
+  /* IDENTYCZNY jak w 05/05A/05D (2026-08-12). Do 2026-08-12 stał tu w amber -
      „awans" miał mówić, że ręczny zapis jest teraz jedyną drogą. Nie rozróżniał
      niczego: pilot sięga po ten przycisk zawsze z tego samego powodu (logger nie
      rozpoznał stanu), a brak fixa i zła detekcja przy zdrowym odbiorniku znaczą dla
@@ -285,12 +285,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 05G</span>
+  <span class="film-strip">UZ AERO - 05G</span>
   <span class="slug">cockpit · GPS bez fixa · degradacja czujnika</span>
   <span class="canvas-meta"><span class="pulse"></span>Wariant 05</span>
 </header>
 
-<div class="phone-wrap"><main class="phone" role="region" aria-label="Mockup — Kokpit w locie bez sygnału GPS">
+<div class="phone-wrap"><main class="phone" role="region" aria-label="Mockup - Kokpit w locie bez sygnału GPS">
   <div class="status-bar">
     <span>16:10</span>
     <span class="status-right">
@@ -303,12 +303,12 @@
 
   <div class="screen">
 
-    <!-- COMPACT APP BAR — SyncChip pokazuje SIEĆ, nie GPS. Tu: zielony SYNC. -->
+    <!-- COMPACT APP BAR - SyncChip pokazuje SIEĆ, nie GPS. Tu: zielony SYNC. -->
     <div class="compact-bar">
       <div class="compact-info">
         <span class="compact-aircraft">SP-AXA</span>
         <span class="compact-sep">·</span>
-        <!-- Dzień skoków: JEDEN kod ICAO, nie para (issue #13) — samolot wraca tam, skąd
+        <!-- Dzień skoków: JEDEN kod ICAO, nie para (issue #13) - samolot wraca tam, skąd
              wystartował. Para start → lądowanie zostaje na paskach innych operacji. -->
         <span>EPKK · SKOKI</span>
       </div>
@@ -317,13 +317,13 @@
           <span class="live-dot"></span>
           RUNNING
         </div>
-        <a href="13-ustawienia.html" class="gear-btn" title="Ustawienia — diagnostyka GPS">
+        <a href="13-ustawienia.html" class="gear-btn" title="Ustawienia - diagnostyka GPS">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         </a>
       </div>
     </div>
 
-    <!-- BANER GPS — Typ A: przyrząd, nie zamyka się. Znika sam z powrotem fixa. -->
+    <!-- BANER GPS - Typ A: przyrząd, nie zamyka się. Znika sam z powrotem fixa. -->
     <div class="no-gps">
       <div class="no-gps-head">
         <span class="no-gps-dot"></span>
@@ -332,19 +332,19 @@
       </div>
       <!-- Zdanie o sieci przeniesione TUTAJ z chipa SYNC. Ekran uczył rozdziału osi
            czujnik/łączność zielonym chipem, ale reguła jest twarda: online nie rysuje
-           nic (issue #12). Lekcja zostaje, wskaźnik znika — inaczej jeden ekran miałby
+           nic (issue #12). Lekcja zostaje, wskaźnik znika - inaczej jeden ekran miałby
            plakietkę, której nie ma nigdzie indziej, i uczyłby czegoś odwrotnego. -->
-      <div class="no-gps-sub">Ostatni fix <b>15:58 UTC</b> (12 min temu). Startów i lądowań nie wykryjemy — <b>zapisuj je ręcznie</b> przyciskiem Landing / Take off. Timery i log samolotu liczą dalej z zegara. <b>Sieć działa normalnie</b> — awaria czujnika to nie awaria łączności, zdarzenia wysyłają się na bieżąco.</div>
+      <div class="no-gps-sub">Ostatni fix <b>15:58 UTC</b> (12 min temu). Startów i lądowań nie wykryjemy - <b>zapisuj je ręcznie</b> przyciskiem Landing / Take off. Timery i log samolotu liczą dalej z zegara. <b>Sieć działa normalnie</b> - awaria czujnika to nie awaria łączności, zdarzenia wysyłają się na bieżąco.</div>
       <!-- BEZ PRZYCISKÓW (2026-08-12). Stały tu dwa: „Zapisz zdarzenie" (05F)
-           i „Lista ręczna" (08) — pomyślane jako dwie skale problemu, a na urządzeniu
+           i „Lista ręczna" (08) - pomyślane jako dwie skale problemu, a na urządzeniu
            czytane jako drugi pasek akcji nad tym prawdziwym. Pierwszy otwierał
            dokładnie ten sam arkusz, co przycisk główny na dole; drugi dublował kafelek
-           z 04, który i tak pojawia się dopiero po STOP ENGINE — bo przegapione loty
+           z 04, który i tak pojawia się dopiero po STOP ENGINE - bo przegapione loty
            odtwarza się PO biegu, nie w powietrzu. Baner jest przyrządem: mówi, co się
            stało z czujnikiem, i wskazuje pasek akcji zdaniem, nie własnym przyciskiem. -->
     </div>
 
-    <!-- PHASE HERO — faza z GPS jest nieznana; stan „w locie" znamy ze zdarzeń -->
+    <!-- PHASE HERO - faza z GPS jest nieznana; stan „w locie" znamy ze zdarzeń -->
     <div class="phase-hero">
       <div class="phase-body">
         <div class="phase-hero-icon">
@@ -357,12 +357,12 @@
       </div>
     </div>
 
-    <!-- GPS PARAMS GRID — czujnik martwy → — — z adnotacją; FOB i zegar to dane lokalne -->
+    <!-- GPS PARAMS GRID - czujnik martwy → - - z adnotacją; FOB i zegar to dane lokalne -->
     <div class="param-grid">
       <div class="param-cell">
         <div class="param-label">Ground Speed</div>
         <div style="display:flex;align-items:baseline;gap:6px;">
-          <div class="param-value stale">— —</div>
+          <div class="param-value stale">- -</div>
           <div class="param-unit">KT</div>
         </div>
         <div class="param-stale-note">brak fixa od 15:58</div>
@@ -370,13 +370,13 @@
       <div class="param-cell">
         <div class="param-label">Altitude</div>
         <div style="display:flex;align-items:baseline;gap:6px;">
-          <div class="param-value stale">— —</div>
+          <div class="param-value stale">- -</div>
           <div class="param-unit">FT</div>
         </div>
         <div class="param-stale-note">brak fixa od 15:58</div>
       </div>
       <!-- Paliwo i czas lotu bez wyróżnienia (issue #19): to odczyty, a nie stany
-           wymagające uwagi. Podpisy pod spodem mówią, skąd wartość pochodzi — i to one
+           wymagające uwagi. Podpisy pod spodem mówią, skąd wartość pochodzi - i to one
            niosą różnicę wobec martwych komórek GPS wyżej, nie kolor. -->
       <div class="param-cell">
         <div class="param-label">Fuel on Board</div>
@@ -384,9 +384,9 @@
           <div class="param-value">~90</div>
           <div class="param-unit">L</div>
         </div>
-        <div class="param-stale-note" style="color:var(--text-muted)">szacunek ze zużycia — bez GPS</div>
+        <div class="param-stale-note" style="color:var(--text-muted)">szacunek ze zużycia - bez GPS</div>
       </div>
-      <!-- Czas lotu CAŁEJ SESJI (0:44 + 0:42 + 0:53 otwartego) — patrz komentarz przy
+      <!-- Czas lotu CAŁEJ SESJI (0:44 + 0:42 + 0:53 otwartego) - patrz komentarz przy
            tym kafelku w 05. Bez fixa liczy się tak samo: to zegar, nie czujnik, a loty
            dopisane RĘCZNIE (jedyna droga zapisu w tym stanie) wchodzą do sumy od razu. -->
       <div class="param-cell">
@@ -394,15 +394,15 @@
         <div style="display:flex;align-items:baseline;gap:6px;">
           <div class="param-value">02:19</div>
         </div>
-        <div class="param-stale-note" style="color:var(--text-muted)">zegar — liczy normalnie</div>
+        <div class="param-stale-note" style="color:var(--text-muted)">zegar - liczy normalnie</div>
       </div>
     </div>
 
-    <!-- LOG SESJI — dane lokalne, zero wariantów offline/GPS.
+    <!-- LOG SESJI - dane lokalne, zero wariantów offline/GPS.
          Karta pokazuje się dopiero, gdy w sesji jest zdarzenie OPERACYJNE (issue #19).
          Oś jest ta sama, co na 04, 05 i 10 (issue #44). Brak fixa nie zmienia w niej
          niczego: zdarzenia zapisane ręcznie z paska akcji wyglądają dokładnie tak samo
-         jak wykryte, bo METODA ZAPISU nie jest pytaniem pilota (issue #40 pkt 6) —
+         jak wykryte, bo METODA ZAPISU nie jest pytaniem pilota (issue #40 pkt 6) -
          zostaje w rejestrze i w panelu. Widać za to DZIURĘ: bez GPS-a nie ma wierszy
          kołowania, bo nikt ich nie wykrył ani nie dopisał. -->
     <div class="session-log">
@@ -472,7 +472,7 @@
           <span class="axis-label"><span class="axis-name muted">Zrzut 3</span><span class="axis-sub">4 skoczków · 3 200 ft</span></span>
           <span class="axis-right"></span>
         </div>
-        <!-- Licznik „na żywo" liczy z ZEGARA, nie z GPS-a — brak fixa go nie zatrzymuje. -->
+        <!-- Licznik „na żywo" liczy z ZEGARA, nie z GPS-a - brak fixa go nie zatrzymuje. -->
         <div class="axis-row">
           <span class="axis-time"></span>
           <span class="axis-mark"><span class="axis-dot live"></span></span>
@@ -482,30 +482,30 @@
       </div>
     </div>
 
-    <!-- BOTTOM ACTIONS — pasek WYGLĄDA DOKŁADNIE TAK SAMO jak przy zdrowym GPS-ie
+    <!-- BOTTOM ACTIONS - pasek WYGLĄDA DOKŁADNIE TAK SAMO jak przy zdrowym GPS-ie
          (2026-08-12): pełna nazwa zdarzenia (issue #19), neutralny przycisk główny,
          te same proporcje. To jedyne miejsce, w którym pilot ZAPISUJE zdarzenia.
          Do 2026-08-12 stały tu dwa sygnały o czujniku: dopisek „· ręcznie" i awans
-         przycisku na amber. Oba wyleciały jako rozróżnienie bez różnicy — tap w ten
+         przycisku na amber. Oba wyleciały jako rozróżnienie bez różnicy - tap w ten
          przycisk jest ręcznym zapisem także przy zdrowym odbiorniku, a pilot sięga
          po niego zawsze z tego samego powodu: logger nie rozpoznał stanu. Czy zawinił
          brak fixa, czy zła detekcja, mówi baner i siatka parametrów wyżej.
          Przycisk „Zrzut" jest tu, bo to dzień skokowy; przy przelocie, egzaminie, locie
-         technicznym i „innych" NIE MA GO W OGÓLE — nie ma czego wynosić, więc `drop` nie
+         technicznym i „innych" NIE MA GO W OGÓLE - nie ma czego wynosić, więc `drop` nie
          może się wydarzyć. To brak akcji, a nie wyszarzenie z powodem. -->
     <div class="action-row">
-      <a href="05f-zdarzenie-reczne.html" class="primary-btn" title="Autodetekcja stoi — lądowanie zapiszesz wyłącznie ręcznie; czas cofniesz stepperami">
+      <a href="05f-zdarzenie-reczne.html" class="primary-btn" title="Autodetekcja stoi - lądowanie zapiszesz wyłącznie ręcznie; czas cofniesz stepperami">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="18 13 12 19 6 13"/></svg>
         Landing
       </a>
       <!-- Zrzut AKTYWNY mimo reguły „tylko w Cruise" (2026-08-11): bez fixa faza jest
-           nieznana, a ręczny zapis to jedyna droga — bramka fazy bez danych o fazie
+           nieznana, a ręczny zapis to jedyna droga - bramka fazy bez danych o fazie
            byłaby blokadą zapisu zdarzenia, które naprawdę zaszło. -->
-      <a href="05e-zrzut.html" class="zrzut-btn" title="Zapis zrzutu działa — bez fixa wysokość wpiszesz z wysokościomierza (steppery w arkuszu); bramka fazy (Cruise) nie działa bez GPS">
+      <a href="05e-zrzut.html" class="zrzut-btn" title="Zapis zrzutu działa - bez fixa wysokość wpiszesz z wysokościomierza (steppery w arkuszu); bramka fazy (Cruise) nie działa bez GPS">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8 2 5 5 5 8c0 5 7 14 7 14s7-9 7-14c0-3-2.5-6-7-6z"/><circle cx="12" cy="8" r="2" fill="currentColor" stroke="none"/></svg>
         <span class="zrzut-btn-lbl">Zrzut</span>
       </a>
-      <span class="stop-btn disabled" title="Silnik zatrzymasz po wylądowaniu i zakończeniu dobiegu — engine_stop w locie byłby fałszywym wpisem">
+      <span class="stop-btn disabled" title="Silnik zatrzymasz po wylądowaniu i zakończeniu dobiegu - engine_stop w locie byłby fałszywym wpisem">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
         STOP
         <span class="stop-btn-lbl">po LDG</span>
@@ -516,25 +516,25 @@
 </main>
 <nav class="state-sidebar">
   <div class="state-sidebar-lbl">Kokpit</div>
-  <a href="05h-cockpit-idle.html" title="Kiedy: silnik ON, samolot jeszcze stoi — przycisk Taxi otwiera sekwencję; ruch zapisze też autodetekcja"><span class="dot"></span>Engine idle</a>
-  <a href="05a-cockpit-taxi.html" title="Kiedy: kołowanie trwa (zapisane przez autodetekcję albo przycisk Taxi) — przycisk podpowiada Take off"><span class="dot"></span>Taxi przed T/O</a>
-  <a href="05-cockpit-running.html" title="Kiedy: w locie — phase hero (Climb/Cruise/Descent), GPS live, log zdarzeń, buforowanie offline"><span class="dot"></span>In Flight</a>
-  <a href="05b-cockpit-inflight-toast.html" title="Kiedy: GPS wykrył start (GS > 50 kt) — toast z odliczaniem, 5 s na Cofnij"><span class="dot"></span>Toast Takeoff</a>
-  <a href="05c-cockpit-toast-ldg.html" title="Kiedy: GPS wykrył lądowanie (GS < 30 kt + niska wysokość) — toast z Cofnij podczas rolloutu"><span class="dot"></span>Toast Landing</a>
-  <a href="05d-cockpit-taxi-post.html" title="Kiedy: lot ukończony, silnik nadal ON — kołowanie; kolejny T/O albo STOP ENGINE"><span class="dot"></span>Taxi po LDG</a>
-  <a href="05e-zrzut.html" title="Kiedy: nad zrzutowiskiem — potwierdzenie składu z załadunku (rozliczenie)"><span class="dot"></span>Zrzut</a>
-  <a href="05i-zaladunek.html" title="Kiedy: na ziemi dnia skokowego — skoczkowie wsiadają; skład opcjonalny, wypełni arkusz zrzutu (issue #21)"><span class="dot"></span>Załadunek</a>
-  <a href="05g-cockpit-no-gps.html" class="active" title="Kiedy: GPS stracił fixa — parametry — —, autodetekcja wstrzymana, wejścia ręczne aktywne; sieć osobno (SYNC może być zielony)"><span class="dot"></span>No GPS</a>
+  <a href="05h-cockpit-idle.html" title="Kiedy: silnik ON, samolot jeszcze stoi - przycisk Taxi otwiera sekwencję; ruch zapisze też autodetekcja"><span class="dot"></span>Engine idle</a>
+  <a href="05a-cockpit-taxi.html" title="Kiedy: kołowanie trwa (zapisane przez autodetekcję albo przycisk Taxi) - przycisk podpowiada Take off"><span class="dot"></span>Taxi przed T/O</a>
+  <a href="05-cockpit-running.html" title="Kiedy: w locie - phase hero (Climb/Cruise/Descent), GPS live, log zdarzeń, buforowanie offline"><span class="dot"></span>In Flight</a>
+  <a href="05b-cockpit-inflight-toast.html" title="Kiedy: GPS wykrył start (GS > 50 kt) - toast z odliczaniem, 5 s na Cofnij"><span class="dot"></span>Toast Takeoff</a>
+  <a href="05c-cockpit-toast-ldg.html" title="Kiedy: GPS wykrył lądowanie (GS < 30 kt + niska wysokość) - toast z Cofnij podczas rolloutu"><span class="dot"></span>Toast Landing</a>
+  <a href="05d-cockpit-taxi-post.html" title="Kiedy: lot ukończony, silnik nadal ON - kołowanie; kolejny T/O albo STOP ENGINE"><span class="dot"></span>Taxi po LDG</a>
+  <a href="05e-zrzut.html" title="Kiedy: nad zrzutowiskiem - potwierdzenie składu z załadunku (rozliczenie)"><span class="dot"></span>Zrzut</a>
+  <a href="05i-zaladunek.html" title="Kiedy: na ziemi dnia skokowego - skoczkowie wsiadają; skład opcjonalny, wypełni arkusz zrzutu (issue #21)"><span class="dot"></span>Załadunek</a>
+  <a href="05g-cockpit-no-gps.html" class="active" title="Kiedy: GPS stracił fixa - parametry - -, autodetekcja wstrzymana, wejścia ręczne aktywne; sieć osobno (SYNC może być zielony)"><span class="dot"></span>No GPS</a>
 </nav>
 </div>
 
 <aside class="variants-panel">
-  <div class="vp-title">Degradacja GPS — dwie osie, trzy ekrany</div>
+  <div class="vp-title">Degradacja GPS - dwie osie, trzy ekrany</div>
   <a class="vp-item active" href="05g-cockpit-no-gps.html">
     <span class="vp-badge amber">05G</span>
     <span class="vp-body">
       <span class="vp-name">Kokpit bez fixa GPS</span>
-      <span class="vp-when">Silnik ON / w locie, a GPS stracił sygnał. To awaria <b>czujnika</b>, nie łączności — sieć może działać, więc SyncChip zostaje zielony (jak tutaj), a wysyłka zdarzeń biegnie dalej. Autodetekcja staje (ryzyko 🔴 z sekcji 8: niezauważone = niezapisane lądowanie), wejścia ręczne przejmują; timery i log liczą z zegara. Baner to Typ A — przyrząd, znika sam z powrotem fixa.</span>
+      <span class="vp-when">Silnik ON / w locie, a GPS stracił sygnał. To awaria <b>czujnika</b>, nie łączności - sieć może działać, więc SyncChip zostaje zielony (jak tutaj), a wysyłka zdarzeń biegnie dalej. Autodetekcja staje (ryzyko 🔴 z sekcji 8: niezauważone = niezapisane lądowanie), wejścia ręczne przejmują; timery i log liczą z zegara. Baner to Typ A - przyrząd, znika sam z powrotem fixa.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -542,21 +542,21 @@
     <span class="vp-badge amber">05F</span>
     <span class="vp-body">
       <span class="vp-name">Zdarzenie ręczne (arkusz)</span>
-      <span class="vp-when">Pojedynczy zapis T/O lub LAND, którego GPS nie wykrył — czas cofalny stepperami ±1 min. Z 05G otwierany przyciskiem „Landing" w pasku akcji — jedynym wejściem, bo baner akcji nie ma.</span>
+      <span class="vp-when">Pojedynczy zapis T/O lub LAND, którego GPS nie wykrył - czas cofalny stepperami ±1 min. Z 05G otwierany przyciskiem „Landing" w pasku akcji - jedynym wejściem, bo baner akcji nie ma.</span>
     </span>
   </a>
   <a class="vp-item" href="10d-edycja.html">
     <span class="vp-badge">10D</span>
     <span class="vp-body">
       <span class="vp-name">Popraw dane sesji (tryb edycji)</span>
-      <span class="vp-when">GPS milczał dłużej — brakujące starty i lądowania dopisuje się po biegu (§3.8). Wejście jest na 04 <b>po STOP ENGINE</b>, nie stąd: przegapione loty odtwarza się po zatrzymaniu silnika, a nie w powietrzu.</span>
+      <span class="vp-when">GPS milczał dłużej - brakujące starty i lądowania dopisuje się po biegu (§3.8). Wejście jest na 04 <b>po STOP ENGINE</b>, nie stąd: przegapione loty odtwarza się po zatrzymaniu silnika, a nie w powietrzu.</span>
     </span>
   </a>
   <a class="vp-item" href="05-cockpit-running.html">
     <span class="vp-badge">05</span>
     <span class="vp-body">
       <span class="vp-name">In Flight (fix wrócił)</span>
-      <span class="vp-when">Powrót fixa gasi baner i wznawia autodetekcję — parametry znów live, bez żadnej akcji pilota.</span>
+      <span class="vp-when">Powrót fixa gasi baner i wznawia autodetekcję - parametry znów live, bez żadnej akcji pilota.</span>
     </span>
   </a>
 </aside>

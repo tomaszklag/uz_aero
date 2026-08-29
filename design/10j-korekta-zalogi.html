@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 10J Korekta załogi</title>
+<title>UZ Aero - 10J Korekta załogi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -74,7 +74,7 @@
   .modal-title { font-family:var(--font-display); font-size:22px; letter-spacing:2px; color:var(--text-primary); }
   .modal-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
 
-  /* Lista kart wyboru — nigdy natywny `<select>` (CLAUDE.md). Cele 56 px: wybór
+  /* Lista kart wyboru - nigdy natywny `<select>` (CLAUDE.md). Cele 56 px: wybór
      robi się w rękawicach, a pozycji jest tyle, ile pilotów w klubie. */
   .pick { display:flex; align-items:center; gap:11px; min-height:56px; padding:10px 13px; border-radius:13px; border:1px solid var(--border); background:var(--surface); text-decoration:none; }
   .pick + .pick { margin-top:7px; }
@@ -128,12 +128,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 10J</span>
+  <span class="film-strip">UZ AERO - 10J</span>
   <span class="slug">korekta załogi · dual całej sesji</span>
   <span class="canvas-meta"><span class="pulse"></span>Arkusz 10D</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Korekta drugiego pilota">
+<main class="phone" role="region" aria-label="Mockup - Korekta drugiego pilota">
   <div class="status-bar">
     <span>9:41</span>
     <span class="status-right">
@@ -179,8 +179,8 @@
         <div class="modal-handle"></div>
         <!-- Nagłówek NIE powtarza „cała sesja": zakres poprawki jest treścią przypisu
              pod listą, gdzie stoi razem z powodem („czas blokowy przypisze się…")
-             i z tym, czego arkusz NIE robi. Napisany dwa razy — raz jako etykieta bez
-             wyjaśnienia, raz jako zdanie — pierwszy raz nie mówi nic. -->
+             i z tym, czego arkusz NIE robi. Napisany dwa razy - raz jako etykieta bez
+             wyjaśnienia, raz jako zdanie - pierwszy raz nie mówi nic. -->
         <div class="modal-title">KOREKTA ZAŁOGI</div>
 
         <!-- PIC-a na liście NIE MA: jedna osoba nie leci sama ze sobą w dwóch rolach
@@ -189,7 +189,7 @@
         <div>
           <div class="field-label">Kto leciał jako drugi pilot</div>
           <a href="10d-edycja.html" class="pick">
-            <span class="pick-avatar">—</span>
+            <span class="pick-avatar">-</span>
             <span class="pick-body">
               <span class="pick-name">Bez Duala</span>
               <span class="pick-note">sesja jednoosobowa</span>
@@ -222,13 +222,13 @@
 
         <div class="reason-box">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          <input class="reason-input" type="text" placeholder="Powód (opcjonalnie) — np. w kabinie siedział kto inny" />
+          <input class="reason-input" type="text" placeholder="Powód (opcjonalnie) - np. w kabinie siedział kto inny" />
         </div>
 
         <!-- WIERSZA HISTORII TU NIE MA i to jest reguła, nie przeoczenie: przy
              zdarzeniu, którego nikt nie poprawiał, „Historia zmian · brak" jest wierszem
-             o niczym (ta sama zasada, którą issue #40 wyrzuciło „Notatki —"). Wiersz
-             pojawia się dopiero z pierwszą poprawką — patrz 10E, gdzie licznik mówi „2". -->
+             o niczym (ta sama zasada, którą issue #40 wyrzuciło „Notatki -"). Wiersz
+             pojawia się dopiero z pierwszą poprawką - patrz 10E, gdzie licznik mówi „2". -->
 
         <div class="modal-actions">
           <a href="10d-edycja.html" class="btn-cancel">Anuluj</a>
@@ -236,7 +236,7 @@
         </div>
 
         <div class="note">
-          Poprawka obejmuje CAŁĄ sesję — czas blokowy przypisze się wskazanej osobie od
+          Poprawka obejmuje CAŁĄ sesję - czas blokowy przypisze się wskazanej osobie od
           przejęcia do zdania. Jeśli drugi pilot zmienił się W TRAKCIE, to nie jest to
           miejsce: taką zmianę zapisuje się w kokpicie (07), przed uruchomieniem silnika.
         </div>
@@ -246,12 +246,12 @@
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Arkusze trybu edycji — kiedy który?</div>
+  <div class="vp-title">Arkusze trybu edycji - kiedy który?</div>
   <a class="vp-item active" href="10j-korekta-zalogi.html">
     <span class="vp-badge">10J</span>
     <span class="vp-body">
       <span class="vp-name">Korekta załogi (Dual)</span>
-      <span class="vp-when">Ołówek w nagłówku karty „Załoga": „wpisałem złego drugiego pilota". Poprawka działa WSTECZ na całą sesję i przepisuje jej czas blokowy na wskazaną osobę. PIC-a nie ma na liście (`DUAL_IS_PIC`) ani do zmiany (`PIC_CHANGE_NOT_ALLOWED` — to przelogowanie, nie korekta). Technicznie: `amend` pola `dualId` w `preflight_confirm`, bo w nagłówkach zdarzeń zostaje tożsamość z chwili zapisu.</span>
+      <span class="vp-when">Ołówek w nagłówku karty „Załoga": „wpisałem złego drugiego pilota". Poprawka działa WSTECZ na całą sesję i przepisuje jej czas blokowy na wskazaną osobę. PIC-a nie ma na liście (`DUAL_IS_PIC`) ani do zmiany (`PIC_CHANGE_NOT_ALLOWED` - to przelogowanie, nie korekta). Technicznie: `amend` pola `dualId` w `preflight_confirm`, bo w nagłówkach zdarzeń zostaje tożsamość z chwili zapisu.</span>
     </span>
     <span class="vp-tag">ten arkusz</span>
   </a>

@@ -1,42 +1,42 @@
 /**
- * UZ Aero — RAMA ARKUSZA wysuwanego od dołu (`.modal-overlay` + `.modal-sheet`).
+ * UZ Aero - RAMA ARKUSZA wysuwanego od dołu (`.modal-overlay` + `.modal-sheet`).
  *
  * ══ PO CO OSOBNY KOMPONENT ══
  * Bo arkuszy jest osiem, a rama była kopiowana: `Modal`, przyciemnione tło z tapnięciem
  * „anuluj", kontener przyklejony do dołu, panel z promieniem 24 i akcentowaną krawędzią
- * górną. Kopia numer siedem gubiła zwykle to samo — SUFIT WYSOKOŚCI. Arkusz korekty
+ * górną. Kopia numer siedem gubiła zwykle to samo - SUFIT WYSOKOŚCI. Arkusz korekty
  * zdarzenia z kompletem wierszy odniesienia dobijał przez to do samej góry telefonu
  * i przestawał wyglądać jak wstawka NAD ekranem: bez pasa przyciemnionego tła czytał się
  * jak nowy ekran, a jedyną poszlaką zostawał uchwyt, którego nikt nie szuka
  * (zgłoszenie z urządzenia, 2026-08-14).
  *
  * ══ CO RAMA GWARANTUJE KAŻDEMU ARKUSZOWI ══
- *  • **widać ekran pod spodem** — sufit `sheetMaxHeight` zostawia `SHEET_TOP_GAP` ponad
+ *  • **widać ekran pod spodem** - sufit `sheetMaxHeight` zostawia `SHEET_TOP_GAP` ponad
  *    bezpiecznym obszarem, więc arkusz nigdy nie dobija do krawędzi;
- *  • **treść się przewija, a akcje zostają** — gdy zabraknie miejsca, skraca się to, co
+ *  • **treść się przewija, a akcje zostają** - gdy zabraknie miejsca, skraca się to, co
  *    pilot może doczytać przewinięciem, a nie to, czym arkusz się zamyka. Rząd akcji idzie
  *    do `pinned`, poza obszar przewijania;
  *  • **dolna krawędź nie wpada pod klawiaturę ani pod pasek nawigacji** (`sheetBottomPad`);
- *  • **„wstecz" Androida zamyka arkusz, nie ekran** — `Modal` z RN, nie własna nakładka.
+ *  • **„wstecz" Androida zamyka arkusz, nie ekran** - `Modal` z RN, nie własna nakładka.
  *
  * Rama NIE zna treści: tytuł, pola i przyciski należą do konkretnego arkusza. Zmienne
- * zostają tylko te, które mockupy naprawdę różnicują — odstęp wewnętrzny, zapas dolny
+ * zostają tylko te, które mockupy naprawdę różnicują - odstęp wewnętrzny, zapas dolny
  * z projektu i kolor akcentu górnej krawędzi.
  *
  * ══ ARKUSZ I KLAWIATURA WCHODZĄ RAZEM (issue #62, szósta tura z urządzenia) ══
  * Zgłoszenie: „otwiera się popup i po krótkiej chwili otwiera się klawiatura". To nie
- * było złe wyczucie czasu w JS — to była kolejność wymuszona przez system.
+ * było złe wyczucie czasu w JS - to była kolejność wymuszona przez system.
  *
  * `Modal` na Androidzie jest OSOBNYM OKNEM natywnym (`Dialog` z własnym `Window`),
  * a klawiatura może przyczepić się wyłącznie do okna, które ma fokus wejścia. Dopóki
- * animacja wjazdu okna trwa, `focus()` ustawia fokus WIDOKU bez IME — dokładnie to
+ * animacja wjazdu okna trwa, `focus()` ustawia fokus WIDOKU bez IME - dokładnie to
  * odkryła druga tura issue #58 („fokus IME dostaje dopiero po dojechaniu animacji
  * wjazdu", `hooks/keyboardFocus.ts`). Animacja `Modal`-a leżała więc na krytycznej
  * ścieżce klawiatury i kosztowała te „krótką chwilę".
  *
  * Odtąd okno pojawia się BEZ animacji (`animationType="none"`), więc `onShow` pada
  * natychmiast i drabinka fokusu łapie klawiaturę w PIERWSZEJ próbie. Wysunięcie panelu
- * animujemy sami — i dzięki temu biegnie RÓWNOLEGLE z wjeżdżającą klawiaturą, zamiast
+ * animujemy sami - i dzięki temu biegnie RÓWNOLEGLE z wjeżdżającą klawiaturą, zamiast
  * przed nią. Bez modułu natywnego: `Animated` po `transform` i `opacity` z
  * `useNativeDriver`, tak samo jak puls skeletonów.
  *
@@ -67,7 +67,7 @@ import { sheetBottomPad, sheetMaxHeight } from '../../hooks/keyboardGeometry';
  */
 const ENTER_MS = 220;
 
-/** Zamknięcie jest szybsze od otwarcia — tak działa każdy dobrze zrobiony arkusz. */
+/** Zamknięcie jest szybsze od otwarcia - tak działa każdy dobrze zrobiony arkusz. */
 const EXIT_MS = 160;
 
 export interface SheetSurfaceProps {
@@ -76,22 +76,22 @@ export interface SheetSurfaceProps {
   onCancel: () => void;
   /**
    * Chwila, w której okno modala JUŻ ISTNIEJE (issue #58 pkt 7 i 8). Arkusz z polem
-   * wpisu startuje stąd drabinkę fokusu `useSheetInputFocus` — nie pojedyncze
+   * wpisu startuje stąd drabinkę fokusu `useSheetInputFocus` - nie pojedyncze
    * `focus()` i nie `autoFocus`: oba zawiodły, historia w `hooks/keyboardFocus.ts`.
    */
   onShow?: () => void;
-  /** Odstęp między elementami arkusza — mockupy dają 12–16 dp. */
+  /** Odstęp między elementami arkusza - mockupy dają 12–16 dp. */
   gap?: number;
   paddingHorizontal?: number;
   paddingTop?: number;
   /** Zapas dolny Z MOCKUPU; nad paskiem nawigacji rama ustąpi więcej (`sheetBottomPad`). */
   designPad?: number;
   /**
-   * Wysokość klawiatury. Arkusz bez pól tekstowych podaje 0 — nie dlatego, że klawiatura
+   * Wysokość klawiatury. Arkusz bez pól tekstowych podaje 0 - nie dlatego, że klawiatura
    * go nie dotyczy, tylko dlatego, że nigdy się przy nim nie pojawi.
    */
   keyboardHeight?: number;
-  /** Kolor górnej krawędzi — akcent typu arkusza (błękit zrzutu, amber wpisu ręcznego). */
+  /** Kolor górnej krawędzi - akcent typu arkusza (błękit zrzutu, amber wpisu ręcznego). */
   accentColor?: string;
   /** Numpad PIN-u centruje treść; reszta arkuszy rozciąga ją na szerokość. */
   align?: 'stretch' | 'center';
@@ -123,7 +123,7 @@ export function SheetSurface({
 
   /**
    * 0 = panel schowany pod dolną krawędzią, 1 = na miejscu. Jedna wartość napędza
-   * i wysunięcie panelu, i przyciemnienie tła — bo to jest jeden ruch, nie dwa.
+   * i wysunięcie panelu, i przyciemnienie tła - bo to jest jeden ruch, nie dwa.
    */
   const enter = useRef(new Animated.Value(0)).current;
   /**
@@ -131,13 +131,13 @@ export function SheetSurface({
    * a bez tego panel znikałby skokiem (`Modal` odmontowuje dzieci natychmiast).
    */
   const [mounted, setMounted] = useState(visible);
-  /** Wysokość panelu — dystans wysunięcia. Do pomiaru animujemy z całego ekranu. */
+  /** Wysokość panelu - dystans wysunięcia. Do pomiaru animujemy z całego ekranu. */
   const [panelHeight, setPanelHeight] = useState<number | null>(null);
 
   /*
    * Wysunięcie rusza w PÓŹNIEJSZYM z dwóch zdarzeń: okno pokazane i panel zmierzony.
    * Ta sama koniunkcja, co przy drabince fokusu (`shouldStartLadder`) i z tego samego
-   * powodu — kolejność bywa OBIE strony, zależnie od urządzenia i obciążenia JS.
+   * powodu - kolejność bywa OBIE strony, zależnie od urządzenia i obciążenia JS.
    * Bez pomiaru animowalibyśmy z wysokości całego ekranu, czyli za daleko i za szybko.
    */
   const shown = useRef(false);
@@ -155,11 +155,11 @@ export function SheetSurface({
 
   useEffect(() => {
     if (visible) {
-      /* Otwarcie W TRAKCIE wyjazdu musi ubić tamtą animację — inaczej jej callback
+      /* Otwarcie W TRAKCIE wyjazdu musi ubić tamtą animację - inaczej jej callback
          odmontowałby arkusz, który pilot właśnie otworzył. `stopAnimation` sprawia,
          że callback dostaje `finished: false`, a bramka niżej go ignoruje. */
       enter.stopAnimation();
-      // Nowe otwarcie zaczyna od zera — bramki i pomiar też, bo okno powstaje od nowa.
+      // Nowe otwarcie zaczyna od zera - bramki i pomiar też, bo okno powstaje od nowa.
       enter.setValue(0);
       shown.current = false;
       measured.current = false;
@@ -196,7 +196,7 @@ export function SheetSurface({
     <Modal
       visible={mounted}
       transparent
-      /* BEZ animacji okna — patrz nota „ARKUSZ I KLAWIATURA WCHODZĄ RAZEM" na górze
+      /* BEZ animacji okna - patrz nota „ARKUSZ I KLAWIATURA WCHODZĄ RAZEM" na górze
          pliku. Okno pojawia się natychmiast, `onShow` pada od razu i drabinka fokusu
          łapie klawiaturę w pierwszej próbie; wysunięcie panelu robimy sami niżej. */
       animationType="none"
@@ -213,7 +213,7 @@ export function SheetSurface({
           W TRAKCIE WYJAZDU NAKŁADKA NIE ŁAPIE DOTYKU (zgłoszenie z urządzenia: „jakby
           2× muszę wcisnąć DALEJ"). Odkąd okno żyje dłużej niż `visible`, przez ~160 ms
           po zamknięciu arkusza pełnoekranowa nakładka wciąż stała nad ekranem i zjadała
-          pierwsze tapnięcie — pilot trafiał w gasnące tło zamiast w przycisk pod nim.
+          pierwsze tapnięcie - pilot trafiał w gasnące tło zamiast w przycisk pod nim.
           Zamykany arkusz ma być już tylko OBRAZEM. */}
       <Animated.View
         pointerEvents={visible ? 'auto' : 'none'}
@@ -226,7 +226,7 @@ export function SheetSurface({
         />
       </Animated.View>
 
-      {/* Klawiatura podnosi arkusz zamiast go zasłaniać — patrz `useKeyboardHeight`. */}
+      {/* Klawiatura podnosi arkusz zamiast go zasłaniać - patrz `useKeyboardHeight`. */}
       <View
         style={[styles.bottom, { paddingBottom: keyboardHeight }]}
         pointerEvents={visible ? 'box-none' : 'none'}
@@ -242,7 +242,7 @@ export function SheetSurface({
           style={{
             transform: [
               {
-                /* Do pomiaru panel stoi poniżej całego ekranu — czyli i tak niewidoczny,
+                /* Do pomiaru panel stoi poniżej całego ekranu - czyli i tak niewidoczny,
                    więc nie mruga w złym miejscu. Po pomiarze dystans jest dokładnie
                    jego wysokością i wysunięcie czyta się jak jeden ruch od krawędzi. */
                 translateY: enter.interpolate({
@@ -265,7 +265,7 @@ export function SheetSurface({
         >
           <View style={[styles.handle, { backgroundColor: theme.colors.borderStrong }]} />
 
-          {/* `flexShrink` bez `flexGrow` — krótka treść nie rozciąga arkusza na siłę. */}
+          {/* `flexShrink` bez `flexGrow` - krótka treść nie rozciąga arkusza na siłę. */}
           <ScrollView
             style={styles.scroll}
             contentContainerStyle={{

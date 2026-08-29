@@ -1,9 +1,9 @@
 /**
- * UZ Aero — panel: DTO floty → wiersze tabeli `A07`.
+ * UZ Aero - panel: DTO floty → wiersze tabeli `A07`.
  *
  * Najważniejsze w tym pliku są TRZY STANY ŚWIEŻOŚCI. Kolumny „Claim teraz",
  * „Ostatnie MH" i „Ostatni FOB" przychodzą z telefonów, więc każda musi umieć
- * powiedzieć „nie wiem" — a zero podstawione za brak jest twierdzeniem o świecie,
+ * powiedzieć „nie wiem" - a zero podstawione za brak jest twierdzeniem o świecie,
  * którego serwer nie wysłał.
  */
 
@@ -65,10 +65,10 @@ describe('konfiguracja w wierszu', () => {
 
   it('rok bez wartości daje kreskę, a nie zero', () => {
     const [row] = fleetRows([dto({ year: null })], NOW);
-    expect(row!.year).toBe('—');
+    expect(row!.year).toBe('-');
   });
 
-  it('format `hhmm` ma własną plakietkę — to inny licznik w kabinie, nie ozdoba', () => {
+  it('format `hhmm` ma własną plakietkę - to inny licznik w kabinie, nie ozdoba', () => {
     const [row] = fleetRows([dto({ mhFormat: 'hhmm' })], NOW);
     expect(row!.mhFormat).toEqual({ text: 'hh:mm', tone: 'blue' });
   });
@@ -85,7 +85,7 @@ describe('konfiguracja w wierszu', () => {
     expect(row!.service.sub).toBe('nie pojawia się na liście wyboru');
   });
 
-  it('próg zawsze z jednym miejscem po przecinku — 62.85 to nie 63', () => {
+  it('próg zawsze z jednym miejscem po przecinku - 62.85 to nie 63', () => {
     // `litres()` zaokrągliłoby do pełnych litrów, a tu chodzi właśnie o dokładny próg.
     expect(toleranceText(62.85)).toBe('±62.9 L');
     expect(toleranceText(10)).toBe('±10.0 L');
@@ -93,15 +93,15 @@ describe('konfiguracja w wierszu', () => {
 });
 
 describe('trzy stany świeżości kolumn z telefonów', () => {
-  it('BRAK danych: żadnego zdarzenia w rejestrze — kreska i powód, nigdy zero', () => {
+  it('BRAK danych: żadnego zdarzenia w rejestrze - kreska i powód, nigdy zero', () => {
     const [row] = fleetRows([dto()], NOW);
-    expect(row!.mh).toEqual({ text: '—', sub: 'brak danych z telefonu', freshness: 'none' });
-    expect(row!.fuel).toEqual({ text: '—', sub: 'brak danych z telefonu', freshness: 'none' });
+    expect(row!.mh).toEqual({ text: '-', sub: 'brak danych z telefonu', freshness: 'none' });
+    expect(row!.fuel).toEqual({ text: '-', sub: 'brak danych z telefonu', freshness: 'none' });
     expect(row!.claim.badge).toEqual({ text: 'wolny', tone: 'dim' });
     expect(row!.claim.freshness).toBe('none');
   });
 
-  it('LIVE: sync sprzed kilku minut — wartości bez zastrzeżeń', () => {
+  it('LIVE: sync sprzed kilku minut - wartości bez zastrzeżeń', () => {
     const [row] = fleetRows(
       [
         dto({
@@ -123,7 +123,7 @@ describe('trzy stany świeżości kolumn z telefonów', () => {
     expect(row!.fuel).toMatchObject({ text: '210 L', sub: 'sesja otwarta', freshness: 'fresh' });
   });
 
-  it('CACHE: sync starszy niż doba dostaje amber — to informacja, nie awaria', () => {
+  it('CACHE: sync starszy niż doba dostaje amber - to informacja, nie awaria', () => {
     const [row] = fleetRows(
       [
         dto({
@@ -143,7 +143,7 @@ describe('trzy stany świeżości kolumn z telefonów', () => {
 
     expect(row!.mh.freshness).toBe('stale');
     expect(row!.fuel.freshness).toBe('stale');
-    // Przekazanie niesie WIEK odczytu, nie tylko wiek synchronizacji — to dwie różne
+    // Przekazanie niesie WIEK odczytu, nie tylko wiek synchronizacji - to dwie różne
     // rzeczy i mockup podpisuje kolumnę FOB tą pierwszą.
     expect(row!.fuel.sub).toBe('przekazanie · 2 dni');
   });
@@ -197,7 +197,7 @@ describe('trzy stany świeżości kolumn z telefonów', () => {
 });
 
 describe('kolumna claimu', () => {
-  it('zajęta jednostka mówi „Zajęty", a NIE „W locie" — projekcja nie zna silnika', () => {
+  it('zajęta jednostka mówi „Zajęty", a NIE „W locie" - projekcja nie zna silnika', () => {
     const [row] = fleetRows(
       [
         dto({
@@ -239,7 +239,7 @@ describe('kolumna claimu', () => {
     expect(row!.claim.sub).toBe('bez preflightu');
   });
 
-  it('jednostka wyłączona nie jest „wolna" — nikt jej nie weźmie', () => {
+  it('jednostka wyłączona nie jest „wolna" - nikt jej nie weźmie', () => {
     const [row] = fleetRows([dto({ serviceStatus: 'disabled' })], NOW);
     expect(row!.claim.badge).toEqual({ text: 'nie do wyboru', tone: 'dim' });
     expect(row!.claim.sub).toBe('wyłączony ze służby');
@@ -257,7 +257,7 @@ describe('klasa podpisu świeżości', () => {
 
   // ══ TU BY WYSZŁA WADA, KTÓREJ NIE ZŁAPAŁY TESTY WYŻEJ ══
   // Testy `freshness: 'stale'` przechodziły na zielono, a ekran malował
-  // `class="cell-sub fresh-stale"` — klasę, której nie definiuje ŻADEN arkusz. Trzy
+  // `class="cell-sub fresh-stale"` - klasę, której nie definiuje ŻADEN arkusz. Trzy
   // stany były policzone, przetestowane i niewidoczne. Asercja musi więc sięgnąć
   // o poziom dalej: aż do reguły CSS, która nadaje kolor, i do mockupu, który jest
   // specyfikacją nazw.
@@ -273,12 +273,12 @@ describe('klasa podpisu świeżości', () => {
       expect(freshClass(freshness)).toBe(`cell-sub ${freshness}`);
       expect(css).toContain(`.cell-sub.${freshness} {`);
     }
-    // Kolor amber jest CAŁĄ treścią stanu „starszy niż doba" — bez niego wpis sprzed
+    // Kolor amber jest CAŁĄ treścią stanu „starszy niż doba" - bez niego wpis sprzed
     // trzech minut i sprzed dwóch dni wyglądają identycznie.
     expect(css).toMatch(/\.cell-sub\.stale\s*\{\s*color:\s*var\(--amber\)/);
   });
 
-  it('nazwy modyfikatorów są DOSŁOWNIE te z `SZABLON.html` — mockup wygrywa', () => {
+  it('nazwy modyfikatorów są DOSŁOWNIE te z `SZABLON.html` - mockup wygrywa', () => {
     const szablon = readFileSync(
       join(__dirname, '..', '..', '..', '..', 'design', 'admin', 'SZABLON.html'),
       'utf8',
@@ -309,7 +309,7 @@ describe('jednostka wyłączona z OTWARTYM dniem', () => {
     expect(plain!.service.sub).toBe('nie pojawia się na liście wyboru');
   });
 
-  it('zgłasza się osobnym ostrzeżeniem — bo inaczej NIC by o tym nie powiedziało', () => {
+  it('zgłasza się osobnym ostrzeżeniem - bo inaczej NIC by o tym nie powiedziało', () => {
     const notice = disabledOpenDays([dto(), stranded]);
     expect(notice?.regs).toEqual(['SP-KWA']);
     expect(notice?.text).toContain('SP-KWA');
@@ -333,7 +333,7 @@ describe('jednostka wyłączona z OTWARTYM dniem', () => {
 // ── przejście do dni ────────────────────────────────────────────────────────────
 
 describe('link z wiersza do dni', () => {
-  it('ma go KAŻDY wiersz, także jednostka wolna — to przypadek najczęstszy', () => {
+  it('ma go KAŻDY wiersz, także jednostka wolna - to przypadek najczęstszy', () => {
     const [free] = fleetRows([dto({ id: 'ac-1' })], NOW);
     expect(free!.day).toEqual({ to: '/dni?samolot=ac-1', label: 'Dni lotne' });
 
@@ -341,7 +341,7 @@ describe('link z wiersza do dni', () => {
     expect(disabled!.day.to).toBe('/dni?samolot=ac-2');
   });
 
-  it('jednostka zajęta prowadzi wprost na KARTĘ tego dnia — po to serwer podaje `sessionUuid`', () => {
+  it('jednostka zajęta prowadzi wprost na KARTĘ tego dnia - po to serwer podaje `sessionUuid`', () => {
     const [row] = fleetRows(
       [
         dto({

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) — PORTY warstwy aplikacji.
+ * UZ Aero (serwer) - PORTY warstwy aplikacji.
  *
  * Ta sama zasada co w aplikacji mobilnej: komendy i zapytania znają WYŁĄCZNIE te
  * interfejsy; implementacje (Postgres, zegar systemowy, krypto) wstrzykuje composition
@@ -7,7 +7,7 @@
  * „udającej" logikę.
  *
  * Uproszczony CQRS: komendy piszą i zwracają wynik, zapytania czytają projekcje.
- * Bez szyny zdarzeń i bez osobnej bazy odczytu — projekcje odświeżamy synchronicznie
+ * Bez szyny zdarzeń i bez osobnej bazy odczytu - projekcje odświeżamy synchronicznie
  * w tej samej transakcji, w której przyjmujemy zdarzenia. Przy skali klubu (jeden
  * serwer, kilkunastu pilotów) każdy dodatkowy ruchomy element to koszt bez zysku.
  */
@@ -28,7 +28,7 @@ import type { PilotRole } from '../../domain/roles.ts';
 // ── magazyn ─────────────────────────────────────────────────────────────────────
 
 /**
- * Minimalny interfejs bazy — spełniają go strukturalnie i `pg.Pool`, i PGlite.
+ * Minimalny interfejs bazy - spełniają go strukturalnie i `pg.Pool`, i PGlite.
  * To jest nasz „port bazodanowy": adaptery przyjmują `Queryable`, więc test może
  * podać bazę w procesie, a produkcja pulę połączeń, bez żadnej warstwy tłumaczącej.
  */
@@ -38,7 +38,7 @@ export interface Queryable {
 
 /**
  * Baza z transakcjami. Przyjęcie paczki zdarzeń jest atomowe: wstawienie + odświeżenie
- * projekcji + flagi w JEDNEJ transakcji — telefon, który dostał odpowiedź, może uznać
+ * projekcji + flagi w JEDNEJ transakcji - telefon, który dostał odpowiedź, może uznać
  * zdarzenia za dostarczone, a stan `sessions` nigdy nie wyprzedza ani nie goni `events`.
  */
 export interface Database extends Queryable {
@@ -47,7 +47,7 @@ export interface Database extends Queryable {
 
 // ── piloci i uwierzytelnienie ───────────────────────────────────────────────────
 
-/** Konto pilota po stronie serwera (zakłada administrator — brak rejestracji). */
+/** Konto pilota po stronie serwera (zakłada administrator - brak rejestracji). */
 export interface PilotAccount {
   id: string;
   code: string;
@@ -60,13 +60,13 @@ export interface PilotAccount {
 }
 
 /**
- * Konto tak, jak widzi je BRAMA UPRAWNIEŃ panelu (`http/authorize.ts`) — bez hasha.
+ * Konto tak, jak widzi je BRAMA UPRAWNIEŃ panelu (`http/authorize.ts`) - bez hasha.
  *
  * Osobny typ od `PilotAccount` i to jest cała jego treść. `PilotAccount` istnieje dla
  * LOGOWANIA, więc niesie `passwordHash`; brama hasła nie weryfikuje, a mimo to czytała
  * go przy KAŻDYM żądaniu panelu i wnosiła aż do warstwy HTTP (`AuthOutcome.account`).
  * Hash, który wjeżdża tam, gdzie nie jest potrzebny, prędzej czy później gdzieś się
- * zserializuje — jeden brak pola jest tańszy niż dyscyplina „pamiętaj, żeby go nie
+ * zserializuje - jeden brak pola jest tańszy niż dyscyplina „pamiętaj, żeby go nie
  * wypisać". Ta sama zasada, co przy `AdminPilotAccount` po stronie panelu.
  */
 export interface PilotAuthSnapshot {
@@ -77,7 +77,7 @@ export interface PilotAuthSnapshot {
   role: PilotRole;
   /**
    * Od kiedy poświadczenia tego konta są ważne. `null` = nigdy ich nie
-   * unieważniano. Token wydany WCZEŚNIEJ nie przechodzi bramy — to jedyny sposób,
+   * unieważniano. Token wydany WCZEŚNIEJ nie przechodzi bramy - to jedyny sposób,
    * w jaki reset hasła i deaktywacja zrywają sesję PANELU, która nie ma wiersza
    * w bazie (podpisany JWT w ciasteczku `HttpOnly`).
    */
@@ -87,12 +87,12 @@ export interface PilotAuthSnapshot {
 export interface PilotsPort {
   findByLogin(login: string): Promise<PilotAccount | null>;
   findById(id: string): Promise<PilotAccount | null>;
-  /** Projekcja dla bramy panelu: rola, aktywność i znacznik unieważnienia — bez hasha. */
+  /** Projekcja dla bramy panelu: rola, aktywność i znacznik unieważnienia - bez hasha. */
   authSnapshot(id: string): Promise<PilotAuthSnapshot | null>;
 }
 
 /**
- * Preferencje pilota (dziś wyłącznie motyw) — wędrują za pilotem między urządzeniami
+ * Preferencje pilota (dziś wyłącznie motyw) - wędrują za pilotem między urządzeniami
  * (decyzja 2026-07-29). `themeUpdatedAt` to stempel DECYZJI nadany przez telefon:
  * oś rozstrzygania LWW, celowo różna od `updated_at` konta.
  */
@@ -103,23 +103,23 @@ export interface PilotPrefs {
 
 /**
  * Osobny port od `PilotsPort` nie dla symetrii, tylko dlatego, że tamten jest CZYSTYM
- * odczytem kont (zapis kont mieszka w seedzie/administratorze) — a preferencje są
+ * odczytem kont (zapis kont mieszka w seedzie/administratorze) - a preferencje są
  * jedynym miejscem, w którym pilot pisze do własnego wiersza.
  */
 export interface PilotPrefsPort {
-  /** `null` = pilot nie istnieje (token przeżył konto — stan patologiczny). */
+  /** `null` = pilot nie istnieje (token przeżył konto - stan patologiczny). */
   get(pilotId: string): Promise<PilotPrefs | null>;
   /**
    * Zapis LWW: skutek WYŁĄCZNIE, gdy `updatedAt` jest ściśle NOWSZY niż zapisany
    * stempel (brak stempla = każdy wygrywa). Warunek siedzi w SQL-u, nie w odczycie
-   * przed zapisem — dwa telefony tego samego pilota nie prześcigną się timingiem.
+   * przed zapisem - dwa telefony tego samego pilota nie prześcigną się timingiem.
    */
   setIfNewer(pilotId: string, theme: string, updatedAt: Date): Promise<void>;
 }
 
 /**
  * Hasła: `hash` przy zakładaniu konta (seed/admin), `verify` przy logowaniu.
- * Implementacja na `node:crypto` (scrypt) — patrz adapter, tam jest uzasadnienie.
+ * Implementacja na `node:crypto` (scrypt) - patrz adapter, tam jest uzasadnienie.
  */
 export interface PasswordHasher {
   hash(password: string): Promise<string>;
@@ -127,7 +127,7 @@ export interface PasswordHasher {
 }
 
 /** Podpisywanie i weryfikacja JWT sesji (HS256). */
-/** Tożsamość odczytana z tokenu — to, na podstawie czego trasy podejmują decyzje. */
+/** Tożsamość odczytana z tokenu - to, na podstawie czego trasy podejmują decyzje. */
 export interface Identity {
   pilotId: string;
   code: string;
@@ -137,14 +137,14 @@ export interface Identity {
 /**
  * Tożsamość ODCZYTANA z tokenu razem z CHWILĄ JEGO WYDANIA.
  *
- * `issuedAt` nie jest polem wejściowym `sign` — chwilę wydania zna wyłącznie ten, kto
+ * `issuedAt` nie jest polem wejściowym `sign` - chwilę wydania zna wyłącznie ten, kto
  * podpisuje, i sam ją wpisuje z zegara. Osobny typ zamiast pola opcjonalnego w
  * `Identity`, żeby żaden wołający `sign` nie mógł tej wartości podać ani zapomnieć.
  */
 export interface VerifiedIdentity extends Identity {
   /**
    * `iat` w SEKUNDACH epoki (RFC 7519). `0` = token sprzed wprowadzenia claimu
-   * (`pilots.credentials_valid_from`) — czyli „wydany przed czasem", więc każde
+   * (`pilots.credentials_valid_from`) - czyli „wydany przed czasem", więc każde
    * unieważnienie poświadczeń
    * go obejmuje. Domyślna wartość idzie w stronę BEZPIECZNĄ, nigdy w stronę zaufania.
    */
@@ -154,13 +154,13 @@ export interface VerifiedIdentity extends Identity {
 export interface TokenService {
   /** Zwraca podpisany token dostępu dla pilota. */
   sign(claims: Identity, ttlSec: number): string;
-  /** Zwraca claims albo `null` — token zły/wygasły. Nigdy nie rzuca. */
+  /** Zwraca claims albo `null` - token zły/wygasły. Nigdy nie rzuca. */
   verify(token: string): VerifiedIdentity | null;
 }
 
 /**
  * Refresh tokeny: NIEPRZEZROCZYSTE losowe wartości w bazie (hash), nie JWT.
- * Powód: refresh żyje długo (§3.0 — wygasły JWT nie wylogowuje), więc musi dać się
+ * Powód: refresh żyje długo (§3.0 - wygasły JWT nie wylogowuje), więc musi dać się
  * unieważnić po stronie serwera; JWT z natury unieważnić się nie da.
  */
 export interface RefreshTokensPort {
@@ -168,7 +168,7 @@ export interface RefreshTokensPort {
   /**
    * ATOMOWA rotacja: unieważnia stary i wydaje nowy w jednej transakcji.
    * Rozdzielone consume+issue (audyt) zostawiały okno, w którym crash/zgubiona
-   * odpowiedź kasowały stary token bez wydania nowego — a pełne ponowne logowanie
+   * odpowiedź kasowały stary token bez wydania nowego - a pełne ponowne logowanie
    * wymaga sieci, więc łamałoby obietnicę §3.0. `null` = token nieznany/wygasły.
    */
   rotate(token: string, newExpiresAt: Date): Promise<{ pilotId: string; token: string } | null>;
@@ -180,7 +180,7 @@ export interface RefreshTokensPort {
 export interface ReferenceSnapshot {
   aircraft: ReferenceAircraft[];
   pilots: ReferencePilot[];
-  /** Najświeższy `updated_at` — podstawa ETagu i adnotacji wieku cache w aplikacji. */
+  /** Najświeższy `updated_at` - podstawa ETagu i adnotacji wieku cache w aplikacji. */
   updatedAt: Date | null;
 }
 
@@ -191,7 +191,7 @@ export interface ReferencePort {
 /**
  * OŚ FAZ PIONOWYCH lotu (wznoszenie / przelot / zniżanie) dla sesji.
  *
- * Wynik zależy WYŁĄCZNIE od śladu GPS — nie od rejestru zdarzeń. Dzięki temu da się go
+ * Wynik zależy WYŁĄCZNIE od śladu GPS - nie od rejestru zdarzeń. Dzięki temu da się go
  * cache'ować obok nagrania: korekta czasu startu zmienia okno lotu, ale nie zmienia ani
  * jednego odcinka tej osi. Pusta lista znaczy „ten dzień nie ma nagrania" i jest wynikiem
  * pełnoprawnym: interwały tej sesji zostają wtedy bez rozbicia na fazy pionowe.
@@ -201,14 +201,14 @@ export interface PhaseTimelinePort {
 }
 
 /**
- * NORMA ZUŻYCIA per samolot (`aircraft_consumption`) — materializacja modelu dla telefonów.
+ * NORMA ZUŻYCIA per samolot (`aircraft_consumption`) - materializacja modelu dla telefonów.
  *
  * Port jest w `common/`, bo normę PRODUKUJE analityka panelu, a KONSUMUJE aplikacja
  * pilota (`GET /reference`). Liczenie jej na żądanie telefonu odpada: `/reference`
  * odpytuje każdy telefon co kwadrans, a model czyta strumienie kilkudziesięciu sesji.
  */
 export interface ConsumptionNormPort {
-  /** Uuidy zamkniętych dni samolotu w oknie — wejście przeliczenia. */
+  /** Uuidy zamkniętych dni samolotu w oknie - wejście przeliczenia. */
   closedSessionUuids(
     db: Queryable,
     aircraftId: string,
@@ -227,11 +227,11 @@ export interface ConsumptionNormPort {
     computedAt: Date,
   ): Promise<void>;
 
-  /** Normy całej floty, po `aircraft_id` — wejście `GET /reference`. */
+  /** Normy całej floty, po `aircraft_id` - wejście `GET /reference`. */
   all(db: Queryable): Promise<Map<string, ConsumptionNorm>>;
 
   /**
-   * Najświeższy stempel policzenia — trzeci składnik ETagu referencji. Bez niego
+   * Najświeższy stempel policzenia - trzeci składnik ETagu referencji. Bez niego
    * przeliczenie modeli (bez zmiany sesji ani konfiguracji) nie dotarłoby do telefonów,
    * bo `304` zamroziłoby poprzednią odpowiedź.
    */
@@ -247,18 +247,18 @@ export interface EventsStorePort {
     events: readonly Event[],
     sourceDevice: string | null,
   ): Promise<{ accepted: number; duplicates: number }>;
-  /** Pełny strumień sesji — wejście `projectSession`. */
+  /** Pełny strumień sesji - wejście `projectSession`. */
   sessionEvents(db: Queryable, sessionUuid: string): Promise<Event[]>;
   /**
-   * Strumienie WIELU sesji jednym zapytaniem — wejście analityki zużycia (`A10a`).
+   * Strumienie WIELU sesji jednym zapytaniem - wejście analityki zużycia (`A10a`).
    *
    * DLACZEGO OSOBNA METODA, A NIE `sessionEvents` W PĘTLI: okno 90 dni to ~50 sesji
-   * na samolot, a rok — ponad 200. Pętla oznaczałaby tyleż round-tripów na jedno
+   * na samolot, a rok - ponad 200. Pętla oznaczałaby tyleż round-tripów na jedno
    * otwarcie ekranu; `WHERE session_uuid = ANY($1)` załatwia to jednym.
    *
    * DLACZEGO W TYM PORCIE, A NIE W NOWYM: `contract.test.ts` liczy wywołania tego
    * portu, żeby pilnować reguły „listy panelu nie odtwarzają projekcji ze strumienia"
-   * (§7.5). Nowy port byłby furtką POZA tym licznikiem — tutaj gwarancja robi się
+   * (§7.5). Nowy port byłby furtką POZA tym licznikiem - tutaj gwarancja robi się
    * mocniejsza, nie słabsza.
    */
   sessionStreams(
@@ -271,7 +271,7 @@ export interface EventsStorePort {
   countForSession(db: Queryable, sessionUuid: string): Promise<number>;
 }
 
-/** Wiersz projekcji `sessions` — zrzut `projectSession`, nigdy źródło prawdy. */
+/** Wiersz projekcji `sessions` - zrzut `projectSession`, nigdy źródło prawdy. */
 export interface SessionRow {
   sessionUuid: string;
   aircraftId: string;
@@ -279,24 +279,24 @@ export interface SessionRow {
   dualId: string | null;
   status: 'active' | 'closed';
   /**
-   * `SessionState.claimedAt` — czas PRZEJĘCIA samolotu, czyli zdarzenia `session_claim`
-   * (decyzja 2026-08-07; wcześniej kolumna niosła meldunek — uzasadnienie w `mappers/sessionRow.ts`).
+   * `SessionState.claimedAt` - czas PRZEJĘCIA samolotu, czyli zdarzenia `session_claim`
+   * (decyzja 2026-08-07; wcześniej kolumna niosła meldunek - uzasadnienie w `mappers/sessionRow.ts`).
    * `null` = strumień bez claimu, czyli rejestr niekompletny; wg §4.4 nie powinien wystąpić.
    */
   claimTime: number | null;
   closeTime: number | null;
   /**
-   * Rodzaj operacji i klient dnia — wymiary listy dni panelu (`A02`).
+   * Rodzaj operacji i klient dnia - wymiary listy dni panelu (`A02`).
    * Wartości pochodzą z projekcji, nie z ponownego czytania payloadów: reguła
    * „agreguj wartości projekcji, nigdy nie odtwarzaj projekcji SQL-em".
    */
   operation: OperationType | null;
   client: string | null;
   /**
-   * Notatka pilota do dnia (`sessions.notes`, issue #14) — wolny tekst z `preflight_confirm`.
+   * Notatka pilota do dnia (`sessions.notes`, issue #14) - wolny tekst z `preflight_confirm`.
    * `null` = dzień bez notatki (stan normalny, nie „nieprzeliczony"). Stoi obok
    * `client`, bo pochodzi z tego samego zdarzenia i z tej samej projekcji; różni je
-   * ODBIORCA: klienta czyta panel i statystyki, notatkę — podpowiedzi preflightu.
+   * ODBIORCA: klienta czyta panel i statystyki, notatkę - podpowiedzi preflightu.
    */
   notes: string | null;
   mhStart: number | null;
@@ -309,12 +309,12 @@ export interface SessionRow {
   flightMs: number;
   flightsCount: number;
   /**
-   * Kolumny statystyk (kolumny statystyk) — wejście agregatów `A10`.
+   * Kolumny statystyk (kolumny statystyk) - wejście agregatów `A10`.
    *
    * Wszystkie są NULL-owalne z JEDNEGO powodu: wiersz zapisany przed migracją ma tu
    * `NULL` do czasu przebudowy projekcji (`A11`) i agregat musi umieć to odróżnić od
    * zera. `sessionRowFrom` NIGDY nie pisze `null` w liczniki (`takeoffCount`,
-   * `dropCount`, …) — `null` czytany z bazy znaczy więc zawsze „nieprzeliczone".
+   * `dropCount`, …) - `null` czytany z bazy znaczy więc zawsze „nieprzeliczone".
    * `mhDeltaH`/`fuelConsumedL` bywają `null` także w świeżym wierszu: bilans dnia
    * istnieje dopiero z odczytem końcowym `day_close` (reguła projekcji).
    */
@@ -326,12 +326,12 @@ export interface SessionRow {
   jumpersTandem: number | null;
   jumpersAff: number | null;
   jumpersSolo: number | null;
-  /** Suma wysokości zrzutów Z FIXEM i ich licznik — średnia zakresu = suma / licznik. */
+  /** Suma wysokości zrzutów Z FIXEM i ich licznik - średnia zakresu = suma / licznik. */
   dropAltSumFt: number | null;
   dropAltCount: number | null;
   /**
    * Olej (issue #60): pomiar z przejęcia i SUMA dolanego (para z preflightu + zdarzenia
-   * `oil_add`). `oilLevelL: null` = pomiaru nie było — stan zwykły dla sesji sprzed
+   * `oil_add`). `oilLevelL: null` = pomiaru nie było - stan zwykły dla sesji sprzed
    * modułu i wpisów ręcznych, NIE „nieprzeliczone". Z tych kolumn składa się
    * przekazanie oleju w `GET /reference` (`Handover.oil`).
    */
@@ -344,25 +344,25 @@ export interface SessionsProjectionPort {
   get(db: Queryable, sessionUuid: string): Promise<SessionRow | null>;
   listByAircraft(db: Queryable, aircraftId: string): Promise<SessionRow[]>;
   /**
-   * Sesje jednego PILOTA — do wykrywania nakładki jego czasu (`pilot_overlap`, §4.7).
+   * Sesje jednego PILOTA - do wykrywania nakładki jego czasu (`pilot_overlap`, §4.7).
    *
    * Osobno od `listByAircraft`, bo to inna OŚ: nakładka grafiku idzie w poprzek maszyn,
    * więc nie da się jej zobaczyć, patrząc na jeden samolot. Filtrujemy po `pic_id`, czyli
-   * po PIC-u sesji — Dual nie jest piszącym i nie odpowiada za jej istnienie (§4.1 pkt 3).
+   * po PIC-u sesji - Dual nie jest piszącym i nie odpowiada za jej istnienie (§4.1 pkt 3).
    */
   listByPilot(db: Queryable, picId: string): Promise<SessionRow[]>;
   /**
-   * Sesje jednej maszyny przejęte w danym oknie czasu — SKŁAD KARTY DOBY (§4.7).
+   * Sesje jednej maszyny przejęte w danym oknie czasu - SKŁAD KARTY DOBY (§4.7).
    *
    * Osobno od `listByAircraft`, choć zawężenie jest jego podzbiorem: tamten czyta CAŁĄ
    * historię maszyny (łańcuch MH potrzebuje sąsiedztwa sesji przez lata), a eksport
    * potrzebuje jednej doby. Użycie tamtego znaczyłoby wczytywanie całego nalotu
-   * samolotu przy każdym zdaniu maszyny — koszt rosnący bez granicy za odpowiedź
+   * samolotu przy każdym zdaniu maszyny - koszt rosnący bez granicy za odpowiedź
    * o dwudziestu czterech godzinach.
    *
    * Okno jest po `claim_time`, czyli po CHWILI PRZEJĘCIA, i granice są DOMKNIĘTE
    * (`utcDayRange`). Sesja rozpoczęta o 23:50 i zdana po północy należy do doby swojego
-   * przejęcia — ta sama reguła, co w projekcji dnia pilota (`projectPilotDay`).
+   * przejęcia - ta sama reguła, co w projekcji dnia pilota (`projectPilotDay`).
    *
    * Wynik jest UPORZĄDKOWANY chronologicznie: karta numeruje zmiany `S1`, `S2`…, więc
    * kolejność jest treścią, a nie przypadkiem planera.
@@ -389,7 +389,7 @@ export interface AircraftConfigPort {
 
 /**
  * Wiersz flagi po stronie serwera. Kształt „na drucie" (`type`, `sessionUuids`) idzie
- * z domeny — `SessionFlag` w `@uzaero/domain` — bo telefon czyta dokładnie te pola
+ * z domeny - `SessionFlag` w `@uzaero/domain` - bo telefon czyta dokładnie te pola
  * z `/sessions/:uuid/sync-status`. Reszta (`id`, `details`, `status`) jest sprawą
  * panelu i na telefon nie jedzie.
  */
@@ -404,7 +404,7 @@ export interface FlagRecord {
 
 export interface FlagsPort {
   /**
-   * Zapewnia OTWARTĄ flagę (typ + ten sam zestaw sesji) — wstawia tylko, gdy nie ma.
+   * Zapewnia OTWARTĄ flagę (typ + ten sam zestaw sesji) - wstawia tylko, gdy nie ma.
    * Ponowny sync tych samych danych nie może mnożyć flag.
    */
   ensureOpen(
@@ -419,7 +419,7 @@ export interface FlagsPort {
 
 /**
  * Dzienna karta arkusza: tytuł wg konwencji §4.7 (`YYYY-MM-DD_SP-XXX`) + zawartość
- * tabelaryczna jako wiersze komórek. Kształt jest CELOWO niezależny od Google API —
+ * tabelaryczna jako wiersze komórek. Kształt jest CELOWO niezależny od Google API -
  * budowa treści to czysta funkcja domeny eksportu, a jak te wiersze trafiają do
  * arkusza (i czym jest „karta" u dostawcy), wie wyłącznie adapter.
  */
@@ -441,11 +441,11 @@ export interface StoredDaySheet {
 }
 
 /**
- * Odczyt zapisanych kart — OSOBNY port, nie metoda `SheetsPort`. Stronę zapisu
+ * Odczyt zapisanych kart - OSOBNY port, nie metoda `SheetsPort`. Stronę zapisu
  * implementuje KAŻDY dostawca arkuszy (bazodanowy dziś, Google po dostarczeniu
- * klucza serwisowego — podmiana tego samego portu), ale odczyt po nazwie istnieje
+ * klucza serwisowego - podmiana tego samego portu), ale odczyt po nazwie istnieje
  * wyłącznie dlatego, że karty serwujemy z własnej bazy (`GET /sheets/:tab`).
- * U Google „odczytem" jest sam arkusz pod `sheet_url` — doklejenie tej metody do
+ * U Google „odczytem" jest sam arkusz pod `sheet_url` - doklejenie tej metody do
  * `SheetsPort` zmuszałoby przyszły adapter do martwego kodu.
  */
 export interface SheetsReadPort {
@@ -454,7 +454,7 @@ export interface SheetsReadPort {
 }
 
 /**
- * Wpis dziennika eksportu (§5.3 `export_log`) — CZŁONKOSTWO jednej sesji w jednej
+ * Wpis dziennika eksportu (§5.3 `export_log`) - CZŁONKOSTWO jednej sesji w jednej
  * rewizji karty doby.
  *
  * Od 2026-08-07 (karta = doba samolotu) jedna rewizja ma tyle wierszy, ile sesji weszło
@@ -464,7 +464,7 @@ export interface SheetsReadPort {
  */
 export interface ExportRecord {
   sessionUuid: string;
-  /** Doba karty jako `YYYY-MM-DD` (UTC z chwili przejęcia) — prefiks nazwy karty. */
+  /** Doba karty jako `YYYY-MM-DD` (UTC z chwili przejęcia) - prefiks nazwy karty. */
   day: string;
   aircraftId: string;
   sheetUrl: string;
@@ -476,7 +476,7 @@ export interface ExportRecord {
 /**
  * Jedna REWIZJA karty doby: jeden zapis do arkusza, N wierszy dziennika.
  *
- * Osobny typ od `ExportRecord`, a nie tablica tamtych, bo rewizja jest NIEPODZIELNA —
+ * Osobny typ od `ExportRecord`, a nie tablica tamtych, bo rewizja jest NIEPODZIELNA -
  * `day`, `aircraftId`, `sheetUrl`, `revision` i `exportedAt` muszą być we wszystkich
  * wierszach identyczne. Tablica `ExportRecord[]` pozwalałaby złożyć komplet, w którym
  * dwie sesje jednej karty mają różny numer rewizji, i nic by tego nie zatrzymało.
@@ -487,13 +487,13 @@ export interface ExportCardRecord {
   sheetUrl: string;
   revision: number;
   exportedAt: Date;
-  /** Sesje WCHODZĄCE w tę rewizję — po jednym wierszu dziennika na każdą. */
+  /** Sesje WCHODZĄCE w tę rewizję - po jednym wierszu dziennika na każdą. */
   sessionUuids: readonly string[];
 }
 
 /**
  * Dziennik eksportu jest append-only jak reszta systemu: regeneracja karty to NOWY
- * komplet wierszy z kolejną rewizją, nie nadpisanie — historia „co i kiedy poszło do
+ * komplet wierszy z kolejną rewizją, nie nadpisanie - historia „co i kiedy poszło do
  * arkusza" zostaje do audytu, a `sync-status` czyta po prostu najświeższy wpis sesji.
  */
 export interface ExportLogPort {
@@ -506,7 +506,7 @@ export interface ExportLogPort {
    * Numer ostatniej rewizji KARTY (pary doba+samolot); `0` = jeszcze nie eksportowano.
    *
    * Osobno od `latest`, bo pytania są dwa i mają różne klucze. Nowa sesja dołączająca
-   * do już wyeksportowanej doby nie ma ANI JEDNEGO własnego wiersza — gdyby numer
+   * do już wyeksportowanej doby nie ma ANI JEDNEGO własnego wiersza - gdyby numer
    * kolejnej rewizji liczyć z `latest(jej uuid)`, karta zaczęłaby od jedynki po raz
    * drugi i dziennik przestałby być osią czasu jednego dokumentu.
    */
@@ -520,7 +520,7 @@ export interface ExportLogPort {
    * ══ CZEGO PILNUJE ══
    * Sekwencji „odczytaj ostatnią rewizję → dodaj jeden → dopisz wiersze". Bez niej
    * spóźniona paczka z telefonu i kliknięcie „Ponów" w panelu, trafione w tę samą
-   * chwilę, czytają ten sam stan i obie chcą zapisać rewizję 3 — a dziennik, w którym
+   * chwilę, czytają ten sam stan i obie chcą zapisać rewizję 3 - a dziennik, w którym
    * numer rewizji nie jest jednoznaczny, przestaje odpowiadać na pytanie „co i kiedy
    * poszło do arkusza". Drugi zapis odbija się o `UNIQUE (day,
    * aircraft_id, revision, session_uuid)`; blokada sprawia, że do tego odbicia w ogóle
@@ -533,10 +533,10 @@ export interface ExportLogPort {
    *
    * ══ CZEGO NIE PILNUJE ══
    * Treści karty. `exported_sheets` jest UPSERT-em po nazwie i wygrywa zapis późniejszy
-   * — co jest poprawne, bo obie strony budują kartę z TYCH SAMYCH strumieni zdarzeń.
+   * - co jest poprawne, bo obie strony budują kartę z TYCH SAMYCH strumieni zdarzeń.
    *
    * Kształt klucza mieszka w adapterze, bo nazwa klucza advisory jest szczegółem
-   * Postgresa — ta sama decyzja, co przy `FleetAdminPort.lockAircraft`.
+   * Postgresa - ta sama decyzja, co przy `FleetAdminPort.lockAircraft`.
    */
   lock(tx: Queryable, day: string, aircraftId: string): Promise<void>;
 }
@@ -546,7 +546,7 @@ export interface ExportLogPort {
 /**
  * Zrzut śladu kalibracyjnego z telefonów (`POST /traces`): surowe fixy + markery
  * detektora, materiał do kalibracji progów §3.3 i replayu przez `runDetector`.
- * To NIE są zdarzenia domenowe — nie dotykają Postgresa ani projekcji; lądują
+ * To NIE są zdarzenia domenowe - nie dotykają Postgresa ani projekcji; lądują
  * w plikach NDJSON per sesja, bo analiza i tak jest offline (skrypt replay).
  */
 export interface TraceSinkPort {
@@ -555,7 +555,7 @@ export interface TraceSinkPort {
 }
 
 /**
- * ODCZYT śladu jednej sesji — do mapy lotu w panelu (`A02c-slad.html`).
+ * ODCZYT śladu jednej sesji - do mapy lotu w panelu (`A02c-slad.html`).
  *
  * Osobny port od `TraceSinkPort`, mimo wspólnego magazynu, bo to dwie różne
  * odpowiedzialności o różnych wymaganiach: zapis jest gorący (kilkanaście telefonów
@@ -563,13 +563,13 @@ export interface TraceSinkPort {
  * i może sobie pozwolić na przeczytanie całego pliku sesji. Sklejenie ich w jeden port
  * kazałoby adapterowi zapisu deklarować metodę, której zapis nigdy nie użyje.
  *
- * Zwracamy SUROWE wiersze — filtrowanie po oknie lotu i bramkę jakości robi domena
+ * Zwracamy SUROWE wiersze - filtrowanie po oknie lotu i bramkę jakości robi domena
  * (`buildFlightTrack`), tym samym kodem, którym liczy je telefon.
  */
 export interface TraceSourcePort {
   /**
    * Wpisy śladu jednej sesji, w kolejności zapisu. Pusta tablica, gdy sesja nie ma
-   * zapisu — brak pliku NIE jest błędem: lot mógł być wpisany ręcznie, telefon mógł
+   * zapisu - brak pliku NIE jest błędem: lot mógł być wpisany ręcznie, telefon mógł
    * nie zdążyć wysłać, a ślad i tak nigdy nie był rejestrem (wariant 14B).
    */
   read(sessionUuid: string): Promise<Record<string, unknown>[]>;
@@ -577,7 +577,7 @@ export interface TraceSourcePort {
 
 // ── zegar ───────────────────────────────────────────────────────────────────────
 
-/** Czas jako port — testy okna refresh tokenów sterują nim jawnie. */
+/** Czas jako port - testy okna refresh tokenów sterują nim jawnie. */
 export interface Clock {
   now(): Date;
 }

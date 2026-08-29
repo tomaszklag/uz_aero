@@ -1,16 +1,16 @@
 /**
- * UZ Aero — testy projekcji sesji (§5.2: stan liczony w pamięci ze strumienia zdarzeń).
+ * UZ Aero - testy projekcji sesji (§5.2: stan liczony w pamięci ze strumienia zdarzeń).
  *
  * Scenariusz odwzorowuje **kanoniczną oś czasu dnia 22 JUNE** z `docs/design-notes.md`.
  * Od 2026-08-10 (pivot: sesja = jeden bieg silnika) dzień to TRZY SESJE na SP-AXA,
- * każda domknięta odczytami z obu stron — a liczby dnia zostają te same:
+ * każda domknięta odczytami z obu stron - a liczby dnia zostają te same:
  *   s1: preflight 08:00 (150 L · 1234:30) · bieg 08:12–10:34, 2 loty · zdanie 10:40 (112 L · 1236:52)
  *   s2: preflight 11:00 (112 L) · tankowanie 11:05 (+48 → 160) · bieg 11:15–12:28, 1 lot · zdanie 12:35 (138 L · 1238:05)
  *   s3: preflight 13:00 (138 L) · bieg 13:10–16:14, 3 loty · 3 zrzuty · zdanie 16:45 (88 L · 1241:09)
  *   dzień: 6 lotów · block 6:39 · paliwo 150 +48 −110 = 88 · MH 1234:30 → 1241:09
  *
  * Ten dzień jest WZORCEM POPRAWNOŚCI modelu 2026-08-10 (strażnik zgodności ze starym
- * strumieniem zdjęty decyzją użytkownika — nic nie było wdrożone). Pilnuje nie tylko
+ * strumieniem zdjęty decyzją użytkownika - nic nie było wdrożone). Pilnuje nie tylko
  * kodu, ale i zgodności z designem.
  */
 
@@ -21,7 +21,7 @@ const SESSION = 'sess-22jun';
 const AC = 'sp-axa';
 const PIC = 'tmk';
 
-/** Baza doby scenariusza (22 JUNE 2026, 00:00 UTC) — konkretna data nie ma znaczenia. */
+/** Baza doby scenariusza (22 JUNE 2026, 00:00 UTC) - konkretna data nie ma znaczenia. */
 const DAY0 = Date.UTC(2026, 5, 22, 0, 0, 0);
 
 /** „HH:MM" → epoch ms w dobie scenariusza. Czasy w całym projekcie są w UTC. */
@@ -62,7 +62,7 @@ function ev<K extends EventType>(
 
 const MIN = 60_000;
 
-/** Pełny cykl silnika z jednym lotem — najmniejsza sensowna jednostka pracy. */
+/** Pełny cykl silnika z jednym lotem - najmniejsza sensowna jednostka pracy. */
 function singleCycle(): Event[] {
   return [
     ev('engine_start', '08:12', {}),
@@ -108,7 +108,7 @@ function canonicalSession2(): Event[] {
       reading: { fuelL: 112, mh: mh('1236:52') },
       mhFormat: 'hhmm',
     }, S),
-    // Tankowanie PRZED uruchomieniem — wpis sesji (kokpit 04a): 112 +48 → 160 L.
+    // Tankowanie PRZED uruchomieniem - wpis sesji (kokpit 04a): 112 +48 → 160 L.
     ev('refuel', '11:05', { beforeL: 112, addedL: 48, afterL: 160 }, S),
     ev('engine_start', '11:15', {}, S),
     ev('takeoff', '11:28', { method: 'auto' }, S),
@@ -157,7 +157,7 @@ function canonicalSession3(): Event[] {
   ];
 }
 
-describe('projectSession — pojedynczy cykl', () => {
+describe('projectSession - pojedynczy cykl', () => {
   it('liczy block time, lot i liczniki z pełnego cyklu silnika', () => {
     const s = projectSession(singleCycle());
 
@@ -180,7 +180,7 @@ describe('projectSession — pojedynczy cykl', () => {
     expect(s.inFlight).toBe(true);
     expect(s.openEngineStartAt).toBe(at('08:12'));
     expect(s.openTakeoffAt).toBe(at('08:25'));
-    // Niedomknięty cykl nie wlicza się do sumy — block time rośnie dopiero po stopie.
+    // Niedomknięty cykl nie wlicza się do sumy - block time rośnie dopiero po stopie.
     expect(s.blockTimeMs).toBe(0);
     expect(s.landingCount).toBe(0);
   });
@@ -193,7 +193,7 @@ describe('projectSession — pojedynczy cykl', () => {
     const start = [ev('engine_start', '08:12', {}), ev('taxi', '08:14', { method: 'auto' })];
     expect(projectSession(start).taxiing).toBe(true);
 
-    // Start zamyka kołowanie — po lądowaniu zjazd z pasa to NOWE taxi.
+    // Start zamyka kołowanie - po lądowaniu zjazd z pasa to NOWE taxi.
     const flying = [...start, ev('takeoff', '08:25', { method: 'auto' })];
     expect(projectSession(flying).taxiing).toBe(false);
 
@@ -209,7 +209,7 @@ describe('projectSession — pojedynczy cykl', () => {
   });
 });
 
-describe('kanoniczny dzień 22 JUNE — trzy sesje (zgodność z design-notes)', () => {
+describe('kanoniczny dzień 22 JUNE - trzy sesje (zgodność z design-notes)', () => {
   const s1 = projectSession(canonicalSession1());
   const s2 = projectSession(canonicalSession2());
   const s3 = projectSession(canonicalSession3());
@@ -228,7 +228,7 @@ describe('kanoniczny dzień 22 JUNE — trzy sesje (zgodność z design-notes)',
   });
 
   it('oś dnia: sesje ponumerowane ciągiem, w kolejności uruchomień silnika', () => {
-    // Klamra służby żyła tu do 2026-08-11 (meldunek/koniec) — usunięta z modelem
+    // Klamra służby żyła tu do 2026-08-11 (meldunek/koniec) - usunięta z modelem
     // (issue #23). Dzień pilota to płaska lista sesji.
     expect(day.sessions.map((x) => x.index)).toEqual([1, 2, 3]);
     expect(day.sessions.map((x) => x.startedAt)).toEqual([
@@ -253,7 +253,7 @@ describe('kanoniczny dzień 22 JUNE — trzy sesje (zgodność z design-notes)',
     expect(s2.mh.end).toBeCloseTo(mh('1238:05'), 5);
     expect(s3.mh.start).toBeCloseTo(s2.mh.end!, 5);
     expect(s3.mh.end).toBeCloseTo(mh('1241:09'), 5);
-    // Δ MH każdej sesji = jej block time — inwariant łańcucha (§4.5).
+    // Δ MH każdej sesji = jej block time - inwariant łańcucha (§4.5).
     expect(s1.mh.deltaH! * 60 * MIN).toBeCloseTo(s1.blockTimeMs, 0);
     expect(s2.mh.deltaH! * 60 * MIN).toBeCloseTo(s2.blockTimeMs, 0);
     expect(s3.mh.deltaH! * 60 * MIN).toBeCloseTo(s3.blockTimeMs, 0);
@@ -263,7 +263,7 @@ describe('kanoniczny dzień 22 JUNE — trzy sesje (zgodność z design-notes)',
     expect(s3.drops.count).toBe(3);
     expect(s3.drops.jumpers).toEqual({ tandem: 6, aff: 3, solo: 4 });
     expect(s3.drops.totalJumpers).toBe(13);
-    // Suma i licznik wysokości jadą OSOBNO (panel A10 składa z nich średnią zakresu —
+    // Suma i licznik wysokości jadą OSOBNO (panel A10 składa z nich średnią zakresu -
     // średnich per sesja nie da się składać), a średnia sesji jest z nich pochodną.
     expect(s3.drops.altitudeSumFt).toBe(2450 + 1800 + 3200);
     expect(s3.drops.altitudeFixCount).toBe(3);
@@ -272,7 +272,7 @@ describe('kanoniczny dzień 22 JUNE — trzy sesje (zgodność z design-notes)',
 
   it('zrzut BEZ wysokości nie wchodzi ani do sumy, ani do licznika fixów', () => {
     // Brak fixa GPS to niewiedza, nie zero: wliczenie go do sumy zaniżałoby średnią,
-    // a do licznika — udawało pomiar, którego nie było (mockup A10: „7 bez wysokości
+    // a do licznika - udawało pomiar, którego nie było (mockup A10: „7 bez wysokości
     // nie wchodzi do średniej").
     const partial = projectSession([
       ev('drop', '13:48', { dropNumber: 1, altitudeFt: 3000, jumpers: { tandem: 1, aff: 0, solo: 0 } }),
@@ -303,7 +303,7 @@ describe('kanoniczny dzień 22 JUNE — trzy sesje (zgodność z design-notes)',
       at: at('13:05'),
     });
 
-    // Kolejny załadunek NADPISUJE poprzedni — liczy się skład faktycznie na pokładzie.
+    // Kolejny załadunek NADPISUJE poprzedni - liczy się skład faktycznie na pokładzie.
     const overwritten = projectSession([
       ev('boarding', '13:05', { jumpers: { tandem: 2, aff: 1, solo: 0 } }),
       ev('boarding', '13:20', { jumpers: null }),
@@ -311,7 +311,7 @@ describe('kanoniczny dzień 22 JUNE — trzy sesje (zgodność z design-notes)',
     expect(overwritten.boarding).toEqual({ jumpers: null, at: at('13:20') });
   });
 
-  it('zrzut KONSUMUJE załadunek — drugi arkusz w tym samym locie zaczyna od zera', () => {
+  it('zrzut KONSUMUJE załadunek - drugi arkusz w tym samym locie zaczyna od zera', () => {
     const s = projectSession([
       ev('boarding', '13:05', { jumpers: { tandem: 2, aff: 1, solo: 0 } }),
       ev('takeoff', '13:24', { method: 'auto' }),
@@ -329,7 +329,7 @@ describe('kanoniczny dzień 22 JUNE — trzy sesje (zgodność z design-notes)',
   });
 });
 
-describe('projectSession — notatka dnia (issue #14)', () => {
+describe('projectSession - notatka dnia (issue #14)', () => {
   it('notatka z preflightu wchodzi do projekcji', () => {
     const state = projectSession([
       ev('preflight_confirm', '08:00', {
@@ -349,7 +349,7 @@ describe('projectSession — notatka dnia (issue #14)', () => {
   });
 });
 
-describe('projectSession — domyślny skład skoczków (2026-08-17)', () => {
+describe('projectSession - domyślny skład skoczków (2026-08-17)', () => {
   it('jumperDefaults z preflightu wchodzi do projekcji', () => {
     const state = projectSession([
       ev('preflight_confirm', '08:00', {
@@ -366,7 +366,7 @@ describe('projectSession — domyślny skład skoczków (2026-08-17)', () => {
     expect(projectSession(canonicalSession1()).jumperDefaults).toBeNull();
   });
 
-  it('boarding nie nadpisuje defaultu sesji — to dwa osobne stany', () => {
+  it('boarding nie nadpisuje defaultu sesji - to dwa osobne stany', () => {
     const state = projectSession([
       ev('preflight_confirm', '08:00', {
         operation: 'skoki',
@@ -382,7 +382,7 @@ describe('projectSession — domyślny skład skoczków (2026-08-17)', () => {
   });
 });
 
-describe('projectSession — odporność', () => {
+describe('projectSession - odporność', () => {
   it('kolejność wejścia nie zmienia wyniku (porządkowanie po czasie)', () => {
     const ordered = canonicalSession3();
     const shuffled = [...ordered].reverse();
@@ -414,10 +414,10 @@ describe('projectSession — odporność', () => {
 // odczytem. Stan paliwomierza wewnątrz sesji zmieniają wyłącznie tankowania.
 
 /**
- * Preflight i zdanie samolotu niosą WYŁĄCZNIE odczyty — klamra służby (dutyStart/
+ * Preflight i zdanie samolotu niosą WYŁĄCZNIE odczyty - klamra służby (dutyStart/
  * dutyEnd) znikła z payloadów razem z modelem (issue #23, 2026-08-11).
  */
-describe('projectSession — preflight i zdanie to odczyty, nie deklaracje', () => {
+describe('projectSession - preflight i zdanie to odczyty, nie deklaracje', () => {
   it('preflight ustawia odczyty startowe', () => {
     const s = projectSession([
       ev('preflight_confirm', '08:00', {
@@ -451,10 +451,10 @@ describe('projectSession — preflight i zdanie to odczyty, nie deklaracje', () 
 
 /**
  * Bieg silnika jako byt (`Leg`): para `engine_start`/`engine_stop` z czasem blokowym.
- * Pola potwierdzenia znikły 2026-08-10 razem z `leg_close` — sesję zatwierdza
+ * Pola potwierdzenia znikły 2026-08-10 razem z `leg_close` - sesję zatwierdza
  * `day_close`, a po regule SESSION_ALREADY_RAN sesja ma najwyżej jeden bieg.
  */
-describe('projectSession — bieg silnika jako byt (Leg)', () => {
+describe('projectSession - bieg silnika jako byt (Leg)', () => {
   const dayStart = () =>
     ev('preflight_confirm', '08:00', {
       operation: 'skoki',
@@ -473,7 +473,7 @@ describe('projectSession — bieg silnika jako byt (Leg)', () => {
 
   it('projekcja jest totalna także dla strumienia ZŁAMANEGO (dwa biegi w sesji)', () => {
     // Reguła SESSION_ALREADY_RAN odrzuca drugi start, ale projekcja musi opisać
-    // również strumień, który powstał obok reguł (dwa telefony przed syncem) —
+    // również strumień, który powstał obok reguł (dwa telefony przed syncem) -
     // dwa biegi dają dwa wiersze, a nie cichą utratę drugiego.
     const s = projectSession([
       dayStart(),
@@ -505,7 +505,7 @@ describe('olej przy przejęciu (issue #60)', () => {
   it('bez pól olejowych stan zostaje pusty (pomiaru nie było ≠ zero)', () => {
     const s = projectSession([preflightOil({})]);
     expect(s.oil).toEqual({ levelL: null, addedL: 0, afterL: null });
-    // pusty stan sesji ma ten sam kształt — skeleton store'u nie może się różnić
+    // pusty stan sesji ma ten sam kształt - skeleton store'u nie może się różnić
     expect(emptySessionState().oil).toEqual({ levelL: null, addedL: 0, afterL: null });
   });
 
@@ -543,5 +543,75 @@ describe('olej przy przejęciu (issue #60)', () => {
       ev('oil_add', '10:40', { addedL: 0.5 }, 'sess-oil'),
     ]);
     expect(s.oil).toEqual({ levelL: null, addedL: 1.5, afterL: null });
+  });
+});
+
+/**
+ * KRĘGI (TOUCH AND GO) — jedna koperta czasu, wiele lądowań (uwaga z urządzenia,
+ * 2026-08-29).
+ *
+ * Wpis ręczny pozwala podać „start 10:00, ostatnie lądowanie 10:40, 4 touch and go"
+ * zamiast pięciu par godzin, których nikt nie zmierzył. Rejestr niesie wtedy JEDEN lot
+ * z licznikiem, a arytmetykę robi projekcja.
+ */
+describe('touch and go — licznik przy lądowaniu', () => {
+  it('n kręgów to n dodatkowych lądowań I n dodatkowych startów', () => {
+    // Touch and go JEST lądowaniem, po którym natychmiast następuje start, więc
+    // 4 kręgi = 5 lądowań i 5 startów: ten otwierający lot plus cztery po kręgach.
+    const s = projectSession([
+      ev('engine_start', '09:42', {}),
+      ev('takeoff', '10:00', { method: 'manual' }),
+      ev('landing', '10:40', { method: 'manual', touchAndGo: 4 }),
+      ev('engine_stop', '11:18', {}),
+    ]);
+
+    expect(s.landingCount).toBe(5);
+    expect(s.takeoffCount).toBe(5);
+  });
+
+  it('lot zostaje JEDEN — kręgi nie dzielą koperty czasu', () => {
+    // Maszyna nie zatrzymała się między kręgami, więc czas lotu jest czasem całej
+    // serii. Dzielenie go na równe odcinki byłoby wymyślaniem godzin.
+    const s = projectSession([
+      ev('engine_start', '09:42', {}),
+      ev('takeoff', '10:00', { method: 'manual' }),
+      ev('landing', '10:40', { method: 'manual', touchAndGo: 4 }),
+      ev('engine_stop', '11:18', {}),
+    ]);
+
+    expect(s.flights).toHaveLength(1);
+    expect(s.flights[0]!.durationMs).toBe(40 * MIN);
+    expect(s.flights[0]!.touchAndGo).toBe(4);
+  });
+
+  /**
+   * NAJWAŻNIEJSZY TEST TEJ ZMIANY: ścieżka automatyczna ma liczyć DOKŁADNIE tak,
+   * jak przed dołożeniem pola. Detekcja GPS `touchAndGo` nie ustawia — każdy krąg
+   * daje tam własną, prawdziwą parę zdarzeń — więc brak pola nie może niczego ruszyć.
+   */
+  it('lot z detekcji GPS liczy się bez zmian — brak pola znaczy zero kręgów', () => {
+    const s = projectSession(singleCycle());
+
+    expect(s.takeoffCount).toBe(1);
+    expect(s.landingCount).toBe(1);
+    expect(s.flights[0]!.touchAndGo).toBeUndefined();
+  });
+
+  it('doba pilota dolicza kręgi TAK SAMO — inaczej sesja i dzień mówiłyby co innego', () => {
+    /* Liczniki doby idą z LOTÓW, nie ze zdarzeń, więc mają własną arytmetykę i własny
+       sposób, żeby się rozjechać: bez tego dzień pokazywałby 1 lądowanie tam, gdzie
+       sesja pokazuje 5 — a obie liczby stoją na innych ekranach, więc nikt by nie
+       zauważył. */
+    const events = [
+      ev('session_claim', '09:40', { mode: 'free', previousPicId: null }),
+      ev('engine_start', '09:42', {}),
+      ev('takeoff', '10:00', { method: 'manual' }),
+      ev('landing', '10:40', { method: 'manual', touchAndGo: 4 }),
+      ev('engine_stop', '11:18', {}),
+    ];
+    const day = projectPilotDay([projectSession(events)], PIC, DAY0);
+
+    expect(day.landingCount).toBe(5);
+    expect(day.takeoffCount).toBe(5);
   });
 });

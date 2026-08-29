@@ -1,10 +1,10 @@
 /**
- * UZ Aero — panel: testy przejść z pulpitu (`A01`, `A01a`).
+ * UZ Aero - panel: testy przejść z pulpitu (`A01`, `A01a`).
  *
  * ══ PO CO ODDZIELNY PLIK NA SAME ADRESY ══
  * Pulpit bez przejść jest tablicą ogłoszeń, a przejście prowadzące gdzie indziej niż
  * obiecuje kafel jest gorsze od jego braku. Adresy są też JEDYNĄ rzeczą na tym ekranie,
- * którą da się zepsuć bez zmiany ani jednej liczby — literówka w nazwie parametru daje
+ * którą da się zepsuć bez zmiany ani jednej liczby - literówka w nazwie parametru daje
  * poprawnie wyglądającą listę BEZ zawężenia.
  *
  * Dlatego test porównuje je z parserami filtrów ekranów docelowych, a nie z napisami
@@ -31,7 +31,7 @@ import {
   aircraftLink,
 } from './dashboardLinks';
 
-/** Query string adresu jako `URLSearchParams` — tak, jak odczyta go router panelu. */
+/** Query string adresu jako `URLSearchParams` - tak, jak odczyta go router panelu. */
 const paramsOf = (href: string): URLSearchParams =>
   new URLSearchParams(href.split('?')[1] ?? '');
 
@@ -95,14 +95,14 @@ describe('wiersze prowadzą w miejsce, które ISTNIEJE', () => {
   });
 
   it('identyfikatory ze znakami specjalnymi nie rozbijają adresu', () => {
-    // `aircraft.id` jest UUID-em, ale rejestracja bywa kluczem w starych danych —
+    // `aircraft.id` jest UUID-em, ale rejestracja bywa kluczem w starych danych -
     // a `SP/ABC` w ścieżce zrobiłby z jednego segmentu dwa.
     expect(aircraftLink('SP/ABC')).toBe('/flota/SP%2FABC');
   });
 });
 
 describe('przejście do rejestru zdarzeń (`A04`)', () => {
-  it('prowadzi do rejestru w stanie DOMYŚLNYM — tego samego, co pokazuje karta', () => {
+  it('prowadzi do rejestru w stanie DOMYŚLNYM - tego samego, co pokazuje karta', () => {
     // Karta „Ostatnio przyjęte" wypisuje sześć ostatnio PRZYJĘTYCH zdarzeń, a domyślny
     // porządek rejestru jest dokładnie ten sam (`received_at`, malejąco). Każde inne
     // zawężenie kazałoby człowiekowi szukać, gdzie podziały się wiersze, które właśnie

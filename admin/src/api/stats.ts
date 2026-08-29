@@ -1,8 +1,8 @@
 /**
- * UZ Aero — panel: statystyki floty i pilotów (`GET /admin/api/stats`).
+ * UZ Aero - panel: statystyki floty i pilotów (`GET /admin/api/stats`).
  *
  * Jeden plik = jeden zasób = jeden prefiks trasy, jak `server/src/http/routes/`.
- * Jedno żądanie oddaje WSZYSTKIE trzy ujęcia (samolot / pilot / operacja) naraz —
+ * Jedno żądanie oddaje WSZYSTKIE trzy ujęcia (samolot / pilot / operacja) naraz -
  * to ten sam zbiór dni policzony w trzech przekrojach i sumy muszą się zgadzać
  * między ujęciami, więc przełącznik ujęcia jest sprawą EKRANU, nie zapytania.
  */
@@ -13,7 +13,7 @@ import { apiGet } from './httpClient';
 /**
  * Zakres jako dni UTC `YYYY-MM-DD`, obustronnie domknięty. OBA pola opcjonalne:
  * bez nich serwer stosuje zakres domyślny (ostatnie 30 dni od DZIŚ swojego zegara)
- * i mówi o tym w `range.defaulted` — panel nie rozstrzyga, co znaczy „dziś".
+ * i mówi o tym w `range.defaulted` - panel nie rozstrzyga, co znaczy „dziś".
  */
 export interface StatsQuery {
   from?: string;

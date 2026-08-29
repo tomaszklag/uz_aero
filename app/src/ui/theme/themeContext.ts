@@ -1,19 +1,19 @@
 /**
- * UZ Aero — kontekst motywu i jego JEDYNY czytnik.
+ * UZ Aero - kontekst motywu i jego JEDYNY czytnik.
  *
  * Osobny plik od `ThemeProvider.tsx` z powodu narzędziowego: **Fast Refresh podmienia
  * moduł w miejscu tylko wtedy, gdy WSZYSTKIE jego eksporty są komponentami**. Hook
  * `useTheme` obok komponentu `ThemeProvider` sprawiał, że moduł przestawał być granicą
- * odświeżania — a to nie jest wyłącznie strata wygody.
+ * odświeżania - a to nie jest wyłącznie strata wygody.
  *
  * Groźny jest sam `createContext`: gdyby re-ewaluował się razem z komponentami,
  * zamontowany provider podawałby STARY obiekt kontekstu, a świeżo odświeżony ekran
- * czytałby NOWY. `useContext` zwróciłby wtedy `undefined`, czyli — po tym rzucie niżej —
+ * czytałby NOWY. `useContext` zwróciłby wtedy `undefined`, czyli - po tym rzucie niżej -
  * „useTheme poza ThemeProvider" na ekranie, który stoi dokładnie wewnątrz providera.
  * Tożsamość kontekstu MUSI przetrwać odświeżenie komponentów, które go czytają,
  * więc mieszka poza granicą odświeżania.
  *
- * Kontekst i hook zostają RAZEM, bo to jedna odpowiedzialność — dostęp do motywu.
+ * Kontekst i hook zostają RAZEM, bo to jedna odpowiedzialność - dostęp do motywu.
  * Rozdzielenie ich kazałoby eksportować sam obiekt kontekstu szerzej, a wtedy
  * `useContext(ThemeContext)` z pominięciem hooka omijałby rzut i wracał `undefined`.
  *

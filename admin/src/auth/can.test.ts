@@ -1,8 +1,8 @@
 /**
- * UZ Aero — panel: brama widoczności pozycji nawigacji (moduł czysty).
+ * UZ Aero - panel: brama widoczności pozycji nawigacji (moduł czysty).
  *
  * Testujemy DECYZJĘ, nie wygląd: czy pozycja jest klikalna i czy odmowa niesie powód.
- * Renderowania drzew nie ruszamy — specyfikacją wyglądu jest mockup.
+ * Renderowania drzew nie ruszamy - specyfikacją wyglądu jest mockup.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -33,7 +33,7 @@ describe('can', () => {
     for (const capability of ADMIN) expect(can(ADMIN, capability)).toBe(true);
   });
 
-  it('BRAK listy zdolności zamyka wszystko — niewiedza nie otwiera', () => {
+  it('BRAK listy zdolności zamyka wszystko - niewiedza nie otwiera', () => {
     // Stan przejściowy (sesja jeszcze się ładuje) nie może na ułamek sekundy
     // pokazać pełnej nawigacji, bo migotanie uprawnień wygląda jak awaria.
     expect(can(undefined, 'panel.access')).toBe(false);
@@ -42,7 +42,7 @@ describe('can', () => {
 });
 
 describe('denialReason', () => {
-  it('mówi, KOGO prosić — a nie tylko, że się nie da', () => {
+  it('mówi, KOGO prosić - a nie tylko, że się nie da', () => {
     expect(denialReason('thresholds.manage')).toBe('Wymaga roli: administrator');
     expect(denialReason('flags.resolve')).toBe('Wymaga roli: administrator lub szef wyszkolenia');
   });

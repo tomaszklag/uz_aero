@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: DTO floty → wiersze tabeli `A07` (moduł CZYSTY).
+ * UZ Aero - panel: DTO floty → wiersze tabeli `A07` (moduł CZYSTY).
  *
  * Ekran jest `.tsx` bez decyzji o treści: plakietki, podpisy i to, który odczyt jest
  * nieświeży, rozstrzyga się tutaj i ma test w Node.
@@ -9,12 +9,12 @@
  * w telefonie: `live` (bez adnotacji) / `cache` (z wiekiem, amber) / `brak`
  * („brak danych"). Kolumny „Claim teraz", „Ostatnie MH" i „Ostatni FOB" przychodzą
  * Z TELEFONÓW wraz ze zdarzeniami, więc każda z nich musi umieć powiedzieć „nie wiem".
- * **Zera za brak nie podstawiamy nigdy** — `0 L` w kolumnie paliwa jest twierdzeniem
+ * **Zera za brak nie podstawiamy nigdy** - `0 L` w kolumnie paliwa jest twierdzeniem
  * o pustym zbiorniku, a brak odczytu nim nie jest.
  *
  * ══ DLACZEGO „ZAJĘTY", A NIE „W LOCIE" ══
  * Mockup A07 podpisuje aktywny claim plakietką „W locie". Projekcja `sessions` nie
- * niesie stanu silnika — to ta sama granica, o którą rozbił się chip „W locie" na
+ * niesie stanu silnika - to ta sama granica, o którą rozbił się chip „W locie" na
  * liście dni (`A02`, baner „Plakietki »W locie« nie ma"). Claim znaczy „ktoś zajął
  * jednostkę na dziś"; czy w tej chwili kołuje, czy stoi na płycie, serwer nie wie,
  * a panel nie zgaduje. Rozjazd sprostowany jawnie w mockupie (sekcja „Sprostowanie
@@ -30,7 +30,7 @@ import { dayLink, type DayLink } from './fleetFilters';
 /**
  * Od kiedy odczyt z telefonu dostaje kolor amber.
  *
- * Próg PREZENTACJI, nie reguła domeny — mockup A07 mówi wprost: „Wpis starszy niż 24 h
+ * Próg PREZENTACJI, nie reguła domeny - mockup A07 mówi wprost: „Wpis starszy niż 24 h
  * dostaje kolor amber; to nie awaria, tylko informacja, że samolot od tego czasu mógł
  * stać albo lecieć bez zasięgu". Dlatego liczba mieszka tutaj, a nie w `tolerances.ts`:
  * nie wpływa na żadną flagę ani na żadną liczbę dnia. Progi, które coś rozstrzygają,
@@ -44,7 +44,7 @@ export interface FleetBadge {
   dot?: boolean;
 }
 
-/** Trzy stany świeżości §4.8 — `live` / `cache` / `brak` pod nazwami z `SZABLON.html`. */
+/** Trzy stany świeżości §4.8 - `live` / `cache` / `brak` pod nazwami z `SZABLON.html`. */
 export type Freshness = 'fresh' | 'stale' | 'none';
 
 /**
@@ -52,19 +52,19 @@ export type Freshness = 'fresh' | 'stale' | 'none';
  *
  * Nazwa klasy jest DECYZJĄ O TREŚCI, więc mieszka w module czystym z testem, a nie
  * w interpolacji w `.tsx`. Powód nie jest estetyczny: do 2026-08-01 ekran `A07`
- * sklejał `` `cell-sub fresh-${freshness}` ``, czyli wypisywał `fresh-stale` —
+ * sklejał `` `cell-sub fresh-${freshness}` ``, czyli wypisywał `fresh-stale` -
  * klasę, której nie definiuje ani `SZABLON.html`, ani żaden arkusz panelu. Trzy stany
  * były policzone, przetestowane i NIEWIDOCZNE. Modyfikatory nazywają się tak samo jak
- * stany, bo tak nazywa je szablon (`.cell-sub.fresh/.stale/.none`) — a reguła „mockup
+ * stany, bo tak nazywa je szablon (`.cell-sub.fresh/.stale/.none`) - a reguła „mockup
  * wygrywa" dotyczy też nazw klas, bo to po nich grepuje recenzent.
  */
 export function freshClass(freshness: Freshness): string {
   return `cell-sub ${freshness}`;
 }
 
-/** Wartość z podpisem świeżości — wspólny kształt trzech kolumn stanu. */
+/** Wartość z podpisem świeżości - wspólny kształt trzech kolumn stanu. */
 export interface FreshCell {
-  /** Główna wartość albo „—", gdy jej nie ma. */
+  /** Główna wartość albo „-", gdy jej nie ma. */
   text: string;
   /** Podpis pod wartością; `null` = nic do dodania. */
   sub: string | null;
@@ -76,10 +76,10 @@ export interface FleetRow {
   id: string;
   reg: string;
   type: string;
-  /** Rok albo „—": kolumna `aircraft.year` jest `NULL`-owalna. */
+  /** Rok albo „-": kolumna `aircraft.year` jest `NULL`-owalna. */
   year: string;
   capacity: string;
-  /** Próg `FUEL_MISMATCH` policzony PRZEZ SERWER — panel go wyłącznie formatuje. */
+  /** Próg `FUEL_MISMATCH` policzony PRZEZ SERWER - panel go wyłącznie formatuje. */
   tolerance: string;
   mhFormat: FleetBadge;
   /** `null` = Dual nieobowiązkowy; kolumna pokazuje wtedy kreskę. */
@@ -88,11 +88,11 @@ export interface FleetRow {
   claim: FreshCell & { badge: FleetBadge; sessionUuid: string | null };
   mh: FreshCell;
   fuel: FreshCell;
-  /** Przejście do dni tej jednostki — ma je KAŻDY wiersz (patrz `dayLink`). */
+  /** Przejście do dni tej jednostki - ma je KAŻDY wiersz (patrz `dayLink`). */
   day: DayLink;
   /** `true` = jednostka wyłączona ze służby; cały wiersz jest przygaszony (mockup A07). */
   dim: boolean;
-  /** Surowe DTO — szuflada otwiera wiersz, który już jest na liście. */
+  /** Surowe DTO - szuflada otwiera wiersz, który już jest na liście. */
   dto: AircraftListItemDto;
 }
 
@@ -108,7 +108,7 @@ export function fleetRows(items: readonly AircraftListItemDto[], now: number): F
       id: dto.id,
       reg: dto.reg,
       type: dto.type,
-      year: dto.year == null ? '—' : String(dto.year),
+      year: dto.year == null ? '-' : String(dto.year),
       capacity: litres(dto.capacityL),
       tolerance: toleranceText(dto.fuelToleranceL),
       mhFormat: MH_BADGE[dto.mhFormat],
@@ -128,7 +128,7 @@ export function fleetRows(items: readonly AircraftListItemDto[], now: number): F
  * Próg jako „±62.9 L".
  *
  * Jedno miejsce po przecinku, bo tyle znaczy 5% z pojemności podanej w pełnych litrach,
- * a `litres()` zaokrągliłoby `62.85` do `63` — czyli pokazałoby liczbę, której serwer
+ * a `litres()` zaokrągliłoby `62.85` do `63` - czyli pokazałoby liczbę, której serwer
  * nie wysłał, w miejscu, gdzie chodzi właśnie o dokładny próg. Zaokrąglenie mieszka
  * w module czystym z testem, nigdy w `.tsx` (test architektury tego pilnuje).
  */
@@ -143,7 +143,7 @@ function serviceCell(dto: AircraftListItemDto): FleetBadge & { sub: string | nul
       tone: 'red',
       dot: true,
       // Mockup ma tu „od 19 JUN 2026 · remont". Daty wyłączenia ani powodu nie ma
-      // w bazie — `aircraft.updated_at` mówi „kiedy ruszono wiersz", nie „od kiedy
+      // w bazie - `aircraft.updated_at` mówi „kiedy ruszono wiersz", nie „od kiedy
       // stoi", a powód mieszka w dzienniku audytu. Zamiast wpisać cudzą wielkość pod
       // tą etykietą, mówimy tyle, ile wiadomo.
       //
@@ -161,21 +161,21 @@ function serviceCell(dto: AircraftListItemDto): FleetBadge & { sub: string | nul
 }
 
 /**
- * Jednostki WYŁĄCZONE, które mimo to mają otwarty dzień — `null`, gdy nie ma takich.
+ * Jednostki WYŁĄCZONE, które mimo to mają otwarty dzień - `null`, gdy nie ma takich.
  *
  * ══ DLACZEGO TO W OGÓLE MOŻE ZAJŚĆ ══
  * Wyłączenie ze służby nie jest bramką na `POST /events` i być nią nie może: rejestr
  * jest append-only i przyjmuje FAKTY z terenu, a odrzucenie paczki złamałoby regułę
  * nadrzędną („brak sieci NIGDY nie blokuje pracy pilota", `CLAUDE.md`) i zgubiłoby
  * dane o locie, który i tak się odbył. Blokada działa na telefonach, KTÓRE POBRAŁY
- * świeżą konfigurację — telefon z cache'em referencyjnym sprzed wyłączenia otworzy
+ * świeżą konfigurację - telefon z cache'em referencyjnym sprzed wyłączenia otworzy
  * dzień mimo blokady w panelu.
  *
  * Ten baner jest JEDYNĄ informacją, po której administrator się o tym dowie.
  */
 export interface DisabledOpenDays {
   regs: string[];
-  /** Zdanie do banera — z odmienioną liczbą jednostek. */
+  /** Zdanie do banera - z odmienioną liczbą jednostek. */
   text: string;
 }
 
@@ -191,7 +191,7 @@ export function disabledOpenDays(items: readonly AircraftListItemDto[]): Disable
       : 'są wyłączone ze służby, a mimo to mają otwarty dzień lotny';
   return {
     regs,
-    text: `${regs.join(' · ')} ${what}. Blokada wyboru działa na telefonach, które pobrały świeżą konfigurację; telefon z cache'em referencyjnym sprzed wyłączenia potrafi otworzyć dzień mimo niej. Zdarzenia z terenu przyjmujemy zawsze — dzień domknie się normalnie i trafi na listę dni lotnych.`,
+    text: `${regs.join(' · ')} ${what}. Blokada wyboru działa na telefonach, które pobrały świeżą konfigurację; telefon z cache'em referencyjnym sprzed wyłączenia potrafi otworzyć dzień mimo niej. Zdarzenia z terenu przyjmujemy zawsze - dzień domknie się normalnie i trafi na listę dni lotnych.`,
   };
 }
 
@@ -199,7 +199,7 @@ export function disabledOpenDays(items: readonly AircraftListItemDto[]): Disable
  * Claim: zajęty / wolny / nie do wyboru.
  *
  * Jednostka wyłączona ze służby dostaje własny stan, bo jej „wolny" znaczyłoby coś
- * nieprawdziwego — nikt jej nie weźmie, bo nie ma jej na liście wyboru.
+ * nieprawdziwego - nikt jej nie weźmie, bo nie ma jej na liście wyboru.
  */
 function claimCell(
   dto: AircraftListItemDto,
@@ -220,7 +220,7 @@ function claimCell(
   if (dto.serviceStatus === 'disabled') {
     return {
       badge: { text: 'nie do wyboru', tone: 'dim' },
-      text: '—',
+      text: '-',
       sub: 'wyłączony ze służby',
       freshness: 'none',
       sessionUuid: null,
@@ -229,14 +229,14 @@ function claimCell(
 
   return {
     badge: { text: 'wolny', tone: 'dim' },
-    text: '—',
+    text: '-',
     sub: dto.reading == null ? 'nigdy nie przejmowany' : `zwolniony ${stamp(dto.reading.at)}`,
     freshness: dto.reading == null ? 'none' : syncFreshness(dto.lastEventAt, now),
     sessionUuid: null,
   };
 }
 
-/** Ostatni odczyt licznika — formatowany WEDŁUG konfiguracji tej jednostki. */
+/** Ostatni odczyt licznika - formatowany WEDŁUG konfiguracji tej jednostki. */
 function mhCell(dto: AircraftListItemDto, now: number): FreshCell {
   if (dto.reading == null) return NO_DATA;
   return {
@@ -261,10 +261,10 @@ function fuelCell(dto: AircraftListItemDto, now: number): FreshCell {
 }
 
 /** Trzeci stan świeżości: „brak danych". Nigdy zero, nigdy pusty napis. */
-const NO_DATA: FreshCell = { text: '—', sub: 'brak danych z telefonu', freshness: 'none' };
+const NO_DATA: FreshCell = { text: '-', sub: 'brak danych z telefonu', freshness: 'none' };
 
 /**
- * Wiek OSTATNIEGO SYNCU, nie wiek odczytu — i to jest różnica, którą ekran ma
+ * Wiek OSTATNIEGO SYNCU, nie wiek odczytu - i to jest różnica, którą ekran ma
  * komunikować. Odczyt sprzed doby przy syncu sprzed trzech minut znaczy „samolot stoi";
  * ten sam odczyt przy telefonie milczącym od wczoraj znaczy „nie wiemy, co się dzieje".
  */
@@ -287,7 +287,7 @@ function parseStamp(value: string | null): number | null {
   return Number.isNaN(ms) ? null : ms;
 }
 
-/** „30 Jul 2026 18:41" — data i godzina UTC w jednym podpisie kolumny. */
+/** „30 Jul 2026 18:41" - data i godzina UTC w jednym podpisie kolumny. */
 function stamp(ms: number): string {
   return `${dateUtcShort(ms)} ${timeUtc(ms)} UTC`;
 }
@@ -306,7 +306,7 @@ export function fleetEmpty(narrowed: boolean): EmptyCopy {
   if (narrowed) {
     return {
       title: 'ŻADNA JEDNOSTKA NIE PASUJE',
-      note: 'Zdejmij zawężenie albo popraw wyszukiwanie. Samolotów nie kasujemy — wyłączenie ze służby zabiera jednostkę z listy wyboru w aplikacji, a wiersz zostaje.',
+      note: 'Zdejmij zawężenie albo popraw wyszukiwanie. Samolotów nie kasujemy - wyłączenie ze służby zabiera jednostkę z listy wyboru w aplikacji, a wiersz zostaje.',
     };
   }
   return {

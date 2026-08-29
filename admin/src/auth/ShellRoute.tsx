@@ -1,7 +1,7 @@
 /**
- * UZ Aero — panel: brama sesji dla wszystkiego, co jest ZA logowaniem.
+ * UZ Aero - panel: brama sesji dla wszystkiego, co jest ZA logowaniem.
  *
- * Jedno miejsce, w którym panel odpowiada na pytanie „czy wolno tu wejść" — i jedno,
+ * Jedno miejsce, w którym panel odpowiada na pytanie „czy wolno tu wejść" - i jedno,
  * w którym składa ramę. Rozsianie tego po ekranach dałoby konstrukcję, w której nikt
  * nie wie, czy każdy ekran pamiętał o sprawdzeniu.
  *

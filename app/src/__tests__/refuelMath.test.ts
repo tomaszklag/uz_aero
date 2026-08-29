@@ -1,8 +1,8 @@
 /**
- * UZ Aero — test arytmetyki ekranu TANKOWANIE (mockup 06).
+ * UZ Aero - test arytmetyki ekranu TANKOWANIE (mockup 06).
  *
  * Kalkulacja zużycia jest jedyną liczbą na tym ekranie, której pilot nie odczyta
- * z przyrządu — więc jedyną, której błędu nie ma jak zauważyć. Test odwzorowuje
+ * z przyrządu - więc jedyną, której błędu nie ma jak zauważyć. Test odwzorowuje
  * kanoniczny dzień 22 JUNE z `docs/design-notes.md`, te same liczby, które pokazuje
  * mockup: odczyt startowy 150 L, cykl 08:12 → 10:34 (blok 2:22), stan przed
  * tankowaniem 112 L → 38 L zużycia → ~16 L/h.
@@ -73,7 +73,7 @@ describe('punkt odniesienia paliwa', () => {
   });
 
   it('wybiera odczyt najpóźniejszy CHRONOLOGICZNIE, nie ostatni zapisany', () => {
-    // Wpis ręczny i korekta czasu wstawiają zdarzenia z cofniętym czasem — kolejność
+    // Wpis ręczny i korekta czasu wstawiają zdarzenia z cofniętym czasem - kolejność
     // wstawienia wskazałaby wtedy nieaktualny odczyt.
     const ref = lastFuelReference([
       event('refuel', at(10, 48), { beforeL: 112, addedL: 48, afterL: 160 }),
@@ -106,7 +106,7 @@ describe('czas pracy silnika w oknie', () => {
     );
   });
 
-  it('liczy ręczny off/on-block — wada naprawiona 2026-08-05', () => {
+  it('liczy ręczny off/on-block - wada naprawiona 2026-08-05', () => {
     // Dzień, w którym GPS zawiódł i wzlot trafił do rejestru wpisem ręcznym (ekran 08).
     // Przed poprawką mianownik pomijał te 90 minut, więc średnia L/h wychodziła zawyżona.
     const events = [
@@ -145,12 +145,12 @@ describe('kalkulacja zużycia', () => {
     expect(hoursMinutes(estimate!.engineMs)).toBe('1h 13 min');
   });
 
-  it('bez pracy silnika nie ma czego dzielić — null, nie nieskończoność', () => {
+  it('bez pracy silnika nie ma czego dzielić - null, nie nieskończoność', () => {
     const events = [preflight(at(8, 0), 150)];
     expect(estimateConsumption(events, projectSession(events), 150, at(8, 30))).toBeNull();
   });
 
-  it('wzrost paliwa nie daje ujemnego zużycia — null zamiast wymyślonej liczby', () => {
+  it('wzrost paliwa nie daje ujemnego zużycia - null zamiast wymyślonej liczby', () => {
     // Ktoś zatankował poza aplikacją; domena zgłosi FUEL_MISMATCH, my nie zgadujemy.
     const state = projectSession(canonicalDay);
     expect(estimateConsumption(canonicalDay, state, 165, at(10, 48))).toBeNull();

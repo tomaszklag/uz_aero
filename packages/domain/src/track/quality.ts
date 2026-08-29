@@ -1,12 +1,12 @@
 /**
- * UZ Aero — bramka jakości śladu: KTÓRY punkt wchodzi do trasy i dlaczego nie.
+ * UZ Aero - bramka jakości śladu: KTÓRY punkt wchodzi do trasy i dlaczego nie.
  *
- * Detektor ma już `fixUsable` i ono jest tu źródłem prawdy — ten moduł nie wprowadza
+ * Detektor ma już `fixUsable` i ono jest tu źródłem prawdy - ten moduł nie wprowadza
  * własnych progów, tylko NAZYWA powód. Różnica jest wyłącznie w bogactwie odpowiedzi:
  * automatowi w locie wystarczy „użyteczny / nie", a ekranowi diagnostycznemu po locie
  * potrzebny jest powód do wpisania w kolumnę „Uwagi" (mockup A02c).
  *
- * Spójność obu funkcji pilnuje test — gdyby ktoś zmienił próg w jednym miejscu,
+ * Spójność obu funkcji pilnuje test - gdyby ktoś zmienił próg w jednym miejscu,
  * a w drugim nie, ślad przestałby pokazywać to, co naprawdę widział algorytm.
  */
 
@@ -15,7 +15,7 @@ import { distanceM, METERS_PER_NM } from '../detection/geo';
 import { GPS_THRESHOLDS, type GpsThresholds } from '../detection/thresholds';
 import type { RawTrackEntry, TrackRejection } from './point';
 
-/** Godzina w milisekundach — do przeliczenia skoku pozycji na prędkość implikowaną. */
+/** Godzina w milisekundach - do przeliczenia skoku pozycji na prędkość implikowaną. */
 const MS_PER_HOUR = 3_600_000;
 
 /** Wpis śladu w postaci, jakiej oczekuje `fixUsable` (kontrakt `null` = brak pomiaru). */
@@ -35,7 +35,7 @@ function toFix(entry: RawTrackEntry) {
  * Prędkość implikowana przez przeskok między dwoma odczytami (węzły).
  *
  * Ten sam test, którym detektor odsiewa teleportację (`flightDetector.ts` §plauzybilność).
- * Zwraca `null`, gdy odstęp czasu jest zerowy albo ujemny — dzielenie przez zero dałoby
+ * Zwraca `null`, gdy odstęp czasu jest zerowy albo ujemny - dzielenie przez zero dałoby
  * nieskończoność i odrzuciłoby poprawny punkt tylko dlatego, że dwa fixy mają ten sam
  * znacznik czasu (zdarza się przy zapisie wsadowym).
  */
@@ -52,7 +52,7 @@ export function impliedSpeedKt(
 /**
  * Powód odrzucenia punktu albo `null`, gdy punkt jest dobry.
  *
- * @param previous ostatni PRZYJĘTY punkt — do testu skoku. Null przy pierwszym punkcie
+ * @param previous ostatni PRZYJĘTY punkt - do testu skoku. Null przy pierwszym punkcie
  *   trasy: nie ma względem czego mierzyć przeskoku, więc test skoku się nie stosuje.
  */
 export function rejectionReason(
@@ -85,7 +85,7 @@ export function rejectionReason(
 
 /**
  * Czy wpis przeszedłby bramkę DETEKTORA (bez testu skoku, który wymaga kontekstu).
- * Istnieje po to, żeby test spójności miał czego pilnować — patrz nagłówek modułu.
+ * Istnieje po to, żeby test spójności miał czego pilnować - patrz nagłówek modułu.
  */
 export function entryUsableByDetector(
   entry: RawTrackEntry,

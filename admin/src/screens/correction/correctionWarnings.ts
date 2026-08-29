@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: BANER KOLIZJI nad formularzem korekty (moduł CZYSTY).
+ * UZ Aero - panel: BANER KOLIZJI nad formularzem korekty (moduł CZYSTY).
  *
  * ══ TO JEST MIEJSCE PO BRAMCE `400 day_open` ══
  * Do etapu D serwer ODMAWIAŁ korekty, gdy sesja nie miała `day_close`, a panel pokazywał
@@ -14,19 +14,19 @@
  * ══ BANER NIE BLOKUJE I TO JEST CAŁA JEGO KONSTRUKCJA ══
  * Nie ma tu pola „disabled", „blocking" ani niczego, z czego `.tsx` mógłby wyprowadzić
  * wyszarzenie przycisku. Ostrzeżenie, które po cichu odbiera możliwość działania, jest
- * bramką z ładniejszym napisem — a tę właśnie usunęliśmy. Jedyne, co ten moduł robi, to
+ * bramką z ładniejszym napisem - a tę właśnie usunęliśmy. Jedyne, co ten moduł robi, to
  * nazywa kolizję i mówi, co z niej wyniknie.
  *
  * Treść bierzemy z KOMUNIKATU DOMENY (`packages/domain/src/rules/sessionRules.ts`),
  * bo to on opisuje regułę; panel dokłada wyłącznie zdanie o KONSEKWENCJI, którego
- * domena nie zna — ona nie wie nic o synchronizacji jednokierunkowej ani o tym, że
+ * domena nie zna - ona nie wie nic o synchronizacji jednokierunkowej ani o tym, że
  * administrator siedzi przy innym ekranie niż pilot.
  */
 
 import type { RuleViolation } from '@uzaero/domain';
 
 export interface CorrectionWarningItem {
-  /** Kod domeny — pokazywany, bo po nim wraca się do reguły w kodzie i w audycie. */
+  /** Kod domeny - pokazywany, bo po nim wraca się do reguły w kodzie i w audycie. */
   code: string;
   /** Komunikat domeny: co jest kolizją. */
   text: string;
@@ -37,7 +37,7 @@ export interface CorrectionWarningItem {
 export interface CorrectionWarningBanner {
   /**
    * Zawsze `warn`, nigdy `danger`. Kolizja nie jest błędem: rejestr jest append-only,
-   * więc obie strony mogą pisać i nic się nie nadpisze — pytanie brzmi tylko, czy
+   * więc obie strony mogą pisać i nic się nie nadpisze - pytanie brzmi tylko, czy
    * administrator wie, że pisze nie sam.
    */
   tone: 'warn';
@@ -51,7 +51,7 @@ export interface CorrectionWarningBanner {
  *
  * Rozdzielone, bo prowadzą w RÓŻNE strony: przy otwartej sesji problemem jest to, że
  * pilot dopisze zdarzenia PO korekcie (i liczby znów się zmienią), a przy otwartym oknie
- * sesji (24 h od zdania) — że pilot poprawi to samo drugi raz, po swojemu.
+ * sesji (24 h od zdania) - że pilot poprawi to samo drugi raz, po swojemu.
  */
 const CONSEQUENCE: Record<string, string> = {
   ADMIN_EDIT_SESSION_ACTIVE:
@@ -87,9 +87,9 @@ export function correctionWarningBanner(
         : `Ta korekta wchodzi w ${warnings.length} kolizje z pilotem.`,
     items,
     // Zdanie kluczowe: mówi wprost, że decyzja należy do człowieka. Bez niego baner
-    // czytałoby się jak zapowiedź odmowy — czyli jak bramka, której już nie ma.
+    // czytałoby się jak zapowiedź odmowy - czyli jak bramka, której już nie ma.
     note:
-      'To jest ostrzeżenie, nie odmowa — zapis jest możliwy i przycisk działa. Rejestr ' +
+      'To jest ostrzeżenie, nie odmowa - zapis jest możliwy i przycisk działa. Rejestr ' +
       'jest append-only, więc nic się nie nadpisze; obie strony po prostu dopiszą swoje. ' +
       'Decyzja należy do Ciebie.',
   };

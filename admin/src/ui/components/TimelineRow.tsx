@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: POZYCJA OSI ZDARZEŃ (`.tl-row` z `SZABLON.html`).
+ * UZ Aero - panel: POZYCJA OSI ZDARZEŃ (`.tl-row` z `SZABLON.html`).
  *
  * ══ `voided` PRZEKREŚLA, NIGDY NIE UKRYWA ══
  * Rejestr zdarzeń jest append-only i to właśnie te wiersze tłumaczą, dlaczego liczby
@@ -8,7 +8,7 @@
  * dla którego istnieje. Dlatego `voided` jest modyfikatorem WYGLĄDU (`.tl-row.voided`
  * przekreśla nazwę i czas), a nie warunkiem renderowania.
  *
- * Kropka niesie ton zdarzenia, a nie jego ważność — zielona zaczyna, czerwona kończy,
+ * Kropka niesie ton zdarzenia, a nie jego ważność - zielona zaczyna, czerwona kończy,
  * niebieska opisuje lot, bursztynowa wymaga uwagi. Ten sam słownik, co plakietki.
  */
 
@@ -23,11 +23,11 @@ interface TimelineRowProps {
   name: string;
   /** Druga linia: co to zdarzenie niosło. Zawsze TEKST, nigdy HTML (patrz niżej). */
   meta: ReactNode;
-  /** Plakietka zamykająca wiersz — rodzaj zdarzenia jednym słowem. */
+  /** Plakietka zamykająca wiersz - rodzaj zdarzenia jednym słowem. */
   badge?: ReactNode;
   /**
    * Akcja przy wierszu (przejście do korekty tego zdarzenia, `A02b`). Osobny slot od
-   * `badge`, bo czwarty tor siatki `.tl-row` przyjmuje JEDNO dziecko — dopiero razem
+   * `badge`, bo czwarty tor siatki `.tl-row` przyjmuje JEDNO dziecko - dopiero razem
    * trafiają do wspólnego `.tl-act`. Wiersz bez akcji zostaje w markupie identyczny
    * jak w mockupie `A02a`.
    */
@@ -53,7 +53,7 @@ export function TimelineRow({
       <span>
         {/* Nazwa i opis idą jako DZIECI REACTA, nigdy przez `dangerouslySetInnerHTML`.
             Payloady zdarzeń pochodzą z telefonów i zawierają dowolne napisy wpisane
-            przez pilota (`notes`, `client`) — to jest ta granica, na której panel
+            przez pilota (`notes`, `client`) - to jest ta granica, na której panel
             renderujący rejestr przestaje być podatny na wstrzyknięcie. */}
         <span className="tl-name">{name}</span>
         <span className="tl-meta">{meta}</span>

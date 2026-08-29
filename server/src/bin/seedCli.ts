@@ -1,7 +1,7 @@
 /**
- * UZ Aero (serwer) — `npm run seed`: migracje + konto administratora.
+ * UZ Aero (serwer) - `npm run seed`: migracje + konto administratora.
  *
- * `SEED_PASSWORD` jest wymagane jawnie — seed z domyślnym hasłem zaszytym w kodzie
+ * `SEED_PASSWORD` jest wymagane jawnie - seed z domyślnym hasłem zaszytym w kodzie
  * prędzej czy później trafiłby na serwer, na którym nikt go nie zmienił.
  */
 

@@ -1,5 +1,5 @@
 /**
- * UZ Aero — CorrectionSheet (mockup `design/10e` „Korekta zdarzenia"; wcześniej 04c)
+ * UZ Aero - CorrectionSheet (mockup `design/10e` „Korekta zdarzenia"; wcześniej 04c)
  *
  * Arkusz korekty w trybie edycji sesji: nazwa korygowanego zdarzenia, czas, wiersze
  * odniesienia (metoda wykrycia, wpływ na czasy), opcjonalny powód i wejście w historię
@@ -7,19 +7,19 @@
  *
  * ══ UNIEWAŻNIENIE JEST IKONĄ, NIE PRZYCISKIEM ══
  * Kosz w nagłówku (uwaga z urządzenia, 2026-08-14). Wcześniej stał tu pełnowymiarowy
- * czerwony przycisk pod separatorem — i choć separator miał go oddalić od „Zapisz",
+ * czerwony przycisk pod separatorem - i choć separator miał go oddalić od „Zapisz",
  * skutek był odwrotny: krzyczał jak akcja główna arkusza. A intencją wchodzącego
  * w korektę jest POPRAWKA; kasowanie to rzadki wyjątek, który ma być dostępny, nie
  * eksponowany.
  *
  * ══ CZEGO TU ŚWIADOMIE NIE MA ══
  * Wyjaśnień, jak działa rejestr (zgłoszenie z urządzenia, 2026-08-14). Baner „korekta
- * nie kasuje historii — zapisujemy osobne zdarzenie korygujące…" i przypis „oznacza
+ * nie kasuje historii - zapisujemy osobne zdarzenie korygujące…" i przypis „oznacza
  * zdarzenie jako błędne (nie usuwa go z rejestru)" opisywały wewnętrzną budowę
  * append-only komuś, kto o nią nie pytał. Ta sama reguła zdjęła wcześniej przypis spod
  * pasa edycji i podpowiedzi „litry z paliwomierza": arkusz odpowiada na pytanie ZADANE.
  *
- * Czas ustawia wspólny `TimeStepper` — jedna czynność ma w aplikacji jeden kształt.
+ * Czas ustawia wspólny `TimeStepper` - jedna czynność ma w aplikacji jeden kształt.
  */
 
 import React, { useEffect, useState } from 'react';
@@ -43,32 +43,32 @@ export interface CorrectionSheetProps {
   visible: boolean;
   /** Nazwa zdarzenia z kontekstem („Landing · Lot 1"). */
   eventLabel: string;
-  /** Pierwotny czas zdarzenia (ms) — punkt odniesienia delty. */
+  /** Pierwotny czas zdarzenia (ms) - punkt odniesienia delty. */
   originalTime: number;
   /**
-   * Pochodzenie zapisu („auto · GPS" / „ręcznie") — od 2026-08-14 NIE JEST plakietką
+   * Pochodzenie zapisu („auto · GPS" / „ręcznie") - od 2026-08-14 NIE JEST plakietką
    * na ekranie, tylko źródłem podpisu przy zmianie czasu („względem odczytu GPS").
    * Metodę wykrycia niesie osobny wiersz odniesienia, więc plakietka ją dublowała.
    */
   methodBadge?: string | null;
-  /** Wiersze odniesienia dla bieżąco ustawionego czasu — w tym wpływ na czasy. */
+  /** Wiersze odniesienia dla bieżąco ustawionego czasu - w tym wpływ na czasy. */
   refsFor: (newTime: number) => CorrectionRef[];
   formatTime: (t: number) => string;
-  /** Górna granica czasu (zwykle „teraz") — korekta w przyszłość to przepowiednia. */
+  /** Górna granica czasu (zwykle „teraz") - korekta w przyszłość to przepowiednia. */
   maxTime: number;
   /** Napis akcji destrukcyjnej („TEGO LĄDOWANIA NIE BYŁO"). */
   voidLabel: string;
   busy?: boolean;
-  /** Ile poprawek ma już to zdarzenie — wejście w historię zmian (issue #43). */
+  /** Ile poprawek ma już to zdarzenie - wejście w historię zmian (issue #43). */
   historyCount?: number;
   onOpenHistory?: () => void;
-  /** Powód jest OPCJONALNY — patrz `ReasonField`. */
+  /** Powód jest OPCJONALNY - patrz `ReasonField`. */
   onSave: (newTime: number, reason: string | null) => void;
   onVoid: (reason: string | null) => void;
   onCancel: () => void;
 }
 
-/** Zakres korekty czasu (min) — dalej niż godzina to nie korekta, tylko inne zdarzenie. */
+/** Zakres korekty czasu (min) - dalej niż godzina to nie korekta, tylko inne zdarzenie. */
 const MAX_SHIFT_MIN = 60;
 
 export function CorrectionSheet({
@@ -92,7 +92,7 @@ export function CorrectionSheet({
   const [offsetMin, setOffsetMin] = useState(0);
   const [reason, setReason] = useState('');
 
-  // Każde otwarcie startuje od czasu pierwotnego — arkusz nie pamięta porzuconej edycji.
+  // Każde otwarcie startuje od czasu pierwotnego - arkusz nie pamięta porzuconej edycji.
   useEffect(() => {
     if (visible) {
       setOffsetMin(0);
@@ -100,7 +100,7 @@ export function CorrectionSheet({
     }
   }, [visible, originalTime]);
 
-  /** Pusty powód to BRAK powodu, nie pusty napis — historia zmian ma go nie pokazywać. */
+  /** Pusty powód to BRAK powodu, nie pusty napis - historia zmian ma go nie pokazywać. */
   const trimmedReason = (): string | null => (reason.trim() === '' ? null : reason.trim());
 
   const newTime = originalTime + offsetMin * 60_000;
@@ -127,7 +127,7 @@ export function CorrectionSheet({
               style={{ flex: 1 }}
             />
             {/* Bez powodu odmowy pod przyciskiem (uwaga z urządzenia, 2026-08-14):
-                „Zmień czas albo użyj akcji poniżej" opisywało stan, który widać —
+                „Zmień czas albo użyj akcji poniżej" opisywało stan, który widać -
                 arkusz otwarty na wartości pierwotnej niczego jeszcze nie zmienił. */}
             <ActionButton
               label="ZAPISZ KOREKTĘ"
@@ -144,7 +144,7 @@ export function CorrectionSheet({
       }
     >
       {/*
-        Tytuł, cel korekty i — po prawej — KOSZ.
+        Tytuł, cel korekty i - po prawej - KOSZ.
         Unieważnienie zdarzenia było wcześniej pełnowymiarowym czerwonym przyciskiem pod
         separatorem i krzyczało jak akcja główna, choć intencją wchodzącego w korektę
         jest poprawka, a nie kasowanie (uwaga z urządzenia, 2026-08-14).
@@ -165,7 +165,7 @@ export function CorrectionSheet({
       {/*
         CEL KOREKTY jednym wierszem, jak w arkuszu notatki i zrzutu (uwaga z urządzenia).
         Wcześniej stała tu karta w kolorowej ramce, z ikoną typu zdarzenia i plakietką
-        metody — trzy ozdoby wokół jednej informacji („co poprawiam"), z których:
+        metody - trzy ozdoby wokół jednej informacji („co poprawiam"), z których:
          • ramka i ikona niosły ton arkusza, nie stan danych,
          • plakietka „auto · GPS" powtarzała wiersz odniesienia „Metoda wykrycia"
            dwa centymetry niżej.
@@ -175,7 +175,7 @@ export function CorrectionSheet({
         {eventLabel.toUpperCase()}
       </AppText>
 
-      {/* Czas zdarzenia — WSPÓLNA kontrolka, nie własna para przycisków. Do issue #43
+      {/* Czas zdarzenia - WSPÓLNA kontrolka, nie własna para przycisków. Do issue #43
           arkusz miał tu prywatny `MinuteButton`: krok minutowy działał, ale godziny nie
           dało się wpisać z klawiatury, bo kontrolka nie umiała nic poza ±1. */}
       <TimeStepper
@@ -188,7 +188,7 @@ export function CorrectionSheet({
         max={Math.min(originalTime + MAX_SHIFT_MIN * 60_000, maxTime)}
       />
 
-      {/* Wiersze odniesienia — w tym wpływ na czasy, przeliczany na bieżąco. */}
+      {/* Wiersze odniesienia - w tym wpływ na czasy, przeliczany na bieżąco. */}
       {refsFor(newTime).map((ref) => (
         <View key={ref.label} style={styles.refRow}>
           <AppText variant="mono" tone="muted" style={styles.refText}>

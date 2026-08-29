@@ -1,5 +1,5 @@
 /**
- * UZ Aero — testy odświeżania cache referencyjnego (§4.8, `application/sync/referenceSync.ts`).
+ * UZ Aero - testy odświeżania cache referencyjnego (§4.8, `application/sync/referenceSync.ts`).
  *
  * Sedno: cache ma być nadpisywany prawdą serwera przy okazji, ale NIGDY psuty przez
  * brak sieci; 304 ma zerować wiek danych (adnotacja „· z cache · sync …" mówi o czasie
@@ -35,7 +35,7 @@ const T0 = Date.UTC(2026, 5, 22, 8, 0, 0);
 const PILOT = { id: 'TMK', code: 'TMK', name: 'Tomasz Małkiewicz' };
 const CREDS: StoredCredentials = { token: 'jwt-1', refreshToken: 'r1', pilot: PILOT };
 
-/** Wiersz floty z serwera — `fetchedAt` serwera jest ignorowany (stemplujemy lokalnie). */
+/** Wiersz floty z serwera - `fetchedAt` serwera jest ignorowany (stemplujemy lokalnie). */
 const axa = (over: Partial<ReferenceAircraft> = {}): ReferenceAircraft => ({
   id: 'SP-AXA',
   reg: 'SP-AXA',
@@ -102,7 +102,7 @@ class RefServer implements ServerPort {
   getSyncStatus = async (): Promise<SessionSyncStatus> => {
     throw new Error('nieużywane w tych testach');
   };
-  /** Droga powrotna (§4.9) ma własne testy — `eventRestore.test.ts`. */
+  /** Droga powrotna (§4.9) ma własne testy - `eventRestore.test.ts`. */
   pullEvents = async (): Promise<RemoteEventPage> => ({
     events: [],
     nextCursor: null,
@@ -161,7 +161,7 @@ describe('ReferenceSync', () => {
     expect(server.calls).toHaveLength(1);
   });
 
-  it('pusta flota omija bramę wieku — świeżo założony klub nie czeka kwadransa (issue #55)', async () => {
+  it('pusta flota omija bramę wieku - świeżo założony klub nie czeka kwadransa (issue #55)', async () => {
     const { clock, repo, server, sync } = harness();
     // Pierwsze logowanie PRZED założeniem floty w panelu (od issue #50 cache zasila
     // wyłącznie serwer): odpowiedź z pustą listą jest prawdziwa i stempluje „sprawdzone".
@@ -179,7 +179,7 @@ describe('ReferenceSync', () => {
     expect((await repo.getAircraft()).map((a) => a.reg)).toEqual(['SP-AXA']);
   });
 
-  it('refresh() nie zna bramy wieku — droga „SYNCHRONIZUJ TERAZ" pyta zawsze (issue #55)', async () => {
+  it('refresh() nie zna bramy wieku - droga „SYNCHRONIZUJ TERAZ" pyta zawsze (issue #55)', async () => {
     const { clock, server, sync } = harness();
     server.script = [
       { data: { aircraft: [axa()], pilots: [tmk] }, etag: 'e1' },
@@ -188,7 +188,7 @@ describe('ReferenceSync', () => {
     await sync.refreshIfStale();
 
     // Głęboko w oknie świeżości: pętla okazji by odpuściła, ale ręczne ponaglenie
-    // pyta „co serwer wie TERAZ" — z ETagiem, więc niezmieniona flota kosztuje 304.
+    // pyta „co serwer wie TERAZ" - z ETagiem, więc niezmieniona flota kosztuje 304.
     clock.advance(60_000);
     expect(await sync.refresh()).toBe('refreshed');
     expect(server.calls).toHaveLength(2);
@@ -219,7 +219,7 @@ describe('ReferenceSync', () => {
 
     expect(await sync.refreshIfStale()).toBe('skipped');
     expect((await repo.getAircraftById('SP-AXA'))?.claimPicId).toBe('KRZ');
-    // Brak stempla „sprawdzone" — kolejne wywołanie ma znowu spytać serwer.
+    // Brak stempla „sprawdzone" - kolejne wywołanie ma znowu spytać serwer.
     server.script = [{ data: { aircraft: [axa()], pilots: [tmk] }, etag: 'e1' }];
     expect(await sync.refreshIfStale()).toBe('refreshed');
   });

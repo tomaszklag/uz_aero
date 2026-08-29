@@ -1,7 +1,7 @@
 /**
- * UZ Aero (serwer) — trasa `GET /sheets/:tab` (§4.7).
+ * UZ Aero (serwer) - trasa `GET /sheets/:tab` (§4.7).
  *
- * Cel linków `export_log.sheet_url` i pudełka arkusza na ekranie 11 — dopóki karty
+ * Cel linków `export_log.sheet_url` i pudełka arkusza na ekranie 11 - dopóki karty
  * mieszkają w naszej bazie (bazodanowy adapter `SheetsPort`), to tu się je czyta.
  * Autoryzacja Bearer jak na pozostałych trasach: karta to dokument klubu,
  * nie strona publiczna.

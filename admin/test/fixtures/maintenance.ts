@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: odpowiedzi tras `/admin/api/maintenance/*` do testu renderu (`A11`).
+ * UZ Aero - panel: odpowiedzi tras `/admin/api/maintenance/*` do testu renderu (`A11`).
  *
  * Scenariusz jest ten z mockupu: dwie sesje różniące się od przeliczenia (jedna w dwóch
  * polach), 37 martwych tokenów obok 15 żywych, jeden dzień bez karty i jeden zablokowany
@@ -46,7 +46,7 @@ export function rebuildFixture(): RebuildReportDto {
 }
 
 /**
- * Raport z UDANEGO ZAPISU tych samych dwóch wierszy — ten sam kształt, inny `mode`.
+ * Raport z UDANEGO ZAPISU tych samych dwóch wierszy - ten sam kształt, inny `mode`.
  *
  * Istnieje, bo to jest stan, w którym ekran przez chwilę kłamał najgłośniej: baner wołał
  * „to incydent, ustal przyczynę", tabela pokazywała różnice, które właśnie zniknęły,
@@ -144,7 +144,7 @@ const EMPTY_COUNTS = {
 };
 
 /**
- * Strona monitora zawężona przez SERWER do jednego stanu — tak wchodzi do kolejki.
+ * Strona monitora zawężona przez SERWER do jednego stanu - tak wchodzi do kolejki.
  *
  * `matched` jest osobnym parametrem, bo to właśnie rozjazd `matched` ↔ `items.length`
  * jest treścią: serwer liczy dopasowania POZA `limit`-em, a lista jest oknem.
@@ -158,12 +158,12 @@ export function queuePage(items: ExportListItemDto[], matched = items.length): E
   } as ExportPageDto;
 }
 
-/** Dzień zamknięty, którego karta nie powstała — ponowienie ma sens. */
+/** Dzień zamknięty, którego karta nie powstała - ponowienie ma sens. */
 export function failedExport(): ExportListItemDto {
   return exportItem({});
 }
 
-/** Dzień zablokowany otwartą flagą — ponowienie odbije się o tę samą bramkę. */
+/** Dzień zablokowany otwartą flagą - ponowienie odbije się o tę samą bramkę. */
 export function blockedExport(): ExportListItemDto {
   return exportItem({
     sessionUuid: 'sess-flaga',

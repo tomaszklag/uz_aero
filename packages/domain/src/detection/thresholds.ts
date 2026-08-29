@@ -1,8 +1,8 @@
 /**
- * UZ Aero — progi auto-detekcji startu i lądowania (docs/_main.md.txt §3.3).
+ * UZ Aero - progi auto-detekcji startu i lądowania (docs/_main.md.txt §3.3).
  *
  * ⚠️ WSZYSTKIE WARTOŚCI SĄ DO KALIBRACJI podczas testów z pilotami (§3.3, §5 planu).
- * GPS consumer-grade bywa nieprecyzyjny — progi, histerezy i podwójne warunki chronią
+ * GPS consumer-grade bywa nieprecyzyjny - progi, histerezy i podwójne warunki chronią
  * przed fałszywymi detekcjami. Detekcja NIE zapisuje zdarzenia od razu: emisja następuje
  * dopiero po upływie okna „Cofnij" (AutodetectToast).
  *
@@ -11,7 +11,7 @@
  * w czułości. Wcześniej okno potwierdzenia płaciło się dokładnością czasu: zdarzenie
  * dostawało stempel fixa, który warunek potwierdził, więc każda dodatkowa sekunda
  * pewności to była sekunda kłamstwa w dokumentach. Od czasu, gdy `onset.ts` odnajduje
- * właściwy moment WSTECZ w buforze, ten koszt zniknął — a wtedy dłuższe okno jest
+ * właściwy moment WSTECZ w buforze, ten koszt zniknął - a wtedy dłuższe okno jest
  * czystym zyskiem: mniej fałszywych detekcji przy tym samym (a właściwie lepszym) czasie.
  */
 
@@ -26,7 +26,7 @@
  * 25 m to około pięciokrotność dryfu odbiornika stojącego w miejscu i jednocześnie
  * ~6 sekund kołowania z prędkością 8 kt. Próg działa z dwoma zabezpieczeniami
  * (`motion.ts`, zgłoszenie z terenu 2026-08-04): jest powiększany o deklarowaną
- * niepewność fixa (`accuracyM`) i musi się utrzymać `TAXI_CONFIRM_SEC` — pierwsza
+ * niepewność fixa (`accuracyM`) i musi się utrzymać `TAXI_CONFIRM_SEC` - pierwsza
  * wersja („25 m samo w sobie jest potwierdzeniem") kołowała telefonem odłożonym
  * na stole, bo bramka jakości wpuszcza fixy o dokładności do 50 m.
  */
@@ -35,7 +35,7 @@ export const TAXI_DISPLACEMENT_M = 25;
 /**
  * Promień, w którym kotwica postoju wciąż się odświeża (m), i zarazem promień
  * szukania momentu ruszenia wstecz. Musi pomieścić dryf, ale nie długość samolotu
- * plus manewr — stąd wartość wyraźnie niższa od progu ruchu.
+ * plus manewr - stąd wartość wyraźnie niższa od progu ruchu.
  */
 export const TAXI_ANCHOR_RADIUS_M = 10;
 
@@ -52,7 +52,7 @@ export const STOP_DISPLACEMENT_M = 10;
  * Kołowanie, kanał WSPARCIA: prędkość po ziemi powyżej progu (węzły).
  *
  * ZOSTAJE przy 4 kt, choć czułość kanału przemieszczeniowego kusiła, żeby zejść niżej.
- * Ten tor obsługuje WYŁĄCZNIE sytuacje, w których przemieszczenia policzyć się NIE DA —
+ * Ten tor obsługuje WYŁĄCZNIE sytuacje, w których przemieszczenia policzyć się NIE DA -
  * czyli fixy bez pozycji, a więc dane najgorszej jakości, jakie w ogóle dostajemy
  * (od 2026-08-04 egzekwowane wprost: przy dostępnej pozycji doppler nie głosuje).
  * Obniżanie progu akurat tam, gdzie wiemy najmniej, jest odwrotnością tego, co należy
@@ -99,7 +99,7 @@ export const AUTODETECT_TOAST_SEC = 5;
 /**
  * Okno (s) uśredniania WYSOKOŚCI ZRZUTU (issue #21 pkt 2).
  *
- * Pojedynczy fix niesie szum wysokości rzędu kilkudziesięciu stóp — zapis zrzutu
+ * Pojedynczy fix niesie szum wysokości rzędu kilkudziesięciu stóp - zapis zrzutu
  * „z jednego odczytu" wpisywał ten szum wprost do rozliczenia. Średnia z okna wygładza
  * go: przy 1 Hz to ~15 próbek. Dłużej = gładszy odczyt, ale jeśli samolot jeszcze się
  * wznosi w dolocie nad zrzutowisko, wartość ciągnie w dół (uśrednia niższe fixy);
@@ -116,7 +116,7 @@ export const TREND_WINDOW_SEC = 10;
  * Start, warunek prędkościowy: WETO, gdy samolot HAMUJE szybciej niż to (kt/s).
  *
  * Zamyka konkretną dziurę, nie hipotetyczną. Po lądowaniu faza wraca na `ground`,
- * a histereza trwa 30 s — tymczasem dobieg z prędkości przyziemienia do prędkości
+ * a histereza trwa 30 s - tymczasem dobieg z prędkości przyziemienia do prędkości
  * kołowania potrafi zająć dłużej. Samolot przechodzi wtedy przez próg startu Z GÓRY,
  * przy wygasającej histerezie, i po staremu wyglądał jak rozbieg.
  *
@@ -124,7 +124,7 @@ export const TREND_WINDOW_SEC = 10;
  * różnica istotna: rozbieg ma +1,5…+3 kt/s, ale ustabilizowane wznoszenie ma około zera.
  * Wymóg dodatniego przyspieszenia wyciąłby więc prawdziwy start, gdyby ten nie zdążył
  * potwierdzić się w fazie rozpędzania. Dobieg ma −2 kt/s i mieści się poza progiem
- * z zapasem — odcinamy dowód POZYTYWNIE przeczący, zgodnie z rereszą algorytmu.
+ * z zapasem - odcinamy dowód POZYTYWNIE przeczący, zgodnie z rereszą algorytmu.
  */
 export const TAKEOFF_MAX_DECEL_KT_PER_SEC = 0.5;
 
@@ -136,7 +136,7 @@ export const TAKEOFF_MAX_DECEL_KT_PER_SEC = 0.5;
  * (`coords.heading` był w każdym odczycie i szedł do kosza): przyziemienie ma kurs
  * stabilny, krąg nadlotniskowy trzyma 3–5 °/s przez kilkanaście sekund.
  *
- * Weto działa tylko wtedy, gdy prędkość kątową DA SIĘ zmierzyć — na dobiegu odbiornik
+ * Weto działa tylko wtedy, gdy prędkość kątową DA SIĘ zmierzyć - na dobiegu odbiornik
  * kursu nie podaje i wtedy nic nie unieważniamy.
  */
 export const LANDING_TURN_RATE_VETO_DPS = 3;
@@ -153,15 +153,15 @@ export const GROUND_CONTACT_AGL_FT = 25;
 /**
  * Po ilu sekundach BEZ fixa uznajemy, że GPS zamilkł (mockup 05g, ryzyko 🔴 z §8).
  * Fixy przychodzą co ~1 s; 15 s ciszy to już nie czkawka odbiornika, tylko utrata
- * sygnału — kokpit przełącza się na baner „autodetekcja wstrzymana" i ręczny zapis.
+ * sygnału - kokpit przełącza się na baner „autodetekcja wstrzymana" i ręczny zapis.
  */
 export const GPS_STALE_SEC = 15;
 
 // Bramka jakości fixa (audyt algorytmu 2026-07-29).
 //
-// Jamming to nie tylko ZANIK sygnału (ten łapie watchdog) — częściej DEGRADACJA:
+// Jamming to nie tylko ZANIK sygnału (ten łapie watchdog) - częściej DEGRADACJA:
 // fixy przychodzą, ale z pozycją skaczącą o kilometry i dokładnością trzycyfrową.
-// Trzy progi niżej zamieniają śmieciowy fix w „brak fixa" — a brak fixa system
+// Trzy progi niżej zamieniają śmieciowy fix w „brak fixa" - a brak fixa system
 // obsługuje uczciwie (05g + zapis ręczny).
 
 /**
@@ -171,7 +171,7 @@ export const GPS_STALE_SEC = 15;
 export const MAX_FIX_ACCURACY_M = 50;
 
 /**
- * Sufit wiarygodnej prędkości (kt) — i deklarowanej przez odbiornik, i IMPLIKOWANEJ
+ * Sufit wiarygodnej prędkości (kt) - i deklarowanej przez odbiornik, i IMPLIKOWANEJ
  * przez skok pozycji między fixami. Cessna 182 nie przekroczy 180 kt; 250 zostawia
  * zapas na przyszłe maszyny, a odcina teleportacje spoofingu/multipathu (tysiące kt).
  */
@@ -186,7 +186,7 @@ export const LANDING_FIELD_VICINITY_NM = 2;
 
 /**
  * Elewację lotniska bierzemy z wysokości GPS w momencie ENGINE START (§3.3, §8).
- * Ta stała to nazwane odniesienie do tej zasady — brak wartości liczbowej.
+ * Ta stała to nazwane odniesienie do tej zasady - brak wartości liczbowej.
  */
 export const FIELD_ELEVATION_SOURCE = 'engine_start_gps_altitude' as const;
 

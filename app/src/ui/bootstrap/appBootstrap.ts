@@ -1,11 +1,11 @@
 /**
- * UZ Aero — COMPOSITION ROOT aplikacji.
+ * UZ Aero - COMPOSITION ROOT aplikacji.
  *
  * Jedyne miejsce, w którym warstwy schodzą się w całość: adapter natywny (SQLite)
  * → repozytorium → komendy/zapytania → store UI. Reszta kodu nie wie, skąd biorą się
- * zależności — dostaje je gotowe (§5 architektury: porty i adaptery).
+ * zależności - dostaje je gotowe (§5 architektury: porty i adaptery).
  *
- * Import `ExpoSqliteAdapter` jest tu WPROST, a nie przez barrel infrastruktury —
+ * Import `ExpoSqliteAdapter` jest tu WPROST, a nie przez barrel infrastruktury -
  * barrel celowo nie wciąga modułu natywnego, żeby testy w Node działały bez urządzenia.
  */
 
@@ -36,14 +36,14 @@ import type { GpsPort, SensorPort } from '../../application/ports';
 import { useSessionStore } from '../store';
 import { useAuthStore } from '../store/authStore';
 
-/** Stan startu aplikacji — UI musi wiedzieć, czy baza jest gotowa. */
+/** Stan startu aplikacji - UI musi wiedzieć, czy baza jest gotowa. */
 export type BootstrapStatus =
   | { phase: 'loading' }
   | { phase: 'ready'; trace: TraceRecorder }
   | { phase: 'error'; message: string };
 
 /**
- * Port GPS aplikacji. Tworzony raz — adapter trzyma subskrypcję, więc nie może
+ * Port GPS aplikacji. Tworzony raz - adapter trzyma subskrypcję, więc nie może
  * powstawać przy każdym renderze.
  */
 export function useGpsPort(): GpsPort {
@@ -51,7 +51,7 @@ export function useGpsPort(): GpsPort {
 }
 
 /**
- * Port czujników pokładowych. Jak wyżej — adapter trzyma subskrypcje i okno agregacji.
+ * Port czujników pokładowych. Jak wyżej - adapter trzyma subskrypcje i okno agregacji.
  *
  * Zawsze `ExpoSensorsAdapter`, także na telefonach bez barometru: adapter sam pyta
  * `isAvailableAsync()` i nie zakłada nasłuchu na czujnik, którego nie ma. Rozgałęzianie
@@ -65,7 +65,7 @@ export function useSensorPort(): SensorPort {
 /**
  * Otwiera bazę na urządzeniu, buduje warstwy i podłącza je do store'u.
  *
- * Uruchamiane raz przy starcie. Błąd otwarcia bazy jest stanem terminalnym —
+ * Uruchamiane raz przy starcie. Błąd otwarcia bazy jest stanem terminalnym -
  * bez lokalnego zapisu aplikacja nie ma prawa udawać, że działa (offline-first
  * stoi na tym, że zapis jest zawsze; §4.1).
  */
@@ -82,7 +82,7 @@ export function useAppBootstrap(): BootstrapStatus {
         await storage.init();
         if (cancelled) return;
 
-        // Cache referencyjny wypełnia WYŁĄCZNIE serwer (`GET /reference`) — zaślepka
+        // Cache referencyjny wypełnia WYŁĄCZNIE serwer (`GET /reference`) - zaślepka
         // pierwszego uruchomienia usunięta przy issue #50: upsert synca nigdy nie kasuje
         // wierszy, więc fikcyjna flota zostawałaby na urządzeniu na zawsze. Do pierwszego
         // syncu listy pokazują uczciwy stan pusty (`loaded`/`streamHydrated`, §4.9).
@@ -90,7 +90,7 @@ export function useAppBootstrap(): BootstrapStatus {
         attachRepo(repo);
 
         // Warstwa synca (M3): HTTP → serwis poświadczeń → silnik. Store auth dostaje
-        // serwis i od razu czyta magazyn — to on przełącza bramkę login/aplikacja;
+        // serwis i od razu czyta magazyn - to on przełącza bramkę login/aplikacja;
         // silnik idzie do store'u sesji, skąd żyją pętla okazji i ekran 11.
         const server = new HttpServerApi(apiBaseUrl());
         const auth = new AuthService(server, new SecureCredentials(), new PinCrypto());
@@ -103,7 +103,7 @@ export function useAppBootstrap(): BootstrapStatus {
 
         // Odczyt śladu dla ekranu 14. Od issue #47 składa się z TRZECH źródeł o różnych
         // gwarancjach i to jest cała jego trudność: rejestr z telefonu (czasy, loty),
-        // geometria z serwera (`HttpSessionTrackSource`) i lokalny magazyn nagrania —
+        // geometria z serwera (`HttpSessionTrackSource`) i lokalny magazyn nagrania -
         // ten ostatni WYŁĄCZNIE po to, żeby odróżnić „nagranie jeszcze nie poszło"
         // od „serwer go nie ma".
         useSessionStore
@@ -119,11 +119,11 @@ export function useAppBootstrap(): BootstrapStatus {
             new ReferenceSync(repo, server, auth),
             new TraceSync(storage, server, auth),
             // Motyw pilota (decyzja 2026-07-29): ten sam format klucza czyta
-            // ThemeProvider — jedno miejsce wie, jak wygląda rekord (ThemePrefsStore).
+            // ThemeProvider - jedno miejsce wie, jak wygląda rekord (ThemePrefsStore).
             new ThemePrefsSync(new ThemePrefsStore(AsyncStorage), server, auth),
             // Droga POWROTNA outboxa (§4.9, issue #32): telefon po czyszczeniu pamięci
             // albo reinstalacji odbudowuje własny rejestr z serwera. Ten sam `repo`,
-            // co wysyłka — pobrane zdarzenia są zwykłymi wierszami strumienia.
+            // co wysyłka - pobrane zdarzenia są zwykłymi wierszami strumienia.
             new EventRestore(repo, server, auth),
           );
 

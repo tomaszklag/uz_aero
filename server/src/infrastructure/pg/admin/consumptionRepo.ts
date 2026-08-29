@@ -1,15 +1,15 @@
 /**
- * UZ Aero (serwer) — adapter analityki zużycia (`ConsumptionAdminPort`, mockup `A10a`).
+ * UZ Aero (serwer) - adapter analityki zużycia (`ConsumptionAdminPort`, mockup `A10a`).
  *
  * ══ CO TU WOLNO, A CZEGO NIE ══
  * Ten plik NIE LICZY NICZEGO. Oddaje wiersze: konfigurację jednostki, kolumny projekcji
- * zamkniętych dni okna i licznik dni otwartych. Cała arytmetyka — interwały paliwowe,
- * regresja, przeliczniki motogodzin — mieszka w `@uzaero/domain`, a ilorazy w mapperze.
+ * zamkniętych dni okna i licznik dni otwartych. Cała arytmetyka - interwały paliwowe,
+ * regresja, przeliczniki motogodzin - mieszka w `@uzaero/domain`, a ilorazy w mapperze.
  * Reguła jest ta sama, co przy `statsRepo.ts`: SQL oddaje FAKTY, wnioski wyciąga warstwa
  * wyżej (`docs/architektura-panelu-serwer.md` §7.1).
  *
  * ══ ZAKRES PO DNIU ZAMKNIĘCIA ══
- * Do modelu wchodzą wyłącznie dni ZAMKNIĘTE — dzień bez `day_close` nie ma odczytu
+ * Do modelu wchodzą wyłącznie dni ZAMKNIĘTE - dzień bez `day_close` nie ma odczytu
  * końcowego paliwomierza, więc jego zużycia po prostu nie znamy. Predykat jest ten sam,
  * co w statystykach zakresu, i obsługuje go ten sam częściowy indeks
  * `idx_sessions_closed_day`.
@@ -25,7 +25,7 @@ import type {
   StatsRange,
 } from '../../../application/admin/ports.ts';
 
-/** Wspólny predykat okna — jedna definicja, żeby licznik i lista nie mogły się rozjechać. */
+/** Wspólny predykat okna - jedna definicja, żeby licznik i lista nie mogły się rozjechać. */
 const CLOSED_IN_RANGE = `s.aircraft_id = $1 AND s.status = 'closed' AND s.close_time BETWEEN $2 AND $3`;
 
 interface SessionDbRow {
@@ -78,14 +78,14 @@ export class PgAdminConsumptionRepo implements ConsumptionAdminPort {
 
     // Licznik JEST osobnym zapytaniem, choć kusi, żeby wyliczyć go z długości listy.
     // Przy przycięciu limitem długość mówiłaby tylko „tyle, ile pokazaliśmy", a ekran
-    // ma powiedzieć, ilu dni NIE policzył — inaczej przycięta analityka wyglądałaby
+    // ma powiedzieć, ilu dni NIE policzył - inaczej przycięta analityka wyglądałaby
     // na komplet.
     const counted = await db.query<{ n: string }>(
       `SELECT COUNT(*) AS n FROM sessions s WHERE ${CLOSED_IN_RANGE}`,
       params,
     );
 
-    // Od najnowszego: gdy okno przekracza limit, chcemy zachować dni ŚWIEŻE — model
+    // Od najnowszego: gdy okno przekracza limit, chcemy zachować dni ŚWIEŻE - model
     // ma opisywać samolot, jakim jest teraz, a nie jakim był na początku zakresu.
     // `session_uuid` rozstrzyga remis, inaczej wynik zależałby od planu zapytania.
     const { rows } = await db.query<SessionDbRow>(
@@ -113,7 +113,7 @@ export class PgAdminConsumptionRepo implements ConsumptionAdminPort {
   }
 
   async openSessions(db: Queryable, aircraftId: string, range: StatsRange): Promise<number> {
-    // Dzień otwarty nie ma `close_time`, więc jedyną jego datą jest czas przejęcia (`claim_time`) — tak samo
+    // Dzień otwarty nie ma `close_time`, więc jedyną jego datą jest czas przejęcia (`claim_time`) - tak samo
     // lokuje go w czasie lista dni (`A02`) i licznik otwartych w statystykach (`A10`).
     const { rows } = await db.query<{ n: string }>(
       `SELECT COUNT(*) AS n

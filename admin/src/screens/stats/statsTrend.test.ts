@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: geometria wykresu „nalot dzień po dniu".
+ * UZ Aero - panel: geometria wykresu „nalot dzień po dniu".
  *
  * Serwer oddaje szereg (dzień → blok); tu sprawdzamy WYŁĄCZNIE rysunek: skalowanie
  * do viewBoxu mockupu, kropki dni zerowych (widoczne, nie puste) i podpisy osi.
@@ -27,7 +27,7 @@ describe('trendView', () => {
     expect(view.lastDot).toEqual({ x: 600, y: 5 });
   });
 
-  it('dzień ZEROWY dostaje kropkę na osi — jest widoczny, nie pusty', () => {
+  it('dzień ZEROWY dostaje kropkę na osi - jest widoczny, nie pusty', () => {
     const view = trendView([day(1, 2 * HOUR), day(2, 0), day(3, 4 * HOUR)])!;
     expect(view.zeroDots).toEqual([{ key: '2026-07-02', x: 300 }]);
     expect(view.zeroNote).toContain('Jeden dzień bez nalotu (02 JUL)');
@@ -47,14 +47,14 @@ describe('trendView', () => {
     expect(view.sumLabel).toBe('suma 13:12');
   });
 
-  it('oś: pierwszy dzień, ćwiartki i ostatni — bez duplikatów przy krótkich zakresach', () => {
+  it('oś: pierwszy dzień, ćwiartki i ostatni - bez duplikatów przy krótkich zakresach', () => {
     const month = Array.from({ length: 30 }, (_, i) => day(i + 1, HOUR));
     expect(trendView(month)!.axis).toEqual(['01 JUL', '08 JUL', '16 JUL', '23 JUL', '30 JUL']);
 
     expect(trendView([day(1, HOUR), day(2, HOUR)])!.axis).toEqual(['01 JUL', '02 JUL']);
   });
 
-  it('lista dni zerowych jest PRZYCIĘTA — sześć imiennie, reszta wielokropkiem', () => {
+  it('lista dni zerowych jest PRZYCIĘTA - sześć imiennie, reszta wielokropkiem', () => {
     const quiet = Array.from({ length: 10 }, (_, i) => day(i + 1, 0));
     quiet.push(day(11, HOUR));
     const note = trendView(quiet)!.zeroNote!;

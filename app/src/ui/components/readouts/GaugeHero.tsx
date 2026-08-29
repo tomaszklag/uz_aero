@@ -1,13 +1,13 @@
 /**
- * UZ Aero — GaugeHero (`.fob-indicator` z mockupu 06)
+ * UZ Aero - GaugeHero (`.fob-indicator` z mockupu 06)
  *
  * Karta-przyrząd na całą szerokość: etykieta, JEDNA wielka liczba z jednostką, pasek
  * poziomu z podziałką i podpis mówiący, skąd ta liczba pochodzi. Cyfry mają 64 px, bo
- * to jedyna wartość, od której zależy sens całego ekranu — pilot ma ją odczytać bez
+ * to jedyna wartość, od której zależy sens całego ekranu - pilot ma ją odczytać bez
  * schylania się nad telefonem.
  *
  * Czym różni się od `Readout` (02a): tam wartość przychodzi Z SERWERA i wymaga adnotacji
- * świeżości (`live` / `cache` / `brak`, §4.8). Tutaj wartość jest **danymi sesji** —
+ * świeżości (`live` / `cache` / `brak`, §4.8). Tutaj wartość jest **danymi sesji** -
  * liczy się ją lokalnie ze strumienia zdarzeń, więc jest zawsze świeża i wariantów
  * offline mieć nie może (`CLAUDE.md`, offline-first pkt 1). Dlatego GaugeHero nie ma
  * i nie powinien mieć propa `freshness`.
@@ -28,7 +28,7 @@ import { toneColors, type Tone } from '../tone';
 export interface GaugeHeroProps {
   /** Etykieta nad wartością, np. „FOB przed tankowaniem". */
   label: string;
-  /** Sformatowana wartość główna (sama liczba — jednostka idzie osobno). */
+  /** Sformatowana wartość główna (sama liczba - jednostka idzie osobno). */
   value: string;
   unit: string;
   tone?: Tone;
@@ -36,7 +36,7 @@ export interface GaugeHeroProps {
   ratio?: number | null;
   /** Podpisy podziałki pod paskiem. */
   scale?: string[];
-  /** Podpis pod paskiem — skąd ta wartość pochodzi. */
+  /** Podpis pod paskiem - skąd ta wartość pochodzi. */
   caption?: string;
   /** Korekta wartości odczytem z licznika. Bez niej karta jest czystym odczytem. */
   onCorrect?: () => void;
@@ -110,7 +110,7 @@ export function GaugeHero({
       )}
 
       {onCorrect != null && (
-        // Cel dotykowy 44 px — ten sam próg dla rękawic co w `ActionButton` i `Readout`.
+        // Cel dotykowy 44 px - ten sam próg dla rękawic co w `ActionButton` i `Readout`.
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`${correctLabel}: ${label}`}

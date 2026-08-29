@@ -1,16 +1,16 @@
 /**
- * UZ Aero — Avatar
+ * UZ Aero - Avatar
  *
  * Kafelek z inicjałami (`.pilot-avatar` 40 px, `.crew-avatar` 32 px w mockupach).
- * Zaokrąglony kwadrat, nie koło — tak jest w designie i tak odróżnia się od kółka
+ * Zaokrąglony kwadrat, nie koło - tak jest w designie i tak odróżnia się od kółka
  * zaznaczenia w tym samym wierszu.
  *
  * Inicjały liczymy z imienia i nazwiska, bo w bazie mamy `name`, a nie osobne pola.
  *
- * Z KODEM (`code`) kafelek pokazuje kod pilota zamiast inicjałów — mono, bo tak zapisujemy
+ * Z KODEM (`code`) kafelek pokazuje kod pilota zamiast inicjałów - mono, bo tak zapisujemy
  * wszystkie kody w tej aplikacji (`CLAUDE.md`, sekcja Czcionki). Powód zmiany (issue #12):
  * w wierszu wyboru drugiego pilota kod stał już po prawej stronie, więc inicjały po lewej
- * były trzecim — i najmniej użytecznym — zapisem tej samej osoby. Kod jest tym, czym pilot
+ * były trzecim - i najmniej użytecznym - zapisem tej samej osoby. Kod jest tym, czym pilot
  * podpisuje się w papierach i czym woła go klub.
  */
 
@@ -24,9 +24,9 @@ import { toneColors, type Tone } from '../tone';
 export type AvatarSize = 'sm' | 'md';
 
 export interface AvatarProps {
-  /** Pełne imię i nazwisko — inicjały wyliczamy sami. */
+  /** Pełne imię i nazwisko - inicjały wyliczamy sami. */
   name: string;
-  /** Kod pilota („AKO"); podany — zastępuje inicjały i idzie czcionką mono. */
+  /** Kod pilota („AKO"); podany - zastępuje inicjały i idzie czcionką mono. */
   code?: string;
   size?: AvatarSize;
   /** `neutral` = pozycja nie wybrana, `green` = wybrana / zalogowany pilot. */
@@ -75,7 +75,7 @@ export function Avatar({ name, code, size = 'md', tone = 'neutral', style }: Ava
     >
       {code != null ? (
         // Trzy znaki kodu w kwadracie 32 px: mniejszy stopień i ciaśniejsze światło niż
-        // przy dwuznakowych inicjałach — inaczej „AKO" rozpycha kafelek.
+        // przy dwuznakowych inicjałach - inaczej „AKO" rozpycha kafelek.
         <AppText
           variant="mono"
           numberOfLines={1}

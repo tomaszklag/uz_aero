@@ -1,27 +1,27 @@
 /**
- * UZ Aero — uzgadnianie MOTYWU PILOTA z serwerem przez `/me/prefs`
+ * UZ Aero - uzgadnianie MOTYWU PILOTA z serwerem przez `/me/prefs`
  * (decyzja 2026-07-29: motyw jest preferencją pilota i wędruje między urządzeniami).
  *
  * Wzorzec `ReferenceSync`: czysta klasa wołana przez pętlę okazji, offline-first
- * bez wyjątków — zmiana motywu NIGDY nie czeka na sieć (najpierw zapis lokalny
+ * bez wyjątków - zmiana motywu NIGDY nie czeka na sieć (najpierw zapis lokalny
  * w `ThemePrefsPort`, sync to skutek). Zasady:
  *
- *  • **Push przed pull, bez bramy wieku**: rekord `dirty` to nasz „outbox" preferencji —
+ *  • **Push przed pull, bez bramy wieku**: rekord `dirty` to nasz „outbox" preferencji -
  *    wysyłamy przy każdej okazji, aż serwer potwierdzi. Pull (rozejrzenie się, czy
  *    pilot nie zmienił motywu na INNYM telefonie) idzie za bramą wieku, żeby puls
  *    pętli co 60 s nie odpytywał serwera o rzecz zmienianą kilka razy w sezonie.
  *  • **LWW po `updatedAt` w OBIE strony**: stempel decyzji pilota (zegar telefonu)
  *    rozstrzyga i na serwerze (SQL nadpisuje tylko nowszym), i lokalnie (adoptujemy
- *    wyłącznie stan ściśle nowszy niż nasz — także wtedy, gdy w trakcie rozmowy
+ *    wyłącznie stan ściśle nowszy niż nasz - także wtedy, gdy w trakcie rozmowy
  *    pilot zdążył wybrać coś nowego). Odpowiedź PUT jest autorytatywna: przegrany
  *    stempel dostaje w niej zwycięzcę i dostosowuje lokalny motyw.
  *  • **Tożsamość z magazynu, nie z argumentu w ciemno**: przed rozmową sprawdzamy,
- *    że profil urządzenia to wciąż TEN pilot — przelogowanie w trakcie przebiegu
+ *    że profil urządzenia to wciąż TEN pilot - przelogowanie w trakcie przebiegu
  *    nie może zapisać cudzą preferencją (token należy już do kogoś innego).
- *  • Offline / wygasła sesja / odmowa = `skipped` — rekord (i `dirty`) zostaje,
+ *  • Offline / wygasła sesja / odmowa = `skipped` - rekord (i `dirty`) zostaje,
  *    następna okazja spróbuje znowu.
  *
- * Adopcję serwerowego motywu zgłaszamy słuchaczom (`onApplied`) — ThemeProvider
+ * Adopcję serwerowego motywu zgłaszamy słuchaczom (`onApplied`) - ThemeProvider
  * przemalowuje ekran na żywo, bez restartu aplikacji.
  */
 
@@ -30,23 +30,23 @@ import type { ServerPort, RemoteThemePrefs } from '../ports/serverPort';
 import type { ThemePrefRecord, ThemePrefsPort } from '../ports/themePrefsPort';
 import { authorizedFetch } from './authorizedFetch';
 
-/** Brama wieku pulla — jak `REFERENCE_MAX_AGE_MS`: motyw z innego telefonu nie jest daną na żywo. */
+/** Brama wieku pulla - jak `REFERENCE_MAX_AGE_MS`: motyw z innego telefonu nie jest daną na żywo. */
 export const THEME_PREFS_MAX_AGE_MS = 15 * 60_000;
 
 export type ThemePrefsSyncOutcome =
-  /** Serwer potwierdzony niedawno, rekord czysty — rozmowy nie było. */
+  /** Serwer potwierdzony niedawno, rekord czysty - rozmowy nie było. */
   | 'fresh'
-  /** Serwer przyjął nasz stempel (wygrany/pierwszy zapis) — `dirty` zgaszone. */
+  /** Serwer przyjął nasz stempel (wygrany/pierwszy zapis) - `dirty` zgaszone. */
   | 'pushed'
   /** Adoptowaliśmy nowszy stan serwera (decyzja pilota z innego urządzenia). */
   | 'pulled'
   /** Serwer nie ma nic nowszego; lokalny motyw zostaje. */
   | 'in_sync'
-  /** Offline / wygasła sesja / inny profil — bez zmian, spróbujemy przy okazji. */
+  /** Offline / wygasła sesja / inny profil - bez zmian, spróbujemy przy okazji. */
   | 'skipped';
 
 export class ThemePrefsSync {
-  /** Chwila ostatniego POTWIERDZENIA stanu serwera, per pilot (pamięć procesu — start aplikacji i tak robi pull). */
+  /** Chwila ostatniego POTWIERDZENIA stanu serwera, per pilot (pamięć procesu - start aplikacji i tak robi pull). */
   private confirmedAt = new Map<string, number>();
   private listeners = new Set<(pilotId: string, theme: string) => void>();
 
@@ -88,7 +88,7 @@ export class ThemePrefsSync {
 
     if (await this.adoptIfNewer(pilotId, remote)) return 'pulled'; // przegrany LWW dostosowuje się
 
-    // Wygrana (serwer odpowiedział naszym stemplem): gasimy `dirty` — ale tylko jeśli
+    // Wygrana (serwer odpowiedział naszym stemplem): gasimy `dirty` - ale tylko jeśli
     // pilot NIE zdążył w międzyczasie wybrać czegoś nowszego (wtedy dirty zostaje
     // i wyśle go następna okazja).
     const current = await this.prefs.read(pilotId);
@@ -111,7 +111,7 @@ export class ThemePrefsSync {
   /**
    * LWW po stronie telefonu: przyjmujemy stan serwera tylko, gdy jego stempel jest
    * ŚCIŚLE nowszy niż lokalny (remis = zostajemy przy swoim). Rekord czytamy tuż
-   * przed zapisem — rozmowa z serwerem trwała, a pilot mógł w tym czasie klikać.
+   * przed zapisem - rozmowa z serwerem trwała, a pilot mógł w tym czasie klikać.
    */
   private async adoptIfNewer(pilotId: string, remote: RemoteThemePrefs): Promise<boolean> {
     if (remote.theme == null || remote.themeUpdatedAt == null) return false;
@@ -126,13 +126,13 @@ export class ThemePrefsSync {
     return true;
   }
 
-  /** Profil urządzenia musi być TYM pilotem — token po przelogowaniu należy do kogoś innego. */
+  /** Profil urządzenia musi być TYM pilotem - token po przelogowaniu należy do kogoś innego. */
   private async isCurrentPilot(pilotId: string): Promise<boolean> {
     try {
       const stored = await this.auth.profile();
       return stored?.pilot.id === pilotId;
     } catch {
-      return false; // magazyn niedostępny = nie wiemy, czyj token — nie ryzykujemy
+      return false; // magazyn niedostępny = nie wiemy, czyj token - nie ryzykujemy
     }
   }
 }

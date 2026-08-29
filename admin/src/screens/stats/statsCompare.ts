@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: „Nalot: blok vs czas lotu" i „Wykorzystanie floty" (moduł CZYSTY).
+ * UZ Aero - panel: „Nalot: blok vs czas lotu" i „Wykorzystanie floty" (moduł CZYSTY).
  *
  * Dwa boczne wykresy mockupu `A10`. Liczby (blok, lot, dni aktywne, procent
  * wykorzystania) przychodzą z serwera; ten moduł liczy wyłącznie GEOMETRIĘ pasków
@@ -33,18 +33,18 @@ export interface MeterRowView {
 
 /**
  * Wykorzystanie poniżej POŁOWY dni zakresu jest bursztynowe. Próg wynika z mockupu
- * (70 % i 60 % zielone, 47 % amber) — to sygnał „jednostka stoi częściej, niż lata",
+ * (70 % i 60 % zielone, 47 % amber) - to sygnał „jednostka stoi częściej, niż lata",
  * nie alarm; dokładna wartość progu jest decyzją prezentacji, nie serwera.
  */
 const METER_AMBER_BELOW_PCT = 50;
 
 const nameOf = (row: StatsAircraftItemDto): string => row.reg ?? row.aircraftId;
 
-/** Szerokość jako `%` z jednym miejscem — geometria, jak wysokości w `dashboardSpark`. */
+/** Szerokość jako `%` z jednym miejscem - geometria, jak wysokości w `dashboardSpark`. */
 const widthPct = (value: number, max: number): string =>
   max <= 0 ? '0%' : `${((value / max) * 100).toFixed(1)}%`;
 
-/** Pary pasków w porządku serwera (malejąco po bloku) — wspólna skala = max bloku. */
+/** Pary pasków w porządku serwera (malejąco po bloku) - wspólna skala = max bloku. */
 export function duoRows(aircraft: StatsAircraftItemDto[]): DuoRowView[] {
   const max = aircraft.reduce((acc, row) => Math.max(acc, row.blockMs), 0);
   return aircraft.map((row) => ({

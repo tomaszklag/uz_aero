@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 15H Lot ręczny · krok 3/4 bez biegu silnika</title>
+<title>UZ Aero - 15H Lot ręczny · krok 3/4 bez biegu silnika</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -71,7 +71,7 @@
   .section-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
   .optional-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); background:var(--surface-raised); border:1px solid var(--border); border-radius:6px; padding:2px 6px; }
 
-  /* Para godzin biegu silnika — dwie kolumny, bo to jedna wielkość o dwóch końcach. */
+  /* Para godzin biegu silnika - dwie kolumny, bo to jedna wielkość o dwóch końcach. */
   .time-pair { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
   .field { display:flex; flex-direction:column; gap:6px; }
   .field-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
@@ -79,30 +79,30 @@
   .field-input:hover { border-color:var(--green-border); }
   /* Metryka wartości = pole wpisu z arkusza (issue #58 pkt 5 i 9): mono 16 / 1.5;
      placeholder ZAWSZE składem tekstowym (trzecia tura #58): body 15
-     w --text-placeholder, jak w arkuszu notatki — instrukcja, nie wartość. */
+     w --text-placeholder, jak w arkuszu notatki - instrukcja, nie wartość. */
   .field-time { font-family:var(--font-mono); font-size:16px; font-weight:700; letter-spacing:1.5px; color:var(--text-primary); }
   .field-time.empty { color:var(--text-placeholder); font-weight:400; font-family:var(--font-body); font-size:15px; line-height:20px; letter-spacing:0; }
   .field-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); line-height:1.5; }
 
-  /* ===== OŚ SESJI — TEN SAM KOMPONENT, CO W KOKPICIE I W ROZLICZENIU (issue #62) =====
+  /* ===== OŚ SESJI - TEN SAM KOMPONENT, CO W KOKPICIE I W ROZLICZENIU (issue #62) =====
 
      Do issue #62 krok 3 był DWIEMA PŁASKIMI LISTAMI obok siebie: „Loty" i „Zrzuty".
      Zgłoszenie z urządzenia trafiło w sedno: „na jednym biegu silnika wykonałem kilka
-     zrzutów w kilku lotach" — a formularz nie miał jak pokazać, który zrzut należy do
+     zrzutów w kilku lotach" - a formularz nie miał jak pokazać, który zrzut należy do
      którego lotu. Nie dlatego, że model tego nie wie: `DROP_ON_GROUND` w domenie
      sprawdza dokładnie zawieranie się zrzutu w oknie lotu, a oś sesji i kokpit od
      zawsze wyrażają przynależność POZYCJĄ W CZASIE. Wiedział model, milczał ekran.
 
-     Odpowiedzią jest oś — ta sama, którą pilot ogląda w kokpicie w trakcie lotu
+     Odpowiedzią jest oś - ta sama, którą pilot ogląda w kokpicie w trakcie lotu
      i w rozliczeniu po nim (`SessionAxis`, issue #44). Jedna rzecz ma w tej aplikacji
      jeden kształt, a wpis ręczny opisuje TEN SAM bieg silnika, co zapis automatyczny.
 
      Trzy rzeczy wynikają z tego za darmo:
       • zrzut stoi MIĘDZY startem a lądowaniem swojego lotu i niesie jego numer po
-        prawej — przynależność widać, zamiast trzeba jej szukać (pkt 9);
+        prawej - przynależność widać, zamiast trzeba jej szukać (pkt 9);
       • nowy lot dziedziczy godziny BIEGU SILNIKA, bo oś ma dwa końce i to one są
         jego naturalnymi granicami (pkt 8);
-      • dopóki biegu nie ma, oś nie istnieje — więc nie ma też czego do niej dodać
+      • dopóki biegu nie ma, oś nie istnieje - więc nie ma też czego do niej dodać
         (pkt 10). Patrz wariant 15H.
 
      Wiersz ma tu 44 px, nie 28: w rozliczeniu oś jest opisowa i rytm celu dotykowego
@@ -116,7 +116,7 @@
   .axis-row:hover { background:var(--surface-hover); }
   .axis-time { font-family:var(--font-mono); font-size:11px; color:var(--text-primary); }
   .axis-time.dim { color:var(--text-secondary); }
-  /* Koniec biegu bez godziny — placeholder w miejscu wartości, bo wiersz JEST wejściem
+  /* Koniec biegu bez godziny - placeholder w miejscu wartości, bo wiersz JEST wejściem
      w jej wpisanie (issue #62, czwarta tura). */
   .axis-time.empty { color:var(--text-placeholder); }
   /* Pion osi rysuje sam wiersz: kropka + kreska do sąsiada. Osobny element linii
@@ -138,20 +138,20 @@
   .axis-name.muted { color:var(--text-secondary); }
   .axis-sub { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
   .axis-right { display:flex; align-items:center; justify-content:flex-end; gap:8px; }
-  /* Numer lotu po PRAWEJ — przy starcie mówi „który lot się tu zaczyna", a przy
+  /* Numer lotu po PRAWEJ - przy starcie mówi „który lot się tu zaczyna", a przy
      ZRZUCIE „do którego lotu on należy" (issue #62 pkt 9). To ta sama kolumna
      i to samo pytanie, więc ta sama odpowiedź. */
   .axis-flight { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
   .axis-dur { font-family:var(--font-mono); font-size:11px; color:var(--green); }
   .axis-pen { display:flex; align-items:center; justify-content:center; color:var(--text-muted); }
   .axis-row:hover .axis-pen { color:var(--green); }
-  /* Zrzut poza jakimkolwiek lotem — miękka reguła domeny `DROP_ON_GROUND`, do issue #62
+  /* Zrzut poza jakimkolwiek lotem - miękka reguła domeny `DROP_ON_GROUND`, do issue #62
      pokazywana dopiero na kroku 4. Ostrzeżenie ma stać tam, gdzie da się je naprawić. */
   .axis-row.warned .axis-name { color:var(--amber); }
   .axis-row.warned .axis-flight { color:var(--amber); }
   /* Dopisanie jest OSTATNIM WIERSZEM osi, nie przyciskiem pod nią (wzorzec „DODAJ
      WPIS", issue #43): nowy lot trafi w przebieg sesji, więc wejście stoi tam, gdzie
-     skończy się jego skutek. Plus, nie ołówek — ołówek obiecuje poprawianie
+     skończy się jego skutek. Plus, nie ołówek - ołówek obiecuje poprawianie
      istniejącej wartości. */
   .axis-add { display:flex; align-items:center; justify-content:center; gap:8px; min-height:44px; border-top:1px solid var(--border); font-family:var(--font-mono); font-size:10px; letter-spacing:1.5px; color:var(--green); text-decoration:none; }
   .axis-add:hover { background:var(--surface-hover); }
@@ -168,7 +168,7 @@
 
   .btn-primary { display:flex; align-items:center; justify-content:center; gap:10px; background:var(--green); color:#0A0A0A; border:none; border-radius:14px; padding:16px; font-family:var(--font-display); font-size:22px; letter-spacing:3px; text-decoration:none; box-shadow:0 0 30px rgba(46,204,113,0.35); }
   /* Powód blokady WEWNĄTRZ przycisku, nigdy pod nim (issue #55). Przycisk z powodem
-     NIE dostaje przygaszenia opacity — bursztyn pod 0.45 przestaje być ostrzeżeniem. */
+     NIE dostaje przygaszenia opacity - bursztyn pod 0.45 przestaje być ostrzeżeniem. */
   .btn-primary.disabled { background:var(--surface-hover); color:var(--text-muted); box-shadow:none; cursor:not-allowed; flex-direction:column; gap:6px; }
   .btn-reason { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--amber); text-align:center; line-height:1.5; }
 
@@ -189,12 +189,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 15H</span>
+  <span class="film-strip">UZ AERO - 15H</span>
   <span class="slug">lot ręczny · krok 3 bez biegu silnika</span>
   <span class="canvas-meta">Stan wejścia</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Lot ręczny, krok 3 bez wpisanego biegu silnika">
+<main class="phone" role="region" aria-label="Mockup - Lot ręczny, krok 3 bez wpisanego biegu silnika">
   <div class="status-bar">
     <span>16:22</span>
     <span class="status-right">
@@ -225,13 +225,13 @@
            ALE JEST TYM SAMYM EKRANEM, CO 15B (czwarta tura z urządzenia).
 
            Do czwartej tury stała tu karta „Bieg silnika” z parą pól, a oś pojawiała
-           się dopiero po ich wypełnieniu — czyli krok 3 miewał DWA różne układy,
+           się dopiero po ich wypełnieniu - czyli krok 3 miewał DWA różne układy,
            a w pełnym stanie te same dwie godziny stały w karcie i na osi naraz
            („dubluje się «bieg silnika» z tym, co mam na osi czasu”).
 
            Odtąd oś istnieje od pierwszej sekundy, a jej dwa końce startują z „--:--”
            i SAME są wejściem w wpisanie godziny. Wypełnienie obu zamienia ten ekran
-           w 15B — bez zmiany układu, tylko z dopisanymi wierszami.
+           w 15B - bez zmiany układu, tylko z dopisanymi wierszami.
 
            Reguła „nie da się dodać lotu bez biegu silnika” zostaje w mocy i pilnuje jej
            BRAK wiersza „DODAJ LOT”, a nie wyszarzony przycisk: wyszarzony obiecywałby
@@ -241,7 +241,7 @@
            Powodu nie tłumaczymy tu zdaniem: niesie go „DALEJ” na dole ekranu,
            bursztynem wewnątrz przycisku (issue #55).
 
-           Stopki sum też nie ma — bez biegu silnika blok nie ma z czego wyjść, a trójka
+           Stopki sum też nie ma - bez biegu silnika blok nie ma z czego wyjść, a trójka
            zer byłaby liczbą o niczym (reguła „zerowy licznik to szum” z issue #43). -->
       <div class="section flush">
         <div class="section-head"><span class="section-label">Przebieg sesji</span></div>
@@ -276,18 +276,18 @@
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Kroki wpisu ręcznego — co gdzie</div>
+  <div class="vp-title">Kroki wpisu ręcznego - co gdzie</div>
   <a class="vp-item" href="15-reczny-lot.html">
     <span class="vp-badge">15</span>
     <span class="vp-body">
-      <span class="vp-name">Krok 1 — data i samolot</span>
+      <span class="vp-name">Krok 1 - data i samolot</span>
       <span class="vp-when">Maszyna, data lotu, opcjonalny Dual.</span>
     </span>
   </a>
   <a class="vp-item" href="15a-reczny-zadanie.html">
     <span class="vp-badge">15A</span>
     <span class="vp-body">
-      <span class="vp-name">Krok 2 — zadanie</span>
+      <span class="vp-name">Krok 2 - zadanie</span>
       <span class="vp-when">Rodzaj operacji, lotniska, klient, notatka.</span>
     </span>
   </a>
@@ -295,21 +295,21 @@
     <span class="vp-badge amber">15H</span>
     <span class="vp-body">
       <span class="vp-name">Krok 3 bez biegu silnika</span>
-      <span class="vp-when">Stan, w którym krok 3 się otwiera — TEN SAM układ, co 15B. Oś już jest, ale oba jej końce mają „--:--" i to one są wejściem w wpisanie godzin; stopki sum nie ma, bo blok nie ma z czego wyjść. „DODAJ LOT" pojawi się dopiero z biegiem silnika, a wpisanie obu godzin zamienia ten ekran w 15B bez zmiany układu.</span>
+      <span class="vp-when">Stan, w którym krok 3 się otwiera - TEN SAM układ, co 15B. Oś już jest, ale oba jej końce mają „--:--" i to one są wejściem w wpisanie godzin; stopki sum nie ma, bo blok nie ma z czego wyjść. „DODAJ LOT" pojawi się dopiero z biegiem silnika, a wpisanie obu godzin zamienia ten ekran w 15B bez zmiany układu.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
   <a class="vp-item" href="15b-reczny-czasy.html">
     <span class="vp-badge">15B</span>
     <span class="vp-body">
-      <span class="vp-name">Krok 3 — przebieg sesji</span>
+      <span class="vp-name">Krok 3 - przebieg sesji</span>
       <span class="vp-when">Bieg wpisany: oś od uruchomienia do wyłączenia, loty w środku, zrzuty w swoich lotach.</span>
     </span>
   </a>
   <a class="vp-item" href="15c-reczny-liczniki.html">
     <span class="vp-badge">15C</span>
     <span class="vp-body">
-      <span class="vp-name">Krok 4 — liczniki i paliwo</span>
+      <span class="vp-name">Krok 4 - liczniki i paliwo</span>
       <span class="vp-when">Paliwo przed / dolewki / po, motogodziny przed i po, ostrzeżenia.</span>
     </span>
   </a>

@@ -1,10 +1,10 @@
 /**
- * UZ Aero — panel: INWENTARZ IKON, przepisany 1:1 z `design/admin/*.html`.
+ * UZ Aero - panel: INWENTARZ IKON, przepisany 1:1 z `design/admin/*.html`.
  *
  * Jeden plik na całą rodzinę, wbrew regule „jedna odpowiedzialność = jeden plik",
  * i to jest świadomy wyjątek: to nie są komponenty z zachowaniem, tylko kilkanaście
  * czteroliniowych ścieżek SVG stanowiących JEDEN inwentarz. Rozbicie ich na kilkanaście
- * plików utrudniłoby jedyną kontrolę, jaką mamy — porównanie z mockupem wzrokiem.
+ * plików utrudniłoby jedyną kontrolę, jaką mamy - porównanie z mockupem wzrokiem.
  *
  * Ścieżki są kopiami z plików HTML, nie własną interpretacją. Zmiana ikony zaczyna
  * się od zmiany w `design/admin/`, tak jak każda inna zmiana wyglądu.
@@ -14,7 +14,7 @@ interface IconProps {
   size?: number;
 }
 
-/** Ikona konturowa — wspólna oprawa (`stroke-width` i `viewBox` jak w mockupach). */
+/** Ikona konturowa - wspólna oprawa (`stroke-width` i `viewBox` jak w mockupach). */
 function Stroke({ size = 15, width = 2, children }: IconProps & { width?: number; children: React.ReactNode }) {
   return (
     <svg
@@ -31,7 +31,7 @@ function Stroke({ size = 15, width = 2, children }: IconProps & { width?: number
   );
 }
 
-/** Samolot — znak marki i ikona floty. Jedyna ikona wypełniona, jak w mockupach. */
+/** Samolot - znak marki i ikona floty. Jedyna ikona wypełniona, jak w mockupach. */
 export function PlaneIcon({ size = 14 }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -172,7 +172,7 @@ export function SuccessIcon({ size }: IconProps) {
   );
 }
 
-/** Lupa — pasek filtrów list (A02, A03). */
+/** Lupa - pasek filtrów list (A02, A03). */
 export function SearchIcon({ size = 13 }: IconProps) {
   return (
     <Stroke size={size}>
@@ -182,7 +182,7 @@ export function SearchIcon({ size = 13 }: IconProps) {
   );
 }
 
-/** Krzyżyk — zamknięcie szuflady (`.x-btn`). */
+/** Krzyżyk - zamknięcie szuflady (`.x-btn`). */
 export function CloseIcon({ size = 14 }: IconProps) {
   return (
     <Stroke size={size} width={2.5}>
@@ -193,10 +193,10 @@ export function CloseIcon({ size = 14 }: IconProps) {
 }
 
 /**
- * Goła „ptaszka" — potwierdzenie akcji i stan pusty skrzynki (A03b).
+ * Goła „ptaszka" - potwierdzenie akcji i stan pusty skrzynki (A03b).
  *
  * ISTNIEJE OBOK `SuccessIcon` (ptaszek w kółku) i to nie jest duplikat: mockupy
- * używają obu w różnych miejscach — kółko w banerze, sam znak na przycisku
+ * używają obu w różnych miejscach - kółko w banerze, sam znak na przycisku
  * „Rozwiąż i odblokuj kartę" oraz w ikonie stanu pustego.
  */
 export function CheckIcon({ size = 13 }: IconProps) {
@@ -207,7 +207,7 @@ export function CheckIcon({ size = 13 }: IconProps) {
   );
 }
 
-/** Szewron w prawo — pozycja listy prowadząca w głąb. */
+/** Szewron w prawo - pozycja listy prowadząca w głąb. */
 export function ChevronRightIcon({ size = 15 }: IconProps) {
   return (
     <Stroke size={size}>
@@ -216,7 +216,7 @@ export function ChevronRightIcon({ size = 15 }: IconProps) {
   );
 }
 
-/** Ołówek — przejście do korekty zdarzenia (A02b). */
+/** Ołówek - przejście do korekty zdarzenia (A02b). */
 export function EditIcon({ size = 13 }: IconProps) {
   return (
     <Stroke size={size}>
@@ -237,7 +237,7 @@ export function SignInIcon({ size = 14 }: IconProps) {
   );
 }
 
-/** Strzałka „wyjdź" — wylogowanie ze stopki sidebara. */
+/** Strzałka „wyjdź" - wylogowanie ze stopki sidebara. */
 export function SignOutIcon({ size = 13 }: IconProps) {
   return (
     <Stroke size={size} width={2.5}>

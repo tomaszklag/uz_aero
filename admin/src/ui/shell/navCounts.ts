@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: plakietka licznika przy pozycji nawigacji (moduł CZYSTY).
+ * UZ Aero - panel: plakietka licznika przy pozycji nawigacji (moduł CZYSTY).
  *
  * Sidebar widać na każdym ekranie, więc plakietka „7" przy „Flagach" jest jedynym
  * miejscem, w którym administrator dowiaduje się o zaległej sprawie, nie będąc na
@@ -8,7 +8,7 @@
  *
  * Amber przy zerze przyzwyczajałby do ignorowania koloru; zieleń robiłaby z braku
  * spraw osiągnięcie, choć znaczy tylko tyle, że dziś nic nie doszło. Tak rysuje to
- * mockup: `A03` ma `nav-count amber` z siódemką, `A03b` — goły `nav-count` z zerem.
+ * mockup: `A03` ma `nav-count amber` z siódemką, `A03b` - goły `nav-count` z zerem.
  */
 
 /** Kształt przyjmowany przez `NavItem` (`.nav-count` + opcjonalny modyfikator tonu). */

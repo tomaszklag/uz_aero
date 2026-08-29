@@ -1,26 +1,26 @@
 /**
- * UZ Aero — panel: MUTACJE konfiguracji floty (`A07`, `A07a`).
+ * UZ Aero - panel: MUTACJE konfiguracji floty (`A07`, `A07a`).
  *
  * **Mutacja deklaruje swoje unieważnienia TUTAJ, nie na ekranie**
  * (`docs/architektura-panelu-frontend.md` §4.3).
  *
  * Co się zmienia po każdej z nich:
- *  • **lista floty** — skład (nowa jednostka), konfiguracja i próg flagi;
- *  • **listy dni** — wiersz `A02` niesie `reg`, typ i `mhFormat` samolotu, więc zmiana
+ *  • **lista floty** - skład (nowa jednostka), konfiguracja i próg flagi;
+ *  • **listy dni** - wiersz `A02` niesie `reg`, typ i `mhFormat` samolotu, więc zmiana
  *    rejestracji albo formatu licznika przemalowuje kolumny „Samolot" i „MH" w każdym
  *    otwartym obok widoku dni; bez tego unieważnienia lista pokazywałaby stary format
  *    licznika do najbliższego odświeżenia strony;
- *  • **dziennik audytu** — `AuditedWrite` dopisał wpis TĄ SAMĄ transakcją, więc `A09`
+ *  • **dziennik audytu** - `AuditedWrite` dopisał wpis TĄ SAMĄ transakcją, więc `A09`
  *    otwarty obok jest nieaktualny dokładnie od tej chwili;
- *  • **pulpit** — unieważnia go każda mutacja panelu, bo alternatywą jest plakietka
+ *  • **pulpit** - unieważnia go każda mutacja panelu, bo alternatywą jest plakietka
  *    kłamiąca zaraz po zmianie.
  *
  * Czego tu NIE MA:
  *  • **unieważnienia progu** (`keys.fleet.tolerance`). Odpowiedź „1100 L → 55 L" jest
- *    funkcją czystą i nie starzeje się od zapisu — unieważnianie jej kazałoby serwerowi
+ *    funkcją czystą i nie starzeje się od zapisu - unieważnianie jej kazałoby serwerowi
  *    policzyć drugi raz to samo. **To zdanie było nieprawdziwe do 2026-08-01**: kod
  *    unieważniał `keys.fleet.all`, a `invalidateQueries` dopasowuje PREFIKSOWO, więc
- *    próg leciał razem z listami — i to w chwili, gdy jego zapytanie jest aktywne, bo
+ *    próg leciał razem z listami - i to w chwili, gdy jego zapytanie jest aktywne, bo
  *    szuflada zapisu stoi otwarta. Wybraliśmy zawężenie unieważnienia, a nie poprawienie
  *    komentarza: komentarz opisywał zachowanie SŁUSZNE, więc tańsze było doprowadzenie
  *    kodu do niego niż spisanie marnotrawstwa jako reguły. Stąd `keys.fleet.lists`
@@ -43,7 +43,7 @@ import {
 import { keys } from './keys';
 
 /**
- * Eksportowana, żeby dało się ją sprawdzić na PRAWDZIWYM `QueryClient` bez renderu —
+ * Eksportowana, żeby dało się ją sprawdzić na PRAWDZIWYM `QueryClient` bez renderu -
  * „czego ta mutacja NIE unieważnia" jest własnością kluczy, nie ekranu, więc test na
  * atrapie sieci byłby testem atrapy, a test przez UI testowałby React.
  */

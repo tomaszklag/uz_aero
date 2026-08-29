@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: walidacja formularza konta (`A06a`) i budowa ciała żądania.
+ * UZ Aero - panel: walidacja formularza konta (`A06a`) i budowa ciała żądania.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -53,7 +53,7 @@ describe('pole: imię i nazwisko', () => {
 });
 
 describe('pole: kod pilota', () => {
-  it('normalizuje do wersalików — „kza" i „KZA" to ten sam kod', () => {
+  it('normalizuje do wersalików - „kza" i „KZA" to ten sam kod', () => {
     expect(normalizeCode(' kza ')).toBe('KZA');
     expect(codeState('kza').ok).toBe(true);
   });
@@ -71,7 +71,7 @@ describe('pole: kod pilota', () => {
 });
 
 describe('pole: e-mail', () => {
-  it('puste jest DOZWOLONE — loginem bywa sam kod pilota', () => {
+  it('puste jest DOZWOLONE - loginem bywa sam kod pilota', () => {
     expect(emailState('').ok).toBe(true);
     expect(emailState('   ').ok).toBe(true);
   });
@@ -98,7 +98,7 @@ describe('stan całego formularza', () => {
 });
 
 describe('ciało żądania', () => {
-  it('`POST` niesie tożsamość i rolę — i NIE niesie hasła', () => {
+  it('`POST` niesie tożsamość i rolę - i NIE niesie hasła', () => {
     const body = createBody(draft({ code: ' kza ', name: '  Katarzyna Zawadzka  ' }));
     expect(body).toEqual({
       code: 'KZA',

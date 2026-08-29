@@ -1,9 +1,9 @@
 /**
- * UZ Aero — composition root warstwy danych.
+ * UZ Aero - composition root warstwy danych.
  *
  * Tu (i tylko tu) produkcyjne implementacje portów spotykają się z aplikacją:
  * `defaultClock` jako `ClockPort`, `uuidv4` jako `IdPort`. Warstwa aplikacji tego nie robi,
- * bo import infrastruktury w aplikacji odwróciłby kierunek zależności — a zamiast reguły
+ * bo import infrastruktury w aplikacji odwróciłby kierunek zależności - a zamiast reguły
  * na papierze mielibyśmy „przecież tylko jeden mały import".
  *
  * Testy wołają `new EventsRepo(adapter, { clock: new FixedClock(…), generateId: … })`

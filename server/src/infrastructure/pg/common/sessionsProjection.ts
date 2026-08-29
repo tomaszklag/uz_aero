@@ -1,11 +1,11 @@
 /**
- * UZ Aero (serwer) — adapter projekcji sesji (`SessionsProjectionPort`).
+ * UZ Aero (serwer) - adapter projekcji sesji (`SessionsProjectionPort`).
  *
- * `sessions` NIE jest źródłem prawdy — to zrzut `projectSession(events)`, w całości
+ * `sessions` NIE jest źródłem prawdy - to zrzut `projectSession(events)`, w całości
  * odtwarzalny ze strumienia. Upsert nadpisuje wszystko poza kluczem: projekcja nie ma
  * własnej pamięci, więc nie ma czego scalać.
  *
- * Kształt wiersza i jego mapowanie mieszkają w `sessionDbRow.ts` — od przekroju 2
+ * Kształt wiersza i jego mapowanie mieszkają w `sessionDbRow.ts` - od przekroju 2
  * panelu czyta tę tabelę także `admin/sessionsRepo.ts`.
  */
 
@@ -99,7 +99,7 @@ export class PgSessionsProjection implements SessionsProjectionPort {
    * Skład karty doby (§4.7): sesje maszyny PRZEJĘTE w oknie, chronologicznie.
    *
    * `BETWEEN` jest domknięty obustronnie, bo `utcDayRange` oddaje ostatnią milisekundę
-   * doby, a nie północ następnej — inaczej sesja przejęta dokładnie o 00:00:00.000
+   * doby, a nie północ następnej - inaczej sesja przejęta dokładnie o 00:00:00.000
    * wpadłaby do dwóch kart albo do żadnej, zależnie od strony ostrego nierówności.
    * Porządek `(claim_time, session_uuid)` jest treścią, nie ozdobą: karta numeruje
    * zmiany `S1`, `S2`… i dwie sesje przejęte w tej samej minucie muszą mieć stabilną

@@ -1,5 +1,5 @@
 /**
- * UZ Aero — CounterRow (`.type-row` z mockupu 05e)
+ * UZ Aero - CounterRow (`.type-row` z mockupu 05e)
  *
  * Wiersz licznika: nazwa z podpowiedzią po lewej, para przycisków −/+ z wartością po prawej.
  *
@@ -8,7 +8,7 @@
  * z audytu użyteczności, który wcześniej wyrzucił suwaki z odczytów paliwa.
  *
  * Różnica wobec `Stepper`: tam wartość jest ciągła i ma jednostkę, więc komponent zna
- * duży krok, zakres i formatowanie. Tu liczymy sztuki — krok zawsze wynosi 1, a wartości
+ * duży krok, zakres i formatowanie. Tu liczymy sztuki - krok zawsze wynosi 1, a wartości
  * poniżej zera nie ma sensu wpisywać.
  */
 
@@ -21,7 +21,7 @@ import { toneColors, type Tone } from '../tone';
 
 export interface CounterRowProps {
   label: string;
-  /** Podpowiedź pod nazwą — kogo dotyczy ta pozycja („z instruktorem"). */
+  /** Podpowiedź pod nazwą - kogo dotyczy ta pozycja („z instruktorem"). */
   hint?: string;
   value: number;
   onChange: (next: number) => void;
@@ -56,7 +56,7 @@ export function CounterRow({
         {
           paddingHorizontal: 11,
           paddingVertical: 9,
-          // Mockup 05e daje `.type-row` promień 13 — znormalizowany do kanonu
+          // Mockup 05e daje `.type-row` promień 13 - znormalizowany do kanonu
           // `radius.btn`; dryf 13/14 ubity celowo, wzorem `colors.overlay`.
           borderRadius: theme.radius.btn,
           borderWidth: theme.borderWidth,
@@ -111,7 +111,7 @@ function StepButton({
       style={({ pressed }) => [
         styles.button,
         {
-          // Mockup 05e: `.step-btn` też ma 13 — znormalizowane do `radius.btn` jak wiersz wyżej.
+          // Mockup 05e: `.step-btn` też ma 13 - znormalizowane do `radius.btn` jak wiersz wyżej.
           borderRadius: theme.radius.btn,
           borderWidth: theme.borderWidth,
           borderColor: pressed ? tone.border : theme.colors.borderStrong,
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
   label: { fontSize: 14, letterSpacing: 0.5 },
   hint: { fontSize: 8, letterSpacing: 1, textTransform: 'uppercase' },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  // 46 px — próg dla rękawic; ten sam co w `Stepper`.
+  // 46 px - próg dla rękawic; ten sam co w `Stepper`.
   button: { width: 46, height: 46, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   buttonLabel: { fontSize: 26, lineHeight: 28 },
   value: { minWidth: 28, fontSize: 24, lineHeight: 26, textAlign: 'center' },

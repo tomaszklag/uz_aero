@@ -1,13 +1,13 @@
 /**
- * UZ Aero — panel: WYKRES „nalot dzień po dniu" (moduł CZYSTY) — geometria SVG.
+ * UZ Aero - panel: WYKRES „nalot dzień po dniu" (moduł CZYSTY) - geometria SVG.
  *
  * Dane przychodzą z serwera JAKO SZEREG (dzień → blok); ten moduł liczy WYŁĄCZNIE
  * geometrię rysunku: współrzędne polyline w viewBoxie 600×96 mockupu, kropki dni
- * zerowych i podpisy osi. To ta sama granica, co `dashboardSpark.ts` na pulpicie —
+ * zerowych i podpisy osi. To ta sama granica, co `dashboardSpark.ts` na pulpicie -
  * geometria nie jest metryką, a metryk ten moduł nie tworzy.
  *
- * Dzień zerowy dostaje KROPKĘ na osi zamiast zwykłego punktu — mockup mówi wprost:
- * to „dzień bez ani jednej sesji — nie brak danych", więc ma być widoczny, nie pusty.
+ * Dzień zerowy dostaje KROPKĘ na osi zamiast zwykłego punktu - mockup mówi wprost:
+ * to „dzień bez ani jednej sesji - nie brak danych", więc ma być widoczny, nie pusty.
  */
 
 import { duration } from '@uzaero/format';
@@ -23,13 +23,13 @@ const CEIL_Y = 5;
 const HOUR_MS = 3_600_000;
 
 export interface TrendView {
-  /** Punkty polyline `„x,y x,y …"` — jeden na dzień kalendarzowy zakresu. */
+  /** Punkty polyline `„x,y x,y …"` - jeden na dzień kalendarzowy zakresu. */
   points: string;
   /** Kropki dni ZEROWYCH na osi (dzień bez sesji jest widoczny, nie pusty). */
   zeroDots: { key: string; x: number }[];
-  /** Ostatni punkt szeregu — wyróżniony jak w mockupie. */
+  /** Ostatni punkt szeregu - wyróżniony jak w mockupie. */
   lastDot: { x: number; y: number } | null;
-  /** Do pięciu podpisów osi — pierwszy, ćwiartki i ostatni dzień. */
+  /** Do pięciu podpisów osi - pierwszy, ćwiartki i ostatni dzień. */
   axis: string[];
   /** Plakietka „max 10.2 h · 27 JUL"; `null` przy zakresie bez nalotu. */
   maxLabel: string | null;
@@ -71,10 +71,10 @@ export function trendView(daily: StatsDailyPointDto[]): TrendView | null {
   };
 }
 
-/** Zaokrąglenie współrzędnej do 0.1 — SVG nie potrzebuje piętnastu miejsc. */
+/** Zaokrąglenie współrzędnej do 0.1 - SVG nie potrzebuje piętnastu miejsc. */
 const round1 = (value: number): number => Math.round(value * 10) / 10;
 
-/** Pierwszy dzień, ćwiartki i ostatni — bez duplikatów przy krótkich zakresach. */
+/** Pierwszy dzień, ćwiartki i ostatni - bez duplikatów przy krótkich zakresach. */
 function axisTicks(daily: StatsDailyPointDto[]): string[] {
   const last = daily.length - 1;
   const indexes = [0, Math.round(last * 0.25), Math.round(last * 0.5), Math.round(last * 0.75), last];
@@ -93,5 +93,5 @@ function zeroNote(zeroDays: string[]): string | null {
     zeroDays.length === 1
       ? `Jeden dzień bez nalotu (${shown})`
       : `${zeroDays.length} dni bez nalotu (${shown}${suffix})`;
-  return `${label} to dni bez ani jednej sesji — nie brak danych. Dzień bez \`session_claim\` nie istnieje w rejestrze i panel go nie zmyśla.`;
+  return `${label} to dni bez ani jednej sesji - nie brak danych. Dzień bez \`session_claim\` nie istnieje w rejestrze i panel go nie zmyśla.`;
 }

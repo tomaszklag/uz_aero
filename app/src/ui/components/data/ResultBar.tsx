@@ -1,16 +1,16 @@
 /**
- * UZ Aero — ResultBar (`.result-row` z mockupu 06)
+ * UZ Aero - ResultBar (`.result-row` z mockupu 06)
  *
  * Samodzielny pasek WYNIKU: po lewej etykieta i rachunek, który do niego doprowadził,
- * po prawej jedna duża liczba na tonowanym tle. To nie jest kolejne pole formularza —
+ * po prawej jedna duża liczba na tonowanym tle. To nie jest kolejne pole formularza -
  * to odpowiedź na pytanie „co dokładnie zapiszę", policzona z tego, co pilot ustawił.
  *
  * Dlaczego rachunek jest widoczny, a nie tylko wynik: `refuel` zapisuje TRZY liczby
  * (przed / dolano / po) i domena odrzuca zdarzenie, gdy się nie sumują (`FUEL_ARITHMETIC`,
  * §3.4). Pokazanie „112 + 48 = 160 L" pozwala pilotowi wyłapać zły odczyt zanim komenda
- * go odrzuci — i zrozumieć komunikat, gdyby jednak odrzuciła.
+ * go odrzuci - i zrozumieć komunikat, gdyby jednak odrzuciła.
  *
- * Czym różni się od `ResultRow` z `Field.tsx`: tamten jest STOPKĄ sekcji formularza —
+ * Czym różni się od `ResultRow` z `Field.tsx`: tamten jest STOPKĄ sekcji formularza -
  * cienka linia i wartość 18 px, wewnątrz karty, pod polami, z których wynika. Ten stoi
  * MIĘDZY sekcjami jako osobny element o własnym tle i tonie (zielony gdy wynik jest
  * w porządku, czerwony gdy łamie limit), bo w mockupie 06 wynik jest równorzędny
@@ -35,7 +35,7 @@ export interface ResultBarProps {
   value: string;
   /** Rachunek prowadzący do wartości („112 + 48 = 160 L · 48% pojemności"). */
   formula?: string | null;
-  /** Ton wyniku — `green` gdy wynik jest w porządku, `red` gdy łamie limit. */
+  /** Ton wyniku - `green` gdy wynik jest w porządku, `red` gdy łamie limit. */
   tone?: Tone;
   style?: ViewStyle;
 }

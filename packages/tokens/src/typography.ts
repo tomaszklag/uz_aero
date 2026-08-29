@@ -1,21 +1,21 @@
 /**
- * UZ Aero — TYPOGRAFIA.
+ * UZ Aero - TYPOGRAFIA.
  *
  * Tu przebiega jedyny SZEW między platformami. Rodziny czcionek nazywają się inaczej
  * w React Native (eksporty `@expo-google-fonts`) i w CSS (rodziny z Google Fonts), więc
  * pakiet podaje oba zestawy pod osobnymi nazwami. `fontFamily` zostaje aliasem wariantu
- * natywnego, żeby aplikacja — 85 plików importujących te tokeny — nie zmieniła ani znaku.
+ * natywnego, żeby aplikacja - 85 plików importujących te tokeny - nie zmieniła ani znaku.
  *
  * Same rozmiary, wagi i interlinie są WSPÓLNE: to ta sama skala typograficzna,
  * niezależnie od tego, co ją renderuje.
  */
 
 /**
- * Rodziny czcionek dla React Native — nazwy zgodne z eksportami @expo-google-fonts.
+ * Rodziny czcionek dla React Native - nazwy zgodne z eksportami @expo-google-fonts.
  * Bebas Neue = display/nagłówki. Archivo = body/etykiety/przyciski.
  * JetBrains Mono = cyfry timerów, kody ICAO, wartości GPS, MH, kody pilotów.
  *
- * Wariantów jest osiem, bo RN wybiera GRUBOŚĆ przez osobny plik czcionki —
+ * Wariantów jest osiem, bo RN wybiera GRUBOŚĆ przez osobny plik czcionki -
  * `fontWeight` na Androidzie nie działa na czcionkach wczytanych z pakietu.
  */
 export const fontFamilyNative = {
@@ -30,7 +30,7 @@ export const fontFamilyNative = {
 } as const;
 
 /**
- * Rodziny czcionek dla CSS. Trzy, nie osiem — w przeglądarce grubość jest OSOBNĄ
+ * Rodziny czcionek dla CSS. Trzy, nie osiem - w przeglądarce grubość jest OSOBNĄ
  * właściwością (`font-weight`), więc nie należy do nazwy rodziny. Te same trzy
  * wartości stoją w `design/admin/SZABLON.html` jako `--font-display`, `--font-body`
  * i `--font-mono`.
@@ -49,7 +49,7 @@ export const fontFamilyCss = {
  */
 export const fontFamily = fontFamilyNative;
 
-/** Pojedynczy token typograficzny (bez koloru — kolor idzie z motywu). */
+/** Pojedynczy token typograficzny (bez koloru - kolor idzie z motywu). */
 export interface TypographyToken {
   fontFamily: string;
   fontSize: number;
@@ -98,7 +98,7 @@ export const typography = {
   // Etykiety przycisków akcji. Dwa rozmiary, oba skopiowane z mockupów:
   //  - button       → `.btn-primary` (DALEJ, ZACZNIJ DZIEŃ, START ENGINE)
   //  - button_small → `.modal-btn-cancel` / `.modal-btn-confirm` (akcje arkusza)
-  // Nie używamy tu `display` (34 px) — to rozmiar tytułu ekranu, nie napisu na przycisku.
+  // Nie używamy tu `display` (34 px) - to rozmiar tytułu ekranu, nie napisu na przycisku.
   button: {
     fontFamily: fontFamily.display,
     fontSize: 22,
@@ -131,7 +131,7 @@ export const typography = {
   },
   // Mikro-etykiety sekcji i pasków (mono 9 / wersaliki): `.diag-key` (13),
   // `.header-sub` (08), `.version-tag` (01), `.pin-label` (00), `.field-label` (07),
-  // `.group-lbl` (12). Mockupy wahają się między światłem 1.5 a 2 px — kanon to 1.5
+  // `.group-lbl` (12). Mockupy wahają się między światłem 1.5 a 2 px - kanon to 1.5
   // (jak `.diag-key`/`.header-sub`); normalizacja jest celowa, wzorem `colors.overlay`,
   // który zakończył dryf scrimów.
   micro: {
@@ -144,5 +144,5 @@ export const typography = {
 } satisfies Record<string, TypographyToken>;
 
 
-/** Nazwa tokenu typograficznego — klucz w `typography`. */
+/** Nazwa tokenu typograficznego - klucz w `typography`. */
 export type TypographyName = keyof typeof typography;

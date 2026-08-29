@@ -1,8 +1,8 @@
 /**
- * UZ Aero — test logiki ZMIANY ZAŁOGI (ekran 07).
+ * UZ Aero - test logiki ZMIANY ZAŁOGI (ekran 07).
  *
  * Kluczowa jest atrybucja block time per pilot: Dual wchodzący w połowie dnia dostaje
- * czas WYŁĄCZNIE z cykli po swoim wejściu. Do dokumentów każdy wpisuje własny czas —
+ * czas WYŁĄCZNIE z cykli po swoim wejściu. Do dokumentów każdy wpisuje własny czas -
  * przybliżenie „wszyscy mają tyle co dzień" byłoby fałszem rozliczeniowym, którego
  * nikt nie zauważy aż do kontroli.
  */
@@ -15,7 +15,7 @@ const at = (h: number, m: number): number => DAY + (h * 60 + m) * 60_000;
 
 let legSeq = 0;
 
-/** Bieg silnika — ten test bada wyłącznie podział czasu blokowego. */
+/** Bieg silnika - ten test bada wyłącznie podział czasu blokowego. */
 const run = (from: number, to: number | null): Leg => ({
   index: ++legSeq,
   startedAt: from,
@@ -47,7 +47,7 @@ describe('block time od wejścia do załogi', () => {
   });
 
   it('cykl sprzed wejścia liczy się tylko od momentu wejścia', () => {
-    // Dual wszedł 10:00 — z pierwszego cyklu (8:12–10:34) należy mu się tylko 0:34.
+    // Dual wszedł 10:00 - z pierwszego cyklu (8:12–10:34) należy mu się tylko 0:34.
     expect(blockSince(runs, at(10, 0), at(13, 0))).toBe((34 + 60 + 13) * 60_000);
   });
 
@@ -62,11 +62,11 @@ describe('block time od wejścia do załogi', () => {
 });
 
 describe('od kiedy Dual jest w załodze', () => {
-  it('bez zmian załogi — od początku dnia', () => {
+  it('bez zmian załogi - od początku dnia', () => {
     expect(dualSince([], at(8, 0))).toBe(at(8, 0));
   });
 
-  it('po zmianie — od OSTATNIEGO crew_change, nie pierwszego', () => {
+  it('po zmianie - od OSTATNIEGO crew_change, nie pierwszego', () => {
     const events = [crewEvent(at(10, 40), 'PWI'), crewEvent(at(12, 30), 'JSE')];
     expect(dualSince(events, at(8, 0))).toBe(at(12, 30));
   });
@@ -74,7 +74,7 @@ describe('od kiedy Dual jest w załodze', () => {
 
 describe('wiersze aktualnej załogi', () => {
   it('puste miejsce Duala jest wierszem, nie brakiem wiersza', () => {
-    // Mockup zawsze pokazuje dwa wiersze — pusty DUAL to informacja, nie cisza.
+    // Mockup zawsze pokazuje dwa wiersze - pusty DUAL to informacja, nie cisza.
     const projection = {
       picId: 'TMK',
       dualId: null,
@@ -94,7 +94,7 @@ describe('blokada zapisu zmiany Duala', () => {
     expect(reason).toContain('2-osobowej');
   });
 
-  it('bez wymogu — rezygnacja z Duala jest legalna', () => {
+  it('bez wymogu - rezygnacja z Duala jest legalna', () => {
     expect(dualChangeBlocker(NO_DUAL, 'AKO', false, 'Cessna 182')).toBeNull();
   });
 

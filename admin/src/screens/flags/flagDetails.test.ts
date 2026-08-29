@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: liczby rozbieżności z `flags.details` (moduł czysty).
+ * UZ Aero - panel: liczby rozbieżności z `flags.details` (moduł czysty).
  *
  * Ten plik powstał razem z rozdzieleniem `session_overlap` (2026-08-07) na
  * `aircraft_overlap` i `pilot_overlap`. Do tej pory jedna gałąź opisywała jedno pojęcie
@@ -42,7 +42,7 @@ function flag(over: Partial<FlagListItemDto> = {}): FlagListItemDto {
 const rowValue = (rows: ReturnType<typeof detailRows>, key: string) =>
   rows.find((r) => r.key === key)!.value;
 
-describe('aircraft_overlap — dwa telefony piszą do jednej MASZYNY', () => {
+describe('aircraft_overlap - dwa telefony piszą do jednej MASZYNY', () => {
   it('liczy sesje bez zdania samolotu i mówi, że dotyczą tej maszyny', () => {
     const d = discrepancyOf(flag());
     expect(d.main).toBe('2 sesje bez day_close');
@@ -50,13 +50,13 @@ describe('aircraft_overlap — dwa telefony piszą do jednej MASZYNY', () => {
   });
 
   it('brak `openSessions` w `details` nie udaje liczby', () => {
-    // Flagi sprzed zmiany detektora zostają w bazie na zawsze — panel ma o nich mówić
+    // Flagi sprzed zmiany detektora zostają w bazie na zawsze - panel ma o nich mówić
     // to, co wie, a nie podstawiać zero.
     expect(discrepancyOf(flag({ details: {} })).main).toBe('sesje bez zdania samolotu');
   });
 });
 
-describe('pilot_overlap — jeden PILOT rzekomo na dwóch maszynach naraz', () => {
+describe('pilot_overlap - jeden PILOT rzekomo na dwóch maszynach naraz', () => {
   const pilotFlag = (details: Record<string, unknown>) =>
     flag({ id: 1052, type: 'pilot_overlap', blocksExport: false, details });
 
@@ -69,7 +69,7 @@ describe('pilot_overlap — jeden PILOT rzekomo na dwóch maszynach naraz', () =
     expect(d.sub).toBe('09:12 → 10:30 UTC');
   });
 
-  it('nakładka, która TRWA, mówi „trwa" — bo `to` nie jest brakiem danych', () => {
+  it('nakładka, która TRWA, mówi „trwa" - bo `to` nie jest brakiem danych', () => {
     // `pilotOverlap.ts` dokłada `to` wyłącznie wtedy, gdy OBIE sesje są zamknięte.
     // Przy otwartej nakładka nie skończyła się i domyślanie się końca byłoby
     // twierdzeniem o przyszłości. To najczęstsza postać tej wady: zapomniane zdanie
@@ -96,7 +96,7 @@ describe('pilot_overlap — jeden PILOT rzekomo na dwóch maszynach naraz', () =
     const d = discrepancyOf(pilotFlag({}));
     expect(d.main).toBe('dwie maszyny naraz');
     expect(d.sub).toBeNull();
-    expect(rowValue(detailRows(pilotFlag({})), 'Maszyny')).toBe('—');
+    expect(rowValue(detailRows(pilotFlag({})), 'Maszyny')).toBe('-');
   });
 });
 

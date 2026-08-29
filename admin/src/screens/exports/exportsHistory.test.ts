@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: historia rewizji karty.
+ * UZ Aero - panel: historia rewizji karty.
  *
  * Test jednej własności, dla której cały ten ekran istnieje: **N wierszy dziennika
  * i JEDEN wiersz karty**. Gdyby panel sklejał te dwie liczby w jedną, przestałby
@@ -33,7 +33,7 @@ const history = (revisions: ExportRevisionDto[], sheetRows: number): ExportHisto
 });
 
 describe('oś rewizji karty', () => {
-  it('zachowuje kolejność serwera — oś czasu jednej karty czyta się od początku', () => {
+  it('zachowuje kolejność serwera - oś czasu jednej karty czyta się od początku', () => {
     const entries = revisionEntries([
       revision(1, '2026-07-30T18:52:14.000Z'),
       revision(2, '2026-07-30T22:07:41.000Z'),
@@ -55,7 +55,7 @@ describe('oś rewizji karty', () => {
     expect(entries.map((e) => e.tone)).toEqual(['green', 'blue']);
   });
 
-  it('nie zmyśla POWODU rewizji — `export_log` go nie ma', () => {
+  it('nie zmyśla POWODU rewizji - `export_log` go nie ma', () => {
     // Mockup podpisuje wiersze „spóźniony sync" i „korekta zdarzenia"; dziennik ma sześć
     // kolumn i żadnej z nich nie jest powód. Wiersz mówi to, co wiadomo.
     const entry = revisionEntries([revision(2, '2026-07-30T22:07:41.000Z')])[0]!;
@@ -65,7 +65,7 @@ describe('oś rewizji karty', () => {
 
 describe('plakietka „która rewizja leży w karcie"', () => {
   it('bierze OSTATNIĄ rewizję z osi rosnącej', () => {
-    // Do 2026-08-01 rozstrzygał to widok (`revisions[revisions.length - 1]`) — czyli
+    // Do 2026-08-01 rozstrzygał to widok (`revisions[revisions.length - 1]`) - czyli
     // decyzja o treści mieszkała w `.tsx` i opierała się na porządku, którego widok nie
     // ustala. Odwrócenie sortowania na serwerze zmieniłoby napis, nie ruszając testów.
     const summary = currentRevisionLabel(
@@ -92,7 +92,7 @@ describe('ostrzeżenie „ta treść jest z innej sesji"', () => {
   });
 
   it('nazywa sesję, która nadpisała, i tłumaczy DLACZEGO tak się dzieje', () => {
-    // Podgląd czyta `exported_sheets` po NAZWIE karty, a nazwa nie niesie sesji — więc
+    // Podgląd czyta `exported_sheets` po NAZWIE karty, a nazwa nie niesie sesji - więc
     // przy dwóch zmianach tego samego dnia rozwinięcie sesji porannej wyświetla dzień
     // popołudniowy. Bez tego zdania wygląda to na treść klikniętego wiersza.
     const note = overwrittenNotice({

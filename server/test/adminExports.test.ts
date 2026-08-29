@@ -1,13 +1,13 @@
 /**
- * UZ Aero (serwer) — monitor eksportu i ponowienie (`/admin/api/exports*`, mockup `A05`).
+ * UZ Aero (serwer) - monitor eksportu i ponowienie (`/admin/api/exports*`, mockup `A05`).
  *
  * Ten sam wzorzec co reszta: PGlite w procesie, prawdziwe klasy, `app.inject`, zero
- * atrap poza JEDNĄ — adapterem arkuszy, który potrafi na żądanie paść. Bez niego stan
+ * atrap poza JEDNĄ - adapterem arkuszy, który potrafi na żądanie paść. Bez niego stan
  * `missing` („dzień zamknięty, karty nie ma") byłby nieosiągalny, a to jest jedyny stan,
  * dla którego cały ten ekran istnieje: karta jest SKUTKIEM, nie warunkiem, więc awaria
  * eksportu nie cofa niczego i nie zostawia po sobie wiersza w żadnej tabeli.
  *
- * Dni lotne powstają z PRAWDZIWEGO `POST /events` — test, który wstawia sesję i wiersz
+ * Dni lotne powstają z PRAWDZIWEGO `POST /events` - test, który wstawia sesję i wiersz
  * `export_log` `INSERT`-em, przybija własne wyobrażenie o systemie, a nie system.
  */
 
@@ -60,7 +60,7 @@ interface DayOptions {
   dayOffset?: number;
 }
 
-/** Dzień lotny BEZ `day_close` — sesja zostaje otwarta. */
+/** Dzień lotny BEZ `day_close` - sesja zostaje otwarta. */
 function openDay(o: DayOptions) {
   const d = o.dayOffset ?? 0;
   const reading = o.reading ?? { fuelL: 150, mh: 1234.5 };
@@ -98,17 +98,17 @@ function closeDay(o: DayOptions & { mh?: number }) {
   ];
 }
 
-/** Sesja BEZ `preflight_confirm` — pilot wziął samolot i nie dokończył przejęcia. */
+/** Sesja BEZ `preflight_confirm` - pilot wziął samolot i nie dokończył przejęcia. */
 function claimOnly(o: DayOptions) {
   return [event('session_claim', at(8, 0, o.dayOffset ?? 0), { mode: 'free' }, o)];
 }
 
 /**
- * Strumień BEZ `session_claim` — jedyna droga do stanu `impossible` po zmianie z 2026-08-07.
+ * Strumień BEZ `session_claim` - jedyna droga do stanu `impossible` po zmianie z 2026-08-07.
  *
  * Wg §4.4 claim jest pierwszym zdarzeniem każdej sesji, więc taki strumień nie powstaje
  * w normalnej pracy. Serwer go jednak PRZYJMIE (§4.5: nie odrzuca danych z terenu), a
- * monitor eksportu musi umieć powiedzieć, że takiej karty nie da się nazwać — zamiast
+ * monitor eksportu musi umieć powiedzieć, że takiej karty nie da się nazwać - zamiast
  * pokazać ją jako brakującą, czyli możliwą do dorobienia.
  */
 function withoutClaim(o: DayOptions) {
@@ -133,11 +133,11 @@ function withoutClaim(o: DayOptions) {
 type Harness = Awaited<ReturnType<typeof testHarness>>;
 
 /**
- * Adapter arkuszy, który pada na żądanie — jedyna atrapa w tym pliku.
+ * Adapter arkuszy, który pada na żądanie - jedyna atrapa w tym pliku.
  *
  * Opakowuje PRAWDZIWY zapis (`PgSheets` przez `write`), więc po wyłączeniu awarii karta
  * ląduje w bazie dokładnie tak, jak w produkcji. Podmieniamy moment awarii, nie
- * zachowanie — ta sama zasada, co przy dekoratorze `events` w `contract.test.ts`.
+ * zachowanie - ta sama zasada, co przy dekoratorze `events` w `contract.test.ts`.
  */
 class FlakySheets implements SheetsPort {
   failing = false;
@@ -149,12 +149,12 @@ class FlakySheets implements SheetsPort {
 }
 
 /**
- * Strumień zdarzeń, który potrafi rzucić `TypeError` — druga (i ostatnia) atrapa.
+ * Strumień zdarzeń, który potrafi rzucić `TypeError` - druga (i ostatnia) atrapa.
  *
  * Istnieje wyłącznie po to, żeby odtworzyć BŁĄD PO NASZEJ STRONIE w środku eksportu:
  * bez niego jedynym osiągalnym wyjątkiem jest awaria adaptera arkuszy, więc rozróżnienia
  * `sheets_adapter` vs `unexpected` nie dałoby się przybić niczym poza deklaracją.
- * Opakowuje PRAWDZIWY adapter i wybucha dopiero po ustawieniu `explode` — ingest
+ * Opakowuje PRAWDZIWY adapter i wybucha dopiero po ustawieniu `explode` - ingest
  * przechodzi normalnie, dopiero ponowienie trafia na wyjątek.
  */
 class ExplodingEvents implements EventsStorePort {
@@ -191,7 +191,7 @@ async function explodingHarness() {
 
 async function flakyHarness() {
   // `PgSheets` potrzebuje bazy, więc atrapa dostaje delegata dopiero po złożeniu
-  // harnessu — stąd pośrednik, a nie gotowa instancja w argumencie.
+  // harnessu - stąd pośrednik, a nie gotowa instancja w argumencie.
   let delegate: SheetsPort['writeDaySheet'] | null = null;
   const sheets = new FlakySheets((sheet) => {
     if (delegate == null) throw new Error('delegat arkuszy nie został ustawiony');
@@ -273,7 +273,7 @@ async function auditRows(db: Harness['db']) {
   return rows;
 }
 
-describe('monitor eksportu — lista (A05)', () => {
+describe('monitor eksportu - lista (A05)', () => {
   it('pusto: zero wierszy i liczniki w zerach, nie brak liczników', async () => {
     const { app } = await testHarness();
     const admin = await login(app, 'TMK');
@@ -293,13 +293,13 @@ describe('monitor eksportu — lista (A05)', () => {
         revised: 0,
         overwritten: 0,
       },
-      // Pusty zakres nie jest obcięty — i to jest inne zdanie niż „nic nie ma".
+      // Pusty zakres nie jest obcięty - i to jest inne zdanie niż „nic nie ma".
       matched: 0,
       truncated: false,
     });
   });
 
-  it('nazywa kartę TAK SAMO jak eksporter — także dla dnia, który jeszcze trwa', async () => {
+  it('nazywa kartę TAK SAMO jak eksporter - także dla dnia, który jeszcze trwa', async () => {
     const { app } = await testHarness();
     const tmk = await login(app, 'TMK');
     const krz = await login(app, 'KRZ');
@@ -343,7 +343,7 @@ describe('monitor eksportu — lista (A05)', () => {
       revision: null,
       exportedAt: null,
     });
-    // Sesja z SAMYM claimem, bez preflightu, ma dziś nazwę karty — bo nazwę wyznacza
+    // Sesja z SAMYM claimem, bez preflightu, ma dziś nazwę karty - bo nazwę wyznacza
     // chwila przejęcia, a nie meldunek (decyzja 2026-08-07). To dzień, który po prostu jeszcze
     // trwa. Stan `impossible` został wyłącznie dla rejestru niekompletnego (brak
     // `session_claim`), czyli dla czegoś, czego trasą `POST /events` nie da się zapisać.
@@ -401,7 +401,7 @@ describe('monitor eksportu — lista (A05)', () => {
     const narrowed = (await listExports(app, tmk, '?state=current')).json();
 
     expect(narrowed.items.map((i: { sessionUuid: string }) => i.sessionUuid)).toEqual(['c-1']);
-    // Po kliknięciu chipa pozostałe liczby NIE spadają do zera — inaczej administrator
+    // Po kliknięciu chipa pozostałe liczby NIE spadają do zera - inaczej administrator
     // po jednym zawężeniu przestałby widzieć, ile jeszcze zostało.
     expect(narrowed.counts).toMatchObject({ total: 2, current: 1, waiting: 1 });
 
@@ -440,7 +440,7 @@ describe('monitor eksportu — lista (A05)', () => {
  * Wada, którą te przypadki zamykają: `LIMIT` szedł w SQL-u bez predykatu stanu,
  * a zawężenie chipem i WSZYSTKIE liczniki liczyły się w JS z okna PO obcięciu. Klub
  * z 250 zamkniętymi dniami wchodził bez filtrów, dostawał 200 najnowszych, kafel
- * „Bez karty" pokazywał 0 — a dzień z awarią eksportu sprzed dziewięciu miesięcy był
+ * „Bez karty" pokazywał 0 - a dzień z awarią eksportu sprzed dziewięciu miesięcy był
  * niewidoczny, niepoliczony i nie do znalezienia chipem.
  */
 describe('limit obcina LISTĘ, nie prawdę o zakresie (A05)', () => {
@@ -448,7 +448,7 @@ describe('limit obcina LISTĘ, nie prawdę o zakresie (A05)', () => {
     const { app } = await testHarness();
     const admin = await login(app, 'TMK');
 
-    // Trzy zamknięte dni, każdy z kartą — i pytanie o JEDEN najnowszy.
+    // Trzy zamknięte dni, każdy z kartą - i pytanie o JEDEN najnowszy.
     for (const day of [0, 1, 2]) {
       const o = { sessionUuid: `l-${day}`, picId: 'TMK', dayOffset: day };
       await post(app, admin, openDay(o));
@@ -458,7 +458,7 @@ describe('limit obcina LISTĘ, nie prawdę o zakresie (A05)', () => {
     const body = (await listExports(app, admin, '?limit=1')).json();
 
     expect(body.items).toHaveLength(1);
-    // Przed poprawką `total` był długością `items`, czyli 1 — kafel opisywał okno.
+    // Przed poprawką `total` był długością `items`, czyli 1 - kafel opisywał okno.
     expect(body.counts).toMatchObject({ total: 3, current: 3 });
     expect(body.matched).toBe(3);
     // Lista przycięta po cichu jest najgorszym trybem awarii narzędzia nadzoru:
@@ -471,12 +471,12 @@ describe('limit obcina LISTĘ, nie prawdę o zakresie (A05)', () => {
     expect(full.matched).toBe(3);
   });
 
-  it('chip znajduje dzień STARSZY niż limit — zawężenie jest przed obcięciem', async () => {
+  it('chip znajduje dzień STARSZY niż limit - zawężenie jest przed obcięciem', async () => {
     const { app, sheets } = await flakyHarness();
     const admin = await login(app, 'TMK');
 
     // Najstarszy dzień: eksport padł, więc karty nie ma. Dokładnie ten wiersz, dla
-    // którego ten ekran istnieje — i dokładnie ten, który obcięcie zabierało pierwszy.
+    // którego ten ekran istnieje - i dokładnie ten, który obcięcie zabierało pierwszy.
     sheets.failing = true;
     await post(app, admin, openDay({ sessionUuid: 'old-missing', picId: 'TMK' }));
     await post(app, admin, closeDay({ sessionUuid: 'old-missing', picId: 'TMK' }));
@@ -489,7 +489,7 @@ describe('limit obcina LISTĘ, nie prawdę o zakresie (A05)', () => {
       await post(app, admin, closeDay(o));
     }
 
-    // Bez zawężenia limit pokazuje wyłącznie nowsze dni — i to jest w porządku…
+    // Bez zawężenia limit pokazuje wyłącznie nowsze dni - i to jest w porządku…
     const window = (await listExports(app, admin, '?limit=2')).json();
     expect(window.items.map((i: { sessionUuid: string }) => i.sessionUuid)).toEqual([
       'new-2',
@@ -498,14 +498,14 @@ describe('limit obcina LISTĘ, nie prawdę o zakresie (A05)', () => {
     // …dopóki licznik mówi prawdę o tym, czego w oknie nie widać.
     expect(window.counts).toMatchObject({ total: 3, current: 2, missing: 1 });
 
-    // Przed poprawką: `.filter()` po `LIMIT` — pusta lista i chip kłamiący „1".
+    // Przed poprawką: `.filter()` po `LIMIT` - pusta lista i chip kłamiący „1".
     const narrowed = (await listExports(app, admin, '?state=missing&limit=2')).json();
     expect(narrowed.items.map((i: { sessionUuid: string }) => i.sessionUuid)).toEqual([
       'old-missing',
     ]);
     expect(narrowed.matched).toBe(1);
     expect(narrowed.truncated).toBe(false);
-    // Liczniki dalej opisują CAŁY zakres, nie zawężenie — inaczej po jednym kliknięciu
+    // Liczniki dalej opisują CAŁY zakres, nie zawężenie - inaczej po jednym kliknięciu
     // przestałoby być widać, ile zostało gdzie indziej.
     expect(narrowed.counts).toMatchObject({ total: 3, current: 2, missing: 1 });
   });
@@ -536,7 +536,7 @@ describe('limit obcina LISTĘ, nie prawdę o zakresie (A05)', () => {
    *
    * Od 2026-08-01 stan karty ma dwie definicje: `exportState` w mapperze (dla wiersza)
    * i `CASE` w adapterze (dla liczników i zawężenia). Rozjazd między nimi jest dokładnie
-   * tą wadą, przed którą broniła poprzednia konstrukcja — i którą kupujemy świadomie,
+   * tą wadą, przed którą broniła poprzednia konstrukcja - i którą kupujemy świadomie,
    * bo DA SIĘ ją złapać testem, a kłamiącego licznika nie dało się.
    */
   it('liczniki zgadzają się z wierszami, a `?state=X` oddaje dokładnie te wiersze', async () => {
@@ -553,7 +553,7 @@ describe('limit obcina LISTĘ, nie prawdę o zakresie (A05)', () => {
     await post(app, tmk, openDay({ sessionUuid: 's-miss', picId: 'TMK', dayOffset: 1 }));
     await post(app, tmk, closeDay({ sessionUuid: 's-miss', picId: 'TMK', dayOffset: 1 }));
     sheets.failing = false;
-    // `impossible` — strumień bez claimu, czyli rejestr niekompletny (patrz `withoutClaim`).
+    // `impossible` - strumień bez claimu, czyli rejestr niekompletny (patrz `withoutClaim`).
     await post(
       app,
       krz,
@@ -613,19 +613,19 @@ describe('limit obcina LISTĘ, nie prawdę o zakresie (A05)', () => {
 });
 
 /**
- * DWIE ZMIANY NA JEDNYM SAMOLOCIE JEDNEGO DNIA — KARTA JEST JEDNA I OBIE SĄ W NIEJ.
+ * DWIE ZMIANY NA JEDNYM SAMOLOCIE JEDNEGO DNIA - KARTA JEST JEDNA I OBIE SĄ W NIEJ.
  *
  * ══ CO TU BYŁO DO 2026-08-07 ══
  * Nazwa karty niesie DZIEŃ i SAMOLOT, ale nie sesję, a `exported_sheets` jest po `tab`
  * UPSERT-owane. Zmiana poranna i popołudniowa budowały więc DWA dokumenty o jednej
- * nazwie i druga nadpisywała pierwszą — monitor raportował obie jako „W arkuszu",
+ * nazwie i druga nadpisywała pierwszą - monitor raportował obie jako „W arkuszu",
  * a podgląd karty porannej pokazywał treść popołudniowej. Panel umiał to wtedy
  * najwyżej NAZWAĆ (`overwrittenBy`), bo scalanie kart było decyzją produktową.
  *
  * ══ DECYZJA ZAPADŁA (§4.7): karta = DOBA SAMOLOTU ══
  * Sesje są wierszami jednej karty, a nie konkurentami do jednej nazwy. Te przypadki
  * pilnują teraz odwrotnej własności: żadna zmiana nie może zniknąć pod inną.
- * `overwrittenBy` zostaje w kontrakcie i musi być `null` — jego zapalenie się dla dwóch
+ * `overwrittenBy` zostaje w kontrakcie i musi być `null` - jego zapalenie się dla dwóch
  * sesji tej samej doby znaczyłoby, że powstały dwie karty jednego dokumentu, czyli że
  * ta zmiana gdzieś się cofnęła.
  */
@@ -652,7 +652,7 @@ describe('dwie zmiany jednego dnia w jednej karcie (A05)', () => {
     expect(by('zmiana-am')).toMatchObject({ state: 'current', tab: '2026-06-22_SP-AXA' });
     expect(by('zmiana-pm')).toMatchObject({ state: 'current', tab: '2026-06-22_SP-AXA' });
 
-    // Rewizja jest własnością KARTY, więc po drugiej zmianie obie mają numer 2 —
+    // Rewizja jest własnością KARTY, więc po drugiej zmianie obie mają numer 2 -
     // a nie po jedynce każda dla siebie.
     expect(by('zmiana-am').revision).toBe(2);
     expect(by('zmiana-pm').revision).toBe(2);
@@ -662,12 +662,12 @@ describe('dwie zmiany jednego dnia w jednej karcie (A05)', () => {
     expect(by('zmiana-pm').overwrittenBy).toBeNull();
     expect(body.counts.overwritten).toBe(0);
 
-    // Flaga nakładki NIE powstała — obie sesje zamknięto poprawnie, więc nie ma sporu.
+    // Flaga nakładki NIE powstała - obie sesje zamknięto poprawnie, więc nie ma sporu.
     expect(by('zmiana-am').blockingFlagIds).toEqual([]);
     expect(by('zmiana-pm').blockingFlagIds).toEqual([]);
   });
 
-  it('podgląd z obu wierszy pokazuje TĘ SAMĄ kartę — i są w niej obaj piloci', async () => {
+  it('podgląd z obu wierszy pokazuje TĘ SAMĄ kartę - i są w niej obaj piloci', async () => {
     const { app, db, clock } = await testHarness();
     const tmk = await login(app, 'TMK');
     const krz = await login(app, 'KRZ');
@@ -689,7 +689,7 @@ describe('dwie zmiany jednego dnia w jednej karcie (A05)', () => {
 
     const amSheet = (await getPanel(app, tmk, '/exports/am/sheet')).json();
     const pmSheet = (await getPanel(app, tmk, '/exports/pm/sheet')).json();
-    // Ta sama nazwa = ta sama treść — i to już NIE jest wprowadzanie w błąd, bo treść
+    // Ta sama nazwa = ta sama treść - i to już NIE jest wprowadzanie w błąd, bo treść
     // opisuje dobę obojga, a nie dzień pracy jednego z nich.
     expect(amSheet.rows).toEqual(pmSheet.rows);
     expect(amSheet.rows).toContainEqual(['Sesje', '2']);
@@ -736,7 +736,7 @@ describe('dwie zmiany jednego dnia w jednej karcie (A05)', () => {
 });
 
 describe('historia rewizji i podgląd karty (A05)', () => {
-  it('N wierszy dziennika, JEDEN wiersz karty — dwie tabele, dwa zadania', async () => {
+  it('N wierszy dziennika, JEDEN wiersz karty - dwie tabele, dwa zadania', async () => {
     const { app, db } = await testHarness();
     const admin = await login(app, 'TMK');
 
@@ -760,7 +760,7 @@ describe('historia rewizji i podgląd karty (A05)', () => {
     expect(await exportLogRows(db)).toHaveLength(3);
   });
 
-  it('podgląd karty jedzie POD PREFIKSEM PANELU — ciasteczko sesji nie widzi `/sheets`', async () => {
+  it('podgląd karty jedzie POD PREFIKSEM PANELU - ciasteczko sesji nie widzi `/sheets`', async () => {
     const { app } = await testHarness();
     const admin = await login(app, 'TMK');
 
@@ -816,7 +816,7 @@ describe('ponowienie eksportu (A05)', () => {
     // Odpowiedź niesie ŚWIEŻY wiersz listy, żeby panel nie musiał dopytywać.
     expect(res.json().row).toMatchObject({ state: 'current', revision: 2 });
 
-    // Dziennik urósł, karta została jedna — to jest test, dla którego ten ekran istnieje.
+    // Dziennik urósł, karta została jedna - to jest test, dla którego ten ekran istnieje.
     expect(await exportLogRows(db)).toEqual([
       { session_uuid: 'r-1', revision: 1, day: '2026-06-22' },
       { session_uuid: 'r-1', revision: 2, day: '2026-06-22' },
@@ -830,7 +830,7 @@ describe('ponowienie eksportu (A05)', () => {
 
     sheets.failing = true;
     await post(app, admin, openDay({ sessionUuid: 'f-1', picId: 'TMK' }));
-    // Awaria arkuszy NIE cofa przyjęcia zdarzeń — telefon dostał 200, dzień jest zamknięty.
+    // Awaria arkuszy NIE cofa przyjęcia zdarzeń - telefon dostał 200, dzień jest zamknięty.
     expect((await post(app, admin, closeDay({ sessionUuid: 'f-1', picId: 'TMK' }))).statusCode).toBe(
       200,
     );
@@ -863,7 +863,7 @@ describe('ponowienie eksportu (A05)', () => {
     ]);
   });
 
-  it('odmowa bramki to 200 z POWODEM, nie 500 — i nie dopisuje rewizji', async () => {
+  it('odmowa bramki to 200 z POWODEM, nie 500 - i nie dopisuje rewizji', async () => {
     const { app, db } = await testHarness();
     const tmk = await login(app, 'TMK');
     const krz = await login(app, 'KRZ');
@@ -872,7 +872,7 @@ describe('ponowienie eksportu (A05)', () => {
     await post(app, krz, openDay({ sessionUuid: 'g-block', picId: 'KRZ' }));
     await post(app, krz, closeDay({ sessionUuid: 'g-block', picId: 'KRZ' }));
 
-    // Obie sesje są objęte TĄ SAMĄ flagą nakładki, więc obie odbijają się o nią —
+    // Obie sesje są objęte TĄ SAMĄ flagą nakładki, więc obie odbijają się o nią -
     // także ta niezamknięta. Do 2026-08-07 dostawała `session_open`, bo bramki
     // szeregowały się per sesja („twój dzień jeszcze trwa"). Po przejściu na kartę doby
     // to była już nieprawda: doba MA zdaną zmianę (`g-block`), więc powodem, dla którego
@@ -885,7 +885,7 @@ describe('ponowienie eksportu (A05)', () => {
     expect(blockedRetry.statusCode).toBe(200);
     expect(blockedRetry.json().retry.outcome).toEqual({ exported: false, reason: 'overlap_flag' });
 
-    // Ponowienie NIE omija bramek §4.7 — sporny dzień dalej nie ma karty.
+    // Ponowienie NIE omija bramek §4.7 - sporny dzień dalej nie ma karty.
     expect(await exportLogRows(db)).toEqual([]);
     expect(await sheetRowCount(db)).toBe(0);
   });
@@ -903,7 +903,7 @@ describe('ponowienie eksportu (A05)', () => {
     expect(rows[0]).toMatchObject({
       action: 'export.retry',
       actor_pilot_id: 'TMK',
-      // Celem jest KARTA — dziennik ma się dać zawęzić do „co robiono z tym arkuszem".
+      // Celem jest KARTA - dziennik ma się dać zawęzić do „co robiono z tym arkuszem".
       target_type: 'sheet',
       target_id: '2026-06-22_SP-AXA',
     });
@@ -915,7 +915,7 @@ describe('ponowienie eksportu (A05)', () => {
     });
   });
 
-  it('ślad powstaje TAKŻE przy odmowie — inaczej „dlaczego ten dzień stoi" nie ma odpowiedzi', async () => {
+  it('ślad powstaje TAKŻE przy odmowie - inaczej „dlaczego ten dzień stoi" nie ma odpowiedzi', async () => {
     const { app, db } = await testHarness();
     const admin = await login(app, 'TMK');
     await post(app, admin, openDay({ sessionUuid: 'a-2', picId: 'TMK' }));
@@ -933,7 +933,7 @@ describe('ponowienie eksportu (A05)', () => {
    * AWARIA ADAPTERA ARKUSZY TO CO INNEGO NIŻ BŁĄD PO NASZEJ STRONIE (poprawka 2026-08-01).
    *
    * Do tej pory komenda łapała KAŻDY wyjątek i zwracała `outcome: null`, a panel mówił
-   * na to „Adapter arkuszy zgłosił awarię — spróbuj ponownie za chwilę". Czyli `TypeError`
+   * na to „Adapter arkuszy zgłosił awarię - spróbuj ponownie za chwilę". Czyli `TypeError`
    * w projekcji albo przegrany wyścig rewizji były raportowane jako awaria Google:
    * komunikat kazał administratorowi CZEKAĆ na coś, co samo nie minie.
    */
@@ -962,7 +962,7 @@ describe('ponowienie eksportu (A05)', () => {
     await post(app, admin, closeDay({ sessionUuid: 'e-boom', picId: 'TMK' }));
 
     // Wybucha dopiero teraz: ingest przeszedł normalnie, więc dzień jest zamknięty
-    // i ma kartę — tak jak w prawdziwej regresji, która wychodzi przy ponowieniu.
+    // i ma kartę - tak jak w prawdziwej regresji, która wychodzi przy ponowieniu.
     events.explode = true;
     const res = await retry(app, 'e-boom', admin);
 
@@ -982,7 +982,7 @@ describe('ponowienie eksportu (A05)', () => {
     await post(app, admin, closeDay({ sessionUuid: 'e-ok', picId: 'TMK' }));
     expect((await retry(app, 'e-ok', admin)).json().retry.failure).toBeNull();
 
-    // Odmowa jest stanem świata, a nie awarią — `failure` musi zostać puste, inaczej
+    // Odmowa jest stanem świata, a nie awarią - `failure` musi zostać puste, inaczej
     // panel pokazałby „coś się zepsuło" tam, gdzie działa zasada.
     await post(app, admin, openDay({ sessionUuid: 'e-open', picId: 'TMK', dayOffset: 1 }));
     const refused = await retry(app, 'e-open', admin);
@@ -992,7 +992,7 @@ describe('ponowienie eksportu (A05)', () => {
     });
   });
 
-  it('404 dla nieznanej sesji — i ANI JEDNEGO wpisu w dzienniku audytu', async () => {
+  it('404 dla nieznanej sesji - i ANI JEDNEGO wpisu w dzienniku audytu', async () => {
     const { app, db } = await testHarness();
     const admin = await login(app, 'TMK');
 
@@ -1025,7 +1025,7 @@ describe('rewizje są jednoznaczne (uq_export_log_card_revision)', () => {
 
   /**
    * ══ CZEGO TEN PRZYPADEK NIE DOWODZI ══
-   * **Nie dowodzi, że działa blokada advisory** — i tak ma być zapisane, zamiast udawać
+   * **Nie dowodzi, że działa blokada advisory** - i tak ma być zapisane, zamiast udawać
    * inaczej. PGlite ma JEDNO połączenie i szereguje transakcje własnym mutexem, więc
    * `pg_advisory_xact_lock` nie ma tu czego wstrzymać: po jego usunięciu ten przypadek
    * nadal przechodzi (sprawdzone). Prawdziwej równoległości nie da się na PGlite
@@ -1033,7 +1033,7 @@ describe('rewizje są jednoznaczne (uq_export_log_card_revision)', () => {
    *
    * Dowodzi natomiast rzeczy, którą da się sprawdzić: sekwencja nadania rewizji jest
    * poprawna, dwie próby dają dwa RÓŻNE numery i żadna nie kończy się pięćsetką.
-   * Przed wyścigiem, którego tu nie ma, broni ograniczenie `uq_export_log_card_revision` — a ono ma
+   * Przed wyścigiem, którego tu nie ma, broni ograniczenie `uq_export_log_card_revision` - a ono ma
    * własny przypadek wyżej i ten faktycznie upada po zdjęciu `UNIQUE`.
    */
   it('dwa ponowienia naraz dają DWIE różne rewizje, nie dwie takie same', async () => {
@@ -1050,13 +1050,13 @@ describe('rewizje są jednoznaczne (uq_export_log_card_revision)', () => {
     const revisions = [a, b].map((res) => res.json().retry.revisionAfter).sort();
     expect(revisions).toEqual([2, 3]);
     expect((await exportLogRows(db)).map((r) => r.revision)).toEqual([1, 2, 3]);
-    // Treść karty dalej JEDNA — obie wysyłki budują ją z tego samego strumienia.
+    // Treść karty dalej JEDNA - obie wysyłki budują ją z tego samego strumienia.
     expect(await sheetRowCount(db)).toBe(1);
   });
 });
 
 /**
- * KOLEJNOŚĆ rozstrzygania stanu — jedyny przypadek, którego nie da się zbudować przez
+ * KOLEJNOŚĆ rozstrzygania stanu - jedyny przypadek, którego nie da się zbudować przez
  * `POST /events`, bo wymaga sesji jednocześnie bez preflightu i objętej flagą.
  *
  * Ten blok DOPEŁNIA przypadki HTTP wyżej, a nie zastępuje ich: test modułu czystego
@@ -1083,7 +1083,7 @@ describe('pierwszeństwo stanów karty', () => {
     ...patch,
   });
 
-  it('brak chwili przejęcia wygrywa ze wszystkim — karty nie da się NAZWAĆ', () => {
+  it('brak chwili przejęcia wygrywa ze wszystkim - karty nie da się NAZWAĆ', () => {
     // „Brakuje karty" sugerowałoby, że da się ją dorobić; tu nie ma jak. Od 2026-08-07
     // to stan wyłącznie awaryjny: `session_claim` ma KAŻDA sesja (§4.4).
     expect(exportState(join({ claimedAt: null, blockingFlagIds: [7], status: 'active' }))).toBe(
@@ -1092,17 +1092,17 @@ describe('pierwszeństwo stanów karty', () => {
   });
 
   it('dzień w toku jest `waiting`, nawet gdy wisi na nim flaga blokująca', () => {
-    // Dzień, który jeszcze trwa, nie jest zablokowany decyzją człowieka — jest niegotowy.
+    // Dzień, który jeszcze trwa, nie jest zablokowany decyzją człowieka - jest niegotowy.
     expect(exportState(join({ status: 'active', blockingFlagIds: [7] }))).toBe('waiting');
   });
 
-  it('flaga wygrywa z brakiem karty — wiersz ma prowadzić do flagi, nie do „Ponów"', () => {
+  it('flaga wygrywa z brakiem karty - wiersz ma prowadzić do flagi, nie do „Ponów"', () => {
     expect(exportState(join({ blockingFlagIds: [7] }))).toBe('blocked');
   });
 
   it('rewizja bez stempla wysyłki to nadal `missing`, nie „karta jest"', () => {
     // Obie kolumny wchodzą do `export_log` jednym `INSERT`-em, więc rozjazd znaczy
-    // ręczną ingerencję — i wtedy uczciwiej powiedzieć „karty nie ma".
+    // ręczną ingerencję - i wtedy uczciwiej powiedzieć „karty nie ma".
     expect(exportState(join({ revision: 2, exportedAt: null }))).toBe('missing');
     expect(exportState(join({ revision: 2, exportedAt: new Date(DAY) }))).toBe('current');
   });
@@ -1118,12 +1118,12 @@ describe('zdolności monitora eksportu', () => {
     await post(app, admin, openDay({ sessionUuid: 'z-1', picId: 'TMK' }));
     await post(app, admin, closeDay({ sessionUuid: 'z-1', picId: 'TMK' }));
 
-    // Odczyt: `panel.access` — monitor jest narzędziem obojga.
+    // Odczyt: `panel.access` - monitor jest narzędziem obojga.
     expect((await listExports(app, trainingLead)).statusCode).toBe(200);
     expect((await getPanel(app, trainingLead, '/exports/z-1')).statusCode).toBe(200);
     expect((await getPanel(app, trainingLead, '/exports/z-1/sheet')).statusCode).toBe(200);
 
-    // Ponowienie nadpisuje dokument klubu — zostaje przy właścicielu systemu.
+    // Ponowienie nadpisuje dokument klubu - zostaje przy właścicielu systemu.
     const refused = await retry(app, 'z-1', trainingLead);
     expect(refused.statusCode).toBe(403);
     expect(refused.json()).toMatchObject({ required: 'fleet.manage' });

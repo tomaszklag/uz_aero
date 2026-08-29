@@ -1,13 +1,13 @@
 /**
- * UZ Aero — panel: kafle i chipy monitora eksportu (moduł CZYSTY, testowany w Node).
+ * UZ Aero - panel: kafle i chipy monitora eksportu (moduł CZYSTY, testowany w Node).
  *
  * Wszystkie liczby pochodzą z pola `counts` odpowiedzi, policzonego przez serwer nad
- * CAŁYM zakresem zapytania — poza `LIMIT`-em. Panel ich nie sumuje: suma z widocznej
+ * CAŁYM zakresem zapytania - poza `LIMIT`-em. Panel ich nie sumuje: suma z widocznej
  * strony kłamałaby przy każdym obcięciu, a przy zawężeniu chipem pokazywałaby zera na
  * wszystkich pozostałych.
  *
- * `counts === undefined` (zapytanie w drodze albo nieudane) daje „—", nigdy `0`. Zero
- * jest twierdzeniem o świecie — „w tym zakresie nie ma ani jednej karty" — a brak
+ * `counts === undefined` (zapytanie w drodze albo nieudane) daje „-", nigdy `0`. Zero
+ * jest twierdzeniem o świecie - „w tym zakresie nie ma ani jednej karty" - a brak
  * odpowiedzi nim nie jest.
  */
 
@@ -24,14 +24,14 @@ export interface ExportTile {
   note: string;
 }
 
-const show = (value: number | undefined): string => (value === undefined ? '—' : String(value));
+const show = (value: number | undefined): string => (value === undefined ? '-' : String(value));
 
 /**
  * Cztery kafle z mockupu, w tej samej kolejności. Zamiast „Błąd regeneracji" stoi
  * „Brak karty" i to nie jest przemianowanie kosmetyczne: nieudany eksport NIE zostawia
  * po sobie wiersza w żadnej tabeli (dziennik dostaje wpis dopiero po udanym zapisie
  * karty), więc licznika prób ani treści błędu nie ma z czego policzyć. To, co da się
- * policzyć uczciwie, to dni zamknięte BEZ karty — czyli skutek tych awarii.
+ * policzyć uczciwie, to dni zamknięte BEZ karty - czyli skutek tych awarii.
  */
 export function exportTiles(counts: ExportCountsDto | undefined): ExportTile[] {
   return [
@@ -63,17 +63,17 @@ export function exportTiles(counts: ExportCountsDto | undefined): ExportTile[] {
 }
 
 /**
- * Baner „karty nadpisane przez inną sesję" — `null`, gdy nie ma ani jednej.
+ * Baner „karty nadpisane przez inną sesję" - `null`, gdy nie ma ani jednej.
  *
  * ══ ZNACZENIE TEGO BANERA ZMIENIŁO SIĘ 2026-08-07 ══
  * Opisywał OTWARTĄ decyzję produktową: dwie zamknięte zmiany jednego samolotu budowały
  * karty o tej samej nazwie i druga nadpisywała pierwszą. **Decyzja zapadła: karta jest
- * DOBĄ SAMOLOTU** (§4.7), a zmiany są jej wierszami — więc ta wada zniknęła
+ * DOBĄ SAMOLOTU** (§4.7), a zmiany są jej wierszami - więc ta wada zniknęła
  * z konstrukcji, zamiast zostać opisana.
  *
  * Baner zostaje, bo ma dziś DWA realne znaczenia. Pierwsze: sesja wycięta z karty otwartą
  * flagą przestaje być opisana treścią leżącą pod tą nazwą, a doba idzie do arkusza bez
- * niej. Drugie i ważniejsze — jest SYGNALIZATOREM: zapalenie się go dla dwóch sesji TEJ
+ * niej. Drugie i ważniejsze - jest SYGNALIZATOREM: zapalenie się go dla dwóch sesji TEJ
  * SAMEJ doby znaczyłoby, że znów powstają dwie karty jednego dokumentu, czyli że regres
  * wrócił.
  */
@@ -84,10 +84,10 @@ export function overwrittenNotice(counts: ExportCountsDto | undefined): string |
     `${n} ${plural(n, 'sesja ma kartę nadpisaną', 'sesje mają karty nadpisane', 'sesji ma karty nadpisane')} ` +
     'przez INNY eksport tej samej nazwy. Od 2026-08-07 karta jest DOBĄ SAMOLOTU (§4.7), więc ' +
     'zmiana poranna i popołudniowa są WIERSZAMI jednego dokumentu i nadpisywać się nie mają ' +
-    'prawa — normalną przyczyną tego stanu jest sesja wycięta z karty otwartą flagą ' +
+    'prawa - normalną przyczyną tego stanu jest sesja wycięta z karty otwartą flagą ' +
     'aircraft_overlap: doba poszła do arkusza bez niej, więc treść pod tą nazwą jej nie ' +
     'opisuje. Jeśli natomiast nadpisują się DWIE sesje tej samej doby i maszyny, to znaczy, ' +
-    'że znów powstają dwie karty jednego dokumentu — i to jest usterka do zgłoszenia. ' +
+    'że znów powstają dwie karty jednego dokumentu - i to jest usterka do zgłoszenia. ' +
     'Dziennik eksportu pamięta obie wysyłki, bo jest append-only.'
   );
 }
@@ -99,7 +99,7 @@ export interface ExportChip {
   title: string;
 }
 
-/** Chipy filtra — etykieta, liczba z serwera i zdanie mówiące, co ten chip zawęża. */
+/** Chipy filtra - etykieta, liczba z serwera i zdanie mówiące, co ten chip zawęża. */
 export function exportChips(counts: ExportCountsDto | undefined): ExportChip[] {
   return [
     { scope: 'all', label: 'Wszystkie', count: counts?.total, title: 'Wszystkie dni w zakresie.' },
@@ -113,10 +113,10 @@ export function exportChips(counts: ExportCountsDto | undefined): ExportChip[] {
       scope: 'revised',
       label: 'Rewizje',
       count: counts?.revised,
-      // Zawęża po samym NUMERZE rewizji, niezależnie od stanu karty — dokładnie tak,
+      // Zawęża po samym NUMERZE rewizji, niezależnie od stanu karty - dokładnie tak,
       // jak serwer liczy `counts.revised`. Zdanie mówiące „wśród kart istniejących"
       // byłoby opisem innego chipa niż ten (poprawka prozy z 2026-08-01).
-      title: 'Dni z rewizją większą niż 1 — karta wracała do arkusza, niezależnie od jej dzisiejszego stanu.',
+      title: 'Dni z rewizją większą niż 1 - karta wracała do arkusza, niezależnie od jej dzisiejszego stanu.',
     },
     {
       scope: 'blocked',
@@ -128,25 +128,25 @@ export function exportChips(counts: ExportCountsDto | undefined): ExportChip[] {
       scope: 'missing',
       label: 'Bez karty',
       count: counts?.missing,
-      title: 'Samolot zdany, a karta nie powstała — eksport nie doszedł.',
+      title: 'Samolot zdany, a karta nie powstała - eksport nie doszedł.',
     },
     {
       scope: 'waiting',
       label: 'Czekają',
       count: counts?.waiting,
-      title: 'Sesje bez day_close — wiersz karty domyka zdanie samolotu.',
+      title: 'Sesje bez day_close - wiersz karty domyka zdanie samolotu.',
     },
     {
       scope: 'impossible',
       label: 'Bez claimu',
       count: counts?.impossible,
-      title: 'Sesje bez session_claim — karty nie da się nazwać.',
+      title: 'Sesje bez session_claim - karty nie da się nazwać.',
     },
   ];
 }
 
 /**
- * Baner „lista jest przycięta" — `null`, gdy nie jest.
+ * Baner „lista jest przycięta" - `null`, gdy nie jest.
  *
  * Do 2026-08-01 tego zdania na ekranie NIE BYŁO, choć docblock stałej `EXPORTS_PAGE_LIMIT`
  * twierdził, że „ekran mówi o tym wprost". Lista przycięta po cichu jest najgorszym
@@ -164,7 +164,7 @@ export function truncationNotice(page: {
   if (!page.truncated) return null;
   const hidden = page.matched - page.shown;
   return (
-    `Widzisz ${page.shown} z ${page.matched} dni pasujących do tego zawężenia — ` +
+    `Widzisz ${page.shown} z ${page.matched} dni pasujących do tego zawężenia - ` +
     `${hidden} ${plural(hidden, 'dzień', 'dni', 'dni')} poza listą, bo panel pobiera najwyżej ` +
     `${EXPORTS_PAGE_LIMIT} wierszy naraz. Liczniki i kafle nad tabelą opisują CAŁY zakres, ` +
     'więc pokazują także to, czego tu nie widać. Zawęź zakres dat albo wybierz chip stanu, ' +
@@ -186,7 +186,7 @@ export function exportsEmpty(narrowed: boolean): EmptyCopy {
   return narrowed
     ? {
         title: 'NIC W TYM ZAWĘŻENIU',
-        note: 'Żaden dzień nie spełnia bieżących filtrów. Zdejmij chip albo poszerz zakres dat — liczniki nad tabelą pokazują, gdzie coś jest.',
+        note: 'Żaden dzień nie spełnia bieżących filtrów. Zdejmij chip albo poszerz zakres dat - liczniki nad tabelą pokazują, gdzie coś jest.',
       }
     : {
         title: 'ŻADEN DZIEŃ NIE ZOSTAŁ ZAMKNIĘTY',

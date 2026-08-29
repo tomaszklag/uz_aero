@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 01 Mój dzień</title>
+<title>UZ Aero - 01 Mój dzień</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -56,9 +56,9 @@
   .nav-strip span { color:var(--border-strong); }
 
   /* ===== App header =====
-     Wzorzec od issue #23 pkt 7 — JEDEN dla całej aplikacji: tytuł i podtytuł
+     Wzorzec od issue #23 pkt 7 - JEDEN dla całej aplikacji: tytuł i podtytuł
      wyrównane DO LEWEJ, ustawienia zawsze PO PRAWEJ. SyncChip stoi przed zębatką
-     i online NIE RYSUJE NIC (issue #12) — wariant offline pokazuje 01C.
+     i online NIE RYSUJE NIC (issue #12) - wariant offline pokazuje 01C.
      Licznika sesji w nagłówku nie ma (issue #23 pkt 6): liczbę sesji widać na liście. */
   .app-header {
     display:flex; align-items:center; justify-content:space-between; gap:10px;
@@ -77,7 +77,7 @@
   .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
   .scroll::-webkit-scrollbar { display:none; }
   /* Karty mają `overflow:hidden` (zaokrąglone rogi tabel), co w kolumnie flex zeruje
-     ich minimalną wysokość — bez tego sumy zostają UCIĘTE zamiast wyjechać poza ekran
+     ich minimalną wysokość - bez tego sumy zostają UCIĘTE zamiast wyjechać poza ekran
      do przewinięcia. */
   .scroll > * { flex-shrink:0; }
 
@@ -86,22 +86,22 @@
 
   /* ===== Log dnia =====
      Serce ekranu po issue #23: PŁASKA oś czasu sesji doby, posortowana po
-     uruchomieniu silnika. Samolot jest INFORMACJĄ kafelka, nie osią grupowania —
+     uruchomieniu silnika. Samolot jest INFORMACJĄ kafelka, nie osią grupowania -
      grupy per maszyna kłamały o przebiegu dnia przy każdej przesiadce.
 
      KAFELEK, NIE WIERSZ TABELI (issue #42, 2026-08-13). To DOKŁADNIE ten sam
      komponent, co na „Poprzednich dniach" (12): nagłówek + rejestracja, godziny
      biegu silnika, trójka Loty / Blok / Lot i pas akcji. Do 2026-08-13 stała tu
-     własna tabela `.leg-row` z tymi samymi trzema wielkościami w drugim układzie —
+     własna tabela `.leg-row` z tymi samymi trzema wielkościami w drugim układzie -
      dwa widoki jednej rzeczy każą pilotowi sprawdzać, czy aplikacja mówi o tym samym.
 
      RÓŻNIC WOBEC 12 SĄ DWIE, obie wymuszone treścią:
       1. nagłówkiem kafelka jest NUMER SESJI w dobie, nie data. Data stoi w nagłówku
-         ekranu i jest wspólna dla wszystkich kafelków — powtórzona trzy razy byłaby
+         ekranu i jest wspólna dla wszystkich kafelków - powtórzona trzy razy byłaby
          szumem, a numer niesie kolejność, którą wcześniej dawała kolumna `.leg-num`;
       2. kafelki NIE są niebieskie. Na 12 błękit oddziela sesje w oknie korekty od
          zamkniętych; tu wszystkie są w oknie (doba trwa krócej niż 24 h), więc kolor
-         świecący przy każdym kafelku przestaje cokolwiek znaczyć — ta sama reguła,
+         świecący przy każdym kafelku przestaje cokolwiek znaczyć - ta sama reguła,
          dla której SyncChip online nie rysuje nic (issue #12). */
   .group-lbl { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:2px 2px 0; }
   .day-card {
@@ -111,24 +111,24 @@
   }
   .day-card:hover { border-color:var(--border-strong); }
   .day-top { display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
-  /* Nagłówek kafelka — na 12 jest tu data, tu numer sesji. Ta sama skala i ten sam
+  /* Nagłówek kafelka - na 12 jest tu data, tu numer sesji. Ta sama skala i ten sam
      krój, bo to ta sama rola: co to za kafelek. */
   .day-title { font-family:var(--font-display); font-size:21px; letter-spacing:1.5px; color:var(--text-primary); line-height:1; }
   .day-title-row { display:flex; align-items:center; gap:8px; }
-  /* Plakietka „RĘCZNIE" (przebudowa 15, 2026-08-16) — sesja wpisana po fakcie
+  /* Plakietka „RĘCZNIE" (przebudowa 15, 2026-08-16) - sesja wpisana po fakcie
      z ekranu 15. Neutralna ramka bez wypełnienia: fakt o POCHODZENIU całej sesji,
      nie ostrzeżenie. Przy tytule, bo mówi o sesji jako całości; wiersze osi na 10
      znaczników nie dostają (issue #40 pkt 6 zostaje w mocy). */
   .day-tag { font-family:var(--font-mono); font-size:7.5px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); border:1px solid var(--border-strong); border-radius:5px; padding:2px 5px; }
   .day-ac { font-family:var(--font-mono); font-size:11px; letter-spacing:1.5px; color:var(--green); }
-  /* Godziny biegu silnika ze znacznikiem strefy — jak na 12. Bieg jeszcze otwarty
+  /* Godziny biegu silnika ze znacznikiem strefy - jak na 12. Bieg jeszcze otwarty
      kończy się wielokropkiem („13:40 → … UTC"), nie udaje zamkniętego. */
   .day-times { font-family:var(--font-mono); font-size:10px; letter-spacing:0.5px; color:var(--text-muted); margin-top:-4px; }
   .day-stats { display:flex; gap:14px; flex-wrap:wrap; }
   .stat { display:flex; flex-direction:column; gap:2px; }
   .stat-k { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
   .stat-v { font-family:var(--font-mono); font-size:13px; font-weight:700; color:var(--text-secondary); }
-  /* Pas akcji w tonie neutralnym — kształt i napis jak na 12 („OTWÓRZ I POPRAW"),
+  /* Pas akcji w tonie neutralnym - kształt i napis jak na 12 („OTWÓRZ I POPRAW"),
      bo to ta sama akcja: ekran sesji (10) z ołówkami przy zdarzeniach. */
   .cta-open {
     display:flex; align-items:center; justify-content:center; gap:8px; min-height:44px;
@@ -137,10 +137,10 @@
   }
   .day-card:hover .cta-open { border-color:var(--text-muted); color:var(--text-primary); }
 
-  /* Sumy doby: Blok i Loty — własna karta pod listą kafelków. Kafla „Służba" nie ma
+  /* Sumy doby: Blok i Loty - własna karta pod listą kafelków. Kafla „Służba" nie ma
      (issue #23 pkt 2): czas „od pierwszej do ostatniej czynności" niczego nie mierzył. */
   .totals-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
-  /* Trzy kolumny od 2026-08-16 — Loty · Blok · Lot, tak jak na kafelku sesji. */
+  /* Trzy kolumny od 2026-08-16 - Loty · Blok · Lot, tak jak na kafelku sesji. */
   .totals { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1px; background:var(--border); }
   .total-cell { background:var(--surface); padding:10px 12px; display:flex; flex-direction:column; gap:3px; }
   .total-key { font-family:var(--font-mono); font-size:7px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
@@ -149,17 +149,17 @@
 
   /* ===== Przyciski =====
      JEDEN krój na wszystkie przyciski ekranu (issue #42, 2026-08-13): display 16 px
-     / ls 2 — token `button_small`, ten sam, którym pisze pas akcji kafelka i akcje
+     / ls 2 - token `button_small`, ten sam, którym pisze pas akcji kafelka i akcje
      arkuszy. Do 2026-08-13 „ROZPOCZNIJ LOT" i „DODAJ LOT RĘCZNIE" były mono 11 px,
      a „Poprzednie dni" osobnym linkiem pisanym Archivo 12,5 px: trzy kroje na trzech
-     przyciskach jednego ekranu. Wielkość dalej różnicuje WAGĘ akcji — ale rodzina
+     przyciskach jednego ekranu. Wielkość dalej różnicuje WAGĘ akcji - ale rodzina
      jest jedna.
 
      „ROZPOCZNIJ LOT" JEST `.btn-primary` NA KAŻDYM WARIANCIE DOBY (zgłoszenie
      z urządzenia, 2026-08-16): do tej pory po pierwszej sesji zamieniał się w szary
-     — ekran uczył się dwa razy w ciągu jednego dnia, a druga sesja nie jest mniej
+     - ekran uczył się dwa razy w ciągu jednego dnia, a druga sesja nie jest mniej
      ważna od pierwszej. MIEJSCE: pod logiem dnia, nad wpisem ręcznym (uwaga
-     z urządzenia, 2026-08-26) — log jest właściwą treścią ekranu domowego, więc
+     z urządzenia, 2026-08-26) - log jest właściwą treścią ekranu domowego, więc
      stoi pierwszy; jednakowo na 01, 01A i 01C. */
   .btn-primary {
     display:flex; align-items:center; justify-content:center; gap:10px;
@@ -179,10 +179,10 @@
   .btn-secondary:hover { border-color:var(--green-border); color:var(--green); }
 
   /* „ZAMKNIJ DZIEŃ" i przypis „Nie musisz go zamykać…" USUNIĘTE (issue #23 pkt 2 i 4)
-     razem z klamrą służby — dzień pilota nie jest bytem, który się zamyka. */
+     razem z klamrą służby - dzień pilota nie jest bytem, który się zamyka. */
 
   /* Wejście w okno korekty 24 h: zwykły `.btn-secondary` z plakietką w środku.
-     Osobna klasa `.history-link` (własny krój, własna wysokość) została usunięta —
+     Osobna klasa `.history-link` (własny krój, własna wysokość) została usunięta -
      to był przycisk udający link. */
   .history-badge {
     font-family:var(--font-mono); font-size:8px; letter-spacing:1px; text-transform:uppercase;
@@ -211,12 +211,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 01</span>
+  <span class="film-strip">UZ AERO - 01</span>
   <span class="slug">mój dzień · ekran domowy</span>
   <span class="canvas-meta"><span class="pulse"></span>Ekran 1</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Mój dzień">
+<main class="phone" role="region" aria-label="Mockup - Mój dzień">
   <div class="status-bar">
     <span>17:25</span>
     <span class="status-right">
@@ -228,13 +228,13 @@
 
   <div class="screen">
 
-    <!-- App Header — tytuł do lewej, ustawienia po prawej (issue #23 pkt 7);
+    <!-- App Header - tytuł do lewej, ustawienia po prawej (issue #23 pkt 7);
          online SyncChip nie rysuje nic (issue #12) -->
     <div class="app-header">
       <div class="app-header-left">
         <span class="screen-title">MÓJ DZIEŃ</span>
         <!-- Bez „UTC" w podtytule (uwaga użytkownika, issue #23): znacznik strefy
-             niesie nagłówek karty „Log dnia · czasy UTC" — tam mówi coś o tabeli,
+             niesie nagłówek karty „Log dnia · czasy UTC" - tam mówi coś o tabeli,
              w nagłówku ekranu był szumem. -->
         <span class="header-subtitle">TMK · 06 SIE 2026</span>
       </div>
@@ -249,12 +249,12 @@
 
       <!-- Log dnia: płaska oś czasu sesji (issue #23 pkt 3). Kafelek = jedna sesja
            (bieg silnika z lotami w środku), rejestracja jest informacją kafelka.
-           Sesje na liście są już ZATWIERDZONE — zdanie samolotu (09b) potwierdziło
+           Sesje na liście są już ZATWIERDZONE - zdanie samolotu (09b) potwierdziło
            dane, więc po locie niczego się nie potwierdza ani nie wysyła ponownie.
            Kafelek prowadzi do DETALI TEJ SESJI (10): ślad biegu silnika, oś czasu,
            rachunek paliwa i MH, i tam korekty. Wejścia w ślad z listy NIE MA
-           (issue #25 pkt 2) — ślad otwiera się miniaturą na ekranie sesji.
-           TEN SAM KOMPONENT stoi na „Poprzednich dniach" (12) — issue #42. -->
+           (issue #25 pkt 2) - ślad otwiera się miniaturą na ekranie sesji.
+           TEN SAM KOMPONENT stoi na „Poprzednich dniach" (12) - issue #42. -->
       <div class="group-lbl">Log dnia</div>
 
       <a href="10-statystyki.html" class="day-card">
@@ -312,16 +312,16 @@
         </div>
       </a>
 
-      <!-- Sumy doby pod listą — jedyna wielkość, która NIE należy do pojedynczej
+      <!-- Sumy doby pod listą - jedyna wielkość, która NIE należy do pojedynczej
            sesji, więc jako jedyna została kartą własnego kształtu.
 
            TA SAMA TRÓJKA, CO NA KAFELKU SESJI: Loty · Blok · Lot (2026-08-16).
            Do tej pory była tu para, w której komórka „Loty" niosła CZAS w powietrzu,
-           a liczbę lotów spychała do podpisu „5 st / 5 ldg" — czyli etykieta mówiła
+           a liczbę lotów spychała do podpisu „5 st / 5 ldg" - czyli etykieta mówiła
            o jednej wielkości, a wartość o drugiej. Podpis dublował przy tym sam siebie:
            lot to start i lądowanie, więc obie liczby są liczbą lotów. Czas lotu ma
            odtąd własną komórkę, bo to inna wielkość niż blok: blok mierzy pracę silnika
-           (uruchomienie → wyłączenie), lot — powietrze (start → lądowanie). -->
+           (uruchomienie → wyłączenie), lot - powietrze (start → lądowanie). -->
       <div class="totals-card">
         <div class="totals">
           <div class="total-cell">
@@ -342,7 +342,7 @@
 
       <!-- PAS AKCJI POD LOGIEM (uwaga z urządzenia, 2026-08-26): log jest właściwą
            treścią ekranu domowego, więc stoi pierwszy. „ROZPOCZNIJ LOT" pozostaje
-           zielony i główny przez cały dzień (2026-08-16) — zmienia się wyłącznie
+           zielony i główny przez cały dzień (2026-08-16) - zmienia się wyłącznie
            miejsce; stoi nad wpisem ręcznym, bo jest drogą codzienną, a wpis awaryjną. -->
       <a href="02-preflight.html" class="btn-primary">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
@@ -350,7 +350,7 @@
       </a>
 
       <!-- Ręczny wpis CAŁEGO lotu (model 2026-08-10, story pkt 7): samolot, czasy
-           silnika i lotu, odczyty. Dla lotów zapisanych poza telefonem — papier,
+           silnika i lotu, odczyty. Dla lotów zapisanych poza telefonem - papier,
            rozładowana bateria, cudza rejestracja dnia. -->
       <a href="15-reczny-lot.html" class="btn-secondary">
         <svg width="15" height="15" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 8.5l1.8-0.5 5.4-5.4a1.2 1.2 0 0 0-1.7-1.7L1.6 6.3l-.6 1.8z"/></svg>
@@ -358,12 +358,12 @@
       </a>
 
       <!-- Trzeci przycisk tego samego kroju i kształtu, co dwa wyżej (issue #42):
-           plakietka niesie to, co przedtem świeciło przy linku — dzień, który wciąż
+           plakietka niesie to, co przedtem świeciło przy linku - dzień, który wciąż
            można poprawić. -->
       <a href="12-historia.html" class="btn-secondary">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
         POPRZEDNIE DNI
-        <span class="history-badge">05 SIE — można poprawić</span>
+        <span class="history-badge">05 SIE - można poprawić</span>
       </a>
 
     </div>
@@ -371,27 +371,27 @@
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Warianty tego ekranu — kiedy który?</div>
+  <div class="vp-title">Warianty tego ekranu - kiedy który?</div>
   <a class="vp-item active" href="01-moj-dzien.html">
     <span class="vp-badge">01</span>
     <span class="vp-body">
       <span class="vp-name">Dzień w toku</span>
-      <span class="vp-when">Standard po pierwszej sesji: płaska oś czasu sesji doby (kafelek = jeden bieg silnika z lotami w środku, rejestracja jako informacja kafelka — bez grupowania po maszynie), sumy Blok / Loty. Kafelek jest TYM SAMYM komponentem, co na „Poprzednich dniach" (issue #42) — z numerem sesji zamiast daty, bo data stoi w nagłówku ekranu. Klamry służby i „Zamknij dzień" nie ma (issue #23) — dzień pilota to lista sesji, niczego się nie otwiera ani nie zamyka.</span>
+      <span class="vp-when">Standard po pierwszej sesji: płaska oś czasu sesji doby (kafelek = jeden bieg silnika z lotami w środku, rejestracja jako informacja kafelka - bez grupowania po maszynie), sumy Blok / Loty. Kafelek jest TYM SAMYM komponentem, co na „Poprzednich dniach" (issue #42) - z numerem sesji zamiast daty, bo data stoi w nagłówku ekranu. Klamry służby i „Zamknij dzień" nie ma (issue #23) - dzień pilota to lista sesji, niczego się nie otwiera ani nie zamyka.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
   <a class="vp-item" href="01a-moj-dzien-pusty.html">
     <span class="vp-badge blue">01A</span>
     <span class="vp-body">
-      <span class="vp-name">Początek dnia — zero sesji</span>
-      <span class="vp-when">Pilot wszedł do aplikacji i nie przejął jeszcze nic: pusty log dnia („— —", nigdy zera), cały ekran prowadzi do przejęcia samolotu.</span>
+      <span class="vp-name">Początek dnia - zero sesji</span>
+      <span class="vp-when">Pilot wszedł do aplikacji i nie przejął jeszcze nic: pusty log dnia („- -", nigdy zera), cały ekran prowadzi do przejęcia samolotu.</span>
     </span>
   </a>
   <a class="vp-item" href="01c-moj-dzien-offline.html">
     <span class="vp-badge amber">01C</span>
     <span class="vp-body">
-      <span class="vp-name">Offline — pill i szczegóły synchronizacji</span>
-      <span class="vp-when">Brak sieci: w nagłówku amber pill „OFFLINE · n" (jedyny ślad sieci na ekranie), tapnięcie otwiera arkusz ze szczegółami — ostatnia udana synchronizacja, kolejka, stempel danych referencyjnych (issue #23 pkt 5).</span>
+      <span class="vp-name">Offline - pill i szczegóły synchronizacji</span>
+      <span class="vp-when">Brak sieci: w nagłówku amber pill „OFFLINE · n" (jedyny ślad sieci na ekranie), tapnięcie otwiera arkusz ze szczegółami - ostatnia udana synchronizacja, kolejka, stempel danych referencyjnych (issue #23 pkt 5).</span>
     </span>
   </a>
 </aside>

@@ -1,17 +1,17 @@
 /**
- * UZ Aero — adapter czujników na `expo-sensors`.
+ * UZ Aero - adapter czujników na `expo-sensors`.
  *
  * Jedyne miejsce w kodzie, które wie o `expo-sensors`. Robi trzy rzeczy i ani jednej
  * więcej: przelicza jednostki platformy na jednostki domeny, spina trzy niezależne
  * strumienie w jedno okno czasu i oddaje AGREGAT. Cała matematyka (usunięcie grawitacji,
  * moduły, wariancja) mieszka w `domain/detection/imu.ts` i jest testowana w Node.
  *
- * JEDNOSTKI — źródło realnych pomyłek:
+ * JEDNOSTKI - źródło realnych pomyłek:
  *   • `Accelerometer` oddaje wielokrotności g, NIE m/s² (na obu platformach);
  *   • `Gyroscope` oddaje rad/s, a my myślimy w °/s;
  *   • `Barometer` oddaje hPa, czyli to, czego chcemy, bez przeliczania.
  *
- * UWAGA: modułu natywnego nie wolno wciągać do barrela infrastruktury — importuj wprost.
+ * UWAGA: modułu natywnego nie wolno wciągać do barrela infrastruktury - importuj wprost.
  */
 
 import { Accelerometer, Barometer, Gyroscope } from 'expo-sensors';
@@ -35,12 +35,12 @@ import type {
 const G_TO_MPS2 = 9.806_65;
 const RAD_TO_DEG = 180 / Math.PI;
 
-/** Odstęp próbek inercyjnych (ms) — 50 Hz pokrywa pasmo dudnienia kół 1–20 Hz. */
+/** Odstęp próbek inercyjnych (ms) - 50 Hz pokrywa pasmo dudnienia kół 1–20 Hz. */
 const IMU_INTERVAL_MS = Math.round(1000 / IMU_SAMPLE_HZ);
 
 /**
  * Odstęp odczytów barometru (ms). Rzadziej niż IMU z premedytacją: ciśnienie zmienia się
- * wolno, a czujnik jest dokładny — 5 Hz to już nadmiar wobec zjawiska, które mierzymy.
+ * wolno, a czujnik jest dokładny - 5 Hz to już nadmiar wobec zjawiska, które mierzymy.
  */
 const BARO_INTERVAL_MS = 200;
 
@@ -140,7 +140,7 @@ export class ExpoSensorsAdapter implements SensorPort {
     const { aggregate, next } = drainImu(this.accumulator);
     this.accumulator = next;
 
-    // Okno bez ANI JEDNEGO pomiaru pomijamy — puste wiersze w śladzie tylko rozcieńczają
+    // Okno bez ANI JEDNEGO pomiaru pomijamy - puste wiersze w śladzie tylko rozcieńczają
     // materiał. Brak ciśnienia przy obecnym IMU (i odwrotnie) już warto zapisać.
     if (aggregate == null && this.lastPressureHpa == null) return;
 

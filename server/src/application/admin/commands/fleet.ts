@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) — konfiguracja floty: dodanie jednostki, edycja, wyłączenie ze
+ * UZ Aero (serwer) - konfiguracja floty: dodanie jednostki, edycja, wyłączenie ze
  * służby (panel, mockupy `A07-flota.html` i `A07a-samolot.html`).
  *
  * ══ CO TA KOMENDA NAPRAWDĘ ZMIENIA ══
@@ -8,7 +8,7 @@
  * format motogodzin zmienia sposób wpisywania na preflight, wymóg drugiego pilota
  * bramkuje przejęcie samolotu, a stan służby decyduje, czy jednostkę da się w ogóle
  * wybrać. Dlatego diff w dzienniku audytu niesie tu nie tylko „z czego na co", ale
- * i PRÓG, który z tej zmiany wynikł — bez tego wpis „1257 → 1100" nie odpowiada na
+ * i PRÓG, który z tej zmiany wynikł - bez tego wpis „1257 → 1100" nie odpowiada na
  * pytanie, po co ta zmiana zaszła.
  *
  * ══ CZEGO TA KOMENDA NIE ROBI I NIE BĘDZIE ROBIŁA ══
@@ -17,35 +17,35 @@
  *     jakie przyszły z telefonu, a flagi wystawione przed zmianą zachowują STARY próg
  *     w `details`. Nie ma tu i nie może być pętli po `flags` ani po `events`.
  *
- *     **Ale to NIE znaczy „zmiana nie działa wstecz" — i tak było to opisane do
+ *     **Ale to NIE znaczy „zmiana nie działa wstecz" - i tak było to opisane do
  *     2026-08-01.** Detekcja flag łańcucha nie mieszka w tym pliku: przeliczenie
  *     zachodzi w `application/mobile/commands/ingest.ts`, które po KAŻDEJ przyjętej
  *     paczce `POST /events` woła `chainFlags` na CAŁEJ historii sesji samolotu
  *     (`sessions.listByAircraft`) z pojemnością BIEŻĄCĄ (`aircraft.capacityL`), a
  *     `domain/mhChain.ts` liczy próg raz dla wszystkich par. Skutek: po obniżeniu
  *     pojemności najbliższa synchronizacja tej jednostki potrafi wystawić NOWĄ flagę
- *     na parze dni zamkniętych PRZED zmianą. Asymetrycznie — podniesienie pojemności
+ *     na parze dni zamkniętych PRZED zmianą. Asymetrycznie - podniesienie pojemności
  *     niczego nie zdejmuje, bo `ensureOpen` tylko dokłada.
  *
  *     Zmiana momentu powstawania flag jest decyzją produktową wymagającą ścieżki
  *     kalibracyjnej (`CLAUDE.md`: progów nie stroimy „na wyczucie"), więc zachowanie
- *     zostaje, a prostujemy OBIETNICĘ — w `A07a`, w szufladzie panelu i w teście
+ *     zostaje, a prostujemy OBIETNICĘ - w `A07a`, w szufladzie panelu i w teście
  *     (`test/adminFleet.test.ts`, „najbliższy POST /events flaguje parę starych dni").
  *  2. **Nie kasuje jednostek.** Wyłączenie ze służby zabiera samolot z listy wyboru
  *     na przyszłość; sesje historyczne, karty arkusza, flagi i łańcuch motogodzin
  *     zostają nietknięte. W tym pliku nie ma `DELETE` na `aircraft`.
  *  3. **Nie dotyka claimu ani odczytów liczników.** To są wielkości wyliczane ze
- *     strumienia zdarzeń — port konfiguracji ich nie zna (`AdminAircraft` jest osobnym
+ *     strumienia zdarzeń - port konfiguracji ich nie zna (`AdminAircraft` jest osobnym
  *     typem od `ReferenceAircraft` właśnie po to).
  *
  * ══ JAK ZMIANA DOCIERA DO TELEFONÓW ══
  * Jedynym kanałem jest `GET /reference`: zapis podbija `aircraft.updated_at`, a z niego
  * powstaje ETag zasobu (`application/mobile/queries/reference.ts`). Aplikacja odpytuje
  * przy starcie dnia, więc samolot z otwartą sesją dokończy dzień na konfiguracji, którą
- * pobrał rano. Adapter MUSI stemplować `updated_at` przy każdym zapisie — inaczej
+ * pobrał rano. Adapter MUSI stemplować `updated_at` przy każdym zapisie - inaczej
  * zmiana zostaje w panelu i nikt jej nie zobaczy (pilnuje `test/adminFleet.test.ts`).
  *
- * Konstruktor bez `Database`/`Queryable` — komenda nie ma jak zapisać z pominięciem
+ * Konstruktor bez `Database`/`Queryable` - komenda nie ma jak zapisać z pominięciem
  * śladu audytu, bo nie ma uchwytu do bazy (`auditedWrite.ts`, `test/architecture.test.ts`).
  */
 
@@ -69,7 +69,7 @@ export interface CreateAircraftInput {
   mhFormat: MhFormat;
   dualRequired: boolean;
   serviceStatus: ServiceStatus;
-  /** Konfiguracja oleju (issue #60) — `null` = moduł dla jednostki milczy. */
+  /** Konfiguracja oleju (issue #60) - `null` = moduł dla jednostki milczy. */
   oilMinL: number | null;
   oilCapacityL: number | null;
   oilNormLPerH: number | null;
@@ -92,7 +92,7 @@ export type FleetOutcome<T> =
 
 /**
  * Sygnały przerwania transakcji. Muszą być WYJĄTKAMI, bo tylko wyjątek wycofuje
- * transakcję `AuditedWrite.run` — zwrócenie wartości zostawiłoby wpis audytu
+ * transakcję `AuditedWrite.run` - zwrócenie wartości zostawiłoby wpis audytu
  * o operacji, która się nie zdarzyła. Poza ten plik nie wychodzą.
  */
 class AircraftNotFound extends Error {}
@@ -117,7 +117,7 @@ interface FieldDiff {
   to: unknown;
 }
 
-/** Pola konfiguracji, które w ogóle podlegają zmianie — jedna lista dla diffa i patcha. */
+/** Pola konfiguracji, które w ogóle podlegają zmianie - jedna lista dla diffa i patcha. */
 const FIELDS = [
   'reg',
   'type',
@@ -136,14 +136,14 @@ export class AdminFleetCommands {
     private readonly write: AuditedWrite,
     private readonly fleet: FleetAdminPort,
     /**
-     * Identyfikator jednostki jako FUNKCJA w konstruktorze, nie port — nie ma tu
+     * Identyfikator jednostki jako FUNKCJA w konstruktorze, nie port - nie ma tu
      * adaptera do podmiany (composition root podaje `randomUUID`), a port bez drugiej
      * implementacji to koszt bez zysku (ta sama decyzja, co przy `newId` w komendzie
      * kont i korekt).
      *
      * `id` NIE jest rejestracją i to jest reguła produktu, nie szczegół. Zdarzenia
      * wiążą się z `aircraft_id`, więc gdyby `id = reg`, przemalowanie znaków na
-     * kadłubie odrywałoby samolot od całego jego nalotu, flag i kart arkusza — dokładnie
+     * kadłubie odrywałoby samolot od całego jego nalotu, flag i kart arkusza - dokładnie
      * ta pułapka, którą przy kontach zamyka rozdział `id` od kodu pilota. Jednostki
      * z seeda mają `id = reg` historycznie i zostają takie, jakie są; migracji tego nie
      * robimy, bo przepisanie klucza obcego w rejestrze append-only jest gorsze od
@@ -209,7 +209,7 @@ export class AdminFleetCommands {
       const aircraft = await this.write.run(actor, async (tx) => {
         // Blokada PRZED odczytem wiersza i w TEJ SAMEJ transakcji. Bez niej dwie
         // równoległe zmiany tego samego samolotu czytają ten sam stan wyjściowy, więc
-        // w dzienniku audytu zostają DWA wpisy o przejściu „1257 → 1100" — mimo że
+        // w dzienniku audytu zostają DWA wpisy o przejściu „1257 → 1100" - mimo że
         // druga transakcja zaczynała już od 1100. Diff, którego „przed" bywa nieprawdą,
         // przestaje być dowodem. Ta sama rola, co `lockAdminPopulation` przy kontach.
         await this.fleet.lockAircraft(tx, id);
@@ -218,7 +218,7 @@ export class AdminFleetCommands {
         if (before == null) throw new AircraftNotFound();
 
         const changes = diffOf(before, input);
-        // Zapis bez zmiany zostawiłby w dzienniku wpis o niczym — a dziennik nadzoru,
+        // Zapis bez zmiany zostawiłby w dzienniku wpis o niczym - a dziennik nadzoru,
         // w którym połowa wierszy to „otwarto i zamknięto formularz", przestaje być
         // czytelny. Panel i tak blokuje przycisk, gdy nic nie ruszono.
         if (Object.keys(changes).length === 0) throw new NoChanges();
@@ -226,7 +226,7 @@ export class AdminFleetCommands {
         const capacity = refuseCapacity(input.capacityL ?? null);
         if (capacity != null) throw new Refused(capacity);
 
-        // Reguła oleju orzeka o STANIE po zmianie, a PATCH niesie różnicę — składamy
+        // Reguła oleju orzeka o STANIE po zmianie, a PATCH niesie różnicę - składamy
         // wartości efektywne: minimum podniesione ponad ISTNIEJĄCĄ pojemność też ma
         // zostać odrzucone, nie tylko para wysłana w jednym żądaniu.
         const oil = refuseOil({
@@ -239,7 +239,7 @@ export class AdminFleetCommands {
         if (oil != null) throw new Refused(oil);
 
         if (input.serviceStatus !== undefined && input.serviceStatus !== before.serviceStatus) {
-          // Licznik czytany PO wzięciu blokady — tak jak przy populacji administratorów.
+          // Licznik czytany PO wzięciu blokady - tak jak przy populacji administratorów.
           // Czego ta blokada NIE obejmuje, opisuje `FleetAdminPort.lockAircraft`:
           // telefon otwierający dzień blokuje sesję, nie samolot.
           const refusal = refuseDisable({
@@ -269,7 +269,7 @@ export class AdminFleetCommands {
               // ma odpowiadać na pytanie „co się zmieniło". Pole niezmienione w ogóle
               // się tu nie pojawia.
               changes,
-              // Skutek zmiany pojemności wypisany wprost — dokładnie ta liczba, którą
+              // Skutek zmiany pojemności wypisany wprost - dokładnie ta liczba, którą
               // panel pokazał w karcie „Skutki zmiany" przed zapisem. Wpis bez niej
               // kazałby czytającemu liczyć 5% w pamięci.
               ...(input.capacityL === undefined || input.capacityL === before.capacityL
@@ -299,7 +299,7 @@ export class AdminFleetCommands {
     if (err instanceof Refused) return { ok: false, reason: 'refused', refusal: err.refusal };
 
     // Przegrany wyścig o unikalność to TA SAMA odpowiedź, co sprawdzenie przed zapisem
-    // — 409 z nazwą pola. Bez tego dwa równoległe `POST /fleet` z tą samą rejestracją
+    // - 409 z nazwą pola. Bez tego dwa równoległe `POST /fleet` z tą samą rejestracją
     // kończyłyby się 500, czyli „coś się zepsuło" na zdarzenie, które ma gotowe
     // wyjaśnienie i gotowy formularz do poprawienia.
     if (uniqueConflictOn(err, ['reg'] as const) != null) {
@@ -312,7 +312,7 @@ export class AdminFleetCommands {
 
 /**
  * Kod akcji w dzienniku. `aircraft.disable` istnieje w katalogu
- * (`domain/adminActions.ts`), a `aircraft.enable` — NIE, i to jest świadoma treść tego
+ * (`domain/adminActions.ts`), a `aircraft.enable` - NIE, i to jest świadoma treść tego
  * katalogu, a nie luka: przywrócenie do służby jest zwykłą zmianą pola, a odebranie
  * jednostki z listy wyboru jest zdarzeniem, którego szuka się w dzienniku po nazwie.
  * Ta sama zasada, co przy `pilot.deactivate` i braku `pilot.activate`.
@@ -322,7 +322,7 @@ function auditAction(before: ServiceStatus, after: ServiceStatus): 'aircraft.upd
 }
 
 /**
- * Co naprawdę się zmienia — pola o wartości identycznej z obecną wypadają.
+ * Co naprawdę się zmienia - pola o wartości identycznej z obecną wypadają.
  *
  * Bez tego „Zapisz zmiany" bez zmiany pola dopisywałby do dziennika wiersz mówiący,
  * że rejestracja zmieniła się z `SP-KLM` na `SP-KLM`. Diff jest jedyną treścią wpisu,
@@ -339,7 +339,7 @@ function diffOf(before: AdminAircraft, input: UpdateAircraftInput): Record<strin
   return changes;
 }
 
-/** `{reg: undefined}` nadpisałoby wartość w rozwinięciu obiektu — stąd ten filtr. */
+/** `{reg: undefined}` nadpisałoby wartość w rozwinięciu obiektu - stąd ten filtr. */
 function stripUndefined(input: UpdateAircraftInput): Partial<AdminAircraft> {
   const out: Record<string, unknown> = {};
   for (const key of FIELDS) {

@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: filtry skrzynki ↔ query string (moduł czysty).
+ * UZ Aero - panel: filtry skrzynki ↔ query string (moduł czysty).
  *
  * Reguła, której pilnujemy: filtr da się WKLEIĆ. Adres jest jedynym magazynem stanu
  * listy, więc round-trip musi być wierny, a adres nieczytelny nie może wywalić ekranu.
@@ -20,7 +20,7 @@ import {
 const parse = (query: string): FlagFilter => filterFromParams(new URLSearchParams(query));
 
 describe('filtr ↔ adres', () => {
-  it('goły adres skrzynki znaczy „otwarte" — i ustawia to PANEL, nie serwer', () => {
+  it('goły adres skrzynki znaczy „otwarte" - i ustawia to PANEL, nie serwer', () => {
     // Trasa listy celowo nie zawęża nic sama: domyślne zawężenie w API byłoby
     // niewidoczną regułą, przez którą liczniki przestałyby się zgadzać z listą.
     expect(parse('')).toEqual(DEFAULT_FLAG_FILTER);
@@ -38,7 +38,7 @@ describe('filtr ↔ adres', () => {
     expect(filterFromParams(new URLSearchParams(paramsFromFilter(filter)))).toEqual(filter);
   });
 
-  it('wartości domyślne NIE trafiają do adresu — link ma być do przepisania', () => {
+  it('wartości domyślne NIE trafiają do adresu - link ma być do przepisania', () => {
     expect(paramsFromFilter(DEFAULT_FLAG_FILTER)).toEqual({});
   });
 
@@ -59,7 +59,7 @@ describe('filtr ↔ adres', () => {
     expect(query.to).toBe(Date.UTC(2026, 6, 31, 23, 59, 59, 999));
   });
 
-  it('limit jest zawsze podany — obcięcie listy ma być widoczne w `total`', () => {
+  it('limit jest zawsze podany - obcięcie listy ma być widoczne w `total`', () => {
     expect(flagListQuery(DEFAULT_FLAG_FILTER).limit).toBe(FLAG_PAGE_LIMIT);
   });
 

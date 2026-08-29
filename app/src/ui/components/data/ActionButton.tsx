@@ -1,18 +1,18 @@
 /**
- * UZ Aero — ActionButton
+ * UZ Aero - ActionButton
  *
  * Jeden przycisk na wszystkie akcje z mockupów, z trzema rzeczami, które w kokpicie
  * nie są ozdobnikiem:
  *
- *  1. **Przytrzymanie zamiast tapnięcia** (`holdMs`) — START/STOP ENGINE wymagają 2 s
+ *  1. **Przytrzymanie zamiast tapnięcia** (`holdMs`) - START/STOP ENGINE wymagają 2 s
  *     (§3.2). W wibracjach i rękawicach przypadkowe dotknięcie jest realne, a te dwie
  *     akcje wyznaczają czasy blokowe. Pasek postępu pokazuje, ile jeszcze trzymać.
- *  2. **Blokada z podanym powodem** (`disabledReason`) — zasada „nigdy cichy błąd"
+ *  2. **Blokada z podanym powodem** (`disabledReason`) - zasada „nigdy cichy błąd"
  *     (§6 pkt 3). Powód renderujemy jako WIDOCZNY tekst, nie tooltip: `title` w RN
  *     nie istnieje, a pilot i tak nie ma czym najechać. Powód stoi WEWNĄTRZ przycisku,
  *     w slocie podpisu (issue #55): tekst POD przyciskiem pojawiał się i znikał razem
  *     ze stanem blokady, skacząc layoutem wszystkiego poniżej.
- *  3. **Cel dotykowy ≥ 44 px** — próg dla rękawic; wymuszony `minHeight`.
+ *  3. **Cel dotykowy ≥ 44 px** - próg dla rękawic; wymuszony `minHeight`.
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -25,30 +25,30 @@ import { Tag } from '../status/Tag';
 import { toneColors, type Tone } from '../tone';
 
 /**
- * `solid`   — `.btn-primary` z mockupów: pełne wypełnienie akcentem, ciemny napis.
+ * `solid`   - `.btn-primary` z mockupów: pełne wypełnienie akcentem, ciemny napis.
  *             Główne „dalej" formularza; jeden taki przycisk na ekran.
- * `primary` — `.start-engine`: przygaszone tło akcentu i akcentowany napis. Akcje kokpitu,
+ * `primary` - `.start-engine`: przygaszone tło akcentu i akcentowany napis. Akcje kokpitu,
  *             gdzie pełna zieleń świeciłaby w nocy prosto w oczy.
- * `secondary` — sam kontur (Anuluj, Wstecz).
+ * `secondary` - sam kontur (Anuluj, Wstecz).
  */
 export type ActionVariant = 'solid' | 'primary' | 'secondary';
 
 /**
- * Rozmiar etykiety i celu dotykowego — z mockupów:
+ * Rozmiar etykiety i celu dotykowego - z mockupów:
  *  `hero` = `.start-engine` z kokpitu: układ pionowy, okrągła ikona 56 px, napis 28 px / ls 4.
- *           Jedyna akcja na ekranie, którą trzeba trafić nie patrząc — stąd ta skala;
- *  `lg`   = `.btn-primary` (22 px / ls 3, wysokość ≥ 56) — główna akcja formularza;
- *  `md`   = `.modal-btn-*` (16 px / ls 2, wysokość ≥ 48) — para akcji w arkuszu, gdzie
+ *           Jedyna akcja na ekranie, którą trzeba trafić nie patrząc - stąd ta skala;
+ *  `lg`   = `.btn-primary` (22 px / ls 3, wysokość ≥ 56) - główna akcja formularza;
+ *  `md`   = `.modal-btn-*` (16 px / ls 2, wysokość ≥ 48) - para akcji w arkuszu, gdzie
  *           dwa przyciski dzielą szerokość i pełny rozmiar rozpychałby arkusz;
  *  `splash` = `.start-btn` ze splasha (01): 20 px / ls 3, gap 10 i padding 16/24 wprost
  *           z mockupu; NACIŚNIĘCIE wypełnia przycisk akcentem (`:hover` mockupu),
- *           zamiast przygaszać opacity — jedyny rozmiar z tym zachowaniem.
+ *           zamiast przygaszać opacity - jedyny rozmiar z tym zachowaniem.
  *
  * Rozmiar to klasa przycisku z mockupu (kształt + zachowanie naciśnięcia), nie sama
- * liczba pikseli — dlatego pressed-fill splasha jest częścią rozmiaru, a nie osobnym
+ * liczba pikseli - dlatego pressed-fill splasha jest częścią rozmiaru, a nie osobnym
  * booleanem czy czwartym wariantem: mockup przybija go dla `.start-btn` i tylko dla
  * niego, osobny przełącznik pozwalałby na kombinacje (np. `solid` + fill) bez pokrycia
- * w designie, a wariant opisuje schemat kolorów w spoczynku — splash w spoczynku
+ * w designie, a wariant opisuje schemat kolorów w spoczynku - splash w spoczynku
  * JEST wariantem `primary`.
  */
 export type ActionSize = 'hero' | 'lg' | 'md' | 'splash';
@@ -62,49 +62,49 @@ export interface ActionButtonProps {
   /** Podpis pod etykietą (np. „przytrzymaj 2 s", „zapisze odczyt MH"). */
   hint?: string;
   /**
-   * Ikona przed etykietą — podawana NAZWĄ, nie gotowym elementem.
+   * Ikona przed etykietą - podawana NAZWĄ, nie gotowym elementem.
    *
    * Kolor i rozmiar ustala przycisk, bo tylko on wie, czy jest zablokowany i jakiego
    * jest wariantu. Gdy ikony przekazywały ekrany, każdy wpisywał `theme.colors.bg`
-   * na sztywno — i po zablokowaniu zostawała czarna ikona na ciemnym tle, niewidoczna.
+   * na sztywno - i po zablokowaniu zostawała czarna ikona na ciemnym tle, niewidoczna.
    */
   icon?: IconName;
   /** Ikona za etykietą (np. strzałka „dalej"). */
   trailingIcon?: IconName;
   /**
-   * Plakietka za etykietą — krótki napis o tym, co czeka PO drugiej stronie
-   * przycisku („05 SIE — można poprawić" na wejściu w historię, 01).
+   * Plakietka za etykietą - krótki napis o tym, co czeka PO drugiej stronie
+   * przycisku („05 SIE - można poprawić" na wejściu w historię, 01).
    *
    * Istnieje, bo bez niej ekran robił z takiego wejścia własny „przycisk-link"
    * o innym kroju i innej wysokości (issue #42). Plakietka jest INFORMACJĄ, nie
    * stanem przycisku: `null` znaczy „nie ma o czym mówić" i wtedy nie ma jej wcale.
    */
   badge?: string | null;
-  /** Ton plakietki — domyślnie niebieski, czyli „informacja", nie ostrzeżenie. */
+  /** Ton plakietki - domyślnie niebieski, czyli „informacja", nie ostrzeżenie. */
   badgeTone?: Tone;
   /** Czas przytrzymania (ms). 0 = zwykłe tapnięcie. */
   holdMs?: number;
   /**
-   * Blokada — wymaga podania powodu; powód jest pokazywany WEWNĄTRZ przycisku,
+   * Blokada - wymaga podania powodu; powód jest pokazywany WEWNĄTRZ przycisku,
    * bursztynem, w miejscu podpisu `hint` (i zamiast niego, dopóki blokada trwa).
    * Nigdy pod przyciskiem (issue #55): napis doklejany od dołu skakał layoutem
    * ekranu przy każdej zmianie stanu.
    */
   disabledReason?: string | null;
   /**
-   * Blokada BEZ powodu — dla stanów, które widać (uwaga z urządzenia, 2026-08-14).
+   * Blokada BEZ powodu - dla stanów, które widać (uwaga z urządzenia, 2026-08-14).
    *
    * Reguła „nigdy blokada bez powodu" (§6 pkt 3) powstała przeciw wyszarzonym
    * przyciskom, po których nie wiadomo, czego brakuje. Nie każdy taki stan jest jednak
    * zagadką: w arkuszu korekty otwartym na wartości pierwotnej „ZAPISZ" jest nieaktywny,
-   * bo NIC SIĘ JESZCZE NIE ZMIENIŁO — a to widać w kontrolce nad nim. Zdanie „zmień czas
+   * bo NIC SIĘ JESZCZE NIE ZMIENIŁO - a to widać w kontrolce nad nim. Zdanie „zmień czas
    * albo użyj akcji poniżej" opisywało tam oczywistość.
    *
    * Nowego użycia nie dokładaj bez tego rachunku: jeśli powodu blokady nie widać
    * z ekranu, właściwym polem jest `disabledReason`.
    */
   disabled?: boolean;
-  /** Zajętość (trwa zapis) — blokuje bez komunikatu o błędzie. */
+  /** Zajętość (trwa zapis) - blokuje bez komunikatu o błędzie. */
   busy?: boolean;
   style?: ViewStyle;
 }
@@ -166,7 +166,7 @@ export function ActionButton({
   const solid = variant === 'solid';
   const hero = size === 'hero';
   const splash = size === 'splash';
-  // Pressed-fill `.start-btn:hover` (01) — opt-in przez rozmiar `splash` i tylko przy
+  // Pressed-fill `.start-btn:hover` (01) - opt-in przez rozmiar `splash` i tylko przy
   // tapnięciu: z przytrzymaniem (holdMs > 0) feedbackiem jest pasek postępu, którego
   // pełne wypełnienie by nie pokazało. Pozostałe rozmiary: pressed = opacity 0.7.
   const fillsOnPress = splash && holdMs === 0;
@@ -180,7 +180,7 @@ export function ActionButton({
   const labelColor = disabled
     ? theme.colors.textMuted
     : solid
-      ? theme.colors.bg // ciemny napis na pełnym akcencie — kontrast w każdym motywie
+      ? theme.colors.bg // ciemny napis na pełnym akcencie - kontrast w każdym motywie
       : c.accent;
 
   return (
@@ -201,7 +201,7 @@ export function ActionButton({
               // Każdy wariant zostaje powyżej progu 44 px dla rękawic.
               minHeight: hero ? 132 : size === 'md' ? 48 : 56,
               gap: hero ? theme.spacing.sm : theme.spacing.xs,
-              // `.start-btn` przybija padding 16/24 — szerszy niż standardowe 16.
+              // `.start-btn` przybija padding 16/24 - szerszy niż standardowe 16.
               paddingHorizontal: splash ? theme.spacing.xxl : theme.spacing.lg,
               paddingVertical: hero
                 ? 22
@@ -229,11 +229,11 @@ export function ActionButton({
       >
         {({ pressed }) => {
           const filled = fillsOnPress && pressed && !disabled;
-          // Na pełnym wypełnieniu akcentem treść musi pociemnieć — jak w `solid`.
+          // Na pełnym wypełnieniu akcentem treść musi pociemnieć - jak w `solid`.
           const contentColor = filled ? theme.colors.bg : labelColor;
           return (
             <>
-              {/* Pasek postępu przytrzymania — wypełnia przycisk od lewej. */}
+              {/* Pasek postępu przytrzymania - wypełnia przycisk od lewej. */}
               {holding && (
                 <Animated.View
                   pointerEvents="none"
@@ -247,7 +247,7 @@ export function ActionButton({
                 />
               )}
 
-              {/* `hero`: okrągła plakietka z ikoną nad napisem — cel, w który trzeba trafić,
+              {/* `hero`: okrągła plakietka z ikoną nad napisem - cel, w który trzeba trafić,
                   nie patrząc na ekran. */}
               {hero && icon != null && (
                 <View
@@ -259,7 +259,7 @@ export function ActionButton({
                   <Icon
                     name={icon}
                     size={24}
-                    // Na wypełnionej plakietce napis musi być ciemny, na przygaszonej — muted.
+                    // Na wypełnionej plakietce napis musi być ciemny, na przygaszonej - muted.
                     color={disabled ? theme.colors.textMuted : theme.colors.bg}
                   />
                 </View>
@@ -278,14 +278,14 @@ export function ActionButton({
                 {trailingIcon != null && (
                   <Icon name={trailingIcon} size={size === 'md' ? 16 : 18} color={contentColor} />
                 )}
-                {/* Plakietka na końcu rzędu — przycisk zostaje przyciskiem, a napis
+                {/* Plakietka na końcu rzędu - przycisk zostaje przyciskiem, a napis
                     o tym, co go czeka, nie wymaga własnego kształtu obok. */}
                 {badge != null && <Tag label={badge} tone={badgeTone} />}
               </View>
 
               {/* Powód blokady zajmuje slot podpisu i WYGRYWA z nim: dopóki blokada
                   trwa, odpowiedzią na „czemu nie działa" jest powód, nie opis skutku
-                  (§6 pkt 3 + issue #55 — nigdy tekst pod przyciskiem). */}
+                  (§6 pkt 3 + issue #55 - nigdy tekst pod przyciskiem). */}
               {disabledReason != null ? (
                 <AppText variant="mono" style={[styles.hint, { color: theme.colors.amber }]}>
                   {disabledReason}
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
   heroLabel: { fontSize: 28, lineHeight: 30, letterSpacing: 4 },
   // `.start-btn` (01): mockup przybija gap 10 między ikoną a napisem.
   splashRow: { gap: 10 },
-  // `.start-btn` (01): Bebas 20 px (ls 3 zostaje z tokenu `button`). lineHeight 36 —
+  // `.start-btn` (01): Bebas 20 px (ls 3 zostaje z tokenu `button`). lineHeight 36 -
   // mockup interlinii nie przybija; dotychczasowy splash dziedziczył ją z tokenu
   // `display` i wymóg 1:1 z obecnym renderem każe ją zachować (wysokość ~68 px).
   splashLabel: { fontSize: 20, lineHeight: 36 },

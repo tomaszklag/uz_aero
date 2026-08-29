@@ -1,11 +1,11 @@
 /**
- * UZ Aero — arkusz zrzutu wpisu ręcznego (sekcja „Zrzuty" na kroku 3, mockup 15B).
+ * UZ Aero - arkusz zrzutu wpisu ręcznego (sekcja „Zrzuty" na kroku 3, mockup 15B).
  *
  * NIE jest to `DropSheet` z kokpitu i to nie jest duplikat: tamten arkusz potwierdza
  * zrzut, który dzieje się TERAZ (czas z zegara, wysokość z GPS, skład z załadunku),
- * ten opisuje zrzut z PRZESZŁOŚCI — czas i wysokość pilot przepisuje z kartki, więc
+ * ten opisuje zrzut z PRZESZŁOŚCI - czas i wysokość pilot przepisuje z kartki, więc
  * obie wielkości są tu POLAMI. Skład pozostaje opcjonalny (`null` = „niepodany",
- * nie zero) — dokładnie jak w 05E i jak w domenie.
+ * nie zero) - dokładnie jak w 05E i jak w domenie.
  */
 
 import React, { useEffect, useState } from 'react';
@@ -19,7 +19,7 @@ import { Field } from '../input/Field';
 import { IconAction } from '../data/IconAction';
 import { Sheet } from './Sheet';
 
-/** Zrzut w edycji: czas + skład + wysokość (null = nieznana — uczciwiej niż zgadywana). */
+/** Zrzut w edycji: czas + skład + wysokość (null = nieznana - uczciwiej niż zgadywana). */
 export interface ManualDropValue {
   at: number;
   jumpers: JumperCounts | null;
@@ -64,7 +64,7 @@ export function ManualDropSheet({
       setJumpers(value.jumpers ?? EMPTY);
       setAltitudeFt(value.altitudeFt ?? 0);
     }
-    // `value` poza zależnościami — patrz `FlightTimesSheet`: przeładowanie w trakcie
+    // `value` poza zależnościami - patrz `FlightTimesSheet`: przeładowanie w trakcie
     // edycji cofałoby zmiany pilota.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
@@ -77,10 +77,10 @@ export function ManualDropSheet({
       onConfirm={() =>
         onConfirm({
           at,
-          // Suma 0 = „skład niepodany" (`null`), nie zero — ta sama normalizacja,
+          // Suma 0 = „skład niepodany" (`null`), nie zero - ta sama normalizacja,
           // którą robi komenda zrzutu na żywo (`declaredJumpers`).
           jumpers: jumpers.tandem + jumpers.aff + jumpers.solo > 0 ? jumpers : null,
-          // Zero stóp nie jest wysokością zrzutu — traktujemy jak „nie podano".
+          // Zero stóp nie jest wysokością zrzutu - traktujemy jak „nie podano".
           altitudeFt: altitudeFt > 0 ? altitudeFt : null,
         })
       }
@@ -90,7 +90,7 @@ export function ManualDropSheet({
           <IconAction
             name="trash"
             tone="red"
-            accessibilityLabel={`Usuń — ${title}`}
+            accessibilityLabel={`Usuń - ${title}`}
             onPress={onDelete}
           />
         ) : undefined
@@ -124,8 +124,8 @@ export function ManualDropSheet({
         onChange={(n) => setJumpers((j) => ({ ...j, solo: n }))}
       />
 
-      {/* Wysokość z kartki — 0 znaczy „nie podano" i tak wraca do wołającego. */}
-      <Field label="Wysokość zrzutu (ft) — opcjonalnie">
+      {/* Wysokość z kartki - 0 znaczy „nie podano" i tak wraca do wołającego. */}
+      <Field label="Wysokość zrzutu (ft) - opcjonalnie">
         <Stepper
           value={altitudeFt}
           onChange={setAltitudeFt}
@@ -134,7 +134,7 @@ export function ManualDropSheet({
           stepLabel="100 ft"
           bigStepLabel="1000 ft"
           min={0}
-          format={(v) => (v > 0 ? String(v) : '—')}
+          format={(v) => (v > 0 ? String(v) : '-')}
           edit={{
             toText: (v) => (v > 0 ? String(v) : ''),
             parse: (text) => {

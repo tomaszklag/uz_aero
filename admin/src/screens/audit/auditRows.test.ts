@@ -1,9 +1,9 @@
 /**
- * UZ Aero — panel: wiersz dziennika audytu.
+ * UZ Aero - panel: wiersz dziennika audytu.
  *
  * Testujemy głównie BRAKI, bo to one są tu treścią: konto skasowane, akcja spoza
  * katalogu, wpis bez adresu IP i akcja bez pojedynczego obiektu. Każdy z tych
- * przypadków ma zostać na liście widoczny i opisany — dziennik nadzoru, który je
+ * przypadków ma zostać na liście widoczny i opisany - dziennik nadzoru, który je
  * ukrywa albo zamienia na milczącą kreskę, przestaje odpowiadać na pytanie
  * „kto to ruszał".
  */
@@ -30,7 +30,7 @@ const base: AuditEntryDto = {
 const row = (patch: Partial<AuditEntryDto> = {}) => auditRows([{ ...base, ...patch }])[0]!;
 
 describe('wiersz dziennika audytu', () => {
-  it('czas ma SEKUNDY i numer wpisu — w rejestrze sekundy rozstrzygają kolejność', () => {
+  it('czas ma SEKUNDY i numer wpisu - w rejestrze sekundy rozstrzygają kolejność', () => {
     const view = row();
     expect(view.when.text).toBe('31 JUL 2026 14:19:02');
     // Numer wpisu składamy z `base.id`, a nie z literału `#8814`: skaner architektury
@@ -38,7 +38,7 @@ describe('wiersz dziennika audytu', () => {
     expect(view.when.sub).toBe(`#${base.id}`);
   });
 
-  it('nie przesortowuje listy — porządek zostaje serwera', () => {
+  it('nie przesortowuje listy - porządek zostaje serwera', () => {
     const rows = auditRows([
       { ...base, id: 3, createdAt: '2026-07-31T10:00:00.000Z' },
       { ...base, id: 9, createdAt: '2026-07-31T18:00:00.000Z' },
@@ -53,7 +53,7 @@ describe('wiersz dziennika audytu', () => {
     expect(view.actor.name).toBe('ZZZ');
     expect(view.actor.missing).toBe(true);
     expect(view.actor.sub).toContain('konta nie ma');
-    // Identyfikator do zawężenia zostaje sprawny — po człowieku, którego konto
+    // Identyfikator do zawężenia zostaje sprawny - po człowieku, którego konto
     // skasowano, tym bardziej chce się zobaczyć wszystkie ślady.
     expect(view.actor.pilotId).toBe('ZZZ');
   });
@@ -76,9 +76,9 @@ describe('wiersz dziennika audytu', () => {
     // o innym charakterze niż „nie dotyczy pojedynczego bytu".
     const view = row({ action: 'maintenance.prune_tokens', targetType: null, targetId: null });
 
-    expect(view.target.text).toBe('—');
+    expect(view.target.text).toBe('-');
     expect(view.target.sub).toContain('bez pojedynczego obiektu');
-    // Bez pary (typ, id) nie ma czego zawęzić — link nie powstaje, zamiast prowadzić
+    // Bez pary (typ, id) nie ma czego zawęzić - link nie powstaje, zamiast prowadzić
     // do pustej listy.
     expect(view.target.link).toBeNull();
   });
@@ -97,7 +97,7 @@ describe('wiersz dziennika audytu', () => {
 
   it('brak adresu IP znaczy „akcja spoza żądania HTTP", nie „nie wiadomo"', () => {
     const view = row({ ip: null });
-    expect(view.ip).toEqual({ text: '—', offline: true });
+    expect(view.ip).toEqual({ text: '-', offline: true });
     expect(row().ip).toEqual({ text: '10.20.4.11', offline: false });
   });
 
@@ -116,6 +116,6 @@ describe('wiersz dziennika audytu', () => {
   });
 
   it('nieczytelny stempel czasu daje kreskę, a nie „Invalid Date"', () => {
-    expect(row({ createdAt: 'to nie jest data' }).when.text).toBe('—');
+    expect(row({ createdAt: 'to nie jest data' }).when.text).toBe('-');
   });
 });

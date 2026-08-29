@@ -1,10 +1,10 @@
 /**
- * UZ Aero — panel: LOG PUNKTÓW śladu → wiersze tabeli (moduł CZYSTY).
+ * UZ Aero - panel: LOG PUNKTÓW śladu → wiersze tabeli (moduł CZYSTY).
  *
  * Osobno od ekranu, jak `dayFlights.ts` przy karcie dnia: napisy powstają w kodzie
  * testowalnym w Node, a `.tsx` tylko je układa.
  *
- * Powód odrzucenia jest tu TREŚCIĄ, nie ozdobą — po to istnieje ten log. Każdy z czterech
+ * Powód odrzucenia jest tu TREŚCIĄ, nie ozdobą - po to istnieje ten log. Każdy z czterech
  * powodów bramki znaczy dla diagnostyki co innego i dlatego każdy dostaje własne zdanie,
  * a nie wspólne „odrzucony".
  */
@@ -30,13 +30,13 @@ export interface TrackLogRow {
   rejected: boolean;
 }
 
-/** Co znaczy dany powód odrzucenia — słowami, którymi opisuje go dokumentacja detekcji. */
+/** Co znaczy dany powód odrzucenia - słowami, którymi opisuje go dokumentacja detekcji. */
 const REJECTION_NOTE: Record<TrackRejection, string> = {
   accuracy:
-    'Dokładność gorsza niż próg bramki — odbiornik sam przyznaje, że zgaduje pozycję.',
-  speed: 'Prędkość ponad progiem plauzybilności — odczyt fizycznie niemożliwy dla tego statku.',
-  jump: 'Skok pozycji wymagający prędkości ponad progiem — multipath albo spoofing.',
-  'no-position': 'Wiersz bez pozycji — fix zapisany, zanim odbiornik ustalił miejsce.',
+    'Dokładność gorsza niż próg bramki - odbiornik sam przyznaje, że zgaduje pozycję.',
+  speed: 'Prędkość ponad progiem plauzybilności - odczyt fizycznie niemożliwy dla tego statku.',
+  jump: 'Skok pozycji wymagający prędkości ponad progiem - multipath albo spoofing.',
+  'no-position': 'Wiersz bez pozycji - fix zapisany, zanim odbiornik ustalił miejsce.',
 };
 
 const REJECTION_LABEL: Record<TrackRejection, string> = {
@@ -49,18 +49,18 @@ const REJECTION_LABEL: Record<TrackRejection, string> = {
 export function trackLogRows(log: readonly TrackPoint[]): TrackLogRow[] {
   return log.map((point, index) => {
     const rejected = point.rejected != null;
-    const position = point.rejected === 'no-position' ? ['—', '—'] : splitPosition(point);
+    const position = point.rejected === 'no-position' ? ['-', '-'] : splitPosition(point);
 
     return {
       id: `${point.time}-${index}`,
       time: timeUtcSeconds(point.time),
       lat: position[0]!,
       lon: position[1]!,
-      groundSpeed: point.groundSpeedKt != null ? `${Math.round(point.groundSpeedKt)} kt` : '—',
+      groundSpeed: point.groundSpeedKt != null ? `${Math.round(point.groundSpeedKt)} kt` : '-',
       altitude:
-        point.altitudeFt != null ? Math.round(point.altitudeFt).toLocaleString('pl-PL') : '—',
-      track: point.trackDeg != null ? `${Math.round(point.trackDeg)}°` : '—',
-      accuracy: point.accuracyM != null ? `${Math.round(point.accuracyM)} m` : '—',
+        point.altitudeFt != null ? Math.round(point.altitudeFt).toLocaleString('pl-PL') : '-',
+      track: point.trackDeg != null ? `${Math.round(point.trackDeg)}°` : '-',
+      accuracy: point.accuracyM != null ? `${Math.round(point.accuracyM)} m` : '-',
       state: point.rejected != null ? REJECTION_LABEL[point.rejected] : 'ok',
       // Skok pozycji to inny kaliber niż słaba dokładność: pierwsze bywa atakiem albo
       // odbiciem od terenu, drugie zwykłą spiralą wznoszenia. Kolor to rozróżnia.
@@ -72,7 +72,7 @@ export function trackLogRows(log: readonly TrackPoint[]): TrackLogRow[] {
 }
 
 /**
- * `formatLatLon` daje jeden napis „52°08.3'N 015°47.9'E" — tabela chce dwóch kolumn,
+ * `formatLatLon` daje jeden napis „52°08.3'N 015°47.9'E" - tabela chce dwóch kolumn,
  * żeby stopnie ustawiły się w pionie jedne pod drugimi. Rozdziela je pojedyncza spacja
  * między częścią szerokości i długości (patrz `packages/format`).
  */

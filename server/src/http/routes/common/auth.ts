@@ -1,8 +1,8 @@
 /**
- * UZ Aero (serwer) — trasy `/auth/*` (§3.0, §4.6).
+ * UZ Aero (serwer) - trasy `/auth/*` (§3.0, §4.6).
  *
  * Cienkie jak cała warstwa HTTP: zod → komenda → status. Jedyna „logika" to zasada,
- * że 401 wygląda IDENTYCZNIE dla złego hasła i nieistniejącego konta — enumeracji
+ * że 401 wygląda IDENTYCZNIE dla złego hasła i nieistniejącego konta - enumeracji
  * kont broni komenda (stały koszt weryfikacji), a trasa jej nie psuje treścią błędu.
  */
 

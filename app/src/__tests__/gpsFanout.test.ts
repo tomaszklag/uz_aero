@@ -1,9 +1,9 @@
 /**
- * UZ Aero — GPS z DWOMA odbiorcami naraz.
+ * UZ Aero - GPS z DWOMA odbiorcami naraz.
  *
  * Regresja z urządzenia (2026-07-29): kokpit i diagnostyka GPS na ekranie 13 słuchają
  * tego samego odbiornika jednocześnie. Gdy adapter trzymał jednego słuchacza, wejście
- * w ustawienia odbierało kokpitowi strumień, a wyjście gasiło go do zera — autodetekcja
+ * w ustawienia odbierało kokpitowi strumień, a wyjście gasiło go do zera - autodetekcja
  * milkła do końca dnia, a baner „GPS: brak sygnału" nie miał już czym zniknąć.
  *
  * Dlatego sprawdzamy KONTRAKT PORTU, nie implementację: drugi `start` nie zabiera fixów
@@ -22,7 +22,7 @@ const fix = (time: number): GpsFix => ({
   accuracyM: 5,
 });
 
-describe('GpsFanout — jeden odbiornik, wielu odbiorców', () => {
+describe('GpsFanout - jeden odbiornik, wielu odbiorców', () => {
   it('rozsyła fix do WSZYSTKICH zapisanych odbiorców', () => {
     const fanout = new GpsFanout();
     const cockpit: GpsFix[] = [];
@@ -45,7 +45,7 @@ describe('GpsFanout — jeden odbiornik, wielu odbiorców', () => {
     expect(fanout.add(cockpit)).toBe(true);
     expect(fanout.add(diagnostics)).toBe(false);
 
-    // Wyjście z ustawień NIE gasi odbiornika — kokpit dalej słucha.
+    // Wyjście z ustawień NIE gasi odbiornika - kokpit dalej słucha.
     expect(fanout.remove(diagnostics)).toBe(false);
     expect(fanout.empty).toBe(false);
 
@@ -100,7 +100,7 @@ describe('GpsFanout — jeden odbiornik, wielu odbiorców', () => {
   });
 });
 
-describe('ReplayGpsAdapter — ten sam kontrakt co adapter urządzenia', () => {
+describe('ReplayGpsAdapter - ten sam kontrakt co adapter urządzenia', () => {
   it('drugi odbiorca nie odbiera strumienia pierwszemu', async () => {
     // Import leniwy: barrel infrastruktury nie wciąga modułów natywnych, ale trzymamy
     // tę zależność lokalnie, żeby test kontraktu nie zależał od kolejności eksportów.
@@ -110,7 +110,7 @@ describe('ReplayGpsAdapter — ten sam kontrakt co adapter urządzenia', () => {
     const cockpit: GpsFix[] = [];
     const stop = await gps.start((f) => void cockpit.push(f));
 
-    // Diagnostyka dołącza PO odtworzeniu serii — nie ma już czego słuchać, ale i nie
+    // Diagnostyka dołącza PO odtworzeniu serii - nie ma już czego słuchać, ale i nie
     // wolno jej zrestartować cudzego strumienia ani go zabrać.
     const stopDiagnostics = await gps.start(() => undefined);
     expect(cockpit.map((f) => f.time)).toEqual([1_000, 2_000]);

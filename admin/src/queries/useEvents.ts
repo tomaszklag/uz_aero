@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: odczyt REJESTRU ZDARZEŃ (`A04`).
+ * UZ Aero - panel: odczyt REJESTRU ZDARZEŃ (`A04`).
  *
  * Hook jest cienki z zasady: decyzja o treści ekranu mieszka w czystych modułach
  * `screens/events/*.ts`, a tutaj zostaje wyłącznie to, co dotyczy cache'u.
@@ -9,12 +9,12 @@
  * `events` jest NAJSZYBCIEJ ROSNĄCĄ tabelą w systemie i rośnie W TRAKCIE przeglądania,
  * bo telefony dosyłają outboxy. Kursor keyset opisuje POZYCJĘ w porządku, więc dopisany
  * wiersz go nie przesuwa; `OFFSET` przesunąłby wszystko o jeden i administrator
- * przestałby widzieć akurat to zdarzenie, którego szuka — najgorszy możliwy tryb awarii
+ * przestałby widzieć akurat to zdarzenie, którego szuka - najgorszy możliwy tryb awarii
  * narzędzia śledczego.
  *
  * Kursor prowadzi TYLKO W PRZÓD, więc strony się DOKŁADAJĄ, a nie podmieniają.
  * Numerowany paginator wymagałby albo własnego stosu kursorów (stan, którego nie da
- * się wkleić w link), albo offsetu — czyli tego, czego serwer świadomie nie robi.
+ * się wkleić w link), albo offsetu - czyli tego, czego serwer świadomie nie robi.
  *
  * Osobnego zapytania o liczniki tu NIE MA, inaczej niż przy audycie: serwer liczy je
  * jednym zapytaniem razem ze stroną i wydaje w polu `counts`. Drugie żądanie pytałoby
@@ -34,7 +34,7 @@ export function useEvents(query: EventListQuery, enabled = true) {
     initialPageParam: null,
     queryFn: ({ pageParam }) =>
       listEvents(pageParam == null ? query : { ...query, cursor: pageParam }),
-    // `undefined` (czego wymaga TanStack) wyłącza przycisk „pokaż kolejne" — i to jest
+    // `undefined` (czego wymaga TanStack) wyłącza przycisk „pokaż kolejne" - i to jest
     // właściwe zachowanie: nie ma czego pobierać.
     getNextPageParam: (last) => last.nextCursor ?? undefined,
     select: (data) => data.pages,

@@ -1,8 +1,8 @@
 /**
- * UZ Aero — panel: chipy filtra listy kont (`A06`).
+ * UZ Aero - panel: chipy filtra listy kont (`A06`).
  *
  * Jedna własność, dla której ten moduł istnieje: **liczba na chipie jest liczbą
- * wierszy, które zobaczysz po kliknięciu** — a nie liczbą z kafla. Chip biorący
+ * wierszy, które zobaczysz po kliknięciu** - a nie liczbą z kafla. Chip biorący
  * liczbę „po całym klubie" kłamie przy każdym wyszukiwaniu.
  */
 
@@ -25,13 +25,13 @@ describe('chipy filtra kont', () => {
 
   it('liczby idą z `scopes` (zawężonych wyszukiwaniem), nie z liczników klubu', () => {
     // Scenariusz z przeglądu: administrator wpisał frazę, tabela ma jeden wiersz.
-    // Chip „Nieaktywni" musi wtedy pokazać zero, a nie dwa konta z całego klubu —
+    // Chip „Nieaktywni" musi wtedy pokazać zero, a nie dwa konta z całego klubu -
     // bo po kliknięciu w niego zobaczy dokładnie zero wierszy.
     const narrowed: PilotScopeCountsDto = { total: 1, active: 1, inactive: 0, panel: 1 };
     expect(pilotChips(narrowed).map((c) => c.count)).toEqual([1, 1, 0, 1]);
   });
 
-  it('bez odpowiedzi serwera chip NIE MA liczby — zero byłoby twierdzeniem', () => {
+  it('bez odpowiedzi serwera chip NIE MA liczby - zero byłoby twierdzeniem', () => {
     for (const chip of pilotChips(null)) {
       expect(chip.count).toBeUndefined();
       expect(chip.label.length).toBeGreaterThan(0);

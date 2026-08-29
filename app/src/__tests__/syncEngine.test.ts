@@ -1,10 +1,10 @@
 /**
- * UZ Aero — testy SILNIKA SYNCHRONIZACJI (§4.3) i cyklu poświadczeń (§3.0).
+ * UZ Aero - testy SILNIKA SYNCHRONIZACJI (§4.3) i cyklu poświadczeń (§3.0).
  *
  * Najważniejsze przypadki to te, których nie widać przy biurku z Wi-Fi: sieć znika
  * w połowie paczki, token wygasa między paczkami, serwer już ma połowę zdarzeń
  * z urwanej próby. Księgowość outboxa musi wyjść z każdego z nich bez zgubionego
- * i bez zdublowanego zdarzenia — to jest cała obietnica §4.3.
+ * i bez zdublowanego zdarzenia - to jest cała obietnica §4.3.
  */
 
 import { AuthService } from '../application/auth/authService';
@@ -29,7 +29,7 @@ import { FixedClock } from '../infrastructure/clock';
 
 const T0 = Date.UTC(2026, 5, 22, 8, 0, 0);
 
-/** Magazyn poświadczeń w pamięci — bezpieczny magazyn to szczegół platformy. */
+/** Magazyn poświadczeń w pamięci - bezpieczny magazyn to szczegół platformy. */
 class MemoryCredentials {
   private stored: StoredCredentials | null;
   constructor(initial: StoredCredentials | null = null) {
@@ -92,7 +92,7 @@ class ScriptedServer implements ServerPort {
     throw new Error('ta atrapa nie obsługuje śladu sesji');
   };
 
-  /** Droga powrotna (§4.9) ma własne testy — `eventRestore.test.ts`. */
+  /** Droga powrotna (§4.9) ma własne testy - `eventRestore.test.ts`. */
   pullEvents = async (): Promise<RemoteEventPage> => ({
     events: [],
     nextCursor: null,
@@ -109,7 +109,7 @@ class ScriptedServer implements ServerPort {
     throw new Error('nieużywane w tych testach');
   };
 
-  /** Łańcuch paliwa (issue #62) — ten silnik go nie używa, ekran pyta wprost. */
+  /** Łańcuch paliwa (issue #62) - ten silnik go nie używa, ekran pyta wprost. */
   async getReadingsChain(): Promise<{ before: null; after: null; oil: null }> {
     return { before: null, after: null, oil: null };
   }
@@ -188,7 +188,7 @@ describe('SyncEngine.syncOnce', () => {
   });
 
   it('duplikaty z urwanej próby liczą się jako dostarczone (§4.3)', async () => {
-    // Poprzedni sync padł PO dotarciu paczki, PRZED odpowiedzią — serwer ma zdarzenia,
+    // Poprzedni sync padł PO dotarciu paczki, PRZED odpowiedzią - serwer ma zdarzenia,
     // telefon o tym nie wie. Retransmisja: sześć duplikatów to sześć potwierdzeń.
     const repo = await repoWithEvents(6);
     const server = new ScriptedServer([ok(0, 6)]);
@@ -242,7 +242,7 @@ describe('SyncEngine.syncOnce', () => {
     expect(await engineWith(repo, server).syncOnce()).toEqual({ kind: 'offline' });
   });
 
-  it('403 (single-writer) = rejected z kodem — do pokazania pilotowi', async () => {
+  it('403 (single-writer) = rejected z kodem - do pokazania pilotowi', async () => {
     const repo = await repoWithEvents(1);
     const server = new ScriptedServer([new ServerRejectedError(403, 'not_session_pic')]);
 
@@ -280,7 +280,7 @@ describe('SyncEngine.fetchStatus (zaparkowane po usunięciu ekranu 11)', () => {
     expect(await engineWith(repo, server).fetchStatus('sess-1')).toEqual(STATUS);
   });
 
-  it('offline → null, bez wyjątku — ekran zostaje przy danych z cache', async () => {
+  it('offline → null, bez wyjątku - ekran zostaje przy danych z cache', async () => {
     const repo = await repoWithEvents(0);
     const server = new ScriptedServer([]);
     server.statusScript = [new ServerUnreachableError()];
@@ -308,7 +308,7 @@ describe('SyncEngine.fetchStatus (zaparkowane po usunięciu ekranu 11)', () => {
 });
 
 describe('SyncEngine.fetchAircraftState (przejęcie §4.4)', () => {
-  it('zwraca żywy stan — podstawa do takeover_online', async () => {
+  it('zwraca żywy stan - podstawa do takeover_online', async () => {
     const repo = await repoWithEvents(0);
     const server = new ScriptedServer([]);
     server.aircraftStateScript = [
@@ -319,7 +319,7 @@ describe('SyncEngine.fetchAircraftState (przejęcie §4.4)', () => {
     expect(state?.claimPicId).toBe('AKO');
   });
 
-  it('offline → null — wołający musi zadeklarować takeover_offline', async () => {
+  it('offline → null - wołający musi zadeklarować takeover_offline', async () => {
     const repo = await repoWithEvents(0);
     const server = new ScriptedServer([]);
     server.aircraftStateScript = [new ServerUnreachableError()];
@@ -338,7 +338,7 @@ describe('AuthService', () => {
     expect(await credentials.load()).toMatchObject({ token: 'jwt-1', pilot: PILOT });
   });
 
-  it('wylogowanie zablokowane przy niepustym outboxie — poświadczenia zostają', async () => {
+  it('wylogowanie zablokowane przy niepustym outboxie - poświadczenia zostają', async () => {
     const credentials = new MemoryCredentials(CREDS);
     const auth = new AuthService(new ScriptedServer([]), credentials, new PinCrypto());
 
@@ -366,14 +366,14 @@ describe('AuthService', () => {
     expect(await auth.verifyPin('1234')).toBe(false);
   });
 
-  it('rotacja tokenu NIE kasuje PIN-u — zamek przeżywa wygaśnięcie sesji (§3.0)', async () => {
+  it('rotacja tokenu NIE kasuje PIN-u - zamek przeżywa wygaśnięcie sesji (§3.0)', async () => {
     const credentials = new MemoryCredentials(CREDS);
     const auth = new AuthService(new ScriptedServer([]), credentials, new PinCrypto());
     await auth.setPin('1234');
 
     expect(await auth.rotate()).toBe('jwt-2');
 
-    // Token nowy, PIN ten sam — inaczej pilot dostawałby „Ustaw PIN" co godzinę.
+    // Token nowy, PIN ten sam - inaczej pilot dostawałby „Ustaw PIN" co godzinę.
     expect(await auth.verifyPin('1234')).toBe(true);
     expect((await credentials.load())?.refreshToken).toBe('r2');
   });

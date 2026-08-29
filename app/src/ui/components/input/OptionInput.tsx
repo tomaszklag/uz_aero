@@ -1,12 +1,12 @@
 /**
- * UZ Aero — OptionInput (`.option-input` z mockupu 11)
+ * UZ Aero - OptionInput (`.option-input` z mockupu 11)
  *
  * Wartość konfiguracyjna w „ubraniu" pola formularza: podniesiona powierzchnia,
- * obramowanie akcentem, mono. To NIE jest input — niczego się tu nie wpisuje;
- * wygląd pola mówi „to jest ustawienie", a brak kursora — „nie twoje".
+ * obramowanie akcentem, mono. To NIE jest input - niczego się tu nie wpisuje;
+ * wygląd pola mówi „to jest ustawienie", a brak kursora - „nie twoje".
  *
  * Ton: `green` = wartość obowiązuje (mockup 11), `amber` = wartość przyszła/oczekuje
- * (11a — arkusz jeszcze nie istnieje), `muted` = opcja nieaktywna.
+ * (11a - arkusz jeszcze nie istnieje), `muted` = opcja nieaktywna.
  */
 
 import React from 'react';

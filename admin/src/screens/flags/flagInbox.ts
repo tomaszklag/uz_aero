@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: decyzje o treści CAŁEJ skrzynki, nie pojedynczego wiersza
+ * UZ Aero - panel: decyzje o treści CAŁEJ skrzynki, nie pojedynczego wiersza
  * (moduł CZYSTY).
  *
  * Dwie rzeczy, których nie da się rozstrzygnąć w komórce tabeli: co powiedzieć nad
@@ -18,7 +18,7 @@ export interface BlockingFlag {
 /**
  * Sprawy z TEJ listy, które trzymają kartę dnia poza arkuszem.
  *
- * Predykat, nie licznik — i to jest różnica merytoryczna. Panel opisuje tu wiersze,
+ * Predykat, nie licznik - i to jest różnica merytoryczna. Panel opisuje tu wiersze,
  * które człowiek ma przed oczami, a nie stan całego systemu: lista bywa zawężona
  * filtrem i przycięta `limit`-em, więc policzenie z niej „ile flag blokuje eksport"
  * dałoby liczbę, której serwer nigdy nie wysłał. Dlatego baner wymienia NUMERY
@@ -38,7 +38,7 @@ export interface InboxEmpty {
 /**
  * Pusta skrzynka mówi CO INNEGO w zależności od tego, czego szukaliśmy.
  *
- * „Brak otwartych flag" jest wiadomością o stanie klubu (`A03b`) — wszystko jest
+ * „Brak otwartych flag" jest wiadomością o stanie klubu (`A03b`) - wszystko jest
  * wyjaśnione i podpisane. „Nic w tym filtrze" jest wiadomością o zapytaniu.
  * Jeden napis na oba przypadki kazałby administratorowi zgadywać, czy właśnie
  * widzi dobrą wiadomość, czy własną literówkę.
@@ -49,7 +49,7 @@ export function inboxEmpty(filter: FlagFilter): InboxEmpty {
       title: 'NIC W TYM FILTRZE',
       note:
         'Żadna flaga nie spełnia zawężenia, które jest w adresie. Zdejmij filtr typu, ' +
-        'sesji albo zakresu dat — skrzynka nie jest pusta, jest zawężona.',
+        'sesji albo zakresu dat - skrzynka nie jest pusta, jest zawężona.',
     };
   }
 
@@ -57,7 +57,7 @@ export function inboxEmpty(filter: FlagFilter): InboxEmpty {
     return {
       title: 'BRAK ROZWIĄZANYCH FLAG',
       note:
-        'Nikt jeszcze nie zamknął żadnej sprawy. Rozwiązana flaga nie znika z bazy — ' +
+        'Nikt jeszcze nie zamknął żadnej sprawy. Rozwiązana flaga nie znika z bazy - ' +
         'zmienia się tylko status i dopisuje chwila rozstrzygnięcia, żeby po pół roku ' +
         'dało się odtworzyć, kto uznał dziurę w łańcuchu za nieszkodliwą i dlaczego.',
     };
@@ -70,7 +70,7 @@ export function inboxEmpty(filter: FlagFilter): InboxEmpty {
       'na odblokowanie. Nowa flaga pojawi się tu automatycznie, gdy serwer przyjmie ' +
       'zdarzenia z dziurą albo cofnięciem w łańcuchu motogodzin, zobaczy dwie niezamknięte ' +
       'sesje jednego samolotu, rozjazd paliwa poza tolerancją albo przestawiony zegar. ' +
-      'Flag nie zakłada i nie kasuje człowiek — pustej skrzynki nie da się „wyczyścić", ' +
+      'Flag nie zakłada i nie kasuje człowiek - pustej skrzynki nie da się „wyczyścić", ' +
       'da się ją tylko wypracować.',
   };
 }

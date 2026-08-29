@@ -1,14 +1,14 @@
 /**
- * UZ Aero — panel: FORMULARZ SAMOLOTU (`A07a`) — walidacja i szkic (moduł CZYSTY).
+ * UZ Aero - panel: FORMULARZ SAMOLOTU (`A07a`) - walidacja i szkic (moduł CZYSTY).
  *
  * Serwer sprawdza to samo (`http/routes/admin/fleet.ts` + `domain/fleetGuards.ts`),
  * więc to NIE JEST zabezpieczenie. To różnica między „przycisk mówi, czego brakuje"
- * a „serwer odbija 400 bez wyjaśnienia" — i dlatego reguły są tu LUSTREM reguł serwera,
+ * a „serwer odbija 400 bez wyjaśnienia" - i dlatego reguły są tu LUSTREM reguł serwera,
  * wypisanym obok z podaniem, czego dotyczą.
  *
  * ══ DLACZEGO POJEMNOŚĆ MA WŁASNY PARSER, A NIE `Number(text)` ══
  * Bo pole wypełnia człowiek z polską klawiaturą: „1100", „1 100", „1100,5" mają znaczyć
- * to samo. `Number('1100,5')` daje `NaN`, a `parseFloat('1 100')` — `1`. Obie pomyłki
+ * to samo. `Number('1100,5')` daje `NaN`, a `parseFloat('1 100')` - `1`. Obie pomyłki
  * kończą się zapisem pojemności, której nikt nie wpisał, czyli przesunięciem progu
  * flagi `FUEL_MISMATCH` bez wiedzy administratora. Ten sam powód, dla którego
  * `@uzaero/format` ma `parseLitres` dla telefonu.
@@ -29,7 +29,7 @@ export interface AircraftDraft {
   dualRequired: boolean;
   serviceStatus: ServiceStatus;
   /**
-   * Konfiguracja OLEJU (issue #60) — trzy pola opcjonalne: puste = moduł dla tej
+   * Konfiguracja OLEJU (issue #60) - trzy pola opcjonalne: puste = moduł dla tej
    * jednostki milczy (podpowiedzi i ostrzeżenia w aplikacji śpią, pomiar działa).
    * Lustro reguł serwera: wartości dodatnie, minimum ≤ zbiornik (`fleetGuards.refuseOil`).
    */
@@ -44,13 +44,13 @@ export const REG_MAX = 10;
 /** Lustro `type` z trasy. */
 export const TYPE_MIN = 2;
 export const TYPE_MAX = 60;
-/** Lustro `year` z trasy — zakres tabliczki znamionowej, nie fantazji. */
+/** Lustro `year` z trasy - zakres tabliczki znamionowej, nie fantazji. */
 export const YEAR_MIN = 1900;
 export const YEAR_MAX = 2100;
 
 export interface FieldState {
   ok: boolean;
-  /** Powód odmowy — WIDOCZNY tekst pod polem, nigdy tooltip; `null` = pole w porządku. */
+  /** Powód odmowy - WIDOCZNY tekst pod polem, nigdy tooltip; `null` = pole w porządku. */
   message: string | null;
 }
 
@@ -59,7 +59,7 @@ const OK: FieldState = { ok: true, message: null };
 /**
  * Rejestrację normalizujemy do WERSALIKÓW, a nie odrzucamy małych liter: „sp-klm"
  * i „SP-KLM" to w intencji administratora ta sama maszyna. Serwer robi dokładnie to
- * samo — panel pokazuje wynik od razu, żeby wielka litera nie była niespodzianką
+ * samo - panel pokazuje wynik od razu, żeby wielka litera nie była niespodzianką
  * po zapisie.
  */
 export function normalizeReg(value: string): string {
@@ -72,7 +72,7 @@ export function regState(value: string): FieldState {
     return {
       ok: false,
       message:
-        'Rejestracja jest wymagana — widać ją w logu dnia, w nazwie karty arkusza i w każdej fladze.',
+        'Rejestracja jest wymagana - widać ją w logu dnia, w nazwie karty arkusza i w każdej fladze.',
     };
   }
   if (reg.length < REG_MIN || reg.length > REG_MAX) {
@@ -87,7 +87,7 @@ export function regState(value: string): FieldState {
 export function typeState(value: string): FieldState {
   const text = value.trim();
   if (text.length === 0) {
-    return { ok: false, message: 'Typ jest wymagany — bez niego wiersz floty nie ma podpisu.' };
+    return { ok: false, message: 'Typ jest wymagany - bez niego wiersz floty nie ma podpisu.' };
   }
   if (text.length < TYPE_MIN || text.length > TYPE_MAX) {
     return { ok: false, message: `Typ: od ${TYPE_MIN} do ${TYPE_MAX} znaków.` };
@@ -96,7 +96,7 @@ export function typeState(value: string): FieldState {
 }
 
 /**
- * Rok jest OPCJONALNY, bo kolumna `aircraft.year` jest `NULL`-owalna — tabliczka bez
+ * Rok jest OPCJONALNY, bo kolumna `aircraft.year` jest `NULL`-owalna - tabliczka bez
  * daty produkcji to realny przypadek. Puste pole znaczy „nie wiadomo", a nie „rok 0".
  */
 export function yearState(value: string): FieldState {
@@ -128,7 +128,7 @@ export function capacityState(value: string): FieldState {
       // Powód, nie „popraw pole": zero cofa tolerancję flagi do podłogi 10 L i unieważnia
       // inwariant „stan po tankowaniu ≤ pojemność". Serwer odmawia z tym samym kodem.
       message:
-        'Pojemność musi być większa od zera — z niej wynika próg flagi FUEL_MISMATCH i limit wpisu tankowania.',
+        'Pojemność musi być większa od zera - z niej wynika próg flagi FUEL_MISMATCH i limit wpisu tankowania.',
     };
   }
   return OK;
@@ -154,9 +154,9 @@ export function oilFieldState(value: string, label: string): FieldState {
   if (parsed.value != null && parsed.value <= 0) {
     return {
       ok: false,
-      // Powód, nie „popraw pole": minimum 0 wyłączałoby ostrzeżenie po cichu — serwer
+      // Powód, nie „popraw pole": minimum 0 wyłączałoby ostrzeżenie po cichu - serwer
       // odmawia z kodem `oil_not_positive`.
-      message: `${label} musi być większe od zera — puste pole znaczy „nieskonfigurowane".`,
+      message: `${label} musi być większe od zera - puste pole znaczy „nieskonfigurowane".`,
     };
   }
   return OK;
@@ -173,7 +173,7 @@ export function oilPairState(draft: Pick<AircraftDraft, 'oilMin' | 'oilCapacity'
   if (min.value != null && capacity.value != null && min.value > capacity.value) {
     return {
       ok: false,
-      message: 'Minimum oleju nie może przekraczać zbiornika — ostrzeżenie „dolej" nie miałoby jak zgasnąć.',
+      message: 'Minimum oleju nie może przekraczać zbiornika - ostrzeżenie „dolej" nie miałoby jak zgasnąć.',
     };
   }
   return OK;
@@ -187,11 +187,11 @@ export interface FormState {
   oilMin: FieldState;
   oilCapacity: FieldState;
   oilNorm: FieldState;
-  /** Reguła PARY minimum–zbiornik — komunikat pod sekcją oleju, nie pod jednym polem. */
+  /** Reguła PARY minimum–zbiornik - komunikat pod sekcją oleju, nie pod jednym polem. */
   oilPair: FieldState;
   /** Czy wolno wysłać. */
   ok: boolean;
-  /** Powód blokady przycisku — WIDOCZNY tekst, nigdy sam wyszarzony przycisk. */
+  /** Powód blokady przycisku - WIDOCZNY tekst, nigdy sam wyszarzony przycisk. */
   reason: string | null;
 }
 
@@ -217,11 +217,11 @@ export function formState(draft: AircraftDraft): FormState {
     oilNorm,
     oilPair,
     ok,
-    reason: ok ? null : 'Popraw pola oznaczone niżej — serwer odrzuci ten zapis.',
+    reason: ok ? null : 'Popraw pola oznaczone niżej - serwer odrzuci ten zapis.',
   };
 }
 
-/** Pusty formularz „Dodaj samolot" — stan służby domyślnie „w służbie" (mockup A07a). */
+/** Pusty formularz „Dodaj samolot" - stan służby domyślnie „w służbie" (mockup A07a). */
 export const EMPTY_DRAFT: AircraftDraft = {
   reg: '',
   type: '',
@@ -304,7 +304,7 @@ export function updateBody(
   if (draft.serviceStatus !== before.serviceStatus) body.serviceStatus = draft.serviceStatus;
 
   // Olej (issue #60): wyczyszczone pole to jawne `null` („moduł ma zamilknąć"),
-  // a nie pominięcie — pominięte pole PATCH zostawia bez zmian.
+  // a nie pominięcie - pominięte pole PATCH zostawia bez zmian.
   const oilMinL = parseOil(draft.oilMin).value;
   if (oilMinL !== before.oilMinL) body.oilMinL = oilMinL;
   const oilCapacityL = parseOil(draft.oilCapacity).value;
@@ -315,7 +315,7 @@ export function updateBody(
   return body;
 }
 
-/** Czy formularz w ogóle coś zmienia — bez tego przycisk „Zapisz" prosi o 400. */
+/** Czy formularz w ogóle coś zmienia - bez tego przycisk „Zapisz" prosi o 400. */
 export function hasChanges(before: AircraftListItemDto, draft: AircraftDraft): boolean {
   return Object.keys(updateBody(before, draft)).length > 0;
 }
@@ -327,18 +327,18 @@ export interface ChoiceOption<T extends string> {
 }
 
 /**
- * Opisy formatu licznika 1:1 z mockupu `A07a` — to jedyne miejsce w produkcie, w którym
+ * Opisy formatu licznika 1:1 z mockupu `A07a` - to jedyne miejsce w produkcie, w którym
  * człowiek czyta, CO ten wybór zmienia, zanim go dokona.
  */
 export const MH_FORMAT_OPTIONS: readonly ChoiceOption<MhFormat>[] = [
   {
     id: 'decimal',
-    name: 'Dziesiętny — 3907.8',
+    name: 'Dziesiętny - 3907.8',
     desc: 'Licznik z dziesiętną częścią godziny. Pilot wpisuje jedną liczbę.',
   },
   {
     id: 'hhmm',
-    name: 'Godziny i minuty — 3907:48',
+    name: 'Godziny i minuty - 3907:48',
     desc: 'Licznik z minutami. Pilot wpisuje dwa pola: godziny i minuty 00–59.',
   },
 ];
@@ -352,7 +352,7 @@ export const DUAL_OPTIONS: readonly ChoiceOption<'no' | 'yes'>[] = [
   {
     id: 'yes',
     name: 'Wymagany',
-    desc: 'Preflight bez wskazanego Duala jest zablokowany — pilot nie przejdzie do potwierdzenia.',
+    desc: 'Preflight bez wskazanego Duala jest zablokowany - pilot nie przejdzie do potwierdzenia.',
   },
 ];
 

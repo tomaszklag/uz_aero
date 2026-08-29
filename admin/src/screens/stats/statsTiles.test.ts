@@ -1,8 +1,8 @@
 /**
- * UZ Aero — panel: kafle statystyk.
+ * UZ Aero - panel: kafle statystyk.
  *
  * Dwie własności konstytucji ekranu: liczby są PRZEPISANE z odpowiedzi (nie liczone
- * tutaj), a `null` z serwera — z każdego powodu — zostaje kreską z wyjaśnieniem.
+ * tutaj), a `null` z serwera - z każdego powodu - zostaje kreską z wyjaśnieniem.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -17,7 +17,7 @@ const tile = (data: StatsReportDto | null, key: string) => {
   return found;
 };
 
-describe('statsTiles — dane kompletne (scenariusz mockupu)', () => {
+describe('statsTiles - dane kompletne (scenariusz mockupu)', () => {
   const data = statsFixture();
 
   it('sześć kafli mockupu w jego kolejności i z jego liczbami', () => {
@@ -40,7 +40,7 @@ describe('statsTiles — dane kompletne (scenariusz mockupu)', () => {
   it('przypisy niosą ilorazy SERWERA: procent bloku i rozjazd Δ MH', () => {
     expect(tile(data, 'flight').note).toContain('71,7 % nalotu blokowego');
     expect(tile(data, 'mh').note).toBe(
-      'Δ liczników fizycznych · blok 186.65 h — rozjazd 0.35 h.',
+      'Δ liczników fizycznych · blok 186.65 h - rozjazd 0.35 h.',
     );
     expect(tile(data, 'days').note).toBe('3 samoloty · 5 pilotów · 30 dni kalendarzowych.');
   });
@@ -63,7 +63,7 @@ describe('statsTiles — dane kompletne (scenariusz mockupu)', () => {
   it('kafel MH: blok z dni Z PARĄ ODCZYTÓW i adnotacja o dniach poza porównaniem', () => {
     const data = statsFixture();
     // Dwa dni bez pary odczytów: mianownik rozjazdu pochodzi z TEGO SAMEGO zbioru
-    // dni co suma Δ — pełny blok pisałby „rozjazd 20 h", gdy naprawdę brakuje odczytów.
+    // dni co suma Δ - pełny blok pisałby „rozjazd 20 h", gdy naprawdę brakuje odczytów.
     data.totals.mhUnknownSessions = 2;
     data.totals.mhBlockHours = 120.5;
     data.totals.mhVsBlockH = 0.4;
@@ -73,12 +73,12 @@ describe('statsTiles — dane kompletne (scenariusz mockupu)', () => {
   });
 });
 
-describe('statsTiles — `null` to „nie wiemy", nigdy zero', () => {
-  it('bez odpowiedzi wszystkie kafle mówią „—" bez tonu', () => {
+describe('statsTiles - `null` to „nie wiemy", nigdy zero', () => {
+  it('bez odpowiedzi wszystkie kafle mówią „-" bez tonu', () => {
     for (const t of statsTiles(null)) {
-      expect(t.value).toBe('—');
+      expect(t.value).toBe('-');
       expect(t.tone).toBeUndefined();
-      expect(t.note).toBe('Nie wiadomo — raport się nie pobrał.');
+      expect(t.note).toBe('Nie wiadomo - raport się nie pobrał.');
     }
   });
 
@@ -91,12 +91,12 @@ describe('statsTiles — `null` to „nie wiemy", nigdy zero', () => {
     data.totals.mhDeltaH = null;
     data.totals.mhVsBlockH = null;
 
-    expect(tile(data, 'takeoffs').value).toBe('—');
+    expect(tile(data, 'takeoffs').value).toBe('-');
     expect(tile(data, 'takeoffs').note).toContain('kolumn statystyk');
-    expect(tile(data, 'fuel').value).toBe('—');
+    expect(tile(data, 'fuel').value).toBe('-');
     expect(tile(data, 'fuel').unit).toBeUndefined();
-    expect(tile(data, 'mh').value).toBe('—');
-    // Stare kolumny projekcji (blok, lot, dni) zostają liczbami — migracja ich nie ruszała.
+    expect(tile(data, 'mh').value).toBe('-');
+    // Stare kolumny projekcji (blok, lot, dni) zostają liczbami - migracja ich nie ruszała.
     expect(tile(data, 'block').value).toBe('186:39');
   });
 });

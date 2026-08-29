@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 05C Cockpit · Toast Landing</title>
+<title>UZ Aero - 05C Cockpit · Toast Landing</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -66,7 +66,7 @@
   .param-cell { background:var(--surface); padding:12px 14px; display:flex; flex-direction:column; gap:4px; }
   /* WARIANT OSTRZEGAWCZY paliwa (issue #19), nie domyślny wygląd komórki: amber dopiero,
      gdy szacunek czasu lotu z FOB spadnie do ~1h45 (godzina zapasu nad rezerwą 45 min),
-     czerwony na samej rezerwie. Powyżej — jak tutaj — paliwo jest neutralne, bo kolor
+     czerwony na samej rezerwie. Powyżej - jak tutaj - paliwo jest neutralne, bo kolor
      świecący zawsze przestaje być ostrzeżeniem. */
   .param-cell.amber-bg { background:rgba(243,156,18,0.04); }
   .param-label { font-family:var(--font-mono); font-size: 10px; letter-spacing:2.5px; text-transform:uppercase; color:var(--text-muted); }
@@ -74,9 +74,9 @@
   .param-value.amber { color:var(--amber); }
   .param-unit { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); }
 
-  /* OŚ SESJI (issue #44) — ten sam inwentarz, co na 04, 05 i 10; pełny komentarz stoi
+  /* OŚ SESJI (issue #44) - ten sam inwentarz, co na 04, 05 i 10; pełny komentarz stoi
      w 04. Stan własny tego ekranu: zdarzenie WŁAŚCIE WYKRYTE, czekające w oknie COFNIJ
-     — kropka kreskowana i plakietka przy nazwie (jak na 05B). */
+     - kropka kreskowana i plakietka przy nazwie (jak na 05B). */
   .session-log { flex:1; overflow-y:auto; scrollbar-width:none; background:var(--surface); border-bottom:1px solid var(--border); }
   .session-log::-webkit-scrollbar { display:none; }
   .session-log-header { display:flex; align-items:center; justify-content:space-between; padding:6px 12px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--surface-raised); z-index:2; }
@@ -111,12 +111,12 @@
 
   /* AUTODETECT TOAST */
   .action-row { display:grid; grid-template-columns:1fr auto; gap:10px; padding:12px 14px; background:var(--bg); flex-shrink:0; align-items:stretch; }
-  /* STOP ENGINE — wymaganie 3.2; podczas dobiegu jeszcze disabled, aktywny po zatrzymaniu (05d) */
+  /* STOP ENGINE - wymaganie 3.2; podczas dobiegu jeszcze disabled, aktywny po zatrzymaniu (05d) */
   .stop-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; padding:12px 16px; background:var(--red-muted); border:1px solid var(--red-border); border-radius:14px; color:var(--red); text-decoration:none; cursor:pointer; font-family:var(--font-display); font-size:16px; letter-spacing:1.5px; white-space:nowrap; }
   .stop-btn-lbl { font-family:var(--font-mono); font-size:7px; letter-spacing:1px; text-transform:uppercase; opacity:0.7; }
   .stop-btn.disabled { opacity:0.32; filter:saturate(0.4); pointer-events:none; }
 
-  /* Bottom sheet — autodetect event */
+  /* Bottom sheet - autodetect event */
   .detect-sheet {
     position: absolute; bottom: 0; left: 0; right: 0;
     background: var(--surface-raised);
@@ -130,7 +130,7 @@
   .detect-bar {
     height: 6px; background: var(--green); width: 60%;
   }
-  /* Doktryna 3.2: brak reakcji = zapis. Jedyną akcją jest COFNIJ — więc ona ma być duża. */
+  /* Doktryna 3.2: brak reakcji = zapis. Jedyną akcją jest COFNIJ - więc ona ma być duża. */
   .detect-count { font-family: var(--font-mono); font-size: 20px; font-weight: 700; color: var(--green); min-width: 34px; text-align: center; }
   .detect-undo {
     margin: 14px 18px 8px; min-height: 58px; padding: 16px 20px;
@@ -214,7 +214,7 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 05C</span>
+  <span class="film-strip">UZ AERO - 05C</span>
   <span class="slug">cockpit · in flight · autodetect LDG</span>
   <span class="canvas-meta"><span class="pulse"></span>pojawia się automatycznie: GPS wykrywa GS ≤ 30 KT podczas lotu</span>
 </header>
@@ -234,12 +234,12 @@
       <div class="compact-info">
         <span class="compact-aircraft">SP-AXA</span>
         <span class="compact-sep">·</span>
-        <!-- Dzień skoków: JEDEN kod ICAO, nie para (issue #13) — samolot wraca tam, skąd
+        <!-- Dzień skoków: JEDEN kod ICAO, nie para (issue #13) - samolot wraca tam, skąd
              wystartował. Para start → lądowanie zostaje na paskach innych operacji. -->
         <span>EPKK · SKOKI</span>
       </div>
       <div class="compact-right">
-        <div class="offline-badge" title="Brak sieci — zdarzenia zapisują się lokalnie, wysyłka automatyczna po odzyskaniu zasięgu">
+        <div class="offline-badge" title="Brak sieci - zdarzenia zapisują się lokalnie, wysyłka automatyczna po odzyskaniu zasięgu">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
           Offline · 13
         </div>
@@ -247,13 +247,13 @@
           <span class="live-dot"></span>
           RUNNING
         </div>
-        <a href="13-ustawienia.html" class="gear-btn" style="text-decoration:none;" title="Ustawienia — motyw, PIN, konto, diagnostyka GPS">
+        <a href="13-ustawienia.html" class="gear-btn" style="text-decoration:none;" title="Ustawienia - motyw, PIN, konto, diagnostyka GPS">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         </a>
       </div>
     </div>
 
-    <!-- Phase: Taxi — system just detected landing, transitioning -->
+    <!-- Phase: Taxi - system just detected landing, transitioning -->
     <div class="phase-hero">
       <div class="phase-body">
         <div class="phase-hero-icon">
@@ -279,14 +279,14 @@
         <div class="param-label">Fuel on Board</div>
         <div style="display:flex;align-items:baseline;gap:6px;"><div class="param-value">~92</div><div class="param-unit">L</div></div>
       </div>
-      <!-- Czas lotu CAŁEJ SESJI (0:44 + 0:42 + 0:53 otwartego) — patrz komentarz przy
+      <!-- Czas lotu CAŁEJ SESJI (0:44 + 0:42 + 0:53 otwartego) - patrz komentarz przy
            tym kafelku w 05. Lądowanie wisi jeszcze w toaście, więc lot trzeci liczy
            się dalej jako otwarty. -->
       <div class="param-cell">
         <div class="param-label">Flight Time</div>
         <div style="display:flex;align-items:baseline;gap:6px;"><div class="param-value" style="color:var(--text-secondary)">02:19</div></div>
     <!-- Karta logu pokazuje się dopiero, gdy w sesji jest zdarzenie OPERACYJNE
-         (issue #19) — tu jest ich pełna sesja. Oś jest ta sama, co na 04 i na 10
+         (issue #19) - tu jest ich pełna sesja. Oś jest ta sama, co na 04 i na 10
          (issue #44); ostatni wiersz czeka w oknie COFNIJ. -->
     <div class="session-log">
       <div class="session-log-header">
@@ -372,7 +372,7 @@
           <span class="axis-label"><span class="axis-name muted">Zrzut 3</span><span class="axis-sub">4 skoczków · 3 200 ft</span></span>
           <span class="axis-right"></span>
         </div>
-        <!-- LĄDOWANIE W OKNIE COFNIJ — wykryte, jeszcze nieostateczne (toast odlicza).
+        <!-- LĄDOWANIE W OKNIE COFNIJ - wykryte, jeszcze nieostateczne (toast odlicza).
              Czas lotu stoi już po prawej, ale przygaszony: gdy pilot cofnie detekcję,
              zniknie razem z wierszem. -->
         <div class="axis-row" style="background:rgba(46,204,113,0.04);">
@@ -385,18 +385,18 @@
     </div>
 
     <div class="action-row">
-      <a href="05f-zdarzenie-reczne.html" class="primary-btn" title="Zapisz ręcznie — GPS nie wykrył zdarzenia albo wykrył za późno">
+      <a href="05f-zdarzenie-reczne.html" class="primary-btn" title="Zapisz ręcznie - GPS nie wykrył zdarzenia albo wykrył za późno">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg>
         Take off
       </a>
-      <span class="stop-btn disabled" title="Trwa dobieg — silnik zatrzymasz po zatrzymaniu samolotu (ekran Taxi po LDG)">
+      <span class="stop-btn disabled" title="Trwa dobieg - silnik zatrzymasz po zatrzymaniu samolotu (ekran Taxi po LDG)">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
         STOP
         <span class="stop-btn-lbl">po dobiegu</span>
       </span>
     </div>
 
-    <!-- BOTTOM SHEET — autodetect Landing -->
+    <!-- BOTTOM SHEET - autodetect Landing -->
     <div class="detect-sheet">
       <div class="detect-bar"></div>
       <div class="detect-handle"></div>
@@ -412,7 +412,7 @@
       </div>
       <a href="05-cockpit-running.html" class="detect-undo">
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
-        <span>COFNIJ — TO PRZELOT</span>
+        <span>COFNIJ - TO PRZELOT</span>
       </a>
       <div class="detect-auto">Nic nie rób, a zapiszemy automatycznie za <b>5 s</b>. Cofnij, jeśli to był przelot nad lotniskiem, nie lądowanie.</div>
     </div>
@@ -420,15 +420,15 @@
 </main>
 <nav class="state-sidebar">
   <div class="state-sidebar-lbl">Kokpit</div>
-  <a href="05h-cockpit-idle.html" title="Kiedy: silnik ON, samolot jeszcze stoi — przycisk Taxi otwiera sekwencję; ruch zapisze też autodetekcja"><span class="dot"></span>Engine idle</a>
-  <a href="05a-cockpit-taxi.html" title="Kiedy: kołowanie trwa (zapisane przez autodetekcję albo przycisk Taxi) — przycisk podpowiada Take off"><span class="dot"></span>Taxi przed T/O</a>
-  <a href="05-cockpit-running.html" title="Kiedy: w locie — phase hero (Climb/Cruise/Descent), GPS live, log zdarzeń, buforowanie offline"><span class="dot"></span>In Flight</a>
-  <a href="05b-cockpit-inflight-toast.html" title="Kiedy: GPS wykrył start (GS > 50 kt) — toast z odliczaniem, 5 s na Cofnij"><span class="dot"></span>Toast Takeoff</a>
-  <a href="05c-cockpit-toast-ldg.html" class="active" title="Kiedy: GPS wykrył lądowanie (GS < 30 kt + niska wysokość) — toast z Cofnij podczas rolloutu"><span class="dot"></span>Toast Landing</a>
-  <a href="05d-cockpit-taxi-post.html" title="Kiedy: lot ukończony, silnik nadal ON — kołowanie; kolejny T/O albo STOP ENGINE"><span class="dot"></span>Taxi po LDG</a>
-  <a href="05e-zrzut.html" title="Kiedy: nad zrzutowiskiem — potwierdzenie składu z załadunku (rozliczenie)"><span class="dot"></span>Zrzut</a>
-  <a href="05i-zaladunek.html" title="Kiedy: na ziemi dnia skokowego — skoczkowie wsiadają; skład opcjonalny, wypełni arkusz zrzutu (issue #21)"><span class="dot"></span>Załadunek</a>
-  <a href="05g-cockpit-no-gps.html" title="Kiedy: GPS stracił fixa — parametry — —, autodetekcja wstrzymana, wejścia ręczne aktywne; sieć osobno (SYNC może być zielony)"><span class="dot"></span>No GPS</a>
+  <a href="05h-cockpit-idle.html" title="Kiedy: silnik ON, samolot jeszcze stoi - przycisk Taxi otwiera sekwencję; ruch zapisze też autodetekcja"><span class="dot"></span>Engine idle</a>
+  <a href="05a-cockpit-taxi.html" title="Kiedy: kołowanie trwa (zapisane przez autodetekcję albo przycisk Taxi) - przycisk podpowiada Take off"><span class="dot"></span>Taxi przed T/O</a>
+  <a href="05-cockpit-running.html" title="Kiedy: w locie - phase hero (Climb/Cruise/Descent), GPS live, log zdarzeń, buforowanie offline"><span class="dot"></span>In Flight</a>
+  <a href="05b-cockpit-inflight-toast.html" title="Kiedy: GPS wykrył start (GS > 50 kt) - toast z odliczaniem, 5 s na Cofnij"><span class="dot"></span>Toast Takeoff</a>
+  <a href="05c-cockpit-toast-ldg.html" class="active" title="Kiedy: GPS wykrył lądowanie (GS < 30 kt + niska wysokość) - toast z Cofnij podczas rolloutu"><span class="dot"></span>Toast Landing</a>
+  <a href="05d-cockpit-taxi-post.html" title="Kiedy: lot ukończony, silnik nadal ON - kołowanie; kolejny T/O albo STOP ENGINE"><span class="dot"></span>Taxi po LDG</a>
+  <a href="05e-zrzut.html" title="Kiedy: nad zrzutowiskiem - potwierdzenie składu z załadunku (rozliczenie)"><span class="dot"></span>Zrzut</a>
+  <a href="05i-zaladunek.html" title="Kiedy: na ziemi dnia skokowego - skoczkowie wsiadają; skład opcjonalny, wypełni arkusz zrzutu (issue #21)"><span class="dot"></span>Załadunek</a>
+  <a href="05g-cockpit-no-gps.html" title="Kiedy: GPS stracił fixa - parametry - -, autodetekcja wstrzymana, wejścia ręczne aktywne; sieć osobno (SYNC może być zielony)"><span class="dot"></span>No GPS</a>
 </nav>
 </div>
 

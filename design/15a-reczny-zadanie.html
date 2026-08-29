@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 15A Lot ręczny · krok 2/4 · zadanie</title>
+<title>UZ Aero - 15A Lot ręczny · krok 2/4 · zadanie</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -76,10 +76,10 @@
   .field-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
   .field-input { background:var(--surface-raised); border:1px solid var(--border-strong); border-radius:12px; padding:12px 14px; display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:46px; cursor:pointer; text-decoration:none; }
   .field-input:hover { border-color:var(--green-border); }
-  /* Metryka wartości = pole wpisu z arkusza (issue #58 pkt 5 i 9): mono 16 / 1.5 —
+  /* Metryka wartości = pole wpisu z arkusza (issue #58 pkt 5 i 9): mono 16 / 1.5 -
      22 px robiło z kodu ICAO bohatera ekranu. PLACEHOLDER JEST ZAWSZE SKŁADEM
      TEKSTOWYM (trzecia tura #58): body 15 w --text-placeholder, jak w arkuszu
-     notatki — instrukcja, nie wartość. Tekst pilota (klient, notatka) zawija się
+     notatki - instrukcja, nie wartość. Tekst pilota (klient, notatka) zawija się
      W CAŁOŚCI (pkt 10). */
   .field-input-val { font-size:15px; line-height:20px; color:var(--text-primary); }
   .field-input-val.icao { font-family:var(--font-mono); font-size:16px; font-weight:700; letter-spacing:1.5px; }
@@ -90,7 +90,7 @@
   .field-meta { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .field-icon { display:flex; color:var(--text-muted); flex-shrink:0; }
 
-  /* Rodzaj operacji — siatka kart z ikonami, nigdy natywny select (reguła z CLAUDE.md).
+  /* Rodzaj operacji - siatka kart z ikonami, nigdy natywny select (reguła z CLAUDE.md).
      Wybór steruje resztą wpisu tak samo, jak przy locie normalnym: skoki = JEDNO
      lotnisko (start i lądowanie na tym samym placu, issue #13) i krok 3 z sekcją
      zrzutów; pozostałe operacje = para start → lądowanie i krok 3 bez zrzutów
@@ -120,12 +120,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 15A</span>
+  <span class="film-strip">UZ AERO - 15A</span>
   <span class="slug">lot ręczny · zadanie · krok 2 / 4</span>
   <span class="canvas-meta">Ekran 15A</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Lot ręczny, krok 2: zadanie">
+<main class="phone" role="region" aria-label="Mockup - Lot ręczny, krok 2: zadanie">
   <div class="status-bar">
     <span>16:21</span>
     <span class="status-right">
@@ -155,7 +155,7 @@
       <!-- TE SAME POLA, CO NA 02E przy locie normalnym (zgłoszenie z urządzenia,
            2026-08-16: „brakuje wszystkich dodatkowych pól, jakie definiuję przy locie
            automatycznym"). Do tej pory komenda `manualFlight` wpisywała twardo
-           `operation: 'inne'` i nie miała gdzie przyjąć lotnisk — lot wpisany z kartki
+           `operation: 'inne'` i nie miała gdzie przyjąć lotnisk - lot wpisany z kartki
            trafiał do rozliczenia jako operacja nieokreślona, choć pilot doskonale
            wiedział, że to były skoki na własnym polu.
 
@@ -202,14 +202,14 @@
 
       <!-- SKOKI = JEDNO LOTNISKO (issue #13): startują i lądują na tym samym placu,
            więc pytanie o parę byłoby pytaniem o to samo dwa razy. Przy przelocie,
-           egzaminie i locie technicznym stoją tu DWA pola — „Start" i „Lądowanie" —
+           egzaminie i locie technicznym stoją tu DWA pola - „Start" i „Lądowanie" -
            jedno pod drugim, bez strzałki (wzorzec 02F).
 
            TRASA JEST WYMAGANA (issue #58, kolejna tura z urządzenia): bez lotniska
-           (przy parze — bez obu) DALEJ jest zablokowane z powodem w przycisku
+           (przy parze - bez obu) DALEJ jest zablokowane z powodem w przycisku
            („Wybierz lotnisko startu."). Pole bez plakietki „opcjonalne" obiecuje
            wymóg, więc bramka musi go egzekwować. To świadome ODEJŚCIE od 02E,
-           gdzie pustą trasę wolno zostawić (start silnika ma trwać sekundy — fakt
+           gdzie pustą trasę wolno zostawić (start silnika ma trwać sekundy - fakt
            lotu > kompletność formularza): wpis opisuje lot, który JUŻ się odbył,
            więc „jeszcze nie wiem, dokąd" tu nie istnieje. -->
 
@@ -248,7 +248,7 @@
       </div>
 
       <!-- NOTATKA MA WŁASNĄ SEKCJĘ (zgłoszenie z urządzenia): do 2026-08-16 mieszkała
-           w arkuszu czasów — pilot, który chciał dopisać zdanie o locie, musiał otworzyć
+           w arkuszu czasów - pilot, który chciał dopisać zdanie o locie, musiał otworzyć
            okno służące do czegoś innego, a zamknięcie go bez potwierdzenia gubiło tekst.
            To ta sama notatka, co na 02E: jedno pole `preflight_confirm.notes`, poprawialne
            potem przez arkusz 10K. -->
@@ -260,7 +260,7 @@
         <div class="field">
           <a href="15a-reczny-zadanie.html" class="field-input">
             <span class="field-input-main grow">
-              <span class="field-input-val">Telefon został w hangarze — lot spisany z kartki.</span>
+              <span class="field-input-val">Telefon został w hangarze - lot spisany z kartki.</span>
             </span>
             <span class="field-icon">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
@@ -281,33 +281,33 @@
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Kroki wpisu ręcznego — co gdzie</div>
+  <div class="vp-title">Kroki wpisu ręcznego - co gdzie</div>
   <a class="vp-item" href="15-reczny-lot.html">
     <span class="vp-badge">15</span>
     <span class="vp-body">
-      <span class="vp-name">Krok 1 — data i samolot</span>
+      <span class="vp-name">Krok 1 - data i samolot</span>
       <span class="vp-when">Maszyna, data lotu (domyślnie dzisiejsza), opcjonalny Dual.</span>
     </span>
   </a>
   <a class="vp-item active" href="15a-reczny-zadanie.html">
     <span class="vp-badge">15A</span>
     <span class="vp-body">
-      <span class="vp-name">Krok 2 — zadanie</span>
-      <span class="vp-when">Rodzaj operacji, lotniska, klient i notatka — te same pola, co na 02E. Rodzaj operacji decyduje o liczbie pól trasy (issue #13) i o tym, czy krok 3 pyta o zrzuty (issue #19).</span>
+      <span class="vp-name">Krok 2 - zadanie</span>
+      <span class="vp-when">Rodzaj operacji, lotniska, klient i notatka - te same pola, co na 02E. Rodzaj operacji decyduje o liczbie pól trasy (issue #13) i o tym, czy krok 3 pyta o zrzuty (issue #19).</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
   <a class="vp-item" href="15b-reczny-czasy.html">
     <span class="vp-badge">15B</span>
     <span class="vp-body">
-      <span class="vp-name">Krok 3 — czasy</span>
+      <span class="vp-name">Krok 3 - czasy</span>
       <span class="vp-when">Bieg silnika, loty i zrzuty.</span>
     </span>
   </a>
   <a class="vp-item" href="15c-reczny-liczniki.html">
     <span class="vp-badge">15C</span>
     <span class="vp-body">
-      <span class="vp-name">Krok 4 — liczniki i paliwo</span>
+      <span class="vp-name">Krok 4 - liczniki i paliwo</span>
       <span class="vp-when">Paliwo przed / dolewki / po, motogodziny przed i po, ostrzeżenia.</span>
     </span>
   </a>

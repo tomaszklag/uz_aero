@@ -1,8 +1,8 @@
 /**
- * UZ Aero — panel: FILTRY REJESTRU ZDARZEŃ ↔ query string (moduł CZYSTY).
+ * UZ Aero - panel: FILTRY REJESTRU ZDARZEŃ ↔ query string (moduł CZYSTY).
  *
  * Filtry mieszkają w URL-u, nie w stanie komponentu
- * (`docs/architektura-panelu-frontend.md` §4.4) — i na tym ekranie to nie jest wygoda,
+ * (`docs/architektura-panelu-frontend.md` §4.4) - i na tym ekranie to nie jest wygoda,
  * tylko WYMAGANIE. `ANALIZA` §3 nazywa deep link do rejestru podstawowym scenariuszem
  * współpracy („gdzie jest zdarzenie `uuid=…`, które telefon uważa za wysłane"), a karta
  * dnia i pulpit prowadzą tu z GOTOWYM zawężeniem. Filtr trzymany w `useState` uczyniłby
@@ -12,11 +12,11 @@
  * Klucze TEGO query stringa są po polsku (`?od=`, `?samolot=`, `?typ=`), bo to adres
  * produktu widoczny w pasku przeglądarki. Klucze żądania do serwera są po angielsku
  * (`?from=`, `?aircraftId=`, `?type=`), bo to kontrakt kodu. Tłumaczenie jednego na
- * drugie jest tutaj i nigdzie indziej — `eventsListQuery` niżej.
+ * drugie jest tutaj i nigdzie indziej - `eventsListQuery` niżej.
  *
  * Wartość NIEZNANA jest POMIJANA, nie odrzucana: adres z literówką ma pokazać rejestr,
  * a nie stronę błędu. Wyjątkiem jest serwer, który po nieznanym typie odmawia
- * czterysetką — dlatego `typ` przepuszczamy wyłącznie z katalogu.
+ * czterysetką - dlatego `typ` przepuszczamy wyłącznie z katalogu.
  */
 
 import type { EventListQuery } from '../../api/events';
@@ -25,7 +25,7 @@ import { isKnownEventType } from './eventCatalog';
 export type SortDirection = 'asc' | 'desc';
 
 export interface EventsFilter {
-  /** DOKŁADNY uuid zdarzenia — główny scenariusz ekranu. */
+  /** DOKŁADNY uuid zdarzenia - główny scenariusz ekranu. */
   uuid: string | null;
   sessionUuid: string | null;
   aircraftId: string | null;
@@ -40,10 +40,10 @@ export interface EventsFilter {
 }
 
 /**
- * Domyślnie BEZ zawężenia i najnowsze na górze — jak nagłówek `received_at ↓`
+ * Domyślnie BEZ zawężenia i najnowsze na górze - jak nagłówek `received_at ↓`
  * w mockupie. Panel nie ustawia domyślnego zakresu dat: ukryte zawężenie do ostatniego
  * tygodnia sprawiłoby, że kafle i pusta lista mówiłyby o czymś, czego nie widać
- * w adresie — a ten ekran istnieje po to, żeby adres dało się wkleić w zgłoszeniu.
+ * w adresie - a ten ekran istnieje po to, żeby adres dało się wkleić w zgłoszeniu.
  */
 export const DEFAULT_EVENTS_FILTER: EventsFilter = {
   uuid: null,
@@ -67,19 +67,19 @@ const isSort = (value: string | null): value is SortDirection =>
   value === 'asc' || value === 'desc';
 
 /**
- * `YYYY-MM-DD` i nic innego — wpis nieczytelny traktujemy jak brak filtra.
+ * `YYYY-MM-DD` i nic innego - wpis nieczytelny traktujemy jak brak filtra.
  *
  * Sprawdzamy KSZTAŁT **oraz** SENSOWNOŚĆ, a nie sam regex: `2026-13-45` przechodzi
  * wzorzec, ale nie jest datą, a `Date.UTC(2026, 12, 45)` po cichu przewija się na
  * luty 2027. Zakres cofnięty o pół roku bez ani jednego komunikatu to najgorszy
- * możliwy sposób na zgubienie danych w narzędziu śledczym — lepiej pokazać pełny
+ * możliwy sposób na zgubienie danych w narzędziu śledczym - lepiej pokazać pełny
  * rejestr niż zawężenie, o które nikt nie prosił.
  */
 const isDay = (value: string | null): value is string => {
   if (value == null || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const parsed = new Date(`${value}T00:00:00.000Z`);
   // `Number.isNaN` PRZED `toISOString`, bo na dacie nieprawidłowej ta metoda RZUCA
-  // (`RangeError`) — a filtr z adresu nie ma prawa wywrócić ekranu.
+  // (`RangeError`) - a filtr z adresu nie ma prawa wywrócić ekranu.
   if (Number.isNaN(parsed.getTime())) return false;
   // Round-trip: data, która po sparsowaniu wypisuje się inaczej, nie istniała.
   return parsed.toISOString().startsWith(value);
@@ -111,7 +111,7 @@ export function filterFromParams(params: URLSearchParams): EventsFilter {
 
 /**
  * Filtr → query string EKRANU. Wartości domyślne POMIJAMY, żeby adres pełnego rejestru
- * był po prostu `#/zdarzenia` — link, który da się przeczytać i przepisać.
+ * był po prostu `#/zdarzenia` - link, który da się przeczytać i przepisać.
  */
 export function paramsFromFilter(filter: EventsFilter): Record<string, string> {
   const params: Record<string, string> = {};
@@ -128,7 +128,7 @@ export function paramsFromFilter(filter: EventsFilter): Record<string, string> {
 }
 
 /**
- * Adres ekranu dla danego filtra — JEDNO miejsce, w którym powstaje link do rejestru.
+ * Adres ekranu dla danego filtra - JEDNO miejsce, w którym powstaje link do rejestru.
  *
  * Używają go: pulpit (karta „Ostatnio przyjęte"), karta dnia („Zobacz w rejestrze"),
  * kolumny tabeli (zawęź do samolotu / pilota / sesji) i plakietka typu. Rozjazd między
@@ -151,7 +151,7 @@ export function eventHref(uuid: string): string {
 
 /**
  * Filtr ekranu → parametry trasy. Zakres dat jedzie jako DZIEŃ (`YYYY-MM-DD`), bo tak
- * przyjmuje go trasa — a górną granicę domyka serwer do końca doby, żeby „od 25 do 31"
+ * przyjmuje go trasa - a górną granicę domyka serwer do końca doby, żeby „od 25 do 31"
  * nie gubiło ostatniego dnia.
  */
 export function eventsListQuery(filter: EventsFilter): EventListQuery {
@@ -169,7 +169,7 @@ export function eventsListQuery(filter: EventsFilter): EventListQuery {
   };
 }
 
-/** Czy filtr cokolwiek zawęża — pusta lista mówi wtedy co innego (`eventsPages`). */
+/** Czy filtr cokolwiek zawęża - pusta lista mówi wtedy co innego (`eventsPages`). */
 export function isNarrowed(filter: EventsFilter): boolean {
   return (
     filter.uuid != null ||

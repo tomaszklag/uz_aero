@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 02E Nowy lot · Zadanie</title>
+<title>UZ Aero - 02E Nowy lot · Zadanie</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -72,7 +72,7 @@
   .back-btn { display:flex; align-items:center; gap:6px; font-family:var(--font-mono); font-size:11px; color:var(--text-muted); text-decoration:none; letter-spacing:0.5px; }
   .header-right { display:flex; align-items:center; gap:8px; }
 
-  /* Treść: przewijana, a akcja siedzi na jej końcu — przy krótkiej treści dosuwa się
+  /* Treść: przewijana, a akcja siedzi na jej końcu - przy krótkiej treści dosuwa się
      do dolnej krawędzi (reguła „Akcja kończąca ekran" z docs/design-notes.md). */
   .scroll { flex:1; overflow-y:auto; padding:14px 16px 20px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
   .scroll::-webkit-scrollbar { display:none; }
@@ -85,36 +85,36 @@
   .field-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
   /* ===== POLE W TRYBIE ODCZYTU (issue #14) =====
      Na tym ekranie nie ma już ANI JEDNEGO inputu. Każde pole jest PRZYCISKIEM z wartością
-     — ten sam kształt, co odczyty liczników na kroku 3 (`.field-input.filled` w 02A) —
+     - ten sam kształt, co odczyty liczników na kroku 3 (`.field-input.filled` w 02A) -
      a wpisywanie dzieje się w arkuszu wysuwanym od dołu. Ikona po prawej mówi, co się
      stanie po tapnięciu: LUPA przy trasie (bo tam się szuka w katalogu), OŁÓWEK przy
      polach tekstowych (bo tam się pisze). Zgłoszenie z urządzenia brzmiało „trochę nie
-     widać, że tam jest przeszukiwanie" — pole z czterema kratkami wyglądało jak miejsce
+     widać, że tam jest przeszukiwanie" - pole z czterema kratkami wyglądało jak miejsce
      na przepisanie kodu z pamięci i niczym nie zdradzało, że można wpisać „zielona". */
   .field-input { background:var(--surface-raised); border:1px solid var(--border-strong); border-radius:12px; padding:12px 14px; display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:46px; cursor:pointer; }
   .field-input:hover { border-color:var(--green-border); }
   .field-input-val { font-size:15px; line-height:20px; color:var(--text-primary); }
-  /* Kod ICAO czyta się jak numer rejestracyjny, nie jak zdanie — mono, rozstrzelony.
-     METRYKA = POLE WPISU Z ARKUSZA (issue #58 pkt 5 i 9): mono 16 / 1.5 — kontrolka
+  /* Kod ICAO czyta się jak numer rejestracyjny, nie jak zdanie - mono, rozstrzelony.
+     METRYKA = POLE WPISU Z ARKUSZA (issue #58 pkt 5 i 9): mono 16 / 1.5 - kontrolka
      formularza jest tym samym polem oglądanym w spoczynku; 22 px robiło z kodu
      bohatera ekranu, a z placeholdera „Wybierz lotnisko" wpisaną wartość. */
   .field-input-val.icao { font-family:var(--font-mono); font-size:16px; font-weight:700; letter-spacing:1.5px; }
-  /* Pusto: placeholder ZAWSZE składem tekstowym (trzecia tura #58) — body 15
+  /* Pusto: placeholder ZAWSZE składem tekstowym (trzecia tura #58) - body 15
      w --text-placeholder, jak w arkuszu notatki. To instrukcja („Wybierz
      lotnisko"), nie wartość, więc nie dziedziczy kroju kodu; wysokość trzyma
      min-height kontrolki. */
   .field-input-val.empty { color:var(--text-placeholder); font-weight:400; font-family:var(--font-body); font-size:15px; line-height:20px; letter-spacing:0; }
-  /* Wartość główna NIE kurczy się nigdy — kod ICAO ma być cały. Ustępuje prawa strona. */
+  /* Wartość główna NIE kurczy się nigdy - kod ICAO ma być cały. Ustępuje prawa strona. */
   .field-input-main { display:flex; align-items:center; gap:6px; flex-shrink:0; }
   /* Wariant tekstowy zabiera resztę wiersza: zdanie ZAWIJA SIĘ W CAŁOŚCI (issue #58
-     pkt 10 — ucięta notatka wyglądała, jakby się nie zapisała), a nie wypycha ołówka
+     pkt 10 - ucięta notatka wyglądała, jakby się nie zapisała), a nie wypycha ołówka
      poza pole. */
   .field-input-main.grow { flex:1; min-width:0; }
   .field-input-side { display:flex; align-items:center; gap:10px; flex-shrink:1; min-width:0; }
-  /* Nazwa rozpoznanego lotniska stoi TERAZ W POLU, obok kodu — dlatego pod trasą zniknął
+  /* Nazwa rozpoznanego lotniska stoi TERAZ W POLU, obok kodu - dlatego pod trasą zniknął
      rząd potwierdzeń („Start: EPZG · Zielona Góra-Babimost Airport”), który powtarzał kod
      widoczny wyżej. Jedna linia z wielokropkiem: najdłuższe nazwy katalogu nie mieszczą
-     się obok kodu, a pełną widać w arkuszu — czyli tam, gdzie pilot wybiera. */
+     się obok kodu, a pełną widać w arkuszu - czyli tam, gdzie pilot wybiera. */
   .field-meta { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .field-icon { display:flex; color:var(--text-muted); flex-shrink:0; }
   .optional-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); background:var(--surface-raised); border:1px solid var(--border); border-radius:6px; padding:2px 6px; }
@@ -126,13 +126,13 @@
   .op-option.selected .op-icon, .op-option.selected .op-label { color:var(--green); }
   .op-label { font-size:12px; color:var(--text-secondary); }
 
-  /* Bez `.route-row` / `.route-arrow` — i to nie jest brak tylko tego ekranu. Odkąd pole
+  /* Bez `.route-row` / `.route-arrow` - i to nie jest brak tylko tego ekranu. Odkąd pole
      niesie w sobie nazwę lotniska (issue #14), para kodów nie mieści się już obok siebie:
      przy operacjach z parą stoją DWA pola jedno pod drugim, każde na pełną szerokość,
      z etykietami „Start" i „Lądowanie" i bez strzałki między nimi (patrz 02F). Tu wybrane
      są skoki, więc pole jest jedno. */
 
-  /* ===== ARKUSZ (`.modal-overlay` / `.modal-sheet`) — wzorzec z 02b =====
+  /* ===== ARKUSZ (`.modal-overlay` / `.modal-sheet`) - wzorzec z 02b =====
      Miejsce, w którym pilot faktycznie WPISUJE. Arkusz otwiera się razem z klawiaturą,
      więc szukanie (albo pisanie) jest pierwszą rzeczą, którą widać, a formularz pod nim
      czyta się jak podsumowanie, a nie jak kartka do wypełnienia. */
@@ -145,7 +145,7 @@
   .modal-title { font-family:var(--font-display); font-size:22px; letter-spacing:2px; color:var(--text-primary); }
   .modal-input-row { display:flex; align-items:center; gap:10px; background:var(--surface); border:2px solid var(--border-strong); border-radius:14px; padding:12px 16px; }
   /* POLE JEST MONO, PLACEHOLDER SKŁADEM TEKSTOWYM (issue #58): kod pisze się krojem
-     kodu, ale zachęta to instrukcja — body 15 w --text-placeholder, jak placeholder
+     kodu, ale zachęta to instrukcja - body 15 w --text-placeholder, jak placeholder
      arkusza notatki. Wspólny line-height trzyma wysokość pola między stanami;
      w RN robi to nakładka `PlaceholderOverlay` nad polem o stałej metryce. */
   .modal-input-val { font-family:var(--font-mono); font-size:16px; font-weight:400; letter-spacing:1.5px; line-height:21px; color:var(--text-primary); flex:1; }
@@ -154,22 +154,22 @@
   @keyframes blink { 50% { opacity:0; } }
   .modal-note { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); line-height:1.5; }
   .modal-input-val.placeholder { font-family:var(--font-body); font-size:15px; letter-spacing:0; color:var(--text-placeholder); }
-  /* W pustym polu kursor stoi na LEWEJ krawędzi, PRZED zachętą — jak w prawdziwym
+  /* W pustym polu kursor stoi na LEWEJ krawędzi, PRZED zachętą - jak w prawdziwym
      polu, gdzie placeholder leży pod kursorem, a nie za nim. */
   .modal-input-val.placeholder .modal-cursor { margin-left:0; margin-right:3px; }
-  /* Rezygnacja z trasy — pojawia się tylko przy wypełnionym polu i pustym wpisie. */
+  /* Rezygnacja z trasy - pojawia się tylko przy wypełnionym polu i pustym wpisie. */
   .modal-clear { align-self:flex-start; font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); padding:8px 0; cursor:pointer; }
-  /* Wyszukiwarka nie ma czego potwierdzać — wybór dzieje się tapnięciem w wiersz. */
+  /* Wyszukiwarka nie ma czego potwierdzać - wybór dzieje się tapnięciem w wiersz. */
   .modal-actions.single { grid-template-columns:1fr; }
   .modal-actions { display:grid; grid-template-columns:1fr 2fr; gap:8px; }
   .modal-btn-cancel { display:flex; align-items:center; justify-content:center; padding:15px; border-radius:14px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text-secondary); font-family:var(--font-display); font-size:17px; letter-spacing:2px; cursor:pointer; }
   .modal-btn-confirm { display:flex; align-items:center; justify-content:center; padding:15px; border-radius:14px; border:none; background:var(--green); color:#0D0D0D; font-family:var(--font-display); font-size:17px; letter-spacing:2px; cursor:pointer; box-shadow:0 0 24px rgba(46,204,113,0.3); }
-  /* Arkusz składu skoczków potwierdza na niebiesko — ton pary zrzut/załadunek (05E/05I),
+  /* Arkusz składu skoczków potwierdza na niebiesko - ton pary zrzut/załadunek (05E/05I),
      do której ten skład za chwilę popłynie. */
   .modal-btn-confirm.blue { background:var(--blue); box-shadow:0 0 24px rgba(52,152,219,0.3); }
 
   /* ===== LICZNIKI SKŁADU (w arkuszu domyślnego składu) =====
-     1:1 z pary 05E/05I — to są TE SAME trzy liczniki, tylko pytane wcześniej:
+     1:1 z pary 05E/05I - to są TE SAME trzy liczniki, tylko pytane wcześniej:
      duże cele dotykowe 46px (rękawice), zero przygaszone. */
   .type-row { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--border); border-radius:13px; padding:9px 11px; }
   .type-name { flex:1; display:flex; flex-direction:column; gap:2px; }
@@ -190,7 +190,7 @@
   .suggest-list { display:flex; flex-direction:column; gap:6px; }
   .suggest-row { display:flex; align-items:center; gap:11px; padding:9px 11px; border-radius:12px; border:1px solid var(--border); background:var(--surface-raised); cursor:pointer; }
   .suggest-row:hover { border-color:var(--green-border); }
-  /* Wiersz z lotniskiem, które pilot ma już w polu — obramowanie, kolor kodu i ptaszek. */
+  /* Wiersz z lotniskiem, które pilot ma już w polu - obramowanie, kolor kodu i ptaszek. */
   .suggest-row.selected { border-color:var(--green-border); background:var(--green-muted); }
   .suggest-row.selected .suggest-icao { color:var(--green); }
   .suggest-check { width:20px; height:20px; border-radius:50%; flex-shrink:0; background:var(--green); color:#0D0D0D; display:flex; align-items:center; justify-content:center; }
@@ -200,7 +200,7 @@
   .suggest-meta { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); }
 
   /* ===== OSTATNIO UŻYWANE (w arkuszu tekstowym) =====
-     Wartość po lewej, rodzaj operacji po prawej — ten sam klient bywa i skokami,
+     Wartość po lewej, rodzaj operacji po prawej - ten sam klient bywa i skokami,
      i przelotem, więc bez tej prawej kolumny wiersze bywają nierozróżnialne. */
   .recent-list { display:flex; flex-direction:column; gap:6px; }
   .recent-row { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border-radius:12px; border:1px solid var(--border); background:var(--surface-raised); cursor:pointer; }
@@ -208,13 +208,13 @@
   .recent-val { font-size:13px; color:var(--text-secondary); min-width:0; }
   .recent-meta { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); flex-shrink:0; }
 
-  /* Podpowiedź z ostatniego dnia — adnotacja informacyjna (blue), nie ostrzeżenie */
+  /* Podpowiedź z ostatniego dnia - adnotacja informacyjna (blue), nie ostrzeżenie */
   /* Baner pouczający (Typ C): `position:relative` + zapas z prawej na `×`, mini-chip
-     stoi w tym samym miejscu po zwinięciu. Metryki jak w 09 i 07 — jeden wzorzec. */
+     stoi w tym samym miejscu po zwinięciu. Metryki jak w 09 i 07 - jeden wzorzec. */
   .hint-box { position:relative; display:flex; align-items:flex-start; gap:8px; background:var(--blue-muted); border:1px solid var(--blue-border); border-radius:10px; padding:9px 40px 9px 11px; }
   .hint-text { font-family:var(--font-mono); font-size:9px; color:var(--blue); line-height:1.5; display:flex; flex-direction:column; gap:5px; }
   .hint-lead { font-weight:700; text-transform:uppercase; letter-spacing:1px; }
-  /* Przycisk akcji banera pouczającego (uwaga z urządzenia, 2026-08-27) — obrys w tonie
+  /* Przycisk akcji banera pouczającego (uwaga z urządzenia, 2026-08-27) - obrys w tonie
      banera, mono wersalikami; cel dotykowy 40 px. Część wzorca DS, nie ozdoba ekranu. */
   .hint-action { align-self:flex-start; min-height:40px; margin-top:2px; padding:0 12px; display:flex; align-items:center; border:1px solid var(--blue-border); border-radius:10px; background:transparent; color:var(--blue); font-family:var(--font-mono); font-size:10px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; }
   .edu-dismiss { position:absolute; top:5px; right:5px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; color:var(--text-muted); border:none; background:transparent; border-radius:8px; cursor:pointer; }
@@ -228,7 +228,7 @@
     text-decoration:none; box-shadow:0 0 30px rgba(46,204,113,0.35);
   }
 
-  /* ===== VARIANTS PANEL (canvas — skróty do wariantów ekranu) ===== */
+  /* ===== VARIANTS PANEL (canvas - skróty do wariantów ekranu) ===== */
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
   .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
   .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; transition:all .15s; }
@@ -244,12 +244,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 02E</span>
+  <span class="film-strip">UZ AERO - 02E</span>
   <span class="slug">przejęcie · zadanie · krok 2 / 3</span>
   <span class="canvas-meta">Ekran 2E</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Preflight: zadanie dnia">
+<main class="phone" role="region" aria-label="Mockup - Preflight: zadanie dnia">
   <div class="status-bar">
     <span>9:41</span>
     <span class="status-right">
@@ -276,37 +276,37 @@
 
     <div class="scroll">
 
-      <!-- PODPOWIEDŹ Z OSTATNIEGO DNIA — warunek sensu tego kroku.
+      <!-- PODPOWIEDŹ Z OSTATNIEGO DNIA - warunek sensu tego kroku.
            Żadne pole niżej nie blokuje przejścia dalej (operacja ma wartość domyślną,
            trasa i klient są opcjonalne), więc bez pamięci ekran byłby codziennym
            tapnięciem w pusty formularz. Z pamięcią pilot POTWIERDZA to, co widzi.
 
-           BANER TYPU C (pouczający, zamykalny) — `×` zwija go do mini-chipu w tym samym
+           BANER TYPU C (pouczający, zamykalny) - `×` zwija go do mini-chipu w tym samym
            miejscu, a stan schowania jest zapamiętany NA STAŁE per pilot. Wcześniej była
            to zwykła adnotacja, która znikała po pierwszej zmianie pola: wyjaśnienie
            mechanizmu uciekało z ekranu w chwili, w której pilot mógł go szukać.
-           Baner mówi więc o REGULE („co uzupełniamy"), a nie o zawartości pól — dzięki
+           Baner mówi więc o REGULE („co uzupełniamy"), a nie o zawartości pól - dzięki
            temu jest prawdziwy także po ręcznej poprawce i nie musi znikać.
            Nie pojawia się, gdy nie było czego podstawić (pierwszy dzień pilota, pierwszy
-           dzień na tym samolocie) — wtedy opisywałby mechanizm, którego nie widać.
+           dzień na tym samolocie) - wtedy opisywałby mechanizm, którego nie widać.
 
-           IKONA POUCZAJĄCEGO TO PYTAJNIK (uwaga z urządzenia, 2026-08-27) — TA SAMA
+           IKONA POUCZAJĄCEGO TO PYTAJNIK (uwaga z urządzenia, 2026-08-27) - TA SAMA
            w banerze i w zwiniętym chipie: baner, który wyjaśnia, PYTA, a wykrzyknik
            (alert-circle) czytał się jak ostrzeżenie. Reguła DS, dotyczy każdego
            banera typu C (05f, 07, 09b poprawione razem z tym).
 
            PRZYCISK „WYCZYŚĆ FORMULARZ" (ta sama uwaga): baner tłumaczący, skąd wzięły
-           się wartości, jest naturalnym miejscem decyzji „nie chcę ich" — czyści pola
-           zadania do stanu początkowego (notatki nie rusza — nie była podpowiedzią),
+           się wartości, jest naturalnym miejscem decyzji „nie chcę ich" - czyści pola
+           zadania do stanu początkowego (notatki nie rusza - nie była podpowiedzią),
            a baner ZNIKA razem z danymi, o których mówił; podpowiedź nie wraca. -->
       <div class="hint-box" id="eduTaskSource">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         <div class="hint-text">
           <span class="hint-lead">Dane z ostatniego dnia</span>
-          <span>Formularz uzupełniamy z ostatniego dnia: rodzaj operacji i klienta — z Twojego, trasę — z tego samolotu. Zweryfikuj wartości przed przejściem dalej.</span>
+          <span>Formularz uzupełniamy z ostatniego dnia: rodzaj operacji i klienta - z Twojego, trasę - z tego samolotu. Zweryfikuj wartości przed przejściem dalej.</span>
           <button class="hint-action" onclick="document.getElementById('eduTaskSource').style.display='none'">Wyczyść formularz</button>
         </div>
-        <button class="edu-dismiss" onclick="eduCollapse('eduTaskSource')" title="Rozumiem — schowaj wyjaśnienie">
+        <button class="edu-dismiss" onclick="eduCollapse('eduTaskSource')" title="Rozumiem - schowaj wyjaśnienie">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
@@ -352,18 +352,18 @@
         </div>
       </div>
 
-      <!-- SEKCJA TRASY — RODZAJ OPERACJI WYZNACZA JEJ KSZTAŁT (issue #13).
+      <!-- SEKCJA TRASY - RODZAJ OPERACJI WYZNACZA JEJ KSZTAŁT (issue #13).
            Skoki wracają tam, skąd wystartowały: samolot krąży nad polem i ląduje na tym
            samym placu. Dlatego przy skokach pytamy o JEDNO lotnisko. Do tej pory formularz
-           kazał wpisać ten sam kod dwa razy — i, co gorsza, pozwalał opisać dzień skoków
+           kazał wpisać ten sam kod dwa razy - i, co gorsza, pozwalał opisać dzień skoków
            parą różnych lotnisk, czyli trasą, której w takim dniu nie da się polecieć.
 
            Sekcja jednego pola NIE MA NAGŁÓWKA: „Miejsce skoków" nad „Lotnisko skoków"
-           nazywało tę samą rzecz dwa razy. Etykieta pola wystarcza — tak samo zbudowany
+           nazywało tę samą rzecz dwa razy. Etykieta pola wystarcza - tak samo zbudowany
            jest odczyt licznika na kroku 3. Nagłówek „Trasa" wraca przy parze kodów,
            gdzie ma co spinać.
            Pozostałe operacje (przelot, egzamin, lot techniczny, inne) mogą skończyć gdzie
-           indziej i zostają przy PARZE kodów — dwa pola JEDNO POD DRUGIM, z etykietami
+           indziej i zostają przy PARZE kodów - dwa pola JEDNO POD DRUGIM, z etykietami
            „Start" i „Lądowanie", każde na pełną szerokość i bez strzałki między nimi
            (patrz wariant 02F). Strzałka odpadła razem z ciasnym wierszem: odkąd pole
            niesie w sobie nazwę lotniska, dwa kody nie mieszczą się już obok siebie.
@@ -374,7 +374,7 @@
         <div class="field">
           <div class="field-label">Lotnisko skoków</div>
           <!-- POLE-PRZYCISK Z LUPĄ (issue #14). Kod po lewej, nazwa rozpoznanego lotniska
-               po prawej, lupa na końcu — tapnięcie otwiera arkusz `#sheet-airfield`.
+               po prawej, lupa na końcu - tapnięcie otwiera arkusz `#sheet-airfield`.
                Pusto = przygaszone „Wybierz lotnisko" w miejscu kodu (patrz 02F). -->
           <div class="field-input" onclick="openSheet('sheet-airfield')">
             <span class="field-input-main">
@@ -390,22 +390,22 @@
         </div>
       </div>
 
-      <!-- SEKCJA: OPCJONALNIE — pola w trybie odczytu z OŁÓWKIEM (nie lupą: tu się
+      <!-- SEKCJA: OPCJONALNIE - pola w trybie odczytu z OŁÓWKIEM (nie lupą: tu się
            ustawia wartość, a nie przeszukuje katalog). Skład skoczków otwiera arkusz
-           liczników `#sheet-jumpers` (tylko dzień skokowy — patrz komentarz przy polu),
-           klient — arkusz `#sheet-client`, notatka — ten sam arkusz z polem
+           liczników `#sheet-jumpers` (tylko dzień skokowy - patrz komentarz przy polu),
+           klient - arkusz `#sheet-client`, notatka - ten sam arkusz z polem
            wielolinijkowym.
 
            BEZ PODPOWIEDZI POD POLEM KLIENTA (issue #14). Stało tam „Wiąże zrzuty dnia
-           z klientem — trafia do statystyk i arkusza rozliczeniowego", czyli opis tego,
+           z klientem - trafia do statystyk i arkusza rozliczeniowego", czyli opis tego,
            co się z wartością dzieje PÓŹNIEJ. Pilot w tym miejscu odpowiada na jedno
-           pytanie — „dla kogo" — i etykieta pola już je zadaje. -->
+           pytanie - „dla kogo" - i etykieta pola już je zadaje. -->
       <div class="section">
-        <!-- DOMYŚLNY SKŁAD SKOCZKÓW (2026-08-17) — pole istnieje WYŁĄCZNIE przy operacji
+        <!-- DOMYŚLNY SKŁAD SKOCZKÓW (2026-08-17) - pole istnieje WYŁĄCZNIE przy operacji
              skoki (ten sam predykat `isJumpOperation`, który bramkuje przycisk zrzutu
-             w kokpicie, issue #19; przy przelocie na 02F pola NIE MA — to brak pytania,
+             w kokpicie, issue #19; przy przelocie na 02F pola NIE MA - to brak pytania,
              nie blokada). Ustawiony tu skład podstawia liczniki KAŻDEGO załadunku bez
-             własnej deklaracji — także po zrzucie, który konsumuje poprzedni skład —
+             własnej deklaracji - także po zrzucie, który konsumuje poprzedni skład -
              a pilot nadal może go zmienić w konkretnym arkuszu 05I. Wartość pokazuje
              tylko NIEZEROWE pozycje („4 tandem · 2 solo"); pusto = przygaszone
              „Bez ustawionego składu". Po fakcie się go NIE poprawia: korekty idą przez
@@ -445,12 +445,12 @@
           </div>
         </div>
 
-        <!-- NOTATKA DO DNIA (nowe pole, issue #14) — jedyne miejsce w preflightcie, w którym
+        <!-- NOTATKA DO DNIA (nowe pole, issue #14) - jedyne miejsce w preflightcie, w którym
              pilot pisze ZDANIE, a nie kod. Ten sam kształt pola i ten sam ołówek, co przy
              kliencie; różni je to, że wartość może zająć dwie linie, a arkusz otwiera się
              z polem wielolinijkowym. Pusto = przygaszone „Bez notatki".
 
-             ARKUSZ NOTATKI TO TEN SAM KOMPONENT, CO `#sheet-client` — dlatego nie ma go
+             ARKUSZ NOTATKI TO TEN SAM KOMPONENT, CO `#sheet-client` - dlatego nie ma go
              w pliku trzeci raz. Różnice: tytuł „Notatka", pole wysokie na kilka
              linii zamiast jednej i podpowiedzi bez prawej kolumny (notatka nie należy do
              rodzaju operacji, więc nie ma czym jej opisać). Reszta identyczna: nagłówek
@@ -462,7 +462,7 @@
           </div>
           <div class="field-input">
             <span class="field-input-main grow">
-              <span class="field-input-val">Lot zapoznawczy z uczniem — pierwszy raz na tym typie</span>
+              <span class="field-input-val">Lot zapoznawczy z uczniem - pierwszy raz na tym typie</span>
             </span>
             <span class="field-input-side">
               <span class="field-icon">
@@ -483,23 +483,23 @@
     </div>
 
     <!-- ================= ARKUSZ: WYBÓR LOTNISKA =================
-         Ukryty (`display:none`) — pokazuje go tapnięcie w pole trasy. Stan z wpisanym
+         Ukryty (`display:none`) - pokazuje go tapnięcie w pole trasy. Stan z wpisanym
          tekstem i wieloma trafieniami ma osobny wariant: 02F.
 
          TO JEST WYSZUKIWARKA, NIE FORMULARZ Z LISTĄ POD SPODEM. Tapnięcie w pozycję JEST
-         wyborem — arkusz zamyka się i wraca wartość. Stąd trzy rzeczy, które łatwo wziąć
+         wyborem - arkusz zamyka się i wraca wartość. Stąd trzy rzeczy, które łatwo wziąć
          za przeoczenia:
-          • NIE MA przycisku „WYBIERZ" — stałby obok pozycji, którą pilot właśnie tapnął;
-          • NIE MA linii z nazwą pod polem wpisu — nazwa stoi w wierszu listy, czyli tam,
+          • NIE MA przycisku „WYBIERZ" - stałby obok pozycji, którą pilot właśnie tapnął;
+          • NIE MA linii z nazwą pod polem wpisu - nazwa stoi w wierszu listy, czyli tam,
             gdzie pilot patrzy, wybierając. Ta sama nazwa dwa razy robiła stan „coś jest
             wybrane, a pod spodem nadal wiszą podpowiedzi", w którym nie było wiadomo,
             co obowiązuje;
-          • pole startuje PUSTE, nawet gdy trasa jest już wpisana — otwierasz wyszukiwarkę,
+          • pole startuje PUSTE, nawet gdy trasa jest już wpisana - otwierasz wyszukiwarkę,
             żeby coś zmienić, a nie oglądać poprzedni wpis. Dotychczasowa wartość stoi
             w formularzu pod arkuszem i zostaje po „ANULUJ".
 
          PUSTE PYTANIE MA ODPOWIEDŹ: bez wpisanego tekstu lista pokazuje lotniska
-         NAJBLIŻSZE pilotowi (z odległością w drugiej linii) — stoi zwykle na tym,
+         NAJBLIŻSZE pilotowi (z odległością w drugiej linii) - stoi zwykle na tym,
          z którego zaraz wystartuje. Bez pozycji (brak fixa, uprawnienie do lokalizacji
          dajemy dopiero na kroku 4) zostaje sama zachęta „Wpisz kod ICAO albo nazwę". -->
     <div class="modal-overlay" id="sheet-airfield" style="display:none;" onclick="closeSheet('sheet-airfield')">
@@ -510,9 +510,9 @@
 
         <!-- WYBRANE NA GÓRZE (issue #14, druga tura). Pole wpisu startuje puste, więc bez
              tej sekcji arkusz otwarty PONOWNIE wyglądał identycznie jak przy pierwszym
-             wyborze — nic nie mówiło, że coś jest już w polu. Znacznik jest KSZTAŁTEM
+             wyborze - nic nie mówiło, że coś jest już w polu. Znacznik jest KSZTAŁTEM
              (ptaszek), nie samym kolorem: działa w słońcu i przy daltonizmie. Sekcja znika
-             przy pisaniu — wtedy pytaniem jest wpis, a nie stan sprzed chwili. -->
+             przy pisaniu - wtedy pytaniem jest wpis, a nie stan sprzed chwili. -->
         <div class="suggest-head">
           <span class="suggest-title">Wybrane</span>
         </div>
@@ -529,7 +529,7 @@
           </div>
         </div>
 
-        <!-- Lista „najbliżej Ciebie" BEZ wybranego lotniska — stoi wyżej, a dwa razy
+        <!-- Lista „najbliżej Ciebie" BEZ wybranego lotniska - stoi wyżej, a dwa razy
              byłoby tylko myleniem. -->
         <div class="suggest-head">
           <span class="suggest-title">Najbliżej Ciebie</span>
@@ -557,7 +557,7 @@
 
         <!-- POLE WPISU NA DOLE, TUŻ NAD AKCJĄ: arkusz jest przyklejony do dolnej
              krawędzi i rośnie w GÓRĘ, więc pole na górze przeskakiwało przy każdej
-             literze zmieniającej długość listy — pisało się do celu, który ucieka
+             literze zmieniającej długość listy - pisało się do celu, który ucieka
              pod palcem (zgłoszenie z urządzenia). Tu ma stałą odległość od klawiatury,
              a lista rośnie i kurczy się nad nim. -->
         <div class="modal-input-row">
@@ -575,9 +575,9 @@
     </div>
 
     <!-- ================= ARKUSZ: OZNACZENIE KLIENTA =================
-         Ukryty — pokazuje go tapnięcie w pole klienta. Zysk jest tu inny niż przy
+         Ukryty - pokazuje go tapnięcie w pole klienta. Zysk jest tu inny niż przy
          lotnisku: nie chodzi o to, żeby było widać przeszukiwanie, tylko o to, żeby pilot
-         NIE MUSIAŁ przepisywać tego samego z pamięci — nad polem stoi lista wartości
+         NIE MUSIAŁ przepisywać tego samego z pamięci - nad polem stoi lista wartości
          używanych ostatnio. -->
     <div class="modal-overlay" id="sheet-client" style="display:none;" onclick="closeSheet('sheet-client')">
       <div class="modal-sheet" onclick="event.stopPropagation()">
@@ -585,31 +585,31 @@
         <div class="modal-title">Oznaczenie klienta</div>
 
 
-        <!-- PODPOWIEDZI SĄ TYLKO ONLINE — i to jest decyzja, nie brak. W przeciwieństwie
+        <!-- PODPOWIEDZI SĄ TYLKO ONLINE - i to jest decyzja, nie brak. W przeciwieństwie
              do katalogu lotnisk (wkompilowanego w aplikację) ta lista mieszka na serwerze,
              bo składa się z tego, czego klub używał ostatnio.
 
-             WARIANT BEZ SIECI: cały blok niżej — nagłówek „Ostatnio używane" i wiersze —
+             WARIANT BEZ SIECI: cały blok niżej - nagłówek „Ostatnio używane" i wiersze -
              znika, a w jego miejscu stoi jedno spokojne zdanie:
 
-                 <div class="modal-note">Podpowiedzi wymagają połączenia — wpisz wartość
+                 <div class="modal-note">Podpowiedzi wymagają połączenia - wpisz wartość
                  ręcznie</div>
 
              Bez ostrzeżenia i bez ambera, bo nic się nie zepsuło: pole działa dokładnie
              tak, jak działało wcześniej (wpisujesz i potwierdzasz), znika sama wygoda
              (CLAUDE.md: „brak sieci NIGDY nie blokuje pracy pilota"). -->
         <!-- ARKUSZ SZUKA W HISTORII PRZY KAŻDEJ LITERZE (issue #14, druga tura).
-             Wpis nie jest tylko nową wartością — jest też zapytaniem do listy: „SKY"
+             Wpis nie jest tylko nową wartością - jest też zapytaniem do listy: „SKY"
              zawęża ją do zleceń tego klienta, a nagłówek zmienia się wtedy na
              „Z historii". Gdy wpis do niczego nie pasuje, lista znika, a zostaje jedno
-             zdanie: <div class="modal-note">Brak w historii — zapisze się jako nowy
+             zdanie: <div class="modal-note">Brak w historii - zapisze się jako nowy
              wpis</div> (to nadal jest pole tekstowe, nie lista zamknięta).
-             Szukanie jest LOKALNE, po liście pobranej raz przy wejściu na ekran — bez
+             Szukanie jest LOKALNE, po liście pobranej raz przy wejściu na ekran - bez
              dodatkowego zapytania na literę. Jeśli krótszy wpis nic nie znalazł, dłuższy
              nie ma czego znaleźć, więc aplikacja w ogóle nie przechodzi po liście
              (dopisanie znaku może wynik tylko zawęzić).
 
-             ARKUSZ OTWIERA SIĘ Z DOTYCHCZASOWĄ WARTOŚCIĄ — inaczej niż arkusz lotniska,
+             ARKUSZ OTWIERA SIĘ Z DOTYCHCZASOWĄ WARTOŚCIĄ - inaczej niż arkusz lotniska,
              gdzie pole startuje puste. Lotnisko się WYBIERA, a oznaczenie klienta częściej
              POPRAWIA („zlec. 2026/114" → „…/118"), więc kasowanie wpisu przy otwarciu
              kazałoby przepisywać całość. Lista startuje wtedy nieprzefiltrowana. -->
@@ -644,15 +644,15 @@
     </div>
 
     <!-- ================= ARKUSZ: DOMYŚLNY SKŁAD SKOCZKÓW =================
-         Ukryty — pokazuje go tapnięcie w pole składu. TE SAME trzy liczniki, co para
+         Ukryty - pokazuje go tapnięcie w pole składu. TE SAME trzy liczniki, co para
          05E/05I (ten sam skład, tylko pytany wcześniej), ale w ramie generycznego
          arkusza tego ekranu: bez czasu i numeru lotu w nagłówku, bo na tym kroku żadna
-         sesja jeszcze nie istnieje — to wartość szkicu preflightu, nie zdarzenie.
+         sesja jeszcze nie istnieje - to wartość szkicu preflightu, nie zdarzenie.
 
-         SUMA ZERO = BRAK DEKLARACJI, nie „zero skoczków" — ta sama normalizacja, co
+         SUMA ZERO = BRAK DEKLARACJI, nie „zero skoczków" - ta sama normalizacja, co
          przy załadunku i zrzucie: zapis z samymi zerami czyści pole do „Bez ustawionego
          składu". Dlatego nie ma osobnego przycisku „wyczyść". Potwierdzenie na
-         NIEBIESKO — ton pary zrzut/załadunek, do której ten skład popłynie. -->
+         NIEBIESKO - ton pary zrzut/załadunek, do której ten skład popłynie. -->
     <div class="modal-overlay" id="sheet-jumpers" style="display:none;" onclick="closeSheet('sheet-jumpers')">
       <div class="modal-sheet" onclick="event.stopPropagation()">
         <div class="modal-handle"></div>
@@ -695,8 +695,8 @@
         </div>
 
         <!-- Jedno zdanie o skutku, bo skutek dzieje się na INNYM ekranie (arkusz 05I)
-             — z samego pola nie widać, dokąd wartość popłynie. -->
-        <div class="modal-note">Ten skład podstawi się przy każdym załadunku tego lotu bez własnej deklaracji — przy konkretnym załadunku nadal można go zmienić.</div>
+             - z samego pola nie widać, dokąd wartość popłynie. -->
+        <div class="modal-note">Ten skład podstawi się przy każdym załadunku tego lotu bez własnej deklaracji - przy konkretnym załadunku nadal można go zmienić.</div>
 
         <div class="modal-actions">
           <div class="modal-btn-cancel" onclick="closeSheet('sheet-jumpers')">ANULUJ</div>
@@ -709,20 +709,20 @@
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Warianty ekranu zadania (krok 2) — kiedy który?</div>
+  <div class="vp-title">Warianty ekranu zadania (krok 2) - kiedy który?</div>
   <a class="vp-item active" href="02e-preflight-zadanie.html">
     <span class="vp-badge">02E</span>
     <span class="vp-body">
       <span class="vp-name">Formularz w spoczynku · skoki (jedno lotnisko)</span>
-      <span class="vp-when">Stan spoczynku: żaden arkusz nie jest otwarty. Wszystkie pola są <b>przyciskami z wartością</b>, nie inputami — lupa przy trasie, ołówek przy składzie skoczków, kliencie i notatce; wpisywanie dzieje się w arkuszu wysuwanym od dołu (wszystkie są w tym pliku, ukryte — tapnij pole, żeby zobaczyć). Wybrane są <b>skoki</b>, więc sekcja trasy to JEDNO pole „Lotnisko skoków" (bez osobnego nagłówka sekcji — etykieta pola wystarcza) — samolot wraca tam, skąd wystartował — a w opcjonalnych stoi „Domyślny skład skoczków" (przy innych operacjach tego pola NIE MA — tak jak przycisku zrzutu w kokpicie). Przelot, egzamin, lot techniczny i inne pokazują w miejscu trasy DWA pola pod sobą („Start", „Lądowanie"), tak jak na 02F. Widoczna podpowiedź z ostatniego dnia, dopóki pilot niczego nie dotknie.</span>
+      <span class="vp-when">Stan spoczynku: żaden arkusz nie jest otwarty. Wszystkie pola są <b>przyciskami z wartością</b>, nie inputami - lupa przy trasie, ołówek przy składzie skoczków, kliencie i notatce; wpisywanie dzieje się w arkuszu wysuwanym od dołu (wszystkie są w tym pliku, ukryte - tapnij pole, żeby zobaczyć). Wybrane są <b>skoki</b>, więc sekcja trasy to JEDNO pole „Lotnisko skoków" (bez osobnego nagłówka sekcji - etykieta pola wystarcza) - samolot wraca tam, skąd wystartował - a w opcjonalnych stoi „Domyślny skład skoczków" (przy innych operacjach tego pola NIE MA - tak jak przycisku zrzutu w kokpicie). Przelot, egzamin, lot techniczny i inne pokazują w miejscu trasy DWA pola pod sobą („Start", „Lądowanie"), tak jak na 02F. Widoczna podpowiedź z ostatniego dnia, dopóki pilot niczego nie dotknie.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
   <a class="vp-item" href="02f-preflight-lotnisko.html">
     <span class="vp-badge">02F</span>
     <span class="vp-body">
-      <span class="vp-name">Arkusz wyboru lotniska — szukanie po nazwie · przelot (para pól)</span>
-      <span class="vp-when">Arkusz OTWARTY nad formularzem: pilot wpisał „ZIELONA" i katalog pokazuje pasujące lotniska (kod, nazwa, kurs pasa magnetyczny i elewacja). To jedyne miejsce, w którym dzieje się szukanie — dlatego pole w formularzu ma lupę. Wybrany jest <b>przelot</b>, więc pod nakładką stoją dwa pola trasy, a arkusz należy do „Startu". Kod spoza katalogu wpisuje się normalnie — to podpowiedź, nie bramka. Działa bez sieci: katalog jest w telefonie.</span>
+      <span class="vp-name">Arkusz wyboru lotniska - szukanie po nazwie · przelot (para pól)</span>
+      <span class="vp-when">Arkusz OTWARTY nad formularzem: pilot wpisał „ZIELONA" i katalog pokazuje pasujące lotniska (kod, nazwa, kurs pasa magnetyczny i elewacja). To jedyne miejsce, w którym dzieje się szukanie - dlatego pole w formularzu ma lupę. Wybrany jest <b>przelot</b>, więc pod nakładką stoją dwa pola trasy, a arkusz należy do „Startu". Kod spoza katalogu wpisuje się normalnie - to podpowiedź, nie bramka. Działa bez sieci: katalog jest w telefonie.</span>
     </span>
   </a>
 </aside>
@@ -740,18 +740,18 @@
 
 <script>
   // Baner pouczający: `×` chowa go do mini-chipu, chip przywraca. W aplikacji stan
-  // schowania jest zapamiętany NA STAŁE per pilot (`useEduBanner`) — mockup pokazuje
+  // schowania jest zapamiętany NA STAŁE per pilot (`useEduBanner`) - mockup pokazuje
   // samą mechanikę. Te same funkcje mają 05f, 07, 09 i 09a.
   function eduCollapse(id){ document.getElementById(id).style.display='none'; document.getElementById(id+'-mini').style.display='inline-flex'; }
   function eduExpand(id){ document.getElementById(id).style.display=''; document.getElementById(id+'-mini').style.display='none'; }
 
   // Arkusze: pole otwiera, ANULUJ i tapnięcie w tło zamykają (wzorzec z 02b). W aplikacji
-  // arkusz jest `Modal` z RN, więc zamyka go też przycisk „wstecz" Androida — i otwiera
+  // arkusz jest `Modal` z RN, więc zamyka go też przycisk „wstecz" Androida - i otwiera
   // się razem z klawiaturą, czego statyczny mockup nie pokaże.
   function openSheet(id){ document.getElementById(id).style.display='flex'; }
   function closeSheet(id){ document.getElementById(id).style.display='none'; }
 
-  // Liczniki składu — ta sama mechanika co 05E/05I: krok 1, podłoga 0, zero przygaszone.
+  // Liczniki składu - ta sama mechanika co 05E/05I: krok 1, podłoga 0, zero przygaszone.
   const jumpers = { tandem: 4, aff: 0, solo: 2 };
   function bump(key, d){
     jumpers[key] = Math.max(0, jumpers[key] + d);

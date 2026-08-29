@@ -1,7 +1,7 @@
 /**
- * UZ Aero — panel: przycisk (`.btn` z `SZABLON.html`).
+ * UZ Aero - panel: przycisk (`.btn` z `SZABLON.html`).
  *
- * `disabled` NIGDY nie występuje bez `disabledReason` — to ta sama reguła, którą
+ * `disabled` NIGDY nie występuje bez `disabledReason` - to ta sama reguła, którą
  * `ActionButton` egzekwuje w aplikacji pilota: **powód blokady jest widocznym tekstem,
  * nie tooltipem**. Przycisk, którego nie da się kliknąć i nie wiadomo dlaczego, jest
  * gorszy od przycisku, który odmawia z komunikatem.
@@ -14,7 +14,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
 /**
- * `ok` to zielona OBRAMÓWKA (`.btn.ok`), czyli odwrotność `danger` — akcja
+ * `ok` to zielona OBRAMÓWKA (`.btn.ok`), czyli odwrotność `danger` - akcja
  * przywracająca („Aktywuj" konta na A06). `primary` zostaje akcją GŁÓWNĄ ekranu
  * i w kolumnie tabeli nie ma czego szukać: kilkanaście przycisków głównych naraz
  * znaczy, że żaden nie jest główny.
@@ -27,7 +27,7 @@ interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'cla
   /** Przycisk na całą szerokość karty (A00: „Zaloguj się"). */
   block?: boolean;
   /**
-   * Powód blokady — dopisuje się do ETYKIETY i trafia do `title`, dokładnie jak
+   * Powód blokady - dopisuje się do ETYKIETY i trafia do `title`, dokładnie jak
    * w `LinkButton`.
    *
    * Nagłówek tego pliku deklarował tę regułę od pierwszego przekroju, a komponent jej
@@ -64,7 +64,7 @@ export function Button({
       {children}
       {/* Powód pokazujemy WYŁĄCZNIE przy faktycznej blokadzie: dopisany do przycisku
           czynnego byłby zdaniem o stanie, którego nie ma. */}
-      {blocked ? ` — ${reason.toLowerCase()}` : null}
+      {blocked ? ` - ${reason.toLowerCase()}` : null}
     </button>
   );
 }

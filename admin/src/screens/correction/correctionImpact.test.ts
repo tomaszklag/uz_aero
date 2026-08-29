@@ -1,9 +1,9 @@
 /**
- * UZ Aero — panel: karta „wpływ na liczby dnia · przed → po" (moduł czysty).
+ * UZ Aero - panel: karta „wpływ na liczby dnia · przed → po" (moduł czysty).
  *
  * Ten plik NICZEGO nie liczy i o tym są te testy: `before` i `after` przychodzą
  * z serwera jako dwa `SessionState`, a tutaj tylko się je zestawia. Najważniejszy
- * przypadek — `void` na `engine_stop` — pokazuje, dlaczego panel nie ma prawa liczyć
+ * przypadek - `void` na `engine_stop` - pokazuje, dlaczego panel nie ma prawa liczyć
  * skutku sam: cykl NIE skraca się o różnicę czasów, tylko zostaje otwarty i wypada
  * z czasu blokowego w całości.
  */
@@ -44,7 +44,7 @@ const state = (over: Partial<SessionState> = {}): SessionState =>
 const find = (rows: ReturnType<typeof impactRows>, label: string) =>
   rows.find((row) => row.label === label)!;
 
-describe('retime — skraca cykl i czas blokowy', () => {
+describe('retime - skraca cykl i czas blokowy', () => {
   const before = state();
   const after = state({
     blockTimeMs: 5 * HOUR + 41 * MIN,
@@ -65,7 +65,7 @@ describe('retime — skraca cykl i czas blokowy', () => {
     });
   });
 
-  it('wypisuje TEN cykl, który się zmienił — i tylko jego', () => {
+  it('wypisuje TEN cykl, który się zmienił - i tylko jego', () => {
     const cycles = rows.filter((row) => row.label.startsWith('Cykl silnika'));
     expect(cycles).toHaveLength(1);
     expect(cycles[0]).toMatchObject({
@@ -77,7 +77,7 @@ describe('retime — skraca cykl i czas blokowy', () => {
 
   it('wielkości nietknięte zostają na karcie z adnotacją, a nie znikają', () => {
     // Administrator korygujący czas silnika musi ZOBACZYĆ, że starty, lądowania
-    // i odczyt motogodzin nie drgnęły — to jest dowód, że korekta dotknęła tylko
+    // i odczyt motogodzin nie drgnęły - to jest dowód, że korekta dotknęła tylko
     // tego, co miała dotknąć.
     expect(find(rows, 'Starty / lądowania').changed).toBe(false);
     expect(find(rows, 'Δ motogodzin')).toMatchObject({ changed: false, after: '5.7' });
@@ -94,9 +94,9 @@ describe('retime — skraca cykl i czas blokowy', () => {
   });
 });
 
-describe('void na engine_stop — cykl zostaje OTWARTY', () => {
+describe('void na engine_stop - cykl zostaje OTWARTY', () => {
   // Teza amber-banera z mockupu: `void` jest tu złym narzędziem. Silnik został
-  // wyłączony, pomylona jest tylko godzina — a unieważnienie zdarzenia nie skraca
+  // wyłączony, pomylona jest tylko godzina - a unieważnienie zdarzenia nie skraca
   // cyklu, tylko usuwa go z czasu blokowego w całości.
   const before = state();
   const after = state({
@@ -118,14 +118,14 @@ describe('void na engine_stop — cykl zostaje OTWARTY', () => {
     expect(cycle.note).toContain('w całości');
   });
 
-  it('czas blokowy dostaje ton czerwony — dzień bez zamknięcia silnika jest zepsuty', () => {
+  it('czas blokowy dostaje ton czerwony - dzień bez zamknięcia silnika jest zepsuty', () => {
     const block = find(rows, 'Czas blokowy dnia');
     expect(block).toMatchObject({ before: '05:53', after: '04:36', tone: 'red' });
     expect(block.note).toContain('zamknięcia ostatniego cyklu');
   });
 });
 
-describe('void na lądowaniu — bilans przestaje się domykać', () => {
+describe('void na lądowaniu - bilans przestaje się domykać', () => {
   const before = state();
   const after = state({
     landingCount: 8,
@@ -147,7 +147,7 @@ describe('void na lądowaniu — bilans przestaje się domykać', () => {
 });
 
 describe('czego na karcie NIE MA', () => {
-  it('nie liczy „średniego zużycia" ani „blok − Δ MH" — projekcja ich nie niesie', () => {
+  it('nie liczy „średniego zużycia" ani „blok − Δ MH" - projekcja ich nie niesie', () => {
     // Policzenie ich tutaj byłoby pierwszą liczbą na ekranie, której serwer nigdy
     // nie wysłał, i pierwszą, która rozjedzie się z arkuszem przy zmianie definicji.
     const labels = impactRows(state(), state(), 'decimal').map((row) => row.label);

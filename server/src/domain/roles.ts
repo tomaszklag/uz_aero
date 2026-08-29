@@ -1,12 +1,12 @@
 /**
- * UZ Aero (serwer) — role kont i uprawnienia panelu administracyjnego.
+ * UZ Aero (serwer) - role kont i uprawnienia panelu administracyjnego.
  *
  * Decyzja 2026-07-31 (odwraca 2026-07-24): panel powstaje jako osobna aplikacja web,
  * z dwiema rolami. Projekt UI: `design/admin/`; analiza i mapowanie ekranów na
  * uprawnienia: `design/admin/ANALIZA.md`.
  *
  * **Rola siedzi na koncie pilota, nie w osobnej tabeli użytkowników panelu**, bo
- * administrator i szef wyszkolenia SĄ pilotami — latają, mają telefon i dodatkowo
+ * administrator i szef wyszkolenia SĄ pilotami - latają, mają telefon i dodatkowo
  * wchodzą do back-office'u. Osobny byt użytkownika rozdwoiłby tożsamość: ten sam
  * człowiek miałby dwa identyfikatory, a jego nalot rozjechałby się między nimi.
  *
@@ -17,7 +17,7 @@
  * w której nikt nigdy nie wie, czy zna wszystkie miejsca.
  */
 
-/** Kolejność bez znaczenia — to zbiór, nie drabina. Uprawnienia daje mapa niżej. */
+/** Kolejność bez znaczenia - to zbiór, nie drabina. Uprawnienia daje mapa niżej. */
 export const PILOT_ROLES = ['pilot', 'training_lead', 'admin'] as const;
 
 export type PilotRole = (typeof PILOT_ROLES)[number];
@@ -30,16 +30,16 @@ export type PilotRole = (typeof PILOT_ROLES)[number];
 export const DEFAULT_ROLE: PilotRole = 'pilot';
 
 export type Capability =
-  /** Wejście do panelu w ogóle — bez tego logowanie do `admin/` jest odrzucane. */
+  /** Wejście do panelu w ogóle - bez tego logowanie do `admin/` jest odrzucane. */
   | 'panel.access'
   /** Zamknięcie flagi (`status='resolved'`) i wywołany tym re-eksport karty dnia. */
   | 'flags.resolve'
-  /** Korekta zdarzenia po oknie 24 h — dopisanie `event_correction` w cudzej sesji. */
+  /** Korekta zdarzenia po oknie 24 h - dopisanie `event_correction` w cudzej sesji. */
   | 'events.correct'
   /** Zakładanie kont, reset hasła, deaktywacja, zmiana roli. */
   | 'accounts.manage'
   /**
-   * Dodanie i edycja samolotu, wyłączenie ze służby — **oraz ręczne ponowienie eksportu
+   * Dodanie i edycja samolotu, wyłączenie ze służby - **oraz ręczne ponowienie eksportu
    * karty dnia** (`POST /admin/api/exports/:sessionUuid/retry`, `A05`).
    *
    * Eksport dostał TĘ zdolność, a nie własną, i to jest decyzja do potwierdzenia przez
@@ -49,11 +49,11 @@ export type Capability =
    * w jednym pliku. Mnożenie zdolności bez potrzeby rozmywa tę odpowiedź.
    *
    * Gdyby ponowienie miało trafić do szefa wyszkolenia, właściwym ruchem jest osobna
-   * zdolność `exports.retry` — a NIE dopisanie `fleet.manage` do jego roli, bo tamta
+   * zdolność `exports.retry` - a NIE dopisanie `fleet.manage` do jego roli, bo tamta
    * niesie też edycję wejść reguł §4.5.
    */
   | 'fleet.manage'
-  /** Zmiana tolerancji flag (progi detekcji są tylko do odczytu — patrz A08). */
+  /** Zmiana tolerancji flag (progi detekcji są tylko do odczytu - patrz A08). */
   | 'thresholds.manage'
   /** Odczyt dziennika akcji administratorów. */
   | 'audit.read'
@@ -65,7 +65,7 @@ export type Capability =
    * **To jest decyzja do potwierdzenia przez człowieka**, tak jak `fleet.manage`
    * przy ponowieniu eksportu. Przeglądnięcie katalogu nie dało dopasowania: każda
    * dotychczasowa zdolność nazywa ZASÓB (flagi, rejestr, konta, flota, progi,
-   * dziennik), a przebudowa nie dotyczy żadnego z nich — nadpisuje PROJEKCJĘ
+   * dziennik), a przebudowa nie dotyczy żadnego z nich - nadpisuje PROJEKCJĘ
    * wszystkich dni klubu naraz. Wpisanie jej pod `fleet.manage` („kto steruje
    * dokumentem klubu") albo `thresholds.manage` („kto stroi reguły") dałoby fałszywą
    * odpowiedź na pytanie, po które ten plik istnieje: „co panel potrafi zmienić".
@@ -73,13 +73,13 @@ export type Capability =
    * Zakres jest WĄSKI i celowo nie obejmuje dwóch pozostałych operacji ekranu A11:
    * sprzątanie wygasłych tokenów jedzie na `accounts.manage` (ta sama tabela i ta
    * sama władza, co unieważnianie sesji przy deaktywacji konta), a ponowienie
-   * eksportu na `fleet.manage` (dokładnie jak na `A05` — druga zdolność dla tego
+   * eksportu na `fleet.manage` (dokładnie jak na `A05` - druga zdolność dla tego
    * samego przycisku byłaby rozjazdem).
    */
   | 'maintenance.run';
 
 const CAPABILITIES: Readonly<Record<PilotRole, readonly Capability[]>> = {
-  // Pilot pracuje wyłącznie w aplikacji na telefonie. Panel go nie dotyczy —
+  // Pilot pracuje wyłącznie w aplikacji na telefonie. Panel go nie dotyczy -
   // i to jest pełna lista jego uprawnień w panelu, celowo pusta.
   pilot: [],
 
@@ -88,7 +88,7 @@ const CAPABILITIES: Readonly<Record<PilotRole, readonly Capability[]>> = {
   // wyjaśnienie rozbieżności to inna odpowiedzialność niż pisanie w cudzym rejestrze.
   training_lead: ['panel.access', 'flags.resolve'],
 
-  // Administrator — wszystko. Lista jest wypisana jawnie, a nie wyliczona jako
+  // Administrator - wszystko. Lista jest wypisana jawnie, a nie wyliczona jako
   // „reszta": dopisanie nowej zdolności ma zmusić do świadomej decyzji, komu ją dać.
   admin: [
     'panel.access',
@@ -113,14 +113,14 @@ export function can(role: PilotRole, capability: Capability): boolean {
 }
 
 /**
- * Komplet zdolności roli — dla `GET /admin/api/me`.
+ * Komplet zdolności roli - dla `GET /admin/api/me`.
  *
  * Panel MUSI znać tę listę, bo mockup wymaga pozycji nawigacji **widocznych
  * i wyszarzonych** z podanym powodem, a nie ukrytych (`SZABLON.html`, `.nav-item.locked`).
  * Wysyłanie listy zamiast samej roli oznacza, że panel nie trzyma DRUGIEJ kopii mapy
  * uprawnień: zmiana tutaj przemalowuje sidebar bez wydania panelu.
  *
- * To nadal WYŁĄCZNIE podpowiedź dla UI — egzekwuje `can` na każdym żądaniu. Ukrycie
+ * To nadal WYŁĄCZNIE podpowiedź dla UI - egzekwuje `can` na każdym żądaniu. Ukrycie
  * przycisku nigdy nie było zabezpieczeniem i tym się nie staje.
  */
 export function capabilitiesOf(role: PilotRole): readonly Capability[] {

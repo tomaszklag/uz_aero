@@ -1,12 +1,12 @@
 /**
- * UZ Aero — test NIESPÓJNOŚCI LOGU (issue #43, baner trybu edycji `design/10d`).
+ * UZ Aero - test NIESPÓJNOŚCI LOGU (issue #43, baner trybu edycji `design/10d`).
  *
  * Reguła nadrzędna: ten moduł niczego nie odrzuca. Sesja z lotem bez lądowania jest
- * faktem, który się WYDARZYŁ — GPS zgubił lądowanie — i aplikacja ma o nim powiedzieć,
+ * faktem, który się WYDARZYŁ - GPS zgubił lądowanie - i aplikacja ma o nim powiedzieć,
  * a nie schować go ani odmówić wyświetlenia. Stąd wyłącznie miękkie naruszenia.
  *
  * Drugi wątek testów: niespójności liczą się ze strumienia PO KOREKTACH. Pilot, który
- * właśnie poprawił czas, musi natychmiast widzieć, czy poprawka pomogła — i tak samo
+ * właśnie poprawił czas, musi natychmiast widzieć, czy poprawka pomogła - i tak samo
  * musi zobaczyć problem, który dopiero co sam wprowadził.
  */
 
@@ -99,7 +99,7 @@ describe('sesja spójna', () => {
     expect(issues(healthy())).toEqual([]);
   });
 
-  it('a każde naruszenie jest MIĘKKIE — log opisuje fakty, nie zapisy do odrzucenia', () => {
+  it('a każde naruszenie jest MIĘKKIE - log opisuje fakty, nie zapisy do odrzucenia', () => {
     const events = healthy().filter((e) => e.type !== 'landing');
     const found = issues(events);
     expect(found.length).toBeGreaterThan(0);
@@ -112,12 +112,12 @@ describe('loty', () => {
     const events = healthy().filter((e) => e.type !== 'landing');
     const found = issues(events);
     expect(codes(found)).toContain('FLIGHT_WITHOUT_LANDING');
-    // Wskazuje KTÓRE zdarzenie — oś sesji oznacza po tym konkretny wiersz.
+    // Wskazuje KTÓRE zdarzenie - oś sesji oznacza po tym konkretny wiersz.
     const flight = found.find((v) => v.code === 'FLIGHT_WITHOUT_LANDING')!;
     expect(flight.details?.uuid).toBe(events.find((e) => e.type === 'takeoff')!.uuid);
   });
 
-  it('ale w POWIETRZU milczy — to nie jest brak danych, tylko trwający lot', () => {
+  it('ale w POWIETRZU milczy - to nie jest brak danych, tylko trwający lot', () => {
     const events = [
       claim(),
       preflight(),
@@ -168,7 +168,7 @@ describe('zrzuty', () => {
     const landing = events.find((e) => e.type === 'landing')!;
     expect(codes(issues(events))).not.toContain('DROP_ON_GROUND');
 
-    // Lądowanie przesunięte na 08:40 — zrzut z 08:52 zostaje poza lotem.
+    // Lądowanie przesunięte na 08:40 - zrzut z 08:52 zostaje poza lotem.
     const stream = [...events, correction(landing, at(11, 40), { action: 'retime', newTime: at(8, 40) })];
     expect(codes(issues(stream))).toContain('DROP_ON_GROUND');
   });
@@ -200,7 +200,7 @@ describe('odczyty', () => {
     expect(codes(issues(events))).toContain('FUEL_OVER_CAPACITY');
   });
 
-  it('paliwa przy zdaniu więcej niż mogło zostać — brakuje tankowania', () => {
+  it('paliwa przy zdaniu więcej niż mogło zostać - brakuje tankowania', () => {
     const events = [...healthy().filter((e) => e.type !== 'day_close'), dayClose(180, 1236.1)];
     expect(codes(issues(events))).toContain('FUEL_INCREASE_WITHOUT_REFUEL');
   });

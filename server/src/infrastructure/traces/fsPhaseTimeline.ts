@@ -1,24 +1,24 @@
 /**
- * UZ Aero (serwer) — oś faz pionowych jako PLIK POBOCZNY przy śladzie (`PhaseTimelinePort`).
+ * UZ Aero (serwer) - oś faz pionowych jako PLIK POBOCZNY przy śladzie (`PhaseTimelinePort`).
  *
  * ══ PROBLEM ══
  * Model czterofazowy potrzebuje, dla każdego interwału paliwowego, rozbicia lotu na
  * wznoszenie, przelot i zniżanie. Wynika ono ze śladu GPS, a ślad to NDJSON o rozmiarze
  * kilku megabajtów na dzień lotny. Analityka okna 90-dniowego dotyka kilkudziesięciu
- * sesji — czytanie ich wszystkich przy każdym otwarciu ekranu byłoby setkami megabajtów
+ * sesji - czytanie ich wszystkich przy każdym otwarciu ekranu byłoby setkami megabajtów
  * parsowania na jedno żądanie.
  *
  * ══ ROZWIĄZANIE: PLIK POBOCZNY LICZONY LENIWIE ══
- * Obok `<sesja>.ndjson` leży `<sesja>.phases.json` — kilkaset bajtów zamiast kilku
+ * Obok `<sesja>.ndjson` leży `<sesja>.phases.json` - kilkaset bajtów zamiast kilku
  * megabajtów. Powstaje przy pierwszym pytaniu i żyje, dopóki ślad się nie zmieni.
  *
  * ══ DLACZEGO PLIK, A NIE TABELA ══
  * Trzy powody, każdy wystarczający osobno:
- *  • **retencja za darmo** — pochodna śladu żyje przy śladzie, więc skasowanie nagrania
+ *  • **retencja za darmo** - pochodna śladu żyje przy śladzie, więc skasowanie nagrania
  *    zabiera ze sobą jego oś; tabela wymagałaby własnego sprzątania i pamiętania o nim;
- *  • **skasowanie jest bezpieczne z definicji** — plik odtworzy się przy następnym
+ *  • **skasowanie jest bezpieczne z definicji** - plik odtworzy się przy następnym
  *    pytaniu, więc nie ma tu stanu, który dałoby się nieodwracalnie stracić;
- *  • **zero migracji** — kształt osi zmieni się razem z progami detekcji, a to nie
+ *  • **zero migracji** - kształt osi zmieni się razem z progami detekcji, a to nie
  *    powód, żeby ruszać schemat bazy.
  *
  * Gdyby kiedyś trzeba było FILTROWAĆ albo SORTOWAĆ po fazach po stronie bazy, wróci
@@ -27,7 +27,7 @@
  * ══ UNIEWAŻNIANIE ══
  * Nagłówek pliku niesie rozmiar i czas modyfikacji ŹRÓDŁA. Niezgodność któregokolwiek
  * znaczy „ślad urósł albo został podmieniony" i wymusza przeliczenie. Ślad jest
- * append-only (`FsTraceSink` dopisuje), więc rozmiar wystarczyłby sam — ale czas
+ * append-only (`FsTraceSink` dopisuje), więc rozmiar wystarczyłby sam - ale czas
  * modyfikacji kosztuje jedno pole i łapie też podmianę pliku z zewnątrz.
  *
  * Wersja formatu (`version`) unieważnia wszystkie pliki naraz po zmianie progów
@@ -50,7 +50,7 @@ import { safeName } from './safeName.ts';
 
 /**
  * Wersja formatu pliku pobocznego. **Podbij ją przy każdej zmianie progów albo metody
- * liczenia faz** — inaczej stare pliki opisywałyby lot inaczej niż świeżo policzone,
+ * liczenia faz** - inaczej stare pliki opisywałyby lot inaczej niż świeżo policzone,
  * a rozjazdu nie dałoby się zauważyć po samej treści.
  */
 const TIMELINE_VERSION = 1;
@@ -110,7 +110,7 @@ export class FsPhaseTimeline implements PhaseTimelinePort {
 
       return file.segments;
     } catch {
-      // Brak pliku albo treść nie do odczytania — liczymy od nowa. Plik pochodny nie ma
+      // Brak pliku albo treść nie do odczytania - liczymy od nowa. Plik pochodny nie ma
       // prawa wywrócić żądania, bo z definicji da się go odtworzyć.
       return null;
     }
@@ -120,7 +120,7 @@ export class FsPhaseTimeline implements PhaseTimelinePort {
     try {
       await writeFile(this.sidecarPath(sessionUuid), JSON.stringify(file), 'utf8');
     } catch (err) {
-      // Zapis cache'u jest optymalizacją, nie warunkiem poprawności — nieudany kosztuje
+      // Zapis cache'u jest optymalizacją, nie warunkiem poprawności - nieudany kosztuje
       // przeliczenie przy następnym pytaniu i nic poza tym.
       console.error(`nie udało się zapisać osi faz dla ${sessionUuid}:`, err);
     }

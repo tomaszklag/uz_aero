@@ -1,11 +1,11 @@
 /**
- * UZ Aero — panel: kafle i karta „Rola w panelu" na `A06` (moduł CZYSTY).
+ * UZ Aero - panel: kafle i karta „Rola w panelu" na `A06` (moduł CZYSTY).
  *
- * **Wszystkie liczby pochodzą z pola `counts` odpowiedzi serwera** — policzonego po
+ * **Wszystkie liczby pochodzą z pola `counts` odpowiedzi serwera** - policzonego po
  * CAŁYM klubie, niezależnie od zawężenia listy. To jest cały powód, dla którego ten
  * moduł nie dostaje wierszy: kafel „Konta aktywne 8 / 10" ma opisywać klub, a nie to,
  * co akurat widać po włączeniu chipa. Zsumowanie widocznych wierszy dałoby liczbę,
- * której serwer nigdy nie wysłał — i zmieniałoby się przy każdym kliknięciu w filtr.
+ * której serwer nigdy nie wysłał - i zmieniałoby się przy każdym kliknięciu w filtr.
  *
  * Kafel „Dni lotne" bierze `counts.flyingDays`, czyli liczbę ZAMKNIĘTYCH SESJI okna,
  * a nie sumę kolumny „Dni lotne" z wierszy: dzień szkolny liczy się dwóm pilotom
@@ -21,14 +21,14 @@ import type { TileTone } from '../../ui/components';
 export interface PilotTile {
   label: string;
   value: string;
-  /** Drobny dopisek przy wartości (`8 / 10`) — renderowany jako `<small>`. */
+  /** Drobny dopisek przy wartości (`8 / 10`) - renderowany jako `<small>`. */
   unit?: string;
   tone?: TileTone;
   note: string;
 }
 
 /**
- * Ile kont ma wejście do panelu. Suma dwóch pól serwera, a nie osobna liczba z drutu —
+ * Ile kont ma wejście do panelu. Suma dwóch pól serwera, a nie osobna liczba z drutu -
  * i dlatego mieszka TUTAJ, a nie w `.tsx`: każde dodawanie w widoku jest pierwszym
  * krokiem do panelu, który liczy po swojemu.
  */
@@ -36,25 +36,25 @@ export function panelRoleCount(counts: PilotCountsDto): number {
   return counts.admin + counts.trainingLead;
 }
 
-/** `null` = odpowiedzi jeszcze nie ma (albo nie przyszła) — wtedy „—", nigdy zero. */
+/** `null` = odpowiedzi jeszcze nie ma (albo nie przyszła) - wtedy „-", nigdy zero. */
 export function pilotTiles(counts: PilotCountsDto | null, monthLabel: string): PilotTile[] {
   const panelRoles = counts == null ? null : panelRoleCount(counts);
 
   return [
     {
       label: 'Konta aktywne',
-      value: counts == null ? '—' : String(counts.active),
+      value: counts == null ? '-' : String(counts.active),
       ...(counts == null ? {} : { unit: `/ ${counts.total}` }),
       tone: 'green',
       // Kafle i chipy filtra liczą CO INNEGO, odkąd chipy respektują wyszukiwanie
       // (`pilotsChips.ts`). Różnica jest widoczna na ekranie w tej samej sekundzie,
-      // więc kafel musi powiedzieć wprost, o czym mówi — inaczej wygląda jak liczba,
+      // więc kafel musi powiedzieć wprost, o czym mówi - inaczej wygląda jak liczba,
       // która się „zacięła".
-      note: 'Po całym klubie — kafli nie zawęża ani chip, ani wyszukiwanie. Zalogują się w aplikacji i — jeśli rola pozwala — w panelu.',
+      note: 'Po całym klubie - kafli nie zawęża ani chip, ani wyszukiwanie. Zalogują się w aplikacji i - jeśli rola pozwala - w panelu.',
     },
     {
       label: 'Z rolą panelu',
-      value: panelRoles == null ? '—' : String(panelRoles),
+      value: panelRoles == null ? '-' : String(panelRoles),
       tone: 'blue',
       note:
         counts == null
@@ -67,13 +67,13 @@ export function pilotTiles(counts: PilotCountsDto | null, monthLabel: string): P
     },
     {
       label: 'Nieaktywne',
-      value: counts == null ? '—' : String(counts.inactive),
-      note: 'Po całym klubie. Bez logowania — zdarzenia zostają w rejestrze i dalej liczą się w statystykach.',
+      value: counts == null ? '-' : String(counts.inactive),
+      note: 'Po całym klubie. Bez logowania - zdarzenia zostają w rejestrze i dalej liczą się w statystykach.',
     },
     {
       label: `Dni lotne · ${monthLabel}`,
-      value: counts == null ? '—' : String(counts.flyingDays),
-      note: 'Suma dni z zamkniętymi sesjami — liczy serwer, po sesjach, nie po osobach.',
+      value: counts == null ? '-' : String(counts.flyingDays),
+      note: 'Suma dni z zamkniętymi sesjami - liczy serwer, po sesjach, nie po osobach.',
     },
   ];
 }
@@ -84,22 +84,22 @@ export interface RoleSplitRow {
   tone?: 'blue';
 }
 
-/** Karta „Rola w panelu" — te same liczby, rozbite po rolach (mockup A06, prawa kolumna). */
+/** Karta „Rola w panelu" - te same liczby, rozbite po rolach (mockup A06, prawa kolumna). */
 export function roleSplit(counts: PilotCountsDto | null): RoleSplitRow[] {
   return [
-    { label: 'Administrator', value: counts == null ? '—' : String(counts.admin), tone: 'blue' },
+    { label: 'Administrator', value: counts == null ? '-' : String(counts.admin), tone: 'blue' },
     {
       label: 'Szef wyszkolenia',
-      value: counts == null ? '—' : String(counts.trainingLead),
+      value: counts == null ? '-' : String(counts.trainingLead),
       tone: 'blue',
     },
-    { label: 'Bez dostępu do panelu', value: counts == null ? '—' : String(counts.pilot) },
+    { label: 'Bez dostępu do panelu', value: counts == null ? '-' : String(counts.pilot) },
   ];
 }
 
-/** Podpis plakietki karty: „2 z 10 kont". `—`, dopóki serwer nie odpowie. */
+/** Podpis plakietki karty: „2 z 10 kont". `-`, dopóki serwer nie odpowie. */
 export function roleSplitCaption(counts: PilotCountsDto | null): string {
-  if (counts == null) return '— z — kont';
+  if (counts == null) return '- z - kont';
   return `${panelRoleCount(counts)} z ${counts.total} ${plural(counts.total, 'konta', 'kont', 'kont')}`;
 }
 
@@ -107,7 +107,7 @@ export function roleSplitCaption(counts: PilotCountsDto | null): string {
  * `2026-07-01` + `2026-07-31` → `LIP 2026` albo `01 JUL – 15 JUL 2026`.
  *
  * Okno podaje SERWER (`daysFrom`/`daysTo`), więc nagłówek kolumny opisuje to, co
- * naprawdę policzono. Panel nie zakłada, że to bieżący miesiąc — inaczej wklejony link
+ * naprawdę policzono. Panel nie zakłada, że to bieżący miesiąc - inaczej wklejony link
  * z własnym zakresem pokazywałby liczby pod cudzą etykietą.
  */
 export function monthLabel(daysFrom: string | undefined, daysTo: string | undefined): string {
@@ -121,7 +121,7 @@ export function monthLabel(daysFrom: string | undefined, daysTo: string | undefi
     from.getUTCFullYear() === to.getUTCFullYear() && from.getUTCMonth() === to.getUTCMonth();
   const label = `${MONTHS[from.getUTCMonth()]} ${from.getUTCFullYear()}`;
 
-  // Pełny miesiąc dostaje krótką etykietę („LIP 2026"), a każde inne okno — zakres
+  // Pełny miesiąc dostaje krótką etykietę („LIP 2026"), a każde inne okno - zakres
   // dat. Napis „LIP 2026" nad liczbą policzoną za pięć dni lipca byłby fałszem.
   return sameMonth && isFirstDay(from) && isLastDay(to) ? label : `${daysFrom} → ${daysTo}`;
 }

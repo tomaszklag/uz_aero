@@ -1,14 +1,14 @@
 /**
- * UZ Aero (serwer) — kształt wiersza tabeli `sessions` i jego mapowanie na `SessionRow`.
+ * UZ Aero (serwer) - kształt wiersza tabeli `sessions` i jego mapowanie na `SessionRow`.
  *
  * Wydzielone z `sessionsProjection.ts`, bo od przekroju 2 panelu czyta tę tabelę DRUGI
- * adapter (`admin/sessionsRepo.ts` — lista dni ze złączeniami). Dwie kopie mapowania
+ * adapter (`admin/sessionsRepo.ts` - lista dni ze złączeniami). Dwie kopie mapowania
  * kolumn to dokładnie ta klasa błędu, przed którą broni `test/schema.test.ts`: literówka
- * w nazwie kolumny nie jest błędem typów, tylko `undefined` w runtime — a rozjazd dwóch
+ * w nazwie kolumny nie jest błędem typów, tylko `undefined` w runtime - a rozjazd dwóch
  * kopii byłby widoczny dopiero jako różnica między listą a szczegółem dnia.
  *
  * Model persystencji zostaje PRYWATNY dla `infrastructure/` (`docs/architektura-panelu-serwer.md`
- * §1.1): panel widzi wyłącznie DTO, warstwa aplikacji — `SessionRow`.
+ * §1.1): panel widzi wyłącznie DTO, warstwa aplikacji - `SessionRow`.
  */
 
 import { isOperationType } from '@uzaero/domain';
@@ -50,7 +50,7 @@ export interface SessionDbRow {
 }
 
 /**
- * Lista kolumn projekcji z aliasem tabeli — żeby zapytanie ze złączeniami nie musiało
+ * Lista kolumn projekcji z aliasem tabeli - żeby zapytanie ze złączeniami nie musiało
  * jej przepisywać, a `SELECT *` nie wciągał kolumn dołączonych tabel o tych samych
  * nazwach (`updated_at` jest w `sessions`, `aircraft` i `pilots`).
  */
@@ -92,12 +92,12 @@ export const sessionColumns = (alias: string): string =>
     .join(', ');
 
 /**
- * `BIGINT` wraca z `pg` jako string (nie mieści się w `number` bez straty) — konwersja
+ * `BIGINT` wraca z `pg` jako string (nie mieści się w `number` bez straty) - konwersja
  * jest tu jawna i w jednym miejscu.
  *
  * Wartość `operation` spoza katalogu rzuca, a nie jest po cichu zerowana:
  * `sessions_operation_known` pilnuje jej w bazie, więc obecność innej wartości znaczy, że ktoś zdjął
- * ograniczenie albo grzebał ręcznie — a wtedy cisza byłaby najgorszą z opcji (ten sam
+ * ograniczenie albo grzebał ręcznie - a wtedy cisza byłaby najgorszą z opcji (ten sam
  * argument, co przy `flags.type` w `flagsRepo.ts`).
  */
 export function toSessionRow(r: SessionDbRow): SessionRow {
@@ -124,7 +124,7 @@ export function toSessionRow(r: SessionDbRow): SessionRow {
     blockMs: Number(r.block_ms),
     flightMs: Number(r.flight_ms),
     flightsCount: r.flights_count,
-    // `NULL` w kolumnach kolumn statystyk zostaje `null` — to „wiersz sprzed migracji,
+    // `NULL` w kolumnach kolumn statystyk zostaje `null` - to „wiersz sprzed migracji,
     // nieprzeliczony", a nie zero. Zamiana na 0 zafałszowałaby agregaty `A10`.
     takeoffCount: r.takeoff_count,
     landingCount: r.landing_count,

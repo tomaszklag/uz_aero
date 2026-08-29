@@ -1,9 +1,9 @@
 /**
- * UZ Aero — testy podpowiedzi lotnisk (`searchAirfields`).
+ * UZ Aero - testy podpowiedzi lotnisk (`searchAirfields`).
  *
  * Dwie rzeczy mogą zepsuć to pole i obie są tu sprawdzone: podpowiedź, która NIE pokazuje
  * kodu wpisanego przez pilota (bo nazwa przepchnęła go poza listę), oraz podpowiedź, która
- * zachowuje się jak bramka — a katalog jest wyłącznie polski, więc wpis spoza listy musi
+ * zachowuje się jak bramka - a katalog jest wyłącznie polski, więc wpis spoza listy musi
  * przejść bez oporu.
  */
 
@@ -30,7 +30,7 @@ const CATALOGUE = [
 const codes = (found: Airfield[]): string[] => found.map((a) => a.icao);
 
 describe('searchAirfields', () => {
-  it('pusty wpis nie daje podpowiedzi — lista nie wisi pod nietkniętym polem', () => {
+  it('pusty wpis nie daje podpowiedzi - lista nie wisi pod nietkniętym polem', () => {
     expect(searchAirfields('', { catalogue: CATALOGUE })).toEqual([]);
     expect(searchAirfields('   ', { catalogue: CATALOGUE })).toEqual([]);
     expect(searchAirfields(null, { catalogue: CATALOGUE })).toEqual([]);
@@ -48,7 +48,7 @@ describe('searchAirfields', () => {
     expect(codes(searchAirfields('EPZG', { catalogue: CATALOGUE }))[0]).toBe('EPZG');
   });
 
-  it('kod bije nazwę — inaczej wpisany kod spadłby poza listę', () => {
+  it('kod bije nazwę - inaczej wpisany kod spadłby poza listę', () => {
     // „EPZ" pasuje do trzech kodów; gdyby liczyła się głównie nazwa, na górze wylądowałyby
     // lotniska z „Z" w nazwie, a pilot nie zobaczyłby tego, o które mu chodziło.
     const found = searchAirfields('EPZ', { catalogue: CATALOGUE });
@@ -62,7 +62,7 @@ describe('searchAirfields', () => {
       'EPZG',
       'EPZP',
     ]);
-    // Ł i Ż nie rozkładają się przez `normalize('NFD')` — stąd własna mapa liter.
+    // Ł i Ż nie rozkładają się przez `normalize('NFD')` - stąd własna mapa liter.
     expect(codes(searchAirfields('zar', { catalogue: CATALOGUE }))).toEqual(['EPZR']);
     expect(codes(searchAirfields('Żar', { catalogue: CATALOGUE }))).toEqual(['EPZR']);
   });
@@ -72,7 +72,7 @@ describe('searchAirfields', () => {
     expect(codes(searchAirfields('przylep', { catalogue: CATALOGUE }))).toEqual(['EPZP']);
   });
 
-  it('kod spoza katalogu daje pustą listę, a nie błąd — wpis musi przejść', () => {
+  it('kod spoza katalogu daje pustą listę, a nie błąd - wpis musi przejść', () => {
     // Przelot do Berlina: EDDB nie jest i nie będzie w polskim katalogu.
     expect(searchAirfields('EDDB', { catalogue: CATALOGUE })).toEqual([]);
     expect(searchAirfields('XXXX', { catalogue: CATALOGUE })).toEqual([]);
@@ -88,7 +88,7 @@ describe('searchAirfields', () => {
   });
 
   it('działa na prawdziwym katalogu wbudowanym w aplikację', () => {
-    // Kontrola, że domyślne źródło jest podłączone — testy wyżej podmieniają katalog,
+    // Kontrola, że domyślne źródło jest podłączone - testy wyżej podmieniają katalog,
     // więc bez tego przypadku przeszłyby także przy pustej liście lotnisk.
     expect(POLISH_AIRFIELDS.length).toBeGreaterThan(50);
     expect(codes(searchAirfields('EPZG'))[0]).toBe('EPZG');
@@ -97,14 +97,14 @@ describe('searchAirfields', () => {
 });
 
 /**
- * Lista „najbliżej Ciebie" (issue #14) — odpowiedź na puste pole wyszukiwarki.
+ * Lista „najbliżej Ciebie" (issue #14) - odpowiedź na puste pole wyszukiwarki.
  *
  * Pilot stoi zwykle na lotnisku, z którego zaraz wystartuje, więc pierwsza pozycja ma być
  * tą właściwą. Test pilnuje też stanu BEZ pozycji: brak fixa jest normalny (o uprawnienie
  * prosimy dopiero na kroku 4), więc funkcja ma wtedy milczeć, a nie zgadywać.
  */
 describe('nearestAirfields', () => {
-  // Współrzędne przybliżone, ale zachowujące PORZĄDEK odległości — tylko on jest tu treścią.
+  // Współrzędne przybliżone, ale zachowujące PORZĄDEK odległości - tylko on jest tu treścią.
   const NEAR = [
     { ...airfield('EPRA', 'Radom-Sadków'), lat: 51.39, lon: 21.21 },
     { ...airfield('EPWA', 'Warsaw Chopin Airport'), lat: 52.17, lon: 20.97 },
@@ -119,12 +119,12 @@ describe('nearestAirfields', () => {
     expect(found[1]!.distanceNm).toBeGreaterThan(found[0]!.distanceNm);
   });
 
-  it('bez pozycji nie zgaduje — pusta lista, nie „pierwsze z brzegu"', () => {
+  it('bez pozycji nie zgaduje - pusta lista, nie „pierwsze z brzegu"', () => {
     expect(nearestAirfields(null, { catalogue: NEAR })).toEqual([]);
     expect(nearestAirfields(undefined, { catalogue: NEAR })).toEqual([]);
   });
 
-  it('respektuje limit — lista podpowiedzi ma się mieścić nad klawiaturą', () => {
+  it('respektuje limit - lista podpowiedzi ma się mieścić nad klawiaturą', () => {
     expect(nearestAirfields({ lat: 52, lon: 21 }, { catalogue: NEAR, limit: 2 })).toHaveLength(2);
     expect(nearestAirfields({ lat: 52, lon: 21 }, { catalogue: NEAR, limit: 0 })).toEqual([]);
   });

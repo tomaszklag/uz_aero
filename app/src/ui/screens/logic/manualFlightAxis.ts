@@ -1,22 +1,22 @@
 /**
- * UZ Aero — szkic wpisu ręcznego → OŚ SESJI (issue #62 pkt 8, 9 i 10; mockup `15b`).
+ * UZ Aero - szkic wpisu ręcznego → OŚ SESJI (issue #62 pkt 8, 9 i 10; mockup `15b`).
  *
  * ══ DLACZEGO OŚ, A NIE DWIE LISTY ══
  * Do issue #62 krok 3 pokazywał dwie płaskie listy obok siebie: „Loty" i „Zrzuty".
  * Zgłoszenie z urządzenia trafiło w sedno: „na jednym biegu silnika wykonałem kilka
- * zrzutów w kilku lotach" — a formularz nie miał jak pokazać, który zrzut należy do
+ * zrzutów w kilku lotach" - a formularz nie miał jak pokazać, który zrzut należy do
  * którego lotu.
  *
  * Nie dlatego, że model tego nie wie. Zrzut NIE MA pola z numerem lotu
  * (`DropPayload` niesie sam `dropNumber`) i mieć nie musi: przynależność jest
- * ZAWIERANIEM SIĘ W CZASIE i tak definiuje ją domena — `DROP_ON_GROUND`
+ * ZAWIERANIEM SIĘ W CZASIE i tak definiuje ją domena - `DROP_ON_GROUND`
  * (`rules/consistency.ts`) pyta dokładnie o to, czy zrzut wypadł w oknie któregoś
  * lotu. Oś kokpitu i oś rozliczenia wyrażają to samo POZYCJĄ wiersza. Wiedział więc
- * model, milczał ekran — i to ekran trzeba było naprawić.
+ * model, milczał ekran - i to ekran trzeba było naprawić.
  *
  * Stąd ten moduł: składa z płaskiego szkicu te same wiersze, które `buildSessionAxis`
  * składa z rejestru. Jedna rzecz ma w tej aplikacji jeden kształt, a wpis ręczny
- * opisuje TEN SAM bieg silnika, co zapis automatyczny — tylko z kartki.
+ * opisuje TEN SAM bieg silnika, co zapis automatyczny - tylko z kartki.
  *
  * ══ OSI NIE MA, DOPÓKI NIE MA BIEGU SILNIKA ══
  * Sesja JEST biegiem silnika, więc lot bez niego nie ma w czym się zawierać. Dopóki
@@ -26,7 +26,7 @@
  * odrzucą (ta sama zasada, co brak „EDYTUJ DANE" w podglądzie 10B i brak „DALEJ"
  * przy pustej flocie na 02G).
  *
- * Zero Reacta, zero zegara systemowego — wejściem jest szkic, wyjściem wiersze.
+ * Zero Reacta, zero zegara systemowego - wejściem jest szkic, wyjściem wiersze.
  */
 
 import { duration, timeUtc } from '../../format';
@@ -39,13 +39,13 @@ import type {
 import { sortedFlights } from './manualFlight';
 
 /**
- * Co otwiera tapnięcie w wiersz — ekran nie parsuje `id` samodzielnie.
+ * Co otwiera tapnięcie w wiersz - ekran nie parsuje `id` samodzielnie.
  *
  * Cel niesie KONKRETNY KONIEC pary (issue #62, trzecia tura z urządzenia): „skoro
  * klikam w konkretną pozycję, to wiem, że tylko to chcę edytować". Tapnięcie w START
  * otwierało arkusz z parą start + lądowanie, czyli dawało do ręki kontrolkę, o którą
  * nikt nie prosił, i kazało szukać wzrokiem tej właściwej. Drugi koniec zostaje
- * w arkuszu jako wiersz odniesienia — patrz `FlightTimesField.readOnly`.
+ * w arkuszu jako wiersz odniesienia - patrz `FlightTimesField.readOnly`.
  */
 export type ManualAxisTarget =
   | { kind: 'engine'; field: 'start' | 'stop' }
@@ -57,7 +57,7 @@ export interface ManualFlightAxis {
   foot: SessionAxisFootItem[];
 }
 
-/** Identyfikatory wierszy — jedno miejsce, żeby budowanie i czytanie się nie rozjechało. */
+/** Identyfikatory wierszy - jedno miejsce, żeby budowanie i czytanie się nie rozjechało. */
 const ENGINE_START = 'engine-start';
 const ENGINE_STOP = 'engine-stop';
 
@@ -81,7 +81,7 @@ export function manualAxisTarget(rowId: string): ManualAxisTarget | null {
 /**
  * Numer lotu (1-based), w którym mieści się dana chwila; `null` = poza każdym lotem.
  *
- * Granice DOMKNIĘTE po obu stronach — tak samo, jak liczy je `DROP_ON_GROUND`
+ * Granice DOMKNIĘTE po obu stronach - tak samo, jak liczy je `DROP_ON_GROUND`
  * w domenie. Zrzut w sekundzie startu jest dziwny, ale nie jest „na ziemi", a dwie
  * różne odpowiedzi na to samo pytanie w domenie i na ekranie byłyby gorsze niż
  * jedna dyskusyjna.
@@ -95,10 +95,10 @@ export function flightNumberAt(
 }
 
 /**
- * Godzina startowa NOWEGO zrzutu — środek PIERWSZEGO lotu, który jeszcze zrzutu nie ma.
+ * Godzina startowa NOWEGO zrzutu - środek PIERWSZEGO lotu, który jeszcze zrzutu nie ma.
  *
  * Do issue #62 nowy zrzut lądował zawsze w połowie OSTATNIEGO lotu, więc na dniu
- * skokowym wszystkie trafiały do tego samego — a pilot i tak dopisuje je po kolei.
+ * skokowym wszystkie trafiały do tego samego - a pilot i tak dopisuje je po kolei.
  * Dzień skokowy to zwykle jedno wyniesienie na lot, więc „pierwszy lot bez zrzutu"
  * trafia w intencję bez ani jednego dodatkowego pytania; kto potrzebuje dwóch
  * w jednym locie, poprawi godzinę w arkuszu.
@@ -117,10 +117,10 @@ export function nextDropAt(draft: ManualFlightDraft): number | null {
 /**
  * Godziny startowe NOWEGO lotu (issue #62 pkt 8).
  *
- * Do issue #62 nowy lot dostawał „10 minut po ostatnim lądowaniu, 30 minut długości" —
+ * Do issue #62 nowy lot dostawał „10 minut po ostatnim lądowaniu, 30 minut długości" -
  * liczby wzięte znikąd, które trzeba było potem poprawiać dwoma arkuszami. Oś ma dwa
  * końce i to one są naturalnymi granicami lotu: PIERWSZY lot dostaje cały bieg silnika
- * (przy sesji z jednym lotem — najczęstszej — jest to od razu wartość właściwa),
+ * (przy sesji z jednym lotem - najczęstszej - jest to od razu wartość właściwa),
  * a każdy kolejny biegnie od ostatniego lądowania do wyłączenia silnika, bo tyle
  * miejsca zostało.
  *
@@ -136,12 +136,12 @@ export function nextFlightTimes(
 }
 
 /**
- * Zrzut POPRZEDZAJĄCY daną chwilę — źródło wartości startowych następnego
+ * Zrzut POPRZEDZAJĄCY daną chwilę - źródło wartości startowych następnego
  * (issue #62, czwarta tura z urządzenia).
  *
  * Dzień skokowy to ta sama maszyna, ten sam klub i zwykle ta sama wysokość wyniesienia
  * lot po locie. Nowy zrzut zaczynający od zera kazał więc wbijać te same liczby od nowa
- * przy każdym wyniesieniu — a formularz miał je tuż obok. Kopiujemy skład i wysokość;
+ * przy każdym wyniesieniu - a formularz miał je tuż obok. Kopiujemy skład i wysokość;
  * godzina idzie z `nextDropAt`, bo ta akurat jest za każdym razem inna.
  *
  * `null` = nie ma poprzednika (pierwszy zrzut sesji) i wtedy pola startują puste:
@@ -170,14 +170,14 @@ export function dropSummary(drop: Pick<ManualFlightDropDraft, 'jumpers' | 'altit
   return parts.join(' · ');
 }
 
-/** Godzina, której jeszcze nie ma — ten sam placeholder, co w kontrolce czasu. */
+/** Godzina, której jeszcze nie ma - ten sam placeholder, co w kontrolce czasu. */
 const NO_TIME = '--:--';
 
 /**
  * Szkic → wiersze osi.
  *
  * ══ OŚ ISTNIEJE OD PIERWSZEJ SEKUNDY (issue #62, czwarta tura z urządzenia) ══
- * Do tej tury krok 3 miał NAD osią kartę „Bieg silnika" z parą godzin — dokładnie
+ * Do tej tury krok 3 miał NAD osią kartę „Bieg silnika" z parą godzin - dokładnie
  * tych samych, które oś rysuje jako swój pierwszy i ostatni wiersz. Zgłoszenie
  * brzmiało: „dubluje się «bieg silnika» z tym, co mam na osi czasu, nie ma sensu ten
  * input". Karta zniknęła, a oś zaczyna się od dwóch końców z `--:--`, które SĄ
@@ -185,10 +185,10 @@ const NO_TIME = '--:--';
  *
  * Zysk jest większy niż jedna karta mniej: pusty krok 3 i krok 3 z pełną sesją to
  * odtąd TEN SAM ekran w dwóch stanach, a nie dwa różne układy. Reguła „nie da się
- * dodać lotu bez biegu silnika" (pkt 10) zostaje w mocy — pilnuje jej ekran, nie
+ * dodać lotu bez biegu silnika" (pkt 10) zostaje w mocy - pilnuje jej ekran, nie
  * pokazując wiersza „DODAJ LOT", dopóki oba końce nie mają godziny.
  *
- * @param jumpDay dzień skokowy — bez niego zrzutów na osi NIE MA (issue #19: przy
+ * @param jumpDay dzień skokowy - bez niego zrzutów na osi NIE MA (issue #19: przy
  *   przelocie zrzut nie może się wydarzyć, więc jego brak nie jest brakiem danych).
  */
 export function buildManualFlightAxis(
@@ -197,7 +197,7 @@ export function buildManualFlightAxis(
 ): ManualFlightAxis {
   const flights = sortedFlights(draft);
   const drops = jumpDay ? [...draft.drops].sort((a, b) => a.at - b.at) : [];
-  /** Numer zrzutu W CAŁEJ SESJI — liczy się z porządku czasu, nie z gniazda lotu. */
+  /** Numer zrzutu W CAŁEJ SESJI - liczy się z porządku czasu, nie z gniazda lotu. */
   const dropNumber = new Map(drops.map((d, i) => [d.id, i + 1]));
 
   const dropRow = (drop: ManualFlightDropDraft): SessionAxisRow => {
@@ -209,11 +209,11 @@ export function buildManualFlightAxis(
       name: `Zrzut ${dropNumber.get(drop.id) ?? 1}`,
       sub: dropSummary(drop),
       /* PRAWA KOLUMNA ODPOWIADA NA TO SAMO PYTANIE, CO PRZY STARCIE: „który to lot".
-         Przy zrzucie brzmi ono „do którego lotu on należy" — i to jest odpowiedź
+         Przy zrzucie brzmi ono „do którego lotu on należy" - i to jest odpowiedź
          na zgłoszenie z issue #62 pkt 9. */
       flight: inFlight != null ? `lot ${inFlight}` : 'poza lotem',
       /* Miękka reguła domeny `DROP_ON_GROUND`, pokazana TU, a nie krok dalej:
-         ostrzeżenie ma stać tam, gdzie da się je naprawić. NIE blokuje zapisu —
+         ostrzeżenie ma stać tam, gdzie da się je naprawić. NIE blokuje zapisu -
          fakt lotu jest cenniejszy niż kompletność formularza. */
       warned: inFlight == null,
     };
@@ -224,7 +224,7 @@ export function buildManualFlightAxis(
    * Pierwsza wersja sortowała wszystko jedną parą `(czas, ranga typu)` ze stałą rangą
    * startu przed lądowaniem. Przy locie startującym DOKŁADNIE w godzinie lądowania
    * poprzedniego dawało to kolejność „Start (lot 2) → Lądowanie (lot 1)", czyli obraz
-   * lotu, który zaczął się przed wylądowaniem poprzedniego — a to nieprawda.
+   * lotu, który zaczął się przed wylądowaniem poprzedniego - a to nieprawda.
    *
    * Jednej rangi nie da się dobrać: wewnątrz lotu start musi wyprzedzać lądowanie,
    * a MIĘDZY lotami lądowanie musi wyprzedzać start. Te dwa wymagania są sprzeczne,
@@ -254,7 +254,7 @@ export function buildManualFlightAxis(
   }
 
   /*
-   * Zrzuty POZA lotami wchodzą po czasie — za ostatni wiersz, który jeszcze się przed
+   * Zrzuty POZA lotami wchodzą po czasie - za ostatni wiersz, który jeszcze się przed
    * nimi zdarzył. Są z definicji poza każdym oknem lotu, więc nie mają jak zderzyć się
    * o remis z tym, co dzieje się w środku.
    */
@@ -299,7 +299,7 @@ export function buildManualFlightAxis(
   };
 }
 
-/** Czas wiersza wyliczony z jego źródła — do wstawiania zrzutów spoza lotów. */
+/** Czas wiersza wyliczony z jego źródła - do wstawiania zrzutów spoza lotów. */
 function rowTime(
   row: SessionAxisRow,
   flights: readonly ManualFlightLegDraft[],

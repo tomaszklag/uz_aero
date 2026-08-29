@@ -1,5 +1,5 @@
 /**
- * UZ Aero — testy śladu kalibracyjnego (faza 5): rejestrator + wysyłka.
+ * UZ Aero - testy śladu kalibracyjnego (faza 5): rejestrator + wysyłka.
  *
  * Kontrakty warte pilnowania: księgowość wysyłki jak w outboksie (wysłane nie wraca),
  * retencja tnie po ZEGARZE URZĄDZENIA, a nieudana wysyłka zostawia wpisy na miejscu.
@@ -61,7 +61,7 @@ class TraceServer implements ServerPort {
   getTaskSuggestions = async () => {
     throw new Error('nieużywane');
   };
-  /** Droga powrotna (§4.9) ma własne testy — `eventRestore.test.ts`. */
+  /** Droga powrotna (§4.9) ma własne testy - `eventRestore.test.ts`. */
   pullEvents = async () => ({ events: [], nextCursor: null, hasMore: false });
   getPrefs = async () => {
     throw new Error('nieużywane');
@@ -109,7 +109,7 @@ describe('TraceRecorder', () => {
     expect(batch[1]).toMatchObject({ kind: 'undo', detail: 'landing' });
   });
 
-  it('retencja tnie po zegarze urządzenia — stare znikają, świeże zostają', async () => {
+  it('retencja tnie po zegarze urządzenia - stare znikają, świeże zostają', async () => {
     const { clock, store, recorder } = harness();
     recorder.fix(aFix(0), null);
     await flush();
@@ -124,7 +124,7 @@ describe('TraceRecorder', () => {
 });
 
 describe('TraceSync', () => {
-  it('wysyła paczkę i oznacza wysłane — druga okazja nie dubluje', async () => {
+  it('wysyła paczkę i oznacza wysłane - druga okazja nie dubluje', async () => {
     const { recorder, server, sync } = harness();
     recorder.fix(aFix(0), 'sess-1');
     recorder.fix(aFix(1), 'sess-1');

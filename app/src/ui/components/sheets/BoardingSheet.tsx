@@ -1,23 +1,23 @@
 /**
- * UZ Aero — BoardingSheet (mockup 05i „Załadunek", issue #21 pkt 7)
+ * UZ Aero - BoardingSheet (mockup 05i „Załadunek", issue #21 pkt 7)
  *
- * Arkusz znacznika załadunku: skoczkowie weszli na pokład — na ziemi, po wykołowaniu
+ * Arkusz znacznika załadunku: skoczkowie weszli na pokład - na ziemi, po wykołowaniu
  * z pasa między lotami albo przed pierwszym startem serii. Te same liczniki co arkusz
  * zrzutu (05e), bo to ta sama lista opowiedziana chwilę wcześniej: skład zadeklarowany
  * tutaj otwiera arkusz zrzutu już WYPEŁNIONY i w locie zostaje samo potwierdzenie.
  *
- * OTWARTY PONOWNIE pokazuje skład, który już czeka na zrzut (issue #28) — tak samo jak
+ * OTWARTY PONOWNIE pokazuje skład, który już czeka na zrzut (issue #28) - tak samo jak
  * arkusz zrzutu i z tego samego stanu (`logic/boardingPrefill.ts`). Do 2026-08-12
  * liczniki kasowały się przy KAŻDYM otwarciu, więc pilot, który zadeklarował skład przed
  * uruchomieniem silnika, po uruchomieniu widział same zera: poprawienie deklaracji
  * wymagało wpisania jej od nowa, z pamięci.
  *
- * Skład jest OPCJONALNY — zapis bez liczb odnotowuje sam fakt załadunku (zero nigdy
+ * Skład jest OPCJONALNY - zapis bez liczb odnotowuje sam fakt załadunku (zero nigdy
  * nie udaje pomiaru: suma 0 zapisuje się jako „skład niepodany", nie „zero skoczków";
  * normalizacja w `SessionCommands.boarding`). Dlatego przycisk zapisu nie ma stanu
  * zablokowanego.
  *
- * Wysokości tu NIE MA — samolot stoi na ziemi; jedyny pomiarowy wiersz arkusza zrzutu
+ * Wysokości tu NIE MA - samolot stoi na ziemi; jedyny pomiarowy wiersz arkusza zrzutu
  * nie ma tu czego pokazać.
  */
 
@@ -37,19 +37,19 @@ import { jumpersKey } from './jumpersKey';
 export interface BoardingSheetProps {
   visible: boolean;
   /**
-   * Numer lotu NADCHODZĄCEGO — załadunek dzieje się na ziemi, więc należy do lotu,
+   * Numer lotu NADCHODZĄCEGO - załadunek dzieje się na ziemi, więc należy do lotu,
    * który dopiero się zacznie (`logic/flightNumber.ts`).
    */
   flightNumber: number;
   /** Czas załadunku (sformatowany, UTC). */
   time: string;
   /**
-   * Skład, który JUŻ czeka na zrzut (issue #28) — liczniki otwierają się z nim, a zapis
+   * Skład, który JUŻ czeka na zrzut (issue #28) - liczniki otwierają się z nim, a zapis
    * zastępuje tamtą deklarację. `null` = nic nie czeka albo załadunek był bez liczb:
    * liczniki startują od zera.
    */
   initialJumpers?: JumperCounts | null;
-  /** Czas czekającej deklaracji (sformatowany, UTC) — podpis prefillu; `null` gdy brak. */
+  /** Czas czekającej deklaracji (sformatowany, UTC) - podpis prefillu; `null` gdy brak. */
   declaredTime?: string | null;
   busy?: boolean;
   onConfirm: (jumpers: JumperCounts) => void;
@@ -73,13 +73,13 @@ export function BoardingSheet({
   const keyboardHeight = useKeyboardHeight();
   const [jumpers, setJumpers] = useState<JumperCounts>(EMPTY);
 
-  // Każde otwarcie zaczyna od składu CZEKAJĄCEGO na zrzut, a bez niego od zera —
+  // Każde otwarcie zaczyna od składu CZEKAJĄCEGO na zrzut, a bez niego od zera -
   // ta sama reguła i ten sam stan co w arkuszu zrzutu (issue #28). Po zrzucie prefillu
   // nie ma: projekcja skonsumowała załadunek, bo tamci skoczkowie już wyszli.
   //
   // W zależnościach stoi KLUCZ SKŁADU, nie identyczność obiektu: projekcja przelicza się
   // po każdym zdarzeniu sesji (choćby po kołowaniu z autodetekcji), więc `initialJumpers`
-  // bywa nowym obiektem o tych samych liczbach — a effect zależny od identyczności
+  // bywa nowym obiektem o tych samych liczbach - a effect zależny od identyczności
   // kasowałby wtedy liczniki pod palcami pilota.
   const prefillKey = jumpersKey(initialJumpers);
   useEffect(() => {
@@ -142,7 +142,7 @@ export function BoardingSheet({
         onChange={set('solo')}
       />
 
-      {/* Ta sama karta sumy co w arkuszu zrzutu — to jest skład, który za chwilę
+      {/* Ta sama karta sumy co w arkuszu zrzutu - to jest skład, który za chwilę
           pokaże się tam jako prefill. */}
       <View
         style={[
@@ -165,18 +165,18 @@ export function BoardingSheet({
 
       {/* Dwa podpisy, bo arkusz opowiada dwie różne rzeczy. Z prefillem: skąd wzięły
           się liczby, zanim pilot czegokolwiek dotknął, i co zrobi zapis (deklaracja
-          zostaje zastąpiona — liczy się skład faktycznie siedzący na pokładzie).
-          Bez prefillu: że bez liczb też ma sens — zanim pilot zacznie szukać, czemu
+          zostaje zastąpiona - liczy się skład faktycznie siedzący na pokładzie).
+          Bez prefillu: że bez liczb też ma sens - zanim pilot zacznie szukać, czemu
           wolno zapisać zero. */}
       {initialJumpers != null ? (
         <AppText variant="mono" tone="muted" style={styles.note}>
           {declaredTime != null
-            ? `Skład zadeklarowany ${declaredTime} UTC — zapis go zaktualizuje`
-            : 'Skład zadeklarowany wcześniej — zapis go zaktualizuje'}
+            ? `Skład zadeklarowany ${declaredTime} UTC - zapis go zaktualizuje`
+            : 'Skład zadeklarowany wcześniej - zapis go zaktualizuje'}
         </AppText>
       ) : (
         <AppText variant="mono" tone="muted" style={styles.note}>
-          Skład możesz pominąć — zapis i tak odnotuje załadunek w logu
+          Skład możesz pominąć - zapis i tak odnotuje załadunek w logu
         </AppText>
       )}
 

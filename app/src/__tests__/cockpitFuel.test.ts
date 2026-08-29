@@ -1,10 +1,10 @@
 /**
- * UZ Aero — paliwo na ekranie 04: jedna liczba, jedno miejsce.
+ * UZ Aero - paliwo na ekranie 04: jedna liczba, jedno miejsce.
  *
  * Test pilnuje reguły, a nie napisów: **litry nie mają prawa pojawić się dwa razy na
  * jednym ekranie, ale nie mają też prawa zniknąć**. Pasek paliwa istnieje tylko wtedy,
  * gdy mówi coś ponad liczbę (jest norma → jest wystarczalność), a kafelek „Tankowanie"
- * przejmuje stan zbiorników dokładnie wtedy, gdy paska nie ma — również po tankowaniu,
+ * przejmuje stan zbiorników dokładnie wtedy, gdy paska nie ma - również po tankowaniu,
  * bo to najłatwiejszy sposób zgubienia FOB z całego kokpitu.
  */
 
@@ -29,31 +29,31 @@ const norm = (over: Partial<ConsumptionNorm> = {}): ConsumptionNorm => ({
   ...over,
 });
 
-describe('samolot Z normą — pasek jest przyrządem', () => {
+describe('samolot Z normą - pasek jest przyrządem', () => {
   it('pasek dostaje szacunek i adnotację o źródle', () => {
     const view = buildCockpitFuel({ fobL: 111, addedL: 0, norm: norm() });
 
     expect(view.strip).not.toBeNull();
     expect(view.strip!.endurance).toMatch(/^wystarczy na ~/);
     expect(view.strip!.source).toBe(
-      'szacunek z normy samolotu (90 dni) — decyduje paliwomierz',
+      'szacunek z normy samolotu (90 dni) - decyduje paliwomierz',
     );
   });
 
-  it('kafelek NIE powtarza litrów paska — zaprasza do akcji', () => {
+  it('kafelek NIE powtarza litrów paska - zaprasza do akcji', () => {
     expect(buildCockpitFuel({ fobL: 111, addedL: 0, norm: norm() }).refuelSub).toBe(
       'Dolej i zapisz odczyt',
     );
   });
 
-  it('dzisiejsza dolewka to fakt, którego pasek nie zna — kafelek ją melduje', () => {
+  it('dzisiejsza dolewka to fakt, którego pasek nie zna - kafelek ją melduje', () => {
     expect(buildCockpitFuel({ fobL: 156, addedL: 45, norm: norm() }).refuelSub).toBe(
       'Dolane dziś: 45 L',
     );
   });
 });
 
-describe('samolot BEZ normy — paska nie ma, litry niesie kafelek', () => {
+describe('samolot BEZ normy - paska nie ma, litry niesie kafelek', () => {
   it('pasek bez szacunku byłby samą liczbą, więc go nie ma', () => {
     expect(buildCockpitFuel({ fobL: 111, addedL: 0, norm: null }).strip).toBeNull();
   });
@@ -64,7 +64,7 @@ describe('samolot BEZ normy — paska nie ma, litry niesie kafelek', () => {
     );
   });
 
-  it('po tankowaniu kafelek niesie OBIE liczby — inaczej FOB znika z ekranu', () => {
+  it('po tankowaniu kafelek niesie OBIE liczby - inaczej FOB znika z ekranu', () => {
     // Sedno tego testu: „Dolane dziś" jako jedyny podpis wypychało stan na pokładzie
     // z kokpitu, w którym nie ma już paska.
     expect(buildCockpitFuel({ fobL: 156, addedL: 45, norm: null }).refuelSub).toBe(
@@ -72,9 +72,9 @@ describe('samolot BEZ normy — paska nie ma, litry niesie kafelek', () => {
     );
   });
 
-  it('brak odczytu mówi „—", zamiast udawać zero litrów', () => {
+  it('brak odczytu mówi „-", zamiast udawać zero litrów', () => {
     expect(buildCockpitFuel({ fobL: null, addedL: 0, norm: null }).refuelSub).toBe(
-      'Na pokładzie: —',
+      'Na pokładzie: -',
     );
   });
 

@@ -1,12 +1,12 @@
 /**
- * UZ Aero — ThemePicker
+ * UZ Aero - ThemePicker
  *
  * Przełącznik 5 motywów (wzorzec: sekcja theme-picker w 05-themes.html).
  * Każdy przycisk = pill z próbką koloru + etykietą; aktywny wyróżniony.
  * Zmiana motywu przez setTheme() → cały ekran przemalowuje się na żywo.
  *
  * Próbka koloru (swatch) jest budowana z tokenów danego motywu (bg + akcent green),
- * więc nie ma tu żadnych hardcoded hex — wszystko pochodzi z pliku tokenów.
+ * więc nie ma tu żadnych hardcoded hex - wszystko pochodzi z pliku tokenów.
  */
 
 import React from 'react';
@@ -16,7 +16,7 @@ import { useTheme } from '../../theme';
 import { THEME_LABELS, THEME_ORDER, THEMES, fontFamily } from '../../theme/tokens';
 import { AppText } from '../foundation/AppText';
 
-/** Opisy motywów z mockupu 13 (`.theme-desc`) — kiedy który ma sens w kokpicie. */
+/** Opisy motywów z mockupu 13 (`.theme-desc`) - kiedy który ma sens w kokpicie. */
 const THEME_DESC: Record<string, string> = {
   night: 'ciemny · domyślny · kokpit po zmroku',
   paper: 'ciepła biel · mniej odblasków za dnia',
@@ -27,7 +27,7 @@ const THEME_DESC: Record<string, string> = {
 
 export interface ThemePickerProps {
   /**
-   * `detailed` — karty z opisem i podwójnym swatchem (mockup 13 `.theme-card`);
+   * `detailed` - karty z opisem i podwójnym swatchem (mockup 13 `.theme-card`);
    * domyślnie kompaktowe pigułki (katalog DS / StyleGuide).
    */
   detailed?: boolean;
@@ -59,7 +59,7 @@ export function ThemePicker({ detailed = false, style }: ThemePickerProps) {
                 },
               ]}
             >
-              {/* Podwójny swatch (tło + akcent) — kolory INNEGO motywu z jego tokenów. */}
+              {/* Podwójny swatch (tło + akcent) - kolory INNEGO motywu z jego tokenów. */}
               <View style={styles.swatchPair}>
                 <View style={[styles.swatchHalf, { backgroundColor: swatch.bg, borderColor: theme.colors.borderStrong, borderWidth: theme.borderWidth }]} />
                 <View style={[styles.swatchHalf, { backgroundColor: swatch.green, borderColor: theme.colors.borderStrong, borderWidth: theme.borderWidth }]} />

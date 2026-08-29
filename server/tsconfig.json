@@ -3,7 +3,7 @@
     "target": "ES2022",
     // `Preserve` + `Bundler`: serwer wykonuje TS przez tsx (rozdzielczość bundlerowa),
     // więc typecheck ma widzieć moduły tak samo jak runtime. NodeNext wymagałby
-    // rozszerzeń w relatywnych importach WEWNĄTRZ `@uzaero/domain` — a domena musi
+    // rozszerzeń w relatywnych importach WEWNĄTRZ `@uzaero/domain` - a domena musi
     // kompilować się też pod Metro/Jest aplikacji, które rozszerzeń nie chcą.
     "module": "Preserve",
     "moduleResolution": "Bundler",
@@ -16,7 +16,7 @@
     "allowImportingTsExtensions": true
   },
   // `scripts` też pod typecheckiem: `replay.ts` woła `runDetector` z domeny, więc
-  // każda zmiana kontraktu detekcji może go zepsuć — a jest narzędziem kalibracji
+  // każda zmiana kontraktu detekcji może go zepsuć - a jest narzędziem kalibracji
   // fazy 5, czyli sprawdzanym dopiero wtedy, gdy jest najbardziej potrzebny.
   "include": ["src", "test", "scripts"]
 }

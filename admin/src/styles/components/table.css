@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: TABELA, kręgosłup back-office'u.
+ * UZ Aero - panel: TABELA, kręgosłup back-office'u.
  *
  * Klasy i wartości 1:1 z `design/admin/SZABLON.html` (sekcja „TABELA"). Reguła,
  * której nie wolno tu zgubić: **liczby zawsze mono i do prawej** (`.num`), bo panel
@@ -13,7 +13,7 @@
   background: var(--surface);
 }
 
-/* Tabela zagnieżdżona w karcie (historia rozwiązanych, legenda typów) — bez własnej
+/* Tabela zagnieżdżona w karcie (historia rozwiązanych, legenda typów) - bez własnej
    ramki i tła, bo ramkę niesie już karta. W mockupie stoi to stylem inline; tutaj
    dostaje nazwę, bo klasa bez nazwy jest klasą, której nikt nie znajdzie greppem. */
 .table-wrap.plain {
@@ -36,7 +36,7 @@ thead th {
   color: var(--text-muted);
   font-weight: 500;
   padding: 11px 14px;
-  /* Odcień nagłówka tabeli NIE JEST tokenem — nie ma go ani w `05-themes.html`, ani
+  /* Odcień nagłówka tabeli NIE JEST tokenem - nie ma go ani w `05-themes.html`, ani
      w `:root` szablonu; stoi tam literałem, tak samo jak `#0a0a0c` sidebara. Kopiujemy
      wartość zamiast wymyślać token, którego design nie zatwierdził. */
   background: #101010;
@@ -46,14 +46,14 @@ thead th {
 
 thead th.sortable {
   /* Padding przechodzi na przycisk w środku, żeby cały obszar nagłówka był celem
-     kliknięcia — inaczej klikalna byłaby wyłącznie sama etykieta. */
+     kliknięcia - inaczej klikalna byłaby wyłącznie sama etykieta. */
   padding: 0;
 }
 
 /* Nagłówek sortowalny jest PRZYCISKIEM, nie klikalnym `<th>`: mockup rysuje kursor
    na komórce, ale komórka z `onClick` jest nieosiągalna z klawiatury, a panel jest
    nią nawigowany. Przycisk dziedziczy całą typografię nagłówka, więc wygląd zostaje
-   ten sam — zmienia się tylko to, że da się go dosięgnąć tabem. */
+   ten sam - zmienia się tylko to, że da się go dosięgnąć tabem. */
 thead th.sortable > button {
   width: 100%;
   padding: 11px 14px;
@@ -101,7 +101,7 @@ tbody tr.clickable {
   cursor: pointer;
 }
 
-/* Wiersz otwarty w szufladzie — mockup `A03a` zaznacza go tłem i zieloną krawędzią
+/* Wiersz otwarty w szufladzie - mockup `A03a` zaznacza go tłem i zieloną krawędzią
    od strony treści, żeby po zamknięciu szuflady wzrok wrócił tam, gdzie był. */
 tbody tr.opened {
   background: var(--surface-raised);
@@ -138,13 +138,13 @@ td.dim {
   margin-top: 2px;
 }
 
-/* ŚWIEŻOŚĆ w komórce tabeli — podpis `.cell-sub` niosący WIEK danych z telefonu.
+/* ŚWIEŻOŚĆ w komórce tabeli - podpis `.cell-sub` niosący WIEK danych z telefonu.
    Trzy stany §4.8 dosłownie: `fresh` = live (bez zastrzeżeń), `stale` = cache
    starszy niż doba, `none` = brak danych. Modyfikator, a nie osobna klasa, bo to
-   nadal ten sam podpis — zmienia się wyłącznie to, co mówi o jego wiarygodności.
+   nadal ten sam podpis - zmienia się wyłącznie to, co mówi o jego wiarygodności.
    Nazwy są DOSŁOWNIE te z `SZABLON.html`; do 2026-08-01 ekran `A07` wypisywał
    `fresh-fresh`/`fresh-stale`/`fresh-none`, czyli klasy, których nie definiował
-   żaden arkusz — odczyt sprzed trzech minut i sprzed dwóch dni wyglądały tak samo,
+   żaden arkusz - odczyt sprzed trzech minut i sprzed dwóch dni wyglądały tak samo,
    choć karta obok obiecywała amber. */
 .cell-sub.fresh {
   color: var(--green);
@@ -159,7 +159,7 @@ td.dim {
 }
 
 /* Wiek sprawy, która leży ZA DŁUGO. W mockupie stoi to jako styl inline
-   (`color:var(--red);font-weight:700`) na wybranych wierszach — tutaj jest klasą,
+   (`color:var(--red);font-weight:700`) na wybranych wierszach - tutaj jest klasą,
    bo o tym, które wiersze są stare, rozstrzyga próg w `flagRows.ts`, a nie autor
    pliku HTML. Wygląd bez zmian. */
 .cell-age.old {
@@ -173,7 +173,7 @@ td.dim {
   letter-spacing: 1px;
 }
 
-/* Link W TREŚCI komórki — zawęża listę do tej wartości (`A09`: konto działającego,
+/* Link W TREŚCI komórki - zawęża listę do tej wartości (`A09`: konto działającego,
    identyfikator obiektu). Wygląda jak treść, nie jak przycisk, i to jest cała jego
    racja bytu: dwa `.btn` na wiersz w tabeli o sześciu kolumnach zamieniają listę
    w farmę guzików. Kreska jest przerywana i wygaszona, więc nie konkuruje z liczbami
@@ -199,8 +199,8 @@ td.dim {
 /* WARTOŚĆ ZEGARA w komórce tabeli (`A04`: `device_time`, `gps_time`, `Δ zegarów`).
    W mockupie stoi to stylem inline (`style="color:var(--amber)"`); tutaj jest klasą,
    bo o tym, który zegar się rozjechał, rozstrzyga PRÓG Z SERWERA, a nie autor pliku
-   HTML. Trzy tony, trzy różne zdania: `dim` — zegary się zgadzają, `amber` — rozjazd
-   ponad próg `CLOCK_DRIFT`, `red` — nie ma czego porównać, bo nie było fixa GPS. */
+   HTML. Trzy tony, trzy różne zdania: `dim` - zegary się zgadzają, `amber` - rozjazd
+   ponad próg `CLOCK_DRIFT`, `red` - nie ma czego porównać, bo nie było fixa GPS. */
 .clock-val.amber {
   color: var(--amber);
   font-weight: 700;
@@ -217,7 +217,7 @@ td.dim {
 /* Wartość zegara, którą KOREKTA przestawiła (`A04`, `retime`). Przekreślenie znaczy
    „to już nie jest liczba, którą liczy projekcja"; nowy czas stoi pod spodem jako
    `.cell-sub`. Bez tego zdarzenie po korekcie było w tabeli nieodróżnialne od
-   nietkniętego — kolumny pokazywały wartości surowe, a jedyna wzmianka mieszkała
+   nietkniętego - kolumny pokazywały wartości surowe, a jedyna wzmianka mieszkała
    w rozwinięciu, które trzeba otworzyć osobno dla każdego wiersza.
    Reguła stoi PO tonach, żeby wygaszenie wygrywało z czerwienią „brak fixa": wiersz
    bez fixa, któremu korekta NADAŁA czas, ma obie klasy naraz.
@@ -227,7 +227,7 @@ td.dim {
   color: var(--text-muted);
 }
 
-/* Zdarzenie UNIEWAŻNIONE korektą (`A04`). Wiersz ZOSTAJE w tabeli — rejestr jest
+/* Zdarzenie UNIEWAŻNIONE korektą (`A04`). Wiersz ZOSTAJE w tabeli - rejestr jest
    append-only i to właśnie te wiersze tłumaczą, dlaczego liczby dnia różnią się
    od tego, co zapisał telefon. Przekreślamy czasy i identyfikatory, nie całą treść:
    plakietka typu i nazwisko pilota mają być czytelne, bo po nich się szuka.
@@ -238,11 +238,11 @@ tbody tr.voided td.mono {
   color: var(--text-muted);
 }
 
-/* ROZWINIĘCIE WIERSZA (`A04`: payload + nagłówek zdarzenia) — wiersz-satelita pod
+/* ROZWINIĘCIE WIERSZA (`A04`: payload + nagłówek zdarzenia) - wiersz-satelita pod
    wierszem właściwym, przez całą szerokość tabeli. Osobny `<tr>`, a nie szuflada
    z boku, bo mockup pokazuje treść DOKŁADNIE pod wierszem, którego dotyczy:
    przy dochodzeniu porównuje się sąsiednie zdarzenia, a szuflada zasłania listę.
-   Kolejność ma znaczenie — reguła stoi PO `tbody tr:hover`, żeby najechanie myszą
+   Kolejność ma znaczenie - reguła stoi PO `tbody tr:hover`, żeby najechanie myszą
    nie podświetlało satelity jak osobnego wiersza listy. */
 tbody tr.row-expand:hover {
   background: none;
@@ -254,7 +254,7 @@ tbody tr.row-expand > td {
 }
 
 /* Dzień z OTWARTĄ FLAGĄ. W mockupie `A02-dni.html` stoi to stylem inline
-   (`style="background:var(--amber-muted)"`) na dwóch wierszach — tutaj jest klasą,
+   (`style="background:var(--amber-muted)"`) na dwóch wierszach - tutaj jest klasą,
    bo o tym, który wiersz ma flagę, rozstrzyga `openFlags` z odpowiedzi serwera,
    a nie autor pliku HTML. Wygląd bez zmian.
    Kolejność ma znaczenie: reguła stoi PO `tbody tr:hover`, żeby najechanie myszą
@@ -266,7 +266,7 @@ tbody tr.flagged:hover {
 
 /* Stopka listy stronicowanej kursorem: podpis „pokazano N z M" i przycisk dokładający
    kolejną stronę. `SZABLON.html` tej klasy nie ma, bo żaden mockup nie rysuje
-   paginacji — `A02` pokazuje dwanaście wierszy i kończy się banerem. Kursor keyset
+   paginacji - `A02` pokazuje dwanaście wierszy i kończy się banerem. Kursor keyset
    jest jednak kontraktem serwera (`nextCursor` w każdej odpowiedzi), a lista przycięta
    po cichu byłaby najgorszym trybem awarii narzędzia nadzoru: wyglądałaby na komplet. */
 .list-foot {

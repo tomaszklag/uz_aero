@@ -1,26 +1,26 @@
 /**
- * UZ Aero — panel: SZABLON JEST INWENTARZEM, nie ilustracją.
+ * UZ Aero - panel: SZABLON JEST INWENTARZEM, nie ilustracją.
  *
  * Reguła z `CLAUDE.md` i `docs/architektura-panelu-frontend.md` §3.3: klasa używana
  * w panelu musi mieć regułę ZARÓWNO w `admin/src/styles/**`, JAK I w
- * `design/admin/SZABLON.html`. Powód jest praktyczny, nie porządkowy — szablon to
+ * `design/admin/SZABLON.html`. Powód jest praktyczny, nie porządkowy - szablon to
  * jedyne miejsce, w którym da się zobaczyć komplet komponentów back-office'u naraz,
  * a `CLAUDE.md` każe zaczynać każdy nowy ekran od skopiowania stamtąd `<head>`.
  * Klasa, której tam nie ma, jest niewidoczna dla autora następnego ekranu: napisze
- * ją drugi raz pod inną nazwą albo — gorzej — użyje jej, nie mając reguły.
+ * ją drugi raz pod inną nazwą albo - gorzej - użyje jej, nie mając reguły.
  *
  * ══ KIERUNEK JEST JEDEN I TO JEST ŚWIADOME ══
  * Sprawdzamy WYŁĄCZNIE „panel ⊆ szablon". Odwrotna strona NIE jest naruszeniem:
  * szablon celowo wyprzedza implementację i niesie komponenty ekranów, których jeszcze
  * nie ma (progi, pulpit, statystyki), plus ramę samego mockupu (okno przeglądarki,
- * panel wariantów, nav-strip). W chwili pisania to sześćdziesiąt klas — wymuszanie
+ * panel wariantów, nav-strip). W chwili pisania to sześćdziesiąt klas - wymuszanie
  * równości kazałoby albo kasować z szablonu inwentarz zaprojektowany i zatwierdzony,
  * albo trzymać listę wyjątków dłuższą od reguły, którą i tak trzeba by ruszać przy
  * każdym ekranie. Jedno i drugie zamieniłoby test w koszt bez zysku.
  *
  * Czego ten test NIE łapie: klasy użytej w `.tsx`, która nie ma reguły NIGDZIE.
- * Broni przed tym para z `architecture.test.ts` — zakaz sklejania nazw klas
- * w `.tsx` (nazwa musi być literałem, więc da się ją wygrepować) — oraz test
+ * Broni przed tym para z `architecture.test.ts` - zakaz sklejania nazw klas
+ * w `.tsx` (nazwa musi być literałem, więc da się ją wygrepować) - oraz test
  * inwentarza klas świeżości w `screens/fleet/fleetRows.test.ts`. Pełne skanowanie
  * `className` to osobna praca; ta luka jest tu nazwana, żeby nikt nie uznał,
  * że jest zamknięta.
@@ -44,7 +44,7 @@ function cssFiles(dir: string): string[] {
 
 /**
  * Nazwy klas z SELEKTORÓW. Komentarze zdejmujemy (proza o klasie to nie klasa),
- * a z każdej reguły bierzemy wyłącznie część przed `{` — inaczej wartości typu
+ * a z każdej reguły bierzemy wyłącznie część przed `{` - inaczej wartości typu
  * `.5rem` czy `rgba(…,0.05)` wjeżdżałyby do zbioru jako klasy.
  */
 function classesIn(css: string): Set<string> {
@@ -80,7 +80,7 @@ describe('inwentarz klas: panel ↔ SZABLON.html', () => {
     expect(panel.size).toBeGreaterThan(100);
     expect(template.size).toBeGreaterThan(100);
 
-    // Klasy, o których wiemy, że są po obu stronach — gdyby regex przestał łapać
+    // Klasy, o których wiemy, że są po obu stronach - gdyby regex przestał łapać
     // selektory złożone albo modyfikatory, ten wiersz padnie pierwszy.
     for (const known of ['table-wrap', 'chip', 'drawer', 'banner', 'cell-sub']) {
       expect(panel.has(known), `panel: .${known}`).toBe(true);

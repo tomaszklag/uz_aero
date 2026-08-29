@@ -1,8 +1,8 @@
 /**
- * UZ Aero — ProfileChip (`.profile-chip` z mockupu 00)
+ * UZ Aero - ProfileChip (`.profile-chip` z mockupu 00)
  *
  * Karta lokalnego profilu na zamku PIN: okrągły awatar z inicjałami, nazwisko, kod.
- * Mówi pilotowi, CZYJ profil odblokowuje — na wspólnym telefonie klubowym to nie
+ * Mówi pilotowi, CZYJ profil odblokowuje - na wspólnym telefonie klubowym to nie
  * ornament, tylko ochrona przed wpisaniem swojego PIN-u w cudzy profil.
  */
 
@@ -16,7 +16,7 @@ import { toneColors } from '../tone';
 
 export interface ProfileChipProps {
   name: string;
-  /** Kod pilota (TMK) — mono, pod nazwiskiem. */
+  /** Kod pilota (TMK) - mono, pod nazwiskiem. */
   code: string;
   style?: ViewStyle;
 }

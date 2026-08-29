@@ -1,8 +1,8 @@
 /**
- * UZ Aero — test NOTATEK SESJI (ekran 10, issue #40 pkt 5).
+ * UZ Aero - test NOTATEK SESJI (ekran 10, issue #40 pkt 5).
  *
  * Zgłoszenie brzmiało krótko: „brakuje pola z dodanymi notatkami". Tekst wpisany przez
- * pilota — przy zadaniu (02e) albo przy wpisie ręcznym (08, 15) — nie wracał do niego
+ * pilota - przy zadaniu (02e) albo przy wpisie ręcznym (08, 15) - nie wracał do niego
  * nigdzie; widział go tylko administrator w panelu.
  *
  * Test pilnuje trzech rzeczy: OBA źródła trafiają do jednej listy, kolejność jest
@@ -69,7 +69,7 @@ function sessionEvents(over: { taskNote?: string | null; manualNote?: string | n
       {
         takeoff: at(9, 12),
         notes:
-          over.manualNote === undefined ? 'Start dopisany z pamięci — brak fixa.' : over.manualNote,
+          over.manualNote === undefined ? 'Start dopisany z pamięci - brak fixa.' : over.manualNote,
       },
       'manual-1',
     ),
@@ -81,20 +81,20 @@ function notes(events: Event[] = sessionEvents()) {
   return sessionNotes(projectSession(events), events);
 }
 
-/** Korekta wartości — `amend` z issue #43. Czas poprawki nie musi mieścić się w sesji. */
+/** Korekta wartości - `amend` z issue #43. Czas poprawki nie musi mieścić się w sesji. */
 function amend(targetUuid: string, fields: object, when = at(11, 0)): Event {
   return event('event_correction', when, { targetUuid, action: 'amend', fields } as never);
 }
 
 describe('notatki sesji', () => {
   it('zbiera notatkę z zadania i uwagi wpisu ręcznego w jednej liście', () => {
-    expect(notes().map((note) => `${note.when ?? '—'} — ${note.text}`)).toEqual([
-      '— — Drugi zbiornik nie trzyma wskazania.',
-      'Wpis ręczny · 09:12 — Start dopisany z pamięci — brak fixa.',
+    expect(notes().map((note) => `${note.when ?? '-'} - ${note.text}`)).toEqual([
+      '- - Drugi zbiornik nie trzyma wskazania.',
+      'Wpis ręczny · 09:12 - Start dopisany z pamięci - brak fixa.',
     ]);
   });
 
-  it('notatka sesji NIE MA stempla — miałby opisywać godzinę preflightu, nie ją', () => {
+  it('notatka sesji NIE MA stempla - miałby opisywać godzinę preflightu, nie ją', () => {
     // Zgłoszenie z urządzenia (2026-08-14): przy notatce świeciło „Zadanie · 08:06",
     // czyli czas POTWIERDZENIA zadania. Notatka sesji jest jedna, więc stempel niczego
     // nie rozróżniał, a po pierwszej poprawce treści zaczynał wprost kłamać.
@@ -103,7 +103,7 @@ describe('notatki sesji', () => {
     expect(sesyjna?.when).toBeNull();
   });
 
-  it('uwaga wpisu ręcznego stempel MA — jest ich wiele i trzeba je rozróżnić', () => {
+  it('uwaga wpisu ręcznego stempel MA - jest ich wiele i trzeba je rozróżnić', () => {
     const wpis = notes().find((note) => note.kind === 'entry');
 
     expect(wpis?.when).toBe('Wpis ręczny · 09:12');
@@ -113,7 +113,7 @@ describe('notatki sesji', () => {
     expect(notes().map((note) => note.id)).toEqual(['preflight', 'manual-1']);
   });
 
-  it('sesja bez ani jednej notatki daje pustą listę — ekran nie rysuje wtedy karty', () => {
+  it('sesja bez ani jednej notatki daje pustą listę - ekran nie rysuje wtedy karty', () => {
     expect(notes(sessionEvents({ taskNote: null, manualNote: null }))).toEqual([]);
   });
 
@@ -123,7 +123,7 @@ describe('notatki sesji', () => {
     expect(notes(sessionEvents({ taskNote: '   ', manualNote: '\n' }))).toEqual([]);
   });
 
-  it('kolejność jest chronologiczna — także gdy wpis ręczny opisuje wcześniejszą godzinę', () => {
+  it('kolejność jest chronologiczna - także gdy wpis ręczny opisuje wcześniejszą godzinę', () => {
     // Wpis po fakcie potrafi nieść czas sprzed przejęcia (pilot odtwarza lot z pamięci).
     // Lista czyta się jak reszta ekranu: w czasie sesji, a nie w czasie wpisywania.
     const wczesny = sessionEvents().map((e) =>
@@ -137,7 +137,7 @@ describe('notatki sesji', () => {
 /**
  * DOPISANIE notatki (zgłoszenie z urządzenia, 2026-08-14).
  *
- * Karta „Notatki" pojawia się w trybie ODCZYTU tylko z treścią (issue #40) — i to
+ * Karta „Notatki" pojawia się w trybie ODCZYTU tylko z treścią (issue #40) - i to
  * zostaje. Ale w trybie EDYCJI ta sama reguła odbierała jedyne wejście: sesja bez
  * notatki nie miała karty, więc nie miała jak notatki dostać. Adres celu musi więc
  * istnieć NIEZALEŻNIE od tego, czy notatka już jest.
@@ -159,21 +159,21 @@ describe('cel dopisania notatki', () => {
     expect(fromTask?.targetUuid).toBe(noteTargetUuid(events));
   });
 
-  it('sesja bez preflightu nie ma czego adresować — ołówka wtedy nie ma', () => {
+  it('sesja bez preflightu nie ma czego adresować - ołówka wtedy nie ma', () => {
     const bezPreflightu = sessionEvents().filter((e) => e.type !== 'preflight_confirm');
     expect(noteTargetUuid(bezPreflightu)).toBeNull();
   });
 
   it('dopisanie jest możliwe TYLKO przy braku notatki sesji', () => {
     // Druga połowa tego samego zgłoszenia: przy istniejącej notatce wiersz „Dodaj
-    // notatkę do sesji" obiecywał drugą, a naprawdę nadpisałby pierwszą — notatka
+    // notatkę do sesji" obiecywał drugą, a naprawdę nadpisałby pierwszą - notatka
     // sesji to JEDNO pole w payloadzie preflightu.
     expect(missingSessionNote(notes())).toBe(false);
     expect(missingSessionNote(notes(sessionEvents({ taskNote: null })))).toBe(true);
   });
 
   it('nie ma po co dopisywać notatki, którą ktoś już poprawiał', () => {
-    // Sesja z poprawioną notatką ma notatkę — inaczej „popr." nie miałoby czego opisywać.
+    // Sesja z poprawioną notatką ma notatkę - inaczej „popr." nie miałoby czego opisywać.
     const poprawiona = [...sessionEvents(), amend('preflight-1', { notes: 'Po poprawce.' })];
 
     expect(missingSessionNote(notes(poprawiona))).toBe(false);
@@ -195,8 +195,8 @@ describe('cel dopisania notatki', () => {
  *
  * Notatka dała się poprawić, ale nic o tym nie mówiła: pilot czytał tekst nie wiedząc,
  * że to już nie jest to, co wpisał, i nie miał jak dojść do historii zmian. Licznik
- * `changes` zasila JEDNO i drugie — plakietkę „popr." przy wierszu i wejście w historię
- * w arkuszu — więc nie mają jak powiedzieć czegoś innego.
+ * `changes` zasila JEDNO i drugie - plakietkę „popr." przy wierszu i wejście w historię
+ * w arkuszu - więc nie mają jak powiedzieć czegoś innego.
  */
 describe('ślad poprawki notatki', () => {
   it('świeżo napisana notatka nie ma żadnych zmian', () => {
@@ -209,7 +209,7 @@ describe('ślad poprawki notatki', () => {
 
     expect(lista.find((n) => n.kind === 'session')?.changes).toBe(1);
     expect(lista.find((n) => n.kind === 'session')?.text).toBe('Po poprawce.');
-    // Uwaga wpisu ręcznego to osobny tekst w osobnym zdarzeniu — poprawka preflightu
+    // Uwaga wpisu ręcznego to osobny tekst w osobnym zdarzeniu - poprawka preflightu
     // nie ma jak jej dotknąć.
     expect(lista.find((n) => n.kind === 'entry')?.changes).toBe(0);
   });
@@ -233,7 +233,7 @@ describe('ślad poprawki notatki', () => {
   });
 
   it('skasowanie notatki jest zmianą, ale nie ma już czego opisać', () => {
-    // `notes: null` KASUJE notatkę — wiersz znika z listy razem z plakietką. Ślad
+    // `notes: null` KASUJE notatkę - wiersz znika z listy razem z plakietką. Ślad
     // zostaje w rejestrze i widać go w historii zmian preflightu.
     const events = [...sessionEvents({ manualNote: null }), amend('preflight-1', { notes: null })];
 
@@ -249,7 +249,7 @@ describe('ślad poprawki notatki', () => {
   });
 
   it('noteChanges bez adresu daje zero, a nie wyjątek', () => {
-    // Sesja bez preflightu w strumieniu — `noteTargetUuid` zwraca wtedy `null`.
+    // Sesja bez preflightu w strumieniu - `noteTargetUuid` zwraca wtedy `null`.
     expect(noteChanges(sessionEvents(), null)).toBe(0);
   });
 });

@@ -1,23 +1,23 @@
 /**
- * UZ Aero (serwer) — flota w panelu (`/admin/api/fleet*`, `A07` i `A07a`).
+ * UZ Aero (serwer) - flota w panelu (`/admin/api/fleet*`, `A07` i `A07a`).
  *
  * Flota jest jedynym miejscem, w którym administrator przestawia WEJŚCIA REGUŁ, więc
  * ten plik pilnuje sześciu własności, których złamanie jest usterką produktu, a nie
  * kosmetyką ekranu:
  *
- *  1. **serwer podaje ROZWIĄZANĄ tolerancję** — `max(10 L, 5% pojemności)` — i robi to
+ *  1. **serwer podaje ROZWIĄZANĄ tolerancję** - `max(10 L, 5% pojemności)` - i robi to
  *     zarówno przy każdym samolocie, jak i dla pojemności, która jeszcze nie została
  *     zapisana; bez tego panel nie ma prawa pokazać progu, bo nie wolno mu liczyć;
- *  2. **komenda floty niczego nie przepisuje** — flaga wystawiona przed zmianą zachowuje
+ *  2. **komenda floty niczego nie przepisuje** - flaga wystawiona przed zmianą zachowuje
  *     stary próg w `details`, a rejestr zdarzeń zostaje nietknięty. Osobno przybite jest
  *     to, co z tego NIE wynika: nowy próg obejmie także pary dni historycznych przy
  *     najbliższym `POST /events`, bo detekcja liczy łańcuch z całej historii samolotu;
- *  3. **zapis podbija ETag `GET /reference`** — to JEDYNY kanał, którym konfiguracja
+ *  3. **zapis podbija ETag `GET /reference`** - to JEDYNY kanał, którym konfiguracja
  *     wychodzi do telefonów; bez tego zmiana zostaje w panelu;
- *  4. **samolotu z otwartą sesją nie da się wyłączyć ze służby** — odmowa jawna,
+ *  4. **samolotu z otwartą sesją nie da się wyłączyć ze służby** - odmowa jawna,
  *     z powodem;
- *  5. **wyłączenie ze służby nie psuje historii** — dni, flagi i karty zostają;
- *  6. **szef wyszkolenia czyta flotę, ale jej nie zmienia** — 403 z podaną zdolnością.
+ *  5. **wyłączenie ze służby nie psuje historii** - dni, flagi i karty zostają;
+ *  6. **szef wyszkolenia czyta flotę, ale jej nie zmienia** - 403 z podaną zdolnością.
  *
  * Zero atrap: PGlite w procesie, prawdziwe klasy, `app.inject`, dni powstają
  * z prawdziwego `POST /events`.
@@ -160,7 +160,7 @@ const rowOf = (body: { items: { reg: string }[] }, reg: string) => {
 
 // ── odczyt listy ────────────────────────────────────────────────────────────────
 
-describe('GET /admin/api/fleet — konfiguracja + stan z telefonów', () => {
+describe('GET /admin/api/fleet - konfiguracja + stan z telefonów', () => {
   it('każdy wiersz niesie ROZWIĄZANĄ tolerancję `FUEL_MISMATCH`, nie samą pojemność', async () => {
     // To jest własność, dla której ta trasa w ogóle ma taki kształt: panel nie może
     // policzyć `max(10 L, 5%)`, bo z domeny wolno mu importować wyłącznie typy.
@@ -175,11 +175,11 @@ describe('GET /admin/api/fleet — konfiguracja + stan z telefonów', () => {
     expect(rowOf(body, 'SP-AXA')).toMatchObject({ capacityL: 330, fuelToleranceL: 16.5 });
     // 1700 L → 85 L.
     expect(rowOf(body, 'SP-ANK')).toMatchObject({ capacityL: 1700, fuelToleranceL: 85 });
-    // 200 L → 5% = 10 L, czyli dokładnie próg — tolerancja nie schodzi niżej.
+    // 200 L → 5% = 10 L, czyli dokładnie próg - tolerancja nie schodzi niżej.
     expect(rowOf(body, 'SP-KWA')).toMatchObject({ capacityL: 200, fuelToleranceL: 10 });
   });
 
-  it('kolumny stanu mają TRZY stany świeżości — nigdy zera za brak', async () => {
+  it('kolumny stanu mają TRZY stany świeżości - nigdy zera za brak', async () => {
     const harness = await testHarness();
     const { app } = harness;
     const tmk = await token(app, 'TMK');
@@ -209,7 +209,7 @@ describe('GET /admin/api/fleet — konfiguracja + stan z telefonów', () => {
 
     const fgk = rowOf(body, 'SP-FGK') as unknown as Record<string, unknown>;
     expect(fgk.claim).toMatchObject({ picId: 'KRZ', picCode: 'KRZ', sessionUuid: 'fleet-open' });
-    // Odczytu NIE MA — i to jest trzeci stan („brak danych"), a nie zero.
+    // Odczytu NIE MA - i to jest trzeci stan („brak danych"), a nie zero.
     expect(fgk.reading).toBeNull();
     expect(typeof fgk.lastEventAt).toBe('string');
 
@@ -233,7 +233,7 @@ describe('GET /admin/api/fleet — konfiguracja + stan z telefonów', () => {
 
     const all = (await listFleet(app, tmk)).json();
     expect(all.counts).toEqual({ total: 4, active: 3, disabled: 1, claimed: 1 });
-    // Wyłączone na końcu listy — porządek jest częścią kontraktu portu.
+    // Wyłączone na końcu listy - porządek jest częścią kontraktu portu.
     expect(all.items.map((i: { reg: string }) => i.reg)).toEqual([
       'SP-ANK',
       'SP-AXA',
@@ -246,7 +246,7 @@ describe('GET /admin/api/fleet — konfiguracja + stan z telefonów', () => {
 
     const narrowed = (await listFleet(app, tmk, '?status=disabled')).json();
     expect(narrowed.items.map((i: { reg: string }) => i.reg)).toEqual(['SP-KWA']);
-    // Kafle się NIE ruszyły — opisują flotę, nie zawężenie. Chip też nie: zawęża go
+    // Kafle się NIE ruszyły - opisują flotę, nie zawężenie. Chip też nie: zawęża go
     // WYŁĄCZNIE wyszukiwanie, żeby cztery liczby zostały porównywalne między sobą.
     expect(narrowed.counts).toEqual({ total: 4, active: 3, disabled: 1, claimed: 1 });
     expect(narrowed.scopes).toEqual({ total: 4, active: 3, disabled: 1, claimed: 1 });
@@ -258,7 +258,7 @@ describe('GET /admin/api/fleet — konfiguracja + stan z telefonów', () => {
     // …a chipy o tym, co zobaczy człowiek po kliknięciu przy tej frazie.
     expect(searched.scopes).toEqual({ total: 1, active: 1, disabled: 0, claimed: 0 });
 
-    // Chip „Z claimem" filtruje po stronie SERWERA — liczba na chipie i skład listy
+    // Chip „Z claimem" filtruje po stronie SERWERA - liczba na chipie i skład listy
     // pod nim muszą mieć jedną definicję, a nie dwie (SQL kafla vs `.filter()` panelu).
     const claimed = (await listFleet(app, tmk, '?claimed=true')).json();
     expect(claimed.items.map((i: { reg: string }) => i.reg)).toEqual(['SP-FGK']);
@@ -266,10 +266,10 @@ describe('GET /admin/api/fleet — konfiguracja + stan z telefonów', () => {
     expect(free.items.map((i: { reg: string }) => i.reg)).not.toContain('SP-FGK');
   });
 
-  it('chip „Wyłączone" i lista pod nim mają JEDNĄ definicję — także dla stanu spoza katalogu', async () => {
+  it('chip „Wyłączone" i lista pod nim mają JEDNĄ definicję - także dla stanu spoza katalogu', async () => {
     // Chip z liczbą jest obietnicą „tyle wierszy zobaczysz po kliknięciu". Do 2026-08-01
     // kafel i chip liczyły `service_status <> 'active'`, a lista filtrowała przez
-    // `= 'disabled'` — więc wiersz ze stanem spoza katalogu wchodził do liczby i nie
+    // `= 'disabled'` - więc wiersz ze stanem spoza katalogu wchodził do liczby i nie
     // wchodził do listy. Przez HTTP jest to nieosiągalne (zod ma enum), ale wartość
     // w bazie bierze się też z migracji, seeda i psql; a `toServiceStatus` w adapterze
     // PREZENTUJE taki wiersz jako „Wyłączony", bo domyślenie się `active` z literówki
@@ -303,7 +303,7 @@ describe('GET /admin/api/fleet — konfiguracja + stan z telefonów', () => {
 
 // ── rozwiązana tolerancja dla wartości spoza bazy ───────────────────────────────
 
-describe('GET /admin/api/fleet/tolerance — próg dla pojemności i dla samolotu', () => {
+describe('GET /admin/api/fleet/tolerance - próg dla pojemności i dla samolotu', () => {
   it('liczy próg dla pojemności, której jeszcze nie ma w bazie (karta „Skutki zmiany")', async () => {
     const { app } = await testHarness();
     const tmk = await token(app, 'TMK');
@@ -316,14 +316,14 @@ describe('GET /admin/api/fleet/tolerance — próg dla pojemności i dla samolot
       capacityL: 1100,
       fuelToleranceL: 55,
     });
-    // Poniżej progu 10 L tolerancja NIE schodzi — to jest cała treść słowa „lub" w §4.5.
+    // Poniżej progu 10 L tolerancja NIE schodzi - to jest cała treść słowa „lub" w §4.5.
     expect((await tolerance(app, tmk, '?capacityL=118')).json()).toEqual({
       capacityL: 118,
       fuelToleranceL: 10,
     });
   });
 
-  it('odpowiada też po `aircraftId` — to odblokowuje A02a/A02b, gdzie panel zna samolot, a nie pojemność', async () => {
+  it('odpowiada też po `aircraftId` - to odblokowuje A02a/A02b, gdzie panel zna samolot, a nie pojemność', async () => {
     const { app } = await testHarness();
     const tmk = await token(app, 'TMK');
 
@@ -335,13 +335,13 @@ describe('GET /admin/api/fleet/tolerance — próg dla pojemności i dla samolot
     expect((await tolerance(app, tmk, '?aircraftId=SP-NIEMA')).statusCode).toBe(404);
   });
 
-  it('odmawia DOKŁADNIE tym samym, czym odmawia zapis — jedna definicja dopuszczalnej pojemności', async () => {
+  it('odmawia DOKŁADNIE tym samym, czym odmawia zapis - jedna definicja dopuszczalnej pojemności', async () => {
     // Do 2026-08-01 ta trasa odpowiadała progiem na `0`, `-500`, pusty parametr
     // i `1e300`, mimo że zapis tych samych wartości kończył się `409
     // capacity_not_positive` albo `400`. Dwie trasy jednego zasobu miały dwie definicje
     // pojemności, więc karta „Skutki zmiany" potrafiła pokazać wiarygodny próg dla
     // liczby, której serwer nigdy by nie zapisał. Jedyną obroną był warunek w
-    // `admin/src/queries/useFleet.ts` — czyli reguła siedziała w panelu, dokładnie tam,
+    // `admin/src/queries/useFleet.ts` - czyli reguła siedziała w panelu, dokładnie tam,
     // gdzie ten przekrój deklaruje, że jej nie ma.
     const { app } = await testHarness();
     const tmk = await token(app, 'TMK');
@@ -352,7 +352,7 @@ describe('GET /admin/api/fleet/tolerance — próg dla pojemności i dla samolot
       expect(res.json()).toEqual({ error: 'refused', reason: 'capacity_not_positive' });
     }
 
-    // Poza zakresem kolumny to kształt żądania, nie reguła — tak samo jak przy zapisie.
+    // Poza zakresem kolumny to kształt żądania, nie reguła - tak samo jak przy zapisie.
     expect((await tolerance(app, tmk, '?capacityL=1e300')).statusCode).toBe(400);
     expect((await tolerance(app, tmk, '?capacityL=abc')).statusCode).toBe(400);
 
@@ -367,7 +367,7 @@ describe('GET /admin/api/fleet/tolerance — próg dla pojemności i dla samolot
     expect(zero.json()).toEqual({ error: 'refused', reason: 'capacity_not_positive' });
   });
 
-  it('BRAK obu parametrów to nadal poprawne pytanie — „pojemność nieznana", próg z podłogi', async () => {
+  it('BRAK obu parametrów to nadal poprawne pytanie - „pojemność nieznana", próg z podłogi', async () => {
     // `capacityL: null` znaczy „zapytanie nie podało pojemności", a NIE „samolot bez
     // skonfigurowanej pojemności": takiego wiersza nie ma, bo `aircraft.capacity_l` jest
     // `NOT NULL`, a zapis ≤ 0 kończy się odmową. Kontrakt mówił do 2026-08-01 to drugie.
@@ -379,7 +379,7 @@ describe('GET /admin/api/fleet/tolerance — próg dla pojemności i dla samolot
 
 // ── zapis konfiguracji ──────────────────────────────────────────────────────────
 
-describe('POST /admin/api/fleet — dodanie jednostki', () => {
+describe('POST /admin/api/fleet - dodanie jednostki', () => {
   it('zakłada samolot, oddaje pełny wiersz listy i zapisuje próg w dzienniku audytu', async () => {
     const harness = await testHarness();
     const { app, db } = harness;
@@ -396,7 +396,7 @@ describe('POST /admin/api/fleet — dodanie jednostki', () => {
 
     expect(res.statusCode).toBe(201);
     const aircraft = res.json().aircraft;
-    // Rejestracja znormalizowana do WERSALIKÓW — indeks `UNIQUE` jest wrażliwy na
+    // Rejestracja znormalizowana do WERSALIKÓW - indeks `UNIQUE` jest wrażliwy na
     // wielkość, więc bez tego „sp-klm" założyłoby drugi wiersz tej samej maszyny.
     expect(aircraft).toMatchObject({
       reg: 'SP-KLM',
@@ -462,13 +462,13 @@ describe('POST /admin/api/fleet — dodanie jednostki', () => {
     expect(res.json()).toEqual({ error: 'refused', reason: 'capacity_not_positive' });
     const rows = await db.query("SELECT id FROM aircraft WHERE reg = 'SP-ZER'");
     expect(rows.rows).toHaveLength(0);
-    // Odmowa NIE zostawia wpisu w dzienniku — wyjątek wycofuje całą transakcję.
+    // Odmowa NIE zostawia wpisu w dzienniku - wyjątek wycofuje całą transakcję.
     const audit = await db.query("SELECT id FROM admin_audit WHERE action = 'aircraft.create'");
     expect(audit.rows).toHaveLength(0);
   });
 });
 
-describe('PATCH /admin/api/fleet/:id — zmiana konfiguracji', () => {
+describe('PATCH /admin/api/fleet/:id - zmiana konfiguracji', () => {
   it('zmiana pojemności PRZESUWA próg flagi i wypisuje skutek w dzienniku', async () => {
     const harness = await testHarness();
     const { app, db } = harness;
@@ -484,7 +484,7 @@ describe('PATCH /admin/api/fleet/:id — zmiana konfiguracji', () => {
     expect(res.statusCode).toBe(200);
     expect(res.json().aircraft).toMatchObject({ capacityL: 1100, fuelToleranceL: 55 });
 
-    // Lista mówi to samo co odpowiedź mutacji — jedno źródło liczby.
+    // Lista mówi to samo co odpowiedź mutacji - jedno źródło liczby.
     const after = rowOf((await listFleet(app, tmk)).json(), 'SP-ANK') as unknown as {
       fuelToleranceL: number;
     };
@@ -577,11 +577,11 @@ describe('komenda floty niczego nie przepisuje', () => {
     expect(flagAfter.rows[0]!.details).toEqual(flagBefore.rows[0]!.details);
     expect(flagAfter.rows[0]!.created_at).toEqual(flagBefore.rows[0]!.created_at);
 
-    // Rejestr zdarzeń bez zmian — ani jednego dopisanego, ani jednego skasowanego.
+    // Rejestr zdarzeń bez zmian - ani jednego dopisanego, ani jednego skasowanego.
     const eventsAfter = await db.query<{ n: string }>('SELECT COUNT(*) AS n FROM events');
     expect(eventsAfter.rows[0]!.n).toBe(eventsBefore.rows[0]!.n);
 
-    // Liczba otwartych flag na wierszu floty się nie zmieniła — karta „Skutki zmiany"
+    // Liczba otwartych flag na wierszu floty się nie zmieniła - karta „Skutki zmiany"
     // pokazuje ją właśnie po to, żeby powiedzieć, ilu spraw zmiana NIE dotyka.
     const after = rowOf((await listFleet(app, tmk)).json(), 'SP-AXA') as unknown as {
       openFlags: number;
@@ -598,7 +598,7 @@ describe('komenda floty niczego nie przepisuje', () => {
     // jednak, że „zmiana nie działa wstecz": `IngestCommands` po KAŻDEJ przyjętej
     // paczce liczy `chainFlags` na CAŁEJ historii sesji samolotu, z pojemnością
     // BIEŻĄCĄ. Obniżenie pojemności przesuwa więc próg także dla par dni zamkniętych
-    // PRZED zmianą — i wychodzi to przy pierwszej synchronizacji tej jednostki,
+    // PRZED zmianą - i wychodzi to przy pierwszej synchronizacji tej jednostki,
     // czyli w chwili, w której nikt się tego nie spodziewa.
     //
     // Zachowanie zostaje (zmiana momentu powstawania flag wymaga ścieżki
@@ -633,12 +633,12 @@ describe('komenda floty niczego nie przepisuje', () => {
     const ank = rowOf((await listFleet(app, tmk)).json(), 'SP-ANK') as unknown as { id: string };
     expect((await patchAircraft(app, tmk, ank.id, { capacityL: 200 })).statusCode).toBe(200);
 
-    // Sam PATCH nadal niczego nie wystawia — komenda nie ma pętli po `flags`.
+    // Sam PATCH nadal niczego nie wystawia - komenda nie ma pętli po `flags`.
     expect(await flagsOf()).toHaveLength(0);
 
     // …a teraz przychodzi ZWYCZAJNA paczka trzeciego dnia, spięta z poprzednim bez
     // żadnego rozjazdu (paliwo 88 → 88, licznik ciągły). Jedyne, co się zmieniło,
-    // to próg — i to on wystawia flagę na parze `hist-a` / `hist-b`.
+    // to próg - i to on wystawia flagę na parze `hist-a` / `hist-b`.
     await postEvents(
       app,
       tmk,
@@ -647,13 +647,13 @@ describe('komenda floty niczego nie przepisuje', () => {
 
     const raised = await flagsOf();
     expect(raised).toHaveLength(1);
-    // Para DNI ZAMKNIĘTYCH przed zmianą pojemności — nie ta, którą właśnie przysłano.
+    // Para DNI ZAMKNIĘTYCH przed zmianą pojemności - nie ta, którą właśnie przysłano.
     expect(raised[0]!.session_uuids).toEqual(['hist-a', 'hist-b']);
     // Próg zapisany w fladze to NOWY próg, mimo że oba dni domknięto przy starym.
     expect(raised[0]!.details).toMatchObject({ toleranceL: 10, diffL: 62 });
 
     // Asymetria: powrót do 1700 L NIE zdejmuje flagi, która przy tym progu by nie
-    // powstała — `ensureOpen` tylko dokłada. Zmiana działa wstecz WYŁĄCZNIE w stronę
+    // powstała - `ensureOpen` tylko dokłada. Zmiana działa wstecz WYŁĄCZNIE w stronę
     // produkującą pracę i ekran ma o tym mówić wprost.
     expect((await patchAircraft(app, tmk, ank.id, { capacityL: 1700 })).statusCode).toBe(200);
     await postEvents(
@@ -667,11 +667,11 @@ describe('komenda floty niczego nie przepisuje', () => {
 
 // ── kanał do telefonów ──────────────────────────────────────────────────────────
 
-describe('zapis dociera do telefonów — ETag `GET /reference`', () => {
+describe('zapis dociera do telefonów - ETag `GET /reference`', () => {
   it('zmiana konfiguracji PODBIJA znacznik i unieważnia 304', async () => {
     // To jest JEDYNY kanał, którym konfiguracja wychodzi z panelu. Zapis, który nie
     // rusza `aircraft.updated_at`, zostaje w bazie panelu i żaden telefon go nie
-    // zobaczy — dostanie 304 i będzie pracował na starej pojemności.
+    // zobaczy - dostanie 304 i będzie pracował na starej pojemności.
     const harness = await testHarness();
     const { app } = harness;
     const tmk = await token(app, 'TMK');
@@ -696,12 +696,12 @@ describe('zapis dociera do telefonów — ETag `GET /reference`', () => {
     expect(aircraft?.capacityL).toBe(1100);
   });
 
-  it('samolot WYŁĄCZONY nadal jedzie w `/reference` — filtruje go aplikacja, nie serwer', async () => {
+  it('samolot WYŁĄCZONY nadal jedzie w `/reference` - filtruje go aplikacja, nie serwer', async () => {
     // Sprostowanie mockupu A07: „przestaje wychodzić w GET /reference" nie jest tym,
     // co robi serwer. Migawka niesie WSZYSTKIE jednostki razem z `serviceStatus`, bo
     // rekord, który zniknie z odpowiedzi, zostaje w cache telefonu na zawsze
     // (`app/src/application/sync/referenceSync.ts` mówi to wprost). Wybór blokuje
-    // aplikacja — `preflightDraft.ts` odrzuca `serviceStatus === 'disabled'`.
+    // aplikacja - `preflightDraft.ts` odrzuca `serviceStatus === 'disabled'`.
     const { app } = await testHarness();
     const tmk = await token(app, 'TMK');
 
@@ -763,7 +763,7 @@ describe('wyłączenie ze służby', () => {
     // jest zdarzeniem, którego szuka się w dzienniku po nazwie.
     expect(audit.rows[0]!.action).toBe('aircraft.disable');
 
-    // Powrót do służby wraca jako zwykła aktualizacja — katalog nie ma
+    // Powrót do służby wraca jako zwykła aktualizacja - katalog nie ma
     // `aircraft.enable` i to jest jego świadoma treść.
     expect((await patchAircraft(app, tmk, axa.id, { serviceStatus: 'active' })).statusCode).toBe(200);
     const back = await db.query<{ action: string }>(
@@ -772,7 +772,7 @@ describe('wyłączenie ze służby', () => {
     expect(back.rows[0]!.action).toBe('aircraft.update');
   });
 
-  it('wyłączenie NIE unieważnia historii — dni, flagi i karty zostają', async () => {
+  it('wyłączenie NIE unieważnia historii - dni, flagi i karty zostają', async () => {
     const harness = await testHarness();
     const { app } = harness;
     const tmk = await token(app, 'TMK');
@@ -814,7 +814,7 @@ describe('wyłączenie ze służby', () => {
     });
     expect(flags.json().total).toBeGreaterThan(0);
 
-    // Karta arkusza dnia też zostaje — wyłączenie to zmiana konfiguracji, nie kasowanie.
+    // Karta arkusza dnia też zostaje - wyłączenie to zmiana konfiguracji, nie kasowanie.
     const sheet = await app.inject({
       method: 'GET',
       url: '/admin/api/sessions/hist-1',
@@ -828,7 +828,7 @@ describe('wyłączenie ze służby', () => {
 // ── zakres uprawnień ────────────────────────────────────────────────────────────
 
 describe('zakres uprawnień floty', () => {
-  it('szef wyszkolenia CZYTA flotę, ale jej nie zmienia — 403 z podaną zdolnością', async () => {
+  it('szef wyszkolenia CZYTA flotę, ale jej nie zmienia - 403 z podaną zdolnością', async () => {
     const { app } = await testHarness();
     // AKO = `training_lead` z seeda.
     const ako = await token(app, 'AKO');
@@ -852,7 +852,7 @@ describe('zakres uprawnień floty', () => {
     expect(patched.json()).toMatchObject({ required: 'fleet.manage' });
   });
 
-  it('pilot bez wejścia do panelu nie widzi nawet listy — 403 `panel.access`', async () => {
+  it('pilot bez wejścia do panelu nie widzi nawet listy - 403 `panel.access`', async () => {
     const { app } = await testHarness();
     const pwi = await token(app, 'PWI');
     const res = await listFleet(app, pwi);
@@ -902,17 +902,17 @@ describe('konfiguracja oleju (issue #60)', () => {
       .json()
       .aircraft.find((a: { reg: string }) => a.reg === 'SP-OIL');
     expect(oilAc).toMatchObject({ oilMinL: 8.5, oilCapacityL: 11.4, oilNormLPerH: 0.12 });
-    // Jednostka bez konfiguracji niesie jawne nulle — moduł dla niej milczy.
+    // Jednostka bez konfiguracji niesie jawne nulle - moduł dla niej milczy.
     const axa = ref.json().aircraft.find((a: { reg: string }) => a.reg === 'SP-AXA');
     expect(axa).toMatchObject({ oilMinL: null, oilCapacityL: null, oilNormLPerH: null });
 
-    // `null` = wyczyść (moduł ma zamilknąć) — inaczej niż pominięcie pola.
+    // `null` = wyczyść (moduł ma zamilknąć) - inaczej niż pominięcie pola.
     const cleared = await patchAircraft(app, tmk, id, { oilMinL: null });
     expect(cleared.statusCode).toBe(200);
     expect(cleared.json().aircraft).toMatchObject({ oilMinL: null, oilCapacityL: 11.4 });
   });
 
-  it('zero i minimum ponad zbiornik odbijają się z powodem — reguła, nie kształt żądania', async () => {
+  it('zero i minimum ponad zbiornik odbijają się z powodem - reguła, nie kształt żądania', async () => {
     const { app } = await testHarness();
     const tmk = await token(app, 'TMK');
 
@@ -942,7 +942,7 @@ describe('konfiguracja oleju (issue #60)', () => {
     });
     const id = created.json().aircraft.id as string;
 
-    // Samo minimum w żądaniu — zbiornik 10 L stoi już w bazie; 12 > 10 ma odbić.
+    // Samo minimum w żądaniu - zbiornik 10 L stoi już w bazie; 12 > 10 ma odbić.
     const res = await patchAircraft(app, tmk, id, { oilMinL: 12 });
     expect(res.statusCode).toBe(409);
     expect(res.json()).toMatchObject({ error: 'refused', reason: 'oil_min_above_capacity' });

@@ -1,5 +1,5 @@
 /**
- * UZ Aero — ZŁOŻENIE MOTYWU: palety + skale + typografia w jeden obiekt.
+ * UZ Aero - ZŁOŻENIE MOTYWU: palety + skale + typografia w jeden obiekt.
  *
  * `Theme` jest tym, co dostaje `ThemeProvider` aplikacji i (po zamianie na zmienne
  * CSS przez `cssVars.ts`) panel webowy. Rejestr `THEMES` trzyma wszystkie pięć.
@@ -19,7 +19,7 @@ import {
 
 export interface Theme {
   name: ThemeName;
-  /** true dla Paper/Solar/Sky — steruje podbiciem wagi cyfr i grubszymi borderami (§6). */
+  /** true dla Paper/Solar/Sky - steruje podbiciem wagi cyfr i grubszymi borderami (§6). */
   isLight: boolean;
   colors: ThemeColors;
   spacing: typeof spacing;
@@ -53,7 +53,7 @@ export const THEMES: Record<ThemeName, Theme> = {
   amber: makeTheme('amber', amberColors, false),
 };
 
-/** Kolejność w przełączniku motywów — zgodna z sekcją theme-picker w 05-themes.html. */
+/** Kolejność w przełączniku motywów - zgodna z sekcją theme-picker w 05-themes.html. */
 export const THEME_ORDER: ThemeName[] = ['night', 'paper', 'solar', 'sky', 'amber'];
 
 /** Etykiety wyświetlane w ThemePicker. */

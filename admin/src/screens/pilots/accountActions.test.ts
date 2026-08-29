@@ -1,9 +1,9 @@
 /**
- * UZ Aero — panel: dostępność akcji na koncie i komunikaty odmowy.
+ * UZ Aero - panel: dostępność akcji na koncie i komunikaty odmowy.
  *
  * Dwie własności, których złamanie jest usterką PRODUKTOWĄ, a nie kosmetyczną:
  *  1. przycisk zablokowany ZAWSZE niesie powód (nigdy sama kłódka);
- *  2. odmowa serwera tłumaczy ZASADĘ, a nie kod — bo to jest ta chwila, w której
+ *  2. odmowa serwera tłumaczy ZASADĘ, a nie kod - bo to jest ta chwila, w której
  *     człowiek sięga po `UPDATE` w psql.
  */
 
@@ -53,7 +53,7 @@ describe('zdolność', () => {
 });
 
 describe('akcje w wierszu', () => {
-  it('szef wyszkolenia widzi WSZYSTKIE przyciski zablokowane — z powodem', () => {
+  it('szef wyszkolenia widzi WSZYSTKIE przyciski zablokowane - z powodem', () => {
     for (const action of [
       resetAction(pilot(), LEAD),
       activeAction(pilot(), LEAD, 'inny'),
@@ -70,13 +70,13 @@ describe('akcje w wierszu', () => {
     expect(action.reason).toContain('najpierw aktywuj');
   });
 
-  it('administrator nie deaktywuje WŁASNEGO konta — blokada widoczna od razu', () => {
+  it('administrator nie deaktywuje WŁASNEGO konta - blokada widoczna od razu', () => {
     const action = activeAction(pilot({ id: 'ja' }), ADMIN, 'ja');
     expect(action.enabled).toBe(false);
     expect(action.reason).toContain('Twoje konto');
   });
 
-  it('AKTYWACJA własnego konta nie jest blokowana — tu nic się nie odcina', () => {
+  it('AKTYWACJA własnego konta nie jest blokowana - tu nic się nie odcina', () => {
     // Konto nieaktywne, którym patrzysz na panel, nie istnieje (brama odcina je
     // natychmiast), ale reguła ma być o tym, co odbiera dostęp, a nie o właścicielu.
     expect(activeAction(pilot({ id: 'ja', active: false }), ADMIN, 'ja').enabled).toBe(true);
@@ -103,7 +103,7 @@ describe('odmowa serwera', () => {
     expect(accountFailure(409, { error: 'conflict', field: 'email' }).title).toContain('e-mail');
   });
 
-  it('400 `no_changes` nie straszy — to nie jest awaria', () => {
+  it('400 `no_changes` nie straszy - to nie jest awaria', () => {
     const failure = accountFailure(400, { error: 'no_changes' });
     expect(failure.tone).toBe('warn');
     expect(failure.final).toBe(false);
@@ -120,7 +120,7 @@ describe('odmowa serwera', () => {
     expect(failure.final).toBe(false);
   });
 
-  it('nieznany status nie gubi kodu — administrator ma czego szukać', () => {
+  it('nieznany status nie gubi kodu - administrator ma czego szukać', () => {
     expect(accountFailure(503, { error: 'boom' }).detail).toContain('503');
   });
 
@@ -149,7 +149,7 @@ describe('napis nad hasłem pokazanym raz', () => {
     expect(secretCopy('reset', 0).note).toContain('nie miał żywych sesji telefonu');
   });
 
-  it('mówi o OBU rodzajach sesji — także wtedy, gdy liczba wynosi zero', () => {
+  it('mówi o OBU rodzajach sesji - także wtedy, gdy liczba wynosi zero', () => {
     // `revokedSessions` liczy wyłącznie refresh tokeny telefonu; sesji panelu nie ma
     // w bazie i nikt jej nie zliczał. Zdanie „ten pilot nie miał aktywnych sesji"
     // byłoby przy zerze fałszywe o panelu, który właśnie stracił dostęp.
@@ -161,7 +161,7 @@ describe('napis nad hasłem pokazanym raz', () => {
 });
 
 describe('baner po zmianie dostępu do konta', () => {
-  it('deaktywacja ODMIENIA liczebnik — „1 sesję", nie „1 sesji"', () => {
+  it('deaktywacja ODMIENIA liczebnik - „1 sesję", nie „1 sesji"', () => {
     // To jest wada, dla której ta funkcja powstała: szuflada składała napis w JSX-ie
     // i wychodziło z tego „Unieważniono 1 sesji", mimo że `sessionWord` stał obok.
     expect(activeChangeCopy(false, 1).note).toContain('Unieważniono 1 sesję telefonu');

@@ -1,18 +1,18 @@
 /**
- * UZ Aero — test wspólnych napisów ekranu sesji (10).
+ * UZ Aero - test wspólnych napisów ekranu sesji (10).
  *
  * Po przebudowie z issue #38 zostały tu dwie odmiany. Wyglądają na drobiazg, ale obie
  * stoją w miejscach, na które pilot patrzy pierwsze: plakietka nagłówka („6 lot"
  * zamiast „6 lotów" byłoby pierwszą rzeczą po zdaniu samolotu) i rozliczenie zrzutów,
  * które idzie do klienta.
  *
- * Wiersze osi czasu, rachunki paliwa i motogodzin mają własne testy —
+ * Wiersze osi czasu, rachunki paliwa i motogodzin mają własne testy -
  * `sessionAxis.test.ts` i `sessionBalance.test.ts`.
  */
 
 import { dateTimeUtcShort, flightsBadge, hhmm, jumperBreakdown } from '../ui/screens/logic/statsDay';
 
-describe('plakietka lotów — trzy formy liczebnika', () => {
+describe('plakietka lotów - trzy formy liczebnika', () => {
   it('pojedyncza, mnoga bliska i mnoga daleka', () => {
     expect(flightsBadge(1)).toBe('1 lot');
     expect(flightsBadge(2)).toBe('2 loty');
@@ -26,7 +26,7 @@ describe('plakietka lotów — trzy formy liczebnika', () => {
     expect(flightsBadge(22)).toBe('22 loty');
   });
 
-  it('zero to też forma daleka — sesja bez lotu jest normalną sesją', () => {
+  it('zero to też forma daleka - sesja bez lotu jest normalną sesją', () => {
     expect(flightsBadge(0)).toBe('0 lotów');
   });
 });
@@ -38,7 +38,7 @@ describe('rozbicie skoczków', () => {
   });
 
   it('sam zero daje kreskę, a nie „0 TANDEM"', () => {
-    expect(jumperBreakdown({ tandem: 0, aff: 0, solo: 0 })).toBe('—');
+    expect(jumperBreakdown({ tandem: 0, aff: 0, solo: 0 })).toBe('-');
   });
 });
 

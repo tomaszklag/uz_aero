@@ -1,7 +1,7 @@
 /**
- * UZ Aero — CardPicker (`.aircraft-option` / `.crew-option` z mockupu 02)
+ * UZ Aero - CardPicker (`.aircraft-option` / `.crew-option` z mockupu 02)
  *
- * Wybór z listy **kart**, nigdy natywnego selecta — twarda reguła projektu (`CLAUDE.md`):
+ * Wybór z listy **kart**, nigdy natywnego selecta - twarda reguła projektu (`CLAUDE.md`):
  * na telefonie karty pokazują wszystkie opcje naraz wraz z kontekstem (typ samolotu,
  * blokada PIC, kod pilota), a select ukrywa je za jednym tapnięciem.
  *
@@ -10,21 +10,21 @@
  *   [awatar]  ETYKIETA ────────────  detal   [tagi]  (✓)
  *
  * Etykieta rozpycha wiersz, detal i tagi trzymają się prawej. Dwie linie tekstu na pozycję
- * rozciągnęłyby listę czterech samolotów na pół ekranu — a to pierwsza rzecz, którą pilot
+ * rozciągnęłyby listę czterech samolotów na pół ekranu - a to pierwsza rzecz, którą pilot
  * widzi rano.
  *
- * Pozycja niedostępna ma **podany powód** (`disabledReason`) — nigdy wyszarzenie bez
+ * Pozycja niedostępna ma **podany powód** (`disabledReason`) - nigdy wyszarzenie bez
  * wyjaśnienia (§6 pkt 3). Gdy powód mieści się w tagu (mockup: czerwone „Wyłączony"),
- * renderujemy tag; dłuższy powód idzie osobną linią. Cel dotykowy ≥ 56 px — rękawice.
+ * renderujemy tag; dłuższy powód idzie osobną linią. Cel dotykowy ≥ 56 px - rękawice.
  *
- * POZYCJA `peek` — nie do wyboru, do obejrzenia (`onSecondary`, ikona oka w miejscu kółka).
+ * POZYCJA `peek` - nie do wyboru, do obejrzenia (`onSecondary`, ikona oka w miejscu kółka).
  * Tak wygląda samolot prowadzony przez innego pilota: wcześniej dostawał kółko wyboru,
  * mikro-plakietkę „PIC: KRZ · od 07:10" wciśniętą między typ a ikonę oka i dwie różne
  * akcje w jednym wierszu (tapnięcie = przejmij, oko = podejrzyj). Właściciel produktu
  * zgłosił to jako brzydki, stłoczony wiersz (issue #12) i miał rację także mechanicznie:
  * przejęcie odbiera poprzednikowi prawo zapisu (§4.4), więc nie może dzielić powierzchni
  * dotykowej z niewinnym podglądem. Teraz cały wiersz prowadzi do podglądu (04b), a
- * przejęcie jest osobną decyzją TAM — po zobaczeniu, co się z samolotem dzieje. Kto
+ * przejęcie jest osobną decyzją TAM - po zobaczeniu, co się z samolotem dzieje. Kto
  * prowadzi i od kiedy, mówi `note`: pełnowymiarowa linia pod etykietą, nie plakietka.
  */
 
@@ -50,14 +50,14 @@ export interface PickerOption<T extends string> {
   label: string;
   /** Wartość po prawej: typ samolotu. Mono, przygaszona. */
   detail?: string;
-  /** Kafelek przed etykietą — kod pilota na liście załogi (`Avatar` z `code`). */
+  /** Kafelek przed etykietą - kod pilota na liście załogi (`Avatar` z `code`). */
   avatarCode?: string;
   /** Małe etykiety: „wyłączony", „wymagany". */
   tags?: PickerTag[];
   /** Blokada wyboru z powodem; powód jest widoczny na karcie. */
   disabledReason?: string;
   /**
-   * Druga linia pod etykietą — kontekst, który nie mieści się w tagu
+   * Druga linia pod etykietą - kontekst, który nie mieści się w tagu
    * („Prowadzi PIC: KRZ · od 07:10"). Amber, bo tyle dziś potrzebuje ta lista.
    */
   note?: string;
@@ -66,7 +66,7 @@ export interface PickerOption<T extends string> {
    * kółka wyboru stoi ikona oka. Patrz nota na górze pliku.
    */
   peek?: boolean;
-  /** Gdy powód mieści się w tagu (np. „Wyłączony") — nie dublujemy go osobną linią. */
+  /** Gdy powód mieści się w tagu (np. „Wyłączony") - nie dublujemy go osobną linią. */
   disabledTagged?: boolean;
 }
 
@@ -74,7 +74,7 @@ export interface CardPickerProps<T extends string> {
   options: PickerOption<T>[];
   value: T | null;
   onChange: (value: T) => void;
-  /** Cel pozycji `peek` — podgląd read-only zajętego samolotu (04b). */
+  /** Cel pozycji `peek` - podgląd read-only zajętego samolotu (04b). */
   onSecondary?: (value: T) => void;
   secondaryIcon?: IconName;
   secondaryLabel?: string;
@@ -97,7 +97,7 @@ export function CardPicker<T extends string>({
     <View style={[{ gap: 6 }, style]}>
       {options.map((opt) => {
         const peek = opt.peek === true && onSecondary != null;
-        // Pozycja `peek` nigdy nie jest „wybrana" — nie ma czego zaznaczać, skoro
+        // Pozycja `peek` nigdy nie jest „wybrana" - nie ma czego zaznaczać, skoro
         // tapnięcie prowadzi na inny ekran.
         const selected = !peek && opt.value === value;
         const disabled = opt.disabledReason != null;
@@ -158,7 +158,7 @@ export function CardPicker<T extends string>({
 
               {/* Oko STOI W MIEJSCU kółka wyboru, a nie obok niego: wiersz ma jedną
                   akcję, więc ma też jeden znacznik po prawej. Pozycja zablokowana nie
-                  dostaje go wcale — tak samo jak nie dostaje pustego kółka. */}
+                  dostaje go wcale - tak samo jak nie dostaje pustego kółka. */}
               {peek && !disabled && (
                 <View
                   style={[
@@ -170,9 +170,9 @@ export function CardPicker<T extends string>({
                 </View>
               )}
 
-              {/* Znacznik wyboru — kółko z ptaszkiem (.aircraft-check). Sam zielony krążek
+              {/* Znacznik wyboru - kółko z ptaszkiem (.aircraft-check). Sam zielony krążek
                   byłby sygnałem wyłącznie kolorystycznym; kształt działa też w słońcu,
-                  w motywach jasnych i przy daltonizmie. Pozycja zablokowana go nie ma —
+                  w motywach jasnych i przy daltonizmie. Pozycja zablokowana go nie ma -
                   nie da się jej wybrać, więc puste kółko tylko myliłoby. */}
               {!disabled && !peek && (
                 <View

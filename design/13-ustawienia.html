@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 13 Ustawienia</title>
+<title>UZ Aero - 13 Ustawienia</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -52,14 +52,14 @@
   .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
   .scroll::-webkit-scrollbar { display:none; }
 
-  /* sekcja — wzorzec formularzy z 09 */
+  /* sekcja - wzorzec formularzy z 09 */
   .form-section { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; gap:10px; }
   .form-section-title { font-family:var(--font-mono); font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text-secondary); padding-bottom:8px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:6px; }
   .form-section-title::before { content:''; width:3px; height:10px; border-radius:2px; background:var(--border-strong); }
   .section-note { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.8px; color:var(--text-muted); line-height:1.6; }
   .section-note b { color:var(--green); font-weight:700; }
 
-  /* ── MOTYW — lista kart (nie natywny select), zaznaczony = zielona obramówka ── */
+  /* ── MOTYW - lista kart (nie natywny select), zaznaczony = zielona obramówka ── */
   .theme-card {
     display:flex; align-items:center; gap:11px;
     background:var(--surface-raised); border:1px solid var(--border); border-radius:12px;
@@ -100,7 +100,7 @@
   .profile-name { font-size:15px; font-weight:600; color:var(--text-primary); line-height:1; }
   .profile-sub { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
 
-  /* Ochrona wylogowania (3.0) — wzorzec .outbox-guard z 00-login */
+  /* Ochrona wylogowania (3.0) - wzorzec .outbox-guard z 00-login */
   .outbox-guard {
     display:flex; align-items:flex-start; gap:8px;
     background:var(--amber-muted); border:1px solid var(--amber-border);
@@ -125,7 +125,7 @@
   .ref-sync { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-secondary); display:inline-flex; align-items:center; gap:7px; }
   .ref-sync .dot { width:6px; height:6px; border-radius:50%; background:var(--amber); flex-shrink:0; }
 
-  /* ── ARKUSZ ZMIANY PIN — offline, dwa kroki ── */
+  /* ── ARKUSZ ZMIANY PIN - offline, dwa kroki ── */
   .sheet-overlay { position:absolute; inset:0; z-index:50; background:rgba(0,0,0,0.74); display:none; flex-direction:column; justify-content:flex-end; }
   .sheet-overlay.open { display:flex; }
   /* Sufit arkusza: pas tła nad nim ma być WIDOCZNY, inaczej arkusz z dużą treścią
@@ -169,16 +169,16 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 13</span>
+  <span class="film-strip">UZ AERO - 13</span>
   <span class="slug">ustawienia · motyw · pin · konto · gps</span>
   <span class="canvas-meta"><span class="pulse"></span>Ekran 13</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Ustawienia">
+<main class="phone" role="region" aria-label="Mockup - Ustawienia">
   <div class="status-bar">
     <span>12:47</span>
     <span class="status-right">
-      <!-- sieć padła — wifi przekreślone; GPS ma się świetnie (sekcja Diagnostyka) -->
+      <!-- sieć padła - wifi przekreślone; GPS ma się świetnie (sekcja Diagnostyka) -->
       <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5" opacity="0.4"/><rect x="10" y="2" width="3" height="10" rx="0.5" opacity="0.4"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
       <svg class="wifi-off" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
       <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="16" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
@@ -192,7 +192,7 @@
         Kokpit
       </a>
       <span class="screen-title">USTAWIENIA</span>
-      <div class="offline-chip" title="Brak sieci — 3 zapisy czekają na wysyłkę; wyślą się same po powrocie zasięgu. Ustawienia działają w pełni offline.">
+      <div class="offline-chip" title="Brak sieci - 3 zapisy czekają na wysyłkę; wyślą się same po powrocie zasięgu. Ustawienia działają w pełni offline.">
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
         Offline · 3
       </div>
@@ -249,7 +249,7 @@
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
           Podgląd motywów w kokpicie
         </a>
-        <div class="section-note">Motyw zapisuje się w profilu pilota i wędruje między urządzeniami — <b>zmiana działa offline</b>.</div>
+        <div class="section-note">Motyw zapisuje się w profilu pilota i wędruje między urządzeniami - <b>zmiana działa offline</b>.</div>
       </div>
 
       <!-- ══ PIN ══ -->
@@ -265,7 +265,7 @@
           </span>
           <svg class="action-chevron" width="14" height="14" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5L7 5l-3.5 3.5"/></svg>
         </button>
-        <div class="section-note">PIN sprawdzany lokalnie na telefonie — zmiana <b>działa w 100% offline</b>.</div>
+        <div class="section-note">PIN sprawdzany lokalnie na telefonie - zmiana <b>działa w 100% offline</b>.</div>
       </div>
 
       <!-- ══ KONTO ══ -->
@@ -279,33 +279,33 @@
           </div>
         </div>
 
-        <!-- Wylogowanie zablokowane: niepusty outbox (3.0) — disabled Z POWODEM, nigdy cichy błąd -->
+        <!-- Wylogowanie zablokowane: niepusty outbox (3.0) - disabled Z POWODEM, nigdy cichy błąd -->
         <button class="action-item disabled" title="Zablokowane: 3 zapisy z dzisiejszej sesji nie dotarły jeszcze na serwer" aria-disabled="true">
           <span class="action-icon">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           </span>
           <span class="action-body">
             <span class="action-name">Wyloguj i zmień konto</span>
-            <span class="action-sub">niedostępne — 3 zapisy czekają na wysyłkę</span>
+            <span class="action-sub">niedostępne - 3 zapisy czekają na wysyłkę</span>
           </span>
         </button>
 
         <div class="outbox-guard">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <span><b>3 zapisy z dzisiejszej sesji</b> nie dotarły jeszcze na serwer — wylogowanie by je skasowało. Wróć do zasięgu: wyślą się same i przycisk się odblokuje.</span>
+          <span><b>3 zapisy z dzisiejszej sesji</b> nie dotarły jeszcze na serwer - wylogowanie by je skasowało. Wróć do zasięgu: wyślą się same i przycisk się odblokuje.</span>
         </div>
-        <div class="section-note">Ponowne logowanie <b style="color:var(--amber)">wymaga internetu</b> — konta zakłada administrator.</div>
+        <div class="section-note">Ponowne logowanie <b style="color:var(--amber)">wymaga internetu</b> - konta zakłada administrator.</div>
       </div>
 
-      <!-- ══ SYNCHRONIZACJA — STAN, nie osobny ekran ══
+      <!-- ══ SYNCHRONIZACJA - STAN, nie osobny ekran ══
            Ekran 11 USUNIĘTY (2026-08-12): był trzecim widokiem tej samej sesji
            (tabela lotów i „dane dnia" = ekran 10) i drugim wskaźnikiem sieci (kolejka
            i ostatnia wysyłka = arkusz pod SyncChipem). Zostało to, czego nie ma
-           nigdzie indziej: uwagi serwera (§4.5) i awaryjne wymuszenie synchronizacji —
+           nigdzie indziej: uwagi serwera (§4.5) i awaryjne wymuszenie synchronizacji -
            od issue #55 OBU kierunków: przycisk dopycha kolejkę wysyłki i pobiera
            świeże dane referencyjne (flota, przekazania) z pominięciem bramy wieku,
            bo pilot sięgający po niego pyta „co serwer wie TERAZ".
-           Mieszka tutaj, bo Ustawienia są widoczne ZAWSZE — SyncChip pojawia się
+           Mieszka tutaj, bo Ustawienia są widoczne ZAWSZE - SyncChip pojawia się
            wyłącznie offline, więc flaga wystawiona po udanej wysyłce nie miałaby
            się gdzie pokazać. -->
       <div class="form-section">
@@ -319,7 +319,7 @@
             <span class="diag-key">Ostatnia udana wysyłka</span>
             <span class="diag-val">09:41 UTC</span>
           </div>
-          <!-- Uwagi serwera: wiersz stoi ZAWSZE, także z „brak uwag" — inaczej pilot
+          <!-- Uwagi serwera: wiersz stoi ZAWSZE, także z „brak uwag" - inaczej pilot
                nie wie, czy serwer nic nie zgłasza, czy nic nie sprawdził. -->
           <div class="diag-row">
             <span class="diag-key">Uwagi serwera</span>
@@ -330,10 +330,10 @@
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
           Synchronizuj teraz
         </button>
-        <div class="section-note">Synchronizacją zarządza aplikacja <b>sama</b> — ten przycisk to awaryjne ponaglenie, nie krok procedury: dopycha kolejkę wysyłki i pobiera świeże dane referencyjne (flota, przekazania). Bez zasięgu jest wyłączony z podanym powodem.</div>
+        <div class="section-note">Synchronizacją zarządza aplikacja <b>sama</b> - ten przycisk to awaryjne ponaglenie, nie krok procedury: dopycha kolejkę wysyłki i pobiera świeże dane referencyjne (flota, przekazania). Bez zasięgu jest wyłączony z podanym powodem.</div>
       </div>
 
-      <!-- ══ DIAGNOSTYKA GPS — czujnik lokalny, oś niezależna od sieci ══ -->
+      <!-- ══ DIAGNOSTYKA GPS - czujnik lokalny, oś niezależna od sieci ══ -->
       <div class="form-section">
         <div class="form-section-title">Diagnostyka GPS</div>
         <div>
@@ -358,7 +358,7 @@
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
           Odśwież
         </button>
-        <div class="section-note">Czujnik lokalny — odczyt <b>działa bez zasięgu</b>. Brak fixa w locie zobaczysz w kokpicie jako czerwony baner (05G).</div>
+        <div class="section-note">Czujnik lokalny - odczyt <b>działa bez zasięgu</b>. Brak fixa w locie zobaczysz w kokpicie jako czerwony baner (05G).</div>
       </div>
 
       <!-- ══ O APLIKACJI ══ -->
@@ -374,15 +374,15 @@
             <span class="diag-val">SP-AXA <small>· Cessna 182</small></span>
           </div>
         </div>
-        <div class="ref-sync" title="Samoloty, konfiguracje, piloci — pobierane z serwera przy każdym starcie z siecią; teraz offline, więc pokazujemy wiek danych">
+        <div class="ref-sync" title="Samoloty, konfiguracje, piloci - pobierane z serwera przy każdym starcie z siecią; teraz offline, więc pokazujemy wiek danych">
           <span class="dot"></span>Dane referencyjne · sync 09:41 UTC
         </div>
-        <div class="section-note">Offline — dane referencyjne odświeżą się same po powrocie zasięgu.</div>
+        <div class="section-note">Offline - dane referencyjne odświeżą się same po powrocie zasięgu.</div>
       </div>
 
     </div>
 
-    <!-- ═══ ARKUSZ ZMIANY PIN — dwa kroki, w pełni offline ═══ -->
+    <!-- ═══ ARKUSZ ZMIANY PIN - dwa kroki, w pełni offline ═══ -->
     <div class="sheet-overlay" id="pinSheet">
       <div class="sheet">
         <div class="sheet-handle"></div>
@@ -409,7 +409,7 @@
         </div>
         <div class="sheet-offline-note">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          Sprawdzane lokalnie — bez zasięgu też działa
+          Sprawdzane lokalnie - bez zasięgu też działa
         </div>
         <button class="sheet-cancel" onclick="closePin()">Anuluj</button>
       </div>
@@ -423,7 +423,7 @@
     <span class="vp-badge">13</span>
     <span class="vp-body">
       <span class="vp-name">Ustawienia</span>
-      <span class="vp-when">Wejście zębatką z app-baru kokpitu (04, 04A, 05, 05A–05D). Wszystko tu działa offline — jedyna akcja wymagająca sieci (wylogowanie → ponowny login) jest disabled z podanym powodem, a przy niepustej kolejce wysyłki chroni ją amber-box (wzorzec z 00).</span>
+      <span class="vp-when">Wejście zębatką z app-baru kokpitu (04, 04A, 05, 05A–05D). Wszystko tu działa offline - jedyna akcja wymagająca sieci (wylogowanie → ponowny login) jest disabled z podanym powodem, a przy niepustej kolejce wysyłki chroni ją amber-box (wzorzec z 00).</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -431,13 +431,13 @@
     <span class="vp-badge">05T</span>
     <span class="vp-body">
       <span class="vp-name">Podgląd motywów</span>
-      <span class="vp-when">Pięć motywów przełączanych na żywym ekranie kokpitu — sekcja „Motyw" prowadzi tutaj.</span>
+      <span class="vp-when">Pięć motywów przełączanych na żywym ekranie kokpitu - sekcja „Motyw" prowadzi tutaj.</span>
     </span>
   </a>
   <a class="vp-item" href="04-cockpit-ground.html">
     <span class="vp-badge">04</span>
     <span class="vp-body">
-      <span class="vp-name">Kokpit — powrót</span>
+      <span class="vp-name">Kokpit - powrót</span>
       <span class="vp-when">Strzałka wstecz wraca dokładnie tam, skąd przyszła zębatka.</span>
     </span>
   </a>
@@ -460,7 +460,7 @@
       document.getElementById('th-' + k).classList.toggle('selected', k === t));
   }
 
-  // ── Diagnostyka GPS: odświeżenie fixa (czujnik lokalny — zero sieci) ──
+  // ── Diagnostyka GPS: odświeżenie fixa (czujnik lokalny - zero sieci) ──
   function refreshFix() {
     document.getElementById('fixTime').childNodes[0].textContent = '12:47:41 UTC ';
     document.getElementById('fixAge').textContent = '· przed chwilą';

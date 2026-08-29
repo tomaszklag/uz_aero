@@ -1,18 +1,18 @@
 /**
- * UZ Aero — faza lotu i prędkość pionowa (mockup 05 `.phase-hero`).
+ * UZ Aero - faza lotu i prędkość pionowa (mockup 05 `.phase-hero`).
  *
  * Mockup pokazuje w kokpicie ogromny napis fazy („Climb") i pod nim prędkość pionową
  * („+1 200 FT/MIN"). To nie jest ozdobnik: w powietrzu pilot ma jednym spojrzeniem
  * wiedzieć, w jakim stanie jest lot, bez odczytywania sześciu liczb.
  *
- * Czysta funkcja bez zależności — dzięki temu da się ją sprawdzić na odtworzonych
+ * Czysta funkcja bez zależności - dzięki temu da się ją sprawdzić na odtworzonych
  * trasach, tak jak `flightDetector`. GPS klasy konsumenckiej kłamie na wysokości
  * bardziej niż na pozycji, więc:
  *
- *  • prędkość pionową liczymy z **okna czasu**, nie z dwóch kolejnych fixów — pojedynczy
+ *  • prędkość pionową liczymy z **okna czasu**, nie z dwóch kolejnych fixów - pojedynczy
  *    przeskok wysokości o 30 ft dałby fałszywe ±1800 ft/min;
  *  • fixy starsze niż okno odrzucamy, a przy przerwie w sygnale nie „domykamy" wyliczenia
- *    z rozpędu — brak danych zwracamy jako `null`, nie jako zero.
+ *    z rozpędu - brak danych zwracamy jako `null`, nie jako zero.
  */
 
 import type { GpsFix } from './fix';
@@ -34,7 +34,7 @@ export const VS_WINDOW_SEC = 10;
 /**
  * Minimalna rozpiętość okna (s), poniżej której nie podajemy wyniku.
  *
- * Dwa fixy sekundę po sobie różniące się o 20 ft dałyby 1200 ft/min — czyli „Climb"
+ * Dwa fixy sekundę po sobie różniące się o 20 ft dałyby 1200 ft/min - czyli „Climb"
  * z czystego szumu. Lepiej przez chwilę nie wiedzieć, niż podać liczbę wziętą z sufitu.
  */
 export const VS_MIN_SPAN_SEC = 5;
@@ -50,10 +50,10 @@ export const TAXI_MIN_KT = 3;
  *
  * Liczymy **nachylenie regresji liniowej** wysokości względem czasu, a nie różnicę
  * skrajnych punktów. Powód jest praktyczny: metoda „ostatni minus pierwszy" daje
- * pojedynczemu artefaktowi GPS pełną wagę — jeden fix wyżej o 30 ft na końcu okna
+ * pojedynczemu artefaktowi GPS pełną wagę - jeden fix wyżej o 30 ft na końcu okna
  * potrafi wyprodukować fałszywe „Climb". Regresja rozkłada ten sam błąd na całe okno.
  *
- * Zwracamy `null` zamiast zera, gdy danych brakuje albo są zbyt ciasne w czasie —
+ * Zwracamy `null` zamiast zera, gdy danych brakuje albo są zbyt ciasne w czasie -
  * „nie wiem" i „nie wznosi się" to dwie różne informacje.
  */
 export function verticalSpeedFpm(
@@ -70,7 +70,7 @@ export function verticalSpeedFpm(
   for (const fix of fixes) {
     if (fix.altitudeFt == null) continue;
     const ageMs = newest.time - fix.time;
-    // Ujemny wiek = fix z przyszłości (cofnięty zegar) — odrzucamy.
+    // Ujemny wiek = fix z przyszłości (cofnięty zegar) - odrzucamy.
     if (ageMs < 0 || ageMs > windowSec * 1000) continue;
     points.push({ t: -ageMs / 1000, v: fix.altitudeFt });
   }
@@ -82,7 +82,7 @@ export function verticalSpeedFpm(
 /**
  * Faza lotu na podstawie stanu automatu detekcji i ostatnich fixów.
  *
- * `airborne` pochodzi z `flightDetector` — świadomie NIE wyliczamy go tu drugi raz.
+ * `airborne` pochodzi z `flightDetector` - świadomie NIE wyliczamy go tu drugi raz.
  * Jeden automat decyduje, czy samolot jest w powietrzu; tutaj tylko nazywamy to,
  * co robi. Dwa niezależne źródła tej samej prawdy prędzej czy później by się rozjechały.
  */
@@ -103,7 +103,7 @@ export function flightPhase(
     return { phase: moving ? 'taxi' : 'idle', verticalSpeedFpm: vs };
   }
 
-  // Bez wysokości nie da się odróżnić wznoszenia od przelotu — mówimy „cruise",
+  // Bez wysokości nie da się odróżnić wznoszenia od przelotu - mówimy „cruise",
   // bo to stan domyślny, a nie zgadujemy wznoszenia.
   if (vs == null) return { phase: 'cruise', verticalSpeedFpm: null };
 

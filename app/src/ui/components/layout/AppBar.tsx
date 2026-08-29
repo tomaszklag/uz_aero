@@ -1,11 +1,11 @@
 /**
- * UZ Aero — AppBar
+ * UZ Aero - AppBar
  *
  * Górny pasek kontekstu, wspólny dla ekranów dnia lotnego (.app-bar / .compact-bar
  * w mockupach): po lewej samolot i trasa, po prawej wskaźnik łączności i akcje.
  *
  * Samolot jest wyróżniony kolorem, bo to jedyna informacja, która musi być czytelna
- * jednym spojrzeniem — pilot lata kilkoma maszynami i pomyłka kosztuje rozjazd danych.
+ * jednym spojrzeniem - pilot lata kilkoma maszynami i pomyłka kosztuje rozjazd danych.
  */
 
 import React from 'react';
@@ -20,7 +20,7 @@ export interface AppBarProps {
   aircraft?: string | null;
   /** Druga linia: trasa i operacja (np. „EPKK → EPWA · SKOKI"). */
   subtitle?: string | null;
-  /** Prawa strona — zwykle `SyncChip`, ewentualnie akcje. */
+  /** Prawa strona - zwykle `SyncChip`, ewentualnie akcje. */
   right?: React.ReactNode;
   /** Koło zębate po prawej (`.settings-btn` z mockupów kokpitu). */
   onSettings?: () => void;
@@ -55,11 +55,11 @@ export function AppBar({
     >
       <View style={styles.left}>
         <AppText variant="mono" tone="green" style={styles.aircraft}>
-          {aircraft ?? '—'}
+          {aircraft ?? '-'}
         </AppText>
         {subtitle != null && (
           // Druga linia niesie kody ICAO, a te wg `CLAUDE.md` należą do JetBrains Mono
-          // — nie do Archivo. Mockup `.route-line`: mono 11 px / ls 1.
+          // - nie do Archivo. Mockup `.route-line`: mono 11 px / ls 1.
           <AppText variant="mono" tone="muted" style={styles.subtitle}>
             {subtitle}
           </AppText>

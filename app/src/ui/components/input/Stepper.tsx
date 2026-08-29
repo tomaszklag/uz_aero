@@ -1,10 +1,10 @@
 /**
- * UZ Aero — Stepper
+ * UZ Aero - Stepper
  *
  * Wprowadzanie wartości liczbowej przyciskami ±, nie suwakiem.
  *
  * Dlaczego nie suwak: audyt użyteczności wykazał, że dolewka paliwa była ustawiana
- * uchwytem 16×16 px na torze 312 px — około **1,4 litra na piksel** przeciągnięcia.
+ * uchwytem 16×16 px na torze 312 px - około **1,4 litra na piksel** przeciągnięcia.
  * W rękawicach, na słońcu, przy pracującym silniku to nie jest precyzja, tylko loteria.
  * Stepper daje dokładność co do kroku i cele dotykowe 46 px.
  *
@@ -32,7 +32,7 @@ export interface StepperEdit {
   /** Wartość → tekst startowy pola (zwykle to samo, co `format`). */
   toText: (value: number) => string;
   /**
-   * Maska w trakcie pisania — np. dwukropek godziny stawiany za pilota
+   * Maska w trakcie pisania - np. dwukropek godziny stawiany za pilota
    * (`maskTimeUtcInput`). Bez niej tekst idzie do pola bez zmian.
    */
   mask?: (text: string) => string;
@@ -40,7 +40,7 @@ export interface StepperEdit {
   parse: (text: string) => number | null;
   keyboardType?: KeyboardTypeOptions;
   maxLength?: number;
-  /** Do czytnika ekranu — co się właściwie wpisuje („Czas zdarzenia"). */
+  /** Do czytnika ekranu - co się właściwie wpisuje („Czas zdarzenia"). */
   label?: string;
 }
 
@@ -49,28 +49,28 @@ export interface StepperProps {
    * `null` = wartości JESZCZE NIE MA i kontrolka tego nie ukrywa (issue #62 pkt 3).
    *
    * Arkusz czasów wpisu ręcznego otwierał się z godzinami 10:00 i 11:00, których nikt
-   * nie wpisał — a potem mierzył od nich przesunięcie („względem wpisu (10:00)") i tymi
+   * nie wpisał - a potem mierzył od nich przesunięcie („względem wpisu (10:00)") i tymi
    * właśnie liczbami ruszał przy ±1 min. Wartość podstawiona wygląda jak wartość
    * wpisana i to jest cały problem: pilot nie ma jak odróżnić swojego odczytu od
    * zgadywanki formularza. Ta sama reguła, która każe wpisywać paliwo przed
    * uruchomieniem zamiast brać je z cache.
    *
    * Przy `null` przyciski ± są wygaszone (nie ma czego przesuwać), a wartość pokazuje
-   * `placeholder` — wpisanie z klawiatury zostaje jedyną drogą i o to chodzi.
+   * `placeholder` - wpisanie z klawiatury zostaje jedyną drogą i o to chodzi.
    */
   value: number | null;
   onChange: (next: number) => void;
   /** Krok podstawowy (przyciski ±). */
   step?: number;
-  /** Krok przyspieszony — drugi rząd przycisków (np. ±10 L). Brak = jeden rząd. */
+  /** Krok przyspieszony - drugi rząd przycisków (np. ±10 L). Brak = jeden rząd. */
   bigStep?: number;
   /**
-   * Jak NAZWAĆ krok na przycisku, bez znaku („1 min"). Domyślnie sama liczba kroku —
+   * Jak NAZWAĆ krok na przycisku, bez znaku („1 min"). Domyślnie sama liczba kroku -
    * co jest prawdą tylko wtedy, gdy wartość i jej jednostka są tym samym, co krok.
    *
    * Czas trzymamy w MILISEKUNDACH, więc bez tego pola przycisk pisał „+60000"
    * (zgłoszenie z urządzenia, 2026-08-14). `format` tu nie pomoże: formatuje WARTOŚĆ
-   * (godzinę), a nie różnicę — „+01:00" znaczyłoby coś zupełnie innego niż „+1 min".
+   * (godzinę), a nie różnicę - „+01:00" znaczyłoby coś zupełnie innego niż „+1 min".
    */
   stepLabel?: string;
   bigStepLabel?: string;
@@ -80,7 +80,7 @@ export interface StepperProps {
   format?: (value: number) => string;
   /**
    * Wpisanie wartości Z KLAWIATURY po tapnięciu w liczbę (zgłoszenie z urządzenia,
-   * 2026-08-14). Pominięte — wartość jest tylko do odczytu i zmienia się przyciskami.
+   * 2026-08-14). Pominięte - wartość jest tylko do odczytu i zmienia się przyciskami.
    *
    * Przyciski są dobre do POPRAWKI („o minutę za późno"), ale nie do przeskoku:
    * godzina odległa o czterdzieści minut to czterdzieści dotknięć. Klawiatura obsługuje
@@ -94,22 +94,22 @@ export interface StepperProps {
   /**
    * Kontrolka OTWIERA SIĘ od razu w trybie wpisu (issue #62, trzecia tura z urządzenia).
    *
-   * Arkusz czasu jest formularzem o jednym pytaniu — po jego otwarciu pilot i tak
+   * Arkusz czasu jest formularzem o jednym pytaniu - po jego otwarciu pilot i tak
    * tapie w wartość, żeby wbić godzinę. Bez tego każdy wpis kosztował jedno tapnięcie
    * więcej, a arkusz otwierał się w stanie, w którym nic nie zapraszało do pisania.
    *
-   * SAMO to nie podnosi KLAWIATURY — do tego służy `inputRef` z `useSheetInputFocus`
+   * SAMO to nie podnosi KLAWIATURY - do tego służy `inputRef` z `useSheetInputFocus`
    * (patrz niżej). Tu chodzi tylko o to, żeby pole W OGÓLE ISTNIAŁO w drzewie,
    * bo inaczej callback ref nie ma się na czym zawiesić.
    */
   autoEdit?: boolean;
   /**
-   * Callback ref na wewnętrzny `TextInput` — WYŁĄCZNIE dla `useSheetInputFocus`.
+   * Callback ref na wewnętrzny `TextInput` - WYŁĄCZNIE dla `useSheetInputFocus`.
    *
    * Klawiaturę w arkuszu podnosi drabinka prób z tego hooka i nic innego: trzy
    * podejścia już zawiodły i ich historia stoi w `hooks/keyboardFocus.ts`.
    * `autoFocus` na tym polu odpaliłby się przy montowaniu, zanim okno modala
-   * istnieje — czyli dokładnie pierwszy z tych błędów.
+   * istnieje - czyli dokładnie pierwszy z tych błędów.
    */
   inputRef?: (input: TextInput | null) => void;
   unit?: string;
@@ -118,7 +118,7 @@ export interface StepperProps {
 }
 
 /**
- * Przycisk kroku — komponent MODUŁOWY, nie zagnieżdżony w ciele `Stepper`.
+ * Przycisk kroku - komponent MODUŁOWY, nie zagnieżdżony w ciele `Stepper`.
  *
  * Zadeklarowany wewnątrz `Stepper` (tak było do issue #62) jest przy każdym renderze
  * NOWYM typem komponentu, więc React nie aktualizuje istniejącego drzewa, tylko odmontowuje
@@ -157,7 +157,7 @@ function StepButton({
       ]}
     >
       {/* Jedna linia ZAWSZE: „+1 min" łamało się na dwie, bo przycisk miał sztywne
-          46 px szerokości — próg rękawic policzony dla samego „+". Odtąd 46 px jest
+          46 px szerokości - próg rękawic policzony dla samego „+". Odtąd 46 px jest
           MINIMUM, a szerokość rośnie z napisem (uwaga z urządzenia, 2026-08-14). */}
       <AppText variant="mono" tone={disabled ? 'muted' : 'primary'} numberOfLines={1}>
         {label}
@@ -178,7 +178,7 @@ export function Stepper({
   format,
   edit,
   hint,
-  placeholder = '—',
+  placeholder = '-',
   autoEdit = false,
   inputRef,
   unit,
@@ -191,7 +191,7 @@ export function Stepper({
   /**
    * Tekst w trakcie wpisywania; `null` = pole zamknięte, wartość tylko do odczytu.
    *
-   * Przy `autoEdit` startujemy OTWARCI — ale TYLKO nad pustą wartością
+   * Przy `autoEdit` startujemy OTWARCI - ale TYLKO nad pustą wartością
    * (`stepperOpensForTyping`, uwaga z urządzenia 2026-08-29): mając co przesuwać,
    * pilot sięga po ± i klawiatura zasłania mu wtedy pół arkusza bez powodu. Pole
    * startuje więc puste, bo przy niepustym w ogóle się nie otwiera.
@@ -215,7 +215,7 @@ export function Stepper({
    * Do issue #62 brał wyłącznie `value`, czyli wartość sprzed otwarcia klawiatury:
    * pilot wpisywał 08:15, dotykał „+1 min" i dostawał 10:01, bo przycisk przesuwał
    * godzinę podstawioną przez formularz, a nie tę wpisaną. Zatwierdzenie pola dzieje
-   * się przy `onBlur`, więc w chwili tapnięcia świeża wartość istnieje TYLKO w `draft` —
+   * się przy `onBlur`, więc w chwili tapnięcia świeża wartość istnieje TYLKO w `draft` -
    * i to ona jest tym, co pilot ma przed oczami.
    */
   const bump = useCallback(
@@ -223,7 +223,7 @@ export function Stepper({
       const pending = draft != null ? (edit?.parse(draft) ?? null) : null;
       const base = pending ?? value;
       if (draft != null) setDraft(null);
-      // Wartości nie ma i wpis jej nie dał — nie ma czego przesuwać (przycisk i tak
+      // Wartości nie ma i wpis jej nie dał - nie ma czego przesuwać (przycisk i tak
       // jest wtedy wygaszony; ta gałąź broni przed wpisem nieczytelnym).
       if (base == null) return;
       const next = clamp(base + delta);
@@ -234,7 +234,7 @@ export function Stepper({
 
   /**
    * Zamknięcie pola wpisu. Wpis nieczytelny albo poza granicami NIE jest błędem
-   * do pokazania — po prostu zostaje wartość sprzed edycji. Granice przycina
+   * do pokazania - po prostu zostaje wartość sprzed edycji. Granice przycina
    * ta sama arytmetyka, co przyciski, więc klawiatura nie ma jak ich obejść.
    */
   const commit = useCallback(() => {
@@ -246,7 +246,7 @@ export function Stepper({
     if (next !== value) onChange(next);
   }, [clamp, draft, edit, onChange, value]);
 
-  /** Czy krok wyszedłby poza granice — przy braku wartości nie ma czego przesuwać. */
+  /** Czy krok wyszedłby poza granice - przy braku wartości nie ma czego przesuwać. */
   const stepBlocked = (delta: number): boolean =>
     value == null || value + delta > max || value + delta < min;
 
@@ -273,13 +273,13 @@ export function Stepper({
           onPress={bump}
         />
 
-        {/* Wartość jest CELEM DOTKNIĘCIA, gdy da się ją wpisać — przyciski zostają
+        {/* Wartość jest CELEM DOTKNIĘCIA, gdy da się ją wpisać - przyciski zostają
             do poprawki o krok, klawiatura do przeskoku. Bez `edit` to zwykły napis. */}
         {draft != null && edit != null ? (
           <TextInput
             /* `autoFocus` TYLKO poza `autoEdit`: tam pole pojawia się w odpowiedzi na
                tapnięcie pilota, więc okno modala od dawna istnieje i fokus jest
-               natychmiastowy. Przy `autoEdit` pole montuje się razem z arkuszem —
+               natychmiastowy. Przy `autoEdit` pole montuje się razem z arkuszem -
                i wtedy fokus należy do drabinki `useSheetInputFocus`, bo `autoFocus`
                odpala się, zanim okno modala w ogóle jest (`hooks/keyboardFocus.ts`). */
             autoFocus={!autoEdit}
@@ -290,12 +290,12 @@ export function Stepper({
              * (issue #62, uwaga z urządzenia).
              *
              * Do tej pory wpis szedł do rodzica dopiero przy `onBlur`, więc wszystko,
-             * co z tej wartości liczą arkusze — czas trwania pary, podpis przesunięcia,
-             * powód blokady „ZAPISZ" — odpowiadało dopiero po tapnięciu gdzieś obok.
+             * co z tej wartości liczą arkusze - czas trwania pary, podpis przesunięcia,
+             * powód blokady „ZAPISZ" - odpowiadało dopiero po tapnięciu gdzieś obok.
              * Pilot wpisywał godzinę, patrzył na wiersz „Blok" i widział poprzedni
              * wynik: formularz sprawiał wrażenie, że nie przyjął tego, co wpisał.
              *
-             * Niepełny wpis („08:3") nie parsuje się i po prostu nie rusza wartości —
+             * Niepełny wpis („08:3") nie parsuje się i po prostu nie rusza wartości -
              * to nie jest błąd do pokazania, tylko normalny stan w połowie pisania.
              * `commit` przy `onBlur` ZOSTAJE jako domknięcie: to on kasuje szkic
              * i przywraca widok wartości.
@@ -313,17 +313,17 @@ export function Stepper({
              * 2026-08-29: „otwiera się klawiatura i znika").
              *
              * `commit` kasuje szkic, a szkic jest warunkiem renderowania tego
-             * `TextInput` — więc każdy `blur()` ODMONTOWUJE pole. Poza `autoEdit` to
+             * `TextInput` - więc każdy `blur()` ODMONTOWUJE pole. Poza `autoEdit` to
              * jest właśnie sens domknięcia: pilot tapnął gdzie indziej, kontrolka wraca
              * do widoku wartości. Przy `autoEdit` pole JEST kontrolką (arkusz otworzył
              * się po to, żeby w nim pisać), więc zwinięcie zabiera to, o co pilot prosił
-             * — a `blur()` przychodzi tam nie tylko od niego: robi je ponowienie
+             * - a `blur()` przychodzi tam nie tylko od niego: robi je ponowienie
              * drabinki fokusu, żeby móc ponownie poprosić o klawiaturę
              * (`hooks/keyboardFocus.ts`). Zwijając się pod nim, kontrolka zamieniała
              * nieudaną próbę fokusu w zniknięcie pola.
              *
              * Nic się przez to nie gubi: od issue #62 wartość wychodzi na KAŻDĄ zmianę
-             * tekstu, więc `commit` przy wyjściu nie jest już zapisem — jest wyłącznie
+             * tekstu, więc `commit` przy wyjściu nie jest już zapisem - jest wyłącznie
              * domknięciem widoku. Wpis w toku zamyka `bump` (±) albo odmontowanie
              * arkusza.
              */
@@ -346,19 +346,19 @@ export function Stepper({
           <Pressable
             accessibilityRole={edit != null ? 'button' : 'text'}
             accessibilityLabel={
-              edit == null ? undefined : `${edit.label ?? 'Wartość'} — wpisz z klawiatury`
+              edit == null ? undefined : `${edit.label ?? 'Wartość'} - wpisz z klawiatury`
             }
             disabled={edit == null}
-            /* Pusta wartość otwiera PUSTE pole — `toText` opisuje liczbę, a nie jej brak. */
+            /* Pusta wartość otwiera PUSTE pole - `toText` opisuje liczbę, a nie jej brak. */
             onPress={() => setDraft(value == null ? '' : (edit?.toText(value) ?? null))}
             /* BEZ podkreślenia (uwaga z urządzenia, 2026-08-14). Przerywana kreska pod
-               godziną wyglądała jak usterka rysowania, a nie jak zaproszenie do wpisu —
+               godziną wyglądała jak usterka rysowania, a nie jak zaproszenie do wpisu -
                wartość steppera i tak jest największym elementem kontrolki, więc palec
                ląduje na niej sam. */
             style={styles.value}
           >
             {/* Brak wartości bierze KOLOR placeholdera (issue #58), ale ZOSTAJE przy
-                metryce wartości — inaczej niż zachęty w polach formularza. Placeholder
+                metryce wartości - inaczej niż zachęty w polach formularza. Placeholder
                 steppera nie jest zdaniem („wybierz lotnisko"), tylko pustym slotem
                 w kształcie liczby („--:--"), a zmiana kroju przy wpisaniu godziny
                 podskoczyłaby wysokością całej kontrolki. */}
@@ -419,7 +419,7 @@ export function Stepper({
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center' },
-  // 46 px — próg celu dotykowego dla rękawic (audyt ergonomii). MINIMUM, nie sztywna
+  // 46 px - próg celu dotykowego dla rękawic (audyt ergonomii). MINIMUM, nie sztywna
   // szerokość: przycisk z napisem („1 min") musi się w jednej linii zmieścić.
   btn: {
     minWidth: 46,

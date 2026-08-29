@@ -1,10 +1,10 @@
 /**
- * UZ Aero (serwer) — adapter refresh tokenów (`RefreshTokensPort`).
+ * UZ Aero (serwer) - adapter refresh tokenów (`RefreshTokensPort`).
  *
- * Wydajemy losowe 256 bitów, a w bazie trzymamy SHA-256 wartości — wyciek tabeli nie
+ * Wydajemy losowe 256 bitów, a w bazie trzymamy SHA-256 wartości - wyciek tabeli nie
  * daje działających sesji. Rotacja jest JEDNĄ transakcją (audyt): kasowanie starego
  * i wydanie nowego nie mogą się rozjechać, bo telefon, który stracił odpowiedź,
- * zostałby bez żadnego ważnego tokenu — a ponowne logowanie wymaga sieci (§3.0).
+ * zostałby bez żadnego ważnego tokenu - a ponowne logowanie wymaga sieci (§3.0).
  *
  * `DELETE … RETURNING` w rotacji daje też ochronę przed podwójnym użyciem: z dwóch
  * równoległych prób tego samego tokenu tylko jedna trafi w wiersz.

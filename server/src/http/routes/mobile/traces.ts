@@ -1,21 +1,21 @@
 /**
- * UZ Aero (serwer) — ŚLAD GPS w obie strony: `POST /traces` (wysyłka nagrania, faza 5)
+ * UZ Aero (serwer) - ŚLAD GPS w obie strony: `POST /traces` (wysyłka nagrania, faza 5)
  * i `GET /me/sessions/:uuid/track` (ślad sesji do narysowania, issue #47).
  *
- * Obie trasy w jednym pliku, bo to JEDEN materiał z dwoma kierunkami — dokładnie jak
+ * Obie trasy w jednym pliku, bo to JEDEN materiał z dwoma kierunkami - dokładnie jak
  * `POST /events` i `GET /me/events` w `events.ts`. Rozdzielenie ich sugerowałoby dwa
  * niezależne zasoby, a od issue #47 są ściśle sprzężone: telefon oddaje nagranie
  * WŁAŚNIE PO TO, żeby móc je potem pobrać z powrotem i narysować.
  *
- * `POST /traces` — niskopriorytetowy zrzut z telefonów: koperta luźna z premedytacją,
+ * `POST /traces` - niskopriorytetowy zrzut z telefonów: koperta luźna z premedytacją,
  * bo to materiał badawczy, nie rejestr; przyszły wpis barometru (nowy `kind`) nie może
  * wymagać zmiany serwera. Walidujemy tylko ramy: tablica obiektów, limit wielkości
  * paczki. Tożsamość z JWT dopisuje się do każdego wiersza (czyj telefon nagrał).
  *
- * `GET /me/sessions/:uuid/track` — gotowa geometria po kompresji (RDP na linii
+ * `GET /me/sessions/:uuid/track` - gotowa geometria po kompresji (RDP na linii
  * i na profilu, próbka logu, liczby przycięte do rozdzielczości): telefon nie dostaje
  * ani jednego surowego fixa, bo nie ma z nim co zrobić. Uprawnienie sprawdza
- * `SessionTrackQueries` na PIC-u sesji, nie ta trasa — to reguła o danych, nie o HTTP.
+ * `SessionTrackQueries` na PIC-u sesji, nie ta trasa - to reguła o danych, nie o HTTP.
  */
 
 import type { FastifyInstance } from 'fastify';

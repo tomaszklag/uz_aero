@@ -1,15 +1,15 @@
 /**
- * UZ Aero — łamana rysowana layoutem RN (prymityw DS).
+ * UZ Aero - łamana rysowana layoutem RN (prymityw DS).
  *
- * Każdy odcinek to `<View>` o wysokości równej grubości kreski, obrócony o kąt odcinka —
+ * Każdy odcinek to `<View>` o wysokości równej grubości kreski, obrócony o kąt odcinka -
  * ta sama technika co `CheckIcon`, z tego samego powodu: `react-native-svg` jest modułem
  * NATYWNYM, a dokładanie go do kompilacji wymusza przebudowę dev clienta u każdego, kto
  * klonuje repo. Ślad lotu po uproszczeniu (RDP) ma kilkadziesiąt wierzchołków, więc
- * kilkadziesiąt `<View>` — koszt bez znaczenia dla ekranu, który nie animuje.
+ * kilkadziesiąt `<View>` - koszt bez znaczenia dla ekranu, który nie animuje.
  *
  * ══ CIĄGŁOŚĆ LINII (issue #47 pkt 1 i druga tura przeglądu) ══
- * Cała geometria — łącznie z NADMIAREM na styku, bez którego łuk rozpada się w kropki,
- * a wierzchołek jest ścięty — siedzi w `screenPolyline.ts` i tam jest wyjaśniona.
+ * Cała geometria - łącznie z NADMIAREM na styku, bez którego łuk rozpada się w kropki,
+ * a wierzchołek jest ścięty - siedzi w `screenPolyline.ts` i tam jest wyjaśniona.
  * Ten komponent wyłącznie ją rysuje i NIE MA prawa niczego pomijać: pominięty odcinek
  * to dziura, a dziura co drugi punkt zamienia trasę w zbiór kropek.
  */
@@ -57,7 +57,7 @@ export function TrackPolyline({
             height: segment.thickness,
             backgroundColor: color,
             // Zaokrąglony koniec wystający dokładnie do wierzchołka JEST okrągłym
-            // złączem — tym samym, które w SVG robi `stroke-linejoin: round`.
+            // złączem - tym samym, które w SVG robi `stroke-linejoin: round`.
             borderRadius: segment.thickness / 2,
             transform: [{ rotate: `${segment.angleRad}rad` }],
           }}

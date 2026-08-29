@@ -1,8 +1,8 @@
 /**
- * UZ Aero — złożenie katalogu z dwóch źródeł.
+ * UZ Aero - złożenie katalogu z dwóch źródeł.
  *
  * KOLEJNOŚĆ ŹRÓDEŁ jest decyzją, nie przypadkiem. Najpierw OurAirports (domena publiczna,
- * zero zobowiązań licencyjnych), a OSM tylko tam, gdzie OurAirports milczy — dzięki temu
+ * zero zobowiązań licencyjnych), a OSM tylko tam, gdzie OurAirports milczy - dzięki temu
  * ślad ODbL w katalogu jest tak mały, jak się da, przy pełnym pokryciu danych.
  *
  * Rekord z kursem, ale bez wiarygodnej długości, ODPADA do następnego źródła: pas
@@ -15,7 +15,7 @@ import type { OverpassWay } from './osmRunways';
 import { ourAirportsRunway, type AirfieldSeed, type RunwayFacts } from './ourAirports';
 import { runwaysFromWays } from './osmRunways';
 
-/** Skąd pochodzi pas — potrzebne do atrybucji ODbL i do przeglądu zmian po regeneracji. */
+/** Skąd pochodzi pas - potrzebne do atrybucji ODbL i do przeglądu zmian po regeneracji. */
 export type RunwaySource = 'ourairports' | 'osm';
 
 export interface CatalogueRunway extends RunwayFacts {

@@ -1,21 +1,21 @@
 /**
- * UZ Aero — deklinacja magnetyczna i przeliczanie kursów na magnetyczne.
+ * UZ Aero - deklinacja magnetyczna i przeliczanie kursów na magnetyczne.
  *
- * PO CO: w lotnictwie kurs bez oznaczenia jest MAGNETYCZNY — tak są opisane progi pasów,
+ * PO CO: w lotnictwie kurs bez oznaczenia jest MAGNETYCZNY - tak są opisane progi pasów,
  * tak podaje je wieża i tak czyta je pilot z busoli. Nasze dane źródłowe (OurAirports,
  * geometria OpenStreetMap) są geograficzne, więc różnią się od tego, co pilot widzi na
  * tabliczce, o kilka stopni. Katalog zostaje geograficzny, bo mapa śladu rysuje pasy na
  * siatce zorientowanej na północ geograficzną; przeliczamy dopiero PRZY WYŚWIETLANIU.
  *
  * MODEL: liniowe przybliżenie IGRF dla obszaru Polski, epoka 2026. Deklinacja rośnie
- * ku wschodowi i północnemu wschodowi — od ~+4,5° przy granicy zachodniej do ~+8,5°
+ * ku wschodowi i północnemu wschodowi - od ~+4,5° przy granicy zachodniej do ~+8,5°
  * na Suwalszczyźnie. Reszta po dopasowaniu mieści się poniżej 1°, czyli poniżej
  * rozdzielczości, z jaką cokolwiek tu pokazujemy.
  *
  * OGRANICZENIA, świadome:
  * - Model obowiązuje W POLSCE. Katalog jest wyłącznie polski (`EP**`), więc innych
  *   punktów tu nie ma; gdyby kiedyś były, ta funkcja przestaje być właściwym narzędziem.
- * - Deklinacja dryfuje o ~+0,1°/rok. Po kilku latach warto odświeżyć stałe — do tego
+ * - Deklinacja dryfuje o ~+0,1°/rok. Po kilku latach warto odświeżyć stałe - do tego
  *   czasu błąd zostaje poniżej stopnia, a to i tak mniej niż niepewność kursu liczonego
  *   z geometrii pasa.
  * - To NIE jest źródło do nawigacji. Służy do podpisu „pas 060°" przy podpowiedzi

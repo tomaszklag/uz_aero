@@ -1,18 +1,18 @@
 /**
- * UZ Aero — arytmetyka ekranu TANKOWANIE (mockup 06).
+ * UZ Aero - arytmetyka ekranu TANKOWANIE (mockup 06).
  *
  * Osobny moduł bez importów React Native, bo to jedyna nietrywialna logika tego ekranu
- * i jedyna, której pomyłka nie objawi się niczym widocznym — zła średnia L/h wygląda
+ * i jedyna, której pomyłka nie objawi się niczym widocznym - zła średnia L/h wygląda
  * dokładnie tak samo jak dobra.
  *
  * Co tu liczymy i skąd bierzemy dane:
- *  • **punkt odniesienia** — ostatni BEZPOŚREDNI odczyt paliwomierza w strumieniu
+ *  • **punkt odniesienia** - ostatni BEZPOŚREDNI odczyt paliwomierza w strumieniu
  *    (preflight albo poprzednie tankowanie). Zużycia w locie nie mierzymy, więc jedyne,
  *    co wiemy na pewno, to dwa odczyty i czas pracy silnika między nimi;
- *  • **czas pracy silnika** — z zamkniętych cykli projekcji, przycięty do okna
+ *  • **czas pracy silnika** - z zamkniętych cykli projekcji, przycięty do okna
  *    „od odczytu do teraz". Licznik motogodzin chodzi z silnikiem (§4.5), więc to on
  *    jest mianownikiem, a nie czas zegarowy dnia;
- *  • **średnia L/h** — (odczyt odniesienia − stan przed tankowaniem) / godziny pracy.
+ *  • **średnia L/h** - (odczyt odniesienia − stan przed tankowaniem) / godziny pracy.
  *
  * To **szacunek kontrolny**, nie pomiar: `CLAUDE.md` stawia licznik fizyczny ponad naszą
  * rachubą, więc gdy danych brakuje, zwracamy `null` zamiast liczby „mniej więcej".
@@ -31,12 +31,12 @@ import {
 export interface FuelReference {
   at: EpochMillis;
   fuelL: number;
-  /** Skąd pochodzi — steruje podpisem w UI („preflight 08:00 UTC"). */
+  /** Skąd pochodzi - steruje podpisem w UI („preflight 08:00 UTC"). */
   source: 'preflight' | 'refuel';
 }
 
 /**
- * Znajduje ostatni odczyt paliwomierza (chronologicznie, nie w kolejności zapisu —
+ * Znajduje ostatni odczyt paliwomierza (chronologicznie, nie w kolejności zapisu -
  * wpis ręczny i korekta czasu wstawiają zdarzenia „wstecz").
  * `null`, gdy w sesji nie ma jeszcze żadnego odczytu.
  */
@@ -64,12 +64,12 @@ export function lastFuelReference(events: Event[]): FuelReference | null {
  * zużycia po stronie panelu i dwie definicje zaczęłyby się rozjeżdżać przy pierwszej
  * poprawce. Tam też mieszka uzasadnienie dwóch rzeczy, których ta funkcja pierwotnie
  * nie robiła, a robić musi:
- *  • liczy ręczne off/on-block z `manual_log_entry` (fallback GPS, ekran 08) — projekcja
+ *  • liczy ręczne off/on-block z `manual_log_entry` (fallback GPS, ekran 08) - projekcja
  *    dokłada je do `blockTimeMs` BEZ wpisu w `legs`, więc liczenie z samych cykli
  *    zaniżało mianownik i zawyżało L/h (wada znaleziona 2026-08-05);
  *  • scala odcinki nachodzące na siebie, zamiast sumować ich długości.
  *
- * `events` musi pochodzić z tej samej sesji co `state` — inaczej odcinki opisywałyby
+ * `events` musi pochodzić z tej samej sesji co `state` - inaczej odcinki opisywałyby
  * inny dzień niż cykle.
  */
 export function engineTimeInWindow(
@@ -96,9 +96,9 @@ export interface ConsumptionEstimate {
  * Szacuje zużycie od ostatniego odczytu do stanu `beforeL`.
  *
  * `null` (czyli „nie ma czego pokazać”, a nie „zero”) gdy:
- *  • nie ma odczytu odniesienia — pierwsze zdarzenie w sesji,
- *  • silnik nie pracował od tego odczytu — dzielenie przez zero,
- *  • paliwa jest WIĘCEJ niż przy odczycie — ujemne zużycie to sygnał błędu odczytu
+ *  • nie ma odczytu odniesienia - pierwsze zdarzenie w sesji,
+ *  • silnik nie pracował od tego odczytu - dzielenie przez zero,
+ *  • paliwa jest WIĘCEJ niż przy odczycie - ujemne zużycie to sygnał błędu odczytu
  *    albo tankowania poza aplikacją; domena zgłosi to jako `FUEL_MISMATCH`, a my
  *    nie zamazujemy tego wymyśloną liczbą.
  */
@@ -128,7 +128,7 @@ export function maxAddableL(beforeL: number, capacityL: number | null): number |
 
 /**
  * Podziałka pod paskiem dolewki: 0 → ćwiartki → maks (`.slider-labels` z mockupu).
- * Wartości pośrednie zaokrąglamy do 5 L — podziałka ma orientować, a nie udawać
+ * Wartości pośrednie zaokrąglamy do 5 L - podziałka ma orientować, a nie udawać
  * precyzję, której dolewka nie ma (mockup: 0 · 55 · 110 · 165 · 218 dla maks. 218 L).
  */
 export function refuelScale(maxL: number): string[] {

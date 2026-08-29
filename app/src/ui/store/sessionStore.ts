@@ -1,15 +1,15 @@
 /**
- * UZ Aero — store sesji (Zustand) — CIENKA warstwa nad `application`.
+ * UZ Aero - store sesji (Zustand) - CIENKA warstwa nad `application`.
  *
  * Store nie zna reguł ani bazy. Robi trzy rzeczy:
  *  1. trzyma tożsamość bieżącej sesji (`context`) i podaje ją komendom,
  *  2. woła komendę i po zapisie odświeża projekcję zapytaniami,
  *  3. wystawia UI to, co ekran ma narysować: `projection`, `outboxCount`, `warnings`, `lastError`.
  *
- * Cała walidacja siedzi w `domain/rules` i jest egzekwowana przez `SessionCommands` —
+ * Cała walidacja siedzi w `domain/rules` i jest egzekwowana przez `SessionCommands` -
  * gdyby ekran wołał komendę z pominięciem store'u, reguły i tak obowiązują.
  *
- * Dane sesji są ZAWSZE świeże (źródłem prawdy jest telefon) — zero wariantów offline
+ * Dane sesji są ZAWSZE świeże (źródłem prawdy jest telefon) - zero wariantów offline
  * w tej warstwie (§6 pkt 1). Wskaźnik łączności to wyłącznie `outboxCount`/`synced`
  * (SyncChip), liczony z outboxa.
  */
@@ -61,12 +61,12 @@ import { useAuthStore } from './authStore';
 export type { ClaimInput, SessionContext };
 
 export interface SessionStore {
-  /** Warstwa danych — potrzebna wyłącznie do księgowości outboxa (`markSynced`, §4.3). */
+  /** Warstwa danych - potrzebna wyłącznie do księgowości outboxa (`markSynced`, §4.3). */
   repo: EventsRepo | null;
   commands: SessionCommands | null;
   queries: SessionQueries | null;
   /**
-   * Zapytania o ślad lotu (ekran 14) — podłączane osobno, bo potrzebują `TracePort`,
+   * Zapytania o ślad lotu (ekran 14) - podłączane osobno, bo potrzebują `TracePort`,
    * czyli magazynu stojącego OBOK rejestru (własna retencja, własna wysyłka). Ekran
    * bez podłączonej warstwy pokazuje stan pusty zamiast się wywalać: ślad jest
    * materiałem badawczym i jego brak nigdy nie może zablokować pracy.
@@ -84,11 +84,11 @@ export interface SessionStore {
   /** true, gdy outbox pusty (SyncChip = SYNC). */
   synced: boolean;
   /**
-   * Licznik zmian LOKALNEGO STRUMIENIA spoza bieżącej sesji — rośnie, gdy odtworzenie
+   * Licznik zmian LOKALNEGO STRUMIENIA spoza bieżącej sesji - rośnie, gdy odtworzenie
    * (§4.9) dopisze zdarzenia z serwera. Ekrany czytające cały rejestr („Mój dzień",
    * „Historia dni") trzymają go w zależnościach efektu: bez tego pilot po czyszczeniu
    * pamięci patrzyłby na pusty dzień, mając już dane w bazie, do czasu przejścia
-   * między ekranami. `projection.eventCount` tego nie łapie — opisuje JEDNĄ sesję.
+   * między ekranami. `projection.eventCount` tego nie łapie - opisuje JEDNĄ sesję.
    */
   streamRevision: number;
   /**
@@ -96,41 +96,41 @@ export interface SessionStore {
    *
    * Odpowiada na jedno pytanie ekranu: „czy pustemu rejestrowi wolno wierzyć". Zanim
    * pierwsze odtworzenie się zakończy, pusta doba może być artefaktem czyszczenia
-   * pamięci, a nie faktem — a „DZIŚ BEZ LOTÓW" pokazane pilotowi z trzema
+   * pamięci, a nie faktem - a „DZIŚ BEZ LOTÓW" pokazane pilotowi z trzema
    * sesjami za sobą jest kłamstwem (to ta sama zasada, dla której `usePilotDay` zwraca
    * `null` do pierwszego odczytu). `true` bez warstwy synca: bez serwera lokalny
    * rejestr JEST całą prawdą i nie ma na co czekać.
    */
   streamHydrated: boolean;
-  /** Silnik synca — podłączany w composition root; ekran 11 pyta go o stan serwera. */
+  /** Silnik synca - podłączany w composition root; ekran 11 pyta go o stan serwera. */
   sync: SyncEngine | null;
-  /** Odświeżanie cache referencyjnego (§4.8) — podłączane razem z silnikiem. */
+  /** Odświeżanie cache referencyjnego (§4.8) - podłączane razem z silnikiem. */
   referenceSync: ReferenceSync | null;
-  /** Odtworzenie rejestru z serwera (§4.9, issue #32) — druga połowa outboxa. */
+  /** Odtworzenie rejestru z serwera (§4.9, issue #32) - druga połowa outboxa. */
   eventRestore: EventRestore | null;
-  /** Wysyłka śladu kalibracyjnego (faza 5) — ostatni, niskopriorytetowy krok okazji. */
+  /** Wysyłka śladu kalibracyjnego (faza 5) - ostatni, niskopriorytetowy krok okazji. */
   traceSync: TraceSync | null;
-  /** Uzgadnianie motywu pilota przez `/me/prefs` (decyzja 2026-07-29) — ThemeProvider słucha adopcji. */
+  /** Uzgadnianie motywu pilota przez `/me/prefs` (decyzja 2026-07-29) - ThemeProvider słucha adopcji. */
   themePrefs: ThemePrefsSync | null;
-  /** Wynik ostatniego przebiegu synca — SyncChip i ekran 11 czytają stąd. */
+  /** Wynik ostatniego przebiegu synca - SyncChip i ekran 11 czytają stąd. */
   lastSync: SyncOutcome | null;
-  /** Chwila ostatniej UDANEJ wysyłki (epoch ms) — „ostatnia udana wysyłka 14:02 UTC". */
+  /** Chwila ostatniej UDANEJ wysyłki (epoch ms) - „ostatnia udana wysyłka 14:02 UTC". */
   lastSyncAt: number | null;
-  /** Otwarte flagi serwera dotykające naszych sesji (§4.5) — do pokazania na 11. */
+  /** Otwarte flagi serwera dotykające naszych sesji (§4.5) - do pokazania na 11. */
   serverFlags: SessionFlag[];
   /** Miękkie flagi ostatniej udanej komendy (banner „zapisane, ale sprawdź"). */
   warnings: RuleViolation[];
-  /** Komunikat ostatniego odrzucenia (twarda reguła) — null po udanej komendzie. */
+  /** Komunikat ostatniego odrzucenia (twarda reguła) - null po udanej komendzie. */
   lastError: string | null;
 
   /** Podłącza gotowe warstwy (composition root aplikacji). */
   attach(deps: { repo: EventsRepo; commands: SessionCommands; queries: SessionQueries }): void;
   /** Skrót: buduje komendy i zapytania z repozytorium. */
   attachRepo(repo: EventsRepo): void;
-  /** Podłącza zapytania o ślad (composition root — potrzebują magazynu śladu). */
+  /** Podłącza zapytania o ślad (composition root - potrzebują magazynu śladu). */
   attachTrack(queries: FlightTrackQueries): void;
   /**
-   * Podłącza warstwę synca (composition root) — bez niej `syncNow` i `refreshReference`
+   * Podłącza warstwę synca (composition root) - bez niej `syncNow` i `refreshReference`
    * są cichym no-op (testy i StyleGuide żyją bez serwera).
    */
   attachSync(
@@ -146,7 +146,7 @@ export interface SessionStore {
   confirmPreflight(payload: PreflightConfirmPayload): Promise<CommandResult>;
   startEngine(payload?: EngineStartPayload): Promise<CommandResult>;
   stopEngine(payload?: EngineStopPayload): Promise<CommandResult>;
-  /** Rozpoczęcie kołowania — bez okna „COFNIJ", zapis natychmiastowy. */
+  /** Rozpoczęcie kołowania - bez okna „COFNIJ", zapis natychmiastowy. */
   taxi(
     method?: DetectionMethod,
     position?: GpsPosition | null,
@@ -165,21 +165,21 @@ export interface SessionStore {
   ): Promise<CommandResult>;
   /** `at` = czas rzeczywisty, gdy tankowanie dopisujemy po fakcie (issue #43). */
   refuel(payload: RefuelPayload, at?: EpochMillis): Promise<CommandResult>;
-  /** Dolewka oleju z kokpitu (issue #60) — jak tankowanie: przy zatrzymanym śmigle. */
+  /** Dolewka oleju z kokpitu (issue #60) - jak tankowanie: przy zatrzymanym śmigle. */
   addOil(payload: OilAddPayload, at?: EpochMillis): Promise<CommandResult>;
-  /** Korekta zdarzenia (04c) — zmiana czasu albo unieważnienie, zapis append-only. */
+  /** Korekta zdarzenia (04c) - zmiana czasu albo unieważnienie, zapis append-only. */
   correctEvent(payload: EventCorrectionPayload): Promise<CommandResult>;
   drop(input: DropInput): Promise<CommandResult>;
-  /** Załadunek skoczków (issue #21 pkt 7) — znacznik faktu, skład opcjonalny. */
+  /** Załadunek skoczków (issue #21 pkt 7) - znacznik faktu, skład opcjonalny. */
   boarding(input: BoardingInput): Promise<CommandResult>;
   crewChange(payload: CrewChangePayload): Promise<CommandResult>;
   manualLogEntry(payload: ManualLogEntryPayload): Promise<CommandResult>;
   /**
-   * Ręczny wpis CAŁEGO lotu z 01 (ekran 15) — tworzy kompletną, ZAKOŃCZONĄ sesję.
+   * Ręczny wpis CAŁEGO lotu z 01 (ekran 15) - tworzy kompletną, ZAKOŃCZONĄ sesję.
    * Nie wymaga kontekstu: sesja historyczna nie jest „bieżącą" i nie ma jej wznawiać.
    */
   manualFlight(input: ManualFlightInput): Promise<CommandResult>;
-  /** Zdanie samolotu (09B) = ZATWIERDZENIE logu sesji — NIE kończy dnia pilota. */
+  /** Zdanie samolotu (09B) = ZATWIERDZENIE logu sesji - NIE kończy dnia pilota. */
   releaseAircraft(payload: DayClosePayload): Promise<CommandResult>;
 
   /** Wczytuje istniejącą sesję z bazy i odtwarza kontekst (np. po restarcie aplikacji). */
@@ -188,17 +188,17 @@ export interface SessionStore {
   markSynced(uuids: string[]): Promise<void>;
   /** Przelicza projekcję i licznik outboxa (po cyklu synca). */
   refreshOutbox(): Promise<void>;
-  /** Zapisuje wynik przebiegu synca — flagi serwera nadpisują poprzednie. */
+  /** Zapisuje wynik przebiegu synca - flagi serwera nadpisują poprzednie. */
   applySyncOutcome(outcome: SyncOutcome): void;
   /**
-   * Jeden pełny przebieg synca z zapisem wyniku — wspólna droga pętli okazji
+   * Jeden pełny przebieg synca z zapisem wyniku - wspólna droga pętli okazji
    * (`useSyncLoop`) i przycisku „SYNCHRONIZUJ TERAZ" na ekranie 11.
    */
   syncNow(): Promise<void>;
   /** Odświeża cache referencyjny, jeśli przekroczył bramę wieku (§4.8). */
   refreshReference(): Promise<void>;
   /**
-   * Odświeża cache referencyjny BEZ bramy wieku — droga przycisku „SYNCHRONIZUJ
+   * Odświeża cache referencyjny BEZ bramy wieku - droga przycisku „SYNCHRONIZUJ
    * TERAZ" (issue #55): pilot, który sięga po awaryjne ponaglenie, pyta „co serwer
    * wie TERAZ", a odpowiedź „sprawdzałem kwadrans temu" mija się z pytaniem.
    * ETag działa dalej, więc niezmieniona flota kosztuje 304 bez ciała.
@@ -206,21 +206,21 @@ export interface SessionStore {
   refreshReferenceNow(): Promise<void>;
   /**
    * Dopisuje do lokalnego strumienia zdarzenia, które ma serwer, a nie ma telefon
-   * (§4.9, issue #32) — odtworzenie po czyszczeniu pamięci, reinstalacji albo na nowym
+   * (§4.9, issue #32) - odtworzenie po czyszczeniu pamięci, reinstalacji albo na nowym
    * urządzeniu. Po zapisie podbija `streamRevision`, żeby otwarte ekrany przeliczyły
    * projekcje.
    */
   restoreEvents(): Promise<void>;
-  /** Wysyła jedną paczkę śladu kalibracyjnego (faza 5) — cicho, bez wpływu na UI. */
+  /** Wysyła jedną paczkę śladu kalibracyjnego (faza 5) - cicho, bez wpływu na UI. */
   uploadTraces(): Promise<void>;
   /** Uzgadnia motyw zalogowanego pilota (push `dirty` od razu, pull za bramą wieku). */
   syncThemePrefs(): Promise<void>;
-  /** Czyści stan w pamięci (wylogowanie / nowy dzień) — nie kasuje bazy. */
+  /** Czyści stan w pamięci (wylogowanie / nowy dzień) - nie kasuje bazy. */
   reset(): void;
 }
 
 export const useSessionStore = create<SessionStore>((set, get) => {
-  /** Trwający zapis kołowania — serializacja przeciw wyścigowi, patrz `taxi()`. */
+  /** Trwający zapis kołowania - serializacja przeciw wyścigowi, patrz `taxi()`. */
   let taxiInFlight: Promise<CommandResult> | null = null;
 
   /** Brak podłączonych warstw to błąd programistyczny, nie stan runtime. */
@@ -260,16 +260,16 @@ export const useSessionStore = create<SessionStore>((set, get) => {
   /**
    * Wspólna ścieżka: komenda → odświeżenie → zapamiętanie ostrzeżeń.
    * Twarde odrzucenie (`DomainRuleError`) zapisujemy w `lastError` DLA UI i rzucamy dalej,
-   * żeby wołający (np. modal potwierdzenia) mógł zareagować — cichy błąd jest zakazany
+   * żeby wołający (np. modal potwierdzenia) mógł zareagować - cichy błąd jest zakazany
    * (§6 pkt 3: „nigdy cichy błąd").
    *
    * `fromDetector` = zapis z AUTODETEKCJI GPS, jedyny wyjątek od tej zasady (issue #30).
    * „Nigdy cichy błąd" broni pilota przed martwym przyciskiem: nacisnął, nic się nie
-   * stało, nie wie dlaczego. Automat niczego nie naciska — gdy jego zdarzenie kłóci się
+   * stało, nie wie dlaczego. Automat niczego nie naciska - gdy jego zdarzenie kłóci się
    * z rejestrem, wygrywa rejestr, a czerwony baner „Nie zapisano" opisywałby wtedy
    * pomyłkę MASZYNY językiem utraconego wpisu pilota. Wyjątek jest wąski z rozmysłem:
    * dotyczy WYŁĄCZNIE odmowy reguły. Każda inna awaria zapisu (baza, magazyn) zostaje
-   * widoczna — cisza o nieudanym zapisie to utrata danych.
+   * widoczna - cisza o nieudanym zapisie to utrata danych.
    */
   async function run(
     action: () => Promise<CommandResult>,
@@ -358,19 +358,19 @@ export const useSessionStore = create<SessionStore>((set, get) => {
       return run(() => requireCommands().stopEngine(requireContext(), payload));
     },
 
-    // Trzy zdarzenia, które umie zapisać AUTOMAT — i jedyne, w których `method` mówi,
+    // Trzy zdarzenia, które umie zapisać AUTOMAT - i jedyne, w których `method` mówi,
     // czy za zapisem stał palec pilota. Stąd `fromDetector`: patrz nagłówek `run`.
     /**
      * ZAPISY KOŁOWANIA SĄ ZSERIALIZOWANE (zgłoszenie z urządzenia, 2026-08-26:
      * „Kołowanie" 2x pod rząd w logu). Pilot tapie „Taxi" w tej samej sekundzie,
-     * w której automat wykrywa ruch z tych samych fixów — a obie warstwy obrony
+     * w której automat wykrywa ruch z tych samych fixów - a obie warstwy obrony
      * mają to samo ślepe pole, ZAPIS W LOCIE: sito `taxiWrite` czyta projekcję,
      * która odświeża się dopiero po zakończonym zapisie, a twarda reguła
-     * `ALREADY_TAXIING` czyta stan z bazy PRZED dopisaniem, bez transakcji — dwa
+     * `ALREADY_TAXIING` czyta stan z bazy PRZED dopisaniem, bez transakcji - dwa
      * nakładające się zapisy oba widzą „kołowania nie ma" i oba wchodzą.
      *
      * Drugi zapis czeka więc na pierwszy i dopiero na ŚWIEŻEJ projekcji rozstrzyga,
-     * czy jest jeszcze potrzebny. Duplikat oddaje wynik TAMTEGO zapisu — po cichu,
+     * czy jest jeszcze potrzebny. Duplikat oddaje wynik TAMTEGO zapisu - po cichu,
      * bo kołowanie już jest w rejestrze, czyli dokładnie ten stan, o który wołający
      * prosił; błąd „już kołujesz" za wpis, którego pilot nie dublował świadomie,
      * byłby szumem (ta sama logika, co `skip` w `taxiWrite`).
@@ -388,7 +388,7 @@ export const useSessionStore = create<SessionStore>((set, get) => {
           );
           // Po rozstrzygnięciu poprzedniego zapisu projekcja mówi prawdę: kołowanie
           // otwarte = nasz wpis byłby duplikatem. Nieudany poprzedni zapis (null)
-          // niczego nie otworzył — piszemy normalnie.
+          // niczego nie otworzył - piszemy normalnie.
           if (settled != null && get().projection.taxiing) {
             return settled.result;
           }
@@ -440,7 +440,7 @@ export const useSessionStore = create<SessionStore>((set, get) => {
       const ctx = requireContext();
       const result = await run(() => requireCommands().crewChange(ctx, payload));
       // Zmiana PIC jest odrzucana przez regułę (single-writer, §4.1 pkt 3), więc do
-      // kontekstu może wejść wyłącznie nowy Dual — i dopiero po udanym zapisie.
+      // kontekstu może wejść wyłącznie nowy Dual - i dopiero po udanym zapisie.
       if (payload.role === 'dual') {
         set({ context: { ...ctx, dualId: payload.pilotInId ?? null } });
       }
@@ -485,12 +485,12 @@ export const useSessionStore = create<SessionStore>((set, get) => {
 
       // Uzgodnienie klucza usługi GPS w tle: leczy upgrade w środku otwartego dnia
       // (klucza jeszcze nie było) i crash między `day_close` a czyszczeniem. Błąd meta
-      // nie może wywrócić wznowienia — dzień pilota jest ważniejszy niż ślad.
+      // nie może wywrócić wznowienia - dzień pilota jest ważniejszy niż ślad.
       try {
         const repo = get().repo;
         if (repo != null && projection.sessionUuid != null) {
           // Pytamy o ZDANIE samolotu (`closed`). Historyczny warunek `dutyEnd == null`
-          // trzymał klucz usługi w tle wskazujący na sesję, której pilot już nie ma —
+          // trzymał klucz usługi w tle wskazujący na sesję, której pilot już nie ma -
           // a samego `dutyEnd` nie ma dziś w modelu w ogóle (issue #23).
           if (!projection.closed) {
             await repo.setMeta(SESSION_META_KEYS.activeSessionUuid, projection.sessionUuid);
@@ -499,7 +499,7 @@ export const useSessionStore = create<SessionStore>((set, get) => {
           }
         }
       } catch {
-        // Świadomie cicho — patrz komentarz wyżej.
+        // Świadomie cicho - patrz komentarz wyżej.
       }
     },
 
@@ -518,7 +518,7 @@ export const useSessionStore = create<SessionStore>((set, get) => {
       set((state) => ({
         lastSync: outcome,
         lastSyncAt: outcome.kind === 'synced' ? Date.now() : state.lastSyncAt,
-        // Flagi nadpisujemy przy KAŻDYM udanym syncu — serwer zwraca komplet otwartych,
+        // Flagi nadpisujemy przy KAŻDYM udanym syncu - serwer zwraca komplet otwartych,
         // więc rozwiązane u administratora same znikają z ekranu 11.
         serverFlags: outcome.kind === 'synced' ? outcome.flags : state.serverFlags,
       }));
@@ -526,7 +526,7 @@ export const useSessionStore = create<SessionStore>((set, get) => {
 
     async syncNow() {
       const { sync, applySyncOutcome, refreshOutbox } = get();
-      if (sync == null) return; // testy i StyleGuide żyją bez serwera — to nie błąd
+      if (sync == null) return; // testy i StyleGuide żyją bez serwera - to nie błąd
       const outcome = await sync.syncOnce();
       applySyncOutcome(outcome);
       if (outcome.kind === 'synced') await refreshOutbox();
@@ -547,7 +547,7 @@ export const useSessionStore = create<SessionStore>((set, get) => {
     async restoreEvents() {
       const { eventRestore } = get();
       if (eventRestore == null) {
-        // Bez warstwy synca (testy, StyleGuide) lokalny rejestr jest całą prawdą —
+        // Bez warstwy synca (testy, StyleGuide) lokalny rejestr jest całą prawdą -
         // nie ma na co czekać i nie ma co odtwarzać.
         set({ streamHydrated: true });
         return;
@@ -563,7 +563,7 @@ export const useSessionStore = create<SessionStore>((set, get) => {
           await refresh();
         }
       } finally {
-        // Także po niepowodzeniu: offline nie jest stanem, w którym ekran ma czekać —
+        // Także po niepowodzeniu: offline nie jest stanem, w którym ekran ma czekać -
         // wtedy lokalny rejestr jest najlepszą dostępną prawdą i trzeba go pokazać.
         set({ streamHydrated: true });
       }
@@ -577,8 +577,8 @@ export const useSessionStore = create<SessionStore>((set, get) => {
 
     async syncThemePrefs() {
       const { themePrefs } = get();
-      if (themePrefs == null) return; // testy i StyleGuide żyją bez serwera — to nie błąd
-      // Tożsamość bierzemy ze store'u auth w chwili przebiegu — pętla okazji nie musi
+      if (themePrefs == null) return; // testy i StyleGuide żyją bez serwera - to nie błąd
+      // Tożsamość bierzemy ze store'u auth w chwili przebiegu - pętla okazji nie musi
       // jej znać, a moduł synca i tak weryfikuje profil przed rozmową z serwerem.
       const pilot = useAuthStore.getState().pilot;
       if (pilot == null) return;
@@ -592,7 +592,7 @@ export const useSessionStore = create<SessionStore>((set, get) => {
         projection: emptySessionState(),
         outboxCount: 0,
         synced: true,
-        // Wylogowanie znaczy, że na tym urządzeniu może zalogować się KTOŚ INNY —
+        // Wylogowanie znaczy, że na tym urządzeniu może zalogować się KTOŚ INNY -
         // a jego rejestr trzeba dopiero uzgodnić z serwerem (kursor odtworzenia jest
         // przypisany do pilota, `EventRestore`). Bez warstwy synca nie ma na co czekać.
         streamHydrated: get().eventRestore == null,

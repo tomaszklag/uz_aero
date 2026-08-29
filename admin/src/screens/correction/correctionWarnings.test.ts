@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: baner kolizji nad formularzem korekty (`A02b`).
+ * UZ Aero - panel: baner kolizji nad formularzem korekty (`A02b`).
  *
  * Ten plik pilnuje ODWRÓCENIA decyzji z 2026-08-07. Wcześniej sesja bez `day_close`
  * kończyła się odmową `400 day_open`; dziś kończy się ostrzeżeniem, a zapis idzie.
@@ -16,11 +16,11 @@ import { correctionWarningBanner } from './correctionWarnings';
 const sessionActive: RuleViolation = {
   code: 'ADMIN_EDIT_SESSION_ACTIVE',
   severity: 'warning',
-  message: 'Pilot nadal prowadzi tę sesję — może dopisać własne zdarzenia po synchronizacji.',
+  message: 'Pilot nadal prowadzi tę sesję - może dopisać własne zdarzenia po synchronizacji.',
 };
 
 // Komunikat lustrzy dzisiejszą domenę (`sessionRules.ts`): okno jest JEDNO, per sesja,
-// liczone od zdania samolotu — kotwice per wzlot odeszły z pivotem 2026-08-10.
+// liczone od zdania samolotu - kotwice per wzlot odeszły z pivotem 2026-08-10.
 const windowOpen: RuleViolation = {
   code: 'ADMIN_EDIT_PILOT_WINDOW_OPEN',
   severity: 'warning',
@@ -36,13 +36,13 @@ describe('brak kolizji nie rysuje NICZEGO', () => {
 });
 
 describe('kolizja jest OSTRZEŻENIEM, nie odmową', () => {
-  it('otwarta sesja mówi, co się stanie — i nie zapowiada blokady', () => {
+  it('otwarta sesja mówi, co się stanie - i nie zapowiada blokady', () => {
     const banner = correctionWarningBanner([sessionActive])!;
 
     expect(banner.tone).toBe('warn');
     expect(banner.title).toBe('Ta korekta wchodzi w kolizję z pilotem.');
     expect(banner.items[0]!.code).toBe('ADMIN_EDIT_SESSION_ACTIVE');
-    // Komunikat pochodzi z DOMENY — panel go nie przepisuje po swojemu.
+    // Komunikat pochodzi z DOMENY - panel go nie przepisuje po swojemu.
     expect(banner.items[0]!.text).toBe(sessionActive.message);
     // …a konsekwencję dokłada panel, bo domena nie wie nic o jednokierunkowym syncu.
     expect(banner.items[0]!.consequence).toContain('policzą się jeszcze raz');
@@ -51,7 +51,7 @@ describe('kolizja jest OSTRZEŻENIEM, nie odmową', () => {
   it('NIE NIESIE nic, z czego dałoby się wyszarzyć przycisk zapisu', () => {
     // Odwrócenie bramki `400 day_open`: administrator może edytować ZAWSZE. Gdyby ten
     // moduł oddał `blocking`/`disabled`, `.tsx` prędzej czy później by je przeczytał
-    // i bramka wróciłaby tylnymi drzwiami — dlatego pilnujemy KSZTAŁTU wyniku.
+    // i bramka wróciłaby tylnymi drzwiami - dlatego pilnujemy KSZTAŁTU wyniku.
     const banner = correctionWarningBanner([sessionActive, windowOpen])!;
 
     expect(Object.keys(banner).sort()).toEqual(['items', 'note', 'title', 'tone']);

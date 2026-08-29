@@ -1,12 +1,12 @@
 /**
- * UZ Aero — test FORMATOWANIA I PARSOWANIA odczytów.
+ * UZ Aero - test FORMATOWANIA I PARSOWANIA odczytów.
  *
  * `parseMotoHours` jest jedynym miejscem, w którym napis wpisany przez pilota staje się
- * liczbą trafiającą do rejestru zdarzeń — a odczyt MH porządkuje sesje samolotu (§4.5).
+ * liczbą trafiającą do rejestru zdarzeń - a odczyt MH porządkuje sesje samolotu (§4.5).
  * Pomyłka o 30 minut nie wygląda tu na błąd: po prostu zapisuje się zła wartość.
  * Dlatego parser i formater sprawdzamy razem, w obie strony.
  *
- * Testujemy też, że wpis nieczytelny daje `null`, a nie „prawie liczbę" — wołający ma
+ * Testujemy też, że wpis nieczytelny daje `null`, a nie „prawie liczbę" - wołający ma
  * wtedy zablokować zapis (§6 pkt 3: nigdy cichy błąd).
  */
 
@@ -51,7 +51,7 @@ describe('motogodziny', () => {
   it('formatuje wg konfiguracji samolotu (§5.4)', () => {
     expect(motoHours(1234.5, 'hhmm')).toBe('1234:30');
     expect(motoHours(1234.5, 'decimal')).toBe('1234.5');
-    expect(motoHours(null, 'hhmm')).toBe('—');
+    expect(motoHours(null, 'hhmm')).toBe('-');
   });
 
   it('nie produkuje „:60" przy zaokrągleniu minut w górę', () => {
@@ -78,7 +78,7 @@ describe('motogodziny', () => {
     for (const value of [0, 1.5, 99.25, 1233, 1234.5, 1241.15]) {
       const viaHhmm = parseMotoHours(motoHours(value, 'hhmm'));
       expect(viaHhmm).not.toBeNull();
-      // hh:mm ma rozdzielczość minuty — zgodność do 1/60 h wystarcza.
+      // hh:mm ma rozdzielczość minuty - zgodność do 1/60 h wystarcza.
       expect(Math.abs(viaHhmm! - value)).toBeLessThanOrEqual(1 / 120 + 1e-9);
 
       expect(parseMotoHours(motoHours(value, 'decimal'))).toBeCloseTo(value, 1);
@@ -90,14 +90,14 @@ describe('paliwo', () => {
   it('formatuje bez miejsc po przecinku', () => {
     expect(litres(88)).toBe('88 L');
     expect(litres(87.6)).toBe('88 L');
-    expect(litres(null)).toBe('—');
+    expect(litres(null)).toBe('-');
   });
 
-  it('olej z jednym miejscem po przecinku — podziałka bagnetu, nie paliwomierza', () => {
+  it('olej z jednym miejscem po przecinku - podziałka bagnetu, nie paliwomierza', () => {
     expect(oilLitres(10.2)).toBe('10,2 L');
     expect(oilLitres(10)).toBe('10,0 L');
     expect(oilLitres(10.16)).toBe('10,2 L');
-    expect(oilLitres(null)).toBe('—');
+    expect(oilLitres(null)).toBe('-');
   });
 
   it('datownik osi czasu: dzień i miesiąc bez roku + godzina UTC', () => {
@@ -116,12 +116,12 @@ describe('paliwo', () => {
 
 describe('czas', () => {
   it('pokazuje godziny w UTC, nie w strefie urządzenia', () => {
-    // 2026-06-22 08:00 UTC — niezależnie od tego, gdzie stoi telefon (`CLAUDE.md`).
+    // 2026-06-22 08:00 UTC - niezależnie od tego, gdzie stoi telefon (`CLAUDE.md`).
     expect(timeUtc(Date.UTC(2026, 5, 22, 8, 0))).toBe('08:00');
-    expect(timeUtc(null)).toBe('—');
+    expect(timeUtc(null)).toBe('-');
   });
 
-  it('maska stawia dwukropek za pilota — wpisuje same cyfry', () => {
+  it('maska stawia dwukropek za pilota - wpisuje same cyfry', () => {
     // Klawiatura numeryczna nie ma dwukropka; „0800" musi znaczyć 08:00.
     expect(maskTimeUtcInput('0')).toBe('0');
     expect(maskTimeUtcInput('08')).toBe('08');
@@ -132,14 +132,14 @@ describe('czas', () => {
     expect(maskTimeUtcInput('08:00')).toBe('08:00');
     // Backspace w „08:00" daje „08:0", a nie skok o dwa znaki.
     expect(maskTimeUtcInput('08:0')).toBe('08:0');
-    // Piąta cyfra nie ma gdzie trafić — ucinamy zamiast puszczać „08:0012".
+    // Piąta cyfra nie ma gdzie trafić - ucinamy zamiast puszczać „08:0012".
     expect(maskTimeUtcInput('080012')).toBe('08:00');
     expect(maskTimeUtcInput('')).toBe('');
   });
 
   it('kropka i przecinek znaczą dwukropek (issue #62 pkt 2)', () => {
     // Klawiatura numeryczna ma kropkę albo przecinek, nie ma dwukropka. Do issue #62
-    // maska wycinała je razem z resztą niecyfr, więc „8.30" wychodziło jako „83:0" —
+    // maska wycinała je razem z resztą niecyfr, więc „8.30" wychodziło jako „83:0" -
     // `parseTimeUtcOnDay` odrzucał to (83 > 23), a `Stepper` cicho zostawiał starą
     // godzinę. Separator kończy część godzinową, dokładnie jak w masce motogodzin.
     expect(maskTimeUtcInput('8.30')).toBe('08:30');
@@ -152,16 +152,16 @@ describe('czas', () => {
     expect(maskTimeUtcInput('08:')).toBe('08:');
     expect(maskTimeUtcInput('8.3')).toBe('08:3');
 
-    // Wiodący separator nie ma czego zamknąć — godzina zaczyna liczbę.
+    // Wiodący separator nie ma czego zamknąć - godzina zaczyna liczbę.
     expect(maskTimeUtcInput('.30')).toBe('');
     expect(maskTimeUtcInput(',')).toBe('');
-    // Drugi separator jest już bez znaczenia — minuty biorą same cyfry.
+    // Drugi separator jest już bez znaczenia - minuty biorą same cyfry.
     expect(maskTimeUtcInput('8.3.0')).toBe('08:30');
     // Nadmiar cyfr po separatorze ucinamy tak samo jak w wersji bez separatora.
     expect(maskTimeUtcInput('8.3012')).toBe('08:30');
   });
 
-  it('maska godziny domyka się z parserem — wpis z separatorem daje czas', () => {
+  it('maska godziny domyka się z parserem - wpis z separatorem daje czas', () => {
     // Właściwy dowód z issue #62: cała droga „to, co pilot wbił" → znacznik czasu.
     // Bez poprawki maski parser dostawał „83:0" i zwracał `null`, czyli wpis ginął.
     const day = Date.UTC(2026, 5, 22);
@@ -169,7 +169,7 @@ describe('czas', () => {
     expect(parseTimeUtcOnDay(maskTimeUtcInput('8,30'), day)).toBe(Date.UTC(2026, 5, 22, 8, 30));
   });
 
-  it('maska daty stawia kropki za pilota — wzorzec maski godziny (arkusz 15E)', () => {
+  it('maska daty stawia kropki za pilota - wzorzec maski godziny (arkusz 15E)', () => {
     expect(maskDateUtcInput('16')).toBe('16');
     expect(maskDateUtcInput('1608')).toBe('16.08');
     expect(maskDateUtcInput('16082026')).toBe('16.08.2026');
@@ -182,23 +182,23 @@ describe('czas', () => {
   it('wpisana data ląduje o północy doby UTC; rok wolno pominąć', () => {
     const ref = Date.UTC(2026, 7, 16, 16, 20);
     expect(parseDateUtc('15.08.2026', ref)).toBe(Date.UTC(2026, 7, 15));
-    // Bez roku — rok z wartości odniesienia: poprawka o parę dni nie zmienia roku.
+    // Bez roku - rok z wartości odniesienia: poprawka o parę dni nie zmienia roku.
     expect(parseDateUtc('15.08', ref)).toBe(Date.UTC(2026, 7, 15));
-    // Dzień spoza kalendarza NIE przewija się na następny miesiąc — cicha zmiana
+    // Dzień spoza kalendarza NIE przewija się na następny miesiąc - cicha zmiana
     // daty jest kłamstwem, nie uprzejmością (ta sama zasada co parseDateTimeUtc).
     expect(parseDateUtc('31.04', ref)).toBeNull();
     expect(parseDateUtc('bzdura', ref)).toBeNull();
   });
 
   it('wpisaną godzinę osadza w dniu lotnym, nie w dniu „dziś"', () => {
-    // Arkusze meldunku (02) i zakończenia duty (09) dostają tylko „HH:MM" — data musi
+    // Arkusze meldunku (02) i zakończenia duty (09) dostają tylko „HH:MM" - data musi
     // przyjść z wartości poprawianej, inaczej korekta przeskakiwałaby dzień lotny.
     const day = Date.UTC(2026, 5, 22, 9, 41, 30);
     expect(parseTimeUtcOnDay('08:00', day)).toBe(Date.UTC(2026, 5, 22, 8, 0));
     expect(parseTimeUtcOnDay('8:05', day)).toBe(Date.UTC(2026, 5, 22, 8, 5));
     expect(parseTimeUtcOnDay(' 16:45 ', day)).toBe(Date.UTC(2026, 5, 22, 16, 45));
 
-    // Sekundy z „teraz" nie przeżywają korekty — pilot wpisuje pełną minutę.
+    // Sekundy z „teraz" nie przeżywają korekty - pilot wpisuje pełną minutę.
     expect(parseTimeUtcOnDay('09:41', day)).toBe(Date.UTC(2026, 5, 22, 9, 41));
   });
 
@@ -217,11 +217,11 @@ describe('czas', () => {
 });
 
 /**
- * Data dnia lotnego na telefonie. Aplikacja pilota mówi po polsku każdym napisem — po
+ * Data dnia lotnego na telefonie. Aplikacja pilota mówi po polsku każdym napisem - po
  * issue #12 także miesiącem. Dopełniacz, bo tak czyta się datę: „22 czerwca 2026".
  *
  * Skrót w `dateTimeUtcShort` jest PREFIKSEM pełnej nazwy, więc oba zapisy trzymają jedną
- * tablicę miesięcy i nie mają jak się rozjechać — dlatego sprawdzamy je razem, w tym
+ * tablicę miesięcy i nie mają jak się rozjechać - dlatego sprawdzamy je razem, w tym
  * miesiące z ogonkiem (WRZEŚNIA, PAŹDZIERNIKA), gdzie skracanie łatwo zepsuć.
  */
 describe('data dnia lotnego po polsku', () => {
@@ -238,14 +238,14 @@ describe('data dnia lotnego po polsku', () => {
   });
 
   it('nagłówek kalendarza niesie miesiąc w MIANOWNIKU, nie dopełniaczu (issue #58)', () => {
-    // „SIERPNIA 2026" w nagłówku brzmiałoby jak urwane zdanie — data to „22 sierpnia",
+    // „SIERPNIA 2026" w nagłówku brzmiałoby jak urwane zdanie - data to „22 sierpnia",
     // ale nazwa miesiąca to „sierpień".
     expect(monthYearUtc(Date.UTC(2026, 7, 16))).toBe('SIERPIEŃ 2026');
     expect(monthYearUtc(Date.UTC(2026, 8, 1))).toBe('WRZESIEŃ 2026');
     expect(monthYearUtc(Date.UTC(2027, 0, 1))).toBe('STYCZEŃ 2027');
   });
 
-  it('panel zostaje przy skrótach lotniczych — polonizacja dotyczy telefonu', () => {
+  it('panel zostaje przy skrótach lotniczych - polonizacja dotyczy telefonu', () => {
     // Kolumny dat w `design/admin/` i ich testy są napisane w tym zapisie; zmiana
     // panelu to osobna decyzja, nie skutek uboczny zmiany na telefonie.
     expect(dateUtcShort(Date.UTC(2026, 6, 31))).toBe('31 JUL 2026');
@@ -255,17 +255,17 @@ describe('data dnia lotnego po polsku', () => {
 /**
  * Pole nowego czasu z ekranu korekty administratora (`design/admin/A02b-korekta.html`).
  * Tu wartość jedzie do REJESTRU KLUBU, więc każdy cichy błąd parsowania kończy się
- * złą liczbą w arkuszu — i nikt tego nie zauważy, bo napis wygląda poprawnie.
+ * złą liczbą w arkuszu - i nikt tego nie zauważy, bo napis wygląda poprawnie.
  */
 describe('data z godziną w UTC (korekta administratora)', () => {
   it('wypisuje dokładnie zapis z mockupu A02b', () => {
     expect(dateTimeUtc(Date.UTC(2026, 6, 30, 13, 1, 33))).toBe('2026-07-30 13:01:33');
-    // Jednocyfrowe miesiące i dni dostają wiodące zero — inaczej pole raz ma
+    // Jednocyfrowe miesiące i dni dostają wiodące zero - inaczej pole raz ma
     // 19 znaków, raz 17, i kolumna mono skacze.
     expect(dateTimeUtc(Date.UTC(2026, 0, 3, 4, 5, 6))).toBe('2026-01-03 04:05:06');
   });
 
-  it('parsuje JAWNIE w UTC — to jest cały powód istnienia tej funkcji', () => {
+  it('parsuje JAWNIE w UTC - to jest cały powód istnienia tej funkcji', () => {
     // `new Date('2026-07-30 13:01:33')` przeglądarka rozumie jako czas LOKALNY;
     // w Warszawie latem dałoby to przesunięcie o 2 h bez żadnego sygnału.
     expect(parseDateTimeUtc('2026-07-30 13:01:33')).toBe(Date.UTC(2026, 6, 30, 13, 1, 33));
@@ -296,12 +296,12 @@ describe('data z godziną w UTC (korekta administratora)', () => {
   });
 
   it('odrzuca datę NIEISTNIEJĄCĄ, zamiast przewinąć kalendarz', () => {
-    // `Date.UTC(2026, 1, 30)` daje 2 marca i przeszłoby bez kontroli — a korekta,
+    // `Date.UTC(2026, 1, 30)` daje 2 marca i przeszłoby bez kontroli - a korekta,
     // która po cichu przesuwa dzień lotny, jest gorsza niż odrzucony formularz.
     expect(parseDateTimeUtc('2026-02-30 10:00:00')).toBeNull();
     expect(parseDateTimeUtc('2026-04-31 10:00:00')).toBeNull();
     expect(parseDateTimeUtc('2026-13-01 10:00:00')).toBeNull();
-    // Rok przestępny zostaje poprawny — to nie jest test na „odrzucaj wszystko".
+    // Rok przestępny zostaje poprawny - to nie jest test na „odrzucaj wszystko".
     expect(parseDateTimeUtc('2028-02-29 10:00:00')).toBe(Date.UTC(2028, 1, 29, 10, 0, 0));
   });
 });
@@ -317,7 +317,7 @@ describe('wiek względny (skrzynka flag panelu)', () => {
     expect(relativeAge(26 * min)).toBe('26 min');
   });
 
-  it('zjada człon zerowy — „2 dni", nie „2 dni 0 h"', () => {
+  it('zjada człon zerowy - „2 dni", nie „2 dni 0 h"', () => {
     expect(relativeAge(2 * 24 * h)).toBe('2 dni');
     expect(relativeAge(20 * h)).toBe('20 h');
   });
@@ -328,7 +328,7 @@ describe('wiek względny (skrzynka flag panelu)', () => {
     expect(relativeAge(22 * 24 * h)).toBe('22 dni');
   });
 
-  it('nigdy nie schodzi poniżej zera — zegary bywają przestawione', () => {
+  it('nigdy nie schodzi poniżej zera - zegary bywają przestawione', () => {
     // Flaga „utworzona za 5 minut" to rozjazd zegarów, a nie ujemny wiek. Panel
     // ma wtedy pokazać najmniejszą prawdziwą wartość, nie minus.
     expect(relativeAge(-5 * min)).toBe('0 min');

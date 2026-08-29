@@ -1,9 +1,9 @@
 /**
- * UZ Aero (serwer) — deklaracja trasy panelu administracyjnego.
+ * UZ Aero (serwer) - deklaracja trasy panelu administracyjnego.
  *
  * **Zdolność jest ATRYBUTEM trasy, a nie zdaniem w ciele handlera.** Dzięki temu
  * odpowiedź na pytanie „czego wymaga ten endpoint" da się wyczytać z jednej linii
- * i wygrepować z całego katalogu — a handler dostaje `Actor` gotowego, więc nie ma
+ * i wygrepować z całego katalogu - a handler dostaje `Actor` gotowego, więc nie ma
  * jak zapomnieć sprawdzenia, bo nie ma jak go pominąć.
  *
  * **Prefiks `/admin/api`, nie `/admin`.** `/admin/*` jest zarezerwowane pod statyczny
@@ -12,7 +12,7 @@
  * plikiem HTML. Prefiks stoi tu w jednym miejscu, żeby nie dało się go przeoczyć
  * w kolejnym pliku tras.
  *
- * Token przychodzi z `tokenFromRequest` — nagłówek `Bearer` (skrypty, telefon) ALBO
+ * Token przychodzi z `tokenFromRequest` - nagłówek `Bearer` (skrypty, telefon) ALBO
  * ciasteczko sesji panelu (przeglądarka). Trasa nie wie, który to kanał i wiedzieć
  * nie musi: brama uprawnień jest jedna (`http/authorize.ts`), a wejście do niej
  * rozstrzyga jeden plik (`http/tokenFromRequest.ts`).
@@ -37,13 +37,13 @@ export const ADMIN_API_PREFIX = '/admin/api';
  * Zależności BRAMY, wspólne dla wszystkich tras panelu.
  *
  * Jeden obiekt zamiast dwóch parametrów w każdej funkcji `register*`: brama ma dziś
- * dwa wejścia (weryfikacja tokenu i odczyt konta), a trzecie — gdyby kiedyś doszło —
+ * dwa wejścia (weryfikacja tokenu i odczyt konta), a trzecie - gdyby kiedyś doszło -
  * ma się dołożyć TUTAJ, a nie w sześciu sygnaturach naraz.
  */
 export interface AdminGate {
   tokens: TokenService;
   /**
-   * Konta czytane PRZY KAŻDYM ŻĄDANIU panelu — patrz `authorizeAccount`. To ten sam
+   * Konta czytane PRZY KAŻDYM ŻĄDANIU panelu - patrz `authorizeAccount`. To ten sam
    * port, którym loguje się telefon: panel i aplikacja mają jedną tabelę kont, bo to
    * ci sami ludzie.
    */
@@ -61,7 +61,7 @@ export interface AdminRouteSpec {
  * Świeże konto (z bazy) + adres żądania → `Actor` (do audytu). Jedyne miejsce, w którym
  * to złączenie zachodzi.
  *
- * Rola pochodzi z KONTA, nie z claimu tokenu (zmiana 2026-08-01, przekrój A06 —
+ * Rola pochodzi z KONTA, nie z claimu tokenu (zmiana 2026-08-01, przekrój A06 -
  * uzasadnienie stoi przy `authorizeAccount`). Dzięki temu jeden odczyt obsługuje naraz
  * dwie rzeczy: bramę uprawnień i `admin_audit.actor_role`, czyli rolę Z CHWILI AKCJI.
  *

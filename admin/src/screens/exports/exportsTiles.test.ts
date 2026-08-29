@@ -1,9 +1,9 @@
 /**
- * UZ Aero — panel: kafle, chipy i stan pusty monitora eksportu.
+ * UZ Aero - panel: kafle, chipy i stan pusty monitora eksportu.
  *
- * Własność, dla której ten plik istnieje: **brak odpowiedzi to „—", nigdy „0"**. Zero
+ * Własność, dla której ten plik istnieje: **brak odpowiedzi to „-", nigdy „0"**. Zero
  * jest twierdzeniem o świecie („w tym zakresie nie ma ani jednej karty"), a nieudane
- * albo trwające żądanie nim nie jest — a kafel z zerem obok banera o błędzie kłamie
+ * albo trwające żądanie nim nie jest - a kafel z zerem obok banera o błędzie kłamie
  * najbardziej przekonująco.
  */
 
@@ -42,14 +42,14 @@ describe('kafle monitora eksportu', () => {
     ]);
   });
 
-  it('bez odpowiedzi pokazują „—", nie zero', () => {
-    expect(exportTiles(undefined).map((t) => t.value)).toEqual(['—', '—', '—', '—']);
+  it('bez odpowiedzi pokazują „-", nie zero', () => {
+    expect(exportTiles(undefined).map((t) => t.value)).toEqual(['-', '-', '-', '-']);
   });
 
-  it('kafel „Błąd regeneracji" z mockupu zastąpił „Bez karty" — i to jest treść, nie nazwa', () => {
+  it('kafel „Błąd regeneracji" z mockupu zastąpił „Bez karty" - i to jest treść, nie nazwa', () => {
     // Licznika prób ani treści błędu nie ma z czego policzyć: nieudany eksport nie
     // zostawia wiersza w żadnej tabeli. To, co da się policzyć uczciwie, to SKUTEK
-    // tych awarii — dni zamknięte bez karty.
+    // tych awarii - dni zamknięte bez karty.
     const tile = exportTiles(counts).at(-1)!;
     expect(tile.label).toBe('Bez karty');
     expect(tile.note).toContain('eksport nie doszedł');
@@ -73,7 +73,7 @@ describe('chipy filtra', () => {
     expect(chips.every((chip) => chip.title.length > 0)).toBe(true);
   });
 
-  it('bez odpowiedzi chipy nie mają liczb — a nie mają zer', () => {
+  it('bez odpowiedzi chipy nie mają liczb - a nie mają zer', () => {
     expect(exportChips(undefined).every((chip) => chip.count === undefined)).toBe(true);
   });
 });
@@ -86,7 +86,7 @@ describe('baner obcięcia listy', () => {
   it('mówi ile widać, ilu nie widać i że liczniki opisują CAŁY zakres', () => {
     // Wada, którą ten przypadek zamyka: `EXPORTS_PAGE_LIMIT` nie było używane nigdzie,
     // a jego docblock obiecywał, że „ekran mówi o tym wprost", gdy zakres przekroczy
-    // limit. Na ekranie nie było o tym ani zdania — lista przycięta po cichu wygląda
+    // limit. Na ekranie nie było o tym ani zdania - lista przycięta po cichu wygląda
     // na komplet, więc odpowiedź „każdy dzień ma arkusz" brzmiała jak prawdziwa.
     const note = truncationNotice({ shown: 200, matched: 431, truncated: true })!;
 
@@ -110,7 +110,7 @@ describe('baner nadpisanych kart', () => {
   it('mówi o SESJACH i o tym, że decyzja produktowa ZAPADŁA', () => {
     // ODWRÓCENIE zdania z 2026-08-01 („decyzja produktowa jest otwarta"). Decyzja
     // zapadła 2026-08-07: karta jest DOBĄ SAMOLOTU, a zmiana poranna i popołudniowa są
-    // jej wierszami — więc nadpisywanie zniknęło z konstrukcji. Baner ma dziś dwie
+    // jej wierszami - więc nadpisywanie zniknęło z konstrukcji. Baner ma dziś dwie
     // treści: normalną (sesja wycięta z karty flagą) i alarmową (dwie sesje tej samej
     // doby znów budują dwie karty). Bez tego rozróżnienia byłby opisem wady, której
     // już nie ma.
@@ -122,7 +122,7 @@ describe('baner nadpisanych kart', () => {
     expect(note).toContain('usterka do zgłoszenia');
     expect(note).toContain('append-only');
     expect(note).toContain('4.7');
-    // Zdanie o otwartej decyzji ma ZNIKNĄĆ — inaczej panel opisuje nieaktualny świat.
+    // Zdanie o otwartej decyzji ma ZNIKNĄĆ - inaczej panel opisuje nieaktualny świat.
     expect(note).not.toContain('otwarta decyzja produktowa');
   });
 

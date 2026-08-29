@@ -1,14 +1,14 @@
 /**
- * UZ Aero — OilSheet (mockup 02i „Pomiar oleju", issue #60)
+ * UZ Aero - OilSheet (mockup 02i „Pomiar oleju", issue #60)
  *
  * Arkusz DWÓCH pól, bo pomiar i dolewka to jedna czynność przy bagnecie: zmierz →
  * jeśli mało, dolej. Stan po dolewce jest RACHUNKIEM (wiersz „Po dolewce"), nie trzecim
- * polem — inaczej niż trójka `refuel`, dzięki czemu korekta jednej liczby niczego nie
+ * polem - inaczej niż trójka `refuel`, dzięki czemu korekta jednej liczby niczego nie
  * rozjeżdża.
  *
- * OBA pola wolno zostawić puste — zapis pustej pary CZYŚCI wcześniejszy wpis szkicu.
+ * OBA pola wolno zostawić puste - zapis pustej pary CZYŚCI wcześniejszy wpis szkicu.
  * Arkusz nie egzekwuje wymagalności pomiaru (decyzja 2026-08-27: krok wymagany):
- * to robota bramki CTA (`preflightBlocker`), która mówi powód w przycisku — arkusz
+ * to robota bramki CTA (`preflightBlocker`), która mówi powód w przycisku - arkusz
  * z przymusem musiałby kłamać przy wpisie ręcznym (15), gdzie pomiaru może nie być.
  *
  * Komponent jest głupi: wiersze odniesienia, ostrzeżenie i rachunek „po dolewce"
@@ -31,7 +31,7 @@ export interface OilSheetProps {
   initialAddedText: string;
   /** Tekst → litry; `null` dla wpisu nieczytelnego (pusty tekst NIE przechodzi tędy). */
   parse: (text: string) => number | null;
-  /** Wiersze odniesienia (oczekiwane / minimum / zbiornik) — stałe dla otwarcia. */
+  /** Wiersze odniesienia (oczekiwane / minimum / zbiornik) - stałe dla otwarcia. */
   rows?: SheetRow[];
   /** Rachunek „Po dolewce" dla bieżącej pary; `null` = wiersza nie ma. */
   afterRowFor: (levelL: number | null, addedL: number | null) => SheetRow | null;
@@ -66,7 +66,7 @@ export function OilSheet({
   const [levelText, setLevelText] = useState(initialLevelText);
   const [addedText, setAddedText] = useState(initialAddedText);
   /**
-   * Zaznaczenie STEROWANE przy otwarciu — ta sama mechanika i to samo uzasadnienie,
+   * Zaznaczenie STEROWANE przy otwarciu - ta sama mechanika i to samo uzasadnienie,
    * co w `ReadingSheet` (zgłoszenie z urządzenia): Android z `selectAllOnFocus`
    * odnawia zaznaczenie przy każdym programowym ustawieniu sterowanego tekstu
    * i druga cyfra wymazywała pierwszą. Zaznaczamy raz, potem kursorem rządzi pole.
@@ -75,7 +75,7 @@ export function OilSheet({
     { start: number; end: number } | undefined
   >({ start: 0, end: initialLevelText.length });
 
-  // Każde otwarcie zaczyna od wartości ze szkicu — arkusz nie pamięta porzuconej edycji.
+  // Każde otwarcie zaczyna od wartości ze szkicu - arkusz nie pamięta porzuconej edycji.
   useEffect(() => {
     if (!visible) return;
     setLevelText(initialLevelText);
@@ -113,10 +113,10 @@ export function OilSheet({
   } as const;
 
   /* Baner mówi o WARTOŚCI, przycisk o tym, czemu nie da się zapisać (uwaga z urządzenia,
-     2026-08-29 — pełne uzasadnienie przy `blocker` w `ReadingSheet`). Wpis nieczytelny
+     2026-08-29 - pełne uzasadnienie przy `blocker` w `ReadingSheet`). Wpis nieczytelny
      jest blokadą, więc jego zdanie stoi w przycisku; „Zanim potwierdzisz" zostaje dla
      poziomu, który wygląda podejrzanie, ale zapisać się da. Czerwień znika z banera
-     razem z tym przypadkiem — nieczytelny wpis znaczy już czerwona ramka POLA, a to
+     razem z tym przypadkiem - nieczytelny wpis znaczy już czerwona ramka POLA, a to
      ona wskazuje, KTÓRE z dwóch pól poprawić. */
   return (
     <Sheet
@@ -126,12 +126,12 @@ export function OilSheet({
       {...(warning != null ? { warning } : {})}
       warningTone="amber"
       confirmLabel="ZAPISZ"
-      confirmDisabledReason={invalid ? 'Nie rozumiem tej wartości — popraw wpis' : null}
+      confirmDisabledReason={invalid ? 'Nie rozumiem tej wartości - popraw wpis' : null}
       onConfirm={() => onConfirm(level.value, added.value)}
       onCancel={onCancel}
     >
       <AppText variant="mono" tone="muted" style={styles.fieldLabel}>
-        Bagnet — poziom zmierzony
+        Bagnet - poziom zmierzony
       </AppText>
       <View style={[styles.inputRow, inputFrame(!level.ok)]}>
         <TextInput
@@ -143,7 +143,7 @@ export function OilSheet({
           selectionColor={theme.colors.selection}
           cursorColor={amber.accent}
           selectionHandleColor={amber.accent}
-          accessibilityLabel="Pomiar oleju — poziom z bagnetu"
+          accessibilityLabel="Pomiar oleju - poziom z bagnetu"
           style={[inputText, { color: amber.accent }]}
         />
         <AppText variant="mono" tone="secondary" style={styles.unit}>
@@ -162,7 +162,7 @@ export function OilSheet({
           selectionColor={theme.colors.selection}
           cursorColor={theme.colors.textPrimary}
           selectionHandleColor={theme.colors.textPrimary}
-          accessibilityLabel="Pomiar oleju — ile dolano"
+          accessibilityLabel="Pomiar oleju - ile dolano"
           style={[inputText, { color: theme.colors.textPrimary }]}
         />
         <AppText variant="mono" tone="secondary" style={styles.unit}>

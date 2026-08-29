@@ -1,39 +1,39 @@
 /**
- * UZ Aero (serwer) — konta pilotów: zakładanie, edycja, reset hasła, deaktywacja
+ * UZ Aero (serwer) - konta pilotów: zakładanie, edycja, reset hasła, deaktywacja
  * (panel, mockupy `A06-piloci.html` i `A06a-konto.html`).
  *
  * ══ DLACZEGO TEN PLIK POWSTAJE AKURAT TERAZ ══
  * 2026-08-01 administrator nie mógł wejść do systemu, bo w całym produkcie nie było
  * ŻADNEJ ścieżki zmiany hasła: seed z założenia nie nadpisuje `password_hash`, CLI nie
  * ma, panelu kont nie było. Jedynym wyjściem był ręczny `UPDATE` z hashem policzonym
- * poza aplikacją — czyli operacja bez śladu, bez walidacji i bez świadka. Ten plik to
+ * poza aplikacją - czyli operacja bez śladu, bez walidacji i bez świadka. Ten plik to
  * zamyka; `domain/accountGuards.ts` pilnuje, żeby przy okazji nie otworzył gorszej
  * dziury (jeden klik zostawiający klub bez administratora).
  *
  * ══ CZTERY ZASADY, KTÓRE TA KOMENDA MUSI UTRZYMAĆ ══
  *
  *  1. **Hasło generuje SERWER i oddaje je RAZ.** Panel nigdy hasła nie wysyła i nie ma
- *     trasy „pokaż ponownie". Do dziennika audytu idzie WYŁĄCZNIE fakt i komu — nigdy
- *     wartość, nigdy hash (`A09`: „Hasła, hashe, PIN-y — nigdy").
- *  2. **Deaktywacja i reset ZRYWAJĄ sesje — OBU powierzchni.** Refresh tokeny telefonu
+ *     trasy „pokaż ponownie". Do dziennika audytu idzie WYŁĄCZNIE fakt i komu - nigdy
+ *     wartość, nigdy hash (`A09`: „Hasła, hashe, PIN-y - nigdy").
+ *  2. **Deaktywacja i reset ZRYWAJĄ sesje - OBU powierzchni.** Refresh tokeny telefonu
  *     kasujemy z tabeli; sesji panelu skasować się nie da, bo jest podpisanym JWT
  *     w ciasteczku i nie ma dla niej wiersza. Dlatego te same dwie operacje przesuwają
  *     `credentials_valid_from` konta, a brama odrzuca token wydany
  *     wcześniej (`http/authorize.ts`). Bez tego „Deaktywuj" jest obietnicą bez pokrycia
  *     w obie strony: pilot z żywym refreshem pracuje dalej, a wykradzione poświadczenie
  *     panelu przeżywa reset hasła o osiem godzin. Liczba unieważnionych TOKENÓW jedzie
- *     do audytu i dotyczy wyłącznie telefonu — panel liczy się osobno, bo jego sesji
+ *     do audytu i dotyczy wyłącznie telefonu - panel liczy się osobno, bo jego sesji
  *     nikt nie zliczał i zliczyć nie może.
- *  3. **Administrator nie odcina sam siebie** ani ostatniego administratora klubu —
+ *  3. **Administrator nie odcina sam siebie** ani ostatniego administratora klubu -
  *     odmowa jest jawna i z powodem (`AccountRefusal`), nigdy ciche ukrycie akcji.
  *     Populację administratorów chroni blokada advisory na stałym kluczu, wzięta
- *     PRZED policzeniem ich (`PilotsAdminPort.lockAdminPopulation`) — patrz `update`.
+ *     PRZED policzeniem ich (`PilotsAdminPort.lockAdminPopulation`) - patrz `update`.
  *  4. **Konta się NIE KASUJE.** Deaktywacja odbiera dostęp; zdarzenia zostają
  *     w rejestrze (append-only) i dalej liczą się w statystykach, kartach dnia
  *     i łańcuchu motogodzin samolotu. W tym pliku nie ma i nie może być `DELETE`
  *     na `pilots`.
  *
- * Konstruktor bez `Database`/`Queryable` — komenda nie ma jak zapisać z pominięciem
+ * Konstruktor bez `Database`/`Queryable` - komenda nie ma jak zapisać z pominięciem
  * śladu audytu, bo nie ma uchwytu do bazy (`auditedWrite.ts`, `test/architecture.test.ts`).
  */
 
@@ -71,7 +71,7 @@ export interface UpdatePilotInput {
 
 export interface PilotSecret {
   account: AdminPilotAccount;
-  /** Wartość jawna — jedyny raz w całym systemie. Trasa oddaje ją i zapomina. */
+  /** Wartość jawna - jedyny raz w całym systemie. Trasa oddaje ją i zapomina. */
   password: string;
   revokedSessions: number;
 }
@@ -95,7 +95,7 @@ export type PilotOutcome<T> =
 
 /**
  * Sygnały przerwania transakcji. Muszą być WYJĄTKAMI, bo tylko wyjątek wycofuje
- * transakcję `AuditedWrite.run` — zwrócenie wartości zostawiłoby wpis audytu
+ * transakcję `AuditedWrite.run` - zwrócenie wartości zostawiłoby wpis audytu
  * o operacji, która się nie zdarzyła. Poza ten plik nie wychodzą.
  */
 class PilotNotFound extends Error {}
@@ -117,10 +117,10 @@ class Refused extends Error {
 /**
  * Naruszenie UNIKALNOŚCI zgłoszone przez bazę (SQLSTATE `23505`) → pole formularza.
  *
- * Rozpoznanie mieszka w `uniqueConflict.ts` — od 2026-08-01 ma DRUGIEGO konsumenta
+ * Rozpoznanie mieszka w `uniqueConflict.ts` - od 2026-08-01 ma DRUGIEGO konsumenta
  * (rejestracja samolotu, `commands/fleet.ts`), a cała trudność tej funkcji siedzi
  * w jednej linii regexa, której nie wolno mieć w dwóch kopiach. Tutaj zostaje samo
- * PIERWSZEŃSTWO pól przy komunikacie wskazującym oba naraz — kolejność zachowana
+ * PIERWSZEŃSTWO pól przy komunikacie wskazującym oba naraz - kolejność zachowana
  * dokładnie taka, jaka była przed wydzieleniem.
  */
 export function uniqueConflictField(err: unknown): 'code' | 'email' | null {
@@ -143,7 +143,7 @@ export class AdminPilotCommands {
      * Identyfikator konta i hasło startowe jako FUNKCJE w konstruktorze, nie porty:
      * nie ma tu adaptera do podmiany (composition root podaje `randomUUID`
      * i `generateStartPassword`), a port bez drugiej implementacji to koszt bez zysku
-     * — ta sama decyzja, co przy `newId` w `commands/corrections.ts`.
+     * - ta sama decyzja, co przy `newId` w `commands/corrections.ts`.
      *
      * `id` NIE jest kodem pilota i to jest reguła produktu, nie szczegół: zdarzenia
      * wiążą się z `id`, więc zmiana kodu nie przepisuje historii (mockup A06: „Kod
@@ -155,7 +155,7 @@ export class AdminPilotCommands {
     /**
      * Zegar potrzebny WYŁĄCZNIE po to, żeby ostemplować unieważnienie poświadczeń
      * (`credentials_valid_from`). Nie bierzemy `now()` z SQL-a, bo wtedy w testach
-     * znacznik szedłby z zegara systemowego, a `iat` tokenu ze sterowanego zegara —
+     * znacznik szedłby z zegara systemowego, a `iat` tokenu ze sterowanego zegara -
      * i porównanie tych dwóch odpowiadałoby na pytanie o dwa różne czasy.
      */
     private readonly clock: Clock,
@@ -219,17 +219,17 @@ export class AdminPilotCommands {
         const changes = diffOf(before, input);
         // Zapis bez zmiany zostawiłby w dzienniku wpis o niczym. Dziennik nadzoru,
         // w którym połowa wierszy to „otwarto i zamknięto formularz", przestaje być
-        // czytelny — a panel i tak blokuje przycisk, gdy nic nie ruszono.
+        // czytelny - a panel i tak blokuje przycisk, gdy nic nie ruszono.
         if (Object.keys(changes).length === 0) throw new NoChanges();
 
         if (input.role !== undefined) {
-          // Blokada PRZED odczytem licznika i w TEJ SAMEJ transakcji — inaczej nie
+          // Blokada PRZED odczytem licznika i w TEJ SAMEJ transakcji - inaczej nie
           // szereguje niczego. `SELECT COUNT(*)` w READ COMMITTED nie blokuje, a dwie
           // transakcje odbierające rolę DWÓM RÓŻNYM administratorom piszą do różnych
           // wierszy, więc bez tej blokady nic ich nie serializuje: obie widzą „jest
           // dwóch", obie commitują i zostaje ZERO administratorów. Z blokadą druga
           // transakcja liczy dopiero po pierwszej, widzi jednego i odbija się
-          // o `last_admin` — czyli gałąź, która dopiero tu staje się osiągalna.
+          // o `last_admin` - czyli gałąź, która dopiero tu staje się osiągalna.
           await this.pilots.lockAdminPopulation(tx);
 
           const refusal = refuseRoleChange({
@@ -281,7 +281,7 @@ export class AdminPilotCommands {
    *
    *  • **deaktywacja zrywa sesje**, aktywacja nie ma czego zrywać;
    *  • **akcja w audycie** jest inna. `pilot.deactivate` istnieje w katalogu
-   *    (`domain/adminActions.ts`), `pilot.activate` — NIE, i to jest świadoma treść
+   *    (`domain/adminActions.ts`), `pilot.activate` - NIE, i to jest świadoma treść
    *    tego katalogu, a nie luka: przywrócenie dostępu jest zmianą pola `active`,
    *    czyli zwykłą aktualizacją konta. Odebranie dostępu ma własny kod, bo jest
    *    zdarzeniem, którego szuka się w dzienniku po nazwie.
@@ -309,11 +309,11 @@ export class AdminPilotCommands {
           if (refusal != null) throw new Refused(refusal);
         }
 
-        // `at` stempluje unieważnienie poświadczeń — patrz `PilotsAdminPort.setActive`.
+        // `at` stempluje unieważnienie poświadczeń - patrz `PilotsAdminPort.setActive`.
         await this.pilots.setActive(tx, id, active, this.clock.now());
         // Sesje zrywamy TĄ SAMĄ transakcją, co zmianę `active`. Rozdzielenie
         // zostawiałoby okno, w którym konto jest już wyłączone, a token jeszcze
-        // działa — czyli dokładnie stan, którego ta operacja ma nie dopuścić.
+        // działa - czyli dokładnie stan, którego ta operacja ma nie dopuścić.
         const revokedSessions = active ? 0 : await this.sessions.revokeAllFor(tx, id);
 
         return {
@@ -345,7 +345,7 @@ export class AdminPilotCommands {
    * dostęp poprzednim hasłem. Skutek dla pilota opisuje mockup A06a: potrzebuje
    * PEŁNEGO logowania przy sieci i ustawia PIN od nowa.
    *
-   * `revokedSessions` liczy WYŁĄCZNIE refresh tokeny telefonu — sesji panelu nikt nie
+   * `revokedSessions` liczy WYŁĄCZNIE refresh tokeny telefonu - sesji panelu nikt nie
    * zliczał i zliczyć nie może, bo nie ma jej w bazie. Odbiera ją znacznik
    * `credentials_valid_from`, a nie ta liczba; komunikat na ekranie musi więc mówić
    * o obu rodzajach osobno i pozostać prawdziwy także przy `revokedSessions === 0`.
@@ -372,7 +372,7 @@ export class AdminPilotCommands {
             targetType: 'pilot',
             targetId: id,
             // Ani hasła, ani hasha, ani nawet jego długości. Sam fakt, komu i ile
-            // sesji przy okazji zerwano — mockup A06a mówi to wprost przy banerze
+            // sesji przy okazji zerwano - mockup A06a mówi to wprost przy banerze
             // „Hasło widzisz wyłącznie teraz".
             details: { code: account.code, passwordIssued: true, revokedSessions },
           },
@@ -393,7 +393,7 @@ export class AdminPilotCommands {
     if (err instanceof Refused) return { ok: false, reason: 'refused', refusal: err.refusal };
 
     // Przegrany wyścig o unikalność to TA SAMA odpowiedź, co sprawdzenie przed
-    // zapisem — 409 z nazwą pola. Bez tego dwa równoległe `POST /pilots` z tym samym
+    // zapisem - 409 z nazwą pola. Bez tego dwa równoległe `POST /pilots` z tym samym
     // kodem kończyły się 500, czyli komunikatem „coś się zepsuło" na zdarzenie, które
     // ma gotowe wyjaśnienie i gotowy formularz do poprawienia.
     const field = uniqueConflictField(err);
@@ -404,7 +404,7 @@ export class AdminPilotCommands {
 }
 
 /**
- * Co naprawdę się zmienia — pola o wartości identycznej z obecną wypadają.
+ * Co naprawdę się zmienia - pola o wartości identycznej z obecną wypadają.
  *
  * Bez tego „zapisz" bez zmiany pola dopisywałby do dziennika wiersz mówiący, że kod
  * pilota zmienił się z `KZA` na `KZA`. Diff jest tu jedyną treścią wpisu, więc jego
@@ -421,7 +421,7 @@ function diffOf(before: AdminPilotAccount, input: UpdatePilotInput): Record<stri
   return changes;
 }
 
-/** `{code: undefined}` nadpisałoby wartość w rozwinięciu obiektu — stąd ten filtr. */
+/** `{code: undefined}` nadpisałoby wartość w rozwinięciu obiektu - stąd ten filtr. */
 function stripUndefined(input: UpdatePilotInput): Partial<AdminPilotAccount> {
   const out: Partial<AdminPilotAccount> = {};
   if (input.code !== undefined) out.code = input.code;

@@ -1,8 +1,8 @@
 /**
- * UZ Aero — panel: podgląd karty arkusza.
+ * UZ Aero - panel: podgląd karty arkusza.
  *
  * Karta jest DOKUMENTEM, nie danymi: panel jej nie interpretuje. Testujemy więc jedyne
- * dwie decyzje, jakie tu zapadają — zachowanie separatorów sekcji i szerokość tabeli.
+ * dwie decyzje, jakie tu zapadają - zachowanie separatorów sekcji i szerokość tabeli.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -11,7 +11,7 @@ import { sheetLines, sheetWidth } from './exportsSheet';
 
 // Wycinek prawdziwej karty z `buildDaySheet`: puste tablice są separatorami sekcji.
 const CARD: string[][] = [
-  ['UZ Aero — dzień lotny', '2026-07-30 (UTC)'],
+  ['UZ Aero - dzień lotny', '2026-07-30 (UTC)'],
   ['Samolot', 'SP-ABC'],
   [],
   ['Loty · czasy UTC'],
@@ -21,7 +21,7 @@ const CARD: string[][] = [
 
 describe('podgląd karty', () => {
   it('zachowuje separatory sekcji zamiast je odsiewać', () => {
-    // Bez nich karta zlewa się w jeden blok — a to jest dokument, który ktoś czyta
+    // Bez nich karta zlewa się w jeden blok - a to jest dokument, który ktoś czyta
     // razem z arkuszem klubu.
     const lines = sheetLines(CARD);
 
@@ -42,7 +42,7 @@ describe('podgląd karty', () => {
     // od dnia i nie da się jej przybić na sztywno.
     expect(sheetWidth(CARD)).toBe(5);
     expect(sheetWidth([['a']])).toBe(1);
-    // Karta pusta nie może dać kolumn zero — tabela bez kolumn nie renderuje separatora.
+    // Karta pusta nie może dać kolumn zero - tabela bez kolumn nie renderuje separatora.
     expect(sheetWidth([])).toBe(1);
   });
 

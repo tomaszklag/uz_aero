@@ -1,8 +1,8 @@
 /**
- * UZ Aero — logika ekranu 04c (korekta zdarzenia), czysta i testowalna bez RN.
+ * UZ Aero - logika ekranu 04c (korekta zdarzenia), czysta i testowalna bez RN.
  *
  * Najważniejsza jest tu rzetelność wiersza „Wpływ na czas lotu: 0:53 → 0:56". Nie
- * liczymy go „na piechotę" obok projekcji — budujemy KANDYDATA korekty, przepuszczamy
+ * liczymy go „na piechotę" obok projekcji - budujemy KANDYDATA korekty, przepuszczamy
  * przez tę samą `projectSession`, którą liczy cała aplikacja, i porównujemy wyniki.
  * Dzięki temu podgląd wpływu nie może rozjechać się z tym, co korekta faktycznie zrobi.
  */
@@ -18,7 +18,7 @@ export interface CorrectionImpact {
   afterMs: number;
 }
 
-/** Syntetyczne zdarzenie korekty — tylko do podglądu, nigdy nie trafia do rejestru. */
+/** Syntetyczne zdarzenie korekty - tylko do podglądu, nigdy nie trafia do rejestru. */
 function syntheticCorrection(target: Event, payload: EventCorrectionPayload): Event {
   return {
     uuid: '__preview__',
@@ -27,7 +27,7 @@ function syntheticCorrection(target: Event, payload: EventCorrectionPayload): Ev
     picId: target.picId,
     dualId: target.dualId,
     type: 'event_correction',
-    deviceTime: Number.MAX_SAFE_INTEGER, // „ostatnia wygrywa" — podgląd zawsze najnowszy
+    deviceTime: Number.MAX_SAFE_INTEGER, // „ostatnia wygrywa" - podgląd zawsze najnowszy
     gpsTime: null,
     payload,
     schemaVersion: 1,
@@ -36,11 +36,11 @@ function syntheticCorrection(target: Event, payload: EventCorrectionPayload): Ev
 }
 
 /**
- * Co zmieni korekta czasu — przez podwójną projekcję (przed / po).
+ * Co zmieni korekta czasu - przez podwójną projekcję (przed / po).
  *
  * Start i lądowanie ruszają czas LOTU; cykle silnika ruszają czas BLOKU (a przez §4.5
  * także oczekiwany przyrost MH). Tankowanie, zrzut i kołowanie nie wyznaczają żadnego
- * czasu — wtedy wiersza wpływu po prostu nie ma, zamiast pokazywać „0:00 → 0:00".
+ * czasu - wtedy wiersza wpływu po prostu nie ma, zamiast pokazywać „0:00 → 0:00".
  */
 export function correctionImpact(
   events: readonly Event[],
@@ -67,7 +67,7 @@ export function correctionImpact(
 }
 
 /**
- * Numer lotu, do którego należy zdarzenie („Landing · Lot 1") — liczony po strumieniu
+ * Numer lotu, do którego należy zdarzenie („Landing · Lot 1") - liczony po strumieniu
  * efektywnym tak samo, jak numeruje go log cyklu. `null` dla zdarzeń spoza lotów.
  */
 export function flightNumberOf(events: readonly Event[], target: Event): number | null {
@@ -82,7 +82,7 @@ export function flightNumberOf(events: readonly Event[], target: Event): number 
   return null;
 }
 
-/** Napis destrukcyjny — dopełniacz per typ („TEGO LĄDOWANIA NIE BYŁO"). */
+/** Napis destrukcyjny - dopełniacz per typ („TEGO LĄDOWANIA NIE BYŁO"). */
 export function voidLabelFor(type: EventType): string {
   // Rodzaj żeński poza szablonem: „TEGO DOLEWKI" kłamałoby gramatyką (issue #60).
   if (type === 'oil_add') return 'TEJ DOLEWKI NIE BYŁO';

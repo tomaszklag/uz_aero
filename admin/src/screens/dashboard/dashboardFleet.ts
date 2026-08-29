@@ -1,9 +1,9 @@
 /**
- * UZ Aero — panel: „FLOTA TERAZ" — DTO → wiersze pulpitu (moduł CZYSTY).
+ * UZ Aero - panel: „FLOTA TERAZ" - DTO → wiersze pulpitu (moduł CZYSTY).
  *
  * ══ WIERSZ NIESIE DWIE WARSTWY NARAZ ══
  * Co samolot robi (faza) i SKĄD to wiemy (świeżość). Druga jest równie ważna jak
- * pierwsza — cytat z `SZABLON.html`: „»w locie« przy syncu sprzed 47 minut to nie jest
+ * pierwsza - cytat z `SZABLON.html`: „»w locie« przy syncu sprzed 47 minut to nie jest
  * wiedza o locie, tylko ostatnia znana pozycja". Dlatego klasa wiersza (`flying` /
  * `stale` / `free`) mówi o JAKOŚCI DANYCH, a nie o fazie lotu: `stale` nosi samolot,
  * który leci, ale którego telefon milczy.
@@ -11,12 +11,12 @@
  * ══ „W LOCIE" JEST TU PRAWDZIWE ══
  * Na `A02` i `A07` tej plakietki NIE MA i to było słuszne: projekcja `sessions` nie
  * niesie stanu silnika, a listy tam są nieograniczone. Pulpit dostaje `engine`
- * policzone przez serwer `projectSession` na strumieniu otwartej sesji — panel nie
+ * policzone przez serwer `projectSession` na strumieniu otwartej sesji - panel nie
  * zgaduje i nie liczy, tylko formatuje. `engine == null` znaczy DOKŁADNIE „ta jednostka
  * nie ma otwartej sesji", nigdy „nie wiemy".
  *
  * ══ ZERA NIE PODSTAWIAMY ══
- * Brak odczytu to „—" i podpis „brak danych z telefonu". `0 L` byłoby twierdzeniem
+ * Brak odczytu to „-" i podpis „brak danych z telefonu". `0 L` byłoby twierdzeniem
  * o pustym zbiorniku, a brak odczytu nim nie jest (`CLAUDE.md`, Offline-first).
  * Liczniki fizyczne wygrywają: MH i FOB w tej tabeli są PODPOWIEDZIĄ, nie prawdą.
  */
@@ -31,14 +31,14 @@ import { dayCardLink, aircraftLink } from './dashboardLinks';
 /**
  * Od kiedy telefon z OTWARTYM dniem uchodzi za milczący.
  *
- * Próg PREZENTACJI, nie reguła domeny — nie wystawia flagi i nie zmienia żadnej liczby;
+ * Próg PREZENTACJI, nie reguła domeny - nie wystawia flagi i nie zmienia żadnej liczby;
  * decyduje wyłącznie o kolorze wiersza. Osobny od `STALE_AFTER_MS` (24 h) z ekranu
  * floty i to jest cała jego treść: tam pytanie brzmi „czy ten odczyt jeszcze coś
  * znaczy" i doba jest w porządku, tutaj brzmi „czy wiem, co ten samolot robi TERAZ",
  * a przy otwartym locie pół godziny ciszy to już nie jest wiedza o locie.
  *
  * Mockup `A01` maluje na zielono sync sprzed 2 i 6 minut, a na bursztynowo sprzed
- * 47 — czyli stawia granicę gdzieś w tym przedziale, nie podając jej. 30 minut to
+ * 47 - czyli stawia granicę gdzieś w tym przedziale, nie podając jej. 30 minut to
  * odczyt tej intencji i **decyzja do potwierdzenia przez człowieka**.
  */
 export const OPEN_DAY_STALE_AFTER_MS = 30 * 60 * 1000;
@@ -46,7 +46,7 @@ export const OPEN_DAY_STALE_AFTER_MS = 30 * 60 * 1000;
 export interface FleetBadge {
   text: string;
   tone: PillTone;
-  /** Kropka pulsująca — stan TRWAJĄCY. Puls bez trwania byłby ozdobą. */
+  /** Kropka pulsująca - stan TRWAJĄCY. Puls bez trwania byłby ozdobą. */
   live?: boolean;
 }
 
@@ -61,7 +61,7 @@ export type FleetMood = 'flying' | 'ground' | 'stale' | 'free';
  *
  * Reguła z `admin/test/architecture.test.ts`: nazwa klasy nie powstaje z kawałków.
  * Mapa daje cztery pełne napisy, które da się wygrepować jednocześnie w panelu
- * i w mockupie — a `.tsx` dostaje gotowy `className` i nie podejmuje decyzji.
+ * i w mockupie - a `.tsx` dostaje gotowy `className` i nie podejmuje decyzji.
  */
 const ROW_CLASS: Record<FleetMood, string> = {
   flying: 'fleet-row flying',
@@ -71,7 +71,7 @@ const ROW_CLASS: Record<FleetMood, string> = {
 };
 
 /**
- * Klasa wartości świeżości (`.fresh-val` z `SZABLON.html`) — trzy stany, trzy pełne
+ * Klasa wartości świeżości (`.fresh-val` z `SZABLON.html`) - trzy stany, trzy pełne
  * literały. To jest ta sama reguła, co `freshClass` na ekranie floty, tylko dla innego
  * bloku: tam podpis komórki tabeli (`.cell-sub`), tu prawa kolumna wiersza floty.
  */
@@ -94,11 +94,11 @@ export interface FleetNowRow {
   reg: string;
   type: string;
   mood: FleetMood;
-  /** Gotowa klasa wiersza — `.tsx` niczego nie skleja. */
+  /** Gotowa klasa wiersza - `.tsx` niczego nie skleja. */
   rowClass: string;
   /** Kto trzyma samolot albo dlaczego nikt. */
   who: string;
-  /** „claim 07:58 · zajęty 6:24 · EPKK · dual: M. Bąk" — jedna linia opisu. */
+  /** „claim 07:58 · zajęty 6:24 · EPKK · dual: M. Bąk" - jedna linia opisu. */
   since: string;
   /** Ostatni znany odczyt licznika, sformatowany WG KONFIGURACJI jednostki. */
   mh: string;
@@ -111,12 +111,12 @@ export interface FleetNowRow {
   freshText: string;
   /** Druga linia świeżości: „lot 4 · T/O 14:11", „silnik OFF 14:04", „z day_close". */
   freshNote: string;
-  /** Dokąd prowadzi wiersz — karta dnia albo szuflada jednostki. */
+  /** Dokąd prowadzi wiersz - karta dnia albo szuflada jednostki. */
   to: string;
 }
 
 /**
- * `nowMs` przychodzi z `DashboardDto.at`, czyli z ZEGARA SERWERA — nie z `Date.now()`.
+ * `nowMs` przychodzi z `DashboardDto.at`, czyli z ZEGARA SERWERA - nie z `Date.now()`.
  * Stemple, z którymi je porównujemy, nadaje baza; zegar przeglądarki byłby w tym
  * równaniu trzecim i jedynym niesprawdzonym.
  */
@@ -150,8 +150,8 @@ export function fleetNowRows(
   });
 }
 
-/** Brak danych. Nigdy `0`, nigdy pusty napis — to jest cała reguła tej stałej. */
-const DASH = '—';
+/** Brak danych. Nigdy `0`, nigdy pusty napis - to jest cała reguła tej stałej. */
+const DASH = '-';
 
 function moodOf(item: DashboardAircraftDto, syncMs: number | null, nowMs: number): FleetMood {
   if (item.engine == null) return 'free';
@@ -180,7 +180,7 @@ function whoOf(item: DashboardAircraftDto): string {
   if (aircraft.claim != null) {
     return aircraft.claim.picName ?? aircraft.claim.picCode ?? aircraft.claim.picId;
   }
-  return aircraft.serviceStatus === 'disabled' ? 'Wyłączony ze służby' : 'Wolny — bez claimu';
+  return aircraft.serviceStatus === 'disabled' ? 'Wyłączony ze służby' : 'Wolny - bez claimu';
 }
 
 /** Druga linia opisu: skąd i od kiedy. Kropki rozdzielają fakty, nie zdania. */
@@ -196,7 +196,7 @@ function sinceOf(item: DashboardAircraftDto, nowMs: number): string {
   const parts: string[] = [];
   if (engine.claimedAt == null) {
     // Sesja bez `session_claim` to rejestr NIEKOMPLETNY (§4.4 mówi, że każda sesja
-    // zaczyna się claimem) — nie ma wtedy ani daty, ani czego liczyć.
+    // zaczyna się claimem) - nie ma wtedy ani daty, ani czego liczyć.
     parts.push('claim bez daty w rejestrze');
   } else {
     parts.push(`claim ${timeUtc(engine.claimedAt)}`);
@@ -237,7 +237,7 @@ function freshTextOf(
   if (syncMs == null) return 'brak zdarzeń w rejestrze';
   if (item.engine != null) return `sync ${relativeAge(Math.max(0, nowMs - syncMs))} temu`;
   if (item.aircraft.reading == null) return `sync ${relativeAge(Math.max(0, nowMs - syncMs))} temu`;
-  // Jednostka wolna: interesuje nas moment PRZEKAZANIA, a nie wiek ostatniej paczki —
+  // Jednostka wolna: interesuje nas moment PRZEKAZANIA, a nie wiek ostatniej paczki -
   // to on jest źródłem liczb w tym wierszu.
   return `przekazanie ${dateUtcShort(item.aircraft.reading.at)}`;
 }
@@ -271,7 +271,7 @@ export interface EmptyCopy {
   note: string;
 }
 
-/** Klub bez ani jednej jednostki — pilot nie ma czego wybrać na preflight. */
+/** Klub bez ani jednej jednostki - pilot nie ma czego wybrać na preflight. */
 export const FLEET_EMPTY: EmptyCopy = {
   title: 'BRAK JEDNOSTEK W REJESTRZE',
   note: 'Pulpit nie ma czego pokazać, bo w rejestrze floty nie ma ani jednego samolotu. Pierwszą jednostkę dodaje się na ekranie floty albo seedem.',

@@ -1,12 +1,12 @@
 /**
- * UZ Aero — panel: sklejenie stron kursorowych rejestru i stany puste (`A04`).
+ * UZ Aero - panel: sklejenie stron kursorowych rejestru i stany puste (`A04`).
  *
  * Dwie własności, których złamanie nie widać po niczym poza treścią na ekranie:
  *
  *  1. **`counts: null` znaczy „nie wiemy", nie „zero".** Zero jest twierdzeniem
  *     o świecie i nie wolno go postawić obok banera o nieudanym pobraniu.
- *  2. **Pustka mówi trzy różne rzeczy.** Najważniejsza z nich — „to zdarzenie nie
- *     dotarło na serwer" — jest odpowiedzią na najczęstsze pytanie, jakie ten ekran
+ *  2. **Pustka mówi trzy różne rzeczy.** Najważniejsza z nich - „to zdarzenie nie
+ *     dotarło na serwer" - jest odpowiedzią na najczęstsze pytanie, jakie ten ekran
  *     dostanie (`ANALIZA` §5), a pustka bez tego zdania na nie nie odpowiada.
  */
 
@@ -27,7 +27,7 @@ const page = (over: Partial<EventsPageDto> = {}): EventsPageDto => ({
 
 describe('strony rejestru: sklejanie kursorem', () => {
   it('bez odpowiedzi wszystko jest puste, a liczniki NIEZNANE', () => {
-    // `counts: null`, nie zera — patrz nagłówek pliku.
+    // `counts: null`, nie zera - patrz nagłówek pliku.
     expect(eventsPages(undefined)).toEqual({ items: [], shown: 0, counts: null, hasMore: false });
     expect(eventsPages([])).toEqual({ items: [], shown: 0, counts: null, hasMore: false });
   });
@@ -45,7 +45,7 @@ describe('strony rejestru: sklejanie kursorem', () => {
   });
 
   it('„czy jest więcej" pyta OSTATNIĄ stronę, nie pierwszą', () => {
-    // `nextCursor` pierwszej strony jest już zużyty — czytanie go kazałoby przyciskowi
+    // `nextCursor` pierwszej strony jest już zużyty - czytanie go kazałoby przyciskowi
     // „pokaż starsze" świecić na wiecznie.
     const state = eventsPages([page({ nextCursor: 'c1' }), page({ nextCursor: null })]);
     expect(state.hasMore).toBe(false);
@@ -78,19 +78,19 @@ describe('strony rejestru: podpis „pokazano N z M"', () => {
 });
 
 describe('strony rejestru: pustka mówi TRZY różne rzeczy', () => {
-  it('szukanie po uuid — „to zdarzenie nie dotarło", z drogą wyjścia', () => {
+  it('szukanie po uuid - „to zdarzenie nie dotarło", z drogą wyjścia', () => {
     // Najczęstsze pytanie tego ekranu. Pustka bez tego zdania na nie nie odpowiada,
     // a wskazanie outboxu telefonu jest KONKRETNYM działaniem, nie pocieszeniem.
     const empty = eventsEmpty({ narrowed: true, uuidLookup: true, uuid: 'ev-9' });
     expect(empty.title).toContain('NIE DOTARŁO');
     expect(empty.note).toContain('ev-9');
     expect(empty.note).toContain('outbox');
-    // Oba identyfikatory wyglądają tak samo, więc pomyłka jest naturalna — ekran
+    // Oba identyfikatory wyglądają tak samo, więc pomyłka jest naturalna - ekran
     // proponuje przeszukanie po sesji zamiast kazać zgadywać.
     expect(empty.sessionRetryUuid).toBe('ev-9');
   });
 
-  it('inne zawężenie — „nic w tym zawężeniu" plus ostrzeżenie o osi czasu', () => {
+  it('inne zawężenie - „nic w tym zawężeniu" plus ostrzeżenie o osi czasu', () => {
     const empty = eventsEmpty({ narrowed: true, uuidLookup: false, uuid: null });
     expect(empty.title).toContain('ZAWĘŻENIU');
     // Pułapka, w którą wpada się przy pierwszym użyciu: zakres idzie po czasie
@@ -99,8 +99,8 @@ describe('strony rejestru: pustka mówi TRZY różne rzeczy', () => {
     expect(empty.sessionRetryUuid).toBeNull();
   });
 
-  it('rejestr bez ani jednego wiersza — to podejrzenie awarii synchronizacji', () => {
-    // „Baza pusta" przy klubie, który lata, nie znaczy ciszy — znaczy, że zdarzenia
+  it('rejestr bez ani jednego wiersza - to podejrzenie awarii synchronizacji', () => {
+    // „Baza pusta" przy klubie, który lata, nie znaczy ciszy - znaczy, że zdarzenia
     // leżą w outboxach. Ekran ma to powiedzieć, a nie pokazać neutralną pustkę.
     const empty = eventsEmpty({ narrowed: false, uuidLookup: false, uuid: null });
     expect(empty.title).toContain('PUSTY');

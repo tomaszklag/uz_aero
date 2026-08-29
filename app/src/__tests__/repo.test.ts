@@ -1,5 +1,5 @@
 /**
- * UZ Aero — testy repozytorium + InMemoryAdapter (warstwa danych, §4.1/§4.3/§4.8).
+ * UZ Aero - testy repozytorium + InMemoryAdapter (warstwa danych, §4.1/§4.3/§4.8).
  * Rdzeń: append→odczyt, outbox (`synced_at IS NULL`), markSynced, dedup po uuid,
  * dwa zegary (deviceTime + gpsTime), cache referencyjny z fetchedAt.
  */
@@ -91,7 +91,7 @@ describe('EventsRepo + InMemoryAdapter', () => {
     expect(aBack!.syncedAt).toBe(99_999);
   });
 
-  it('dedup po uuid — ponowny append tego samego uuid nie duplikuje', async () => {
+  it('dedup po uuid - ponowny append tego samego uuid nie duplikuje', async () => {
     const { repo } = makeRepo();
     const first = await repo.appendEvent(engineStart({ uuid: 'fixed', deviceTime: 1 }));
     const second = await repo.appendEvent(engineStart({ uuid: 'fixed', deviceTime: 999 }));
@@ -130,7 +130,7 @@ describe('EventsRepo + InMemoryAdapter', () => {
         claimSince: null,
         handover: null,
         consumption: null,
-        // Konfiguracja oleju (issue #60) — musi przeżyć rundę zapis→odczyt.
+        // Konfiguracja oleju (issue #60) - musi przeżyć rundę zapis→odczyt.
         oilMinL: 8.5,
         oilCapacityL: 11.4,
         oilNormLPerH: 0.12,

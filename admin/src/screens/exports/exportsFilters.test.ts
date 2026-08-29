@@ -1,7 +1,7 @@
 /**
- * UZ Aero — panel: filtry monitora eksportu ↔ query string.
+ * UZ Aero - panel: filtry monitora eksportu ↔ query string.
  *
- * Filtr mieszka w URL-u, więc obie strony tłumaczenia muszą być odwracalne — a jedyne
+ * Filtr mieszka w URL-u, więc obie strony tłumaczenia muszą być odwracalne - a jedyne
  * zawężenie, którego serwer NIE ZNA (`revised`), nie ma prawa do niego pojechać.
  */
 
@@ -21,7 +21,7 @@ import {
 const params = (query: string) => new URLSearchParams(query);
 
 describe('filtry monitora eksportu', () => {
-  it('pusty adres daje filtr domyślny — bez ukrytego zakresu dat', () => {
+  it('pusty adres daje filtr domyślny - bez ukrytego zakresu dat', () => {
     // Mockup ma w pasku `?dni=7`, ale ukryte zawężenie sprawiłoby, że liczniki i pusta
     // lista mówią o czymś, czego nie widać w adresie.
     expect(filterFromParams(params(''))).toEqual(DEFAULT_EXPORTS_FILTER);
@@ -43,7 +43,7 @@ describe('filtry monitora eksportu', () => {
     expect(isNarrowed(filter)).toBe(true);
   });
 
-  it('wartości nieczytelne POMIJA zamiast odrzucać — adres z literówką ma działać', () => {
+  it('wartości nieczytelne POMIJA zamiast odrzucać - adres z literówką ma działać', () => {
     const filter = filterFromParams(params('od=wczoraj&stan=zielony&szukaj=%20%20'));
 
     expect(filter.from).toBeNull();
@@ -72,11 +72,11 @@ describe('filtry monitora eksportu', () => {
     expect(paramsFromFilter(DEFAULT_EXPORTS_FILTER)).toEqual({});
   });
 
-  it('do trasy jedzie `state`, ale NIGDY `revised` — serwer takiego stanu nie zna', () => {
+  it('do trasy jedzie `state`, ale NIGDY `revised` - serwer takiego stanu nie zna', () => {
     // `revised` nie jest stanem, tylko wymiarem PRZECINAJĄCYM stany: zawęża po samym
     // numerze rewizji (`> 1`), niezależnie od tego, co dziś leży w arkuszu. Wysłanie go
     // jako `?state=` skończyłoby się czterysetką, więc pytamy o CAŁY zakres (bez `state`)
-    // i odsiewamy rewizję 1 na wierszach — dokładnie tak, jak serwer liczy `revised`.
+    // i odsiewamy rewizję 1 na wierszach - dokładnie tak, jak serwer liczy `revised`.
     const limit = { limit: EXPORTS_PAGE_LIMIT };
     expect(exportListQuery({ ...DEFAULT_EXPORTS_FILTER, scope: 'revised' })).toEqual(limit);
     expect(exportListQuery({ ...DEFAULT_EXPORTS_FILTER, scope: 'blocked' })).toEqual({
@@ -86,7 +86,7 @@ describe('filtry monitora eksportu', () => {
     expect(exportListQuery(DEFAULT_EXPORTS_FILTER)).toEqual(limit);
   });
 
-  it('ZAWSZE wysyła limit — bezpiecznik ma być widoczny po obu stronach', () => {
+  it('ZAWSZE wysyła limit - bezpiecznik ma być widoczny po obu stronach', () => {
     // Do 2026-08-01 `EXPORTS_PAGE_LIMIT` nie było używane NIGDZIE, a jego docblock
     // obiecywał komunikat, którego na ekranie nie było. Stała bez użycia i obietnica
     // bez pokrycia to jedna wada, nie dwie.

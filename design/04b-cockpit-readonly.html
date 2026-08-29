@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 04B Cockpit · podgląd read-only</title>
+<title>UZ Aero - 04B Cockpit · podgląd read-only</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -59,7 +59,7 @@
   .aircraft-code { color: var(--blue); font-size: 13px; font-weight: 700; letter-spacing: 1.5px; }
   .route-line { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; display: flex; align-items: center; gap: 5px; }
   .icao { color: var(--text-secondary); }
-  /* SyncChip = SAM pill (issue #23 pkt 5) — stempla pod chipem NIE MA; wiek danych
+  /* SyncChip = SAM pill (issue #23 pkt 5) - stempla pod chipem NIE MA; wiek danych
      TEGO ekranu niesie stopka banera niżej (`.ro-meta`), a szczegóły syncu (kolejka,
      ostatni udany sync, wiek danych referencyjnych) otwiera tapnięcie pilla (wzorzec 01c). */
   .app-bar-right { display: flex; align-items: center; }
@@ -74,7 +74,7 @@
   /* ===== SCROLL AREA ===== */
   .scroll { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; scrollbar-width: none; }
   .scroll::-webkit-scrollbar { display: none; }
-  /* Kolumna flex ŚCISKA dzieci, zanim pozwoli im wyjechać poza ekran — a log samolotu ma
+  /* Kolumna flex ŚCISKA dzieci, zanim pozwoli im wyjechać poza ekran - a log samolotu ma
      `overflow: hidden`, więc zamiast się przewinąć, zapadał się do zera po dołożeniu
      banera ostrzegawczego. Treść przewijamy, nie zgniatamy. */
   .scroll > * { flex-shrink: 0; }
@@ -94,7 +94,7 @@
   .ro-meta .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
 
   /* ===== STATUS GROUND CHIP =====
-     Kanon pilla jak `.sync-chip`/`.running-badge` (3×9, ls 1.5, gap 5) — jedna
+     Kanon pilla jak `.sync-chip`/`.running-badge` (3×9, ls 1.5, gap 5) - jedna
      rodzina chipów, jedna metryka (2026-08-04). */
   .ground-chip {
     display: inline-flex; align-items: center; gap: 5px; align-self: center;
@@ -106,7 +106,7 @@
   .ground-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); }
 
   /* ===== TAKEOVER ===== */
-  /* Ostrzeżenie przed przejęciem — ta sama forma co `.ro-banner` (ikona + tytuł + tekst),
+  /* Ostrzeżenie przed przejęciem - ta sama forma co `.ro-banner` (ikona + tytuł + tekst),
      tyle że amber: to ostrzeżenie warunkowe, nie status, więc nie jest zamykalne. */
   .ro-banner.warn { background: var(--amber-muted); border-color: var(--amber-border); }
   .ro-banner.warn .ro-icon { color: var(--amber); }
@@ -137,10 +137,10 @@
   .session-log { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
   .session-log-header { display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; border-bottom: 1px solid var(--border); background: var(--surface-raised); }
   .session-log-title { font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); }
-  /* OŚ SESJI (issue #44) — ten sam inwentarz, co na 04, 05 i 10; pełny komentarz stoi
+  /* OŚ SESJI (issue #44) - ten sam inwentarz, co na 04, 05 i 10; pełny komentarz stoi
      w 04. Cudza sesja czyta się dokładnie tak samo jak własna: podgląd niczego nie
      upraszcza, bo pilot ma na jej podstawie zdecydować, czy przejmuje maszynę.
-     Akordeon cykli odszedł razem z modelem wielu cykli (2026-08-10) — sesja ma jeden
+     Akordeon cykli odszedł razem z modelem wielu cykli (2026-08-10) - sesja ma jeden
      bieg silnika, więc nie ma czego zwijać. */
   .axis { padding: 12px 0; }
   .axis-row { display: grid; grid-template-columns: 52px 14px 1fr auto; align-items: center; gap: 8px; padding: 0 12px 0 10px; min-height: 28px; }
@@ -164,9 +164,9 @@
   .axis-flight { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.5px; color: var(--text-muted); }
   .axis-dur { font-family: var(--font-mono); font-size: 11px; color: var(--green); }
   /* Znacznika outboxa (`.axis-pending`) tu NIE MA: kolejka wysyłki opisuje TEN telefon,
-     a cudze zdarzenia przyszły z serwera — strzałka mówiłaby o kolejce, której nie znamy.
+     a cudze zdarzenia przyszły z serwera - strzałka mówiłaby o kolejce, której nie znamy.
      Stopki sum też nie ma: sesja trwa, więc nie ma czego sumować. */
-  /* read-only: BEZ kolumny edycji — podgląd nie edytuje logu */
+  /* read-only: BEZ kolumny edycji - podgląd nie edytuje logu */
 
   /* ===== ACTION GRID (disabled w podglądzie) ===== */
   .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -203,7 +203,7 @@
   .ss-btn[data-state="cache"].active { background:var(--amber-muted); border-color:var(--amber-border); color:var(--amber); }
   .ss-desc { width:100%; font-family:var(--font-mono); font-size:9px; color:var(--text-muted); letter-spacing:0.5px; padding-left:2px; }
 
-  /* ===== VARIANTS PANEL (canvas — skróty do wariantów ekranu) ===== */
+  /* ===== VARIANTS PANEL (canvas - skróty do wariantów ekranu) ===== */
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
   .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
   .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; transition:all .15s; }
@@ -227,7 +227,7 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 04B</span>
+  <span class="film-strip">UZ AERO - 04B</span>
   <span class="slug">cockpit · podgląd read-only</span>
   <span class="canvas-meta"><span class="pulse"></span>Wariant 04</span>
 </header>
@@ -236,10 +236,10 @@
   <span class="ss-label">Stan danych</span>
   <button class="ss-btn active" data-state="live" onclick="setState('live')">Live</button>
   <button class="ss-btn" data-state="cache" onclick="setState('cache')">Cache</button>
-  <span class="ss-desc" id="ss-desc">Jest sieć — stan samolotu pobrany na żywo z serwera.</span>
+  <span class="ss-desc" id="ss-desc">Jest sieć - stan samolotu pobrany na żywo z serwera.</span>
 </div>
 
-<main class="phone" id="phone" data-state="live" role="region" aria-label="Mockup — Podgląd samolotu (read-only)">
+<main class="phone" id="phone" data-state="live" role="region" aria-label="Mockup - Podgląd samolotu (read-only)">
   <div class="status-bar">
     <span>9:41</span>
     <span class="status-right">
@@ -264,10 +264,10 @@
         </div>
       </div>
       <!-- Online chipa NIE MA (reguła z 2026-08-06): „zsynchronizowano" to stan domyślny.
-           Offline: SAM pill `OFFLINE · n` (issue #23 pkt 5) — szczegóły syncu pod
+           Offline: SAM pill `OFFLINE · n` (issue #23 pkt 5) - szczegóły syncu pod
            tapnięciem (wzorzec 01c), a wiek danych TEGO ekranu mówi stopka banera niżej. -->
       <div class="app-bar-right">
-        <div class="sync-chip only-cache" style="background:var(--amber-muted); border-color:var(--amber-border); color:var(--amber);" title="Brak sieci — ostatni znany stan z cache; tapnięcie otwiera arkusz szczegółów synchronizacji">
+        <div class="sync-chip only-cache" style="background:var(--amber-muted); border-color:var(--amber-border); color:var(--amber);" title="Brak sieci - ostatni znany stan z cache; tapnięcie otwiera arkusz szczegółów synchronizacji">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
           OFFLINE · 2
         </div>
@@ -281,9 +281,9 @@
       <div class="ro-banner">
         <svg class="ro-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         <div class="ro-body">
-          <div class="ro-title">PODGLĄD — TYLKO ODCZYT</div>
-          <div class="ro-text">Samolot prowadzi <strong>KRZ · od 07:10</strong>. Dane zapisuje wyłącznie jego telefon — Ty widzisz stan pobrany z serwera.</div>
-          <div class="stale-warn only-cache">Brak łączności — to <strong>ostatni znany stan</strong>. KRZ mógł już wylądować, zatankować albo zdać samolot.</div>
+          <div class="ro-title">PODGLĄD - TYLKO ODCZYT</div>
+          <div class="ro-text">Samolot prowadzi <strong>KRZ · od 07:10</strong>. Dane zapisuje wyłącznie jego telefon - Ty widzisz stan pobrany z serwera.</div>
+          <div class="stale-warn only-cache">Brak łączności - to <strong>ostatni znany stan</strong>. KRZ mógł już wylądować, zatankować albo zdać samolot.</div>
           <div class="ro-meta only-live"><span class="dot"></span>Dane z serwera · pobrano 09:41 · ostatnia aktywność KRZ 09:38</div>
           <div class="ro-meta only-cache"><span class="dot"></span>Ostatnie pobrane dane · 21 CZE 17:30 · stan sprzed ponad doby</div>
         </div>
@@ -295,9 +295,9 @@
         GROUND · SILNIK WYŁĄCZONY · WG SERWERA
       </div>
 
-      <!-- PASEK SESJI SAMOLOTU — podgląd cudzej sesji.
+      <!-- PASEK SESJI SAMOLOTU - podgląd cudzej sesji.
            Wcześniej stał tu „Duty KRZ 02:31". Czas służby innego pilota nie jest
-           informacją o SAMOLOCIE i nie ma czego wnosić do decyzji o przejęciu —
+           informacją o SAMOLOCIE i nie ma czego wnosić do decyzji o przejęciu -
            liczy się, od kiedy maszyna jest zajęta i ile już zrobiła. -->
       <div class="claim-strip">
         <div class="strip-left">
@@ -312,7 +312,7 @@
         <div class="claim-since">zajęty</div>
       </div>
 
-      <!-- LOG CUDZEJ SESJI (KRZ) — ta sama oś, co we własnym kokpicie i w rozliczeniu
+      <!-- LOG CUDZEJ SESJI (KRZ) - ta sama oś, co we własnym kokpicie i w rozliczeniu
            (issue #44). Podgląd nie ma prawa upraszczać: to na podstawie tego logu pilot
            decyduje, czy przejmuje maszynę.
            Sumy sesji mówi PASEK wyżej („1 lot"), więc oś ich nie powtarza stopką. -->
@@ -370,26 +370,26 @@
 
       <!-- PRZEJMIJ -->
       <!-- Ostrzeżenie przeniesione z popupu przejęcia na 02 (2026-08-06): modala już nie ma,
-           a decyzja zapada TUTAJ — po zobaczeniu stanu i logu dnia. Kto prowadzi samolot,
-           od kiedy i jak stare są dane, mówi baner „PODGLĄD — TYLKO ODCZYT" wyżej, więc
+           a decyzja zapada TUTAJ - po zobaczeniu stanu i logu dnia. Kto prowadzi samolot,
+           od kiedy i jak stare są dane, mówi baner „PODGLĄD - TYLKO ODCZYT" wyżej, więc
            tego nie powtarzamy; tu stoi wyłącznie to, co wynika z samego przejęcia. -->
       <div class="ro-banner warn">
         <svg class="ro-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         <div class="ro-body">
           <div class="ro-title">ZANIM PRZEJMIESZ</div>
-          <div class="ro-text">KRZ może mieć <strong>niewysłane dane</strong>. Po przejęciu tylko Ty będziesz wysyłać dane dla tego samolotu — <strong>zweryfikuj odczyty paliwa i MH z liczników</strong> w kolejnym kroku. Spóźnione dane poprzednika serwer scali automatycznie.<span class="only-cache"> Przejęcie działa też bez sieci: zapisze się na telefonie i wyśle po powrocie zasięgu, a jeśli KRZ nadal lata, oznaczymy to do wyjaśnienia.</span></div>
+          <div class="ro-text">KRZ może mieć <strong>niewysłane dane</strong>. Po przejęciu tylko Ty będziesz wysyłać dane dla tego samolotu - <strong>zweryfikuj odczyty paliwa i MH z liczników</strong> w kolejnym kroku. Spóźnione dane poprzednika serwer scali automatycznie.<span class="only-cache"> Przejęcie działa też bez sieci: zapisze się na telefonie i wyśle po powrocie zasięgu, a jeśli KRZ nadal lata, oznaczymy to do wyjaśnienia.</span></div>
         </div>
       </div>
       <a href="02-preflight.html" class="takeover-btn only-live">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M8 21H3v-5"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
         PRZEJMIJ SAMOLOT
       </a>
-      <div class="takeover-hint only-live">Wrócisz do nowego lotu z wybranym SP-FGK — zapisze się dopiero po potwierdzeniu odczytów</div>
+      <div class="takeover-hint only-live">Wrócisz do nowego lotu z wybranym SP-FGK - zapisze się dopiero po potwierdzeniu odczytów</div>
       <a href="02d-preflight-offline.html" class="takeover-btn only-cache">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M8 21H3v-5"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
         PRZEJMIJ SAMOLOT
       </a>
-      <div class="takeover-hint only-cache">Wrócisz do nowego lotu z wybranym SP-FGK — zapisze się dopiero po potwierdzeniu odczytów</div>
+      <div class="takeover-hint only-cache">Wrócisz do nowego lotu z wybranym SP-FGK - zapisze się dopiero po potwierdzeniu odczytów</div>
 
       <!-- ACTIONS (disabled) -->
       <div class="action-grid">
@@ -408,7 +408,7 @@
           </div>
           <div>
             <div class="action-label">Zmiana załogi</div>
-            <div class="action-sub">PIC: KRZ · DUAL: —</div>
+            <div class="action-sub">PIC: KRZ · DUAL: -</div>
           </div>
         </span>
         <span class="action-card disabled">
@@ -426,37 +426,37 @@
           </div>
           <div>
             <div class="action-label">Zdaj samolot</div>
-            <div class="action-sub">Odczyt końcowy — dzień trwa dalej</div>
+            <div class="action-sub">Odczyt końcowy - dzień trwa dalej</div>
           </div>
         </span>
       </div>
-      <div class="actions-reason">Akcje niedostępne w podglądzie — zapisywać może tylko pilot, który prowadzi samolot</div>
+      <div class="actions-reason">Akcje niedostępne w podglądzie - zapisywać może tylko pilot, który prowadzi samolot</div>
 
     </div><!-- end scroll -->
   </div><!-- end screen -->
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Warianty kokpitu ground — kiedy który?</div>
+  <div class="vp-title">Warianty kokpitu ground - kiedy który?</div>
   <a class="vp-item" href="04a-cockpit-ground.html">
     <span class="vp-badge">04A</span>
     <span class="vp-body">
       <span class="vp-name">Przed uruchomieniem silnika</span>
-      <span class="vp-when">Zaraz po przejęciu — pusty log sesji, START ENGINE, tankowanie i zmiana załogi. Jedyny stan ground PRZED startem; nie „start dnia" — dzień pilota mógł zacząć się wcześniej, na innej maszynie.</span>
+      <span class="vp-when">Zaraz po przejęciu - pusty log sesji, START ENGINE, tankowanie i zmiana załogi. Jedyny stan ground PRZED startem; nie „start dnia" - dzień pilota mógł zacząć się wcześniej, na innej maszynie.</span>
     </span>
   </a>
   <a class="vp-item" href="04-cockpit-ground.html">
     <span class="vp-badge">04</span>
     <span class="vp-body">
       <span class="vp-name">Po zatrzymaniu silnika</span>
-      <span class="vp-when">Sesja zakończona (sesja = jeden bieg silnika, 2026-08-10): hero ZDAJ SAMOLOT — drugiego START ENGINE nie ma, log jednej sesji, tankowanie dozwolone przed zdaniem.</span>
+      <span class="vp-when">Sesja zakończona (sesja = jeden bieg silnika, 2026-08-10): hero ZDAJ SAMOLOT - drugiego START ENGINE nie ma, log jednej sesji, tankowanie dozwolone przed zdaniem.</span>
     </span>
   </a>
   <a class="vp-item active" href="04b-cockpit-readonly.html">
     <span class="vp-badge blue">04B</span>
     <span class="vp-body">
       <span class="vp-name">Podgląd read-only</span>
-      <span class="vp-when">Cudzy samolot — inny pilot ma aktywny claim: stan i log samolotu z serwera, zero możliwości zapisu, ostrzeżenie i akcja „Przejmij". Wejście z karty zajętego samolotu w preflightcie (cała karta prowadzi tutaj) — to JEDYNE miejsce, w którym przejmuje się samolot.</span>
+      <span class="vp-when">Cudzy samolot - inny pilot ma aktywny claim: stan i log samolotu z serwera, zero możliwości zapisu, ostrzeżenie i akcja „Przejmij". Wejście z karty zajętego samolotu w preflightcie (cała karta prowadzi tutaj) - to JEDYNE miejsce, w którym przejmuje się samolot.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -464,14 +464,14 @@
     <span class="vp-badge blue">10D</span>
     <span class="vp-body">
       <span class="vp-name">Popraw dane sesji (tryb edycji)</span>
-      <span class="vp-when">Poprawianie WŁASNEJ sesji: czasy zdarzeń, odczyty paliwa i MH, skład zrzutu, brakujące wpisy. Tego ekranu nie da się otworzyć dla cudzej maszyny — pisze wyłącznie PIC sesji (single-writer §4.4).</span>
+      <span class="vp-when">Poprawianie WŁASNEJ sesji: czasy zdarzeń, odczyty paliwa i MH, skład zrzutu, brakujące wpisy. Tego ekranu nie da się otworzyć dla cudzej maszyny - pisze wyłącznie PIC sesji (single-writer §4.4).</span>
     </span>
   </a>
   <a class="vp-item" href="04d-wyjscie-z-kokpitu.html">
     <span class="vp-badge blue">04D</span>
     <span class="vp-body">
       <span class="vp-name">Blokada wyjścia z kokpitu</span>
-      <span class="vp-when">Pilot trzyma samolot i nacisnął „wstecz" (albo cofnął gestem). Kokpit jest stanem modalnym: arkusz mówi, co go tu trzyma, i pokazuje jedyne wyjście — zdanie maszyny.</span>
+      <span class="vp-when">Pilot trzyma samolot i nacisnął „wstecz" (albo cofnął gestem). Kokpit jest stanem modalnym: arkusz mówi, co go tu trzyma, i pokazuje jedyne wyjście - zdanie maszyny.</span>
     </span>
   </a>
 </aside>
@@ -492,11 +492,11 @@
 
 <script>
   // Stany świeżości danych z serwera (architektura 4.8): cały ten ekran to kategoria (b),
-  // więc musi mieć wariant cache — offline pokazujemy ostatni znany stan z adnotacją wieku.
+  // więc musi mieć wariant cache - offline pokazujemy ostatni znany stan z adnotacją wieku.
   const phoneEl = document.getElementById('phone');
   const ssDesc = {
-    live: 'Jest sieć — stan samolotu pobrany na żywo z serwera.',
-    cache: 'Brak sieci — ostatni znany stan z cache (21 CZE 17:30). Przejęcie nadal możliwe: claim jest optymistyczny.'
+    live: 'Jest sieć - stan samolotu pobrany na żywo z serwera.',
+    cache: 'Brak sieci - ostatni znany stan z cache (21 CZE 17:30). Przejęcie nadal możliwe: claim jest optymistyczny.'
   };
   function setState(s) {
     phoneEl.dataset.state = s;

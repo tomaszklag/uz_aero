@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: DTO kont → wiersze tabeli `A06`.
+ * UZ Aero - panel: DTO kont → wiersze tabeli `A06`.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -33,25 +33,25 @@ describe('wiersz konta', () => {
   });
 
   it('konto nieaktywne: plakietka bez kropki i CAŁY wiersz przygaszony', () => {
-    // Mockup A06 rysuje nieaktywne konta wyszarzone, a nie ukryte — deaktywacja
+    // Mockup A06 rysuje nieaktywne konta wyszarzone, a nie ukryte - deaktywacja
     // odbiera dostęp, nie kasuje człowieka z historii klubu.
     const [row] = pilotRows([dto({ active: false })]);
     expect(row?.status).toEqual({ text: 'Nieaktywny', tone: 'dim', dot: false });
     expect(row?.dim).toBe(true);
   });
 
-  it('zero dni lotnych to „—", nie „0"', () => {
+  it('zero dni lotnych to „-", nie „0"', () => {
     // Zero w kolumnie liczbowej czyta się jak wynik pomiaru; tu znaczy „w tym oknie
     // ani jednego dnia".
-    expect(pilotRows([dto({ flyingDays: 0 })])[0]?.flyingDays).toBe('—');
+    expect(pilotRows([dto({ flyingDays: 0 })])[0]?.flyingDays).toBe('-');
   });
 
-  it('brak e-maila to „—" — loginem bywa sam kod pilota', () => {
-    expect(pilotRows([dto({ email: null })])[0]?.email).toBe('—');
+  it('brak e-maila to „-" - loginem bywa sam kod pilota', () => {
+    expect(pilotRows([dto({ email: null })])[0]?.email).toBe('-');
   });
 
-  it('nieczytelny stempel daje „—", a nie „Invalid Date"', () => {
-    expect(pilotRows([dto({ updatedAt: 'to-nie-jest-data' })])[0]?.changed).toBe('—');
+  it('nieczytelny stempel daje „-", a nie „Invalid Date"', () => {
+    expect(pilotRows([dto({ updatedAt: 'to-nie-jest-data' })])[0]?.changed).toBe('-');
   });
 
   it('czytelny stempel skraca się do dnia UTC', () => {

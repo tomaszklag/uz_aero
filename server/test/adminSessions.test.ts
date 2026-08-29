@@ -1,9 +1,9 @@
 /**
- * UZ Aero (serwer) — lista dni i karta dnia panelu
+ * UZ Aero (serwer) - lista dni i karta dnia panelu
  * (`GET /admin/api/sessions`, `GET /admin/api/sessions/:uuid`; mockupy `A02`, `A02a`).
  *
  * Ten sam wzorzec co reszta: PGlite w procesie, prawdziwe klasy, `app.inject`, zero
- * atrap. Dni powstają tak, jak powstają w produkcji — z PRAWDZIWEGO `POST /events`,
+ * atrap. Dni powstają tak, jak powstają w produkcji - z PRAWDZIWEGO `POST /events`,
  * bo test, który wstawia wiersz projekcji `INSERT`-em, przybija własne wyobrażenie
  * o projekcji, a nie zachowanie systemu.
  */
@@ -45,7 +45,7 @@ interface DayOptions {
   operation?: string;
   client?: string | null;
   mh?: number;
-  /** Odczyt startowy paliwa — musi zgadzać się z przekazaniem poprzedniego dnia. */
+  /** Odczyt startowy paliwa - musi zgadzać się z przekazaniem poprzedniego dnia. */
   fuelStartL?: number;
   dayOffset?: number;
   close?: boolean;
@@ -124,7 +124,7 @@ function list(app: Harness['app'], token: string, query = '') {
   });
 }
 
-/** Trzy dni na dwóch samolotach, dwóch pilotów, dwie operacje — materiał na filtry. */
+/** Trzy dni na dwóch samolotach, dwóch pilotów, dwie operacje - materiał na filtry. */
 async function threeDays() {
   const harness = await testHarness();
   const { app } = harness;
@@ -146,7 +146,7 @@ async function threeDays() {
       mh: 900,
     }),
   );
-  // Dzień OTWARTY (bez `day_close`) — na liście ma stan `active` i puste odczyty końcowe.
+  // Dzień OTWARTY (bez `day_close`) - na liście ma stan `active` i puste odczyty końcowe.
   // Odczyty startowe (MH i paliwo) domykają przekazanie z `sess-1` na tym samym
   // samolocie: fixtura ma być BEZ flag, żeby test filtra `flagged` mierzył filtr,
   // a nie przypadkową rozbieżność w danych testowych.
@@ -211,7 +211,7 @@ describe('lista dni (A02)', () => {
     });
 
     // Dzień otwarty: odczyty końcowe puste, karty arkusza nie ma. Panel niczego
-    // nie domyśla — to jest cała treść banera „dzień otwarty ≠ dzień niekompletny".
+    // nie domyśla - to jest cała treść banera „dzień otwarty ≠ dzień niekompletny".
     expect(body.items[0]).toMatchObject({
       sessionUuid: 'sess-3',
       status: 'active',
@@ -230,7 +230,7 @@ describe('lista dni (A02)', () => {
     const body = (await list(app, admin, '?aircraftId=SP-FGK')).json();
 
     // Blok = jeden cykl silnika 08:12 → 10:34; lot = 08:25 → 09:18. Te same liczby
-    // co ekran 10 telefonu i karta arkusza — jeden `projectSession` dla wszystkich.
+    // co ekran 10 telefonu i karta arkusza - jeden `projectSession` dla wszystkich.
     expect(body.items[0]).toMatchObject({
       blockMs: (2 * 60 + 22) * 60_000,
       flightMs: 53 * 60_000,
@@ -298,7 +298,7 @@ describe('lista dni (A02)', () => {
       'sess-2',
     ]);
 
-    // Telefon dosyła NOWSZY dzień — z `OFFSET 2` druga strona zaczęłaby się od
+    // Telefon dosyła NOWSZY dzień - z `OFFSET 2` druga strona zaczęłaby się od
     // `sess-2` (wiersz z pierwszej strony), a `sess-1` przepadłby bez śladu.
     await post(
       app,
@@ -353,7 +353,7 @@ describe('karta dnia (A02a)', () => {
     const body = res.json();
     expect(body.session).toMatchObject({ sessionUuid: 'sess-1', reg: 'SP-AXA', picCode: 'TMK' });
 
-    // `state` to byt DOMENOWY — jedzie bez własnego DTO, w całości, żeby panel
+    // `state` to byt DOMENOWY - jedzie bez własnego DTO, w całości, żeby panel
     // formatował liczby serwera zamiast liczyć swoje.
     expect(body.state).toMatchObject({
       sessionUuid: 'sess-1',
@@ -382,7 +382,7 @@ describe('karta dnia (A02a)', () => {
   it('oś jest CHRONOLOGICZNA także wtedy, gdy uuidy sortują się odwrotnie', async () => {
     // Regresja. Cały dzień przychodzi JEDNĄ paczką (norma offline-first: pilot lata bez
     // zasięgu, outbox leci jednym rzutem), a `received_at` bierze się z `now()`, czyli
-    // z czasu ROZPOCZĘCIA TRANSAKCJI — więc dla całej paczki jest identyczny i porządek
+    // z czasu ROZPOCZĘCIA TRANSAKCJI - więc dla całej paczki jest identyczny i porządek
     // rozstrzyga `uuid`, w produkcji przypadkowy.
     //
     // Poprzedni test tego nie łapał, bo jego fikstura nadaje uuidy `s-1-…`…`s-7-…`,
@@ -439,7 +439,7 @@ describe('karta dnia (A02a)', () => {
   it('oś zdarzeń pokazuje zdarzenie UNIEWAŻNIONE, a nie ukrywa je', async () => {
     const { app, admin } = await threeDays();
 
-    // Korekta administracyjna po zamknięciu dnia (przekrój 3) — jedyna droga, którą
+    // Korekta administracyjna po zamknięciu dnia (przekrój 3) - jedyna droga, którą
     // korekta trafia do rejestru z panelu.
     const correction = await app.inject({
       method: 'POST',
@@ -454,7 +454,7 @@ describe('karta dnia (A02a)', () => {
           })
         ).json().state.flights[0].takeoffUuid,
         action: 'void',
-        reason: 'Start wykryty przy kołowaniu — potwierdzone z pilotem.',
+        reason: 'Start wykryty przy kołowaniu - potwierdzone z pilotem.',
       },
     });
     expect(correction.statusCode).toBe(200);
@@ -481,7 +481,7 @@ describe('karta dnia (A02a)', () => {
     const { app, clock } = await threeDays();
     // Zegar testu stoi na starcie dnia pierwszego, a korekta stempluje się „teraz":
     // bez przesunięcia nowy czas lądowania byłby dla reguł czasem Z PRZYSZŁOŚCI
-    // (`CORRECTION_TIME_IN_FUTURE`) — i słusznie. Po przesunięciu token dostępu jest
+    // (`CORRECTION_TIME_IN_FUTURE`) - i słusznie. Po przesunięciu token dostępu jest
     // przeterminowany, więc logujemy się jeszcze raz: to jest zachowanie produkcyjne,
     // a nie obejście testowe.
     clock.advance(4 * DAY_MS);
@@ -504,7 +504,7 @@ describe('karta dnia (A02a)', () => {
         targetUuid: landingUuid,
         action: 'retime',
         newTime: at(9, 30),
-        reason: 'Lądowanie wykryte 12 min za późno — GPS zgubił fix na finale.',
+        reason: 'Lądowanie wykryte 12 min za późno - GPS zgubił fix na finale.',
       },
     });
     expect(correction.statusCode).toBe(200);
@@ -522,16 +522,16 @@ describe('karta dnia (A02a)', () => {
     );
     expect(landing.voided).toBe(false);
     expect(landing.correctedTime).toBe(at(9, 30));
-    // Zapisany czas zostaje nietknięty — oś pokazuje OBA (mockup: stary przekreślony).
+    // Zapisany czas zostaje nietknięty - oś pokazuje OBA (mockup: stary przekreślony).
     expect(landing.event.gpsTime).toBe(at(9, 18));
   });
 
   it('`adminCorrected` odróżnia korektę PANELU od korekty pilota z okna 24 h', async () => {
-    // Oba zdarzenia wyjdą z tej osi UNIEWAŻNIONE i w rejestrze wyglądają identycznie —
+    // Oba zdarzenia wyjdą z tej osi UNIEWAŻNIONE i w rejestrze wyglądają identycznie -
     // `event_correction` ma ten sam kształt niezależnie od tego, kto ją dopisał.
     // Różnica jest w tym, CZY POWSTAŁ ŚLAD: korekta administratora idzie przez
     // `AuditedWrite` i zostawia wiersz w `admin_audit`, a korekta pilota przez
-    // `POST /events`, czyli z pominięciem tej bramy — dziennika nie dotyka w ogóle.
+    // `POST /events`, czyli z pominięciem tej bramy - dziennika nie dotyka w ogóle.
     // Panel wiesza na tym polu przejście „ślad w audycie", więc bez tego rozróżnienia
     // link prowadzi w pustkę dokładnie w przypadku NORMALNYM (korekt pilota jest
     // więcej niż administracyjnych, bo tamte są z definicji wyjątkiem).
@@ -548,7 +548,7 @@ describe('karta dnia (A02a)', () => {
 
     const flight = (await card()).state.flights[0];
 
-    // 1) KOREKTA ADMINISTRATORA — jedyna droga zapisu panelu, `source_device` = `admin:TMK`.
+    // 1) KOREKTA ADMINISTRATORA - jedyna droga zapisu panelu, `source_device` = `admin:TMK`.
     const byAdmin = await app.inject({
       method: 'POST',
       url: '/admin/api/sessions/sess-1/corrections',
@@ -556,12 +556,12 @@ describe('karta dnia (A02a)', () => {
       payload: {
         targetUuid: flight.takeoffUuid,
         action: 'void',
-        reason: 'Start wykryty przy kołowaniu — potwierdzone z pilotem.',
+        reason: 'Start wykryty przy kołowaniu - potwierdzone z pilotem.',
       },
     });
     expect(byAdmin.statusCode).toBe(200);
 
-    // 2) KOREKTA PILOTA — zwykły `POST /events` z telefonu, z identyfikatorem urządzenia.
+    // 2) KOREKTA PILOTA - zwykły `POST /events` z telefonu, z identyfikatorem urządzenia.
     const pilot = await login(app, 'TMK');
     const byPilot = await post(app, pilot, [
       event(
@@ -580,7 +580,7 @@ describe('karta dnia (A02a)', () => {
     }[];
     const find = (uuid: string) => timeline.find((e) => e.event.uuid === uuid)!;
 
-    // Oba są unieważnione — po tym polu NIE DA SIĘ ich rozróżnić…
+    // Oba są unieważnione - po tym polu NIE DA SIĘ ich rozróżnić…
     expect([find(flight.takeoffUuid).voided, find(flight.landingUuid).voided]).toEqual([true, true]);
     // …a ślad w dzienniku ma tylko jedno z nich.
     expect(find(flight.takeoffUuid).adminCorrected).toBe(true);
@@ -599,7 +599,7 @@ describe('karta dnia (A02a)', () => {
     expect(audited.items.map((i) => i.targetId)).toEqual([flight.takeoffUuid]);
   });
 
-  it('flagi dnia zawierają także ROZWIĄZANE — historia decyzji zostaje na karcie', async () => {
+  it('flagi dnia zawierają także ROZWIĄZANE - historia decyzji zostaje na karcie', async () => {
     const harness = await testHarness();
     const { app, db } = harness;
     const tmk = await login(app, 'TMK');
@@ -624,7 +624,7 @@ describe('karta dnia (A02a)', () => {
       method: 'POST',
       url: `/admin/api/flags/${rows[0]!.id}/resolve`,
       headers: { authorization: `Bearer ${tmk}`, ...ADMIN_CSRF_HEADERS },
-      payload: { note: 'Nakładka pozorna — KRZ zamknął dzień telefonicznie.' },
+      payload: { note: 'Nakładka pozorna - KRZ zamknął dzień telefonicznie.' },
     });
 
     const body = (
@@ -640,7 +640,7 @@ describe('karta dnia (A02a)', () => {
       type: 'aircraft_overlap',
       status: 'resolved',
       resolvedBy: 'TMK',
-      // Rozwiązana nakładka już NIE blokuje karty — to samo mówi bramka eksportera.
+      // Rozwiązana nakładka już NIE blokuje karty - to samo mówi bramka eksportera.
       blocksExport: false,
     });
   });

@@ -1,7 +1,7 @@
 /**
- * UZ Aero — testy regresji z więzem nieujemności (analityka zużycia).
+ * UZ Aero - testy regresji z więzem nieujemności (analityka zużycia).
  *
- * Ta matematyka nie ma testu „na oko" — dokładnie jak odwzorowanie mapy: błąd w niej
+ * Ta matematyka nie ma testu „na oko" - dokładnie jak odwzorowanie mapy: błąd w niej
  * nie wywala aplikacji, tylko podaje stawkę spalania o kilka litrów obok, a taka liczba
  * wygląda równie wiarygodnie jak prawdziwa. Dlatego punktami odniesienia są układy
  * o rozwiązaniu znanym z definicji (dokładne dopasowanie, iloraz sum, jawny więz),
@@ -10,7 +10,7 @@
 
 import { solveNnls } from '../domain';
 
-describe('solveNnls — układy o znanym rozwiązaniu', () => {
+describe('solveNnls - układy o znanym rozwiązaniu', () => {
   it('odtwarza stawki dokładnie, gdy równania są spójne', () => {
     // 2 fazy: ziemia 10 L/h, powietrze 40 L/h. Trzy interwały o różnych proporcjach.
     const a = [
@@ -29,7 +29,7 @@ describe('solveNnls — układy o znanym rozwiązaniu', () => {
     expect(solution!.active).toEqual([false, false]);
   });
 
-  it('model jednofazowy NIE jest ilorazem sum — i to jest poprawne', () => {
+  it('model jednofazowy NIE jest ilorazem sum - i to jest poprawne', () => {
     // Rzecz, którą trzeba znać, zanim ktoś zacznie „naprawiać" rozjazd między kaflem
     // „na godzinę bloku" a modelem zdegradowanym do jednej fazy. Regresja przez zero
     // minimalizuje błąd w LITRACH, więc waży interwał kwadratem jego długości:
@@ -57,7 +57,7 @@ describe('solveNnls — układy o znanym rozwiązaniu', () => {
 
   it('przypina stawkę do zera zamiast oddać ujemną', () => {
     // Druga kolumna „tłumaczyłaby" dane najlepiej wartością ujemną. Zwykła regresja
-    // podałaby ją bez mrugnięcia — fizycznie znaczyłaby „silnik produkuje paliwo".
+    // podałaby ją bez mrugnięcia - fizycznie znaczyłaby „silnik produkuje paliwo".
     const a = [
       [1, 1],
       [1, 2],
@@ -74,7 +74,7 @@ describe('solveNnls — układy o znanym rozwiązaniu', () => {
     expect(solution!.x[0]).toBeCloseTo(20, 10);
   });
 
-  it('kolumny współliniowe zwracają null — nie da się rozdzielić faz', () => {
+  it('kolumny współliniowe zwracają null - nie da się rozdzielić faz', () => {
     // Druga kolumna to dokładnie dwukrotność pierwszej: każdy podział zużycia między
     // te fazy pasuje tak samo dobrze. „Nie wiem" jest tu jedyną uczciwą odpowiedzią.
     const a = [
@@ -120,7 +120,7 @@ describe('solveNnls — układy o znanym rozwiązaniu', () => {
   });
 
   it('niesie składniki błędu standardowego: odwrotność Grama i normy kolumn', () => {
-    // Bez tych dwóch liczb nie da się policzyć „±2.1" — a stawka bez niepewności
+    // Bez tych dwóch liczb nie da się policzyć „±2.1" - a stawka bez niepewności
     // nie ma prawa stanąć na ekranie.
     const solution = solveNnls(
       [

@@ -1,8 +1,8 @@
 /**
- * UZ Aero — panel: nazwanie stanów karty i wyniku ponowienia.
+ * UZ Aero - panel: nazwanie stanów karty i wyniku ponowienia.
  *
  * Najważniejsza własność: **odmowa i awaria to DWIE różne wiadomości**. „Flaga trzyma
- * kartę" jest stanem świata, „eksport rzucił" jest usterką — sklejenie ich w jedno
+ * kartę" jest stanem świata, „eksport rzucił" jest usterką - sklejenie ich w jedno
  * „nie udało się" kazałoby administratorowi zgadywać, czy ponawiać, czy iść do flag.
  */
 
@@ -22,7 +22,7 @@ describe('stany karty', () => {
   });
 
   it('kropka „to trwa" tylko tam, gdzie coś faktycznie trwa', () => {
-    // Sesja w toku i flaga czekająca na człowieka — tak. Karta w arkuszu i sesja bez
+    // Sesja w toku i flaga czekająca na człowieka - tak. Karta w arkuszu i sesja bez
     // claimu to stany zastane, nie procesy.
     expect(EXPORT_STATE_META.waiting.dot).toBe(true);
     expect(EXPORT_STATE_META.blocked.dot).toBe(true);
@@ -30,13 +30,13 @@ describe('stany karty', () => {
     expect(EXPORT_STATE_META.impossible.dot).toBe(false);
   });
 
-  it('stany nazywają SESJĘ, a nie „dzień lotny" — karta jest DOBĄ SAMOLOTU', () => {
+  it('stany nazywają SESJĘ, a nie „dzień lotny" - karta jest DOBĄ SAMOLOTU', () => {
     // Po §4.7 jedna karta zbiera wszystkie sesje pary (doba, maszyna), więc „Czeka ·
     // dzień otwarty" mówiło o niewłaściwym bycie: sesja w toku bywa już wierszem karty,
     // którą zbudowała poranna zmiana tej samej maszyny.
     expect(EXPORT_STATE_META.waiting.label).toBe('Czeka · sesja w toku');
     expect(EXPORT_STATE_META.blocked.note).toContain('karty doby');
-    // `impossible` to brak `session_claim`, a nie brak preflightu — po §3.6a preflight
+    // `impossible` to brak `session_claim`, a nie brak preflightu - po §3.6a preflight
     // przestał być warunkiem daty.
     expect(EXPORT_STATE_META.impossible.label).toBe('Bez claimu');
   });
@@ -66,7 +66,7 @@ describe('wynik ponowienia jako zdanie', () => {
     expect(message.title).not.toContain('null');
   });
 
-  it('odmowa jest OSTRZEŻENIEM z powodem — i mówi, że bramki się nie omija', () => {
+  it('odmowa jest OSTRZEŻENIEM z powodem - i mówi, że bramki się nie omija', () => {
     const message = retryMessage({ exported: false, reason: 'overlap_flag' }, 2, null);
 
     expect(message.tone).toBe('warn');
@@ -74,13 +74,13 @@ describe('wynik ponowienia jako zdanie', () => {
     expect(message.body).toContain('nie omija');
   });
 
-  it('każdy powód odmowy ma polskie zdanie — także ten najrzadszy', () => {
+  it('każdy powód odmowy ma polskie zdanie - także ten najrzadszy', () => {
     for (const reason of ['no_events', 'session_open', 'no_preflight', 'overlap_flag'] as const) {
       expect(retryMessage({ exported: false, reason }, null, null).body.length).toBeGreaterThan(20);
     }
   });
 
-  it('awaria ARKUSZY jest błędem, który minie — i mówi, żeby spróbować za chwilę', () => {
+  it('awaria ARKUSZY jest błędem, który minie - i mówi, żeby spróbować za chwilę', () => {
     const message = retryMessage(null, 2, 'sheets_adapter');
 
     expect(message.tone).toBe('danger');
@@ -93,7 +93,7 @@ describe('wynik ponowienia jako zdanie', () => {
   it('błąd PO NASZEJ STRONIE nie udaje awarii arkuszy i nie każe czekać', () => {
     // Wada, którą ten przypadek zamyka: do 2026-08-01 komenda łapała KAŻDY wyjątek
     // i zwracała `outcome: null`, więc `TypeError` w budowie karty dostawał zdanie
-    // „Adapter arkuszy zgłosił awarię — spróbuj ponownie za chwilę". Administrator
+    // „Adapter arkuszy zgłosił awarię - spróbuj ponownie za chwilę". Administrator
     // czekał na usterkę, która sama nie mija.
     const message = retryMessage(null, 2, 'unexpected');
 

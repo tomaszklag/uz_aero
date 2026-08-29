@@ -1,12 +1,12 @@
 /**
- * UZ Aero — panel: KANONICZNA NAWIGACJA, 11 pozycji w czterech grupach.
+ * UZ Aero - panel: KANONICZNA NAWIGACJA, 11 pozycji w czterech grupach.
  *
- * Przepisana 1:1 z `design/admin/SZABLON.html` — kolejność, etykiety, grupy i ikony.
+ * Przepisana 1:1 z `design/admin/SZABLON.html` - kolejność, etykiety, grupy i ikony.
  * Sidebar jest jedyną rzeczą widoczną na każdym ekranie panelu, więc od tej chwili
  * jest identyczny wszędzie i pochodzi z jednego pliku (`§10 krok 3`).
  *
  * `capability` mówi, czego pozycja WYMAGA. Brak wymogu ponad `panel.access` znaczy
- * „czyta każdy, kto wszedł do panelu" — a nie „brak kontroli": `panel.access` jest
+ * „czyta każdy, kto wszedł do panelu" - a nie „brak kontroli": `panel.access` jest
  * warunkiem koniecznym wydania sesji.
  */
 
@@ -26,14 +26,14 @@ import {
 } from '../components/icons';
 
 export interface NavItemSpec {
-  /** Ścieżka trasy (bez `#`) — router panelu jedzie na hashu (§7). */
+  /** Ścieżka trasy (bez `#`) - router panelu jedzie na hashu (§7). */
   to: string;
   label: string;
   icon: React.ReactNode;
   capability: Capability;
   /**
    * Plik mockupu, z którego powstaje ekran. Nie jest ozdobą: dopóki ekran nie istnieje,
-   * to jedyna informacja, którą panel może uczciwie podać zamiast pustej strony —
+   * to jedyna informacja, którą panel może uczciwie podać zamiast pustej strony -
    * a gdy już powstanie, zostaje jako wskazanie źródła prawdy dla jego wyglądu.
    */
   mockup: string;
@@ -74,8 +74,8 @@ export const NAV_GROUPS: NavGroupSpec[] = [
         to: '/piloci',
         label: 'Piloci',
         icon: <PeopleIcon />,
-        // `panel.access`, nie `accounts.manage` — decyzja produktowa z mockupu A06:
-        // „Szef wyszkolenia widzi tę listę, ale bez przycisków — potrzebuje jej do
+        // `panel.access`, nie `accounts.manage` - decyzja produktowa z mockupu A06:
+        // „Szef wyszkolenia widzi tę listę, ale bez przycisków - potrzebuje jej do
         // statystyk i flag, nie do zarządzania dostępem". Kłódka na pozycji nawigacji
         // odcinałaby mu odczyt, którego trasa `GET /admin/api/pilots` udziela.
         // Przyciski akcji wyszarza `screens/pilots/accountActions.ts`, z powodem.
@@ -86,10 +86,10 @@ export const NAV_GROUPS: NavGroupSpec[] = [
         to: '/flota',
         label: 'Flota',
         icon: <PlaneIcon size={15} />,
-        // `panel.access`, nie `fleet.manage` — decyzja produktowa z mockupu A07:
+        // `panel.access`, nie `fleet.manage` - decyzja produktowa z mockupu A07:
         // „Szef wyszkolenia czyta tę tabelę (potrzebuje jej do flag i statystyk), ale
         // bez przycisków edycji". Kłódka na pozycji nawigacji odcinałaby mu odczyt,
-        // którego trasa `GET /admin/api/fleet` udziela — i przy okazji zabrałaby
+        // którego trasa `GET /admin/api/fleet` udziela - i przy okazji zabrałaby
         // ekranowi rolę słownika samolotów dla filtrów listy dni. Przyciski akcji
         // wyszarza `screens/fleet/aircraftActions.ts`, z powodem.
         capability: 'panel.access',
@@ -107,7 +107,7 @@ export const NAV_GROUPS: NavGroupSpec[] = [
         label: 'Konserwacja',
         icon: <WrenchIcon />,
         mockup: 'A11-konserwacja.html',
-        // `maintenance.run` — pozycja katalogu dołożona 2026-08-02 razem z trasami
+        // `maintenance.run` - pozycja katalogu dołożona 2026-08-02 razem z trasami
         // konserwacji (`server/src/domain/roles.ts`, decyzja do potwierdzenia).
         // Kłódka, a nie `panel.access` jak przy kontach i flocie, i to jest różnica
         // merytoryczna: tam szef wyszkolenia CZYTA tabelę (potrzebuje jej do flag

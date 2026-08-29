@@ -1,15 +1,15 @@
 /**
- * UZ Aero — panel: dziennik audytu (`/admin/api/audit`).
+ * UZ Aero - panel: dziennik audytu (`/admin/api/audit`).
  *
  * Jeden plik = jeden zasób = jeden prefiks trasy, jak `server/src/http/routes/`.
- * Warstwa `api/` nie zna Reacta ani cache'u — zwraca obietnice, a co z nimi zrobić,
+ * Warstwa `api/` nie zna Reacta ani cache'u - zwraca obietnice, a co z nimi zrobić,
  * decyduje `queries/`.
  *
  * ══ `action` JEST PARAMETREM POWTARZALNYM ══
  * Ekran filtruje GRUPAMI („Konta", „Flota", „Konserwacja"), a grupa to kilka kodów
  * katalogu naraz. Dlatego składamy `?action=a&action=b`, a nie listę po przecinku:
  * przecinek byłby własnym formatem, który trasa musiałaby rozbierać, a powtórzony
- * parametr rozumie każdy serwer i każdy klient — łącznie z paskiem adresu, do którego
+ * parametr rozumie każdy serwer i każdy klient - łącznie z paskiem adresu, do którego
  * ten link ma dać się wkleić.
  */
 
@@ -17,7 +17,7 @@ import type { AdminAction, AuditPageDto } from './dto';
 import { apiGet } from './httpClient';
 
 /**
- * Filtr dziennika tak, jak przyjmuje go trasa. Wszystko poza `limit` opcjonalne —
+ * Filtr dziennika tak, jak przyjmuje go trasa. Wszystko poza `limit` opcjonalne -
  * brak filtra znaczy „pokaż wszystko".
  *
  * `action` jest typu `AdminAction[]`, mimo że dziennik może zawierać kody spoza
@@ -27,11 +27,11 @@ import { apiGet } from './httpClient';
  */
 export interface AuditListQuery {
   action?: AdminAction[];
-  /** Identyfikator konta działającego — dopasowanie DOKŁADNE, nie po nazwisku. */
+  /** Identyfikator konta działającego - dopasowanie DOKŁADNE, nie po nazwisku. */
   actor?: string;
   targetType?: string;
   targetId?: string;
-  /** Dzień UTC `YYYY-MM-DD` włącznie — trasa filtruje po DNIACH, nie po stemplach. */
+  /** Dzień UTC `YYYY-MM-DD` włącznie - trasa filtruje po DNIACH, nie po stemplach. */
   from?: string;
   to?: string;
   sort?: 'asc' | 'desc';

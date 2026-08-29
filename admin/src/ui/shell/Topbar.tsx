@@ -1,7 +1,7 @@
 /**
- * UZ Aero — panel: topbar (`.topbar` z `SZABLON.html`).
+ * UZ Aero - panel: topbar (`.topbar` z `SZABLON.html`).
  *
- * Okruszki po lewej, zegar UTC po prawej. Nic więcej — mockup nie przewiduje tu
+ * Okruszki po lewej, zegar UTC po prawej. Nic więcej - mockup nie przewiduje tu
  * ani wyszukiwarki globalnej, ani powiadomień, a topbar widoczny na każdym ekranie
  * jest najgorszym miejscem na „jeszcze jedną drobną rzecz".
  */

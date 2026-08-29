@@ -1,7 +1,7 @@
 /**
- * UZ Aero (serwer) — ODCZYTOWA strona ekranu konserwacji (`A11-konserwacja.html`).
+ * UZ Aero (serwer) - ODCZYTOWA strona ekranu konserwacji (`A11-konserwacja.html`).
  *
- * ══ TO SĄ ZAPYTANIA, NIE KOMENDY — I TO JEST NAJWAŻNIEJSZE ZDANIE TEGO PLIKU ══
+ * ══ TO SĄ ZAPYTANIA, NIE KOMENDY - I TO JEST NAJWAŻNIEJSZE ZDANIE TEGO PLIKU ══
  * Żadne z nich nie przechodzi przez `AuditedWrite`, więc żadne nie ma jak zapisać ani
  * jak dopisać wiersza do `admin_audit`. Dotyczy to zwłaszcza `compareProjections`,
  * które do 2026-08-02 było trybem KOMENDY i zostawiało ślad także wtedy, gdy niczego
@@ -10,12 +10,12 @@
  * Powód zmiany jest ten sam, co przy podglądzie korekty (`queries/corrections.ts`):
  * brama `AuditedWrite` wymusza w typie wpis do dziennika, a dziennik nadzoru nie może
  * opisywać rzeczy, które się nie wydarzyły. „Administrator porównał projekcję" nie jest
- * zmianą w systemie — a wpis o tym rozmywa jedyny dokument odpowiadający na pytanie
+ * zmianą w systemie - a wpis o tym rozmywa jedyny dokument odpowiadający na pytanie
  * „kto co zmienił". Cena jest nazwana wprost: informacja „ktoś sprawdził i się zgadzało"
  * przestaje być odtwarzalna z dziennika. Ekran `A11` mówi to wprost, zamiast obiecywać
  * ślad, którego nie ma.
  *
- * Stąd konstruktor bez `AuditedWrite` — zero zapisów, zero wpisów, zero skutków ubocznych.
+ * Stąd konstruktor bez `AuditedWrite` - zero zapisów, zero wpisów, zero skutków ubocznych.
  */
 
 import { REFRESH_TTL_DAYS } from '../../common/commands/auth.ts';
@@ -43,7 +43,7 @@ export class AdminMaintenanceQueries {
   ) {}
 
   /**
-   * Krok pierwszy z mockupu: „Przelicz i porównaj — bez zapisu".
+   * Krok pierwszy z mockupu: „Przelicz i porównaj - bez zapisu".
    *
    * Blokady advisory tu NIE MA i to jest zamierzone: bez zapisu nie ma czego chronić
    * przed lost update, a zablokowanie tysięcy sesji na czas pełnego skanu zatrzymałoby
@@ -64,18 +64,18 @@ export class AdminMaintenanceQueries {
       sessions: scan.sessions,
       rowsDiffering: scan.rowsDiffering,
       fieldsDiffering: scan.fieldsDiffering,
-      // Zawsze zero — i to nie jest wartość domyślna do wypełnienia później: ta droga
+      // Zawsze zero - i to nie jest wartość domyślna do wypełnienia później: ta droga
       // nie ma czym zapisać.
       written: 0,
       // Ile różnic nie zmieściło się w raporcie (`PROJECTION_DIFF_LIMIT`). Liczby wyżej
-      // opisują CAŁY rejestr, więc bez tego pola lista wyglądałaby na komplet — czyli
+      // opisują CAŁY rejestr, więc bez tego pola lista wyglądałaby na komplet - czyli
       // dokładnie tak, jak przycięta lista na `A05` przed poprawką z 2026-08-01.
       remaining: scan.remaining,
       diffs: scan.diffs,
     };
   }
 
-  /** Stan tabeli `refresh_tokens` PRZED czyszczeniem — same liczby i daty. */
+  /** Stan tabeli `refresh_tokens` PRZED czyszczeniem - same liczby i daty. */
   async refreshTokens(): Promise<RefreshTokenScanDto> {
     const at = this.clock.now();
     const scan = await this.maintenance.scanRefreshTokens(this.db, at);

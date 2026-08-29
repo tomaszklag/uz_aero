@@ -1,5 +1,5 @@
 /**
- * UZ Aero — wysokość zrzutu: średnia z okna, nie ostatni fix (issue #21 pkt 2).
+ * UZ Aero - wysokość zrzutu: średnia z okna, nie ostatni fix (issue #21 pkt 2).
  *
  * Kontrakt: okno liczone wstecz od NAJNOWSZEGO fixa (`DROP_ALT_WINDOW_SEC`), fixy bez
  * wysokości i spoza okna pomijane, brak danych = `null` (nigdy zero). Przypadek
@@ -26,7 +26,7 @@ function fix(ageSec: number, altitudeFt: number | null): GpsFix {
 const chronological = (fixes: GpsFix[]): GpsFix[] => [...fixes].sort((a, b) => a.time - b.time);
 
 describe('averageAltitudeFt', () => {
-  it('uśrednia wysokości z okna — artefakt jednego fixa nie dyktuje wyniku', () => {
+  it('uśrednia wysokości z okna - artefakt jednego fixa nie dyktuje wyniku', () => {
     // Stabilne 2400 ft i jeden skok +90 ft na końcu: stare zachowanie (ostatni fix)
     // zapisałoby 2490; średnia rozkłada artefakt na całe okno.
     const fixes = chronological([fix(4, 2400), fix(3, 2400), fix(2, 2400), fix(1, 2400), fix(0, 2490)]);
@@ -35,7 +35,7 @@ describe('averageAltitudeFt', () => {
 
   it('fixy starsze niż okno nie wchodzą do średniej', () => {
     const fixes = chronological([
-      fix(DROP_ALT_WINDOW_SEC + 5, 1000), // dolot — dawno poza oknem
+      fix(DROP_ALT_WINDOW_SEC + 5, 1000), // dolot - dawno poza oknem
       fix(2, 2500),
       fix(0, 2500),
     ]);
@@ -47,14 +47,14 @@ describe('averageAltitudeFt', () => {
     expect(averageAltitudeFt(fixes)).toBe(2400);
   });
 
-  it('brak jakiejkolwiek wysokości w oknie = null — „nie wiem" to nie „zero stóp"', () => {
+  it('brak jakiejkolwiek wysokości w oknie = null - „nie wiem" to nie „zero stóp"', () => {
     expect(averageAltitudeFt([])).toBeNull();
     expect(averageAltitudeFt(chronological([fix(1, null), fix(0, null)]))).toBeNull();
   });
 
   it('fix z przyszłości (cofnięty zegar) jest odrzucany jak w prędkości pionowej', () => {
     // „Najnowszy" po czasie to ostatni element; wcześniejszy wpis z czasem PÓŹNIEJSZYM
-    // niż on symuluje skok zegara — nie może zatruć średniej.
+    // niż on symuluje skok zegara - nie może zatruć średniej.
     const future = { ...fix(0, 9000), time: T0 + 5_000 };
     const fixes = [future, fix(1, 2400), fix(0, 2400)];
     expect(averageAltitudeFt(fixes)).toBe(2400);

@@ -1,5 +1,5 @@
 /**
- * UZ Aero — testy matematyki kalendarza miesięcznego (arkusz daty lotu, issue #58).
+ * UZ Aero - testy matematyki kalendarza miesięcznego (arkusz daty lotu, issue #58).
  *
  * Kalendarz potrafi się pomylić w trzech miejscach i wszystkie trzy są tu przybite:
  * wyrównanie pierwszego dnia do PONIEDZIAŁKU (getUTCDay liczy od niedzieli), długość
@@ -36,7 +36,7 @@ describe('calendarWeeks', () => {
     expect(weeks).toHaveLength(6);
     for (const week of weeks) expect(week).toHaveLength(7);
 
-    // 1 SIE 2026 to sobota — kolumny PN…PT puste, sobota niesie pierwszy dzień.
+    // 1 SIE 2026 to sobota - kolumny PN…PT puste, sobota niesie pierwszy dzień.
     expect(weeks[0]!.slice(0, 5)).toEqual([null, null, null, null, null]);
     expect(weeks[0]![5]).toBe(Date.UTC(2026, 7, 1));
 
@@ -44,7 +44,7 @@ describe('calendarWeeks', () => {
     expect(days).toHaveLength(31);
     expect(days[0]).toBe(Date.UTC(2026, 7, 1));
     expect(days.at(-1)).toBe(Date.UTC(2026, 7, 31));
-    // Doby idą co 24 h — kalendarz mówi tym samym `utcDayStart`, co reszta modelu.
+    // Doby idą co 24 h - kalendarz mówi tym samym `utcDayStart`, co reszta modelu.
     expect(days[1]! - days[0]!).toBe(DAY_MS);
   });
 
@@ -63,7 +63,7 @@ describe('calendarWeeks', () => {
   it('ostatni tydzień jest dopełniony do 7 pól pustymi komórkami', () => {
     const weeks = calendarWeeks(Date.UTC(2026, 7, 1));
     const last = weeks.at(-1)!;
-    // 31 SIE 2026 to poniedziałek — reszta tygodnia pusta.
+    // 31 SIE 2026 to poniedziałek - reszta tygodnia pusta.
     expect(last[0]).toBe(Date.UTC(2026, 7, 31));
     expect(last.slice(1)).toEqual([null, null, null, null, null, null]);
   });

@@ -1,12 +1,12 @@
 /**
- * UZ Aero — panel: tożsamość zalogowanego udostępniona drzewu.
+ * UZ Aero - panel: tożsamość zalogowanego udostępniona drzewu.
  *
  * CIENKA wygoda nad cache'em Query, nie drugie źródło prawdy
  * (`docs/architektura-panelu-frontend.md` §4.1): jedynym magazynem sesji zostaje
  * zapytanie `['me']`. Ten kontekst istnieje po to, żeby sidebar i topbar nie wołały
  * hooka niezależnie od siebie i nie rozjechały się w stanie ładowania.
  *
- * Plik eksportuje WYŁĄCZNIE komponent — sam kontekst i hook `useSessionState` mieszkają
+ * Plik eksportuje WYŁĄCZNIE komponent - sam kontekst i hook `useSessionState` mieszkają
  * w `sessionContext.ts`, bo inaczej Fast Refresh odrzuca ten moduł i każda edycja
  * providera przeładowuje stronę (powód zapisany tam).
  */

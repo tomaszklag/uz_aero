@@ -1,19 +1,19 @@
 /**
- * UZ Aero — test RACHUNKÓW paliwa i motogodzin (ekran 10, issue #38 pkt 4, 5 i 6;
+ * UZ Aero - test RACHUNKÓW paliwa i motogodzin (ekran 10, issue #38 pkt 4, 5 i 6;
  * issue #40 pkt 7 i 8).
  *
  * Od issue #40 karta pokazuje SAMĄ plakietkę werdyktu, a pasmo, stawki i rozpisane
- * działanie mieszkają w arkuszu (`details`) — otwieranym przez tego, kto zapyta
+ * działanie mieszkają w arkuszu (`details`) - otwieranym przez tego, kto zapyta
  * „dlaczego tak". Test pilnuje przede wszystkim tego, że arkusz istnieje dokładnie
  * wtedy, co werdykt: plakietka bez szczegółów byłaby wyrokiem bez uzasadnienia.
  *
  * Trzy rzeczy są tu ważniejsze od arytmetyki:
- *  • **werdykt liczy się dla TEJ mieszanki faz**, a nie dla średniej z okna — sesja
+ *  • **werdykt liczy się dla TEJ mieszanki faz**, a nie dla średniej z okna - sesja
  *    z długim kołowaniem nie może wychodzić „poniżej normy" tylko dlatego, że mniej
  *    latała (to była wada, którą zgłosił issue #38 pkt 6),
- *  • **motogodziny mają WŁASNĄ normę** — przyrost licznika nie równa się czasowi
+ *  • **motogodziny mają WŁASNĄ normę** - przyrost licznika nie równa się czasowi
  *    blokowemu i ekran nie ma prawa tego twierdzić (pkt 4),
- *  • **brak danych kończy się zdaniem, nie kreską** — pusty pasek przy liczbach
+ *  • **brak danych kończy się zdaniem, nie kreską** - pusty pasek przy liczbach
  *    z licznika wygląda jak awaria aplikacji.
  */
 
@@ -24,7 +24,7 @@ import type { ConsumptionNorm, SessionState } from '../domain';
 
 const HOUR = 3_600_000;
 
-/** Wartość wiersza arkusza normy — po etykiecie, bo o kolejność pyta osobny test. */
+/** Wartość wiersza arkusza normy - po etykiecie, bo o kolejność pyta osobny test. */
 function detail(view: BalanceView, label: string): string | undefined {
   return view.details?.rows.find((row) => row.label === label)?.value;
 }
@@ -83,7 +83,7 @@ describe('rachunek paliwa', () => {
     expect(view.totalValue).toBe('27 L');
   });
 
-  it('wiersz dolewek zostaje także przy zerze — brak wiersza kazałby zgadywać', () => {
+  it('wiersz dolewek zostaje także przy zerze - brak wiersza kazałby zgadywać', () => {
     const view = fuelBalance(session({ fuel: { ...session().fuel, addedL: 0 } }), norm(), 0);
 
     expect(view.rows[1]!.label).toBe('Dolane');
@@ -106,9 +106,9 @@ describe('rachunek paliwa', () => {
     const view = fuelBalance(session(), norm(), 2);
 
     expect(view.details?.title).toBe('NORMA PALIWA');
-    expect(view.details?.summary).toContain('W normie — 27 L przy oczekiwanych 23 L – 35 L');
+    expect(view.details?.summary).toContain('W normie - 27 L przy oczekiwanych 23 L – 35 L');
     expect(detail(view, 'Zużyte w tej sesji')).toBe('27 L');
-    // 27 L na 1:43 pracy silnika ≈ 16 L/h — mniej niż stawka lotu, bo prawie pół
+    // 27 L na 1:43 pracy silnika ≈ 16 L/h - mniej niż stawka lotu, bo prawie pół
     // godziny silnik pracował na ziemi. Po to ta liczba w arkuszu stoi.
     expect(detail(view, 'Średnia tej sesji')).toBe('16 L/h');
     expect(detail(view, 'Norma w locie')).toBe('20 L/h');
@@ -138,12 +138,12 @@ describe('rachunek paliwa', () => {
     // 1:43 × 15 L/h ≈ 25,8 L, pasmo z centyli okna (12–18 L/h) rozepchane do podłogi.
     expect(detail(view, 'Oczekiwane po tej sesji')).toBe('20 L – 32 L');
     expect(detail(view, 'Norma')).toBe('15 L/h pracy silnika');
-    // Arkusz mówi wprost, że model nie rozdzielił faz — to słabsza odpowiedź niż
+    // Arkusz mówi wprost, że model nie rozdzielił faz - to słabsza odpowiedź niż
     // stawki fazowe i pilot ma prawo o tym wiedzieć.
     expect(view.details?.summary).toContain('nie rozdzielił jeszcze faz');
   });
 
-  it('silnik, który nie pracował, nie ma z czym porównywać — i mówi to wprost', () => {
+  it('silnik, który nie pracował, nie ma z czym porównywać - i mówi to wprost', () => {
     const bezLotu = session({
       blockTimeMs: 0,
       flightTimeMs: 0,
@@ -169,14 +169,14 @@ describe('rachunek paliwa', () => {
     });
     const view = fuelBalance(otwarta, norm(), 2);
 
-    expect(view.totalValue).toBe('—');
+    expect(view.totalValue).toBe('-');
     expect(view.verdict).toBeNull();
     expect(view.naNote).toContain('brakuje odczytu przy zdaniu');
   });
 });
 
 describe('rachunek motogodzin', () => {
-  it('ma tę samą formę co paliwo — przesłanki, wynik, werdykt', () => {
+  it('ma tę samą formę co paliwo - przesłanki, wynik, werdykt', () => {
     const view = mhBalance(session(), norm());
 
     expect(view.rows.map((row) => `${row.op}${row.label} = ${row.value}`)).toEqual([
@@ -187,7 +187,7 @@ describe('rachunek motogodzin', () => {
     expect(view.totalValue).toBe('+1:35');
   });
 
-  it('oczekiwanie jest MNIEJSZE niż czas blokowy — obrotomierz na ziemi chodzi wolniej', () => {
+  it('oczekiwanie jest MNIEJSZE niż czas blokowy - obrotomierz na ziemi chodzi wolniej', () => {
     // 1:16 × 1,00 + 0:27 × 0,40 = 1,45 h ≈ 1:27, a blok wynosi 1:43. Pasmo ±5%
     // rozepchane do podziałki licznika (±0,1 h) daje 1:21 – 1:33.
     const view = mhBalance(session(), norm());

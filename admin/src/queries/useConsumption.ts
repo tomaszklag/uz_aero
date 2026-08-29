@@ -1,7 +1,7 @@
 /**
- * UZ Aero — panel: odczyt analityki zużycia (`A10a`, `A10b`).
+ * UZ Aero - panel: odczyt analityki zużycia (`A10a`, `A10b`).
  *
- * Hook cienki jak reszta — decyzje o treści mieszkają w czystych modułach
+ * Hook cienki jak reszta - decyzje o treści mieszkają w czystych modułach
  * `screens/consumption/*.ts`. Raport dotyczy dni ZAMKNIĘTYCH, więc nie starzeje się
  * z sekundy na sekundę; domyślne 30 s `staleTime` z `queries/client.ts` zostaje.
  */

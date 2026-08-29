@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: wiersz monitora eksportu.
+ * UZ Aero - panel: wiersz monitora eksportu.
  *
  * Najważniejsze asercje dotyczą tego, czego wiersz NIE robi: nie skleja nazwy karty,
  * nie wnioskuje daty z niczego poza chwilą przejęcia i nie proponuje ponowienia tam,
@@ -39,7 +39,7 @@ const item = (patch: Partial<ExportListItemDto> = {}): ExportListItemDto => ({
 const rowsOf = (items: ExportListItemDto[]) => exportRows(items, NOW, (uuid) => `/eksporty/${uuid}`);
 
 describe('wiersz monitora eksportu', () => {
-  it('przepisuje nazwę karty z serwera — panel jej NIE skleja', () => {
+  it('przepisuje nazwę karty z serwera - panel jej NIE skleja', () => {
     const [row] = rowsOf([item()]);
 
     expect(row!.tab.text).toBe('2026-07-30_SP-ABC');
@@ -48,11 +48,11 @@ describe('wiersz monitora eksportu', () => {
     expect(row!.exportedAt.text).toContain('30 JUL 2026');
   });
 
-  it('sesja bez claimu nie ma ani daty, ani nazwy — i mówi o tym wprost', () => {
+  it('sesja bez claimu nie ma ani daty, ani nazwy - i mówi o tym wprost', () => {
     const [row] = rowsOf([item({ claimedAt: null, tab: null, day: null, state: 'impossible' })]);
 
-    expect(row!.day.text).toBe('—');
-    expect(row!.tab).toMatchObject({ text: '—', known: false });
+    expect(row!.day.text).toBe('-');
+    expect(row!.tab).toMatchObject({ text: '-', known: false });
     // „Brakuje karty" sugerowałoby, że da się ją dorobić; tu nie ma jak.
     expect(row!.canRetry).toBe(false);
     expect(row!.retryReason).toContain('bez session_claim');
@@ -60,7 +60,7 @@ describe('wiersz monitora eksportu', () => {
 
   it('kolumna „Dzień" niesie GODZINĘ przejęcia, bo dwie zmiany dzielą datę I nazwę karty', () => {
     // Karta jest DOBĄ SAMOLOTU (§4.7), więc poranna i popołudniowa zmiana SP-ABC mają
-    // ten sam `tab` — i to jest poprawne, bo są wierszami jednego dokumentu. Wiersz
+    // ten sam `tab` - i to jest poprawne, bo są wierszami jednego dokumentu. Wiersz
     // monitora musi wtedy powiedzieć, KTÓREJ sesji dotyczy, a jedyną taką liczbą jest
     // godzina przejęcia. Do etapu D stało tu samo „UTC".
     const morning = item({ sessionUuid: 'am', claimedAt: Date.UTC(2026, 6, 30, 6, 12) });
@@ -79,15 +79,15 @@ describe('wiersz monitora eksportu', () => {
       item({ state: 'missing', revision: null, exportedAt: null, sheetUrl: null }),
     ]);
 
-    expect(row!.exportedAt.text).toBe('—');
+    expect(row!.exportedAt.text).toBe('-');
     expect(row!.exportedAt.sub).toContain('sync');
-    expect(row!.revision).toMatchObject({ text: '—', revised: false });
+    expect(row!.revision).toMatchObject({ text: '-', revised: false });
     // Ponowienie MA sens: dzień jest zamknięty, nic go nie blokuje.
     expect(row!.canRetry).toBe(true);
     expect(row!.retryReason).toBeNull();
   });
 
-  it('dzień otwarty i dzień zablokowany flagą mają zablokowane „Ponów" — z RÓŻNYM powodem', () => {
+  it('dzień otwarty i dzień zablokowany flagą mają zablokowane „Ponów" - z RÓŻNYM powodem', () => {
     const [open] = rowsOf([item({ sessionStatus: 'active', state: 'waiting', revision: null })]);
     expect(open!.canRetry).toBe(false);
     expect(open!.retryReason).toContain('day_close');
@@ -96,10 +96,10 @@ describe('wiersz monitora eksportu', () => {
     const [blocked] = rowsOf([item({ state: 'blocked', revision: null, blockingFlagIds: [1046] })]);
     expect(blocked!.canRetry).toBe(false);
     // Numer flagi bez kratki w asercji: test architektury szuka hexów w kodzie panelu,
-    // a `#1046` jest poprawnym zapisem koloru — literał w teście wywalałby regułę,
+    // a `#1046` jest poprawnym zapisem koloru - literał w teście wywalałby regułę,
     // której ten test broni.
     expect(blocked!.retryReason).toContain('1046');
-    // Wiersz prowadzi DO flagi — tam jest praca do wykonania.
+    // Wiersz prowadzi DO flagi - tam jest praca do wykonania.
     expect(blocked!.flagHref).toBe('/flagi/1046');
     expect(blocked!.flagged).toBe(true);
     expect(blocked!.state.sub).toContain('flaga ');
@@ -124,7 +124,7 @@ describe('wiersz monitora eksportu', () => {
 
     expect(narrowToScope(rows, 'revised').map((r) => r.revision.text)).toEqual(['3']);
     expect(narrowToScope(rows, 'all')).toHaveLength(2);
-    // Pozostałe zawężenia realizuje SERWER — panel nie filtruje po stanie u siebie,
+    // Pozostałe zawężenia realizuje SERWER - panel nie filtruje po stanie u siebie,
     // bo dwie definicje stanu to dokładnie ten rozjazd, który panel ma wykrywać.
     expect(narrowToScope(rows, 'blocked')).toHaveLength(2);
   });
@@ -143,7 +143,7 @@ describe('wiersz monitora eksportu', () => {
       }),
     ]);
 
-    // Stan zostaje `current` — dziennik TEGO dnia ma własne rewizje i to jest prawda.
+    // Stan zostaje `current` - dziennik TEGO dnia ma własne rewizje i to jest prawda.
     expect(row!.state.text).toBe('W arkuszu');
     expect(row!.overwritten).not.toBeNull();
     expect(row!.overwritten!.label).toContain('nadpisana');
@@ -157,7 +157,7 @@ describe('wiersz monitora eksportu', () => {
     expect(rowsOf([item()])[0]!.overwritten).toBeNull();
   });
 
-  it('nie sortuje — oddaje wiersze w kolejności serwera', () => {
+  it('nie sortuje - oddaje wiersze w kolejności serwera', () => {
     const rows = rowsOf([item({ sessionUuid: 'a' }), item({ sessionUuid: 'b' })]);
     expect(rows.map((r) => r.sessionUuid)).toEqual(['a', 'b']);
   });

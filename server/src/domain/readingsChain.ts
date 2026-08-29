@@ -1,8 +1,8 @@
 /**
- * UZ Aero (serwer) — CIĄGŁOŚĆ ODCZYTÓW WOKÓŁ DANEJ CHWILI (issue #62, piąta i szósta tura).
+ * UZ Aero (serwer) - CIĄGŁOŚĆ ODCZYTÓW WOKÓŁ DANEJ CHWILI (issue #62, piąta i szósta tura).
  *
  * ══ PO CO ══
- * Wpis ręczny opisuje lot, który JUŻ się odbył — często kilka dni temu, na maszynie,
+ * Wpis ręczny opisuje lot, który JUŻ się odbył - często kilka dni temu, na maszynie,
  * którą przed nim i po nim latał ktoś inny. Zgłoszenie z urządzenia: „jeśli podałem już
  * godziny i mam połączenie do API, to możemy pobrać poprzedzający i kolejny lot. Dzięki
  * temu możemy proponować ilość paliwa przed rozpoczęciem lotu… tak samo można podać
@@ -11,26 +11,26 @@
  *
  * ══ DLACZEGO NIE WYSTARCZYŁO PRZEKAZANIE Z `/reference` ══
  * Bo `handover` to JEDEN punkt: ostatni znany stan maszyny. Odpowiada na pytanie „ile
- * jest teraz", a wpis ręczny pyta „ile było w czwartek o 09:42" — a między czwartkiem
+ * jest teraz", a wpis ręczny pyta „ile było w czwartek o 09:42" - a między czwartkiem
  * a dziś maszyna zdążyła polatać. Dla wpisu bieżącego oba pytania mają tę samą
  * odpowiedź i dlatego brak tej trasy tak długo nie przeszkadzał.
  *
  * ══ TRZY WIELKOŚCI, DWIE RÓŻNE OSIE ══
  * Paliwo i motogodziny czyta się przy PRZEJĘCIU i przy ZDANIU, więc mają po dwa końce
- * i jadą tą samą parą sąsiadów. **Olej NIE MA końca przy zdaniu** — bagnet tuż po locie
+ * i jadą tą samą parą sąsiadów. **Olej NIE MA końca przy zdaniu** - bagnet tuż po locie
  * kłamie, więc pomiar żyje wyłącznie przy przejęciu, a interwał zużycia biegnie
  * pomiar→pomiar przez wiele sesji z kotwicą w liczniku (issue #60). Olej dostaje przez
  * to własne pole o kształcie `OilHandover`: KOTWICĘ i sumę dolewek od niej, a nie parę
- * „przed/po". To nie jest niekonsekwencja — to jest ta sama różnica, przez którą pomiar
+ * „przed/po". To nie jest niekonsekwencja - to jest ta sama różnica, przez którą pomiar
  * oleju nie jest krokiem zdania samolotu.
  *
  * ══ CZEGO TU NIE MA ══
- * Werdyktu. Ta funkcja mówi, co wie rejestr — czy pilot ma się tym przejąć, rozstrzyga
+ * Werdyktu. Ta funkcja mówi, co wie rejestr - czy pilot ma się tym przejąć, rozstrzyga
  * telefon i rozstrzyga to OSTRZEŻENIEM, nigdy blokadą (issue #62: „nic nie może
  * blokować"). Serwer nie ma tu prawa głosu, bo pilot patrzy na paliwomierz i na bagnet,
  * a to są przyrządy fizyczne (`CLAUDE.md`: liczniki fizyczne > dane z serwera).
  *
- * Czysta funkcja na wierszach projekcji — bez SQL-a i bez zegara, żeby dała się
+ * Czysta funkcja na wierszach projekcji - bez SQL-a i bez zegara, żeby dała się
  * przetestować na tablicy.
  */
 
@@ -43,7 +43,7 @@ import type { SessionRow } from '../application/common/ports.ts';
 export interface ReadingsChainLink {
   sessionUuid: string;
   picId: string;
-  /** Kiedy padł ten odczyt (UTC) — zdanie samolotu albo jego przejęcie. */
+  /** Kiedy padł ten odczyt (UTC) - zdanie samolotu albo jego przejęcie. */
   at: number;
   fuelL: number;
   mh: number;
@@ -51,7 +51,7 @@ export interface ReadingsChainLink {
 
 /**
  * Sąsiedztwo w łańcuchu: co maszyna miała, gdy ktoś ją PRZED tą chwilą zdał,
- * i co miała, gdy ktoś ją PO niej przejął. Oba pola bywają `null` — i to jest
+ * i co miała, gdy ktoś ją PO niej przejął. Oba pola bywają `null` - i to jest
  * normalny stan, nie brak danych: pierwszy lot maszyny nie ma poprzednika,
  * a najnowszy nie ma następcy.
  */
@@ -60,7 +60,7 @@ export interface ReadingsChainNeighbours {
   after: ReadingsChainLink | null;
   /**
    * Ostatni POMIAR OLEJU nie później niż `at`, razem z sumą dolewek od niego (issue #60).
-   * Ten sam kształt, co `Handover.oil` w `/reference` — bo to ta sama wielkość, tylko
+   * Ten sam kształt, co `Handover.oil` w `/reference` - bo to ta sama wielkość, tylko
    * pytana o przeszłą chwilę zamiast o „teraz". Ekran liczy z niej oczekiwanie tym
    * samym `oilPreflight.expectation()`, co na 02a.
    */
@@ -70,12 +70,12 @@ export interface ReadingsChainNeighbours {
 /**
  * Sąsiedzi danej chwili w historii JEDNEJ maszyny.
  *
- * `before` = ostatnia sesja ZAMKNIĘTA przed `at` — jej odczyt przy zdaniu jest tym,
- * co pilot powinien zastać w zbiorniku. `after` = pierwsza sesja przejęta po `at` —
+ * `before` = ostatnia sesja ZAMKNIĘTA przed `at` - jej odczyt przy zdaniu jest tym,
+ * co pilot powinien zastać w zbiorniku. `after` = pierwsza sesja przejęta po `at` -
  * jej odczyt przy przejęciu jest tym, co pilot powinien zostawić.
  *
  * SESJĘ WYKLUCZANĄ PODAJE WOŁAJĄCY (`exceptUuid`): przy poprawianiu istniejącego wpisu
- * jego własne odczyty nie mogą być dla niego punktem odniesienia — wyszłoby, że zgadza
+ * jego własne odczyty nie mogą być dla niego punktem odniesienia - wyszłoby, że zgadza
  * się sam ze sobą.
  *
  * Bierzemy WYŁĄCZNIE sesje z kompletem odczytów: sesja bez `fuelEndL` nie mówi nic
@@ -90,7 +90,7 @@ export function readingsChainNeighbours(
 
   /*
    * PRZED: sesje zamknięte przed `at`, najpóźniejsza wygrywa. Kotwicą jest `closeTime`,
-   * bo to chwila odczytu przy zdaniu — nie `claimTime`, który mówi tylko, kiedy tamten
+   * bo to chwila odczytu przy zdaniu - nie `claimTime`, który mówi tylko, kiedy tamten
    * pilot zaczynał.
    */
   const before = usable
@@ -104,7 +104,7 @@ export function readingsChainNeighbours(
     .sort((a, b) => a.closeTime - b.closeTime)
     .at(-1);
 
-  /* PO: sesje przejęte po `at`, najwcześniejsza wygrywa. Tu kotwicą jest `claimTime` —
+  /* PO: sesje przejęte po `at`, najwcześniejsza wygrywa. Tu kotwicą jest `claimTime` -
      chwila odczytu przy przejęciu. */
   const after = usable
     .filter(
@@ -139,7 +139,7 @@ export function readingsChainNeighbours(
           }
         : null,
     /* Olej idzie WŁASNĄ osią (patrz nagłówek): kotwica to ostatni pomiar nie później
-       niż `at`, a dolewki liczą się do tej samej granicy — te zapisane PÓŹNIEJ opisują
+       niż `at`, a dolewki liczą się do tej samej granicy - te zapisane PÓŹNIEJ opisują
        stan, którego pilot wpisujący ten lot nie mógł zastać. Regułę wyboru kotwicy
        (licznik przed zegarem) trzyma `latestOilHandover`, więc jest jedna. */
     oil: latestOilHandover(usable, { asOf: at }),

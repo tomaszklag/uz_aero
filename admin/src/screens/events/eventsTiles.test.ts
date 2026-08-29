@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: kafle rejestru zdarzeń (`A04`).
+ * UZ Aero - panel: kafle rejestru zdarzeń (`A04`).
  *
  * Najdroższa możliwa pomyłka narzędzia nadzoru to ZERO w miejscu, w którym nie ma
  * odpowiedzi: „0 zdarzeń bez fixa" wypisane tuż obok banera o nieudanym pobraniu
@@ -7,7 +7,7 @@
  * danych, a nie liczb.
  *
  * Drugi ciężar tego pliku to kafel, którego serwer NIE MA i mieć nie może
- * („Przyjęte / duplikaty"). Ma zostać widoczny, z kreską i z wyjaśnieniem — brak
+ * („Przyjęte / duplikaty"). Ma zostać widoczny, z kreską i z wyjaśnieniem - brak
  * nazwany jest lepszy niż brak ukryty.
  */
 
@@ -30,11 +30,11 @@ const byLabel = (list: ReturnType<typeof eventsTiles>, part: string) => {
   return tile;
 };
 
-describe('kafle rejestru: brak odpowiedzi to „—", nigdy zero', () => {
+describe('kafle rejestru: brak odpowiedzi to „-", nigdy zero', () => {
   it('bez liczników wszystkie kafle mówią „nie wiadomo"', () => {
     const tiles = eventsTiles(null, false);
     expect(tiles).toHaveLength(4);
-    for (const tile of tiles) expect(tile.value).toBe('—');
+    for (const tile of tiles) expect(tile.value).toBe('-');
     // Ton też znika: bursztyn przy nieznanej liczbie sugerowałby sprawę do wyjaśnienia.
     expect(byLabel(tiles, 'Rozjazd').tone).toBeNull();
     expect(byLabel(tiles, 'Rozjazd').note).toContain('nie pobrał');
@@ -59,7 +59,7 @@ describe('kafle rejestru: liczby pochodzą z SERWERA, nie z widocznej strony', (
 
   it('próg CLOCK_DRIFT jest WYPISANY z odpowiedzi, a nie znany panelowi', () => {
     // Druga kopia progu w panelu rozjechałaby się z regułą przy pierwszym strojeniu
-    // tolerancji — a rozjazd byłby cichy: kolor przestałby odpowiadać skrzynce flag.
+    // tolerancji - a rozjazd byłby cichy: kolor przestałby odpowiadać skrzynce flag.
     expect(byLabel(eventsTiles(counts(), false), 'Rozjazd').note).toContain('120 s');
     expect(byLabel(eventsTiles(counts({ driftThresholdMs: 300_000 }), false), 'Rozjazd').note).toContain(
       '300 s',
@@ -79,9 +79,9 @@ describe('kafle rejestru: brak, o którym mówimy wprost', () => {
     // `ON CONFLICT DO NOTHING`, a różnica wraca wyłącznie do telefonu. Kafel usunięty
     // kazałby następnej osobie szukać liczby, która nie istnieje.
     const tile = byLabel(eventsTiles(counts(), false), 'duplikaty');
-    expect(tile.value).toBe('—');
+    expect(tile.value).toBe('-');
     expect(tile.note).toContain('ON CONFLICT DO NOTHING');
-    // Nawet przy pełnych licznikach — bo to brak KONSTRUKCYJNY, nie brak odpowiedzi.
-    expect(byLabel(eventsTiles(null, false), 'duplikaty').value).toBe('—');
+    // Nawet przy pełnych licznikach - bo to brak KONSTRUKCYJNY, nie brak odpowiedzi.
+    expect(byLabel(eventsTiles(null, false), 'duplikaty').value).toBe('-');
   });
 });

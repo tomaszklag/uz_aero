@@ -1,7 +1,7 @@
 /**
- * UZ Aero — PODZIAŁKA ODLEGŁOŚCI profilu pionowego (issue #47, trzecia tura przeglądu).
+ * UZ Aero - PODZIAŁKA ODLEGŁOŚCI profilu pionowego (issue #47, trzecia tura przeglądu).
  *
- * Profil ma oś CZASU, a podziałka pokazuje DROGĘ — i to jest cała trudność tego pliku.
+ * Profil ma oś CZASU, a podziałka pokazuje DROGĘ - i to jest cała trudność tego pliku.
  * Na osi czasu nie ma stałego przelicznika „NM na piksel": pięć minut wznoszenia po
  * 70 kt to inna droga niż pięć minut przelotu po 110 kt, a pięć minut postoju to zero.
  * „Średnia NM na piksel" byłaby liczbą, która nie opisuje żadnego miejsca wykresu.
@@ -10,14 +10,14 @@
  * liczbę mil (1-2-5) i szukamy, ILE PIKSELI zajmuje ta droga OD LEWEJ KRAWĘDZI kadru.
  * Pasek jest wtedy prawdziwy dla miejsca, w którym stoi: „2 NM" znaczy „tyle ekranu
  * zajęły dwie mile TUTAJ". Przy przesuwaniu wykresu pasek zmienia długość i to jest
- * poprawne — w innym miejscu lotu te same dwie mile trwały inaczej.
+ * poprawne - w innym miejscu lotu te same dwie mile trwały inaczej.
  *
  * Gdy w kadrze samolot nie przebył żadnej drogi (postój przy pracującym silniku),
  * podziałki NIE MA: pasek zerowej długości albo rozciągnięty na cały ekran opisywałby
  * wyłącznie dzielenie przez zero.
  */
 
-/** Ładne kroki w milach morskich — ten sam ciąg 1-2-5, co na mapie. */
+/** Ładne kroki w milach morskich - ten sam ciąg 1-2-5, co na mapie. */
 const STEPS_NM = [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200];
 
 export interface DistanceScale {
@@ -80,7 +80,7 @@ function pixelsFor(
 }
 
 /**
- * „0.5", „2", „10" — bez zbędnego zera po przecinku.
+ * „0.5", „2", „10" - bez zbędnego zera po przecinku.
  *
  * Kropka, nie przecinek: tak samo jak dystans sesji w statystykach („38.4 NM"), żeby
  * dwie liczby o tej samej wielkości na jednym ekranie nie były pisane inaczej.

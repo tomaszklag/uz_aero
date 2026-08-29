@@ -1,7 +1,7 @@
 /**
- * UZ Aero — panel: kafle i karta „Rola w panelu" na `A06`.
+ * UZ Aero - panel: kafle i karta „Rola w panelu" na `A06`.
  *
- * Najważniejszy przypadek w tym pliku: **brak odpowiedzi daje „—", nigdy zera.**
+ * Najważniejszy przypadek w tym pliku: **brak odpowiedzi daje „-", nigdy zera.**
  * Zero jest twierdzeniem o świecie („klub nie ma ani jednego aktywnego konta"),
  * a brak odpowiedzi nim nie jest.
  */
@@ -38,14 +38,14 @@ describe('kafle', () => {
     ]);
   });
 
-  it('bez odpowiedzi serwera — wszędzie „—", nigdzie zero', () => {
+  it('bez odpowiedzi serwera - wszędzie „-", nigdzie zero', () => {
     for (const tile of pilotTiles(null, 'LIP 2026')) {
-      expect(tile.value).toBe('—');
+      expect(tile.value).toBe('-');
       expect(tile.unit).toBeUndefined();
     }
   });
 
-  it('podpis „z rolą panelu" odmienia liczebniki — WSZYSTKIE TRZY formy', () => {
+  it('podpis „z rolą panelu" odmienia liczebniki - WSZYSTKIE TRZY formy', () => {
     const one = pilotTiles(counts, 'LIP 2026')[1];
     expect(one?.note).toBe('1 administrator · 1 szef wyszkolenia.');
 
@@ -59,7 +59,7 @@ describe('kafle', () => {
     expect(many?.note).toBe('5 administratorów · 12 szefów wyszkolenia.');
   });
 
-  it('kafle MÓWIĄ, że opisują cały klub — bo chipy obok już tak nie robią', () => {
+  it('kafle MÓWIĄ, że opisują cały klub - bo chipy obok już tak nie robią', () => {
     // Odkąd chipy filtra respektują wyszukiwanie (`pilotsChips.ts`), kafel i chip
     // pokazują na jednym ekranie dwie różne liczby o tej samej rzeczy. Kafel bez
     // adnotacji wyglądałby wtedy jak liczba, która się zacięła.
@@ -76,7 +76,7 @@ describe('kafle', () => {
 });
 
 describe('ile kont ma wejście do panelu', () => {
-  it('sumuje administratorów i szefów wyszkolenia — poza `.tsx`', () => {
+  it('sumuje administratorów i szefów wyszkolenia - poza `.tsx`', () => {
     expect(panelRoleCount(counts)).toBe(2);
     expect(panelRoleCount({ ...counts, admin: 0, trainingLead: 0 })).toBe(0);
   });
@@ -91,9 +91,9 @@ describe('karta „Rola w panelu"', () => {
     ]);
   });
 
-  it('bez odpowiedzi — myślniki, także w podpisie', () => {
-    expect(roleSplit(null).map((r) => r.value)).toEqual(['—', '—', '—']);
-    expect(roleSplitCaption(null)).toBe('— z — kont');
+  it('bez odpowiedzi - myślniki, także w podpisie', () => {
+    expect(roleSplit(null).map((r) => r.value)).toEqual(['-', '-', '-']);
+    expect(roleSplitCaption(null)).toBe('- z - kont');
   });
 
   it('podpis mówi, ilu z ilu ma wejście do panelu', () => {
@@ -107,7 +107,7 @@ describe('etykieta okna dni lotnych', () => {
     expect(monthLabel('2026-02-01', '2026-02-28')).toBe('LUT 2026');
   });
 
-  it('okno NIEPEŁNE pokazuje zakres — „LIP 2026" nad pięcioma dniami byłoby fałszem', () => {
+  it('okno NIEPEŁNE pokazuje zakres - „LIP 2026" nad pięcioma dniami byłoby fałszem', () => {
     expect(monthLabel('2026-07-01', '2026-07-05')).toBe('2026-07-01 → 2026-07-05');
     expect(monthLabel('2026-06-15', '2026-07-14')).toBe('2026-06-15 → 2026-07-14');
   });

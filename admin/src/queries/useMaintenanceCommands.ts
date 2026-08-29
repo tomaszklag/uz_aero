@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: MUTACJE ekranu konserwacji (`A11`).
+ * UZ Aero - panel: MUTACJE ekranu konserwacji (`A11`).
  *
  * **Mutacja deklaruje swoje unieważnienia TUTAJ, nie na ekranie**
  * (`docs/architektura-panelu-frontend.md` §4.3).
@@ -22,20 +22,20 @@ import { keys } from './keys';
  * Lista jest długa i to jest miara tej operacji: przebudowa nadpisuje wiersze `sessions`,
  * czyli źródło KAŻDEJ liczby, którą panel pokazuje poza rejestrem zdarzeń. Dni, karta
  * dnia, monitor eksportu (kolumna „Rewizja" czyta stan dnia), pulpit i liczniki
- * sidebara — wszystkie z nich.
+ * sidebara - wszystkie z nich.
  *
- * ══ CZEGO TA MUTACJA NIE UNIEWAŻNIA — I TO JEST JEJ NAJWAŻNIEJSZA WŁASNOŚĆ ══
+ * ══ CZEGO TA MUTACJA NIE UNIEWAŻNIA - I TO JEST JEJ NAJWAŻNIEJSZA WŁASNOŚĆ ══
  *  • **`maintenance.projections`** (porównanie). Do 2026-08-02 stało tu
  *    `keys.maintenance.all`, a `invalidateQueries` dopasowuje PREFIKSOWO i refetchuje
  *    zapytania AKTYWNE niezależnie od `staleTime`. Kliknięcie „Nadpisz" odpalało więc
  *    drugi pełny skan rejestru (~4 min dla 1291 sesji), którego wynik i tak lądował
  *    w koszu, bo ekran pokazuje po zapisie raport z ZAPISU. Skan jest zdjęty z automatu
- *    świadomie (`useMaintenance.ts`) i uruchamia go WYŁĄCZNIE człowiek — wywołanie go
+ *    świadomie (`useMaintenance.ts`) i uruchamia go WYŁĄCZNIE człowiek - wywołanie go
  *    ubocznie kasowało tę decyzję. To ta sama pułapka, co `fleet.all` łapiący
  *    `fleet.tolerance`, i tym razem ma własny test.
- *  • **`maintenance.refreshTokens`** — przebudowa nie dotyka tabeli sesji.
- *  • **`maintenance.schema`** — migracje wprowadza START SERWERA, nie akcja panelu.
- *  • **`events`** — rejestr zdarzeń jest tym JEDYNYM, czego przebudowa nie dotyka.
+ *  • **`maintenance.refreshTokens`** - przebudowa nie dotyka tabeli sesji.
+ *  • **`maintenance.schema`** - migracje wprowadza START SERWERA, nie akcja panelu.
+ *  • **`events`** - rejestr zdarzeń jest tym JEDYNYM, czego przebudowa nie dotyka.
  *    Dopisanie go tutaj sugerowałoby coś odwrotnego.
  *
  * Raport z porównania jest po zapisie NIEAKTUALNY i ekran o tym wie: pokazuje ten
@@ -44,7 +44,7 @@ import { keys } from './keys';
  * Unieważnianie po to, żeby uniknąć nieaktualnej odpowiedzi, kosztowałoby cztery
  * minuty pracy bazy za rzecz, którą rozstrzyga stempel czasu.
  *
- * Eksportowana, żeby dało się ją sprawdzić na PRAWDZIWYM `QueryClient` bez renderu —
+ * Eksportowana, żeby dało się ją sprawdzić na PRAWDZIWYM `QueryClient` bez renderu -
  * „co ta mutacja unieważnia" jest własnością kluczy, nie ekranu.
  */
 export function invalidateAfterRebuild(qc: QueryClient): void {
@@ -79,7 +79,7 @@ export function usePurgeRefreshTokens() {
   );
 }
 
-/** Wspólny kształt obu mutacji — różnią się wejściem i listą unieważnień, niczym więcej. */
+/** Wspólny kształt obu mutacji - różnią się wejściem i listą unieważnień, niczym więcej. */
 function useMutationWith<TResult, TInput>(
   run: (input: TInput) => Promise<TResult>,
   invalidate: (qc: QueryClient) => void,

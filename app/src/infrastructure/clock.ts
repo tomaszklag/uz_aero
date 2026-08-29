@@ -1,12 +1,12 @@
 /**
- * UZ Aero — ADAPTERY zegara (`ClockPort`): dwa niezależne czasy (§4.1 pkt 6, §4.5).
+ * UZ Aero - ADAPTERY zegara (`ClockPort`): dwa niezależne czasy (§4.1 pkt 6, §4.5).
  *
  * Każde zdarzenie niesie `deviceTime` (zegar telefonu) i `gpsTime` (czas z fixa GPS).
- * GPS jest niezależny od sieci i ustawień telefonu — serwer po nim wykrywa przestawiony
+ * GPS jest niezależny od sieci i ustawień telefonu - serwer po nim wykrywa przestawiony
  * zegar (flaga CLOCK_DRIFT). Ten moduł jest jedynym miejscem, które „stempluje" czas.
  *
  * Realny GPS (expo-location) podłączymy przez `DeviceClock.setGpsFix(...)` w hooku
- * lokalizacji — tu NIE importujemy expo-location, żeby moduł działał też w Node/Jest.
+ * lokalizacji - tu NIE importujemy expo-location, żeby moduł działał też w Node/Jest.
  */
 
 import type { EpochMillis } from '../domain';
@@ -14,7 +14,7 @@ import type { ClockPort } from '../application/ports';
 
 /**
  * Zegar produkcyjny. `now()` = `Date.now()`. `gpsTime()` zwraca surowy czas ostatniego
- * fixa, o ile jest świeży (młodszy niż `maxAgeMs`) — inaczej null. NIE ekstrapolujemy
+ * fixa, o ile jest świeży (młodszy niż `maxAgeMs`) - inaczej null. NIE ekstrapolujemy
  * czasu GPS zegarem urządzenia (to zniweczyłoby niezależność obu zegarów); brak świeżego
  * fixa = uczciwy null.
  *

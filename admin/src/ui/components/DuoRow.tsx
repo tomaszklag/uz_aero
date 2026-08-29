@@ -1,8 +1,8 @@
 /**
- * UZ Aero — panel: PARA PASKÓW jednej pozycji (`.duo` z `SZABLON.html`).
+ * UZ Aero - panel: PARA PASKÓW jednej pozycji (`.duo` z `SZABLON.html`).
  *
  * „Blok vs czas lotu" z mockupu `A10`: zielony pasek bloku i niebieski lotu na TEJ
- * SAMEJ skali — różnica długości to czas z pracującym silnikiem poza lotem.
+ * SAMEJ skali - różnica długości to czas z pracującym silnikiem poza lotem.
  * Szerokości przychodzą policzone z `screens/stats/statsCompare.ts`.
  */
 

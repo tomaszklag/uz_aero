@@ -1,17 +1,17 @@
 /**
- * UZ Aero — panel: katalog typów zdarzeń MUSI być tym, co zna domena.
+ * UZ Aero - panel: katalog typów zdarzeń MUSI być tym, co zna domena.
  *
  * `screens/day/eventTypes.ts` trzyma `Record<EventType, …>`, więc KOMPLET kodów wymusza
- * kompilator — panelowi wolno importować z `@uzaero/domain` wyłącznie typy, nie wartości
+ * kompilator - panelowi wolno importować z `@uzaero/domain` wyłącznie typy, nie wartości
  * (`docs/architektura-panelu-frontend.md` §5.1), więc runtime'owej tablicy `EVENT_TYPES`
  * nie ma jak wziąć. Ale kompilator pilnuje wyłącznie ZBIORU kluczy: nie widzi ich
- * KOLEJNOŚCI, a `EVENT_TYPE_LIST` buduje z niej chipy filtra rejestru — i to ta lista
+ * KOLEJNOŚCI, a `EVENT_TYPE_LIST` buduje z niej chipy filtra rejestru - i to ta lista
  * jedzie do serwera jako `?type=`.
  *
  * Ten plik czyta katalog domeny z DYSKU (tak samo jak `adminActions.mirror.test.ts`
  * czyta katalog serwera) i porównuje go z listą, którą zna panel. Bez tego dopisanie
  * czternastego typu zdarzenia objawiłoby się dopiero wtedy, gdy ktoś by go szukał
- * chipem — a chip filtruje coś, czego nie ma, po cichu.
+ * chipem - a chip filtruje coś, czego nie ma, po cichu.
  *
  * Kierunek jest obustronny celowo: typ dopisany w domenie zostawiłby chip bez pozycji,
  * a typ obecny tylko w panelu obiecywałby filtr, który trasa odrzuci czterysetką.
@@ -35,7 +35,7 @@ function domainEventTypes(): string[] {
   const source = readFileSync(CATALOG, 'utf8');
   const block = /export const EVENT_TYPES: readonly EventType\[\] = \[([\s\S]*?)\];/.exec(source);
   if (block == null) {
-    throw new Error('Nie znaleziono tablicy EVENT_TYPES — zmienił się kształt pliku domeny');
+    throw new Error('Nie znaleziono tablicy EVENT_TYPES - zmienił się kształt pliku domeny');
   }
   return [...block[1]!.matchAll(/'([a-z_]+)'/g)].map((m) => m[1]!);
 }
@@ -51,7 +51,7 @@ describe('katalog typów zdarzeń: panel ↔ domena', () => {
   });
 
   it('lista chipów ma DOKŁADNIE te same kody, w tej samej kolejności', () => {
-    // Kolejność to kolejność dnia lotnego — dokładnie tak, jak chipy stoją w mockupie
+    // Kolejność to kolejność dnia lotnego - dokładnie tak, jak chipy stoją w mockupie
     // `A04`; alfabetyczna byłaby uprzejmością, która gubi znaczenie.
     expect(EVENT_TYPE_LIST).toEqual(domainEventTypes());
   });
@@ -64,7 +64,7 @@ describe('katalog typów zdarzeń: panel ↔ domena', () => {
     }
 
     // Rejestr POKAZUJE typy spoza katalogu (kolumna `events.type` nie ma `CHECK`-a),
-    // choć FILTROWAĆ po nich nie wolno — dwa różne pytania, dwie różne odpowiedzi.
+    // choć FILTROWAĆ po nich nie wolno - dwa różne pytania, dwie różne odpowiedzi.
     const unknown = eventTypeView('jakis_nowy_typ');
     expect(unknown.known).toBe(false);
     expect(unknown.code).toBe('jakis_nowy_typ');
@@ -72,7 +72,7 @@ describe('katalog typów zdarzeń: panel ↔ domena', () => {
   });
 
   it('klucz z `Object.prototype` NIE jest znanym typem', () => {
-    // `EVENT_META['toString']` nie jest `undefined`, tylko funkcją z prototypu —
+    // `EVENT_META['toString']` nie jest `undefined`, tylko funkcją z prototypu -
     // zwykły odczyt uznałby `?typ=toString` za znany kod i wysłał go do serwera.
     for (const key of ['toString', 'constructor', 'hasOwnProperty', '__proto__']) {
       expect(isKnownEventType(key), key).toBe(false);

@@ -1,9 +1,9 @@
 /**
- * UZ Aero — panel: nagłówek strony i kafle podsumowań.
+ * UZ Aero - panel: nagłówek strony i kafle podsumowań.
  *
  * Klasy i wartości 1:1 z `design/admin/SZABLON.html` (sekcje „nagłówek strony"
  * i „karty i kafle" w części kaflowej). Karty (`.card`) mieszkają w `surfaces.css`,
- * bo są powierzchnią ogólną — kafel jest wskaźnikiem i chodzi w siatce.
+ * bo są powierzchnią ogólną - kafel jest wskaźnikiem i chodzi w siatce.
  */
 
 /* ── nagłówek strony ── */
@@ -42,7 +42,7 @@
   gap: 12px;
 }
 
-/* Kafel bywa linkiem w głąb (pulpit) i zwykłym pudełkiem (podsumowania) — jedna
+/* Kafel bywa linkiem w głąb (pulpit) i zwykłym pudełkiem (podsumowania) - jedna
    definicja obsługuje oba, bo `text-decoration`/`color` na nie-linku nic nie robi. */
 .tile {
   background: var(--surface);
@@ -105,7 +105,7 @@
   line-height: 1.45;
 }
 
-/* Wartość w SIATCE liczb (`.day-grid`), a nie w kaflu — 28 px rozbija czterokomórkową
+/* Wartość w SIATCE liczb (`.day-grid`), a nie w kaflu - 28 px rozbija czterokomórkową
    kratkę w wąskiej kolumnie bocznej pulpitu. Modyfikator, nie druga klasa wartości:
    kolor, rodzina i światło zostają te same, zmienia się wyłącznie stopień. */
 .tile-val.sm {

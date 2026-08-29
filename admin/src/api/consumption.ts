@@ -1,8 +1,8 @@
 /**
- * UZ Aero — panel: analityka zużycia jednego samolotu
+ * UZ Aero - panel: analityka zużycia jednego samolotu
  * (`GET /admin/api/fleet/:id/consumption`, mockupy `A10a` / `A10b`).
  *
- * Zasób należy do FLOTY, nie do statystyk — stąd prefiks `/fleet`, mimo że wejście na
+ * Zasób należy do FLOTY, nie do statystyk - stąd prefiks `/fleet`, mimo że wejście na
  * ekran prowadzi z tabeli statystyk. Analityka opisuje jednostkę, a nie zakres raportu;
  * zakres jest jej parametrem.
  */

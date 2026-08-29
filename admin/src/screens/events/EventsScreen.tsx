@@ -1,11 +1,11 @@
 /**
- * UZ Aero — panel: REJESTR ZDARZEŃ (`design/admin/A04-zdarzenia.html`).
+ * UZ Aero - panel: REJESTR ZDARZEŃ (`design/admin/A04-zdarzenia.html`).
  *
  * Wszystkie inne ekrany panelu pokazują PROJEKCJE. Ten jeden pokazuje surowy fakt,
- * z którego projekcje powstały — i sięga się po niego wtedy, gdy liczby się nie
+ * z którego projekcje powstały - i sięga się po niego wtedy, gdy liczby się nie
  * zgadzają: „skąd wzięła się ta wartość", „co dokładnie przyszło z telefonu", „czy to
  * zdarzenie w ogóle dotarło". Z tego wynika reguła nadrzędna ekranu: **pokazuje to,
- * co przyszło, bez interpretacji** — nieznany typ, nieznany kształt payloadu, brak
+ * co przyszło, bez interpretacji** - nieznany typ, nieznany kształt payloadu, brak
  * fixa GPS i konto, którego już nie ma, mają się wyświetlić dosłownie i nic z tego
  * nie ma prawa wywrócić widoku.
  *
@@ -18,7 +18,7 @@
  *  1. **Licznika duplikatów** z kafla „Przyjęte / duplikaty". Serwer go nie ma i mieć
  *     nie może: `POST /events` odsiewa duplikaty przez `ON CONFLICT DO NOTHING`,
  *     a liczba wraca wyłącznie do telefonu w odpowiedzi synca. Kafel zostaje z kreską
- *     i mówi dlaczego — brak nazwany jest lepszy niż brak ukryty.
+ *     i mówi dlaczego - brak nazwany jest lepszy niż brak ukryty.
  *  2. **Eksportu CSV.** Trasy nie ma; przycisk jest zablokowany z podanym powodem,
  *     a nie usunięty, bo mockup go obiecuje.
  *  3. **Wyszukiwania po fragmencie uuid-a.** Trasa dopasowuje uuid DOKŁADNIE (indeks
@@ -27,12 +27,12 @@
  * Wszystkie trzy są opisane na ekranie, nie przemilczane.
  *
  * ══ CO TEN EKRAN POKAZUJE PONAD MOCKUP ══
- * Pominięcia były nazwane, dodania nie — a rozjazd liczy się w obie strony.
+ * Pominięcia były nazwane, dodania nie - a rozjazd liczy się w obie strony.
  *  1. **Dwunasta kolumna „Dzień lotny"** (`thead` mockupu ma jedenaście). Skrót
  *     `session_uuid` z linkiem na kartę dnia: pytanie „do którego dnia należy to
  *     zdarzenie" pada przy każdym dochodzeniu, a bez kolumny odpowiedź wymagałaby
  *     rozwinięcia każdego wiersza z osobna.
- *  2. **Widoczny w tabeli ślad korekty `retime`** — przekreślona wartość `gps_time`
+ *  2. **Widoczny w tabeli ślad korekty `retime`** - przekreślona wartość `gps_time`
  *     i czas nadany korektą pod nią. Mockup pokazuje korektę wyłącznie w rozwinięciu.
  * Oba dodania są sprostowane w `design/admin/A04-zdarzenia.html` (`SPROSTOWANIE
  * 2026-08-02`), bo mockup jest specyfikacją i to on ma być prawdą.
@@ -91,7 +91,7 @@ import { eventsEmpty, eventsPages, pagesSummary } from './eventsPages';
 import { driftSeconds, eventsRows, headerRows, type EventRow } from './eventsRows';
 import { eventsTiles } from './eventsTiles';
 
-/** Ile kont pobieramy do słownika chipów — tak samo jak na liście dni. */
+/** Ile kont pobieramy do słownika chipów - tak samo jak na liście dni. */
 const PILOT_DICTIONARY_LIMIT = 200;
 
 export function EventsScreen() {
@@ -114,7 +114,7 @@ export function EventsScreen() {
 
   // Wpis w wyszukiwarce żyje lokalnie do naciśnięcia Entera: filtrem jest URL, ale
   // przeładowywanie rejestru po każdej literze uuid-a byłoby serią żądań, z których
-  // żadne nie ma sensu — trasa dopasowuje identyfikator DOKŁADNIE, nie prefiksem.
+  // żadne nie ma sensu - trasa dopasowuje identyfikator DOKŁADNIE, nie prefiksem.
   const [uuidDraft, setUuidDraft] = useState(filter.uuid ?? '');
   useEffect(() => {
     setUuidDraft(filter.uuid ?? '');
@@ -128,7 +128,7 @@ export function EventsScreen() {
         reason={denialReason('panel.access')}
         note={
           <>
-            Rejestr surowych zdarzeń czyta każde konto z dostępem do panelu — administrator
+            Rejestr surowych zdarzeń czyta każde konto z dostępem do panelu - administrator
             i szef wyszkolenia. Ta pozycja nawigacji zostaje <b>widoczna</b> właśnie po to,
             żebyś nie musiał zgadywać, czy funkcji nie ma w produkcie, czy nie ma jej Twoje
             konto.
@@ -139,7 +139,7 @@ export function EventsScreen() {
   }
 
   const apply = (next: EventsFilter): void => setSearchParams(paramsFromFilter(next));
-  /** Ten sam klik otwiera i zamyka rozwinięcie — wzorzec z monitora eksportu. */
+  /** Ten sam klik otwiera i zamyka rozwinięcie - wzorzec z monitora eksportu. */
   const toggle = (uuid: string): void => {
     navigate(uuid === openUuid ? eventsHref(filter) : `/zdarzenia/${uuid}${search(filter)}`);
   };
@@ -159,7 +159,7 @@ export function EventsScreen() {
         title="REJESTR ZDARZEŃ"
         sub={
           <>
-            Surowy strumień z tabeli <code>events</code> — dokładnie to, co przysłały telefony,
+            Surowy strumień z tabeli <code>events</code> - dokładnie to, co przysłały telefony,
             bez projekcji i bez upiększania. Ekran do dochodzenia „dlaczego liczby wyglądają
             tak, a nie inaczej"; rozliczenie dnia jest na <b>karcie dnia</b>, a raport
             w statystykach.
@@ -178,10 +178,10 @@ export function EventsScreen() {
       />
 
       <Banner tone="status">
-        <b>Widok tylko do odczytu — rejestr jest append-only.</b> Nie ma tu „edytuj wiersz"
+        <b>Widok tylko do odczytu - rejestr jest append-only.</b> Nie ma tu „edytuj wiersz"
         ani kosza i nie będzie: zdarzenie raz przyjęte zostaje w bazie na zawsze. W całym{' '}
         <code>server/src</code> nie występuje ani jedno <code>UPDATE events</code> ani{' '}
-        <code>DELETE FROM events</code> — pilnuje tego test architektury. Jedyna droga zmiany
+        <code>DELETE FROM events</code> - pilnuje tego test architektury. Jedyna droga zmiany
         to dopisanie <code>event_correction</code> (<code>retime</code> / <code>void</code>)
         z karty dnia; sama korekta też jest tu widoczna jako zwykły wiersz.
       </Banner>
@@ -202,7 +202,7 @@ export function EventsScreen() {
         <SearchInput
           value={uuidDraft}
           ariaLabel="Filtruj po uuid zdarzenia"
-          placeholder="uuid zdarzenia — pełny, Enter filtruje"
+          placeholder="uuid zdarzenia - pełny, Enter filtruje"
           onChange={setUuidDraft}
           onSubmit={() =>
             apply({ ...filter, uuid: uuidDraft.trim() === '' ? null : uuidDraft.trim() })
@@ -220,7 +220,7 @@ export function EventsScreen() {
           <FilterChip
             label={`urządzenie: ${filter.sourceDevice} · zdejmij`}
             active
-            title="Dokładna wartość kolumny source_device — czym zdarzenie przyszło."
+            title="Dokładna wartość kolumny source_device - czym zdarzenie przyszło."
             onClick={() => apply({ ...filter, sourceDevice: null })}
           />
         )}
@@ -228,7 +228,7 @@ export function EventsScreen() {
           <FilterChip
             label={`${filter.from ?? '…'} → ${filter.to ?? '…'} · zdejmij`}
             active
-            title="Zakres dat UTC z adresu — po czasie PRZYJĘCIA przez serwer."
+            title="Zakres dat UTC z adresu - po czasie PRZYJĘCIA przez serwer."
             onClick={() => apply({ ...filter, from: null, to: null })}
           />
         )}
@@ -258,7 +258,7 @@ export function EventsScreen() {
             label={`${pickerLabel(aircraftOptions, filter.aircraftId)} · zdejmij`}
             active
             tone="amber"
-            title="Jednostka spoza słownika — zawężenie z adresu."
+            title="Jednostka spoza słownika - zawężenie z adresu."
             onClick={() => apply({ ...filter, aircraftId: null })}
           />
         ) : null}
@@ -279,7 +279,7 @@ export function EventsScreen() {
             label={`${pickerLabel(pilotOptions, filter.pilotId)} · zdejmij`}
             active
             tone="amber"
-            title="Konto spoza słownika — zawężenie z adresu."
+            title="Konto spoza słownika - zawężenie z adresu."
             onClick={() => apply({ ...filter, pilotId: null })}
           />
         ) : null}
@@ -304,7 +304,7 @@ export function EventsScreen() {
 
       {page.isPending ? null : page.isError ? (
         <Banner tone="danger" live>
-          <b>Nie udało się pobrać rejestru.</b> Panel działa wyłącznie online — to jedyne
+          <b>Nie udało się pobrać rejestru.</b> Panel działa wyłącznie online - to jedyne
           miejsce w systemie, w którym brak sieci wolno pokazać jako blokadę.{' '}
           <Button variant="ghost" size="sm" onClick={() => void page.refetch()}>
             Ponów
@@ -335,7 +335,7 @@ export function EventsScreen() {
       ) : (
         <>
           <DataTable
-            caption="Rejestr zdarzeń — porządek serwera po czasie przyjęcia, czasy UTC"
+            caption="Rejestr zdarzeń - porządek serwera po czasie przyjęcia, czasy UTC"
             columns={columns(filter, apply, openUuid ?? null, toggle, mayCorrect)}
             rows={rows}
             rowKey={(row) => row.uuid}
@@ -353,12 +353,12 @@ export function EventsScreen() {
           />
 
           {/* Wklejony link do zdarzenia, które wypadło z bieżącego zawężenia. Bez tego
-              adres wyglądałby na działający, a rozwinięcia po prostu by nie było —
+              adres wyglądałby na działający, a rozwinięcia po prostu by nie było -
               czyli ekran milczałby dokładnie tam, gdzie ma odpowiadać. */}
           {openUuid == null || rows.some((row) => row.uuid === openUuid) ? null : (
             <Banner tone="warn">
               <b>Tego zdarzenia nie ma na pobranych stronach.</b> Adres wskazuje{' '}
-              <code>{openUuid}</code>, ale bieżące zawężenie go nie obejmuje — albo leży
+              <code>{openUuid}</code>, ale bieżące zawężenie go nie obejmuje - albo leży
               dalej niż dociągnięte strony.{' '}
               <LinkButton to={eventHref(openUuid)} variant="ghost" size="sm">
                 Pokaż wyłącznie to zdarzenie
@@ -371,7 +371,7 @@ export function EventsScreen() {
               {pagesSummary(pages)}{' '}
               {pages.hasMore ? (
                 <>
-                  Kolejne zdarzenia dokłada <b>kursor keyset</b>, nie <code>OFFSET</code> —
+                  Kolejne zdarzenia dokłada <b>kursor keyset</b>, nie <code>OFFSET</code> -
                   rejestr rośnie w trakcie przeglądania, bo telefony właśnie dosyłają
                   outboxy, a offset na rosnącej tabeli gubi wiersze i dubluje inne.
                 </>
@@ -402,7 +402,7 @@ export function EventsScreen() {
       </Banner>
 
       <Banner tone="status">
-        <b>Czego ten rejestr nie umie wyszukać.</b> Uuid dopasowuje się <b>dokładnie</b> —
+        <b>Czego ten rejestr nie umie wyszukać.</b> Uuid dopasowuje się <b>dokładnie</b> -
         dopasowanie fragmentem byłoby pełnym skanowaniem najszybciej rosnącej tabeli
         w systemie. Nie ma wyszukiwania pełnotekstowego po treści payloadu ani kalendarza;
         zakres ustawia się z adresu (<code>?od=2026-07-30&amp;do=2026-07-31</code>).
@@ -414,13 +414,13 @@ export function EventsScreen() {
 }
 
 /**
- * Rozwinięcie wiersza: surowy payload po lewej, nagłówek zdarzenia po prawej —
+ * Rozwinięcie wiersza: surowy payload po lewej, nagłówek zdarzenia po prawej -
  * dokładnie jak w mockupie.
  *
  * `entry` przychodzi z tej samej listy, z której powstał `row`, więc `null` tu nie
  * powstaje. Obsługujemy go mimo to jednym zdaniem zamiast wykrzyknikiem: wywrócony
  * render rejestru wygląda jak dowód, że zdarzenia nie było. Adres wskazujący zdarzenie
- * spoza pobranych stron rozstrzyga EKRAN, nad stopką listy — tam jest widoczny nawet
+ * spoza pobranych stron rozstrzyga EKRAN, nad stopką listy - tam jest widoczny nawet
  * wtedy, gdy żaden wiersz się nie rozwinął.
  */
 function Detail({
@@ -436,7 +436,7 @@ function Detail({
     return (
       <Banner tone="warn">
         <b>Brak danych rozwinięcia.</b> Wiersz <code>{row.uuid}</code> jest na liście, ale
-        jego treść nie dotarła do rozwinięcia — odśwież stronę.
+        jego treść nie dotarła do rozwinięcia - odśwież stronę.
       </Banner>
     );
   }
@@ -448,14 +448,14 @@ function Detail({
         {!row.voided ? null : (
           <Banner tone="warn">
             <b>To zdarzenie jest unieważnione korektą.</b> Wiersz zostaje w rejestrze na
-            zawsze — projekcja go nie liczy, ale zapis pozostaje dowodem tego, co przysłał
+            zawsze - projekcja go nie liczy, ale zapis pozostaje dowodem tego, co przysłał
             telefon. {row.adminCorrected ? 'Korektę zapisał panel.' : 'Korektę zapisał pilot w oknie 24 h.'}
           </Banner>
         )}
         {row.drift.missing ? (
           <Banner tone="warn">
             <b>Brak fixa GPS w chwili zapisu.</b> <code>gps_time = null</code>, więc projekcja
-            spadła na <code>device_time</code> — czyli na zegar telefonu, którego nikt nie
+            spadła na <code>device_time</code> - czyli na zegar telefonu, którego nikt nie
             weryfikuje. Różnica zegarów dla tego wiersza <b>nie istnieje</b>; to nie to samo,
             co różnica równa zeru.
           </Banner>
@@ -477,7 +477,7 @@ function Detail({
   );
 }
 
-/** Wiersz odpowiedzi po uuid — rozwinięcie czyta DTO, a nie zmapowany wiersz tabeli. */
+/** Wiersz odpowiedzi po uuid - rozwinięcie czyta DTO, a nie zmapowany wiersz tabeli. */
 function entryOf(items: ReturnType<typeof eventsPages>['items'], uuid: string) {
   return items.find((item) => item.uuid === uuid);
 }
@@ -489,7 +489,7 @@ function search(filter: EventsFilter): string {
 }
 
 /**
- * Kolumny rejestru — dokładnie te z `A04-zdarzenia.html`.
+ * Kolumny rejestru - dokładnie te z `A04-zdarzenia.html`.
  *
  * Sortowanie dostaje WYŁĄCZNIE kolumna czasu przyjęcia, bo tylko po niej serwer umie
  * stronicować kursorem; nagłówek, który po kliknięciu nic nie robi, byłby gorszy od
@@ -534,7 +534,7 @@ function columns(
       align: 'num',
       // Kolumna, w której WIDAĆ korektę: `retime` wchodzi domenowo w `gps_time`, więc
       // wartość surowa jest tu przekreślana, a czas nadany stoi pod nią podpisem.
-      // Klasa i podpis przychodzą gotowe z modułu czystego — ekran niczego nie skleja.
+      // Klasa i podpis przychodzą gotowe z modułu czystego - ekran niczego nie skleja.
       render: (row) => (
         <>
           <span className={row.gps.className ?? undefined}>{row.gps.text}</span>

@@ -1,12 +1,12 @@
 /**
- * UZ Aero — Trail (`.trail` z mockupu 02a)
+ * UZ Aero - Trail (`.trail` z mockupu 02a)
  *
  * Oś czasu pod wartością przekazania: kropka, tytuł, jedna linia szczegółów, pionowa
  * kreska łącząca kolejne ogniwa.
  *
  * Po co: pilot patrzy na paliwomierz i widzi mniej, niż mówi przekazanie. Bez historii
  * zostaje mu zgadywanie, czy pomylił się w odczycie, czy ktoś jeszcze poleciał.
- * Oś odpowiada na to jednym spojrzeniem — i dlatego jest częścią ekranu odczytów,
+ * Oś odpowiada na to jednym spojrzeniem - i dlatego jest częścią ekranu odczytów,
  * a nie osobnym „szczegółami" schowanym za tapnięciem.
  *
  * Komponent jest czysto prezentacyjny: dostaje gotowe napisy, bo wyliczenia (średnie
@@ -56,7 +56,7 @@ export function Trail({ rows, style }: TrailProps) {
 
         return (
           <View key={row.id} style={[styles.row, { paddingBottom: last ? 0 : 10 }]}>
-            {/* Kreska łącząca — biegnie od kropki w dół, poza ostatnim ogniwem. */}
+            {/* Kreska łącząca - biegnie od kropki w dół, poza ostatnim ogniwem. */}
             {!last && (
               <View style={[styles.line, { backgroundColor: theme.colors.border }]} />
             )}

@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: ROZSTRZYGNIĘCIE FLAGI, decyzje o treści (moduł CZYSTY).
+ * UZ Aero - panel: ROZSTRZYGNIĘCIE FLAGI, decyzje o treści (moduł CZYSTY).
  *
  * Wzorzec z `screens/login/loginMessages.ts`: ekran jest `.tsx` bez decyzji o treści,
  * a odpowiedź serwera → komunikat rozstrzyga się tutaj i ma test w Node. Dlatego
@@ -25,14 +25,14 @@ export const NOTE_MAX_LENGTH = 2000;
 export interface NoteState {
   /** Czy wolno wysłać. */
   ok: boolean;
-  /** Powód odmowy — WIDOCZNY tekst przy przycisku, nigdy tooltip. */
+  /** Powód odmowy - WIDOCZNY tekst przy przycisku, nigdy tooltip. */
   reason: string | null;
 }
 
 /**
  * Komentarz jest WYMAGANY i odrzucamy go tutaj, zanim poleci żądanie.
  *
- * Serwer sprawdza to samo (`.trim().min(1)`), więc to nie jest zabezpieczenie —
+ * Serwer sprawdza to samo (`.trim().min(1)`), więc to nie jest zabezpieczenie -
  * to różnica między „przycisk mówi, czego brakuje" a „serwer odbija 400 bez
  * wyjaśnienia". Same spacje nie liczą się za uzasadnienie: za pół roku nikt nie
  * pamięta, dlaczego nakładka sesji okazała się pozorna, a pusty ślad jest wtedy
@@ -43,7 +43,7 @@ export function noteState(note: string): NoteState {
   if (trimmed.length === 0) {
     return {
       ok: false,
-      reason: 'Komentarz jest wymagany — to jedyna treść, jaką panel dopisuje do flagi.',
+      reason: 'Komentarz jest wymagany - to jedyna treść, jaką panel dopisuje do flagi.',
     };
   }
   if (note.length > NOTE_MAX_LENGTH) {
@@ -55,7 +55,7 @@ export function noteState(note: string): NoteState {
   return { ok: true, reason: null };
 }
 
-/** Kto i czym zamknął sprawę PIERWSZY — treść odpowiedzi 409. */
+/** Kto i czym zamknął sprawę PIERWSZY - treść odpowiedzi 409. */
 export interface ResolutionWinner {
   by: string;
   at: string;
@@ -78,14 +78,14 @@ export interface ResolveFailure {
 /**
  * Odpowiedź serwera → komunikat odmowy.
  *
- * **409 to najważniejszy przypadek tego pliku.** Ktoś mógł zamknąć sprawę pierwszy —
+ * **409 to najważniejszy przypadek tego pliku.** Ktoś mógł zamknąć sprawę pierwszy -
  * i wtedy komunikat „coś poszło nie tak" byłby wprost szkodliwy: drugi klikający
  * dopisałby własne uzasadnienie do decyzji, której nie podjął, albo poszedłby szukać
  * awarii, której nie ma. Odpowiedź niesie STAN FLAGI wraz z komentarzem zwycięzcy
  * (`server/src/http/routes/admin/flags.ts`), więc pokazujemy CZYJE rozstrzygnięcie
  * zdążyło i jakie.
  *
- * Mockup `A03a` nie ma na to stanu — projektujemy go w duchu reszty ekranu: baner
+ * Mockup `A03a` nie ma na to stanu - projektujemy go w duchu reszty ekranu: baner
  * `danger` w szufladzie, cytat komentarza pierwszego rozstrzygającego, formularz
  * zamknięty.
  */
@@ -97,15 +97,15 @@ export function resolveFailure(status: number | null, body: ApiErrorDto | null):
       tone: 'danger',
       title: 'Tę sprawę zamknął już ktoś inny.',
       detail:
-        'Twój komentarz NIE został zapisany — flaga ma rozstrzygnięcie, które zdążyło ' +
+        'Twój komentarz NIE został zapisany - flaga ma rozstrzygnięcie, które zdążyło ' +
         'pierwsze, i ono zostaje. Jeżeli się z nim nie zgadzasz, to jest rozmowa ' +
         'z autorem, a nie druga decyzja w tym samym miejscu.',
       winner:
         flag == null
           ? null
           : {
-              by: flag.resolvedBy ?? '—',
-              at: at == null || Number.isNaN(at) ? '—' : `${dateUtcShort(at)} ${timeUtc(at)} UTC`,
+              by: flag.resolvedBy ?? '-',
+              at: at == null || Number.isNaN(at) ? '-' : `${dateUtcShort(at)} ${timeUtc(at)} UTC`,
               note: flag.resolutionNote ?? '',
             },
       final: true,
@@ -118,7 +118,7 @@ export function resolveFailure(status: number | null, body: ApiErrorDto | null):
       title: 'Tej flagi nie ma w rejestrze.',
       detail:
         'Adres wskazuje numer, którego serwer nie zna. Wróć do skrzynki i otwórz sprawę ' +
-        'z listy — flag nie kasuje się z bazy, więc pomyłka jest raczej w adresie.',
+        'z listy - flag nie kasuje się z bazy, więc pomyłka jest raczej w adresie.',
       winner: null,
       final: true,
     };
@@ -128,7 +128,7 @@ export function resolveFailure(status: number | null, body: ApiErrorDto | null):
     return {
       tone: 'warn',
       title: 'Twoja rola nie obejmuje rozstrzygania flag.',
-      detail: `${denialReason('flags.resolve')}. Skrzynkę czyta każdy, kto ma wejście do panelu — zamyka sprawę węższa zdolność.`,
+      detail: `${denialReason('flags.resolve')}. Skrzynkę czyta każdy, kto ma wejście do panelu - zamyka sprawę węższa zdolność.`,
       winner: null,
       final: true,
     };
@@ -152,7 +152,7 @@ export function resolveFailure(status: number | null, body: ApiErrorDto | null):
       title: 'Brak połączenia z serwerem.',
       detail:
         'Panel działa wyłącznie online, a rozstrzygnięcie musi zapisać się w bazie razem ' +
-        'ze śladem audytu. Nie wiadomo, czy żądanie doszło — odśwież skrzynkę, zanim ' +
+        'ze śladem audytu. Nie wiadomo, czy żądanie doszło - odśwież skrzynkę, zanim ' +
         'spróbujesz ponownie.',
       winner: null,
       final: false,
@@ -175,7 +175,7 @@ export function resolveFailure(status: number | null, body: ApiErrorDto | null):
  */
 const REFUSAL_LABEL: Record<ExportRefusalDto, string> = {
   no_events: 'brak zdarzeń w rejestrze tej sesji',
-  session_open: 'dzień jeszcze nie zamknięty — karta powstanie po `day_close`',
+  session_open: 'dzień jeszcze nie zamknięty - karta powstanie po `day_close`',
   no_preflight: 'brak potwierdzenia przedlotowego, nie ma z czego zbudować karty',
   overlap_flag: 'inna otwarta flaga nakładki wciąż trzyma tę kartę',
 };
@@ -189,11 +189,11 @@ export interface ResolveOutcome {
 }
 
 /**
- * Skutek rozstrzygnięcia — co naprawdę stało się z kartą dnia.
+ * Skutek rozstrzygnięcia - co naprawdę stało się z kartą dnia.
  *
  * Serwer zwraca SKUTEK, a nie `204`, właśnie po to, żeby padło „arkusz odblokowany ·
  * rewizja 1", a nie samo „zapisano". Re-eksport uruchamia się **wyłącznie dla
- * `aircraft_overlap`**, bo tylko ten typ jest bramką w `DayExporter` — pusta lista
+ * `aircraft_overlap`**, bo tylko ten typ jest bramką w `DayExporter` - pusta lista
  * jest więc poprawną odpowiedzią, a nie brakiem informacji, i tak ją opisujemy.
  */
 export function resolveOutcome(result: ResolveFlagResultDto): ResolveOutcome {
@@ -211,21 +211,21 @@ export function resolveOutcome(result: ResolveFlagResultDto): ResolveOutcome {
   const failed = result.exports.some((attempt) => attempt.outcome == null);
   return {
     tone: failed ? 'warn' : 'ok',
-    title: failed ? 'Sprawa zamknięta, karta dnia — nie.' : 'Sprawa zamknięta, karta odblokowana.',
+    title: failed ? 'Sprawa zamknięta, karta dnia - nie.' : 'Sprawa zamknięta, karta odblokowana.',
     lines: result.exports.map(exportLine),
     note: failed
-      ? 'Flaga JEST rozwiązana — nie powiódł się sam zapis karty. Ponów eksport na ekranie Eksporty.'
+      ? 'Flaga JEST rozwiązana - nie powiódł się sam zapis karty. Ponów eksport na ekranie Eksporty.'
       : 'Bramka `dayExporter` przestała trzymać sesję. Ślad akcji jest w audycie.',
   };
 }
 
 function exportLine(attempt: ExportAttemptDto): string {
   const session = attempt.sessionUuid;
-  if (attempt.outcome == null) return `${session} — eksport karty rzucił błędem`;
+  if (attempt.outcome == null) return `${session} - eksport karty rzucił błędem`;
   if (attempt.outcome.exported) {
-    return `${session} — karta ${attempt.outcome.tab} · rewizja ${attempt.outcome.revision}`;
+    return `${session} - karta ${attempt.outcome.tab} · rewizja ${attempt.outcome.revision}`;
   }
-  return `${session} — bez karty: ${REFUSAL_LABEL[attempt.outcome.reason]}`;
+  return `${session} - bez karty: ${REFUSAL_LABEL[attempt.outcome.reason]}`;
 }
 
 export interface CorrectionAction {
@@ -233,29 +233,29 @@ export interface CorrectionAction {
   to: string;
   label: string;
   disabled: boolean;
-  /** Powód blokady — WIDOCZNY przy przycisku, nigdy ciche ukrycie pozycji. */
+  /** Powód blokady - WIDOCZNY przy przycisku, nigdy ciche ukrycie pozycji. */
   reason: string | null;
 }
 
 /**
- * Przejście do korekty zdarzenia — jedyna droga, którą zmienia się LICZBY.
+ * Przejście do korekty zdarzenia - jedyna droga, którą zmienia się LICZBY.
  *
  * ══ PROWADZI NA KARTĘ DNIA, NIE WPROST W FORMULARZ ══
  * Korekta dotyczy KONKRETNEGO zdarzenia (`/dni/<sesja>/korekta/<zdarzenie>`), a flaga
- * wskazuje sesję, nie zdarzenie — `aircraft_overlap` opisuje dwie nakładające się sesje,
+ * wskazuje sesję, nie zdarzenie - `aircraft_overlap` opisuje dwie nakładające się sesje,
  * a nie pojedynczy odczyt. Wyboru dokonuje się więc na osi dnia, która ZNA uuid-y
  * i wie, które zdarzenia są korygowalne. Adres bez celu prowadziłby w ekran, który nie
- * wie, co poprawia — a to jest gorsze niż jeden klik więcej.
+ * wie, co poprawia - a to jest gorsze niż jeden klik więcej.
  *
  * Rozstrzygnięcie flagi jest komentarzem i zmianą statusu; jeżeli błędna jest sama
  * liczba, poprawia ją nowe zdarzenie `event_correction`, a oryginał zostaje
  * w rejestrze na zawsze. Zdolności są tu ROZŁĄCZNE i to jest sedno tej funkcji:
- * `flags.resolve` ma administrator **oraz** szef wyszkolenia, `events.correct` —
+ * `flags.resolve` ma administrator **oraz** szef wyszkolenia, `events.correct` -
  * **tylko administrator**. Dla szefa wyszkolenia przycisk zostaje WIDOCZNY
  * i wyszarzony z powodem: ukrycie zmusiłoby go do zgadywania, czy funkcji nie ma
  * w produkcie, czy nie ma jej on.
  *
- * To podpowiedź dla UI, nie zabezpieczenie — egzekwuje serwer przy każdym żądaniu.
+ * To podpowiedź dla UI, nie zabezpieczenie - egzekwuje serwer przy każdym żądaniu.
  */
 export function correctionAction(
   flag: FlagListItemDto,
@@ -276,7 +276,7 @@ export function correctionAction(
       to: '',
       label: 'Korekta zdarzenia',
       disabled: true,
-      reason: 'Flaga nie wskazuje żadnej sesji — nie ma czego korygować',
+      reason: 'Flaga nie wskazuje żadnej sesji - nie ma czego korygować',
     };
   }
 

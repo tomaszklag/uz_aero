@@ -1,8 +1,8 @@
 /**
- * UZ Aero — projekcja DNIA PILOTA (docs/_main.md.txt §3.6, model po issue #23).
+ * UZ Aero - projekcja DNIA PILOTA (docs/_main.md.txt §3.6, model po issue #23).
  *
  * Reguła, z której wynika cały ten moduł: **do pilota w danej dobie UTC przypisana
- * jest lista sesji** — i nic ponadto. Klamra służby (meldunek / koniec / czas „od
+ * jest lista sesji** - i nic ponadto. Klamra służby (meldunek / koniec / czas „od
  * pierwszej do ostatniej czynności") żyła tu między 2026-08-06 a 2026-08-11 i została
  * usunięta W CAŁOŚCI (issue #23): niczego nie mierzyła, a wymagała deklaracji,
  * zamykania dnia i osobnych reguł. Dzień pilota zaczyna się pierwszą sesją
@@ -10,7 +10,7 @@
  *
  * DLACZEGO TO OSOBNA PROJEKCJA, A NIE POLE `SessionState`:
  * dzień należy do PILOTA, a `SessionState` opisuje jeden SAMOLOT. Pilot, który
- * w jednej dobie latał dwiema maszynami, ma jeden dzień i dwie sesje — żadna z nich
+ * w jednej dobie latał dwiema maszynami, ma jeden dzień i dwie sesje - żadna z nich
  * nie zna drugiej, więc żadna nie może złożyć listy. Ta funkcja bierze zatem
  * wszystkie sesje doby i składa z nich oś pilota.
  *
@@ -21,29 +21,29 @@
 import type { EpochMillis } from '../time';
 import type { SessionState } from './session';
 
-/** Doba UTC jako liczba — północ 00:00:00.000Z. Klucz grupowania dnia pilota. */
+/** Doba UTC jako liczba - północ 00:00:00.000Z. Klucz grupowania dnia pilota. */
 export type UtcDayStart = EpochMillis;
 
 const DAY_MS = 86_400_000;
 
-/** Początek doby UTC, w której leży `t`. Dzielenie całkowite — bez `Date`, bez stref. */
+/** Początek doby UTC, w której leży `t`. Dzielenie całkowite - bez `Date`, bez stref. */
 export function utcDayStart(t: EpochMillis): UtcDayStart {
   return Math.floor(t / DAY_MS) * DAY_MS;
 }
 
 /**
- * Sesja widziana z osi PILOTA — bieg silnika wzbogacony o samolot.
+ * Sesja widziana z osi PILOTA - bieg silnika wzbogacony o samolot.
  *
  * `Leg` żyje wewnątrz sesji i nie musi wiedzieć, czyj jest; tutaj samolot jest
  * INFORMACJĄ wiersza, bo lista sesji doby biegnie płaską osią czasu przez maszyny
- * (issue #23 pkt 3: bez grupowania po samolocie — grupy kłamały o przebiegu dnia
+ * (issue #23 pkt 3: bez grupowania po samolocie - grupy kłamały o przebiegu dnia
  * przy każdej przesiadce).
  *
  * Sesja = jeden bieg silnika (2026-08-10), więc wiersz doby OPISUJE SESJĘ: czasy
  * silnika, liczba lotów w środku, blok i czas w powietrzu.
  */
 export interface PilotDaySession {
-  /** Numer w DOBIE (1-based) — ekran 01 numeruje ciągiem przez maszyny. */
+  /** Numer w DOBIE (1-based) - ekran 01 numeruje ciągiem przez maszyny. */
   index: number;
   aircraftId: string;
   sessionUuid: string;
@@ -54,13 +54,13 @@ export interface PilotDaySession {
   blockMs: number;
   /** Suma czasu lotów, które zaczęły się wewnątrz biegu (ms). */
   flightMs: number;
-  /** Liczba lotów (start → lądowanie) w tej sesji — kolumna „Loty" na 01. */
+  /** Liczba lotów (start → lądowanie) w tej sesji - kolumna „Loty" na 01. */
   flightCount: number;
-  /** Sesja wpisana ręcznie po fakcie (ekran 15) — plakietka „RĘCZNIE" na kafelku. */
+  /** Sesja wpisana ręcznie po fakcie (ekran 15) - plakietka „RĘCZNIE" na kafelku. */
   manualEntry: boolean;
 }
 
-/** Dzień pilota w jednej dobie UTC — lista sesji + sumy, przekrojowo po samolotach. */
+/** Dzień pilota w jednej dobie UTC - lista sesji + sumy, przekrojowo po samolotach. */
 export interface PilotDay {
   pilotId: string;
   /** Doba UTC, do której należy ten dzień (północ). */
@@ -77,7 +77,7 @@ export interface PilotDay {
   landingCount: number;
 }
 
-/** Pusty dzień — doba, w której pilot nic nie zrobił. */
+/** Pusty dzień - doba, w której pilot nic nie zrobił. */
 export function emptyPilotDay(pilotId: string, day: UtcDayStart): PilotDay {
   return {
     pilotId,
@@ -94,14 +94,14 @@ export function emptyPilotDay(pilotId: string, day: UtcDayStart): PilotDay {
 /**
  * Składa dzień pilota w dobie UTC z sesji, które w tej dobie prowadził.
  *
- * @param sessions sesje pilota (projekcje `projectSession`) — wołający dobiera je
+ * @param sessions sesje pilota (projekcje `projectSession`) - wołający dobiera je
  *                 z bazy; funkcja sama odfiltruje cudze i spoza doby,
  * @param pilotId  pilot, którego dzień liczymy (porównywane z `sessionPicId`,
- *                 czyli JEDYNYM piszącym sesji — §4.1 pkt 3),
+ *                 czyli JEDYNYM piszącym sesji - §4.1 pkt 3),
  * @param day      doba UTC (północ; użyj `utcDayStart`).
  *
  * Przynależność sesji do doby wyznacza czas URUCHOMIENIA silnika. Sesja rozpoczęta
- * o 23:50 i zatrzymana o 00:20 należy w całości do doby, w której wystartowała — inaczej
+ * o 23:50 i zatrzymana o 00:20 należy w całości do doby, w której wystartowała - inaczej
  * jeden lot rozpadłby się na dwa dni, czyli dokładnie ten problem, który przebudowa
  * flow usunęła.
  */
@@ -120,7 +120,7 @@ export function projectPilotDay(
     if (s.sessionUuid == null || s.aircraftId == null) continue;
 
     // Po 2026-08-10 `legs` ma zero albo jeden element (SESSION_ALREADY_RAN); pętla
-    // zostaje, bo projekcja musi opisać także strumień złamany — dwa biegi w jednej
+    // zostaje, bo projekcja musi opisać także strumień złamany - dwa biegi w jednej
     // sesji dadzą dwa wiersze, a nie cichą utratę drugiego.
     for (const leg of s.legs) {
       if (utcDayStart(leg.startedAt) !== day) continue;
@@ -137,10 +137,17 @@ export function projectPilotDay(
       });
     }
 
+    /* Liczniki doby idą z LOTÓW, nie ze zdarzeń — więc kręgi trzeba doliczyć TU
+       drugi raz (`projectSession` robi to po swojej stronie, na strumieniu).
+       Bez tego doba pilota po cichu zaniżałaby lądowania przy każdym wpisie ręcznym
+       z touch and go: sesja pokazywałaby 5, dzień 1, i nikt by tego nie zauważył,
+       bo obie liczby stoją na innych ekranach. Reguła jest ta sama, co w projekcji
+       sesji: n kręgów to n dodatkowych lądowań i n dodatkowych startów. */
     for (const f of s.flights) {
       if (utcDayStart(f.takeoffAt) !== day) continue;
-      pilotDay.takeoffCount += 1;
-      if (f.landingAt != null) pilotDay.landingCount += 1;
+      const circuits = f.touchAndGo ?? 0;
+      pilotDay.takeoffCount += 1 + circuits;
+      if (f.landingAt != null) pilotDay.landingCount += 1 + circuits;
     }
   }
 
@@ -165,7 +172,7 @@ export function projectPilotDay(
 // Pomocnicze
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Liczba lotów, które ZACZĘŁY się wewnątrz biegu — kolumna „Loty" na 01. */
+/** Liczba lotów, które ZACZĘŁY się wewnątrz biegu - kolumna „Loty" na 01. */
 function flightCountWithin(
   s: SessionState,
   from: EpochMillis,

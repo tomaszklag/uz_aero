@@ -1,16 +1,16 @@
 /**
- * UZ Aero — panel: KAFLE I CHIPY floty (`A07`) — moduł CZYSTY.
+ * UZ Aero - panel: KAFLE I CHIPY floty (`A07`) - moduł CZYSTY.
  *
- * Kafle biorą `counts` (cała flota), chipy — `scopes` (zawężone WYSZUKIWANIEM). To są
+ * Kafle biorą `counts` (cała flota), chipy - `scopes` (zawężone WYSZUKIWANIEM). To są
  * dwa różne pytania i dwie różne liczby na jednym ekranie: kafel opisuje flotę, a chip
  * z liczbą jest obietnicą „tyle wierszy zobaczysz po kliknięciu". Przy kontach pilotów
  * sklejenie ich było usterką widoczną gołym okiem.
  *
- * ══ „NAJSTARSZY ODCZYT" LICZY SIĘ Z WIERSZY — I DLATEGO Z PEŁNEJ LISTY ══
+ * ══ „NAJSTARSZY ODCZYT" LICZY SIĘ Z WIERSZY - I DLATEGO Z PEŁNEJ LISTY ══
  * Serwer nie ma osobnego agregatu „najdawniejszy sync" i nie potrzebuje go: flota jedzie
  * w CAŁOŚCI, więc minimum po `lastEventAt` nie jest liczbą wymyśloną przez panel, tylko
  * wyborem z kompletu, który serwer właśnie przysłał. Warunek jest jeden i twardy: kafel
- * MUSI dostać listę NIEZAWĘŻONĄ (ekran woła `useFleet({})` osobno) — policzony z listy
+ * MUSI dostać listę NIEZAWĘŻONĄ (ekran woła `useFleet({})` osobno) - policzony z listy
  * po filtrze opisywałby zawężenie pod etykietą mówiącą o flocie.
  */
 
@@ -29,8 +29,8 @@ export interface FleetTile {
   note: string;
 }
 
-/** Wartość kafla przy braku odpowiedzi z serwera — „nie wiemy", nigdy zero. */
-const UNKNOWN = '—';
+/** Wartość kafla przy braku odpowiedzi z serwera - „nie wiemy", nigdy zero. */
+const UNKNOWN = '-';
 
 export function fleetTiles(
   counts: FleetCountsDto | null,
@@ -57,7 +57,7 @@ export function fleetTiles(
       label: 'Wyłączone ze służby',
       value: counts == null ? UNKNOWN : String(counts.disabled),
       tone: 'red',
-      note: 'Historia zostaje w całości — znika wyłącznie możliwość wyboru.',
+      note: 'Historia zostaje w całości - znika wyłącznie możliwość wyboru.',
     },
     {
       label: 'Najstarszy odczyt',
@@ -70,7 +70,7 @@ export function fleetTiles(
 
 /**
  * Które jednostki są zajęte i przez kogo. Przy jednej wypisujemy ją z nazwiska (tak
- * rysuje to mockup); przy kilku — same rejestracje, bo trzy nazwiska w kaflu nie
+ * rysuje to mockup); przy kilku - same rejestracje, bo trzy nazwiska w kaflu nie
  * mieszczą się i tak.
  */
 function claimNote(items: readonly AircraftListItemDto[]): string {
@@ -83,7 +83,7 @@ function claimNote(items: readonly AircraftListItemDto[]): string {
     const since = first.claim!.since == null ? '' : ` od ${timeUtc(first.claim!.since)} UTC`;
     return `${first.reg} · ${who}${since}.`;
   }
-  return `${claimed.map((item) => item.reg).join(' · ')} — dni w toku.`;
+  return `${claimed.map((item) => item.reg).join(' · ')} - dni w toku.`;
 }
 
 /**
@@ -129,11 +129,11 @@ export function fleetChips(scopes: FleetCountsDto | null): FleetChip[] {
 }
 
 /**
- * Wiersze karty „Progi zależne od pojemności" — po jednym na jednostkę W SŁUŻBIE.
+ * Wiersze karty „Progi zależne od pojemności" - po jednym na jednostkę W SŁUŻBIE.
  *
  * Wyłączone pomijamy, bo karta odpowiada na pytanie „od ilu litrów rozbieżność będzie
  * flagowana", a jednostka poza służbą nie wygeneruje już żadnego zdarzenia. Liczba
- * pochodzi z serwera (`fuelToleranceL`) — panel nie ma prawa policzyć 5% sam.
+ * pochodzi z serwera (`fuelToleranceL`) - panel nie ma prawa policzyć 5% sam.
  */
 export interface ToleranceRow {
   id: string;

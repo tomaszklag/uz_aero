@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: strona przychodowa · zrzuty.
+ * UZ Aero - panel: strona przychodowa · zrzuty.
  *
  * Trzy stany sekcji (ok / stale / empty) i uczciwość średniej wysokości: liczby
  * przychodzą z serwera, a przypis mówi, ILE zrzutów nie weszło do średniej.
@@ -10,7 +10,7 @@ import { describe, expect, it } from 'vitest';
 import { statsFixture } from '../../../test/fixtures/stats';
 import { dropsView } from './statsDrops';
 
-describe('dropsView — dane kompletne', () => {
+describe('dropsView - dane kompletne', () => {
   const data = statsFixture();
   const view = dropsView(data.drops, data.operations);
 
@@ -28,9 +28,9 @@ describe('dropsView — dane kompletne', () => {
   });
 
   it('średnia mówi, że 7 zrzutów bez wysokości NIE weszło do średniej', () => {
-    // Dokładnie zdanie z mockupu — razem z odmianą („7 … nie wchodzi").
+    // Dokładnie zdanie z mockupu - razem z odmianą („7 … nie wchodzi").
     expect(view.tiles[2]!.note).toBe(
-      'Z 171 zrzutów, które miały fix GPS — 7 bez wysokości nie wchodzi do średniej.',
+      'Z 171 zrzutów, które miały fix GPS - 7 bez wysokości nie wchodzi do średniej.',
     );
   });
 
@@ -77,8 +77,8 @@ describe('dropsView — dane kompletne', () => {
   });
 });
 
-describe('dropsView — niewiedza i pustka', () => {
-  it('wiersze sprzed kolumn statystyk: kafle „—", ZERO tabeli klientów, baner z powodem', () => {
+describe('dropsView - niewiedza i pustka', () => {
+  it('wiersze sprzed kolumn statystyk: kafle „-", ZERO tabeli klientów, baner z powodem', () => {
     const data = statsFixture();
     data.drops.staleRows = 2;
     data.drops.lifts = null;
@@ -88,13 +88,13 @@ describe('dropsView — niewiedza i pustka', () => {
 
     const view = dropsView(data.drops, data.operations);
     expect(view.state).toBe('stale');
-    for (const tile of view.tiles) expect(tile.value).toBe('—');
+    for (const tile of view.tiles) expect(tile.value).toBe('-');
     expect(view.ribbon).toEqual([]);
     expect(view.clients).toEqual([]);
     expect(view.note).toContain('kolumn statystyk');
     expect(view.note).toContain('twierdziłyby, że nikt nie skakał');
     // Licznik stale obejmuje TAKŻE dni bez rodzaju operacji (każdy MÓGŁ być skokowy)
-    // — zdanie stanu musi nazwać oba powody, nie tylko kolumny statystyk.
+    // - zdanie stanu musi nazwać oba powody, nie tylko kolumny statystyk.
     expect(view.note).toContain('MÓGŁ być skokowy');
   });
 

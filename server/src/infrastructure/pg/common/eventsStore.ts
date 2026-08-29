@@ -1,8 +1,8 @@
 /**
- * UZ Aero (serwer) — adapter magazynu zdarzeń (`EventsStorePort`).
+ * UZ Aero (serwer) - adapter magazynu zdarzeń (`EventsStorePort`).
  *
  * Idempotencja synca (§4.3) mieszka w JEDNYM miejscu: `ON CONFLICT (uuid) DO NOTHING`.
- * Telefon może wysłać tę samą paczkę pięć razy (urwane połączenie, retry) — liczba
+ * Telefon może wysłać tę samą paczkę pięć razy (urwane połączenie, retry) - liczba
  * wierszy w `events` się nie zmieni, a odpowiedź uczciwie rozdzieli `accepted` od
  * `duplicates`, bo to od niej zależy księgowość outboxa po stronie aplikacji.
  */
@@ -36,7 +36,7 @@ const toEvent = (r: EventRow): Event =>
     gpsTime: r.gps_time != null ? Number(r.gps_time) : null,
     payload: r.payload,
     schemaVersion: r.schema_version,
-    syncedAt: null, // pole klienckie — na serwerze bez znaczenia
+    syncedAt: null, // pole klienckie - na serwerze bez znaczenia
   }) as Event;
 
 export class PgEventsStore implements EventsStorePort {
@@ -99,7 +99,7 @@ export class PgEventsStore implements EventsStorePort {
     );
 
     // Klucze zakładamy z góry, żeby sesja BEZ zdarzeń miała pustą tablicę zamiast
-    // brakującego wpisu — wywołujący nie musi wtedy rozróżniać `undefined` od `[]`.
+    // brakującego wpisu - wywołujący nie musi wtedy rozróżniać `undefined` od `[]`.
     for (const uuid of sessionUuids) streams.set(uuid, []);
     for (const row of rows) streams.get(row.session_uuid)?.push(toEvent(row));
 

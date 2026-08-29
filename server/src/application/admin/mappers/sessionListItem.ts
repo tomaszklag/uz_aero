@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) — wiersz projekcji + złączenia → DTO listy dni (`A02`).
+ * UZ Aero (serwer) - wiersz projekcji + złączenia → DTO listy dni (`A02`).
  *
  * Osobny, nazwany moduł z tego samego powodu co `application/sessionRow.ts` po stronie
  * zapisu: to CZYSTA funkcja, więc testuje się ją na liczbach bez bazy, a zapytanie
@@ -7,7 +7,7 @@
  *
  * **Ta funkcja niczego nie liczy.** Przepisuje wartości, które policzyła projekcja
  * (`sessionRowFrom(projectSession(stream))`), i dokłada pola ze złączeń. Gdyby pojawiła
- * się tu arytmetyka — choćby „delta MH = koniec − start" — byłoby to drugie, równoległe
+ * się tu arytmetyka - choćby „delta MH = koniec − start" - byłoby to drugie, równoległe
  * wyliczenie obok projekcji, czyli dokładnie to, które zaczyna kłamać
  * (`docs/architektura-panelu-serwer.md` §7.1). Nowa liczba w panelu = nowa KOLUMNA
  * projekcji wypełniana przez `sessionRowFrom`.

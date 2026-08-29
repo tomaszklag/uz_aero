@@ -1,9 +1,9 @@
 /**
- * UZ Aero — panel: testy wierszy logu śladu (moduł czysty).
+ * UZ Aero - panel: testy wierszy logu śladu (moduł czysty).
  *
  * Najważniejsza reguła tego pliku nie jest widoczna w typach: **punkt odrzucony zostaje
  * w logu i dostaje POWÓD**. Log śladu istnieje wyłącznie po to, żeby zobaczyć, gdzie
- * bramka jakości zadziałała i dlaczego — wiersz bez wyjaśnienia albo cztery różne
+ * bramka jakości zadziałała i dlaczego - wiersz bez wyjaśnienia albo cztery różne
  * przyczyny sklejone w jedno „odrzucony" zabierają mu całą wartość diagnostyczną.
  */
 
@@ -38,7 +38,7 @@ describe('trackLogRows', () => {
     expect(row!.stateTone).toBe('dim');
   });
 
-  it('każdy powód odrzucenia ma własne zdanie — nie wspólne „odrzucony"', () => {
+  it('każdy powód odrzucenia ma własne zdanie - nie wspólne „odrzucony"', () => {
     const rows = trackLogRows([
       point({ rejected: 'accuracy' }),
       point({ rejected: 'speed' }),
@@ -73,23 +73,23 @@ describe('trackLogRows', () => {
   it('wiersz bez pozycji nie udaje współrzędnych', () => {
     const [row] = trackLogRows([point({ rejected: 'no-position' })]);
 
-    expect(row!.lat).toBe('—');
-    expect(row!.lon).toBe('—');
+    expect(row!.lat).toBe('-');
+    expect(row!.lon).toBe('-');
   });
 
-  it('brak pomiaru to „—", nie zero', () => {
+  it('brak pomiaru to „-", nie zero', () => {
     const [row] = trackLogRows([
       point({ groundSpeedKt: null, altitudeFt: null, trackDeg: null, accuracyM: null }),
     ]);
 
-    expect(row!.groundSpeed).toBe('—');
-    expect(row!.altitude).toBe('—');
-    expect(row!.track).toBe('—');
-    expect(row!.accuracy).toBe('—');
+    expect(row!.groundSpeed).toBe('-');
+    expect(row!.altitude).toBe('-');
+    expect(row!.track).toBe('-');
+    expect(row!.accuracy).toBe('-');
   });
 
   it('identyfikatory wierszy są unikalne mimo tego samego znacznika czasu', () => {
-    // Zapis wsadowy potrafi dać dwa fixy z identycznym `time` — klucz React musi to znieść.
+    // Zapis wsadowy potrafi dać dwa fixy z identycznym `time` - klucz React musi to znieść.
     const rows = trackLogRows([point(), point(), point()]);
     expect(new Set(rows.map((row) => row.id)).size).toBe(3);
   });

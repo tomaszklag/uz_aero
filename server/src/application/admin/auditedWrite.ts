@@ -1,17 +1,17 @@
 /**
- * UZ Aero (serwer) — JEDYNA droga zapisu panelu administracyjnego.
+ * UZ Aero (serwer) - JEDYNA droga zapisu panelu administracyjnego.
  *
  * Wymaganie brzmi: wpis do `admin_audit` powstaje w TEJ SAMEJ transakcji co skutek,
- * a napisanie komendy panelu BEZ śladu ma być niemożliwe — nie „odradzane".
+ * a napisanie komendy panelu BEZ śladu ma być niemożliwe - nie „odradzane".
  *
  * Mechanizm ma dwie połowy i żadna sama nie wystarcza:
  *
  *  1. **Ślad jest wartością ZWRACANĄ, nie wywołaniem obok.** `effect` musi oddać
  *     `Audited<T>`, więc pominięcie audytu jest błędem KOMPILACJI, a nie rzeczą do
- *     wyłapania na review. Nie da się oddać skutku bez wpisu — to cała sztuczka.
+ *     wyłapania na review. Nie da się oddać skutku bez wpisu - to cała sztuczka.
  *  2. **Komendy panelu nie dostają `Database` ani `Queryable` w konstruktorze.**
  *     Dostają `AuditedWrite` i porty odczytu. Bez uchwytu do bazy nie mają jak
- *     zapisać poza `run`. Pilnuje tego `test/architecture.test.ts` — kompilator
+ *     zapisać poza `run`. Pilnuje tego `test/architecture.test.ts` - kompilator
  *     tej reguły nie zna.
  *
  * Czym to się różni od „pamiętajmy, żeby logować":
@@ -46,7 +46,7 @@ export class AuditedWrite {
    * Kolejność jest istotna w obie strony: skutek, którego nie udało się zaudytować,
    * zostaje wycofany (rollback zabiera oba), a wyjątek z `effect` nie zostawia wpisu
    * o operacji, która się nie zdarzyła. Dlatego przerwanie operacji z powodów
-   * biznesowych (flaga już rozwiązana) realizujemy WYJĄTKIEM — zwrócenie wartości
+   * biznesowych (flaga już rozwiązana) realizujemy WYJĄTKIEM - zwrócenie wartości
    * nie umiałoby wycofać transakcji.
    *
    * Skutki UBOCZNE poza bazą (eksport karty dnia, wysyłka) nie mają tu wstępu:

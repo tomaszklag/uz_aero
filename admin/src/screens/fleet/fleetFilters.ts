@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: FILTRY FLOTY ↔ query string (moduł CZYSTY, testowany w Node).
+ * UZ Aero - panel: FILTRY FLOTY ↔ query string (moduł CZYSTY, testowany w Node).
  *
  * Filtry mieszkają w URL-u, nie w stanie komponentu
  * (`docs/architektura-panelu-frontend.md` §4.4): „wklej mi link do wyłączonych
@@ -9,7 +9,7 @@
  * ══ DLACZEGO STAN JEST JEDNYM CHIPEM, A NA SERWERZE DWOMA PARAMETRAMI ══
  * Pasek z `A07-flota.html` miesza dwa niezależne warunki bazy: `service_status`
  * (`active`/`disabled`) i „czy ktoś trzyma jednostkę" (`claimed`). Dla człowieka to
- * jednak JEDNO pytanie — „co jest z tym samolotem" — a chipy wykluczają się wzajemnie
+ * jednak JEDNO pytanie - „co jest z tym samolotem" - a chipy wykluczają się wzajemnie
  * także w mockupie. Tłumaczenie jednego wyboru na właściwy parametr trasy jest więc
  * treścią tego pliku, a nie pominiętym uogólnieniem. Ta sama konstrukcja, co
  * `daysFilters.ts`.
@@ -18,7 +18,7 @@
 import type { FleetListQuery } from '../../api/fleet';
 
 /**
- * Zakres listy jako JEDEN wybór. `all` to brak zawężenia, a nie czwarty stan — dlatego
+ * Zakres listy jako JEDEN wybór. `all` to brak zawężenia, a nie czwarty stan - dlatego
  * nie jest wartością żadnego pola serwera.
  */
 export type FleetScope = 'all' | 'active' | 'disabled' | 'claimed';
@@ -56,7 +56,7 @@ export function filterFromParams(params: URLSearchParams): FleetFilter {
 
 /**
  * Filtr → query string. Wartości domyślne POMIJAMY, żeby adres pełnej listy był po
- * prostu `#/flota` — link, który da się przeczytać i przepisać.
+ * prostu `#/flota` - link, który da się przeczytać i przepisać.
  */
 export function paramsFromFilter(filter: FleetFilter): Record<string, string> {
   const params: Record<string, string> = {};
@@ -67,7 +67,7 @@ export function paramsFromFilter(filter: FleetFilter): Record<string, string> {
 
 /**
  * Jeden wybór zakresu → parametry trasy. `claimed` jedzie jako `'true'`, nigdy jako
- * `'false'`: chip pyta o jednostki zajęte, a nie o zaprzeczenie — stronę negatywną
+ * `'false'`: chip pyta o jednostki zajęte, a nie o zaprzeczenie - stronę negatywną
  * filtra serwer umie, ale w mockupie nie ma na nią chipa i nie wymyślamy go.
  */
 function scopeQuery(scope: FleetScope): Partial<FleetListQuery> {
@@ -90,7 +90,7 @@ export function fleetListQuery(filter: FleetFilter): FleetListQuery {
   };
 }
 
-/** Czy filtr zawęża cokolwiek — pusta lista mówi wtedy co innego (patrz `fleetEmpty`). */
+/** Czy filtr zawęża cokolwiek - pusta lista mówi wtedy co innego (patrz `fleetEmpty`). */
 export function isNarrowed(filter: FleetFilter): boolean {
   return filter.scope !== 'all' || filter.search != null;
 }
@@ -101,7 +101,7 @@ export function aircraftHref(filter: FleetFilter, id: string): string {
   return `/flota/${encodeURIComponent(id)}${query === '' ? '' : `?${query}`}`;
 }
 
-/** Adres szuflady „Dodaj samolot" — ten sam ekran z pustym formularzem. */
+/** Adres szuflady „Dodaj samolot" - ten sam ekran z pustym formularzem. */
 export function newAircraftHref(filter: FleetFilter): string {
   return aircraftHref(filter, NEW_AIRCRAFT_SEGMENT);
 }
@@ -111,7 +111,7 @@ export function daysHref(aircraftId: string): string {
   return `/dni?samolot=${encodeURIComponent(aircraftId)}`;
 }
 
-/** Adres KARTY DNIA (`A02a`) — pełna strona, nie szuflada. */
+/** Adres KARTY DNIA (`A02a`) - pełna strona, nie szuflada. */
 export function dayHref(sessionUuid: string): string {
   return `/dni/${encodeURIComponent(sessionUuid)}`;
 }
@@ -122,15 +122,15 @@ export interface DayLink {
 }
 
 /**
- * Przejście z wiersza floty do dni — dla KAŻDEJ jednostki, nie tylko zajętej.
+ * Przejście z wiersza floty do dni - dla KAŻDEJ jednostki, nie tylko zajętej.
  *
  * Do 2026-08-01 przycisk pojawiał się wyłącznie przy `claim != null`, czyli w przypadku
- * NAJRZADSZYM, a prowadził i tak na listę dni zawężoną do samolotu — więc warunek nie
+ * NAJRZADSZYM, a prowadził i tak na listę dni zawężoną do samolotu - więc warunek nie
  * miał uzasadnienia i odbierał dostęp do historii jednostki wolnej, czyli tej, o którą
  * pyta się najczęściej („co się działo na SP-KWA przed remontem").
  *
  * Cel zależy od tego, co o wierszu WIADOMO: przy otwartym dniu serwer podaje jego
- * `sessionUuid` (`AdminAircraftClaim`), więc link celuje wprost w kartę tego dnia —
+ * `sessionUuid` (`AdminAircraftClaim`), więc link celuje wprost w kartę tego dnia -
  * i to jest jedyny konsument tego pola. Bez claimu nie ma jednego dnia, o który chodzi,
  * więc link zawęża listę do jednostki.
  */

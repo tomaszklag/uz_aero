@@ -1,13 +1,13 @@
 /**
- * UZ Aero — ParamGrid (`.param-grid` z mockupu 05)
+ * UZ Aero - ParamGrid (`.param-grid` z mockupu 05)
  *
  * Siatka 2×2 parametrów GPS w locie: prędkość po ziemi, wysokość, paliwo, czas lotu.
- * Komórki stykają się i są rozdzielone włosową linią, a nie osobnymi ramkami — dzięki
+ * Komórki stykają się i są rozdzielone włosową linią, a nie osobnymi ramkami - dzięki
  * temu czyta się je jak jeden przyrząd, a nie cztery kafelki.
  *
  * Czym różni się od `StatGrid`: tam komórki zawijają się dla dowolnej liczby pozycji
  * i niosą bilans do przepisania. Tutaj układ jest sztywny 2×2, bo w locie te cztery
- * wartości stoją zawsze w tych samych miejscach — pilot sięga po nie pamięcią
+ * wartości stoją zawsze w tych samych miejscach - pilot sięga po nie pamięcią
  * mięśniową, nie wzrokiem.
  *
  * `tint` delikatnie podbija tło komórki (paliwo amber, czas lotu green), tak jak
@@ -30,7 +30,7 @@ export interface ParamCell {
   /** Przygaszone tło w tonie komórki. */
   tint?: boolean;
   /**
-   * Czujnik martwy (mockup 05g `.param-value.stale`): wartość przygaszona — „— —"
+   * Czujnik martwy (mockup 05g `.param-value.stale`): wartość przygaszona - „- -"
    * ma wyglądać jak brak odczytu, nie jak odczyt zerowy.
    */
   stale?: boolean;
@@ -46,7 +46,7 @@ export interface ParamGridProps {
 export function ParamGrid({ cells, style }: ParamGridProps) {
   const { theme } = useTheme();
 
-  // Pary jako jawne wiersze z komórkami `flex: 1` — NIE `width: '49.9%'` + zawijanie:
+  // Pary jako jawne wiersze z komórkami `flex: 1` - NIE `width: '49.9%'` + zawijanie:
   // 2 × 49.9% plus 1 px odstępu na linię to ponad 100% przy szerokościach telefonów
   // (< 500 pt), więc siatka składała się w pion 1×4.
   const pairs: ParamCell[][] = [];
@@ -91,7 +91,7 @@ function Cell({ cell }: { cell: ParamCell }) {
       style={[
         styles.cell,
         {
-          // `.amber-bg`/`.green-bg` z mockupu 05 to akcent w 4% alfy — szept
+          // `.amber-bg`/`.green-bg` z mockupu 05 to akcent w 4% alfy - szept
           // przyrządu. `c.muted` (12%) robił z komórek kolorowe plakietki.
           // Akcenty wszystkich pięciu motywów są 6-cyfrowym hexem, więc
           // dosztukowanie kanału alfa „0A" (10/255 ≈ 0.04) jest bezpieczne.
@@ -130,9 +130,9 @@ function Cell({ cell }: { cell: ParamCell }) {
       {cell.note != null && (
         <AppText
           variant="mono"
-          // Nota martwej komórki jest AMBER, żywej — muted (sam kontekst źródła).
+          // Nota martwej komórki jest AMBER, żywej - muted (sam kontekst źródła).
           // Czerwień (do 2026-08-12) świeciła w siatce nad banerem tego samego stanu,
-          // który jest ostrzeżeniem — dwa kolory na jedną wiadomość „czujnik nie
+          // który jest ostrzeżeniem - dwa kolory na jedną wiadomość „czujnik nie
           // pracuje". Kolor stanu jest jeden; patrz `NoGpsBanner`.
           style={[styles.note, { color: cell.stale ? theme.colors.amber : theme.colors.textMuted }]}
         >
@@ -147,8 +147,8 @@ const styles = StyleSheet.create({
   // Kolumna wierszy; tło kontenera prześwituje przez 1 px odstępy jako włosowe linie.
   grid: { gap: 1 },
   gridRow: { flexDirection: 'row', gap: 1 },
-  // `flex: 1` w jawnym wierszu — obie komórki dzielą szerokość po równo niezależnie
-  // od szerokości ekranu i skali czcionki (wady wariantu `width: %` — patrz wyżej).
+  // `flex: 1` w jawnym wierszu - obie komórki dzielą szerokość po równo niezależnie
+  // od szerokości ekranu i skali czcionki (wady wariantu `width: %` - patrz wyżej).
   cell: { flex: 1, gap: 4, paddingHorizontal: 14, paddingVertical: 12 },
   valueRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
   unit: { fontSize: 11, letterSpacing: 1 },

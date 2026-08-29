@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) — adapter listy dni lotnych panelu (`SessionsAdminPort`, `A02`).
+ * UZ Aero (serwer) - adapter listy dni lotnych panelu (`SessionsAdminPort`, `A02`).
  *
  * Osobny adapter od `pg/sessionsProjection.ts` z tego samego powodu, co osobny port:
  * tamten obsługuje ZAPIS projekcji w gorącej transakcji ingestu (`upsert` + odczyty
@@ -9,7 +9,7 @@
  * **Czego tu NIE MA i nie wolno dodać:** arytmetyki na kolumnach projekcji
  * (`SUM(mh_end - mh_start)`, `COUNT(*) FROM events WHERE type='takeoff'`). Wolno
  * AGREGOWAĆ wartości, które wyprodukowała projekcja; nie wolno ODTWARZAĆ projekcji
- * SQL-em — to drugie, równoległe wyliczenie, i to ono zaczyna kłamać
+ * SQL-em - to drugie, równoległe wyliczenie, i to ono zaczyna kłamać
  * (`docs/architektura-panelu-serwer.md` §7.1). Nowa liczba w panelu = nowa kolumna
  * wypełniana przez `sessionRowFrom`.
  *
@@ -36,11 +36,11 @@ import {
 import { sessionColumns, toSessionRow, type SessionDbRow } from '../sessionDbRow.ts';
 import { SqlFilter } from '../sqlFilter.ts';
 
-/** Klucz porządku listy dni. `claim_time` jest NULL-owalne — stąd `NULLS LAST` i kursor. */
+/** Klucz porządku listy dni. `claim_time` jest NULL-owalne - stąd `NULLS LAST` i kursor. */
 const KEY: readonly [string, string] = ['s.claim_time', 's.session_uuid'];
 
 /**
- * Kształt kursora listy dni: `claim_time` to `BIGINT` z epoką w ms (NULL-owalny —
+ * Kształt kursora listy dni: `claim_time` to `BIGINT` z epoką w ms (NULL-owalny -
  * sesja bez przejęcia nie ma daty), a tie-breakerem jest `session_uuid`, czyli
  * zwykły tekst. Jeden obiekt dla dekodowania i dla predykatu, żeby deklaracja klucza
  * była w tym pliku jedna.
@@ -98,7 +98,7 @@ const toMhFormat = (value: string | null): MhFormat | null =>
 const toFlagTypes = (values: string[] | null): FlagType[] => {
   if (values == null) return [];
   // Ten sam strażnik i to samo uzasadnienie, co w adapterach flag: od wprowadzenia `flags_type_known`
-  // pilnuje tego `CHECK`, więc wartość spoza katalogu znaczy ręczną ingerencję —
+  // pilnuje tego `CHECK`, więc wartość spoza katalogu znaczy ręczną ingerencję -
   // a ciche pominięcie flagi byłoby najgorszą z opcji, bo flaga istnieje po to,
   // żeby być widoczna.
   for (const value of values) {
@@ -130,7 +130,7 @@ export class PgAdminSessionsRepo implements SessionsAdminPort {
     const cursor = filter.cursor == null ? null : decodeCursor(filter.cursor, shape);
     if (filter.cursor != null && cursor == null) return null;
 
-    // Warunki BEZ kursora — te same jadą do `COUNT(*)`, żeby licznik „pokazano 50
+    // Warunki BEZ kursora - te same jadą do `COUNT(*)`, żeby licznik „pokazano 50
     // z ~1 291" opisywał cały wynik filtra, a nie resztę po kursorze.
     const conditions = new SqlFilter();
     this.applyFilters(conditions, filter);
@@ -157,7 +157,7 @@ export class PgAdminSessionsRepo implements SessionsAdminPort {
 
     // `COUNT` bez złączeń: żaden filtr nie sięga do `aircraft` ani `pilots`, więc
     // złączenia byłyby tu wyłącznie kosztem. Dokładne liczenie przy skali klubu jest
-    // tanie — szacowania z `pg_class.reltuples` nie budujemy.
+    // tanie - szacowania z `pg_class.reltuples` nie budujemy.
     const counted = await db.query<{ n: string }>(
       `SELECT COUNT(*) AS n FROM sessions s ${conditions.where()}`,
       conditions.params(),
@@ -174,7 +174,7 @@ export class PgAdminSessionsRepo implements SessionsAdminPort {
   }
 
   /**
-   * Wszystkie filtry są OPCJONALNE i pomijane, gdy nieustawione — numerację `$n` nadaje
+   * Wszystkie filtry są OPCJONALNE i pomijane, gdy nieustawione - numerację `$n` nadaje
    * `SqlFilter`, żeby nie było jej w tym pliku wcale.
    *
    * Filtr zakresu dat działa na `claim_time`, czyli na czasie przejęcia; sesja bez
@@ -189,7 +189,7 @@ export class PgAdminSessionsRepo implements SessionsAdminPort {
     filter.addOptional('s.status = ?', f.status);
     filter.addOptional('s.operation = ?', f.operation);
 
-    // Dzień szkolny należy do OBU członków załogi — pilot pytający o swoje dni
+    // Dzień szkolny należy do OBU członków załogi - pilot pytający o swoje dni
     // ma zobaczyć także te, w których siedział jako Dual.
     if (f.pilotId !== undefined) {
       filter.add('(s.pic_id = ? OR s.dual_id = ?)', f.pilotId, f.pilotId);

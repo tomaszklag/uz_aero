@@ -1,7 +1,7 @@
 /**
- * UZ Aero — test osi faz pionowych ze śladu GPS.
+ * UZ Aero - test osi faz pionowych ze śladu GPS.
  *
- * Ta oś decyduje, ile paliwa model przypisze wznoszeniu, a ile przelotowi — czyli
+ * Ta oś decyduje, ile paliwa model przypisze wznoszeniu, a ile przelotowi - czyli
  * o liczbach, których nikt nie zmierzył i nie ma jak sprawdzić „na oko". Test buduje
  * ślady o znanym profilu (równe wznoszenie, poziom, zniżanie) i sprawdza, czy oś je
  * odtwarza; osobno pilnuje rzeczy, która na prawdziwym nagraniu jest najgroźniejsza:
@@ -42,7 +42,7 @@ describe('rozpoznanie faz pionowych', () => {
   });
 
   it('lot poziomy to cruise, nie wznoszenie z szumu', () => {
-    // Wysokość drga o ±10 ft wokół 4000 — regresja w oknie rozkłada to na zero.
+    // Wysokość drga o ±10 ft wokół 4000 - regresja w oknie rozkłada to na zero.
     const points = track(
       Array.from({ length: 20 }, (_, i) => [i * 2, 4000 + (i % 2 === 0 ? 10 : -10)]),
     );
@@ -77,7 +77,7 @@ describe('odporność wejścia', () => {
   });
 
   it('punkt odrzucony przez bramkę jakości nie tworzy fazy, której nie było', () => {
-    // Fix ze skokiem wysokości o 3000 ft, oznaczony jako odrzucony — gdyby wszedł,
+    // Fix ze skokiem wysokości o 3000 ft, oznaczony jako odrzucony - gdyby wszedł,
     // wyprodukowałby wznoszenie rzędu 90 000 ft/min.
     const points = [
       point(0, 4000),
@@ -114,13 +114,13 @@ describe('czasy faz w oknie interwału', () => {
 
   it('NIE liczy dryfu wysokości na ziemi', () => {
     // Sedno przecięcia z czasem lotu. Ślad nagrywa się przy pracującym silniku, więc
-    // obejmuje kołowanie — a wysokość GPS potrafi na płycie dryfować o kilkadziesiąt
+    // obejmuje kołowanie - a wysokość GPS potrafi na płycie dryfować o kilkadziesiąt
     // stóp i wyprodukować „wznoszenie", którego nie było.
     const rows: Array<[number, number]> = [];
     for (let i = 0; i <= 30; i++) rows.push([i * 2, 800 + i * 20]); // „wznoszenie" na ziemi
 
     const timeline = buildPhaseTimeline(track(rows));
-    // Samolot wystartował dopiero w 200. sekundzie — całe nagranie jest sprzed startu.
+    // Samolot wystartował dopiero w 200. sekundzie - całe nagranie jest sprzed startu.
     const times = phaseTimesInWindow(timeline, [{ from: sec(200), to: sec(400) }], sec(0), sec(400));
 
     expect(times.climbMs).toBe(0);

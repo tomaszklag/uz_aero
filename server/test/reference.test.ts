@@ -1,9 +1,9 @@
 /**
- * UZ Aero (serwer) — testy `GET /reference` (§4.6, §4.8).
+ * UZ Aero (serwer) - testy `GET /reference` (§4.6, §4.8).
  *
  * Kontrakt z aplikacją: kształty `ReferenceAircraft`/`ReferencePilot` idą z pakietu
  * domeny, więc test sprawdza dokładnie to, co telefon włoży do cache. ETag/304 to
- * oszczędność łącza w terenie — flota zmienia się kilka razy w sezonie.
+ * oszczędność łącza w terenie - flota zmienia się kilka razy w sezonie.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -26,7 +26,7 @@ describe('GET /reference', () => {
     expect(res.statusCode).toBe(401);
   });
 
-  it('zwraca flotę i pilotów w kształtach domeny — scenariusz zgodny z aplikacją', async () => {
+  it('zwraca flotę i pilotów w kształtach domeny - scenariusz zgodny z aplikacją', async () => {
     const { app } = await testHarness();
     const token = await authed(app);
 
@@ -47,7 +47,7 @@ describe('GET /reference', () => {
     ]);
     expect(body.pilots).toHaveLength(5);
 
-    // Konfiguracja §5.4 — to z niej aplikacja bierze walidacje i formaty.
+    // Konfiguracja §5.4 - to z niej aplikacja bierze walidacje i formaty.
     const an2 = body.aircraft.find((a: { reg: string }) => a.reg === 'SP-ANK');
     expect(an2.dualRequired).toBe(true);
     expect(an2.capacityL).toBe(1700);
@@ -60,7 +60,7 @@ describe('GET /reference', () => {
     expect(an2.handover).toBeNull();
   });
 
-  it('otwarta sesja wypełnia claim w /reference — cache telefonu dostaje stan floty', async () => {
+  it('otwarta sesja wypełnia claim w /reference - cache telefonu dostaje stan floty', async () => {
     const { app } = await testHarness();
     const token = await authed(app);
 
@@ -104,7 +104,7 @@ describe('GET /reference', () => {
     const res = await app.inject({
       method: 'GET',
       url: '/reference',
-      // Stary ETag NIE może dać 304 — claim właśnie się zmienił.
+      // Stary ETag NIE może dać 304 - claim właśnie się zmienił.
       headers: { authorization: `Bearer ${token}`, 'if-none-match': first.headers.etag as string },
     });
 
@@ -135,7 +135,7 @@ describe('GET /reference', () => {
     expect(second.body).toBe('');
   });
 
-  it('zmiana danych zmienia ETag — 304 nie zamraża floty na zawsze', async () => {
+  it('zmiana danych zmienia ETag - 304 nie zamraża floty na zawsze', async () => {
     const { app, db } = await testHarness();
     const token = await authed(app);
 
@@ -145,7 +145,7 @@ describe('GET /reference', () => {
       headers: { authorization: `Bearer ${token}` },
     });
 
-    // Administrator wyłącza samolot ze służby — updated_at idzie do przodu.
+    // Administrator wyłącza samolot ze służby - updated_at idzie do przodu.
     await db.query(
       "UPDATE aircraft SET service_status = 'disabled', updated_at = now() + interval '1 second' WHERE id = 'SP-AXA'",
     );
@@ -174,7 +174,7 @@ describe('norma zużycia w kanale referencyjnym (etap 3, 2026-08-05)', () => {
     expect(res.statusCode).toBe(200);
     for (const aircraft of res.json().aircraft) {
       // Świeża baza nie ma jeszcze żadnego zamkniętego dnia, więc modelu też nie ma.
-      // Telefon musi dostać jawny brak, a nie normę „0 L/h" — na jej podstawie
+      // Telefon musi dostać jawny brak, a nie normę „0 L/h" - na jej podstawie
       // ekran tankowania orzekłby, że każdy wynik jest „powyżej normy".
       expect(aircraft.consumption).toBeNull();
     }
@@ -182,7 +182,7 @@ describe('norma zużycia w kanale referencyjnym (etap 3, 2026-08-05)', () => {
 
   it('policzona norma trafia do odpowiedzi i ZMIENIA ETag', async () => {
     // Bez trzeciego składnika ETagu przeliczenie modelu (które nie rusza ani floty,
-    // ani sesji) byłoby dla telefonu niewidoczne — 304 zamroziłoby poprzednią odpowiedź.
+    // ani sesji) byłoby dla telefonu niewidoczne - 304 zamroziłoby poprzednią odpowiedź.
     const { app, db } = await testHarness();
     const token = await authed(app);
 
@@ -222,7 +222,7 @@ describe('norma zużycia w kanale referencyjnym (etap 3, 2026-08-05)', () => {
     const axa = after.json().aircraft.find((a: { id: string }) => a.id === 'SP-AXA');
     expect(axa.consumption).toMatchObject({ blockLPerH: 16, windowDays: 90, airLPerH: 20 });
 
-    // Pozostałe jednostki nadal bez normy — wpis dotyczy jednego samolotu.
+    // Pozostałe jednostki nadal bez normy - wpis dotyczy jednego samolotu.
     const other = after.json().aircraft.find((a: { id: string }) => a.id === 'SP-FGK');
     expect(other.consumption).toBeNull();
   });
@@ -250,7 +250,7 @@ describe('przekazanie oleju w /reference (issue #60)', () => {
       schemaVersion: 1,
     });
 
-    // Sesja 1: POMIAR 10,6 L przy liczniku 1230,5 — to ona zostanie kotwicą.
+    // Sesja 1: POMIAR 10,6 L przy liczniku 1230,5 - to ona zostanie kotwicą.
     const s1 = await app.inject({
       method: 'POST',
       url: '/events',
@@ -274,7 +274,7 @@ describe('przekazanie oleju w /reference (issue #60)', () => {
     });
     expect(s1.statusCode).toBe(200);
 
-    // Sesja 2: BEZ pomiaru (bagnet gorący) — dolewka 0,7 przy przejęciu + 0,3 z kokpitu.
+    // Sesja 2: BEZ pomiaru (bagnet gorący) - dolewka 0,7 przy przejęciu + 0,3 z kokpitu.
     const s2 = await app.inject({
       method: 'POST',
       url: '/events',

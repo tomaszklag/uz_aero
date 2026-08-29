@@ -1,13 +1,13 @@
 /**
- * UZ Aero (serwer) — STATYSTYKI floty i pilotów (`GET /admin/api/stats`, mockup `A10`).
+ * UZ Aero (serwer) - STATYSTYKI floty i pilotów (`GET /admin/api/stats`, mockup `A10`).
  *
  * Konstytucja ekranu (zdanie z góry mockupu) w postaci wykonywalnej:
  *
- *  1. **panel sumuje gotowe wyniki** — agregat trasy równa się sumie kolumn projekcji;
+ *  1. **panel sumuje gotowe wyniki** - agregat trasy równa się sumie kolumn projekcji;
  *     równość z `projectSession` przybija osobno `contract.test.ts`;
  *  2. **tylko dni ZAMKNIĘTE wchodzą do sum**, zakres liczy się po DNIU ZAMKNIĘCIA,
  *     a odpowiedź mówi, ile dni otwartych pominęła;
- *  3. **`null` to „nie wiemy", nigdy zero** — wiersz sprzed kolumn statystyk nie staje się
+ *  3. **`null` to „nie wiemy", nigdy zero** - wiersz sprzed kolumn statystyk nie staje się
  *     zerem startów, a zrzut bez wysokości nie wchodzi do średniej.
  *
  * Dni powstają przez `POST /events` tokenem PIC-a (single-writer), żeby agregaty
@@ -23,7 +23,7 @@ type Harness = Awaited<ReturnType<typeof testHarness>>;
 
 const HOUR_MS = 60 * 60 * 1000;
 const MIN_MS = 60 * 1000;
-/** Trzy kolejne doby czerwca — zakres testów: 2026-06-19 … 2026-06-22. */
+/** Trzy kolejne doby czerwca - zakres testów: 2026-06-19 … 2026-06-22. */
 const D19 = Date.UTC(2026, 5, 19);
 const D20 = Date.UTC(2026, 5, 20);
 const D21 = Date.UTC(2026, 5, 21);
@@ -46,7 +46,7 @@ interface DayOptions {
   drops?: { tandem: number; aff: number; solo: number; alt: number | null }[];
   mh?: number;
   fuelEnd?: number;
-  /** `false` = dzień bez `day_close` (otwarty — poza sumami). */
+  /** `false` = dzień bez `day_close` (otwarty - poza sumami). */
   close?: boolean;
   /** Czas `day_close` WZGLĘDEM `dayStart` (domyślnie 16:45 tego samego dnia). */
   closeAtMs?: number;
@@ -54,7 +54,7 @@ interface DayOptions {
 
 let seq = 0;
 
-/** Kanoniczny dzień lotny — te same godziny co w `contract.test.ts`, sterowane opcjami. */
+/** Kanoniczny dzień lotny - te same godziny co w `contract.test.ts`, sterowane opcjami. */
 function flyingDay(o: DayOptions) {
   const base = {
     sessionUuid: o.sessionUuid,
@@ -122,7 +122,7 @@ async function token(app: Harness['app'], who: string): Promise<string> {
 
 const bearer = (t: string) => ({ authorization: `Bearer ${t}` });
 
-/** Wysyła dzień TOKENEM JEGO PIC-a — single-writer, jak w `adminDashboard.test.ts`. */
+/** Wysyła dzień TOKENEM JEGO PIC-a - single-writer, jak w `adminDashboard.test.ts`. */
 async function ingest(
   app: Harness['app'],
   events: { picId: string; [key: string]: unknown }[],
@@ -138,7 +138,7 @@ async function ingest(
 
 /**
  * Zestaw kanoniczny: dwa dni ZAMKNIĘTE (skoki na SP-AXA, ferry z dualem na SP-FGK)
- * i jeden OTWARTY — dokładnie ten układ, o którym mówi nagłówek mockupu („dni jeszcze
+ * i jeden OTWARTY - dokładnie ten układ, o którym mówi nagłówek mockupu („dni jeszcze
  * otwarte są celowo poza zakresem").
  */
 async function threeDays() {
@@ -201,14 +201,14 @@ async function threeDays() {
 }
 
 describe('A10 · sumy zakresu z kolumn projekcji', () => {
-  it('kafle: blok, lot, starty/lądowania, paliwo, Δ MH i wymiary — z dni ZAMKNIĘTYCH', async () => {
+  it('kafle: blok, lot, starty/lądowania, paliwo, Δ MH i wymiary - z dni ZAMKNIĘTYCH', async () => {
     const { stats } = await threeDays();
     const report = await stats();
 
     expect(report.totals).toMatchObject({
       sessions: 2,
       aircraft: 2,
-      // PIC ∪ Dual: TMK, PWI i JSE — dzień szkolny należy do OBU członków załogi.
+      // PIC ∪ Dual: TMK, PWI i JSE - dzień szkolny należy do OBU członków załogi.
       pilots: 3,
       blockMs: 2 * BLOCK_MS,
       flightMs: 2 * FLIGHT_MS,
@@ -217,10 +217,10 @@ describe('A10 · sumy zakresu z kolumn projekcji', () => {
       staleRows: 0,
       openSessionsInRange: 1,
     });
-    // Paliwo: (150−88) + (150−96); Δ MH: 2×2.2 — floaty porównujemy z tolerancją.
+    // Paliwo: (150−88) + (150−96); Δ MH: 2×2.2 - floaty porównujemy z tolerancją.
     expect(report.totals.fuelConsumedL).toBeCloseTo(62 + 54, 9);
     expect(report.totals.mhDeltaH).toBeCloseTo(4.4, 9);
-    // Iloraz liczy SERWER — panel nie ma prawa dzielić dwóch sum po swojemu.
+    // Iloraz liczy SERWER - panel nie ma prawa dzielić dwóch sum po swojemu.
     expect(report.totals.flightVsBlockPct).toBeCloseTo(((2 * FLIGHT_MS) / (2 * BLOCK_MS)) * 100, 9);
     expect(report.range).toMatchObject({
       fromDay: '2026-06-19',
@@ -230,7 +230,7 @@ describe('A10 · sumy zakresu z kolumn projekcji', () => {
     });
   });
 
-  it('trzy ujęcia to TEN SAM zbiór dni — sumy zgadzają się między ujęciami', async () => {
+  it('trzy ujęcia to TEN SAM zbiór dni - sumy zgadzają się między ujęciami', async () => {
     const { stats } = await threeDays();
     const report = await stats();
 
@@ -239,13 +239,13 @@ describe('A10 · sumy zakresu z kolumn projekcji', () => {
       expect(rows.reduce((acc, r) => acc + r.flightMs, 0)).toBe(report.totals.flightMs);
       expect(rows.reduce((acc, r) => acc + r.sessions, 0)).toBe(report.totals.sessions);
     }
-    // Blok „jako PIC" też sumuje się do nalotu floty (hint mockupu) — Duala tu nie ma.
+    // Blok „jako PIC" też sumuje się do nalotu floty (hint mockupu) - Duala tu nie ma.
     expect(report.pilots.reduce((acc, r) => acc + r.blockMs, 0)).toBe(report.totals.blockMs);
 
     expect(report.aircraft.map((r) => r.reg).sort()).toEqual(['SP-AXA', 'SP-FGK']);
     // Bloki obu operacji są tu RÓWNE, więc rozstrzyga tie-breaker alfabetyczny.
     expect(report.operations.map((r) => r.operation)).toEqual(['ferry', 'skoki']);
-    // Bloki obu PIC-ów są równe — rozstrzyga tie-breaker po identyfikatorze konta.
+    // Bloki obu PIC-ów są równe - rozstrzyga tie-breaker po identyfikatorze konta.
     expect(report.pilots.map((r) => r.code)).toEqual(['PWI', 'TMK']);
     expect(report.pilots.find((r) => r.code === 'PWI')).toMatchObject({
       regs: ['SP-FGK'],
@@ -260,7 +260,7 @@ describe('A10 · sumy zakresu z kolumn projekcji', () => {
     expect(row).toMatchObject({ reg: 'SP-AXA', sessions: 1, activeDays: 1 });
     expect(row.mhFirstStart).toBe(1200);
     expect(row.mhLastEnd).toBeCloseTo(1202.2, 9);
-    // 62 L / (2:22 bloku = 2.3(6) h) — mockup liczy średnią na godzinę blokową.
+    // 62 L / (2:22 bloku = 2.3(6) h) - mockup liczy średnią na godzinę blokową.
     expect(row.avgLitresPerBlockHour).toBeCloseTo(62 / (BLOCK_MS / HOUR_MS), 9);
     // 1 dzień lotny na 4 dni kalendarzowe zakresu.
     expect(row.utilizationPct).toBeCloseTo(25, 9);
@@ -268,13 +268,13 @@ describe('A10 · sumy zakresu z kolumn projekcji', () => {
 });
 
 describe('A10 · dni otwarte i oś zakresu', () => {
-  it('dzień OTWARTY jest poza sumami — zamknięcie go zmieniłoby raport wstecz', async () => {
+  it('dzień OTWARTY jest poza sumami - zamknięcie go zmieniłoby raport wstecz', async () => {
     const { app, stats } = await threeDays();
     const before = await stats();
     expect(before.totals.sessions).toBe(2);
     expect(before.totals.openSessionsInRange).toBe(1);
 
-    // Domknięcie otwartego dnia WCIĄGA go do sum — dokładnie dlatego wcześniej był
+    // Domknięcie otwartego dnia WCIĄGA go do sum - dokładnie dlatego wcześniej był
     // poza nimi: jego liczby nie były jeszcze ostateczne.
     await ingest(app, [
       {
@@ -299,14 +299,14 @@ describe('A10 · dni otwarte i oś zakresu', () => {
 
   it('zakres liczy się po DNIU ZAMKNIĘCIA sesji, nie po duty starcie', async () => {
     const { app, admin } = await threeDays();
-    // Dzień z duty startem 19-go, domknięty NAZAJUTRZ o 02:30 — nocna zmiana.
+    // Dzień z duty startem 19-go, domknięty NAZAJUTRZ o 02:30 - nocna zmiana.
     await ingest(
       app,
       flyingDay({
         sessionUuid: 'st-night',
         aircraftId: 'SP-ANK',
         picId: 'KRZ',
-        dualId: 'JSE', // An-2 wymaga Duala — a dla statystyk to kolejny uczestnik.
+        dualId: 'JSE', // An-2 wymaga Duala - a dla statystyk to kolejny uczestnik.
         dayStart: D19,
         operation: 'ferry',
         closeAtMs: 26 * HOUR_MS + 30 * MIN_MS, // 20 czerwca, 02:30
@@ -323,14 +323,14 @@ describe('A10 · dni otwarte i oś zakresu', () => {
       return res.json() as AdminStatsReport;
     };
 
-    // 19-go dzień jeszcze trwał — do sum wchodzi tam, gdzie został DOMKNIĘTY.
+    // 19-go dzień jeszcze trwał - do sum wchodzi tam, gdzie został DOMKNIĘTY.
     expect((await on('2026-06-19')).totals.sessions).toBe(0);
     const closingDay = await on('2026-06-20');
     expect(closingDay.totals.sessions).toBe(2); // st-sky + st-night
     expect(closingDay.aircraft.map((r) => r.reg).sort()).toEqual(['SP-ANK', 'SP-AXA']);
   });
 
-  it('szereg dzienny niesie PEŁNY kalendarz — dzień bez sesji to prawdziwe zero', async () => {
+  it('szereg dzienny niesie PEŁNY kalendarz - dzień bez sesji to prawdziwe zero', async () => {
     const { stats } = await threeDays();
     const daily = (await stats()).daily;
 
@@ -341,14 +341,14 @@ describe('A10 · dni otwarte i oś zakresu', () => {
       '2026-06-21',
       '2026-06-22',
     ]);
-    // 19-go i 22-go nikt nie DOMKNĄŁ dnia — zero jest faktem o rejestrze, nie brakiem.
+    // 19-go i 22-go nikt nie DOMKNĄŁ dnia - zero jest faktem o rejestrze, nie brakiem.
     expect(daily.map((p) => p.blockMs)).toEqual([0, BLOCK_MS, BLOCK_MS, 0]);
   });
 
   it('dzień otwarty BEZ CLAIMU (rejestr niekompletny) jest liczony ZAWSZE, osobno', async () => {
     const { app, stats } = await threeDays();
     // Strumień bez `session_claim`, czyli bez `claim_time`. Wg §4.4 claim jest pierwszym
-    // zdarzeniem każdej sesji, więc taki strumień nie powstaje w normalnej pracy — ale
+    // zdarzeniem każdej sesji, więc taki strumień nie powstaje w normalnej pracy - ale
     // serwer go przyjmie (§4.5: nie odrzuca danych z terenu) i nie ma jak przypisać go
     // do zakresu dat. Uczciwiej pokazać go zawsze, niż schować: to licznik rzeczy
     // wymagających uwagi, a ta sesja jest połamana.
@@ -378,8 +378,8 @@ describe('A10 · dni otwarte i oś zakresu', () => {
     ]);
 
     const report = await stats();
-    expect(report.totals.openSessionsInRange).toBe(1); // st-open — po duty starcie
-    expect(report.totals.openSessionsUndated).toBe(1); // st-lost — bez daty
+    expect(report.totals.openSessionsInRange).toBe(1); // st-open - po duty starcie
+    expect(report.totals.openSessionsUndated).toBe(1); // st-lost - bez daty
 
     // Zakres, w którym st-open NIE leży: sesja bez daty dalej jest widoczna,
     // bo nie istnieje zakres, do którego należy.
@@ -427,7 +427,7 @@ describe('A10 · dni otwarte i oś zakresu', () => {
     const kwa = (res.json() as AdminStatsReport).aircraft.find(
       (r) => r.aircraftId === 'SP-KWA',
     )!;
-    // „Pierwsza" sesja remisu to `st-tie-a` (uuid rosnąco), „ostatnia" — `st-tie-z`.
+    // „Pierwsza" sesja remisu to `st-tie-a` (uuid rosnąco), „ostatnia" - `st-tie-z`.
     expect(kwa.mhFirstStart).toBe(1000);
     expect(kwa.mhLastEnd).toBeCloseTo(2002.2, 9);
   });
@@ -436,7 +436,7 @@ describe('A10 · dni otwarte i oś zakresu', () => {
     const { stats } = await threeDays();
     const report = await stats('');
 
-    // TestClock stoi 2026-06-22 — „dziś" rozstrzyga serwer, nie przeglądarka.
+    // TestClock stoi 2026-06-22 - „dziś" rozstrzyga serwer, nie przeglądarka.
     expect(report.range).toMatchObject({
       fromDay: '2026-05-24',
       toDay: '2026-06-22',
@@ -448,13 +448,13 @@ describe('A10 · dni otwarte i oś zakresu', () => {
   });
 });
 
-describe('A10 · strona przychodowa — zrzuty', () => {
+describe('A10 · strona przychodowa - zrzuty', () => {
   it('sumy wyniesień i skoczków; średnia WYŁĄCZNIE ze zrzutów z fixem', async () => {
     const { stats } = await threeDays();
     const drops = (await stats()).drops;
 
     expect(drops).toMatchObject({
-      sessions: 1, // wyłącznie operacja `skoki` (podpis mockupu) — dzień ferry nie wchodzi
+      sessions: 1, // wyłącznie operacja `skoki` (podpis mockupu) - dzień ferry nie wchodzi
       lifts: 2,
       jumpers: 8,
       tandem: 3,
@@ -477,16 +477,16 @@ describe('A10 · strona przychodowa — zrzuty', () => {
       tandem: 3,
       avgAltitudeFt: 3000,
     });
-    // Licznik zrzutów Z fixem jedzie w odpowiedzi — panel nie ma prawa odtwarzać go
+    // Licznik zrzutów Z fixem jedzie w odpowiedzi - panel nie ma prawa odtwarzać go
     // odejmowaniem `lifts − dropsWithoutAltitude`.
     expect(drops.dropsWithAltitude).toBe(1);
   });
 
-  it('dzień z `operation IS NULL` w zakresie unieważnia sekcję zrzutów — mógł być skokowy', async () => {
+  it('dzień z `operation IS NULL` w zakresie unieważnia sekcję zrzutów - mógł być skokowy', async () => {
     const { db, stats } = await threeDays();
     // Wiersz historyczny bez rodzaju operacji: rodzaju operacji NIE ZNAMY, więc każdy
     // taki dzień MÓGŁ być dniem skokowym. Zawężenie `operation = 'skoki'` nie ma prawa
-    // wyrzucić go ze zbioru nawet jako „nieznany" — sekcja pokazywałaby sumę z części
+    // wyrzucić go ze zbioru nawet jako „nieznany" - sekcja pokazywałaby sumę z części
     // wierszy podaną jako całość i przeczyła banerowi o wierszach do przebudowy.
     await db.query(
       `UPDATE sessions SET operation = NULL, client = NULL WHERE session_uuid = 'st-ferry'`,
@@ -498,13 +498,13 @@ describe('A10 · strona przychodowa — zrzuty', () => {
     expect(report.drops.jumpers).toBeNull();
     expect(report.drops.avgAltitudeFt).toBeNull();
     expect(report.drops.clients).toEqual([]);
-    // Dni JAWNIE skokowe są policzone — niepewny jest zakres, nie one.
+    // Dni JAWNIE skokowe są policzone - niepewny jest zakres, nie one.
     expect(report.drops.sessions).toBe(1);
   });
 });
 
 describe('A10 · `null` to „nie wiemy", nigdy zero', () => {
-  it('wiersz sprzed kolumn statystyk unieważnia agregaty jej kolumn — z licznikiem, nie po cichu', async () => {
+  it('wiersz sprzed kolumn statystyk unieważnia agregaty jej kolumn - z licznikiem, nie po cichu', async () => {
     const { db, stats } = await threeDays();
     // Symulacja wiersza sprzed migracji: dokładnie tak wygląda projekcja zapisana przed
     // wdrożeniem, dopóki nie przejdzie przebudowa z `A11`.
@@ -517,14 +517,14 @@ describe('A10 · `null` to „nie wiemy", nigdy zero', () => {
     );
 
     const report = await stats();
-    // Suma po CZĘŚCI wierszy podana jako całość byłaby kłamstwem — jedzie kreska
+    // Suma po CZĘŚCI wierszy podana jako całość byłaby kłamstwem - jedzie kreska
     // i licznik wierszy do przebudowy.
     expect(report.totals.takeoffs).toBeNull();
     expect(report.totals.landings).toBeNull();
     expect(report.totals.fuelConsumedL).toBeNull();
     expect(report.totals.mhDeltaH).toBeNull();
     expect(report.totals.staleRows).toBe(1);
-    // Stare kolumny (blok, lot, liczba dni) są NIETKNIĘTE migracją — zostają liczbami.
+    // Stare kolumny (blok, lot, liczba dni) są NIETKNIĘTE migracją - zostają liczbami.
     expect(report.totals.blockMs).toBe(2 * BLOCK_MS);
 
     // Sekcja zrzutów pada W CAŁOŚCI: częściowa tabela klientów wyglądałaby na pełne
@@ -546,7 +546,7 @@ describe('A10 · `null` to „nie wiemy", nigdy zero', () => {
 
   it('dzień zamknięty BEZ preflightu: bilans nieznany nie wchodzi do sumy i jest POLICZONY', async () => {
     const { app, stats } = await threeDays();
-    // Claim + day_close bez `preflight_confirm` — realny stan (telefon padł w trakcie).
+    // Claim + day_close bez `preflight_confirm` - realny stan (telefon padł w trakcie).
     // Odczytu początkowego nie ma, więc bilansów NIE DA SIĘ policzyć.
     const base = {
       sessionUuid: 'st-bare',
@@ -576,13 +576,13 @@ describe('A10 · `null` to „nie wiemy", nigdy zero', () => {
 
     const report = await stats();
     expect(report.totals.sessions).toBe(3);
-    // Suma paliwa dalej JEST liczbą — ale odpowiedź mówi, że jeden dzień do niej
+    // Suma paliwa dalej JEST liczbą - ale odpowiedź mówi, że jeden dzień do niej
     // nie wszedł, bo jego bilansu nie znamy.
     expect(report.totals.fuelConsumedL).toBeCloseTo(62 + 54, 9);
     expect(report.totals.fuelUnknownSessions).toBe(1);
     expect(report.totals.mhUnknownSessions).toBe(1);
     expect(report.totals.staleRows).toBe(0);
-    // Dzień bez preflightu nie ma też RODZAJU OPERACJI — mógł być skokowy, więc
+    // Dzień bez preflightu nie ma też RODZAJU OPERACJI - mógł być skokowy, więc
     // sekcja zrzutów uczciwie mówi „nie wiem", a nie „nikt nie skakał".
     expect(report.drops.staleRows).toBe(1);
     expect(report.drops.lifts).toBeNull();
@@ -591,7 +591,7 @@ describe('A10 · `null` to „nie wiemy", nigdy zero', () => {
   it('Śr. L/h i rozjazd Δ MH liczą mianownik z TEGO SAMEGO zbioru dni co licznik', async () => {
     const { app, stats } = await threeDays();
     // Drugi dzień na SP-AXA: zamknięty, z blokiem (engine_start → engine_stop), ale BEZ
-    // preflightu — bilansów paliwa i MH nie znamy, choć godziny blokowe są policzone.
+    // preflightu - bilansów paliwa i MH nie znamy, choć godziny blokowe są policzone.
     const base = {
       sessionUuid: 'st-noball',
       aircraftId: 'SP-AXA',
@@ -623,11 +623,11 @@ describe('A10 · `null` to „nie wiemy", nigdy zero', () => {
     const axa = report.aircraft.find((r) => r.reg === 'SP-AXA')!;
     expect(axa.sessions).toBe(2);
     expect(axa.fuelUnknownSessions).toBe(1);
-    // 62 L dzielone przez blok DNI Z BILANSEM (2:22), nie przez blok obu dni (4:44) —
+    // 62 L dzielone przez blok DNI Z BILANSEM (2:22), nie przez blok obu dni (4:44) -
     // mieszany mianownik systematycznie ZANIŻAŁBY zużycie o połowę.
     expect(axa.avgLitresPerBlockHour).toBeCloseTo(62 / (BLOCK_MS / HOUR_MS), 9);
 
-    // Rozjazd Δ MH vs blok: dzień bez pary odczytów nie wchodzi do PORÓWNANIA —
+    // Rozjazd Δ MH vs blok: dzień bez pary odczytów nie wchodzi do PORÓWNANIA -
     // częściowa suma Δ minus pełne godziny blokowe pisałaby „rozjazd 2.4 h",
     // gdy naprawdę brakuje odczytów.
     expect(report.totals.mhUnknownSessions).toBe(1);
@@ -648,7 +648,7 @@ describe('A10 · brama i walidacja', () => {
     expect(inverted.json()).toEqual({ error: 'bad_range' });
   });
 
-  it('zakres odwrócony JEDNOSTRONNIE — samo `from` z przyszłości — to też 400 bad_range', async () => {
+  it('zakres odwrócony JEDNOSTRONNIE - samo `from` z przyszłości - to też 400 bad_range', async () => {
     const { app, admin } = await threeDays();
     // TestClock stoi 2026-06-22: bez `to` serwer domyka zakres na końcu dzisiejszej
     // doby, więc `from` z przyszłości daje `from > to` DOPIERO po rozstrzygnięciu

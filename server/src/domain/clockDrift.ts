@@ -1,21 +1,21 @@
 /**
- * UZ Aero (serwer) — flaga rozjazdu zegarów (§4.5 `clock_drift`).
+ * UZ Aero (serwer) - flaga rozjazdu zegarów (§4.5 `clock_drift`).
  *
  * Każde zdarzenie niesie DWA zegary: `deviceTime` (telefon) i `gpsTime` (z fixa, `null`
- * gdy brak). Projekcja liczy czasy z GPS, gdy tylko jest — ale gdy telefon rozjeżdża
+ * gdy brak). Projekcja liczy czasy z GPS, gdy tylko jest - ale gdy telefon rozjeżdża
  * się z GPS, warto to zapisać, bo tłumaczy późniejsze dziwactwa w danych: zdarzenia
  * bez fixa (zapis ręczny, kołowanie w hangarze) dostają wtedy stempel z przestawionego
  * zegara i nic już tego nie prostuje.
  *
  * **Dlaczego to w ogóle powstało.** §4.5 obiecywała tę flagę od początku, ale do
  * 2026-07-31 istniała wyłącznie jako lokalne ostrzeżenie w telefonie (`checkClocks`
- * w `packages/domain/src/rules/sessionRules.ts`) — pilot widział komunikat, a serwer
+ * w `packages/domain/src/rules/sessionRules.ts`) - pilot widział komunikat, a serwer
  * nie wiedział o niczym, więc po fakcie nie dało się tego zobaczyć nigdzie. Decyzja
  * 2026-07-31: kod dogania dokumentację. Próg jest WSPÓLNY z telefonem
  * (`CLOCK_DRIFT_MS`), żeby obie strony mówiły to samo.
  *
  * Flaga jest JEDNA na sesję, nie jedna na zdarzenie: przestawiony zegar to własność
- * telefonu na czas dnia, a nie pojedynczego zapisu — dwadzieścia flag opisujących
+ * telefonu na czas dnia, a nie pojedynczego zapisu - dwadzieścia flag opisujących
  * ten sam przestawiony zegar nauczyłoby wyłącznie ignorowania skrzynki.
  */
 
@@ -57,7 +57,7 @@ export function clockDriftFlag(
       maxDriftMs: worst.drift,
       maxDriftSec: Math.round(worst.drift / 1000),
       thresholdMs: CLOCK_DRIFT_MS,
-      // Który zapis był najgorszy — bez tego administrator ma flagę bez tropu.
+      // Który zapis był najgorszy - bez tego administrator ma flagę bez tropu.
       eventUuid: worst.event.uuid,
       eventType: worst.event.type,
       comparedEvents: compared,

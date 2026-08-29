@@ -1,11 +1,11 @@
 /**
- * UZ Aero — panel: WYKRES NAPŁYWU (`.spark` z `SZABLON.html`).
+ * UZ Aero - panel: WYKRES NAPŁYWU (`.spark` z `SZABLON.html`).
  *
- * Dwanaście słupków i trzy podpisy osi — bez biblioteki wykresów i bez SVG, bo to nie
+ * Dwanaście słupków i trzy podpisy osi - bez biblioteki wykresów i bez SVG, bo to nie
  * jest wykres do odczytywania wartości, tylko PULS: odpowiada na pytanie „czy napływ
  * się urwał", a dokładne liczby stoją w karcie obok.
  *
- * Wysokości i klasy przychodzą policzone z `screens/dashboard/dashboardSpark.ts` — komponent
+ * Wysokości i klasy przychodzą policzone z `screens/dashboard/dashboardSpark.ts` - komponent
  * nie liczy niczego (`admin/test/architecture.test.ts` zakazuje `Math.round` w `.tsx`).
  * Słupek pusty ma WŁASNĄ klasę (`.zero`) i widoczną wysokość, bo cisza w rejestrze musi
  * być widoczna, a nie niewidoczna.
@@ -22,7 +22,7 @@ interface SparkBarView {
 interface SparklineProps {
   bars: SparkBarView[];
   axis: [string, string, string];
-  /** Opis dla czytnika ekranu — słupki same z siebie nie niosą żadnej treści. */
+  /** Opis dla czytnika ekranu - słupki same z siebie nie niosą żadnej treści. */
   label: string;
 }
 

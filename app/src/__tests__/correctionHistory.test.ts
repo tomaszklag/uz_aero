@@ -1,7 +1,7 @@
 /**
- * UZ Aero — test HISTORII ZMIAN zdarzenia (issue #43, arkusz `design/10i`).
+ * UZ Aero - test HISTORII ZMIAN zdarzenia (issue #43, arkusz `design/10i`).
  *
- * Historia nie jest osobnym dziennikiem, tylko odczytem rejestru — i to jest cała
+ * Historia nie jest osobnym dziennikiem, tylko odczytem rejestru - i to jest cała
  * odpowiedź na pytanie z issue („czy architektura nam na to pozwala?"). Testy pilnują,
  * żeby ten odczyt mówił dokładnie to, co policzyła projekcja:
  *  • wartość „przed" bierze się z POPRZEDNIEJ korekty, nie z oryginału,
@@ -65,7 +65,7 @@ function correction(
 
 const landing = (): Event => event('landing', at(8, 58), { method: 'auto' });
 
-describe('historia zmian — czas zdarzenia', () => {
+describe('historia zmian - czas zdarzenia', () => {
   it('pusta, dopóki nikt nie poprawiał', () => {
     const target = landing();
     expect(correctionHistory([target], target.uuid)).toEqual([]);
@@ -117,7 +117,7 @@ describe('historia zmian — czas zdarzenia', () => {
   });
 });
 
-describe('historia zmian — unieważnienie i powrót', () => {
+describe('historia zmian - unieważnienie i powrót', () => {
   it('void jest wpisem o FAKCIE, bez pary wartości', () => {
     const target = landing();
     const stream = [target, correction(target, at(11, 38), { action: 'void' })];
@@ -141,7 +141,7 @@ describe('historia zmian — unieważnienie i powrót', () => {
     expect(history.map((h) => h.kind)).toEqual(['void', 'unvoid', 'retime']);
   });
 
-  it('powtórzone unieważnienie nie produkuje drugiego wpisu — nic się nie zmieniło', () => {
+  it('powtórzone unieważnienie nie produkuje drugiego wpisu - nic się nie zmieniło', () => {
     const target = landing();
     const stream = [
       target,
@@ -152,11 +152,11 @@ describe('historia zmian — unieważnienie i powrót', () => {
   });
 });
 
-describe('historia zmian — wartości', () => {
+describe('historia zmian - wartości', () => {
   const dayClose = (): Event =>
     event('day_close', at(11, 20), { finalReading: { fuelL: 171, mh: 1236.1 } });
 
-  it('korekta dwóch pól daje DWA wpisy — każdy ze swoją parą wartości', () => {
+  it('korekta dwóch pól daje DWA wpisy - każdy ze swoją parą wartości', () => {
     const target = dayClose();
     const stream = [
       target,
@@ -170,7 +170,7 @@ describe('historia zmian — wartości', () => {
     expect(history).toHaveLength(2);
     expect(history[0]).toMatchObject({ field: 'fuelL', from: 171, to: 168 });
     expect(history[1]).toMatchObject({ field: 'mh', from: 1236.1, to: 1236.5 });
-    // Oba wpisy pochodzą z JEDNEJ korekty — ekran może je pogrupować.
+    // Oba wpisy pochodzą z JEDNEJ korekty - ekran może je pogrupować.
     expect(history[0]?.correctionUuid).toBe(history[1]?.correctionUuid);
   });
 
@@ -214,7 +214,7 @@ describe('historia zmian — wartości', () => {
   });
 });
 
-describe('historia zmian — wpisy nieczytelne', () => {
+describe('historia zmian - wpisy nieczytelne', () => {
   it('korekta bez rozpoznanego pola nie trafia do historii', () => {
     const target = event('day_close', at(11, 20), {
       finalReading: { fuelL: 171, mh: 1236.1 },
@@ -241,7 +241,7 @@ describe('historia zmian — wpisy nieczytelne', () => {
   });
 });
 
-describe('historia zmian — olej przy przejęciu (issue #60)', () => {
+describe('historia zmian - olej przy przejęciu (issue #60)', () => {
   const preflightWithOil = (): Event =>
     event('preflight_confirm', at(8, 4), {
       operation: 'skoki',
@@ -262,7 +262,7 @@ describe('historia zmian — olej przy przejęciu (issue #60)', () => {
     const history = correctionHistory(stream, target.uuid);
     expect(history).toHaveLength(2);
     expect(history[0]).toMatchObject({ field: 'oilL', from: 10.2, to: 9.7, kind: 'amend' });
-    // dolewki w zapisie pierwotnym nie było — kotwicą jest null, nie zero
+    // dolewki w zapisie pierwotnym nie było - kotwicą jest null, nie zero
     expect(history[1]).toMatchObject({ field: 'oilAddedL', from: null, to: 1.0 });
   });
 

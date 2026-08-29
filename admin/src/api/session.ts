@@ -1,8 +1,8 @@
 /**
- * UZ Aero — panel: sesja przeglądarkowa (`/admin/api/auth/*`, `/admin/api/me`).
+ * UZ Aero - panel: sesja przeglądarkowa (`/admin/api/auth/*`, `/admin/api/me`).
  *
  * Jeden plik = jeden zasób = jeden prefiks trasy, tak jak `server/src/http/routes/`.
- * Warstwa `api/` nie zna Reacta i nie zna cache'u — zwraca obietnice, a co z nimi
+ * Warstwa `api/` nie zna Reacta i nie zna cache'u - zwraca obietnice, a co z nimi
  * zrobić, decyduje `queries/`.
  *
  * Uwaga o tym, czego tu NIE MA: token. Logowanie zwraca tożsamość, a poświadczenie

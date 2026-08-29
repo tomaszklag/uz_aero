@@ -1,12 +1,12 @@
 /**
- * UZ Aero — panel: czcionki self-hostowane (§9 architektury frontendu).
+ * UZ Aero - panel: czcionki self-hostowane (§9 architektury frontendu).
  *
- * PLIK GENEROWANY skryptem (pobranie woff2 z Google Fonts + emisja @font-face) —
+ * PLIK GENEROWANY skryptem (pobranie woff2 z Google Fonts + emisja @font-face) -
  * poprawki wprowadzaj przez ponowne wygenerowanie, nie ręcznie. Subsety latin
  * + latin-ext (polskie znaki); wagi jak w dawnym linku CDN: Archivo 400–800,
  * Bebas Neue 400, JetBrains Mono 400/500/700. Licencje OFL: public/fonts/OFL-*.txt.
  *
- * Ścieżki /fonts/* są absolutne od korzenia serwisu — Vite przepisuje je pod
+ * Ścieżki /fonts/* są absolutne od korzenia serwisu - Vite przepisuje je pod
  * base '/admin/' przy buildzie (weryfikacja: grep dist/assets/*.css po '/admin/fonts/').
  */
 

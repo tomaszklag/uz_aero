@@ -1,8 +1,8 @@
 /**
- * UZ Aero — test statystyk śladu (issue #47 pkt 3).
+ * UZ Aero - test statystyk śladu (issue #47 pkt 3).
  *
  * Statystyki opisują lot liczbami, których nikt nie mierzył przyrządem i których nie da
- * się sprawdzić „na oko" — dokładnie tak jak oś faz. Test buduje więc ślady o ZNANYM
+ * się sprawdzić „na oko" - dokładnie tak jak oś faz. Test buduje więc ślady o ZNANYM
  * przebiegu (równe wznoszenie, poziom z zadanym falowaniem, kołowanie o zadanej
  * prędkości) i pyta, czy statystyka je odtwarza.
  *
@@ -65,7 +65,7 @@ const airborne = (fromSec: number, toSec: number): Span[] => [
   { from: sec(fromSec), to: sec(toSec) },
 ];
 
-describe('statystyki śladu — prędkość i pion', () => {
+describe('statystyki śladu - prędkość i pion', () => {
   it('max wznoszenia i opadania odtwarza zadany profil', () => {
     // 5 minut po 600 ft/min w górę, potem 5 minut po 700 ft/min w dół.
     const points = track([...ramp(0, 300, 1_000, 4_000), ...ramp(301, 300, 4_000, 500)]);
@@ -115,7 +115,7 @@ describe('statystyki śladu — prędkość i pion', () => {
   });
 });
 
-describe('statystyki śladu — czasy faz', () => {
+describe('statystyki śladu - czasy faz', () => {
   it('suma faz równa się czasowi biegu silnika', () => {
     const points = track([
       ...ramp(0, 120, 500, 500, 12), // kołowanie
@@ -173,7 +173,7 @@ describe('statystyki śladu — czasy faz', () => {
   });
 });
 
-describe('statystyki śladu — trzymanie wysokości', () => {
+describe('statystyki śladu - trzymanie wysokości', () => {
   it('lot równy: pasmo bliskie zeru, cały czas w tolerancji', () => {
     const points = track(ramp(0, 600, 3_000, 3_000, 95));
 
@@ -189,7 +189,7 @@ describe('statystyki śladu — trzymanie wysokości', () => {
   });
 
   it('rozjeżdżanie wysokości o ±150 ft widać w paśmie i w udziale czasu', () => {
-    // Falowanie w skali MINUT (okres ~10 min) — tak wygląda niedokładne trzymanie
+    // Falowanie w skali MINUT (okres ~10 min) - tak wygląda niedokładne trzymanie
     // poziomu na przelocie. Prędkość pionowa nie przekracza 100 ft/min, więc oś faz
     // słusznie widzi tu przelot, a nie naprzemienne wznoszenie.
     const rows: Array<[number, number, number]> = [];
@@ -227,7 +227,7 @@ describe('statystyki śladu — trzymanie wysokości', () => {
     expect(stats.level!.levelMs).toBeGreaterThan(400_000);
   });
 
-  it('przelot krótszy niż próg — blok MILCZY zamiast orzekać z trzech odczytów', () => {
+  it('przelot krótszy niż próg - blok MILCZY zamiast orzekać z trzech odczytów', () => {
     const shortCruiseSec = LEVEL_MIN_CRUISE_MS / 1000 - 30;
     const points = track(ramp(0, shortCruiseSec, 3_000, 3_000, 95));
 
@@ -274,7 +274,7 @@ describe('upraszczanie profilu', () => {
 
     expect(simplified.length).toBeGreaterThan(2);
     expect(simplified.length).toBeLessThan(20);
-    // Szczyt musi przetrwać — to najczęściej czytana liczba profilu.
+    // Szczyt musi przetrwać - to najczęściej czytana liczba profilu.
     expect(Math.max(...simplified.map((s) => s.altitudeFt))).toBeCloseTo(4_000, 0);
   });
 });
@@ -298,7 +298,7 @@ describe('koperta śladu przez sieć', () => {
 
   it('ścina nagranie do rozmiaru, który da się przesłać', () => {
     expect(payload.totalCount).toBe(601);
-    // Prosta linia i prosty profil zwijają się prawie do niczego — o to chodzi.
+    // Prosta linia i prosty profil zwijają się prawie do niczego - o to chodzi.
     expect(payload.line.length).toBeLessThan(20);
     expect(payload.profile.samples.length).toBeLessThan(20);
   });
@@ -311,7 +311,7 @@ describe('koperta śladu przez sieć', () => {
   });
 
   it('statystyki liczą się z KOMPLETU punktów, nie z uproszczonej linii', () => {
-    // 3 000 ft w 600 s to 300 ft/min — wartość, której uproszczona linia nie zmienia,
+    // 3 000 ft w 600 s to 300 ft/min - wartość, której uproszczona linia nie zmienia,
     // ale która musi wyjść z pełnego nagrania.
     expect(payload.stats.speed!.maxClimbFtPerMin).toBeCloseTo(300, 0);
     expect(payload.usableCount).toBe(601);

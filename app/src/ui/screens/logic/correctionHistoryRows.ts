@@ -1,16 +1,16 @@
 /**
- * UZ Aero — PODPIS WIERSZA HISTORII ZMIAN (issue #43, arkusz `design/10i`).
+ * UZ Aero - PODPIS WIERSZA HISTORII ZMIAN (issue #43, arkusz `design/10i`).
  *
  * Wpis historii mówi „było → jest" o jednym polu, a plakietka przy nim nazywa to pole.
  * Sęk w tym, że nazywa je PO CO INNEGO, niż się wydaje: nie po to, żeby powiedzieć,
- * czego dotyczy zmiana — to zwykle wiadomo z nagłówka arkusza i z samych wartości —
+ * czego dotyczy zmiana - to zwykle wiadomo z nagłówka arkusza i z samych wartości -
  * tylko po to, żeby ODRÓŻNIĆ wiersze od siebie.
  *
  * ══ STĄD JEDNA REGUŁA ══
  * Podpis pojawia się WYŁĄCZNIE wtedy, gdy lista miesza różne pola. Historia notatki ma
- * same notatki, historia lądowania — same czasy, a arkusz mówi w nagłówku „NOTATKA SESJI"
+ * same notatki, historia lądowania - same czasy, a arkusz mówi w nagłówku „NOTATKA SESJI"
  * i „Lądowanie · lot 1". Plakietka powtarzała to samo o dwa centymetry niżej, przy każdym
- * wpisie, i zabierała miejsce parze wartości — czyli jedynej treści, po którą pilot ten
+ * wpisie, i zabierała miejsce parze wartości - czyli jedynej treści, po którą pilot ten
  * arkusz otwiera.
  *
  * Historia odczytu przejęcia bywa mieszana (czas, paliwo, licznik) i tam podpis zostaje:
@@ -24,7 +24,7 @@
 
 import type { CorrectionField } from '../../../domain';
 
-/** Nazwy pól — po polsku, bo czyta je pilot. Panel ma własny słownik i własny język. */
+/** Nazwy pól - po polsku, bo czyta je pilot. Panel ma własny słownik i własny język. */
 const FIELD_LABEL: Record<CorrectionField, string> = {
   time: 'czas',
   fuelL: 'paliwo',

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 14B Brak śladu</title>
+<title>UZ Aero - 14B Brak śladu</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -71,7 +71,7 @@
   .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
   .scroll::-webkit-scrollbar { display:none; }
   /* Karty z `overflow:hidden` zapadaja sie w kolumnie flex zamiast wyjechac poza
-     ekran do przewiniecia — ta sama wada, co naprawiona w 01 i 10. */
+     ekran do przewiniecia - ta sama wada, co naprawiona w 01 i 10. */
   .scroll > * { flex-shrink:0; }
 
   .section-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
@@ -181,12 +181,12 @@
           <div class="empty-title">BEZ ZAPISU GPS</div>
           <div class="empty-text">
             Ta sesja została <b>wpisana ręcznie</b>, więc nie ma z czego narysować trasy.
-            Czasy są prawdziwe — pochodzą z Twojego wpisu, nie z odbiornika.
+            Czasy są prawdziwe - pochodzą z Twojego wpisu, nie z odbiornika.
           </div>
         </div>
       </div>
 
-      <!-- Dane, które JEDNAK są — zamiast pustego ekranu pokazujemy co wiadomo -->
+      <!-- Dane, które JEDNAK są - zamiast pustego ekranu pokazujemy co wiadomo -->
       <div class="section-card">
         <div class="section-card-head">
           Co wiadomo o tej sesji
@@ -213,10 +213,10 @@
         </div>
       </div>
 
-      <!-- Dwa powody, dla których śladu nie ma — pilot ma wiedzieć, który go dotyczy.
+      <!-- Dwa powody, dla których śladu nie ma - pilot ma wiedzieć, który go dotyczy.
            Od issue #47 NIE MA wśród nich retencji: ślad trzyma serwer i nie kasuje go
            po 14 dniach. Retencja była limitem PAMIĘCI TELEFONU i zniknęła razem
-           z trzymaniem śladu na telefonie. Trzeci stan — „jest, ale nie ma zasięgu" —
+           z trzymaniem śladu na telefonie. Trzeci stan - „jest, ale nie ma zasięgu" -
            to osobny ekran (14C), bo tam ślad ISTNIEJE i wystarczy sieć. -->
       <div class="section-card">
         <div class="section-card-head">Kiedy śladu nie ma</div>
@@ -227,7 +227,7 @@
               <span class="reason-name">Sesja wpisana ręcznie</span>
               <span class="reason-when">
                 Lot dopisany ekranem „Dodaj lot ręcznie" (15) albo wpisem ręcznym z kokpitu
-                (05F) — GPS nie pracował albo detekcja go nie złapała. Zapis czasów jest
+                (05F) - GPS nie pracował albo detekcja go nie złapała. Zapis czasów jest
                 pełnoprawny, brakuje wyłącznie geometrii.
               </span>
             </span>
@@ -238,7 +238,7 @@
               <span class="reason-name">Nagranie nie dotarło na serwer</span>
               <span class="reason-when">
                 Telefon nagrywa ślad i wysyła go przy pierwszej okazji, ale nagranie może
-                nie powstać wcale — odmowa dostępu do lokalizacji, wyczerpana bateria,
+                nie powstać wcale - odmowa dostępu do lokalizacji, wyczerpana bateria,
                 odinstalowana aplikacja przed wysyłką. Jeśli ślad wciąż CZEKA w kolejce
                 na tym telefonie, ekran mówi to wprost i podaje liczbę punktów.
               </span>
@@ -257,11 +257,11 @@
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Warianty tego ekranu — kiedy który?</div>
+  <div class="vp-title">Warianty tego ekranu - kiedy który?</div>
   <a class="vp-item" href="14-slad.html">
     <span class="vp-badge">14</span>
     <span class="vp-body">
-      <span class="vp-name">Ślad sesji — pełny</span>
+      <span class="vp-name">Ślad sesji - pełny</span>
       <span class="vp-when">Standard: serwer ma ślad tej sesji. Trasa na siatce współrzędnych z pasami lotnisk z katalogu, profil pionowy ze znacznikami i czasami, statystyki lotu, log punktów ze stanem bramki jakości.</span>
     </span>
   </a>
@@ -276,7 +276,7 @@
     <span class="vp-badge dim">14B</span>
     <span class="vp-body">
       <span class="vp-name">Brak śladu</span>
-      <span class="vp-when">Sesja wpisana ręcznie (15 / 05F) albo nagranie, które nigdy nie powstało lub nie dotarło na serwer. Od issue #25 to stan ZABEZPIECZAJĄCY, nie zwykły cel drogi: wejściem w ślad jest miniatura na ekranie sesji, a przy braku trasy miniatura pokazuje powód. Ekran zostaje, bo powód trzeba czasem przeczytać w całości — wtedy podaje go razem z tym, co mimo wszystko wiadomo, zamiast pustej mapy i zer.</span>
+      <span class="vp-when">Sesja wpisana ręcznie (15 / 05F) albo nagranie, które nigdy nie powstało lub nie dotarło na serwer. Od issue #25 to stan ZABEZPIECZAJĄCY, nie zwykły cel drogi: wejściem w ślad jest miniatura na ekranie sesji, a przy braku trasy miniatura pokazuje powód. Ekran zostaje, bo powód trzeba czasem przeczytać w całości - wtedy podaje go razem z tym, co mimo wszystko wiadomo, zamiast pustej mapy i zer.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>

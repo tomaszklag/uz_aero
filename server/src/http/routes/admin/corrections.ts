@@ -1,9 +1,9 @@
 /**
- * UZ Aero (serwer) — trasa korekty administracyjnej (`/admin/api/sessions/:uuid/corrections`,
+ * UZ Aero (serwer) - trasa korekty administracyjnej (`/admin/api/sessions/:uuid/corrections`,
  * mockup `A02b-korekta.html`).
  *
  * Cienka jak reszta repo: zod → komenda → status. Trasa nie zna ani transakcji, ani
- * audytu, ani reguły „czym stemplujemy zdarzenie" — to wszystko jest w komendzie.
+ * audytu, ani reguły „czym stemplujemy zdarzenie" - to wszystko jest w komendzie.
  *
  * **`POST`, nie `PATCH`, i na kolekcji `corrections`, nie na zdarzeniu.** Adres mówi
  * prawdę o operacji: powstaje NOWY zasób w sesji, a zdarzenie wskazane przez `targetUuid`
@@ -31,7 +31,7 @@ const correctionParams = z.object({ uuid: z.string().min(1).max(100) });
  * Pola wspólne obu akcji. `reason` jest WYMAGANY, a `.trim()` przed `.min(1)` znaczy,
  * że spacje nie liczą się za uzasadnienie (A02b: „Bez powodu przycisk zapisu jest
  * nieaktywny"). Za rok to jedyna rzecz, która wyjaśni, dlaczego liczby dnia różnią się
- * od tego, co zapisał telefon — pusty ślad byłby wtedy gorszy niż brak przycisku.
+ * od tego, co zapisał telefon - pusty ślad byłby wtedy gorszy niż brak przycisku.
  */
 const correctionBase = z.object({
   targetUuid: z.string().min(1).max(100),
@@ -40,7 +40,7 @@ const correctionBase = z.object({
 
 /**
  * Sam KSZTAŁT korekty, bez uzasadnienia. Wydzielony, bo podgląd („co się stanie")
- * i zapis („zrób to") pytają o dokładnie tę samą rzecz — a druga definicja tej unii
+ * i zapis („zrób to") pytają o dokładnie tę samą rzecz - a druga definicja tej unii
  * byłaby pierwszym miejscem, w którym podgląd zaczyna opisywać inną operację niż ta,
  * którą panel za chwilę wyśle.
  */
@@ -74,7 +74,7 @@ const correctionShape = z.discriminatedUnion('action', [
   }),
 ]);
 
-/** Trzy akcje — te same, które zna domena i pokazuje mockup (`amend` od issue #43). */
+/** Trzy akcje - te same, które zna domena i pokazuje mockup (`amend` od issue #43). */
 const correctionBody = z.discriminatedUnion('action', [
   correctionBase.extend({
     action: z.literal('retime'),
@@ -87,11 +87,11 @@ const correctionBody = z.discriminatedUnion('action', [
 /**
  * Kształt zoda → payload domenowy. Jedno miejsce dla obu tras.
  *
- * `reason` wchodzi do payloadu od issue #43 — i jest to ODWRÓCENIE wcześniejszej reguły
+ * `reason` wchodzi do payloadu od issue #43 - i jest to ODWRÓCENIE wcześniejszej reguły
  * („powód należy wyłącznie do audytu"). Powód tej zmiany: pilot widzi teraz historię
  * zmian swojego logu (`design/10i`) razem z korektami administratora, które wracają na
  * telefon (§4.9). Uzasadnienie wyłącznie w audycie znaczyłoby, że na ekranie pilota
- * cudza poprawka stoi jako „bez powodu" — mimo że powód istnieje i jest wymagany.
+ * cudza poprawka stoi jako „bez powodu" - mimo że powód istnieje i jest wymagany.
  * Kopia w audycie zostaje: tam odpowiada na pytanie „kto i dlaczego", tu na „dlaczego".
  */
 function payloadOf(
@@ -117,10 +117,10 @@ const resultToWire = (result: CorrectionResult) => ({
   state: result.state,
   // Kolizje z pilotem jadą w odpowiedzi POZYTYWNEJ: korekta jest zapisana, a panel ma
   // powiedzieć, w co administrator wszedł. Do 2026-08-07 była tu zamiast tego odmowa
-  // `400 day_open` — patrz komenda.
+  // `400 day_open` - patrz komenda.
   warnings: result.warnings,
   // Wynik re-eksportu w odpowiedzi, żeby panel powiedział „arkusz · rewizja 3",
-  // a nie samo „zapisano" — i uczciwie pokazał `null`, gdy eksport padł.
+  // a nie samo „zapisano" - i uczciwie pokazał `null`, gdy eksport padł.
   reexport: result.reexport,
 });
 
@@ -131,13 +131,13 @@ export function registerAdminCorrectionRoutes(
   gate: AdminGate,
 ): void {
   /**
-   * PODGLĄD — `POST`, ale ZAPYTANIE: zero zapisów, zero wpisów w audycie, zero
+   * PODGLĄD - `POST`, ale ZAPYTANIE: zero zapisów, zero wpisów w audycie, zero
    * re-eksportu. Ciało nie ma `reason`, bo podgląd musi działać, ZANIM administrator
    * napisze uzasadnienie; kolejność „najpierw zobacz skutek, potem wytłumacz decyzję"
    * jest tu celowa.
    *
    * Zdolność ta sama, co przy zapisie (`events.correct`): podgląd pokazuje pełny stan
-   * dnia po hipotetycznej zmianie, więc nie jest „lżejszy" od odczytu karty dnia —
+   * dnia po hipotetycznej zmianie, więc nie jest „lżejszy" od odczytu karty dnia -
    * jest narzędziem tej samej operacji.
    */
   adminRoute(

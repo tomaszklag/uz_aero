@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: RAMA aplikacji (`.shell` z `SZABLON.html`).
+ * UZ Aero - panel: RAMA aplikacji (`.shell` z `SZABLON.html`).
  *
  * Sidebar + (topbar + treść). Rama jest komponentem, a nie ekranem: nie wie, co
  * renderuje, i nie sięga po dane. Treść wstawia router (`<Outlet/>`), okruszki

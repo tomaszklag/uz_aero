@@ -1,16 +1,16 @@
 /**
- * UZ Aero — wkompilowana siatka undulacji EGM96 (`geoid/egm96Grid.ts` + API).
+ * UZ Aero - wkompilowana siatka undulacji EGM96 (`geoid/egm96Grid.ts` + API).
  *
  * Tu sprawdzamy PRAWDZIWE dane, które jadą w bundlu: kotwicę empiryczną z EPNL
  * (zgłoszenie 2026-08-11: elewacja 830 ft, surowy GPS ~950 ft → undulacja ~37 m),
- * fizyczny zakres nad Polską i gładkość geoidy — skok między sąsiednimi węzłami
+ * fizyczny zakres nad Polską i gładkość geoidy - skok między sąsiednimi węzłami
  * wykryłby przesunięcie albo transpozycję tablicy szybciej niż jakikolwiek punkt.
  */
 
 import { EGM96_GRID } from '../../../packages/domain/src/geoid/egm96Grid';
 import { airfieldByIcao, geoidUndulationM } from '../domain';
 
-describe('geoidUndulationM — wkompilowany wycinek EGM96', () => {
+describe('geoidUndulationM - wkompilowany wycinek EGM96', () => {
   it('EPNL: undulacja zgadza się ze zmierzonym rozjazdem 950 ft vs 830 ft (~37 m)', () => {
     const epnl = airfieldByIcao('EPNL')!;
     const undulation = geoidUndulationM(epnl)!;
@@ -21,7 +21,7 @@ describe('geoidUndulationM — wkompilowany wycinek EGM96', () => {
   it('cała Polska z pograniczem mieści się w przedziale 22–50 m', () => {
     // Okno 49–55°N / 14–24°E zahacza o Litwę i Ukrainę; skrajne węzły odczytane
     // z siatki to 24,96 m (północny wschód) i 46,84 m (Tatry). Widełki z małym
-    // zapasem — pomyłka jednostek (m/cm) albo znaku wywala je o rząd wielkości.
+    // zapasem - pomyłka jednostek (m/cm) albo znaku wywala je o rząd wielkości.
     for (let lat = 49; lat <= 55; lat += 0.25) {
       for (let lon = 14; lon <= 24; lon += 0.25) {
         const undulation = geoidUndulationM({ lat, lon });
@@ -42,7 +42,7 @@ describe('geoidUndulationM — wkompilowany wycinek EGM96', () => {
         if (r + 1 < rows) maxStepCm = Math.max(maxStepCm, Math.abs(valuesCm[(r + 1) * cols + c]! - here));
       }
     }
-    // Najostrzejszy realny gradient wycinka to Alpy (~3,5 m na 15′) — próg 5 m
+    // Najostrzejszy realny gradient wycinka to Alpy (~3,5 m na 15′) - próg 5 m
     // zostawia im zapas, a przesunięcie/transpozycję tablicy nadal łapie.
     expect(maxStepCm).toBeLessThan(500);
   });

@@ -1,15 +1,15 @@
 /**
- * UZ Aero — model zużycia paliwa per faza lotu.
+ * UZ Aero - model zużycia paliwa per faza lotu.
  *
  * ══ CO TU SIĘ DZIEJE ══
  * Każdy przyjęty interwał daje równanie „zużycie = Σ stawka_fazy · czas_fazy". Stawek
  * szukamy regresją z więzem nieujemności (`fit.ts`), a niepewność wyniku jest częścią
- * odpowiedzi, nie dodatkiem — stawka bez przedziału nie ma prawa stanąć na ekranie.
+ * odpowiedzi, nie dodatkiem - stawka bez przedziału nie ma prawa stanąć na ekranie.
  *
  * ══ DRABINA MODELI: OD SZCZEGÓŁU DO UCZCIWOŚCI ══
  * Fazy da się rozdzielić tylko wtedy, gdy występują w interwałach w RÓŻNYCH proporcjach.
  * Dzień skokowy wygląda co wyniesienie tak samo, więc wznoszenia od przelotu może się
- * nie dać odróżnić — i wtedy regresja nadal poda cztery liczby, tylko będą one podziałem
+ * nie dać odróżnić - i wtedy regresja nadal poda cztery liczby, tylko będą one podziałem
  * przypadkowym, z ogromnymi przedziałami. Zamiast to pokazać, schodzimy o szczebel:
  *
  *     ziemia · wznoszenie · przelot · zniżanie   (wymaga śladu GPS)
@@ -22,15 +22,15 @@
  * tych faz" jest wynikiem, a nie awarią do ukrycia.
  *
  * ══ INTERWAŁY BEZ ŚLADU NIE SĄ IMPUTOWANE ══
- * Interwał bez rozbicia lotu na fazy pionowe nie dostaje podziału „średnimi proporcjami" —
+ * Interwał bez rozbicia lotu na fazy pionowe nie dostaje podziału „średnimi proporcjami" -
  * to byłoby wpisanie do danych czegoś, czego nikt nie zaobserwował. Model czterofazowy
  * liczy się WYŁĄCZNIE na interwałach ze śladem; `tracedIntervals` mówi, ilu wierszy
  * to dotyczy („89 / 96" na mockupie A10a).
  *
  * ══ ODSTAJĄCE WYKLUCZAMY, ALE POKAZUJEMY ══
  * Interwał z resztą ponad `OUTLIER_SIGMA` wypada z dopasowania i trafia na listę
- * z powodem. Zwykle jest śladem czegoś realnego — pomyłki w odczycie albo dolewki spoza
- * aplikacji — więc ukrycie go kosztowałoby dokładnie tę informację, dla której ten ekran
+ * z powodem. Zwykle jest śladem czegoś realnego - pomyłki w odczycie albo dolewki spoza
+ * aplikacji - więc ukrycie go kosztowałoby dokładnie tę informację, dla której ten ekran
  * powstał.
  */
 
@@ -50,13 +50,13 @@ export type PhaseSet = 'four' | 'two' | 'single';
 
 /** Dlaczego model zszedł niżej niż zestaw czterofazowy. */
 export type Degradation =
-  /** Bez zejścia — model stoi na najbogatszym zestawie, jaki dane uniosły. */
+  /** Bez zejścia - model stoi na najbogatszym zestawie, jaki dane uniosły. */
   | 'none'
   /** Zbyt jednorodne interwały: przedziały szersze niż `MAX_RELATIVE_CI`. */
   | 'collinear'
   /** Za mało interwałów ze śladem GPS, żeby rozdzielić fazy pionowe. */
   | 'no-trace'
-  /** Układ osobliwy — faz nie da się od siebie odróżnić w ogóle. */
+  /** Układ osobliwy - faz nie da się od siebie odróżnić w ogóle. */
   | 'singular';
 
 /** Nazwa fazy w wyniku modelu. */
@@ -68,11 +68,11 @@ export interface PhaseRate {
   lPerH: number;
   /** Połowa szerokości przedziału 95%; `null` = brak stopni swobody. */
   ciHalfWidth: number | null;
-  /** Stawka przypięta do zera przez więz — przedział czytamy jednostronnie („≤ …"). */
+  /** Stawka przypięta do zera przez więz - przedział czytamy jednostronnie („≤ …"). */
   pinned: boolean;
   /** Ile razy niepewność jest większa niż przy fazach idealnie rozdzielonych. */
   varianceInflation: number;
-  /** Łączny czas tej fazy w oknie (ms) — wstęga podziału czasu na mockupie. */
+  /** Łączny czas tej fazy w oknie (ms) - wstęga podziału czasu na mockupie. */
   hoursInWindowMs: number;
 }
 
@@ -86,16 +86,16 @@ export interface ConsumptionModel {
   /** Liczba równań, które weszły do dopasowania (po wykluczeniu odstających). */
   equations: number;
   degreesOfFreedom: number;
-  /** Odchylenie reszt w litrach — nagłówkowa miara jakości dopasowania. */
+  /** Odchylenie reszt w litrach - nagłówkowa miara jakości dopasowania. */
   residualSigmaL: number | null;
   rSquaredUncentered: number | null;
-  /** Interwały wykluczone jako odstające — z ustawionym `rejected: 'outlier'`. */
+  /** Interwały wykluczone jako odstające - z ustawionym `rejected: 'outlier'`. */
   outliers: FuelInterval[];
   /** Ile przyjętych interwałów ma pełny ślad GPS (mianownik: `gate.intervals`). */
   tracedIntervals: number;
 }
 
-/** Model, którego nie wolno opublikować — bramka niespełniona albo brak dopasowania. */
+/** Model, którego nie wolno opublikować - bramka niespełniona albo brak dopasowania. */
 export function emptyConsumptionModel(
   gate: PublicationGate,
   degradedBecause: Degradation = 'none',
@@ -123,7 +123,7 @@ export function fitConsumptionModel(intervals: readonly FuelInterval[]): Consump
 
   if (!gate.published) return { ...emptyConsumptionModel(gate), tracedIntervals: traced.length };
 
-  // Zejście po drabinie zapamiętuje POWÓD pierwszego niepowodzenia — administratora
+  // Zejście po drabinie zapamiętuje POWÓD pierwszego niepowodzenia - administratora
   // interesuje, dlaczego nie widzi rozbicia na fazy lotu, a nie że ostatni szczebel wyszedł.
   let reason: Degradation = 'none';
 
@@ -138,7 +138,7 @@ export function fitConsumptionModel(intervals: readonly FuelInterval[]): Consump
   const two = attempt(accepted, TWO_PHASE);
   if (two != null) return finish(two, gate, 'two', reason, traced.length);
 
-  // Zejście na JEDNĄ fazę ma zawsze ten sam powód — ziemi nie dało się odróżnić od
+  // Zejście na JEDNĄ fazę ma zawsze ten sam powód - ziemi nie dało się odróżnić od
   // powietrza. Brak śladu GPS tłumaczy wyłącznie brak faz PIONOWYCH i przepisanie go
   // tutaj byłoby myleniem czytelnika: usunięcie plików śladu niczego by nie naprawiło.
   const single = attempt(accepted, SINGLE_PHASE);
@@ -177,7 +177,7 @@ function hasTrace(interval: FuelInterval): boolean {
   return interval.climbMs != null && interval.cruiseMs != null && interval.descentMs != null;
 }
 
-/** Wynik jednej próby dopasowania — razem z tym, co z niej wypadło. */
+/** Wynik jednej próby dopasowania - razem z tym, co z niej wypadło. */
 interface Attempt {
   fit: Fit;
   columns: PhaseColumn[];
@@ -192,7 +192,7 @@ interface Attempt {
  * do tego, co model już rozumie, i po kilku rundach zostawia dane sztucznie zgodne
  * z modelem. Jedna runda usuwa realne pomyłki odczytu i na tym poprzestaje.
  *
- * `null`, gdy układ jest osobliwy albo przedziały przekraczają `MAX_RELATIVE_CI` —
+ * `null`, gdy układ jest osobliwy albo przedziały przekraczają `MAX_RELATIVE_CI` -
  * wtedy wywołujący schodzi na uboższy zestaw faz.
  */
 function attempt(intervals: readonly FuelInterval[], columns: PhaseColumn[]): Attempt | null {
@@ -227,22 +227,22 @@ function run(intervals: readonly FuelInterval[], columns: PhaseColumn[]): Fit | 
 }
 
 /**
- * Interwały, których model nie tłumaczy — reszta ponad `OUTLIER_SIGMA` odpornych odchyleń.
+ * Interwały, których model nie tłumaczy - reszta ponad `OUTLIER_SIGMA` odpornych odchyleń.
  *
  * ══ DLACZEGO MEDIANA, A NIE ODCHYLENIE STANDARDOWE (poprawka z testu) ══
  * Pierwsza wersja mierzyła rozrzut przez `residualSigma`, czyli pierwiastek z sumy
- * kwadratów reszt — i NIE ZNAJDOWAŁA odstających w ogóle. Powód jest wbudowany w metodę:
+ * kwadratów reszt - i NIE ZNAJDOWAŁA odstających w ogóle. Powód jest wbudowany w metodę:
  * regresja przesuwa się w stronę punktu odstającego, a jego wielka reszta wchodzi do tej
  * samej sumy, z której liczymy próg. Przy siedmiu równaniach jeden błąd odczytu podnosił
  * σ tak, że sam mieścił się poniżej „trzech sigm". Zjawisko nazywa się maskowaniem
- * i jest tym groźniejsze, im mniejsza próbka — czyli dokładnie w naszym zakresie.
+ * i jest tym groźniejsze, im mniejsza próbka - czyli dokładnie w naszym zakresie.
  *
  * Mediana odchyleń bezwzględnych (MAD) tego nie ma: pojedyncza wielka reszta nie rusza
  * mediany. Mnożnik 1,4826 skaluje MAD tak, żeby dla reszt o rozkładzie normalnym
- * odpowiadał odchyleniu standardowemu — dzięki temu próg `OUTLIER_SIGMA` znaczy to samo,
+ * odpowiadał odchyleniu standardowemu - dzięki temu próg `OUTLIER_SIGMA` znaczy to samo,
  * co znaczył.
  *
- * Gdy MAD wychodzi zero (ponad połowa reszt identyczna — dane bez szumu), wracamy do
+ * Gdy MAD wychodzi zero (ponad połowa reszt identyczna - dane bez szumu), wracamy do
  * `residualSigma`: przy zerowej skali odpornej każde odchylenie byłoby „nieskończenie
  * odstające", a to jest agresywność, na którą przy pięciu równaniach nie ma miejsca.
  */
@@ -258,7 +258,7 @@ function findOutliers(intervals: readonly FuelInterval[], fit: Fit): FuelInterva
   return intervals.filter((_, index) => Math.abs(residuals[index]! - center) > limit);
 }
 
-/** Mediana — przy parzystej liczbie próbek średnia dwóch środkowych. */
+/** Mediana - przy parzystej liczbie próbek średnia dwóch środkowych. */
 function median(values: readonly number[]): number {
   if (values.length === 0) return 0;
   const sorted = [...values].sort((a, b) => a - b);
@@ -269,7 +269,7 @@ function median(values: readonly number[]): number {
 }
 
 /**
- * Czy wynik nadaje się do pokazania — DWIE niezależne bramki.
+ * Czy wynik nadaje się do pokazania - DWIE niezależne bramki.
  *
  * ══ 1. SZEROKOŚĆ PRZEDZIAŁU ══
  * Żadna stawka wolna nie może mieć przedziału szerszego niż `MAX_RELATIVE_CI` swojej
@@ -280,15 +280,15 @@ function median(values: readonly number[]): number {
  * Sam przedział NIE WYSTARCZA i kosztowało to konkretny błędny wynik: model podał
  * stawkę ziemi WYŻSZĄ niż stawkę lotu (52 vs 37 L/h dla Cessny 182), a przedziały
  * wyszły ±21% i ±14%, czyli poniżej progu. Dane były wewnętrznie spójne, więc σ reszt
- * było maleńkie — a iloczyn `σ · √VIF` bywa mały nawet przy VIF rzędu tysiąca.
+ * było maleńkie - a iloczyn `σ · √VIF` bywa mały nawet przy VIF rzędu tysiąca.
  *
  * Przedział i VIF odpowiadają na różne pytania: pierwszy na „jak dokładnie", drugi na
  * „czy te dane w ogóle rozstrzygają ten podział". Model idealnie dopasowany do dni
- * o prawie stałej proporcji faz podaje podział DOWOLNY, nie wyznaczony — i tylko VIF
+ * o prawie stałej proporcji faz podaje podział DOWOLNY, nie wyznaczony - i tylko VIF
  * to widzi.
  */
 function acceptable(fit: Fit, columns: PhaseColumn[]): boolean {
-  // Jedna kolumna nie ma czego mylić z czym — zestaw jednofazowy przechodzi zawsze,
+  // Jedna kolumna nie ma czego mylić z czym - zestaw jednofazowy przechodzi zawsze,
   // inaczej drabina nie miałaby ostatniego szczebla.
   if (columns.length === 1) return true;
 
@@ -302,7 +302,7 @@ function acceptable(fit: Fit, columns: PhaseColumn[]): boolean {
       return false;
     }
 
-    if (coefficient.ciHalfWidth == null) return true; // brak stopni swobody — patrz `fit.ts`
+    if (coefficient.ciHalfWidth == null) return true; // brak stopni swobody - patrz `fit.ts`
     if (coefficient.value <= 0) return true;
     return coefficient.ciHalfWidth / coefficient.value <= MAX_RELATIVE_CI;
   });

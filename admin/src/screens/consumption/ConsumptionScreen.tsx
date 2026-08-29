@@ -1,22 +1,22 @@
 /**
- * UZ Aero — panel: ANALITYKA ZUŻYCIA
+ * UZ Aero - panel: ANALITYKA ZUŻYCIA
  * (`design/admin/A10a-analityka.html`, wariant `A10b-analityka-brak-danych.html`).
  *
  * ══ KONSTYTUCJA EKRANU ══
  * Wszystkie liczby policzyła domena (`packages/domain/src/consumption/`) i przysłał
- * serwer. Ekran ich NIE LICZY — zamienia je na napisy i geometrię, tak samo jak
+ * serwer. Ekran ich NIE LICZY - zamienia je na napisy i geometrię, tak samo jak
  * statystyki zakresu. Jedyne dzielenie, jakie tu jest, to szerokości segmentów wstęgi.
  *
  * ══ ESTYMATA, NIE POMIAR ══
  * Przepływomierza w samolocie nie ma, więc zużycia „w samym wznoszeniu" nikt nigdy nie
  * zmierzył. Każda stawka na tym ekranie jest wnioskiem z regresji i dlatego **stoi razem
- * ze swoim przedziałem ufności** — liczba bez niepewności wyglądałaby jak odczyt
+ * ze swoim przedziałem ufności** - liczba bez niepewności wyglądałaby jak odczyt
  * przyrządu. Ta sama zasada rządzi bramką publikacji: poniżej progu danych ekran mówi,
  * czego brakuje (`A10b`), zamiast pokazać stawkę „wstępną".
  *
  * ══ DWA WARIANTY, JEDNA TRASA ══
  * `A10a` i `A10b` to ten sam widok w dwóch stanach tych samych danych, nie dwa adresy.
- * O tym, który zobaczy administrator, rozstrzyga `fuel.published` z serwera — panel nie
+ * O tym, który zobaczy administrator, rozstrzyga `fuel.published` z serwera - panel nie
  * zgaduje przed pobraniem, ile danych ma samolot.
  */
 
@@ -169,7 +169,7 @@ export function ConsumptionScreen() {
           <>
             Skąd biorą się średnie tego samolotu: każdy odczyt paliwomierza (preflight,
             tankowanie, koniec dnia) tnie dzień na <b>interwały o znanym zużyciu</b>,
-            a regresja rozdziela je między fazy. Motogodziny analogicznie — jedno równanie
+            a regresja rozdziela je między fazy. Motogodziny analogicznie - jedno równanie
             na każdy zamknięty dzień. Każda liczba klika się w dół: do interwału, dnia
             i zdarzeń źródłowych.
           </>
@@ -184,7 +184,7 @@ export function ConsumptionScreen() {
       <Banner tone="status">
         <span>
           <b>Estymata statystyczna, nie dokumentacja samolotu.</b> Liczby uczą się
-          z odczytów pilotów i czasów z rejestru zdarzeń. Służą nadzorowi i prognozom —
+          z odczytów pilotów i czasów z rejestru zdarzeń. Służą nadzorowi i prognozom -
           nie zastępują instrukcji użytkowania ani odczytu przyrządów. Liczniki fizyczne
           pozostają źródłem prawdy.
         </span>
@@ -213,7 +213,7 @@ export function ConsumptionScreen() {
 
       <Columns even>
         <Card
-          title="Paliwo — model fazowy"
+          title="Paliwo - model fazowy"
           actions={
             <>
               <Pill tone="dim">{`${data.fuel.equations} równań`}</Pill>
@@ -279,7 +279,7 @@ export function ConsumptionScreen() {
                 label={gate.engineLabel}
               />
               <span className="hint">
-                Interwały są widoczne od pierwszego dnia — dowód liczenia zbiera się na
+                Interwały są widoczne od pierwszego dnia - dowód liczenia zbiera się na
                 oczach administratora, a nie pojawia znikąd razem ze stawkami.
               </span>
             </>
@@ -289,7 +289,7 @@ export function ConsumptionScreen() {
         </Card>
 
         <Card
-          title="Motogodziny — przelicznik na godzinę zegara"
+          title="Motogodziny - przelicznik na godzinę zegara"
           actions={
             <Pill tone={data.mh.kind === 'tach' ? 'amber' : data.mh.kind === 'hobbs' ? 'green' : 'dim'}>
               {`licznik ${counterLabel(data.mh.kind)}`}
@@ -314,7 +314,7 @@ export function ConsumptionScreen() {
 
           {data.mh.rows.length === 0 ? (
             <span className="hint">
-              Żaden dzień w oknie nie ma pary odczytów licznika — bez nich nie ma równania.
+              Żaden dzień w oknie nie ma pary odczytów licznika - bez nich nie ma równania.
             </span>
           ) : (
             <DataTable
@@ -327,7 +327,7 @@ export function ConsumptionScreen() {
 
           <span className="hint">
             Licznik obrotomierzowy zlicza <b>obroty silnika</b> przeliczone na godziny przy
-            obrotach znamionowych — dlatego ΔMH dnia nie równa się blokowi i nie ma prawa
+            obrotach znamionowych - dlatego ΔMH dnia nie równa się blokowi i nie ma prawa
             się równać: na ziemi silnik kręci wolniej. Charakter licznika model wykrywa sam
             z danych; przelicznik bliski jedności w obu fazach znaczy licznik godzinowy.
           </span>
@@ -346,14 +346,14 @@ export function ConsumptionScreen() {
           </div>
           <span className="hint">
             Rosnące spalanie przy niezmienionym profilu operacji to <b>wczesny sygnał
-            serwisowy</b>, nie ciekawostka księgowa — dokładnie po to ten wykres tu stoi.
+            serwisowy</b>, nie ciekawostka księgowa - dokładnie po to ten wykres tu stoi.
             Wzrost w granicach niepewności jeszcze niczego nie dowodzi.
           </span>
         </Card>
       )}
 
       <Card
-        title="Interwały paliwowe — skąd biorą się liczby"
+        title="Interwały paliwowe - skąd biorą się liczby"
         actions={<Pill tone="dim">odczyt → odczyt · zawsze w obrębie sesji</Pill>}
       >
         {intervals.length === 0 ? (
@@ -376,19 +376,19 @@ export function ConsumptionScreen() {
           Pokazano {intervals.length} interwałów z {data.basis.sessions} dni zamkniętych
           {data.basis.openSessions === 0
             ? '.'
-            : ` (dni otwartych w oknie: ${data.basis.openSessions} — bez odczytu końcowego nie znamy ich zużycia).`}
+            : ` (dni otwartych w oknie: ${data.basis.openSessions} - bez odczytu końcowego nie znamy ich zużycia).`}
           {data.basis.sessionsInRange > data.basis.sessions
-            ? ` Uwaga: okno obejmuje ${data.basis.sessionsInRange} dni, a analiza objęła ${data.basis.sessions} — resztę przycięto limitem.`
+            ? ` Uwaga: okno obejmuje ${data.basis.sessionsInRange} dni, a analiza objęła ${data.basis.sessions} - resztę przycięto limitem.`
             : ''}
         </span>
       </Card>
 
       <Columns even>
-        <Card title="Jak liczymy — reguły">
+        <Card title="Jak liczymy - reguły">
           <ul className="reason-list">
             <li>
               średnia okna to iloraz sum (Σ zużycia / Σ godzin), nigdy średnia dziennych
-              średnich — krótki interwał z błędem odczytu nie może rządzić wynikiem
+              średnich - krótki interwał z błędem odczytu nie może rządzić wynikiem
             </li>
             <li>
               interwał zaczyna się i kończy odczytem paliwomierza, zawsze WEWNĄTRZ jednej
@@ -401,7 +401,7 @@ export function ConsumptionScreen() {
             </li>
             <li>
               ujemne zużycie i odcinki krótsze niż 30 min pracy silnika nie wchodzą do
-              regresji — zostają na liście z powodem
+              regresji - zostają na liście z powodem
             </li>
             <li>
               stawki publikujemy od 5 interwałów i 10 h silnika; wcześniej ekran mówi „za
@@ -437,7 +437,7 @@ export function ConsumptionScreen() {
           <span className="hint">
             Stawki <code>r</code> (L/h) i przeliczniki <code>k</code> (MH na godzinę zegara)
             to niewiadome; czasy faz <code>t</code> są znane z rejestru i śladu.
-            Identyfikowalność bierze się ze zmienności proporcji faz między interwałami —
+            Identyfikowalność bierze się ze zmienności proporcji faz między interwałami -
             dzień z trzema wyniesieniami i dzień z ośmioma to dwa różne równania.
             Niepewność liczymy <b>ze wzoru, nie losowaniem</b>: ta sama odpowiedź przy
             każdym przeliczeniu, sprawdzalna i przybita testem.

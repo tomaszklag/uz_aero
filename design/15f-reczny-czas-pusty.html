@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 15F Lot ręczny · arkusz czasu bez wartości</title>
+<title>UZ Aero - 15F Lot ręczny · arkusz czasu bez wartości</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -87,10 +87,10 @@
   .modal-sheet { background:var(--surface-raised); border-radius:24px 24px 0 0; padding:20px 18px 36px; display:flex; flex-direction:column; gap:16px; border-top:1px solid var(--border-strong); max-height:calc(100% - 56px); overflow-y:auto; }
   .modal-handle { width:36px; height:4px; border-radius:2px; background:var(--border-strong); align-self:center; margin-bottom:2px; }
   .modal-title { font-family:var(--font-display); font-size:22px; letter-spacing:2px; color:var(--text-primary); }
-  /* Cel jednym wierszem mono — bez kolorowej ramki i ikony typu (issue #43). */
+  /* Cel jednym wierszem mono - bez kolorowej ramki i ikony typu (issue #43). */
   .target-label { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); }
   /* Czas lokalny drobnym drukiem POD zegarem UTC (issue #62 pkt 6). Rejestr jedzie
-     w UTC i tak zostaje — ale pilot ma na ręce zegarek, który pokazuje LT. */
+     w UTC i tak zostaje - ale pilot ma na ręce zegarek, który pokazuje LT. */
   /* Linia etykiety kontrolki: nazwa po lewej, czas lokalny po prawej (2026-08-29). */
   .field-head { display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:6px; }
   .time-local { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); }
@@ -100,14 +100,14 @@
   .step-btn[disabled] { opacity:0.35; cursor:not-allowed; pointer-events:none; }
   /* Powód blokady WEWNĄTRZ przycisku, nigdy pod nim (issue #55): napis doklejany pod
      spodem pojawiał się i znikał razem ze stanem, skacząc layoutem reszty. Przycisk
-     z powodem NIE dostaje przygaszenia opacity — bursztyn musi zostać ostrzeżeniem. */
+     z powodem NIE dostaje przygaszenia opacity - bursztyn musi zostać ostrzeżeniem. */
   .modal-btn-confirm.disabled { background:var(--surface-hover); color:var(--text-muted); box-shadow:none; pointer-events:none; cursor:not-allowed; flex-direction:column; gap:5px; }
   .btn-reason { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--amber); text-align:center; line-height:1.5; }
 
-  /* ===== TIME STEPPER — JEDNA KONTROLKA NA CAŁĄ APLIKACJĘ (issue #43) =====
+  /* ===== TIME STEPPER - JEDNA KONTROLKA NA CAŁĄ APLIKACJĘ (issue #43) =====
      Ta sama, co w korektach (10E–10H) i w kokpicie (05F). Wpis ręczny miał do
-     2026-08-16 własną parę przycisków w `ManualEntrySheet` — komponencie po skasowanym
-     ekranie 08 — z krokiem 10 minut i bez możliwości wpisania godziny z klawiatury.
+     2026-08-16 własną parę przycisków w `ManualEntrySheet` - komponencie po skasowanym
+     ekranie 08 - z krokiem 10 minut i bez możliwości wpisania godziny z klawiatury.
      Reguły kontrolki: krok to MINUTA i tylko ona; godzinę da się WPISAĆ (tapnięcie
      w wartość otwiera klawiaturę numeryczną, dwukropek stawia maska); przycisk rośnie
      z napisem (46 px to minimum celu, nie sztywna szerokość); jeden wygląd, bez tonu
@@ -148,12 +148,12 @@
 
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 15F</span>
+  <span class="film-strip">UZ AERO - 15F</span>
   <span class="slug">lot ręczny · arkusz czasu bez wartości</span>
   <span class="canvas-meta">Stan otwarcia</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Lot ręczny: arkusz czasu w stanie pustym">
+<main class="phone" role="region" aria-label="Mockup - Lot ręczny: arkusz czasu w stanie pustym">
   <div class="status-bar">
     <span>09:14</span>
     <span class="status-right">
@@ -198,7 +198,7 @@
 
          Do issue #62 ten arkusz otwierał się z godzinami 10:00 i 11:00, których nikt
          nie wpisał. Podstawiona godzina wygląda dokładnie jak wpisana i pilot nie ma
-         jak ich odróżnić — a potem ta sama zgadywanka służy jeszcze za dwie rzeczy:
+         jak ich odróżnić - a potem ta sama zgadywanka służy jeszcze za dwie rzeczy:
          za punkt odniesienia podpisu („Zmiana o −105 min względem wpisu (10:00)")
          i za bazę kroku ±1 min. Zgłoszenie z urządzenia opisało oba objawy naraz
          i zaproponowało wprost: „może ten popup powinien działać tak, że nie mam
@@ -222,8 +222,8 @@
 
                  I DLATEGO TO JEST JEDYNY ARKUSZ CZASU, KTÓRY OTWIERA SIĘ Z KLAWIATURĄ
                  (`stepperOpensForTyping`, uwaga z urządzenia 2026-08-29): warunkiem
-                 jest PUSTA wartość. Nad godziną już wpisaną — przy „DODAJ LOT"
-                 i przy korekcie (15D) — klawiatura nie wchodzi sama, bo tam pilot
+                 jest PUSTA wartość. Nad godziną już wpisaną - przy „DODAJ LOT"
+                 i przy korekcie (15D) - klawiatura nie wchodzi sama, bo tam pilot
                  poprawia o minutę przyciskiem, a ona zasłania pół arkusza. -->
             <button class="step-btn" disabled>−1 min</button>
             <span class="time-val empty">--:--</span>
@@ -246,13 +246,13 @@
 
         <div class="modal-ref">
           <span>Blok</span>
-          <span class="modal-ref-val">—</span>
+          <span class="modal-ref-val">-</span>
         </div>
 
         <div class="modal-actions">
           <a href="15b-reczny-czasy.html" class="modal-btn-cancel">ANULUJ</a>
           <!-- POWÓD BLOKADY WEWNĄTRZ PRZYCISKU, nigdy pod nim (issue #55). Do issue #62
-               odmowa padała dopiero przy „DALEJ" na dole kroku — czyli po zamknięciu
+               odmowa padała dopiero przy „DALEJ" na dole kroku - czyli po zamknięciu
                arkusza, gdy pilot nie widział już żadnej z tych godzin. -->
           <span class="modal-btn-confirm disabled">
             ZAPISZ
@@ -266,11 +266,11 @@
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Arkusz czasu — stany</div>
+  <div class="vp-title">Arkusz czasu - stany</div>
   <a class="vp-item active" href="15f-reczny-czas-pusty.html">
     <span class="vp-badge blue">15F</span>
     <span class="vp-body">
-      <span class="vp-name">Bez wartości — stan otwarcia</span>
+      <span class="vp-name">Bez wartości - stan otwarcia</span>
       <span class="vp-when">Bieg silnika otwierany po raz pierwszy: godzin nie ma, bo nikt ich nie wpisał. Przyciski ± wygaszone, „ZAPISZ" z powodem w środku.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
@@ -278,7 +278,7 @@
   <a class="vp-item" href="15d-reczny-czas-arkusz.html">
     <span class="vp-badge blue">15D</span>
     <span class="vp-body">
-      <span class="vp-name">Z wartością — poprawka</span>
+      <span class="vp-name">Z wartością - poprawka</span>
       <span class="vp-when">Godzina już jest (wpisana albo wyprowadzona z biegu silnika przy nowym locie): ± działa, podpis mówi o ile przesunięto, pod spodem czas lokalny.</span>
     </span>
   </a>
@@ -286,13 +286,13 @@
     <span class="vp-badge amber">15G</span>
     <span class="vp-body">
       <span class="vp-name">Odwrócona para godzin</span>
-      <span class="vp-when">Wyłączenie wcześniejsze niż uruchomienie: czas trwania pokazuje „—", a „ZAPISZ" nazywa skutek.</span>
+      <span class="vp-when">Wyłączenie wcześniejsze niż uruchomienie: czas trwania pokazuje „-", a „ZAPISZ" nazywa skutek.</span>
     </span>
   </a>
   <a class="vp-item" href="15b-reczny-czasy.html">
     <span class="vp-badge">15B</span>
     <span class="vp-body">
-      <span class="vp-name">Krok 3 — czasy</span>
+      <span class="vp-name">Krok 3 - czasy</span>
       <span class="vp-when">Ekran pod tym arkuszem.</span>
     </span>
   </a>

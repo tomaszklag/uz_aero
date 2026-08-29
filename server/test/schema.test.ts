@@ -1,14 +1,14 @@
 /**
- * UZ Aero (serwer) — test KONTRAKTU SCHEMATU na prawdziwym Postgresie (PGlite).
+ * UZ Aero (serwer) - test KONTRAKTU SCHEMATU na prawdziwym Postgresie (PGlite).
  *
  * Lustro `sqliteSchema.test.ts` z aplikacji i domknięcie tej samej luki: kolumny DDL
  * ↔ interfejsy wierszy ↔ mapowanie to trzy miejsca, które muszą się zgadzać, a literówka
- * w nazwie kolumny nie jest błędem typów — tylko `undefined` w runtime. Listy kolumn
+ * w nazwie kolumny nie jest błędem typów - tylko `undefined` w runtime. Listy kolumn
  * są tu przybite na sztywno; zmiana schematu bez zmiany testu ma NIE przejść.
  *
  * ══ TEN PLIK BYŁ DOWODEM ZGNIECENIA MIGRACJI (2026-08-08) ══
  * Dwadzieścia trzy migracje zwinęły się w jedną bazową. Listy niżej NIE ZMIENIŁY SIĘ ani
- * o kolumnę, ani o pozycję — i to jest cała weryfikacja tamtej zmiany: zgnieciony skrypt
+ * o kolumnę, ani o pozycję - i to jest cała weryfikacja tamtej zmiany: zgnieciony skrypt
  * produkuje ten sam schemat, który produkowała historia. Stąd też porządek kolumn wygląda,
  * jak wygląda (rzeczy dokładane `ALTER`-em siedzą na końcu tabel); jest zachowany
  * świadomie, żeby to porównanie dało się zrobić.
@@ -45,7 +45,7 @@ describe('schemat PostgreSQL (kontrakt)', () => {
     expect(SCHEMA_VERSION).toBe(MIGRATIONS.length);
   });
 
-  it('KAŻDA migracja ma opis — inaczej `A11` wypisuje cudzy przy nowej pozycji', () => {
+  it('KAŻDA migracja ma opis - inaczej `A11` wypisuje cudzy przy nowej pozycji', () => {
     // Ekran konserwacji sklejał do 2026-08-02 numer z bazy z opisem z kodu PO INDEKSIE.
     // Dopisanie migracji bez dopisania opisu przesunęłoby całą kolumnę „Co wprowadza"
     // o jeden i nikt by tego nie zauważył: tabela dalej wyglądałaby poprawnie.
@@ -53,7 +53,7 @@ describe('schemat PostgreSQL (kontrakt)', () => {
     for (const title of MIGRATION_TITLES) expect(title.trim().length).toBeGreaterThan(10);
   });
 
-  it('migracje są idempotentne — ponowne wołanie niczego nie psuje', async () => {
+  it('migracje są idempotentne - ponowne wołanie niczego nie psuje', async () => {
     const db = await migrated();
     await expect(migrate(db as Queryable)).resolves.toBeUndefined();
   });
@@ -76,7 +76,7 @@ describe('schemat PostgreSQL (kontrakt)', () => {
     ],
     [
       'sessions',
-      // `operation`/`client`, kolumny statystyk (od `takeoff_count`) i `notes` na końcu —
+      // `operation`/`client`, kolumny statystyk (od `takeoff_count`) i `notes` na końcu -
       // dołożone `ALTER`-em. `claim_time` niesie CZAS PRZEJĘCIA maszyny (uzasadnienie:
       // `application/common/mappers/sessionRow.ts`), i dlatego kolumny `duty_start` tu
       // świadomie NIE MA: klamra służby należy do PILOTA, nie do sesji (§3.6a).
@@ -84,7 +84,7 @@ describe('schemat PostgreSQL (kontrakt)', () => {
     ],
     [
       'flags',
-      // `resolved_by`/`resolution_note` na końcu — dołożone `ALTER`-em.
+      // `resolved_by`/`resolution_note` na końcu - dołożone `ALTER`-em.
       ['id', 'type', 'aircraft_id', 'session_uuids', 'details', 'status', 'created_at', 'resolved_at', 'resolved_by', 'resolution_note'],
     ],
     [
@@ -97,7 +97,7 @@ describe('schemat PostgreSQL (kontrakt)', () => {
       ['id', 'actor_pilot_id', 'actor_role', 'action', 'target_type', 'target_id', 'details', 'ip', 'created_at'],
     ],
     // Dopisana przy zgnieceniu: tabela istniała od materializacji normy zużycia
-    // (2026-08-05), ale wypadła z tego kontraktu — czyli jedyna tabela schematu, której
+    // (2026-08-05), ale wypadła z tego kontraktu - czyli jedyna tabela schematu, której
     // literówka w nazwie kolumny nie zatrzymałaby żadnego testu.
     ['aircraft_consumption', ['aircraft_id', 'window_days', 'model', 'computed_at']],
   ])('tabela %s ma dokładnie uzgodnione kolumny', async (table, expected) => {

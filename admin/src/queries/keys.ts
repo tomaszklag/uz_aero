@@ -1,11 +1,11 @@
 /**
- * UZ Aero — panel: klucze zapytań TanStack Query, wszystkie w JEDNYM miejscu.
+ * UZ Aero - panel: klucze zapytań TanStack Query, wszystkie w JEDNYM miejscu.
  *
  * Hierarchicznie, żeby unieważnianie prefiksem było jednolinijkowe
  * (`docs/architektura-panelu-frontend.md` §4.2): mutacja, która zmienia skład listy,
  * unieważnia `keys.<zasób>.all` i nie musi znać żadnego konkretnego filtra.
  *
- * Klucze dochodzą razem z ekranami, które ich używają — z jednym wyjątkiem,
+ * Klucze dochodzą razem z ekranami, które ich używają - z jednym wyjątkiem,
  * opisanym niżej przy `sessions`/`exports`/`dashboard`.
  */
 
@@ -42,7 +42,7 @@ export const keys = {
    *
    * `count` odpowiada na INNE pytanie niż lista: kafle nad tabelą („dni z flagą",
    * „wyeksportowane") potrzebują liczby, którą policzył serwer całym filtrem, a nie
-   * sumy z wierszy pobranej strony — ta kłamałaby przy każdym obcięciu `limit`-em.
+   * sumy z wierszy pobranej strony - ta kłamałaby przy każdym obcięciu `limit`-em.
    */
   sessions: {
     all: ['sessions'] as const,
@@ -50,7 +50,7 @@ export const keys = {
     count: (query: SessionListQuery) => ['sessions', 'count', query] as const,
     detail: (sessionUuid: string) => ['sessions', 'detail', sessionUuid] as const,
     /**
-     * Ślad jednego lotu (`A02c`). Pod prefiksem `sessions`, bo to zasób TEJ sesji —
+     * Ślad jednego lotu (`A02c`). Pod prefiksem `sessions`, bo to zasób TEJ sesji -
      * korekta czasu startu zmienia okno lotu, więc unieważnienie `sessions.all`
      * ma pociągnąć za sobą także mapę. Osobny prefiks rozerwałby ten związek.
      */
@@ -62,7 +62,7 @@ export const keys = {
    * Dziennik audytu (`A09`).
    *
    * Tak samo jak przy dniach: `list` NIE zawiera kursora (to parametr strony, nie
-   * tożsamość pytania), a `count` odpowiada na inne pytanie niż lista — kafle nad
+   * tożsamość pytania), a `count` odpowiada na inne pytanie niż lista - kafle nad
    * tabelą („wpisy dziś") potrzebują liczby policzonej przez serwer całym filtrem,
    * a nie sumy z pobranej strony.
    */
@@ -75,7 +75,7 @@ export const keys = {
   /**
    * Rejestr zdarzeń (`A04`).
    *
-   * Tak samo jak przy dniach i dzienniku: `list` NIE zawiera kursora — kursor keyset
+   * Tak samo jak przy dniach i dzienniku: `list` NIE zawiera kursora - kursor keyset
    * opisuje pozycję WEWNĄTRZ jednego wyniku filtra, więc jest parametrem strony,
    * a nie częścią tożsamości pytania. Wpisanie go do klucza dałoby osobny wpis cache'u
    * na każdą stronę i pierwszy powrót „wstecz" zaczynałby rejestr od nowa.
@@ -113,28 +113,28 @@ export const keys = {
    *
    * `tolerance` jest kluczowana POJEMNOŚCIĄ, bo to jest całe pytanie: „jaki próg wyjdzie
    * dla 1100 L". Dzięki temu poprawianie liczby w formularzu tam i z powrotem wraca do
-   * już policzonej odpowiedzi zamiast pytać serwer drugi raz o to samo — a mockup `A07a`
+   * już policzonej odpowiedzi zamiast pytać serwer drugi raz o to samo - a mockup `A07a`
    * przewiduje właśnie takie poprawianie. Wpis żyje bez końca (`staleTime: Infinity`
    * w hooku), bo `max(10 L, 5%)` nie zmienia się między żądaniami.
    *
-   * `detail` nie ma: szuflada samolotu otwiera wiersz, który już jest na liście — trasy
+   * `detail` nie ma: szuflada samolotu otwiera wiersz, który już jest na liście - trasy
    * `GET /fleet/:id` serwer nie wystawia, bo flota ma kilka jednostek i pobranie
    * całości jest tańsze niż druga trasa. Ta sama decyzja, co przy kontach.
    */
   fleet: {
     /**
-     * **Jedyny zasób bez `all` — i to jest treść, nie niekonsekwencja.**
+     * **Jedyny zasób bez `all` - i to jest treść, nie niekonsekwencja.**
      *
      * Pod prefiksem `['fleet']` żyją DWA pytania o różnej naturze: skład listy (starzeje
      * się przy każdym zapisie) i próg dla pojemności (funkcja czysta, `staleTime:
      * Infinity`). `invalidateQueries` dopasowuje PREFIKSOWO, więc `all` unieważniałoby
-     * jedno razem z drugim — i tak było do 2026-08-01, mimo że `useFleetCommands`
+     * jedno razem z drugim - i tak było do 2026-08-01, mimo że `useFleetCommands`
      * deklarował w komentarzu, że progu NIE unieważnia. Koszt nie był teoretyczny:
      * szuflada zapisu jest w tej chwili otwarta, więc jej zapytanie o próg jest AKTYWNE
      * i unieważnienie kończyło się natychmiastowym żądaniem o liczbę, która nie może
      * się zmienić.
      *
-     * Zamiast korzenia obejmującego wszystko mamy więc `lists` — prefiks dokładnie tego,
+     * Zamiast korzenia obejmującego wszystko mamy więc `lists` - prefiks dokładnie tego,
      * co po zapisie faktycznie jest nieaktualne. Korzeń, który obiecuje więcej, niż
      * którakolwiek mutacja chce unieważnić, jest pułapką, a nie wygodą.
      */
@@ -144,12 +144,12 @@ export const keys = {
   },
 
   /**
-   * PODGLĄD korekty (`A02b`) — dry-run, więc zwykłe zapytanie z cache'em.
+   * PODGLĄD korekty (`A02b`) - dry-run, więc zwykłe zapytanie z cache'em.
    *
    * Cały szkic (`targetUuid` + akcja + `newTime`) jest częścią klucza, bo jest częścią
    * PYTANIA: „co się stanie, jeśli przesunę to zdarzenie na 13:01:33" to inne pytanie
    * niż „…na 13:02:00". Dzięki temu przełączanie `retime` ↔ `void` w formularzu wraca
-   * do już policzonej odpowiedzi zamiast pytać serwer drugi raz o to samo — a mockup
+   * do już policzonej odpowiedzi zamiast pytać serwer drugi raz o to samo - a mockup
    * przewiduje właśnie takie przełączanie tam i z powrotem.
    */
   corrections: {
@@ -163,7 +163,7 @@ export const keys = {
    *
    * `all` jest tu KORZENIEM obejmującym wszystko i to jest właściwe, odwrotnie niż
    * przy flocie: pod tym prefiksem żyją wyłącznie pytania o STAN arkusza (lista,
-   * historia rewizji, treść karty), a każde z nich starzeje się od tej samej rzeczy —
+   * historia rewizji, treść karty), a każde z nich starzeje się od tej samej rzeczy -
    * od wysyłki karty. Rozwiązanie flagi, korekta zdarzenia i ponowienie unieważniają
    * je razem, bo razem przestają być prawdziwe.
    *
@@ -181,24 +181,24 @@ export const keys = {
   /**
    * Konserwacja (`A11`).
    *
-   * `projections` to PORÓWNANIE różnic — zapytanie kosztowne (pełny skan rejestru),
+   * `projections` to PORÓWNANIE różnic - zapytanie kosztowne (pełny skan rejestru),
    * więc ekran nie odpala go przy wejściu: uruchamia je człowiek przyciskiem, a klucz
    * służy do trzymania odpowiedzi między przełączeniami ekranu. Klucz nie ma parametrów,
    * bo pytanie nie ma parametrów: „czy projekcja zgadza się ze strumieniem" dotyczy
    * CAŁEJ bazy i innego zakresu nie ma.
    *
-   * **Bez korzenia `all` — z tego samego powodu, co przy flocie i mocniejszego.**
+   * **Bez korzenia `all` - z tego samego powodu, co przy flocie i mocniejszego.**
    * Pod prefiksem `['maintenance']` żyją trzy pytania, których NIC nie starzeje razem:
    * porównanie projekcji (pełny skan rejestru, ~4 min), stan tabeli tokenów (jedno
    * `COUNT`) i stan schematu (zmienia go wyłącznie START SERWERA). Korzeń był tu
    * pułapką dosłownie: `invalidateQueries` dopasowuje PREFIKSOWO i refetchuje ZAPYTANIA
    * AKTYWNE niezależnie od `staleTime`, więc unieważnienie po nadpisaniu projekcji
-   * odpalało drugi czterominutowy skan rejestru — a jego wynik i tak był wyrzucany,
+   * odpalało drugi czterominutowy skan rejestru - a jego wynik i tak był wyrzucany,
    * bo ekran pokazuje wtedy raport z ZAPISU. Skan świadomie zdjęto z automatu
    * (`useMaintenance.ts`: „żeby nie zamienić ekranu diagnostycznego w generator
    * obciążenia"); wywołanie go ubocznie kasowało tę decyzję.
    *
-   * Każda mutacja unieważnia więc dokładnie ten klucz, który zdezaktualizowała —
+   * Każda mutacja unieważnia więc dokładnie ten klucz, który zdezaktualizowała -
    * i ani jednego więcej (`useMaintenanceCommands.test.ts`).
    */
   maintenance: {
@@ -211,7 +211,7 @@ export const keys = {
 
   /**
    * Statystyki (`A10`). Klucz niesie CAŁY zakres dat, bo zakres jest tożsamością
-   * pytania — „lipiec" i „ostatnie 30 dni" to dwa różne raporty i oba mają prawo żyć
+   * pytania - „lipiec" i „ostatnie 30 dni" to dwa różne raporty i oba mają prawo żyć
    * w cache'u obok siebie (przełączanie presetów wraca wtedy do policzonej odpowiedzi).
    * Ujęcia (samolot / pilot / operacja) w kluczu NIE MA: to jeden raport, a przełącznik
    * tylko wybiera tabelę z tej samej odpowiedzi.
@@ -225,13 +225,13 @@ export const keys = {
    * Analityka zużycia (`A10a`, `A10b`).
    *
    * Klucz niesie CAŁE pytanie: samolot i zakres. Przełączanie jednostki chipem wraca
-   * wtedy do policzonej odpowiedzi zamiast pytać serwer drugi raz — a raport jest
+   * wtedy do policzonej odpowiedzi zamiast pytać serwer drugi raz - a raport jest
    * kosztowny (czyta strumienie kilkudziesięciu sesji), więc jest to oszczędność
    * realna, nie kosmetyczna.
    *
    * Pod prefiksem `fleet` NIE stoi, choć dotyczy jednostki: `keys.fleet.lists`
    * unieważnia się przy każdym zapisie konfiguracji, a analityka nie zmienia się od
-   * zmiany pojemności zbiorników — zmienia się od nowych DNI. Wspólny prefiks kazałby
+   * zmiany pojemności zbiorników - zmienia się od nowych DNI. Wspólny prefiks kazałby
    * jej przeliczać się bez powodu.
    */
   consumption: {

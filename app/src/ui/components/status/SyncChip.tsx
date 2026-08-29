@@ -1,25 +1,25 @@
 /**
- * UZ Aero — SyncChip
+ * UZ Aero - SyncChip
  *
  * Jedyny globalny wskaźnik łączności (offline-first, docs/_main.md.txt §4.3, §6):
  *   - synced  → **nic** (od 2026-08-06, issue #12)
  *   - offline → "OFFLINE · n" (amber pill, n = liczba zdarzeń w outboksie)
  *
- * DLACZEGO ZIELONE „SYNC" ZNIKŁO. Zsynchronizowano to stan DOMYŚLNY — plakietka
+ * DLACZEGO ZIELONE „SYNC" ZNIKŁO. Zsynchronizowano to stan DOMYŚLNY - plakietka
  * potwierdzająca normalność zajmowała miejsce w każdym nagłówku aplikacji i uczyła oko
  * ignorować róg ekranu, w którym czasem pojawia się rzecz naprawdę ważna. Cisza niesie
  * tu tę samą informację (ta sama reguła co przy `FreshnessNote`: stan `live` nie dostaje
  * żadnej adnotacji), a amber pill zauważa się dopiero wtedy, gdy jest co zauważać.
  *
  * SZCZEGÓŁY POD TAPNIĘCIEM (issue #23 pkt 5, mockup `01c`). Ekran pokazywał dwa stemple
- * syncu naraz — pod pillem i w stopce „Dane referencyjne" — i oba znikły: pill jest
+ * syncu naraz - pod pillem i w stopce „Dane referencyjne" - i oba znikły: pill jest
  * jedynym śladem sieci, a tapnięcie otwiera arkusz ze szczegółami (stan kolejki,
  * ostatnia udana synchronizacja, wiek danych referencyjnych). Arkusz jest INFORMACYJNY,
  * bez akcji „wyślij teraz": outbox wysyła sam, gdy wróci sieć (§4.1), a przycisk-atrapa
  * uczyłby, że trzeba pomagać.
  *
  * Pill renderuje się PRZEZ `StatusChip`: SYNC i RUNNING stoją obok siebie w pasku 05,
- * więc muszą mieć identyczne metryki — osobna implementacja pilla już raz rozjechała
+ * więc muszą mieć identyczne metryki - osobna implementacja pilla już raz rozjechała
  * ich wysokości (2026-08-04). Osobny komponent zostaje, bo wskaźnik sieci jest jeden,
  * nie wolno go mnożyć i ma własny słownik stanów.
  */
@@ -38,12 +38,12 @@ export type SyncStatus = 'synced' | 'offline';
 
 export interface SyncChipProps {
   status: SyncStatus;
-  /** Liczba zdarzeń w outboksie — renderowana jako "OFFLINE · n" (tylko dla offline). */
+  /** Liczba zdarzeń w outboksie - renderowana jako "OFFLINE · n" (tylko dla offline). */
   outboxCount?: number;
   /** Chwila ostatniej UDANEJ synchronizacji (`sessionStore.lastSyncAt`); null = jeszcze żadnej. */
   lastSyncAt?: number | null;
   /**
-   * Stempel cache referencyjnego (`reference.checkedAt`, §4.8) — wiersz w arkuszu
+   * Stempel cache referencyjnego (`reference.checkedAt`, §4.8) - wiersz w arkuszu
    * szczegółów. `undefined` = ekran go nie zna i wiersza nie ma; `null` = wiemy,
    * że cache jeszcze nigdy się nie potwierdził („jeszcze bez synca").
    */
@@ -60,7 +60,7 @@ export function SyncChip({
 }: SyncChipProps) {
   const [detailsOpen, setDetailsOpen] = useState(false);
 
-  // Stan domyślny nie melduje się z niczym — patrz nota wyżej.
+  // Stan domyślny nie melduje się z niczym - patrz nota wyżej.
   if (status === 'synced') return null;
 
   const count = outboxCount ?? 0;
@@ -71,7 +71,7 @@ export function SyncChip({
     <>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`Offline, ${count} w kolejce — szczegóły synchronizacji`}
+        accessibilityLabel={`Offline, ${count} w kolejce - szczegóły synchronizacji`}
         onPress={() => setDetailsOpen(true)}
         style={({ pressed }) => [styles.pill, { opacity: pressed ? 0.6 : 1 }, style]}
       >
@@ -107,7 +107,7 @@ export function SyncChip({
           tone="amber"
           icon="sync"
           text={
-            `Offline — ${queued} ${plural(count, 'czeka', 'czekają', 'czeka')} w kolejce. ` +
+            `Offline - ${queued} ${plural(count, 'czeka', 'czekają', 'czeka')} w kolejce. ` +
             'Wyślą się same, gdy wróci sieć; brak zasięgu niczego nie blokuje.'
           }
         />

@@ -1,14 +1,14 @@
 /**
- * UZ Aero — test AKCJI `amend` (issue #43): korekta WARTOŚCI, nie czasu.
+ * UZ Aero - test AKCJI `amend` (issue #43): korekta WARTOŚCI, nie czasu.
  *
  * Do issue #43 `event_correction` umiało dwie rzeczy: przesunąć zdarzenie w czasie
  * i uznać, że go nie było. Odczyt paliwa, licznik motogodzin i skład zrzutu były więc
- * nietykalne — pilot, który przepisał z tarczy 171 zamiast 168, nie miał JAK tego
+ * nietykalne - pilot, który przepisał z tarczy 171 zamiast 168, nie miał JAK tego
  * poprawić, a to jego jedyny zapis stanu maszyny.
  *
  * Testy pilnują trzech rzeczy naraz:
  *  1. `amend` faktycznie zmienia liczby W PROJEKCJI (nie tylko w payloadzie),
- *  2. czas i wartości są NIEZALEŻNE — poprawka jednego nie kasuje drugiego,
+ *  2. czas i wartości są NIEZALEŻNE - poprawka jednego nie kasuje drugiego,
  *  3. korekta nie jest furtką omijającą reguły: te same progi, co przy pierwszym zapisie.
  *
  * Punkt czwarty jest testem REGRESYJNYM na najdalszego konsumenta strumienia: skoro
@@ -93,7 +93,7 @@ function session(): {
     arrivalIcao: 'EPZG',
     reading: { fuelL: 150, mh: 1234.5 },
     mhFormat: 'decimal',
-    // Olej z bagnetu przy przejęciu (issue #60) — pomiar 10,2 L + dolane 1,0 L.
+    // Olej z bagnetu przy przejęciu (issue #60) - pomiar 10,2 L + dolane 1,0 L.
     oilL: 10.2,
     oilAddedL: 1.0,
   });
@@ -127,12 +127,12 @@ function session(): {
 
 const codes = (v: RuleViolation[]): string[] => errorsOf(v).map((x) => x.code);
 
-/** Kandydat korekty na tle strumienia — tak samo jak sprawdza go komenda. */
+/** Kandydat korekty na tle strumienia - tak samo jak sprawdza go komenda. */
 function check(stream: Event[], candidate: Event): RuleViolation[] {
   return checkAppend(projectSession(stream), candidate, LIMITS);
 }
 
-describe('amend — odczyty przejęcia i zdania', () => {
+describe('amend - odczyty przejęcia i zdania', () => {
   it('poprawiony odczyt przy zdaniu wchodzi do projekcji i przelicza zużycie', () => {
     const { events, dayClose } = session();
     const before = projectSession(events);
@@ -147,7 +147,7 @@ describe('amend — odczyty przejęcia i zdania', () => {
     const after = projectSession(stream);
     expect(after.fuel.endL).toBe(123);
     expect(after.fuel.consumedL).toBe(27);
-    // Motogodzin nikt nie ruszał — korekta jednego pola nie dotyka drugiego.
+    // Motogodzin nikt nie ruszał - korekta jednego pola nie dotyka drugiego.
     expect(after.mh.end).toBe(1236.1);
   });
 
@@ -174,7 +174,7 @@ describe('amend — odczyty przejęcia i zdania', () => {
   });
 });
 
-describe('amend — skład zrzutu', () => {
+describe('amend - skład zrzutu', () => {
   it('zmienia skład i sumę skoczków w rozliczeniu', () => {
     const { events, drop } = session();
     expect(projectSession(events).drops.totalJumpers).toBe(4);
@@ -189,7 +189,7 @@ describe('amend — skład zrzutu', () => {
     const after = projectSession(stream);
     expect(after.drops.totalJumpers).toBe(5);
     expect(after.drops.jumpers).toEqual({ tandem: 2, aff: 1, solo: 2 });
-    // Wysokość pochodzi z pomiaru i nie należy do białej listy — zostaje.
+    // Wysokość pochodzi z pomiaru i nie należy do białej listy - zostaje.
     expect(after.drops.avgAltitudeFt).toBe(12800);
   });
 
@@ -201,18 +201,18 @@ describe('amend — skład zrzutu', () => {
     ];
     const effective = applyCorrections(stream).find((e) => e.uuid === drop.uuid);
     expect((effective as EventOf<'drop'>).payload.jumpers).toBeNull();
-    // Zrzut nadal się LICZY — brak składu nie kasuje faktu wyniesienia (issue #21).
+    // Zrzut nadal się LICZY - brak składu nie kasuje faktu wyniesienia (issue #21).
     expect(projectSession(stream).drops.count).toBe(1);
     expect(projectSession(stream).drops.totalJumpers).toBe(0);
   });
 });
 
 /**
- * Notatka (issue #43, zgłoszenie z urządzenia) — jedyna dana sesji pisana ZDANIEM.
+ * Notatka (issue #43, zgłoszenie z urządzenia) - jedyna dana sesji pisana ZDANIEM.
  * Do tej poprawki nie dało się jej zmienić w ogóle: tekst z kroku „zadanie" wracał
  * do autora wyłącznie do czytania.
  */
-describe('amend — notatka sesji', () => {
+describe('amend - notatka sesji', () => {
   it('poprawia notatkę z zadania', () => {
     const { events, preflight } = session();
     expect(projectSession(events).notes).toBeNull();
@@ -227,7 +227,7 @@ describe('amend — notatka sesji', () => {
     expect(projectSession(stream).notes).toBe('Drugi zbiornik nie trzyma wskazania.');
   });
 
-  it('`notes: null` KASUJE notatkę — pusty tekst to decyzja, nie brak pola', () => {
+  it('`notes: null` KASUJE notatkę - pusty tekst to decyzja, nie brak pola', () => {
     const { events, preflight } = session();
     const stream = [
       ...events,
@@ -253,7 +253,7 @@ describe('amend — notatka sesji', () => {
     expect(
       codes(check(events, correction(preflight, at(11, 40), { action: 'amend', fields: { notes: 'x' } }))),
     ).toEqual([]);
-    // `day_close` niesie odczyty przekazania, nie tekst — pole tam nie istnieje.
+    // `day_close` niesie odczyty przekazania, nie tekst - pole tam nie istnieje.
     expect(
       codes(check(events, correction(dayClose, at(11, 40), { action: 'amend', fields: { notes: 'x' } }))),
     ).toContain('CORRECTION_FIELD_NOT_ALLOWED');
@@ -261,16 +261,16 @@ describe('amend — notatka sesji', () => {
 });
 
 /**
- * DUAL (issue #43, zgłoszenie z urządzenia) — najtrudniejsze pole z całej białej listy.
+ * DUAL (issue #43, zgłoszenie z urządzenia) - najtrudniejsze pole z całej białej listy.
  *
  * Drugi pilot żył wyłącznie w NAGŁÓWKU zdarzeń, a nagłówka nie da się poprawić bez
  * złamania append-only: opisuje chwilę zapisu, nie fakt o sesji. Dlatego preflight
  * dostał `dualId` w payloadzie, a projekcja czyta go z PIERWSZEŃSTWEM.
  */
-describe('amend — drugi pilot całej sesji', () => {
+describe('amend - drugi pilot całej sesji', () => {
   it('deklaracja z preflightu wygrywa z nagłówkami zdarzeń', () => {
     const { events, preflight } = session();
-    // Nagłówki niosą AKO — tak zapisał telefon w chwili lotu.
+    // Nagłówki niosą AKO - tak zapisał telefon w chwili lotu.
     const withDual = events.map((e) => ({ ...e, dualId: 'AKO' }) as Event);
     expect(projectSession(withDual).dualId).toBe('AKO');
 
@@ -283,7 +283,7 @@ describe('amend — drugi pilot całej sesji', () => {
     expect(stream.every((e) => e.type === 'event_correction' || e.dualId === 'AKO')).toBe(true);
   });
 
-  it('`dualId: null` znaczy „sesja jednoosobowa" — to deklaracja, nie brak', () => {
+  it('`dualId: null` znaczy „sesja jednoosobowa" - to deklaracja, nie brak', () => {
     const { events, preflight } = session();
     const withDual = events.map((e) => ({ ...e, dualId: 'AKO' }) as Event);
     const stream = [
@@ -293,20 +293,20 @@ describe('amend — drugi pilot całej sesji', () => {
     expect(projectSession(stream).dualId).toBeNull();
   });
 
-  it('bez deklaracji obowiązuje nagłówek — sesje sprzed tej zmiany liczą się jak dawniej', () => {
+  it('bez deklaracji obowiązuje nagłówek - sesje sprzed tej zmiany liczą się jak dawniej', () => {
     const { events } = session();
     const withDual = events.map((e) => ({ ...e, dualId: 'AKO' }) as Event);
     expect(projectSession(withDual).dualId).toBe('AKO');
   });
 
-  it('Dual nie może być PIC-em — ta sama reguła, co przy zmianie załogi', () => {
+  it('Dual nie może być PIC-em - ta sama reguła, co przy zmianie załogi', () => {
     const { events, preflight } = session();
     expect(
       codes(check(events, correction(preflight, at(11, 40), { action: 'amend', fields: { dualId: 'TMK' } }))),
     ).toContain('DUAL_IS_PIC');
   });
 
-  it('przy zdaniu samolotu pola załogi nie ma — tam nie deklaruje się składu', () => {
+  it('przy zdaniu samolotu pola załogi nie ma - tam nie deklaruje się składu', () => {
     const { events, dayClose } = session();
     expect(
       codes(check(events, correction(dayClose, at(11, 40), { action: 'amend', fields: { dualId: 'AKO' } }))),
@@ -314,7 +314,7 @@ describe('amend — drugi pilot całej sesji', () => {
   });
 });
 
-describe('składanie wielu korekt — czas i wartości są niezależne', () => {
+describe('składanie wielu korekt - czas i wartości są niezależne', () => {
   it('retime PO amend nie cofa poprawionej wartości', () => {
     const { events, drop } = session();
     const stream = [
@@ -357,7 +357,7 @@ describe('składanie wielu korekt — czas i wartości są niezależne', () => {
     expect(after.fuel.endL).toBe(123);
   });
 
-  it('amend przywraca zdarzenie unieważnione — poprawiasz to, co uznajesz za zaszłe', () => {
+  it('amend przywraca zdarzenie unieważnione - poprawiasz to, co uznajesz za zaszłe', () => {
     const { events, drop } = session();
     const stream = [
       ...events,
@@ -371,7 +371,7 @@ describe('składanie wielu korekt — czas i wartości są niezależne', () => {
     expect(projectSession(stream).drops.totalJumpers).toBe(1);
   });
 
-  it('amend BEZ ani jednego znanego pola jest nieczytelny — poprzedni zostaje w mocy', () => {
+  it('amend BEZ ani jednego znanego pola jest nieczytelny - poprzedni zostaje w mocy', () => {
     const { events, dayClose } = session();
     const broken = correction(dayClose, at(11, 45), { action: 'amend', fields: {} });
     (broken as { payload: unknown }).payload = {
@@ -421,7 +421,7 @@ describe('reguły korekty wartości', () => {
         ),
       ),
     ).toContain('CORRECTION_FIELD_NOT_ALLOWED');
-    // Lądowanie nie ma ŻADNEGO pola do poprawienia — czas zmienia `retime`.
+    // Lądowanie nie ma ŻADNEGO pola do poprawienia - czas zmienia `retime`.
     expect(
       codes(check(events, correction(landing, at(11, 40), { action: 'amend', fields: { fuelL: 1 } }))),
     ).toContain('CORRECTION_FIELD_NOT_ALLOWED');
@@ -458,7 +458,7 @@ describe('reguły korekty wartości', () => {
   /**
    * `session_claim` przestał być nietykalny w JEDNYM wymiarze (uwaga z urządzenia):
    * godzina przejęcia to zwykły fakt i pilot musi umieć ją sprostować. Nietykalna
-   * została sama ISTOTA claimu — bez niego sesja nie ma właściciela (§4.4).
+   * została sama ISTOTA claimu - bez niego sesja nie ma właściciela (§4.4).
    */
   it('godzinę przejęcia MOŻNA poprawić', () => {
     const { events } = session();
@@ -479,7 +479,7 @@ describe('reguły korekty wartości', () => {
     ).toContain('CORRECTION_TARGET_NOT_ALLOWED');
   });
 
-  it('korekty się nie poprawia — poprawia się fakt', () => {
+  it('korekty się nie poprawia - poprawia się fakt', () => {
     const { events } = session();
     const first = correction(events[3]!, at(11, 40), { action: 'retime', newTime: at(8, 21) });
     const stream = [...events, first];
@@ -520,7 +520,7 @@ describe('regresja: poprawka dociera do analityki zużycia', () => {
   });
 });
 
-describe('amend — olej przy przejęciu (issue #60)', () => {
+describe('amend - olej przy przejęciu (issue #60)', () => {
   it('poprawiony pomiar wchodzi do projekcji; dolewka i paliwo zostają nietknięte', () => {
     const { events, preflight } = session();
     expect(projectSession(events).oil).toEqual({ levelL: 10.2, addedL: 1.0, afterL: 11.2 });
@@ -536,7 +536,7 @@ describe('amend — olej przy przejęciu (issue #60)', () => {
     expect(after.fuel.startL).toBe(150);
   });
 
-  it('`oilL: null` kasuje omyłkowy pomiar — null jest wartością, nie brakiem pola', () => {
+  it('`oilL: null` kasuje omyłkowy pomiar - null jest wartością, nie brakiem pola', () => {
     const { events, preflight } = session();
     const stream = [
       ...events,
@@ -545,11 +545,11 @@ describe('amend — olej przy przejęciu (issue #60)', () => {
     const after = projectSession(stream);
     expect(after.oil.levelL).toBeNull();
     expect(after.oil.afterL).toBeNull();
-    // dolewka to osobny fakt — kasowanie pomiaru jej nie rusza
+    // dolewka to osobny fakt - kasowanie pomiaru jej nie rusza
     expect(after.oil.addedL).toBe(1.0);
   });
 
-  it('olej nie należy do zdania samolotu — biała lista odrzuca cel day_close', () => {
+  it('olej nie należy do zdania samolotu - biała lista odrzuca cel day_close', () => {
     const { events, dayClose } = session();
     const candidate = correction(dayClose, at(11, 40), {
       action: 'amend',

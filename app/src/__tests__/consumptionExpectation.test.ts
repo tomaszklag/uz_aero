@@ -1,5 +1,5 @@
 /**
- * UZ Aero — test oczekiwania fazowego (issue #38 pkt 4 i 6).
+ * UZ Aero - test oczekiwania fazowego (issue #38 pkt 4 i 6).
  *
  * Ekran 10 pyta „czy 27 litrów i +1:35 na liczniku to normalne PO TAKIEJ sesji", więc
  * test pilnuje trzech rzeczy w tej kolejności: że przewidywanie reaguje na PROPORCJĘ faz
@@ -55,7 +55,7 @@ describe('oczekiwane zużycie paliwa', () => {
   });
 
   it('pasmo bierze się z rozrzutu obserwacji', () => {
-    // Sesja na tyle duża, że ±10% rozrzutu przekracza podłogę przyrządu — inaczej
+    // Sesja na tyle duża, że ±10% rozrzutu przekracza podłogę przyrządu - inaczej
     // testowalibyśmy podłogę, a nie pasmo.
     const e = expectedFuelL(norm(), { blockMs: 5 * HOUR, flightMs: 5 * HOUR })!;
 
@@ -65,7 +65,7 @@ describe('oczekiwane zużycie paliwa', () => {
   });
 
   it('pasmo nie schodzi poniżej błędu odczytu paliwomierza', () => {
-    // Rozrzut zerowy (dane wewnętrznie spójne) — bez podłogi werdykt zapalałby się
+    // Rozrzut zerowy (dane wewnętrznie spójne) - bez podłogi werdykt zapalałby się
     // na jednym litrze, czyli na czymś, czego paliwomierz nie umie pokazać.
     const e = expectedFuelL(norm({ fuelRatioLow: 1, fuelRatioHigh: 1 }), {
       blockMs: 1 * HOUR,
@@ -90,7 +90,7 @@ describe('oczekiwane zużycie paliwa', () => {
   });
 
   it('czas lotu dłuższy niż praca silnika nie robi ujemnej ziemi', () => {
-    // Rozjazd rejestru (ręczny wpis nachodzący na bieg silnika) — ziemia przycięta
+    // Rozjazd rejestru (ręczny wpis nachodzący na bieg silnika) - ziemia przycięta
     // do zera, a nie odjęta od zużycia.
     const e = expectedFuelL(norm(), { blockMs: 1 * HOUR, flightMs: 3 * HOUR })!;
 
@@ -130,7 +130,7 @@ describe('oczekiwany przyrost licznika', () => {
     expect(e.high).toBeCloseTo(1 + MH_BAND_FLOOR_H, 6);
   });
 
-  it('bez przeliczników milczy — nie podstawia czasu blokowego', () => {
+  it('bez przeliczników milczy - nie podstawia czasu blokowego', () => {
     expect(expectedMhH(norm({ mh: null }), { blockMs: 2 * HOUR, flightMs: HOUR })).toBeNull();
   });
 });

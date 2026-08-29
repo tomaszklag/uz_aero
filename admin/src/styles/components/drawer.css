@@ -1,11 +1,11 @@
 /**
- * UZ Aero — panel: szuflada szczegółu.
+ * UZ Aero - panel: szuflada szczegółu.
  *
  * Klasy i wartości 1:1 z `design/admin/SZABLON.html` (sekcja „szuflada szczegółu").
  *
  * **Jedna świadoma różnica: `fixed` zamiast `absolute`.** W mockupie szuflada jest
  * pozycjonowana względem `.main`, bo `.main` dostaje tam `position:relative` stylem
- * inline. W panelu ekran renderuje się WEWNĄTRZ `.content`, które ma `overflow-y:auto` —
+ * inline. W panelu ekran renderuje się WEWNĄTRZ `.content`, które ma `overflow-y:auto` -
  * szuflada `absolute` przewijałaby się razem z listą i kończyła na jej wysokości.
  * `fixed` z odsunięciem o szerokość sidebara daje dokładnie to samo, co mockup
  * (warstwa nad całą kolumną treści, razem z topbarem), i nie zależy od przewinięcia.
@@ -18,12 +18,12 @@
   bottom: 0;
   left: var(--sidebar-w);
   /* NIE `var(--overlay)`: token niesie 0,74 (przyciemnienie modala w aplikacji
-     pilota), a szuflada panelu przyciemnia listę słabiej — 0,55 z szablonu — bo
+     pilota), a szuflada panelu przyciemnia listę słabiej - 0,55 z szablonu - bo
      lista pod spodem ma dalej być czytelna. To jest sens szuflady: kontekst zostaje. */
   background: rgba(0, 0, 0, 0.55);
   z-index: 60;
   /* Przesłona jest `<button>` (kliknięcie w tło to akcja), więc zdejmujemy z niej
-     wygląd przycisku — zostaje sama powierzchnia. */
+     wygląd przycisku - zostaje sama powierzchnia. */
   border: none;
   padding: 0;
   cursor: pointer;
@@ -43,7 +43,7 @@
   box-shadow: -24px 0 60px rgba(0, 0, 0, 0.5);
 }
 
-/* Szuflada SZERSZA — dla szuflady, która jest formularzem, a nie podglądem: korekta
+/* Szuflada SZERSZA - dla szuflady, która jest formularzem, a nie podglądem: korekta
    administratora (`A02b`) niesie kartę „przed → po", pole powodu i pełny opis skutków,
    a w 520 px każdy wiersz klucz–wartość łamie się na dwie linie. Modyfikator, bo
    szerokość jest własnością TREŚCI szuflady, nie jednego ekranu. */
@@ -95,7 +95,7 @@
   justify-content: flex-end;
 }
 
-/* Notatka po lewej stronie akcji stopki — stała własność szuflady, nie treść ekranu:
+/* Notatka po lewej stronie akcji stopki - stała własność szuflady, nie treść ekranu:
    mówi, czego to okno NIE zrobi („brak edycji · brak kasowania" w `A02b`). */
 .drawer-note {
   margin-right: auto;

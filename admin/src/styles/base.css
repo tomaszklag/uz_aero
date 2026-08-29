@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: reset, korzeń dokumentu i stany globalne.
+ * UZ Aero - panel: reset, korzeń dokumentu i stany globalne.
  *
  * Odpowiednik `<style>` z `design/admin/SZABLON.html` w części, która w mockupie
  * dotyczy `body` i `.browser`. Różnica jest jedna i wynika z natury rzeczy: w mockupie
@@ -34,7 +34,7 @@ body {
 }
 
 /**
- * Widoczny fokus klawiatury — DOCHODZI do design systemu razem z pierwszym ekranem
+ * Widoczny fokus klawiatury - DOCHODZI do design systemu razem z pierwszym ekranem
  * (`docs/architektura-panelu-frontend.md` §7). Szablon miał dotąd tylko `:focus-within`
  * na `.search` i `.input:focus`, a panel jest nawigowany klawiaturą: tabele, filtry,
  * formularze. `:focus-visible`, nie `:focus`, żeby kliknięcie myszą nie rysowało
@@ -46,19 +46,19 @@ body {
   border-radius: 6px;
 }
 
-/* Pasek przewijania treści — jak w szablonie (`.content::-webkit-scrollbar`). */
+/* Pasek przewijania treści - jak w szablonie (`.content::-webkit-scrollbar`). */
 ::selection {
   background: var(--selection);
 }
 
 /**
- * Treść WYŁĄCZNIE dla czytnika ekranu — podpis tabeli (`<caption>`).
+ * Treść WYŁĄCZNIE dla czytnika ekranu - podpis tabeli (`<caption>`).
  *
  * DOCHODZI do design systemu razem z pierwszą tabelą, tak jak `:focus-visible`
  * doszedł razem z pierwszym formularzem. W mockupie tabelę nazywa nagłówek strony
  * stojący nad nią; czytnik ekranu potrzebuje tej nazwy WEWNĄTRZ tabeli, bo czyta ją
  * jako osobny obiekt i inaczej ogłasza „tabela, 8 kolumn" bez słowa o tym, czego
- * dotyczy. Widoczny `<caption>` zmieniłby wygląd, więc go chowamy — nie usuwamy.
+ * dotyczy. Widoczny `<caption>` zmieniłby wygląd, więc go chowamy - nie usuwamy.
  */
 .visually-hidden {
   position: absolute;

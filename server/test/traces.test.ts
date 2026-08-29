@@ -1,7 +1,7 @@
 /**
- * UZ Aero (serwer) — testy `POST /traces` (ślad kalibracyjny GPS, faza 5).
+ * UZ Aero (serwer) - testy `POST /traces` (ślad kalibracyjny GPS, faza 5).
  *
- * Ślad NIE dotyka Postgresa: ląduje w NDJSON per sesja — dokładnie w formacie,
+ * Ślad NIE dotyka Postgresa: ląduje w NDJSON per sesja - dokładnie w formacie,
  * który czyta skrypt `replay`. Test zagląda do pliku, bo plik JEST kontraktem.
  */
 

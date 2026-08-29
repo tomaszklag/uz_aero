@@ -1,9 +1,9 @@
 /**
- * UZ Aero — panel: UJĘCIE „PER OPERACJA" → wiersze tabeli (moduł CZYSTY).
+ * UZ Aero - panel: UJĘCIE „PER OPERACJA" → wiersze tabeli (moduł CZYSTY).
  *
  * Udział w nalocie (`blockSharePct`) liczy SERWER; tu powstaje wyłącznie geometria
  * paska i etykieta. Podpisy wierszy składają się z DANYCH projekcji (rejestracje,
- * liczba klientów) — list lotnisk i nazw egzaminów z mockupu projekcja nie niesie
+ * liczba klientów) - list lotnisk i nazw egzaminów z mockupu projekcja nie niesie
  * i podpis ich nie zmyśla (sprostowanie w `A10-statystyki.html`).
  */
 
@@ -32,7 +32,7 @@ export interface OperationRowView {
   fuelClass?: string;
 }
 
-/** Etykiety plakietek — wersaliki jak w mockupie; `null` = dni bez preflightu. */
+/** Etykiety plakietek - wersaliki jak w mockupie; `null` = dni bez preflightu. */
 const OPERATION_LABELS: Record<OperationType, string> = {
   skoki: 'SKOKI',
   // Wartość w rejestrze to nadal `ferry`; napis jest polski jak wszędzie indziej (issue #13).
@@ -52,7 +52,7 @@ export function operationRows(
       total: false,
       pill: {
         label: row.operation == null ? 'BEZ PREFLIGHTU' : OPERATION_LABELS[row.operation],
-        // Niebieska plakietka wyróżnia SKOKI — stronę przychodową klubu (mockup barwi
+        // Niebieska plakietka wyróżnia SKOKI - stronę przychodową klubu (mockup barwi
         // tylko ten wiersz; reszta operacji jest przygaszona).
         tone: row.operation === 'skoki' ? 'blue' : 'dim',
       },

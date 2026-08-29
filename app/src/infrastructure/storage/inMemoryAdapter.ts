@@ -1,8 +1,8 @@
 /**
- * UZ Aero — magazyn w pamięci: implementacja referencyjna i testowa `StoragePort`.
+ * UZ Aero - magazyn w pamięci: implementacja referencyjna i testowa `StoragePort`.
  *
  * Dzięki niemu CAŁY rdzeń (repo, komendy, reguły, projekcje, outbox, dedup) testuje się
- * w Node/Jest bez natywnego `expo-sqlite` — to jest powód istnienia portu.
+ * w Node/Jest bez natywnego `expo-sqlite` - to jest powód istnienia portu.
  *
  * Trzyma zdarzenia w mapie `uuid → Event` plus tablicę `order` (kolejność wstawienia).
  * Zwraca i przyjmuje KOPIE, więc testy nie mogą przypadkiem zmutować stanu magazynu.
@@ -19,8 +19,8 @@ import type {
 
 /**
  * Głęboka kopia struktur JSON-serializowalnych. Payloady zdarzeń i rekordy cache to
- * czyste dane (liczby, stringi, null, obiekty/tablice) — round-trip przez JSON jest
- * bezpieczny i izoluje magazyn od mutacji przez wołającego. (Brak Date — czas trzymamy
+ * czyste dane (liczby, stringi, null, obiekty/tablice) - round-trip przez JSON jest
+ * bezpieczny i izoluje magazyn od mutacji przez wołającego. (Brak Date - czas trzymamy
  * jako epoch ms; `undefined` znika, co jest pożądane dla pól opcjonalnych.)
  */
 function deepClone<T>(value: T): T {
@@ -35,7 +35,7 @@ export class InMemoryAdapter implements StoragePort, TracePort {
   private meta = new Map<string, string>();
 
   async init(): Promise<void> {
-    // Nic do zrobienia — struktury istnieją od konstrukcji.
+    // Nic do zrobienia - struktury istnieją od konstrukcji.
   }
 
   async insertEvent(event: Event): Promise<boolean> {

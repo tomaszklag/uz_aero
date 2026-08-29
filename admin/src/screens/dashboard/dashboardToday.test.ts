@@ -1,9 +1,9 @@
 /**
- * UZ Aero — panel: testy kart „Dziś w liczbach" i „Ostatni dzień lotny" (`A01`, `A01a`).
+ * UZ Aero - panel: testy kart „Dziś w liczbach" i „Ostatni dzień lotny" (`A01`, `A01a`).
  *
  * Najważniejszy przypadek jest o BRAKU: komórka „Zrzuty · skoczkowie" z mockupu stoi
  * z kreską, bo projekcja `sessions` nie niesie `DropSummary`. Zero byłoby twierdzeniem,
- * że dziś nikt nie skakał — a tego nie wiemy.
+ * że dziś nikt nie skakał - a tego nie wiemy.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -33,14 +33,14 @@ describe('cztery komórki mockupu, w tej samej kolejności', () => {
     expect(view.cells.map((c) => c.key)).toEqual(['zdarzenia', 'loty', 'blok', 'zrzuty']);
     expect(view.cells[0]?.value).toBe('184');
     expect(view.cells[1]?.value).toBe('17');
-    // Blok formatuje `duration` z `@uzaero/format` — ten sam kod, co ekran 10 telefonu.
+    // Blok formatuje `duration` z `@uzaero/format` - ten sam kod, co ekran 10 telefonu.
     expect(view.cells[2]?.value).toBe('9:47');
   });
 
   it('zrzuty pokazują KRESKĘ i karta mówi dlaczego', () => {
     // To jest reguła, nie wymówka: `null` znaczy „nie wiemy", a zero byłoby
     // twierdzeniem o świecie.
-    expect(view.cells[3]?.value).toBe('—');
+    expect(view.cells[3]?.value).toBe('-');
     expect(view.note).toContain('projekcja `sessions` nie niesie takich kolumn');
     expect(view.note).toContain('zamiast zera stoi kreska');
   });
@@ -67,7 +67,7 @@ describe('doba bez lotów', () => {
   });
 
   it('opisuje, że „zdarzenia" liczą PRZYJĘCIE, a nie czas zdarzenia', () => {
-    // Paczka z wczoraj przyjęta dziś liczy się do dziś — bez tego zdania liczba
+    // Paczka z wczoraj przyjęta dziś liczy się do dziś - bez tego zdania liczba
     // wyglądałaby na sprzeczną z listą dni.
     expect(dayView(totals()).note).toContain('paczka z wczoraj przyjęta dziś liczy się do dziś');
   });

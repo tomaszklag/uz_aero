@@ -1,15 +1,15 @@
 /**
- * UZ Aero — testy ODTWORZENIA REJESTRU (§4.9, issue #32,
+ * UZ Aero - testy ODTWORZENIA REJESTRU (§4.9, issue #32,
  * `application/sync/eventRestore.ts`).
  *
  * Scenariusz źródłowy jest jeden: pilot wyczyścił pamięć aplikacji i „nagle wszystko
  * stracił", chociaż jego dni leżały na serwerze. Te testy pilnują, żeby droga powrotna
  * naprawiała ten stan i przy okazji NIE psuła niczego, co działa:
  *
- *  • pobrane zdarzenia wchodzą do strumienia jako WYSŁANE — inaczej telefon odesłałby
+ *  • pobrane zdarzenia wchodzą do strumienia jako WYSŁANE - inaczej telefon odesłałby
  *    serwerowi jego własne dane i robiłby to w kółko;
  *  • dedup po `uuid` chroni wpis, który czeka jeszcze w outboxie;
- *  • kursor należy do PILOTA — po zalogowaniu kolegi na tym samym telefonie
+ *  • kursor należy do PILOTA - po zalogowaniu kolegi na tym samym telefonie
  *    odtwarzamy od początku, a nie od cudzej pozycji;
  *  • brak sieci to zwykły wynik, nie awaria: strumień zostaje nietknięty.
  */
@@ -41,7 +41,7 @@ import { FixedClock } from '../infrastructure/clock';
 const T0 = Date.UTC(2026, 5, 22, 8, 0, 0);
 const PILOT = { id: 'TMK', code: 'TMK', name: 'Tomasz Małkiewicz' };
 
-/** Zdarzenie „z serwera" — koperta §5.1 BEZ `syncedAt` (to pole telefonu). */
+/** Zdarzenie „z serwera" - koperta §5.1 BEZ `syncedAt` (to pole telefonu). */
 function remote(uuid: string, over: Partial<Omit<Event, 'syncedAt'>> = {}) {
   return {
     uuid,
@@ -129,14 +129,14 @@ function harness(pilot = PILOT) {
   return { clock, repo, server, credentials, restore: new EventRestore(repo, server, auth) };
 }
 
-/** Strona „na drucie" — domyślnie ostatnia (telefon dogonił serwer). */
+/** Strona „na drucie" - domyślnie ostatnia (telefon dogonił serwer). */
 const page = (
   events: Omit<Event, 'syncedAt'>[],
   over: Partial<RemoteEventPage> = {},
 ): RemoteEventPage => ({ events, nextCursor: 'c-end', hasMore: false, ...over });
 
 describe('EventRestore', () => {
-  it('telefon po czyszczeniu pamięci odbudowuje rejestr — strona po stronie', async () => {
+  it('telefon po czyszczeniu pamięci odbudowuje rejestr - strona po stronie', async () => {
     const { repo, server, restore } = harness();
     server.script = [
       page([remote('e-1'), remote('e-2', { type: 'engine_start' })], {
@@ -150,13 +150,13 @@ describe('EventRestore', () => {
 
     expect(outcome).toEqual({ kind: 'pulled', fetched: 3, inserted: 3, complete: true });
     expect((await repo.getAllEvents()).map((e) => e.uuid)).toEqual(['e-1', 'e-2', 'e-3']);
-    // Druga strona pytana OD kursora pierwszej — inaczej pętla stałaby w miejscu.
+    // Druga strona pytana OD kursora pierwszej - inaczej pętla stałaby w miejscu.
     expect(server.calls.map((c) => c.cursor)).toEqual([null, 'c-1']);
   });
 
   it('pobrane zdarzenia NIE trafiają do outboxa', async () => {
     // Przyszły Z serwera, więc serwer je ma. Bez stempla wysyłki telefon odesłałby
-    // własnemu serwerowi jego własne dane — przy każdej okazji synchronizacji.
+    // własnemu serwerowi jego własne dane - przy każdej okazji synchronizacji.
     const { repo, server, restore } = harness();
     server.script = [page([remote('e-1')])];
 
@@ -188,7 +188,7 @@ describe('EventRestore', () => {
     expect(await repo.getOutboxCount()).toBe(1);
   });
 
-  it('kursor jest zapamiętany — kolejne odtworzenie pyta OD KOŃCA, nie od nowa', async () => {
+  it('kursor jest zapamiętany - kolejne odtworzenie pyta OD KOŃCA, nie od nowa', async () => {
     const { clock, server, restore } = harness();
     server.script = [page([remote('e-1')], { nextCursor: 'c-1' })];
     await restore.restore();
@@ -219,7 +219,7 @@ describe('EventRestore', () => {
     expect(await repo.getAllEvents()).toHaveLength(0);
   });
 
-  it('sieć znika w połowie odtwarzania — to, co weszło, ZOSTAJE razem z kursorem', async () => {
+  it('sieć znika w połowie odtwarzania - to, co weszło, ZOSTAJE razem z kursorem', async () => {
     // Pełne odtworzenie sezonu to kilkanaście stron na łączu, które bywa jednym paskiem.
     // Przerwanie nie może kasować pobranego ani cofać pozycji: następna okazja podejmuje
     // pracę tam, gdzie stanęła.
@@ -236,14 +236,14 @@ describe('EventRestore', () => {
     expect(await repo.getMeta(EVENT_RESTORE_META_CURSOR)).toBe(
       JSON.stringify({ pilotId: 'TMK', cursor: 'c-1' }),
     );
-    // Przerwane odtworzenie NIE stempluje bramy wieku — dokończenie ma iść przy
+    // Przerwane odtworzenie NIE stempluje bramy wieku - dokończenie ma iść przy
     // najbliższej okazji, a nie za kwadrans.
     server.script = [page([remote('e-2')], { nextCursor: 'c-2' })];
     expect(await restore.restoreIfStale()).toMatchObject({ kind: 'pulled', complete: true });
     expect(server.calls.at(-1)?.cursor).toBe('c-1');
   });
 
-  it('kursor należy do PILOTA — kolega na tym samym telefonie zaczyna od początku', async () => {
+  it('kursor należy do PILOTA - kolega na tym samym telefonie zaczyna od początku', async () => {
     // Bez tego telefon klubowy powtórzyłby awarię, którą ten moduł naprawia: pytałby
     // od pozycji poprzednika i uznał, że nowy pilot nie ma żadnej historii.
     const { repo, server } = harness();
@@ -273,7 +273,7 @@ describe('EventRestore', () => {
 
   it('serwer bez końca („hasMore" zawsze) nie zawiesza pętli okazji', async () => {
     // Pas bezpieczeństwa, nie limit historii: przebieg kończy się po `MAX_PAGES`,
-    // a reszta dochodzi przy następnej okazji — kursor jest zapisany po każdej stronie.
+    // a reszta dochodzi przy następnej okazji - kursor jest zapisany po każdej stronie.
     const { server, restore } = harness();
     server.script = Array.from({ length: EVENT_RESTORE_MAX_PAGES + 5 }, (_, i) =>
       page([remote(`e-${i}`)], { nextCursor: `c-${i}`, hasMore: true }),

@@ -1,9 +1,9 @@
 /**
- * UZ Aero — testy magazynu motywu PER PILOT (`infrastructure/prefs/themePrefsStore.ts`,
+ * UZ Aero - testy magazynu motywu PER PILOT (`infrastructure/prefs/themePrefsStore.ts`,
  * decyzja 2026-07-29: motyw jest preferencją pilota, nie telefonu).
  *
  * Klasa dostaje magazyn klucz→wartość konstruktorem (produkcyjnie AsyncStorage),
- * więc format zapisu i migrację starego klucza per telefon sprawdzamy w Node —
+ * więc format zapisu i migrację starego klucza per telefon sprawdzamy w Node -
  * to jedyne miejsce, które zna kształt rekordu na dysku.
  */
 
@@ -19,7 +19,7 @@ class MemoryKv implements KeyValueStorage {
 }
 
 describe('ThemePrefsStore', () => {
-  it('rekordy żyją per pilot — przelogowanie na wspólnym telefonie zmienia motyw', async () => {
+  it('rekordy żyją per pilot - przelogowanie na wspólnym telefonie zmienia motyw', async () => {
     const store = new ThemePrefsStore(new MemoryKv());
     await store.write('TMK', { theme: 'paper', updatedAt: 1000, dirty: true });
     await store.write('AKO', { theme: 'amber', updatedAt: 2000, dirty: false });
@@ -63,7 +63,7 @@ describe('ThemePrefsStore', () => {
     const kv = new MemoryKv();
     const store = new ThemePrefsStore(kv);
 
-    kv.data.set(`${LEGACY_THEME_KEY}.TMK`, 'night'); // goły tekst pod NOWYM kluczem — nie nasz format
+    kv.data.set(`${LEGACY_THEME_KEY}.TMK`, 'night'); // goły tekst pod NOWYM kluczem - nie nasz format
     expect(await store.read('TMK')).toBeNull();
 
     kv.data.set(`${LEGACY_THEME_KEY}.TMK`, JSON.stringify({ theme: 'night' })); // bez metadanych LWW

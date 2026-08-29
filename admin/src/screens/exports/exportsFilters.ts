@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: FILTRY MONITORA EKSPORTU ↔ query string (moduł CZYSTY, Node).
+ * UZ Aero - panel: FILTRY MONITORA EKSPORTU ↔ query string (moduł CZYSTY, Node).
  *
  * Filtry mieszkają w URL-u, nie w stanie komponentu
  * (`docs/architektura-panelu-frontend.md` §4.4): „wklej mi link do tego dnia" jest
@@ -10,7 +10,7 @@
  * Na `A02` pasek stanu miesza trzy niezależne warunki bazy (`status`, `flagged`,
  * `exported`). Tutaj stan karty jest JEDNĄ wielkością, wnioskowaną przez serwer, więc
  * chip przekłada się wprost na `?state=`. Chip „Rewizje" jest jedynym wyjątkiem i jest
- * opisany niżej — regeneracja nie jest stanem, tylko WYMIAREM przecinającym stany.
+ * opisany niżej - regeneracja nie jest stanem, tylko WYMIAREM przecinającym stany.
  */
 
 import type { ExportListQuery } from '../../api/exports';
@@ -18,13 +18,13 @@ import type { ExportStateDto } from '../../api/dto';
 
 /**
  * Zawężenie listy. `all` to brak zawężenia, a nie siódmy stan; `revised` nie jest
- * stanem serwera, tylko pytaniem „które karty wracały do arkusza" — obsługuje je
+ * stanem serwera, tylko pytaniem „które karty wracały do arkusza" - obsługuje je
  * `exportsRows.ts`, bo serwer takiego parametru nie ma, a wymyślanie go tylko po to,
  * żeby chip wyglądał jak pozostałe, dołożyłoby trasie wymiar bez odbiorcy.
  *
  * `revised` przecina stany: zawęża WYŁĄCZNIE po numerze rewizji (`> 1`), a nie wśród
  * kart istniejących. Dzień z rewizją 3, na którym otwarto później flagę, jest więc
- * „regeneracją" tak samo jak dzień z rewizją 3 leżący w arkuszu — i tak samo liczy go
+ * „regeneracją" tak samo jak dzień z rewizją 3 leżący w arkuszu - i tak samo liczy go
  * serwer (`counts.revised`), więc liczba na chipie zgadza się z tym, co widać.
  */
 export type ExportScope = 'all' | ExportStateDto | 'revised';
@@ -33,7 +33,7 @@ export interface ExportsFilter {
   /** Dzień UTC `YYYY-MM-DD` włącznie; `null` = bez ograniczenia zakresu. */
   from: string | null;
   to: string | null;
-  /** Identyfikator samolotu z rejestru floty — dopasowanie DOKŁADNE. */
+  /** Identyfikator samolotu z rejestru floty - dopasowanie DOKŁADNE. */
   aircraftId: string | null;
   /** Fragment rejestracji, identyfikatora samolotu albo uuid-a sesji. */
   search: string | null;
@@ -55,7 +55,7 @@ export const DEFAULT_EXPORTS_FILTER: ExportsFilter = {
 };
 
 /**
- * Ile dni pobieramy jednym żądaniem. Bez kursora — monitor jest zawężony do zakresu
+ * Ile dni pobieramy jednym żądaniem. Bez kursora - monitor jest zawężony do zakresu
  * dat, a nie do strony (uzasadnienie w `queries/useExports.ts`).
  *
  * Ta liczba jest BEZPIECZNIKIEM, nie stronicowaniem, i jedzie w `?limit=`. Liczniki
@@ -80,7 +80,7 @@ const SCOPES: readonly ExportScope[] = [
 const isScope = (value: string | null): value is ExportScope =>
   value != null && (SCOPES as readonly string[]).includes(value);
 
-/** `YYYY-MM-DD` i nic innego — wpis nieczytelny traktujemy jak brak filtra. */
+/** `YYYY-MM-DD` i nic innego - wpis nieczytelny traktujemy jak brak filtra. */
 const isDay = (value: string | null): value is string =>
   value != null && /^\d{4}-\d{2}-\d{2}$/.test(value);
 
@@ -106,7 +106,7 @@ export function filterFromParams(params: URLSearchParams): ExportsFilter {
 
 /**
  * Filtr → query string. Wartości domyślne POMIJAMY, żeby adres pełnej listy był po
- * prostu `#/eksporty` — link, który da się przeczytać i przepisać.
+ * prostu `#/eksporty` - link, który da się przeczytać i przepisać.
  */
 export function paramsFromFilter(filter: ExportsFilter): Record<string, string> {
   const params: Record<string, string> = {};
@@ -123,12 +123,12 @@ export function paramsFromFilter(filter: ExportsFilter): Record<string, string> 
  *
  * `revised` NIE jedzie do serwera: trasa nie zna takiego stanu, a wysłanie go jako
  * `?state=revised` skończyłoby się czterysetką. Zawężenie „tylko regeneracje" pyta więc
- * o CAŁY zakres (bez `state`) i odsiewa rewizję 1 na wierszach (`exportsRows.ts`) —
+ * o CAŁY zakres (bez `state`) i odsiewa rewizję 1 na wierszach (`exportsRows.ts`) -
  * dokładnie tak, jak serwer liczy `counts.revised`, czyli po samym numerze rewizji,
  * bez oglądania się na stan karty. Dzięki tej zgodności liczba na chipie jest obietnicą
  * „tyle wierszy zobaczysz", a nie sumą z innego pytania.
  *
- * `limit` jedzie ZAWSZE — jest bezpiecznikiem, a odpowiedź niesie `truncated`, więc
+ * `limit` jedzie ZAWSZE - jest bezpiecznikiem, a odpowiedź niesie `truncated`, więc
  * ekran ma czym powiedzieć, że lista jest przycięta.
  */
 export function exportListQuery(filter: ExportsFilter): ExportListQuery {
@@ -144,7 +144,7 @@ export function exportListQuery(filter: ExportsFilter): ExportListQuery {
   };
 }
 
-/** Czy filtr cokolwiek zawęża — pusta lista mówi wtedy co innego (patrz `exportsEmpty`). */
+/** Czy filtr cokolwiek zawęża - pusta lista mówi wtedy co innego (patrz `exportsEmpty`). */
 export function isNarrowed(filter: ExportsFilter): boolean {
   return (
     filter.from != null ||
@@ -155,7 +155,7 @@ export function isNarrowed(filter: ExportsFilter): boolean {
   );
 }
 
-/** Adres monitora z danym zawężeniem — do linków „pokaż zablokowane" i wzorem `A09`. */
+/** Adres monitora z danym zawężeniem - do linków „pokaż zablokowane" i wzorem `A09`. */
 export function exportsHref(filter: ExportsFilter, sessionUuid?: string | null): string {
   const query = new URLSearchParams(paramsFromFilter(filter)).toString();
   const path = sessionUuid == null ? '/eksporty' : `/eksporty/${sessionUuid}`;

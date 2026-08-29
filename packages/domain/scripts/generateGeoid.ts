@@ -1,5 +1,5 @@
 /**
- * UZ Aero — generator wycinka siatki undulacji geoidy EGM96
+ * UZ Aero - generator wycinka siatki undulacji geoidy EGM96
  * (`packages/domain/src/geoid/egm96Grid.ts`).
  *
  * URUCHOMIENIE (z korzenia repo, plik siatki pobrany wcześniej z NGA):
@@ -7,7 +7,7 @@
  *   npx tsx packages/domain/scripts/generateGeoid.ts --grid=./WW15MGH.GRD
  *
  * Zanim cokolwiek wytnie, generator sprawdza pobrany plik na SZEŚCIU oficjalnych
- * punktach testowych NGA (para `INPUT.DAT`/`OUTINTPT.DAT` z tego samego pakietu) —
+ * punktach testowych NGA (para `INPUT.DAT`/`OUTINTPT.DAT` z tego samego pakietu) -
  * naszą interpolacją dwuliniową, czyli dokładnie tą, którą wykonuje aplikacja.
  * Po wycięciu porównuje jeszcze wynik interpolacji świat vs wycinek w punktach
  * kontrolnych pokrycia: każdy błąd kopiowania (przesunięcie wiersza, kolumny,
@@ -47,7 +47,7 @@ if (!existsSync(gridPath)) {
 
 /**
  * Oficjalne wzorce NGA (`OUTINTPT.DAT`). Program INTPT.F potrafi liczyć też
- * splajnem, stąd tolerancja — dwuliniowa interpolacja na gładkiej geoidzie
+ * splajnem, stąd tolerancja - dwuliniowa interpolacja na gładkiej geoidzie
  * schodzi się z nim do pojedynczych centymetrów.
  */
 const OFFICIAL_TEST_POINTS = [
@@ -88,7 +88,7 @@ for (const point of OFFICIAL_TEST_POINTS) {
       `oczekiwane ${point.undulationM.toFixed(3).padStart(8)}  otrzymane ${got.toFixed(3).padStart(8)}  Δ ${(diff >= 0 ? '+' : '') + diff.toFixed(3)} m`,
   );
   if (Math.abs(diff) > OFFICIAL_TOLERANCE_M) {
-    throw new Error(`wzorzec NGA poza tolerancją ${OFFICIAL_TOLERANCE_M} m — siatka albo interpolacja są złe`);
+    throw new Error(`wzorzec NGA poza tolerancją ${OFFICIAL_TOLERANCE_M} m - siatka albo interpolacja są złe`);
   }
 }
 

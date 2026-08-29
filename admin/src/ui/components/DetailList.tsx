@@ -1,15 +1,15 @@
 /**
- * UZ Aero — panel: lista pól `details` (`.det` z `SZABLON.html`).
+ * UZ Aero - panel: lista pól `details` (`.det` z `SZABLON.html`).
  *
  * ══ POKAZUJE WSZYSTKO, CO DOSTAŁA ══
- * Komponent nie filtruje wierszy i nie ma jak tego zrobić — dostaje gotową listę
+ * Komponent nie filtruje wierszy i nie ma jak tego zrobić - dostaje gotową listę
  * z modułu czystego (`screens/audit/auditDetails.ts`). Pole, którego panel nie umie
  * nazwać, przychodzi tu z `known: false` i renderuje się WYGASZONE, ale renderuje się:
  * dziennik audytu, który ukrywa pole, bo go nie zna, przestaje być narzędziem nadzoru.
  *
  * Wartości idą jako DZIECI REACTA, nigdy przez `dangerouslySetInnerHTML`. `details`
  * niesie treść wpisaną przez człowieka (komentarz do flagi, powód korekty) i pola
- * pochodzące pośrednio z payloadów telefonu — to jest ta granica, na której panel
+ * pochodzące pośrednio z payloadów telefonu - to jest ta granica, na której panel
  * renderujący rejestr przestaje być podatny na wstrzyknięcie.
  */
 
@@ -23,7 +23,7 @@ export interface DetailItem {
 
 interface DetailListProps {
   items: readonly DetailItem[];
-  /** Napis dla pustego worka — ekran wie, co znaczy brak szczegółów przy tej akcji. */
+  /** Napis dla pustego worka - ekran wie, co znaczy brak szczegółów przy tej akcji. */
   empty: string;
 }
 

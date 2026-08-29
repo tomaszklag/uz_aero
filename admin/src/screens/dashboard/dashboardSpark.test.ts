@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: testy wykresu „Napływ zdarzeń 12 h" (`A01`).
+ * UZ Aero - panel: testy wykresu „Napływ zdarzeń 12 h" (`A01`).
  *
  * Najważniejsza własność jest semantyczna, nie geometryczna: **pusty słupek musi być
  * WIDOCZNY i mieć własną klasę**. Cytat z `SZABLON.html`: „cisza w rejestrze wymaga
@@ -40,7 +40,7 @@ describe('słupki', () => {
 
   it('BIEŻĄCE wiadro jest wyróżnione, nawet gdy puste', () => {
     // Ostatnie wiadro dopiero się wypełnia, więc jego pustka znaczy co innego niż
-    // pustka wiadra domkniętego — i nie ma prawa wyglądać tak samo.
+    // pustka wiadra domkniętego - i nie ma prawa wyglądać tak samo.
     const view = sparkView(inflow([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0]));
     expect(view.bars[11]?.className).toBe('now');
     expect(view.bars[10]?.className).toBe('');
@@ -53,7 +53,7 @@ describe('słupki', () => {
     expect(view.bars.every((b) => b.height === '4%')).toBe(true);
   });
 
-  it('każdy słupek zna swój początek — do etykiety dostępnościowej', () => {
+  it('każdy słupek zna swój początek - do etykiety dostępnościowej', () => {
     const view = sparkView(inflow(new Array(12).fill(1)));
     expect(view.bars[0]?.fromMs).toBe(NOW - 12 * HOUR);
     expect(view.bars[11]?.fromMs).toBe(NOW - HOUR);

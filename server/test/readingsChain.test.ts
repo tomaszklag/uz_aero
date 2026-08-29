@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) — test ciągłości odczytów wokół chwili (issue #62, piąta tura).
+ * UZ Aero (serwer) - test ciągłości odczytów wokół chwili (issue #62, piąta tura).
  *
  * Czysta funkcja na wierszach projekcji, więc test nie potrzebuje bazy ani serwera.
  */
@@ -107,43 +107,43 @@ describe('sąsiedztwo w łańcuchu odczytów', () => {
     expect(before?.sessionUuid).toBe('poludnie');
   });
 
-  it('pomija sesje BEZ odczytów — zero udające odczyt jest gorsze od milczenia', () => {
+  it('pomija sesje BEZ odczytów - zero udające odczyt jest gorsze od milczenia', () => {
     const withOpen = [
       ...HISTORY,
       // Sesja trwająca: zamknięcia i odczytu końcowego jeszcze nie ma.
       session({ sessionUuid: 'trwa', status: 'active', claimTime: at(10), fuelStartL: 140 }),
-      // Sesja zamknięta, ale bez odczytu — rejestr niekompletny.
+      // Sesja zamknięta, ale bez odczytu - rejestr niekompletny.
       session({ sessionUuid: 'bezodczytu', claimTime: at(10), closeTime: at(11) }),
     ];
     const { before } = readingsChainNeighbours(withOpen, at(12));
     expect(before?.sessionUuid).toBe('rano');
   });
 
-  it('WYKLUCZA wskazaną sesję — poprawiany wpis nie może być sobie punktem odniesienia', () => {
+  it('WYKLUCZA wskazaną sesję - poprawiany wpis nie może być sobie punktem odniesienia', () => {
     // Bez wykluczenia sesja „rano" byłaby własnym poprzednikiem przy jej poprawianiu.
     const { before } = readingsChainNeighbours(HISTORY, at(12), 'rano');
     expect(before).toBeNull();
   });
 
-  it('granice są DOMKNIĘTE — zdanie i przejęcie co do minuty to normalny dzień', () => {
+  it('granice są DOMKNIĘTE - zdanie i przejęcie co do minuty to normalny dzień', () => {
     // Zetknięcie sesji co do minuty nie jest nakładką (§3.6a), więc odczyt z tej samej
     // chwili jest właściwym sąsiadem, a nie przypadkiem do pominięcia.
     expect(readingsChainNeighbours(HISTORY, at(9)).before?.sessionUuid).toBe('rano');
     expect(readingsChainNeighbours(HISTORY, at(15)).after?.sessionUuid).toBe('wieczor');
   });
 
-  it('niesie MOTOGODZINY obu sąsiadów — łańcuch MH jest osią samolotu (§4.5)', () => {
+  it('niesie MOTOGODZINY obu sąsiadów - łańcuch MH jest osią samolotu (§4.5)', () => {
     const { before, after } = readingsChainNeighbours(HISTORY, at(12));
     expect(before?.mh).toBe(1232);
     expect(after?.mh).toBe(1240);
   });
 });
 
-describe('olej idzie WŁASNĄ osią — pomiar żyje tylko przy przejęciu', () => {
+describe('olej idzie WŁASNĄ osią - pomiar żyje tylko przy przejęciu', () => {
   /**
    * Bagnet tuż po locie kłamie, więc zdanie samolotu oleju NIE MIERZY (issue #60):
    * interwał biegnie pomiar→pomiar przez wiele sesji, z kotwicą w liczniku. Olej nie
-   * ma więc pary „przed/po" — ma kotwicę i sumę dolewek od niej.
+   * ma więc pary „przed/po" - ma kotwicę i sumę dolewek od niej.
    */
   const WITH_OIL: SessionRow[] = [
     session({
@@ -167,7 +167,7 @@ describe('olej idzie WŁASNĄ osią — pomiar żyje tylko przy przejęciu', () 
       mhEnd: 1233,
       fuelStartL: 140,
       fuelEndL: 120,
-      // Sesja bez pomiaru, ale z dolewką — wchodzi SUMĄ do kotwicy sprzed niej.
+      // Sesja bez pomiaru, ale z dolewką - wchodzi SUMĄ do kotwicy sprzed niej.
       oilAddedL: 1,
     }),
     session({
@@ -193,7 +193,7 @@ describe('olej idzie WŁASNĄ osią — pomiar żyje tylko przy przejęciu', () 
 
   it('NIE liczy dolewek zapisanych PO pytanej chwili', () => {
     // 2 L z sesji o 15:00 opisuje stan, którego pilot wpisujący lot z południa
-    // nie mógł zastać — a pomiar 8,1 L tym bardziej nie jest jego kotwicą.
+    // nie mógł zastać - a pomiar 8,1 L tym bardziej nie jest jego kotwicą.
     const { oil } = readingsChainNeighbours(WITH_OIL, at(12));
     expect(oil?.addedSinceL).not.toBe(3);
     expect(oil?.levelL).not.toBe(8.1);
@@ -204,7 +204,7 @@ describe('olej idzie WŁASNĄ osią — pomiar żyje tylko przy przejęciu', () 
     expect(readingsChainNeighbours(HISTORY, at(12)).oil).toBeNull();
   });
 
-  it('pytanie o „teraz" widzi cały łańcuch — zachowanie sprzed issue #62', () => {
+  it('pytanie o „teraz" widzi cały łańcuch - zachowanie sprzed issue #62', () => {
     const { oil } = readingsChainNeighbours(WITH_OIL, at(23));
     expect(oil).toMatchObject({ levelL: 8.1, atMh: 1240 });
     expect(oil?.addedSinceL).toBe(2);

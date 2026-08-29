@@ -1,8 +1,8 @@
 /**
- * UZ Aero — pojedynczy odczyt GPS w postaci, jakiej potrzebuje detekcja.
+ * UZ Aero - pojedynczy odczyt GPS w postaci, jakiej potrzebuje detekcja.
  *
  * Wydzielony z automatu, bo czytają go teraz wszystkie moduły detekcji, a automat
- * czyta je wszystkie — wspólny typ w pliku automatu robił cykl importów.
+ * czyta je wszystkie - wspólny typ w pliku automatu robił cykl importów.
  *
  * KONTRAKT PÓL NIEZNANYCH (poprawka audytu 2026-07-30): `null` znaczy „odbiornik nie
  * podał", nigdy „wartość wynosi zero". Adapter długo mapował brakującą prędkość na
@@ -17,7 +17,7 @@ import type { EpochMillis } from '../time';
 import type { LatLon } from './geo';
 
 export interface GpsFix {
-  /** Czas fixa (UTC, epoch ms) — zegar GPS, nie telefonu (§4.5). */
+  /** Czas fixa (UTC, epoch ms) - zegar GPS, nie telefonu (§4.5). */
   time: EpochMillis;
   /** Prędkość względem ziemi (węzły) z dopplera; `null` = odbiornik NIE PODAŁ. */
   groundSpeedKt: number | null;
@@ -25,7 +25,7 @@ export interface GpsFix {
   altitudeFt: number | null;
   /**
    * Kurs nad ziemią (stopnie 0–360). Odbiorniki podają go tylko powyżej pewnej
-   * prędkości — na postoju bywa `null` albo losowy, i tak ma być: prędkość kątowa
+   * prędkości - na postoju bywa `null` albo losowy, i tak ma być: prędkość kątowa
    * z kursu ma sens wyłącznie w ruchu (`trends.ts` sam pilnuje kompletu danych).
    */
   trackDeg?: number | null;

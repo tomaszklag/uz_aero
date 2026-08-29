@@ -1,8 +1,8 @@
 /**
- * UZ Aero — CrewCorrectionSheet: poprawka DRUGIEGO PILOTA całej sesji (issue #43).
+ * UZ Aero - CrewCorrectionSheet: poprawka DRUGIEGO PILOTA całej sesji (issue #43).
  *
  * ══ CO TO ZNACZY „POPRAWIĆ DUALA" ══
- * „Wpisałem złego drugiego pilota" — poprawka działa WSTECZ na całą sesję, więc czas
+ * „Wpisałem złego drugiego pilota" - poprawka działa WSTECZ na całą sesję, więc czas
  * blokowy w całości przypisuje się wskazanej osobie. To NIE JEST zmiana załogi w trakcie
  * (od tego jest `crew_change` i ekran 07): tamta dzieli sesję na odcinki i każdemu
  * pilotowi daje jego kawałek. Arkusz mówi o tym wprost, bo z samej listy nazwisk nie
@@ -24,7 +24,7 @@ import { Sheet } from './Sheet';
 
 export interface CrewOption {
   id: string;
-  /** Kod pilota („AKO") — monospacing, tak jak w dokumentach. */
+  /** Kod pilota („AKO") - monospacing, tak jak w dokumentach. */
   code: string;
   name: string;
 }
@@ -37,12 +37,12 @@ export interface CrewCorrectionSheetProps {
   options: readonly CrewOption[];
   historyCount?: number;
   onOpenHistory?: () => void;
-  /** `null` = „sesja jednoosobowa" — to decyzja, nie brak wyboru. */
+  /** `null` = „sesja jednoosobowa" - to decyzja, nie brak wyboru. */
   onSave: (dualId: string | null, reason: string | null) => void;
   onCancel: () => void;
 }
 
-/** Identyfikator pozycji „bez Duala" — nie koliduje z uuid pilota. */
+/** Identyfikator pozycji „bez Duala" - nie koliduje z uuid pilota. */
 const NONE = '__none__';
 
 export function CrewCorrectionSheet({
@@ -84,8 +84,8 @@ export function CrewCorrectionSheet({
       {/*
         Nagłówek nie powtarza „cała sesja": zakres poprawki jest treścią przypisu pod
         listą, gdzie stoi razem z powodem („czas blokowy przypisze się…") i z tym, czego
-        ten arkusz NIE robi (zmiana załogi w trakcie). Napisany dwa razy — raz jako
-        etykieta bez wyjaśnienia, raz jako zdanie — pierwszy raz nie mówi nic.
+        ten arkusz NIE robi (zmiana załogi w trakcie). Napisany dwa razy - raz jako
+        etykieta bez wyjaśnienia, raz jako zdanie - pierwszy raz nie mówi nic.
       */}
       <CardPicker
         options={[
@@ -110,7 +110,7 @@ export function CrewCorrectionSheet({
 
       <View style={styles.note}>
         <AppText variant="mono" tone="muted" style={styles.noteText}>
-          Poprawka obejmuje CAŁĄ sesję — czas blokowy przypisze się wskazanej osobie od
+          Poprawka obejmuje CAŁĄ sesję - czas blokowy przypisze się wskazanej osobie od
           przejęcia do zdania. Jeśli drugi pilot zmienił się W TRAKCIE, to nie jest to
           miejsce: taką zmianę zapisuje się w kokpicie, przed uruchomieniem silnika.
         </AppText>

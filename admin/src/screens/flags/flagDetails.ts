@@ -1,9 +1,9 @@
 /**
- * UZ Aero — panel: LICZBY ROZBIEŻNOŚCI z `flags.details` (moduł CZYSTY).
+ * UZ Aero - panel: LICZBY ROZBIEŻNOŚCI z `flags.details` (moduł CZYSTY).
  *
  * `details` jest kolumną `jsonb`, więc na wejściu ma typ `Record<string, unknown>`
  * i tak trzeba go czytać: po nazwie, z przyznaniem się do braku. To nie jest
- * defensywność na zapas — kształt zależy od TYPU flagi
+ * defensywność na zapas - kształt zależy od TYPU flagi
  * (`server/src/domain/mhChain.ts`, `clockDrift.ts`), a flagi zapisane przed zmianą
  * detektora zostają w bazie na zawsze, bo skrzynka pokazuje też sprawy sprzed pół roku.
  *
@@ -15,8 +15,8 @@ import { litres, motoHours, plural, timeUtc } from '@uzaero/format';
 
 import type { FlagListItemDto } from '../../api/dto';
 
-/** Brak wartości pokazujemy tak samo jak aplikacja pilota — jedną kreską. */
-const NONE = '—';
+/** Brak wartości pokazujemy tak samo jak aplikacja pilota - jedną kreską. */
+const NONE = '-';
 
 const num = (details: Record<string, unknown>, key: string): number | null => {
   const value = details[key];
@@ -28,10 +28,10 @@ const text = (details: Record<string, unknown>, key: string): string | null => {
   return typeof value === 'string' && value !== '' ? value : null;
 };
 
-/** Godziny dziesiętne z `details` — format `decimal`, bo tak są zapisane w bazie. */
+/** Godziny dziesiętne z `details` - format `decimal`, bo tak są zapisane w bazie. */
 const mh = (value: number | null): string => motoHours(value, 'decimal');
 
-/** Znak minus TYPOGRAFICZNY (U+2212), jak w mockupie — nie łącznik. */
+/** Znak minus TYPOGRAFICZNY (U+2212), jak w mockupie - nie łącznik. */
 const signed = (value: number | null, unit: string): string =>
   value == null ? NONE : `${value < 0 ? '−' : '+'}${Math.abs(value)} ${unit}`;
 
@@ -40,7 +40,7 @@ const negate = (value: number | null): number | null => (value == null ? null : 
 export interface Discrepancy {
   /** Główna treść komórki „Rozbieżność" w tabeli. */
   main: string;
-  /** Druga linia (`.cell-sub`) — skala rozjazdu albo trop do zdarzenia. */
+  /** Druga linia (`.cell-sub`) - skala rozjazdu albo trop do zdarzenia. */
   sub: string | null;
 }
 
@@ -73,7 +73,7 @@ export function discrepancyOf(flag: FlagListItemDto): Discrepancy {
     }
     case 'pilot_overlap': {
       // `details` z `pilotOverlap.ts`: `aircraft` („SP-ABC + SP-KLM"), `from`, a `to`
-      // WYŁĄCZNIE gdy obie sesje są zamknięte — przy otwartej nakładka trwa nadal
+      // WYŁĄCZNIE gdy obie sesje są zamknięte - przy otwartej nakładka trwa nadal
       // i domyślanie się końca byłoby twierdzeniem o przyszłości.
       const pair = text(d, 'aircraft');
       const from = num(d, 'from');
@@ -93,7 +93,7 @@ export function discrepancyOf(flag: FlagListItemDto): Discrepancy {
       };
     case 'mh_regression': {
       // Serwer zapisuje `regressionH` jako wartość DODATNIĄ (wielkość cofnięcia),
-      // a cofnięcie pokazujemy ze znakiem minus — tak samo jak mockup.
+      // a cofnięcie pokazujemy ze znakiem minus - tak samo jak mockup.
       const back = num(d, 'regressionH');
       return {
         main: `${mh(num(d, 'prevEnd'))} → ${mh(num(d, 'nextStart'))}`,
@@ -138,7 +138,7 @@ export function detailRows(flag: FlagListItemDto): DetailRow[] {
         { key: 'Maszyny', value: text(d, 'aircraft') ?? NONE, tone: 'amber' },
         { key: 'Wspólny odcinek od', value: from == null ? NONE : `${timeUtc(from)} UTC` },
         // „trwa", nie kreska: brak `to` znaczy, że któraś sesja jest nadal otwarta,
-        // czyli nakładka NIE SKOŃCZYŁA SIĘ — to fakt, a nie brak danych.
+        // czyli nakładka NIE SKOŃCZYŁA SIĘ - to fakt, a nie brak danych.
         { key: 'Wspólny odcinek do', value: to == null ? 'trwa' : `${timeUtc(to)} UTC` },
         { key: 'Sesje w sprawie', value: String(flag.sessionUuids.length) },
       ];

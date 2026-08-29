@@ -1,13 +1,13 @@
 /**
- * UZ Aero — ScaleBar (pasek poziomu z PODZIAŁKĄ, mockup 06)
+ * UZ Aero - ScaleBar (pasek poziomu z PODZIAŁKĄ, mockup 06)
  *
  * `LevelBar` odpowiada na pytanie „dużo to czy mało" jednym spojrzeniem. Gdy pasek idzie
- * przez całą szerokość karty, samo wypełnienie przestaje wystarczać — trzeba wiedzieć,
+ * przez całą szerokość karty, samo wypełnienie przestaje wystarczać - trzeba wiedzieć,
  * do czego się odnosi. Stąd podpisy pod paskiem: w `.fob-bar-labels` są dwa („0 L" ↔
  * „pojemność: 330 L"), w `.slider-labels` pięć (ćwiartki dolewki).
  *
  * Świadomie NIE jest kontrolką. W mockupie ten sam kształt niósł uchwyt suwaka; audyt
- * użyteczności go odrzucił (≈1,4 litra na piksel w rękawicach — patrz `Stepper`), więc
+ * użyteczności go odrzucił (≈1,4 litra na piksel w rękawicach - patrz `Stepper`), więc
  * wartość ustawia `Stepper`, a pasek został **wyłącznie wskaźnikiem**: pokazuje, gdzie
  * na skali jest to, co pilot właśnie wpisał.
  */
@@ -25,7 +25,7 @@ export interface ScaleBarProps {
   ratio: number;
   tone?: Tone;
   /**
-   * Podpisy podziałki, od lewej do prawej. Skrajne trzymają się krawędzi paska —
+   * Podpisy podziałki, od lewej do prawej. Skrajne trzymają się krawędzi paska -
    * tak jak `justify-content: space-between` w mockupie.
    */
   scale?: string[];
@@ -50,7 +50,7 @@ export function ScaleBar({ ratio, tone = 'amber', scale = [], height = 6, style 
           {scale.map((label, i) => (
             <AppText
               // Podpisy podziałki bywają identyczne (np. dwa „0 L" przy pustym baku),
-              // więc kluczem jest pozycja — to ona, a nie treść, definiuje element.
+              // więc kluczem jest pozycja - to ona, a nie treść, definiuje element.
               key={`${i}-${label}`}
               variant="mono"
               tone="muted"

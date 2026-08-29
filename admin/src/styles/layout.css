@@ -1,10 +1,10 @@
 /**
- * UZ Aero — panel: WYMIARY RAMY i szkielet układu.
+ * UZ Aero - panel: WYMIARY RAMY i szkielet układu.
  *
  * Osobny plik od `tokens.css` i to jest twarda linia (`docs/architektura-panelu-frontend.md`
  * §1.3): tokeny to wartości PRODUKTU, wspólne z aplikacją pilota; `--sidebar-w`
  * i `--topbar-h` to wymiary jednej powierzchni. Telefon nie ma sidebara, więc te
- * zmienne nie mają czego szukać w pakiecie tokenów — pilnuje tego test w `app/`.
+ * zmienne nie mają czego szukać w pakiecie tokenów - pilnuje tego test w `app/`.
  *
  * Klasy 1:1 z `design/admin/SZABLON.html`; wartości przepisane bez zmian.
  */
@@ -37,7 +37,7 @@
   gap: 18px;
 }
 
-/* Kolumna scrollowana: dzieci NIE mogą się kurczyć — inaczej `.table-wrap`
+/* Kolumna scrollowana: dzieci NIE mogą się kurczyć - inaczej `.table-wrap`
    z `overflow:hidden` obcina wiersze, zamiast pozwolić `.content` przewinąć.
    Komentarz przeniesiony z szablonu razem z regułą, bo bez niego wygląda
    na nadmiarowy i ktoś go kiedyś usunie. */
@@ -58,7 +58,7 @@
 
 /**
  * Siatka dwukolumnowa treści (`.cols` z `SZABLON.html`). Po lewej rzecz główna,
- * po prawej przypisy do niej — stała szerokość prawej kolumny, bo to ona ma się
+ * po prawej przypisy do niej - stała szerokość prawej kolumny, bo to ona ma się
  * NIE rozjeżdżać między ekranami, a lewa mieści tabele i musi brać, co zostanie.
  *
  * `align-items:start` jest tu istotne: bez niego karta boczna rozciągałaby się na
@@ -76,7 +76,7 @@
 }
 
 /**
- * Kolumna kart wewnątrz `.cols` — karty jedna pod drugą z tym samym odstępem, co
+ * Kolumna kart wewnątrz `.cols` - karty jedna pod drugą z tym samym odstępem, co
  * siatka. W mockupie stoi to stylem inline (`display:flex;flex-direction:column;
  * gap:16px`); tutaj dostaje nazwę, bo klasa bez nazwy jest klasą, której nikt nie
  * znajdzie greppem.
@@ -108,7 +108,7 @@
  * Szersza kolumna boczna (400 px) tam, gdzie niesie ona WŁASNĄ treść, a nie przypis
  * do lewej: puls systemu na pulpicie (`A01`), dowód z replaya przy progach (`A08`).
  * Modyfikator zamiast zmiany bazy, bo szersza prawa = węższa lewa, a w lewej stoją
- * tabele — 20 px mniej potrafi przyciąć kolumnę w `.table-wrap`.
+ * tabele - 20 px mniej potrafi przyciąć kolumnę w `.table-wrap`.
  */
 .cols.wide {
   grid-template-columns: 1fr 400px;

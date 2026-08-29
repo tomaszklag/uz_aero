@@ -1,15 +1,15 @@
 /**
- * UZ Aero — panel: KOPERTY ODPOWIEDZI `/admin/api/*` jako własne typy.
+ * UZ Aero - panel: KOPERTY ODPOWIEDZI `/admin/api/*` jako własne typy.
  *
  * Dlaczego własne, a nie importowane z serwera (`docs/architektura-panelu-frontend.md`
  * §5.2): `server/` to workspace z `type: module`, rozszerzeniami `.ts` w importach,
  * typami Fastify i `pg`. Import stamtąd wciągnąłby typy Node'a do bundla przeglądarki
  * i przywiązałby panel do wewnętrznego podziału warstw serwera. **Nigdy nie importujemy
- * z `server/src`** — a kształty odpowiedzi po stronie serwera przybijają jego własne
+ * z `server/src`** - a kształty odpowiedzi po stronie serwera przybijają jego własne
  * testy tras (PGlite + `app.inject`).
  *
  * Byty domenowe biorzemy jako TYPY z `@uzaero/domain` (`import type`, nigdy wartości).
- * Tutaj mieszkają wyłącznie koperty HTTP — czyli to, co jest prezentacją przez
+ * Tutaj mieszkają wyłącznie koperty HTTP - czyli to, co jest prezentacją przez
  * konkretną trasę i zmienia się razem z nią.
  */
 
@@ -34,12 +34,12 @@ import type {
 } from '@uzaero/domain';
 
 /**
- * Role kont. LUSTRO `server/src/domain/roles.ts` — świadome, opisane i tymczasowe.
+ * Role kont. LUSTRO `server/src/domain/roles.ts` - świadome, opisane i tymczasowe.
  *
  * Rekomendacją `docs/architektura-panelu-frontend.md` §11 pkt 6 jest przeniesienie
  * `roles.ts` do `@uzaero/domain`, żeby panel dostał TYP zamiast kopii. To DECYZJA
  * CZŁOWIEKA, jeszcze niepodjęta, więc panel realizuje wariant minimalny: serwer
- * przysyła listę zdolności, panel porównuje ją z nazwami, a lista mieszka tutaj —
+ * przysyła listę zdolności, panel porównuje ją z nazwami, a lista mieszka tutaj -
  * w jednym pliku, na granicy HTTP, gdzie każdy jej widzi.
  *
  * Czego ta kopia NIE robi: nie decyduje o niczym. Mapa rola → zdolności jest wyłącznie
@@ -59,7 +59,7 @@ export type Capability =
   | 'maintenance.run';
 
 /**
- * Katalog akcji dziennika audytu. LUSTRO `server/src/domain/adminActions.ts` — świadome,
+ * Katalog akcji dziennika audytu. LUSTRO `server/src/domain/adminActions.ts` - świadome,
  * opisane i PRZYBITE TESTEM (`admin/test/adminActions.mirror.test.ts`).
  *
  * Ta sama sytuacja, co przy `Capability` wyżej: katalog mieszka w `server/src/domain/`,
@@ -67,15 +67,15 @@ export type Capability =
  * i dlatego ta kopia dostaje mechanizm, którego `Capability` nie ma: ekran `A09` musi
  * mieć KOMPLET kodów, bo mapuje każdy z nich na plakietkę i opis (`Record<AdminAction,
  * …>` w `screens/audit/auditActions.ts` wymusza to kompilatorem). Lista przepisana
- * ręcznie i niepilnowana rozjechałaby się przy pierwszej nowej komendzie panelu —
+ * ręcznie i niepilnowana rozjechałaby się przy pierwszej nowej komendzie panelu -
  * i objawiłoby się to dopiero wtedy, gdy ktoś by tej akcji szukał w dzienniku.
  *
  * Czego ta kopia NIE robi: nie decyduje o tym, co wolno zapisać. Zapisuje wyłącznie
- * serwer, typem `AdminAction` po swojej stronie. Tu są nazwy do nazwania — i do
+ * serwer, typem `AdminAction` po swojej stronie. Tu są nazwy do nazwania - i do
  * zbudowania filtra, który serwer i tak waliduje `isAdminAction`.
  *
  * **Dziennik może nieść kody SPOZA tej listy** (wpisy historyczne, akcja wycofana
- * z katalogu — `admin_audit.action` celowo nie ma `CHECK`-a). Dlatego DTO niżej ma
+ * z katalogu - `admin_audit.action` celowo nie ma `CHECK`-a). Dlatego DTO niżej ma
  * `action: string`, a nie `AdminAction`: unia opisuje katalog, nie zawartość tabeli.
  */
 export type AdminAction =
@@ -94,7 +94,7 @@ export type AdminAction =
   | 'maintenance.retry_exports'
   | 'maintenance.prune_tokens';
 
-/** Konto zalogowane w panelu — stopka sidebara i decyzje o widoczności pozycji. */
+/** Konto zalogowane w panelu - stopka sidebara i decyzje o widoczności pozycji. */
 export interface PanelPilotDto {
   id: string;
   code: string;
@@ -103,25 +103,25 @@ export interface PanelPilotDto {
 }
 
 /**
- * Odpowiedź `POST /admin/api/auth/login` i `GET /admin/api/me` — TEN SAM kształt.
+ * Odpowiedź `POST /admin/api/auth/login` i `GET /admin/api/me` - TEN SAM kształt.
  *
  * Token NIE JEST tu wymieniony i nie może być: sesja jedzie ciasteczkiem `HttpOnly`,
  * którego JavaScript panelu nie widzi. To nie jest niedopatrzenie kontraktu, tylko
- * jego treść — panel nigdy nie trzyma poświadczenia.
+ * jego treść - panel nigdy nie trzyma poświadczenia.
  */
 export interface PanelSessionDto {
   pilot: PanelPilotDto;
   capabilities: Capability[];
 }
 
-/** Ciało odmowy z tras panelu — `error` zawsze, reszta zależnie od powodu. */
+/** Ciało odmowy z tras panelu - `error` zawsze, reszta zależnie od powodu. */
 export interface ApiErrorDto {
   error: string;
   /** 403 z bramy zdolności: KTÓREJ zdolności zabrakło (panel ma podać powód). */
   required?: Capability;
   /**
    * 422 `rule_violation` z zapisu korekty: KTÓRE reguły domeny odmówiły. Panel ma
-   * pokazać konkretny powód z tej listy, a nie „popraw formularz" — kody i komunikaty
+   * pokazać konkretny powód z tej listy, a nie „popraw formularz" - kody i komunikaty
    * pochodzą z `packages/domain/src/rules/violations.ts` i są pisane dla człowieka.
    */
   violations?: RuleViolation[];
@@ -129,21 +129,21 @@ export interface ApiErrorDto {
    * 409 `already_resolved`: stan flagi, którą ktoś zamknął PIERWSZY.
    *
    * Odmowa niesie tu treść, a nie tylko kod, i to jest jej sens: przegrany wyścig
-   * ma pokazać CZYJE rozstrzygnięcie zdążyło i jakim komentarzem — inaczej drugi
+   * ma pokazać CZYJE rozstrzygnięcie zdążyło i jakim komentarzem - inaczej drugi
    * klikający dopisałby własne uzasadnienie do decyzji, której nie podjął.
    */
   flag?: ResolvedFlagWireDto;
   /**
    * 409 `conflict` z zapisu konta albo jednostki: KTÓRE pole jest zajęte. Bez tego
    * formularz z kilkoma polami dostawałby „naruszenie unikalności" i nie wiedziałby,
-   * co poprawić. `reg` dochodzi z ekranu floty (`A07a`) — rejestracja jest unikalna
+   * co poprawić. `reg` dochodzi z ekranu floty (`A07a`) - rejestracja jest unikalna
    * w całym systemie, bo widać ją w logu dnia, w nazwie karty arkusza i w każdej fladze.
    */
   field?: 'code' | 'email' | 'reg';
   /**
    * 409 `refused` z zapisu konta: DLACZEGO odmówiono (`self_deactivate`, `last_admin`…).
    * Odmowa bez powodu przy przycisku „Deaktywuj" kazałaby administratorowi zgadywać,
-   * czy to awaria, czy zasada — czyli dokładnie w tej chwili sięgnąć po `UPDATE` w psql.
+   * czy to awaria, czy zasada - czyli dokładnie w tej chwili sięgnąć po `UPDATE` w psql.
    */
   reason?: PilotRefusalDto | FleetRefusalDto;
 }
@@ -151,7 +151,7 @@ export interface ApiErrorDto {
 // ── skrzynka flag (`A03`, `A03a`) ───────────────────────────────────────────────
 
 /**
- * Jedna sprawa w skrzynce — odpowiedź `GET /admin/api/flags`.
+ * Jedna sprawa w skrzynce - odpowiedź `GET /admin/api/flags`.
  *
  * `FlagType`/`FlagStatus` biorzemy jako TYPY z `@uzaero/domain` (a nie jako kopię
  * jak przy rolach): katalog flag JEST w pakiecie wspólnym, więc panel nie ma powodu
@@ -163,7 +163,7 @@ export interface FlagListItemDto {
   status: FlagStatus;
 
   aircraftId: string;
-  /** `null`, gdy samolotu nie ma już w rejestrze floty — flaga zostaje mimo to. */
+  /** `null`, gdy samolotu nie ma już w rejestrze floty - flaga zostaje mimo to. */
   reg: string | null;
   aircraftType: string | null;
 
@@ -171,24 +171,24 @@ export interface FlagListItemDto {
   /**
    * Liczby rozbieżności policzone przez serwer przy ingescie. Kształt ZALEŻY OD TYPU
    * flagi i celowo nie jest tu rozpisany na unię: `details` pochodzi z kolumny `jsonb`
-   * i panel czyta z niego pola po nazwie, przyznając się do braku („—"), zamiast
+   * i panel czyta z niego pola po nazwie, przyznając się do braku („-"), zamiast
    * obiecywać typem coś, czego baza nie gwarantuje.
    */
   details: Record<string, unknown>;
 
-  /** ISO 8601 UTC — chwila WYKRYCIA rozbieżności; z niej liczy się wiek w skrzynce. */
+  /** ISO 8601 UTC - chwila WYKRYCIA rozbieżności; z niej liczy się wiek w skrzynce. */
   createdAt: string;
   resolvedAt: string | null;
-  /** Identyfikator konta, które zamknęło sprawę — NIE nazwisko (patrz raport §API). */
+  /** Identyfikator konta, które zamknęło sprawę - NIE nazwisko (patrz raport §API). */
   resolvedBy: string | null;
   resolutionNote: string | null;
 
-  /** Czy ta flaga TRZYMA kartę dnia poza arkuszem — pierwszy klucz porządku skrzynki. */
+  /** Czy ta flaga TRZYMA kartę dnia poza arkuszem - pierwszy klucz porządku skrzynki. */
   blocksExport: boolean;
 }
 
 /**
- * Strona skrzynki. Bez kursora — `total` mówi, ile spraw spełnia filtr, także wtedy,
+ * Strona skrzynki. Bez kursora - `total` mówi, ile spraw spełnia filtr, także wtedy,
  * gdy `limit` obciął listę.
  */
 export interface FlagPageDto {
@@ -196,7 +196,7 @@ export interface FlagPageDto {
   total: number;
 }
 
-/** Flaga w odpowiedzi 409 — węższa niż wiersz listy (bez złączeń i bez `createdAt`). */
+/** Flaga w odpowiedzi 409 - węższa niż wiersz listy (bez złączeń i bez `createdAt`). */
 export interface ResolvedFlagWireDto {
   id: number;
   type: FlagType;
@@ -209,7 +209,7 @@ export interface ResolvedFlagWireDto {
   resolutionNote: string | null;
 }
 
-/** Powody, dla których eksporter ODMÓWIŁ zbudowania karty — nie błędy, tylko stany. */
+/** Powody, dla których eksporter ODMÓWIŁ zbudowania karty - nie błędy, tylko stany. */
 export type ExportRefusalDto = 'no_events' | 'session_open' | 'no_preflight' | 'overlap_flag';
 
 export type ExportOutcomeDto =
@@ -217,7 +217,7 @@ export type ExportOutcomeDto =
   | { exported: false; reason: ExportRefusalDto };
 
 /**
- * RODZAJ awarii próby eksportu — jedzie razem z `outcome: null`.
+ * RODZAJ awarii próby eksportu - jedzie razem z `outcome: null`.
  *
  * `sheets_adapter` = rzucił zapis karty (niedostępny Google, padnięta baza kart);
  * ponowienie za chwilę ma sens. `unexpected` = rzuciło cokolwiek innego po stronie
@@ -229,7 +229,7 @@ export type ExportFailureDto = 'sheets_adapter' | 'unexpected';
 /**
  * Próba re-eksportu jednej z sesji, których dotyczyła flaga.
  *
- * `outcome: null` znaczy „eksport rzucił" — flaga JEST rozwiązana, a karta nie
+ * `outcome: null` znaczy „eksport rzucił" - flaga JEST rozwiązana, a karta nie
  * powstała. Panel musi to pokazać uczciwie, bo cisza sugerowałaby, że karty w ogóle
  * nie próbowano odblokować.
  */
@@ -255,22 +255,22 @@ export interface ResolveFlagResultDto {
 // ── monitor eksportu (`A05`) ────────────────────────────────────────────────────
 
 /**
- * Stan karty dnia — wnioskuje go SERWER, panel wyłącznie nazywa.
+ * Stan karty dnia - wnioskuje go SERWER, panel wyłącznie nazywa.
  *
  * Wniosek składa się z czterech faktów naraz (status sesji, obecność chwili przejęcia,
  * otwarte flagi blokujące, obecność wiersza w `export_log`), a panel widzi każdy z nich
- * osobno — złożenie ich tutaj byłoby drugą definicją reguły, która i tak musi istnieć
+ * osobno - złożenie ich tutaj byłoby drugą definicją reguły, która i tak musi istnieć
  * na serwerze, bo to ona bramkuje eksport.
  *
  * Stanu „karta nieaktualna" (`NIEAKTUALNY` z `ANALIZA`) **nie ma i to jest świadome**:
  * wymagałby porównania stempla eksportu ze stemplem projekcji, a te pochodzą z dwóch
- * różnych zegarów (aplikacji i Postgresa). Mockup `A05` tego stanu zresztą nie zna —
+ * różnych zegarów (aplikacji i Postgresa). Mockup `A05` tego stanu zresztą nie zna -
  * rozróżnia „W arkuszu" i „Rewizja N", a jedno i drugie wynika z numeru rewizji.
  */
 export type ExportStateDto = 'waiting' | 'blocked' | 'impossible' | 'missing' | 'current';
 
 /**
- * Jeden dzień lotny widziany OD STRONY ARKUSZA — odpowiedź `GET /admin/api/exports`.
+ * Jeden dzień lotny widziany OD STRONY ARKUSZA - odpowiedź `GET /admin/api/exports`.
  *
  * Wiersz powstaje z projekcji sesji, a nie z `export_log`, i to jest istota tego ekranu:
  * dzień BEZ ani jednego eksportu jest tu najważniejszym wierszem, a nie brakiem danych.
@@ -279,7 +279,7 @@ export interface ExportListItemDto {
   sessionUuid: string;
 
   /**
-   * Nazwa karty wg konwencji §4.7 (`YYYY-MM-DD_SP-XXX`) — policzona przez serwer TĄ
+   * Nazwa karty wg konwencji §4.7 (`YYYY-MM-DD_SP-XXX`) - policzona przez serwer TĄ
    * SAMĄ funkcją, którą eksporter nazywa kartę przy zapisie. Panel jej NIE skleja:
    * druga konwencja nazw znaczyłaby link do karty, której w bazie nie ma.
    * `null` = sesja bez `session_claim`, czyli karty nie da się nazwać.
@@ -287,7 +287,7 @@ export interface ExportListItemDto {
   tab: string | null;
   /** Dzień karty `YYYY-MM-DD` (UTC z chwili przejęcia); `null` razem z `tab`. */
   day: string | null;
-  /** Chwila przejęcia samolotu (epoch ms UTC) — kolumna „Dzień". `null` = rejestr bez claimu. */
+  /** Chwila przejęcia samolotu (epoch ms UTC) - kolumna „Dzień". `null` = rejestr bez claimu. */
   claimedAt: number | null;
 
   aircraftId: string;
@@ -299,40 +299,40 @@ export interface ExportListItemDto {
   picCode: string | null;
   picName: string | null;
 
-  /** `active` = brak `day_close`. NIE znaczy „w locie" — projekcja tego nie niesie. */
+  /** `active` = brak `day_close`. NIE znaczy „w locie" - projekcja tego nie niesie. */
   sessionStatus: 'active' | 'closed';
   state: ExportStateDto;
 
   /** Ostatnia rewizja karty; `null` = nigdy nie eksportowano. */
   revision: number | null;
-  /** ISO 8601 UTC — chwila ostatniej UDANEJ wysyłki. */
+  /** ISO 8601 UTC - chwila ostatniej UDANEJ wysyłki. */
   exportedAt: string | null;
   sheetUrl: string | null;
 
-  /** Otwarte flagi trzymające kartę poza arkuszem — cel linku „Do flagi". */
+  /** Otwarte flagi trzymające kartę poza arkuszem - cel linku „Do flagi". */
   blockingFlagIds: number[];
-  /** ISO 8601 UTC — ostatnia przyjęta paczka tej sesji („kiedy ostatni sync"). */
+  /** ISO 8601 UTC - ostatnia przyjęta paczka tej sesji („kiedy ostatni sync"). */
   updatedAt: string;
 
   /**
-   * INNA sesja zapisała kartę o tej samej nazwie PÓŹNIEJ — treść leżąca dziś pod `tab`
+   * INNA sesja zapisała kartę o tej samej nazwie PÓŹNIEJ - treść leżąca dziś pod `tab`
    * opisuje TAMTEN dzień pracy, nie ten wiersz.
    *
    * Nazwa karty (`YYYY-MM-DD_SP-XXX`) niesie dzień i samolot, ale nie sesję, więc dwie
    * zamknięte zmiany na jednym samolocie tego samego dnia budują kartę o tej samej
-   * nazwie — a `exported_sheets` jest po niej UPSERT-owane. Serwer wykrywa to
+   * nazwie - a `exported_sheets` jest po niej UPSERT-owane. Serwer wykrywa to
    * w `export_log`; panel niczego tu nie porównuje.
    */
   overwrittenBy: { sessionUuid: string; exportedAt: string } | null;
 }
 
 /**
- * Liczniki kafli i chipów. Liczy je SERWER nad CAŁYM zakresem zapytania — także po
+ * Liczniki kafli i chipów. Liczy je SERWER nad CAŁYM zakresem zapytania - także po
  * zawężeniu chipem (inaczej po jednym kliknięciu wszystkie pozostałe pokazywałyby zero)
  * i także wtedy, gdy `limit` obciął listę (inaczej kafel opisywałby okno, a nie rejestr).
  */
 export interface ExportCountsDto {
-  /** Wszystkie dni w zakresie filtra — NIEZALEŻNIE od zawężenia chipem stanu. */
+  /** Wszystkie dni w zakresie filtra - NIEZALEŻNIE od zawężenia chipem stanu. */
   total: number;
   current: number;
   blocked: number;
@@ -340,7 +340,7 @@ export interface ExportCountsDto {
   waiting: number;
   impossible: number;
   /**
-   * Karty z rewizją > 1 — wymiar, nie stan. Liczone WYŁĄCZNIE po numerze rewizji, bez
+   * Karty z rewizją > 1 - wymiar, nie stan. Liczone WYŁĄCZNIE po numerze rewizji, bez
    * oglądania się na stan karty; chip „Rewizje" zawęża panel dokładnie tak samo.
    */
   revised: number;
@@ -353,20 +353,20 @@ export interface ExportCountsDto {
  * a zakres w skali klubu to kilkadziesiąt dni lotnych. Kursor dokłada się tam, gdzie
  * lista rośnie bez granicy (dziennik audytu, rejestr zdarzeń); tu granicę stawia kalendarz.
  *
- * Kalendarza panel jednak jeszcze nie ma, więc `limit` bywa realną granicą — i wtedy
+ * Kalendarza panel jednak jeszcze nie ma, więc `limit` bywa realną granicą - i wtedy
  * `truncated` mówi to wprost. Lista przycięta po cichu wygląda na komplet, a to jest
  * najgorszy tryb awarii narzędzia nadzoru.
  */
 export interface ExportPageDto {
   items: ExportListItemDto[];
   counts: ExportCountsDto;
-  /** Ile dni pasuje do zapytania RAZEM z zawężeniem — także tych poza `limit`. */
+  /** Ile dni pasuje do zapytania RAZEM z zawężeniem - także tych poza `limit`. */
   matched: number;
   /** `true` = `limit` obciął listę. */
   truncated: boolean;
 }
 
-/** Jedna wysyłka karty — wiersz `export_log`. */
+/** Jedna wysyłka karty - wiersz `export_log`. */
 export interface ExportRevisionDto {
   revision: number;
   day: string;
@@ -375,28 +375,28 @@ export interface ExportRevisionDto {
 }
 
 /**
- * Historia rewizji jednej karty — `GET /admin/api/exports/:sessionUuid`.
+ * Historia rewizji jednej karty - `GET /admin/api/exports/:sessionUuid`.
  *
  * `sheetRows` (0 albo 1) jedzie OSOBNO od `revisions.length` i to jest cała treść tego
  * rozwinięcia: „3 wiersze dziennika, 1 wiersz karty". `export_log` jest append-only
  * i pamięta każdą wysyłkę; `exported_sheets` trzyma wyłącznie treść bieżącą, bo czytelnik
- * linku ma widzieć aktualny stan dnia — tak jak widziałby arkusz.
+ * linku ma widzieć aktualny stan dnia - tak jak widziałby arkusz.
  */
 export interface ExportHistoryDto {
   sessionUuid: string;
   tab: string | null;
   state: ExportStateDto;
-  /** Od najstarszej rewizji — to jest oś czasu jednej karty, a nie lista. */
+  /** Od najstarszej rewizji - to jest oś czasu jednej karty, a nie lista. */
   revisions: ExportRevisionDto[];
   sheetRows: number;
   /**
-   * Ten sam fakt, co w wierszu listy — jedzie tu, bo to PODGLĄD wprowadza w błąd:
+   * Ten sam fakt, co w wierszu listy - jedzie tu, bo to PODGLĄD wprowadza w błąd:
    * gdy kartę zapisała później inna sesja, `rows` opisują tamten dzień pracy.
    */
   overwrittenBy: { sessionUuid: string; exportedAt: string } | null;
 }
 
-/** Treść BIEŻĄCEJ karty — dosłowne wiersze dokumentu, nie projekcja do liczenia. */
+/** Treść BIEŻĄCEJ karty - dosłowne wiersze dokumentu, nie projekcja do liczenia. */
 export interface SheetPreviewDto {
   tab: string;
   rows: string[][];
@@ -404,11 +404,11 @@ export interface SheetPreviewDto {
 }
 
 /**
- * Wynik ponowienia — odpowiedź `POST /admin/api/exports/:sessionUuid/retry`.
+ * Wynik ponowienia - odpowiedź `POST /admin/api/exports/:sessionUuid/retry`.
  *
  * **Odmowa jedzie jako 200, nie jako błąd.** „Dzień jeszcze otwarty" i „flaga trzyma
  * kartę" to poprawne odpowiedzi o stanie świata; awarią jest dopiero `outcome: null`,
- * czyli „eksport rzucił" — jedyny stan, w którym mockupowa „Błąd regeneracji" ma
+ * czyli „eksport rzucił" - jedyny stan, w którym mockupowa „Błąd regeneracji" ma
  * pokrycie w danych. Widać go WYŁĄCZNIE tutaj: nieudany eksport nie zostawia wiersza
  * w żadnej tabeli, więc lista nie ma z czego go odtworzyć.
  */
@@ -432,20 +432,20 @@ export interface ExportRetryResultDto {
 // ── dni lotne (`A02`) i karta dnia (`A02a`) ─────────────────────────────────────
 
 /**
- * Jeden dzień lotny na liście — odpowiedź `GET /admin/api/sessions`.
+ * Jeden dzień lotny na liście - odpowiedź `GET /admin/api/sessions`.
  *
  * **Wszystkie liczby są PRZEPISANE z projekcji `sessions`, nie policzone tutaj ani
  * w SQL-u.** Serwer wypełnia je `sessionRowFrom(projectSession(stream))`, więc kolumna
  * „Blok" na tej liście, ekran 10 telefonu i karta arkusza pokazują tę samą wielkość
  * policzoną tym samym kodem. Panel je wyłącznie FORMATUJE (`@uzaero/format`).
  *
- * Czasy zdarzeń w epoch ms UTC, stemple serwera w ISO 8601 — i to nie jest
+ * Czasy zdarzeń w epoch ms UTC, stemple serwera w ISO 8601 - i to nie jest
  * niekonsekwencja: `claimedAt` jest czasem, który zapisał telefon (ta sama domena, co
  * `Event.gpsTime`), a `updatedAt` chwilą, w której serwer przyjął paczkę.
  *
  * **Ten wiersz opisuje SESJĘ SAMOLOTU (przejęcie → zdanie), nie dzień pilota.** Dzień
  * pilota to lista sesji na różnych maszynach (issue #23; klamra służby nie istnieje
- * w modelu w ogóle), więc nie ma go czego szukać w wierszu jednej sesji — a sesje
+ * w modelu w ogóle), więc nie ma go czego szukać w wierszu jednej sesji - a sesje
  * bywają krótkie (dwie zmiany dziennie na maszynie to norma).
  */
 export interface SessionListItemDto {
@@ -470,7 +470,7 @@ export interface SessionListItemDto {
   dualName: string | null;
 
   /**
-   * `active` = brak `day_close` w rejestrze. **To NIE jest „w locie"** — projekcja nie
+   * `active` = brak `day_close` w rejestrze. **To NIE jest „w locie"** - projekcja nie
    * niesie informacji o pracy silnika (patrz baner `A02-dni.html`), więc panel mówi
    * „dzień otwarty" i nie udaje wiedzy, której nie dostał.
    */
@@ -490,7 +490,7 @@ export interface SessionListItemDto {
   flightMs: number;
   flightsCount: number;
   mhStart: number | null;
-  /** `null` dopóki nie ma `day_close` — odczyt końcowy istnieje dopiero z przekazania. */
+  /** `null` dopóki nie ma `day_close` - odczyt końcowy istnieje dopiero z przekazania. */
   mhEnd: number | null;
   fuelStartL: number | null;
   fuelEndL: number | null;
@@ -499,13 +499,13 @@ export interface SessionListItemDto {
   openFlags: FlagType[];
   /** Ostatnia rewizja karty arkusza; `null` = nigdy nie eksportowano. */
   exportRevision: number | null;
-  /** ISO 8601 UTC — ostatnia przyjęta paczka tej sesji, czyli „kiedy ostatni sync". */
+  /** ISO 8601 UTC - ostatnia przyjęta paczka tej sesji, czyli „kiedy ostatni sync". */
   updatedAt: string;
 }
 
 /**
  * Strona listy dni. **`nextCursor === null` znaczy „to był koniec", nie „spróbuj
- * jeszcze raz"** — a `total` opisuje CAŁY wynik filtra, także wtedy, gdy `limit`
+ * jeszcze raz"** - a `total` opisuje CAŁY wynik filtra, także wtedy, gdy `limit`
  * obciął stronę.
  *
  * Kursor jest NIEPRZEZROCZYSTY i panel nie ma prawa go konstruować: koduje klucz
@@ -521,12 +521,12 @@ export interface SessionPageDto {
 /**
  * Pozycja osi zdarzeń karty dnia.
  *
- * Oś pokazuje strumień SUROWY — rejestr jest append-only i widać w nim wszystko,
+ * Oś pokazuje strumień SUROWY - rejestr jest append-only i widać w nim wszystko,
  * łącznie ze zdarzeniami unieważnionymi. Adnotacje wylicza serwer PORÓWNANIEM
  * z wynikiem `applyCorrections`; panel ich nie odtwarza i nie przesortowuje osi.
  */
 export interface TimelineEntryDto {
-  /** Byt domenowy — jedzie bez własnego DTO (reguła granicy typów serwera). */
+  /** Byt domenowy - jedzie bez własnego DTO (reguła granicy typów serwera). */
   event: Event;
   /** `true` = unieważnione korektą; wiersz jest PRZEKREŚLONY, nigdy ukryty. */
   voided: boolean;
@@ -537,7 +537,7 @@ export interface TimelineEntryDto {
    *
    * Panelowi tej różnicy nie da się wyliczyć z osi: `event_correction` wygląda
    * identycznie niezależnie od tego, kto ją dopisał, a rozróżnia je kolumna serwera
-   * `events.source_device`. Konsekwencja jest jednak dla panelu decydująca — korekta
+   * `events.source_device`. Konsekwencja jest jednak dla panelu decydująca - korekta
    * pilota idzie przez `POST /events`, czyli Z POMINIĘCIEM bramy `AuditedWrite`, więc
    * wpisu w `admin_audit` po niej nie ma. Przejście „ślad w audycie" wiesza się
    * dokładnie na tym polu.
@@ -546,11 +546,11 @@ export interface TimelineEntryDto {
 }
 
 /**
- * Karta jednego dnia — odpowiedź `GET /admin/api/sessions/:uuid`.
+ * Karta jednego dnia - odpowiedź `GET /admin/api/sessions/:uuid`.
  *
  * `state` to JEDYNE miejsce panelu, w którym liczby dnia pochodzą z `projectSession`
  * policzonego na żądanie. Jedzie w całości i jako typ domenowy, żeby panel formatował
- * liczby serwera zamiast liczyć własne — to ta sama gwarancja, co
+ * liczby serwera zamiast liczyć własne - to ta sama gwarancja, co
  * `server/test/contract.test.ts`: karta dnia w panelu i ekran 10 telefonu nie mogą
  * się różnić.
  */
@@ -559,22 +559,22 @@ export interface SessionDetailDto {
   state: SessionState;
   /** Porządek CHRONOLOGICZNY nadaje serwer. Panel go NIE zmienia (patrz `dayTimeline`). */
   timeline: TimelineEntryDto[];
-  /** Flagi sesji RAZEM z rozwiązanymi — historia decyzji zostaje na karcie. */
+  /** Flagi sesji RAZEM z rozwiązanymi - historia decyzji zostaje na karcie. */
   flags: FlagListItemDto[];
 }
 
 // ── rejestr zdarzeń (`A04`) ─────────────────────────────────────────────────────
 
-/** Który zegar dał czas efektywny — ten, którym liczy projekcja serwera. */
+/** Który zegar dał czas efektywny - ten, którym liczy projekcja serwera. */
 export type EventClockDto = 'gps' | 'device';
 
 /**
- * Jedno zdarzenie w rejestrze — odpowiedź `GET /admin/api/events`.
+ * Jedno zdarzenie w rejestrze - odpowiedź `GET /admin/api/events`.
  *
  * ══ DWA POLA SĄ CELOWO SZERSZE, NIŻ WYGLĄDAJĄ ══
  *  1. **`type` jest napisem, nie `EventType`.** Kolumna `events.type` nie ma `CHECK`-a,
  *     a walidacja katalogu zachodzi na WEJŚCIU (`POST /events`). Rejestr pokazuje więc
- *     typ spoza katalogu DOSŁOWNIE — narzędzie śledcze, które wywraca się na własnej
+ *     typ spoza katalogu DOSŁOWNIE - narzędzie śledcze, które wywraca się na własnej
  *     historii, jest bezużyteczne dokładnie wtedy, gdy jest potrzebne. Ta sama decyzja,
  *     co przy `AuditEntryDto.action`.
  *  2. **`payload` jest `unknown`, nie `Record<string, unknown>`.** `JSONB` przyjmuje też
@@ -584,7 +584,7 @@ export type EventClockDto = 'gps' | 'device';
  *
  * ══ DWA ZEGARY ══
  * `driftMs === null` znaczy **„różnicy nie ma czego liczyć"** (brak fixa GPS), a nie
- * „zero". Zero jest twierdzeniem, że zegary się zgadzały — i to jest cała treść kolumny
+ * „zero". Zero jest twierdzeniem, że zegary się zgadzały - i to jest cała treść kolumny
  * `Δ zegarów` z mockupu `A04`.
  */
 export interface EventEntryDto {
@@ -602,36 +602,36 @@ export interface EventEntryDto {
   dualCode: string | null;
   dualName: string | null;
 
-  /** Surowy kod typu — także spoza katalogu (patrz nagłówek). */
+  /** Surowy kod typu - także spoza katalogu (patrz nagłówek). */
   type: string;
 
-  /** Zegar telefonu (epoch ms UTC) — zawsze obecny. */
+  /** Zegar telefonu (epoch ms UTC) - zawsze obecny. */
   deviceTime: number;
   /** Czas z fixa GPS (epoch ms UTC); `null` = brak fixa w chwili zapisu. */
   gpsTime: number | null;
   /** `|device − gps|` w ms; `null` = brak fixa, więc różnica NIE ISTNIEJE. */
   driftMs: number | null;
   /**
-   * Czas, którym liczy projekcja — **PO nałożeniu korekt**, nie z kolumn surowych.
+   * Czas, którym liczy projekcja - **PO nałożeniu korekt**, nie z kolumn surowych.
    * Surowe zegary stoją w `deviceTime`/`gpsTime` obok, więc nic nie ginie.
    */
   effectiveTime: number;
-  /** Który zegar dał `effectiveTime` — w TYM SAMYM stanie (po korektach). */
+  /** Który zegar dał `effectiveTime` - w TYM SAMYM stanie (po korektach). */
   effectiveClock: EventClockDto;
 
   /** Treść zdarzenia DOSŁOWNIE z `JSONB`, dowolnego kształtu. */
   payload: unknown;
   schemaVersion: number;
 
-  /** ISO 8601 UTC — kiedy SERWER przyjął zdarzenie. Po tym idzie porządek listy. */
+  /** ISO 8601 UTC - kiedy SERWER przyjął zdarzenie. Po tym idzie porządek listy. */
   receivedAt: string;
   sourceDevice: string | null;
-  /** TEN WIERSZ zapisał panel, a nie telefon — fakt o pochodzeniu zapisu. */
+  /** TEN WIERSZ zapisał panel, a nie telefon - fakt o pochodzeniu zapisu. */
   writtenByPanel: boolean;
 
-  /** Korekta unieważniła zdarzenie. Wiersz ZOSTAJE — przekreślony, nie usunięty. */
+  /** Korekta unieważniła zdarzenie. Wiersz ZOSTAJE - przekreślony, nie usunięty. */
   voided: boolean;
-  /** Zdarzenie RUSZAŁA korekta — z istnienia zapisu, nie z nierówności wartości. */
+  /** Zdarzenie RUSZAŁA korekta - z istnienia zapisu, nie z nierówności wartości. */
   corrected: boolean;
   /** Czas NADANY korektą `retime` (epoch ms UTC); `null` = czasu nie nadano. */
   correctedTime: number | null;
@@ -640,7 +640,7 @@ export interface EventEntryDto {
 }
 
 /**
- * Liczniki kafli `A04`. Liczy je SERWER nad CAŁYM zakresem zapytania — także wtedy,
+ * Liczniki kafli `A04`. Liczy je SERWER nad CAŁYM zakresem zapytania - także wtedy,
  * gdy `limit` obciął listę. Kafel opisuje rejestr, a nie okno, przez które właśnie
  * ktoś patrzy.
  */
@@ -648,7 +648,7 @@ export interface EventCountsDto {
   total: number;
   withoutGpsFix: number;
   clockDrift: number;
-  /** Próg, którym policzono `clockDrift` — panel go WYPISUJE, a nie zna. */
+  /** Próg, którym policzono `clockDrift` - panel go WYPISUJE, a nie zna. */
   driftThresholdMs: number;
 }
 
@@ -669,7 +669,7 @@ export interface EventsPageDto {
 // ── dziennik audytu (`A09`) ─────────────────────────────────────────────────────
 
 /**
- * Jeden wpis dziennika — odpowiedź `GET /admin/api/audit`.
+ * Jeden wpis dziennika - odpowiedź `GET /admin/api/audit`.
  *
  * ══ DWA POLA SĄ NAPISAMI CELOWO I NIE WOLNO ICH ZWĘZIĆ ══
  * `action` i `actorRole` opisują stan świata Z CHWILI AKCJI. Migracja 9 świadomie nie
@@ -678,14 +678,14 @@ export interface EventsPageDto {
  * pokazujemy DOSŁOWNIE (`auditActions.ts`), zamiast go ukrywać albo wywracać się na nim.
  * Dziennik nadzoru, który nie otwiera się przez własną historię, przestaje być dziennikiem.
  *
- * `details` jest workiem o kształcie zależnym od akcji — serwer wydaje go bez
+ * `details` jest workiem o kształcie zależnym od akcji - serwer wydaje go bez
  * interpretacji. Panel czyta z niego pola po nazwie i **pokazuje także te, których nie
  * rozumie**: dziennik, który ukrywa pole, bo go nie zna, przestaje być narzędziem nadzoru.
  */
 export interface AuditEntryDto {
-  /** `admin_audit.id` — rosnący; w kolumnie czasu widać go jako `#8814`. */
+  /** `admin_audit.id` - rosnący; w kolumnie czasu widać go jako `#8814`. */
   id: number;
-  /** ISO 8601 UTC — chwila akcji wg zegara serwera. */
+  /** ISO 8601 UTC - chwila akcji wg zegara serwera. */
   createdAt: string;
 
   actorPilotId: string;
@@ -695,7 +695,7 @@ export interface AuditEntryDto {
   actorRole: string;
 
   action: string;
-  /** `flag` · `event` · `pilot` · `aircraft` · `sheet` … — `null` przy akcji bez celu. */
+  /** `flag` · `event` · `pilot` · `aircraft` · `sheet` … - `null` przy akcji bez celu. */
   targetType: string | null;
   targetId: string | null;
 
@@ -704,7 +704,7 @@ export interface AuditEntryDto {
   ip: string | null;
 }
 
-/** Strona dziennika. Kursor keyset — `nextCursor === null` znaczy „to był koniec". */
+/** Strona dziennika. Kursor keyset - `nextCursor === null` znaczy „to był koniec". */
 export interface AuditPageDto {
   items: AuditEntryDto[];
   nextCursor: string | null;
@@ -715,7 +715,7 @@ export interface AuditPageDto {
    * PIERWSZEJ strony (bez kursora): jest własnością zapytania, a nie strony, więc nie
    * zmienia się przy przewijaniu, a pełny `COUNT(*)` na dzienniku bez górnej granicy
    * jest wielokrotnie droższy od samej strony. Panel niesie wartość z pierwszej strony
-   * (`auditPages.ts`) i nigdy nie zamienia `null` na `0` — zero jest twierdzeniem
+   * (`auditPages.ts`) i nigdy nie zamienia `null` na `0` - zero jest twierdzeniem
    * o świecie, brak odpowiedzi nim nie jest.
    */
   total: number | null;
@@ -724,14 +724,14 @@ export interface AuditPageDto {
 // ── konta pilotów (`A06`, `A06a`) ───────────────────────────────────────────────
 
 /**
- * Jedno konto na liście — odpowiedź `GET /admin/api/pilots`.
+ * Jedno konto na liście - odpowiedź `GET /admin/api/pilots`.
  *
  * ══ CZEGO TU NIE MA I DLACZEGO ══
  *  1. **Hasła i hasha.** Hasło jedzie WYŁĄCZNIE w odpowiedzi na akcję, która je
  *     wytworzyła (`PilotSecretDto`), i tylko raz; hash nie opuszcza serwera nigdy.
  *  2. **`lastLoginAt`.** Mockup A06 ma kolumnę „Ostatnie logowanie”, a `pilots` nie
  *     ma takiej kolumny i nikt jej nie zapisuje. Panel tej kolumny NIE pokazuje
- *     i mówi o tym wprost na ekranie — wyliczanie jej z czegokolwiek innego byłoby
+ *     i mówi o tym wprost na ekranie - wyliczanie jej z czegokolwiek innego byłoby
  *     inną wielkością pod tą samą etykietą.
  *
  * `flyingDays` liczy SERWER agregatem po projekcji `sessions`, w oknie, które ta sama
@@ -739,18 +739,18 @@ export interface AuditPageDto {
  */
 export interface PilotListItemDto {
   id: string;
-  /** Etykieta w logu dnia i w kartach arkusza — NIE klucz zdarzeń (te wiążą `id`). */
+  /** Etykieta w logu dnia i w kartach arkusza - NIE klucz zdarzeń (te wiążą `id`). */
   code: string;
   name: string;
   email: string | null;
   active: boolean;
   role: PilotRole;
-  /** ISO 8601 UTC — ostatnia zmiana wiersza konta. Nie: ostatnie logowanie. */
+  /** ISO 8601 UTC - ostatnia zmiana wiersza konta. Nie: ostatnie logowanie. */
   updatedAt: string;
   flyingDays: number;
 }
 
-/** Liczniki kafli i karty „Rola w panelu" — po WSZYSTKICH kontach, nie po filtrze. */
+/** Liczniki kafli i karty „Rola w panelu" - po WSZYSTKICH kontach, nie po filtrze. */
 export interface PilotCountsDto {
   total: number;
   active: number;
@@ -761,14 +761,14 @@ export interface PilotCountsDto {
   /**
    * Dni lotne CAŁEGO klubu w oknie `daysFrom`–`daysTo`: liczba sesji ZAMKNIĘTYCH,
    * a nie suma kolumny `flyingDays` z wierszy. Dzień szkolny liczy się dwóm pilotom
-   * naraz, więc suma kolumny byłaby liczbą osobodni — panel nie ma jak tej różnicy
+   * naraz, więc suma kolumny byłaby liczbą osobodni - panel nie ma jak tej różnicy
    * odgadnąć i dlatego liczbę podaje serwer.
    */
   flyingDays: number;
 }
 
 /**
- * Liczniki CHIPÓW filtra — cztery zawężenia listy w bieżącym WYSZUKIWANIU.
+ * Liczniki CHIPÓW filtra - cztery zawężenia listy w bieżącym WYSZUKIWANIU.
  *
  * Osobne od `PilotCountsDto`, bo odpowiadają na inne pytanie. Kafel opisuje KLUB
  * („Konta aktywne 8 / 10") i ma się nie ruszać przy wpisywaniu w wyszukiwarkę; chip
@@ -781,22 +781,22 @@ export interface PilotScopeCountsDto {
   total: number;
   active: number;
   inactive: number;
-  /** Chip „Z rolą panelu" — konta z rolą dającą wejście do panelu. */
+  /** Chip „Z rolą panelu" - konta z rolą dającą wejście do panelu. */
   panel: number;
 }
 
 /**
  * Lista kont. **Bez kursora i to jest celowe**: klub ma kilkanaście kont, a lista
  * referencyjna, którą trzeba stronicować, nie nadaje się na słownik do filtra innego
- * ekranu. `total` mówi, ile kont spełnia filtr — także gdy `limit` obciął listę.
+ * ekranu. `total` mówi, ile kont spełnia filtr - także gdy `limit` obciął listę.
  */
 export interface PilotPageDto {
   items: PilotListItemDto[];
   total: number;
   counts: PilotCountsDto;
-  /** Liczniki chipów — patrz `PilotScopeCountsDto`. Bez wyszukiwania = jak `counts`. */
+  /** Liczniki chipów - patrz `PilotScopeCountsDto`. Bez wyszukiwania = jak `counts`. */
   scopes: PilotScopeCountsDto;
-  /** Okno, w którym policzono `flyingDays` — dzień UTC `YYYY-MM-DD`, włącznie. */
+  /** Okno, w którym policzono `flyingDays` - dzień UTC `YYYY-MM-DD`, włącznie. */
   daysFrom: string;
   daysTo: string;
 }
@@ -806,7 +806,7 @@ export interface PilotPageDto {
  *
  * `password` widzimy jeden jedyny raz: nie ma go w bazie (jest hash), nie ma
  * w dzienniku audytu (jest sam fakt) i nie ma trasy „pokaż ponownie". Panel nie ma
- * prawa go nigdzie zapisać — pokazuje w szufladzie i zapomina razem z jej zamknięciem.
+ * prawa go nigdzie zapisać - pokazuje w szufladzie i zapomina razem z jej zamknięciem.
  */
 export interface PilotSecretDto {
   pilot: PilotListItemDto;
@@ -818,14 +818,14 @@ export interface PilotSecretDto {
 /** Odpowiedź zmiany konta bez hasła: nowy stan wiersza + skutki uboczne. */
 export interface PilotChangeDto {
   pilot: PilotListItemDto;
-  /** `0` przy zmianie tożsamości; przy deaktywacji — ile sesji zerwano. */
+  /** `0` przy zmianie tożsamości; przy deaktywacji - ile sesji zerwano. */
   revokedSessions: number;
 }
 
 /**
  * Powód, dla którego serwer ODMÓWIŁ zmiany na koncie (`409 refused`).
  *
- * Lustro `AccountRefusal` z `server/src/domain/accountGuards.ts`. Kody są surowe —
+ * Lustro `AccountRefusal` z `server/src/domain/accountGuards.ts`. Kody są surowe -
  * nazwanie ich po polsku jest sprawą panelu (`screens/pilots/accountActions.ts`),
  * bo serwer nie zna języka interfejsu.
  */
@@ -838,15 +838,15 @@ export type PilotRefusalDto =
 // ── flota (`A07`, `A07a`) ───────────────────────────────────────────────────────
 
 /**
- * Kto trzyma samolot TERAZ — sesja bez `day_close`.
+ * Kto trzyma samolot TERAZ - sesja bez `day_close`.
  *
  * **To NIE jest „w locie"** i mockup A07 tak to podpisuje wyłącznie skrótem myślowym.
  * Projekcja `sessions` nie niesie stanu silnika (ta sama granica, co na liście dni
- * `A02`), więc claim znaczy „ktoś zajął jednostkę na dziś" — a czy w tej chwili kołuje,
+ * `A02`), więc claim znaczy „ktoś zajął jednostkę na dziś" - a czy w tej chwili kołuje,
  * czy stoi na płycie, tego serwer nie wie i panel nie zgaduje.
  */
 export interface AircraftClaimDto {
-  /** Sesja trzymająca claim — stąd link w głąb, na kartę dnia `A02a`. */
+  /** Sesja trzymająca claim - stąd link w głąb, na kartę dnia `A02a`. */
   sessionUuid: string;
   picId: string;
   /** `null` = konta nie ma już w `pilots`; claim zostaje z samym identyfikatorem. */
@@ -857,14 +857,14 @@ export interface AircraftClaimDto {
 }
 
 /**
- * Ostatni znany odczyt liczników — PODPOWIEDŹ, nie prawda.
+ * Ostatni znany odczyt liczników - PODPOWIEDŹ, nie prawda.
  *
  * Mockup A07 mówi to wprost: „Liczniki fizyczne wygrywają. Wartości z tej tabeli są
  * podpowiedzią dla pilota na preflight, nie prawdą". Dlatego `at` jedzie razem
  * z wartością: odczyt bez wieku byłby twierdzeniem o teraźniejszości, którym nie jest.
  */
 export interface AircraftReadingDto {
-  /** Godziny dziesiętne — panel formatuje przez `motoHours(value, mhFormat)`. */
+  /** Godziny dziesiętne - panel formatuje przez `motoHours(value, mhFormat)`. */
   mh: number;
   fuelL: number;
   at: number;
@@ -875,55 +875,55 @@ export interface AircraftReadingDto {
 }
 
 /**
- * Jedna jednostka na liście `A07` — odpowiedź `GET /admin/api/fleet`.
+ * Jedna jednostka na liście `A07` - odpowiedź `GET /admin/api/fleet`.
  *
  * ══ `fuelToleranceL` LICZY SERWER I TO JEST TREŚĆ TEJ TRASY ══
- * Tolerancja flagi `FUEL_MISMATCH` to `max(10 L, 5% pojemności)` — nie stała, tylko
+ * Tolerancja flagi `FUEL_MISMATCH` to `max(10 L, 5% pojemności)` - nie stała, tylko
  * funkcja pojemności. Panelowi wolno importować z `@uzaero/domain` wyłącznie TYPY,
  * więc gdyby serwer nie podawał wyniku, ekran musiałby albo pominąć kolumnę progu (tak
- * było przez cztery przekroje), albo policzyć ją sam — czyli zacząć trzymać drugą kopię
+ * było przez cztery przekroje), albo policzyć ją sam - czyli zacząć trzymać drugą kopię
  * reguły §4.5 w przeglądarce.
  *
  * ══ CZEGO TU NIE MA ══
  * **Daty i powodu wyłączenia** („od 19 JUN 2026 · remont" z mockupu). Tabela `aircraft`
  * ma `service_status` i `updated_at`, i nic poza tym; `updated_at` mówi „kiedy ruszono
  * wiersz", a nie „od kiedy samolot stoi". Kto i kiedy wyłączył jednostkę, wie dziennik
- * audytu (`aircraft.disable`) — i tam prowadzi link z szuflady.
+ * audytu (`aircraft.disable`) - i tam prowadzi link z szuflady.
  */
 export interface AircraftListItemDto {
   id: string;
-  /** Znaki na kadłubie — unikalne. Etykieta, nie klucz zdarzeń (te wiążą `id`). */
+  /** Znaki na kadłubie - unikalne. Etykieta, nie klucz zdarzeń (te wiążą `id`). */
   reg: string;
   type: string;
   year: number | null;
   capacityL: number;
-  /** Efektywna tolerancja `FUEL_MISMATCH` (L) dla tej pojemności — patrz wyżej. */
+  /** Efektywna tolerancja `FUEL_MISMATCH` (L) dla tej pojemności - patrz wyżej. */
   fuelToleranceL: number;
   mhFormat: MhFormat;
   dualRequired: boolean;
   serviceStatus: ServiceStatus;
-  /** Konfiguracja oleju (issue #60); `null` = nieskonfigurowane — moduł milczy. */
+  /** Konfiguracja oleju (issue #60); `null` = nieskonfigurowane - moduł milczy. */
   oilMinL: number | null;
   oilCapacityL: number | null;
   oilNormLPerH: number | null;
-  /** ISO 8601 UTC — ostatnia zmiana wiersza konfiguracji, nie: ostatni lot. */
+  /** ISO 8601 UTC - ostatnia zmiana wiersza konfiguracji, nie: ostatni lot. */
   updatedAt: string;
 
   claim: AircraftClaimDto | null;
   reading: AircraftReadingDto | null;
   /**
-   * ISO 8601 UTC — kiedy serwer ostatnio przyjął ZDARZENIE tego samolotu.
+   * ISO 8601 UTC - kiedy serwer ostatnio przyjął ZDARZENIE tego samolotu.
    * `null` = ani jednego zdarzenia w rejestrze („brak danych", nigdy „zero").
    */
   lastEventAt: string | null;
 
-  /** Sesje bez `day_close` — blokują wyłączenie ze służby. */
+  /** Sesje bez `day_close` - blokują wyłączenie ze służby. */
   openSessions: number;
-  /** Otwarte flagi tej jednostki — karta „Skutki zmiany" pokazuje je „bez przeliczenia". */
+  /** Otwarte flagi tej jednostki - karta „Skutki zmiany" pokazuje je „bez przeliczenia". */
   openFlags: number;
 }
 
-/** Liczniki kafli `A07` — po CAŁEJ flocie, nie po zawężeniu listy. */
+/** Liczniki kafli `A07` - po CAŁEJ flocie, nie po zawężeniu listy. */
 export interface FleetCountsDto {
   total: number;
   active: number;
@@ -940,7 +940,7 @@ export interface FleetPageDto {
   items: AircraftListItemDto[];
   counts: FleetCountsDto;
   /**
-   * Liczniki CHIPÓW — te same cztery zawężenia, ale w bieżącym WYSZUKIWANIU.
+   * Liczniki CHIPÓW - te same cztery zawężenia, ale w bieżącym WYSZUKIWANIU.
    *
    * Osobne od `counts`, bo odpowiadają na inne pytanie. Kafel opisuje FLOTĘ („W służbie
    * 4 / 5") i ma się nie ruszać przy wpisywaniu w wyszukiwarkę; chip z liczbą jest
@@ -952,7 +952,7 @@ export interface FleetPageDto {
 }
 
 /**
- * Próg `FUEL_MISMATCH` rozwiązany dla pojemności, która NIE MUSI być w bazie —
+ * Próg `FUEL_MISMATCH` rozwiązany dla pojemności, która NIE MUSI być w bazie -
  * odpowiedź `GET /admin/api/fleet/tolerance`.
  *
  * To jest jedyna droga, którą karta „Skutki zmiany" (`A07a`) dostaje liczbę
@@ -965,7 +965,7 @@ export interface AircraftToleranceDto {
   fuelToleranceL: number;
 }
 
-/** Odpowiedź zapisu konfiguracji — pełny, świeży wiersz listy. */
+/** Odpowiedź zapisu konfiguracji - pełny, świeży wiersz listy. */
 export interface AircraftChangeDto {
   aircraft: AircraftListItemDto;
 }
@@ -973,7 +973,7 @@ export interface AircraftChangeDto {
 /**
  * Powód, dla którego serwer ODMÓWIŁ zmiany konfiguracji (`409 refused`).
  *
- * Lustro `FleetRefusal` z `server/src/domain/fleetGuards.ts`. Kody są surowe —
+ * Lustro `FleetRefusal` z `server/src/domain/fleetGuards.ts`. Kody są surowe -
  * nazwanie ich po polsku jest sprawą panelu (`screens/fleet/aircraftActions.ts`),
  * bo serwer nie zna języka interfejsu.
  */
@@ -982,7 +982,7 @@ export type FleetRefusalDto = 'capacity_not_positive' | 'open_session';
 // ── korekta administratora (`A02b`) ─────────────────────────────────────────────
 
 /**
- * Kształt korekty na drucie — DOKŁADNIE payload domenowy, bez pól panelu.
+ * Kształt korekty na drucie - DOKŁADNIE payload domenowy, bez pól panelu.
  *
  * Jedzie w podglądzie i w zapisie, więc żyje w jednym miejscu: druga definicja byłaby
  * pierwszym punktem, w którym karta „przed → po" opisuje inną operację niż ta, którą
@@ -991,11 +991,11 @@ export type FleetRefusalDto = 'capacity_not_positive' | 'open_session';
 export type CorrectionDraftDto = EventCorrectionPayload;
 
 /**
- * Zdarzenie korygowane — ORYGINALNY ODCZYT z rejestru (karta „oryginalny odczyt").
+ * Zdarzenie korygowane - ORYGINALNY ODCZYT z rejestru (karta „oryginalny odczyt").
  *
  * Oba zegary stoją obok siebie, bo różnica między nimi jest całą treścią scenariusza:
  * `gpsTime === null` znaczy „zapisano bez fixa GPS", a wtedy projekcja bierze
- * `deviceTime` — czyli zegar telefonu ze wszystkimi jego wadami.
+ * `deviceTime` - czyli zegar telefonu ze wszystkimi jego wadami.
  */
 export interface CorrectionTargetDto {
   uuid: string;
@@ -1006,19 +1006,19 @@ export interface CorrectionTargetDto {
   /** Czas, którym projekcja liczy dzień DZIŚ; `null` = zdarzenie już unieważnione. */
   effectiveTime: number | null;
   voided: boolean;
-  /** `events.source_device` — dowolny napis z telefonu albo `admin:<id>`. TEKST. */
+  /** `events.source_device` - dowolny napis z telefonu albo `admin:<id>`. TEKST. */
   sourceDevice: string | null;
-  /** Pełne zdarzenie — panel opisuje payload tym samym kodem, co oś dnia. */
+  /** Pełne zdarzenie - panel opisuje payload tym samym kodem, co oś dnia. */
   event: Event;
 }
 
 /**
- * Odpowiedź `POST /admin/api/sessions/:uuid/corrections/preview` — DRY-RUN.
+ * Odpowiedź `POST /admin/api/sessions/:uuid/corrections/preview` - DRY-RUN.
  *
  * Serwer liczy `before` i `after` przez `projectSession`, bo panelowi wolno importować
  * z domeny wyłącznie typy. To nie jest wygoda: `void` na `engine_stop` NIE skraca cyklu
  * o różnicę czasów, tylko zostawia go otwartym, przez co wypada z czasu blokowego
- * w całości — tej reguły nie da się odgadnąć z payloadu.
+ * w całości - tej reguły nie da się odgadnąć z payloadu.
  *
  * Podgląd nie przyjmuje `reason`: skutek ogląda się PRZED napisaniem uzasadnienia.
  */
@@ -1031,36 +1031,36 @@ export interface CorrectionPreviewDto {
   /** Naruszenia, które ZABLOKOWAŁYBY zapis. Pusta lista = w tej chwili wolno. */
   violations: RuleViolation[];
   /**
-   * Miękkie naruszenia — KOLIZJE, nie powody odmowy. Panel pokazuje je jako baner nad
+   * Miękkie naruszenia - KOLIZJE, nie powody odmowy. Panel pokazuje je jako baner nad
    * formularzem korekty.
    *
    * Zastąpiły bramkę `400 day_open` (2026-08-07). Dwa kody:
    * `ADMIN_EDIT_SESSION_ACTIVE` (pilot nadal prowadzi sesję i dośle własne zdarzenia)
    * i `ADMIN_EDIT_PILOT_WINDOW_OPEN` (okno 24 h od zdania sesji jeszcze biegnie, więc
-   * obie strony mogą poprawiać naraz). Rozstrzyga człowiek — panel nie blokuje przycisku.
+   * obie strony mogą poprawiać naraz). Rozstrzyga człowiek - panel nie blokuje przycisku.
    */
   warnings: RuleViolation[];
 }
 
 /**
- * Odpowiedź `POST /admin/api/sessions/:uuid/corrections` — korekta ZAPISANA.
+ * Odpowiedź `POST /admin/api/sessions/:uuid/corrections` - korekta ZAPISANA.
  *
- * `reexport: null` znaczy **korekta jest w rejestrze, a karta arkusza NIE powstała** —
+ * `reexport: null` znaczy **korekta jest w rejestrze, a karta arkusza NIE powstała** -
  * eksport rzucił. Panel musi to pokazać wprost: sugerowanie sukcesu byłoby kłamstwem,
  * a sugerowanie porażki gorszym kłamstwem, bo administrator powtórzyłby korektę.
  */
 export interface CorrectionResultDto {
   sessionUuid: string;
-  /** Uuid DOPISANEGO zdarzenia — adres korekty w rejestrze i na osi dnia. */
+  /** Uuid DOPISANEGO zdarzenia - adres korekty w rejestrze i na osi dnia. */
   correctionUuid: string;
   targetUuid: string;
   action: CorrectionDraftDto['action'];
-  /** ISO 8601 UTC — chwila zapisu wg zegara serwera. */
+  /** ISO 8601 UTC - chwila zapisu wg zegara serwera. */
   recordedAt: string;
   /** Stan dnia PO korekcie, policzony `projectSession`. Panel go formatuje. */
   state: SessionState;
   /**
-   * Kolizje policzone PRZED zapisem — te same dwa kody, co w podglądzie. Jadą
+   * Kolizje policzone PRZED zapisem - te same dwa kody, co w podglądzie. Jadą
    * w odpowiedzi POZYTYWNEJ, bo korekta JEST w rejestrze: panel ma powiedzieć, w co
    * administrator wszedł, a nie udawać, że zapis się nie odbył.
    */
@@ -1071,7 +1071,7 @@ export interface CorrectionResultDto {
 // ── pulpit (`A01`, `A01a`) ──────────────────────────────────────────────────────
 
 /**
- * Stan silnika jednostki z OTWARTĄ sesją — policzony na serwerze `projectSession`.
+ * Stan silnika jednostki z OTWARTĄ sesją - policzony na serwerze `projectSession`.
  *
  * Panel nie ma jak tego wyliczyć i to jest cały powód istnienia tego pola: zakaz
  * importów wartościowych z `@uzaero/domain` (§5.1) odcina mu `projectSession`, więc
@@ -1085,7 +1085,7 @@ export interface EngineStateDto {
   sessionUuid: string;
   engineRunning: boolean;
   inFlight: boolean;
-  /** Numer bieżącego (albo ostatniego) lotu dnia — podpis „lot 4". */
+  /** Numer bieżącego (albo ostatniego) lotu dnia - podpis „lot 4". */
   flightsCount: number;
   /** Czas OTWARTEGO startu (epoch ms UTC); `null` = nie ma lotu w toku. */
   openTakeoffAt: number | null;
@@ -1093,8 +1093,8 @@ export interface EngineStateDto {
   engineStoppedAt: number | null;
   lastEventAt: number | null;
   /**
-   * Chwila PRZEJĘCIA samolotu (`session_claim`, epoch ms UTC) — od kiedy maszyna jest
-   * zajęta. Do 2026-08-07 stał tu meldunek pilota — odszedł najpierw z §3.6a (klamra
+   * Chwila PRZEJĘCIA samolotu (`session_claim`, epoch ms UTC) - od kiedy maszyna jest
+   * zajęta. Do 2026-08-07 stał tu meldunek pilota - odszedł najpierw z §3.6a (klamra
    * per pilot, nie per maszyna), a od issue #23 klamra służby nie istnieje w ogóle.
    */
   claimedAt: number | null;
@@ -1112,7 +1112,7 @@ export interface DashboardAircraftDto {
 }
 
 /**
- * Liczniki kafli. Każdy pochodzi z zapytania ekranu docelowego — kafel jest przejściem,
+ * Liczniki kafli. Każdy pochodzi z zapytania ekranu docelowego - kafel jest przejściem,
  * więc jego liczba musi być obietnicą „tyle wierszy tam zobaczysz".
  */
 export interface DashboardCountsDto {
@@ -1136,7 +1136,7 @@ export interface DashboardAttentionDto {
   staleOpenDays: SessionListItemDto[];
 }
 
-/** Histogram „Napływ zdarzeń" liczony po `received_at` — zegarze SERWERA. */
+/** Histogram „Napływ zdarzeń" liczony po `received_at` - zegarze SERWERA. */
 export interface DashboardInflowDto {
   fromMs: number;
   toMs: number;
@@ -1146,7 +1146,7 @@ export interface DashboardInflowDto {
 }
 
 /**
- * Jedno zdarzenie w karcie „Ostatnio przyjęte". Bez `payload` — pulpit odpowiada na
+ * Jedno zdarzenie w karcie „Ostatnio przyjęte". Bez `payload` - pulpit odpowiada na
  * pytanie „czy coś do nas dociera", a nie „co dokładnie przyszło" (od tego jest oś
  * karty dnia).
  */
@@ -1158,14 +1158,14 @@ export interface RecentEventDto {
   type: EventType;
   /** Czas ZDARZENIA (GPS przed zegarem telefonu), epoch ms UTC. */
   eventTime: number;
-  /** Kiedy SERWER je przyjął (ISO 8601 UTC) — oś porządku tej listy. */
+  /** Kiedy SERWER je przyjął (ISO 8601 UTC) - oś porządku tej listy. */
   receivedAt: string;
   picId: string;
   picCode: string | null;
   picName: string | null;
 }
 
-/** Sumy jednej doby UTC — „Dziś w liczbach" i „Ostatni dzień lotny". */
+/** Sumy jednej doby UTC - „Dziś w liczbach" i „Ostatni dzień lotny". */
 export interface DayTotalsDto {
   day: string;
   fromMs: number;
@@ -1174,23 +1174,23 @@ export interface DayTotalsDto {
   aircraft: number;
   flights: number;
   blockMs: number;
-  /** Zdarzenia PRZYJĘTE w tej dobie — nie „zdarzenia z tego dnia". */
+  /** Zdarzenia PRZYJĘTE w tej dobie - nie „zdarzenia z tego dnia". */
   eventsAccepted: number;
 }
 
 /**
- * Odpowiedź `GET /admin/api/dashboard` — cały pulpit jednym żądaniem.
+ * Odpowiedź `GET /admin/api/dashboard` - cały pulpit jednym żądaniem.
  *
  * `at` jest tu polem UŻYTKOWYM, nie metadaną: wszystkie wieki („sync 2 min temu",
  * „flaga czeka 3 dni") panel liczy WZGLĘDEM NIEGO, a nie względem `Date.now()`
- * przeglądarki. Powód jest konkretny — stemple, z którymi je porównujemy, nadaje
+ * przeglądarki. Powód jest konkretny - stemple, z którymi je porównujemy, nadaje
  * baza, więc zegar przeglądarki jest w tym równaniu trzecim, niepotrzebnym i jedynym
  * niesprawdzonym. Administrator z przestawionym zegarem widziałby „sync 3 h temu"
  * przy telefonie, który zsynchronizował się przed chwilą.
  */
 export interface DashboardDto {
   at: string;
-  /** Okno samodzielnej korekty pilota (ms) — z domeny, bo panel nie ma jej skąd wziąć. */
+  /** Okno samodzielnej korekty pilota (ms) - z domeny, bo panel nie ma jej skąd wziąć. */
   correctionWindowMs: number;
   counts: DashboardCountsDto;
   fleet: DashboardAircraftDto[];
@@ -1205,10 +1205,10 @@ export interface DashboardDto {
 // ── statystyki (`A10`) ──────────────────────────────────────────────────────────
 
 /**
- * Zakres raportu — obustronnie domknięty, po DNIU ZAMKNIĘCIA sesji (`close_time`):
+ * Zakres raportu - obustronnie domknięty, po DNIU ZAMKNIĘCIA sesji (`close_time`):
  * dzień wchodzi do sum tam, gdzie został domknięty, bo dopiero wtedy jego liczby są
  * ostateczne. `defaulted` = serwer zastosował zakres domyślny (ostatnie 30 dni od
- * DZIŚ zegara SERWERA — panel bez parametrów w adresie nie rozstrzyga, co znaczy „dziś").
+ * DZIŚ zegara SERWERA - panel bez parametrów w adresie nie rozstrzyga, co znaczy „dziś").
  */
 export interface StatsRangeDto {
   fromDay: string;
@@ -1220,19 +1220,19 @@ export interface StatsRangeDto {
 }
 
 /**
- * Sumy zakresu. KAŻDA liczba — także ilorazy (procenty, średnie) — pochodzi z serwera:
+ * Sumy zakresu. KAŻDA liczba - także ilorazy (procenty, średnie) - pochodzi z serwera:
  * konstytucja ekranu mówi „panel sumuje gotowe wyniki, nie liczy własnych metryk",
  * a dzielenie dwóch sum po swojemu byłoby właśnie własną metryką.
  *
  * `null` znaczy „nie wiemy" i ma tu DWA źródła, oba nazwane: `staleRows` (wiersze
- * projekcji sprzed kolumn statystyk — naprawia przebudowa na `A11`) oraz
+ * projekcji sprzed kolumn statystyk - naprawia przebudowa na `A11`) oraz
  * `fuelUnknownSessions`/`mhUnknownSessions` (dni zamknięte, których bilansu nie da
  * się policzyć). Panel nigdy nie zamienia `null` na zero.
  */
 export interface StatsTotalsDto {
   sessions: number;
   aircraft: number;
-  /** PIC ∪ OSTATNI dual każdego dnia — dual zastąpiony w środku dnia może wypaść. */
+  /** PIC ∪ OSTATNI dual każdego dnia - dual zastąpiony w środku dnia może wypaść. */
   pilots: number;
   blockMs: number;
   flightMs: number;
@@ -1243,14 +1243,14 @@ export interface StatsTotalsDto {
   fuelUnknownSessions: number;
   mhDeltaH: number | null;
   mhUnknownSessions: number;
-  /** Blok dni ZE ZNANYM Δ MH (h dziesiętne) — mianownik rozjazdu z tego samego zbioru dni. */
+  /** Blok dni ZE ZNANYM Δ MH (h dziesiętne) - mianownik rozjazdu z tego samego zbioru dni. */
   mhBlockHours: number;
   mhVsBlockH: number | null;
   staleRows: number;
-  /** Sesje OTWARTE z chwilą przejęcia w zakresie — celowo poza sumami. */
+  /** Sesje OTWARTE z chwilą przejęcia w zakresie - celowo poza sumami. */
   openSessionsInRange: number;
   /**
-   * Sesje OTWARTE BEZ `session_claim` — rejestr niekompletny: nie mają daty, więc nie
+   * Sesje OTWARTE BEZ `session_claim` - rejestr niekompletny: nie mają daty, więc nie
    * należą do żadnego zakresu i są liczone ZAWSZE. Do 2026-08-07 licznik obejmował
    * sesje z samym claimem (kolumna niosła wtedy opcjonalny meldunek); dziś taka sesja
    * MA datę, a ten licznik jest sygnałem o połamanym strumieniu i w zdrowym klubie stoi
@@ -1289,9 +1289,9 @@ export interface StatsAircraftItemDto {
 }
 
 /**
- * Ujęcie „per pilot" — atrybucja po PIC-u (starty i lądowania też). Kolumny „Blok
+ * Ujęcie „per pilot" - atrybucja po PIC-u (starty i lądowania też). Kolumny „Blok
  * jako Dual" TU NIE MA: projekcja niesie OSTATNIEGO duala dnia, a zmiana załogi
- * w środku dnia przypisałaby mu cudze godziny — atrybucja per członek załogi czeka
+ * w środku dnia przypisałaby mu cudze godziny - atrybucja per członek załogi czeka
  * na projekcję domenową (ekran mówi to wprost).
  */
 export interface StatsPilotItemDto {
@@ -1334,7 +1334,7 @@ export interface StatsClientItemDto {
   jumpersPerLift: number | null;
 }
 
-/** Strona przychodowa — zakres zawężony do operacji `skoki` (podpis mockupu). */
+/** Strona przychodowa - zakres zawężony do operacji `skoki` (podpis mockupu). */
 export interface StatsDropsDto {
   sessions: number;
   flightMs: number;
@@ -1345,21 +1345,21 @@ export interface StatsDropsDto {
   solo: number | null;
   liftsPerSession: number | null;
   jumpersPerLift: number | null;
-  /** Średnia WYŁĄCZNIE ze zrzutów z fixem — liczona z SUMY i LICZNIKA, nie ze średnich. */
+  /** Średnia WYŁĄCZNIE ze zrzutów z fixem - liczona z SUMY i LICZNIKA, nie ze średnich. */
   avgAltitudeFt: number | null;
-  /** Zrzuty Z fixem — licznik SERWERA; panel nie odtwarza go odejmowaniem. */
+  /** Zrzuty Z fixem - licznik SERWERA; panel nie odtwarza go odejmowaniem. */
   dropsWithAltitude: number | null;
   dropsWithoutAltitude: number | null;
   jumpersPerFlightHour: number | null;
   /** Dni skokowe sprzed kolumn statystyk ORAZ dni bez rodzaju operacji (mogły być skokowe). */
   staleRows: number;
-  /** Pusta przy `staleRows > 0` — częściowa tabela wyglądałaby na kompletną. */
+  /** Pusta przy `staleRows > 0` - częściowa tabela wyglądałaby na kompletną. */
   clients: StatsClientItemDto[];
 }
 
-/** Odpowiedź `GET /admin/api/stats` — trzy ujęcia jednego zbioru dni naraz. */
+/** Odpowiedź `GET /admin/api/stats` - trzy ujęcia jednego zbioru dni naraz. */
 export interface StatsReportDto {
-  /** Zegar serwera (ISO 8601 UTC) — presety dat liczą „dziś" od niego. */
+  /** Zegar serwera (ISO 8601 UTC) - presety dat liczą „dziś" od niego. */
   at: string;
   range: StatsRangeDto;
   totals: StatsTotalsDto;
@@ -1374,7 +1374,7 @@ export interface StatsReportDto {
 
 /**
  * Tryb raportu przebudowy. `dry_run` powstaje w ZAPYTANIU
- * (`GET /maintenance/projections/compare` — zero zapisów, zero wpisów w dzienniku),
+ * (`GET /maintenance/projections/compare` - zero zapisów, zero wpisów w dzienniku),
  * `write` w KOMENDZIE (`POST /maintenance/projections/rebuild`, przez `AuditedWrite`).
  * Pole zostaje, bo dwa identycznie wyglądające raporty różnią się wyłącznie tym,
  * czego już nie widać.
@@ -1402,14 +1402,14 @@ export interface ProjectionRowDiffDto {
 /**
  * Raport przebiegu.
  *
- * **Niezerowe `rowsDiffering` to INCYDENT, nie sukces** — projekcja jest odświeżana
+ * **Niezerowe `rowsDiffering` to INCYDENT, nie sukces** - projekcja jest odświeżana
  * w tej samej transakcji, w której serwer przyjmuje zdarzenia, więc w normalnej pracy
  * różnicy być NIE MOŻE. Ekran mówi to wprost, zamiast zachęcać do kliknięcia „napraw".
  */
 export interface RebuildReportDto {
   mode: RebuildModeDto;
   sessions: number;
-  /** Liczba PEŁNA, policzona nad całym rejestrem — niezależna od limitu raportu. */
+  /** Liczba PEŁNA, policzona nad całym rejestrem - niezależna od limitu raportu. */
   rowsDiffering: number;
   fieldsDiffering: number;
   /** Ile wierszy FAKTYCZNIE nadpisano; w `dry_run` zawsze 0. */
@@ -1432,8 +1432,8 @@ export interface RebuildReportDto {
 /**
  * Stan tabeli `refresh_tokens` PRZED czyszczeniem.
  *
- * Same liczby i daty — wartości ani skrótów tokenów nie ma tu i nie może być
- * (`A09`: „Tokeny i refresh tokeny — nigdy").
+ * Same liczby i daty - wartości ani skrótów tokenów nie ma tu i nie może być
+ * (`A09`: „Tokeny i refresh tokeny - nigdy").
  */
 export interface RefreshTokenScanDto {
   total: number;
@@ -1441,7 +1441,7 @@ export interface RefreshTokenScanDto {
   valid: number;
   oldestExpiredAt: string | null;
   newestExpiredAt: string | null;
-  /** Chwila, wobec której serwer policzył „wygasły" — granica jest ruchoma. */
+  /** Chwila, wobec której serwer policzył „wygasły" - granica jest ruchoma. */
   at: string;
   ttlDays: number;
 }
@@ -1451,7 +1451,7 @@ export interface TokenPurgeReportDto {
   deleted: number;
   oldestExpiredAt: string | null;
   newestExpiredAt: string | null;
-  /** Policzone PO skasowaniu — wykonywalna postać „nikt nie został wylogowany". */
+  /** Policzone PO skasowaniu - wykonywalna postać „nikt nie został wylogowany". */
   remainingValid: number;
   at: string;
 }
@@ -1465,7 +1465,7 @@ export interface SchemaMigrationDto {
 }
 
 /**
- * Stan schematu bazy. `pending > 0` znaczy, że baza jest STARSZA niż kod — stan możliwy
+ * Stan schematu bazy. `pending > 0` znaczy, że baza jest STARSZA niż kod - stan możliwy
  * wyłącznie po awarii runnera migracji w starcie serwera.
  */
 export interface SchemaStateDto {
@@ -1481,7 +1481,7 @@ export interface SchemaStateDto {
 /**
  * Trasa jednego lotu: geometria, log punktów i profil pionowy.
  *
- * `TrackVertex`, `TrackPoint` i `FlightProfile` biorzemy jako TYPY z domeny — to byty
+ * `TrackVertex`, `TrackPoint` i `FlightProfile` biorzemy jako TYPY z domeny - to byty
  * domenowe, liczone tym samym kodem, którym liczy je telefon. Własny DTO dostaje
  * wyłącznie koperta, bo złączenie śladu (pliki NDJSON) z lotem (projekcja rejestru)
  * istnieje tylko na tej trasie.
@@ -1491,7 +1491,7 @@ export interface FlightTrackDto {
   flightIndex: number;
   takeoffAt: number;
   landingAt: number | null;
-  /** `auto` / `manual` — lot ręczny nigdy nie ma śladu i to nie jest błąd. */
+  /** `auto` / `manual` - lot ręczny nigdy nie ma śladu i to nie jest błąd. */
   method: string;
   line: TrackVertex[];
   /** Próbka co 30 s PLUS wszystkie punkty odrzucone przez bramkę jakości. */
@@ -1509,7 +1509,7 @@ export interface FlightTrackDto {
  * Raport analityki zużycia jednego samolotu.
  *
  * `ConsumptionModel`, `MhModel`, `ConsumptionSummary` i `FuelInterval` biorzemy jako
- * TYPY z domeny — to byty domenowe, liczone tym samym kodem, którym liczy je telefon
+ * TYPY z domeny - to byty domenowe, liczone tym samym kodem, którym liczy je telefon
  * (norma w aplikacji pilota wychodzi z tego samego modułu). Własne są wyłącznie koperty:
  * tożsamość jednostki, zakres i opis podstawy.
  */

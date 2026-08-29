@@ -1,4 +1,4 @@
-# UZ Aero — dokumentacja projektu
+# UZ Aero - dokumentacja projektu
 
 > Aplikacja Android (React Native + Expo) do elektronicznego chronometrażu lotów.
 > Offline-first: telefon pilota rejestruje wszystko lokalnie, własny backend scala dane floty
@@ -12,9 +12,9 @@
 1. [Kontekst i cel](#1-kontekst-i-cel)
 2. [Użytkownicy i środowisko](#2-użytkownicy-i-środowisko)
 3. [Wymagania funkcjonalne](#3-wymagania-funkcjonalne)
-4. [Architektura systemu — offline-first i synchronizacja](#4-architektura-systemu--offline-first-i-synchronizacja)
+4. [Architektura systemu - offline-first i synchronizacja](#4-architektura-systemu--offline-first-i-synchronizacja)
 5. [Model danych](#5-model-danych)
-6. [Architektura UX — dwa tryby](#6-architektura-ux--dwa-tryby)
+6. [Architektura UX - dwa tryby](#6-architektura-ux--dwa-tryby)
 7. [Screen flow](#7-screen-flow)
 8. [Wymagania niefunkcjonalne i ryzyka](#8-wymagania-niefunkcjonalne-i-ryzyka)
 9. [Stack technologiczny](#9-stack-technologiczny)
@@ -30,20 +30,20 @@ Aplikacja UZ Aero zastępuje papierowy chronometraż używany przez pilotów pod
 - czasy blokowe (off-block / on-block) dla każdego pilota
 - czasy lotów (takeoff / landing)
 - stany i rozchód paliwa (z walidacją pojemnością zbiorników)
-- motogodziny (MH) — odczyty licznika w formacie z konfiguracji samolotu
+- motogodziny (MH) - odczyty licznika w formacie z konfiguracji samolotu
 - liczniki startów i lądowań
 - zrzuty (drop) przy operacjach skokowych
 
 Dane trafiają automatycznie na serwer klubu, który scala sesje różnych pilotów, wykrywa
 niespójności i generuje arkusz dzienny w Google Sheets. **Pilot niczego nie eksportuje
-ręcznie** — jego jedynym obowiązkiem jest rzetelny odczyt liczników przy przejęciu
+ręcznie** - jego jedynym obowiązkiem jest rzetelny odczyt liczników przy przejęciu
 i zdaniu samolotu (zdanie zatwierdza log całej sesji).
 
 ### Decyzje architektoniczne (log)
 
 | Data | Decyzja |
 |------|---------|
-| 2026-06-22 | Nazwa aplikacji: **UZ Aero** (stare nazwy e-Chronometraż / e-CHRONO — błędne) |
+| 2026-06-22 | Nazwa aplikacji: **UZ Aero** (stare nazwy e-Chronometraż / e-CHRONO - błędne) |
 | 2026-06-22 | Logowanie: Google OAuth (primary) + e-mail/hasło (fallback); tożsamość pilota znana w całej sesji |
 | 2026-07-03 | Role załogi: **PIC** (zalogowany, prowadzi aplikację) + **Dual** (drugi pilot); zastępuje CDR/SIC |
 | 2026-07-03 | Format MH (dziesiętny / hh:mm) i pojemność zbiorników = konfiguracja samolotu na serwerze |
@@ -54,44 +54,44 @@ i zdaniu samolotu (zdanie zatwierdza log całej sesji).
 | 2026-07-22 | **Single-writer**: w ramach sesji zapisuje wyłącznie telefon PIC-a; pozostali mają tryb read-only |
 | 2026-07-22 | Scalanie sesji po **łańcuchu liczników MH**, nie po timestampach; każde zdarzenie niesie dwa zegary (device + GPS) |
 | 2026-07-22 | Logowanie = jednorazowe provisioning (online); wejście do aplikacji = PIN offline; **wygasły token nie wylogowuje**; wylogowanie zablokowane przy niepustym outboxie |
-| 2026-07-22 | Tryb awaryjny (sesja bez zweryfikowanej tożsamości) **rozważony i odrzucony** — zweryfikowana tożsamość jest twardym warunkiem; jedyny wyjątek od zasady offline-first (pierwsze logowanie / zapomniany PIN / cudzy telefon) świadomie zaakceptowany i mitygowany proceduralnie |
-| 2026-07-23 | **Zrzuty rozliczane w aplikacji**: `drop` niesie liczbę skoczków w rozbiciu na typy (tandem/AFF/solo); statystyki i arkusz dostają sekcję rozliczeniową; pole „klient" z preflightu wiąże dzień z odbiorcą. Powód: bez tego aplikacja rejestruje wszystko, co kosztuje, i nic, co zarabia — papierowa lista wyniesień przetrwałaby wdrożenie |
-| 2026-07-23 | **Korekta samodzielna: okno 24 h** — pilot poprawia bez akceptacji administratora; po oknie tylko admin. Zawsze append-only. *(Zakotwiczenie przeniesione z `day_close` na zamknięcie WZLOTU — 2026-08-06 i 2026-08-07)* |
-| 2026-07-23 | **Jeden samolot = jeden dzień** — przesiadka wymaga zamknięcia dnia i nowego preflightu. Świadomy trade-off: duty time nie odzwierciedla wtedy pełnej służby pilota (powstają dwie „służby"). Rozdzielenie duty od sesji samolotu **rozważone i odrzucone** jako nadmiarowe przy obecnej skali |
-| 2026-07-23 | **Usunięto „przerwę" w duty** — przełącznik bez konsekwencji; duty liczone brutto |
-| 2026-07-24 | **Utrata telefonu z niepustym outboxem — poza zakresem.** Ryzyko rozpoznane (dzień bez zasięgu istnieje w jednym egzemplarzu, do czasu synchronizacji), świadomie NIE adresowane w tej wersji. Nie proponować ponownie |
-| 2026-07-24 | **Panel administratora — nie teraz.** Zakładanie kont, resety haseł, rozwiązywanie flag i korekty po oknie 24 h zostają procesem ręcznym (SQL/seed). Do rozważenia po backendzie |
+| 2026-07-22 | Tryb awaryjny (sesja bez zweryfikowanej tożsamości) **rozważony i odrzucony** - zweryfikowana tożsamość jest twardym warunkiem; jedyny wyjątek od zasady offline-first (pierwsze logowanie / zapomniany PIN / cudzy telefon) świadomie zaakceptowany i mitygowany proceduralnie |
+| 2026-07-23 | **Zrzuty rozliczane w aplikacji**: `drop` niesie liczbę skoczków w rozbiciu na typy (tandem/AFF/solo); statystyki i arkusz dostają sekcję rozliczeniową; pole „klient" z preflightu wiąże dzień z odbiorcą. Powód: bez tego aplikacja rejestruje wszystko, co kosztuje, i nic, co zarabia - papierowa lista wyniesień przetrwałaby wdrożenie |
+| 2026-07-23 | **Korekta samodzielna: okno 24 h** - pilot poprawia bez akceptacji administratora; po oknie tylko admin. Zawsze append-only. *(Zakotwiczenie przeniesione z `day_close` na zamknięcie WZLOTU - 2026-08-06 i 2026-08-07)* |
+| 2026-07-23 | **Jeden samolot = jeden dzień** - przesiadka wymaga zamknięcia dnia i nowego preflightu. Świadomy trade-off: duty time nie odzwierciedla wtedy pełnej służby pilota (powstają dwie „służby"). Rozdzielenie duty od sesji samolotu **rozważone i odrzucone** jako nadmiarowe przy obecnej skali |
+| 2026-07-23 | **Usunięto „przerwę" w duty** - przełącznik bez konsekwencji; duty liczone brutto |
+| 2026-07-24 | **Utrata telefonu z niepustym outboxem - poza zakresem.** Ryzyko rozpoznane (dzień bez zasięgu istnieje w jednym egzemplarzu, do czasu synchronizacji), świadomie NIE adresowane w tej wersji. Nie proponować ponownie |
+| 2026-07-24 | **Panel administratora - nie teraz.** Zakładanie kont, resety haseł, rozwiązywanie flag i korekty po oknie 24 h zostają procesem ręcznym (SQL/seed). Do rozważenia po backendzie |
 | 2026-07-22 | **Rezygnacja z Google OAuth** (odwraca decyzję z 2026-06-22): konta pilotów zakłada administrator w bazie, logowanie = login + hasło → JWT. Powód: argument za OAuth (Sheets na telefonie) zniknął wraz z eksportem serwerowym; wąskie, zamknięte grono użytkowników; zero konfiguracji OAuth/SHA/Play Console |
-| 2026-07-31 | **Podział kodu: warstwa jako oś główna, powierzchnia jako druga** (`admin` / `mobile` / `common` wewnątrz `application/`, `http/routes/`, `infrastructure/pg/`). ODRZUCONE: dwie gałęzie najwyższego poziomu ADMIN/MOBILE — te powierzchnie nie są dwoma systemami (jedna baza, jeden strumień zdarzeń, jedna projekcja, jedno logowanie), więc trzecia gałąź na kod wspólny wchłonęłaby większość plików, a granica byłaby przekraczana przy każdym żądaniu. ODRZUCONE: spłaszczenie — `admin/` jest granicą sprawdzaną maszynowo przez `test/architecture.test.ts`. Oś powierzchni obowiązuje TYLKO tam, gdzie plik istnieje dla kogoś: schemat bazy, punkty wejścia i mapowania mają własne miejsca. Szczegóły: `docs/architektura-kodu.md` |
+| 2026-07-31 | **Podział kodu: warstwa jako oś główna, powierzchnia jako druga** (`admin` / `mobile` / `common` wewnątrz `application/`, `http/routes/`, `infrastructure/pg/`). ODRZUCONE: dwie gałęzie najwyższego poziomu ADMIN/MOBILE - te powierzchnie nie są dwoma systemami (jedna baza, jeden strumień zdarzeń, jedna projekcja, jedno logowanie), więc trzecia gałąź na kod wspólny wchłonęłaby większość plików, a granica byłaby przekraczana przy każdym żądaniu. ODRZUCONE: spłaszczenie - `admin/` jest granicą sprawdzaną maszynowo przez `test/architecture.test.ts`. Oś powierzchni obowiązuje TYLKO tam, gdzie plik istnieje dla kogoś: schemat bazy, punkty wejścia i mapowania mają własne miejsca. Szczegóły: `docs/architektura-kodu.md` |
 | 2026-07-31 | **Katalog flag: kod dogania §4.5, nie odwrotnie.** `FUEL_MISMATCH` i `CLOCK_DRIFT` doliczamy przy ingescie (dziś żyją wyłącznie jako lokalne ostrzeżenia w telefonie i nigdy nie docierają na serwer); `session_overlap` zostaje następcą `DOUBLE_CLAIM` + `TIME_OVERLAP`. Powód: obie kontrole mają komplet danych po stronie serwera (`checkClocks` już porównuje oba zegary), a rozbieżność dokumentacji z kodem jest droższa niż ich dopisanie. Determinuje kształt `FlagType`, więc decyzja zapadła PRZED cyklem życia flagi |
-| 2026-07-31 | **Bez ORM-a i bez query buildera** (podtrzymuje „Spójność modeli bez ORM"). Powód mocniejszy niż poprzedni: ten system nie ma encji, którymi ORM miałby zarządzać — `events` jest append-only, a wiersz `sessions` to zrzut `projectSession` nadpisywany w całości, więc change tracking i unit of work zapraszają do „poprawienia jednego pola projekcji", czyli do obejścia strumienia. Zamiast tego `infrastructure/pg/sqlFilter.ts` + `keyset.ts` (~120 linii z testami) i naprawa runnera migracji (`BEGIN`/`COMMIT` jednym `exec`), która domyka też wadę migracji z `ADD CONSTRAINT`/`ADD COLUMN` |
-| 2026-07-31 | **Panel dzieli wyłącznie model DOMENOWY** (`@uzaero/domain`); modelu persystencji nie widzi nigdy — między nim a bazą stoi DTO z `/admin/api/*`. Osobnego pakietu „modele z bazy" NIE tworzymy: uczyniłby schemat kontraktem publicznym i pozwolił panelowi liczyć po swojemu zamiast przez `projectSession`. API pod `/admin/api/*`, nie `/admin/*` — kolizja z wildcardem `@fastify/static` (tryb awarii: żądanie API dostaje plik HTML) |
-| 2026-07-31 | **Wspólne biblioteki frontendu: dwa pakiety nie-wizualne** — `@uzaero/tokens` (5 motywów + emiter zmiennych CSS) i `@uzaero/format` (czas blokowy, MH, UTC). **Zero pakietu z komponentami**: RN i web to inne przyciski, nie ta sama skórka (kokpitowy `ActionButton` ma przytrzymanie 2 s i 44 px pod rękawice, `.btn` panelu 36 px z `:hover`), a `react-native-web` nie wyrenderuje zatwierdzonego `SZABLON.html`. Komponenty webowe zostają w `admin/src/ui/components/` |
-| 2026-08-06 | **Dzień służby przestaje być kontenerem na loty — ODWRACA „jeden samolot = jeden dzień" z 2026-07-23.** Flow był zbudowany wokół dnia służby: żeby zapisać jeden lot, pilot musiał otworzyć i zamknąć służbę, a przesiadka na drugi samolot dawała dwie służby. W rzeczywistości typowy dzień to JEDEN lot i przekazanie maszyny — służba trwająca cały dzień jest rzadkością. Nowa reguła: **loty są zapisywane, służba jest deklarowana i zawsze stanowi klamrę wokół lotów** (duty ⊇ suma wzlotów). Klamra należy do pilota, nie do samolotu, i domyślnie bierze się z pierwszego i ostatniego wzlotu doby UTC; deklaracja jest korektą po fakcie, nie warunkiem startu. Jednostką potwierdzenia danych staje się **wzlot** (09), a zdanie samolotu (09b) nie kończy dnia. Znika czas meldowania z przejęcia i ekran podsumowania `03`; ekranem domowym jest `01 Mój dzień` (dawny splash). Trade-off z lipca („powstają dwie służby") tym samym przestaje istnieć |
-| 2026-08-07 | **Trzy jednostki, dwa byty i jedna projekcja** (konsekwencja 2026-08-06). Model rozróżnia WZLOT (jednostka potwierdzenia), SESJĘ SAMOLOTU (claim → zdanie, ogniwo łańcucha MH) i SŁUŻBĘ PILOTA (klamra per pilot per doba UTC). Byt w danych dostają tylko dwie pierwsze: `leg_close` jest zdarzeniem, sesja zostaje jak dziś. **Służba jest CZYSTĄ PROJEKCJĄ** (`packages/domain/src/projections/duty.ts`) czytającą strumienie kilku sesji — poza `SessionState`, bo obejmuje maszyny, których pojedyncza sesja nie zna. Powód, dla którego nie tworzymy dla niej osi zdarzeń: nagłówek wymaga `session_uuid` i `aircraft_id`, więc „meldunek" nie miałby gdzie mieszkać |
-| 2026-08-07 | **`claim_time` przestaje nieść `dutyStart`** — od teraz to czas zdarzenia `session_claim`. Powód: kolumna była jednocześnie datą sesji i klamrą służby, a po usunięciu meldowania z przejęcia (2026-08-06) `dutyStart` bywa `null`, co wyzerowałoby sortowanie listy dni, kursor keyset, indeks `idx_sessions_day`, filtr zakresu dat i `openSessionsUndated`. `session_claim` istnieje zawsze i jest pierwszym zdarzeniem sesji, więc jest naturalnym czasem sesji; przy okazji znika trójgałęziowy predykat `NULLS LAST` zaprojektowany pod przypadek brzegowy, który stałby się większościowy. Wymaga migracji z backfillem i `rebuild-projections` (różnica będzie ogromna i OCZEKIWANA — to wyjątek od reguły „niezerowy dry-run = incydent") |
-| 2026-08-07 | **Okno korekty 24 h kotwiczy się w zamknięciu WZLOTU**, nie dnia. Każdy wzlot ma własne okno liczone od `leg_close`. Wzlot niepotwierdzony („Potwierdzę później", §3.6) dostaje kotwicę awaryjną w `engine_stop` — bez niej `closedAt == null` znaczyłoby „okno nie obowiązuje", czyli **bezterminowe prawo zapisu**, a `null` jest tu stanem domyślnym, nie brzegowym. Konsekwencja: `leg_close` MUSI być korygowalny (inaczej pilot nie poprawi literówki w odczycie, mimo że okno istnieje właśnie po to), co unieważnia argument z `architektura-kodu.md` §„flag łańcucha nie przeliczamy" |
-| 2026-08-07 | **Zdanie samolotu bez wzlotu wymaga POWODU, ale go nie warunkuje** (ekran 09C). `day_close.noFlightReason` (`weather`/`malfunction`/`cancelled`/`other`) jest wymagany przez EKRAN — pilot stoi przy samolocie i odpowie w sekundę — a przez domenę tylko flagowany (`NO_FLIGHT_WITHOUT_REASON`, waga `warning`). Powód takiego rozdziału: odrzucenie zdarzenia skasowałoby jedyny ślad po tym, że maszyna była zajęta i nie poleciała, czyli dokładnie tę informację, o którą administratorowi chodzi. Twarda reguła kosztowałaby fakt, miękka kosztuje tylko kompletność formularza |
-| 2026-08-07 | **Fakty strumienia dostają JAWNE znaczniki w projekcji** — `claimedAt` i `preflightAt`. Powód: `PREFLIGHT_REQUIRED` pytało o `state.dutyStart`, co było poprawne wyłącznie dopóty, dopóki godzina meldunku była obowiązkowa; po jej uopcjonalnieniu ta sama reguła zaczęła blokować silnik i zdanie samolotu pilotowi, który niczego nie pominął. Reguła ogólna: **pole opcjonalne nie jest znacznikiem tego, że zdarzenie zaszło**, a komplet zielonych testów tego nie wyłapie, gdy każdy helper wypełnia je „bo tak było zawsze". Przy okazji `claimedAt` znosi przechodzenie po surowych zdarzeniach w modelach widoku |
-| 2026-08-11 | **Klamra służby USUNIĘTA W CAŁOŚCI (issue #23)** — zamyka temat odłożony przy pivocie 2026-08-10. Do pilota w danej dobie przypisana jest **lista sesji i nic ponadto**: czas „od meldunku do zamknięcia" niczego nie mierzył, a wymagał deklaracji, przycisku „Zamknij dzień" i osobnych reguł. Z modelu znikają `preflight_confirm.dutyStart`, `day_close.dutyEnd`, reguła `DUTY_END_BEFORE_START` i projekcja klamry (`projectDuty` → `projectPilotDay` — lista sesji z sumami); z designu ekran `01b` i sekcja „Służba" na 01. Log dnia jest PŁASKĄ osią czasu (rejestracja to informacja wiersza, nie oś grupowania), sumy doby to Blok i Loty. Przy okazji: nagłówek wg jednego wzorca (tytuł do lewej, ustawienia po prawej — pkt 7) i SyncChip jako sam pill z arkuszem szczegółów pod tapnięciem (pkt 5, wariant `01c`) |
-| 2026-08-08 | **Historia (ekran 12) listuje DOBĘ PILOTA, z przeglądaniem w głąb.** Rozstrzyga sprzeczność wykrytą audytem: mockup `12-historia.html` (etap A) obiecywał kartę doby pilota obejmującą kilka maszyn, a kod (decyzja C4) robił kartę na SESJĘ — obie zapisane, obie uzasadnione, wzajemnie się wykluczające. Wygrywa doba pilota, bo ekran odpowiada na pytanie „co dziś zrobiłem", a to pytanie zadaje CZŁOWIEK o swoją służbę, nie o maszynę. Sesja samolotu nie znika — staje się drugim poziomem: **doba pilota → sesja na konkretnym samolocie → wzloty i loty ze szczegółami**. Konsekwencja: karta doby czyta `projectDuty` (projekcja per pilot per doba UTC), a nie `projectSession`; `historyDays.ts` i zapytanie `historyDays()` wymagają przebudowy, bo dziś grupują po sesji. Kod ma dogonić mockup, nie odwrotnie |
-| 2026-08-12 | **Ekran 12 to SESJE spoza dzisiejszej doby — ODWRACA „historia listuje dobę pilota" z 2026-08-08** (issue #35). Tamta decyzja rozstrzygała sprzeczność mockup↔kod na korzyść karty-doby; dziś rozstrzygamy ją odwrotnie i to KOD miał rację. Powody: (1) pytanie „co dziś zrobiłem" ma już swój ekran — `01 Mój dzień` po issue #23 JEST listą sesji doby, więc karta-doba w historii powtarzałaby go drugi raz, tyle że innym kształtem; (2) celem kafelka jest rozliczenie (10), a ono opisuje JEDNĄ maszynę — paliwo i motogodziny dwóch samolotów nie sumują się w jedną liczbę, więc karta-doba nie miałaby czego otworzyć. Ekran nazywa się odtąd **„Poprzednie dni"** i NIE pokazuje sesji z doby bieżącej (te są na 01, z ołówkiem wiersza); doba sesji liczy się tą samą kotwicą co na 01 — uruchomieniem silnika. Metryki kafelka = metryki wiersza sesji z 01 (Loty · Blok · Lot). Sesja po oknie 24 h otwiera 10 w trybie PODGLĄDU (`design/10b`): bez ołówków, bez „Edytuj dane" — dotąd nie dało się jej otworzyć wcale |
-| 2026-07-31 | **Panel administratora — DECYZJA ODWRÓCONA** (odwraca 2026-07-24): powstaje jako **osobna aplikacja web**. Zakres v1 = pełny back-office (konta, flota, skrzynka flag, korekty po oknie 24 h, przegląd dni, rejestr zdarzeń, monitor eksportu, statystyki, audyt, progi), **dwie role** (`administrator` — wszystko; `szef wyszkolenia` — podgląd, statystyki, rozwiązywanie flag), stan floty **na żywo** oraz dane po fakcie. Powód: backend jest gotowy i wymaga obsługi, a §4.7 postawiło bramkę, której **nikt nie może otworzyć** — otwarta flaga `session_overlap` blokuje eksport karty dnia, a `status='resolved'` nie ustawia dziś żaden kod w `server/src`. Projekt UI: `design/admin/` (20 ekranów); zakres, mapowanie na endpointy i braki serwera: `design/admin/ANALIZA.md` |
+| 2026-07-31 | **Bez ORM-a i bez query buildera** (podtrzymuje „Spójność modeli bez ORM"). Powód mocniejszy niż poprzedni: ten system nie ma encji, którymi ORM miałby zarządzać - `events` jest append-only, a wiersz `sessions` to zrzut `projectSession` nadpisywany w całości, więc change tracking i unit of work zapraszają do „poprawienia jednego pola projekcji", czyli do obejścia strumienia. Zamiast tego `infrastructure/pg/sqlFilter.ts` + `keyset.ts` (~120 linii z testami) i naprawa runnera migracji (`BEGIN`/`COMMIT` jednym `exec`), która domyka też wadę migracji z `ADD CONSTRAINT`/`ADD COLUMN` |
+| 2026-07-31 | **Panel dzieli wyłącznie model DOMENOWY** (`@uzaero/domain`); modelu persystencji nie widzi nigdy - między nim a bazą stoi DTO z `/admin/api/*`. Osobnego pakietu „modele z bazy" NIE tworzymy: uczyniłby schemat kontraktem publicznym i pozwolił panelowi liczyć po swojemu zamiast przez `projectSession`. API pod `/admin/api/*`, nie `/admin/*` - kolizja z wildcardem `@fastify/static` (tryb awarii: żądanie API dostaje plik HTML) |
+| 2026-07-31 | **Wspólne biblioteki frontendu: dwa pakiety nie-wizualne** - `@uzaero/tokens` (5 motywów + emiter zmiennych CSS) i `@uzaero/format` (czas blokowy, MH, UTC). **Zero pakietu z komponentami**: RN i web to inne przyciski, nie ta sama skórka (kokpitowy `ActionButton` ma przytrzymanie 2 s i 44 px pod rękawice, `.btn` panelu 36 px z `:hover`), a `react-native-web` nie wyrenderuje zatwierdzonego `SZABLON.html`. Komponenty webowe zostają w `admin/src/ui/components/` |
+| 2026-08-06 | **Dzień służby przestaje być kontenerem na loty - ODWRACA „jeden samolot = jeden dzień" z 2026-07-23.** Flow był zbudowany wokół dnia służby: żeby zapisać jeden lot, pilot musiał otworzyć i zamknąć służbę, a przesiadka na drugi samolot dawała dwie służby. W rzeczywistości typowy dzień to JEDEN lot i przekazanie maszyny - służba trwająca cały dzień jest rzadkością. Nowa reguła: **loty są zapisywane, służba jest deklarowana i zawsze stanowi klamrę wokół lotów** (duty ⊇ suma wzlotów). Klamra należy do pilota, nie do samolotu, i domyślnie bierze się z pierwszego i ostatniego wzlotu doby UTC; deklaracja jest korektą po fakcie, nie warunkiem startu. Jednostką potwierdzenia danych staje się **wzlot** (09), a zdanie samolotu (09b) nie kończy dnia. Znika czas meldowania z przejęcia i ekran podsumowania `03`; ekranem domowym jest `01 Mój dzień` (dawny splash). Trade-off z lipca („powstają dwie służby") tym samym przestaje istnieć |
+| 2026-08-07 | **Trzy jednostki, dwa byty i jedna projekcja** (konsekwencja 2026-08-06). Model rozróżnia WZLOT (jednostka potwierdzenia), SESJĘ SAMOLOTU (claim → zdanie, ogniwo łańcucha MH) i SŁUŻBĘ PILOTA (klamra per pilot per doba UTC). Byt w danych dostają tylko dwie pierwsze: `leg_close` jest zdarzeniem, sesja zostaje jak dziś. **Służba jest CZYSTĄ PROJEKCJĄ** (`packages/domain/src/projections/duty.ts`) czytającą strumienie kilku sesji - poza `SessionState`, bo obejmuje maszyny, których pojedyncza sesja nie zna. Powód, dla którego nie tworzymy dla niej osi zdarzeń: nagłówek wymaga `session_uuid` i `aircraft_id`, więc „meldunek" nie miałby gdzie mieszkać |
+| 2026-08-07 | **`claim_time` przestaje nieść `dutyStart`** - od teraz to czas zdarzenia `session_claim`. Powód: kolumna była jednocześnie datą sesji i klamrą służby, a po usunięciu meldowania z przejęcia (2026-08-06) `dutyStart` bywa `null`, co wyzerowałoby sortowanie listy dni, kursor keyset, indeks `idx_sessions_day`, filtr zakresu dat i `openSessionsUndated`. `session_claim` istnieje zawsze i jest pierwszym zdarzeniem sesji, więc jest naturalnym czasem sesji; przy okazji znika trójgałęziowy predykat `NULLS LAST` zaprojektowany pod przypadek brzegowy, który stałby się większościowy. Wymaga migracji z backfillem i `rebuild-projections` (różnica będzie ogromna i OCZEKIWANA - to wyjątek od reguły „niezerowy dry-run = incydent") |
+| 2026-08-07 | **Okno korekty 24 h kotwiczy się w zamknięciu WZLOTU**, nie dnia. Każdy wzlot ma własne okno liczone od `leg_close`. Wzlot niepotwierdzony („Potwierdzę później", §3.6) dostaje kotwicę awaryjną w `engine_stop` - bez niej `closedAt == null` znaczyłoby „okno nie obowiązuje", czyli **bezterminowe prawo zapisu**, a `null` jest tu stanem domyślnym, nie brzegowym. Konsekwencja: `leg_close` MUSI być korygowalny (inaczej pilot nie poprawi literówki w odczycie, mimo że okno istnieje właśnie po to), co unieważnia argument z `architektura-kodu.md` §„flag łańcucha nie przeliczamy" |
+| 2026-08-07 | **Zdanie samolotu bez wzlotu wymaga POWODU, ale go nie warunkuje** (ekran 09C). `day_close.noFlightReason` (`weather`/`malfunction`/`cancelled`/`other`) jest wymagany przez EKRAN - pilot stoi przy samolocie i odpowie w sekundę - a przez domenę tylko flagowany (`NO_FLIGHT_WITHOUT_REASON`, waga `warning`). Powód takiego rozdziału: odrzucenie zdarzenia skasowałoby jedyny ślad po tym, że maszyna była zajęta i nie poleciała, czyli dokładnie tę informację, o którą administratorowi chodzi. Twarda reguła kosztowałaby fakt, miękka kosztuje tylko kompletność formularza |
+| 2026-08-07 | **Fakty strumienia dostają JAWNE znaczniki w projekcji** - `claimedAt` i `preflightAt`. Powód: `PREFLIGHT_REQUIRED` pytało o `state.dutyStart`, co było poprawne wyłącznie dopóty, dopóki godzina meldunku była obowiązkowa; po jej uopcjonalnieniu ta sama reguła zaczęła blokować silnik i zdanie samolotu pilotowi, który niczego nie pominął. Reguła ogólna: **pole opcjonalne nie jest znacznikiem tego, że zdarzenie zaszło**, a komplet zielonych testów tego nie wyłapie, gdy każdy helper wypełnia je „bo tak było zawsze". Przy okazji `claimedAt` znosi przechodzenie po surowych zdarzeniach w modelach widoku |
+| 2026-08-11 | **Klamra służby USUNIĘTA W CAŁOŚCI (issue #23)** - zamyka temat odłożony przy pivocie 2026-08-10. Do pilota w danej dobie przypisana jest **lista sesji i nic ponadto**: czas „od meldunku do zamknięcia" niczego nie mierzył, a wymagał deklaracji, przycisku „Zamknij dzień" i osobnych reguł. Z modelu znikają `preflight_confirm.dutyStart`, `day_close.dutyEnd`, reguła `DUTY_END_BEFORE_START` i projekcja klamry (`projectDuty` → `projectPilotDay` - lista sesji z sumami); z designu ekran `01b` i sekcja „Służba" na 01. Log dnia jest PŁASKĄ osią czasu (rejestracja to informacja wiersza, nie oś grupowania), sumy doby to Blok i Loty. Przy okazji: nagłówek wg jednego wzorca (tytuł do lewej, ustawienia po prawej - pkt 7) i SyncChip jako sam pill z arkuszem szczegółów pod tapnięciem (pkt 5, wariant `01c`) |
+| 2026-08-08 | **Historia (ekran 12) listuje DOBĘ PILOTA, z przeglądaniem w głąb.** Rozstrzyga sprzeczność wykrytą audytem: mockup `12-historia.html` (etap A) obiecywał kartę doby pilota obejmującą kilka maszyn, a kod (decyzja C4) robił kartę na SESJĘ - obie zapisane, obie uzasadnione, wzajemnie się wykluczające. Wygrywa doba pilota, bo ekran odpowiada na pytanie „co dziś zrobiłem", a to pytanie zadaje CZŁOWIEK o swoją służbę, nie o maszynę. Sesja samolotu nie znika - staje się drugim poziomem: **doba pilota → sesja na konkretnym samolocie → wzloty i loty ze szczegółami**. Konsekwencja: karta doby czyta `projectDuty` (projekcja per pilot per doba UTC), a nie `projectSession`; `historyDays.ts` i zapytanie `historyDays()` wymagają przebudowy, bo dziś grupują po sesji. Kod ma dogonić mockup, nie odwrotnie |
+| 2026-08-12 | **Ekran 12 to SESJE spoza dzisiejszej doby - ODWRACA „historia listuje dobę pilota" z 2026-08-08** (issue #35). Tamta decyzja rozstrzygała sprzeczność mockup↔kod na korzyść karty-doby; dziś rozstrzygamy ją odwrotnie i to KOD miał rację. Powody: (1) pytanie „co dziś zrobiłem" ma już swój ekran - `01 Mój dzień` po issue #23 JEST listą sesji doby, więc karta-doba w historii powtarzałaby go drugi raz, tyle że innym kształtem; (2) celem kafelka jest rozliczenie (10), a ono opisuje JEDNĄ maszynę - paliwo i motogodziny dwóch samolotów nie sumują się w jedną liczbę, więc karta-doba nie miałaby czego otworzyć. Ekran nazywa się odtąd **„Poprzednie dni"** i NIE pokazuje sesji z doby bieżącej (te są na 01, z ołówkiem wiersza); doba sesji liczy się tą samą kotwicą co na 01 - uruchomieniem silnika. Metryki kafelka = metryki wiersza sesji z 01 (Loty · Blok · Lot). Sesja po oknie 24 h otwiera 10 w trybie PODGLĄDU (`design/10b`): bez ołówków, bez „Edytuj dane" - dotąd nie dało się jej otworzyć wcale |
+| 2026-07-31 | **Panel administratora - DECYZJA ODWRÓCONA** (odwraca 2026-07-24): powstaje jako **osobna aplikacja web**. Zakres v1 = pełny back-office (konta, flota, skrzynka flag, korekty po oknie 24 h, przegląd dni, rejestr zdarzeń, monitor eksportu, statystyki, audyt, progi), **dwie role** (`administrator` - wszystko; `szef wyszkolenia` - podgląd, statystyki, rozwiązywanie flag), stan floty **na żywo** oraz dane po fakcie. Powód: backend jest gotowy i wymaga obsługi, a §4.7 postawiło bramkę, której **nikt nie może otworzyć** - otwarta flaga `session_overlap` blokuje eksport karty dnia, a `status='resolved'` nie ustawia dziś żaden kod w `server/src`. Projekt UI: `design/admin/` (20 ekranów); zakres, mapowanie na endpointy i braki serwera: `design/admin/ANALIZA.md` |
 
 ---
 
 ## 2. Użytkownicy i środowisko
 
-- **PIC** — pilot zalogowany w aplikacji, prowadzi sesję ze swojego telefonu; jedyny piszący
-- **Dual** — drugi pilot; wybierany w preflightcie, jego godziny wylicza serwer z danych sesji;
+- **PIC** - pilot zalogowany w aplikacji, prowadzi sesję ze swojego telefonu; jedyny piszący
+- **Dual** - drugi pilot; wybierany w preflightcie, jego godziny wylicza serwer z danych sesji;
   we własnej aplikacji widzi samolot w trybie read-only
 - **Urządzenie:** telefon Android każdego pilota (Android 10+); możliwy tablet
 - **Środowisko użycia:**
   - w kokpicie podczas lotu → priorytet: szybkość, czytelność, duże elementy
   - na ziemi między lotami → priorytet: dokładność, szczegółowe formularze
   - silne nasłonecznienie → oprócz motywów ciemnych (Night, Amber/NVG) motywy jasne
-    pod pełne słońce (Paper, Solar, Sky) — patrz `design/05-themes.html`
-- **Łączność:** offline-first — pełna funkcjonalność bez sieci; synchronizacja automatyczna
+    pod pełne słońce (Paper, Solar, Sky) - patrz `design/05-themes.html`
+- **Łączność:** offline-first - pełna funkcjonalność bez sieci; synchronizacja automatyczna
   w tle, gdy sieć jest dostępna. Brak zasięgu nigdy nie blokuje pracy pilota.
 
 ---
@@ -104,26 +104,26 @@ Logowanie (jednorazowe provisioning urządzenia) jest rozdzielone od wejścia do
 (codzienne odblokowanie):
 
 - logowanie kontem nadanym przez administratora (login + hasło; **brak samodzielnej
-  rejestracji** — użytkowników zakłada admin w bazie, reset hasła też u admina);
-  **pierwsze logowanie wymaga sieci** — weryfikacja na serwerze tworzy lokalny profil
+  rejestracji** - użytkowników zakłada admin w bazie, reset hasła też u admina);
+  **pierwsze logowanie wymaga sieci** - weryfikacja na serwerze tworzy lokalny profil
   pilota: tożsamość, JWT + refresh (`expo-secure-store`), PIN, cache referencyjny
 - od tej pory wejście do aplikacji = **odblokowanie PIN-em, zero sieci**; 00-login
   z istniejącym profilem otwiera się w trybie PIN ("Zaloguj jako inny pilot" dostępne
   pod spodem, z adnotacją że wymaga internetu)
-- **wygasły token ≠ wylogowanie** — JWT służy wyłącznie do komunikacji z serwerem;
+- **wygasły token ≠ wylogowanie** - JWT służy wyłącznie do komunikacji z serwerem;
   praca lokalna nie wymaga ważnego tokenu, refresh następuje przy najbliższej sieci;
   aplikacja nigdy sama nie wyrzuca użytkownika do ekranu logowania
 - **wylogowanie jest chronione**: zablokowane przy niepustym outboxie (ochrona przed
   utratą niewysłanych zdarzeń) + ostrzeżenie "ponowne logowanie wymaga internetu"
 - świeża instalacja / nowy telefon bez sieci = twarda granica (tożsamości nie da się
-  zweryfikować offline) — akceptowany trade-off; 00-login pokazuje wtedy czytelny
-  komunikat "Pierwsze logowanie wymaga internetu — zaloguj się przed wylotem w teren"
+  zweryfikować offline) - akceptowany trade-off; 00-login pokazuje wtedy czytelny
+  komunikat "Pierwsze logowanie wymaga internetu - zaloguj się przed wylotem w teren"
   zamiast niedziałającego przycisku Google
-- zapomniany PIN = pełne ponowne logowanie (wymaga sieci) — 00-login potrzebuje ścieżki
+- zapomniany PIN = pełne ponowne logowanie (wymaga sieci) - 00-login potrzebuje ścieżki
   "Nie pamiętam PIN" z tą samą informacją o wymogu internetu
-- tryb awaryjny (praca bez zweryfikowanej tożsamości) — **odrzucony** (log decyzji);
+- tryb awaryjny (praca bez zweryfikowanej tożsamości) - **odrzucony** (log decyzji);
   tożsamość jest twardym warunkiem rozpoczęcia sesji
-- po zalogowaniu tożsamość pilota jest znana w całej aplikacji — **nigdzie nie pytamy o kod pilota**
+- po zalogowaniu tożsamość pilota jest znana w całej aplikacji - **nigdzie nie pytamy o kod pilota**
 - przy logowaniu i każdym kontakcie z siecią aplikacja odświeża cache referencyjny (sekcja 4.8)
 
 ### 3.1 Przejęcie samolotu (stepper 3-krokowy)
@@ -131,67 +131,67 @@ Logowanie (jednorazowe provisioning urządzenia) jest rozdzielone od wejścia do
 > Do 2026-08-06 ten ekran nazywał się „preflight briefing" i otwierał DZIEŃ SŁUŻBY.
 > Nie otwiera już niczego poza sesją samolotu: pytanie „od kiedy jesteś na służbie"
 > zniknęło stąd razem z resztą modelu dnia jako kontenera (log decyzji, 2026-08-06).
-> Rozpoczęcie lotu ma trwać kilka sekund — pilot idzie latać, nie otwiera doby.
+> Rozpoczęcie lotu ma trwać kilka sekund - pilot idzie latać, nie otwiera doby.
 
-**Krok 1 — samolot i załoga:**
+**Krok 1 - samolot i załoga:**
 
 - samolot z listy kart zarejestrowanych jednostek (rejestracja + typ + rok); stany karty:
   wolny / **aktywny PIC** ("PIC: KRZ · od 07:10") / wyłączony ze służby (disabled)
 - wybór zajętego samolotu → modal przejęcia (sekcja 4.4)
 - rodzaj operacji jako siatka kart z ikonami: Skoki / Przelot / Egzamin / Lot techniczny / Inne
-  (napisy dla pilota; wartości w rejestrze bez zmian — `skoki`, `ferry`, `egzamin`,
+  (napisy dla pilota; wartości w rejestrze bez zmian - `skoki`, `ferry`, `egzamin`,
   `techniczny`, `inne`, bo to identyfikatory, nie etykiety)
 - **rodzaj operacji wyznacza kształt trasy** (decyzja 2026-08-06, issue #13): skoki startują
   i lądują na tym samym lotnisku, więc formularz pyta o JEDNO pole ICAO (rekord i tak trzyma
   oba kody równe); pozostałe operacje opisuje para start → lądowanie. Ten sam predykat
   (`isSameFieldOperation`) uzbraja bramkę lądowania w detekcji (sekcja 3.3)
-- trasa (ICAO start / lądowanie) — na kroku 2 (`02e`), razem z operacją i klientem
-- **Dual** — opcjonalny wybór z listy pilotów; gdy samolot ma flagę załogi dwuosobowej
+- trasa (ICAO start / lądowanie) - na kroku 2 (`02e`), razem z operacją i klientem
+- **Dual** - opcjonalny wybór z listy pilotów; gdy samolot ma flagę załogi dwuosobowej
   (np. An-2), pole staje się wymagane i blokuje przejście dalej
-- **czasu meldowania TU NIE MA** — dzień pilota to lista sesji (sekcja 3.6a, issue #23);
+- **czasu meldowania TU NIE MA** - dzień pilota to lista sesji (sekcja 3.6a, issue #23);
   żadnej godziny „od kiedy" się nie deklaruje
 
-**Krok 3 — paliwo i motogodziny:**
+**Krok 3 - paliwo i motogodziny:**
 
-- wartości **przekazane przez poprzednika** (z serwera lub cache) — read-only z breakdownem
+- wartości **przekazane przez poprzednika** (z serwera lub cache) - read-only z breakdownem
   (po tankowaniu / spalone / śr. zużycie / kto przekazał)
 - korekta wyłącznie przez modal ("Koryguj") z ostrzeżeniem o rozbieżności ponad próg
 - format MH wg konfiguracji samolotu (dziesiętny `1 234.5` lub `hh:mm` `1 234:30`)
 - wskaźnik paliwa w skali pojemności zbiorników z konfiguracji; walidacja: odczyt ≤ pojemność
-- offline / brak danych przekazania: pola puste z komunikatem "brak danych — wpisz z licznika";
+- offline / brak danych przekazania: pola puste z komunikatem "brak danych - wpisz z licznika";
   odczyt pilota staje się początkiem łańcucha (sekcja 4.5)
 
 Krok 3 kończy nowy lot: CTA **„ROZPOCZNIJ LOT"** emituje `session_claim` i `preflight_confirm`,
 po czym otwiera kokpit. Osobny ekran podsumowania (dawny `03-preflight-confirm`) został
-**usunięty** — powtarzał to, co pilot wpisał sekundę wcześniej, i był czwartym tapem w
+**usunięty** - powtarzał to, co pilot wpisał sekundę wcześniej, i był czwartym tapem w
 drodze do samolotu.
 
-### 3.2 Ekran roboczy — cockpit view
+### 3.2 Ekran roboczy - cockpit view
 
-Główny ekran pracy z JEDNYM samolotem (nie z dobą — patrz 3.6a). Dwa stany:
+Główny ekran pracy z JEDNYM samolotem (nie z dobą - patrz 3.6a). Dwa stany:
 
 **Stan: silnik wyłączony (ground)**
 - dwa stany ground (pivot 2026-08-10): PRZED uruchomieniem hero = START ENGINE,
   PO zatrzymaniu hero = ZDAJ SAMOLOT (drugiego startu nie ma)
-- **kokpit jest stanem modalnym** — drogi na 01 nie ma; pasek sesji („SP-FGK · KRZ
+- **kokpit jest stanem modalnym** - drogi na 01 nie ma; pasek sesji („SP-FGK · KRZ
   od 07:10 · 2 loty") żyje wyłącznie na podglądzie CUDZEJ maszyny (04b). Czasu pracy
   pilota w kokpicie NIE MA: dzień pilota to lista sesji (issue #23) i mieszka na 01
 - log zdarzeń tej sesji (jeden bieg silnika, loty z separatorami "Lot N")
 - wskaźnik łączności `SyncChip`: online nie rysuje NIC (issue #12), offline sam pill
-  `OFFLINE · n` — szczegóły synchronizacji pod tapnięciem (issue #23 pkt 5)
+  `OFFLINE · n` - szczegóły synchronizacji pod tapnięciem (issue #23 pkt 5)
 - skróty: tankowanie, zmiana załogi, popraw dane sesji (tryb edycji 10d), zdaj samolot
   (zawsze dostępny)
 
 **Stan: silnik uruchomiony (running)**
-- **phase hero** — aktualna faza lotu dużą czcionką (Engine Idle → Taxi → Takeoff → Climb
+- **phase hero** - aktualna faza lotu dużą czcionką (Engine Idle → Taxi → Takeoff → Climb
   → Cruise → Descent → Landing → Taxi); block time jako mały chip
 - czas lokalny / UTC (live), grid GPS: GS (kt), Altitude (ft), Fuel on Board (L), Flight time
 - log zdarzeń live z wpisem "In flight…" (pulsująca kropka + timer)
-- toast autodetekcji: "Wykryto: Takeoff ✓ [Cofnij] 5…" — brak reakcji = zapis; Cofnij anuluje
+- toast autodetekcji: "Wykryto: Takeoff ✓ [Cofnij] 5…" - brak reakcji = zapis; Cofnij anuluje
 - przyciski ręcznej korekty T/O / LDG / Taxi (zawsze widoczne, secondary style)
-- STOP ENGINE — jedyna akcja zawsze inicjowana ręcznie (prominentna, z potwierdzeniem);
+- STOP ENGINE - jedyna akcja zawsze inicjowana ręcznie (prominentna, z potwierdzeniem);
   kończy SESJĘ: wraca do kokpitu ground z hero **ZDAJ SAMOLOT** (sekcja 3.6)
-- Zrzut (Drop) — przycisk ręczny, tylko przy operacji Skoki
+- Zrzut (Drop) - przycisk ręczny, tylko przy operacji Skoki
 
 ### 3.3 Algorytm auto-detekcji startu i lądowania
 
@@ -200,16 +200,16 @@ Detekcja na podstawie danych GPS:
 **Start (takeoff):**
 - GS > próg (sugerowane 45–55 kt) przez min. 3 sekundy
 - LUB zmiana wysokości względem elewacji lotniska > próg (sugerowane 50 ft)
-- zabezpieczenie: histereza — po detekcji startu ignoruj kolejne przez 60 s
+- zabezpieczenie: histereza - po detekcji startu ignoruj kolejne przez 60 s
 
 **Lądowanie (landing):**
 - GS < próg (sugerowane 30 kt) przez min. 5 sekund
 - ORAZ wysokość względem elewacji lotniska < 30 ft
 - zabezpieczenie: nie zaliczaj lądowania podczas ciasnych zakrętów (chwilowy spadek GS)
-  — wymaga spełnienia obu warunków jednocześnie
+  - wymaga spełnienia obu warunków jednocześnie
 
 Fazy pośrednie (Taxi, Climb, Cruise, Descent) są **stanem wyświetlanym**, wyliczanym
-z GS i prędkości pionowej — nie generują zdarzeń logowanych, służą czytelności phase hero.
+z GS i prędkości pionowej - nie generują zdarzeń logowanych, służą czytelności phase hero.
 
 > ⚠️ Progi do kalibracji podczas testów z pilotami. Znane ryzyko: precyzja GPS
 > consumer-grade może powodować fałszywe detekcje.
@@ -220,8 +220,8 @@ Opcja ręczna: pilot może dokliknąć start lub lądowanie, a błędny wpis usu
 
 Formularz dostępny między lotami:
 
-- stan paliwa przed tankowaniem (L) — podpowiada bieżący FOB
-- ilość dolana (L) — suwak przeskalowany do "do pełna" = pojemność − FOB (z konfiguracji)
+- stan paliwa przed tankowaniem (L) - podpowiada bieżący FOB
+- ilość dolana (L) - suwak przeskalowany do "do pełna" = pojemność − FOB (z konfiguracji)
 - stan po tankowaniu (wyliczany; walidacja: ≤ pojemność zbiorników)
 - kalkulacja zużycia: średnie zużycie/h od ostatniego tankowania jako punkt kontrolny
 
@@ -229,17 +229,17 @@ Formularz dostępny między lotami:
 
 - **zmiana PIC** = przejęcie sesji: nowy pilot musi zalogować się na własnym telefonie
   (model single-writer); aplikacja poprzednika zamyka sesję
-- **zmiana Dual** — wybór z listy pilotów; przy wymogu załogi 2-os. Dual nie może pozostać pusty
+- **zmiana Dual** - wybór z listy pilotów; przy wymogu załogi 2-os. Dual nie może pozostać pusty
 - rejestracja czasu zmiany; każdy pilot ma osobny licznik czasu blokowego (wylicza serwer)
 
 ### 3.6 Zatwierdzenie sesji przy zdaniu samolotu
 
 **PRZEPISANE 2026-08-10 (pivot: sesja = jeden bieg silnika).** Jednostką potwierdzenia
-jest **sesja** — od uruchomienia do zatrzymania silnika, z dowolną liczbą LOTÓW
+jest **sesja** - od uruchomienia do zatrzymania silnika, z dowolną liczbą LOTÓW
 (start → lądowanie, w tym touch and go) w środku. Po STOP ENGINE drugiego startu nie ma:
 kokpit (04) pokazuje hero „ZDAJ SAMOLOT", a kolejny lot to NOWE przejęcie.
 
-Osobnego „zamknięcia wzlotu" (dawny ekran 09, `leg_close`) już nie ma — jego przegląd
+Osobnego „zamknięcia wzlotu" (dawny ekran 09, `leg_close`) już nie ma - jego przegląd
 czasów z detekcji przeszedł na 09b, a poprawki robi się w trybie edycji sesji (10d,
 issue #43), dostępnym z kokpitu także przed zdaniem. Nie ma też trybu „Potwierdzę później" ani pasków „do potwierdzenia" na 01:
 na listę dnia trafiają wyłącznie sesje zatwierdzone.
@@ -249,13 +249,13 @@ na listę dnia trafiają wyłącznie sesje zatwierdzone.
 > na końcu. Stary argument („nikt nie chodzi do licznika po każdym wzlocie") opisywał
 > model, w którym każde wyniesienie było osobnym cyklem do potwierdzenia.
 
-**Zdanie samolotu (09b)** — po zatrzymaniu silnika: przegląd lotów sesji (czasy
-z detekcji), **odczyt FOB i MH WYMAGANY** — staje się przekazaniem dla następnego pilota,
+**Zdanie samolotu (09b)** - po zatrzymaniu silnika: przegląd lotów sesji (czasy
+z detekcji), **odczyt FOB i MH WYMAGANY** - staje się przekazaniem dla następnego pilota,
 ogniwem łańcucha MH (4.5) i ZATWIERDZENIEM logu całej sesji; odczyty trafiają do logu
 jako kolejne wpisy. Przed zdaniem wolno jeszcze dolać paliwa (tankowanie żyje w kokpicie:
 przed uruchomieniem i po zatrzymaniu). Wariant `09c` obsługuje zdanie bez lotu (pogoda,
-usterka) — silnik nie ruszył, odczyty wypełnione wartościami z przejęcia, jedyne pytanie
-to powód. Z listy dziennej można też dodać CAŁY lot ręcznie (15) — kompletną sesję
+usterka) - silnik nie ruszył, odczyty wypełnione wartościami z przejęcia, jedyne pytanie
+to powód. Z listy dziennej można też dodać CAŁY lot ręcznie (15) - kompletną sesję
 z czasami i odczytami, dla lotów zapisanych poza telefonem.
 
 **Zdanie samolotu NIE kończy dnia pilota.** Kolejna maszyna dopisuje się do listy sesji
@@ -263,48 +263,48 @@ tej samej doby (§3.6a).
 
 ### 3.6a Dzień pilota = lista sesji (klamra służby USUNIĘTA)
 
-> Decyzja 2026-08-11 (issue #23) — zamyka temat odłożony przy pivocie 2026-08-10.
+> Decyzja 2026-08-11 (issue #23) - zamyka temat odłożony przy pivocie 2026-08-10.
 > Historycznie: 2026-08-06 „służba jest klamrą wokół lotów" (odwracała „jeden samolot =
 > jeden dzień" z 2026-07-23); klamra przeżyła w tym kształcie pięć dni.
 
-Reguła w jednym zdaniu: **do pilota w danej dobie UTC przypisana jest lista sesji —
+Reguła w jednym zdaniu: **do pilota w danej dobie UTC przypisana jest lista sesji -
 i nic ponadto.** Czas „od meldunku do zamknięcia" niczego nie mierzył, a wymagał
 deklaracji, przycisku „Zamknij dzień" i osobnych reguł.
 
-- dzień należy do **pilota**, nie do samolotu — sesje na różnych maszynach leżą na
+- dzień należy do **pilota**, nie do samolotu - sesje na różnych maszynach leżą na
   jednej liście (płaska oś czasu; rejestracja jest informacją wiersza, nie osią
   grupowania)
 - dnia **nie otwiera się ani nie zamyka**: zaczyna się pierwszą sesją; sumy doby to
   czas blokowy i czas lotu (plus starty/lądowania)
 - z modelu znikły: `preflight_confirm.dutyStart`, `day_close.dutyEnd`, reguła
-  `DUTY_END_BEFORE_START`, projekcja klamry (dziś `projectPilotDay` — lista sesji
+  `DUTY_END_BEFORE_START`, projekcja klamry (dziś `projectPilotDay` - lista sesji
   i sumy), ekran `01b` („dzień zamknięty") i przycisk „Zamknij dzień"
-- **okno korekty jest JEDNO, per sesja**: 24 h od ZDANIA samolotu (`day_close`) —
+- **okno korekty jest JEDNO, per sesja**: 24 h od ZDANIA samolotu (`day_close`) -
   osobno dla każdej sesji; drzwiami jest historia (12)
 - łańcuch MH nie ma z dniem pilota nic wspólnego: to oś **samolotu**
 
-> Opcja „przerwa" (pauzowanie duty) pozostaje **usunięta** — decyzja 2026-07-23;
+> Opcja „przerwa" (pauzowanie duty) pozostaje **usunięta** - decyzja 2026-07-23;
 > po issue #23 nie ma już nawet wielkości, którą miałaby pauzować.
 
 ### 3.6b Znane ryzyko: opcjonalny odczyt kontra analityka zużycia
 
 **ROZWIĄZANE 2026-08-10 przez pivot modelu, nie przez kalibrację.** Odczyt przy zdaniu
-jest obowiązkowy, a sesja = jeden bieg silnika — więc KAŻDA sesja jest domknięta
+jest obowiązkowy, a sesja = jeden bieg silnika - więc KAŻDA sesja jest domknięta
 odczytami z obu stron (przejęcie → zdanie) i interwały degeneracyjne „między ostatnim
 `leg_close` a zdaniem" znikają z konstrukcji. Opis niżej zostaje jako uzasadnienie
 historyczne; progi (`consumption/policy.ts`) nadal kalibruje wyłącznie
 `consumptionReplay.ts` na danych demo po etapie E.
 
-**Nierozstrzygnięte świadomie** (2026-08-07) — do zamknięcia przez `consumptionReplay.ts`,
+**Nierozstrzygnięte świadomie** (2026-08-07) - do zamknięcia przez `consumptionReplay.ts`,
 nie przez dyskusję.
 
-Model zużycia (`packages/domain/src/consumption/`) stoi na **interwałach paliwowych** —
+Model zużycia (`packages/domain/src/consumption/`) stoi na **interwałach paliwowych** -
 odcinkach między kolejnymi odczytami paliwomierza. Dotąd ich końcami były `preflight_confirm`,
 para `refuel.beforeL`/`afterL` i `day_close`. Po §3.6 odczyt przy zamknięciu wzlotu jest
 **opcjonalny**, a zdanie samolotu zastąpiło `day_close`.
 
 Skutek, którego nie da się przewidzieć zza biurka: w dniu skokowym z dziesięcioma wzlotami
-i zerem odczytów pośrednich powstanie **JEDEN interwał na całą sesję** — czyli dokładnie ten
+i zerem odczytów pośrednich powstanie **JEDEN interwał na całą sesję** - czyli dokładnie ten
 przypadek, w którym `MAX_VARIANCE_INFLATION` odrzuci rozdział zużycia ziemia/lot, bo dane
 nie rozstrzygają podziału. Odwrotnie: pilot skrupulatny da dziesięć krótkich interwałów
 o niskiej dźwigni. **Opcjonalność, która ratuje dzień skokowy przed ceremonią, uderza
@@ -312,15 +312,15 @@ w analitykę tego samego dnia.**
 
 Otwarte pytania:
 1. czy odczyt z `leg_close` jest pełnoprawnym ogniwem łańcucha MH, czy tylko domyka interwał
-   paliwowy — **decyzja: pełnoprawnym**, bo §4.1 pkt 5 stawia licznik fizyczny nad rachubą,
+   paliwowy - **decyzja: pełnoprawnym**, bo §4.1 pkt 5 stawia licznik fizyczny nad rachubą,
 2. czy `policy.ts` potrzebuje progu minimalnej długości interwału,
 3. czy ostrzeżenie warunkowe „po pięciu pominięciach" (§3.6) jest wystarczającą zachętą.
 
-Punktów 2 i 3 **nie rozstrzygamy w dyskusji** — służy do tego replay na realnej historii.
+Punktów 2 i 3 **nie rozstrzygamy w dyskusji** - służy do tego replay na realnej historii.
 
 **WARUNEK WSTĘPNY SPEŁNIONY 2026-08-08.** Generator demo (`server/scripts/demo/`) został
 przebudowany pod nowy model i produkuje cztery style pracy z ekranem 09 (`ConfirmStyle`):
-odczyt przy każdym wzlocie, co trzeci, potwierdzenie bez odczytu i brak potwierdzenia —
+odczyt przy każdym wzlocie, co trzeci, potwierdzenie bez odczytu i brak potwierdzenia -
 czyli od interwałów ~32 min po JEDEN interwał na całą sesję. Do tego dochodzą próby silnika
 bez lotu (jedyne obserwacje z całym czasem na ziemi) i jeden wzlot przerwany na kołowaniu
 (jedyny interwał poniżej progu 30 min). Pierwszy przebieg `consumptionReplay.ts` na tych
@@ -335,15 +335,15 @@ danych (nie strojąc niczego) pokazał trzy rzeczy:
    wyłącznie na maszynie z RÓŻNORODNYM ruchem (egzaminy, przeloty, próby silnika):
    ziemia 12,5 L/h ±31%, lot 40,1 L/h ±2%.
 3. **Sesja `careful` produkuje interwał degeneracyjny** między ostatnim `leg_close`
-   a zdaniem samolotu (zero czasu silnika, dwa odczyty) — do 25% wszystkich. Odrzucany
+   a zdaniem samolotu (zero czasu silnika, dwa odczyty) - do 25% wszystkich. Odrzucany
    poprawnie (`no-engine`/`negative-consumption`), ale wchodzi do mianownika statystyk.
 
-Odpowiedzi na punkty 2 i 3 zapadną PO kalibracji na tych danych — nie tutaj.
+Odpowiedzi na punkty 2 i 3 zapadną PO kalibracji na tych danych - nie tutaj.
 
 **AKTUALIZACJA przy issue #50 (2026-08-26):** generator demo został USUNIĘTY razem
-z resztą danych demo (przygotowanie testów z pilotami — seed stawia odtąd wyłącznie
+z resztą danych demo (przygotowanie testów z pilotami - seed stawia odtąd wyłącznie
 konto administratora). Wnioski z przebiegu 2026-08-08 wyżej zostają jako ustalenia,
-a kalibracja progów poczeka na REALNĄ historię z testów — `consumptionReplay.ts`
+a kalibracja progów poczeka na REALNĄ historię z testów - `consumptionReplay.ts`
 działa bez zmian, bo czyta bazę, nie generator. Gdyby syntetyczne dane były jeszcze
 kiedyś potrzebne, generator jest w historii gita.
 
@@ -351,24 +351,24 @@ kiedyś potrzebne, generator jest w historii gita.
 
 Dwa poziomy, bo dwie różne osie (3.6a):
 
-**Mój dzień (01) — oś pilota:** płaski log sesji doby przekrojowo po samolotach
+**Mój dzień (01) - oś pilota:** płaski log sesji doby przekrojowo po samolotach
 (rejestracja jako informacja wiersza), sumy czasu blokowego / czasu lotu, liczba
 startów i lądowań. Klamry służby nie ma (issue #23).
 
-**Sesja (10) — oś maszyny** (przebudowa issue #38, 2026-08-12; ekran nazywał się
+**Sesja (10) - oś maszyny** (przebudowa issue #38, 2026-08-12; ekran nazywał się
 „Rozliczenie" w modelu, w którym stał na ścieżce zamykania dnia i sam był bramką
-„ZATWIERDŹ → SYNC" — bramka zniknęła przy issue #23, nazwa została):
+„ZATWIERDŹ → SYNC" - bramka zniknęła przy issue #23, nazwa została):
 - **ślad CAŁEGO biegu silnika** ze znacznikami wszystkich startów i lądowań, wprost na
   ekranie; miniatura otwiera pełny ślad (14). Ekran 16 (szczegóły jednego lotu) usunięty
 - **oś czasu zamiast tabeli lotów**: przejęcie (z odczytami) → uruchomienie → starty,
   zrzuty i lądowania → wyłączenie → zdanie (z odczytami). Stopka: blok, czas w powietrzu,
   liczba startów, lotnisko. Czas blokowy pada na tym ekranie DOKŁADNIE RAZ
-- **paliwo i motogodziny w JEDNEJ formie** — rachunek (odczyt → dolewki → odczyt = wynik),
+- **paliwo i motogodziny w JEDNEJ formie** - rachunek (odczyt → dolewki → odczyt = wynik),
   a pod nim oczekiwanie policzone dla TEJ mieszanki faz i werdykt w normie / powyżej /
   poniżej (§3.6b, `consumption/expectation.ts`). Motogodziny mają odtąd własną normę:
   przyrost licznika NIE równa się czasowi blokowemu i nie ma prawa się równać
 - **zrzuty**: pojedyncze wyniesienia na osi czasu, suma (skoczkowie w rozbiciu na typy,
-  średnia wysokość, klient) w osobnej karcie — strona przychodowa
+  średnia wysokość, klient) w osobnej karcie - strona przychodowa
 - **plakietka „AUTO" nie istnieje**: detekcja jest stanem domyślnym, więc oznaczamy
   wyłącznie wpis RĘCZNY (ta sama reguła, co SyncChip po issue #12)
 
@@ -376,19 +376,19 @@ Paliwo i MH są wielkościami samolotu, więc nie sumują się po pilocie lecąc
 maszynami.
 
 Dane edytowalne w trakcie sesji oraz **przez 24 h od jej zdania** (decyzja 2026-07-23,
-kotwica = `day_close` — osobno dla każdej sesji, patrz §3.6a): pilot nanosi korektę
+kotwica = `day_close` - osobno dla każdej sesji, patrz §3.6a): pilot nanosi korektę
 samodzielnie, bez akceptacji administratora. Po upływie okna korektę wprowadza
-administrator. Korekta zawsze jest zdarzeniem append-only — nie kasuje oryginalnego odczytu.
+administrator. Korekta zawsze jest zdarzeniem append-only - nie kasuje oryginalnego odczytu.
 
-### 3.8 Edycja danych sesji (tryb ekranu 10 — issue #43, 2026-08-13)
+### 3.8 Edycja danych sesji (tryb ekranu 10 - issue #43, 2026-08-13)
 
 **Osobnego ekranu „lista ręczna" (08) NIE MA od 2026-08-13.** Był drugim widokiem tej
-samej sesji — inna oś, inny słownik, jedyna możliwa korekta: czas albo unieważnienie.
+samej sesji - inna oś, inny słownik, jedyna możliwa korekta: czas albo unieważnienie.
 Poprawianie jest odtąd **stanem ekranu sesji** (`design/10d`): ten sam ślad, ta sama oś
 czasu i te same rachunki, plus ołówek przy każdym wierszu i pas akcji z „DODAJ WPIS".
 
 Wejścia są dwa i oba prowadzą w to samo miejsce: „EDYTUJ DANE" na ekranie sesji (10)
-oraz kafelek „Popraw dane sesji" w kokpicie po zatrzymaniu silnika — ten drugi wraca
+oraz kafelek „Popraw dane sesji" w kokpicie po zatrzymaniu silnika - ten drugi wraca
 DO KOKPITU, bo kokpit jest stanem modalnym, a log trzeba dać się naprawić PRZED zdaniem
 samolotu (zdanie go zatwierdza).
 
@@ -401,19 +401,19 @@ Co da się poprawić (arkusze `design/10e`–`10h`):
 | zrzut | 10g | czas oraz skład (tandem / AFF / solo) | `event_correction` · `retime` / `amend` / `void` |
 | brakujący fakt | 10h | dopisanie zdarzenia (start, lądowanie, kołowanie, zrzut, załadunek, tankowanie) z metodą `manual` | zdarzenie właściwego typu |
 | notatka sesji | arkusz z 02e | treść notatki; pusty tekst ją KASUJE | `event_correction` · `amend` (`notes`) |
-| drugi pilot | 10j | Dual CAŁEJ sesji — poprawka działa wstecz | `event_correction` · `amend` (`dualId`) |
+| drugi pilot | 10j | Dual CAŁEJ sesji - poprawka działa wstecz | `event_correction` · `amend` (`dualId`) |
 
 Każdy arkusz niesie **opcjonalny powód** (trafia do historii zmian i do panelu) oraz
 wejście w **historię zmian** (`design/10i`): „było → jest", kto, kiedy, z jakim powodem,
-a na dole zapis pierwotny. Lista jest kompletna z definicji — rejestr jest append-only —
+a na dole zapis pierwotny. Lista jest kompletna z definicji - rejestr jest append-only -
 i pokazuje także korekty administratora, bo od issue #32 wracają na telefon (§4.9).
 Wiersz raz poprawiony nosi znacznik **„popr."** również w trybie odczytu.
 
 **Godzina przejęcia i kaskada.** Przejęcie otwiera sesję, więc nie może wypaść PO
-uruchomieniu silnika — maszyna nie ruszyła, zanim ktoś ją wziął. Poprawka w tył jest
+uruchomieniu silnika - maszyna nie ruszyła, zanim ktoś ją wziął. Poprawka w tył jest
 zwykłą korektą; w przód, za uruchomienie, przesuwa CAŁY bieg o tyle, żeby uruchomienie
 wypadło dokładnie w nowej godzinie przejęcia (czasy trwania bez zmian). Arkusz zapowiada
-to przed zapisem. `day_close` zostaje na miejscu — od niego liczy się okno 24 h, więc
+to przed zapisem. `day_close` zostaje na miejscu - od niego liczy się okno 24 h, więc
 przesuwanie go własną poprawką przedłużałoby sobie termin; z tego samego powodu ZDANIE
 samolotu nie ma w arkuszu pola godziny. Plan liczy `ui/screens/logic/claimRetime.ts`
 i on też odmawia, gdy przesunięty bieg wyszedłby poza zdanie maszyny.
@@ -425,16 +425,16 @@ efektywnym, inaczej niż `checkAppend` pytający o pojedynczego kandydata do zap
 
 Wpisy ręczne trafiają do strumienia jak każde inne. CAŁY lot z ekranu 15 to komplet
 zwykłych zdarzeń sesji (`session_claim` → `preflight_confirm` → bieg → `day_close`)
-z czasami pilota w `gpsTime` i jawnym znacznikiem `session_claim.manualEntry` —
+z czasami pilota w `gpsTime` i jawnym znacznikiem `session_claim.manualEntry` -
 z niego bierze się plakietka „RĘCZNIE" na kafelku (01/12) i w nagłówku rozliczenia
-(10); pojedyncze fakty dopisywane w edycji — jako zdarzenia własnego typu z metodą
+(10); pojedyncze fakty dopisywane w edycji - jako zdarzenia własnego typu z metodą
 `manual`. Od przebudowy 2026-08-16 ekran 15 jest STEPPEREM czterech kroków z pełną
 paritą zadania (operacja, lotniska, klient, Dual), wieloma lotami w jednym biegu,
 zrzutami, dolewkami i odczytami z OBU stron biegu; nieścisłości (kolizje z własnymi
-sesjami, łańcuch MH/paliwa wobec przekazania z cache) OSTRZEGAJĄ, nigdy nie blokują —
+sesjami, łańcuch MH/paliwa wobec przekazania z cache) OSTRZEGAJĄ, nigdy nie blokują -
 pełny opis w `CLAUDE.md`, sekcja „Wpis ręczny = ten sam lot, te same pytania".
 
-### 3.9 Synchronizacja (sekcja w Ustawieniach 13 — dawny ekran 11 „eksport")
+### 3.9 Synchronizacja (sekcja w Ustawieniach 13 - dawny ekran 11 „eksport")
 
 **Osobnego ekranu NIE MA od 2026-08-12.** Był trzecim widokiem tej samej sesji
 („Podgląd arkusza" = tabela lotów z 10, „Dane dnia" = blok/paliwo/zrzuty z 10)
@@ -442,13 +442,13 @@ i drugim wskaźnikiem sieci (status wysyłki i kolejka = arkusz pod SyncChipem,
 issue #23), a jego „SYNCHRONIZUJ TERAZ" przeczyło regule zapisanej w tym samym
 arkuszu: outbox wysyła się sam. Do Ustawień przeszły trzy wiersze i jeden przycisk:
 kolejka, ostatnia udana wysyłka, **uwagi serwera** i awaryjne ponaglenie. Uwagi
-mieszkają tam, a nie pod SyncChipem, bo chip pojawia się WYŁĄCZNIE offline — flaga
+mieszkają tam, a nie pod SyncChipem, bo chip pojawia się WYŁĄCZNIE offline - flaga
 wystawiona przez serwer po udanej wysyłce nie miałaby się gdzie pokazać.
 Punkty niżej opisują wymagania, które ta sekcja spełnia (historycznie: ekran 11).
 
 - widok statusu, nie akcja: "wysłano 47/47 zdarzeń", czas ostatniego synca,
   status eksportu serwera ("Serwer zaktualizował arkusz"), link do arkusza
-- arkusz docelowy pochodzi z konfiguracji serwera — telefon nie wybiera arkusza
+- arkusz docelowy pochodzi z konfiguracji serwera - telefon nie wybiera arkusza
   i nie trzyma uprawnień do Sheets
 - przycisk ręcznego synca wyłącznie jako fallback (sync i tak działa automatycznie)
 - lista flag serwera dotyczących sesji pilota (do wiadomości, nie do rozwiązywania w locie)
@@ -463,7 +463,7 @@ Każdy zalogowany pilot może otworzyć podgląd samolotu, którego nie claimuje
 
 ---
 
-## 4. Architektura systemu — offline-first i synchronizacja
+## 4. Architektura systemu - offline-first i synchronizacja
 
 ### 4.1 Zasady
 
@@ -472,13 +472,13 @@ Każdy zalogowany pilot może otworzyć podgląd samolotu, którego nie claimuje
 2. **Serwer = źródło prawdy floty i historii.** PostgreSQL przyjmuje zdarzenia, deduplikuje
    po UUID, scala sesje, flaguje niespójności, eksportuje do Sheets.
 3. **Single-writer:** w ramach sesji pisze wyłącznie urządzenie PIC-a. Dual i pozostali
-   piloci — read-only. Godziny Duala wylicza serwer.
+   piloci - read-only. Godziny Duala wylicza serwer.
 4. **Claim optymistyczny:** rozpoczęcie sesji nie wymaga zgody serwera (sekcja 4.4).
 5. **Liczniki fizyczne > zegary:** preflight zawsze opiera się na odczycie MH/paliwomierza;
    dane z serwera są podpowiedzią. Serwer porządkuje sesje po łańcuchu MH (sekcja 4.5).
-6. **Dwa zegary w każdym zdarzeniu:** `device_time` + `gps_time` (gdy fix dostępny) —
+6. **Dwa zegary w każdym zdarzeniu:** `device_time` + `gps_time` (gdy fix dostępny) -
    czas GPS jest niezależny od sieci i ustawień telefonu; rozjazd ponad próg → flaga.
-7. **Eksport wykonuje serwer** kontem serwisowym — telefon nie ma uprawnień do Sheets.
+7. **Eksport wykonuje serwer** kontem serwisowym - telefon nie ma uprawnień do Sheets.
 
 ### 4.2 Przepływ danych
 
@@ -492,52 +492,52 @@ Każdy zalogowany pilot może otworzyć podgląd samolotu, którego nie claimuje
 │ cache            │◀ /reference┤ PostgreSQL          │
 │ referencyjny     │◀ /state ───┤ (flota, historia)   │
 └──────────────────┘            └─────────────────────┘
-       ▲ read-only (podgląd stanu floty) — telefony pozostałych pilotów
+       ▲ read-only (podgląd stanu floty) - telefony pozostałych pilotów
 ```
 
 ### 4.3 Outbox
 
 - zdarzenia z `synced_at IS NULL` tworzą kolejkę; wysyłka paczkami, automatycznie,
   przy każdym odzyskaniu sieci i cyklicznie w tle; retry z backoffem
-- odpowiedź serwera: `accepted` / `duplicates` (już znane UUID — idempotencja) / `flags`
-- UI: chip `OFFLINE · n` (online chip nie rysuje nic — issue #12); tapnięcie pilla
+- odpowiedź serwera: `accepted` / `duplicates` (już znane UUID - idempotencja) / `flags`
+- UI: chip `OFFLINE · n` (online chip nie rysuje nic - issue #12); tapnięcie pilla
   otwiera arkusz szczegółów synchronizacji (kolejka, ostatni udany sync, wiek danych
-  referencyjnych — issue #23 pkt 5); pełna kolejka na ekranie 11
+  referencyjnych - issue #23 pkt 5); pełna kolejka na ekranie 11
 - po potwierdzeniu zdarzenia lokalnie dostają `synced_at`; przycinanie lokalnej historii
-  po N dniach od ostatniego zdarzenia doby (retencja do ustalenia, np. 30 dni) — dzień
+  po N dniach od ostatniego zdarzenia doby (retencja do ustalenia, np. 30 dni) - dzień
   pilota nie ma „zamknięcia", od którego dałoby się liczyć (§3.6a)
 - **outbox ma drogę powrotną** (§4.9, issue #32): `GET /me/events` odbudowuje lokalny
   rejestr z serwera po czyszczeniu pamięci, reinstalacji albo na nowym urządzeniu
 
 ### 4.4 Claim i przejęcie samolotu
 
-`session_claim` to zwykłe zdarzenie w outboxie — **lokalnie zawsze można zostać PIC-em**.
+`session_claim` to zwykłe zdarzenie w outboxie - **lokalnie zawsze można zostać PIC-em**.
 Serwer nie jest mutexem, tylko detektorem konfliktów: dwa nakładające się claimy → flaga
 `DOUBLE_CLAIM` do wyjaśnienia, nigdy blokada pracy w terenie.
 
 Modal przejęcia przy wyborze zajętego samolotu:
 
-- **wariant online:** pełna wiedza — "Aktywny PIC: KRZ · od 07:10 · ostatni sync 09:12
+- **wariant online:** pełna wiedza - "Aktywny PIC: KRZ · od 07:10 · ostatni sync 09:12
   · ma niewysłane dane" + ostrzeżenie; przejęcie natychmiastowe
-- **wariant offline:** wiedza z cache — "Stan z cache z 17:30 · brak łączności";
+- **wariant offline:** wiedza z cache - "Stan z cache z 17:30 · brak łączności";
   ostrzeżenie z natury słabsze i mówi to wprost; pilot wpisuje odczyty z liczników
   ręcznie (modale korekty z 3.1), a jego odczyt staje się początkiem nowego ogniwa łańcucha
 
-Spóźnione dane poprzednika serwer scala po fakcie (append-only — nic nie nadpisują);
+Spóźnione dane poprzednika serwer scala po fakcie (append-only - nic nie nadpisują);
 nakładki flaguje zamiast odrzucać.
 
-> Opcja na później (poza fazą 0): przekazanie QR-kodem — telefon poprzednika pokazuje kod
+> Opcja na później (poza fazą 0): przekazanie QR-kodem - telefon poprzednika pokazuje kod
 > z końcowymi odczytami, nowy PIC skanuje. Zamyka lukę zaufania całkowicie offline.
 
 ### 4.5 Scalanie i flagi
 
-Kręgosłupem scalania jest **łańcuch odczytów MH** — licznik motogodzin jest monotoniczny
+Kręgosłupem scalania jest **łańcuch odczytów MH** - licznik motogodzin jest monotoniczny
 i niezależny od zegarów oraz sieci. Każda sesja zaczyna się i kończy odczytem liczników;
 serwer porządkuje sesje samolotu po MH, timestampy są drugorzędne.
 
 Katalog przepisany z `packages/domain/src/flags.ts` (**sześć pozycji**: decyzja 2026-07-31
 zwinęła `DOUBLE_CLAIM` + `TIME_OVERLAP` w jedną pozycję, a etap D4 rozdzielił ją z powrotem
-2026-08-07 — tym razem wzdłuż innej osi, patrz niżej):
+2026-08-07 - tym razem wzdłuż innej osi, patrz niżej):
 
 | Flaga | Warunek | Znaczenie |
 |-------|---------|-----------|
@@ -545,16 +545,16 @@ zwinęła `DOUBLE_CLAIM` + `TIME_OVERLAP` w jedną pozycję, a etap D4 rozdzieli
 | `mh_regression` | odczyt niższy niż poprzedni | cofnięty licznik albo błąd wpisu |
 | `aircraft_overlap` | dwie niezamknięte sesje jednego SAMOLOTU | typowo przejęcie offline; **jedyna bramka karty arkusza** |
 | `pilot_overlap` | sesje jednego PILOTA nachodzące w czasie | anomalia grafiku (rzekomo lata dwiema maszynami); arkusza NIE blokuje |
-| `fuel_mismatch` | odczyt vs przekazanie poza tolerancją | do wyjaśnienia (paliwomierz nieprecyzyjny — tolerancja szersza) |
+| `fuel_mismatch` | odczyt vs przekazanie poza tolerancją | do wyjaśnienia (paliwomierz nieprecyzyjny - tolerancja szersza) |
 | `clock_drift` | \|device_time − gps_time\| > próg | zegar telefonu przestawiony |
 
 > **ROZSTRZYGNIĘTE w etapie D4** (WDROŻONE 2026-08-07, §4.7): jedna flaga `session_overlap`
-> udawała dwie różne patologie — nakładkę claimów na maszynie i nakładkę czasu pilota.
+> udawała dwie różne patologie - nakładkę claimów na maszynie i nakładkę czasu pilota.
 > Przy długich sesjach zbiegały się w praktyce; po §3.6a sesje są krótkie i to przestało być
 > prawdą, bo pilot legalnie zdaje jedną maszynę i bierze drugą **co do minuty**. Stąd podział
 > na `aircraft_overlap` i `pilot_overlap` w tabeli wyżej (`server/src/domain/pilotOverlap.ts`).
 >
-> **`mh_gap` przy krótszych sesjach** — NADAL OTWARTE: gdy jedna maszyna ma w dobie pięć sesji, a dwie z nich
+> **`mh_gap` przy krótszych sesjach** - NADAL OTWARTE: gdy jedna maszyna ma w dobie pięć sesji, a dwie z nich
 > nie mają domknięcia (sesja porzucona bez zdania samolotu), reguła „start MH > koniec
 > poprzedniej" musi wiedzieć, którą sesję uznać za poprzednią. Dziś zakłada łańcuch bez dziur.
 
@@ -567,20 +567,20 @@ administratora/szefa wyszkolenia, nie w kokpicie).
 | Metoda | Endpoint | Cel |
 |--------|----------|-----|
 | POST | `/auth/login` | login + hasło → JWT sesji + refresh token |
-| POST | `/auth/refresh` | odświeżenie JWT (refresh długożyciowy — patrz 3.0) |
+| POST | `/auth/refresh` | odświeżenie JWT (refresh długożyciowy - patrz 3.0) |
 | GET | `/reference` | samoloty + konfiguracje + piloci + claim/przekazanie per samolot; ETag (flota **i** sesje) do cache |
-| GET | `/aircraft/:id/state` | aktywny claim (kto, od kiedy), najświeższy znany stan FOB + MH — wyliczony z ostatnich zsynchronizowanych zdarzeń (przekazanie ze **zdania samolotu**, opcjonalny odczyt z `leg_close`, lub zdarzenia w trakcie sesji, np. tankowanie), `last_sync_at` |
-| GET | `/aircraft/:id/readings-chain?at=…` | ciągłość ODCZYTÓW wokół chwili (issue #62): `{before, after, oil}`. `before`/`after` = odczyt paliwa i MH przy zdaniu sesji poprzedzającej i przy przejęciu następnej (`{sessionUuid, picId, at, fuelL, mh}` albo `null`); `oil` = ostatni POMIAR OLEJU nie późniejszy niż `at` razem z sumą dolewek od niego (kształt `Handover.oil`). Olej ma kotwicę, nie parę „przed/po", bo bagnet tuż po locie kłamie i zdanie samolotu oleju nie mierzy (issue #60). Materiał podpowiedzi wpisu ręcznego — `handover` z `/reference` odpowiada na inne pytanie („ile jest TERAZ"), a wpis opisuje czwartek, gdy maszyna zdążyła polatać z kimś innym. Czysty odczyt, bez migracji; `except=<uuid>` wyklucza poprawianą sesję, żeby nie była sobie punktem odniesienia |
+| GET | `/aircraft/:id/state` | aktywny claim (kto, od kiedy), najświeższy znany stan FOB + MH - wyliczony z ostatnich zsynchronizowanych zdarzeń (przekazanie ze **zdania samolotu**, opcjonalny odczyt z `leg_close`, lub zdarzenia w trakcie sesji, np. tankowanie), `last_sync_at` |
+| GET | `/aircraft/:id/readings-chain?at=…` | ciągłość ODCZYTÓW wokół chwili (issue #62): `{before, after, oil}`. `before`/`after` = odczyt paliwa i MH przy zdaniu sesji poprzedzającej i przy przejęciu następnej (`{sessionUuid, picId, at, fuelL, mh}` albo `null`); `oil` = ostatni POMIAR OLEJU nie późniejszy niż `at` razem z sumą dolewek od niego (kształt `Handover.oil`). Olej ma kotwicę, nie parę „przed/po", bo bagnet tuż po locie kłamie i zdanie samolotu oleju nie mierzy (issue #60). Materiał podpowiedzi wpisu ręcznego - `handover` z `/reference` odpowiada na inne pytanie („ile jest TERAZ"), a wpis opisuje czwartek, gdy maszyna zdążyła polatać z kimś innym. Czysty odczyt, bez migracji; `except=<uuid>` wyklucza poprawianą sesję, żeby nie była sobie punktem odniesienia |
 | POST | `/events` | paczka zdarzeń → `{accepted, duplicates, flags}` |
 | GET | `/me/events` | strona WŁASNYCH zdarzeń pilota (kursor keyset po `received_at`) → `{events, nextCursor, hasMore}`; odtworzenie rejestru na urządzeniu, które go straciło (§4.9) |
 | GET | `/sessions/:uuid/sync-status` | wysłane/łącznie, flagi sesji, status i link eksportu |
-| GET | `/me/task-suggestions` | ostatnio używane oznaczenia klientów (z operacją, na której padły) i notatki pilota — podpowiedzi do kroku 2 preflightu (issue #14) |
+| GET | `/me/task-suggestions` | ostatnio używane oznaczenia klientów (z operacją, na której padły) i notatki pilota - podpowiedzi do kroku 2 preflightu (issue #14) |
 
 `/me/task-suggestions` jest jedynym odczytem, który **świadomie nie ma wariantu offline**:
 bez sieci pole działa jak dotąd (pilot wpisuje wartość), znika sama lista. To wygoda,
-a nie dane, których brak zmienia dzień lotny — dlatego nie trzymamy jej też w cache.
+a nie dane, których brak zmienia dzień lotny - dlatego nie trzymamy jej też w cache.
 
-Bez pushów — telefon odpytuje przy starcie aplikacji, po każdym opróżnieniu outboxa
+Bez pushów - telefon odpytuje przy starcie aplikacji, po każdym opróżnieniu outboxa
 i przy wejściu na ekrany, które pokazują stan floty (preflight, read-only, ekran 11).
 
 ### 4.7 Eksport do Google Sheets (serwerowy)
@@ -591,38 +591,38 @@ i przy wejściu na ekrany, które pokazują stan floty (preflight, read-only, ek
 - spóźnione dane (sync po eksporcie) → serwer regeneruje arkusz i oznacza rewizję
   w `export_log`
 - **bramka flagi obejmuje wyłącznie sesje objęte flagą**, nie całą kartę: karta wychodzi
-  z adnotacją „niekompletna — flaga #n"
+  z adnotacją „niekompletna - flaga #n"
 
 **Wdrożone 2026-08-07** (`application/common/export/`):
 
 - **dobę wyznacza `claimedAt`**, czyli czas `session_claim` (`sessions.claim_time`,
-  decyzja 2026-08-07) — **nie `dutyStart`**. Meldunek jest od §3.6a opcjonalny i ekran 02 o niego
+  decyzja 2026-08-07) - **nie `dutyStart`**. Meldunek jest od §3.6a opcjonalny i ekran 02 o niego
   nie pyta, więc oparta na nim bramka odrzucała każdą sesję z przebudowanego flow. Sesja
-  przejęta o 23:50 i zdana po północy należy do doby swojego PRZEJĘCIA — ta sama reguła,
+  przejęta o 23:50 i zdana po północy należy do doby swojego PRZEJĘCIA - ta sama reguła,
   co przy przynależności sesji do doby pilota w `projectPilotDay`
 - **kształt karty**: nagłówek (samolot · doba · liczba zmian · czas blokowy doby) → tabela
   `Sesje doby` (PIC, Dual, operacja, przejęcie → zdanie, block, stan) → `Loty` → `Paliwo` →
   `Motogodziny` → `Zrzuty` (tylko przy operacji Skoki). Zmiany są etykietowane `S1`, `S2`…
-  chronologicznie i **`Sesja` jest pierwszą kolumną tabeli lotów** — numer lotu liczy się
+  chronologicznie i **`Sesja` jest pierwszą kolumną tabeli lotów** - numer lotu liczy się
   w obrębie sesji, więc w dobie z dwiema zmianami powtórzy się
 - **sumy doby nie są sumą wszystkiego**: paliwo startowe to odczyt pierwszej zmiany,
-  końcowe — ostatniej (poziom w zbiorniku nie jest addytywny); MH doby to **ruch licznika**
+  końcowe - ostatniej (poziom w zbiorniku nie jest addytywny); MH doby to **ruch licznika**
   od pierwszego do ostatniego odczytu, a rozjazd wobec sumy delt per sesja ma zgłosić
   `mh_gap`, nie zamaskować arytmetyka karty
-- **sesja jeszcze niezdana jest w karcie** ze stanem „w toku" — karta odzwierciedla aktualny
+- **sesja jeszcze niezdana jest w karcie** ze stanem „w toku" - karta odzwierciedla aktualny
   stan doby i jest przebudowywana przy każdym kolejnym zdaniu maszyny
 - **rewizja należy do pary (doba, samolot)**, nie do sesji. `export_log` ma po jednym
-  wierszu na sesję wchodzącą do rewizji, wszystkie z tym samym numerem — bo
+  wierszu na sesję wchodzącą do rewizji, wszystkie z tym samym numerem - bo
   `GET /sessions/:uuid/sync-status` (ekran 11) pyta o link PO SESJI i każda zmiana musi go
   znaleźć, także ta, która eksportu nie wyzwoliła. Blokada advisory obejmuje ten sam klucz
   co rewizja (`export_log:<doba>:<samolot>`)
 
 > **Dlaczego karta jest dobą samolotu, a nie sesją** (decyzja 2026-08-07, konsekwencja §3.6a):
-> po skróceniu sesji nazwa `YYYY-MM-DD_SP-XXX` przestaje być kluczem unikalnym — w typowym
+> po skróceniu sesji nazwa `YYYY-MM-DD_SP-XXX` przestaje być kluczem unikalnym - w typowym
 > dniu skokowym tą samą maszyną lata dwóch pilotów. Klub czyta jednak dzień per samolot,
 > nie per zmianę pilota, więc jednostką zostaje doba, a sesje są jej wierszami. Blokowanie
 > całej karty z powodu jednej pary nakładających się sesji uczyniłoby z bramki stan domyślny,
-> bo przy krótszych sesjach nakładki są częstsze — stąd zawężenie bramki.
+> bo przy krótszych sesjach nakładki są częstsze - stąd zawężenie bramki.
 >
 > **`session_overlap` ROZDZIELONE na dwie patologie** (WDROŻONE 2026-08-07): nakładka CLAIMÓW
 > na jednej maszynie (dwa telefony piszą do tej samej maszyny) to co innego niż nakładka
@@ -636,42 +636,42 @@ i przy wejściu na ekrany, które pokazują stan floty (preflight, read-only, ek
 Dane z serwera mają dwie prędkości:
 
 - **wolnozmienne (cache referencyjny):** lista samolotów z konfiguracjami + lista pilotów
-  — pobierane przy logowaniu, odświeżane przy każdym kontakcie z siecią (ETag — tanie
+  - pobierane przy logowaniu, odświeżane przy każdym kontakcie z siecią (ETag - tanie
   odpytywanie); stary cache jest zwykle bezpieczny
-- **szybkozmienne (stan samolotu):** claim, najświeższy FOB i MH — pobierane **na żywo**
+- **szybkozmienne (stan samolotu):** claim, najświeższy FOB i MH - pobierane **na żywo**
   przy każdym wejściu w preflight / podgląd, gdy jest sieć; cache służy wyłącznie
   jako fallback offline
 
 Każdy rekord cache niesie `fetched_at`; preflight offline pokazuje adnotację
 "dane z cache · sync 21 JUN 17:30". W obu przypadkach odczyty fizycznych liczników
-pozostają ostatecznym źródłem prawdy — dane z serwera to podpowiedź.
+pozostają ostatecznym źródłem prawdy - dane z serwera to podpowiedź.
 
 ### 4.9 Odtworzenie rejestru na urządzeniu (issue #32, 2026-08-12)
 
 Do tej pory synchronizacja miała **jeden kierunek**: outbox wypychał zdarzenia na serwer
-i nic nigdy nie wracało. Konsekwencja wyszła w terenie — pilot wyczyścił pamięć aplikacji
+i nic nigdy nie wracało. Konsekwencja wyszła w terenie - pilot wyczyścił pamięć aplikacji
 i stracił WSZYSTKO, chociaż jego dni leżały kompletne w bazie klubu. `GET /me/events`
 zamyka pętlę.
 
-- **co wraca:** wyłącznie zdarzenia, w których pilot jest **PIC-em** (§4.1 pkt 3 — jedyny
+- **co wraca:** wyłącznie zdarzenia, w których pilot jest **PIC-em** (§4.1 pkt 3 - jedyny
   piszący sesji, więc tylko te telefon kiedykolwiek miał u siebie). Sesje, w których był
   Dualem, do jego lokalnego rejestru NIE wchodzą: „Historia dni" pokazuje wszystko, co
-  leży w telefonie, więc dopisanie ich dałoby mu dzień, którego nie prowadził — z ołówkiem
+  leży w telefonie, więc dopisanie ich dałoby mu dzień, którego nie prowadził - z ołówkiem
   korekty. Godziny Duala liczy serwer
 - **koperta** jest ta sama, co przy wysyłce (§5.1), bez `received_at` i `source_device`
   (księgowość serwera). Pobrane zdarzenie da się odesłać przez `POST /events` i wróci
-  jako `duplicates` — jedna definicja zdarzenia w obie strony
+  jako `duplicates` - jedna definicja zdarzenia w obie strony
 - **kursor keyset** po `(received_at, uuid)` rosnąco, nieprzezroczysty dla telefonu.
   Wypełniony także na OSTATNIEJ stronie (`hasMore: false` mówi osobno, czy jest co
-  czytać) — inaczej telefon nie miałby czego zapamiętać po dojściu do końca i przy każdej
+  czytać) - inaczej telefon nie miałby czego zapamiętać po dojściu do końca i przy każdej
   okazji ściągałby ogon rejestru od nowa. Kursor jest zapisany **per pilot**: po
   zalogowaniu kolegi na tym samym telefonie odtwarzamy od początku jego rejestru
-- **zapis lokalny ze stemplem wysyłki** — zdarzenie przyszło Z serwera, więc serwer je
+- **zapis lokalny ze stemplem wysyłki** - zdarzenie przyszło Z serwera, więc serwer je
   ma; bez stempla wpadłoby do outboxa i telefon odsyłałby serwerowi jego własne dane
   w kółko. Dedup po `uuid` należy do magazynu, więc wpis czekający jeszcze w outboxie
   zostaje nietknięty (o jego losie rozstrzyga wysyłka, nie odczyt)
 - **brama wieku 15 min** i pętla stron po ≤200 zdarzeń, z sufitem stron na przebieg;
-  przerwanie w połowie nie cofa niczego — kursor jest zapisywany po każdej stronie
+  przerwanie w połowie nie cofa niczego - kursor jest zapisywany po każdej stronie
 
 Dwie konsekwencje warte zapamiętania:
 
@@ -679,21 +679,21 @@ Dwie konsekwencje warte zapamiętania:
   pierwotna kolejność zapisu na telefonie (zdarzenie utworzone offline wcześniej mogło
   dojechać później). Projekcje to znoszą, bo porządek czasowy przywraca `projectSession`,
   a odtworzony telefon dostaje dokładnie ten porządek, którym rejestr czyta SERWER
-  (`ORDER BY received_at, uuid`) — czyli wersję kanoniczną, nie gorszą
+  (`ORDER BY received_at, uuid`) - czyli wersję kanoniczną, nie gorszą
 - **sesja niezdana nie wraca jako „bieżąca"**: `current_session_uuid` jest lokalną
   pamięcią urządzenia i po czyszczeniu go nie ma. Odtworzona sesja jest widoczna na 01
   i w historii, a maszynę trzymaną w chwili awarii odbiera się normalną drogą przejęcia
-  (§4.4) — wznawianie kokpitu z rejestru sprzed tygodnia byłoby gorsze niż jego brak
+  (§4.4) - wznawianie kokpitu z rejestru sprzed tygodnia byłoby gorsze niż jego brak
 
-> **To nie jest odwrót od offline-first — to jego warunek.** Ekrany („Mój dzień",
+> **To nie jest odwrót od offline-first - to jego warunek.** Ekrany („Mój dzień",
 > „Historia dni", statystyki) dalej czytają WYŁĄCZNIE lokalny strumień i liczą projekcje
 > w telefonie (§4.1 pkt 1, §6 pkt 1: dane sesji nie mają wariantu „z cache"). Pobranie
-> nie zasila EKRANU, tylko REJESTR. Odwrotna decyzja — ekran pytający serwer — zabrałaby
+> nie zasila EKRANU, tylko REJESTR. Odwrotna decyzja - ekran pytający serwer - zabrałaby
 > pilotowi jego dzień dokładnie wtedy, gdy zabraknie zasięgu, czyli w powietrzu.
 >
 > Jedyny ślad w UI jest negatywny i **dotyczy wyłącznie stanu pustego**: dopóki pierwsze
 > odtworzenie nie wróci, 01 i 12 nie rysują „DZIŚ BEZ LOTÓW" ani „BRAK ZAMKNIĘTYCH
-> DNI". Doba z sesjami wyświetla się NATYCHMIAST z tego, co telefon ma lokalnie — ona
+> DNI". Doba z sesjami wyświetla się NATYCHMIAST z tego, co telefon ma lokalnie - ona
 > nigdy nie kłamie i nie ma powodu, żeby czekała na sieć. To ta sama zasada, dla której
 > `usePilotDay` zwraca `null` do pierwszego odczytu z bazy. Offline stan pusty pojawia
 > się normalnie: odtworzenie wraca wtedy od razu jako `skipped`, a lokalny rejestr JEST
@@ -702,33 +702,33 @@ Dwie konsekwencje warte zapamiętania:
 ### 4.10 Ślad GPS wraca z serwera (issue #47, 2026-08-14)
 
 Zapis GPS przestał mieszkać na telefonie. Do tej pory nagranie leżało w `gps_trace`
-przez **14 dni** i stamtąd rysował się ekran 14 — a po tym czasie znikało razem z trasą,
+przez **14 dni** i stamtąd rysował się ekran 14 - a po tym czasie znikało razem z trasą,
 mimo że jego kopia leżała kompletna na serwerze. Retencja była limitem **pamięci
 urządzenia** (dzień lotny to ~30 tys. wierszy), nie decyzją o wartości danych.
 
 Kierunek jest odtąd odwrócony: telefon **nagrywa → oddaje (`POST /traces`) → kasuje**,
 a ekran śladu pobiera gotową geometrię z `GET /me/sessions/:uuid/track`.
 
-- **co wraca:** WYŁĄCZNIE geometria i liczby z niej policzone — linia po uproszczeniu
+- **co wraca:** WYŁĄCZNIE geometria i liczby z niej policzone - linia po uproszczeniu
   RDP, profil pionowy i statystyki lotu. Rejestracji maszyny, listy lotów ani czasów
   w kopercie NIE MA. Logu punktów też nie: tabela surowych fixów ze stanem bramki
   jakości jest materiałem do strojenia progów i została w panelu (A02c) oraz
   w nagraniu czytanym przez `replay.ts` (przegląd 2026-08-15)
 - **co zostaje lokalne:** wszystko powyższe. Czasy startów, loty, czas w powietrzu i bieg
-  silnika liczą się dalej z lokalnego rejestru — dlatego wariant bez zasięgu (`14c`)
+  silnika liczą się dalej z lokalnego rejestru - dlatego wariant bez zasięgu (`14c`)
   pokazuje komplet czasów i mówi wprost, że brakuje mu wyłącznie rysunku
 - **kompresja (pkt 6 zgłoszenia):** RDP w metrach na linii, RDP w stopach na profilu,
   współrzędne do 5 miejsc (~1 m). Nagranie o kilku MB schodzi do kilkudziesięciu kB. Statystyki liczą się PRZED upraszczaniem,
-  z kompletu punktów — inaczej „max wznoszenie" zależałoby od tolerancji rysowania
+  z kompletu punktów - inaczej „max wznoszenie" zależałoby od tolerancji rysowania
 - **okno bierze się z REJESTRU, nie ze śladu** (jak w panelu): po korekcie czasu startu
   ślad zmienia się sam przy następnym otwarciu
-- **uprawnienie:** PIC sesji. Cudza sesja dostaje 404, nie 403 — potwierdzenie „istnieje,
+- **uprawnienie:** PIC sesji. Cudza sesja dostaje 404, nie 403 - potwierdzenie „istnieje,
   ale nie twoja" byłoby odpowiedzią na pytanie, którego pytający nie ma prawa zadać
 - **retencja na telefonie** zostaje jako SUFIT dla wpisów, których nie udało się wysłać
   (telefon tygodniami bez zasięgu). Normalną drogą jest kasowanie po potwierdzeniu
 
 > **To jest świadomy wyjątek od offline-first i jedyny taki w aplikacji.** Ekran 14 bez
-> zasięgu nie narysuje trasy — ani dzisiejszej, ani żadnej innej. Decyzja użytkownika
+> zasięgu nie narysuje trasy - ani dzisiejszej, ani żadnej innej. Decyzja użytkownika
 > (2026-08-14) po przedstawieniu wariantu „lokalnie + API w zapasie": ślad jest materiałem
 > do OGLĄDANIA po locie, a nie przyrządem w locie, więc jego cena za trwałość i za pamięć
 > telefonu jest do przyjęcia. Reguła §6 pkt 1 pozostaje nietknięta: DANE SESJI (czasy,
@@ -743,15 +743,15 @@ a ekran śladu pobiera gotową geometrię z `GET /me/sessions/:uuid/track`.
 Wszystko, co dzieje się w dniu lotnym, jest zdarzeniem append-only:
 
 ```
-uuid            — idempotencja (dedup na serwerze)
-session_uuid    — sesja (od claim do day_close)
-aircraft_id     — samolot
-pic_id, dual_id — załoga w chwili zdarzenia
-type            — typ zdarzenia (niżej)
-device_time     — zegar telefonu (UTC)
-gps_time        — czas z fixa GPS (UTC, null gdy brak fixa)
-payload         — JSON specyficzny dla typu
-schema_version  — wersjonowanie payloadu
+uuid            - idempotencja (dedup na serwerze)
+session_uuid    - sesja (od claim do day_close)
+aircraft_id     - samolot
+pic_id, dual_id - załoga w chwili zdarzenia
+type            - typ zdarzenia (niżej)
+device_time     - zegar telefonu (UTC)
+gps_time        - czas z fixa GPS (UTC, null gdy brak fixa)
+payload         - JSON specyficzny dla typu
+schema_version  - wersjonowanie payloadu
 ```
 
 Typy zdarzeń:
@@ -759,23 +759,23 @@ Typy zdarzeń:
 | Typ | Payload (istotne pola) |
 |-----|------------------------|
 | `session_claim` | tryb przejęcia (wolny / przejęcie online / przejęcie offline) |
-| `preflight_confirm` | trasa, operacja, odczyt FOB + MH, korekty z powodem, oznaczenie klienta i **notatka do dnia** (wolny tekst, issue #14); od issue #43 także `dualId` — DRUGI PILOT CAŁEJ SESJI, który wygrywa z nagłówkiem zdarzeń (bez tego pola załogi nie dałoby się poprawić: nagłówek opisuje chwilę zapisu i jest append-only); `dutyStart` usunięty razem z klamrą służby (issue #23); od 2026-08-17 (operacja Skoki) także **`jumperDefaults`** — domyślny skład skoczków, ustawiany na kroku „zadanie" (02e), zanim padnie pierwszy `boarding`. Podstawia liczniki KAŻDEGO załadunku bez własnej deklaracji, także po `drop`, który konsumuje poprzedni skład (`boardingInitialJumpers` w apce). Nie wchodzi do białej listy `amend` — to tylko wartość startowa formularza, a rzeczywisty skład poprawia się przez własne zdarzenie `boarding`/`drop` |
+| `preflight_confirm` | trasa, operacja, odczyt FOB + MH, korekty z powodem, oznaczenie klienta i **notatka do dnia** (wolny tekst, issue #14); od issue #43 także `dualId` - DRUGI PILOT CAŁEJ SESJI, który wygrywa z nagłówkiem zdarzeń (bez tego pola załogi nie dałoby się poprawić: nagłówek opisuje chwilę zapisu i jest append-only); `dutyStart` usunięty razem z klamrą służby (issue #23); od 2026-08-17 (operacja Skoki) także **`jumperDefaults`** - domyślny skład skoczków, ustawiany na kroku „zadanie" (02e), zanim padnie pierwszy `boarding`. Podstawia liczniki KAŻDEGO załadunku bez własnej deklaracji, także po `drop`, który konsumuje poprzedni skład (`boardingInitialJumpers` w apce). Nie wchodzi do białej listy `amend` - to tylko wartość startowa formularza, a rzeczywisty skład poprawia się przez własne zdarzenie `boarding`/`drop` |
 | `engine_start` / `engine_stop` | pozycja GPS, elewacja przy starcie |
-| `taxi` | metoda (auto / manual), pozycja — otwiera lot w logu cyklu; NIE wpływa na czas blokowy ani czas lotu, więc zapisuje się bez okna „COFNIJ" |
+| `taxi` | metoda (auto / manual), pozycja - otwiera lot w logu cyklu; NIE wpływa na czas blokowy ani czas lotu, więc zapisuje się bez okna „COFNIJ" |
 | `takeoff` / `landing` | metoda (auto / manual), pozycja |
-| `drop` | numer zrzutu, wysokość (**średnia z okna GPS** `DROP_ALT_WINDOW_SEC`, nie pojedynczy fix — issue #21), **skład skoczków w rozbiciu na typy** (`tandem` / `aff` / `solo`) — strona przychodowa dnia; klient dziedziczony z `preflight_confirm`. Skład jest **OPCJONALNY** (issue #21: `null` = niepodany, nie zero) — arkusz otwiera się wypełniony składem z `boarding` i pilot tylko potwierdza. Możliwy WYŁĄCZNIE w dniu skokowym (`isJumpOperation`) — w kokpicie innej operacji przycisku zrzutu nie ma (issue #19) |
-| `boarding` | **załadunek skoczków** (issue #21): znacznik wejścia składu na pokład — na ziemi, przed startem serii albo po wykołowaniu z pasa między lotami; skład OPCJONALNY jak przy `drop`. Zadeklarowany skład wypełnia arkusz najbliższego zrzutu (projekcja czyści go pierwszym `drop`) **oraz arkusz załadunku otwarty ponownie** (issue #28): dopóki skład czeka na zrzut, 05i pokazuje go zamiast zer, a kolejny zapis go zastępuje — liczy się skład faktycznie siedzący na pokładzie. W kokpicie zajmuje na ziemi slot, w którym w powietrzu stoi zrzut — para trzyma stałą geometrię paska akcji |
+| `drop` | numer zrzutu, wysokość (**średnia z okna GPS** `DROP_ALT_WINDOW_SEC`, nie pojedynczy fix - issue #21), **skład skoczków w rozbiciu na typy** (`tandem` / `aff` / `solo`) - strona przychodowa dnia; klient dziedziczony z `preflight_confirm`. Skład jest **OPCJONALNY** (issue #21: `null` = niepodany, nie zero) - arkusz otwiera się wypełniony składem z `boarding` i pilot tylko potwierdza. Możliwy WYŁĄCZNIE w dniu skokowym (`isJumpOperation`) - w kokpicie innej operacji przycisku zrzutu nie ma (issue #19) |
+| `boarding` | **załadunek skoczków** (issue #21): znacznik wejścia składu na pokład - na ziemi, przed startem serii albo po wykołowaniu z pasa między lotami; skład OPCJONALNY jak przy `drop`. Zadeklarowany skład wypełnia arkusz najbliższego zrzutu (projekcja czyści go pierwszym `drop`) **oraz arkusz załadunku otwarty ponownie** (issue #28): dopóki skład czeka na zrzut, 05i pokazuje go zamiast zer, a kolejny zapis go zastępuje - liczy się skład faktycznie siedzący na pokładzie. W kokpicie zajmuje na ziemi slot, w którym w powietrzu stoi zrzut - para trzyma stałą geometrię paska akcji |
 | `refuel` | przed / dolano / po, wyliczone zużycie |
 | `crew_change` | rola (PIC / Dual), pilot out / in |
 | `manual_log_entry` | off block / T/O / LDG / on block, uwagi |
-| `day_close` | **zdanie samolotu**: końcowy FOB + MH (przekazanie) oraz `noFlightReason` dla sesji bez ani jednego biegu silnika (09C: `weather` / `malfunction` / `cancelled` / `other`). Brak powodu przy takiej sesji to **miękka** flaga `NO_FLIGHT_WITHOUT_REASON` — odrzucenie zdarzenia skasowałoby jedyny ślad po tym, że maszyna stała zajęta. (`dutyEnd` usunięte 2026-08-11 razem z klamrą służby — issue #23) |
-| `event_correction` | `targetUuid` + opcjonalny `reason` + akcja: `retime` (nowy czas) · `void` („zdarzenia nie było") · `amend` (nowa WARTOŚĆ w payloadzie celu — issue #43) — append-only: oryginał zostaje, projekcja nakłada korekty przed liczeniem (ostatnia wygrywa); samodzielna korekta pilota do 24 h po zdaniu samolotu (decyzja 2026-07-23, kotwica per sesja od 2026-08-10). Biała lista pól `amend` zależy od typu celu: `fuelL`/`mh`/`notes`/`dualId` dla `preflight_confirm`, `fuelL`/`mh` dla `day_close`, `jumpers` dla `drop`, `notes` dla `manual_log_entry` — poza nią `CORRECTION_FIELD_NOT_ALLOWED`. Na `preflight_confirm` i `day_close` dozwolony jest WYŁĄCZNIE `amend`; `retime`/`void` odrzuca `CORRECTION_TARGET_NOT_ALLOWED`, bo unieważnienie zdania rozbiłoby sesję w pół. `session_claim` przyjmuje wyłącznie `retime` (godzina przejęcia to zwykły fakt; `void` zabrałby sesji właściciela) — a przesunięcie jej ZA uruchomienie silnika pociąga cały bieg, patrz §3.8 |
+| `day_close` | **zdanie samolotu**: końcowy FOB + MH (przekazanie) oraz `noFlightReason` dla sesji bez ani jednego biegu silnika (09C: `weather` / `malfunction` / `cancelled` / `other`). Brak powodu przy takiej sesji to **miękka** flaga `NO_FLIGHT_WITHOUT_REASON` - odrzucenie zdarzenia skasowałoby jedyny ślad po tym, że maszyna stała zajęta. (`dutyEnd` usunięte 2026-08-11 razem z klamrą służby - issue #23) |
+| `event_correction` | `targetUuid` + opcjonalny `reason` + akcja: `retime` (nowy czas) · `void` („zdarzenia nie było") · `amend` (nowa WARTOŚĆ w payloadzie celu - issue #43) - append-only: oryginał zostaje, projekcja nakłada korekty przed liczeniem (ostatnia wygrywa); samodzielna korekta pilota do 24 h po zdaniu samolotu (decyzja 2026-07-23, kotwica per sesja od 2026-08-10). Biała lista pól `amend` zależy od typu celu: `fuelL`/`mh`/`notes`/`dualId` dla `preflight_confirm`, `fuelL`/`mh` dla `day_close`, `jumpers` dla `drop`, `notes` dla `manual_log_entry` - poza nią `CORRECTION_FIELD_NOT_ALLOWED`. Na `preflight_confirm` i `day_close` dozwolony jest WYŁĄCZNIE `amend`; `retime`/`void` odrzuca `CORRECTION_TARGET_NOT_ALLOWED`, bo unieważnienie zdania rozbiłoby sesję w pół. `session_claim` przyjmuje wyłącznie `retime` (godzina przejęcia to zwykły fakt; `void` zabrałby sesji właściciela) - a przesunięcie jej ZA uruchomienie silnika pociąga cały bieg, patrz §3.8 |
 
 > **Stan modelu (po pivocie 2026-08-10 i issue #23 z 2026-08-11).**
 >
-> `leg_close` NIE istnieje (usunięty z pivotem — sesję zatwierdza `day_close`);
-> `dutyStart`/`dutyEnd` NIE istnieją (usunięte z klamrą służby — issue #23);
-> `CURRENT_SCHEMA_VERSION` = 1 (strażnik zgodności zdjęty 2026-08-10 — nic nie było
+> `leg_close` NIE istnieje (usunięty z pivotem - sesję zatwierdza `day_close`);
+> `dutyStart`/`dutyEnd` NIE istnieją (usunięte z klamrą służby - issue #23);
+> `CURRENT_SCHEMA_VERSION` = 1 (strażnik zgodności zdjęty 2026-08-10 - nic nie było
 > wdrożone); `projectPilotDay` składa dzień pilota (listę sesji z sumami) per pilot
 > per doba UTC; okno korekty kotwiczy się w ZDANIU samolotu, per sesja.
 >
@@ -783,64 +783,64 @@ Typy zdarzeń:
 > opcjonalnych): reguła `PREFLIGHT_REQUIRED` pytała o `state.dutyStart` jako o dowód
 > „preflight był". Gdy godzina meldunku stała się opcjonalna, ten sam warunek zaczął
 > znaczyć coś zupełnie innego i blokował uruchomienie silnika u pilota, który niczego
-> nie pominął. Projekcja ma JAWNE znaczniki faktów strumienia — `claimedAt` (przejęcie)
-> i `preflightAt` (preflight) — i to o nie pytają reguły. **Pole opcjonalne przestaje
+> nie pominął. Projekcja ma JAWNE znaczniki faktów strumienia - `claimedAt` (przejęcie)
+> i `preflightAt` (preflight) - i to o nie pytają reguły. **Pole opcjonalne przestaje
 > być dobrym znacznikiem zdarzenia w chwili, gdy staje się opcjonalne**, a komplet
 > zielonych testów tego nie wyłapie, jeśli każdy helper podaje wartość „bo tak było
 > zawsze".
 >
 > Nazwa `day_close` **zostaje mimo zmiany znaczenia** (dziś: zdanie samolotu, nie koniec
-> dnia). Strumień jest append-only — zdarzenia w bazie nie zmienią nazwy dlatego, że
+> dnia). Strumień jest append-only - zdarzenia w bazie nie zmienią nazwy dlatego, że
 > zmieniło się jej znaczenie; zmieniamy docblocki i komunikaty, nie identyfikatory.
 
 ### 5.2 SQLite (telefon)
 
 ```
-events              — jak wyżej + synced_at (NULL = outbox)
-reference_aircraft  — id, reg, typ, rok, capacity_l, mh_format (decimal|hhmm),
+events              - jak wyżej + synced_at (NULL = outbox)
+reference_aircraft  - id, reg, typ, rok, capacity_l, mh_format (decimal|hhmm),
                       dual_required, service_status, claim_pic, claim_since,
                       handover (JSON: FOB, MH, kto, kiedy), fetched_at
-reference_pilots    — id, kod, imię i nazwisko, active, fetched_at
-session_meta        — klucz/wartość: bieżąca sesja, zalogowany pilot
+reference_pilots    - id, kod, imię i nazwisko, active, fetched_at
+session_meta        - klucz/wartość: bieżąca sesja, zalogowany pilot
 ```
 
 Sekrety (JWT, refresh, hash PIN-u) w `expo-secure-store`, nie w SQLite.
 Stan bieżącej sesji i statystyki dnia to **projekcje liczone w pamięci** (Zustand)
-ze strumienia zdarzeń — przy kilkuset zdarzeniach dziennie tabele agregujące są zbędne.
+ze strumienia zdarzeń - przy kilkuset zdarzeniach dziennie tabele agregujące są zbędne.
 
 ### 5.3 PostgreSQL (serwer)
 
 ```
-pilots       — id, kod, imię i nazwisko, e-mail, password_hash, active, role
-               (konta zakłada i resetuje administrator — brak samodzielnej rejestracji)
-               role: pilot | training_lead | admin (decyzja 2026-07-31) —
+pilots       - id, kod, imię i nazwisko, e-mail, password_hash, active, role
+               (konta zakłada i resetuje administrator - brak samodzielnej rejestracji)
+               role: pilot | training_lead | admin (decyzja 2026-07-31) -
                uprawnienia panelu siedzą na koncie pilota, bo szef wyszkolenia
                i administrator SĄ pilotami; mapa ról na zdolności: server/src/domain/roles.ts
-aircraft     — id, reg, typ, rok, capacity_l, mh_format, dual_required, service_status
-events       — uuid PK, session_uuid, aircraft_id, pic_id, dual_id, type,
+aircraft     - id, reg, typ, rok, capacity_l, mh_format, dual_required, service_status
+events       - uuid PK, session_uuid, aircraft_id, pic_id, dual_id, type,
                device_time, gps_time, payload JSONB, received_at, source_device
-sessions     — projekcja: uuid, aircraft_id, pic_id, claim/close time,
+sessions     - projekcja: uuid, aircraft_id, pic_id, claim/close time,
                mh_start/end, fuel_start/end, status (active|closed|flagged)
-flags        — id, type, session_uuid(s), szczegóły, status (open|resolved)
-export_log   — data, aircraft_id, sheet_url, exported_at, rewizja, session_uuid
-               (rewizja należy do PARY data+aircraft_id — karta jest dobą samolotu,
+flags        - id, type, session_uuid(s), szczegóły, status (open|resolved)
+export_log   - data, aircraft_id, sheet_url, exported_at, rewizja, session_uuid
+               (rewizja należy do PARY data+aircraft_id - karta jest dobą samolotu,
                §4.7; session_uuid = CZŁONKOSTWO sesji w rewizji, po nim pyta
                GET /sessions/:uuid/sync-status)
 ```
 
 `events` jest append-only również na serwerze; `sessions` i statystyki to projekcje
-odświeżane przy przyjęciu zdarzeń. Dochodzą jeszcze: `exported_sheets` (treść kart —
+odświeżane przy przyjęciu zdarzeń. Dochodzą jeszcze: `exported_sheets` (treść kart -
 bazodanowy adapter `SheetsPort`), `admin_audit` (ślad akcji panelu, append-only),
 `refresh_tokens` (hashe, nie wartości) i `aircraft_consumption` (materializacja normy
 zużycia dla telefonów).
 
 > **Schemat jest JEDNĄ migracją bazową** (zgniecenie 2026-08-08, `SCHEMA_VERSION = 1`).
 > Dwadzieścia trzy migracje z lipca i sierpnia 2026 zwinęły się w jeden skrypt opisujący
-> stan docelowy — faza 5 się nie zaczęła, więc nie było danych produkcyjnych do zachowania.
+> stan docelowy - faza 5 się nie zaczęła, więc nie było danych produkcyjnych do zachowania.
 > **Uzasadnienie KAŻDEJ kolumny, ograniczenia i indeksu stoi komentarzem przy nim
 > w `server/src/infrastructure/pg/schema.ts`**; historia pułapek (trzy podejścia do
 > `NULLS LAST`, sprostowania do `UNIQUE` dziennika eksportu, dwa przesunięcia znaczenia
-> karty) — w `docs/architektura-panelu-serwer.md` §7.8. Odwołania „migracja N" w kodzie
+> karty) - w `docs/architektura-panelu-serwer.md` §7.8. Odwołania „migracja N" w kodzie
 > zostały przepisane na nazwy rzeczy; w narracji historycznej tamtego dokumentu zostają.
 
 ### 5.4 Konfiguracja samolotu (na serwerze, cache'owana)
@@ -854,7 +854,7 @@ zużycia dla telefonów).
 
 ---
 
-## 6. Architektura UX — dwa tryby
+## 6. Architektura UX - dwa tryby
 
 Aplikacja automatycznie przełącza tryb na podstawie stanu silnika:
 
@@ -866,7 +866,7 @@ TRYB GROUND (silnik wyłączony)
 └── akcje: tankowanie, zmiana załogi, popraw dane sesji, zdaj samolot
 
 TRYB COCKPIT (silnik uruchomiony / w locie)
-├── phase hero — faza lotu dużą czcionką
+├── phase hero - faza lotu dużą czcionką
 ├── duże cyfry, minimum elementów na ekranie
 ├── tylko krytyczne akcje (stop, ręczna korekta S/L, drop)
 └── parametry GPS live
@@ -874,27 +874,27 @@ TRYB COCKPIT (silnik uruchomiony / w locie)
 
 ### Stany świeżości danych (offline-first w UI)
 
-Nie projektujemy ekranów w dwóch wersjach online/offline — dzielimy **komponenty**
+Nie projektujemy ekranów w dwóch wersjach online/offline - dzielimy **komponenty**
 według źródła danych:
 
-1. **Dane sesji (lokalne zdarzenia)** — timery, log dnia, liczniki, statystyki bieżącego
+1. **Dane sesji (lokalne zdarzenia)** - timery, log dnia, liczniki, statystyki bieżącego
    dnia. Zawsze świeże, bo źródłem prawdy jest telefon. **Zero wariantów offline.**
    To jest większość kokpitu.
-2. **Dane z serwera** — przekazanie (FOB/MH), status claim na kartach samolotów, lista
+2. **Dane z serwera** - przekazanie (FOB/MH), status claim na kartach samolotów, lista
    pilotów, stan floty w podglądzie read-only. Trzy stany świeżości, komunikowane
    adnotacją przy wartości (nie osobnym ekranem):
-   - `live` — bez adnotacji (stan domyślny, dane na żywo)
-   - `cache` — "· z cache · sync 21 JUN 17:30" (amber) — wartość z `fetched_at`
-   - `brak` — "brak danych — wpisz z licznika" (amber) — pole puste, licznik fizyczny
+   - `live` - bez adnotacji (stan domyślny, dane na żywo)
+   - `cache` - "· z cache · sync 21 JUN 17:30" (amber) - wartość z `fetched_at`
+   - `brak` - "brak danych - wpisz z licznika" (amber) - pole puste, licznik fizyczny
      przejmuje rolę źródła
-3. **Akcje wymagające sieci** — pierwsze logowanie, "Zaloguj jako inny pilot",
+3. **Akcje wymagające sieci** - pierwsze logowanie, "Zaloguj jako inny pilot",
    ręczny sync. Offline: disabled **z podanym powodem**, nigdy cichy błąd.
 
-Globalny stan łączności pokazuje wyłącznie SyncChip — pojedynczy wskaźnik zamiast
+Globalny stan łączności pokazuje wyłącznie SyncChip - pojedynczy wskaźnik zamiast
 rozsianych komunikatów o braku sieci. Online chip NIE POJAWIA SIĘ w ogóle (decyzja
 2026-08-06, issue #12: stan domyślny nie zasługuje na plakietkę i uczy oko ignorować
 róg ekranu, w którym czasem pojawia się OFFLINE); offline pokazuje SAM pill
-`OFFLINE · n`, a tapnięcie otwiera arkusz szczegółów synchronizacji — stan kolejki,
+`OFFLINE · n`, a tapnięcie otwiera arkusz szczegółów synchronizacji - stan kolejki,
 stempel ostatniej udanej synchronizacji, wiek danych referencyjnych (issue #23 pkt 5;
 wzorzec: `01c`). Stemple nie wiszą na ekranie na stałe.
 
@@ -902,37 +902,37 @@ Warianty stanu zrealizowane w mockupach (rodziny wariantów; każdy ekran rodzin
 na canvasie panel „Warianty tego ekranu" z opisem, KIEDY się wyświetla):
 
 - **logowanie:** `00-login` (odblokowanie PIN, offline) · `00a-login-full` (pełny login,
-  wymaga sieci) · `00b-login-offline` (twarda granica — brak profilu i brak sieci)
-- **mój dzień (ekran domowy):** `01-moj-dzien` (dzień w toku — płaski log sesji) ·
+  wymaga sieci) · `00b-login-offline` (twarda granica - brak profilu i brak sieci)
+- **mój dzień (ekran domowy):** `01-moj-dzien` (dzień w toku - płaski log sesji) ·
   `01a-moj-dzien-pusty` (zero sesji) · `01c-moj-dzien-offline` (pill OFFLINE + arkusz
   szczegółów synchronizacji)
 - **przejęcie krok 1:** `02-preflight` (online, claim live) · `02d-preflight-offline`
   (dane z cache z adnotacją wieku, modal przejęcia w wariancie offline)
 - **przejęcie krok 2:** `02e-preflight-zadanie` (operacja, trasa, klient, notatka) ·
   `02f-preflight-lotnisko` (arkusz wyboru lotniska)
-- **przejęcie krok 3:** `02a-preflight` — przełącznik stanów świeżości przekazania
+- **przejęcie krok 3:** `02a-preflight` - przełącznik stanów świeżości przekazania
   (`live` / `cache` / `brak`) na canvasie; modale korekty `02b` / `02c`
 - **kokpit ground:** `04a` (świeżo przejęty samolot, PRZED uruchomieniem) · `04`
-  (PO zatrzymaniu — hero ZDAJ SAMOLOT) ·
-  `04b-cockpit-readonly` (podgląd cudzego samolotu — single-writer, akcje disabled z powodem)
+  (PO zatrzymaniu - hero ZDAJ SAMOLOT) ·
+  `04b-cockpit-readonly` (podgląd cudzego samolotu - single-writer, akcje disabled z powodem)
 - **kokpit w locie:** `05a` (taxi) · `05b` (toast T/O) · `05` (in flight) · `05c`
   (toast LDG) · `05d` (taxi po LDG) · `05g` (brak GPS)
 - **zdanie samolotu:** `09b-zdaj-samolot` (odczyt wymagany = zatwierdzenie logu sesji) ·
   `09c-zdaj-bez-lotu` (pogoda / usterka); ekrany `09`/`09a` usunięte z pivotem 2026-08-10
 - **sesja:** `10-statystyki` (z lotami) · `10a-statystyki-zero` (bez lotu) ·
-  `10b-rozliczenie-zamkniete` (po oknie korekty — podgląd bez elementów zapisu) ·
-  `10c-norma-detale` (arkusz normy pod plakietką werdyktu — issue #40: na karcie zostaje
+  `10b-rozliczenie-zamkniete` (po oknie korekty - podgląd bez elementów zapisu) ·
+  `10c-norma-detale` (arkusz normy pod plakietką werdyktu - issue #40: na karcie zostaje
   sama plakietka, pasmo i stawki otwiera ten, kto pyta „dlaczego tak")
-- **ślad (issue #38, #47):** `14-slad` opisuje CAŁY bieg silnika — kołowanie, wszystkie
+- **ślad (issue #38, #47):** `14-slad` opisuje CAŁY bieg silnika - kołowanie, wszystkie
   starty i lądowania, profil pionowy z przerwą na ziemi, statystyki lotu; wejście
   miniaturą z `10`. Ekrany `16` i `16a` USUNIĘTE: zapis GPS powstaje w jednym ciągu, więc
   krojenie go na loty dokładało ekran, który dublował to, co widać piętro wyżej.
   Znaczniki (start, zrzut, maksimum, lądowanie) stoją na OBU wykresach i każdy niesie
-  czas — mapa z nazwą, profil samą godziną, bo tam rodzaj niesie kolor. `14b` = trasy nie
+  czas - mapa z nazwą, profil samą godziną, bo tam rodzaj niesie kolor. `14b` = trasy nie
   ma i nie będzie (wpis ręczny albo nagranie, które nie dotarło), `14c` = ślad jest na
   serwerze, brakuje zasięgu, `14d` = stan w trakcie gestu (kursor sprzężony, zoom)
 
-**Motywy:** para ciemna — Night (domyślny), Amber/NVG; para jasna pod pełne słońce —
+**Motywy:** para ciemna - Night (domyślny), Amber/NVG; para jasna pod pełne słońce -
 Paper (ciepła biel), Solar (czysta biel), Sky (chłodny błękitno-szary).
 Wzorce i tokeny: `design/05-themes.html`. W trybach jasnych podbić font-weight cyfr
 i pogrubić bordery (1→1.5 px); jasność ekranu na max przy motywie słonecznym.
@@ -953,7 +953,7 @@ i pogrubić bordery (1→1.5 px); jasność ekranu na max przy motywie słoneczn
 [00 Login]  profil na telefonie → odblokowanie PIN-em (offline OK)
             brak profilu → login + hasło od administratora (wymaga sieci; offline: komunikat)
     ↓
-[01 Mój dzień]  EKRAN DOMOWY — płaski log SESJI dnia (kafelek = jeden bieg silnika
+[01 Mój dzień]  EKRAN DOMOWY - płaski log SESJI dnia (kafelek = jeden bieg silnika
     │           z lotami w środku; rejestracja jako informacja kafelka), przekrojowo
     │           po samolotach; stąd rozpoczęcie lotu, ręczny wpis lotu i okno korekty 24 h
     │           warianty: 01a (zero sesji) · 01c (offline + arkusz syncu)
@@ -969,13 +969,13 @@ i pogrubić bordery (1→1.5 px); jasność ekranu na max przy motywie słoneczn
     ↓
 [02a Nowy lot 3/3]  paliwo + MH od poprzednika · korekty przez modale (02b / 02c)
     ↓ „ROZPOCZNIJ LOT"  (claim + odczyt; BEZ osobnego ekranu podsumowania)
-[04a Cockpit — PRZED URUCHOMIENIEM]  tankowanie · zmiana załogi · zdanie bez lotu (09c)
-    ↓ START ENGINE  (jedyny w sesji — sesja = jeden bieg silnika, 2026-08-10)
+[04a Cockpit - PRZED URUCHOMIENIEM]  tankowanie · zmiana załogi · zdanie bez lotu (09c)
+    ↓ START ENGINE  (jedyny w sesji - sesja = jeden bieg silnika, 2026-08-10)
 [05a Taxi] → autodetekcja T/O → [05b Toast T/O] → [05 Running / fazy lotu]
     → autodetekcja LDG → [05c Toast LDG] → [05d Taxi po lądowaniu]
     → kolejny T/O (pętla LOTÓW w tej samej sesji) lub STOP ENGINE
     ↓ STOP ENGINE
-[04 Cockpit — PO ZATRZYMANIU]  hero = ZDAJ SAMOLOT (drugiego STARTU nie ma) ·
+[04 Cockpit - PO ZATRZYMANIU]  hero = ZDAJ SAMOLOT (drugiego STARTU nie ma) ·
     │                          log jednej sesji · [06 Tankowanie] · [08 Lista ręczna]
     ↓ ZDAJ SAMOLOT
 [09b Zdaj samolot]  przegląd lotów sesji + odczyt WYMAGANY (= przekazanie, ogniwo
@@ -983,23 +983,23 @@ i pogrubić bordery (1→1.5 px); jasność ekranu na max przy motywie słoneczn
     ↓
 [01 Mój dzień]  kolejna sesja dopisuje się do listy dnia
     ├─ KAFELEK sesji → [10 Detale sesji]  ślad biegu silnika + oś czasu, rachunek
-    │   paliwa i MH, zrzuty, notatki — per sesja, nie per doba; niczego się nie
+    │   paliwa i MH, zrzuty, notatki - per sesja, nie per doba; niczego się nie
     │   zatwierdza (zdanie już potwierdziło dane). 10a = bez lotu · 10b = po oknie
     │   korekty (podgląd bez zapisu)
     │      ├─ MINIATURA ŚLADU → [14 Ślad]  CAŁY bieg silnika: kołowanie, wszystkie
     │      │   starty i lądowania, profil pionowy z przerwą na ziemi (14b = brak zapisu)
     │      ├─ „EDYTUJ DANE" → [10d TRYB EDYCJI tego samego ekranu]  JEDYNE drzwi do
-    │      │   korekty (issue #40 — oś w trybie odczytu ołówków nie ma; issue #43 —
+    │      │   korekty (issue #40 - oś w trybie odczytu ołówków nie ma; issue #43 -
     │      │   ołówek wraca dopiero w trybie edycji). Arkusze: 10e czas zdarzenia ·
     │      │   10f paliwo i MH przy przejęciu/zdaniu · 10g zrzut · 10h dodaj wpis ·
     │      │   10i historia zmian (także w podglądzie 10b)
-    │      └─ PLAKIETKA WERDYKTU → [10c Norma — szczegóły]  pasmo, stawki, rachunek
+    │      └─ PLAKIETKA WERDYKTU → [10c Norma - szczegóły]  pasmo, stawki, rachunek
     │   (issue #38 ODWRACA #25: zapis GPS powstaje w JEDNYM ciągu, więc ślad należy do
-    │   SESJI, a loty są jego odcinkami — ekran 16 „szczegóły lotu" USUNIĘTY, jego treść
+    │   SESJI, a loty są jego odcinkami - ekran 16 „szczegóły lotu" USUNIĘTY, jego treść
     │   wróciła na oś czasu sesji. Z list wejścia w ślad nadal NIE MA: jedyne prowadzi
     │   przez miniaturę tutaj)
     ├─ [13 Ustawienia]  w tym sekcja „Synchronizacja": kolejka, ostatnia udana wysyłka,
-    │   uwagi serwera, awaryjne ponaglenie (§3.9; ekran 11 USUNIĘTY 2026-08-12 — był
+    │   uwagi serwera, awaryjne ponaglenie (§3.9; ekran 11 USUNIĘTY 2026-08-12 - był
     │   trzecim widokiem tej samej sesji i drugim wskaźnikiem sieci)
     └─ [12 Poprzednie dni]  sesje spoza dzisiejszej doby, na TAKICH SAMYCH kafelkach
         co na 01 (issue #42); w oknie 24 h → 10, po oknie → 10b
@@ -1007,22 +1007,22 @@ i pogrubić bordery (1→1.5 px); jasność ekranu na max przy motywie słoneczn
 
 Pętla, nie prosta. Dzień pilota nie ma „startu" ani „końca" jako kroków flow: zaczyna się
 pierwszą sesją i NICZYM się nie domyka (issue #23). Ekranem, do którego wszystko wraca,
-jest **01 Mój dzień** — nie kokpit i nie zakończenie dnia.
+jest **01 Mój dzień** - nie kokpit i nie zakończenie dnia.
 
 **Kokpit jest stanem modalnym** (decyzja 2026-08-10). Dopóki pilot trzyma samolot, z 04/05
 nie prowadzi żadna droga na 01: akcje ground i 09 wracają do kokpitu, a na 01 wraca się
-przez [09b Zdaj samolot] — czyli oddając maszynę. Do 2026-08-10 wyjątkiem był pasek sesji
+przez [09b Zdaj samolot] - czyli oddając maszynę. Do 2026-08-10 wyjątkiem był pasek sesji
 z linkiem „Mój dzień →"; został usunięty z 04/04a właśnie dlatego, że był tą drogą.
 Reguła jest o ODDANIU, nie o „zamknięciu dnia": dzień pilota po prostu trwa, a kolejna
 maszyna dopisze się do listy sesji (§3.6a).
 
-Dotyczy to również przycisku sprzętowego i gestu cofania — oba pokazują arkusz
+Dotyczy to również przycisku sprzętowego i gestu cofania - oba pokazują arkusz
 [04d Wyjście z kokpitu] zamiast zdejmować ekran (bez niego „wstecz" pokazywał 02a, czyli
 formularz przejęcia maszyny już przejętej). Arkusz nie jest samą odmową: mówi, co trzyma
 pilota na tym ekranie, i prowadzi na 09b. Blokada bez komunikatu byłaby złamaniem „nigdy
-cichy błąd" (§6) — martwy przycisk czyta się jak zawieszona aplikacja.
+cichy błąd" (§6) - martwy przycisk czyta się jak zawieszona aplikacja.
 
-Mockupy: `design/index.html` (komplet ekranów, stanów i wariantów — liczby nie podajemy,
+Mockupy: `design/index.html` (komplet ekranów, stanów i wariantów - liczby nie podajemy,
 bo rozjeżdża się przy każdej zmianie). Szczegółowe założenia
 per ekran: `docs/design-notes.md`. Changelog decyzji designu: `design/ZMIANY.md`.
 
@@ -1034,7 +1034,7 @@ per ekran: `docs/design-notes.md`. Changelog decyzji designu: `design/ZMIANY.md`
 
 | Ryzyko | Poziom | Mitygacja |
 |--------|--------|-----------|
-| GPS w tle — Android battery saver zabija proces | 🔴 wysoki | ✅ WDROŻONE (2026-08-03): Foreground Service z powiadomieniem (okno = silnik pracuje); `expo-task-manager`; po śmierci procesu usługa wstaje headless i pisze ślad do `gps_trace` (`active_session_uuid` z meta). Szczegóły: `docs/architektura-kodu.md` §5 „GPS w tle" |
+| GPS w tle - Android battery saver zabija proces | 🔴 wysoki | ✅ WDROŻONE (2026-08-03): Foreground Service z powiadomieniem (okno = silnik pracuje); `expo-task-manager`; po śmierci procesu usługa wstaje headless i pisze ślad do `gps_trace` (`active_session_uuid` z meta). Szczegóły: `docs/architektura-kodu.md` §5 „GPS w tle" |
 | Fałszywe detekcje S/L (ciasne zakręty, słaby GPS) | 🔴 wysoki | Histereza, podwójny warunek (GS + alt), toast z Cofnij, ręczna korekta |
 | Przestawiony zegar telefonu (offline) | 🟡 średni | `gps_time` przy każdym zdarzeniu; flaga `CLOCK_DRIFT`; czasy blokowe z GPS |
 | Spóźniony sync poprzednika przy przejęciu | 🟡 średni | Append-only + łańcuch MH + flagi zamiast blokad (sekcje 4.4–4.5) |
@@ -1047,10 +1047,10 @@ per ekran: `docs/design-notes.md`. Changelog decyzji designu: `design/ZMIANY.md`
 
 - Android 10+ (API 29+)
 - Uprawnienia: `ACCESS_FINE_LOCATION`, `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_LOCATION`
-  (API 34+), `POST_NOTIFICATIONS` (13+; miękkie — odmowa chowa pasek usługi, zapis działa),
-  `INTERNET`. `ACCESS_BACKGROUND_LOCATION` celowo NIE — usłudze pierwszoplanowej
+  (API 34+), `POST_NOTIFICATIONS` (13+; miękkie - odmowa chowa pasek usługi, zapis działa),
+  `INTERNET`. `ACCESS_BACKGROUND_LOCATION` celowo NIE - usłudze pierwszoplanowej
   wystarcza while-in-use
-- Działa w tle (GPS tracking gdy ekran wygaszony) — usługa pierwszoplanowa przy
+- Działa w tle (GPS tracking gdy ekran wygaszony) - usługa pierwszoplanowa przy
   pracującym silniku; przeżywa śmierć procesu (zapis headless do `gps_trace`)
 - Offline-first: wszystkie dane lokalne w SQLite, sync automatyczny gdy sieć
 
@@ -1079,11 +1079,11 @@ per ekran: `docs/design-notes.md`. Changelog decyzji designu: `design/ZMIANY.md`
 | Baza | PostgreSQL | Events append-only + projekcje, JSONB na payloady |
 | Eksport | Google Sheets API v4, konto serwisowe | Telefon nie ma uprawnień do Sheets |
 | Deploy | Docker (VPS lub Cloud Run) | Mały, przenośny serwis |
-| Testy | Vitest/Jest — scenariusze scalania | Łańcuch MH, flagi, dedup — rdzeń logiki |
+| Testy | Vitest/Jest - scenariusze scalania | Łańcuch MH, flagi, dedup - rdzeń logiki |
 
 Administracja danymi referencyjnymi (samoloty, konfiguracje, piloci), a także rozwiązywanie
 flag, korekty po oknie 24 h i nadzór nad eksportem: **osobna aplikacja web** (decyzja
-2026-07-31, odwraca 2026-07-24). Projekt UI: `design/admin/` — 20 ekranów w ramce okna
+2026-07-31, odwraca 2026-07-24). Projekt UI: `design/admin/` - 20 ekranów w ramce okna
 1440×900 na tych samych tokenach i czcionkach co mockupy telefonu (`design/admin/SZABLON.html`).
 Zakres, role, mapowanie każdego ekranu na endpoint oraz lista braków serwera z wyceną:
 `design/admin/ANALIZA.md`.
@@ -1094,18 +1094,18 @@ Zakres, role, mapowanie każdego ekranu na endpoint oraz lista braków serwera z
 
 | Faza | Zakres | Status |
 |------|--------|--------|
-| 0 | Design UX/UI — mockupy HTML wszystkich ekranów, design tokens | ✅ zakończona; **przebudowana 2026-08-06** (faza 8) — mockupy w `design/` zatwierdzone jako specyfikacja |
-| 1 | Fundament aplikacji — RN + Expo, nawigacja, schemat zdarzeń w SQLite, GPS hook | ✅ zakończona — architektura kodu: `docs/architektura-kodu.md` |
-| 2 | Fundament backendu — API (kontrakt 4.6), Postgres, auth login+hasło→JWT (decyzja 2026-07-22), dedup | ✅ zakończona — `server/` (clean architecture + uproszczony CQRS, wspólna domena `packages/domain`); po audycie bezpieczeństwa (2026-07-28); zaległości audytu: `docs/architektura-kodu.md` §0 |
-| 3 | Ekrany aplikacji — preflight, cockpit, akcje ground, statystyki | ✅ zakończona — komplet ekranów 00 (PIN)–12 (z 04b i arkuszami 05e/05f); mockupy wdrożone 1:1 **wobec designu sprzed 2026-08-06** — po przebudowie flow (faza 8) ekrany wymagają przepisania. Ekrany 08 i 04c skasowane przy issue #43: korekta jest TRYBEM ekranu 10 (arkusze 10e–10i) |
-| 4 | Sync end-to-end — outbox, cache referencyjny, claimy, scalanie + flagi, eksport Sheets | ✅ zakończona (wariant bazodanowy) — outbox → `/events` (SyncEngine §4.3), auth §3.0, flagi + `sync-status`, ekran 11, cache referencyjny (ETag/304), `takeover_online`; eksport 4.7 działa end-to-end: karty w tabeli `exported_sheets` (`GET /sheets/:tab`), `export_log` z rewizjami, bramka flagi overlap, `exportUrl` w sync-status. Adapter Google Sheets = opcjonalna podmiana portu, gdy będzie klucz konta serwisowego |
+| 0 | Design UX/UI - mockupy HTML wszystkich ekranów, design tokens | ✅ zakończona; **przebudowana 2026-08-06** (faza 8) - mockupy w `design/` zatwierdzone jako specyfikacja |
+| 1 | Fundament aplikacji - RN + Expo, nawigacja, schemat zdarzeń w SQLite, GPS hook | ✅ zakończona - architektura kodu: `docs/architektura-kodu.md` |
+| 2 | Fundament backendu - API (kontrakt 4.6), Postgres, auth login+hasło→JWT (decyzja 2026-07-22), dedup | ✅ zakończona - `server/` (clean architecture + uproszczony CQRS, wspólna domena `packages/domain`); po audycie bezpieczeństwa (2026-07-28); zaległości audytu: `docs/architektura-kodu.md` §0 |
+| 3 | Ekrany aplikacji - preflight, cockpit, akcje ground, statystyki | ✅ zakończona - komplet ekranów 00 (PIN)–12 (z 04b i arkuszami 05e/05f); mockupy wdrożone 1:1 **wobec designu sprzed 2026-08-06** - po przebudowie flow (faza 8) ekrany wymagają przepisania. Ekrany 08 i 04c skasowane przy issue #43: korekta jest TRYBEM ekranu 10 (arkusze 10e–10i) |
+| 4 | Sync end-to-end - outbox, cache referencyjny, claimy, scalanie + flagi, eksport Sheets | ✅ zakończona (wariant bazodanowy) - outbox → `/events` (SyncEngine §4.3), auth §3.0, flagi + `sync-status`, ekran 11, cache referencyjny (ETag/304), `takeover_online`; eksport 4.7 działa end-to-end: karty w tabeli `exported_sheets` (`GET /sheets/:tab`), `export_log` z rewizjami, bramka flagi overlap, `exportUrl` w sync-status. Adapter Google Sheets = opcjonalna podmiana portu, gdy będzie klucz konta serwisowego |
 | 5 | Testy z pilotami, korekty UX, kalibracja progów S/L | przed nami · szac. 2 tyg. |
-| 6 | Wdrożenie — Play Store internal track, deploy backendu, dokumentacja | przed nami · szac. 1 tyg. |
-| 7 | **Panel administracyjny (web)** — role w bazie i tokenie, endpointy `/admin/*`, cykl życia flagi (`resolved`), korekta po oknie 24 h, tabela audytu | ✅ wdrożone (backend + `admin/`, ekrany A01–A11); panel przepisany pod nowy model w fazie 8 etap D (✅ 2026-08-07/08) |
-| **8** | **Przebudowa flow** (§3.6a, decyzja 2026-08-06), potem **pivot „sesja = jeden bieg silnika"** (2026-08-10) i **issue #23** (2026-08-11: klamra służby usunięta) | ✅ domknięta w kodzie: etapy A–D (2026-08-06→08-08), pivot A'–E' i issue #23 — szczegóły etapów w `CLAUDE.md` i w tabeli decyzji §1; baza dev do przesiania seedem (decyzja użytkownika) |
+| 6 | Wdrożenie - Play Store internal track, deploy backendu, dokumentacja | przed nami · szac. 1 tyg. |
+| 7 | **Panel administracyjny (web)** - role w bazie i tokenie, endpointy `/admin/*`, cykl życia flagi (`resolved`), korekta po oknie 24 h, tabela audytu | ✅ wdrożone (backend + `admin/`, ekrany A01–A11); panel przepisany pod nowy model w fazie 8 etap D (✅ 2026-08-07/08) |
+| **8** | **Przebudowa flow** (§3.6a, decyzja 2026-08-06), potem **pivot „sesja = jeden bieg silnika"** (2026-08-10) i **issue #23** (2026-08-11: klamra służby usunięta) | ✅ domknięta w kodzie: etapy A–D (2026-08-06→08-08), pivot A'–E' i issue #23 - szczegóły etapów w `CLAUDE.md` i w tabeli decyzji §1; baza dev do przesiania seedem (decyzja użytkownika) |
 
 > **Faza 8 wyprzedza fazę 5.** Testy z pilotami na starym flow byłyby testami rzeczy, która
-> ma zniknąć — pilot oceniałby ceremonię otwierania i zamykania dnia służby, czyli dokładnie
+> ma zniknąć - pilot oceniałby ceremonię otwierania i zamykania dnia służby, czyli dokładnie
 > to, co zostało uznane za błąd projektowy. Kalibracja progów S/L (faza 5) jest niezależna
 > od modelu dnia i może iść równolegle, bo detekcja startu i lądowania nie dotyka służby.
 
@@ -1113,19 +1113,19 @@ Zakres, role, mapowanie każdego ekranu na endpoint oraz lista braków serwera z
 
 ## 11. Prompty dla agentów
 
-Prompty utrzymywane razem z dokumentem — **odwołują się do sekcji zamiast duplikować
+Prompty utrzymywane razem z dokumentem - **odwołują się do sekcji zamiast duplikować
 schematy** (duplikaty były przyczyną rozjazdów w wersji 0.1). Przed użyciem w fazach 1–2
 zweryfikować z zatwierdzonym designem (`design/`, `docs/design-notes.md`).
 
 Każdy prompt uzupełnij o kontekst: **aplikacja nazywa się UZ Aero**, dokumentacja
 w `docs/_main.md.txt`, design tokens i phone frame w `design/` (patrz `CLAUDE.md`).
 
-> **Status (2026-08-07): CAŁA SEKCJA 11 JEST HISTORYCZNA — nie używaj tych promptów.**
+> **Status (2026-08-07): CAŁA SEKCJA 11 JEST HISTORYCZNA - nie używaj tych promptów.**
 >
 > Dwa niezależne powody:
 > 1. **Struktura** (ustalone 2026-07-28): fazy 1 i 3 powstały bez tych promptów, a AGENT 1–4
 >    i 6 opisują inny podział niż faktycznie zbudowany (warstwy `domain/application/
->    infrastructure/ui` z portami, nie `src/db`/`src/sync` — `docs/architektura-kodu.md`).
+>    infrastructure/ui` z portami, nie `src/db`/`src/sync` - `docs/architektura-kodu.md`).
 > 2. **Model dziedzinowy** (2026-08-06): wszystkie prompty opisują dzień służby jako kontener
 >    na loty. AGENT 6 buduje `EndOfDayScreen` z `duty end` i `day_close`; AGENT 7 każe stawiać
 >    eksport na `day_close` i wymienia sześć nieistniejących typów flag. Agent dostający
@@ -1135,10 +1135,10 @@ w `docs/_main.md.txt`, design tokens i phone frame w `design/` (patrz `CLAUDE.md
 
 ---
 
-### AGENT 1 — Inicjalizacja projektu React Native
+### AGENT 1 - Inicjalizacja projektu React Native
 
 ```
-Jesteś seniorem React Native. Zainicjalizuj projekt UZ Aero — elektroniczny chronometraż
+Jesteś seniorem React Native. Zainicjalizuj projekt UZ Aero - elektroniczny chronometraż
 lotów, offline-first, GPS w tle, sync z własnym backendem (NIE bezpośrednio do Sheets).
 
 STACK: sekcja 9 dokumentacji (RN + Expo, React Navigation v6, Zustand, expo-sqlite,
@@ -1148,20 +1148,20 @@ STRUKTURA:
 src/screens, components, store, db, sync (outbox + api client), hooks
 (useGPS, useTimer, useFlightDetection), utils, navigation, constants, types
 
-BAZA: zaimplementuj schemat z sekcji 5.2 — events append-only (+ synced_at),
+BAZA: zaimplementuj schemat z sekcji 5.2 - events append-only (+ synced_at),
 reference_aircraft, reference_pilots, session_meta. Typy zdarzeń i payloady: sekcja 5.1.
-Żadnych tabel agregujących — projekcje liczy Zustand.
+Żadnych tabel agregujących - projekcje liczy Zustand.
 
 DELIVERABLE: projekt się kompiluje, nawigacja z placeholderami wszystkich ekranów
 (flow: sekcja 7), SQLite ze schemą, typy TS dla zdarzeń i encji, constants/gps.ts z progami.
 ```
 
-### AGENT 2 — Design system i komponenty bazowe
+### AGENT 2 - Design system i komponenty bazowe
 
 ```
 Jesteś senior RN UI developerem. Przenieś design system UZ Aero z mockupów do RN.
 
-ŹRÓDŁO PRAWDY: design/05-themes.html — motywy Night (domyślny), Amber/NVG, Paper, Solar,
+ŹRÓDŁO PRAWDY: design/05-themes.html - motywy Night (domyślny), Amber/NVG, Paper, Solar,
 Sky; tokeny kolorów, typografia (Bebas Neue / Archivo / JetBrains Mono), spacing, radiusy.
 Zaimplementuj w src/constants/theme.ts z przełączaniem motywów; w motywach jasnych
 podbite font-weight cyfr i bordery 1.5 px.
@@ -1170,12 +1170,12 @@ KOMPONENTY: TimerDisplay, ParamCard, CounterPill, ActionButton, ConfirmModal (pr
 2 s), StatusBar, GroundActionCard, FuelIndicator (skala = capacity_l z konfiguracji),
 PhaseHero (faza lotu + obrócona ikona), EventLog (separatory "Lot N"), AutodetectToast
 (odliczanie + Cofnij), SyncChip (SYNC / OFFLINE · n), ReadOnlyBanner, CardPicker
-(lista kart zamiast selecta — wzorzec z CLAUDE.md).
+(lista kart zamiast selecta - wzorzec z CLAUDE.md).
 
 Wymagania: TypeScript z pełnymi typami, StyleSheet.create, obsługa wszystkich 5 motywów.
 ```
 
-### AGENT 3 — Ekran cockpit view
+### AGENT 3 - Ekran cockpit view
 
 ```
 Jesteś senior RN developerem. Zbuduj główny ekran roboczy UZ Aero.
@@ -1185,11 +1185,11 @@ Stany i zawartość: sekcja 3.2 dokumentacji. Dwa warianty: GROUND (start engine
 akcje 2×2, SyncChip) i RUNNING (PhaseHero, grid GPS 2×2, log live, AutodetectToast,
 STOP ENGINE prominentny, Drop przy operacji Skoki).
 
-Każda akcja emituje zdarzenie do SQLite (sekcja 5.1) przez warstwę sync — nigdy zapis
+Każda akcja emituje zdarzenie do SQLite (sekcja 5.1) przez warstwę sync - nigdy zapis
 "stanu". KeepAwake gdy silnik pracuje; obsługa braku GPS ("GPS: brak sygnału").
 ```
 
-### AGENT 4 — Algorytm detekcji startów i lądowań
+### AGENT 4 - Algorytm detekcji startów i lądowań
 
 ```
 Jesteś ekspertem od algorytmów. Zaimplementuj useFlightDetection() dla UZ Aero.
@@ -1206,7 +1206,7 @@ debug log ostatnich 100 detekcji, unit testy przypadków brzegowych (ciasny zakr
 turbulencje ±30 ft, poprawny cykl).
 ```
 
-### AGENT 5 — Klient synchronizacji (telefon)
+### AGENT 5 - Klient synchronizacji (telefon)
 
 ```
 Jesteś ekspertem od offline-first sync. Zaimplementuj warstwę sync UZ Aero po stronie RN.
@@ -1217,7 +1217,7 @@ KONTRAKT API: sekcja 4.6. ZASADY: sekcje 4.1, 4.3, 4.8.
 - cache referencyjny: GET /reference z ETag przy logowaniu i odzyskaniu sieci;
   fetched_at → adnotacja wieku w UI
 - stan samolotu: GET /aircraft/:id/state na preflightcie i w trybie read-only
-- claim: session_claim jako zwykłe zdarzenie (sekcja 4.4 — warianty online/offline)
+- claim: session_claim jako zwykłe zdarzenie (sekcja 4.4 - warianty online/offline)
 - dwa zegary: każde zdarzenie z device_time + gps_time (z ostatniego fixa)
 - auth: POST /auth/login (login + hasło) → JWT + refresh w secure-store;
   offline unlock PIN-em bez wylogowania
@@ -1225,24 +1225,24 @@ KONTRAKT API: sekcja 4.6. ZASADY: sekcje 4.1, 4.3, 4.8.
 DELIVERABLE: moduł src/sync z testami (kolejka, retry, dedup odpowiedzi, ETag).
 ```
 
-### AGENT 6 — Statystyki i zakończenie dnia
+### AGENT 6 - Statystyki i zakończenie dnia
 
 ```
 Jesteś senior RN developerem. Zbuduj ekrany końca dnia UZ Aero (sekcje 3.6–3.7, 3.9).
 
-EndOfDayScreen: końcowy FOB + odczyt MH (format wg konfiguracji samolotu — to przekazanie
+EndOfDayScreen: końcowy FOB + odczyt MH (format wg konfiguracji samolotu - to przekazanie
 dla następnego pilota), duty end, przerwa vs zakończenie. Emituje day_close.
 DayStatsScreen: duty time, czas blokowy per PIC/Dual, lista lotów (edycja inline przed
-day_close, po — read-only), paliwo i MH (start/koniec/delta), zrzuty przy skokach.
+day_close, po - read-only), paliwo i MH (start/koniec/delta), zrzuty przy skokach.
 Wszystko liczone jako projekcje ze zdarzeń (Zustand), nie z tabel agregujących.
 SyncStatusScreen (ekran 11): status wysyłki n/n, flagi sesji, status eksportu serwera
-i link do arkusza — wzorzec design/11-eksport.html. Bez akcji eksportu na telefonie.
-[ARCHIWUM 2026-08-12: ekran 11 i jego mockupy USUNIĘTE — okazał się trzecią kopią
+i link do arkusza - wzorzec design/11-eksport.html. Bez akcji eksportu na telefonie.
+[ARCHIWUM 2026-08-12: ekran 11 i jego mockupy USUNIĘTE - okazał się trzecią kopią
 rozliczenia (10); zostały trzy wiersze i przycisk w Ustawieniach, patrz §3.9.
 Cały ten blok „AGENT n" opisuje model sprzed pivotu (duty, day_close) i jest historią.]
 ```
 
-### AGENT 7 — Backend
+### AGENT 7 - Backend
 
 ```
 Jesteś senior backend developerem (Node.js/TypeScript). Zbuduj serwis UZ Aero.
@@ -1251,7 +1251,7 @@ STACK: Fastify + PostgreSQL + Docker (sekcja 9). SCHEMAT: sekcja 5.3.
 ENDPOINTY: sekcja 4.6 (auth login + hasło → JWT, reference z ETag, aircraft state,
 przyjmowanie zdarzeń, sync-status).
 
-RDZEŃ — scalanie (sekcja 4.5): dedup po UUID (idempotentny POST /events); projekcja
+RDZEŃ - scalanie (sekcja 4.5): dedup po UUID (idempotentny POST /events); projekcja
 sessions ze strumienia zdarzeń; porządkowanie sesji samolotu po łańcuchu odczytów MH;
 flagi DOUBLE_CLAIM / TIME_OVERLAP / MH_GAP / MH_REGRESSION / FUEL_MISMATCH / CLOCK_DRIFT
 z cyklem open → resolved.
@@ -1268,5 +1268,5 @@ duplikaty zdarzeń. Walidacja: zdarzenia sesji przyjmowane tylko od jej PIC-a (J
 
 *Dokument aktualizowany przy każdej zmianie wymagań. Decyzje designu: `design/ZMIANY.md`;
 założenia per ekran: `docs/design-notes.md`.*
-*Wersja: 0.5 — 2026-08-11 — klamra służby usunięta w całości (§3.6a: dzień pilota = lista sesji, issue #23); aplikacja w budowie
-(fazy 1 ✅ i 3 🔶 — patrz §10); architektura kodu: `docs/architektura-kodu.md`.*
+*Wersja: 0.5 - 2026-08-11 - klamra służby usunięta w całości (§3.6a: dzień pilota = lista sesji, issue #23); aplikacja w budowie
+(fazy 1 ✅ i 3 🔶 - patrz §10); architektura kodu: `docs/architektura-kodu.md`.*

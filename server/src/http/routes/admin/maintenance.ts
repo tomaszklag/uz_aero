@@ -1,11 +1,11 @@
 /**
- * UZ Aero (serwer) — trasy operacji serwisowych (`/admin/api/maintenance/*`, mockup `A11`).
+ * UZ Aero (serwer) - trasy operacji serwisowych (`/admin/api/maintenance/*`, mockup `A11`).
  *
  * Cienkie jak reszta repo: zod → zapytanie/komenda → status.
  *
  * ══ ZDOLNOŚCI SĄ TU ROZSZCZEPIONE I KAŻDA MA POWÓD ══
  *  • przebudowa projekcji i stan schematu → **`maintenance.run`** (nowa pozycja katalogu,
- *    decyzja do potwierdzenia — uzasadnienie przy `Capability` w `domain/roles.ts`);
+ *    decyzja do potwierdzenia - uzasadnienie przy `Capability` w `domain/roles.ts`);
  *  • sprzątanie wygasłych tokenów → **`accounts.manage`**, bo to ta sama tabela i ta sama
  *    władza, co unieważnianie sesji przy deaktywacji konta (`AdminPilotCommands`);
  *  • kolejka ponowień eksportu → **nie ma tu trasy w ogóle**. Ekran woła `GET /exports`
@@ -14,7 +14,7 @@
  *
  * ══ DLACZEGO PORÓWNANIE JEST `GET`-em ══
  * Bo niczego nie zapisuje i nie zostawia śladu w dzienniku (`queries/maintenance.ts`).
- * `POST` sugerowałby, że coś się wydarzyło — a wydarzył się wyłącznie odczyt.
+ * `POST` sugerowałby, że coś się wydarzyło - a wydarzył się wyłącznie odczyt.
  * Przeciwstawna decyzja przy podglądzie korekty (`POST …/corrections/preview`) miała
  * inny powód: tam parametrem jest kształt korekty, a nie brak parametrów.
  */
@@ -27,7 +27,7 @@ import type { AdminMaintenanceQueries } from '../../../application/admin/queries
 import { adminRoute, type AdminGate } from './adminRoute.ts';
 
 /**
- * Powód nadpisania. Wymagany PRZEZ KOMENDĘ, a nie tylko przez ten schemat — zod pilnuje
+ * Powód nadpisania. Wymagany PRZEZ KOMENDĘ, a nie tylko przez ten schemat - zod pilnuje
  * kształtu (napis, długość), a decyzję „bez powodu nie ma zapisu" podejmuje warstwa
  * aplikacji, żeby obowiązywała także wołającego spoza HTTP (CLI).
  */
@@ -71,10 +71,10 @@ export function registerAdminMaintenanceRoutes(
 
       const outcome = await commands.rebuildProjections(actor, { reason: body.data.reason });
       if (!outcome.ok) {
-        // Dwie odmowy, dwa statusy — bo to dwa różne zdania do człowieka:
-        //  • 400 `reason_required`  — wada ŻĄDANIA (brakuje pola), popraw formularz.
+        // Dwie odmowy, dwa statusy - bo to dwa różne zdania do człowieka:
+        //  • 400 `reason_required`  - wada ŻĄDANIA (brakuje pola), popraw formularz.
         //    Ta sama granica, co przy korekcie administratora.
-        //  • 409 `nothing_to_rebuild` — stan ŚWIATA: projekcja już się zgadza, więc
+        //  • 409 `nothing_to_rebuild` - stan ŚWIATA: projekcja już się zgadza, więc
         //    nie ma operacji do wykonania i nie ma czego wpisać do dziennika. Ten sam
         //    status, co przy fladze rozwiązanej przez kogoś innego (`flag.resolve`).
         const status = outcome.reason === 'nothing_to_rebuild' ? 409 : 400;

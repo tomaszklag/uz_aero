@@ -1,16 +1,16 @@
 /**
- * UZ Aero — 02A NOWY LOT · krok 3/3: paliwo i motogodziny.
+ * UZ Aero - 02A NOWY LOT · krok 3/3: paliwo i motogodziny.
  *
  * Odwzorowanie mockupu `design/02a-preflight.html` wraz z arkuszami korekty z 02b/02c.
  * Struktura stamtąd: [box „brak danych"] → sekcja PALIWO → sekcja MOTOGODZINY →
  * poświadczenie → ROZPOCZNIJ LOT.
  *
- * Najważniejszy ekran przejęcia, bo tutaj powstaje **początek łańcucha MH** (§4.5) —
+ * Najważniejszy ekran przejęcia, bo tutaj powstaje **początek łańcucha MH** (§4.5) -
  * wartość, po której serwer porządkuje sesje samolotu.
  *
  * OSTATNI KROK: to ten przycisk zapisuje `session_claim` i `preflight_confirm`, i stąd
  * prowadzi wprost do kokpitu. Osobny ekran podsumowania (dawny `03`) został usunięty
- * 2026-08-07 — powtarzał wartości wpisane sekundę wcześniej i wydłużał drogę do lotu
+ * 2026-08-07 - powtarzał wartości wpisane sekundę wcześniej i wydłużał drogę do lotu
  * o krok bez decyzji. Do tej chwili **nic nie jest zapisane**: szkic żyje w pamięci UI.
  *
  * Zasada nadrzędna (`CLAUDE.md`): **liczniki fizyczne > dane z serwera**. Przekazanie
@@ -19,7 +19,7 @@
  * historię, która do niej doprowadziła, i korektę na wyciągnięcie kciuka.
  *
  * Świeżość i łączność to **dwie różne osie** (komentarz z mockupu): „brak" zdarza się
- * też online — nowy samolot we flocie albo przejęcie bez danych.
+ * też online - nowy samolot we flocie albo przejęcie bez danych.
  */
 
 import React, { useCallback, useMemo, useState } from 'react';
@@ -45,7 +45,7 @@ import { useTheme } from '../theme';
 import { useGps } from '../bootstrap/servicesContext';
 import { useCurrentPilot, useSessionStore } from '../store';
 import { usePreflightDraft } from '../store/preflightDraft';
-// Import wprost z infrastruktury (jak composition root w `appBootstrap`) — moduł
+// Import wprost z infrastruktury (jak composition root w `appBootstrap`) - moduł
 // dotyka `react-native`, więc nie ma go w barrelu.
 import { requestNotificationPermission } from '../../infrastructure/permissions/notificationPermission';
 import { claimDecision } from './logic/claimMode';
@@ -79,12 +79,12 @@ const MH_WARN_H = 0.5;
 const stamp = stampUtc;
 
 /**
- * „29 JULY 16:50 UTC · 18:50 LT" — moment przekazania z JAWNĄ strefą.
+ * „29 JULY 16:50 UTC · 18:50 LT" - moment przekazania z JAWNĄ strefą.
  *
  * Tu, w odróżnieniu od osi czasu, strefę wypisujemy wprost: to jedyna data na ekranie,
  * po której pilot ocenia, czy odczyty są sprzed godziny czy sprzed tygodnia, a mylnie
  * odczytana o dwie godziny zmienia tę ocenę. LT jako wartość drugorzędna (`CLAUDE.md`),
- * z prawdziwej strefy telefonu — odpowiada na „a która to była u mnie".
+ * z prawdziwej strefy telefonu - odpowiada na „a która to była u mnie".
  */
 function stampUtcLt(t: number): string {
   return `${stamp(t)} UTC · ${timeLocal(t)} LT`;
@@ -128,7 +128,7 @@ export function PreflightReadingsScreen({
   );
 
   /**
-   * ROZPOCZNIJ LOT — tu kończy się szkic, a zaczyna rejestr.
+   * ROZPOCZNIJ LOT - tu kończy się szkic, a zaczyna rejestr.
    *
    * Zapis zapadał do 2026-08-07 na osobnym ekranie podsumowania (dawny `03`). Ekran zniknął,
    * bo powtarzał to, co pilot wpisał sekundę wcześniej, i wydłużał drogę do kokpitu
@@ -138,29 +138,29 @@ export function PreflightReadingsScreen({
   const takeOver = useCallback(async () => {
     if (aircraft == null) return;
 
-    // Rozgrzewka uprawnień na dzień lotny (lokalizacja + powiadomienia) — TUTAJ,
+    // Rozgrzewka uprawnień na dzień lotny (lokalizacja + powiadomienia) - TUTAJ,
     // na ziemi, a nie przy pierwszym START ENGINE w środku checklisty silnika.
     // Sekwencyjnie (dwa systemowe dialogi naraz się gryzą), bez `await` w torze
-    // przejęcia i bez patrzenia na wynik: odmowa NICZEGO nie blokuje (§4.1) —
+    // przejęcia i bez patrzenia na wynik: odmowa NICZEGO nie blokuje (§4.1) -
     // kokpit sam pokaże tryb ręczny, a pasek usługi najwyżej schowa system.
     void (async () => {
       try {
         await gps?.requestPermission();
         await requestNotificationPermission();
       } catch {
-        // Miękka prośba — cisza jest tu decyzją, nie przeoczeniem.
+        // Miękka prośba - cisza jest tu decyzją, nie przeoczeniem.
       }
     })();
 
     setBusy(true);
     try {
-      // 1. Claim — od tej chwili to urządzenie jest jedynym piszącym dla tego samolotu.
+      // 1. Claim - od tej chwili to urządzenie jest jedynym piszącym dla tego samolotu.
       //
       //    Przy przejęciu pytamy serwer o ŻYWY stan (§4.4): odpowiedź awansuje claim
-      //    do `takeover_online` (z aktualnym poprzednikiem — cache mógł wskazywać
+      //    do `takeover_online` (z aktualnym poprzednikiem - cache mógł wskazywać
       //    kogoś, kto już oddał samolot), brak odpowiedzi degraduje do
       //    `takeover_offline`. Bez zasięgu `fetchAircraftState` szybko wraca `null`
-      //    i pilot leci dalej — sieć jest okazją, nie warunkiem (§6).
+      //    i pilot leci dalej - sieć jest okazją, nie warunkiem (§6).
       const live =
         aircraft.claimPicId != null && sync != null
           ? await sync.fetchAircraftState(aircraft.id)
@@ -175,17 +175,17 @@ export function PreflightReadingsScreen({
         previousPicId: decision.previousPicId ?? undefined,
       });
 
-      // 2. Preflight — odczyty liczników stają się początkiem łańcucha MH (§4.5).
+      // 2. Preflight - odczyty liczników stają się początkiem łańcucha MH (§4.5).
       //
       //    `dutyStart` nie istnieje w payloadzie (§3.6a, domknięte issue #23): dzień
-      //    pilota to lista sesji — klamry służby i godziny meldunku nie ma w modelu
+      //    pilota to lista sesji - klamry służby i godziny meldunku nie ma w modelu
       //    w ogóle, więc nie ma czego wysyłać.
       await confirmPreflight({
         operation: draft.operation,
         departureIcao: draft.departureIcao || null,
         arrivalIcao: draft.arrivalIcao || null,
         reading: { fuelL: draft.fuelL, mh: draft.mh },
-        // Olej (issue #60): klucze tylko przy faktycznym wpisie — sesja bez pomiaru
+        // Olej (issue #60): klucze tylko przy faktycznym wpisie - sesja bez pomiaru
         // nie niesie pustych pól, a brak klucza czyta się wszędzie tak samo jak null.
         ...(draft.oilL != null || draft.oilAddedL != null
           ? { oilL: draft.oilL, oilAddedL: draft.oilAddedL }
@@ -193,7 +193,7 @@ export function PreflightReadingsScreen({
         client: draft.client,
         notes: draft.notes,
         mhFormat,
-        // Ma sens WYŁĄCZNIE przy skokach — pole na 02e jest wtedy ukryte, ale
+        // Ma sens WYŁĄCZNIE przy skokach - pole na 02e jest wtedy ukryte, ale
         // to jest bramka OSTATECZNA: wpis sprzed zmiany operacji nie wysyła
         // sierocej wartości do sesji innego rodzaju.
         jumperDefaults: isJumpOperation(draft.operation) ? draft.jumperDefaults : null,
@@ -209,7 +209,7 @@ export function PreflightReadingsScreen({
   }, [aircraft, claim, confirmPreflight, draft, gps, mhFormat, navigation, pilotId, sync]);
 
   /**
-   * Stan świeżości (§4.8). Bez przekazania jest `brak` — niezależnie od sieci.
+   * Stan świeżości (§4.8). Bez przekazania jest `brak` - niezależnie od sieci.
    * Z przekazaniem: gdy jesteśmy online, wartości są tak świeże, jak ostatni kontakt
    * z serwerem (`live`); offline to z definicji dane z ostatniej synchronizacji (`cache`).
    */
@@ -217,7 +217,7 @@ export function PreflightReadingsScreen({
   const syncedAt = aircraft != null ? stamp(aircraft.fetchedAt) : null;
 
   /**
-   * Po ręcznej korekcie wartość NIE pochodzi już z serwera — i adnotacja musi to mówić.
+   * Po ręcznej korekcie wartość NIE pochodzi już z serwera - i adnotacja musi to mówić.
    * Wcześniej ekran zostawiał tu „Ostatnie pobrane · …" obok liczby wpisanej przez
    * pilota (kłamstwo o pochodzeniu) albo oznaczał ją jako `live` (kłamstwo w drugą stronę).
    */
@@ -258,7 +258,7 @@ export function PreflightReadingsScreen({
         const hours = e.durationMs != null ? e.durationMs / 3_600_000 : null;
         const title = `${pilotName(e.pilotId)} latał${flown != null ? ` · ${flown}` : ''}`;
 
-        // Średnie liczymy z danych, nie przepisujemy — inaczej rozjechałyby się
+        // Średnie liczymy z danych, nie przepisujemy - inaczej rozjechałyby się
         // z wartościami obok, gdy serwer przyśle inne liczby.
         const used = lastFuel != null && e.fuelAfterL != null ? lastFuel - e.fuelAfterL : null;
         fuel.push({
@@ -291,7 +291,7 @@ export function PreflightReadingsScreen({
   const applyReading = useCallback(
     (key: 'fuelL' | 'mh', value: number) => {
       draft.set(key, value);
-      // Ręczna korekta zrywa więź z przekazaniem — od tej chwili źródłem jest licznik.
+      // Ręczna korekta zrywa więź z przekazaniem - od tej chwili źródłem jest licznik.
       draft.set('readingSource', 'manual');
       setEditing(null);
     },
@@ -310,7 +310,7 @@ export function PreflightReadingsScreen({
 
   const capacity = aircraft.capacityL;
   const missing = freshness === 'brak';
-  // Powód, dla którego ROZPOCZNIJ LOT stoi — logika z testami (`preflightGate.ts`).
+  // Powód, dla którego ROZPOCZNIJ LOT stoi - logika z testami (`preflightGate.ts`).
   // Pomiar oleju jest krokiem WYMAGANYM (decyzja 2026-08-27, issue #60).
   const blocker = preflightBlocker({
     fuelL: draft.fuelL,
@@ -319,7 +319,7 @@ export function PreflightReadingsScreen({
     handoverMh: handover?.reading.mh ?? null,
   });
 
-  // ── olej (issue #60): pomiar, nie potwierdzenie — logika w `logic/oilPreflight` ──
+  // ── olej (issue #60): pomiar, nie potwierdzenie - logika w `logic/oilPreflight` ──
   const oilConfig: OilConfig = {
     minL: aircraft.oilMinL ?? null,
     capacityL: aircraft.oilCapacityL ?? null,
@@ -353,7 +353,7 @@ export function PreflightReadingsScreen({
         <ScreenHeader
           title="NOWY LOT"
           // Samolot RAZ, w nagłówku. Wcześniej rejestracja wracała w każdym podpisie
-          // („z konfiguracji SP-ANK" pod paliwem, pod MH i w obu arkuszach) — a to jest
+          // („z konfiguracji SP-ANK" pod paliwem, pod MH i w obu arkuszach) - a to jest
           // stała całego ekranu, nie właściwość pojedynczego odczytu. Zniknąć nie może:
           // odczyt wpisany dla złego samolotu zatruwa łańcuch MH (§4.5).
           subtitle={[aircraft.reg, aircraft.type].filter(Boolean).join(' · ')}
@@ -368,7 +368,7 @@ export function PreflightReadingsScreen({
           }
         />
       }
-      // Przycisk dalej — przy dolnej krawędzi, niezależnie od tego, ile miejsca zajęła
+      // Przycisk dalej - przy dolnej krawędzi, niezależnie od tego, ile miejsca zajęła
       // oś czasu przekazania (reguła z 2026-07-30).
       footer={
         <ActionButton
@@ -390,7 +390,7 @@ export function PreflightReadingsScreen({
             tone="amber"
             text={
               `Brak danych przekazania dla ${aircraft.reg} (pusty cache / przejęcie offline). ` +
-              'Wpisz odczyty z fizycznych liczników — Twój odczyt rozpocznie nowe ogniwo ' +
+              'Wpisz odczyty z fizycznych liczników - Twój odczyt rozpocznie nowe ogniwo ' +
               'łańcucha; serwer scali dane po synchronizacji.'
             }
           />
@@ -424,7 +424,7 @@ export function PreflightReadingsScreen({
 
         {/* ── skąd te wartości (`.certified-row`) ───────────────────────────
             Mockup miał tu suchą pieczątkę „Poświadczył J. Kowalski · 21 JUNE · 17:30".
-            Pilot zapytał wprost, co ten komunikat mówi i po kim przejmuje samolot —
+            Pilot zapytał wprost, co ten komunikat mówi i po kim przejmuje samolot -
             czyli pieczątka nie odpowiadała na jedyne pytanie, które w tym miejscu ma
             znaczenie: czyje są liczby stojące wyżej i co z nimi zrobić. Teraz mówi to
             wprost, z jawną strefą czasu.
@@ -432,7 +432,7 @@ export function PreflightReadingsScreen({
             Świadomie NIE piszemy „poświadczył": serwer buduje przekazanie albo
             z zamkniętego dnia, albo z dnia jeszcze trwającego (`latestHandover`), a typ
             `Handover` tych dwóch przypadków nie rozróżnia. Słowo o poświadczeniu byłoby
-            w drugim przypadku nieprawdą — a to ekran, na którym zaufanie do liczb jest
+            w drugim przypadku nieprawdą - a to ekran, na którym zaufanie do liczb jest
             całą treścią. */}
         {handover != null && (
           <InlineNote
@@ -444,7 +444,7 @@ export function PreflightReadingsScreen({
             text={[
               handover.byPilotId === pilotId
                 ? `Odczyty powyżej to Twoje własne, z ostatniego dnia na ${aircraft.reg}.`
-                : `Odczyty powyżej przekazał ${pilotName(handover.byPilotId)} — to po nim przejmujesz ${aircraft.reg}.`,
+                : `Odczyty powyżej przekazał ${pilotName(handover.byPilotId)} - to po nim przejmujesz ${aircraft.reg}.`,
               `Stan z ${stampUtcLt(handover.at)}`,
               'Sprawdź go na licznikach. Twój odczyt jest ważniejszy, a ewentualne ' +
                 'nieścisłości zostaną rozwiązane przez koordynatora.',
@@ -452,11 +452,11 @@ export function PreflightReadingsScreen({
           />
         )}
 
-        {/* ── olej silnikowy (issue #60) — POMIAR, nie potwierdzenie ──────────
+        {/* ── olej silnikowy (issue #60) - POMIAR, nie potwierdzenie ──────────
             Paliwo i MH wyżej pilot POTWIERDZA (przekazane wartości stoją wpisane);
-            oleju nikt nie przekazuje — bagnet czyta się TERAZ. Dlatego wartość zaczyna
+            oleju nikt nie przekazuje - bagnet czyta się TERAZ. Dlatego wartość zaczyna
             PUSTA w każdym stanie świeżości (prefill oczekiwaną fabrykowałby pomiar).
-            Pomiar jest krokiem WYMAGANYM (decyzja 2026-08-27) — bez niego ROZPOCZNIJ
+            Pomiar jest krokiem WYMAGANYM (decyzja 2026-08-27) - bez niego ROZPOCZNIJ
             LOT stoi z powodem (`preflightBlocker`). Tag „opcjonalnie" tu NIE stoi,
             bo wymagalność jest stanem domyślnym formularza (oznaczamy wyłącznie to,
             co opcjonalne). Sekcja stoi ZA blokiem przekazania, bo nie jest jego częścią. */}
@@ -468,14 +468,14 @@ export function PreflightReadingsScreen({
           syncedAt={syncedAt}
           caption={oilView.caption !== '' ? oilView.caption : undefined}
           missing={false}
-          missingNote="Brak historii — pierwszy pomiar zacznie łańcuch"
+          missingNote="Brak historii - pierwszy pomiar zacznie łańcuch"
           manualNote="Twój pomiar z bagnetu"
           correctLabel={draft.oilL != null || draft.oilAddedL != null ? 'Koryguj' : 'Wpisz pomiar'}
           trail={oilView.trail}
           onCorrect={() => setEditing('oil')}
         />
 
-        {/* Ostrzeżenie warunkowe — znika razem z warunkiem (dolewką albo poprawką),
+        {/* Ostrzeżenie warunkowe - znika razem z warunkiem (dolewką albo poprawką),
             nie zamyka się ręcznie. Poniżej minimum NIE blokuje: PIC decyduje (D3). */}
         {oilView.warning != null && (
           <InlineNote icon="warning" tone="amber" text={oilView.warning} />
@@ -513,7 +513,7 @@ export function PreflightReadingsScreen({
           },
           {
             // Rejestracja zostaje tam, gdzie nagłówek ekranu jest zasłonięty arkuszem,
-            // a pilot właśnie nadpisuje odczyt — samo słowo „konfiguracja" nic nie wnosiło.
+            // a pilot właśnie nadpisuje odczyt - samo słowo „konfiguracja" nic nie wnosiło.
             label: `Pojemność zbiorników · ${aircraft.reg}`,
             value: litres(capacity),
           },
@@ -557,7 +557,7 @@ export function PreflightReadingsScreen({
           const d = v - handover.reading.mh;
           if (d < 0) {
             return (
-              `Licznik nie może się cofnąć — przekazano ${motoHours(handover.reading.mh, mhFormat)} MH. ` +
+              `Licznik nie może się cofnąć - przekazano ${motoHours(handover.reading.mh, mhFormat)} MH. ` +
               'Zapis z niższą wartością zostanie odrzucony.'
             );
           }

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 05A Cockpit · Taxi (przed T/O)</title>
+<title>UZ Aero - 05A Cockpit · Taxi (przed T/O)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -66,7 +66,7 @@
   .param-cell { background:var(--surface); padding:12px 14px; display:flex; flex-direction:column; gap:4px; }
   /* WARIANT OSTRZEGAWCZY paliwa (issue #19), nie domyślny wygląd komórki: amber dopiero,
      gdy szacunek czasu lotu z FOB spadnie do ~1h45 (godzina zapasu nad rezerwą 45 min),
-     czerwony na samej rezerwie. Powyżej — jak tutaj, ze świeżo zatankowanym ~140 L —
+     czerwony na samej rezerwie. Powyżej - jak tutaj, ze świeżo zatankowanym ~140 L -
      paliwo jest neutralne, bo kolor świecący zawsze przestaje być ostrzeżeniem. */
   .param-cell.amber-bg { background:rgba(243,156,18,0.04); }
   .param-label { font-family:var(--font-mono); font-size: 10px; letter-spacing:2.5px; text-transform:uppercase; color:var(--text-muted); }
@@ -75,9 +75,9 @@
   .param-value.amber { color:var(--amber); }
   .param-unit { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); }
 
-  /* OŚ SESJI (issue #44) — ten sam inwentarz, co na 04, 05 i 10; pełny komentarz stoi
+  /* OŚ SESJI (issue #44) - ten sam inwentarz, co na 04, 05 i 10; pełny komentarz stoi
      w 04. W locie oś kończy się wierszem „na żywo": zielona kropka, bez godziny po
-     lewej (to nie jest zdarzenie rejestru), licznik po prawej — tam, gdzie ta oś trzyma
+     lewej (to nie jest zdarzenie rejestru), licznik po prawej - tam, gdzie ta oś trzyma
      wszystkie czasy trwania. */
   .session-log { flex:1; overflow-y:auto; scrollbar-width:none; background:var(--surface); border-bottom:1px solid var(--border); }
   .session-log::-webkit-scrollbar { display:none; }
@@ -98,7 +98,7 @@
   .axis-dot.blue { background:var(--blue); }
   .axis-dot.amber { background:var(--amber); }
   .axis-dot.hollow { background:var(--surface); border:1.5px solid var(--text-muted); box-shadow:0 0 0 2px var(--surface); }
-  /* ZIELEŃ NALEŻY WYŁĄCZNIE DO TERAŹNIEJSZOŚCI (issue #19) — stąd puls tylko tutaj. */
+  /* ZIELEŃ NALEŻY WYŁĄCZNIE DO TERAŹNIEJSZOŚCI (issue #19) - stąd puls tylko tutaj. */
   .axis-dot.live { background:var(--green); animation:pulse 1.5s ease-in-out infinite; }
   .axis-label { display:flex; flex-direction:column; gap:1px; min-width:0; }
   .axis-name { font-family:var(--font-mono); font-size:10px; letter-spacing:1.4px; text-transform:uppercase; color:var(--text-primary); display:flex; align-items:center; gap:6px; }
@@ -109,13 +109,13 @@
   .axis-flight { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
   .axis-dur { font-family:var(--font-mono); font-size:11px; color:var(--green); }
 
-  /* ACTION ROW — next logbook event primary, ZAŁADUNEK middle (slot pary zrzut/załadunek), STOP right */
+  /* ACTION ROW - next logbook event primary, ZAŁADUNEK middle (slot pary zrzut/załadunek), STOP right */
   .action-row { display:grid; grid-template-columns:1fr auto auto; gap:10px; padding:12px 14px; background:var(--bg); flex-shrink:0; align-items:stretch; }
-  /* Załadunek (issue #21) — naziemna połowa pary zrzut/załadunek: ten sam slot i ton,
+  /* Załadunek (issue #21) - naziemna połowa pary zrzut/załadunek: ten sam slot i ton,
      w którym w locie stoi Zrzut, więc pasek dnia skokowego trzyma stałą geometrię. */
   .boarding-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; padding:12px 14px; background:rgba(52,152,219,0.1); border:1px solid rgba(52,152,219,0.3); border-radius:14px; color:var(--blue); cursor:pointer; text-decoration:none; }
   .boarding-btn-lbl { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; white-space:nowrap; }
-  /* STOP ENGINE — wymaganie 3.2; na ziemi (GS < 5 kt) aktywny — kończy SESJĘ i wraca do kokpitu 04 (hero ZDAJ SAMOLOT); drugiego startu nie ma (pivot 2026-08-10) */
+  /* STOP ENGINE - wymaganie 3.2; na ziemi (GS < 5 kt) aktywny - kończy SESJĘ i wraca do kokpitu 04 (hero ZDAJ SAMOLOT); drugiego startu nie ma (pivot 2026-08-10) */
   .stop-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; padding:12px 16px; background:var(--red-muted); border:1px solid var(--red-border); border-radius:14px; color:var(--red); text-decoration:none; cursor:pointer; font-family:var(--font-display); font-size:16px; letter-spacing:1.5px; white-space:nowrap; }
   .stop-btn-lbl { font-family:var(--font-mono); font-size:7px; letter-spacing:1px; text-transform:uppercase; opacity:0.7; }
   .stop-btn.disabled { opacity:0.32; filter:saturate(0.4); pointer-events:none; }
@@ -154,7 +154,7 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 05A</span>
+  <span class="film-strip">UZ AERO - 05A</span>
   <span class="slug">cockpit · taxi · przed T/O</span>
   <span class="canvas-meta"><span class="pulse"></span>Silnik ON · 0 lotów</span>
 </header>
@@ -174,12 +174,12 @@
       <div class="compact-info">
         <span class="compact-aircraft">SP-AXA</span>
         <span class="compact-sep">·</span>
-        <!-- Dzień skoków: JEDEN kod ICAO, nie para (issue #13) — samolot wraca tam, skąd
+        <!-- Dzień skoków: JEDEN kod ICAO, nie para (issue #13) - samolot wraca tam, skąd
              wystartował. Para start → lądowanie zostaje na paskach innych operacji. -->
         <span>EPKK · SKOKI</span>
       </div>
       <div class="compact-right">
-        <div class="offline-badge" title="Brak sieci — zdarzenia zapisują się lokalnie, wysyłka automatyczna po odzyskaniu zasięgu">
+        <div class="offline-badge" title="Brak sieci - zdarzenia zapisują się lokalnie, wysyłka automatyczna po odzyskaniu zasięgu">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
           Offline · 8
         </div>
@@ -187,7 +187,7 @@
           <span class="live-dot"></span>
           RUNNING
         </div>
-        <a href="13-ustawienia.html" class="gear-btn" style="text-decoration:none;" title="Ustawienia — motyw, PIN, konto, diagnostyka GPS">
+        <a href="13-ustawienia.html" class="gear-btn" style="text-decoration:none;" title="Ustawienia - motyw, PIN, konto, diagnostyka GPS">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         </a>
       </div>
@@ -196,7 +196,7 @@
     <div class="phase-hero">
       <div class="phase-body">
         <div class="phase-hero-icon">
-          <!-- samolot poziomo — kołowanie -->
+          <!-- samolot poziomo - kołowanie -->
           <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M22.00,15.08C22.00,14.25 21.32,13.57 20.49,13.58L15.00,13.57L9.98,5.57L8.00,5.57L10.14,13.57L5.00,13.57L3.50,11.57L1.99,11.57L2.93,15.09L3.33,16.58L4.99,16.59L10.49,16.58L14.99,16.58L20.48,16.60C21.33,16.57 21.99,15.90 22.00,15.08Z"/><path d="M7.3,17.7 a1.3,1.3 0 1 0 2.6,0 a1.3,1.3 0 1 0 -2.6,0 z"/><path d="M16.5,17.7 a1.3,1.3 0 1 0 2.6,0 a1.3,1.3 0 1 0 -2.6,0 z"/><path d="M2.5,19H21.5V21H2.5V19"/></svg>
         </div>
         <div class="phase-text">
@@ -237,7 +237,7 @@
     </div>
 
     <!-- KARTA LOGU JEST TU, BO KOŁOWANIE JUŻ SIĘ WYDARZYŁO (issue #19).
-         Reguła: karta pokazuje się dopiero, gdy w sesji jest zdarzenie OPERACYJNE —
+         Reguła: karta pokazuje się dopiero, gdy w sesji jest zdarzenie OPERACYJNE -
          kołowanie, start, lądowanie albo zrzut. W chwili MIĘDZY start engine a wykryciem
          kołowania tej karty nie ma w ogóle: oś złożona z przejęcia, uruchomienia
          i wiersza „na żywo" powtarzałaby to, co ekran mówi wyżej. -->
@@ -264,7 +264,7 @@
           <span class="axis-label"><span class="axis-name muted">Kołowanie</span></span>
           <span class="axis-right"></span>
         </div>
-        <!-- Na ziemi licznik biegnie od URUCHOMIENIA silnika (w powietrzu — od startu). -->
+        <!-- Na ziemi licznik biegnie od URUCHOMIENIA silnika (w powietrzu - od startu). -->
         <div class="axis-row">
           <span class="axis-time"></span>
           <span class="axis-mark"><span class="axis-dot live"></span></span>
@@ -275,11 +275,11 @@
     </div>
 
     <div class="action-row">
-      <a href="05f-zdarzenie-reczne.html" class="primary-btn" title="Zapisz ręcznie — GPS nie wykrył zdarzenia albo wykrył za późno">
+      <a href="05f-zdarzenie-reczne.html" class="primary-btn" title="Zapisz ręcznie - GPS nie wykrył zdarzenia albo wykrył za późno">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg>
         Take off
       </a>
-      <a href="05i-zaladunek.html" class="boarding-btn" title="Załadunek skoczków (issue #21) — znacznik wejścia składu na pokład; liczby opcjonalne, zadeklarowany skład wypełni arkusz zrzutu">
+      <a href="05i-zaladunek.html" class="boarding-btn" title="Załadunek skoczków (issue #21) - znacznik wejścia składu na pokład; liczby opcjonalne, zadeklarowany skład wypełni arkusz zrzutu">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         <span class="boarding-btn-lbl">Załadunek</span>
       </a>
@@ -293,15 +293,15 @@
 </main>
 <nav class="state-sidebar">
   <div class="state-sidebar-lbl">Kokpit</div>
-  <a href="05h-cockpit-idle.html" title="Kiedy: silnik ON, samolot jeszcze stoi — przycisk Taxi otwiera sekwencję; ruch zapisze też autodetekcja"><span class="dot"></span>Engine idle</a>
-  <a href="05a-cockpit-taxi.html" class="active" title="Kiedy: kołowanie trwa (zapisane przez autodetekcję albo przycisk Taxi) — przycisk podpowiada Take off"><span class="dot"></span>Taxi przed T/O</a>
-  <a href="05-cockpit-running.html" title="Kiedy: w locie — phase hero (Climb/Cruise/Descent), GPS live, log zdarzeń, buforowanie offline"><span class="dot"></span>In Flight</a>
-  <a href="05b-cockpit-inflight-toast.html" title="Kiedy: GPS wykrył start (GS > 50 kt) — toast z odliczaniem, 5 s na Cofnij"><span class="dot"></span>Toast Takeoff</a>
-  <a href="05c-cockpit-toast-ldg.html" title="Kiedy: GPS wykrył lądowanie (GS < 30 kt + niska wysokość) — toast z Cofnij podczas rolloutu"><span class="dot"></span>Toast Landing</a>
-  <a href="05d-cockpit-taxi-post.html" title="Kiedy: lot ukończony, silnik nadal ON — kołowanie; kolejny T/O albo STOP ENGINE"><span class="dot"></span>Taxi po LDG</a>
-  <a href="05e-zrzut.html" title="Kiedy: nad zrzutowiskiem — potwierdzenie składu z załadunku (rozliczenie)"><span class="dot"></span>Zrzut</a>
-  <a href="05i-zaladunek.html" title="Kiedy: na ziemi dnia skokowego — skoczkowie wsiadają; skład opcjonalny, wypełni arkusz zrzutu (issue #21)"><span class="dot"></span>Załadunek</a>
-  <a href="05g-cockpit-no-gps.html" title="Kiedy: GPS stracił fixa — parametry — —, autodetekcja wstrzymana, wejścia ręczne aktywne; sieć osobno (SYNC może być zielony)"><span class="dot"></span>No GPS</a>
+  <a href="05h-cockpit-idle.html" title="Kiedy: silnik ON, samolot jeszcze stoi - przycisk Taxi otwiera sekwencję; ruch zapisze też autodetekcja"><span class="dot"></span>Engine idle</a>
+  <a href="05a-cockpit-taxi.html" class="active" title="Kiedy: kołowanie trwa (zapisane przez autodetekcję albo przycisk Taxi) - przycisk podpowiada Take off"><span class="dot"></span>Taxi przed T/O</a>
+  <a href="05-cockpit-running.html" title="Kiedy: w locie - phase hero (Climb/Cruise/Descent), GPS live, log zdarzeń, buforowanie offline"><span class="dot"></span>In Flight</a>
+  <a href="05b-cockpit-inflight-toast.html" title="Kiedy: GPS wykrył start (GS > 50 kt) - toast z odliczaniem, 5 s na Cofnij"><span class="dot"></span>Toast Takeoff</a>
+  <a href="05c-cockpit-toast-ldg.html" title="Kiedy: GPS wykrył lądowanie (GS < 30 kt + niska wysokość) - toast z Cofnij podczas rolloutu"><span class="dot"></span>Toast Landing</a>
+  <a href="05d-cockpit-taxi-post.html" title="Kiedy: lot ukończony, silnik nadal ON - kołowanie; kolejny T/O albo STOP ENGINE"><span class="dot"></span>Taxi po LDG</a>
+  <a href="05e-zrzut.html" title="Kiedy: nad zrzutowiskiem - potwierdzenie składu z załadunku (rozliczenie)"><span class="dot"></span>Zrzut</a>
+  <a href="05i-zaladunek.html" title="Kiedy: na ziemi dnia skokowego - skoczkowie wsiadają; skład opcjonalny, wypełni arkusz zrzutu (issue #21)"><span class="dot"></span>Załadunek</a>
+  <a href="05g-cockpit-no-gps.html" title="Kiedy: GPS stracił fixa - parametry - -, autodetekcja wstrzymana, wejścia ręczne aktywne; sieć osobno (SYNC może być zielony)"><span class="dot"></span>No GPS</a>
 </nav>
 </div>
 

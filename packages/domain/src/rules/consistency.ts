@@ -1,10 +1,10 @@
 /**
- * UZ Aero — NIESPÓJNOŚCI LOGU SESJI (issue #43, baner trybu edycji `design/10d`).
+ * UZ Aero - NIESPÓJNOŚCI LOGU SESJI (issue #43, baner trybu edycji `design/10d`).
  *
  * ══ CZYM TO SIĘ RÓŻNI OD `checkAppend` ══
  * `checkAppend` pyta o KANDYDATA do zapisu: „czy wolno dopisać to zdarzenie?". Odpowiada
  * przed zapisem i potrafi odmówić. Ten moduł pyta o CAŁY strumień: „czy to, co już leży
- * w rejestrze, trzyma się kupy?". Nie odmawia niczego — sesja z lotem bez lądowania jest
+ * w rejestrze, trzyma się kupy?". Nie odmawia niczego - sesja z lotem bez lądowania jest
  * faktem, który się WYDARZYŁ (GPS zgubił lądowanie) i którego nie wolno schować.
  *
  * Dlatego wszystkie naruszenia są tu MIĘKKIE (`warning`), a ekran zamienia je w listę
@@ -13,11 +13,11 @@
  *
  * ══ DLACZEGO ZE STRUMIENIA EFEKTYWNEGO ══
  * Bo pilot poprawia log i musi natychmiast widzieć, czy poprawka pomogła. Sprawdzanie
- * surowego strumienia pokazywałoby niespójności, których już nie ma — a te, które
+ * surowego strumienia pokazywałoby niespójności, których już nie ma - a te, które
  * korekta dopiero wprowadziła, przemilczałoby.
  *
  * Każde naruszenie niesie w `details.uuid` adres zdarzenia, którego dotyczy (o ile
- * takie jest) — dzięki temu oś sesji potrafi oznaczyć konkretny wiersz, zamiast zostawiać
+ * takie jest) - dzięki temu oś sesji potrafi oznaczyć konkretny wiersz, zamiast zostawiać
  * pilota z listą zarzutów bez wskazania miejsca.
  */
 
@@ -38,9 +38,9 @@ const hhmm = (ms: EpochMillis): string => {
 };
 
 /**
- * Niespójności logu sesji — lista dla banera w trybie edycji.
+ * Niespójności logu sesji - lista dla banera w trybie edycji.
  *
- * @param state  projekcja sesji (loty, biegi, odczyty) — policzona z tych samych zdarzeń.
+ * @param state  projekcja sesji (loty, biegi, odczyty) - policzona z tych samych zdarzeń.
  * @param events surowy strumień sesji; korekty nakładamy tutaj.
  * @param limits limity samolotu z cache'u referencyjnego (pojemność zbiorników).
  */
@@ -75,7 +75,7 @@ function checkFlights(state: SessionState): RuleViolation[] {
       v.push(
         warning(
           'FLIGHT_WITHOUT_LANDING',
-          `Lot ${flight.index} nie ma lądowania — start o ${hhmm(flight.takeoffAt)}, a silnik już nie pracuje.`,
+          `Lot ${flight.index} nie ma lądowania - start o ${hhmm(flight.takeoffAt)}, a silnik już nie pracuje.`,
           { uuid: flight.takeoffUuid, flight: flight.index, takeoffAt: flight.takeoffAt },
         ),
       );
@@ -94,7 +94,7 @@ function checkFlights(state: SessionState): RuleViolation[] {
   return v;
 }
 
-/** Typy, które muszą wypaść WEWNĄTRZ pracy silnika — samolot nie startuje na postoju. */
+/** Typy, które muszą wypaść WEWNĄTRZ pracy silnika - samolot nie startuje na postoju. */
 const IN_RUN_TYPES: readonly Event['type'][] = ['taxi', 'takeoff', 'landing', 'drop'];
 
 /** Nazwy dla komunikatu; identyfikator zostaje w `details.type`. */
@@ -109,7 +109,7 @@ const TYPE_LABEL: Partial<Record<Event['type'], string>> = {
  * Zdarzenie poza klamrą biegu silnika.
  *
  * Sesja z otwartym biegiem (silnik pracuje) nie ma jeszcze górnej granicy, więc
- * sprawdzamy wtedy wyłącznie dolną. Sesja bez żadnego biegu nie ma czego naruszyć —
+ * sprawdzamy wtedy wyłącznie dolną. Sesja bez żadnego biegu nie ma czego naruszyć -
  * milczymy, bo zdarzenia bez klamry opisuje już „lot bez lądowania" albo nic.
  */
 function checkRunBracket(state: SessionState, effective: readonly Event[]): RuleViolation[] {
@@ -144,7 +144,7 @@ function checkRunBracket(state: SessionState, effective: readonly Event[]): Rule
 /**
  * Zrzut zapisany na ziemi.
  *
- * Ta sama reguła istnieje w `checkAppend` (`DROP_ON_GROUND`, pytanie o kandydata) —
+ * Ta sama reguła istnieje w `checkAppend` (`DROP_ON_GROUND`, pytanie o kandydata) -
  * tutaj patrzymy na zapisany strumień, więc łapiemy także zrzut, który wypadł poza lot
  * DOPIERO po korekcie czasu startu albo lądowania.
  */
@@ -162,7 +162,7 @@ function checkDrops(state: SessionState, effective: readonly Event[]): RuleViola
     v.push(
       warning(
         'DROP_ON_GROUND',
-        `Zrzut ${drop.payload.dropNumber} o ${hhmm(time)} wypada poza lotem — na ziemi nikt nie wyskakuje.`,
+        `Zrzut ${drop.payload.dropNumber} o ${hhmm(time)} wypada poza lotem - na ziemi nikt nie wyskakuje.`,
         { uuid: drop.uuid, dropNumber: drop.payload.dropNumber, at: time },
       ),
     );
@@ -173,7 +173,7 @@ function checkDrops(state: SessionState, effective: readonly Event[]): RuleViola
 /**
  * Odczyty: cofnięty licznik, paliwo ponad pojemność, paliwo, które przybyło samo.
  *
- * `MH_REGRESSION` i `FUEL_OVER_CAPACITY` mają tu te same nazwy, co przy zapisie —
+ * `MH_REGRESSION` i `FUEL_OVER_CAPACITY` mają tu te same nazwy, co przy zapisie -
  * to ten sam fenomen widziany z drugiej strony (raz jako odmowa zapisu, raz jako opis
  * tego, co już leży w rejestrze, np. po korekcie odczytu startowego).
  */
@@ -191,7 +191,7 @@ function checkReadings(state: SessionState, limits: AircraftLimits): RuleViolati
     );
   }
 
-  // Δ MH wyraźnie większa niż czas blokowy — obrotomierz nie potrafi wyprzedzić zegara.
+  // Δ MH wyraźnie większa niż czas blokowy - obrotomierz nie potrafi wyprzedzić zegara.
   if (mh.deltaH != null && state.blockTimeMs > 0) {
     const blockH = state.blockTimeMs / 3_600_000;
     if (mh.deltaH > blockH + MH_TOLERANCE_H) {
@@ -228,7 +228,7 @@ function checkReadings(state: SessionState, limits: AircraftLimits): RuleViolati
       v.push(
         warning(
           'FUEL_INCREASE_WITHOUT_REFUEL',
-          `Przy zdaniu jest więcej paliwa (${fuel.endL} L) niż mogło zostać (${maxEnd} L) — brakuje tankowania.`,
+          `Przy zdaniu jest więcej paliwa (${fuel.endL} L) niż mogło zostać (${maxEnd} L) - brakuje tankowania.`,
           { endL: fuel.endL, maxEnd },
         ),
       );

@@ -1,14 +1,14 @@
 /**
- * UZ Aero — panel: kafel podsumowania (`.tile` z `SZABLON.html`).
+ * UZ Aero - panel: kafel podsumowania (`.tile` z `SZABLON.html`).
  *
  * Trzy warstwy z mockupu: klucz (mono, wersaliki), wartość (mono, 28 px) i przypis.
- * `unit` renderuje się jako `<small>` wewnątrz wartości — „3 dni 3 h" ma być jedną
+ * `unit` renderuje się jako `<small>` wewnątrz wartości - „3 dni 3 h" ma być jedną
  * liczbą z jednostką, a nie dwiema liczbami obok siebie.
  *
  * `note` jest wymagane: kafel bez przypisu podaje liczbę bez odpowiedzi na pytanie
  * „z czego", a to jest dokładnie ten rodzaj wskaźnika, któremu nikt nie ufa.
  *
- * ══ `to` — KAFEL BYWA PRZEJŚCIEM ══
+ * ══ `to` - KAFEL BYWA PRZEJŚCIEM ══
  * Na pulpicie (`A01`) każdy kafel prowadzi do listy zawężonej dokładnie tak, jak
  * policzona jest jego liczba; na ekranach podsumowań (`A05`, `A06`, `A07`) jest zwykłym
  * pudełkiem. Szablon przewiduje oba przypadki JEDNĄ regułą i mówi to wprost w komentarzu
@@ -26,7 +26,7 @@ export type TileTone = 'green' | 'amber' | 'red' | 'blue';
 interface TileProps {
   label: string;
   value: ReactNode;
-  /** Jednostka albo dopisek przy wartości — mniejszy, w kolorze drugorzędnym. */
+  /** Jednostka albo dopisek przy wartości - mniejszy, w kolorze drugorzędnym. */
   unit?: string;
   tone?: TileTone;
   note: ReactNode;

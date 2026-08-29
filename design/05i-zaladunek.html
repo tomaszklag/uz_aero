@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 05I Załadunek · skoczkowie na pokład</title>
+<title>UZ Aero - 05I Załadunek · skoczkowie na pokład</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -50,7 +50,7 @@
   .running-badge { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; background:var(--green-muted); border:1px solid var(--green-border); font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); }
   .running-badge .live-dot { width:6px; height:6px; border-radius:50%; background:var(--green); animation:pulse 1.5s ease-in-out infinite; }
 
-  /* tło — kokpit na ziemi po dobiegu, przygaszony przez sheet */
+  /* tło - kokpit na ziemi po dobiegu, przygaszony przez sheet */
   .phase-hero { display:flex; flex-direction:column; padding:10px 16px 12px; background:var(--bg); flex-shrink:0; position:relative; gap:8px; }
   .phase-body { display:flex; align-items:center; gap:14px; align-self:center; }
   .phase-text { display:flex; flex-direction:column; gap:3px; }
@@ -64,7 +64,7 @@
   .param-unit { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); }
   .spacer { flex:1; }
 
-  /* ===== SHEET ZAŁADUNKU — te same klocki co arkusz zrzutu (05E): to ta sama lista,
+  /* ===== SHEET ZAŁADUNKU - te same klocki co arkusz zrzutu (05E): to ta sama lista,
      opowiedziana chwilę wcześniej. Bez wiersza wysokości: samolot stoi na ziemi. ===== */
   .sheet-overlay { position:absolute; inset:0; z-index:50; background:rgba(0,0,0,0.74); display:flex; flex-direction:column; justify-content:flex-end; }
   /* Sufit arkusza: pas tła nad nim ma być WIDOCZNY, inaczej arkusz z dużą treścią
@@ -75,7 +75,7 @@
   .sheet-title { font-family:var(--font-display); font-size:23px; letter-spacing:2px; color:var(--blue); }
   .sheet-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
 
-  /* steppery typów — duże cele dotykowe (rękawice), 1:1 z 05E */
+  /* steppery typów - duże cele dotykowe (rękawice), 1:1 z 05E */
   .type-row { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--border); border-radius:13px; padding:9px 11px; }
   .type-name { flex:1; display:flex; flex-direction:column; gap:2px; }
   .type-lbl { font-size:14px; font-weight:700; color:var(--text-primary); letter-spacing:0.5px; }
@@ -86,13 +86,13 @@
   .step-val { font-family:var(--font-mono); font-size:26px; font-weight:700; min-width:30px; text-align:center; color:var(--text-primary); }
   .step-val.zero { color:var(--text-muted); }
 
-  /* suma — to jest skład, który za chwilę pokaże się w 05E jako prefill */
+  /* suma - to jest skład, który za chwilę pokaże się w 05E jako prefill */
   .total-row { display:flex; align-items:center; justify-content:space-between; background:var(--blue-muted); border:1px solid var(--blue-border); border-radius:13px; padding:12px 15px; }
   .total-lbl { font-family:var(--font-mono); font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--blue); opacity:0.85; }
   .total-val { font-family:var(--font-display); font-size:30px; letter-spacing:1px; color:var(--blue); line-height:1; }
 
-  /* Skład jest opcjonalny — mówimy to, zanim pilot zacznie szukać, czemu wolno zapisać zero.
-     Ten sam slot niesie podpis prefillu, gdy arkusz otwiera się PONOWNIE (issue #28) —
+  /* Skład jest opcjonalny - mówimy to, zanim pilot zacznie szukać, czemu wolno zapisać zero.
+     Ten sam slot niesie podpis prefillu, gdy arkusz otwiera się PONOWNIE (issue #28) -
      patrz opis stanu w panelu wariantów pod telefonem. */
   .optional-note { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); text-align:center; }
 
@@ -123,12 +123,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 05I</span>
+  <span class="film-strip">UZ AERO - 05I</span>
   <span class="slug">załadunek · skoczkowie na pokład · interaktywny</span>
   <span class="canvas-meta"><span class="pulse"></span>Wariant 05</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Załadunek skoczków">
+<main class="phone" role="region" aria-label="Mockup - Załadunek skoczków">
   <div class="status-bar">
     <span>16:12</span>
     <span class="status-right">
@@ -149,7 +149,7 @@
       </div>
     </div>
 
-    <!-- Tło: kokpit po dobiegu (05D) — silnik pracuje, samolot stoi, skład wsiada. -->
+    <!-- Tło: kokpit po dobiegu (05D) - silnik pracuje, samolot stoi, skład wsiada. -->
     <div class="phase-hero">
       <div class="phase-body">
         <div class="phase-hero-icon">
@@ -225,7 +225,7 @@
           <span class="total-val" id="total">0</span>
         </div>
 
-        <div class="optional-note">Skład możesz pominąć — zapis i tak odnotuje załadunek w logu</div>
+        <div class="optional-note">Skład możesz pominąć - zapis i tak odnotuje załadunek w logu</div>
 
         <div class="sheet-actions">
           <a href="05d-cockpit-taxi-post.html" class="btn-cancel">Anuluj</a>
@@ -240,12 +240,12 @@
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Para zrzut / załadunek — kiedy który?</div>
+  <div class="vp-title">Para zrzut / załadunek - kiedy który?</div>
   <a class="vp-item active" href="05i-zaladunek.html">
     <span class="vp-badge blue">05I</span>
     <span class="vp-body">
       <span class="vp-name">Załadunek skoczków</span>
-      <span class="vp-when">Na ziemi dnia skokowego: przed startem serii (kafelek na 04A) albo po wykołowaniu z pasa między lotami (slot paska akcji — 05H/05A/05D). Znacznik wejścia składu na pokład; liczby OPCJONALNE — zapis bez nich odnotowuje sam fakt (skład „niepodany", nie „zero"). Zadeklarowany skład wypełnia arkusz zrzutu.</span>
+      <span class="vp-when">Na ziemi dnia skokowego: przed startem serii (kafelek na 04A) albo po wykołowaniu z pasa między lotami (slot paska akcji - 05H/05A/05D). Znacznik wejścia składu na pokład; liczby OPCJONALNE - zapis bez nich odnotowuje sam fakt (skład „niepodany", nie „zero"). Zadeklarowany skład wypełnia arkusz zrzutu.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -253,7 +253,7 @@
     <span class="vp-badge blue">05I</span>
     <span class="vp-body">
       <span class="vp-name">…otwarty PONOWNIE (skład już czeka)</span>
-      <span class="vp-when">Ten sam arkusz, gdy załadunek jest już zapisany, a zrzutu jeszcze nie było (np. skład wsiadł przed uruchomieniem silnika i pilot wraca poprawić liczby). Liczniki otwierają się ZADEKLAROWANYM składem — tym samym, którym otwiera się arkusz zrzutu — a w miejscu podpisu o opcjonalności stoi „Skład zadeklarowany 16:12 UTC — zapis go zaktualizuje". Załadunek bez liczb prefillem nie jest: zerowe liczniki z takim podpisem ogłaszałyby deklarację pustego samolotu. Do 2026-08-12 arkusz kasował liczniki przy każdym otwarciu i pokazywał same zera (issue #28).</span>
+      <span class="vp-when">Ten sam arkusz, gdy załadunek jest już zapisany, a zrzutu jeszcze nie było (np. skład wsiadł przed uruchomieniem silnika i pilot wraca poprawić liczby). Liczniki otwierają się ZADEKLAROWANYM składem - tym samym, którym otwiera się arkusz zrzutu - a w miejscu podpisu o opcjonalności stoi „Skład zadeklarowany 16:12 UTC - zapis go zaktualizuje". Załadunek bez liczb prefillem nie jest: zerowe liczniki z takim podpisem ogłaszałyby deklarację pustego samolotu. Do 2026-08-12 arkusz kasował liczniki przy każdym otwarciu i pokazywał same zera (issue #28).</span>
     </span>
     <span class="vp-tag">stan tego arkusza</span>
   </div>
@@ -261,14 +261,14 @@
     <span class="vp-badge blue">05E</span>
     <span class="vp-body">
       <span class="vp-name">Zapis zrzutu (druga połowa pary)</span>
-      <span class="vp-when">W locie, nad zrzutowiskiem — liczniki otwierają się wypełnione TYM składem i pilot tylko potwierdza. Zrzut konsumuje załadunek: drugi zrzut w tym samym locie zaczyna od zera, dopóki nikt nowy nie wsiądzie.</span>
+      <span class="vp-when">W locie, nad zrzutowiskiem - liczniki otwierają się wypełnione TYM składem i pilot tylko potwierdza. Zrzut konsumuje załadunek: drugi zrzut w tym samym locie zaczyna od zera, dopóki nikt nowy nie wsiądzie.</span>
     </span>
   </a>
   <a class="vp-item" href="05d-cockpit-taxi-post.html">
     <span class="vp-badge">05D</span>
     <span class="vp-body">
       <span class="vp-name">Kokpit po dobiegu (stąd się otwiera)</span>
-      <span class="vp-when">„Jak wyląduję i wykołuję z pasa" (issue #21 pkt 7) — skład kolejnego lotu wsiada przy pracującym silniku; przycisk Załadunek stoi w pasku akcji obok Take off i STOP.</span>
+      <span class="vp-when">„Jak wyląduję i wykołuję z pasa" (issue #21 pkt 7) - skład kolejnego lotu wsiada przy pracującym silniku; przycisk Załadunek stoi w pasku akcji obok Take off i STOP.</span>
     </span>
   </a>
 </aside>
@@ -282,7 +282,7 @@
 </nav>
 
 <script>
-  // Te same steppery co w 05E — zero jest legalne: skład opcjonalny (issue #21).
+  // Te same steppery co w 05E - zero jest legalne: skład opcjonalny (issue #21).
   const c = { tandem: 0, aff: 0, solo: 0 };
   function bump(k, d) {
     c[k] = Math.max(0, c[k] + d);

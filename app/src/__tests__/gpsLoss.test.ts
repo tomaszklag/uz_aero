@@ -1,8 +1,8 @@
 /**
- * UZ Aero — testy napisów stanu „GPS: brak sygnału" (mockup 05g, `screens/gpsLoss.ts`)
+ * UZ Aero - testy napisów stanu „GPS: brak sygnału" (mockup 05g, `screens/gpsLoss.ts`)
  * i formatu pozycji DDM (ekran 13, `format.formatLatLon`).
  *
- * Te zdania czyta pilot W LOCIE — pomyłka w wieku fixa albo w półkuli to nie literówka.
+ * Te zdania czyta pilot W LOCIE - pomyłka w wieku fixa albo w półkuli to nie literówka.
  */
 
 import { formatLatLon } from '../ui/format';
@@ -18,7 +18,7 @@ import {
 
 const T = Date.UTC(2026, 5, 22, 15, 58, 0);
 
-describe('gpsLoss — baner i adnotacje 05g', () => {
+describe('gpsLoss - baner i adnotacje 05g', () => {
   it('wiek fixa: minuty po minucie, sekundy poniżej', () => {
     expect(fixAge(T, T + 12 * 60_000)).toBe('12 min temu');
     expect(fixAge(T, T + 45_000)).toBe('45 s temu');
@@ -29,7 +29,7 @@ describe('gpsLoss — baner i adnotacje 05g', () => {
     const text = gpsLossText(T, T + 12 * 60_000);
     expect(text).toContain('Ostatni fix 15:58 UTC (12 min temu).');
     expect(text).toContain('zapisuj je ręcznie');
-    // Baner nazywa przyciski tak, jak są podpisane w pasku akcji — od 2026-08-12
+    // Baner nazywa przyciski tak, jak są podpisane w pasku akcji - od 2026-08-12
     // to on niesie całe ostrzeżenie, bo z przycisku znikł dopisek „· ręcznie".
     expect(text).toContain('przyciskiem Landing / Take off');
     expect(text).toContain('Timery i log dnia liczą dalej z zegara.');
@@ -47,7 +47,7 @@ describe('gpsLoss — baner i adnotacje 05g', () => {
   });
 });
 
-describe('gpsSignalState — rozruch to nie awaria (decyzja UX 2026-08-04)', () => {
+describe('gpsSignalState - rozruch to nie awaria (decyzja UX 2026-08-04)', () => {
   it('fixy płyną → live (bez banera)', () => {
     expect(gpsSignalState(true, T, false)).toBe('live');
     expect(gpsSignalState(true, null, false)).toBe('live');
@@ -61,14 +61,14 @@ describe('gpsSignalState — rozruch to nie awaria (decyzja UX 2026-08-04)', () 
     expect(gpsSignalState(false, T, false)).toBe('lost');
   });
 
-  it('odmowa uprawnienia wygrywa ze wszystkim — fix jej nie naprawi', () => {
+  it('odmowa uprawnienia wygrywa ze wszystkim - fix jej nie naprawi', () => {
     expect(gpsSignalState(false, null, true)).toBe('permission');
     expect(gpsSignalState(false, T, true)).toBe('permission');
   });
 
   it('treści rozruchu i uprawnień mówią, co robić, bez języka awarii', () => {
     expect(gpsAcquiringText()).toContain('wyszukuje sygnał');
-    // Przyciski nazywane tak, jak są podpisane w pasku akcji — skróty „T-O / LAND"
+    // Przyciski nazywane tak, jak są podpisane w pasku akcji - skróty „T-O / LAND"
     // odsyłały do napisów, których nie ma na ekranie od issue #19.
     expect(gpsAcquiringText()).toContain('przyciskiem Take off / Landing');
     expect(gpsAcquiringText()).not.toMatch(/brak sygnału|awari/i);
@@ -77,7 +77,7 @@ describe('gpsSignalState — rozruch to nie awaria (decyzja UX 2026-08-04)', () 
   });
 });
 
-describe('formatLatLon — stopnie i minuty dziesiętne (ekran 13)', () => {
+describe('formatLatLon - stopnie i minuty dziesiętne (ekran 13)', () => {
   it('kanoniczna pozycja EPKK-okolice: 50°04.7\'N 019°47.1\'E', () => {
     expect(formatLatLon(50.0783, 19.785)).toBe("50°04.7'N 019°47.1'E");
   });
@@ -86,7 +86,7 @@ describe('formatLatLon — stopnie i minuty dziesiętne (ekran 13)', () => {
     expect(formatLatLon(-33.9249, -18.4241)).toBe("33°55.5'S 018°25.4'W");
   });
 
-  it('minuty z zerem wiodącym — wyrównanie kolumny', () => {
+  it('minuty z zerem wiodącym - wyrównanie kolumny', () => {
     expect(formatLatLon(52.05, 21.0083)).toBe("52°03.0'N 021°00.5'E");
   });
 });

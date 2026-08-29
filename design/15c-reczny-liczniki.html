@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 15C Lot ręczny · krok 4/4 · liczniki i paliwo</title>
+<title>UZ Aero - 15C Lot ręczny · krok 4/4 · liczniki i paliwo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -67,7 +67,7 @@
   .spacer { flex:1; min-height:8px; }
 
   /* `flex-shrink:0` jest OBOWIĄZKOWE: `.scroll` jest kolumną flex, więc bez tego
-     sekcje ściskają się zamiast przewijać — karta z osią paliwa (jedyna z `overflow:
+     sekcje ściskają się zamiast przewijać - karta z osią paliwa (jedyna z `overflow:
      hidden`) zapadała się przez to do jednego piksela i znikała z ekranu. */
   .section { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:14px; display:flex; flex-direction:column; gap:12px; flex-shrink:0; }
   .section-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
@@ -80,18 +80,18 @@
   .field-input:hover { border-color:var(--green-border); }
   /* Metryka wartości = pole wpisu z arkusza (issue #58 pkt 5 i 9): mono 16 / 1.5.
      Placeholder ZAWSZE składem tekstowym (trzecia tura #58): body 15
-     w --text-placeholder, jak w arkuszu notatki — instrukcja, nie wartość;
+     w --text-placeholder, jak w arkuszu notatki - instrukcja, nie wartość;
      wysokość trzyma min-height kontrolki, więc osobny skład niczym nie skacze. */
   .field-val { font-family:var(--font-mono); font-size:16px; font-weight:700; letter-spacing:1.5px; color:var(--text-primary); }
   .field-val.amber { color:var(--amber); }
   .field-val.empty { color:var(--text-placeholder); font-weight:400; font-family:var(--font-body); font-size:15px; line-height:20px; letter-spacing:0; }
   .field-unit { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); }
-  /* Źródło wartości WYKRYTEJ (issue #62, siódma tura) — liczba przyszła z rejestru,
+  /* Źródło wartości WYKRYTEJ (issue #62, siódma tura) - liczba przyszła z rejestru,
      nie z paliwomierza, i ma tego nie udawać. Stoi po prawej, jak `meta` w kontrolce. */
   .field-src { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); margin-left:auto; }
   .field-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); line-height:1.5; }
 
-  /* ===== OŚ — TEN SAM KOMPONENT, CO NA KROKU 3 I W ROZLICZENIU (issue #62) =====
+  /* ===== OŚ - TEN SAM KOMPONENT, CO NA KROKU 3 I W ROZLICZENIU (issue #62) =====
      Paliwo jest sekwencją, więc rysuje się tym, czym rysują się wszystkie sekwencje
      tej aplikacji. Wiersz ma 44 px, bo każdy otwiera swój arkusz. */
   .section.flush { padding:0; gap:0; overflow:hidden; }
@@ -105,7 +105,7 @@
   .axis-row:first-child .axis-mark::before { top:50%; }
   .axis-row:last-child .axis-mark::before { bottom:50%; }
   .axis-dot { position:relative; align-self:center; width:9px; height:9px; border-radius:50%; background:var(--border-strong); border:2px solid var(--surface); box-shadow:0 0 0 2px var(--surface); }
-  /* Amber jest w tym systemie kolorem PALIWA — przy dolewce niesie znaczenie, nie ozdobę. */
+  /* Amber jest w tym systemie kolorem PALIWA - przy dolewce niesie znaczenie, nie ozdobę. */
   .axis-dot.amber { background:var(--amber); }
   .axis-dot.hollow { background:var(--surface); border:1.5px solid var(--text-muted); box-shadow:0 0 0 2px var(--surface); }
   .axis-label { display:flex; flex-direction:column; gap:1px; min-width:0; }
@@ -121,13 +121,13 @@
   .axis-foot-val.amber { color:var(--amber); }
   .axis-foot-key { font-family:var(--font-mono); font-size:7px; letter-spacing:1.2px; text-transform:uppercase; color:var(--text-muted); }
 
-  /* Plakietka werdyktu przy WARTOŚCI — zielona w normie, bursztynowa poza pasmem.
+  /* Plakietka werdyktu przy WARTOŚCI - zielona w normie, bursztynowa poza pasmem.
      Nigdy czerwona: wynik poza pasmem jest do sprawdzenia, a nie błędny. */
   .tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; border-radius:5px; padding:2px 6px; border:1px solid var(--border-strong); color:var(--text-muted); margin-left:auto; }
   .tag.green { color:var(--green); background:var(--green-muted); border-color:var(--green-border); }
   .tag.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
 
-  /* Dolewki — lista zdarzeń w czasie, tak jak loty na kroku 3. Stan „po" liczy się
+  /* Dolewki - lista zdarzeń w czasie, tak jak loty na kroku 3. Stan „po" liczy się
      z odczytów, a nie z osobnego pola: `refuel` niesie spójną trójkę before/added/after
      i to arkusz dolewki ją domyka. */
   .row-list { display:flex; flex-direction:column; gap:1px; background:var(--border); border-radius:12px; overflow:hidden; }
@@ -141,17 +141,17 @@
 
   /* ===== OSTRZEŻENIA (nie blokady) =====
      Baner ostrzegawczy warunkowy: znika razem z warunkiem, nie zamyka się ręcznie.
-     ZAPIS POZOSTAJE MOŻLIWY — pilot wpisujący lot z kartki tydzień później często
+     ZAPIS POZOSTAJE MOŻLIWY - pilot wpisujący lot z kartki tydzień później często
      ma dane niepełne, a fakt lotu jest cenniejszy niż kompletność formularza
      (ta sama zasada, co przy `NO_FLIGHT_WITHOUT_REASON`). Twarde reguły domeny
-     nadal odrzucą zapis niemożliwy — np. lądowanie przed startem. */
+     nadal odrzucą zapis niemożliwy - np. lądowanie przed startem. */
   .warn-list { display:flex; flex-direction:column; gap:8px; }
   .warn { display:flex; align-items:flex-start; gap:9px; background:var(--amber-muted); border:1px solid var(--amber-border); border-radius:12px; padding:10px 12px; }
   .warn svg { color:var(--amber); flex-shrink:0; margin-top:1px; }
   .warn-body { display:flex; flex-direction:column; gap:3px; }
   .warn-text { font-size:11px; color:var(--text-secondary); line-height:1.5; }
   .warn-text b { color:var(--amber); font-weight:700; }
-  /* Wiek danych referencyjnych — ta sama adnotacja, co przy każdej wartości z cache
+  /* Wiek danych referencyjnych - ta sama adnotacja, co przy każdej wartości z cache
      (§6 pkt 2 / §4.8): ostrzeżenie oparte na danych sprzed dwóch dni musi o tym mówić. */
   .warn-src { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
 
@@ -173,12 +173,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 15C</span>
+  <span class="film-strip">UZ AERO - 15C</span>
   <span class="slug">lot ręczny · liczniki i paliwo · krok 4 / 4</span>
   <span class="canvas-meta">Ekran 15C</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Lot ręczny, krok 4: liczniki i paliwo">
+<main class="phone" role="region" aria-label="Mockup - Lot ręczny, krok 4: liczniki i paliwo">
   <div class="status-bar">
     <span>16:24</span>
     <span class="status-right">
@@ -207,7 +207,7 @@
 
       <!-- PALIWO MA TRZY STANY, NIE JEDEN (zgłoszenie z urządzenia, 2026-08-16).
            Do tej pory wpis ręczny pytał WYŁĄCZNIE o stan po locie, a stan początkowy
-           brał z ostatniego przekazania w cache — czyli zgadywał wielkość, którą pilot
+           brał z ostatniego przekazania w cache - czyli zgadywał wielkość, którą pilot
            odczytał z paliwomierza i ma zapisaną na kartce. Sesja z dolewką nie dawała
            się wpisać w ogóle: różnica „przed minus po" wychodziła ujemna i całe zużycie
            tej sesji szło do analityki jako nonsens (`consumption/intervals.ts`).
@@ -219,24 +219,24 @@
            Zgłoszenie z urządzenia rozstrzygnęło kształt tej sekcji: „system wykrywa
            ilość paliwa w oparciu o poprzedzający lot, później podaję, ile paliwa
            zostało dotankowane oraz ile paliwa zostało po wykonaniu operacji. Nie ma
-           sensu podawać godziny, kiedy nastąpiło dolanie albo pomiar — to wynika
+           sensu podawać godziny, kiedy nastąpiło dolanie albo pomiar - to wynika
            z godzin, kiedy samolot został uruchomiony i wyłączony."
 
            Zniknęła przez to CAŁA lista dolewek z osobnymi godzinami (i arkusz do nich),
            a razem z nią trzy rzeczy, które kosztowała:
 
             1. godzina dolewki rozstrzygała tylko „przed czy po biegu", a minuta nie
-               ważyła nigdzie — w obu oknach silnik stoi, więc żaden interwał analityki
+               ważyła nigdzie - w obu oknach silnik stoi, więc żaden interwał analityki
                nie zmienia się od przesunięcia o kwadrans;
             2. dolewkę dało się wpisać na ŚRODEK biegu, czyli w stan, który domena
-               i tak odrzuca (REFUEL_ENGINE_RUNNING) — dziś taki stan jest niewyrażalny;
+               i tak odrzuca (REFUEL_ENGINE_RUNNING) - dziś taki stan jest niewyrażalny;
             3. odczyt „przed uruchomieniem" był stanem PO porannym tankowaniu, więc
                rachunek musiał go cofać o dolewki sprzed niego, inaczej litry liczyły
-               się podwójnie. Szkic trzyma odtąd ZASTANE — i cofać nie ma już czego.
+               się podwójnie. Szkic trzyma odtąd ZASTANE - i cofać nie ma już czego.
 
            Kolejność pól zastępuje godziny: zastane → dolane → (lot) → zostało.
            ZASTANE wykrywa się z sesji poprzedzającej (readings-chain) i pokazuje ze
-           ŹRÓDŁEM — żeby liczba nie udawała odczytu z paliwomierza. Pilot poprawia ją
+           ŹRÓDŁEM - żeby liczba nie udawała odczytu z paliwomierza. Pilot poprawia ją
            jednym tapnięciem: przyrząd fizyczny bije rachubę. -->
       <div class="section">
         <div class="section-head"><span class="section-label">Paliwo</span></div>
@@ -261,12 +261,12 @@
         </div>
         <div class="field-sub">zużycie 36 L · przed startem 112 L − po locie 76 L</div>
       </div>
-      <!-- NORMA — „przeliczmy i sprawdźmy, czy się zgadza” (issue #62, piąta tura).
+      <!-- NORMA - „przeliczmy i sprawdźmy, czy się zgadza” (issue #62, piąta tura).
            Oczekiwanie liczy DOMENA z normy tej maszyny (cache referencyjny, więc
-           działa offline) — ta sama arytmetyka, którą po zapisaniu pokaże ekran
+           działa offline) - ta sama arytmetyka, którą po zapisaniu pokaże ekran
            rozliczenia. Karty NIE MA, gdy maszyna nie ma jeszcze normy: brak normy
            nie jest brakiem danych pilota i nie ma prawa wyglądać jak jego błąd.
-           Werdykt jest BURSZTYNOWY, nie czerwony — wynik poza pasmem jest
+           Werdykt jest BURSZTYNOWY, nie czerwony - wynik poza pasmem jest
            DO SPRAWDZENIA, a paliwomierz i licznik mają rację. -->
       <div class="section">
         <div class="section-head"><span class="section-label">Norma zużycia</span></div>
@@ -291,14 +291,14 @@
         </div>
       </div>
 
-      <!-- MOTOGODZINY PRZED I PO — do 2026-08-16 wpis pytał tylko o stan po locie,
+      <!-- MOTOGODZINY PRZED I PO - do 2026-08-16 wpis pytał tylko o stan po locie,
            a stan przed brał z PRZEKAZANIA („ile jest teraz"), więc dla lotu sprzed
            tygodnia zgadywał. Łańcuch MH jest osią SAMOLOTU (§4.5), a zgadnięte ogniwo
            psuło rachunek następnemu pilotowi, nie temu, który wpisuje.
 
            STAN PRZED URUCHOMIENIEM WYKRYWA SIĘ Z SĄSIADA (issue #62, ósma tura): trasa
            `readings-chain` niesie licznik razem z paliwem, więc to ta sama odpowiedź
-           i ta sama reguła — źródło przy polu, poprawka jednym tapnięciem. Stan PO
+           i ta sama reguła - źródło przy polu, poprawka jednym tapnięciem. Stan PO
            locie zostaje pytaniem: `after` jest odpowiedzią na nie, a podstawiona
            odpowiedź zawsze się „zgadza" i kasuje ostrzeżenie, dla którego łańcuch powstał.
 
@@ -321,18 +321,18 @@
         </div>
         <!-- PODPISU „przyrost 1:32 · blok 1:36" TU NIE MA (issue #62, piąta tura):
              przyrost licznika NIE RÓWNA SIĘ czasowi blokowemu i nie ma prawa się równać
-             — obrotomierz na wolnych obrotach chodzi wolniej niż zegar. Zestawione obok
+             - obrotomierz na wolnych obrotach chodzi wolniej niż zegar. Zestawione obok
              siebie sugerowały błąd przy poprawnym odczycie; to ta sama pomyłka, którą
              issue #38 wyrzuciło z ekranu 10. Przyrost porównuje się z NORMĄ maszyny,
              w karcie „Norma zużycia" wyżej. -->
       </div>
 
-      <!-- OLEJ (issue #60) — tu OPCJONALNY, świadomym wyjątkiem: na 02A pomiar jest
+      <!-- OLEJ (issue #60) - tu OPCJONALNY, świadomym wyjątkiem: na 02A pomiar jest
            krokiem WYMAGANYM (decyzja 2026-08-27), ale lot z kartki sprzed tygodnia
            może uczciwego pomiaru nie mieć, a fakt lotu jest cenniejszy niż kompletność
-           formularza (reguła flow 15 — blokera NIE MA). Stąd tag „opcjonalnie":
+           formularza (reguła flow 15 - blokera NIE MA). Stąd tag „opcjonalnie":
            tu naprawdę odróżnia. Jedno wejście otwiera TEN SAM arkusz co 02I (pomiar
-           + dolewka); bez wiersza „Oczekiwane wg normy" — wpis opisuje przeszłość,
+           + dolewka); bez wiersza „Oczekiwane wg normy" - wpis opisuje przeszłość,
            a oczekiwanie liczy się względem bieżącego licznika, więc mówiłoby o innym
            dniu (ta sama reguła, co brak podpowiedzi zadania na 15A). -->
       <div class="section">
@@ -347,7 +347,7 @@
       </div>
 
       <!-- OSTRZEŻENIA liczone z LOKALNEGO rejestru (kolizje z własnymi sesjami)
-           i z cache referencyjnego (łańcuch MH i paliwa maszyny) — bez pytania serwera,
+           i z cache referencyjnego (łańcuch MH i paliwa maszyny) - bez pytania serwera,
            więc działają offline. Kolizje z sesjami INNYCH pilotów rozstrzygnie i tak
            serwer: oznaczy je flagą `aircraft_overlap`, a uwaga wróci na telefon (§4.5).
            ŻADNE Z NICH NIE BLOKUJE ZAPISU. -->
@@ -356,26 +356,26 @@
              z CUDZYM odczytem, czyli o czymś, czego pilot nie widzi nigdzie indziej.
              Reszta ostrzeżeń dotyczy jego własnych liczb, które ma na tym samym ekranie.
 
-             Źródłem jest `GET /aircraft/:id/readings-chain` — odczyt przy zdaniu sesji
+             Źródłem jest `GET /aircraft/:id/readings-chain` - odczyt przy zdaniu sesji
              POPRZEDZAJĄCEJ i przy przejęciu NASTĘPNEJ. Przekazanie z `/reference` na to
              pytanie nie odpowiada: to jeden punkt („ile jest teraz"), a wpis ręczny pyta
              o czwartek, gdy maszyna zdążyła już polatać z kimś innym.
 
              NIE BLOKUJE i blokować nie może: paliwomierz jest przyrządem fizycznym
              i to on ma rację, a ktoś mógł dolać poza aplikacją. Bez sieci, przy pierwszym
-             locie maszyny albo na starszym serwerze tego ostrzeżenia po prostu nie ma —
+             locie maszyny albo na starszym serwerze tego ostrzeżenia po prostu nie ma -
              ekran milczy o ciągłości, zamiast zgadywać.
 
              DLACZEGO OSTRZEŻENIA SĄ TU Z DRUGIEJ STRONY BIEGU (issue #62, ósma tura):
              odczyty ZASTANE przyszły z sąsiada i mają to napisane przy polach, więc
-             z sąsiadem zgodzić się nie mogą — rozjazd „przed" pojawia się dopiero wtedy,
+             z sąsiadem zgodzić się nie mogą - rozjazd „przed" pojawia się dopiero wtedy,
              gdy pilot poprawi liczbę z przyrządu (i wtedy gaśnie adnotacja źródła).
              Strona PO locie jest niepodstawiana z definicji i to ona niesie właściwe
              pytanie: czy ten lot zostawił maszynę tam, gdzie zastał ją następny. -->
         <div class="warn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           <span class="warn-body">
-            <span class="warn-text"><b>Paliwo nie zgadza się z następnym lotem</b> — następny pilot zastał 92 L, a wpis kończy na 76 L.</span>
+            <span class="warn-text"><b>Paliwo nie zgadza się z następnym lotem</b> - następny pilot zastał 92 L, a wpis kończy na 76 L.</span>
             <span class="warn-src">z rejestru · JKW · 16 SIE 15:00</span>
           </span>
         </div>
@@ -386,22 +386,22 @@
         <div class="warn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           <span class="warn-body">
-            <span class="warn-text"><b>Licznik nie zgadza się z następnym lotem</b> — następny pilot zastał 1 308:10, a wpis kończy na 1 307:53.</span>
+            <span class="warn-text"><b>Licznik nie zgadza się z następnym lotem</b> - następny pilot zastał 1 308:10, a wpis kończy na 1 307:53.</span>
             <span class="warn-src">z rejestru · JKW · 16 SIE 15:00</span>
           </span>
         </div>
 
         <!-- OLEJ ostrzega TYLKO W JEDNĄ STRONĘ: o poziomie, którego PRZYBYŁO bez
              zapisanej dolewki. Ubytek jest normalnym zużyciem i ma własny rachunek
-             w module oleju — ta sama asymetria, co przy FUEL_INCREASE_WITHOUT_REFUEL.
+             w module oleju - ta sama asymetria, co przy FUEL_INCREASE_WITHOUT_REFUEL.
 
              Olej nie ma pary „przed/po", bo bagnet tuż po locie kłamie i zdanie
-             samolotu oleju NIE MIERZY (issue #60): rejestr zna KOTWICĘ — ostatni pomiar
-             i dolewki od niego — a nie „ile powinno zostać po tym locie". -->
+             samolotu oleju NIE MIERZY (issue #60): rejestr zna KOTWICĘ - ostatni pomiar
+             i dolewki od niego - a nie „ile powinno zostać po tym locie". -->
         <div class="warn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           <span class="warn-body">
-            <span class="warn-text"><b>Oleju jest więcej niż przy ostatnim pomiarze</b> — było 9,2 L i dolano 1,0 L, a wpis podaje 12,0 L. Brakuje dolewki?</span>
+            <span class="warn-text"><b>Oleju jest więcej niż przy ostatnim pomiarze</b> - było 9,2 L i dolano 1,0 L, a wpis podaje 12,0 L. Brakuje dolewki?</span>
             <span class="warn-src">z rejestru · 16 SIE 07:00</span>
           </span>
         </div>
@@ -411,11 +411,11 @@
             <span class="warn-text"><b>Czasy zachodzą na Twoją SESJĘ 2</b> na SP-KLM (10:20 → 11:02). Jeden pilot nie leci dwiema maszynami naraz.</span>
           </span>
         </div>
-        <!-- OSTRZEŻENIA Z CACHE SĄ TU WYPARTE (issue #62, piąta tura) — dlatego nie ma
+        <!-- OSTRZEŻENIA Z CACHE SĄ TU WYPARTE (issue #62, piąta tura) - dlatego nie ma
              pod spodem wiersza „Licznik nie zgadza się z łańcuchem · z cache". Odkąd
              trasa `readings-chain` odpowiedziała, jej ostrzeżenia wypierają liczone
              z przekazania: `handover` mówi „ile jest TERAZ", a wpis dotyczy przeszłej
-             chwili — dwa zdania o tej samej liczbie, z których jedno jest mniej trafne,
+             chwili - dwa zdania o tej samej liczbie, z których jedno jest mniej trafne,
              to szum. Bez sieci wracają lokalne i wtedy niosą adnotację wieku cache'u. -->
       </div>
 
@@ -431,33 +431,33 @@
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Kroki wpisu ręcznego — co gdzie</div>
+  <div class="vp-title">Kroki wpisu ręcznego - co gdzie</div>
   <a class="vp-item" href="15-reczny-lot.html">
     <span class="vp-badge">15</span>
     <span class="vp-body">
-      <span class="vp-name">Krok 1 — data i samolot</span>
+      <span class="vp-name">Krok 1 - data i samolot</span>
       <span class="vp-when">Maszyna, data lotu, opcjonalny Dual.</span>
     </span>
   </a>
   <a class="vp-item" href="15a-reczny-zadanie.html">
     <span class="vp-badge">15A</span>
     <span class="vp-body">
-      <span class="vp-name">Krok 2 — zadanie</span>
+      <span class="vp-name">Krok 2 - zadanie</span>
       <span class="vp-when">Rodzaj operacji, lotniska, klient, notatka.</span>
     </span>
   </a>
   <a class="vp-item" href="15b-reczny-czasy.html">
     <span class="vp-badge">15B</span>
     <span class="vp-body">
-      <span class="vp-name">Krok 3 — czasy</span>
+      <span class="vp-name">Krok 3 - czasy</span>
       <span class="vp-when">Bieg silnika, loty, zrzuty.</span>
     </span>
   </a>
   <a class="vp-item active" href="15c-reczny-liczniki.html">
     <span class="vp-badge">15C</span>
     <span class="vp-body">
-      <span class="vp-name">Krok 4 — liczniki i paliwo</span>
-      <span class="vp-when">Paliwo przed uruchomieniem, dolewki i stan po locie; motogodziny z obu stron. Ostrzeżenia o nieścisłościach stoją tu, bo tu widać liczby, których dotyczą — i nie blokują zapisu.</span>
+      <span class="vp-name">Krok 4 - liczniki i paliwo</span>
+      <span class="vp-when">Paliwo przed uruchomieniem, dolewki i stan po locie; motogodziny z obu stron. Ostrzeżenia o nieścisłościach stoją tu, bo tu widać liczby, których dotyczą - i nie blokują zapisu.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>

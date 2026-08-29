@@ -1,10 +1,10 @@
 /**
- * UZ Aero — ciągłość łamanej śladu (issue #47 pkt 1).
+ * UZ Aero - ciągłość łamanej śladu (issue #47 pkt 1).
  *
  * Test istnieje, bo błąd, który naprawia, był NIEWIDOCZNY w kodzie i bardzo widoczny na
  * urządzeniu: stara wersja `TrackPolyline` pomijała odcinki krótsze niż pół piksela,
- * więc gęsty zapis rysował się jako zbiór kropek. Odtwarzamy tu oba realne wejścia —
- * profil pionowy (tysiące próbek na 290 px) i mapę przy dużej rozpiętości trasy —
+ * więc gęsty zapis rysował się jako zbiór kropek. Odtwarzamy tu oba realne wejścia -
+ * profil pionowy (tysiące próbek na 290 px) i mapę przy dużej rozpiętości trasy -
  * i pytamy o jedną rzecz: czy z punktów da się zbudować LINIĘ.
  */
 
@@ -35,7 +35,7 @@ describe('łamana w przestrzeni ekranu', () => {
       points.push({ x: (i / 3_600) * 290, y: 140 - (i / 3_600) * 120 });
     }
 
-    // Dowód, że stara implementacja rysowała PUSTKĘ — to jest zgłoszony objaw.
+    // Dowód, że stara implementacja rysowała PUSTKĘ - to jest zgłoszony objaw.
     expect(oldSegmentCount(points)).toBe(0);
 
     const path = screenPath(points);
@@ -45,7 +45,7 @@ describe('łamana w przestrzeni ekranu', () => {
     expect(path[path.length - 1]).toEqual(points[points.length - 1]);
   });
 
-  it('kolejne punkty są odległe o co najmniej krok — czyli każdy odcinek się rysuje', () => {
+  it('kolejne punkty są odległe o co najmniej krok - czyli każdy odcinek się rysuje', () => {
     const points: Point2D[] = [];
     for (let i = 0; i < 1_000; i++) points.push({ x: i * 0.3, y: 50 + Math.sin(i / 40) * 20 });
 
@@ -60,7 +60,7 @@ describe('łamana w przestrzeni ekranu', () => {
 
   it('trasa rozciągnięta na kilkadziesiąt kilometrów nie gubi zakrętu', () => {
     // Kadr mapy: 300 px na 20 km, więc uproszczenie RDP (25 m) daje ~0,4 px na odcinek.
-    // Zakręt o 90° musi przetrwać — to on jest treścią rysunku.
+    // Zakręt o 90° musi przetrwać - to on jest treścią rysunku.
     const points: Point2D[] = [];
     for (let i = 0; i < 200; i++) points.push({ x: i * 0.4, y: 100 });
     for (let i = 1; i < 200; i++) points.push({ x: 80, y: 100 + i * 0.4 });
@@ -97,11 +97,11 @@ describe('łamana w przestrzeni ekranu', () => {
 
 /**
  * Druga tura przeglądu: „nadal na przełamaniach są dziury". Prostokąt o DOKŁADNEJ
- * długości odcinka styka się z sąsiadem w jednym punkcie osi — przy zaokrąglonych
+ * długości odcinka styka się z sąsiadem w jednym punkcie osi - przy zaokrąglonych
  * końcach i obrocie to za mało, żeby linia była ciągła. Sprawdzone rysunkiem: łuk
  * o krótkich odcinkach rozpadał się w kropki, a wierzchołek załamania był ścięty.
  */
-describe('odcinki łamanej — nadmiar na styku', () => {
+describe('odcinki łamanej - nadmiar na styku', () => {
   const THICK = 2.5;
 
   it('każdy prostokąt jest dłuższy od odcinka DOKŁADNIE o grubość kreski', () => {
@@ -133,7 +133,7 @@ describe('odcinki łamanej — nadmiar na styku', () => {
   });
 
   it('sąsiedzi ZACHODZĄ na siebie wokół wspólnego wierzchołka', () => {
-    // Załamanie 90° — najgorszy przypadek dla styku dwóch prostokątów.
+    // Załamanie 90° - najgorszy przypadek dla styku dwóch prostokątów.
     const segments = polylineSegments(
       [
         { x: 0, y: 0 },
@@ -147,13 +147,13 @@ describe('odcinki łamanej — nadmiar na styku', () => {
       const centerX = segment.left + segment.length / 2;
       const centerY = segment.top + segment.thickness / 2;
       // Odległość środka do wspólnego wierzchołka (40, 0) to połowa odcinka (20),
-      // a prostokąt sięga 21,25 — czyli PRZECHODZI przez wierzchołek.
+      // a prostokąt sięga 21,25 - czyli PRZECHODZI przez wierzchołek.
       const reach = segment.length / 2;
       expect(reach).toBeGreaterThan(Math.hypot(40 - centerX, 0 - centerY));
     }
   });
 
-  it('gęsty łuk nie rozpada się w kropki — każdy prostokąt dłuższy niż gruby', () => {
+  it('gęsty łuk nie rozpada się w kropki - każdy prostokąt dłuższy niż gruby', () => {
     // Spirala wznoszenia po decymacji ekranowej: kroki rzędu 2 px.
     const arc: Point2D[] = [];
     for (let t = 0; t < 120; t++) arc.push({ x: Math.cos(t / 14) * 60, y: Math.sin(t / 14) * 60 });

@@ -1,12 +1,12 @@
 /**
- * UZ Aero — panel: chip filtra (`.chip`, `.chip.on` z `SZABLON.html`).
+ * UZ Aero - panel: chip filtra (`.chip`, `.chip.on` z `SZABLON.html`).
  *
- * Chip jest `<button>`, a nie `<span>` jak w mockupie — mockup jest specyfikacją
+ * Chip jest `<button>`, a nie `<span>` jak w mockupie - mockup jest specyfikacją
  * WYGLĄDU, a wygląd zostaje ten sam. Filtr, którego nie da się kliknąć z klawiatury,
  * psułby ten sam scenariusz, dla którego panel istnieje: przygotowanie linku do
  * konkretnego wycinka skrzynki.
  *
- * `count` przychodzi Z SERWERA albo nie ma go wcale. Chip nie liczy nic sam —
+ * `count` przychodzi Z SERWERA albo nie ma go wcale. Chip nie liczy nic sam -
  * plakietka „Otwarte · 7" wyliczona z wierszy na ekranie kłamałaby przy każdym
  * innym filtrze i przy każdym obcięciu listy.
  */

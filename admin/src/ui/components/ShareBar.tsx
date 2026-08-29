@@ -1,7 +1,7 @@
 /**
- * UZ Aero — panel: PASEK UDZIAŁU w komórce tabeli (`.share` z `SZABLON.html`).
+ * UZ Aero - panel: PASEK UDZIAŁU w komórce tabeli (`.share` z `SZABLON.html`).
  *
- * Kolumna „Udział w nalocie" z mockupu `A10` — cieńszy niż `.meter`, bo mieszka
+ * Kolumna „Udział w nalocie" z mockupu `A10` - cieńszy niż `.meter`, bo mieszka
  * w wierszu tabeli. Procent liczy SERWER; tu jest wyłącznie geometria i etykieta.
  */
 

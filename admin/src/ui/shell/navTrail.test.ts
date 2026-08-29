@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: okruszki wyprowadzone z kanonicznej nawigacji (moduł czysty).
+ * UZ Aero - panel: okruszki wyprowadzone z kanonicznej nawigacji (moduł czysty).
  */
 
 import { describe, expect, it } from 'vitest';
@@ -22,7 +22,7 @@ describe('trailFor', () => {
     expect(trailFor('/')).toEqual(['Panel']);
   });
 
-  it('prefiks nie połyka dłuższej nazwy — granicą jest `/`', () => {
+  it('prefiks nie połyka dłuższej nazwy - granicą jest `/`', () => {
     expect(trailFor('/dniowka')).toEqual(['Panel']);
   });
 

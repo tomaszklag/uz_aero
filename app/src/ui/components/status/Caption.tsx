@@ -1,15 +1,15 @@
 /**
- * UZ Aero — Caption (`.takeover-hint`, `.actions-reason`, `.start-engine-hint`)
+ * UZ Aero - Caption (`.takeover-hint`, `.actions-reason`, `.start-engine-hint`)
  *
  * Wyśrodkowany podpis pod kontrolką: mono 9 px, WERSALIKI, ton przygaszony.
  *
  * Mockupy używają go wszędzie tam, gdzie przycisk albo siatka wymaga jednego zdania
- * wyjaśnienia — „co się stanie po kliknięciu" albo „dlaczego jest zablokowane".
+ * wyjaśnienia - „co się stanie po kliknięciu" albo „dlaczego jest zablokowane".
  * Bez tego wzorca każdy ekran wpisywałby własny `fontSize`/`letterSpacing` i po
  * kilku ekranach ten sam podpis miałby trzy różne rozmiary.
  *
  * Czym różni się od `InlineNote`: tam jest kolorowe pudełko z ikoną, przypis do
- * sąsiadującej WARTOŚCI. Tu nie ma tła ani ikony — to podpis do AKCJI, ma być
+ * sąsiadującej WARTOŚCI. Tu nie ma tła ani ikony - to podpis do AKCJI, ma być
  * czytelny i nie podnosić własnej rangi ponad przycisk, pod którym stoi.
  */
 
@@ -34,7 +34,7 @@ export function Caption({ text, tone = 'muted', style }: CaptionProps) {
 }
 
 const styles = StyleSheet.create({
-  // `line-height: 1.6` z mockupu — podpis bywa dwuwierszowy i ciasny interlinia
+  // `line-height: 1.6` z mockupu - podpis bywa dwuwierszowy i ciasny interlinia
   // zlewałaby go w blok.
   caption: { fontSize: 9, lineHeight: 15, letterSpacing: 1, textTransform: 'uppercase', textAlign: 'center' },
 });

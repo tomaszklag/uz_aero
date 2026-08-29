@@ -1,13 +1,13 @@
 /**
- * UZ Aero (serwer) — strona ODCZYTU rejestru zdarzeń (`A04`).
+ * UZ Aero (serwer) - strona ODCZYTU rejestru zdarzeń (`A04`).
  *
  * Scenariusz, dla którego ten ekran istnieje: liczby się nie zgadzają i trzeba
  * odpowiedzieć na pytanie „skąd się wzięła ta wartość", „co dokładnie przyszło
  * z telefonu" albo „czy to zdarzenie w ogóle dotarło". Wszystkie inne zapytania panelu
- * czytają PROJEKCJE — to jedno czyta surowy rejestr.
+ * czytają PROJEKCJE - to jedno czyta surowy rejestr.
  *
  * Klasa jest cienka celowo. Porządek, filtrowanie i liczniki są własnością PORTU
- * (indeks i `ORDER BY`), złożenie wiersza — czystej funkcji. Tutaj zostają dokładnie
+ * (indeks i `ORDER BY`), złożenie wiersza - czystej funkcji. Tutaj zostają dokładnie
  * dwie rzeczy:
  *
  *  • nieczytelny kursor jest wariantem WYNIKU, a nie wyjątkiem (wzorzec
@@ -15,7 +15,7 @@
  *    to 400, a nie 500;
  *  • **próg `CLOCK_DRIFT` wchodzi tu z domeny** (`CLOCK_DRIFT_MS`) i jedzie do SQL-a
  *    parametrem. Wpisany w zapytanie byłby drugą definicją tolerancji obok tej, którą
- *    liczy flagę przy ingescie — a wtedy kafel „rozjazd zegarów" i skrzynka flag
+ *    liczy flagę przy ingescie - a wtedy kafel „rozjazd zegarów" i skrzynka flag
  *    mówiłyby o dwóch różnych progach pod jedną nazwą.
  */
 

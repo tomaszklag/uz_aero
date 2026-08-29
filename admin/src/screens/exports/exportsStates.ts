@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: NAZWANIE stanów karty dnia (moduł CZYSTY, testowany w Node).
+ * UZ Aero - panel: NAZWANIE stanów karty dnia (moduł CZYSTY, testowany w Node).
  *
  * Serwer wysyła surowy kod (`current`, `blocked`, `missing`, `waiting`, `impossible`);
  * polska nazwa, plakietka i zdanie wyjaśniające są własnością panelu, bo serwer nie zna
@@ -7,7 +7,7 @@
  *
  * `Record<ExportStateDto, …>` jest tu WYMUSZENIEM kompilatora: dopisanie stanu po
  * stronie serwera bez nazwania go tutaj przestaje się kompilować. Bez tego nowy kod
- * pojawiłby się w tabeli jako pusta komórka — i nikt by tego nie zauważył, bo stan
+ * pojawiłby się w tabeli jako pusta komórka - i nikt by tego nie zauważył, bo stan
  * rzadki z natury jest rzadki.
  */
 
@@ -22,7 +22,7 @@ import type { PillTone } from '../../ui/components/Pill';
 export interface ExportStateMeta {
   tone: PillTone;
   label: string;
-  /** Druga linia komórki „Status" — czym ten stan jest w szczegółach. */
+  /** Druga linia komórki „Status" - czym ten stan jest w szczegółach. */
   note: string;
   /** Kropka tylko przy stanie, który TRWA (dzień w toku, flaga czekająca na człowieka). */
   dot: boolean;
@@ -42,7 +42,7 @@ export const EXPORT_STATE_META: Record<ExportStateDto, ExportStateMeta> = {
     label: 'Zablokowana',
     // Bramka zawęziła się 2026-08-07 z całej karty do SESJI (§4.7): sporna zmiana
     // wypada z karty, a reszta doby idzie do arkusza z adnotacją „niekompletna".
-    note: 'aircraft_overlap — ta sesja wypada z karty doby',
+    note: 'aircraft_overlap - ta sesja wypada z karty doby',
     dot: true,
   },
   missing: {
@@ -67,12 +67,12 @@ export const EXPORT_STATE_META: Record<ExportStateDto, ExportStateMeta> = {
 
 /**
  * Powody odmowy eksportera po polsku. Serwer wysyła kody `ExportOutcome`, panel je
- * nazywa — i nazywa WSZYSTKIE, bo `Record` po unii nie pozwala pominąć żadnego.
+ * nazywa - i nazywa WSZYSTKIE, bo `Record` po unii nie pozwala pominąć żadnego.
  */
 const REFUSAL_LABEL: Record<ExportRefusalDto, string> = {
   no_events: 'ta doba nie ma ani jednej sesji w rejestrze',
-  session_open: 'żadnej maszyny tej doby jeszcze nie zdano — karta powstaje po day_close',
-  no_preflight: 'sesja bez session_claim — karty nie da się nazwać',
+  session_open: 'żadnej maszyny tej doby jeszcze nie zdano - karta powstaje po day_close',
+  no_preflight: 'sesja bez session_claim - karty nie da się nazwać',
   overlap_flag: 'otwarta flaga aircraft_overlap trzyma tę sesję poza kartą doby',
 };
 
@@ -83,13 +83,13 @@ export interface RetryMessage {
 }
 
 /**
- * Awarie próby po polsku — `Record` po unii, więc nowego rodzaju nie da się przemilczeć.
+ * Awarie próby po polsku - `Record` po unii, więc nowego rodzaju nie da się przemilczeć.
  *
  * ══ DWA ZDANIA, BO PROWADZĄ W DWIE RÓŻNE STRONY ══
- * Do 2026-08-01 był jeden: „Adapter arkuszy zgłosił awarię — spróbuj za chwilę".
+ * Do 2026-08-01 był jeden: „Adapter arkuszy zgłosił awarię - spróbuj za chwilę".
  * Dostawał go także `TypeError` w budowie karty i przegrany wyścig rewizji, bo komenda
  * łapała każdy wyjątek i zwracała `null`. Administrator dostawał wtedy polecenie
- * CZEKANIA na usterkę, która sama nie mija — i to jest gorsze niż „coś poszło nie tak",
+ * CZEKANIA na usterkę, która sama nie mija - i to jest gorsze niż „coś poszło nie tak",
  * bo nie zostawia nawet zdziwienia.
  */
 const FAILURE_MESSAGE: Record<ExportFailureDto, { title: string; body: string }> = {
@@ -97,13 +97,13 @@ const FAILURE_MESSAGE: Record<ExportFailureDto, { title: string; body: string }>
     title: 'Adapter arkuszy zgłosił awarię.',
     body:
       'Karta nie została zapisana i dziennik nie dostał nowego wiersza. To awaria ZAPISU ' +
-      'do arkusza — dane w rejestrze są całe, a nieudana próba nie zostawia śladu w bazie, ' +
+      'do arkusza - dane w rejestrze są całe, a nieudana próba nie zostawia śladu w bazie, ' +
       'więc historii tych awarii nie ma gdzie zobaczyć. Spróbuj ponownie za chwilę.',
   },
   unexpected: {
     title: 'Eksport przerwał się błędem po stronie serwera.',
     body:
-      'To NIE jest awaria arkuszy i ponowienie za chwilę samo tego nie naprawi — powtórna ' +
+      'To NIE jest awaria arkuszy i ponowienie za chwilę samo tego nie naprawi - powtórna ' +
       'próba trafi na ten sam błąd. Szczegóły są w logach serwera; wpis w dzienniku audytu ' +
       'niesie rodzaj awarii, więc da się po nim wrócić do tej chwili. Zgłoś to, zamiast czekać.',
   },
@@ -113,12 +113,12 @@ const FAILURE_MESSAGE: Record<ExportFailureDto, { title: string; body: string }>
  * Wynik ponowienia → zdanie dla człowieka.
  *
  * Cztery różne wiadomości, celowo NIE sklejone w mniej:
- *  • **sukces** — z numerem rewizji, bo „zapisano" nie odpowiada na pytanie, czy
+ *  • **sukces** - z numerem rewizji, bo „zapisano" nie odpowiada na pytanie, czy
  *    w arkuszu jest teraz coś nowego (`ANALIZA` ryzyko 2);
- *  • **odmowa** — stan świata, nie awaria. Ma powód i ma go pokazać dosłownie,
+ *  • **odmowa** - stan świata, nie awaria. Ma powód i ma go pokazać dosłownie,
  *    bo administrator, który nie wie, czy to zasada czy usterka, sięga po `psql`;
- *  • **awaria arkuszy** — minie sama, ponowienie za chwilę ma sens;
- *  • **błąd nasz** — nie minie sam i panel nie ma prawa obiecywać, że minie.
+ *  • **awaria arkuszy** - minie sama, ponowienie za chwilę ma sens;
+ *  • **błąd nasz** - nie minie sam i panel nie ma prawa obiecywać, że minie.
  */
 export function retryMessage(
   outcome: ExportOutcomeDto | null,
@@ -137,7 +137,7 @@ export function retryMessage(
     return {
       tone: 'warn',
       title: 'Karta nie powstała.',
-      body: `${REFUSAL_LABEL[outcome.reason]}. Ponowienie nie omija bramek eksportu — najpierw musi zniknąć powód.`,
+      body: `${REFUSAL_LABEL[outcome.reason]}. Ponowienie nie omija bramek eksportu - najpierw musi zniknąć powód.`,
     };
   }
 
@@ -145,18 +145,18 @@ export function retryMessage(
     tone: 'ok',
     title:
       revisionBefore == null
-        ? `Karta ${outcome.tab} powstała po raz pierwszy — rewizja ${outcome.revision}.`
-        : `Karta ${outcome.tab} zregenerowana — rewizja ${revisionBefore} → ${outcome.revision}.`,
+        ? `Karta ${outcome.tab} powstała po raz pierwszy - rewizja ${outcome.revision}.`
+        : `Karta ${outcome.tab} zregenerowana - rewizja ${revisionBefore} → ${outcome.revision}.`,
     body:
       'Dziennik eksportu dostał NOWY wiersz (jest append-only), a treść karty została ' +
-      'nadpisana — w exported_sheets jest zawsze jedna, bieżąca wersja.',
+      'nadpisana - w exported_sheets jest zawsze jedna, bieżąca wersja.',
   };
 }
 
 /**
  * Napis na przycisku ponowienia. `retrying` dotyczy WIERSZA, nie tabeli.
  *
- * Wygląda na drobiazg do wpisania w `.tsx`, ale jest wyborem treści zależnym od danych —
+ * Wygląda na drobiazg do wpisania w `.tsx`, ale jest wyborem treści zależnym od danych -
  * a do 2026-08-01 stał w widoku i był karmiony `retry.isPending`, czyli stanem CAŁEJ
  * mutacji. Po kliknięciu „Ponów" na jednym dniu wszystkie dwieście wierszy pisało
  * „Ponawiam…", twierdząc o 199 dniach rzecz nieprawdziwą.

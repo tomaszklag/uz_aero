@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: testy karty „Ostatnio przyjęte" (`A01`).
+ * UZ Aero - panel: testy karty „Ostatnio przyjęte" (`A01`).
  *
  * Karta istnieje po to, żeby NIE POMYLIĆ dwóch czasów: kiedy coś się stało i kiedy się
  * o tym dowiedzieliśmy. Na tym rozróżnieniu stoi zdanie, którym zaczyna się cały
@@ -31,11 +31,11 @@ const event = (over: Partial<RecentEventDto> = {}): RecentEventDto => ({
 const one = (over: Partial<RecentEventDto> = {}) => recentRows([event(over)])[0]!;
 
 describe('kolumna czasu i opis', () => {
-  it('czas to CZAS ZDARZENIA z sekundami — sekundy mają znaczenie w rejestrze', () => {
+  it('czas to CZAS ZDARZENIA z sekundami - sekundy mają znaczenie w rejestrze', () => {
     expect(one({ eventTime: Date.UTC(2026, 6, 31, 14, 19, 52) }).time).toBe('14:19:52');
   });
 
-  it('typ zdarzenia jest nazwą wiersza — ten sam napis, co w SQL-u i w mockupie', () => {
+  it('typ zdarzenia jest nazwą wiersza - ten sam napis, co w SQL-u i w mockupie', () => {
     const row = one({ type: 'engine_stop' });
     expect(row.name).toBe('engine_stop');
     expect(row.badge).toBe('silnik');
@@ -57,7 +57,7 @@ describe('opóźnienie przyjęcia mówi się WPROST, gdy jest faktem o łączno�
     expect(row.meta).toContain('przyjęte 2 h 58 min po zdarzeniu');
   });
 
-  it('dokładnie NA progu jeszcze milczymy — granica jest ostra', () => {
+  it('dokładnie NA progu jeszcze milczymy - granica jest ostra', () => {
     const row = one({
       eventTime: NOW - DELAY_WORTH_SAYING_MS,
       receivedAt: new Date(NOW).toISOString(),

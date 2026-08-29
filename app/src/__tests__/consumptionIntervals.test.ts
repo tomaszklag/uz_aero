@@ -1,9 +1,9 @@
 /**
- * UZ Aero — test ekstrakcji interwałów paliwowych i równania motogodzin.
+ * UZ Aero - test ekstrakcji interwałów paliwowych i równania motogodzin.
  *
  * Interwał jest jednostką, na której stoi cała analityka: jeśli granice wypadną w złym
  * miejscu albo czas pracy silnika policzy się nie z tego okna, model dostanie liczby
- * bez sensu — i wypluje stawkę, która będzie wyglądać zupełnie wiarygodnie. Dlatego
+ * bez sensu - i wypluje stawkę, która będzie wyglądać zupełnie wiarygodnie. Dlatego
  * test odwzorowuje kanoniczny dzień 22 JUNE z `docs/design-notes.md` (te same liczby,
  * co mockupy 04/06/10) i sprawdza granice, a nie zapamiętane wyniki.
  */
@@ -36,7 +36,7 @@ function event<T extends Event['type']>(type: T, time: number, payload: unknown 
   } as Event;
 }
 
-// Payloady BEZ pól klamry służby (`dutyStart`/`dutyEnd` znikły z modelu — issue #23).
+// Payloady BEZ pól klamry służby (`dutyStart`/`dutyEnd` znikły z modelu - issue #23).
 const preflight = (time: number, fuelL: number, mh = 1234.5): Event =>
   event('preflight_confirm', time, {
     operation: 'skoki',
@@ -94,7 +94,7 @@ describe('granice interwałów paliwowych', () => {
   });
 
   it('nie produkuje ostatniego interwału, dopóki dzień nie jest zamknięty', () => {
-    // Bez odczytu końcowego nie wiadomo, ile paliwa ubyło — a nie zgadujemy.
+    // Bez odczytu końcowego nie wiadomo, ile paliwa ubyło - a nie zgadujemy.
     const open = canonicalDay().filter((e) => e.type !== 'day_close');
     const { intervals } = buildFuelIntervals(open);
 
@@ -123,7 +123,7 @@ describe('korekty zmieniają granice, bo strumień efektywny jest wejściem', ()
     expect(intervals).toHaveLength(1);
     expect(intervals[0]!.startKind).toBe('preflight');
     expect(intervals[0]!.endKind).toBe('day_close');
-    // Zużycie liczy się teraz z dwóch skrajnych odczytów — dolewki nie było.
+    // Zużycie liczy się teraz z dwóch skrajnych odczytów - dolewki nie było.
     expect(intervals[0]!.consumedL).toBe(150 - 141);
   });
 
@@ -147,7 +147,7 @@ describe('korekty zmieniają granice, bo strumień efektywny jest wejściem', ()
   });
 });
 
-describe('bramka wejścia — co nie ma prawa wejść do regresji', () => {
+describe('bramka wejścia - co nie ma prawa wejść do regresji', () => {
   it('odrzuca interwał, w którym paliwa PRZYBYŁO bez tankowania', () => {
     const events = [
       preflight(at(8, 0), 100),
@@ -159,7 +159,7 @@ describe('bramka wejścia — co nie ma prawa wejść do regresji', () => {
     const [interval] = buildFuelIntervals(events).intervals;
 
     expect(interval!.rejected).toBe('negative-consumption');
-    // Wiersz ZOSTAJE w wyniku — to materiał do wyjaśnienia przy dniu, nie szum.
+    // Wiersz ZOSTAJE w wyniku - to materiał do wyjaśnienia przy dniu, nie szum.
     expect(interval!.consumedL).toBe(-20);
   });
 
@@ -212,10 +212,10 @@ describe('równanie motogodzin dnia', () => {
   });
 });
 
-describe('bramka górna — znaleziona przebiegiem po realnej historii (2026-08-05)', () => {
+describe('bramka górna - znaleziona przebiegiem po realnej historii (2026-08-05)', () => {
   it('odrzuca interwał, w którym silnik „pracował" dłużej niż dzień lotny', () => {
     // Prawdziwy przypadek z bazy: `engine_start` 27 JUL 19:00, `engine_stop` 29 JUL
-    // 11:33 — czterdzieści godzin przez dwie noce. To zapomniane wyłączenie, nie lot;
+    // 11:33 - czterdzieści godzin przez dwie noce. To zapomniane wyłączenie, nie lot;
     // mianownik jest wtedy fikcją, a stawka z niego byłaby fikcją pomnożoną przez paliwo.
     const events = [
       preflight(at(8, 0), 300),
@@ -227,7 +227,7 @@ describe('bramka górna — znaleziona przebiegiem po realnej historii (2026-08-
     const [interval] = buildFuelIntervals(events).intervals;
 
     expect(interval!.rejected).toBe('engine-too-long');
-    // Wiersz ZOSTAJE — to jest ślad rozjazdu w rejestrze, a nie szum do ukrycia.
+    // Wiersz ZOSTAJE - to jest ślad rozjazdu w rejestrze, a nie szum do ukrycia.
     expect(interval!.consumedL).toBe(200);
   });
 
@@ -249,12 +249,12 @@ describe('bramka górna — znaleziona przebiegiem po realnej historii (2026-08-
  *
  * Odczyt przy `leg_close` jest OPCJONALNY, więc ten sam dzień daje różną liczbę
  * interwałów w zależności od tego, czy pilot go zrobił. To nie jest niedoskonałość
- * implementacji — to bezpośrednia konsekwencja decyzji z §3.6 i dokładnie ten kompromis,
+ * implementacji - to bezpośrednia konsekwencja decyzji z §3.6 i dokładnie ten kompromis,
  * który §3.6b opisuje jako znane ryzyko.
  */
-describe('interwały paliwowe — sesja domknięta odczytami z obu stron (2026-08-10)', () => {
+describe('interwały paliwowe - sesja domknięta odczytami z obu stron (2026-08-10)', () => {
   // Do 2026-08-10 stał tu blok `leg_close`: odczyt przy wzlocie dzielił sesję na dwa
-  // interwały, a jego brak zostawiał jeden. Pivot skasował zdarzenie — granice stawia
+  // interwały, a jego brak zostawiał jeden. Pivot skasował zdarzenie - granice stawia
   // wyłącznie przejęcie, tankowanie i zdanie, a KAŻDA sesja jest domknięta z obu stron.
   it('sesja bez tankowań to dokładnie JEDEN interwał: przejęcie → zdanie', () => {
     const { intervals } = buildFuelIntervals([

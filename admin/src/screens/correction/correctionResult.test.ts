@@ -1,8 +1,8 @@
 /**
- * UZ Aero — panel: skutek i odmowa korekty (moduł czysty).
+ * UZ Aero - panel: skutek i odmowa korekty (moduł czysty).
  *
  * ══ PRZYPADEK, DLA KTÓREGO TEN PLIK ISTNIEJE ══
- * `reexport: null` — korekta ZAPISANA, arkusz NIE zregenerowany. Sugerowanie sukcesu
+ * `reexport: null` - korekta ZAPISANA, arkusz NIE zregenerowany. Sugerowanie sukcesu
  * byłoby kłamstwem (klub czyta stare liczby), a sugerowanie porażki kłamstwem GORSZYM:
  * administrator dopisałby korektę drugi raz do rejestru, który już ją ma. Test pilnuje,
  * że komunikat mówi obie połowy i wprost odradza powtórzenie.
@@ -42,7 +42,7 @@ describe('korekta zapisana i arkusz odświeżony', () => {
     expect(outcome.steps[3]).toContain('Flagi');
   });
 
-  it('flaga ZOSTAJE otwarta — korekta poprawia liczbę, nie rozstrzyga rozbieżności', () => {
+  it('flaga ZOSTAJE otwarta - korekta poprawia liczbę, nie rozstrzyga rozbieżności', () => {
     expect(outcome.steps[3]).toContain('bez zmian');
   });
 
@@ -64,7 +64,7 @@ describe('korekta zapisana, arkusz NIE (reexport === null)', () => {
     expect(outcome.title).toContain('NIE');
   });
 
-  it('ODRADZA powtórzenie korekty — to jest tu najważniejsze zdanie', () => {
+  it('ODRADZA powtórzenie korekty - to jest tu najważniejsze zdanie', () => {
     expect(outcome.note).toContain('NIE powtarzaj');
     expect(outcome.note).toContain('drugie zdarzenie');
   });
@@ -83,7 +83,7 @@ describe('korekta zapisana, eksporter ODMÓWIŁ z powodem', () => {
     expect(outcome.tone).toBe('warn');
     // Po rozdzieleniu `session_overlap` (2026-08-07) „flaga nakładki" przestała być
     // jednoznaczna: bramką arkusza jest WYŁĄCZNIE `aircraft_overlap`, a `pilot_overlap`
-    // dokumentu klubu nie dotyka. Napis musi więc mówić, KTÓRA to nakładka — i że
+    // dokumentu klubu nie dotyka. Napis musi więc mówić, KTÓRA to nakładka - i że
     // trzyma poza kartą DOBY jedną sesję, a nie całą kartę (§4.7).
     expect(outcome.steps[2]).toContain('aircraft_overlap');
     expect(outcome.steps[2]).toContain('poza kartą doby');
@@ -108,18 +108,18 @@ describe('odmowy zapisu', () => {
     });
 
     expect(failure.violations).toEqual([
-      'CORRECTION_TARGET_NOT_ALLOWED — To zdarzenie nie podlega korekcie.',
+      'CORRECTION_TARGET_NOT_ALLOWED - To zdarzenie nie podlega korekcie.',
     ]);
     expect(failure.detail).toContain('Nic nie zostało zapisane');
     expect(failure.final).toBe(false);
   });
 
-  it('`day_open` NIE JEST już osobną odmową — bramka znikła po obu stronach', () => {
+  it('`day_open` NIE JEST już osobną odmową - bramka znikła po obu stronach', () => {
     // ODWRÓCENIE testu z 2026-08-01, który brzmiał „400 `day_open` odróżnia się od
     // zwykłego 400". Serwer takiej odmowy nie wysyła od 2026-08-07: administrator może
     // edytować ZAWSZE, a kolizja z pilotem jedzie jako ostrzeżenie nad formularzem
     // (`correctionWarnings.ts`). Gdyby stary kod jednak nadszedł ze starego wdrożenia,
-    // panel ma go potraktować jak każde inne odrzucenie formularza — a nie tłumaczyć
+    // panel ma go potraktować jak każde inne odrzucenie formularza - a nie tłumaczyć
     // regułę, której już nie ma.
     const dayOpen = correctionFailure(400, { error: 'day_open' });
     expect(dayOpen.title).toContain('formularz');
@@ -140,13 +140,13 @@ describe('odmowy zapisu', () => {
     expect(correctionFailure(404, { error: 'not_found' }).detail).toContain('listę dni');
   });
 
-  it('brak sieci OSTRZEGA przed ślepym ponowieniem — żądanie mogło dojść', () => {
+  it('brak sieci OSTRZEGA przed ślepym ponowieniem - żądanie mogło dojść', () => {
     const failure = correctionFailure(null, null);
     expect(failure.detail).toContain('ODŚWIEŻ');
     expect(failure.detail).toContain('drugie zdarzenie');
   });
 
-  it('nieznany kod nie udaje, że wie — podaje status i radzi sprawdzić oś', () => {
+  it('nieznany kod nie udaje, że wie - podaje status i radzi sprawdzić oś', () => {
     const failure = correctionFailure(503, { error: 'unavailable' });
     expect(failure.detail).toContain('503');
     expect(failure.violations).toEqual([]);
@@ -154,10 +154,10 @@ describe('odmowy zapisu', () => {
 });
 
 describe('naruszenia z podglądu', () => {
-  it('składają się w te same napisy, co przy 422 — te same reguły, inna chwila', () => {
+  it('składają się w te same napisy, co przy 422 - te same reguły, inna chwila', () => {
     expect(
       violationMessages([{ code: 'CORRECTION_TIME_IN_FUTURE', message: 'Nie z przyszłości.' }]),
-    ).toEqual(['CORRECTION_TIME_IN_FUTURE — Nie z przyszłości.']);
+    ).toEqual(['CORRECTION_TIME_IN_FUTURE - Nie z przyszłości.']);
   });
 
   it('pusta lista to pusta lista, a nie „wszystko w porządku" napisane słowami', () => {

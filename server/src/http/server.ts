@@ -1,9 +1,9 @@
 /**
- * UZ Aero (serwer) — złożenie warstwy HTTP (Fastify).
+ * UZ Aero (serwer) - złożenie warstwy HTTP (Fastify).
  *
  * Trasy mieszkają w `routes/` per zasób; ten plik tylko je rejestruje. Zależności
  * przychodzą z zewnątrz (composition root w `index.ts`, testy składają własne
- * z PGlite) — warstwa HTTP nie tworzy niczego sama.
+ * z PGlite) - warstwa HTTP nie tworzy niczego sama.
  */
 
 import cookie from '@fastify/cookie';
@@ -72,7 +72,7 @@ export interface ServerDeps {
   reference: ReferenceQueries;
   ingest: IngestCommands;
   /**
-   * Odtworzenie rejestru telefonu (`GET /me/events`, §4.9, issue #32) — kierunek
+   * Odtworzenie rejestru telefonu (`GET /me/events`, §4.9, issue #32) - kierunek
    * powrotny wysyłki outboxa. Telefon po czyszczeniu pamięci albo reinstalacji
    * odbudowuje z tego własny strumień; ekrany dalej liczą się lokalnie.
    */
@@ -81,7 +81,7 @@ export interface ServerDeps {
   sheets: SheetQueries;
   traces: TraceSinkPort;
   /**
-   * Ślad sesji do narysowania (`GET /me/sessions/:uuid/track`, issue #47) — kierunek
+   * Ślad sesji do narysowania (`GET /me/sessions/:uuid/track`, issue #47) - kierunek
    * powrotny wysyłki nagrania. Telefon oddaje surowe fixy i kasuje swoją kopię, więc
    * ekran 14 pyta o gotową geometrię tutaj. Wyłącznie geometria: czasy i loty telefon
    * dalej liczy z lokalnego rejestru.
@@ -89,77 +89,77 @@ export interface ServerDeps {
   sessionTrack: SessionTrackQueries;
   prefs: PrefsCommands;
   /**
-   * Podpowiedzi do zadania dnia (`GET /me/task-suggestions`, issue #14) — czysty odczyt
+   * Podpowiedzi do zadania dnia (`GET /me/task-suggestions`, issue #14) - czysty odczyt
    * projekcji: oznaczenia klientów CAŁEGO klubu i notatki TEGO pilota.
    */
   taskSuggestions: TaskSuggestionQueries;
   tokens: TokenService;
   /**
-   * Konta — czytane przy KAŻDYM żądaniu panelu, żeby deaktywacja i odebranie roli
+   * Konta - czytane przy KAŻDYM żądaniu panelu, żeby deaktywacja i odebranie roli
    * działały natychmiast, a nie po wygaśnięciu 8-godzinnej sesji (`http/authorize.ts`).
    * Ten sam port, którym loguje się telefon: jedna tabela kont, bo to ci sami ludzie.
    */
   pilots: PilotsPort;
-  /** Komendy panelu administracyjnego (`/admin/api/*`) — patrz `routes/admin/`. */
+  /** Komendy panelu administracyjnego (`/admin/api/*`) - patrz `routes/admin/`. */
   adminFlags: AdminFlagCommands;
   adminCorrections: AdminCorrectionCommands;
   adminPilots: AdminPilotCommands;
   /**
-   * Konfiguracja floty (`A07`, `A07a`) — jedyna droga zmiany WEJŚĆ REGUŁ §4.5:
+   * Konfiguracja floty (`A07`, `A07a`) - jedyna droga zmiany WEJŚĆ REGUŁ §4.5:
    * pojemności zbiorników (próg `FUEL_MISMATCH`), formatu motogodzin, wymogu Duala
    * i stanu służby. Zmiana wychodzi do telefonów wyłącznie przez ETag `GET /reference`.
    */
   adminFleet: AdminFleetCommands;
   /**
-   * Ręczne ponowienie eksportu karty dnia (`A05`) — jedyna droga, którą człowiek może
+   * Ręczne ponowienie eksportu karty dnia (`A05`) - jedyna droga, którą człowiek może
    * dopchnąć do arkusza dzień, którego automat nie dowiózł. Bramek eksportera NIE omija.
    */
   adminExports: AdminExportCommands;
   /**
-   * Operacje serwisowe (`A11`) — NADPISANIE projekcji `sessions` przeliczonej ze
+   * Operacje serwisowe (`A11`) - NADPISANIE projekcji `sessions` przeliczonej ze
    * strumienia i sprzątanie WYGASŁYCH refresh tokenów. Jedyna komenda panelu, która
    * cokolwiek kasuje; rejestru `events` nie dotyka ani jedna z dwóch operacji.
    */
   adminMaintenance: AdminMaintenanceCommands;
-  /** Strona ODCZYTU panelu — uproszczony CQRS: komendy wyżej, zapytania tutaj. */
+  /** Strona ODCZYTU panelu - uproszczony CQRS: komendy wyżej, zapytania tutaj. */
   adminSessionQueries: AdminSessionQueries;
-  /** Ślad lotu (`A02c`) — rejestr wyznacza okno, pliki NDJSON dają geometrię. */
+  /** Ślad lotu (`A02c`) - rejestr wyznacza okno, pliki NDJSON dają geometrię. */
   adminFlightTrackQueries: AdminFlightTrackQueries;
   adminFlagQueries: AdminFlagQueries;
   adminMeQueries: AdminMeQueries;
   adminPilotQueries: AdminPilotQueries;
   adminFleetQueries: AdminFleetQueries;
-  /** Monitor eksportu (`A05`) — lista dni od strony arkusza, historia rewizji, podgląd karty. */
+  /** Monitor eksportu (`A05`) - lista dni od strony arkusza, historia rewizji, podgląd karty. */
   adminExportQueries: AdminExportQueries;
-  /** Podgląd „przed → po" korekty (`A02b`) — zapytanie, nie komenda: nic nie zapisuje. */
+  /** Podgląd „przed → po" korekty (`A02b`) - zapytanie, nie komenda: nic nie zapisuje. */
   adminCorrectionQueries: AdminCorrectionQueries;
-  /** Dziennik audytu (`A09`) — WYŁĄCZNIE odczyt; zapisuje go `AuditedWrite`. */
+  /** Dziennik audytu (`A09`) - WYŁĄCZNIE odczyt; zapisuje go `AuditedWrite`. */
   adminAuditQueries: AdminAuditQueries;
   /**
-   * Rejestr zdarzeń (`A04`) — jedyne zapytanie panelu czytające SUROWY strumień zamiast
+   * Rejestr zdarzeń (`A04`) - jedyne zapytanie panelu czytające SUROWY strumień zamiast
    * projekcji. Wyłącznie odczyt: `events` jest append-only i żadna trasa tego nie zmienia.
    */
   adminEventQueries: AdminEventQueries;
   /**
-   * Pulpit (`A01`, `A01a`) — jedyne zapytanie panelu, które AGREGUJE inne: liczniki
+   * Pulpit (`A01`, `A01a`) - jedyne zapytanie panelu, które AGREGUJE inne: liczniki
    * kafli, kolejka „wymaga uwagi" i puls rejestru pochodzą z tych samych zapytań,
    * co ekrany docelowe. Kafel jest przejściem, więc jego liczba ma być obietnicą.
    */
   adminDashboardQueries: AdminDashboardQueries;
   /**
-   * Statystyki floty i pilotów (`A10`) — wyłącznie odczyt: agregaty kolumn projekcji
+   * Statystyki floty i pilotów (`A10`) - wyłącznie odczyt: agregaty kolumn projekcji
    * `sessions` w zakresie dat, trzy ujęcia jednego zbioru dni w jednej odpowiedzi.
    */
   adminStatsQueries: AdminStatsQueries;
   /**
-   * Analityka zużycia jednego samolotu (`A10a`/`A10b`) — jedyny przekrój panelu, który
+   * Analityka zużycia jednego samolotu (`A10a`/`A10b`) - jedyny przekrój panelu, który
    * czyta STRUMIEŃ zdarzeń wielu sesji naraz: granice interwałów paliwowych wyznaczają
    * odczyty z payloadów, a stawka per faza opisuje okno, nie dzień (§7.7).
    */
   adminConsumptionQueries: AdminConsumptionQueries;
   /**
    * Odczytowa strona konserwacji (`A11`): PORÓWNANIE projekcji bez zapisu, stan tabeli
-   * refresh tokenów i stan schematu. Bez `AuditedWrite`, więc bez czym zapisać —
+   * refresh tokenów i stan schematu. Bez `AuditedWrite`, więc bez czym zapisać -
    * podgląd różnic nie ma prawa dopisywać do dziennika akcji, które się nie wydarzyły.
    */
   adminMaintenanceQueries: AdminMaintenanceQueries;
@@ -167,13 +167,13 @@ export interface ServerDeps {
 
 export interface ServerOptions {
   /**
-   * Dziennik żądań na konsoli (`registerRequestLog`). Domyślnie WŁĄCZONY — serwer klubu
+   * Dziennik żądań na konsoli (`registerRequestLog`). Domyślnie WŁĄCZONY - serwer klubu
    * ma być widoczny w oknie, w którym stoi. Testy integracyjne go gaszą: pięćset linii
    * dziennika na przebieg zakryłoby to, po co się je czyta.
    */
   requestLog?: boolean;
   /**
-   * Podmiana katalogu buildu panelu — WYŁĄCZNIE dla testów (`adminStatic.test.ts`
+   * Podmiana katalogu buildu panelu - WYŁĄCZNIE dla testów (`adminStatic.test.ts`
    * podstawia katalog tymczasowy). Nieustawiona = wbudowane `admin/dist`
    * (`staticPanel.ts`, §9 architektury frontendu); katalog nieistniejący (dev bez
    * buildu) = `/admin/` odpowiada 404, panel jedzie z Vite.
@@ -181,7 +181,7 @@ export interface ServerOptions {
   adminDistDir?: string;
   /**
    * Zaufanie nagłówkom `X-Forwarded-*` (hosting za proxy TLS, np. Railway). Bez tego
-   * `req.ip` — a więc `actor_ip` w dzienniku audytu — pokazywałby dla wszystkich adres
+   * `req.ip` - a więc `actor_ip` w dzienniku audytu - pokazywałby dla wszystkich adres
    * proxy zamiast człowieka. Domyślnie WYŁĄCZONE: serwer wystawiony wprost nie może
    * wierzyć nagłówkowi, który klient wpisuje sam.
    */
@@ -197,7 +197,7 @@ export function buildServer(deps: ServerDeps, options: ServerOptions = {}): Fast
 
   // Ciasteczka: potrzebuje ich WYŁĄCZNIE sesja panelu, ale wtyczka musi stać przed
   // trasami, bo dokłada `req.cookies` czytane przez `tokenFromRequest`. Bez podpisu
-  // ciasteczek (`secret`) — wartością jest podpisany JWT, więc drugi podpis nad
+  // ciasteczek (`secret`) - wartością jest podpisany JWT, więc drugi podpis nad
   // podpisem nie odpowiadałby na żadne pytanie.
   app.register(cookie);
   registerAdminCsrfGuard(app);
@@ -211,12 +211,12 @@ export function buildServer(deps: ServerDeps, options: ServerOptions = {}): Fast
   registerPrefsRoutes(app, deps.prefs, deps.tokens);
   registerTaskSuggestionRoutes(app, deps.taskSuggestions, deps.tokens);
 
-  // Panel administracyjny — trasy per zasób, tak samo jak wyżej; prefiks `/admin/api`
+  // Panel administracyjny - trasy per zasób, tak samo jak wyżej; prefiks `/admin/api`
   // pilnuje `adminRoute`, żeby nie rozjechał się między plikami.
   //
   // BRAMA jest jedna i składa się TUTAJ: token weryfikuje `tokens`, a rolę i aktywność
   // konta czyta `pilots` przy każdym żądaniu (`http/authorize.ts`). Gdyby któraś trasa
-  // dostała samo `tokens`, deaktywacja działałaby na niej dopiero po 8 godzinach —
+  // dostała samo `tokens`, deaktywacja działałaby na niej dopiero po 8 godzinach -
   // i nikt by tego nie zauważył, bo wyglądałoby to jak działający panel.
   const gate: AdminGate = { tokens: deps.tokens, accounts: deps.pilots };
 
@@ -236,7 +236,7 @@ export function buildServer(deps: ServerDeps, options: ServerOptions = {}): Fast
   registerAdminConsumptionRoutes(app, deps.adminConsumptionQueries, gate);
   registerAdminMaintenanceRoutes(app, deps.adminMaintenanceQueries, deps.adminMaintenance, gate);
 
-  // Statyczny build panelu — na końcu, żeby czytać ten plik w kolejności „API, potem
+  // Statyczny build panelu - na końcu, żeby czytać ten plik w kolejności „API, potem
   // pliki"; w routerze i tak wygrywają trasy konkretne, nie kolejność rejestracji.
   registerAdminPanelStatic(app, options.adminDistDir);
 

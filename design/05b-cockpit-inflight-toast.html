@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 05B Cockpit · In Flight · Toast Takeoff</title>
+<title>UZ Aero - 05B Cockpit · In Flight · Toast Takeoff</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -66,7 +66,7 @@
   .param-cell { background:var(--surface); padding:12px 14px; display:flex; flex-direction:column; gap:4px; }
   /* WARIANT OSTRZEGAWCZY paliwa (issue #19), nie domyślny wygląd komórki: amber dopiero,
      gdy szacunek czasu lotu z FOB spadnie do ~1h45 (godzina zapasu nad rezerwą 45 min),
-     czerwony na samej rezerwie. Powyżej — jak tutaj — paliwo jest neutralne.
+     czerwony na samej rezerwie. Powyżej - jak tutaj - paliwo jest neutralne.
      `.param-cell.green-bg` usunięta razem z zielenią „Flight Time". */
   .param-cell.amber-bg { background:rgba(243,156,18,0.04); }
   .param-label { font-family:var(--font-mono); font-size: 10px; letter-spacing:2.5px; text-transform:uppercase; color:var(--text-muted); }
@@ -74,9 +74,9 @@
   .param-value.amber { color:var(--amber); }
   .param-unit { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); }
 
-  /* OŚ SESJI (issue #44) — ten sam inwentarz, co na 04, 05 i 10; pełny komentarz stoi
+  /* OŚ SESJI (issue #44) - ten sam inwentarz, co na 04, 05 i 10; pełny komentarz stoi
      w 04. Tutaj dochodzi jeden stan własny: zdarzenie WŁAŚNIE WYKRYTE, które czeka
-     w oknie COFNIJ — kropka kreskowana i plakietka przy nazwie, bo zapis jeszcze nie
+     w oknie COFNIJ - kropka kreskowana i plakietka przy nazwie, bo zapis jeszcze nie
      jest ostateczny. */
   .session-log { flex:1; overflow-y:auto; scrollbar-width:none; background:var(--surface); border-bottom:1px solid var(--border); }
   .session-log::-webkit-scrollbar { display:none; }
@@ -98,9 +98,9 @@
   .axis-dot.blue { background:var(--blue); }
   .axis-dot.amber { background:var(--amber); }
   .axis-dot.hollow { background:var(--surface); border:1.5px solid var(--text-muted); box-shadow:0 0 0 2px var(--surface); }
-  /* Kropka kreskowana — zdarzenie wykryte, ale jeszcze do cofnięcia (okno COFNIJ). */
+  /* Kropka kreskowana - zdarzenie wykryte, ale jeszcze do cofnięcia (okno COFNIJ). */
   .axis-dot.await { background:transparent; border:1.5px dashed var(--green-border); box-shadow:0 0 0 2px var(--surface); }
-  /* ZIELEŃ NALEŻY WYŁĄCZNIE DO TERAŹNIEJSZOŚCI (issue #19) — stąd puls tylko tutaj. */
+  /* ZIELEŃ NALEŻY WYŁĄCZNIE DO TERAŹNIEJSZOŚCI (issue #19) - stąd puls tylko tutaj. */
   .axis-dot.live { background:var(--green); animation:pulse 1.5s ease-in-out infinite; }
   .axis-label { display:flex; flex-direction:column; gap:1px; min-width:0; }
   .axis-name { font-family:var(--font-mono); font-size:10px; letter-spacing:1.4px; text-transform:uppercase; color:var(--text-primary); display:flex; align-items:center; gap:6px; }
@@ -114,7 +114,7 @@
   .axis-dur { font-family:var(--font-mono); font-size:11px; color:var(--green); }
 
   /* AUTODETECT TOAST */
-  /* Bottom sheet — autodetect event */
+  /* Bottom sheet - autodetect event */
   .detect-sheet {
     position: absolute; bottom: 0; left: 0; right: 0;
     background: var(--surface-raised);
@@ -126,7 +126,7 @@
     overflow: hidden;
   }
   .detect-bar { height: 6px; background: var(--green); width: 75%; }
-  /* Doktryna 3.2: brak reakcji = zapis. Jedyną akcją jest COFNIJ — więc ona ma być duża,
+  /* Doktryna 3.2: brak reakcji = zapis. Jedyną akcją jest COFNIJ - więc ona ma być duża,
      a nie „Potwierdź", który dubluje to, co i tak się stanie. */
   .detect-count { font-family: var(--font-mono); font-size: 20px; font-weight: 700; color: var(--green); min-width: 34px; text-align: center; }
   .detect-undo {
@@ -178,7 +178,7 @@
   }
 
   .action-row { display:grid; grid-template-columns:1fr auto auto; gap:10px; padding:12px 14px; background:var(--bg); flex-shrink:0; align-items:stretch; }
-  /* STOP ENGINE — wymaganie 3.2; w locie disabled z podanym powodem */
+  /* STOP ENGINE - wymaganie 3.2; w locie disabled z podanym powodem */
   .stop-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; padding:12px 14px; background:var(--red-muted); border:1px solid var(--red-border); border-radius:14px; color:var(--red); text-decoration:none; cursor:pointer; font-family:var(--font-display); font-size:16px; letter-spacing:1.5px; white-space:nowrap; }
   .stop-btn-lbl { font-family:var(--font-mono); font-size:7px; letter-spacing:1px; text-transform:uppercase; opacity:0.7; }
   .stop-btn.disabled { opacity:0.32; filter:saturate(0.4); pointer-events:none; }
@@ -220,7 +220,7 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 05B</span>
+  <span class="film-strip">UZ AERO - 05B</span>
   <span class="slug">cockpit · in flight · autodetect T/O</span>
   <span class="canvas-meta"><span class="pulse"></span>Toast widoczny · 4 s do zapisu</span>
 </header>
@@ -240,12 +240,12 @@
       <div class="compact-info">
         <span class="compact-aircraft">SP-AXA</span>
         <span class="compact-sep">·</span>
-        <!-- Dzień skoków: JEDEN kod ICAO, nie para (issue #13) — samolot wraca tam, skąd
+        <!-- Dzień skoków: JEDEN kod ICAO, nie para (issue #13) - samolot wraca tam, skąd
              wystartował. Para start → lądowanie zostaje na paskach innych operacji. -->
         <span>EPKK · SKOKI</span>
       </div>
       <div class="compact-right">
-        <div class="offline-badge" title="Brak sieci — zdarzenia zapisują się lokalnie, wysyłka automatyczna po odzyskaniu zasięgu">
+        <div class="offline-badge" title="Brak sieci - zdarzenia zapisują się lokalnie, wysyłka automatyczna po odzyskaniu zasięgu">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
           Offline · 9
         </div>
@@ -253,7 +253,7 @@
           <span class="live-dot"></span>
           RUNNING
         </div>
-        <a href="13-ustawienia.html" class="gear-btn" style="text-decoration:none;" title="Ustawienia — motyw, PIN, konto, diagnostyka GPS">
+        <a href="13-ustawienia.html" class="gear-btn" style="text-decoration:none;" title="Ustawienia - motyw, PIN, konto, diagnostyka GPS">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         </a>
       </div>
@@ -266,7 +266,7 @@
         </div>
         <div class="phase-text">
           <div class="phase-hero-name air">Climb</div>
-          <!-- Bez prędkości wznoszenia — decyzja 2026-08-04, uzasadnienie w 05. -->
+          <!-- Bez prędkości wznoszenia - decyzja 2026-08-04, uzasadnienie w 05. -->
         </div>
       </div>
     </div>
@@ -280,7 +280,7 @@
         <div class="param-label">Altitude</div>
         <div style="display:flex;align-items:baseline;gap:6px;"><div class="param-value">800</div><div class="param-unit">FT</div></div>
       </div>
-      <!-- Paliwo i czas lotu bez wyróżnienia (issue #19) — to odczyty, jak Ground Speed
+      <!-- Paliwo i czas lotu bez wyróżnienia (issue #19) - to odczyty, jak Ground Speed
            i Altitude. Amber wraca dopiero blisko rezerwy; patrz `.param-cell.amber-bg`. -->
       <div class="param-cell">
         <div class="param-label">Fuel on Board</div>
@@ -295,7 +295,7 @@
     </div>
 
     <!-- Karta logu pokazuje się dopiero, gdy w sesji jest zdarzenie OPERACYJNE
-         (issue #19) — tu jest ich kilka. -->
+         (issue #19) - tu jest ich kilka. -->
     <div class="session-log">
       <div class="session-log-header">
         <span class="session-log-title">Log sesji · UTC</span>
@@ -320,7 +320,7 @@
           <span class="axis-label"><span class="axis-name muted">Kołowanie</span></span>
           <span class="axis-right"></span>
         </div>
-        <!-- ZDARZENIE W OKNIE COFNIJ — wykryte, ale jeszcze nieostateczne (toast niżej
+        <!-- ZDARZENIE W OKNIE COFNIJ - wykryte, ale jeszcze nieostateczne (toast niżej
              odlicza). Stąd kropka kreskowana i plakietka przy nazwie; numeru lotu
              w prawej kolumnie NIE MA, bo lot zacznie się dopiero, gdy okno minie. -->
         <div class="axis-row" style="background:rgba(46,204,113,0.04);">
@@ -339,18 +339,18 @@
     </div>
 
     <!-- Przycisk „Zrzut" TYLKO w dniu skokowym (issue #19): przy przelocie, egzaminie,
-         locie technicznym i „innych" nie ma go w ogóle — nie ma czego wynosić, więc
+         locie technicznym i „innych" nie ma go w ogóle - nie ma czego wynosić, więc
          `drop` nie może się wydarzyć; to brak akcji, a nie blokada z powodem. -->
     <div class="action-row">
-      <a href="05f-zdarzenie-reczne.html" class="primary-btn" title="Zapisz ręcznie — GPS nie wykrył zdarzenia albo wykrył za późno">
+      <a href="05f-zdarzenie-reczne.html" class="primary-btn" title="Zapisz ręcznie - GPS nie wykrył zdarzenia albo wykrył za późno">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="18 13 12 19 6 13"/></svg>
         Landing
       </a>
       <!-- ZRZUT PRZYGASZONY (decyzja 2026-08-11): wyniesienie dzieje się w locie
-           poziomym, a ten stan to Climb tuż po starcie — przycisk stoi w pasku, żeby
+           poziomym, a ten stan to Climb tuż po starcie - przycisk stoi w pasku, żeby
            geometria nie skakała w locie (pilot sięga nie patrząc), ale aktywny robi
            się dopiero w Cruise. Pełna reguła w komentarzu BOTTOM ACTIONS w 05. -->
-      <span class="zrzut-btn disabled" title="Zrzut zapiszesz w locie poziomym (Cruise) — w Climb przycisk jest przygaszony">
+      <span class="zrzut-btn disabled" title="Zrzut zapiszesz w locie poziomym (Cruise) - w Climb przycisk jest przygaszony">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8 2 5 5 5 8c0 5 7 14 7 14s7-9 7-14c0-3-2.5-6-7-6z"/><circle cx="12" cy="8" r="2" fill="currentColor" stroke="none"/></svg>
         <span class="zrzut-btn-lbl">Zrzut</span>
       </span>
@@ -361,7 +361,7 @@
       </span>
     </div>
 
-    <!-- BOTTOM SHEET — autodetect Takeoff -->
+    <!-- BOTTOM SHEET - autodetect Takeoff -->
     <div class="detect-sheet">
       <div class="detect-bar"></div>
       <div class="detect-handle"></div>
@@ -377,7 +377,7 @@
       </div>
       <a href="05a-cockpit-taxi.html" class="detect-undo">
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
-        <span>COFNIJ — NIE BYŁO STARTU</span>
+        <span>COFNIJ - NIE BYŁO STARTU</span>
       </a>
       <div class="detect-auto">Nic nie rób, a zapiszemy automatycznie za <b>5 s</b>. Cofnij tylko, jeśli GPS się pomylił.</div>
     </div>
@@ -385,14 +385,14 @@
 </main>
 <nav class="state-sidebar">
   <div class="state-sidebar-lbl">Kokpit</div>
-  <a href="05h-cockpit-idle.html" title="Kiedy: silnik ON, samolot jeszcze stoi — przycisk Taxi otwiera sekwencję; ruch zapisze też autodetekcja"><span class="dot"></span>Engine idle</a>
-  <a href="05a-cockpit-taxi.html" title="Kiedy: kołowanie trwa (zapisane przez autodetekcję albo przycisk Taxi) — przycisk podpowiada Take off"><span class="dot"></span>Taxi przed T/O</a>
-  <a href="05-cockpit-running.html" title="Kiedy: w locie — phase hero (Climb/Cruise/Descent), GPS live, log zdarzeń, buforowanie offline"><span class="dot"></span>In Flight</a>
-  <a href="05b-cockpit-inflight-toast.html" class="active" title="Kiedy: GPS wykrył start (GS > 50 kt) — toast z odliczaniem, 5 s na Cofnij"><span class="dot"></span>Toast Takeoff</a>
-  <a href="05c-cockpit-toast-ldg.html" title="Kiedy: GPS wykrył lądowanie (GS < 30 kt + niska wysokość) — toast z Cofnij podczas rolloutu"><span class="dot"></span>Toast Landing</a>
-  <a href="05d-cockpit-taxi-post.html" title="Kiedy: lot ukończony, silnik nadal ON — kołowanie; kolejny T/O albo STOP ENGINE"><span class="dot"></span>Taxi po LDG</a>
-  <a href="05i-zaladunek.html" title="Kiedy: na ziemi dnia skokowego — skoczkowie wsiadają; skład opcjonalny, wypełni arkusz zrzutu (issue #21)"><span class="dot"></span>Załadunek</a>
-  <a href="05g-cockpit-no-gps.html" title="Kiedy: GPS stracił fixa — parametry — —, autodetekcja wstrzymana, wejścia ręczne aktywne; sieć osobno (SYNC może być zielony)"><span class="dot"></span>No GPS</a>
+  <a href="05h-cockpit-idle.html" title="Kiedy: silnik ON, samolot jeszcze stoi - przycisk Taxi otwiera sekwencję; ruch zapisze też autodetekcja"><span class="dot"></span>Engine idle</a>
+  <a href="05a-cockpit-taxi.html" title="Kiedy: kołowanie trwa (zapisane przez autodetekcję albo przycisk Taxi) - przycisk podpowiada Take off"><span class="dot"></span>Taxi przed T/O</a>
+  <a href="05-cockpit-running.html" title="Kiedy: w locie - phase hero (Climb/Cruise/Descent), GPS live, log zdarzeń, buforowanie offline"><span class="dot"></span>In Flight</a>
+  <a href="05b-cockpit-inflight-toast.html" class="active" title="Kiedy: GPS wykrył start (GS > 50 kt) - toast z odliczaniem, 5 s na Cofnij"><span class="dot"></span>Toast Takeoff</a>
+  <a href="05c-cockpit-toast-ldg.html" title="Kiedy: GPS wykrył lądowanie (GS < 30 kt + niska wysokość) - toast z Cofnij podczas rolloutu"><span class="dot"></span>Toast Landing</a>
+  <a href="05d-cockpit-taxi-post.html" title="Kiedy: lot ukończony, silnik nadal ON - kołowanie; kolejny T/O albo STOP ENGINE"><span class="dot"></span>Taxi po LDG</a>
+  <a href="05i-zaladunek.html" title="Kiedy: na ziemi dnia skokowego - skoczkowie wsiadają; skład opcjonalny, wypełni arkusz zrzutu (issue #21)"><span class="dot"></span>Załadunek</a>
+  <a href="05g-cockpit-no-gps.html" title="Kiedy: GPS stracił fixa - parametry - -, autodetekcja wstrzymana, wejścia ręczne aktywne; sieć osobno (SYNC może być zielony)"><span class="dot"></span>No GPS</a>
 </nav>
 </div>
 

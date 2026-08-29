@@ -1,10 +1,10 @@
 /**
- * UZ Aero — panel: filtry rejestru zdarzeń ↔ query string (`A04`).
+ * UZ Aero - panel: filtry rejestru zdarzeń ↔ query string (`A04`).
  *
  * Adres tego ekranu jest produktem, a nie szczegółem implementacji: `ANALIZA` §3
  * nazywa „gdzie jest zdarzenie uuid=…" podstawowym scenariuszem współpracy, a karta
  * dnia i pulpit prowadzą tu z gotowym zawężeniem. Dlatego test sprawdza obie strony
- * tłumaczenia — a przy tym dwa alfabety naraz: adres EKRANU jest po polsku, a żądanie
+ * tłumaczenia - a przy tym dwa alfabety naraz: adres EKRANU jest po polsku, a żądanie
  * do SERWERA po angielsku, i rozjazd między nimi daje listę bez zawężenia, która
  * wygląda zupełnie poprawnie.
  */
@@ -28,9 +28,9 @@ import {
 const parse = (query: string): EventsFilter => filterFromParams(new URLSearchParams(query));
 
 describe('filtry rejestru: adres → filtr', () => {
-  it('pusty adres daje filtr domyślny — bez ukrytego zawężenia do ostatniego tygodnia', () => {
+  it('pusty adres daje filtr domyślny - bez ukrytego zawężenia do ostatniego tygodnia', () => {
     // Domyślny zakres dat sprawiłby, że kafle i pusta lista mówiłyby o czymś, czego
-    // nie widać w adresie — a ten ekran istnieje po to, żeby adres dało się wkleić.
+    // nie widać w adresie - a ten ekran istnieje po to, żeby adres dało się wkleić.
     expect(parse('')).toEqual(DEFAULT_EVENTS_FILTER);
     expect(isNarrowed(DEFAULT_EVENTS_FILTER)).toBe(false);
   });
@@ -66,12 +66,12 @@ describe('filtry rejestru: adres → filtr', () => {
     expect(parse('sort=bokiem').sort).toBe('desc');
   });
 
-  it('data ISTNIEJĄCA przechodzi — także rok trzycyfrowy, który serwer też przyjmuje', () => {
+  it('data ISTNIEJĄCA przechodzi - także rok trzycyfrowy, który serwer też przyjmuje', () => {
     // Lustro `server/src/http/routes/admin/dayRange.ts`. Obie strony walidują ten sam
     // napis TYM SAMYM mechanizmem (parsowanie ISO 8601 UTC), więc zakres przepuszczony
     // przez ekran nie może dostać 400 od trasy. Do 2026-08-02 tak nie było: serwer
     // liczył `Date.UTC(y, m-1, d)`, a ta funkcja mapuje lata 0–99 na 1900 + rok, więc
-    // `0099-01-01` przechodziło walidację panelu i wracało czterysetką — a ekran
+    // `0099-01-01` przechodziło walidację panelu i wracało czterysetką - a ekran
     // pokazywał wtedy baner „Panel działa wyłącznie online", czyli komunikat o SIECI
     // przy błędzie walidacji.
     expect(parse('od=0099-01-01').from).toBe('0099-01-01');
@@ -89,7 +89,7 @@ describe('filtry rejestru: adres → filtr', () => {
 
 describe('filtry rejestru: filtr → adres', () => {
   it('wartości domyślne NIE trafiają do adresu', () => {
-    // Adres pełnego rejestru ma być po prostu `#/zdarzenia` — linkiem, który da się
+    // Adres pełnego rejestru ma być po prostu `#/zdarzenia` - linkiem, który da się
     // przeczytać i przepisać.
     expect(paramsFromFilter(DEFAULT_EVENTS_FILTER)).toEqual({});
     expect(eventsHref(DEFAULT_EVENTS_FILTER)).toBe('/zdarzenia');
@@ -119,7 +119,7 @@ describe('filtry rejestru: filtr → adres', () => {
 describe('filtry rejestru: filtr → żądanie do serwera', () => {
   it('klucze zapytania są PO ANGIELSKU, a typ jedzie tablicą', () => {
     // Trasa przyjmuje `?type=` powtarzalnie (chip bywa grupą), więc nawet jeden typ
-    // jedzie listą — inaczej dołożenie grupy zmieniałoby kształt żądania.
+    // jedzie listą - inaczej dołożenie grupy zmieniałoby kształt żądania.
     const query = eventsListQuery({ ...DEFAULT_EVENTS_FILTER, type: 'landing', aircraftId: 'SP-AXA' });
     expect(query).toEqual({
       type: ['landing'],
@@ -135,7 +135,7 @@ describe('filtry rejestru: filtr → żądanie do serwera', () => {
     expect(Object.keys(query).sort()).toEqual(['limit', 'sort']);
   });
 
-  it('kursor NIE jest częścią zapytania — dokłada go hook przy kolejnej stronie', () => {
+  it('kursor NIE jest częścią zapytania - dokłada go hook przy kolejnej stronie', () => {
     // Kursor opisuje pozycję WEWNĄTRZ wyniku filtra, więc jest parametrem strony,
     // a nie tożsamości pytania. Wpisany tu trafiłby do klucza cache'u.
     expect('cursor' in eventsListQuery(DEFAULT_EVENTS_FILTER)).toBe(false);
@@ -143,7 +143,7 @@ describe('filtry rejestru: filtr → żądanie do serwera', () => {
 });
 
 describe('filtry rejestru: kiedy pustka znaczy „nie dotarło"', () => {
-  it('samo `uuid` to SZUKANIE ZDARZENIA — inne zawężenie już nie', () => {
+  it('samo `uuid` to SZUKANIE ZDARZENIA - inne zawężenie już nie', () => {
     // Od tego zależy stan pusty: „to zdarzenie nie dotarło na serwer" jest odpowiedzią
     // na pytanie zadane uuid-em, a nie na filtr po dacie i samolocie.
     expect(isUuidLookup(parse('uuid=ev-1'))).toBe(true);

@@ -1,9 +1,9 @@
 /**
- * UZ Aero (serwer) — flota panelu (`A07`) i DANE REFERENCYJNE dla filtrów.
+ * UZ Aero (serwer) - flota panelu (`A07`) i DANE REFERENCYJNE dla filtrów.
  *
  * Ta trasa ma dwóch odbiorców, dokładnie jak lista kont. Pierwszy: ekran floty, który
  * potrzebuje konfiguracji, progu flagi i stanu bieżącego z telefonów. Drugi: filtry
- * innych list panelu — `A02` do 2026-08-01 nie miało czym wypełnić chipów samolotów,
+ * innych list panelu - `A02` do 2026-08-01 nie miało czym wypełnić chipów samolotów,
  * mimo że `SessionListFilter.aircraftId` czekał gotowy. Dlatego lista jest kompletna
  * i bez kursora: klub ma kilka jednostek, a lista, którą trzeba stronicować, nie nadaje
  * się na słownik do filtra.
@@ -12,7 +12,7 @@
  * Konfiguracja (`aircraft`) i stan bieżący (claim, ostatni odczyt, ostatni sync) to
  * dwa różne rodzaje wiedzy i ekran ma je rozróżniać. Pierwsza zmienia się wyłącznie
  * w panelu; drugą przynoszą telefony ze zdarzeniami i bywa nieświeża. Serwer podaje
- * OBIE razem z `lastEventAt`, żeby panel miał czym oznaczyć wiek — a nie zgadywał go
+ * OBIE razem z `lastEventAt`, żeby panel miał czym oznaczyć wiek - a nie zgadywał go
  * z czasu odpowiedzi.
  *
  * Zdolność jest ROZSZCZEPIONA i to decyzja produktowa z mockupu A07: listę CZYTA każdy,
@@ -47,12 +47,12 @@ export class AdminFleetQueries {
      * dwiema odpowiedziami na pytanie „kto trzyma ten samolot".
      */
     private readonly sessions: SessionsProjectionPort,
-    /** Nazwiska do claimu i odczytu — po `byId`, bo dotyczy najwyżej kilku kont. */
+    /** Nazwiska do claimu i odczytu - po `byId`, bo dotyczy najwyżej kilku kont. */
     private readonly pilots: PilotsAdminPort,
   ) {}
 
   async list(filter: FleetListFilter): Promise<AdminFleetPage> {
-    // Trzy zapytania, trzy różne pytania — i dlatego nie da się ich skleić: wiersze
+    // Trzy zapytania, trzy różne pytania - i dlatego nie da się ich skleić: wiersze
     // w bieżącym zawężeniu, liczby o CAŁEJ FLOCIE (kafle) i liczby o WYSZUKIWANIU
     // (chipy). Ta sama konstrukcja, co przy liście kont.
     const [joins, counts, scopes] = await Promise.all([
@@ -72,11 +72,11 @@ export class AdminFleetQueries {
   }
 
   /**
-   * Pojedynczy wiersz listy — odpowiedź MUTACJI.
+   * Pojedynczy wiersz listy - odpowiedź MUTACJI.
    *
    * Ponowny odczyt zamiast złożenia wiersza z wejścia komendy: trasa kont robi to
    * drugie i płaci za to `flyingDays: 0` w odpowiedzi (uproszczenie opisane przy
-   * `accountToWire`). Tutaj cena byłaby wyższa — wiersz floty niesie próg flagi,
+   * `accountToWire`). Tutaj cena byłaby wyższa - wiersz floty niesie próg flagi,
    * liczbę otwartych flag i stan z telefonów, więc zmyślony byłby w połowie.
    * Jedno dodatkowe zapytanie po zapisie jest tańsze niż odpowiedź, której panel
    * nie może pokazać.
@@ -91,8 +91,8 @@ export class AdminFleetQueries {
   /**
    * Tolerancja `FUEL_MISMATCH` dla pojemności, która NIE MUSI być w bazie.
    *
-   * Dwa wejścia, jedna odpowiedź: `capacityL` (formularz `A07a` — „co się stanie,
-   * jeśli wpiszę 1100") albo `aircraftId` (`A02a`/`A02b` — „jaki próg obowiązuje ten
+   * Dwa wejścia, jedna odpowiedź: `capacityL` (formularz `A07a` - „co się stanie,
+   * jeśli wpiszę 1100") albo `aircraftId` (`A02a`/`A02b` - „jaki próg obowiązuje ten
    * dzień", gdzie panel zna samolot, a nie jego pojemność). `null` = nie ma takiego
    * samolotu; to 404, a nie tolerancja z podłogi.
    */
@@ -115,7 +115,7 @@ export class AdminFleetQueries {
 
   /**
    * Dokłada do wierszy stan z telefonów. Sesje czytamy per samolot jednym przebiegiem
-   * (tak samo jak `ReferenceQueries`), a nazwiska — po `byId` dla kont, które faktycznie
+   * (tak samo jak `ReferenceQueries`), a nazwiska - po `byId` dla kont, które faktycznie
    * się pojawiły. Przy kilku jednostkach i dwóch kontach na jednostkę to kilkanaście
    * zapytań punktowych; złączenie w SQL-u wymagałoby przeniesienia tam reguły wyboru
    * przekazania, czyli dokładnie tego, czego ten plik unika.
@@ -135,7 +135,7 @@ export class AdminFleetQueries {
     const labels = new Map<string, PilotLabel>();
     for (const id of pilotIds) {
       const account = await this.pilots.byId(this.db, id);
-      // Konto skasowane albo przepisane zostawia claim z samym identyfikatorem —
+      // Konto skasowane albo przepisane zostawia claim z samym identyfikatorem -
       // wiersz floty ma zostać widoczny, a nie zniknąć razem z nazwiskiem.
       if (account != null) labels.set(id, { code: account.code, name: account.name });
     }

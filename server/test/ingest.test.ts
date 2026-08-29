@@ -1,8 +1,8 @@
 /**
- * UZ Aero (serwer) — testy przyjmowania zdarzeń i łańcucha MH (M2, §4.3–4.5).
+ * UZ Aero (serwer) - testy przyjmowania zdarzeń i łańcucha MH (M2, §4.3–4.5).
  *
  * Scenariusze jadą przez PRAWDZIWY endpoint na PRAWDZIWYM Postgresie (PGlite),
- * a projekcję liczy ten sam `projectSession`, co telefon — więc liczby kanonicznego
+ * a projekcję liczy ten sam `projectSession`, co telefon - więc liczby kanonicznego
  * dnia (150→88 L, 1234:30→1241:09 MH) muszą wyjść IDENTYCZNE jak na ekranie 10.
  */
 
@@ -128,7 +128,7 @@ describe('POST /events', () => {
     expect(Number(rows[0]!.n)).toBe(7);
   });
 
-  it('cudzą sesję odrzuca w całości — single-writer (§4.4)', async () => {
+  it('cudzą sesję odrzuca w całości - single-writer (§4.4)', async () => {
     const { app, db } = await testHarness();
     // KRZ próbuje wysłać zdarzenia podpisane PIC-em TMK.
     const tokenKrz = await login(app, 'KRZ');
@@ -147,7 +147,7 @@ describe('POST /events', () => {
   });
 
   it('przejęcie CUDZEJ sesji własnym podpisem → 403 (audyt: krytyczne)', async () => {
-    // KRZ zna sessionUuid TMK i wysyła zdarzenia z WŁASNYM picId — antydatowany
+    // KRZ zna sessionUuid TMK i wysyła zdarzenia z WŁASNYM picId - antydatowany
     // `session_claim` przejąłby sesję, a `day_close` zamknąłby cudzy dzień.
     const { app, db } = await testHarness();
     const tokenTmk = await login(app, 'TMK');
@@ -157,7 +157,7 @@ describe('POST /events', () => {
     const hijack = day('sess-1', { picId: 'KRZ' }).map((e, i) => ({
       ...e,
       uuid: `hijack-${i}`,
-      deviceTime: at(6, 0), // wcześniejsze niż wszystko — próba przejęcia sortowaniem
+      deviceTime: at(6, 0), // wcześniejsze niż wszystko - próba przejęcia sortowaniem
       gpsTime: at(6, 0),
     }));
     const res = await post(app, tokenKrz, hijack);
@@ -184,7 +184,7 @@ describe('POST /events', () => {
   });
 
   /**
-   * Korekta `amend` z telefonu (issue #43) — tryb edycji sesji wysyła ją tą samą trasą,
+   * Korekta `amend` z telefonu (issue #43) - tryb edycji sesji wysyła ją tą samą trasą,
    * co każde inne zdarzenie. Bez schematu na serwerze cała edycja odbijałaby się od
    * `400 bad_payload`: dokładnie ten błąd zatrzymał etap C przy przebudowie flow, więc
    * ta ścieżka ma własny test.
@@ -210,7 +210,7 @@ describe('POST /events', () => {
     );
     expect(rows[0]!.payload).toMatchObject({ action: 'amend', fields: { fuelL: 96 } });
 
-    // Projekcja liczy dzień z POPRAWIONYM odczytem — inaczej korekta byłaby wpisem
+    // Projekcja liczy dzień z POPRAWIONYM odczytem - inaczej korekta byłaby wpisem
     // do rejestru i niczym więcej.
     const { rows: sessions } = await db.query<{ fuel_end_l: string | number | null }>(
       "SELECT fuel_end_l FROM sessions WHERE session_uuid = 'sess-1'",
@@ -218,7 +218,7 @@ describe('POST /events', () => {
     expect(Number(sessions[0]!.fuel_end_l)).toBe(96);
   });
 
-  it('amend z NaN w wartości nie przechodzi — to ta sama trucizna, co w odczycie', async () => {
+  it('amend z NaN w wartości nie przechodzi - to ta sama trucizna, co w odczycie', async () => {
     const { app } = await testHarness();
     const token = await login(app);
 
@@ -235,7 +235,7 @@ describe('POST /events', () => {
     expect(res.json().error).toBe('bad_payload');
   });
 
-  it('NaN w liczbach payloadu nie przechodzi — Postgres by je przyjął', async () => {
+  it('NaN w liczbach payloadu nie przechodzi - Postgres by je przyjął', async () => {
     const { app } = await testHarness();
     const token = await login(app);
     const nan = day('sess-1').map((e) =>
@@ -243,14 +243,14 @@ describe('POST /events', () => {
         ? { ...e, payload: { ...(e.payload as object), reading: { fuelL: NaN, mh: 1234.5 } } }
         : e,
     );
-    // NaN nie jest legalnym JSON-em — koperta odrzuca na serializacji/walidacji.
+    // NaN nie jest legalnym JSON-em - koperta odrzuca na serializacji/walidacji.
     const res = await post(app, token, nan);
     expect(res.statusCode).toBe(400);
   });
 });
 
 describe('notatka pilota do dnia (issue #14, `sessions.notes`)', () => {
-  /** Dzień z notatką w preflighcie — reszta paczki bez zmian. */
+  /** Dzień z notatką w preflighcie - reszta paczki bez zmian. */
   const dayWithNotes = (notes: unknown, sessionUuid = 'sess-1') =>
     day(sessionUuid).map((e) =>
       e.type === 'preflight_confirm'
@@ -269,13 +269,13 @@ describe('notatka pilota do dnia (issue #14, `sessions.notes`)', () => {
     const { app, db } = await testHarness();
     const token = await login(app);
 
-    // Wielolinijkowa i z polskimi znakami — to jest wolny tekst pilota, nie kod.
-    const notes = 'Lot z uczniem.\nDrugi zbiornik nie działa — tankować tylko lewy.';
+    // Wielolinijkowa i z polskimi znakami - to jest wolny tekst pilota, nie kod.
+    const notes = 'Lot z uczniem.\nDrugi zbiornik nie działa - tankować tylko lewy.';
     expect((await post(app, token, dayWithNotes(notes))).statusCode).toBe(200);
     expect(await notesOf(db)).toBe(notes);
   });
 
-  it('BRAK pola = NULL — stare telefony nie wysyłają notatki i mają dalej działać', async () => {
+  it('BRAK pola = NULL - stare telefony nie wysyłają notatki i mają dalej działać', async () => {
     // Zgodność wsteczna jest tu całą treścią przypadku: paczka z outboxa telefonu
     // sprzed tej zmiany nie ma pola `notes`, a odrzucenie jej albo zapisanie pustego
     // napisu (który wszedłby potem do podpowiedzi) byłoby regresem synca.
@@ -286,7 +286,7 @@ describe('notatka pilota do dnia (issue #14, `sessions.notes`)', () => {
     expect(await notesOf(db)).toBe(null);
   });
 
-  it('jawny `null` też zapisuje NULL — telefon może wyczyścić notatkę', async () => {
+  it('jawny `null` też zapisuje NULL - telefon może wyczyścić notatkę', async () => {
     const { app, db } = await testHarness();
     const token = await login(app);
 
@@ -297,7 +297,7 @@ describe('notatka pilota do dnia (issue #14, `sessions.notes`)', () => {
   it('notatka dłuższa niż 2000 znaków → 400 i ZERO śladu w bazie', async () => {
     // Limit jest regułą WEJŚCIA (zod na trasie), nie ograniczeniem tabeli: notatka to
     // akapit o okolicznościach dnia, a nie załącznik. Odrzucamy CAŁĄ paczkę przed
-    // zapisem — częściowe przyjęcie rozjechałoby outbox telefonu.
+    // zapisem - częściowe przyjęcie rozjechałoby outbox telefonu.
     const { app, db } = await testHarness();
     const token = await login(app);
 
@@ -307,7 +307,7 @@ describe('notatka pilota do dnia (issue #14, `sessions.notes`)', () => {
     const { rows } = await db.query<{ n: string }>('SELECT COUNT(*) AS n FROM events');
     expect(Number(rows[0]!.n)).toBe(0);
 
-    // …a dokładnie 2000 znaków przechodzi — granica ma być granicą, nie „mniej więcej".
+    // …a dokładnie 2000 znaków przechodzi - granica ma być granicą, nie „mniej więcej".
     expect((await post(app, token, dayWithNotes('x'.repeat(2000)))).statusCode).toBe(200);
     expect(await notesOf(db)).toHaveLength(2000);
   });
@@ -320,7 +320,7 @@ describe('notatka pilota do dnia (issue #14, `sessions.notes`)', () => {
 });
 
 describe('flagi łańcucha MH (§4.5)', () => {
-  it('ciągły łańcuch dwóch dni — zero flag', async () => {
+  it('ciągły łańcuch dwóch dni - zero flag', async () => {
     const { app } = await testHarness();
     const token = await login(app);
     await post(app, token, day('sess-1'));
@@ -393,7 +393,7 @@ describe('flagi łańcucha MH (§4.5)', () => {
     expect(overlap.sessionUuids.sort()).toEqual(['sess-1', 'sess-2']);
   });
 
-  it('ponowny sync nie mnoży flag — dedupe po typie i zestawie sesji', async () => {
+  it('ponowny sync nie mnoży flag - dedupe po typie i zestawie sesji', async () => {
     const { app, db } = await testHarness();
     const token = await login(app);
     await post(app, token, day('sess-1'));
@@ -417,7 +417,7 @@ describe('flagi łańcucha MH (§4.5)', () => {
  * fakcie nie było ich widać nigdzie.
  *
  * Tolerancja paliwa NIE jest tu stałą 10 L: `SP-AXA` ma w seedzie 330 L pojemności,
- * a §4.5 mówi „±10 L lub ±5% pojemności" — wygrywa większa, czyli 16,5 L. Testy liczą
+ * a §4.5 mówi „±10 L lub ±5% pojemności" - wygrywa większa, czyli 16,5 L. Testy liczą
  * właśnie z tej wartości, bo to ona obowiązuje dla tego samolotu.
  */
 describe('flagi dopisane do katalogu (§4.5)', () => {
@@ -445,8 +445,8 @@ describe('flagi dopisane do katalogu (§4.5)', () => {
     expect(fuel.details.diffL).toBeCloseTo(52, 1);
   });
 
-  it('SPADEK paliwa poza tolerancją też flagujemy — podejrzane są obie strony', async () => {
-    // Wzrost znaczy tankowanie poza aplikacją, spadek — spuszczone paliwo albo błędny
+  it('SPADEK paliwa poza tolerancją też flagujemy - podejrzane są obie strony', async () => {
+    // Wzrost znaczy tankowanie poza aplikacją, spadek - spuszczone paliwo albo błędny
     // odczyt. Żadna z tych rzeczy nie powinna przejść niezauważona.
     const { app } = await testHarness();
     const token = await login(app);
@@ -464,7 +464,7 @@ describe('flagi dopisane do katalogu (§4.5)', () => {
     const token = await login(app);
     await post(app, token, day('sess-1'));
 
-    // 7 L przy tolerancji 16,5 L — paliwomierz nie jest precyzyjny i to jest normalne.
+    // 7 L przy tolerancji 16,5 L - paliwomierz nie jest precyzyjny i to jest normalne.
     const res = await post(app, token, nextDayWithFuel(95));
 
     expect(res.json().flags).toEqual([]);
@@ -572,7 +572,7 @@ describe('GET /aircraft/:id/state i sync-status', () => {
     expect(body).toMatchObject({ sessionUuid: 'sess-2', received: 7, status: 'closed' });
     expect(body.flags.map((f: { type: string }) => f.type)).toEqual(['mh_gap']);
     // Eksport jest domyślnie WŁĄCZONY (adapter bazodanowy): zamknięty dzień ma link.
-    // `mh_gap` nie blokuje eksportu — arkusz wstrzymuje wyłącznie `aircraft_overlap` (§4.7).
+    // `mh_gap` nie blokuje eksportu - arkusz wstrzymuje wyłącznie `aircraft_overlap` (§4.7).
     expect(body.exportUrl).toBe(`${TEST_BASE_URL}/sheets/2026-06-22_SP-AXA`);
   });
 });

@@ -1,7 +1,7 @@
 /**
- * UZ Aero (serwer) — adapter kont pilotów (`PilotsPort`).
+ * UZ Aero (serwer) - adapter kont pilotów (`PilotsPort`).
  *
- * Konta zakłada wyłącznie administrator/seed (decyzja 2026-07-22 — brak samodzielnej
+ * Konta zakłada wyłącznie administrator/seed (decyzja 2026-07-22 - brak samodzielnej
  * rejestracji), więc adapter jest czystym odczytem; zapis mieszka w seedzie.
  */
 
@@ -39,7 +39,7 @@ export class PgPilotsRepo implements PilotsPort {
   constructor(private readonly db: Queryable) {}
 
   async findByLogin(login: string): Promise<PilotAccount | null> {
-    // Loginem jest kod pilota albo e-mail — oba unikalne; wielkość liter bez znaczenia,
+    // Loginem jest kod pilota albo e-mail - oba unikalne; wielkość liter bez znaczenia,
     // bo „TMK" i „tmk" to w intencji pilota to samo konto.
     const { rows } = await this.db.query<PilotRow>(
       'SELECT * FROM pilots WHERE lower(code) = lower($1) OR lower(email) = lower($1)',
@@ -54,7 +54,7 @@ export class PgPilotsRepo implements PilotsPort {
   }
 
   /**
-   * Odczyt BRAMY panelu — kolumny wypisane imiennie i bez `password_hash`.
+   * Odczyt BRAMY panelu - kolumny wypisane imiennie i bez `password_hash`.
    *
    * `SELECT *` z `findById` jest tu nie do przyjęcia z dwóch powodów naraz: wnosiłby
    * hash do warstwy HTTP przy każdym żądaniu panelu (a `PilotAuthSnapshot` powstał

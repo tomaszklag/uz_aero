@@ -1,8 +1,8 @@
 /**
- * UZ Aero — panel: filtry statystyk ↔ URL.
+ * UZ Aero - panel: filtry statystyk ↔ URL.
  *
  * Filtr mieszka w adresie (`?od=…&do=…&ujecie=…`), więc obie strony tłumaczenia
- * muszą być odwracalne — a wpis nieczytelny ma dawać raport DOMYŚLNY, nie stronę
+ * muszą być odwracalne - a wpis nieczytelny ma dawać raport DOMYŚLNY, nie stronę
  * błędu. Presety liczą się od DZIŚ zegara SERWERA (`report.at`).
  */
 
@@ -29,14 +29,14 @@ describe('filterFromParams', () => {
     expect(filterFromParams(new URLSearchParams(''))).toEqual(DEFAULT_STATS_FILTER);
   });
 
-  it('wartości nieczytelne POMIJA — adres z literówką pokazuje raport, nie błąd', () => {
+  it('wartości nieczytelne POMIJA - adres z literówką pokazuje raport, nie błąd', () => {
     const filter = filterFromParams(new URLSearchParams('od=wczoraj&ujecie=kosmos'));
     expect(filter).toEqual(DEFAULT_STATS_FILTER);
   });
 });
 
 describe('paramsFromFilter', () => {
-  it('wartości domyślne pomija — pełny raport to czyste `#/statystyki`', () => {
+  it('wartości domyślne pomija - pełny raport to czyste `#/statystyki`', () => {
     expect(paramsFromFilter(DEFAULT_STATS_FILTER)).toEqual({});
   });
 
@@ -48,7 +48,7 @@ describe('paramsFromFilter', () => {
 });
 
 describe('statsQuery', () => {
-  it('do serwera jadą WYŁĄCZNIE daty — ujęcie jest sprawą ekranu, nie zapytania', () => {
+  it('do serwera jadą WYŁĄCZNIE daty - ujęcie jest sprawą ekranu, nie zapytania', () => {
     expect(statsQuery({ from: '2026-07-01', to: '2026-07-30', view: 'pilot' })).toEqual({
       from: '2026-07-01',
       to: '2026-07-30',
@@ -58,7 +58,7 @@ describe('statsQuery', () => {
 });
 
 describe('statsPresets', () => {
-  // Piątek 31 lipca 2026 — zegar SERWERA z odpowiedzi, nie przeglądarki.
+  // Piątek 31 lipca 2026 - zegar SERWERA z odpowiedzi, nie przeglądarki.
   const AT = '2026-07-31T14:22:07.000Z';
 
   it('tydzień od poniedziałku, poprzedni miesiąc w całości, rok od 1 stycznia', () => {

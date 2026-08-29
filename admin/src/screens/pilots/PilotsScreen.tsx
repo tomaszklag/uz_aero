@@ -1,18 +1,18 @@
 /**
- * UZ Aero — panel: PILOCI I KONTA (`design/admin/A06-piloci.html`).
+ * UZ Aero - panel: PILOCI I KONTA (`design/admin/A06-piloci.html`).
  *
  * ══ DLACZEGO TEN EKRAN POWSTAJE ══
  * 2026-08-01 administrator nie mógł wejść do systemu, bo w całym produkcie nie było
  * ŻADNEJ ścieżki zmiany hasła: seed z założenia nie nadpisuje `password_hash`, CLI nie
  * ma, panelu kont nie było. Jedynym wyjściem był ręczny `UPDATE` z hashem policzonym
- * poza aplikacją — operacja bez śladu i bez świadka. Ten ekran to zamyka.
+ * poza aplikacją - operacja bez śladu i bez świadka. Ten ekran to zamyka.
  *
  * Drugi scenariusz jest równie konkretny: pilot odchodzi z klubu, administrator klika
- * „Deaktywuj" i **musi mieć pewność, że dostęp naprawdę zniknął** — nie „zniknie
+ * „Deaktywuj" i **musi mieć pewność, że dostęp naprawdę zniknął** - nie „zniknie
  * w ciągu ośmiu godzin". Dlatego serwer czyta rolę i status konta przy KAŻDYM żądaniu
  * panelu, a deaktywacja zrywa wszystkie sesje pilota w tej samej transakcji.
  *
- * Szuflada konta (`A06a`) otwiera się NAD listą pod adresem `#/piloci/<id>` — lista
+ * Szuflada konta (`A06a`) otwiera się NAD listą pod adresem `#/piloci/<id>` - lista
  * zostaje pod spodem, bo decyzja o roli zapada w porównaniu z resztą kont.
  *
  * Ekran jest `.tsx` BEZ arytmetyki i bez decyzji o treści: plakietki, napisy, liczniki
@@ -90,7 +90,7 @@ export function PilotsScreen() {
   const apply = (next: PilotsFilter): void => setSearchParams(paramsFromFilter(next));
 
   const counts = pilots.data?.counts ?? null;
-  // Kafle biorą `counts` (cały klub), chipy — `scopes` (zawężone WYSZUKIWANIEM). To są
+  // Kafle biorą `counts` (cały klub), chipy - `scopes` (zawężone WYSZUKIWANIEM). To są
   // dwa różne pytania i dwie różne liczby na jednym ekranie; chip z liczbą jest
   // obietnicą „tyle zobaczysz po kliknięciu", a kafel opisem klubu (`pilotsChips.ts`).
   const scopes = pilots.data?.scopes ?? null;
@@ -117,7 +117,7 @@ export function PilotsScreen() {
         title="PILOCI I KONTA"
         sub={
           <>
-            Konta zakłada tu administrator — aplikacja nie ma samodzielnej rejestracji. Kod
+            Konta zakłada tu administrator - aplikacja nie ma samodzielnej rejestracji. Kod
             pilota, rola i status decydują o tym, co pilot widzi na telefonie i kto w ogóle
             wejdzie do panelu.
           </>
@@ -147,7 +147,7 @@ export function PilotsScreen() {
       <Banner tone="status">
         <b>Sekcja administratora.</b> Zakładanie kont, reset hasła i deaktywacja są dostępne
         wyłącznie dla roli <code>administrator</code>. Szef wyszkolenia widzi tę listę, ale bez
-        przycisków — potrzebuje jej do statystyk i flag, nie do zarządzania dostępem. Przyciski
+        przycisków - potrzebuje jej do statystyk i flag, nie do zarządzania dostępem. Przyciski
         zostają <b>widoczne i zablokowane z powodem</b>, bo ukrycie zmuszałoby do zgadywania,
         czy funkcji nie ma w produkcie, czy nie ma jej Twoje konto.
       </Banner>
@@ -169,7 +169,7 @@ export function PilotsScreen() {
         <SearchInput
           value={searchDraft}
           ariaLabel="Szukaj konta"
-          placeholder={'Szukaj: nazwisko, kod pilota, e-mail — Enter filtruje'}
+          placeholder={'Szukaj: nazwisko, kod pilota, e-mail - Enter filtruje'}
           onChange={setSearchDraft}
           onSubmit={() =>
             apply({ ...filter, search: searchDraft.trim() === '' ? null : searchDraft.trim() })
@@ -193,7 +193,7 @@ export function PilotsScreen() {
 
       {pilots.isPending ? null : pilots.isError ? (
         <Banner tone="danger" live>
-          <b>Nie udało się pobrać listy kont.</b> Panel działa wyłącznie online — to jedyne
+          <b>Nie udało się pobrać listy kont.</b> Panel działa wyłącznie online - to jedyne
           miejsce w systemie, w którym brak sieci wolno pokazać jako blokadę.{' '}
           <Button variant="ghost" size="sm" onClick={() => void pilots.refetch()}>
             Ponów
@@ -205,7 +205,7 @@ export function PilotsScreen() {
         </div>
       ) : (
         <DataTable
-          caption="Konta pilotów — nieaktywne na końcu, czasy UTC"
+          caption="Konta pilotów - nieaktywne na końcu, czasy UTC"
           columns={columns(filter, apply, capabilities, selfId, daysWindow)}
           rows={rows}
           rowKey={(row) => row.id}
@@ -218,7 +218,7 @@ export function PilotsScreen() {
 
       <Banner tone="warn">
         <b>Kolumny „Ostatnie logowanie" tu nie ma i to nie jest przeoczenie.</b> Tabela{' '}
-        <code>pilots</code> nie ma takiej kolumny, a serwer jej nie zapisuje — wyliczenie jej
+        <code>pilots</code> nie ma takiej kolumny, a serwer jej nie zapisuje - wyliczenie jej
         z <code>refresh_tokens</code> dałoby „ostatnią rotację sesji telefonu", czyli inną
         wielkość pod tą samą etykietą. Kolumna <b>Zmieniono</b> mówi, kiedy ruszono wiersz
         konta; <b>co</b> wtedy zmieniono, wie dziennik audytu.
@@ -228,13 +228,13 @@ export function PilotsScreen() {
         <Card title="Co edycja konta zmienia, a czego nie">
           <span className="hint">
             <b>Deaktywacja ≠ usunięcie.</b> Konto nieaktywne nie zaloguje się w aplikacji ani
-            w panelu, a jego <b>aktywne sesje są zrywane natychmiast</b> — ale{' '}
+            w panelu, a jego <b>aktywne sesje są zrywane natychmiast</b> - ale{' '}
             <b>jego zdarzenia zostają w rejestrze</b> (append-only) i dalej liczą się
             w statystykach oraz w wyeksportowanych kartach dnia.
           </span>
           <span className="hint">
             <b>Kod pilota jest etykietą, nie kluczem.</b> Zdarzenia wiążą się z{' '}
-            <code>id</code> konta, więc zmiana kodu nie przepisuje historii — ale w kartach
+            <code>id</code> konta, więc zmiana kodu nie przepisuje historii - ale w kartach
             wyeksportowanych wcześniej zostaje stary kod. Zmieniaj świadomie.
           </span>
           <span className="hint">
@@ -243,7 +243,7 @@ export function PilotsScreen() {
           </span>
           <span className="hint">
             <b>Odebranie dostępu działa natychmiast.</b> Panel czyta rolę i status konta przy
-            KAŻDYM żądaniu, a nie z 8-godzinnego tokenu sesji — inaczej przycisk „Deaktywuj"
+            KAŻDYM żądaniu, a nie z 8-godzinnego tokenu sesji - inaczej przycisk „Deaktywuj"
             obiecywałby coś, co dzieje się dopiero pod wieczór.
           </span>
         </Card>
@@ -267,13 +267,13 @@ export function PilotsScreen() {
             </span>
           </Card>
 
-          <Card title="Hasło startowe — jak to działa">
+          <Card title="Hasło startowe - jak to działa">
             <KeyValue label="Kto generuje" value="serwer" unit="panel nigdy go nie wysyła" />
             <KeyValue label="Ile razy widoczne" value="raz" tone="amber" unit="w szufladzie" />
             <KeyValue label="W bazie" value="hash" unit="scrypt, nigdy wartość" />
             <KeyValue label="W audycie" value="sam fakt" unit="kto, komu, kiedy" />
             <span className="hint">
-              Nie ma trasy „pokaż hasło ponownie" — jedynym wyjściem jest kolejny reset, który
+              Nie ma trasy „pokaż hasło ponownie" - jedynym wyjściem jest kolejny reset, który
               generuje nowe hasło i zrywa wszystkie sesje pilota.
             </span>
           </Card>
@@ -285,7 +285,7 @@ export function PilotsScreen() {
           /**
            * KLUCZ = identyfikator konta z adresu. Bez niego przejście `/piloci/A` →
            * `/piloci/B` zostawiało zamontowaną szufladę A: React widział ten sam
-           * komponent w tym samym miejscu drzewa, więc szkic formularza i — co gorsza —
+           * komponent w tym samym miejscu drzewa, więc szkic formularza i - co gorsza -
            * WYGENEROWANE HASŁO przeżywały zmianę konta i wyświetlały się pod cudzym
            * nagłówkiem. Klucz wymusza montaż od nowa, czyli stan zawsze należący
            * do konta, które jest w adresie.
@@ -306,7 +306,7 @@ export function PilotsScreen() {
 }
 
 /**
- * Kolumny listy kont — z mockupu `A06`, z jedną świadomą zamianą: „Ostatnie logowanie"
+ * Kolumny listy kont - z mockupu `A06`, z jedną świadomą zamianą: „Ostatnie logowanie"
  * na „Zmieniono" (uzasadnienie w nagłówku pliku i w banerze pod tabelą).
  *
  * Sortowanie dostaje WYŁĄCZNIE kolumna nazwiska, bo tylko po niej serwer umie sortować.

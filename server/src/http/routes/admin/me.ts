@@ -1,10 +1,10 @@
 /**
- * UZ Aero (serwer) — `GET /admin/api/me`: kto jest zalogowany w panelu.
+ * UZ Aero (serwer) - `GET /admin/api/me`: kto jest zalogowany w panelu.
  *
  * Istnieje wyłącznie dlatego, że ciasteczko sesji jest `HttpOnly`: po odświeżeniu
  * karty panel nie ma jak odczytać własnej tożsamości i musi o nią zapytać.
  *
- * Zdolność `panel.access` — czyli ta sama brama, co przy wydaniu sesji. Konto, które
+ * Zdolność `panel.access` - czyli ta sama brama, co przy wydaniu sesji. Konto, które
  * straciło rolę, dostanie tu 403 z podanym powodem i panel pokaże ekran „brak
  * uprawnień" zamiast pustego shellu.
  */

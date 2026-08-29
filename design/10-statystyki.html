@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 10 Sesja</title>
+<title>UZ Aero - 10 Sesja</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -60,17 +60,17 @@
     display:flex; align-items:center; justify-content:space-between;
     padding:8px 14px; border-bottom:1px solid var(--border); flex-shrink:0;
   }
-  /* `min-width:0` — bez tego długi podtytuł rozpycha kolumnę i wchodzi pod „Dzień" */
+  /* `min-width:0` - bez tego długi podtytuł rozpycha kolumnę i wchodzi pod „Dzień" */
   .app-header-center { display:flex; flex-direction:column; align-items:center; gap:1px; flex:1; min-width:0; }
   .app-header-right { display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
-  /* Powrót do „Mój dzień" — ten ekran jest odnogą osi pilota, nie etapem flow */
+  /* Powrót do „Mój dzień" - ten ekran jest odnogą osi pilota, nie etapem flow */
   .back-btn {
     display:inline-flex; align-items:center; gap:5px; min-height:34px;
     font-family:var(--font-mono); font-size:11px; color:var(--text-muted);
     text-decoration:none; padding:5px 8px; border-radius:6px; border:1px solid var(--border);
   }
   .back-btn:hover { color:var(--text-secondary); border-color:var(--border-strong); }
-  /* Okno korekty po ZDANIU samolotu (jedno na sesję) — 24 h samodzielnie, potem administrator */
+  /* Okno korekty po ZDANIU samolotu (jedno na sesję) - 24 h samodzielnie, potem administrator */
   .correction-window {
     display:flex; align-items:flex-start; gap:9px;
     background:var(--blue-muted); border:1px solid rgba(52,152,219,0.28);
@@ -93,7 +93,7 @@
   .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
   .scroll::-webkit-scrollbar { display:none; }
   /* Karty mają `overflow:hidden` (zaokrąglone rogi), co w kolumnie flex zeruje ich
-     minimalną wysokość — bez tego sekcje zapadają się do samych nagłówków. */
+     minimalną wysokość - bez tego sekcje zapadają się do samych nagłówków. */
   .scroll > * { flex-shrink:0; }
 
   /* Section card */
@@ -119,7 +119,7 @@
   /* ===== ŚLAD SESJI =====
      Ślad rysuje CAŁY BIEG SILNIKA (issue #38 pkt 2): kołowanie jaśniejszą linią,
      loty pełną, a każdy start i każde lądowanie ma na trasie swój znacznik.
-     Do issue #38 mapy tu nie było w ogóle — ślad mieszkał piętro niżej, na
+     Do issue #38 mapy tu nie było w ogóle - ślad mieszkał piętro niżej, na
      szczegółach lotu, i pilot oglądał go dopiero po dwóch wejściach. */
   .track-thumb {
     display:block; text-decoration:none; position:relative;
@@ -134,7 +134,7 @@
     color:var(--green); background:rgba(13,13,13,0.72);
     border:1px solid var(--green-border); border-radius:999px; padding:4px 9px;
   }
-  /* Legenda zastępuje podpisy przy znacznikach — cztery etykiety na jednym placu
+  /* Legenda zastępuje podpisy przy znacznikach - cztery etykiety na jednym placu
      zlewały się w plamę, a przy dziesięciu wyniesieniach dnia skokowego byłoby ich
      dwadzieścia. Tłumaczy KSZTAŁT znaku raz, a nie przy każdym wystąpieniu. */
   .track-legend {
@@ -161,7 +161,7 @@
   /* WIERSZ JEST NISKI (28 px zamiast 38) i to jest możliwe dopiero od issue #40:
      oś nie ma już ołówków, czyli nie ma celów dotknięcia i nie musi trzymać rytmu
      44 px. Numer lotu przeniesiony na prawą stronę zdejmuje drugą linię z połowy
-     wierszy — cała sesja skokowa mieści się na ekranie zamiast wymuszać przewijanie. */
+     wierszy - cała sesja skokowa mieści się na ekranie zamiast wymuszać przewijanie. */
   .axis-row {
     display:grid; grid-template-columns:52px 14px 1fr auto;
     align-items:center; gap:8px; padding:0 12px 0 10px; min-height:28px;
@@ -184,12 +184,12 @@
   .axis-dot.green { background:var(--green); }
   .axis-dot.red { background:var(--red); }
   .axis-dot.blue { background:var(--blue); }
-  /* Tankowanie i zmiana załogi — zdarzenia POZA pracą silnika (issue #44). Amber jest
+  /* Tankowanie i zmiana załogi - zdarzenia POZA pracą silnika (issue #44). Amber jest
      w systemie kolorem paliwa, więc niesie tu znaczenie, a nie wyróżnienie. Do issue #44
      tych wierszy na osi NIE BYŁO: rachunek niżej mówił „dolane · 2 tankowania", a oś
-     milczała o tym, kiedy się wydarzyły — mimo że arkusz 10H pozwala je dopisać. */
+     milczała o tym, kiedy się wydarzyły - mimo że arkusz 10H pozwala je dopisać. */
   .axis-dot.amber { background:var(--amber); }
-  /* Otoczka 2 px w kolorze karty — ta sama, którą ma kropka wypełniona: kreska osi
+  /* Otoczka 2 px w kolorze karty - ta sama, którą ma kropka wypełniona: kreska osi
      ma urywać się PRZED obrysem, a nie wchodzić do środka i wychodzić drugą stroną
      (zgłoszenie z urządzenia, 2026-08-14). Dotyczy PRZEJĘCIA i ZDANIA, jedynych
      pustych punktów osi. */
@@ -197,15 +197,15 @@
   .axis-label { display:flex; flex-direction:column; gap:1px; min-width:0; }
   .axis-name { font-family:var(--font-mono); font-size:10px; letter-spacing:1.4px; text-transform:uppercase; color:var(--text-primary); display:flex; align-items:center; gap:6px; }
   .axis-name.muted { color:var(--text-secondary); }
-  /* Znacznik „poprawione" (issue #43) — jedyny ślad edycji, który zostaje w trybie
+  /* Znacznik „poprawione" (issue #43) - jedyny ślad edycji, który zostaje w trybie
      ODCZYTU. To fakt o danych, nie akcja: liczba obok nie jest tą, którą zapisał
      przyrząd, i pilot ma prawo to widzieć bez wchodzenia w tryb edycji.
 
      SAMA PLAKIETKA JEST KLIKALNA (uwaga z urządzenia) i prowadzi do historii zmian
-     (10I) — jedyny cel dotknięcia osi w trybie odczytu. Nie łamie to reguły „bez
+     (10I) - jedyny cel dotknięcia osi w trybie odczytu. Nie łamie to reguły „bez
      ołówków" (issue #40 pkt 1): ołówek obiecuje zapis, a historia jest wyłącznie do
      czytania. Znacznik bez wejścia stawiał pytanie, na które ekran nie odpowiadał.
-     Napisu nie powiększamy — obszar reakcji rozciąga `hitSlop`, wiersz zostaje 28 px. */
+     Napisu nie powiększamy - obszar reakcji rozciąga `hitSlop`, wiersz zostaje 28 px. */
   .tag-corrected {
     font-family:var(--font-mono); font-size:7.5px; letter-spacing:1px; text-transform:uppercase;
     color:var(--amber); background:var(--amber-muted); border:1px solid var(--amber-border);
@@ -214,29 +214,29 @@
   .axis-sub { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
   /* Prawa kolumna niesie odtąd WYŁĄCZNIE czas trwania (issue #40 pkt 1 i 2).
      Zniknęły z niej dwie rzeczy:
-      • OŁÓWEK przy każdym wierszu — dwanaście identycznych celów w jednej kolumnie
+      • OŁÓWEK przy każdym wierszu - dwanaście identycznych celów w jednej kolumnie
         czytało się jak szum, a korekta ma jedne drzwi: „EDYTUJ DANE" na dole ekranu
         (08). Jedno wejście zamiast dwunastu, i to takie, które prowadzi do listy,
         w której widać kontekst poprawianego zdarzenia;
-      • plakietka RĘCZNIE — sposób POWSTANIA zapisu nie jest tu pytaniem pilota
+      • plakietka RĘCZNIE - sposób POWSTANIA zapisu nie jest tu pytaniem pilota
         (ta sama reguła, którą przy issue #38 wygasiła plakietkę „AUTO"). Metoda
         zostaje w rejestrze i w panelu administratora, gdzie faktycznie coś zmienia.
      UŚCIŚLENIE 2026-08-16 (przebudowa 15): reguła dotyczy WIERSZY OSI i zostaje
      w mocy. Sesja wpisana ręcznie W CAŁOŚCI (ekran 15) dostaje jedną neutralną
      plakietkę „RĘCZNIE" w NAGŁÓWKU ekranu (obok „Podgląd"/„EDYCJA") i na kafelku
-     (01/12) — to fakt o pochodzeniu całej sesji, nie metoda pojedynczego zdarzenia;
+     (01/12) - to fakt o pochodzeniu całej sesji, nie metoda pojedynczego zdarzenia;
      przy wpisie ręcznym świeciłaby przy każdym wierszu naraz. */
   /* Prawa krawędź niesie DOKŁADNIE JEDNĄ rzecz na wiersz: numer lotu przy starcie albo
-     czas trwania przy lądowaniu i kołowaniu. Dlatego nic nie trzeba rezerwować —
+     czas trwania przy lądowaniu i kołowaniu. Dlatego nic nie trzeba rezerwować -
      wszystko dosuwa się do prawej i stoi w jednej linii pionowej przez całą oś. */
   .axis-right { display:flex; align-items:center; justify-content:flex-end; gap:8px; }
   /* Numer lotu PO PRAWEJ i tylko przy STARCIE: jest przypisem do zdarzenia („który lot
      się tu zaczyna"), a nie jego opisem. Pod nazwą kosztował drugą linię w połowie
      wierszy osi; przy lądowaniu walczyłby o miejsce z czasem lotu, po który pilot
-     w tej kolumnie sięga — a para start → lądowanie i tak czyta się w pionie. */
+     w tej kolumnie sięga - a para start → lądowanie i tak czyta się w pionie. */
   .axis-flight { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
   .axis-dur { font-family:var(--font-mono); font-size:11px; color:var(--green); }
-  /* Stopka osi — JEDYNE miejsce, w którym pada czas blokowy (issue #38 pkt 9).
+  /* Stopka osi - JEDYNE miejsce, w którym pada czas blokowy (issue #38 pkt 9).
      Wcześniej stał w bohaterze ekranu, w obu kartach załogi, w podpisie średniego
      zużycia i w wierszu Δ motogodzin: pięć razy ta sama liczba. */
   .axis-foot {
@@ -248,9 +248,9 @@
   .axis-foot-val.green { color:var(--green); }
   .axis-foot-key { font-family:var(--font-mono); font-size:7px; letter-spacing:1.2px; text-transform:uppercase; color:var(--text-muted); }
 
-  /* ===== RACHUNEK (paliwo i motogodziny — JEDNA forma) =====
+  /* ===== RACHUNEK (paliwo i motogodziny - JEDNA forma) =====
      Issue #38 pkt 5: to są te same pytania („ile ubyło i czy tyle powinno"), więc
-     dostają ten sam układ — przesłanki, kreska, wynik, werdykt. Paliwo miało wcześniej
+     dostają ten sam układ - przesłanki, kreska, wynik, werdykt. Paliwo miało wcześniej
      siatkę 2×2 wielkich kafli, motogodziny trzy wiersze tekstu; nic tego nie
      uzasadniało poza kolejnością powstawania. */
   .calc-row {
@@ -269,13 +269,13 @@
   .calc-total-val.amber { color:var(--amber); }
   .calc-total-val.green { color:var(--green); }
   /* Werdykt: liczba pilota kontra to, czego model się spodziewał po TEJ sesji.
-     Pasmo pochodzi z rozrzutu obserwacji, nie z przedziału ufności — patrz
+     Pasmo pochodzi z rozrzutu obserwacji, nie z przedziału ufności - patrz
      `packages/domain/src/consumption/expectation.ts`.
 
-     ISSUE #40 pkt 7 i 8 — NA KARCIE ZOSTAJE SAMA PLAKIETKA. Pasmo („23 – 35 L")
+     ISSUE #40 pkt 7 i 8 - NA KARCIE ZOSTAJE SAMA PLAKIETKA. Pasmo („23 – 35 L")
      i rozpisane działanie stały pod każdym rachunkiem na stałe: pilot, który chce
      wiedzieć „czy dobrze", dostaje odpowiedź jednym słowem, a pilot, który pyta
-     „dlaczego tak", otwiera arkusz (`10c`). Cały wiersz jest celem dotknięcia —
+     „dlaczego tak", otwiera arkusz (`10c`). Cały wiersz jest celem dotknięcia -
      plakietka ma 9 px czcionki i sama w sobie jest za małym celem. */
   .verdict {
     display:flex; align-items:center; justify-content:space-between; gap:10px;
@@ -289,7 +289,7 @@
     border-radius:999px; padding:4px 10px; white-space:nowrap;
   }
   .verdict-tag.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
-  /* Znak „są szczegóły" — bez niego plakietka wygląda na sam napis i nikt jej nie
+  /* Znak „są szczegóły" - bez niego plakietka wygląda na sam napis i nikt jej nie
      dotknie. Ikona, nie napis „szczegóły": słowo w tym wierszu przekrzykiwałoby
      werdykt, który jest tu jedyną treścią. */
   .verdict-more { color:var(--text-muted); display:inline-flex; align-items:center; }
@@ -309,14 +309,14 @@
   /* ===== NOTATKI (issue #40 pkt 5) =====
      Wolny tekst, który pilot zapisał przy zadaniu (02e) albo przy wpisie ręcznym
      (08/15). Do tej pory nie miał na tym ekranie ANI JEDNEGO miejsca: notatkę
-     widział administrator w panelu, a jej autor już nie — więc po zdaniu samolotu
+     widział administrator w panelu, a jej autor już nie - więc po zdaniu samolotu
      nie dało się sprawdzić, co się właściwie zapisało.
-     Kartę rysujemy TYLKO wtedy, gdy jest treść: „Notatki —" byłoby wierszem
+     Kartę rysujemy TYLKO wtedy, gdy jest treść: „Notatki -" byłoby wierszem
      o niczym, a nie brakiem informacji.
      Body font, nie mono: to zdanie napisane przez człowieka, a nie odczyt. */
   .note-block { padding:10px 12px; display:flex; flex-direction:column; gap:4px; }
   .note-block + .note-block { border-top:1px solid var(--border); }
-  /* Górny wiersz notatki — stempel (tylko przy uwagach wpisów ręcznych) i „popr.".
+  /* Górny wiersz notatki - stempel (tylko przy uwagach wpisów ręcznych) i „popr.".
      Nie istnieje, gdy nie ma czego nieść. */
   .note-head { display:flex; align-items:center; gap:6px; }
   .note-when {
@@ -335,7 +335,7 @@
     border:1px solid var(--border-strong); text-decoration:none; cursor:pointer;
   }
   /* `.btn-primary` USUNIĘTY razem z zielonym „WRÓĆ DO DNIA" (issue #42): ten ekran nie
-     ma akcji głównej — sesję potwierdziło zdanie samolotu, tu się ją ogląda i poprawia.
+     ma akcji głównej - sesję potwierdziło zdanie samolotu, tu się ją ogląda i poprawia.
      Styl zostawiony „na zapas" zaprasza do odtworzenia przycisku. */
 
   /* ===== VARIANTS PANEL ===== */
@@ -355,7 +355,7 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 10</span>
+  <span class="film-strip">UZ AERO - 10</span>
   <span class="slug">sesja · jeden bieg silnika</span>
   <span class="canvas-meta"><span class="pulse"></span>Ekran 10</span>
 </header>
@@ -388,7 +388,7 @@
       </div>
       <!-- BEZ PLAKIETKI Z LICZBĄ LOTÓW (issue #40): stopka osi mówi „STARTY 2" trzy
            centymetry niżej, a plakietka świecąca przy każdej normalnej sesji uczy oko
-           pomijać róg nagłówka — ta sama reguła, którą issue #12 wygasił zielony
+           pomijać róg nagłówka - ta sama reguła, którą issue #12 wygasił zielony
            SyncChip. Zostaje sam stan odchylony: „bez lotu" na 10A i „Podgląd" na 10B. -->
       <div class="app-header-right"></div>
     </div>
@@ -401,7 +401,7 @@
         <svg class="cw-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
         <!-- Baner mówi, GDZIE się poprawia (issue #40 pkt 1): ołówków przy wierszach
              już nie ma, więc zdanie o nich prowadziłoby donikąd. -->
-        <span class="cw-text">Dane możesz poprawiać teraz i jeszcze przez <b>24 h po zdaniu samolotu</b> — do 07 SIE 11:20 UTC. Później korektę nanosi administrator.</span>
+        <span class="cw-text">Dane możesz poprawiać teraz i jeszcze przez <b>24 h po zdaniu samolotu</b> - do 07 SIE 11:20 UTC. Później korektę nanosi administrator.</span>
       </div>
 
       <!-- ══ PRZEBIEG SESJI: ŚLAD + OŚ CZASU ════════════════════════════════
@@ -419,7 +419,7 @@
           <svg viewBox="0 0 365 168" preserveAspectRatio="xMidYMid meet">
             <rect x="0" y="0" width="365" height="168" fill="#0F1216"/>
 
-            <!-- KOŁOWANIE — jaśniejsza, przerywana linia. Ślad obejmuje CAŁY bieg
+            <!-- KOŁOWANIE - jaśniejsza, przerywana linia. Ślad obejmuje CAŁY bieg
                  silnika (decyzja przy issue #38), więc oś i rysunek zaczynają się
                  w tym samym punkcie: uruchomieniu, nie pierwszym starcie. -->
             <path d="M78 138 L104 132" fill="none" stroke="var(--text-muted)" stroke-width="1.6"
@@ -429,7 +429,7 @@
             <path d="M112 126 L86 134" fill="none" stroke="var(--text-muted)" stroke-width="1.6"
                   stroke-dasharray="3 3" stroke-linecap="round" opacity="0.7"/>
 
-            <!-- LOT 1 — pełna linia -->
+            <!-- LOT 1 - pełna linia -->
             <path d="M104 132
                      C140 122, 168 108, 188 86
                      C208 62, 200 36, 172 32
@@ -439,7 +439,7 @@
                   fill="none" stroke="var(--green)" stroke-width="2.5"
                   stroke-linecap="round" stroke-linejoin="round" opacity="0.92"/>
 
-            <!-- LOT 2 — ten sam rejon, inna pętla; nieco jaśniejszy, żeby dało się
+            <!-- LOT 2 - ten sam rejon, inna pętla; nieco jaśniejszy, żeby dało się
                  odróżnić dwa wyniesienia bez legendy kolorów. -->
             <path d="M150 130
                      C186 120, 226 104, 248 80
@@ -450,11 +450,11 @@
                   fill="none" stroke="var(--green)" stroke-width="2.5"
                   stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/>
 
-            <!-- ZNACZNIKI: każdy start i każde lądowanie (issue #38 pkt 2 — „nawet
+            <!-- ZNACZNIKI: każdy start i każde lądowanie (issue #38 pkt 2 - „nawet
                  jak w jednym locie było kilka lądowań, zaznaczmy je na wykresie"). -->
             <!-- BEZ PODPISÓW przy znacznikach: przy skokach wszystkie starty i
                  lądowania wypadają na tym samym placu, więc cztery etykiety zlewają się
-                 w plamę — a godziny stoją wiersz niżej, na osi. Rysunek mówi „ile ich
+                 w plamę - a godziny stoją wiersz niżej, na osi. Rysunek mówi „ile ich
                  było i gdzie", oś mówi „o której". -->
             <circle cx="104" cy="132" r="5" fill="var(--green)"/>
             <circle cx="104" cy="132" r="9" fill="none" stroke="var(--green)" stroke-width="1" opacity="0.45"/>
@@ -484,12 +484,12 @@
           </span>
         </a>
 
-        <!-- OŚ SESJI — issue #38 pkt 7: uruchomienie, starty, lądowania, wyłączenie
+        <!-- OŚ SESJI - issue #38 pkt 7: uruchomienie, starty, lądowania, wyłączenie
              i liczba startów. Zrzuty wchodzą tu jako zdarzenia w czasie, bo nimi są;
              po skasowaniu ekranu 16 nie mają innego miejsca, w którym byłyby PRZY
              swoim locie, a nie w sumie sesji. -->
         <div class="axis">
-          <!-- Przejęcie i zdanie stoją na osi jako końce SZARE, bo nie są pracą silnika —
+          <!-- Przejęcie i zdanie stoją na osi jako końce SZARE, bo nie są pracą silnika -
                ale muszą tu być: to przy nich pilot spisuje paliwo i licznik, więc wiersze
                rachunków niżej („odczyt przy przejęciu", „licznik przy zdaniu") mają na
                osi swój punkt. Bez nich rachunek odwoływałby się do chwil, których ekran
@@ -502,7 +502,7 @@
           </div>
 
           <!-- TANKOWANIE NA OSI (issue #44). Do tej pory rachunek paliwa niżej mówił
-               „dolane · 2 tankowania", a oś nie pokazywała ANI JEDNEGO — pilot widział
+               „dolane · 2 tankowania", a oś nie pokazywała ANI JEDNEGO - pilot widział
                liczbę, której nie umiał umiejscowić w czasie. Wiersz niesie dolewkę
                i stan po niej, czyli dokładnie to, co zapisał ekran 06. -->
           <div class="axis-row">
@@ -522,7 +522,7 @@
           <!-- KOŁOWANIE (issue #40 pkt 4). Zdarzenie `taxi` zapada raz na lot i było
                na tej osi jedyną dziurą: log kokpitu pokazywał je od zawsze, a
                rozliczenie tej samej sesji już nie.
-               Wiersz niesie SAMĄ GODZINĘ — bez czasu trwania. „Ile trwało kołowanie"
+               Wiersz niesie SAMĄ GODZINĘ - bez czasu trwania. „Ile trwało kołowanie"
                jest w rozliczeniu ciekawostką (do bloku i tak wchodzi cały bieg
                silnika); zegar przygotowania ma sens w kokpicie, nie tutaj. -->
           <div class="axis-row">
@@ -549,12 +549,12 @@
           </div>
 
           <!-- Wiersz PO KOREKCIE: plakietka „popr." przy nazwie, podpis mówi, co było
-               i kto zmienił. Prawa kolumna zostaje przy czasie trwania — plakietka nie
+               i kto zmienił. Prawa kolumna zostaje przy czasie trwania - plakietka nie
                ma prawa jej zabrać (issue #40 pkt 2).
 
                PLAKIETKA JEST KLIKALNA I TU: otwiera pełne „było → jest" (10I). To
                jedyny cel dotknięcia całej osi w trybie odczytu i jedyny wyjątek od
-               reguły „oś jest czysto opisowa" — bo historia niczego nie zapisuje,
+               reguły „oś jest czysto opisowa" - bo historia niczego nie zapisuje,
                a bez tego wejścia znacznik stawia pytanie, na które nie ma odpowiedzi.
                Wiersz zostaje przy 28 px: obszar reakcji rozciąga `hitSlop`, nie rytm. -->
           <div class="axis-row">
@@ -630,7 +630,7 @@
           </div>
           <!-- „Czas lotu", nie „W powietrzu" (issue #40 pkt 3): dwa słowa łamały się
                na telefonie na dwie linie i rozpychały stopkę. Nazwa jest przy okazji
-               ta sama, co w kokpicie (Flight Time) — jedna wielkość, jedno słowo. -->
+               ta sama, co w kokpicie (Flight Time) - jedna wielkość, jedno słowo. -->
           <div class="axis-foot-item">
             <span class="axis-foot-val green">01:16</span>
             <span class="axis-foot-key">Czas lotu</span>
@@ -646,7 +646,7 @@
         </div>
       </div>
 
-      <!-- ══ PALIWO — RACHUNEK ═══════════════════════════════════════════════ -->
+      <!-- ══ PALIWO - RACHUNEK ═══════════════════════════════════════════════ -->
       <div class="section-card">
         <div class="section-card-head amber">Paliwo</div>
         <div class="calc-row">
@@ -669,7 +669,7 @@
              0:27 kołowania po 8 L/h i 1:16 lotu po 20 L/h, a nie „L/h sesji kontra
              pasmo blokowe". Sesja z długim postojem na ziemi wychodziła wcześniej
              „poniżej normy" bez żadnego powodu poza proporcją faz.
-             Pasmo, stawki i rozpisane działanie przeniosły się pod tapnięcie (10c) —
+             Pasmo, stawki i rozpisane działanie przeniosły się pod tapnięcie (10c) -
              issue #40 pkt 7: karta odpowiada „czy dobrze", arkusz „dlaczego tak". -->
         <a href="10c-norma-detale.html" class="verdict" title="Szczegóły normy paliwa">
           <span class="verdict-tag">✓ W NORMIE</span>
@@ -679,7 +679,7 @@
         </a>
       </div>
 
-      <!-- ══ MOTOGODZINY — TEN SAM RACHUNEK ══════════════════════════════════
+      <!-- ══ MOTOGODZINY - TEN SAM RACHUNEK ══════════════════════════════════
            Tytuł bez „licznik w formacie hh:mm · łańcuch samolotu" (issue #38 pkt 3):
            format widać po samych liczbach, a łańcuch jest sprawą serwera, nie pilota. -->
       <div class="section-card">
@@ -699,13 +699,13 @@
         <!-- Issue #38 pkt 4: licznik SPISUJE się z tarczy i ma prawo różnić się od
              czasu blokowego. Ekran do tej pory pisał „Δ sesji (= czas blokowy 03:16)"
              i tym samym nazywał poprawny odczyt rozjazdem. Obrotomierz na wolnych
-             obrotach przyrasta wolniej niż zegar — model wyznacza oba przeliczniki
+             obrotach przyrasta wolniej niż zegar - model wyznacza oba przeliczniki
              z historii maszyny (`consumption/mhModel.ts`). -->
-        <!-- Werdykt amber na tym samym ekranie, co zielony przy paliwie — celowo:
+        <!-- Werdykt amber na tym samym ekranie, co zielony przy paliwie - celowo:
              obie wielkości mają WŁASNE pasmo i nic ich nie wiąże ze sobą. Ton ostrzega,
              ale niczego nie blokuje: licznik jest przyrządem fizycznym i to on ma rację
              (`CLAUDE.md`: liczniki fizyczne > dane z serwera).
-             Ta sama forma co przy paliwie (issue #40 pkt 8) — plakietka na karcie,
+             Ta sama forma co przy paliwie (issue #40 pkt 8) - plakietka na karcie,
              liczby w arkuszu. Przy odchyleniu arkusz jest tym ważniejszy: pilot chce
              wtedy wiedzieć, o ile i wobec czego. -->
         <a href="10c-norma-detale.html" class="verdict" title="Szczegóły normy motogodzin">
@@ -716,7 +716,7 @@
         </a>
       </div>
 
-      <!-- ══ ZRZUTY — STRONA PRZYCHODOWA SESJI ═══════════════════════════════
+      <!-- ══ ZRZUTY - STRONA PRZYCHODOWA SESJI ═══════════════════════════════
            Pojedyncze wyniesienia stoją na osi czasu wyżej; tutaj zostaje suma,
            bo to ona idzie do rozliczenia z klientem. -->
       <div class="section-card">
@@ -741,7 +741,7 @@
 
       <!-- ══ ZAŁOGA ══════════════════════════════════════════════════════════
            Jeden wiersz zamiast dwóch kafli (issue #38 pkt 9): obie karty niosły ten
-           sam czas blokowy, a Dual dodatkowo „0 / 0" startów — liczbę, która nic nie
+           sam czas blokowy, a Dual dodatkowo „0 / 0" startów - liczbę, która nic nie
            znaczy poza tym, że rejestr ma jednego autora. -->
       <div class="section-card">
         <div class="section-card-head">Załoga</div>
@@ -753,7 +753,7 @@
           <span class="info-key">Dual</span>
           <span>
             <span class="info-val">AKO · Anna Kowalska</span>
-            <div class="info-note">cała sesja — bez zmiany załogi</div>
+            <div class="info-note">cała sesja - bez zmiany załogi</div>
           </span>
         </div>
       </div>
@@ -761,24 +761,24 @@
       <!-- ══ NOTATKI (issue #40 pkt 5) ═══════════════════════════════════════
            Wszystko, co pilot NAPISAŁ o tej sesji: notatka z kroku „zadanie" (02e)
            i uwagi dopisane do wpisów ręcznych (08, 15). Karta stoi na końcu, bo jest
-           komentarzem do liczb wyżej, a nie jedną z nich — ale stoi, bo do issue #40
+           komentarzem do liczb wyżej, a nie jedną z nich - ale stoi, bo do issue #40
            tekst wpisany przez pilota nie wracał do niego NIGDZIE.
 
            Notatka SESJI idzie bez stempla (zgłoszenie z urządzenia, 2026-08-14):
-           jest dokładnie jedna, więc „Zadanie · 08:04" nie odróżniało jej od niczego —
+           jest dokładnie jedna, więc „Zadanie · 08:04" nie odróżniało jej od niczego -
            opisywało godzinę potwierdzenia zadania, a po pierwszej poprawce treści
            wprost kłamało. Podpis zostaje przy uwagach wpisów ręcznych, bo tych bywa
            wiele i trzeba wiedzieć, do którego wpisu należą.
 
            Plakietka „popr." stoi tu tak samo jak przy wierszach osi: tekst poprawiony
-           nie jest tekstem wpisanym, a to fakt o danych, nie akcja — więc widać go
+           nie jest tekstem wpisanym, a to fakt o danych, nie akcja - więc widać go
            także w trybie ODCZYTU. Co dokładnie się zmieniło, mówi historia zmian (10I),
            dostępna z arkusza notatki w trybie edycji. -->
       <div class="section-card">
         <div class="section-card-head">Notatki</div>
         <div class="note-block">
           <span class="note-head"><a href="10i-historia-zmian.html" class="tag-corrected">popr.</a></span>
-          <span class="note-text">Drugi zbiornik nie trzyma wskazania — tankować z jednej strony.</span>
+          <span class="note-text">Drugi zbiornik nie trzyma wskazania - tankować z jednej strony.</span>
         </div>
         <div class="note-block">
           <span class="note-when">Wpis ręczny · 09:12</span>
@@ -788,16 +788,16 @@
 
       <!-- Action buttons.
            JEDYNE drzwi do korekty (issue #40 pkt 1). Od issue #43 nie prowadzą na osobny
-           ekran — przełączają TEN ekran w TRYB EDYCJI (10D). Lista ręczna (08) została
+           ekran - przełączają TEN ekran w TRYB EDYCJI (10D). Lista ręczna (08) została
            skasowana: była drugim widokiem tej samej sesji, z własną osią, własnym
            słownikiem i jedyną możliwą korektą (czas albo unieważnienie). Tryb edycji
-           poprawia wszystko tam, gdzie pilot to widzi — łącznie z odczytami paliwa i MH
+           poprawia wszystko tam, gdzie pilot to widzi - łącznie z odczytami paliwa i MH
            przy przejęciu i zdaniu oraz składem zrzutu.
 
            Zielone „WRÓĆ DO DNIA" USUNIĘTE (issue #42, 2026-08-13): powrót stoi już
            w nagłówku („‹ Dzień") i jest tam na każdym ekranie aplikacji. Drugi powrót
-           na dole — w dodatku w kolorze akcji głównej, na miejscu, w którym reszta
-           aplikacji stawia „dalej" — obiecywał czynność, której ten ekran nie ma:
+           na dole - w dodatku w kolorze akcji głównej, na miejscu, w którym reszta
+           aplikacji stawia „dalej" - obiecywał czynność, której ten ekran nie ma:
            sesję potwierdziło zdanie samolotu (09B), tutaj się ją ogląda.
            Zostaje jedyna akcja, która naprawdę coś robi. -->
 
@@ -813,41 +813,41 @@
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Warianty tego ekranu — kiedy który?</div>
+  <div class="vp-title">Warianty tego ekranu - kiedy który?</div>
   <a class="vp-item active" href="10-statystyki.html">
     <span class="vp-badge">10</span>
     <span class="vp-body">
-      <span class="vp-name">Sesja — z lotami</span>
-      <span class="vp-when">Detale JEDNEJ sesji, wywoływane kafelkiem sesji w logu dnia (01) albo takim samym kafelkiem w historii (12): ślad całego biegu silnika ze znacznikami startów i lądowań, oś czasu od uruchomienia do wyłączenia, rachunek paliwa i motogodzin na tle normy, rozliczenie zrzutów. Zdanie samolotu już POTWIERDZIŁO dane — tu się je tylko ogląda i koryguje. Opisuje oś SAMOLOTU: paliwo i MH nie sumują się po pilocie lecącym dwiema maszynami.</span>
+      <span class="vp-name">Sesja - z lotami</span>
+      <span class="vp-when">Detale JEDNEJ sesji, wywoływane kafelkiem sesji w logu dnia (01) albo takim samym kafelkiem w historii (12): ślad całego biegu silnika ze znacznikami startów i lądowań, oś czasu od uruchomienia do wyłączenia, rachunek paliwa i motogodzin na tle normy, rozliczenie zrzutów. Zdanie samolotu już POTWIERDZIŁO dane - tu się je tylko ogląda i koryguje. Opisuje oś SAMOLOTU: paliwo i MH nie sumują się po pilocie lecącym dwiema maszynami.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
   <a class="vp-item" href="10a-statystyki-zero.html">
     <span class="vp-badge amber">10A</span>
     <span class="vp-body">
-      <span class="vp-name">Sesja — bez lotów</span>
+      <span class="vp-name">Sesja - bez lotów</span>
       <span class="vp-when">Silnik pracował, ale maszyna nie wzbiła się w powietrze (próba, pogoda, usterka): oś ma dwa punkty zamiast ośmiu, śladu nie ma czego rysować, a werdykty paliwa i MH liczą się z samej pracy na ziemi. „Edytuj dane" wraca do zdania samolotu (09C).</span>
     </span>
   </a>
   <a class="vp-item" href="10b-rozliczenie-zamkniete.html">
     <span class="vp-badge amber">10B</span>
     <span class="vp-body">
-      <span class="vp-name">Sesja — po oknie (podgląd)</span>
-      <span class="vp-when">Minęły 24 h od zdania samolotu: te same liczby, ale bez ani jednego elementu zapisu — znika „Edytuj dane", a niebieski termin zastępuje amber baner z kłódką. Werdykty zostają klikalne: arkusz normy niczego nie zapisuje. Wejście: karta z grupy „Zamknięte" na 12.</span>
+      <span class="vp-name">Sesja - po oknie (podgląd)</span>
+      <span class="vp-when">Minęły 24 h od zdania samolotu: te same liczby, ale bez ani jednego elementu zapisu - znika „Edytuj dane", a niebieski termin zastępuje amber baner z kłódką. Werdykty zostają klikalne: arkusz normy niczego nie zapisuje. Wejście: karta z grupy „Zamknięte" na 12.</span>
     </span>
   </a>
   <a class="vp-item" href="10c-norma-detale.html">
     <span class="vp-badge">10C</span>
     <span class="vp-body">
-      <span class="vp-name">Sesja — arkusz normy</span>
-      <span class="vp-when">Po tapnięciu w plakietkę werdyktu przy paliwie albo motogodzinach: skąd wzięło się „w normie" — stawka w locie i na ziemi, średnia TEJ sesji, rozpisane działanie i pasmo, na koniec podstawa normy razem z jej wiekiem. Arkusz jest wyłącznie informacyjny; wychodzi się z niego „Zamknij".</span>
+      <span class="vp-name">Sesja - arkusz normy</span>
+      <span class="vp-when">Po tapnięciu w plakietkę werdyktu przy paliwie albo motogodzinach: skąd wzięło się „w normie" - stawka w locie i na ziemi, średnia TEJ sesji, rozpisane działanie i pasmo, na koniec podstawa normy razem z jej wiekiem. Arkusz jest wyłącznie informacyjny; wychodzi się z niego „Zamknij".</span>
     </span>
   </a>
   <a class="vp-item" href="10d-edycja.html">
     <span class="vp-badge amber">10D</span>
     <span class="vp-body">
-      <span class="vp-name">Sesja — tryb edycji</span>
-      <span class="vp-when">Po „EDYTUJ DANE" (issue #43): ten sam ekran, ale każdy wiersz osi staje się celem 44 px z ołówkiem, na górze wchodzą wykryte niespójności, a na końcu osi dochodzi wiersz „DODAJ WPIS". Arkusze korekty: 10E (czas zdarzenia), 10F (paliwo i MH przy przejęciu/zdaniu), 10G (zrzut), 10H (nowy wpis), 10I (historia zmian). Dostępny tylko w oknie 24 h — po nim ekran jest podglądem (10B).</span>
+      <span class="vp-name">Sesja - tryb edycji</span>
+      <span class="vp-when">Po „EDYTUJ DANE" (issue #43): ten sam ekran, ale każdy wiersz osi staje się celem 44 px z ołówkiem, na górze wchodzą wykryte niespójności, a na końcu osi dochodzi wiersz „DODAJ WPIS". Arkusze korekty: 10E (czas zdarzenia), 10F (paliwo i MH przy przejęciu/zdaniu), 10G (zrzut), 10H (nowy wpis), 10I (historia zmian). Dostępny tylko w oknie 24 h - po nim ekran jest podglądem (10B).</span>
     </span>
   </a>
 </aside>

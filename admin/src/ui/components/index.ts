@@ -1,10 +1,10 @@
 /**
- * UZ Aero — panel: barrel biblioteki komponentów.
+ * UZ Aero - panel: barrel biblioteki komponentów.
  *
  * Biblioteka rośnie PACZKAMI pod konkretne ekrany, nie „na zapas"
  * (`docs/architektura-panelu-frontend.md` §10 krok 4). To, czego tu nie ma
  * (`Skeleton`, `OptionGrid`…), dochodzi razem z pierwszym ekranem, który tego
- * wymaga — razem z arkuszem CSS o klasach 1:1 z szablonem.
+ * wymaga - razem z arkuszem CSS o klasach 1:1 z szablonem.
  *
  * `SZABLON.html` jest inwentarzem DOCELOWYM, a komponent bez ekranu to kod,
  * którego nikt nie sprawdził w użyciu.

@@ -1,9 +1,9 @@
 /**
- * UZ Aero — panel: filtry dziennika audytu ↔ query string.
+ * UZ Aero - panel: filtry dziennika audytu ↔ query string.
  *
  * Na tym ekranie URL nie jest wygodą, tylko WYMAGANIEM: ekran korekty obiecuje „ślad
  * w audycie → A09", a karta dnia odsyła do śladu konkretnej flagi. Obie drogi to linki,
- * które muszą prowadzić do dziennika ODFILTROWANEGO po obiekcie — więc obie strony
+ * które muszą prowadzić do dziennika ODFILTROWANEGO po obiekcie - więc obie strony
  * tłumaczenia (URL → filtr → parametry trasy) mają test.
  */
 
@@ -26,7 +26,7 @@ import {
 const params = (query: string): URLSearchParams => new URLSearchParams(query);
 
 describe('filtry dziennika audytu', () => {
-  it('pusty adres daje filtr domyślny — bez zawężenia, najnowsze na górze', () => {
+  it('pusty adres daje filtr domyślny - bez zawężenia, najnowsze na górze', () => {
     expect(filterFromParams(params(''))).toEqual(DEFAULT_AUDIT_FILTER);
     expect(isNarrowed(DEFAULT_AUDIT_FILTER)).toBe(false);
   });
@@ -48,14 +48,14 @@ describe('filtry dziennika audytu', () => {
     expect(isNarrowed(filter)).toBe(true);
   });
 
-  it('`akcje` przyjmuje TAKŻE pojedynczy kod — jeden parametr, dwa znaczenia', () => {
+  it('`akcje` przyjmuje TAKŻE pojedynczy kod - jeden parametr, dwa znaczenia', () => {
     expect(scopeFrom('konserwacja')).toEqual({ kind: 'group', id: 'konserwacja' });
     expect(scopeFrom('flag.resolve')).toEqual({ kind: 'action', code: 'flag.resolve' });
     expect(scopeFrom('nie.ma')).toBeNull();
     expect(scopeFrom(null)).toBeNull();
   });
 
-  it('wartości nieznane są POMIJANE — adres z literówką daje pełny dziennik', () => {
+  it('wartości nieznane są POMIJANE - adres z literówką daje pełny dziennik', () => {
     // Strona błędu za literówkę w linku byłaby najgorszą odpowiedzią narzędzia,
     // do którego przychodzi się z wklejonego adresu.
     const filter = filterFromParams(params('akcje=bzdura&sort=wstecz&od=wczoraj&kto=%20%20'));
@@ -94,10 +94,10 @@ describe('filtry dziennika audytu', () => {
     expect(targetHref('flag', '1044')).toBe('/audyt?typ=flag&obiekt=1044');
   });
 
-  it('`groupHref` buduje link „ślad akcji tej sekcji" — z parametrem, który filtr CZYTA', () => {
+  it('`groupHref` buduje link „ślad akcji tej sekcji" - z parametrem, który filtr CZYTA', () => {
     // Wada, która to wymusiła (`A11`): ekran składał adres u siebie i wychodziło mu
     // `?akcja=konserwacja` w liczbie pojedynczej. Nieznany parametr jest po cichu
-    // pomijany, więc link prowadził na PEŁNĄ listę wszystkich akcji panelu — czyli
+    // pomijany, więc link prowadził na PEŁNĄ listę wszystkich akcji panelu - czyli
     // dokładnie tam, skąd miał odesłać. Literówka w napisie nie jest błędem typów.
     expect(groupHref('konserwacja')).toBe('/audyt?akcje=konserwacja');
 
@@ -143,7 +143,7 @@ describe('filtry dziennika audytu', () => {
     });
   });
 
-  it('każdy pojedynczy wymiar zawęża — także sam typ obiektu', () => {
+  it('każdy pojedynczy wymiar zawęża - także sam typ obiektu', () => {
     const only = (patch: Partial<AuditFilter>): boolean =>
       isNarrowed({ ...DEFAULT_AUDIT_FILTER, ...patch });
 

@@ -3,20 +3,20 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — Panel admina · A10 Statystyki</title>
+<title>UZ Aero - Panel admina · A10 Statystyki</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   /* ══════════════════════════════════════════════════════════════════════
-     UZ AERO — PANEL ADMINA · SZABLON
+     UZ AERO - PANEL ADMINA · SZABLON
      Ten plik jest ŹRÓDŁEM dla wszystkich mockupów `design/admin/A*.html`.
      Kopiuj <head> w całości; nie zmieniaj tokenów ani ramy okna.
 
      Czym się różni od mockupów telefonu (`design/*.html`):
-     — ramka to OKNO PRZEGLĄDARKI 1440×900, nie telefon 393×852;
-     — skalowanie `--app-scale` działa identycznie jak `--phone-scale`;
-     — tokeny kolorów i czcionki są TE SAME, bo to ten sam produkt.
+     - ramka to OKNO PRZEGLĄDARKI 1440×900, nie telefon 393×852;
+     - skalowanie `--app-scale` działa identycznie jak `--phone-scale`;
+     - tokeny kolorów i czcionki są TE SAME, bo to ten sam produkt.
      ══════════════════════════════════════════════════════════════════════ */
   :root {
     --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
@@ -27,7 +27,7 @@
     --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28);
     --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
     --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
-    /* wymiary shellu — stałe, żeby wszystkie ekrany siadały w tej samej siatce */
+    /* wymiary shellu - stałe, żeby wszystkie ekrany siadały w tej samej siatce */
     --sidebar-w: 236px; --topbar-h: 56px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -42,7 +42,7 @@
     min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 44px 24px 80px; gap: 26px;
   }
 
-  /* ── canvas: etykieta, panel wariantów, nav-strip — jak w design/*.html, tylko szersze ── */
+  /* ── canvas: etykieta, panel wariantów, nav-strip - jak w design/*.html, tylko szersze ── */
   .canvas-label { width:100%; max-width:1440px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
   .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
   .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
@@ -67,7 +67,7 @@
   .nav-strip a:hover, .nav-strip a.active { color:var(--green); }
   .nav-strip span { color:var(--border-strong); }
 
-  /* ══ RAMA OKNA PRZEGLĄDARKI — desktopowy odpowiednik `.phone` ══ */
+  /* ══ RAMA OKNA PRZEGLĄDARKI - desktopowy odpowiednik `.phone` ══ */
   .browser {
     width:1440px; height:900px; border-radius:14px; background:var(--bg);
     border:1px solid #1C1E24;
@@ -103,7 +103,7 @@
   .nav-count { margin-left:auto; font-family:var(--font-mono); font-size:9.5px; font-weight:700; padding:1px 6px; border-radius:999px; background:var(--surface-raised); color:var(--text-muted); border:1px solid var(--border); }
   .nav-count.amber { background:var(--amber-muted); color:var(--amber); border-color:var(--amber-border); }
   .nav-count.red { background:var(--red-muted); color:var(--red); border-color:var(--red-border); }
-  /* pozycja niedostępna dla roli — widoczna, ale wyjaśniona (nie chowamy, żeby nie zgadywał) */
+  /* pozycja niedostępna dla roli - widoczna, ale wyjaśniona (nie chowamy, żeby nie zgadywał) */
   .nav-item.locked { opacity:0.4; cursor:not-allowed; }
   .nav-item.locked .nav-count { background:transparent; border-color:transparent; }
 
@@ -120,13 +120,13 @@
   .crumbs b { color:var(--text-primary); font-weight:500; }
   .crumbs span { color:var(--border-strong); }
   .topbar-right { display:flex; align-items:center; gap:10px; }
-  /* zegar UTC — w panelu, jak w aplikacji, czas nieoznaczony = UTC */
+  /* zegar UTC - w panelu, jak w aplikacji, czas nieoznaczony = UTC */
   .utc-clock { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); display:inline-flex; align-items:center; gap:7px; }
   .utc-clock b { color:var(--text-primary); font-weight:700; }
   .utc-clock i { font-style:normal; color:var(--blue); font-size:9px; letter-spacing:1.5px; }
 
   .content { flex:1; overflow-y:auto; padding:22px; display:flex; flex-direction:column; gap:18px; }
-  /* Kolumna scrollowana: dzieci NIE mogą się kurczyć — inaczej .table-wrap z overflow:hidden obcina wiersze, zamiast pozwolić .content przewinąć. */
+  /* Kolumna scrollowana: dzieci NIE mogą się kurczyć - inaczej .table-wrap z overflow:hidden obcina wiersze, zamiast pozwolić .content przewinąć. */
   .content > *, .drawer-body > * { flex-shrink:0; }
   .content::-webkit-scrollbar { width:10px; }
   .content::-webkit-scrollbar-thumb { background:var(--border-strong); border-radius:99px; border:3px solid var(--bg); }
@@ -154,7 +154,7 @@
   .card-title .spacer { margin-left:auto; }
 
   .tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
-  /* Kafel bywa linkiem w głąb (pulpit) i zwykłym pudełkiem (podsumowania) — jedna
+  /* Kafel bywa linkiem w głąb (pulpit) i zwykłym pudełkiem (podsumowania) - jedna
      definicja obsługuje oba, bo `text-decoration`/`color` na nie-linku nic nie robi. */
   .tile { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; display:flex; flex-direction:column; gap:6px; text-decoration:none; color:inherit; }
   .tile:hover { border-color:var(--border-strong); }
@@ -176,7 +176,7 @@
   .chip.on { background:var(--green-muted); border-color:var(--green-border); color:var(--green); }
   .chip.on.amber { background:var(--amber-muted); border-color:var(--amber-border); color:var(--amber); }
 
-  /* ── TABELA — kręgosłup panelu; liczby zawsze mono ── */
+  /* ── TABELA - kręgosłup panelu; liczby zawsze mono ── */
   .table-wrap { border:1px solid var(--border); border-radius:14px; overflow:hidden; background:var(--surface); }
   table { width:100%; border-collapse:collapse; }
   thead th { text-align:left; font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.8px; text-transform:uppercase; color:var(--text-muted); font-weight:500; padding:11px 14px; background:#101010; border-bottom:1px solid var(--border); white-space:nowrap; }
@@ -214,7 +214,7 @@
   .input::placeholder { color:var(--text-muted); }
   .hint { font-size:11px; color:var(--text-secondary); line-height:1.5; }
   .hint b { color:var(--amber); font-weight:600; }
-  /* ZAKAZ natywnego <select> (CLAUDE.md) — wybór to zawsze lista kart */
+  /* ZAKAZ natywnego <select> (CLAUDE.md) - wybór to zawsze lista kart */
   .opt-list { display:flex; flex-direction:column; gap:8px; }
   .opt { display:flex; align-items:center; gap:11px; background:var(--surface-raised); border:1px solid var(--border); border-radius:12px; padding:10px 13px; cursor:pointer; min-height:50px; }
   .opt:hover { background:var(--surface-hover); }
@@ -226,7 +226,7 @@
   .opt.selected .opt-check { opacity:1; }
   .opt-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:8px; }
 
-  /* ── banery (3 typy — docs/design-notes.md) ── */
+  /* ── banery (3 typy - docs/design-notes.md) ── */
   .banner { display:flex; align-items:flex-start; gap:10px; border-radius:12px; padding:11px 14px; font-size:12.5px; line-height:1.55; border:1px solid; }
   .banner svg { flex-shrink:0; margin-top:2px; }
   .banner b { font-weight:700; }
@@ -248,7 +248,7 @@
   @keyframes shimmer { 0% { background-position:200% 0; } 100% { background-position:-200% 0; } }
   .no-access { display:flex; flex-direction:column; align-items:center; gap:12px; padding:60px 20px; text-align:center; }
 
-  /* ── szuflada szczegółu (drawer) — otwiera wiersz tabeli bez utraty kontekstu listy ── */
+  /* ── szuflada szczegółu (drawer) - otwiera wiersz tabeli bez utraty kontekstu listy ── */
   .drawer-scrim { position:absolute; inset:0; background:rgba(0,0,0,0.55); z-index:60; }
   .drawer { position:absolute; top:0; right:0; bottom:0; width:520px; background:var(--surface); border-left:1px solid var(--border-strong); z-index:61; display:flex; flex-direction:column; box-shadow:-24px 0 60px rgba(0,0,0,0.5); }
   .drawer-head { flex-shrink:0; padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:flex-start; justify-content:space-between; gap:14px; }
@@ -266,7 +266,7 @@
   .kv-v.green { color:var(--green); } .kv-v.amber { color:var(--amber); } .kv-v.red { color:var(--red); }
   .kv-v small { font-size:9.5px; font-weight:400; color:var(--text-secondary); }
 
-  /* ── oś zdarzeń (log dnia w panelu — czyta się jak rejestr, nie jak lista) ── */
+  /* ── oś zdarzeń (log dnia w panelu - czyta się jak rejestr, nie jak lista) ── */
   .tl { display:flex; flex-direction:column; }
   .tl-row { display:grid; grid-template-columns:74px 20px 1fr auto; align-items:start; gap:10px; padding:8px 0; border-bottom:1px solid var(--hairline); }
   .tl-time { font-family:var(--font-mono); font-size:11.5px; font-weight:700; color:var(--text-primary); letter-spacing:0.5px; }
@@ -279,7 +279,7 @@
   .tl-row:last-child { border-bottom:none; }
   .tl-row.voided .tl-name { text-decoration:line-through; color:var(--text-muted); }
   .tl-row.voided .tl-time { color:var(--text-muted); text-decoration:line-through; }
-  /* Wariant KOMPAKTOWY — oś w wąskiej kolumnie bocznej (pulpit), bez plakietki
+  /* Wariant KOMPAKTOWY - oś w wąskiej kolumnie bocznej (pulpit), bez plakietki
      zamykającej wiersz. Pełna oś jest projektowana pod szeroką kolumnę karty dnia
      i w 400 px robi się rozstrzelona, stąd stopień mniejsze rozmiary i trzy tory
      siatki zamiast czterech. Modyfikator, nie osobny komponent: zachowanie, znaczenie
@@ -297,14 +297,14 @@
   /* Szersza kolumna boczna (400 px) tam, gdzie niesie ona własną treść, a nie
      przypis do lewej: puls systemu na pulpicie, dowód z replaya przy progach.
      Modyfikator zamiast zmiany bazy, bo szersza prawa = węższa lewa, a w lewej
-     stoją tabele — 20 px mniej potrafi przyciąć kolumnę w `.table-wrap`. */
+     stoją tabele - 20 px mniej potrafi przyciąć kolumnę w `.table-wrap`. */
   .cols.wide { grid-template-columns:1fr 400px; }
 
-  /* ══ FLOTA — wiersz samolotu niosący DWIE warstwy naraz ══
+  /* ══ FLOTA - wiersz samolotu niosący DWIE warstwy naraz ══
      Co samolot robi (faza) i SKĄD to wiemy (świeżość). Druga warstwa jest równie
      ważna jak pierwsza: „w locie" przy syncu sprzed 47 minut to nie jest wiedza
      o locie, tylko ostatnia znana pozycja. Klasa stanu na wierszu (`flying`/`stale`)
-     mówi o JAKOŚCI danych, nie o fazie lotu — `stale` nosi samolot, który leci,
+     mówi o JAKOŚCI danych, nie o fazie lotu - `stale` nosi samolot, który leci,
      ale którego telefon milczy. §4.8 stany świeżości. */
   .fleet { display:flex; flex-direction:column; gap:8px; }
   .fleet-row { display:grid; grid-template-columns:96px 1fr 132px 118px 150px; align-items:center; gap:14px; padding:12px 14px; border-radius:12px; background:var(--surface-raised); border:1px solid var(--border); text-decoration:none; color:inherit; }
@@ -320,7 +320,7 @@
   .fleet-nums .k { color:var(--text-muted); font-size:8.5px; letter-spacing:1.2px; }
   .fleet-state { display:flex; justify-content:flex-end; }
 
-  /* Świeżość — jedyne miejsce, w którym panel przyznaje się do NIEWIEDZY.
+  /* Świeżość - jedyne miejsce, w którym panel przyznaje się do NIEWIEDZY.
      Wiek podajemy względnie („3 min temu", „2 dni temu"), nie znacznikiem czasu:
      administrator ocenia, czy dane są aktualne, a nie o której dotarły. */
   .fresh { display:flex; flex-direction:column; align-items:flex-end; gap:3px; }
@@ -329,7 +329,7 @@
   .fresh-val.dim { color:var(--text-muted); }
   .fresh-note { font-family:var(--font-mono); font-size:8px; letter-spacing:0.8px; color:var(--text-muted); text-align:right; }
 
-  /* ══ KOLEJKA „WYMAGA UWAGI" — jedyne miejsce mówiące, co ZROBIĆ ══
+  /* ══ KOLEJKA „WYMAGA UWAGI" - jedyne miejsce mówiące, co ZROBIĆ ══
      Reszta panelu opisuje stan; ta lista stawia zadania. Dlatego wiersz jest linkiem
      w głąb, a wiek pozycji ma własną kolumnę: flaga leżąca trzeci dzień to inny
      problem niż ta sprzed godziny. */
@@ -347,7 +347,7 @@
   .todo-age { font-family:var(--font-mono); font-size:9.5px; font-weight:700; color:var(--text-secondary); flex-shrink:0; text-align:right; }
   .todo-age.old { color:var(--amber); }
 
-  /* ══ NAPŁYW ZDARZEŃ — puls systemu ══
+  /* ══ NAPŁYW ZDARZEŃ - puls systemu ══
      Słupek `zero` jest osobną klasą, a nie słupkiem o wysokości zero, bo cisza
      w rejestrze wymaga podpisu: nie znaczy „nikt nie latał", tylko „nic nie dotarło". */
   .spark { display:flex; align-items:flex-end; gap:3px; height:56px; }
@@ -356,10 +356,10 @@
   .spark i.zero { background:var(--surface-raised); border-color:var(--border); }
   .spark-axis { display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:8px; letter-spacing:1px; color:var(--text-muted); margin-top:6px; }
 
-  /* ══ PRÓG — wiersz w dwóch odmianach: przybity w kodzie vs. dana serwera ══
+  /* ══ PRÓG - wiersz w dwóch odmianach: przybity w kodzie vs. dana serwera ══
      Trzecia kolumna (`thr-src`) niesie różnicę, która jest tu najważniejsza: czy
      wartość da się w ogóle zmienić z panelu. Progi detekcji liczą się na telefonie
-     offline, więc są tylko do odczytu — pole `thr-input` pojawia się wyłącznie tam,
+     offline, więc są tylko do odczytu - pole `thr-input` pojawia się wyłącznie tam,
      gdzie zmiana ma skutek. */
   .thr { display:grid; grid-template-columns:1fr 128px 96px; align-items:center; gap:14px; padding:11px 0; border-bottom:1px solid var(--hairline); }
   .thr:last-of-type { border-bottom:none; }
@@ -373,7 +373,7 @@
   .thr-input:focus { border-color:var(--green-border); }
   .thr-input.changed { border-color:var(--amber-border); color:var(--amber); background:rgba(243,156,18,0.06); }
 
-  /* ══ DOWÓD ZMIANY — „przed → po" na danych historycznych ══
+  /* ══ DOWÓD ZMIANY - „przed → po" na danych historycznych ══
      Amber obramowanie nie jest ostrzeżeniem o błędzie, tylko sygnałem, że to blok
      WARUNKOWY: bez wypełnionego dowodu zapis nie ma prawa dojść do skutku. */
   .proof { border:1px solid var(--amber-border); background:rgba(243,156,18,0.05); border-radius:12px; padding:13px 15px; display:flex; flex-direction:column; gap:11px; }
@@ -385,7 +385,7 @@
   .diff-n { font-size:11px; color:var(--text-secondary); line-height:1.5; }
   .diff-arrow { color:var(--text-muted); font-family:var(--font-mono); font-size:16px; }
 
-  /* Odwołanie do pliku źródłowego — panel bywa czytany razem z repozytorium. */
+  /* Odwołanie do pliku źródłowego - panel bywa czytany razem z repozytorium. */
   .code-ref { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); background:var(--surface-raised); border:1px solid var(--border); border-radius:7px; padding:3px 8px; letter-spacing:0.3px; }
 
   /* ── sekcja demonstracyjna szablonu (TYLKO w tym pliku) ── */
@@ -395,13 +395,13 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — PANEL · A10</span>
+  <span class="film-strip">UZ AERO - PANEL · A10</span>
   <span class="slug">statystyki floty i pilotów · §3.7 · czasy UTC</span>
   <span class="canvas-meta"><span class="pulse"></span>Wykresy: czysty CSS i SVG</span>
 </header>
 
 <aside class="variants-panel">
-  <div class="vp-title">Rodzina ekranu statystyk — kiedy który?</div>
+  <div class="vp-title">Rodzina ekranu statystyk - kiedy który?</div>
   <a class="vp-item active" href="A10-statystyki.html">
     <span class="vp-badge">A10</span>
     <span class="vp-body">
@@ -420,13 +420,13 @@
   <a class="vp-item" href="A10b-analityka-brak-danych.html">
     <span class="vp-badge amber">A10B</span>
     <span class="vp-body">
-      <span class="vp-name">Analityka — za mało danych</span>
+      <span class="vp-name">Analityka - za mało danych</span>
       <span class="vp-when">Samolot poniżej progu publikacji stawek (5 interwałów i 10 h silnika w oknie): progi, postęp zbierania i zebrane interwały zamiast liczb.</span>
     </span>
   </a>
 </aside>
 
-<main class="browser" role="region" aria-label="Panel administracyjny — statystyki floty i pilotów">
+<main class="browser" role="region" aria-label="Panel administracyjny - statystyki floty i pilotów">
 
   <div class="chrome">
     <span class="chrome-dots"><i></i><i></i><i></i></span>
@@ -528,7 +528,7 @@
         <div class="page-head">
           <div>
             <h1 class="page-title">STATYSTYKI FLOTY I PILOTÓW</h1>
-            <p class="page-sub">Suma <b>ZDANYCH sesji</b> w zakresie. Każda liczba to złożenie projekcji <code>projectSession</code> z pojedynczych sesji — panel sumuje gotowe wyniki, nie liczy własnych metryk. Sumy liczą się po dacie ZDANIA samolotu, więc zbiór sesji może różnić się od listy na <a href="A02-dni.html" style="color:var(--green);">A02</a> z tym samym zakresem — tam sesja stoi pod chwilą PRZEJĘCIA (<code>claim_time</code>), a sesja przejęta wieczorem bywa zdana następnego dnia. Sesje jeszcze trwające (dziś: SP-ABC i SP-KLM) są celowo poza zakresem, bo ich sumy zmieniłyby się po zdaniu maszyny.</p>
+            <p class="page-sub">Suma <b>ZDANYCH sesji</b> w zakresie. Każda liczba to złożenie projekcji <code>projectSession</code> z pojedynczych sesji - panel sumuje gotowe wyniki, nie liczy własnych metryk. Sumy liczą się po dacie ZDANIA samolotu, więc zbiór sesji może różnić się od listy na <a href="A02-dni.html" style="color:var(--green);">A02</a> z tym samym zakresem - tam sesja stoi pod chwilą PRZEJĘCIA (<code>claim_time</code>), a sesja przejęta wieczorem bywa zdana następnego dnia. Sesje jeszcze trwające (dziś: SP-ABC i SP-KLM) są celowo poza zakresem, bo ich sumy zmieniłyby się po zdaniu maszyny.</p>
           </div>
           <div class="page-actions">
             <button class="btn primary">
@@ -555,10 +555,10 @@
 
         <div class="tiles">
           <div class="tile"><span class="tile-key">Nalot blokowy</span><span class="tile-val green">186:39</span><span class="tile-note">Suma <code>engine_start</code> → <code>engine_stop</code> z 53 zdanych sesji.</span></div>
-          <div class="tile"><span class="tile-key">Czas lotu</span><span class="tile-val">133:45</span><span class="tile-note">71,7 % nalotu blokowego — reszta to kołowanie i postoje z pracującym silnikiem.</span></div>
+          <div class="tile"><span class="tile-key">Czas lotu</span><span class="tile-val">133:45</span><span class="tile-note">71,7 % nalotu blokowego - reszta to kołowanie i postoje z pracującym silnikiem.</span></div>
           <div class="tile"><span class="tile-key">Starty / lądowania</span><span class="tile-val">356<small> / 356</small></span><span class="tile-note">Bilans domknięty na wszystkich samolotach.</span></div>
           <div class="tile"><span class="tile-key">Paliwo zużyte</span><span class="tile-val amber">21 436<small> L</small></span><span class="tile-note">Start + dolane − koniec, sesja po sesji.</span></div>
-          <div class="tile"><span class="tile-key">Przyrost motogodzin</span><span class="tile-val">180.1<small> h</small></span><span class="tile-note">Δ liczników fizycznych — mniej niż blok 186.65 h, bo licznik SP-ABC liczy obroty i na ziemi przyrasta wolniej (kolumna „Analityka").</span></div>
+          <div class="tile"><span class="tile-key">Przyrost motogodzin</span><span class="tile-val">180.1<small> h</small></span><span class="tile-note">Δ liczników fizycznych - mniej niż blok 186.65 h, bo licznik SP-ABC liczy obroty i na ziemi przyrasta wolniej (kolumna „Analityka").</span></div>
           <div class="tile"><span class="tile-key">Dni lotne</span><span class="tile-val blue">53</span><span class="tile-note">3 samoloty · 5 pilotów · 30 dni kalendarzowych.</span></div>
         </div>
 
@@ -579,7 +579,7 @@
           <div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:9px;letter-spacing:1px;color:var(--text-muted);padding-top:2px;">
             <span>01 JUL</span><span>08 JUL</span><span>15 JUL</span><span>22 JUL</span><span>30 JUL</span>
           </div>
-          <span class="hint">Cztery dni bez nalotu (05, 11, 18, 26 JUL) to dni bez ani jednej sesji — nie brak danych. Dzień bez <code>session_claim</code> nie istnieje w rejestrze i panel go nie zmyśla.</span>
+          <span class="hint">Cztery dni bez nalotu (05, 11, 18, 26 JUL) to dni bez ani jednej sesji - nie brak danych. Dzień bez <code>session_claim</code> nie istnieje w rejestrze i panel go nie zmyśla.</span>
         </div>
 
         <div class="cols">
@@ -610,7 +610,7 @@
               </span>
             </div>
 
-            <span class="hint">Różnica między słupkami to czas z pracującym silnikiem poza lotem — kołowanie, załadunek skoczków, oczekiwanie. Przy SP-KLM (skoki) sięga 41 godzin miesięcznie i to jest normalna charakterystyka operacji, nie błąd danych.</span>
+            <span class="hint">Różnica między słupkami to czas z pracującym silnikiem poza lotem - kołowanie, załadunek skoczków, oczekiwanie. Przy SP-KLM (skoki) sięga 41 godzin miesięcznie i to jest normalna charakterystyka operacji, nie błąd danych.</span>
           </div>
 
           <div class="card">
@@ -632,7 +632,7 @@
               <span style="font-family:var(--font-mono);font-size:11px;font-weight:700;width:58px;text-align:right;">14 · 47 %</span>
             </div>
 
-            <span class="hint">Wykorzystanie liczymy jako liczbę dni z co najmniej jedną zamkniętą sesją, nie jako godziny na dobę — samolot stojący cały dzień z jednym lotem jest wykorzystany, choć nalot ma mały. Do godzin służy wykres obok.</span>
+            <span class="hint">Wykorzystanie liczymy jako liczbę dni z co najmniej jedną zamkniętą sesją, nie jako godziny na dobę - samolot stojący cały dzień z jednym lotem jest wykorzystany, choć nalot ma mały. Do godzin służy wykres obok.</span>
           </div>
         </div>
 
@@ -677,7 +677,7 @@
                   <td class="num">1 684 L</td>
                   <td class="num">36.5</td>
                   <td class="num">1244.6 → 1284.6<span class="cell-sub">dziesiętny · obrotomierzowy</span></td>
-                  <td class="num">40.0<span class="cell-sub">blok 46.2 h — licznik liczy obroty</span></td>
+                  <td class="num">40.0<span class="cell-sub">blok 46.2 h - licznik liczy obroty</span></td>
                   <td class="num">60 %</td>
                   <td><div class="row-actions"><a class="btn sm ghost" href="A10a-analityka.html">Analityka</a></div></td>
                 </tr>
@@ -701,16 +701,16 @@
                   <td class="num cell-strong" style="color:var(--blue);">133:45</td>
                   <td class="num cell-strong">356 / 356</td>
                   <td class="num cell-strong" style="color:var(--amber);">21 436 L</td>
-                  <td class="num dim">—</td>
-                  <td class="num dim">—</td>
+                  <td class="num dim">-</td>
+                  <td class="num dim">-</td>
                   <td class="num cell-strong">180.1 h</td>
-                  <td class="num dim">—</td>
+                  <td class="num dim">-</td>
                   <td></td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <span class="hint" style="display:block;padding-top:8px;">Kolumna „Śr. L/h" nie sumuje się do wiersza RAZEM — średnia ze średnich nie jest średnią. Dla całej floty policzyłaby 21 436 L / 186.65 h = 114.8 L/h, co nie znaczy nic, bo Caravan i AT-3 palą w innej skali. Dlatego panel stawia tu kreskę zamiast liczby, która wygląda na sensowną. Δ MH z kolei <b>nie musi równać się blokowi</b>: licznik obrotomierzowy (SP-ABC) przyrasta na ziemi wolniej niż zegar. Zużycie per faza, przelicznik MH i interwały źródłowe: kolumna <a href="A10a-analityka.html" style="color:var(--green);">Analityka</a>.</span>
+          <span class="hint" style="display:block;padding-top:8px;">Kolumna „Śr. L/h" nie sumuje się do wiersza RAZEM - średnia ze średnich nie jest średnią. Dla całej floty policzyłaby 21 436 L / 186.65 h = 114.8 L/h, co nie znaczy nic, bo Caravan i AT-3 palą w innej skali. Dlatego panel stawia tu kreskę zamiast liczby, która wygląda na sensowną. Δ MH z kolei <b>nie musi równać się blokowi</b>: licznik obrotomierzowy (SP-ABC) przyrasta na ziemi wolniej niż zegar. Zużycie per faza, przelicznik MH i interwały źródłowe: kolumna <a href="A10a-analityka.html" style="color:var(--green);">Analityka</a>.</span>
         </div>
 
         <div data-view="pilot" style="display:none;">
@@ -792,7 +792,7 @@
               </tbody>
             </table>
           </div>
-          <span class="hint" style="display:block;padding-top:8px;">Blok jako PIC sumuje się do nalotu floty; blok jako Dual <b>nie</b> — te same godziny liczą się drugi raz dla drugiego pilota w kabinie. Godziny Duala wylicza serwer z nagłówków zdarzeń (<code>dual_id</code>), bo w sesji pisze wyłącznie urządzenie PIC-a. Starty i lądowania przypisujemy PIC-owi.</span>
+          <span class="hint" style="display:block;padding-top:8px;">Blok jako PIC sumuje się do nalotu floty; blok jako Dual <b>nie</b> - te same godziny liczą się drugi raz dla drugiego pilota w kabinie. Godziny Duala wylicza serwer z nagłówków zdarzeń (<code>dual_id</code>), bo w sesji pisze wyłącznie urządzenie PIC-a. Starty i lądowania przypisujemy PIC-owi.</span>
         </div>
 
         <div data-view="operation" style="display:none;">
@@ -832,7 +832,7 @@
                   <td><span style="display:flex;align-items:center;gap:9px;"><span style="flex:1;height:9px;border-radius:99px;background:var(--surface-raised);overflow:hidden;"><span style="display:block;height:100%;width:13.3%;background:var(--text-muted);"></span></span><span class="mono" style="font-size:10.5px;width:42px;text-align:right;">13.3 %</span></span></td>
                 </tr>
                 <tr class="clickable">
-                  <!-- Napis „PRZELOT" (issue #13) — zmienia się etykieta, nie wartość `ferry`
+                  <!-- Napis „PRZELOT" (issue #13) - zmienia się etykieta, nie wartość `ferry`
                        w kolumnie `sessions.operation`, po której liczy się ten wiersz. -->
                   <td><span class="pill dim">PRZELOT</span><span class="cell-sub">EPWA · EPMO · EPBC</span></td>
                   <td class="num">6</td>
@@ -870,19 +870,19 @@
                   <td class="num cell-strong" style="color:var(--blue);">133:45</td>
                   <td class="num cell-strong">356 / 356</td>
                   <td class="num cell-strong" style="color:var(--amber);">21 436 L</td>
-                  <td class="num dim">—</td>
+                  <td class="num dim">-</td>
                   <td class="dim">100 %</td>
                 </tr>
               </tbody>
             </table>
           </div>
           <!-- SPROSTOWANIE 2026-08-03: poprzednia adnotacja („DO DOROBIENIA: migracja
-               projekcji sessions") była NIEAKTUALNA od migracji 11 — kolumny operation
+               projekcji sessions") była NIEAKTUALNA od migracji 11 - kolumny operation
                i client istnieją od przekroju A02. Poprawione przy wdrożeniu przekroju
                A10 (`server/test/adminStats.test.ts`). -->
           <div class="banner status" style="margin-top:12px;">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            <span><b>Sprostowanie z 2026-08-03 — kolumna <code>operation</code> ISTNIEJE od migracji 11.</b> Poprzednia adnotacja „DO DOROBIENIA: migracja projekcji <code>sessions</code>" była nieaktualna: kolumny <code>operation</code> i <code>client</code> weszły do projekcji razem z przekrojem A02, a wiersze sprzed migracji wypełnia przebudowa projekcji z ekranu <a href="A11-konserwacja.html" style="color:var(--green);">A11</a>. Ujęcie „per operacja" liczy się wprost z kolumn projekcji — bez przeglądu strumienia zdarzeń i bez ograniczania zakresu dat. Podpisy wierszy tej tabeli (lotniska przy PRZELOCIE, nazwy egzaminów) to dane przykładowe: projekcja niesie rejestracje jednostek i liczbę klientów operacji, nie lotniska.</span>
+            <span><b>Sprostowanie z 2026-08-03 - kolumna <code>operation</code> ISTNIEJE od migracji 11.</b> Poprzednia adnotacja „DO DOROBIENIA: migracja projekcji <code>sessions</code>" była nieaktualna: kolumny <code>operation</code> i <code>client</code> weszły do projekcji razem z przekrojem A02, a wiersze sprzed migracji wypełnia przebudowa projekcji z ekranu <a href="A11-konserwacja.html" style="color:var(--green);">A11</a>. Ujęcie „per operacja" liczy się wprost z kolumn projekcji - bez przeglądu strumienia zdarzeń i bez ograniczania zakresu dat. Podpisy wierszy tej tabeli (lotniska przy PRZELOCIE, nazwy egzaminów) to dane przykładowe: projekcja niesie rejestracje jednostek i liczbę klientów operacji, nie lotniska.</span>
           </div>
         </div>
 
@@ -892,7 +892,7 @@
           <div class="tiles">
             <div class="tile" style="background:var(--bg);"><span class="tile-key">Wyniesienia</span><span class="tile-val blue">178</span><span class="tile-note">Zdarzeń <code>drop</code> · 8,5 na sesję skokową.</span></div>
             <div class="tile" style="background:var(--bg);"><span class="tile-key">Skoczkowie</span><span class="tile-val blue">962</span><span class="tile-note">Średnio 5,4 na wyniesienie.</span></div>
-            <div class="tile" style="background:var(--bg);"><span class="tile-key">Śr. wysokość zrzutu</span><span class="tile-val">12 840<small> ft</small></span><span class="tile-note">Z 171 zrzutów, które miały fix GPS — 7 bez wysokości nie wchodzi do średniej.</span></div>
+            <div class="tile" style="background:var(--bg);"><span class="tile-key">Śr. wysokość zrzutu</span><span class="tile-val">12 840<small> ft</small></span><span class="tile-note">Z 171 zrzutów, które miały fix GPS - 7 bez wysokości nie wchodzi do średniej.</span></div>
             <div class="tile" style="background:var(--bg);"><span class="tile-key">Skoczków na godzinę lotu</span><span class="tile-val">13.5</span><span class="tile-note">962 skoczków / 71:24 czasu lotu.</span></div>
           </div>
 
@@ -903,7 +903,7 @@
               <span style="width:17.5%;background:var(--green-muted);border-right:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:10px;font-weight:700;color:var(--green);">AFF 168</span>
               <span style="width:38.7%;background:var(--amber-muted);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:10px;font-weight:700;color:var(--amber);">SOLO 373</span>
             </span>
-            <span class="hint">Tandem to 43,8 % skoczków — i praktycznie cały przychód dnia. Rozbicie bierze się wprost z payloadu <code>drop.jumpers</code>; panel nie dokłada tu cennika, bo cennik nie jest danymi lotniczymi i nie ma go w rejestrze.</span>
+            <span class="hint">Tandem to 43,8 % skoczków - i praktycznie cały przychód dnia. Rozbicie bierze się wprost z payloadu <code>drop.jumpers</code>; panel nie dokłada tu cennika, bo cennik nie jest danymi lotniczymi i nie ma go w rejestrze.</span>
           </div>
 
           <div class="table-wrap" style="margin-top:6px;">
@@ -942,7 +942,7 @@
                zrzutów weszły do projekcji migracją 18 (przekrój A10). -->
           <div class="banner status">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            <span><b>Sprostowanie z 2026-08-03 — projekcja NIESIE agregaty zrzutów (migracja 18).</b> Kolumna <code>client</code> istnieje od migracji 11, a wyniesienia, skoczkowie wg typów oraz <b>SUMA wysokości zrzutów z fixem i ich LICZNIK</b> (<code>drop_alt_sum_ft</code> / <code>drop_alt_count</code>) — od migracji 18. Para suma+licznik zamiast średniej per sesja jest celowa: średnich nie da się składać, a zrzut bez wysokości nie wchodzi ani do sumy, ani do licznika. Licznik wierszy do przebudowy obejmuje <b>także dni z <code>operation IS NULL</code></b> (sprzed migracji 11 albo bez preflightu): rodzaju operacji nie znamy, więc każdy z nich mógł być dniem skokowym — a na bazie migrującej ze starego schematu to jest stan DOMYŚLNY, aż do przebudowy. Wiersze wypełnia przebudowa projekcji (<a href="A11-konserwacja.html" style="color:var(--green);">A11</a>); do tego czasu panel pokazuje w tej sekcji <b>kreski i licznik wierszy do przebudowy — nigdy zera i nigdy sumy z części wierszy podanej jako całość</b>.</span>
+            <span><b>Sprostowanie z 2026-08-03 - projekcja NIESIE agregaty zrzutów (migracja 18).</b> Kolumna <code>client</code> istnieje od migracji 11, a wyniesienia, skoczkowie wg typów oraz <b>SUMA wysokości zrzutów z fixem i ich LICZNIK</b> (<code>drop_alt_sum_ft</code> / <code>drop_alt_count</code>) - od migracji 18. Para suma+licznik zamiast średniej per sesja jest celowa: średnich nie da się składać, a zrzut bez wysokości nie wchodzi ani do sumy, ani do licznika. Licznik wierszy do przebudowy obejmuje <b>także dni z <code>operation IS NULL</code></b> (sprzed migracji 11 albo bez preflightu): rodzaju operacji nie znamy, więc każdy z nich mógł być dniem skokowym - a na bazie migrującej ze starego schematu to jest stan DOMYŚLNY, aż do przebudowy. Wiersze wypełnia przebudowa projekcji (<a href="A11-konserwacja.html" style="color:var(--green);">A11</a>); do tego czasu panel pokazuje w tej sekcji <b>kreski i licznik wierszy do przebudowy - nigdy zera i nigdy sumy z części wierszy podanej jako całość</b>.</span>
           </div>
         </div>
 
@@ -971,7 +971,7 @@
 </nav>
 
 <script>
-  // Przełącznik ujęcia raportu. Trzy tabele żyją w DOM-ie równolegle — to ten sam
+  // Przełącznik ujęcia raportu. Trzy tabele żyją w DOM-ie równolegle - to ten sam
   // zbiór dni policzony w trzech przekrojach, a nie trzy różne zapytania: sumy
   // (blok, czas lotu, starty/lądowania) muszą się zgadzać między ujęciami i właśnie
   // dlatego łatwiej je porównać, przełączając w miejscu.

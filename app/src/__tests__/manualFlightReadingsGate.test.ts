@@ -1,11 +1,11 @@
 /**
- * UZ Aero — test bramki kroku 4 i werdyktu normy (issue #62, piąta tura).
+ * UZ Aero - test bramki kroku 4 i werdyktu normy (issue #62, piąta tura).
  *
  * ══ CO TU JEST SPRAWDZANE, A CO ŚWIADOMIE NIE ══
- * Zgłoszenie prosiło, żeby „nic nie blokowało — tylko ostrzeżenia wymagające reakcji".
+ * Zgłoszenie prosiło, żeby „nic nie blokowało - tylko ostrzeżenia wymagające reakcji".
  * Reguła obowiązuje wszystko, co jest OCENĄ danych (ciągłość paliwa, łańcuch MH, norma)
  * i to mieszka w `manualFlightWarnings.ts`. Blokada zostaje wyłącznie tam, gdzie DOMENA
- * I TAK ODMÓWI — bo komenda robi próbę generalną całej sekwencji i przy pierwszym
+ * I TAK ODMÓWI - bo komenda robi próbę generalną całej sekwencji i przy pierwszym
  * twardym naruszeniu rzuca, nie zapisując ani jednego zdarzenia. Wybór nie jest więc
  * między „zablokować a wpuścić", tylko między „powiedzieć teraz" a „wywalić się po
  * tapnięciu w ZAPISZ". Ten test pilnuje, że blokujemy DOKŁADNIE te przypadki.
@@ -44,12 +44,12 @@ function draft(over: Partial<ManualFlightDraft> = {}): ManualFlightDraft {
 const gate = (d: ManualFlightDraft, capacityL: number | null = 180) =>
   manualFlightStepBlocker('readings', d, { capacityL });
 
-describe('bramka odczytów — blokuje TYLKO to, co domena odrzuci', () => {
+describe('bramka odczytów - blokuje TYLKO to, co domena odrzuci', () => {
   it('puszcza komplet poprawnych odczytów', () => {
     expect(gate(draft())).toBeNull();
   });
 
-  it('żąda stanu z obu stron — `initialReading` i `finalReading` są w komendzie wymagane', () => {
+  it('żąda stanu z obu stron - `initialReading` i `finalReading` są w komendzie wymagane', () => {
     expect(gate(draft({ fuel: { foundL: null, addedL: 0, afterL: 84 } }))).toContain(
       'zastany',
     );
@@ -69,12 +69,12 @@ describe('bramka odczytów — blokuje TYLKO to, co domena odrzuci', () => {
   });
 
   it('sufitem pojemności jest stan PO ZATANKOWANIU (FUEL_OVER_CAPACITY)', () => {
-    // 112 zastane + 80 dolane = 192 L, czyli ponad zbiornik — i to jest liczba,
+    // 112 zastane + 80 dolane = 192 L, czyli ponad zbiornik - i to jest liczba,
     // którą niesie odczyt przy przejęciu, więc to ją domena sprawdza.
     expect(gate(draft({ fuel: { foundL: 112, addedL: 80, afterL: 84 } }), 180)).toBe(
       'Stan 192 L przekracza pojemność zbiorników (180 L).',
     );
-    // Bez znanej pojemności reguła ŚPI — dokładnie jak `checkCapacity` w domenie.
+    // Bez znanej pojemności reguła ŚPI - dokładnie jak `checkCapacity` w domenie.
     expect(gate(draft({ fuel: { foundL: 112, addedL: 80, afterL: 84 } }), null)).toBeNull();
   });
 
@@ -83,13 +83,13 @@ describe('bramka odczytów — blokuje TYLKO to, co domena odrzuci', () => {
   });
 
   it('łapie paliwo, które przybyło samo (FUEL_INCREASE_WITHOUT_REFUEL)', () => {
-    // 112 L przed startem, 140 L po locie, bez tankowania — tolerancja max(10, 5% z 180) = 10.
+    // 112 L przed startem, 140 L po locie, bez tankowania - tolerancja max(10, 5% z 180) = 10.
     expect(gate(draft({ fuel: { foundL: 112, addedL: 0, afterL: 140 } }))).toContain(
       'brakuje dolewki',
     );
     // W granicach tolerancji milczymy: paliwomierz nie jest dokładniejszy niż podziałka.
     expect(gate(draft({ fuel: { foundL: 112, addedL: 0, afterL: 118 } }))).toBeNull();
-    // Z zatankowaniem ten sam stan końcowy jest poprawny — sufit rośnie o dolane litry.
+    // Z zatankowaniem ten sam stan końcowy jest poprawny - sufit rośnie o dolane litry.
     expect(gate(draft({ fuel: { foundL: 112, addedL: 60, afterL: 140 } }))).toBeNull();
   });
 });
@@ -136,7 +136,7 @@ describe('werdykt normy', () => {
     );
   });
 
-  it('wynik poza pasmem jest BURSZTYNOWY, nie czerwony — do sprawdzenia, nie błędny', () => {
+  it('wynik poza pasmem jest BURSZTYNOWY, nie czerwony - do sprawdzenia, nie błędny', () => {
     // 300 L z tej sesji jest poza każdym rozsądnym pasmem.
     const balance = manualFuelBalance(draft({ fuel: { foundL: 300, addedL: 0, afterL: 0 } }), norm);
     expect(balance!.verdict!.label).not.toBe('✓ W NORMIE');
@@ -149,7 +149,7 @@ describe('werdykt normy', () => {
   });
 
   it('przyrost licznika porównuje się z NORMĄ, a nie z czasem blokowym', () => {
-    // Δ MH = 1,5 h przy bloku 1,6 h — obrotomierz chodzi wolniej niż zegar i to jest
+    // Δ MH = 1,5 h przy bloku 1,6 h - obrotomierz chodzi wolniej niż zegar i to jest
     // normalne (issue #38). Werdykt ma pochodzić z normy maszyny, nie z tej różnicy.
     const balance = manualMhBalance(draft(), norm, 'decimal');
     expect(balance!.actual).toBe('1.5');

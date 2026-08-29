@@ -1,17 +1,17 @@
 /**
- * UZ Aero — ślad sesji na telefonie po odwróceniu źródła (issue #47).
+ * UZ Aero - ślad sesji na telefonie po odwróceniu źródła (issue #47).
  *
  * Ekran 14 rysuje odtąd z danych SERWERA, ale czasy i loty liczy dalej z LOKALNEGO
- * rejestru — i to rozdzielenie jest tu najważniejsze. Test pilnuje trzech rzeczy:
+ * rejestru - i to rozdzielenie jest tu najważniejsze. Test pilnuje trzech rzeczy:
  *
  *  1. **trzy powody braku znaczą co innego** i pilot musi je rozróżnić: „nie ma zasięgu"
- *     (14C — ślad jest, wróć później), „nagranie czeka w kolejce na tym telefonie",
- *     „sesja wpisana ręcznie" (14B — trasy nie było i nie będzie). Zwinięcie ich do
+ *     (14C - ślad jest, wróć później), „nagranie czeka w kolejce na tym telefonie",
+ *     „sesja wpisana ręcznie" (14B - trasy nie było i nie będzie). Zwinięcie ich do
  *     jednego „brak śladu" kłamałoby pilotowi o jego locie;
- *  2. **brak sieci NIE zabiera czasów** — bez zasięgu ekran nadal zna bieg silnika,
+ *  2. **brak sieci NIE zabiera czasów** - bez zasięgu ekran nadal zna bieg silnika,
  *     loty i czas w powietrzu, bo liczy je lokalnie (§6 pkt 1);
  *  3. **znaczniki powstają z rejestru**, a pozycje dobierają się do nich z pobranej
- *     linii — razem z regułą scalania maksimum ze zrzutem (mockup 14).
+ *     linii - razem z regułą scalania maksimum ze zrzutem (mockup 14).
  */
 
 import { EventsRepo } from '../application/eventsRepo';
@@ -31,7 +31,7 @@ const min = (m: number): number => T0 + m * 60_000;
 
 const CTX: SessionContext = { sessionUuid: SESSION, aircraftId: AC, picId: PIC, dualId: null };
 
-/** Źródło sterowane z testu — trzy odpowiedzi, tak jak prawdziwe. */
+/** Źródło sterowane z testu - trzy odpowiedzi, tak jak prawdziwe. */
 class ScriptedSource implements SessionTrackSource {
   calls = 0;
   constructor(private readonly outcome: RemoteTrackOutcome) {}
@@ -123,7 +123,7 @@ function payloadWithLine(): SessionTrackPayload {
   };
 }
 
-describe('ślad sesji — powody braku', () => {
+describe('ślad sesji - powody braku', () => {
   it('bez zasięgu: powód „offline", a czasy sesji ZOSTAJĄ', async () => {
     const { commands, clock, queries } = setup({ kind: 'unreachable' });
     await flownSession(commands, clock);
@@ -152,7 +152,7 @@ describe('ślad sesji — powody braku', () => {
     const { commands, clock, queries, adapter } = setup({ kind: 'missing' });
     await flownSession(commands, clock);
 
-    // Wpisy jeszcze niewysłane — po issue #47 to jedyne, co zostaje w `gps_trace`.
+    // Wpisy jeszcze niewysłane - po issue #47 to jedyne, co zostaje w `gps_trace`.
     for (let m = 12; m <= 20; m++) {
       await adapter.appendTrace({
         sessionUuid: SESSION,
@@ -189,7 +189,7 @@ describe('ślad sesji — powody braku', () => {
   });
 });
 
-describe('ślad sesji — znaczniki', () => {
+describe('ślad sesji - znaczniki', () => {
   it('powstają z REJESTRU, a pozycje dobierają się z linii serwera', async () => {
     const { commands, clock, queries } = setup({ kind: 'track', payload: payloadWithLine() });
     await flownSession(commands, clock);
@@ -220,7 +220,7 @@ describe('ślad sesji — znaczniki', () => {
 
   it('maksimum z dala od zdarzeń dostaje WŁASNY znacznik', async () => {
     const payload = payloadWithLine();
-    // Szczyt w połowie zniżania — kwadrans od zrzutu i od lądowania.
+    // Szczyt w połowie zniżania - kwadrans od zrzutu i od lądowania.
     payload.profile = { ...payload.profile, peakAt: min(65) };
 
     const { commands, clock, queries } = setup({ kind: 'track', payload });

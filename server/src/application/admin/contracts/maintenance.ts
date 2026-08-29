@@ -1,12 +1,12 @@
 /**
- * UZ Aero (serwer) — KONTRAKT operacji serwisowych panelu (`A11-konserwacja.html`).
+ * UZ Aero (serwer) - KONTRAKT operacji serwisowych panelu (`A11-konserwacja.html`).
  *
  * Wyłącznie typy; jedyny dozwolony import to `@uzaero/domain` (patrz `sessions.ts`).
  *
  * Ekran ma cztery sekcje i trzy z nich mieszkają tutaj: przebudowa projekcji,
  * sprzątanie wygasłych refresh tokenów i stan schematu. Czwarta (kolejka ponowień
  * eksportu) NIE MA własnego kontraktu i to jest decyzja: jej wierszem jest
- * `AdminExportListItem` z `contracts/exports.ts`, a jej akcją — `AdminExportCommands.retry`
+ * `AdminExportListItem` z `contracts/exports.ts`, a jej akcją - `AdminExportCommands.retry`
  * z `A05`. Drugi kształt tego samego bytu byłby początkiem rozjazdu między „ponów"
  * na monitorze eksportu a „ponów" w konserwacji.
  */
@@ -19,7 +19,7 @@
  * Od 2026-08-02 tryby są rozdzielone także w KODZIE: `dry_run` powstaje w zapytaniu
  * (`queries/maintenance.ts`, zero zapisów i zero audytu), `write` w komendzie
  * (`commands/maintenance.ts`, przez `AuditedWrite`). To pole zostaje, bo raport ma
- * mówić, którą z dwóch dróg powstał — inaczej dwa identycznie wyglądające dokumenty
+ * mówić, którą z dwóch dróg powstał - inaczej dwa identycznie wyglądające dokumenty
  * różniłyby się wyłącznie tym, czego już nie widać.
  */
 export type RebuildMode = 'dry_run' | 'write';
@@ -54,10 +54,10 @@ export interface ProjectionRowDiff {
  */
 export interface RebuildReport {
   mode: RebuildMode;
-  /** Ile sesji znaleziono w rejestrze `events` (nie w projekcji — to jest cały sens). */
+  /** Ile sesji znaleziono w rejestrze `events` (nie w projekcji - to jest cały sens). */
   sessions: number;
   /**
-   * Ile wierszy się rozjechało — liczba PEŁNA, policzona nad całym rejestrem i
+   * Ile wierszy się rozjechało - liczba PEŁNA, policzona nad całym rejestrem i
    * niezależna od limitu objętości raportu. Ta sama zasada, co `AdminExportCounts`
    * na `A05`: liczba opisuje cały zakres, lista opisuje to, co się zmieściło.
    */
@@ -66,11 +66,11 @@ export interface RebuildReport {
   /** Ile wierszy FAKTYCZNIE nadpisano; w `dry_run` zawsze 0. */
   written: number;
   /**
-   * Ile rozjechanych sesji ZOSTAŁO poza tym raportem — `rowsDiffering - diffs.length`.
+   * Ile rozjechanych sesji ZOSTAŁO poza tym raportem - `rowsDiffering - diffs.length`.
    *
    * Przy `write` to jest dokładnie ta sama liczba w drugim znaczeniu: **tyle sesji
    * nadal się różni i czeka na kolejne wywołanie**, bo jeden przebieg nadpisuje
-   * najwyżej `PROJECTION_DIFF_LIMIT` sesji (`application/admin/projectionScan.ts` —
+   * najwyżej `PROJECTION_DIFF_LIMIT` sesji (`application/admin/projectionScan.ts` -
    * tam też uzasadnienie limitu). Znaczenia schodzą się, bo zapis nadpisuje dokładnie
    * te wiersze, które opisuje raport, i ani jednego więcej.
    *
@@ -81,21 +81,21 @@ export interface RebuildReport {
   diffs: ProjectionRowDiff[];
 }
 
-// ── wygasłe refresh tokeny (sekcja 3 — JEDYNA operacja, która kasuje) ────────────
+// ── wygasłe refresh tokeny (sekcja 3 - JEDYNA operacja, która kasuje) ────────────
 
 /**
  * Stan tabeli `refresh_tokens` widziany PRZED czyszczeniem (`A11`, karta „Wygasłe
  * refresh tokeny").
  *
  * **Nie ma tu ani jednego pola z wartością tokenu i nie może być.** W bazie leżą
- * wyłącznie skróty SHA-256, a wartości nie zna nawet serwer — ale reguła obowiązuje
+ * wyłącznie skróty SHA-256, a wartości nie zna nawet serwer - ale reguła obowiązuje
  * niezależnie od tego, co akurat leży w kolumnie: `A09` wymienia tokeny na liście
  * rzeczy, które NIGDY nie opuszczają swojej tabeli. Stąd wyłącznie liczby i daty.
  *
  * `valid` jedzie osobno, a nie jako `total - expired`, bo to jest zdanie, które ekran
- * wypowiada wprost („15 ważnych — bez zmian") i musi je policzyć serwer w tym samym
+ * wypowiada wprost („15 ważnych - bez zmian") i musi je policzyć serwer w tym samym
  * zapytaniu, w którym liczy wygasłe. Odejmowanie po stronie panelu byłoby drugą
- * definicją „ważnego" — a granica biegnie po zegarze, więc dwie definicje znaczą
+ * definicją „ważnego" - a granica biegnie po zegarze, więc dwie definicje znaczą
  * dwie różne chwile.
  */
 export interface RefreshTokenScanDto {
@@ -105,19 +105,19 @@ export interface RefreshTokenScanDto {
   /** Zakres WYGAŚNIĘCIA kandydatów do skasowania (ISO 8601, UTC); `null` = brak. */
   oldestExpiredAt: string | null;
   newestExpiredAt: string | null;
-  /** Chwila, wobec której policzono „wygasły" — bo granica jest ruchoma. */
+  /** Chwila, wobec której policzono „wygasły" - bo granica jest ruchoma. */
   at: string;
-  /** `REFRESH_TTL_DAYS` — ekran mówi, po jakim czasie wiersz w ogóle może wygasnąć. */
+  /** `REFRESH_TTL_DAYS` - ekran mówi, po jakim czasie wiersz w ogóle może wygasnąć. */
   ttlDays: number;
 }
 
 /**
- * Skutek czyszczenia. Te same liczby jadą do `admin_audit.details` — i to jest CAŁA
+ * Skutek czyszczenia. Te same liczby jadą do `admin_audit.details` - i to jest CAŁA
  * treść wpisu: ile wierszy zniknęło i z jakiego zakresu dat wygaśnięcia.
  *
  * `remainingValid` odpowiada na pytanie, które zadaje się zaraz po kliknięciu: czy
  * ktoś stracił sesję. Odpowiedź „nie" musi być policzona PO skasowaniu, w tej samej
- * transakcji — inaczej byłaby obietnicą sprzed operacji.
+ * transakcji - inaczej byłaby obietnicą sprzed operacji.
  */
 export interface TokenPurgeReport {
   deleted: number;
@@ -127,12 +127,12 @@ export interface TokenPurgeReport {
   at: string;
 }
 
-// ── stan schematu (sekcja 4 — tylko do odczytu) ─────────────────────────────────
+// ── stan schematu (sekcja 4 - tylko do odczytu) ─────────────────────────────────
 
 /** Jedna migracja: numer, jednozdaniowy opis i chwila zastosowania. */
 export interface SchemaMigrationDto {
   version: number;
-  /** Opis z `infrastructure/pg/schema.ts` — źródło prawdy stoi przy DDL-u. */
+  /** Opis z `infrastructure/pg/schema.ts` - źródło prawdy stoi przy DDL-u. */
   title: string;
   /** ISO 8601 UTC; `null` = migracja jeszcze NIE zastosowana. */
   appliedAt: string | null;
@@ -147,11 +147,11 @@ export interface SchemaMigrationDto {
  * administratora. Ta odpowiedź istnieje po to, żeby przy diagnozie nie trzeba było
  * zaglądać do `psql`.
  *
- * `pending > 0` znaczy, że baza jest STARSZA niż kod, który ją obsługuje — stan możliwy
+ * `pending > 0` znaczy, że baza jest STARSZA niż kod, który ją obsługuje - stan możliwy
  * wyłącznie wtedy, gdy runner padł w starcie. Ekran nazywa go wprost.
  */
 export interface SchemaStateDto {
-  /** `SCHEMA_VERSION` — ile migracji zna KOD. */
+  /** `SCHEMA_VERSION` - ile migracji zna KOD. */
   schemaVersion: number;
   /** Ile migracji odnotowała BAZA (`schema_migrations`). */
   applied: number;

@@ -1,11 +1,11 @@
-# UZ Aero — obraz produkcyjny serwera (API + statyczny build panelu; Railway/Docker).
+# UZ Aero - obraz produkcyjny serwera (API + statyczny build panelu; Railway/Docker).
 #
 # Monorepo npm workspaces, więc obie instalacje jadą `npm ci -w …` z JEDNEGO lockfile'a
-# w korzeniu — bez workspace'u `app/` (Expo to setki MB, których serwer nie potrzebuje).
+# w korzeniu - bez workspace'u `app/` (Expo to setki MB, których serwer nie potrzebuje).
 # Manifest `app/package.json` MUSI jednak być w obrazie budowania: npm czyta mapę
 # workspace'ów z korzenia i bez niego odmawia jakiejkolwiek instalacji.
 #
-# Serwer działa przez tsx (TypeScript bez kroku budowania — jak `npm run start`),
+# Serwer działa przez tsx (TypeScript bez kroku budowania - jak `npm run start`),
 # dlatego `tsx` jest w dependencies serwera, a runtime instaluje `--omit=dev`.
 
 # ── etap 1: build panelu (Vite, base '/admin/') ──────────────────────────────
@@ -44,9 +44,9 @@ COPY server/ server/
 COPY --from=admin-build /repo/admin/dist admin/dist
 
 # Resztę środowiska (DATABASE_URL, JWT_SECRET, PUBLIC_BASE_URL, TRUST_PROXY=1, PORT)
-# podaje hosting; build panelu serwer znajduje sam — ścieżka wbudowana względem źródeł
+# podaje hosting; build panelu serwer znajduje sam - ścieżka wbudowana względem źródeł
 # (`staticPanel.ts`), stąd COPY wyżej musi trafić dokładnie w `admin/dist`. `TRACES_DIR`
-# celowo na /data — tam montuje się trwały wolumen: po issue #47 kopia śladu GPS
+# celowo na /data - tam montuje się trwały wolumen: po issue #47 kopia śladu GPS
 # na serwerze jest JEDYNĄ kopią.
 ENV TRACES_DIR=/data/traces
 

@@ -1,9 +1,9 @@
 /**
- * UZ Aero — panel: karta „SKUTKI ZMIANY" (`A07a`).
+ * UZ Aero - panel: karta „SKUTKI ZMIANY" (`A07a`).
  *
  * Scenariusz, dla którego ta karta istnieje, jest tu przybity dosłownie: pojemność
- * SP-KLM z 1257 na 1100 L musi pokazać przesunięcie progu z ±62.9 na ±55.0 L —
- * **z liczb serwera** — i musi powiedzieć PRAWDĘ o tym, co się stanie z otwartymi
+ * SP-KLM z 1257 na 1100 L musi pokazać przesunięcie progu z ±62.9 na ±55.0 L -
+ * **z liczb serwera** - i musi powiedzieć PRAWDĘ o tym, co się stanie z otwartymi
  * flagami. Adnotacja „bez przeliczenia" była nieprawdziwa: wpisy istniejące faktycznie
  * zostają nietknięte, ale niższy próg potrafi DOŁOŻYĆ flagi na parach dni zamkniętych
  * wcześniej, bo `POST /events` przelicza łańcuch z całej historii samolotu
@@ -57,7 +57,7 @@ describe('scenariusz z mockupu: 1257 → 1100 L', () => {
     expect(rowOf(card, 'Pojemność').value).toBe('1257 L → 1100 L');
   });
 
-  it('pokazuje PRZESUNIĘCIE progu — obie liczby z serwera, żadnej z panelu', () => {
+  it('pokazuje PRZESUNIĘCIE progu - obie liczby z serwera, żadnej z panelu', () => {
     expect(rowOf(card, 'Próg FUEL_MISMATCH').value).toBe('±62.9 L → ±55.0 L');
   });
 
@@ -68,7 +68,7 @@ describe('scenariusz z mockupu: 1257 → 1100 L', () => {
 
   it('o otwartych flagach mówi PRAWDĘ: zostają, ale mogą przybyć', () => {
     // Ten wiersz nie ma prawa obiecywać „bez przeliczenia". Istniejące flagi zachowują
-    // próg z chwili wykrycia i żadna nie zniknie — natomiast obniżenie pojemności
+    // próg z chwili wykrycia i żadna nie zniknie - natomiast obniżenie pojemności
     // przesuwa próg także dla PAR HISTORYCZNYCH, więc liczba jest dolną granicą.
     const row = rowOf(card, 'Otwarte flagi tej jednostki');
     expect(row.value).toBe('2');
@@ -89,7 +89,7 @@ describe('próg czeka na serwer, zamiast zgadywać', () => {
     const before = dto();
     const card = impactCard(before, draft(before, { capacity: '1100' }), null);
     const row = rowOf(card, 'Próg FUEL_MISMATCH');
-    // Stara wartość widoczna, ale opisana — pokazanie jej jako „po" byłoby liczbą,
+    // Stara wartość widoczna, ale opisana - pokazanie jej jako „po" byłoby liczbą,
     // która nie nadąża za polem.
     expect(row.value).toBe('±62.9 L');
     expect(row.unit).toBe('nowy próg liczy serwer…');

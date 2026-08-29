@@ -1,8 +1,8 @@
 /**
- * UZ Aero — test logiki prezentacji korekty (04c).
+ * UZ Aero - test logiki prezentacji korekty (04c).
  *
  * Wiersz „Wpływ na czas lotu" jest obietnicą: pokazuje pilotowi, co korekta zrobi,
- * ZANIM ją zapisze. Liczymy go tą samą projekcją, którą liczy cała aplikacja — ten test
+ * ZANIM ją zapisze. Liczymy go tą samą projekcją, którą liczy cała aplikacja - ten test
  * pilnuje, żeby obietnica i skutek były jednym kodem, na liczbach z mockupu.
  */
 
@@ -66,7 +66,7 @@ describe('wpływ korekty na czasy', () => {
     expect(impact.afterMs - impact.beforeMs).toBe(6 * 60_000);
   });
 
-  it('tankowanie nie wyznacza czasu — brak wiersza wpływu zamiast „0:00 → 0:00"', () => {
+  it('tankowanie nie wyznacza czasu - brak wiersza wpływu zamiast „0:00 → 0:00"', () => {
     const { events, refuel } = day();
     expect(correctionImpact(events, refuel, at(11, 0))).toBeNull();
   });

@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: stan pusty (`.empty` z `SZABLON.html`).
+ * UZ Aero - panel: stan pusty (`.empty` z `SZABLON.html`).
  *
  * `note` jest OBOWIĄZKOWE, bo pusty ekran bez wyjaśnienia to najgorsza możliwa
  * odpowiedź narzędzia diagnostycznego: nie odróżnia „nic się nie zdarzyło" od

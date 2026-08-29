@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: wiersze ujęcia „per samolot".
+ * UZ Aero - panel: wiersze ujęcia „per samolot".
  *
  * Wiersz RAZEM bierze liczby z `totals` SERWERA (nie sumuje tutaj), a trzy kolumny
  * dostają w nim kreskę ŚWIADOMIE: średnia ze średnich nie jest średnią.
@@ -48,11 +48,11 @@ describe('aircraftRows', () => {
       flight: '133:45',
       takeoffsLandings: '356 / 356',
       fuel: '21 436 L',
-      avgLph: '—',
-      mhRange: '—',
-      // Formaty liczników bywają różne per jednostka — suma w godzinach dziesiętnych.
+      avgLph: '-',
+      mhRange: '-',
+      // Formaty liczników bywają różne per jednostka - suma w godzinach dziesiętnych.
       mhDelta: '186.3 h',
-      utilization: '—',
+      utilization: '-',
       blockClass: 'cell-green',
       flightClass: 'cell-blue',
       fuelClass: 'cell-amber',
@@ -70,10 +70,10 @@ describe('aircraftRows', () => {
     klm.mhDeltaH = null;
 
     const row = aircraftRows(data.aircraft, data.totals)[0]!;
-    expect(row.takeoffsLandings).toBe('—');
-    expect(row.fuel).toBe('—');
-    expect(row.avgLph).toBe('—');
-    expect(row.mhDelta).toBe('—');
+    expect(row.takeoffsLandings).toBe('-');
+    expect(row.fuel).toBe('-');
+    expect(row.avgLph).toBe('-');
+    expect(row.mhDelta).toBe('-');
     // Stare kolumny projekcji zostają liczbami.
     expect(row.block).toBe('112:38');
   });

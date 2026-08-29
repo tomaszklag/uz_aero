@@ -1,12 +1,12 @@
 /**
- * UZ Aero — panel: DZIENNIK AUDYTU (`design/admin/A09-audyt.html`).
+ * UZ Aero - panel: DZIENNIK AUDYTU (`design/admin/A09-audyt.html`).
  *
  * Dziennik zapisuje się od pierwszego przekroju panelu i **nikt go dotąd nie
- * przeczytał** — ten ekran jest jego pierwszym czytelnikiem. Scenariusz, dla którego
+ * przeczytał** - ten ekran jest jego pierwszym czytelnikiem. Scenariusz, dla którego
  * powstaje, jest konkretny: administrator patrzy na dzień lotny, którego liczby nie
  * zgadzają się z tym, co pamięta pilot, i musi odpowiedzieć na pytanie „kto to ruszał,
  * kiedy i dlaczego". Dlatego wejście z kontekstem (`?typ=event&obiekt=…` z karty dnia
- * i z ekranu korekty) jest wymaganiem, a nie ozdobą — a filtry mieszkają w URL-u,
+ * i z ekranu korekty) jest wymaganiem, a nie ozdobą - a filtry mieszkają w URL-u,
  * żeby taki link dało się wkleić.
  *
  * Ekran jest `.tsx` BEZ arytmetyki i bez decyzji o treści: każdy napis, plakietka
@@ -14,15 +14,15 @@
  * `auditRows`, `auditDetails`, `auditPages`, `auditTiles`), które mają testy w Node.
  *
  * ══ CZEGO TEN EKRAN ŚWIADOMIE NIE POKAZUJE ══
- *  1. **Logowań do panelu** (`auth.login`, `auth.login_failed` z mockupu) — takich
+ *  1. **Logowań do panelu** (`auth.login`, `auth.login_failed` z mockupu) - takich
  *     wpisów NIE MA i nie da się ich udawać: wiersz `admin_audit` powstaje wyłącznie
  *     przez `AuditedWrite`, w tej samej transakcji co SKUTEK, a logowanie skutku nie
  *     ma; nieudane nie ma nawet aktora (`actor_pilot_id NOT NULL`). Ekran mówi to
  *     wprost w karcie „Czego tu nie ma".
- *  2. **Wyszukiwania pełnotekstowego** po nazwisku, rejestracji i adresie IP —
+ *  2. **Wyszukiwania pełnotekstowego** po nazwisku, rejestracji i adresie IP -
  *     trasa filtruje po DOKŁADNYCH identyfikatorach. Pole wyszukiwania zawęża po
  *     identyfikatorze obiektu i mówi o tym w podpowiedzi.
- *  3. **Chipów aktorów z licznikami** („T. Małkiewicz · 10") — wymagałyby agregatu
+ *  3. **Chipów aktorów z licznikami** („T. Małkiewicz · 10") - wymagałyby agregatu
  *     `GROUP BY actor`, którego serwer nie wystawia. Zamiast zgadywać: konto zawęża
  *     się kliknięciem w kolumnie „Kto", a chip pokazuje bieżące zawężenie.
  * Wszystkie trzy są opisane na ekranie, nie przemilczane.
@@ -86,7 +86,7 @@ export function AuditScreen() {
 
   // Wpis w wyszukiwarce żyje lokalnie do naciśnięcia Entera: filtrem jest URL, ale
   // przeładowywanie dziennika po każdej literze UUID-a byłoby serią żądań, z których
-  // żadne nie ma sensu — trasa dopasowuje identyfikator DOKŁADNIE, nie prefiksem.
+  // żadne nie ma sensu - trasa dopasowuje identyfikator DOKŁADNIE, nie prefiksem.
   const [targetDraft, setTargetDraft] = useState(filter.targetId ?? '');
   useEffect(() => {
     setTargetDraft(filter.targetId ?? '');
@@ -100,7 +100,7 @@ export function AuditScreen() {
         reason={denialReason('audit.read')}
         note={
           <>
-            Dziennik akcji administratorów czyta wyłącznie administrator — szef wyszkolenia
+            Dziennik akcji administratorów czyta wyłącznie administrator - szef wyszkolenia
             rozstrzyga rozbieżności, ale nie nadzoruje cudzych śladów. Ta pozycja nawigacji
             zostaje <b>widoczna</b> właśnie po to, żebyś nie musiał zgadywać, czy funkcji nie
             ma w produkcie, czy nie ma jej Twoje konto.
@@ -123,7 +123,7 @@ export function AuditScreen() {
         sub={
           <>
             Każda akcja administratora i szefa wyszkolenia: kto, kiedy (UTC), co i na czym.
-            Wpis powstaje <b>tą samą transakcją, co skutek</b> — operacja, której nie udało się
+            Wpis powstaje <b>tą samą transakcją, co skutek</b> - operacja, której nie udało się
             zaudytować, po prostu nie zachodzi. Rejestr lotniczy jest append-only, więc panel,
             który go dotyka, musi być rozliczalny tak samo.
           </>
@@ -143,7 +143,7 @@ export function AuditScreen() {
       <Banner tone="danger">
         <b>Wiersze audytu są niezmienne i nieusuwalne.</b> Nie ma tu edycji, kasowania,
         „archiwizuj" ani „wyczyść starsze niż". W całym <code>server/src</code> nie występuje
-        ani jedno <code>UPDATE admin_audit</code> ani <code>DELETE FROM admin_audit</code> —
+        ani jedno <code>UPDATE admin_audit</code> ani <code>DELETE FROM admin_audit</code> -
         i pilnuje tego test architektury, a docelowo <code>GRANT INSERT, SELECT</code> dla roli
         aplikacyjnej. Administrator nie może usunąć własnego śladu i to jest cel, nie skutek
         uboczny.
@@ -156,8 +156,8 @@ export function AuditScreen() {
       </Banner>
 
       <TileGrid>
-        {/* Warunkiem „—" jest OBECNOŚĆ danych, nie faza ładowania. `isPending` jest
-            `false` także wtedy, gdy pobranie się NIE UDAŁO — a `auditPages` bez
+        {/* Warunkiem „-" jest OBECNOŚĆ danych, nie faza ładowania. `isPending` jest
+            `false` także wtedy, gdy pobranie się NIE UDAŁO - a `auditPages` bez
             odpowiedzi oddaje wtedy `total: null`, czyli „nie wiemy". Postawienie tu
             zera kazałoby ekranowi twierdzić, tuż obok banera o błędzie, że w całej
             historii systemu nie było ani jednej akcji administratora. */}
@@ -175,7 +175,7 @@ export function AuditScreen() {
         <SearchInput
           value={targetDraft}
           ariaLabel="Filtruj po identyfikatorze obiektu"
-          placeholder={'Identyfikator obiektu: uuid zdarzenia, numer flagi, kod pilota — Enter filtruje'}
+          placeholder={'Identyfikator obiektu: uuid zdarzenia, numer flagi, kod pilota - Enter filtruje'}
           onChange={setTargetDraft}
           onSubmit={() =>
             apply({
@@ -204,7 +204,7 @@ export function AuditScreen() {
           <FilterChip
             label={`${filter.from ?? '…'} → ${filter.to ?? '…'} · zdejmij`}
             active
-            title="Zakres dat UTC z adresu — panel nie ma jeszcze kalendarza (patrz baner pod tabelą)."
+            title="Zakres dat UTC z adresu - panel nie ma jeszcze kalendarza (patrz baner pod tabelą)."
             onClick={() => apply({ ...filter, from: null, to: null })}
           />
         )}
@@ -236,7 +236,7 @@ export function AuditScreen() {
             label={`${filter.scope.code} · zdejmij`}
             active
             tone="amber"
-            title="Zawężenie do jednej akcji — z kliknięcia w plakietkę w tabeli."
+            title="Zawężenie do jednej akcji - z kliknięcia w plakietkę w tabeli."
             onClick={() => apply({ ...filter, scope: null })}
           />
         ) : null}
@@ -244,7 +244,7 @@ export function AuditScreen() {
 
       {entries.isPending ? null : entries.isError ? (
         <Banner tone="danger" live>
-          <b>Nie udało się pobrać dziennika.</b> Panel działa wyłącznie online — to jedyne
+          <b>Nie udało się pobrać dziennika.</b> Panel działa wyłącznie online - to jedyne
           miejsce w systemie, w którym brak sieci wolno pokazać jako blokadę.{' '}
           <Button variant="ghost" size="sm" onClick={() => void entries.refetch()}>
             Ponów
@@ -257,7 +257,7 @@ export function AuditScreen() {
       ) : (
         <>
           <DataTable
-            caption="Dziennik audytu — porządek serwera od najnowszego, czasy UTC"
+            caption="Dziennik audytu - porządek serwera od najnowszego, czasy UTC"
             columns={columns(filter, apply)}
             rows={rows}
             rowKey={(row) => row.id}
@@ -268,7 +268,7 @@ export function AuditScreen() {
               {pagesSummary(pages)}{' '}
               {pages.hasMore ? (
                 <>
-                  Kolejne wpisy dokłada <b>kursor keyset</b>, nie <code>OFFSET</code> —
+                  Kolejne wpisy dokłada <b>kursor keyset</b>, nie <code>OFFSET</code> -
                   dziennik rośnie w trakcie przeglądania (drugi administrator właśnie coś
                   zmienia), a offset na rosnącej tabeli gubi wiersze i dubluje inne.
                 </>
@@ -292,7 +292,7 @@ export function AuditScreen() {
       <Banner tone="status">
         <b>Czego ten dziennik nie umie wyszukać.</b> Trasa filtruje po <b>dokładnych</b>{' '}
         identyfikatorach: konto, typ i identyfikator obiektu, grupa akcji, zakres dat.
-        Nie ma wyszukiwania po nazwisku, rejestracji ani adresie IP i nie ma kalendarza —
+        Nie ma wyszukiwania po nazwisku, rejestracji ani adresie IP i nie ma kalendarza -
         zakres ustawia się z adresu (<code>?od=2026-07-25&amp;do=2026-07-31</code>).
         Sortować da się wyłącznie po czasie, bo kursor keyset jedzie po{' '}
         <code>(created_at, id)</code>; nagłówek, który po kliknięciu nic nie robi, byłby
@@ -346,7 +346,7 @@ export function AuditScreen() {
           </div>
           <span className="hint">
             Katalog jest <b>pełny od początku</b>, choć część akcji nie ma jeszcze ekranu,
-            który by je wywoływał — odpowiada na pytanie o ZAKRES panelu, nie o stan wdrożenia
+            który by je wywoływał - odpowiada na pytanie o ZAKRES panelu, nie o stan wdrożenia
             (<code className="code-ref">server/src/domain/adminActions.ts</code>). Kody są surowe;
             nazwy po polsku i plakietki są własnością panelu, bo serwer nie zna języka interfejsu.
           </span>
@@ -385,13 +385,13 @@ export function AuditScreen() {
             <span className="hint">
               <b>Logowań w tym dzienniku nie ma i to jest granica konstrukcji, nie brak.</b>{' '}
               Wiersz powstaje wyłącznie przez <code>AuditedWrite</code>, w tej samej transakcji
-              co skutek — a udane logowanie żadnego skutku w danych nie ma, nieudane nie ma zaś
+              co skutek - a udane logowanie żadnego skutku w danych nie ma, nieudane nie ma zaś
               nawet aktora (<code>actor_pilot_id NOT NULL</code>). Gdyby te wpisy miały powstawać,
               musiałby to być <b>osobny dziennik bezpieczeństwa</b>, z własną tabelą i własnym
-              cyklem życia — i taka jest decyzja do podjęcia, a nie poprawka do tego ekranu.
+              cyklem życia - i taka jest decyzja do podjęcia, a nie poprawka do tego ekranu.
             </span>
             <span className="hint">
-              Audyt opisuje akcje <b>panelu</b>, nie ruch samolotów — to, co robił pilot, jest
+              Audyt opisuje akcje <b>panelu</b>, nie ruch samolotów - to, co robił pilot, jest
               w rejestrze zdarzeń i tam też zostaje na zawsze. Dwa różne dzienniki, dwie różne
               odpowiedzialności; żadnego z nich nie da się posprzątać.
             </span>
@@ -403,11 +403,11 @@ export function AuditScreen() {
 }
 
 /**
- * Kolumny dziennika — dokładnie te z `A09-audyt.html`.
+ * Kolumny dziennika - dokładnie te z `A09-audyt.html`.
  *
  * Sortowanie dostaje WYŁĄCZNIE kolumna czasu, bo tylko po niej serwer umie stronicować
  * kursorem. Wiersz nie jest klikalny: wpis audytu nie ma ekranu szczegółu, a cała jego
- * treść stoi w kolumnie „Szczegóły" — udawany klik prowadziłby donikąd.
+ * treść stoi w kolumnie „Szczegóły" - udawany klik prowadziłby donikąd.
  */
 function columns(filter: AuditFilter, apply: (next: AuditFilter) => void): Column<AuditRow>[] {
   return [

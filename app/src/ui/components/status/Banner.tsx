@@ -1,28 +1,28 @@
 /**
- * UZ Aero — Banner (trzy typy, jeden zamykalny)
+ * UZ Aero - Banner (trzy typy, jeden zamykalny)
  *
- * Taksonomia z `docs/design-notes.md` — od typu zależy, czy wolno go zamknąć:
+ * Taksonomia z `docs/design-notes.md` - od typu zależy, czy wolno go zamknąć:
  *
- *  • `status`  — żywy stan (offline, tylko-odczyt, odliczanie okna korekty).
- *                To PRZYRZĄD, nie onboarding. **Nigdy zamykalny** — ukrycie go
+ *  • `status`  - żywy stan (offline, tylko-odczyt, odliczanie okna korekty).
+ *                To PRZYRZĄD, nie onboarding. **Nigdy zamykalny** - ukrycie go
  *                znaczy ukrycie stanu, którego pilot potrzebuje co spojrzenie.
- *  • `warning` — ostrzeżenie warunkowe (rozbieżność paliwa/MH, brak drugiego pilota).
+ *  • `warning` - ostrzeżenie warunkowe (rozbieżność paliwa/MH, brak drugiego pilota).
  *                Pojawia się i znika **z warunkiem**; nie zamyka się ręcznie.
- *  • `edu`     — pouczający, jednorazowy. Pomocny za pierwszym razem, szum potem.
+ *  • `edu`     - pouczający, jednorazowy. Pomocny za pierwszym razem, szum potem.
  *                **Zamykalny**: `×` chowa go, w jego miejscu zostaje mini-chip.
  *
- * Stan schowania banera `edu` aplikacja zapamiętuje NA STAŁE per pilot — inaczej pilot
+ * Stan schowania banera `edu` aplikacja zapamiętuje NA STAŁE per pilot - inaczej pilot
  * zamykałby go w kółko i wzorzec byłby gorszy niż jego brak. Tu przyjmujemy to przez
  * `dismissed` + `onDismiss`, żeby komponent pozostał bezstanowy.
  *
- * IKONA POUCZAJĄCEGO TO ZAWSZE PYTAJNIK (uwaga z urządzenia, 2026-08-27) — komponent
+ * IKONA POUCZAJĄCEGO TO ZAWSZE PYTAJNIK (uwaga z urządzenia, 2026-08-27) - komponent
  * WYMUSZA ją dla `edu`, ignorując `icon` od wołającego: baner, który wyjaśnia, PYTA,
  * a wykrzyknik (`info` = alert-circle) czytał się jak ostrzeżenie. TA SAMA ikona stoi
- * w banerze i w zwiniętym chipie — chip rysował dotąd tekstowe „?", więc dwa stany
+ * w banerze i w zwiniętym chipie - chip rysował dotąd tekstowe „?", więc dwa stany
  * jednej rzeczy wyglądały jak dwie rzeczy. Egzekwowane tutaj, nie konwencją w ekranach,
  * bo konwencja już raz się rozjechała (trzy ekrany podawały `info`, jeden `sync`).
  *
- * `action` — opcjonalny przycisk POD treścią (np. „Wyczyść formularz" w banerze
+ * `action` - opcjonalny przycisk POD treścią (np. „Wyczyść formularz" w banerze
  * o podstawionych danych na 02E): baner tłumaczący, skąd wzięły się wartości, jest
  * naturalnym miejscem decyzji „nie chcę ich". Slot jest częścią komponentu, żeby
  * przycisk w banerze wyglądał wszędzie tak samo.
@@ -42,7 +42,7 @@ export interface BannerProps {
   kind: BannerKind;
   title?: string;
   text: string;
-  /** Ikona po lewej (mockupy mają ją przy ostrzeżeniach — `.warning-box`). */
+  /** Ikona po lewej (mockupy mają ją przy ostrzeżeniach - `.warning-box`). */
   icon?: IconName;
   /** Ton akcentu; domyślnie dobierany po rodzaju. */
   tone?: Tone;
@@ -52,7 +52,7 @@ export interface BannerProps {
   onDismiss?: (next: boolean) => void;
   /** Etykieta mini-chipu po zwinięciu (np. „Jak to działa?"). */
   collapsedLabel?: string;
-  /** Przycisk pod treścią (np. „Wyczyść formularz") — patrz docblock modułu. */
+  /** Przycisk pod treścią (np. „Wyczyść formularz") - patrz docblock modułu. */
   action?: { label: string; onPress: () => void };
   style?: ViewStyle;
 }
@@ -78,10 +78,10 @@ export function Banner({
   const { theme } = useTheme();
   const c = toneColors(theme, tone ?? DEFAULT_TONE[kind]);
   const dismissible = kind === 'edu' && onDismiss != null;
-  // Pouczający PYTA — pytajnik wymuszony na poziomie DS (patrz docblock modułu).
+  // Pouczający PYTA - pytajnik wymuszony na poziomie DS (patrz docblock modułu).
   const effectiveIcon: IconName | undefined = kind === 'edu' ? 'help' : icon;
 
-  // Zwinięty baner pouczający — mini-chip w miejscu, w którym stał; TA SAMA ikona,
+  // Zwinięty baner pouczający - mini-chip w miejscu, w którym stał; TA SAMA ikona,
   // co w banerze rozwiniętym, żeby dwa stany jednej rzeczy wyglądały jak jedna rzecz.
   if (dismissible && dismissed) {
     return (
@@ -89,7 +89,7 @@ export function Banner({
         accessibilityRole="button"
         accessibilityLabel={`Pokaż wyjaśnienie: ${collapsedLabel}`}
         onPress={() => onDismiss?.(false)}
-        // Mini-chip 34 px jest z mockupu (05f) — hitSlop dociąga cel do progu rękawic.
+        // Mini-chip 34 px jest z mockupu (05f) - hitSlop dociąga cel do progu rękawic.
         hitSlop={6}
         style={[
           styles.mini,

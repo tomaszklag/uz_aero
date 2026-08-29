@@ -1,8 +1,8 @@
 /**
- * UZ Aero — testy odwzorowania Web Mercator i doboru kafelków.
+ * UZ Aero - testy odwzorowania Web Mercator i doboru kafelków.
  *
  * Ta matematyka nie ma testu „na oko": błąd w niej nie wywala aplikacji, tylko przesuwa
- * ślad o kilometr względem mapy — a to jest dokładnie ten rodzaj wady, którą łatwo
+ * ślad o kilometr względem mapy - a to jest dokładnie ten rodzaj wady, którą łatwo
  * przeoczyć na ekranie i niemożliwie trudno wytłumaczyć potem pilotowi.
  *
  * Punkty odniesienia są znane z definicji odwzorowania (środek świata, zawijanie osi X,
@@ -49,7 +49,7 @@ describe('project / unproject', () => {
     }
   });
 
-  it('północ ma mniejsze Y niż południe — oś rośnie na południe', () => {
+  it('północ ma mniejsze Y niż południe - oś rośnie na południe', () => {
     const north = project({ lat: 60, lon: 0 }, 8);
     const south = project({ lat: 40, lon: 0 }, 8);
     expect(north.y).toBeLessThan(south.y);
@@ -101,7 +101,7 @@ describe('fitBounds', () => {
     expect(center.y).toBeCloseTo(150, 6);
   });
 
-  it('zoom jest liczbą całkowitą — kafelki istnieją tylko dla takich poziomów', () => {
+  it('zoom jest liczbą całkowitą - kafelki istnieją tylko dla takich poziomów', () => {
     const view = fitBounds(bounds, 360, 300);
     expect(Number.isInteger(view.zoom)).toBe(true);
   });
@@ -142,14 +142,14 @@ describe('tilesFor', () => {
     }
   });
 
-  it('zawija oś X — mapa jest cylindrem', () => {
+  it('zawija oś X - mapa jest cylindrem', () => {
     // Okno wychodzące poza prawą krawędź świata na zoomie 1 (płótno 512 px).
     const view = { zoom: 1, originX: 500, originY: 100, width: 200, height: 100 };
     const tiles = tilesFor(view);
     expect(tiles.every((t) => t.x >= 0 && t.x < 2)).toBe(true);
   });
 
-  it('pomija kafelki spoza osi Y — nad biegunem nie ma mapy', () => {
+  it('pomija kafelki spoza osi Y - nad biegunem nie ma mapy', () => {
     const view = { zoom: 1, originX: 0, originY: -300, width: 200, height: 200 };
     const tiles = tilesFor(view);
     expect(tiles.every((t) => t.y >= 0 && t.y < 2)).toBe(true);
@@ -161,7 +161,7 @@ describe('scaleBar', () => {
     const view = fitBounds({ north: 52.2, south: 52.1, east: 15.9, west: 15.7 }, 360, 300);
     const bar = scaleBar(view, EPZG.lat);
 
-    // Ładna ma być liczba w NM, bo to ona stoi pod kreską — metry są tylko pochodną
+    // Ładna ma być liczba w NM, bo to ona stoi pod kreską - metry są tylko pochodną
     // do przeliczenia długości pasa startowego na piksele (2026-08-15).
     const mantissa = bar.nm / 10 ** Math.floor(Math.log10(bar.nm));
     expect([1, 2, 5]).toContain(Math.round(mantissa));

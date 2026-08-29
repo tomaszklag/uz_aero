@@ -1,12 +1,12 @@
 /**
- * UZ Aero — panel: COMPOSITION ROOT.
+ * UZ Aero - panel: COMPOSITION ROOT.
  *
  * Jedyne miejsce, które zna wszystkie konkrety naraz: klienta zapytań, router,
  * kontekst sesji i arkusze stylów. Reszta kodu dostaje wszystko propsami albo
- * hookiem — dokładnie jak `server/src/index.ts` i `app/src/bootstrap/`.
+ * hookiem - dokładnie jak `server/src/index.ts` i `app/src/bootstrap/`.
  *
  * Kolejność arkuszy jest ZNACZĄCA i dlatego stoi tu, a nie w `index.html`:
- * `fonts.css` (@font-face, self-host — §9) → `tokens.css` (generowany) → `base.css`
+ * `fonts.css` (@font-face, self-host - §9) → `tokens.css` (generowany) → `base.css`
  * (reset i korzeń) → `layout.css` (rama) → komponenty. Zmienne i kroje muszą
  * istnieć, zanim ktokolwiek po nie sięgnie.
  */
@@ -38,13 +38,13 @@ import { createQueryClient } from './queries/client';
 import { router } from './routes';
 
 const container = document.getElementById('root');
-if (container == null) throw new Error('Brak elementu #root — sprawdź admin/index.html');
+if (container == null) throw new Error('Brak elementu #root - sprawdź admin/index.html');
 
 createRoot(container).render(
   <StrictMode>
     <QueryClientProvider client={createQueryClient()}>
       {/* Sesja stoi NAD routerem, bo o tym, czy pokazać ramę czy logowanie,
-          rozstrzygają trasy — a nie mogą tego zrobić, nie znając odpowiedzi. */}
+          rozstrzygają trasy - a nie mogą tego zrobić, nie znając odpowiedzi. */}
       <SessionProvider>
         <RouterProvider router={router} />
       </SessionProvider>

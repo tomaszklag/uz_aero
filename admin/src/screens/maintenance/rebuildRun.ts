@@ -1,14 +1,14 @@
 /**
- * UZ Aero — panel: URUCHOMIENIE przebudowy — dwa kroki (moduł CZYSTY, Node).
+ * UZ Aero - panel: URUCHOMIENIE przebudowy - dwa kroki (moduł CZYSTY, Node).
  *
  * Mockup `A11` mówi wprost: „Nadpisanie odblokowuje się dopiero po świeżym porównaniu
- * i podaniu powodu". Ten plik jest tą regułą zapisaną wykonywalnie — i jest bramką dla
+ * i podaniu powodu". Ten plik jest tą regułą zapisaną wykonywalnie - i jest bramką dla
  * CZŁOWIEKA, nie zabezpieczeniem: serwer odmawia niezależnie (`reason_required`,
  * `nothing_to_rebuild`), a wyszarzenie przycisku ma wyłącznie oszczędzić żądanie
  * i powiedzieć, czego brakuje.
  *
  * ══ RAPORT Z PORÓWNANIA I RAPORT Z ZAPISU TO DWA RÓŻNE DOKUMENTY ══
- * Oba mają ten sam kształt (`RebuildReportDto`) i różnią się jednym polem — `mode`.
+ * Oba mają ten sam kształt (`RebuildReportDto`) i różnią się jednym polem - `mode`.
  * Do 2026-08-02 ekran tej różnicy nie widział, więc zaraz po UDANYM nadpisaniu baner
  * dalej wołał „to incydent, ustal przyczynę, dopiero potem nadpisuj", tabela pokazywała
  * różnice, które właśnie zniknęły, a przycisk wracał CZYNNY z etykietą „Nadpisz N
@@ -19,7 +19,7 @@
  * ══ CZEGO TEN PLIK NIE ROBI ══
  * Nie ocenia, czy różnicę WOLNO nadpisać. Tego nie da się rozstrzygnąć maszynowo:
  * odpowiedź brzmi „tak, jeśli tłumaczy ją wydanie domeny" i wymaga zajrzenia do audytu
- * i dat wydań. Panel może wyłącznie postawić przed tym pytaniem — i stawia je banerem.
+ * i dat wydań. Panel może wyłącznie postawić przed tym pytaniem - i stawia je banerem.
  */
 
 import { dateUtcShort, plural, relativeAge, timeUtc } from '@uzaero/format';
@@ -45,17 +45,17 @@ export interface CurrentReport {
 /** Jedno źródło raportu razem z chwilą, w której stał się aktualny. */
 export interface ReportSource {
   data: RebuildReportDto | undefined;
-  /** `dataUpdatedAt` zapytania albo `submittedAt` mutacji — obie w epoch ms. */
+  /** `dataUpdatedAt` zapytania albo `submittedAt` mutacji - obie w epoch ms. */
   at: number;
 }
 
 /**
- * Który z dwóch raportów opisuje bazę TERAZ — porównanie czy zapis.
+ * Który z dwóch raportów opisuje bazę TERAZ - porównanie czy zapis.
  *
  * ══ DLACZEGO NIE `zapis ?? porównanie` ══
  * Tak było i to jest wada, którą ta funkcja zamyka. Po nadpisaniu raport z zapisu
  * słusznie wygrywa (tamten opisuje bazę, której już nie ma), ale po KOLEJNYM porównaniu
- * wygrywał nadal — bo wynik mutacji żyje w hooku, dopóki go ktoś nie zresetuje. Ekran
+ * wygrywał nadal - bo wynik mutacji żyje w hooku, dopóki go ktoś nie zresetuje. Ekran
  * pokazywałby wtedy skutek sprzed pięciu minut jako odpowiedź na pytanie zadane przed
  * chwilą, a bramka „Nadpisz" zostawałaby zamknięta mimo świeżego porównania.
  *
@@ -79,11 +79,11 @@ export interface RebuildVerdict {
 
 /**
  * Zdanie nad tabelą różnic. `null` = nie było jeszcze ani porównania, ani zapisu, więc
- * nie ma o czym mówić — ekran pokazuje wtedy zaproszenie, a nie werdykt o bazie,
+ * nie ma o czym mówić - ekran pokazuje wtedy zaproszenie, a nie werdykt o bazie,
  * której nie czytał.
  *
  * **Zero różnic jest wynikiem OCZEKIWANYM i dostaje ton zielony.** Narzędzie, które
- * przy każdym uruchomieniu melduje dryf, przestaje cokolwiek znaczyć — a narzędzie,
+ * przy każdym uruchomieniu melduje dryf, przestaje cokolwiek znaczyć - a narzędzie,
  * które przy braku dryfu wygląda na „nic nie znalazłem, spróbuj jeszcze", uczy klikania.
  */
 export function rebuildVerdict(report: RebuildReportDto | undefined): RebuildVerdict | null {
@@ -94,7 +94,7 @@ export function rebuildVerdict(report: RebuildReportDto | undefined): RebuildVer
     return {
       tone: 'ok',
       title: 'Projekcja zgadza się ze strumieniem.',
-      body: `Przeliczono ${report.sessions} ${plural(report.sessions, 'sesję', 'sesje', 'sesji')} z rejestru zdarzeń i żaden wiersz nie różni się od przeliczenia. Nie ma czego nadpisywać — i to jest stan, w którym baza ma być.`,
+      body: `Przeliczono ${report.sessions} ${plural(report.sessions, 'sesję', 'sesje', 'sesji')} z rejestru zdarzeń i żaden wiersz nie różni się od przeliczenia. Nie ma czego nadpisywać - i to jest stan, w którym baza ma być.`,
     };
   }
 
@@ -103,14 +103,14 @@ export function rebuildVerdict(report: RebuildReportDto | undefined): RebuildVer
     tone: 'warn',
     title:
       rows === 1
-        ? 'Jeden wiersz różni się od przeliczenia — to incydent, nie zadanie do sprzątnięcia.'
-        : `${rows} wiersze różnią się od przeliczenia — to incydent, nie zadanie do sprzątnięcia.`,
+        ? 'Jeden wiersz różni się od przeliczenia - to incydent, nie zadanie do sprzątnięcia.'
+        : `${rows} wiersze różnią się od przeliczenia - to incydent, nie zadanie do sprzątnięcia.`,
     body: 'Projekcja jest odświeżana w tej samej transakcji, w której serwer przyjmuje zdarzenia, więc w normalnej pracy różnicy być NIE MOŻE. Zapis wyrówna liczby i tym samym skasuje jedyny ślad po tym, co je rozjechało. Najpierw ustal przyczynę (zmiana reguły liczenia w wydaniu domeny? ręczny UPDATE? odtworzenie z kopii zrobionej w połowie strumienia?), dopiero potem nadpisuj.',
   };
 }
 
 /**
- * Werdykt po ZAPISIE — mówi, co się stało, a nie co jest do zbadania.
+ * Werdykt po ZAPISIE - mówi, co się stało, a nie co jest do zbadania.
  *
  * Diagnoza („to incydent, ustal przyczynę") była już wypowiedziana przed zapisem i po
  * nim jest nieprawdziwa dwa razy naraz: wiersze się już nie różnią, a przyczyny i tak
@@ -123,27 +123,27 @@ function writeVerdict(report: RebuildReportDto): RebuildVerdict {
     return {
       tone: 'ok',
       title: `Nadpisano ${written}.`,
-      body: `Liczby pochodzą z chwili ZAPISU, nie z wcześniejszego porównania: serwer przeliczył różnice ponownie, pod blokadą, bo między podglądem a decyzją telefony dosyłają paczki. Ślad operacji (liczby i powód) jest w dzienniku audytu. Kolejne nadpisanie wymaga nowego porównania — ten raport opisuje bazę SPRZED zapisu i nie ma prawa otwierać bramki drugi raz.`,
+      body: `Liczby pochodzą z chwili ZAPISU, nie z wcześniejszego porównania: serwer przeliczył różnice ponownie, pod blokadą, bo między podglądem a decyzją telefony dosyłają paczki. Ślad operacji (liczby i powód) jest w dzienniku audytu. Kolejne nadpisanie wymaga nowego porównania - ten raport opisuje bazę SPRZED zapisu i nie ma prawa otwierać bramki drugi raz.`,
     };
   }
 
   const left = `${report.remaining} ${plural(report.remaining, 'sesja', 'sesje', 'sesji')}`;
   return {
     tone: 'warn',
-    title: `Nadpisano ${written} z ${report.rowsDiffering} rozjechanych — ${left} zostało.`,
-    body: `Jeden przebieg nadpisuje ograniczoną liczbę sesji i to jest bezpiecznik, nie awaria: każda nadpisywana sesja jest na czas transakcji zamknięta dla przyjmowania zdarzeń z telefonów, a blokady advisory idą ze wspólnej puli całego klastra. Przebudowa jest DOKOŃCZONA po kolejnych uruchomieniach — przelicz i porównaj jeszcze raz, żeby zobaczyć, co zostało.`,
+    title: `Nadpisano ${written} z ${report.rowsDiffering} rozjechanych - ${left} zostało.`,
+    body: `Jeden przebieg nadpisuje ograniczoną liczbę sesji i to jest bezpiecznik, nie awaria: każda nadpisywana sesja jest na czas transakcji zamknięta dla przyjmowania zdarzeń z telefonów, a blokady advisory idą ze wspólnej puli całego klastra. Przebudowa jest DOKOŃCZONA po kolejnych uruchomieniach - przelicz i porównaj jeszcze raz, żeby zobaczyć, co zostało.`,
   };
 }
 
 export interface RunGate {
   disabled: boolean;
-  /** Powód blokady — WIDOCZNY tekst przy przycisku, nigdy sam tooltip. */
+  /** Powód blokady - WIDOCZNY tekst przy przycisku, nigdy sam tooltip. */
   reason: string | null;
   label: string;
 }
 
 export interface WriteGateInput {
-  /** Bieżący raport — z porównania albo z zapisu; `undefined` = nie było żadnego. */
+  /** Bieżący raport - z porównania albo z zapisu; `undefined` = nie było żadnego. */
   report: RebuildReportDto | undefined;
   /** Treść pola „Powód nadpisania". */
   reason: string;
@@ -154,7 +154,7 @@ export interface WriteGateInput {
 }
 
 /**
- * Bramka przycisku „Nadpisz N wierszy" — pięć warunków, każdy z własnym zdaniem.
+ * Bramka przycisku „Nadpisz N wierszy" - pięć warunków, każdy z własnym zdaniem.
  *
  * Kolejność sprawdzeń jest treścią: brak uprawnień wygrywa ze wszystkim (nie ma sensu
  * mówić „najpierw porównaj" komuś, kto i tak nie zapisze), a brak porównania wyprzedza
@@ -164,12 +164,12 @@ export interface WriteGateInput {
  * Reguła z mockupu brzmi „nadpisanie odblokowuje się dopiero po ŚWIEŻYM porównaniu",
  * ale do 2026-08-02 nie miała żadnej postaci w kodzie: bramka patrzyła wyłącznie na to,
  * czy jakikolwiek raport istnieje. Świeże znaczy tu **nowsze niż ostatni zapis**, więc
- * raport z zapisu (`mode: 'write'`) bramki NIE otwiera — opisuje bazę sprzed nadpisania
+ * raport z zapisu (`mode: 'write'`) bramki NIE otwiera - opisuje bazę sprzed nadpisania
  * i drugie kliknięcie na jego podstawie nadpisałoby zero wierszy, dopisując przy okazji
  * drugi wpis do dziennika audytu. Który raport jest bieżący, rozstrzyga `currentReport`.
  *
  * Bramka dla MASZYNY stoi po stronie serwera i odmawia niezależnie (409
- * `nothing_to_rebuild`) — panel nie jest tu zabezpieczeniem i nie udaje nim być.
+ * `nothing_to_rebuild`) - panel nie jest tu zabezpieczeniem i nie udaje nim być.
  */
 export function writeGate(input: WriteGateInput): RunGate {
   const label = writeLabel(input.report);
@@ -177,7 +177,7 @@ export function writeGate(input: WriteGateInput): RunGate {
   if (!input.mayWrite) {
     return {
       disabled: true,
-      reason: 'Wymaga roli: administrator — nadpisanie dotyka liczb wszystkich dni klubu',
+      reason: 'Wymaga roli: administrator - nadpisanie dotyka liczb wszystkich dni klubu',
       label,
     };
   }
@@ -188,21 +188,21 @@ export function writeGate(input: WriteGateInput): RunGate {
   if (input.report.mode === 'write') {
     return {
       disabled: true,
-      reason: 'ten raport pochodzi z zapisu — przelicz i porównaj, zanim nadpiszesz ponownie',
+      reason: 'ten raport pochodzi z zapisu - przelicz i porównaj, zanim nadpiszesz ponownie',
       label,
     };
   }
   if (input.report.rowsDiffering === 0) {
-    return { disabled: true, reason: 'nie ma czego nadpisywać — projekcja się zgadza', label };
+    return { disabled: true, reason: 'nie ma czego nadpisywać - projekcja się zgadza', label };
   }
   if (input.reason.trim().length === 0) {
-    return { disabled: true, reason: 'podaj powód — trafia do dziennika audytu', label };
+    return { disabled: true, reason: 'podaj powód - trafia do dziennika audytu', label };
   }
   return { disabled: false, reason: null, label };
 }
 
 /**
- * Etykieta przycisku. Liczbę niesie WYŁĄCZNIE raport z porównania z niezerową różnicą —
+ * Etykieta przycisku. Liczbę niesie WYŁĄCZNIE raport z porównania z niezerową różnicą -
  * bo tylko wtedy jest to obietnica „tyle wierszy ruszy po kliknięciu". Po zapisie
  * `rowsDiffering` opisuje przeszłość, więc „Nadpisz 2 wiersze" byłoby zaproszeniem do
  * operacji, która nadpisze zero.
@@ -215,12 +215,12 @@ function writeLabel(report: RebuildReportDto | undefined): string {
   return `Nadpisz ${rows} ${plural(rows, 'wiersz', 'wiersze', 'wierszy')}`;
 }
 
-/** Bramka przycisku „Przelicz i porównaj" — jedyny warunek to uprawnienie i zajętość. */
+/** Bramka przycisku „Przelicz i porównaj" - jedyny warunek to uprawnienie i zajętość. */
 export function compareGate(mayRun: boolean, pending: boolean): RunGate {
   if (!mayRun) {
     return {
       disabled: true,
-      reason: 'Wymaga roli: administrator — porównanie czyta cały rejestr zdarzeń',
+      reason: 'Wymaga roli: administrator - porównanie czyta cały rejestr zdarzeń',
       label: 'Przelicz i porównaj',
     };
   }
@@ -239,7 +239,7 @@ export interface RunFact {
 }
 
 /**
- * Liczby przebiegu — kolumna „Ostatnie porównanie bez zapisu" / „Ostatni przebieg
+ * Liczby przebiegu - kolumna „Ostatnie porównanie bez zapisu" / „Ostatni przebieg
  * z zapisem" z mockupu.
  *
  * `undefined` daje kreski, nigdy zer: „0 wierszy różnych" przy braku odpowiedzi wygląda
@@ -250,16 +250,16 @@ export interface RunFact {
  * stanem sprzed zapisu.
  *
  * Czego tu NIE MA: **czasu przebiegu** („3 min 41 s" w mockupie) i **daty ostatniej
- * przebudowy**. Jedno i drugie wymagałoby, żeby serwer zapamiętał przebieg — a jedynym
+ * przebudowy**. Jedno i drugie wymagałoby, żeby serwer zapamiętał przebieg - a jedynym
  * miejscem, w którym cokolwiek po nim zostaje, jest `admin_audit` (i wyłącznie dla
  * ZAPISU, bo porównanie świadomie nie zostawia wpisu). Ekran mówi to wprost i odsyła
  * do dziennika, zamiast pokazywać liczbę wziętą znikąd. Stempel `Raport z` opisuje za
- * to chwilę, w której odpowiedź DOTARŁA — i tę panel zna, bo sam ją odebrał.
+ * to chwilę, w której odpowiedź DOTARŁA - i tę panel zna, bo sam ją odebrał.
  */
 export function runFacts(current: CurrentReport, nowMs: number): RunFact[] {
   const report = current.report;
   const written = report?.mode === 'write';
-  const show = (value: number | undefined): string => (value === undefined ? '—' : String(value));
+  const show = (value: number | undefined): string => (value === undefined ? '-' : String(value));
 
   return [
     {
@@ -292,14 +292,14 @@ export function runFacts(current: CurrentReport, nowMs: number): RunFact[] {
 }
 
 /**
- * Chwila, z której pochodzi raport — data, godzina UTC i WIEK.
+ * Chwila, z której pochodzi raport - data, godzina UTC i WIEK.
  *
  * Wiek jest tu ważniejszy niż sama godzina: przy `staleTime: Infinity` i wyłączonym
  * odświeżaniu na fokusie raport potrafi wisieć na ekranie godzinami, a „14:22 UTC"
  * samo w sobie nie mówi, czy to było przed chwilą, czy przed obiadem.
  */
 function stamp(at: number | null, nowMs: number): { value: string; unit?: string } {
-  if (at == null) return { value: '—' };
+  if (at == null) return { value: '-' };
   return { value: `${dateUtcShort(at)} ${timeUtc(at)}`, unit: `UTC · ${relativeAge(nowMs - at)} temu` };
 }
 
@@ -314,7 +314,7 @@ export interface RebuildFailure {
  * wyjątku należy do ekranu, a nie do tego modułu (wzorzec `flagResolve.resolveFailure`).
  *
  * 409 `nothing_to_rebuild` jest tu najważniejszy i nie jest awarią: znaczy, że projekcja
- * zgadza się ze strumieniem, więc nie ma operacji do wykonania — i serwer świadomie nie
+ * zgadza się ze strumieniem, więc nie ma operacji do wykonania - i serwer świadomie nie
  * zostawia po takiej próbie wpisu w dzienniku. Nazwanie tego „błędem zapisu" kazałoby
  * szukać usterki tam, gdzie jej nie ma.
  */
@@ -322,14 +322,14 @@ export function rebuildFailure(status: number | null, body: ApiErrorDto | null):
   if (status === 409 || body?.error === 'nothing_to_rebuild') {
     return {
       tone: 'status',
-      title: 'Nie ma czego nadpisywać — i dlatego nic się nie stało.',
+      title: 'Nie ma czego nadpisywać - i dlatego nic się nie stało.',
       body: 'Serwer przeliczył projekcję pod blokadą i nie znalazł ani jednej różnicy. Zapis zera wierszy nie jest operacją, więc dziennik audytu NIE dostał wpisu: dokument odpowiadający na pytanie „kto co zmienił" nie może opisywać rzeczy, które się nie wydarzyły. Jeżeli widziałeś różnice przed chwilą, znaczy to, że wyrównało je poprzednie nadpisanie.',
     };
   }
   if (status === 400 || body?.error === 'reason_required') {
     return {
       tone: 'danger',
-      title: 'Serwer odmówił nadpisania — brak uzasadnienia.',
+      title: 'Serwer odmówił nadpisania - brak uzasadnienia.',
       body: 'Pole „Powód nadpisania" jest wymagane po stronie serwera, a nie tylko w tym formularzu: żądanie bez powodu odbija się o trasę, bo powód jest jedyną rzeczą, która w dzienniku audytu tłumaczy, dlaczego liczby klubu zostały wyrównane.',
     };
   }
@@ -337,12 +337,12 @@ export function rebuildFailure(status: number | null, body: ApiErrorDto | null):
     return {
       tone: 'warn',
       title: 'Twoja rola nie obejmuje narzędzi serwisowych.',
-      body: 'Nadpisanie projekcji wymaga zdolności maintenance.run — dotyka liczb wszystkich dni klubu naraz. Ekran zostaje widoczny, żebyś nie musiał zgadywać, czy funkcji nie ma w produkcie, czy nie ma jej Twoje konto.',
+      body: 'Nadpisanie projekcji wymaga zdolności maintenance.run - dotyka liczb wszystkich dni klubu naraz. Ekran zostaje widoczny, żebyś nie musiał zgadywać, czy funkcji nie ma w produkcie, czy nie ma jej Twoje konto.',
     };
   }
   return {
     tone: 'danger',
     title: 'Nadpisanie nie doszło do skutku.',
-    body: 'Serwer nie przyjął żądania, a projekcja została nietknięta — skutek i ślad audytu idą jedną transakcją, więc przerwanie cofa oba naraz. Panel działa wyłącznie online: to jedyne miejsce w systemie, w którym brak sieci wolno pokazać jako blokadę.',
+    body: 'Serwer nie przyjął żądania, a projekcja została nietknięta - skutek i ślad audytu idą jedną transakcją, więc przerwanie cofa oba naraz. Panel działa wyłącznie online: to jedyne miejsce w systemie, w którym brak sieci wolno pokazać jako blokadę.',
   };
 }

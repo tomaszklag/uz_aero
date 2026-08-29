@@ -1,17 +1,17 @@
 /**
- * UZ Aero — arkusz daty lotu (mockup `design/15e-reczny-data.html`, krok 1 wpisu
+ * UZ Aero - arkusz daty lotu (mockup `design/15e-reczny-data.html`, krok 1 wpisu
  * ręcznego).
  *
- * Od issue #58 sercem arkusza jest KALENDARZ MIESIĘCZNY (`CalendarGrid`) — zgłoszenie
+ * Od issue #58 sercem arkusza jest KALENDARZ MIESIĘCZNY (`CalendarGrid`) - zgłoszenie
  * z urządzenia odwróciło decyzję z 2026-08-16 (wtedy: stepper ±1 dzień + wpis
  * z klawiatury, „siatka 42 kratek to kontrolka, której pilot musi się dopiero
  * nauczyć"). W praktyce było odwrotnie: kalendarz jest kontrolką, którą pilot ZNA,
- * a odklikiwanie daty przyciskiem ±1 dzień — tą, której musiał się uczyć.
- * Skróty „Wczoraj" i „Dzisiaj" (w tej kolejności — starsze po lewej, issue #62)
+ * a odklikiwanie daty przyciskiem ±1 dzień - tą, której musiał się uczyć.
+ * Skróty „Wczoraj" i „Dzisiaj" (w tej kolejności - starsze po lewej, issue #62)
  * zostają NAD kalendarzem: te dwa dni obsługują
  * niemal każdy wpis, więc zwykle siatki nie trzeba nawet dotykać.
  *
- * Przypis „doba liczy się od uruchomienia silnika" mieszka TUTAJ — i tylko tutaj
+ * Przypis „doba liczy się od uruchomienia silnika" mieszka TUTAJ - i tylko tutaj
  * (issue #58 pkt 3): na formularzu kroku 1 powtarzał się pod polem, a wersalikowa
  * etykieta pola robiła z niego krzyk. Tu jest zwykłym zdaniem pod kalendarzem.
  */
@@ -32,9 +32,9 @@ export interface FlightDateSheetProps {
   visible: boolean;
   /** Doba UTC (północ) w edycji. */
   day: number;
-  /** „Teraz" — górna granica (lot w przyszłości to nonsens) i kotwica skrótów. */
+  /** „Teraz" - górna granica (lot w przyszłości to nonsens) i kotwica skrótów. */
   now: number;
-  /** Wiersz „Sesje w tej dobie" — wołający liczy go z lokalnego rejestru. */
+  /** Wiersz „Sesje w tej dobie" - wołający liczy go z lokalnego rejestru. */
   sessionsInfo?: string | null;
   onConfirm: (day: number) => void;
   onCancel: () => void;
@@ -98,17 +98,17 @@ export function FlightDateSheet({
     >
       {/* WCZORAJ PRZED DZISIAJ (zgłoszenie z urządzenia, issue #62): skróty stoją nad
           siatką, w której czas płynie w prawo i w dół, więc para w odwrotnej kolejności
-          czytała się pod prąd całego arkusza. Starsze po lewej — jak wszędzie. */}
+          czytała się pod prąd całego arkusza. Starsze po lewej - jak wszędzie. */}
       <View style={styles.quickRow}>
         {quick(yesterday, 'Wczoraj')}
         {quick(today, 'Dzisiaj')}
       </View>
 
       {/* `key` po widoczności: każde otwarcie montuje siatkę od nowa, więc kartka
-          wraca na miesiąc WYBRANEJ doby — nie na ostatnio przeglądany. */}
+          wraca na miesiąc WYBRANEJ doby - nie na ostatnio przeglądany. */}
       <CalendarGrid key={String(visible)} value={value} max={today} today={today} onChange={setValue} />
 
-      {/* Zwykłe zdanie, nie wersalikowa etykieta (issue #58 pkt 3) — to przypis
+      {/* Zwykłe zdanie, nie wersalikowa etykieta (issue #58 pkt 3) - to przypis
           o znaczeniu wyboru, a nie nazwa pola. */}
       <AppText variant="body" tone="muted" style={styles.note}>
         Doba liczy się od uruchomienia silnika.

@@ -2,7 +2,7 @@
   "name": "@uzaero/server",
   "version": "0.0.0",
   "private": true,
-  "description": "UZ Aero — backend: przyjmowanie zdarzeń, scalanie sesji, flagi, eksport do Sheets",
+  "description": "UZ Aero - backend: przyjmowanie zdarzeń, scalanie sesji, flagi, eksport do Sheets",
   "type": "module",
   "main": "src/index.ts",
   "scripts": {

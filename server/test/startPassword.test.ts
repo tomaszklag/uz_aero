@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) — generator hasła startowego (`infrastructure/auth/startPassword.ts`).
+ * UZ Aero (serwer) - generator hasła startowego (`infrastructure/auth/startPassword.ts`).
  *
  * Hasło startowe jest jedynym poświadczeniem, które w tym systemie powstaje MASZYNOWO
  * i wędruje między dwoma ludźmi. Testujemy trzy rzeczy i wszystkie są własnościami,
@@ -17,7 +17,7 @@ import {
 } from '../src/infrastructure/auth/startPassword.ts';
 
 describe('hasło startowe', () => {
-  it('ma kształt trzech grup po cztery znaki — hasło się DYKTUJE, nie kopiuje', () => {
+  it('ma kształt trzech grup po cztery znaki - hasło się DYKTUJE, nie kopiuje', () => {
     expect(generateStartPassword()).toMatch(/^[a-z2-9]{4}-[a-z2-9]{4}-[a-z2-9]{4}$/);
   });
 

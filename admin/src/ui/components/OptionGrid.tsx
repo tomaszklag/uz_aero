@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: siatka wyboru / pól w rzędzie (`.opt-grid` z `SZABLON.html`).
+ * UZ Aero - panel: siatka wyboru / pól w rzędzie (`.opt-grid` z `SZABLON.html`).
  *
  * Ten sam kontener obsługuje dwa zastosowania, bo obydwa są tą samą rzeczą: rzędem,
  * który zwija się na wąskim ekranie. `SZABLON.html` definiuje klasę przy KARTACH

@@ -1,11 +1,11 @@
 /**
- * UZ Aero — testy deklinacji magnetycznej.
+ * UZ Aero - testy deklinacji magnetycznej.
  *
  * Sprawdzamy trzy rzeczy: że model daje dla Polski wartości z właściwego przedziału,
  * że kurs magnetyczny jest MNIEJSZY od geograficznego (deklinacja wschodnia) i że
  * przeliczenie nie wyprodukuje kursu ujemnego przy progach blisko północy.
  *
- * Model jest przybliżeniem IGRF dla epoki 2026 — testy celowo trzymają szerokie widełki,
+ * Model jest przybliżeniem IGRF dla epoki 2026 - testy celowo trzymają szerokie widełki,
  * bo mają wyłapać pomyłkę w znaku albo w rzędzie wielkości, a nie pilnować trzeciego
  * miejsca po przecinku wartości, która i tak dryfuje o ~0,1°/rok.
  */
@@ -43,7 +43,7 @@ describe('magneticDeclinationDeg', () => {
 
   it('na Suwalszczyźnie jest wyraźnie większa niż przy granicy zachodniej', () => {
     // Rozpiętość przez kraj to ~3–4°, czyli tyle, że pomylenie punktów zmienia
-    // wyświetlany kurs o kilka stopni — dlatego liczymy ją per lotnisko.
+    // wyświetlany kurs o kilka stopni - dlatego liczymy ją per lotnisko.
     const suwalki = magneticDeclinationDeg({ lat: 54.07, lon: 22.9 });
     const zielonaGora = magneticDeclinationDeg({ lat: 51.98, lon: 15.46 });
 
@@ -52,7 +52,7 @@ describe('magneticDeclinationDeg', () => {
 });
 
 describe('toMagneticDeg', () => {
-  it('kurs magnetyczny jest MNIEJSZY od geograficznego — deklinacja jest wschodnia', () => {
+  it('kurs magnetyczny jest MNIEJSZY od geograficznego - deklinacja jest wschodnia', () => {
     const epzg = { lat: 52.1385, lon: 15.7986 };
 
     // Pas 06/24 w Babimoście: geograficznie 65°, na tabliczce 06.

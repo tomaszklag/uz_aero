@@ -1,14 +1,14 @@
 /**
- * UZ Aero (serwer) — adapter floty po stronie PANELU (`FleetAdminPort`, `A07`, `A07a`).
+ * UZ Aero (serwer) - adapter floty po stronie PANELU (`FleetAdminPort`, `A07`, `A07a`).
  *
- * Trzeci adapter tabeli `aircraft` i to jest wzorzec, nie niedopatrzenie — dokładnie
+ * Trzeci adapter tabeli `aircraft` i to jest wzorzec, nie niedopatrzenie - dokładnie
  * jak przy `pilots` i `flags`. `mobile/referenceRepo.ts` buduje CAŁĄ migawkę floty pod
  * cache telefonów; `common/aircraftConfigRepo.ts` oddaje jedną liczbę w gorącej
  * transakcji ingestu; ten pisze i liczy, biorąc `tx` z zewnątrz, bo każdy zapis panelu
  * jedzie transakcją śladu audytu. Ani ingest, ani `GET /reference` nie mają jak
  * zregresować od zmian w ekranie floty.
  *
- * ══ `updated_at` PRZY KAŻDYM ZAPISIE — TO NIE JEST KOSMETYKA ══
+ * ══ `updated_at` PRZY KAŻDYM ZAPISIE - TO NIE JEST KOSMETYKA ══
  * Z tej kolumny powstaje ETag `GET /reference`
  * (`application/mobile/queries/reference.ts` → `PgReferenceRepo.snapshot`). Zapis, który
  * jej nie ruszy, zostaje w panelu i **nie dociera do żadnego telefonu**: aplikacja
@@ -40,7 +40,7 @@ interface AircraftDbRow {
   reg: string;
   type: string;
   year: number | null;
-  /** `REAL` — sterownik oddaje liczbę, PGlite bywa napisem; `Number` domyka oba. */
+  /** `REAL` - sterownik oddaje liczbę, PGlite bywa napisem; `Number` domyka oba. */
   capacity_l: string | number;
   mh_format: string;
   dual_required: boolean;
@@ -52,7 +52,7 @@ interface AircraftDbRow {
 }
 
 interface JoinedDbRow extends AircraftDbRow {
-  /** `COUNT(*)` — sterownik oddaje `int8` NAPISEM, nie liczbą. */
+  /** `COUNT(*)` - sterownik oddaje `int8` NAPISEM, nie liczbą. */
   open_sessions: string | number;
   open_flags: string | number;
   last_event_at: string | Date | null;
@@ -120,7 +120,7 @@ const SERVICE_STATUS_SQL: Record<ServiceStatus, string> = {
  * Trzy agregaty po tabelach OBOK, nie odtworzenie projekcji: liczba trwających dni,
  * liczba otwartych flag i znacznik ostatniego przyjętego zdarzenia. Żaden z nich nie
  * jest liczbą dnia policzoną po raz drugi (`docs/architektura-panelu-serwer.md` §7.1)
- * — to są odpowiedzi na pytania o inne tabele.
+ * - to są odpowiedzi na pytania o inne tabele.
  */
 const SELECT = `
   SELECT a.*,
@@ -146,7 +146,7 @@ export class PgAdminFleetRepo implements FleetAdminPort {
     const { rows } = await db.query<JoinedDbRow>(
       // Porządek jest CZĘŚCIĄ KONTRAKTU portu, jak przy skrzynce flag i liście kont:
       // jednostki wyłączone lądują na końcu (mockup A07 rysuje je tak), a w obrębie
-      // grupy sortujemy po rejestracji — jedynym polu, po którym człowiek szuka.
+      // grupy sortujemy po rejestracji - jedynym polu, po którym człowiek szuka.
       `${SELECT} ${sql.where()} ORDER BY (a.service_status = 'disabled'), a.reg ASC`,
       sql.params(),
     );
@@ -158,7 +158,7 @@ export class PgAdminFleetRepo implements FleetAdminPort {
   }
 
   /**
-   * Liczniki CHIPÓW — te same cztery zawężenia, ale w bieżącym wyszukiwaniu.
+   * Liczniki CHIPÓW - te same cztery zawężenia, ale w bieżącym wyszukiwaniu.
    *
    * Osobna metoda od `counts`, mimo identycznego SQL-a poza `WHERE`, bo odpowiada na
    * inne pytanie: `counts` opisuje flotę (kafle), a to jest obietnica chipa („tyle
@@ -173,7 +173,7 @@ export class PgAdminFleetRepo implements FleetAdminPort {
 
   private async countBy(db: Queryable, sql: SqlFilter): Promise<FleetCounts> {
     const { rows } = await db.query<Record<string, string>>(
-      // Te same dwa fragmenty, co w `list` — jeden literał na jedno pojęcie, żeby
+      // Te same dwa fragmenty, co w `list` - jeden literał na jedno pojęcie, żeby
       // liczba na chipie i skład listy pod nim nie mogły się rozjechać.
       `SELECT COUNT(*) AS total,
               COUNT(*) FILTER (WHERE ${SERVICE_STATUS_SQL.active})   AS active,
@@ -246,12 +246,12 @@ export class PgAdminFleetRepo implements FleetAdminPort {
 
   /**
    * `COALESCE` zamiast budowania `SET` z obecnych pól: `undefined` znaczy „bez zmian",
-   * a `null` przy roku znaczy „wyczyść" — te dwa przypadki muszą zostać rozróżnione
+   * a `null` przy roku znaczy „wyczyść" - te dwa przypadki muszą zostać rozróżnione
    * aż do SQL-a, stąd jawny znacznik `$4` dla roku (ta sama sztuczka, co przy e-mailu
    * konta).
    *
    * `updated_at = now()` jest tu ZAWSZE i to jest jedyny powód, dla którego zapis
-   * z panelu dociera do telefonów — patrz nagłówek pliku.
+   * z panelu dociera do telefonów - patrz nagłówek pliku.
    */
   async update(tx: Queryable, id: string, patch: AircraftPatch): Promise<void> {
     await tx.query(
@@ -264,7 +264,7 @@ export class PgAdminFleetRepo implements FleetAdminPort {
               dual_required  = COALESCE($8, dual_required),
               service_status = COALESCE($9, service_status),
               -- Olej (issue #60): NULL znaczy "wyczyść" (moduł ma zamilknąć), więc
-              -- każda para niesie jawny znacznik zmiany — ta sama sztuczka, co rok.
+              -- każda para niesie jawny znacznik zmiany - ta sama sztuczka, co rok.
               oil_min_l        = CASE WHEN $11 THEN $10 ELSE oil_min_l END,
               oil_capacity_l   = CASE WHEN $13 THEN $12 ELSE oil_capacity_l END,
               oil_norm_l_per_h = CASE WHEN $15 THEN $14 ELSE oil_norm_l_per_h END,
@@ -299,7 +299,7 @@ export class PgAdminFleetRepo implements FleetAdminPort {
   }
 
   /**
-   * Klucz jest PER JEDNOSTKA, a nie stały jak przy populacji administratorów — bo
+   * Klucz jest PER JEDNOSTKA, a nie stały jak przy populacji administratorów - bo
    * chroniony zasób jest tu inny: nie „ilu jest administratorów w klubie", tylko „jaki
    * jest stan TEGO wiersza". Dwie zmiany różnych samolotów nie muszą na siebie czekać.
    *

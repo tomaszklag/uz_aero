@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) — komenda przyjęcia paczki zdarzeń (`POST /events`, §4.3–4.5).
+ * UZ Aero (serwer) - komenda przyjęcia paczki zdarzeń (`POST /events`, §4.3–4.5).
  *
  * Cała operacja jest JEDNĄ transakcją: wstawienie zdarzeń → przeliczenie projekcji
  * dotkniętych sesji → flagi łańcucha MH. Telefon, który dostał odpowiedź, może
@@ -10,12 +10,12 @@
  *  • **Idempotencja** (§4.3): retry tej samej paczki daje `duplicates`, nie podwójne
  *    wiersze. Klucz = uuid nadany przez telefon.
  *  • **Serwer nie blokuje, flaguje** (§4.5): nakładka sesji, dziura albo cofnięcie
- *    łańcucha MH nie odrzucają zdarzeń — trafiają do `flags` do wyjaśnienia. Jedyny
+ *    łańcucha MH nie odrzucają zdarzeń - trafiają do `flags` do wyjaśnienia. Jedyny
  *    twardy warunek to TOŻSAMOŚĆ: paczkę sesji wysyła wyłącznie telefon jej PIC-a
  *    (single-writer §4.4); cudze zdarzenia to nie konflikt danych, tylko brak
  *    uprawnień.
  *
- * Projekcję liczy `projectSession` z `@uzaero/domain` — DOKŁADNIE ten sam kod, który
+ * Projekcję liczy `projectSession` z `@uzaero/domain` - DOKŁADNIE ten sam kod, który
  * liczy ekran statystyk na telefonie. Korekty (04c) wchodzą w wynik automatycznie,
  * bo nakłada je sama projekcja.
  */
@@ -45,7 +45,7 @@ import type {
 export interface IngestResult {
   accepted: number;
   duplicates: number;
-  /** Otwarte flagi dotykające przysłanych sesji — telefon pokaże je na ekranie 11. */
+  /** Otwarte flagi dotykające przysłanych sesji - telefon pokaże je na ekranie 11. */
   flags: FlagRecord[];
 }
 
@@ -65,7 +65,7 @@ export class IngestCommands {
     private readonly exporter: DayExporter | null,
     /**
      * Porty przeliczenia normy zużycia; `null` = wyłączone. Norma jest podpowiedzią
-     * dla pilota (ekrany 04/06/10), więc jej brak nie blokuje niczego — dokładnie tak
+     * dla pilota (ekrany 04/06/10), więc jej brak nie blokuje niczego - dokładnie tak
      * samo jak brak eksportu arkusza.
      */
     private readonly norms: ConsumptionNormPorts | null,
@@ -77,18 +77,18 @@ export class IngestCommands {
     batch: readonly Event[],
     sourceDevice: string | null,
   ): Promise<IngestOutcome> {
-    // Samoloty dotknięte paczką — wypełniane w transakcji, używane PO commicie
+    // Samoloty dotknięte paczką - wypełniane w transakcji, używane PO commicie
     // (przeliczenie normy zużycia), więc muszą przeżyć jej zakres.
     const aircraftIds = new Set<string>();
     const picIds = new Set<string>();
     // Single-writer (§4.4), warstwa 1: każda paczka niesie zdarzenia podpisane PIC-em
-    // sesji; nadawca musi nim być. Odrzucamy CAŁĄ paczkę — częściowe przyjęcie
+    // sesji; nadawca musi nim być. Odrzucamy CAŁĄ paczkę - częściowe przyjęcie
     // rozjechałoby księgowość outboxa (telefon nie wie, które wiersze weszły).
     if (batch.some((e) => e.picId !== senderPilotId)) {
       return { ok: false, reason: 'not_session_pic' };
     }
 
-    // Warstwa 2 (audyt: KRYTYCZNE): sam podpis w paczce nie wystarcza — napastnik
+    // Warstwa 2 (audyt: KRYTYCZNE): sam podpis w paczce nie wystarcza - napastnik
     // wpisałby WŁASNE picId w zdarzenia celujące w CUDZĄ sessionUuid i antydatowanym
     // zdarzeniem przejął sesję, unieważnił loty korektą albo zamknął cudzy dzień.
     // Dlatego nadawcę porównujemy z PIC-em sesji JUŻ ISTNIEJĄCEJ na serwerze; nowa
@@ -101,7 +101,7 @@ export class IngestCommands {
     }
 
     const { closedNow, ...result } = await this.db.transaction(async (tx) => {
-      // Blokada advisory per sesja (audyt: lost update) — dwie równoległe paczki tej
+      // Blokada advisory per sesja (audyt: lost update) - dwie równoległe paczki tej
       // samej sesji liczyłyby projekcję każda bez zdarzeń drugiej i ostatni commit
       // nadpisałby `sessions` niekompletnym stanem. Lock szereguje ingest per sesja,
       // zwalnia się sam z końcem transakcji.
@@ -111,7 +111,7 @@ export class IngestCommands {
 
       const { accepted, duplicates } = await this.events.insertBatch(tx, batch, sourceDevice);
 
-      // Projekcje przeliczamy per DOTKNIĘTA sesja — pełny strumień, nie przyrost.
+      // Projekcje przeliczamy per DOTKNIĘTA sesja - pełny strumień, nie przyrost.
       // Strumień dnia to dziesiątki zdarzeń; odtwarzalność > mikrooptymalizacja.
       const sessionUuids = [...new Set(batch.map((e) => e.sessionUuid))];
       const closedNow: string[] = [];
@@ -126,14 +126,14 @@ export class IngestCommands {
         if (row.status === 'closed') closedNow.push(sessionUuid);
 
         // Rozjazd zegarów jest własnością POJEDYNCZEGO zdarzenia, nie łańcucha sesji,
-        // więc liczy się tu — na pełnym strumieniu dnia, który i tak mamy wczytany.
+        // więc liczy się tu - na pełnym strumieniu dnia, który i tak mamy wczytany.
         const drift = clockDriftFlag(sessionUuid, stream);
         if (drift != null) {
           await this.flags.ensureOpen(tx, { ...drift, aircraftId: row.aircraftId });
         }
       }
 
-      // Flagi liczymy per samolot, z CAŁEJ jego historii sesji — anomalia łańcucha
+      // Flagi liczymy per samolot, z CAŁEJ jego historii sesji - anomalia łańcucha
       // z definicji dotyczy pary sesji, więc sama paczka nie wystarcza.
       for (const aircraftId of aircraftIds) {
         const links: ChainLink[] = (await this.sessions.listByAircraft(tx, aircraftId)).map(
@@ -152,11 +152,11 @@ export class IngestCommands {
         }
       }
 
-      // Nakładka CZASU PILOTA — druga oś, więc drugie przejście (§4.7). Grafik człowieka
+      // Nakładka CZASU PILOTA - druga oś, więc drugie przejście (§4.7). Grafik człowieka
       // idzie w poprzek maszyn, więc pętla po samolotach wyżej nie ma jak jej zobaczyć:
       // dwie sesje tworzące nakładkę należą z definicji do RÓŻNYCH samolotów.
       //
-      // Flaga ląduje na samolocie PÓŹNIEJSZEJ z pary — tabela `flags` wymaga jednego
+      // Flaga ląduje na samolocie PÓŹNIEJSZEJ z pary - tabela `flags` wymaga jednego
       // `aircraft_id`, a to ta maszyna została wzięta, gdy poprzednia nie była zdana.
       // Wskazuje ją `laterSessionUuid`, NIE `sessionUuids[1]`: tamta tablica jest
       // posortowana alfabetycznie (zbiór kanoniczny dla `UNIQUE`) i o czasie nie mówi nic.
@@ -179,9 +179,9 @@ export class IngestCommands {
       return { accepted, duplicates, flags, closedNow };
     });
 
-    // Eksport §4.7 — PO commicie i poza gwarancjami odpowiedzi: telefon dostaje 200
+    // Eksport §4.7 - PO commicie i poza gwarancjami odpowiedzi: telefon dostaje 200
     // za PRZYJĘCIE zdarzeń, a arkusz jest skutkiem, nie warunkiem. Awaria Sheets nie
-    // może zamienić dostarczonej paczki w wieczny retry outboxa — dlatego wyjątek
+    // może zamienić dostarczonej paczki w wieczny retry outboxa - dlatego wyjątek
     // kończy się logiem, nigdy błędem odpowiedzi. Sesja zamknięta w tej paczce
     // (albo domknięta wcześniej i właśnie uzupełniona spóźnionymi danymi) dostaje
     // świeżą kartę; rewizje nalicza eksporter.
@@ -195,9 +195,9 @@ export class IngestCommands {
       }
     }
 
-    // Norma zużycia — dokładnie ta sama umowa, co przy eksporcie: PO commicie, poza
+    // Norma zużycia - dokładnie ta sama umowa, co przy eksporcie: PO commicie, poza
     // gwarancjami odpowiedzi, wyjątek do logu. Model czyta strumienie kilkudziesięciu
-    // sesji i puszcza je przez regresję, więc jest to najdroższa rzecz w tym przepływie —
+    // sesji i puszcza je przez regresję, więc jest to najdroższa rzecz w tym przepływie -
     // a przelicza się wyłącznie wtedy, gdy dzień faktycznie się domknął, bo tylko wtedy
     // przybył nowy interwał paliwowy. Otwarcie dnia niczego w modelu nie zmienia.
     if (this.norms != null && closedNow.length > 0) {

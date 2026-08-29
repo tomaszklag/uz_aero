@@ -1,8 +1,8 @@
 /**
- * UZ Aero (serwer) — trasa `GET /me/task-suggestions` (issue #14, ekran 02e).
+ * UZ Aero (serwer) - trasa `GET /me/task-suggestions` (issue #14, ekran 02e).
  *
  * Cienka jak reszta `/me/*`: token → zapytanie → treść. Tożsamość WYŁĄCZNIE z tokenu
- * (wzorzec `prefs.ts`) — gdyby pilot mógł podać `picId` w zapytaniu, endpoint
+ * (wzorzec `prefs.ts`) - gdyby pilot mógł podać `picId` w zapytaniu, endpoint
  * podpowiadający notatki stałby się czytnikiem cudzych notatek.
  *
  * Pusta historia to `{ clients: [], notes: [] }` ze statusem 200, nie 404: nowy klub

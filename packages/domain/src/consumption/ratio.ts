@@ -1,14 +1,14 @@
 /**
- * UZ Aero — rozrzut obserwacji wokół przewidywania (issue #38).
+ * UZ Aero - rozrzut obserwacji wokół przewidywania (issue #38).
  *
  * ══ PO CO OSOBNA LICZBA, SKORO MODEL MA PRZEDZIAŁY ══
- * Bo odpowiadają na różne pytania — to ta sama uwaga, którą niesie `summary.ts`, tylko
+ * Bo odpowiadają na różne pytania - to ta sama uwaga, którą niesie `summary.ts`, tylko
  * przeniesiona z „L/h okna" na „litry tej sesji". Przedział ufności mówi, jak dokładnie
  * znamy stawkę; rozrzut mówi, jak bardzo REALNE sesje odbiegają od tego, co model dla
  * nich przewiduje. Werdykt „powyżej normy" na ekranie pilota musi stać na tym drugim.
  *
  * ══ PASMO MUSI PASOWAĆ DO ESTYMATORA ══
- * Ilorazy liczymy dokładnie tą formułą, którą policzy TELEFON — dwie stawki (ziemia,
+ * Ilorazy liczymy dokładnie tą formułą, którą policzy TELEFON - dwie stawki (ziemia,
  * powietrze), bez faz pionowych. Gdyby pasmo powstało z modelu czterofazowego, opisywałoby
  * dokładność przewidywania, którego na telefonie nikt nie wykonuje: byłoby za wąskie
  * i zapalałoby werdykt na własnym uproszczeniu.
@@ -24,14 +24,14 @@ import { HOUR_MS } from './policy';
 export interface RatioBand {
   low: number;
   high: number;
-  /** Ile obserwacji stoi za pasmem — poniżej dwóch pasmo jest punktem. */
+  /** Ile obserwacji stoi za pasmem - poniżej dwóch pasmo jest punktem. */
   samples: number;
 }
 
 /**
  * Rozrzut zużycia paliwa wokół przewidywania z dwóch stawek.
  *
- * Wchodzą wyłącznie interwały PRZYJĘTE — a że model oznacza odstające przez ustawienie
+ * Wchodzą wyłącznie interwały PRZYJĘTE - a że model oznacza odstające przez ustawienie
  * `rejected`, wywołanie po dopasowaniu wyklucza je tym samym predykatem. Interwał,
  * którego model nie tłumaczy, nie ma prawa rozpychać pasma dla wszystkich pozostałych.
  */
@@ -57,7 +57,7 @@ export function fuelRatioBand(
  * Rozrzut przyrostu licznika wokół przewidywania.
  *
  * Model MH liczy przewidywanie sam (`MhFit.modelledMh`) i robi to z tych samych dwóch
- * przeliczników, które trafiają do telefonu — więc tutaj wystarczy przepisać ilorazy.
+ * przeliczników, które trafiają do telefonu - więc tutaj wystarczy przepisać ilorazy.
  */
 export function mhRatioBand(rows: readonly MhFit[]): RatioBand | null {
   const ratios: number[] = [];

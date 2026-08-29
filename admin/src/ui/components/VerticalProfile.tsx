@@ -1,10 +1,10 @@
 /**
- * UZ Aero — panel: profil pionowy lotu (`A02c-slad.html`, sekcja „Profil pionowy").
+ * UZ Aero - panel: profil pionowy lotu (`A02c-slad.html`, sekcja „Profil pionowy").
  *
  * Jak `TrackMap`: CZYSTY UKŁAD, zero arytmetyki. Współrzędne, siatkę i podpisy liczy
  * `profilePlot` (`screens/track/trackChart.ts`), tutaj zostaje rozmieszczenie.
  *
- * Wysokość jest GPS-owa, nie ciśnieniowa — ekran mówi o tym w stopce pod wykresem,
+ * Wysokość jest GPS-owa, nie ciśnieniowa - ekran mówi o tym w stopce pod wykresem,
  * bo różnica względem wysokościomierza w kokpicie potrafi sięgnąć kilkuset stóp,
  * a ten widok bywa czytany obok dokumentów pilota.
  */
@@ -18,10 +18,10 @@ export interface ProfileGridRow {
   solid: boolean;
 }
 
-/** Kształt oczekiwany przez komponent — typ przy komponencie, jak w `TrackMap`. */
+/** Kształt oczekiwany przez komponent - typ przy komponencie, jak w `TrackMap`. */
 export interface ProfilePlot {
   polyline: string;
-  /** Ta sama łamana domknięta do podstawy — wypełnienie pod krzywą. */
+  /** Ta sama łamana domknięta do podstawy - wypełnienie pod krzywą. */
   area: string;
   grid: ProfileGridRow[];
   left: number;
@@ -34,7 +34,7 @@ interface VerticalProfileProps {
   plot: ProfilePlot;
   width: number;
   height: number;
-  /** Czas pierwszego i ostatniego odczytu — podpisy osi. */
+  /** Czas pierwszego i ostatniego odczytu - podpisy osi. */
   startAt: number;
   endAt: number;
   /** Podpis szczytu; pusty napis = szczytu nie pokazujemy. */

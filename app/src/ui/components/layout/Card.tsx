@@ -1,11 +1,11 @@
 /**
- * UZ Aero — Card
+ * UZ Aero - Card
  *
  * Powtarzalny pojemnik z mockupów (.section / .card / .day-log / .form-card):
  * powierzchnia, obramowanie, zaokrąglenie, opcjonalny nagłówek z etykietą mono
  * UPPERCASE.
  *
- * Używany przez log dnia, siatki parametrów, sekcje formularzy — wszędzie, gdzie
+ * Używany przez log dnia, siatki parametrów, sekcje formularzy - wszędzie, gdzie
  * w designie występuje „karta".
  */
 
@@ -16,10 +16,10 @@ import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
 
 /**
- * `bar`    — `.day-log` z ekranów kokpitu: nagłówek na wyróżnionym tle, oddzielony linią.
+ * `bar`    - `.day-log` z ekranów kokpitu: nagłówek na wyróżnionym tle, oddzielony linią.
  *            Karta jest osobnym „przyrządem", nagłówek ma być widoczny przy przewijaniu.
- * `inline` — `.section` z formularzy: mała etykieta mono jako pierwszy element treści,
- *            bez linii i bez tła. Formularz to ciąg sekcji — paski nagłówków posiekałyby
+ * `inline` - `.section` z formularzy: mała etykieta mono jako pierwszy element treści,
+ *            bez linii i bez tła. Formularz to ciąg sekcji - paski nagłówków posiekałyby
  *            go na kilkanaście pudełek.
  */
 export type CardHeader = 'bar' | 'inline';
@@ -30,7 +30,7 @@ export interface CardProps extends ViewProps {
   header?: CardHeader;
   /** Element po prawej stronie nagłówka (licznik, tag „opcjonalne", akcja). */
   headerRight?: React.ReactNode;
-  /** Zeruje wewnętrzny padding — dla list, które same zarządzają odstępami. */
+  /** Zeruje wewnętrzny padding - dla list, które same zarządzają odstępami. */
   flush?: boolean;
   contentStyle?: ViewStyle;
 }

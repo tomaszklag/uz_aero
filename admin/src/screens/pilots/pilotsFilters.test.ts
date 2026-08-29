@@ -1,8 +1,8 @@
 /**
- * UZ Aero — panel: filtry listy kont ↔ query string.
+ * UZ Aero - panel: filtry listy kont ↔ query string.
  *
  * Testujemy obie strony tłumaczenia, bo to jest jedyne miejsce, w którym adres staje
- * się filtrem i z powrotem — a link do listy kont jest tu scenariuszem współpracy
+ * się filtrem i z powrotem - a link do listy kont jest tu scenariuszem współpracy
  * („popatrz na te dwa nieaktywne konta"), nie ozdobą.
  */
 
@@ -37,7 +37,7 @@ describe('adres → filtr', () => {
     });
   });
 
-  it('nieznana wartość jest POMIJANA — adres z literówką pokazuje pełną listę', () => {
+  it('nieznana wartość jest POMIJANA - adres z literówką pokazuje pełną listę', () => {
     expect(filterFromParams(params('stan=nieistnieje&sort=byle'))).toEqual(
       DEFAULT_PILOTS_FILTER,
     );
@@ -49,7 +49,7 @@ describe('adres → filtr', () => {
 });
 
 describe('filtr → adres', () => {
-  it('wartości domyślne POMIJAMY — pełna lista to po prostu `/piloci`', () => {
+  it('wartości domyślne POMIJAMY - pełna lista to po prostu `/piloci`', () => {
     expect(paramsFromFilter(DEFAULT_PILOTS_FILTER)).toEqual({});
     expect(pilotsHref(DEFAULT_PILOTS_FILTER)).toBe('/piloci');
   });
@@ -93,7 +93,7 @@ describe('filtr → parametry trasy', () => {
     });
   });
 
-  it('„z rolą panelu" to DWIE role naraz — inaczej chip kłamałby o połowie kont', () => {
+  it('„z rolą panelu" to DWIE role naraz - inaczej chip kłamałby o połowie kont', () => {
     expect(pilotListQuery({ ...DEFAULT_PILOTS_FILTER, scope: 'panel' })).toMatchObject({
       role: ['admin', 'training_lead'],
     });
@@ -111,7 +111,7 @@ describe('czy filtr zawęża', () => {
     expect(isNarrowed(DEFAULT_PILOTS_FILTER)).toBe(false);
   });
 
-  it('sam kierunek sortowania to nie zawężenie — lista ma tyle samo pozycji', () => {
+  it('sam kierunek sortowania to nie zawężenie - lista ma tyle samo pozycji', () => {
     expect(isNarrowed({ ...DEFAULT_PILOTS_FILTER, sort: 'desc' })).toBe(false);
   });
 

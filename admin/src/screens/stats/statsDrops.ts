@@ -1,17 +1,17 @@
 /**
- * UZ Aero — panel: STRONA PRZYCHODOWA · ZRZUTY (moduł CZYSTY) — sekcja mockupu `A10`.
+ * UZ Aero - panel: STRONA PRZYCHODOWA · ZRZUTY (moduł CZYSTY) - sekcja mockupu `A10`.
  *
- * Wszystkie liczby — także średnie i „na godzinę lotu" — przychodzą z serwera;
+ * Wszystkie liczby - także średnie i „na godzinę lotu" - przychodzą z serwera;
  * moduł składa napisy, geometrię wstęgi typów i wiersze tabeli klientów.
  *
  * ══ TRZY STANY SEKCJI ══
- *  `stale` — w zakresie są wiersze, których nie da się uczciwie doliczyć do zrzutów:
+ *  `stale` - w zakresie są wiersze, których nie da się uczciwie doliczyć do zrzutów:
  *            dni skokowe sprzed kolumn statystyk ORAZ dni bez rodzaju operacji (każdy MÓGŁ
- *            być skokowy). Kafle mówią „—" i sekcja kieruje na przebudowę (`A11`).
+ *            być skokowy). Kafle mówią „-" i sekcja kieruje na przebudowę (`A11`).
  *            Zero byłoby twierdzeniem, że nikt nie skakał.
- *  `empty` — zakres nie ma zamkniętych dni operacji SKOKI: to fakt, nie awaria —
+ *  `empty` - zakres nie ma zamkniętych dni operacji SKOKI: to fakt, nie awaria -
  *            zdanie o fakcie pokazuje się WYŁĄCZNIE przy zerowym liczniku stale.
- *  `ok`    — liczby z sum kolumn projekcji.
+ *  `ok`    - liczby z sum kolumn projekcji.
  */
 
 import { duration, plural } from '@uzaero/format';
@@ -92,7 +92,7 @@ export function dropsView(
       tiles: dashTiles(),
       ribbon: [],
       clients: [],
-      note: 'W zakresie nie ma zamkniętych dni operacji SKOKI — strona przychodowa nie ma czego rozliczać. To fakt o zakresie, nie awaria danych.',
+      note: 'W zakresie nie ma zamkniętych dni operacji SKOKI - strona przychodowa nie ma czego rozliczać. To fakt o zakresie, nie awaria danych.',
     };
   }
 
@@ -135,22 +135,22 @@ export function dropsView(
 }
 
 const dashTiles = (): DropsTile[] => [
-  { key: 'lifts', label: 'Wyniesienia', value: DASH, note: 'Nie wiemy — patrz baner niżej.' },
-  { key: 'jumpers', label: 'Skoczkowie', value: DASH, note: 'Nie wiemy — patrz baner niżej.' },
-  { key: 'altitude', label: 'Śr. wysokość zrzutu', value: DASH, note: 'Nie wiemy — patrz baner niżej.' },
-  { key: 'per-hour', label: 'Skoczków na godzinę lotu', value: DASH, note: 'Nie wiemy — patrz baner niżej.' },
+  { key: 'lifts', label: 'Wyniesienia', value: DASH, note: 'Nie wiemy - patrz baner niżej.' },
+  { key: 'jumpers', label: 'Skoczkowie', value: DASH, note: 'Nie wiemy - patrz baner niżej.' },
+  { key: 'altitude', label: 'Śr. wysokość zrzutu', value: DASH, note: 'Nie wiemy - patrz baner niżej.' },
+  { key: 'per-hour', label: 'Skoczków na godzinę lotu', value: DASH, note: 'Nie wiemy - patrz baner niżej.' },
 ];
 
 function altitudeNote(drops: StatsDropsDto): string {
   if (drops.avgAltitudeFt == null) {
-    return 'Żaden zrzut zakresu nie miał fixa wysokości — średniej nie ma z czego policzyć.';
+    return 'Żaden zrzut zakresu nie miał fixa wysokości - średniej nie ma z czego policzyć.';
   }
-  // Licznik zrzutów Z fixem przychodzi z serwera (`drop_alt_count`) — odtwarzanie go
+  // Licznik zrzutów Z fixem przychodzi z serwera (`drop_alt_count`) - odtwarzanie go
   // odejmowaniem `lifts − without` byłoby arytmetyką panelu na liczbie, którą serwer MA.
   const withFix = drops.dropsWithAltitude ?? 0;
   const without = drops.dropsWithoutAltitude ?? 0;
-  if (without === 0) return `Z ${withFix} ${plural(withFix, 'zrzutu', 'zrzutów', 'zrzutów')} — każdy miał fix GPS.`;
-  return `Z ${withFix} ${plural(withFix, 'zrzutu', 'zrzutów', 'zrzutów')}, które miały fix GPS — ${without} bez wysokości nie ${plural(without, 'wchodzi', 'wchodzą', 'wchodzi')} do średniej.`;
+  if (without === 0) return `Z ${withFix} ${plural(withFix, 'zrzutu', 'zrzutów', 'zrzutów')} - każdy miał fix GPS.`;
+  return `Z ${withFix} ${plural(withFix, 'zrzutu', 'zrzutów', 'zrzutów')}, które miały fix GPS - ${without} bez wysokości nie ${plural(without, 'wchodzi', 'wchodzą', 'wchodzi')} do średniej.`;
 }
 
 /** Wstęga typów: szerokość = udział w skoczkach; segment zerowy znika, nie zwęża się do 0. */

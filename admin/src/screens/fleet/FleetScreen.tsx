@@ -1,18 +1,18 @@
 /**
- * UZ Aero — panel: FLOTA (`design/admin/A07-flota.html`).
+ * UZ Aero - panel: FLOTA (`design/admin/A07-flota.html`).
  *
  * ══ CZYM TEN EKRAN JEST W SYSTEMIE ══
  * To nie jest lista sprzętu, tylko **panel sterowania regułami**. Pojemność zbiorników
  * wyznacza tolerancję flagi `FUEL_MISMATCH`, format motogodzin zmienia sposób wpisywania
  * na preflight, wymóg drugiego pilota bramkuje przejęcie samolotu, a stan służby
  * decyduje, czy jednostka w ogóle pojawi się na liście wyboru w aplikacji. Każda z tych
- * czterech rzeczy wychodzi do telefonów jednym kanałem — przez `GET /reference`.
+ * czterech rzeczy wychodzi do telefonów jednym kanałem - przez `GET /reference`.
  *
  * ══ DWA ŹRÓDŁA W JEDNYM WIERSZU I EKRAN MA JE ROZRÓŻNIAĆ ══
- * Lewa strona tabeli to KONFIGURACJA z bazy panelu (zmienia się tylko tutaj). Prawa —
+ * Lewa strona tabeli to KONFIGURACJA z bazy panelu (zmienia się tylko tutaj). Prawa -
  * stan bieżący, który przyniosły TELEFONY wraz ze zdarzeniami: kto trzyma samolot,
  * ostatnie MH i FOB. Ta druga bywa nieświeża i wtedy jest oznaczona (`fleetRows.ts`,
- * trzy stany świeżości). Liczniki fizyczne wygrywają — wartości z tej tabeli są
+ * trzy stany świeżości). Liczniki fizyczne wygrywają - wartości z tej tabeli są
  * podpowiedzią dla pilota na preflight, nie prawdą.
  *
  * Ekran jest `.tsx` BEZ arytmetyki i bez decyzji o treści: plakietki, podpisy, liczniki
@@ -20,7 +20,7 @@
  * `fleetTiles`, `aircraftActions`), które mają testy w Node.
  *
  * ══ CZEGO TEN EKRAN ŚWIADOMIE NIE POKAZUJE ══
- *  1. **Plakietki „W locie"** z mockupu — projekcja `sessions` nie niesie stanu silnika
+ *  1. **Plakietki „W locie"** z mockupu - projekcja `sessions` nie niesie stanu silnika
  *     (ta sama granica, o którą rozbił się chip „W locie" na `A02`). Claim mówi „ktoś
  *     zajął jednostkę na dziś" i tak jest podpisany: „Zajęty".
  *  2. **Daty i powodu wyłączenia** („od 19 JUN 2026 · remont"). W `aircraft` nie ma
@@ -76,7 +76,7 @@ export function FleetScreen() {
 
   const filter = filterFromParams(searchParams);
   const fleet = useFleet(fleetListQuery(filter));
-  // Druga, NIEZAWĘŻONA lista — i to nie jest marnotrawstwo. Kafle opisują flotę,
+  // Druga, NIEZAWĘŻONA lista - i to nie jest marnotrawstwo. Kafle opisują flotę,
   // a nie zawężenie („Najstarszy odczyt" policzony z listy po filtrze mówiłby o czymś
   // innym, niż głosi jego etykieta). Przy pustym filtrze klucz zapytania jest ten sam,
   // więc TanStack nie wysyła drugiego żądania; przy zawężeniu płacimy jednym żądaniem
@@ -98,7 +98,7 @@ export function FleetScreen() {
   const now = Date.now();
   const rows = fleetRows(items, now);
   const empty = fleetEmpty(isNarrowed(filter));
-  // Kafle opisują CAŁĄ flotę, więc i to ostrzeżenie liczymy z listy niezawężonej —
+  // Kafle opisują CAŁĄ flotę, więc i to ostrzeżenie liczymy z listy niezawężonej -
   // inaczej chip „W służbie" chowałby jedyny wiersz, o którym ten baner mówi.
   const stranded = disabledOpenDays(everything);
   const load = fleetLoad(
@@ -119,7 +119,7 @@ export function FleetScreen() {
 
   const openedNew = id === NEW_AIRCRAFT_SEGMENT;
   // Wiersz szukamy najpierw w liście ZAWĘŻONEJ (to ją człowiek widzi pod spodem),
-  // a w drugiej kolejności w pełnej — wklejony link do jednostki odfiltrowanej ma
+  // a w drugiej kolejności w pełnej - wklejony link do jednostki odfiltrowanej ma
   // otworzyć szufladę, a nie stan „nie ma jej tutaj". Do stanu „nie ma" schodzimy
   // dopiero wtedy, gdy identyfikatora nie zna ŻADNA z dwóch list.
   const opened =
@@ -137,7 +137,7 @@ export function FleetScreen() {
           <>
             Konfiguracja jednostek: to z niej aplikacja bierze listę wyboru samolotu, skalę
             paliwomierza, format wpisu motogodzin i wymóg drugiego pilota. Kolumny po prawej
-            to stan bieżący z telefonów — bywa nieświeży i jest wtedy oznaczony. Czasy UTC.
+            to stan bieżący z telefonów - bywa nieświeży i jest wtedy oznaczony. Czasy UTC.
           </>
         }
         actions={
@@ -155,7 +155,7 @@ export function FleetScreen() {
       <Banner tone="status">
         <b>Sekcja administratora.</b> Dodawanie i edycja jednostek wymaga roli{' '}
         <code>administrator</code>. Szef wyszkolenia czyta tę tabelę (potrzebuje jej do flag
-        i statystyk), ale bez przycisków edycji — przyciski zostają{' '}
+        i statystyk), ale bez przycisków edycji - przyciski zostają{' '}
         <b>widoczne i zablokowane z powodem</b>, bo ukrycie zmuszałoby do zgadywania, czy
         funkcji nie ma w produkcie, czy nie ma jej Twoje konto.
       </Banner>
@@ -177,7 +177,7 @@ export function FleetScreen() {
         <SearchInput
           value={searchDraft}
           ariaLabel="Szukaj jednostki"
-          placeholder={'Szukaj: rejestracja, typ — Enter filtruje'}
+          placeholder={'Szukaj: rejestracja, typ - Enter filtruje'}
           onChange={setSearchDraft}
           onSubmit={() =>
             apply({ ...filter, search: searchDraft.trim() === '' ? null : searchDraft.trim() })
@@ -202,7 +202,7 @@ export function FleetScreen() {
 
       {fleet.isPending ? null : fleet.isError ? (
         <Banner tone="danger" live>
-          <b>Nie udało się pobrać floty.</b> Panel działa wyłącznie online — to jedyne miejsce
+          <b>Nie udało się pobrać floty.</b> Panel działa wyłącznie online - to jedyne miejsce
           w systemie, w którym brak sieci wolno pokazać jako blokadę.{' '}
           <Button variant="ghost" size="sm" onClick={() => void fleet.refetch()}>
             Ponów
@@ -214,7 +214,7 @@ export function FleetScreen() {
         </div>
       ) : (
         <DataTable
-          caption="Flota — jednostki wyłączone na końcu, czasy UTC"
+          caption="Flota - jednostki wyłączone na końcu, czasy UTC"
           columns={columns(filter, capabilities)}
           rows={rows}
           rowKey={(row) => row.id}
@@ -227,7 +227,7 @@ export function FleetScreen() {
 
       <Banner tone="warn">
         <b>Wyłączenie ze służby to zmiana konfiguracji, nie kasowanie.</b> Jednostka znika
-        z listy wyboru samolotu w aplikacji pilota — ale <b>historia zostaje w całości</b>:
+        z listy wyboru samolotu w aplikacji pilota - ale <b>historia zostaje w całości</b>:
         sesje, zdarzenia, karty dnia i łańcuch motogodzin liczą się dalej, a jej dni nadal
         widać na liście dni lotnych. Samolot z <b>otwartym dniem</b> wyłączyć się nie da;
         serwer odmawia z podanym powodem.
@@ -239,7 +239,7 @@ export function FleetScreen() {
         append-only i przyjmuje <b>fakty z terenu</b>, a odrzucenie paczki złamałoby regułę
         nadrzędną („brak sieci nigdy nie blokuje pracy pilota") i zgubiłoby dane o locie,
         który i tak się odbył. Telefon z cache'em referencyjnym sprzed wyłączenia potrafi
-        więc jeszcze otworzyć dzień na jednostce wyłączonej — i wtedy widać to w tabeli
+        więc jeszcze otworzyć dzień na jednostce wyłączonej - i wtedy widać to w tabeli
         wyżej, w kolumnie „Stan służby".
       </Banner>
 
@@ -259,19 +259,19 @@ export function FleetScreen() {
             służby) jest w bazie panelu i zmienia się tylko tutaj.
           </span>
           <span className="hint">
-            <b>Claim, MH i FOB</b> przychodzą z telefonów wraz ze zdarzeniami — pokazujemy je
+            <b>Claim, MH i FOB</b> przychodzą z telefonów wraz ze zdarzeniami - pokazujemy je
             z wiekiem ostatniego synchronizowania. Wpis starszy niż 24 h dostaje kolor amber;
             to nie awaria, tylko informacja, że samolot od tego czasu mógł stać albo lecieć
             bez zasięgu. Brak odczytu to <b>„brak danych"</b>, nigdy zero.
           </span>
           <span className="hint">
             <b>Liczniki fizyczne wygrywają.</b> Wartości z tej tabeli są podpowiedzią dla
-            pilota na preflight, nie prawdą — pilot patrzy na licznik i to jego odczyt trafia
+            pilota na preflight, nie prawdą - pilot patrzy na licznik i to jego odczyt trafia
             do rejestru.
           </span>
           <span className="hint">
             <b>„Zajęty" nie znaczy „w locie".</b> Projekcja dnia niesie informację o otwartej
-            sesji, nie o pracy silnika — tak samo jak na liście dni lotnych. Kto i kiedy
+            sesji, nie o pracy silnika - tak samo jak na liście dni lotnych. Kto i kiedy
             wyłączył jednostkę ze służby, wie <b>dziennik audytu</b>; w tabeli tej daty nie
             ma, bo nie ma jej w bazie.
           </span>
@@ -283,10 +283,10 @@ export function FleetScreen() {
           ))}
           <span className="hint">
             Tolerancja flagi <code>FUEL_MISMATCH</code> to większa z dwóch wartości:{' '}
-            <b>10 L</b> albo <b>5% pojemności</b>. <b>Liczy ją serwer</b> — panel nie ma prawa
+            <b>10 L</b> albo <b>5% pojemności</b>. <b>Liczy ją serwer</b> - panel nie ma prawa
             mnożyć pojemności po swojemu, żeby na dwóch ekranach nie wyszły dwie różne
             wartości tego samego progu. Zmiana pojemności w szufladzie <b>nie przepisuje
-            rejestru</b> — flagi już wystawione zachowują próg, przy którym powstały — ale
+            rejestru</b> - flagi już wystawione zachowują próg, przy którym powstały - ale
             nowy próg obowiązuje przy najbliższej synchronizacji tej jednostki także dla{' '}
             <b>par dni już zamkniętych</b>. Szczegóły w szufladzie samolotu.
           </span>
@@ -315,12 +315,12 @@ export function FleetScreen() {
 }
 
 /**
- * Kolumny listy — dokładnie te z `A07-flota.html`, z jedną świadomą zamianą: plakietka
+ * Kolumny listy - dokładnie te z `A07-flota.html`, z jedną świadomą zamianą: plakietka
  * claimu mówi „Zajęty" zamiast „W locie" (uzasadnienie w nagłówku pliku i w karcie
  * „Skąd biorą się kolumny stanu").
  *
  * Sortowania nie ma na żadnej kolumnie, bo porządek listy jest kontraktem serwera
- * (wyłączone na końcu, dalej po rejestracji) — nagłówek ze strzałką obiecywałby
+ * (wyłączone na końcu, dalej po rejestracji) - nagłówek ze strzałką obiecywałby
  * zachowanie, którego trasa nie ma.
  */
 function columns(
@@ -360,7 +360,7 @@ function columns(
       header: 'Dual',
       cellClass: 'dim',
       render: (row) =>
-        row.dual == null ? <>—</> : <Pill tone={row.dual.tone}>{row.dual.text}</Pill>,
+        row.dual == null ? <>-</> : <Pill tone={row.dual.tone}>{row.dual.text}</Pill>,
     },
     {
       key: 'service',
@@ -383,7 +383,7 @@ function columns(
             {row.claim.badge.text}
           </Pill>
           <span className={freshClass(row.claim.freshness)}>
-            {row.claim.text === '—' ? row.claim.sub : `${row.claim.text} · ${row.claim.sub}`}
+            {row.claim.text === '-' ? row.claim.sub : `${row.claim.text} · ${row.claim.sub}`}
           </span>
         </>
       ),
@@ -419,7 +419,7 @@ function columns(
       header: '',
       render: (row) => (
         <div className="row-actions">
-          {/* Przejście do dni ma KAŻDY wiersz, nie tylko zajęty — jednostka wolna jest
+          {/* Przejście do dni ma KAŻDY wiersz, nie tylko zajęty - jednostka wolna jest
               przypadkiem najczęstszym i to o jej historię pyta się najczęściej. Cel
               i etykietę wybiera `dayLink`, bo to decyzja o treści, a nie układ. */}
           <LinkButton to={row.day.to} variant="ghost" size="sm">

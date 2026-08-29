@@ -1,10 +1,10 @@
 /**
- * UZ Aero (serwer) — produkcyjny seed po issue #50: wyłącznie konto administratora.
+ * UZ Aero (serwer) - produkcyjny seed po issue #50: wyłącznie konto administratora.
  *
  * Seed przestał być danymi scenariusza (te mieszkają w `test/testWorld.ts`) i został
  * bootstrapem wdrożenia, więc testujemy go w roli, w której będzie użyty: świeża baza,
  * `migrate` + `seed`, logowanie loginem `admin`, wejście do panelu. Osobno powtórny
- * bieg — na żywej bazie seed bywa odpalany „na wszelki wypadek" i nie wolno mu wtedy
+ * bieg - na żywej bazie seed bywa odpalany „na wszelki wypadek" i nie wolno mu wtedy
  * ani zresetować hasła, ani dorobić drugiego konta.
  */
 
@@ -60,12 +60,12 @@ describe('seed (bootstrap wdrożenia)', () => {
 
     const pilots = await db.query<{ count: unknown }>('SELECT count(*) AS count FROM pilots');
     expect(Number(pilots.rows[0]?.count)).toBe(1);
-    // Obowiązuje hasło z PIERWSZEGO biegu — zmiana hasła to panel, nie seed.
+    // Obowiązuje hasło z PIERWSZEGO biegu - zmiana hasła to panel, nie seed.
     const account = await new PgPilotsRepo(db).findByLogin('admin');
     expect(await hasher.verify(PASSWORD, account!.passwordHash)).toBe(true);
   });
 
-  it('powtórny bieg przywraca rolę admin — jedyna droga awaryjna klubu bez administratora', async () => {
+  it('powtórny bieg przywraca rolę admin - jedyna droga awaryjna klubu bez administratora', async () => {
     const db = await freshDb();
     const hasher = new ScryptHasher();
     await seed(db, hasher, { adminPassword: PASSWORD });

@@ -1,7 +1,7 @@
 /**
- * UZ Aero — panel: eksport zestawienia do CSV.
+ * UZ Aero - panel: eksport zestawienia do CSV.
  *
- * CSV powstaje z TYCH SAMYCH modeli wierszy, które widać w tabeli — razem z RAZEM.
+ * CSV powstaje z TYCH SAMYCH modeli wierszy, które widać w tabeli - razem z RAZEM.
  * Separator to średnik (polski Excel), a pola z separatorem w treści są cytowane.
  */
 
@@ -13,7 +13,7 @@ import { statsCsv, statsCsvFilename } from './statsCsv';
 import { operationRows } from './statsOperationRows';
 import { pilotRows } from './statsPilotRows';
 
-/** Znak BOM w asercjach po nazwie — literał byłby niewidoczny w kodzie testu. */
+/** Znak BOM w asercjach po nazwie - literał byłby niewidoczny w kodzie testu. */
 const BOM = '\uFEFF';
 
 function input(view: 'aircraft' | 'pilot' | 'operation') {
@@ -37,7 +37,7 @@ describe('statsCsv', () => {
     );
   });
 
-  it('plik zaczyna się od BOM — bez niego polski Excel czyta „Śr. L/h" jako krzaki', () => {
+  it('plik zaczyna się od BOM - bez niego polski Excel czyta „Śr. L/h" jako krzaki', () => {
     // Średnik „dla polskiego Excela" bez BOM to połowa roboty: ten sam Excel
     // zinterpretuje UTF-8 jako Windows-1250 i wysypie polskie znaki w nagłówkach
     // i nazwiskach.
@@ -74,8 +74,8 @@ describe('statsCsv', () => {
     expect(line.startsWith('"Anna; ""Wrzos"""')).toBe(true);
   });
 
-  it('pole zaczynające się jak formuła dostaje apostrof — Excel nie wykona =HYPERLINK', () => {
-    // Nazwiska wpisuje wprawdzie administrator, ale to nadal wejście człowieka —
+  it('pole zaczynające się jak formuła dostaje apostrof - Excel nie wykona =HYPERLINK', () => {
+    // Nazwiska wpisuje wprawdzie administrator, ale to nadal wejście człowieka -
     // a Excel wykonuje formuły z CSV bez pytania.
     const rows = input('pilot');
     rows.pilots[0]!.name = '=HYPERLINK("http://zlo.example";"Anna Wrzosek")';

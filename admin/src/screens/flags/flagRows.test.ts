@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: wiersz skrzynki flag (moduł czysty).
+ * UZ Aero - panel: wiersz skrzynki flag (moduł czysty).
  *
  * Testujemy REGUŁY, nie brzmienie napisów. Najważniejsza z nich nie jest widoczna
  * w typach: **mapowanie nie ma prawa przestawić kolejności**, bo porządek skrzynki
@@ -35,7 +35,7 @@ function flag(over: Partial<FlagListItemDto> = {}): FlagListItemDto {
 }
 
 describe('flagRows', () => {
-  it('NIE SORTUJE — oddaje wiersze w kolejności, w której przyszły z serwera', () => {
+  it('NIE SORTUJE - oddaje wiersze w kolejności, w której przyszły z serwera', () => {
     // Kolejność jest własnością `ORDER BY` (blokujące eksport na górze, potem od
     // najstarszych). Wejście jest tu celowo „nieposortowane po wieku": gdyby ekran
     // sortował po swojemu, młodsza sprawa blokująca spadłaby pod starszą, a karta
@@ -57,7 +57,7 @@ describe('flagRows', () => {
     const blocking = flagRows([flag({ type: 'aircraft_overlap', blocksExport: true })], NOW)[0]!;
     expect(blocking.effect).toEqual({ tone: 'red', text: 'Blokuje kartę', dot: true });
 
-    // Ten sam TYP, ale rozwiązany — serwer mówi `blocksExport: false` i to wygrywa.
+    // Ten sam TYP, ale rozwiązany - serwer mówi `blocksExport: false` i to wygrywa.
     const resolved = flagRows(
       [flag({ type: 'aircraft_overlap', status: 'resolved', blocksExport: false, resolvedAt: hoursAgo(1) })],
       NOW,
@@ -72,7 +72,7 @@ describe('flagRows', () => {
     const open = flagRows([flag({ createdAt: hoursAgo(6) })], NOW)[0]!;
     expect(open.age.text).toBe('6 h');
 
-    // Sprawa zamknięta godzinę po wykryciu „leżała godzinę" — i tyle ma pokazywać
+    // Sprawa zamknięta godzinę po wykryciu „leżała godzinę" - i tyle ma pokazywać
     // tydzień później, bo pytanie brzmi „ile leżała", a nie „ile ma lat".
     const closed = flagRows(
       [flag({ status: 'resolved', createdAt: hoursAgo(100), resolvedAt: hoursAgo(99) })],
@@ -105,14 +105,14 @@ describe('flagRows', () => {
   });
 
   it('brak liczby w `details` daje kreskę, nie „undefined" i nie zero', () => {
-    // `details` to `jsonb` — flaga sprzed zmiany detektora może nie mieć pola,
+    // `details` to `jsonb` - flaga sprzed zmiany detektora może nie mieć pola,
     // a „0.0 h dziury" byłoby zdaniem fałszywym, nie brakiem danych.
     const row = flagRows([flag({ details: {} })], NOW)[0]!;
-    expect(row.discrepancy.main).toBe('— → —');
-    expect(row.discrepancy.sub).toBe('— w łańcuchu MH');
+    expect(row.discrepancy.main).toBe('- → -');
+    expect(row.discrepancy.sub).toBe('- w łańcuchu MH');
   });
 
-  it('samolot wyrejestrowany nie gubi wiersza — zostaje identyfikator', () => {
+  it('samolot wyrejestrowany nie gubi wiersza - zostaje identyfikator', () => {
     const row = flagRows([flag({ reg: null, aircraftType: null })], NOW)[0]!;
     expect(row.aircraft.reg).toBe('SP-ABC');
     expect(row.aircraft.type).toBeNull();

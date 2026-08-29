@@ -1,10 +1,10 @@
 /**
- * UZ Aero — panel: filtry listy dni ↔ query string (moduł czysty).
+ * UZ Aero - panel: filtry listy dni ↔ query string (moduł czysty).
  *
  * Testujemy REGUŁY, nie brzmienie napisów. Najważniejsza z nich nie jest widoczna
  * w typach: **jeden chip „Stan" tłumaczy się na TRZY różne parametry trasy**
  * (`status`, `flagged`, `exported`), a liczniki kafli muszą pytać serwer TYM SAMYM
- * zawężeniem, co lista — inaczej „2 dni z flagą" obok listy jednego samolotu byłoby
+ * zawężeniem, co lista - inaczej „2 dni z flagą" obok listy jednego samolotu byłoby
  * zdaniem o czymś innym niż to, na co człowiek patrzy.
  */
 
@@ -44,7 +44,7 @@ describe('filterFromParams', () => {
     });
   });
 
-  it('wartości nieznane POMIJA zamiast odrzucać — adres z literówką pokazuje listę', () => {
+  it('wartości nieznane POMIJA zamiast odrzucać - adres z literówką pokazuje listę', () => {
     // Panel nadzoru nie ma prawa odpowiadać stroną błędu na przekręcony link.
     const filter = filterFromParams(
       params('stan=w-locie&operacja=lot-w-kosmos&sort=byle-jak&od=31-07-2026&do=wczoraj'),
@@ -61,7 +61,7 @@ describe('filterFromParams', () => {
 });
 
 describe('paramsFromFilter', () => {
-  it('pomija wartości domyślne — adres pełnej listy to po prostu `#/dni`', () => {
+  it('pomija wartości domyślne - adres pełnej listy to po prostu `#/dni`', () => {
     expect(paramsFromFilter(DEFAULT_DAYS_FILTER)).toEqual({});
   });
 
@@ -103,12 +103,12 @@ describe('sessionListQuery', () => {
     expect(of('flagged')).not.toHaveProperty('status');
   });
 
-  it('daty jadą jako DZIEŃ, nie jako epoch — górną granicę domyka serwer', () => {
+  it('daty jadą jako DZIEŃ, nie jako epoch - górną granicę domyka serwer', () => {
     const query = sessionListQuery({ ...DEFAULT_DAYS_FILTER, from: '2026-07-25', to: '2026-07-31' });
     expect(query).toMatchObject({ from: '2026-07-25', to: '2026-07-31' });
   });
 
-  it('nie wysyła kursora — pierwszą stronę pobiera się bez niego', () => {
+  it('nie wysyła kursora - pierwszą stronę pobiera się bez niego', () => {
     // Kursor jest parametrem STRONY, a nie filtra: dokłada go `useSessions`
     // z odpowiedzi poprzedniej strony. Gdyby wchodził tutaj, wpadłby też do klucza
     // cache'u i każdy powrót „wstecz" zaczynałby listę od nowa.
@@ -128,7 +128,7 @@ describe('sessionCountQuery', () => {
     const count = sessionCountQuery(filter, 'flagged');
 
     expect(count).toMatchObject({ aircraftId: 'SP-KLM', from: '2026-07-25', flagged: true });
-    // Stan poprzedni ZNIKA — inaczej kafel liczyłby „dni otwarte z flagą".
+    // Stan poprzedni ZNIKA - inaczej kafel liczyłby „dni otwarte z flagą".
     expect(count).not.toHaveProperty('status');
   });
 

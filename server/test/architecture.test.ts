@@ -1,13 +1,13 @@
 /**
- * UZ Aero (serwer) — GRANICE, KTÓRYCH NIE PILNUJE KOMPILATOR.
+ * UZ Aero (serwer) - GRANICE, KTÓRYCH NIE PILNUJE KOMPILATOR.
  *
  * Lustro `app/src/__tests__/architecture.test.ts` i ta sama zasada: reguła architektury
- * jest warta tyle, ile jej egzekucja. Trzy własności niżej są w kodzie niewidoczne —
+ * jest warta tyle, ile jej egzekucja. Trzy własności niżej są w kodzie niewidoczne -
  * nic nie broni następnej osobie dopisać `UPDATE admin_audit`, wstrzyknąć `Database`
  * do komendy panelu albo zarejestrować trasę panelu z pominięciem bramy uprawnień.
  * Dokument może się zdezaktualizować; ten plik nie.
  *
- * Zakres rośnie razem z panelem: od przekroju 2 (`contracts/` — kontrakty odczytu)
+ * Zakres rośnie razem z panelem: od przekroju 2 (`contracts/` - kontrakty odczytu)
  * doszła granica importów katalogu kontraktów.
  */
 
@@ -40,7 +40,7 @@ const read = (file: string): string => readFileSync(join(SRC, file), 'utf8');
  * tłumaczy, dlaczego `UPDATE admin_audit` jest zakazane, i bez tego kroku sam wywoływałby
  * naruszenie, którego opisuje zakaz.
  *
- * **Trzecia forma — komentarz SQL `-- …` — doszła 2026-08-08 razem ze zgnieceniem
+ * **Trzecia forma - komentarz SQL `-- …` - doszła 2026-08-08 razem ze zgnieceniem
  * migracji.** Uzasadnienia przeniosły się wtedy z docbloków TypeScriptu do komentarzy
  * przy kolumnach, czyli DO WNĘTRZA szablonu z DDL-em, gdzie oba wzorce wyżej nie sięgają.
  * Wzorzec wymaga spacji po myślnikach (`-- `), żeby nie zjeść operatora dekrementacji:
@@ -61,7 +61,7 @@ function importedFrom(code: string): string[] {
   return out;
 }
 
-/** Nazwy importowane w pliku — `import { A, type B as C } from '…'`. */
+/** Nazwy importowane w pliku - `import { A, type B as C } from '…'`. */
 function importedNames(code: string): string[] {
   const out: string[] = [];
   const re = /import\s+(?:type\s+)?\{([^}]*)\}\s+from/g;
@@ -80,7 +80,7 @@ const writesTo = (table: string): RegExp =>
   new RegExp(String.raw`\bUPDATE\s+${table}\b|\bDELETE\s+FROM\s+${table}\b`, 'i');
 
 /**
- * UPSERT do tabeli — `INSERT INTO <tabela> … ON CONFLICT … DO UPDATE`.
+ * UPSERT do tabeli - `INSERT INTO <tabela> … ON CONFLICT … DO UPDATE`.
  *
  * Osobno od `writesTo`, bo `writesTo` go NIE WIDZI i to nie jest przeoczenie regexa:
  * w `ON CONFLICT DO UPDATE SET` po słowie `UPDATE` nie stoi nazwa tabeli, więc wzorzec
@@ -101,7 +101,7 @@ describe('granice, których nie pilnuje kompilator', () => {
       'application/admin/commands/flags.ts',
     );
 
-    // Adapter flag panelu ROBI `UPDATE flags` — jeśli skaner tego nie widzi, nie
+    // Adapter flag panelu ROBI `UPDATE flags` - jeśli skaner tego nie widzi, nie
     // zobaczy też `UPDATE admin_audit`.
     expect(writesTo('flags').test(codeOf('infrastructure/pg/admin/flagsRepo.ts'))).toBe(true);
     expect(writesTo('admin_audit').test('DELETE FROM admin_audit WHERE id = 1')).toBe(true);
@@ -110,7 +110,7 @@ describe('granice, których nie pilnuje kompilator', () => {
     expect(upsertsInto('exported_sheets').test(codeOf('infrastructure/pg/common/sheetsRepo.ts'))).toBe(
       true,
     );
-    // …a czysty `INSERT` bez `ON CONFLICT` nim NIE jest — inaczej reguła zabraniałaby
+    // …a czysty `INSERT` bez `ON CONFLICT` nim NIE jest - inaczej reguła zabraniałaby
     // dopisywania do dziennika, czyli jedynej operacji, która ma tam być dozwolona.
     expect(upsertsInto('export_log').test('INSERT INTO export_log (a) VALUES ($1)')).toBe(false);
     expect(
@@ -121,40 +121,40 @@ describe('granice, których nie pilnuje kompilator', () => {
       false,
     );
 
-    // Zdejmowanie komentarzy nie zjada kodu i zjada prozę — obie strony naraz.
+    // Zdejmowanie komentarzy nie zjada kodu i zjada prozę - obie strony naraz.
     expect(codeOf('infrastructure/pg/schema.ts')).toContain('CREATE TABLE IF NOT EXISTS admin_audit');
     expect(codeOf('infrastructure/pg/schema.ts')).not.toContain('UPDATE admin_audit');
 
     // Wyciąganie nazw z importów działa na pliku, który `Database` faktycznie bierze.
     expect(importedNames(read('application/mobile/commands/ingest.ts'))).toContain('Database');
 
-    // Katalog kontraktów istnieje i skaner widzi jego import domeny — bez tego
+    // Katalog kontraktów istnieje i skaner widzi jego import domeny - bez tego
     // przypadek „kontrakty importują wyłącznie domenę" przechodziłby na pustej liście.
     expect(filesUnder('application/admin/contracts').length).toBeGreaterThan(2);
     expect(importedFrom(read('application/admin/contracts/sessions.ts'))).toContain(
       '@uzaero/domain',
     );
 
-    // Skaner nagłówka `Authorization` faktycznie coś widzi — w JEDYNYM pliku, który
+    // Skaner nagłówka `Authorization` faktycznie coś widzi - w JEDYNYM pliku, który
     // ma prawo go czytać. Bez tego „zero naruszeń" mogłoby znaczyć „zły regex".
     expect(codeOf('http/tokenFromRequest.ts')).toContain('headers.authorization');
     expect(filesUnder('http/routes/admin')).toContain('http/routes/admin/auth.ts');
   });
 
-  it('rejestr `events` jest append-only — nigdzie w src/ nie ma UPDATE ani DELETE', () => {
+  it('rejestr `events` jest append-only - nigdzie w src/ nie ma UPDATE ani DELETE', () => {
     const offenders = filesUnder('.').filter((f) => writesTo('events').test(codeOf(f)));
     expect(offenders).toEqual([]);
   });
 
-  it('dziennik `admin_audit` jest append-only — nigdzie w src/ nie ma UPDATE ani DELETE', () => {
+  it('dziennik `admin_audit` jest append-only - nigdzie w src/ nie ma UPDATE ani DELETE', () => {
     // Docelowo pilnuje tego GRANT bez UPDATE/DELETE dla roli aplikacyjnej; do czasu
     // rozdzielenia connection stringów to jest jedyna wykonywalna gwarancja.
     const offenders = filesUnder('.').filter((f) => writesTo('admin_audit').test(codeOf(f)));
     expect(offenders).toEqual([]);
   });
 
-  it('dziennik `export_log` jest append-only — bez UPDATE, DELETE i bez UPSERT-u', () => {
-    // Ta własność NIE jest ozdobą schematu — stoi pod całą treścią przekroju A05.
+  it('dziennik `export_log` jest append-only - bez UPDATE, DELETE i bez UPSERT-u', () => {
+    // Ta własność NIE jest ozdobą schematu - stoi pod całą treścią przekroju A05.
     // Opiera się na niej komentarz przy `export_log` w `schema.ts` („po nim, i tylko po nim, da się
     // odpowiedzieć, co widział skarbnik klubu"), baner ekranu („dwie tabele, dwa różne
     // zadania") i podsumowanie historii rewizji („3 wiersze dziennika, 1 wiersz karty").
@@ -171,7 +171,7 @@ describe('granice, których nie pilnuje kompilator', () => {
     // Odwrotna reguła do tej wyżej i dlatego stoi osobno, a nie jako wyjątek na liście.
     // `exported_sheets` ma semantykę ZAKŁADKI W ARKUSZU: jedna nazwa = jedna karta,
     // a rewizja nadpisuje treść, bo czytelnik linku z ekranu 11 ma widzieć aktualny stan
-    // dnia. Historię pamięta append-only `export_log` — i to rozdzielenie jest jedynym
+    // dnia. Historię pamięta append-only `export_log` - i to rozdzielenie jest jedynym
     // śladem rozjazdu arkusz↔rejestr.
     //
     // Asercja jest POZYTYWNA, żeby nikt nie „ujednolicił" dwóch tabel przez zdjęcie
@@ -186,7 +186,7 @@ describe('granice, których nie pilnuje kompilator', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('komendy panelu nie mają uchwytu do bazy — zapis wyłącznie przez AuditedWrite', () => {
+  it('komendy panelu nie mają uchwytu do bazy - zapis wyłącznie przez AuditedWrite', () => {
     // Druga połowa mechanizmu audytu: `Audited<T>` wymusza ślad w typie, a BRAK
     // `Database`/`Queryable` odbiera możliwość ominięcia tej bramy w ogóle.
     const offenders: string[] = [];
@@ -198,20 +198,20 @@ describe('granice, których nie pilnuje kompilator', () => {
     expect(offenders).toEqual([]);
   });
 
-  it("tryb administracyjny reguł ma JEDNO miejsce — literał `'administrative'`", () => {
+  it("tryb administracyjny reguł ma JEDNO miejsce - literał `'administrative'`", () => {
     // `checkAppend(…, 'administrative')` uchyla regułę `CORRECTION_WINDOW_EXPIRED`.
     // To jedyna furtka w całej domenie, więc musi mieć jednego użytkownika i nazwisko:
     // rozlanie literału po komendach byłoby początkiem konstrukcji, w której nikt nie
     // wie, ile reguł omija panel. Zmiana tej listy to decyzja produktowa, nie refaktor.
     //
-    // Użytkownikiem jest HELPER, a nie komenda: korektę ocenia się w dwóch miejscach —
+    // Użytkownikiem jest HELPER, a nie komenda: korektę ocenia się w dwóch miejscach -
     // przy zapisie (`commands/corrections.ts`) i przy podglądzie „przed → po"
-    // (`queries/corrections.ts`) — a ocena musi być jedna. Obie strony idą przez
+    // (`queries/corrections.ts`) - a ocena musi być jedna. Obie strony idą przez
     // `correctionCandidate.ts`, więc lista dalej ma dokładnie jedną pozycję. Dopisanie
     // do niej drugiego pliku byłoby ROZLUŹNIENIEM tej reguły, nie jej utrzymaniem.
     //
     // Skanujemy `server/src`, bo tam literał jest UŻYCIEM. W `packages/domain` stoi
-    // jego DEKLARACJA (`rules/authority.ts` — definicja słownika uprawnień) i ona
+    // jego DEKLARACJA (`rules/authority.ts` - definicja słownika uprawnień) i ona
     // z natury musi go zawierać.
     const users = filesUnder('.')
       .filter((f) => codeOf(f).includes("'administrative'"))
@@ -219,7 +219,7 @@ describe('granice, których nie pilnuje kompilator', () => {
     expect(users).toEqual(['application/admin/correctionCandidate.ts']);
   });
 
-  it('`sessionStreams` woła WYŁĄCZNIE analityka zużycia — obie jej strony', () => {
+  it('`sessionStreams` woła WYŁĄCZNIE analityka zużycia - obie jej strony', () => {
     // Odczyt strumieni WIELU sesji naraz jest jedynym miejscem, w którym serwer sięga do
     // rejestru poza kartą dnia i śladem lotu (§7.5, §7.7). Metoda jest wygodna i właśnie
     // dlatego groźna: użyta w liście zamieniłaby stronę wyników w pełny przegląd
@@ -227,13 +227,13 @@ describe('granice, których nie pilnuje kompilator', () => {
     //
     // Licznik w `contract.test.ts` pilnuje ZACHOWANIA (ile razy trasa czyta), ta reguła
     // pilnuje DOSTĘPU (kto w ogóle może zawołać). Deklaracja portu i jego adapter są
-    // z listy wyłączone — tam metoda z natury musi wystąpić.
+    // z listy wyłączone - tam metoda z natury musi wystąpić.
     //
     // Lista ma DWIE pozycje i obie są tym samym rachunkiem policzonym dla innego odbiorcy:
     // `queries/consumption.ts` liczy pełen raport dla panelu (`A10a`), a
-    // `common/consumptionNorm.ts` — skróconą normę dla telefonów (`GET /reference`,
+    // `common/consumptionNorm.ts` - skróconą normę dla telefonów (`GET /reference`,
     // ekrany 04/06/10). Druga pozycja weszła świadomie razem z etapem 3; **dopisanie
-    // trzeciej jest decyzją, nie refaktorem** — każdy nowy wołający otwiera rejestr
+    // trzeciej jest decyzją, nie refaktorem** - każdy nowy wołający otwiera rejestr
     // kolejnej ścieżce odczytu.
     const users = filesUnder('.')
       .filter((f) => codeOf(f).includes('sessionStreams'))
@@ -251,8 +251,8 @@ describe('granice, których nie pilnuje kompilator', () => {
 
   it('kontrakty panelu importują wyłącznie domenę i siebie nawzajem', () => {
     // `contracts/` to POWIERZCHNIA dla klienta panelu (docelowo `@uzaero/server/admin-contracts`).
-    // Import czegokolwiek spoza domeny wciągnąłby tam wnętrze serwera — w skrajnym
-    // przypadku `pg` do przeglądarki — a przy okazji przywiązałby panel do kształtu
+    // Import czegokolwiek spoza domeny wciągnąłby tam wnętrze serwera - w skrajnym
+    // przypadku `pg` do przeglądarki - a przy okazji przywiązałby panel do kształtu
     // projekcji, czyli do rzeczy, która ma się swobodnie zmieniać.
     const offenders: string[] = [];
     for (const file of filesUnder('application/admin/contracts')) {
@@ -266,19 +266,19 @@ describe('granice, których nie pilnuje kompilator', () => {
 
   it('trasy panelu rejestrują się wyłącznie przez `adminRoute`', () => {
     // Zdolność ma być ATRYBUTEM deklaracji trasy. `app.post(...)` w pliku tras panelu
-    // to trasa bez bramy uprawnień — i nikt by tego nie zauważył przy przeglądzie.
+    // to trasa bez bramy uprawnień - i nikt by tego nie zauważył przy przeglądzie.
     //
     // Wyjątki są WYMIENIONE IMIENNIE, a nie opisane wzorcem ścieżki: dopisanie pliku
     // do tej listy ma być świadomą decyzją widoczną w diffie, a nie skutkiem nazwania
     // pliku „jakoś tak".
     const publicByDesign = [
-      // `adminRoute.ts` — sama brama; `auth.ts` — logowanie i wylogowanie, które
+      // `adminRoute.ts` - sama brama; `auth.ts` - logowanie i wylogowanie, które
       // z definicji nie mogą wymagać ważnej sesji (§8.6). Bramą `auth.ts` jest
       // nagłówek CSRF z `http/adminCsrf.ts`, a nie zdolność.
       'http/routes/admin/adminRoute.ts',
       'http/routes/admin/auth.ts',
-      // Statyczny build panelu (§9) — pliki i przekierowania na `/admin/` są publiczne
-      // z definicji: stronę logowania trzeba pobrać BEZ sesji. Danych tu nie ma —
+      // Statyczny build panelu (§9) - pliki i przekierowania na `/admin/` są publiczne
+      // z definicji: stronę logowania trzeba pobrać BEZ sesji. Danych tu nie ma -
       // wszystko, co panel wie, przychodzi później z `/admin/api/*` przez bramę.
       'http/routes/admin/staticPanel.ts',
     ];
@@ -290,7 +290,7 @@ describe('granice, których nie pilnuje kompilator', () => {
 
   it('trasy panelu NIE czytają nagłówka `Authorization` na własną rękę', () => {
     // Sesja przeglądarkowa dołożyła drugi kanał tego samego poświadczenia (ciasteczko).
-    // Jedno miejsce wie, skąd bierze się token (`http/tokenFromRequest.ts`) — trasa,
+    // Jedno miejsce wie, skąd bierze się token (`http/tokenFromRequest.ts`) - trasa,
     // która sięgnie po nagłówek sama, wyłączy panel z autoryzacji, nie zauważywszy tego:
     // przeglądarka nagłówka nie wysyła, więc taki endpoint po prostu zawsze da 401.
     const offenders = filesUnder('http')
@@ -302,18 +302,18 @@ describe('granice, których nie pilnuje kompilator', () => {
   it('oś POWIERZCHNI: `common/` nie zna panelu ani telefonu, a powierzchnie nie znają siebie', () => {
     // Druga oś podziału `server/src` (`CLAUDE.md`, `docs/architektura-kodu.md`): wewnątrz
     // `application/`, `http/routes/` i `infrastructure/pg/` drugi poziom mówi, KOMU plik
-    // służy. `common/` ma twarde znaczenie „OBIE powierzchnie" — i to jest jedyna reguła
+    // służy. `common/` ma twarde znaczenie „OBIE powierzchnie" - i to jest jedyna reguła
     // osi, której złamanie jest ciche: kod dalej się kompiluje i testy przechodzą.
     //
     // Konsekwencja złamania jest konkretna. `common/` sięgające do `admin/` sprawia, że
-    // moduł deklarowany jako wspólny zaczyna zależeć od panelu — a wtedy telefon wciąga
+    // moduł deklarowany jako wspólny zaczyna zależeć od panelu - a wtedy telefon wciąga
     // za sobą kod back-office'u przez zwykły import, którego nikt nie zauważy. W drugą
     // stronę: `mobile/` importujące z `admin/` znaczy, że granica przestała istnieć,
     // a katalogi zostały jako dekoracja.
     //
     // Dopisane 2026-08-01, gdy przekrój floty PRZENIÓSŁ `aircraftStateView.ts` z `mobile/`
     // do `common/` (panel i `GET /reference` liczą claim tym samym kodem). Przeniesienie
-    // było słuszne, ale okazało się, że osi nie pilnowało nic — reguła istniała wyłącznie
+    // było słuszne, ale okazało się, że osi nie pilnowało nic - reguła istniała wyłącznie
     // w dokumencie, a dokument nie wywala budowania.
     const surfaceOf = (file: string): 'admin' | 'mobile' | 'common' | null => {
       const match = /^(?:application|http\/routes|infrastructure\/pg)\/(admin|mobile|common)\//.exec(
@@ -322,7 +322,7 @@ describe('granice, których nie pilnuje kompilator', () => {
       return (match?.[1] as 'admin' | 'mobile' | 'common' | undefined) ?? null;
     };
 
-    /** Powierzchnia, do której PROWADZI import — po samym kształcie ścieżki względnej. */
+    /** Powierzchnia, do której PROWADZI import - po samym kształcie ścieżki względnej. */
     const targetSurface = (spec: string): 'admin' | 'mobile' | 'common' | null => {
       const match = /(?:^|\/)(admin|mobile|common)\//.exec(spec);
       return (match?.[1] as 'admin' | 'mobile' | 'common' | undefined) ?? null;

@@ -1,12 +1,12 @@
 /**
- * UZ Aero — pasek sesji cudzego samolotu (04B) i decyzja o wznowieniu po restarcie.
+ * UZ Aero - pasek sesji cudzego samolotu (04B) i decyzja o wznowieniu po restarcie.
  *
  * Oba moduły pilnują tej samej granicy: **kokpit opisuje SAMOLOT, nie dzień pilota**.
  * Pasek mówi, czyja jest maszyna i ile zrobiła; bramka wznowienia pyta, czy pilot ją
- * jeszcze trzyma. Żadne z nich nie ma prawa sięgnąć po dawną klamrę służby — ta znikła
+ * jeszcze trzyma. Żadne z nich nie ma prawa sięgnąć po dawną klamrę służby - ta znikła
  * z modelu w całości (issue #23), a dzień pilota to lista sesji.
  *
- * Wariant WŁASNEJ sesji (`buildClaimStrip`, mockupy 04/04A) miał tu własny blok testów —
+ * Wariant WŁASNEJ sesji (`buildClaimStrip`, mockupy 04/04A) miał tu własny blok testów -
  * zniknął razem z funkcją 2026-08-10, gdy kokpit stał się stanem modalnym bez drogi
  * powrotnej na 01. Odmiana liczebnika i zerowy licznik LOTÓW przeszły do bloku 04B,
  * bo to jedyny pasek, który dziś istnieje.
@@ -50,7 +50,7 @@ beforeEach(() => {
   flightSeq = 0;
 });
 
-describe('pasek sesji — cudzy samolot (04B)', () => {
+describe('pasek sesji - cudzy samolot (04B)', () => {
   it('opisuje maszynę, a NIE czas pracy tamtego pilota', () => {
     // Wcześniej stało tu „Duty KRZ 02:31". Czas pracy innego pilota nie jest informacją
     // o samolocie i nie wnosi nic do decyzji o przejęciu.
@@ -68,7 +68,7 @@ describe('pasek sesji — cudzy samolot (04B)', () => {
     expect(vm.trailing).toBe('zajęty');
   });
 
-  it('maszyna, która dziś nic nie zrobiła, mówi to wprost — zero nie jest wynikiem', () => {
+  it('maszyna, która dziś nic nie zrobiła, mówi to wprost - zero nie jest wynikiem', () => {
     expect(buildPeekStrip(session({ aircraftId: 'SP-FGK' }), 'KRZ')!.flights).toBe(
       'jeszcze żadnego lotu',
     );
@@ -92,7 +92,7 @@ describe('pasek sesji — cudzy samolot (04B)', () => {
       'KRZ',
     )!;
 
-    expect(vm.label).toBe('SP-AXA · KRZ od — UTC');
+    expect(vm.label).toBe('SP-AXA · KRZ od - UTC');
   });
 
   it('brak samolotu to brak paska', () => {
@@ -106,7 +106,7 @@ describe('wznowienie po restarcie', () => {
   });
 
   it('ZDANY samolot wraca do „Mój dzień", nie do kokpitu', () => {
-    // Sedno: pytamy o `closed` (fakt zdania), nie o dawną klamrę służby — historyczny
+    // Sedno: pytamy o `closed` (fakt zdania), nie o dawną klamrę służby - historyczny
     // warunek `dutyEnd == null` wrzucał pilota do kokpitu maszyny, której już nie ma.
     const released = session({ closed: true });
 

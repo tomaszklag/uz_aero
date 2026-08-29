@@ -1,19 +1,19 @@
 /**
- * UZ Aero — panel: KARTA „OSTATNIO PRZYJĘTE" (moduł CZYSTY).
+ * UZ Aero - panel: KARTA „OSTATNIO PRZYJĘTE" (moduł CZYSTY).
  *
  * ══ DWA CZASY W JEDNYM WIERSZU I O ICH RÓŻNICY JEST TA KARTA ══
- * `receivedAt` to chwila, w której SERWER przyjął zdarzenie — i to ona porządkuje
+ * `receivedAt` to chwila, w której SERWER przyjął zdarzenie - i to ona porządkuje
  * listę. `eventTime` to chwila, w której coś się STAŁO. Przy pilocie pracującym
  * offline te dwie potrafią dzielić godziny, a cała treść pulpitu („to nie jest podgląd
  * lotu na żywo") polega na tym, żeby ich nie mylić.
  *
  * Kolumna czasu pokazuje więc czas ZDARZENIA (tak rysuje to mockup), a opóźnienie
- * przyjęcia dopisujemy do metadanych WYŁĄCZNIE wtedy, gdy jest zauważalne — inaczej
+ * przyjęcia dopisujemy do metadanych WYŁĄCZNIE wtedy, gdy jest zauważalne - inaczej
  * każdy wiersz nosiłby „opóźnienie 0 min" i przestałoby to cokolwiek znaczyć.
  *
  * ══ PRZEJŚCIE PROWADZI NA KARTĘ DNIA, NIE DO REJESTRU ══
  * Mockup kieruje stąd do `A04`, którego nie ma. Zdarzenie należy do DNIA i to karta
- * dnia (`A02a`) pokazuje je w pełnym kontekście — więc wiersz prowadzi tam. Martwego
+ * dnia (`A02a`) pokazuje je w pełnym kontekście - więc wiersz prowadzi tam. Martwego
  * linku nie zostawiamy; przycisk „REJESTR" jest zablokowany z powodem (`dashboardLinks`).
  */
 
@@ -29,21 +29,21 @@ import { dayCardLink } from './dashboardLinks';
  * Od jakiego opóźnienia mówimy o nim wprost.
  *
  * Próg PREZENTACJI: pięć minut to normalny rytm synchronizacji telefonu, a wiersz,
- * który przy każdym zdarzeniu tłumaczy się z sekund, przestaje być czytany. Powyżej —
+ * który przy każdym zdarzeniu tłumaczy się z sekund, przestaje być czytany. Powyżej -
  * to już jest fakt o łączności i ma być widoczny.
  */
 export const DELAY_WORTH_SAYING_MS = 5 * 60 * 1000;
 
 export interface RecentRow {
   key: string;
-  /** „14:19:52" UTC — sekundy mają znaczenie w rejestrze. */
+  /** „14:19:52" UTC - sekundy mają znaczenie w rejestrze. */
   time: string;
   dot: TimelineTone;
   /** Nazwa zdarzenia = jego TYP z rejestru, ten sam napis co w SQL-u i w mockupie. */
   name: string;
   badge: string;
   badgeTone: PillTone;
-  /** Opis w JEDNEJ linii, renderowany jako TEKST — nigdy jako HTML. */
+  /** Opis w JEDNEJ linii, renderowany jako TEKST - nigdy jako HTML. */
   meta: string;
   to: string;
 }
@@ -83,5 +83,5 @@ export interface RecentEmptyCopy {
  */
 export const RECENT_EMPTY: RecentEmptyCopy = {
   title: 'REJESTR JEST PUSTY',
-  note: 'Serwer nie przyjął jeszcze ani jednego zdarzenia. To nie jest cisza po dniu lotnym — to stan sprzed pierwszego synchronizowania telefonu.',
+  note: 'Serwer nie przyjął jeszcze ani jednego zdarzenia. To nie jest cisza po dniu lotnym - to stan sprzed pierwszego synchronizowania telefonu.',
 };

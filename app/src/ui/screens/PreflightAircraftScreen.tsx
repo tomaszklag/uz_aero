@@ -1,27 +1,27 @@
 /**
- * UZ Aero — 02 NOWY LOT · krok 1/3: kto i czym.
+ * UZ Aero - 02 NOWY LOT · krok 1/3: kto i czym.
  *
- * Odwzorowanie mockupu `design/02-preflight.html` — kolejność i treść sekcji są stamtąd,
+ * Odwzorowanie mockupu `design/02-preflight.html` - kolejność i treść sekcji są stamtąd,
  * nie z improwizacji: pasek tożsamości → samolot → drugi pilot → DALEJ.
  *
  * Rodzaj operacji, trasa i klient przeniosły się do kroku 2 (`PreflightTaskScreen`,
- * decyzja 2026-07-30): ten ekran zbierał WYBORY Z LIST (w tym przejęcie samolotu —
+ * decyzja 2026-07-30): ten ekran zbierał WYBORY Z LIST (w tym przejęcie samolotu -
  * najcięższą decyzję preflightu) razem z opisem zadania, a obie listy rosną z flotą
  * i liczbą pilotów.
  *
  * CZASU MELDOWANIA TU NIE MA (§3.6a; od issue #23 razem z całą klamrą służby).
- * Dzień pilota to lista sesji — godziny „od kiedy" się nie deklaruje. Pytanie o nią
- * w drodze do kokpitu kosztowało krok i mówiło nieprawdę — sugerowało, że bez
+ * Dzień pilota to lista sesji - godziny „od kiedy" się nie deklaruje. Pytanie o nią
+ * w drodze do kokpitu kosztowało krok i mówiło nieprawdę - sugerowało, że bez
  * odpowiedzi nie wolno lecieć. **Przejęcie ma trwać kilka sekund** (`CLAUDE.md`),
  * a to był jedyny ekran preflightu z pytaniem o czas.
  *
  * Reguły, których ten ekran pilnuje:
  *  • wybór z **listy kart**, nigdy z natywnego selecta; operacje jako **siatka ikon**
  *    (`CLAUDE.md`);
- *  • tożsamość pilota jest znana z sesji — nie pytamy o kod, **pokazujemy** go paskiem;
- *  • samolot wyłączony ze służby jest widoczny, ale niedostępny — z podanym powodem;
+ *  • tożsamość pilota jest znana z sesji - nie pytamy o kod, **pokazujemy** go paskiem;
+ *  • samolot wyłączony ze służby jest widoczny, ale niedostępny - z podanym powodem;
  *  • samolotu zajętego przez innego pilota **nie da się stąd wybrać**: wiersz prowadzi
- *    do podglądu 04b, a przejęcie jest decyzją TAMTEGO ekranu (issue #12; §4.4 — claim
+ *    do podglądu 04b, a przejęcie jest decyzją TAMTEGO ekranu (issue #12; §4.4 - claim
  *    odbiera poprzednikowi prawo zapisu, więc nie zapada przy liście);
  *  • samolot z wymogiem załogi 2-osobowej blokuje przejście dalej bez Duala.
  *
@@ -30,16 +30,16 @@
  *    „Samolot" z jedną szarą linijką czytała się jak drobna usterka, a o ścianie pilot
  *    dowiadywał się dopiero z zablokowanego DALEJ. Zamiast formularza stoi bursztynowa
  *    karta z powodem i drogą wyjścia; DALEJ nie ma wcale (wyszarzony przycisk
- *    obiecywałby akcję, której reguły nie dopuszczą — ta sama zasada co 10B).
+ *    obiecywałby akcję, której reguły nie dopuszczą - ta sama zasada co 10B).
  *    Ekran co kilka sekund ponawia odczyt lokalnej bazy, więc gdy pętla synca (60 s)
  *    dowiezie `GET /reference`, formularz wraca bez udziału pilota;
  *  • **„wstecz" przy niepustym formularzu pyta o rezygnację** (`design/02h`,
- *    `AbandonDraftSheet`): ta sama mechanika co blokada kokpitu (04d) —
+ *    `AbandonDraftSheet`): ta sama mechanika co blokada kokpitu (04d) -
  *    `usePreventRemove` łapie przycisk sprzętowy i gest. Potwierdzenie CZYŚCI szkic,
  *    więc następne wejście zaczyna od nowa; wcześniej porzucony formularz wracał
- *    z wyborami sprzed godziny. Pusty formularz wychodzi bez pytania — arkusz nad
+ *    z wyborami sprzed godziny. Pusty formularz wychodzi bez pytania - arkusz nad
  *    niczym pytałby o zgodę na nic. Zapisana akcja nawigacji jedzie dopiero z efektu,
- *    PO re-renderze, w którym bramka opadła — dispatch w tym samym tiku trafiałby
+ *    PO re-renderze, w którym bramka opadła - dispatch w tym samym tiku trafiałby
  *    w listener pamiętający jeszcze bramkę podniesioną.
  */
 
@@ -72,7 +72,7 @@ import type { ReferenceAircraft, ReferencePilot } from '../../domain';
 
 /**
  * Co ile ekran ponawia odczyt pustego cache floty (stan `design/02g`). To odczyt
- * z SQLite, nie sieć — sieć odpytuje pętla synca własnym rytmem (60 s z bramą wieku);
+ * z SQLite, nie sieć - sieć odpytuje pętla synca własnym rytmem (60 s z bramą wieku);
  * my tylko sprawdzamy, czy już dowiozła.
  */
 const EMPTY_FLEET_RECHECK_MS = 5000;
@@ -80,7 +80,7 @@ const EMPTY_FLEET_RECHECK_MS = 5000;
 export function PreflightAircraftScreen({
   navigation,
 }: {
-  // Podgląd read-only (04b) potrzebuje parametru — stąd druga, opcjonalna pozycja.
+  // Podgląd read-only (04b) potrzebuje parametru - stąd druga, opcjonalna pozycja.
   // `dispatch` wykonuje akcję nawigacji zatrzymaną przez bramkę rezygnacji.
   navigation: {
     navigate: (screen: string, params?: Record<string, unknown>) => void;
@@ -103,7 +103,7 @@ export function PreflightAircraftScreen({
   const [pilots, setPilots] = useState<ReferencePilot[]>([]);
   /**
    * Czy cache referencyjny został już PRZECZYTANY. Bez tej flagi pusta tablica znaczyła
-   * dwie różne rzeczy — „jeszcze nie wiem" i „nie ma ani jednego samolotu" — i ekran
+   * dwie różne rzeczy - „jeszcze nie wiem" i „nie ma ani jednego samolotu" - i ekran
    * pokazywał stan braku floty w trakcie normalnego odczytu, czyli komunikat o awarii
    * przy poprawnym starcie (issue #33).
    */
@@ -125,17 +125,17 @@ export function PreflightAircraftScreen({
     };
   }, [pilotId, queries, setPilotProfile]);
 
-  /** Stan `design/02g`: cache przeczytany i pusty — warning zamiast formularza. */
+  /** Stan `design/02g`: cache przeczytany i pusty - warning zamiast formularza. */
   const noFleet = loaded && fleet.length === 0;
 
-  // Warning ma zniknąć SAM, gdy sync dowiezie flotę — pilot patrzący na ekran z radą
+  // Warning ma zniknąć SAM, gdy sync dowiezie flotę - pilot patrzący na ekran z radą
   // „sprawdź internet" nie może być zmuszony do wyjścia i powrotu, żeby sprawdzić,
   // czy rada zadziałała. Dwa mechanizmy, dwie role:
-  //  • `refreshReference()` przy wejściu w stan — pytanie serwera OD RAZU, bez czekania
+  //  • `refreshReference()` przy wejściu w stan - pytanie serwera OD RAZU, bez czekania
   //    do 60 s na puls pętli. Brama wieku nie trzyma pustej floty (issue #55,
   //    `referenceSync.refreshIfStale`), więc to jest prawdziwe zapytanie, nie no-op;
   //    kolejne próby (brak zasięgu przy pierwszej) robi pętla synca własnym rytmem;
-  //  • odczyt lokalnej bazy co `EMPTY_FLEET_RECHECK_MS` — podnosi z niej to, co sync
+  //  • odczyt lokalnej bazy co `EMPTY_FLEET_RECHECK_MS` - podnosi z niej to, co sync
   //    dopisał, niezależnie od tego, KTÓRA okazja go przyniosła.
   useEffect(() => {
     if (!noFleet || queries == null) return;
@@ -156,14 +156,14 @@ export function PreflightAircraftScreen({
   }, [noFleet, pilotId, queries, refreshReference, setPilotProfile]);
 
   // ── bramka „wstecz": rezygnacja z nowego lotu (issue #55, `design/02h`) ────────
-  /** Akcja nawigacji zatrzymana przez bramkę — arkusz jest otwarty, póki tu coś jest. */
+  /** Akcja nawigacji zatrzymana przez bramkę - arkusz jest otwarty, póki tu coś jest. */
   const [leaveAction, setLeaveAction] = useState<NavigationAction | null>(null);
-  /** Pilot potwierdził rezygnację — bramka ma opaść i wypuścić zatrzymaną akcję. */
+  /** Pilot potwierdził rezygnację - bramka ma opaść i wypuścić zatrzymaną akcję. */
   const [leaving, setLeaving] = useState(false);
 
   /*
    * Bramka pyta o WYBORY (`draft.dirty()`), nie o sam fakt bycia na ekranie: pusty
-   * formularz wychodzi bez pytania. Warunek gaśnie też po ukończeniu flow — krok 3
+   * formularz wychodzi bez pytania. Warunek gaśnie też po ukończeniu flow - krok 3
    * czyści szkic PRZED wejściem do kokpitu, więc zdjęcie tego ekranu ze stosu przy
    * powrocie na 01 (po zdaniu samolotu) przechodzi bez arkusza.
    */
@@ -199,7 +199,7 @@ export function PreflightAircraftScreen({
           tags: grounded ? [{ label: 'Wyłączony', tone: 'red' as const }] : undefined,
           // Zajęty przez kogoś innego = pozycja do podglądu (04b), nie do wyboru.
           // Sama informacja „kto" bez „od kiedy" nie pozwala ocenić, czy tamten dzień
-          // jeszcze trwa — stąd godzina blokady w tej samej linii.
+          // jeszcze trwa - stąd godzina blokady w tej samej linii.
           peek: claimed,
           note: claimed
             ? a.claimSince != null
@@ -207,14 +207,14 @@ export function PreflightAircraftScreen({
               : `Prowadzi PIC: ${a.claimPicId}`
             : undefined,
           disabledReason: grounded ? 'Wyłączony ze służby' : undefined,
-          // Powód niesie już czerwony tag — druga linia byłaby powtórzeniem.
+          // Powód niesie już czerwony tag - druga linia byłaby powtórzeniem.
           disabledTagged: grounded,
         };
       }),
     [fleet, pilotId],
   );
 
-  // Pilot zalogowany nie może być jednocześnie Dualem — filtrujemy go z listy.
+  // Pilot zalogowany nie może być jednocześnie Dualem - filtrujemy go z listy.
   // Kod pilota nosi kafelek po lewej (issue #12), więc nie powtarzamy go w detalu.
   const dualOptions: PickerOption<string>[] = useMemo(
     () =>
@@ -227,7 +227,7 @@ export function PreflightAircraftScreen({
   const handleAircraft = useCallback(
     (id: string) => {
       const found = fleet.find((a) => a.id === id);
-      // Samolot z cudzym claimem nie wchodzi tą drogą — `CardPicker` kieruje takie
+      // Samolot z cudzym claimem nie wchodzi tą drogą - `CardPicker` kieruje takie
       // pozycje do podglądu (04b), a stamtąd wraca gotowy wybór.
       if (!found || (found.claimPicId != null && found.claimPicId !== pilotId)) return;
       draft.setAircraft(found);
@@ -253,11 +253,11 @@ export function PreflightAircraftScreen({
           }
         />
       }
-      // Warning braku floty stoi na środku ekranu (mockup 02g: `margin:auto`) — treść
+      // Warning braku floty stoi na środku ekranu (mockup 02g: `margin:auto`) - treść
       // musi się rozciągnąć do pełnej wysokości, żeby środek istniał.
       contentContainerStyle={noFleet ? styles.grow : undefined}
       // Akcja prowadząca dalej stoi przy dolnej krawędzi niezależnie od długości
-      // formularza — kciuk ma stałe miejsce do trafienia (reguła z 2026-07-30).
+      // formularza - kciuk ma stałe miejsce do trafienia (reguła z 2026-07-30).
       // Przy pustej flocie DALEJ nie ma WCALE: wyszarzony przycisk obiecywałby akcję,
       // której reguły nie dopuszczą (issue #55; ta sama zasada co brak „EDYTUJ DANE"
       // na 10B).
@@ -269,7 +269,7 @@ export function PreflightAircraftScreen({
             variant="solid"
             trailingIcon="next"
             // Powody padają POJEDYNCZO i w kolejności czynności: najpierw maszyna,
-            // potem to, czego ona wymaga. Brak Duala jedzie odtąd TĄ SAMĄ drogą —
+            // potem to, czego ona wymaga. Brak Duala jedzie odtąd TĄ SAMĄ drogą -
             // baner nad sekcją wyboru zniknął (uwaga z urządzenia 2026-08-29,
             // `logic/dualRequirement.ts`), bo jeden wyjątek od „powód stoi w przycisku"
             // kosztował więcej niż powtórzenie, którego miał oszczędzić.
@@ -312,7 +312,7 @@ export function PreflightAircraftScreen({
               BRAK SAMOLOTÓW
             </AppText>
             <AppText variant="body" tone="secondary" style={styles.emptyText}>
-              W pamięci telefonu nie ma jeszcze floty —{' '}
+              W pamięci telefonu nie ma jeszcze floty -{' '}
               <AppText
                 variant="body"
                 style={[styles.emptyText, {
@@ -325,7 +325,7 @@ export function PreflightAircraftScreen({
               .
             </AppText>
             <AppText variant="body" tone="secondary" style={styles.emptyText}>
-              Lista pobiera się z serwera automatycznie, gdy jest internet — sprawdź
+              Lista pobiera się z serwera automatycznie, gdy jest internet - sprawdź
               połączenie. Jeśli to nie pomaga, poproś administratora o dodanie samolotów
               do floty.
             </AppText>
@@ -342,10 +342,10 @@ export function PreflightAircraftScreen({
 
           {/* ── samolot ─────────────────────────────────────────────────── */}
           <Card title="Samolot" header="inline">
-            {/* Trzy pozycje w geometrii `CardPicker` (minHeight 56, odstęp 6) — flota
+            {/* Trzy pozycje w geometrii `CardPicker` (minHeight 56, odstęp 6) - flota
                 klubu jest tego rzędu, a plamki nie mają prawa udawać, że wiedzą ile
                 dokładnie (wzorzec `design/LOADERY.html`). Stanu „brak samolotów" tu
-                już nie ma — pusta flota przełącza CAŁY ekran w warning (`noFleet`). */}
+                już nie ma - pusta flota przełącza CAŁY ekran w warning (`noFleet`). */}
             {!loaded ? (
               skeleton ? (
                 <SkeletonRows rows={3} height={56} radius={theme.radius.md} gap={6} />
@@ -356,17 +356,17 @@ export function PreflightAircraftScreen({
                 value={selected?.id ?? null}
                 onChange={handleAircraft}
                 // Cała pozycja z cudzym claimem prowadzi TUTAJ. Przejęcie odbiera
-                // poprzednikowi prawo zapisu (§4.4), więc zapada dopiero na 04b — po
+                // poprzednikowi prawo zapisu (§4.4), więc zapada dopiero na 04b - po
                 // zobaczeniu, co się z samolotem dzieje, a nie tapnięciem w listę.
                 onSecondary={(id) => navigation.navigate('CockpitReadonly', { aircraftId: id })}
-                secondaryLabel="Podgląd — kto prowadzi ten samolot"
+                secondaryLabel="Podgląd - kto prowadzi ten samolot"
               />
             )}
           </Card>
 
           {/* ── drugi pilot ─────────────────────────────────────────────── */}
           {/* „· Dual" wypadło z tytułu (issue #12): to żargon obok napisu, który i tak
-              mówi wszystko. Rola „DUAL" zostaje tam, gdzie jest identyfikatorem — w logu
+              mówi wszystko. Rola „DUAL" zostaje tam, gdzie jest identyfikatorem - w logu
               dnia, na karcie załogi i w arkuszu. */}
           <Card
             title="Drugi pilot"
@@ -391,7 +391,7 @@ export function PreflightAircraftScreen({
             )}
             {/* Baner „Wymagana załoga dwuosobowa" USUNIĘTY (uwaga z urządzenia,
                 2026-08-29): powód, dla którego nie da się iść dalej, ma w tej
-                aplikacji jedno miejsce — wnętrze przycisku, który nie działa.
+                aplikacji jedno miejsce - wnętrze przycisku, który nie działa.
                 Plakietka nagłówka zostaje: mówi o WŁAŚCIWOŚCI maszyny, w miejscu
                 wyboru, także wtedy gdy Dual jest już wskazany i nic nie blokuje. */}
           </Card>
@@ -400,10 +400,10 @@ export function PreflightAircraftScreen({
 
       {/* Arkusza przejęcia tu już nie ma (issue #12): pytanie „PRZEJMIJ SP-FGK?" padało
           nad listą, na której nie było widać ani stanu samolotu, ani tego, co poprzednik
-          zdążył zrobić — a to jest właśnie treść ekranu 04b. Cała decyzja przeniosła się
+          zdążył zrobić - a to jest właśnie treść ekranu 04b. Cała decyzja przeniosła się
           tam razem z ostrzeżeniem o niewysłanych danych poprzednika. */}
 
-      {/* Wiersze odniesienia tylko dla FAKTYCZNYCH wyborów — kreska niczego nie
+      {/* Wiersze odniesienia tylko dla FAKTYCZNYCH wyborów - kreska niczego nie
           przypomina (ta sama reguła, co godzina przejęcia w `LeaveCockpitSheet`). */}
       <AbandonDraftSheet
         visible={leaveAction != null && !leaving}

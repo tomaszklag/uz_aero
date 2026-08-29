@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 10I Historia zmian</title>
+<title>UZ Aero - 10I Historia zmian</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -69,7 +69,7 @@
   .modal-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
 
   /* ===== LISTA ZMIAN =====
-     Najnowsza na górze, zapis pierwotny na dole — czyta się „jak jest teraz, a jak
+     Najnowsza na górze, zapis pierwotny na dole - czyta się „jak jest teraz, a jak
      było na początku". Odwrotna kolejność (chronologiczna) kazałaby przewijać do końca,
      żeby zobaczyć stan aktualny, a to on jest pytaniem numer jeden.
 
@@ -78,7 +78,7 @@
      i nie da się jej „posprzątać". Dlatego nie ma tu żadnej akcji poza czytaniem. */
   .hist { display:flex; flex-direction:column; }
   .hist-item { display:grid; grid-template-columns:16px 1fr; gap:11px; }
-  /* Pion osi rysuje sam wiersz — jak na osi sesji (10). */
+  /* Pion osi rysuje sam wiersz - jak na osi sesji (10). */
   .hist-rail { position:relative; display:flex; justify-content:center; }
   .hist-rail::before { content:''; position:absolute; top:0; bottom:0; width:1px; background:var(--border-strong); }
   .hist-item:first-child .hist-rail::before { top:14px; }
@@ -88,7 +88,7 @@
   .hist-body { display:flex; flex-direction:column; gap:4px; padding:4px 0 14px; min-width:0; }
   .hist-when { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.2px; text-transform:uppercase; color:var(--text-muted); }
   /* Zmiana wartości: „było → jest" w monospace, bo to liczby i czasy, a nie zdanie.
-     Wartość STARA przygaszona i przekreślona — nie kasujemy jej z widoku, ale też
+     Wartość STARA przygaszona i przekreślona - nie kasujemy jej z widoku, ale też
      nie pozwalamy jej konkurować z aktualną. */
   .hist-change { display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-family:var(--font-mono); font-size:13px; }
   .hist-from { color:var(--text-muted); text-decoration:line-through; }
@@ -96,9 +96,9 @@
   .hist-to { color:var(--text-primary); font-weight:700; }
   /* Plakietka wiersza. Nosi ją zawsze KOTWICA („zapis pierwotny"), bo ona jedna nie
      jest zmianą i musi się przedstawić; nazwę POLA („paliwo", „czas") dostają wiersze
-     tylko wtedy, gdy lista miesza różne pola — patrz komentarz przy liście niżej. */
+     tylko wtedy, gdy lista miesza różne pola - patrz komentarz przy liście niżej. */
   .hist-field { font-family:var(--font-mono); font-size:8px; letter-spacing:1.2px; text-transform:uppercase; color:var(--text-secondary); background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:2px 6px; }
-  /* Autor: rola ma znaczenie, bo korekta administratora znaczy co innego niż własna —
+  /* Autor: rola ma znaczenie, bo korekta administratora znaczy co innego niż własna -
      pilot ma prawo wiedzieć, że ktoś ruszył jego log po zamknięciu okna. */
   .hist-who { display:flex; align-items:center; gap:6px; font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-secondary); }
   .who-tag { font-size:7.5px; letter-spacing:1px; text-transform:uppercase; border-radius:4px; padding:1px 5px; }
@@ -106,7 +106,7 @@
   .who-tag.admin { color:var(--amber); background:var(--amber-muted); border:1px solid var(--amber-border); }
   .hist-reason { font-size:11px; color:var(--text-secondary); line-height:1.5; font-style:italic; }
   .hist-reason.none { color:var(--text-muted); font-style:normal; font-family:var(--font-mono); font-size:9px; }
-  /* Unieważnienie i przywrócenie to nie „zmiana wartości", tylko zmiana FAKTU —
+  /* Unieważnienie i przywrócenie to nie „zmiana wartości", tylko zmiana FAKTU -
      dlatego zamiast strzałki dostają zdanie. */
   /* Domyślnie zieleń: przywrócenie jest powrotem do stanu, w którym zdarzenie SIĘ LICZY.
      Unieważnienie dostaje czerwień, bo zabiera fakt z wyliczeń. */
@@ -140,12 +140,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 10I</span>
+  <span class="film-strip">UZ AERO - 10I</span>
   <span class="slug">historia zmian · append-only</span>
   <span class="canvas-meta"><span class="pulse"></span>Arkusz 10D</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Historia zmian zdarzenia">
+<main class="phone" role="region" aria-label="Mockup - Historia zmian zdarzenia">
   <div class="status-bar">
     <span>9:41</span>
     <span class="status-right">
@@ -182,8 +182,8 @@
         </div>
 
         <!-- PLAKIETKI Z NAZWĄ POLA TU NIE MA i to jest reguła, nie oszczędność miejsca
-             (uwaga z urządzenia, 2026-08-14). Nazwa pola nie mówi, CZEGO dotyczy zmiana —
-             to wiadomo z nagłówka („Lądowanie · lot 1") i z samych wartości — tylko
+             (uwaga z urządzenia, 2026-08-14). Nazwa pola nie mówi, CZEGO dotyczy zmiana -
+             to wiadomo z nagłówka („Lądowanie · lot 1") i z samych wartości - tylko
              ODRÓŻNIA wiersze od siebie. Tu wszystkie są o czasie, więc „czas" przy każdym
              wpisie powtarzało nagłówek i zabierało miejsce parze „było → jest".
 
@@ -192,7 +192,7 @@
              różnią się wyłącznie rzędem wielkości. Decyduje faktyczna zawartość listy,
              nie to, co mogłoby się w niej znaleźć. -->
         <div class="hist">
-          <!-- Najnowsza zmiana — administratora. Rola stoi przy nazwisku, bo korekta
+          <!-- Najnowsza zmiana - administratora. Rola stoi przy nazwisku, bo korekta
                spoza własnego telefonu znaczy dla pilota co innego niż własna. -->
           <div class="hist-item">
             <span class="hist-rail"><span class="hist-dot"></span></span>
@@ -222,7 +222,7 @@
             </div>
           </div>
 
-          <!-- PRZYWRÓCENIE — osobny wpis, nie skutek uboczny wiersza wyżej. Poprawka
+          <!-- PRZYWRÓCENIE - osobny wpis, nie skutek uboczny wiersza wyżej. Poprawka
                czegokolwiek w zdarzeniu unieważnionym uznaje je za zaszłe (`applyCorrections`),
                a to jest zmiana FAKTU, nie wartości: bez tego wiersza lista mówiłaby
                „tego nie było", a dwie linijki niżej podawała mu nową godzinę. -->
@@ -236,24 +236,24 @@
             </div>
           </div>
 
-          <!-- Wpis bez powodu — pole jest opcjonalne i tak też wygląda: „bez powodu"
+          <!-- Wpis bez powodu - pole jest opcjonalne i tak też wygląda: „bez powodu"
                zamiast pustej linii, żeby brak był widoczny jako brak, a nie jako błąd. -->
           <div class="hist-item">
             <span class="hist-rail"><span class="hist-dot"></span></span>
             <div class="hist-body">
               <span class="hist-when">06 SIE · 11:38 UTC</span>
-              <span class="hist-verdict void">unieważnione — „tego lądowania nie było"</span>
+              <span class="hist-verdict void">unieważnione - „tego lądowania nie było"</span>
               <span class="hist-who">Tomasz Małkiewicz <span class="who-tag me">Ty</span></span>
               <span class="hist-reason none">bez powodu</span>
             </div>
           </div>
 
           <!-- KOTWICA: zapis pierwotny. Kropka pusta, bo to nie korekta, tylko fakt
-               z terenu — i to on jest punktem odniesienia dla wszystkich strzałek wyżej.
+               z terenu - i to on jest punktem odniesienia dla wszystkich strzałek wyżej.
 
                BEZ PODPISU O ŹRÓDLE („autodetekcja · GPS", „zapis sesji") i bez przypisu
                o append-only pod listą (zgłoszenie z urządzenia, 2026-08-14). Pierwsze
-               było prowenienecją, o którą pilot nie pyta — ta sama reguła, przez którą
+               było prowenienecją, o którą pilot nie pyta - ta sama reguła, przez którą
                issue #40 zdjęło plakietki „AUTO" i „RĘCZNIE" z osi. Drugie opisywało
                wewnętrzną budowę rejestru komuś, kto o nią nie pytał: ta sama reguła,
                przez którą wyleciał przypis „korekty zapisują się od razu" z trybu edycji.
@@ -277,12 +277,12 @@
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Arkusze trybu edycji — kiedy który?</div>
+  <div class="vp-title">Arkusze trybu edycji - kiedy który?</div>
   <a class="vp-item active" href="10i-historia-zmian.html">
     <span class="vp-badge blue">10I</span>
     <span class="vp-body">
       <span class="vp-name">Historia zmian</span>
-      <span class="vp-when">Spod wiersza „Historia zmian" w każdym arkuszu korekty (10E, 10F, 10G): co, kiedy i przez kogo zostało zmienione — razem z zapisem pierwotnym na dole. Sam odczyt, zero akcji: cofnięcie korekty robi się kolejną korektą, nie kasowaniem wpisu z tej listy. Otwiera się też w trybie podglądu (10B), bo zamknięte okno odbiera prawo do zmiany danych, nie do ich zrozumienia.</span>
+      <span class="vp-when">Spod wiersza „Historia zmian" w każdym arkuszu korekty (10E, 10F, 10G): co, kiedy i przez kogo zostało zmienione - razem z zapisem pierwotnym na dole. Sam odczyt, zero akcji: cofnięcie korekty robi się kolejną korektą, nie kasowaniem wpisu z tej listy. Otwiera się też w trybie podglądu (10B), bo zamknięte okno odbiera prawo do zmiany danych, nie do ich zrozumienia.</span>
     </span>
     <span class="vp-tag">ten arkusz</span>
   </a>
@@ -297,7 +297,7 @@
     <span class="vp-badge amber">10F</span>
     <span class="vp-body">
       <span class="vp-name">Korekta odczytu</span>
-      <span class="vp-when">Historia paliwa i motogodzin — tu pole „czas" zastępuje „paliwo" albo „MH".</span>
+      <span class="vp-when">Historia paliwa i motogodzin - tu pole „czas" zastępuje „paliwo" albo „MH".</span>
     </span>
   </a>
   <a class="vp-item" href="10g-korekta-zrzutu.html">

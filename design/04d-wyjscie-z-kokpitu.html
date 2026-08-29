@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 04D Wyjście z kokpitu · blokada „wstecz"</title>
+<title>UZ Aero - 04D Wyjście z kokpitu · blokada „wstecz"</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -63,7 +63,7 @@
   .scroll { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:14px; scrollbar-width:none; }
   .scroll::-webkit-scrollbar { display:none; }
   /* Karty z `overflow:hidden` zapadaja sie w kolumnie flex zamiast wyjechac poza
-     ekran do przewiniecia — ta sama wada, co naprawiona w 01 i 10. */
+     ekran do przewiniecia - ta sama wada, co naprawiona w 01 i 10. */
   .scroll > * { flex-shrink:0; }
 
   .start-engine {
@@ -80,13 +80,13 @@
   .start-engine-label { font-family:var(--font-display); font-size:32px; letter-spacing:4px; color:var(--green); text-align:center; position:relative; z-index:1; text-shadow:0 0 20px rgba(46,204,113,0.3); }
   .start-engine-hint { font-family:var(--font-mono); font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); text-align:center; position:relative; z-index:1; }
 
-  /* Reguły `.claim-strip` / `.claim-*` usunięte razem z paskiem sesji (2026-08-10) —
+  /* Reguły `.claim-strip` / `.claim-*` usunięte razem z paskiem sesji (2026-08-10) -
      pasek został wyłącznie w 04B, gdzie opisuje CUDZĄ maszynę. `.strip-left`
      i `.strip-label` zostają: używa ich pasek paliwa niżej. */
   .strip-left { display:flex; align-items:center; gap:8px; }
   .strip-label { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
 
-  /* Pasek paliwa — tokeny 1:1 z 04, bo to ten sam komponent na innym etapie sesji. */
+  /* Pasek paliwa - tokeny 1:1 z 04, bo to ten sam komponent na innym etapie sesji. */
   .fuel-strip { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
   .fuel-strip-icon { color:var(--amber); }
   .fuel-strip-val { font-family:var(--font-mono); font-size:16px; font-weight:400; letter-spacing:2px; color:var(--text-primary); }
@@ -114,7 +114,7 @@
   .action-sub { font-size:10px; color:var(--text-muted); line-height:1.3; }
 
   /* ===== ARKUSZ BLOKADY WYJŚCIA =====
-     Tokeny 1:1 z arkusza korekty (04c) — ten sam prymityw `.modal-overlay` / `.modal-sheet`,
+     Tokeny 1:1 z arkusza korekty (04c) - ten sam prymityw `.modal-overlay` / `.modal-sheet`,
      inna treść. Proporcja akcji 1fr 2fr też stamtąd: anuluj jest węższy od potwierdzenia. */
   .modal-overlay { position:absolute; inset:0; z-index:50; background:rgba(0,0,0,0.72); display:flex; flex-direction:column; justify-content:flex-end; }
   /* Sufit arkusza: pas tła nad nim ma być WIDOCZNY, inaczej arkusz z dużą treścią
@@ -139,7 +139,7 @@
   .nav-strip a.active { color:var(--green); }
   .nav-strip span { color:var(--border-strong); }
 
-  /* ===== VARIANTS PANEL (canvas — skróty do wariantów ekranu) ===== */
+  /* ===== VARIANTS PANEL (canvas - skróty do wariantów ekranu) ===== */
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
   .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
   .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; transition:all .15s; }
@@ -156,12 +156,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 04D</span>
+  <span class="film-strip">UZ AERO - 04D</span>
   <span class="slug">wyjście z kokpitu · blokada „wstecz"</span>
   <span class="canvas-meta"><span class="pulse"></span>Wariant 04</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Blokada wyjścia z kokpitu">
+<main class="phone" role="region" aria-label="Mockup - Blokada wyjścia z kokpitu">
   <div class="status-bar">
     <span>9:41</span>
     <span class="status-right">
@@ -178,7 +178,7 @@
           <span class="aircraft-code">SP-AXA</span>
         </div>
         <!-- TRASA DNIA WEDŁUG RODZAJU OPERACJI (issue #13): przy skokach pasek pisze
-             JEDEN kod ICAO — samolot wraca tam, skąd wystartował, więc oba kody w rekordzie
+             JEDEN kod ICAO - samolot wraca tam, skąd wystartował, więc oba kody w rekordzie
              są równe, a „EPKK → EPKK" czytałoby się jak pomyłka. -->
         <div class="route-line">
           <span class="icao">EPKK</span>
@@ -187,7 +187,7 @@
         </div>
       </div>
       <div class="app-bar-right">
-        <a href="13-ustawienia.html" class="settings-btn" style="text-decoration:none;" title="Ustawienia — motyw, PIN, konto, diagnostyka GPS">
+        <a href="13-ustawienia.html" class="settings-btn" style="text-decoration:none;" title="Ustawienia - motyw, PIN, konto, diagnostyka GPS">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         </a>
       </div>
@@ -195,9 +195,9 @@
 
     <div class="scroll">
 
-      <!-- Bez chipa „GROUND · SILNIK WYŁĄCZONY" — hero START ENGINE mówi to samo mocniej
+      <!-- Bez chipa „GROUND · SILNIK WYŁĄCZONY" - hero START ENGINE mówi to samo mocniej
            (decyzja 2026-08-04, jak na 04). Chip stanu zostaje tylko na 04b („wg serwera"). -->
-      <!-- START ENGINE — główna akcja, bardziej prominentna niż w trakcie dnia -->
+      <!-- START ENGINE - główna akcja, bardziej prominentna niż w trakcie dnia -->
       <a href="05-cockpit-running.html" class="start-engine">
         <div class="start-icon">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0D0D0D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
@@ -206,14 +206,14 @@
         <div class="start-engine-hint">Przytrzymaj 2 sekundy aby potwierdzić</div>
       </a>
 
-      <!-- TU STAŁ PASEK SESJI — USUNIĘTY 2026-08-10 (patrz komentarz w 04).
+      <!-- TU STAŁ PASEK SESJI - USUNIĘTY 2026-08-10 (patrz komentarz w 04).
            Ten wariant był jego najgorszym przypadkiem: świeżo przejęta maszyna nie ma
            czego pokazać, więc najmocniejszy typograficznie wiersz ekranu mówił „jeszcze
-           żadnego wzlotu" — trzeci raz to samo, obok „0 cykli · 0 T/O" i „Brak zdarzeń".
+           żadnego wzlotu" - trzeci raz to samo, obok „0 cykli · 0 T/O" i „Brak zdarzeń".
            Kokpit jest stanem modalnym: wyjście prowadzi przez „Zdaj samolot". -->
 
-      <!-- FUEL STRIP — jest tu OD RAZU po przejęciu (2026-08-10), bo odczyt paliwa właśnie
-           powstał: pilot wpisał go na 02a. Warunek jest ten sam co na 04 — pasek pojawia
+      <!-- FUEL STRIP - jest tu OD RAZU po przejęciu (2026-08-10), bo odczyt paliwa właśnie
+           powstał: pilot wpisał go na 02a. Warunek jest ten sam co na 04 - pasek pojawia
            się, gdy maszyna ma normę zużycia, czyli gdy ma czym być przyrządem. Bez normy
            paska nie ma i litry niesie podpis kafelka „Tankowanie". -->
       <div class="fuel-strip">
@@ -228,11 +228,11 @@
         </div>
         <div class="fuel-strip-est">
           wystarczy na <b>~6 wyniesień</b> do rezerwy 45 min<br>
-          <span class="fuel-strip-src">szacunek z normy samolotu (90 dni) — decyduje paliwomierz</span>
+          <span class="fuel-strip-src">szacunek z normy samolotu (90 dni) - decyduje paliwomierz</span>
         </div>
       </div>
 
-      <!-- LOG SAMOLOTU — empty state -->
+      <!-- LOG SAMOLOTU - empty state -->
       <div class="session-log">
         <div class="session-log-header">
           <span class="session-log-title">Log sesji · SP-AXA · UTC</span>
@@ -255,7 +255,7 @@
           </div>
           <div>
             <div class="action-label">Tankowanie</div>
-            <!-- Litry mówi pasek wyżej, więc kafelek ich nie powtarza (2026-08-10) —
+            <!-- Litry mówi pasek wyżej, więc kafelek ich nie powtarza (2026-08-10) -
                  patrz komentarz przy siatce akcji w 04. -->
             <div class="action-sub">Dolej i zapisz odczyt</div>
           </div>
@@ -284,7 +284,7 @@
           </div>
           <div>
             <div class="action-label">Zdaj samolot</div>
-            <div class="action-sub">Odczyt końcowy — dzień trwa dalej</div>
+            <div class="action-sub">Odczyt końcowy - dzień trwa dalej</div>
           </div>
         </a>
       </div>
@@ -294,16 +294,16 @@
     <!-- ═══ ARKUSZ BLOKADY WYJŚCIA ═══════════════════════════════════════════
          KIEDY: pilot trzyma samolot i nacisnął sprzętowy „wstecz" albo cofnął gestem
          krawędziowym. Kokpit jest stanem modalnym (`CLAUDE.md` → „Kokpit jest stanem
-         modalnym"), więc żadne z tych dwóch nie ma prawa go zdjąć — bez bramki „wstecz"
+         modalnym"), więc żadne z tych dwóch nie ma prawa go zdjąć - bez bramki „wstecz"
          pokazywał 02a, czyli formularz przejęcia maszyny JUŻ przejętej.
 
          DLACZEGO ARKUSZ, A NIE CICHE ZIGNOROWANIE: „nigdy cichy błąd" (§6 pkt 3) dotyczy
-         też blokad. Przycisk, który nic nie robi, wygląda jak zawieszona aplikacja —
+         też blokad. Przycisk, który nic nie robi, wygląda jak zawieszona aplikacja -
          i zostanie naciśnięty jeszcze trzy razy.
 
          DLACZEGO WYJŚCIE JEST SZERSZYM PRZYCISKIEM: pilot właśnie powiedział, że chce
          opuścić kokpit. „ZDAJ SAMOLOT" prowadzi na 09b, czyli do FORMULARZA z własnym
-         potwierdzeniem — pomyłka nic nie kosztuje. Bezpieczne wyjście jest za to domyślne
+         potwierdzeniem - pomyłka nic nie kosztuje. Bezpieczne wyjście jest za to domyślne
          przy każdym porzuceniu arkusza: drugie „wstecz" i tapnięcie w tło zostawiają
          pilota w kokpicie.
 
@@ -325,9 +325,9 @@
 
         <div class="hold-box">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 20h20L12 2Z"/><line x1="12" y1="9" x2="12" y2="14"/><line x1="12" y1="17" x2="12" y2="17"/></svg>
-          <span class="hold-text">Dopóki maszyna jest przejęta, <b>ekranem pracy jest kokpit</b> — „Mój dzień"
+          <span class="hold-text">Dopóki maszyna jest przejęta, <b>ekranem pracy jest kokpit</b> - „Mój dzień"
           otworzy się po jej oddaniu. Zdanie samolotu to odczyt liczników i przekazanie
-          następnemu pilotowi; Twój dzień biegnie dalej — kolejna maszyna dopisze się do listy sesji.</span>
+          następnemu pilotowi; Twój dzień biegnie dalej - kolejna maszyna dopisze się do listy sesji.</span>
         </div>
 
         <div class="modal-actions">
@@ -338,7 +338,7 @@
           </a>
         </div>
         <!-- PODPISU POD AKCJAMI NIE MA (2026-08-29, ta sama decyzja co w 02H). Stało tu
-             „«Wstecz» jeszcze raz albo tapnięcie w tło zostawia Cię w kokpicie" — zdanie
+             „«Wstecz» jeszcze raz albo tapnięcie w tło zostawia Cię w kokpicie" - zdanie
              o ZACHOWANIU APLIKACJI, nie odpowiedź na pytanie pilota. Bezpieczne wyjście
              jest w arkuszu domyślne i odkrywa się pierwszym tapnięciem obok, a „ZOSTAŃ"
              mówi to samo przyciskiem. Oba arkusze potwierdzenia wyglądają przez to tak
@@ -349,40 +349,40 @@
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Warianty kokpitu ground — kiedy który?</div>
+  <div class="vp-title">Warianty kokpitu ground - kiedy który?</div>
   <a class="vp-item" href="04a-cockpit-ground.html">
     <span class="vp-badge">04A</span>
     <span class="vp-body">
       <span class="vp-name">Przed uruchomieniem silnika</span>
-      <span class="vp-when">Zaraz po przejęciu — pusty log sesji, START ENGINE, tankowanie i zmiana załogi. Jedyny stan ground PRZED startem; nie „start dnia" — dzień pilota mógł zacząć się wcześniej, na innej maszynie.</span>
+      <span class="vp-when">Zaraz po przejęciu - pusty log sesji, START ENGINE, tankowanie i zmiana załogi. Jedyny stan ground PRZED startem; nie „start dnia" - dzień pilota mógł zacząć się wcześniej, na innej maszynie.</span>
     </span>
   </a>
   <a class="vp-item" href="04-cockpit-ground.html">
     <span class="vp-badge">04</span>
     <span class="vp-body">
       <span class="vp-name">Po zatrzymaniu silnika</span>
-      <span class="vp-when">Sesja zakończona (sesja = jeden bieg silnika, 2026-08-10): hero ZDAJ SAMOLOT — drugiego START ENGINE nie ma, log jednej sesji, tankowanie dozwolone przed zdaniem.</span>
+      <span class="vp-when">Sesja zakończona (sesja = jeden bieg silnika, 2026-08-10): hero ZDAJ SAMOLOT - drugiego START ENGINE nie ma, log jednej sesji, tankowanie dozwolone przed zdaniem.</span>
     </span>
   </a>
   <a class="vp-item" href="04b-cockpit-readonly.html">
     <span class="vp-badge blue">04B</span>
     <span class="vp-body">
       <span class="vp-name">Podgląd read-only</span>
-      <span class="vp-when">Cudzy samolot — inny pilot ma aktywny claim: stan i log samolotu z serwera, zero możliwości zapisu, akcja „Przejmij".</span>
+      <span class="vp-when">Cudzy samolot - inny pilot ma aktywny claim: stan i log samolotu z serwera, zero możliwości zapisu, akcja „Przejmij".</span>
     </span>
   </a>
   <a class="vp-item" href="10d-edycja.html">
     <span class="vp-badge blue">10D</span>
     <span class="vp-body">
       <span class="vp-name">Popraw dane sesji (tryb edycji)</span>
-      <span class="vp-when">Wyjątek od modalności kokpitu, który modalności nie łamie: kafelek „Popraw dane sesji" otwiera tryb edycji i wraca TU, do kokpitu — samolot zostaje w rękach pilota.</span>
+      <span class="vp-when">Wyjątek od modalności kokpitu, który modalności nie łamie: kafelek „Popraw dane sesji" otwiera tryb edycji i wraca TU, do kokpitu - samolot zostaje w rękach pilota.</span>
     </span>
   </a>
   <a class="vp-item active" href="04d-wyjscie-z-kokpitu.html">
     <span class="vp-badge blue">04D</span>
     <span class="vp-body">
       <span class="vp-name">Blokada wyjścia z kokpitu</span>
-      <span class="vp-when">Pilot trzyma samolot i nacisnął „wstecz" (albo cofnął gestem). Kokpit jest stanem modalnym: arkusz mówi, co go tu trzyma, i pokazuje jedyne wyjście — zdanie maszyny. Wyświetla się tak samo w trybie ground i w locie.</span>
+      <span class="vp-when">Pilot trzyma samolot i nacisnął „wstecz" (albo cofnął gestem). Kokpit jest stanem modalnym: arkusz mówi, co go tu trzyma, i pokazuje jedyne wyjście - zdanie maszyny. Wyświetla się tak samo w trybie ground i w locie.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>

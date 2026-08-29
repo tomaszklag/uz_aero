@@ -1,10 +1,10 @@
 /**
- * UZ Aero (serwer) — testy bazodanowego adaptera arkuszy i `GET /sheets/:tab` (§4.7).
+ * UZ Aero (serwer) - testy bazodanowego adaptera arkuszy i `GET /sheets/:tab` (§4.7).
  *
  * Eksport działa tu END-TO-END bez żadnej atrapy: `POST /events` z `day_close`
  * → `PgSheets` zapisuje kartę do `exported_sheets` → `export_log` dostaje rewizję
  * → `sync-status` i `GET /sheets/:tab` serwują to, co zapisał eksporter. Dokładnie
- * ta ścieżka, którą przejdzie produkcja — adapter Google będzie tylko podmianą
+ * ta ścieżka, którą przejdzie produkcja - adapter Google będzie tylko podmianą
  * miejsca zapisu.
  */
 
@@ -33,7 +33,7 @@ function event(type: string, time: number, payload: Record<string, unknown> = {}
   };
 }
 
-/** Kanoniczny dzień — te same liczby co w `ingest.test.ts` (150→88 L, 1234:30→1241:09). */
+/** Kanoniczny dzień - te same liczby co w `ingest.test.ts` (150→88 L, 1234:30→1241:09). */
 function day() {
   return [
     event('session_claim', at(8, 0), { mode: 'free' }),
@@ -90,8 +90,8 @@ describe('bazodanowe karty arkusza (PgSheets + GET /sheets/:tab)', () => {
     const sheet = res.json();
     expect(sheet.tab).toBe('2026-06-22_SP-AXA');
 
-    // Kanoniczne liczby — ta sama projekcja co ekran 10 telefonu.
-    expect(sheet.rows).toContainEqual(['UZ Aero — doba samolotu', '2026-06-22 (UTC)']);
+    // Kanoniczne liczby - ta sama projekcja co ekran 10 telefonu.
+    expect(sheet.rows).toContainEqual(['UZ Aero - doba samolotu', '2026-06-22 (UTC)']);
     expect(sheet.rows).toContainEqual(['S1', '1', '08:25', '09:18', '00:53', 'AUTO']);
     expect(sheet.rows).toContainEqual(['Doba', '1234:30', '1241:09', '6:39']);
     expect(sheet.rows).toContainEqual(['Czas blokowy doby', '02:22']);
@@ -114,7 +114,7 @@ describe('bazodanowe karty arkusza (PgSheets + GET /sheets/:tab)', () => {
     const token = await login(app);
     await post(app, token, day());
 
-    // Spóźniony zrzut dociera po eksporcie — karta ma się przegenerować.
+    // Spóźniony zrzut dociera po eksporcie - karta ma się przegenerować.
     await post(app, token, [
       event('drop', at(8, 48), {
         dropNumber: 1,
@@ -139,7 +139,7 @@ describe('bazodanowe karty arkusza (PgSheets + GET /sheets/:tab)', () => {
     expect(Number(log.rows[0]!.revision)).toBe(2); // a historia rewizji została w dzienniku
   });
 
-  it('karta to dokument klubu — bez tokenu 401', async () => {
+  it('karta to dokument klubu - bez tokenu 401', async () => {
     const { app } = await testHarness();
     const token = await login(app);
     await post(app, token, day());

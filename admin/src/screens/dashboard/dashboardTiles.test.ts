@@ -1,12 +1,12 @@
 /**
- * UZ Aero — panel: testy kafli pulpitu (`A01`, `A01a`).
+ * UZ Aero - panel: testy kafli pulpitu (`A01`, `A01a`).
  *
  * Dwie własności, na których stoi zaufanie do całego ekranu:
- *  1. **`null` to „nie wiemy", nigdy `0`** — „0 otwartych flag" przy awarii pobrania
+ *  1. **`null` to „nie wiemy", nigdy `0`** - „0 otwartych flag" przy awarii pobrania
  *     to najgorszy możliwy komunikat w narzędziu nadzoru, bo wygląda jak dobra
  *     wiadomość;
  *  2. **każdy kafel ma dokąd prowadzić**, a jego liczba jest obietnicą „tyle wierszy
- *     tam zobaczysz" — czyli cel przejścia zawęża listę dokładnie tak, jak policzony
+ *     tam zobaczysz" - czyli cel przejścia zawęża listę dokładnie tak, jak policzony
  *     jest kafel.
  */
 
@@ -22,19 +22,19 @@ const byKey = (key: string, data: Parameters<typeof dashboardTiles>[0]) => {
 };
 
 describe('brak odpowiedzi z serwera', () => {
-  it('WSZYSTKIE cztery kafle mówią „—", żaden nie mówi zera', () => {
+  it('WSZYSTKIE cztery kafle mówią „-", żaden nie mówi zera', () => {
     const tiles = dashboardTiles(null);
     expect(tiles).toHaveLength(4);
     for (const tile of tiles) {
-      expect(tile.value).toBe('—');
-      expect(tile.note).toBe('Nie wiadomo — pulpit się nie pobrał.');
-      // Jednostka bez liczby byłaby „— / 5", czyli twierdzeniem o flocie przy braku
+      expect(tile.value).toBe('-');
+      expect(tile.note).toBe('Nie wiadomo - pulpit się nie pobrał.');
+      // Jednostka bez liczby byłaby „- / 5", czyli twierdzeniem o flocie przy braku
       // wiedzy o niej.
       expect(tile.unit).toBeUndefined();
     }
   });
 
-  it('przejścia ZOSTAJĄ czynne — lista docelowa może się pobrać, choć pulpit nie', () => {
+  it('przejścia ZOSTAJĄ czynne - lista docelowa może się pobrać, choć pulpit nie', () => {
     for (const tile of dashboardTiles(null)) {
       expect(tile.to.startsWith('/')).toBe(true);
     }
@@ -89,7 +89,7 @@ describe('zero NIE jest awarią i nie ma prawa świecić ostrzegawczo', () => {
   });
 
   it('komplet kart w arkuszu daje kafel SŁOWNY, nie czerwone zero', () => {
-    // Mockup `A01a` pisze tu „wszystko aktualne" — liczba w czerwieni przy zerowej
+    // Mockup `A01a` pisze tu „wszystko aktualne" - liczba w czerwieni przy zerowej
     // awarii byłaby fałszywym alarmem na ekranie, który ma alarmować.
     const data = dashboardFixture();
     data.counts.exports = {
@@ -110,7 +110,7 @@ describe('zero NIE jest awarią i nie ma prawa świecić ostrzegawczo', () => {
     expect(tile.to).toBe('/eksporty');
   });
 
-  it('same karty ZABLOKOWANE flagą to bursztyn, nie czerwień — to nie jest awaria', () => {
+  it('same karty ZABLOKOWANE flagą to bursztyn, nie czerwień - to nie jest awaria', () => {
     const data = dashboardFixture();
     data.counts.exports = {
       total: 4,
@@ -132,6 +132,6 @@ describe('zero NIE jest awarią i nie ma prawa świecić ostrzegawczo', () => {
   it('dzień otwarty od rana NIE jest zaległością i przypis to mówi', () => {
     const data = dashboardFixture();
     data.attention.staleOpenDays = [];
-    expect(byKey('dni', data).note).toBe('Wszystkie z dzisiaj — to normalna praca, nie zaległość.');
+    expect(byKey('dni', data).note).toBe('Wszystkie z dzisiaj - to normalna praca, nie zaległość.');
   });
 });

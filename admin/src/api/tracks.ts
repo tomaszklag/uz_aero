@@ -1,8 +1,8 @@
 /**
- * UZ Aero — panel: ślad lotu (`/admin/api/sessions/:uuid/track/:flight`).
+ * UZ Aero - panel: ślad lotu (`/admin/api/sessions/:uuid/track/:flight`).
  *
  * Jeden plik = jeden zasób, jak reszta `api/`. Adres jest zagnieżdżony pod sesją,
- * bo ślad nie ma własnej tożsamości — istnieje wyłącznie jako wycinek zapisu sesji
+ * bo ślad nie ma własnej tożsamości - istnieje wyłącznie jako wycinek zapisu sesji
  * wyznaczony przez lot z rejestru (`server/src/http/routes/admin/tracks.ts`).
  *
  * 404 jest tu ODPOWIEDZIĄ, nie awarią, i ma dwa różne znaczenia: `no_session`

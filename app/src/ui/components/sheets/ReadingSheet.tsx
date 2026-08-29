@@ -1,5 +1,5 @@
 /**
- * UZ Aero — ReadingSheet (mockupy 02b „Odczyt paliwa" i 02c „Odczyt motogodzin")
+ * UZ Aero - ReadingSheet (mockupy 02b „Odczyt paliwa" i 02c „Odczyt motogodzin")
  *
  * Arkusz świadomej korekty odczytu: duża wartość do wpisania, pod nią wiersze
  * odniesienia (co przekazał poprzednik, jaka jest pojemność / format licznika),
@@ -8,11 +8,11 @@
  * DLACZEGO ARKUSZ, a nie edycja w miejscu: to jest moment, w którym pilot **nadpisuje
  * dane z serwera własnym odczytem z licznika**. Przekazane wartości muszą być widoczne
  * obok wpisywanej (stąd wiersze odniesienia), a rozbieżność ponad próg ma zostać
- * zauważona, zanim trafi do rejestru — nie po fakcie w banerze na dole ekranu.
+ * zauważona, zanim trafi do rejestru - nie po fakcie w banerze na dole ekranu.
  *
  * Ostrzeżenie jest **miękkie**: pilot może potwierdzić mimo rozbieżności, bo licznik
  * fizyczny jest prawdą (`CLAUDE.md`). Twarde inwarianty (np. cofnięty licznik) odrzuca
- * dopiero komenda — tutaj ich nie dublujemy.
+ * dopiero komenda - tutaj ich nie dublujemy.
  *
  * Ten sam arkusz obsługuje GODZINY duty (meldunek na 02, zakończenie na 09) w trybie
  * `keyboard="time"`: tam „odniesieniem" jest bieżąca godzina i dzień lotny, a wpisywana
@@ -31,10 +31,10 @@ import { toneColors, type Tone } from '../tone';
 
 /**
  * Klawiatura per tryb wpisu. `number-pad` dla godziny: same cyfry, bez paska podpowiedzi
- * i bez znaków, których w „HH:MM" i tak nie użyjemy — dwukropek dokłada maska.
+ * i bez znaków, których w „HH:MM" i tak nie użyjemy - dwukropek dokłada maska.
  *
  * Trybu `text` (pełna QWERTY) JUŻ NIE MA. Istniał dla licznika w formacie hh:mm, bo
- * dwukropka nie ma na klawiaturze numerycznej — ale pełna klawiatura zajmuje pół ekranu
+ * dwukropka nie ma na klawiaturze numerycznej - ale pełna klawiatura zajmuje pół ekranu
  * i podsuwa podpowiedzi słownikowe pod liczbę z tarczy. Dziś separator dokłada maska
  * (`maskMotoHoursInput`), więc wystarcza `decimal-pad` (zgłoszenie z urządzenia,
  * 2026-08-14).
@@ -64,7 +64,7 @@ export interface ReadingSheetProps {
    */
   keyboard?: 'decimal' | 'time';
   /**
-   * Maska w trakcie pisania — np. `maskMotoHoursInput`, która przyjmuje kropkę,
+   * Maska w trakcie pisania - np. `maskMotoHoursInput`, która przyjmuje kropkę,
    * przecinek i dwukropek jako TEN SAM separator i zamienia go na właściwy dla formatu
    * licznika. Dzięki niej pole obsługuje się klawiaturą numeryczną, choć zapis hh:mm
    * wymaga znaku, którego na niej nie ma.
@@ -96,11 +96,11 @@ export function ReadingSheet({
    * Zaznaczenie STEROWANE przy otwarciu, nie `selectTextOnFocus`.
    *
    * Android z `selectAllOnFocus` odnawia zaznaczenie przy każdym programowym ustawieniu
-   * tekstu — a wartość tego pola jest sterowana, więc każdy znak przechodzi przez JS
+   * tekstu - a wartość tego pola jest sterowana, więc każdy znak przechodzi przez JS
    * i wraca do widoku. Skutek na urządzeniu: pierwsza wpisana cyfra znów była zaznaczona
    * i druga ją wymazywała; dopiero trzecia trafiała tam, gdzie pilot celował.
    *
-   * Dlatego zaznaczamy całość sami — jeden raz, przy otwarciu — a potem oddajemy kursor
+   * Dlatego zaznaczamy całość sami - jeden raz, przy otwarciu - a potem oddajemy kursor
    * (`undefined` = pole nim rządzi). Wyjątek: przy masce godziny dosuwamy kursor na koniec,
    * bo maska przestawia znaki (dwukropek wjeżdża przed ostatnią cyfrę) i natywna pozycja
    * przestaje odpowiadać temu, co pilot widzi.
@@ -109,7 +109,7 @@ export function ReadingSheet({
     start: 0,
     end: initialText.length,
   });
-  // Każde otwarcie zaczyna od aktualnej wartości — arkusz nie pamięta porzuconej edycji.
+  // Każde otwarcie zaczyna od aktualnej wartości - arkusz nie pamięta porzuconej edycji.
   useEffect(() => {
     if (!visible) return;
     setText(initialText);
@@ -141,7 +141,7 @@ export function ReadingSheet({
    * wartość, żeby zapisać»? Mamy pattern, że walidacja jest na przycisku").
    *
    * Do tej pory ten arkusz wrzucał w JEDEN baner trzy różne rzeczy: puste pole,
-   * wpis nieczytelny i ostrzeżenie o samej liczbie — a „POTWIERDŹ" wyglądał na
+   * wpis nieczytelny i ostrzeżenie o samej liczbie - a „POTWIERDŹ" wyglądał na
    * aktywny i po tapnięciu milczał (`onConfirm` sprawdzał `parsed != null` w środku).
    * Cichy przycisk to dokładnie to, przeciw czemu stoi §6 pkt 3.
    *
@@ -149,14 +149,14 @@ export function ReadingSheet({
    * LICZBĘ, którą pilot wpisał (różni się od szacunku, przekracza pojemność) i zapisu
    * nie wstrzymuje; blokada mieszka W PRZYCISKU, bursztynem, i tam pilot jej szuka.
    *
-   * Puste pole zostaje osobnym przypadkiem od nieczytelnego (issue #60 — arkusz dolewki
+   * Puste pole zostaje osobnym przypadkiem od nieczytelnego (issue #60 - arkusz dolewki
    * startuje pusty, bo prefill fabrykowałby ilość): to nie jest błąd, tylko brak wpisu,
    * i zdanie ma o tym mówić.
    */
   const blocker = empty
     ? 'Wpisz wartość, żeby zapisać'
     : parsed == null
-      ? 'Nie rozumiem tej wartości — popraw wpis'
+      ? 'Nie rozumiem tej wartości - popraw wpis'
       : null;
 
   /** Cyfry: akcent tonu (mockup 02b: `.modal-input-val` = `var(--amber)`). */
@@ -173,7 +173,7 @@ export function ReadingSheet({
       confirmDisabledReason={blocker}
       onConfirm={() => onConfirm(parsed!)}
       onCancel={onCancel}
-      /* Klawiatura od otwarcia — drabinka prób z `useSheetInputFocus` (issue #58
+      /* Klawiatura od otwarcia - drabinka prób z `useSheetInputFocus` (issue #58
          pkt 7, druga tura: pojedynczy focus w onShow bywał nadal za wcześnie). */
       onShow={onShow}
     >
@@ -200,12 +200,12 @@ export function ReadingSheet({
           keyboardType={KEYBOARD_TYPE[keyboard]}
           // Patrz nota przy `selection`. Bez `onSelectionChange` z rozmysłem: kursor
           // postawiony palcem zostaje, gdzie pilot go postawił, bo tapnięcie nie
-          // przerysowuje pola — a sterowana pozycja nie zależy od kolejności zdarzeń.
+          // przerysowuje pola - a sterowana pozycja nie zależy od kolejności zdarzeń.
           selection={selection}
-          // Podkładka zaznaczenia neutralna (`colors.selection`) — akcent w tym samym
+          // Podkładka zaznaczenia neutralna (`colors.selection`) - akcent w tym samym
           // odcieniu co cyfry dawał jednolity prostokąt zamiast czytelnego zaznaczenia.
           selectionColor={theme.colors.selection}
-          // Kursor i uchwyty w pełnym kryciu tonu — jak migający `.modal-cursor` w 02b.
+          // Kursor i uchwyty w pełnym kryciu tonu - jak migający `.modal-cursor` w 02b.
           cursorColor={c.accent}
           selectionHandleColor={c.accent}
           accessibilityLabel={title}

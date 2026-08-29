@@ -1,13 +1,13 @@
 /**
- * UZ Aero — panel: EKRAN LOGOWANIA (`design/admin/A00-login.html`, wariant błędu A00a).
+ * UZ Aero - panel: EKRAN LOGOWANIA (`design/admin/A00-login.html`, wariant błędu A00a).
  *
  * Wdrożony sekcja po sekcji z mockupu: znak marki nad kartą, karta formularza 420 px,
  * baner wyjaśniający role, stopka ze stemplem UTC. Wariant A00a dokłada baner odmowy
  * NAD kartą i plakietkę statusu w jej tytule.
  *
  * Czego z A00a NIE wdrażamy i dlaczego: **licznika prób („zostały 3 z 5")**. Mockup
- * mówi to o sobie sam — „liczby 5 prób / 15 minut są WARTOŚCIAMI ROBOCZYMI… tych dwóch
- * progów NIE przepisuj do kodu bez ustalenia" — a rate-limit `/auth/*` jest zaległością
+ * mówi to o sobie sam - „liczby 5 prób / 15 minut są WARTOŚCIAMI ROBOCZYMI… tych dwóch
+ * progów NIE przepisuj do kodu bez ustalenia" - a rate-limit `/auth/*` jest zaległością
  * serwera (faza 6). Licznik prób bez działającego limitu byłby napisem, który kłamie.
  */
 
@@ -19,7 +19,7 @@ import { Banner, Button, Card, Field, Pill, TextInput } from '../../ui/component
 import { PlaneIcon, SignInIcon } from '../../ui/components/icons';
 import { loginMessage, type LoginMessage } from './loginMessages';
 
-/** Szerokość karty i banerów z mockupu — wymiar układu jednego ekranu. */
+/** Szerokość karty i banerów z mockupu - wymiar układu jednego ekranu. */
 const COLUMN = { width: 420 } as const;
 
 export function LoginScreen() {
@@ -43,7 +43,7 @@ export function LoginScreen() {
           setStatus(httpStatus);
           setMessage(loginMessage(httpStatus, code));
           // Hasło czyścimy po KAŻDEJ odmowie (A00a: „pole wyczyszczone po odrzuceniu"),
-          // login zostaje — poprawianie literówki w loginie nie ma być karane
+          // login zostaje - poprawianie literówki w loginie nie ma być karane
           // przepisywaniem obu pól.
           setPassword('');
         },
@@ -124,7 +124,7 @@ export function LoginScreen() {
             label="Hasło"
             hint={
               message?.markPassword === true
-                ? 'Pole wyczyszczone po odrzuceniu — wpisz hasło jeszcze raz.'
+                ? 'Pole wyczyszczone po odrzuceniu - wpisz hasło jeszcze raz.'
                 : undefined
             }
           >
@@ -152,7 +152,7 @@ export function LoginScreen() {
 
           <span className="hint">
             Konta zakłada administrator w bazie. Panel nie ma samodzielnej rejestracji ani logowania
-            przez Google — jedyne wejście to login i hasło.
+            przez Google - jedyne wejście to login i hasło.
           </span>
         </Card>
       </form>
@@ -160,7 +160,7 @@ export function LoginScreen() {
       {message == null ? (
         <Banner tone="status" style={COLUMN}>
           <b>Panel jest dla dwóch ról.</b> Konto pilota zaloguje się poprawnie, ale zobaczy tylko
-          komunikat: „to konto nie ma roli administratora ani szefa wyszkolenia — panel jest tylko
+          komunikat: „to konto nie ma roli administratora ani szefa wyszkolenia - panel jest tylko
           dla nich; pilot loguje się w aplikacji na telefonie".
         </Banner>
       ) : null}

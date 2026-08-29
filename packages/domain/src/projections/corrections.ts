@@ -1,16 +1,16 @@
 /**
- * UZ Aero — nakładanie korekt na strumień zdarzeń (tryb edycji sesji, model §5.1).
+ * UZ Aero - nakładanie korekt na strumień zdarzeń (tryb edycji sesji, model §5.1).
  *
  * Rejestr jest append-only: korekta to osobne zdarzenie `event_correction`, oryginał
- * zostaje. Ten moduł zamienia strumień SUROWY na strumień EFEKTYWNY — taki, jakby
+ * zostaje. Ten moduł zamienia strumień SUROWY na strumień EFEKTYWNY - taki, jakby
  * zdarzenia od początku miały poprawione czasy i wartości, a unieważnione nie zaszły.
  *
  * Wszyscy konsumenci (projekcja sesji, log dnia, statystyki) przechodzą przez tę jedną
- * funkcję — dzięki temu nie istnieje miejsce, w którym widać „stare" czasy, poza samym
+ * funkcję - dzięki temu nie istnieje miejsce, w którym widać „stare" czasy, poza samym
  * rejestrem, który celowo pamięta wszystko.
  *
  * Gdy jedno zdarzenie ma kilka korekt, WYGRYWA OSTATNIA (po czasie zapisu korekty):
- * pilot poprawił się drugi raz — i to jest jego aktualna wersja. Działa to też dla pary
+ * pilot poprawił się drugi raz - i to jest jego aktualna wersja. Działa to też dla pary
  * `void` → `retime`: ponowna zmiana czasu przywraca zdarzenie do życia, bo skoro pilot
  * podaje mu nowy czas, to uznaje, że jednak zaszło. Ta sama zasada obejmuje `amend`
  * (issue #43): kto poprawia WARTOŚĆ zdarzenia, uznaje je za zaszłe.
@@ -19,7 +19,7 @@
  * Czas i wartości to dwa **niezależne** wymiary tej samej poprawki, więc składamy je
  * osobno: `retime` nie kasuje wcześniejszego `amend`, a `amend` nie cofa poprawionego
  * czasu. Inaczej pilot, który poprawił skład zrzutu, a potem jego godzinę, po cichu
- * traciłby pierwszą poprawkę — a nie ma jak się o tym dowiedzieć, bo obie widzi na
+ * traciłby pierwszą poprawkę - a nie ma jak się o tym dowiedzieć, bo obie widzi na
  * jednej liście historii.
  * W obrębie samych wartości „ostatnia wygrywa" liczy się **per pole**: druga korekta
  * paliwa nie rusza poprawionych wcześniej motogodzin.
@@ -29,14 +29,14 @@
  * zodem), a nie faktem odczytu: kolumna `events.payload` to `JSONB` bez `CHECK`-a, więc
  * do strumienia trafia też wiersz wpisany ręcznie w psql, odtworzony ze zrzutu albo
  * przysłany przez starszą wersję telefonu. Taki wiersz nie ma prawa zabrać widoku
- * WSZYSTKIM pozostałym — a zabierał: `payload` równy JSON-owemu `null` dawał
+ * WSZYSTKIM pozostałym - a zabierał: `payload` równy JSON-owemu `null` dawał
  * `TypeError` przy sięgnięciu po `targetUuid`, czyli 500 z całego rejestru zdarzeń,
  * i to bez możliwości obejścia filtrem (wiersz wchodzi na każdą stronę w swoim zakresie).
  *
  * Pomijamy więc korektę, która NIE ADRESUJE celu (`targetUuid` inne niż napis) i taką,
  * której akcji nie znamy. To drugie jest równie ważne: gałąź „wszystko, co nie jest
  * `void`" traktowała po cichu KAŻDĄ nieznaną akcję jak `retime` i brała z niej
- * `newTime` — czyli podejmowała decyzję za kształt, którego nie rozumie. Nieznana
+ * `newTime` - czyli podejmowała decyzję za kształt, którego nie rozumie. Nieznana
  * akcja może w przyszłej wersji znaczyć cokolwiek; jedyna uczciwa odpowiedź brzmi
  * „nie wiem, więc nie ruszam zdarzenia".
  */
@@ -47,13 +47,13 @@ import type { CorrectionFields, Event, EventOf, JumperCounts } from '../events/e
 /** Czas zdarzenia: GPS ma pierwszeństwo przed zegarem telefonu (§5.1, dwa zegary). */
 const at = (e: Event): EpochMillis => e.gpsTime ?? e.deviceTime;
 
-/** Korekta CZYTELNA — adresuje cel i niesie akcję, którą ta wersja domeny zna. */
+/** Korekta CZYTELNA - adresuje cel i niesie akcję, którą ta wersja domeny zna. */
 type ReadableCorrection =
   | { targetUuid: string; action: 'void' }
   | { targetUuid: string; action: 'retime'; newTime: EpochMillis }
   | { targetUuid: string; action: 'amend'; fields: CorrectionFields };
 
-/** Skład zrzutu z surowego JSON-a — albo `null`/`undefined`, gdy nie da się go przeczytać. */
+/** Skład zrzutu z surowego JSON-a - albo `null`/`undefined`, gdy nie da się go przeczytać. */
 function readJumpers(value: unknown): JumperCounts | null | undefined {
   if (value === null) return null;
   if (typeof value !== 'object') return undefined;
@@ -65,7 +65,7 @@ function readJumpers(value: unknown): JumperCounts | null | undefined {
 }
 
 /**
- * Pola `amend` z surowego payloadu — wyłącznie te z BIAŁEJ LISTY i wyłącznie o właściwym
+ * Pola `amend` z surowego payloadu - wyłącznie te z BIAŁEJ LISTY i wyłącznie o właściwym
  * kształcie. `undefined` znaczy „nie ma czego nałożyć": pusta poprawka jest nieczytelna
  * tak samo jak nieznana akcja i z tego samego powodu (patrz `readCorrection`).
  */
@@ -83,7 +83,7 @@ function readFields(value: unknown): CorrectionFields | undefined {
   const fields: CorrectionFields = {};
   if (typeof raw.fuelL === 'number') fields.fuelL = raw.fuelL;
   if (typeof raw.mh === 'number') fields.mh = raw.mh;
-  // `oilL: null` = „pomiaru nie było" (kasowanie omyłkowego wpisu) — wartość, nie brak.
+  // `oilL: null` = „pomiaru nie było" (kasowanie omyłkowego wpisu) - wartość, nie brak.
   if (raw.oilL === null) fields.oilL = null;
   else if (typeof raw.oilL === 'number') fields.oilL = raw.oilL;
   if (raw.oilAddedL === null) fields.oilAddedL = null;
@@ -107,7 +107,7 @@ function readFields(value: unknown): CorrectionFields | undefined {
  * Kształt wejścia opisujemy `unknown`-ami, a nie `EventCorrectionPayload`, bo to jest
  * dokładnie ta różnica, o którą chodzi: typ mówi, co OBIECAŁO wejście, a ta funkcja
  * czyta, co FAKTYCZNIE leży w bazie. `retime` bez liczbowego `newTime` też jest
- * nieczytelny — wpisałby zdarzeniu `gpsTime`, którego nikt nie podał. Tak samo `amend`
+ * nieczytelny - wpisałby zdarzeniu `gpsTime`, którego nikt nie podał. Tak samo `amend`
  * bez ani jednego rozpoznanego pola: nie wiadomo, co miałby zmienić.
  */
 function readCorrection(correction: EventOf<'event_correction'>): ReadableCorrection | null {
@@ -137,7 +137,7 @@ function readCorrection(correction: EventOf<'event_correction'>): ReadableCorrec
  * `applyCorrections` jest jedynym przejściem dla wszystkich konsumentów strumienia,
  * więc korekta wpisana raz działa też w analityce zużycia, w arkuszu i w panelu.
  *
- * Pole nieadekwatne do typu celu jest pomijane — reguła `CORRECTION_FIELD_NOT_ALLOWED`
+ * Pole nieadekwatne do typu celu jest pomijane - reguła `CORRECTION_FIELD_NOT_ALLOWED`
  * odrzuca takie korekty przy zapisie, ale odczyt bazy nie może na tym polegać (§ ta sama
  * zasada, co przy nieznanej akcji: „nie wiem, więc nie ruszam zdarzenia").
  */
@@ -182,7 +182,7 @@ function amend(event: Event, fields: CorrectionFields): Event {
 }
 
 /**
- * Wynik złożenia wszystkich korekt jednego celu — dwa niezależne wymiary plus życie.
+ * Wynik złożenia wszystkich korekt jednego celu - dwa niezależne wymiary plus życie.
  * `newTime`/`fields` równe `null`/pustemu obiektowi znaczą „tego wymiaru nikt nie ruszył".
  */
 interface EffectiveCorrection {
@@ -195,7 +195,7 @@ interface EffectiveCorrection {
  * Strumień efektywny: bez zdarzeń `event_correction`, bez celów unieważnionych,
  * z czasami i wartościami po korekcie.
  *
- * Zmiana czasu wchodzi w `gpsTime` — to pole „kiedy naprawdę zaszło" (§5.1); `deviceTime`
+ * Zmiana czasu wchodzi w `gpsTime` - to pole „kiedy naprawdę zaszło" (§5.1); `deviceTime`
  * zostaje nietknięty jako ślad chwili pierwotnego zapisu. Zwracamy nowe obiekty, strumień
  * wejściowy jest nienaruszalny jak sam rejestr.
  */
@@ -208,7 +208,7 @@ export function applyCorrections(events: readonly Event[]): Event[] {
 
   const effective = new Map<string, EffectiveCorrection>();
   for (const correction of corrections) {
-    // Nieczytelna korekta wypada TUTAJ, a nie przy nakładaniu — dzięki temu poprzednia,
+    // Nieczytelna korekta wypada TUTAJ, a nie przy nakładaniu - dzięki temu poprzednia,
     // czytelna korekta tego samego celu dalej obowiązuje. „Ostatnia wygrywa" znaczy
     // „ostatnia, którą da się przeczytać", a nie „ostatnia, która skasuje poprzednią".
     const readable = readCorrection(correction);
@@ -256,7 +256,7 @@ export interface IndexedEvent {
   /**
    * Czas zdarzenia (GPS → fallback zegar telefonu), z SUROWEGO strumienia.
    *
-   * Potrzebny regułom, żeby ustalić, DO KTÓREGO WZLOTU należy korygowane zdarzenie —
+   * Potrzebny regułom, żeby ustalić, DO KTÓREGO WZLOTU należy korygowane zdarzenie -
    * od tego zależy, czy okno 24 h tego wzlotu jeszcze trwa (§3.6a: każdy wzlot ma
    * własne okno). Bez czasu reguła musiałaby pytać o okno zagregowane, czyli pozwalać
    * poprawiać wzlot wygasły, dopóki jakikolwiek inny jest otwarty.
@@ -266,10 +266,10 @@ export interface IndexedEvent {
 
 /**
  * Indeks zdarzeń KORYGOWALNYCH: uuid → typ i czas. Buduje go projekcja, a reguły
- * używają do walidacji celu korekty — `checkAppend` dostaje stan, nie surowy strumień.
+ * używają do walidacji celu korekty - `checkAppend` dostaje stan, nie surowy strumień.
  *
  * Obejmuje też zdarzenia już unieważnione: ponowna korekta unieważnionego jest legalna
- * (patrz „ostatnia wygrywa" wyżej). Nie obejmuje samych korekt — poprawia się fakt,
+ * (patrz „ostatnia wygrywa" wyżej). Nie obejmuje samych korekt - poprawia się fakt,
  * nie poprawkę; kolejna korekta celu po prostu zastępuje poprzednią.
  */
 export function buildEventIndex(events: readonly Event[]): Record<string, IndexedEvent> {

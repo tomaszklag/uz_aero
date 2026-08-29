@@ -1,8 +1,8 @@
 /**
- * UZ Aero — GhostAction (`.block-add` z mockupu 08)
+ * UZ Aero - GhostAction (`.block-add` z mockupu 08)
  *
  * Dyskretna akcja w stopce karty: kreskowana linia u góry, wyśrodkowany napis mono
- * z ikoną. Celowo NIE wygląda jak przycisk — to zaproszenie („Dodaj zdarzenie ręcznie"),
+ * z ikoną. Celowo NIE wygląda jak przycisk - to zaproszenie („Dodaj zdarzenie ręcznie"),
  * a nie krok procedury. Pełnowymiarowy `ActionButton` w tym miejscu sugerowałby, że
  * dopisywanie ręczne jest normalną częścią przepływu, a jest ratunkiem.
  *

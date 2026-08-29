@@ -1,5 +1,5 @@
 /**
- * UZ Aero — spoina: GPS → automat detekcji → toast → komenda.
+ * UZ Aero - spoina: GPS → automat detekcji → toast → komenda.
  *
  * Rozdział ról jest tu celowy i wynika z §3.2:
  *   • `GpsPort`         daje fixy (urządzenie albo odtworzenie trasy),
@@ -8,10 +8,10 @@
  *   • ekran             tylko wyświetla to, co hook zwraca.
  *
  * Dzięki temu zdarzenie NIE powstaje w chwili detekcji. Gdyby powstawało, cofnięcie
- * musiałoby kasować zapis — a rejestr jest append-only. Tak jest uczciwiej: dopóki
+ * musiałoby kasować zapis - a rejestr jest append-only. Tak jest uczciwiej: dopóki
  * okno trwa, nic nie zostało zapisane.
  *
- * Elewację lotniska bierzemy z fixa w chwili ENGINE START (§3.3) — bez niej wysokość
+ * Elewację lotniska bierzemy z fixa w chwili ENGINE START (§3.3) - bez niej wysokość
  * nad terenem jest nieznana, a wtedy automat świadomie nie zgaduje lądowania.
  */
 
@@ -40,44 +40,44 @@ import { taxiWrite } from './taxiWrite';
 
 /** Oczekujące zdarzenie w oknie „COFNIJ". */
 export interface PendingDetection {
-  /** Tylko start i lądowanie trafiają do okna „COFNIJ" — kołowanie zapisuje się od razu. */
+  /** Tylko start i lądowanie trafiają do okna „COFNIJ" - kołowanie zapisuje się od razu. */
   detection: Exclude<Detection, 'taxi'>;
   /**
-   * RETRO-DATOWANY czas zdarzenia (`DetectorStep.detectedAt`) — ten trafia do rejestru
+   * RETRO-DATOWANY czas zdarzenia (`DetectorStep.detectedAt`) - ten trafia do rejestru
    * i ten pokazuje toast. Bywa o kilkanaście sekund wcześniejszy niż fix potwierdzający.
    */
   at: number;
-  /** Fix, który detekcję POTWIERDZIŁ — źródło wartości pokazywanych w toaście. */
+  /** Fix, który detekcję POTWIERDZIŁ - źródło wartości pokazywanych w toaście. */
   fix: GpsFix;
   secondsLeft: number;
 }
 
 export interface FlightDetectionState {
-  /** Ostatni fix — zasila siatkę GPS w kokpicie. Zostaje też PO utracie sygnału. */
+  /** Ostatni fix - zasila siatkę GPS w kokpicie. Zostaje też PO utracie sygnału. */
   fix: GpsFix | null;
-  /** Faza lotu i prędkość pionowa — napis w `PhaseHero` (mockup 05). */
+  /** Faza lotu i prędkość pionowa - napis w `PhaseHero` (mockup 05). */
   phase: PhaseReading;
   /**
    * Wysokość dla ZAPISU ZRZUTU: średnia z okna `DROP_ALT_WINDOW_SEC` historii detektora
-   * (issue #21 pkt 2) — pojedynczy fix niesie kilkadziesiąt stóp szumu i nie nadaje się
+   * (issue #21 pkt 2) - pojedynczy fix niesie kilkadziesiąt stóp szumu i nie nadaje się
    * do dokumentów. Liczona z TEJ SAMEJ historii co prędkość pionowa (jedna prawda
-   * o tym, co widział algorytm); po utracie sygnału zostaje ostatnia wartość — jak `fix`.
+   * o tym, co widział algorytm); po utracie sygnału zostaje ostatnia wartość - jak `fix`.
    */
   dropAltitudeFt: number | null;
   /** Detekcja czekająca na potwierdzenie ciszą albo cofnięcie. */
   pending: PendingDetection | null;
-  /** Anuluje oczekującą detekcję — nic nie zostaje zapisane. */
+  /** Anuluje oczekującą detekcję - nic nie zostaje zapisane. */
   undo: () => void;
   /**
    * GPS ŻYJE: fixy przychodzą i najświeższy ma mniej niż `GPS_STALE_SEC`.
-   * `false` = brak uprawnień, brak sygnału ALBO sygnał właśnie umilkł (mockup 05g) —
+   * `false` = brak uprawnień, brak sygnału ALBO sygnał właśnie umilkł (mockup 05g) -
    * kokpit pokazuje wtedy baner-przyrząd i przestawia zapis na ręczny.
    */
   gpsAvailable: boolean;
-  /** Chwila ostatniego fixa (czas fixa) — „Ostatni fix 15:58 UTC" na banerze 05g. */
+  /** Chwila ostatniego fixa (czas fixa) - „Ostatni fix 15:58 UTC" na banerze 05g. */
   lastFixAt: number | null;
   /**
-   * Pilot odmówił uprawnienia lokalizacji — jedyny powód ciszy, którego sygnał
+   * Pilot odmówił uprawnienia lokalizacji - jedyny powód ciszy, którego sygnał
    * nie naprawi sam (baner dostaje wtedy instrukcję ustawień, nie „szukam nieba").
    */
   permissionDenied: boolean;
@@ -88,10 +88,10 @@ export interface UseFlightDetectionOptions {
   gps: GpsPort | null;
   /** Czy nasłuchiwać. Zwykle: silnik pracuje. */
   enabled: boolean;
-  /** Elewacja lotniska (ft) — z fixa przy ENGINE START. */
+  /** Elewacja lotniska (ft) - z fixa przy ENGINE START. */
   fieldElevationFt?: number | null;
   /**
-   * Operacja lata Z i NA to samo lotnisko (skoki) — włącza geofence lądowania
+   * Operacja lata Z i NA to samo lotnisko (skoki) - włącza geofence lądowania
    * w detektorze. Przelot MUSI zostawić `false`.
    */
   sameFieldOnly?: boolean;
@@ -120,7 +120,7 @@ export function useFlightDetection({
   const [lastFixAt, setLastFixAt] = useState<number | null>(null);
   const [permissionDenied, setPermissionDenied] = useState(false);
 
-  /** Zegar URZĄDZENIA z chwili odbioru fixa — świeżość liczymy własnym zegarem,
+  /** Zegar URZĄDZENIA z chwili odbioru fixa - świeżość liczymy własnym zegarem,
    *  bo martwy GPS z definicji nie powie nam, że umarł (mockup 05g). */
   const lastFixDeviceMs = useRef<number | null>(null);
 
@@ -131,7 +131,7 @@ export function useFlightDetection({
   /**
    * DETEKCJA W TOKU: od pokazania toasta „COFNIJ" do końca zapisu (albo cofnięcia).
    *
-   * To jedyne okno, w którym automat i rejestr MUSZĄ się różnić — faza już się zmieniła,
+   * To jedyne okno, w którym automat i rejestr MUSZĄ się różnić - faza już się zmieniła,
    * a zdarzenia z rozmysłem jeszcze nie ma. Uzgadnianie faz i natychmiastowy zapis
    * kołowania są w nim wyłączone; poza nim rejestr rządzi.
    */
@@ -139,7 +139,7 @@ export function useFlightDetection({
   /** Kołowanie wstrzymane oknem „COFNIJ" (para „landing → taxi", `taxiWrite`). */
   const heldTaxiAt = useRef<number | null>(null);
 
-  // Elewacja pojawia się dopiero przy starcie silnika — aktualizujemy bez resetu fazy,
+  // Elewacja pojawia się dopiero przy starcie silnika - aktualizujemy bez resetu fazy,
   // żeby nie zgubić stanu „w powietrzu" przy ponownym renderze. Tryb operacji tak samo.
   useEffect(() => {
     detector.current = { ...detector.current, fieldElevationFt, sameFieldOnly };
@@ -153,7 +153,7 @@ export function useFlightDetection({
   }, []);
 
   /**
-   * Kołowanie do rejestru — jedna droga dla emisji bieżącej i dla wpisu wstrzymanego
+   * Kołowanie do rejestru - jedna droga dla emisji bieżącej i dla wpisu wstrzymanego
    * oknem „COFNIJ". Co z nim zrobić, orzeka czysta `taxiWrite`; tutaj zostaje sam zapis.
    */
   const recordTaxi = useCallback(
@@ -171,7 +171,7 @@ export function useFlightDetection({
       heldTaxiAt.current = null;
       if (decision === 'skip') return;
       void taxi('auto', null, at).catch(() => {
-        // Odmowa reguły dla zapisu Z AUTOMATU nie trafia na ekran — store trzyma ją
+        // Odmowa reguły dla zapisu Z AUTOMATU nie trafia na ekran - store trzyma ją
         // z dala od `lastError` (issue #30). Pilot nie nacisnął niczego, więc nie ma
         // czego mu prostować; ślad do kalibracji zostaje w markerach.
       });
@@ -192,18 +192,18 @@ export function useFlightDetection({
   const undo = useCallback(() => {
     clearTimers();
     settling.current = false;
-    // Nie było lądowania — nie było i dobiegu. Kołowanie wstrzymane oknem znika razem
+    // Nie było lądowania - nie było i dobiegu. Kołowanie wstrzymane oknem znika razem
     // ze zdarzeniem, które je otworzyło.
     releaseHeldTaxi(false);
     setPending((p) => {
-      // Marker COFNIJ do śladu (faza 5): fałszywa detekcja oznaczona przez pilota —
+      // Marker COFNIJ do śladu (faza 5): fałszywa detekcja oznaczona przez pilota -
       // rejestr zdarzeń tego nie widzi, bo COFNIJ z definicji zapobiega zdarzeniu.
       if (p != null) trace?.marker('undo', p.detection, p.at, sessionUuid);
       return null;
     });
   }, [clearTimers, releaseHeldTaxi, sessionUuid, trace]);
 
-  /** Po upływie okna zapisujemy zdarzenie — metodą `auto`, z czasem RETRO-DATOWANYM. */
+  /** Po upływie okna zapisujemy zdarzenie - metodą `auto`, z czasem RETRO-DATOWANYM. */
   const commit = useCallback(
     async (d: Exclude<Detection, 'taxi'>, at: number) => {
       setPending(null);
@@ -259,11 +259,11 @@ export function useFlightDetection({
     let attaching = false;
 
     const handleFix = (incoming: GpsFix) => {
-      // Ślad kalibracyjny (faza 5): SUROWY fix, PRZED kwarantanną — śmieci to
+      // Ślad kalibracyjny (faza 5): SUROWY fix, PRZED kwarantanną - śmieci to
       // najcenniejszy materiał do progów bramki jakości.
       trace?.fix(incoming, sessionUuid);
 
-      // Kwarantanna śmieciowego fixa (zakłócenia — audyt 2026-07-29): nie karmimy nim
+      // Kwarantanna śmieciowego fixa (zakłócenia - audyt 2026-07-29): nie karmimy nim
       // ANI detektora, ani siatki, ani świeżości. Strumień samych śmieci wygasza
       // `gpsAvailable` watchdogiem → kokpit uczciwie pokaże 05g „autodetekcja
       // wstrzymana", a diagnostyka na 13 surowe fixy dalej widzi (własna subskrypcja).
@@ -276,7 +276,7 @@ export function useFlightDetection({
 
       // REJESTR STERUJE AUTOMATEM (issue #30). Faza automatu żyje w pamięci ekranu
       // i nie widzi zapisów spoza siebie: wpisu ręcznego, „COFNIJ", restartu aplikacji.
-      // Rozjazd kosztuje więcej niż fałszywą detekcję — automat w złej fazie szuka
+      // Rozjazd kosztuje więcej niż fałszywą detekcję - automat w złej fazie szuka
       // NIE TEGO zdarzenia i potrafi przegapić cały lot. Poza oknem „COFNIJ" (gdzie
       // różnica jest zamierzona) prostujemy go przed każdym krokiem.
       if (!settling.current) {
@@ -290,15 +290,15 @@ export function useFlightDetection({
       detector.current = step.state;
 
       // Kołowanie zapisujemy OD RAZU, bez okna „COFNIJ". Okno istnieje po to, żeby
-      // fałszywy start albo lądowanie nie trafiły do czasów lotu — kołowanie żadnego
+      // fałszywy start albo lądowanie nie trafiły do czasów lotu - kołowanie żadnego
       // czasu nie wyznacza, więc pytanie „czy na pewno?" byłoby samym szumem.
       // Duplikat odrodzonego detektora i dobieg zapisany przed lądowaniem rozstrzyga
-      // `taxiWrite` — po cichu, bo pilot niczego tu nie nacisnął.
+      // `taxiWrite` - po cichu, bo pilot niczego tu nie nacisnął.
       if (step.detection === 'taxi') {
         recordTaxi(step.detectedAt ?? incoming.time, settling.current);
       }
 
-      // Okno prędkości pionowej bierzemy z historii DETEKTORA — hook nie prowadzi już
+      // Okno prędkości pionowej bierzemy z historii DETEKTORA - hook nie prowadzi już
       // własnego bufora. Dwa bufory tych samych fixów to dwie prawdy o tym, co widział
       // algorytm, i pierwsza rozbieżność wyszłaby dopiero przy analizie nagrania.
       setPhase(
@@ -307,7 +307,7 @@ export function useFlightDetection({
           fixesInWindow(step.state.history, VS_WINDOW_SEC),
         ),
       );
-      // Ta sama historia, inne pytanie: nie „jaki trend", tylko „na jakim poziomie" —
+      // Ta sama historia, inne pytanie: nie „jaki trend", tylko „na jakim poziomie" -
       // średnia z okna zamiast ostatniego fixa (issue #21 pkt 2).
       setDropAltitudeFt(averageAltitudeFt(step.state.history.fixes));
 
@@ -319,7 +319,7 @@ export function useFlightDetection({
     /**
      * Podnosi nasłuch od nowa. Stara subskrypcja schodzi PRZED założeniem nowej, żeby
      * przez chwilę nie stały dwie i detektor nie dostał tego samego fixa dwa razy.
-     * Bez pytania o uprawnienia — te załatwia pierwsze wejście; powtarzanie prośby przy
+     * Bez pytania o uprawnienia - te załatwia pierwsze wejście; powtarzanie prośby przy
      * każdej odbudowie potrafiłoby wystawić pilotowi systemowe okno w locie.
      */
     const attach = async (): Promise<void> => {
@@ -334,7 +334,7 @@ export function useFlightDetection({
           return;
         }
         stop = release;
-        // Cisza liczy się od chwili, gdy nasłuch STOI — inaczej watchdog mierzyłby
+        // Cisza liczy się od chwili, gdy nasłuch STOI - inaczej watchdog mierzyłby
         // czas do fixa, którego nikt jeszcze nie miał komu podać.
         lastFixDeviceMs.current = Date.now();
       } finally {
@@ -347,7 +347,7 @@ export function useFlightDetection({
       if (cancelled) return;
       if (permission !== 'granted') {
         // Odmowa to INNY stan niż cisza sygnału: baner dostaje instrukcję ustawień
-        // zamiast „szukam nieba" (rozróżnienie stanów — decyzja UX 2026-08-04).
+        // zamiast „szukam nieba" (rozróżnienie stanów - decyzja UX 2026-08-04).
         setPermissionDenied(true);
         setGpsAvailable(false);
         return;
@@ -358,7 +358,7 @@ export function useFlightDetection({
 
     // Watchdog świeżości (mockup 05g): sam brak KOLEJNYCH fixów nie wywołuje żadnego
     // callbacku, więc ciszę trzeba zauważyć aktywnie. Po `GPS_STALE_SEC` bez fixa
-    // `gpsAvailable` gaśnie — kokpit wystawia baner-przyrząd i ręczny zapis; powrót
+    // `gpsAvailable` gaśnie - kokpit wystawia baner-przyrząd i ręczny zapis; powrót
     // sygnału gasi baner sam (pierwszy świeży fix ustawia flagę z powrotem).
     const staleTimer = setInterval(() => {
       const at = lastFixDeviceMs.current;
@@ -367,7 +367,7 @@ export function useFlightDetection({
 
       // Cisza ma dwie przyczyny nie do odróżnienia z zewnątrz: nie ma sygnału ALBO
       // umarła NASZA subskrypcja (Android potrafi ją ubić po powrocie z tła albo przy
-      // przełączeniu dostawcy lokalizacji). Martwej subskrypcji sygnał już nie obudzi —
+      // przełączeniu dostawcy lokalizacji). Martwej subskrypcji sygnał już nie obudzi -
       // baner zostałby na ekranie do końca dnia, choć telefon dawno ma fixa. Dlatego
       // co `GPS_STALE_SEC` podnosimy nasłuch od nowa; `attach` przestawia zegar ciszy,
       // więc odbudowa sama się reguluje i nie robi tego częściej.

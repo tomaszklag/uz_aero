@@ -1,9 +1,9 @@
 /**
- * UZ Aero (serwer) — adapter konfiguracji samolotu (`AircraftConfigPort`).
+ * UZ Aero (serwer) - adapter konfiguracji samolotu (`AircraftConfigPort`).
  *
  * Czysty odczyt jednej wartości: flota zmienia się kilka razy w sezonie i zmienia ją
  * administrator, nie ingest. Czytamy `Queryable` podanym przez wołającego, więc
- * odczyt trafia do TEJ SAMEJ transakcji, w której liczone są flagi — inaczej
+ * odczyt trafia do TEJ SAMEJ transakcji, w której liczone są flagi - inaczej
  * tolerancja mogłaby pochodzić z innej wersji konfiguracji niż reszta rachunku.
  */
 

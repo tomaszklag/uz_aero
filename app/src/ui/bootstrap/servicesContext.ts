@@ -1,5 +1,5 @@
 /**
- * UZ Aero — kontekst usług platformy (GPS, czujniki, rejestrator śladu) i jego czytniki.
+ * UZ Aero - kontekst usług platformy (GPS, czujniki, rejestrator śladu) i jego czytniki.
  *
  * Osobny plik od `ServicesProvider.tsx` z tego samego powodu co `ui/theme/themeContext.ts`:
  * **Fast Refresh podmienia moduł w miejscu tylko wtedy, gdy WSZYSTKIE jego eksporty są
@@ -10,7 +10,7 @@
  * „brak GPS" przy działającym odbiorniku.
  *
  * Wartością domyślną kontekstu są same `null`-e i to jest ZAMIERZONE: brak portu jest
- * stanem normalnym (testy, StyleGuide, telefon bez barometru), nie awarią — więc czytnik
+ * stanem normalnym (testy, StyleGuide, telefon bez barometru), nie awarią - więc czytnik
  * nie rzuca, w odróżnieniu od `useTheme`.
  */
 
@@ -21,7 +21,7 @@ import type { TraceRecorder } from '../../application';
 
 export interface Services {
   gps: GpsPort | null;
-  /** Czujniki pokładowe (barometr, inercja) — na razie WYŁĄCZNIE do nagrywania śladu. */
+  /** Czujniki pokładowe (barometr, inercja) - na razie WYŁĄCZNIE do nagrywania śladu. */
   sensors: SensorPort | null;
   trace: TraceRecorder | null;
 }
@@ -34,7 +34,7 @@ export function useGps(): GpsPort | null {
 }
 
 /**
- * Port czujników pokładowych albo null. `NullSensorAdapter` też zwraca „nic nie mam" —
+ * Port czujników pokładowych albo null. `NullSensorAdapter` też zwraca „nic nie mam" -
  * telefon bez barometru jest stanem normalnym, nie awarią, więc wołający nie musi
  * odróżniać „brak portu" od „port bez czujników".
  */

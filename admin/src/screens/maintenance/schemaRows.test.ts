@@ -1,8 +1,8 @@
 /**
- * UZ Aero — panel: stan schematu i migracji (`A11`, sekcja tylko do odczytu).
+ * UZ Aero - panel: stan schematu i migracji (`A11`, sekcja tylko do odczytu).
  *
  * Najważniejszy przypadek: **brak odpowiedzi daje kreski, nie zera**. „0 / 0" na ekranie,
- * po który sięga się przy diagnozie, wygląda jak pusta baza — czyli jak najgorsza możliwa
+ * po który sięga się przy diagnozie, wygląda jak pusta baza - czyli jak najgorsza możliwa
  * wiadomość, i to nieprawdziwa.
  */
 
@@ -11,7 +11,7 @@ import { describe, expect, it } from 'vitest';
 import type { SchemaStateDto } from '../../api/dto';
 import { schemaAge, schemaFacts, schemaRows, schemaWarning } from './schemaRows';
 
-/** Chwila odniesienia dla wieku — parametr, a nie `Date.now()` w środku modułu. */
+/** Chwila odniesienia dla wieku - parametr, a nie `Date.now()` w środku modułu. */
 const NOW = Date.UTC(2026, 6, 31, 14, 22);
 
 const state = (over: Partial<SchemaStateDto> = {}): SchemaStateDto => ({
@@ -32,9 +32,9 @@ describe('wiersze tabeli migracji', () => {
     expect(schemaRows(undefined)).toEqual([]);
   });
 
-  it('zastosowana świeci zielono i pokazuje datę; brakująca — bursztynem i kreską', () => {
+  it('zastosowana świeci zielono i pokazuje datę; brakująca - bursztynem i kreską', () => {
     // Bursztyn, nie czerwień: migracja niezastosowana nie jest uszkodzeniem danych,
-    // tylko bazą starszą niż kod — a to naprawia RESTART, nie panel.
+    // tylko bazą starszą niż kod - a to naprawia RESTART, nie panel.
     const rows = schemaRows(
       state({
         applied: 2,
@@ -48,11 +48,11 @@ describe('wiersze tabeli migracji', () => {
 
     expect(rows[0]).toMatchObject({ version: 1, appliedAt: '12 MAY 2026' });
     expect(rows[0]!.state).toMatchObject({ tone: 'green', text: 'zastosowana' });
-    expect(rows[2]).toMatchObject({ appliedAt: '—' });
+    expect(rows[2]).toMatchObject({ appliedAt: '-' });
     expect(rows[2]!.state).toMatchObject({ tone: 'amber' });
   });
 
-  it('opis migracji pochodzi z SERWERA — panel nie trzyma drugiej listy', () => {
+  it('opis migracji pochodzi z SERWERA - panel nie trzyma drugiej listy', () => {
     // Lista opisów po stronie panelu rozjechałaby się przy pierwszej nowej migracji
     // i wypisywała opis jednej pozycji przy następnej.
     expect(schemaRows(state())[2]!.title).toBe('Motyw pilota');
@@ -60,15 +60,15 @@ describe('wiersze tabeli migracji', () => {
 });
 
 describe('liczby nad tabelą', () => {
-  it('bez odpowiedzi — kreski, nigdy „0 / 0"', () => {
+  it('bez odpowiedzi - kreski, nigdy „0 / 0"', () => {
     const facts = schemaFacts(undefined, NOW);
-    expect(facts.find((f) => f.label === 'Zastosowanych')?.value).toBe('—');
+    expect(facts.find((f) => f.label === 'Zastosowanych')?.value).toBe('-');
     expect(facts.some((f) => f.value === '0')).toBe(false);
-    // Nazwa tabeli stanu jest FAKTEM o systemie, nie danymi — zostaje zawsze.
+    // Nazwa tabeli stanu jest FAKTEM o systemie, nie danymi - zostaje zawsze.
     expect(facts.find((f) => f.label === 'Tabela stanu')?.value).toBe('schema_migrations');
   });
 
-  it('komplet świeci zielono, niepełny zestaw — bursztynem', () => {
+  it('komplet świeci zielono, niepełny zestaw - bursztynem', () => {
     expect(schemaFacts(state(), NOW).find((f) => f.label === 'Zastosowanych')).toMatchObject({
       value: '3 / 3',
       tone: 'green',
@@ -86,7 +86,7 @@ describe('ostrzeżenie „baza starsza niż kod"', () => {
   });
 
   it('przy brakującej migracji mówi ILE brakuje i że naprawą jest RESTART', () => {
-    // Serwer, który wstał z niepełnym schematem, wygląda jak działający — dlatego
+    // Serwer, który wstał z niepełnym schematem, wygląda jak działający - dlatego
     // ten stan musi być nazwany, a nie policzony po cichu.
     const warning = schemaWarning(state({ applied: 2, pending: 1 }));
     expect(warning).toContain('2 z 3');
@@ -100,7 +100,7 @@ describe('wiek ostatniej migracji', () => {
     expect(schemaAge(state({ lastAppliedAt: null }), Date.now())).toBeNull();
   });
 
-  it('podaje WIEK, a nie znacznik czasu — to samo, co reguła świeżości w szablonie', () => {
+  it('podaje WIEK, a nie znacznik czasu - to samo, co reguła świeżości w szablonie', () => {
     const age = schemaAge(state(), Date.UTC(2026, 6, 31, 5, 2));
     expect(age).toContain('temu');
     expect(age).not.toContain('2026');

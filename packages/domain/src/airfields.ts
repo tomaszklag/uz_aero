@@ -1,15 +1,15 @@
 /**
- * UZ Aero — katalog polskich lotnisk (dane statyczne).
+ * UZ Aero - katalog polskich lotnisk (dane statyczne).
  *
  * PO CO: mapa śladu rysuje trasę na siatce współrzędnych, bez kafelków (decyzja
- * 2026-08-04). Sama linia w pustce nie mówi jednak, GDZIE lot się odbył — dopiero
+ * 2026-08-04). Sama linia w pustce nie mówi jednak, GDZIE lot się odbył - dopiero
  * pas startowy z podpisem daje odniesienie, które pilot rozpoznaje bez zastanowienia.
  *
- * ŹRÓDŁA (dwa, w tej kolejności — uzasadnienie i odrzucone warianty: `docs/dane-lotnisk.md`):
+ * ŹRÓDŁA (dwa, w tej kolejności - uzasadnienie i odrzucone warianty: `docs/dane-lotnisk.md`):
  *
- *   1. OurAirports (`ourairports.com`) — DOMENA PUBLICZNA. Szkielet katalogu: kod ICAO,
+ *   1. OurAirports (`ourairports.com`) - DOMENA PUBLICZNA. Szkielet katalogu: kod ICAO,
  *      nazwa, pozycja, elewacja, a także pas wszędzie tam, gdzie źródło go podaje.
- *   2. OpenStreetMap (`aeroway=runway`) — licencja **ODbL**. Wyłącznie pasy lotnisk,
+ *   2. OpenStreetMap (`aeroway=runway`) - licencja **ODbL**. Wyłącznie pasy lotnisk,
  *      których OurAirports nie ma; w praktyce lotniska aeroklubowe i lądowiska.
  *
  * ATRYBUCJA I ODbL: ten plik jest bazą pochodną od OSM, więc jest udostępniony na ODbL,
@@ -17,15 +17,15 @@
  * mówi, którego rekordu to dotyczy.
  *
  * DLACZEGO STATYCZNIE, A NIE Z BAZY: lotniska zmieniają się w skali lat, a ekran śladu
- * ma działać bez sieci — pobieranie katalogu z serwera dokładałoby zależność sieciową
+ * ma działać bez sieci - pobieranie katalogu z serwera dokładałoby zależność sieciową
  * dokładnie tam, gdzie jej świadomie nie ma. Odświeżenie to ponowne uruchomienie
  * generatora (`packages/domain/scripts/generateAirfields.ts`) i jeden commit.
  *
- * PLIK GENEROWANY — nie edytuj ręcznie.
+ * PLIK GENEROWANY - nie edytuj ręcznie.
  * Rekordów: 106, z pasem: 106 (z tego z OSM: 57).
  */
 
-/** Skąd pochodzi pas — atrybucja ODbL dotyczy wyłącznie rekordów `'osm'`. */
+/** Skąd pochodzi pas - atrybucja ODbL dotyczy wyłącznie rekordów `'osm'`. */
 export type RunwaySource = 'ourairports' | 'osm';
 
 /** Pas startowy: kierunek geograficzny i długość. Null, gdy żadne źródło go nie podaje. */
@@ -38,7 +38,7 @@ export interface AirfieldRunway {
 
 /** Lotnisko z katalogu. */
 export interface Airfield {
-  /** Kod ICAO — ten sam, który pilot wpisuje w preflighcie (`departureIcao`). */
+  /** Kod ICAO - ten sam, który pilot wpisuje w preflighcie (`departureIcao`). */
   icao: string;
   name: string;
   lat: number;

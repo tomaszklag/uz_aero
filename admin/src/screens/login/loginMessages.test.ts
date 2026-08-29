@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: komunikaty ekranu logowania (moduł czysty).
+ * UZ Aero - panel: komunikaty ekranu logowania (moduł czysty).
  *
  * Testujemy REGUŁĘ, nie brzmienie: że 401 nie zdradza istnienia konta, że 403 z braku
  * roli mówi coś ZUPEŁNIE innego, i że nieznana odpowiedź nie zamienia się w milczenie.
@@ -20,7 +20,7 @@ describe('loginMessage', () => {
   });
 
   it('konto wyłączone dostaje TEN SAM komunikat co złe hasło', () => {
-    // Serwer odpowiada 401 również przy `account_disabled` — panel nie ma prawa
+    // Serwer odpowiada 401 również przy `account_disabled` - panel nie ma prawa
     // rozdzielić tych przypadków, bo rozdzielenie ich jest wyliczarką kont.
     expect(loginMessage(401, 'account_disabled')).toEqual(loginMessage(401, 'invalid_credentials'));
   });
@@ -29,7 +29,7 @@ describe('loginMessage', () => {
     const message = loginMessage(403, 'no_panel_access');
 
     expect(message.tone).toBe('warn');
-    // Hasło było poprawne, więc pole hasła NIE jest oznaczane jako błędne —
+    // Hasło było poprawne, więc pole hasła NIE jest oznaczane jako błędne -
     // inaczej wysłalibyśmy człowieka po nowe hasło zamiast po nową rolę.
     expect(message.markPassword).toBe(false);
     expect(message.detail).toMatch(/administrator/i);

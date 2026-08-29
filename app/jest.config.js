@@ -1,14 +1,14 @@
 /**
- * UZ Aero — konfiguracja Jest dla testów WARSTWY DANYCH (Faza 1).
+ * UZ Aero - konfiguracja Jest dla testów WARSTWY DANYCH (Faza 1).
  *
  * Świadomy wybór: testy rdzenia (czyste projekcje + `InMemoryAdapter` + repo + store)
- * są RN-free — nie importują react-native, expo-* ani `expo-sqlite`. Dlatego zamiast
+ * są RN-free - nie importują react-native, expo-* ani `expo-sqlite`. Dlatego zamiast
  * ciężkiego łańcucha `jest-expo` używamy izolowanego `babel-jest` (Babel strippuje typy,
  * kompiluje ESM→CJS pod bieżący Node). Type-checkingiem zajmuje się osobno `tsc --noEmit`
- * (skrypt `typecheck`) — czysty rozdział: babel = wykonanie testów, tsc = poprawność typów.
+ * (skrypt `typecheck`) - czysty rozdział: babel = wykonanie testów, tsc = poprawność typów.
  *
  * `configFile:false` + `babelrc:false` izolują transform od builda aplikacji (Metro nadal
- * używa `babel-preset-expo`) — ta konfiguracja nie dotyka runtime RN.
+ * używa `babel-preset-expo`) - ta konfiguracja nie dotyka runtime RN.
  *
  * Testy komponentów RN (jeśli powstaną) można dołożyć osobnym projektem z presetem jest-expo.
  */

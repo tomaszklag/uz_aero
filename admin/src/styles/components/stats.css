@@ -1,15 +1,15 @@
 /**
- * UZ Aero — panel: KOMPONENTY STATYSTYK (`A10`).
+ * UZ Aero - panel: KOMPONENTY STATYSTYK (`A10`).
  *
  * Klasy przepisane 1:1 z `design/admin/SZABLON.html` (sekcja „STATYSTYKI (A10)").
- * Mockup budował te wykresy stylami inline, przez co wzorce nie miały NAZW — sekcja
+ * Mockup budował te wykresy stylami inline, przez co wzorce nie miały NAZW - sekcja
  * w szablonie i ten arkusz powstały razem z przekrojem A10 (ta sama historia, co
  * `.reason-list` przy A01a). Geometrię (szerokości, punkty polyline) liczy moduł
  * czysty ekranu i podaje stylem inline; klasa niesie wszystko poza geometrią.
  * Równości z szablonem pilnuje `admin/test/classInventory.test.ts`.
  */
 
-/* Szereg „dzień po dniu" — SVG polyline; oś z podpisami dat pod spodem. */
+/* Szereg „dzień po dniu" - SVG polyline; oś z podpisami dat pod spodem. */
 .trend {
   width: 100%;
   height: auto;
@@ -26,7 +26,7 @@
   padding-top: 2px;
 }
 
-/* Zestawienie DWÓCH wielkości jednej pozycji (blok vs czas lotu) — para pasków. */
+/* Zestawienie DWÓCH wielkości jednej pozycji (blok vs czas lotu) - para pasków. */
 .duo {
   display: flex;
   align-items: center;
@@ -77,7 +77,7 @@
   color: var(--blue);
 }
 
-/* Miernik udziału (wykorzystanie floty) — tor z wypełnieniem i twardą krawędzią. */
+/* Miernik udziału (wykorzystanie floty) - tor z wypełnieniem i twardą krawędzią. */
 .meter {
   display: flex;
   align-items: center;
@@ -110,7 +110,7 @@
   flex-shrink: 0;
 }
 
-/* Pasek udziału W KOMÓRCE tabeli („Udział w nalocie") — cieńszy niż miernik. */
+/* Pasek udziału W KOMÓRCE tabeli („Udział w nalocie") - cieńszy niż miernik. */
 .share {
   display: flex;
   align-items: center;
@@ -139,7 +139,7 @@
   flex-shrink: 0;
 }
 
-/* Wstęga rozkładu (typy skoków) — segmenty sumujące się do całości. */
+/* Wstęga rozkładu (typy skoków) - segmenty sumujące się do całości. */
 .ribbon {
   display: flex;
   height: 26px;
@@ -188,18 +188,18 @@
   margin-left: auto;
 }
 
-/* Przypis POD tabelą — odsunięty od jej krawędzi (mockup: styl inline). */
+/* Przypis POD tabelą - odsunięty od jej krawędzi (mockup: styl inline). */
 .table-hint {
   display: block;
   padding-top: 8px;
 }
 
-/* Wiersz RAZEM tabeli — wyróżnione tło (mockup robił to stylem inline na <tr>). */
+/* Wiersz RAZEM tabeli - wyróżnione tło (mockup robił to stylem inline na <tr>). */
 .row-total td {
   background: var(--surface-raised);
 }
 
-/* Tony komórek wiersza RAZEM — te same barwy, co kolumny kafli nad tabelą. */
+/* Tony komórek wiersza RAZEM - te same barwy, co kolumny kafli nad tabelą. */
 .cell-green {
   color: var(--green);
 }

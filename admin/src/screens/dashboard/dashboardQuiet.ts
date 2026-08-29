@@ -1,24 +1,24 @@
 /**
- * UZ Aero — panel: CISZA SPODZIEWANA CZY PODEJRZANA (`A01a`, moduł CZYSTY).
+ * UZ Aero - panel: CISZA SPODZIEWANA CZY PODEJRZANA (`A01a`, moduł CZYSTY).
  *
  * ══ DLACZEGO TEN PLIK W OGÓLE ISTNIEJE ══
- * Pulpit, który zawsze coś krzyczy, przestaje być czytany — a wtedy przestaje działać
+ * Pulpit, który zawsze coś krzyczy, przestaje być czytany - a wtedy przestaje działać
  * także wtedy, gdy naprawdę krzyczy. Wariant „cisza" nie jest więc stanem pustym na
  * doczepkę: ma wyglądać jak POTWIERDZENIE, że jest dobrze, i musi odróżnić dwie rzeczy,
- * które w bazie offline-first zapisują się IDENTYCZNIE — jako nic:
+ * które w bazie offline-first zapisują się IDENTYCZNIE - jako nic:
  *
  *   • „dziś nikt nie lata"      → cisza SPODZIEWANA, zielono,
  *   • „nic do nas nie dociera"  → cisza PODEJRZANA, bursztyn.
  *
  * Sam brak wierszy nie rozstrzyga niczego. Rozstrzyga to, **czym skończył się ostatni
- * strumień**: domknięty dzień to cisza, urwany claim to alarm — nawet jeśli licznik
+ * strumień**: domknięty dzień to cisza, urwany claim to alarm - nawet jeśli licznik
  * w obu przypadkach pokazuje zero.
  *
  * ══ DLACZEGO WERDYKT LICZY PANEL, A NIE SERWER ══
  * Bo jest wyłącznie KOLOREM BANERA: nie wystawia flagi, nie zmienia żadnej liczby
  * i nie ma konsumenta poza tym ekranem. Wszystkie FAKTY, z których wynika, przychodzą
  * z serwera i mają tam testy; tutaj powstaje z nich jedno zdanie. Gdyby werdykt kiedyś
- * miał skutek (powiadomienie, wpis w dzienniku), jego miejsce jest po stronie serwera —
+ * miał skutek (powiadomienie, wpis w dzienniku), jego miejsce jest po stronie serwera -
  * i wtedy ten plik znika, a nie rozrasta się o drugą regułę.
  */
 
@@ -30,7 +30,7 @@ import type { DashboardDto } from '../../api/dto';
  * Po ilu godzinach bez ANI JEDNEGO zdarzenia cisza staje się podejrzana.
  *
  * Próg z mockupu `A01a` („Próg podejrzenia: 48 godz."), wypisany na ekranie razem
- * z werdyktem — administrator ma widzieć, wobec czego panel go wydał. Jest to próg
+ * z werdyktem - administrator ma widzieć, wobec czego panel go wydał. Jest to próg
  * PREZENTACJI: nie wystawia flagi i nie zmienia żadnej liczby.
  */
 export const SUSPICIOUS_AFTER_MS = 48 * 60 * 60 * 1000;
@@ -46,10 +46,10 @@ export interface QuietView {
   verdict: QuietVerdict;
   /** Krótka plakietka do topbara i nagłówka karty. */
   label: string;
-  /** Zdanie banera — pierwsze, co administrator czyta na pustym pulpicie. */
+  /** Zdanie banera - pierwsze, co administrator czyta na pustym pulpicie. */
   headline: string;
   /**
-   * Powody, dla których cisza JEST podejrzana. Pusta lista przy `expected` — i to
+   * Powody, dla których cisza JEST podejrzana. Pusta lista przy `expected` - i to
    * jest cała jej treść: werdykt zielony znaczy „sprawdziliśmy cztery rzeczy i żadna
    * nie pękła", a nie „nie mamy nic do powiedzenia".
    */
@@ -62,7 +62,7 @@ export interface QuietView {
  * Czy pulpit jest w ogóle W CISZY.
  *
  * Warunek jest twardy: ani jednego otwartego claimu i ani jednego otwartego dnia.
- * Dopóki cokolwiek lata, pytanie „czy to cisza spodziewana" nie ma sensu — pulpit
+ * Dopóki cokolwiek lata, pytanie „czy to cisza spodziewana" nie ma sensu - pulpit
  * pokazuje wtedy ruch.
  */
 export function isQuiet(data: DashboardDto): boolean {
@@ -77,7 +77,7 @@ export function quietView(data: DashboardDto): QuietView {
 
   const verdict: QuietVerdict =
     lastMs == null && data.counts.exports.total === 0
-      ? // Pusty rejestr to nie jest cisza po dniu lotnym — to stan sprzed pierwszego
+      ? // Pusty rejestr to nie jest cisza po dniu lotnym - to stan sprzed pierwszego
         // synchronizowania. Nazwanie go „spodziewanym" byłoby uspokajaniem w sprawie,
         // o której nic nie wiemy.
         'unknown'
@@ -102,7 +102,7 @@ const LABEL: Record<QuietVerdict, string> = {
 
 /**
  * Cztery warunki z mockupu `A01a`. Pęknięcie choćby jednego zmienia werdykt na bursztyn
- * i NAZYWA stan wprost — bo „coś jest nie tak" bez powiedzenia czego jest gorsze od
+ * i NAZYWA stan wprost - bo „coś jest nie tak" bez powiedzenia czego jest gorsze od
  * milczenia.
  */
 function quietReasons(
@@ -125,7 +125,7 @@ function quietReasons(
   if (data.attention.staleOpenDays.length > 0) {
     out.push({
       key: 'dzien-bez-zamkniecia',
-      text: `${data.attention.staleOpenDays.length} dzień lotny bez \`day_close\` stoi otwarty dłużej niż doba — karta arkusza nie powstanie, dopóki się nie zamknie.`,
+      text: `${data.attention.staleOpenDays.length} dzień lotny bez \`day_close\` stoi otwarty dłużej niż doba - karta arkusza nie powstanie, dopóki się nie zamknie.`,
     });
   }
 
@@ -142,7 +142,7 @@ function quietReasons(
   if (missing > 0) {
     out.push({
       key: 'karta-bez-arkusza',
-      text: `${missing} zamkniętych dni nie ma karty w arkuszu — eksport odbił się awarią i nie zostawił po sobie śladu w żadnej tabeli.`,
+      text: `${missing} zamkniętych dni nie ma karty w arkuszu - eksport odbił się awarią i nie zostawił po sobie śladu w żadnej tabeli.`,
     });
   }
   if (blocked > 0) {
@@ -163,19 +163,19 @@ function headlineOf(
   lastType: string | null,
 ): string {
   if (verdict === 'unknown') {
-    return 'Rejestr jest pusty. Serwer nie przyjął jeszcze ani jednego zdarzenia, więc nie ma czego nazwać ciszą — to stan sprzed pierwszego synchronizowania telefonu.';
+    return 'Rejestr jest pusty. Serwer nie przyjął jeszcze ani jednego zdarzenia, więc nie ma czego nazwać ciszą - to stan sprzed pierwszego synchronizowania telefonu.';
   }
 
   const since =
     lastMs == null
       ? 'Nie przyjęliśmy jeszcze żadnego zdarzenia'
-      : `Ostatnie zdarzenie przyjęliśmy ${relativeAge(Math.max(0, nowMs - lastMs))} temu${lastType == null ? '' : ` — \`${lastType}\``}`;
+      : `Ostatnie zdarzenie przyjęliśmy ${relativeAge(Math.max(0, nowMs - lastMs))} temu${lastType == null ? '' : ` - \`${lastType}\``}`;
 
   if (verdict === 'suspicious') {
     return `${since}. Ta pustka NIE jest zgodna z projektem: coś z ostatniego dnia lotnego zostało niedomknięte, więc milczenie telefonów nie tłumaczy się samo.`;
   }
 
-  return `${since}. Każda sesja z ostatniego dnia lotnego jest domknięta, żaden samolot nie ma otwartego claimu, a karty dnia są w arkuszu. Rejestr milczy, bo nie ma czego zapisywać — nie dlatego, że coś przestało działać. Aplikacja pracuje offline-first i nie melduje się „na wszelki wypadek".`;
+  return `${since}. Każda sesja z ostatniego dnia lotnego jest domknięta, żaden samolot nie ma otwartego claimu, a karty dnia są w arkuszu. Rejestr milczy, bo nie ma czego zapisywać - nie dlatego, że coś przestało działać. Aplikacja pracuje offline-first i nie melduje się „na wszelki wypadek".`;
 }
 
 /**
@@ -196,7 +196,7 @@ function factsOf(
       label: 'Ostatnie zdarzenie',
       value:
         lastMs == null || last == null
-          ? 'brak — rejestr pusty'
+          ? 'brak - rejestr pusty'
           : `${relativeAge(Math.max(0, nowMs - lastMs))} temu · ${dateUtcShort(lastMs)} ${timeUtc(lastMs)} · ${last.type} ${last.reg ?? last.aircraftId}`,
       tone: lastMs == null ? 'amber' : nowMs - lastMs > SUSPICIOUS_AFTER_MS ? 'amber' : 'green',
     },

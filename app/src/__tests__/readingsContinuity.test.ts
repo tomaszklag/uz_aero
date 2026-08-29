@@ -1,7 +1,7 @@
 /**
- * UZ Aero — test ciągłości paliwa w formularzu (issue #62, piąta tura).
+ * UZ Aero - test ciągłości paliwa w formularzu (issue #62, piąta tura).
  *
- * „Chodzi o to, aby była ciągłość w ilości paliwa" — a jednocześnie „nic nie może
+ * „Chodzi o to, aby była ciągłość w ilości paliwa" - a jednocześnie „nic nie może
  * blokować, to powinny być tylko ostrzeżenia wymagające reakcji". Test pilnuje obu
  * zdań naraz: rozjazd jest widoczny i nazwany, ale nie ma jak zatrzymać zapisu.
  */
@@ -38,7 +38,7 @@ const chain: RemoteReadingsChain = {
 };
 
 describe('wiersze odniesienia w arkuszu odczytu', () => {
-  it('podają liczbę Z ŹRÓDŁEM — kto i kiedy', () => {
+  it('podają liczbę Z ŹRÓDŁEM - kto i kiedy', () => {
     // Zgłoszenie: „jeśli jest domyślna wartość, to należy wypisać, z czego ona wynika".
     const before = fuelBeforeReference(chain);
     expect(before!.value).toBe('140 L');
@@ -51,7 +51,7 @@ describe('wiersze odniesienia w arkuszu odczytu', () => {
     expect(after!.label).toContain('JKW');
   });
 
-  it('bez sąsiada milczą — kreska byłaby gorsza od braku wiersza', () => {
+  it('bez sąsiada milczą - kreska byłaby gorsza od braku wiersza', () => {
     expect(fuelBeforeReference(null)).toBeNull();
     expect(fuelBeforeReference(undefined)).toBeNull();
     expect(fuelBeforeReference({ before: null, after: null, oil: null })).toBeNull();
@@ -65,7 +65,7 @@ describe('ostrzeżenia o rozjeździe łańcucha', () => {
   });
 
   it('milczą w granicach podziałki paliwomierza', () => {
-    // 4 L różnicy to mniej niż tolerancja — ostrzeżenie o tym byłoby fałszywym
+    // 4 L różnicy to mniej niż tolerancja - ostrzeżenie o tym byłoby fałszywym
     // alarmem przy każdej normalnej sesji.
     expect(fuelContinuityWarnings(chain, 144, 92)).toEqual([]);
   });
@@ -84,7 +84,7 @@ describe('ostrzeżenia o rozjeździe łańcucha', () => {
     expect(w!.text).toContain('96 L');
   });
 
-  it('łapią rozjazd w OBIE strony — także paliwo, którego przybyło', () => {
+  it('łapią rozjazd w OBIE strony - także paliwo, którego przybyło', () => {
     // Ktoś mógł dolać poza aplikacją: rejestr o tym nie wie, a zbiornik owszem.
     // Dlatego mówimy o różnicy, a nie o jej znaku, i nie nazywamy tego błędem.
     expect(fuelContinuityWarnings(chain, 200, 96)).toHaveLength(1);
@@ -96,16 +96,16 @@ describe('ostrzeżenia o rozjeździe łańcucha', () => {
     expect(fuelContinuityWarnings(chain, null, null)).toEqual([]);
   });
 
-  it('ostrzeżenie jest TYLKO tekstem — nie niesie niczego, co mogłoby zablokować zapis', () => {
+  it('ostrzeżenie jest TYLKO tekstem - nie niesie niczego, co mogłoby zablokować zapis', () => {
     // Gdyby kiedyś doszło pole w rodzaju `blocking`, ekran mógłby zacząć na nim
-    // wyszarzać przycisk — a to jest dokładnie ta bramka, której tu nie ma być.
+    // wyszarzać przycisk - a to jest dokładnie ta bramka, której tu nie ma być.
     for (const w of fuelContinuityWarnings(chain, 100, 40)) {
       expect(Object.keys(w).sort()).toEqual(['id', 'src', 'text']);
     }
   });
 });
 
-describe('ciągłość MOTOGODZIN — łańcuch MH jest osią samolotu (§4.5)', () => {
+describe('ciągłość MOTOGODZIN - łańcuch MH jest osią samolotu (§4.5)', () => {
   it('podaje odczyty obu sąsiadów jako wiersze odniesienia', () => {
     expect(mhBeforeReference(chain, 'decimal')!.value).toBe('1232.0');
     expect(mhAfterReference(chain, 'decimal')!.value).toBe('1240.0');
@@ -129,7 +129,7 @@ describe('ciągłość MOTOGODZIN — łańcuch MH jest osią samolotu (§4.5)',
   });
 });
 
-describe('ciągłość OLEJU — kotwica, nie para „przed/po"', () => {
+describe('ciągłość OLEJU - kotwica, nie para „przed/po"', () => {
   /** Bagnet po locie kłamie, więc olej ma jeden punkt odniesienia, nie dwa (issue #60). */
   const withOil: RemoteReadingsChain = {
     ...chain,

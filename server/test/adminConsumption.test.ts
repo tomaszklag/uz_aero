@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) — test przekroju ANALITYKI ZUŻYCIA (`A10a`, `A10b`).
+ * UZ Aero (serwer) - test przekroju ANALITYKI ZUŻYCIA (`A10a`, `A10b`).
  *
  * Dane wjeżdżają PRAWDZIWYM ingestem (`POST /events`), jak w `adminStats.test.ts`:
  * analityka czyta rejestr, więc test, który wstawiałby wiersze wprost do bazy,
@@ -47,7 +47,7 @@ function wire(
 /**
  * Dzień lotny o zadanym zużyciu: preflight → cykl silnika z jednym lotem → zamknięcie.
  *
- * `hours` to długość cyklu, `burnL` — ubytek paliwa. Dzięki temu każdy dzień wnosi
+ * `hours` to długość cyklu, `burnL` - ubytek paliwa. Dzięki temu każdy dzień wnosi
  * jedno równanie o znanej z góry stawce.
  */
 function flyingDay(options: {
@@ -113,7 +113,7 @@ async function ingest(app: Harness['app'], events: object[]): Promise<void> {
 
 /**
  * Sześć zamkniętych dni o RÓŻNYCH proporcjach ziemia/powietrze i łącznym czasie silnika
- * ponad 10 h — czyli tyle, ile trzeba, żeby bramka publikacji przepuściła stawki.
+ * ponad 10 h - czyli tyle, ile trzeba, żeby bramka publikacji przepuściła stawki.
  * Stawki źródłowe: 12 L/h na ziemi, 42 L/h w powietrzu; przelicznik MH 1.0 / 0.4.
  */
 function sixDays() {
@@ -193,7 +193,7 @@ describe('A10a · analityka liczy się ze strumienia, ale bez własnej arytmetyk
     expect(body.headline.mhPerBlockHour).toBeCloseTo(14.5 / 17.5, 6);
   });
 
-  it('interwały niosą swoje źródła — tabela „skąd biorą się liczby"', async () => {
+  it('interwały niosą swoje źródła - tabela „skąd biorą się liczby"', async () => {
     const { app } = await testHarness();
     await ingest(app, sixDays());
 
@@ -205,7 +205,7 @@ describe('A10a · analityka liczy się ze strumienia, ale bez własnej arytmetyk
     expect(first.endKind).toBe('day_close');
     expect(first.startUuid).toMatch(/preflight_confirm$/);
     expect(first.rejected).toBeNull();
-    // Kolejność chronologiczna — wykres trendu potrzebuje osi rosnącej.
+    // Kolejność chronologiczna - wykres trendu potrzebuje osi rosnącej.
     expect(body.intervals[0].startAt).toBeLessThan(body.intervals[5].startAt);
   });
 });
@@ -232,7 +232,7 @@ describe('A10b · poniżej progu publikacji ekran mówi „za mało danych"', ()
     expect(body.fuel.gate.intervals).toBe(1);
     expect(body.fuel.gate.missingIntervals).toBe(4);
     expect(body.intervals).toHaveLength(1);
-    // Sumy są dostępne od pierwszego dnia — to na nich stoi ekran `A10b`.
+    // Sumy są dostępne od pierwszego dnia - to na nich stoi ekran `A10b`.
     expect(body.headline.litersPerBlockHour).toBeCloseTo(69 / 2, 6);
   });
 
@@ -255,7 +255,7 @@ describe('A10b · poniżej progu publikacji ekran mówi „za mało danych"', ()
 
     expect(body.basis.sessions).toBe(0);
     expect(body.basis.openSessions).toBe(1);
-    // Bez odczytu końcowego nie znamy zużycia — więc ani interwału, ani zmyślonej liczby.
+    // Bez odczytu końcowego nie znamy zużycia - więc ani interwału, ani zmyślonej liczby.
     expect(body.intervals).toEqual([]);
     expect(body.headline.litersPerBlockHour).toBeNull();
   });

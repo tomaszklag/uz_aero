@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: SZUFLADA SAMOLOTU (`design/admin/A07a-samolot.html`).
+ * UZ Aero - panel: SZUFLADA SAMOLOTU (`design/admin/A07a-samolot.html`).
  *
  * **Jedna szuflada, dwa wejścia**: „Dodaj samolot" (pola puste, stan służby domyślnie
  * „w służbie") oraz „Edytuj" z wiersza (pola wypełnione). Nie rozdzielamy tego na
@@ -9,14 +9,14 @@
  *
  *  1. **Skutek widać PRZED zapisem.** Realny scenariusz: administrator poprawia
  *     pojemność z 1257 na 1100 L i musi zobaczyć, że próg flagi `FUEL_MISMATCH`
- *     przesunie się z ±62.9 na ±55.0 L. **Obie liczby przychodzą z serwera** — „przed"
+ *     przesunie się z ±62.9 na ±55.0 L. **Obie liczby przychodzą z serwera** - „przed"
  *     w wierszu listy, „po" z `GET /admin/api/fleet/tolerance`. Panel nie mnoży przez
  *     0.05 i nie może: z domeny wolno mu importować wyłącznie typy.
- *  2. **Panel nigdy nie przepisuje rejestru — ale nowy próg obejmie też pary
+ *  2. **Panel nigdy nie przepisuje rejestru - ale nowy próg obejmie też pary
  *     historyczne.** Zapisane zdarzenia i wystawione flagi zostają nietknięte (zapis
  *     konfiguracji nie ma pętli po `events` ani po `flags`). Detekcja łańcucha jest
  *     jednak przeliczana z CAŁEJ historii samolotu przy każdej przyjętej paczce
- *     `POST /events` i bierze wtedy pojemność BIEŻĄCĄ — więc po obniżeniu progu
+ *     `POST /events` i bierze wtedy pojemność BIEŻĄCĄ - więc po obniżeniu progu
  *     najbliższa synchronizacja tej jednostki potrafi wystawić flagę na parze dni
  *     zamkniętych wcześniej. Sprostowanie z 2026-08-01: „to nie przelicza wstecz" było
  *     prawdą o tym pliku i nieprawdą o systemie.
@@ -80,7 +80,7 @@ interface AircraftDrawerProps {
   creating: boolean;
   capabilities: readonly Capability[] | undefined;
   /**
-   * Stan pobrania floty — TRZY wartości, nie `boolean`. Szuflada musi odróżnić „lista
+   * Stan pobrania floty - TRZY wartości, nie `boolean`. Szuflada musi odróżnić „lista
    * jeszcze leci" od „lista padła" od „lista jest, jednostki w niej nie ma"; przy
    * dwóch stanach awaria pobrania mówiła człowiekowi „zdejmij filtr".
    */
@@ -93,7 +93,7 @@ interface AircraftDrawerProps {
  * samolotu montuje ją od nowa i żaden szkic nie przechodzi między maszynami.
  *
  * Tutaj rozstrzyga się druga połowa tej samej sprawy: **wiersz może zniknąć spod
- * szuflady, która została otwarta** — lista jest zawężona filtrem, a zapis potrafi
+ * szuflady, która została otwarta** - lista jest zawężona filtrem, a zapis potrafi
  * wyrzucić jednostkę spod bieżącego chipa (wyłączenie ze służby przy chipie „W służbie"
  * robi to zawsze). Wtedy `props.aircraft` staje się `null`, a odmontowanie szuflady
  * zabrałoby ze sobą potwierdzenie właśnie wykonanej zmiany.
@@ -113,9 +113,9 @@ export function AircraftDrawer(props: AircraftDrawerProps) {
  * Głęboki link do jednostki, której nie ma na liście.
  *
  * TRZY przyczyny i wszystkie trzeba rozróżnić: lista jeszcze się nie pobrała (to nie
- * jest błąd), lista PADŁA (wtedy nie wiadomo nic — a do 2026-08-01 szuflada mówiła
+ * jest błąd), lista PADŁA (wtedy nie wiadomo nic - a do 2026-08-01 szuflada mówiła
  * wtedy „zdejmij filtr", czyli kazała poprawiać zawężenie, którego serwer nie zdążył
- * zastosować) albo jednostka wypadła spod zawężenia — bo trasy `GET /fleet/:id` nie ma,
+ * zastosować) albo jednostka wypadła spod zawężenia - bo trasy `GET /fleet/:id` nie ma,
  * a lista jest jedynym źródłem wierszy. Mockup nie ma na to stanu; projektujemy go
  * w duchu reszty panelu: konkretnie i z podaniem, co dalej. Treść trzech wariantów
  * mieszka w `aircraftActions.ts` (`missingAircraftCopy`) i ma test w Node, a nie tutaj.
@@ -149,7 +149,7 @@ function NewAircraft({ capabilities, onClose }: AircraftDrawerProps) {
   const form = formState(draft);
   const failure = create.isError ? failureOf(create.error) : null;
   const done = create.data != null;
-  // Próg dla wpisywanej pojemności — ta sama trasa, co przy edycji. Nowa jednostka nie
+  // Próg dla wpisywanej pojemności - ta sama trasa, co przy edycji. Nowa jednostka nie
   // ma „przed", więc karta pokazuje samą wartość docelową.
   const tolerance = useFuelTolerance(parseCapacity(draft.capacity));
 
@@ -157,12 +157,12 @@ function NewAircraft({ capabilities, onClose }: AircraftDrawerProps) {
     <Drawer
       wide
       title="NOWY SAMOLOT"
-      sub="dane referencyjne — z nich aplikacja bierze listę wyboru i wejścia reguł"
+      sub="dane referencyjne - z nich aplikacja bierze listę wyboru i wejścia reguł"
       onClose={onClose}
       footer={
         done ? (
           <Button variant="primary" onClick={onClose}>
-            Gotowe — wróć do listy
+            Gotowe - wróć do listy
           </Button>
         ) : (
           <>
@@ -199,13 +199,13 @@ function NewAircraft({ capabilities, onClose }: AircraftDrawerProps) {
                 „±62.9 L" wygląda na dwie różne liczby. */}
             <KeyValue
               label="Próg FUEL_MISMATCH"
-              value={tolerance.data == null ? '—' : toleranceText(tolerance.data.fuelToleranceL)}
+              value={tolerance.data == null ? '-' : toleranceText(tolerance.data.fuelToleranceL)}
               unit={tolerance.data == null ? 'liczy serwer z pojemności' : 'większa z: 10 L albo 5%'}
               {...(tolerance.data == null ? {} : { tone: 'amber' as const })}
             />
             <span className="hint">
               <b>Pojemność</b> steruje tolerancją flagi <code>FUEL_MISMATCH</code> i ogranicza
-              wpis tankowania w aplikacji — stan po tankowaniu nie może jej przekroczyć.{' '}
+              wpis tankowania w aplikacji - stan po tankowaniu nie może jej przekroczyć.{' '}
               <b>Format motogodzin</b> zmienia sam sposób wpisywania na ekranie preflight:
               jedno pole dziesiętne albo dwa pola godziny i minuty.
             </span>
@@ -244,7 +244,7 @@ function ExistingAircraft({
   const impact = impactCard(
     aircraft,
     draft,
-    // Próg „po" bierzemy wyłącznie wtedy, gdy serwer policzył go dla TEJ pojemności —
+    // Próg „po" bierzemy wyłącznie wtedy, gdy serwer policzył go dla TEJ pojemności -
     // odpowiedź dla poprzedniej wartości pola byłaby liczbą, która nie nadąża.
     tolerance.data?.capacityL === capacityL ? tolerance.data.fuelToleranceL : null,
   );
@@ -318,9 +318,9 @@ function ExistingAircraft({
         ))}
         <span className="hint">
           <b>Pojemność</b> steruje tolerancją flagi <code>FUEL_MISMATCH</code>: większa z dwóch
-          wartości — <b>10 L</b> albo <b>5% pojemności</b>. Po zapisie rozbieżność między
+          wartości - <b>10 L</b> albo <b>5% pojemności</b>. Po zapisie rozbieżność między
           odczytem paliwomierza a przekazaniem będzie flagowana od nowego progu. Ta sama liczba
-          ogranicza wpis tankowania w aplikacji — stan po tankowaniu nie może przekroczyć
+          ogranicza wpis tankowania w aplikacji - stan po tankowaniu nie może przekroczyć
           pojemności. <b>Obie liczby progu liczy serwer</b>, żeby na dwóch ekranach nie wyszły
           dwie różne wartości tego samego.
         </span>
@@ -334,10 +334,10 @@ function ExistingAircraft({
       <Banner tone="danger">
         <b>Sprostowanie z 2026-08-01: nowy próg obejmie także dni już zamknięte.</b> Zapisane
         zdarzenia zostają dokładnie takie, jakie przyszły z telefonu, a <b>panel nigdy nie
-        przepisuje rejestru</b> — flagi wystawione wcześniej zachowują próg, przy którym
+        przepisuje rejestru</b> - flagi wystawione wcześniej zachowują próg, przy którym
         powstały, i żadna z nich nie zniknie. Ale rozbieżności paliwa serwer szuka od nowa
         w <b>całej historii tego samolotu</b> przy każdej przyjętej paczce zdarzeń, biorąc
-        pojemność aktualną — więc po obniżeniu progu najbliższa synchronizacja tej jednostki
+        pojemność aktualną - więc po obniżeniu progu najbliższa synchronizacja tej jednostki
         potrafi wystawić <b>nową flagę na parze dni sprzed zmiany</b>. W drugą stronę to nie
         działa: podniesienie pojemności nie zdejmuje flag, które przy nowym progu by nie
         powstały. Zmiana pojemności jest więc decyzją o tym, co jeszcze wyjdzie z przeszłości,
@@ -364,7 +364,7 @@ function ExistingAircraft({
         <span className="hint">
           Zmiana rejestracji <b>nie przepisuje historii</b>: zdarzenia wiążą się z{' '}
           <code>id</code> jednostki. W kartach arkusza wyeksportowanych wcześniej zostaje jednak
-          stara rejestracja — dlatego zmieniaj ją tylko przy faktycznej zmianie znaków na
+          stara rejestracja - dlatego zmieniaj ją tylko przy faktycznej zmianie znaków na
           kadłubie.
         </span>
       </Card>
@@ -373,10 +373,10 @@ function ExistingAircraft({
 }
 
 /**
- * Konfiguracja OLEJU (issue #60) — mockup `A07a`, karta między „Stan służby" a normą
+ * Konfiguracja OLEJU (issue #60) - mockup `A07a`, karta między „Stan służby" a normą
  * z analityki. Trzy liczby z dokumentacji jednostki (POH), wszystkie OPCJONALNE:
  * puste pola = sekcja oleju w aplikacji bez podpowiedzi i bez ostrzeżeń (pomiar dalej
- * da się zapisać) — moduł wchodzi do floty stopniowo, samolot po samolocie.
+ * da się zapisać) - moduł wchodzi do floty stopniowo, samolot po samolocie.
  */
 function OilFields({
   draft,
@@ -425,14 +425,14 @@ function OilFields({
 
       <Field
         htmlFor="samolot-olej-norma"
-        label="Norma zużycia — nominalna (L/h) · opcjonalnie"
+        label="Norma zużycia - nominalna (L/h) · opcjonalnie"
         hint={
           form.oilNorm.message ?? (
             <>
               <b>Minimum</b> zapala ostrzeżenie na kroku liczników („dolej co najmniej…"),
-              <b> zbiornik</b> ogranicza pomiar i dolewkę — jak pojemność ogranicza tankowanie.
+              <b> zbiornik</b> ogranicza pomiar i dolewkę - jak pojemność ogranicza tankowanie.
               <b> Norma nominalna</b> (z dokumentacji silnika) zasila sugestię oczekiwanego
-              poziomu, dopóki analityka nie policzy własnej stawki z pomiarów — wyliczona
+              poziomu, dopóki analityka nie policzy własnej stawki z pomiarów - wyliczona
               wygra z wpisaną. Puste pola = moduł oleju dla tej jednostki milczy.
             </>
           )
@@ -451,7 +451,7 @@ function OilFields({
   );
 }
 
-/** Rejestracja, typ, rok i pojemność — wspólne dla obu wariantów szuflady. */
+/** Rejestracja, typ, rok i pojemność - wspólne dla obu wariantów szuflady. */
 function IdentityFields({
   draft,
   onChange,
@@ -472,7 +472,7 @@ function IdentityFields({
           form.reg.message ?? (
             <>
               Unikalna w całym systemie. Widoczna w logu dnia, w nazwie karty eksportu (
-              <code>2026-07-30_SP-KLM</code>) i w każdej fladze — zmieniaj tylko przy faktycznej
+              <code>2026-07-30_SP-KLM</code>) i w każdej fladze - zmieniaj tylko przy faktycznej
               zmianie znaków na kadłubie. Zapisujemy ją WERSALIKAMI niezależnie od tego, jak ją
               wpiszesz.
             </>
@@ -503,7 +503,7 @@ function IdentityFields({
         <Field
           htmlFor="samolot-rok"
           label="Rok produkcji"
-          hint={form.year.message ?? 'Pole może zostać puste — tabliczka bez daty to realny przypadek.'}
+          hint={form.year.message ?? 'Pole może zostać puste - tabliczka bez daty to realny przypadek.'}
         >
           <TextInput
             id="samolot-rok"
@@ -534,7 +534,7 @@ function IdentityFields({
   );
 }
 
-/** Format licznika — lista kart, jedyny dozwolony „select" w produkcie. */
+/** Format licznika - lista kart, jedyny dozwolony „select" w produkcie. */
 function MhFormatChoice({
   draft,
   onChange,
@@ -626,13 +626,13 @@ function ServiceChoice({
   );
 }
 
-/** Jedyny kanał, którym konfiguracja wychodzi z panelu — i ekran to mówi wprost. */
+/** Jedyny kanał, którym konfiguracja wychodzi z panelu - i ekran to mówi wprost. */
 function TelephonesBanner() {
   return (
     <Banner tone="status">
       <b>Telefony zobaczą zmianę przy najbliższym pobraniu danych referencyjnych.</b> Zapis
       podbija znacznik zasobu <code>GET /reference</code>, a aplikacja odpytuje go przy starcie
-      dnia. Samolot z <b>otwartą sesją dokończy dzień</b> na konfiguracji, którą pobrał rano —
+      dnia. Samolot z <b>otwartą sesją dokończy dzień</b> na konfiguracji, którą pobrał rano -
       i to jest zachowanie zamierzone, nie opóźnienie.
     </Banner>
   );

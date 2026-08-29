@@ -1,12 +1,12 @@
 /**
- * UZ Aero — panel: odczyt śladu jednego lotu (`A02c`).
+ * UZ Aero - panel: odczyt śladu jednego lotu (`A02c`).
  *
  * Osobny plik od `useSessionDay.ts`, bo to inne zapytanie o innym koszcie: karta dnia
- * czyta strumień zdarzeń (dziesiątki wierszy), a ślad — plik NDJSON sesji (dziesiątki
+ * czyta strumień zdarzeń (dziesiątki wierszy), a ślad - plik NDJSON sesji (dziesiątki
  * tysięcy). Sklejenie ich w jedno pytanie kazałoby liście dni ciągnąć geometrię, której
  * nigdy nie pokaże.
  *
- * `retry: false` przy 404: „ten lot nie ma śladu" to odpowiedź, a nie usterka sieci —
+ * `retry: false` przy 404: „ten lot nie ma śladu" to odpowiedź, a nie usterka sieci -
  * ponawianie jej opóźniałoby wyłącznie moment, w którym ekran powie prawdę.
  */
 

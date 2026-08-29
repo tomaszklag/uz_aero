@@ -1,13 +1,13 @@
 /**
- * UZ Aero (serwer) — cykl życia flagi i re-eksport (`POST /admin/api/flags/:id/resolve`).
+ * UZ Aero (serwer) - cykl życia flagi i re-eksport (`POST /admin/api/flags/:id/resolve`).
  *
  * Ten sam wzorzec co reszta: PGlite w procesie, prawdziwe klasy, `app.inject`, zero
- * atrap. Flagi powstają tak, jak powstają w produkcji — z PRAWDZIWEGO `POST /events`,
+ * atrap. Flagi powstają tak, jak powstają w produkcji - z PRAWDZIWEGO `POST /events`,
  * bo test, który wstawia flagę `INSERT`-em, przybija własne wyobrażenie o niej,
  * a nie zachowanie systemu.
  *
  * Najważniejszy przypadek to ten drugi: rozwiązanie flagi ODBLOKOWUJE kartę dnia.
- * To jest test, dla którego panel powstaje — do przekroju 1 otwarta `aircraft_overlap`
+ * To jest test, dla którego panel powstaje - do przekroju 1 otwarta `aircraft_overlap`
  * blokowała eksport bezterminowo, a jedynym odblokowaniem był ręczny `UPDATE`.
  */
 
@@ -48,7 +48,7 @@ interface DayOptions {
   dayOffset?: number;
 }
 
-/** Dzień lotny BEZ zamknięcia — sesja zostaje otwarta (materiał na nakładkę). */
+/** Dzień lotny BEZ zamknięcia - sesja zostaje otwarta (materiał na nakładkę). */
 function openDay(o: DayOptions) {
   const d = o.dayOffset ?? 0;
   const base = { sessionUuid: o.sessionUuid, picId: o.picId };
@@ -147,7 +147,7 @@ async function exportRevisions(db: Harness['db']) {
 /**
  * Nakładka sesji jak w `export.test.ts`: TMK nie zamyka dnia, KRZ przejmuje samolot
  * offline. Obie sesje bez `day_close` → `aircraft_overlap`. Potem KRZ zamyka SWÓJ
- * dzień — sesja jest domknięta, ale sporna, więc karta NIE powstaje.
+ * dzień - sesja jest domknięta, ale sporna, więc karta NIE powstaje.
  */
 async function overlapping() {
   const harness = await testHarness();
@@ -162,7 +162,7 @@ async function overlapping() {
   const flags = await flagRows(db);
   expect(flags).toHaveLength(1);
   expect(flags[0]).toMatchObject({ type: 'aircraft_overlap', status: 'open' });
-  // Bramka DZIAŁA przed rozwiązaniem — bez tego test niżej nie dowodziłby niczego.
+  // Bramka DZIAŁA przed rozwiązaniem - bez tego test niżej nie dowodziłby niczego.
   expect(await exportRevisions(db)).toEqual([]);
 
   return { ...harness, flagId: flags[0]!.id };
@@ -192,14 +192,14 @@ describe('rozwiązanie flagi (A03a)', () => {
     expect((await flagRows(db))[0]!.resolved_at).not.toBeNull();
 
     // Re-eksport obu sesji flagi. Od 2026-08-07 (karta = DOBA SAMOLOTU, §4.7) obie
-    // prowadzą do TEJ SAMEJ karty, więc obie kończą się sukcesem — a nie, jak przed
+    // prowadzą do TEJ SAMEJ karty, więc obie kończą się sukcesem - a nie, jak przed
     // zmianą, jedną kartą i jedną odmową „dzień jeszcze otwarty". Sesja `sess-1` nie
     // została zdana i to widać W KARCIE (wiersz „w toku"), a nie w odmowie eksportu:
     // doba maszyny ma jedną prawdę niezależnie od tego, ile zmian już ją oddało.
     //
     // Dwie rewizje z jednego rozstrzygnięcia są ceną tego, że `ExportAttempt` jest per
     // SESJA (kontrakt panelu `A03a`), a karta per doba: druga próba przebudowuje ten sam
-    // dokument. Dziennik mówi o tym uczciwie — dwa zapisy, dwie rewizje — zamiast ukrywać
+    // dokument. Dziennik mówi o tym uczciwie - dwa zapisy, dwie rewizje - zamiast ukrywać
     // jedną z prób.
     expect(res.json().exports).toEqual([
       {
@@ -223,7 +223,7 @@ describe('rozwiązanie flagi (A03a)', () => {
     ]);
 
     // …i karta FAKTYCZNIE powstała. Każda rewizja ma wiersz dziennika NA KAŻDĄ sesję
-    // wchodzącą do karty — po nich `sync-status` obu pilotów znajduje ten sam link.
+    // wchodzącą do karty - po nich `sync-status` obu pilotów znajduje ten sam link.
     expect(await exportRevisions(db)).toEqual([
       { session_uuid: 'sess-1', revision: 1 },
       { session_uuid: 'sess-2', revision: 1 },
@@ -241,7 +241,7 @@ describe('rozwiązanie flagi (A03a)', () => {
     expect(sheet.json().rows).toContainEqual(['Sesje', '2']);
   });
 
-  it('szef wyszkolenia MOŻE rozstrzygnąć flagę — to jego główne narzędzie', async () => {
+  it('szef wyszkolenia MOŻE rozstrzygnąć flagę - to jego główne narzędzie', async () => {
     const { app, db, flagId } = await overlapping();
     const trainingLead = await login(app, 'AKO');
 
@@ -251,7 +251,7 @@ describe('rozwiązanie flagi (A03a)', () => {
     expect((await flagRows(db))[0]).toMatchObject({ status: 'resolved', resolved_by: 'AKO' });
   });
 
-  it('pilot NIE MOŻE — 403 z podaną wymaganą zdolnością, flaga zostaje otwarta', async () => {
+  it('pilot NIE MOŻE - 403 z podaną wymaganą zdolnością, flaga zostaje otwarta', async () => {
     const { app, db, flagId } = await overlapping();
     const pilot = await login(app, 'PWI');
 
@@ -262,7 +262,7 @@ describe('rozwiązanie flagi (A03a)', () => {
     expect((await flagRows(db))[0]).toMatchObject({ status: 'open' });
   });
 
-  it('bez tokenu → 401, nie 403 — to dwie różne wiadomości', async () => {
+  it('bez tokenu → 401, nie 403 - to dwie różne wiadomości', async () => {
     const { app, db, flagId } = await overlapping();
 
     const res = await resolve(app, flagId, { note: 'Bez logowania.' });
@@ -276,7 +276,7 @@ describe('rozwiązanie flagi (A03a)', () => {
     ['brak pola', undefined],
     ['pusty napis', ''],
     ['same spacje', '   '],
-  ])('komentarz wymagany — %s daje 400 i nie rusza flagi', async (_case, note) => {
+  ])('komentarz wymagany - %s daje 400 i nie rusza flagi', async (_case, note) => {
     const { app, db, flagId } = await overlapping();
     const admin = await login(app, 'TMK');
 
@@ -299,7 +299,7 @@ describe('rozwiązanie flagi (A03a)', () => {
 
   it('ponowne rozwiązanie → 409 z AKTUALNYM stanem flagi, komentarz pierwszego zostaje', async () => {
     // Zachowanie wybrane świadomie: nie 200 („i tak jest rozwiązana") i nie 404.
-    // Drugi klikający ma zobaczyć, że sprawę zamknął ktoś inny i CZYIM komentarzem —
+    // Drugi klikający ma zobaczyć, że sprawę zamknął ktoś inny i CZYIM komentarzem -
     // inaczej dopisałby własne uzasadnienie do decyzji, której nie podjął. Warunek
     // `status='open'` siedzi w SQL-u, więc to samo chroni przed wyścigiem dwóch osób.
     const { app, db, flagId } = await overlapping();
@@ -322,7 +322,7 @@ describe('rozwiązanie flagi (A03a)', () => {
       resolution_note: 'Pierwsze rozstrzygnięcie.',
     });
 
-    // Karta przebudowała się WYŁĄCZNIE przy pierwszym rozstrzygnięciu — przegrany
+    // Karta przebudowała się WYŁĄCZNIE przy pierwszym rozstrzygnięciu - przegrany
     // wyścig nie podbija rewizji. Dwie rewizje to ślad dwóch sesji flagi, a nie
     // dwóch rozstrzygnięć (patrz przypadek „ODBLOKOWUJE kartę dnia" wyżej).
     expect(await exportRevisions(db)).toEqual([
@@ -341,7 +341,7 @@ describe('rozwiązanie flagi (A03a)', () => {
 
     await post(app, tmk, openDay({ sessionUuid: 'sess-1', picId: 'TMK', reading: { fuelL: 150, mh: 1234.5 } }));
     await post(app, tmk, closeDay({ sessionUuid: 'sess-1', picId: 'TMK', mh: 1241.15 }));
-    // Następny dzień zaczyna się od licznika wyższego o ~9 h — ktoś latał bez aplikacji.
+    // Następny dzień zaczyna się od licznika wyższego o ~9 h - ktoś latał bez aplikacji.
     // Paliwo ZGADZA się z przekazaniem (88 L z `closeDay`) celowo: ten test dotyczy
     // flagi nieblokującej eksportu, a rozjazd paliwa dołożyłby drugą, niezwiązaną
     // z jego tezą (od 2026-07-31 serwer liczy też `fuel_mismatch`).
@@ -372,13 +372,13 @@ function inbox(app: Harness['app'], token: string, query = '') {
   });
 }
 
-/** Ten sam dzień, ale na innym samolocie — łańcuchy MH i paliwa są PER SAMOLOT. */
+/** Ten sam dzień, ale na innym samolocie - łańcuchy MH i paliwa są PER SAMOLOT. */
 const onAircraft = (events: ReturnType<typeof event>[], aircraftId: string) =>
   events.map((e) => ({ ...e, aircraftId }));
 
 /**
  * Skrzynka z DWOMA typami spraw naraz, na DWÓCH samolotach: nakładka (blokuje kartę
- * dnia) powstaje jako pierwsza, dziura w łańcuchu MH — później. Porządek skrzynki ma
+ * dnia) powstaje jako pierwsza, dziura w łańcuchu MH - później. Porządek skrzynki ma
  * je odwrócić.
  *
  * Rozdzielenie na dwa samoloty nie jest kosmetyczne: łańcuch MH i paliwa liczy się
@@ -386,7 +386,7 @@ const onAircraft = (events: ReturnType<typeof event>[], aircraftId: string) =>
  * flagi, których ten test nie dotyczy.
  *
  * Z tego samego powodu dni na SP-FGK lata TRZECI pilot (2026-08-07). Wcześniej były
- * TMK-a, czyli tego samego, który trzyma otwartą sesję na SP-AXA — a od rozdzielenia
+ * TMK-a, czyli tego samego, który trzyma otwartą sesję na SP-AXA - a od rozdzielenia
  * `session_overlap` (§4.7) taki układ jest już wykrywany jako `pilot_overlap`:
  * jeden człowiek prowadzi dwie maszyny naraz. Detektor miał rację, więc poprawiamy
  * FIXTURE, a nie detektor.
@@ -402,9 +402,9 @@ async function mixedInbox() {
   await post(app, tmk, openDay({ sessionUuid: 'sess-1', picId: 'TMK', reading: { fuelL: 150, mh: 1234.5 } }));
   await post(app, krz, openDay({ sessionUuid: 'sess-2', picId: 'KRZ', reading: { fuelL: 150, mh: 1236.87 } }));
 
-  // 2) Dziura MH na SP-FGK w kolejnych dniach — flaga młodsza, ale NIE blokuje karty.
+  // 2) Dziura MH na SP-FGK w kolejnych dniach - flaga młodsza, ale NIE blokuje karty.
   // O „młodszej" decyduje `flags.created_at` z zegara BAZY (DEFAULT now()), nie
-  // z `TestClock` — dlatego wiek ustawia tu kolejność wywołań, a nie przesunięcie zegara.
+  // z `TestClock` - dlatego wiek ustawia tu kolejność wywołań, a nie przesunięcie zegara.
   await post(app, jse, onAircraft(openDay({ sessionUuid: 'sess-3', picId: 'JSE', reading: { fuelL: 150, mh: 400 } }), 'SP-FGK'));
   await post(app, jse, onAircraft(closeDay({ sessionUuid: 'sess-3', picId: 'JSE', mh: 402 }), 'SP-FGK'));
   await post(app, jse, onAircraft(openDay({ sessionUuid: 'sess-4', picId: 'JSE', reading: { fuelL: 88, mh: 410 }, dayOffset: 1 }), 'SP-FGK'));
@@ -419,7 +419,7 @@ async function mixedInbox() {
 }
 
 describe('skrzynka flag (A03)', () => {
-  it('sortuje blokujące eksport na górę, potem po wieku — od najstarszych', async () => {
+  it('sortuje blokujące eksport na górę, potem po wieku - od najstarszych', async () => {
     const { app, admin } = await mixedInbox();
 
     const body = (await inbox(app, admin)).json();
@@ -457,7 +457,7 @@ describe('skrzynka flag (A03)', () => {
     await post(app, tmk, closeDay({ sessionUuid: 'sess-2', picId: 'TMK', mh: 1252, dayOffset: 1 }));
 
     // Potem nakładka na INNYM samolocie (flaga młodsza, blokująca). Sesje SP-FGK
-    // należą do INNYCH pilotów niż dni SP-AXA wyżej — inaczej TMK trzymałby otwartą
+    // należą do INNYCH pilotów niż dni SP-AXA wyżej - inaczej TMK trzymałby otwartą
     // maszynę, lecąc drugą, czyli produkowałby `pilot_overlap` (§4.7) i zaśmiecał
     // skrzynkę flagami, o których ten test nie mówi.
     const withFgk = (uuid: string, pic: string, mh: number) =>
@@ -486,7 +486,7 @@ describe('skrzynka flag (A03)', () => {
     expect(await types('?status=open')).toEqual(['mh_gap']);
     expect(await types('?status=resolved')).toEqual(['aircraft_overlap']);
 
-    // Rozwiązana nakładka przestaje blokować kartę — ta sama odpowiedź, co bramka
+    // Rozwiązana nakładka przestaje blokować kartę - ta sama odpowiedź, co bramka
     // eksportera. Nie ma jej gdzie zapisać, bo jest wyliczana z typu i statusu.
     const resolved = (await inbox(app, admin, '?status=resolved')).json();
     expect(resolved.items[0]).toMatchObject({

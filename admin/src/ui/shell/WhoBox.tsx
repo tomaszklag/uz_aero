@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: stopka sidebara z tożsamością (`.who` z `SZABLON.html`).
+ * UZ Aero - panel: stopka sidebara z tożsamością (`.who` z `SZABLON.html`).
  *
  * Rola pod nazwiskiem nie jest ozdobą: to jedyne miejsce, w którym człowiek widzi,
  * DLACZEGO część pozycji nawigacji jest wyszarzona.

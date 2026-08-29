@@ -1,15 +1,15 @@
 /**
- * UZ Aero — projekcja ŚLADU LOTU: surowe wpisy + okno czasowe lotu → trasa do narysowania.
+ * UZ Aero - projekcja ŚLADU LOTU: surowe wpisy + okno czasowe lotu → trasa do narysowania.
  *
  * KLUCZOWA DECYZJA (2026-08-03): lot i ślad wiąże CZAS, nie żaden nowy identyfikator.
  * `Flight` z `projections/session.ts` niesie `takeoffAt` i `landingAt`, a każdy wpis
- * śladu ma `time` i `sessionUuid` — więc „ślad lotu 3" to po prostu wycinek zapisu tej
+ * śladu ma `time` i `sessionUuid` - więc „ślad lotu 3" to po prostu wycinek zapisu tej
  * sesji między dwoma znacznikami. Nie trzeba ani migracji, ani wiązania zapisywanego
  * w locie, a ślad pozostaje tym, czym był: materiałem obok rejestru, nie jego częścią.
  *
  * Konsekwencja, o której trzeba pamiętać: gdy administrator poprawi czas startu
  * (`event_correction` typu `retime`), ślad lotu ZMIENI SIĘ sam przy następnym otwarciu,
- * bo okno liczy się z rejestru po korektach. To jest pożądane — mapa ma pokazywać lot
+ * bo okno liczy się z rejestru po korektach. To jest pożądane - mapa ma pokazywać lot
  * tak, jak go dziś rozumie rejestr, a nie tak, jak rozumiał go telefon w chwili zapisu.
  */
 
@@ -26,7 +26,7 @@ export interface FlightWindow {
   landingAt: EpochMillis | null;
 }
 
-/** Punkt geometrii z czasem — linia na mapie plus możliwość pokazania „gdzie o której". */
+/** Punkt geometrii z czasem - linia na mapie plus możliwość pokazania „gdzie o której". */
 export interface TrackVertex extends LatLon {
   time: EpochMillis;
   altitudeFt: number | null;
@@ -35,17 +35,17 @@ export interface TrackVertex extends LatLon {
    *
    * Doszła przy issue #47 razem z kursorem sprzężonym: po kompresji telefon nie ma już
    * surowych fixów, więc odczyt „co się działo o 08:31" musi mieć z czego powstać.
-   * Koszt to kilka bajtów na wierzchołek uproszczonej linii — nieporównywalnie mniej
+   * Koszt to kilka bajtów na wierzchołek uproszczonej linii - nieporównywalnie mniej
    * niż wysyłanie w tym celu pełnego nagrania.
    */
   groundSpeedKt: number | null;
 }
 
-/** Gotowy ślad lotu — wszystko, czego potrzebuje ekran mapy i log punktów. */
+/** Gotowy ślad lotu - wszystko, czego potrzebuje ekran mapy i log punktów. */
 export interface FlightTrack {
   /** Wszystkie punkty w oknie, RAZEM z odrzuconymi (log pokazuje powód). */
   points: TrackPoint[];
-  /** Geometria po bramce i uproszczeniu — to rysuje mapa. */
+  /** Geometria po bramce i uproszczeniu - to rysuje mapa. */
   line: TrackVertex[];
   /** Suma odcinków między przyjętymi punktami (mile morskie). */
   distanceNm: number;
@@ -59,7 +59,7 @@ export interface FlightTrack {
   usableCount: number;
 }
 
-/** Pusty ślad — lot bez zapisu GPS (wpis ręczny albo zapis po retencji). Wariant 14B. */
+/** Pusty ślad - lot bez zapisu GPS (wpis ręczny albo zapis po retencji). Wariant 14B. */
 export function emptyFlightTrack(): FlightTrack {
   return {
     points: [],
@@ -82,7 +82,7 @@ export interface BuildTrackOptions {
 /**
  * Buduje ślad lotu z surowego zapisu.
  *
- * @param entries wpisy śladu JEDNEJ sesji, w dowolnej kolejności (sortujemy sami —
+ * @param entries wpisy śladu JEDNEJ sesji, w dowolnej kolejności (sortujemy sami -
  *   zapis wsadowy i retro-datowanie potrafią je pomieszać, tak samo jak w rejestrze).
  * @param window okno lotu z projekcji sesji.
  */
@@ -91,7 +91,7 @@ export interface BuildTrackOptions {
  *
  * Wydzielone z `buildFlightTrack`, bo tej samej konwersji potrzebuje oś faz pionowych
  * (`consumption/phaseTimeline.ts`), która pracuje na CAŁYM nagraniu, a nie na oknie
- * jednego lotu. Druga kopia tej pętli oznaczałaby drugą bramkę jakości — i ślad
+ * jednego lotu. Druga kopia tej pętli oznaczałaby drugą bramkę jakości - i ślad
  * pokazywałby na mapie coś innego, niż widziała analityka.
  *
  * Wejście musi być posortowane rosnąco po czasie: test skoku pozycji porównuje z ostatnim
@@ -102,7 +102,7 @@ export function toTrackPoints(
   thresholds: GpsThresholds = GPS_THRESHOLDS,
 ): TrackPoint[] {
   const points: TrackPoint[] = [];
-  // Ostatni PRZYJĘTY punkt — odniesienie testu skoku. Odrzucony nie może być
+  // Ostatni PRZYJĘTY punkt - odniesienie testu skoku. Odrzucony nie może być
   // odniesieniem, bo jedna teleportacja unieważniłaby cały ogon trasy.
   let previousAccepted: { lat: number; lon: number; time: EpochMillis } | null = null;
 
@@ -110,7 +110,7 @@ export function toTrackPoints(
     const rejected = rejectionReason(entry, previousAccepted, thresholds);
     const point: TrackPoint = {
       time: entry.time,
-      // Punkty bez pozycji dostają 0/0 i `rejected = 'no-position'` — nigdy nie trafią
+      // Punkty bez pozycji dostają 0/0 i `rejected = 'no-position'` - nigdy nie trafią
       // do geometrii, a log ma pokazać, że wiersz w zapisie był.
       lat: entry.lat ?? 0,
       lon: entry.lon ?? 0,
@@ -137,7 +137,7 @@ export function buildFlightTrack(
   const toleranceM = options.toleranceM ?? DEFAULT_SIMPLIFY_TOLERANCE_M;
   const thresholds = options.thresholds ?? GPS_THRESHOLDS;
 
-  // Lot otwarty (w powietrzu) nie ma górnej granicy — ślad idzie do ostatniego wpisu.
+  // Lot otwarty (w powietrzu) nie ma górnej granicy - ślad idzie do ostatniego wpisu.
   const until = window.landingAt ?? Number.POSITIVE_INFINITY;
 
   const inWindow = entries
@@ -155,7 +155,7 @@ export function buildFlightTrack(
 
   // Dystans z PEŁNEJ listy przyjętych punktów, nie z uproszczonej: upraszczanie służy
   // rysowaniu, a nie liczeniu. Liczenie po uproszczonej zaniżyłoby dystans o długość
-  // wszystkich ściętych zakrętów — najbardziej właśnie tam, gdzie samolot krąży.
+  // wszystkich ściętych zakrętów - najbardziej właśnie tam, gdzie samolot krąży.
   let distance = 0;
   for (let i = 1; i < usable.length; i++) {
     distance += distanceNm(

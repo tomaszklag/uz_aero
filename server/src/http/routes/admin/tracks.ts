@@ -1,10 +1,10 @@
 /**
- * UZ Aero (serwer) — trasa śladu lotu w panelu (`GET /admin/api/sessions/:uuid/track/:flight`,
+ * UZ Aero (serwer) - trasa śladu lotu w panelu (`GET /admin/api/sessions/:uuid/track/:flight`,
  * mockup `A02c-slad.html`).
  *
  * Adres jest zagnieżdżony pod sesją, a nie osobny (`/tracks/:id`), bo ślad nie ma
  * własnej tożsamości: istnieje wyłącznie jako wycinek zapisu sesji wyznaczony przez
- * lot z rejestru. Identyfikator, którego nie ma w danych, trzeba by wymyślić — a każdy
+ * lot z rejestru. Identyfikator, którego nie ma w danych, trzeba by wymyślić - a każdy
  * wymyślony klucz to kolejna rzecz do utrzymania w zgodzie z rzeczywistością.
  *
  * Zdolność `panel.access`, jak przy karcie dnia: ślad jest ODCZYTEM tego samego dnia,
@@ -20,7 +20,7 @@ import { adminRoute, type AdminGate } from './adminRoute.ts';
 
 const params = z.object({
   uuid: z.string().min(1).max(100),
-  // Numer lotu w dniu. Górna granica jest hojna z premedytacją — dzień skokowy potrafi
+  // Numer lotu w dniu. Górna granica jest hojna z premedytacją - dzień skokowy potrafi
   // mieć kilkadziesiąt sesji, a limit ma chronić przed absurdem, nie przed rekordem.
   flight: z.coerce.number().int().positive().max(500),
 });

@@ -1,10 +1,10 @@
 /**
- * UZ Aero — ŚLAD SESJI PRZEZ SIEĆ: jeden kształt dla serwera i telefonu (issue #47).
+ * UZ Aero - ŚLAD SESJI PRZEZ SIEĆ: jeden kształt dla serwera i telefonu (issue #47).
  *
  * ══ CO TU JEST, A CZEGO NIE MA ══
  * Payload niesie WYŁĄCZNIE to, czego rejestr na telefonie nie wie: geometrię i liczby
  * z niej policzone. Rejestracji maszyny, listy lotów, czasu w powietrzu ani godzin
- * startów tu NIE MA — telefon ma je lokalnie i liczy z nich tak samo jak dotąd
+ * startów tu NIE MA - telefon ma je lokalnie i liczy z nich tak samo jak dotąd
  * (§6 pkt 1: ekrany liczą się z lokalnego strumienia). Gdyby wjechały do tej koperty,
  * powstałaby druga prawda o sesji, przysłana z drugiej strony łącza, i pierwszy rozjazd
  * czasu po korekcie administratora byłby nie do rozstrzygnięcia.
@@ -12,19 +12,19 @@
  * ══ KOMPRESJA (issue #47 pkt 6) ══
  * Nagranie to ~1 fix/s, czyli kilkadziesiąt tysięcy wierszy na dzień lotny. Przez sieć
  * nie idzie ani jeden z nich w surowej postaci:
- *  • **linia** — RDP w metrach (`simplifyTrack`): zostają wierzchołki, które ZMIENIAJĄ
+ *  • **linia** - RDP w metrach (`simplifyTrack`): zostają wierzchołki, które ZMIENIAJĄ
  *    kształt, a prosta między nimi znika,
- *  • **profil** — RDP w stopach (`simplifyProfile`): to samo w osi wysokości,
- *  • **liczby** — przycięte do rozdzielczości, w jakiej cokolwiek znaczą: 5 miejsc po
+ *  • **profil** - RDP w stopach (`simplifyProfile`): to samo w osi wysokości,
+ *  • **liczby** - przycięte do rozdzielczości, w jakiej cokolwiek znaczą: 5 miejsc po
  *    przecinku to ~1 m w Polsce, a dziesiąte części stopy na wysokości GPS opisują
  *    wyłącznie szum odbiornika.
- * Statystyki liczą się PRZED upraszczaniem, z kompletu punktów — inaczej „max
+ * Statystyki liczą się PRZED upraszczaniem, z kompletu punktów - inaczej „max
  * wznoszenie" zależałoby od tolerancji rysowania.
  *
  * ══ CZEGO TU NIE MA: LOGU PUNKTÓW ══
  * Tabela surowych fixów ze stanem bramki jakości była największą częścią tej koperty
  * (~300 wierszy na sesję) i zniknęła z ekranu przy przeglądzie issue #47: to materiał
- * do STROJENIA PROGÓW, a nie odpowiedź na pytanie pilota. Została tam, gdzie służy —
+ * do STROJENIA PROGÓW, a nie odpowiedź na pytanie pilota. Została tam, gdzie służy -
  * w panelu (`admin/queries/flightTrack.ts`, własny kontrakt) i w nagraniu czytanym
  * przez `server/scripts/replay.ts`. Liczby `totalCount`/`usableCount` zostają, bo one
  * jedne mówią coś o jakości TEGO zapisu.
@@ -43,7 +43,7 @@ const POSITION_DECIMALS = 5;
 /** Ślad jednej sesji w postaci, w jakiej podróżuje przez sieć. */
 export interface SessionTrackPayload {
   sessionUuid: string;
-  /** Geometria po bramce jakości i uproszczeniu — to rysuje mapa. */
+  /** Geometria po bramce jakości i uproszczeniu - to rysuje mapa. */
   line: TrackVertex[];
   /** Profil pionowy: liczby z KOMPLETU odczytów, próbki uproszczone do rysowania. */
   profile: FlightProfile;
@@ -63,7 +63,7 @@ export interface BuildSessionTrackOptions extends BuildTrackOptions {
   profileToleranceFt?: number;
 }
 
-/** Pusty ślad — sesja bez nagrania. Kształt ten sam, żeby odbiorca nie miał wariantu. */
+/** Pusty ślad - sesja bez nagrania. Kształt ten sam, żeby odbiorca nie miał wariantu. */
 export function emptySessionTrackPayload(sessionUuid: string): SessionTrackPayload {
   return {
     sessionUuid,
@@ -82,7 +82,7 @@ export function emptySessionTrackPayload(sessionUuid: string): SessionTrackPaylo
 /**
  * Buduje kopertę śladu z surowego nagrania jednej sesji.
  *
- * @param entries wiersze nagrania w dowolnej kolejności — `buildFlightTrack` sortuje.
+ * @param entries wiersze nagrania w dowolnej kolejności - `buildFlightTrack` sortuje.
  * @param stats okno biegu silnika i odcinki lotu Z REJESTRU; okno wyznacza też zakres
  *   nagrania, które w ogóle bierzemy pod uwagę.
  */
@@ -118,7 +118,7 @@ export function buildSessionTrackPayload(
     endedAt: track.endedAt,
     totalCount: track.totalCount,
     usableCount: track.usableCount,
-    // Statystyki z KOMPLETU punktów, przed upraszczaniem — patrz nagłówek pliku.
+    // Statystyki z KOMPLETU punktów, przed upraszczaniem - patrz nagłówek pliku.
     stats: buildTrackStats(track.points, stats),
   };
 }
@@ -137,7 +137,7 @@ function roundSample(sample: ProfileSample): ProfileSample {
   return { time: sample.time, altitudeFt: Math.round(sample.altitudeFt) };
 }
 
-/** Liczby podpisu profilu — stopy całkowite, prędkości pionowe do jednego miejsca. */
+/** Liczby podpisu profilu - stopy całkowite, prędkości pionowe do jednego miejsca. */
 function roundProfileNumbers(profile: FlightProfile): FlightProfile {
   return {
     ...profile,

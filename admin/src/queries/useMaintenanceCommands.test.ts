@@ -1,22 +1,22 @@
 /**
- * UZ Aero — panel: CZEGO mutacje konserwacji nie unieważniają.
+ * UZ Aero - panel: CZEGO mutacje konserwacji nie unieważniają.
  *
  * ══ DLACZEGO TEN PLIK POWSTAŁ DOPIERO PO WADZIE ══
- * `useFleetCommands` deklarował w docblocku „czego tu NIE MA", a kod robił co innego —
+ * `useFleetCommands` deklarował w docblocku „czego tu NIE MA", a kod robił co innego -
  * i dostał za to test (`useFleetCommands.test.ts`). `useMaintenanceCommands` powtórzył
  * dokładnie ten sam błąd: unieważniał `keys.maintenance.all`, a `invalidateQueries`
- * dopasowuje PREFIKSOWO, więc razem z nim leciało `['maintenance','projections']` —
+ * dopasowuje PREFIKSOWO, więc razem z nim leciało `['maintenance','projections']` -
  * czyli PORÓWNANIE PROJEKCJI, pełny skan rejestru zdarzeń liczony w minutach.
  *
  * Cena była wyższa niż przy flocie. Tam unieważniano zapytanie o liczbę, która nie może
  * się zmienić; tutaj kliknięcie „Nadpisz" odpalało drugi czterominutowy skan bazy,
  * którego wynik i tak lądował w koszu (po zapisie ekran pokazuje raport z ZAPISU).
- * A skan jest zdjęty z automatu ŚWIADOMIE — `useMaintenance.ts` mówi wprost, że
+ * A skan jest zdjęty z automatu ŚWIADOMIE - `useMaintenance.ts` mówi wprost, że
  * uruchamianie go samoczynnie „zamieniłoby ekran diagnostyczny w generator obciążenia".
  * Unieważnienie ubocznie kasowało tę decyzję.
  *
  * Docblock `invalidateAfterRebuild` obiecywał, że funkcja jest eksportowana po to, żeby
- * dało się ją sprawdzić na PRAWDZIWYM `QueryClient`. Obietnica nie miała pokrycia —
+ * dało się ją sprawdzić na PRAWDZIWYM `QueryClient`. Obietnica nie miała pokrycia -
  * ten plik ją realizuje: bez renderu i bez atrapy sieci, bo pytanie „czy klucz A
  * unieważnia klucz B" jest własnością kluczy (`docs/architektura-panelu-frontend.md` §8).
  */
@@ -40,7 +40,7 @@ function seedMaintenance(qc: QueryClient): void {
 }
 
 describe('unieważnienia po NADPISANIU projekcji', () => {
-  it('PORÓWNANIE nie starzeje się od zapisu — mimo wspólnego prefiksu `maintenance`', () => {
+  it('PORÓWNANIE nie starzeje się od zapisu - mimo wspólnego prefiksu `maintenance`', () => {
     const qc = client();
     seedMaintenance(qc);
 
@@ -53,7 +53,7 @@ describe('unieważnienia po NADPISANIU projekcji', () => {
     // ══ TO JEST TA ASERCJA ══
     // Porównanie czyta strumień KAŻDEJ sesji w rejestrze. Unieważnienie go tutaj znaczy
     // drugi taki przebieg odpalony ubocznie, w chwili gdy zapytanie jest AKTYWNE (ekran
-    // konserwacji stoi otwarty — to z niego przyszła mutacja), a jego wynik i tak jest
+    // konserwacji stoi otwarty - to z niego przyszła mutacja), a jego wynik i tak jest
     // wyrzucany, bo po zapisie ekran pokazuje raport z zapisu.
     expect(invalidated(qc, keys.maintenance.projections)).toBe(false);
     // Przebudowa nie dotyka tabeli sesji ani schematu bazy.
@@ -74,7 +74,7 @@ describe('unieważnienia po NADPISANIU projekcji', () => {
     for (const key of stale) expect(invalidated(qc, key), String(key)).toBe(true);
   });
 
-  it('REJESTR ZDARZEŃ zostaje nietknięty — bo przebudowa go nie dotyka', () => {
+  it('REJESTR ZDARZEŃ zostaje nietknięty - bo przebudowa go nie dotyka', () => {
     // Unieważnienie `events` sugerowałoby, że przebudowa mogła coś w rejestrze zmienić.
     // Nie mogła: `events` jest append-only i pilnuje tego test architektury serwera.
     const qc = client();
@@ -87,7 +87,7 @@ describe('unieważnienia po NADPISANIU projekcji', () => {
 });
 
 describe('unieważnienia po WYCZYSZCZENIU wygasłych tokenów', () => {
-  it('starzeje się karta tokenów, audyt i pulpit — i nic poza tym', () => {
+  it('starzeje się karta tokenów, audyt i pulpit - i nic poza tym', () => {
     const qc = client();
     seedMaintenance(qc);
     for (const key of [keys.audit.all, keys.dashboard, keys.sessions.all, keys.exports.all]) {
@@ -101,7 +101,7 @@ describe('unieważnienia po WYCZYSZCZENIU wygasłych tokenów', () => {
     expect(invalidated(qc, keys.dashboard)).toBe(true);
 
     // Sesje lotne, karty arkusza i porównanie projekcji nie mają z tabelą tokenów nic
-    // wspólnego — unieważnienie „na wszelki wypadek" byłoby serią żądań o dane, które
+    // wspólnego - unieważnienie „na wszelki wypadek" byłoby serią żądań o dane, które
     // się nie zmieniły, a w przypadku porównania: o czterominutowy skan rejestru.
     expect(invalidated(qc, keys.sessions.all)).toBe(false);
     expect(invalidated(qc, keys.exports.all)).toBe(false);

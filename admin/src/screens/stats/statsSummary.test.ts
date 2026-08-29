@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: podtytuł i chip zakresu statystyk.
+ * UZ Aero - panel: podtytuł i chip zakresu statystyk.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -21,9 +21,9 @@ describe('statsPageSub', () => {
     expect(statsPageSub(null)).not.toContain('otwart');
   });
 
-  it('podtytuł mówi, że sumy liczą się po dniu ZDANIA — inna oś niż lista dni', () => {
+  it('podtytuł mówi, że sumy liczą się po dniu ZDANIA - inna oś niż lista dni', () => {
     // Ta sama para dat na A02 (oś przejęcia) i A10 (oś zdania) może dać INNY zbiór
-    // sesji — bez tego zdania rozjazd wyglądałby na błąd którejś z list. Po §3.6a jest
+    // sesji - bez tego zdania rozjazd wyglądałby na błąd którejś z list. Po §3.6a jest
     // realny: zmiana wieczorna przejęta 30 JUL bywa zdana 31 JUL nad ranem.
     expect(statsPageSub(null)).toContain('po dniu zdania samolotu');
     expect(statsPageSub(statsFixture().totals)).toContain('może różnić się od listy dni');

@@ -1,7 +1,7 @@
 /**
- * UZ Aero — panel: słowniki filtrów listy dni (`A02`).
+ * UZ Aero - panel: słowniki filtrów listy dni (`A02`).
  *
- * Chip niesie IDENTYFIKATOR do trasy — panel nie odsiewa wierszy sam. Test pilnuje
+ * Chip niesie IDENTYFIKATOR do trasy - panel nie odsiewa wierszy sam. Test pilnuje
  * dwóch rzeczy, które łatwo zgubić: że jednostki wyłączone i konta nieaktywne ZOSTAJĄ
  * w słowniku (ich historia jest najczęstszym powodem szukania), oraz że wybór spoza
  * słownika nadal widać.
@@ -58,7 +58,7 @@ describe('chipy samolotów', () => {
     expect(chip!.title).toContain('Cessna 182');
   });
 
-  it('jednostki WYŁĄCZONE zostają — ich dni nadal są w rejestrze', () => {
+  it('jednostki WYŁĄCZONE zostają - ich dni nadal są w rejestrze', () => {
     const chips = aircraftChips([aircraft({ id: 'ac-2', reg: 'SP-KWA', serviceStatus: 'disabled' })]);
     expect(chips.map((c) => c.id)).toEqual([null, 'ac-2']);
     expect(chips[1]!.title).toContain('historia zostaje');
@@ -74,7 +74,7 @@ describe('chipy samolotów', () => {
 });
 
 describe('chipy pilotów', () => {
-  it('etykietą jest KOD — nazwisko idzie do podpowiedzi', () => {
+  it('etykietą jest KOD - nazwisko idzie do podpowiedzi', () => {
     const [, chip] = pilotChips([pilot()]);
     expect(chip).toMatchObject({ id: 'p-1', label: 'TMK' });
     expect(chip!.title).toContain('Tomasz Małkiewicz');

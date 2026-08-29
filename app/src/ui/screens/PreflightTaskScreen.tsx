@@ -1,10 +1,10 @@
 /**
- * UZ Aero — 02E NOWY LOT · krok 2/3: zadanie dnia.
+ * UZ Aero - 02E NOWY LOT · krok 2/3: zadanie dnia.
  *
- * Rodzaj operacji, trasa i oznaczenie klienta — czyli „co dziś robimy". Wydzielone
+ * Rodzaj operacji, trasa i oznaczenie klienta - czyli „co dziś robimy". Wydzielone
  * z kroku 1 (decyzja 2026-07-30), bo tamten stał się najdłuższym formularzem aplikacji
  * i rósł dalej: lista floty i lista pilotów przybierają z każdym samolotem i każdym
- * nowym kontem. Podział idzie po naturze pytań — krok 1 odpowiada „kto, czym i od kiedy"
+ * nowym kontem. Podział idzie po naturze pytań - krok 1 odpowiada „kto, czym i od kiedy"
  * (wybory z list, w tym przejęcie samolotu), ten odpowiada „co dziś robimy" (opis).
  *
  * PODPOWIEDŹ Z OSTATNIEGO DNIA jest tu warunkiem sensu, nie ozdobnikiem. Żadne z tych
@@ -15,7 +15,7 @@
  *
  * Podpowiedź ustępuje pilotowi bez pytania: pierwsze dotknięcie któregokolwiek z tych
  * pól wyłącza ją do końca preflightu (`taskTouched` w szkicu). Wyjaśnienie, SKĄD te
- * wartości, jest osobnym bytem — banerem pouczającym (`edu`), który pilot chowa raz
+ * wartości, jest osobnym bytem - banerem pouczającym (`edu`), który pilot chowa raz
  * i na stałe. Nie znika po dotknięciu pola, bo opisuje regułę, a nie zawartość pól.
  *
  * FORMULARZ CZYTA SIĘ JAK PODSUMOWANIE, NIE JAK KARTKA DO WYPEŁNIENIA (issue #14).
@@ -30,11 +30,11 @@
  * pod oznaczeniem klienta (mówiła, co się z wartością dzieje w statystykach i arkuszu).
  *
  * RODZAJ OPERACJI WYZNACZA TRASĘ (issue #13). Skoki wracają tam, skąd wystartowały,
- * więc pytamy o JEDNO lotnisko — do tej pory formularz kazał wpisać ten sam kod dwa razy
+ * więc pytamy o JEDNO lotnisko - do tej pory formularz kazał wpisać ten sam kod dwa razy
  * i pozwalał opisać dzień skoków trasą „EPKK → EPWA", której nie da się polecieć.
  * Pozostałe operacje (przelot, egzamin, lot techniczny, inne) mogą skończyć gdzie indziej
  * i zostają przy parze kodów. O tym, która operacja jest którym kształtem, orzeka domena
- * (`isSameFieldOperation`) — ten sam predykat uzbraja bramkę lądowania w kokpicie, więc
+ * (`isSameFieldOperation`) - ten sam predykat uzbraja bramkę lądowania w kokpicie, więc
  * formularz i detekcja nie mogą się rozjechać.
  */
 
@@ -69,12 +69,12 @@ import { jumperDefaultsLabel, normalizeJumperDefaults } from './logic/jumperDefa
 import { isJumpOperation, isSameFieldOperation, OPERATION_TYPES } from '../../domain';
 import type { OperationType } from '../../domain';
 /**
- * Nazwa lotniska albo plakietka „spoza katalogu" (issue #62 pkt 1) — jedna decyzja
+ * Nazwa lotniska albo plakietka „spoza katalogu" (issue #62 pkt 1) - jedna decyzja
  * na oba ekrany z trasą, żeby EDDB nie wyglądało tu inaczej niż we wpisie ręcznym.
  */
 import { airfieldValueProps } from '../components/input/airfieldMark';
 
-/** Siatka operacji — ikony jak w `.op-grid` mockupu 02e, nazwy z `operationLabel`. */
+/** Siatka operacji - ikony jak w `.op-grid` mockupu 02e, nazwy z `operationLabel`. */
 const OPERATIONS: GridOption<OperationType>[] = OPERATION_TYPES.map((value) => ({
   value,
   label: operationLabel(value),
@@ -110,13 +110,13 @@ export function PreflightTaskScreen({
         arrivalIcao: memory.route?.arrivalIcao ?? '',
       },
     );
-    // `draft` celowo poza zależnościami — hak Zustanda zmienia referencję przy każdym
+    // `draft` celowo poza zależnościami - hak Zustanda zmienia referencję przy każdym
     // wpisie, a podpowiedź ma się wykonać po odczycie z dysku, nie po każdej literze.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [memory.ready, memory.task, memory.route]);
 
   /**
-   * Czy w ogóle było co podstawić — czyli czy baner ma o czym mówić.
+   * Czy w ogóle było co podstawić - czyli czy baner ma o czym mówić.
    *
    * Bez zapamiętanego dnia (pierwszy lot pilota, pierwszy dzień na tym samolocie)
    * formularz jest pusty i wyjaśnienie mechanizmu opisywałoby coś, czego pilot nie
@@ -125,10 +125,10 @@ export function PreflightTaskScreen({
   const prefilled = memory.ready && (memory.task != null || memory.route != null);
   const [sourceDismissed, setSourceDismissed] = useEduBanner('task-source');
 
-  // Jedno lotnisko czy para — patrz nota na górze pliku.
+  // Jedno lotnisko czy para - patrz nota na górze pliku.
   const shape = isSameFieldOperation(draft.operation) ? 'single' : 'pair';
 
-  /** Który arkusz jest otwarty — `null` = żaden (dwa pola trasy, dwa pola tekstowe). */
+  /** Który arkusz jest otwarty - `null` = żaden (dwa pola trasy, dwa pola tekstowe). */
   const [picker, setPicker] = useState<'departure' | 'arrival' | null>(null);
   const [editor, setEditor] = useState<'client' | 'notes' | null>(null);
   const [jumperSheetOpen, setJumperSheetOpen] = useState(false);
@@ -138,13 +138,13 @@ export function PreflightTaskScreen({
   // pilot zdąży tapnąć w pole. Brak pozycji nie blokuje niczego (patrz hook).
   const position = useNearbyPosition(true);
 
-  // Ostatnio używane oznaczenia i notatki — jedyna treść tego ekranu z serwera.
+  // Ostatnio używane oznaczenia i notatki - jedyna treść tego ekranu z serwera.
   // Żądanie leci dopiero przy OTWARCIU arkusza (patrz `openEditor` niżej i nota w hooku):
   // klient i notatka są opcjonalne, więc pobieranie „na zapas" przy wejściu na ekran
   // płaciło jednym żądaniem za każdy preflight, w którym pilot i tak ich nie dotknął.
   const { suggestions: remote, reload: reloadSuggestions } = useTaskSuggestions();
   // Trzy stany jadą do arkusza NIETKNIĘTE (`undefined` = pytamy, `null` = nie mamy,
-  // tablica = mamy, choćby pustą) — zwinięcie „pytamy" do pustej listy kazałoby arkuszowi
+  // tablica = mamy, choćby pustą) - zwinięcie „pytamy" do pustej listy kazałoby arkuszowi
   // ogłaszać „historia jest pusta", zanim odpowiedź w ogóle wróci.
   const clientSuggestions = useMemo<TextSuggestion[] | null | undefined>(
     () =>
@@ -152,7 +152,7 @@ export function PreflightTaskScreen({
         ? remote
         : remote.clients.map((row) => ({
             value: row.value,
-            // „Co to było za zlecenie" — ten sam klient bywa i skokami, i przelotem.
+            // „Co to było za zlecenie" - ten sam klient bywa i skokami, i przelotem.
             meta: row.operation == null ? null : operationLabel(row.operation),
           })),
     [remote],
@@ -164,10 +164,10 @@ export function PreflightTaskScreen({
   );
 
   /**
-   * Otwarcie arkusza to JEDYNY moment, w którym pytamy serwer o podpowiedzi — wtedy
+   * Otwarcie arkusza to JEDYNY moment, w którym pytamy serwer o podpowiedzi - wtedy
    * i tylko wtedy wynik ma się gdzie pokazać. Hook pilnuje, żeby otwarcie klienta,
    * a zaraz potem notatki, nie wysłało dwóch żądań (świeża odpowiedź żyje minutę),
-   * i żeby nieudana próba nie zablokowała kolejnej — pilot, który odzyskał zasięg,
+   * i żeby nieudana próba nie zablokowała kolejnej - pilot, który odzyskał zasięg,
    * dostanie listę przy następnym otwarciu.
    */
   const openEditor = useCallback(
@@ -213,7 +213,7 @@ export function PreflightTaskScreen({
           variant="solid"
           trailingIcon="next"
           onPress={() => {
-            // Zapamiętujemy przy przejściu dalej — czyli wtedy, gdy pilot świadomie
+            // Zapamiętujemy przy przejściu dalej - czyli wtedy, gdy pilot świadomie
             // zaakceptował te wartości, a nie po każdym stuknięciu w formularz.
             memory.remember(
               { operation: draft.operation, client: draft.client },
@@ -230,14 +230,14 @@ export function PreflightTaskScreen({
             pomocne za pierwszym razem i szumem przy każdym kolejnym, więc pilot chowa
             je na stałe (`×` → mini-chip w tym samym miejscu).
 
-            Baner opisuje REGUŁĘ, a nie bieżące wartości — dlatego nie znika po pierwszej
+            Baner opisuje REGUŁĘ, a nie bieżące wartości - dlatego nie znika po pierwszej
             zmianie pola, jak robiła to poprzednia adnotacja. „Uzupełnione z ostatniego
             dnia" przestawało być prawdą dla poprawionego pola i baner musiał uciekać
             z ekranu; zdanie o tym, CO uzupełniamy, jest prawdziwe cały czas.
 
-            ZNIKA za to po „WYCZYŚĆ FORMULARZ" (uwaga z urządzenia, 2026-08-27) — pilnuje
+            ZNIKA za to po „WYCZYŚĆ FORMULARZ" (uwaga z urządzenia, 2026-08-27) - pilnuje
             tego `draft.suggested`, nie sama pamięć zadania: po wyczyszczeniu podstawione
-            dane już nie stoją (i nie wrócą — `taskTouched`), więc baner o nich kłamałby,
+            dane już nie stoją (i nie wrócą - `taskTouched`), więc baner o nich kłamałby,
             także po powrocie na ekran. */}
         {prefilled && draft.suggested && (
           <Banner
@@ -253,7 +253,7 @@ export function PreflightTaskScreen({
             onDismiss={setSourceDismissed}
             // Baner tłumaczący, skąd wzięły się wartości, jest naturalnym miejscem
             // decyzji „nie chcę ich": czyści pola zadania do stanu początkowego
-            // i przywraca czysty formularz (notatki nie rusza — nie była podpowiedzią).
+            // i przywraca czysty formularz (notatki nie rusza - nie była podpowiedzią).
             action={{ label: 'Wyczyść formularz', onPress: () => draft.clearTask() }}
           />
         )}
@@ -269,7 +269,7 @@ export function PreflightTaskScreen({
 
         {/* ── trasa ─────────────────────────────────────────────────────────
             Pola są PRZYCISKAMI, nie inputami (issue #14). Wpisywanie i szukanie dzieje
-            się w arkuszu — tym samym ruchem, co godzina meldunku na kroku 1. Nazwa
+            się w arkuszu - tym samym ruchem, co godzina meldunku na kroku 1. Nazwa
             rozpoznanego lotniska stoi w samym polu, więc zniknął rząd potwierdzeń pod
             spodem („Start: EPZG · …"), który powtarzał kod widoczny wyżej.
 
@@ -288,7 +288,7 @@ export function PreflightTaskScreen({
                 placeholder="Wybierz lotnisko"
                 {...airfieldValueProps(draft.departureIcao)}
                 actionIcon="search"
-                accessibilityLabel={`Lotnisko startu ${draft.departureIcao || 'nie wybrane'} — zmień`}
+                accessibilityLabel={`Lotnisko startu ${draft.departureIcao || 'nie wybrane'} - zmień`}
                 onPress={() => setPicker('departure')}
               />
             </Field>
@@ -300,7 +300,7 @@ export function PreflightTaskScreen({
                   placeholder="Wybierz lotnisko"
                   {...airfieldValueProps(draft.arrivalIcao)}
                   actionIcon="search"
-                  accessibilityLabel={`Lotnisko lądowania ${draft.arrivalIcao || 'nie wybrane'} — zmień`}
+                  accessibilityLabel={`Lotnisko lądowania ${draft.arrivalIcao || 'nie wybrane'} - zmień`}
                   onPress={() => setPicker('arrival')}
                 />
               </Field>
@@ -313,11 +313,11 @@ export function PreflightTaskScreen({
           {/* Bez podpowiedzi pod polem („Wiąże zrzuty dnia z klientem…", issue #14):
               zdanie o statystykach i arkuszu rozliczeniowym opisywało, co się z wartością
               dzieje PÓŹNIEJ, a pilot w tym miejscu odpowiada tylko na pytanie „dla kogo". */}
-          {/* Ma sens wyłącznie przy skokach — ten sam predykat, którym domena bramkuje
+          {/* Ma sens wyłącznie przy skokach - ten sam predykat, którym domena bramkuje
               przycisk zrzutu w kokpicie (issue #19), więc pole i akcja nie mają jak
               się rozjechać. Ustawiony tu skład staje się wartością startową KAŻDEGO
               załadunku bez własnej deklaracji, także po tym, jak zrzut skonsumował
-              poprzedni (`boardingInitialJumpers`) — nie edytuje się go po fakcie:
+              poprzedni (`boardingInitialJumpers`) - nie edytuje się go po fakcie:
               korekty idą przez zdarzenia załadunku i zrzutu, które już są poprawialne. */}
           {isJumpOperation(draft.operation) && (
             <Field label="Domyślny skład skoczków" tag={{ label: 'opcjonalne' }}>
@@ -326,7 +326,7 @@ export function PreflightTaskScreen({
                 value={draft.jumperDefaults != null ? jumperDefaultsLabel(draft.jumperDefaults) : ''}
                 placeholder="Bez ustawionego składu"
                 actionIcon="edit"
-                accessibilityLabel={`Domyślny skład skoczków ${jumperDefaultsLabel(draft.jumperDefaults)} — zmień`}
+                accessibilityLabel={`Domyślny skład skoczków ${jumperDefaultsLabel(draft.jumperDefaults)} - zmień`}
                 onPress={() => setJumperSheetOpen(true)}
               />
             </Field>
@@ -338,7 +338,7 @@ export function PreflightTaskScreen({
               value={draft.client ?? ''}
               placeholder="Bez oznaczenia"
               actionIcon="edit"
-              accessibilityLabel={`Oznaczenie klienta ${draft.client ?? 'puste'} — zmień`}
+              accessibilityLabel={`Oznaczenie klienta ${draft.client ?? 'puste'} - zmień`}
               onPress={() => openEditor('client')}
             />
           </Field>
@@ -349,7 +349,7 @@ export function PreflightTaskScreen({
               value={draft.notes ?? ''}
               placeholder="Bez notatki"
               actionIcon="edit"
-              accessibilityLabel={`Notatka ${draft.notes ?? 'pusta'} — zmień`}
+              accessibilityLabel={`Notatka ${draft.notes ?? 'pusta'} - zmień`}
               onPress={() => openEditor('notes')}
             />
           </Field>
@@ -357,7 +357,7 @@ export function PreflightTaskScreen({
       </View>
 
       {/* ── arkusz wyboru lotniska ──────────────────────────────────────────
-          Jeden arkusz na oba pola — różni je tytuł i to, dokąd wraca wynik. */}
+          Jeden arkusz na oba pola - różni je tytuł i to, dokąd wraca wynik. */}
       <AirfieldSheet
         visible={picker != null}
         title={

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 02 Nowy lot · Samolot i załoga</title>
+<title>UZ Aero - 02 Nowy lot · Samolot i załoga</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -79,7 +79,7 @@
     border-radius: 8px; padding: 4px 10px; margin-top: 2px;
     flex-shrink: 0; white-space: nowrap;
   }
-  /* BEZ `.sync-chip` — online nie ma plakietki łączności (reguła 2026-08-06);
+  /* BEZ `.sync-chip` - online nie ma plakietki łączności (reguła 2026-08-06);
      chip mieszka wyłącznie w wariancie offline (02D). */
   .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
 
@@ -233,7 +233,7 @@
     color: var(--red); background: var(--red-muted); border: 1px solid var(--red-border);
     border-radius: 4px; padding: 2px 6px; white-space: nowrap;
   }
-  /* Pozycja prowadzona przez innego PIC — dwa wiersze zamiast ciasnej plakietki:
+  /* Pozycja prowadzona przez innego PIC - dwa wiersze zamiast ciasnej plakietki:
      rejestracja z typem u góry, adnotacja amber pod spodem, wyrównana do lewej. */
   .aircraft-option.locked { text-decoration: none; }
   .aircraft-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
@@ -242,7 +242,7 @@
     font-family: var(--font-mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
     color: var(--amber);
   }
-  /* Oko stoi DOKŁADNIE w miejscu kółka wyboru — ta pozycja nie jest wybieralna,
+  /* Oko stoi DOKŁADNIE w miejscu kółka wyboru - ta pozycja nie jest wybieralna,
      więc kółka nie ma; jedyne wyjście z niej to podgląd read-only (04B). */
   .aircraft-peek {
     display: flex; align-items: center; justify-content: center;
@@ -289,7 +289,7 @@
     background: rgba(46,204,113,0.07); border-color: var(--green-border);
     box-shadow: 0 0 0 1px rgba(46,204,113,0.08);
   }
-  /* W kwadracie stoi KOD pilota (mono), nie inicjały — kod jest jego identyfikatorem
+  /* W kwadracie stoi KOD pilota (mono), nie inicjały - kod jest jego identyfikatorem
      w arkuszu, więc nie ma powodu powtarzać go drugi raz po prawej stronie wiersza. */
   .crew-avatar {
     width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
@@ -308,12 +308,12 @@
   }
   /* Powód blokady stoi WEWNĄTRZ przycisku (issue #55): tekst POD przyciskiem pojawiał
      się i znikał razem ze stanem, skacząc layoutem reszty ekranu. Zablokowany przycisk
-     układa się przez to w KOLUMNĘ — napis, pod nim bursztynowe zdanie. */
+     układa się przez to w KOLUMNĘ - napis, pod nim bursztynowe zdanie. */
   .btn-primary.disabled { background: var(--surface-hover); color: var(--text-muted); box-shadow: none; pointer-events: none; cursor: not-allowed; flex-direction: column; gap: 6px; }
   .btn-label { display: flex; align-items: center; justify-content: center; gap: 10px; }
   .btn-reason { font-family: var(--font-mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--amber); text-align: center; line-height: 1.5; }
 
-  /* ===== VARIANTS PANEL (canvas — skróty do wariantów ekranu) ===== */
+  /* ===== VARIANTS PANEL (canvas - skróty do wariantów ekranu) ===== */
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
   .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
   .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; transition:all .15s; }
@@ -331,12 +331,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 02</span>
+  <span class="film-strip">UZ AERO - 02</span>
   <span class="slug">przejęcie · samolot i załoga</span>
   <span class="canvas-meta"><span class="pulse"></span>Ekran 2</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Preflight">
+<main class="phone" role="region" aria-label="Mockup - Preflight">
   <div class="status-bar">
     <span>9:41</span>
     <span class="status-right">
@@ -349,9 +349,9 @@
   <div class="screen">
     <!-- App Header -->
     <!-- BEZ chipa SYNC (reguła 2026-08-06): „zsynchronizowano" jest stanem DOMYŚLNYM
-         i nie zasługuje na plakietkę — chip pokazujemy wyłącznie offline (02D), gdzie
-         niesie realną informację (licznik kolejki; szczegóły — w tym wiek danych
-         referencyjnych — pod tapnięciem, issue #23 pkt 5).
+         i nie zasługuje na plakietkę - chip pokazujemy wyłącznie offline (02D), gdzie
+         niesie realną informację (licznik kolejki; szczegóły - w tym wiek danych
+         referencyjnych - pod tapnięciem, issue #23 pkt 5).
          Online w nagłówku zostaje sam badge kroku. -->
     <div class="app-header">
       <div class="header-left">
@@ -372,7 +372,7 @@
           <div class="pilot-name">Tomasz Małkiewicz</div>
           <div class="pilot-sub">tomasz@uzaero.pl</div>
         </div>
-        <span class="role-badge" title="Pilot in command — pilot zalogowany w aplikacji">PIC</span>
+        <span class="role-badge" title="Pilot in command - pilot zalogowany w aplikacji">PIC</span>
       </div>
 
       <!-- SEKCJA: SAMOLOT -->
@@ -388,10 +388,10 @@
           </div>
           <!-- SP-FGK prowadzi inny PIC: cała karta jest LINKIEM do podglądu 04B, a nie
                pozycją do zaznaczenia. Przejęcie (§4.4) odbiera poprzedniemu PIC prawo
-               zapisu, więc tej decyzji nie podejmuje się z listy — dopiero na 04B, po
+               zapisu, więc tej decyzji nie podejmuje się z listy - dopiero na 04B, po
                zobaczeniu, co się z samolotem dzieje (log samolotu, wiek danych, ostrzeżenie).
                Dlatego zamiast kółka wyboru stoi tu oko. -->
-          <a class="aircraft-option locked" href="04b-cockpit-readonly.html" title="Podgląd read-only — stan i log samolotu; stamtąd przejmujesz samolot (04B)">
+          <a class="aircraft-option locked" href="04b-cockpit-readonly.html" title="Podgląd read-only - stan i log samolotu; stamtąd przejmujesz samolot (04B)">
             <div class="aircraft-body">
               <div class="aircraft-row">
                 <div class="aircraft-reg">SP-FGK</div>
@@ -441,10 +441,10 @@
         </div>
         <!-- BANERA „An-2 wymaga załogi 2-osobowej" TU NIE MA (uwaga z urządzenia,
              2026-08-29). Powód, dla którego nie da się iść dalej, ma w tej aplikacji
-             JEDNO miejsce — wnętrze przycisku, który nie działa (issue #55). Wymóg
+             JEDNO miejsce - wnętrze przycisku, który nie działa (issue #55). Wymóg
              Duala był ostatnim wyjątkiem: mówił banerem, a „DALEJ" dostawał samo
              wyszarzenie. Jeden wyjątek kosztuje więcej niż powtórzenie, którego miał
-             oszczędzić — pilot napotyka blokadę przy PRZYCISKU i tam szuka odpowiedzi.
+             oszczędzić - pilot napotyka blokadę przy PRZYCISKU i tam szuka odpowiedzi.
 
              Plakietka „wymagany · załoga 2-os." przy nagłówku ZOSTAJE: mówi
              o właściwości maszyny, w miejscu wyboru, także wtedy gdy Dual jest już
@@ -453,25 +453,25 @@
 
       <!-- USUNIĘTE STĄD (decyzja 2026-07-30): rodzaj operacji, trasa i oznaczenie
            klienta przeniosły się do kroku 2 (02E „Zadanie"). Ten ekran zbiera WYBORY
-           Z LIST — samolot (z przejęciem po innym PIC) i drugiego pilota — a obie
+           Z LIST - samolot (z przejęciem po innym PIC) i drugiego pilota - a obie
            listy rosną z flotą i liczbą kont.
 
            USUNIĘTY STĄD TAKŻE CZAS MELDOWANIA (przebudowa flow; od issue #23 razem
            z całą klamrą służby): pytanie „od kiedy jesteś na służbie" nie ma prawa
-           stać na drodze do samolotu. Dzień pilota to lista sesji — żadnej godziny
+           stać na drodze do samolotu. Dzień pilota to lista sesji - żadnej godziny
            „od kiedy" się nie deklaruje. Rozpoczęcie lotu ma trwać kilka sekund,
            nie otwierać dnia. -->
 
-      <!-- CTA Button — powód blokady wjeżdża W ŚRODEK, w `.btn-reason` (issue #55).
+      <!-- CTA Button - powód blokady wjeżdża W ŚRODEK, w `.btn-reason` (issue #55).
            Przycisk zablokowany układa się wtedy w kolumnę: napis, pod nim bursztynowe
-           zdanie. Bez przygaszenia opacity — bursztyn pod nią przestaje być
+           zdanie. Bez przygaszenia opacity - bursztyn pod nią przestaje być
            ostrzeżeniem, a wyszarzenie niosą już kolory tła i napisu. -->
       <a href="02e-preflight-zadanie.html" class="btn-primary" id="btn-next">
         <span class="btn-label">
           DALEJ
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         </span>
-        <span class="btn-reason" id="btn-reason" style="display:none;">Wybierz drugiego pilota — ten samolot wymaga załogi dwuosobowej</span>
+        <span class="btn-reason" id="btn-reason" style="display:none;">Wybierz drugiego pilota - ten samolot wymaga załogi dwuosobowej</span>
       </a>
 
     </div>
@@ -479,34 +479,34 @@
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Warianty kroku 1 (samolot i załoga) — kiedy który?</div>
+  <div class="vp-title">Warianty kroku 1 (samolot i załoga) - kiedy który?</div>
   <a class="vp-item active" href="02-preflight.html">
     <span class="vp-badge">02</span>
     <span class="vp-body">
       <span class="vp-name">Online</span>
-      <span class="vp-when">Jest sieć — stany claim i dane referencyjne na żywo z serwera. Bez plakietki łączności: online jest stanem domyślnym.</span>
+      <span class="vp-when">Jest sieć - stany claim i dane referencyjne na żywo z serwera. Bez plakietki łączności: online jest stanem domyślnym.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
   <a class="vp-item" href="02d-preflight-offline.html">
     <span class="vp-badge amber">02D</span>
     <span class="vp-body">
-      <span class="vp-name">Offline — dane z cache</span>
-      <span class="vp-when">Brak sieci — lista samolotów i claimy z ostatniej synchronizacji (adnotacja wieku); zajęty samolot podglądasz na 04B i stamtąd przejmujesz, claim trafia do outboxa. Chip OFFLINE ze stemplem ostatniego synca.</span>
+      <span class="vp-name">Offline - dane z cache</span>
+      <span class="vp-when">Brak sieci - lista samolotów i claimy z ostatniej synchronizacji (adnotacja wieku); zajęty samolot podglądasz na 04B i stamtąd przejmujesz, claim trafia do outboxa. Chip OFFLINE ze stemplem ostatniego synca.</span>
     </span>
   </a>
   <a class="vp-item" href="02g-preflight-brak-floty.html">
     <span class="vp-badge amber">02G</span>
     <span class="vp-body">
       <span class="vp-name">Brak floty w pamięci</span>
-      <span class="vp-when">Cache referencyjny przeczytany i PUSTY (świeża instalacja przed pierwszym syncem albo flota nie założona w panelu) — zamiast formularza warning na cały ekran, bez DALEJ (issue #55).</span>
+      <span class="vp-when">Cache referencyjny przeczytany i PUSTY (świeża instalacja przed pierwszym syncem albo flota nie założona w panelu) - zamiast formularza warning na cały ekran, bez DALEJ (issue #55).</span>
     </span>
   </a>
   <a class="vp-item" href="02h-preflight-rezygnacja.html">
     <span class="vp-badge blue">02H</span>
     <span class="vp-body">
       <span class="vp-name">Rezygnacja z nowego lotu</span>
-      <span class="vp-when">„Wstecz" przy niepustym formularzu — arkusz pyta o rezygnację; potwierdzenie czyści szkic i następne wejście zaczyna od nowa (issue #55). Pusty formularz wychodzi bez pytania.</span>
+      <span class="vp-when">„Wstecz" przy niepustym formularzu - arkusz pyta o rezygnację; potwierdzenie czyści szkic i następne wejście zaczyna od nowa (issue #55). Pusty formularz wychodzi bez pytania.</span>
     </span>
   </a>
 </aside>
@@ -529,7 +529,7 @@
 <script>
   // Drugi pilot: wymagany gdy wybrany samolot ma flagę data-req2p="1" (konfiguracja samolotu na serwerze)
   // Blokada PIC: samolot prowadzony przez innego pilota (.aircraft-option.locked) NIE jest
-  // pozycją do zaznaczenia — to link do podglądu 04B, gdzie stoi przejęcie. Dlatego pętla
+  // pozycją do zaznaczenia - to link do podglądu 04B, gdzie stoi przejęcie. Dlatego pętla
   // czyszcząca zaznaczenie musi znieść pozycję bez kółka wyboru.
   function selectAircraft(el) {
     document.querySelectorAll('.aircraft-option').forEach(o => {

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 02G Nowy lot · Brak floty w pamięci</title>
+<title>UZ Aero - 02G Nowy lot · Brak floty w pamięci</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -66,7 +66,7 @@
   .nav-strip a.active { color:var(--amber); }
   .nav-strip span { color:var(--border-strong); }
 
-  /* App header — identyczny z 02: nagłówek znamy lokalnie, więc nie czeka i nie znika
+  /* App header - identyczny z 02: nagłówek znamy lokalnie, więc nie czeka i nie znika
      (reguła LOADERY: co znamy lokalnie, nie czeka). */
   .app-header {
     display: flex; align-items: flex-start; justify-content: space-between; padding: 14px 16px 12px;
@@ -86,10 +86,10 @@
   .scroll::-webkit-scrollbar { display: none; }
 
   /* ===== WARNING NA CAŁY EKRAN (issue #55 pkt 3) =====
-     Zamiast formularza — bo formularz bez ani jednej pozycji do wyboru obiecywał
+     Zamiast formularza - bo formularz bez ani jednej pozycji do wyboru obiecywał
      czynność, której nie da się wykonać: sekcja „Samolot" z jedną szarą linijką
      tekstu czytała się jak drobna usterka, a pilot dowiadywał się o ścianie dopiero
-     z zablokowanego DALEJ. Karta jest bursztynowa (warning, nie błąd — nic się nie
+     z zablokowanego DALEJ. Karta jest bursztynowa (warning, nie błąd - nic się nie
      zepsuło, po prostu nie ma jeszcze danych) i wisi na środku ekranu. */
   .empty-warning {
     margin: auto 0;
@@ -106,7 +106,7 @@
   .ew-text { font-size: 12.5px; color: var(--text-secondary); line-height: 1.6; max-width: 288px; }
   .ew-text b { color: var(--text-primary); font-weight: 600; }
 
-  /* ===== VARIANTS PANEL (canvas — skróty do wariantów ekranu) ===== */
+  /* ===== VARIANTS PANEL (canvas - skróty do wariantów ekranu) ===== */
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
   .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
   .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; transition:all .15s; }
@@ -124,12 +124,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 02G</span>
+  <span class="film-strip">UZ AERO - 02G</span>
   <span class="slug">nowy lot · brak floty w pamięci</span>
   <span class="canvas-meta"><span class="pulse"></span>Wariant 02</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Brak floty w pamięci telefonu">
+<main class="phone" role="region" aria-label="Mockup - Brak floty w pamięci telefonu">
   <div class="status-bar">
     <span>9:41</span>
     <span class="status-right">
@@ -141,20 +141,20 @@
 
   <div class="screen">
     <!-- KIEDY TEN WARIANT (issue #55 pkt 3): cache referencyjny jest PRZECZYTANY
-         (flaga `loaded` — bez niej to zwykły skeleton, patrz LOADERY) i nie ma w nim
+         (flaga `loaded` - bez niej to zwykły skeleton, patrz LOADERY) i nie ma w nim
          ANI JEDNEGO samolotu. Od issue #50 cache wypełnia wyłącznie `GET /reference`,
          więc ten stan zdarza się naprawdę: świeża instalacja przed pierwszym syncem
          referencyjnym albo klub, któremu administrator nie założył jeszcze floty (A06).
-         Stan `brak` jest NIEZALEŻNY od łączności (§4.8) — dlatego rysujemy go online,
+         Stan `brak` jest NIEZALEŻNY od łączności (§4.8) - dlatego rysujemy go online,
          bez chipa; offline dochodzi standardowy pill OFFLINE w nagłówku (02D).
 
-         FORMULARZA NIE MA W OGÓLE — ani sekcji, ani DALEJ (wyszarzony przycisk
-         obiecywałby akcję, której reguły nie dopuszczą — ta sama zasada co 10B).
+         FORMULARZA NIE MA W OGÓLE - ani sekcji, ani DALEJ (wyszarzony przycisk
+         obiecywałby akcję, której reguły nie dopuszczą - ta sama zasada co 10B).
          Warning odpowiada na trzy pytania: co jest nie tak, dlaczego nie polecisz
          i co się musi wydarzyć, żeby ekran wrócił do normy. Lista pobiera się sama:
-         wejście w ten stan pyta serwer OD RAZU — brama wieku cache referencyjnego
+         wejście w ten stan pyta serwer OD RAZU - brama wieku cache referencyjnego
          (15 min) NIE trzyma pustej floty, bo pusta flota nie ma czego chronić
-         (`referenceSync.refreshIfStale`) — kolejne próby robi pętla synca co 60 s,
+         (`referenceSync.refreshIfStale`) - kolejne próby robi pętla synca co 60 s,
          a ekran ponawia odczyt lokalnej bazy co 5 s. Gdy flota dojedzie, formularz
          wraca bez udziału pilota. -->
     <div class="app-header">
@@ -172,34 +172,34 @@
           <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         </div>
         <div class="ew-title">BRAK SAMOLOTÓW</div>
-        <div class="ew-text">W pamięci telefonu nie ma jeszcze floty — <b>bez wybranego samolotu nie da się rozpocząć lotu</b>.</div>
-        <div class="ew-text">Lista pobiera się z serwera automatycznie, gdy jest internet — sprawdź połączenie. Jeśli to nie pomaga, poproś administratora o dodanie samolotów do floty.</div>
+        <div class="ew-text">W pamięci telefonu nie ma jeszcze floty - <b>bez wybranego samolotu nie da się rozpocząć lotu</b>.</div>
+        <div class="ew-text">Lista pobiera się z serwera automatycznie, gdy jest internet - sprawdź połączenie. Jeśli to nie pomaga, poproś administratora o dodanie samolotów do floty.</div>
       </div>
     </div>
   </div>
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Warianty kroku 1 (samolot i załoga) — kiedy który?</div>
+  <div class="vp-title">Warianty kroku 1 (samolot i załoga) - kiedy który?</div>
   <a class="vp-item" href="02-preflight.html">
     <span class="vp-badge">02</span>
     <span class="vp-body">
       <span class="vp-name">Online</span>
-      <span class="vp-when">Jest sieć — stany claim i dane referencyjne na żywo z serwera. Bez plakietki łączności: online jest stanem domyślnym.</span>
+      <span class="vp-when">Jest sieć - stany claim i dane referencyjne na żywo z serwera. Bez plakietki łączności: online jest stanem domyślnym.</span>
     </span>
   </a>
   <a class="vp-item" href="02d-preflight-offline.html">
     <span class="vp-badge amber">02D</span>
     <span class="vp-body">
-      <span class="vp-name">Offline — dane z cache</span>
-      <span class="vp-when">Brak sieci — lista samolotów i claimy z ostatniej synchronizacji (adnotacja wieku); chip OFFLINE ze stemplem ostatniego synca.</span>
+      <span class="vp-name">Offline - dane z cache</span>
+      <span class="vp-when">Brak sieci - lista samolotów i claimy z ostatniej synchronizacji (adnotacja wieku); chip OFFLINE ze stemplem ostatniego synca.</span>
     </span>
   </a>
   <a class="vp-item active" href="02g-preflight-brak-floty.html">
     <span class="vp-badge amber">02G</span>
     <span class="vp-body">
       <span class="vp-name">Brak floty w pamięci</span>
-      <span class="vp-when">Cache referencyjny przeczytany i PUSTY (świeża instalacja przed pierwszym syncem albo flota jeszcze nie założona w panelu). Zamiast formularza warning na cały ekran — bez sekcji i bez DALEJ; formularz wraca sam, gdy sync dowiezie listę.</span>
+      <span class="vp-when">Cache referencyjny przeczytany i PUSTY (świeża instalacja przed pierwszym syncem albo flota jeszcze nie założona w panelu). Zamiast formularza warning na cały ekran - bez sekcji i bez DALEJ; formularz wraca sam, gdy sync dowiezie listę.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -207,7 +207,7 @@
     <span class="vp-badge blue">02H</span>
     <span class="vp-body">
       <span class="vp-name">Rezygnacja z nowego lotu</span>
-      <span class="vp-when">„Wstecz" z kroku 1 przy niepustym formularzu — arkusz pyta, czy na pewno zrezygnować; potwierdzenie czyści szkic.</span>
+      <span class="vp-when">„Wstecz" z kroku 1 przy niepustym formularzu - arkusz pyta, czy na pewno zrezygnować; potwierdzenie czyści szkic.</span>
     </span>
   </a>
 </aside>

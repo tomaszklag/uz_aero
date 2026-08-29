@@ -1,7 +1,7 @@
 /**
- * UZ Aero — panel: formularz samolotu (`A07a`) — walidacja i szkic.
+ * UZ Aero - panel: formularz samolotu (`A07a`) - walidacja i szkic.
  *
- * Reguły są LUSTREM reguł serwera; test pilnuje, żeby lustro nie było krzywe —
+ * Reguły są LUSTREM reguł serwera; test pilnuje, żeby lustro nie było krzywe -
  * inaczej formularz przepuszcza dane, które serwer odrzuci bez wyjaśnienia.
  */
 
@@ -52,7 +52,7 @@ const draft = (over: Partial<AircraftDraft> = {}): AircraftDraft => ({
 });
 
 describe('rejestracja', () => {
-  it('normalizujemy do WERSALIKÓW — indeks UNIQUE jest wrażliwy na wielkość', () => {
+  it('normalizujemy do WERSALIKÓW - indeks UNIQUE jest wrażliwy na wielkość', () => {
     expect(normalizeReg('  sp-klm ')).toBe('SP-KLM');
     expect(regState('sp-klm').ok).toBe(true);
   });
@@ -70,7 +70,7 @@ describe('typ i rok', () => {
     expect(typeState('Aero AT-3').ok).toBe(true);
   });
 
-  it('rok może zostać PUSTY — tabliczka bez daty to realny przypadek', () => {
+  it('rok może zostać PUSTY - tabliczka bez daty to realny przypadek', () => {
     expect(yearState('').ok).toBe(true);
     expect(yearState('2011').ok).toBe(true);
   });
@@ -83,7 +83,7 @@ describe('typ i rok', () => {
 });
 
 describe('pojemność', () => {
-  it('przyjmuje przecinek i spacje — pole wypełnia człowiek, nie parser JSON-a', () => {
+  it('przyjmuje przecinek i spacje - pole wypełnia człowiek, nie parser JSON-a', () => {
     expect(parseCapacity('1 100')).toBe(1100);
     expect(parseCapacity('1100,5')).toBe(1100.5);
   });
@@ -93,7 +93,7 @@ describe('pojemność', () => {
     expect(parseCapacity('')).toBeNull();
   });
 
-  it('zero jest odrzucane Z POWODEM — to od tej liczby zależy próg flagi', () => {
+  it('zero jest odrzucane Z POWODEM - to od tej liczby zależy próg flagi', () => {
     const state = capacityState('0');
     expect(state.ok).toBe(false);
     expect(state.message).toContain('FUEL_MISMATCH');
@@ -124,14 +124,14 @@ describe('szkic → ciało żądania', () => {
       mhFormat: 'decimal',
       dualRequired: true,
       serviceStatus: 'active',
-      // Olej (issue #60): nieskonfigurowany jedzie jako JAWNE nulle — moduł milczy.
+      // Olej (issue #60): nieskonfigurowany jedzie jako JAWNE nulle - moduł milczy.
       oilMinL: null,
       oilCapacityL: null,
       oilNormLPerH: null,
     });
   });
 
-  it('`PATCH` niesie WYŁĄCZNIE pola zmienione — dziennik audytu zapisuje diff', () => {
+  it('`PATCH` niesie WYŁĄCZNIE pola zmienione - dziennik audytu zapisuje diff', () => {
     const before = dto();
     expect(updateBody(before, draft({ capacity: '1100' }))).toEqual({ capacityL: 1100 });
   });
@@ -142,12 +142,12 @@ describe('szkic → ciało żądania', () => {
     expect(hasChanges(before, draft())).toBe(false);
   });
 
-  it('wyczyszczony rok jedzie jako pusty napis — „nie wiadomo", nie „rok 0"', () => {
+  it('wyczyszczony rok jedzie jako pusty napis - „nie wiadomo", nie „rok 0"', () => {
     const before = dto({ year: 2011 });
     expect(updateBody(before, draft({ year: '' }))).toEqual({ year: '' });
   });
 
-  it('pojemność NIECZYTELNA nie trafia do `PATCH`-a — lepiej nie wysłać niż zgadnąć', () => {
+  it('pojemność NIECZYTELNA nie trafia do `PATCH`-a - lepiej nie wysłać niż zgadnąć', () => {
     const before = dto();
     expect(updateBody(before, draft({ capacity: 'dużo' }))).toEqual({});
   });
@@ -167,7 +167,7 @@ describe('szkic → ciało żądania', () => {
 
 // ── konfiguracja oleju (issue #60, etap D) ──────────────────────────────────────
 
-describe('pola oleju — lustro `fleetGuards.refuseOil`', () => {
+describe('pola oleju - lustro `fleetGuards.refuseOil`', () => {
   it('puste pola są legalne (moduł milczy), a szkic wysyła jawne nulle przy tworzeniu', () => {
     const draft = { ...EMPTY_DRAFT, reg: 'SP-OIL', type: 'Cessna 182', capacity: '330' };
     expect(formState(draft).ok).toBe(true);
@@ -188,7 +188,7 @@ describe('pola oleju — lustro `fleetGuards.refuseOil`', () => {
     expect(createBody(draft)).toMatchObject({ oilMinL: 8.5, oilCapacityL: 11.4, oilNormLPerH: 0.12 });
   });
 
-  it('zero i śmieci odbijają z powodem pod POLEM, minimum ponad zbiornik — pod PARĄ', () => {
+  it('zero i śmieci odbijają z powodem pod POLEM, minimum ponad zbiornik - pod PARĄ', () => {
     const zero = formState({ ...EMPTY_DRAFT, reg: 'SP-OIL', type: 'C182', capacity: '330', oilMin: '0' });
     expect(zero.ok).toBe(false);
     expect(zero.oilMin.message).toContain('większe od zera');
@@ -213,7 +213,7 @@ describe('pola oleju — lustro `fleetGuards.refuseOil`', () => {
     const draft = draftOf(before);
     expect(draft.oilMin).toBe('8,5');
 
-    // Bez zmian — ciało puste (serwer odmawia `no_changes`).
+    // Bez zmian - ciało puste (serwer odmawia `no_changes`).
     expect(updateBody(before, draft)).toEqual({});
 
     // Wyczyszczenie minimum = jawny null; reszta pól nietknięta.

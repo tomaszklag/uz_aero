@@ -1,12 +1,12 @@
 /**
- * UZ Aero — DROGA PRZEBYTA DO DANEJ CHWILI (issue #47, trzecia tura przeglądu).
+ * UZ Aero - DROGA PRZEBYTA DO DANEJ CHWILI (issue #47, trzecia tura przeglądu).
  *
- * Profil ma oś CZASU, więc podziałka mówi „15 min". Pilot pyta jednak też o dystans —
+ * Profil ma oś CZASU, więc podziałka mówi „15 min". Pilot pyta jednak też o dystans -
  * a ten na osi czasu NIE JEST proporcjonalny: pięć minut wznoszenia po 70 kt to inna
  * droga niż pięć minut przelotu po 110 kt, a pięć minut postoju to zero.
  *
  * Dlatego nie liczymy „ile NM na piksel" (byłaby to średnia udająca skalę), tylko
- * podajemy drogę DLA KONKRETNEJ PARY CHWIL — tej, którą akurat obejmuje pasek podziałki
+ * podajemy drogę DLA KONKRETNEJ PARY CHWIL - tej, którą akurat obejmuje pasek podziałki
  * w miejscu, w którym stoi. Wynik jest wtedy faktem o tym locie, a nie przybliżeniem:
  * przesunięcie wykresu zmienia liczbę, bo w innym miejscu lotu samolot leciał inaczej.
  */
@@ -20,13 +20,13 @@ export type DistanceLookup = (at: number) => number | null;
  * Buduje odczyt drogi z geometrii śladu.
  *
  * Między wierzchołkami interpolujemy LINIOWO po czasie. To przybliżenie tylko wewnątrz
- * jednego odcinka uproszczonej linii — a te są krótkie, bo RDP zostawia wierzchołki
+ * jednego odcinka uproszczonej linii - a te są krótkie, bo RDP zostawia wierzchołki
  * tam, gdzie trasa zmienia kształt.
  */
 export function buildDistanceLookup(line: readonly TrackVertex[]): DistanceLookup {
   if (line.length < 2) return () => null;
 
-  // Droga narastająco — liczona raz, przy budowie odczytu.
+  // Droga narastająco - liczona raz, przy budowie odczytu.
   const cumulative: number[] = new Array(line.length);
   cumulative[0] = 0;
   for (let i = 1; i < line.length; i++) {

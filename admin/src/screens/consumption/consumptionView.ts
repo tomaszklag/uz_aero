@@ -1,13 +1,13 @@
 /**
- * UZ Aero — panel: treść ekranu analityki zużycia (moduł CZYSTY).
+ * UZ Aero - panel: treść ekranu analityki zużycia (moduł CZYSTY).
  *
  * Kafle, karty stawek, wstęga podziału czasu, wiersze tabel i komunikat bramki. Panel
- * NIE LICZY tu żadnej metryki — wszystkie liczby przychodzą policzone przez domenę
+ * NIE LICZY tu żadnej metryki - wszystkie liczby przychodzą policzone przez domenę
  * (`GET /admin/api/fleet/:id/consumption`). Ten moduł zamienia je na NAPISY i GEOMETRIĘ,
  * dokładnie jak `statsTiles.ts` / `statsAircraftRows.ts` przy statystykach.
  *
  * Jeden wyjątek jest nazwany i celowy: **szerokości segmentów wstęgi** to udziały
- * czasu, więc dzielenie odbywa się tutaj. To geometria wykresu, nie metryka — ta sama
+ * czasu, więc dzielenie odbywa się tutaj. To geometria wykresu, nie metryka - ta sama
  * decyzja, co przy paskach `duoRows` w statystykach.
  */
 
@@ -58,14 +58,14 @@ export function consumptionTiles(report: ConsumptionReportDto): TileView[] {
       label: 'Na godzinę bloku',
       value: dot1(headline.litersPerBlockHour),
       unit: ' L/h',
-      note: `Σ ${litresThousands(summary.litersTotal)} / ${hoursMinutes(summary.engineMs)} pracy silnika — ta sama definicja, co „Śr. L/h" w statystykach.`,
+      note: `Σ ${litresThousands(summary.litersTotal)} / ${hoursMinutes(summary.engineMs)} pracy silnika - ta sama definicja, co „Śr. L/h" w statystykach.`,
     },
     {
       key: 'per-flight',
       label: 'Paliwo na lot',
       value: headline.litersPerFlight == null ? DASH : `≈${Math.round(headline.litersPerFlight)}`,
       unit: ' L',
-      // „Startów", jak w mockupie A10a — licznikiem jest lot (start → lądowanie);
+      // „Startów", jak w mockupie A10a - licznikiem jest lot (start → lądowanie);
       // słowo „wzlot" wycofane ze słownika (pivot 2026-08-10).
       note: `${thousands(summary.flights)} startów w oknie. Dla dni skokowych czytaj: na wyniesienie.`,
     },
@@ -90,11 +90,11 @@ export function consumptionTiles(report: ConsumptionReportDto): TileView[] {
 function mhNote(report: ConsumptionReportDto): string {
   switch (report.mh.kind) {
     case 'tach':
-      return 'Licznik obrotomierzowy — na ziemi przyrasta wolniej niż zegar. Rozkład per faza niżej.';
+      return 'Licznik obrotomierzowy - na ziemi przyrasta wolniej niż zegar. Rozkład per faza niżej.';
     case 'hobbs':
-      return 'Licznik godzinowy (Hobbs) — chodzi 1:1 z zegarem, gdy silnik pracuje.';
+      return 'Licznik godzinowy (Hobbs) - chodzi 1:1 z zegarem, gdy silnik pracuje.';
     default:
-      return 'Charakteru licznika jeszcze nie rozstrzygnięto — za mało zamkniętych dni.';
+      return 'Charakteru licznika jeszcze nie rozstrzygnięto - za mało zamkniętych dni.';
   }
 }
 
@@ -107,7 +107,7 @@ export interface RateView {
   value: string;
   unit: string;
   uncertainty: string;
-  /** Stawka nieoznaczona — karta zostaje na ekranie wygaszona, z powodem. */
+  /** Stawka nieoznaczona - karta zostaje na ekranie wygaszona, z powodem. */
   muted: boolean;
 }
 
@@ -127,7 +127,7 @@ export interface RibbonSegmentView {
   key: string;
   label: string;
   tone: 'green' | 'blue' | 'amber' | 'dim';
-  /** Gotowa szerokość CSS („41.0%") — geometrię liczy moduł, nie widok. */
+  /** Gotowa szerokość CSS („41.0%") - geometrię liczy moduł, nie widok. */
   width: string;
 }
 
@@ -146,7 +146,7 @@ export function ribbonSegments(report: ConsumptionReportDto): RibbonSegmentView[
     }));
 }
 
-/** Karty przeliczników motogodzin — ten sam kształt, co karty stawek paliwa. */
+/** Karty przeliczników motogodzin - ten sam kształt, co karty stawek paliwa. */
 export function mhCards(report: ConsumptionReportDto): RateView[] {
   return [
     {
@@ -174,20 +174,20 @@ function mhUncertainty(ci: number | null): string {
   return ci == null ? 'bez przedziału' : `±${ci.toFixed(2)} · 95%`;
 }
 
-/** Podpis jakości dopasowania — „2.6 L · 0.94" (σ reszt i R² niecentrowane). */
+/** Podpis jakości dopasowania - „2.6 L · 0.94" (σ reszt i R² niecentrowane). */
 export function fitQualityLabel(report: ConsumptionReportDto): string {
   const sigma = report.fuel.residualSigmaL;
   const r2 = report.fuel.rSquaredUncentered;
   return `${sigma == null ? DASH : `${sigma.toFixed(1)} L`} · ${r2 == null ? DASH : r2.toFixed(2)}`;
 }
 
-/** Podpis odstających — zdanie, nie liczba bez kontekstu. */
+/** Podpis odstających - zdanie, nie liczba bez kontekstu. */
 export function outliersLabel(report: ConsumptionReportDto): string {
   const count = report.fuel.outliers.length;
-  return count === 0 ? 'brak' : `${count} — wykluczone z modelu, wylistowane niżej`;
+  return count === 0 ? 'brak' : `${count} - wykluczone z modelu, wylistowane niżej`;
 }
 
-/** Punkt osi trendu — „JUL · 36.5". */
+/** Punkt osi trendu - „JUL · 36.5". */
 export function trendAxis(report: ConsumptionReportDto): { key: string; label: string }[] {
   return report.summary.months.map((month) => ({
     key: month.month,
@@ -201,7 +201,7 @@ export function trendAxis(report: ConsumptionReportDto): { key: string; label: s
 
 export interface GateView {
   published: boolean;
-  /** Zdanie banera — mówi, czego brakuje, a nie że „coś poszło nie tak". */
+  /** Zdanie banera - mówi, czego brakuje, a nie że „coś poszło nie tak". */
   message: string;
   intervalsPercent: number;
   enginePercent: number;
@@ -220,7 +220,7 @@ export function gateView(report: ConsumptionReportDto): GateView {
     published,
     message: published
       ? `Model policzony z ${gate.intervals} interwałów (${hoursMinutes(gate.engineMs)} pracy silnika).`
-      : `Model publikujemy od ${MIN_INTERVALS} interwałów paliwowych i 10 godzin pracy silnika w oknie — ten samolot ma ${gate.intervals} i ${hoursMinutes(gate.engineMs)}. Stawka z tylu odczytów byłaby liczbą wyglądającą na wynik pomiaru; zamiast niej pokazujemy postęp i surowe interwały.`,
+      : `Model publikujemy od ${MIN_INTERVALS} interwałów paliwowych i 10 godzin pracy silnika w oknie - ten samolot ma ${gate.intervals} i ${hoursMinutes(gate.engineMs)}. Stawka z tylu odczytów byłaby liczbą wyglądającą na wynik pomiaru; zamiast niej pokazujemy postęp i surowe interwały.`,
     intervalsPercent: Math.min(100, (gate.intervals / MIN_INTERVALS) * 100),
     enginePercent: Math.min(100, (gate.engineMs / MIN_ENGINE_MS) * 100),
     intervalsLabel: `${gate.intervals} / ${MIN_INTERVALS}`,
@@ -228,17 +228,17 @@ export function gateView(report: ConsumptionReportDto): GateView {
   };
 }
 
-/** Zdanie o zejściu po drabinie faz — `null`, gdy model stoi na najbogatszym zestawie. */
+/** Zdanie o zejściu po drabinie faz - `null`, gdy model stoi na najbogatszym zestawie. */
 export function degradationNote(report: ConsumptionReportDto): string | null {
   if (!report.fuel.published) return null;
 
   switch (report.fuel.degradedBecause) {
     case 'no-trace':
-      return `Rozbicie lotu na wznoszenie, przelot i zniżanie wymaga śladu GPS — mają go ${report.fuel.tracedIntervals} z ${report.fuel.gate.intervals} interwałów. Model liczy fazy ziemia / powietrze.`;
+      return `Rozbicie lotu na wznoszenie, przelot i zniżanie wymaga śladu GPS - mają go ${report.fuel.tracedIntervals} z ${report.fuel.gate.intervals} interwałów. Model liczy fazy ziemia / powietrze.`;
     case 'collinear':
       return 'Faz lotu nie dało się od siebie odróżnić: interwały mają zbyt podobne proporcje, więc każdy podział zużycia pasowałby tak samo dobrze. Model zszedł o szczebel niżej i mówi o tym wprost, zamiast pokazywać podział przypadkowy.';
     case 'singular':
-      return 'Układ okazał się nierozwiązywalny — faz nie da się rozdzielić w ogóle.';
+      return 'Układ okazał się nierozwiązywalny - faz nie da się rozdzielić w ogóle.';
     default:
       return null;
   }
@@ -282,7 +282,7 @@ export function intervalRows(report: ConsumptionReportDto): IntervalRowView[] {
   });
 }
 
-/** „0:14 / 0:16 / 0:22 / 0:10" — kreska tam, gdzie fazy pionowej nie znamy. */
+/** „0:14 / 0:16 / 0:22 / 0:10" - kreska tam, gdzie fazy pionowej nie znamy. */
 function phaseBreakdown(interval: ConsumptionReportDto['intervals'][number]): string {
   const vertical = [interval.climbMs, interval.cruiseMs, interval.descentMs];
   const parts = [hoursMinutes(interval.groundMs)];
@@ -316,7 +316,7 @@ export function mhRows(report: ConsumptionReportDto): MhRowView[] {
   }));
 }
 
-/** Podpis typu licznika — zdanie, nie kod. */
+/** Podpis typu licznika - zdanie, nie kod. */
 export function counterLabel(kind: string): string {
   switch (kind) {
     case 'tach':

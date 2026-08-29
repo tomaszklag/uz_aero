@@ -1,11 +1,11 @@
 /**
- * UZ Aero — panel: karta „WPŁYW NA LICZBY DNIA · PRZED → PO" (moduł CZYSTY).
+ * UZ Aero - panel: karta „WPŁYW NA LICZBY DNIA · PRZED → PO" (moduł CZYSTY).
  *
  * ══ ANI JEDNA LICZBA NIE POWSTAJE TUTAJ ══
  * `before` i `after` to dwa `SessionState` policzone przez SERWER (`projectSession`,
  * na strumieniu z doklejonym kandydatem korekty). Ten plik wyłącznie je zestawia
  * i formatuje przez `@uzaero/format`. To nie jest pedanteria: gdyby panel liczył skutek
- * sam, pierwszą ofiarą byłby `void` — unieważnienie `engine_stop` NIE skraca cyklu
+ * sam, pierwszą ofiarą byłby `void` - unieważnienie `engine_stop` NIE skraca cyklu
  * o różnicę czasów, tylko zostawia go OTWARTYM, przez co cały cykl wypada z czasu
  * blokowego. Tej reguły nie da się odgadnąć z payloadu.
  *
@@ -30,14 +30,14 @@ export interface ImpactRow {
   after: string;
   changed: boolean;
   tone?: KeyValueTone;
-  /** Dopisek — dlaczego się zmieniło albo dlaczego NIE MOŻE się zmienić. */
+  /** Dopisek - dlaczego się zmieniło albo dlaczego NIE MOŻE się zmienić. */
   note?: string;
 }
 
 /**
  * Zestawienie „przed → po".
  *
- * Wiersze BEZ zmiany zostają na karcie z dopiskiem „bez zmian" — dokładnie jak
+ * Wiersze BEZ zmiany zostają na karcie z dopiskiem „bez zmian" - dokładnie jak
  * w mockupie. To nie jest szum: administrator korygujący czas silnika musi zobaczyć,
  * że starty, lądowania i odczyt motogodzin NIE drgnęły, bo to jest dowód, że korekta
  * dotknęła tylko tego, co miała dotknąć.
@@ -52,7 +52,7 @@ export function impactRows(
       note: blockNote(before, after),
       // Cykl zostawiony OTWARTY to jedyny stan, który tu wolno ocenić: dzień
       // z niezamkniętym silnikiem nie ma czasu blokowego w ogóle. Reszty („lepiej"
-      // czy „gorzej") panel nie ocenia — na to trzeba tolerancji, których nie zna.
+      // czy „gorzej") panel nie ocenia - na to trzeba tolerancji, których nie zna.
       tone: !before.engineRunning && after.engineRunning ? 'red' : undefined,
     }),
     ...engineRunRows(before, after),
@@ -66,21 +66,21 @@ export function impactRows(
         note:
           after.takeoffCount === after.landingCount
             ? undefined
-            : 'bilans się NIE domyka — brakuje startu albo lądowania',
+            : 'bilans się NIE domyka - brakuje startu albo lądowania',
       },
     ),
     row('Lotów w dniu', flightsLabel(before), flightsLabel(after)),
     row('Paliwo zużyte', litres(before.fuel.consumedL), litres(after.fuel.consumedL), {
-      note: 'z odczytów paliwomierza — korekta czasu nie rusza litrów',
+      note: 'z odczytów paliwomierza - korekta czasu nie rusza litrów',
     }),
     row(
       'Δ motogodzin',
       motoHours(before.mh.deltaH, mhFormat),
       motoHours(after.mh.deltaH, mhFormat),
-      { note: 'odczyt fizycznego licznika — nietykalny, cel korekty nim nie jest' },
+      { note: 'odczyt fizycznego licznika - nietykalny, cel korekty nim nie jest' },
     ),
     row('Samolot zajęty', held(before), held(after), {
-      note: 'od `session_claim` do `day_close` — obu nie da się korygować',
+      note: 'od `session_claim` do `day_close` - obu nie da się korygować',
     }),
     row(
       'Zdarzeń w projekcji',
@@ -111,15 +111,15 @@ function row(
 }
 
 /**
- * Cykle silnika — po jednym wierszu na cykl, który korekta rusza.
+ * Cykle silnika - po jednym wierszu na cykl, który korekta rusza.
  *
  * Mockup pokazuje „Cykl silnika 3: 01:17:19 → 01:05:19" i to jest właściwy poziom
  * szczegółu: administrator poprawia KONKRETNE wyłączenie silnika, więc musi zobaczyć
- * ten cykl, a nie tylko sumę dnia. Cykle niezmienione pomijamy — dzień skokowy ma ich
+ * ten cykl, a nie tylko sumę dnia. Cykle niezmienione pomijamy - dzień skokowy ma ich
  * kilka i wypisanie wszystkich zamieniłoby kartę w tabelę bez treści.
  *
  * Pary bierzemy po INDEKSIE, bo `projectSession` buduje `legs` w kolejności
- * chronologicznej, a korekta czasu nie zmienia liczby cykli — z jednym wyjątkiem,
+ * chronologicznej, a korekta czasu nie zmienia liczby cykli - z jednym wyjątkiem,
  * który jest tu najważniejszy: `void` na `engine_stop` zostawia cykl otwarty.
  */
 function engineRunRows(before: SessionState, after: SessionState): ImpactRow[] {
@@ -130,7 +130,7 @@ function engineRunRows(before: SessionState, after: SessionState): ImpactRow[] {
     const a = before.legs[i];
     const b = after.legs[i];
     const label = `Cykl silnika ${i + 1}`;
-    const beforeText = a == null ? '—' : runText(a.stoppedAt, a.durationMs);
+    const beforeText = a == null ? '-' : runText(a.stoppedAt, a.durationMs);
     const afterText = b == null ? 'znika' : runText(b.stoppedAt, b.durationMs);
     if (beforeText === afterText) continue;
 
@@ -139,7 +139,7 @@ function engineRunRows(before: SessionState, after: SessionState): ImpactRow[] {
         ...(b != null && b.stoppedAt == null
           ? {
               tone: 'red' as const,
-              note: 'cykl zostaje OTWARTY — wypada z czasu blokowego w całości, nie skraca się',
+              note: 'cykl zostaje OTWARTY - wypada z czasu blokowego w całości, nie skraca się',
             }
           : {}),
       }),
@@ -157,20 +157,20 @@ const flightsLabel = (state: SessionState): string =>
 
 /**
  * Czas zajęcia MASZYNY: przejęcie → zdanie. **Odjęcie dwóch stempli** podanych przez
- * serwer — ta sama kategoria działania, co kafel na karcie sesji (`daySummary.ts`):
+ * serwer - ta sama kategoria działania, co kafel na karcie sesji (`daySummary.ts`):
  * upływ między dwiema chwilami, a nie druga wersja liczby dnia.
  *
  * Stał tu „Czas służby (duty)" i była to ta sama pomyłka kategorii, co na karcie sesji:
  * służba należy do PILOTA i obejmuje kilka maszyn (§3.6a), więc korekta zdarzenia
- * JEDNEJ sesji nie ma jak jej opisać. Wiersz zostaje, bo pełni tu rolę kontrolną —
+ * JEDNEJ sesji nie ma jak jej opisać. Wiersz zostaje, bo pełni tu rolę kontrolną -
  * pokazuje, że korekta czasu nie ruszyła ram sesji.
  */
 function held(state: SessionState): string {
-  if (state.claimedAt == null || state.closedAt == null) return '—';
+  if (state.claimedAt == null || state.closedAt == null) return '-';
   return hhmm(state.closedAt - state.claimedAt);
 }
 
-/** Zdanie pod czasem blokowym — jedyne miejsce, gdzie `void` tłumaczy się sam. */
+/** Zdanie pod czasem blokowym - jedyne miejsce, gdzie `void` tłumaczy się sam. */
 function blockNote(before: SessionState, after: SessionState): string | undefined {
   if (!before.engineRunning && after.engineRunning) {
     return 'po korekcie dzień nie ma zamknięcia ostatniego cyklu silnika';

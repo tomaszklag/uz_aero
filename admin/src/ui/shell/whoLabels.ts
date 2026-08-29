@@ -1,8 +1,8 @@
 /**
- * UZ Aero — panel: napisy stopki sidebara (moduł CZYSTY, testowany bez DOM-u).
+ * UZ Aero - panel: napisy stopki sidebara (moduł CZYSTY, testowany bez DOM-u).
  *
- * Wyniesione z komponentu, bo to są DECYZJE o treści — jak nazywamy rolę po polsku
- * i co pokazujemy w awatarze — a nie układ. Ta sama reguła, którą `app/` realizuje
+ * Wyniesione z komponentu, bo to są DECYZJE o treści - jak nazywamy rolę po polsku
+ * i co pokazujemy w awatarze - a nie układ. Ta sama reguła, którą `app/` realizuje
  * przez `screens/*.ts` obok ekranu.
  */
 

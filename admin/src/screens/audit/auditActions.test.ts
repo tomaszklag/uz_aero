@@ -1,9 +1,9 @@
 /**
- * UZ Aero — panel: katalog akcji dziennika (`A09`).
+ * UZ Aero - panel: katalog akcji dziennika (`A09`).
  *
  * Najważniejszy przypadek w tym pliku to NIEZNANY KOD. Kolumna `admin_audit.action`
  * celowo nie ma `CHECK`-a, więc dziennik może nieść akcję wycofaną
- * z katalogu — a ekran nadzoru, który wywraca się na własnej historii albo ją ukrywa,
+ * z katalogu - a ekran nadzoru, który wywraca się na własnej historii albo ją ukrywa,
  * przestaje być narzędziem nadzoru.
  */
 
@@ -22,7 +22,7 @@ import {
 describe('katalog akcji audytu', () => {
   it('każda akcja ma ton, grupę, nazwę po polsku i zdanie „co zapisujemy"', () => {
     // `Record<AdminAction, …>` wymusza komplet kluczy kompilatorem; tu sprawdzamy,
-    // że żaden wpis nie jest pusty — bo pusty napis kompilator przepuści.
+    // że żaden wpis nie jest pusty - bo pusty napis kompilator przepuści.
     expect(AUDIT_ACTIONS.length).toBeGreaterThan(10);
 
     for (const code of AUDIT_ACTIONS) {
@@ -42,7 +42,7 @@ describe('katalog akcji audytu', () => {
     expect(new Set(grouped).size).toBe(grouped.length);
   });
 
-  it('konta i flota mają po kilka kodów — chip grupy to nie alias jednej akcji', () => {
+  it('konta i flota mają po kilka kodów - chip grupy to nie alias jednej akcji', () => {
     expect(actionsOfGroup('konta')).toEqual([
       'pilot.create',
       'pilot.update',
@@ -63,7 +63,7 @@ describe('katalog akcji audytu', () => {
     expect(view.code).toBe('pilot.merge');
     expect(view.known).toBe(false);
     expect(view.tone).toBe('dim');
-    // Podpis tłumaczy, skąd taki wpis się bierze — „—" kazałoby zgadywać,
+    // Podpis tłumaczy, skąd taki wpis się bierze - „-" kazałoby zgadywać,
     // czy to awaria panelu, czy uszkodzony wiersz.
     expect(view.label).toContain('katalogu');
   });
@@ -76,7 +76,7 @@ describe('katalog akcji audytu', () => {
   });
 
   it('pusty napis i śmieci też nie wywracają widoku', () => {
-    // Wartość z bazy przechodzi tu bez walidacji — bo walidacja przy odczycie
+    // Wartość z bazy przechodzi tu bez walidacji - bo walidacja przy odczycie
     // znaczyłaby, że dziennik nie otwiera się przez własną zawartość.
     expect(actionView('').known).toBe(false);
     expect(actionView('   ').code).toBe('   ');

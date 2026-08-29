@@ -1,5 +1,5 @@
 /**
- * UZ Aero — testy sekcji „Synchronizacja" w Ustawieniach (`screens/logic/syncStatus.ts`).
+ * UZ Aero - testy sekcji „Synchronizacja" w Ustawieniach (`screens/logic/syncStatus.ts`).
  *
  * Plik schudł razem z ekranem 11 (2026-08-12): licznik „wysłane / wszystkie", nazwa
  * karty arkusza, równanie paliwa i podsumowanie zrzutów opisywały widok, który był
@@ -10,7 +10,7 @@
 
 import { eventsCount, flagLabel, serverNoticeLabel } from '../ui/screens/logic/syncStatus';
 
-describe('eventsCount — polska liczba mnoga', () => {
+describe('eventsCount - polska liczba mnoga', () => {
   it.each([
     [1, '1 zdarzenie'],
     [2, '2 zdarzenia'],
@@ -26,7 +26,7 @@ describe('eventsCount — polska liczba mnoga', () => {
 });
 
 describe('flagLabel', () => {
-  // Pilot nie może zobaczyć `aircraft_overlap` ani `fuel_mismatch` — to kody dla
+  // Pilot nie może zobaczyć `aircraft_overlap` ani `fuel_mismatch` - to kody dla
   // programisty. Katalog ma KOMPLET sześciu typów §4.5 i mówi dokładnie tymi samymi
   // słowami co panel (`admin/src/screens/flags/flagTypes.ts`, pole `short`), bo pilot
   // i administrator rozmawiają o tej samej fladze przez telefon.
@@ -41,20 +41,20 @@ describe('flagLabel', () => {
     expect(flagLabel(type)).toBe(label);
   });
 
-  it('nie zna już `session_overlap` — etap D4 rozdzielił go na dwie różne patologie', () => {
+  it('nie zna już `session_overlap` - etap D4 rozdzielił go na dwie różne patologie', () => {
     // Nazwa historyczna: żaden strumień po 2026-08-07 jej nie niesie, a katalog, który
     // ją zna, uczy nieaktualnego modelu. Surowy kod jest tu WŁAŚCIWĄ odpowiedzią.
     expect(flagLabel('session_overlap')).toBe('session_overlap');
   });
 
-  it('nieznany typ wraca surowy — lepszy kod niż zgadywana etykieta', () => {
+  it('nieznany typ wraca surowy - lepszy kod niż zgadywana etykieta', () => {
     expect(flagLabel('whatever_new')).toBe('whatever_new');
   });
 });
 
-describe('serverNoticeLabel — cisza nie może znaczyć dwóch rzeczy', () => {
+describe('serverNoticeLabel - cisza nie może znaczyć dwóch rzeczy', () => {
   // Flagi przychodzą w odpowiedzi na WYSYŁKĘ. Telefon, który jeszcze nigdy nie wysłał,
-  // nie wie nic — i musi to powiedzieć wprost, bo „brak uwag" znaczyłoby wtedy
+  // nie wie nic - i musi to powiedzieć wprost, bo „brak uwag" znaczyłoby wtedy
   // „sprawdzone i czysto" (§6 pkt 2).
   it('bez ani jednej udanej wysyłki: nie wiemy nic', () => {
     expect(serverNoticeLabel(0, false)).toBe('jeszcze nie sprawdzone');

@@ -1,5 +1,5 @@
 /**
- * UZ Aero — które lotniska pokazać na mapie śladu.
+ * UZ Aero - które lotniska pokazać na mapie śladu.
  *
  * Ekran rysuje trasę na siatce współrzędnych, bez kafelków (decyzja 2026-08-04), więc
  * lotniska są JEDYNYM odniesieniem w terenie. Tym ważniejsze, żeby nie było ich za dużo:
@@ -7,7 +7,7 @@
  * przez którą nie widać śladu.
  *
  * Stąd dwie reguły. Bierzemy lotniska LEŻĄCE W KADRZE (plus wąski margines, żeby pas
- * przy samej krawędzi nie znikał w połowie), a gdy i tak jest ich dużo — zostawiamy te
+ * przy samej krawędzi nie znikał w połowie), a gdy i tak jest ich dużo - zostawiamy te
  * najbliższe środkowi trasy, bo lot toczy się wokół nich, a nie wokół krawędzi ekranu.
  *
  * Lotnisko wskazane w preflighcie (`departureIcao`) wchodzi ZAWSZE, nawet spoza kadru:
@@ -19,7 +19,7 @@ import { POLISH_AIRFIELDS, type Airfield } from '../airfields';
 import { distanceNm, type LatLon } from '../detection/geo';
 import type { LatLonBounds } from './mercator';
 
-/** Ile lotnisk najwyżej rysujemy — powyżej tego mapa przestaje być czytelna. */
+/** Ile lotnisk najwyżej rysujemy - powyżej tego mapa przestaje być czytelna. */
 export const MAX_AIRFIELDS_IN_VIEW = 6;
 
 /**
@@ -29,7 +29,7 @@ export const MAX_AIRFIELDS_IN_VIEW = 6;
 const EDGE_MARGIN_DEG = 0.05;
 
 export interface AirfieldsInViewOptions {
-  /** Kod ICAO z preflightu — to lotnisko pokazujemy zawsze. */
+  /** Kod ICAO z preflightu - to lotnisko pokazujemy zawsze. */
   preferredIcao?: string | null;
   limit?: number;
   /** Katalog do przeszukania; podmieniany w testach. */
@@ -61,7 +61,7 @@ export function airfieldsInView(
       a.lon >= bounds.west - EDGE_MARGIN_DEG,
   );
 
-  // Szukamy w PODANYM katalogu, a nie globalnym `airfieldByIcao` — inaczej test
+  // Szukamy w PODANYM katalogu, a nie globalnym `airfieldByIcao` - inaczej test
   // z własnym zestawem lotnisk dostawałby wynik z prawdziwych danych.
   const key = options.preferredIcao?.trim().toUpperCase();
   const preferred = key == null || key === '' ? null : (catalogue.find((a) => a.icao === key) ?? null);

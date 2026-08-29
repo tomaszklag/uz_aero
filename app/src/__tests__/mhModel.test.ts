@@ -1,10 +1,10 @@
 /**
- * UZ Aero — test przelicznika motogodzin.
+ * UZ Aero - test przelicznika motogodzin.
  *
  * Model odpowiada na pytanie, które w dokumentacji nie ma odpowiedzi: czy licznik tego
  * samolotu chodzi z zegarem (Hobbs), czy zlicza obroty (obrotomierzowy, na ziemi wolniej).
  * Odpowiedź bierze się WYŁĄCZNIE z danych, więc test buduje dni o znanych przelicznikach
- * i sprawdza, czy model je odzyskuje — oraz czy MILCZY tam, gdzie dane nie rozstrzygają.
+ * i sprawdza, czy model je odzyskuje - oraz czy MILCZY tam, gdzie dane nie rozstrzygają.
  */
 
 import { fitMhModel, type MhEquation } from '../domain';
@@ -31,7 +31,7 @@ function day(
   };
 }
 
-/** Sześć dni o RÓŻNYCH proporcjach faz — to ta zmienność identyfikuje przeliczniki. */
+/** Sześć dni o RÓŻNYCH proporcjach faz - to ta zmienność identyfikuje przeliczniki. */
 function sixDays(kFlight: number, kGround: number, noise: number[] = []): MhEquation[] {
   const shape: Array<[number, number]> = [
     [4.0, 0.5],
@@ -71,7 +71,7 @@ describe('rozpoznanie typu licznika', () => {
     expect(model.kind).toBe('unknown');
     expect(model.perFlightHour).toBeNull();
     expect(model.perGroundHour).toBeNull();
-    // Wiersze zestawienia „fakt kontra model" powstają mimo to — ekran ma co pokazać,
+    // Wiersze zestawienia „fakt kontra model" powstają mimo to - ekran ma co pokazać,
     // zanim przeliczniki wolno opublikować.
     expect(model.rows).toHaveLength(3);
   });
@@ -124,7 +124,7 @@ describe('niepewność i reszty', () => {
 describe('bramki znalezione przebiegiem po realnej historii (2026-08-05)', () => {
   it('różnica trzech minut na godzinę to NIE jest inny typ licznika', () => {
     // Realny przypadek: SP-FGK i SP-KWA dawały 1,00 kontra 0,99 i model orzekał
-    // „obrotomierzowy". Statystycznie miał rację — przy danych bez szumu przedziały są
+    // „obrotomierzowy". Statystycznie miał rację - przy danych bez szumu przedziały są
     // zerowe, więc każda różnica jest pewna. Operacyjnie odpowiedź była bez sensu.
     const model = fitMhModel(sixDays(1.0, 0.99));
 
@@ -133,7 +133,7 @@ describe('bramki znalezione przebiegiem po realnej historii (2026-08-05)', () =>
 
   it('nie publikuje przelicznika, który przeczy fizyce licznika', () => {
     // An-2 z bazy dawał „w locie 0,90, na ziemi 1,20". Licznik chodzący SZYBCIEJ na
-    // wolnych obrotach nie istnieje — ani obrotomierzowy, ani godzinowy. To artefakt
+    // wolnych obrotach nie istnieje - ani obrotomierzowy, ani godzinowy. To artefakt
     // danych, więc wynik nie ma prawa stanąć na ekranie jako fakt.
     const model = fitMhModel(sixDays(0.9, 1.2));
 
@@ -141,7 +141,7 @@ describe('bramki znalezione przebiegiem po realnej historii (2026-08-05)', () =>
     expect(model.kind).toBe('unknown');
     expect(model.perFlightHour).toBeNull();
     expect(model.perGroundHour).toBeNull();
-    // Wiersze zestawienia zostają — administrator ma zobaczyć, na czym model poległ.
+    // Wiersze zestawienia zostają - administrator ma zobaczyć, na czym model poległ.
     expect(model.rows).toHaveLength(6);
   });
 

@@ -1,15 +1,15 @@
 /**
- * UZ Aero (serwer) — trasa analityki zużycia (`GET /admin/api/fleet/:id/consumption`).
+ * UZ Aero (serwer) - trasa analityki zużycia (`GET /admin/api/fleet/:id/consumption`).
  *
  * ══ DLACZEGO POD `/fleet`, A NIE `/aircraft` ══
  * Mockup `A10a` pokazuje w pasku adresu `/admin/api/aircraft/:id/consumption`, ale
- * rodzina `/aircraft/*` w panelu NIE ISTNIEJE — flota siedzi pod `/fleet` (lista,
+ * rodzina `/aircraft/*` w panelu NIE ISTNIEJE - flota siedzi pod `/fleet` (lista,
  * edycja jednostki). Drugi rzeczownik na ten sam zasób to dokładnie ten dryf, który
  * ten projekt tępi gdzie indziej, więc trasa idzie pod istniejący prefiks, a mockup
  * dostaje poprawioną etykietę.
  *
  * ══ ZDOLNOŚĆ: `panel.access` ══
- * Ekran jest wyłącznie do odczytu — zero komend, zero `AuditedWrite`. Szef wyszkolenia
+ * Ekran jest wyłącznie do odczytu - zero komend, zero `AuditedWrite`. Szef wyszkolenia
  * jest naturalnym odbiorcą (norma zużycia to jego pytanie przy planowaniu), więc
  * istniejąca zdolność wejścia do panelu wystarcza; nowej nie wymyślamy. Ten sam
  * argument, co przy `/stats`.

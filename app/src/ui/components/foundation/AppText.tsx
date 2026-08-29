@@ -1,9 +1,9 @@
 /**
- * UZ Aero — AppText
+ * UZ Aero - AppText
  *
  * Typografia oparta wyłącznie na tokenach motywu. Warianty pokrywają całą skalę
  * z 05-themes.html. Reguła §6 (docs/_main.md.txt): w motywach jasnych podbijamy
- * wagę cyfr — realizujemy to zamianą rodziny JetBrains Mono na cięższą dla
+ * wagę cyfr - realizujemy to zamianą rodziny JetBrains Mono na cięższą dla
  * wariantów "cyfrowych" (timer / param / mono).
  */
 
@@ -14,7 +14,7 @@ import { useTheme } from '../../theme';
 import { type Theme, type TypographyName, type TypographyToken } from '../../theme/tokens';
 
 /** Warianty publiczne. Wymagane przez zadanie: display | body | label | mono | timer.
- *  Dodatkowo param / paramLabel — pełna skala tokenów (param_value / param_label) —
+ *  Dodatkowo param / paramLabel - pełna skala tokenów (param_value / param_label) -
  *  oraz micro: mikro-etykiety 9 px w wersalikach (`.diag-key`, `.header-sub`). */
 export type AppTextVariant =
   | 'display'
@@ -50,8 +50,8 @@ const VARIANT_TOKEN: Record<AppTextVariant, TypographyName> = {
   micro: 'micro',
 };
 
-/** Warianty renderujące cyfry mono — kandydaci do podbicia wagi w motywach jasnych.
- *  `micro` (jak `paramLabel`) celowo poza zbiorem — etykieta nie jest odczytem. */
+/** Warianty renderujące cyfry mono - kandydaci do podbicia wagi w motywach jasnych.
+ *  `micro` (jak `paramLabel`) celowo poza zbiorem - etykieta nie jest odczytem. */
 const DIGIT_VARIANTS: ReadonlySet<AppTextVariant> = new Set<AppTextVariant>([
   'timer',
   'param',

@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: sklejenie stron kursorowych dziennika i stany brzegowe.
+ * UZ Aero - panel: sklejenie stron kursorowych dziennika i stany brzegowe.
  *
  * Bliźniak `daysPages.test.ts`. Różnica, która na tym ekranie ma znaczenie: dziennik
  * nie ma górnej granicy wielkości i rośnie w trakcie przeglądania, więc podpis
@@ -36,7 +36,7 @@ const page = (
 });
 
 describe('strony dziennika audytu', () => {
-  it('BRAK odpowiedzi to `total: null`, nie zero — i żadnej obietnicy ciągu dalszego', () => {
+  it('BRAK odpowiedzi to `total: null`, nie zero - i żadnej obietnicy ciągu dalszego', () => {
     // Zero jest twierdzeniem o świecie („nikt jeszcze niczego nie zmienił"), a brak
     // odpowiedzi nim nie jest. Ta różnica ma znaczenie dokładnie wtedy, gdy pobranie
     // się nie udało: ekran pokazuje wtedy baner o błędzie i nie może obok postawić
@@ -48,7 +48,7 @@ describe('strony dziennika audytu', () => {
   it('strony się DOKŁADAJĄ, a granica strony nie ma szwu', () => {
     // Predykat kursora jest ostry (`<`, nie `<=`), więc pierwszy wiersz następnej
     // strony jest kolejnym, a nie powtórzonym. Konkatenacja jest tu poprawna bez
-    // odsiewania duplikatów — dokładanie `Set` „na wszelki wypadek" maskowałoby
+    // odsiewania duplikatów - dokładanie `Set` „na wszelki wypadek" maskowałoby
     // zepsuty predykat po stronie serwera.
     const state = auditPages([page([9, 8], 'c1', 6), page([7, 6], 'c2', null), page([5, 4], null, null)]);
 
@@ -64,11 +64,11 @@ describe('strony dziennika audytu', () => {
     expect(auditPages([page([9], 'c1', 9), page([8], 'c2', null)]).hasMore).toBe(true);
   });
 
-  it('`total` bierzemy z PIERWSZEJ strony — kolejne go NIE NIOSĄ', () => {
+  it('`total` bierzemy z PIERWSZEJ strony - kolejne go NIE NIOSĄ', () => {
     // Serwer liczy `COUNT(*)` wyłącznie dla żądania bez kursora: liczba wpisów
     // w zawężeniu jest własnością ZAPYTANIA, nie strony, a pełny licznik na dzienniku
     // bez górnej granicy jest wielokrotnie droższy od samej strony. Czytanie licznika
-    // z ostatniej strony kazałoby podpisowi „pokazano N z M" zgasnąć do „—" dokładnie
+    // z ostatniej strony kazałoby podpisowi „pokazano N z M" zgasnąć do „-" dokładnie
     // w chwili, w której człowiek klika „pokaż kolejne wpisy".
     const state = auditPages([page([9], 'c1', 12), page([8], 'c2', null)]);
     expect(state.total).toBe(12);
@@ -83,21 +83,21 @@ describe('strony dziennika audytu', () => {
 
   it('podpis BEZ odpowiedzi nie twierdzi, że dziennik jest pusty', () => {
     // „Brak wpisów w tym zawężeniu" byłoby odpowiedzią na pytanie, na które nie mamy
-    // danych — a stoi pod tym baner „nie udało się pobrać dziennika".
+    // danych - a stoi pod tym baner „nie udało się pobrać dziennika".
     expect(pagesSummary(auditPages(undefined))).toBe(
-      'Liczba wpisów nieznana — serwer nie odpowiedział.',
+      'Liczba wpisów nieznana - serwer nie odpowiedział.',
     );
   });
 
   it('pusty dziennik mówi CO INNEGO niż pusty wynik filtra', () => {
     // „Nic w tym filtrze" jest wiadomością o zapytaniu; „nikt jeszcze niczego nie
-    // zmienił" — o stanie systemu, i jest to stan całkowicie normalny.
+    // zmienił" - o stanie systemu, i jest to stan całkowicie normalny.
     const narrowed = auditEmpty(true);
     const virgin = auditEmpty(false);
 
     expect(narrowed.title).not.toBe(virgin.title);
     expect(narrowed.note).toContain('zawężony');
-    // Pusty dziennik NIE MOŻE sugerować awarii logowania — logowań tu z założenia nie ma.
+    // Pusty dziennik NIE MOŻE sugerować awarii logowania - logowań tu z założenia nie ma.
     expect(virgin.note).toContain('logowanie nie działa');
     expect(virgin.note).toContain('rejestrze zdarzeń');
   });

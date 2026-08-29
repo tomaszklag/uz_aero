@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: KOMPONENTY PULPITU (`A01`, `A01a`).
+ * UZ Aero - panel: KOMPONENTY PULPITU (`A01`, `A01a`).
  *
  * Klasy przepisane 1:1 z `design/admin/SZABLON.html` (sekcje „FLOTA", „KOLEJKA WYMAGA
  * UWAGI", „NAPŁYW ZDARZEŃ"). Nazwy zostają DOSŁOWNE, bez CSS Modules i haszy: dopóki
@@ -8,9 +8,9 @@
  * pilnuje `admin/test/classInventory.test.ts`.
  */
 
-/* ══ FLOTA — wiersz samolotu niosący DWIE warstwy naraz ══
+/* ══ FLOTA - wiersz samolotu niosący DWIE warstwy naraz ══
    Co samolot robi (faza) i SKĄD to wiemy (świeżość). Klasa stanu na wierszu
-   (`flying`/`stale`) mówi o JAKOŚCI DANYCH, nie o fazie lotu — `stale` nosi samolot,
+   (`flying`/`stale`) mówi o JAKOŚCI DANYCH, nie o fazie lotu - `stale` nosi samolot,
    który leci, ale którego telefon milczy. */
 .fleet {
   display: flex;
@@ -88,7 +88,7 @@
   justify-content: flex-end;
 }
 
-/* Świeżość — jedyne miejsce, w którym panel przyznaje się do NIEWIEDZY.
+/* Świeżość - jedyne miejsce, w którym panel przyznaje się do NIEWIEDZY.
    Wiek podajemy względnie („3 min temu", „2 dni temu"), nie znacznikiem czasu:
    administrator ocenia, czy dane są aktualne, a nie o której dotarły. */
 .fresh {
@@ -117,7 +117,7 @@
   text-align: right;
 }
 
-/* ══ KOLEJKA „WYMAGA UWAGI" — jedyne miejsce mówiące, co ZROBIĆ ══
+/* ══ KOLEJKA „WYMAGA UWAGI" - jedyne miejsce mówiące, co ZROBIĆ ══
    Reszta panelu opisuje stan; ta lista stawia zadania. Dlatego wiersz jest linkiem
    w głąb, a wiek pozycji ma własną kolumnę. */
 .todo {
@@ -195,7 +195,7 @@
   color: var(--amber);
 }
 
-/* ══ NAPŁYW ZDARZEŃ — puls systemu ══
+/* ══ NAPŁYW ZDARZEŃ - puls systemu ══
    Słupek `zero` jest osobną klasą, a nie słupkiem o wysokości zero, bo cisza
    w rejestrze wymaga podpisu: nie znaczy „nikt nie latał", tylko „nic nie dotarło". */
 .spark {
@@ -231,7 +231,7 @@
 
 /* Lista WARUNKÓW wewnątrz banera („kiedy ta sama pustka znaczy »cisza podejrzana«",
    `A01a`). Mono i bez punktorów, bo to nie jest proza, tylko wyliczenie faktów, które
-   panel sprawdził — a każdy z nich ma osobno pękać albo nie pękać. */
+   panel sprawdził - a każdy z nich ma osobno pękać albo nie pękać. */
 .reason-list {
   display: flex;
   flex-direction: column;
@@ -250,7 +250,7 @@
 }
 
 /* Siatka liczb doby („Dziś w liczbach", „Ostatni dzień lotny"). Cztery komórki
-   klucz+wartość bez ramek — to NIE są kafle: nie prowadzą nigdzie osobno i czyta się
+   klucz+wartość bez ramek - to NIE są kafle: nie prowadzą nigdzie osobno i czyta się
    je razem, jako jedno podsumowanie. */
 .day-grid {
   display: grid;

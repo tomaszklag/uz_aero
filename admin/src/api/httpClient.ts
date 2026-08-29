@@ -1,23 +1,23 @@
 /**
- * UZ Aero — panel: JEDYNE miejsce w kodzie, w którym występuje `fetch`.
+ * UZ Aero - panel: JEDYNE miejsce w kodzie, w którym występuje `fetch`.
  *
  * Reguła jest wykonywalna (`test/architecture.test.ts`), a jej cel nie jest
  * porządkowy: dopóki sieć ma jedne drzwi, „skąd wzięła się ta liczba" ma zawsze
- * tę samą odpowiedź — z odpowiedzi serwera. Drugie wywołanie `fetch` w komponencie
+ * tę samą odpowiedź - z odpowiedzi serwera. Drugie wywołanie `fetch` w komponencie
  * jest pierwszym krokiem do panelu, który liczy po swojemu.
  *
  * Trzy rzeczy dzieją się tu i nigdzie indziej:
- *  • ścieżki są WZGLĘDNE (`/admin/api/…`) — panel jedzie z tego samego originu co API,
+ *  • ścieżki są WZGLĘDNE (`/admin/api/…`) - panel jedzie z tego samego originu co API,
  *    więc nie ma `apiBaseUrl`, nie ma CORS-u i ciasteczko `SameSite=Strict` działa.
  *    W `app/` taki plik istnieje właśnie dlatego, że telefon jest INNYM originem;
  *  • mutacje niosą nagłówek CSRF (`X-UZ-Admin`), którego przeglądarka nie wyśle
- *    cross-origin bez preflightu — serwer go WYMAGA (`server/src/http/adminCsrf.ts`);
+ *    cross-origin bez preflightu - serwer go WYMAGA (`server/src/http/adminCsrf.ts`);
  *  • odpowiedzi spoza 2xx stają się `HttpError`, a nie `undefined` w komórce tabeli.
  */
 
 import type { ApiErrorDto } from './dto';
 
-/** Prefiks API panelu. `/admin/api`, nie `/admin` — to drugie to statyczny build. */
+/** Prefiks API panelu. `/admin/api`, nie `/admin` - to drugie to statyczny build. */
 const API_PREFIX = '/admin/api';
 
 /** Nagłówek CSRF wymagany przez serwer przy każdej metodzie innej niż GET. */
@@ -28,7 +28,7 @@ const CSRF_HEADER = 'X-UZ-Admin';
  *
  * Status jest częścią wiadomości, a nie szczegółem transportu: 401 znaczy „zaloguj
  * się", 403 „twoja rola tego nie obejmuje", 409 „ktoś cię ubiegł". Ekran, który
- * dostaje samo `Error('błąd')`, nie ma jak powiedzieć, co się stało — a mockupy
+ * dostaje samo `Error('błąd')`, nie ma jak powiedzieć, co się stało - a mockupy
  * panelu wymagają podania powodu, nigdy cichego odbicia.
  */
 export class HttpError extends Error {
@@ -41,14 +41,14 @@ export class HttpError extends Error {
   }
 }
 
-/** `true` dla odmów serwera; `false` dla awarii sieci — to dwie różne wiadomości. */
+/** `true` dla odmów serwera; `false` dla awarii sieci - to dwie różne wiadomości. */
 export function isHttpError(error: unknown): error is HttpError {
   return error instanceof HttpError;
 }
 
 /**
  * Walidacja WĄSKA i celowo taka (`docs/architektura-panelu-frontend.md` §5.2):
- * sprawdzamy, że przyszedł JSON — czyli tyle, żeby złamany kontrakt wywalił się
+ * sprawdzamy, że przyszedł JSON - czyli tyle, żeby złamany kontrakt wywalił się
  * głośno przy odpowiedzi, a nie po cichu przy renderze. Pełnych schematów `zod`
  * po stronie klienta NIE ma: kształt przybijają testy tras serwera.
  */
@@ -65,7 +65,7 @@ async function request(path: string, init: RequestInit): Promise<unknown> {
   const res = await fetch(`${API_PREFIX}${path}`, {
     ...init,
     // Ciasteczko sesji jedzie z żądaniem także wtedy, gdy dev-serwer stoi na innym
-    // porcie niż API — bez tego logowanie „działa", a kolejne żądanie dostaje 401.
+    // porcie niż API - bez tego logowanie „działa", a kolejne żądanie dostaje 401.
     credentials: 'same-origin',
   });
 
@@ -74,7 +74,7 @@ async function request(path: string, init: RequestInit): Promise<unknown> {
     const dto = (body ?? {}) as Partial<ApiErrorDto>;
     // Ciało odmowy przepisujemy W CAŁOŚCI, a nie pole po polu. Powód jest konkretny:
     // 409 z wyścigu o flagę niesie `flag` ze stanem i komentarzem ZWYCIĘZCY, a lista
-    // wybranych pól gubiłaby tę treść po cichu — i przy każdej kolejnej odmowie
+    // wybranych pól gubiłaby tę treść po cichu - i przy każdej kolejnej odmowie
     // niosącej dane trzeba by pamiętać, żeby ją tutaj dopisać.
     throw new HttpError(res.status, { ...dto, error: dto.error ?? 'unknown' });
   }
@@ -90,7 +90,7 @@ export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
 }
 
 /**
- * `PATCH`, a nie kolejny `POST`: zmiana konta (`A06a`) opisuje RÓŻNICĘ — pola
+ * `PATCH`, a nie kolejny `POST`: zmiana konta (`A06a`) opisuje RÓŻNICĘ - pola
  * nieprzysłane zostają bez zmian. `POST /pilots/:id` sugerowałby, że ciało jest pełnym
  * stanem konta, więc pominięcie pola je czyściło.
  */
@@ -98,7 +98,7 @@ export async function apiPatch<T>(path: string, body?: unknown): Promise<T> {
   return (await request(path, mutation('PATCH', body))) as T;
 }
 
-/** Nagłówek CSRF i JSON-owe ciało w jednym miejscu — mutacje różnią się metodą. */
+/** Nagłówek CSRF i JSON-owe ciało w jednym miejscu - mutacje różnią się metodą. */
 function mutation(method: 'POST' | 'PATCH', body: unknown): RequestInit {
   return {
     method,

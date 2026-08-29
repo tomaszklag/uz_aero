@@ -1,5 +1,5 @@
 /**
- * UZ Aero — nachylenie prostej regresji po czasie.
+ * UZ Aero - nachylenie prostej regresji po czasie.
  *
  * Wydzielone, bo ta sama metoda liczy teraz dwie różne rzeczy: prędkość pionową
  * (`flightPhase.ts`) i przyspieszenie podłużne (`trends.ts`). Powód, dla którego
@@ -8,7 +8,7 @@
  * i produkowała fałszywe „Climb" z 30-stopowej szpilki. Regresja rozkłada ten sam
  * błąd na całe okno.
  *
- * Zwracamy `null`, nie zero, gdy danych brakuje albo są zbyt ciasne w czasie —
+ * Zwracamy `null`, nie zero, gdy danych brakuje albo są zbyt ciasne w czasie -
  * „nie wiem" i „nie zmienia się" to dwie różne informacje, a detektor podejmuje
  * na ich podstawie różne decyzje.
  */
