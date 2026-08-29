@@ -132,7 +132,6 @@
   .modal-actions { display:grid; grid-template-columns:1fr 2fr; gap:8px; }
   .btn-cancel { display:flex; align-items:center; justify-content:center; padding:14px; border-radius:14px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text-secondary); font-family:var(--font-display); font-size:16px; letter-spacing:2px; text-decoration:none; cursor:pointer; }
   .btn-release { display:flex; align-items:center; justify-content:center; gap:8px; padding:14px; border-radius:14px; border:none; background:var(--red); color:#0D0D0D; font-family:var(--font-display); font-size:16px; letter-spacing:2px; text-decoration:none; cursor:pointer; box-shadow:0 0 20px rgba(231,76,60,0.25); }
-  .modal-hint { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.8px; color:var(--text-muted); text-align:center; line-height:1.6; }
 
   .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
   .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
@@ -338,7 +337,12 @@
             Zdaj samolot
           </a>
         </div>
-        <div class="modal-hint">„Wstecz" jeszcze raz albo tapnięcie w tło zostawia Cię w kokpicie</div>
+        <!-- PODPISU POD AKCJAMI NIE MA (2026-08-29, ta sama decyzja co w 02H). Stało tu
+             „«Wstecz» jeszcze raz albo tapnięcie w tło zostawia Cię w kokpicie" — zdanie
+             o ZACHOWANIU APLIKACJI, nie odpowiedź na pytanie pilota. Bezpieczne wyjście
+             jest w arkuszu domyślne i odkrywa się pierwszym tapnięciem obok, a „ZOSTAŃ"
+             mówi to samo przyciskiem. Oba arkusze potwierdzenia wyglądają przez to tak
+             samo: pytanie, wiersze odniesienia, ostrzeżenie o stawce, para akcji. -->
       </div>
     </div>
   </div>
