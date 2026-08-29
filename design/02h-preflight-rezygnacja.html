@@ -171,7 +171,6 @@
   .modal-actions { display:grid; grid-template-columns:1fr 2fr; gap:8px; }
   .btn-cancel { display:flex; align-items:center; justify-content:center; padding:14px; border-radius:14px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text-secondary); font-family:var(--font-display); font-size:16px; letter-spacing:2px; text-decoration:none; cursor:pointer; }
   .btn-abandon { display:flex; align-items:center; justify-content:center; gap:8px; padding:14px; border-radius:14px; border:none; background:var(--amber); color:#0D0D0D; font-family:var(--font-display); font-size:16px; letter-spacing:2px; text-decoration:none; cursor:pointer; box-shadow:0 0 20px rgba(243,156,18,0.25); }
-  .modal-hint { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.8px; color:var(--text-muted); text-align:center; line-height:1.6; }
 
   /* ===== VARIANTS PANEL (canvas — skróty do wariantów ekranu) ===== */
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
@@ -310,7 +309,12 @@
             Zrezygnuj
           </a>
         </div>
-        <div class="modal-hint">Tapnięcie w tło albo „wstecz" jeszcze raz zostawia Cię w formularzu</div>
+        <!-- PODPISU POD AKCJAMI TEŻ NIE MA (2026-08-29, ta sama uwaga co baner wyżej).
+             Stało tu „Tapnięcie w tło albo «wstecz» jeszcze raz zostawia Cię
+             w formularzu" — zdanie o ZACHOWANIU APLIKACJI, nie odpowiedź na pytanie
+             pilota. Bezpieczne wyjście jest w arkuszu domyślne i pilot i tak je odkryje
+             pierwszym tapnięciem obok; pisanie o nim zajmowało trzecią linię w arkuszu,
+             którego całą treścią jest jedno pytanie. „ZOSTAŃ" mówi to samo, przyciskiem. -->
       </div>
     </div>
   </div>
