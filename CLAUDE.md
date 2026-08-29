@@ -976,10 +976,14 @@ poprawka dosięgła ośmiu arkuszy naraz.
   wychodzi bez pytania (`manualFlightDirty`, liczone z KLUCZY pustego szkicu, więc nowe
   pole wchodzi do rachunku samo; ręczna koniunkcja przestałaby być prawdziwa przy
   pierwszym dopisanym polu i nikt by tego nie zauważył). Arkusz jest JEDEN dla obu dróg
-  do lotu — `AbandonDraftSheet` (dawny `AbandonPreflightSheet`): wspólne zostaje zdanie
-  „w rejestrze nie ma jeszcze nic, formularz zacznie od nowa", a parametrami idą tytuł,
-  wiersze podsumowania i NAZWA przycisku, który dopiero zapisuje („ROZPOCZNIJ LOT"
-  vs „ZAPISZ LOT")
+  do lotu — `AbandonDraftSheet` (dawny `AbandonPreflightSheet`), a parametrami idą tytuł
+  i wiersze podsumowania. **Arkusz nie ma banera** (druga uwaga z tego samego dnia):
+  zdanie „Do rejestru nie trafiło jeszcze nic — zapis robi dopiero «ZAPISZ LOT»…"
+  USUNIĘTE, bo „nic nie wnosi i zamiast tłumaczyć stawia jeszcze więcej pytań" —
+  opowiadało o REJESTRZE komuś, kto chce tylko wyjść z formularza, a przy okazji
+  podsuwało myśl, że coś jednak mogło się zapisać. Ta sama kategoria przypisów, którą
+  issue #43 wyrzuciło z arkuszy korekty. Arkusz mówi, CO PILOT STRACI (wiersze
+  odniesienia), i nic ponadto
 - **arkusz ma tyle kontrolek, ile pytań** (trzecia tura): tapnięcie w START na osi
   otwierało parę start + lądowanie, czyli dawało kontrolkę, o którą nikt nie prosił —
   „skoro klikam w konkretną pozycję, to wiem, że tylko to chcę edytować". Cel osi niesie

@@ -16,11 +16,17 @@
  * ══ JEDEN ARKUSZ NA OBIE DROGI DO LOTU (uwaga z urządzenia, 2026-08-29) ══
  * Powstał dla preflightu (issue #55) jako `AbandonPreflightSheet`, a wpis ręczny
  * potrzebuje DOKŁADNIE tego samego — bo jest tym samym: wielokrokowym formularzem,
- * z którego „wstecz" wychodzi bezpowrotnie. Osobna kopia rozjechałaby się co do
- * uzasadnienia (a to ono jest tu treścią), więc różnice jadą PARAMETRAMI: tytuł,
- * wiersze podsumowania i NAZWA PRZYCISKU, który dopiero zapisuje. Zdanie o tym, że
- * w rejestrze nie ma jeszcze nic i że formularz zacznie od nowa, zostaje wspólne —
- * bo w obu flow jest tak samo prawdziwe.
+ * z którego „wstecz" wychodzi bezpowrotnie. Różnice jadą PARAMETRAMI: tytuł i wiersze
+ * podsumowania.
+ *
+ * ══ BEZ BANERA (druga uwaga z urządzenia, 2026-08-29) ══
+ * „Do rejestru nie trafiło jeszcze nic — zapis robi dopiero «ZAPISZ LOT». Po rezygnacji
+ * formularz zaczyna następnym razem od nowa" — zdanie USUNIĘTE: „nic nie wnosi i zamiast
+ * tłumaczyć stawia jeszcze więcej pytań". Słusznie, bo opowiadało o REJESTRZE komuś, kto
+ * chce tylko wyjść z formularza — a przy okazji podsuwało myśl, że coś jednak mogło się
+ * zapisać. Ta sama kategoria przypisów, którą issue #43 wyrzuciło z arkuszy korekty.
+ * Arkusz mówi więc, co pilot straci (wiersze podsumowania), i nic ponadto; nazwa
+ * przycisku zapisu odeszła razem z banerem, bo istniała wyłącznie na jego potrzeby.
  *
  * Bezpieczne wyjście jest domyślne przy każdym porzuceniu arkusza: „wstecz" jeszcze raz
  * i tapnięcie w tło zostawiają pilota w formularzu (`Sheet` stoi na `Modal` z RN).
@@ -34,12 +40,6 @@ export interface AbandonDraftSheetProps {
   visible: boolean;
   /** „ZREZYGNOWAĆ Z NOWEGO LOTU?" / „ZREZYGNOWAĆ Z WPISU RĘCZNEGO?" */
   title: string;
-  /**
-   * Nazwa przycisku, który dopiero zapisuje („ROZPOCZNIJ LOT", „ZAPISZ LOT") — wchodzi
-   * do zdania o rejestrze. Pilot ma poznać moment, w którym zapis NAPRAWDĘ następuje,
-   * a ten moment jest w każdym flow inny.
-   */
-  saveLabel: string;
   /**
    * Wiersze odniesienia — WYŁĄCZNIE faktyczne wybory. Kreska niczego nie przypomina
    * (ta sama reguła, co godzina przejęcia w `LeaveCockpitSheet`), więc wołający
@@ -55,7 +55,6 @@ export interface AbandonDraftSheetProps {
 export function AbandonDraftSheet({
   visible,
   title,
-  saveLabel,
   rows,
   onStay,
   onAbandon,
@@ -65,11 +64,6 @@ export function AbandonDraftSheet({
       visible={visible}
       title={title}
       rows={rows}
-      warning={
-        `Do rejestru nie trafiło jeszcze nic — zapis robi dopiero „${saveLabel}". ` +
-        'Po rezygnacji formularz zaczyna następnym razem od nowa, bez zapamiętanych wyborów.'
-      }
-      warningTone="amber"
       confirmLabel="ZREZYGNUJ"
       confirmTone="amber"
       onConfirm={onAbandon}

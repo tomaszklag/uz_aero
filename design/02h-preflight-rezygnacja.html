@@ -168,10 +168,6 @@
   .modal-title { font-family:var(--font-display); font-size:22px; letter-spacing:2px; color:var(--text-primary); }
   .modal-ref { display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:10px; color:var(--text-muted); padding:0 2px; }
   .modal-ref-val { color:var(--text-secondary); }
-  .hold-box { display:flex; align-items:flex-start; gap:9px; background:var(--amber-muted); border:1px solid var(--amber-border); border-radius:12px; padding:11px 13px; }
-  .hold-box svg { flex-shrink:0; margin-top:1px; color:var(--amber); }
-  .hold-text { font-family:var(--font-body); font-size:11px; color:var(--text-secondary); line-height:1.55; }
-  .hold-text b { color:var(--amber); font-weight:600; }
   .modal-actions { display:grid; grid-template-columns:1fr 2fr; gap:8px; }
   .btn-cancel { display:flex; align-items:center; justify-content:center; padding:14px; border-radius:14px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text-secondary); font-family:var(--font-display); font-size:16px; letter-spacing:2px; text-decoration:none; cursor:pointer; }
   .btn-abandon { display:flex; align-items:center; justify-content:center; gap:8px; padding:14px; border-radius:14px; border:none; background:var(--amber); color:#0D0D0D; font-family:var(--font-display); font-size:16px; letter-spacing:2px; text-decoration:none; cursor:pointer; box-shadow:0 0 20px rgba(243,156,18,0.25); }
@@ -294,11 +290,18 @@
           <span class="modal-ref-val">SP-AXA · Cessna 182</span>
         </div>
 
-        <div class="hold-box">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 20h20L12 2Z"/><line x1="12" y1="9" x2="12" y2="14"/><line x1="12" y1="17" x2="12" y2="17"/></svg>
-          <span class="hold-text">Do rejestru nie trafiło jeszcze nic — zapis robi dopiero „ROZPOCZNIJ LOT".
-          Po rezygnacji <b>formularz zaczyna następnym razem od nowa</b>, bez zapamiętanych wyborów.</span>
-        </div>
+        <!-- BANERA TU NIE MA (uwaga z urządzenia, 2026-08-29). Stało tu zdanie „Do
+             rejestru nie trafiło jeszcze nic — zapis robi dopiero «ROZPOCZNIJ LOT».
+             Po rezygnacji formularz zaczyna następnym razem od nowa": „nic nie wnosi
+             i zamiast tłumaczyć stawia jeszcze więcej pytań".
+
+             Słusznie — opowiadało o REJESTRZE komuś, kto chce tylko wyjść z formularza,
+             a przy okazji podsuwało myśl, że coś jednak mogło się zapisać. Ta sama
+             kategoria przypisów, którą issue #43 wyrzuciło z arkuszy korekty
+             („korekta nie kasuje historii…", „wiersz zostaje w rejestrze").
+
+             Arkusz mówi więc, CO PILOT STRACI (wiersze odniesienia wyżej), i nic
+             ponadto. Tytuł z pytaniem i para przycisków wystarczają za resztę. -->
 
         <div class="modal-actions">
           <a href="02-preflight.html" class="btn-cancel">Zostań</a>

@@ -408,7 +408,6 @@ export function PreflightAircraftScreen({
       <AbandonDraftSheet
         visible={leaveAction != null && !leaving}
         title="ZREZYGNOWAĆ Z NOWEGO LOTU?"
-        saveLabel="ROZPOCZNIJ LOT"
         rows={[
           ...(selected != null
             ? [{ label: 'Wybrany samolot', value: `${selected.reg} · ${selected.type}` }]

@@ -1161,8 +1161,7 @@ export function ManualFlightScreen({
           kroku 1 i pilot mógł ją zmienić jako jedyną rzecz. */}
       <AbandonDraftSheet
         visible={leaveAction != null && !leaving}
-        title="ZREZYGNOWAĆ Z WPISU RĘCZNEGO?"
-        saveLabel="ZAPISZ LOT"
+        title="ZREZYGNOWAĆ Z WPISU RĘCZNEGO?"
         rows={[
           { label: 'Data lotu', value: dateUtcDayMonth(draft.day) },
           ...(aircraft != null
