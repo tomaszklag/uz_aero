@@ -149,6 +149,15 @@
     text-decoration: none; cursor: pointer;
     box-shadow: 0 0 24px rgba(46,204,113,0.3);
   }
+  /* Blokada zapisu = przycisk `disabled` z POWODEM W ŚRODKU (issue #55, tu rozciągnięte
+     na arkusze uwagą z urządzenia 2026-08-29). Kolumna, bo powód staje pod napisem.
+     Bez przygaszenia opacity — bursztyn pod 0.45 przestaje być ostrzeżeniem, a
+     wyszarzenie niosą już kolory tła i napisu. */
+  .modal-btn-confirm.disabled {
+    background: var(--surface-hover); color: var(--text-muted); box-shadow: none;
+    flex-direction: column; gap: 5px; cursor: not-allowed; pointer-events: none;
+  }
+  .btn-reason { font-family: var(--font-mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--amber); text-align: center; line-height: 1.5; }
 </style>
 </head>
 <body>
@@ -222,6 +231,23 @@
           <span class="modal-ref-val">330 L</span>
         </div>
 
+        <!-- BANER MÓWI O WARTOŚCI, PRZYCISK O TYM, CZEMU NIE DA SIĘ ZAPISAĆ
+             (uwaga z urządzenia, 2026-08-29). To są dwie różne rzeczy i mają dwa różne
+             miejsca — a arkusz odczytu mieszał je w jednym banerze:
+
+              • BANER (ten niżej, „Zanim potwierdzisz") = zdanie o LICZBIE, którą pilot
+                właśnie wpisał: różni się od szacunku, przekracza pojemność, schodzi
+                pod minimum. Wpis jest czytelny, zapis możliwy — pilot ma tylko wiedzieć,
+                na co patrzy. Ostrzeżenie, nie przeszkoda;
+
+              • PRZYCISK = powód, dla którego zapisu NIE MA: pole puste albo wpis
+                nieczytelny. Wtedy „Potwierdź" jest `disabled`, a powód stoi bursztynem
+                W JEGO ŚRODKU (`.btn-reason`, issue #55) — nigdy jako baner nad akcjami
+                i nigdy jako przycisk, który po tapnięciu po prostu nic nie robi.
+
+             Do 2026-08-29 puste pole dawało baner „Wpisz wartość, żeby zapisać", a
+             „Potwierdź" wyglądał na aktywny i milczał. Baner nie jest miejscem na
+             blokadę: pilot szuka odpowiedzi przy przycisku, w który właśnie tapnął. -->
         <div class="modal-warning">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           <span>Odczyt różni się od szacunku o <strong>−30 L</strong>. Sprawdź stan zbiorników przed zatwierdzeniem.</span>
@@ -231,6 +257,13 @@
           <a href="02a-preflight.html" class="modal-btn-cancel">Anuluj</a>
           <a href="02a-preflight.html" class="modal-btn-confirm">Potwierdź</a>
         </div>
+        <!-- Stan zablokowany tego samego rzędu akcji (pole puste albo wpis nieczytelny):
+             <span class="modal-btn-confirm disabled">
+               Potwierdź
+               <span class="btn-reason">Wpisz wartość, żeby zapisać</span>
+             </span>
+             — kolumna, bursztynowy podpis, bez przygaszenia opacity (bursztyn pod 0.45
+             przestaje być ostrzeżeniem). Style niżej. -->
       </div>
     </div>
 

@@ -112,21 +112,22 @@ export function OilSheet({
     letterSpacing: 2,
   } as const;
 
+  /* Baner mówi o WARTOŚCI, przycisk o tym, czemu nie da się zapisać (uwaga z urządzenia,
+     2026-08-29 — pełne uzasadnienie przy `blocker` w `ReadingSheet`). Wpis nieczytelny
+     jest blokadą, więc jego zdanie stoi w przycisku; „Zanim potwierdzisz" zostaje dla
+     poziomu, który wygląda podejrzanie, ale zapisać się da. Czerwień znika z banera
+     razem z tym przypadkiem — nieczytelny wpis znaczy już czerwona ramka POLA, a to
+     ona wskazuje, KTÓRE z dwóch pól poprawić. */
   return (
     <Sheet
       visible={visible}
       title="Pomiar oleju"
       rows={afterRow != null ? [...rows, afterRow] : rows}
-      warning={
-        invalid
-          ? 'Nie rozumiem tej wartości — popraw wpis, żeby móc zapisać.'
-          : (warning ?? undefined)
-      }
-      warningTone={invalid ? 'red' : 'amber'}
+      {...(warning != null ? { warning } : {})}
+      warningTone="amber"
       confirmLabel="ZAPISZ"
-      onConfirm={() => {
-        if (!invalid) onConfirm(level.value, added.value);
-      }}
+      confirmDisabledReason={invalid ? 'Nie rozumiem tej wartości — popraw wpis' : null}
+      onConfirm={() => onConfirm(level.value, added.value)}
       onCancel={onCancel}
     >
       <AppText variant="mono" tone="muted" style={styles.fieldLabel}>

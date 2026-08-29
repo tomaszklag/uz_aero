@@ -755,6 +755,23 @@ Cztery uwagi z urządzenia; dwie z nich to reguły obowiązujące każdy nowy ek
   tymi dwoma ekranami był treścią zgłoszenia. Plakietka „wymagany · załoga 2-os."
   przy nagłówku ZOSTAJE: mówi o WŁAŚCIWOŚCI maszyny w miejscu wyboru, także wtedy
   gdy nic nie blokuje — to inna rzecz niż powód, dla którego nie da się iść dalej
+- **REGUŁA OBOWIĄZUJE TAKŻE ARKUSZE** (uwaga z urządzenia, 2026-08-29: „jak mam wpis
+  paliwa, to po co dajesz baner «wpisz wartość, żeby zapisać»? […] taki pattern
+  powinien być wszędzie"). Granica jest jedna i przechodzi między dwoma pytaniami:
+  - **baner „Zanim potwierdzisz" opisuje WARTOŚĆ**, którą pilot wpisał — różni się od
+    szacunku, przekracza pojemność, schodzi pod minimum. Zapisu nie wstrzymuje;
+  - **przycisk niesie POWÓD, dla którego zapisu nie ma** — pole puste, wpis
+    nieczytelny, nic nie zmienione. `Sheet.confirmDisabledReason` → `ActionButton`.
+
+  Trzy arkusze łamały to na trzy sposoby i wszystkie zostały poprawione: `ReadingSheet`
+  i `OilSheet` wrzucały blokadę do banera, a przycisk sprawdzał warunek w środku
+  `onConfirm` i po tapnięciu MILCZAŁ (§6 pkt 3); `ReadingCorrectionSheet` podawał
+  `onConfirm: undefined`, a `Sheet` bez akcji nie rysuje przycisku WCALE — znikające
+  „ZAPISZ KOREKTĘ" w wypełnianym formularzu czyta się jak usterka. **Brak akcji ma sens
+  tam, gdzie akcji nie ma z definicji** (podgląd po oknie korekty 10B, pusta flota 02G),
+  nie w formularzu, który pilot właśnie wypełnia. Czerwony baner „nie rozumiem tej
+  wartości" znika razem z tym: nieczytelny wpis znaczy już czerwona ramka POLA, a ona
+  jedna mówi, KTÓRE pole poprawić
 - **pusta flota na kroku 1 = warning na CAŁY ekran, nie formularz** (`design/02g`,
   stan `noFleet` w `PreflightAircraftScreen`): sekcja „Samolot" z szarą linijką
   „brak samolotów w pamięci urządzenia" czytała się jak usterka, a o ścianie pilot

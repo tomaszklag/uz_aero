@@ -173,10 +173,30 @@ export function ReadingCorrectionSheet({
     (!oilLevelChanged || oilLevelState?.ok === true) &&
     (!oilAddedChanged || oilAddedState?.ok === true);
   const changed = fuelChanged || mhChanged || oilLevelChanged || oilAddedChanged || timeChanged;
-  // Ostrzeżenie „blokujące" nie wyszarza przycisku, tylko odbiera mu akcję i mówi
-  // powód — ta sama zasada, co przy pustym formularzu (§6 pkt 3).
   const timeNote = time != null ? time.noteFor(at) : null;
   const blocked = timeNote?.blocking === true;
+
+  /**
+   * POWÓD W PRZYCISKU, ZAMIAST ZNIKAJĄCEGO PRZYCISKU (uwaga z urządzenia, 2026-08-29:
+   * „walidacja jest na przycisku, jest on disabled i na przycisku na żółto piszemy
+   * czemu — taki pattern powinien być wszędzie").
+   *
+   * Do tej pory arkusz podawał `onConfirm: undefined`, a `Sheet` przy braku akcji nie
+   * rysuje przycisku WCALE. Znikające „ZAPISZ KOREKTĘ" jest tu gorsze od wyszarzonego:
+   * brak akcji ma sens tam, gdzie akcji nie ma z definicji (podgląd po oknie korekty
+   * 10B, pusta flota 02G), a nie w formularzu, który pilot właśnie wypełnia — tam
+   * zniknięcie czyta się jak usterka, a nie jak odpowiedź.
+   *
+   * Powody padają pojedynczo, w kolejności czynności: najpierw popraw to, czego nie
+   * da się przeczytać, potem zmień cokolwiek, na końcu ustąp twardej regule czasu.
+   */
+  const blocker = !readable
+    ? 'Nie rozumiem którejś z wartości — popraw wpis'
+    : !changed
+      ? 'Zmień którąś z wartości, żeby zapisać korektę'
+      : blocked
+        ? (timeNote?.text ?? 'Tej korekty nie da się zapisać')
+        : null;
 
   const confirm = (): void => {
     const fields: ReadingCorrection = {};
@@ -195,11 +215,9 @@ export function ReadingCorrectionSheet({
       title="KOREKTA ODCZYTU"
       rows={rows}
       warning={warning}
-      // Bez zmiany nie ma czego zapisać; wpis nieczytelny (litery w litrach) też nie
-      // zamienia się w korektę. Przycisk zostaje WIDOCZNY — powód odmowy mówi, czego
-      // brakuje, zamiast zostawiać pilota z wyszarzonym prostokątem (§6 pkt 3).
       confirmLabel="ZAPISZ KOREKTĘ"
-      onConfirm={changed && readable && !blocked ? confirm : undefined}
+      confirmDisabledReason={blocker}
+      onConfirm={confirm}
       onCancel={onCancel}
     >
       {/* Karta celu jak w arkuszu czasu (10E): ikona, NAZWA ZDARZENIA pełnym stopniem

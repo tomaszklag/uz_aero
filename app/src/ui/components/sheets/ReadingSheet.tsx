@@ -132,11 +132,32 @@ export function ReadingSheet({
   );
 
   const parsed = parse(text);
-  // Puste pole to nie jest wpis nieczytelny (issue #60 — arkusz dolewki startuje pusty,
-  // bo prefill fabrykowałby ilość): zamiast czerwonego „nie rozumiem" bursztynowe
-  // wezwanie, a przycisk zostaje bez akcji z podanym powodem (§6 pkt 3).
   const empty = text.trim() === '';
   const warning = parsed != null ? (warningFor?.(parsed) ?? null) : null;
+
+  /**
+   * BANER MÓWI O WARTOŚCI, PRZYCISK O TYM, CZEMU NIE DA SIĘ ZAPISAĆ (uwaga
+   * z urządzenia, 2026-08-29: „jak mam wpis paliwa, to po co dajesz baner «wpisz
+   * wartość, żeby zapisać»? Mamy pattern, że walidacja jest na przycisku").
+   *
+   * Do tej pory ten arkusz wrzucał w JEDEN baner trzy różne rzeczy: puste pole,
+   * wpis nieczytelny i ostrzeżenie o samej liczbie — a „POTWIERDŹ" wyglądał na
+   * aktywny i po tapnięciu milczał (`onConfirm` sprawdzał `parsed != null` w środku).
+   * Cichy przycisk to dokładnie to, przeciw czemu stoi §6 pkt 3.
+   *
+   * Granica jest odtąd ta sama, co wszędzie: baner „Zanim potwierdzisz" opisuje
+   * LICZBĘ, którą pilot wpisał (różni się od szacunku, przekracza pojemność) i zapisu
+   * nie wstrzymuje; blokada mieszka W PRZYCISKU, bursztynem, i tam pilot jej szuka.
+   *
+   * Puste pole zostaje osobnym przypadkiem od nieczytelnego (issue #60 — arkusz dolewki
+   * startuje pusty, bo prefill fabrykowałby ilość): to nie jest błąd, tylko brak wpisu,
+   * i zdanie ma o tym mówić.
+   */
+  const blocker = empty
+    ? 'Wpisz wartość, żeby zapisać'
+    : parsed == null
+      ? 'Nie rozumiem tej wartości — popraw wpis'
+      : null;
 
   /** Cyfry: akcent tonu (mockup 02b: `.modal-input-val` = `var(--amber)`). */
   const valueColor = tone === 'neutral' ? theme.colors.textPrimary : c.accent;
@@ -146,18 +167,11 @@ export function ReadingSheet({
       visible={visible}
       title={title}
       rows={rows}
-      warning={
-        empty
-          ? 'Wpisz wartość, żeby zapisać.'
-          : parsed == null
-            ? 'Nie rozumiem tej wartości — popraw wpis, żeby móc potwierdzić.'
-            : (warning ?? undefined)
-      }
-      warningTone={parsed != null ? 'amber' : empty ? 'amber' : 'red'}
+      {...(warning != null ? { warning } : {})}
+      warningTone="amber"
       confirmLabel="POTWIERDŹ"
-      onConfirm={() => {
-        if (parsed != null) onConfirm(parsed);
-      }}
+      confirmDisabledReason={blocker}
+      onConfirm={() => onConfirm(parsed!)}
       onCancel={onCancel}
       /* Klawiatura od otwarcia — drabinka prób z `useSheetInputFocus` (issue #58
          pkt 7, druga tura: pojedynczy focus w onShow bywał nadal za wcześnie). */
