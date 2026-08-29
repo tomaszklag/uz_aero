@@ -15,6 +15,14 @@
  * (`Keyboard.isVisible`). Widoczna klawiatura zatrzymuje drabinkę — późne
  * `blur+focus` przy wysuniętej klawiaturze mrugałoby kursorem bez powodu.
  *
+ * ══ PONOWIENIE JEST DROGIE I DLATEGO STOI DALEKO ══
+ * `blur()` nie jest darmowe: gasi wjeżdżającą klawiaturę, a w kontrolce, która przy
+ * wyjściu z pola zwija się do widoku wartości, potrafi zabrać samo pole. Ponowienie
+ * wolno więc odpalić dopiero wtedy, gdy WIADOMO, że pierwsza próba zawiodła — czyli
+ * po `KEYBOARD_SHOW_MS`. Rung wcześniejszy niż ten próg strzela w każde normalne
+ * otwarcie i sam produkuje usterkę, którą miał naprawiać (uwaga z urządzenia,
+ * 2026-08-29 — pełny opis przy `RETRY_DELAYS_MS`).
+ *
  * ══ ROLA DRABINKI ZAWĘZIŁA SIĘ (issue #62, szósta tura) ══
  * Powód nr 2 z tej historii — czekanie na animację wjazdu okna — ZNIKŁ: `SheetSurface`
  * otwiera `Modal` bez animacji (`animationType="none"`) i animuje panel sam, więc okno
@@ -30,20 +38,33 @@
  */
 
 /**
+ * Ile trwa wysunięcie klawiatury Androida — czyli po jakim czasie od `focus()` można
+ * w ogóle ORZEC, czy próba się udała. `keyboardDidShow` pada dopiero na końcu tej
+ * animacji i to on jest jedynym sygnałem sukcesu, jakim dysponujemy.
+ */
+export const KEYBOARD_SHOW_MS = 300;
+
+/**
  * Odstępy kolejnych prób od startu drabinki.
  *
- * PIERWSZE PONOWIENIE JEST BLISKO (issue #62, szósta tura). Poprzedni harmonogram
- * (150/400/800) był dobrany tak, żeby PRZECZEKAĆ animację wjazdu okna — a tej już nie
- * ma, odkąd `SheetSurface` otwiera `Modal` bez animacji. Zostało wyłącznie okno na
- * przejęcie fokusu wejścia przez świeżo pokazane okno, czyli klatka albo dwie: `onShow`
- * pada, gdy dialog jest POKAZANY, ale fokus wejścia potrafi dojść beat później, a wtedy
- * próba nr 0 ustawia fokus widoku bez IME. Czekanie 150 ms na naprawę tego jest widoczne
- * gołym okiem — stąd pierwsza próba po 50 ms.
+ * PONOWIENIE NIE MOŻE WYPAŚĆ PRZED SYGNAŁEM, KTÓRY BY JE ODWOŁAŁ (uwaga z urządzenia,
+ * 2026-08-29: „otwiera się klawiatura i znika"). Szósta tura issue #62 ustawiła
+ * pierwsze ponowienie na 50 ms, żeby nie było widać czekania — i to był błąd
+ * rozumowania, bo ponowienie NIE JEST przyspieszeniem otwarcia. Jest naprawą
+ * NIEUDANEJ próby, a o nieudanej próbie nie da się wiedzieć wcześniej niż po
+ * `KEYBOARD_SHOW_MS`.
  *
- * Dalsze rungi zostają rzadkie: są na zamulony JS, nie na fokus okna, a przy wysuniętej
- * klawiaturze i tak gasną (`focusStep` pyta o `Keyboard.isVisible`).
+ * Skutek starego harmonogramu: przy KAŻDYM normalnym otwarciu rungi 50 ms i 180 ms
+ * wypadały w środku animacji klawiatury, `Keyboard.isVisible()` było jeszcze fałszem,
+ * więc `focusStep` kazał robić `blur()` + `focus()` — czyli schować wjeżdżającą
+ * klawiaturę i poprosić o nią jeszcze raz. Dwa razy pod rząd. Dokładnie to widział
+ * pilot: klawiatura wychodzi, znika, wraca.
+ *
+ * Odtąd rungi stoją ZA tą granicą, a przy udanym otwarciu nie odpala się ani jeden:
+ * `useSheetInputFocus` kasuje je na `keyboardDidShow`. Są insurancem na zamulony JS,
+ * nie mechanizmem otwierania — otwiera próba nr 0, natychmiast w `onShow`.
  */
-export const RETRY_DELAYS_MS = [50, 180, 400, 800];
+export const RETRY_DELAYS_MS = [350, 800];
 
 /**
  * Drabinka rusza w PÓŹNIEJSZYM z dwóch zdarzeń: okno modala pokazane (`onShow`)

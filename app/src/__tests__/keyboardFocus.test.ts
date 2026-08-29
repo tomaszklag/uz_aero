@@ -7,7 +7,12 @@
  * no-opem i nie pokaże klawiatury), a widoczna klawiatura zatrzymuje drabinkę.
  */
 
-import { RETRY_DELAYS_MS, focusStep, shouldStartLadder } from '../ui/hooks/keyboardFocus';
+import {
+  KEYBOARD_SHOW_MS,
+  RETRY_DELAYS_MS,
+  focusStep,
+  shouldStartLadder,
+} from '../ui/hooks/keyboardFocus';
 
 describe('focusStep — drabinka fokusu w arkuszu', () => {
   it('pierwsza próba jest czystym focus() — pole nie było jeszcze skupione', () => {
@@ -42,14 +47,24 @@ describe('focusStep — drabinka fokusu w arkuszu', () => {
     expect(shouldStartLadder(true, true)).toBe(true);
   });
 
-  it('pierwsze ponowienie jest BLISKO, ostatnie daleko (issue #62, szósta tura)', () => {
-    // Do #62 pierwsza próba wypadała po 150 ms, bo miała przeczekać animację wjazdu
-    // okna. Animacji już nie ma (`SheetSurface` otwiera Modal bez niej), a zostało
-    // tylko przejęcie fokusu wejścia przez świeżo pokazane okno — klatka albo dwie.
-    // 150 ms czekania na to widać gołym okiem („nie wysuwa się od razu klawiatura").
-    expect(Math.min(...RETRY_DELAYS_MS)).toBeLessThanOrEqual(80);
-    // Ostatnie ponowienie zostaje daleko: jest na zamulony JS, nie na fokus okna.
-    expect(Math.max(...RETRY_DELAYS_MS)).toBeGreaterThanOrEqual(400);
+  /**
+   * REGRESJA Z 2026-08-29 („otwiera się klawiatura i znika"), i to regresja
+   * przybita testem: szósta tura issue #62 przesunęła pierwsze ponowienie na 50 ms,
+   * a TEN test wymagał wtedy `≤ 80`. Pilnował więc dokładnie tego, co psuło ekran.
+   *
+   * Właściwy niezmiennik jest inny i wynika z tego, czym ponowienie JEST: naprawą
+   * nieudanej próby. O nieudanej próbie nie da się wiedzieć, dopóki klawiatura ma
+   * jeszcze czas wyjść — a jedyny sygnał sukcesu (`keyboardDidShow`) pada na końcu
+   * jej animacji. Rung przed tą granicą strzela w każde normalne otwarcie: widzi
+   * `isVisible === false`, robi `blur()` + `focus()` i chowa klawiaturę, którą sam
+   * przed chwilą wywołał.
+   */
+  it('ŻADNE ponowienie nie wypada przed sygnałem, który mogłoby je odwołać', () => {
+    expect(Math.min(...RETRY_DELAYS_MS)).toBeGreaterThanOrEqual(KEYBOARD_SHOW_MS);
+  });
+
+  it('ostatnie ponowienie zostaje daleko — jest na zamulony JS, nie na fokus okna', () => {
+    expect(Math.max(...RETRY_DELAYS_MS)).toBeGreaterThanOrEqual(800);
     // Rosnąco — każda próba daje oknu więcej czasu niż poprzednia.
     expect([...RETRY_DELAYS_MS].sort((a, b) => a - b)).toEqual(RETRY_DELAYS_MS);
   });

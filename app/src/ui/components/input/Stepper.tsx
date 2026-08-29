@@ -302,7 +302,26 @@ export function Stepper({
               const next = clamp(parsed);
               if (next !== value) onChange(next);
             }}
-            onBlur={commit}
+            /**
+             * PRZY `autoEdit` WYJŚCIE Z POLA GO NIE ZWIJA (uwaga z urządzenia,
+             * 2026-08-29: „otwiera się klawiatura i znika").
+             *
+             * `commit` kasuje szkic, a szkic jest warunkiem renderowania tego
+             * `TextInput` — więc każdy `blur()` ODMONTOWUJE pole. Poza `autoEdit` to
+             * jest właśnie sens domknięcia: pilot tapnął gdzie indziej, kontrolka wraca
+             * do widoku wartości. Przy `autoEdit` pole JEST kontrolką (arkusz otworzył
+             * się po to, żeby w nim pisać), więc zwinięcie zabiera to, o co pilot prosił
+             * — a `blur()` przychodzi tam nie tylko od niego: robi je ponowienie
+             * drabinki fokusu, żeby móc ponownie poprosić o klawiaturę
+             * (`hooks/keyboardFocus.ts`). Zwijając się pod nim, kontrolka zamieniała
+             * nieudaną próbę fokusu w zniknięcie pola.
+             *
+             * Nic się przez to nie gubi: od issue #62 wartość wychodzi na KAŻDĄ zmianę
+             * tekstu, więc `commit` przy wyjściu nie jest już zapisem — jest wyłącznie
+             * domknięciem widoku. Wpis w toku zamyka `bump` (±) albo odmontowanie
+             * arkusza.
+             */
+            onBlur={autoEdit ? undefined : commit}
             onSubmitEditing={commit}
             keyboardType={edit.keyboardType ?? 'number-pad'}
             maxLength={edit.maxLength}

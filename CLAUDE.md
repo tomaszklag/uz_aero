@@ -820,9 +820,11 @@ Dziesięć uwag z urządzenia wokół wpisu ręcznego (15) i design systemu:
   z `onShow` gubił pierwszą próbę, bo `onShow` potrafi wyprzedzić commit dzieci
   modala (ref pusty → klawiatura dopiero z ponowienia = widoczne opóźnienie).
   Drabinka rusza więc w PÓŹNIEJSZYM z dwóch zdarzeń (okno pokazane, pole
-  zamontowane — `shouldStartLadder`) i ponawia przez `blur()`+`focus()` po
-  150/400/800 ms, dopóki `Keyboard.isVisible()` nie potwierdzi klawiatury.
-  Nowy arkusz z wpisem MUSI iść przez ten hook
+  zamontowane — `shouldStartLadder`) i ponawia przez `blur()`+`focus()`, dopóki
+  klawiatura nie wyjdzie. **Odstępy ponowień: patrz „ponowienie fokusu jest drogie"
+  niżej** — nie dobieraj ich pod „żeby było szybciej", bo ponowienie nie otwiera
+  klawiatury, tylko naprawia próbę, która zawiodła. Nowy arkusz z wpisem MUSI iść
+  przez ten hook
 - **data lotu jest PIERWSZYM polem kroku 1 wpisu ręcznego** — wpis zaczyna się od
   „którego to było?", potem czym. Przypis „doba liczy się od uruchomienia silnika"
   zniknął z formularza; to samo zdanie stoi w arkuszu daty jako ZWYKŁE zdanie
@@ -909,14 +911,34 @@ poprawka dosięgła ośmiu arkuszy naraz.
   - **wysunięcie rusza w PÓŹNIEJSZYM z dwóch zdarzeń** (okno pokazane, panel zmierzony)
     — ta sama koniunkcja i ten sam powód, co przy drabince fokusu
   - **drabinka fokusu ZOSTAJE**, ale w węższej roli: broni już tylko przed `onShow`
-    wyprzedzającym commit dzieci modala, nie przed animacją okna. Jej odstępy zostały
-    przez to PRZESTROJONE (50/180/400/800 zamiast 150/400/800): pierwsze ponowienie
-    czekało na animację okna, a teraz czeka wyłącznie na przejęcie fokusu wejścia przez
-    świeżo pokazane okno — klatkę albo dwie
+    wyprzedzającym commit dzieci modala, nie przed animacją okna. Odstępy przestrojone
+    wtedy na 50/180/400/800 okazały się jednak BŁĘDEM — patrz punkt niżej
   - **zamykany arkusz NIE ŁAPIE DOTYKU** (`pointerEvents` po `visible`, nie po animacji):
     odkąd okno żyje dłużej niż `visible`, pełnoekranowa nakładka przez ~160 ms po
     zamknięciu zjadała pierwsze tapnięcie w ekran pod spodem („jakby 2× muszę wcisnąć
     DALEJ"). Arkusz w trakcie wyjazdu ma być już tylko OBRAZEM
+  - **PONOWIENIE FOKUSU JEST DROGIE I DLATEGO STOI DALEKO** (uwaga z urządzenia,
+    2026-08-29: „otwiera się klawiatura i znika"). Przestrojenie odstępów na
+    50/180/400/800 wzięło się z myślenia, że wcześniejszy rung = szybsza klawiatura.
+    Ponowienie NIE OTWIERA klawiatury — otwiera ją próba nr 0 w `onShow`. Ponowienie
+    NAPRAWIA próbę, która zawiodła, a o tym, że zawiodła, nie da się wiedzieć, dopóki
+    klawiatura ma jeszcze czas wyjść: jedyny sygnał sukcesu (`keyboardDidShow`) pada
+    na końcu jej animacji (~300 ms). Rungi 50 i 180 wypadały więc w środku tej animacji,
+    widziały `Keyboard.isVisible() === false` i robiły `blur()`+`focus()` — chowały
+    klawiaturę, którą same przed chwilą wywołały, i to przy KAŻDYM normalnym otwarciu.
+    Odtąd: `KEYBOARD_SHOW_MS` = 300 jako nazwana granica, `RETRY_DELAYS_MS` = [350, 800]
+    za nią, a `useSheetInputFocus` kasuje wiszące rungi na `keyboardDidShow` — przy
+    udanym otwarciu nie odpala się ani jeden. Niezmiennik „żadne ponowienie przed
+    `KEYBOARD_SHOW_MS`" ma test; poprzedni test wymagał `≤ 80 ms`, czyli PILNOWAŁ
+    usterki — dobierając te liczby, pilnuj sygnału, nie wrażenia szybkości
+  - **kontrolka `autoEdit` NIE ZWIJA SIĘ przy wyjściu z pola** (`Stepper.onBlur`, ta
+    sama uwaga): `commit` kasuje szkic, a szkic jest warunkiem renderowania `TextInput`,
+    więc każdy `blur()` ODMONTOWYWAŁ pole. Poza `autoEdit` to jest sens domknięcia
+    (pilot tapnął gdzie indziej, wraca widok wartości), ale przy `autoEdit` pole JEST
+    kontrolką — a `blur()` przychodzi tam nie tylko od pilota: robi je ponowienie
+    drabinki. Kontrolka zamieniała przez to nieudaną próbę fokusu w ZNIKNIĘCIE POLA.
+    Nic się nie gubi, bo wartość wychodzi na każdą zmianę tekstu: `commit` przy wyjściu
+    nie jest zapisem, tylko domknięciem widoku
   - **przy JEDNEJ kontrolce etykieta nie powtarza tytułu**: „URUCHOMIENIE" nad polem
     „Uruchomienie (UTC)" to było jedno słowo dwa razy. Zostaje sama jednostka
     („Godzina (UTC)"); przy parze kontrolek etykiety wracają do nazw, bo wtedy odróżniają

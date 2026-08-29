@@ -34,6 +34,24 @@ export function useSheetInputFocus(): {
 
   useEffect(() => clearTimers, [clearTimers]);
 
+  /*
+   * KLAWIATURA ODWOŁUJE DRABINKĘ W CHWILI, W KTÓREJ WYJDZIE (uwaga z urządzenia,
+   * 2026-08-29). Do tej pory ponowienia pytały o `Keyboard.isVisible()` dopiero
+   * w swoim terminie — a między `focus()` a `keyboardDidShow` mija cała animacja
+   * wysunięcia, więc rung wypadający w środku tej animacji widział jeszcze fałsz
+   * i robił `blur()` + `focus()`: chował klawiaturę, którą sam przed chwilą wywołał.
+   *
+   * Sygnał zdarzeniowy jest tu właściwą odpowiedzią, bo pyta o TO SAMO co
+   * `Keyboard.isVisible()`, tylko w momencie, w którym odpowiedź się zmienia,
+   * zamiast w z góry wybranej chwili. Odstępy rungów są drugą połową tej poprawki:
+   * stoją za `KEYBOARD_SHOW_MS`, żeby przy wolniejszym urządzeniu nie wyprzedziły
+   * zdarzenia, które ma je skasować.
+   */
+  useEffect(() => {
+    const shown = Keyboard.addListener('keyboardDidShow', clearTimers);
+    return () => shown.remove();
+  }, [clearTimers]);
+
   const attempt = useCallback((round: number) => {
     const field = input.current;
     if (field == null) return;
