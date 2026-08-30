@@ -162,6 +162,11 @@ function lastEventAt(rows: readonly { at: number }[]): number {
   return rows.reduce((max, row) => (row.at > max ? row.at : max), 0);
 }
 
+/** Najwcześniejsza chwila strumienia, nie później niż podana; klucz sortowania przejęcia. */
+function firstEventAt(events: readonly Event[], claimedAt: number): number {
+  return events.reduce((min, event) => (at(event) < min ? at(event) : min), claimedAt);
+}
+
 /** Czas zdarzenia: GPS ma pierwszeństwo przed zegarem telefonu (§5.1, dwa zegary). */
 const at = (e: Event): number => e.gpsTime ?? e.deviceTime;
 
@@ -238,7 +243,19 @@ export function buildSessionAxis(
     rows.push({
       id: 'claim',
       kind: 'claim',
-      at: projection.claimedAt,
+      /* PRZEJĘCIE OTWIERA OŚ ZAWSZE (zgłoszenie z urządzenia, 2026-08-30: „najpierw
+         powinno być przejęcie, a dopiero później tankowanie").
+
+         Wpis ręczny składa dolewkę MINUTĘ PRZED uruchomieniem (issue #62, siódma tura),
+         a przejęcie stoi na uruchomieniu - więc tankowanie wypadało przed przejęciem
+         maszyny, czyli przed chwilą, od której pilot w ogóle nią dysponuje. Ta minuta
+         jest konwencją, nie pomiarem (dlatego oś jej nie pokazuje), a mimo to ustawiała
+         kolejność.
+
+         Klucz sortowania bierze więc WCZEŚNIEJSZĄ z dwóch chwil - symetrycznie do
+         zdania, które bierze późniejszą. Sesja na żywo nic na tym nie traci: tam
+         przejęcie faktycznie poprzedza wszystko. */
+      at: firstEventAt(events, projection.claimedAt),
       time: declaredTime(projection.claimedAt, projection.manualEntry, true),
       name: 'Przejęcie',
       sub: claimReadingLine(projection, mhFormat),

@@ -470,7 +470,19 @@ export function StatsScreen({
               onPress={openTrack}
             />
           )}
-          {trackLoaded && (track == null || track.missing != null) && (
+          {/* WPIS RĘCZNY NIE MA SEKCJI ŚLADU W OGÓLE (zgłoszenie z urządzenia,
+              2026-08-30: „przy locie ręcznym nigdy nie będzie śladu GPS - jest więc sens
+              wyświetlać tę sekcję?").
+
+              Nie ma. Pozostałe trzy powody braku są ZDARZENIAMI, o których warto
+              powiedzieć: nagranie czeka w kolejce, serwer go nie ma, brakuje zasięgu -
+              każde z nich może się zmienić i pilot ma wiedzieć, na co czeka. Wpis
+              ręczny nie czeka na nic: śladu nie było, nie będzie i nie jest to brak,
+              tylko właściwość zapisu - mówi o niej plakietka „RĘCZNIE" w nagłówku.
+
+              Karta znika razem z drogą na ekran 14, i tak ma być: nie ma po co wchodzić
+              w ekran śladu sesji, która śladu mieć nie może. */}
+          {trackLoaded && !projection.manualEntry && (track == null || track.missing != null) && (
             <View style={[styles.noTrack, { borderBottomColor: theme.colors.border }]}>
               {/* Powód braku śladu nazywa `missingTrackCopy` - ten sam moduł, co na
                   ekranie 14 (zgłoszenie z urządzenia, 2026-08-30). Do tej pory ten

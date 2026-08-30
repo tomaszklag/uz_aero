@@ -504,6 +504,13 @@ describe('oś sesji wpisanej ręcznie', () => {
     );
   });
 
+  it('PRZEJĘCIE otwiera oś - przed tankowaniem, które składa się minutę wcześniej', () => {
+    // Dolewka wpisu ręcznego siada minutę PRZED uruchomieniem, a przejęcie na nim -
+    // więc tankowanie wypadało przed chwilą, od której pilot dysponuje maszyną.
+    const rows = axis(manualEvents()).rows;
+    expect(rows[0]!.kind).toBe('claim');
+    expect(rows.findIndex((r) => r.kind === 'refuel')).toBeGreaterThan(0);
+  });
   it('godziny WYPROWADZONE są puste - przejęcie, zdanie i tankowanie', () => {
     // Pilot podał bieg silnika i godziny lotów; te trzy chwile są konwencją, nie
     // pomiarem. Godzina przy nich udawałaby zapamiętaną wartość.
