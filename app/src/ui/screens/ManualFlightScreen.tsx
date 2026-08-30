@@ -155,9 +155,6 @@ export function ManualFlightScreen({
   const { theme } = useTheme();
   const queries = useSessionStore((s) => s.queries);
   const manualFlight = useSessionStore((s) => s.manualFlight);
-  const synced = useSessionStore((s) => s.synced);
-  const outboxCount = useSessionStore((s) => s.outboxCount);
-  const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
   const pilotId = useCurrentPilot((s) => s.id);
 
   const [stepIndex, setStepIndex] = useState(0);
@@ -466,13 +463,7 @@ export function ManualFlightScreen({
             else navigation.navigate('MyDay');
           }}
           backLabel={stepIndex === 0 ? 'Mój dzień' : 'Wróć'}
-          right={
-            <SyncChip
-              status={synced ? 'synced' : 'offline'}
-              outboxCount={outboxCount}
-              lastSyncAt={lastSyncAt}
-            />
-          }
+          right={<SyncChip />}
         />
       }
       footer={

@@ -1497,6 +1497,34 @@ Pełna architektura: `docs/_main.md.txt` (sekcje 4–6). Zasady twarde:
   2. **dane z serwera** (przekazanie FOB/MH, status claim, lista pilotów) - 3 stany świeżości: `live` (bez adnotacji) / `cache` ("· z cache · sync 21 JUN 17:30", amber) / `brak` ("brak danych - wpisz z licznika")
   3. **akcje wymagające sieci** (pierwsze logowanie, zmiana konta, ręczny sync) - offline: disabled z podanym powodem, nigdy cichy błąd
 - Jeden globalny wskaźnik łączności: SyncChip - nie rozsiewamy komunikatów o braku sieci po ekranach. **Online nie rysuje NIC** (decyzja 2026-08-06, issue #12: „zsynchronizowano" to stan domyślny, a plakietka świecąca przez 99% czasu uczy oko ignorować róg ekranu). Offline: **SAM pill** `OFFLINE · n`; tapnięcie otwiera arkusz szczegółów synchronizacji (kolejka, ostatni udany sync, wiek danych referencyjnych - issue #23 pkt 5, wzorzec `01c`). Stemple syncu nie wiszą na ekranie na stałe. **Arkusz MA akcję „PONÓW PRÓBĘ"** (uwaga z urządzenia, 2026-08-30) - odwraca to zdanie z issue #23 („arkusz jest INFORMACYJNY, bez akcji: przycisk-atrapa uczyłby, że trzeba pomagać"), bo ponowienie NIE JEST atrapą: robi to samo, co „SYNCHRONIZUJ TERAZ" w ustawieniach (dopycha kolejkę i pyta o dane referencyjne z pominięciem bramy wieku, issue #55). Znikły za to stopka odsyłająca po ten przycisk do ustawień oraz zdanie „brak zasięgu niczego nie blokuje" - drugie odpowiadało na obawę, której pilot nie zgłosił, a przez to ją podsuwało
+- **„OFFLINE" ZNACZY WYNIK OSTATNIEJ PRÓBY, NIGDY NIEPUSTĄ KOLEJKĘ** (uwaga z urządzenia,
+  2026-08-30: „w logach api widzę, że udało się połączenie, ale UI nadal mówi, że jest
+  offline"). Chip liczył stan jako `outboxCount === 0 ? 'synced' : 'offline'`, więc KAŻDA
+  zaległość była „brakiem sieci" - także taka, która stoi dlatego, że serwer ODPOWIEDZIAŁ
+  i odmówił. Właściwą definicję aplikacja miała już w dwóch innych miejscach (Ustawienia:
+  „innego pojęcia o sieci aplikacja nie ma i nie udaje, że ma"; plakietka zaległości na 12
+  z issue #35), a chip był jedynym z definicją drugą - powtórzoną w piętnastu ekranach.
+  Odtąd rachunek jest JEDEN, w `components/status/syncIndicator.ts`, a ekran podaje samo
+  `<SyncChip />`: szesnasta kopia nie ma jak się rozjechać, skoro nie ma czego kopiować
+- **TRZECI STAN: `blocked`** (`SYNC STOI · n`, CZERWONY, mockup `01d`) - serwer odmówił
+  albo sesja wygasła. To NIE jest offline i nie wolno tego tak nazywać: sieć jest, a
+  kolejka mimo to stoi i sama nie ruszy. Bursztyn w tej aplikacji znaczy „poczekaj, samo
+  przejdzie", więc kolor musi je rozróżniać już na pillu. Baner nazywa powód, uspokaja
+  o ZAPISACH (rejestr na telefonie jest kompletny - bez tego czerwień czyta się jak utrata
+  danych), niesie KOD odmowy (pilot przeczyta go administratorowi) i kończy się DROGĄ
+  WYJŚCIA. Rozdzielenie stanów nie jest ozdobą awarii - bez niego jedyną odpowiedzią na
+  odmowę serwera było zdanie o czekaniu na zasięg
+- **KAŻDA AKCJA MUSI ZOSTAWIĆ ŚLAD, TAKŻE NIEUDANA** - wiersz „Ostatnia próba"
+  (`sessionStore.lastAttemptAt`, osobno od `lastSyncAt`: tamto mówi, ile lat mają dane,
+  to - czy przycisk zadziałał). Przy nieudanym ponowieniu NIC innego w arkuszu się nie
+  zmienia: kolejka stoi, stempel udanego syncu stoi, pill stoi - więc bez tego wiersza
+  tapnięcie było nieodróżnialne od martwego przycisku. Przycisk mówi przy tym, co się
+  DZIEJE („WYSYŁANIE…"), a nie tylko gaśnie; to nie jest wyjątek od §6 pkt 3, bo tamta
+  reguła dotyczy BLOKAD, a to jest postęp czynności, o którą pilot właśnie poprosił
+- **ARKUSZ ŻYJE DŁUŻEJ NIŻ PILL**: udane ponowienie gasi wskaźnik, ale arkusz zostaje
+  otwarty ze zdaniem „Wysłano n". Do 2026-08-30 komponent zaczynał się od `return null`,
+  więc jedyny przypadek z dobrą wiadomością wyrywał pilotowi arkusz z rąk - a zniknięcie
+  jest fatalnym raportem, bo wygląda dokładnie tak samo jak awaria
 - Blokada PIC = optymistyczny claim - przejęcie samolotu działa też offline (ostrzeżenie z danych cache)
 - Wygasły token ≠ wylogowanie; wylogowanie zablokowane przy niepustym outboxie
 - Liczniki fizyczne (MH, paliwomierz) > dane z serwera - serwer tylko podpowiada

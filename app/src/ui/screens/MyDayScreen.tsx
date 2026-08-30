@@ -94,8 +94,6 @@ export function MyDayScreen({
   const repo = useSessionStore((s) => s.repo);
   const queries = useSessionStore((s) => s.queries);
   const loadSession = useSessionStore((s) => s.loadSession);
-  const synced = useSessionStore((s) => s.synced);
-  const outboxCount = useSessionStore((s) => s.outboxCount);
   const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
   const streamRevision = useSessionStore((s) => s.streamRevision);
   const streamHydrated = useSessionStore((s) => s.streamHydrated);
@@ -212,12 +210,7 @@ export function MyDayScreen({
           right={
             // Licznika sesji w nagłówku nie ma (issue #23 pkt 6) - liczbę sesji widać
             // na liście. Pill offline jest jedynym śladem sieci; szczegóły pod tapnięciem.
-            <SyncChip
-              status={synced ? 'synced' : 'offline'}
-              outboxCount={outboxCount}
-              lastSyncAt={lastSyncAt}
-              refCheckedAt={refCheckedAt}
-            />
+            <SyncChip refCheckedAt={refCheckedAt} />
           }
         />
       }

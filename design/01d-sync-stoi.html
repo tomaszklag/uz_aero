@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero - 01C Mój dzień (offline + szczegóły synchronizacji)</title>
+<title>UZ Aero - 01D Mój dzień (sync stoi - serwer odmówił)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -67,12 +67,16 @@
   .screen-title { font-family:var(--font-display); font-size:20px; letter-spacing:2px; color:var(--text-primary); }
   .header-subtitle { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
   .app-header-right { display:flex; align-items:center; gap:4px; flex-shrink:0; }
+  /* CZERWONY, nie bursztynowy. Bursztyn w tej aplikacji znaczy "poczekaj, samo
+     przejdzie" (offline, dane z cache) - a ten stan sam nie przejdzie. Kolor jest
+     jedyną rzeczą, którą pilot widzi bez otwierania arkusza, więc musi już on
+     odróżniać "nie ma sieci" od "sieć jest, a kolejka stoi". */
   .sync-chip {
     display:inline-flex; align-items:center; gap:5px;
     min-height:34px; padding:3px 11px; border-radius:999px;
-    background:var(--amber-muted); border:1px solid var(--amber-border);
+    background:var(--red-muted); border:1px solid var(--red-border);
     font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase;
-    color:var(--amber); text-decoration:none; cursor:pointer;
+    color:var(--red); text-decoration:none; cursor:pointer;
   }
   .icon-btn {
     width:44px; height:44px; display:inline-flex; align-items:center; justify-content:center;
@@ -151,12 +155,12 @@
   .modal-sheet { background:var(--surface-raised); border-radius:24px 24px 0 0; padding:18px 18px 30px; display:flex; flex-direction:column; gap:13px; border-top:1px solid var(--border-strong); max-height:calc(100% - 56px); overflow-y:auto; }
   .sheet-title { font-family:var(--font-display); font-size:21px; letter-spacing:2px; }
   .sheet-status {
-    display:flex; align-items:center; gap:9px; padding:11px 13px; border-radius:12px;
-    background:var(--amber-muted); border:1px solid var(--amber-border);
+    display:flex; align-items:flex-start; gap:9px; padding:11px 13px; border-radius:12px;
+    background:var(--red-muted); border:1px solid var(--red-border);
   }
-  .sheet-status .dot { width:8px; height:8px; border-radius:50%; background:var(--amber); box-shadow:0 0 8px var(--amber-glow); flex-shrink:0; }
+  .sheet-status .dot { width:8px; height:8px; border-radius:50%; background:var(--red); box-shadow:0 0 8px var(--red-glow); flex-shrink:0; margin-top:4px; }
   .sheet-status-text { font-size:12px; color:var(--text-primary); line-height:1.5; }
-  .sheet-status-text b { color:var(--amber); }
+  .sheet-status-text b { color:var(--red); }
   .sheet-rows { display:flex; flex-direction:column; border:1px solid var(--border); border-radius:12px; overflow:hidden; }
   .sheet-row { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:11px 13px; background:var(--surface); border-bottom:1px solid var(--border); }
   .sheet-row:last-child { border-bottom:none; }
@@ -205,8 +209,8 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO - 01C</span>
-  <span class="slug">mój dzień · offline + szczegóły syncu</span>
+  <span class="film-strip">UZ AERO - 01D</span>
+  <span class="slug">mój dzień · sync stoi (serwer odmówił)</span>
   <span class="canvas-meta"><span class="pulse"></span>Wariant ekranu 01</span>
 </header>
 
@@ -228,9 +232,9 @@
         <span class="header-subtitle">TMK · 06 SIE 2026</span>
       </div>
       <div class="app-header-right">
-        <a href="01c-moj-dzien-offline.html" class="sync-chip" title="Szczegóły synchronizacji - arkusz na dole ekranu">
+        <a href="01d-sync-stoi.html" class="sync-chip" title="Szczegóły synchronizacji - arkusz na dole ekranu">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6"/></svg>
-          OFFLINE · 2
+          SYNC STOI · 2
         </a>
         <a href="13-ustawienia.html" class="icon-btn" title="Ustawienia">
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82V9a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
@@ -333,14 +337,23 @@
       <div class="modal-sheet">
         <span class="sheet-title">SYNCHRONIZACJA</span>
 
+        <!-- BANER MÓWI, ŻE TO SIĘ SAMO NIE NAPRAWI - i to jest cała różnica wobec 01C.
+             Do 2026-08-30 ten stan wyświetlał się jako "Offline … wyślą się same, gdy
+             wróci sieć", czyli podawał pilotowi nieprawdę i kazał czekać na zdarzenie,
+             które już nastąpiło: sieć JEST, serwer odpowiedział, tylko odmówił.
+
+             Zdanie kończy się DROGĄ WYJŚCIA, bo bez niej baner jest samą złą wiadomością.
+             Nie ma tu za to ani słowa o kopercie, kodzie HTTP czy budowie kolejki -
+             ta sama granica, którą issue #43 wyznaczyło arkuszom korekty. -->
         <div class="sheet-status">
           <span class="dot"></span>
           <!-- „brak zasięgu niczego nie blokuje" USUNIĘTE (uwaga z urządzenia,
                2026-08-30). Zdanie odpowiadało na obawę, której pilot nie zgłosił -
                a przez to ją podsuwało. Ta sama kategoria przypisów, którą issue #43
                wyrzuciło z arkuszy korekty. Zostaje sam fakt i to, co się z nim stanie. -->
-          <span class="sheet-status-text"><b>Offline</b> - 2 zdarzenia czekają w kolejce.
-          Wyślą się same, gdy wróci sieć.</span>
+          <span class="sheet-status-text"><b>Serwer odmówił przyjęcia</b> - 2 zdarzenia stoją
+          w kolejce i nie wyślą się same. Twoje zapisy są bezpieczne w telefonie.
+          Zgłoś to administratorowi.</span>
         </div>
 
         <div class="sheet-rows">
@@ -358,7 +371,7 @@
                pytanie o wiek danych. -->
           <div class="sheet-row">
             <span class="sheet-row-key">Ostatnia próba</span>
-            <span class="sheet-row-val amber">17:42 UTC - brak sieci</span>
+            <span class="sheet-row-val red">17:42 UTC - odrzucone</span>
           </div>
           <div class="sheet-row">
             <span class="sheet-row-key">Ostatnia udana synchronizacja</span>
@@ -408,20 +421,20 @@
       <span class="vp-when">Pilot wszedł do aplikacji i nie przejął jeszcze nic: pusty log dnia, cały ekran prowadzi do przejęcia samolotu.</span>
     </span>
   </a>
-  <a class="vp-item active" href="01c-moj-dzien-offline.html">
+  <a class="vp-item" href="01c-moj-dzien-offline.html">
     <span class="vp-badge amber">01C</span>
     <span class="vp-body">
       <span class="vp-name">Offline - pill i szczegóły synchronizacji</span>
       <span class="vp-when">Brak sieci: amber pill „OFFLINE · n" przed zębatką (jedyny ślad sieci, bez stempla pod spodem). Tapnięcie otwiera ten arkusz: kolejka, ostatnia udana synchronizacja, wiek danych referencyjnych (issue #23 pkt 5). Arkusz podaje też wynik OSTATNIEJ PRÓBY i przycisk "Ponów próbę". Wzorzec pilla i arkusza obowiązuje KAŻDY ekran z SyncChipem.</span>
     </span>
-    <span class="vp-tag">ten ekran</span>
   </a>
-  <a class="vp-item" href="01d-sync-stoi.html">
+  <a class="vp-item active" href="01d-sync-stoi.html">
     <span class="vp-badge amber">01D</span>
     <span class="vp-body">
       <span class="vp-name">Sync stoi - kolejka się nie opróżni sama</span>
       <span class="vp-when">Serwer ODPOWIEDZIAŁ i odmówił (albo sesja wygasła). To NIE jest offline: sieć jest, więc "wyślą się same, gdy wróci sieć" byłoby nieprawdą - a dokładnie tak wyglądał ten stan do 2026-08-30. Czerwony pill, powód i droga wyjścia w arkuszu.</span>
     </span>
+    <span class="vp-tag">ten ekran</span>
   </a>
 </aside>
 
@@ -432,8 +445,8 @@
   <span>·</span>
   <a href="01-moj-dzien.html">01 Mój dzień</a>
   <a href="01a-moj-dzien-pusty.html">01A Zero sesji</a>
-  <a href="01c-moj-dzien-offline.html" class="active">01C Offline</a>
-  <a href="01d-sync-stoi.html">01D Sync stoi</a>
+  <a href="01c-moj-dzien-offline.html">01C Offline</a>
+  <a href="01d-sync-stoi.html" class="active">01D Sync stoi</a>
   <span>·</span>
   <a href="12-historia.html">12 Poprzednie dni</a>
   <span>·</span>

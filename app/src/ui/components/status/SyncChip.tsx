@@ -1,53 +1,71 @@
 /**
  * UZ Aero - SyncChip
  *
- * Jedyny globalny wskaźnik łączności (offline-first, docs/_main.md.txt §4.3, §6):
- *   - synced  → **nic** (od 2026-08-06, issue #12)
- *   - offline → "OFFLINE · n" (amber pill, n = liczba zdarzeń w outboksie)
+ * Jedyny globalny wskaźnik łączności (offline-first, docs/_main.md.txt §4.3, §6).
+ * Stany, ich znaczenia i cała treść arkusza mieszkają w `syncIndicator.ts` - tutaj
+ * zostaje sam rysunek, bo `.tsx` w tej aplikacji eksportuje wyłącznie komponenty
+ * (`docs/architektura-kodu.md` §2).
  *
  * DLACZEGO ZIELONE „SYNC" ZNIKŁO. Zsynchronizowano to stan DOMYŚLNY - plakietka
  * potwierdzająca normalność zajmowała miejsce w każdym nagłówku aplikacji i uczyła oko
  * ignorować róg ekranu, w którym czasem pojawia się rzecz naprawdę ważna. Cisza niesie
  * tu tę samą informację (ta sama reguła co przy `FreshnessNote`: stan `live` nie dostaje
- * żadnej adnotacji), a amber pill zauważa się dopiero wtedy, gdy jest co zauważać.
+ * żadnej adnotacji), a pill zauważa się dopiero wtedy, gdy jest co zauważać.
  *
- * SZCZEGÓŁY POD TAPNIĘCIEM (issue #23 pkt 5, mockup `01c`). Ekran pokazywał dwa stemple
- * syncu naraz - pod pillem i w stopce „Dane referencyjne" - i oba znikły: pill jest
- * jedynym śladem sieci, a tapnięcie otwiera arkusz ze szczegółami (stan kolejki,
- * ostatnia udana synchronizacja, wiek danych referencyjnych).
+ * SZCZEGÓŁY POD TAPNIĘCIEM (issue #23 pkt 5, mockupy `01c` i `01d`). Ekran pokazywał dwa
+ * stemple syncu naraz - pod pillem i w stopce „Dane referencyjne" - i oba znikły: pill
+ * jest jedynym śladem sieci, a tapnięcie otwiera arkusz ze szczegółami.
  *
  * ARKUSZ MA AKCJĘ „PONÓW PRÓBĘ" (uwaga z urządzenia, 2026-08-30) - i to ODWRACA decyzję
  * z issue #23, która brzmiała „arkusz jest INFORMACYJNY, bez akcji «wyślij teraz»:
  * outbox wysyła sam, a przycisk-atrapa uczyłby, że trzeba pomagać". Uzasadnienie było
  * połowiczne: outbox faktycznie wysyła sam, ale ponowienie NIE JEST atrapą - robi
  * dokładnie to, co „SYNCHRONIZUJ TERAZ" w ustawieniach, czyli dopycha kolejkę I pyta
- * o dane referencyjne z pominięciem bramy wieku (issue #55). Pilot otwiera ten arkusz
- * z pytaniem „czy teraz?", a odpowiedź „poczekaj albo idź do ustawień" była gorsza niż
- * jedno tapnięcie - zwłaszcza odkąd stopka z tym drogowskazem zniknęła.
+ * o dane referencyjne z pominięciem bramy wieku (issue #55).
+ *
+ * ARKUSZ ŻYJE DŁUŻEJ NIŻ PILL (druga uwaga z tego samego dnia). Do 2026-08-30 komponent
+ * zaczynał się od `if (status === 'synced') return null`, więc UDANE ponowienie - czyli
+ * jedyny przypadek, w którym pilot dostawał dobrą wiadomość - wyrywało mu arkusz z rąk
+ * w połowie interakcji: kolejka szła do zera, wskaźnik gasł i całe poddrzewo znikało
+ * razem z odpowiedzią. Zniknięcie jest fatalnym raportem, bo wygląda dokładnie tak samo
+ * jak awaria. Odtąd gaśnie sam PILL, a arkusz zostaje otwarty ze zdaniem „Wysłano n" -
+ * zamyka go pilot, kiedy je przeczyta.
+ *
+ * WSKAŹNIK LICZY SIĘ TUTAJ, NIE W EKRANACH. Piętnaście ekranów powtarzało
+ * `status={synced ? 'synced' : 'offline'}` - piętnaście kopii rachunku, który był
+ * nieprawdziwy (pełne uzasadnienie w `syncIndicator.ts`). Ekran podaje dziś samo
+ * `<SyncChip />`; propsy zostają wyłącznie jako nadpisania dla katalogu stylów, który
+ * musi umieć pokazać stan bez podłączonego serwera.
  *
  * Pill renderuje się PRZEZ `StatusChip`: SYNC i RUNNING stoją obok siebie w pasku 05,
  * więc muszą mieć identyczne metryki - osobna implementacja pilla już raz rozjechała
- * ich wysokości (2026-08-04). Osobny komponent zostaje, bo wskaźnik sieci jest jeden,
- * nie wolno go mnożyć i ma własny słownik stanów.
+ * ich wysokości (2026-08-04).
  */
 
 import React, { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, type ViewStyle } from 'react-native';
 
-import { plural, timeUtc } from '../../format';
+import { eventsCount, timeUtc } from '../../format';
 import { useSessionStore } from '../../store';
 import { Banner } from './Banner';
-import { Sheet } from '../sheets/Sheet';
+import { Sheet, type SheetRow } from '../sheets/Sheet';
 import { StatusChip } from './StatusChip';
 import { syncStamp } from './syncStamp';
-
-export type SyncStatus = 'synced' | 'offline';
+import {
+  attemptStamp,
+  syncIndicator,
+  syncPillLabel,
+  syncPillTone,
+  syncReport,
+  type SyncIndicator,
+} from './syncIndicator';
 
 export interface SyncChipProps {
-  status: SyncStatus;
-  /** Liczba zdarzeń w outboksie - renderowana jako "OFFLINE · n" (tylko dla offline). */
+  /** Nadpisanie stanu - wyłącznie dla katalogu stylów; normalnie liczy go `syncIndicator`. */
+  status?: SyncIndicator;
+  /** Nadpisanie licznika kolejki (katalog stylów). */
   outboxCount?: number;
-  /** Chwila ostatniej UDANEJ synchronizacji (`sessionStore.lastSyncAt`); null = jeszcze żadnej. */
+  /** Nadpisanie chwili ostatniej UDANEJ synchronizacji (katalog stylów). */
   lastSyncAt?: number | null;
   /**
    * Stempel cache referencyjnego (`reference.checkedAt`, §4.8) - wiersz w arkuszu
@@ -58,24 +76,35 @@ export interface SyncChipProps {
   style?: ViewStyle;
 }
 
-export function SyncChip({
-  status,
-  outboxCount,
-  lastSyncAt = null,
-  refCheckedAt,
-  style,
-}: SyncChipProps) {
+export function SyncChip({ status, outboxCount, lastSyncAt, refCheckedAt, style }: SyncChipProps) {
   const [detailsOpen, setDetailsOpen] = useState(false);
+  /* Arkusz musi PRZEŻYĆ zgaśnięcie pilla (patrz nota wyżej), ale montowanie go na zapas
+     na każdym ekranie nie jest ceną, którą trzeba za to zapłacić: `Sheet` trzyma
+     `useKeyboardHeight`, więc wisiałby nasłuch klawiatury przerysowujący to poddrzewo
+     przy każdym wysunięciu - akurat na ekranach z polami wpisu, gdzie dzieje się to bez
+     przerwy. Warunek montowania jest więc taki jak przed zmianą (pill widoczny),
+     poszerzony o „pilot ten arkusz otworzył" - i to wystarcza, bo otworzyć go można
+     wyłącznie z widocznego pilla. */
+  const [everOpened, setEverOpened] = useState(false);
+
+  const storeCount = useSessionStore((st) => st.outboxCount);
+  const storeLastSync = useSessionStore((st) => st.lastSync);
+  const storeLastSyncAt = useSessionStore((st) => st.lastSyncAt);
+  const lastAttemptAt = useSessionStore((st) => st.lastAttemptAt);
+  const syncNow = useSessionStore((st) => st.syncNow);
+  const refreshReferenceNow = useSessionStore((st) => st.refreshReferenceNow);
+
+  const count = outboxCount ?? storeCount;
+  const indicator = status ?? syncIndicator(count, storeLastSync);
+  const syncedAt = lastSyncAt !== undefined ? lastSyncAt : storeLastSyncAt;
 
   /* Ponowienie to TA SAMA para wywołań, co „SYNCHRONIZUJ TERAZ" w ustawieniach:
      dopchnięcie kolejki i pytanie o dane referencyjne z pominięciem bramy wieku
      (issue #55). Pilot sięgający po przycisk awaryjny pyta „co serwer wie teraz",
      a sama wysyłka odpowiadałaby na pół pytania.
 
-     Store bywa pusty (StyleGuide, testy komponentów) - wtedy akcji po prostu nie ma,
+     Store bywa pusty (katalog stylów, testy komponentów) - wtedy akcji po prostu nie ma,
      zamiast przycisku, który nic nie robi (§6 pkt 3). */
-  const syncNow = useSessionStore((st) => st.syncNow);
-  const refreshReferenceNow = useSessionStore((st) => st.refreshReferenceNow);
   const [retrying, setRetrying] = useState(false);
   const retry = useCallback(async (): Promise<void> => {
     if (syncNow == null) return;
@@ -88,65 +117,75 @@ export function SyncChip({
     }
   }, [refreshReferenceNow, syncNow]);
 
-  // Stan domyślny nie melduje się z niczym - patrz nota wyżej.
-  if (status === 'synced') return null;
+  const report = syncReport(indicator, count, storeLastSync);
+  const attempt = attemptStamp(storeLastSync, lastAttemptAt);
+  const pill = syncPillLabel(indicator, count);
 
-  const count = outboxCount ?? 0;
-  const label = outboxCount != null ? `OFFLINE · ${outboxCount}` : 'OFFLINE';
-  const queued = `${count} ${plural(count, 'zdarzenie', 'zdarzenia', 'zdarzeń')}`;
+  const rows: SheetRow[] = [
+    { label: 'W kolejce', value: eventsCount(count) },
+    // NAD stemplem udanego syncu: odpowiada na świeższe pytanie („co się właśnie
+    // stało"), a tamten na pytanie o wiek danych.
+    ...(attempt != null
+      ? [
+          {
+            label: 'Ostatnia próba',
+            value: attempt.value,
+            ...(attempt.tone != null && { tone: attempt.tone }),
+          },
+        ]
+      : []),
+    { label: 'Ostatnia udana synchronizacja', value: syncStamp(syncedAt ?? null, Date.now()) },
+    ...(refCheckedAt !== undefined
+      ? [
+          {
+            label: 'Dane referencyjne',
+            value: refCheckedAt != null ? `sync ${timeUtc(refCheckedAt)} UTC` : 'jeszcze bez synca',
+          },
+        ]
+      : []),
+  ];
 
   return (
     <>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`Offline, ${count} w kolejce - szczegóły synchronizacji`}
-        onPress={() => setDetailsOpen(true)}
-        style={({ pressed }) => [styles.pill, { opacity: pressed ? 0.6 : 1 }, style]}
-      >
-        <StatusChip label={label} tone="amber" />
-      </Pressable>
+      {indicator !== 'hidden' && (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`${pill} - szczegóły synchronizacji`}
+          onPress={() => {
+            setEverOpened(true);
+            setDetailsOpen(true);
+          }}
+          style={({ pressed }) => [styles.pill, { opacity: pressed ? 0.6 : 1 }, style]}
+        >
+          <StatusChip label={pill} tone={syncPillTone(indicator)} />
+        </Pressable>
+      )}
 
-      <Sheet
-        visible={detailsOpen}
-        title="SYNCHRONIZACJA"
-        rows={[
-          { label: 'W kolejce', value: queued },
-          { label: 'Ostatnia udana synchronizacja', value: syncStamp(lastSyncAt, Date.now()) },
-          ...(refCheckedAt !== undefined
-            ? [
-                {
-                  label: 'Dane referencyjne',
-                  value:
-                    refCheckedAt != null ? `sync ${timeUtc(refCheckedAt)} UTC` : 'jeszcze bez synca',
-                },
-              ]
-            : []),
-        ]}
-        cancelLabel="ZAMKNIJ"
-        onCancel={() => setDetailsOpen(false)}
-        /* Stopka „Pełna kolejka i historia wysyłki: Ustawienia → …" USUNIĘTA (uwaga
-           z urządzenia, 2026-08-30): odsyłała po przycisk, który stoi teraz TUTAJ. */
-        {...(syncNow != null
-          ? {
-              confirmLabel: 'PONÓW PRÓBĘ',
-              confirmDisabled: retrying,
-              onConfirm: () => void retry(),
-            }
-          : {})}
-      >
-        <Banner
-          kind="status"
-          tone="amber"
-          icon="sync"
-          text={
-            /* „brak zasięgu niczego nie blokuje" USUNIĘTE (uwaga z urządzenia,
-               2026-08-30): zdanie odpowiadało na obawę, której pilot nie zgłosił -
-               a przez to ją podsuwało. Zostaje sam fakt i to, co się z nim stanie. */
-            `Offline - ${queued} ${plural(count, 'czeka', 'czekają', 'czeka')} w kolejce. ` +
-            'Wyślą się same, gdy wróci sieć.'
-          }
-        />
-      </Sheet>
+      {(everOpened || indicator !== 'hidden') && (
+        <Sheet
+          visible={detailsOpen}
+          title="SYNCHRONIZACJA"
+          rows={rows}
+          cancelLabel="ZAMKNIJ"
+          onCancel={() => setDetailsOpen(false)}
+          /* Stopka „Pełna kolejka i historia wysyłki: Ustawienia → …" USUNIĘTA (uwaga
+             z urządzenia, 2026-08-30): odsyłała po przycisk, który stoi teraz TUTAJ. */
+          {...(syncNow != null
+            ? {
+                // Napis mówi, co się DZIEJE, a nie tylko że przycisk jest chwilowo martwy:
+                // bez niego jedynym śladem trwającej wysyłki było wyszarzenie,
+                // nieodróżnialne od blokady. Powodu tu nie ma i być nie powinno - §6 pkt 3
+                // dotyczy blokad, a to jest postęp czynności, o którą pilot właśnie
+                // poprosił.
+                confirmLabel: retrying ? 'WYSYŁANIE…' : 'PONÓW PRÓBĘ',
+                confirmDisabled: retrying,
+                onConfirm: () => void retry(),
+              }
+            : {})}
+        >
+          <Banner kind="status" tone={report.tone} icon="sync" text={report.text} />
+        </Sheet>
+      )}
     </>
   );
 }

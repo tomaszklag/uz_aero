@@ -109,9 +109,6 @@ export function ReleaseAircraftScreen({
   navigation: { navigate: (s: string) => void; goBack: () => void };
 }) {
   const projection = useSessionStore((s) => s.projection);
-  const synced = useSessionStore((s) => s.synced);
-  const outboxCount = useSessionStore((s) => s.outboxCount);
-  const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
   const lastError = useSessionStore((s) => s.lastError);
   const releaseAircraft = useSessionStore((s) => s.releaseAircraft);
 
@@ -169,13 +166,7 @@ export function ReleaseAircraftScreen({
             subtitle={`${vm.aircraftId} · ${dateUtcLong(now)}`}
             onBack={navigation.goBack}
             backLabel="Kokpit"
-            right={
-              <SyncChip
-                status={synced ? 'synced' : 'offline'}
-                outboxCount={outboxCount}
-                lastSyncAt={lastSyncAt}
-              />
-            }
+            right={<SyncChip />}
           />
           {/* Bilans sesji zostaje na ekranie, gdy pilot przewija formularz: to z nim
               porównuje przyrost licznika, który właśnie przepisuje. Sesja bez lotu

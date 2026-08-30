@@ -89,9 +89,6 @@ export function PreflightAircraftScreen({
 }) {
   const { theme } = useTheme();
   const queries = useSessionStore((s) => s.queries);
-  const synced = useSessionStore((s) => s.synced);
-  const outboxCount = useSessionStore((s) => s.outboxCount);
-  const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
   const refreshReference = useSessionStore((s) => s.refreshReference);
 
   const pilotId = useCurrentPilot((s) => s.id);
@@ -244,13 +241,7 @@ export function PreflightAircraftScreen({
           // pilot i tak ma przed oczami, a numer kroku mówi już wszystko o miejscu w flow.
           title="NOWY LOT"
           step="1 / 3"
-          right={
-            <SyncChip
-              status={synced ? 'synced' : 'offline'}
-              outboxCount={outboxCount}
-              lastSyncAt={lastSyncAt}
-            />
-          }
+          right={<SyncChip />}
         />
       }
       // Warning braku floty stoi na środku ekranu (mockup 02g: `margin:auto`) - treść

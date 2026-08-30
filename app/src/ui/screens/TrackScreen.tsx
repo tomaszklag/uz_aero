@@ -79,9 +79,6 @@ export function TrackScreen({
   const { theme } = useTheme();
   const { width } = useWindowDimensions();
   const trackQueries = useSessionStore((s) => s.trackQueries);
-  const synced = useSessionStore((s) => s.synced);
-  const outboxCount = useSessionStore((s) => s.outboxCount);
-  const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
 
   const [view, setView] = useState<SessionTrackView | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -164,13 +161,7 @@ export function TrackScreen({
       size="md"
       onBack={navigation.goBack}
       backLabel="Sesja"
-      right={
-        <SyncChip
-          status={synced ? 'synced' : 'offline'}
-          outboxCount={outboxCount}
-          lastSyncAt={lastSyncAt}
-        />
-      }
+      right={<SyncChip />}
     />
   );
 

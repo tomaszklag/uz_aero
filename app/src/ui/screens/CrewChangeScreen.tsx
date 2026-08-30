@@ -54,8 +54,6 @@ export function CrewChangeScreen({
   const events = useSessionStore((s) => s.events);
   const queries = useSessionStore((s) => s.queries);
   const synced = useSessionStore((s) => s.synced);
-  const outboxCount = useSessionStore((s) => s.outboxCount);
-  const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
   const lastError = useSessionStore((s) => s.lastError);
   const crewChange = useSessionStore((s) => s.crewChange);
   const pilotId = useCurrentPilot((s) => s.id);
@@ -158,11 +156,7 @@ export function CrewChangeScreen({
               <AppText variant="mono" tone="muted" style={styles.headerTime}>
                 {`${timeUtc(now)} UTC`}
               </AppText>
-              <SyncChip
-                status={synced ? 'synced' : 'offline'}
-                outboxCount={outboxCount}
-                lastSyncAt={lastSyncAt}
-              />
+              <SyncChip />
             </>
           }
         />

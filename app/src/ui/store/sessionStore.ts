@@ -116,6 +116,16 @@ export interface SessionStore {
   lastSync: SyncOutcome | null;
   /** Chwila ostatniej UDANEJ wysyłki (epoch ms) - „ostatnia udana wysyłka 14:02 UTC". */
   lastSyncAt: number | null;
+  /**
+   * Chwila ostatniej PRÓBY - udanej czy nie (uwaga z urządzenia, 2026-08-30: „klikam
+   * «ponów próbę» i nie dostaję żadnego feedback czy się udało czy nie").
+   *
+   * Osobno od `lastSyncAt`, bo odpowiada na inne pytanie. Tamto mówi, ile lat mają
+   * dane; to mówi, czy przycisk w ogóle zadziałał - i przy nieudanym ponowieniu jest
+   * JEDYNĄ rzeczą w arkuszu, która się zmienia (kolejka stoi, stempel udanego syncu
+   * stoi, pill stoi). Bez tego pola tapnięcie było nieodróżnialne od martwego przycisku.
+   */
+  lastAttemptAt: number | null;
   /** Otwarte flagi serwera dotykające naszych sesji (§4.5) - do pokazania na 11. */
   serverFlags: SessionFlag[];
   /** Miękkie flagi ostatniej udanej komendy (banner „zapisane, ale sprawdź"). */
@@ -313,6 +323,7 @@ export const useSessionStore = create<SessionStore>((set, get) => {
     themePrefs: null,
     lastSync: null,
     lastSyncAt: null,
+    lastAttemptAt: null,
     serverFlags: [],
     warnings: [],
     lastError: null,
@@ -528,6 +539,8 @@ export const useSessionStore = create<SessionStore>((set, get) => {
       set((state) => ({
         lastSync: outcome,
         lastSyncAt: outcome.kind === 'synced' ? Date.now() : state.lastSyncAt,
+        // KAŻDY przebieg, także nieudany - to jest cała treść tego pola.
+        lastAttemptAt: Date.now(),
         // Flagi nadpisujemy przy KAŻDYM udanym syncu - serwer zwraca komplet otwartych,
         // więc rozwiązane u administratora same znikają z ekranu 11.
         serverFlags: outcome.kind === 'synced' ? outcome.flags : state.serverFlags,
@@ -608,6 +621,7 @@ export const useSessionStore = create<SessionStore>((set, get) => {
         streamHydrated: get().eventRestore == null,
         lastSync: null,
         lastSyncAt: null,
+        lastAttemptAt: null,
         serverFlags: [],
         warnings: [],
         lastError: null,

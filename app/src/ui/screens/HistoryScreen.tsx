@@ -54,7 +54,6 @@ export function HistoryScreen({
   const synced = useSessionStore((s) => s.synced);
   const outboxCount = useSessionStore((s) => s.outboxCount);
   const lastSync = useSessionStore((s) => s.lastSync);
-  const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
   const streamRevision = useSessionStore((s) => s.streamRevision);
   const streamHydrated = useSessionStore((s) => s.streamHydrated);
 
@@ -124,13 +123,7 @@ export function HistoryScreen({
           size="md"
           onBack={navigation.goBack}
           backLabel="Dzień"
-          right={
-            <SyncChip
-              status={synced ? 'synced' : 'offline'}
-              outboxCount={outboxCount}
-              lastSyncAt={lastSyncAt}
-            />
-          }
+          right={<SyncChip />}
         />
       }
     >

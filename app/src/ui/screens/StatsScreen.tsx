@@ -111,8 +111,6 @@ export function StatsScreen({
   const queries = useSessionStore((s) => s.queries);
   const trackQueries = useSessionStore((s) => s.trackQueries);
   const synced = useSessionStore((s) => s.synced);
-  const outboxCount = useSessionStore((s) => s.outboxCount);
-  const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
   const currentPilotId = useCurrentPilot((s) => s.id);
 
   // Norma zużycia z cache'u referencyjnego - jedyna dana z serwera na tym ekranie.
@@ -375,11 +373,7 @@ export function StatsScreen({
                   style={{ borderRadius: theme.radius.pill }}
                 />
               )}
-              <SyncChip
-                status={synced ? 'synced' : 'offline'}
-                outboxCount={outboxCount}
-                lastSyncAt={lastSyncAt}
-              />
+              <SyncChip />
             </>
           }
         />

@@ -70,8 +70,6 @@ export function RefuelScreen({
   const events = useSessionStore((s) => s.events);
   const queries = useSessionStore((s) => s.queries);
   const synced = useSessionStore((s) => s.synced);
-  const outboxCount = useSessionStore((s) => s.outboxCount);
-  const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
   const warnings = useSessionStore((s) => s.warnings);
   const lastError = useSessionStore((s) => s.lastError);
   const refuel = useSessionStore((s) => s.refuel);
@@ -190,11 +188,7 @@ export function RefuelScreen({
           onBack={navigation.goBack}
           right={
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm }}>
-              <SyncChip
-                status={synced ? 'synced' : 'offline'}
-                outboxCount={outboxCount}
-                lastSyncAt={lastSyncAt}
-              />
+              <SyncChip />
               <Icon name="refuel" size={20} color={theme.colors.amber} />
             </View>
           }

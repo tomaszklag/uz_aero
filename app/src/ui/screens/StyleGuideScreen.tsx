@@ -44,8 +44,12 @@ export function StyleGuideScreen() {
       <View style={styles.chipRow}>
         {/* Stan `synced` NIE RYSUJE NIC (issue #12) - puste miejsce obok jest pełnoprawną
             pozycją katalogu, a nie brakiem przykładu. */}
-        <SyncChip status="synced" />
+        {/* Trzy stany wskaźnika. `hidden` jest w katalogu celowo, choć nie rysuje nic:
+            cisza jest tu DECYZJĄ (issue #12), a katalog, w którym jej nie widać, kusi
+            do dołożenia zielonej plakietki „zsynchronizowano". */}
+        <SyncChip status="hidden" />
         <SyncChip status="offline" outboxCount={7} lastSyncAt={Date.now() - 3 * 3_600_000} />
+        <SyncChip status="blocked" outboxCount={7} lastSyncAt={Date.now() - 3 * 3_600_000} />
       </View>
       <AppText variant="body" tone="secondary" style={styles.caption}>
         „Zsynchronizowano" to stan domyślny i nie dostaje plakietki. Offline pokazuje kolejkę

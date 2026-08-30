@@ -71,7 +71,6 @@ export function SettingsScreen({
   const serverFlags = useSessionStore((s) => s.serverFlags);
   const syncNow = useSessionStore((s) => s.syncNow);
   const refreshReferenceNow = useSessionStore((s) => s.refreshReferenceNow);
-  const synced = useSessionStore((s) => s.synced);
   const projection = useSessionStore((s) => s.projection);
   const queries = useSessionStore((s) => s.queries);
   const repo = useSessionStore((s) => s.repo);
@@ -187,13 +186,7 @@ export function SettingsScreen({
           size="md"
           onBack={navigation.goBack}
           backLabel="Kokpit"
-          right={
-            <SyncChip
-              status={synced ? 'synced' : 'offline'}
-              outboxCount={outboxCount}
-              lastSyncAt={lastSyncAt}
-            />
-          }
+          right={<SyncChip />}
         />
       }
     >

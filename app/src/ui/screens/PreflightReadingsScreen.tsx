@@ -97,8 +97,6 @@ export function PreflightReadingsScreen({
 }) {
   const { theme } = useTheme();
   const synced = useSessionStore((s) => s.synced);
-  const outboxCount = useSessionStore((s) => s.outboxCount);
-  const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
   const claim = useSessionStore((s) => s.claim);
   const confirmPreflight = useSessionStore((s) => s.confirmPreflight);
   const lastError = useSessionStore((s) => s.lastError);
@@ -359,13 +357,7 @@ export function PreflightReadingsScreen({
           subtitle={[aircraft.reg, aircraft.type].filter(Boolean).join(' · ')}
           step="3 / 3"
           onBack={navigation.goBack}
-          right={
-            <SyncChip
-              status={synced ? 'synced' : 'offline'}
-              outboxCount={outboxCount}
-              lastSyncAt={lastSyncAt}
-            />
-          }
+          right={<SyncChip />}
         />
       }
       // Przycisk dalej - przy dolnej krawędzi, niezależnie od tego, ile miejsca zajęła

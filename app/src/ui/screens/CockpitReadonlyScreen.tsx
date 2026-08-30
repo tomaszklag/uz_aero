@@ -87,8 +87,6 @@ export function CockpitReadonlyScreen({
 
   const queries = useSessionStore((s) => s.queries);
   const synced = useSessionStore((s) => s.synced);
-  const outboxCount = useSessionStore((s) => s.outboxCount);
-  const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
   /** Przejęcie wypełnia szkic preflightu - patrz nota przy przycisku niżej. */
   const takeAircraft = usePreflightDraft((s) => s.setAircraft);
 
@@ -242,13 +240,7 @@ export function CockpitReadonlyScreen({
           subtitle={subtitle.length > 0 ? subtitle : null}
           // SyncChip zostaje jedynym wskaźnikiem sieci (`CLAUDE.md`); o wieku danych
           // mówi stopka banera niżej - to druga, niezależna oś.
-          right={
-            <SyncChip
-              status={synced ? 'synced' : 'offline'}
-              outboxCount={outboxCount}
-              lastSyncAt={lastSyncAt}
-            />
-          }
+          right={<SyncChip />}
         />
       }
     >

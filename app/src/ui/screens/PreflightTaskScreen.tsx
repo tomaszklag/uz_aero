@@ -87,9 +87,6 @@ export function PreflightTaskScreen({
   navigation: { navigate: (s: string) => void; goBack: () => void };
 }) {
   const { theme } = useTheme();
-  const synced = useSessionStore((s) => s.synced);
-  const outboxCount = useSessionStore((s) => s.outboxCount);
-  const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
 
   const draft = usePreflightDraft();
   const aircraft = draft.aircraft;
@@ -197,13 +194,7 @@ export function PreflightTaskScreen({
           subtitle={[aircraft.reg, aircraft.type].filter(Boolean).join(' · ')}
           step="2 / 3"
           onBack={navigation.goBack}
-          right={
-            <SyncChip
-              status={synced ? 'synced' : 'offline'}
-              outboxCount={outboxCount}
-              lastSyncAt={lastSyncAt}
-            />
-          }
+          right={<SyncChip />}
         />
       }
       footer={
