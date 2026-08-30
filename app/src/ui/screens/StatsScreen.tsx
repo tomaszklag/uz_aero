@@ -75,6 +75,7 @@ import {
   sessionInconsistencies,
 } from '../../domain';
 import type { SessionTrackView } from '../../application';
+import { missingTrackCopy } from './logic/missingTrack';
 import { dateUtcDayMonth } from '../format';
 import { TrackThumbnail } from '../components/data/TrackThumbnail';
 import { dateTimeUtcShort, jumperBreakdown } from './logic/statsDay';
@@ -471,11 +472,16 @@ export function StatsScreen({
           )}
           {trackLoaded && (track == null || track.missing != null) && (
             <View style={[styles.noTrack, { borderBottomColor: theme.colors.border }]}>
+              {/* Powód braku śladu nazywa `missingTrackCopy` - ten sam moduł, co na
+                  ekranie 14 (zgłoszenie z urządzenia, 2026-08-30). Do tej pory ten
+                  ekran rozróżniał tylko wpis ręczny od reszty i tłumaczył brak trasy
+                  RETENCJĄ, której nie ma od issue #47. Baner z modułu tu nie wchodzi:
+                  mówi o modelu śladu, a to jest miniaturka, nie ekran o śladzie. */}
               <AppText variant="display" tone="secondary" style={styles.noTrackTitle}>
-                {noTrackTitle(track)}
+                {noTrack(track).title.toUpperCase()}
               </AppText>
               <AppText variant="mono" tone="muted" style={styles.noTrackText}>
-                {noTrackText(track)}
+                {noTrack(track).text}
               </AppText>
             </View>
           )}
@@ -852,22 +858,12 @@ function CrewRow({
   );
 }
 
-/** Nagłówek kafelka „bez śladu" - dwa różne powody znaczą dla pilota co innego. */
-function noTrackTitle(track: SessionTrackView | null): string {
-  return track?.missing === 'manual' ? 'BEZ ZAPISU GPS' : 'ŚLAD NIEDOSTĘPNY';
-}
-
-function noTrackText(track: SessionTrackView | null): string {
-  if (track?.missing === 'manual') {
-    return (
-      'Ta sesja została wpisana ręcznie, więc nie ma z czego narysować trasy. ' +
-      'Czasy poniżej są pełnoprawne - pochodzą z Twojego wpisu, nie z odbiornika.'
-    );
-  }
-  return (
-    'Nie ma zapisu GPS dla tej sesji. Ślad to materiał roboczy z retencją 14 dni - ' +
-    'starsze sesje mają komplet czasów i liczb, ale trasy już nie.'
-  );
+/**
+ * Treść kafelka „bez śladu". Brak widoku (`null`) traktujemy jak `no-record`: serwer
+ * nie oddał nagrania i tyle wiemy - to jedyny powód, który nie wymaga niczego więcej.
+ */
+function noTrack(track: SessionTrackView | null) {
+  return missingTrackCopy(track?.missing ?? 'no-record', track?.pendingFixes ?? 0);
 }
 
 /**

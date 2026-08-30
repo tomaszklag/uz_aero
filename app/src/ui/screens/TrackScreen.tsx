@@ -48,6 +48,7 @@ import {
 } from '../components';
 import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
+import { missingTrackCopy } from './logic/missingTrack';
 import { useSkeleton } from '../hooks/useSkeleton';
 import { buildDistanceLookup } from './logic/trackDistance';
 import { mapMarkers, profileMarkers } from './logic/trackMarkers';
@@ -531,7 +532,7 @@ function feet(value: number): string {
 function MissingTrack({ view }: { view: SessionTrackView }) {
   const first = view.flights[0] ?? null;
   const last = view.flights[view.flights.length - 1] ?? null;
-  const copy = missingCopy(view.missing!, view.pendingFixes);
+  const copy = missingTrackCopy(view.missing!, view.pendingFixes);
 
   return (
     <View style={styles.content}>
@@ -563,54 +564,6 @@ function MissingTrack({ view }: { view: SessionTrackView }) {
       {copy.banner != null && <Banner kind="status" tone="amber" text={copy.banner} />}
     </View>
   );
-}
-
-function missingCopy(
-  reason: MissingTrackReason,
-  pendingFixes: number,
-): { title: string; text: string; banner: string | null } {
-  if (reason === 'offline') {
-    return {
-      title: 'Ślad jest na serwerze',
-      text:
-        'Telefon nagrał tę trasę i oddał ją serwerowi, ale nie ma teraz jak jej pobrać. ' +
-        'Wróć na ten ekran z zasięgiem - trasa, profil i statystyki wczytają się w całości.',
-      banner:
-        'Ślad nie zajmuje już pamięci telefonu: nagranie idzie na serwer i tam zostaje ' +
-        'na stałe, także po reinstalacji aplikacji i na nowym telefonie. Ceną jest ten ' +
-        'ekran - sama trasa wymaga zasięgu.',
-    };
-  }
-
-  if (reason === 'pending-upload') {
-    return {
-      title: 'Nagranie czeka na wysyłkę',
-      text:
-        `To nagranie jest jeszcze na tym telefonie - ${pendingFixes.toLocaleString('pl-PL')} ` +
-        `${plural(pendingFixes, 'punkt', 'punkty', 'punktów')} w kolejce. Pójdzie przy ` +
-        'najbliższej okazji i wtedy ten ekran narysuje trasę.',
-      banner: null,
-    };
-  }
-
-  if (reason === 'manual') {
-    return {
-      title: 'Bez zapisu GPS',
-      text:
-        'Ta sesja została wpisana ręcznie, więc nie ma z czego narysować trasy. Czasy są ' +
-        'prawdziwe - pochodzą z Twojego wpisu, nie z odbiornika.',
-      banner: null,
-    };
-  }
-
-  return {
-    title: 'Ślad niedostępny',
-    text:
-      'Serwer nie ma nagrania tej sesji. Nagranie mogło nie powstać (brak zgody na ' +
-      'lokalizację, wyczerpana bateria) albo nigdy nie dotarło z telefonu, na którym ' +
-      'powstało. Czasy i statystyki sesji są kompletne - brakuje wyłącznie trasy.',
-    banner: null,
-  };
 }
 
 /** „2 loty" - trzy formy polskiej liczby mnogiej; ten sam napis, co plakietka na 10. */
