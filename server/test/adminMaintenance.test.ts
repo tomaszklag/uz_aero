@@ -699,20 +699,25 @@ describe('A11 · stan schematu - wyłącznie odczyt', () => {
 });
 
 describe('A11 · zdolności', () => {
-  /** Konto z ziarna, które ma wejście do panelu, ale nie ma narzędzi serwisowych. */
-  async function trainingLead(harness: Harness): Promise<Record<string, string>> {
-    await harness.db.query("UPDATE pilots SET role = 'training_lead' WHERE id = 'AKO'");
+  /**
+   * Konto z ziarna, które nie ma narzędzi serwisowych.
+   *
+   * Do 2026-08-30 podmiotem była rola pośrednia (wejście do panelu bez `maintenance.run`).
+   * Po jej wycofaniu tę samą odmowę - i tę samą zdolność w treści - dostaje token
+   * zwykłego pilota, bo brama pyta o ZDOLNOŚĆ, a nie o wejście do panelu.
+   */
+  async function withoutTools(harness: Harness): Promise<Record<string, string>> {
     const login = await harness.app.inject({
       method: 'POST',
       url: '/auth/login',
-      payload: { login: 'AKO', password: TEST_PASSWORD },
+      payload: { login: 'PWI', password: TEST_PASSWORD },
     });
     return { authorization: `Bearer ${login.json().token}` };
   }
 
-  it('szef wyszkolenia dostaje 403 na KAŻDEJ trasie konserwacji, z podaną zdolnością', async () => {
+  it('konto bez zdolności dostaje 403 na KAŻDEJ trasie konserwacji, z podaną zdolnością', async () => {
     const harness = await withDay();
-    const headers = await trainingLead(harness);
+    const headers = await withoutTools(harness);
 
     const cases: [string, string, string][] = [
       ['GET', '/admin/api/maintenance/projections/compare', 'maintenance.run'],

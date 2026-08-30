@@ -6,9 +6,9 @@
  * uprawnienia: `design/admin/ANALIZA.md`.
  *
  * **Rola siedzi na koncie pilota, nie w osobnej tabeli użytkowników panelu**, bo
- * administrator i szef wyszkolenia SĄ pilotami - latają, mają telefon i dodatkowo
- * wchodzą do back-office'u. Osobny byt użytkownika rozdwoiłby tożsamość: ten sam
- * człowiek miałby dwa identyfikatory, a jego nalot rozjechałby się między nimi.
+ * administrator JEST pilotem - lata, ma telefon i dodatkowo wchodzi do back-office'u.
+ * Osobny byt użytkownika rozdwoiłby tożsamość: ten sam człowiek miałby dwa
+ * identyfikatory, a jego nalot rozjechałby się między nimi.
  *
  * **Uprawnienia trzymamy jako mapę ról na zdolności**, a nie jako `if (role === 'admin')`
  * rozsiane po trasach. Powód jest ten sam, dla którego istnieje `http/authorize.ts`:
@@ -17,8 +17,29 @@
  * w której nikt nigdy nie wie, czy zna wszystkie miejsca.
  */
 
-/** Kolejność bez znaczenia - to zbiór, nie drabina. Uprawnienia daje mapa niżej. */
-export const PILOT_ROLES = ['pilot', 'training_lead', 'admin'] as const;
+/**
+ * Kolejność bez znaczenia - to zbiór, nie drabina. Uprawnienia daje mapa niżej.
+ *
+ * == `training_lead` WYCOFANY 2026-08-30 (decyzja właściciela produktu) ==
+ * „Na razie pozbądźmy się roli szef wyszkolenia, niech zostanie tylko admin i pilot.
+ * Rozbudujemy i przemyślimy uprawnienia w kolejnych iteracjach."
+ *
+ * Zostają dwie role i jedna z nich w ogóle nie dotyczy panelu, więc KAŻDY, kto wejdzie
+ * do back-office'u, ma dziś komplet zdolności. Katalog `Capability` zostaje mimo to
+ * rozpisany i egzekwowany na każdej trasie - bo wraca razem z trzecią rolą, a brama,
+ * która przez jedną iterację nie odmawia nikomu, jest tańsza niż brama dopisywana
+ * z powrotem do dwudziestu tras.
+ *
+ * **`CHECK` na kolumnie `pilots.role` poszedł za tą zmianą** (decyzja użytkownika:
+ * „nic nie jest wdrożone, mamy kontrolę nad danymi") - kolumna dopuszcza dokładnie te
+ * dwie role. Baza założona wcześniej ma starsze ograniczenie i to nie przeszkadza:
+ * żaden wiersz go nie używa, a każdy odczyt przechodzi przez
+ * `isPilotRole(...) ? role : DEFAULT_ROLE` (`infrastructure/pg/**\/pilotsRepo.ts`,
+ * `infrastructure/auth/hs256Tokens.ts`), więc wartość spoza katalogu schodzi do
+ * `pilot` - czyli do NAJMNIEJSZYCH uprawnień. Ten kierunek błędu jest bezpieczny;
+ * odwrotny nie byłby.
+ */
+export const PILOT_ROLES = ['pilot', 'admin'] as const;
 
 export type PilotRole = (typeof PILOT_ROLES)[number];
 
@@ -82,11 +103,6 @@ const CAPABILITIES: Readonly<Record<PilotRole, readonly Capability[]>> = {
   // Pilot pracuje wyłącznie w aplikacji na telefonie. Panel go nie dotyczy -
   // i to jest pełna lista jego uprawnień w panelu, celowo pusta.
   pilot: [],
-
-  // Szef wyszkolenia: patrzy i rozstrzyga rozbieżności. NIE dostaje korekty zdarzeń
-  // ani audytu (rekomendacja `ANALIZA.md`, do rewizji, gdy praktyka pokaże inaczej):
-  // wyjaśnienie rozbieżności to inna odpowiedzialność niż pisanie w cudzym rejestrze.
-  training_lead: ['panel.access', 'flags.resolve'],
 
   // Administrator - wszystko. Lista jest wypisana jawnie, a nie wyliczona jako
   // „reszta": dopisanie nowej zdolności ma zmusić do świadomej decyzji, komu ją dać.

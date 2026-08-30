@@ -17,7 +17,8 @@
  *  4. **samolotu z otwartą sesją nie da się wyłączyć ze służby** - odmowa jawna,
  *     z powodem;
  *  5. **wyłączenie ze służby nie psuje historii** - dni, flagi i karty zostają;
- *  6. **szef wyszkolenia czyta flotę, ale jej nie zmienia** - 403 z podaną zdolnością.
+ *  6. **lista i tolerancja to ODCZYT, zmiana floty żąda `fleet.manage`** - 403
+ *     z podaną zdolnością.
  *
  * Zero atrap: PGlite w procesie, prawdziwe klasy, `app.inject`, dni powstają
  * z prawdziwego `POST /events`.
@@ -828,15 +829,18 @@ describe('wyłączenie ze służby', () => {
 // ── zakres uprawnień ────────────────────────────────────────────────────────────
 
 describe('zakres uprawnień floty', () => {
-  it('szef wyszkolenia CZYTA flotę, ale jej nie zmienia - 403 z podaną zdolnością', async () => {
+  it('lista i tolerancja to ODCZYT, zmiana floty żąda `fleet.manage`', async () => {
+    // Do 2026-08-30 obie odpowiedzi padały na JEDEN token: rola pośrednia czytała
+    // flotę, ale jej nie zmieniała. Po jej wycofaniu odczyt pokazuje administrator,
+    // a odmowę zapisu - z tą samą zdolnością w treści - token zwykłego pilota.
     const { app } = await testHarness();
-    // AKO = `training_lead` z seeda.
-    const ako = await token(app, 'AKO');
+    const tmk = await token(app, 'TMK');
+    const pwi = await token(app, 'PWI');
 
-    expect((await listFleet(app, ako)).statusCode).toBe(200);
-    expect((await tolerance(app, ako, '?capacityL=1100')).statusCode).toBe(200);
+    expect((await listFleet(app, tmk)).statusCode).toBe(200);
+    expect((await tolerance(app, tmk, '?capacityL=1100')).statusCode).toBe(200);
 
-    const created = await createAircraft(app, ako, {
+    const created = await createAircraft(app, pwi, {
       reg: 'SP-NEW',
       type: 'Cessna 152',
       capacityL: 100,
@@ -845,9 +849,8 @@ describe('zakres uprawnień floty', () => {
     expect(created.statusCode).toBe(403);
     expect(created.json()).toMatchObject({ required: 'fleet.manage' });
 
-    const tmk = await token(app, 'TMK');
     const axa = rowOf((await listFleet(app, tmk)).json(), 'SP-AXA') as unknown as { id: string };
-    const patched = await patchAircraft(app, ako, axa.id, { capacityL: 400 });
+    const patched = await patchAircraft(app, pwi, axa.id, { capacityL: 400 });
     expect(patched.statusCode).toBe(403);
     expect(patched.json()).toMatchObject({ required: 'fleet.manage' });
   });
@@ -946,5 +949,99 @@ describe('konfiguracja oleju (issue #60)', () => {
     const res = await patchAircraft(app, tmk, id, { oilMinL: 12 });
     expect(res.statusCode).toBe(409);
     expect(res.json()).toMatchObject({ error: 'refused', reason: 'oil_min_above_capacity' });
+  });
+});
+
+/**
+ * USUWANIE JEDNOSTKI (2026-08-30).
+ *
+ * Nieodwracalne, więc każda z dwóch odmów ma własny przekrój. Warunek „najpierw wyłącz
+ * ze służby" jest tu WAŻNIEJSZY niż przy koncie: telefon nie kasuje wierszy, więc
+ * maszyna usunięta „na gorąco" zostałaby na nim jako W SŁUŻBIE, czyli WYBIERALNA -
+ * pilot zacząłby lot na samolocie, którego serwer nie zna.
+ */
+describe('usunięcie jednostki floty', () => {
+  const deleteAircraft = (app: Harness['app'], t: string, id: string) =>
+    app.inject({ method: 'DELETE', url: `/admin/api/fleet/${id}`, headers: writer(t) });
+
+  /** Jednostka świeżo wpisana i od razu wyłączona - stan, z którego usunięcie przechodzi. */
+  async function disposable(app: Harness['app'], t: string): Promise<string> {
+    const created = await createAircraft(app, t, {
+      reg: 'SP-TMP',
+      type: 'Pomyłka',
+      capacityL: 100,
+      mhFormat: 'decimal',
+      serviceStatus: 'disabled',
+    });
+    return created.json().aircraft.id as string;
+  }
+
+  it('kasuje jednostkę BEZ historii - wiersz znika, audyt niesie rejestrację', async () => {
+    const { app, db } = await testHarness();
+    const tmk = await token(app, 'TMK');
+    const id = await disposable(app, tmk);
+
+    const res = await deleteAircraft(app, tmk, id);
+
+    expect(res.statusCode).toBe(204);
+    const { rows } = await db.query('SELECT id FROM aircraft WHERE id = $1', [id]);
+    expect(rows).toHaveLength(0);
+
+    // Po tej operacji wpis audytu jest jedynym śladem maszyny, więc niesie znaki
+    // z kadłuba, a nie sam identyfikator.
+    const { rows: audit } = await db.query<{ details: Record<string, unknown> }>(
+      "SELECT details FROM admin_audit WHERE action = 'aircraft.delete'",
+    );
+    expect(audit).toHaveLength(1);
+    expect(audit[0]?.details).toMatchObject({ reg: 'SP-TMP', type: 'Pomyłka' });
+  });
+
+  it('ODMAWIA, dopóki jednostka jest w służbie', async () => {
+    const { app, db } = await testHarness();
+    const tmk = await token(app, 'TMK');
+    const created = await createAircraft(app, tmk, {
+      reg: 'SP-TMP',
+      type: 'Pomyłka',
+      capacityL: 100,
+      mhFormat: 'decimal',
+    });
+    const id = created.json().aircraft.id as string;
+
+    const res = await deleteAircraft(app, tmk, id);
+
+    expect(res.statusCode).toBe(409);
+    expect(res.json()).toMatchObject({ error: 'refused', reason: 'aircraft_in_service' });
+    const { rows } = await db.query('SELECT id FROM aircraft WHERE id = $1', [id]);
+    expect(rows).toHaveLength(1);
+  });
+
+  it('ODMAWIA jednostce, która ma w rejestrze choć jedno zdarzenie', async () => {
+    const { app, db } = await testHarness();
+    const tmk = await token(app, 'TMK');
+    const id = await disposable(app, tmk);
+    await db.query(
+      `INSERT INTO events (uuid, session_uuid, aircraft_id, pic_id, type, device_time,
+                           payload, schema_version)
+       VALUES ('e-1', 's-1', $1, 'TMK', 'engine_start', 1, '{}'::jsonb, 1)`,
+      [id],
+    );
+
+    const res = await deleteAircraft(app, tmk, id);
+
+    expect(res.statusCode).toBe(409);
+    expect(res.json()).toMatchObject({ error: 'refused', reason: 'has_history' });
+  });
+
+  it('konto bez zdolności `fleet.manage` dostaje 403 i niczego nie kasuje', async () => {
+    const { app, db } = await testHarness();
+    const tmk = await token(app, 'TMK');
+    const id = await disposable(app, tmk);
+
+    const res = await deleteAircraft(app, await token(app, 'PWI'), id);
+
+    expect(res.statusCode).toBe(403);
+    expect(res.json()).toMatchObject({ required: 'fleet.manage' });
+    const { rows } = await db.query('SELECT id FROM aircraft WHERE id = $1', [id]);
+    expect(rows).toHaveLength(1);
   });
 });

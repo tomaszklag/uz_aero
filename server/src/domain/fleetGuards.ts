@@ -38,7 +38,11 @@ export type FleetRefusal =
   | 'capacity_not_positive'
   | 'open_session'
   | 'oil_not_positive'
-  | 'oil_min_above_capacity';
+  | 'oil_min_above_capacity'
+  /** Usunięcie jednostki, która nadal jest w służbie - patrz `refuseDeleteAircraft`. */
+  | 'aircraft_in_service'
+  /** Usunięcie jednostki, do której coś się odwołuje - zostałaby historia bez maszyny. */
+  | 'has_history';
 
 /**
  * Pojemność zbiorników. `null` = pole nietknięte w `PATCH`-u, więc nie ma czego oceniać.
@@ -93,5 +97,43 @@ export function refuseOil(input: {
   if (input.oilMinL != null && input.oilCapacityL != null && input.oilMinL > input.oilCapacityL) {
     return 'oil_min_above_capacity';
   }
+  return null;
+}
+
+/**
+ * Stan jednostki w chwili próby USUNIĘCIA.
+ *
+ * `references` to LICZBA odwołań do tej maszyny w całym systemie: zdarzenia, sesje,
+ * flagi, dziennik eksportu, karty arkusza i wiersz normy zużycia. Liczy je
+ * repozytorium jednym zapytaniem - domena nie zna SQL-a, ale zna regułę.
+ */
+export interface AircraftDeletion {
+  inService: boolean;
+  references: number;
+}
+
+/**
+ * Usunięcie jednostki - odmowa albo `null`.
+ *
+ * ══ TA SAMA DWUSTOPNIOWOŚĆ, CO PRZY KONCIE, I TU WAŻNIEJSZA ══
+ * Kasujemy wyłącznie maszynę JUŻ WYŁĄCZONĄ ze służby, bo telefon nie ma ścieżki
+ * usuwania wiersza (`referenceSync` robi wyłącznie `upsertAircraft`). Jednostka
+ * skasowana na serwerze zostałaby na telefonie z ostatnim znanym stanem - czyli
+ * W SŁUŻBIE, a więc **WYBIERALNA**: pilot zacząłby lot na maszynie, której serwer nie
+ * zna, i wysłał zdarzenia z nieznanym `aircraft_id`. Przy koncie skutkiem byłby duch
+ * na liście drugich pilotów; tutaj - sesja bez maszyny.
+ *
+ * Wyłączenie ze służby jedzie natomiast normalną drogą (`GET /reference`), a aplikacja
+ * pokazuje taką jednostkę z czerwonym tagiem i BLOKUJE wybór. Kolejność „wyłącz →
+ * poczekaj na sync → usuń" zamyka więc dziurę mechanizmem, który już istnieje.
+ *
+ * `references > 0` blokuje twardo: w tym schemacie NIE MA ani jednego klucza obcego
+ * wskazującego `aircraft(id)` - `events`, `sessions`, `flags`, `export_log`,
+ * `exported_sheets` i `aircraft_consumption` trzymają zwykły tekst. Baza nie
+ * powstrzymałaby kasowania; powstrzymuje ta funkcja.
+ */
+export function refuseDeleteAircraft(deletion: AircraftDeletion): FleetRefusal | null {
+  if (deletion.inService) return 'aircraft_in_service';
+  if (deletion.references > 0) return 'has_history';
   return null;
 }

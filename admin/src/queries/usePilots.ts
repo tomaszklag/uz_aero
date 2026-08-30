@@ -1,14 +1,8 @@
 /**
- * UZ Aero - panel: odczyt listy kont (`A06`).
+ * UZ Aero - panel 2.0: lista kont pilotów.
  *
- * ══ DLACZEGO ZWYKŁE `useQuery`, A NIE `useInfiniteQuery` ══
- * Bo trasa nie ma kursora i mieć go nie musi: klub ma kilkanaście kont, a lista jest
- * jednocześnie SŁOWNIKIEM pilotów dla filtrów innych ekranów. Lista, którą trzeba
- * doładowywać stronami, nie nadaje się do rozwijanego filtra - i to jest powód,
- * dla którego kształt tej trasy różni się od dni lotnych i dziennika audytu.
- *
- * Hook jest cienki z zasady: decyzja o treści ekranu mieszka w czystych modułach
- * `screens/pilots/*.ts`, a tutaj zostaje wyłącznie to, co dotyczy cache'u.
+ * Warstwa `queries/` zna sieć (`api/`) i cache, ale nie zna ekranu: hook oddaje dane,
+ * a co z nich narysować, decyduje `screens/`.
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -17,10 +11,20 @@ import type { PilotPageDto } from '../api/dto';
 import { listPilots, type PilotListQuery } from '../api/pilots';
 import { keys } from './keys';
 
-export function usePilots(query: PilotListQuery, enabled = true) {
+/**
+ * Górna granica listy kont.
+ *
+ * Nie jest stronicowaniem, tylko bezpiecznikiem: klub ma kilkanaście kont, a lista,
+ * którą trzeba przewijać stronami, przestaje nadawać się na słownik do wyszukiwarki.
+ * Gdy `total` z odpowiedzi przekroczy tę liczbę, ekran powie o tym wprost - lista
+ * przycięta po cichu wygląda jak komplet.
+ */
+export const PILOT_LIST_LIMIT = 200;
+
+export function usePilots(query: Omit<PilotListQuery, 'limit'>) {
+  const full: PilotListQuery = { ...query, limit: PILOT_LIST_LIMIT };
   return useQuery<PilotPageDto>({
-    queryKey: keys.pilots.list(query),
-    queryFn: () => listPilots(query),
-    enabled,
+    queryKey: keys.pilots.list(full),
+    queryFn: () => listPilots(full),
   });
 }

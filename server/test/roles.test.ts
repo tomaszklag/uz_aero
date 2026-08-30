@@ -18,23 +18,26 @@ import { TEST_PASSWORD, TEST_SECRET, testHarness } from './helpers.ts';
 
 describe('mapa uprawnień', () => {
   it('pilot nie ma w panelu NICZEGO - z wejściem włącznie', () => {
-    expect(can('pilot', 'panel.access')).toBe(false);
-    expect(can('pilot', 'flags.resolve')).toBe(false);
-    expect(can('pilot', 'accounts.manage')).toBe(false);
+    // Lista wypisana w całości, a nie trzy przykłady: po wycofaniu roli pośredniej
+    // (2026-08-30) to JEDYNY przypadek mówiący „tej zdolności się nie dostaje",
+    // więc musi widzieć każdą nową pozycję katalogu - tak samo jak przypadek niżej.
+    for (const capability of [
+      'panel.access',
+      'flags.resolve',
+      'events.correct',
+      'accounts.manage',
+      'fleet.manage',
+      'thresholds.manage',
+      'audit.read',
+      'maintenance.run',
+    ] as const) {
+      expect(can('pilot', capability)).toBe(false);
+    }
   });
 
-  it('szef wyszkolenia rozstrzyga flagi, ale nie pisze w cudzym rejestrze ani w kontach', () => {
-    expect(can('training_lead', 'panel.access')).toBe(true);
-    expect(can('training_lead', 'flags.resolve')).toBe(true);
-    expect(can('training_lead', 'events.correct')).toBe(false);
-    expect(can('training_lead', 'accounts.manage')).toBe(false);
-    expect(can('training_lead', 'thresholds.manage')).toBe(false);
-    expect(can('training_lead', 'audit.read')).toBe(false);
-    // Narzędzia serwisowe (`A11`) - nadpisanie projekcji dotyka liczb WSZYSTKICH dni
-    // klubu naraz, więc zostaje przy jednej roli, tak jak korekta rejestru.
-    expect(can('training_lead', 'maintenance.run')).toBe(false);
-  });
-
+  // Przypadek roli pośredniej („rozstrzyga flagi, ale nie pisze w rejestrze ani
+  // w kontach") wypadł razem z rolą `training_lead` 2026-08-30 - dziś każdy, kto
+  // wchodzi do panelu, ma komplet i mówi o tym ten przypadek.
   it('administrator ma komplet', () => {
     for (const capability of [
       'panel.access',
@@ -109,13 +112,17 @@ describe('brama uprawnień tras panelu', () => {
     });
   });
 
-  it('szef wyszkolenia przechodzi na flagach i odbija się na kontach', async () => {
+  it('brama odpowiada PER ZDOLNOŚĆ - przepuszcza na flagach, odbija na kontach', async () => {
+    // Do 2026-08-30 obie odpowiedzi padały na JEDEN token (rola pośrednia miała
+    // `flags.resolve`, nie miała `accounts.manage`). Po jej wycofaniu ta sama para
+    // wymaga dwóch podmiotów - katalog zdolności i brama zostają nietknięte.
     const { db, tokens } = await testHarness();
     const accounts = new PgPilotsRepo(db);
-    const token = tokens.sign({ pilotId: 'AKO', code: 'AKO', role: 'training_lead' }, 3600);
+    const admin = tokens.sign({ pilotId: 'TMK', code: 'TMK', role: 'admin' }, 3600);
+    const pilot = tokens.sign({ pilotId: 'PWI', code: 'PWI', role: 'pilot' }, 3600);
 
-    expect((await authorizeAccount(tokens, accounts, token, 'flags.resolve')).ok).toBe(true);
-    expect(await authorizeAccount(tokens, accounts, token, 'accounts.manage')).toMatchObject({
+    expect((await authorizeAccount(tokens, accounts, admin, 'flags.resolve')).ok).toBe(true);
+    expect(await authorizeAccount(tokens, accounts, pilot, 'accounts.manage')).toMatchObject({
       status: 403,
       body: { required: 'accounts.manage' },
     });
@@ -202,7 +209,7 @@ describe('brama uprawnień tras panelu', () => {
     const accounts = new PgPilotsRepo(db);
     const token = tokens.sign({ pilotId: 'TMK', code: 'TMK', role: 'admin' }, 3600);
 
-    await db.query("UPDATE pilots SET role = 'training_lead' WHERE id = 'TMK'");
+    await db.query("UPDATE pilots SET role = 'pilot' WHERE id = 'TMK'");
 
     // Token nadal NIESIE `admin` - i to jest sedno: brama go nie pyta o rolę.
     expect(tokens.verify(token)?.role).toBe('admin');

@@ -1,666 +1,396 @@
 /**
- * UZ Aero - panel: SZUFLADA SAMOLOTU (`design/admin/A07a-samolot.html`).
+ * UZ Aero - panel 2.0: karta samolotu (`#/samoloty/:id`).
  *
- * **Jedna szuflada, dwa wejścia**: „Dodaj samolot" (pola puste, stan służby domyślnie
- * „w służbie") oraz „Edytuj" z wiersza (pola wypełnione). Nie rozdzielamy tego na
- * ekrany, bo to ta sama decyzja: jaką konfigurację ma ta jednostka.
+ * Trzy sekcje: czym jest maszyna, co z niej wynika dla pilota, olej (opcjonalny).
+ * Panel 1.0 miał tu siedem sekcji, w tym kartę „Skutki zmiany" - sześć wierszy
+ * porównań, z których przy typowej poprawce cztery mówiły „bez zmian".
  *
- * ══ TRZY RZECZY, KTÓRYCH NIE WOLNO TU ZGUBIĆ ══
- *
- *  1. **Skutek widać PRZED zapisem.** Realny scenariusz: administrator poprawia
- *     pojemność z 1257 na 1100 L i musi zobaczyć, że próg flagi `FUEL_MISMATCH`
- *     przesunie się z ±62.9 na ±55.0 L. **Obie liczby przychodzą z serwera** - „przed"
- *     w wierszu listy, „po" z `GET /admin/api/fleet/tolerance`. Panel nie mnoży przez
- *     0.05 i nie może: z domeny wolno mu importować wyłącznie typy.
- *  2. **Panel nigdy nie przepisuje rejestru - ale nowy próg obejmie też pary
- *     historyczne.** Zapisane zdarzenia i wystawione flagi zostają nietknięte (zapis
- *     konfiguracji nie ma pętli po `events` ani po `flags`). Detekcja łańcucha jest
- *     jednak przeliczana z CAŁEJ historii samolotu przy każdej przyjętej paczce
- *     `POST /events` i bierze wtedy pojemność BIEŻĄCĄ - więc po obniżeniu progu
- *     najbliższa synchronizacja tej jednostki potrafi wystawić flagę na parze dni
- *     zamkniętych wcześniej. Sprostowanie z 2026-08-01: „to nie przelicza wstecz" było
- *     prawdą o tym pliku i nieprawdą o systemie.
- *  3. **Telefony zobaczą zmianę przy najbliższym pobraniu danych referencyjnych.**
- *     Zapis podbija znacznik `GET /reference`; samolot z otwartą sesją dokończy dzień
- *     na konfiguracji, którą pobrał rano.
- *
- * Szuflada jest `.tsx` bez decyzji o treści: walidacja, komunikaty, wiersze skutków
- * i dostępność akcji mieszkają w `aircraftForm.ts`, `aircraftImpact.ts`
- * i `aircraftActions.ts`, które mają testy w Node.
+ * == PROG PALIWA JAKO JEDNA LINIJKA POD POLEM ==
+ * Zmieniona pojemność zmienia próg, od którego serwer zgłasza rozjazd paliwa między
+ * lotami. To jedyna konsekwencja, której nie widać z samego pola - więc jest napisana,
+ * ale JAKO PODPOWIEDZ przy polu i dopiero wtedy, gdy liczba faktycznie się zmieniła.
+ * Liczbę podaje serwer (`GET /fleet/tolerance`), bo panelowi nie wolno mnożyć
+ * pojemności po swojemu - druga kopia tej reguły rozjechałaby się z pierwszą.
  */
 
-import { useRef, useState } from 'react';
+import { litres } from '@uzaero/format';
+import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 
-import type { AircraftListItemDto, ApiErrorDto, Capability } from '../../api/dto';
-import { isHttpError } from '../../api/httpClient';
-import { useFuelTolerance } from '../../queries/useFleet';
-import { useCreateAircraft, useUpdateAircraft } from '../../queries/useFleetCommands';
+import type { AircraftListItemDto } from '../../api/dto';
 import {
-  Banner,
-  Button,
-  Card,
-  Drawer,
-  Field,
-  KeyValue,
-  LinkButton,
-  OptionButton,
-  OptionGrid,
-  OptionList,
-  Pill,
-  TextInput,
-} from '../../ui/components';
-import { targetHref } from '../audit/auditFilters';
-import { toleranceText } from './fleetRows';
+  useCreateAircraft,
+  useDeleteAircraft,
+  useFuelTolerance,
+  useUpdateAircraft,
+} from '../../queries/useFleet';
+import { Banner, Button, Card, Drawer, Field, OptionButton, Pill, TextInput } from '../../ui/components';
+import { conflictField, errorMessage, refusalOf } from '../common/apiMessage';
 import {
-  disableAction,
-  editAction,
-  fleetFailure,
-  missingAircraftCopy,
-  saveCopy,
-  type FleetLoad,
-} from './aircraftActions';
-import {
-  DUAL_OPTIONS,
-  EMPTY_DRAFT,
-  MH_FORMAT_OPTIONS,
-  SERVICE_OPTIONS,
-  createBody,
+  capacityValue,
+  createBodyOf,
+  deleteBlocker,
+  disablesAircraftInUse,
+  draftKey,
   draftOf,
-  formState,
+  EMPTY_AIRCRAFT,
   hasChanges,
-  parseCapacity,
-  updateBody,
+  normalizeReg,
+  updateBodyOf,
+  verdictOf,
   type AircraftDraft,
 } from './aircraftForm';
-import { impactCard } from './aircraftImpact';
+import {
+  aircraftConflictMessage,
+  AIRCRAFT_IN_USE,
+  fleetRefusalMessage,
+} from './aircraftRefusal';
+import { mhFormatExample, mhFormatLabel, MH_FORMAT_ORDER } from './fleetRows';
 
 interface AircraftDrawerProps {
-  /** Jednostka z listy; `null` przy dodawaniu nowej albo nieznanym identyfikatorze. */
-  aircraft: AircraftListItemDto | null;
-  creating: boolean;
-  capabilities: readonly Capability[] | undefined;
-  /**
-   * Stan pobrania floty - TRZY wartości, nie `boolean`. Szuflada musi odróżnić „lista
-   * jeszcze leci" od „lista padła" od „lista jest, jednostki w niej nie ma"; przy
-   * dwóch stanach awaria pobrania mówiła człowiekowi „zdejmij filtr".
-   */
-  load: FleetLoad;
+  /** `nowy` albo identyfikator jednostki z listy. */
+  id: string;
+  /** `null` = lista jeszcze nie przyszła; pusta tablica = przyszła i jest pusta. */
+  fleet: AircraftListItemDto[] | null;
+  listPending: boolean;
+  manages: boolean;
   onClose: () => void;
 }
 
-/**
- * Szuflada jest KLUCZOWANA identyfikatorem jednostki w `FleetScreen`, więc zmiana
- * samolotu montuje ją od nowa i żaden szkic nie przechodzi między maszynami.
- *
- * Tutaj rozstrzyga się druga połowa tej samej sprawy: **wiersz może zniknąć spod
- * szuflady, która została otwarta** - lista jest zawężona filtrem, a zapis potrafi
- * wyrzucić jednostkę spod bieżącego chipa (wyłączenie ze służby przy chipie „W służbie"
- * robi to zawsze). Wtedy `props.aircraft` staje się `null`, a odmontowanie szuflady
- * zabrałoby ze sobą potwierdzenie właśnie wykonanej zmiany.
- */
-export function AircraftDrawer(props: AircraftDrawerProps) {
-  const known = useRef(props.aircraft);
-  if (props.aircraft != null) known.current = props.aircraft;
+export function AircraftDrawer({ id, fleet, listPending, manages, onClose }: AircraftDrawerProps) {
+  const creating = id === 'nowy';
+  const aircraft = creating ? null : (fleet?.find((item) => item.id === id) ?? null);
 
-  if (props.creating) return <NewAircraft {...props} />;
-  if (known.current == null) {
-    return <MissingAircraft load={props.load} onClose={props.onClose} />;
-  }
-  return <ExistingAircraft {...props} initial={known.current} />;
-}
+  const [draft, setDraft] = useState<AircraftDraft>(EMPTY_AIRCRAFT);
+  const [done, setDone] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
-/**
- * Głęboki link do jednostki, której nie ma na liście.
- *
- * TRZY przyczyny i wszystkie trzeba rozróżnić: lista jeszcze się nie pobrała (to nie
- * jest błąd), lista PADŁA (wtedy nie wiadomo nic - a do 2026-08-01 szuflada mówiła
- * wtedy „zdejmij filtr", czyli kazała poprawiać zawężenie, którego serwer nie zdążył
- * zastosować) albo jednostka wypadła spod zawężenia - bo trasy `GET /fleet/:id` nie ma,
- * a lista jest jedynym źródłem wierszy. Mockup nie ma na to stanu; projektujemy go
- * w duchu reszty panelu: konkretnie i z podaniem, co dalej. Treść trzech wariantów
- * mieszka w `aircraftActions.ts` (`missingAircraftCopy`) i ma test w Node, a nie tutaj.
- */
-function MissingAircraft({ load, onClose }: { load: FleetLoad; onClose: () => void }) {
-  const copy = missingAircraftCopy(load);
-  return (
-    <Drawer
-      title="SAMOLOT"
-      sub={copy.sub}
-      onClose={onClose}
-      footer={
-        <Button variant="primary" onClick={onClose}>
-          Wróć do listy
-        </Button>
-      }
-    >
-      <Banner tone={copy.tone}>
-        <b>{copy.title}</b> {copy.note}
-      </Banner>
-    </Drawer>
-  );
-}
+  // Szkic przestawia się DOKŁADNIE wtedy, gdy zmienia się tożsamość edytowanej
+  // jednostki - także przy jej PIERWSZYM pojawieniu się, bo przy wejściu z linku
+  // szuflada montuje się przed listą (`draftKey` opisuje to szerzej). Odświeżenie
+  // listy po zapisie klucza nie zmienia, więc nie kasuje wpisanych zmian.
+  const synced = useRef<string | null>(null);
+  useEffect(() => {
+    const key = draftKey(creating, aircraft);
+    if (key == null || synced.current === key) return;
+    synced.current = key;
+    setDraft(aircraft == null ? EMPTY_AIRCRAFT : draftOf(aircraft));
+    setDone(null);
+    setConfirmDelete(false);
+  }, [creating, aircraft]);
 
-/** Szuflada „Dodaj samolot": pełna konfiguracja od zera. */
-function NewAircraft({ capabilities, onClose }: AircraftDrawerProps) {
-  const [draft, setDraft] = useState<AircraftDraft>(EMPTY_DRAFT);
   const create = useCreateAircraft();
+  const update = useUpdateAircraft();
+  const remove = useDeleteAircraft();
 
-  const edit = editAction(capabilities);
-  const form = formState(draft);
-  const failure = create.isError ? failureOf(create.error) : null;
-  const done = create.data != null;
-  // Próg dla wpisywanej pojemności - ta sama trasa, co przy edycji. Nowa jednostka nie
-  // ma „przed", więc karta pokazuje samą wartość docelową.
-  const tolerance = useFuelTolerance(parseCapacity(draft.capacity));
+  const pending = create.isPending || update.isPending || remove.isPending;
+  const error = create.error ?? update.error ?? remove.error;
+
+  const verdict = verdictOf(draft);
+  const changed = aircraft == null ? true : hasChanges(aircraft, draft);
+  const readOnly = !manages;
+
+  const field = conflictField(error);
+  const conflict = aircraftConflictMessage(field);
+  const refusal = refusalOf(error);
+  const refusalText = refusal == null ? null : fleetRefusalMessage(refusal);
+  const generalError =
+    error == null || conflict != null || refusalText != null ? null : errorMessage(error);
+
+  // Próg liczy serwer dla wartości WPISYWANEJ, więc pytanie leci przy każdej poprawce
+  // liczby - i wraca z cache'u, gdy klient wróci do wartości, o którą już pytał.
+  const capacity = capacityValue(draft);
+  const tolerance = useFuelTolerance(capacity);
+  const capacityChanged = aircraft != null && capacity != null && capacity !== aircraft.capacityL;
+
+  // Wyłączenia jednostki w użyciu serwer i tak odmówi - mówimy to przy przycisku,
+  // zanim klient straci wypełniony formularz na rzecz komunikatu o błędzie.
+  const inUse = aircraft != null && disablesAircraftInUse(aircraft, draft);
+
+  const save = (): void => {
+    if (aircraft == null) {
+      create.mutate(createBodyOf(draft), {
+        onSuccess: (result) => setDone(`${result.aircraft.reg} jest na liście.`),
+      });
+      return;
+    }
+    update.mutate(
+      { id: aircraft.id, body: updateBodyOf(aircraft, draft) },
+      { onSuccess: (result) => setDone(`Zapisano ${result.aircraft.reg}.`) },
+    );
+  };
+
+  const blocker = verdict.blocker ?? (inUse ? AIRCRAFT_IN_USE : null);
 
   return (
     <Drawer
-      wide
-      title="NOWY SAMOLOT"
-      sub="dane referencyjne - z nich aplikacja bierze listę wyboru i wejścia reguł"
+      title={creating ? 'NOWY SAMOLOT' : (aircraft?.reg ?? 'SAMOLOT')}
+      sub={
+        <>
+          {aircraft?.type ?? 'Nowa jednostka floty'}
+          {readOnly ? <Pill tone="dim">tylko podgląd</Pill> : null}
+        </>
+      }
       onClose={onClose}
       footer={
-        done ? (
-          <Button variant="primary" onClick={onClose}>
-            Gotowe - wróć do listy
-          </Button>
-        ) : (
+        readOnly ? undefined : (
           <>
-            {edit.reason == null ? null : <span className="drawer-note">{edit.reason}</span>}
-            {form.reason == null ? null : <span className="drawer-note">{form.reason}</span>}
             <Button variant="ghost" onClick={onClose}>
               Anuluj
             </Button>
             <Button
               variant="primary"
-              disabled={!edit.enabled || !form.ok || create.isPending}
-              onClick={() => create.mutate(createBody(draft))}
+              onClick={save}
+              disabled={pending || !verdict.complete || blocker != null || !changed}
+              reason={blocker ?? undefined}
             >
-              {create.isPending ? 'Zapisuję…' : 'Dodaj samolot'}
+              {pending ? 'Zapisuję…' : creating ? 'Dodaj samolot' : 'Zapisz'}
             </Button>
           </>
         )
       }
     >
-      {create.data == null ? null : <SavedBanner kind="create" reg={create.data.aircraft.reg} />}
-      {failure == null ? null : <FailureBanner failure={failure} />}
+      {!creating && aircraft == null && !listPending ? (
+        <Card title="Nie ma go na liście">
+          <p className="hint">
+            Wyszukiwanie albo zawężenie ukrywa tę jednostkę.{' '}
+            <Link to="/samoloty">Pokaż wszystkie</Link>
+          </p>
+        </Card>
+      ) : null}
 
-      {done ? null : (
-        <>
-          <IdentityFields draft={draft} onChange={setDraft} disabled={!edit.enabled} form={form} />
-          <MhFormatChoice draft={draft} onChange={setDraft} disabled={!edit.enabled} />
-          <DualChoice draft={draft} onChange={setDraft} disabled={!edit.enabled} />
-          <ServiceChoice draft={draft} onChange={setDraft} disabled={!edit.enabled} reason={null} />
-          <OilFields draft={draft} onChange={setDraft} disabled={!edit.enabled} form={form} />
+      {generalError == null ? null : (
+        <Banner tone="danger" live>
+          {generalError}
+        </Banner>
+      )}
+      {refusalText == null ? null : (
+        <Banner tone="warn" live>
+          {refusalText}
+        </Banner>
+      )}
+      {done == null ? null : (
+        <Banner tone="ok" live>
+          {done}
+        </Banner>
+      )}
 
-          <Card title="Co ta konfiguracja włącza" actions={<Pill tone="dim">wejścia reguł</Pill>}>
-            {/* Zapis progu składa `toleranceText`, a nie interpolacja w JSX-ie: ten sam
-                napis ma wyjść tutaj i w kolumnie tabeli, inaczej „±62.85 L" obok
-                „±62.9 L" wygląda na dwie różne liczby. */}
-            <KeyValue
-              label="Próg FUEL_MISMATCH"
-              value={tolerance.data == null ? '-' : toleranceText(tolerance.data.fuelToleranceL)}
-              unit={tolerance.data == null ? 'liczy serwer z pojemności' : 'większa z: 10 L albo 5%'}
-              {...(tolerance.data == null ? {} : { tone: 'amber' as const })}
+      <Card title="Samolot">
+        <Field htmlFor="reg" label="Rejestracja" hint="Znaki z kadłuba, np. SP-KLM.">
+          <TextInput
+            id="reg"
+            mono
+            value={draft.reg}
+            disabled={readOnly}
+            invalid={verdict.invalid.includes('reg') || field === 'reg'}
+            onChange={(event) => setDraft({ ...draft, reg: normalizeReg(event.target.value) })}
+          />
+        </Field>
+        {conflict == null ? null : <p className="hint danger">{conflict}</p>}
+
+        <Field htmlFor="type" label="Typ" hint="np. Cessna 182.">
+          <TextInput
+            id="type"
+            value={draft.type}
+            disabled={readOnly}
+            invalid={verdict.invalid.includes('type')}
+            onChange={(event) => setDraft({ ...draft, type: event.target.value })}
+          />
+        </Field>
+
+        <div className="field-pair">
+          <Field htmlFor="year" label="Rok produkcji" hint="Można zostawić puste.">
+            <TextInput
+              id="year"
+              mono
+              inputMode="numeric"
+              value={draft.year}
+              disabled={readOnly}
+              invalid={verdict.invalid.includes('year')}
+              onChange={(event) => setDraft({ ...draft, year: event.target.value })}
             />
-            <span className="hint">
-              <b>Pojemność</b> steruje tolerancją flagi <code>FUEL_MISMATCH</code> i ogranicza
-              wpis tankowania w aplikacji - stan po tankowaniu nie może jej przekroczyć.{' '}
-              <b>Format motogodzin</b> zmienia sam sposób wpisywania na ekranie preflight:
-              jedno pole dziesiętne albo dwa pola godziny i minuty.
-            </span>
-          </Card>
+          </Field>
 
-          <TelephonesBanner />
-        </>
+          <Field
+            htmlFor="capacity"
+            // Krótko, bo etykieta stoi w PARZE pól: „Paliwo - pojemność zbiorników (L)"
+            // łamało się na dwie linie i zsuwało pole niżej niż sąsiednie.
+            label="Pojemność paliwa (L)"
+            hint={
+              capacityChanged ? (
+                <>
+                  Było {litres(aircraft.capacityL)}.
+                  {tolerance.data == null
+                    ? null
+                    : ` Rozjazd paliwa zgłaszamy od ±${litres(tolerance.data.fuelToleranceL)}` +
+                      ` (dziś ±${litres(aircraft.fuelToleranceL)}).`}
+                </>
+              ) : undefined
+            }
+          >
+            <TextInput
+              id="capacity"
+              mono
+              inputMode="decimal"
+              value={draft.capacityL}
+              disabled={readOnly}
+              invalid={verdict.invalid.includes('capacityL')}
+              onChange={(event) => setDraft({ ...draft, capacityL: event.target.value })}
+            />
+          </Field>
+        </div>
+      </Card>
+
+      <Card title="Ustawienia dla pilota">
+        <span className="label">Licznik motogodzin</span>
+        <div className="opt-list" role="radiogroup" aria-label="Format licznika motogodzin">
+          {MH_FORMAT_ORDER.map((format) => (
+            <OptionButton
+              key={format}
+              name={`${mhFormatLabel(format)} - ${mhFormatExample(format)}`}
+              desc={
+                format === 'decimal'
+                  ? 'Pilot wpisuje jedną liczbę.'
+                  : 'Pilot wpisuje godziny i minuty.'
+              }
+              selected={draft.mhFormat === format}
+              disabled={readOnly}
+              onSelect={() => setDraft({ ...draft, mhFormat: format })}
+            />
+          ))}
+        </div>
+
+        <span className="label">Drugi pilot</span>
+        <div className="opt-list" role="radiogroup" aria-label="Wymóg drugiego pilota">
+          <OptionButton
+            name="Nieobowiązkowy"
+            desc="Pilot może lecieć sam."
+            selected={!draft.dualRequired}
+            disabled={readOnly}
+            onSelect={() => setDraft({ ...draft, dualRequired: false })}
+          />
+          <OptionButton
+            name="Wymagany"
+            desc="Bez drugiego pilota aplikacja nie pozwoli zacząć lotu."
+            selected={draft.dualRequired}
+            disabled={readOnly}
+            onSelect={() => setDraft({ ...draft, dualRequired: true })}
+          />
+        </div>
+
+        <span className="label">Stan</span>
+        <div className="opt-list" role="radiogroup" aria-label="Stan służby">
+          <OptionButton
+            name="W służbie"
+            desc="Pilot widzi go na liście samolotów."
+            selected={draft.serviceStatus === 'active'}
+            disabled={readOnly}
+            onSelect={() => setDraft({ ...draft, serviceStatus: 'active' })}
+          />
+          <OptionButton
+            name="Wyłączony"
+            desc="Znika z listy. Zapisane loty zostają."
+            selected={draft.serviceStatus === 'disabled'}
+            disabled={readOnly}
+            onSelect={() => setDraft({ ...draft, serviceStatus: 'disabled' })}
+          />
+        </div>
+      </Card>
+
+      <Card
+        title={
+          <>
+            Olej <Pill tone="dim">opcjonalne</Pill>
+          </>
+        }
+      >
+        <div className="field-pair">
+          <Field htmlFor="oil-min" label="Minimum przed lotem (L)">
+            <TextInput
+              id="oil-min"
+              mono
+              inputMode="decimal"
+              value={draft.oilMinL}
+              disabled={readOnly}
+              invalid={verdict.invalid.includes('oilMinL')}
+              onChange={(event) => setDraft({ ...draft, oilMinL: event.target.value })}
+            />
+          </Field>
+
+          <Field htmlFor="oil-capacity" label="Zbiornik oleju (L)">
+            <TextInput
+              id="oil-capacity"
+              mono
+              inputMode="decimal"
+              value={draft.oilCapacityL}
+              disabled={readOnly}
+              invalid={verdict.invalid.includes('oilCapacityL')}
+              onChange={(event) => setDraft({ ...draft, oilCapacityL: event.target.value })}
+            />
+          </Field>
+        </div>
+
+        <Field
+          htmlFor="oil-norm"
+          label="Zużycie z dokumentacji (L/h)"
+          hint="Puste pola znaczą, że aplikacja nie będzie o oleju przypominać."
+        >
+          <TextInput
+            id="oil-norm"
+            mono
+            inputMode="decimal"
+            value={draft.oilNormLPerH}
+            disabled={readOnly}
+            invalid={verdict.invalid.includes('oilNormLPerH')}
+            onChange={(event) => setDraft({ ...draft, oilNormLPerH: event.target.value })}
+          />
+        </Field>
+      </Card>
+
+      {aircraft == null || readOnly ? null : (
+        <Card title="Usuwanie">
+          <div className="access-row">
+            <span className="kv-k">Usuń trwale</span>
+            {/* Powód blokady stoi W PRZYCISKU, bo stan służby widać z listy i z sekcji
+                wyżej. Drugiego warunku (brak historii) panel nie zna - lista nie niesie
+                liczby lotów - więc ten wraca odmową serwera z nazwanym powodem. */}
+            <Button
+              variant="danger"
+              size="sm"
+              disabled={pending || deleteBlocker(aircraft) != null}
+              reason={deleteBlocker(aircraft) ?? undefined}
+              onClick={() => setConfirmDelete(true)}
+            >
+              Usuń samolot
+            </Button>
+          </div>
+
+          {confirmDelete ? (
+            <div className="confirm">
+              <p className="confirm-q">Usunąć {aircraft.reg}?</p>
+              <p className="hint">
+                Zniknie z rejestru floty na zawsze - tego nie da się cofnąć. Jeśli ma
+                zapisane loty, zostanie tylko wyłączony.
+              </p>
+              <div className="confirm-actions">
+                <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(false)}>
+                  Anuluj
+                </Button>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  disabled={pending}
+                  // Po udanym usunięciu ZAMYKAMY kartę: jednostki już nie ma, a formularz
+                  // nad nieistniejącym wierszem obiecuje zapis.
+                  onClick={() => remove.mutate(aircraft.id, { onSuccess: onClose })}
+                >
+                  Usuń samolot
+                </Button>
+              </div>
+            </div>
+          ) : null}
+        </Card>
       )}
     </Drawer>
   );
-}
-
-/** Szuflada edycji: konfiguracja + karta „Skutki zmiany" + dwa banery skutków. */
-function ExistingAircraft({
-  aircraft: fromList,
-  initial,
-  capabilities,
-  onClose,
-}: AircraftDrawerProps & { initial: AircraftListItemDto }) {
-  const [draft, setDraft] = useState<AircraftDraft>(() => draftOf(initial));
-  const update = useUpdateAircraft();
-
-  // Wiersz listy, dopóki na niej jest; potem skutek ostatniego zapisu. Bez tego zapis,
-  // który wyrzuca jednostkę spod bieżącego chipa, zostawiałby szufladę ze stanem
-  // sprzed zmiany.
-  const aircraft = fromList ?? update.data?.aircraft ?? initial;
-
-  const edit = editAction(capabilities);
-  const disable = disableAction(aircraft, capabilities);
-  const form = formState(draft);
-  const changed = hasChanges(aircraft, draft);
-  const failure = update.isError ? failureOf(update.error) : null;
-
-  const capacityL = parseCapacity(draft.capacity);
-  const tolerance = useFuelTolerance(capacityL);
-  const impact = impactCard(
-    aircraft,
-    draft,
-    // Próg „po" bierzemy wyłącznie wtedy, gdy serwer policzył go dla TEJ pojemności -
-    // odpowiedź dla poprzedniej wartości pola byłaby liczbą, która nie nadąża.
-    tolerance.data?.capacityL === capacityL ? tolerance.data.fuelToleranceL : null,
-  );
-
-  // Wyłączenie ze służby jest częścią TEGO formularza (mockup A07a), więc blokada
-  // „otwarty dzień" musi gasić przycisk zapisu tylko wtedy, gdy szkic faktycznie
-  // próbuje wyłączyć jednostkę. Zmiana pojemności przy otwartym dniu jest dozwolona.
-  const disabling = draft.serviceStatus === 'disabled' && aircraft.serviceStatus !== 'disabled';
-  const blocked = disabling && !disable.enabled;
-
-  return (
-    <Drawer
-      wide
-      title={`${aircraft.reg} · EDYCJA`}
-      sub={
-        <>
-          {aircraft.type} · id {aircraft.id} · dane referencyjne
-        </>
-      }
-      onClose={onClose}
-      footer={
-        <>
-          {edit.reason == null ? null : <span className="drawer-note">{edit.reason}</span>}
-          {blocked && disable.reason != null ? (
-            <span className="drawer-note">{disable.reason}</span>
-          ) : null}
-          {form.reason == null ? null : <span className="drawer-note">{form.reason}</span>}
-          <Button variant="ghost" onClick={onClose}>
-            Anuluj
-          </Button>
-          <Button
-            variant="primary"
-            disabled={!edit.enabled || !form.ok || !changed || blocked || update.isPending}
-            onClick={() => update.mutate({ id: aircraft.id, body: updateBody(aircraft, draft) })}
-          >
-            {update.isPending ? 'Zapisuję…' : 'Zapisz zmiany'}
-          </Button>
-        </>
-      }
-    >
-      {update.data == null ? null : <SavedBanner kind="update" reg={update.data.aircraft.reg} />}
-      {failure == null ? null : <FailureBanner failure={failure} />}
-
-      <IdentityFields draft={draft} onChange={setDraft} disabled={!edit.enabled} form={form} />
-      <MhFormatChoice draft={draft} onChange={setDraft} disabled={!edit.enabled} />
-      <DualChoice draft={draft} onChange={setDraft} disabled={!edit.enabled} />
-      <ServiceChoice
-        draft={draft}
-        onChange={setDraft}
-        disabled={!edit.enabled}
-        reason={disable.enabled ? null : disable.reason}
-      />
-      <OilFields draft={draft} onChange={setDraft} disabled={!edit.enabled} form={form} />
-
-      <Card
-        title="Skutki zmiany"
-        actions={
-          <Pill tone={impact.changeCount === 0 ? 'dim' : 'amber'}>
-            {impact.changeCount === 0 ? 'bez zmian' : impact.changeLabel}
-          </Pill>
-        }
-      >
-        {impact.rows.map((row) => (
-          <KeyValue
-            key={row.label}
-            label={row.label}
-            value={row.value}
-            {...(row.unit == null ? {} : { unit: row.unit })}
-            {...(row.tone == null ? {} : { tone: row.tone })}
-          />
-        ))}
-        <span className="hint">
-          <b>Pojemność</b> steruje tolerancją flagi <code>FUEL_MISMATCH</code>: większa z dwóch
-          wartości - <b>10 L</b> albo <b>5% pojemności</b>. Po zapisie rozbieżność między
-          odczytem paliwomierza a przekazaniem będzie flagowana od nowego progu. Ta sama liczba
-          ogranicza wpis tankowania w aplikacji - stan po tankowaniu nie może przekroczyć
-          pojemności. <b>Obie liczby progu liczy serwer</b>, żeby na dwóch ekranach nie wyszły
-          dwie różne wartości tego samego.
-        </span>
-        <span className="hint">
-          <b>Format motogodzin</b> zmienia sam sposób wpisywania na ekranie preflight: jedno
-          pole dziesiętne albo dwa pola godziny i minuty. Wartości już zapisane zostają
-          w formacie, w jakim je wpisano.
-        </span>
-      </Card>
-
-      <Banner tone="danger">
-        <b>Sprostowanie z 2026-08-01: nowy próg obejmie także dni już zamknięte.</b> Zapisane
-        zdarzenia zostają dokładnie takie, jakie przyszły z telefonu, a <b>panel nigdy nie
-        przepisuje rejestru</b> - flagi wystawione wcześniej zachowują próg, przy którym
-        powstały, i żadna z nich nie zniknie. Ale rozbieżności paliwa serwer szuka od nowa
-        w <b>całej historii tego samolotu</b> przy każdej przyjętej paczce zdarzeń, biorąc
-        pojemność aktualną - więc po obniżeniu progu najbliższa synchronizacja tej jednostki
-        potrafi wystawić <b>nową flagę na parze dni sprzed zmiany</b>. W drugą stronę to nie
-        działa: podniesienie pojemności nie zdejmuje flag, które przy nowym progu by nie
-        powstały. Zmiana pojemności jest więc decyzją o tym, co jeszcze wyjdzie z przeszłości,
-        a nie tylko o przyszłości.
-      </Banner>
-
-      <TelephonesBanner />
-
-      <Card title="Ślad i historia">
-        <KeyValue
-          label="Identyfikator jednostki"
-          value={aircraft.id}
-          unit="zdarzenia wiążą się z nim, nie z rejestracją"
-        />
-        <KeyValue
-          label="Historia zmian"
-          value={
-            <LinkButton to={targetHref('aircraft', aircraft.id)} variant="ghost" size="sm">
-              wpisy w dzienniku audytu → A09
-            </LinkButton>
-          }
-          unit="kto, kiedy i co zmienił"
-        />
-        <span className="hint">
-          Zmiana rejestracji <b>nie przepisuje historii</b>: zdarzenia wiążą się z{' '}
-          <code>id</code> jednostki. W kartach arkusza wyeksportowanych wcześniej zostaje jednak
-          stara rejestracja - dlatego zmieniaj ją tylko przy faktycznej zmianie znaków na
-          kadłubie.
-        </span>
-      </Card>
-    </Drawer>
-  );
-}
-
-/**
- * Konfiguracja OLEJU (issue #60) - mockup `A07a`, karta między „Stan służby" a normą
- * z analityki. Trzy liczby z dokumentacji jednostki (POH), wszystkie OPCJONALNE:
- * puste pola = sekcja oleju w aplikacji bez podpowiedzi i bez ostrzeżeń (pomiar dalej
- * da się zapisać) - moduł wchodzi do floty stopniowo, samolot po samolocie.
- */
-function OilFields({
-  draft,
-  onChange,
-  disabled,
-  form,
-}: {
-  draft: AircraftDraft;
-  onChange: (next: AircraftDraft) => void;
-  disabled: boolean;
-  form: ReturnType<typeof formState>;
-}) {
-  return (
-    <Card title="Olej silnikowy">
-      <OptionGrid>
-        <Field
-          htmlFor="samolot-olej-min"
-          label="Minimum przed lotem (L)"
-          hint={form.oilMin.message ?? form.oilPair.message}
-        >
-          <TextInput
-            id="samolot-olej-min"
-            mono
-            value={draft.oilMin}
-            disabled={disabled}
-            invalid={(draft.oilMin.length > 0 && !form.oilMin.ok) || !form.oilPair.ok}
-            onChange={(event) => onChange({ ...draft, oilMin: event.target.value })}
-          />
-        </Field>
-
-        <Field
-          htmlFor="samolot-olej-zbiornik"
-          label="Zbiornik oleju (L)"
-          hint={form.oilCapacity.message}
-        >
-          <TextInput
-            id="samolot-olej-zbiornik"
-            mono
-            value={draft.oilCapacity}
-            disabled={disabled}
-            invalid={(draft.oilCapacity.length > 0 && !form.oilCapacity.ok) || !form.oilPair.ok}
-            onChange={(event) => onChange({ ...draft, oilCapacity: event.target.value })}
-          />
-        </Field>
-      </OptionGrid>
-
-      <Field
-        htmlFor="samolot-olej-norma"
-        label="Norma zużycia - nominalna (L/h) · opcjonalnie"
-        hint={
-          form.oilNorm.message ?? (
-            <>
-              <b>Minimum</b> zapala ostrzeżenie na kroku liczników („dolej co najmniej…"),
-              <b> zbiornik</b> ogranicza pomiar i dolewkę - jak pojemność ogranicza tankowanie.
-              <b> Norma nominalna</b> (z dokumentacji silnika) zasila sugestię oczekiwanego
-              poziomu, dopóki analityka nie policzy własnej stawki z pomiarów - wyliczona
-              wygra z wpisaną. Puste pola = moduł oleju dla tej jednostki milczy.
-            </>
-          )
-        }
-      >
-        <TextInput
-          id="samolot-olej-norma"
-          mono
-          value={draft.oilNorm}
-          disabled={disabled}
-          invalid={draft.oilNorm.length > 0 && !form.oilNorm.ok}
-          onChange={(event) => onChange({ ...draft, oilNorm: event.target.value })}
-        />
-      </Field>
-    </Card>
-  );
-}
-
-/** Rejestracja, typ, rok i pojemność - wspólne dla obu wariantów szuflady. */
-function IdentityFields({
-  draft,
-  onChange,
-  disabled,
-  form,
-}: {
-  draft: AircraftDraft;
-  onChange: (next: AircraftDraft) => void;
-  disabled: boolean;
-  form: ReturnType<typeof formState>;
-}) {
-  return (
-    <Card title="Jednostka">
-      <Field
-        htmlFor="samolot-reg"
-        label="Rejestracja"
-        hint={
-          form.reg.message ?? (
-            <>
-              Unikalna w całym systemie. Widoczna w logu dnia, w nazwie karty eksportu (
-              <code>2026-07-30_SP-KLM</code>) i w każdej fladze - zmieniaj tylko przy faktycznej
-              zmianie znaków na kadłubie. Zapisujemy ją WERSALIKAMI niezależnie od tego, jak ją
-              wpiszesz.
-            </>
-          )
-        }
-      >
-        <TextInput
-          id="samolot-reg"
-          mono
-          value={draft.reg}
-          disabled={disabled}
-          invalid={draft.reg.length > 0 && !form.reg.ok}
-          onChange={(event) => onChange({ ...draft, reg: event.target.value })}
-        />
-      </Field>
-
-      <Field htmlFor="samolot-typ" label="Typ" hint={form.type.message}>
-        <TextInput
-          id="samolot-typ"
-          value={draft.type}
-          disabled={disabled}
-          invalid={draft.type.length > 0 && !form.type.ok}
-          onChange={(event) => onChange({ ...draft, type: event.target.value })}
-        />
-      </Field>
-
-      <OptionGrid>
-        <Field
-          htmlFor="samolot-rok"
-          label="Rok produkcji"
-          hint={form.year.message ?? 'Pole może zostać puste - tabliczka bez daty to realny przypadek.'}
-        >
-          <TextInput
-            id="samolot-rok"
-            mono
-            value={draft.year}
-            disabled={disabled}
-            invalid={draft.year.length > 0 && !form.year.ok}
-            onChange={(event) => onChange({ ...draft, year: event.target.value })}
-          />
-        </Field>
-
-        <Field
-          htmlFor="samolot-pojemnosc"
-          label="Pojemność zbiorników (L)"
-          hint={form.capacity.message ?? 'Z niej wynika próg flagi paliwa i limit wpisu tankowania.'}
-        >
-          <TextInput
-            id="samolot-pojemnosc"
-            mono
-            value={draft.capacity}
-            disabled={disabled}
-            invalid={draft.capacity.length > 0 && !form.capacity.ok}
-            onChange={(event) => onChange({ ...draft, capacity: event.target.value })}
-          />
-        </Field>
-      </OptionGrid>
-    </Card>
-  );
-}
-
-/** Format licznika - lista kart, jedyny dozwolony „select" w produkcie. */
-function MhFormatChoice({
-  draft,
-  onChange,
-  disabled,
-}: {
-  draft: AircraftDraft;
-  onChange: (next: AircraftDraft) => void;
-  disabled: boolean;
-}) {
-  return (
-    <div className="field">
-      <span className="label">Format motogodzin</span>
-      <OptionList ariaLabel="Format motogodzin">
-        {MH_FORMAT_OPTIONS.map((option) => (
-          <OptionButton
-            key={option.id}
-            name={option.name}
-            desc={option.desc}
-            selected={draft.mhFormat === option.id}
-            disabled={disabled}
-            onSelect={() => onChange({ ...draft, mhFormat: option.id })}
-          />
-        ))}
-      </OptionList>
-    </div>
-  );
-}
-
-function DualChoice({
-  draft,
-  onChange,
-  disabled,
-}: {
-  draft: AircraftDraft;
-  onChange: (next: AircraftDraft) => void;
-  disabled: boolean;
-}) {
-  return (
-    <div className="field">
-      <span className="label">Drugi pilot (Dual)</span>
-      <OptionList ariaLabel="Wymóg drugiego pilota">
-        {DUAL_OPTIONS.map((option) => (
-          <OptionButton
-            key={option.id}
-            name={option.name}
-            desc={option.desc}
-            selected={draft.dualRequired === (option.id === 'yes')}
-            disabled={disabled}
-            onSelect={() => onChange({ ...draft, dualRequired: option.id === 'yes' })}
-          />
-        ))}
-      </OptionList>
-    </div>
-  );
-}
-
-/**
- * Stan służby. `reason` gasi WYŁĄCZNIE kartę „wyłączony": jednostka z otwartym dniem
- * nie może zniknąć z listy wyboru, ale wszystko inne w tym formularzu wolno zmieniać.
- */
-function ServiceChoice({
-  draft,
-  onChange,
-  disabled,
-  reason,
-}: {
-  draft: AircraftDraft;
-  onChange: (next: AircraftDraft) => void;
-  disabled: boolean;
-  reason: string | null;
-}) {
-  return (
-    <div className="field">
-      <span className="label">Stan służby</span>
-      <OptionList ariaLabel="Stan służby">
-        {SERVICE_OPTIONS.map((option) => (
-          <OptionButton
-            key={option.id}
-            name={option.name}
-            desc={option.desc}
-            selected={draft.serviceStatus === option.id}
-            disabled={disabled || (option.id === 'disabled' && reason != null)}
-            onSelect={() => onChange({ ...draft, serviceStatus: option.id })}
-          />
-        ))}
-      </OptionList>
-      {reason == null ? null : <span className="hint">{reason}</span>}
-    </div>
-  );
-}
-
-/** Jedyny kanał, którym konfiguracja wychodzi z panelu - i ekran to mówi wprost. */
-function TelephonesBanner() {
-  return (
-    <Banner tone="status">
-      <b>Telefony zobaczą zmianę przy najbliższym pobraniu danych referencyjnych.</b> Zapis
-      podbija znacznik zasobu <code>GET /reference</code>, a aplikacja odpytuje go przy starcie
-      dnia. Samolot z <b>otwartą sesją dokończy dzień</b> na konfiguracji, którą pobrał rano -
-      i to jest zachowanie zamierzone, nie opóźnienie.
-    </Banner>
-  );
-}
-
-function SavedBanner({ kind, reg }: { kind: 'create' | 'update'; reg: string }) {
-  const copy = saveCopy(kind, reg);
-  return (
-    <Banner tone="ok" live>
-      <b>{copy.title}</b> {copy.note}
-    </Banner>
-  );
-}
-
-function FailureBanner({ failure }: { failure: ReturnType<typeof fleetFailure> }) {
-  return (
-    <Banner tone={failure.tone} live>
-      <b>{failure.title}</b> {failure.detail}
-    </Banner>
-  );
-}
-
-/**
- * `HttpError` → komunikat. Rozpakowanie wyjątku należy do ekranu, a nie do modułu
- * czystego: `fleetFailure` przyjmuje STATUS i CIAŁO, żeby dało się je przetestować
- * bez klienta HTTP.
- */
-function failureOf(error: unknown) {
-  if (isHttpError(error)) return fleetFailure(error.status, error.body as ApiErrorDto);
-  return fleetFailure(null, null);
 }

@@ -1,46 +1,34 @@
 /**
- * UZ Aero - panel: WYMIARY RAMY i szkielet układu.
+ * UZ Aero - panel 2.0: WYMIARY RAMY i szkielet układu.
  *
- * Osobny plik od `tokens.css` i to jest twarda linia (`docs/architektura-panelu-frontend.md`
- * §1.3): tokeny to wartości PRODUKTU, wspólne z aplikacją pilota; `--sidebar-w`
- * i `--topbar-h` to wymiary jednej powierzchni. Telefon nie ma sidebara, więc te
- * zmienne nie mają czego szukać w pakiecie tokenów - pilnuje tego test w `app/`.
+ * Osobny plik od `tokens.css` i to jest twarda linia: tokeny to wartości PRODUKTU,
+ * wspólne z aplikacją pilota; `--topbar-h` to wymiar jednej powierzchni. Telefon nie
+ * ma paska panelu, więc ta zmienna nie ma czego szukać w pakiecie tokenów.
  *
- * Klasy 1:1 z `design/admin/SZABLON.html`; wartości przepisane bez zmian.
+ * `--sidebar-w` zniknęła razem z kolumną boczną (patrz `ui/shell/tabs.ts`).
  */
 
 :root {
-  --sidebar-w: 236px;
   --topbar-h: 56px;
-}
-
-.shell {
-  flex: 1;
-  display: grid;
-  grid-template-columns: var(--sidebar-w) 1fr;
-  min-height: 0;
-}
-
-.main {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
+  /* Treść nie rozlewa się na pełną szerokość monitora: wiersz tabeli szerszy niż
+     to oko przenosi między kolumnami, gubiąc wiersz w połowie drogi. */
+  --content-max: 1180px;
 }
 
 .content {
   flex: 1;
   overflow-y: auto;
-  padding: 22px;
+  padding: 26px 22px 40px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
+  width: 100%;
+  max-width: var(--content-max);
+  margin: 0 auto;
 }
 
 /* Kolumna scrollowana: dzieci NIE mogą się kurczyć - inaczej `.table-wrap`
-   z `overflow:hidden` obcina wiersze, zamiast pozwolić `.content` przewinąć.
-   Komentarz przeniesiony z szablonu razem z regułą, bo bez niego wygląda
-   na nadmiarowy i ktoś go kiedyś usunie. */
+   z `overflow:hidden` obcina wiersze, zamiast pozwolić `.content` przewinąć. */
 .content > *,
 .drawer-body > * {
   flex-shrink: 0;
@@ -56,60 +44,21 @@
   border: 3px solid var(--bg);
 }
 
-/**
- * Siatka dwukolumnowa treści (`.cols` z `SZABLON.html`). Po lewej rzecz główna,
- * po prawej przypisy do niej - stała szerokość prawej kolumny, bo to ona ma się
- * NIE rozjeżdżać między ekranami, a lewa mieści tabele i musi brać, co zostanie.
- *
- * `align-items:start` jest tu istotne: bez niego karta boczna rozciągałaby się na
- * wysokość osi zdarzeń dnia, czyli na kilkaset pikseli pustego tła.
- */
-.cols {
-  display: grid;
-  grid-template-columns: 1fr 380px;
-  gap: 16px;
-  align-items: start;
-}
-
-.cols.even {
-  grid-template-columns: 1fr 1fr;
-}
-
-/**
- * Kolumna kart wewnątrz `.cols` - karty jedna pod drugą z tym samym odstępem, co
- * siatka. W mockupie stoi to stylem inline (`display:flex;flex-direction:column;
- * gap:16px`); tutaj dostaje nazwę, bo klasa bez nazwy jest klasą, której nikt nie
- * znajdzie greppem.
- */
-.cols-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-width: 0;
-}
-
-/**
- * Ekran PRZED shellem (logowanie, A00). W mockupie to zwykły `div` ze stylami
- * inline w `.browser`; tutaj dostaje nazwę, bo klasa bez nazwy jest klasą,
- * której nikt nie znajdzie greppem.
- */
+/** Ekran PRZED ramą (logowanie) - kolumna wyśrodkowana w oknie. */
 .centered {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 20px;
+  gap: 18px;
   padding: 24px;
   overflow-y: auto;
 }
 
-/**
- * Szersza kolumna boczna (400 px) tam, gdzie niesie ona WŁASNĄ treść, a nie przypis
- * do lewej: puls systemu na pulpicie (`A01`), dowód z replaya przy progach (`A08`).
- * Modyfikator zamiast zmiany bazy, bo szersza prawa = węższa lewa, a w lewej stoją
- * tabele - 20 px mniej potrafi przyciąć kolumnę w `.table-wrap`.
- */
-.cols.wide {
-  grid-template-columns: 1fr 400px;
+/** Siatka dwóch pól w rzędzie (rok i pojemność, minimum i zbiornik oleju). */
+.field-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 }

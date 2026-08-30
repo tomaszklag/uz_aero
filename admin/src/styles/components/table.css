@@ -276,3 +276,25 @@ tbody tr.flagged:hover {
   gap: 12px;
   flex-wrap: wrap;
 }
+
+/**
+ * Wiersz PRZYGASZONY - konto bez dostępu, samolot poza służbą.
+ *
+ * Sam kolor, bez przekreśleń i bez ikony: to nadal prawdziwy wiersz, który da się
+ * otworzyć i poprawić, a nie zapis unieważniony. Serwer stawia takie wiersze na końcu
+ * listy, więc przygaszenie mówi „to już nie pracuje", a nie „to jest błąd".
+ */
+tbody tr.muted td {
+  color: var(--text-muted);
+}
+
+tbody tr.muted .reg,
+tbody tr.muted .cell-strong {
+  color: var(--text-secondary);
+}
+
+/* Druga linia komórki w tonie ostrzeżenia - jednostka wyłączona, na której ktoś
+   jeszcze lata. Jedyne miejsce w panelu 2.0, gdzie wiersz mówi coś ponad dane. */
+.cell-sub.warn {
+  color: var(--amber);
+}

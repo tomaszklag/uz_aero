@@ -168,10 +168,10 @@ describe('audyt wymuszony typem, nie dyscypliną', () => {
   it('NIEUDANY SKUTEK nie zostawia śladu - odbita próba nie dopisuje wiersza', async () => {
     const { app, db, flagId } = await overlapping();
     const admin = await login(app, 'TMK');
-    const trainingLead = await login(app, 'AKO');
+    const otherAdmin = await login(app, 'AKO');
 
     await resolve(app, flagId, admin, 'Pierwsze rozstrzygnięcie.');
-    const second = await resolve(app, flagId, trainingLead, 'Drugie rozstrzygnięcie.');
+    const second = await resolve(app, flagId, otherAdmin, 'Drugie rozstrzygnięcie.');
     expect(second.statusCode).toBe(409);
 
     // Dokładnie JEDEN wiersz: druga próba przerwała transakcję przed wpisem, więc
@@ -183,14 +183,16 @@ describe('audyt wymuszony typem, nie dyscypliną', () => {
 
   it('wpis niesie aktora, jego rolę, akcję i identyfikator flagi', async () => {
     const { app, db, flagId } = await overlapping();
-    const trainingLead = await login(app, 'AKO');
+    // Aktorem jest DRUGI administrator, nie TMK: wpis ma dowieść, że dziennik zapisuje
+    // tego, kto akcję wykonał, a nie tego, kim jest pierwsze konto ze świata testowego.
+    const otherAdmin = await login(app, 'AKO');
 
-    await resolve(app, flagId, trainingLead, 'Nakładka pozorna - dane dosłane z kopii.');
+    await resolve(app, flagId, otherAdmin, 'Nakładka pozorna - dane dosłane z kopii.');
 
     expect(await auditRows(db)).toMatchObject([
       {
         actor_pilot_id: 'AKO',
-        actor_role: 'training_lead',
+        actor_role: 'admin',
         action: 'flag.resolve',
         target_type: 'flag',
         target_id: String(flagId),
@@ -283,7 +285,7 @@ const JOURNAL: readonly AuditSeed[] = [
   },
   {
     actor: 'AKO',
-    role: 'training_lead',
+    role: 'admin',
     action: 'flag.resolve',
     targetType: 'flag',
     targetId: '1044',
@@ -388,7 +390,7 @@ describe('dziennik audytu - strona odczytu (A09)', () => {
       actorPilotId: 'AKO',
       actorCode: 'AKO',
       actorName: 'Anna Kowalska',
-      actorRole: 'training_lead',
+      actorRole: 'admin',
       targetType: 'flag',
       targetId: '1044',
       ip: '10.20.4.63',
@@ -698,20 +700,19 @@ describe('dziennik audytu - strona odczytu (A09)', () => {
     expect([...seen].sort((a, b) => a - b)).toEqual(rows.map((r) => Number(r.id)));
   });
 
-  it('audyt czyta WYŁĄCZNIE administrator - szef wyszkolenia dostaje 403', async () => {
-    // `domain/roles.ts` nie daje `audit.read` roli `training_lead` i to jest decyzja,
-    // nie luka: rozstrzyganie rozbieżności to inna odpowiedzialność niż nadzór nad
-    // administratorami. Panel ma tę pozycję nawigacji POKAZAĆ i zablokować z powodem,
-    // więc odpowiedź musi nieść, KTÓREJ zdolności zabrakło.
+  it('audyt czyta WYŁĄCZNIE `audit.read` - konto bez niej dostaje 403 z powodem', async () => {
+    // Do 2026-08-30 podmiotem była rola pośrednia: miała wejście do panelu, ale nie
+    // miała `audit.read`. Po jej wycofaniu tę samą odmowę - i tę samą zdolność
+    // w treści - dostaje token zwykłego pilota, bo brama pyta o ZDOLNOŚĆ, a nie
+    // o wejście do panelu. Panel ma tę pozycję nawigacji POKAZAĆ i zablokować
+    // z powodem, więc odpowiedź musi nieść, KTÓREJ zdolności zabrakło.
     const { app } = await journal();
-    const trainingLead = await login(app, 'AKO');
     const pilot = await login(app, 'PWI');
 
-    const lead = await getAudit(app, trainingLead);
-    expect(lead.statusCode).toBe(403);
-    expect(lead.json()).toMatchObject({ required: 'audit.read' });
+    const refused = await getAudit(app, pilot);
+    expect(refused.statusCode).toBe(403);
+    expect(refused.json()).toMatchObject({ required: 'audit.read' });
 
-    expect((await getAudit(app, pilot)).statusCode).toBe(403);
     expect((await getAudit(app, null)).statusCode).toBe(401);
   });
 });

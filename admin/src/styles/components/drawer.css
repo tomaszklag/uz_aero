@@ -3,12 +3,17 @@
  *
  * Klasy i wartości 1:1 z `design/admin/SZABLON.html` (sekcja „szuflada szczegółu").
  *
- * **Jedna świadoma różnica: `fixed` zamiast `absolute`.** W mockupie szuflada jest
- * pozycjonowana względem `.main`, bo `.main` dostaje tam `position:relative` stylem
- * inline. W panelu ekran renderuje się WEWNĄTRZ `.content`, które ma `overflow-y:auto` -
- * szuflada `absolute` przewijałaby się razem z listą i kończyła na jej wysokości.
- * `fixed` z odsunięciem o szerokość sidebara daje dokładnie to samo, co mockup
- * (warstwa nad całą kolumną treści, razem z topbarem), i nie zależy od przewinięcia.
+ * **Pozycjonowanie `fixed`, nie `absolute`.** Ekran renderuje się WEWNĄTRZ `.content`,
+ * które ma `overflow-y:auto` - szuflada `absolute` przewijałaby się razem z listą
+ * i kończyła na jej wysokości. `fixed` daje warstwę nad całym oknem i nie zależy
+ * od przewinięcia.
+ *
+ * **Przesłona zaczyna się od LEWEJ KRAWEDZI OKNA.** Do panelu 2.0 stało tu
+ * `left: var(--sidebar-w)`, bo warstwa miała omijać kolumnę boczną - a kolumna
+ * zniknęła razem z całą zmienną. Deklaracja z nieistniejącą zmienną jest NIEWAZNA,
+ * więc `left` schodziło do `auto` i przesłona traciła szerokość: tło się nie
+ * przyciemniało, a kliknięcie obok szuflady jej nie zamykało. Awaria cicha - nic
+ * nie krzyczy, tylko dwie rzeczy przestają działać.
  */
 
 .drawer-scrim {
@@ -16,7 +21,7 @@
   top: 0;
   right: 0;
   bottom: 0;
-  left: var(--sidebar-w);
+  left: 0;
   /* NIE `var(--overlay)`: token niesie 0,74 (przyciemnienie modala w aplikacji
      pilota), a szuflada panelu przyciemnia listę słabiej - 0,55 z szablonu - bo
      lista pod spodem ma dalej być czytelna. To jest sens szuflady: kontekst zostaje. */

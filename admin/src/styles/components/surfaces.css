@@ -357,3 +357,82 @@
   padding: 3px 8px;
   letter-spacing: 0.3px;
 }
+
+/**
+ * Pytanie o potwierdzenie NIEODWRACALNEJ akcji - w miejscu, w którym ją kliknięto.
+ *
+ * Nie `window.confirm` i nie osobne okno nad szufladą: pytanie ma stać przy przycisku,
+ * którego dotyczy, i nieść oba zdania, po które człowiek sięga - co z dostępem i co
+ * z danymi. Ton czerwony, bo pyta o odcięcie, a nie o zapis.
+ */
+.confirm {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--red-muted);
+  border: 1px solid var(--red-border);
+}
+
+.confirm-q {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/**
+ * HASŁO POKAZANE JEDEN RAZ.
+ *
+ * Ton zielony, bo to wynik udanej akcji, a nie ostrzeżenie - ostrzeżeniem jest
+ * jedno zdanie pod spodem („zapisz je teraz"). Wartość jest `mono` i duża, bo bywa
+ * przepisywana z ekranu na kartkę.
+ */
+.secret {
+  padding: 13px;
+  border-radius: 10px;
+  background: var(--green-muted);
+  border: 1px solid var(--green-border);
+}
+
+.secret-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 9px;
+}
+
+.secret-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--green);
+}
+
+.secret-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.secret-value {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  letter-spacing: 1.5px;
+  color: var(--text-primary);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 11px;
+  user-select: all;
+  overflow-wrap: anywhere;
+}

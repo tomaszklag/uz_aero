@@ -8,6 +8,15 @@
 >
 > Wersja 1.0 - 2026-07-31.
 
+> **CZYTAJ RAZEM Z `panel-2.0.md` (2026-08-30).** Szkielet opisany niżej obowiązuje
+> dalej w całości - warstwy, kierunki zależności, jedne drzwi do sieci, własne DTO,
+> TanStack Query bez globalnego store'u, testy granic. Zmieniło się natomiast to, co
+> z tego szkieletu ZBUDOWANO: panel został przepisany do dwóch modułów (piloci, flota),
+> z paskiem górnym zamiast kolumny bocznej, bez banerów wyjaśniających i bez makiet
+> HTML jako specyfikacji. Gdzie ten dokument mówi co innego niż `panel-2.0.md` -
+> rozstrzyga `panel-2.0.md`; dotyczy to §3 (mapowanie z mockupów), §7 (kolumna boczna,
+> pozycje wyszarzone) i §10 (kolejność wdrażania jedenastu ekranów).
+
 ---
 
 ## 0. Rozstrzygnięcia w jednym miejscu

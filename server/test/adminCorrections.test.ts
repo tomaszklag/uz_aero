@@ -344,14 +344,16 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
     expect(await sessionRow(db)).toMatchObject({ flightMs: 0, blockMs: BLOCK_MS });
   });
 
-  it('szef wyszkolenia NIE MOŻE pisać w cudzym rejestrze - 403 z wymaganą zdolnością', async () => {
-    // Rozstrzyganie flag ma (`adminFlags.test.ts`), korekty nie: wyjaśnianie
-    // rozbieżności to inna odpowiedzialność niż dopisywanie zdarzeń.
+  it('konto bez `events.correct` nie pisze w cudzym rejestrze - 403 i pusty dziennik', async () => {
+    // Do 2026-08-30 podmiotem była rola pośrednia (rozstrzygała flagi, korekt nie).
+    // Po jej wycofaniu tę samą odmowę - z tą samą zdolnością w treści - dostaje token
+    // zwykłego pilota; osobno przybite jest to, że odbita próba NIE zostawia wiersza
+    // w dzienniku nadzoru.
     const { app, db } = await flownDay();
-    const trainingLead = await login(app, 'AKO');
+    const outsider = await login(app, 'PWI');
 
     const res = await correct(app, SESSION, {
-      token: trainingLead,
+      token: outsider,
       body: { targetUuid: UUID.landing, action: 'void', reason: 'Wygląda na pomyłkę detektora.' },
     });
 
@@ -901,12 +903,12 @@ describe('podgląd korekty przed zapisem (A02b, dry-run)', () => {
     expect(res.json()).toEqual({ error: 'not_found' });
   });
 
-  it('szef wyszkolenia NIE zobaczy podglądu - ta sama zdolność, co przy zapisie', async () => {
+  it('konto bez `events.correct` nie zobaczy podglądu - ta sama zdolność, co przy zapisie', async () => {
     const { app } = await flownDay();
-    const trainingLead = await login(app, 'AKO');
+    const outsider = await login(app, 'PWI');
 
     const res = await preview(app, SESSION, {
-      token: trainingLead,
+      token: outsider,
       body: { targetUuid: UUID.landing, action: 'void' },
     });
 

@@ -37,8 +37,8 @@ export function can(
  * `roles.ts` do `@uzaero/domain`.
  */
 const GRANTED_BY: Record<Capability, string> = {
-  'panel.access': 'administrator lub szef wyszkolenia',
-  'flags.resolve': 'administrator lub szef wyszkolenia',
+  'panel.access': 'administrator',
+  'flags.resolve': 'administrator',
   'events.correct': 'administrator',
   'accounts.manage': 'administrator',
   'fleet.manage': 'administrator',

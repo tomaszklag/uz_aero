@@ -1,0 +1,134 @@
+/**
+ * UZ Aero - panel 2.0: EKRAN LOGOWANIA.
+ *
+ * Osobny arkusz, bo to jedyny ekran panelu, który nie jest tabelą ani formularzem
+ * w szufladzie - i jedyny, na którym marka ma prawo być duża. Reszta panelu jest
+ * gęsta z zawodu (back-office), a tu na ekranie stoją dwa pola: gęstość nie ma czego
+ * oszczędzać, a oddech jest jedyną rzeczą, która odróżnia stronę logowania od
+ * formularza wklejonego na czarne tło.
+ *
+ * Zgłoszenie z urządzenia (2026-08-30): „brakuje paddingów i nie wygląda nowocześnie".
+ * Ekran korzystał z generycznej `.card` (16/18 px) i pól o wysokości 40 px, czyli
+ * wymiarów dobranych do tabeli z ośmioma kolumnami.
+ */
+
+/**
+ * Poświata pod treścią - jedyny gradient w panelu i jedyne miejsce, gdzie tło nie
+ * jest płaskie. Rysuje ją TŁO SEKCJI, nie osobny element: pusty `div` istniejący
+ * wyłącznie po to, żeby coś rozmyć, jest elementem bez treści w drzewie dostępności.
+ */
+.login {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  padding: 40px 24px 64px;
+  overflow-y: auto;
+  background:
+    radial-gradient(600px 320px at 50% 30%, var(--green-muted), transparent 70%),
+    radial-gradient(900px 500px at 50% 0%, var(--bg-tint), transparent 60%);
+}
+
+.login-mark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.login-badge {
+  width: 68px;
+  height: 68px;
+  border-radius: 22px;
+  background: var(--surface-raised);
+  border: 1px solid var(--green-border);
+  color: var(--green);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Poświata zamiast wypełnienia: znak ma świecić, a nie być zieloną plamą. */
+  box-shadow:
+    0 0 0 6px var(--green-muted),
+    0 18px 40px -18px var(--green-glow);
+}
+
+.login-title {
+  font-family: var(--font-display);
+  font-size: 44px;
+  letter-spacing: 7px;
+  /* Bebas Neue ma duży odstęp wewnętrzny; bez tego podpis odkleja się od nazwy. */
+  line-height: 0.9;
+  color: var(--text-primary);
+  /* Wersaliki mają odstęp PO ostatniej literze, więc blok wygląda na przesunięty
+     w lewo. Wcięcie o połowę odstępu wyrównuje go optycznie do środka. */
+  text-indent: 7px;
+}
+
+.login-note {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/**
+ * Karta formularza. Własna, nie `.card`: tam padding jest dobrany do gęstej treści
+ * back-office'u, a tu ma być powietrze.
+ */
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 32px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  /* Delikatne rozjaśnienie od góry - powierzchnia dostaje kierunek światła zamiast
+     płaskiej plamy. Wartość jest tak mała, że nie zmienia tonu, tylko krawędź. */
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.028), transparent 120px),
+    var(--surface);
+  box-shadow: 0 30px 70px -30px rgba(0, 0, 0, 0.9);
+}
+
+/* Odstęp między polami trzyma FORMULARZ, nie karta: karta ma jedno dziecko, więc
+   `gap` na niej nie miałby czego rozsunąć. */
+.login-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Pola logowania są WYŻSZE niż w reszcie panelu: na ekranie są dwa, więc nie ma
+   czego upychać, a 48 px to wygodny cel także na tablecie w hangarze. */
+.login-card .input {
+  min-height: 48px;
+  border-radius: 13px;
+  padding: 12px 15px;
+  font-size: 14px;
+}
+
+.login-card .label {
+  font-size: 9px;
+  letter-spacing: 2px;
+}
+
+.login-card .field {
+  gap: 8px;
+}
+
+.login-card .btn {
+  min-height: 48px;
+  border-radius: 13px;
+  font-size: 15px;
+  /* Odstęp od ostatniego pola większy niż między polami - przycisk kończy formularz,
+     a nie jest jego trzecim wierszem. */
+  margin-top: 4px;
+}
+
+/* Baner błędu trzyma szerokość karty, żeby kolumna miała jedną krawędź. */
+.login-banner {
+  width: 100%;
+  max-width: 400px;
+}

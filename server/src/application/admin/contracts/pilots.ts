@@ -22,7 +22,7 @@
  */
 
 /** Lustro `PILOT_ROLES` z `domain/roles.ts` - patrz nagłówek pliku. */
-export type PilotRoleWire = 'pilot' | 'training_lead' | 'admin';
+export type PilotRoleWire = 'pilot' | 'admin';
 
 /** Jedno konto na liście `A06`. */
 export interface AdminPilotListItem {
@@ -48,7 +48,7 @@ export interface AdminPilotCounts {
   active: number;
   inactive: number;
   admin: number;
-  trainingLead: number;
+  /** `training_lead` wypadł razem z rolą (2026-08-30) - patrz `domain/roles.ts`. */
   pilot: number;
   /**
    * Dni lotne CAŁEGO klubu w oknie `daysFrom`–`daysTo`: liczba sesji ZAMKNIĘTYCH,

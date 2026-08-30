@@ -31,9 +31,15 @@
  *     kalibracyjnej (`CLAUDE.md`: progów nie stroimy „na wyczucie"), więc zachowanie
  *     zostaje, a prostujemy OBIETNICĘ - w `A07a`, w szufladzie panelu i w teście
  *     (`test/adminFleet.test.ts`, „najbliższy POST /events flaguje parę starych dni").
- *  2. **Nie kasuje jednostek.** Wyłączenie ze służby zabiera samolot z listy wyboru
- *     na przyszłość; sesje historyczne, karty arkusza, flagi i łańcuch motogodzin
- *     zostają nietknięte. W tym pliku nie ma `DELETE` na `aircraft`.
+ *  2. **Nie kasuje jednostek, KTORE LATALY.** Wyłączenie ze służby zabiera samolot
+ *     z listy wyboru na przyszłość; sesje historyczne, karty arkusza, flagi i łańcuch
+ *     motogodzin zostają nietknięte.
+ *
+ *     Od 2026-08-30 jest `remove` i nie jest to odwrócenie tej zasady, tylko jej
+ *     dopełnienie: `refuseDeleteAircraft` przepuszcza wyłącznie maszynę, do której NIC
+ *     się nie odwołuje i która jest już poza służbą. Usuwalna jest więc dokładnie ta,
+ *     która powstała pomyłką - literówka w rejestracji, dubel, samolot ostatecznie
+ *     niewzięty.
  *  3. **Nie dotyka claimu ani odczytów liczników.** To są wielkości wyliczane ze
  *     strumienia zdarzeń - port konfiguracji ich nie zna (`AdminAircraft` jest osobnym
  *     typem od `ReferenceAircraft` właśnie po to).
@@ -53,6 +59,7 @@ import { fuelToleranceL, type MhFormat, type ServiceStatus } from '@uzaero/domai
 
 import {
   refuseCapacity,
+  refuseDeleteAircraft,
   refuseDisable,
   refuseOil,
   type FleetRefusal,
@@ -281,6 +288,54 @@ export class AdminFleetCommands {
                     },
                   }),
             },
+          },
+        };
+      });
+
+      return { ok: true, result: aircraft };
+    } catch (err) {
+      return this.asOutcome(err);
+    }
+  }
+
+  /**
+   * TRWAŁE usunięcie jednostki (2026-08-30).
+   *
+   * Istnieje z tego samego powodu, co `AdminPilotCommands.remove`: wpisany pomyłkowo
+   * samolot (literówka w rejestracji, dubel, maszyna, której klub ostatecznie nie wziął)
+   * nie ma jak zniknąć - wyłączenie ze służby przenosi go tylko na dół listy. Wszystko,
+   * co latało, chroni `refuseDeleteAircraft`: zdarzenie, sesja, flaga, karta arkusza
+   * albo policzona norma zużycia zamykają tę drogę na zawsze.
+   *
+   * Blokada per jednostka jak przy edycji: bez niej równoległe przywrócenie do służby
+   * mogłoby wejść między odczyt a `DELETE`.
+   */
+  async remove(actor: Actor, id: string): Promise<FleetOutcome<AdminAircraft>> {
+    try {
+      const aircraft = await this.write.run(actor, async (tx) => {
+        await this.fleet.lockAircraft(tx, id);
+
+        const before = await this.fleet.byId(tx, id);
+        if (before == null) throw new AircraftNotFound();
+
+        const refusal = refuseDeleteAircraft({
+          inService: before.serviceStatus !== 'disabled',
+          references: await this.fleet.references(tx, id),
+        });
+        if (refusal != null) throw new Refused(refusal);
+
+        await this.fleet.delete(tx, id);
+
+        return {
+          result: before,
+          audit: {
+            action: 'aircraft.delete' as const,
+            targetType: 'aircraft',
+            targetId: id,
+            // KOMPLET tożsamości: wiersza już nie ma, więc ten wpis jest jedynym
+            // miejscem, z którego da się odczytać, KTORĄ maszynę usunięto - `targetId`
+            // jest uuid-em, którego nikt nie rozpozna.
+            details: { reg: before.reg, type: before.type, year: before.year },
           },
         };
       });

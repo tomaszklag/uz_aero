@@ -100,13 +100,20 @@ export const MIGRATION_1 = `
     -- z opóźnieniem i wtedy wygrywałby ten, kto miał lepszą sieć.
     theme_updated_at TIMESTAMPTZ,
 
-    -- Rola konta (panel administracyjny). Administrator i szef wyszkolenia SĄ pilotami,
-    -- więc drugi byt tożsamości rozjechałby ich nalot na dwa konta (src/domain/roles.ts).
+    -- Rola konta (panel administracyjny). Administrator JEST pilotem - lata i ma telefon
+    -- - więc drugi byt tożsamości rozjechałby jego nalot na dwa konta (src/domain/roles.ts).
     -- CHECK zamiast typu ENUM: enum w Postgresie rozszerza się osobnym DDL-em o własnych
     -- ograniczeniach transakcyjnych, a CHECK jest zwykłym ograniczeniem tabeli - tańszy
     -- w utrzymaniu i tak samo nieprzepuszczalny. DEFAULT 'pilot' domyka istniejące konta:
     -- podniesienie uprawnień ma być jawną decyzją administratora, nigdy skutkiem ubocznym.
-    role TEXT NOT NULL DEFAULT 'pilot' CHECK (role IN ('pilot', 'training_lead', 'admin')),
+    --
+    -- Rola 'training_lead' wycofana 2026-08-30 i USUNIĘTA STĄD, a nie zostawiona
+    -- „na wszelki wypadek": kolumna ma mówić to samo, co PILOT_ROLES. Baza deweloperska
+    -- założona wcześniej ma starsze ograniczenie i to nie przeszkadza (żaden wiersz go
+    -- nie używa), a odczyt i tak degraduje nieznaną rolę do 'pilot'
+    -- (isPilotRole → DEFAULT_ROLE). Wystarczy postawić bazę od nowa, żeby zgadzało się
+    -- co do znaku.
+    role TEXT NOT NULL DEFAULT 'pilot' CHECK (role IN ('pilot', 'admin')),
 
     -- Znacznik UNIEWAŻNIENIA POŚWIADCZEŃ konta (przekrój A06).
     --

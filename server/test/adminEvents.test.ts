@@ -221,14 +221,10 @@ describe('rejestr zdarzeń: kto może patrzeć', () => {
     expect(pilot.statusCode).toBe(403);
   });
 
-  it('szef wyszkolenia CZYTA rejestr - to jest odczyt, nie zapis', async () => {
-    // `ANALIZA.md`: „Rejestr zdarzeń - przeglądarka (A04) | admin ✅ | szef wyszkolenia
-    // ✅ (odczyt)". Zdolnością jest `panel.access`, a nie nowa `events.read`, bo ta
-    // nie odrzuciłaby ani jednego żądania, które przechodzi dziś.
-    const { app } = await testHarness();
-    const res = await getEvents(app, await token(app, 'AKO'));
-    expect(res.statusCode).toBe(200);
-  });
+  // Osobny przypadek „rola pośrednia CZYTA rejestr" wypadł razem z rolą `training_lead`
+  // (2026-08-30): zdolnością pozostaje `panel.access`, a nie nowa `events.read` - ta nie
+  // odrzuciłaby ani jednego żądania, które przechodzi dziś. Odczyt administratora
+  // przybija każdy przypadek niżej, odmowę pilota - przypadek wyżej.
 });
 
 // ── surowość: nic nie ma prawa wywrócić listy ───────────────────────────────────
