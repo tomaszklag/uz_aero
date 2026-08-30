@@ -1189,6 +1189,27 @@ i tak sprawdza ją `DROP_ON_GROUND` (`rules/consistency.ts`). Wiedział model, m
   werdykt poza pasmem jest BURSZTYNOWY: paliwomierz i licznik mają rację. Podpis
   „przyrost … · blok …" USUNIĘTY - przyrost licznika nie równa się blokowi i nie ma
   prawa się równać (poprawka z issue #38, tu powtórzona)
+- **NORMA NA KROKU 4 TO TEN SAM RACHUNEK, CO PO ZAPISANIU** (uwaga z urządzenia,
+  2026-08-29: „jak mam wpisanie paliwa, to może odpalisz ten moduł, co przy
+  automatycznym locie? […] jak go kliknę, to otwierają się szczegóły, jak to zostało
+  policzone"). Krok 4 pokazywał sam werdykt, więc pilot widział „↑ POWYŻEJ NORMY"
+  i nie miał jak sprawdzić, z czego to wyszło - a ekran rozliczenia (10) odpowiada
+  na to od issue #40.
+  - **zależność `sessionBalance` od projekcji była POZORNA**: rachunek czyta z niej
+    DWIE liczby (czas blokowy i czas w powietrzu) plus odczyty, a jedno i drugie wpis
+    ręczny ma w szkicu. Stąd podział na RDZEŃ (`fuelBalanceOf`, `mhBalanceOf` - biorą
+    fakty) i cienkie adaptery `fuelBalance`/`mhBalance` dla projekcji. Ekran 10 woła
+    je jak dotąd, krok 4 woła rdzeń przez `manualFuelBalanceView`/`manualMhBalanceView`
+  - **karta niesie pełny `BalanceView`**: wiersze działania, sumę, plakietkę werdyktu
+    i ARKUSZ SZCZEGÓŁÓW (10C) pod tapnięciem. Wiek normy zszedł przy okazji DO ARKUSZA
+    (§4.8, reguła z issue #40): na karcie została sama plakietka, a adnotacja o cache'u
+    bez liczb obok nie ma czego kwalifikować
+  - **tytuły brzmią „Rachunek paliwa" / „Rachunek motogodzin"**, nie „Paliwo" jak na 10:
+    tam kart wpisu nie ma, a na kroku 4 stoją wyżej i nosiłyby ten sam tytuł. Rachunki
+    stoją POD obydwoma wpisami - najpierw to, co pilot wpisuje, potem co z tego wychodzi
+  - **`ManualBalance` i spółka USUNIĘTE**: były DRUGIM rachunkiem tej samej wielkości,
+    a takie pary rozjeżdżają się przy pierwszej poprawce jednej z nich. Została
+    `manualPhaseTimes` (czasy faz ze szkicu) i dwa adaptery
 - **CIĄGŁOŚĆ ODCZYTÓW Z SĄSIEDNIMI SESJAMI** (piąta i szósta tura;
   `GET /aircraft/:id/readings-chain`, `server/src/domain/readingsChain.ts`,
   `logic/readingsContinuity.ts`, `hooks/useReadingsChain.ts`): maszyna nie tankuje się

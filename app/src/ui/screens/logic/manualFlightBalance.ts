@@ -23,50 +23,20 @@
  * wyglądać jak jego błąd.
  */
 
-import {
-  expectationVerdict,
-  expectedFuelL,
-  expectedMhH,
-  type ConsumptionNorm,
-  type Expectation,
-  type MhFormat,
-  type NormVerdict,
-  type SessionPhaseTimes,
-} from '../../../domain';
-import type { Tone } from '../../components';
-import { litres, motoHours } from '../../format';
+import type { ConsumptionNorm, MhFormat, SessionPhaseTimes } from '../../../domain';
 import type { ManualFlightDraft } from './manualFlight';
+import { fuelBalanceOf, mhBalanceOf, type BalanceView } from './sessionBalance';
 import { fuelUsedL, sortedFlights } from './manualFlight';
 
-/** Werdykt normy - plakietka przy wyniku, ten sam napis co na ekranie sesji. */
-export interface ManualVerdict {
-  label: string;
-  tone: Tone;
-}
-
-/** Porównanie jednej wielkości z normą; `expected` `null` = norma milczy. */
-export interface ManualBalance {
-  /** „Zużycie paliwa" / „Przyrost licznika". */
-  label: string;
-  /** Ile wyszło z wpisu („76 L", „1:36"). */
-  actual: string;
-  /** „oczekiwane 68 L · pasmo 58 – 79 L"; `null` = nie ma z czym porównać. */
-  expected: string | null;
-  verdict: ManualVerdict | null;
-}
-
-const VERDICT_LABEL: Record<NormVerdict, string> = {
-  'w-normie': '✓ W NORMIE',
-  powyzej: '↑ POWYŻEJ NORMY',
-  ponizej: '↓ PONIŻEJ NORMY',
-};
-
-/**
- * Czasy faz sesji ze szkicu; `null` = biegu silnika nie ma, więc nie ma czego liczyć.
- *
- * Czas w powietrzu to suma lotów, a ziemię domena wylicza sama z różnicy - patrz
- * `SessionPhaseTimes`. Ujemnego bloku nie przepuszczamy: para godzin w odwrotnej
- * kolejności jest blokadą arkusza, a tu byłaby oczekiwaniem policzonym z bzdury.
+/*
+ * `ManualVerdict`, `ManualBalance`, `manualFuelBalance`, `manualMhBalance`,
+ * `VERDICT_LABEL`, `expectedText` i `verdictOf` USUNIĘTE (uwaga z urządzenia,
+ * 2026-08-29). Były DRUGIM rachunkiem tej samej rzeczy: liczyły werdykt ze szkicu,
+ * podczas gdy ekran rozliczenia liczył go z projekcji przez `sessionBalance`. Dwie
+ * arytmetyki jednej wielkości rozjeżdżają się przy pierwszej poprawce jednej z nich -
+ * a przy okazji ta krótsza nie umiała pokazać, JAK policzyła (arkusz szczegółów pod
+ * plakietką), o co prosiło zgłoszenie. Zostaje `manualPhaseTimes` (czasy faz ze
+ * szkicu) i dwa adaptery niżej, które wołają rdzeń `sessionBalance`.
  */
 export function manualPhaseTimes(draft: ManualFlightDraft): SessionPhaseTimes | null {
   if (draft.engineStart == null || draft.engineStop == null) return null;
@@ -81,68 +51,53 @@ export function manualPhaseTimes(draft: ManualFlightDraft): SessionPhaseTimes | 
 }
 
 /**
- * Zużycie paliwa wobec normy. `null`, gdy nie ma kompletu odczytów albo biegu silnika -
- * ekran nie pokazuje wtedy karty w ogóle.
+ * ══ TEN SAM RACHUNEK, CO PO ZAPISANIU (uwaga z urządzenia, 2026-08-29) ══
+ * „Jak mam wpisanie paliwa, to może odpalisz ten moduł, co przy automatycznym locie?
+ * Tam jak przeglądam później ten lot, to mam widoczny badge […]. Jak go kliknę, to
+ * otwierają się szczegóły, jak to zostało policzone."
+ *
+ * Można - bo zależność `sessionBalance` od projekcji była pozorna: rachunek czyta
+ * z niej DWIE liczby (czas blokowy i czas w powietrzu) plus odczyty, a jedno i drugie
+ * wpis ręczny ma u siebie w szkicu. Krok 4 dostaje przez to nie tylko werdykt, ale
+ * i rozpisane działanie pod plakietką - dokładnie to samo, które pilot zobaczy na
+ * ekranie 10, gdy wpis już trafi do rejestru.
+ *
+ * `null` = nie ma czego liczyć (brak biegu silnika albo kompletu odczytów) i wtedy
+ * ekran nie rysuje karty w ogóle, zamiast pokazywać kreski.
  */
-export function manualFuelBalance(
+export function manualFuelBalanceView(
   draft: ManualFlightDraft,
   norm: ConsumptionNorm | null,
-): ManualBalance | null {
-  const used = fuelUsedL(draft);
+): BalanceView | null {
   const times = manualPhaseTimes(draft);
-  if (used == null || times == null) return null;
+  if (times == null) return null;
 
-  const expectation = expectedFuelL(norm, times);
-  return {
-    label: 'Zużycie paliwa',
-    actual: litres(used),
-    expected: expectation != null ? expectedText(expectation, litres) : null,
-    verdict: verdictOf(used, expectation),
-  };
+  /* Dolewka jest we wpisie ręcznym JEDNĄ liczbą bez godziny (issue #62, siódma tura),
+     więc „liczba tankowań" jest zerojedynkowa - i tak ma być: wiersz mówi „Dolane",
+     a nie „Dolane · 2 tankowania", bo drugiego tankowania nie da się tu wyrazić. */
+  return fuelBalanceOf(
+    times,
+    {
+      startL: draft.fuel.foundL,
+      addedL: draft.fuel.addedL,
+      endL: draft.fuel.afterL,
+      consumedL: fuelUsedL(draft),
+    },
+    norm,
+    draft.fuel.addedL > 0 ? 1 : 0,
+  );
 }
 
-/**
- * Przyrost licznika wobec normy.
- *
- * ══ PRZYROST NIE RÓWNA SIĘ CZASOWI BLOKOWEMU ══
- * I nie ma prawa się równać: obrotomierz na wolnych obrotach przyrasta wolniej niż zegar
- * (`consumption/mhModel.ts`). Dlatego porównujemy z NORMĄ tej maszyny, a nie z blokiem -
- * ta sama poprawka, którą issue #38 wprowadziło na ekranie 10.
- */
-export function manualMhBalance(
+/** Przyrost licznika - ten sam rachunek i ten sam arkusz szczegółów, co przy paliwie. */
+export function manualMhBalanceView(
   draft: ManualFlightDraft,
   norm: ConsumptionNorm | null,
   format: MhFormat,
-): ManualBalance | null {
+): BalanceView | null {
   const times = manualPhaseTimes(draft);
-  if (draft.mhBefore == null || draft.mhAfter == null || times == null) return null;
+  if (times == null) return null;
 
-  const delta = draft.mhAfter - draft.mhBefore;
-  const expectation = expectedMhH(norm, times);
-  return {
-    label: 'Przyrost licznika',
-    actual: motoHours(delta, format),
-    expected:
-      expectation != null ? expectedText(expectation, (v) => motoHours(v, format)) : null,
-    verdict: verdictOf(delta, expectation),
-  };
-}
-
-/** „oczekiwane 68 L · pasmo 58 – 79 L" - wynik i to, co jeszcze uchodzi za normalne. */
-function expectedText(expectation: Expectation, format: (v: number) => string): string {
-  return `oczekiwane ${format(expectation.value)} · pasmo ${format(expectation.low)} – ${format(
-    expectation.high,
-  )}`;
-}
-
-function verdictOf(actual: number, expectation: Expectation | null): ManualVerdict | null {
-  if (expectation == null) return null;
-  const verdict = expectationVerdict(actual, expectation);
-  return {
-    label: VERDICT_LABEL[verdict],
-    /* Amber, nie czerwień: wynik poza pasmem jest DO SPRAWDZENIA, a nie błędny.
-       Paliwomierz i licznik są przyrządami fizycznymi i to one mają rację
-       (`CLAUDE.md`: liczniki fizyczne > dane z serwera). */
-    tone: verdict === 'w-normie' ? 'green' : 'amber',
-  };
+  const deltaH =
+    draft.mhBefore != null && draft.mhAfter != null ? draft.mhAfter - draft.mhBefore : null;
+  return mhBalanceOf(times, { start: draft.mhBefore, end: draft.mhAfter, deltaH }, norm, format);
 }

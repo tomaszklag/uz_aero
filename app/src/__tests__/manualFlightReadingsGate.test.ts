@@ -17,8 +17,8 @@ import {
   type ManualFlightDraft,
 } from '../ui/screens/logic/manualFlight';
 import {
-  manualFuelBalance,
-  manualMhBalance,
+  manualFuelBalanceView,
+  manualMhBalanceView,
   manualPhaseTimes,
 } from '../ui/screens/logic/manualFlightBalance';
 import type { ConsumptionNorm } from '../domain';
@@ -116,43 +116,71 @@ describe('werdykt normy', () => {
 
   it('odwrócony bieg silnika NIE produkuje oczekiwania z bzdury', () => {
     expect(manualPhaseTimes(draft({ engineStop: at(9, 0) }))).toBeNull();
-    expect(manualFuelBalance(draft({ engineStop: at(9, 0) }), norm)).toBeNull();
+    expect(manualFuelBalanceView(draft({ engineStop: at(9, 0) }), norm)).toBeNull();
   });
 
-  it('bez normy maszyny ekran MILCZY o oczekiwaniu, ale wynik podaje', () => {
-    const balance = manualFuelBalance(draft(), null);
-    expect(balance).not.toBeNull();
-    expect(balance!.actual).toBe('28 L');
-    expect(balance!.expected).toBeNull();
-    expect(balance!.verdict).toBeNull();
+  /**
+   * TEN SAM RACHUNEK, CO PO ZAPISANIU (uwaga z urządzenia, 2026-08-29): krok 4 woła
+   * rdzeń `sessionBalance`, więc dostaje pełny `BalanceView` - wiersze działania,
+   * sumę, plakietkę werdyktu i ARKUSZ SZCZEGÓŁÓW pod nią. Wcześniej miał sam werdykt
+   * i pilot nie miał jak sprawdzić, z czego wyszedł.
+   */
+  it('rachunek ma wiersze działania i sumę, tak jak ekran rozliczenia', () => {
+    const view = manualFuelBalanceView(draft(), norm)!;
+
+    expect(view.rows.map((r) => r.id)).toEqual(['start', 'added', 'end']);
+    expect(view.totalLabel).toBe('Zużyte');
+    expect(view.totalValue).toBe('28 L');
   });
 
-  it('z normą podaje oczekiwanie, pasmo i werdykt', () => {
-    const balance = manualFuelBalance(draft(), norm);
-    expect(balance!.expected).toMatch(/^oczekiwane .* · pasmo .* – .*$/);
-    expect(balance!.verdict).not.toBeNull();
-    expect(['✓ W NORMIE', '↑ POWYŻEJ NORMY', '↓ PONIŻEJ NORMY']).toContain(
-      balance!.verdict!.label,
-    );
+  it('bez normy maszyny werdyktu nie ma, ale wynik i POWÓD braku są', () => {
+    const view = manualFuelBalanceView(draft(), null)!;
+
+    expect(view.totalValue).toBe('28 L');
+    expect(view.verdict).toBeNull();
+    expect(view.details).toBeNull();
+    // „-" bez wyjaśnienia wygląda jak awaria aplikacji (§6 pkt 3).
+    expect(view.naNote).toContain('normy');
+  });
+
+  it('z normą podaje werdykt I szczegóły pod plakietką', () => {
+    const view = manualFuelBalanceView(draft(), norm)!;
+
+    expect(view.verdict).not.toBeNull();
+    expect(view.details).not.toBeNull();
+    expect(view.details!.title).toBe('NORMA PALIWA');
+    // Arkusz ma odpowiadać „dlaczego tak", więc niesie rozpisane działanie.
+    expect(view.details!.note).not.toBe('');
+    expect(view.details!.rows.length).toBeGreaterThan(1);
   });
 
   it('wynik poza pasmem jest BURSZTYNOWY, nie czerwony - do sprawdzenia, nie błędny', () => {
     // 300 L z tej sesji jest poza każdym rozsądnym pasmem.
-    const balance = manualFuelBalance(draft({ fuel: { foundL: 300, addedL: 0, afterL: 0 } }), norm);
-    expect(balance!.verdict!.label).not.toBe('✓ W NORMIE');
-    expect(balance!.verdict!.tone).toBe('amber');
+    const view = manualFuelBalanceView(
+      draft({ fuel: { foundL: 300, addedL: 0, afterL: 0 } }),
+      norm,
+    )!;
+
+    expect(view.verdict!.label).not.toContain('W NORMIE');
+    expect(view.verdict!.tone).toBe('amber');
   });
 
-  it('bez kompletu odczytów nie ma czego porównywać', () => {
-    expect(manualFuelBalance(draft({ fuel: { foundL: 112, addedL: 0, afterL: null } }), norm)).toBeNull();
-    expect(manualMhBalance(draft({ mhBefore: null }), norm, 'decimal')).toBeNull();
+  it('bez kompletu odczytów werdyktu nie ma - i mówi, czego brakuje', () => {
+    const view = manualFuelBalanceView(draft({ fuel: { foundL: 112, addedL: 0, afterL: null } }), norm)!;
+    expect(view.verdict).toBeNull();
+    expect(view.naNote).toContain('odczytu');
+
+    const mh = manualMhBalanceView(draft({ mhBefore: null }), norm, 'decimal')!;
+    expect(mh.verdict).toBeNull();
   });
 
   it('przyrost licznika porównuje się z NORMĄ, a nie z czasem blokowym', () => {
     // Δ MH = 1,5 h przy bloku 1,6 h - obrotomierz chodzi wolniej niż zegar i to jest
     // normalne (issue #38). Werdykt ma pochodzić z normy maszyny, nie z tej różnicy.
-    const balance = manualMhBalance(draft(), norm, 'decimal');
-    expect(balance!.actual).toBe('1.5');
-    expect(balance!.expected).not.toBeNull();
+    const view = manualMhBalanceView(draft(), norm, 'decimal')!;
+
+    expect(view.totalLabel).toBe('Przyrost');
+    expect(view.details).not.toBeNull();
+    expect(view.details!.title).toBe('NORMA MOTOGODZIN');
   });
 });

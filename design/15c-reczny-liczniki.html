@@ -74,6 +74,17 @@
   .section-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
   .optional-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); background:var(--surface-raised); border:1px solid var(--border); border-radius:6px; padding:2px 6px; }
 
+  /* Rachunek 1:1 z ekranu rozliczenia (10): wpis ręczny liczy TĘ SAMĄ arytmetykę,
+     więc ma ten sam kształt. Plakietka werdyktu jest CELEM DOTKNIĘCIA - otwiera
+     arkusz 10C ze szczegółami (uwaga z urządzenia, 2026-08-29). */
+  .calc-row { display:flex; align-items:baseline; justify-content:space-between; gap:10px; padding:8px 12px; }
+  .calc-key { font-family:var(--font-mono); font-size:9.5px; letter-spacing:0.5px; color:var(--text-secondary); }
+  .calc-key .op { color:var(--text-muted); display:inline-block; width:10px; }
+  .calc-val { font-family:var(--font-mono); font-size:12px; color:var(--text-primary); }
+  .calc-total { display:flex; align-items:baseline; justify-content:space-between; gap:10px; padding:9px 12px; border-top:1px solid var(--border-strong); background:rgba(255,255,255,0.015); }
+  .calc-total-key { font-family:var(--font-mono); font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
+  .calc-total-val { font-family:var(--font-display); font-size:26px; letter-spacing:1.5px; line-height:1; color:var(--text-primary); }
+  .calc-total-val.amber { color:var(--amber); }
   .field { display:flex; flex-direction:column; gap:6px; }
   .field-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
   .field-input { background:var(--surface-raised); border:1px solid var(--border-strong); border-radius:12px; padding:12px 14px; display:flex; align-items:baseline; justify-content:space-between; gap:10px; min-height:46px; cursor:pointer; text-decoration:none; }
@@ -261,35 +272,6 @@
         </div>
         <div class="field-sub">zużycie 36 L · przed startem 112 L − po locie 76 L</div>
       </div>
-      <!-- NORMA - „przeliczmy i sprawdźmy, czy się zgadza” (issue #62, piąta tura).
-           Oczekiwanie liczy DOMENA z normy tej maszyny (cache referencyjny, więc
-           działa offline) - ta sama arytmetyka, którą po zapisaniu pokaże ekran
-           rozliczenia. Karty NIE MA, gdy maszyna nie ma jeszcze normy: brak normy
-           nie jest brakiem danych pilota i nie ma prawa wyglądać jak jego błąd.
-           Werdykt jest BURSZTYNOWY, nie czerwony - wynik poza pasmem jest
-           DO SPRAWDZENIA, a paliwomierz i licznik mają rację. -->
-      <div class="section">
-        <div class="section-head"><span class="section-label">Norma zużycia</span></div>
-        <div class="field">
-          <span class="field-label">Zużycie paliwa</span>
-          <span class="field-input">
-            <span class="field-val amber">36 L</span>
-            <span class="tag green">✓ w normie</span>
-          </span>
-          <div class="field-sub">oczekiwane 33 L · pasmo 27 – 40 L · z cache · sync 16 SIE 08:14</div>
-        </div>
-        <div class="field">
-          <span class="field-label">Przyrost licznika</span>
-          <span class="field-input">
-            <!-- 1 307:53 − 1 306:21 = 1:32, czyli DOKŁADNIE różnica pary z karty niżej.
-                 Liczba w makiecie ma się zgadzać z liczbami, z których wynika: makieta
-                 jest specyfikacją, a nie ilustracją. -->
-            <span class="field-val">1:32</span>
-            <span class="tag amber">↑ powyżej normy</span>
-          </span>
-          <div class="field-sub">oczekiwane 1:21 · pasmo 1:14 – 1:27 · z cache · sync 16 SIE 08:14</div>
-        </div>
-      </div>
 
       <!-- MOTOGODZINY PRZED I PO - do 2026-08-16 wpis pytał tylko o stan po locie,
            a stan przed brał z PRZEKAZANIA („ile jest teraz"), więc dla lotu sprzed
@@ -325,6 +307,57 @@
              siebie sugerowały błąd przy poprawnym odczycie; to ta sama pomyłka, którą
              issue #38 wyrzuciło z ekranu 10. Przyrost porównuje się z NORMĄ maszyny,
              w karcie „Norma zużycia" wyżej. -->
+      </div>
+
+      <!-- ══ TEN SAM RACHUNEK, CO PO ZAPISANIU (uwaga z urządzenia, 2026-08-29) ══
+
+           „Jak mam wpisanie paliwa, to może odpalisz ten moduł, co przy automatycznym
+            locie? Tam jak przeglądam później ten lot, to mam widoczny badge, gdzie
+            wyświetlamy info, czy zużycie jest w normie. Jak go kliknę, to otwierają się
+            szczegóły, jak to zostało policzone."
+
+           Do tej pory krok 4 pokazywał sam werdykt i podpis z pasmem, a ekran
+           rozliczenia (10) - kartę rachunku z rozpisanym działaniem i arkuszem
+           szczegółów pod plakietką (10C, issue #40). Ta sama sesja miała więc dwa
+           kształty i tylko jeden z nich odpowiadał na pytanie „z czego to wyszło".
+
+           Odtąd jest jeden: `BalanceCard` z `sessionBalance`, czyli wiersze działania
+           (odczyt przy przejęciu → dolane → odczyt przy zdaniu), suma, plakietka
+           werdyktu i arkusz 10C pod tapnięciem. Zależność tamtego modułu od projekcji
+           okazała się pozorna - czyta z niej DWIE liczby (czas blokowy i czas
+           w powietrzu) plus odczyty, a jedno i drugie wpis ręczny ma w szkicu.
+
+           WIEK NORMY zszedł przy okazji DO ARKUSZA (§4.8, reguła z issue #40): na
+           karcie została sama plakietka werdyktu, a adnotacja o cache'u bez liczb obok
+           nie ma czego kwalifikować.
+
+           Karty NIE MA, gdy nie ma biegu silnika. Bez normy maszyny karta zostaje, ale
+           zamiast werdyktu niesie POWÓD jego braku - „-" bez wyjaśnienia wygląda jak
+           awaria aplikacji (§6 pkt 3). Werdykt poza pasmem jest BURSZTYNOWY, nie
+           czerwony: to paliwomierz i licznik mają rację. -->
+      <div class="section">
+        <div class="section-head"><span class="section-label">Rachunek paliwa</span></div>
+        <div class="calc-row"><span class="calc-key">Odczyt przy przejęciu</span><span class="calc-val">64 L</span></div>
+        <div class="calc-row"><span class="calc-key"><span class="op">+</span> Dolane</span><span class="calc-val">48 L</span></div>
+        <div class="calc-row"><span class="calc-key"><span class="op">−</span> Odczyt przy zdaniu</span><span class="calc-val">76 L</span></div>
+        <div class="calc-total">
+          <span class="calc-total-key">Zużyte</span>
+          <span class="calc-total-val amber">36 L</span>
+          <a href="10c-norma-detale.html" class="tag green">✓ w normie</a>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><span class="section-label">Rachunek motogodzin</span></div>
+        <div class="calc-row"><span class="calc-key">Licznik przy przejęciu</span><span class="calc-val">1 306:21</span></div>
+        <div class="calc-row"><span class="calc-key"><span class="op">−</span> Licznik przy zdaniu</span><span class="calc-val">1 307:53</span></div>
+        <div class="calc-total">
+          <span class="calc-total-key">Przyrost</span>
+          <!-- 1 307:53 − 1 306:21 = 1:32. Liczba w makiecie ma się zgadzać z liczbami,
+               z których wynika: makieta jest specyfikacją, a nie ilustracją. -->
+          <span class="calc-total-val">+1:32</span>
+          <a href="10c-norma-detale.html" class="tag amber">↑ powyżej normy</a>
+        </div>
       </div>
 
       <!-- OLEJ (issue #60) - tu OPCJONALNY, świadomym wyjątkiem: na 02A pomiar jest

@@ -34,10 +34,12 @@ import {
   ActionButton,
   AirfieldSheet,
   AppText,
+  BalanceCard,
   Banner,
   Card,
   CardPicker,
   Field,
+  FreshnessNote,
   FlightDateSheet,
   FlightTimesSheet,
   ManualDropSheet,
@@ -121,7 +123,8 @@ import {
 } from './logic/readingsPrefill';
 import { useReadingsChain } from '../hooks/useReadingsChain';
 import type { RemoteReadingsChain } from '../../application';
-import { manualFuelBalance, manualMhBalance } from './logic/manualFlightBalance';
+import { manualFuelBalanceView, manualMhBalanceView } from './logic/manualFlightBalance';
+import type { BalanceView } from './logic/sessionBalance';
 import { jumpDayWithoutDrop, manualFlightWarnings } from './logic/manualFlightWarnings';
 import { fuelSheetWarning, mhSheetWarning } from './logic/readingSheetWarning';
 import { operationLabel } from './logic/operations';
@@ -417,20 +420,31 @@ export function ManualFlightScreen({
   const startL = fuelAtStartL(draft);
   const used = fuelUsedL(draft);
   const norm = aircraft?.consumption ?? null;
+  /* TEN SAM RACHUNEK, CO PO ZAPISANIU (uwaga z urządzenia, 2026-08-29): karta niesie
+     odtąd pełny `BalanceView` - wiersze działania, sumę, plakietkę werdyktu i ARKUSZ
+     SZCZEGÓŁÓW pod nią. Do tej pory krok 4 pokazywał sam werdykt, więc pilot widział
+     „↑ POWYŻEJ NORMY" i nie miał jak sprawdzić, z czego to wyszło - a ekran rozliczenia
+     (10) odpowiada na to od issue #40. */
   const balances = useMemo(
     () =>
       [
-        manualFuelBalance(draft, norm),
-        manualMhBalance(draft, norm, mhFormat),
-      ].filter((b): b is NonNullable<typeof b> => b != null),
+        /* „Rachunek …", nie „Paliwo" jak na ekranie 10: tam kart wpisu nie ma, a tu stoją
+           wyżej i nosiłyby ten sam tytuł. Dwie karty o jednej nazwie na jednym ekranie
+           każą pilotowi zgadywać, która jest którą. */
+        { title: 'Rachunek paliwa', view: manualFuelBalanceView(draft, norm) },
+        { title: 'Rachunek motogodzin', view: manualMhBalanceView(draft, norm, mhFormat) },
+      ].filter((b): b is { title: string; view: BalanceView } => b.view != null),
     [draft, norm, mhFormat],
   );
   /* Norma jest DANĄ Z SERWERA, więc niesie adnotację wieku (§4.8) - ta sama, co przy
-     ostrzeżeniach łańcucha. Bez normy nie ma czego kwalifikować i adnotacji nie ma. */
-  const normSrc =
-    norm != null && aircraft?.fetchedAt != null
-      ? `z cache · sync ${dateTimeUtcShort(aircraft.fetchedAt)}`
-      : null;
+     ostrzeżeniach łańcucha. Od 2026-08-29 idzie tą samą drogą, co na ekranie 10:
+     stoi W ARKUSZU szczegółów, przy liczbach, których dotyczy - na karcie została
+     sama plakietka werdyktu, a adnotacja o cache'u bez liczb obok nie ma czego
+     kwalifikować. Bez normy nie ma jej wcale. */
+  const normFreshness =
+    norm != null && aircraft?.fetchedAt != null ? (
+      <FreshnessNote state="cache" syncedAt={dateTimeUtcShort(aircraft.fetchedAt)} />
+    ) : null;
   // Granice godzin wpisu = doba lotu; stepper nie ucieknie w cudzy dzień.
   const dayMin = draft.day;
   const dayMax = draft.day + 24 * HOUR - MIN;
@@ -850,24 +864,20 @@ export function ManualFlightScreen({
                 normy maszyny ekran MILCZY, zamiast rysować kreski. Werdykt jest
                 bursztynowy, nie czerwony - wynik poza pasmem jest DO SPRAWDZENIA,
                 a paliwomierz i licznik mają rację (liczniki fizyczne > dane serwera). */}
-            {balances.length > 0 && (
-              <Card title="Norma zużycia" header="inline">
-                {balances.map((b) => (
-                  <Field key={b.label} label={b.label}>
-                    <ValueBox
-                      value={b.actual}
-                      tone={b.verdict?.tone ?? 'neutral'}
-                      {...(b.verdict != null ? { tag: b.verdict } : {})}
-                    />
-                    {b.expected != null && (
-                      <AppText variant="mono" tone="muted" style={{ fontSize: 9, lineHeight: 14 }}>
-                        {normSrc != null ? `${b.expected} · ${normSrc}` : b.expected}
-                      </AppText>
-                    )}
-                  </Field>
-                ))}
-              </Card>
-            )}
+            {balances.map((b) => (
+              <BalanceCard
+                key={b.title}
+                title={b.title}
+                rows={b.view.rows}
+                totalLabel={b.view.totalLabel}
+                totalValue={b.view.totalValue}
+                totalTone={b.view.totalTone}
+                verdict={b.view.verdict}
+                details={b.view.details}
+                naNote={b.view.naNote}
+                {...(normFreshness != null ? { freshness: normFreshness } : {})}
+              />
+            ))}
 
             {/* ── olej (issue #60) - tu OPCJONALNY, świadomym wyjątkiem ──────────
                 Na 02a pomiar jest krokiem WYMAGANYM (decyzja 2026-08-27), ale lot

@@ -94,12 +94,56 @@ export interface BalanceView {
  * pytanie, które pilot i tak sobie zada, a jego brak kazałby zgadywać, czy tankowania
  * nie było, czy nie zostało zapisane.
  */
+/**
+ * ══ CO RACHUNEK NAPRAWDĘ POTRZEBUJE (uwaga z urządzenia, 2026-08-29) ══
+ * Zgłoszenie brzmiało: „jak mam wpisanie paliwa, to może odpalisz ten moduł, co przy
+ * automatycznym locie?" - i okazało się, że można, bo zależność od `SessionState` była
+ * pozorna. Cały ten moduł czyta z projekcji DWIE LICZBY (czas blokowy i czas w powietrzu)
+ * plus odczyty, które wpis ręczny ma u siebie w szkicu.
+ *
+ * Stąd podział: RDZEŃ (`fuelBalanceOf`, `mhBalanceOf`) bierze fakty, a `fuelBalance`
+ * i `mhBalance` zostają cienkimi adapterami dla projekcji. Ekran rozliczenia (10) woła
+ * je jak dotąd, a krok 4 wpisu ręcznego liczy TĘ SAMĄ arytmetykę ze szkicu - łącznie
+ * z arkuszem szczegółów pod plakietką, którego wcześniej nie miał.
+ */
+
+/** Czasy faz sesji - z projekcji albo ze szkicu wpisu ręcznego. */
+export interface BalanceTimes {
+  blockMs: number;
+  flightMs: number;
+}
+
+/** Odczyty paliwa sesji; `null` = niespisane (i wtedy werdyktu nie ma). */
+export interface FuelFacts {
+  startL: number | null;
+  addedL: number;
+  endL: number | null;
+  consumedL: number | null;
+}
+
+/** Odczyty licznika sesji. */
+export interface MhFacts {
+  start: number | null;
+  end: number | null;
+  deltaH: number | null;
+}
+
 export function fuelBalance(
   projection: SessionState,
   norm: ConsumptionNorm | null,
   refuelCount: number,
 ): BalanceView {
-  const expectation = expectedFuelL(norm, times(projection));
+  return fuelBalanceOf(times(projection), projection.fuel, norm, refuelCount);
+}
+
+/** Rdzeń rachunku paliwa - patrz nota „CO RACHUNEK NAPRAWDĘ POTRZEBUJE" wyżej. */
+export function fuelBalanceOf(
+  facts: BalanceTimes,
+  fuel: FuelFacts,
+  norm: ConsumptionNorm | null,
+  refuelCount: number,
+): BalanceView {
+  const expectation = expectedFuelL(norm, facts);
 
   return {
     rows: [
@@ -107,27 +151,27 @@ export function fuelBalance(
         id: 'start',
         op: '',
         label: 'Odczyt przy przejęciu',
-        value: litres(projection.fuel.startL),
+        value: litres(fuel.startL),
       },
       {
         id: 'added',
         op: '+',
         label: refuelCount > 0 ? `Dolane · ${refuelLabel(refuelCount)}` : 'Dolane',
-        value: litres(projection.fuel.addedL),
+        value: litres(fuel.addedL),
       },
       {
         id: 'end',
         op: '−',
         label: 'Odczyt przy zdaniu',
-        value: litres(projection.fuel.endL),
+        value: litres(fuel.endL),
       },
     ],
     totalLabel: 'Zużyte',
-    totalValue: litres(projection.fuel.consumedL),
+    totalValue: litres(fuel.consumedL),
     totalTone: 'amber',
-    verdict: verdictOf(projection.fuel.consumedL, expectation),
-    details: fuelDetails(projection, norm, expectation),
-    naNote: naNote(projection, norm, expectation, projection.fuel.consumedL != null),
+    verdict: verdictOf(fuel.consumedL, expectation),
+    details: fuelDetails(facts, fuel.consumedL, norm, expectation),
+    naNote: naNote(facts, norm, expectation, fuel.consumedL != null),
   };
 }
 
@@ -141,9 +185,18 @@ export function fuelBalance(
  * a pilotowi, który wpisał to, co widział na tarczy, sugerował błąd.
  */
 export function mhBalance(projection: SessionState, norm: ConsumptionNorm | null): BalanceView {
-  const format: MhFormat = projection.mhFormat ?? 'decimal';
-  const expectation = expectedMhH(norm, times(projection));
-  const delta = projection.mh.deltaH;
+  return mhBalanceOf(times(projection), projection.mh, norm, projection.mhFormat ?? 'decimal');
+}
+
+/** Rdzeń rachunku motogodzin - patrz nota „CO RACHUNEK NAPRAWDĘ POTRZEBUJE" wyżej. */
+export function mhBalanceOf(
+  facts: BalanceTimes,
+  mh: MhFacts,
+  norm: ConsumptionNorm | null,
+  format: MhFormat,
+): BalanceView {
+  const expectation = expectedMhH(norm, facts);
+  const delta = mh.deltaH;
 
   return {
     rows: [
@@ -151,21 +204,21 @@ export function mhBalance(projection: SessionState, norm: ConsumptionNorm | null
         id: 'start',
         op: '',
         label: 'Licznik przy przejęciu',
-        value: motoHours(projection.mh.start, format),
+        value: motoHours(mh.start, format),
       },
       {
         id: 'end',
         op: '−',
         label: 'Licznik przy zdaniu',
-        value: motoHours(projection.mh.end, format),
+        value: motoHours(mh.end, format),
       },
     ],
     totalLabel: 'Przyrost',
     totalValue: signedMh(delta, format),
     totalTone: delta != null && delta > 0 ? 'green' : 'neutral',
     verdict: verdictOf(delta, expectation),
-    details: mhDetails(projection, norm, expectation, format),
-    naNote: naNote(projection, norm, expectation, delta != null),
+    details: mhDetails(facts, delta, norm, expectation, format),
+    naNote: naNote(facts, norm, expectation, delta != null),
   };
 }
 
@@ -217,11 +270,11 @@ const VERDICT_WORD: Record<NormVerdict, string> = {
  * uczciwa, i arkusz nazywa ją po imieniu.
  */
 function fuelDetails(
-  projection: SessionState,
+  facts: BalanceTimes,
+  consumed: number | null,
   norm: ConsumptionNorm | null,
   expectation: Expectation | null,
 ): BalanceDetails | null {
-  const consumed = projection.fuel.consumedL;
   if (norm == null || expectation == null || consumed == null) return null;
 
   // Para stawek albo `null` - jeden obiekt zamiast dwóch pól, żeby „mamy fazy" było
@@ -234,7 +287,7 @@ function fuelDetails(
   const rows: BalanceDetailRow[] = [
     { label: 'Zużyte w tej sesji', value: litres(consumed) },
     { label: 'Oczekiwane po tej sesji', value: bandOf(expectation, litres) },
-    { label: 'Średnia tej sesji', value: `${round(perBlockHour(consumed, projection))} L/h` },
+    { label: 'Średnia tej sesji', value: `${round(perBlockHour(consumed, facts))} L/h` },
   ];
 
   if (phases != null) {
@@ -250,8 +303,8 @@ function fuelDetails(
 
   const equation =
     phases != null
-      ? `${split(projection)} × ${round(phases.air)} L/h + ${ground(projection)} × ${round(phases.ground)} L/h ≈ ${litres(expectation.value)}`
-      : `${blockTime(projection)} pracy silnika × ${round(norm.blockLPerH)} L/h ≈ ${litres(expectation.value)}`;
+      ? `${split(facts)} × ${round(phases.air)} L/h + ${ground(facts)} × ${round(phases.ground)} L/h ≈ ${litres(expectation.value)}`
+      : `${blockTime(facts)} pracy silnika × ${round(norm.blockLPerH)} L/h ≈ ${litres(expectation.value)}`;
 
   return {
     title: 'NORMA PALIWA',
@@ -276,12 +329,12 @@ function fuelDetails(
  * (`consumption/mhModel.ts`), nikt go nie konfiguruje.
  */
 function mhDetails(
-  projection: SessionState,
+  facts: BalanceTimes,
+  delta: number | null,
   norm: ConsumptionNorm | null,
   expectation: Expectation | null,
   format: MhFormat,
 ): BalanceDetails | null {
-  const delta = projection.mh.deltaH;
   if (norm?.mh == null || expectation == null || delta == null) return null;
 
   const signed = (value: number) => signedMh(value, format);
@@ -295,15 +348,15 @@ function mhDetails(
       { label: 'Oczekiwane po tej sesji', value: bandOf(expectation, signed) },
       {
         label: 'Średnia tej sesji',
-        value: `${rate(perBlockHour(delta, projection))} MH/h`,
+        value: `${rate(perBlockHour(delta, facts))} MH/h`,
       },
       { label: 'Przelicznik w locie', value: `${rate(norm.mh.perFlightHour)} MH/h` },
       { label: 'Przelicznik na ziemi', value: `${rate(norm.mh.perGroundHour)} MH/h` },
       { label: 'Podstawa', value: `${sessions} · ${COUNTER_LABEL[norm.mh.kind]}` },
     ],
     note:
-      `Jak to liczymy: ${split(projection)} × ${rate(norm.mh.perFlightHour)} + ` +
-      `${ground(projection)} × ${rate(norm.mh.perGroundHour)} MH/h ≈ ${signed(expectation.value)}. ` +
+      `Jak to liczymy: ${split(facts)} × ${rate(norm.mh.perFlightHour)} + ` +
+      `${ground(facts)} × ${rate(norm.mh.perGroundHour)} MH/h ≈ ${signed(expectation.value)}. ` +
       'Licznik na wolnych obrotach przyrasta wolniej niż zegar, więc przyrost mniejszy ' +
       'od czasu blokowego jest poprawnym działaniem przyrządu, a nie pomyłką.',
   };
@@ -337,8 +390,8 @@ function bandOf(expectation: Expectation, format: (value: number) => string): st
  * Wynik przeliczony na godzinę pracy silnika - jedyna liczba arkusza policzona lokalnie,
  * a nie przysłana. Stoi obok stawek normy po to, żeby dało się je porównać wprost.
  */
-function perBlockHour(value: number, projection: SessionState): number {
-  const hours = projection.blockTimeMs / 3_600_000;
+function perBlockHour(value: number, facts: BalanceTimes): number {
+  const hours = facts.blockMs / 3_600_000;
   return hours > 0 ? value / hours : 0;
 }
 
@@ -353,14 +406,14 @@ const COUNTER_LABEL: Record<'hobbs' | 'tach' | 'unknown', string> = {
  * wygląda jak awaria aplikacji (§6 pkt 3).
  */
 function naNote(
-  projection: SessionState,
+  facts: BalanceTimes,
   norm: ConsumptionNorm | null,
   expectation: Expectation | null,
   hasActual: boolean,
 ): string | null {
   if (expectation != null && hasActual) return null;
 
-  if (projection.blockTimeMs <= 0) {
+  if (facts.blockMs <= 0) {
     return 'Nie porównujemy z normą - silnik nie pracował, a norma opisuje godzinę jego pracy.';
   }
   if (!hasActual) {
@@ -378,18 +431,18 @@ function naNote(
  * `duration`, nie `hhmm`: przypis jest ZDANIEM, a nie kolumną tabeli, więc wiodące zero
  * („01:16 lotu") niczego tu nie wyrównuje, a czyta się jak stempel czasu.
  */
-function split(projection: SessionState): string {
-  return `${duration(Math.min(projection.flightTimeMs, projection.blockTimeMs))} lotu`;
+function split(facts: BalanceTimes): string {
+  return `${duration(Math.min(facts.flightMs, facts.blockMs))} lotu`;
 }
 
 /** „0:27 ziemi" - reszta biegu silnika, nigdy ujemna (ta sama reguła co w domenie). */
-function ground(projection: SessionState): string {
-  return `${duration(Math.max(0, projection.blockTimeMs - projection.flightTimeMs))} ziemi`;
+function ground(facts: BalanceTimes): string {
+  return `${duration(Math.max(0, facts.blockMs - facts.flightMs))} ziemi`;
 }
 
 /** „1:43" - cały bieg silnika; potrzebne, gdy model nie rozdzielił faz. */
-function blockTime(projection: SessionState): string {
-  return duration(projection.blockTimeMs);
+function blockTime(facts: BalanceTimes): string {
+  return duration(facts.blockMs);
 }
 
 /** Stawka paliwa bez miejsc po przecinku - paliwomierz nie ma takiej dokładności. */
