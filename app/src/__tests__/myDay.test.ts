@@ -82,7 +82,12 @@ beforeEach(() => {
 });
 
 describe('buildMyDay - scenariusz mockupu 01', () => {
-  const vm = () => buildMyDay(dayOf(axa(), klm()));
+  /* Rezolwer znaku: w świecie testowym identyfikatorem JEST znak, więc mapowanie jest
+     tożsamością - i to właśnie dlatego bug z UUID-em przeżył wiele tur niezauważony
+     (zgłoszenie z urządzenia 2026-08-30). Podajemy go JAWNIE, żeby test mówił, że
+     kafelek bierze znak z cache'u floty, a nie z projekcji. */
+  const regOf = (id: string) => id.toUpperCase();
+  const vm = () => buildMyDay(dayOf(axa(), klm()), regOf);
 
   it('lista jest płaską osią czasu z rejestracją na kafelku - bez grupowania', () => {
     const cards = vm().sessions;
@@ -91,6 +96,21 @@ describe('buildMyDay - scenariusz mockupu 01', () => {
     expect(cards.map((c) => c.aircraft)).toEqual(['SP-AXA', 'SP-AXA', 'SP-KLM']);
   });
 
+  /**
+   * ZGŁOSZENIE Z URZĄDZENIA (2026-08-30): na kafelku stał UUID zamiast znaku maszyny.
+   *
+   * Projekcja zna wyłącznie IDENTYFIKATOR, a znak mieszka w cache referencyjnym -
+   * i przez wiele tur nikt tego nie zauważył, bo w świecie testowym identyfikatorem
+   * JEST znak. Dopiero flota założona w panelu dostaje identyfikatory UUID.
+   *
+   * Kreska, nie identyfikator: pilot nie ma co zrobić z UUID-em, a podstawiony
+   * identyfikator UDAJE znak - dokładnie tak, jak udawał go do tej pory.
+   */
+  it('maszyna spoza cache floty NIE pokazuje identyfikatora', () => {
+    const cards = buildMyDay(dayOf(axa()), () => null).sessions;
+    expect(cards[0]!.aircraft).not.toContain('sp-axa');
+    expect(cards[0]!.aircraft).toBe('- -');
+  });
   it('kafelek sesji niesie czasy, liczbę lotów i oba czasy trwania', () => {
     const card = vm().sessions[0]!;
 
@@ -105,7 +125,7 @@ describe('buildMyDay - scenariusz mockupu 01', () => {
   it('otwarty bieg pokazuje „→ …" zamiast udawać zakończony', () => {
     const open = session({ aircraftId: 'SP-KLM', legs: [leg('13:40', null)] });
 
-    const cards = buildMyDay(dayOf(open)).sessions;
+    const cards = buildMyDay(dayOf(open), regOf).sessions;
 
     expect(cards[0]!.times).toBe('13:40 → … UTC');
   });

@@ -86,7 +86,11 @@ describe('poprzednie dni (ekran 12)', () => {
     await writeDay(repo, 'sess-1', at(8, 0)); // zdanie 16:45, okno do 23 CZE 16:45
 
     const now = nextDay(9, 0); // 23 CZE 09:00 - zostało 7 h 45 min
-    const groups = buildHistory(await queries.historyDays(), now);
+    /* Rezolwer znaku - jak w `myDay.test.ts`: identyfikator w świecie testowym JEST
+       znakiem, więc mapowanie jest tożsamością, ale podane JAWNIE mówi, że kafelek
+       bierze znak z cache'u floty, a nie z projekcji (2026-08-30). */
+    const regOf = (id: string) => id.toUpperCase();
+    const groups = buildHistory(await queries.historyDays(), now, false, regOf);
 
     expect(groups.closed).toHaveLength(0);
     expect(groups.editable).toHaveLength(1);

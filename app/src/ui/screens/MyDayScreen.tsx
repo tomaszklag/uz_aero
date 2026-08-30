@@ -59,6 +59,7 @@ import { usePilotDay } from '../hooks/usePilotDay';
 import { useSkeleton } from '../hooks/useSkeleton';
 import { utcDayStart } from '../../domain';
 import { dateUtcLong, plural } from '../format';
+import { useAircraftRegistrations } from '../hooks/useAircraftRegistrations';
 import { buildMyDay, myDayActions, totalLabel } from './logic/myDay';
 import { editableBadge } from './logic/historyDays';
 
@@ -108,7 +109,10 @@ export function MyDayScreen({
   const day = utcDayStart(now);
   const pilotDay = usePilotDay(pilotId, day);
 
-  const vm = pilotDay != null ? buildMyDay(pilotDay) : null;
+  /* Znak maszyny mieszka w cache referencyjnym, projekcja zna sam identyfikator -
+     bez tego kafelek pokazywał UUID (zgłoszenie z urządzenia 2026-08-30). */
+  const regOf = useAircraftRegistrations();
+  const vm = pilotDay != null ? buildMyDay(pilotDay, regOf) : null;
 
   // Pas akcji nie zależy od doby (`myDayActions` bez argumentów od 2026-08-16), więc
   // liczy się raz i poza czekaniem na strumień. Kolejność tablicy jest kolejnością
