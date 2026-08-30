@@ -848,7 +848,7 @@ export function ManualFlightScreen({
                   równać (obrotomierz na wolnych obrotach chodzi wolniej niż zegar),
                   więc zestawianie ich obok sugerowało błąd przy poprawnym odczycie -
                   ta sama poprawka, którą issue #38 wprowadziło na ekranie 10. Przyrost
-                  porównuje się z NORMĄ maszyny, w karcie niżej. */}
+                  porównuje się z NORMĄ maszyny - i to jest wiersz sumy pod spodem. */}
 
               {mhView != null && (
                 <BalanceSummary
