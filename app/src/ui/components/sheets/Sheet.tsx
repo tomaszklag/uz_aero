@@ -78,6 +78,13 @@ export interface SheetProps {
    * gdy pilot nie widzi już żadnej z tych liczb.
    */
   confirmDisabledReason?: string | null;
+  /**
+   * Blokada BEZ powodu - dla stanu, który widać z KONTROLKI NAD PRZYCISKIEM
+   * (uwaga z urządzenia, 2026-08-29: puste pole wymagane). Nowego użycia nie dokładaj
+   * bez tego rachunku: jeśli powodu blokady nie widać z arkusza, właściwym polem
+   * jest `confirmDisabledReason`.
+   */
+  confirmDisabled?: boolean;
   onConfirm?: () => void;
   cancelLabel?: string;
   onCancel: () => void;
@@ -113,6 +120,7 @@ export function Sheet({
   confirmLabel,
   confirmTone = 'green',
   confirmDisabledReason = null,
+  confirmDisabled = false,
   onConfirm,
   cancelLabel = 'ANULUJ',
   onCancel,
@@ -154,6 +162,7 @@ export function Sheet({
                 variant="solid"
                 size="md"
                 disabledReason={confirmDisabledReason}
+                disabled={confirmDisabled}
                 onPress={onConfirm}
                 style={{ flex: 2 }}
               />

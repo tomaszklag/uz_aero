@@ -247,7 +247,23 @@
 
              Do 2026-08-29 puste pole dawało baner „Wpisz wartość, żeby zapisać", a
              „Potwierdź" wyglądał na aktywny i milczał. Baner nie jest miejscem na
-             blokadę: pilot szuka odpowiedzi przy przycisku, w który właśnie tapnął. -->
+             blokadę: pilot szuka odpowiedzi przy przycisku, w który właśnie tapnął.
+
+             PUSTE POLE NIE DOSTAJE JUŻ NAWET ZDANIA W PRZYCISKU (druga uwaga tego dnia:
+             „nie ma sensu pisać «wpisz wartość, żeby zapisać» - wiadomo, że jak pole
+             jest wymagane, to dlatego przycisk jest disabled"). To ten WĄSKI wyjątek,
+             który reguła issue #55 przewiduje: blokadę widać z kontrolki nad przyciskiem.
+             Wpis NIECZYTELNY zdanie zachowuje - czerwona ramka mówi, KTÓRE pole, ale
+             nie mówi, czemu zapisu nie ma.
+
+             CO MÓWI BANER PRZY PALIWIE (trzy przypadki, logic/readingSheetWarning.ts):
+              • „Odczyt 340 L przekracza pojemność zbiorników (330 L)";
+              • „Poprzednik (AKO) zdał maszynę z 140 L, a wpisujesz 100 L. Ktoś tankował
+                poza aplikacją?" - sąsiad z łańcucha wykryty po godzinach wpisu;
+              • „Po locie nie mogło zostać 200 L - w zbiornikach było najwyżej 148 L".
+             Ta sama zasada obowiązuje licznik (cofnięcie, rozjazd z sąsiadem) i olej
+             (zbiornik, minimum, przyrost bez dolewki). Żadne z nich nie blokuje: to
+             paliwomierz i licznik mają rację, a ktoś mógł dolać poza aplikacją. -->
         <div class="modal-warning">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           <span>Odczyt różni się od szacunku o <strong>−30 L</strong>. Sprawdź stan zbiorników przed zatwierdzeniem.</span>

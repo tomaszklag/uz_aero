@@ -812,8 +812,26 @@ Cztery uwagi z urządzenia; dwie z nich to reguły obowiązujące każdy nowy ek
   powinien być wszędzie"). Granica jest jedna i przechodzi między dwoma pytaniami:
   - **baner „Zanim potwierdzisz" opisuje WARTOŚĆ**, którą pilot wpisał - różni się od
     szacunku, przekracza pojemność, schodzi pod minimum. Zapisu nie wstrzymuje;
-  - **przycisk niesie POWÓD, dla którego zapisu nie ma** - pole puste, wpis
-    nieczytelny, nic nie zmienione. `Sheet.confirmDisabledReason` → `ActionButton`.
+  - **przycisk niesie POWÓD, dla którego zapisu nie ma** - wpis nieczytelny, nic nie
+    zmienione. `Sheet.confirmDisabledReason` → `ActionButton`.
+
+  **PUSTE POLE WYMAGANE NIE DOSTAJE ZDANIA** (druga uwaga z urządzenia, 2026-08-29:
+  „nie ma sensu pisać «wpisz wartość, żeby zapisać» - wiadomo, że jak pole jest
+  wymagane, to dlatego przycisk jest disabled"). To ten WĄSKI wyjątek reguły issue #55:
+  blokadę widać z KONTROLKI NAD PRZYCISKIEM. Wpis NIECZYTELNY zdanie zachowuje, bo
+  czerwona ramka mówi, KTÓRE pole, ale nie mówi, czemu zapisu nie ma. Do tego służy
+  `Sheet.confirmDisabled` - i nowego użycia nie dokładaj bez tego rachunku.
+
+  **ARKUSZ ODCZYTU WALIDUJE WARTOŚĆ NA MIEJSCU** (`logic/readingSheetWarning.ts`,
+  z testami). Do 2026-08-29 sufit zbiornika i ciągłość z sąsiadem odzywały się dopiero
+  na kroku 4 - czyli po zamknięciu arkusza, gdy liczby nie ma już przed oczami.
+  Ostrzega: odczyt ponad pojemność, „po locie" ponad zastane + dolane, rozjazd
+  z poprzednikiem/następcą w łańcuchu (`readings-chain`, tolerancja 6 L i 0,1 MH),
+  cofnięty licznik. Kolejność sprawdzeń jest kolejnością POWAGI - arkusz pokazuje
+  JEDNO zdanie, więc pierwsze musi być tym, które trzeba przeczytać. Olej dochodzi
+  tą samą drogą (`oilEntryWarning` + `oilContinuityWarnings`). **Nic z tego nie
+  blokuje**: paliwomierz i licznik są przyrządami fizycznymi i to one mają rację,
+  a twarde odmowy domeny zostają w bramce kroku 4
 
   Trzy arkusze łamały to na trzy sposoby i wszystkie zostały poprawione: `ReadingSheet`
   i `OilSheet` wrzucały blokadę do banera, a przycisk sprawdzał warunek w środku

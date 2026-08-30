@@ -150,14 +150,18 @@ export function ReadingSheet({
    * nie wstrzymuje; blokada mieszka W PRZYCISKU, bursztynem, i tam pilot jej szuka.
    *
    * Puste pole zostaje osobnym przypadkiem od nieczytelnego (issue #60 - arkusz dolewki
-   * startuje pusty, bo prefill fabrykowałby ilość): to nie jest błąd, tylko brak wpisu,
-   * i zdanie ma o tym mówić.
+   * startuje pusty, bo prefill fabrykowałby ilość).
+   *
+   * ══ PUSTE POLE NIE DOSTAJE ZDANIA (druga uwaga z urządzenia, 2026-08-29) ══
+   * „Nie ma sensu pisać na przycisku «wpisz wartość, żeby zapisać» - wiadomo, że jak
+   * pole jest wymagane, to dlatego przycisk jest disabled."
+   *
+   * I to jest dokładnie ten WĄSKI wyjątek, który reguła issue #55 przewiduje: blokadę
+   * widać z KONTROLKI NAD PRZYCISKIEM. Pustego pola nie trzeba nazywać - pilot patrzy
+   * na nie, wpisując. Wpis NIECZYTELNY zdanie zachowuje, bo czerwona ramka mówi, KTÓRE
+   * pole, ale nie mówi CZEMU zapisu nie ma; sama pustka mówi jedno i drugie naraz.
    */
-  const blocker = empty
-    ? 'Wpisz wartość, żeby zapisać'
-    : parsed == null
-      ? 'Nie rozumiem tej wartości - popraw wpis'
-      : null;
+  const blocker = empty ? null : parsed == null ? 'Nie rozumiem tej wartości - popraw wpis' : null;
 
   /** Cyfry: akcent tonu (mockup 02b: `.modal-input-val` = `var(--amber)`). */
   const valueColor = tone === 'neutral' ? theme.colors.textPrimary : c.accent;
@@ -171,6 +175,7 @@ export function ReadingSheet({
       warningTone="amber"
       confirmLabel="POTWIERDŹ"
       confirmDisabledReason={blocker}
+      confirmDisabled={empty}
       onConfirm={() => onConfirm(parsed!)}
       onCancel={onCancel}
       /* Klawiatura od otwarcia - drabinka prób z `useSheetInputFocus` (issue #58

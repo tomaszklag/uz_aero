@@ -123,6 +123,7 @@ import { useReadingsChain } from '../hooks/useReadingsChain';
 import type { RemoteReadingsChain } from '../../application';
 import { manualFuelBalance, manualMhBalance } from './logic/manualFlightBalance';
 import { jumpDayWithoutDrop, manualFlightWarnings } from './logic/manualFlightWarnings';
+import { fuelSheetWarning, mhSheetWarning } from './logic/readingSheetWarning';
 import { operationLabel } from './logic/operations';
 /** Nazwa lotniska albo plakietka „spoza katalogu" - ta sama, co na 02E (issue #62 pkt 1). */
 import { airfieldValueProps } from '../components/input/airfieldMark';
@@ -1139,6 +1140,20 @@ export function ManualFlightScreen({
            (siódma tura - decyzja użytkownika), ale źródło zostaje widoczne i pilot
            poprawia go jednym tapnięciem: paliwomierz bije rachubę. */
         rows={fuelSheetRows(sheet, chain, aircraft?.handover ?? null)}
+        /* Ostrzeżenie o WPISYWANEJ liczbie (uwaga z urządzenia, 2026-08-29): sufit
+           zbiornika i rozjazd z sąsiadem w łańcuchu. Do tej pory jedno i drugie
+           odzywało się dopiero na kroku 4 - czyli po zamknięciu arkusza, gdy liczby
+           nie ma już przed oczami. Nie blokuje: paliwomierz ma rację. */
+        warningFor={(v) =>
+          sheet?.kind === 'fuel'
+            ? fuelSheetWarning(sheet.which, v, {
+                capacityL: aircraft?.capacityL ?? null,
+                chain,
+                foundL: draft.fuel.foundL,
+                addedL: draft.fuel.addedL,
+              })
+            : null
+        }
         parse={parseLitres}
         onConfirm={(v) => {
           if (sheet?.kind !== 'fuel') return;
@@ -1167,6 +1182,17 @@ export function ManualFlightScreen({
            Łańcuch MH jest osią SAMOLOTU (§4.5), więc sąsiad mówi wprost, od czego ten
            wpis powinien zaczynać i na czym kończyć. */
         rows={mhSheetRows(sheet, chain, mhFormat, aircraft?.handover ?? null)}
+        /* Jak przy paliwie: cofnięty licznik i rozjazd z sąsiadem mówią przy polu,
+           a nie dopiero w podsumowaniu kroku 4. */
+        warningFor={(v) =>
+          sheet?.kind === 'mh'
+            ? mhSheetWarning(sheet.which ?? 'before', v, {
+                format: mhFormat,
+                chain,
+                beforeMh: draft.mhBefore,
+              })
+            : null
+        }
         parse={parseMotoHours}
         onConfirm={(v) => {
           if (sheet?.kind !== 'mh') return;
@@ -1199,7 +1225,18 @@ export function ManualFlightScreen({
             : []),
         ]}
         afterRowFor={(l, a) => oilAfterRow(l, a, oilConfig)}
-        warningFor={(l, a) => oilEntryWarning(l, a, oilConfig, null)}
+        /* Do konfiguracji jednostki (zbiornik, minimum) dochodzi CIĄGŁOŚĆ z ostatnim
+           pomiarem (uwaga z urządzenia, 2026-08-29 - ta sama zasada, co przy paliwie
+           i liczniku). Pierwszeństwo ma `oilEntryWarning`, bo mówi o stanie fizycznie
+           niemożliwym albo niebezpiecznym; rozjazd z rejestrem jest tylko podejrzany.
+
+           Olej ma JEDEN wiersz łańcucha, nie parę: bagnet tuż po locie kłamie, więc
+           zdanie samolotu oleju nie mierzy (issue #60) i interwał biegnie pomiar→pomiar
+           przez wiele sesji. Ostrzegamy tylko o oleju, którego PRZYBYŁO bez dolewki -
+           ubytek jest normalnym zużyciem. */
+        warningFor={(l, a) =>
+          oilEntryWarning(l, a, oilConfig, null) ?? oilContinuityWarnings(chain, l)[0]?.text ?? null
+        }
         onConfirm={(l, a) => {
           patch({ oilL: l, oilAddedL: a });
           close();
