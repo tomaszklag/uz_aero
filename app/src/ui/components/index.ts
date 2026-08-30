@@ -119,6 +119,7 @@ export * from './data/SessionAxis';
 export * from './data/HistoryLink';
 export * from './data/IconAction';
 export * from './data/BalanceCard';
+export * from './data/BalanceSummary';
 export * from './data/KeyValueRow';
 // Ślad lotu: łamana rysowana layoutem, pełna mapa (14), miniatura na szczegółach
 // lotu (16) i profil pionowy.

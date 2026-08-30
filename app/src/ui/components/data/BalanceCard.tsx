@@ -26,17 +26,14 @@
  * w sobie byłaby celem poniżej progu dostępności.
  */
 
-import React, { useState } from 'react';
-import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
+import React from 'react';
+import { StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
-import { Icon } from '../foundation/Icon';
 import { Card } from '../layout/Card';
-import { Banner } from '../status/Banner';
-import { Sheet } from '../sheets/Sheet';
-import { Tag } from '../status/Tag';
-import { toneColors, type Tone } from '../tone';
+import { BalanceSummary } from './BalanceSummary';
+import type { Tone } from '../tone';
 
 export interface BalanceCardRow {
   id: string;
@@ -95,8 +92,6 @@ export function BalanceCard({
   style,
 }: BalanceCardProps) {
   const { theme } = useTheme();
-  const total = toneColors(theme, totalTone);
-  const [detailsOpen, setDetailsOpen] = useState(false);
 
   return (
     <Card title={title} flush style={style}>
@@ -118,75 +113,18 @@ export function BalanceCard({
         </View>
       ))}
 
-      <View style={[styles.total, { borderTopColor: theme.colors.borderStrong }]}>
-        <AppText variant="mono" tone="muted" style={styles.totalKey}>
-          {totalLabel.toUpperCase()}
-        </AppText>
-        <AppText
-          variant="display"
-          style={[
-            styles.totalValue,
-            { color: totalTone === 'neutral' ? theme.colors.textPrimary : total.accent },
-          ]}
-        >
-          {totalValue}
-        </AppText>
-      </View>
-
-      {verdict != null && (
-        <Pressable
-          accessibilityRole={details != null ? 'button' : undefined}
-          accessibilityLabel={
-            details != null ? `${verdict.label} - szczegóły normy` : verdict.label
-          }
-          disabled={details == null}
-          onPress={() => setDetailsOpen(true)}
-          style={({ pressed }) => [
-            styles.verdict,
-            { borderTopColor: theme.colors.border },
-            pressed ? { backgroundColor: theme.colors.surfaceHover } : null,
-          ]}
-        >
-          <Tag label={verdict.label} tone={verdict.tone} size="md" />
-          {/* Znak „są szczegóły" - bez niego plakietka wygląda na sam napis i nikt jej
-              nie dotknie. Ikona, nie napis: słowo w tym wierszu przekrzykiwałoby werdykt,
-              który jest tu jedyną treścią. */}
-          {details != null && (
-            <Icon name="info" size={14} color={theme.colors.textMuted} />
-          )}
-        </Pressable>
-      )}
-
-      {naNote != null && (
-        <View style={[styles.verdict, { borderTopColor: theme.colors.border }]}>
-          <AppText variant="mono" tone="muted" style={styles.naNote}>
-            {naNote}
-          </AppText>
-        </View>
-      )}
-
-      {details != null && (
-        <Sheet
-          visible={detailsOpen}
-          title={details.title}
-          rows={details.rows}
-          cancelLabel="ZAMKNIJ"
-          onCancel={() => setDetailsOpen(false)}
-          footer={
-            <AppText variant="mono" tone="muted" style={styles.sheetNote}>
-              {details.note}
-            </AppText>
-          }
-        >
-          <Banner
-            kind="status"
-            tone={verdict?.tone ?? 'neutral'}
-            icon={verdict?.tone === 'green' ? 'check' : 'warning'}
-            text={details.summary}
-          />
-          {freshness}
-        </Sheet>
-      )}
+      {/* Suma, werdykt i arkusz szczegółów mieszkają w `BalanceSummary` - ten sam
+          komponent nosi je w karcie wpisu ręcznego, gdzie wierszy działania NIE MA,
+          bo składowe stoją w polach nad nim (uwaga z urządzenia, 2026-08-29). */}
+      <BalanceSummary
+        totalLabel={totalLabel}
+        totalValue={totalValue}
+        totalTone={totalTone}
+        verdict={verdict}
+        details={details}
+        freshness={freshness}
+        naNote={naNote}
+      />
     </Card>
   );
 }
@@ -204,28 +142,4 @@ const styles = StyleSheet.create({
   op: { width: 12, fontSize: 9.5 },
   label: { fontSize: 9.5, letterSpacing: 0.5, flexShrink: 1 },
   value: { fontSize: 12 },
-  total: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    gap: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    borderTopWidth: 1,
-  },
-  totalKey: { fontSize: 8, letterSpacing: 2 },
-  totalValue: { fontSize: 26, letterSpacing: 1.5, lineHeight: 26 },
-  verdict: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    // Cały wiersz jest celem dotknięcia (audyt dostępności): plakietka ma 9 px czcionki.
-    minHeight: 44,
-    borderTopWidth: 1,
-  },
-  naNote: { fontSize: 9, letterSpacing: 0.5, lineHeight: 14 },
-  sheetNote: { fontSize: 9, letterSpacing: 0.4, lineHeight: 14 },
 });

@@ -34,7 +34,7 @@ import {
   ActionButton,
   AirfieldSheet,
   AppText,
-  BalanceCard,
+  BalanceSummary,
   Banner,
   Card,
   CardPicker,
@@ -92,8 +92,6 @@ import {
   emptyManualFlightDraft,
   manualFlightDirty,
   manualFlightStepBlocker,
-  fuelAtStartL,
-  fuelUsedL,
   sortedFlights,
   toManualFlightInput,
   type ManualFlightDraft,
@@ -417,23 +415,16 @@ export function ManualFlightScreen({
   const engineRunSet = draft.engineStart != null && draft.engineStop != null;
 
   // ── krok 4: paliwo i werdykt normy (issue #62, piąta i siódma tura) ────────
-  const startL = fuelAtStartL(draft);
-  const used = fuelUsedL(draft);
   const norm = aircraft?.consumption ?? null;
-  /* TEN SAM RACHUNEK, CO PO ZAPISANIU (uwaga z urządzenia, 2026-08-29): karta niesie
-     odtąd pełny `BalanceView` - wiersze działania, sumę, plakietkę werdyktu i ARKUSZ
-     SZCZEGÓŁÓW pod nią. Do tej pory krok 4 pokazywał sam werdykt, więc pilot widział
-     „↑ POWYŻEJ NORMY" i nie miał jak sprawdzić, z czego to wyszło - a ekran rozliczenia
-     (10) odpowiada na to od issue #40. */
-  const balances = useMemo(
-    () =>
-      [
-        /* „Rachunek …", nie „Paliwo" jak na ekranie 10: tam kart wpisu nie ma, a tu stoją
-           wyżej i nosiłyby ten sam tytuł. Dwie karty o jednej nazwie na jednym ekranie
-           każą pilotowi zgadywać, która jest którą. */
-        { title: 'Rachunek paliwa', view: manualFuelBalanceView(draft, norm) },
-        { title: 'Rachunek motogodzin', view: manualMhBalanceView(draft, norm, mhFormat) },
-      ].filter((b): b is { title: string; view: BalanceView } => b.view != null),
+  /* TEN SAM RACHUNEK, CO PO ZAPISANIU (uwaga z urządzenia, 2026-08-29) - ale SAMO
+     PODSUMOWANIE, nie cała karta: „trochę dublujemy to, co jest w inputach". Wiersze
+     działania wypisywały zastane, dolane i po locie, czyli dokładnie te trzy liczby,
+     które pilot ma w polach wyżej. Do karty wchodzi więc to, czego w polach NIE MA -
+     wynik i werdykt; rozpisane działanie mieszka w arkuszu pod plakietką, tam gdzie
+     pada pytanie „jak to policzone". */
+  const fuelView = useMemo(() => manualFuelBalanceView(draft, norm), [draft, norm]);
+  const mhView = useMemo(
+    () => manualMhBalanceView(draft, norm, mhFormat),
     [draft, norm, mhFormat],
   );
   /* Norma jest DANĄ Z SERWERA, więc niesie adnotację wieku (§4.8) - ta sama, co przy
@@ -815,12 +806,18 @@ export function ManualFlightScreen({
                 />
               </Field>
 
-              {/* Rachunek pokazujemy dopiero, gdy ma z czego wyjść - kreska przy
-                  niepełnych danych byłaby liczbą o niczym. */}
-              {used != null && startL != null && (
-                <AppText variant="mono" tone="muted" style={{ fontSize: 9, lineHeight: 14 }}>
-                  {`zużycie ${litres(used)} · przed startem ${Math.round(startL)} L − po locie ${Math.round(draft.fuel.afterL!)} L`}
-                </AppText>
+              {/* Podpis „zużycie 36 L · przed startem …" USUNIĘTY: mówił to samo, co
+                  wiersz sumy niżej, tylko w linii i bez werdyktu. */}
+              {fuelView != null && (
+                <BalanceSummary
+                  totalLabel={fuelView.totalLabel}
+                  totalValue={fuelView.totalValue}
+                  totalTone={fuelView.totalTone}
+                  verdict={fuelView.verdict}
+                  details={fuelView.details}
+                  naNote={fuelView.naNote}
+                  {...(normFreshness != null ? { freshness: normFreshness } : {})}
+                />
               )}
             </Card>
 
@@ -852,6 +849,18 @@ export function ManualFlightScreen({
                   więc zestawianie ich obok sugerowało błąd przy poprawnym odczycie -
                   ta sama poprawka, którą issue #38 wprowadziło na ekranie 10. Przyrost
                   porównuje się z NORMĄ maszyny, w karcie niżej. */}
+
+              {mhView != null && (
+                <BalanceSummary
+                  totalLabel={mhView.totalLabel}
+                  totalValue={mhView.totalValue}
+                  totalTone={mhView.totalTone}
+                  verdict={mhView.verdict}
+                  details={mhView.details}
+                  naNote={mhView.naNote}
+                  {...(normFreshness != null ? { freshness: normFreshness } : {})}
+                />
+              )}
             </Card>
 
             {/* ── NORMA: czy to zużycie się zgadza (issue #62, piąta tura) ────────
@@ -864,20 +873,6 @@ export function ManualFlightScreen({
                 normy maszyny ekran MILCZY, zamiast rysować kreski. Werdykt jest
                 bursztynowy, nie czerwony - wynik poza pasmem jest DO SPRAWDZENIA,
                 a paliwomierz i licznik mają rację (liczniki fizyczne > dane serwera). */}
-            {balances.map((b) => (
-              <BalanceCard
-                key={b.title}
-                title={b.title}
-                rows={b.view.rows}
-                totalLabel={b.view.totalLabel}
-                totalValue={b.view.totalValue}
-                totalTone={b.view.totalTone}
-                verdict={b.view.verdict}
-                details={b.view.details}
-                naNote={b.view.naNote}
-                {...(normFreshness != null ? { freshness: normFreshness } : {})}
-              />
-            ))}
 
             {/* ── olej (issue #60) - tu OPCJONALNY, świadomym wyjątkiem ──────────
                 Na 02a pomiar jest krokiem WYMAGANYM (decyzja 2026-08-27), ale lot

@@ -270,7 +270,26 @@
             <span class="field-val amber">76</span><span class="field-unit">L</span>
           </a>
         </div>
-        <div class="field-sub">zużycie 36 L · przed startem 112 L − po locie 76 L</div>
+        <!-- ══ PODSUMOWANIE WCHODZI DO KARTY, NIE OBOK NIEJ (uwaga z urządzenia,
+             2026-08-29: „trochę dublujemy to, co jest w inputach - nie możesz dodać
+             tylko tego podsumowania do sekcji PALIWO?") ══
+
+             Osobna karta rachunku wypisywała te same trzy liczby, które stoją w polach
+             wyżej: zastane, dolane, po locie. Rachunek jest tu WNIOSKIEM z pól, a nie
+             drugą ich listą - do karty wchodzi więc tylko to, czego w polach NIE MA:
+             wynik i werdykt.
+
+             Rozpisane działanie nie ginie - mieszka w arkuszu 10C pod plakietką, czyli
+             tam, gdzie pada pytanie „jak to policzone". Ta sama zasada, którą issue #40
+             zastosowało na ekranie 10: karta odpowiada „czy dobrze", arkusz „dlaczego".
+
+             Podpis „zużycie 36 L · przed startem 112 L − po locie 76 L" ZNIKA razem
+             z tym: mówił to samo, co wiersz sumy, tylko w linii i bez werdyktu. -->
+        <div class="calc-total">
+          <span class="calc-total-key">Zużyte</span>
+          <span class="calc-total-val amber">36 L</span>
+          <a href="10c-norma-detale.html" class="tag green">✓ w normie</a>
+        </div>
       </div>
 
       <!-- MOTOGODZINY PRZED I PO - do 2026-08-16 wpis pytał tylko o stan po locie,
@@ -307,58 +326,13 @@
              siebie sugerowały błąd przy poprawnym odczycie; to ta sama pomyłka, którą
              issue #38 wyrzuciło z ekranu 10. Przyrost porównuje się z NORMĄ maszyny,
              w karcie „Norma zużycia" wyżej. -->
-      </div>
-
-      <!-- ══ TEN SAM RACHUNEK, CO PO ZAPISANIU (uwaga z urządzenia, 2026-08-29) ══
-
-           „Jak mam wpisanie paliwa, to może odpalisz ten moduł, co przy automatycznym
-            locie? Tam jak przeglądam później ten lot, to mam widoczny badge, gdzie
-            wyświetlamy info, czy zużycie jest w normie. Jak go kliknę, to otwierają się
-            szczegóły, jak to zostało policzone."
-
-           Do tej pory krok 4 pokazywał sam werdykt i podpis z pasmem, a ekran
-           rozliczenia (10) - kartę rachunku z rozpisanym działaniem i arkuszem
-           szczegółów pod plakietką (10C, issue #40). Ta sama sesja miała więc dwa
-           kształty i tylko jeden z nich odpowiadał na pytanie „z czego to wyszło".
-
-           Odtąd jest jeden: `BalanceCard` z `sessionBalance`, czyli wiersze działania
-           (odczyt przy przejęciu → dolane → odczyt przy zdaniu), suma, plakietka
-           werdyktu i arkusz 10C pod tapnięciem. Zależność tamtego modułu od projekcji
-           okazała się pozorna - czyta z niej DWIE liczby (czas blokowy i czas
-           w powietrzu) plus odczyty, a jedno i drugie wpis ręczny ma w szkicu.
-
-           WIEK NORMY zszedł przy okazji DO ARKUSZA (§4.8, reguła z issue #40): na
-           karcie została sama plakietka werdyktu, a adnotacja o cache'u bez liczb obok
-           nie ma czego kwalifikować.
-
-           Karty NIE MA, gdy nie ma biegu silnika. Bez normy maszyny karta zostaje, ale
-           zamiast werdyktu niesie POWÓD jego braku - „-" bez wyjaśnienia wygląda jak
-           awaria aplikacji (§6 pkt 3). Werdykt poza pasmem jest BURSZTYNOWY, nie
-           czerwony: to paliwomierz i licznik mają rację. -->
-      <div class="section">
-        <div class="section-head"><span class="section-label">Rachunek paliwa</span></div>
-        <div class="calc-row"><span class="calc-key">Odczyt przy przejęciu</span><span class="calc-val">64 L</span></div>
-        <div class="calc-row"><span class="calc-key"><span class="op">+</span> Dolane</span><span class="calc-val">48 L</span></div>
-        <div class="calc-row"><span class="calc-key"><span class="op">−</span> Odczyt przy zdaniu</span><span class="calc-val">76 L</span></div>
-        <div class="calc-total">
-          <span class="calc-total-key">Zużyte</span>
-          <span class="calc-total-val amber">36 L</span>
-          <a href="10c-norma-detale.html" class="tag green">✓ w normie</a>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="section-head"><span class="section-label">Rachunek motogodzin</span></div>
-        <div class="calc-row"><span class="calc-key">Licznik przy przejęciu</span><span class="calc-val">1 306:21</span></div>
-        <div class="calc-row"><span class="calc-key"><span class="op">−</span> Licznik przy zdaniu</span><span class="calc-val">1 307:53</span></div>
         <div class="calc-total">
           <span class="calc-total-key">Przyrost</span>
-          <!-- 1 307:53 − 1 306:21 = 1:32. Liczba w makiecie ma się zgadzać z liczbami,
-               z których wynika: makieta jest specyfikacją, a nie ilustracją. -->
           <span class="calc-total-val">+1:32</span>
           <a href="10c-norma-detale.html" class="tag amber">↑ powyżej normy</a>
         </div>
       </div>
+
 
       <!-- OLEJ (issue #60) - tu OPCJONALNY, świadomym wyjątkiem: na 02A pomiar jest
            krokiem WYMAGANYM (decyzja 2026-08-27), ale lot z kartki sprzed tygodnia

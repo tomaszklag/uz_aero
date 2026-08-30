@@ -1200,13 +1200,22 @@ i tak sprawdza ją `DROP_ON_GROUND` (`rules/consistency.ts`). Wiedział model, m
     ręczny ma w szkicu. Stąd podział na RDZEŃ (`fuelBalanceOf`, `mhBalanceOf` - biorą
     fakty) i cienkie adaptery `fuelBalance`/`mhBalance` dla projekcji. Ekran 10 woła
     je jak dotąd, krok 4 woła rdzeń przez `manualFuelBalanceView`/`manualMhBalanceView`
-  - **karta niesie pełny `BalanceView`**: wiersze działania, sumę, plakietkę werdyktu
-    i ARKUSZ SZCZEGÓŁÓW (10C) pod tapnięciem. Wiek normy zszedł przy okazji DO ARKUSZA
-    (§4.8, reguła z issue #40): na karcie została sama plakietka, a adnotacja o cache'u
-    bez liczb obok nie ma czego kwalifikować
-  - **tytuły brzmią „Rachunek paliwa" / „Rachunek motogodzin"**, nie „Paliwo" jak na 10:
-    tam kart wpisu nie ma, a na kroku 4 stoją wyżej i nosiłyby ten sam tytuł. Rachunki
-    stoją POD obydwoma wpisami - najpierw to, co pilot wpisuje, potem co z tego wychodzi
+  - **do karty wchodzi SAMO PODSUMOWANIE, nie cały rachunek** (druga uwaga tego dnia:
+    „trochę dublujemy to, co jest w inputach - nie możesz dodać tylko tego podsumowania
+    do sekcji PALIWO?"). Wiersze działania wypisywały zastane, dolane i po locie, czyli
+    dokładnie te trzy liczby, które pilot ma w polach wyżej. Osobne karty rachunku
+    ZNIKNĘŁY, a do kart „Paliwo" i „Motogodziny" doszedł `BalanceSummary` - suma,
+    plakietka werdyktu i ARKUSZ SZCZEGÓŁÓW (10C) pod tapnięciem. Rozpisane działanie
+    nie ginie: mieszka w arkuszu, czyli tam, gdzie pada pytanie „jak to policzone".
+    Ta sama zasada, którą issue #40 zastosowało na 10 - karta odpowiada „czy dobrze",
+    arkusz „dlaczego"
+  - **`BalanceSummary` jest WSPÓLNY**: `BalanceCard` (ekran 10, gdzie składowych nie ma
+    nigdzie indziej, więc karta je rozpisuje) nosi go tak samo. Różnica między tymi
+    powierzchniami jest DOKŁADNIE JEDNA - obecność wierszy działania
+  - **podpis „zużycie 36 L · przed startem …" USUNIĘTY**: mówił to samo, co wiersz sumy,
+    tylko w linii i bez werdyktu
+  - wiek normy zszedł przy okazji DO ARKUSZA (§4.8, reguła z issue #40): przy karcie
+    została sama plakietka, a adnotacja o cache'u bez liczb obok nie ma czego kwalifikować
   - **`ManualBalance` i spółka USUNIĘTE**: były DRUGIM rachunkiem tej samej wielkości,
     a takie pary rozjeżdżają się przy pierwszej poprawce jednej z nich. Została
     `manualPhaseTimes` (czasy faz ze szkicu) i dwa adaptery
