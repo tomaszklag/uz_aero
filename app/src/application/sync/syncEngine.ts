@@ -29,6 +29,7 @@ import {
   type RemoteTaskSuggestions,
   type ServerPort,
   type SessionSyncStatus,
+  type SyncTrigger,
 } from '../ports/serverPort';
 
 /** Limit paczki - zgodny z kopertą `POST /events` po stronie serwera. */
@@ -61,11 +62,16 @@ export class SyncEngine {
     private readonly sourceDevice: string | null = null,
   ) {}
 
-  async syncOnce(): Promise<SyncOutcome> {
+  /**
+   * `trigger` mówi tylko, KTO poprosił - port przekłada to na limit czasu (patrz
+   * `SyncTrigger`). Domyślnie tło, bo tak woła pętla okazji; `manual` podaje wyłącznie
+   * droga z przycisku, gdzie pilot stoi i czeka.
+   */
+  async syncOnce(trigger: SyncTrigger = 'background'): Promise<SyncOutcome> {
     if (this.running) return { kind: 'idle' };
     this.running = true;
     try {
-      return await this.drain();
+      return await this.drain(trigger);
     } finally {
       this.running = false;
     }
@@ -138,7 +144,7 @@ export class SyncEngine {
     return authorizedFetch(this.auth, (token) => this.server.getTaskSuggestions(token));
   }
 
-  private async drain(): Promise<SyncOutcome> {
+  private async drain(trigger: SyncTrigger): Promise<SyncOutcome> {
     let token = await this.auth.freshToken();
     if (token == null) return { kind: 'auth_expired' };
 
@@ -154,7 +160,7 @@ export class SyncEngine {
       const batch = pending.slice(0, SYNC_BATCH_LIMIT);
       let result: PushResult;
       try {
-        result = await this.server.pushEvents(token, batch, this.sourceDevice);
+        result = await this.server.pushEvents(token, batch, this.sourceDevice, trigger);
       } catch (error) {
         if (error instanceof ServerUnreachableError) return { kind: 'offline' };
         if (error instanceof ServerRejectedError && error.status === 401) {

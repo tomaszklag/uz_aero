@@ -97,7 +97,9 @@ export function SettingsScreen({
   const runManualSync = useCallback(async (): Promise<void> => {
     setSyncing(true);
     try {
-      await syncNow();
+      // 'manual': ten przycisk jest awaryjnym ponagleniem, więc czeka dłużej
+      // niż pętla tła (patrz `SyncTrigger`).
+      await syncNow('manual');
       await refreshReferenceNow();
       await readRefStamp();
     } finally {

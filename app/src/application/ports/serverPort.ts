@@ -178,10 +178,35 @@ export interface RemoteReadingsChain {
   oil: OilHandover | null;
 }
 
+/**
+ * KTO POPROSIŁ o tę rozmowę z serwerem - i tylko tyle. Ile sekund z tego wynika,
+ * decyduje adapter, bo cierpliwość jest własnością TRANSPORTU (uwaga z urządzenia,
+ * 2026-08-30).
+ *
+ * Port świadomie nie przyjmuje milisekund. Warstwa aplikacji wie, czy przy telefonie
+ * ktoś stoi; nie wie i nie ma prawa wiedzieć, ile trwa obudzenie uśpionej instancji.
+ *
+ * Skąd wymóg. Limit był JEDEN i wynosił 8 s - dobrany pod pętlę okazji, gdzie jest
+ * słuszny: przy słabym zasięgu lepiej szybko powiedzieć „offline" i wrócić za minutę,
+ * niż wisieć i blokować kolejne okazje. Dla przycisku „PONÓW PRÓBĘ" ten sam limit był
+ * jednak wadą, i to trafiającą dokładnie w najgorszy moment: pilot sięga po ponowienie
+ * wtedy, gdy długo nic nie szło, czyli gdy serwer zdążył się uśpić - a zimny start
+ * bywa dłuższy niż 8 s. Telefon rzucał `abort()`, meldował „brak sieci" i szedł dalej,
+ * podczas gdy serwer właśnie wstawał, PRZYJMOWAŁ paczkę i zapisywał ją do bazy.
+ * W logach API zostawał sukces, na ekranie „OFFLINE" - i to jest ta sprzeczność,
+ * od której zaczęło się zgłoszenie.
+ */
+export type SyncTrigger = 'background' | 'manual';
+
 export interface ServerPort {
   login(login: string, password: string): Promise<AuthTokens>;
   refresh(refreshToken: string): Promise<AuthTokens>;
-  pushEvents(token: string, events: Event[], sourceDevice: string | null): Promise<PushResult>;
+  pushEvents(
+    token: string,
+    events: Event[],
+    sourceDevice: string | null,
+    trigger?: SyncTrigger,
+  ): Promise<PushResult>;
   /**
    * Strona WŁASNYCH zdarzeń pilota (`GET /me/events`, §4.9) - kierunek powrotny
    * `pushEvents`. Tożsamość bierze się z tokenu, więc port nie ma gdzie przyjąć
@@ -191,7 +216,11 @@ export interface ServerPort {
     token: string,
     params: { cursor?: string | null; limit?: number },
   ): Promise<RemoteEventPage>;
-  getReference(token: string, etag?: string | null): Promise<ReferenceFetch>;
+  getReference(
+    token: string,
+    etag?: string | null,
+    trigger?: SyncTrigger,
+  ): Promise<ReferenceFetch>;
   getAircraftState(token: string, aircraftId: string): Promise<RemoteAircraftState>;
   /**
    * Ciągłość odczytów wokół chwili (`GET /aircraft/:id/readings-chain`, issue #62) - czym

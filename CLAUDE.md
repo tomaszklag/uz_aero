@@ -1521,6 +1521,16 @@ Pełna architektura: `docs/_main.md.txt` (sekcje 4–6). Zasady twarde:
   tapnięcie było nieodróżnialne od martwego przycisku. Przycisk mówi przy tym, co się
   DZIEJE („WYSYŁANIE…"), a nie tylko gaśnie; to nie jest wyjątek od §6 pkt 3, bo tamta
   reguła dotyczy BLOKAD, a to jest postęp czynności, o którą pilot właśnie poprosił
+- **DWA LIMITY CZASU, BO DWA RÓŻNE PYTANIA** (`SyncTrigger` w porcie serwera): pętla
+  tła czeka 8 s, ponowienie z ręki pilota 30 s. Krótki limit jest słuszny w tle - przy
+  słabym zasięgu lepiej szybko powiedzieć „offline" i wrócić za minutę - ale pod
+  przyciskiem rachunek się odwraca: nikt nie wróci za minutę, bo pilot stoi i patrzy,
+  a sięga po ponowienie DOKŁADNIE wtedy, gdy długo nic nie szło, czyli gdy serwer
+  zdążył się uśpić. Zimny start dłuższy niż 8 s zamieniał udaną wysyłkę w „brak sieci":
+  telefon rzucał `abort()`, serwer w tym samym czasie przyjmował paczkę i zapisywał ją,
+  a w logach API zostawał sukces przy pilocie patrzącym na OFFLINE. **Port przyjmuje
+  KTO POPROSIŁ, nigdy milisekundy** - warstwa aplikacji wie, czy przy telefonie ktoś
+  stoi, a ile trwa obudzenie instancji wie wyłącznie transport
 - **ARKUSZ ŻYJE DŁUŻEJ NIŻ PILL**: udane ponowienie gasi wskaźnik, ale arkusz zostaje
   otwarty ze zdaniem „Wysłano n". Do 2026-08-30 komponent zaczynał się od `return null`,
   więc jedyny przypadek z dobrą wiadomością wyrywał pilotowi arkusz z rąk - a zniknięcie

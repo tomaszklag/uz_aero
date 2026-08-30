@@ -46,7 +46,7 @@ class MemoryCredentials {
 
 /** Serwer-skrypt: kolejki zaprogramowanych odpowiedzi na `pushEvents` i `getSyncStatus`. */
 class ScriptedServer implements ServerPort {
-  pushes: { token: string; count: number }[] = [];
+  pushes: { token: string; count: number; trigger?: string }[] = [];
   statusCalls: string[] = [];
   refreshCalls = 0;
   statusScript: Array<SessionSyncStatus | Error> = [];
@@ -70,8 +70,13 @@ class ScriptedServer implements ServerPort {
     return this.refreshResult;
   }
 
-  async pushEvents(token: string, events: unknown[]): Promise<PushResult> {
-    this.pushes.push({ token, count: events.length });
+  async pushEvents(
+    token: string,
+    events: unknown[],
+    _sourceDevice?: string | null,
+    trigger?: string,
+  ): Promise<PushResult> {
+    this.pushes.push({ token, count: events.length, trigger });
     const next = this.script.shift();
     if (next == null) throw new Error('scenariusz się skończył');
     if (next instanceof Error) throw next;
@@ -169,6 +174,27 @@ function engineWith(repo: EventsRepo, server: ServerPort): SyncEngine {
 }
 
 describe('SyncEngine.syncOnce', () => {
+  /**
+   * KTO POPROSIŁ dojeżdża do portu (uwaga z urządzenia, 2026-08-30). Silnik nie zna
+   * sekund - przekłada je adapter - więc jedyne, co da się tu sprawdzić i jedyne,
+   * co ma znaczenie, to czy informacja w ogóle dociera na dół. Bez tego dłuższy limit
+   * dla ponowienia z ręki byłby martwym kodem, a objaw wróciłby niezauważony: telefon
+   * przerywa po 8 s, serwer w tym czasie przyjmuje paczkę, a pilot czyta „brak sieci".
+   */
+  it('przekazuje do portu, kto poprosił - tło domyślnie, manual z przycisku', async () => {
+    const repo = await repoWithEvents(1);
+    const server = new ScriptedServer([ok(1), ok(1)]);
+    const engine = engineWith(repo, server);
+
+    await engine.syncOnce();
+    expect(server.pushes[0]?.trigger).toBe('background');
+
+    // Drugie repozytorium, bo pierwsze jest już opróżnione - pusty outbox nie
+    // rozmawia z serwerem i test nie miałby czego obejrzeć.
+    await engineWith(await repoWithEvents(1), server).syncOnce('manual');
+    expect(server.pushes[1]?.trigger).toBe('manual');
+  });
+
   it('opróżnia outbox i oznacza wysłane', async () => {
     const repo = await repoWithEvents(3);
     const server = new ScriptedServer([ok(3)]);

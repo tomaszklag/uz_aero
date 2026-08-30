@@ -55,6 +55,7 @@ import {
   type EventsRepo,
   type SessionContext,
   type SyncOutcome,
+  type SyncTrigger,
 } from '../../application';
 import { useAuthStore } from './authStore';
 
@@ -208,9 +209,12 @@ export interface SessionStore {
   applySyncOutcome(outcome: SyncOutcome): void;
   /**
    * Jeden pełny przebieg synca z zapisem wyniku - wspólna droga pętli okazji
-   * (`useSyncLoop`) i przycisku „SYNCHRONIZUJ TERAZ" na ekranie 11.
+   * (`useSyncLoop`) i ponowienia z ręki pilota (arkusz SyncChipa, Ustawienia).
+   *
+   * `trigger` niesie WYŁĄCZNIE to, kto poprosił; limit czasu wyprowadza z tego port
+   * (`SyncTrigger`). Domyślnie tło - `manual` podają dwie drogi z przycisku.
    */
-  syncNow(): Promise<void>;
+  syncNow(trigger?: SyncTrigger): Promise<void>;
   /** Odświeża cache referencyjny, jeśli przekroczył bramę wieku (§4.8). */
   refreshReference(): Promise<void>;
   /**
@@ -547,10 +551,10 @@ export const useSessionStore = create<SessionStore>((set, get) => {
       }));
     },
 
-    async syncNow() {
+    async syncNow(trigger) {
       const { sync, applySyncOutcome, refreshOutbox } = get();
       if (sync == null) return; // testy i StyleGuide żyją bez serwera - to nie błąd
-      const outcome = await sync.syncOnce();
+      const outcome = await sync.syncOnce(trigger);
       applySyncOutcome(outcome);
       if (outcome.kind === 'synced') await refreshOutbox();
     },

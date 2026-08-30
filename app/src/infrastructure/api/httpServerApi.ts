@@ -5,9 +5,18 @@
  *  • wyjątek fetch / timeout → `ServerUnreachableError` - normalny stan pracy w terenie,
  *  • odpowiedź poza 2xx → `ServerRejectedError(status, code)` - serwer żyje i odmawia.
  *
- * Timeout jest krótki (8 s): pętla synca woła nas przy każdej okazji, więc lepiej
- * szybko powiedzieć „offline" i wrócić za chwilę, niż wisieć na słabym zasięgu
- * i blokować kolejne okazje.
+ * DWA LIMITY CZASU, bo dwa różne pytania (uwaga z urządzenia, 2026-08-30).
+ * W tle limit jest krótki: pętla okazji woła nas co minutę, więc lepiej szybko
+ * powiedzieć „offline" i wrócić za chwilę, niż wisieć na słabym zasięgu i blokować
+ * kolejne okazje. Pod przyciskiem „PONÓW PRÓBĘ" ten sam rachunek jest odwrotny -
+ * nikt nie wróci za minutę, bo to pilot właśnie poprosił i patrzy na ekran, a poprosił
+ * dokładnie wtedy, gdy długo nic nie szło, czyli gdy serwer zdążył się uśpić.
+ * Zimny start bywa dłuższy niż 8 s i to zamieniało udaną wysyłkę w „brak sieci":
+ * telefon przerywał, serwer w tym samym czasie przyjmował paczkę i zapisywał ją,
+ * a w logach API zostawał sukces przy pilotze patrzącym na napis OFFLINE.
+ *
+ * Który limit obowiązuje, wynika z `SyncTrigger` - warstwa aplikacji mówi, KTO
+ * poprosił, a sekundy zostają tutaj, bo są własnością transportu.
  */
 
 import type {
@@ -23,9 +32,17 @@ import type {
   SessionSyncStatus,
 } from '../../application/ports';
 import { ServerRejectedError, ServerUnreachableError } from '../../application/ports';
+import type { SyncTrigger } from '../../application/ports';
 import type { Event, SessionTrackPayload } from '../../domain';
 
+/** Pętla okazji - krótko, bo zaraz wróci. */
 const TIMEOUT_MS = 8_000;
+/** Ponowienie z ręki pilota - tyle, ile trwa obudzenie uśpionej instancji. */
+const MANUAL_TIMEOUT_MS = 30_000;
+
+function timeoutFor(trigger: SyncTrigger | undefined): number {
+  return trigger === 'manual' ? MANUAL_TIMEOUT_MS : TIMEOUT_MS;
+}
 
 export class HttpServerApi implements ServerPort {
   constructor(private readonly baseUrl: string) {}
@@ -38,12 +55,18 @@ export class HttpServerApi implements ServerPort {
     return this.request('POST', '/auth/refresh', { body: { refreshToken } });
   }
 
-  pushEvents(token: string, events: Event[], sourceDevice: string | null): Promise<PushResult> {
+  pushEvents(
+    token: string,
+    events: Event[],
+    sourceDevice: string | null,
+    trigger?: SyncTrigger,
+  ): Promise<PushResult> {
     // `syncedAt` jest księgowością TEGO telefonu - kopercie serwera nic po nim.
     const wire = events.map(({ syncedAt: _local, ...event }) => event);
     return this.request('POST', '/events', {
       token,
       body: sourceDevice != null ? { events: wire, sourceDevice } : { events: wire },
+      timeoutMs: timeoutFor(trigger),
     });
   }
 
@@ -67,10 +90,15 @@ export class HttpServerApi implements ServerPort {
    * `GET /reference` z ETagiem (§4.8): przy zgodnym `If-None-Match` serwer odpowiada
    * 304 bez ciała - wtedy `data: null`, a cache telefonu zostaje uznany za aktualny.
    */
-  async getReference(token: string, etag: string | null = null): Promise<ReferenceFetch> {
+  async getReference(
+    token: string,
+    etag: string | null = null,
+    trigger?: SyncTrigger,
+  ): Promise<ReferenceFetch> {
     const response = await this.send('GET', '/reference', {
       token,
       headers: etag != null ? { 'if-none-match': etag } : {},
+      timeoutMs: timeoutFor(trigger),
     });
     if (response.status === 304) return { data: null, etag };
     if (!response.ok) throw new ServerRejectedError(response.status, await errorCode(response));
@@ -135,7 +163,7 @@ export class HttpServerApi implements ServerPort {
   private async request<T>(
     method: 'GET' | 'POST' | 'PUT',
     path: string,
-    options: { token?: string; body?: unknown },
+    options: { token?: string; body?: unknown; timeoutMs?: number },
   ): Promise<T> {
     const response = await this.send(method, path, options);
     if (!response.ok) {
@@ -152,10 +180,16 @@ export class HttpServerApi implements ServerPort {
   private async send(
     method: 'GET' | 'POST' | 'PUT',
     path: string,
-    options: { token?: string; body?: unknown; headers?: Record<string, string> },
+    options: {
+      token?: string;
+      body?: unknown;
+      headers?: Record<string, string>;
+      /** Brak = limit tła; patrz nota na górze pliku. */
+      timeoutMs?: number;
+    },
   ): Promise<Response> {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+    const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? TIMEOUT_MS);
 
     try {
       return await fetch(`${this.baseUrl}${path}`, {

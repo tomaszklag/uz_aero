@@ -27,7 +27,7 @@
 
 import type { EventsRepo } from '../eventsRepo';
 import type { AuthService } from '../auth/authService';
-import type { ServerPort } from '../ports/serverPort';
+import type { ServerPort, SyncTrigger } from '../ports/serverPort';
 import { authorizedFetch } from './authorizedFetch';
 
 /** Klucze `session_meta` - księgowość tego modułu, niewidoczna dla ekranów. */
@@ -67,14 +67,15 @@ export class ReferenceSync {
     if (withinGate && (await this.repo.getAircraft()).length > 0) {
       return 'fresh';
     }
-    return this.refresh();
+    // Brama wieku jest drogą TŁA (pętla okazji), więc i limit czasu jest tła.
+    return this.refresh('background');
   }
 
   /** Bezwarunkowe odświeżenie (z ETagiem - „bezwarunkowe" nie znaczy „bez 304"). */
-  async refresh(): Promise<ReferenceRefreshOutcome> {
+  async refresh(trigger: SyncTrigger = 'manual'): Promise<ReferenceRefreshOutcome> {
     const etag = await this.repo.getMeta(REFERENCE_META_ETAG);
     const result = await authorizedFetch(this.auth, (token) =>
-      this.server.getReference(token, etag),
+      this.server.getReference(token, etag, trigger),
     );
     if (result == null) return 'skipped';
 

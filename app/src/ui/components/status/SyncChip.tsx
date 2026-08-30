@@ -110,7 +110,10 @@ export function SyncChip({ status, outboxCount, lastSyncAt, refCheckedAt, style 
     if (syncNow == null) return;
     setRetrying(true);
     try {
-      await syncNow();
+      // 'manual' = pilot stoi i czeka, więc port daje dłuższy limit czasu: po ten
+      // przycisk sięga się wtedy, gdy długo nic nie szło, czyli gdy serwer zdążył
+      // się uśpić - a zimny start bywa dłuższy niż limit pętli tła.
+      await syncNow('manual');
       await refreshReferenceNow?.();
     } finally {
       setRetrying(false);
