@@ -21,6 +21,7 @@ import { StyleSheet, TextInput, View } from 'react-native';
 
 import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
+import { Tag } from '../status/Tag';
 import { Sheet, type SheetRow } from './Sheet';
 import { toneColors } from '../tone';
 
@@ -151,9 +152,17 @@ export function OilSheet({
         </AppText>
       </View>
 
-      <AppText variant="mono" tone="muted" style={styles.fieldLabel}>
-        Dolano · opcjonalnie
-      </AppText>
+      {/* OPCJONALNOŚĆ MÓWI PIGUŁKA, NIE DOKLEJONE SŁOWO (uwaga z urządzenia,
+          2026-08-29). „Dolano · opcjonalnie" czytało się jak część NAZWY pola, choć
+          jest jego WŁAŚCIWOŚCIĄ - a właściwość pola ma w tym systemie jeden kształt:
+          plakietka w linii etykiety, ta sama, co „opcjonalne" przy Dualu i przy
+          kręgach. */}
+      <View style={styles.fieldHead}>
+        <AppText variant="mono" tone="muted" style={styles.fieldLabel}>
+          Dolano
+        </AppText>
+        <Tag label="opcjonalne" />
+      </View>
       <View style={[styles.inputRow, inputFrame(!added.ok)]}>
         <TextInput
           value={addedText}
@@ -174,7 +183,9 @@ export function OilSheet({
 }
 
 const styles = StyleSheet.create({
-  fieldLabel: { fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', marginBottom: -6 },
+  fieldLabel: { fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' },
+  // Etykieta po lewej, plakietka właściwości po prawej - jak w komponencie `Field`.
+  fieldHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: -6 },
   inputRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   unit: { fontSize: 16 },
 });

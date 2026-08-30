@@ -64,6 +64,11 @@ export interface TimeStepperProps {
   max?: number;
   /** Co pokazać, dopóki godziny nie ma (`value === null`). */
   placeholder?: string;
+  /**
+   * Plakietka WŁAŚCIWOŚCI pola („opcjonalne") - ta sama, co w `Field`. Różni się od
+   * `localTime` rolą: plakietka mówi o WŁAŚCIWOŚCI pola, adnotacja o jego bieżącej WARTOŚCI.
+   */
+  tag?: { label: string };
   /** Kontrolka otwiera się w trybie wpisu - patrz `StepperProps.autoEdit`. */
   autoEdit?: boolean;
   /** Callback ref pola wpisu dla `useSheetInputFocus` - patrz `StepperProps.inputRef`. */
@@ -90,6 +95,7 @@ export function TimeStepper({
   min,
   max,
   placeholder,
+  tag,
   autoEdit = false,
   inputRef,
   localTime = false,
@@ -111,7 +117,7 @@ export function TimeStepper({
   const note = localTime && value != null ? `${timeLocal(value)} LT` : undefined;
 
   return (
-    <Field label={label} {...(note != null ? { labelNote: note } : {})}>
+    <Field label={label} {...(tag != null ? { tag } : {})} {...(note != null ? { labelNote: note } : {})}>
       <Stepper
         value={value}
         onChange={onChange}

@@ -727,6 +727,26 @@ kroków (jak 02 → 02E → 02A): data+samolot+Dual → zadanie → czasy → li
 - **bez tagów „wymagane"**: wymagalność jest stanem DOMYŚLNYM formularza, plakietka
   przy każdej sekcji nie odróżniała niczego od niczego (reguła SyncChipa z issue #12).
   Oznaczamy WYŁĄCZNIE to, co opcjonalne. Ta reguła obowiązuje każdy nowy formularz
+- **OPCJONALNOŚĆ MÓWI PLAKIETKA, NIGDY SŁOWO DOKLEJONE DO NAZWY** (uwaga z urządzenia,
+  2026-08-29: „jak coś jest opcjonalne, to zaznaczałeś w pill, a nie jak zwykły tekst
+  w tym popup"). „Dolano · opcjonalnie" i „Wysokość zrzutu (ft) - opcjonalnie" czytały
+  się jak część NAZWY pola, choć są jego WŁAŚCIWOŚCIĄ - a właściwość ma w tym systemie
+  jeden kształt: `Field.tag` w linii etykiety, ta sama plakietka, co „opcjonalne" przy
+  Dualu i „wymagany · załoga 2-os." przy maszynie. Poprawione w `OilSheet`,
+  `ManualDropSheet` i makietach 02A/02I; `TimeStepper` przepuszcza `tag` do `Field`.
+  **Placeholdery to co innego** i zostają zdaniem („Powód (opcjonalnie) - np. …"):
+  są instrukcją W POLU, a nie etykietą nad nim
+- **W ARKUSZU ZRZUTU CZAS STOI POD SKŁADEM** (ta sama uwaga). Treścią zrzutu jest to,
+  KOGO wyniesiono - i tylko tego nie odtworzy nikt poza pilotem, który leciał. Godzina
+  jest wtórna, bo formularz podstawia ją ze ŚRODKA pierwszego lotu bez zrzutu
+  (`nextDropAt`), więc pilot, który jej nie tyka, dostaje wartość sensowną, a nie pustą;
+  stąd plakietka „opcjonalne" przy niej. Skoro skład jest pierwszym pytaniem, dostał
+  wreszcie własną etykietę („Skład - ilu wyskoczyło", ta sama, co w 10G).
+  **Kolejność jest inna niż w arkuszu KOREKTY zrzutu (10G) i to jest świadome**: tam
+  wchodzi się tapnięciem w wiersz osi, żeby poprawić godzinę, więc godzina jest pytaniem
+  pierwszym. Pusta godzina pozostaje niewyrażalna - zrzut jest zdarzeniem rejestru,
+  a zdarzenie bez czasu nie istnieje (`gpsTime ?? deviceTime`) i nie przeszłoby reguły
+  `DROP_ON_GROUND`
 - edu-baner „Wpis trafi na listę dnia…" USUNIĘTY (opisywał budowę rejestru komuś, kto
   chce wpisać lot z kartki); `ManualEntrySheet` SKASOWANY (komponent po ekranie 08,
   krok 10 minut, bez wpisu z klawiatury) - czasy idą przez `FlightTimesSheet`

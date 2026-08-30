@@ -96,36 +96,61 @@ export function ManualDropSheet({
         ) : undefined
       }
     >
+      {/* SKŁAD JEST PIERWSZYM PYTANIEM ARKUSZA (uwaga z urządzenia, 2026-08-29) i przez
+          to dostaje wreszcie własną etykietę: do tej pory trzy liczniki wisiały bez
+          nazwy, bo pierwsze w kolejności było pole czasu i to ono nadawało arkuszowi
+          temat. Nazwa jest ta sama, co w arkuszu korekty zrzutu (10G) - jedna rzecz ma
+          w tej aplikacji jeden napis.
+
+          OPCJONALNY tak samo jak tam: brak liczby znaczy „nie podano", nie zero
+          (issue #21 pkt 5) - i tak samo mówi to plakietka, a nie słowo doklejone do
+          nazwy pola. */}
+      <Field label="Skład - ilu wyskoczyło" tag={{ label: 'opcjonalne' }}>
+        <CounterRow
+          label="Tandem"
+          value={jumpers.tandem}
+          onChange={(n) => setJumpers((j) => ({ ...j, tandem: n }))}
+        />
+        <CounterRow
+          label="AFF"
+          hint="z instruktorem"
+          value={jumpers.aff}
+          onChange={(n) => setJumpers((j) => ({ ...j, aff: n }))}
+        />
+        <CounterRow
+          label="Solo"
+          value={jumpers.solo}
+          onChange={(n) => setJumpers((j) => ({ ...j, solo: n }))}
+        />
+      </Field>
+
+      {/* CZAS STOI POD DEKLARACJĄ SKŁADU (uwaga z urządzenia, 2026-08-29).
+          Treścią zrzutu jest to, KOGO wyniesiono - i tylko tego nie odtworzy nikt poza
+          pilotem, który leciał. Godzina jest wtórna: przy dopisywaniu zrzutu formularz
+          podstawia ją ze ŚRODKA pierwszego lotu bez zrzutu (`nextDropAt`), więc pilot,
+          który jej nie tyka, dostaje wartość sensowną, a nie pustą. Stąd plakietka
+          „opcjonalne" i miejsce POD licznikami: pierwsze pytanie arkusza ma być tym,
+          na które odpowiedź zna tylko on.
+
+          Godziny nie da się przy tym zostawić PUSTEJ i to nie jest przeoczenie:
+          zrzut jest zdarzeniem rejestru, a zdarzenie bez czasu nie istnieje
+          (`gpsTime ?? deviceTime`) - nie miałoby też jak trafić na oś ani przejść
+          reguły `DROP_ON_GROUND`, która pyta, czy wypadło w oknie któregoś lotu. */}
       <TimeStepper
         label="Czas zrzutu (UTC)"
+        tag={{ label: 'opcjonalne' }}
         value={at}
         onChange={setAt}
         format={timeUtc}
         originalTime={value.at}
         origin="wpisu"
+        localTime
         {...(min != null ? { min } : {})}
         {...(max != null ? { max } : {})}
       />
 
-      <CounterRow
-        label="Tandem"
-        value={jumpers.tandem}
-        onChange={(n) => setJumpers((j) => ({ ...j, tandem: n }))}
-      />
-      <CounterRow
-        label="AFF"
-        hint="z instruktorem"
-        value={jumpers.aff}
-        onChange={(n) => setJumpers((j) => ({ ...j, aff: n }))}
-      />
-      <CounterRow
-        label="Solo"
-        value={jumpers.solo}
-        onChange={(n) => setJumpers((j) => ({ ...j, solo: n }))}
-      />
-
       {/* Wysokość z kartki - 0 znaczy „nie podano" i tak wraca do wołającego. */}
-      <Field label="Wysokość zrzutu (ft) - opcjonalnie">
+      <Field label="Wysokość zrzutu (ft)" tag={{ label: 'opcjonalne' }}>
         <Stepper
           value={altitudeFt}
           onChange={setAltitudeFt}

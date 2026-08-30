@@ -95,6 +95,12 @@
     font-family: var(--font-display); font-size: 24px; letter-spacing: 2px; color: var(--text-primary);
   }
   .modal-field-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); margin-bottom: -5px; }
+  /* ETYKIETA Z PIGUŁKĄ „opcjonalne" (uwaga z urządzenia, 2026-08-29). Doklejone do
+     nazwy słowo („Dolano · opcjonalnie") czytało się jak część nazwy pola, a nie jak
+     jego WŁAŚCIWOŚĆ - a właściwość pola ma w tym systemie jeden kształt: pigułkę
+     w linii etykiety, tę samą, co „opcjonalne" przy Dualu i „wymagany · załoga 2-os.". */
+  .modal-field-head { display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+  .optional-tag { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); background:var(--surface-raised); border:1px solid var(--border); border-radius:5px; padding:2px 6px; white-space:nowrap; }
   .modal-input-row {
     display: flex; align-items: center; gap: 10px;
     background: var(--surface); border: 2px solid var(--amber-border);
@@ -202,7 +208,7 @@
           <span class="modal-input-unit">L</span>
         </div>
 
-        <div class="modal-field-label">Dolano · opcjonalnie</div>
+        <div class="modal-field-head"><span class="modal-field-label">Dolano</span><span class="optional-tag">opcjonalne</span></div>
         <div class="modal-input-row secondary">
           <span class="modal-input-val">1,0</span>
           <span class="modal-input-unit">L</span>
