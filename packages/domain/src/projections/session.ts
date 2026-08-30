@@ -75,12 +75,12 @@ export interface Flight {
   takeoffUuid: string;
   landingUuid: string | null;
   /**
-   * Kręgi (touch and go) zamknięte lądowaniem tego lotu — patrz `LandingPayload`.
+   * Kręgi (touch and go) zamknięte lądowaniem tego lotu - patrz `LandingPayload`.
    * Pole jest NIEOBECNE przy zwykłym locie, żeby czytelnik nie musiał odróżniać
    * „zero kręgów" od „nie dotyczy": jedno i drugie znaczy jeden start i jedno lądowanie.
    *
    * Lot z kręgami niesie JEDEN przedział czasu (start → OSTATNIE lądowanie), bo maszyna
-   * nie zatrzymała się między nimi — `durationMs` jest więc czasem całej serii i tak
+   * nie zatrzymała się między nimi - `durationMs` jest więc czasem całej serii i tak
    * ma być.
    */
   touchAndGo?: number;
@@ -178,6 +178,23 @@ export interface SessionState {
    * zasila plakietkę „RĘCZNIE" na kafelku (01/12) i w nagłówku rozliczenia (10).
    */
   manualEntry: boolean;
+  /**
+   * SESJA UNIEWAŻNIONA W CAŁOŚCI (`session_void`, uwaga z urządzenia 2026-08-30).
+   *
+   * Strumień zostaje - rejestr jest append-only - ale sesja przestaje się LICZYĆ:
+   * wypada z dnia pilota, z historii, z sum i z eksportu. Czytelnik, który pokazuje
+   * pilotowi jego pracę, ma ją pomijać; czytelnik, który pokazuje REJESTR
+   * (administrator, oś zdarzeń), ma ją widzieć razem z powodem.
+   *
+   * Reszta projekcji liczy się dalej normalnie i jest to świadome: unieważnienie
+   * odbiera sesji WAŻNOŚĆ, nie treść - inaczej administrator oglądałby pusty wpis
+   * i nie miałby jak ocenić, czy wycofanie było słuszne.
+   */
+  voided: boolean;
+  /** Kiedy unieważniono; `null` = sesja ważna. */
+  voidedAt: EpochMillis | null;
+  /** Po co unieważniono; `null` = nie podano albo sesja ważna. */
+  voidReason: string | null;
 
   operation: OperationType | null;
   departureIcao: string | null;
@@ -273,6 +290,9 @@ export function emptySessionState(): SessionState {
     dualId: null,
     sessionPicId: null,
     manualEntry: false,
+    voided: false,
+    voidedAt: null,
+    voidReason: null,
     operation: null,
     departureIcao: null,
     arrivalIcao: null,
@@ -433,7 +453,7 @@ export function projectSession(events: Event[]): SessionState {
       case 'landing': {
         /* KRĘGI ROSNĄ OBA LICZNIKI (uwaga z urządzenia, 2026-08-29). `touchAndGo: n`
            znaczy, że między startem tego lotu a tym lądowaniem maszyna przyziemiła
-           i wystartowała n razy — czyli lądowań jest n + 1 (te kręgi plus to lądowanie),
+           i wystartowała n razy - czyli lądowań jest n + 1 (te kręgi plus to lądowanie),
            a startów n WIĘCEJ niż policzył `takeoff` otwierający lot.
 
            Brak pola daje n = 0, więc ścieżka automatyczna liczy dokładnie jak przed
@@ -525,6 +545,15 @@ export function projectSession(events: Event[]): SessionState {
         if (p.offBlock != null && p.onBlock != null) {
           state.blockTimeMs += Math.max(0, p.onBlock - p.offBlock);
         }
+        break;
+      }
+
+      case 'session_void': {
+        // Unieważnienie jest FAKTEM o sesji, nie o pojedynczym zdarzeniu - stąd własny
+        // typ, a nie `event_correction` (przejęcia unieważnić się nie da z zasady).
+        state.voided = true;
+        state.voidedAt = t;
+        state.voidReason = event.payload.reason;
         break;
       }
 

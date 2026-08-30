@@ -53,15 +53,25 @@ export interface MyDayVm {
 
 const DASH = '- -';
 
-/** Buduje model widoku ekranu 01 z projekcji dnia pilota. */
-export function buildMyDay(day: PilotDay): MyDayVm {
+/**
+ * Buduje model widoku ekranu 01 z projekcji dnia pilota.
+ *
+ * @param regOf identyfikator maszyny → jej ZNAK; `null` = cache floty jej nie zna.
+ *   Wstrzykiwany, bo projekcja zna wyłącznie identyfikator, a znak mieszka w cache
+ *   referencyjnym - i to jest dokładnie ta granica, którą kafelek przekroczył
+ *   (zgłoszenie z urządzenia 2026-08-30: na karcie stał UUID). Domyślne "nie wiem"
+ *   zamiast identyfikatora: pilot nie ma co zrobić z UUID-em, a podstawiony
+ *   identyfikator UDAJE znak i przez wiele tur udawał go skutecznie, bo w świecie
+ *   testowym identyfikatorem BYŁ znak („sp-axa").
+ */
+export function buildMyDay(day: PilotDay, regOf: (id: string) => string | null = () => null): MyDayVm {
   return {
     sessions: day.sessions.map((session) => ({
       sessionUuid: session.sessionUuid,
       // Numer w dobie zastąpił kolumnę `.leg-num` starej tabeli: niesie kolejność,
       // której same godziny nie niosą, gdy pilot przegląda listę kątem oka.
       title: `SESJA ${session.index}`,
-      aircraft: session.aircraftId,
+      aircraft: regOf(session.aircraftId) ?? DASH,
       times: sessionTimes(session.startedAt, session.stoppedAt),
       stats: sessionStats(session.flightCount, session.blockMs, session.flightMs),
       manual: session.manualEntry,

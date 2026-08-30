@@ -304,6 +304,32 @@ export interface CorrectionFields {
 }
 
 /**
+ * `session_void` - CAŁA SESJA UNIEWAŻNIONA (uwaga z urządzenia, 2026-08-30: „daj
+ * możliwość usunięcia całego lotu").
+ *
+ * ══ DLACZEGO NOWE ZDARZENIE, A NIE `void` NA PRZEJĘCIU ══
+ * Bo domena tego drugiego ODMAWIA i słusznie: `session_claim` jest tożsamością sesji,
+ * a jego unieważnienie zostawiłoby strumień bez właściciela. Tak samo
+ * `preflight_confirm` i `day_close` - unieważnienie któregokolwiek rozbiłoby sesję
+ * w pół i zerwało łańcuch MH (§4.5). Skasowanie CAŁOŚCI jest więc innym faktem niż
+ * skasowanie kawałka i musi mieć własny zapis, a nie obejście istniejących reguł.
+ *
+ * ══ REJESTR ZOSTAJE APPEND-ONLY ══
+ * Nic nie znika z bazy. Sesja przestaje się LICZYĆ: wypada z dnia pilota, z historii,
+ * z sum i z eksportu - ale jej strumień zostaje, razem z powodem i z tym, kto go
+ * dopisał. Administrator ma widzieć, że wpis był i że został wycofany; zniknięcie bez
+ * śladu byłoby w rejestrze lotniczym wadą, nie funkcją.
+ */
+export interface SessionVoidPayload {
+  /**
+   * Po co unieważniono; `null` = nie podano. OPCJONALNY, jak każdy powód korekty
+   * (issue #43): wymagany byłby tarciem w polu, a bez niego administrator patrzący
+   * na wycofany wpis nie ma jak się dowiedzieć dlaczego.
+   */
+  reason: string | null;
+}
+
+/**
  * `event_correction` - poprawka istniejącego zdarzenia (tryb edycji sesji, `design/10e`–`10g`).
  *
  * Rejestr jest append-only, więc korekta NIE edytuje celu: dopisujemy osobne zdarzenie,
@@ -537,6 +563,7 @@ export interface EventPayloadMap {
   crew_change: CrewChangePayload;
   manual_log_entry: ManualLogEntryPayload;
   day_close: DayClosePayload;
+  session_void: SessionVoidPayload;
   event_correction: EventCorrectionPayload;
 }
 
@@ -559,6 +586,7 @@ export const EVENT_TYPES: readonly EventType[] = [
   'crew_change',
   'manual_log_entry',
   'day_close',
+  'session_void',
   'event_correction',
 ];
 

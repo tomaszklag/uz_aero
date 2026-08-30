@@ -40,6 +40,7 @@ import {
 import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
 import { useSkeleton } from '../hooks/useSkeleton';
+import { useAircraftRegistrations } from '../hooks/useAircraftRegistrations';
 import { buildHistory, type DayCardSpec, type EditableDaySpec } from './logic/historyDays';
 
 export function HistoryScreen({
@@ -89,7 +90,10 @@ export function HistoryScreen({
    */
   const pushing = lastSync?.kind === 'synced' || lastSync?.kind === 'idle';
 
-  const groups = days != null ? buildHistory(days, Date.now(), pushing) : null;
+  /* Znak maszyny mieszka w cache referencyjnym, projekcja zna sam identyfikator -
+     bez tego kafelek pokazywał UUID (zgłoszenie z urządzenia 2026-08-30). */
+  const regOf = useAircraftRegistrations();
+  const groups = days != null ? buildHistory(days, Date.now(), pushing, regOf) : null;
   // Pustej historii wolno wierzyć dopiero po pierwszym uzgodnieniu rejestru z serwerem
   // (§4.9, issue #32): telefon zaraz po czyszczeniu pamięci pokazałby „BRAK POPRZEDNICH
   // DNI" komuś, kto ma za sobą sezon - a to jest dokładnie ten komunikat, który wygląda

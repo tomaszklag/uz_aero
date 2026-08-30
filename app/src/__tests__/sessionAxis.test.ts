@@ -464,6 +464,81 @@ describe('znacznik poprawki', () => {
   });
 });
 
+/**
+ * WPIS RĘCZNY: OŚ MÓWI TYLKO O GODZINACH, KTÓRE PILOT PODAŁ (zgłoszenie z urządzenia,
+ * 2026-08-30: „mam «zdanie» przed «przejęciem» i «tankowaniem». Jak jest lot ręczny, to
+ * czas «zdanie», «przejęcie» i «tankowanie» nie są poprawne").
+ *
+ * Sesja wpisana po fakcie: bieg 12:00 → 13:50 podany przez pilota, ale `day_close`
+ * ostemplowane chwilą ZAPISU (11:43) - i tak ma zostać, bo od niego liczy się okno
+ * korekty (`manualFlight.test.ts`).
+ */
+describe('oś sesji wpisanej ręcznie', () => {
+  function manualEvents(): Event[] {
+    return [
+      event('session_claim', at(12, 0), {
+        mode: 'free',
+        previousPicId: null,
+        manualEntry: true,
+      }),
+      event('preflight_confirm', at(12, 0), {
+        operation: 'skoki',
+        reading: { fuelL: 630, mh: 1002.1 },
+      } as EventOf<'preflight_confirm'>['payload']),
+      event('refuel', at(11, 59), { beforeL: 630, addedL: 180, afterL: 810 }, 'refuel-1'),
+      event('engine_start', at(12, 0), {}, 'm-engine-on'),
+      event('takeoff', at(12, 8), { method: 'manual' }, 'm-to'),
+      event('landing', at(13, 46), { method: 'manual' }, 'm-ldg'),
+      event('engine_stop', at(13, 50), {}, 'm-engine-off'),
+      // Chwila ZAPISU formularza - wcześniejsza niż bieg, bo wpis powstał osobno.
+      event('day_close', at(11, 43), { finalReading: { fuelL: 605, mh: 1003.1 } }),
+    ];
+  }
+
+  it('ZDANIE zamyka oś, choć zapisano je wcześniej niż bieg silnika', () => {
+    const rows = axis(manualEvents()).rows;
+    expect(rows[rows.length - 1]!.kind).toBe('release');
+    // …i nie stoi przed przejęciem, co było treścią zgłoszenia.
+    expect(rows.findIndex((r) => r.kind === 'release')).toBeGreaterThan(
+      rows.findIndex((r) => r.kind === 'claim'),
+    );
+  });
+
+  it('PRZEJĘCIE otwiera oś - przed tankowaniem, które składa się minutę wcześniej', () => {
+    // Dolewka wpisu ręcznego siada minutę PRZED uruchomieniem, a przejęcie na nim -
+    // więc tankowanie wypadało przed chwilą, od której pilot dysponuje maszyną.
+    const rows = axis(manualEvents()).rows;
+    expect(rows[0]!.kind).toBe('claim');
+    expect(rows.findIndex((r) => r.kind === 'refuel')).toBeGreaterThan(0);
+  });
+  it('godziny WYPROWADZONE są puste - przejęcie, zdanie i tankowanie', () => {
+    // Pilot podał bieg silnika i godziny lotów; te trzy chwile są konwencją, nie
+    // pomiarem. Godzina przy nich udawałaby zapamiętaną wartość.
+    const rows = axis(manualEvents()).rows;
+    const timeOf = (kind: string) => rows.find((r) => r.kind === kind)!.time;
+
+    expect(timeOf('claim')).toBe('');
+    expect(timeOf('release')).toBe('');
+    expect(timeOf('refuel')).toBe('');
+  });
+
+  it('godziny ZADEKLAROWANE zostają - bieg silnika i loty', () => {
+    const rows = axis(manualEvents()).rows;
+    const timeOf = (kind: string) => rows.find((r) => r.kind === kind)!.time;
+
+    expect(timeOf('engineStart')).toBe('12:00');
+    expect(timeOf('takeoff')).toBe('12:08');
+    expect(timeOf('landing')).toBe('13:46');
+    expect(timeOf('engineStop')).toBe('13:50');
+  });
+
+  it('sesja z DETEKCJI pokazuje wszystkie godziny - tam każda jest zmierzona', () => {
+    const rows = axis().rows;
+    expect(rows.find((r) => r.kind === 'claim')!.time).not.toBe('');
+    expect(rows.find((r) => r.kind === 'release')!.time).not.toBe('');
+  });
+});
+
 /** Strażnik typu: projekcja musi mieć wszystko, czego oś potrzebuje. */
 export type _AxisNeeds = Pick<
   SessionState,

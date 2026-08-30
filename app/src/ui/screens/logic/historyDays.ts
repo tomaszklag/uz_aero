@@ -103,13 +103,19 @@ export function uploadSpec(pendingCount: number, pushing: boolean): UploadSpec |
     : { label: `Oczekuje na przesłanie · ${pendingCount}`, state: 'queued' };
 }
 
-function cardSpec(day: HistoryDay, pushing: boolean): DayCardSpec {
+function cardSpec(
+  day: HistoryDay,
+  pushing: boolean,
+  regOf: (id: string) => string | null,
+): DayCardSpec {
   const { state, pendingCount } = day;
   const leg = state.legs[0];
   return {
     sessionUuid: state.sessionUuid ?? '',
     title: state.claimedAt != null ? dateUtcLong(state.claimedAt) : '-',
-    aircraft: state.aircraftId ?? '-',
+    // Znak, nie identyfikator - patrz `buildMyDay`. Kafelek jest ten sam, więc
+    // i ta granica jest ta sama.
+    aircraft: (state.aircraftId != null ? regOf(state.aircraftId) : null) ?? '-',
     // Godziny biegu silnika: bez nich dwie sesje tej samej doby na tej samej maszynie
     // są nie do odróżnienia.
     times: sessionTimes(leg?.startedAt ?? null, leg?.stoppedAt ?? null),
@@ -130,9 +136,15 @@ function cardSpec(day: HistoryDay, pushing: boolean): DayCardSpec {
  * bez claimu (śmieciowe) - patrz docblock modułu.
  *
  * @param now      teraz (epoch ms) - wyznacza dobę dzisiejszą i stan okien korekty,
- * @param pushing  czy sync dosięga serwera (etykieta plakietki wysyłki).
+ * @param pushing  czy sync dosięga serwera (etykieta plakietki wysyłki),
+ * @param regOf    identyfikator maszyny → jej ZNAK (patrz `buildMyDay`).
  */
-export function buildHistory(days: HistoryDay[], now: number, pushing = false): HistoryGroups {
+export function buildHistory(
+  days: HistoryDay[],
+  now: number,
+  pushing = false,
+  regOf: (id: string) => string | null = () => null,
+): HistoryGroups {
   const groups: HistoryGroups = { editable: [], closed: [] };
   const today = utcDayStart(now);
 
@@ -147,12 +159,12 @@ export function buildHistory(days: HistoryDay[], now: number, pushing = false): 
     const window = correctionWindow(day.state, now);
     if (window.open && window.closesAt != null) {
       groups.editable.push({
-        ...cardSpec(day, pushing),
+        ...cardSpec(day, pushing, regOf),
         deadline: `Korekta do ${dateTimeUtcShort(window.closesAt)}`,
         remaining: remainingLabel(window.closesAt - now),
       });
     } else {
-      groups.closed.push(cardSpec(day, pushing));
+      groups.closed.push(cardSpec(day, pushing, regOf));
     }
   }
   return groups;

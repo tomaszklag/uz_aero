@@ -108,7 +108,18 @@ export function DayCard({
             </AppText>
           )}
         </View>
-        <AppText variant="mono" style={[styles.aircraft, { color: theme.colors.green }]}>
+        {/* ZNAK NIE MOŻE ZAGŁODZIĆ TYTUŁU (zgłoszenie z urządzenia, 2026-08-30).
+            Napis bez ograniczenia zawijał się na całą szerokość i spychał tytuł razem
+            z plakietką do jednej kolumny znaków - kafelek wyglądał jak usterka
+            rysowania. Wywołało to co innego (identyfikator zamiast znaku, patrz
+            `buildMyDay`), ale rama ma być odporna na DŁUGĄ wartość niezależnie od
+            tego, skąd się wzięła: jedna linia i skracanie. */}
+        <AppText
+          variant="mono"
+          numberOfLines={1}
+          ellipsizeMode="tail"
+          style={[styles.aircraft, { color: theme.colors.green }]}
+        >
           {aircraft}
         </AppText>
       </View>
@@ -195,7 +206,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     paddingVertical: 2,
   },
-  aircraft: { fontSize: 11, letterSpacing: 1.5 },
+  // `flexShrink` z `maxWidth`: znak ustępuje tytułowi, ale nie znika do zera.
+  aircraft: { fontSize: 11, letterSpacing: 1.5, flexShrink: 1, maxWidth: '55%' },
   /** `.day-times` - dosunięte do daty ujemnym marginesem, tak jak w mockupie. */
   times: { fontSize: 10, lineHeight: 13, letterSpacing: 0.5, marginTop: -5 },
   stats: { flexDirection: 'row', gap: 14, flexWrap: 'wrap' },

@@ -164,6 +164,16 @@
   .sheet-row-val { font-family:var(--font-mono); font-size:11px; color:var(--text-primary); display:inline-flex; align-items:center; gap:7px; }
   .sheet-row-val .dot { width:6px; height:6px; border-radius:50%; background:var(--green); }
   .sheet-note { font-size:11px; color:var(--text-secondary); line-height:1.55; }
+  /* Para akcji arkusza: 1 : 2, jak w każdym innym (`.modal-actions`). Ponowienie jest
+     akcją GŁÓWNĄ, bo to po nie pilot tu wszedł; „Zamknij" zostaje wyjściem. */
+  .sheet-actions { display:grid; grid-template-columns:1fr 2fr; gap:8px; }
+  .sheet-retry {
+    display:flex; align-items:center; justify-content:center;
+    padding:13px; border-radius:14px; border:none;
+    background:var(--green); color:#0D0D0D;
+    font-family:var(--font-display); font-size:16px; letter-spacing:2px;
+    text-decoration:none; cursor:pointer;
+  }
   .sheet-close {
     display:flex; align-items:center; justify-content:center; gap:8px;
     width:100%; min-height:46px; padding:13px; border-radius:12px;
@@ -321,8 +331,12 @@
 
         <div class="sheet-status">
           <span class="dot"></span>
+          <!-- „brak zasięgu niczego nie blokuje" USUNIĘTE (uwaga z urządzenia,
+               2026-08-30). Zdanie odpowiadało na obawę, której pilot nie zgłosił -
+               a przez to ją podsuwało. Ta sama kategoria przypisów, którą issue #43
+               wyrzuciło z arkuszy korekty. Zostaje sam fakt i to, co się z nim stanie. -->
           <span class="sheet-status-text"><b>Offline</b> - 2 zdarzenia czekają w kolejce.
-          Wyślą się same, gdy wróci sieć; brak zasięgu niczego nie blokuje.</span>
+          Wyślą się same, gdy wróci sieć.</span>
         </div>
 
         <div class="sheet-rows">
@@ -340,9 +354,22 @@
           </div>
         </div>
 
-        <span class="sheet-note">Pełną kolejkę i historię wysyłki znajdziesz w „Ustawienia → Status synchronizacji".</span>
+        <!-- DROGOWSKAZ DO USTAWIEŃ USUNIĘTY, A W JEGO MIEJSCE WESZŁA AKCJA
+             (uwaga z urządzenia, 2026-08-30). Stopka odsyłała po przycisk „Synchronizuj
+             teraz" do innego ekranu - a skoro pilot otworzył ten arkusz właśnie z tym
+             pytaniem, przycisk ma stać tutaj.
 
-        <a href="01-moj-dzien.html" class="sheet-close">ZAMKNIJ</a>
+             ODWRACA TO DECYZJĘ Z issue #23 („arkusz jest INFORMACYJNY, bez akcji -
+             outbox wysyła sam, a przycisk-atrapa uczyłby, że trzeba pomagać").
+             Uzasadnienie było połowiczne: outbox faktycznie wysyła sam, ale ponowienie
+             NIE JEST atrapą - robi dokładnie to, co „SYNCHRONIZUJ TERAZ" w ustawieniach
+             (dopycha kolejkę i pyta o dane referencyjne z pominięciem bramy wieku,
+             issue #55). Pilot pyta „czy teraz?", a odpowiedź „poczekaj albo idź do
+             ustawień" była gorsza niż jedno tapnięcie. -->
+        <div class="sheet-actions">
+          <a href="01c-moj-dzien-offline.html" class="sheet-close">ZAMKNIJ</a>
+          <a href="01c-moj-dzien-offline.html" class="sheet-retry">PONÓW PRÓBĘ</a>
+        </div>
       </div>
     </div>
 

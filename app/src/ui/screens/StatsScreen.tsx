@@ -55,6 +55,7 @@ import {
   CorrectedTag,
   FreshnessNote,
   Icon,
+  ReasonField,
   ResultRow,
   Screen,
   ScreenHeader,
@@ -63,6 +64,7 @@ import {
   SyncChip,
   Tag,
 } from '../components';
+import { Sheet } from '../components/sheets/Sheet';
 import { useTheme } from '../theme';
 import { useCurrentPilot, useSessionStore } from '../store';
 import { useAircraft } from '../hooks/useAircraft';
@@ -75,7 +77,8 @@ import {
   sessionInconsistencies,
 } from '../../domain';
 import type { SessionTrackView } from '../../application';
-import { dateUtcDayMonth } from '../format';
+import { missingTrackCopy } from './logic/missingTrack';
+import { dateUtcDayMonth, duration, timeUtc } from '../format';
 import { TrackThumbnail } from '../components/data/TrackThumbnail';
 import { dateTimeUtcShort, jumperBreakdown } from './logic/statsDay';
 import { buildSessionAxis } from './logic/sessionAxis';
@@ -203,6 +206,27 @@ export function StatsScreen({
    * przychodzi z zewnątrz i nie może obchodzić reguły.
    */
   const [editingRequested, setEditingRequested] = useState(route?.params?.edit === true);
+
+  /**
+   * USUNIĘCIE CAŁEGO WPISU (uwaga z urządzenia, 2026-08-30: „ta operacja powinna być
+   * poprzedzona jeszcze potwierdzeniem użytkownika, aby nie było przypadkowego
+   * usunięcia"). Arkusz 10L: co zniknie, co zostanie w rejestrze, opcjonalny powód.
+   */
+  const [voidOpen, setVoidOpen] = useState(false);
+  const [voidReason, setVoidReason] = useState('');
+  const [voiding, setVoiding] = useState(false);
+  const voidSession = useSessionStore((st) => st.voidSession);
+  const confirmVoid = useCallback(async (): Promise<void> => {
+    setVoiding(true);
+    try {
+      await voidSession(voidReason.trim() === '' ? null : voidReason.trim());
+      setVoidOpen(false);
+      // Wpisu już nie ma w dniu pilota, więc nie ma na co wracać na tym ekranie.
+      navigation.navigate('MyDay');
+    } finally {
+      setVoiding(false);
+    }
+  }, [navigation, voidReason, voidSession]);
   const editing = editingRequested && !readOnly;
 
   const aircraftLimits = useMemo(() => aircraftLimitsFrom(aircraftRef), [aircraftRef]);
@@ -396,7 +420,7 @@ export function StatsScreen({
            * do której dokłada wiersz. Jako ostatnia pozycja osi stoi tam, gdzie
            * dopisanie się skończy.
            */
-          <View style={{ paddingHorizontal: 14, paddingBottom: 14 }}>
+          <View style={{ paddingHorizontal: 14, paddingBottom: 14, gap: 14 }}>
             <ActionButton
               label="ZAKOŃCZ EDYCJĘ"
               tone="green"
@@ -404,6 +428,26 @@ export function StatsScreen({
               size="md"
               icon="check"
               onPress={() => setEditingRequested(false)}
+            />
+
+            {/* USUNIĘCIE CAŁEGO WPISU (uwaga z urządzenia, 2026-08-30) - na SAMYM DOLE,
+                za wszystkim. Intencją wchodzącego w edycję jest POPRAWKA; kasowanie
+                jest wyjściem awaryjnym i nie może stać na drodze wzroku.
+
+                Obramowanie, nie wypełnienie: czerwień ma mówić „uwaga", nie „zrób to".
+                Pełnowymiarowy przycisk (inaczej niż kosz w linii tytułu arkusza,
+                issue #43), bo i skutek jest inny - kosz kasuje jedno zdarzenie, ten
+                przycisk CAŁY wpis.
+
+                Nie ma go w trybie ODCZYTU: usuwanie jest czynnością edycji, a ekran
+                w odczycie nie ma ani jednego elementu zapisu (issue #40). */}
+            <ActionButton
+              label="USUŃ CAŁY WPIS"
+              tone="red"
+              variant="secondary"
+              size="md"
+              icon="trash"
+              onPress={() => setVoidOpen(true)}
             />
           </View>
         ) : (
@@ -469,13 +513,30 @@ export function StatsScreen({
               onPress={openTrack}
             />
           )}
-          {trackLoaded && (track == null || track.missing != null) && (
+          {/* WPIS RĘCZNY NIE MA SEKCJI ŚLADU W OGÓLE (zgłoszenie z urządzenia,
+              2026-08-30: „przy locie ręcznym nigdy nie będzie śladu GPS - jest więc sens
+              wyświetlać tę sekcję?").
+
+              Nie ma. Pozostałe trzy powody braku są ZDARZENIAMI, o których warto
+              powiedzieć: nagranie czeka w kolejce, serwer go nie ma, brakuje zasięgu -
+              każde z nich może się zmienić i pilot ma wiedzieć, na co czeka. Wpis
+              ręczny nie czeka na nic: śladu nie było, nie będzie i nie jest to brak,
+              tylko właściwość zapisu - mówi o niej plakietka „RĘCZNIE" w nagłówku.
+
+              Karta znika razem z drogą na ekran 14, i tak ma być: nie ma po co wchodzić
+              w ekran śladu sesji, która śladu mieć nie może. */}
+          {trackLoaded && !projection.manualEntry && (track == null || track.missing != null) && (
             <View style={[styles.noTrack, { borderBottomColor: theme.colors.border }]}>
+              {/* Powód braku śladu nazywa `missingTrackCopy` - ten sam moduł, co na
+                  ekranie 14 (zgłoszenie z urządzenia, 2026-08-30). Do tej pory ten
+                  ekran rozróżniał tylko wpis ręczny od reszty i tłumaczył brak trasy
+                  RETENCJĄ, której nie ma od issue #47. Baner z modułu tu nie wchodzi:
+                  mówi o modelu śladu, a to jest miniaturka, nie ekran o śladzie. */}
               <AppText variant="display" tone="secondary" style={styles.noTrackTitle}>
-                {noTrackTitle(track)}
+                {noTrack(track).title.toUpperCase()}
               </AppText>
               <AppText variant="mono" tone="muted" style={styles.noTrackText}>
-                {noTrackText(track)}
+                {noTrack(track).text}
               </AppText>
             </View>
           )}
@@ -751,6 +812,46 @@ export function StatsScreen({
       {/* Arkusze trybu edycji - korekta czasu, odczytu, zrzutu, dopisanie wpisu
           i historia zmian. Renderują się same, gdy `useSessionEdit` ma otwarty cel. */}
       {edit.sheets}
+
+      {/* POTWIERDZENIE USUNIĘCIA (mockup 10L). Wiersze odniesienia nazywają KONKRETNY
+          wpis - dwie sesje tej samej maszyny w jednej dobie różnią się wyłącznie
+          godzinami biegu, więc „ta sesja" nie wystarczy.
+
+          Baner mówi o SKUTKU, nie o budowie rejestru: „zapis zostaje i widzi go
+          administrator" jest odpowiedzią na pytanie, które pilot zada sobie sam przed
+          tapnięciem w czerwony przycisk. Milczenie byłoby tu obietnicą, której rejestr
+          append-only nie umie dotrzymać.
+
+          Powód OPCJONALNY, jak przy każdej korekcie (issue #43). */}
+      <Sheet
+        visible={voidOpen}
+        title="USUNĄĆ CAŁY WPIS?"
+        rows={[
+          { label: 'Samolot', value: aircraftRef?.reg ?? projection.aircraftId ?? '-' },
+          {
+            label: 'Bieg silnika',
+            value:
+              projection.legs[0]?.startedAt != null
+                ? `${timeUtc(projection.legs[0]!.startedAt)} → ${projection.legs[0]!.stoppedAt != null ? timeUtc(projection.legs[0]!.stoppedAt!) : '…'} UTC`
+                : 'bez uruchomienia',
+          },
+          {
+            label: 'Loty · blok · lot',
+            value: `${projection.flights.length} · ${duration(projection.blockTimeMs)} · ${duration(projection.flightTimeMs)}`,
+          },
+        ]}
+        warning="Wpis zniknie z Twojego dnia, z historii i z sum. Zapis zostaje w rejestrze i widzi go administrator - razem z powodem, jeśli go podasz."
+        warningTone="amber"
+        confirmLabel="USUŃ WPIS"
+        confirmTone="red"
+        confirmDisabled={voiding}
+        onConfirm={() => void confirmVoid()}
+        cancelLabel="ZOSTAW"
+        onCancel={() => setVoidOpen(false)}
+      >
+        <ReasonField value={voidReason} onChangeText={setVoidReason} />
+      </Sheet>
+
     </Screen>
   );
 }
@@ -852,22 +953,12 @@ function CrewRow({
   );
 }
 
-/** Nagłówek kafelka „bez śladu" - dwa różne powody znaczą dla pilota co innego. */
-function noTrackTitle(track: SessionTrackView | null): string {
-  return track?.missing === 'manual' ? 'BEZ ZAPISU GPS' : 'ŚLAD NIEDOSTĘPNY';
-}
-
-function noTrackText(track: SessionTrackView | null): string {
-  if (track?.missing === 'manual') {
-    return (
-      'Ta sesja została wpisana ręcznie, więc nie ma z czego narysować trasy. ' +
-      'Czasy poniżej są pełnoprawne - pochodzą z Twojego wpisu, nie z odbiornika.'
-    );
-  }
-  return (
-    'Nie ma zapisu GPS dla tej sesji. Ślad to materiał roboczy z retencją 14 dni - ' +
-    'starsze sesje mają komplet czasów i liczb, ale trasy już nie.'
-  );
+/**
+ * Treść kafelka „bez śladu". Brak widoku (`null`) traktujemy jak `no-record`: serwer
+ * nie oddał nagrania i tyle wiemy - to jedyny powód, który nie wymaga niczego więcej.
+ */
+function noTrack(track: SessionTrackView | null) {
+  return missingTrackCopy(track?.missing ?? 'no-record', track?.pendingFixes ?? 0);
 }
 
 /**

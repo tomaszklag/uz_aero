@@ -39,7 +39,7 @@ export interface AdminSessionListItem {
   dualCode: string | null;
   dualName: string | null;
 
-  status: 'active' | 'closed';
+  status: 'active' | 'closed' | 'voided';
   operation: OperationType | null;
   client: string | null;
 

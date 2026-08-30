@@ -277,7 +277,8 @@ export interface SessionRow {
   aircraftId: string;
   picId: string;
   dualId: string | null;
-  status: 'active' | 'closed';
+  /** 'voided' = sesja unieważniona w całości (2026-08-30) - patrz `sessionRow`. */
+  status: 'active' | 'closed' | 'voided';
   /**
    * `SessionState.claimedAt` - czas PRZEJĘCIA samolotu, czyli zdarzenia `session_claim`
    * (decyzja 2026-08-07; wcześniej kolumna niosła meldunek - uzasadnienie w `mappers/sessionRow.ts`).

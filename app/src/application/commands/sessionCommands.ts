@@ -357,6 +357,28 @@ export class SessionCommands {
     return result;
   }
 
+  /**
+   * UNIEWAŻNIA CAŁĄ SESJĘ (uwaga z urządzenia, 2026-08-30: „daj możliwość usunięcia
+   * całego lotu").
+   *
+   * Rejestr zostaje append-only - nic nie znika z bazy. Sesja przestaje się LICZYĆ:
+   * wypada z dnia pilota, z sum, z historii i z eksportu, a jej strumień zostaje razem
+   * z powodem. Pełne uzasadnienie (dlaczego osobne zdarzenie, a nie `void` na
+   * przejęciu) stoi przy `SessionVoidPayload` w domenie.
+   *
+   * Uprawnienie jest TO SAMO, co przy każdej innej korekcie: pilot ma 24 h od zdania
+   * samolotu, administrator nie jest blokowany nigdy (`CORRECTION_EVENT_TYPES`).
+   * Reguły odrzucą też unieważnienie sesji nieistniejącej i drugie z rzędu.
+   *
+   * Czyścimy klucz bieżącej sesji, jak przy zdaniu: pilot, który wycofał wpis, nie ma
+   * już czego prowadzić, a usługa GPS nie ma do czego przypisywać fixów.
+   */
+  async voidSession(ctx: SessionContext, reason: string | null): Promise<CommandResult> {
+    const result = await this.execute(ctx, 'session_void', () => ({ payload: { reason } }));
+    await this.repo.deleteMeta(SESSION_META_KEYS.activeSessionUuid);
+    return result;
+  }
+
   // ── ręczny wpis CAŁEGO lotu (ekran 15, model 2026-08-10) ────────────────────
 
   /**

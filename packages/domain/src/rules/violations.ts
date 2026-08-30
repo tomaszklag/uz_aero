@@ -97,6 +97,10 @@ export type ViolationCode =
   // ── korekta zdarzenia (tryb edycji sesji, 10e–10g) ─────────────────────────
   | 'CORRECTION_TARGET_NOT_FOUND'
   | 'CORRECTION_TARGET_NOT_ALLOWED'
+  /** Unieważnienie sesji, której nie ma (brak przejęcia). */
+  | 'SESSION_VOID_NO_SESSION'
+  /** Sesja już unieważniona - stan jest binarny. */
+  | 'SESSION_ALREADY_VOIDED'
   | 'CORRECTION_TIME_IN_FUTURE'
   /** `amend` wskazał pole, którego ten typ zdarzenia nie ma (issue #43 - biała lista). */
   | 'CORRECTION_FIELD_NOT_ALLOWED'

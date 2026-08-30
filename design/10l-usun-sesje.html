@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero - 10D Sesja · tryb edycji</title>
+<title>UZ Aero - 10L Usunięcie całego wpisu (potwierdzenie)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -235,6 +235,31 @@
   /* Strefa destrukcyjna: obramowanie, nie wypełnienie - czerwień ma mówić „uwaga",
      a nie „zrób to". Odstęp nad nią oddziela ją od pasa akcji, żeby palec wracający
      z „ZAKOŃCZ EDYCJĘ" nie trafiał w nią odruchem. */
+  /* ═══ ARKUSZ POTWIERDZENIA (10L) ═══ rama jak w każdym innym arkuszu. */
+  .modal-overlay { position:absolute; inset:0; z-index:50; background:rgba(0,0,0,0.72); display:flex; flex-direction:column; justify-content:flex-end; }
+  .modal-sheet { background:var(--surface-raised); border-radius:24px 24px 0 0; padding:20px 18px 34px; display:flex; flex-direction:column; gap:14px; border-top:1px solid var(--red-border); max-height:calc(100% - 56px); overflow-y:auto; }
+  .modal-handle { width:36px; height:4px; border-radius:2px; background:var(--border-strong); align-self:center; }
+  .modal-title { font-family:var(--font-display); font-size:23px; letter-spacing:2px; color:var(--text-primary); }
+  .modal-ref { display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+  .modal-ref span:first-child { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); }
+  .modal-ref-val { font-family:var(--font-mono); font-size:11px; color:var(--text-primary); }
+  .modal-actions { display:grid; grid-template-columns:1fr 2fr; gap:8px; }
+  .btn-cancel { display:flex; align-items:center; justify-content:center; padding:14px; border-radius:14px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text-secondary); font-family:var(--font-display); font-size:16px; letter-spacing:2px; text-decoration:none; }
+  .hold-box { display:flex; align-items:flex-start; gap:9px; background:var(--amber-muted); border:1px solid var(--amber-border); border-radius:12px; padding:11px 13px; }
+  .hold-box svg { flex-shrink:0; margin-top:1px; color:var(--amber); }
+  .hold-text { font-family:var(--font-body); font-size:11px; color:var(--text-secondary); line-height:1.55; }
+  .hold-text b { color:var(--amber); font-weight:600; }
+  .reason-input { width:100%; background:var(--surface); border:1px solid var(--border-strong); border-radius:12px; padding:12px 13px; color:var(--text-primary); font-family:var(--font-body); font-size:12px; }
+  .reason-input::placeholder { color:var(--text-placeholder); }
+  /* Potwierdzenie jest CZERWONE I PEŁNE - inaczej niż bursztynowa rezygnacja z 02H:
+     tam pilot porzuca formularz, tu wycofuje zapisany wpis. Kolor mówi o skutku. */
+  .btn-void-confirm {
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    padding:14px; border-radius:14px; border:none;
+    background:var(--red); color:#0D0D0D;
+    font-family:var(--font-display); font-size:16px; letter-spacing:2px;
+    text-decoration:none; cursor:pointer;
+  }
   .danger-zone { margin-top:18px; padding-top:14px; border-top:1px solid var(--border); }
   .btn-void {
     display:flex; align-items:center; justify-content:center; gap:9px;
@@ -280,8 +305,8 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO - 10D</span>
-  <span class="slug">sesja · tryb edycji</span>
+  <span class="film-strip">UZ AERO - 10L</span>
+  <span class="slug">sesja · usunięcie całego wpisu</span>
   <span class="canvas-meta"><span class="pulse"></span>Wariant 10</span>
 </header>
 
@@ -703,6 +728,60 @@
       </div>
 
     </div>
+
+    <div class="modal-overlay">
+      <div class="modal-sheet">
+        <div class="modal-handle"></div>
+        <div class="modal-title">USUNĄĆ CAŁY WPIS?</div>
+
+        <!-- CO ZNIKNIE - konkretnie, nie „ta sesja". Pilot ma rozpoznać wpis, który
+             kasuje: dwie sesje tej samej maszyny w jednej dobie różnią się wyłącznie
+             godzinami biegu. Te same trzy wielkości, co na kafelku (Loty · Blok · Lot),
+             bo to po nich pilot poznaje sesję na liście. -->
+        <div class="modal-ref">
+          <span>Samolot</span>
+          <span class="modal-ref-val">SP-AXA · 30 SIE</span>
+        </div>
+        <div class="modal-ref">
+          <span>Bieg silnika</span>
+          <span class="modal-ref-val">12:00 → 13:50 UTC</span>
+        </div>
+        <div class="modal-ref">
+          <span>Loty · blok · lot</span>
+          <span class="modal-ref-val">1 · 1:50 · 1:38</span>
+        </div>
+
+        <!-- BANER MÓWI O SKUTKU, nie o budowie rejestru (reguła z issue #43).
+             „Zapis zostaje w rejestrze i widzi go administrator" NIE jest przypisem
+             o wewnętrznej mechanice - jest odpowiedzią na pytanie, które pilot zada
+             sobie sam przed tapnięciem w czerwony przycisk: czy to znika naprawdę,
+             i czy ktoś zobaczy, że coś tu było. Milczenie w tym miejscu byłoby
+             obietnicą, której rejestr append-only nie umie dotrzymać. -->
+        <div class="hold-box">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 20h20L12 2Z"/><line x1="12" y1="9" x2="12" y2="14"/><line x1="12" y1="17" x2="12" y2="17"/></svg>
+          <span class="hold-text">Wpis zniknie z Twojego dnia, z historii i z sum. <b>Zapis zostaje
+          w rejestrze</b> i widzi go administrator - razem z powodem, jeśli go podasz.</span>
+        </div>
+
+        <!-- POWÓD OPCJONALNY, jak przy każdej korekcie (issue #43): wymagany byłby
+             tarciem w polu, a bez niego administrator patrzący na wycofany wpis nie
+             ma jak się dowiedzieć dlaczego. -->
+        <input class="reason-input" type="text" placeholder="Powód (opcjonalnie) - np. wpisałem ten lot dwa razy" />
+
+        <div class="modal-actions">
+          <a href="10d-edycja.html" class="btn-cancel">Zostaw</a>
+          <a href="01-moj-dzien.html" class="btn-void-confirm">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            Usuń wpis
+          </a>
+        </div>
+        <!-- PODPISU POD AKCJAMI TEŻ NIE MA (2026-08-29, ta sama uwaga co baner wyżej).
+             Stało tu „Tapnięcie w tło albo «wstecz» jeszcze raz zostawia Cię
+             w formularzu" - zdanie o ZACHOWANIU APLIKACJI, nie odpowiedź na pytanie
+             pilota. Bezpieczne wyjście jest w arkuszu domyślne i pilot i tak je odkryje
+             pierwszym tapnięciem obok; pisanie o nim zajmowało trzecią linię w arkuszu,
+             którego całą treścią jest jedno pytanie. „ZOSTAŃ" mówi to samo, przyciskiem. -->
+      </div>
   </div>
 </main>
 
@@ -795,8 +874,6 @@
   <a href="10k-korekta-notatki.html">10K Notatka</a>
   <span>·</span>
   <a href="14-slad.html">14 Ślad →</a>
-  <span>·</span>
-  <a href="10l-usun-sesje.html">10L Usuń wpis</a>
 </nav>
 
 </body>

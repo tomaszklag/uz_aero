@@ -1297,6 +1297,39 @@ i tak sprawdza ją `DROP_ON_GROUND` (`rules/consistency.ts`). Wiedział model, m
 - stopka sum zamyka oś, a wiersze dopisania idą POD nią - ta sama kolejność, co w trybie
   edycji rozliczenia (10D)
 
+## Usunięcie CAŁEGO wpisu = `session_void` (uwaga z urządzenia, 2026-08-30)
+„Daj możliwość usunięcia całego lotu. Ta operacja powinna być poprzedzona jeszcze
+potwierdzeniem użytkownika, aby nie było przypadkowego usunięcia."
+- **NOWE ZDARZENIE, nie `void` na przejęciu**: domena tego drugiego ODMAWIA i słusznie -
+  `session_claim` jest tożsamością sesji, a `preflight_confirm`/`day_close` trzymają
+  końce łańcucha MH. Skasowanie CAŁOŚCI jest innym faktem niż skasowanie kawałka i ma
+  własny zapis, zamiast obchodzić istniejące reguły
+- **rejestr zostaje APPEND-ONLY**: nic nie znika z bazy. Sesja przestaje się LICZYĆ -
+  wypada z dnia pilota, z sum, z historii i z eksportu - ale jej strumień zostaje razem
+  z powodem. Administrator ma widzieć, że wpis był i został wycofany; zniknięcie bez
+  śladu byłoby w rejestrze lotniczym wadą, nie funkcją
+- **filtr stoi W `projectPilotDay`**, w jednym miejscu: gdyby pomijał go ekran, wycofana
+  sesja znikałaby z listy, ale nadal dokładała się do „Blok" i „Loty"
+- **na serwerze to TRZECI STATUS sesji** (`voided`; kolumna jest zwykłym TEXT-em bez
+  CHECK-a, więc wchodzi bez migracji). Oba krytyczne wykluczenia są napisane jako
+  „musi być `closed`", więc działają same: eksport do arkusza (`dayExporter`) i ŁAŃCUCH
+  MH (`aircraftStateView`) pomijają taki wiersz. Lista eksportów mówi `impossible`,
+  nie `waiting` - sesja wycofana nie czeka na nic
+- **uprawnienie TO SAMO, co przy korekcie**: typ jest w `CORRECTION_EVENT_TYPES`, więc
+  pilot ma 24 h od zdania, a administrator nie jest blokowany nigdy. Reguły odrzucają
+  unieważnienie sesji nieotwartej (`SESSION_VOID_NO_SESSION`) i drugie z rzędu
+  (`SESSION_ALREADY_VOIDED`)
+- **wejście jest JEDNO i tylko w trybie EDYCJI** (`10D` → arkusz `10L`), na samym dole,
+  za wszystkim: intencją wchodzącego w edycję jest poprawka, a kasowanie jest wyjściem
+  awaryjnym. Przycisk OBRAMOWANY, nie wypełniony - czerwień mówi „uwaga", nie „zrób to";
+  pełnowymiarowy, inaczej niż kosz w linii tytułu arkusza (issue #43), bo kosz kasuje
+  jedno zdarzenie, a ten przycisk CAŁY wpis
+- **arkusz nazywa KONKRETNY wpis** (maszyna, bieg silnika, Loty·Blok·Lot): dwie sesje
+  tej samej maszyny w dobie różnią się wyłącznie godzinami. Baner mówi o SKUTKU
+  („zapis zostaje w rejestrze i widzi go administrator") - to NIE jest przypis o budowie
+  rejestru, tylko odpowiedź na pytanie, które pilot zada sobie przed tapnięciem
+  w czerwony przycisk. Powód OPCJONALNY, jak przy każdej korekcie
+
 ## Log zdarzeń jest JEDEN - kokpit rysuje oś sesji (issue #44, 2026-08-14)
 Aplikacja miała dwa style logu tej samej sesji: oś na ekranie sesji (10) i osobny
 `EventLog` w kokpicie (04, 05, 04B). Ta sama sesja czytała się przez to dwa razy inaczej,
@@ -1463,7 +1496,7 @@ Pełna architektura: `docs/_main.md.txt` (sekcje 4–6). Zasady twarde:
   1. **dane sesji** (timery, log samolotu na `04`, lista sesji doby na `01`, liczniki, statystyki) - lokalne, zawsze świeże, zero wariantów offline
   2. **dane z serwera** (przekazanie FOB/MH, status claim, lista pilotów) - 3 stany świeżości: `live` (bez adnotacji) / `cache` ("· z cache · sync 21 JUN 17:30", amber) / `brak` ("brak danych - wpisz z licznika")
   3. **akcje wymagające sieci** (pierwsze logowanie, zmiana konta, ręczny sync) - offline: disabled z podanym powodem, nigdy cichy błąd
-- Jeden globalny wskaźnik łączności: SyncChip - nie rozsiewamy komunikatów o braku sieci po ekranach. **Online nie rysuje NIC** (decyzja 2026-08-06, issue #12: „zsynchronizowano" to stan domyślny, a plakietka świecąca przez 99% czasu uczy oko ignorować róg ekranu). Offline: **SAM pill** `OFFLINE · n`; tapnięcie otwiera arkusz szczegółów synchronizacji (kolejka, ostatni udany sync, wiek danych referencyjnych - issue #23 pkt 5, wzorzec `01c`). Stemple syncu nie wiszą na ekranie na stałe
+- Jeden globalny wskaźnik łączności: SyncChip - nie rozsiewamy komunikatów o braku sieci po ekranach. **Online nie rysuje NIC** (decyzja 2026-08-06, issue #12: „zsynchronizowano" to stan domyślny, a plakietka świecąca przez 99% czasu uczy oko ignorować róg ekranu). Offline: **SAM pill** `OFFLINE · n`; tapnięcie otwiera arkusz szczegółów synchronizacji (kolejka, ostatni udany sync, wiek danych referencyjnych - issue #23 pkt 5, wzorzec `01c`). Stemple syncu nie wiszą na ekranie na stałe. **Arkusz MA akcję „PONÓW PRÓBĘ"** (uwaga z urządzenia, 2026-08-30) - odwraca to zdanie z issue #23 („arkusz jest INFORMACYJNY, bez akcji: przycisk-atrapa uczyłby, że trzeba pomagać"), bo ponowienie NIE JEST atrapą: robi to samo, co „SYNCHRONIZUJ TERAZ" w ustawieniach (dopycha kolejkę i pyta o dane referencyjne z pominięciem bramy wieku, issue #55). Znikły za to stopka odsyłająca po ten przycisk do ustawień oraz zdanie „brak zasięgu niczego nie blokuje" - drugie odpowiadało na obawę, której pilot nie zgłosił, a przez to ją podsuwało
 - Blokada PIC = optymistyczny claim - przejęcie samolotu działa też offline (ostrzeżenie z danych cache)
 - Wygasły token ≠ wylogowanie; wylogowanie zablokowane przy niepustym outboxie
 - Liczniki fizyczne (MH, paliwomierz) > dane z serwera - serwer tylko podpowiada
