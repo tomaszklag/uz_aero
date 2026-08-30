@@ -137,6 +137,31 @@ export interface SessionAxis {
   foot: AxisFootItem[];
 }
 
+/**
+ * Godzina wiersza, którą pilot NAPRAWDĘ podał (zgłoszenie z urządzenia, 2026-08-30:
+ * „jak jest lot ręczny, to czas «zdanie», «przejęcie» i «tankowanie» nie są poprawne -
+ * może nie ma sensu wyświetlać godzin dla tych zdarzeń?").
+ *
+ * We wpisie ręcznym pilot deklaruje BIEG SILNIKA i godziny lotów. Przejęcie i zdanie
+ * siadają na końcach biegu (patrz komenda `manualFlight`), a minuta tankowania jest
+ * czystą konwencją - zdarzenie składa się minutę przed uruchomieniem, bo w obu
+ * dozwolonych oknach silnik stoi i minuta nie waży NIGDZIE (issue #62, siódma tura).
+ *
+ * Pokazane obok siebie te trzy godziny udawały pomiar: „11:59" przy tankowaniu wygląda
+ * jak zapamiętana chwila, a przejęcie i zdanie powtarzały liczbę stojącą dwa wiersze
+ * dalej. Rejestr ma mówić prawdę o swojej dokładności, więc w sesji wpisanej ręcznie
+ * te wiersze nie mają godziny - a sesja z detekcji GPS pokazuje wszystkie, bo tam
+ * KAŻDA jest zmierzona.
+ */
+function declaredTime(at: number, manualEntry: boolean, derived: boolean): string {
+  return manualEntry && derived ? '' : timeUtc(at);
+}
+
+/** Najpóźniejsza chwila zbudowanych już wierszy; 0 dla osi pustej. */
+function lastEventAt(rows: readonly { at: number }[]): number {
+  return rows.reduce((max, row) => (row.at > max ? row.at : max), 0);
+}
+
 /** Czas zdarzenia: GPS ma pierwszeństwo przed zegarem telefonu (§5.1, dwa zegary). */
 const at = (e: Event): number => e.gpsTime ?? e.deviceTime;
 
@@ -214,7 +239,7 @@ export function buildSessionAxis(
       id: 'claim',
       kind: 'claim',
       at: projection.claimedAt,
-      time: timeUtc(projection.claimedAt),
+      time: declaredTime(projection.claimedAt, projection.manualEntry, true),
       name: 'Przejęcie',
       sub: claimReadingLine(projection, mhFormat),
       flight: null,
@@ -285,7 +310,7 @@ export function buildSessionAxis(
         id: refuel.uuid,
         kind: 'refuel',
         at: at(refuel),
-        time: timeUtc(at(refuel)),
+        time: declaredTime(at(refuel), projection.manualEntry, true),
         name: 'Tankowanie',
         // Dolewka i stan PO niej: pierwsza liczba mówi, ile poszło z dystrybutora,
         // druga - z czym samolot został. Stanu przed nie ma, bo to poprzedni odczyt,
@@ -399,8 +424,21 @@ export function buildSessionAxis(
     rows.push({
       id: 'release',
       kind: 'release',
-      at: projection.closedAt,
-      time: timeUtc(projection.closedAt),
+      /* ZDANIE ZAMYKA OŚ, NAWET GDY ZAPISANO JE PÓŹNIEJ (zgłoszenie z urządzenia,
+         2026-08-30: „mam «zdanie» przed «przejęciem»").
+
+         `closedAt` to czas ZDARZENIA `day_close`, a wpis ręczny nie stempluje go
+         godziną z formularza - i słusznie: od niego liczy się okno korekty, więc wpis
+         sprzed dwóch dni rodziłby się z oknem już wygasłym (decyzja z przebudowy 15,
+         przybita testem w `manualFlight.test.ts`). Zdanie niesie więc chwilę ZAPISU,
+         która z przebiegiem sesji nie ma nic wspólnego i potrafi wypaść przed nim.
+
+         Oś sortuje po `at`, więc bierze tu PÓŹNIEJSZĄ z dwóch chwil. Dla sesji na żywo
+         nic to nie zmienia (zdanie i tak następuje po wyłączeniu), a wpisowi ręcznemu
+         przywraca kolejność przyczynową. To jest klucz SORTOWANIA, nie twierdzenie
+         o godzinie - godziny ten wiersz w sesji ręcznej i tak nie pokazuje. */
+      at: Math.max(projection.closedAt, lastEventAt(rows)),
+      time: declaredTime(projection.closedAt, projection.manualEntry, true),
       name: 'Zdanie',
       sub: readingLine(projection.fuel.endL, projection.mh.end, mhFormat),
       flight: null,
