@@ -772,10 +772,17 @@ kroków (jak 02 → 02E → 02A): data+samolot+Dual → zadanie → czasy → li
   - **detekcja GPS tego pola NIE USTAWIA** i ścieżka automatyczna liczy się dokładnie
     jak przed zmianą - każdy krąg produkuje tam własną, PRAWDZIWĄ parę zdarzeń.
     Pilnuje tego osobny test w `projections.test.ts`
-  - **licznik jest w arkuszu CAŁEGO lotu** (`FlightTimesSheet.circuits`), nigdy przy
-    biegu silnika (kręgi są własnością lotu) ani przy edycji jednego końca pary (arkusz
-    ma tyle kontrolek, ile pytań). Podpis pod polem mówi, ile z tego wychodzi LĄDOWAŃ -
-    zamiana „4" na „5" w głowie jest rachunkiem, którego formularz ma oszczędzić.
+  - **licznik jest w arkuszu CAŁEGO lotu I w arkuszu LĄDOWANIA**
+    (`FlightTimesSheet.circuits`, bramka `showsCircuits` - jedna na widoczność I na
+    zapis, bo rozjazd między nimi jest cichy: pokazany licznik bez zapisu gubi wpis,
+    a zapis bez pokazania zeruje liczbę, której nikt nie widział). Nigdy przy biegu
+    silnika (kręgi są własnością lotu) ani przy edycji STARTU: start otwierający lot
+    jest jeden i o kręgach nie wie. Lądowanie licznik dostało uwagą z urządzenia
+    (2026-08-29: „jak edytuję lot, to nie mogę edytować ilości touch and go") - kręgi
+    są jego własnością, oś wypisuje je przy nim, a pole, które da się WPISAĆ, ale nie
+    da się POPRAWIĆ, to ten sam błąd, który issue #43 nazwało regułą „wejście nie może
+    znikać razem z rzeczą, której dotyczy". Podpis pod polem mówi, ile z tego wychodzi
+    LĄDOWAŃ - zamiana „4" na „5" w głowie jest rachunkiem, którego formularz ma oszczędzić.
     Odmiana idzie przez `landingsCount` w `@uzaero/format`, wspólną z osią
 - **wpis bez ani jednego lotu OSTRZEGA, nie blokuje** (uwaga z urządzenia, 2026-08-29 -
   odwraca decyzję z przebudowy 15). Blokada „Dodaj przynajmniej jeden lot" stała na

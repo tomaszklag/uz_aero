@@ -1054,20 +1054,29 @@ export function ManualFlightScreen({
               }
             : undefined
         }
-        /* Licznik kręgów TYLKO przy CAŁYM locie: tapnięcie w pojedynczą pozycję osi
-           pyta o godzinę tej pozycji i nic więcej (issue #62, trzecia tura). */
-        {...(flightSheetField(sheet) === undefined
+        /* Licznik kręgów przy CAŁYM locie i przy LĄDOWANIU (uwaga z urządzenia,
+           2026-08-29: „jak edytuję lot, to nie mogę edytować ilości touch and go").
+
+           Kręgi są własnością lądowania - to ono je zamyka, to ono niesie liczbę
+           w rejestrze i przy nim oś je wypisuje („Lądowanie · 5 lądowań"). Arkusz
+           lądowania ma więc dwie kontrolki i nie łamie to reguły „tyle kontrolek,
+           ile pytań": obie dotyczą TEGO SAMEGO wiersza osi, w który pilot tapnął.
+
+           Zostawiony wyłącznie w arkuszu pary licznik był polem, które da się WPISAĆ,
+           ale nie da się POPRAWIĆ - a to jest ten sam błąd, który issue #43 nazwało
+           regułą „wejście nie może znikać razem z rzeczą, której dotyczy".
+           Arkusz STARTU licznika nie ma: start otwierający lot o kręgach nie wie. */
+        {...(showsCircuits(sheet)
           ? { circuits: { value: circuits, onChange: setCircuits } }
           : {})}
         onConfirm={(v) => {
           if (sheet?.kind !== 'flight') return;
-          /* Kręgi zapisujemy WYŁĄCZNIE stąd, gdzie arkusz je pokazywał - przy edycji
-             jednego końca pary licznika nie było, więc nie ma go czym nadpisać.
+          /* Kręgi zapisujemy WYŁĄCZNIE stąd, gdzie arkusz je POKAZYWAŁ - inaczej
+             edycja samego startu wyzerowałaby liczbę, której pilot nawet nie widział.
              Zero czyścimy do `undefined`: „bez kręgów" ma być brakiem pola. */
-          const withCircuits =
-            flightSheetField(sheet) === undefined
-              ? { touchAndGo: circuits > 0 ? circuits : undefined }
-              : {};
+          const withCircuits = showsCircuits(sheet)
+            ? { touchAndGo: circuits > 0 ? circuits : undefined }
+            : {};
           if (sheet.id == null) {
             patch({
               flights: [
@@ -1363,6 +1372,22 @@ type FlightSheetState =
 function flightSheetField(sheet: FlightSheetState): 'takeoff' | 'landing' | undefined {
   if (sheet == null || sheet.kind !== 'flight') return undefined;
   return (sheet as { field?: 'takeoff' | 'landing' }).field;
+}
+
+/**
+ * Czy arkusz lotu pokazuje licznik kręgów (uwaga z urządzenia, 2026-08-29).
+ *
+ * Cała para („DODAJ LOT", wejście z karty biegu) i arkusz LĄDOWANIA - bo kręgi są
+ * własnością lądowania. Arkusz startu ich nie ma: start otwierający lot jest jeden
+ * i o kręgach nie wie.
+ *
+ * Jedna funkcja na widoczność I na zapis, bo rozjazd między nimi jest cichy:
+ * pokazany licznik bez zapisu gubi wpis pilota, a zapis bez pokazania zeruje liczbę,
+ * której nikt nie widział.
+ */
+function showsCircuits(sheet: FlightSheetState): boolean {
+  const field = flightSheetField(sheet);
+  return field === undefined || field === 'landing';
 }
 
 function flightSheetTitle(

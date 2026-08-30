@@ -236,7 +236,24 @@
              start po lądowaniu.
 
              PARA W CAŁOŚCI zostaje tylko tam, gdzie powstaje w całości: przy „DODAJ
-             LOT" i przy wejściu z karty „Bieg silnika". -->
+             LOT" i przy wejściu z karty „Bieg silnika".
+
+             ══ WYJĄTEK: LĄDOWANIE NIESIE TAKŻE LICZNIK KRĘGÓW ══
+             (uwaga z urządzenia, 2026-08-29: „jak edytuję lot, to nie mogę edytować
+             ilości touch and go").
+
+             Kręgi są własnością LĄDOWANIA - to ono je zamyka, to ono niesie liczbę
+             w rejestrze (`LandingPayload.touchAndGo`) i to przy nim oś je wypisuje
+             („Lądowanie · 5 lądowań"). Arkusz otwarty na lądowaniu ma więc DWIE
+             kontrolki: godzinę i licznik - i nie łamie to reguły „tyle kontrolek, ile
+             pytań", bo obie odpowiadają na pytania o TEN SAM wiersz osi, w który pilot
+             właśnie tapnął.
+
+             Gdyby licznik został wyłącznie w arkuszu całej pary, byłby polem, które
+             da się WPISAĆ, ale nie da się POPRAWIĆ - a to jest dokładnie ten błąd,
+             który issue #43 nazwało regułą „wejście nie może znikać razem z rzeczą,
+             której dotyczy". Arkusz STARTU licznika nie ma: start otwierający lot
+             jest jeden i o kręgach nie wie. -->
         <!-- TU KLAWIATURY NIE MA (uwaga z urządzenia, 2026-08-29):
 
                „jak mam «dodaj lot», gdzie mam już wpisane default wartości, to nie
