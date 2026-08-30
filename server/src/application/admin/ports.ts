@@ -1349,3 +1349,43 @@ export interface ConsumptionAdminPort {
    */
   openSessions(db: Queryable, aircraftId: string, range: StatsRange): Promise<number>;
 }
+
+/**
+ * Agregat poziomu 1 logu dnia - jedna maszyna floty w zakresie dat.
+ *
+ * Kształt jest niemal tożsamy z kontraktem HTTP, bo ta warstwa niczego tu nie
+ * przelicza: adapter sumuje kolumny projekcji, a mapper dokłada wyłącznie nazwy
+ * i formaty. Port istnieje mimo to, bo kontrakt nie ma prawa być typem ADAPTERA -
+ * ta sama granica, co przy statystykach.
+ */
+export interface LogAircraftAggregate {
+  aircraftId: string;
+  reg: string | null;
+  aircraftType: string | null;
+  mhFormat: string | null;
+  sessions: number;
+  openSessions: number;
+  activeDays: number;
+  flights: number;
+  takeoffs: number | null;
+  landings: number | null;
+  blockMs: number;
+  flightMs: number;
+  fuelAddedL: number | null;
+  fuelConsumedL: number | null;
+  fuelUnknownSessions: number;
+  oilAddedL: number | null;
+  mhDeltaH: number | null;
+  lastEngineStopAt: number | null;
+}
+
+export interface LogAdminPort {
+  /**
+   * Cała FLOTA w zakresie - także maszyny, które nie latały (wiersz samych kresek).
+   * Oś zakresu to `claim_time`, czyli ta sama, po której filtruje lista sesji pod
+   * spodem: dwa poziomy jednego modułu liczące po dwóch osiach potrafiłyby pokazać
+   * inną liczbę sesji, a narzędzie nadzoru, które samo ze sobą się nie zgadza,
+   * przestaje być narzędziem.
+   */
+  byAircraft(db: Queryable, range: { fromMs: number; toMs: number }): Promise<LogAircraftAggregate[]>;
+}

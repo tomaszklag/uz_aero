@@ -59,6 +59,46 @@ export interface AdminSessionListItem {
   fuelStartL: number | null;
   fuelEndL: number | null;
 
+  /**
+   * ══ LOG DNIA (panel 2.0, 2026-08-30) ══
+   * Pola, których grid modułu nie ma skąd wziąć inaczej. Wszystkie są PRZEPISANIEM
+   * kolumn projekcji - panel nie liczy z nich niczego poza tym, co widzi.
+   */
+
+  /**
+   * Bieg silnika. To NIE JEST `claimedAt`/`closeTime`: przejęcie i zdanie samolotu
+   * bywają odległe od pracy śmigła o godziny, a log dnia pyta o LOT.
+   */
+  engineStartAt: number | null;
+  engineStopAt: number | null;
+  /** Koperta lotów w biegu. `null` = sesja bez lotu (próba silnika, pogoda, usterka). */
+  firstTakeoffAt: number | null;
+  lastLandingAt: number | null;
+  /**
+   * Lotniska. `arrivalIcao: null` bywa NORMĄ, nie brakiem - przy operacji na jednym
+   * placu (skoki) drugiego lotniska nie ma z definicji, więc czytelnik potrzebuje
+   * OBU pól razem z `operation`, żeby wiedzieć, którą pustkę widzi.
+   */
+  departureIcao: string | null;
+  arrivalIcao: string | null;
+  /** Suma dolewek paliwa w sesji (litry). Trzecia liczba bilansu: przed → dolano → po. */
+  fuelAddedL: number | null;
+  /** Pomiar oleju z PRZEJĘCIA; po locie olej się nie mierzy (issue #60). */
+  oilLevelL: number | null;
+  /** Suma dolewek oleju: para z preflightu + zdarzenia `oil_add`. */
+  oilAddedL: number | null;
+  /**
+   * Liczniki ZDARZEŃ - inne niż `flightsCount`, bo uwzględniają kręgi: lot z czterema
+   * `touch and go` to JEDEN lot, ale pięć startów i pięć lądowań (issue #62).
+   * `null` = wiersz sprzed kolumn statystyk, do przebudowy projekcji.
+   */
+  takeoffCount: number | null;
+  landingCount: number | null;
+  /** Sesja wpisana ręcznie po fakcie - plakietka przy dacie, nie przy wartościach. */
+  manualEntry: boolean | null;
+  /** Stan oleju, z którym silnik ruszył (pomiar + dolewka) - liczy domena. */
+  oilAfterL: number | null;
+
   /** Typy OTWARTYCH flag dotyczących tej sesji - plakietka „2 flagi" w kolumnie „Stan". */
   openFlags: FlagType[];
   /** Ostatnia rewizja karty arkusza; `null` = nigdy nie eksportowano. */

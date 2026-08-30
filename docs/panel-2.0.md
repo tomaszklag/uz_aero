@@ -296,3 +296,95 @@ dotyczą serwera i aplikacji pilota, a nie panelu:
    wystawić flagę na parze dni zamkniętych przed zmianą. Panel 2.0 mówi o zmianie progu
    jedną linijką pod polem, ale nie ostrzega o skutku wstecznym - bo najpierw trzeba
    rozstrzygnąć, czy to zachowanie jest pożądane.
+
+---
+
+## 9. Moduł „Dziennik" (2026-08-30)
+
+Trzeci moduł panelu, zamówiony przez właściciela produktu: *„ekran, z poziomu którego
+będę mógł podejrzeć log dnia… raczej będę przeglądał taki log dla konkretnego samolotu,
+więc widok musi być dwupoziomowy"*.
+
+### 9.1 Trzy poziomy, trzy adresy
+
+| Poziom | Adres | Co pokazuje |
+|---|---|---|
+| 1 | `#/dziennik?od=&do=` | CAŁA flota w zakresie dat - także maszyny, które nie latały |
+| 2 | `#/dziennik/SP-KLM?od=&do=` | grid sesji jednej maszyny |
+| 3 | `#/dziennik/SP-KLM/<uuid>` | jedna sesja: oś zdarzeń i komplet odczytów |
+
+W adresie stoi **rejestracja, nie identyfikator** - `#/dziennik/SP-KLM` człowiek
+przeczyta i wpisze z pamięci, a o to w wymogu „do wklejenia" chodziło. Zakres dat jedzie
+w adresie ZAWSZE, także domyślny, żeby każdy adres z paska przeglądarki był kompletny.
+
+Dziennik jest PIERWSZĄ zakładką i przejmuje ekran startowy: konta i flotę zakłada się
+raz na sezon, dziennik ogląda się co tydzień.
+
+### 9.2 Siedemnaście danych, dziewięć kolumn
+
+Zamówienie wymieniało siedemnaście wartości; właściciel dopuścił ich łączenie
+(*„możesz te kolumny jakoś mądrze pokazać"*). Reguła układu brzmi: **wartości czytane
+jednym spojrzeniem stoją w jednej komórce, a kolumną jest PYTANIE, nie liczba.**
+
+Grid ma przez to dziewięć kolumn danych i mieści się w 1136 px bez przewijania:
+dzień · bieg silnika · lot · loty · pilot · zadanie · paliwo · motogodziny · olej.
+Para niesie godziny w jednej linii, a druga linia ją KWALIFIKUJE - przy biegu silnika
+mówi jak długo, przy locie dokąd, przy paliwie ile dolano.
+
+Rejestracji w wierszach poziomu 2 NIE MA: jesteśmy wewnątrz jednej maszyny, więc byłaby
+kolumną o stałej wartości. Stoi w tytule strony.
+
+### 9.3 Tylko odczyty, żadnych szacunków
+
+Decyzja właściciela: *„nie wyświetlaj szacunków na tym gridzie - tutaj interesują mnie
+tylko realne odczyty"*. Reguła obowiązuje CAŁY moduł:
+
+- w gridzie stoją wyłącznie wartości **zmierzone** albo **policzone z faktów** (liczba
+  lotów, czas trwania biegu, suma pomiaru i dolewki);
+- **brakujący odczyt jest widoczny jako brak** - kreska, nigdy zero i nigdy wartość
+  zastępcza. `0 L` znaczy pusty zbiornik, `—` znaczy „nikt nie zapisał";
+- przy parze bez jednej strony kreska zostaje PRZY strzałce, więc widać, którego
+  odczytu brakuje;
+- sesja otwarta mówi **„w toku"**, bo to nie jest brak odczytu, tylko fakt, że jeszcze
+  nie nastąpił;
+- norma zużycia i szacowany poziom oleju **nie wchodzą** - ani teraz, ani później.
+
+**Olej ma trzy wartości i ani jednej pary**: stan przed lotem · dolano · stan do lotu.
+Po locie oleju się nie mierzy (issue #60), więc strzałka „przed → po" byłaby obietnicą
+pomiaru, którego nie ma. Sumę „do lotu" liczy DOMENA (`oil.afterL`), nie panel - bo to
+nie jest zwykła suma: dolewka bez pomiaru poziomu nie zna, a naiwne `pomiar + dolewka`
+dałoby wtedy liczbę wziętą znikąd.
+
+### 9.4 Co musiało dojść po stronie serwera
+
+Sześć wartości zamówionego gridu **nie istniało nigdzie w projekcji** - nie dało się ich
+„doczytać" zapytaniem, bo lista sesji czyta wyłącznie kolumny tabeli (§7.1 architektury
+serwera). Migracja 3 dokłada osiem kolumn:
+
+`engine_start_at` · `engine_stop_at` · `first_takeoff_at` · `last_landing_at` ·
+`departure_icao` · `arrival_icao` · `fuel_added_l` · `manual_entry` · `oil_after_l`
+
+Wszystkie są PRZEPISANIEM wartości, które `projectSession` już liczyła - żadna nie zmienia
+modelu zdarzeń. **Istniejące wiersze zostaną puste do czasu przebudowy projekcji**
+(`POST /admin/api/maintenance/projections/rebuild`).
+
+Doszła też trasa `GET /admin/api/log` (poziom 1). Nie użyliśmy gotowego `/stats`, mimo
+że ma agregat per samolot, z dwóch powodów: filtruje po `close_time` (zdanie samolotu),
+a lista sesji po `claim_time` (przejęcie), i **liczy wyłącznie sesje zamknięte** - więc
+dzisiejszy dzień byłby pusty do wieczora. Dwa poziomy jednego modułu liczące po dwóch
+osiach potrafią pokazać cztery sesje na jednym ekranie i pięć wierszy na drugim, a
+narzędzie nadzoru, którego dwa ekrany się nie zgadzają, przestaje być narzędziem.
+
+### 9.5 Czego w pierwszej wersji nie ma
+
+- **śladu GPS na poziomie 3** - trasa serwera oddaje ślad PER LOT, a renderer mapy trzeba
+  odzyskać z panelu 1.0 (`93eac82^`) i podjąć decyzję o wyjątku w regule „z domeny tylko
+  typy" (rzut Web Mercator był jedynym takim wyjątkiem w 1.0). Poziom 3 bez tej karty
+  jest kompletny w pozostałych sekcjach;
+- **sum pod gridem** - poziom 1 podaje je dla tego samego zakresu;
+- **sortowania po każdej kolumnie** - serwer sortuje kursorem po czasie i tylko po nim;
+  sortowanie w przeglądarce ustawiłoby wyłącznie wczytaną stronę;
+- **eksportu do arkusza** - robi go serwer po swojemu (§4.7); drugi kanał to druga prawda
+  o tych samych danych;
+- **filtrów po pilocie i operacji** - trasa je umie, ale nie zamówiono ich, a każdy chip
+  to kolejny stan w adresie.

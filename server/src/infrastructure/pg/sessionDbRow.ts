@@ -47,6 +47,16 @@ export interface SessionDbRow {
   drop_alt_count: number | null;
   oil_level_l: number | null;
   oil_added_l: number | null;
+  // Log dnia (panel 2.0). Kolumny BIGINT wracają z `pg` NAPISEM, stąd konwersja niżej.
+  engine_start_at: string | number | null;
+  engine_stop_at: string | number | null;
+  first_takeoff_at: string | number | null;
+  last_landing_at: string | number | null;
+  departure_icao: string | null;
+  arrival_icao: string | null;
+  fuel_added_l: number | null;
+  manual_entry: boolean | null;
+  oil_after_l: number | null;
 }
 
 /**
@@ -87,6 +97,15 @@ export const sessionColumns = (alias: string): string =>
     'drop_alt_count',
     'oil_level_l',
     'oil_added_l',
+    'engine_start_at',
+    'engine_stop_at',
+    'first_takeoff_at',
+    'last_landing_at',
+    'departure_icao',
+    'arrival_icao',
+    'fuel_added_l',
+    'manual_entry',
+    'oil_after_l',
   ]
     .map((column) => `${alias}.${column}`)
     .join(', ');
@@ -100,6 +119,9 @@ export const sessionColumns = (alias: string): string =>
  * ograniczenie albo grzebał ręcznie - a wtedy cisza byłaby najgorszą z opcji (ten sam
  * argument, co przy `flags.type` w `flagsRepo.ts`).
  */
+/** Kolumna `BIGINT` wraca z `pg` NAPISEM - jedno miejsce konwersji dla kolumn logu dnia. */
+const ms = (v: string | number | null): number | null => (v == null ? null : Number(v));
+
 export function toSessionRow(r: SessionDbRow): SessionRow {
   if (r.operation != null && !isOperationType(r.operation)) {
     throw new Error(`Nieznany rodzaj operacji w bazie: ${r.operation} (sesja ${r.session_uuid})`);
@@ -141,5 +163,16 @@ export function toSessionRow(r: SessionDbRow): SessionRow {
     // bez pomiaru bywa niezerowa (dolewka w ciemno / `oil_add`).
     oilLevelL: r.oil_level_l,
     oilAddedL: r.oil_added_l,
+    // Log dnia: te same zasady, co wyżej - brak wartości zostaje brakiem (sesja bez
+    // lotu albo wiersz sprzed przebudowy projekcji), a kolumny czasu wracają napisem.
+    engineStartAt: ms(r.engine_start_at),
+    engineStopAt: ms(r.engine_stop_at),
+    firstTakeoffAt: ms(r.first_takeoff_at),
+    lastLandingAt: ms(r.last_landing_at),
+    departureIcao: r.departure_icao,
+    arrivalIcao: r.arrival_icao,
+    fuelAddedL: r.fuel_added_l,
+    manualEntry: r.manual_entry,
+    oilAfterL: r.oil_after_l,
   };
 }

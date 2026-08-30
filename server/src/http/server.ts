@@ -28,6 +28,7 @@ import type { AdminPilotQueries } from '../application/admin/queries/pilots.ts';
 import type { AdminFlightTrackQueries } from '../application/admin/queries/flightTrack.ts';
 import type { AdminSessionQueries } from '../application/admin/queries/sessions.ts';
 import type { AdminConsumptionQueries } from '../application/admin/queries/consumption.ts';
+import type { AdminLogQueries } from '../application/admin/queries/log.ts';
 import type { AdminStatsQueries } from '../application/admin/queries/stats.ts';
 import type { AuthCommands } from '../application/common/commands/auth.ts';
 import type { IngestCommands } from '../application/mobile/commands/ingest.ts';
@@ -56,6 +57,7 @@ import { registerAdminMeRoutes } from './routes/admin/me.ts';
 import { registerAdminPilotRoutes } from './routes/admin/pilots.ts';
 import { registerAdminSessionRoutes } from './routes/admin/sessions.ts';
 import { registerAdminConsumptionRoutes } from './routes/admin/consumption.ts';
+import { registerAdminLogRoutes } from './routes/admin/log.ts';
 import { registerAdminStatsRoutes } from './routes/admin/stats.ts';
 import { registerAdminTrackRoutes } from './routes/admin/tracks.ts';
 import { registerAuthRoutes } from './routes/common/auth.ts';
@@ -151,6 +153,7 @@ export interface ServerDeps {
    * `sessions` w zakresie dat, trzy ujęcia jednego zbioru dni w jednej odpowiedzi.
    */
   adminStatsQueries: AdminStatsQueries;
+  adminLogQueries: AdminLogQueries;
   /**
    * Analityka zużycia jednego samolotu (`A10a`/`A10b`) - jedyny przekrój panelu, który
    * czyta STRUMIEŃ zdarzeń wielu sesji naraz: granice interwałów paliwowych wyznaczają
@@ -233,6 +236,7 @@ export function buildServer(deps: ServerDeps, options: ServerOptions = {}): Fast
   registerAdminEventRoutes(app, deps.adminEventQueries, gate);
   registerAdminDashboardRoutes(app, deps.adminDashboardQueries, gate);
   registerAdminStatsRoutes(app, deps.adminStatsQueries, gate);
+  registerAdminLogRoutes(app, deps.adminLogQueries, gate);
   registerAdminConsumptionRoutes(app, deps.adminConsumptionQueries, gate);
   registerAdminMaintenanceRoutes(app, deps.adminMaintenanceQueries, deps.adminMaintenance, gate);
 

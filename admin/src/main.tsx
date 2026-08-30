@@ -29,6 +29,7 @@ import './styles/components/table.css';
 import './styles/components/drawer.css';
 import './styles/components/skeleton.css';
 import './styles/components/login.css';
+import './styles/components/logbook.css';
 
 import { SessionProvider } from './auth/SessionProvider';
 import { createQueryClient } from './queries/client';

@@ -42,6 +42,7 @@ import { AdminMeQueries } from '../src/application/admin/queries/me.ts';
 import { AdminPilotQueries } from '../src/application/admin/queries/pilots.ts';
 import { AdminSessionQueries } from '../src/application/admin/queries/sessions.ts';
 import { AdminConsumptionQueries } from '../src/application/admin/queries/consumption.ts';
+import { AdminLogQueries } from '../src/application/admin/queries/log.ts';
 import { AdminStatsQueries } from '../src/application/admin/queries/stats.ts';
 import { AuditedWrite } from '../src/application/admin/auditedWrite.ts';
 import { AuthCommands } from '../src/application/common/commands/auth.ts';
@@ -70,6 +71,7 @@ import { PgAdminPilotsRepo } from '../src/infrastructure/pg/admin/pilotsRepo.ts'
 import { PgAdminRefreshTokensRepo } from '../src/infrastructure/pg/admin/refreshTokensRepo.ts';
 import { PgAdminSessionsRepo } from '../src/infrastructure/pg/admin/sessionsRepo.ts';
 import { PgAdminConsumptionRepo } from '../src/infrastructure/pg/admin/consumptionRepo.ts';
+import { PgAdminLogRepo } from '../src/infrastructure/pg/admin/logRepo.ts';
 import { PgAdminStatsRepo } from '../src/infrastructure/pg/admin/statsRepo.ts';
 import { FsPhaseTimeline } from '../src/infrastructure/traces/fsPhaseTimeline.ts';
 import { PgConsumptionNormRepo } from '../src/infrastructure/pg/common/consumptionNormRepo.ts';
@@ -329,6 +331,7 @@ export async function testHarness(
     // Statystyki (A10) - jak w produkcyjnym composition root: czysty odczyt agregatów
     // kolumn projekcji, zegar rozstrzyga zakres domyślny.
     adminStatsQueries: new AdminStatsQueries(db, new PgAdminStatsRepo(), clock),
+    adminLogQueries: new AdminLogQueries(db, new PgAdminLogRepo(), clock),
     // Analityka zużycia (A10a/A10b) - dostaje TEN SAM `events`, co reszta harnessu,
     // więc dekorator liczący odczyty strumienia widzi też jej wywołania.
     adminConsumptionQueries: new AdminConsumptionQueries(

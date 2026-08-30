@@ -7,6 +7,7 @@
  */
 
 import type { FleetListQuery } from '../api/fleet';
+import type { LogRangeQuery, SessionListQuery } from '../api/log';
 import type { PilotListQuery } from '../api/pilots';
 
 export const keys = {
@@ -46,5 +47,18 @@ export const keys = {
      * już policzonej odpowiedzi zamiast pytać serwer drugi raz o to samo.
      */
     tolerance: (capacityL: number) => ['fleet', 'tolerance', capacityL] as const,
+  },
+
+  /**
+   * Dziennik. Trzy poziomy pod jednym prefiksem, bo starzeją się od tej samej rzeczy:
+   * od nowej paczki zdarzeń. Zakres dat JEST częścią tożsamości pytania - „sierpień"
+   * i „ostatnie 30 dni" to dwa różne raporty i oba mają prawo żyć w cache obok siebie,
+   * żeby przełączanie szybkich filtrów wracało do policzonej odpowiedzi.
+   */
+  log: {
+    all: ['log'] as const,
+    fleet: (query: LogRangeQuery) => ['log', 'fleet', query] as const,
+    sessions: (query: SessionListQuery) => ['log', 'sessions', query] as const,
+    session: (uuid: string) => ['log', 'session', uuid] as const,
   },
 };

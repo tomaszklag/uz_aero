@@ -22,6 +22,9 @@ export interface Tab {
 }
 
 export const TABS: readonly Tab[] = [
+  // Dziennik jest PIERWSZY, bo ekran startowy ma być tym, po który się sięga:
+  // konta i flotę zakłada się raz na sezon, dziennik ogląda się co tydzień.
+  { to: '/dziennik', label: 'Dziennik' },
   { to: '/piloci', label: 'Piloci' },
   { to: '/samoloty', label: 'Samoloty' },
 ];

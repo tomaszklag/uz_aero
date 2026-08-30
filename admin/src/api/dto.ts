@@ -18,7 +18,7 @@
  * Pole dopisuje się tutaj razem z ekranem, który je pokazuje, nigdy „na zapas".
  */
 
-import type { MhFormat, ServiceStatus } from '@uzaero/domain';
+import type { Event, MhFormat, OperationType, ServiceStatus, SessionState } from '@uzaero/domain';
 
 // -- sesja panelu (logowanie, `GET /me`) ----------------------------------------
 
@@ -214,4 +214,166 @@ export interface AircraftToleranceDto {
   /** `null` = pytanie bez pojemności; próg schodzi wtedy do podłogi 10 L. */
   capacityL: number | null;
   fuelToleranceL: number;
+}
+
+// -- dziennik: poziom 1 (flota w zakresie) --------------------------------------
+
+/**
+ * Jedna maszyna w zakresie dat - wiersz poziomu 1.
+ *
+ * Wszystkie liczby SUMUJE SERWER z kolumn projekcji. Panel niczego tu nie dodaje
+ * ani nie dzieli - także „ile średnio na godzinę", bo takiej liczby nie zamówiono,
+ * a policzona w przeglądarce rozjechałaby się z analityką zużycia.
+ */
+export interface LogAircraftDto {
+  aircraftId: string;
+  /** `null` = jednostki nie ma już w rejestrze floty; sesje historyczne zostają. */
+  reg: string | null;
+  aircraftType: string | null;
+  mhFormat: MhFormat | null;
+
+  sessions: number;
+  /** Ile sesji jeszcze trwa - to jest jedyny sygnał „ta maszyna lata teraz". */
+  openSessions: number;
+  /** DNI pracy, nie liczba sesji: dwie zmiany jednego dnia to jeden dzień. */
+  activeDays: number;
+
+  flights: number;
+  /** Liczniki ZDARZEŃ - z kręgami, więc większe od `flights` (issue #62). */
+  takeoffs: number | null;
+  landings: number | null;
+
+  blockMs: number;
+  flightMs: number;
+
+  fuelAddedL: number | null;
+  /** `null` = choć jedna sesja zakresu nie ma bilansu; `fuelUnknownSessions` mówi ile. */
+  fuelConsumedL: number | null;
+  fuelUnknownSessions: number;
+  /** WYŁĄCZNIE dolewki - zużycia oleju nie ma, bo po locie się go nie mierzy. */
+  oilAddedL: number | null;
+  mhDeltaH: number | null;
+  lastEngineStopAt: number | null;
+}
+
+export interface LogRangeDto {
+  from: string;
+  to: string;
+  /** `true` = zakresu nie podano i serwer wybrał domyślny. */
+  defaulted: boolean;
+}
+
+export interface LogReportDto {
+  /** Chwila odpowiedzi z zegara SERWERA - panel kotwiczy nią szybkie filtry. */
+  at: string;
+  range: LogRangeDto;
+  aircraft: LogAircraftDto[];
+}
+
+
+// -- dziennik: poziom 2 (sesje jednej maszyny) i poziom 3 (jedna sesja) ---------
+
+/**
+ * Jedna sesja - wiersz gridu poziomu 2 (`GET /admin/api/sessions`).
+ *
+ * Sesja to JEDEN bieg silnika (pivot 2026-08-10): od uruchomienia do zatrzymania,
+ * a lotów w niej może być wiele albo ani jednego.
+ *
+ * == CZASY SA CZTERY I KAZDY ZNACZY CO INNEGO ==
+ * `claimedAt`/`closeTime` to PRZEJECIE i ZDANIE maszyny, `engineStartAt`/`engineStopAt`
+ * to praca śmigła, a `firstTakeoffAt`/`lastLandingAt` to koperta lotów w środku.
+ * Pomylenie ich jest najłatwiejszym błędem tego ekranu: pilot bierze samolot rano,
+ * uruchamia po południu, a zdaje wieczorem.
+ */
+export interface SessionListItemDto {
+  sessionUuid: string;
+  aircraftId: string;
+  reg: string | null;
+  aircraftType: string | null;
+  mhFormat: MhFormat | null;
+
+  picId: string;
+  picCode: string | null;
+  picName: string | null;
+  dualCode: string | null;
+  dualName: string | null;
+
+  /** `voided` = pilot unieważnił CAŁY wpis (issue #62); wiersz zostaje przekreślony. */
+  status: 'active' | 'closed' | 'voided';
+  operation: OperationType | null;
+  client: string | null;
+
+  claimedAt: number | null;
+  closeTime: number | null;
+  engineStartAt: number | null;
+  engineStopAt: number | null;
+  firstTakeoffAt: number | null;
+  lastLandingAt: number | null;
+
+  departureIcao: string | null;
+  /** `null` bywa NORMĄ, nie brakiem: przy skokach drugiego lotniska nie ma z definicji. */
+  arrivalIcao: string | null;
+
+  blockMs: number;
+  flightMs: number;
+  flightsCount: number;
+  takeoffCount: number | null;
+  landingCount: number | null;
+
+  mhStart: number | null;
+  mhEnd: number | null;
+  fuelStartL: number | null;
+  fuelAddedL: number | null;
+  fuelEndL: number | null;
+  /** Pomiar oleju z PRZEJĘCIA; po locie oleju się nie mierzy (issue #60). */
+  oilLevelL: number | null;
+  oilAddedL: number | null;
+  /** Stan oleju, z ktorym silnik ruszyl (pomiar + dolewka) - liczy DOMENA, nie panel. */
+  oilAfterL: number | null;
+
+  /** Sesja wpisana ręcznie po fakcie - plakietka przy dacie, nie przy wartościach. */
+  manualEntry: boolean | null;
+  updatedAt: string;
+}
+
+/**
+ * Strona listy sesji.
+ *
+ * `nextCursor !== null` znaczy „lista jest PRZYCIĘTA" - i ekran musi to powiedzieć.
+ * Lista ucięta po cichu wygląda jak komplet, a to najgorszy tryb awarii narzędzia,
+ * które ma odpowiadać na pytanie „co ta maszyna robiła w sierpniu".
+ */
+export interface SessionPageDto {
+  items: SessionListItemDto[];
+  nextCursor: string | null;
+  total: number;
+}
+
+/**
+ * Jeden wiersz osi zdarzeń (poziom 3).
+ *
+ * Oś pokazuje strumień SUROWY - rejestr jest append-only, więc widać w nim wszystko,
+ * łącznie ze zdarzeniami unieważnionymi. `Event` bierzemy jako TYP z domeny.
+ */
+export interface TimelineEntryDto {
+  event: Event;
+  /** `true` = unieważnione korektą; wiersz jest przekreślony, ale zostaje. */
+  voided: boolean;
+  /** Czas PO korekcie; `null` = czas zdarzenia jest oryginalny. */
+  correctedTime: number | null;
+  /** `true` = poprawił to administrator z panelu, a nie pilot w oknie 24 h. */
+  adminCorrected: boolean;
+}
+
+/**
+ * Szczegóły jednej sesji (poziom 3).
+ *
+ * `state` liczy SERWER (`projectSession`) na żądanie - to jedyne miejsce panelu,
+ * w którym tak jest, i dzięki temu karta sesji nie ma jak pokazać innych liczb niż
+ * ekran rozliczenia w telefonie.
+ */
+export interface SessionDetailDto {
+  session: SessionListItemDto;
+  state: SessionState;
+  timeline: TimelineEntryDto[];
 }

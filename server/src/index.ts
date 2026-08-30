@@ -30,6 +30,7 @@ import { AdminPilotQueries } from './application/admin/queries/pilots.ts';
 import { AdminFlightTrackQueries } from './application/admin/queries/flightTrack.ts';
 import { AdminSessionQueries } from './application/admin/queries/sessions.ts';
 import { AdminConsumptionQueries } from './application/admin/queries/consumption.ts';
+import { AdminLogQueries } from './application/admin/queries/log.ts';
 import { AdminStatsQueries } from './application/admin/queries/stats.ts';
 import { AuditedWrite } from './application/admin/auditedWrite.ts';
 import { AuthCommands } from './application/common/commands/auth.ts';
@@ -58,6 +59,7 @@ import { PgAdminPilotsRepo } from './infrastructure/pg/admin/pilotsRepo.ts';
 import { PgAdminRefreshTokensRepo } from './infrastructure/pg/admin/refreshTokensRepo.ts';
 import { PgAdminSessionsRepo } from './infrastructure/pg/admin/sessionsRepo.ts';
 import { PgAdminConsumptionRepo } from './infrastructure/pg/admin/consumptionRepo.ts';
+import { PgAdminLogRepo } from './infrastructure/pg/admin/logRepo.ts';
 import { PgAdminStatsRepo } from './infrastructure/pg/admin/statsRepo.ts';
 import { PgAircraftConfigRepo } from './infrastructure/pg/common/aircraftConfigRepo.ts';
 import { PgDatabase } from './infrastructure/pg/database.ts';
@@ -315,6 +317,7 @@ const app = buildServer({
   // Statystyki (A10) - czysty odczyt agregatów kolumn projekcji; zegar rozstrzyga
   // zakres domyślny „ostatnie 30 dni od dziś".
   adminStatsQueries: new AdminStatsQueries(db, new PgAdminStatsRepo(), clock),
+  adminLogQueries: new AdminLogQueries(db, new PgAdminLogRepo(), clock),
   // Analityka zużycia (A10a/A10b) - bierze TEN SAM magazyn zdarzeń, co reszta serwera:
   // strumienie sesji są jej wejściem, a licznik odczytów w `contract.test.ts` pilnuje,
   // że poza nią żadna lista po nie nie sięga.

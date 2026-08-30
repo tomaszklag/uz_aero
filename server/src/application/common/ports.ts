@@ -338,6 +338,67 @@ export interface SessionRow {
    */
   oilLevelL: number | null;
   oilAddedL: number | null;
+
+  /**
+   * Bieg silnika - PIERWSZA i OSTATNIA chwila pracy śmigła w tej sesji.
+   *
+   * To NIE JEST `claimTime`/`closeTime`: przejęcie i zdanie samolotu to chwile WOKOŁ
+   * biegu, czasem odległe o godziny (pilot bierze maszynę rano, uruchamia po południu).
+   * Podstawienie jednego za drugie w logu dnia byłoby kłamstwem o godzinie lotu.
+   *
+   * `null` = sesja bez uruchomienia (przejęta i zdana bez lotu) albo wiersz sprzed
+   * kolumn logu, do przebudowy projekcji.
+   */
+  engineStartAt: number | null;
+  engineStopAt: number | null;
+
+  /**
+   * Koperta LOTOW wewnątrz biegu: pierwszy start i ostatnie lądowanie.
+   *
+   * `null` przy sesji BEZ LOTU (próba silnika, pogoda, usterka) - to jest stan świata,
+   * a nie brak danych, i log ma go pokazywać jako pustą komórkę, nie jako zero.
+   */
+  firstTakeoffAt: number | null;
+  lastLandingAt: number | null;
+
+  /**
+   * Lotniska sesji z `preflight_confirm`.
+   *
+   * `arrivalIcao: null` bywa NORMĄ, nie brakiem: przy operacji na jednym placu (skoki,
+   * issue #13) drugiego lotniska nie ma z definicji. Czytelnik musi znać rodzaj
+   * operacji, żeby odróżnić „to samo lotnisko" od „nie wiadomo" - dlatego log pokazuje
+   * jedno i drugie w tej samej komórce.
+   */
+  departureIcao: string | null;
+  arrivalIcao: string | null;
+
+  /**
+   * Suma zdarzeń `refuel` w sesji (litry).
+   *
+   * Do 2026-08-30 ta liczba żyła WYŁĄCZNIE w pamięci projekcji, więc panel znał stan
+   * paliwa przed i po, ale nie wiedział, ile dolano między nimi - a bez tego trzeciej
+   * liczby bilans sesji jest nie do przeczytania.
+   */
+  fuelAddedL: number | null;
+
+  /**
+   * Sesja wpisana RĘCZNIE po fakcie (`session_claim.manualEntry`, ekran 15 aplikacji).
+   *
+   * Z metody zdarzeń tego nie da się wywieść (`manual` niesie też lot zapisany
+   * przyciskami na żywo), więc znacznik jedzie jawnie od telefonu. `null` = wiersz
+   * sprzed kolumny, do przebudowy projekcji.
+   */
+  manualEntry: boolean | null;
+
+  /**
+   * Stan oleju, z którym silnik ruszył: pomiar plus dolewka.
+   *
+   * PRZEPISUJEMY wartość policzoną przez domenę, zamiast dodawać dwie liczby w panelu
+   * - bo to nie jest zwykła suma: dolewka BEZ pomiaru poziomu nie zna (`oil.afterL`
+   * jest wtedy `null`, mimo że `addedL` bywa niezerowe). Naiwne `level + added` dałoby
+   * w tym wypadku liczbę wziętą znikąd.
+   */
+  oilAfterL: number | null;
 }
 
 export interface SessionsProjectionPort {
