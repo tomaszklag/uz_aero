@@ -90,6 +90,9 @@ export function aircraftLimitsFrom(
 export const CORRECTION_EVENT_TYPES: readonly EventType[] = [
   'manual_log_entry',
   'event_correction',
+  // Unieważnienie CAŁEJ sesji jest korektą najdalej idącą, więc podlega temu samemu
+  // oknu: pilot 24 h od zdania, administrator bez ograniczeń (2026-08-30).
+  'session_void',
 ];
 
 /**
@@ -791,6 +794,33 @@ function checkByType(
             ),
           );
         }
+      }
+      break;
+    }
+
+    /**
+     * `session_void` - unieważnienie CAŁEJ sesji (uwaga z urządzenia, 2026-08-30).
+     *
+     * Reguły są dwie i obie wynikają z tego, czym to zdarzenie jest:
+     *
+     *  • **musi mieć co unieważniać** - sesja bez przejęcia nie istnieje, więc
+     *    unieważnienie wisiałoby w próżni. Ten sam powód, dla którego korekta wymaga
+     *    istniejącego celu (`CORRECTION_TARGET_NOT_FOUND`);
+     *  • **drugi raz nie ma sensu** - stan jest binarny, a dwa zapisy jednego faktu
+     *    rozjeżdżają się przy pierwszej różnicy powodów.
+     *
+     * Okna korekty pilnuje `checkCorrectionWindow` (typ jest na liście
+     * `CORRECTION_EVENT_TYPES`): pilot ma 24 h od zdania, administrator nie jest
+     * blokowany nigdy - dokładnie jak przy każdej innej poprawce.
+     */
+    case 'session_void': {
+      if (state.sessionPicId == null) {
+        v.push(
+          error('SESSION_VOID_NO_SESSION', 'Nie ma czego unieważnić - sesja nie została otwarta.'),
+        );
+      }
+      if (state.voided) {
+        v.push(error('SESSION_ALREADY_VOIDED', 'Ta sesja jest już unieważniona.'));
       }
       break;
     }

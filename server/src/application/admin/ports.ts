@@ -380,7 +380,7 @@ export interface AdminExportJoin {
   picId: string;
   picCode: string | null;
   picName: string | null;
-  status: 'active' | 'closed';
+  status: 'active' | 'closed' | 'voided';
   /** Chwila przejęcia samolotu (epoch ms UTC); `null` = strumień bez `session_claim`. */
   claimedAt: number | null;
   /** Ostatnia przyjęta paczka tej sesji - oś porównania „karta starsza niż dane". */

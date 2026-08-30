@@ -38,7 +38,7 @@ export interface SyncStatus {
   sessionUuid: string;
   /** Ile zdarzeń sesji serwer przyjął - telefon porówna ze swoim licznikiem. */
   received: number;
-  status: 'active' | 'closed' | 'unknown';
+  status: 'active' | 'closed' | 'voided' | 'unknown';
   flags: FlagRecord[];
   /** Link do karty arkusza (§4.7); `null` mówi „jeszcze nie wyeksportowano". */
   exportUrl: string | null;

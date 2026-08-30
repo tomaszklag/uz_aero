@@ -188,6 +188,21 @@ export const PAYLOAD_SCHEMAS: Record<string, z.ZodTypeAny> = {
   }),
 
   /**
+   * `session_void` - CAŁA sesja unieważniona (uwaga z urządzenia, 2026-08-30).
+   *
+   * Rejestr zostaje append-only: zdarzenie NIE kasuje strumienia, tylko odbiera sesji
+   * ważność. Serwer musi je przyjąć, bo inaczej telefon dostawałby `400 bad_payload`
+   * i wycofany wpis wisiałby w kolejce na zawsze - ta sama pułapka, którą złapał
+   * etap D1 przy `leg_close`.
+   *
+   * Powód OPCJONALNY, jak przy każdej korekcie; limit długości ten sam, co u innych
+   * pól swobodnego tekstu.
+   */
+  session_void: z.object({
+    reason: z.string().max(1000).nullable(),
+  }),
+
+  /**
    * `event_correction` - TRZY akcje od issue #43.
    *
    * `amend` niesie WARTOŚĆ zamiast czasu (odczyt paliwa i MH przy przejęciu/zdaniu,

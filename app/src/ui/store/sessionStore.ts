@@ -181,6 +181,12 @@ export interface SessionStore {
   manualFlight(input: ManualFlightInput): Promise<CommandResult>;
   /** Zdanie samolotu (09B) = ZATWIERDZENIE logu sesji - NIE kończy dnia pilota. */
   releaseAircraft(payload: DayClosePayload): Promise<CommandResult>;
+  /**
+   * Unieważnia CAŁĄ sesję (uwaga z urządzenia, 2026-08-30). Rejestr zostaje
+   * append-only - sesja przestaje się liczyć, jej strumień zostaje. Uprawnienie to
+   * samo, co przy korekcie: 24 h od zdania samolotu.
+   */
+  voidSession(reason: string | null): Promise<CommandResult>;
 
   /** Wczytuje istniejącą sesję z bazy i odtwarza kontekst (np. po restarcie aplikacji). */
   loadSession(sessionUuid: string): Promise<void>;
@@ -457,6 +463,10 @@ export const useSessionStore = create<SessionStore>((set, get) => {
 
     releaseAircraft(payload) {
       return run(() => requireCommands().releaseAircraft(requireContext(), payload));
+    },
+
+    voidSession(reason) {
+      return run(() => requireCommands().voidSession(requireContext(), reason));
     },
 
     async loadSession(sessionUuid) {

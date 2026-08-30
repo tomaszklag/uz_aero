@@ -45,6 +45,9 @@ import type { AdminExportJoin } from '../ports.ts';
  */
 export function exportState(join: AdminExportJoin): ExportState {
   if (join.claimedAt == null) return 'impossible';
+  /* Sesja unieważniona nie CZEKA na eksport - została wycofana (2026-08-30). Bez tego
+     wisiałaby w panelu jako „waiting" bez końca, bo zamknięta już nie będzie. */
+  if (join.status === 'voided') return 'impossible';
   if (join.status !== 'closed') return 'waiting';
   if (join.blockingFlagIds.length > 0) return 'blocked';
   if (join.revision == null || join.exportedAt == null) return 'missing';

@@ -615,3 +615,58 @@ describe('touch and go — licznik przy lądowaniu', () => {
     expect(day.takeoffCount).toBe(5);
   });
 });
+
+/**
+ * UNIEWAŻNIENIE CAŁEJ SESJI (uwaga z urządzenia, 2026-08-30: „daj możliwość usunięcia
+ * całego lotu").
+ *
+ * Rejestr zostaje append-only: `session_void` nie kasuje strumienia, tylko odbiera
+ * sesji ważność. Projekcja liczy dalej wszystko - administrator ma widzieć, CO zostało
+ * wycofane - a wypada dopiero z DNIA PILOTA.
+ */
+describe('session_void - sesja unieważniona', () => {
+  function voidedSession(): Event[] {
+    return [
+      ev('session_claim', '09:40', { mode: 'free', previousPicId: null }),
+      ev('engine_start', '09:42', {}),
+      ev('takeoff', '10:00', { method: 'manual' }),
+      ev('landing', '10:40', { method: 'manual' }),
+      ev('engine_stop', '11:18', {}),
+      ev('session_void', '12:00', { reason: 'wpisałem ten lot dwa razy' }),
+    ];
+  }
+
+  it('projekcja NIESIE fakt unieważnienia razem z powodem', () => {
+    const s = projectSession(voidedSession());
+
+    expect(s.voided).toBe(true);
+    expect(s.voidReason).toBe('wpisałem ten lot dwa razy');
+    expect(s.voidedAt).toBe(at('12:00'));
+  });
+
+  it('reszta projekcji liczy się DALEJ - wycofany wpis ma być widoczny, nie pusty', () => {
+    // Administrator ocenia, czy wycofanie było słuszne, więc musi widzieć treść.
+    const s = projectSession(voidedSession());
+
+    expect(s.flights).toHaveLength(1);
+    expect(s.blockTimeMs).toBe(96 * MIN);
+  });
+
+  it('sesja WYPADA z dnia pilota - i z listy, i z sum', () => {
+    /* Filtr stoi w `projectPilotDay`, w jednym miejscu: gdyby pomijał go ekran,
+       wycofana sesja znikałaby z listy, ale nadal dokładała się do „Blok" i „Loty". */
+    const day = projectPilotDay([projectSession(voidedSession())], PIC, DAY0);
+
+    expect(day.sessions).toHaveLength(0);
+    expect(day.blockTimeMs).toBe(0);
+    expect(day.takeoffCount).toBe(0);
+  });
+
+  it('sesja WAŻNA liczy się jak dotąd - brak zdarzenia niczego nie zmienia', () => {
+    const events = voidedSession().filter((e) => e.type !== 'session_void');
+    const day = projectPilotDay([projectSession(events)], PIC, DAY0);
+
+    expect(day.sessions).toHaveLength(1);
+    expect(day.takeoffCount).toBe(1);
+  });
+});

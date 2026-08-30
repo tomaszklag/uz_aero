@@ -112,7 +112,21 @@ export function projectPilotDay(
 ): PilotDay {
   const pilotDay = emptyPilotDay(pilotId, day);
 
-  const mine = sessions.filter((s) => s.sessionPicId === pilotId);
+  /**
+   * SESJA UNIEWAŻNIONA WYPADA Z DNIA PILOTA (uwaga z urządzenia, 2026-08-30).
+   *
+   * Dzień pilota odpowiada na pytanie „co dziś przelatałem", więc wycofany wpis nie ma
+   * prawa go zaśmiecać ani wchodzić do sum - a wchodziłby, bo strumień zostaje w bazie
+   * (rejestr jest append-only).
+   *
+   * Filtr stoi TU, w jednym miejscu, bo stąd biorą listę i sumy oba ekrany dnia. Gdyby
+   * pomijał go ekran, wycofana sesja znikałaby z listy, ale nadal dokładała się do
+   * „Blok" i „Loty" - dokładnie ten rodzaj cichego rozjazdu, który złapaliśmy przy
+   * kręgach (dwa liczniki, dwa miejsca arytmetyki).
+   *
+   * Administrator widzi ją dalej: jego oś czyta REJESTR, nie ten model.
+   */
+  const mine = sessions.filter((s) => s.sessionPicId === pilotId && !s.voided);
 
   // Sesje doby (po jednym biegu silnika każda), uporządkowane w czasie.
   const collected: PilotDaySession[] = [];

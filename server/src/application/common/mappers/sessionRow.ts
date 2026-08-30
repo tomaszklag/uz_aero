@@ -41,7 +41,13 @@ export function sessionRowFrom(sessionUuid: string, stream: Event[]): SessionRow
     aircraftId: s.aircraftId ?? stream[0]!.aircraftId,
     picId: s.sessionPicId ?? stream[0]!.picId,
     dualId: s.dualId,
-    status: s.closed ? 'closed' : 'active',
+    /* TRZECI STATUS: 'voided' (uwaga z urządzenia, 2026-08-30). Kolumna jest zwykłym
+       TEXT-em bez CHECK-a, więc wartość wchodzi bez migracji - a oba krytyczne
+       wykluczenia są napisane jako „musi być closed", więc działają same:
+       eksport do arkusza (dayExporter) i ŁAŃCUCH MH (aircraftStateView) pomijają
+       wiersz, który nie jest zamknięty. Unieważnienie wygrywa ze zdaniem, bo opisuje
+       CAŁĄ sesję, a nie jej zakończenie. */
+    status: s.voided ? 'voided' : s.closed ? 'closed' : 'active',
     claimTime: s.claimedAt,
     closeTime: s.closedAt,
     // Wymiary listy dni (`operation`, `client`). Przepisujemy WARTOŚĆ POLICZONĄ przez projekcję

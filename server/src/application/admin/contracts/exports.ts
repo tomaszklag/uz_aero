@@ -136,7 +136,7 @@ export interface AdminExportListItem {
   picName: string | null;
 
   /** `active` = brak `day_close` w rejestrze. NIE znaczy „w locie" (patrz `A02`). */
-  sessionStatus: 'active' | 'closed';
+  sessionStatus: 'active' | 'closed' | 'voided';
   state: ExportState;
 
   /** Ostatnia rewizja karty; `null` = nigdy nie eksportowano. */
