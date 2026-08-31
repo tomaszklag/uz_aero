@@ -18,7 +18,14 @@
  * Pole dopisuje się tutaj razem z ekranem, który je pokazuje, nigdy „na zapas".
  */
 
-import type { Event, MhFormat, OperationType, ServiceStatus, SessionState } from '@uzaero/domain';
+import type {
+  Event,
+  MhFormat,
+  OperationType,
+  ServiceStatus,
+  SessionState,
+  SessionTrackPayload,
+} from '@uzaero/domain';
 
 // -- sesja panelu (logowanie, `GET /me`) ----------------------------------------
 
@@ -377,3 +384,15 @@ export interface SessionDetailDto {
   state: SessionState;
   timeline: TimelineEntryDto[];
 }
+
+/**
+ * Ślad GPS sesji (poziom 3).
+ *
+ * Kształt bierzemy WPROST z domeny, zamiast przepisywać go tutaj na lustro. To nie jest
+ * wyłom w zasadzie „DTO panelu ma swoje typy": lustra piszemy dla rzeczy, które panel
+ * i serwer mogą rozumieć inaczej (role, powody odmowy) - i wtedy `test/mirrors.test.ts`
+ * pilnuje, żeby nie rozjechały się w ciszy. `SessionTrackPayload` jest czymś innym:
+ * to KOPERTA TRANSPORTOWA, zaprojektowana jako jeden kształt dla obu odbiorców, i jej
+ * kopia w panelu tworzyłaby dokładnie ten rozjazd, przed którym miałaby chronić.
+ */
+export type SessionTrackDto = SessionTrackPayload;

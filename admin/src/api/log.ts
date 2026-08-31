@@ -9,7 +9,7 @@
  * Warstwa `api/` nie zna Reacta ani cache'u - zwraca obietnice.
  */
 
-import type { LogReportDto, SessionDetailDto, SessionPageDto } from './dto';
+import type { LogReportDto, SessionDetailDto, SessionPageDto, SessionTrackDto } from './dto';
 import { apiGet } from './httpClient';
 
 /** Zakres dat jak w całym panelu: dzień UTC `YYYY-MM-DD`, obustronnie domknięty. */
@@ -51,4 +51,15 @@ export function listSessions(query: SessionListQuery): Promise<SessionPageDto> {
 /** Poziom 3: jedna sesja - stan policzony projekcją, surowa oś zdarzeń i flagi. */
 export function loadSession(uuid: string): Promise<SessionDetailDto> {
   return apiGet<SessionDetailDto>(`/sessions/${encodeURIComponent(uuid)}`);
+}
+
+/**
+ * Ślad GPS sesji - CAŁY bieg silnika, nie pojedynczy lot (issue #38).
+ *
+ * Osobne żądanie od `loadSession`, bo to inny materiał i inny koszt: karta sesji ma
+ * kilkadziesiąt zdarzeń, a ślad kilkaset wierzchołków po kompresji. Wciągnięcie go do
+ * karty spowalniałoby każde wejście w sesję o rzecz, na którą patrzy się rzadziej.
+ */
+export function loadSessionTrack(uuid: string): Promise<SessionTrackDto> {
+  return apiGet<SessionTrackDto>(`/sessions/${encodeURIComponent(uuid)}/track`);
 }

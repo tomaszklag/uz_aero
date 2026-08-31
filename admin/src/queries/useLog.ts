@@ -8,11 +8,17 @@
 
 import { useQuery } from '@tanstack/react-query';
 
-import type { LogReportDto, SessionDetailDto, SessionPageDto } from '../api/dto';
+import type {
+  LogReportDto,
+  SessionDetailDto,
+  SessionPageDto,
+  SessionTrackDto,
+} from '../api/dto';
 import {
   listSessions,
   loadLog,
   loadSession,
+  loadSessionTrack,
   type LogRangeQuery,
   type SessionListQuery,
 } from '../api/log';
@@ -51,5 +57,22 @@ export function useSessionDetail(uuid: string | undefined) {
     queryKey: keys.log.session(uuid ?? ''),
     queryFn: () => loadSession(uuid as string),
     enabled: uuid != null && uuid !== '',
+  });
+}
+
+/**
+ * Ślad sesji - osobne zapytanie od karty, więc mapa dociąga się pod gotowym ekranem
+ * zamiast opóźniać jego pierwsze wyświetlenie.
+ *
+ * `staleTime: Infinity`, bo nagranie jest zamknięte: telefon oddaje je raz i kasuje
+ * swoją kopię. Zmienić może się wyłącznie okno biegu silnika po korekcie
+ * administratora - a wtedy przeładowuje się cały ekran sesji.
+ */
+export function useSessionTrack(uuid: string | undefined) {
+  return useQuery<SessionTrackDto>({
+    queryKey: keys.log.track(uuid ?? ''),
+    queryFn: () => loadSessionTrack(uuid as string),
+    enabled: uuid != null && uuid !== '',
+    staleTime: Infinity,
   });
 }

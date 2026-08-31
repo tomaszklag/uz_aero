@@ -60,5 +60,6 @@ export const keys = {
     fleet: (query: LogRangeQuery) => ['log', 'fleet', query] as const,
     sessions: (query: SessionListQuery) => ['log', 'sessions', query] as const,
     session: (uuid: string) => ['log', 'session', uuid] as const,
+    track: (uuid: string) => ['log', 'track', uuid] as const,
   },
 };

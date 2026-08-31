@@ -15,97 +15,39 @@
  * ich nie zna - patrz nagłówek `SessionTrackPayload`. Dlatego wariant bez zasięgu (14C)
  * nadal pokazuje komplet czasów: brakuje mu rysunku, nie wiedzy.
  *
- * ══ OKNO BIERZEMY Z REJESTRU, NIE ZE ŚLADU ══
- * Ta sama zasada, co w panelu (`admin/queries/flightTrack.ts`): bieg silnika i odcinki
- * lotu pochodzą z projekcji PO korektach. Gdy administrator poprawi czas startu, ślad
- * zmieni się przy następnym otwarciu - mapa ma pokazywać lot tak, jak go dziś rozumie
- * rejestr, a nie tak, jak rozumiał go telefon w chwili zapisu.
- *
- * ══ CZEGO TU CELOWO NIE MA: PLIKU POBOCZNEGO ══
- * `FsPhaseTimeline` cache'uje swoją pochodną obok śladu i unieważnia ją rozmiarem pliku,
- * bo oś faz zależy WYŁĄCZNIE od nagrania. Ta koperta zależy też od REJESTRU - korekta
- * czasu startu zmienia statystyki, nie ruszając ani jednego bajtu NDJSON-a. Cache
- * unieważniany samym śladem podawałby po korekcie liczby sprzed niej i nie dałoby się
- * tego zauważyć po treści. Jeśli parsowanie kiedyś zacznie boleć, kluczem musi być para
- * (ślad, rewizja rejestru sesji) - nie sam ślad.
+ * ══ CO ZOSTAŁO W TYM PLIKU: JEDNO ZDANIE O UPRAWNIENIU ══
+ * Rysunek składa wspólne `common/queries/sessionTrack.ts` - ten sam, z którego czyta panel,
+ * bo ślad jednego biegu silnika ma wyglądać tak samo po obu stronach. Tutaj zostaje
+ * WYŁĄCZNIE reguła „czyja to sesja", bo ona się między powierzchniami różni: telefon
+ * pokazuje własny lot pilota, panel - dowolny, na zdolności `panel.access`.
  */
 
-import {
-  buildSessionTrackPayload,
-  emptySessionTrackPayload,
-  flightSpans,
-  projectSession,
-  type RawTrackEntry,
-  type SessionTrackPayload,
-} from '@uzaero/domain';
+import type { SessionTrackPayload } from '@uzaero/domain';
 
-import type { Database, EventsStorePort, TraceSourcePort } from '../../common/ports.ts';
+import type { SessionTrackQueries } from '../../common/queries/sessionTrack.ts';
 
 /**
  * Odmowa jako wariant wyniku, nie wyjątek na granicy HTTP (wzorzec `FlightTrackOutcome`).
  * `no_session` i `not_yours` to dwa różne stany i telefon mówi o nich innym zdaniem:
  * „tej sesji nie ma" ≠ „to nie jest twoja sesja".
  */
-export type SessionTrackOutcome =
+export type MySessionTrackOutcome =
   | { ok: true; track: SessionTrackPayload }
   | { ok: false; reason: 'no_session' | 'not_yours' };
 
-export class SessionTrackQueries {
-  constructor(
-    private readonly db: Database,
-    private readonly events: EventsStorePort,
-    private readonly traces: TraceSourcePort,
-  ) {}
+export class MySessionTrackQueries {
+  constructor(private readonly tracks: SessionTrackQueries) {}
 
-  async bySession(pilotId: string, sessionUuid: string): Promise<SessionTrackOutcome> {
-    const events = await this.events.sessionEvents(this.db, sessionUuid);
-    if (events.length === 0) return { ok: false, reason: 'no_session' };
+  async bySession(pilotId: string, sessionUuid: string): Promise<MySessionTrackOutcome> {
+    const outcome = await this.tracks.bySession(sessionUuid);
+    if (!outcome.ok) return outcome;
 
-    const state = projectSession(events);
-
-    // Właścicielem jest PIC z otwarcia sesji - ta sama tożsamość, którą regula
+    // Właścicielem jest PIC z otwarcia sesji - ta sama tożsamość, którą reguła
     // `WRITER_MISMATCH` uznaje za jedynego uprawnionego piszącego (§4.1 pkt 3).
     // Ślad jest zapisem CZYJEGOŚ lotu, więc pytanie „czyja to sesja" ma tu dokładnie
     // jedną poprawną odpowiedź i nie jest nią „kto akurat pyta".
-    if (state.sessionPicId !== pilotId) return { ok: false, reason: 'not_yours' };
+    if (outcome.picId !== pilotId) return { ok: false, reason: 'not_yours' };
 
-    const leg = state.legs[0] ?? null;
-    // Sesja bez pracy silnika (09C: pogoda, usterka) nie ma czego rysować i NIE jest to
-    // awaria zapisu. Pusta koperta zamiast odmowy - telefon rozpozna po `usableCount`.
-    if (leg == null) return { ok: true, track: emptySessionTrackPayload(sessionUuid) };
-
-    const entries = (await this.traces.read(sessionUuid)) as unknown as RawTrackEntry[];
-
-    return {
-      ok: true,
-      track: buildSessionTrackPayload(sessionUuid, entries, {
-        airborne: flightSpans(state),
-        engineFrom: leg.startedAt,
-        engineTo: closingTime(leg.stoppedAt, leg.startedAt, entries),
-      }),
-    };
+    return { ok: true, track: outcome.track };
   }
-}
-
-/**
- * Koniec okna dla biegu, który jeszcze trwa.
- *
- * Sesja oglądana z ekranu 14 jest zwykle zamknięta (kokpit jest modalny - dopóki pilot
- * trzyma samolot, nie wychodzi z niego bokiem), ale nagranie potrafi dotrzeć wcześniej
- * niż `engine_stop`. Zamykamy wtedy oknem NAGRANIA, nie zegarem serwera: „teraz" na
- * serwerze nie jest faktem o tym locie, a doliczyłoby do postoju czas między ostatnim
- * fixem a żądaniem.
- */
-function closingTime(
-  stoppedAt: number | null,
-  startedAt: number,
-  entries: readonly RawTrackEntry[],
-): number {
-  if (stoppedAt != null) return stoppedAt;
-
-  let last = startedAt;
-  for (const entry of entries) {
-    if (entry.kind === 'fix' && entry.time > last) last = entry.time;
-  }
-  return last;
 }

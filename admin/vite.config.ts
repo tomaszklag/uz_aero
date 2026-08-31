@@ -38,6 +38,19 @@ export default defineConfig({
     },
   },
 
+  // `vite preview` serwuje GOTOWY build i przydaje się do obejrzenia dokładnie tego,
+  // co pojedzie na produkcję. Bez tego samego proxy pokazywałby panel, w którym nie
+  // działa ani jedno żądanie - czyli mylił, zamiast sprawdzać. To ta sama reguła, co
+  // wyżej: jeden origin, bo ciasteczko sesji ma `SameSite=Strict`.
+  preview: {
+    proxy: {
+      '/admin/api': {
+        target: `http://localhost:${DEV_SERVER_PORT}`,
+        changeOrigin: false,
+      },
+    },
+  },
+
   test: {
     // Środowisko Node, bez jsdom: testy panelu to granice warstw, kontrakt z mockupem
     // i czyste moduły ekranów (`docs/architektura-panelu-frontend.md` §8). Renderowania

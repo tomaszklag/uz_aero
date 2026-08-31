@@ -251,16 +251,22 @@ dla `app/`** i nic w niej nie zmieniamy.
 
 | | 1.0 | 2.0 |
 |---|---|---|
-| pliki `admin/src` | 331 | 62 |
-| linie kodu | 40 098 | 4 978 |
-| build JS (bez gzip) | 702 kB | 361 kB |
-| build CSS | 36 kB | 24 kB |
+| pliki `admin/src` | 331 | 96 |
+| linie kodu | 40 098 | 10 233 |
+| build JS (bez gzip) | 702 kB | 403 kB |
+| build CSS | 36 kB | 28 kB |
 | znaki prozy wyjaśniającej (konta + flota) | ~11 200 | ~900 |
 | stałe banery | 9 | 0 |
 | karty wyjaśniające | 14 | 0 |
 | kafle z licznikami | 8 | 0 |
 | kolumny tabel (konta + flota) | 18 | 11 |
 | ekrany ze skeletonem | 0 | 4 |
+
+Kolumna 2.0 jest stanem na 2026-08-31, czyli po dołożeniu modułu „Dziennik" (§9) razem
+ze śladem GPS - a nie po samych kontach i flocie, na których zaczynaliśmy. Panel 1.0 miał
+w tych 331 plikach 23 ekrany; 2.0 ma sześć i trzy z nich to trzy poziomy dziennika.
+Cała karta śladu - renderer mapy, profil i katalog lotnisk - kosztowała 24 kB buildu
+(379 → 403 kB).
 
 ## 5. Czego serwer nie umie - i czego panel dlatego nie obiecuje
 
@@ -375,12 +381,47 @@ dzisiejszy dzień byłby pusty do wieczora. Dwa poziomy jednego modułu liczące
 osiach potrafią pokazać cztery sesje na jednym ekranie i pięć wierszy na drugim, a
 narzędzie nadzoru, którego dwa ekrany się nie zgadzają, przestaje być narzędziem.
 
+### 9.4a Ślad GPS należy do SESJI (2026-08-31)
+
+Trasa panelu 1.0 (`GET /admin/api/sessions/:uuid/track/:flight`) oddawała ślad **jednego
+lotu**, wycinany z nagrania oknem start→lądowanie. Pochodziła sprzed issue #38 i była
+jedynym powodem, dla którego karta śladu nie weszła do poziomu 3 od razu. Dziś model mówi
+co innego: zapis GPS powstaje w JEDNYM ciągu od uruchomienia do wyłączenia silnika, więc
+należy do sesji, a loty są jego odcinkami. Ujęcie per lot kazało administratorowi oglądać
+dzień w kawałkach i gubiło wszystko, co działo się na ziemi.
+
+Zmiana ma trzy części i żadna nie jest kosmetyczna:
+
+1. **jedno zapytanie dla obu powierzchni** - `application/common/queries/sessionTrack.ts`.
+   Telefon (`GET /me/sessions/:uuid/track`) dokłada nad nim cienką warstwę z bramką
+   właściciela; panel woła je wprost na zdolności `panel.access`. Kopia tej samej
+   geometrii po dwóch stronach rozjeżdżałaby się CICHO - obie mapy wyglądałyby poprawnie,
+   tylko inaczej - a psuje to dokładnie tę rozmowę o TYM SAMYM locie, dla której ekran
+   istnieje. Pilnuje tego test porównujący obie odpowiedzi wprost;
+2. **stara trasa per lot USUNIĘTA** razem z `AdminFlightTrackQueries` i jej kontraktem.
+   Nic jej nie wołało po przebudowie panelu, a jej istnienie było jedynym źródłem
+   przekonania, że ślad jest własnością lotu;
+3. **wyjątek od „z domeny tylko typy" - JEDEN, imienny**. `screens/logbook/trackChart.ts`
+   importuje pięć WARTOŚCI (`airfieldsInView`, `boundsOf`, `fitBounds`, `scaleBar`,
+   `toScreen`) i tylko tyle - test architektury sprawdza zarówno listę plików, jak i listę
+   importów. To nie jest liczenie faktów o locie: dystans, pułap i statystyki przychodzą
+   policzone z serwera, a ten moduł przelicza stopnie na piksele. Alternatywą była kopia
+   tej matematyki w panelu, czyli ten sam lot narysowany administratorowi inaczej niż
+   pilotowi. **Dopisanie drugiej pozycji do listy jest decyzją produktową, nie refaktorem.**
+
+Karta pokazuje mapę, profil pionowy i TRZY liczby (dystans, pułap, prędkość maksymalna).
+Reszta statystyk z koperty - czasy pięciu faz, jakość trzymania wysokości, liczniki bramki
+jakości - została pominięta świadomie: to materiał do strojenia progów detekcji, a nie
+odpowiedź na pytanie, z którym się na ten ekran wchodzi. Tabeli surowych fixów nie ma ani
+tutaj, ani w kopercie (issue #47). Legenda mapy opisuje RODZAJE znaczników, nie
+poszczególne znaczniki - w panelu 1.0 dzień skokowy dawał legendę dłuższą od mapy.
+
+Brak rysunku ma POWÓD i powody się nie zwijają do jednego: lot wpisany ręcznie nie miał
+nagrania z definicji, a sesja bez nagrania to co innego. „Brak śladu" pokazane przy locie
+z kartki byłoby kłamstwem o tym locie.
+
 ### 9.5 Czego w pierwszej wersji nie ma
 
-- **śladu GPS na poziomie 3** - trasa serwera oddaje ślad PER LOT, a renderer mapy trzeba
-  odzyskać z panelu 1.0 (`93eac82^`) i podjąć decyzję o wyjątku w regule „z domeny tylko
-  typy" (rzut Web Mercator był jedynym takim wyjątkiem w 1.0). Poziom 3 bez tej karty
-  jest kompletny w pozostałych sekcjach;
 - **sum pod gridem** - poziom 1 podaje je dla tego samego zakresu;
 - **sortowania po każdej kolumnie** - serwer sortuje kursorem po czasie i tylko po nim;
   sortowanie w przeglądarce ustawiłoby wyłącznie wczytaną stronę;

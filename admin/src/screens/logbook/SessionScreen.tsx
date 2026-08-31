@@ -14,11 +14,26 @@
 import { dateUtcShort, litres, motoHours, oilLitres, timeUtc } from '@uzaero/format';
 import { useParams, useSearchParams } from 'react-router-dom';
 
-import { useSessionDetail } from '../../queries/useLog';
-import { Banner, Card, LinkButton, Loadable, PageHead, Pill } from '../../ui/components';
+import type { SessionTrackDto } from '../../api/dto';
+import { useSessionDetail, useSessionTrack } from '../../queries/useLog';
+import {
+  Banner,
+  Card,
+  EmptyState,
+  LinkButton,
+  Loadable,
+  PageHead,
+  Pill,
+  TrackMap,
+  VerticalProfile,
+} from '../../ui/components';
+import { PlaneIcon } from '../../ui/components/icons';
 import { errorMessage } from '../common/apiMessage';
 import { operationLabel } from './sessionRows';
 import { timelineRow } from './timelineRows';
+import { mapPlot, peakLabel, profilePlot } from './trackChart';
+import { hasTrack, noTrackReason, trackFacts } from './trackFacts';
+import { trackMarkers } from './trackMarkers';
 
 export function SessionScreen() {
   const { reg = '', uuid } = useParams();
@@ -28,6 +43,11 @@ export function SessionScreen() {
   const detail = useSessionDetail(uuid);
   const session = detail.data?.session;
   const rows = (detail.data?.timeline ?? []).map(timelineRow);
+
+  // Ślad idzie OSOBNYM żądaniem: karta sesji ma kilkadziesiąt zdarzeń, nagranie -
+  // kilkaset wierzchołków po kompresji. Mapa dociąga się pod gotowym ekranem, zamiast
+  // opóźniać jego pierwsze wyświetlenie.
+  const track = useSessionTrack(uuid);
 
   const day = session?.claimedAt == null ? '' : dateUtcShort(session.claimedAt);
   const engine =
@@ -140,10 +160,102 @@ export function SessionScreen() {
               <Detail label="Dolano oleju" value={oilLitres(session.oilAddedL)} />
               <Detail label="Olej do lotu" value={oilLitres(session.oilAfterL)} />
             </Card>
+
+            <TrackCard
+              track={track.data}
+              pending={track.isPending}
+              manualEntry={session.manualEntry === true}
+              departureIcao={session.departureIcao}
+              flights={detail.data?.state.flights ?? []}
+            />
           </>
         )}
       </Loadable>
     </>
+  );
+}
+
+/** Płótno mapy i profilu w JEDNOSTKACH RYSUNKU - CSS rozciąga je na szerokość karty. */
+const MAP_WIDTH = 1000;
+const MAP_HEIGHT = 430;
+const PROFILE_WIDTH = 940;
+const PROFILE_HEIGHT = 220;
+
+interface TrackCardProps {
+  track: SessionTrackDto | undefined;
+  pending: boolean;
+  manualEntry: boolean;
+  departureIcao: string | null;
+  flights: readonly { index: number; takeoffAt: number; landingAt: number | null }[];
+}
+
+/**
+ * Ślad CAŁEJ sesji: od uruchomienia do wyłączenia silnika (issue #38). Kołowanie jest
+ * częścią rysunku, a loty jego odcinkami - stąd znaczniki z numerami lotów zamiast
+ * czterech osobnych map.
+ */
+function TrackCard({ track, pending, manualEntry, departureIcao, flights }: TrackCardProps) {
+  if (pending) {
+    return (
+      <Card title="Ślad GPS">
+        <span className="skeleton" style={{ display: 'block', height: MAP_HEIGHT / 2 }} />
+      </Card>
+    );
+  }
+
+  // Brak rysunku ma POWÓD i wariantów jest kilka - „brak śladu" pokazane przy locie
+  // z kartki byłoby kłamstwem o tym locie.
+  if (!hasTrack(track)) {
+    return (
+      <Card title="Ślad GPS">
+        <EmptyState
+          icon={<PlaneIcon size={20} />}
+          title="Bez mapy"
+          note={noTrackReason(manualEntry)}
+        />
+      </Card>
+    );
+  }
+
+  const plot = mapPlot(
+    track.line,
+    trackMarkers(track, flights),
+    MAP_WIDTH,
+    MAP_HEIGHT,
+    departureIcao,
+  );
+  const profile = profilePlot(track.profile, PROFILE_WIDTH, PROFILE_HEIGHT);
+
+  return (
+    <Card title="Ślad GPS">
+      {plot == null ? null : <TrackMap plot={plot} width={MAP_WIDTH} height={MAP_HEIGHT} />}
+
+      <div className="track-facts">
+        {trackFacts(track).map((fact) => (
+          <div className="track-fact" key={fact.label}>
+            <span className="track-fact-k">{fact.label}</span>
+            <span className="track-fact-v">{fact.value}</span>
+          </div>
+        ))}
+      </div>
+
+      {profile == null || track.startedAt == null || track.endedAt == null ? null : (
+        <>
+          <VerticalProfile
+            plot={profile}
+            width={PROFILE_WIDTH}
+            height={PROFILE_HEIGHT}
+            startAt={track.startedAt}
+            endAt={track.endedAt}
+            peakLabel={peakLabel(track.profile)}
+          />
+          <p className="profile-foot">
+            Wysokość z GPS - potrafi różnić się od wysokościomierza o kilkaset stóp.
+            Przerwa w wykresie to czas na ziemi między lotami.
+          </p>
+        </>
+      )}
+    </Card>
   );
 }
 

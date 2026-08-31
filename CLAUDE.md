@@ -1389,8 +1389,8 @@ znikać, wraca po reinstalacji i jest na nowym telefonie.
   inaczej „max wznoszenie" zależałoby od tolerancji rysowania
 - **LOGU PUNKTÓW NIE MA** ani na ekranie, ani w kopercie (przegląd 2026-08-15): tabela
   surowych fixów ze stanem bramki jakości jest materiałem do STROJENIA PROGÓW, a nie
-  odpowiedzią na pytanie pilota - została w panelu (A02c) i w nagraniu czytanym przez
-  `replay.ts`. Ekran nie ma też banera o pochodzeniu danych ani podpowiedzi o gestach:
+  odpowiedzią na pytanie pilota - została w nagraniu czytanym przez `replay.ts`
+  (panel 2.0 również jej nie pokazuje: ekran sesji rysuje mapę i profil, nie tabelę). Ekran nie ma też banera o pochodzeniu danych ani podpowiedzi o gestach:
   jedno i drugie opowiadało o BUDOWIE aplikacji komuś, kto ogląda swój lot
 - **atrybucji źródeł katalogu nie ma na mapie** (2026-08-15) - obowiązek ODbL spełnia
   `docs/dane-lotnisk.md` §3.2. To zamiana miejsca, nie przeoczenie: przywrócenie napisu

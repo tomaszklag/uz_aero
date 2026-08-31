@@ -16,7 +16,6 @@ export type * from './dashboard.ts';
 export type * from './events.ts';
 export type * from './exports.ts';
 export type * from './flags.ts';
-export type * from './flightTrack.ts';
 export type * from './fleet.ts';
 export type * from './maintenance.ts';
 export type * from './pilots.ts';

@@ -30,7 +30,7 @@
 | 5 | Gdzie mieszka `format.ts` | `packages/format`, konsumowany przez `app/`, `admin/` **i `server/`** (dziś ma ręczną kopię) | §1.8, §6 |
 | 6 | Warstwy panelu | `screens/ → queries/ → api/`; `components/` nie zna żadnej z nich; czyste moduły ekranu obok ekranu | §2 |
 | 7 | TanStack Query bez globalnego store'u | **Potwierdzone**, z jednym warunkiem: filtry list żyją w URL-u, nie w stanie | §4 |
-| 8 | Typy | `@uzaero/domain` **tylko jako typy**; koperty HTTP jako własne DTO w `admin/src/api/dto.ts`; **nigdy import z `server/src`** | §5 |
+| 8 | Typy | `@uzaero/domain` **tylko jako typy** (jeden imienny wyjątek: geometria wykresu w `trackChart.ts`); koperty HTTP jako własne DTO w `admin/src/api/dto.ts`; **nigdy import z `server/src`** | §5 |
 | 9 | „Panel nie liczy po swojemu" | Egzekucja: zakaz importów wartościowych z domeny + jedno miejsce z `fetch` + kontrakt serwera | §5.3 |
 | 10 | Routing | **Hash (`#/dni/<uuid>`)** - zero fallbacku SPA na serwerze | §7, §9 |
 | 11 | Rozjazd mockup ↔ komponent | **Mockup wygrywa zawsze.** Wykrywa: test tokenów + test inwentarza klas | §3.3 |
@@ -421,6 +421,12 @@ Egzekucja, trzy warstwy (kolejność = malejąca siła):
 2. **Zakaz importów wartościowych z `@uzaero/domain`** (dozwolone tylko `import type`) -
    szczegóły i uzasadnienie w §5.3. Skutek uboczny jest tu najważniejszy: skoro panel
    nie może wywołać `projectSession`, to nie może przeliczyć niczego po swojemu.
+   **Wyjątek jest DOKŁADNIE JEDEN i imienny**: `screens/logbook/trackChart.ts` importuje
+   pięć funkcji geometrii wykresu (`airfieldsInView`, `boundsOf`, `fitBounds`, `scaleBar`,
+   `toScreen`), bo alternatywą jest kopia odwzorowania Merkatora, czyli ten sam lot
+   narysowany w panelu inaczej niż w telefonie. Test sprawdza obie listy - plików
+   i importów - a dopisanie do nich czegokolwiek jest decyzją produktową
+   (`docs/panel-2.0.md` §9.4a).
 3. **Zakaz `toFixed` / `Math.round` / `Math.floor` / `Intl.NumberFormat`
    w `src/ui/**` i w `*.tsx`** - arytmetyka ma prawo istnieć wyłącznie w module czystym
    z testem obok albo w `@uzaero/format`. To najtańszy sposób złapania momentu,

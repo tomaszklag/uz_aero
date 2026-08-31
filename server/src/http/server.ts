@@ -25,7 +25,6 @@ import type { AdminFleetQueries } from '../application/admin/queries/fleet.ts';
 import type { AdminMaintenanceQueries } from '../application/admin/queries/maintenance.ts';
 import type { AdminMeQueries } from '../application/admin/queries/me.ts';
 import type { AdminPilotQueries } from '../application/admin/queries/pilots.ts';
-import type { AdminFlightTrackQueries } from '../application/admin/queries/flightTrack.ts';
 import type { AdminSessionQueries } from '../application/admin/queries/sessions.ts';
 import type { AdminConsumptionQueries } from '../application/admin/queries/consumption.ts';
 import type { AdminLogQueries } from '../application/admin/queries/log.ts';
@@ -33,7 +32,8 @@ import type { AdminStatsQueries } from '../application/admin/queries/stats.ts';
 import type { AuthCommands } from '../application/common/commands/auth.ts';
 import type { IngestCommands } from '../application/mobile/commands/ingest.ts';
 import type { MyEventQueries } from '../application/mobile/queries/myEvents.ts';
-import type { SessionTrackQueries } from '../application/mobile/queries/sessionTrack.ts';
+import type { SessionTrackQueries } from '../application/common/queries/sessionTrack.ts';
+import type { MySessionTrackQueries } from '../application/mobile/queries/sessionTrack.ts';
 import type { PrefsCommands } from '../application/mobile/commands/prefs.ts';
 import type { ReferenceQueries } from '../application/mobile/queries/reference.ts';
 import type { TaskSuggestionQueries } from '../application/mobile/queries/taskSuggestions.ts';
@@ -88,7 +88,7 @@ export interface ServerDeps {
    * ekran 14 pyta o gotową geometrię tutaj. Wyłącznie geometria: czasy i loty telefon
    * dalej liczy z lokalnego rejestru.
    */
-  sessionTrack: SessionTrackQueries;
+  sessionTrack: MySessionTrackQueries;
   prefs: PrefsCommands;
   /**
    * Podpowiedzi do zadania dnia (`GET /me/task-suggestions`, issue #14) - czysty odczyt
@@ -125,8 +125,8 @@ export interface ServerDeps {
   adminMaintenance: AdminMaintenanceCommands;
   /** Strona ODCZYTU panelu - uproszczony CQRS: komendy wyżej, zapytania tutaj. */
   adminSessionQueries: AdminSessionQueries;
-  /** Ślad lotu (`A02c`) - rejestr wyznacza okno, pliki NDJSON dają geometrię. */
-  adminFlightTrackQueries: AdminFlightTrackQueries;
+  /** Ślad CAŁEJ sesji dla panelu - rejestr wyznacza okno, pliki NDJSON dają geometrię. */
+  adminSessionTrack: SessionTrackQueries;
   adminFlagQueries: AdminFlagQueries;
   adminMeQueries: AdminMeQueries;
   adminPilotQueries: AdminPilotQueries;
@@ -228,7 +228,7 @@ export function buildServer(deps: ServerDeps, options: ServerOptions = {}): Fast
   registerAdminFlagRoutes(app, deps.adminFlags, deps.adminFlagQueries, gate);
   registerAdminCorrectionRoutes(app, deps.adminCorrections, deps.adminCorrectionQueries, gate);
   registerAdminSessionRoutes(app, deps.adminSessionQueries, gate);
-  registerAdminTrackRoutes(app, deps.adminFlightTrackQueries, gate);
+  registerAdminTrackRoutes(app, deps.adminSessionTrack, gate);
   registerAdminAuditRoutes(app, deps.adminAuditQueries, gate);
   registerAdminPilotRoutes(app, deps.adminPilots, deps.adminPilotQueries, gate);
   registerAdminFleetRoutes(app, deps.adminFleet, deps.adminFleetQueries, gate);

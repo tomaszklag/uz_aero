@@ -214,18 +214,44 @@ describe('granice warstw panelu', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('z `@uzaero/domain` wolno importować WYŁĄCZNIE typy', () => {
+  it('z `@uzaero/domain` wolno importować WYŁĄCZNIE typy - poza JEDNYM plikiem', () => {
     // Zakaz ma jeden konkretny cel: odciąć panelowi możliwość liczenia. Skoro
     // `projectSession` jest nieosiągalne, jedynym źródłem liczby jest odpowiedź
     // serwera (`docs/architektura-panelu-frontend.md` §5.1).
     //
-    // W panelu 2.0 reguła nie ma ANI JEDNEGO wyjątku. Poprzedni (odwzorowanie
-    // Web Mercator mapy śladu) zniknął razem z ekranem, który go potrzebował - i tak
-    // miało być: wyjątek zapisany „na zapas" jest zaproszeniem do następnego.
-    const offenders = filesUnder('.').filter((f) =>
-      valueImportsFrom(codeOf(f), '@uzaero/domain'),
-    );
+    // ══ WYJĄTEK: GEOMETRIA WYKRESU (2026-08-31) ══
+    // Lista ma DOKŁADNIE JEDNĄ pozycję i to jest decyzja, nie luka. `trackChart.ts`
+    // przelicza stopnie na piksele - odwzorowanie Web Mercator, kadrowanie, podziałkę
+    // i katalog lotnisk w kadrze. To NIE JEST liczenie faktów o locie: dystans, pułap
+    // i statystyki przychodzą policzone z serwera, a ten moduł układa je na powierzchni
+    // o znanym rozmiarze, dokładnie jak arkusz stylów układa jednostki.
+    //
+    // Alternatywą była kopia tej matematyki w panelu. Kopia oznacza, że ten sam lot
+    // narysuje się administratorowi inaczej niż pilotowi - a rozjazd byłby CICHY, bo
+    // obie mapy wyglądałyby poprawnie. Przy narzędziu, którego wartość polega na
+    // wspólnej rozmowie o TYM SAMYM locie, to najgorszy możliwy rodzaj różnicy.
+    //
+    // **Dopisanie drugiej pozycji jest decyzją produktową, nie refaktorem.** Wyjątek
+    // pilnuje też ZAKRESU: gdyby ten plik sięgnął po `projectSession` albo regułę
+    // domeny, test niżej ma go złapać po nazwie importu.
+    const allowed = 'screens/logbook/trackChart.ts';
+
+    const offenders = filesUnder('.')
+      .filter((f) => valueImportsFrom(codeOf(f), '@uzaero/domain'))
+      .filter((f) => f !== allowed);
     expect(offenders).toEqual([]);
+
+    // Co dokładnie wolno przez tę furtkę przejść - pięć funkcji geometrii i nic więcej.
+    const imported = [...codeOf(allowed).matchAll(/^\s{2}([a-zA-Z][a-zA-Z0-9]*),$/gm)].map(
+      (m) => m[1],
+    );
+    expect(imported.sort()).toEqual([
+      'airfieldsInView',
+      'boundsOf',
+      'fitBounds',
+      'scaleBar',
+      'toScreen',
+    ]);
   });
 
   it('nigdzie nie importujemy z `server/src` - panel nie widzi wnętrza serwera', () => {

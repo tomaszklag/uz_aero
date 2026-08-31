@@ -3,7 +3,7 @@
  *
  * Biblioteka rośnie PACZKAMI pod konkretne ekrany, nie „na zapas": komponent bez
  * ekranu to kod, którego nikt nie sprawdził w użyciu. Panel 2.0 ma pięć ekranów
- * i piętnaście komponentów - i to jest cała lista.
+ * i siedemnaście komponentów - i to jest cała lista.
  */
 
 export { Banner, type BannerTone } from './Banner';
@@ -23,3 +23,5 @@ export { Pill, type PillTone } from './Pill';
 export { SearchInput } from './SearchInput';
 export { TableSkeleton } from './TableSkeleton';
 export { TextInput } from './TextInput';
+export { TrackMap, type MapPlot } from './TrackMap';
+export { VerticalProfile, type ProfilePlot, type ProfileGridRow } from './VerticalProfile';
