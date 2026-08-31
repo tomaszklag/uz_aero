@@ -11,7 +11,7 @@
  *  2. **deaktywacja i reset zrywają sesje** - a liczba zerwanych trafia do audytu;
  *  3. **administrator nie odcina sam siebie ani ostatniego administratora** - odmowa
  *     jest jawna i z powodem;
- *  4. **szef wyszkolenia widzi listę, ale nie zmienia kont** - 403 z podaną zdolnością.
+ *  4. **konto bez `accounts.manage` nie zmienia kont** - 403 z podaną zdolnością.
  *
  * Zero atrap: PGlite, prawdziwe klasy, `app.inject`, prawdziwy scrypt i prawdziwy
  * generator hasła.
@@ -168,20 +168,22 @@ async function auditRows(db: Harness['db']) {
 }
 
 describe('GET /admin/api/pilots - lista kont i dane referencyjne', () => {
+  // Osobny przypadek „rola pośrednia listę CZYTA" wypadł razem z rolą `training_lead`
+  // (2026-08-30): dziś listę czyta dokładnie ten, kto ma wejście do panelu, czyli
+  // administrator - i mówi o tym ten przypadek.
   it('administrator dostaje komplet kont z licznikami po CAŁYM klubie', async () => {
     const { app } = await testHarness();
     const res = await listPilots(app, await tokenOf(app, 'TMK'));
 
     expect(res.statusCode).toBe(200);
     const body = res.json();
-    // Seed: TMK admin, AKO training_lead, PWI/JSE/KRZ piloci.
+    // Seed: TMK i AKO administratorzy, PWI/JSE/KRZ piloci.
     expect(body.items).toHaveLength(5);
     expect(body.counts).toEqual({
       total: 5,
       active: 5,
       inactive: 0,
-      admin: 1,
-      trainingLead: 1,
+      admin: 2,
       pilot: 3,
       // Zero dni lotnych, bo świeży harness nie ma jeszcze ani jednej sesji.
       flyingDays: 0,
@@ -212,22 +214,16 @@ describe('GET /admin/api/pilots - lista kont i dane referencyjne', () => {
     }
   });
 
-  it('SZEF WYSZKOLENIA listę czyta - potrzebuje jej do statystyk i flag', async () => {
-    const { app } = await testHarness();
-    const res = await listPilots(app, await tokenOf(app, 'AKO'));
-    expect(res.statusCode).toBe(200);
-    expect(res.json().items).toHaveLength(5);
-  });
-
   it('filtruje po roli, statusie i szuka po kodzie/nazwisku/e-mailu', async () => {
     const { app } = await testHarness();
     const token = await tokenOf(app, 'TMK');
 
-    expect((await listPilots(app, token, '?role=admin')).json().items).toHaveLength(1);
-    // Chip „Z rolą panelu" to DWIE role naraz - parametr jest powtarzalny.
+    expect((await listPilots(app, token, '?role=admin')).json().items).toHaveLength(2);
+    // Parametr jest POWTARZALNY - chip „Z rolą panelu" był dwiema rolami naraz
+    // i wróci nią razem z trzecią rolą, więc kształt zapytania zostaje sprawdzony.
     expect(
-      (await listPilots(app, token, '?role=admin&role=training_lead')).json().items,
-    ).toHaveLength(2);
+      (await listPilots(app, token, '?role=admin&role=pilot')).json().items,
+    ).toHaveLength(5);
     expect((await listPilots(app, token, '?active=true')).json().items).toHaveLength(5);
     expect((await listPilots(app, token, '?q=kowalska')).json().items).toEqual([
       expect.objectContaining({ code: 'AKO' }),
@@ -245,8 +241,8 @@ describe('GET /admin/api/pilots - lista kont i dane referencyjne', () => {
     const { app } = await testHarness();
     const body = (await listPilots(app, await tokenOf(app, 'TMK'), '?role=admin')).json();
 
-    expect(body.items).toHaveLength(1);
-    expect(body.total).toBe(1);
+    expect(body.items).toHaveLength(2);
+    expect(body.total).toBe(2);
     expect(body.counts.total).toBe(5);
   });
 
@@ -369,9 +365,9 @@ describe('POST /admin/api/pilots - zakładanie konta', () => {
     expect(await auditRows(db)).toEqual([]);
   });
 
-  it('szef wyszkolenia NIE zakłada kont - 403 z podaną zdolnością', async () => {
+  it('konto bez `accounts.manage` nie zakłada kont - 403 z podaną zdolnością', async () => {
     const { app, db } = await testHarness();
-    const res = await createPilot(app, await tokenOf(app, 'AKO'), {
+    const res = await createPilot(app, await tokenOf(app, 'PWI'), {
       code: 'NEW',
       name: 'Nowe Konto',
       email: 'nowe@uzaero.pl',
@@ -402,14 +398,14 @@ describe('PATCH /admin/api/pilots/:id - tożsamość i rola', () => {
     const { app, db } = await testHarness();
     const res = await patchPilot(app, await tokenOf(app, 'TMK'), 'PWI', {
       name: 'Piotr Wiśniewski-Nowak',
-      role: 'training_lead',
+      role: 'admin',
     });
 
     expect(res.statusCode).toBe(200);
     expect(res.json().pilot).toMatchObject({
       code: 'PWI',
       name: 'Piotr Wiśniewski-Nowak',
-      role: 'training_lead',
+      role: 'admin',
     });
 
     const rows = await auditRows(db);
@@ -418,7 +414,7 @@ describe('PATCH /admin/api/pilots/:id - tożsamość i rola', () => {
       code: 'PWI',
       changes: {
         name: { from: 'Piotr Wiśniewski', to: 'Piotr Wiśniewski-Nowak' },
-        role: { from: 'pilot', to: 'training_lead' },
+        role: { from: 'pilot', to: 'admin' },
       },
     });
   });
@@ -473,6 +469,11 @@ describe('PATCH /admin/api/pilots/:id - tożsamość i rola', () => {
     // osobny przypadek niżej („wyścig o populację administratorów").
     const { app, db } = await testHarness();
     const token = await tokenOf(app, 'TMK');
+
+    // Świat testowy ma DWA konta administratorów (TMK, AKO), a ten przypadek opisuje
+    // klub, w którym na końcu zostaje JEDEN - więc AKO schodzi do pilota, zanim ruch
+    // się zacznie. Jawnie w teście, bo to warunek przypadku, a nie własność świata.
+    await db.query("UPDATE pilots SET role = 'pilot' WHERE id = 'AKO'");
 
     // Drugi administrator, żeby dało się w ogóle wykonać ruch odbierający rolę…
     await patchPilot(app, token, 'PWI', { role: 'admin' });
@@ -540,6 +541,10 @@ describe('wyścig o populację administratorów', () => {
     const harness = await testHarness();
     const commands = pilotCommands(harness);
 
+    // Wyścig ma być między DWOMA administratorami, a świat testowy ma trzeciego (AKO)
+    // - z nim żadna z degradacji nie byłaby tą ostatnią i gałąź nigdy by nie zaszła.
+    await harness.db.query("UPDATE pilots SET role = 'pilot' WHERE id = 'AKO'");
+
     // Dwóch administratorów: TMK (seed) i PWI.
     expect((await commands.update(actor('TMK'), 'PWI', { role: 'admin' })).ok).toBe(true);
 
@@ -560,6 +565,10 @@ describe('wyścig o populację administratorów', () => {
   it('deaktywacja ostatniego administratora cudzą ręką → `last_admin`, konto zostaje', async () => {
     const harness = await testHarness();
     const commands = pilotCommands(harness);
+
+    // Jak wyżej: trzeci administrator ze świata testowego zdejmowałby z PWI status
+    // ostatniego, a to jego dotyczy ten przypadek.
+    await harness.db.query("UPDATE pilots SET role = 'pilot' WHERE id = 'AKO'");
 
     expect((await commands.update(actor('TMK'), 'PWI', { role: 'admin' })).ok).toBe(true);
     expect((await commands.update(actor('PWI'), 'TMK', { role: 'pilot' })).ok).toBe(true);
@@ -684,16 +693,16 @@ describe('POST /admin/api/pilots/:id/active - deaktywacja i aktywacja', () => {
   });
 
   it('DEAKTYWACJA ODCINA PANEL NATYCHMIAST - nie po ośmiu godzinach sesji', async () => {
-    // Sedno rozstrzygnięcia „rola i aktywność przy każdym żądaniu". Token szefa
-    // wyszkolenia jest ważny kryptograficznie jeszcze przez godzinę, a mimo to kolejne
-    // żądanie panelu dostaje 401 - bo za poświadczeniem nie stoi już nikt.
+    // Sedno rozstrzygnięcia „rola i aktywność przy każdym żądaniu". Token odciętego
+    // administratora jest ważny kryptograficznie jeszcze przez godzinę, a mimo to
+    // kolejne żądanie panelu dostaje 401 - bo za poświadczeniem nie stoi już nikt.
     const { app } = await testHarness();
-    const leadToken = await tokenOf(app, 'AKO');
-    expect((await listPilots(app, leadToken)).statusCode).toBe(200);
+    const cutOff = await tokenOf(app, 'AKO');
+    expect((await listPilots(app, cutOff)).statusCode).toBe(200);
 
     await setActive(app, await tokenOf(app, 'TMK'), 'AKO', false);
 
-    const after = await listPilots(app, leadToken);
+    const after = await listPilots(app, cutOff);
     expect(after.statusCode).toBe(401);
     expect(after.json()).toEqual({ error: 'unauthorized' });
   });
@@ -781,7 +790,7 @@ describe('POST /admin/api/pilots/:id/password-reset - jedyna ścieżka zmiany ha
     const { app, clock } = await testHarness();
     const admin = await tokenOf(app, 'TMK');
 
-    // AKO (szef wyszkolenia) siedzi w panelu z ważnym ciasteczkiem…
+    // AKO (drugi administrator) siedzi w panelu z ważnym ciasteczkiem…
     const session = await panelSession(app, 'AKO');
     expect((await panelMe(app, session)).statusCode).toBe(200);
 
@@ -851,9 +860,9 @@ describe('POST /admin/api/pilots/:id/password-reset - jedyna ścieżka zmiany ha
     expect(res.json()).toEqual({ error: 'refused', reason: 'inactive_account' });
   });
 
-  it('szef wyszkolenia nie resetuje cudzych haseł - 403', async () => {
+  it('konto bez `accounts.manage` nie resetuje cudzych haseł - 403', async () => {
     const { app } = await testHarness();
-    const res = await resetPassword(app, await tokenOf(app, 'AKO'), 'PWI');
+    const res = await resetPassword(app, await tokenOf(app, 'JSE'), 'PWI');
     expect(res.statusCode).toBe(403);
     expect(res.json()).toEqual({ error: 'forbidden', required: 'accounts.manage' });
   });
@@ -877,5 +886,147 @@ describe('CSRF i sesja przeglądarkowa', () => {
 
     expect(res.statusCode).toBe(403);
     expect(await auditRows(db)).toEqual([]);
+  });
+});
+
+/**
+ * USUWANIE KONTA (2026-08-30).
+ *
+ * Operacja jest NIEODWRACALNA i jedyna taka w panelu, więc przekrój sprawdza nie tylko
+ * ścieżkę udaną, ale KAŻDĄ z trzech odmów osobno - a przy „ma historię" także wariant,
+ * który najłatwiej przeoczyć: konto, które nigdy nie było PIC-em, ale poleciało jako
+ * drugi pilot.
+ */
+describe('usunięcie konta', () => {
+  const deletePilot = (app: Harness['app'], token: string, id: string) =>
+    app.inject({ method: 'DELETE', url: `/admin/api/pilots/${id}`, headers: admin(token) });
+
+  /** Wiersz zdarzenia WPROST do bazy - pytamy o regułę usuwania, nie o ingest. */
+  const insertEvent = (
+    db: Harness['db'],
+    over: { uuid: string; picId: string; dualId?: string | null },
+  ) =>
+    db.query(
+      `INSERT INTO events (uuid, session_uuid, aircraft_id, pic_id, dual_id, type,
+                           device_time, payload, schema_version)
+       VALUES ($1, 's-1', 'SP-AXA', $2, $3, 'engine_start', 1, '{}'::jsonb, 1)`,
+      [over.uuid, over.picId, over.dualId ?? null],
+    );
+
+  /** Konto świeże i już wyłączone - jedyny stan, z którego usunięcie ma prawo przejść. */
+  async function disposable(app: Harness['app'], token: string): Promise<string> {
+    const created = await createPilot(app, token, { code: 'TMP', name: 'Konto Pomyłkowe' });
+    const id = created.json().pilot.id as string;
+    await setActive(app, token, id, false);
+    return id;
+  }
+
+  it('kasuje konto BEZ historii - wiersz znika, a audyt niesie tożsamość', async () => {
+    const { app, db } = await testHarness();
+    const token = await tokenOf(app, 'TMK');
+    const id = await disposable(app, token);
+
+    const res = await deletePilot(app, token, id);
+
+    expect(res.statusCode).toBe(204);
+    const { rows } = await db.query('SELECT id FROM pilots WHERE id = $1', [id]);
+    expect(rows).toHaveLength(0);
+
+    // Wpis audytu jest po tej operacji JEDYNYM śladem konta, więc musi nieść komplet
+    // tożsamości - `target_id` jest uuid-em, którego nikt nie rozpozna.
+    const audit = (await auditRows(db)).find((row) => row.action === 'pilot.delete');
+    expect(audit).toMatchObject({ target_type: 'pilot', target_id: id, actor_pilot_id: 'TMK' });
+    expect(audit?.details).toMatchObject({ code: 'TMP', name: 'Konto Pomyłkowe', role: 'pilot' });
+  });
+
+  it('ODMAWIA, dopóki konto ma dostęp - usuwanie jest dwustopniowe', async () => {
+    // Nie jest to formalność: telefon nie ma ścieżki kasowania wiersza, więc konto
+    // usunięte „na gorąco" zostałoby na nim jako AKTYWNE. Wyłączenie jedzie normalną
+    // drogą przez `GET /reference` i aplikacja po nim filtruje.
+    const { app, db } = await testHarness();
+    const token = await tokenOf(app, 'TMK');
+    const created = await createPilot(app, token, { code: 'TMP', name: 'Konto Pomyłkowe' });
+    const id = created.json().pilot.id as string;
+
+    const res = await deletePilot(app, token, id);
+
+    expect(res.statusCode).toBe(409);
+    expect(res.json()).toMatchObject({ error: 'refused', reason: 'account_active' });
+    const { rows } = await db.query('SELECT id FROM pilots WHERE id = $1', [id]);
+    expect(rows).toHaveLength(1);
+  });
+
+  it('ODMAWIA kontu, które latało jako PIC', async () => {
+    const { app, db } = await testHarness();
+    const token = await tokenOf(app, 'TMK');
+    const id = await disposable(app, token);
+    await insertEvent(db, { uuid: 'e-pic', picId: id });
+
+    const res = await deletePilot(app, token, id);
+
+    expect(res.statusCode).toBe(409);
+    expect(res.json()).toMatchObject({ error: 'refused', reason: 'has_history' });
+  });
+
+  it('ODMAWIA kontu, które poleciało wyłącznie jako DRUGI PILOT', async () => {
+    // Przypadek najłatwiejszy do przeoczenia: konto nie jest PIC-em ani jednej sesji,
+    // a mimo to stoi w cudzym rejestrze i w karcie arkusza.
+    const { app, db } = await testHarness();
+    const token = await tokenOf(app, 'TMK');
+    const id = await disposable(app, token);
+    await insertEvent(db, { uuid: 'e-dual', picId: 'TMK', dualId: id });
+
+    const res = await deletePilot(app, token, id);
+
+    expect(res.statusCode).toBe(409);
+    expect(res.json()).toMatchObject({ error: 'refused', reason: 'has_history' });
+  });
+
+  it('ODMAWIA kontu, które jest SPRAWCĄ w dzienniku audytu', async () => {
+    // Administrator, który coś w klubie zrobił, zostaje w dzienniku - dziennik bez
+    // tożsamości sprawcy przestaje być dziennikiem.
+    const { app, db } = await testHarness();
+    const token = await tokenOf(app, 'TMK');
+    const id = await disposable(app, token);
+    await db.query(
+      `INSERT INTO admin_audit (actor_pilot_id, actor_role, action, target_type, target_id)
+       VALUES ($1, 'admin', 'flag.resolve', 'flag', '1')`,
+      [id],
+    );
+
+    const res = await deletePilot(app, token, id);
+
+    expect(res.statusCode).toBe(409);
+    expect(res.json()).toMatchObject({ error: 'refused', reason: 'has_history' });
+  });
+
+  it('ODMAWIA usunięcia WŁASNEGO konta', async () => {
+    const { app } = await testHarness();
+    const token = await tokenOf(app, 'TMK');
+
+    const res = await deletePilot(app, token, 'TMK');
+
+    expect(res.statusCode).toBe(409);
+    expect(res.json()).toMatchObject({ error: 'refused', reason: 'self_delete' });
+  });
+
+  it('nieznane konto to 404, a nie ciche 204', async () => {
+    const { app } = await testHarness();
+    const res = await deletePilot(app, await tokenOf(app, 'TMK'), 'nie-ma-takiego');
+
+    expect(res.statusCode).toBe(404);
+  });
+
+  it('konto bez zdolności `accounts.manage` dostaje 403 i niczego nie kasuje', async () => {
+    const { app, db } = await testHarness();
+    const admin = await tokenOf(app, 'TMK');
+    const id = await disposable(app, admin);
+
+    const res = await deletePilot(app, await tokenOf(app, 'PWI'), id);
+
+    expect(res.statusCode).toBe(403);
+    expect(res.json()).toMatchObject({ required: 'accounts.manage' });
+    const { rows } = await db.query('SELECT id FROM pilots WHERE id = $1', [id]);
+    expect(rows).toHaveLength(1);
   });
 });

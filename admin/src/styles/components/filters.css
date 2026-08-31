@@ -1,10 +1,13 @@
 /**
- * UZ Aero - panel: pasek filtrów list.
+ * UZ Aero - panel 2.0: pasek nad tabelą - wyszukiwanie i zawężenia.
  *
- * Klasy i wartości 1:1 z `design/admin/SZABLON.html` (sekcja „pasek filtrów").
- * Dwie różnice wobec mockupu i obie są tym samym: `.search` jest `<label>`,
- * a `.chip` - `<button>`. Wygląd bez zmian; zyskuje klawiatura, bo filtr, którego
- * nie da się ustawić bez myszy, psuje scenariusz „przygotuj link do tego wycinka".
+ * Dwie różnice wobec zwykłego HTML-a i obie są tym samym: `.search` jest `<label>`,
+ * a `.chip` - `<button>`. Zyskuje na tym klawiatura, bo filtr, którego nie da się
+ * ustawić bez myszy, psuje scenariusz „przygotuj link do tego wycinka".
+ *
+ * Czego tu nie ma: LICZB przy chipach. W panelu 1.0 chip niósł liczbę trafień, a kafel
+ * nad nim - liczbę po całym klubie; dwie różne liczby o tym samym na jednym ekranie
+ * wymagały przypisu wyjaśniającego różnicę.
  */
 
 .filters {
@@ -49,7 +52,7 @@
 }
 
 .search input::placeholder {
-  color: var(--text-muted);
+  color: var(--text-placeholder);
 }
 
 .chip {
@@ -78,21 +81,4 @@
   background: var(--green-muted);
   border-color: var(--green-border);
   color: var(--green);
-}
-
-/* Grupa dosunięta do prawej krawędzi paska filtrów (plakietki „Wszystkie czasy UTC"
-   i licznik wierszy). W mockupie stoi to stylem inline (`margin-left:auto;
-   display:inline-flex;align-items:center;gap:9px`); tutaj dostaje nazwę, bo klasa bez
-   nazwy jest klasą, której nikt nie znajdzie greppem. */
-.list-spacer {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-}
-
-.chip.on.amber {
-  background: var(--amber-muted);
-  border-color: var(--amber-border);
-  color: var(--amber);
 }

@@ -1,13 +1,18 @@
 /**
- * UZ Aero - panel: mapa śladu lotu (`A02c-slad.html`, sekcja „Trasa").
+ * UZ Aero - panel 2.0: mapa śladu sesji.
  *
  * Komponent jest CZYSTYM UKŁADEM: nie liczy nic, dostaje gotowe piksele z `mapPlot`
- * (`screens/track/trackChart.ts`). To ta sama zasada, co w karcie dnia - decyzja
+ * (`screens/logbook/trackChart.ts`). To ta sama zasada, co w reszcie panelu - decyzja
  * o treści mieszka w module testowalnym w Node, a `.tsx` odpowiada za rozmieszczenie.
  *
  * **Bez kafelków** (decyzja 2026-08-04): tłem jest siatka współrzędnych, a odniesienie
  * w terenie dają lotniska z katalogu - pas startowy z podpisem ICAO. Panel nie pobiera
  * więc niczego z zewnątrz, dokładnie tak samo jak telefon.
+ *
+ * **Legenda opisuje RODZAJE, nie znaczniki.** Panel 1.0 wypisywał w niej każdy znacznik
+ * z osobna - przy locie treningowym to trzy wiersze, ale przy dniu skokowym trzydzieści,
+ * czyli legenda dłuższa od mapy. Numer lotu stoi przy samym znaczniku i tam jest
+ * potrzebny; legenda odpowiada wyłącznie „co znaczy ten kolor".
  *
  * Typy kształtów mieszkają TUTAJ, a nie przy module liczącym, bo warstwa `ui/` nie zna
  * `screens/` (reguła `test/architecture.test.ts`) - kierunek zależności biegnie od
@@ -118,13 +123,13 @@ export function TrackMap({ plot, width, height }: TrackMapProps) {
                 opacity={0.4}
               />
             )}
-            <circle cx={marker.x} cy={marker.y} r={8} fill={marker.color} />
+            <circle cx={marker.x} cy={marker.y} r={7} fill={marker.color} />
             <text
-              x={marker.x + 13}
+              x={marker.x + 12}
               y={marker.y + 4}
               className="axis-label"
               fill={marker.color}
-              fontSize={11}
+              fontSize={10}
             >
               {marker.label}
             </text>
@@ -133,23 +138,18 @@ export function TrackMap({ plot, width, height }: TrackMapProps) {
       </svg>
 
       <div className="map-legend">
-        <div className="map-legend-title">Legenda</div>
         <div className="legend-row">
           <span className="legend-dot line" style={{ background: 'var(--green)' }} />
-          Trasa lotu
+          Trasa
         </div>
-        {plot.markers.map((marker) => (
-          <div className="legend-row" key={marker.label}>
-            <span className="legend-dot" style={{ background: marker.color }} />
-            {marker.label}
-          </div>
-        ))}
-        {plot.airfields.length > 0 && (
-          <div className="legend-row">
-            <span className="legend-dot line" style={{ background: 'var(--border-strong)' }} />
-            Pas startowy
-          </div>
-        )}
+        <div className="legend-row">
+          <span className="legend-dot" style={{ background: 'var(--green)' }} />
+          Start
+        </div>
+        <div className="legend-row">
+          <span className="legend-dot" style={{ background: 'var(--blue)' }} />
+          Lądowanie
+        </div>
       </div>
 
       {/* Bez kafelków podziałka jest JEDYNYM odniesieniem odległości. */}

@@ -40,72 +40,6 @@ export function PlaneIcon({ size = 14 }: IconProps) {
   );
 }
 
-export function DashboardIcon({ size }: IconProps) {
-  return (
-    <Stroke size={size}>
-      <rect x="3" y="3" width="7" height="9" rx="1" />
-      <rect x="14" y="3" width="7" height="5" rx="1" />
-      <rect x="14" y="12" width="7" height="9" rx="1" />
-      <rect x="3" y="16" width="7" height="5" rx="1" />
-    </Stroke>
-  );
-}
-
-export function DaysIcon({ size }: IconProps) {
-  return (
-    <Stroke size={size}>
-      <path d="M12 2v20M2 12h20" />
-    </Stroke>
-  );
-}
-
-export function FlagIcon({ size }: IconProps) {
-  return (
-    <Stroke size={size}>
-      <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
-      <line x1="4" y1="22" x2="4" y2="15" />
-    </Stroke>
-  );
-}
-
-export function FileIcon({ size }: IconProps) {
-  return (
-    <Stroke size={size}>
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-      <polyline points="14 2 14 8 20 8" />
-    </Stroke>
-  );
-}
-
-export function ExportIcon({ size }: IconProps) {
-  return (
-    <Stroke size={size}>
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-      <polyline points="7 10 12 15 17 10" />
-      <line x1="12" y1="15" x2="12" y2="3" />
-    </Stroke>
-  );
-}
-
-export function ClockIcon({ size }: IconProps) {
-  return (
-    <Stroke size={size}>
-      <path d="M12 8v4l3 2" />
-      <circle cx="12" cy="12" r="9" />
-    </Stroke>
-  );
-}
-
-export function ChartIcon({ size }: IconProps) {
-  return (
-    <Stroke size={size}>
-      <line x1="18" y1="20" x2="18" y2="10" />
-      <line x1="12" y1="20" x2="12" y2="4" />
-      <line x1="6" y1="20" x2="6" y2="14" />
-    </Stroke>
-  );
-}
-
 export function PeopleIcon({ size }: IconProps) {
   return (
     <Stroke size={size}>
@@ -121,14 +55,6 @@ export function LockIcon({ size }: IconProps) {
     <Stroke size={size}>
       <rect x="3" y="11" width="18" height="11" rx="2" />
       <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-    </Stroke>
-  );
-}
-
-export function WrenchIcon({ size }: IconProps) {
-  return (
-    <Stroke size={size}>
-      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9l-3.8 3.8z" />
     </Stroke>
   );
 }
@@ -207,15 +133,6 @@ export function CheckIcon({ size = 13 }: IconProps) {
   );
 }
 
-/** Szewron w prawo - pozycja listy prowadząca w głąb. */
-export function ChevronRightIcon({ size = 15 }: IconProps) {
-  return (
-    <Stroke size={size}>
-      <polyline points="9 18 15 12 9 6" />
-    </Stroke>
-  );
-}
-
 /** Ołówek - przejście do korekty zdarzenia (A02b). */
 export function EditIcon({ size = 13 }: IconProps) {
   return (
@@ -244,6 +161,16 @@ export function SignOutIcon({ size = 13 }: IconProps) {
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
       <polyline points="14 17 19 12 14 7" />
       <line x1="19" y1="12" x2="9" y2="12" />
+    </Stroke>
+  );
+}
+
+/** Plus - założenie nowego konta i nowej jednostki floty. */
+export function PlusIcon({ size = 13 }: IconProps) {
+  return (
+    <Stroke size={size} width={2.5}>
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
     </Stroke>
   );
 }

@@ -1024,8 +1024,8 @@ trasy, nie zdaniem w ciele (§8.6).
 2. **Rozwiązanie odblokowuje:** `POST /admin/api/flags/:id/resolve` → 200 z `revision: 1`,
    `GET /sheets/:tab` zwraca wiersze karty. **To jest test, dla którego panel powstaje.**
 3. **Wyścig:** drugie `resolve` → 409 z aktualnym stanem flagi.
-4. **Zdolności:** `pilot` → 403 `{required:'flags.resolve'}`; `training_lead` → 200
-   (§4.5 przypisuje mu cykl życia flagi); brak tokenu → 401.
+4. **Zdolności:** `pilot` → 403 `{required:'flags.resolve'}`; konto bez zdolności → 403 z podaną zdolnością
+   brak tokenu → 401. (Rola `training_lead` wycofana 2026-08-30 - patrz `panel-2.0.md`.)
 5. **Audyt atomowy:** port audytu rzuca → flaga nadal `'open'` (patrz §4.3).
 6. **Typ inny niż overlap:** rozwiązanie `mh_gap` **nie** wywołuje eksportu - odpowiedź
    ma `exports: []`, nie fałszywą rewizję.
@@ -1602,7 +1602,7 @@ niczego, co da się pokazać).
    przesunięcie testów terenowych. *Rekomendacja: przekroje 0–3 przed fazą 5
    (audyt + flagi + karta dnia + korekta = wszystko, czego wymaga naprawianie danych
    z terenu), reszta po niej.*
-5. **Czy `training_lead` dostaje `events.correct` i `audit.read`.** `roles.ts` już
+5. **Czy rola pośrednia dostaje `events.correct` i `audit.read`.** `roles.ts` już
    zdecydował: nie. `ANALIZA.md` oznacza obie pozycje jako „do decyzji" z tą samą
    rekomendacją. Zostawiam jako zamknięte - odnotowuję, bo praktyka może to odwrócić
    i wtedy zmiana to jedna linia w `CAPABILITIES` plus test.

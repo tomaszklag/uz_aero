@@ -1,14 +1,14 @@
 /**
- * UZ Aero - panel: COMPOSITION ROOT.
+ * UZ Aero - panel 2.0: COMPOSITION ROOT.
  *
  * Jedyne miejsce, które zna wszystkie konkrety naraz: klienta zapytań, router,
- * kontekst sesji i arkusze stylów. Reszta kodu dostaje wszystko propsami albo
- * hookiem - dokładnie jak `server/src/index.ts` i `app/src/bootstrap/`.
+ * kontekst sesji i arkusze stylów. Reszta kodu dostaje wszystko propsami albo hookiem -
+ * dokładnie jak `server/src/index.ts` i `app/src/bootstrap/`.
  *
  * Kolejność arkuszy jest ZNACZĄCA i dlatego stoi tu, a nie w `index.html`:
- * `fonts.css` (@font-face, self-host - §9) → `tokens.css` (generowany) → `base.css`
- * (reset i korzeń) → `layout.css` (rama) → komponenty. Zmienne i kroje muszą
- * istnieć, zanim ktokolwiek po nie sięgnie.
+ * `fonts.css` (@font-face, self-host) → `tokens.css` (generowany z `@uzaero/tokens`)
+ * → `base.css` (reset i korzeń) → `layout.css` (rama) → komponenty. Zmienne i kroje
+ * muszą istnieć, zanim ktokolwiek po nie sięgnie.
  */
 
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -26,11 +26,10 @@ import './styles/components/surfaces.css';
 import './styles/components/page.css';
 import './styles/components/filters.css';
 import './styles/components/table.css';
-import './styles/components/payload.css';
-import './styles/components/timeline.css';
 import './styles/components/drawer.css';
-import './styles/components/dashboard.css';
-import './styles/components/stats.css';
+import './styles/components/skeleton.css';
+import './styles/components/login.css';
+import './styles/components/logbook.css';
 import './styles/components/track.css';
 
 import { SessionProvider } from './auth/SessionProvider';

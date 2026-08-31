@@ -632,10 +632,11 @@ export interface AdminPilotJoin {
 export interface PilotListFilter {
   active?: boolean;
   /**
-   * Role jako LISTA, nie pojedyncza wartość, bo ekran filtruje chipem „Z rolą panelu",
-   * a to są DWIE role naraz (`admin` + `training_lead`). Jedna wartość zmusiłaby panel
-   * albo do rezygnacji z chipa z mockupu, albo do sklejania listy z dwóch żądań -
-   * czyli do liczenia po swojemu. Ta sama decyzja, co przy `AuditListFilter.actions`.
+   * Role jako LISTA, nie pojedyncza wartość, bo chip „Z rolą panelu" opisuje ZBIÓR
+   * ról, a nie jedną: dziś jest w nim sam `admin` (po wycofaniu `training_lead`
+   * 2026-08-30), ale wraca do dwóch razem z rolą pośrednią. Jedna wartość zmusiłaby
+   * panel albo do rezygnacji z chipa, albo do sklejania listy z dwóch żądań - czyli
+   * do liczenia po swojemu. Ta sama decyzja, co przy `AuditListFilter.actions`.
    */
   roles?: PilotRole[];
   /** Fragment kodu, nazwiska albo e-maila; dopasowanie bez rozróżniania wielkości. */
@@ -765,6 +766,26 @@ export interface PilotsAdminPort {
    * Postgresa i mieszka w adapterze, tak jak kształt kursora.
    */
   lockAdminPopulation(tx: Queryable): Promise<void>;
+  /**
+   * Czy cokolwiek odwołuje się do tego konta - wejście do `refuseDelete`.
+   *
+   * **Zero znaczy „nic", każda wartość dodatnia znaczy „coś".** Liczba jest liczbą
+   * ŹRÓDEŁ, nie wierszy: adapter pyta `EXISTS`, bo regule wystarczy zero/niezero,
+   * a liczenie lotów konta z całym sezonem byłoby pełnym skanem po nic.
+   *
+   * Źródła: zdarzenia (jako PIC **i jako drugi pilot**, także po korekcie w payloadzie),
+   * sesje oraz wpisy dziennika audytu, w których konto jest SPRAWCĄ. NIE liczy
+   * `refresh_tokens`: to sesje telefonu, a nie historia - kasujemy je razem z kontem.
+   *
+   * Jedna liczba, nie rozbicie na tabele: reguła brzmi „cokolwiek się odwołuje - nie
+   * kasujemy", więc panel nie ma czego zrobić z informacją, KTÓRA tabela trzyma wiersz.
+   */
+  references(tx: Queryable, id: string): Promise<number>;
+  /**
+   * TRWAŁE skasowanie wiersza konta. Wołane WYŁĄCZNIE po `refuseDelete`, w tej samej
+   * transakcji - port nie sprawdza niczego sam.
+   */
+  delete(tx: Queryable, id: string): Promise<void>;
 }
 
 /**
@@ -920,6 +941,22 @@ export interface FleetAdminPort {
    * Czytane w TEJ SAMEJ transakcji co zapis, po wzięciu blokady niżej.
    */
   openSessions(tx: Queryable, aircraftId: string): Promise<number>;
+  /**
+   * Czy cokolwiek odwołuje się do tej jednostki - wejście do `refuseDeleteAircraft`.
+   *
+   * **Zero znaczy „nic", każda wartość dodatnia znaczy „coś"** - jak przy koncie:
+   * liczba jest liczbą ŹRÓDEŁ, nie wierszy. Źródła: zdarzenia, sesje, flagi, dziennik
+   * eksportu i wiersz normy zużycia.
+   *
+   * Jedna liczba, nie rozbicie na tabele: reguła brzmi „cokolwiek się odwołuje - nie
+   * kasujemy", więc panel nie ma czego zrobić z informacją, KTÓRA tabela trzyma wiersz.
+   */
+  references(tx: Queryable, aircraftId: string): Promise<number>;
+  /**
+   * TRWAŁE skasowanie wiersza jednostki. Wołane WYŁĄCZNIE po `refuseDeleteAircraft`,
+   * w tej samej transakcji - port nie sprawdza niczego sam.
+   */
+  delete(tx: Queryable, aircraftId: string): Promise<void>;
   /**
    * Blokada advisory na konfiguracji JEDNEJ jednostki, ważna do końca transakcji.
    *
@@ -1311,4 +1348,44 @@ export interface ConsumptionAdminPort {
    * nie wchodzą; ekran mówi, ile ich pominął, zamiast milczeć o różnicy.
    */
   openSessions(db: Queryable, aircraftId: string, range: StatsRange): Promise<number>;
+}
+
+/**
+ * Agregat poziomu 1 logu dnia - jedna maszyna floty w zakresie dat.
+ *
+ * Kształt jest niemal tożsamy z kontraktem HTTP, bo ta warstwa niczego tu nie
+ * przelicza: adapter sumuje kolumny projekcji, a mapper dokłada wyłącznie nazwy
+ * i formaty. Port istnieje mimo to, bo kontrakt nie ma prawa być typem ADAPTERA -
+ * ta sama granica, co przy statystykach.
+ */
+export interface LogAircraftAggregate {
+  aircraftId: string;
+  reg: string | null;
+  aircraftType: string | null;
+  mhFormat: string | null;
+  sessions: number;
+  openSessions: number;
+  activeDays: number;
+  flights: number;
+  takeoffs: number | null;
+  landings: number | null;
+  blockMs: number;
+  flightMs: number;
+  fuelAddedL: number | null;
+  fuelConsumedL: number | null;
+  fuelUnknownSessions: number;
+  oilAddedL: number | null;
+  mhDeltaH: number | null;
+  lastEngineStopAt: number | null;
+}
+
+export interface LogAdminPort {
+  /**
+   * Cała FLOTA w zakresie - także maszyny, które nie latały (wiersz samych kresek).
+   * Oś zakresu to `claim_time`, czyli ta sama, po której filtruje lista sesji pod
+   * spodem: dwa poziomy jednego modułu liczące po dwóch osiach potrafiłyby pokazać
+   * inną liczbę sesji, a narzędzie nadzoru, które samo ze sobą się nie zgadza,
+   * przestaje być narzędziem.
+   */
+  byAircraft(db: Queryable, range: { fromMs: number; toMs: number }): Promise<LogAircraftAggregate[]>;
 }

@@ -218,6 +218,26 @@ export function registerAdminPilotRoutes(
   adminRoute(
     app,
     gate,
+    // `DELETE`, nie `POST /pilots/:id/delete`: usunięcie zasobu to metoda HTTP, która
+    // dokładnie to znaczy, a odpowiedź nie niesie treści. Nagłówka CSRF wymaga tak samo
+    // jak reszta mutacji (`SAFE_METHODS` to wyłącznie GET/HEAD/OPTIONS).
+    { method: 'DELETE', url: '/pilots/:id', capability: 'accounts.manage' },
+    async (req, reply, actor) => {
+      const params = idParams.safeParse(req.params);
+      if (!params.success) return reply.code(400).send({ error: 'bad_request' });
+
+      const outcome = await pilots.remove(actor, params.data.id);
+      if (!outcome.ok) return refusal(reply, outcome);
+
+      // 204, nie 200 z wierszem: wiersza już nie ma, więc nie ma czego oddać. Panel
+      // i tak przeładowuje listę - to ona jest stanem po operacji.
+      return reply.code(204).send();
+    },
+  );
+
+  adminRoute(
+    app,
+    gate,
     { method: 'POST', url: '/pilots/:id/password-reset', capability: 'accounts.manage' },
     async (req, reply, actor) => {
       const params = idParams.safeParse(req.params);

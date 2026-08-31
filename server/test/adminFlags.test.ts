@@ -169,6 +169,9 @@ async function overlapping() {
 }
 
 describe('rozwiązanie flagi (A03a)', () => {
+  // Osobny przypadek „rola pośrednia MOŻE rozstrzygnąć flagę" wypadł razem z rolą
+  // `training_lead` (2026-08-30): dziś flagę rozstrzyga ten, kto wchodzi do panelu,
+  // czyli administrator - i to jego drogę przez `flags.resolve` przybija ten przypadek.
   it('zmienia status, zapisuje komentarz i ODBLOKOWUJE kartę dnia', async () => {
     const { app, db, flagId } = await overlapping();
     const admin = await login(app, 'TMK');
@@ -241,16 +244,6 @@ describe('rozwiązanie flagi (A03a)', () => {
     expect(sheet.json().rows).toContainEqual(['Sesje', '2']);
   });
 
-  it('szef wyszkolenia MOŻE rozstrzygnąć flagę - to jego główne narzędzie', async () => {
-    const { app, db, flagId } = await overlapping();
-    const trainingLead = await login(app, 'AKO');
-
-    const res = await resolve(app, flagId, { token: trainingLead, note: 'Wyjaśnione z załogą.' });
-
-    expect(res.statusCode).toBe(200);
-    expect((await flagRows(db))[0]).toMatchObject({ status: 'resolved', resolved_by: 'AKO' });
-  });
-
   it('pilot NIE MOŻE - 403 z podaną wymaganą zdolnością, flaga zostaje otwarta', async () => {
     const { app, db, flagId } = await overlapping();
     const pilot = await login(app, 'PWI');
@@ -303,12 +296,14 @@ describe('rozwiązanie flagi (A03a)', () => {
     // inaczej dopisałby własne uzasadnienie do decyzji, której nie podjął. Warunek
     // `status='open'` siedzi w SQL-u, więc to samo chroni przed wyścigiem dwóch osób.
     const { app, db, flagId } = await overlapping();
+    // DWA konta, którym wolno rozstrzygać - świat testowy ma dwóch administratorów
+    // właśnie po to, żeby dało się odtworzyć dwie osoby klikające w tę samą flagę.
     const admin = await login(app, 'TMK');
-    const trainingLead = await login(app, 'AKO');
+    const otherAdmin = await login(app, 'AKO');
 
     await resolve(app, flagId, { token: admin, note: 'Pierwsze rozstrzygnięcie.' });
     const second = await resolve(app, flagId, {
-      token: trainingLead,
+      token: otherAdmin,
       note: 'Drugie rozstrzygnięcie.',
     });
 
@@ -500,10 +495,10 @@ describe('skrzynka flag (A03)', () => {
     expect(limited.total).toBe(2);
   });
 
-  it('szef wyszkolenia CZYTA skrzynkę, pilot dostaje 403, brak tokenu 401', async () => {
-    const { app } = await mixedInbox();
+  it('panel CZYTA skrzynkę, pilot dostaje 403, brak tokenu 401', async () => {
+    const { app, admin } = await mixedInbox();
 
-    expect((await inbox(app, await login(app, 'AKO'))).statusCode).toBe(200);
+    expect((await inbox(app, admin)).statusCode).toBe(200);
 
     const pilot = await inbox(app, await login(app, 'PWI'));
     expect(pilot.statusCode).toBe(403);

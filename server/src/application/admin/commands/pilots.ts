@@ -28,10 +28,17 @@
  *     odmowa jest jawna i z powodem (`AccountRefusal`), nigdy ciche ukrycie akcji.
  *     Populację administratorów chroni blokada advisory na stałym kluczu, wzięta
  *     PRZED policzeniem ich (`PilotsAdminPort.lockAdminPopulation`) - patrz `update`.
- *  4. **Konta się NIE KASUJE.** Deaktywacja odbiera dostęp; zdarzenia zostają
- *     w rejestrze (append-only) i dalej liczą się w statystykach, kartach dnia
- *     i łańcuchu motogodzin samolotu. W tym pliku nie ma i nie może być `DELETE`
- *     na `pilots`.
+ *  4. **Konta, KTORE LATALO, się nie kasuje.** Deaktywacja odbiera dostęp; zdarzenia
+ *     zostają w rejestrze (append-only) i dalej liczą się w statystykach, kartach dnia
+ *     i łańcuchu motogodzin samolotu.
+ *
+ *     Od 2026-08-30 jest `remove` - i to NIE JEST odwrócenie tej zasady, tylko jej
+ *     dopełnienie: `refuseDelete` przepuszcza wyłącznie konto, do którego NIC się nie
+ *     odwołuje (zero zdarzeń jako PIC i jako Dual, zero sesji, zero wpisów audytu jako
+ *     sprawca) i które jest już wyłączone. Usuwalne jest więc dokładnie to, co powstało
+ *     pomyłką - literówka w kodzie, dubel, ktoś, kto nie dołączył. Wszystko, co ma
+ *     historię, chroni ta sama zasada, co dotąd, tylko teraz wypowiedziana jako reguła
+ *     domeny zamiast jako brak metody.
  *
  * Konstruktor bez `Database`/`Queryable` - komenda nie ma jak zapisać z pominięciem
  * śladu audytu, bo nie ma uchwytu do bazy (`auditedWrite.ts`, `test/architecture.test.ts`).
@@ -39,6 +46,7 @@
 
 import {
   refuseDeactivate,
+  refuseDelete,
   refusePasswordReset,
   refuseRoleChange,
   type AccountRefusal,
@@ -380,6 +388,66 @@ export class AdminPilotCommands {
       });
 
       return { ok: true, result: { ...result, password } };
+    } catch (err) {
+      return this.asOutcome(err);
+    }
+  }
+
+  /**
+   * TRWAŁE usunięcie konta (2026-08-30).
+   *
+   * ══ DLACZEGO TA OPERACJA W OGOLE ISTNIEJE, SKORO „KONTA SIE NIE KASUJE" ══
+   * Bo zasada 4 tego pliku mówiła o koncie, KTORE LATALO - i dla takiego zostaje
+   * w mocy: `refuseDelete` odbija wszystko, do czego cokolwiek się odwołuje. To, co
+   * zostaje usuwalne, to konto założone pomyłką: literówka w kodzie, dubel, ktoś, kto
+   * ostatecznie nie dołączył. Trzymanie takiego wiersza na zawsze („bo kont się nie
+   * kasuje") zamienia listę klubu w archiwum cudzych pomyłek, a wyłączenie go nie
+   * usuwa - tylko przenosi na dół listy.
+   *
+   * ══ BLOKADA POPULACJI ADMINISTRATOROW ══
+   * Bierzemy ją jak przy deaktywacji i zmianie roli, mimo że usuwane konto MUSI już
+   * być nieaktywne (więc do puli administratorów się nie liczy). Powód jest w wyścigu:
+   * bez blokady równoległa aktywacja tego samego konta mogłaby wejść między odczyt
+   * a `DELETE` - i skasowalibyśmy konto, które w tej samej chwili odzyskało dostęp.
+   */
+  async remove(actor: Actor, id: string): Promise<PilotOutcome<{ account: AdminPilotAccount }>> {
+    try {
+      const result = await this.write.run(actor, async (tx) => {
+        await this.pilots.lockAdminPopulation(tx);
+
+        const account = await this.pilots.byId(tx, id);
+        if (account == null) throw new PilotNotFound();
+
+        const refusal = refuseDelete({
+          actorPilotId: actor.pilotId,
+          targetPilotId: id,
+          targetActive: account.active,
+          references: await this.pilots.references(tx, id),
+        });
+        if (refusal != null) throw new Refused(refusal);
+
+        await this.pilots.delete(tx, id);
+
+        return {
+          result: { account },
+          audit: {
+            action: 'pilot.delete' as const,
+            targetType: 'pilot',
+            targetId: id,
+            // KOMPLET tożsamości, nie sam identyfikator: wiersza już nie ma, więc ten
+            // wpis jest jedynym miejscem, z którego da się odczytać, KOGO usunięto.
+            // `targetId` zostaje uuid-em, którego nikt nie rozpozna.
+            details: {
+              code: account.code,
+              name: account.name,
+              email: account.email,
+              role: account.role,
+            },
+          },
+        };
+      });
+
+      return { ok: true, result };
     } catch (err) {
       return this.asOutcome(err);
     }

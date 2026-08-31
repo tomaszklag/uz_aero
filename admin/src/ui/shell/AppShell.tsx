@@ -1,51 +1,61 @@
 /**
- * UZ Aero - panel: RAMA aplikacji (`.shell` z `SZABLON.html`).
+ * UZ Aero - panel 2.0: rama aplikacji - pasek górny i miejsce na treść.
  *
- * Sidebar + (topbar + treść). Rama jest komponentem, a nie ekranem: nie wie, co
- * renderuje, i nie sięga po dane. Treść wstawia router (`<Outlet/>`), okruszki
- * i tożsamość przychodzą propsami.
+ * Cała nawigacja panelu mieści się w jednym pasku 56 px: znak po lewej, zakładki
+ * pośrodku, zalogowany po prawej. Czego tu NIE MA i dlaczego:
+ *  • **okruszków** - „Panel / Konfiguracja / Piloci" opisywało jedno kliknięcie;
+ *  • **zegara UTC** - w panelu 2.0 nie ma ani jednej kolumny z czasem, więc zegar
+ *    nie miałby czego kwalifikować. Wraca razem z modułem, w którym czas coś znaczy;
+ *  • **licznika spraw przy zakładkach** - liczba, której nie ma jak kliknąć, jest
+ *    ozdobą; wraca razem ze skrzynką flag.
  */
 
-import type { ReactNode } from 'react';
+import { NavLink } from 'react-router-dom';
 
-import type { Capability, PanelPilotDto } from '../../api/dto';
-import type { NavCount } from './navCounts';
-import { Sidebar } from './Sidebar';
-import { Topbar } from './Topbar';
+import { PlaneIcon, SignOutIcon } from '../components/icons';
+import { TABS } from './tabs';
 
 interface AppShellProps {
-  pilot: PanelPilotDto;
-  capabilities: Capability[];
-  trail: string[];
-  /** Plakietki liczbowe przy pozycjach nawigacji, kluczowane adresem pozycji. */
-  navCounts?: Partial<Record<string, NavCount>>;
+  /** Imię i nazwisko zalogowanego - jedyna rzecz, którą pasek o nim mówi. */
+  who: string;
   onLogout: () => void;
-  logoutDisabled?: boolean;
-  children: ReactNode;
+  logoutPending: boolean;
+  children: React.ReactNode;
 }
 
-export function AppShell({
-  pilot,
-  capabilities,
-  trail,
-  navCounts,
-  onLogout,
-  logoutDisabled,
-  children,
-}: AppShellProps) {
+export function AppShell({ who, onLogout, logoutPending, children }: AppShellProps) {
   return (
-    <div className="shell">
-      <Sidebar
-        pilot={pilot}
-        capabilities={capabilities}
-        navCounts={navCounts}
-        onLogout={onLogout}
-        logoutDisabled={logoutDisabled}
-      />
-      <div className="main">
-        <Topbar trail={trail} />
-        <div className="content">{children}</div>
-      </div>
-    </div>
+    <>
+      <header className="topbar">
+        <span className="brand">
+          <span className="brand-mark">
+            <PlaneIcon size={13} />
+          </span>
+          <span className="brand-name">UZ AERO</span>
+        </span>
+
+        <nav className="tabs" aria-label="Sekcje panelu">
+          {TABS.map((tab) => (
+            <NavLink
+              key={tab.to}
+              to={tab.to}
+              className={({ isActive }) => (isActive ? 'tab active' : 'tab')}
+            >
+              {tab.label}
+            </NavLink>
+          ))}
+        </nav>
+
+        <div className="topbar-right">
+          <span className="who-name">{who}</span>
+          <button type="button" className="btn ghost sm" onClick={onLogout} disabled={logoutPending}>
+            <SignOutIcon size={13} />
+            Wyloguj
+          </button>
+        </div>
+      </header>
+
+      <main className="content">{children}</main>
+    </>
   );
 }

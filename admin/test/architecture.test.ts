@@ -124,7 +124,7 @@ describe('granice warstw panelu', () => {
   it('skaner faktycznie widzi pliki i treści (kontrola samego testu)', () => {
     expect(filesUnder('.').length).toBeGreaterThan(20);
     expect(filesUnder('api')).toContain('api/httpClient.ts');
-    expect(filesUnder('ui')).toContain('ui/shell/Sidebar.tsx');
+    expect(filesUnder('ui')).toContain('ui/shell/AppShell.tsx');
 
     // Skaner `fetch` widzi jedyne prawdziwe wystąpienie…
     expect(codeOf('api/httpClient.ts')).toMatch(/\bfetch\(/);
@@ -133,7 +133,7 @@ describe('granice warstw panelu', () => {
 
     // Rozwiązywanie ścieżek względnych działa.
     expect(resolveImport('queries/useSession.ts', '../api/session')).toBe('api/session');
-    expect(resolveImport('ui/shell/Sidebar.tsx', '../../auth/can')).toBe('auth/can');
+    expect(resolveImport('ui/shell/AppShell.tsx', '../../auth/can')).toBe('auth/can');
 
     // Rozróżnianie importu typu od wartości działa w OBIE strony.
     expect(valueImportsFrom("import type { X } from 'm';", 'm')).toBe(false);
@@ -214,28 +214,44 @@ describe('granice warstw panelu', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('z `@uzaero/domain` wolno importować WYŁĄCZNIE typy', () => {
+  it('z `@uzaero/domain` wolno importować WYŁĄCZNIE typy - poza JEDNYM plikiem', () => {
     // Zakaz ma jeden konkretny cel: odciąć panelowi możliwość liczenia. Skoro
     // `projectSession` jest nieosiągalne, jedynym źródłem liczby jest odpowiedź
     // serwera (`docs/architektura-panelu-frontend.md` §5.1).
     //
-    // JEDEN wyjątek, dopisany 2026-08-03 razem z mapą śladu (`A02c`): odwzorowanie
-    // Web Mercator przelicza stopnie na PIKSELE i nie dotyka ani jednej liczby
-    // domenowej - dystans, wysokości i czasy nadal przychodzą policzone z serwera.
-    // Ten moduł nie może więc „policzyć po swojemu" niczego, o co ten zakaz chodzi.
-    // Alternatywą była kopia tej matematyki w panelu, a kopia znaczy, że ślad prędzej
-    // czy później wygląda inaczej w panelu niż w telefonie - przy narzędziu, którego
-    // wartość polega na wspólnej rozmowie o TYM SAMYM locie, to gorsze niż wyjątek.
-    const MAP_PROJECTION = 'screens/track/trackChart.ts';
+    // ══ WYJĄTEK: GEOMETRIA WYKRESU (2026-08-31) ══
+    // Lista ma DOKŁADNIE JEDNĄ pozycję i to jest decyzja, nie luka. `trackChart.ts`
+    // przelicza stopnie na piksele - odwzorowanie Web Mercator, kadrowanie, podziałkę
+    // i katalog lotnisk w kadrze. To NIE JEST liczenie faktów o locie: dystans, pułap
+    // i statystyki przychodzą policzone z serwera, a ten moduł układa je na powierzchni
+    // o znanym rozmiarze, dokładnie jak arkusz stylów układa jednostki.
+    //
+    // Alternatywą była kopia tej matematyki w panelu. Kopia oznacza, że ten sam lot
+    // narysuje się administratorowi inaczej niż pilotowi - a rozjazd byłby CICHY, bo
+    // obie mapy wyglądałyby poprawnie. Przy narzędziu, którego wartość polega na
+    // wspólnej rozmowie o TYM SAMYM locie, to najgorszy możliwy rodzaj różnicy.
+    //
+    // **Dopisanie drugiej pozycji jest decyzją produktową, nie refaktorem.** Wyjątek
+    // pilnuje też ZAKRESU: gdyby ten plik sięgnął po `projectSession` albo regułę
+    // domeny, test niżej ma go złapać po nazwie importu.
+    const allowed = 'screens/logbook/trackChart.ts';
 
     const offenders = filesUnder('.')
-      .filter((f) => f !== MAP_PROJECTION)
-      .filter((f) => valueImportsFrom(codeOf(f), '@uzaero/domain'));
+      .filter((f) => valueImportsFrom(codeOf(f), '@uzaero/domain'))
+      .filter((f) => f !== allowed);
     expect(offenders).toEqual([]);
 
-    // Wyjątek jest WĄSKI z premedytacją: gdyby ten plik przestał istnieć albo przestał
-    // importować odwzorowanie, wyjątek ma zniknąć razem z nim, a nie zostać na zapas.
-    expect(valueImportsFrom(codeOf(MAP_PROJECTION), '@uzaero/domain')).toBe(true);
+    // Co dokładnie wolno przez tę furtkę przejść - pięć funkcji geometrii i nic więcej.
+    const imported = [...codeOf(allowed).matchAll(/^\s{2}([a-zA-Z][a-zA-Z0-9]*),$/gm)].map(
+      (m) => m[1],
+    );
+    expect(imported.sort()).toEqual([
+      'airfieldsInView',
+      'boundsOf',
+      'fitBounds',
+      'scaleBar',
+      'toScreen',
+    ]);
   });
 
   it('nigdzie nie importujemy z `server/src` - panel nie widzi wnętrza serwera', () => {
@@ -271,12 +287,11 @@ describe('granice warstw panelu', () => {
     //
     // Stąd `auth/sessionContext.ts` osobno od `auth/SessionProvider.tsx`.
     const EXCEPTIONS = new Set([
-      // Tablice KONFIGURACJI, które zawierają JSX (elementy tras, ikony pozycji), więc
-      // muszą być `.tsx` - ale komponentami nie są i odświeżyć się nie mogą. Pełne
-      // przeładowanie po edycji mapy tras albo nawigacji jest tu zachowaniem POPRAWNYM:
-      // zmienia się szkielet aplikacji, a nie ciało komponentu.
+      // Tablica KONFIGURACJI, która zawiera JSX (elementy tras), więc musi być `.tsx` -
+      // ale komponentem nie jest i odświeżyć się nie może. Pełne przeładowanie po
+      // edycji mapy tras jest tu zachowaniem POPRAWNYM: zmienia się szkielet aplikacji,
+      // a nie ciało komponentu.
       'routes.tsx',
-      'ui/shell/navItems.tsx',
     ]);
 
     const exportsOf = (file: string): { kind: string; name: string }[] =>
@@ -288,7 +303,7 @@ describe('granice warstw panelu', () => {
 
     // Kontrola samego skanera: gdyby regex przestał cokolwiek łapać, lista naruszeń
     // byłaby pusta przy dowolnie połamanym panelu.
-    expect(tsx.length).toBeGreaterThan(30);
+    expect(tsx.length).toBeGreaterThan(12);
     expect(exportsOf('auth/SessionProvider.tsx')).toEqual([
       { kind: 'function', name: 'SessionProvider' },
     ]);

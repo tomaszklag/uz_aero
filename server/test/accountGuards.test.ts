@@ -39,7 +39,7 @@ describe('odebranie roli', () => {
         actorPilotId: 'TMK',
         targetPilotId: 'AKO',
         currentRole: 'admin',
-        nextRole: 'training_lead',
+        nextRole: 'pilot',
         targetActive: true,
         activeAdmins: 1,
       }),
@@ -72,6 +72,10 @@ describe('odebranie roli', () => {
     ).toBeNull();
   });
 
+  // Przypadek degradacji roli pośredniej („traci rolę bez ceremonii, bo nie ma
+  // `accounts.manage`") wypadł razem z rolą `training_lead` 2026-08-30: `currentRole`
+  // inne niż `admin` znaczy dziś wyłącznie `pilot`, więc gałęzi „cel nie jest
+  // administratorem" pilnuje ten przypadek.
   it('NADANIE roli nigdy nie jest blokowane - nie zmniejsza liczby naprawiających', () => {
     expect(
       refuseRoleChange({
@@ -92,19 +96,6 @@ describe('odebranie roli', () => {
         targetPilotId: 'TMK',
         currentRole: 'admin',
         nextRole: 'admin',
-        targetActive: true,
-        activeAdmins: 1,
-      }),
-    ).toBeNull();
-  });
-
-  it('szef wyszkolenia traci rolę bez ceremonii - nie ma zdolności accounts.manage', () => {
-    expect(
-      refuseRoleChange({
-        actorPilotId: 'TMK',
-        targetPilotId: 'AKO',
-        currentRole: 'training_lead',
-        nextRole: 'pilot',
         targetActive: true,
         activeAdmins: 1,
       }),

@@ -27,9 +27,20 @@ export const ADMIN_ACTIONS = [
   'pilot.update',
   'pilot.deactivate',
   'pilot.password_reset',
+  /**
+   * TRWAŁE usunięcie wiersza konta (2026-08-30).
+   *
+   * Wpis audytu jest tu jedynym śladem, jaki po koncie zostaje - wiersza już nie ma,
+   * a odwołań do niego nie było (inaczej `refuseDelete` by nie przepuścił). Dlatego
+   * `details` niosą KOMPLET tożsamości (kod, nazwisko, e-mail, rola), a nie sam
+   * identyfikator: „usunięto 8f3a-…" nie odpowiada nikomu na pytanie, kogo usunięto.
+   */
+  'pilot.delete',
   'aircraft.create',
   'aircraft.update',
   'aircraft.disable',
+  /** TRWAŁE usunięcie wiersza jednostki (2026-08-30) - jak `pilot.delete`. */
+  'aircraft.delete',
   /** Zmiana tolerancji flag; progi detekcji są tylko do odczytu (`A08`). */
   'thresholds.update',
   'maintenance.rebuild_projections',

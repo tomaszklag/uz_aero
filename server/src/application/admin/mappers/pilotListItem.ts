@@ -38,8 +38,7 @@ export function pilotCounts(counts: PilotCounts): AdminPilotCounts {
     total: counts.total,
     active: counts.active,
     inactive: counts.inactive,
-    admin: counts.byRole.admin,
-    trainingLead: counts.byRole.training_lead,
+    admin: counts.byRole.admin,
     pilot: counts.byRole.pilot,
     flyingDays: counts.flyingDays,
   };

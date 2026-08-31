@@ -22,9 +22,12 @@ export class PgSessionsProjection implements SessionsProjectionPort {
           block_ms, flight_ms, flights_count,
           takeoff_count, landing_count, mh_delta_h, fuel_consumed_l,
           drop_count, jumpers_tandem, jumpers_aff, jumpers_solo,
-          drop_alt_sum_ft, drop_alt_count, oil_level_l, oil_added_l, updated_at)
+          drop_alt_sum_ft, drop_alt_count, oil_level_l, oil_added_l,
+          engine_start_at, engine_stop_at, first_takeoff_at, last_landing_at,
+          departure_icao, arrival_icao, fuel_added_l, manual_entry, oil_after_l, updated_at)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,
-               $19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31, now())
+               $19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,
+               $32,$33,$34,$35,$36,$37,$38,$39,$40, now())
        ON CONFLICT (session_uuid) DO UPDATE SET
          aircraft_id = EXCLUDED.aircraft_id, pic_id = EXCLUDED.pic_id,
          dual_id = EXCLUDED.dual_id, status = EXCLUDED.status,
@@ -42,6 +45,12 @@ export class PgSessionsProjection implements SessionsProjectionPort {
          jumpers_aff = EXCLUDED.jumpers_aff, jumpers_solo = EXCLUDED.jumpers_solo,
          drop_alt_sum_ft = EXCLUDED.drop_alt_sum_ft, drop_alt_count = EXCLUDED.drop_alt_count,
          oil_level_l = EXCLUDED.oil_level_l, oil_added_l = EXCLUDED.oil_added_l,
+         engine_start_at = EXCLUDED.engine_start_at,
+         engine_stop_at = EXCLUDED.engine_stop_at,
+         first_takeoff_at = EXCLUDED.first_takeoff_at,
+         last_landing_at = EXCLUDED.last_landing_at,
+         departure_icao = EXCLUDED.departure_icao, arrival_icao = EXCLUDED.arrival_icao,
+         fuel_added_l = EXCLUDED.fuel_added_l, manual_entry = EXCLUDED.manual_entry, oil_after_l = EXCLUDED.oil_after_l,
          updated_at = now()`,
       [
         row.sessionUuid,
@@ -75,6 +84,15 @@ export class PgSessionsProjection implements SessionsProjectionPort {
         row.dropAltCount,
         row.oilLevelL,
         row.oilAddedL,
+        row.engineStartAt,
+        row.engineStopAt,
+        row.firstTakeoffAt,
+        row.lastLandingAt,
+        row.departureIcao,
+        row.arrivalIcao,
+        row.fuelAddedL,
+        row.manualEntry,
+        row.oilAfterL,
       ],
     );
   }

@@ -451,7 +451,7 @@ administrator nie miał czym jej wprowadzić.
 - **Korekta administratora NIE idzie przez `POST /events`.** Ta trasa należy do telefonu
   i jej single-writer (podpis w paczce + porównanie z PIC-em istniejącej sesji) zostaje
   nietknięty. Panel dostaje własną trasę `POST /admin/api/sessions/:uuid/corrections`
-  ze zdolnością `events.correct` - administrator TAK, szef wyszkolenia NIE (pisanie
+  ze zdolnością `events.correct` (pisanie
   w cudzym rejestrze to inna odpowiedzialność niż wyjaśnianie rozbieżności).
 - **Zdarzenie stemplujemy PIC-em SESJI, nie administratorem** (`AdminCorrectionCommands`
   w `application/admin/commands/corrections.ts`). `picId` odpowiada na pytanie „czyja to
@@ -526,7 +526,7 @@ pierwszy, w którym trzeba było rozstrzygnąć, skąd biorą się jego liczby.
   strumienia - inaczej narzędzie do wykrywania dryfu samo by go tworzyło, wyścigając się
   z paczką dosyłaną przez telefon.
 - **Trzy trasy odczytu** (`GET /admin/api/sessions`, `/sessions/:uuid`, `/flags`), wszystkie
-  ze zdolnością `panel.access` - czyta administrator i szef wyszkolenia, piszą węższe
+  ze zdolnością `panel.access` - czyta każdy, kto ma wejście do panelu, piszą węższe
   zdolności. Odmowy są wariantami wyniku: uszkodzony kursor → **400 `bad_cursor`** (wartość
   z zewnątrz, nie awaria serwera), nieznana sesja → 404.
 - **Reguła twarda, teraz pilnowana MASZYNOWO:** *agreguj wartości projekcji, nigdy nie

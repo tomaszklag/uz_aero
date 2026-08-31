@@ -1,225 +1,187 @@
-/**
- * UZ Aero - panel: formularz samolotu (`A07a`) - walidacja i szkic.
- *
- * Reguły są LUSTREM reguł serwera; test pilnuje, żeby lustro nie było krzywe -
- * inaczej formularz przepuszcza dane, które serwer odrzuci bez wyjaśnienia.
- */
-
 import { describe, expect, it } from 'vitest';
 
 import type { AircraftListItemDto } from '../../api/dto';
 import {
-  EMPTY_DRAFT,
-  capacityState,
-  createBody,
+  capacityValue,
+  createBodyOf,
+  deleteBlocker,
+  disablesAircraftInUse,
+  draftKey,
   draftOf,
-  formState,
+  EMPTY_AIRCRAFT,
   hasChanges,
-  normalizeReg,
-  parseCapacity,
-  regState,
-  typeState,
-  updateBody,
-  yearState,
-  type AircraftDraft,
+  updateBodyOf,
+  verdictOf,
 } from './aircraftForm';
+import { CAPACITY_NOT_POSITIVE, OIL_MIN_ABOVE_CAPACITY } from './aircraftRefusal';
 
-const dto = (over: Partial<AircraftListItemDto> = {}): AircraftListItemDto => ({
-  id: 'ac-1',
+const aircraft: AircraftListItemDto = {
+  id: 'a-1',
   reg: 'SP-KLM',
-  type: 'Cessna 208 Caravan',
+  type: 'Cessna 182',
   year: 2011,
-  capacityL: 1257,
-  fuelToleranceL: 62.85,
+  capacityL: 1100,
+  fuelToleranceL: 55,
+  mhFormat: 'decimal',
+  dualRequired: false,
+  serviceStatus: 'active',
   oilMinL: null,
   oilCapacityL: null,
   oilNormLPerH: null,
-  mhFormat: 'decimal',
-  dualRequired: true,
-  serviceStatus: 'active',
-  updatedAt: '2026-07-30T18:41:00.000Z',
-  claim: null,
-  reading: null,
-  lastEventAt: null,
   openSessions: 0,
-  openFlags: 0,
-  ...over,
-});
+};
 
-const draft = (over: Partial<AircraftDraft> = {}): AircraftDraft => ({
-  ...draftOf(dto()),
-  ...over,
-});
+const filled = { ...EMPTY_AIRCRAFT, reg: 'SP-KLM', type: 'Cessna 182', capacityL: '1100' };
 
 describe('rejestracja', () => {
-  it('normalizujemy do WERSALIKÓW - indeks UNIQUE jest wrażliwy na wielkość', () => {
-    expect(normalizeReg('  sp-klm ')).toBe('SP-KLM');
-    expect(regState('sp-klm').ok).toBe(true);
+  it('normalizuje do wersalików i przyjmuje myślnik', () => {
+    expect(createBodyOf({ ...filled, reg: ' sp-klm ' }).reg).toBe('SP-KLM');
+    expect(verdictOf({ ...filled, reg: 'sp-klm' }).blocker).toBeNull();
   });
 
-  it('puste pole i zły znak dostają POWÓD, nie samo „niepoprawne"', () => {
-    expect(regState('').message).toContain('wymagana');
-    expect(regState('SP KLM').message).toContain('myślnik');
-    expect(regState('SP').ok).toBe(false);
-  });
-});
-
-describe('typ i rok', () => {
-  it('typ jest wymagany', () => {
-    expect(typeState('').ok).toBe(false);
-    expect(typeState('Aero AT-3').ok).toBe(true);
-  });
-
-  it('rok może zostać PUSTY - tabliczka bez daty to realny przypadek', () => {
-    expect(yearState('').ok).toBe(true);
-    expect(yearState('2011').ok).toBe(true);
-  });
-
-  it('rok spoza zakresu i nie-cyfry są odrzucane', () => {
-    expect(yearState('11').ok).toBe(false);
-    expect(yearState('1800').ok).toBe(false);
-    expect(yearState('rok').ok).toBe(false);
+  it('odrzuca spację i znaki spoza wzorca', () => {
+    expect(verdictOf({ ...filled, reg: 'SP KLM' }).invalid).toContain('reg');
   });
 });
 
 describe('pojemność', () => {
-  it('przyjmuje przecinek i spacje - pole wypełnia człowiek, nie parser JSON-a', () => {
-    expect(parseCapacity('1 100')).toBe(1100);
-    expect(parseCapacity('1100,5')).toBe(1100.5);
+  it('przyjmuje przecinek - tym samym parserem, co aplikacja pilota', () => {
+    expect(capacityValue({ ...filled, capacityL: '1100,5' })).toBe(1100.5);
   });
 
-  it('wpis nieczytelny daje `null`, a nie zgadniętą liczbę', () => {
-    expect(parseCapacity('dużo')).toBeNull();
-    expect(parseCapacity('')).toBeNull();
+  it('zero dostaje ZDANIE ODMOWY SERWERA, nie własne', () => {
+    // Jedna reguła, jedno zdanie - powiedziane wcześniej, nie napisane drugi raz.
+    expect(verdictOf({ ...filled, capacityL: '0' }).blocker).toBe(CAPACITY_NOT_POSITIVE);
   });
 
-  it('zero jest odrzucane Z POWODEM - to od tej liczby zależy próg flagi', () => {
-    const state = capacityState('0');
-    expect(state.ok).toBe(false);
-    expect(state.message).toContain('FUEL_MISMATCH');
-  });
-});
-
-describe('stan formularza', () => {
-  it('pusty formularz nie przechodzi i mówi dlaczego', () => {
-    const state = formState(EMPTY_DRAFT);
-    expect(state.ok).toBe(false);
-    expect(state.reason).not.toBeNull();
+  it('wartość ujemna nie jest odczytem litrów i tak brzmi zdanie', () => {
+    // `parseLitres` przyjmuje wyłącznie cyfry i separator dziesiętny - paliwomierz
+    // nie pokazuje wartości ujemnych, więc „-5" nie jest pojemnością zmniejszoną,
+    // tylko wpisem, którego nie da się odczytać. Zdanie ma mówić właśnie to.
+    expect(verdictOf({ ...filled, capacityL: '-5' }).blocker).toBe('Pojemność w litrach, np. 1100.');
   });
 
-  it('wypełniony poprawnie przechodzi bez powodu blokady', () => {
-    const state = formState(draft());
-    expect(state.ok).toBe(true);
-    expect(state.reason).toBeNull();
+  it('puste pole nie dostaje ZADNEGO zdania - brak widać w formularzu', () => {
+    // Reguła z aplikacji pilota (issue #55). Zapisu i tak nie ma, ale przycisk milczy.
+    const verdict = verdictOf({ ...filled, capacityL: '' });
+    expect(verdict.complete).toBe(false);
+    expect(verdict.blocker).toBeNull();
+    expect(verdict.invalid).toEqual([]);
   });
 });
 
-describe('szkic → ciało żądania', () => {
-  it('`POST` niesie znormalizowaną rejestrację i pojemność jako liczbę', () => {
-    expect(createBody(draft({ reg: 'sp-nowy', capacity: '1 100', year: '' }))).toEqual({
-      reg: 'SP-NOWY',
-      type: 'Cessna 208 Caravan',
-      year: '',
-      capacityL: 1100,
-      mhFormat: 'decimal',
-      dualRequired: true,
-      serviceStatus: 'active',
-      // Olej (issue #60): nieskonfigurowany jedzie jako JAWNE nulle - moduł milczy.
-      oilMinL: null,
-      oilCapacityL: null,
-      oilNormLPerH: null,
-    });
+describe('olej jest opcjonalny W CAŁOSCI', () => {
+  it('trzy puste pola to poprawny formularz', () => {
+    expect(verdictOf(filled).blocker).toBeNull();
+    expect(createBodyOf(filled).oilMinL).toBeNull();
   });
 
-  it('`PATCH` niesie WYŁĄCZNIE pola zmienione - dziennik audytu zapisuje diff', () => {
-    const before = dto();
-    expect(updateBody(before, draft({ capacity: '1100' }))).toEqual({ capacityL: 1100 });
+  it('minimum większe od zbiornika blokuje zdaniem serwera', () => {
+    const draft = { ...filled, oilMinL: '12', oilCapacityL: '8' };
+    expect(verdictOf(draft).blocker).toBe(OIL_MIN_ABOVE_CAPACITY);
+    expect(verdictOf(draft).invalid).toContain('oilMinL');
   });
 
-  it('bez zmiany `PATCH` jest pusty, a przycisk „Zapisz" ma być zgaszony', () => {
-    const before = dto();
-    expect(updateBody(before, draft())).toEqual({});
-    expect(hasChanges(before, draft())).toBe(false);
-  });
-
-  it('wyczyszczony rok jedzie jako pusty napis - „nie wiadomo", nie „rok 0"', () => {
-    const before = dto({ year: 2011 });
-    expect(updateBody(before, draft({ year: '' }))).toEqual({ year: '' });
-  });
-
-  it('pojemność NIECZYTELNA nie trafia do `PATCH`-a - lepiej nie wysłać niż zgadnąć', () => {
-    const before = dto();
-    expect(updateBody(before, draft({ capacity: 'dużo' }))).toEqual({});
-  });
-
-  it('zmiana samej wielkości liter w rejestracji NIE jest zmianą', () => {
-    const before = dto({ reg: 'SP-KLM' });
-    expect(hasChanges(before, draft({ reg: 'sp-klm' }))).toBe(false);
-  });
-
-  it('wyłączenie ze służby jedzie jako pole formularza, nie osobną akcją', () => {
-    const before = dto();
-    expect(updateBody(before, draft({ serviceStatus: 'disabled' }))).toEqual({
-      serviceStatus: 'disabled',
-    });
+  it('samo minimum, bez zbiornika, jest dozwolone', () => {
+    expect(verdictOf({ ...filled, oilMinL: '8,5' }).blocker).toBeNull();
   });
 });
 
-// ── konfiguracja oleju (issue #60, etap D) ──────────────────────────────────────
-
-describe('pola oleju - lustro `fleetGuards.refuseOil`', () => {
-  it('puste pola są legalne (moduł milczy), a szkic wysyła jawne nulle przy tworzeniu', () => {
-    const draft = { ...EMPTY_DRAFT, reg: 'SP-OIL', type: 'Cessna 182', capacity: '330' };
-    expect(formState(draft).ok).toBe(true);
-    expect(createBody(draft)).toMatchObject({ oilMinL: null, oilCapacityL: null, oilNormLPerH: null });
+describe('rok produkcji', () => {
+  it('puste pole jest poprawne', () => {
+    expect(verdictOf({ ...filled, year: '' }).blocker).toBeNull();
+    expect(createBodyOf({ ...filled, year: '' }).year).toBe('');
   });
 
-  it('wpisane wartości parsują polski przecinek i wchodzą do ciała', () => {
-    const draft = {
-      ...EMPTY_DRAFT,
-      reg: 'SP-OIL',
-      type: 'Cessna 182',
-      capacity: '330',
-      oilMin: '8,5',
-      oilCapacity: '11,4',
-      oilNorm: '0,12',
-    };
-    expect(formState(draft).ok).toBe(true);
-    expect(createBody(draft)).toMatchObject({ oilMinL: 8.5, oilCapacityL: 11.4, oilNormLPerH: 0.12 });
+  it('odrzuca liczbę, która nie jest czterocyfrowym rokiem', () => {
+    expect(verdictOf({ ...filled, year: '11' }).invalid).toContain('year');
+    expect(verdictOf({ ...filled, year: '19,99' }).invalid).toContain('year');
+  });
+});
+
+describe('ciało PATCH', () => {
+  it('niesie wyłącznie zmienione pola', () => {
+    const draft = { ...draftOf(aircraft), dualRequired: true };
+    expect(updateBodyOf(aircraft, draft)).toEqual({ dualRequired: true });
   });
 
-  it('zero i śmieci odbijają z powodem pod POLEM, minimum ponad zbiornik - pod PARĄ', () => {
-    const zero = formState({ ...EMPTY_DRAFT, reg: 'SP-OIL', type: 'C182', capacity: '330', oilMin: '0' });
-    expect(zero.ok).toBe(false);
-    expect(zero.oilMin.message).toContain('większe od zera');
-
-    const garbage = formState({ ...EMPTY_DRAFT, reg: 'SP-OIL', type: 'C182', capacity: '330', oilNorm: 'dużo' });
-    expect(garbage.oilNorm.ok).toBe(false);
-
-    const inverted = formState({
-      ...EMPTY_DRAFT,
-      reg: 'SP-OIL',
-      type: 'C182',
-      capacity: '330',
-      oilMin: '12',
-      oilCapacity: '10',
-    });
-    expect(inverted.ok).toBe(false);
-    expect(inverted.oilPair.message).toContain('nie może przekraczać zbiornika');
+  it('otwarcie i zapisanie bez zmian nie jest zmianą', () => {
+    expect(hasChanges(aircraft, draftOf(aircraft))).toBe(false);
   });
 
-  it('PATCH: wyczyszczone pole jedzie jako jawny null, pominięta zmiana nie jedzie wcale', () => {
-    const before = dto({ oilMinL: 8.5, oilCapacityL: 11.4, oilNormLPerH: 0.12 });
-    const draft = draftOf(before);
-    expect(draft.oilMin).toBe('8,5');
+  it('ten sam zapis liczby innym napisem NIE jest zmianą', () => {
+    // „1100" i „1100,0" to ta sama pojemność. Bez porównania wartości panel wysyłałby
+    // zmianę, której nie było - i zostawiał po niej wpis w dzienniku audytu.
+    expect(hasChanges(aircraft, { ...draftOf(aircraft), capacityL: '1100,0' })).toBe(false);
+  });
 
-    // Bez zmian - ciało puste (serwer odmawia `no_changes`).
-    expect(updateBody(before, draft)).toEqual({});
+  it('wyczyszczenie rocznika jedzie jako pusty napis, a oleju jako null', () => {
+    const draft = { ...draftOf({ ...aircraft, oilMinL: 8 }), year: '', oilMinL: '' };
+    const body = updateBodyOf({ ...aircraft, oilMinL: 8 }, draft);
+    expect(body.year).toBe('');
+    expect(body.oilMinL).toBeNull();
+  });
+});
 
-    // Wyczyszczenie minimum = jawny null; reszta pól nietknięta.
-    expect(updateBody(before, { ...draft, oilMin: '' })).toEqual({ oilMinL: null });
+describe('kiedy wolno usunąć jednostkę', () => {
+  it('poza służbą - próba ma sens', () => {
+    expect(deleteBlocker({ ...aircraft, serviceStatus: 'disabled' })).toBeNull();
+  });
 
-    // Zmiana wartości = liczba.
-    expect(updateBody(before, { ...draft, oilNorm: '0,15' })).toEqual({ oilNormLPerH: 0.15 });
+  it('W SŁUŻBIE blokuje - i to jest ważniejsze niż przy koncie', () => {
+    // Telefon nie kasuje wierszy: maszyna usunięta „na gorąco" zostałaby na nim jako
+    // W SŁUŻBIE, czyli WYBIERALNA - pilot zacząłby lot na jednostce, której serwer
+    // nie zna. Wyłączenie ze służby aplikacja rozumie i blokuje wybór.
+    expect(deleteBlocker(aircraft)).toBe('Najpierw wyłącz samolot ze służby.');
+  });
+
+  it('pyta o stan ZAPISANY, nie o szkic', () => {
+    // Dopóki „Wyłączony" nie jest zapisane, telefony o tym nie wiedzą - a na nich
+    // opiera się cała dwustopniowość tej operacji.
+    expect(deleteBlocker(aircraft)).not.toBeNull();
+  });
+});
+
+describe('klucz synchronizacji szkicu', () => {
+  it('BRAK klucza, dopóki jednostki nie ma na liście', () => {
+    // Wejście z linku: szuflada montuje się PRZED listą. Bez tego formularz zostawał
+    // pusty nad samolotem, który istnieje.
+    expect(draftKey(false, null)).toBeNull();
+    expect(draftKey(true, null)).toBe('nowy');
+  });
+
+  it('klucz to TOŻSAMOŚĆ jednostki, więc odświeżenie listy go nie rusza', () => {
+    expect(draftKey(false, aircraft)).toBe('a-1');
+    expect(draftKey(false, { ...aircraft, capacityL: 900 })).toBe('a-1');
+  });
+});
+
+describe('rejestracja zapisana małymi literami', () => {
+  it('NIE udaje zmiany', () => {
+    // Ta sama pułapka, co przy kodzie pilota: wiersz założony z pominięciem trasy
+    // (seed, `INSERT` ręką) ma małe litery, a wpis jest normalizowany.
+    const seeded = { ...aircraft, reg: 'sp-klm' };
+    expect(updateBodyOf(seeded, draftOf(seeded))).toEqual({});
+    expect(hasChanges(seeded, draftOf(seeded))).toBe(false);
+  });
+});
+
+describe('wyłączenie jednostki, na której ktoś lata', () => {
+  const busy = { ...aircraft, openSessions: 1 };
+
+  it('jest rozpoznane PRZED wysłaniem żądania', () => {
+    expect(disablesAircraftInUse(busy, { ...draftOf(busy), serviceStatus: 'disabled' })).toBe(true);
+  });
+
+  it('nie dotyczy jednostki już wyłączonej ani zmiany innego pola', () => {
+    const disabled = { ...busy, serviceStatus: 'disabled' as const };
+    expect(disablesAircraftInUse(disabled, draftOf(disabled))).toBe(false);
+    expect(disablesAircraftInUse(busy, { ...draftOf(busy), type: 'An-2' })).toBe(false);
+  });
+
+  it('wolna jednostka wyłącza się bez przeszkód', () => {
+    expect(
+      disablesAircraftInUse(aircraft, { ...draftOf(aircraft), serviceStatus: 'disabled' }),
+    ).toBe(false);
   });
 });

@@ -38,7 +38,13 @@ export type AccountRefusal =
   /** Ostatni AKTYWNY administrator traci rolę albo dostęp - klub zostaje bez nikogo. */
   | 'last_admin'
   /** Reset hasła konta nieaktywnego - hasło bez dostępu do niczego nie prowadzi. */
-  | 'inactive_account';
+  | 'inactive_account'
+  /** Usunięcie własnego konta - to samo odcięcie, co deaktywacja, tylko nieodwracalne. */
+  | 'self_delete'
+  /** Usunięcie konta, które nadal ma dostęp - patrz `refuseDelete`. */
+  | 'account_active'
+  /** Usunięcie konta, do którego coś się odwołuje - zostałaby historia bez właściciela. */
+  | 'has_history';
 
 export interface RoleChange {
   actorPilotId: string;
@@ -56,8 +62,9 @@ export interface RoleChange {
  *
  * Pilnujemy wyłącznie ODEBRANIA roli administratora - nadanie jej komukolwiek jest
  * bezpieczne w tym sensie, o który tu chodzi (nie zmniejsza liczby ludzi zdolnych
- * naprawić system). Rola `training_lead` nie ma zdolności `accounts.manage`, więc jej
- * odebranie nikogo nie zamyka poza panelem kont.
+ * naprawić system). Odebranie roli komuś, kto nie jest administratorem, nie zamyka
+ * nikogo poza panelem: po wycofaniu `training_lead` (2026-08-30) druga rola nie ma
+ * ani jednej zdolności.
  */
 export function refuseRoleChange(change: RoleChange): AccountRefusal | null {
   if (change.nextRole === change.currentRole) return null;
@@ -106,4 +113,47 @@ export function refuseDeactivate(change: ActiveChange): AccountRefusal | null {
  */
 export function refusePasswordReset(targetActive: boolean): AccountRefusal | null {
   return targetActive ? null : 'inactive_account';
+}
+
+/**
+ * Stan konta w chwili próby USUNIĘCIA - wszystko, czego potrzebuje reguła niżej.
+ *
+ * `references` to LICZBA odwołań do tego konta w całym systemie: zdarzenia (jako PIC
+ * i jako drugi pilot), sesje oraz wpisy dziennika audytu, w których konto jest sprawcą.
+ * Liczy je repozytorium jednym zapytaniem - domena nie zna SQL-a, ale zna regułę.
+ */
+export interface AccountDeletion {
+  actorPilotId: string;
+  targetPilotId: string;
+  targetActive: boolean;
+  references: number;
+}
+
+/**
+ * Usunięcie konta - odmowa albo `null`.
+ *
+ * ══ USUWANIE JEST DWUSTOPNIOWE, A DRUGI WARUNEK NIE JEST FORMALNOŚCIĄ ══
+ * Kasujemy wyłącznie konto, które JUŻ JEST WYŁĄCZONE - i nie z ostrożności, tylko
+ * dlatego, że telefon nie ma ścieżki usuwania wiersza: `referenceSync` w aplikacji
+ * pilota robi wyłącznie `upsertPilots`, nigdy `delete`. Konto skasowane na serwerze
+ * zostałoby więc na każdym telefonie, który zdążył się zsynchronizować - z ostatnim
+ * znanym stanem, czyli AKTYWNE. Wyłączenie przechodzi natomiast normalną drogą
+ * (`active: false` jedzie w `GET /reference`, a aplikacja po tym polu filtruje), więc
+ * kolejność „wyłącz → poczekaj na sync → usuń" zamyka dziurę mechanizmem, który już
+ * istnieje: bez zmiany w aplikacji i bez wydania APK.
+ *
+ * Tombstone w `/reference` (serwer mówi „tego już nie ma", telefon kasuje wiersz) jest
+ * właściwym docelowym rozwiązaniem i zdejmie ten warunek - ale wymaga zmiany kontraktu
+ * ORAZ aplikacji, a starsze buildy w terenie i tak nigdy nie skasują wiersza.
+ *
+ * `references > 0` blokuje TWARDO i bez wyjątków: w tym schemacie jest DOKŁADNIE JEDEN
+ * klucz obcy (`refresh_tokens.pilot_id`), a `events`, `sessions` i `admin_audit`
+ * wskazują konto zwykłym tekstem. Baza nie powstrzymałaby więc kasowania - powstrzymuje
+ * ta funkcja, a osierocona historia jest nie do naprawienia po fakcie.
+ */
+export function refuseDelete(deletion: AccountDeletion): AccountRefusal | null {
+  if (deletion.actorPilotId === deletion.targetPilotId) return 'self_delete';
+  if (deletion.targetActive) return 'account_active';
+  if (deletion.references > 0) return 'has_history';
+  return null;
 }

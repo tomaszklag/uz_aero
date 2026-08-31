@@ -15,7 +15,7 @@
  *     od godziny to normalna praca, dzień otwarty od wczoraj to zadanie;
  *  4. **cisza jest POPRAWNĄ odpowiedzią, nie awarią** - pusty klub dostaje komplet
  *     zer i pustych list, a nie 500 ani brakujących pól;
- *  5. **401 ≠ 403**, a `panel.access` wystarcza - pulpit ma działać szefowi wyszkolenia.
+ *  5. **401 ≠ 403**, a `panel.access` wystarcza - pulpit nie żąda niczego ponadto.
  *
  * ══ DLACZEGO PRZESTAWIAMY ZEGAR TESTU ══
  * `events.received_at` nadaje BAZA (`DEFAULT now()`), a pulpit mierzy okno napływu
@@ -706,24 +706,7 @@ describe('pulpit - uprawnienia', () => {
     expect(pilot.json()).toEqual({ error: 'forbidden', required: 'panel.access' });
   });
 
-  it('szef wyszkolenia widzi CAŁY pulpit - to jego ekran startowy', async () => {
-    // Gdyby pulpit wymagał czegokolwiek ponad `panel.access`, zalogowanie się szefa
-    // wyszkolenia kończyłoby się pustką na ekranie, na który wchodzi jako pierwszy.
-    const { app, dayStart, dashboard } = await harnessNow();
-    await ingest(
-      app,
-      flyingDay({
-        sessionUuid: 'dash-lead',
-        picId: 'TMK',
-        aircraftId: 'SP-AXA',
-        dayStart,
-        until: 'takeoff',
-      }),
-    );
-
-    const res = await dashboard(await token(app, 'AKO'));
-    expect(res.statusCode).toBe(200);
-    expect(res.json().fleet).toHaveLength(4);
-    expect(rowOf(res.json(), 'SP-AXA').engine).toMatchObject({ inFlight: true });
-  });
+  // Osobny przypadek „rola pośrednia widzi CAŁY pulpit" wypadł razem z rolą
+  // `training_lead` (2026-08-30): pulpit nie żąda niczego ponad `panel.access`, a jego
+  // pełną treść - z flotą i jednostką w powietrzu - przybijają przypadki wyżej.
 });

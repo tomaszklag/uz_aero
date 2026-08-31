@@ -98,8 +98,18 @@ export async function apiPatch<T>(path: string, body?: unknown): Promise<T> {
   return (await request(path, mutation('PATCH', body))) as T;
 }
 
+/**
+ * `DELETE` - jedyna mutacja bez ciała po obu stronach.
+ *
+ * Serwer odpowiada `204`, więc `parse` oddaje `null` i typ zwrotny jest `void`:
+ * wiersza już nie ma, nie ma czego oddać, a panel i tak przeładowuje listę.
+ */
+export async function apiDelete(path: string): Promise<void> {
+  await request(path, mutation('DELETE', undefined));
+}
+
 /** Nagłówek CSRF i JSON-owe ciało w jednym miejscu - mutacje różnią się metodą. */
-function mutation(method: 'POST' | 'PATCH', body: unknown): RequestInit {
+function mutation(method: 'POST' | 'PATCH' | 'DELETE', body: unknown): RequestInit {
   return {
     method,
     headers: {

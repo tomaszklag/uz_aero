@@ -326,10 +326,10 @@ describe('lista dni (A02)', () => {
     expect((await list(app, admin, '?operation=lot-w-kosmos')).statusCode).toBe(400);
   });
 
-  it('szef wyszkolenia CZYTA listę, pilot dostaje 403, brak tokenu 401', async () => {
+  it('panel CZYTA listę, pilot dostaje 403, brak tokenu 401', async () => {
     const { app } = await threeDays();
 
-    expect((await list(app, await login(app, 'AKO'))).statusCode).toBe(200);
+    expect((await list(app, await login(app, 'TMK'))).statusCode).toBe(200);
 
     const pilot = await list(app, await login(app, 'PWI'));
     expect(pilot.statusCode).toBe(403);

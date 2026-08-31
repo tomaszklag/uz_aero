@@ -27,9 +27,9 @@ import { AdminFleetQueries } from './application/admin/queries/fleet.ts';
 import { AdminMaintenanceQueries } from './application/admin/queries/maintenance.ts';
 import { AdminMeQueries } from './application/admin/queries/me.ts';
 import { AdminPilotQueries } from './application/admin/queries/pilots.ts';
-import { AdminFlightTrackQueries } from './application/admin/queries/flightTrack.ts';
 import { AdminSessionQueries } from './application/admin/queries/sessions.ts';
 import { AdminConsumptionQueries } from './application/admin/queries/consumption.ts';
+import { AdminLogQueries } from './application/admin/queries/log.ts';
 import { AdminStatsQueries } from './application/admin/queries/stats.ts';
 import { AuditedWrite } from './application/admin/auditedWrite.ts';
 import { AuthCommands } from './application/common/commands/auth.ts';
@@ -37,9 +37,10 @@ import { IngestCommands } from './application/mobile/commands/ingest.ts';
 import { PrefsCommands } from './application/mobile/commands/prefs.ts';
 import { DayExporter } from './application/common/export/dayExporter.ts';
 import { MyEventQueries } from './application/mobile/queries/myEvents.ts';
-import { SessionTrackQueries } from './application/mobile/queries/sessionTrack.ts';
+import { MySessionTrackQueries } from './application/mobile/queries/sessionTrack.ts';
 import { ReferenceQueries } from './application/mobile/queries/reference.ts';
 import { TaskSuggestionQueries } from './application/mobile/queries/taskSuggestions.ts';
+import { SessionTrackQueries } from './application/common/queries/sessionTrack.ts';
 import { SheetQueries } from './application/common/queries/sheets.ts';
 import { StateQueries } from './application/mobile/queries/aircraftState.ts';
 import { Hs256Tokens } from './infrastructure/auth/hs256Tokens.ts';
@@ -58,6 +59,7 @@ import { PgAdminPilotsRepo } from './infrastructure/pg/admin/pilotsRepo.ts';
 import { PgAdminRefreshTokensRepo } from './infrastructure/pg/admin/refreshTokensRepo.ts';
 import { PgAdminSessionsRepo } from './infrastructure/pg/admin/sessionsRepo.ts';
 import { PgAdminConsumptionRepo } from './infrastructure/pg/admin/consumptionRepo.ts';
+import { PgAdminLogRepo } from './infrastructure/pg/admin/logRepo.ts';
 import { PgAdminStatsRepo } from './infrastructure/pg/admin/statsRepo.ts';
 import { PgAircraftConfigRepo } from './infrastructure/pg/common/aircraftConfigRepo.ts';
 import { PgDatabase } from './infrastructure/pg/database.ts';
@@ -173,6 +175,13 @@ const hasher = new ScryptHasher();
 // na pytanie „kto trzyma ten samolot".
 const adminFleetQueries = new AdminFleetQueries(db, adminFleetRepo, sessions, adminPilotsRepo);
 
+// Ślad sesji stoi TU z tego samego powodu: DWÓCH konsumentów, jedna geometria. Telefon
+// dostaje go przez bramkę właściciela (`MySessionTrackQueries`), panel wprost - bo ślad
+// jednego biegu silnika ma po obu stronach wyglądać identycznie (issue #38). Ten sam
+// katalog nagrań i ten sam adapter odczytu: jedno nagranie, dwie powierzchnie, żadnej
+// drugiej kopii.
+const sessionTrack = new SessionTrackQueries(db, events, new FsTraceSource(env.TRACES_DIR));
+
 const app = buildServer({
   auth: new AuthCommands(pilots, new PgRefreshTokens(db, clock), hasher, tokens, clock),
   reference: new ReferenceQueries(new PgReferenceRepo(db), db, sessions, consumptionNorms),
@@ -185,9 +194,9 @@ const app = buildServer({
   sheets: new SheetQueries(sheets),
   traces: new FsTraceSink(env.TRACES_DIR),
   // Droga POWROTNA nagrania (issue #47) - telefon oddaje ślad i kasuje swoją kopię,
-  // więc ekran 14 pobiera gotową geometrię stąd. Ten sam katalog i ten sam adapter
-  // odczytu co w panelu: jedno nagranie, dwie powierzchnie, żadnej drugiej kopii.
-  sessionTrack: new SessionTrackQueries(db, events, new FsTraceSource(env.TRACES_DIR)),
+  // więc ekran 14 pobiera gotową geometrię stąd. Cienka warstwa nad wspólnym zapytaniem:
+  // dokłada JEDNO zdanie o uprawnieniu („to nie jest twoja sesja") i nic poza tym.
+  sessionTrack: new MySessionTrackQueries(sessionTrack),
   prefs: new PrefsCommands(new PgPilotPrefsRepo(db)),
   // Podpowiedzi zadania dnia (issue #14) - własny adapter nad `sessions` obok
   // `PgSessionsProjection`, bo to inne pytanie: tamten czyta i pisze POJEDYNCZY wiersz
@@ -205,14 +214,9 @@ const app = buildServer({
     adminFlagsRepo,
     new PgAdminEventsRepo(),
   ),
-  // Ślad lotu (A02c): okno lotu z rejestru, geometria z plików NDJSON. Ten sam katalog,
-  // do którego pisze `FsTraceSink` - dwa porty nad jednym magazynem, bo zapis jest
-  // gorący i tani, a odczyt rzadki i może przeczytać cały plik sesji.
-  adminFlightTrackQueries: new AdminFlightTrackQueries(
-    db,
-    events,
-    new FsTraceSource(env.TRACES_DIR),
-  ),
+  // Ślad sesji w dzienniku: okno biegu z rejestru, geometria z plików NDJSON. Ten sam
+  // egzemplarz, z którego czyta telefon - patrz wyżej.
+  adminSessionTrack: sessionTrack,
   adminFlagQueries: new AdminFlagQueries(db, adminFlagsRepo),
   // Sesja przeglądarkowa czyta konto tym samym adapterem co logowanie telefonu -
   // panel i telefon logują się do tej samej tabeli kont, bo to ci sami ludzie.
@@ -315,6 +319,7 @@ const app = buildServer({
   // Statystyki (A10) - czysty odczyt agregatów kolumn projekcji; zegar rozstrzyga
   // zakres domyślny „ostatnie 30 dni od dziś".
   adminStatsQueries: new AdminStatsQueries(db, new PgAdminStatsRepo(), clock),
+  adminLogQueries: new AdminLogQueries(db, new PgAdminLogRepo(), clock),
   // Analityka zużycia (A10a/A10b) - bierze TEN SAM magazyn zdarzeń, co reszta serwera:
   // strumienie sesji są jej wejściem, a licznik odczytów w `contract.test.ts` pilnuje,
   // że poza nią żadna lista po nie nie sięga.

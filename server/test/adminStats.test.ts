@@ -662,15 +662,15 @@ describe('A10 · brama i walidacja', () => {
     expect(res.json()).toEqual({ error: 'bad_range' });
   });
 
-  it('szef wyszkolenia CZYTA raport, pilot dostaje 403, brak tokenu 401', async () => {
+  it('panel CZYTA raport, pilot dostaje 403, brak tokenu 401', async () => {
     const { app } = await threeDays();
 
-    const lead = await app.inject({
+    const panel = await app.inject({
       method: 'GET',
       url: '/admin/api/stats',
-      headers: bearer(await token(app, 'AKO')),
+      headers: bearer(await token(app, 'TMK')),
     });
-    expect(lead.statusCode).toBe(200);
+    expect(panel.statusCode).toBe(200);
 
     const pilot = await app.inject({
       method: 'GET',

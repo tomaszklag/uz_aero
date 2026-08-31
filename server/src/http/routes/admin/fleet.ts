@@ -235,6 +235,23 @@ export function registerAdminFleetRoutes(
       return reply.send({ aircraft: await queries.item(outcome.result.id) });
     },
   );
+
+  adminRoute(
+    app,
+    gate,
+    // `DELETE`, nie `POST /fleet/:id/delete` - patrz bliźniacza trasa kont.
+    { method: 'DELETE', url: '/fleet/:id', capability: 'fleet.manage' },
+    async (req, reply, actor) => {
+      const params = idParams.safeParse(req.params);
+      if (!params.success) return reply.code(400).send({ error: 'bad_request' });
+
+      const outcome = await fleet.remove(actor, params.data.id);
+      if (!outcome.ok) return refusal(reply, outcome);
+
+      // 204, nie 200 z wierszem: wiersza już nie ma, więc nie ma czego oddać.
+      return reply.code(204).send();
+    },
+  );
 }
 
 /**

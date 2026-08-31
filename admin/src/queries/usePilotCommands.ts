@@ -1,35 +1,24 @@
 /**
- * UZ Aero - panel: MUTACJE kont pilotów (`A06`, `A06a`).
+ * UZ Aero - panel 2.0: zapisy na kontach pilotów.
  *
- * **Mutacja deklaruje swoje unieważnienia TUTAJ, nie na ekranie**
- * (`docs/architektura-panelu-frontend.md` §4.3). Cztery operacje z tego pliku zmieniają
- * różne rzeczy, ale unieważniają ten sam zestaw - i lepiej, żeby ten zestaw miał jedno
- * miejsce, niż żeby cztery hooki pamiętały cztery listy.
+ * Mutacja deklaruje SWOJE unieważnienia tutaj, a nie na ekranie: dwa ekrany wołające
+ * tę samą mutację nie mogą pamiętać dwóch różnych list.
  *
- * Co się zmienia po KAŻDEJ z nich:
- *  • **lista kont** - skład (nowe konto, zmiana statusu) i liczniki kafli; składu nie
- *    symulujemy na kliencie, bo wymagałoby to powtórzenia serwerowego filtrowania
- *    i sortowania, a po pierwszym filtrze różnica jest gwarantowana;
- *  • **dziennik audytu** - `AuditedWrite` dopisał wpis TĄ SAMĄ transakcją, więc ekran
- *    `A09` otwarty obok jest nieaktualny dokładnie od tej chwili;
- *  • **pulpit** - unieważnia go każda mutacja panelu, bo alternatywą jest plakietka
- *    kłamiąca zaraz po zmianie.
- *
- * Czego tu NIE MA:
- *  • **aktualizacji optymistycznych.** Serwer odmawia zmian, których panel nie umie
- *    przewidzieć („ostatni administrator", zajęty kod), więc optymistyczny UI musiałby
- *    się z tego wycofywać i tłumaczyć. Przycisk pokazuje stan zajęty, UI przyjmuje
- *    odpowiedź serwera.
- *  • **`setQueryData` z hasłem.** Hasło z odpowiedzi żyje w stanie SZUFLADY i ginie
- *    razem z nią. Wpisane do cache'u przeżyłoby nawigację, a to jest dokładnie to,
- *    czego „pokazane raz" ma nie robić.
+ * == WSZYSTKIE CZTERY UNIEWAZNIAJA CALY KORZEN `pilots` I ANI JEDNA NIE WSTAWIA
+ *    ZWROCONEGO WIERSZA DO TABELI ==
+ * Serwer składa wiersz w odpowiedzi mutacji skrótem (`accountToWire` w
+ * `server/src/http/routes/admin/pilots.ts`): oddaje tożsamość i status konta, ale
+ * statystyki podaje zerami, a stempel zmiany bierze z chwili odpowiedzi. Wpisanie go
+ * do cache'u przez `setQueryData` byłoby więc wstawieniem do tabeli wiersza, który
+ * w bazie wygląda inaczej. Prawda przychodzi z odświeżonej listy - to kosztuje jedno
+ * żądanie i nie kosztuje ani jednej niespójności.
  */
 
 import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 
-import type { PilotChangeDto, PilotSecretDto } from '../api/dto';
 import {
   createPilot,
+  deletePilot,
   resetPilotPassword,
   setPilotActive,
   updatePilot,
@@ -38,63 +27,66 @@ import {
 } from '../api/pilots';
 import { keys } from './keys';
 
-function invalidateAccounts(qc: QueryClient): void {
-  void qc.invalidateQueries({ queryKey: keys.pilots.all });
-  void qc.invalidateQueries({ queryKey: keys.audit.all });
-  void qc.invalidateQueries({ queryKey: keys.dashboard });
-}
+/** Jedno unieważnienie dla wszystkich czterech mutacji - patrz nagłówek pliku. */
+const invalidatePilots = (qc: QueryClient): Promise<void> =>
+  qc.invalidateQueries({ queryKey: keys.pilots.all });
 
 export function useCreatePilot() {
   const qc = useQueryClient();
-  return useMutation<PilotSecretDto, unknown, CreatePilotBody>({
-    mutationFn: (body) => createPilot(body),
-    onSuccess: () => invalidateAccounts(qc),
+  return useMutation({
+    mutationFn: (body: CreatePilotBody) => createPilot(body),
+    onSuccess: () => invalidatePilots(qc),
   });
-}
-
-export interface UpdatePilotInput {
-  id: string;
-  body: UpdatePilotBody;
 }
 
 export function useUpdatePilot() {
   const qc = useQueryClient();
-  return useMutation<PilotChangeDto, unknown, UpdatePilotInput>({
-    mutationFn: ({ id, body }) => updatePilot(id, body),
-    onSuccess: () => invalidateAccounts(qc),
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: UpdatePilotBody }) => updatePilot(id, body),
+    onSuccess: () => invalidatePilots(qc),
   });
 }
 
-export interface SetActiveInput {
-  id: string;
-  active: boolean;
-}
-
+/**
+ * Włączenie i wyłączenie dostępu.
+ *
+ * Osobna mutacja, nie parametr `useUpdatePilot`, bo to osobna trasa i osobna operacja:
+ * wyłączenie konta zrywa w jednej transakcji wszystkie sesje telefonu i unieważnia
+ * żywą sesję panelu. Sklejenie jej z poprawianiem nazwiska ukryłoby ten skutek.
+ */
 export function useSetPilotActive() {
   const qc = useQueryClient();
-  return useMutation<PilotChangeDto, unknown, SetActiveInput>({
-    mutationFn: ({ id, active }) => setPilotActive(id, active),
-    onSuccess: () => {
-      invalidateAccounts(qc);
-      // Deaktywacja zrywa WSZYSTKIE sesje pilota - także tę, z której właśnie patrzysz,
-      // jeśli deaktywowano konto, którym jesteś zalogowany. Serwer tego nie dopuszcza
-      // (`self_deactivate`), ale drugi administrator już tak: wtedy `['me']` musi
-      // dostać 401 i zaprowadzić na ekran logowania, zamiast zostawić martwy panel.
-      void qc.invalidateQueries({ queryKey: keys.me });
-    },
+  return useMutation({
+    mutationFn: ({ id, active }: { id: string; active: boolean }) => setPilotActive(id, active),
+    onSuccess: () => invalidatePilots(qc),
   });
 }
 
+/**
+ * Reset hasła.
+ *
+ * Odpowiedź niesie hasło JEDEN RAZ - nie ma trasy „pokaż ponownie". Ekran pokazuje je
+ * i zapomina razem z zamknięciem formularza; do cache'u nie trafia, bo cache przeżywa
+ * zamknięcie ekranu, a hasło nie ma prawa.
+ */
 export function useResetPilotPassword() {
   const qc = useQueryClient();
-  return useMutation<PilotSecretDto, unknown, string>({
-    mutationFn: (id) => resetPilotPassword(id),
-    onSuccess: () => {
-      invalidateAccounts(qc);
-      // Reset zrywa sesje tak samo jak deaktywacja - łącznie z własną, gdy administrator
-      // resetuje hasło sobie (ścieżka ratunkowa z A06a). Sesja PANELU jedzie osobnym
-      // ciasteczkiem i przeżywa, ale `['me']` i tak warto sprawdzić.
-      void qc.invalidateQueries({ queryKey: keys.me });
-    },
+  return useMutation({
+    mutationFn: (id: string) => resetPilotPassword(id),
+    onSuccess: () => invalidatePilots(qc),
+  });
+}
+
+/**
+ * TRWAŁE usunięcie konta - jedyna nieodwracalna operacja w tym panelu.
+ *
+ * Unieważnia listę jak reszta mutacji; ekran zamyka po niej kartę, bo konta, którego
+ * dotyczyła, już nie ma i nie ma czego pokazać.
+ */
+export function useDeletePilot() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deletePilot(id),
+    onSuccess: () => invalidatePilots(qc),
   });
 }

@@ -42,6 +42,7 @@ import { AdminMeQueries } from '../src/application/admin/queries/me.ts';
 import { AdminPilotQueries } from '../src/application/admin/queries/pilots.ts';
 import { AdminSessionQueries } from '../src/application/admin/queries/sessions.ts';
 import { AdminConsumptionQueries } from '../src/application/admin/queries/consumption.ts';
+import { AdminLogQueries } from '../src/application/admin/queries/log.ts';
 import { AdminStatsQueries } from '../src/application/admin/queries/stats.ts';
 import { AuditedWrite } from '../src/application/admin/auditedWrite.ts';
 import { AuthCommands } from '../src/application/common/commands/auth.ts';
@@ -49,9 +50,10 @@ import { IngestCommands } from '../src/application/mobile/commands/ingest.ts';
 import { PrefsCommands } from '../src/application/mobile/commands/prefs.ts';
 import { DayExporter } from '../src/application/common/export/dayExporter.ts';
 import { MyEventQueries } from '../src/application/mobile/queries/myEvents.ts';
-import { SessionTrackQueries } from '../src/application/mobile/queries/sessionTrack.ts';
+import { MySessionTrackQueries } from '../src/application/mobile/queries/sessionTrack.ts';
 import { ReferenceQueries } from '../src/application/mobile/queries/reference.ts';
 import { TaskSuggestionQueries } from '../src/application/mobile/queries/taskSuggestions.ts';
+import { SessionTrackQueries } from '../src/application/common/queries/sessionTrack.ts';
 import { SheetQueries } from '../src/application/common/queries/sheets.ts';
 import { StateQueries } from '../src/application/mobile/queries/aircraftState.ts';
 import { Hs256Tokens } from '../src/infrastructure/auth/hs256Tokens.ts';
@@ -70,6 +72,7 @@ import { PgAdminPilotsRepo } from '../src/infrastructure/pg/admin/pilotsRepo.ts'
 import { PgAdminRefreshTokensRepo } from '../src/infrastructure/pg/admin/refreshTokensRepo.ts';
 import { PgAdminSessionsRepo } from '../src/infrastructure/pg/admin/sessionsRepo.ts';
 import { PgAdminConsumptionRepo } from '../src/infrastructure/pg/admin/consumptionRepo.ts';
+import { PgAdminLogRepo } from '../src/infrastructure/pg/admin/logRepo.ts';
 import { PgAdminStatsRepo } from '../src/infrastructure/pg/admin/statsRepo.ts';
 import { FsPhaseTimeline } from '../src/infrastructure/traces/fsPhaseTimeline.ts';
 import { PgConsumptionNormRepo } from '../src/infrastructure/pg/common/consumptionNormRepo.ts';
@@ -88,7 +91,6 @@ import { PgAircraftConfigRepo } from '../src/infrastructure/pg/common/aircraftCo
 import { PgSheets } from '../src/infrastructure/pg/common/sheetsRepo.ts';
 import { FsTraceSink } from '../src/infrastructure/traces/fsTraceSink.ts';
 import { FsTraceSource } from '../src/infrastructure/traces/fsTraceSource.ts';
-import { AdminFlightTrackQueries } from '../src/application/admin/queries/flightTrack.ts';
 import { buildServer } from '../src/http/server.ts';
 import { seedTestWorld } from './testWorld.ts';
 
@@ -204,6 +206,10 @@ export async function testHarness(
   // Zapytania floty mają DWÓCH konsumentów (trasy `A07` i pulpit) - jak w produkcyjnym
   // composition root, więc stoją w zmiennej, a nie w literale.
   const adminFleetQueries = new AdminFleetQueries(db, adminFleetRepo, sessions, adminPilotsRepo);
+  // Ślad sesji też ma DWÓCH konsumentów (telefon i panel) i w produkcji jest jednym
+  // egzemplarzem - odczyt wskazuje na TEN SAM katalog co zapis, więc test wysyła nagranie
+  // przez `POST /traces` i odbiera je obiema trasami, czyli przechodzi drogę produkcyjną.
+  const sessionTrack = new SessionTrackQueries(db, events, new FsTraceSource(tracesDir));
 
   const app = buildServer({
     auth: new AuthCommands(pilots, new PgRefreshTokens(db, clock), hasher, tokens, clock),
@@ -219,11 +225,10 @@ export async function testHarness(
     // Droga POWROTNA nagrania (issue #47) - ten sam katalog co zapis, więc test wysyła
     // ślad przez `POST /traces` i odbiera go przez `GET /me/sessions/:uuid/track`,
     // czyli przechodzi dokładnie drogę telefonu po skasowaniu lokalnej kopii.
-    sessionTrack: new SessionTrackQueries(db, events, new FsTraceSource(tracesDir)),
-    // Odczyt śladu wskazuje na TEN SAM katalog co zapis - dzięki temu test może wysłać
-    // ślad przez `POST /traces` i przeczytać go przez trasę mapy, czyli przejść dokładnie
-    // tę drogę, którą przechodzą dane w produkcji.
-    adminFlightTrackQueries: new AdminFlightTrackQueries(db, events, new FsTraceSource(tracesDir)),
+    sessionTrack: new MySessionTrackQueries(sessionTrack),
+    // Ten sam egzemplarz, co dla telefonu - w produkcji też jest jeden (`src/index.ts`),
+    // więc test nie ma jak przeoczyć rozjazdu między mapą pilota a mapą administratora.
+    adminSessionTrack: sessionTrack,
     prefs: new PrefsCommands(new PgPilotPrefsRepo(db)),
     // Podpowiedzi zadania dnia (issue #14) - PRAWDZIWY adapter nad projekcją, jak
     // w produkcyjnym composition root: test wysyła preflighty przez `POST /events`
@@ -329,6 +334,7 @@ export async function testHarness(
     // Statystyki (A10) - jak w produkcyjnym composition root: czysty odczyt agregatów
     // kolumn projekcji, zegar rozstrzyga zakres domyślny.
     adminStatsQueries: new AdminStatsQueries(db, new PgAdminStatsRepo(), clock),
+    adminLogQueries: new AdminLogQueries(db, new PgAdminLogRepo(), clock),
     // Analityka zużycia (A10a/A10b) - dostaje TEN SAM `events`, co reszta harnessu,
     // więc dekorator liczący odczyty strumienia widzi też jej wywołania.
     adminConsumptionQueries: new AdminConsumptionQueries(

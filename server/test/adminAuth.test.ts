@@ -43,6 +43,9 @@ function sessionCookie(res: { headers: Record<string, unknown> }): string {
 }
 
 describe('logowanie do panelu wydaje ciasteczko, nie token w ciele', () => {
+  // Przypadek „rola pośrednia dostaje WĘŻSZĄ listę zdolności" wypadł razem z rolą
+  // `training_lead` (2026-08-30): panel otwiera dziś wyłącznie administrator, więc
+  // wysyłana lista jest zawsze tą jedną - i to ją przybija ten przypadek.
   it('administrator dostaje sesję: ciasteczko HttpOnly + tożsamość i zdolności w ciele', async () => {
     const { app } = await testHarness();
     const res = await panelLogin(app, 'TMK');
@@ -87,14 +90,6 @@ describe('logowanie do panelu wydaje ciasteczko, nie token w ciele', () => {
       // jest w całości tym jednym `Max-Age`.
       expect(header).toContain(`Max-Age=${ADMIN_SESSION_TTL_SEC}`);
     });
-  });
-
-  it('szef wyszkolenia dostaje sesję z WĘŻSZĄ listą zdolności', async () => {
-    const { app } = await testHarness();
-    const res = await panelLogin(app, 'AKO');
-
-    expect(res.statusCode).toBe(200);
-    expect(res.json().capabilities).toEqual(['panel.access', 'flags.resolve']);
   });
 
   it('złe hasło i nieistniejące konto dają IDENTYCZNĄ odpowiedź (A00a)', async () => {
@@ -183,6 +178,10 @@ describe('ciasteczko autoryzuje trasy panelu - i nie odbiera tego `Bearer`', () 
     expect(me.json().pilot.id).toBe('TMK');
   });
 
+  // Druga połowa reguły „ciasteczko jest kanałem, nie awansem" - sesja panelu roli
+  // pośredniej odbijała się o `events.correct` tak samo jak jej token `Bearer` -
+  // zniknęła razem z rolą (2026-08-30): każde konto, które w ogóle dostaje ciasteczko
+  // panelu, ma dziś komplet zdolności, więc nie ma czego tym kanałem odmówić.
   it('nagłówek WYGRYWA z ciasteczkiem - drugie poświadczenie nie podnosi uprawnień', async () => {
     // Żądanie niosące oba pochodzi z przeglądarki z doklejonym `Authorization`.
     // Kolejność jest zapisana raz (`tokenFromRequest`), więc nie zależy od trasy.
@@ -213,23 +212,6 @@ describe('ciasteczko autoryzuje trasy panelu - i nie odbiera tego `Bearer`', () 
 
     expect(me.statusCode).toBe(401);
     expect(me.json()).toEqual({ error: 'unauthorized' });
-  });
-
-  it('sesja panelu NIE otwiera niczego, czego nie otwierał token telefonu', async () => {
-    // Ciasteczko jest kanałem, nie awansem: sesja szefa wyszkolenia dalej odbija się
-    // o `events.correct`, tak samo jak jego token `Bearer`.
-    const { app } = await testHarness();
-    const cookie = sessionCookie(await panelLogin(app, 'AKO'));
-
-    const correction = await app.inject({
-      method: 'POST',
-      url: '/admin/api/sessions/sess-1/corrections',
-      headers: { cookie, ...ADMIN_CSRF_HEADERS },
-      payload: { targetUuid: 'x', action: 'void', reason: 'Próba korekty bez uprawnień.' },
-    });
-
-    expect(correction.statusCode).toBe(403);
-    expect(correction.json()).toEqual({ error: 'forbidden', required: 'events.correct' });
   });
 });
 

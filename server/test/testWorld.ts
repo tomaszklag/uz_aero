@@ -21,12 +21,18 @@ const AIRCRAFT = [
 ] as const;
 
 /**
- * Po jednym koncie każdej roli, żeby trasy panelu dało się przetestować bez ręcznego
- * UPDATE-u; reszta to zwykli piloci - stan domyślny konta bez dostępu do back-office'u.
+ * DWA konta z wejściem do panelu i trzej zwykli piloci.
+ *
+ * AKO był szefem wyszkolenia do wycofania tej roli 2026-08-30 i schodzi na `admin`,
+ * a nie na `pilot`, bo tak ocaleje najwięcej przypadków: odmowy „konto bez zdolności X"
+ * dowodzi odtąd token zwykłego pilota (PWI/JSE/KRZ, brama pyta o ZDOLNOŚĆ, nie o wejście
+ * do panelu), a drugiego konta panelowego nie da się niczym zastąpić tam, gdzie przekrój
+ * potrzebuje DWÓCH ludzi przy biurku - cudza sesja panelu, wyścig o flagę, aktor
+ * dziennika audytu inny niż wykonawca.
  */
 const PILOTS = [
   ['TMK', 'TMK', 'Tomasz Małkiewicz', 'tomasz@uzaero.pl', 'admin'],
-  ['AKO', 'AKO', 'Anna Kowalska', 'anna@uzaero.pl', 'training_lead'],
+  ['AKO', 'AKO', 'Anna Kowalska', 'anna@uzaero.pl', 'admin'],
   ['PWI', 'PWI', 'Piotr Wiśniewski', 'piotr@uzaero.pl', 'pilot'],
   ['JSE', 'JSE', 'Jan Serafin', 'jan@uzaero.pl', 'pilot'],
   ['KRZ', 'KRZ', 'Krzysztof Zieliński', 'krzysztof@uzaero.pl', 'pilot'],

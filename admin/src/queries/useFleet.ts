@@ -1,50 +1,89 @@
 /**
- * UZ Aero - panel: odczyt floty (`A07`) i progu flagi paliwa (`A07a`).
+ * UZ Aero - panel 2.0: flota - lista, próg paliwa i zapisy konfiguracji.
  *
- * ══ DLACZEGO ZWYKŁE `useQuery`, A NIE `useInfiniteQuery` ══
- * Bo trasa nie ma kursora i mieć go nie musi: klub ma kilka jednostek, a lista jest
- * jednocześnie SŁOWNIKIEM samolotów dla filtrów innych ekranów (`A02`). Lista, którą
- * trzeba doładowywać stronami, nie nadaje się do rozwijanego filtra - i to jest powód,
- * dla którego kształt tej trasy różni się od dni lotnych i dziennika audytu.
- *
- * Hooki są cienkie z zasady: decyzja o treści ekranu mieszka w czystych modułach
- * `screens/fleet/*.ts`, a tutaj zostaje wyłącznie to, co dotyczy cache'u.
+ * Lista i próg mieszkają w jednym pliku, bo to jeden zasób; różnią się natomiast
+ * czasem życia i dlatego mają osobne klucze (`queries/keys.ts`).
  */
 
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 
 import type { AircraftToleranceDto, FleetPageDto } from '../api/dto';
-import { getFuelTolerance, listFleet, type FleetListQuery } from '../api/fleet';
+import {
+  createAircraft,
+  deleteAircraft,
+  getFuelTolerance,
+  listFleet,
+  updateAircraft,
+  type CreateAircraftBody,
+  type FleetListQuery,
+  type UpdateAircraftBody,
+} from '../api/fleet';
 import { keys } from './keys';
 
-export function useFleet(query: FleetListQuery = {}, enabled = true) {
+export function useFleet(query: FleetListQuery) {
   return useQuery<FleetPageDto>({
     queryKey: keys.fleet.list(query),
     queryFn: () => listFleet(query),
-    enabled,
   });
 }
 
 /**
- * Próg `FUEL_MISMATCH` dla pojemności wpisywanej w formularzu.
+ * Próg rozjazdu paliwa dla pojemności WPISYWANEJ w formularzu.
  *
- * `staleTime: Infinity`, bo `max(10 L, 5% pojemności)` jest funkcją CZYSTĄ - odpowiedź
- * dla 1100 L nigdy się nie zestarzeje, więc odświeżanie jej przy powrocie do karty
- * byłoby żądaniem o wynik, który już mamy.
+ * `enabled` gasi zapytanie dla wartości, których serwer i tak nie policzy (pole puste,
+ * zero, wartość ujemna): trasa odpowiada na nie odmową `409`, a odmowa w tle formularza
+ * zamieniłaby podpowiedź w czerwony stan błędu przy każdym wykasowaniu pola.
  *
- * Zapytanie jest wyłączone przy pojemności niepoprawnej, bo „jaki próg dla pustego
- * pola" nie jest pytaniem - a nie dlatego, że panel musi cokolwiek ratować. Do
- * 2026-08-01 ten warunek BYŁ jedyną obroną: trasa odpowiadała progiem na `0`, `-500`,
- * pusty parametr i `1e300`, czyli reguła „dopuszczalna pojemność" siedziała w panelu,
- * dokładnie tam, gdzie ten przekrój deklaruje, że jej nie ma. Dziś `GET /fleet/tolerance`
- * waliduje tak samo jak zapis: kształt spoza zakresu → `400 bad_request`, wartość ≤ 0
- * (w tym pusty parametr, który koercja zamienia w `0`) → `409 capacity_not_positive`.
+ * `staleTime: Infinity`, bo `max(10 L, 5%)` nie zmienia się między żądaniami - to
+ * funkcja czysta, tylko policzona po drugiej stronie sieci.
  */
 export function useFuelTolerance(capacityL: number | null) {
+  const valid = capacityL != null && Number.isFinite(capacityL) && capacityL > 0;
   return useQuery<AircraftToleranceDto>({
-    queryKey: keys.fleet.tolerance(capacityL ?? 0),
+    queryKey: keys.fleet.tolerance(valid ? capacityL : 0),
     queryFn: () => getFuelTolerance(capacityL as number),
-    enabled: capacityL != null && capacityL > 0,
+    enabled: valid,
     staleTime: Infinity,
+    retry: false,
+  });
+}
+
+/**
+ * Unieważniamy WYŁACZNIE listy - nigdy prefiksu `['fleet']`.
+ *
+ * Powód stoi przy kluczu: pod tym samym prefiksem żyje próg, który jest funkcją czystą
+ * i jest w tej chwili aktywnym zapytaniem otwartego formularza.
+ */
+const invalidateFleet = (qc: QueryClient): Promise<void> =>
+  qc.invalidateQueries({ queryKey: keys.fleet.lists });
+
+export function useCreateAircraft() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: CreateAircraftBody) => createAircraft(body),
+    onSuccess: () => invalidateFleet(qc),
+  });
+}
+
+export function useUpdateAircraft() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: UpdateAircraftBody }) =>
+      updateAircraft(id, body),
+    onSuccess: () => invalidateFleet(qc),
+  });
+}
+
+/**
+ * TRWAŁE usunięcie jednostki - nieodwracalne, więc ekran pyta o potwierdzenie.
+ *
+ * Unieważnia same listy, jak reszta mutacji floty: próg paliwa jest funkcją czystą
+ * i skasowanie jednostki nie ma jak go zmienić.
+ */
+export function useDeleteAircraft() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteAircraft(id),
+    onSuccess: () => invalidateFleet(qc),
   });
 }

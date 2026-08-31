@@ -88,5 +88,26 @@ export function sessionRowFrom(sessionUuid: string, stream: Event[]): SessionRow
     // Z tych kolumn `GET /reference` składa przekazanie oleju (`Handover.oil`).
     oilLevelL: s.oil.levelL,
     oilAddedL: s.oil.addedL,
+    // Log dnia (panel 2.0): bieg silnika, koperta lotów, lotniska i suma dolewek.
+    // Wszystko POLICZONE przez projekcję - tu tylko przepisujemy.
+    //
+    // Sesja ma dokładnie JEDEN bieg silnika (pivot 2026-08-10), więc bierzemy pierwszy
+    // wpis `legs` i to nie jest uproszczenie, tylko model: po zatrzymaniu silnika nie
+    // ma drugiego startu, kolejny lot to nowe przejęcie.
+    engineStartAt: s.legs[0]?.startedAt ?? null,
+    engineStopAt: s.legs[0]?.stoppedAt ?? null,
+    // Koperta LOTOW wewnątrz biegu. Sesja bez lotu (próba silnika, pogoda, usterka)
+    // ma tu `null` i to jest stan świata, nie brak danych.
+    firstTakeoffAt: s.flights[0]?.takeoffAt ?? null,
+    lastLandingAt: s.flights[s.flights.length - 1]?.landingAt ?? null,
+    departureIcao: s.departureIcao,
+    // `null` przy operacji na jednym placu (skoki) jest NORMĄ, nie brakiem: startuje
+    // i ląduje się tam samo, więc pole drugiego lotniska nie istnieje (issue #13).
+    arrivalIcao: s.arrivalIcao,
+    // Suma zdarzeń `refuel`. Do 2026-08-30 żyła wyłącznie w pamięci projekcji, więc
+    // panel znał stan przed i po, ale nie wiedział, ile dolano między nimi.
+    fuelAddedL: s.fuel.addedL,
+    manualEntry: s.manualEntry,
+    oilAfterL: s.oil.afterL,
   };
 }

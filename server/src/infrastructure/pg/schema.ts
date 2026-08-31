@@ -64,7 +64,7 @@
  * nie kosztuje.
  */
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 /**
  * Migracja bazowa - CAŁY schemat serwera.
@@ -100,13 +100,20 @@ export const MIGRATION_1 = `
     -- z opóźnieniem i wtedy wygrywałby ten, kto miał lepszą sieć.
     theme_updated_at TIMESTAMPTZ,
 
-    -- Rola konta (panel administracyjny). Administrator i szef wyszkolenia SĄ pilotami,
-    -- więc drugi byt tożsamości rozjechałby ich nalot na dwa konta (src/domain/roles.ts).
+    -- Rola konta (panel administracyjny). Administrator JEST pilotem - lata i ma telefon
+    -- - więc drugi byt tożsamości rozjechałby jego nalot na dwa konta (src/domain/roles.ts).
     -- CHECK zamiast typu ENUM: enum w Postgresie rozszerza się osobnym DDL-em o własnych
     -- ograniczeniach transakcyjnych, a CHECK jest zwykłym ograniczeniem tabeli - tańszy
     -- w utrzymaniu i tak samo nieprzepuszczalny. DEFAULT 'pilot' domyka istniejące konta:
     -- podniesienie uprawnień ma być jawną decyzją administratora, nigdy skutkiem ubocznym.
-    role TEXT NOT NULL DEFAULT 'pilot' CHECK (role IN ('pilot', 'training_lead', 'admin')),
+    --
+    -- Rola 'training_lead' wycofana 2026-08-30 i USUNIĘTA STĄD, a nie zostawiona
+    -- „na wszelki wypadek": kolumna ma mówić to samo, co PILOT_ROLES. Baza deweloperska
+    -- założona wcześniej ma starsze ograniczenie i to nie przeszkadza (żaden wiersz go
+    -- nie używa), a odczyt i tak degraduje nieznaną rolę do 'pilot'
+    -- (isPilotRole → DEFAULT_ROLE). Wystarczy postawić bazę od nowa, żeby zgadzało się
+    -- co do znaku.
+    role TEXT NOT NULL DEFAULT 'pilot' CHECK (role IN ('pilot', 'admin')),
 
     -- Znacznik UNIEWAŻNIENIA POŚWIADCZEŃ konta (przekrój A06).
     --
@@ -503,7 +510,54 @@ export const MIGRATION_2 = `
   ALTER TABLE sessions ADD COLUMN IF NOT EXISTS oil_added_l DOUBLE PRECISION;
 `;
 
-export const MIGRATIONS: readonly string[] = [MIGRATION_1, MIGRATION_2];
+/**
+ * Log dnia w panelu 2.0 (2026-08-30) - SIEDEM kolumn projekcji, bez których grid
+ * modułu nie ma z czego powstać.
+ *
+ * ══ DLACZEGO KOLUMNY, A NIE WYRAŻENIA W ZAPYTANIU ══
+ * Reguła §7.1: lista sesji czyta WYŁĄCZNIE kolumny tabeli `sessions`, a każda nowa
+ * liczba w panelu to nowa kolumna projekcji, nigdy nowy `SELECT` po strumieniu zdarzeń.
+ * Wszystkie te wartości są już policzone w `SessionState` - projekcja ich dotąd nie
+ * zapisywała, bo nikt o nie nie pytał.
+ *
+ * ══ CZYM SIĘ ROZNIA OD TEGO, CO JUZ BYLO ══
+ *  • `engine_start_at`/`engine_stop_at` - bieg silnika. To NIE JEST `claim_time`
+ *    ani `close_time`: przejęcie i zdanie samolotu to chwile wokół biegu, czasem
+ *    odległe o godziny (pilot bierze maszynę rano, uruchamia po południu).
+ *  • `first_takeoff_at`/`last_landing_at` - koperta LOTOW wewnątrz biegu. Sesja bez
+ *    lotu (próba silnika, pogoda) ma je `NULL` i to jest stan, nie brak danych.
+ *  • `departure_icao`/`arrival_icao` - lotniska z `preflight_confirm`. Przy operacji
+ *    na jednym placu (skoki, issue #13) `arrival_icao` jest `NULL` Z DEFINICJI, więc
+ *    czytelnik musi znać rodzaj operacji, żeby odróżnić „to samo lotnisko" od „nie
+ *    wiadomo" - dlatego grid pokazuje jedno i drugie razem.
+ *  • `fuel_added_l` - suma zdarzeń `refuel` w sesji. Dotąd żyła wyłącznie w pamięci
+ *    projekcji (kontrakt pulpitu nazywał ten brak wprost), więc panel nie miał jak
+ *    pokazać dolewki, mimo że zna stan przed i po.
+ *
+ * Indeks po `engine_start_at`, bo to jest OS CZASU modułu: log dnia pyta „co latało
+ * między 1 a 31 lipca", a doba maszyny zaczyna się uruchomieniem silnika, nie
+ * przejęciem (`projectPilotDay` liczy tak samo). Sesje bez uruchomienia lądują na
+ * końcu - `NULLS LAST` jak przy `claim_time`.
+ *
+ * Kolumny wypełniają się przy najbliższej paczce zdarzeń; istniejące wiersze zostają
+ * puste do czasu przebudowy (`POST /admin/api/maintenance/projections/rebuild`).
+ */
+export const MIGRATION_3 = `
+  ALTER TABLE sessions ADD COLUMN IF NOT EXISTS engine_start_at  BIGINT;
+  ALTER TABLE sessions ADD COLUMN IF NOT EXISTS engine_stop_at   BIGINT;
+  ALTER TABLE sessions ADD COLUMN IF NOT EXISTS first_takeoff_at BIGINT;
+  ALTER TABLE sessions ADD COLUMN IF NOT EXISTS last_landing_at  BIGINT;
+  ALTER TABLE sessions ADD COLUMN IF NOT EXISTS departure_icao   TEXT;
+  ALTER TABLE sessions ADD COLUMN IF NOT EXISTS arrival_icao     TEXT;
+  ALTER TABLE sessions ADD COLUMN IF NOT EXISTS fuel_added_l     DOUBLE PRECISION;
+  ALTER TABLE sessions ADD COLUMN IF NOT EXISTS manual_entry     BOOLEAN;
+  ALTER TABLE sessions ADD COLUMN IF NOT EXISTS oil_after_l      DOUBLE PRECISION;
+
+  CREATE INDEX IF NOT EXISTS idx_sessions_engine_start
+    ON sessions (engine_start_at DESC NULLS LAST, session_uuid DESC);
+`;
+
+export const MIGRATIONS: readonly string[] = [MIGRATION_1, MIGRATION_2, MIGRATION_3];
 
 /**
  * Jednozdaniowy opis KAŻDEJ migracji - kolumna „Co wprowadza" z ekranu `A11`.
@@ -526,4 +580,5 @@ export const MIGRATIONS: readonly string[] = [MIGRATION_1, MIGRATION_2];
 export const MIGRATION_TITLES: readonly string[] = [
   'Schemat bazowy: konta, flota, rejestr zdarzeń, projekcje, eksport, audyt, analityka',
   'Moduł oleju (issue #60): konfiguracja floty (minimum, zbiornik, norma nominalna) i projekcja pomiaru z dolewkami w sesji',
+  'Log dnia (panel 2.0): bieg silnika, koperta lotów, lotniska i suma dolewek paliwa w projekcji sesji',
 ];

@@ -15,13 +15,13 @@
  * `GET /me/sessions/:uuid/track` - gotowa geometria po kompresji (RDP na linii
  * i na profilu, próbka logu, liczby przycięte do rozdzielczości): telefon nie dostaje
  * ani jednego surowego fixa, bo nie ma z nim co zrobić. Uprawnienie sprawdza
- * `SessionTrackQueries` na PIC-u sesji, nie ta trasa - to reguła o danych, nie o HTTP.
+ * `MySessionTrackQueries` na PIC-u sesji, nie ta trasa - to reguła o danych, nie o HTTP.
  */
 
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
-import type { SessionTrackQueries } from '../../../application/mobile/queries/sessionTrack.ts';
+import type { MySessionTrackQueries } from '../../../application/mobile/queries/sessionTrack.ts';
 import type { TokenService, TraceSinkPort } from '../../../application/common/ports.ts';
 import { authorize } from '../../authorize.ts';
 import { tokenFromRequest } from '../../tokenFromRequest.ts';
@@ -37,7 +37,7 @@ const trackParams = z.object({
 export function registerTracesRoutes(
   app: FastifyInstance,
   traces: TraceSinkPort,
-  sessionTrack: SessionTrackQueries,
+  sessionTrack: MySessionTrackQueries,
   tokens: TokenService,
 ): void {
   app.get('/me/sessions/:uuid/track', async (req, reply) => {

@@ -63,6 +63,16 @@
 }
 
 .btn:disabled,
+/**
+ * Blokada przycisku - ATRYBUT i klasa, oba tak samo.
+ *
+ * `:disabled` doszło w panelu 2.0 i to nie było ozdobą: `.btn.disabled` opisywało
+ * wyłącznie LINK zablokowany (`<span class="btn disabled">`), więc `<button disabled>`
+ * wyglądał dokładnie tak samo jak czynny. Zielony przycisk „Zaloguj się", który nie
+ * reaguje na kliknięcie, czyta się jak zawieszona aplikacja - a to jest pierwszy
+ * przycisk, jaki człowiek w tym panelu widzi.
+ */
+.btn:disabled,
 .btn.disabled {
   opacity: 0.4;
   cursor: not-allowed;
@@ -262,4 +272,33 @@
   color: var(--text-muted);
   flex-shrink: 0;
   display: flex;
+}
+
+/**
+ * Podpowiedź pod polem w tonie błędu - „ten kod ma już inny pilot".
+ *
+ * Stoi pod polem, którego dotyczy, a nie w banerze nad formularzem: baner każe
+ * szukać, które z czterech pól poprawić, a czerwona ramka bez zdania nie mówi dlaczego.
+ */
+.hint.danger {
+  color: var(--red);
+}
+
+/**
+ * Wiersz sekcji „Dostęp": nazwa rzeczy po lewej, akcja po prawej.
+ *
+ * Nie tabela klucz-wartość, bo po prawej stronie nie stoi WARTOŚĆ, tylko przycisk -
+ * a wiersz, w którym jedno i drugie wygląda tak samo, uczy klikać w liczby.
+ */
+.access-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.access-row:last-child {
+  border-bottom: none;
 }

@@ -712,8 +712,9 @@ a ekran śladu pobiera gotową geometrię z `GET /me/sessions/:uuid/track`.
 - **co wraca:** WYŁĄCZNIE geometria i liczby z niej policzone - linia po uproszczeniu
   RDP, profil pionowy i statystyki lotu. Rejestracji maszyny, listy lotów ani czasów
   w kopercie NIE MA. Logu punktów też nie: tabela surowych fixów ze stanem bramki
-  jakości jest materiałem do strojenia progów i została w panelu (A02c) oraz
-  w nagraniu czytanym przez `replay.ts` (przegląd 2026-08-15)
+  jakości jest materiałem do strojenia progów i została WYŁĄCZNIE w nagraniu czytanym
+  przez `replay.ts` (przegląd 2026-08-15; panel 2.0 też jej nie pokazuje - jego ekran
+  sesji rysuje mapę i profil, patrz `docs/panel-2.0.md` §9.4)
 - **co zostaje lokalne:** wszystko powyższe. Czasy startów, loty, czas w powietrzu i bieg
   silnika liczą się dalej z lokalnego rejestru - dlatego wariant bez zasięgu (`14c`)
   pokazuje komplet czasów i mówi wprost, że brakuje mu wyłącznie rysunku

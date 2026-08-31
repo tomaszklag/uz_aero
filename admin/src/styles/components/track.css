@@ -1,10 +1,9 @@
 /**
- * UZ Aero - panel: mapa śladu i profil pionowy (`A02c-slad.html`).
+ * UZ Aero - panel 2.0: mapa śladu i profil pionowy (ekran sesji, poziom 3).
  *
- * Klasy przepisane 1:1 z `design/admin/SZABLON.html` (sekcja „mapa śladu i profil
- * pionowy"). Kolory wyłącznie z tokenów - zero hardcoded hex poza tłem płótna mapy,
- * które musi być ciemniejsze od powierzchni karty, żeby kafelki nie zlewały się z nią
- * przy brakującym pokryciu.
+ * Kolory wyłącznie z tokenów poza JEDNYM wyjątkiem: tło płótna mapy musi być
+ * ciemniejsze od powierzchni karty, żeby ślad miał na czym leżeć, a takiego stopnia
+ * w palecie nie ma.
  */
 
 .map-canvas {
@@ -38,6 +37,7 @@
 .map-airfield-dot {
   fill: var(--border-strong);
 }
+
 .map-scale {
   position: absolute;
   left: 12px;
@@ -57,10 +57,9 @@
   color: var(--text-secondary);
   letter-spacing: 1px;
 }
+
 /* Atrybucja katalogu lotnisk: licencja ODbL wymaga podpisu przy publicznym użyciu
-   danych OSM, więc stoi przy mapie, a nie w odległej stopce. Klasa jest kanoniczna
-   (`design/admin/SZABLON.html`) - została po kafelkach i wraca do użycia z tą samą
-   geometrią, żeby nie mnożyć dwóch plakietek robiących to samo. */
+   danych OSM, więc stoi przy mapie, a nie w odległej stopce. */
 .map-attrib {
   position: absolute;
   right: 8px;
@@ -73,6 +72,9 @@
   border-radius: 5px;
   letter-spacing: 0.3px;
 }
+
+/* Legenda opisuje RODZAJE znaczników, więc ma stałe trzy wiersze niezależnie od tego,
+   ile lotów miała sesja - patrz nagłówek `TrackMap.tsx`. */
 .map-legend {
   position: absolute;
   left: 12px;
@@ -84,13 +86,6 @@
   border: 1px solid var(--border);
   border-radius: 9px;
   padding: 9px 11px;
-}
-.map-legend-title {
-  font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: var(--text-muted);
 }
 .legend-row {
   display: flex;
@@ -111,43 +106,6 @@
   width: 14px;
   height: 2.5px;
   border-radius: 2px;
-}
-
-/* Pasek wyboru lotu - przeglądanie dnia lot po locie bez wracania do tabeli. */
-.flight-picker {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin-bottom: 12px;
-}
-.flight-picker-label {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin-right: 4px;
-}
-.fp-item {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--text-secondary);
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  padding: 5px 10px;
-  text-decoration: none;
-  cursor: pointer;
-}
-.fp-item:hover {
-  border-color: var(--border-strong);
-  color: var(--text-primary);
-}
-.fp-item.active {
-  color: var(--green);
-  border-color: var(--green-border);
-  background: var(--green-muted);
 }
 
 /* Profil pionowy - ten sam wykres co w aplikacji, na szerokości panelu. */
@@ -175,27 +133,37 @@
 .grid-line.dashed {
   stroke-dasharray: 2 4;
 }
-.profile-foot {
+
+/* Liczby pod mapą: dystans, pułap, prędkość. Trzy, nie trzynaście - reszta statystyk
+   jest materiałem do strojenia progów, nie odpowiedzią na pytanie z tego ekranu. */
+.track-facts {
   display: flex;
-  gap: 26px;
   flex-wrap: wrap;
-  padding: 8px 16px 14px;
+  gap: 28px;
+  padding: 12px 2px 2px;
+}
+.track-fact {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.track-fact-k {
   font-family: var(--font-mono);
   font-size: 9px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
   color: var(--text-muted);
-  letter-spacing: 1px;
 }
-.profile-foot b {
-  color: var(--text-secondary);
-  font-weight: 500;
+.track-fact-v {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  color: var(--text-primary);
 }
 
-/* Wiersz odrzucony przez bramkę jakości - czytelny, ale wyraźnie drugorzędny. */
-tr.rejected td {
+/* Podpis pod profilem - wysokość jest GPS-owa i to trzeba powiedzieć. */
+.profile-foot {
+  padding: 6px 16px 12px;
+  font-family: var(--font-body);
+  font-size: 11.5px;
   color: var(--text-muted);
-}
-td.pos {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: -0.2px;
 }

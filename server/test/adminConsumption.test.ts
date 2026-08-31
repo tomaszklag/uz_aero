@@ -276,15 +276,15 @@ describe('A10b · poniżej progu publikacji ekran mówi „za mało danych"', ()
 });
 
 describe('A10a · brama uprawnień i walidacja', () => {
-  it('szef wyszkolenia widzi raport, pilot dostaje 403', async () => {
+  it('panel widzi raport, pilot dostaje 403', async () => {
     const { app } = await testHarness();
 
-    const lead = await app.inject({
+    const panel = await app.inject({
       method: 'GET',
       url: '/admin/api/fleet/SP-AXA/consumption',
-      headers: bearer(await token(app, 'AKO')),
+      headers: bearer(await token(app, 'TMK')),
     });
-    expect(lead.statusCode).toBe(200);
+    expect(panel.statusCode).toBe(200);
 
     const pilot = await app.inject({
       method: 'GET',

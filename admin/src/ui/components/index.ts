@@ -1,49 +1,27 @@
 /**
- * UZ Aero - panel: barrel biblioteki komponentów.
+ * UZ Aero - panel 2.0: barrel biblioteki komponentów.
  *
- * Biblioteka rośnie PACZKAMI pod konkretne ekrany, nie „na zapas"
- * (`docs/architektura-panelu-frontend.md` §10 krok 4). To, czego tu nie ma
- * (`Skeleton`, `OptionGrid`…), dochodzi razem z pierwszym ekranem, który tego
- * wymaga - razem z arkuszem CSS o klasach 1:1 z szablonem.
- *
- * `SZABLON.html` jest inwentarzem DOCELOWYM, a komponent bez ekranu to kod,
- * którego nikt nie sprawdził w użyciu.
+ * Biblioteka rośnie PACZKAMI pod konkretne ekrany, nie „na zapas": komponent bez
+ * ekranu to kod, którego nikt nie sprawdził w użyciu. Panel 2.0 ma pięć ekranów
+ * i siedemnaście komponentów - i to jest cała lista.
  */
 
 export { Banner, type BannerTone } from './Banner';
 export { Button } from './Button';
 export { Card } from './Card';
-export { CellLink } from './CellLink';
-export { Columns } from './Columns';
 export { DataTable, type Column, type ColumnSort } from './DataTable';
-export { DetailList, type DetailItem } from './DetailList';
 export { Drawer } from './Drawer';
-export { DuoRow } from './DuoRow';
 export { EmptyState } from './EmptyState';
 export { Field } from './Field';
-export { FilterBar } from './FilterBar';
 export { FilterChip } from './FilterChip';
-export { FleetRow } from './FleetRow';
-export { KeyValue, type KeyValueTone } from './KeyValue';
 export { LinkButton } from './LinkButton';
-export { MeterRow } from './MeterRow';
+export { Loadable } from './Loadable';
 export { NoAccess } from './NoAccess';
 export { OptionButton } from './OptionButton';
-export { OptionGrid } from './OptionGrid';
-export { OptionLink } from './OptionLink';
-export { OptionList } from './OptionList';
 export { PageHead } from './PageHead';
-export { PayloadView, type PayloadViewLine } from './PayloadView';
 export { Pill, type PillTone } from './Pill';
-export { RibbonBar } from './RibbonBar';
 export { SearchInput } from './SearchInput';
-export { ShareBar } from './ShareBar';
-export { Sparkline } from './Sparkline';
-export { TaskRow, type TaskTone } from './TaskRow';
-export { TextArea } from './TextArea';
+export { TableSkeleton } from './TableSkeleton';
 export { TextInput } from './TextInput';
-export { Tile, type TileTone } from './Tile';
-export { TileGrid } from './TileGrid';
-export { Timeline } from './Timeline';
-export { TimelineRow, type TimelineTone } from './TimelineRow';
-export { TrendChart } from './TrendChart';
+export { TrackMap, type MapPlot } from './TrackMap';
+export { VerticalProfile, type ProfilePlot, type ProfileGridRow } from './VerticalProfile';

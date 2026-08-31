@@ -1,333 +1,68 @@
 /**
- * UZ Aero - panel: FLOTA (`design/admin/A07-flota.html`).
+ * UZ Aero - panel 2.0: lista samolotów (`#/samoloty`).
  *
- * ══ CZYM TEN EKRAN JEST W SYSTEMIE ══
- * To nie jest lista sprzętu, tylko **panel sterowania regułami**. Pojemność zbiorników
- * wyznacza tolerancję flagi `FUEL_MISMATCH`, format motogodzin zmienia sposób wpisywania
- * na preflight, wymóg drugiego pilota bramkuje przejęcie samolotu, a stan służby
- * decyduje, czy jednostka w ogóle pojawi się na liście wyboru w aplikacji. Każda z tych
- * czterech rzeczy wychodzi do telefonów jednym kanałem - przez `GET /reference`.
+ * Ekran KONFIGURACJI floty i nic więcej. Czego tu NIE MA wobec panelu 1.0: czterech
+ * kafli, liczb przy chipach, trzech kolumn ze stanem przysyłanym przez telefony
+ * (kto trzyma maszynę, ostatnie motogodziny, ostatnie paliwo) razem z całym aparatem
+ * świeżości danych, progu paliwa jako kolumny, trzech banerów i dwóch kart
+ * wyjaśniających. Stan operacyjny należy do ekranów operacyjnych; tutaj ustawia się
+ * maszynę raz na sezon.
  *
- * ══ DWA ŹRÓDŁA W JEDNYM WIERSZU I EKRAN MA JE ROZRÓŻNIAĆ ══
- * Lewa strona tabeli to KONFIGURACJA z bazy panelu (zmienia się tylko tutaj). Prawa -
- * stan bieżący, który przyniosły TELEFONY wraz ze zdarzeniami: kto trzyma samolot,
- * ostatnie MH i FOB. Ta druga bywa nieświeża i wtedy jest oznaczona (`fleetRows.ts`,
- * trzy stany świeżości). Liczniki fizyczne wygrywają - wartości z tej tabeli są
- * podpowiedzią dla pilota na preflight, nie prawdą.
- *
- * Ekran jest `.tsx` BEZ arytmetyki i bez decyzji o treści: plakietki, podpisy, liczniki
- * i dostępność akcji pochodzą z czystych modułów obok (`fleetFilters`, `fleetRows`,
- * `fleetTiles`, `aircraftActions`), które mają testy w Node.
- *
- * ══ CZEGO TEN EKRAN ŚWIADOMIE NIE POKAZUJE ══
- *  1. **Plakietki „W locie"** z mockupu - projekcja `sessions` nie niesie stanu silnika
- *     (ta sama granica, o którą rozbił się chip „W locie" na `A02`). Claim mówi „ktoś
- *     zajął jednostkę na dziś" i tak jest podpisany: „Zajęty".
- *  2. **Daty i powodu wyłączenia** („od 19 JUN 2026 · remont"). W `aircraft` nie ma
- *     takich kolumn; kto i kiedy wyłączył jednostkę, wie dziennik audytu.
- * Obie rzeczy są opisane na ekranie, a nie przemilczane.
+ * Jeden wyjątek jest świadomy: jednostka WYŁĄCZONA, na której ktoś jeszcze lata.
+ * Tego nie widać nigdzie indziej w panelu 2.0, a znaczy, że maszyna zniknęła pilotom
+ * z listy w połowie czyjegoś dnia.
  */
 
-import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
-import type { Capability } from '../../api/dto';
+import { can } from '../../auth/can';
 import { useSessionState } from '../../auth/sessionContext';
 import { useFleet } from '../../queries/useFleet';
 import {
   Banner,
-  Button,
-  Card,
-  Columns,
   DataTable,
   EmptyState,
-  FilterBar,
   FilterChip,
-  KeyValue,
   LinkButton,
+  Loadable,
   PageHead,
   Pill,
   SearchInput,
-  Tile,
-  TileGrid,
+  TableSkeleton,
   type Column,
 } from '../../ui/components';
-import { PlaneIcon } from '../../ui/components/icons';
+import { PlaneIcon, PlusIcon } from '../../ui/components/icons';
+import { errorMessage } from '../common/apiMessage';
 import { AircraftDrawer } from './AircraftDrawer';
-import {
-  NEW_AIRCRAFT_SEGMENT,
-  filterFromParams,
-  fleetListQuery,
-  isNarrowed,
-  newAircraftHref,
-  paramsFromFilter,
-  aircraftHref,
-  type FleetFilter,
-} from './fleetFilters';
-import { disabledOpenDays, fleetRows, fleetEmpty, freshClass, type FleetRow } from './fleetRows';
-import { fleetChips, fleetTiles, toleranceRows } from './fleetTiles';
-import { canManageFleet, editAction, fleetLoad } from './aircraftActions';
+import { fleetRow, type FleetRow } from './fleetRows';
+
+const HEADERS = ['Rejestracja', 'Rok', 'Paliwo', 'Licznik', 'Drugi pilot', 'Stan', ''];
 
 export function FleetScreen() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const { id } = useParams();
-  const navigate = useNavigate();
   const { session } = useSessionState();
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const [params, setParams] = useSearchParams();
 
-  const filter = filterFromParams(searchParams);
-  const fleet = useFleet(fleetListQuery(filter));
-  // Druga, NIEZAWĘŻONA lista - i to nie jest marnotrawstwo. Kafle opisują flotę,
-  // a nie zawężenie („Najstarszy odczyt" policzony z listy po filtrze mówiłby o czymś
-  // innym, niż głosi jego etykieta). Przy pustym filtrze klucz zapytania jest ten sam,
-  // więc TanStack nie wysyła drugiego żądania; przy zawężeniu płacimy jednym żądaniem
-  // o kilka wierszy. Ta sama lista jest słownikiem samolotów dla filtrów `A02`.
-  const all = useFleet({});
+  const search = params.get('szukaj') ?? '';
+  const onlyActive = params.get('stan') === 'w-sluzbie';
 
-  // Wpis w wyszukiwarce żyje lokalnie do naciśnięcia Entera: filtrem jest URL, ale
-  // przeładowywanie listy po każdej literze rejestracji byłoby serią żądań, z których
-  // żadne nie jest tym, o które pyta człowiek.
-  const [searchDraft, setSearchDraft] = useState(filter.search ?? '');
-  useEffect(() => {
-    setSearchDraft(filter.search ?? '');
-  }, [filter.search]);
-
-  const apply = (next: FleetFilter): void => setSearchParams(paramsFromFilter(next));
-
-  const items = fleet.data?.items ?? [];
-  const everything = all.data?.items ?? [];
-  const now = Date.now();
-  const rows = fleetRows(items, now);
-  const empty = fleetEmpty(isNarrowed(filter));
-  // Kafle opisują CAŁĄ flotę, więc i to ostrzeżenie liczymy z listy niezawężonej -
-  // inaczej chip „W służbie" chowałby jedyny wiersz, o którym ten baner mówi.
-  const stranded = disabledOpenDays(everything);
-  const load = fleetLoad(
-    { pending: fleet.isPending, error: fleet.isError },
-    { pending: all.isPending, error: all.isError },
-  );
-
-  const capabilities = session?.capabilities;
-  const manage = canManageFleet(capabilities);
-
-  /** Zamknięcie szuflady zdejmuje z adresu jednostkę, ale ZOSTAWIA zawężenie listy. */
-  const closeDrawer = (): void => {
-    void navigate({
-      pathname: '/flota',
-      search: new URLSearchParams(paramsFromFilter(filter)).toString(),
-    });
+  const setParam = (key: string, value: string | null): void => {
+    const next = new URLSearchParams(params);
+    if (value == null || value === '') next.delete(key);
+    else next.set(key, value);
+    setParams(next, { replace: true });
   };
 
-  const openedNew = id === NEW_AIRCRAFT_SEGMENT;
-  // Wiersz szukamy najpierw w liście ZAWĘŻONEJ (to ją człowiek widzi pod spodem),
-  // a w drugiej kolejności w pełnej - wklejony link do jednostki odfiltrowanej ma
-  // otworzyć szufladę, a nie stan „nie ma jej tutaj". Do stanu „nie ma" schodzimy
-  // dopiero wtedy, gdy identyfikatora nie zna ŻADNA z dwóch list.
-  const opened =
-    id == null || openedNew
-      ? null
-      : (items.find((item) => item.id === id) ??
-        everything.find((item) => item.id === id) ??
-        null);
+  const fleet = useFleet({
+    q: search === '' ? undefined : search,
+    status: onlyActive ? 'active' : undefined,
+  });
 
-  return (
-    <>
-      <PageHead
-        title="FLOTA"
-        sub={
-          <>
-            Konfiguracja jednostek: to z niej aplikacja bierze listę wyboru samolotu, skalę
-            paliwomierza, format wpisu motogodzin i wymóg drugiego pilota. Kolumny po prawej
-            to stan bieżący z telefonów - bywa nieświeży i jest wtedy oznaczony. Czasy UTC.
-          </>
-        }
-        actions={
-          <LinkButton
-            to={newAircraftHref(filter)}
-            variant="primary"
-            disabled={!manage}
-            reason={editAction(capabilities).reason ?? undefined}
-          >
-            Dodaj samolot
-          </LinkButton>
-        }
-      />
+  const manages = can(session?.capabilities, 'fleet.manage');
+  const rows = (fleet.data?.items ?? []).map(fleetRow);
 
-      <Banner tone="status">
-        <b>Sekcja administratora.</b> Dodawanie i edycja jednostek wymaga roli{' '}
-        <code>administrator</code>. Szef wyszkolenia czyta tę tabelę (potrzebuje jej do flag
-        i statystyk), ale bez przycisków edycji - przyciski zostają{' '}
-        <b>widoczne i zablokowane z powodem</b>, bo ukrycie zmuszałoby do zgadywania, czy
-        funkcji nie ma w produkcie, czy nie ma jej Twoje konto.
-      </Banner>
-
-      <TileGrid>
-        {fleetTiles(all.data?.counts ?? null, everything, now).map((tile) => (
-          <Tile
-            key={tile.label}
-            label={tile.label}
-            value={tile.value}
-            note={tile.note}
-            {...(tile.unit == null ? {} : { unit: tile.unit })}
-            {...(tile.tone == null ? {} : { tone: tile.tone })}
-          />
-        ))}
-      </TileGrid>
-
-      <FilterBar>
-        <SearchInput
-          value={searchDraft}
-          ariaLabel="Szukaj jednostki"
-          placeholder={'Szukaj: rejestracja, typ - Enter filtruje'}
-          onChange={setSearchDraft}
-          onSubmit={() =>
-            apply({ ...filter, search: searchDraft.trim() === '' ? null : searchDraft.trim() })
-          }
-        />
-        {fleetChips(fleet.data?.scopes ?? null).map((chip) => (
-          <FilterChip
-            key={chip.scope}
-            label={chip.label}
-            {...(chip.count == null ? {} : { count: chip.count })}
-            active={filter.scope === chip.scope}
-            {...(chip.scope === 'claimed' ? { tone: 'amber' as const } : {})}
-            onClick={() => apply({ ...filter, scope: chip.scope })}
-          />
-        ))}
-        <span className="list-spacer">
-          <Pill tone="blue" dot>
-            Wszystkie czasy UTC
-          </Pill>
-        </span>
-      </FilterBar>
-
-      {fleet.isPending ? null : fleet.isError ? (
-        <Banner tone="danger" live>
-          <b>Nie udało się pobrać floty.</b> Panel działa wyłącznie online - to jedyne miejsce
-          w systemie, w którym brak sieci wolno pokazać jako blokadę.{' '}
-          <Button variant="ghost" size="sm" onClick={() => void fleet.refetch()}>
-            Ponów
-          </Button>
-        </Banner>
-      ) : rows.length === 0 ? (
-        <div className="table-wrap">
-          <EmptyState icon={<PlaneIcon size={22} />} title={empty.title} note={empty.note} />
-        </div>
-      ) : (
-        <DataTable
-          caption="Flota - jednostki wyłączone na końcu, czasy UTC"
-          columns={columns(filter, capabilities)}
-          rows={rows}
-          rowKey={(row) => row.id}
-          rowClass={(row) => (row.id === id ? 'opened' : row.dim ? 'dim' : undefined)}
-          onRowClick={(row) => {
-            void navigate(aircraftHref(filter, row.id));
-          }}
-        />
-      )}
-
-      <Banner tone="warn">
-        <b>Wyłączenie ze służby to zmiana konfiguracji, nie kasowanie.</b> Jednostka znika
-        z listy wyboru samolotu w aplikacji pilota - ale <b>historia zostaje w całości</b>:
-        sesje, zdarzenia, karty dnia i łańcuch motogodzin liczą się dalej, a jej dni nadal
-        widać na liście dni lotnych. Samolot z <b>otwartym dniem</b> wyłączyć się nie da;
-        serwer odmawia z podanym powodem.
-      </Banner>
-
-      <Banner tone="status">
-        <b>Blokada dotyczy telefonów, które pobrały świeżą konfigurację.</b> Wyłączenie ze
-        służby nie jest bramką na <code>POST /events</code> i być nią nie może: rejestr jest
-        append-only i przyjmuje <b>fakty z terenu</b>, a odrzucenie paczki złamałoby regułę
-        nadrzędną („brak sieci nigdy nie blokuje pracy pilota") i zgubiłoby dane o locie,
-        który i tak się odbył. Telefon z cache'em referencyjnym sprzed wyłączenia potrafi
-        więc jeszcze otworzyć dzień na jednostce wyłączonej - i wtedy widać to w tabeli
-        wyżej, w kolumnie „Stan służby".
-      </Banner>
-
-      {stranded == null ? null : (
-        <Banner tone="warn">
-          <b>Wyłączona jednostka z otwartym dniem.</b> {stranded.text}
-        </Banner>
-      )}
-
-      <Columns>
-        <Card
-          title="Skąd biorą się kolumny stanu"
-          actions={<Pill tone="dim">czasy UTC</Pill>}
-        >
-          <span className="hint">
-            <b>Konfiguracja</b> (rejestracja, typ, rok, pojemność, format MH, dual, stan
-            służby) jest w bazie panelu i zmienia się tylko tutaj.
-          </span>
-          <span className="hint">
-            <b>Claim, MH i FOB</b> przychodzą z telefonów wraz ze zdarzeniami - pokazujemy je
-            z wiekiem ostatniego synchronizowania. Wpis starszy niż 24 h dostaje kolor amber;
-            to nie awaria, tylko informacja, że samolot od tego czasu mógł stać albo lecieć
-            bez zasięgu. Brak odczytu to <b>„brak danych"</b>, nigdy zero.
-          </span>
-          <span className="hint">
-            <b>Liczniki fizyczne wygrywają.</b> Wartości z tej tabeli są podpowiedzią dla
-            pilota na preflight, nie prawdą - pilot patrzy na licznik i to jego odczyt trafia
-            do rejestru.
-          </span>
-          <span className="hint">
-            <b>„Zajęty" nie znaczy „w locie".</b> Projekcja dnia niesie informację o otwartej
-            sesji, nie o pracy silnika - tak samo jak na liście dni lotnych. Kto i kiedy
-            wyłączył jednostkę ze służby, wie <b>dziennik audytu</b>; w tabeli tej daty nie
-            ma, bo nie ma jej w bazie.
-          </span>
-        </Card>
-
-        <Card title="Progi zależne od pojemności">
-          {toleranceRows(everything).map((row) => (
-            <KeyValue key={row.id} label={row.label} value={row.value} />
-          ))}
-          <span className="hint">
-            Tolerancja flagi <code>FUEL_MISMATCH</code> to większa z dwóch wartości:{' '}
-            <b>10 L</b> albo <b>5% pojemności</b>. <b>Liczy ją serwer</b> - panel nie ma prawa
-            mnożyć pojemności po swojemu, żeby na dwóch ekranach nie wyszły dwie różne
-            wartości tego samego progu. Zmiana pojemności w szufladzie <b>nie przepisuje
-            rejestru</b> - flagi już wystawione zachowują próg, przy którym powstały - ale
-            nowy próg obowiązuje przy najbliższej synchronizacji tej jednostki także dla{' '}
-            <b>par dni już zamkniętych</b>. Szczegóły w szufladzie samolotu.
-          </span>
-        </Card>
-      </Columns>
-
-      {id == null ? null : (
-        <AircraftDrawer
-          /**
-           * KLUCZ = identyfikator jednostki z adresu. Bez niego przejście
-           * `/flota/A` → `/flota/B` zostawiało zamontowaną szufladę A: React widziałby
-           * ten sam komponent w tym samym miejscu drzewa, więc szkic formularza
-           * przeżywałby zmianę samolotu i pokazywał cudzą pojemność pod cudzym
-           * nagłówkiem. Ta sama pułapka, co przy szufladzie konta.
-           */
-          key={id}
-          aircraft={opened}
-          creating={openedNew}
-          capabilities={capabilities}
-          load={load}
-          onClose={closeDrawer}
-        />
-      )}
-    </>
-  );
-}
-
-/**
- * Kolumny listy - dokładnie te z `A07-flota.html`, z jedną świadomą zamianą: plakietka
- * claimu mówi „Zajęty" zamiast „W locie" (uzasadnienie w nagłówku pliku i w karcie
- * „Skąd biorą się kolumny stanu").
- *
- * Sortowania nie ma na żadnej kolumnie, bo porządek listy jest kontraktem serwera
- * (wyłączone na końcu, dalej po rejestracji) - nagłówek ze strzałką obiecywałby
- * zachowanie, którego trasa nie ma.
- */
-function columns(
-  filter: FleetFilter,
-  capabilities: readonly Capability[] | undefined,
-): Column<FleetRow>[] {
-  return [
+  const columns: Column<FleetRow>[] = [
     {
       key: 'reg',
       header: 'Rejestracja',
@@ -338,104 +73,142 @@ function columns(
         </>
       ),
     },
-    { key: 'year', header: 'Rok', align: 'num', cellClass: 'dim', render: (row) => row.year },
+    { key: 'year', header: 'Rok', align: 'num', cellClass: 'cell-sub', render: (row) => row.year },
+    { key: 'capacity', header: 'Paliwo', align: 'num', render: (row) => row.capacity },
     {
-      key: 'capacity',
-      header: 'Pojemność',
-      align: 'num',
-      render: (row) => (
-        <>
-          {row.capacity}
-          <span className="cell-sub">próg {row.tolerance}</span>
-        </>
-      ),
-    },
-    {
-      key: 'mhFormat',
-      header: 'Format MH',
-      render: (row) => <Pill tone={row.mhFormat.tone}>{row.mhFormat.text}</Pill>,
+      key: 'mh',
+      header: 'Licznik',
+      render: (row) => <Pill tone={row.mhFormatTone}>{row.mhFormatLabel}</Pill>,
     },
     {
       key: 'dual',
-      header: 'Dual',
-      cellClass: 'dim',
-      render: (row) =>
-        row.dual == null ? <>-</> : <Pill tone={row.dual.tone}>{row.dual.text}</Pill>,
+      header: 'Drugi pilot',
+      render: (row) => (row.dualLabel == null ? '—' : <Pill tone="amber">{row.dualLabel}</Pill>),
     },
     {
-      key: 'service',
-      header: 'Stan służby',
+      key: 'status',
+      header: 'Stan',
       render: (row) => (
         <>
-          <Pill tone={row.service.tone} dot={row.service.dot}>
-            {row.service.text}
+          <Pill tone={row.inService ? 'green' : 'red'} dot>
+            {row.statusLabel}
           </Pill>
-          {row.service.sub == null ? null : <span className="cell-sub">{row.service.sub}</span>}
-        </>
-      ),
-    },
-    {
-      key: 'claim',
-      header: 'Claim teraz',
-      render: (row) => (
-        <>
-          <Pill tone={row.claim.badge.tone} dot={row.claim.badge.dot}>
-            {row.claim.badge.text}
-          </Pill>
-          <span className={freshClass(row.claim.freshness)}>
-            {row.claim.text === '-' ? row.claim.sub : `${row.claim.text} · ${row.claim.sub}`}
-          </span>
-        </>
-      ),
-    },
-    {
-      key: 'mh',
-      header: 'Ostatnie MH',
-      align: 'num',
-      render: (row) => (
-        <>
-          {row.mh.text}
-          {row.mh.sub == null ? null : (
-            <span className={freshClass(row.mh.freshness)}>{row.mh.sub}</span>
-          )}
-        </>
-      ),
-    },
-    {
-      key: 'fuel',
-      header: 'Ostatni FOB',
-      align: 'num',
-      render: (row) => (
-        <>
-          {row.fuel.text}
-          {row.fuel.sub == null ? null : (
-            <span className={freshClass(row.fuel.freshness)}>{row.fuel.sub}</span>
-          )}
+          {row.warning == null ? null : <span className="cell-sub warn">{row.warning}</span>}
         </>
       ),
     },
     {
       key: 'actions',
       header: '',
+      cellClass: 'row-actions',
       render: (row) => (
-        <div className="row-actions">
-          {/* Przejście do dni ma KAŻDY wiersz, nie tylko zajęty - jednostka wolna jest
-              przypadkiem najczęstszym i to o jej historię pyta się najczęściej. Cel
-              i etykietę wybiera `dayLink`, bo to decyzja o treści, a nie układ. */}
-          <LinkButton to={row.day.to} variant="ghost" size="sm">
-            {row.day.label}
-          </LinkButton>
-          <LinkButton
-            to={aircraftHref(filter, row.id)}
-            variant="ghost"
-            size="sm"
-            disabled={!canManageFleet(capabilities)}
-            reason={editAction(capabilities).reason ?? undefined}
-          >
-            Edytuj
-          </LinkButton>
-        </div>
+        <LinkButton to={`/samoloty/${row.id}`} size="sm" variant="ghost">
+          {manages ? 'Edytuj' : 'Zobacz'}
+        </LinkButton>
       ),
     },
   ];
+
+  return (
+    <>
+      <PageHead
+        title="SAMOLOTY"
+        actions={
+          manages ? (
+            <LinkButton to="/samoloty/nowy" variant="primary">
+              <PlusIcon size={13} />
+              Dodaj samolot
+            </LinkButton>
+          ) : undefined
+        }
+      />
+
+      <div className="filters">
+        <SearchInput
+          value={search}
+          placeholder="Szukaj: rejestracja, typ"
+          ariaLabel="Szukaj samolotu"
+          onChange={(value) => setParam('szukaj', value)}
+          onSubmit={() => undefined}
+        />
+        <FilterChip label="Wszystkie" on={!onlyActive} onToggle={() => setParam('stan', null)} />
+        <FilterChip
+          label="W służbie"
+          on={onlyActive}
+          onToggle={() => setParam('stan', onlyActive ? null : 'w-sluzbie')}
+        />
+      </div>
+
+      {fleet.error == null ? null : <Banner tone="danger">{errorMessage(fleet.error)}</Banner>}
+
+      <Loadable
+        pending={fleet.isPending}
+        skeleton={<TableSkeleton headers={HEADERS} widths={[80, 40, 62, 96, 74, 78, 54]} rows={5} />}
+      >
+        {rows.length === 0 ? (
+          <EmptyFleet search={search} manages={manages} onClear={() => setParam('szukaj', null)} />
+        ) : (
+          <DataTable
+            caption="Samoloty"
+            columns={columns}
+            rows={rows}
+            rowKey={(row) => row.id}
+            rowClass={(row) => (row.muted ? 'muted' : undefined)}
+            onRowClick={(row) => navigate(`/samoloty/${row.id}`)}
+          />
+        )}
+      </Loadable>
+
+      {id == null ? null : (
+        <AircraftDrawer
+          id={id}
+          fleet={fleet.data?.items ?? null}
+          listPending={fleet.isPending}
+          manages={manages}
+          onClose={() => navigate({ pathname: '/samoloty', search: params.toString() })}
+        />
+      )}
+    </>
+  );
+}
+
+function EmptyFleet({
+  search,
+  manages,
+  onClear,
+}: {
+  search: string;
+  manages: boolean;
+  onClear: () => void;
+}) {
+  if (search !== '') {
+    return (
+      <EmptyState
+        icon={<PlaneIcon size={20} />}
+        title={`Nic nie pasuje do „${search}”`}
+        note="Sprawdź pisownię albo wyczyść wyszukiwanie."
+        action={
+          <button type="button" className="btn sm" onClick={onClear}>
+            Wyczyść wyszukiwanie
+          </button>
+        }
+      />
+    );
+  }
+
+  return (
+    <EmptyState
+      icon={<PlaneIcon size={20} />}
+      title="Nie ma jeszcze żadnego samolotu"
+      note="Bez tego pilot nie ma czego wybrać, zaczynając lot."
+      action={
+        manages ? (
+          <LinkButton to="/samoloty/nowy" variant="primary">
+            <PlusIcon size={13} />
+            Dodaj samolot
+          </LinkButton>
+        ) : undefined
+      }
+    />
+  );
 }

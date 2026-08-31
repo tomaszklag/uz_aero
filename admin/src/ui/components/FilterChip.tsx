@@ -1,36 +1,22 @@
 /**
- * UZ Aero - panel: chip filtra (`.chip`, `.chip.on` z `SZABLON.html`).
+ * UZ Aero - panel 2.0: zawężenie listy (`.chip`).
  *
- * Chip jest `<button>`, a nie `<span>` jak w mockupie - mockup jest specyfikacją
- * WYGLĄDU, a wygląd zostaje ten sam. Filtr, którego nie da się kliknąć z klawiatury,
- * psułby ten sam scenariusz, dla którego panel istnieje: przygotowanie linku do
- * konkretnego wycinka skrzynki.
+ * `<button>` z `aria-pressed`, a nie `<span onClick>`: filtr, którego nie da się
+ * ustawić z klawiatury, psuje scenariusz „przygotuj link do tego wycinka".
  *
- * `count` przychodzi Z SERWERA albo nie ma go wcale. Chip nie liczy nic sam -
- * plakietka „Otwarte · 7" wyliczona z wierszy na ekranie kłamałaby przy każdym
- * innym filtrze i przy każdym obcięciu listy.
+ * Bez licznika przy nazwie - uzasadnienie stoi w `styles/components/filters.css`.
  */
-
-export type ChipTone = 'amber';
 
 interface FilterChipProps {
   label: string;
-  count?: number;
-  active: boolean;
-  /** Ton stanu WŁĄCZONEGO; bez niego chip aktywny jest zielony jak w szablonie. */
-  tone?: ChipTone;
-  title?: string;
-  onClick: () => void;
+  on: boolean;
+  onToggle: () => void;
 }
 
-export function FilterChip({ label, count, active, tone, title, onClick }: FilterChipProps) {
-  const classes = ['chip', active ? 'on' : null, active && tone != null ? tone : null]
-    .filter((c) => c != null)
-    .join(' ');
-
+export function FilterChip({ label, on, onToggle }: FilterChipProps) {
   return (
-    <button type="button" className={classes} title={title} aria-pressed={active} onClick={onClick}>
-      {count == null ? label : `${label} · ${count}`}
+    <button type="button" className={on ? 'chip on' : 'chip'} aria-pressed={on} onClick={onToggle}>
+      {label}
     </button>
   );
 }

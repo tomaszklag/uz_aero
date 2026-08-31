@@ -1109,22 +1109,24 @@ describe('pierwszeństwo stanów karty', () => {
 });
 
 describe('zdolności monitora eksportu', () => {
-  it('szef wyszkolenia CZYTA monitor, ale nie ponawia; pilot nie wchodzi wcale', async () => {
+  it('monitor to ODCZYT na `panel.access`, ponowienie żąda `fleet.manage`', async () => {
+    // Do 2026-08-30 obie odpowiedzi padały na JEDEN token: rola pośrednia czytała
+    // monitor, ale nie ponawiała. Po jej wycofaniu odczyt pokazuje administrator,
+    // a odmowę ponowienia - z tą samą zdolnością w treści - token zwykłego pilota.
     const { app } = await testHarness();
     const admin = await login(app, 'TMK');
-    const trainingLead = await login(app, 'AKO');
     const pilot = await login(app, 'PWI');
 
     await post(app, admin, openDay({ sessionUuid: 'z-1', picId: 'TMK' }));
     await post(app, admin, closeDay({ sessionUuid: 'z-1', picId: 'TMK' }));
 
-    // Odczyt: `panel.access` - monitor jest narzędziem obojga.
-    expect((await listExports(app, trainingLead)).statusCode).toBe(200);
-    expect((await getPanel(app, trainingLead, '/exports/z-1')).statusCode).toBe(200);
-    expect((await getPanel(app, trainingLead, '/exports/z-1/sheet')).statusCode).toBe(200);
+    // Odczyt: `panel.access` - monitor jest narzędziem każdego, kto wchodzi do panelu.
+    expect((await listExports(app, admin)).statusCode).toBe(200);
+    expect((await getPanel(app, admin, '/exports/z-1')).statusCode).toBe(200);
+    expect((await getPanel(app, admin, '/exports/z-1/sheet')).statusCode).toBe(200);
 
     // Ponowienie nadpisuje dokument klubu - zostaje przy właścicielu systemu.
-    const refused = await retry(app, 'z-1', trainingLead);
+    const refused = await retry(app, 'z-1', pilot);
     expect(refused.statusCode).toBe(403);
     expect(refused.json()).toMatchObject({ required: 'fleet.manage' });
 

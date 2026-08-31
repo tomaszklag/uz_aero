@@ -1,12 +1,15 @@
 /**
- * UZ Aero - panel: profil pionowy lotu (`A02c-slad.html`, sekcja „Profil pionowy").
+ * UZ Aero - panel 2.0: profil pionowy sesji.
  *
  * Jak `TrackMap`: CZYSTY UKŁAD, zero arytmetyki. Współrzędne, siatkę i podpisy liczy
- * `profilePlot` (`screens/track/trackChart.ts`), tutaj zostaje rozmieszczenie.
+ * `profilePlot` (`screens/logbook/trackChart.ts`), tutaj zostaje rozmieszczenie.
  *
- * Wysokość jest GPS-owa, nie ciśnieniowa - ekran mówi o tym w stopce pod wykresem,
- * bo różnica względem wysokościomierza w kokpicie potrafi sięgnąć kilkuset stóp,
- * a ten widok bywa czytany obok dokumentów pilota.
+ * Wykres opisuje CAŁY bieg silnika, więc przerwa między wyniesieniami nie jest dziurą
+ * w zapisie - to czas na ziemi między lotami (issue #38).
+ *
+ * Wysokość jest GPS-owa, nie ciśnieniowa - ekran mówi o tym pod wykresem, bo różnica
+ * względem wysokościomierza w kokpicie potrafi sięgnąć kilkuset stóp, a ten widok bywa
+ * czytany obok dokumentów pilota.
  */
 
 import { timeUtc } from '@uzaero/format';
@@ -26,7 +29,7 @@ export interface ProfilePlot {
   grid: ProfileGridRow[];
   left: number;
   plotWidth: number;
-  /** Szczyt lotu w pikselach; `null`, gdy profil go nie zna. */
+  /** Szczyt sesji w pikselach; `null`, gdy profil go nie zna. */
   peak: { x: number; y: number } | null;
 }
 

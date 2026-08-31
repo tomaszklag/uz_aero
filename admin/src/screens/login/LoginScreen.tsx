@@ -1,142 +1,96 @@
 /**
- * UZ Aero - panel: EKRAN LOGOWANIA (`design/admin/A00-login.html`, wariant błędu A00a).
+ * UZ Aero - panel 2.0: logowanie.
  *
- * Wdrożony sekcja po sekcji z mockupu: znak marki nad kartą, karta formularza 420 px,
- * baner wyjaśniający role, stopka ze stemplem UTC. Wariant A00a dokłada baner odmowy
- * NAD kartą i plakietkę statusu w jej tytule.
+ * Ekran ma jedno zadanie i tyle na nim stoi: dwa pola i przycisk. Czego tu NIE MA
+ * i dlaczego - to jest cała treść tej przebudowy:
+ *  • **„Konta zakłada administrator, panel nie ma rejestracji…"** - opis tego, czego
+ *    w produkcie nie ma, pokazywany komuś, kto chce się zalogować;
+ *  • **„Panel jest dla dwóch ról…"** - wykład o uprawnieniach przed podaniem hasła;
+ *  • **„panel działa wyłącznie online"** - zdanie o budowie aplikacji zamiast o pracy;
+ *  • **„Nie pamiętam hasła"** - takiej trasy nie ma; przycisk obiecywałby wyjście,
+ *    którego nikt nie zbudował (a wyszarzony obiecywałby je jeszcze głośniej).
  *
- * Czego z A00a NIE wdrażamy i dlaczego: **licznika prób („zostały 3 z 5")**. Mockup
- * mówi to o sobie sam - „liczby 5 prób / 15 minut są WARTOŚCIAMI ROBOCZYMI… tych dwóch
- * progów NIE przepisuj do kodu bez ustalenia" - a rate-limit `/auth/*` jest zaległością
- * serwera (faza 6). Licznik prób bez działającego limitu byłby napisem, który kłamie.
+ * Kto nie może wejść, dowie się tego po naciśnięciu „Zaloguj się" - jednym zdaniem
+ * i dopiero wtedy, gdy to pytanie faktycznie padło (`loginMessage.ts`).
  */
 
 import { useState, type FormEvent } from 'react';
+import { Navigate } from 'react-router-dom';
 
-import { isHttpError } from '../../api/httpClient';
+import { useSessionState } from '../../auth/sessionContext';
 import { useLogin } from '../../queries/useSession';
-import { Banner, Button, Card, Field, Pill, TextInput } from '../../ui/components';
+import { Banner, Button, Field, TextInput } from '../../ui/components';
 import { PlaneIcon, SignInIcon } from '../../ui/components/icons';
-import { loginMessage, type LoginMessage } from './loginMessages';
-
-/** Szerokość karty i banerów z mockupu - wymiar układu jednego ekranu. */
-const COLUMN = { width: 420 } as const;
+import { HOME } from '../../ui/shell/tabs';
+import { loginMessage } from './loginMessage';
 
 export function LoginScreen() {
-  const [login, setLogin] = useState('');
+  const { session } = useSessionState();
+  const login = useLogin();
+
+  const [name, setName] = useState('');
   const [password, setPassword] = useState('');
-  const [message, setMessage] = useState<LoginMessage | null>(null);
-  const [status, setStatus] = useState<number | null>(null);
 
-  const mutation = useLogin();
+  // Sesja żyje -> na ekranie logowania nie ma czego robić. Dotyczy też powrotu
+  // „wstecz" po zalogowaniu, nie tylko wklejonego adresu.
+  if (session != null) return <Navigate to={HOME} replace />;
 
-  function submit(event: FormEvent) {
+  const message = login.error == null ? null : loginMessage(login.error);
+
+  const submit = (event: FormEvent): void => {
     event.preventDefault();
-    setMessage(null);
-
-    mutation.mutate(
-      { login: login.trim(), password },
+    if (name.trim() === '' || password === '') return;
+    login.mutate(
+      { login: name.trim(), password },
       {
+        // Hasło odrzucone kasujemy, login zostaje - poprawia się jedno, nie oba.
         onError: (error) => {
-          const httpStatus = isHttpError(error) ? error.status : null;
-          const code = isHttpError(error) ? error.body.error : null;
-          setStatus(httpStatus);
-          setMessage(loginMessage(httpStatus, code));
-          // Hasło czyścimy po KAŻDEJ odmowie (A00a: „pole wyczyszczone po odrzuceniu"),
-          // login zostaje - poprawianie literówki w loginie nie ma być karane
-          // przepisywaniem obu pól.
-          setPassword('');
+          if (loginMessage(error).clearPassword) setPassword('');
         },
       },
     );
-  }
+  };
 
   return (
-    <div className="centered">
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 9,
-          marginBottom: 4,
-        }}
-      >
-        <span
-          style={{
-            width: 64,
-            height: 64,
-            borderRadius: 18,
-            background: 'var(--green-muted)',
-            border: '1px solid var(--green-border)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--green)',
-          }}
-        >
-          <PlaneIcon size={32} />
+    <div className="login">
+      <div className="login-mark">
+        <span className="login-badge">
+          <PlaneIcon size={28} />
         </span>
-        <span style={{ fontFamily: 'var(--font-display)', fontSize: 40, letterSpacing: 6, lineHeight: 1 }}>
-          UZ AERO
-        </span>
-        <span
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 9,
-            letterSpacing: 2.5,
-            textTransform: 'uppercase',
-            color: 'var(--text-muted)',
-          }}
-        >
-          Panel administracyjny
-        </span>
+        <span className="login-title">UZ AERO</span>
+        <span className="login-note">Panel administracyjny</span>
       </div>
 
       {message == null ? null : (
-        <Banner tone={message.tone} live style={COLUMN}>
-          <b>{message.title}</b> {message.detail}
-        </Banner>
+        <div className="login-banner">
+          <Banner tone={message.tone} live>
+            {message.text}
+          </Banner>
+        </div>
       )}
 
-      <form onSubmit={submit} style={COLUMN}>
-        <Card
-          title="Logowanie"
-          actions={
-            status == null ? undefined : <Pill tone={status === 403 ? 'amber' : 'red'}>{status}</Pill>
-          }
-          style={{ gap: 13 }}
-        >
+      <div className="login-card">
+        <form onSubmit={submit}>
           <Field htmlFor="login" label="Login">
             <TextInput
               id="login"
-              name="login"
-              autoComplete="username"
+              value={name}
               autoFocus
+              autoComplete="username"
               placeholder="login albo e-mail"
-              value={login}
-              onChange={(e) => setLogin(e.target.value)}
+              onChange={(event) => setName(event.target.value)}
             />
           </Field>
 
-          <Field
-            htmlFor="password"
-            label="Hasło"
-            hint={
-              message?.markPassword === true
-                ? 'Pole wyczyszczone po odrzuceniu - wpisz hasło jeszcze raz.'
-                : undefined
-            }
-          >
+          <Field htmlFor="password" label="Hasło">
             <TextInput
               id="password"
-              name="password"
               type="password"
+              value={password}
               autoComplete="current-password"
               placeholder="••••••••"
-              invalid={message?.markPassword === true}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              invalid={message?.clearPassword ?? false}
+              onChange={(event) => setPassword(event.target.value)}
             />
           </Field>
 
@@ -144,37 +98,13 @@ export function LoginScreen() {
             type="submit"
             variant="primary"
             block
-            disabled={mutation.isPending || login.trim().length === 0 || password.length === 0}
+            disabled={login.isPending || name.trim() === '' || password === ''}
           >
-            <SignInIcon />
-            {mutation.isPending ? 'Logowanie…' : 'Zaloguj się'}
+            <SignInIcon size={14} />
+            {login.isPending ? 'Logowanie…' : 'Zaloguj się'}
           </Button>
-
-          <span className="hint">
-            Konta zakłada administrator w bazie. Panel nie ma samodzielnej rejestracji ani logowania
-            przez Google - jedyne wejście to login i hasło.
-          </span>
-        </Card>
-      </form>
-
-      {message == null ? (
-        <Banner tone="status" style={COLUMN}>
-          <b>Panel jest dla dwóch ról.</b> Konto pilota zaloguje się poprawnie, ale zobaczy tylko
-          komunikat: „to konto nie ma roli administratora ani szefa wyszkolenia - panel jest tylko
-          dla nich; pilot loguje się w aplikacji na telefonie".
-        </Banner>
-      ) : null}
-
-      <span
-        style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: 10,
-          letterSpacing: 1.2,
-          color: 'var(--text-muted)',
-        }}
-      >
-        panel działa wyłącznie online
-      </span>
+        </form>
+      </div>
     </div>
   );
 }

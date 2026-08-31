@@ -19,7 +19,7 @@ czas blokowy, motogodziny, litry). Wszystkie trzy to czysty TypeScript bez impor
 z RN/DOM. `app/src/ui/theme/tokens.ts` i `app/src/ui/format.ts` są shimami zgodności -
 kod ekranów importuje po staremu.
 Fazy z `docs/_main.md.txt` §10: 1–4 ✅ **wobec modelu sprzed 2026-08-06** (ekrany 00–12 komplet; sync end-to-end z eksportem §4.7 na kartach W BAZIE - `exported_sheets` + `GET /sheets/:tab`; adapter Google Sheets = opcjonalna przyszła podmiana portu `SheetsPort`, gdy będzie klucz) · **faza 8 = przebudowa flow, WYPRZEDZA fazę 5** (patrz niżej) · potem: 5 testy z pilotami, 6 wdrożenie + backlog audytu.
-Faza 7 **panel administracyjny (web)** - projekt UI zamknięty (`design/admin/`: 23 ekrany, `SZABLON.html`, `ANALIZA.md`), a backend i klient web **są wdrożone**: role, `/admin/*`, cykl życia flagi, audyt oraz `admin/` (React+Vite, ekrany A01–A11 z modułami czystymi 1:1 z testami).
+Faza 7 **panel administracyjny (web)** - backend wdrożony w całości (role, `/admin/*`, cykl życia flagi, audyt) i **nietknięty**; klient web przepisany na **PANEL 2.0** (2026-08-30, gałąź `panel-2.0`): dwa moduły - **PILOCI i SAMOLOTY** - zamiast jedenastu ekranów, bez banerów wyjaśniających, bez kafli z licznikami, z paskiem górnym zamiast kolumny bocznej. Trzeci moduł - **DZIENNIK** (2026-08-30): trzy poziomy (flota w zakresie dat → grid sesji jednej maszyny → jedna sesja z osią zdarzeń), dziewięć kolumn zamiast siedemnastu, wyłącznie ODCZYTY - zero szacunków i prognoz, brak odczytu widoczny jako kreska. Wymagał migracji 3 (osiem kolumn projekcji: bieg silnika, koperta lotów, lotniska, dolewka paliwa, wpis ręczny, olej do lotu) i **przebudowy projekcji na istniejących wierszach**. Decyzje, reguły redakcyjne i liczby: **`docs/panel-2.0.md`**; szkielet warstw dalej w `docs/architektura-panelu-frontend.md`. Pozostałe ekrany (pulpit, dni, flagi, zdarzenia, eksporty, audyt, statystyki, analityka, konserwacja) usunięte z kodu i odzyskiwalne z historii gita - wracają pojedynczo, każdy przepisany pod reguły 2.0. **`design/admin/` (23 ekrany, `SZABLON.html`, `ANALIZA.md`) jest odtąd ARCHIWUM panelu 1.0**, nie specyfikacją.
 **Analityka zużycia** (2026-08-05) - wdrożona end-to-end: domena `packages/domain/src/consumption/` (interwały paliwowe odczyt→odczyt, NNLS per faza, przelicznik MH z automatycznym rozpoznaniem obrotomierz/Hobbs, oś faz pionowych ze śladu), `GET /admin/api/fleet/:id/consumption` + ekran A10a/A10b w panelu, norma zużycia w aplikacji pilota (migracja serwera 19 + SQLite 4, ekrany 04/06/10). Reguła czytania strumienia poza listami: `docs/architektura-panelu-serwer.md` §7.7; przepis „nowa metryka analityki": `docs/architektura-kodu.md` §7.
 **Rozszerzona przy issue #38 (2026-08-12)**: norma telefonu niesie parę stawek fazowych
 (ziemia + powietrze) i przeliczniki MH, a `consumption/expectation.ts` liczy z nich
@@ -231,7 +231,13 @@ zakłada się w panelu (dane demo usunięte przy issue #50).
 Każdy mockup używa ramki telefonu 393×852px (iPhone 14 Pro) z `--phone-scale` do auto-skalowania.
 Struktura: `.canvas-label` → `.phone` (z Dynamic Island `::before`) → `.nav-strip`
 
-### Browser frame (`design/admin/*.html` - panel administracyjny)
+### Browser frame (`design/admin/*.html` - panel 1.0, ARCHIWUM)
+> **Panel 2.0 nie ma makiet i to jest decyzja** (`docs/panel-2.0.md` §3.7): makieta
+> zastępuje oglądanie rzeczy, której nie da się jeszcze uruchomić, a panel jest stroną
+> widoczną w przeglądarce w chwili zapisania pliku. Reguła „ekran wdrażamy 1:1
+> z `design/*.html`" **zostaje w mocy dla aplikacji pilota** (`app/`) i nic w niej nie
+> zmieniamy. Poniższy opis dotyczy archiwum 1.0.
+
 Panel to **aplikacja web**, więc ramką jest okno przeglądarki 1440×900 z `--app-scale`
 (działa dokładnie jak `--phone-scale`) i paskiem chrome zamiast Dynamic Island.
 Struktura: `.canvas-label` → `.browser` (`.chrome` → `.shell` = `.sidebar` + `.main`) → `.nav-strip`.
@@ -1383,8 +1389,8 @@ znikać, wraca po reinstalacji i jest na nowym telefonie.
   inaczej „max wznoszenie" zależałoby od tolerancji rysowania
 - **LOGU PUNKTÓW NIE MA** ani na ekranie, ani w kopercie (przegląd 2026-08-15): tabela
   surowych fixów ze stanem bramki jakości jest materiałem do STROJENIA PROGÓW, a nie
-  odpowiedzią na pytanie pilota - została w panelu (A02c) i w nagraniu czytanym przez
-  `replay.ts`. Ekran nie ma też banera o pochodzeniu danych ani podpowiedzi o gestach:
+  odpowiedzią na pytanie pilota - została w nagraniu czytanym przez `replay.ts`
+  (panel 2.0 również jej nie pokazuje: ekran sesji rysuje mapę i profil, nie tabelę). Ekran nie ma też banera o pochodzeniu danych ani podpowiedzi o gestach:
   jedno i drugie opowiadało o BUDOWIE aplikacji komuś, kto ogląda swój lot
 - **atrybucji źródeł katalogu nie ma na mapie** (2026-08-15) - obowiązek ODbL spełnia
   `docs/dane-lotnisk.md` §3.2. To zamiana miejsca, nie przeoczenie: przywrócenie napisu
@@ -1499,8 +1505,8 @@ Pełna architektura: `docs/_main.md.txt` (sekcje 4–6). Zasady twarde:
 Gdy tworzysz prompt dla agenta do tworzenia HTML mockupów, zawsze dołącz:
 1. Pełne design tokeny CSS z `:root` (z sekcji wyżej)
 2. Szablon ramki właściwej dla powierzchni: aplikacja pilota → phone frame (393×852px,
-   `--phone-scale`, Dynamic Island); panel administracyjny → `<head>` skopiowany w całości
-   z `design/admin/SZABLON.html` (okno 1440×900, `--app-scale`, kanoniczny sidebar)
+   `--phone-scale`, Dynamic Island). **Dla panelu makiet nie zlecamy** - od 2.0 ekran
+   powstaje wprost w `admin/` i ogląda się go w przeglądarce (`docs/panel-2.0.md` §3.7)
 3. Informację że aplikacja = UZ Aero
 4. Linki nawigacyjne do sąsiednich ekranów w `nav-strip`
 5. Nazwy plików do stworzenia i docelowy katalog `d:\uz_areo\design\`

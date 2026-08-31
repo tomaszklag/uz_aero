@@ -80,7 +80,7 @@ describe('schemat PostgreSQL (kontrakt)', () => {
       // dołożone `ALTER`-em. `claim_time` niesie CZAS PRZEJĘCIA maszyny (uzasadnienie:
       // `application/common/mappers/sessionRow.ts`), i dlatego kolumny `duty_start` tu
       // świadomie NIE MA: klamra służby należy do PILOTA, nie do sesji (§3.6a).
-      ['session_uuid', 'aircraft_id', 'pic_id', 'dual_id', 'status', 'claim_time', 'close_time', 'mh_start', 'mh_end', 'fuel_start_l', 'fuel_end_l', 'fuel_last_l', 'mh_last', 'block_ms', 'flight_ms', 'flights_count', 'updated_at', 'operation', 'client', 'takeoff_count', 'landing_count', 'mh_delta_h', 'fuel_consumed_l', 'drop_count', 'jumpers_tandem', 'jumpers_aff', 'jumpers_solo', 'drop_alt_sum_ft', 'drop_alt_count', 'notes', 'oil_level_l', 'oil_added_l'],
+      ['session_uuid', 'aircraft_id', 'pic_id', 'dual_id', 'status', 'claim_time', 'close_time', 'mh_start', 'mh_end', 'fuel_start_l', 'fuel_end_l', 'fuel_last_l', 'mh_last', 'block_ms', 'flight_ms', 'flights_count', 'updated_at', 'operation', 'client', 'takeoff_count', 'landing_count', 'mh_delta_h', 'fuel_consumed_l', 'drop_count', 'jumpers_tandem', 'jumpers_aff', 'jumpers_solo', 'drop_alt_sum_ft', 'drop_alt_count', 'notes', 'oil_level_l', 'oil_added_l', 'engine_start_at', 'engine_stop_at', 'first_takeoff_at', 'last_landing_at', 'departure_icao', 'arrival_icao', 'fuel_added_l', 'manual_entry', 'oil_after_l'],
     ],
     [
       'flags',

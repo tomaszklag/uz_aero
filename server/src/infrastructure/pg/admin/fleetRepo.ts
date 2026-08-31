@@ -299,6 +299,39 @@ export class PgAdminFleetRepo implements FleetAdminPort {
   }
 
   /**
+   * Czy cokolwiek odwołuje się do tej jednostki - wejście do `refuseDeleteAircraft`.
+   *
+   * `EXISTS`, nie `COUNT(*)`: regule wystarczy zero/niezero, a liczenie wierszy
+   * w `events` maszyny z sezonem lotów jest pełnym skanem po nic. Wynik jest więc
+   * liczbą ŹRÓDEŁ (0-5), nie wierszy.
+   *
+   * ══ CZEGO TU NIE MA I DLACZEGO ══
+   * **`exported_sheets`** - tabela ma jedną kolumnę klucza (`tab`) z identyfikatorem
+   * maszyny wklejonym w nazwę, więc szukanie po niej byłoby dopasowaniem wzorca do
+   * tekstu. Nie jest potrzebne: karta arkusza nie powstaje bez sesji, a sesje liczymy
+   * wiersz wyżej - jednostka bez sesji nie ma jak mieć karty.
+   * **`admin_audit`** - wpis `aircraft.create` z chwili założenia jednostki jest jej
+   * celem, więc liczenie celów zablokowałoby usunięcie KAŻDEJ maszyny. Sprawcą wpisu
+   * jednostka być nie może (sprawcą jest konto), więc tabela nie ma tu czego wnieść.
+   */
+  async references(tx: Queryable, aircraftId: string): Promise<number> {
+    const { rows } = await tx.query<{ n: string }>(
+      `SELECT (EXISTS (SELECT 1 FROM events WHERE aircraft_id = $1))::int
+            + (EXISTS (SELECT 1 FROM sessions WHERE aircraft_id = $1))::int
+            + (EXISTS (SELECT 1 FROM flags WHERE aircraft_id = $1))::int
+            + (EXISTS (SELECT 1 FROM export_log WHERE aircraft_id = $1))::int
+            + (EXISTS (SELECT 1 FROM aircraft_consumption WHERE aircraft_id = $1))::int AS n`,
+      [aircraftId],
+    );
+    return Number(rows[0]?.n ?? 0);
+  }
+
+  /** Trwałe skasowanie wiersza jednostki. Wołane wyłącznie po `refuseDeleteAircraft`. */
+  async delete(tx: Queryable, aircraftId: string): Promise<void> {
+    await tx.query('DELETE FROM aircraft WHERE id = $1', [aircraftId]);
+  }
+
+  /**
    * Klucz jest PER JEDNOSTKA, a nie stały jak przy populacji administratorów - bo
    * chroniony zasób jest tu inny: nie „ilu jest administratorów w klubie", tylko „jaki
    * jest stan TEGO wiersza". Dwie zmiany różnych samolotów nie muszą na siebie czekać.

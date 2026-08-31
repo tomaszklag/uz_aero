@@ -128,8 +128,12 @@ export class PgAdminPilotsRepo implements PilotsAdminPort {
       `SELECT COUNT(*) AS total,
               COUNT(*) FILTER (WHERE active) AS active,
               COUNT(*) FILTER (WHERE role = 'admin') AS admin,
-              COUNT(*) FILTER (WHERE role = 'training_lead') AS training_lead,
-              COUNT(*) FILTER (WHERE role = 'pilot' OR role IS NULL) AS pilot
+              -- Wszystko, co NIE jest administratorem, liczy się jako pilot - także
+              -- wiersz z wycofaną rolą training_lead (2026-08-30). Tak samo czyta to
+              -- reszta serwera: isPilotRole(role) albo DEFAULT_ROLE. Liczenie go
+              -- osobno albo pomijanie dawałoby kafel, którego suma nie zgadza się
+              -- z total - czyli liczbę, przy której administrator zaczyna zgadywać.
+              COUNT(*) FILTER (WHERE role IS DISTINCT FROM 'admin') AS pilot
          FROM pilots`,
     );
     // Dni klubu liczymy SESJAMI, nie sumą kolumny z wierszy: dzień szkolny ma dwóch
@@ -179,7 +183,10 @@ export class PgAdminPilotsRepo implements PilotsAdminPort {
       `SELECT COUNT(*) AS total,
               COUNT(*) FILTER (WHERE active) AS active,
               COUNT(*) FILTER (WHERE NOT active) AS inactive,
-              COUNT(*) FILTER (WHERE role IN ('admin', 'training_lead')) AS panel
+              -- „Z rolą panelu" = dziś dokładnie administratorzy: po wycofaniu
+              -- training_lead (2026-08-30) nie ma innej roli, która wpuszcza do
+              -- back-office'u. Chip zostaje, bo wraca razem z trzecią rolą.
+              COUNT(*) FILTER (WHERE role = 'admin') AS panel
          FROM pilots p ${sql.where()}`,
       sql.params(),
     );
@@ -317,6 +324,47 @@ export class PgAdminPilotsRepo implements PilotsAdminPort {
    */
   async lockAdminPopulation(tx: Queryable): Promise<void> {
     await tx.query('SELECT pg_advisory_xact_lock(hashtext($1))', [ADMIN_POPULATION_LOCK]);
+  }
+
+  /**
+   * Czy cokolwiek odwołuje się do tego konta - wejście do `refuseDelete`.
+   *
+   * ══ TRZY DECYZJE, KTORE TRZEBA ZNAC ══
+   * 1. **`EXISTS`, nie `COUNT(*)`.** Regule wystarczy zero/niezero, a liczenie wierszy
+   *    w `events` konta z tysiącem lotów jest pełnym skanem po nic. Wynik jest więc
+   *    liczbą ŹRÓDEŁ (0-3), nie wierszy - i tak opisuje go port.
+   * 2. **Drugi pilot liczy się TAK SAMO jak PIC**, i to z dwóch miejsc: kolumny
+   *    `dual_id` (nagłówek zdarzenia) oraz `payload->>'dualId'` (wartość PO korekcie
+   *    administratora, issue #43). Sama kolumna przepuściłaby konto, które ktoś wpisał
+   *    jako Duala poprawką - a to jest odwołanie tak samo prawdziwe.
+   * 3. **`admin_audit` liczy się po SPRAWCY, nigdy po celu.** Konto jest celem wpisu
+   *    `pilot.create` z chwili własnego założenia, więc liczenie celów zablokowałoby
+   *    usunięcie KAŻDEGO konta - reguła nie do spełnienia. Sprawca to co innego:
+   *    administrator, który coś w klubie zrobił, zostaje w dzienniku, a dziennik bez
+   *    tożsamości sprawcy przestaje być dziennikiem.
+   */
+  async references(tx: Queryable, id: string): Promise<number> {
+    const { rows } = await tx.query<{ n: string }>(
+      `SELECT (EXISTS (SELECT 1 FROM events
+                        WHERE pic_id = $1 OR dual_id = $1 OR payload->>'dualId' = $1))::int
+            + (EXISTS (SELECT 1 FROM sessions WHERE pic_id = $1))::int
+            + (EXISTS (SELECT 1 FROM admin_audit WHERE actor_pilot_id = $1))::int AS n`,
+      [id],
+    );
+    return Number(rows[0]?.n ?? 0);
+  }
+
+  /**
+   * Trwałe skasowanie wiersza konta.
+   *
+   * `refresh_tokens` kasujemy JAWNIE, mimo że mają klucz obcy: bez tego `DELETE`
+   * odbiłby się o ograniczenie i wywrócił transakcję wyjątkiem bazy zamiast odmową
+   * z powodem. To nie jest historia, tylko sesje telefonu - a te i tak zniknęły przy
+   * wyłączeniu konta, którego ta operacja wymaga.
+   */
+  async delete(tx: Queryable, id: string): Promise<void> {
+    await tx.query('DELETE FROM refresh_tokens WHERE pilot_id = $1', [id]);
+    await tx.query('DELETE FROM pilots WHERE id = $1', [id]);
   }
 }
 

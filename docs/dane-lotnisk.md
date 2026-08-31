@@ -6,7 +6,7 @@
 >
 > Kod: `packages/domain/scripts/` (generator) i `packages/domain/src/airfields.ts` (wynik).
 > Testy: `app/src/__tests__/airfieldsGenerator.test.ts` (logika) i `airfields.test.ts` (dane).
-> Konsument: `packages/domain/src/track/airfieldsInView.ts` → ekran 14 i panel A02c.
+> Konsument: `packages/domain/src/track/airfieldsInView.ts` → ekran 14 i ślad sesji w panelu.
 > Stan na 2026-08-05 (rozpoznanie i przebudowa źródeł - issue #3).
 
 ---
