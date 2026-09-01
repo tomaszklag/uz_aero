@@ -56,17 +56,25 @@ export interface AdminAircraftReading {
   /** Stan licznika motogodzin (godziny dziesiętne - panel formatuje wg `mhFormat`). */
   mh: number;
   fuelL: number;
-  /** Kiedy powstał ten odczyt (epoch ms UTC). */
+  /**
+   * Kiedy powstał ten odczyt (epoch ms UTC).
+   *
+   * Przy `source: 'initial'` to jest chwila ZAPISU W PANELU (`aircraft.updated_at`),
+   * a nie chwila pomiaru - i tak też ma o niej mówić ekran (issue #66).
+   */
   at: number;
-  byPilotId: string;
+  /** `null` przy `source: 'initial'` - stanu początkowego nie przekazał żaden pilot. */
+  byPilotId: string | null;
   byPilotName: string | null;
   /**
    * Skąd wzięta. `handover` = z zamkniętego dnia (świadome przekazanie);
-   * `open_session` = z dnia, który jeszcze trwa (np. po tankowaniu). Rozróżnienie jest
-   * treścią podpisu w tabeli („przekazanie · 1 dzień" vs „sesja otwarta”), a panel nie
-   * ma jak go odgadnąć - regułę wyboru zna `application/common/aircraftStateView.ts`.
+   * `open_session` = z dnia, który jeszcze trwa (np. po tankowaniu);
+   * `initial` = stan początkowy wpisany w panelu, bo maszyna jeszcze nie latała
+   * (issue #66). Rozróżnienie jest treścią podpisu w tabeli („przekazanie · 1 dzień"
+   * vs „sesja otwarta" vs „stan początkowy"), a panel nie ma jak go odgadnąć - regułę
+   * wyboru zna `application/common/aircraftStateView.ts`.
    */
-  source: 'handover' | 'open_session';
+  source: 'handover' | 'open_session' | 'initial';
 }
 
 /** Jedna jednostka na liście `A07`. */
@@ -89,6 +97,20 @@ export interface AdminAircraftListItem {
   oilMinL: number | null;
   oilCapacityL: number | null;
   oilNormLPerH: number | null;
+  /**
+   * Średnie spalanie z instrukcji użytkowania (L na godzinę PRACY SILNIKA, issue #66);
+   * `null` = nie wpisano.
+   */
+  fuelNormLPerH: number | null;
+  /**
+   * STAN POCZĄTKOWY jednostki (issue #66) - co pokazywały przyrządy, gdy maszyna
+   * trafiła do UZ Aero. Zerowe ogniwo łańcucha: podpowiedź dla PIERWSZEGO pilota,
+   * nieużywana od pierwszej zdanej sesji. Panel poznaje po `reading.source`, czy
+   * jeszcze cokolwiek znaczy.
+   */
+  initialMh: number | null;
+  initialFuelL: number | null;
+  initialOilL: number | null;
   /** ISO 8601 UTC - ostatnia zmiana wiersza konfiguracji (nie: ostatni lot). */
   updatedAt: string;
 

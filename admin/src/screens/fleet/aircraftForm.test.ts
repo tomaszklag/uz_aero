@@ -13,7 +13,11 @@ import {
   updateBodyOf,
   verdictOf,
 } from './aircraftForm';
-import { CAPACITY_NOT_POSITIVE, OIL_MIN_ABOVE_CAPACITY } from './aircraftRefusal';
+import {
+  CAPACITY_NOT_POSITIVE,
+  INITIAL_FUEL_OVER_CAPACITY,
+  OIL_MIN_ABOVE_CAPACITY,
+} from './aircraftRefusal';
 
 const aircraft: AircraftListItemDto = {
   id: 'a-1',
@@ -28,6 +32,11 @@ const aircraft: AircraftListItemDto = {
   oilMinL: null,
   oilCapacityL: null,
   oilNormLPerH: null,
+  fuelNormLPerH: null,
+  initialMh: null,
+  initialFuelL: null,
+  initialOilL: null,
+  reading: null,
   openSessions: 0,
 };
 
@@ -183,5 +192,64 @@ describe('wyłączenie jednostki, na której ktoś lata', () => {
     expect(
       disablesAircraftInUse(aircraft, { ...draftOf(aircraft), serviceStatus: 'disabled' }),
     ).toBe(false);
+  });
+});
+
+/**
+ * NORMY Z DOKUMENTACJI I STAN POCZĄTKOWY (issue #66).
+ *
+ * Dwa rodzaje liczb w jednym formularzu i to jest tu najważniejsze do przypilnowania:
+ * norma zerowa jest LITERÓWKĄ (silnik bez paliwa nie istnieje), a startowe zero -
+ * zwyczajnym faktem (nowy silnik, puste zbiorniki). Sklejenie tych dwóch reguł
+ * odebrałoby klubowi możliwość wpisania maszyny prosto z remontu.
+ */
+describe('normy z dokumentacji i stan początkowy (issue #66)', () => {
+  it('norma zerowa blokuje zapis, startowe zero przechodzi', () => {
+    expect(verdictOf({ ...filled, fuelNormLPerH: '0' }).invalid).toContain('fuelNormLPerH');
+
+    const fresh = verdictOf({ ...filled, initialMh: '0', initialFuelL: '0', initialOilL: '0' });
+    expect(fresh.invalid).toEqual([]);
+    expect(fresh.blocker).toBeNull();
+    expect(createBodyOf({ ...filled, initialMh: '0', initialFuelL: '0' })).toMatchObject({
+      initialMh: 0,
+      initialFuelL: 0,
+    });
+  });
+
+  it('startowe paliwo ponad zbiornik mówi TYM SAMYM zdaniem, co serwer', () => {
+    const over = verdictOf({ ...filled, initialFuelL: '2000' });
+    expect(over.invalid).toContain('initialFuelL');
+    expect(over.blocker).toBe(INITIAL_FUEL_OVER_CAPACITY);
+  });
+
+  it('startowy olej mierzy się ZBIORNIKIEM OLEJU, nie zbiornikiem paliwa', () => {
+    // 12 L oleju mieści się w 1100 L paliwa i właśnie dlatego sufit musi być własny.
+    const over = verdictOf({ ...filled, oilCapacityL: '11.4', initialOilL: '12' });
+    expect(over.invalid).toContain('initialOilL');
+
+    // Bez skonfigurowanego zbiornika oleju nie ma do czego porównywać - reguła śpi.
+    expect(verdictOf({ ...filled, initialOilL: '12' }).invalid).toEqual([]);
+  });
+
+  it('licznik przyjmuje OBA zapisy i wychodzi zawsze dziesiętny', () => {
+    // Administrator przepisuje liczbę z tarczy i nie ma się zastanawiać, jak
+    // jednostka jest skonfigurowana.
+    expect(createBodyOf({ ...filled, initialMh: '1236:30' }).initialMh).toBe(1236.5);
+    expect(createBodyOf({ ...filled, initialMh: '1236,5' }).initialMh).toBe(1236.5);
+    expect(verdictOf({ ...filled, initialMh: 'abc' }).invalid).toContain('initialMh');
+  });
+
+  it('licznik WRACA do pola w formacie tej maszyny, nie zawsze dziesiętnie', () => {
+    const hhmm = { ...aircraft, mhFormat: 'hhmm' as const, initialMh: 1236.5 };
+    expect(draftOf(hhmm).initialMh).toBe('1236:30');
+    expect(draftOf({ ...aircraft, initialMh: 1236.5 }).initialMh).toBe('1236.5');
+    // Odczyt → pole → z powrotem nie może udawać zmiany, bo dopisałby do dziennika
+    // audytu wpis o poprawce, której nie było.
+    expect(hasChanges(hhmm, draftOf(hhmm))).toBe(false);
+  });
+
+  it('PATCH niesie tylko to, co ruszone - reszta pól zostaje po staremu', () => {
+    const body = updateBodyOf(aircraft, { ...draftOf(aircraft), fuelNormLPerH: '18,5' });
+    expect(body).toEqual({ fuelNormLPerH: 18.5 });
   });
 });

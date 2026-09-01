@@ -316,3 +316,160 @@ describe('przekazanie oleju w /reference (issue #60)', () => {
     });
   });
 });
+
+/**
+ * STAN POCZĄTKOWY JEDNOSTKI (issue #66) - zerowe ogniwo łańcucha odczytów.
+ *
+ * Zgłoszenie: „dla pierwszych lotów gdzie nie ma jeszcze danych nie ma jak wyliczyć
+ * normy i odchyleń". Pierwszy pilot maszyny nie miał od czego zacząć - `handover` był
+ * `null`, więc krok liczników pokazywał „brak danych". Administrator wpisuje odtąd
+ * odczyty przyrządów przy wprowadzeniu jednostki, a serwer składa z nich przekazanie
+ * - ale WYŁĄCZNIE dopóki rejestr nie ma czym odpowiedzieć.
+ */
+describe('stan początkowy jednostki (issue #66)', () => {
+  it('bez ani jednej sesji przekazanie powstaje z wpisu w panelu - `byPilotId` jest NULL', async () => {
+    const { app, db } = await testHarness();
+    const token = await authed(app);
+
+    await db.query(
+      `UPDATE aircraft
+          SET initial_mh = 1236.5, initial_fuel_l = 112, initial_oil_l = 8.2,
+              updated_at = now()
+        WHERE id = 'SP-AXA'`,
+    );
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/reference',
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const axa = res.json().aircraft.find((a: { reg: string }) => a.reg === 'SP-AXA');
+
+    expect(axa.handover.reading).toEqual({ fuelL: 112, mh: 1236.5 });
+    // Nikt tej maszyny nie przekazał - i ekran preflightu mówi o tym innym zdaniem.
+    expect(axa.handover.byPilotId).toBeNull();
+    // Olej kotwiczy się w LICZNIKU, bo tak liczy się oczekiwanie (`oilPreflight`).
+    expect(axa.handover.oil).toMatchObject({ levelL: 8.2, atMh: 1236.5, addedSinceL: 0 });
+  });
+
+  it('POŁOWA wpisu nie jest przekazaniem - `reading` niesie parę albo nic', async () => {
+    const { app, db } = await testHarness();
+    const token = await authed(app);
+
+    // Sam licznik, bez paliwa: zero udające odczyt paliwomierza byłoby gorsze
+    // od milczenia (ta sama reguła, co przy filtrze sesji w `pickHandover`).
+    await db.query(
+      "UPDATE aircraft SET initial_mh = 1236.5, updated_at = now() WHERE id = 'SP-AXA'",
+    );
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/reference',
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const axa = res.json().aircraft.find((a: { reg: string }) => a.reg === 'SP-AXA');
+    expect(axa.handover).toBeNull();
+  });
+
+  it('pierwsza ZDANA sesja wypiera wpis z panelu - łańcuch prowadzą odczyty z lotów', async () => {
+    const { app, db } = await testHarness();
+    const token = await authed(app);
+
+    await db.query(
+      `UPDATE aircraft
+          SET initial_mh = 1236.5, initial_fuel_l = 112, initial_oil_l = 8.2,
+              updated_at = now()
+        WHERE id = 'SP-AXA'`,
+    );
+
+    const DAY = Date.UTC(2026, 5, 22);
+    const at = (h: number, m: number): number => DAY + (h * 60 + m) * 60_000;
+    const mk = (i: number, type: string, time: number, payload: object) => ({
+      uuid: `initial-seed-${i}`,
+      sessionUuid: 'sess-init',
+      aircraftId: 'SP-AXA',
+      picId: 'TMK',
+      dualId: null,
+      type,
+      deviceTime: time,
+      gpsTime: time,
+      payload,
+      schemaVersion: 1,
+    });
+
+    const sync = await app.inject({
+      method: 'POST',
+      url: '/events',
+      headers: { authorization: `Bearer ${token}` },
+      payload: {
+        events: [
+          mk(1, 'session_claim', at(8, 0), { mode: 'free' }),
+          mk(2, 'preflight_confirm', at(8, 5), {
+            operation: 'skoki',
+            reading: { fuelL: 112, mh: 1236.5 },
+            mhFormat: 'decimal',
+          }),
+          mk(3, 'engine_start', at(8, 10), {}),
+          mk(4, 'engine_stop', at(9, 30), {}),
+          mk(5, 'day_close', at(9, 40), { finalReading: { fuelL: 84, mh: 1237.9 } }),
+        ],
+      },
+    });
+    expect(sync.statusCode).toBe(200);
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/reference',
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const axa = res.json().aircraft.find((a: { reg: string }) => a.reg === 'SP-AXA');
+
+    expect(axa.handover.reading).toEqual({ fuelL: 84, mh: 1237.9 });
+    expect(axa.handover.byPilotId).toBe('TMK');
+  });
+
+  it('norma nominalna spalania jedzie na telefon obok konfiguracji oleju', async () => {
+    const { app, db } = await testHarness();
+    const token = await authed(app);
+
+    await db.query(
+      "UPDATE aircraft SET fuel_norm_l_per_h = 18.5, updated_at = now() WHERE id = 'SP-AXA'",
+    );
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/reference',
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const body = res.json();
+    const axa = body.aircraft.find((a: { reg: string }) => a.reg === 'SP-AXA');
+    const ank = body.aircraft.find((a: { reg: string }) => a.reg === 'SP-ANK');
+
+    expect(axa.fuelNormLPerH).toBe(18.5);
+    // Nieskonfigurowana jednostka niesie jawny brak, nie zero - ekran ma MILCZEĆ
+    // o normie, a nie orzekać, że każda sesja jest powyżej niej.
+    expect(ank.fuelNormLPerH).toBeNull();
+  });
+
+  // Stan początkowy NIE jedzie na telefon jako osobne pole: serwer składa z niego
+  // przekazanie i wysyła gotowe. Druga kopia tych liczb na drucie byłaby pierwszym
+  // miejscem, w którym ktoś policzy je inaczej niż `pickHandover`.
+  it('samych liczb stanu początkowego w odpowiedzi NIE MA', async () => {
+    const { app, db } = await testHarness();
+    const token = await authed(app);
+
+    await db.query(
+      "UPDATE aircraft SET initial_mh = 1236.5, initial_fuel_l = 112 WHERE id = 'SP-AXA'",
+    );
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/reference',
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const axa = res.json().aircraft.find((a: { reg: string }) => a.reg === 'SP-AXA');
+
+    expect(axa.initialMh).toBeUndefined();
+    expect(axa.initialFuelL).toBeUndefined();
+  });
+});

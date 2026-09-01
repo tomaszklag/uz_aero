@@ -16,6 +16,8 @@ import { fuelToleranceL } from '@uzaero/domain';
 
 import type { Handover } from '@uzaero/domain';
 
+import type { HandoverSource } from '../../common/aircraftStateView.ts';
+
 import type {
   AdminAircraftClaim,
   AdminAircraftListItem,
@@ -42,11 +44,15 @@ export interface AircraftStateInput {
   claim: { picId: string; since: number | null; sessionUuid: string } | null;
   handover: Handover | null;
   /**
-   * `true`, gdy `latestHandover` wziął odczyt z sesji NIEZAMKNIĘTEJ (np. po tankowaniu
-   * w trwającym dniu). Rozróżnienie jest treścią podpisu w tabeli i nie da się go
-   * odczytać z samego `Handover` - ten niesie wartości, nie ich pochodzenie.
+   * Skąd wzięty jest odczyt - `pickHandover().source`. Rozróżnienie jest treścią
+   * podpisu w tabeli i nie da się go odczytać z samego `Handover`: ten niesie
+   * wartości, nie ich pochodzenie. `null` = przekazania nie ma w ogóle.
+   *
+   * Do issue #66 był tu boolean `readingFromOpenSession`, bo warianty były DWA.
+   * Trzeci (`initial` - stan początkowy z panelu) nie mieści się w tak/nie, a dopisanie
+   * drugiego boolean-a obok pierwszego pozwoliłoby wyrazić stan „i to, i to".
    */
-  readingFromOpenSession: boolean;
+  readingSource: HandoverSource | null;
   /** Nazwiska do claimu i odczytu; klucz = `pilotId`. */
   labels: ReadonlyMap<string, PilotLabel>;
 }
@@ -70,6 +76,10 @@ export function aircraftListItem(
     oilMinL: aircraft.oilMinL,
     oilCapacityL: aircraft.oilCapacityL,
     oilNormLPerH: aircraft.oilNormLPerH,
+    fuelNormLPerH: aircraft.fuelNormLPerH,
+    initialMh: aircraft.initialMh,
+    initialFuelL: aircraft.initialFuelL,
+    initialOilL: aircraft.initialOilL,
     updatedAt: join.updatedAt.toISOString(),
     claim: claimOf(state),
     reading: readingOf(state),
@@ -99,8 +109,9 @@ function readingOf(state: AircraftStateInput): AdminAircraftReading | null {
     fuelL: handover.reading.fuelL,
     at: handover.at,
     byPilotId: handover.byPilotId,
-    byPilotName: state.labels.get(handover.byPilotId)?.name ?? null,
-    source: state.readingFromOpenSession ? 'open_session' : 'handover',
+    byPilotName:
+      handover.byPilotId == null ? null : (state.labels.get(handover.byPilotId)?.name ?? null),
+    source: state.readingSource ?? 'handover',
   };
 }
 

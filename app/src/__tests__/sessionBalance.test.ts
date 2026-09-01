@@ -73,7 +73,7 @@ function norm(over: Partial<ConsumptionNorm> = {}): ConsumptionNorm {
 
 describe('rachunek paliwa', () => {
   it('rozpisuje odczyty i dolewki jako przesłanki wyniku', () => {
-    const view = fuelBalance(session(), norm(), 2);
+    const view = fuelBalance(session(), norm(), 2, null);
 
     expect(view.rows.map((row) => `${row.op}${row.label} = ${row.value}`)).toEqual([
       'Odczyt przy przejęciu = 150 L',
@@ -84,7 +84,7 @@ describe('rachunek paliwa', () => {
   });
 
   it('wiersz dolewek zostaje także przy zerze - brak wiersza kazałby zgadywać', () => {
-    const view = fuelBalance(session({ fuel: { ...session().fuel, addedL: 0 } }), norm(), 0);
+    const view = fuelBalance(session({ fuel: { ...session().fuel, addedL: 0 } }), norm(), 0, null);
 
     expect(view.rows[1]!.label).toBe('Dolane');
     expect(view.rows[1]!.value).toBe('0 L');
@@ -94,7 +94,7 @@ describe('rachunek paliwa', () => {
     // 1:16 lotu × 20 L/h + 0:27 ziemi × 8 L/h ≈ 29,0 L. Rozrzut ±10% dałby 26–32 L,
     // ale pasmo rozpycha PODŁOGA z błędu odczytu (±6 L, `policy.ts`): przy tak małym
     // zużyciu dwa odczyty paliwomierza są mniej dokładne niż sam model.
-    const view = fuelBalance(session(), norm(), 2);
+    const view = fuelBalance(session(), norm(), 2, null);
 
     expect(view.verdict?.label).toBe('✓ W NORMIE');
     expect(view.verdict?.tone).toBe('green');
@@ -103,7 +103,7 @@ describe('rachunek paliwa', () => {
   });
 
   it('arkusz normy zestawia stawki z rzeczywistą średnią TEJ sesji (issue #40 pkt 7)', () => {
-    const view = fuelBalance(session(), norm(), 2);
+    const view = fuelBalance(session(), norm(), 2, null);
 
     expect(view.details?.title).toBe('NORMA PALIWA');
     expect(view.details?.summary).toContain('W normie - 27 L przy oczekiwanych 23 L – 35 L');
@@ -118,22 +118,22 @@ describe('rachunek paliwa', () => {
 
   it('plakietka i arkusz istnieją albo znikają RAZEM', () => {
     // Werdykt bez uzasadnienia byłby wyrokiem, którego nie da się sprawdzić.
-    expect(fuelBalance(session(), norm(), 2).details).not.toBeNull();
-    expect(fuelBalance(session(), null, 2).details).toBeNull();
+    expect(fuelBalance(session(), norm(), 2, null).details).not.toBeNull();
+    expect(fuelBalance(session(), null, 2, null).details).toBeNull();
     expect(mhBalance(session(), norm({ mh: null })).details).toBeNull();
   });
 
   it('ta sama liczba litrów przy innej mieszance faz daje inny werdykt', () => {
     // Ten sam blok, ale prawie same kołowanie: oczekiwanie spada i 27 L to za dużo.
     const kolowanie = session({ flightTimeMs: 10 * 60_000 });
-    const view = fuelBalance(kolowanie, norm(), 2);
+    const view = fuelBalance(kolowanie, norm(), 2, null);
 
     expect(view.verdict?.label).toBe('↑ POWYŻEJ NORMY');
     expect(view.verdict?.tone).toBe('amber');
   });
 
   it('bez stawek fazowych schodzi na godzinę pracy silnika', () => {
-    const view = fuelBalance(session(), norm({ airLPerH: null, groundLPerH: null }), 2);
+    const view = fuelBalance(session(), norm({ airLPerH: null, groundLPerH: null }), 2, null);
 
     // 1:43 × 15 L/h ≈ 25,8 L, pasmo z centyli okna (12–18 L/h) rozepchane do podłogi.
     expect(detail(view, 'Oczekiwane po tej sesji')).toBe('20 L – 32 L');
@@ -149,14 +149,14 @@ describe('rachunek paliwa', () => {
       flightTimeMs: 0,
       fuel: { startL: 240, addedL: 0, endL: 240, consumedL: 0, lastReadingL: 240 },
     });
-    const view = fuelBalance(bezLotu, norm(), 0);
+    const view = fuelBalance(bezLotu, norm(), 0, null);
 
     expect(view.verdict).toBeNull();
     expect(view.naNote).toContain('silnik nie pracował');
   });
 
   it('samolot bez normy milczy o normie, ale rachunek pokazuje', () => {
-    const view = fuelBalance(session(), null, 2);
+    const view = fuelBalance(session(), null, 2, null);
 
     expect(view.totalValue).toBe('27 L');
     expect(view.verdict).toBeNull();
@@ -167,7 +167,7 @@ describe('rachunek paliwa', () => {
     const otwarta = session({
       fuel: { startL: 150, addedL: 48, endL: null, consumedL: null, lastReadingL: 150 },
     });
-    const view = fuelBalance(otwarta, norm(), 2);
+    const view = fuelBalance(otwarta, norm(), 2, null);
 
     expect(view.totalValue).toBe('-');
     expect(view.verdict).toBeNull();
@@ -216,7 +216,9 @@ describe('rachunek motogodzin', () => {
 
     expect(view.totalValue).toBe('+1:35');
     expect(view.verdict).toBeNull();
-    expect(view.naNote).toContain('nie ma jeszcze policzonej normy');
+    // Licznik nie ma drabiny do dokumentacji (issue #66) - żadna instrukcja nie podaje
+    // przelicznika obrotomierza - więc mówi o przelicznikach, a nie o „normie" wprost.
+    expect(view.naNote).toContain('nie ma jeszcze policzonych przeliczników licznika');
   });
 
   it('format licznika dziesiętnego przechodzi do wszystkich wartości', () => {
@@ -224,5 +226,54 @@ describe('rachunek motogodzin', () => {
 
     expect(view.rows[0]!.value).toBe('1234.5');
     expect(view.totalValue).toBe('+1.6');
+  });
+});
+
+/**
+ * NORMA Z DOKUMENTACJI NA EKRANIE SESJI (issue #66).
+ *
+ * Dwie role, obie z tego samego zgłoszenia: bez modelu maszyny liczba z instrukcji
+ * JEST normą, a z modelem staje się WARTOŚCIĄ REFERENCYJNĄ, wobec której da się
+ * zmierzyć odchyłkę - „za pomocą takiej średniej z instrukcji można badać, jakie jest
+ * odchylenie nowej średniej oraz średniej z operacji od wartości referencyjnej".
+ */
+describe('norma z dokumentacji na karcie rachunku (issue #66)', () => {
+  it('samolot bez modelu dostaje werdykt Z DOKUMENTACJI, a nie milczenie', () => {
+    // 1:43 pracy silnika × 16 L/h ≈ 27,5 L; zużyto 27 L, więc mieści się w paśmie.
+    const view = fuelBalance(session(), null, 2, 16);
+
+    expect(view.verdict?.label).toBe('✓ W NORMIE');
+    expect(view.naNote).toBeNull();
+    expect(detail(view, 'Norma z dokumentacji')).toBe('16 L/h pracy silnika');
+    // Podstawa mówi WPROST, skąd ta liczba - to najważniejsza różnica między tym
+    // werdyktem a wszystkimi pozostałymi: pasmo jest zadeklarowane, nie zmierzone.
+    expect(detail(view, 'Podstawa')).toBe('dokumentacja jednostki');
+    expect(view.details?.summary).toContain('Pasmo pochodzi z dokumentacji jednostki');
+  });
+
+  it('MODEL WYGRYWA, a dokumentacja zostaje odniesieniem z odchyłką', () => {
+    const view = fuelBalance(session(), norm(), 2, 20);
+
+    // Stawki modelu zostają na swoim miejscu - dokumentacja niczego nie nadpisuje.
+    expect(detail(view, 'Norma w locie')).toBe('20 L/h');
+    expect(detail(view, 'Z dokumentacji')).toBe('20 L/h pracy silnika');
+    // 27 L na 1:43 to 15,7 L/h → −21% wobec 20; norma maszyny 15 L/h → −25%.
+    // Odchyłkę liczymy z wartości DOKŁADNEJ, nie z zaokrąglonej „16 L/h" z wiersza
+    // wyżej - zaokrąglanie dwa razy dodaje błąd, którego nikt nie zamawiał.
+    expect(detail(view, 'Odchyłka od dokumentacji')).toBe('ta sesja −21% · norma maszyny −25%');
+  });
+
+  it('bez wpisanej dokumentacji wiersze odniesienia NIE POWSTAJĄ', () => {
+    const view = fuelBalance(session(), norm(), 2, null);
+
+    expect(detail(view, 'Z dokumentacji')).toBeUndefined();
+    expect(detail(view, 'Odchyłka od dokumentacji')).toBeUndefined();
+  });
+
+  it('brak obu norm mówi o OBU - drugą da się naprawić w panelu', () => {
+    const view = fuelBalance(session(), null, 2, null);
+
+    expect(view.verdict).toBeNull();
+    expect(view.naNote).toContain('ani wpisanego spalania z dokumentacji');
   });
 });

@@ -952,6 +952,115 @@ describe('konfiguracja oleju (issue #60)', () => {
   });
 });
 
+// ── normy z dokumentacji i STAN POCZĄTKOWY (issue #66) ──────────────────────────
+
+/**
+ * Zgłoszenie: „dla pierwszych lotów gdzie nie ma jeszcze danych nie ma jak wyliczyć
+ * normy i odchyleń" plus „jak dodaję samolot to powinno być pole w którym wpiszę
+ * startowy stan motogodzin, paliwa w zbiorniku i oleju".
+ *
+ * Dwie różne rzeczy w jednym przekroju, bo wchodzą jednym formularzem: NORMA jest
+ * konfiguracją (liczba z instrukcji, ważna latami), a STAN POCZĄTKOWY opisuje jedną
+ * chwilę i przestaje działać przy pierwszej zdanej sesji.
+ */
+describe('normy z dokumentacji i stan początkowy (issue #66)', () => {
+  const base = { reg: 'SP-NRM', type: 'Cessna 182', capacityL: 330, mhFormat: 'decimal' as const };
+
+  it('zapis wraca w liście, w karcie i - w części normy - w /reference', async () => {
+    const { app } = await testHarness();
+    const tmk = await token(app, 'TMK');
+
+    const created = await createAircraft(app, tmk, {
+      ...base,
+      oilCapacityL: 11.4,
+      fuelNormLPerH: 18.5,
+      initialMh: 1236.5,
+      initialFuelL: 112,
+      initialOilL: 8.2,
+    });
+    expect(created.statusCode).toBe(201);
+    expect(created.json().aircraft).toMatchObject({
+      fuelNormLPerH: 18.5,
+      initialMh: 1236.5,
+      initialFuelL: 112,
+      initialOilL: 8.2,
+    });
+
+    // Odczyt jednostki, która jeszcze nie latała, POCHODZI z wpisu w panelu - i panel
+    // musi to widzieć, żeby nie podpisać go cudzym nazwiskiem.
+    expect(created.json().aircraft.reading).toMatchObject({
+      mh: 1236.5,
+      fuelL: 112,
+      byPilotId: null,
+      byPilotName: null,
+      source: 'initial',
+    });
+
+    const ref = await reference(app, tmk);
+    const row = ref.json().aircraft.find((a: { reg: string }) => a.reg === 'SP-NRM');
+    expect(row.fuelNormLPerH).toBe(18.5);
+    expect(row.handover).toMatchObject({ byPilotId: null, reading: { fuelL: 112, mh: 1236.5 } });
+  });
+
+  it('norma zerowa odbija się z powodem, a startowe ZERO jest legalne', async () => {
+    const { app } = await testHarness();
+    const tmk = await token(app, 'TMK');
+
+    const zero = await createAircraft(app, tmk, { ...base, reg: 'SP-NR0', fuelNormLPerH: 0 });
+    expect(zero.statusCode).toBe(409);
+    expect(zero.json()).toMatchObject({ error: 'refused', reason: 'fuel_norm_not_positive' });
+
+    // Nowy silnik ma 0 na liczniku, a maszyna przyjęta z pustymi zbiornikami - 0 litrów.
+    // To jest WARTOŚĆ, nie brak, więc ta sama liczba przechodzi w drugim polu.
+    const fresh = await createAircraft(app, tmk, {
+      ...base,
+      reg: 'SP-NR1',
+      initialMh: 0,
+      initialFuelL: 0,
+    });
+    expect(fresh.statusCode).toBe(201);
+    expect(fresh.json().aircraft).toMatchObject({ initialMh: 0, initialFuelL: 0 });
+  });
+
+  it('startowe paliwo ponad zbiornik odbija się - inwariant §3.4 wpisany ręką', async () => {
+    const { app } = await testHarness();
+    const tmk = await token(app, 'TMK');
+
+    const over = await createAircraft(app, tmk, { ...base, reg: 'SP-NR2', initialFuelL: 400 });
+    expect(over.statusCode).toBe(409);
+    expect(over.json()).toMatchObject({ error: 'refused', reason: 'initial_fuel_over_capacity' });
+
+    const minus = await createAircraft(app, tmk, { ...base, reg: 'SP-NR3', initialMh: -1 });
+    expect(minus.statusCode).toBe(409);
+    expect(minus.json()).toMatchObject({ error: 'refused', reason: 'initial_negative' });
+  });
+
+  it('sufit liczy się na stanie EFEKTYWNYM po PATCH-u - także od strony pojemności', async () => {
+    const { app } = await testHarness();
+    const tmk = await token(app, 'TMK');
+
+    const created = await createAircraft(app, tmk, {
+      ...base,
+      reg: 'SP-NR4',
+      initialFuelL: 300,
+    });
+    const id = created.json().aircraft.id as string;
+
+    // Samo obniżenie pojemności: startowe 300 L stoi już w bazie i przestaje się mieścić.
+    const shrink = await patchAircraft(app, tmk, id, { capacityL: 200 });
+    expect(shrink.statusCode).toBe(409);
+    expect(shrink.json()).toMatchObject({
+      error: 'refused',
+      reason: 'initial_fuel_over_capacity',
+    });
+
+    // `null` czyści wpis - tak samo jak przy oleju.
+    const cleared = await patchAircraft(app, tmk, id, { initialFuelL: null });
+    expect(cleared.statusCode).toBe(200);
+    expect(cleared.json().aircraft.initialFuelL).toBeNull();
+  });
+});
+
 /**
  * USUWANIE JEDNOSTKI (2026-08-30).
  *

@@ -852,6 +852,27 @@ zużycia dla telefonów).
 | `mh_format` | `decimal` / `hhmm` | wszystkie odczyty, pola i eksport MH |
 | `dual_required` | An-2: true | wymóg drugiego pilota w preflightcie |
 | `service_status` | `active` / `disabled` | dostępność na liście wyboru |
+| `oil_min_l` | C182: 8,5 | ostrzeżenie "dolej co najmniej…" na kroku liczników (#60) |
+| `oil_capacity_l` | C182: 11,4 | sufit pomiaru i dolewki oleju - siostra `capacity_l` (#60) |
+| `oil_norm_l_per_h` | C182: 0,12 | oczekiwany poziom oleju względem ΔMH (#60) |
+| `fuel_norm_l_per_h` | C182: 18 | norma spalania na godzinę PRACY SILNIKA (#66) |
+
+Wszystkie cztery pola z dołu tabeli są **opcjonalne**: `null` znaczy „nie prowadzimy"
+i wtedy odpowiedni moduł MILCZY, zamiast orzekać z zera.
+
+**Obie normy są NOMINALNE - z instrukcji użytkowania.** Obowiązują dopóty, dopóki
+analityka nie policzy własnej stawki z lotów tej maszyny (§3.6b): **wyliczona wygrywa
+z wpisaną**, bo model opisuje ten egzemplarz, a dokumentacja typ. Norma paliwa zasila
+trzeci szczebel drabiny oczekiwania (`ExpectationBasis: 'nominal'`), a przy modelu już
+policzonym zostaje WARTOŚCIĄ REFERENCYJNĄ - arkusz normy pokazuje odchyłkę od niej.
+
+**Nie jest konfiguracją: STAN POCZĄTKOWY** (`initial_mh`, `initial_fuel_l`,
+`initial_oil_l`, issue #66). Opisuje jedną chwilę - co pokazywały przyrządy, gdy
+jednostkę wprowadzono do UZ Aero - i jest ZEROWYM OGNIWEM łańcucha odczytów: serwer
+składa z niego przekazanie (§4.5) wyłącznie dla maszyny bez ani jednej zdanej sesji,
+z `Handover.byPilotId = null` („nikt nie przekazał"). Od pierwszego zdania samolotu
+przestaje cokolwiek znaczyć. Zero jest tu WARTOŚCIĄ (nowy silnik, puste zbiorniki),
+inaczej niż w normach wyżej.
 
 ---
 

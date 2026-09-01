@@ -75,8 +75,17 @@ export interface OilHandover {
 /** Przekazanie od poprzednika (JSON w kolumnie `handover`, §5.2). */
 export interface Handover {
   reading: FuelMhReading;
-  /** Kto przekazał (pilot id). */
-  byPilotId: string;
+  /**
+   * Kto przekazał (pilot id).
+   *
+   * `null` = **NIKT** - to jest STAN POCZĄTKOWY jednostki wpisany w panelu (issue #66),
+   * czyli zerowe ogniwo łańcucha, od którego zaczyna się pierwszy lot maszyny w UZ Aero.
+   * Ekran musi to rozróżnić: „przekazał J. Kowalski" przy liczbie, której nie przekazał
+   * żaden pilot, jest zdaniem nieprawdziwym w miejscu, gdzie zaufanie do liczb jest całą
+   * treścią. Nullowalność ma tu ten sam sens, co w `HandoverTrailEntry.pilotId`
+   * (tankowanie techniczne) i w `OilHandover.byPilotId`.
+   */
+  byPilotId: string | null;
   /** Kiedy powstało przekazanie (UTC). */
   at: EpochMillis;
   /** Historia prowadząca do tych wartości, od najstarszej. Puste = serwer jej nie podał. */
@@ -189,6 +198,24 @@ export interface ReferenceAircraft {
   /** Czy wymagany drugi pilot (np. An-2) - blokuje preflight bez Duala (§5.4). */
   dualRequired: boolean;
   serviceStatus: ServiceStatus;
+  /**
+   * Średnie spalanie NA GODZINĘ PRACY SILNIKA z instrukcji użytkowania (L/h, issue #66).
+   *
+   * Siostra `oilNormLPerH` i ta sama rola: norma NOMINALNA, wpisana przez administratora,
+   * obowiązująca DOPÓKI analityka nie policzy własnej z lotów tej maszyny
+   * (`consumption`). Wyliczona wygrywa z wpisaną - podmiana zachodzi w jednym miejscu,
+   * w `consumption/expectation.ts`.
+   *
+   * Ten sam mianownik, co `ConsumptionNorm.blockLPerH` (godzina pracy silnika, nie
+   * godzina lotu) - dzięki temu wchodzi dokładnie w miejsce stawki blokowej i nie
+   * wymaga zgadywania podziału na fazy. Z tego samego powodu NIE zasila szacunku
+   * wystarczalności paliwa (`fuelNorm.ts`): tam potrzebna jest stawka W LOCIE,
+   * a zaniżona rezerwa jest błędem w stronę niedopuszczalną.
+   *
+   * `?` i `null` znaczą to samo, co przy polach oleju: brak klucza = rekord sprzed
+   * issue #66, `null` = administrator nie wpisał (ekran wtedy milczy o normie).
+   */
+  fuelNormLPerH?: number | null;
   /*
    * Konfiguracja OLEJU (issue #60) - trzy liczby z dokumentacji jednostki, wszystkie
    * OPCJONALNE na dwóch poziomach naraz:

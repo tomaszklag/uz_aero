@@ -117,6 +117,9 @@ export function StatsScreen({
   // Reszta liczb jest projekcją lokalnych zdarzeń, więc zawsze świeża (§5.2).
   const aircraftRef = useAircraft(projection.aircraftId);
   const norm = aircraftRef?.consumption ?? null;
+  // Spalanie z dokumentacji jednostki (issue #66) - wchodzi dopiero wtedy, gdy modelu
+  // tej maszyny jeszcze nie ma; rozstrzyga to domena, nie ten ekran.
+  const fuelNominal = aircraftRef?.fuelNormLPerH ?? null;
 
   /**
    * Piloci z cache'u referencyjnego (§4.8) - dwa zastosowania, jeden odczyt.
@@ -287,8 +290,8 @@ export function StatsScreen({
   );
 
   const fuel = useMemo(
-    () => fuelBalance(projection, norm, refuelCount),
-    [projection, norm, refuelCount],
+    () => fuelBalance(projection, norm, refuelCount, fuelNominal),
+    [projection, norm, refuelCount, fuelNominal],
   );
   const mh = useMemo(() => mhBalance(projection, norm), [projection, norm]);
 

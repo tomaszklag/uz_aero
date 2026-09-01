@@ -61,6 +61,8 @@ import {
   refuseCapacity,
   refuseDeleteAircraft,
   refuseDisable,
+  refuseFuelNorm,
+  refuseInitialState,
   refuseOil,
   type FleetRefusal,
 } from '../../../domain/fleetGuards.ts';
@@ -80,6 +82,12 @@ export interface CreateAircraftInput {
   oilMinL: number | null;
   oilCapacityL: number | null;
   oilNormLPerH: number | null;
+  /** Norma nominalna spalania z dokumentacji (issue #66) - `null` = nie wpisano. */
+  fuelNormLPerH: number | null;
+  /** Stan początkowy jednostki (issue #66) - zerowe ogniwo łańcucha odczytów. */
+  initialMh: number | null;
+  initialFuelL: number | null;
+  initialOilL: number | null;
 }
 
 /** Zmiana konfiguracji. Pola nieustawione zostają bez zmian (`PATCH` opisuje RÓŻNICĘ). */
@@ -136,6 +144,10 @@ const FIELDS = [
   'oilMinL',
   'oilCapacityL',
   'oilNormLPerH',
+  'fuelNormLPerH',
+  'initialMh',
+  'initialFuelL',
+  'initialOilL',
 ] as const;
 
 export class AdminFleetCommands {
@@ -168,6 +180,10 @@ export class AdminFleetCommands {
         if (capacity != null) throw new Refused(capacity);
         const oil = refuseOil(input);
         if (oil != null) throw new Refused(oil);
+        const fuelNorm = refuseFuelNorm(input.fuelNormLPerH);
+        if (fuelNorm != null) throw new Refused(fuelNorm);
+        const initial = refuseInitialState(input);
+        if (initial != null) throw new Refused(initial);
 
         const clash = await this.fleet.conflict(tx, { reg: input.reg, exceptId: null });
         if (clash != null) throw new Conflict();
@@ -192,6 +208,13 @@ export class AdminFleetCommands {
               oilMinL: created.oilMinL,
               oilCapacityL: created.oilCapacityL,
               oilNormLPerH: created.oilNormLPerH,
+              fuelNormLPerH: created.fuelNormLPerH,
+              // Stan początkowy jedzie do dziennika w KOMPLECIE (issue #66): to jest
+              // jedyny zapis chwili, w której ktoś zadeklarował, od czego ta maszyna
+              // startuje - a od pierwszej zdanej sesji nie widać go już nigdzie.
+              initialMh: created.initialMh,
+              initialFuelL: created.initialFuelL,
+              initialOilL: created.initialOilL,
               // Próg WYNIKAJĄCY z pojemności, a nie druga jej kopia: dziennik ma
               // odpowiadać na pytanie „od ilu litrów ta jednostka zaczyna być flagowana",
               // a nikt nie liczy tego w pamięci przy czytaniu wpisu.
@@ -244,6 +267,26 @@ export class AdminFleetCommands {
             input.oilNormLPerH !== undefined ? input.oilNormLPerH : before.oilNormLPerH,
         });
         if (oil != null) throw new Refused(oil);
+
+        const fuelNorm = refuseFuelNorm(
+          input.fuelNormLPerH !== undefined ? input.fuelNormLPerH : before.fuelNormLPerH,
+        );
+        if (fuelNorm != null) throw new Refused(fuelNorm);
+
+        // Ta sama zasada, co przy oleju: reguła orzeka o STANIE po zmianie, więc
+        // składamy wartości efektywne. Startowe paliwo podniesione ponad ISTNIEJĄCĄ
+        // pojemność ma zostać odrzucone tak samo, jak para wysłana w jednym żądaniu -
+        // i odwrotnie: obniżenie pojemności pod zapisany stan początkowy też.
+        const initial = refuseInitialState({
+          initialMh: input.initialMh !== undefined ? input.initialMh : before.initialMh,
+          initialFuelL:
+            input.initialFuelL !== undefined ? input.initialFuelL : before.initialFuelL,
+          initialOilL: input.initialOilL !== undefined ? input.initialOilL : before.initialOilL,
+          capacityL: input.capacityL !== undefined ? input.capacityL : before.capacityL,
+          oilCapacityL:
+            input.oilCapacityL !== undefined ? input.oilCapacityL : before.oilCapacityL,
+        });
+        if (initial != null) throw new Refused(initial);
 
         if (input.serviceStatus !== undefined && input.serviceStatus !== before.serviceStatus) {
           // Licznik czytany PO wzięciu blokady - tak jak przy populacji administratorów.

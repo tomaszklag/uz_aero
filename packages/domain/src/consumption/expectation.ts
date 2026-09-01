@@ -24,7 +24,12 @@
  */
 
 import type { ConsumptionNorm } from '../reference';
-import { FUEL_BAND_FLOOR_L, HOUR_MS, MH_BAND_FLOOR_H } from './policy';
+import {
+  FUEL_BAND_FLOOR_L,
+  HOUR_MS,
+  MH_BAND_FLOOR_H,
+  NOMINAL_BAND_RATIO,
+} from './policy';
 
 /**
  * Czasy jednej sesji - wejście przewidywania.
@@ -46,7 +51,17 @@ export type ExpectationBasis =
   /** Rozdzielone fazy: osobna stawka na ziemi i w powietrzu. */
   | 'phases'
   /** Sama godzina pracy silnika - model nie rozdzielił faz, pasmo z centyli okna. */
-  | 'engine';
+  | 'engine'
+  /**
+   * Norma Z DOKUMENTACJI jednostki (issue #66) - maszyna nie ma jeszcze własnego modelu.
+   *
+   * Najsłabszy szczebel drabiny i jedyny, na którym pasmo jest ZADEKLAROWANE
+   * (`NOMINAL_BAND_RATIO`), a nie zmierzone: liczba pochodzi z instrukcji użytkowania,
+   * nie z lotów TEJ maszyny. Ekran musi to powiedzieć - werdykt „powyżej normy" znaczy
+   * tu „powyżej tego, co obiecuje producent", a nie „powyżej tego, co ten egzemplarz
+   * zwykle pokazuje".
+   */
+  | 'nominal';
 
 /** Przewidywanie razem z pasmem, w którym wynik uznajemy za normalny. */
 export interface Expectation {
@@ -68,14 +83,43 @@ export type NormVerdict = 'w-normie' | 'powyzej' | 'ponizej';
  * Schodzenie po drabinie modeli jest tu takie samo jak w `model.ts`: gdy stawek fazowych
  * nie ma (model zdegradowany do jednej fazy), przewidujemy z godziny pracy silnika
  * i pasma centylowego. To słabsza odpowiedź, ale uczciwa - i ekran ją rozpozna po `basis`.
+ *
+ * ══ TRZECI SZCZEBEL: NORMA Z DOKUMENTACJI (issue #66) ══
+ * Zgłoszenie brzmiało: „dla pierwszych lotów gdzie nie ma jeszcze danych nie ma jak
+ * wyliczyć normy i odchyleń". Dopóki model tej maszyny nie przeszedł bramki publikacji,
+ * `norm` jest `null` i ekran milczał - a to jest dokładnie ten okres, w którym pilot
+ * jeszcze nie zna maszyny i podpowiedź przydaje mu się najbardziej.
+ *
+ * `nominalLPerH` (`ReferenceAircraft.fuelNormLPerH`) to średnie spalanie NA GODZINĘ
+ * PRACY SILNIKA z instrukcji użytkowania - ten sam mianownik, co `blockLPerH`, więc
+ * wchodzi dokładnie w miejsce stawki blokowej. **Wyliczona wygrywa z wpisaną**: model
+ * opisuje TEN egzemplarz, a dokumentacja - typ. Ta sama kolejność, co przy oleju
+ * (`oilPreflight.ts`, issue #60).
  */
 export function expectedFuelL(
   norm: ConsumptionNorm | null,
   times: SessionPhaseTimes,
+  nominalLPerH: number | null = null,
 ): Expectation | null {
-  if (norm == null) return null;
   const split = phaseHours(times);
   if (split == null) return null;
+  const blockH = split.flightH + split.groundH;
+
+  if (norm == null) {
+    if (nominalLPerH == null || nominalLPerH <= 0) return null;
+    // Pasmo ZADEKLAROWANE, nie zmierzone - patrz `NOMINAL_BAND_RATIO`. Dokumentacja
+    // podaje punkt, a nie rozrzut, więc udawanie centyli byłoby tu zmyśleniem.
+    const value = nominalLPerH * blockH;
+    return withFloor(
+      {
+        value,
+        low: value * (1 - NOMINAL_BAND_RATIO),
+        high: value * (1 + NOMINAL_BAND_RATIO),
+        basis: 'nominal',
+      },
+      FUEL_BAND_FLOOR_L,
+    );
+  }
 
   if (norm.groundLPerH != null && norm.airLPerH != null) {
     const value = norm.airLPerH * split.flightH + norm.groundLPerH * split.groundH;
@@ -84,7 +128,6 @@ export function expectedFuelL(
 
   // Bez rozdzielonych faz zostaje stawka blokowa - wtedy pasmo bierzemy wprost z centyli
   // okna, bo to jest dokładnie to samo pytanie zadane o godzinę pracy silnika.
-  const blockH = split.flightH + split.groundH;
   return withFloor(
     {
       value: norm.blockLPerH * blockH,

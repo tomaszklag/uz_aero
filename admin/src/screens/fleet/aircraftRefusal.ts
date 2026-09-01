@@ -21,6 +21,13 @@ const REFUSALS: Record<FleetRefusalDto, string> = {
   open_session: 'Ktoś ma teraz ten samolot. Wyłącz go, gdy pilot skończy lot.',
   oil_not_positive: 'Wartości oleju muszą być większe od zera. Puste pole znaczy „nie prowadzimy".',
   oil_min_above_capacity: 'Minimum oleju nie może być większe od zbiornika.',
+  fuel_norm_not_positive:
+    'Spalanie z dokumentacji musi być większe od zera. Puste pole znaczy „nie znamy".',
+  // Zero jest tu WARTOŚCIĄ (nowy silnik, puste zbiorniki), więc zdanie mówi o minusie,
+  // a nie o „większe od zera" jak przy normach.
+  initial_negative: 'Stan początkowy nie może być ujemny.',
+  initial_fuel_over_capacity: 'Startowe paliwo nie mieści się w zbiornikach.',
+  initial_oil_over_capacity: 'Startowy olej nie mieści się w zbiorniku oleju.',
   aircraft_in_service: 'Najpierw wyłącz samolot ze służby.',
   has_history: 'Ten samolot ma zapisane loty - możesz go tylko wyłączyć.',
 };
@@ -40,6 +47,12 @@ export function fleetRefusalMessage(reason: FleetRefusalDto | PilotRefusalDto): 
 export const CAPACITY_NOT_POSITIVE = REFUSALS.capacity_not_positive;
 export const OIL_NOT_POSITIVE = REFUSALS.oil_not_positive;
 export const OIL_MIN_ABOVE_CAPACITY = REFUSALS.oil_min_above_capacity;
+export const FUEL_NORM_NOT_POSITIVE = REFUSALS.fuel_norm_not_positive;
+// `initial_negative` NIE MA tu skrótu: formularz nie ma jak zobaczyć minusa (parsery
+// przyjmują same cyfry), więc ta reguła wraca wyłącznie odmową serwera - a skrót do
+// zdania, którego nikt nie woła, obiecywałby sprawdzenie, którego nie ma.
+export const INITIAL_FUEL_OVER_CAPACITY = REFUSALS.initial_fuel_over_capacity;
+export const INITIAL_OIL_OVER_CAPACITY = REFUSALS.initial_oil_over_capacity;
 export const AIRCRAFT_IN_USE = REFUSALS.open_session;
 
 /**

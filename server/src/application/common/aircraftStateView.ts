@@ -21,7 +21,7 @@
 
 import type { Handover, OilHandover } from '@uzaero/domain';
 
-import type { SessionRow } from './ports.ts';
+import type { AircraftSeed, SessionRow } from './ports.ts';
 
 export interface ActiveClaim {
   picId: string;
@@ -66,7 +66,15 @@ export function activeClaim(sessions: readonly SessionRow[]): ActiveClaim | null
  * pochodzenie. Stąd druga funkcja obok, a nie drugie przejście po tych samych sesjach
  * w adapterze panelu.
  */
-export type HandoverSource = 'handover' | 'open_session';
+export type HandoverSource =
+  | 'handover'
+  | 'open_session'
+  /**
+   * STAN POCZĄTKOWY z panelu (issue #66) - rejestr nie ma czym odpowiedzieć, bo ta
+   * maszyna jeszcze nie latała. Panel podpisuje tym kolumnę odczytu, a telefon poznaje
+   * ten wariant po `Handover.byPilotId === null`.
+   */
+  | 'initial';
 
 export interface HandoverPick {
   handover: Handover;
@@ -81,30 +89,58 @@ export interface HandoverPick {
  * (tankowanie podbija `fuelLast`), pokazujemy je - preflight ma podpowiadać stan
  * FAKTYCZNY, nie historyczny.
  */
-export function latestHandover(sessions: readonly SessionRow[]): Handover | null {
-  return pickHandover(sessions)?.handover ?? null;
+export function latestHandover(
+  sessions: readonly SessionRow[],
+  seed: AircraftSeed | null,
+): Handover | null {
+  return pickHandover(sessions, seed)?.handover ?? null;
 }
 
-export function pickHandover(sessions: readonly SessionRow[]): HandoverPick | null {
+/**
+ * @param seed stan początkowy jednostki (issue #66) - używany WYŁĄCZNIE wtedy, gdy
+ *   rejestr nie ma ani jednej zdanej sesji tej maszyny. Argument jest WYMAGANY, nie
+ *   opcjonalny: wołający, który go nie ma (bo nie czyta konfiguracji floty), musi
+ *   napisać `null` i tym samym zadeklarować, że pierwszy lot maszyny zobaczy „brak
+ *   danych". Domyślna wartość zamieniłaby tę decyzję w przeoczenie.
+ */
+export function pickHandover(
+  sessions: readonly SessionRow[],
+  seed: AircraftSeed | null,
+): HandoverPick | null {
+  // Olej jest NIEZALEŻNY od tego, która sesja niesie przekazanie paliwa/MH:
+  // pomiar biegnie własnym łańcuchem pomiar→pomiar (issue #60).
+  const oil = latestOilHandover(sessions, { seed });
+
   const closed = sessions
     .filter((s) => s.status === 'closed' && s.mhEnd != null && s.fuelEndL != null)
     .sort((a, b) => (b.mhEnd ?? 0) - (a.mhEnd ?? 0) || (b.closeTime ?? 0) - (a.closeTime ?? 0));
-  const base = closed[0];
-  if (base == null) return null;
+  const closedBase = closed[0];
+
+  /*
+   * Zerowe ogniwo łańcucha: wpis z panelu wchodzi DOPIERO przy braku zdanej sesji
+   * i tylko z KOMPLETEM pary (paliwo + licznik). Połówka nie jest przekazaniem -
+   * `Handover.reading` niesie obie wielkości naraz, a zero udające drugą z nich
+   * byłoby gorsze od milczenia (ta sama reguła, co przy filtrze sesji wyżej).
+   */
+  const seedBase =
+    closedBase == null && seed != null && seed.fuelL != null && seed.mh != null
+      ? { fuelL: seed.fuelL, mh: seed.mh, at: seed.enteredAt }
+      : null;
+
+  if (closedBase == null && seedBase == null) return null;
+
+  // Od czego liczy się „nowsza sesja w toku": zdanie maszyny albo wpis w panelu.
+  const baseAt = closedBase != null ? (closedBase.closeTime ?? 0) : seedBase!.at;
 
   const newerOpen = sessions
     .filter(
       (s) =>
         s.status === 'active' &&
-        (s.claimTime ?? 0) > (base.closeTime ?? 0) &&
+        (s.claimTime ?? 0) > baseAt &&
         s.fuelLastL != null &&
         s.mhLast != null,
     )
     .sort((a, b) => (b.claimTime ?? 0) - (a.claimTime ?? 0))[0];
-
-  // Olej jest NIEZALEŻNY od tego, która sesja niesie przekazanie paliwa/MH:
-  // pomiar biegnie własnym łańcuchem pomiar→pomiar (issue #60).
-  const oil = latestOilHandover(sessions);
 
   if (newerOpen != null) {
     return {
@@ -118,11 +154,24 @@ export function pickHandover(sessions: readonly SessionRow[]): HandoverPick | nu
     };
   }
 
+  if (closedBase == null) {
+    return {
+      handover: {
+        reading: { fuelL: seedBase!.fuelL, mh: seedBase!.mh },
+        // Nikt tej maszyny nie przekazał - patrz docblock `Handover.byPilotId`.
+        byPilotId: null,
+        at: seedBase!.at,
+        oil,
+      },
+      source: 'initial',
+    };
+  }
+
   return {
     handover: {
-      reading: { fuelL: base.fuelEndL!, mh: base.mhEnd! },
-      byPilotId: base.picId,
-      at: base.closeTime ?? 0,
+      reading: { fuelL: closedBase.fuelEndL!, mh: closedBase.mhEnd! },
+      byPilotId: closedBase.picId,
+      at: closedBase.closeTime ?? 0,
       oil,
     },
     source: 'handover',
@@ -151,6 +200,12 @@ export function latestOilHandover(
      * ten lot nie mógł zastać. Pominięte = cała historia, czyli zachowanie sprzed #62.
      */
     asOf?: number;
+    /**
+     * Stan początkowy jednostki (issue #66) - kotwica ZASTĘPCZA, gdy żadna sesja nie
+     * niesie pomiaru. Wchodzi z `atMh = seed.mh`, bo rachunek oczekiwania kotwiczy się
+     * w liczniku, a nie w zegarze (`oilPreflight.expectation()`).
+     */
+    seed?: AircraftSeed | null;
   } = {},
 ): OilHandover | null {
   const inScope =
@@ -166,7 +221,23 @@ export function latestOilHandover(
         (b.claimTime ?? 0) - (a.claimTime ?? 0),
     );
   const anchor = measured[0];
-  if (anchor == null) return null;
+
+  /*
+   * Bez ani jednego pomiaru kotwicą jest wpis z panelu. Dolewki zapisane po nim liczą
+   * się SUMĄ ze wszystkich sesji w zakresie - każda jest „za kotwicą", bo kotwica
+   * poprzedza pierwszy lot maszyny z definicji.
+   */
+  if (anchor == null) {
+    const seed = opts.seed;
+    if (seed?.oilL == null) return null;
+    return {
+      levelL: seed.oilL,
+      atMh: seed.mh,
+      at: seed.enteredAt,
+      byPilotId: null,
+      addedSinceL: inScope.reduce((sum, s) => sum + (s.oilAddedL ?? 0), 0),
+    };
+  }
 
   // Sesja „za kotwicą" w łańcuchu: po liczniku, a przy remisie/braku - po zegarze.
   const chainAfter = (s: SessionRow): boolean => {

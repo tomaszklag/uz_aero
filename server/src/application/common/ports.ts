@@ -176,12 +176,47 @@ export interface RefreshTokensPort {
 
 // ── dane referencyjne ───────────────────────────────────────────────────────────
 
+/**
+ * STAN POCZĄTKOWY jednostki (issue #66) - zerowe ogniwo łańcucha odczytów.
+ *
+ * Co pokazywały przyrządy, gdy maszynę wprowadzono do UZ Aero. Każde pole osobno
+ * `null` („administrator nie wpisał"), bo klub potrafi znać licznik i nie znać oleju.
+ *
+ * ══ TO NIE JEST PRZEKAZANIE I DLATEGO MA WŁASNY TYP ══
+ * `Handover` odpowiada na pytanie „co zostawił poprzedni pilot"; ten typ - „od czego
+ * ta maszyna zaczyna". Serwer składa z niego przekazanie DOPIERO wtedy, gdy rejestr nie
+ * ma czym odpowiedzieć (`aircraftStateView.pickHandover`), i oznacza je `byPilotId: null`.
+ */
+export interface AircraftSeed {
+  mh: number | null;
+  fuelL: number | null;
+  oilL: number | null;
+  /**
+   * Kiedy wpis powstał - `aircraft.updated_at`, czyli ostatni zapis wiersza w panelu.
+   *
+   * Świadomie NIE nazywamy tego chwilą pomiaru: wiersz rusza się przy każdej zmianie
+   * konfiguracji. Nazwa pola mówi „zapis w panelu" i tak samo ma o nim mówić ekran -
+   * `updated_at` pod etykietą „stan z" byłby inną wielkością pod tą samą nazwą
+   * (ta sama pułapka, co przy `disabledAt` w kontrakcie floty).
+   */
+  enteredAt: number;
+}
+
 /** Flota + piloci dla `GET /reference` (§4.6, §4.8). */
 export interface ReferenceSnapshot {
   aircraft: ReferenceAircraft[];
   pilots: ReferencePilot[];
   /** Najświeższy `updated_at` - podstawa ETagu i adnotacji wieku cache w aplikacji. */
   updatedAt: Date | null;
+  /**
+   * Stan początkowy floty (issue #66), klucz = `aircraft.id`; brak klucza = nie wpisano.
+   *
+   * OBOK `aircraft`, a nie W `ReferenceAircraft`, bo telefon tych liczb NIE DOSTAJE:
+   * serwer składa z nich przekazanie i wysyła gotowe. Pole na drucie, którego nikt nie
+   * czyta, to drugie źródło tej samej prawdy - i pierwsze miejsce, w którym za pół roku
+   * ktoś policzy coś inaczej niż `pickHandover`.
+   */
+  initial: ReadonlyMap<string, AircraftSeed>;
 }
 
 export interface ReferencePort {

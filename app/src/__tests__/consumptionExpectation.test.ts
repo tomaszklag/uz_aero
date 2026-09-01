@@ -13,6 +13,7 @@ import {
   expectedMhH,
   FUEL_BAND_FLOOR_L,
   MH_BAND_FLOOR_H,
+  NOMINAL_BAND_RATIO,
   type ConsumptionNorm,
 } from '../domain';
 
@@ -146,5 +147,71 @@ describe('werdykt', () => {
   it('poza pasmem mówi, w którą stronę', () => {
     expect(expectationVerdict(26.9, e)).toBe('ponizej');
     expect(expectationVerdict(33.1, e)).toBe('powyzej');
+  });
+});
+
+/**
+ * NORMA Z DOKUMENTACJI (issue #66) - trzeci szczebel drabiny.
+ *
+ * Zgłoszenie: „dla pierwszych lotów gdzie nie ma jeszcze danych nie ma jak wyliczyć
+ * normy i odchyleń". Do tej pory `norm == null` znaczyło „ekran milczy" - a to jest
+ * dokładnie ten okres, w którym pilot nie zna jeszcze maszyny.
+ */
+describe('norma nominalna z dokumentacji jednostki', () => {
+  it('bez modelu liczy z godziny PRACY SILNIKA i oznacza podstawę', () => {
+    // 5 h silnika × 18 L/h = 90 L, pasmo ±15% → 76,5–103,5 L. Piętnaście procent z 90 L
+    // to 13,5 L, czyli więcej niż podłoga przyrządu (6 L) - tu rządzi sam próg.
+    const e = expectedFuelL(null, { blockMs: 5 * HOUR, flightMs: 2 * HOUR }, 18)!;
+
+    expect(e.value).toBeCloseTo(90, 6);
+    expect(e.low).toBeCloseTo(90 * (1 - NOMINAL_BAND_RATIO), 6);
+    expect(e.high).toBeCloseTo(90 * (1 + NOMINAL_BAND_RATIO), 6);
+    // Ekran musi umieć powiedzieć, że to NIE jest liczba z lotów tej maszyny.
+    expect(e.basis).toBe('nominal');
+  });
+
+  it('MIESZANKA FAZ nie zmienia wyniku - dokumentacja nie rozdziela ziemi od lotu', () => {
+    const lotem = expectedFuelL(null, { blockMs: 2 * HOUR, flightMs: 2 * HOUR }, 18)!;
+    const ziemia = expectedFuelL(null, { blockMs: 2 * HOUR, flightMs: 0 }, 18)!;
+
+    // I dlatego pasmo jest szerokie: pokrywa różnicę, której ta liczba nie opisuje.
+    expect(lotem.value).toBeCloseTo(ziemia.value, 6);
+  });
+
+  it('MODEL WYGRYWA z dokumentacją - ten egzemplarz przed typem', () => {
+    const e = expectedFuelL(norm(), { blockMs: 2 * HOUR, flightMs: 1 * HOUR }, 18)!;
+
+    // 1 h × 20 + 1 h × 8 = 28 L z modelu, a nie 36 L z dokumentacji.
+    expect(e.value).toBeCloseTo(28, 6);
+    expect(e.basis).toBe('phases');
+  });
+
+  it('pasmo nie schodzi poniżej błędu odczytu przyrządu', () => {
+    // Godzina silnika × 18 L/h = 18 L. ±15% to 2,7 L - mniej niż podłoga 6 L, więc
+    // to ona rozpycha pasmo: przy takim zużyciu dwa odczyty paliwomierza są mniej
+    // dokładne niż sam próg procentowy.
+    const e = expectedFuelL(null, { blockMs: HOUR, flightMs: 0 }, 18)!;
+
+    expect(e.high - e.value).toBeCloseTo(FUEL_BAND_FLOOR_L, 6);
+    expect(e.value - e.low).toBeCloseTo(FUEL_BAND_FLOOR_L, 6);
+
+    // Dolna granica NIE schodzi pod zero także wtedy, gdy podłoga jest szersza od
+    // samego oczekiwania - „ujemne litry" nie są stanem świata.
+    const krotka = expectedFuelL(null, { blockMs: HOUR / 4, flightMs: 0 }, 18)!;
+    expect(krotka.low).toBe(0);
+  });
+
+  it('brak jednego i drugiego to nadal MILCZENIE, nie zero', () => {
+    expect(expectedFuelL(null, { blockMs: 2 * HOUR, flightMs: HOUR }, null)).toBeNull();
+    // Zero i minus nie są stawką - taka konfiguracja nie ma prawa produkować werdyktu.
+    expect(expectedFuelL(null, { blockMs: 2 * HOUR, flightMs: HOUR }, 0)).toBeNull();
+    expect(expectedFuelL(null, { blockMs: 2 * HOUR, flightMs: HOUR }, -5)).toBeNull();
+    // Silnik, który nie pracował, nie ma czego mnożyć.
+    expect(expectedFuelL(null, { blockMs: 0, flightMs: 0 }, 18)).toBeNull();
+  });
+
+  it('LICZNIK dokumentacji nie ma i milczy dalej', () => {
+    // Żadna instrukcja nie podaje przelicznika obrotomierza - drabina MH ma dwa szczeble.
+    expect(expectedMhH(null, { blockMs: 2 * HOUR, flightMs: HOUR })).toBeNull();
   });
 });

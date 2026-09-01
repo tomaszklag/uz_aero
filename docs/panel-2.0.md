@@ -482,3 +482,64 @@ dokumentu klubu nie jest robotą eksportera.
   o tych samych danych;
 - **filtrów po pilocie i operacji** - trasa je umie, ale nie zamówiono ich, a każdy chip
   to kolejny stan w adresie.
+
+## 10. Karta samolotu: normy z dokumentacji i stan początkowy (issue #66, 2026-09-01)
+
+Zamówienie z issue #66: „Brakuje tego i dla pierwszych lotów gdzie nie ma jeszcze danych
+nie ma jak wyliczyć normy i odchyleń. […] W panelu admina jak dodaję samolot to powinno
+być pole w którym wpiszę startowy stan motogodzin, paliwa w zbiorniku i oleju."
+
+Punkty 2 i 3 zgłoszenia (norma oleju, pojemność i minimum oleju) **były już wdrożone**
+przy issue #60 - karta samolotu ma je od 2026-08-27. Dołożone są punkty 1 i 4.
+
+### 10.1 To są DWA rodzaje liczb i dlatego dwie karty
+
+| | **Zużycie z dokumentacji** | **Stan początkowy** |
+|---|---|---|
+| co opisuje | typ silnika | jedną chwilę tej maszyny |
+| jak długo prawdziwe | póki silnik ten sam | do pierwszej zdanej sesji |
+| pola | spalanie paliwa (L/h) · zużycie oleju (L/h) | motogodziny · paliwo · olej |
+| zero | LITERÓWKA - odmowa | WARTOŚĆ (nowy silnik, puste zbiorniki) |
+
+Zlanie ich w jedną sekcję byłoby pomyłką kategorii, a przy okazji zmusiłoby do jednej
+reguły walidacji dla obu - czyli do odebrania klubowi możliwości wpisania maszyny prosto
+z remontu (0 na liczniku).
+
+**Norma oleju PRZENIOSŁA SIĘ** z karty „Olej" do karty „Zużycie z dokumentacji", obok
+normy paliwa. W karcie oleju zostały zbiornik i minimum: one opisują maszynę na zawsze,
+a obie normy są tym samym zdaniem powiedzianym o dwóch płynach - liczbą z instrukcji,
+ważną DOPÓKI analityka nie policzy własnej z lotów.
+
+### 10.2 Stan początkowy jest zerowym ogniwem łańcucha, nie konfiguracją
+
+Nie jedzie na telefon jako osobne pole. Serwer składa z niego **przekazanie**
+(`aircraftStateView.pickHandover`) i wysyła gotowe - dokładnie tak, jak składa je
+z ostatniej zdanej sesji. Wchodzi WYŁĄCZNIE wtedy, gdy rejestr nie ma czym odpowiedzieć,
+i tylko z kompletem pary (paliwo + licznik): połowa nie jest przekazaniem.
+
+Rozpoznaje się je po `Handover.byPilotId === null` - **nikt tej maszyny nie przekazał**.
+Telefon mówi wtedy „stan początkowy wpisany w panelu", a nie „przekazał J. Kowalski";
+panel dostaje `reading.source: 'initial'` i tym samym wie, czy karta jeszcze cokolwiek
+znaczy. Gdy nie znaczy, karta mówi to sama - polem, które przestało działać, a nadal
+wygląda na czynne, nie da się nikim pokierować.
+
+**Czasu pomiaru NIE MA i nie udajemy, że jest**: `at` seeda to `aircraft.updated_at`,
+czyli chwila zapisu w panelu, i tak też jest podpisana („Wpis z …", nie „Stan z …").
+To ta sama zasada, przez którą kontrakt floty nie ma `disabledAt` (§ kontrakt `fleet.ts`).
+
+### 10.3 Cztery nowe odmowy, wszystkie w `domain/fleetGuards.ts`
+
+- `fuel_norm_not_positive` - zero L/h nie jest stanem świata;
+- `initial_negative` - licznik ani zbiornik nie schodzą pod zero (formularz tego nie
+  sprawdza, bo parsery przyjmują same cyfry; reguła żyje na serwerze, gdzie JSON potrafi
+  przynieść minus);
+- `initial_fuel_over_capacity` / `initial_oil_over_capacity` - inwariant §3.4 wpisany
+  ręką, więc bez ani jednego zdarzenia, które mogłoby go złapać później. Liczą się na
+  stanie EFEKTYWNYM: obniżenie pojemności pod zapisany stan początkowy też odbija.
+
+### 10.4 Licznik w formacie TEJ maszyny
+
+Pole „Motogodziny" pokazuje wartość wg `mhFormat` jednostki (`1236:30` albo `1236.5`),
+a przyjmuje OBA zapisy naraz (`parseMotoHours`) - administrator przepisuje liczbę
+z tarczy i nie ma się zastanawiać, jak jednostka jest skonfigurowana. W danych
+motogodziny są zawsze dziesiętne; to jest wyłącznie sposób zapisu.

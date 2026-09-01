@@ -67,7 +67,7 @@ describe('schemat PostgreSQL (kontrakt)', () => {
     ],
     [
       'aircraft',
-      ['id', 'reg', 'type', 'year', 'capacity_l', 'mh_format', 'dual_required', 'service_status', 'updated_at', 'oil_min_l', 'oil_capacity_l', 'oil_norm_l_per_h'],
+      ['id', 'reg', 'type', 'year', 'capacity_l', 'mh_format', 'dual_required', 'service_status', 'updated_at', 'oil_min_l', 'oil_capacity_l', 'oil_norm_l_per_h', 'fuel_norm_l_per_h', 'initial_mh', 'initial_fuel_l', 'initial_oil_l'],
     ],
     ['refresh_tokens', ['token_hash', 'pilot_id', 'expires_at', 'created_at']],
     [
