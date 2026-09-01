@@ -131,7 +131,13 @@ export function toSessionRow(r: SessionDbRow): SessionRow {
     aircraftId: r.aircraft_id,
     picId: r.pic_id,
     dualId: r.dual_id,
-    status: r.status === 'closed' ? 'closed' : 'active',
+    /* TRZY statusy, nie dwa (poprawka 2026-08-31). Kolumna jest wolnym tekstem
+       z `DEFAULT 'active'`, więc zawężamy ją do znanych wartości - ale `voided`
+       JEST znaną wartością od 2026-08-30 i musi tędy przejść. Zwijanie jej do
+       `active` znaczyło, że unieważnienie widać wyłącznie w surowej kolumnie:
+       eksporter budował kartę z wycofaną sesją, a panel nie miał jak zapalić
+       plakietki „unieważniona". */
+    status: r.status === 'closed' ? 'closed' : r.status === 'voided' ? 'voided' : 'active',
     claimTime: r.claim_time != null ? Number(r.claim_time) : null,
     closeTime: r.close_time != null ? Number(r.close_time) : null,
     operation: r.operation,

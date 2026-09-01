@@ -33,6 +33,23 @@ export function refusalOf(error: unknown): PilotRefusalDto | FleetRefusalDto | n
 }
 
 /**
+ * Odmowa REGUŁ REJESTRU (`422 rule_violation`) - zdaniem odpowiada DOMENA.
+ *
+ * Nie tłumaczymy tego na własne napisy, inaczej niż `409 refused`: tamte powody są
+ * kodami (`last_admin`), a te przychodzą gotowym zdaniem po polsku - tym samym, które
+ * czyta pilot na telefonie. Druga wersja rozjechałaby się przy pierwszej poprawce
+ * jednej z nich, a mówią o tym samym fakcie.
+ *
+ * `null` = to nie ten przypadek; wołający schodzi wtedy na `errorMessage`.
+ */
+export function ruleViolationMessage(error: unknown): string | null {
+  if (!isHttpError(error)) return null;
+  if (error.status !== 422 || error.body.error !== 'rule_violation') return null;
+  const messages = (error.body.violations ?? []).map((v) => v.message).filter((m) => m !== '');
+  return messages.length === 0 ? null : messages.join(' ');
+}
+
+/**
  * Zdanie dla wszystkiego, czego ekran nie umiał nazwać sam.
  *
  * `400 no_changes` ma tu swoje zdanie mimo że ekran pilnuje tego wcześniej (przycisk

@@ -18,6 +18,10 @@
  * konstrukcji, w której nikt nie wie, ile reguł omija panel. Pilnuje tego
  * `test/architecture.test.ts` - lista dozwolonych plików ma dokładnie jedną pozycję
  * i jest to ten plik.
+ *
+ * Dlatego mieszka tu także kandydat DRUGIEJ drogi zapisu panelu - unieważnienia całej
+ * sesji (`sessionVoidCandidate`, 2026-08-31). Oceniają go te same dwie funkcje niżej:
+ * biorą KANDYDATA, a nie typ zdarzenia, więc obie drogi przechodzą przez jedną furtkę.
  */
 
 import {
@@ -71,6 +75,49 @@ export function correctionCandidate(
     payload: { ...correction, source: 'admin' },
     schemaVersion: CURRENT_SCHEMA_VERSION,
     // Pole klienckie (księgowość outboxa telefonu) - na serwerze bez znaczenia.
+    syncedAt: null,
+  };
+}
+
+/**
+ * Kandydat UNIEWAŻNIENIA CAŁEJ SESJI (`session_void`, panel 2.0 - 2026-08-31).
+ *
+ * ══ DLACZEGO TUTAJ, A NIE W SWOJEJ KOMENDZIE ══
+ * Bo ocenia go `checkAppend(…, 'administrative')`, a ten literał ma w całym serwerze
+ * DOKŁADNIE jedno miejsce i to jest ten plik (`test/architecture.test.ts`). Reguła
+ * mówi, ile furtek omija panel - dopisanie drugiego pliku do jej listy byłoby
+ * rozluźnieniem reguły, a nie jej utrzymaniem. Wszystko poniżej (`correctionViolations`,
+ * `correctionWarnings`) działa na KANDYDACIE, nie na typie zdarzenia, więc obie drogi
+ * zapisu panelu oceniają się tym samym kodem.
+ *
+ * Nagłówek bierzemy z SESJI dokładnie jak przy korekcie: `picId` to PIC ustalony przy
+ * przejęciu (single-writer §4.4), a na pytanie „kto to zrobił" odpowiadają
+ * `events.source_device` i `admin_audit`.
+ *
+ * Payload NIE dostaje znacznika `source: 'admin'` (korekta go ma): `session_void` niesie
+ * sam powód, a telefon nie ma ekranu, na którym różnica „kto wycofał" cokolwiek by
+ * zmieniła - sesja wypada z listy i z sum niezależnie od autora.
+ */
+export function sessionVoidCandidate(
+  state: SessionState,
+  stream: readonly Event[],
+  reason: string | null,
+  uuid: string,
+  at: Date,
+): Event {
+  const now = at.getTime();
+  const first = stream[0]!;
+  return {
+    uuid,
+    sessionUuid: state.sessionUuid ?? first.sessionUuid,
+    aircraftId: state.aircraftId ?? first.aircraftId,
+    picId: state.sessionPicId ?? first.picId,
+    dualId: state.dualId,
+    type: 'session_void',
+    deviceTime: now,
+    gpsTime: now,
+    payload: { reason },
+    schemaVersion: CURRENT_SCHEMA_VERSION,
     syncedAt: null,
   };
 }

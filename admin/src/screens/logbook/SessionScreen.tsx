@@ -12,24 +12,32 @@
  */
 
 import { dateUtcShort, litres, motoHours, oilLitres, timeUtc } from '@uzaero/format';
+import { useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 
-import type { SessionTrackDto } from '../../api/dto';
+import type { SessionListItemDto, SessionTrackDto } from '../../api/dto';
+import { can } from '../../auth/can';
+import { useVoidSession } from '../../queries/useLogCommands';
 import { useSessionDetail, useSessionTrack } from '../../queries/useLog';
+import { useSession } from '../../queries/useSession';
 import {
   Banner,
+  Button,
   Card,
   EmptyState,
+  Field,
   LinkButton,
   Loadable,
   PageHead,
   Pill,
+  TextInput,
   TrackMap,
   VerticalProfile,
 } from '../../ui/components';
 import { PlaneIcon } from '../../ui/components/icons';
-import { errorMessage } from '../common/apiMessage';
+import { errorMessage, ruleViolationMessage } from '../common/apiMessage';
 import { operationLabel } from './sessionRows';
+import { voidFacts } from './sessionVoid';
 import { timelineRow } from './timelineRows';
 import { mapPlot, peakLabel, profilePlot } from './trackChart';
 import { hasTrack, noTrackReason, trackFacts } from './trackFacts';
@@ -48,6 +56,11 @@ export function SessionScreen() {
   // kilkaset wierzchołków po kompresji. Mapa dociąga się pod gotowym ekranem, zamiast
   // opóźniać jego pierwsze wyświetlenie.
   const track = useSessionTrack(uuid);
+
+  // Pisanie w cudzym rejestrze to `events.correct` - ta sama zdolność, co przy korekcie.
+  // Serwer egzekwuje ją niezależnie; tu decyduje wyłącznie o tym, czy przycisk ISTNIEJE.
+  const me = useSession();
+  const voidable = can(me.data?.capabilities, 'events.correct');
 
   const day = session?.claimedAt == null ? '' : dateUtcShort(session.claimedAt);
   const engine =
@@ -86,6 +99,16 @@ export function SessionScreen() {
       >
         {session == null ? null : (
           <>
+            {session.status === 'voided' ? (
+              // Plakietka w nagłówku mówi CO, ten baner mówi CO Z TEGO WYNIKA. Bez niego
+              // czerwony pill nad wypełnioną kartą czyta się jak ostrzeżenie o danych,
+              // a nie jak informacja, że tych liczb nikt już nie liczy.
+              <Banner tone="status">
+                Wpis wycofany - nie liczy się do nalotu pilota, do sum dziennika ani do
+                karty arkusza. Powód stoi na osi zdarzeń.
+              </Banner>
+            ) : null}
+
             <Card title="Log zdarzeń">
               <div className="table-wrap plain">
                 <table>
@@ -168,6 +191,12 @@ export function SessionScreen() {
               departureIcao={session.departureIcao}
               flights={detail.data?.state.flights ?? []}
             />
+
+            {/* Na samym DOLE i za wszystkim: do sesji wchodzi się, żeby ją przeczytać,
+                a wycofanie wpisu jest wyjściem awaryjnym. Bez zdolności `events.correct`
+                karty NIE MA (§3.3: brak uprawnień = brak przycisku), a przy wpisie już
+                wycofanym nie ma czego wycofywać - mówi to baner na górze. */}
+            {voidable && session.status !== 'voided' ? <VoidCard session={session} /> : null}
           </>
         )}
       </Loadable>
@@ -255,6 +284,109 @@ function TrackCard({ track, pending, manualEntry, departureIcao, flights }: Trac
           </p>
         </>
       )}
+    </Card>
+  );
+}
+
+/**
+ * UNIEWAŻNIENIE CAŁEGO WPISU (2026-08-31).
+ *
+ * ══ PYTANIE STOI PRZY PRZYCISKU, KTÓREGO DOTYCZY ══
+ * Nie `window.confirm` i nie okno nad stroną - ta sama konstrukcja, co przy trwałym
+ * usunięciu konta (`.confirm` w `AccountDrawer`). Różnica jest jedna i wymuszona
+ * treścią: potwierdzenie NAZYWA konkretny wpis, bo dwie sesje tej samej maszyny
+ * w jednej dobie różnią się wyłącznie godzinami.
+ *
+ * Powód jest WYMAGANY (serwer odrzuca puste) i nie dostaje zdania przy przycisku:
+ * puste pole widać w kontrolce tuż nad nim. Zdanie należy się blokadzie, której
+ * z ekranu nie widać - a tej widać.
+ */
+function VoidCard({ session }: { session: SessionListItemDto }) {
+  const [asking, setAsking] = useState(false);
+  const [reason, setReason] = useState('');
+  const withdraw = useVoidSession();
+
+  // Odmowa REGUŁ ma zdanie od domeny („Ta sesja jest już unieważniona"); wszystko
+  // inne - od panelu. Wyścig jest realny: ktoś mógł wycofać ten wpis w drugim oknie.
+  const failure =
+    withdraw.error == null
+      ? null
+      : (ruleViolationMessage(withdraw.error) ?? errorMessage(withdraw.error));
+
+  return (
+    <Card title="Unieważnienie wpisu">
+      <p className="hint">
+        Wycofany wpis wypada z nalotu pilota, z sum dziennika i z karty arkusza. Sam zapis
+        zostaje razem z powodem - widać, że lot był i że go wycofano.
+      </p>
+
+      {asking ? null : (
+        <Button variant="danger" size="sm" onClick={() => setAsking(true)}>
+          Unieważnij wpis
+        </Button>
+      )}
+
+      {asking ? (
+        <div className="confirm">
+          <p className="confirm-q">Unieważnić ten wpis?</p>
+
+          {voidFacts(session).map((fact) => (
+            <div className="kv" key={fact.label}>
+              <span className="kv-k">{fact.label}</span>
+              <span className="kv-v">{fact.value}</span>
+            </div>
+          ))}
+
+          <Field
+            htmlFor="void-reason"
+            label="Powód"
+            hint="Zobaczy go pilot na telefonie; zostaje w dzienniku."
+          >
+            <TextInput
+              id="void-reason"
+              value={reason}
+              placeholder="np. wpis otwarty przez pomyłkę na tej maszynie"
+              onChange={(e) => setReason(e.target.value)}
+            />
+          </Field>
+
+          {failure == null ? null : (
+            <Banner tone="danger" live>
+              {failure}
+            </Banner>
+          )}
+
+          <div className="confirm-actions">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setAsking(false);
+                // Odmowa sprzed chwili nie ma prawa czekać na następne otwarcie -
+                // opisywałaby próbę, o której nikt już nie pamięta.
+                withdraw.reset();
+              }}
+            >
+              Anuluj
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              disabled={withdraw.isPending || reason.trim() === ''}
+              onClick={() =>
+                withdraw.mutate(
+                  { uuid: session.sessionUuid, reason: reason.trim() },
+                  // Po udanym wycofaniu karta i tak znika (wpis ma status `voided`),
+                  // ale zamykamy pytanie jawnie: odświeżenie listy jest asynchroniczne.
+                  { onSuccess: () => setAsking(false) },
+                )
+              }
+            >
+              Unieważnij wpis
+            </Button>
+          </div>
+        </div>
+      ) : null}
     </Card>
   );
 }

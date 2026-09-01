@@ -420,6 +420,59 @@ Brak rysunku ma POWÓD i powody się nie zwijają do jednego: lot wpisany ręczn
 nagrania z definicji, a sesja bez nagrania to co innego. „Brak śladu" pokazane przy locie
 z kartki byłoby kłamstwem o tym locie.
 
+### 9.4b Unieważnienie wpisu (2026-08-31)
+
+Zamówienie właściciela produktu: *„z poziomu admina powinienem mieć możliwość
+w dowolnym momencie usunięcia sesji (cyklu silnika)"*. Zdarzenie `session_void` istniało
+od 2026-08-30 po stronie pilota (okno 24 h od zdania); tu dostaje drugą drogę.
+
+**Dziennik pozostaje modułem do CZYTANIA - to jedyny zapis, jaki w nim jest.** Stoi na
+samym dole poziomu 3, za śladem GPS: do sesji wchodzi się, żeby ją przeczytać, a wycofanie
+wpisu jest wyjściem awaryjnym. Konto bez `events.correct` nie widzi karty w ogóle (§3.3).
+
+Sześć decyzji:
+
+1. **`POST /sessions/:uuid/void`, nie `DELETE`** - nic nie znika. Powstaje nowy fakt
+   („ten wpis został wycofany") razem z powodem i śladem w dzienniku audytu
+   (`session.void`, z kompletem tożsamości wpisu - po wycofaniu żadna lista go
+   nie pokazuje). `DELETE` obiecywałby usunięcie, którego system nie robi;
+2. **osobna komenda, nie czwarta akcja korekty** - `corrections.ts` w całości mówi o CELU
+   wewnątrz sesji (`targetUuid`, podgląd „przed → po"). Unieważnienie nie ma celu i nie
+   ma czego pokazywać w podglądzie: skutkiem jest zniknięcie całego wpisu z rachunków;
+3. **„w dowolnym momencie" znaczy też „w trakcie lotu"** - sesja nie musi być zdana.
+   Kolizja z pilotem, który wciąż trzyma maszynę, jest OSTRZEŻENIEM
+   (`ADMIN_EDIT_SESSION_ACTIVE`), nie odmową - ta sama decyzja, co przy korekcie
+   (2026-08-07). Twarde reguły domeny obowiązują administratora tak samo jak pilota:
+   sesja musi istnieć i nie może być już wycofana;
+4. **powód jest WYMAGANY** - inaczej niż w telefonie, gdzie pilot wycofuje własny wpis
+   i wie, co zrobił. Tu wycofuje się cudzy lot. Powód jedzie do zdarzenia (więc wraca
+   na telefon pilota, §4.9), do dziennika audytu i na oś zdarzeń panelu;
+5. **potwierdzenie NAZYWA wpis** - dzień, bieg silnika, pilot, loty, czas blokowy.
+   Dwie sesje tej samej maszyny w jednej dobie różnią się wyłącznie godzinami, a wejście
+   w sesję bywa wklejonym linkiem. Fakty składa `voidFacts` z tego samego kształtu, który
+   stoi w gridzie poziomu 2;
+6. **karta arkusza powstaje od nowa, bez wycofanej sesji** - patrz niżej.
+
+#### Trzy miejsca, w których `voided` nie działało
+
+Wdrożenie odsłoniło, że status z 2026-08-30 nie docierał nigdzie poza kolumnę `sessions.status`:
+
+- `toSessionRow` (`infrastructure/pg/sessionDbRow.ts`) zwijał wszystko, co nie jest
+  `closed`, do `active`. Skutki: eksporter budował kartę Z wycofaną sesją, panel nie miał
+  jak zapalić plakietki „unieważniona", a `activeClaim` widział maszynę jako zajętą
+  BEZ KOŃCA - pilot, który wycofał własny wpis, blokował samolot reszcie klubu;
+- `exportsRepo` zwijał go tak samo, więc gałąź „sesja wycofana nie czeka na eksport"
+  w `exportState` była nieosiągalna (monitor pokazywał `waiting` w nieskończoność);
+- `dayExporter` odsiewał wycofane sesje wyłącznie BRAMKAMI („musi być `closed`"), więc
+  nie wyzwalały eksportu - ale przy karcie budowanej z innego powodu (druga zmiana tej
+  maszyny) wchodziły do dokumentu klubu jak każda inna.
+
+Wszystkie trzy naprawione. **Została jedna dziura, świadomie**: gdy wycofano JEDYNĄ sesję
+doby, karty nie ma z czego zbudować (`no_events`), więc zapisana wcześniej ZOSTAJE
+w arkuszu z nieaktualną treścią. Wyczyszczenie jej wymaga decyzji, czego klub ma się
+w tym miejscu dowiedzieć (pusta karta? adnotacja „wpis wycofany"?) - a zgadywanie treści
+dokumentu klubu nie jest robotą eksportera.
+
 ### 9.5 Czego w pierwszej wersji nie ma
 
 - **sum pod gridem** - poziom 1 podaje je dla tego samego zakresu;

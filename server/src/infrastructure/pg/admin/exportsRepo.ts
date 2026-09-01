@@ -179,6 +179,7 @@ const selectSql = (blockingTypes: string): string => `
 const STATE_SQL = `
   CASE
     WHEN claim_time IS NULL                                     THEN 'impossible'
+    WHEN status = 'voided'                                      THEN 'impossible'
     WHEN status <> 'closed'                                     THEN 'waiting'
     WHEN COALESCE(array_length(blocking_flag_ids, 1), 0) > 0     THEN 'blocked'
     WHEN revision IS NULL OR exported_at IS NULL                THEN 'missing'
@@ -205,9 +206,11 @@ const toJoin = (r: ExportJoinDbRow): AdminExportJoin => ({
   picId: r.pic_id,
   picCode: r.pic_code,
   picName: r.pic_name,
-  // Kolumna jest wolnym tekstem z `DEFAULT 'active'`; monitor rozróżnia wyłącznie
-  // „zamknięty czy nie", bo tylko to jest bramką eksportera.
-  status: r.status === 'closed' ? 'closed' : 'active',
+  // Kolumna jest wolnym tekstem z `DEFAULT 'active'`; zawężamy ją do wartości znanych.
+  // `voided` musi tędy przejść (poprawka 2026-08-31): bez tego gałąź „sesja wycofana
+  // nie czeka na eksport" w `exportState` była nieosiągalna, a monitor pokazywał
+  // wycofany wpis jako `waiting` bez końca.
+  status: r.status === 'closed' ? 'closed' : r.status === 'voided' ? 'voided' : 'active',
   // `claim_time` niesie chwilę przejęcia samolotu (decyzja 2026-08-07) - dobę karty liczymy
   // z niej, bo karta jest DOBĄ SAMOLOTU (§4.7), a nie służbą pilota.
   claimedAt: r.claim_time == null ? null : Number(r.claim_time),

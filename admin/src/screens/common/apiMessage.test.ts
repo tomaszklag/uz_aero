@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { HttpError } from '../../api/httpClient';
-import { conflictField, errorMessage, refusalOf } from './apiMessage';
+import { conflictField, errorMessage, refusalOf, ruleViolationMessage } from './apiMessage';
 
 const http = (status: number, body: Record<string, unknown>): HttpError =>
   new HttpError(status, body as never);
@@ -45,5 +45,34 @@ describe('zdanie dla człowieka', () => {
 
   it('„nic się nie zmieniło" nie brzmi jak awaria', () => {
     expect(errorMessage(http(400, { error: 'no_changes' }))).toBe('Nic się nie zmieniło.');
+  });
+});
+
+describe('odmowa reguł rejestru (422)', () => {
+  it('oddaje zdanie DOMENY, a nie własne tłumaczenie kodu', () => {
+    const refused = http(422, {
+      error: 'rule_violation',
+      violations: [{ code: 'SESSION_ALREADY_VOIDED', message: 'Ta sesja jest już unieważniona.' }],
+    });
+    expect(ruleViolationMessage(refused)).toBe('Ta sesja jest już unieważniona.');
+  });
+
+  it('kilka naruszeń jedzie razem - żadne nie ginie po drodze', () => {
+    const refused = http(422, {
+      error: 'rule_violation',
+      violations: [
+        { code: 'A', message: 'Pierwsze zdanie.' },
+        { code: 'B', message: 'Drugie zdanie.' },
+      ],
+    });
+    expect(ruleViolationMessage(refused)).toBe('Pierwsze zdanie. Drugie zdanie.');
+  });
+
+  it('inna odmowa i pusta lista → null, więc ekran schodzi na zdanie ogólne', () => {
+    // Serwer bez ani jednego naruszenia w ciele nie dałby czego pokazać, a pusty
+    // baner nad formularzem czyta się jak usterka.
+    expect(ruleViolationMessage(http(422, { error: 'rule_violation', violations: [] }))).toBeNull();
+    expect(ruleViolationMessage(http(409, { error: 'refused', reason: 'last_admin' }))).toBeNull();
+    expect(ruleViolationMessage(new TypeError('Failed to fetch'))).toBeNull();
   });
 });

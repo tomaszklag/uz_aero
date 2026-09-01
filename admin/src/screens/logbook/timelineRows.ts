@@ -106,6 +106,10 @@ export function eventDetail(event: Event): string | null {
       return [fuel == null ? null : litres(fuel), reason].filter((p) => p != null).join(' · ') || null;
     }
 
+    case 'session_void':
+      // Powód jest CAŁĄ treścią tego wiersza: sam fakt wycofania mówi już nazwa.
+      return text(payload, 'reason');
+
     case 'takeoff':
     case 'landing':
       // Metoda wykrycia jest pytaniem REJESTRU, więc stoi w osobnej kolumnie -

@@ -12,6 +12,7 @@ import { Pool } from 'pg';
 import { z } from 'zod';
 
 import { AdminCorrectionCommands } from './application/admin/commands/corrections.ts';
+import { AdminSessionVoidCommands } from './application/admin/commands/sessionVoid.ts';
 import { AdminExportCommands } from './application/admin/commands/exports.ts';
 import { AdminFlagCommands } from './application/admin/commands/flags.ts';
 import { AdminFleetCommands } from './application/admin/commands/fleet.ts';
@@ -261,6 +262,18 @@ const app = buildServer({
     // Flagi łańcucha (§4.5) - od issue #43 korekta `amend` potrafi ruszyć ich wejście,
     // więc komenda musi umieć je otworzyć tak samo jak ingest.
     flags,
+    clock,
+    randomUUID,
+  ),
+  // Unieważnienie CAŁEJ sesji (2026-08-31). Ten sam `exporter`, co korekta i ingest:
+  // karta doby ma po wycofaniu wpisu powstać od nowa, bez niego. Flag łańcucha NIE
+  // dostaje - wycofana sesja wypada z łańcucha MH sama, bo przestaje być `closed`.
+  adminSessionVoid: new AdminSessionVoidCommands(
+    auditedWrite,
+    events,
+    sessions,
+    aircraftConfig,
+    exporter,
     clock,
     randomUUID,
   ),

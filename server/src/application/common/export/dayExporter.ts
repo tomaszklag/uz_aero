@@ -35,6 +35,13 @@
  * Spóźnione dane do doby już wyeksportowanej = ponowna budowa karty i NOWA rewizja
  * (dziennik jest append-only - historia zostaje).
  *
+ * ══ ZNANA DZIURA: DOBA WYCOFANA W CAŁOŚCI (2026-08-31) ══
+ * Unieważnienie sesji przebudowuje kartę bez niej. Gdy jednak wycofano JEDYNĄ sesję
+ * doby, budować nie ma z czego (`no_events`), a karta zapisana wcześniej ZOSTAJE
+ * w arkuszu z nieaktualną treścią. Wyczyszczenie jej wymaga decyzji, czego klub ma
+ * się w tym miejscu dowiedzieć (pusta karta? adnotacja „wpis wycofany"?), a zgadywanie
+ * treści dokumentu klubu nie jest robotą eksportera.
+ *
  * Stan liczymy `projectSession` z pełnego strumienia każdej sesji - te same liczby co
  * ekran 10 telefonu; projekcja `sessions` daje wyłącznie SKŁAD doby (kto, kiedy przejął,
  * czy zdał), bo tabelę lotów i tak trzeba zbudować ze zdarzeń.
@@ -92,8 +99,9 @@ export function blocksExport(flag: { type: FlagType; status: FlagStatus }): bool
  * przesunęła: `ExportRefusalDto` (`admin/contracts/exports.ts`) i klient panelu
  * w `admin/` czytają dokładnie te napisy, a zmiana słownika byłaby osobną decyzją
  * dotykającą obu stron drutu. Co znaczą dzisiaj:
- *  • `no_events`     - doba tej maszyny nie ma ani jednej sesji (albo pytano o sesję,
- *                      której nie ma w projekcji),
+ *  • `no_events`     - doba tej maszyny nie ma ani jednej WAŻNEJ sesji: albo nie ma
+ *                      żadnej, albo pytano o sesję spoza projekcji, albo wszystkie
+ *                      zostały unieważnione (2026-08-31),
  *  • `no_preflight`  - sesja bez `session_claim`, czyli karty nie da się NAZWAĆ
  *                      (rejestr niekompletny - wg §4.4 nie powinno wystąpić),
  *  • `session_open`  - nikt tej doby jeszcze nie zdał samolotu,
@@ -169,7 +177,23 @@ export class DayExporter {
     aircraftId: string,
     requiredSession?: string,
   ): Promise<ExportOutcome> {
-    const rows = await this.sessions.listByAircraftDay(this.db, aircraftId, utcDayRange(day));
+    const all = await this.sessions.listByAircraftDay(this.db, aircraftId, utcDayRange(day));
+    if (all.length === 0) return { exported: false, reason: 'no_events' };
+
+    /*
+     * SESJA UNIEWAŻNIONA NIE ISTNIEJE DLA KARTY (2026-08-30, dociągnięte 2026-08-31).
+     *
+     * Odsiewamy ją PRZED wszystkim innym, bo `voided` znaczy „tego lotu nie liczymy" -
+     * a nie „liczymy go inaczej". Do 2026-08-31 filtru nie było i skutek był taki, że
+     * unieważnienie działało wszędzie poza jedynym miejscem, w którym lot widzi klub:
+     * bramki są napisane jako „musi być `closed`", więc wycofana sesja nie WYZWALAŁA
+     * eksportu, ale przy karcie budowanej z innego powodu (druga zmiana tej maszyny,
+     * ponowienie z panelu) wchodziła do dokumentu jak każda inna.
+     *
+     * Doba, w której wycofano wszystko, wygląda odtąd jak doba bez sesji (`no_events`) -
+     * i tym właśnie jest. Nazwy powodów zostają bez zmian: czyta je panel (`A05`).
+     */
+    const rows = all.filter((r) => r.status !== 'voided');
     if (rows.length === 0) return { exported: false, reason: 'no_events' };
     // Wyzwalaczem jest ZDANIE SAMOLOTU - wystarczy jedno w całej dobie (§4.7).
     if (!rows.some((r) => r.status === 'closed')) return { exported: false, reason: 'session_open' };

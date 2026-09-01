@@ -25,6 +25,7 @@ import type {
   SheetsPort,
 } from '../src/application/common/ports.ts';
 import { AdminCorrectionCommands } from '../src/application/admin/commands/corrections.ts';
+import { AdminSessionVoidCommands } from '../src/application/admin/commands/sessionVoid.ts';
 import { AdminExportCommands } from '../src/application/admin/commands/exports.ts';
 import { AdminFlagCommands } from '../src/application/admin/commands/flags.ts';
 import { AdminFleetCommands } from '../src/application/admin/commands/fleet.ts';
@@ -289,6 +290,17 @@ export async function testHarness(
       new PgAdminEventsRepo(),
       aircraftConfig,
       clock,
+    ),
+    // Unieważnienie CAŁEJ sesji (2026-08-31) - ten sam `exporter`, co korekta: test ma
+    // móc sprawdzić, że karta doby powstaje po wycofaniu wpisu OD NOWA, bez niego.
+    adminSessionVoid: new AdminSessionVoidCommands(
+      auditedWrite,
+      events,
+      sessions,
+      aircraftConfig,
+      exporter,
+      clock,
+      randomUUID,
     ),
     // Odczyt dziennika jedzie PRAWDZIWYM adapterem także wtedy, gdy `options.audit`
     // podmienia stronę zapisu na rzucającą: test „awaria audytu cofa skutek" ma

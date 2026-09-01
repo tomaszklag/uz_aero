@@ -10,6 +10,7 @@ import cookie from '@fastify/cookie';
 import Fastify, { type FastifyInstance } from 'fastify';
 
 import type { AdminCorrectionCommands } from '../application/admin/commands/corrections.ts';
+import type { AdminSessionVoidCommands } from '../application/admin/commands/sessionVoid.ts';
 import type { AdminExportCommands } from '../application/admin/commands/exports.ts';
 import type { AdminFlagCommands } from '../application/admin/commands/flags.ts';
 import type { AdminFleetCommands } from '../application/admin/commands/fleet.ts';
@@ -56,6 +57,7 @@ import { registerAdminMaintenanceRoutes } from './routes/admin/maintenance.ts';
 import { registerAdminMeRoutes } from './routes/admin/me.ts';
 import { registerAdminPilotRoutes } from './routes/admin/pilots.ts';
 import { registerAdminSessionRoutes } from './routes/admin/sessions.ts';
+import { registerAdminSessionVoidRoutes } from './routes/admin/sessionVoid.ts';
 import { registerAdminConsumptionRoutes } from './routes/admin/consumption.ts';
 import { registerAdminLogRoutes } from './routes/admin/log.ts';
 import { registerAdminStatsRoutes } from './routes/admin/stats.ts';
@@ -105,6 +107,11 @@ export interface ServerDeps {
   /** Komendy panelu administracyjnego (`/admin/api/*`) - patrz `routes/admin/`. */
   adminFlags: AdminFlagCommands;
   adminCorrections: AdminCorrectionCommands;
+  /**
+   * Unieważnienie CAŁEJ sesji (2026-08-31) - druga, obok korekty, droga zapisu panelu
+   * do rejestru. Osobna komenda, bo osobne zdarzenie i osobny ślad w audycie.
+   */
+  adminSessionVoid: AdminSessionVoidCommands;
   adminPilots: AdminPilotCommands;
   /**
    * Konfiguracja floty (`A07`, `A07a`) - jedyna droga zmiany WEJŚĆ REGUŁ §4.5:
@@ -228,6 +235,7 @@ export function buildServer(deps: ServerDeps, options: ServerOptions = {}): Fast
   registerAdminFlagRoutes(app, deps.adminFlags, deps.adminFlagQueries, gate);
   registerAdminCorrectionRoutes(app, deps.adminCorrections, deps.adminCorrectionQueries, gate);
   registerAdminSessionRoutes(app, deps.adminSessionQueries, gate);
+  registerAdminSessionVoidRoutes(app, deps.adminSessionVoid, gate);
   registerAdminTrackRoutes(app, deps.adminSessionTrack, gate);
   registerAdminAuditRoutes(app, deps.adminAuditQueries, gate);
   registerAdminPilotRoutes(app, deps.adminPilots, deps.adminPilotQueries, gate);

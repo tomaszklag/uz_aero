@@ -1319,7 +1319,7 @@ potwierdzeniem użytkownika, aby nie było przypadkowego usunięcia."
   pilot ma 24 h od zdania, a administrator nie jest blokowany nigdy. Reguły odrzucają
   unieważnienie sesji nieotwartej (`SESSION_VOID_NO_SESSION`) i drugie z rzędu
   (`SESSION_ALREADY_VOIDED`)
-- **wejście jest JEDNO i tylko w trybie EDYCJI** (`10D` → arkusz `10L`), na samym dole,
+- **w APLIKACJI PILOTA wejście jest JEDNO i tylko w trybie EDYCJI** (`10D` → arkusz `10L`), na samym dole,
   za wszystkim: intencją wchodzącego w edycję jest poprawka, a kasowanie jest wyjściem
   awaryjnym. Przycisk OBRAMOWANY, nie wypełniony - czerwień mówi „uwaga", nie „zrób to";
   pełnowymiarowy, inaczej niż kosz w linii tytułu arkusza (issue #43), bo kosz kasuje
@@ -1329,6 +1329,15 @@ potwierdzeniem użytkownika, aby nie było przypadkowego usunięcia."
   („zapis zostaje w rejestrze i widzi go administrator") - to NIE jest przypis o budowie
   rejestru, tylko odpowiedź na pytanie, które pilot zada sobie przed tapnięciem
   w czerwony przycisk. Powód OPCJONALNY, jak przy każdej korekcie
+- **ADMINISTRATOR MA DRUGĄ DROGĘ, BEZ OKNA** (zamówienie 2026-08-31: „z poziomu admina
+  powinienem mieć możliwość w dowolnym momencie usunięcia sesji"). `POST
+  /admin/api/sessions/:uuid/void` na zdolności `events.correct`, karta na dole ekranu
+  sesji w DZIENNIKU panelu. „W dowolnym momencie" obejmuje sesję W TOKU - kolizja
+  z pilotem jest ostrzeżeniem (`ADMIN_EDIT_SESSION_ACTIVE`), nie odmową, dokładnie jak
+  przy korekcie. Powód jest tam WYMAGANY (w telefonie opcjonalny): pilot wycofuje własny
+  wpis, administrator - cudzy lot. Decyzje i trzy naprawione miejsca, w których status
+  `voided` nie docierał poza kolumnę w bazie (karta arkusza z wycofaną sesją, martwa
+  plakietka w panelu, maszyna zajęta bez końca): `docs/panel-2.0.md` §9.4b
 
 ## Log zdarzeń jest JEDEN - kokpit rysuje oś sesji (issue #44, 2026-08-14)
 Aplikacja miała dwa style logu tej samej sesji: oś na ekranie sesji (10) i osobny

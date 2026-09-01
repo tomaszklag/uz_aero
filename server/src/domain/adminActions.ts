@@ -41,6 +41,20 @@ export const ADMIN_ACTIONS = [
   'aircraft.disable',
   /** TRWAŁE usunięcie wiersza jednostki (2026-08-30) - jak `pilot.delete`. */
   'aircraft.delete',
+  /**
+   * UNIEWAŻNIENIE CAŁEJ SESJI z panelu (`session_void`, 2026-08-31).
+   *
+   * Osobna pozycja obok `event.correct`, choć obie idą tą samą zdolnością
+   * (`events.correct`) i tym samym trybem administracyjnym: korekta zmienia JEDNO
+   * zdarzenie, a ta akcja odbiera ważność CAŁEMU wpisowi - sesja wypada z dnia pilota,
+   * z sum i z karty arkusza. Wspólny kod kazałby czytającemu dziennik otwierać
+   * `details`, żeby odróżnić poprawioną minutę od wycofanego lotu.
+   *
+   * `details` niosą KOMPLET tożsamości wpisu (maszyna, pilot, bieg silnika, powód),
+   * bo po unieważnieniu żadna lista panelu już go nie pokazuje - ta sama reguła, co
+   * przy `pilot.delete`, gdzie audyt jest jedynym śladem.
+   */
+  'session.void',
   /** Zmiana tolerancji flag; progi detekcji są tylko do odczytu (`A08`). */
   'thresholds.update',
   'maintenance.rebuild_projections',

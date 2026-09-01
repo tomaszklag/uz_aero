@@ -9,8 +9,14 @@
  * Warstwa `api/` nie zna Reacta ani cache'u - zwraca obietnice.
  */
 
-import type { LogReportDto, SessionDetailDto, SessionPageDto, SessionTrackDto } from './dto';
-import { apiGet } from './httpClient';
+import type {
+  LogReportDto,
+  SessionDetailDto,
+  SessionPageDto,
+  SessionTrackDto,
+  SessionVoidResultDto,
+} from './dto';
+import { apiGet, apiPost } from './httpClient';
 
 /** Zakres dat jak w całym panelu: dzień UTC `YYYY-MM-DD`, obustronnie domknięty. */
 export interface LogRangeQuery {
@@ -62,4 +68,17 @@ export function loadSession(uuid: string): Promise<SessionDetailDto> {
  */
 export function loadSessionTrack(uuid: string): Promise<SessionTrackDto> {
   return apiGet<SessionTrackDto>(`/sessions/${encodeURIComponent(uuid)}/track`);
+}
+
+/**
+ * Unieważnienie CAŁEJ sesji - jedyny ZAPIS w tym module (2026-08-31).
+ *
+ * `POST` na `/void`, a nie `DELETE /sessions/:uuid`: nic nie znika. Powstaje nowy
+ * fakt - „ten wpis został wycofany" - a wraz z nim powód i ślad w dzienniku. `DELETE`
+ * obiecywałby usunięcie, którego system nie robi i robić nie będzie.
+ *
+ * Powód jest WYMAGANY (serwer odrzuca puste): wycofuje się tu cudzy lot.
+ */
+export function voidSession(uuid: string, reason: string): Promise<SessionVoidResultDto> {
+  return apiPost<SessionVoidResultDto>(`/sessions/${encodeURIComponent(uuid)}/void`, { reason });
 }

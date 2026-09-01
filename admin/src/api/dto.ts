@@ -117,6 +117,14 @@ export interface ApiErrorDto {
   field?: 'code' | 'email' | 'reg';
   /** 409 `refused`: DLACZEGO odmówiono. Odmowa bez powodu każe zgadywać, czy to awaria. */
   reason?: PilotRefusalDto | FleetRefusalDto;
+  /**
+   * 422 `rule_violation`: naruszenia REGUŁ REJESTRU, po polsku i wprost od domeny.
+   *
+   * Nie tłumaczymy ich w panelu na własne zdania (inaczej niż odmowy `409 refused`):
+   * te komunikaty są autorstwa domeny, czyta je też pilot na telefonie, a druga wersja
+   * tego samego zdania rozjeżdża się przy pierwszej poprawce jednej z nich.
+   */
+  violations?: { code: string; message: string }[];
 }
 
 // -- konta pilotów --------------------------------------------------------------
@@ -383,6 +391,26 @@ export interface SessionDetailDto {
   session: SessionListItemDto;
   state: SessionState;
   timeline: TimelineEntryDto[];
+}
+
+/**
+ * Wynik unieważnienia całej sesji (`POST /sessions/:uuid/void`).
+ *
+ * `state` liczy SERWER - ta sama zasada, co przy karcie sesji: panel formatuje
+ * i nic nie liczy sam.
+ */
+export interface SessionVoidResultDto {
+  sessionUuid: string;
+  voidUuid: string;
+  recordedAt: string;
+  state: SessionState;
+  /**
+   * O czym uprzedzić PO zapisie: pilot nadal prowadzi tę sesję albo ma otwarte własne
+   * okno poprawek. Nie są powodem odmowy - wpis jest już wycofany.
+   */
+  warnings: { code: string; message: string }[];
+  /** Przebudowa karty arkusza; `null` = arkusz nie odpowiedział. */
+  reexport: { exported: boolean } | null;
 }
 
 /**
