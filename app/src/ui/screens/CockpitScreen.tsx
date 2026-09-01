@@ -791,7 +791,7 @@ export function CockpitScreen({
           .join(' · ')}
         right={<SyncChip />}
         // `.settings-btn` z mockupu 04 → ekran 13 (ustawienia: motyw, PIN, konto,
-        // diagnostyka GPS). Do czasu 13 prowadził do StyleGuide.
+        // diagnostyka GPS).
         onSettings={() => navigation.navigate('Settings')}
       />
 

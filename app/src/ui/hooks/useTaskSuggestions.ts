@@ -59,7 +59,7 @@ export function useTaskSuggestions(): TaskSuggestionsResult {
   }, []);
 
   const reload = useCallback(() => {
-    // Bez podłączonego synca (testy, StyleGuide) nie ma kogo pytać - i nie ma listy.
+    // Bez podłączonego synca (testy) nie ma kogo pytać - i nie ma listy.
     if (sync == null) {
       setSuggestions(null);
       return;

@@ -13,7 +13,7 @@
  *
  * Kolor to `surfaceHover`, czyli środek zakresu, po którym w panelu webowym przesuwa się
  * gradient - jedyny odcień widoczny zarówno na `surface` (wnętrze karty), jak i na `bg`
- * (goła treść ekranu), we wszystkich pięciu motywach.
+ * (goła treść ekranu), w obu motywach.
  *
  * Dla czytnika ekranu plamka NIE ISTNIEJE: komunikat „Ładowanie" należy do bloku,
  * a nie do czternastu prostokątów (wzorzec, reguła 6). Blok nadaje go sam -

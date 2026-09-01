@@ -10,7 +10,7 @@
  * „brak GPS" przy działającym odbiorniku.
  *
  * Wartością domyślną kontekstu są same `null`-e i to jest ZAMIERZONE: brak portu jest
- * stanem normalnym (testy, StyleGuide, telefon bez barometru), nie awarią - więc czytnik
+ * stanem normalnym (testy, telefon bez barometru), nie awarią - więc czytnik
  * nie rzuca, w odróżnieniu od `useTheme`.
  */
 
@@ -42,7 +42,7 @@ export function useSensors(): SensorPort | null {
   return useContext(ServicesContext).sensors;
 }
 
-/** Rejestrator śladu kalibracyjnego albo null (testy/StyleGuide bez magazynu). */
+/** Rejestrator śladu kalibracyjnego albo null (testy bez magazynu). */
 export function useTrace(): TraceRecorder | null {
   return useContext(ServicesContext).trace;
 }

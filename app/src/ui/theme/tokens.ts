@@ -8,7 +8,8 @@
  *
  * Ten plik to shim zgodności: całe `app/src` importuje tokeny ścieżką `ui/theme/tokens`
  * i tak ma zostać - warstwa UI nie musi wiedzieć, że tokeny są osobnym pakietem.
- * ŹRÓDŁEM PRAWDY dla wartości pozostaje `design/05-themes.html`.
+ * ŹRÓDŁEM PRAWDY dla wartości jest sam pakiet (od issue #72; wcześniej mockup
+ * `design/05-themes.html`, skasowany razem z ekranem podglądu motywów).
  */
 
 export * from '@uzaero/tokens';

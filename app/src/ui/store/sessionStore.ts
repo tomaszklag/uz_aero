@@ -142,7 +142,7 @@ export interface SessionStore {
   attachTrack(queries: FlightTrackQueries): void;
   /**
    * Podłącza warstwę synca (composition root) - bez niej `syncNow` i `refreshReference`
-   * są cichym no-op (testy i StyleGuide żyją bez serwera).
+   * są cichym no-op (testy żyją bez serwera).
    */
   attachSync(
     sync: SyncEngine,
@@ -553,7 +553,7 @@ export const useSessionStore = create<SessionStore>((set, get) => {
 
     async syncNow(trigger) {
       const { sync, applySyncOutcome, refreshOutbox } = get();
-      if (sync == null) return; // testy i StyleGuide żyją bez serwera - to nie błąd
+      if (sync == null) return; // testy żyją bez serwera - to nie błąd
       const outcome = await sync.syncOnce(trigger);
       applySyncOutcome(outcome);
       if (outcome.kind === 'synced') await refreshOutbox();
@@ -574,7 +574,7 @@ export const useSessionStore = create<SessionStore>((set, get) => {
     async restoreEvents() {
       const { eventRestore } = get();
       if (eventRestore == null) {
-        // Bez warstwy synca (testy, StyleGuide) lokalny rejestr jest całą prawdą -
+        // Bez warstwy synca (testy) lokalny rejestr jest całą prawdą -
         // nie ma na co czekać i nie ma co odtwarzać.
         set({ streamHydrated: true });
         return;
@@ -604,7 +604,7 @@ export const useSessionStore = create<SessionStore>((set, get) => {
 
     async syncThemePrefs() {
       const { themePrefs } = get();
-      if (themePrefs == null) return; // testy i StyleGuide żyją bez serwera - to nie błąd
+      if (themePrefs == null) return; // testy żyją bez serwera - to nie błąd
       // Tożsamość bierzemy ze store'u auth w chwili przebiegu - pętla okazji nie musi
       // jej znać, a moduł synca i tak weryfikuje profil przed rozmową z serwerem.
       const pilot = useAuthStore.getState().pilot;

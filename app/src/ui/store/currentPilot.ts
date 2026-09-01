@@ -11,7 +11,7 @@ import { create } from 'zustand';
 
 import type { ReferencePilot } from '../../domain';
 
-/** Placeholder sprzed provisioning - testom i StyleGuide wystarcza stała wartość. */
+/** Placeholder sprzed provisioning - testom wystarcza stała wartość. */
 export const PILOT_ID = 'TMK';
 
 interface CurrentPilotStore {

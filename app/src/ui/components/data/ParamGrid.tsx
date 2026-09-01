@@ -93,7 +93,7 @@ function Cell({ cell }: { cell: ParamCell }) {
         {
           // `.amber-bg`/`.green-bg` z mockupu 05 to akcent w 4% alfy - szept
           // przyrządu. `c.muted` (12%) robił z komórek kolorowe plakietki.
-          // Akcenty wszystkich pięciu motywów są 6-cyfrowym hexem, więc
+          // Akcenty obu motywów są 6-cyfrowym hexem, więc
           // dosztukowanie kanału alfa „0A" (10/255 ≈ 0.04) jest bezpieczne.
           backgroundColor: cell.tint === true ? `${c.accent}0A` : theme.colors.surface,
         },

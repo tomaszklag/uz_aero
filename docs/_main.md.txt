@@ -89,8 +89,8 @@ i zdaniu samolotu (zdanie zatwierdza log całej sesji).
 - **Środowisko użycia:**
   - w kokpicie podczas lotu → priorytet: szybkość, czytelność, duże elementy
   - na ziemi między lotami → priorytet: dokładność, szczegółowe formularze
-  - silne nasłonecznienie → oprócz motywów ciemnych (Night, Amber/NVG) motywy jasne
-    pod pełne słońce (Paper, Solar, Sky) - patrz `design/05-themes.html`
+  - silne nasłonecznienie → obok motywu ciemnego (Night, domyślny) motyw jasny
+    pod pełne słońce (Solar) - przełącznik w ustawieniach (13), issue #72
 - **Łączność:** offline-first - pełna funkcjonalność bez sieci; synchronizacja automatyczna
   w tle, gdy sieć jest dostępna. Brak zasięgu nigdy nie blokuje pracy pilota.
 
@@ -954,13 +954,16 @@ na canvasie panel „Warianty tego ekranu" z opisem, KIEDY się wyświetla):
   ma i nie będzie (wpis ręczny albo nagranie, które nie dotarło), `14c` = ślad jest na
   serwerze, brakuje zasięgu, `14d` = stan w trakcie gestu (kursor sprzężony, zoom)
 
-**Motywy:** para ciemna - Night (domyślny), Amber/NVG; para jasna pod pełne słońce -
-Paper (ciepła biel), Solar (czysta biel), Sky (chłodny błękitno-szary).
-Wzorce i tokeny: `design/05-themes.html`. W trybach jasnych podbić font-weight cyfr
-i pogrubić bordery (1→1.5 px); jasność ekranu na max przy motywie słonecznym.
+**Motywy (issue #72):** DWA - ciemny **Night** (domyślny) i jasny **Solar** (czysta biel,
+maksymalny kontrast, pod pełne słońce). Pilot przełącza je switchem „Ciemny / Jasny"
+w ustawieniach (13); nazw palet nie widzi. Paper, Sky i Amber/NVG usunięte razem
+z ekranem podglądu motywów (`design/05-themes.html`) - pięć wariantów było wyborem,
+którego pilot nie ma po co dokonywać. Tokeny: `packages/tokens` (źródło prawdy palet
+od issue #72). W trybie jasnym podbić font-weight cyfr i pogrubić bordery (1→1.5 px);
+jasność ekranu na max.
 
 **Design language:**
-- ciemne tło (#0d0d0d / #141414) w motywach nocnych
+- ciemne tło (#0d0d0d / #141414) w motywie ciemnym
 - zielony akcent na statusy aktywne (#2ecc71)
 - amber na paliwo / ostrzeżenia (#f39c12)
 - czerwony na stop / błędy (#e74c3c)
@@ -1187,6 +1190,8 @@ Jesteś senior RN UI developerem. Przenieś design system UZ Aero z mockupów do
 Sky; tokeny kolorów, typografia (Bebas Neue / Archivo / JetBrains Mono), spacing, radiusy.
 Zaimplementuj w src/constants/theme.ts z przełączaniem motywów; w motywach jasnych
 podbite font-weight cyfr i bordery 1.5 px.
+[HISTORIA: prompt z Fazy 1. Od issue #72 motywy są DWA (Night, Solar), a plik
+05-themes.html nie istnieje - palety mieszkają w `packages/tokens`.]
 
 KOMPONENTY: TimerDisplay, ParamCard, CounterPill, ActionButton, ConfirmModal (przytrzymaj
 2 s), StatusBar, GroundActionCard, FuelIndicator (skala = capacity_l z konfiguracji),
@@ -1195,6 +1200,7 @@ PhaseHero (faza lotu + obrócona ikona), EventLog (separatory "Lot N"), Autodete
 (lista kart zamiast selecta - wzorzec z CLAUDE.md).
 
 Wymagania: TypeScript z pełnymi typami, StyleSheet.create, obsługa wszystkich 5 motywów.
+[HISTORIA - patrz wyżej: od issue #72 motywy są dwa.]
 ```
 
 ### AGENT 3 - Ekran cockpit view

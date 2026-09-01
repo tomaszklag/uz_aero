@@ -36,8 +36,8 @@ thead th {
   color: var(--text-muted);
   font-weight: 500;
   padding: 11px 14px;
-  /* Odcień nagłówka tabeli NIE JEST tokenem - nie ma go ani w `05-themes.html`, ani
-     w `:root` szablonu; stoi tam literałem, tak samo jak `#0a0a0c` sidebara. Kopiujemy
+  /* Odcień nagłówka tabeli NIE JEST tokenem - nie ma go ani w palecie `@uzaero/tokens`,
+     ani w `:root` szablonu; stoi tam literałem, tak samo jak `#0a0a0c` sidebara. Kopiujemy
      wartość zamiast wymyślać token, którego design nie zatwierdził. */
   background: #101010;
   border-bottom: 1px solid var(--border);

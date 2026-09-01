@@ -77,7 +77,8 @@ Motyw aplikacji jest preferencją PILOTA i wędruje między urządzeniami (decyz
 banery edu; klasa dostaje magazyn KV konstruktorem, więc format i łagodna migracja
 starego klucza per telefon są testowane w Node), `ThemeProvider` nakłada motyw razem
 z tożsamością (subskrypcja store'u auth: odblokowanie/przelogowanie = motyw TEGO
-pilota, bez pilota Night; nazwa spoza tokenów zjeżdża do Night), a `ThemePrefsSync`
+pilota, bez pilota Night; nazwę spoza tokenów tłumaczy `resolveThemeName` - motyw
+wycofany przy issue #72 schodzi do tej samej JASNOŚCI, nieznany do Night), a `ThemePrefsSync`
 (`application/sync/themePrefsSync.ts`, wzorzec `ReferenceSync`, wołany z pętli
 okazji za `refreshReference`) uzgadnia rekord z serwerem przez `/me/prefs`:
 push rekordu `dirty` przy każdej okazji (outbox preferencji - zmiana motywu NIGDY
@@ -160,9 +161,9 @@ fixa, siatka „- -", LAND·RĘCZNIE amber; napisy w `screens/logic/gpsLoss.ts`
 - **z tego opisu nieaktualne jest sygnalizowanie stanu GPS w pasku akcji**: 2026-08-12
 przycisk stracił i dopisek „· ręcznie", i ton amber, a baner - oba przyciski i czerwień
 (patrz tabela komponentów: `NoGpsBanner`, `CockpitActions`)); ekran 13
-Ustawienia (motyw kartami, `PinChangeSheet` offline, wylogowanie z ochroną outboxa
+Ustawienia (motyw przełącznikiem ciemny/jasny - do issue #72 pięć kart, `PinChangeSheet` offline, wylogowanie z ochroną outboxa
 przez `authStore.logout`, diagnostyka GPS z żywą subskrypcją i pozycją DDM, stempel
-cache referencyjnego) - zębatki kokpitu prowadzą tu zamiast do StyleGuide; 15 - wpis
+cache referencyjnego) - tu prowadzą zębatki kokpitu; 15 - wpis
 CAŁEGO lotu po fakcie (od 2026-08-16 stepper 4 kroków w `ManualFlightScreen`; szkic
 i bramki w `logic/manualFlight.ts`, ostrzeżenia w `logic/manualFlightWarnings.ts`,
 arkusze `FlightTimesSheet`/`FlightDateSheet`/`ManualDropSheet`/`RefuelEntrySheet`;
@@ -333,7 +334,8 @@ pierwszym ekranem panelu i to jest cała istota terminu: gdyby panel wystartowa�
 dorobiłby sobie własne kopie palety i formatów, a kopie w działającym UI cofa się dużo
 drożej niż w pliku, którego nikt jeszcze nie renderuje.
 
-- **`packages/tokens`** - pięć motywów, skale, typografia i `themeCssVars()` zamieniające
+- **`packages/tokens`** - dwa motywy (ciemny Night, jasny Solar - issue #72), skale,
+  typografia i `themeCssVars()` zamieniające
   motyw na zmienne CSS, żeby panel nie trzymał DRUGIEJ palety. Jedyny szew między
   platformami przebiega przy czcionkach: `fontFamilyNative` (osiem wariantów, bo RN wybiera
   grubość osobnym plikiem czcionki) obok `fontFamilyCss` (trzy rodziny, bo w przeglądarce
@@ -777,7 +779,7 @@ Wnętrze `ui/`:
 | `navigation/` | stos nawigacji + `RootStackParamList` |
 | `components/` | **Design System** - patrz katalog niżej |
 | `hooks/` | spoiny między portami a UI (np. `useFlightDetection`) |
-| `theme/` | tokeny 5 motywów + `ThemeProvider` / `useTheme` |
+| `theme/` | tokeny obu motywów + `ThemeProvider` / `useTheme` |
 | `store/` | Zustand - cienka warstwa nad komendami i zapytaniami |
 | `bootstrap/` | **composition root**: otwiera SQLite, buduje warstwy, podłącza do store'u |
 | `format.ts` | prezentacja liczb domeny (czas UTC, block time, MH wg formatu, litry) |
@@ -886,6 +888,7 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `Stepper` | wartość liczbowa przyciskami ±, cele 46 px | odczyty paliwa/MH, skoczkowie, czas |
 | `KeyValueRow` | wiersz klucz-wartość (kroje `micro`/`mono`, `valueTone`, `divider`) | `.diag-row` (13) |
 | `SettingsAction` | wiersz akcji ustawień: ikona, nazwa, podpis (przy blokadzie niesie powód), strzałka | `.action-item` (13) |
+| `ThemeSwitch` | przełącznik jasności: ciemny ↔ jasny, obie pozycje widoczne naraz (issue #72 - zastąpił `ThemePicker` z pięcioma paletami) | `.theme-switch` (13) |
 | `SummaryStrip` | pasek bilansu dnia poza obszarem przewijania | `.summary-strip` |
 | `ResultRow` | stopka sekcji: opis + wyliczona wartość nad linią | `.result-row` (09) |
 | `ResultBar` | samodzielny pasek wyniku z rachunkiem, na tonowanym tle | `.result-row` (06) |
@@ -1437,6 +1440,7 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 | `gpsLoss.test.ts` | napisów 05g (wiek fixa, baner, „- -" z czasem) i formatu pozycji DDM z ekranu 13 (półkule, zera wiodące) |
 | `themePrefsSync.test.ts` | uzgadniania motywu pilota przez `/me/prefs`: LWW po stemplu decyzji w obie strony, `dirty` jak outbox, brama wieku pulla, offline = `skipped` |
 | `themePrefsStore.test.ts` | rekordu motywu per pilot: izolacja pilotów na wspólnym telefonie, migracja starego klucza per telefon, odporność na zepsuty zapis |
+| `themeName.test.ts` | nazwy motywu z profilu (issue #72): dwa motywy w rejestrze, motyw wycofany schodzi do tej samej JASNOŚCI, nazwa nieznana i klucz z prototypu do domyślnego |
 | `locationToFix.test.ts` | translacji odczytu platformy: null-nie-zero (regres do `?? 0`), `−1` = brak, jednostki m→ft i m/s→kt, czas z fixa zamiast zegara urządzenia |
 | `backgroundFixRouting.test.ts` | routingu paczek z taska tła: żywy sink > zapis headless > kosz - fix bez sesji nie wchodzi do śladu |
 | `backgroundModePolicy.test.ts` | usługi pierwszoplanowej GPS: adopcja bez restartu po headless, `retry-later` przy próbie startu z tła, sprzątanie osieroconej usługi |

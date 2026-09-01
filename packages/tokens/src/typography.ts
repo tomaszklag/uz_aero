@@ -59,7 +59,8 @@ export interface TypographyToken {
 }
 
 /**
- * Skala typografii. Rozmiary/letter-spacing skopiowane z 05-themes.html:
+ * Skala typografii. Rozmiary/letter-spacing przeniesione z mockupów (do issue #72
+ * mieszkały w `design/05-themes.html`; nazwy w nawiasach to klasy tamtych ekranów):
  *  - display     → .film-strip / .phase-hero-name (Bebas Neue)
  *  - timer_large → duży timer, cyfry mono (CLAUDE.md: "cyfry timerów = JetBrains Mono")
  *  - param_value → .param-value (mono 28 / ls 2 / lh 1)

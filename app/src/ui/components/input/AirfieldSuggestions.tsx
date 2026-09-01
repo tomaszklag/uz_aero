@@ -46,7 +46,7 @@ export interface AirfieldSuggestionsProps {
    * Bez tego arkusz otwarty ponownie wyglądał tak samo jak przy pierwszym wyborze:
    * lista propozycji, na której nic nie mówiło, że coś jest już wybrane (zgłoszenie
    * z urządzenia). Znacznik jest KSZTAŁTEM, nie samym kolorem - działa w słońcu,
-   * w motywach jasnych i przy daltonizmie (ta sama zasada co w `CardPicker`).
+   * w motywie jasnym i przy daltonizmie (ta sama zasada co w `CardPicker`).
    */
   selectedIcao?: string | null;
   onPick: (icao: string) => void;
@@ -59,7 +59,7 @@ export interface AirfieldSuggestionsProps {
    *
    * Ptaszek ustępuje bez straty tylko tam, gdzie sekcja i tak nazywa się „Wybrane" -
    * w liście wyników znacznik zostaje, bo tam odróżnia jeden wiersz od kilku podobnych
-   * (kształt, nie sam kolor: słońce, motywy jasne, daltonizm).
+   * (kształt, nie sam kolor: słońce, motyw jasny, daltonizm).
    */
   onClear?: (icao: string) => void;
   style?: ViewStyle;

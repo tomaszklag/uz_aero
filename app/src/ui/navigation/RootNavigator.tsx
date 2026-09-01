@@ -41,7 +41,6 @@ import { MyDayScreen } from '../screens/MyDayScreen';
 import { ReleaseAircraftScreen } from '../screens/ReleaseAircraftScreen';
 import { StatsScreen } from '../screens/StatsScreen';
 import { TrackScreen, type TrackScreenParams } from '../screens/TrackScreen';
-import { StyleGuideScreen } from '../screens/StyleGuideScreen';
 
 export type RootStackParamList = {
   /** 01 - EKRAN DOMOWY: płaski log sesji doby, przekrojowo po maszynach (issue #23). */
@@ -84,7 +83,6 @@ export type RootStackParamList = {
   Sync: undefined;
   /** 13 - ustawienia: motyw, PIN, konto, diagnostyka GPS. */
   Settings: undefined;
-  StyleGuide: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -142,7 +140,6 @@ export function RootNavigator({
         <Stack.Screen name="Stats" component={StatsScreen} />
         <Stack.Screen name="Track" component={TrackScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />
-        <Stack.Screen name="StyleGuide" component={StyleGuideScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
