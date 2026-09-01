@@ -172,7 +172,7 @@ export function CardPicker<T extends string>({
 
               {/* Znacznik wyboru - kółko z ptaszkiem (.aircraft-check). Sam zielony krążek
                   byłby sygnałem wyłącznie kolorystycznym; kształt działa też w słońcu,
-                  w motywach jasnych i przy daltonizmie. Pozycja zablokowana go nie ma -
+                  w motywie jasnym i przy daltonizmie. Pozycja zablokowana go nie ma -
                   nie da się jej wybrać, więc puste kółko tylko myliłoby. */}
               {!disabled && !peek && (
                 <View

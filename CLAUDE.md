@@ -14,8 +14,8 @@ Stack: React Native + Expo · Zustand · expo-sqlite · expo-location · własny
 ## Faza aktualna
 **Monorepo: aplikacja RN w `app/`, backend w `server/`, wspólne pakiety w `packages/`** -
 `@uzaero/domain` (zdarzenia, reguły, projekcje, detekcja), `@uzaero/tokens` (palety
-pięciu motywów, skale, typografia, emiter zmiennych CSS) i `@uzaero/format` (czasy UTC,
-czas blokowy, motogodziny, litry). Wszystkie trzy to czysty TypeScript bez importów
+dwóch motywów: ciemnego i jasnego, skale, typografia, emiter zmiennych CSS)
+i `@uzaero/format` (czasy UTC, czas blokowy, motogodziny, litry). Wszystkie trzy to czysty TypeScript bez importów
 z RN/DOM. `app/src/ui/theme/tokens.ts` i `app/src/ui/format.ts` są shimami zgodności -
 kod ekranów importuje po staremu.
 Fazy z `docs/_main.md.txt` §10: 1–4 ✅ **wobec modelu sprzed 2026-08-06** (ekrany 00–12 komplet; sync end-to-end z eksportem §4.7 na kartach W BAZIE - `exported_sheets` + `GET /sheets/:tab`; adapter Google Sheets = opcjonalna przyszła podmiana portu `SheetsPort`, gdy będzie klucz) · **faza 8 = przebudowa flow, WYPRZEDZA fazę 5** (patrz niżej) · potem: 5 testy z pilotami, 6 wdrożenie + backlog audytu.
@@ -1338,6 +1338,53 @@ potwierdzeniem użytkownika, aby nie było przypadkowego usunięcia."
   wpis, administrator - cudzy lot. Decyzje i trzy naprawione miejsca, w których status
   `voided` nie docierał poza kolumnę w bazie (karta arkusza z wycofaną sesją, martwa
   plakietka w panelu, maszyna zajęta bez końca): `docs/panel-2.0.md` §9.4b
+
+## Motywy: DWA i przełącznik ciemny/jasny (issue #72, 2026-09-01)
+„Niepotrzebnie mamy tak duży wybór motywów. Zostawmy domyślny ciemny oraz jasny jako
+»Solar«. Można usunąć całe to wybieranie i zostaje tylko switch ciemny/jasny. Dodatkowo
+ekran z podglądem motywów jest do usunięcia i nie jest już potrzebny."
+- **zostają DWA motywy**: `night` (ciemny, domyślny) i `solar` (jasny, maksymalny
+  kontrast pod pełne słońce). **Paper, Sky i Amber/NVG USUNIĘTE** z `packages/tokens` -
+  pięć palet było wyborem, którego pilot nie ma po co dokonywać: pyta „widzę czy nie widzę
+  ekranu", a nie „która biel". Wartości usuniętych palet zostają w historii gita
+- **pilot wybiera JASNOŚĆ, nie nazwę palety**: sekcja „Motyw wyświetlacza" na 13 to
+  `ThemeSwitch` - dwie pozycje obok siebie („Ciemny" / „Jasny", księżyc i słońce), obie
+  widoczne naraz. Nie suwak: suwak pokazuje stan bieżący i każe zgadywać, co zrobi
+  przesunięcie - ta sama reguła, przez którą w całej aplikacji zamiast selecta stoją karty.
+  Opisy palet („ciepła biel · mniej odblasków za dnia") zniknęły razem z wyborem
+- **nazwy `night`/`solar` ZOSTAJĄ** w kodzie, w rekordzie per pilot i w kolumnie
+  `pilots.theme`. Zmiana na `dark`/`light` byłaby ładniejsza, ale przemalowałaby ekran
+  każdemu, kto już raz zsynchronizował motyw: serwer trzyma nazwę jako nieprzezroczysty
+  tekst i nie ma jak jej przetłumaczyć
+- **motyw wycofany wraca z profilu i schodzi do tej samej JASNOŚCI** (`resolveThemeName`
+  w `packages/tokens`, z testem): Paper i Sky → Solar, Amber → Night, nazwa nieznana →
+  Night. Bez tej tablicy pilot latający w słońcu na Paperze obudziłby się w ciemnym
+  kokpicie w środku dnia. Sprawdzenie idzie przez LISTĘ i mapę, nigdy przez
+  `name in THEMES`: rekord `{ theme: 'toString' }` odpowiadał na to pytanie twierdząco
+  i wywracał render
+- **USTAWIENIA NIE TŁUMACZĄ, JAK APLIKACJA JEST ZBUDOWANA** (uwaga z urządzenia,
+  2026-09-01: „po co tam piszesz, że zmiana działa offline? To powinno być
+  w dokumentacji, a nie na UI - to nie interesuje biznesowego usera"). Z ekranu 13
+  i z mockupu wyleciało PIĘĆ przypisów sekcji: motyw („zapisuje się w profilu pilota …
+  zmiana działa offline"), PIN („sprawdzany lokalnie … w 100% offline"), synchronizacja
+  („kolejka opróżnia się sama …"), GPS („czujnik lokalny …") i dane referencyjne
+  („odświeżają się same …"). Mechanizmy (rekord per pilot, `/me/prefs`, LWW, pętla
+  okazji, brama wieku) mieszkają w docblokach i w `docs/architektura-kodu.md` - pilot
+  przyszedł przyciemnić ekran albo zmienić PIN, a nie poznać warstwę synchronizacji.
+  **ZOSTAŁ JEDEN**, przy koncie: „Ponowne logowanie wymaga internetu - konta zakłada
+  administrator", bo niesie POWÓD, dla którego wylogowanie jest decyzją.
+  Reguła na przyszłość - ta sama kategoria, którą issue #43 wyrzuciło z arkuszy korekty,
+  a issue #55 spod klawiatury PIN: **na ekranie zostaje to, co niesie BLOKADĘ z powodem
+  albo instrukcję do wykonania** - nie opis budowy aplikacji
+- **EKRAN PODGLĄDU MOTYWÓW USUNIĘTY** w całości: `StyleGuideScreen` i trasa
+  `StyleGuide` (razem z wejściem „Podgląd motywów w kokpicie" z 13) oraz mockup
+  `design/05-themes.html`. Katalog tokenów i prymitywów odpowiadał na pytanie
+  „czy system motywów działa", zadane raz, w fazie 1
+- **ŹRÓDŁEM PRAWDY PALET JEST ODTĄD `packages/tokens`**, nie mockup - `05-themes.html`
+  był jednym plikiem naraz: ekranem podglądu i słownikiem wartości, a skasowaliśmy ekran.
+  Reguła „ekran wdrażamy 1:1 z `design/*.html`" zostaje w mocy dla wszystkich pozostałych
+  ekranów aplikacji; kolory mockupów dalej stoją w bloku `:root` ich `<head>`, a równość
+  z tokenami przybija `app/src/__tests__/tokensCssVars.test.ts`
 
 ## Log zdarzeń jest JEDEN - kokpit rysuje oś sesji (issue #44, 2026-08-14)
 Aplikacja miała dwa style logu tej samej sesji: oś na ekranie sesji (10) i osobny

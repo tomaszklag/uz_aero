@@ -144,5 +144,5 @@ export * from './data/ActionButton';
 export * from './data/DetectToast';
 
 // Ustawienia
-export * from './settings/ThemePicker';
+export * from './settings/ThemeSwitch';
 export * from './settings/SettingsAction';

@@ -45,7 +45,7 @@ import {
   ScreenHeader,
   SettingsAction,
   SyncChip,
-  ThemePicker,
+  ThemeSwitch,
 } from '../components';
 import { useSessionStore } from '../store';
 import { useAuthStore } from '../store/authStore';
@@ -194,12 +194,12 @@ export function SettingsScreen({
     >
       <View style={styles.content}>
         {/* ── motyw ─────────────────────────────────────────────────────────── */}
+        {/* Motyw jest preferencją PILOTA (decyzja 2026-07-29): rekord per pilot
+            w AsyncStorage, sync przez /me/prefs (LWW). Ekran o tym MILCZY (issue #72) -
+            przypis „zapisuje się w profilu pilota … zmiana działa offline" opowiadał
+            o budowie aplikacji komuś, kto chce tylko przyciemnić ekran. */}
         <Card title="Motyw wyświetlacza" header="inline">
-          <ThemePicker detailed />
-          <GhostAction label="Podgląd motywów w kokpicie" onPress={() => navigation.navigate('StyleGuide')} />
-          {/* Decyzja 2026-07-29: motyw jest preferencją PILOTA - rekord per pilot
-              w AsyncStorage, sync przez /me/prefs (LWW). Mockup 13 mówi to samo. */}
-          <SectionNote text="Motyw zapisuje się w profilu pilota i wędruje między urządzeniami - zmiana działa offline." />
+          <ThemeSwitch />
         </Card>
 
         {/* ── bezpieczeństwo ────────────────────────────────────────────────── */}
@@ -216,7 +216,6 @@ export function SettingsScreen({
           {pinChanged && (
             <Banner kind="status" tone="green" icon="check" title="PIN zmieniony" text="Nowy PIN obowiązuje od teraz - stary przestał działać." />
           )}
-          <SectionNote text="PIN sprawdzany lokalnie na telefonie - zmiana działa w 100% offline." />
         </Card>
 
         {/* ── konto (§3.0: ochrona wylogowania) ─────────────────────────────── */}
@@ -289,7 +288,6 @@ export function SettingsScreen({
             }
             onPress={() => void runManualSync()}
           />
-          <SectionNote text="Kolejka opróżnia się sama, gdy jest sieć - nie musisz jej pilnować. Przycisk dopycha kolejkę i pobiera świeże dane referencyjne (flota, przekazania). Uwagi serwera pochodzą z ostatniej wysyłki; rozwiązuje je administrator w panelu." />
         </Card>
 
         {/* ── diagnostyka GPS (czujnik - oś niezależna od sieci) ────────────── */}
@@ -318,7 +316,6 @@ export function SettingsScreen({
           />
           <TraceRow />
           <GhostAction label="Odśwież" onPress={() => void subscribe()} />
-          <SectionNote text="Czujnik lokalny - odczyt działa bez zasięgu. Brak fixa w locie zobaczysz w kokpicie jako czerwony baner." />
         </Card>
 
         {/* ── o aplikacji ───────────────────────────────────────────────────── */}
@@ -334,7 +331,6 @@ export function SettingsScreen({
             }
           />
           <RefDataStamp checkedAt={refCheckedAt} style={styles.refRow} />
-          <SectionNote text="Dane referencyjne odświeżają się same przy każdym kontakcie z siecią." />
         </Card>
       </View>
 
@@ -389,7 +385,17 @@ function TraceRow() {
   );
 }
 
-/** `.section-note` - przypis sekcji (mono, muted). */
+/**
+ * `.section-note` - przypis sekcji (mono, muted). ZOSTAŁ JEDEN, przy koncie (issue #72,
+ * uwaga z urządzenia): niesie POWÓD, dla którego wylogowanie jest decyzją - ponowne
+ * logowanie wymaga internetu, a konta zakłada administrator.
+ *
+ * Pięć pozostałych (motyw, PIN, synchronizacja, GPS, dane referencyjne) USUNIĘTYCH:
+ * opowiadały, JAK aplikacja jest zbudowana („zmiana działa offline", „kolejka opróżnia
+ * się sama"), komuś, kto przyszedł przyciemnić ekran albo zmienić PIN. Miejsce takich
+ * zdań jest w dokumentacji. Nowy przypis dokładamy WYŁĄCZNIE wtedy, gdy niesie blokadę
+ * z powodem albo instrukcję do wykonania.
+ */
 function SectionNote({ text }: { text: string }) {
   return (
     <AppText variant="mono" tone="muted" style={styles.note}>

@@ -57,7 +57,7 @@ export function useReadingsChain(
   }, []);
 
   const load = useCallback(() => {
-    // Bez synca (testy, StyleGuide) nie ma kogo pytać; bez maszyny albo godziny
+    // Bez synca (testy) nie ma kogo pytać; bez maszyny albo godziny
     // pytanie nie ma sensu - chwila jest CAŁYM pytaniem tej trasy.
     if (sync == null || aircraftId == null || at == null || !enabled) {
       setChain(null);

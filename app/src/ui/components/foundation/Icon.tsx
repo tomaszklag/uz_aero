@@ -129,6 +129,13 @@ const REGISTRY = {
   // (`aircraft-off` znaczy sesję bez lotu). Ślad nie ma z siecią nic wspólnego.
   'no-track': m('map-marker-off'),
 
+  // przełącznik motywu (13, issue #72)
+  // Księżyc i słońce, bo pilot wybiera JASNOŚĆ ekranu, a nie nazwę palety - ta sama
+  // para działa bez czytania etykiety, w rękawicach i pod słońcem. Próbek koloru tu
+  // nie ma: przy dwóch pozycjach czarny i biały kwadrat mówiłyby to, co napis obok.
+  'theme-dark': f('moon'),
+  'theme-light': f('sun'),
+
   // obiekty
   aircraft: m('airplane'),
   // Sesja, w której silnik ani razu nie ruszył (09C) - samolot PRZEKREŚLONY, nie zwykły:

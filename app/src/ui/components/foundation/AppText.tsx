@@ -1,8 +1,8 @@
 /**
  * UZ Aero - AppText
  *
- * Typografia oparta wyłącznie na tokenach motywu. Warianty pokrywają całą skalę
- * z 05-themes.html. Reguła §6 (docs/_main.md.txt): w motywach jasnych podbijamy
+ * Typografia oparta wyłącznie na tokenach motywu; warianty pokrywają całą skalę
+ * `@uzaero/tokens`. Reguła §6 (docs/_main.md.txt): w motywie jasnym podbijamy
  * wagę cyfr - realizujemy to zamianą rodziny JetBrains Mono na cięższą dla
  * wariantów "cyfrowych" (timer / param / mono).
  */
@@ -50,7 +50,7 @@ const VARIANT_TOKEN: Record<AppTextVariant, TypographyName> = {
   micro: 'micro',
 };
 
-/** Warianty renderujące cyfry mono - kandydaci do podbicia wagi w motywach jasnych.
+/** Warianty renderujące cyfry mono - kandydaci do podbicia wagi w motywie jasnym.
  *  `micro` (jak `paramLabel`) celowo poza zbiorem - etykieta nie jest odczytem. */
 const DIGIT_VARIANTS: ReadonlySet<AppTextVariant> = new Set<AppTextVariant>([
   'timer',
@@ -95,7 +95,7 @@ export function AppText({
   const computed = useMemo<TextStyle>(() => {
     const token: TypographyToken = theme.typography[VARIANT_TOKEN[variant]];
 
-    // §6: podbicie wagi cyfr w motywach jasnych = cięższa rodzina mono.
+    // §6: podbicie wagi cyfr w motywie jasnym = cięższa rodzina mono.
     let fontFamily = token.fontFamily;
     if (theme.isLight && DIGIT_VARIANTS.has(variant)) {
       fontFamily = variant === 'timer' ? theme.fontFamily.monoBold : theme.fontFamily.monoMedium;

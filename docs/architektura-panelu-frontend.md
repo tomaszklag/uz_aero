@@ -25,8 +25,8 @@
 |---|---|---|---|
 | 1 | Wspólna biblioteka DS - jeden pakiet czy dwa? | **Dwa pakiety, oba nie-wizualne: `@uzaero/tokens` i `@uzaero/format`. Zero pakietów z komponentami.** | §1 |
 | 2 | Komponenty wspólne RN ↔ web? | **Nie.** Komponenty per platforma; wspólne są wartości, funkcje i decyzje - nie widgety | §1.1–1.2 |
-| 3 | Pięć motywów w panelu? | **Nie.** Panel emituje jeden motyw (`night`); generator zostaje parametryczny | §1.6 |
-| 4 | Kierunek źródła prawdy `05-themes.html` ↔ `tokens.ts` | **Ręcznie, jak dziś - design prowadzi, kod idzie za nim; równość przybija TEST**, nie generator | §1.7 |
+| 3 | Wiele motywów w panelu? | **Nie.** Panel emituje jeden motyw (`night`); generator zostaje parametryczny | §1.6 |
+| 4 | Kierunek źródła prawdy `05-themes.html` ↔ `tokens.ts` | **Nieaktualne od issue #72**: mockup skasowany razem z ekranem podglądu motywów, palety mieszkają w `packages/tokens`, a równości z `SZABLON.html` pilnuje test | §1.7 |
 | 5 | Gdzie mieszka `format.ts` | `packages/format`, konsumowany przez `app/`, `admin/` **i `server/`** (dziś ma ręczną kopię) | §1.8, §6 |
 | 6 | Warstwy panelu | `screens/ → queries/ → api/`; `components/` nie zna żadnej z nich; czyste moduły ekranu obok ekranu | §2 |
 | 7 | TanStack Query bez globalnego store'u | **Potwierdzone**, z jednym warunkiem: filtry list żyją w URL-u, nie w stanie | §4 |
@@ -46,10 +46,10 @@ Aplikacja pilota to **React Native**, panel to **web**. To nie jest różnica st
 
 - RN nie ma CSS ani kaskady; ma `StyleSheet.create` i płaskie obiekty stylów.
 - Web nie ma `StyleSheet`, `View`, `Pressable`, `hitSlop` ani `accessibilityRole`.
-- **Telefon nie ma `:hover`.** To nie jest teoria - `packages`-owy kandydat `tokens.ts`
-  niesie dziś komentarz przy `paperColors.surfaceHover`: *„05-themes.html nie nadpisuje
-  `--surface-hover` w motywach jasnych, bo na webie to stan `:hover`, którego na telefonie
-  nie ma"*. Ten sam token znaczy co innego po obu stronach.
+- **Telefon nie ma `:hover`.** To nie jest teoria - tokeny niosą do dziś komentarz przy
+  `solarColors.surfaceHover`: token bierze się z weba, gdzie jest stanem `:hover`,
+  a na telefonie znaczy powierzchnię „przygaszoną". Ten sam token znaczy co innego
+  po obu stronach.
 - Wymagania są rozłączne. `ActionButton` w aplikacji ma **przytrzymanie 2 s**, cel dotykowy
   ≥ 44 px i widoczny powód blokady, bo pilot pracuje w rękawicach i w wibracjach
   (`docs/architektura-kodu.md` §2). `.btn` z `SZABLON.html` to `min-height:36px` i `:hover`.
@@ -106,10 +106,10 @@ packages/tokens/
   src/index.ts          barrel
   src/themeColors.ts    interface ThemeColors (+ docblocki `overlay`/`selection` przenoszone 1:1)
   src/colors/night.ts   \
-  src/colors/paper.ts    | pięć motywów, każdy w swoim pliku; spread z `night` zostaje,
-  src/colors/solar.ts    | bo odwzorowuje kaskadę CSS z 05-themes.html
-  src/colors/sky.ts      |
-  src/colors/amber.ts   /
+  src/colors/solar.ts    | motywy, każdy w swoim pliku; spread z `night` zostaje,
+                         / bo odwzorowuje kaskadę CSS mockupu (Paper, Sky i Amber
+                           usunięte przy issue #72 - dwie palety mieszczą się dziś
+                           w jednym `themes.ts`)
   src/scales.ts         spacing, radius (z komentarzem o normalizacji 13→14)
   src/typography.ts     fontFamilyNative, fontFamilyCss, TypographyToken, typography
   src/theme.ts          Theme, makeTheme, THEMES, THEME_ORDER, THEME_LABELS, DEFAULT_THEME
@@ -208,12 +208,15 @@ panel ma **jeden** motyw (§1.6), więc runtime dawałby wyłącznie migotanie p
 pierwszym paintem i zależność stylu od wykonania JS. Plik statyczny jest tańszy,
 widoczny w przeglądzie kodu i działa, zanim cokolwiek się wykona.
 
-### 1.6 Co się dzieje z pięcioma motywami
+### 1.6 Co się dzieje z motywami aplikacji
 
 **Panel dziedziczy wartości, nie dziedziczy wielomotywowości.** Decyzja jest już podjęta
 (ANALIZA §7: *„Pięć motywów aplikacji istnieje dla kokpitu w słońcu. Panel ma jeden motyw -
-ciemny, zgodny z tokenami"*) i ma dobre uzasadnienie: motywy jasne i NVG rozwiązują problem
-czytelności ekranu telefonu w słońcu i nocą w kabinie. Administrator siedzi przy biurku.
+ciemny, zgodny z tokenami"*) i ma dobre uzasadnienie: motyw jasny rozwiązuje problem
+czytelności ekranu telefonu w słońcu. Administrator siedzi przy biurku.
+
+(Od issue #72 motywy aplikacji są DWA - ciemny Night i jasny Solar - co niczego tu nie
+zmienia: panel dalej emituje sam `night`.)
 
 Konsekwencje w kodzie, jawnie:
 
@@ -226,6 +229,12 @@ Konsekwencje w kodzie, jawnie:
   z `1px` w `SZABLON.html`.
 
 ### 1.7 Łańcuch źródła prawdy: `05-themes.html` ↔ `tokens.ts` ↔ `SZABLON.html`
+
+> **OD ISSUE #72 PIERWSZE OGNIWO NIE ISTNIEJE.** `design/05-themes.html` był ekranem
+> podglądu motywów i został skasowany razem z nim, a palety mieszkają odtąd
+> w `packages/tokens` - to one są źródłem prawdy. Reszta rozdziału opisuje stan sprzed
+> tej zmiany; wniosek („równości pilnuje TEST, nie dyscyplina") zostaje w mocy dla
+> pary `tokens` ↔ `SZABLON.html`.
 
 Stan faktyczny: **trzy kopie tych samych wartości**, wszystkie robione ręcznie.
 `design/05-themes.html` (`:root` + cztery `[data-theme]`) → `tokens.ts` (docblock mówi

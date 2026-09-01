@@ -4,9 +4,9 @@
    Odtworzenie: npm run tokens:css --workspace admin
    Równość pliku ze źródłem przybija admin/test/tokens.generated.test.ts.
 
-   Panel ma JEDEN motyw (night) i nie ma przełącznika: pięć motywów aplikacji
-   istnieje dla kokpitu w słońcu i nocą w kabinie, a administrator siedzi przy
-   biurku (docs/architektura-panelu-frontend.md §1.6).
+   Panel ma JEDEN motyw (night) i nie ma przełącznika: motyw jasny aplikacji
+   istnieje dla kokpitu w słońcu, a administrator siedzi przy biurku
+   (docs/architektura-panelu-frontend.md §1.6).
 
    Wymiarów ramy panelu (--sidebar-w, --topbar-h) TU NIE MA i nie będzie -
    to układ jednej powierzchni, a nie token produktu. Mieszkają w layout.css.
