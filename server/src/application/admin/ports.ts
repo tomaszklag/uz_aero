@@ -837,6 +837,21 @@ export interface AdminAircraft {
   oilMinL: number | null;
   oilCapacityL: number | null;
   oilNormLPerH: number | null;
+  /**
+   * Średnie spalanie z instrukcji użytkowania (L na godzinę PRACY SILNIKA, issue #66).
+   * Siostra `oilNormLPerH`; `null` = nie wpisano.
+   */
+  fuelNormLPerH: number | null;
+  /**
+   * STAN POCZĄTKOWY - co pokazywały przyrządy, gdy jednostkę wprowadzono do UZ Aero
+   * (issue #66). To NIE jest konfiguracja, tylko zerowe ogniwo łańcucha odczytów:
+   * pierwszy pilot dostaje je jako podpowiedź, a od pierwszej zdanej sesji przestają
+   * cokolwiek znaczyć (`aircraftStateView.pickHandover`). Każde pole osobno `null`,
+   * bo klub potrafi znać licznik i nie znać oleju; ZERO jest tu legalną wartością.
+   */
+  initialMh: number | null;
+  initialFuelL: number | null;
+  initialOilL: number | null;
 }
 
 /**
@@ -903,6 +918,10 @@ export interface AircraftPatch {
   oilMinL?: number | null;
   oilCapacityL?: number | null;
   oilNormLPerH?: number | null;
+  fuelNormLPerH?: number | null;
+  initialMh?: number | null;
+  initialFuelL?: number | null;
+  initialOilL?: number | null;
 }
 
 /**

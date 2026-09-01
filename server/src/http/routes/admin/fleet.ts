@@ -79,6 +79,15 @@ const serviceStatus = z.enum(['active', 'disabled']);
  */
 const oilValue = z.coerce.number().finite().min(-1_000_000).max(1_000_000).nullable();
 
+/**
+ * Norma nominalna spalania i STAN POCZĄTKOWY (issue #66) - ten sam kształt, co przy
+ * oleju, i z tego samego powodu: „większa od zera" (normy) oraz „nieujemna i w granicach
+ * zbiornika" (stan początkowy) są REGUŁAMI (`fleetGuards`), nie kształtem żądania.
+ * Zero jest tu legalnym WEJŚCIEM, bo dla stanu początkowego jest legalną wartością -
+ * odsianie go w zodzie zabrałoby normie jej własną odmowę z nazwanym powodem.
+ */
+const initialValue = oilValue;
+
 const listQuery = z.object({
   status: serviceStatus.optional(),
   // `z.coerce.boolean()` jest tu pułapką: uznaje KAŻDY niepusty napis za `true`, więc
@@ -121,6 +130,10 @@ const createBody = z.object({
   oilMinL: oilValue.default(null),
   oilCapacityL: oilValue.default(null),
   oilNormLPerH: oilValue.default(null),
+  fuelNormLPerH: oilValue.default(null),
+  initialMh: initialValue.default(null),
+  initialFuelL: initialValue.default(null),
+  initialOilL: initialValue.default(null),
 });
 
 /**
@@ -139,6 +152,10 @@ const patchBody = z.object({
   oilMinL: oilValue.optional(),
   oilCapacityL: oilValue.optional(),
   oilNormLPerH: oilValue.optional(),
+  fuelNormLPerH: oilValue.optional(),
+  initialMh: initialValue.optional(),
+  initialFuelL: initialValue.optional(),
+  initialOilL: initialValue.optional(),
 });
 
 const idParams = z.object({ id: z.string().min(1).max(100) });
@@ -211,6 +228,10 @@ export function registerAdminFleetRoutes(
         oilMinL: body.data.oilMinL,
         oilCapacityL: body.data.oilCapacityL,
         oilNormLPerH: body.data.oilNormLPerH,
+        fuelNormLPerH: body.data.fuelNormLPerH,
+        initialMh: body.data.initialMh,
+        initialFuelL: body.data.initialFuelL,
+        initialOilL: body.data.initialOilL,
       });
       if (!outcome.ok) return refusal(reply, outcome);
 

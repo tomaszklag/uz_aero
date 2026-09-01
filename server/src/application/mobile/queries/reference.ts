@@ -58,7 +58,9 @@ export class ReferenceQueries {
         ...a,
         claimPicId: claim?.picId ?? null,
         claimSince: claim?.since ?? null,
-        handover: latestHandover(sessions),
+        // Stan początkowy z panelu (issue #66) wchodzi TYLKO wtedy, gdy maszyna nie ma
+        // ani jednej zdanej sesji - rozstrzyga to `pickHandover`, nie ten wiersz.
+        handover: latestHandover(sessions, snapshot.initial.get(a.id) ?? null),
         // Brak wpisu = model poniżej progu publikacji. Telefon nie pokaże wtedy
         // porównania z normą - i to jest właściwe zachowanie, nie brak danych.
         consumption: norms.get(a.id) ?? null,

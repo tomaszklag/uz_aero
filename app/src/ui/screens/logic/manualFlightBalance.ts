@@ -68,6 +68,8 @@ export function manualPhaseTimes(draft: ManualFlightDraft): SessionPhaseTimes | 
 export function manualFuelBalanceView(
   draft: ManualFlightDraft,
   norm: ConsumptionNorm | null,
+  /** Spalanie z dokumentacji jednostki (issue #66) - wchodzi przy braku modelu. */
+  nominalLPerH: number | null,
 ): BalanceView | null {
   const times = manualPhaseTimes(draft);
   if (times == null) return null;
@@ -85,6 +87,7 @@ export function manualFuelBalanceView(
     },
     norm,
     draft.fuel.addedL > 0 ? 1 : 0,
+    nominalLPerH,
   );
 }
 

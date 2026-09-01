@@ -64,7 +64,7 @@
  * nie kosztuje.
  */
 
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 /**
  * Migracja bazowa - CAŁY schemat serwera.
@@ -557,7 +557,39 @@ export const MIGRATION_3 = `
     ON sessions (engine_start_at DESC NULLS LAST, session_uuid DESC);
 `;
 
-export const MIGRATIONS: readonly string[] = [MIGRATION_1, MIGRATION_2, MIGRATION_3];
+/**
+ * Migracja 4: NORMA NOMINALNA PALIWA i STAN POCZĄTKOWY jednostki (issue #66).
+ *
+ * ══ DWIE RÓŻNE RZECZY, DLATEGO CZTERY KOLUMNY, A NIE JEDNA GRUPA ══
+ * `fuel_norm_l_per_h` jest KONFIGURACJĄ: liczbą z instrukcji użytkowania, prawdziwą tak
+ * długo, jak długo silnik jest ten sam. Siostra `oil_norm_l_per_h` - i tak samo obowiązuje
+ * wyłącznie DOPÓKI analityka nie policzy własnej stawki z lotów (`aircraft_consumption`).
+ *
+ * `initial_*` opisują JEDNĄ CHWILĘ: co pokazywały przyrządy, gdy jednostkę wprowadzono
+ * do UZ Aero. To zerowe ogniwo łańcucha - pierwszy pilot dostaje je jako podpowiedź na
+ * kroku liczników, a od pierwszej zdanej sesji przestają cokolwiek znaczyć, bo łańcuch
+ * prowadzą odczyty z lotów (`aircraftStateView.pickHandover`). Zlanie ich w jedną grupę
+ * z normami byłoby pomyłką kategorii: jedno jest właściwością maszyny, drugie datą.
+ *
+ * Zmiana ADDYTYWNA wobec bazy produkcyjnej (Railway) - nullable kolumny, zero backfillu.
+ * `NULL` przy `initial_*` znaczy „administrator nie wpisał", a nie „zero na liczniku":
+ * zero jest legalnym stanem początkowym (nowy silnik, pusty zbiornik), więc pilnuje tego
+ * osobna reguła (`domain/fleetGuards.refuseInitialState`), a nie brak wartości.
+ */
+export const MIGRATION_4 = `
+  ALTER TABLE aircraft ADD COLUMN IF NOT EXISTS fuel_norm_l_per_h DOUBLE PRECISION;
+
+  ALTER TABLE aircraft ADD COLUMN IF NOT EXISTS initial_mh     DOUBLE PRECISION;
+  ALTER TABLE aircraft ADD COLUMN IF NOT EXISTS initial_fuel_l DOUBLE PRECISION;
+  ALTER TABLE aircraft ADD COLUMN IF NOT EXISTS initial_oil_l  DOUBLE PRECISION;
+`;
+
+export const MIGRATIONS: readonly string[] = [
+  MIGRATION_1,
+  MIGRATION_2,
+  MIGRATION_3,
+  MIGRATION_4,
+];
 
 /**
  * Jednozdaniowy opis KAŻDEJ migracji - kolumna „Co wprowadza" z ekranu `A11`.
@@ -581,4 +613,5 @@ export const MIGRATION_TITLES: readonly string[] = [
   'Schemat bazowy: konta, flota, rejestr zdarzeń, projekcje, eksport, audyt, analityka',
   'Moduł oleju (issue #60): konfiguracja floty (minimum, zbiornik, norma nominalna) i projekcja pomiaru z dolewkami w sesji',
   'Log dnia (panel 2.0): bieg silnika, koperta lotów, lotniska i suma dolewek paliwa w projekcji sesji',
+  'Normy z dokumentacji i stan początkowy (issue #66): nominalne spalanie paliwa oraz startowe motogodziny, paliwo i olej jednostki',
 ];

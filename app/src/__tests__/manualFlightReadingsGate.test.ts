@@ -116,7 +116,7 @@ describe('werdykt normy', () => {
 
   it('odwrócony bieg silnika NIE produkuje oczekiwania z bzdury', () => {
     expect(manualPhaseTimes(draft({ engineStop: at(9, 0) }))).toBeNull();
-    expect(manualFuelBalanceView(draft({ engineStop: at(9, 0) }), norm)).toBeNull();
+    expect(manualFuelBalanceView(draft({ engineStop: at(9, 0) }), norm, null)).toBeNull();
   });
 
   /**
@@ -126,7 +126,7 @@ describe('werdykt normy', () => {
    * i pilot nie miał jak sprawdzić, z czego wyszedł.
    */
   it('rachunek ma wiersze działania i sumę, tak jak ekran rozliczenia', () => {
-    const view = manualFuelBalanceView(draft(), norm)!;
+    const view = manualFuelBalanceView(draft(), norm, null)!;
 
     expect(view.rows.map((r) => r.id)).toEqual(['start', 'added', 'end']);
     expect(view.totalLabel).toBe('Zużyte');
@@ -134,7 +134,7 @@ describe('werdykt normy', () => {
   });
 
   it('bez normy maszyny werdyktu nie ma, ale wynik i POWÓD braku są', () => {
-    const view = manualFuelBalanceView(draft(), null)!;
+    const view = manualFuelBalanceView(draft(), null, null)!;
 
     expect(view.totalValue).toBe('28 L');
     expect(view.verdict).toBeNull();
@@ -144,7 +144,7 @@ describe('werdykt normy', () => {
   });
 
   it('z normą podaje werdykt I szczegóły pod plakietką', () => {
-    const view = manualFuelBalanceView(draft(), norm)!;
+    const view = manualFuelBalanceView(draft(), norm, null)!;
 
     expect(view.verdict).not.toBeNull();
     expect(view.details).not.toBeNull();
@@ -159,6 +159,7 @@ describe('werdykt normy', () => {
     const view = manualFuelBalanceView(
       draft({ fuel: { foundL: 300, addedL: 0, afterL: 0 } }),
       norm,
+      null,
     )!;
 
     expect(view.verdict!.label).not.toContain('W NORMIE');
@@ -166,7 +167,7 @@ describe('werdykt normy', () => {
   });
 
   it('bez kompletu odczytów werdyktu nie ma - i mówi, czego brakuje', () => {
-    const view = manualFuelBalanceView(draft({ fuel: { foundL: 112, addedL: 0, afterL: null } }), norm)!;
+    const view = manualFuelBalanceView(draft({ fuel: { foundL: 112, addedL: 0, afterL: null } }), norm, null)!;
     expect(view.verdict).toBeNull();
     expect(view.naNote).toContain('odczytu');
 

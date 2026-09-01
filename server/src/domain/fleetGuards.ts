@@ -39,6 +39,14 @@ export type FleetRefusal =
   | 'open_session'
   | 'oil_not_positive'
   | 'oil_min_above_capacity'
+  /** Norma spalania z dokumentacji ≤ 0 - zero L/h nie jest stanem świata (issue #66). */
+  | 'fuel_norm_not_positive'
+  /** Stan początkowy ujemny - licznik ani zbiornik nie schodzą pod zero (issue #66). */
+  | 'initial_negative'
+  /** Startowe paliwo ponad pojemność zbiorników - ten sam inwariant, co §3.4. */
+  | 'initial_fuel_over_capacity'
+  /** Startowy olej ponad zbiornik oleju - siostra reguły wyżej. */
+  | 'initial_oil_over_capacity'
   /** Usunięcie jednostki, która nadal jest w służbie - patrz `refuseDeleteAircraft`. */
   | 'aircraft_in_service'
   /** Usunięcie jednostki, do której coś się odwołuje - zostałaby historia bez maszyny. */
@@ -96,6 +104,67 @@ export function refuseOil(input: {
   }
   if (input.oilMinL != null && input.oilCapacityL != null && input.oilMinL > input.oilCapacityL) {
     return 'oil_min_above_capacity';
+  }
+  return null;
+}
+
+/**
+ * NORMA NOMINALNA SPALANIA (issue #66) - liczba z instrukcji użytkowania, L na godzinę
+ * pracy silnika.
+ *
+ * Reguła jest ta sama, co przy oleju i z tego samego powodu: `null` jest stanem
+ * LEGALNYM („nie wpisano - ekran milczy o normie"), a zero nie jest stanem świata,
+ * tylko literówką, której skutek widać dopiero na werdykcie, który nigdy nie zapada.
+ */
+export function refuseFuelNorm(fuelNormLPerH: number | null): FleetRefusal | null {
+  if (fuelNormLPerH == null) return null;
+  if (!Number.isFinite(fuelNormLPerH) || fuelNormLPerH <= 0) return 'fuel_norm_not_positive';
+  return null;
+}
+
+/**
+ * STAN POCZĄTKOWY jednostki (issue #66) - co pokazywały przyrządy, gdy maszyna trafiła
+ * do UZ Aero. Ocena na wartościach EFEKTYWNYCH po zmianie, jak przy oleju.
+ *
+ * ══ DLACZEGO ZERO JEST TU LEGALNE, A PRZY NORMACH NIE ══
+ * Bo to są dwa różne rodzaje liczb. Norma zerowa jest niemożliwa - silnik pracujący
+ * bez paliwa nie istnieje - więc zero znaczy „ktoś się pomylił". Stan początkowy zerowy
+ * jest zwyczajnym faktem: nowy silnik ma 0 na liczniku, a maszyna przyjęta z pustymi
+ * zbiornikami ma 0 litrów. Odrzucamy więc wyłącznie wartości UJEMNE i nieskończone.
+ *
+ * ══ DWA SUFITY, BO DWA ZBIORNIKI ══
+ * Startowe paliwo ponad `capacityL` i startowy olej ponad `oilCapacityL` to ten sam
+ * inwariant, którego pilnuje domena przy tankowaniu (§3.4, `FUEL_OVER_CAPACITY`) -
+ * tyle że wpisany ręką w panelu, więc bez ani jednego zdarzenia, które mogłoby go
+ * złapać później. Sufit oleju śpi przy nieskonfigurowanym zbiorniku: bez pojemności
+ * nie ma do czego porównywać (ta sama zasada, co w `FUEL_OVER_CAPACITY`).
+ */
+export function refuseInitialState(input: {
+  initialMh: number | null;
+  initialFuelL: number | null;
+  initialOilL: number | null;
+  /** Pojemność zbiorników paliwa - sufit `initialFuelL`. */
+  capacityL: number | null;
+  /** Pojemność zbiornika oleju; `null` = nieskonfigurowana, sufit oleju śpi. */
+  oilCapacityL: number | null;
+}): FleetRefusal | null {
+  const sane = (v: number | null): boolean => v == null || (Number.isFinite(v) && v >= 0);
+  if (!sane(input.initialMh) || !sane(input.initialFuelL) || !sane(input.initialOilL)) {
+    return 'initial_negative';
+  }
+  if (
+    input.initialFuelL != null &&
+    input.capacityL != null &&
+    input.initialFuelL > input.capacityL
+  ) {
+    return 'initial_fuel_over_capacity';
+  }
+  if (
+    input.initialOilL != null &&
+    input.oilCapacityL != null &&
+    input.initialOilL > input.oilCapacityL
+  ) {
+    return 'initial_oil_over_capacity';
   }
   return null;
 }

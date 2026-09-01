@@ -1297,6 +1297,59 @@ i tak sprawdza ją `DROP_ON_GROUND` (`rules/consistency.ts`). Wiedział model, m
 - stopka sum zamyka oś, a wiersze dopisania idą POD nią - ta sama kolejność, co w trybie
   edycji rozliczenia (10D)
 
+## Norma z dokumentacji i stan początkowy jednostki (issue #66, 2026-09-01)
+Zgłoszenie: „dla pierwszych lotów gdzie nie ma jeszcze danych nie ma jak wyliczyć normy
+i odchyleń […] jak dodaję samolot to powinno być pole w którym wpiszę startowy stan
+motogodzin, paliwa w zbiorniku i oleju". Punkty 2 i 3 zgłoszenia (norma oleju, pojemność
+i minimum oleju) **były wdrożone przy issue #60** - doszły punkty 1 i 4.
+- **TO SĄ DWA RODZAJE LICZB i dlatego dwie karty w panelu.** `fuelNormLPerH` jest
+  KONFIGURACJĄ: liczbą z instrukcji użytkowania, prawdziwą póki silnik ten sam, siostrą
+  `oilNormLPerH`. `initialMh` / `initialFuelL` / `initialOilL` opisują JEDNĄ CHWILĘ -
+  co pokazywały przyrządy, gdy jednostka trafiła do UZ Aero. Zlanie ich w jedną grupę
+  wymusiłoby jedną regułę walidacji, a **zero znaczy w nich co innego**: norma zerowa
+  jest literówką (silnik bez paliwa nie istnieje), startowe zero - zwyczajnym faktem
+  (nowy silnik, puste zbiorniki). Norma oleju przeniosła się do karty „Zużycie
+  z dokumentacji", obok normy paliwa; w karcie „Olej" zostały zbiornik i minimum
+- **NORMA NOMINALNA TO TRZECI SZCZEBEL DRABINY** `consumption/expectation.ts`
+  (`ExpectationBasis: 'nominal'`), a nie druga arytmetyka: **wyliczona wygrywa
+  z wpisaną** - model opisuje TEN egzemplarz, dokumentacja typ (ta sama kolejność, co
+  przy oleju). Mianownikiem jest GODZINA PRACY SILNIKA, ten sam co `blockLPerH`, więc
+  wchodzi wprost w miejsce stawki blokowej i nie wymaga zgadywania podziału na fazy
+- **PASMO JEST ZADEKLAROWANE, NIE ZMIERZONE** (`NOMINAL_BAND_RATIO` = ±15%,
+  DO KALIBRACJI jak reszta `consumption/policy.ts`). Dokumentacja podaje punkt, a nie
+  rozrzut, więc udawanie centyli byłoby zmyśleniem - i dlatego ekran MUSI to nazwać:
+  arkusz 10C pisze „Pasmo pochodzi z dokumentacji jednostki, a nie z lotów tej maszyny"
+- **`fuelNorm.ts` ZOSTAJE NIETKNIĘTY** i to nie jest przeoczenie: szacunek
+  wystarczalności potrzebuje stawki W LOCIE (`airLPerH`), a nominalna jest stawką na
+  godzinę pracy silnika. Podstawienie jej zaniżyłoby rezerwę - „błąd w tę stronę jest
+  niedopuszczalny" (docblock `liftsRemaining`)
+- **DOKUMENTACJA JAKO WARTOŚĆ REFERENCYJNA**: gdy model JUŻ jest, arkusz 10C dokłada
+  dwa wiersze - „Z dokumentacji" i „Odchyłka od dokumentacji · ta sesja −21% · norma
+  maszyny −25%". To jest druga połowa zgłoszenia („można badać, jakie jest odchylenie
+  nowej średniej oraz średniej z operacji od wartości referencyjnej")
+- **STAN POCZĄTKOWY JEST ZEROWYM OGNIWEM ŁAŃCUCHA, nie polem na drucie.** Nie jedzie na
+  telefon: serwer składa z niego PRZEKAZANIE (`aircraftStateView.pickHandover`) i wysyła
+  gotowe, wyłącznie gdy rejestr nie ma czym odpowiedzieć - i tylko z KOMPLETEM pary
+  (paliwo + licznik; połowa nie jest przekazaniem). Druga kopia tych liczb na drucie
+  byłaby pierwszym miejscem, w którym ktoś policzy je inaczej niż `pickHandover`
+- **`Handover.byPilotId` JEST ODTĄD NULLOWALNY** i to jest cały sygnał: `null` = NIKT
+  tej maszyny nie przekazał. Telefon pisze wtedy „stan początkowy wpisany w panelu"
+  zamiast „przekazał J. Kowalski" (ekran 02A), a panel dostaje `reading.source:
+  'initial'`. Zdanie o poprzednim pilocie przy liczbie, której nie przekazał żaden pilot,
+  byłoby nieprawdą dokładnie tam, gdzie zaufanie do liczb jest całą treścią ekranu
+- **CZASU POMIARU NIE MA i nie udajemy, że jest**: `at` seeda to `aircraft.updated_at`,
+  czyli chwila ZAPISU W PANELU - podpisana „Wpis z …", nigdy „Stan z …". Ta sama zasada,
+  przez którą kontrakt floty nie ma `disabledAt`
+- **`pickHandover(sessions, seed)` MA SEED JAKO ARGUMENT WYMAGANY**, nie opcjonalny:
+  wołający bez konfiguracji floty (`GET /aircraft/:id/state` - trasa uśpiona) musi
+  napisać `null` i tym samym zadeklarować, że pierwszy lot maszyny zobaczy „brak danych".
+  Wartość domyślna zamieniłaby tę decyzję w przeoczenie
+- migracja serwera 4 (addytywna, baza produkcyjna) + SQLite 6 (`reference_fuel` -
+  osobna tabela z tych samych powodów, co `reference_oil`: `ADD COLUMN` w SQLite nie jest
+  idempotentne). Cztery nowe odmowy w `domain/fleetGuards.ts`; sufity paliwa i oleju
+  liczą się na stanie EFEKTYWNYM, więc obniżenie pojemności pod zapisany stan
+  początkowy też odbija. Decyzje i tabela porównawcza: `docs/panel-2.0.md` §10
+
 ## Usunięcie CAŁEGO wpisu = `session_void` (uwaga z urządzenia, 2026-08-30)
 „Daj możliwość usunięcia całego lotu. Ta operacja powinna być poprzedzona jeszcze
 potwierdzeniem użytkownika, aby nie było przypadkowego usunięcia."

@@ -126,10 +126,12 @@ export class AdminFleetQueries {
 
     for (const join of joins) {
       const rows = await this.sessions.listByAircraft(this.db, join.aircraft.id);
-      const state = stateOf(rows);
+      const state = stateOf(rows, join);
       states.set(join.aircraft.id, state);
       if (state.claim != null) pilotIds.add(state.claim.picId);
-      if (state.handover != null) pilotIds.add(state.handover.byPilotId);
+      // `byPilotId === null` znaczy „stan początkowy z panelu" (issue #66) - nie ma
+      // konta do podpisania, więc nie ma o co pytać `pilots.byId`.
+      if (state.handover?.byPilotId != null) pilotIds.add(state.handover.byPilotId);
     }
 
     const labels = new Map<string, PilotLabel>();
@@ -145,16 +147,30 @@ export class AdminFleetQueries {
       return aircraftListItem(join, {
         claim: state?.claim ?? null,
         handover: state?.handover ?? null,
-        readingFromOpenSession: state?.source === 'open_session',
+        readingSource: state?.source ?? null,
         labels,
       });
     });
   }
 }
 
-/** Claim + przekazanie + jego pochodzenie z jednego przebiegu po sesjach samolotu. */
-function stateOf(rows: Awaited<ReturnType<SessionsProjectionPort['listByAircraft']>>) {
+/**
+ * Claim + przekazanie + jego pochodzenie z jednego przebiegu po sesjach samolotu.
+ *
+ * Stan początkowy (issue #66) bierze się z WIERSZA KONFIGURACJI, który lista i tak
+ * ma w ręku - dzięki temu panel i telefon odpowiadają na „jaki jest ostatni znany
+ * odczyt" tą samą funkcją, także dla maszyny, która jeszcze nie latała.
+ */
+function stateOf(
+  rows: Awaited<ReturnType<SessionsProjectionPort['listByAircraft']>>,
+  join: AdminAircraftJoin,
+) {
   const claim = activeClaim(rows);
-  const pick = pickHandover(rows);
+  const pick = pickHandover(rows, {
+    mh: join.aircraft.initialMh,
+    fuelL: join.aircraft.initialFuelL,
+    oilL: join.aircraft.initialOilL,
+    enteredAt: join.updatedAt.getTime(),
+  });
   return { claim, handover: pick?.handover ?? null, source: pick?.source ?? null };
 }

@@ -434,10 +434,21 @@ export function PreflightReadingsScreen({
             // czyje to liczby → z kiedy → co mam z nimi zrobić. Godzina we własnej
             // linii, bo to jedyna wartość, której szuka się tu wzrokiem.
             text={[
-              handover.byPilotId === pilotId
-                ? `Odczyty powyżej to Twoje własne, z ostatniego dnia na ${aircraft.reg}.`
-                : `Odczyty powyżej przekazał ${pilotName(handover.byPilotId)} - to po nim przejmujesz ${aircraft.reg}.`,
-              `Stan z ${stampUtcLt(handover.at)}`,
+              // `byPilotId === null` znaczy „nikt tego nie przekazał": to jest STAN
+              // POCZĄTKOWY wpisany w panelu (issue #66), czyli pierwszy lot tej maszyny
+              // w UZ Aero. Zdanie o poprzednim pilocie byłoby tu nieprawdą - a to ekran,
+              // na którym zaufanie do liczb jest całą treścią.
+              handover.byPilotId == null
+                ? `Odczyty powyżej to stan początkowy ${aircraft.reg} wpisany w panelu - ` +
+                  'to pierwszy lot tej maszyny w UZ Aero.'
+                : handover.byPilotId === pilotId
+                  ? `Odczyty powyżej to Twoje własne, z ostatniego dnia na ${aircraft.reg}.`
+                  : `Odczyty powyżej przekazał ${pilotName(handover.byPilotId)} - to po nim przejmujesz ${aircraft.reg}.`,
+              // Przy stanie początkowym `at` jest chwilą ZAPISU W PANELU, nie pomiaru -
+              // i etykieta musi to mówić, inaczej byłaby inną wielkością pod tą samą nazwą.
+              handover.byPilotId == null
+                ? `Wpis z ${stampUtcLt(handover.at)}`
+                : `Stan z ${stampUtcLt(handover.at)}`,
               'Sprawdź go na licznikach. Twój odczyt jest ważniejszy, a ewentualne ' +
                 'nieścisłości zostaną rozwiązane przez koordynatora.',
             ].join('\n')}
@@ -549,7 +560,7 @@ export function PreflightReadingsScreen({
           const d = v - handover.reading.mh;
           if (d < 0) {
             return (
-              `Licznik nie może się cofnąć - przekazano ${motoHours(handover.reading.mh, mhFormat)} MH. ` +
+              `Licznik nie może się cofnąć - ostatni znany stan to ${motoHours(handover.reading.mh, mhFormat)} MH. ` +
               'Zapis z niższą wartością zostanie odrzucony.'
             );
           }

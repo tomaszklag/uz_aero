@@ -14,7 +14,7 @@
  * z listy, i tak samo pyta serwer, bo tylko on wie, jak jest naprawdę.
  */
 
-import { parseLitres } from '@uzaero/format';
+import { motoHours, parseLitres, parseMotoHours } from '@uzaero/format';
 import type { MhFormat } from '@uzaero/domain';
 
 import type { AircraftListItemDto } from '../../api/dto';
@@ -22,6 +22,9 @@ import type { CreateAircraftBody, UpdateAircraftBody } from '../../api/fleet';
 import {
   AIRCRAFT_IN_SERVICE,
   CAPACITY_NOT_POSITIVE,
+  FUEL_NORM_NOT_POSITIVE,
+  INITIAL_FUEL_OVER_CAPACITY,
+  INITIAL_OIL_OVER_CAPACITY,
   OIL_MIN_ABOVE_CAPACITY,
   OIL_NOT_POSITIVE,
 } from './aircraftRefusal';
@@ -38,6 +41,12 @@ export interface AircraftDraft {
   oilMinL: string;
   oilCapacityL: string;
   oilNormLPerH: string;
+  /** Norma nominalna spalania z dokumentacji (issue #66). */
+  fuelNormLPerH: string;
+  /** Stan początkowy jednostki (issue #66) - zerowe ogniwo łańcucha odczytów. */
+  initialMh: string;
+  initialFuelL: string;
+  initialOilL: string;
 }
 
 export const EMPTY_AIRCRAFT: AircraftDraft = {
@@ -53,10 +62,18 @@ export const EMPTY_AIRCRAFT: AircraftDraft = {
   oilMinL: '',
   oilCapacityL: '',
   oilNormLPerH: '',
+  fuelNormLPerH: '',
+  initialMh: '',
+  initialFuelL: '',
+  initialOilL: '',
 };
 
 /** Liczba -> pole tekstowe. `null` to pole PUSTE, nie napis „null" i nie zero. */
 const textOf = (value: number | null): string => (value == null ? '' : String(value));
+
+/** Motogodziny -> pole tekstowe W FORMACIE LICZNIKA tej maszyny (dziesiętny / hh:mm). */
+const mhTextOf = (value: number | null, format: MhFormat): string =>
+  value == null ? '' : motoHours(value, format);
 
 export function draftOf(aircraft: AircraftListItemDto): AircraftDraft {
   return {
@@ -70,6 +87,13 @@ export function draftOf(aircraft: AircraftListItemDto): AircraftDraft {
     oilMinL: textOf(aircraft.oilMinL),
     oilCapacityL: textOf(aircraft.oilCapacityL),
     oilNormLPerH: textOf(aircraft.oilNormLPerH),
+    fuelNormLPerH: textOf(aircraft.fuelNormLPerH),
+    // Licznik pokazujemy W FORMACIE TEJ MASZYNY: administrator przepisuje liczbę
+    // z tarczy, a tarcza zegarowa pokazuje „1236:30", nie „1236.5". W danych
+    // motogodziny są zawsze dziesiętne - to jest wyłącznie sposób zapisu.
+    initialMh: mhTextOf(aircraft.initialMh, aircraft.mhFormat),
+    initialFuelL: textOf(aircraft.initialFuelL),
+    initialOilL: textOf(aircraft.initialOilL),
   };
 }
 
@@ -103,7 +127,11 @@ export type AircraftField =
   | 'capacityL'
   | 'oilMinL'
   | 'oilCapacityL'
-  | 'oilNormLPerH';
+  | 'oilNormLPerH'
+  | 'fuelNormLPerH'
+  | 'initialMh'
+  | 'initialFuelL'
+  | 'initialOilL';
 
 /**
  * == PUSTE POLE WYMAGANE NIE DOSTAJE ZDANIA ==
@@ -128,6 +156,14 @@ const REG_PATTERN = /^[A-Z0-9-]+$/;
  * używa aplikacja pilota, więc przecinek i kropka znaczą to samo po obu stronach.
  */
 const litresOf = (text: string): number | null => parseLitres(text.trim());
+
+/**
+ * Licznik z pola tekstowego. `parseMotoHours` przyjmuje OBA zapisy naraz („1236.5"
+ * i „1236:30") niezależnie od `mhFormat` - administrator przepisujący liczbę z tarczy
+ * nie ma się zastanawiać, jak jednostka jest skonfigurowana. Wynikiem są zawsze
+ * godziny dziesiętne, bo tylko takie jadą do bazy.
+ */
+const mhOf = (text: string): number | null => parseMotoHours(text.trim());
 
 /** Rok jako CZTERY CYFRY - własny parser, bo `parseLitres` przyjąłby „19,99". */
 function yearOf(text: string): number | null {
@@ -187,10 +223,48 @@ export function verdictOf(draft: AircraftDraft): AircraftVerdict {
     else if (value <= 0) fail(field, OIL_NOT_POSITIVE);
   }
 
+  // Norma spalania z dokumentacji - ta sama reguła, co przy oleju (issue #66).
+  if (draft.fuelNormLPerH.trim() !== '') {
+    const value = litresOf(draft.fuelNormLPerH);
+    if (value == null) fail('fuelNormLPerH', 'Wpisz liczbę albo zostaw pole puste.');
+    else if (value <= 0) fail('fuelNormLPerH', FUEL_NORM_NOT_POSITIVE);
+  }
+
+  /*
+   * Stan początkowy: ZERO jest tu WARTOŚCIĄ, nie brakiem (nowy silnik ma 0 na liczniku,
+   * maszyna przyjęta z pustymi zbiornikami - 0 litrów), więc nie sprawdzamy dodatniości.
+   * Ta różnica wobec norm wyżej jest treścią tych pól, a nie przeoczeniem.
+   *
+   * Ujemnych też tu nie sprawdzamy i to NIE jest luka: oba parsery przyjmują wyłącznie
+   * cyfry, więc „-5" nie jest dla nich liczbą i wypada zdaniem o nieczytelnym wpisie.
+   * Reguła `initial_negative` żyje na serwerze, bo tam JSON potrafi przynieść minus.
+   */
+  const initial: [AircraftField, string, (t: string) => number | null][] = [
+    ['initialMh', draft.initialMh, mhOf],
+    ['initialFuelL', draft.initialFuelL, litresOf],
+    ['initialOilL', draft.initialOilL, litresOf],
+  ];
+  for (const [field, text, parse] of initial) {
+    if (text.trim() === '') continue;
+    if (parse(text) == null) fail(field, 'Wpisz liczbę albo zostaw pole puste.');
+  }
+
   const oilMin = litresOf(draft.oilMinL);
   const oilCapacity = litresOf(draft.oilCapacityL);
   if (oilMin != null && oilCapacity != null && oilMin > oilCapacity) {
     fail('oilMinL', OIL_MIN_ABOVE_CAPACITY);
+  }
+
+  // Oba sufity mówią TYM SAMYM zdaniem, co odmowa serwera - to jest ta sama reguła
+  // powiedziana wcześniej, a nie druga (patrz nagłówek pliku).
+  const initialFuel = litresOf(draft.initialFuelL);
+  if (initialFuel != null && capacity != null && capacity > 0 && initialFuel > capacity) {
+    fail('initialFuelL', INITIAL_FUEL_OVER_CAPACITY);
+  }
+
+  const initialOil = litresOf(draft.initialOilL);
+  if (initialOil != null && oilCapacity != null && initialOil > oilCapacity) {
+    fail('initialOilL', INITIAL_OIL_OVER_CAPACITY);
   }
 
   return { invalid, complete, blocker };
@@ -218,6 +292,10 @@ export function createBodyOf(draft: AircraftDraft): CreateAircraftBody {
     oilMinL: litresOf(draft.oilMinL),
     oilCapacityL: litresOf(draft.oilCapacityL),
     oilNormLPerH: litresOf(draft.oilNormLPerH),
+    fuelNormLPerH: litresOf(draft.fuelNormLPerH),
+    initialMh: mhOf(draft.initialMh),
+    initialFuelL: litresOf(draft.initialFuelL),
+    initialOilL: litresOf(draft.initialOilL),
   };
 }
 
@@ -247,6 +325,10 @@ export function updateBodyOf(
   if (next.oilMinL !== before.oilMinL) body.oilMinL = next.oilMinL;
   if (next.oilCapacityL !== before.oilCapacityL) body.oilCapacityL = next.oilCapacityL;
   if (next.oilNormLPerH !== before.oilNormLPerH) body.oilNormLPerH = next.oilNormLPerH;
+  if (next.fuelNormLPerH !== before.fuelNormLPerH) body.fuelNormLPerH = next.fuelNormLPerH;
+  if (next.initialMh !== before.initialMh) body.initialMh = next.initialMh;
+  if (next.initialFuelL !== before.initialFuelL) body.initialFuelL = next.initialFuelL;
+  if (next.initialOilL !== before.initialOilL) body.initialOilL = next.initialOilL;
 
   return body;
 }

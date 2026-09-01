@@ -105,6 +105,10 @@ export type FleetRefusalDto =
   | 'open_session'
   | 'oil_not_positive'
   | 'oil_min_above_capacity'
+  | 'fuel_norm_not_positive'
+  | 'initial_negative'
+  | 'initial_fuel_over_capacity'
+  | 'initial_oil_over_capacity'
   | 'aircraft_in_service'
   | 'has_history';
 
@@ -204,8 +208,44 @@ export interface AircraftListItemDto {
   oilMinL: number | null;
   oilCapacityL: number | null;
   oilNormLPerH: number | null;
+  /**
+   * Spalanie z instrukcji użytkowania (L na godzinę PRACY SILNIKA, issue #66).
+   * Obowiązuje, dopóki aplikacja nie policzy własnej normy z lotów tej maszyny.
+   */
+  fuelNormLPerH: number | null;
+  /**
+   * STAN POCZĄTKOWY - co pokazywały przyrządy przy wprowadzeniu jednostki (issue #66).
+   * Podpowiedź dla PIERWSZEGO pilota; od pierwszej zdanej sesji nieużywany. Czy jeszcze
+   * cokolwiek znaczy, mówi `reading.source`.
+   */
+  initialMh: number | null;
+  initialFuelL: number | null;
+  initialOilL: number | null;
+  /**
+   * Ostatni znany odczyt liczników - `null` = maszyna nie ma ani przekazania, ani
+   * wpisanego stanu początkowego.
+   */
+  reading: AircraftReadingDto | null;
   /** Sesje bez zdania samolotu. Blokują wyłączenie ze służby - i tylko po to tu są. */
   openSessions: number;
+}
+
+/**
+ * Skąd wzięty jest ostatni odczyt jednostki.
+ *
+ * Panel 2.0 czyta z tego JEDNĄ rzecz: czy stan początkowy jeszcze kogokolwiek dotyczy.
+ * `handover`/`open_session` znaczą „maszyna już lata i prowadzą ją odczyty z lotów",
+ * `initial` - „pierwszy pilot dostanie to, co wpisano w panelu".
+ */
+export interface AircraftReadingDto {
+  mh: number;
+  fuelL: number;
+  /** Epoch ms UTC. Przy `source: 'initial'` to chwila ZAPISU W PANELU, nie pomiaru. */
+  at: number;
+  /** `null` przy `source: 'initial'` - stanu początkowego nikt nie przekazał. */
+  byPilotId: string | null;
+  byPilotName: string | null;
+  source: 'handover' | 'open_session' | 'initial';
 }
 
 /** Lista floty. Bez kursora - klub ma kilka jednostek. */

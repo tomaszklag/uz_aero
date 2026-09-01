@@ -16,7 +16,7 @@
  */
 
 /** Wersja schematu - sterowana `PRAGMA user_version`. Podnieś przy każdej migracji. */
-export const SCHEMA_VERSION = 5;
+export const SCHEMA_VERSION = 6;
 
 /**
  * Migracja 0 → 1: pełny schemat początkowy.
@@ -193,6 +193,32 @@ export const MIGRATION_5 = `
   );
 `;
 
+/**
+ * Migracja 6: NORMA NOMINALNA SPALANIA z dokumentacji jednostki (issue #66).
+ *
+ * ══ DLACZEGO OSOBNA TABELA, SIOSTRA `reference_oil` ══
+ * Ten sam powód, co przy oleju i przy normie: SQLite nie zna
+ * `ALTER TABLE … ADD COLUMN IF NOT EXISTS`, a komplet migracji musi dać się przepuścić
+ * PONOWNIE bez błędu (`sqliteSchema.test.ts`). Kolumna w `reference_aircraft` odpadła
+ * więc na starcie, mimo że logicznie jest siostrą `capacity_l`.
+ *
+ * ══ DLACZEGO NIE DOPISANA DO `reference_oil` ══
+ * Bo tamta tabela nazywa się tak, jak jej treść. `fuel_norm_l_per_h` w tabeli oleju
+ * byłaby pierwszym miejscem, w którym nazwa przestaje opisywać zawartość - a druga
+ * taka kolumna zamieniłaby ją w worek na resztę. Kartę panelu, na której obie normy
+ * stoją obok siebie, składa `AircraftDrawer`; magazyn nie musi tego lustrzanie odbijać.
+ *
+ * Brak wiersza = administrator nie wpisał normy. Ekran rozliczenia milczy wtedy
+ * o oczekiwaniu dokładnie tak, jak przed tą zmianą.
+ */
+export const MIGRATION_6 = `
+  CREATE TABLE IF NOT EXISTS reference_fuel (
+    aircraft_id  TEXT PRIMARY KEY NOT NULL,
+    norm_l_per_h REAL,
+    fetched_at   INTEGER NOT NULL
+  );
+`;
+
 /** Migracje w kolejności stosowania: indeks = wersja docelowa − 1. */
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
@@ -200,4 +226,5 @@ export const MIGRATIONS: readonly string[] = [
   MIGRATION_3,
   MIGRATION_4,
   MIGRATION_5,
+  MIGRATION_6,
 ];

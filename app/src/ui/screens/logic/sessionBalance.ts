@@ -128,12 +128,20 @@ export interface MhFacts {
   deltaH: number | null;
 }
 
+/**
+ * @param nominalLPerH spalanie z dokumentacji jednostki (`ReferenceAircraft.fuelNormLPerH`,
+ *   issue #66) - wchodzi WYŁĄCZNIE wtedy, gdy `norm` jest `null`, bo model opisuje TEN
+ *   egzemplarz, a dokumentacja typ. Argument jest wymagany, nie opcjonalny: ekran, który
+ *   go nie poda, milczy o normie przez pierwsze tygodnie życia maszyny - a to jest
+ *   dokładnie ta dziura, którą issue #66 zamyka.
+ */
 export function fuelBalance(
   projection: SessionState,
   norm: ConsumptionNorm | null,
   refuelCount: number,
+  nominalLPerH: number | null,
 ): BalanceView {
-  return fuelBalanceOf(times(projection), projection.fuel, norm, refuelCount);
+  return fuelBalanceOf(times(projection), projection.fuel, norm, refuelCount, nominalLPerH);
 }
 
 /** Rdzeń rachunku paliwa - patrz nota „CO RACHUNEK NAPRAWDĘ POTRZEBUJE" wyżej. */
@@ -142,8 +150,9 @@ export function fuelBalanceOf(
   fuel: FuelFacts,
   norm: ConsumptionNorm | null,
   refuelCount: number,
+  nominalLPerH: number | null,
 ): BalanceView {
-  const expectation = expectedFuelL(norm, facts);
+  const expectation = expectedFuelL(norm, facts, nominalLPerH);
 
   return {
     rows: [
@@ -170,8 +179,16 @@ export function fuelBalanceOf(
     totalValue: litres(fuel.consumedL),
     totalTone: 'amber',
     verdict: verdictOf(fuel.consumedL, expectation),
-    details: fuelDetails(facts, fuel.consumedL, norm, expectation),
-    naNote: naNote(facts, norm, expectation, fuel.consumedL != null),
+    details: fuelDetails(facts, fuel.consumedL, norm, expectation, nominalLPerH),
+    naNote: naNote(
+      facts,
+      expectation,
+      fuel.consumedL != null,
+      // Brak normy znaczy tu DWIE rzeczy naraz i drugą da się naprawić od ręki:
+      // wystarczy, że administrator uzupełni kartę samolotu (issue #66).
+      'Nie porównujemy z normą - ten samolot nie ma jeszcze policzonej normy ani ' +
+        'wpisanego spalania z dokumentacji.',
+    ),
   };
 }
 
@@ -218,7 +235,12 @@ export function mhBalanceOf(
     totalTone: delta != null && delta > 0 ? 'green' : 'neutral',
     verdict: verdictOf(delta, expectation),
     details: mhDetails(facts, delta, norm, expectation, format),
-    naNote: naNote(facts, norm, expectation, delta != null),
+    naNote: naNote(
+      facts,
+      expectation,
+      delta != null,
+      'Nie porównujemy z normą - ten samolot nie ma jeszcze policzonych przeliczników licznika.',
+    ),
   };
 }
 
@@ -274,8 +296,44 @@ function fuelDetails(
   consumed: number | null,
   norm: ConsumptionNorm | null,
   expectation: Expectation | null,
+  nominalLPerH: number | null,
 ): BalanceDetails | null {
-  if (norm == null || expectation == null || consumed == null) return null;
+  if (expectation == null || consumed == null) return null;
+
+  const sessionLPerH = perBlockHour(consumed, facts);
+  const rows: BalanceDetailRow[] = [
+    { label: 'Zużyte w tej sesji', value: litres(consumed) },
+    { label: 'Oczekiwane po tej sesji', value: bandOf(expectation, litres) },
+    { label: 'Średnia tej sesji', value: `${round(sessionLPerH)} L/h` },
+  ];
+
+  /*
+   * Model tej maszyny jeszcze nie istnieje - liczymy z dokumentacji (issue #66).
+   * Wiersz „Podstawa" mówi to wprost, bo to jest najważniejsza różnica między tym
+   * werdyktem a wszystkimi pozostałymi: pasmo jest ZADEKLAROWANE, nie zmierzone.
+   */
+  if (expectation.basis === 'nominal' || norm == null) {
+    // Do tej gałęzi wchodzi się WYŁĄCZNIE z oczekiwaniem policzonym z dokumentacji,
+    // a `expectedFuelL` liczy je tylko przy dodatniej stawce - `null` jest tu
+    // niemożliwe. Milczymy zamiast podstawiać zero: liczba wzięta z sufitu przy
+    // planowaniu paliwa jest gorsza od braku arkusza.
+    if (nominalLPerH == null) return null;
+    const rate = nominalLPerH;
+    rows.push({ label: 'Norma z dokumentacji', value: `${round(rate)} L/h pracy silnika` });
+    rows.push({ label: 'Podstawa', value: 'dokumentacja jednostki' });
+
+    return {
+      title: 'NORMA PALIWA',
+      summary: summaryOf(consumed, expectation, litres),
+      rows,
+      note:
+        `Jak to liczymy: ${blockTime(facts)} pracy silnika × ${round(rate)} L/h ≈ ` +
+        `${litres(expectation.value)}. Ta liczba pochodzi z instrukcji użytkowania, ` +
+        'a nie z lotów tej maszyny - własną normę policzymy, gdy uzbiera się historia, ' +
+        'i wtedy ona zastąpi tę tutaj. Werdykt niczego nie blokuje - to licznik ' +
+        'w samolocie ma rację, nie model.',
+    };
+  }
 
   // Para stawek albo `null` - jeden obiekt zamiast dwóch pól, żeby „mamy fazy" było
   // faktem sprawdzalnym przez typ, a nie flagą, którą trzeba pamiętać obok wartości.
@@ -283,12 +341,6 @@ function fuelDetails(
     expectation.basis === 'phases' && norm.airLPerH != null && norm.groundLPerH != null
       ? { air: norm.airLPerH, ground: norm.groundLPerH }
       : null;
-
-  const rows: BalanceDetailRow[] = [
-    { label: 'Zużyte w tej sesji', value: litres(consumed) },
-    { label: 'Oczekiwane po tej sesji', value: bandOf(expectation, litres) },
-    { label: 'Średnia tej sesji', value: `${round(perBlockHour(consumed, facts))} L/h` },
-  ];
 
   if (phases != null) {
     rows.push({ label: 'Norma w locie', value: `${round(phases.air)} L/h` });
@@ -300,6 +352,23 @@ function fuelDetails(
     });
   }
   rows.push({ label: 'Podstawa', value: `${norm.windowDays} dni` });
+
+  /*
+   * Odniesienie do dokumentacji (issue #66): „za pomocą takiej średniej z instrukcji
+   * można badać, jakie jest odchylenie nowej średniej oraz średniej z operacji od
+   * wartości referencyjnej". Dwa wiersze, nie jeden: pierwszy podaje liczbę, drugi
+   * mówi, o ile się od niej odjechało - sklejone dawały wartość na trzy linie.
+   */
+  if (nominalLPerH != null && nominalLPerH > 0) {
+    rows.push({ label: 'Z dokumentacji', value: `${round(nominalLPerH)} L/h pracy silnika` });
+    rows.push({
+      label: 'Odchyłka od dokumentacji',
+      value: [
+        `ta sesja ${percentOff(sessionLPerH, nominalLPerH)}`,
+        `norma maszyny ${percentOff(norm.blockLPerH, nominalLPerH)}`,
+      ].join(' · '),
+    });
+  }
 
   const equation =
     phases != null
@@ -318,6 +387,19 @@ function fuelDetails(
       'bo zużycie sesji to różnica dwóch odczytów paliwomierza. Werdykt niczego nie ' +
       'blokuje - to licznik w samolocie ma rację, nie model.',
   };
+}
+
+/**
+ * „+12%" / „−4%" / „0%" - o ile wartość odbiega od odniesienia (issue #66).
+ *
+ * Bez miejsc po przecinku i z półpauzą minusa, jak reszta liczb tego modułu: to jest
+ * porównanie rzędu wielkości („czy pali więcej, niż obiecuje producent"), a nie pomiar.
+ */
+function percentOff(value: number, reference: number): string {
+  if (reference <= 0) return '-';
+  const pct = Math.round(((value - reference) / reference) * 100);
+  if (pct === 0) return '0%';
+  return `${pct > 0 ? '+' : '−'}${Math.abs(pct)}%`;
 }
 
 /**
@@ -374,12 +456,24 @@ function summaryOf(
   format: (value: number) => string,
 ): string {
   const word = VERDICT_WORD[expectationVerdict(actual, expectation)];
-  const tail =
-    expectation.basis === 'phases'
-      ? 'Pasmo liczy się dla TEJ mieszanki faz, nie dla średniej sesji tego samolotu.'
-      : 'Model nie rozdzielił jeszcze faz, więc pasmo opisuje samą godzinę pracy silnika.';
+  const tail = BASIS_NOTE[expectation.basis];
   return `${word} - ${format(actual)} przy oczekiwanych ${bandOf(expectation, format)}. ${tail}`;
 }
+
+/**
+ * Drugie zdanie streszczenia: NA CZYM pasmo stoi.
+ *
+ * Trzy szczeble drabiny, trzy różne wiarygodności - model zdegradowany do jednej fazy
+ * odpowiada słabiej niż fazowy, a norma z dokumentacji nie opisuje TEJ maszyny w ogóle.
+ * Pilot ma prawo o tym wiedzieć, zanim uzna werdykt za wyrok.
+ */
+const BASIS_NOTE: Record<Expectation['basis'], string> = {
+  phases: 'Pasmo liczy się dla TEJ mieszanki faz, nie dla średniej sesji tego samolotu.',
+  engine: 'Model nie rozdzielił jeszcze faz, więc pasmo opisuje samą godzinę pracy silnika.',
+  nominal:
+    'Pasmo pochodzi z dokumentacji jednostki, a nie z lotów tej maszyny - własną normę ' +
+    'policzymy, gdy uzbiera się historia.',
+};
 
 /** „23 – 35 L" / „+1:21 – +1:33". */
 function bandOf(expectation: Expectation, format: (value: number) => string): string {
@@ -407,9 +501,14 @@ const COUNTER_LABEL: Record<'hobbs' | 'tach' | 'unknown', string> = {
  */
 function naNote(
   facts: BalanceTimes,
-  norm: ConsumptionNorm | null,
   expectation: Expectation | null,
   hasActual: boolean,
+  /**
+   * Zdanie na wypadek „normy nie ma". PALIWO i MOTOGODZINY mówią tu co innego, bo od
+   * issue #66 mają różne drabiny: paliwo schodzi jeszcze na dokumentację jednostki,
+   * a licznik nie ma czym - żadna instrukcja nie podaje przelicznika obrotomierza.
+   */
+  noNorm: string,
 ): string | null {
   if (expectation != null && hasActual) return null;
 
@@ -419,10 +518,7 @@ function naNote(
   if (!hasActual) {
     return 'Nie porównujemy z normą - brakuje odczytu przy zdaniu samolotu.';
   }
-  if (norm == null || expectation == null) {
-    return 'Nie porównujemy z normą - ten samolot nie ma jeszcze policzonej normy.';
-  }
-  return null;
+  return noNorm;
 }
 
 /**

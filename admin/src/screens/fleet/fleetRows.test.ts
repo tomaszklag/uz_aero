@@ -16,6 +16,11 @@ const aircraft: AircraftListItemDto = {
   oilMinL: null,
   oilCapacityL: null,
   oilNormLPerH: null,
+  fuelNormLPerH: null,
+  initialMh: null,
+  initialFuelL: null,
+  initialOilL: null,
+  reading: null,
   openSessions: 0,
 };
 

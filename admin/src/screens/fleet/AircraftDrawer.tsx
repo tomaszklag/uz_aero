@@ -107,6 +107,11 @@ export function AircraftDrawer({ id, fleet, listPending, manages, onClose }: Air
   // zanim klient straci wypełniony formularz na rzecz komunikatu o błędzie.
   const inUse = aircraft != null && disablesAircraftInUse(aircraft, draft);
 
+  // Czy stan początkowy jeszcze kogokolwiek dotyczy (issue #66). Odpowiada na to
+  // SERWER przez `reading.source` - panel nie zgaduje po liczbie sesji, bo regułę
+  // wyboru przekazania zna `application/common/aircraftStateView.ts` i tylko ona.
+  const initialInUse = aircraft == null || aircraft.reading == null || aircraft.reading.source === 'initial';
+
   const save = (): void => {
     if (aircraft == null) {
       create.mutate(createBodyOf(draft), {
@@ -317,7 +322,11 @@ export function AircraftDrawer({ id, fleet, listPending, manages, onClose }: Air
             />
           </Field>
 
-          <Field htmlFor="oil-capacity" label="Zbiornik oleju (L)">
+          <Field
+            htmlFor="oil-capacity"
+            label="Zbiornik oleju (L)"
+            hint="Puste pola znaczą, że aplikacja nie będzie o oleju przypominać."
+          >
             <TextInput
               id="oil-capacity"
               mono
@@ -329,20 +338,120 @@ export function AircraftDrawer({ id, fleet, listPending, manages, onClose }: Air
             />
           </Field>
         </div>
+      </Card>
+
+      {/* ── ZUŻYCIE Z DOKUMENTACJI (issue #66) ─────────────────────────────────
+          Norma paliwa i norma oleju stoją RAZEM, choć olej ma własną kartę wyżej:
+          to jedna rzecz powiedziana o dwóch płynach - liczba z instrukcji, ważna
+          DOPÓKI aplikacja nie policzy własnej z lotów tej maszyny. Zbiornik i minimum
+          oleju są czymś innym (opisują maszynę na zawsze), więc zostały u siebie. */}
+      <Card
+        title={
+          <>
+            Zużycie z dokumentacji <Pill tone="dim">opcjonalne</Pill>
+          </>
+        }
+      >
+        <div className="field-pair">
+          <Field
+            htmlFor="fuel-norm"
+            label="Spalanie paliwa (L/h)"
+            hint="Na godzinę pracy silnika."
+          >
+            <TextInput
+              id="fuel-norm"
+              mono
+              inputMode="decimal"
+              value={draft.fuelNormLPerH}
+              disabled={readOnly}
+              invalid={verdict.invalid.includes('fuelNormLPerH')}
+              onChange={(event) => setDraft({ ...draft, fuelNormLPerH: event.target.value })}
+            />
+          </Field>
+
+          <Field htmlFor="oil-norm" label="Zużycie oleju (L/h)" hint="Na motogodzinę.">
+            <TextInput
+              id="oil-norm"
+              mono
+              inputMode="decimal"
+              value={draft.oilNormLPerH}
+              disabled={readOnly}
+              invalid={verdict.invalid.includes('oilNormLPerH')}
+              onChange={(event) => setDraft({ ...draft, oilNormLPerH: event.target.value })}
+            />
+          </Field>
+        </div>
+
+        <p className="hint">
+          Wartości z instrukcji użytkowania. Aplikacja porównuje z nimi wynik lotu,
+          dopóki nie policzy własnej normy z historii tej maszyny - policzona wtedy
+          wygrywa, a te liczby zostają punktem odniesienia.
+        </p>
+      </Card>
+
+      {/* ── STAN POCZĄTKOWY (issue #66) ────────────────────────────────────────
+          To NIE jest konfiguracja, tylko jedna chwila: co pokazywały przyrządy, gdy
+          jednostka trafiła do UZ Aero. Dostaje ją PIERWSZY pilot i nikt więcej -
+          od pierwszej zdanej sesji łańcuch prowadzą odczyty z lotów. Karta mówi to
+          wprost, gdy tak już jest: pole, które przestało działać, a nadal wygląda
+          na czynne, jest gorsze od jego braku. */}
+      <Card
+        title={
+          <>
+            Stan początkowy <Pill tone="dim">opcjonalne</Pill>
+          </>
+        }
+      >
+        {initialInUse ? null : (
+          <Banner tone="status">
+            Ten samolot ma już odczyty z lotów - to one są podpowiedzią dla pilotów.
+            Stan początkowy zostaje zapisany, ale nikomu się nie pokazuje.
+          </Banner>
+        )}
+
+        <div className="field-pair">
+          <Field
+            htmlFor="initial-mh"
+            label="Motogodziny"
+            hint={`Format licznika: ${mhFormatExample(draft.mhFormat)}.`}
+          >
+            <TextInput
+              id="initial-mh"
+              mono
+              inputMode="decimal"
+              value={draft.initialMh}
+              disabled={readOnly}
+              invalid={verdict.invalid.includes('initialMh')}
+              onChange={(event) => setDraft({ ...draft, initialMh: event.target.value })}
+            />
+          </Field>
+
+          <Field htmlFor="initial-fuel" label="Paliwo w zbiornikach (L)">
+            <TextInput
+              id="initial-fuel"
+              mono
+              inputMode="decimal"
+              value={draft.initialFuelL}
+              disabled={readOnly}
+              invalid={verdict.invalid.includes('initialFuelL')}
+              onChange={(event) => setDraft({ ...draft, initialFuelL: event.target.value })}
+            />
+          </Field>
+        </div>
 
         <Field
-          htmlFor="oil-norm"
-          label="Zużycie z dokumentacji (L/h)"
-          hint="Puste pola znaczą, że aplikacja nie będzie o oleju przypominać."
+          htmlFor="initial-oil"
+          label="Olej (L)"
+          hint="Odczyty przyrządów w chwili, gdy samolot trafił do UZ Aero. Zobaczy je pierwszy pilot, który go weźmie."
         >
           <TextInput
-            id="oil-norm"
+            id="initial-oil"
             mono
             inputMode="decimal"
-            value={draft.oilNormLPerH}
+            value={draft.initialOilL}
             disabled={readOnly}
-            invalid={verdict.invalid.includes('oilNormLPerH')}
-            onChange={(event) => setDraft({ ...draft, oilNormLPerH: event.target.value })}
+            invalid={verdict.invalid.includes('initialOilL')}
+            onChange={(event) => setDraft({ ...draft, initialOilL: event.target.value })}
           />
         </Field>
       </Card>

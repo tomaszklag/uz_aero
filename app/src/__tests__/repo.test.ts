@@ -134,6 +134,8 @@ describe('EventsRepo + InMemoryAdapter', () => {
         oilMinL: 8.5,
         oilCapacityL: 11.4,
         oilNormLPerH: 0.12,
+        // Norma nominalna spalania (issue #66) - siostra normy oleju, ta sama runda.
+        fuelNormLPerH: 18.5,
       },
     ]);
     await repo.upsertPilots([{ id: 'pic-1', code: 'KRZ', name: 'Jan Kowalski', active: true }]);
@@ -148,6 +150,7 @@ describe('EventsRepo + InMemoryAdapter', () => {
     expect(byId?.oilMinL).toBe(8.5);
     expect(byId?.oilCapacityL).toBe(11.4);
     expect(byId?.oilNormLPerH).toBe(0.12);
+    expect(byId?.fuelNormLPerH).toBe(18.5);
 
     const pilots = await repo.getPilots();
     expect(pilots[0]!.code).toBe('KRZ');

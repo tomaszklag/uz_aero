@@ -86,6 +86,12 @@ interface AircraftRow {
   oil_min_l: number | null;
   oil_capacity_l: number | null;
   oil_norm_l_per_h: number | null;
+  /**
+   * Nominalne spalanie z `reference_fuel` (migracja 6, issue #66) - `LEFT JOIN`-em.
+   * `null` = administrator nie wpisał albo serwer sprzed issue #66; ekran rozliczenia
+   * milczy wtedy o normie, dopóki analityka nie policzy własnej.
+   */
+  fuel_norm_l_per_h: number | null;
 }
 
 interface PilotRow {
@@ -275,6 +281,21 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort {
             [a.id, a.oilMinL ?? null, a.oilCapacityL ?? null, a.oilNormLPerH ?? null, a.fetchedAt],
           );
         }
+
+        // Norma nominalna spalania (migracja 6, issue #66) - ta sama reguła, co wyżej:
+        // brak wartości z serwera KASUJE wiersz, żeby wykreślona w panelu liczba
+        // nie orzekała o lotach do końca życia telefonu.
+        if (a.fuelNormLPerH == null) {
+          await db.runAsync('DELETE FROM reference_fuel WHERE aircraft_id = ?', [a.id]);
+        } else {
+          await db.runAsync(
+            `INSERT INTO reference_fuel (aircraft_id, norm_l_per_h, fetched_at)
+             VALUES (?, ?, ?)
+             ON CONFLICT(aircraft_id) DO UPDATE SET
+               norm_l_per_h=excluded.norm_l_per_h, fetched_at=excluded.fetched_at`,
+            [a.id, a.fuelNormLPerH, a.fetchedAt],
+          );
+        }
       }
     });
   }
@@ -283,10 +304,12 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort {
     const rows = await this.getDb().getAllAsync<AircraftRow>(
       `SELECT a.*, c.model AS consumption,
               o.min_l AS oil_min_l, o.capacity_l AS oil_capacity_l,
-              o.norm_l_per_h AS oil_norm_l_per_h
+              o.norm_l_per_h AS oil_norm_l_per_h,
+              f.norm_l_per_h AS fuel_norm_l_per_h
          FROM reference_aircraft a
          LEFT JOIN reference_consumption c ON c.aircraft_id = a.id
          LEFT JOIN reference_oil o ON o.aircraft_id = a.id
+         LEFT JOIN reference_fuel f ON f.aircraft_id = a.id
         ORDER BY a.reg ASC`,
     );
     return rows.map(rowToAircraft);
@@ -296,10 +319,12 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort {
     const row = await this.getDb().getFirstAsync<AircraftRow>(
       `SELECT a.*, c.model AS consumption,
               o.min_l AS oil_min_l, o.capacity_l AS oil_capacity_l,
-              o.norm_l_per_h AS oil_norm_l_per_h
+              o.norm_l_per_h AS oil_norm_l_per_h,
+              f.norm_l_per_h AS fuel_norm_l_per_h
          FROM reference_aircraft a
          LEFT JOIN reference_consumption c ON c.aircraft_id = a.id
          LEFT JOIN reference_oil o ON o.aircraft_id = a.id
+         LEFT JOIN reference_fuel f ON f.aircraft_id = a.id
         WHERE a.id = ?`,
       [id],
     );
@@ -567,6 +592,7 @@ function rowToAircraft(row: AircraftRow): ReferenceAircraft {
     oilMinL: row.oil_min_l ?? null,
     oilCapacityL: row.oil_capacity_l ?? null,
     oilNormLPerH: row.oil_norm_l_per_h ?? null,
+    fuelNormLPerH: row.fuel_norm_l_per_h ?? null,
     fetchedAt: row.fetched_at,
   };
 }

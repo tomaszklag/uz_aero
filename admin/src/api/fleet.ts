@@ -74,6 +74,15 @@ export interface CreateAircraftBody {
   oilMinL: number | null;
   oilCapacityL: number | null;
   oilNormLPerH: number | null;
+  /** Norma nominalna spalania (issue #66) - czyści się `null`-em, jak olej. */
+  fuelNormLPerH: number | null;
+  /**
+   * Stan początkowy (issue #66) - też `null`-em, ale ZERO jest tu WARTOŚCIĄ, nie brakiem:
+   * nowy silnik ma 0 na liczniku, a maszyna przyjęta z pustymi zbiornikami - 0 litrów.
+   */
+  initialMh: number | null;
+  initialFuelL: number | null;
+  initialOilL: number | null;
 }
 
 /** `PATCH` opisuje ZMIANĘ, nie stan docelowy - pola nieustawione zostają bez zmian. */

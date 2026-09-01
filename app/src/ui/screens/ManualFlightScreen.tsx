@@ -413,13 +413,20 @@ export function ManualFlightScreen({
 
   // ── krok 4: paliwo i werdykt normy (issue #62, piąta i siódma tura) ────────
   const norm = aircraft?.consumption ?? null;
+  /* Spalanie z dokumentacji jednostki (issue #66) - wchodzi dopiero przy braku modelu
+     tej maszyny, a rozstrzyga to domena. Dzięki temu wpis ręczny z pierwszych tygodni
+     życia samolotu też dostaje werdykt, zamiast milczeć o normie. */
+  const fuelNominal = aircraft?.fuelNormLPerH ?? null;
   /* TEN SAM RACHUNEK, CO PO ZAPISANIU (uwaga z urządzenia, 2026-08-29) - ale SAMO
      PODSUMOWANIE, nie cała karta: „trochę dublujemy to, co jest w inputach". Wiersze
      działania wypisywały zastane, dolane i po locie, czyli dokładnie te trzy liczby,
      które pilot ma w polach wyżej. Do karty wchodzi więc to, czego w polach NIE MA -
      wynik i werdykt; rozpisane działanie mieszka w arkuszu pod plakietką, tam gdzie
      pada pytanie „jak to policzone". */
-  const fuelView = useMemo(() => manualFuelBalanceView(draft, norm), [draft, norm]);
+  const fuelView = useMemo(
+    () => manualFuelBalanceView(draft, norm, fuelNominal),
+    [draft, norm, fuelNominal],
+  );
   const mhView = useMemo(
     () => manualMhBalanceView(draft, norm, mhFormat),
     [draft, norm, mhFormat],

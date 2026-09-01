@@ -172,3 +172,23 @@ export function publicationGate(intervals: readonly FuelInterval[]): Publication
     missingEngineMs: Math.max(0, MIN_PUBLISH_ENGINE_MS - engineMs),
   };
 }
+
+/**
+ * Względna szerokość pasma wokół normy Z DOKUMENTACJI (issue #66).
+ *
+ * ══ DLACZEGO OSOBNY PRÓG, A NIE ROZRZUT JAK WSZĘDZIE INDZIEJ ══
+ * Pozostałe pasma tego modułu biorą się z ROZRZUTU OBSERWACJI (`ratio.ts`) - i to jest
+ * właściwa odpowiedź wszędzie tam, gdzie obserwacje są. Norma z instrukcji użytkowania
+ * ich nie ma z definicji: jest jedną liczbą wpisaną w panelu, zanim maszyna przeleci
+ * pierwszą godzinę. Pasmo trzeba więc ZADEKLAROWAĆ, a nie zmierzyć - i ta różnica jest
+ * treścią `ExpectationBasis: 'nominal'`, żeby ekran umiał ją nazwać.
+ *
+ * Piętnaście procent, bo tyle mniej więcej dzieli spalanie w przelocie od spalania
+ * w dniu z długim kołowaniem, a norma z dokumentacji nie rozdziela faz - jest średnią
+ * na godzinę pracy silnika. Pasmo węższe zapalałoby werdykt przy każdej sesji o innej
+ * mieszance ziemi i powietrza, czyli mówiłoby o zadaniu, a nie o maszynie.
+ *
+ * DO KALIBRACJI razem z resztą progów tego pliku - `server/scripts/consumptionReplay.ts`
+ * puszcza realną historię przez ten sam kod, co serwer.
+ */
+export const NOMINAL_BAND_RATIO = 0.15;
