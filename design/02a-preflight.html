@@ -350,11 +350,18 @@
            oleju nikt nie przekazuje - bagnet czyta się TERAZ. Dlatego wartość zaczyna
            PUSTA (prefill oczekiwaną fabrykowałby pomiar), a pomiar jest krokiem
            WYMAGANYM (decyzja 2026-08-27): bez niego ROZPOCZNIJ LOT stoi z powodem
-           w przycisku, jak przy odczytach w stanie „brak". Tagu „opcjonalnie" NIE MA -
-           wymagalność jest stanem domyślnym formularza (oznaczamy wyłącznie to, co
-           opcjonalne). Ekran pokazuje stan PO POMIARZE (10,2 L); wyjątkiem od wymogu
+           w przycisku. Tagu „opcjonalnie" NIE MA - wymagalność jest stanem domyślnym
+           formularza. Ekran pokazuje stan PO POMIARZE (10,2 L); wyjątkiem od wymogu
            jest wyłącznie wpis ręczny (15 - fakt lotu cenniejszy niż kompletność).
-           Sekcja stoi ZA blokiem przekazania, bo nie jest jego częścią. -->
+           Sekcja stoi ZA blokiem przekazania, bo nie jest jego częścią.
+
+           PO PRZEGLĄDZIE 2026-09-02 sekcja mówi wyłącznie: ile oleju jest i czy
+           dolano. Adnotacja „Twój pomiar z bagnetu" zniknęła (pomiar jest aktem
+           pilota z definicji - nie ma czego poświadczać), podpis „min/zbiornik"
+           zastąpiła PODZIAŁKA jak przy paliwie (wypełnienie = stan po dolewce,
+           bursztynowa kreska = minimum; pod minimum wypełnienie bursztynieje),
+           a szlak podpowiedzi (ostatni pomiar → oczekiwanie z normy) przeniósł się
+           do ARKUSZA - tam, gdzie pilot wpisuje liczbę, którą ma z nim porównać. -->
       <div class="section">
         <div class="section-header">
           <div>
@@ -364,9 +371,12 @@
               <span class="value-none only-none">- -</span>
               <span class="value-unit">L</span>
             </div>
-            <div class="fresh-note only-cache" title="Ostatni pomiar z cache - licznik i bagnet pozostają prawdą">Ostatnie pobrane · 21 CZE 17:30</div>
-            <div class="fresh-note only-none">Brak historii - pierwszy pomiar zacznie łańcuch</div>
-            <div style="font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); margin-top:4px;">min 8,5 L · zbiornik 11,4 L · pomiar przy zimnym silniku</div>
+            <!-- Podziałka: 10,2 / 11,4 L ≈ 89% wypełnienia; minimum 8,5 L ≈ 75%. -->
+            <div class="hide-none" style="margin-top:6px; width:130px; height:6px; border-radius:3px; background:var(--surface-raised); border:1px solid var(--border); position:relative; overflow:hidden;">
+              <div style="position:absolute; inset:0; width:89%; background:var(--text-secondary); border-radius:3px;"></div>
+              <div style="position:absolute; left:75%; top:0; bottom:0; width:2px; margin-left:-1px; background:var(--amber);"></div>
+            </div>
+            <div class="only-none" style="font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); margin-top:4px;">pomiar przy zimnym silniku</div>
           </div>
           <button class="koryguj-btn hide-none" onclick="document.getElementById('oil-modal').style.display='flex'">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -376,27 +386,6 @@
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             Wpisz pomiar
           </button>
-        </div>
-
-        <!-- Szlak jak przy paliwie/MH, ale o POMIARACH: ostatni znany + rachunek
-             oczekiwania z normy. Interwał olejowy biegnie pomiar→pomiar PRZEZ zdania
-             (zdanie samolotu oleju nie mierzy - issue #60), więc kotwicą jest MH. -->
-        <div class="trail hide-none">
-          <div class="trail-row">
-            <div class="trail-line"></div>
-            <div class="trail-dot neutral"></div>
-            <div class="trail-body">
-              <div class="trail-title">Ostatni pomiar · 21 CZERWCA 07:02 - J. Kowalski</div>
-              <div class="trail-meta">bagnet <b>10,6 L</b> przy <b>1 230:30 MH</b> · bez dolewek później</div>
-            </div>
-          </div>
-          <div class="trail-row">
-            <div class="trail-dot green"></div>
-            <div class="trail-body">
-              <div class="trail-title green">Od pomiaru · 4,0 MH</div>
-              <div class="trail-meta">norma <b>0,12 L/h</b> → na bagnecie oczekuj ≈ <b>10,1 L</b></div>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -414,10 +403,13 @@
            skakał layoutem, gdy blokada się zwalniała. -->
       <!-- Powód pada POJEDYNCZO, w kolejności czynności przy maszynie (`preflightBlocker`):
            najpierw liczniki, potem WYMAGANY pomiar oleju, na końcu wiarygodność licznika.
-           Stan „brak" pokazuje pierwszy z nich. -->
+           Stan „brak" pokazuje pierwszy z nich. POWÓD JEST INSTRUKCJĄ, nie uzasadnieniem
+           wymogu (uwaga z urządzenia, 2026-09-02): doklejki „jest obowiązkowy" /
+           „rozpoczną nowe ogniwo łańcucha" wycięte - skoro przycisk stoi, wymóg jest
+           oczywisty, a budowa rejestru nie jest pytaniem pilota. -->
       <span class="btn-primary disabled only-none" style="margin-top:auto;">
         ROZPOCZNIJ LOT
-        <span class="btn-reason">Wprowadź odczyty paliwa i MH z liczników - rozpoczną nowe ogniwo łańcucha</span>
+        <span class="btn-reason">Wprowadź odczyty paliwa i MH z liczników</span>
       </span>
 
     </div>
@@ -481,7 +473,11 @@
     <!-- OIL MODAL (issue #60) - dwa pola, bo pomiar i dolewka to jedna czynność
          przy bagnecie: zmierz → jeśli mało, dolej. Stan po dolewce jest RACHUNKIEM
          (pomiar + dolano), nie trzecim polem - inaczej niż trójka refuel, więc
-         korekta amend nie rozjedzie arytmetyki. Wariant poniżej minimum: 02I. -->
+         korekta amend nie rozjedzie arytmetyki. Wariant poniżej minimum: 02I.
+         Od przeglądu 2026-09-02 wiersze odniesienia niosą też PODPOWIEDŹ (ostatni
+         pomiar + oczekiwanie z normy) - przeniesioną tu ze szlaku sekcji: pilot
+         porównuje z nią liczbę dokładnie w chwili wpisywania. Data w skrócie,
+         bo wiersz to jedna linia; stempel niesie przy okazji wiek podpowiedzi. -->
     <div id="oil-modal" class="modal-overlay" style="display:none;">
       <div class="modal-sheet">
         <div class="modal-handle"></div>
@@ -497,7 +493,11 @@
           <span class="modal-input-unit">L</span>
         </div>
         <div class="modal-ref">
-          <span>Oczekiwane wg normy</span>
+          <span>Ostatni pomiar · 21 CZE 07:02 · J. Kowalski</span>
+          <span style="color:var(--text-secondary);">10,6 L</span>
+        </div>
+        <div class="modal-ref">
+          <span>Oczekiwane wg normy · po 4:00 MH</span>
           <span style="color:var(--text-secondary);">≈ 10,1 L</span>
         </div>
         <div class="modal-ref">

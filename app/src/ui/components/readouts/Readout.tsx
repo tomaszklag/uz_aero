@@ -33,7 +33,12 @@ export interface ReadoutProps {
   unit: string;
   /** Ton wartości: `amber` dla paliwa, `neutral` dla motogodzin. */
   tone?: Tone;
-  freshness: Freshness;
+  /**
+   * Świeżość wartości (§4.8). BEZ tego pola sekcja nie nosi adnotacji wcale - tak
+   * działa olej (uwaga z urządzenia, 2026-09-02): własny pomiar nie ma czego
+   * poświadczać, a podpowiedź z serwera mieszka w arkuszu razem ze swoim stemplem.
+   */
+  freshness?: Freshness;
   /** Czas ostatniej synchronizacji do adnotacji `cache`. */
   syncedAt?: string | null;
   /** Podpis pod wartością, np. „45% pojemności · zbiorniki 330 L". */
@@ -44,9 +49,6 @@ export interface ReadoutProps {
   onCorrect: () => void;
   correctLabel?: string;
   missingLabel?: string;
-  /** Napisy adnotacji świeżości inne niż domyślne (sekcja oleju, issue #60). */
-  missingNote?: string;
-  manualNote?: string;
   /**
    * Jawny stan „brak danych" - nadpisuje wywiedziony (issue #60).
    *
@@ -74,8 +76,6 @@ export function Readout({
   onCorrect,
   correctLabel = 'Koryguj',
   missingLabel = 'Wpisz odczyt',
-  missingNote,
-  manualNote,
   missing: missingOverride,
   trail = [],
   style,
@@ -129,12 +129,7 @@ export function Readout({
             </AppText>
           </View>
 
-          <FreshnessNote
-            state={freshness}
-            syncedAt={syncedAt}
-            {...(missingNote != null ? { missingLabel: missingNote } : {})}
-            {...(manualNote != null ? { manualLabel: manualNote } : {})}
-          />
+          {freshness != null && <FreshnessNote state={freshness} syncedAt={syncedAt} />}
 
           {!missing && gauge}
 

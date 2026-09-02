@@ -1058,30 +1058,38 @@ buildu) - sięgamy po niego dopiero, gdy własna droga okaże się niewystarczaj
    (okna) dają różnicę do dosunięcia; dół widocznej listy jest tu górą klawiatury, bo
    ekran jest już skrócony. Nie mieszaj układów okna i ekranu - to była pomyłka nr 1.
 
-**Pola edycji w arkuszach** (`ReadingSheet`):
+**Pola edycji w arkuszach** (`ReadingSheet`, `OilSheet`):
 
 - **Godzina = klawiatura numeryczna + maska**, nie QWERTY: `keyboardType="number-pad"`
   i `maskTimeUtcInput` składa cztery cyfry w „HH:MM" (klawiatura numeryczna nie ma
   dwukropka, a pełna zajmuje pół ekranu i podstawia podpowiedzi słownikowe). Licznik MH
   w formacie `hh:mm` zostaje na `text`, bo liczba cyfr godzin jest dowolna.
-- **Klawiatura przy otwarciu arkusza: samo `autoFocus` i nic więcej - SPRAWA OTWARTA.**
-  Arkusz powinien otwierać się gotowy do pisania (zgłoszenia z urządzenia, issue #12
-  i #14: „miała się otwierać klawiatura, ale się nie otwiera"), ale na Androidzie
-  `TextInput` w `Modal` po prostu jej nie podnosi. Sprawdzone i **nieskuteczne**:
-  `focus()` po zwłoce 150 ms, `focus()` z `Modal.onShow`, ponawiany `focus()`
-  (0/60/180/350/600/900 ms) z przerwaniem na `isFocused()`, zdjęcie
-  `statusBarTranslucent` z okna modalnego. Każda z tych prób dokładała maszynerii, żadna
-  nie podniosła klawiatury - więc w kodzie został jeden `autoFocus` i tyle, a rzetelne
-  rozwiązanie (najpewniej rezygnacja z `Modal` na rzecz nakładki wewnątrz ekranu, dla
-  WSZYSTKICH arkuszy naraz) czeka na własne zadanie. Nie dokładaj kolejnej łatki
-  celującej w timing: problem nie jest w momencie wywołania.
+- **Klawiatura przy otwarciu arkusza: `useSheetInputFocus` + `Sheet.onShow` - SPRAWA
+  ZAMKNIĘTA przy issue #58/#62** (akapit wyżej pisał „samo `autoFocus` i nic więcej",
+  bo żadna łatka celująca w timing nie działała - i słusznie: problem nie był
+  w momencie wywołania, tylko w tym, że IME może przyczepić się wyłącznie do okna
+  z fokusem, a okno modala dopiero wjeżdżało). Rozwiązanie ma dwie połowy:
+  `SheetSurface` zdejmuje animację okna z krytycznej ścieżki klawiatury
+  (`animationType="none"`, panel animuje się sam), a drabinka prób
+  (`hooks/keyboardFocus.ts`) rusza w PÓŹNIEJSZYM z dwóch zdarzeń - okno pokazane,
+  pole zamontowane - i ponawia dopiero za `KEYBOARD_SHOW_MS`. **Każdy arkusz z polem
+  wpisu idzie przez ten hook.** Goły `autoFocus` odpala się przy montowaniu, zanim
+  okno modala istnieje - dokładnie tak arkusz oleju otwierał się bez klawiatury
+  (zgłoszenie z urządzenia, 2026-09-02).
 - **Nigdy `selectTextOnFocus` na polu sterowanym.** Na Androidzie to `selectAllOnFocus`,
   które odnawia zaznaczenie przy KAŻDYM programowym ustawieniu tekstu - a wartość idzie
-  przez JS i wraca, więc pierwsza wpisana cyfra znów była zaznaczona i druga ją wymazywała.
-  Zamiast tego zaznaczamy całość jawnie **raz, przy otwarciu** (`selection`), a potem
-  oddajemy kursor polu; przy masce dosuwamy go na koniec, bo maska przestawia znaki.
-  `onSelectionChange` świadomie NIE jest podłączone: zdarzenie potrafi dojść z pozycją
-  sprzed maski i cofnąć kursor w środek napisu.
+  przez JS i wraca, więc pierwsza wpisana cyfra znów była zaznaczona i druga ją
+  wymazywała. Zaznaczenie jest sterowane JEDNORAZOWO przy otwarciu, a pozycją jest
+  od 2026-09-02 **kursor na końcu wpisu, nie zaznaczenie całości**: sterowany
+  select-all trzymany aż do pierwszej cyfry przywracał się przy każdym odświeżeniu
+  pola i nie dawał postawić kursora tapnięciem (zgłoszenie z arkusza oleju: „zamiast
+  zaznaczać całość daj kursor na koniec"). Sterowanie oddaje się polu
+  w `onSelectionChange`, gdy doniesie DOKŁADNIE zadaną pozycję
+  (`components/sheets/sheetSelection.ts`: `cursorAtEnd` + `selectionApplied`, z testami).
+  Pozycji ZE zdarzenia nie wpisujemy do stanu nigdy - zdarzenie potrafi dojść z pozycją
+  z fokusu ({0,0}) albo sprzed maski, dlatego zwolnienie porównuje je z celem, zamiast
+  wierzyć pierwszemu z brzegu. Przy masce kursor dosuwa się na koniec po każdym znaku,
+  bo maska przestawia znaki i natywna pozycja przestaje odpowiadać temu, co widać.
 - **Kolor zaznaczenia z tokenu `colors.selection`**, neutralnego per motyw - nigdy akcent
   tonu. Cyfry mają kolor tonu (mockup 02b), więc akcent w tle dawał jednolity prostokąt
   bez czytelnego tekstu. Kursor i uchwyty zostają w pełnym kryciu tonu.

@@ -188,7 +188,10 @@ export function Sheet({
 
       {rows.map((row) => (
         <View key={row.label} style={styles.row}>
-          <AppText variant="mono" tone="muted" style={styles.rowLabel}>
+          {/* Etykieta ustępuje wartości i zawija się (`flexShrink`): wiersz „Ostatni
+              pomiar · 21 CZE 07:02 · J. Kowalski" jest dłuższy niż dotychczasowe,
+              a wartość ma zostać przy prawej krawędzi w całości. */}
+          <AppText variant="mono" tone="muted" style={[styles.rowLabel, styles.rowKey]}>
             {row.label}
           </AppText>
           <AppText
@@ -216,4 +219,5 @@ const styles = StyleSheet.create({
   title: { flex: 1, fontSize: 22, lineHeight: 24, letterSpacing: 2 },
   row: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
   rowLabel: { fontSize: 10, letterSpacing: 0.5 },
+  rowKey: { flexShrink: 1 },
 });

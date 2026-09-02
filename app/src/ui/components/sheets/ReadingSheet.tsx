@@ -27,6 +27,7 @@ import { useTheme } from '../../theme';
 import { useSheetInputFocus } from '../../hooks/useSheetInputFocus';
 import { AppText } from '../foundation/AppText';
 import { Sheet, type SheetRow } from './Sheet';
+import { cursorAtEnd, selectionApplied, type SelectionRange } from './sheetSelection';
 import { toneColors, type Tone } from '../tone';
 
 /**
@@ -93,28 +94,27 @@ export function ReadingSheet({
   const [text, setText] = useState(initialText);
   const { inputRef, onShow } = useSheetInputFocus();
   /**
-   * Zaznaczenie STEROWANE przy otwarciu, nie `selectTextOnFocus`.
+   * Zaznaczenie STEROWANE przy otwarciu, nie `selectTextOnFocus` (ono odnawia
+   * zaznaczenie przy każdym programowym ustawieniu sterowanego tekstu - druga wpisana
+   * cyfra wymazywała pierwszą) - a pozycją jest KURSOR NA KOŃCU, nie zaznaczenie
+   * całości: sterowany select-all trzymany do pierwszej cyfry przywracał się przy
+   * każdym odświeżeniu pola i nie dawał postawić kursora tapnięciem (zgłoszenie
+   * z urządzenia, 2026-09-02, z bliźniaczego arkusza oleju). Sterowanie oddaje się
+   * polu w `onSelectionChange`, gdy doniesie zadaną pozycję - historia i reguła:
+   * `sheetSelection.ts`.
    *
-   * Android z `selectAllOnFocus` odnawia zaznaczenie przy każdym programowym ustawieniu
-   * tekstu - a wartość tego pola jest sterowana, więc każdy znak przechodzi przez JS
-   * i wraca do widoku. Skutek na urządzeniu: pierwsza wpisana cyfra znów była zaznaczona
-   * i druga ją wymazywała; dopiero trzecia trafiała tam, gdzie pilot celował.
-   *
-   * Dlatego zaznaczamy całość sami - jeden raz, przy otwarciu - a potem oddajemy kursor
-   * (`undefined` = pole nim rządzi). Wyjątek: przy masce godziny dosuwamy kursor na koniec,
-   * bo maska przestawia znaki (dwukropek wjeżdża przed ostatnią cyfrę) i natywna pozycja
-   * przestaje odpowiadać temu, co pilot widzi.
+   * Przy masce godziny kursor wraca na koniec po każdym znaku, bo maska przestawia
+   * znaki (dwukropek wjeżdża przed ostatnią cyfrę) i natywna pozycja przestaje
+   * odpowiadać temu, co pilot widzi.
    */
-  const [selection, setSelection] = useState<{ start: number; end: number } | undefined>({
-    start: 0,
-    end: initialText.length,
-  });
+  const [selection, setSelection] = useState<SelectionRange | undefined>(
+    cursorAtEnd(initialText),
+  );
   // Każde otwarcie zaczyna od aktualnej wartości - arkusz nie pamięta porzuconej edycji.
   useEffect(() => {
     if (!visible) return;
     setText(initialText);
-    // Cała wartość zaznaczona: pierwszy wpis nadpisuje odczyt, zamiast dopisywać się.
-    setSelection({ start: 0, end: initialText.length });
+    setSelection(cursorAtEnd(initialText));
   }, [visible, initialText]);
 
   const change = useCallback(
@@ -123,10 +123,10 @@ export function ReadingSheet({
       const apply = mask ?? (keyboard === 'time' ? maskTimeUtcInput : null);
       const next = apply ? apply(raw) : raw;
       setText(next);
-      // Zaznaczenie z otwarcia jest już zużyte: albo kursor na koniec (maska przestawia
-      // znaki, więc natywna pozycja przestaje odpowiadać temu, co widać), albo
-      // z powrotem w ręce pola.
-      setSelection(apply ? { start: next.length, end: next.length } : undefined);
+      // Przy masce kursor na koniec (maska przestawia znaki, więc natywna pozycja
+      // przestaje odpowiadać temu, co widać); bez maski zaznaczenie zostaje w rękach
+      // pola.
+      setSelection(apply ? cursorAtEnd(next) : undefined);
     },
     [keyboard, mask],
   );
@@ -203,10 +203,15 @@ export function ReadingSheet({
           value={text}
           onChangeText={change}
           keyboardType={KEYBOARD_TYPE[keyboard]}
-          // Patrz nota przy `selection`. Bez `onSelectionChange` z rozmysłem: kursor
-          // postawiony palcem zostaje, gdzie pilot go postawił, bo tapnięcie nie
-          // przerysowuje pola - a sterowana pozycja nie zależy od kolejności zdarzeń.
+          // Patrz nota przy `selection`. `onSelectionChange` wyłącznie ZWALNIA
+          // sterowanie - pozycji ze zdarzenia nie wpisuje do stanu nigdy, bo zdarzenie
+          // potrafi dojść z pozycją sprzed maski; dlatego porównanie z CELEM.
           selection={selection}
+          onSelectionChange={(e) => {
+            if (selectionApplied(selection, e.nativeEvent.selection)) {
+              setSelection(undefined);
+            }
+          }}
           // Podkładka zaznaczenia neutralna (`colors.selection`) - akcent w tym samym
           // odcieniu co cyfry dawał jednolity prostokąt zamiast czytelnego zaznaczenia.
           selectionColor={theme.colors.selection}

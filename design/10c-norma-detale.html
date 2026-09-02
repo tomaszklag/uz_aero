@@ -60,7 +60,7 @@
     display:flex; align-items:center; justify-content:space-between;
     padding:8px 14px; border-bottom:1px solid var(--border); flex-shrink:0;
   }
-  /* `min-width:0` - bez tego długi podtytuł rozpycha kolumnę i wchodzi pod „Dzień" */
+  /* `min-width:0` - bez tego długa sygnatura w tytule rozpycha kolumnę i wchodzi pod „Dzień" */
   .app-header-center { display:flex; flex-direction:column; align-items:center; gap:1px; flex:1; min-width:0; }
   .app-header-right { display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
   /* Powrót do „Mój dzień" - ten ekran jest odnogą osi pilota, nie etapem flow */
@@ -80,10 +80,6 @@
   .cw-text { font-size:11px; color:var(--text-secondary); line-height:1.55; }
   .cw-text b { color:var(--blue); font-weight:600; }
   .screen-title { font-family:var(--font-display); font-size:20px; letter-spacing:2px; color:var(--text-primary); }
-  .header-subtitle {
-    font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px;
-    text-transform:uppercase; color:var(--text-muted);
-  }
   .badge {
     font-family:var(--font-mono); font-size:10px; letter-spacing:1px;
     color:var(--green); background:var(--green-muted); border:1px solid var(--green-border);
@@ -381,9 +377,11 @@
 
   <div class="screen">
     <!-- App Header -->
-    <!-- TYTUŁEM JEST SYGNATURA (przegląd 2026-09-02): wiersz „OPERACJA" nad nią
-         powtarzał kategorię, którą sygnatura już niesie, i kosztował linię nagłówka -
-         podtytułem zostaje samo zadanie. „OPERACJA" wraca wyłącznie bez sygnatury
+    <!-- TYTUŁEM JEST SYGNATURA I STOI SAMA (przegląd 2026-09-02, dwie tury): wiersz
+         „OPERACJA" nad nią powtarzał kategorię, którą sygnatura już niesie; podtytuł
+         z zadaniem odpadł drugą uwagą - „daj tylko sygnaturę, nie ma sensu pisać,
+         jakie to zadanie": rodzaj operacji nie identyfikuje lotu, a nagłówek jest od
+         tożsamości. „OPERACJA" ze znakiem i datą wraca wyłącznie bez sygnatury
          (operacja niekompletna nie ma jej z czego złożyć). Wcześniejsze nazwy:
          „ROZLICZENIE" odeszło przy issue #38 pkt 1 (bramka „ZATWIERDŹ → SYNC"
          zniknęła przy issue #23). Chip SYNC USUNIĘTY: online nie rysuje nic
@@ -395,7 +393,6 @@
       </a>
       <div class="app-header-center">
         <span class="screen-title">SP-AXA/2026-08-06/TMK/1</span>
-        <span class="header-subtitle">SKOKI</span>
       </div>
       <!-- Bez plakietki z liczbą lotów (issue #40) - patrz komentarz na 10. -->
       <div class="app-header-right"></div>

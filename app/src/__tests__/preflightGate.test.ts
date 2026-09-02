@@ -19,19 +19,19 @@ describe('bramka ROZPOCZNIJ LOT (02a)', () => {
     expect(preflightBlocker(READY)).toBeNull();
   });
 
-  it('bez odczytów paliwa i MH - łańcuch nie ma się od czego zacząć', () => {
+  it('bez odczytów paliwa i MH powód jest INSTRUKCJĄ, bez doklejki o łańcuchu', () => {
+    // Uwaga z urządzenia (2026-09-02): powód mówi, CO zrobić - nie tłumaczy wymogu
+    // ani budowy rejestru („rozpoczną nowe ogniwo łańcucha" wycięte).
     expect(preflightBlocker({ ...READY, fuelL: 0, mh: 0 })).toBe(
-      'Wprowadź odczyty paliwa i MH z liczników - rozpoczną nowe ogniwo łańcucha',
+      'Wprowadź odczyty paliwa i MH z liczników',
     );
     // Jedna wartość > 0 wystarcza (zachowanie sprzed issue #60 - przekazanie zwykle
     // podstawia obie, a wpisanie jednej znaczy, że pilot jest przy licznikach).
     expect(preflightBlocker({ ...READY, fuelL: 0, oilL: 10.2 })).toBeNull();
   });
 
-  it('bez pomiaru oleju stoi z powodem - krok wymagany (issue #60)', () => {
-    expect(preflightBlocker({ ...READY, oilL: null })).toBe(
-      'Zmierz olej i wpisz pomiar z bagnetu - odczyt przy przejęciu jest obowiązkowy',
-    );
+  it('bez pomiaru oleju stoi z instrukcją - bez „jest obowiązkowy" (uwaga 2026-09-02)', () => {
+    expect(preflightBlocker({ ...READY, oilL: null })).toBe('Zmierz olej i wpisz pomiar');
   });
 
   it('cofnięty licznik wobec przekazania blokuje z powodem', () => {

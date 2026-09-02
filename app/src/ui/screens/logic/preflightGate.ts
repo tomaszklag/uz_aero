@@ -28,17 +28,27 @@ export interface PreflightGateInput {
   handoverMh: number | null;
 }
 
-/** Powód blokady ROZPOCZNIJ LOT; `null` = wolno lecieć. */
+/**
+ * Powód blokady ROZPOCZNIJ LOT; `null` = wolno lecieć.
+ *
+ * POWÓD JEST INSTRUKCJĄ, NIE UZASADNIENIEM WYMOGU (uwaga z urządzenia, 2026-09-02:
+ * „po co pisać na przycisku, że odczyt przy przejęciu jest obowiązkowy"). Skoro
+ * przycisk stoi, wymóg jest oczywisty - zdanie ma mówić, CO zrobić, żeby ruszył.
+ * Doklejki tłumaczące wymóg („jest obowiązkowy") albo budowę rejestru („rozpoczną
+ * nowe ogniwo łańcucha") to kategoria przypisów wycięta przy issue #43/#72.
+ * Zostaje wyjątek trzeciego powodu: cofnięty licznik to blokada NIEwidoczna
+ * z kontrolki, więc niesie regułę, którą łamie (issue #55).
+ */
 export function preflightBlocker(input: PreflightGateInput): string | null {
   // Koniunkcja ŚWIADOMIE (zachowanie sprzed issue #60): przekazanie zwykle podstawia
   // obie wartości, a wpisanie jednej znaczy, że pilot stoi przy licznikach.
   if (input.fuelL <= 0 && input.mh <= 0) {
-    return 'Wprowadź odczyty paliwa i MH z liczników - rozpoczną nowe ogniwo łańcucha';
+    return 'Wprowadź odczyty paliwa i MH z liczników';
   }
   // Olej nie ma przekazania, które by go podstawiło - pomiar jest zawsze aktem pilota,
   // więc bramka pyta o sam fakt wpisu, nie o wartość.
   if (input.oilL == null) {
-    return 'Zmierz olej i wpisz pomiar z bagnetu - odczyt przy przejęciu jest obowiązkowy';
+    return 'Zmierz olej i wpisz pomiar';
   }
   if (input.handoverMh != null && input.mh - input.handoverMh < 0) {
     return 'Licznik motogodzin nie może być niższy niż przekazany - popraw odczyt';

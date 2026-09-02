@@ -288,6 +288,13 @@ go nie nazwał). Odtąd jest **`components/input/TimeStepper.tsx`** i ona ustala
   różnica siedzi w kontraście. Po dołożeniu koloru do palet: `npm run tokens:css` w `admin/`
 - Dropdowny jako lista kart do wyboru (nie natywny `<select>`) - widoczne opcje, zaznaczona = zielona obramówka
 - Operacje/typy jako siatka kart z ikonami
+- **Pole wpisu w arkuszu otwiera się z KURSOREM NA KOŃCU wartości, nie z zaznaczoną
+  całością** (uwaga z urządzenia, 2026-09-02, arkusz oleju): sterowane „zaznacz
+  wszystko" trzymane aż do pierwszej cyfry przywracało się przy każdym odświeżeniu
+  pola i nie dawało postawić kursora tapnięciem. Sterowanie zaznaczeniem jest
+  jednorazowe i oddaje się polu, gdy doniesie zadaną pozycję - mechanika i historia:
+  `components/sheets/sheetSelection.ts` + `docs/architektura-kodu.md` §2 (tam też
+  reguła `useSheetInputFocus`: klawiatura wchodzi razem z arkuszem)
 
 ### Arkusz (popup) - jedna rama dla wszystkich (2026-08-14)
 Arkusz wysuwany od dołu jest **wstawką NAD ekranem i musi to być widać**: nad nim zostaje
@@ -445,10 +452,13 @@ wpisać w zgłoszenie ani znaleźć wzrokiem na liście.
   reguła, przez którą nazwę karty arkusza liczy wyłącznie serwer
 - gdzie stoi: kafelek operacji (01, 12), nagłówek ekranu 10, potwierdzenie usunięcia
   wpisu (10L), grid i nagłówek DZIENNIKA w panelu, potwierdzenie unieważnienia w panelu
-- **na ekranie 10 sygnatura JEST tytułem nagłówka** (przegląd 2026-09-02): wiersz
-  „OPERACJA" nad nią powtarzał kategorię, którą sygnatura już niesie, i kosztował
-  linię - podtytułem zostaje samo zadanie. „OPERACJA" wraca wyłącznie bez sygnatury
-  (operacja niekompletna nie ma jej z czego złożyć); `headerIdentity` w `StatsScreen`
+- **na ekranie 10 sygnatura JEST tytułem nagłówka I STOI SAMA** (przegląd 2026-09-02,
+  w dwóch turach): wiersz „OPERACJA" nad nią powtarzał kategorię, którą sygnatura już
+  niesie, i kosztował linię; podtytuł z zadaniem („SKOKI") odpadł drugą uwagą z tego
+  samego dnia - „daj tylko sygnaturę, nie ma sensu pisać, jakie to zadanie": rodzaj
+  operacji nie identyfikuje lotu, a nagłówek jest od tożsamości. „OPERACJA" ze
+  znakiem i datą w podtytule wraca wyłącznie bez sygnatury (operacja niekompletna
+  nie ma jej z czego złożyć); `headerIdentity` w `StatsScreen`
 - **W KARCIE ARKUSZA SYGNATURY NIE MA** i to nie jest przeoczenie: kolumna `Operacja`
   spina sześć bloków JEDNEGO dokumentu etykietami `S1`, `S2`, a karta jest dobą
   SAMOLOTU - numer z sygnatury (doba PILOTA) nie zgadzałby się z kolejnością zmian
@@ -1037,7 +1047,8 @@ Dziesięć uwag z urządzenia wokół wpisu ręcznego (15) i design systemu:
   notatka wyglądała, jakby się nie zapisała. Bez `numberOfLines`
 - **arkusz z polem wpisu otwiera się Z KLAWIATURĄ**: hook `useSheetInputFocus`
   (drabinka prób) - callback ref na polu + `onShow` przez ramę `SheetSurface.onShow`
-  → `Sheet.onShow`; korzystają AirfieldSheet, TextEntrySheet, ReadingSheet. TRZY
+  → `Sheet.onShow`; korzystają AirfieldSheet, TextEntrySheet, ReadingSheet i OilSheet
+  (dołączony 2026-09-02 - otwierał się gołym `autoFocus`, czyli bez klawiatury). TRZY
   podejścia JUŻ zawiodły i nie wracamy do nich (historia w `hooks/keyboardFocus.ts`):
   `autoFocus` odpala się przy montowaniu, zanim okno modala istnieje; pojedyncze
   `focus()` w `onShow` bywa przed fokusem IME okna i ustawia fokus widoku BEZ
@@ -1554,6 +1565,33 @@ na osi przez unieważnienie i dopisanie, parytet z tankowaniem) - dochodziła pi
 - mockupy: karta na 10 (odczyt + dolewka), 10A (odczyt bez dolewki), 10B (kreski -
   operacja sprzed modułu), 10D (tryb edycji, bez zmian względem odczytu); podpisy
   przejęcia na 10A/10D dostały wreszcie człon „olej …" z issue #60
+
+## Sekcja oleju na 02A: podziałka zamiast tekstu, podpowiedź w arkuszu (2026-09-02)
+Uwagi z urządzenia do kroku liczników (NOWY LOT · 3/3):
+- **adnotacja „Twój pomiar z bagnetu" USUNIĘTA**: pomiar jest aktem pilota z definicji,
+  więc poświadczanie własnego wpisu niczego nie odróżniało (reguła SyncChipa). Sekcja
+  oleju nie nosi odtąd ŻADNEJ adnotacji świeżości - `Readout.freshness` jest opcjonalny,
+  a `FreshnessNote` straciło parametry własnych napisów (jedynym użytkownikiem była ta
+  sekcja; parametr bez drugiego użytkownika to zaproszenie do rozjazdu słownika)
+- **„min/zbiornik" mówi PODZIAŁKA, nie tekst**: `LevelBar` pod wartością, jak przy
+  paliwie - wypełnienie = stan PO dolewce względem zbiornika, bursztynowa kreska =
+  minimum (`LevelBar.markerRatio`), pod minimum wypełnienie bursztynieje. Arytmetyka
+  w `oilClaimView().gauge` (testy); bez pojemności podziałki nie ma, bez minimum -
+  znacznika. Znacznik jest bursztynowy niezależnie od tonu wypełnienia: to granica
+  ostrzeżenia, nie część poziomu
+- **podpowiedź (ostatni pomiar → oczekiwanie z normy) mieszka W ARKUSZU** („koncepcja
+  ciekawa, ale lepiej dać to do popup"): szlak sekcji zniknął, `oilClaimView().sheetRows`
+  stoją nad wierszami konfiguracji arkusza 02I - pilot porównuje z nimi liczbę w chwili
+  wpisywania, a stempel „21 CZE 07:02" niesie przy okazji wiek podpowiedzi (osobna
+  adnotacja świeżości nie ma czego kwalifikować). Na ekranie zostaje: ile oleju jest
+  i czy dolano - podpis wyłącznie przy dolewce, bo „bez dolewki" przy każdym przejęciu
+  niczego by nie odróżniało
+- **powód blokady jest INSTRUKCJĄ, nie uzasadnieniem wymogu** („po co pisać na
+  przycisku, że odczyt przy przejęciu jest obowiązkowy"): z `preflightBlocker` wycięte
+  doklejki „- odczyt przy przejęciu jest obowiązkowy" i „- rozpoczną nowe ogniwo
+  łańcucha" - skoro przycisk stoi, wymóg jest oczywisty, a budowa rejestru nie jest
+  pytaniem pilota (kategoria przypisów z issue #43/#72). Zostaje pełne zdanie
+  o cofniętym liczniku: ta blokada jest niewidoczna z kontrolki (issue #55)
 
 ## Usunięcie CAŁEGO wpisu = `session_void` (uwaga z urządzenia, 2026-08-30)
 „Daj możliwość usunięcia całego lotu. Ta operacja powinna być poprzedzona jeszcze

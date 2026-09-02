@@ -39,7 +39,6 @@ function input(over: Partial<OilClaimInput> = {}): OilClaimInput {
     lastOil: LAST,
     currentMh: 1234.5,
     mhFormat: 'hhmm',
-    synced: true,
     enteredL: null,
     addedL: null,
     pilotName: (id) => (id === 'pk' ? 'J. Kowalski' : (id ?? '?')),
@@ -48,54 +47,49 @@ function input(over: Partial<OilClaimInput> = {}): OilClaimInput {
 }
 
 describe('sekcja oleju - przed pomiarem', () => {
-  it('wartość pusta, świeżość live, szlak: ostatni pomiar + oczekiwanie z normy', () => {
+  it('wartość pusta; podpowiedź (ostatni pomiar + oczekiwanie) to WIERSZE ARKUSZA', () => {
+    // Uwaga z urządzenia (2026-09-02): historia przy pomiarze idzie do arkusza,
+    // na ekranie zostaje sam stan pilota.
     const v = oilClaimView(input());
     expect(v.value).toBeNull();
-    expect(v.freshness).toBe('live');
+    expect(v.gauge).toBeNull();
 
-    expect(v.trail).toHaveLength(2);
-    expect(v.trail[0]!.title).toContain('Ostatni pomiar');
-    expect(v.trail[0]!.title).toContain('J. Kowalski');
-    expect(v.trail[0]!.meta).toContain(oilLitres(10.6));
-    expect(v.trail[0]!.meta).toContain(motoHours(1230.5, 'hhmm'));
+    expect(v.sheetRows).toHaveLength(2);
+    expect(v.sheetRows[0]!.label).toContain('Ostatni pomiar');
+    expect(v.sheetRows[0]!.label).toContain('J. Kowalski');
+    expect(v.sheetRows[0]!.label).toContain('21 CZE 07:02');
+    expect(v.sheetRows[0]!.value).toBe(oilLitres(10.6));
 
     // ΔMH = 4,0 h · norma 0,12 L/h → oczekiwane 10,6 − 0,48 ≈ 10,1 L
-    expect(v.trail[1]!.title).toContain(motoHours(4, 'hhmm'));
-    expect(v.trail[1]!.meta).toContain(oilLitres(10.12));
-    expect(v.trail[1]!.meta).toContain('0,12 L/h');
+    expect(v.sheetRows[1]!.label).toContain(motoHours(4, 'hhmm'));
+    expect(v.sheetRows[1]!.value).toContain(oilLitres(10.12));
   });
 
-  it('dolewki zapisane po pomiarze wchodzą do oczekiwania', () => {
+  it('dolewki zapisane po pomiarze wchodzą do oczekiwania i mają własny wiersz', () => {
     const v = oilClaimView(input({ lastOil: { ...LAST, addedSinceL: 1.0 } }));
+    // dolewka jest też faktem rachunku - pilot ma wiedzieć, że oczekiwanie ją widzi
+    expect(v.sheetRows[1]).toEqual({ label: 'Dolano od pomiaru', value: `+${oilLitres(1.0)}` });
     // 10,6 + 1,0 − 0,48 ≈ 11,1 L
-    expect(v.trail[1]!.meta).toContain(oilLitres(11.12));
-    // dolewka jest też faktem szlaku - pilot ma wiedzieć, że rachunek ją widzi
-    expect(v.trail[0]!.meta).toContain(`+${oilLitres(1.0)}`);
+    expect(v.sheetRows[2]!.value).toContain(oilLitres(11.12));
   });
 
-  it('offline: świeżość cache; brak historii: brak i pusty szlak', () => {
-    expect(oilClaimView(input({ synced: false })).freshness).toBe('cache');
-
-    const none = oilClaimView(input({ lastOil: null }));
-    expect(none.freshness).toBe('brak');
-    expect(none.trail).toEqual([]);
+  it('brak historii: arkusz bez wierszy podpowiedzi', () => {
+    expect(oilClaimView(input({ lastOil: null })).sheetRows).toEqual([]);
   });
 
   it('bez normy / bez kotwicy MH / przy cofniętym liczniku oczekiwania NIE MA', () => {
     const noNorm = oilClaimView(input({ config: { ...CONFIG, normLPerH: null } }));
-    expect(noNorm.trail).toHaveLength(1);
+    expect(noNorm.sheetRows).toHaveLength(1);
 
     const noAnchor = oilClaimView(input({ lastOil: { ...LAST, atMh: null } }));
-    expect(noAnchor.trail).toHaveLength(1);
+    expect(noAnchor.sheetRows).toHaveLength(1);
 
     const regressed = oilClaimView(input({ currentMh: 1230.0 }));
-    expect(regressed.trail).toHaveLength(1);
+    expect(regressed.sheetRows).toHaveLength(1);
   });
 
-  it('podpis: konfiguracja + procedura; bez konfiguracji zostaje sama procedura', () => {
-    expect(oilClaimView(input()).caption).toBe(
-      'min 8,5 L · zbiornik 11,4 L · pomiar przy zimnym silniku',
-    );
+  it('podpis to sama instrukcja pomiaru - min/zbiornik mówi podziałka, nie tekst', () => {
+    expect(oilClaimView(input()).caption).toBe('pomiar przy zimnym silniku');
     expect(oilClaimView(input({ config: NO_CONFIG })).caption).toBe(
       'pomiar przy zimnym silniku',
     );
@@ -103,18 +97,36 @@ describe('sekcja oleju - przed pomiarem', () => {
 });
 
 describe('sekcja oleju - po wpisie', () => {
-  it('wartość z pomiaru, świeżość manual, podpis z rachunkiem dolewki', () => {
+  it('wartość z pomiaru, podpis z rachunkiem dolewki', () => {
     const v = oilClaimView(input({ enteredL: 8.2, addedL: 1.0 }));
     expect(v.value).toBe('8,2');
-    expect(v.freshness).toBe('manual');
     expect(v.caption).toContain(`dolano +${oilLitres(1.0)}`);
     expect(v.caption).toContain(`po dolewce ${oilLitres(9.2)}`);
   });
 
-  it('bez dolewki podpis wraca do konfiguracji (instrukcja pomiaru już zbędna)', () => {
+  it('bez dolewki podpisu nie ma wcale - stan domyślny nie dostaje zdania', () => {
     const v = oilClaimView(input({ enteredL: 10.2 }));
     expect(v.value).toBe('10,2');
-    expect(v.caption).toBe('min 8,5 L · zbiornik 11,4 L');
+    expect(v.caption).toBe('');
+  });
+
+  it('podziałka: stan po dolewce na tle zbiornika, minimum znacznikiem', () => {
+    // 8,2 + 1,0 = 9,2 L na zbiorniku 11,4 L; minimum 8,5 L pod znacznikiem.
+    const v = oilClaimView(input({ enteredL: 8.2, addedL: 1.0 }));
+    expect(v.gauge).toEqual({
+      ratio: 9.2 / 11.4,
+      minRatio: 8.5 / 11.4,
+      belowMin: false,
+    });
+
+    // Pod minimum wypełnienie ostrzega (bursztyn decyduje się tutaj, nie w JSX).
+    expect(oilClaimView(input({ enteredL: 7.8 })).gauge).toMatchObject({ belowMin: true });
+
+    // Bez pojemności nie ma tła podziałki; bez minimum - znacznika.
+    expect(oilClaimView(input({ enteredL: 8.2, config: NO_CONFIG })).gauge).toBeNull();
+    expect(
+      oilClaimView(input({ enteredL: 8.2, config: { ...CONFIG, minL: null } })).gauge,
+    ).toMatchObject({ minRatio: null, belowMin: false });
   });
 
   it('poniżej minimum ostrzega z liczbą; dolewka gasi część „dolej", NIE diagnostykę', () => {
@@ -139,11 +151,11 @@ describe('sekcja oleju - po wpisie', () => {
     expect(oilClaimView(input({ enteredL: 10.0 })).warning).toBeNull();
   });
 
-  it('dolewka w ciemno (bagnet gorący): wartość pusta, manual, podpis z ilością', () => {
+  it('dolewka w ciemno (bagnet gorący): wartość pusta, podpis z ilością, bez podziałki', () => {
     const v = oilClaimView(input({ enteredL: null, addedL: 1.0 }));
     expect(v.value).toBeNull();
-    expect(v.freshness).toBe('manual');
     expect(v.caption).toContain(`dolano +${oilLitres(1.0)}`);
+    expect(v.gauge).toBeNull();
     expect(v.warning).toBeNull();
   });
 });

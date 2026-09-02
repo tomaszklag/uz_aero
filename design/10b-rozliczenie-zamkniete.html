@@ -60,7 +60,7 @@
     display:flex; align-items:center; justify-content:space-between;
     padding:8px 14px; border-bottom:1px solid var(--border); flex-shrink:0;
   }
-  /* `min-width:0` - bez tego długi podtytuł rozpycha kolumnę i wchodzi pod „Dzień" */
+  /* `min-width:0` - bez tego długa sygnatura w tytule rozpycha kolumnę i wchodzi pod „Dzień" */
   .app-header-center { display:flex; flex-direction:column; align-items:center; gap:1px; flex:1; min-width:0; }
   .app-header-right { display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
   /* Powrót do „Mój dzień" - ten ekran jest odnogą osi pilota, nie etapem flow */
@@ -85,10 +85,6 @@
   .correction-window.closed .cw-icon { color:var(--amber); }
   .correction-window.closed .cw-text b { color:var(--amber); }
   .screen-title { font-family:var(--font-display); font-size:20px; letter-spacing:2px; color:var(--text-primary); }
-  .header-subtitle {
-    font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px;
-    text-transform:uppercase; color:var(--text-muted);
-  }
   .badge {
     font-family:var(--font-mono); font-size:10px; letter-spacing:1px;
     color:var(--green); background:var(--green-muted); border:1px solid var(--green-border);
@@ -353,7 +349,6 @@
       </a>
       <div class="app-header-center">
         <span class="screen-title">SP-KLM/2026-07-28/TMK/1</span>
-        <span class="header-subtitle">PRZELOT</span>
       </div>
       <div class="app-header-right">
         <!-- Tryb ekranu wprost: bez tej plakietki brak ołówków wygląda jak awaria,

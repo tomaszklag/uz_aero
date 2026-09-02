@@ -328,15 +328,14 @@ export function PreflightReadingsScreen({
     lastOil: handover?.oil ?? null,
     currentMh: draft.mh,
     mhFormat,
-    synced,
     enteredL: draft.oilL,
     addedL: draft.oilAddedL,
     pilotName,
   });
+  // Podpowiedź (ostatni pomiar → oczekiwanie) stoi w ARKUSZU, nad wierszami
+  // konfiguracji - uwaga z urządzenia, 2026-09-02; pełny wywód w `logic/oilPreflight.ts`.
   const oilSheetRows: SheetRow[] = [
-    ...(oilView.expectedL != null
-      ? [{ label: 'Oczekiwane wg normy', value: `≈ ${oilLitres(oilView.expectedL)}` }]
-      : []),
+    ...oilView.sheetRows,
     ...(oilConfig.minL != null
       ? [{ label: `Minimum przed lotem · ${aircraft.reg}`, value: oilLitres(oilConfig.minL) }]
       : []),
@@ -458,23 +457,33 @@ export function PreflightReadingsScreen({
         {/* ── olej silnikowy (issue #60) - POMIAR, nie potwierdzenie ──────────
             Paliwo i MH wyżej pilot POTWIERDZA (przekazane wartości stoją wpisane);
             oleju nikt nie przekazuje - bagnet czyta się TERAZ. Dlatego wartość zaczyna
-            PUSTA w każdym stanie świeżości (prefill oczekiwaną fabrykowałby pomiar).
-            Pomiar jest krokiem WYMAGANYM (decyzja 2026-08-27) - bez niego ROZPOCZNIJ
-            LOT stoi z powodem (`preflightBlocker`). Tag „opcjonalnie" tu NIE stoi,
-            bo wymagalność jest stanem domyślnym formularza (oznaczamy wyłącznie to,
-            co opcjonalne). Sekcja stoi ZA blokiem przekazania, bo nie jest jego częścią. */}
+            PUSTA (prefill oczekiwaną fabrykowałby pomiar). Pomiar jest krokiem
+            WYMAGANYM (decyzja 2026-08-27) - bez niego ROZPOCZNIJ LOT stoi z powodem
+            (`preflightBlocker`). Tag „opcjonalnie" tu NIE stoi, bo wymagalność jest
+            stanem domyślnym formularza. Sekcja stoi ZA blokiem przekazania, bo nie
+            jest jego częścią.
+
+            PO PRZEGLĄDZIE 2026-09-02 sekcja mówi wyłącznie: ile oleju jest (pomiar,
+            podziałka ze znacznikiem minimum - jak przy paliwie) i czy dolano. Bez
+            adnotacji świeżości („Twój pomiar z bagnetu" poświadczał akt, który jest
+            aktem z definicji), bez „min/zbiornik" w podpisie (mówi je podziałka)
+            i bez szlaku podpowiedzi - ten stoi w arkuszu (`oilSheetRows`). */}
         <Readout
           label="Olej silnikowy"
           value={oilView.value}
           unit="L"
-          freshness={oilView.freshness}
-          syncedAt={syncedAt}
           caption={oilView.caption !== '' ? oilView.caption : undefined}
+          gauge={
+            oilView.gauge != null ? (
+              <LevelBar
+                ratio={oilView.gauge.ratio}
+                tone={oilView.gauge.belowMin ? 'amber' : 'neutral'}
+                markerRatio={oilView.gauge.minRatio}
+              />
+            ) : undefined
+          }
           missing={false}
-          missingNote="Brak historii - pierwszy pomiar zacznie łańcuch"
-          manualNote="Twój pomiar z bagnetu"
           correctLabel={draft.oilL != null || draft.oilAddedL != null ? 'Koryguj' : 'Wpisz pomiar'}
-          trail={oilView.trail}
           onCorrect={() => setEditing('oil')}
         />
 

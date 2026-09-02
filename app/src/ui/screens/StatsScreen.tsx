@@ -88,7 +88,6 @@ import { fieldChanges } from './logic/fieldChanges';
 import { fuelBalance, mhBalance } from './logic/sessionBalance';
 import { oilCard } from './logic/sessionOil';
 import { missingSessionNote, noteTargetUuid, sessionNotes } from './logic/sessionNotes';
-import { operationTag } from './logic/operations';
 
 /** Wysokość miniatury śladu - proporcje z mockupu 10 przy szerokości telefonu. */
 const THUMB_HEIGHT = 168;
@@ -328,12 +327,7 @@ export function StatsScreen({
     projection.drops.count > 0 ||
     (projection.operation != null && isJumpOperation(projection.operation));
 
-  const header = headerIdentity(
-    signature,
-    projection.aircraftId,
-    projection.claimedAt,
-    projection.operation,
-  );
+  const header = headerIdentity(signature, projection.aircraftId, projection.claimedAt);
 
   return (
     <Screen
@@ -897,13 +891,15 @@ function issuesTitle(count: number): string {
 }
 
 /**
- * Nagłówek ekranu: SYGNATURA JEST TYTUŁEM („SP-AXA/2026-09-01/AKO/1", issue #68),
- * a podtytułem samo zadanie („SKOKI"). Słowo „OPERACJA" nad sygnaturą powtarzało
- * kategorię, którą sygnatura już niesie - uwaga z przeglądu 2026-09-02: „wystarczy
- * sama sygnatura i zaoszczędzimy miejsce" (mockup 10).
+ * Nagłówek ekranu: SYGNATURA JEST TYTUŁEM („SP-AXA/2026-09-01/AKO/1", issue #68)
+ * i stoi SAMA. Wiersz „OPERACJA" nad nią odpadł przy przeglądzie 2026-09-02
+ * (powtarzał kategorię, którą sygnatura już niesie), a podtytuł z zadaniem uwagą
+ * z urządzenia z tego samego dnia: „daj tylko sygnaturę, nie ma sensu pisać, jakie
+ * to zadanie" - rodzaj operacji nie identyfikuje lotu, a nagłówek jest od tożsamości.
  *
  * Bez sygnatury (operacja niekompletna, strumień legacy) tytułem wraca „OPERACJA",
- * a podtytuł skleja dawną parę znak · data - sygnatury nie ma z czego złożyć.
+ * a podtytuł skleja dawną parę znak · data - sygnatury nie ma z czego złożyć,
+ * a bez tej pary ekran nie mówiłby, o którym locie w ogóle jest.
  *
  * Godzin tu nie ma - przejęcie i zdanie stoją na osi czasu razem z odczytami, a trzeci
  * napis w nagłówku walczyłby z nimi o tę samą linię.
@@ -912,18 +908,12 @@ function headerIdentity(
   signature: string | null,
   aircraftId: string | null,
   claimedAt: number | null,
-  operation: Parameters<typeof operationTag>[0] | null,
 ): { title: string; subtitle: string | undefined } {
-  const task = operation != null ? operationTag(operation) : null;
-
   if (signature != null) {
-    return { title: signature, subtitle: task ?? undefined };
+    return { title: signature, subtitle: undefined };
   }
 
-  // Rodzaj operacji stoi NA KOŃCU i to jest odporność na skracanie: podtytuł ma
-  // `numberOfLines={1}`, więc przy wąskim nagłówku ucina się OGON - czyli „SKOKI",
-  // a nie identyfikator.
-  const parts = [aircraftId, claimedAt != null ? dateUtcDayMonth(claimedAt) : null, task].filter(
+  const parts = [aircraftId, claimedAt != null ? dateUtcDayMonth(claimedAt) : null].filter(
     (part): part is string => part != null && part !== '',
   );
   return { title: 'OPERACJA', subtitle: parts.length > 0 ? parts.join(' · ') : undefined };

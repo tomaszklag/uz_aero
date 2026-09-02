@@ -40,24 +40,16 @@ export interface FreshnessNoteProps {
   state: Freshness;
   /** Czas ostatniej synchronizacji - pokazywany przy `cache`. */
   syncedAt?: string | null;
-  /** Tekst dla `brak`; domyślnie wersja z mockupu. */
-  missingLabel?: string;
-  /**
-   * Tekst dla `manual`; domyślnie wersja z licznika. Sekcja oleju (issue #60) podaje
-   * własny, bo jej wartość czyta się z bagnetu, nie z licznika - a adnotacja
-   * o pochodzeniu, która myli przyrząd, przestaje poświadczać cokolwiek.
-   */
-  manualLabel?: string;
   style?: ViewStyle;
 }
 
-export function FreshnessNote({
-  state,
-  syncedAt,
-  missingLabel = 'Brak danych - wpisz z licznika',
-  manualLabel = 'Twój odczyt z licznika',
-  style,
-}: FreshnessNoteProps) {
+/*
+ * Napisy są STAŁE, nie parametry: własne odmiany (`missingLabel`, `manualLabel`) miała
+ * wyłącznie sekcja oleju, a ta od 2026-09-02 adnotacji nie nosi wcale (pomiar pilota
+ * nie ma czego poświadczać, a podpowiedź mieszka w arkuszu ze swoim stemplem).
+ * Parametr bez drugiego użytkownika to zaproszenie do rozjazdu słownika.
+ */
+export function FreshnessNote({ state, syncedAt, style }: FreshnessNoteProps) {
   const { theme } = useTheme();
 
   if (state === 'live') return null;
@@ -66,12 +58,12 @@ export function FreshnessNote({
   const c = toneColors(theme, manual ? 'green' : 'amber');
 
   const label = manual
-    ? manualLabel
+    ? 'Twój odczyt z licznika'
     : state === 'cache'
       ? syncedAt != null
         ? `Ostatnie pobrane · ${syncedAt}`
         : 'Ostatnie pobrane · z cache'
-      : missingLabel;
+      : 'Brak danych - wpisz z licznika';
 
   return (
     <View style={[styles.row, style]}>

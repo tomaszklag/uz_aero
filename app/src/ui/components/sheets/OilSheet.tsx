@@ -20,9 +20,11 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
 import { useTheme } from '../../theme';
+import { useSheetInputFocus } from '../../hooks/useSheetInputFocus';
 import { AppText } from '../foundation/AppText';
 import { Tag } from '../status/Tag';
 import { Sheet, type SheetRow } from './Sheet';
+import { cursorAtEnd, selectionApplied, type SelectionRange } from './sheetSelection';
 import { toneColors } from '../tone';
 
 export interface OilSheetProps {
@@ -66,22 +68,28 @@ export function OilSheet({
 
   const [levelText, setLevelText] = useState(initialLevelText);
   const [addedText, setAddedText] = useState(initialAddedText);
+  /* Klawiatura razem z arkuszem - drabinka `useSheetInputFocus`, jak w każdym arkuszu
+     z polem wpisu. Goły `autoFocus` (stan do 2026-09-02) odpalał się przy montowaniu,
+     zanim okno modala istniało - fokus bywał bez klawiatury (`hooks/keyboardFocus.ts`). */
+  const { inputRef, onShow } = useSheetInputFocus();
   /**
-   * Zaznaczenie STEROWANE przy otwarciu - ta sama mechanika i to samo uzasadnienie,
-   * co w `ReadingSheet` (zgłoszenie z urządzenia): Android z `selectAllOnFocus`
-   * odnawia zaznaczenie przy każdym programowym ustawieniu sterowanego tekstu
-   * i druga cyfra wymazywała pierwszą. Zaznaczamy raz, potem kursorem rządzi pole.
+   * Zaznaczenie STEROWANE przy otwarciu (nie `selectTextOnFocus` - ono odnawia
+   * zaznaczenie przy każdym programowym ustawieniu sterowanego tekstu i druga cyfra
+   * wymazywała pierwszą) - a pozycją jest KURSOR NA KOŃCU, nie zaznaczenie całości:
+   * sterowany select-all trzymany do pierwszej cyfry przywracał się przy każdym
+   * odświeżeniu pola i nie dawał postawić kursora tapnięciem (zgłoszenie z urządzenia,
+   * 2026-09-02 - właśnie z tego arkusza). Historia i reguła: `sheetSelection.ts`.
    */
-  const [levelSelection, setLevelSelection] = useState<
-    { start: number; end: number } | undefined
-  >({ start: 0, end: initialLevelText.length });
+  const [levelSelection, setLevelSelection] = useState<SelectionRange | undefined>(
+    cursorAtEnd(initialLevelText),
+  );
 
   // Każde otwarcie zaczyna od wartości ze szkicu - arkusz nie pamięta porzuconej edycji.
   useEffect(() => {
     if (!visible) return;
     setLevelText(initialLevelText);
     setAddedText(initialAddedText);
-    setLevelSelection({ start: 0, end: initialLevelText.length });
+    setLevelSelection(cursorAtEnd(initialLevelText));
   }, [visible, initialLevelText, initialAddedText]);
 
   const changeLevel = useCallback((raw: string) => {
@@ -130,17 +138,25 @@ export function OilSheet({
       confirmDisabledReason={invalid ? 'Nie rozumiem tej wartości - popraw wpis' : null}
       onConfirm={() => onConfirm(level.value, added.value)}
       onCancel={onCancel}
+      onShow={onShow}
     >
       <AppText variant="mono" tone="muted" style={styles.fieldLabel}>
         Bagnet - poziom zmierzony
       </AppText>
       <View style={[styles.inputRow, inputFrame(!level.ok)]}>
         <TextInput
-          autoFocus
+          ref={inputRef}
           value={levelText}
           onChangeText={changeLevel}
           keyboardType="decimal-pad"
           selection={levelSelection}
+          // Wyłącznie ZWALNIA sterowanie zaznaczeniem (nigdy nie wpisuje pozycji
+          // ze zdarzenia) - patrz nota przy `levelSelection`.
+          onSelectionChange={(e) => {
+            if (selectionApplied(levelSelection, e.nativeEvent.selection)) {
+              setLevelSelection(undefined);
+            }
+          }}
           selectionColor={theme.colors.selection}
           cursorColor={amber.accent}
           selectionHandleColor={amber.accent}
