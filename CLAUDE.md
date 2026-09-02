@@ -1422,14 +1422,13 @@ Zgłoszenie: „dla pierwszych lotów gdzie nie ma jeszcze danych nie ma jak wyl
 i odchyleń […] jak dodaję samolot to powinno być pole w którym wpiszę startowy stan
 motogodzin, paliwa w zbiorniku i oleju". Punkty 2 i 3 zgłoszenia (norma oleju, pojemność
 i minimum oleju) **były wdrożone przy issue #60** - doszły punkty 1 i 4.
-- **TO SĄ DWA RODZAJE LICZB i dlatego dwie karty w panelu.** `fuelNormLPerH` jest
-  KONFIGURACJĄ: liczbą z instrukcji użytkowania, prawdziwą póki silnik ten sam, siostrą
-  `oilNormLPerH`. `initialMh` / `initialFuelL` / `initialOilL` opisują JEDNĄ CHWILĘ -
-  co pokazywały przyrządy, gdy jednostka trafiła do UZ Aero. Zlanie ich w jedną grupę
-  wymusiłoby jedną regułę walidacji, a **zero znaczy w nich co innego**: norma zerowa
-  jest literówką (silnik bez paliwa nie istnieje), startowe zero - zwyczajnym faktem
-  (nowy silnik, puste zbiorniki). Norma oleju przeniosła się do karty „Zużycie
-  z dokumentacji", obok normy paliwa; w karcie „Olej" zostały zbiornik i minimum
+- **TO SĄ DWA RODZAJE LICZB** - `fuelNormLPerH` jest KONFIGURACJĄ: liczbą z instrukcji
+  użytkowania, prawdziwą póki silnik ten sam, siostrą `oilNormLPerH`. `initialMh` /
+  `initialFuelL` / `initialOilL` opisują JEDNĄ CHWILĘ - co pokazywały przyrządy, gdy
+  jednostka trafiła do UZ Aero. **Zero znaczy w nich co innego**: norma zerowa jest
+  literówką (silnik bez paliwa nie istnieje), startowe zero - zwyczajnym faktem (nowy
+  silnik, puste zbiorniki). Rozróżnienie żyje w WALIDACJI; „dwie karty w panelu"
+  (2026-09-01) przeżyły jeden dzień - patrz „uwagi z przeglądu" niżej
 - **NORMA NOMINALNA TO TRZECI SZCZEBEL DRABINY** `consumption/expectation.ts`
   (`ExpectationBasis: 'nominal'`), a nie druga arytmetyka: **wyliczona wygrywa
   z wpisaną** - model opisuje TEN egzemplarz, dokumentacja typ (ta sama kolejność, co
@@ -1469,6 +1468,35 @@ i minimum oleju) **były wdrożone przy issue #60** - doszły punkty 1 i 4.
   idempotentne). Cztery nowe odmowy w `domain/fleetGuards.ts`; sufity paliwa i oleju
   liczą się na stanie EFEKTYWNYM, więc obniżenie pojemności pod zapisany stan
   początkowy też odbija. Decyzje i tabela porównawcza: `docs/panel-2.0.md` §10
+
+### Uwagi z przeglądu karty samolotu (issue #66 c.d., 2026-09-02)
+Siedem uwag właściciela do karty z 2026-09-01; pełny zapis `docs/panel-2.0.md` §10.5:
+- **sekcje idą MEDIAMI: Paliwo / Olej / Motogodziny** - karty „Zużycie z dokumentacji"
+  i „Stan początkowy" USUNIĘTE, ich pola stoją w sekcji płynu/licznika, którego dotyczą.
+  Pojemność zbiorników wyprowadziła się z sekcji „Samolot", format licznika
+  z „Ustawień dla pilota"
+- **wszystkie pola tych sekcji są WYMAGANE** („olej musi być wymagany zawsze") -
+  plakietek „opcjonalne" nie ma, puste pole blokuje zapis samym brakiem (issue #55).
+  Egzekwuje FORMULARZ (`verdictOf`); serwer dalej przyjmuje `null`, bo stare wiersze
+  go mają. Wyjątek: „Aktualny stan" wymagany tylko PRZY TWORZENIU - przy edycji wymóg
+  blokowałby niezwiązaną poprawkę na starym wierszu
+- **„Stan początkowy" → „Aktualny stan"**, w dwóch trybach po `reading.source`
+  (`admin/src/screens/fleet/currentState.ts` + `InitialFieldsMode` w `aircraftForm.ts`):
+  do WPISANIA przy tworzeniu i póki jedynym źródłem jest wpis z panelu (`initial` /
+  brak odczytu - własną literówkę wolno poprawić); DO ODCZYTU, gdy maszynę prowadzi
+  dziennik - wartości z ostatniego odczytu z podpisem pochodzenia, a `PATCH` pól
+  `initial*` nie niesie WCALE (tryb `locked`; formatowanie licznika do napisu bywa
+  stratne, więc wykluczenie jest twarde, nie „i tak się nie zmieni")
+- **stan oleju wszedł do kontraktu floty**: `AdminAircraftReading.oilL` (pomiar
+  + dolewki po nim - SUMUJE SERWER, jak `oilAfterL`), `oilAddedSinceL` (do podpisu,
+  żeby suma nie udawała odczytu z bagnetu), `oilAt` (własny stempel - pomiar bywa dużo
+  starszy niż odczyt paliwa). Źródłem ten sam `pickHandover`, co `GET /reference`
+- **norma oleju liczy się na godzinę PRACY SILNIKA, jak paliwo** („nie na
+  motogodzinę") - zmiana DEKLARACJI (etykieta, docblock `ReferenceAircraft.oilNormLPerH`),
+  nie arytmetyki: `oilPreflight.expectation()` dalej mnoży stawkę przez ΔMH, bo licznik
+  to jedyny zegar maszyny znany offline przez cudze operacje (Hobbs mierzy 1:1,
+  obrotomierzowy na ziemi przyrasta wolniej - wtedy ΔMH jest przybliżeniem; dokładniejszy
+  przelicznik przyjdzie z modelem MH analityki w fazie 2 modułu oleju)
 
 ## Usunięcie CAŁEGO wpisu = `session_void` (uwaga z urządzenia, 2026-08-30)
 „Daj możliwość usunięcia całego lotu. Ta operacja powinna być poprzedzona jeszcze

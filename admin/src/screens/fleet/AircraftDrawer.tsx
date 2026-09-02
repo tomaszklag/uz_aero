@@ -1,9 +1,16 @@
 /**
  * UZ Aero - panel 2.0: karta samolotu (`#/samoloty/:id`).
  *
- * Trzy sekcje: czym jest maszyna, co z niej wynika dla pilota, olej (opcjonalny).
- * Panel 1.0 miał tu siedem sekcji, w tym kartę „Skutki zmiany" - sześć wierszy
- * porównań, z których przy typowej poprawce cztery mówiły „bez zmian".
+ * Sekcje idą MEDIAMI, nie rodzajami liczb (uwagi do issue #66): Samolot → Ustawienia
+ * dla pilota → Paliwo → Olej → Motogodziny → Usuwanie. Karty „Zużycie z dokumentacji"
+ * i „Stan początkowy" zniknęły - ich pola stoją w sekcji płynu/licznika, którego
+ * dotyczą, bo administrator myśli „olej", a nie „kategoria liczby". Wszystkie pola
+ * tych sekcji są WYMAGANE (pkt 1 i 5 uwag) - plakietek „opcjonalne" nie ma.
+ *
+ * == „AKTUALNY STAN" MA DWA TRYBY ==
+ * Przy tworzeniu (i dopóki jedynym źródłem jest wpis z panelu) pola stanu wypełnia
+ * administrator. Gdy maszynę prowadzi już dziennik, te same pola są DO ODCZYTU
+ * z wartościami z ostatniego odczytu - granicę i wartości daje `currentState.ts`.
  *
  * == PROG PALIWA JAKO JEDNA LINIJKA POD POLEM ==
  * Zmieniona pojemność zmienia próg, od którego serwer zgłasza rozjazd paliwa między
@@ -39,12 +46,14 @@ import {
   updateBodyOf,
   verdictOf,
   type AircraftDraft,
+  type InitialFieldsMode,
 } from './aircraftForm';
 import {
   aircraftConflictMessage,
   AIRCRAFT_IN_USE,
   fleetRefusalMessage,
 } from './aircraftRefusal';
+import { currentStateLocked, currentStateView } from './currentState';
 import { mhFormatExample, mhFormatLabel, MH_FORMAT_ORDER } from './fleetRows';
 
 interface AircraftDrawerProps {
@@ -86,8 +95,20 @@ export function AircraftDrawer({ id, fleet, listPending, manages, onClose }: Air
   const pending = create.isPending || update.isPending || remove.isPending;
   const error = create.error ?? update.error ?? remove.error;
 
-  const verdict = verdictOf(draft);
-  const changed = aircraft == null ? true : hasChanges(aircraft, draft);
+  // „Aktualny stan": do wpisania przy tworzeniu (WYMAGANY), do odczytu, gdy maszynę
+  // prowadzi już dziennik. Granicę wyznacza `reading.source` - patrz `currentState.ts`.
+  const state =
+    currentStateLocked(aircraft) && aircraft?.reading != null
+      ? currentStateView(aircraft.reading, draft.mhFormat)
+      : null;
+  const initialFields: InitialFieldsMode = creating
+    ? 'required'
+    : state != null
+      ? 'locked'
+      : 'editable';
+
+  const verdict = verdictOf(draft, initialFields);
+  const changed = aircraft == null ? true : hasChanges(aircraft, draft, initialFields);
   const readOnly = !manages;
 
   const field = conflictField(error);
@@ -107,11 +128,6 @@ export function AircraftDrawer({ id, fleet, listPending, manages, onClose }: Air
   // zanim klient straci wypełniony formularz na rzecz komunikatu o błędzie.
   const inUse = aircraft != null && disablesAircraftInUse(aircraft, draft);
 
-  // Czy stan początkowy jeszcze kogokolwiek dotyczy (issue #66). Odpowiada na to
-  // SERWER przez `reading.source` - panel nie zgaduje po liczbie sesji, bo regułę
-  // wyboru przekazania zna `application/common/aircraftStateView.ts` i tylko ona.
-  const initialInUse = aircraft == null || aircraft.reading == null || aircraft.reading.source === 'initial';
-
   const save = (): void => {
     if (aircraft == null) {
       create.mutate(createBodyOf(draft), {
@@ -120,7 +136,7 @@ export function AircraftDrawer({ id, fleet, listPending, manages, onClose }: Air
       return;
     }
     update.mutate(
-      { id: aircraft.id, body: updateBodyOf(aircraft, draft) },
+      { id: aircraft.id, body: updateBodyOf(aircraft, draft, initialFields) },
       { onSuccess: (result) => setDone(`Zapisano ${result.aircraft.reg}.`) },
     );
   };
@@ -193,17 +209,17 @@ export function AircraftDrawer({ id, fleet, listPending, manages, onClose }: Air
         </Field>
         {conflict == null ? null : <p className="hint danger">{conflict}</p>}
 
-        <Field htmlFor="type" label="Typ" hint="np. Cessna 182.">
-          <TextInput
-            id="type"
-            value={draft.type}
-            disabled={readOnly}
-            invalid={verdict.invalid.includes('type')}
-            onChange={(event) => setDraft({ ...draft, type: event.target.value })}
-          />
-        </Field>
-
         <div className="field-pair">
+          <Field htmlFor="type" label="Typ" hint="np. Cessna 182.">
+            <TextInput
+              id="type"
+              value={draft.type}
+              disabled={readOnly}
+              invalid={verdict.invalid.includes('type')}
+              onChange={(event) => setDraft({ ...draft, type: event.target.value })}
+            />
+          </Field>
+
           <Field htmlFor="year" label="Rok produkcji" hint="Można zostawić puste.">
             <TextInput
               id="year"
@@ -215,56 +231,10 @@ export function AircraftDrawer({ id, fleet, listPending, manages, onClose }: Air
               onChange={(event) => setDraft({ ...draft, year: event.target.value })}
             />
           </Field>
-
-          <Field
-            htmlFor="capacity"
-            // Krótko, bo etykieta stoi w PARZE pól: „Paliwo - pojemność zbiorników (L)"
-            // łamało się na dwie linie i zsuwało pole niżej niż sąsiednie.
-            label="Pojemność paliwa (L)"
-            hint={
-              capacityChanged ? (
-                <>
-                  Było {litres(aircraft.capacityL)}.
-                  {tolerance.data == null
-                    ? null
-                    : ` Rozjazd paliwa zgłaszamy od ±${litres(tolerance.data.fuelToleranceL)}` +
-                      ` (dziś ±${litres(aircraft.fuelToleranceL)}).`}
-                </>
-              ) : undefined
-            }
-          >
-            <TextInput
-              id="capacity"
-              mono
-              inputMode="decimal"
-              value={draft.capacityL}
-              disabled={readOnly}
-              invalid={verdict.invalid.includes('capacityL')}
-              onChange={(event) => setDraft({ ...draft, capacityL: event.target.value })}
-            />
-          </Field>
         </div>
       </Card>
 
       <Card title="Ustawienia dla pilota">
-        <span className="label">Licznik motogodzin</span>
-        <div className="opt-list" role="radiogroup" aria-label="Format licznika motogodzin">
-          {MH_FORMAT_ORDER.map((format) => (
-            <OptionButton
-              key={format}
-              name={`${mhFormatLabel(format)} - ${mhFormatExample(format)}`}
-              desc={
-                format === 'decimal'
-                  ? 'Pilot wpisuje jedną liczbę.'
-                  : 'Pilot wpisuje godziny i minuty.'
-              }
-              selected={draft.mhFormat === format}
-              disabled={readOnly}
-              onSelect={() => setDraft({ ...draft, mhFormat: format })}
-            />
-          ))}
-        </div>
-
         <span className="label">Drugi pilot</span>
         <div className="opt-list" role="radiogroup" aria-label="Wymóg drugiego pilota">
           <OptionButton
@@ -302,60 +272,37 @@ export function AircraftDrawer({ id, fleet, listPending, manages, onClose }: Air
         </div>
       </Card>
 
-      <Card
-        title={
-          <>
-            Olej <Pill tone="dim">opcjonalne</Pill>
-          </>
-        }
-      >
+      <Card title="Paliwo">
         <div className="field-pair">
-          <Field htmlFor="oil-min" label="Minimum przed lotem (L)">
-            <TextInput
-              id="oil-min"
-              mono
-              inputMode="decimal"
-              value={draft.oilMinL}
-              disabled={readOnly}
-              invalid={verdict.invalid.includes('oilMinL')}
-              onChange={(event) => setDraft({ ...draft, oilMinL: event.target.value })}
-            />
-          </Field>
-
           <Field
-            htmlFor="oil-capacity"
-            label="Zbiornik oleju (L)"
-            hint="Puste pola znaczą, że aplikacja nie będzie o oleju przypominać."
+            htmlFor="capacity"
+            label="Pojemność zbiorników (L)"
+            hint={
+              capacityChanged ? (
+                <>
+                  Było {litres(aircraft.capacityL)}.
+                  {tolerance.data == null
+                    ? null
+                    : ` Rozjazd paliwa zgłaszamy od ±${litres(tolerance.data.fuelToleranceL)}` +
+                      ` (dziś ±${litres(aircraft.fuelToleranceL)}).`}
+                </>
+              ) : undefined
+            }
           >
             <TextInput
-              id="oil-capacity"
+              id="capacity"
               mono
               inputMode="decimal"
-              value={draft.oilCapacityL}
+              value={draft.capacityL}
               disabled={readOnly}
-              invalid={verdict.invalid.includes('oilCapacityL')}
-              onChange={(event) => setDraft({ ...draft, oilCapacityL: event.target.value })}
+              invalid={verdict.invalid.includes('capacityL')}
+              onChange={(event) => setDraft({ ...draft, capacityL: event.target.value })}
             />
           </Field>
-        </div>
-      </Card>
 
-      {/* ── ZUŻYCIE Z DOKUMENTACJI (issue #66) ─────────────────────────────────
-          Norma paliwa i norma oleju stoją RAZEM, choć olej ma własną kartę wyżej:
-          to jedna rzecz powiedziana o dwóch płynach - liczba z instrukcji, ważna
-          DOPÓKI aplikacja nie policzy własnej z lotów tej maszyny. Zbiornik i minimum
-          oleju są czymś innym (opisują maszynę na zawsze), więc zostały u siebie. */}
-      <Card
-        title={
-          <>
-            Zużycie z dokumentacji <Pill tone="dim">opcjonalne</Pill>
-          </>
-        }
-      >
-        <div className="field-pair">
           <Field
             htmlFor="fuel-norm"
-            label="Spalanie paliwa (L/h)"
+            label="Zużycie z dokumentacji (L/h)"
             hint="Na godzinę pracy silnika."
           >
             <TextInput
@@ -368,51 +315,116 @@ export function AircraftDrawer({ id, fleet, listPending, manages, onClose }: Air
               onChange={(event) => setDraft({ ...draft, fuelNormLPerH: event.target.value })}
             />
           </Field>
+        </div>
 
-          <Field htmlFor="oil-norm" label="Zużycie oleju (L/h)" hint="Na motogodzinę.">
+        {state != null ? (
+          <Field htmlFor="state-fuel" label="Aktualny stan (L)" hint={state.fuel.hint}>
+            <TextInput id="state-fuel" mono value={state.fuel.value} disabled />
+          </Field>
+        ) : (
+          <Field htmlFor="initial-fuel" label="Aktualny stan (L)">
             <TextInput
-              id="oil-norm"
+              id="initial-fuel"
               mono
               inputMode="decimal"
-              value={draft.oilNormLPerH}
+              value={draft.initialFuelL}
               disabled={readOnly}
-              invalid={verdict.invalid.includes('oilNormLPerH')}
-              onChange={(event) => setDraft({ ...draft, oilNormLPerH: event.target.value })}
+              invalid={verdict.invalid.includes('initialFuelL')}
+              onChange={(event) => setDraft({ ...draft, initialFuelL: event.target.value })}
+            />
+          </Field>
+        )}
+      </Card>
+
+      <Card title="Olej">
+        <div className="field-pair">
+          <Field htmlFor="oil-capacity" label="Zbiornik oleju (L)">
+            <TextInput
+              id="oil-capacity"
+              mono
+              inputMode="decimal"
+              value={draft.oilCapacityL}
+              disabled={readOnly}
+              invalid={verdict.invalid.includes('oilCapacityL')}
+              onChange={(event) => setDraft({ ...draft, oilCapacityL: event.target.value })}
+            />
+          </Field>
+
+          <Field htmlFor="oil-min" label="Minimum przed lotem (L)">
+            <TextInput
+              id="oil-min"
+              mono
+              inputMode="decimal"
+              value={draft.oilMinL}
+              disabled={readOnly}
+              invalid={verdict.invalid.includes('oilMinL')}
+              onChange={(event) => setDraft({ ...draft, oilMinL: event.target.value })}
             />
           </Field>
         </div>
 
-        <p className="hint">
-          Wartości z instrukcji użytkowania. Aplikacja porównuje z nimi wynik lotu,
-          dopóki nie policzy własnej normy z historii tej maszyny - policzona wtedy
-          wygrywa, a te liczby zostają punktem odniesienia.
-        </p>
+        <Field
+          htmlFor="oil-norm"
+          label="Zużycie z dokumentacji (L/h)"
+          hint="Na godzinę pracy silnika - jak przy paliwie."
+        >
+          <TextInput
+            id="oil-norm"
+            mono
+            inputMode="decimal"
+            value={draft.oilNormLPerH}
+            disabled={readOnly}
+            invalid={verdict.invalid.includes('oilNormLPerH')}
+            onChange={(event) => setDraft({ ...draft, oilNormLPerH: event.target.value })}
+          />
+        </Field>
+
+        {state != null ? (
+          <Field htmlFor="state-oil" label="Aktualny stan (L)" hint={state.oil.hint}>
+            <TextInput id="state-oil" mono value={state.oil.value} disabled />
+          </Field>
+        ) : (
+          <Field htmlFor="initial-oil" label="Aktualny stan (L)">
+            <TextInput
+              id="initial-oil"
+              mono
+              inputMode="decimal"
+              value={draft.initialOilL}
+              disabled={readOnly}
+              invalid={verdict.invalid.includes('initialOilL')}
+              onChange={(event) => setDraft({ ...draft, initialOilL: event.target.value })}
+            />
+          </Field>
+        )}
       </Card>
 
-      {/* ── STAN POCZĄTKOWY (issue #66) ────────────────────────────────────────
-          To NIE jest konfiguracja, tylko jedna chwila: co pokazywały przyrządy, gdy
-          jednostka trafiła do UZ Aero. Dostaje ją PIERWSZY pilot i nikt więcej -
-          od pierwszej zdanej operacji łańcuch prowadzą odczyty z lotów. Karta mówi to
-          wprost, gdy tak już jest: pole, które przestało działać, a nadal wygląda
-          na czynne, jest gorsze od jego braku. */}
-      <Card
-        title={
-          <>
-            Stan początkowy <Pill tone="dim">opcjonalne</Pill>
-          </>
-        }
-      >
-        {initialInUse ? null : (
-          <Banner tone="status">
-            Ten samolot ma już odczyty z lotów - to one są podpowiedzią dla pilotów.
-            Stan początkowy zostaje zapisany, ale nikomu się nie pokazuje.
-          </Banner>
-        )}
+      <Card title="Motogodziny">
+        <span className="label">Format licznika</span>
+        <div className="opt-list" role="radiogroup" aria-label="Format licznika motogodzin">
+          {MH_FORMAT_ORDER.map((format) => (
+            <OptionButton
+              key={format}
+              name={`${mhFormatLabel(format)} - ${mhFormatExample(format)}`}
+              desc={
+                format === 'decimal'
+                  ? 'Pilot wpisuje jedną liczbę.'
+                  : 'Pilot wpisuje godziny i minuty.'
+              }
+              selected={draft.mhFormat === format}
+              disabled={readOnly}
+              onSelect={() => setDraft({ ...draft, mhFormat: format })}
+            />
+          ))}
+        </div>
 
-        <div className="field-pair">
+        {state != null ? (
+          <Field htmlFor="state-mh" label="Aktualny stan" hint={state.mh.hint}>
+            <TextInput id="state-mh" mono value={state.mh.value} disabled />
+          </Field>
+        ) : (
           <Field
             htmlFor="initial-mh"
-            label="Motogodziny"
+            label="Aktualny stan"
             hint={`Format licznika: ${mhFormatExample(draft.mhFormat)}.`}
           >
             <TextInput
@@ -425,35 +437,7 @@ export function AircraftDrawer({ id, fleet, listPending, manages, onClose }: Air
               onChange={(event) => setDraft({ ...draft, initialMh: event.target.value })}
             />
           </Field>
-
-          <Field htmlFor="initial-fuel" label="Paliwo w zbiornikach (L)">
-            <TextInput
-              id="initial-fuel"
-              mono
-              inputMode="decimal"
-              value={draft.initialFuelL}
-              disabled={readOnly}
-              invalid={verdict.invalid.includes('initialFuelL')}
-              onChange={(event) => setDraft({ ...draft, initialFuelL: event.target.value })}
-            />
-          </Field>
-        </div>
-
-        <Field
-          htmlFor="initial-oil"
-          label="Olej (L)"
-          hint="Odczyty przyrządów w chwili, gdy samolot trafił do UZ Aero. Zobaczy je pierwszy pilot, który go weźmie."
-        >
-          <TextInput
-            id="initial-oil"
-            mono
-            inputMode="decimal"
-            value={draft.initialOilL}
-            disabled={readOnly}
-            invalid={verdict.invalid.includes('initialOilL')}
-            onChange={(event) => setDraft({ ...draft, initialOilL: event.target.value })}
-          />
-        </Field>
+        )}
       </Card>
 
       {aircraft == null || readOnly ? null : (

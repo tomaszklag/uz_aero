@@ -229,9 +229,17 @@ export interface ReferenceAircraft {
   /** Pojemność zbiornika oleju (L) - twardy sufit pomiaru i dolewki, jak `capacityL` dla tankowania. */
   oilCapacityL?: number | null;
   /**
-   * Nominalna norma zużycia oleju (L/h względem MH) - z dokumentacji silnika albo
+   * Nominalna norma zużycia oleju - L NA GODZINĘ PRACY SILNIKA, ten sam mianownik,
+   * co `fuelNormLPerH` (uwagi do issue #66: „zużycie oleju mierzy się na godzinę
+   * pracy, tak jak paliwo - nie na motogodzinę"). Z dokumentacji silnika albo
    * z doświadczenia klubu. Zasila sugestię oczekiwanego poziomu, DOPÓKI analityka nie
    * policzy własnej stawki z pomiarów (faza 2) - wyliczona wygrywa z wpisaną.
+   *
+   * Miarą godzin pracy MIĘDZY pomiarami jest w rachunku przyrost licznika (ΔMH,
+   * `oilPreflight.expectation()`), bo to jedyny zegar maszyny, który telefon zna
+   * offline przez cudze operacje. Licznik Hobbsa mierzy godziny pracy 1:1;
+   * obrotomierzowy przyrasta na ziemi wolniej i wtedy ΔMH jest przybliżeniem -
+   * dokładniejszy przelicznik przyjdzie z modelem MH analityki (faza 2).
    */
   oilNormLPerH?: number | null;
   /** Aktywny claim: kto (pilot id) - null gdy wolny. */

@@ -561,6 +561,11 @@ normy paliwa. W karcie oleju zostały zbiornik i minimum: one opisują maszynę 
 a obie normy są tym samym zdaniem powiedzianym o dwóch płynach - liczbą z instrukcji,
 ważną DOPÓKI analityka nie policzy własnej z lotów.
 
+> **Układ z tej sekcji przeżył jeden dzień** - przegląd właściciela na urządzeniu
+> (§10.5) zwinął obie karty do sekcji PALIWO / OLEJ / MOTOGODZINY. Rozróżnienie „dwa
+> rodzaje liczb" zostało w mocy tam, gdzie naprawdę pracuje: w walidacji (zero to
+> literówka normy i legalna wartość stanu) - przestało tylko być osią układu ekranu.
+
 ### 10.2 Stan początkowy jest zerowym ogniwem łańcucha, nie konfiguracją
 
 Nie jedzie na telefon jako osobne pole. Serwer składa z niego **przekazanie**
@@ -594,3 +599,49 @@ Pole „Motogodziny" pokazuje wartość wg `mhFormat` jednostki (`1236:30` albo 
 a przyjmuje OBA zapisy naraz (`parseMotoHours`) - administrator przepisuje liczbę
 z tarczy i nie ma się zastanawiać, jak jednostka jest skonfigurowana. W danych
 motogodziny są zawsze dziesiętne; to jest wyłącznie sposób zapisu.
+
+### 10.5 Uwagi z przeglądu: sekcje mediami, pola wymagane, „Aktualny stan" (2026-09-02)
+
+Siedem uwag właściciela do karty z §10.1–10.4 (komentarz w issue #66). Wspólny rdzeń:
+**administrator myśli „olej", a nie „kategoria liczby"** - i nie chce pól, których
+wypełnienie jest opcjonalne albo których edycja nic nie zmienia.
+
+**Sekcje idą MEDIAMI.** Karty „Zużycie z dokumentacji" i „Stan początkowy" zniknęły;
+karta samolotu ma odtąd sekcje **Paliwo** (pojemność zbiorników · zużycie z dokumentacji
+· aktualny stan), **Olej** (zbiornik · minimum przed lotem · zużycie z dokumentacji ·
+aktualny stan) i **Motogodziny** (format licznika · aktualny stan). Pojemność zbiorników
+wyprowadziła się z sekcji „Samolot" (uwaga 4), format licznika z „Ustawień dla pilota" -
+oba tam, gdzie ich medium.
+
+**Wszystkie pola tych sekcji są WYMAGANE** (uwagi 1 i 5 - „olej musi być wymagany
+zawsze"). Plakietka „opcjonalne" i przypis „puste pola znaczą, że aplikacja nie będzie
+o oleju przypominać" zniknęły. Puste pole blokuje zapis samym brakiem (reguła issue #55:
+brak widać w formularzu nad przyciskiem); egzekwuje to FORMULARZ - serwer dalej
+przyjmuje `null`, bo stare wiersze go mają, a `PATCH` niesie tylko zmiany. Wyjątek:
+„Aktualny stan" jest wymagany wyłącznie PRZY TWORZENIU - przy edycji starego wiersza
+wymóg blokowałby niezwiązaną poprawkę (np. wyłączenie ze służby).
+
+**„Stan początkowy" nazywa się odtąd „Aktualny stan"** (uwagi 2 i 6) i ma dwa tryby,
+rozstrzygane przez `reading.source` (granica w `admin/src/screens/fleet/currentState.ts`):
+
+- **do wpisania** - przy tworzeniu oraz dopóki jedynym źródłem odczytu jest wpis
+  z panelu (`source: 'initial'` albo brak odczytu): liczba jest nadal wyłącznie wpisem
+  administratora, więc wolno mu poprawić własną literówkę;
+- **do odczytu** - gdy maszynę prowadzi już dziennik (`handover` / `open_session`):
+  pola pokazują wartości z ostatniego odczytu z podpisem pochodzenia („Z dziennika ·
+  odczyt …"), a `PATCH` pól `initial*` nie niesie WCALE (tryb `locked`
+  w `aircraftForm.ts`). Kolumny `initial_*` zostają w bazie jako zapis historyczny.
+
+Stan oleju nie był dotąd w kontrakcie floty - `AdminAircraftReading` dostał `oilL`
+(pomiar + dolewki po nim, SUMUJE SERWER, jak `oilAfterL` na liście operacji),
+`oilAddedSinceL` (do podpisu, żeby suma nie udawała odczytu z bagnetu) i `oilAt`
+(własny stempel - pomiar bywa dużo starszy niż odczyt paliwa). Wartości biorą się
+z tego samego `pickHandover`, którym odpowiada `GET /reference`.
+
+**Norma oleju liczy się na godzinę PRACY SILNIKA, jak paliwo** (uwaga 7 - „nie na
+motogodzinę"). To zmiana DEKLARACJI jednostki (etykieta w panelu, docblock
+`ReferenceAircraft.oilNormLPerH`), nie arytmetyki: rachunek oczekiwania
+(`oilPreflight.expectation()`) dalej mnoży stawkę przez ΔMH, bo licznik jest jedynym
+zegarem maszyny znanym offline przez cudze operacje - Hobbs mierzy godziny pracy 1:1,
+obrotomierzowy przyrasta na ziemi wolniej i wtedy ΔMH jest przybliżeniem. Dokładniejszy
+przelicznik przyjdzie z modelem MH analityki (faza 2 modułu oleju).

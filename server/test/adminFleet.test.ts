@@ -63,6 +63,8 @@ interface DayOptions {
   mh?: number;
   fuelStartL?: number;
   fuelEndL?: number;
+  /** Pomiar oleju przy przejęciu (issue #60); pominięty = dzień bez pomiaru. */
+  oilL?: number;
   dayOffset?: number;
   close?: boolean;
 }
@@ -90,6 +92,7 @@ function flyingDay(o: DayOptions) {
         reading: { fuelL: o.fuelStartL ?? 150, mh },
         client: null,
         mhFormat: 'hhmm',
+        ...(o.oilL == null ? {} : { oilL: o.oilL }),
       },
       base,
     ),
@@ -186,8 +189,13 @@ describe('GET /admin/api/fleet - konfiguracja + stan z telefonów', () => {
     const tmk = await token(app, 'TMK');
     const krz = await token(app, 'KRZ');
 
-    // SP-AXA: dzień ZAMKNIĘTY → jest przekazanie, nie ma claimu.
-    await postEvents(app, tmk, flyingDay({ sessionUuid: 'fleet-closed', picId: 'TMK' }));
+    // SP-AXA: dzień ZAMKNIĘTY → jest przekazanie, nie ma claimu. Pomiar oleju przy
+    // przejęciu zasila pola „Aktualny stan" karty samolotu (uwagi do issue #66).
+    await postEvents(
+      app,
+      tmk,
+      flyingDay({ sessionUuid: 'fleet-closed', picId: 'TMK', oilL: 8.2 }),
+    );
     // SP-FGK: dzień OTWARTY → jest claim; przekazania nie ma, bo nie ma zamkniętego dnia.
     await postEvents(
       app,
@@ -205,7 +213,15 @@ describe('GET /admin/api/fleet - konfiguracja + stan z telefonów', () => {
 
     const axa = rowOf(body, 'SP-AXA') as unknown as Record<string, unknown>;
     expect(axa.claim).toBeNull();
-    expect(axa.reading).toMatchObject({ fuelL: 88, source: 'handover', byPilotName: 'Tomasz Małkiewicz' });
+    // Olej idzie WŁASNĄ osią: pomiar z przejęcia, ze stemplem POMIARU, nie zdania.
+    expect(axa.reading).toMatchObject({
+      fuelL: 88,
+      source: 'handover',
+      byPilotName: 'Tomasz Małkiewicz',
+      oilL: 8.2,
+      oilAddedSinceL: 0,
+    });
+    expect(typeof (axa.reading as Record<string, unknown>).oilAt).toBe('number');
     expect(typeof axa.lastEventAt).toBe('string');
 
     const fgk = rowOf(body, 'SP-FGK') as unknown as Record<string, unknown>;
@@ -987,12 +1003,15 @@ describe('normy z dokumentacji i stan początkowy (issue #66)', () => {
     });
 
     // Odczyt jednostki, która jeszcze nie latała, POCHODZI z wpisu w panelu - i panel
-    // musi to widzieć, żeby nie podpisać go cudzym nazwiskiem.
+    // musi to widzieć, żeby nie podpisać go cudzym nazwiskiem. Olej wchodzi z tego
+    // samego seeda (pola „Aktualny stan" karty samolotu, uwagi do issue #66).
     expect(created.json().aircraft.reading).toMatchObject({
       mh: 1236.5,
       fuelL: 112,
       byPilotId: null,
       byPilotName: null,
+      oilL: 8.2,
+      oilAddedSinceL: 0,
       source: 'initial',
     });
 

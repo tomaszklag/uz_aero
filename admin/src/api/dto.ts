@@ -231,11 +231,10 @@ export interface AircraftListItemDto {
 }
 
 /**
- * Skąd wzięty jest ostatni odczyt jednostki.
- *
- * Panel 2.0 czyta z tego JEDNĄ rzecz: czy stan początkowy jeszcze kogokolwiek dotyczy.
- * `handover`/`open_session` znaczą „maszyna już lata i prowadzą ją odczyty z lotów",
- * `initial` - „pierwszy pilot dostanie to, co wpisano w panelu".
+ * Ostatni znany odczyt jednostki - `source` mówi, czy stan początkowy jeszcze
+ * kogokolwiek dotyczy (`handover`/`open_session` = maszynę prowadzą odczyty z lotów,
+ * `initial` = pierwszy pilot dostanie to, co wpisano w panelu), a wartości wypełniają
+ * pola „Aktualny stan" karty samolotu w trybie odczytu (uwagi do issue #66).
  */
 export interface AircraftReadingDto {
   mh: number;
@@ -245,6 +244,16 @@ export interface AircraftReadingDto {
   /** `null` przy `source: 'initial'` - stanu początkowego nikt nie przekazał. */
   byPilotId: string | null;
   byPilotName: string | null;
+  /**
+   * Ostatni znany stan oleju (L): pomiar + dolewki po nim - SUMĘ liczy serwer, jak
+   * `oilAfterL` na liście operacji. `null` = dziennik nie zna ani jednego pomiaru
+   * i nie wpisano stanu początkowego oleju.
+   */
+  oilL: number | null;
+  /** Ile z `oilL` to dolewki PO pomiarze - do podpisu pola. `null` razem z `oilL`. */
+  oilAddedSinceL: number | null;
+  /** Kiedy zmierzono olej - bywa dużo starszy niż `at`. `null` razem z `oilL`. */
+  oilAt: number | null;
   source: 'handover' | 'open_session' | 'initial';
 }
 
