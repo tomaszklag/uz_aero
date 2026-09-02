@@ -497,7 +497,7 @@
           <div class="axis-row">
             <span class="axis-time dim">08:04</span>
             <span class="axis-mark"><span class="axis-dot hollow"></span></span>
-            <span class="axis-label"><span class="axis-name muted">Przejęcie</span><span class="axis-sub">odczyt 150 L · 1 234:30 · olej 10,2 L</span></span>
+            <span class="axis-label"><span class="axis-name muted">Przejęcie</span><span class="axis-sub">odczyt 150 L · 1 234:30 · olej 10,2 L (+0,5 L)</span></span>
             <span class="axis-right"></span>
           </div>
 
@@ -714,6 +714,41 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-5M12 8h.01"/></svg>
           </span>
         </a>
+      </div>
+
+      <!-- ══ OLEJ - TRZECIE MEDIUM, ALE NIE TRZECI WERDYKT (issue #70) ════════
+           Paliwo i motogodziny mają odczyt z OBU stron biegu, więc liczą zużycie
+           i porównują je z normą. Olej ma tylko jedną stronę: pomiar żyje przy
+           przejęciu, a zdanie samolotu oleju NIE MIERZY (bagnet tuż po locie kłamie,
+           issue #60) - interwał zużycia biegnie pomiar→pomiar przez wiele operacji.
+           Karta niesie więc SAME FAKTY: pomiar, dolewki i stan po nich. Werdyktu
+           nie ma i nie ma też zdania o jego braku - `verdict-na` tłumaczy sytuacyjny
+           brak porównania, a tu porównanie nie istnieje jako pojęcie; stały przypis
+           świeciłby przy każdej operacji (reguła SyncChipa z issue #12).
+
+           Licznik dolewek w etykiecie jak przy paliwie („Dolane · 2 tankowania"):
+           para z przejęcia liczy się jako jedna dolewka, każde `oil_add` z kokpitu
+           jako kolejna. Operacja sprzed modułu oleju dostaje kreski, nie zera -
+           „0,0 L" przy braku pomiaru byłoby faktem wziętym znikąd.
+
+           Korekta NIE TU: karta jest czystym odczytem w obu trybach, jak paliwo
+           i motogodziny. Pomiar i dolewkę przy przejęciu poprawia się na osi
+           (wiersz „Przejęcie" → arkusz 10F z polami oleju i powodem), dolewki
+           z kokpitu przy ich własnych wierszach osi. -->
+      <div class="section-card">
+        <div class="section-card-head amber">Olej</div>
+        <div class="calc-row">
+          <span class="calc-key"><span class="op"></span>Pomiar przy przejęciu</span>
+          <span class="calc-val">10,2 L</span>
+        </div>
+        <div class="calc-row">
+          <span class="calc-key"><span class="op">+</span>Dolane · 1 dolewka</span>
+          <span class="calc-val">0,5 L</span>
+        </div>
+        <div class="calc-total">
+          <span class="calc-total-key">Po dolewkach</span>
+          <span class="calc-total-val amber">10,7 L</span>
+        </div>
       </div>
 
       <!-- ══ ZRZUTY - STRONA PRZYCHODOWA OPERACJI ═══════════════════════════════

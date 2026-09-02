@@ -1523,6 +1523,33 @@ bo obie wołają ten sam rdzeń):
   obowiązywać: §6 pkt 3 dotyczy BLOKAD akcji, a brak plakietki werdyktu akcją nie
   jest - karta i tak pokazuje pełny rachunek
 
+## Karta „Olej" na logu operacji (issue #70, 2026-09-02)
+Zgłoszenie: „brakuje sekcji z olejem oraz możliwości modyfikacji tych danych
+z komentarzem tak jak to jest dla innych pól". Druga połowa istniała już od issue #60
+(arkusz 10F przy przejęciu niesie pola oleju + powód; dolewka z kokpitu poprawia się
+na osi przez unieważnienie i dopisanie, parytet z tankowaniem) - dochodziła pierwsza.
+- **karta „Olej" stoi za Motogodzinami** (kolejność mediów z 02A i 15), ale jest
+  RACHUNKIEM BEZ WERDYKTU: zdanie samolotu oleju nie mierzy, więc zużycia jednej
+  operacji nie ma z czego policzyć - interwał biegnie pomiar→pomiar przez wiele
+  operacji. Wiersze: pomiar przy przejęciu, dolane (z licznikiem dolewek, wzorem
+  „Dolane · 2 tankowania"), suma „Po dolewkach". `logic/sessionOil.ts` z testami
+- **werdyktu nie ma i nie ma zdania o jego braku**: `naNote` tłumaczy sytuacyjny
+  brak porównania, a tu porównanie nie istnieje jako pojęcie - stały przypis
+  świeciłby przy każdej operacji (reguła SyncChipa z issue #12)
+- **zero pokazuje się TYLKO przy pomiarze**: operacja z pomiarem mówi „nie dolewano"
+  (0,0 L), operacja sprzed modułu oleju dostaje KRESKI - „0,0 L" przy braku pomiaru
+  byłoby faktem wziętym znikąd (ta sama reguła, którą dziennik panelu pokazuje brak
+  odczytu jako kreskę). Kreska sumy bez bursztynu - to zwykły stan starych danych
+- **licznik dolewek liczy się ze strumienia EFEKTYWNEGO** (para z przejęcia = jedna
+  dolewka, każde `oil_add` kolejna): dolewka unieważniona korektą nie wchodzi do sumy
+  w projekcji, więc nie może wchodzić do licznika obok niej. (`refuelCount` paliwa
+  liczy z surowego - zastana drobna skaza, nieskopiowana)
+- **karta jest czystym odczytem w OBU trybach**, jak Paliwo i Motogodziny - korekta
+  wchodzi osią (wiersz „Przejęcie" → 10F), nie ołówkiem na karcie
+- mockupy: karta na 10 (pomiar + dolewka), 10A (pomiar bez dolewki), 10B (kreski -
+  operacja sprzed modułu), 10D (tryb edycji, bez zmian względem odczytu); podpisy
+  przejęcia na 10A/10D dostały wreszcie człon „olej …" z issue #60
+
 ## Usunięcie CAŁEGO wpisu = `session_void` (uwaga z urządzenia, 2026-08-30)
 „Daj możliwość usunięcia całego lotu. Ta operacja powinna być poprzedzona jeszcze
 potwierdzeniem użytkownika, aby nie było przypadkowego usunięcia."

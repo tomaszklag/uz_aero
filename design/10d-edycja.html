@@ -357,15 +357,16 @@
 
         <div class="axis">
           <!-- PRZEJĘCIE - ołówek prowadzi do arkusza ODCZYTU (10F), nie do korekty
-               czasu: przy przejęciu poprawia się paliwo i licznik. Czasu przejęcia
-               nie ruszamy - wyznacza go `session_claim`, czyli moment, w którym
-               maszyna została komuś odebrana; to fakt o dwóch pilotach, nie o jednym. -->
+               czasu: przy przejęciu poprawia się paliwo, licznik oraz pomiar
+               i dolewkę oleju (issue #60) - wszystko z powodem korekty. Godzinę
+               przejęcia poprawia ten sam arkusz (issue #43, uwaga z urządzenia) -
+               przesunięta za uruchomienie silnika pociąga cały bieg. -->
           <a class="axis-row" href="10f-korekta-odczytu.html">
             <span class="axis-time dim">08:04</span>
             <span class="axis-mark"><span class="axis-dot hollow"></span></span>
             <span class="axis-label">
               <span class="axis-name muted">Przejęcie</span>
-              <span class="axis-sub">odczyt 150 L · 1 234:30</span>
+              <span class="axis-sub">odczyt 150 L · 1 234:30 · olej 10,2 L (+0,5 L)</span>
             </span>
             <span class="axis-right"></span>
             <span class="axis-pen">
@@ -583,6 +584,31 @@
           <span class="calc-total-val amber">27 L</span>
         </div>
         <div class="calc-foot-note">Odczyty poprawisz na osi wyżej - przy przejęciu i przy zdaniu. Werdykt normy wraca, gdy log przestanie być sprzeczny.</div>
+      </div>
+
+      <!-- ══ OLEJ (issue #70) ════════════════════════════════════════════════
+           W trybie edycji karta wygląda DOKŁADNIE tak samo jak w odczycie - jest
+           czystym rachunkiem, jak paliwo i motogodziny (te między nimi pominięte
+           tu jak dotąd; kolejność na ekranie: Paliwo → Motogodziny → Olej).
+           Pomiar i dolewkę przy przejęciu poprawia się w wierszu „Przejęcie" na
+           osi (arkusz 10F, pola oleju + powód), dolewkę z kokpitu przy jej
+           własnym wierszu - `amend`-a dolewka nie ma (parytet z tankowaniem),
+           poprawia się ją przez unieważnienie i dopisanie. Pełne uzasadnienie
+           kształtu karty przy tej sekcji na 10. -->
+      <div class="section-card">
+        <div class="section-card-head amber">Olej</div>
+        <div class="calc-row">
+          <span class="calc-key"><span class="op"></span>Pomiar przy przejęciu</span>
+          <span class="calc-val">10,2 L</span>
+        </div>
+        <div class="calc-row">
+          <span class="calc-key"><span class="op">+</span>Dolane · 1 dolewka</span>
+          <span class="calc-val">0,5 L</span>
+        </div>
+        <div class="calc-total">
+          <span class="calc-total-key">Po dolewkach</span>
+          <span class="calc-total-val amber">10,7 L</span>
+        </div>
       </div>
 
       <!-- ══ ZAŁOGA ══════════════════════════════════════════════════════════
