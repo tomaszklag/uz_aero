@@ -356,7 +356,7 @@
           <div class="axis-row">
             <span class="axis-time dim">09:10</span>
             <span class="axis-mark"><span class="axis-dot hollow"></span></span>
-            <span class="axis-label"><span class="axis-name muted">Przejęcie</span><span class="axis-sub">odczyt 240 L · 2 815:12</span></span>
+            <span class="axis-label"><span class="axis-name muted">Przejęcie</span><span class="axis-sub">odczyt 240 L · 2 815:12 · olej 16,5 L</span></span>
             <span class="axis-right"></span>
           </div>
           <div class="axis-row">
@@ -429,6 +429,29 @@
           <span class="calc-total-val" style="color:var(--text-secondary);">+0:00</span>
         </div>
         <div class="verdict-na">Nie porównujemy z normą - silnik nie pracował. Zgodność obu odczytów jest tu informacją, a nie brakiem danych.</div>
+      </div>
+
+      <!-- ══ OLEJ (issue #70) ════════════════════════════════════════════════
+           Pomiar obowiązuje także bez lotu - jest krokiem przejęcia, nie lotu.
+           Same fakty, bez werdyktu i bez zdania o jego braku: zużycia jednej
+           operacji nie ma z czego policzyć, bo zdanie samolotu oleju nie mierzy
+           (interwał biegnie pomiar→pomiar przez wiele operacji) - pełne
+           uzasadnienie przy tej karcie na 10. Zero w „Dolane" jest odczytem,
+           nie brakiem: pomiar był, dolewki nie. -->
+      <div class="section-card">
+        <div class="section-card-head amber">Olej</div>
+        <div class="calc-row">
+          <span class="calc-key"><span class="op"></span>Pomiar przy przejęciu</span>
+          <span class="calc-val">16,5 L</span>
+        </div>
+        <div class="calc-row">
+          <span class="calc-key"><span class="op">+</span>Dolane</span>
+          <span class="calc-val">0,0 L</span>
+        </div>
+        <div class="calc-total">
+          <span class="calc-total-key">Po dolewkach</span>
+          <span class="calc-total-val amber">16,5 L</span>
+        </div>
       </div>
 
       <!-- ══ ZRZUTY - ZERO Z KONTEKSTEM ══════════════════════════════════════

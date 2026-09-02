@@ -86,6 +86,7 @@ import { buildSessionAxis } from './logic/sessionAxis';
 import { preflightUuid, withIssues } from './logic/sessionEdit';
 import { fieldChanges } from './logic/fieldChanges';
 import { fuelBalance, mhBalance } from './logic/sessionBalance';
+import { oilCard } from './logic/sessionOil';
 import { missingSessionNote, noteTargetUuid, sessionNotes } from './logic/sessionNotes';
 import { operationTag } from './logic/operations';
 
@@ -300,6 +301,7 @@ export function StatsScreen({
     [projection, norm, refuelCount, fuelNominal],
   );
   const mh = useMemo(() => mhBalance(projection, norm), [projection, norm]);
+  const oil = useMemo(() => oilCard(projection, events), [projection, events]);
 
   // Dzień bez sesji nie ma czego podsumowywać - pokazujemy to wprost, zamiast
   // rysować siatkę myślników.
@@ -618,6 +620,21 @@ export function StatsScreen({
           details={mh.details}
           freshness={normFreshness}
           naNote={mh.naNote}
+        />
+
+        {/* ── olej (issue #70) ─────────────────────────────────────────────
+            Trzecie medium operacji, ale NIE trzeci rachunek z werdyktem: zdanie
+            samolotu oleju nie mierzy (issue #60), więc zużycia jednej operacji nie
+            ma z czego policzyć - interwał biegnie pomiar→pomiar przez wiele
+            operacji. Karta niesie same fakty; pomiar i dolewkę przy przejęciu
+            poprawia się na osi (wiersz „Przejęcie" → arkusz 10F), dolewki
+            z kokpitu przy ich własnych wierszach - jak odczyty paliwa. */}
+        <BalanceCard
+          title="Olej"
+          rows={oil.rows}
+          totalLabel={oil.totalLabel}
+          totalValue={oil.totalValue}
+          totalTone={oil.totalTone}
         />
 
         {/* ── zrzuty: strona przychodowa operacji ──────────────────────────────
