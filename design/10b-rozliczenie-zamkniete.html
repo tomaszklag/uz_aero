@@ -553,6 +553,29 @@
         </a>
       </div>
 
+      <!-- ══ OLEJ - OPERACJA SPRZED MODUŁU (issue #70) ═══════════════════════
+           Ta operacja została zapisana, zanim pomiar oleju wszedł do przejęcia
+           (issue #60), więc śladu oleju w rejestrze NIE MA. Karta zostaje i mówi
+           to kreskami - „0,0 L" przy braku pomiaru byłoby faktem wziętym znikąd
+           (ta sama reguła, którą dziennik panelu pokazuje brak odczytu jako
+           kreskę). Podpis przejęcia na osi wyżej też oleju nie niesie - z tego
+           samego powodu. Pełne uzasadnienie kształtu karty przy tej sekcji na 10. -->
+      <div class="section-card">
+        <div class="section-card-head amber">Olej</div>
+        <div class="calc-row">
+          <span class="calc-key"><span class="op"></span>Pomiar przy przejęciu</span>
+          <span class="calc-val">-</span>
+        </div>
+        <div class="calc-row">
+          <span class="calc-key"><span class="op">+</span>Dolane</span>
+          <span class="calc-val">-</span>
+        </div>
+        <div class="calc-total">
+          <span class="calc-total-key">Po dolewkach</span>
+          <span class="calc-total-val" style="color:var(--text-secondary);">-</span>
+        </div>
+      </div>
+
       <!-- Zrzutów NIE MA: operacja to przelot, a przy przelocie zrzut nie może się
            wydarzyć (issue #19). Sekcja z zerami udawałaby brakujące dane. -->
 
