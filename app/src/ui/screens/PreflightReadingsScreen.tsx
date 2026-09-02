@@ -465,6 +465,9 @@ export function PreflightReadingsScreen({
           tone="amber"
           freshness={freshness}
           syncedAt={syncedAt}
+          // Adnotacja `manual` nazywa PRZYRZĄD (uwaga z urządzenia, 2026-09-02):
+          // paliwa nie czyta się z licznika, tylko mierzy w zbiornikach.
+          manualNote="Twój pomiar ze zbiorników"
           gauge={<LevelBar ratio={draft.fuelL / capacity} tone="amber" />}
           caption={`${Math.round((draft.fuelL / capacity) * 100)}% pojemności · zbiorniki ${capacity} L`}
           onCorrect={() => setEditing('fuel')}
@@ -517,6 +520,14 @@ export function PreflightReadingsScreen({
             ) : undefined
           }
           missing={false}
+          // Adnotacja WRÓCIŁA po przebudowie góry ekranu (uwaga z urządzenia,
+          // 2026-09-02): odkąd baner mówi, że wartości pochodzą z przekazania,
+          // wpis pilota musi się od nich odróżniać - a napis nazywa PRZYRZĄD
+          // („na bagnecie", nie „z licznika"). Przed pomiarem adnotacji nie ma.
+          {...(draft.oilL != null || draft.oilAddedL != null
+            ? { freshness: 'manual' as const }
+            : {})}
+          manualNote="Twój odczyt na bagnecie"
           correctLabel={draft.oilL != null || draft.oilAddedL != null ? 'Koryguj' : 'Wpisz pomiar'}
           // Ostrzeżenie WEWNĄTRZ karty (uwaga z urządzenia, 2026-09-02): dotyczy
           // wartości nad sobą, a stojące pod kartą czytało się jak osobny komunikat

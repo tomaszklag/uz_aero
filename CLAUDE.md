@@ -1570,10 +1570,14 @@ na osi przez unieważnienie i dopisanie, parytet z tankowaniem) - dochodziła pi
 ## Sekcja oleju na 02A: podziałka zamiast tekstu, podpowiedź w arkuszu (2026-09-02)
 Uwagi z urządzenia do kroku liczników (NOWY LOT · 3/3):
 - **adnotacja „Twój pomiar z bagnetu" USUNIĘTA**: pomiar jest aktem pilota z definicji,
-  więc poświadczanie własnego wpisu niczego nie odróżniało (reguła SyncChipa). Sekcja
-  oleju nie nosi odtąd ŻADNEJ adnotacji świeżości - `Readout.freshness` jest opcjonalny,
-  a `FreshnessNote` straciło parametry własnych napisów (jedynym użytkownikiem była ta
-  sekcja; parametr bez drugiego użytkownika to zaproszenie do rozjazdu słownika)
+  więc poświadczanie własnego wpisu niczego nie odróżniało (reguła SyncChipa).
+  **Częściowo ODWRÓCONE po przebudowie góry ekranu** (późniejsza tura tego samego
+  dnia): odkąd baner mówi, że wartości pochodzą z PRZEKAZANIA, wpis pilota musi się
+  od nich odróżniać - adnotacja `manual` wróciła na olej po pomiarze, a jej napis
+  nazywa PRZYRZĄD medium („jak jest paliwo, to nie pisz «Twój odczyt z licznika» -
+  to nieprawda"): paliwo „Twój pomiar ze zbiorników", olej „Twój odczyt na
+  bagnecie", motogodziny „Twój odczyt z licznika" (domyślne).
+  `FreshnessNote.manualLabel` + `Readout.manualNote` niosą tę odmianę
 - **„min/zbiornik" mówi PODZIAŁKA, nie tekst**: `LevelBar` pod wartością, jak przy
   paliwie - wypełnienie = stan PO dolewce względem zbiornika, bursztynowa kreska =
   minimum (`LevelBar.markerRatio`), pod minimum wypełnienie bursztynieje. Arytmetyka

@@ -52,6 +52,12 @@ export interface ReadoutProps {
   correctLabel?: string;
   missingLabel?: string;
   /**
+   * Napis adnotacji `manual` - nazywa przyrząd medium (patrz `FreshnessNote.manualLabel`):
+   * „Twój pomiar ze zbiorników" przy paliwie, „Twój odczyt na bagnecie" przy oleju;
+   * bez pola zostaje wersja z licznika (motogodziny).
+   */
+  manualNote?: string;
+  /**
    * Jawny stan „brak danych" - nadpisuje wywiedziony (issue #60).
    *
    * Domyślnie pusta wartość ZNACZY brak danych, bo paliwo i MH zawsze niosą liczbę
@@ -82,6 +88,7 @@ export function Readout({
   onCorrect,
   correctLabel = 'Koryguj',
   missingLabel = 'Wpisz odczyt',
+  manualNote,
   missing: missingOverride,
   warning = null,
   style,
@@ -135,7 +142,13 @@ export function Readout({
             </AppText>
           </View>
 
-          {freshness != null && <FreshnessNote state={freshness} syncedAt={syncedAt} />}
+          {freshness != null && (
+            <FreshnessNote
+              state={freshness}
+              syncedAt={syncedAt}
+              {...(manualNote != null ? { manualLabel: manualNote } : {})}
+            />
+          )}
 
           {!missing && gauge}
 

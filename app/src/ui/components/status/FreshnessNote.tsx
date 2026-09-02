@@ -40,16 +40,23 @@ export interface FreshnessNoteProps {
   state: Freshness;
   /** Czas ostatniej synchronizacji - pokazywany przy `cache`. */
   syncedAt?: string | null;
+  /**
+   * Napis stanu `manual` - nazywa PRZYRZĄD, z którego pilot wziął wartość, a przyrząd
+   * zależy od medium (uwaga z urządzenia, 2026-09-02: „jak jest paliwo, to nie pisz
+   * «Twój odczyt z licznika» - to nieprawda"): paliwo mierzy się w zbiornikach
+   * („Twój pomiar ze zbiorników"), olej na bagnecie („Twój odczyt na bagnecie");
+   * domyślna wersja z licznika zostaje dla motogodzin.
+   */
+  manualLabel?: string;
   style?: ViewStyle;
 }
 
-/*
- * Napisy są STAŁE, nie parametry: własne odmiany (`missingLabel`, `manualLabel`) miała
- * wyłącznie sekcja oleju, a ta od 2026-09-02 adnotacji nie nosi wcale (pomiar pilota
- * nie ma czego poświadczać, a podpowiedź mieszka w arkuszu ze swoim stemplem).
- * Parametr bez drugiego użytkownika to zaproszenie do rozjazdu słownika.
- */
-export function FreshnessNote({ state, syncedAt, style }: FreshnessNoteProps) {
+export function FreshnessNote({
+  state,
+  syncedAt,
+  manualLabel = 'Twój odczyt z licznika',
+  style,
+}: FreshnessNoteProps) {
   const { theme } = useTheme();
 
   if (state === 'live') return null;
@@ -58,7 +65,7 @@ export function FreshnessNote({ state, syncedAt, style }: FreshnessNoteProps) {
   const c = toneColors(theme, manual ? 'green' : 'amber');
 
   const label = manual
-    ? 'Twój odczyt z licznika'
+    ? manualLabel
     : state === 'cache'
       ? syncedAt != null
         ? `Ostatnie pobrane · ${syncedAt}`
