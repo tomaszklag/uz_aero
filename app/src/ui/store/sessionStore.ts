@@ -51,6 +51,7 @@ import {
   type ClaimInput,
   type CommandResult,
   type DropInput,
+  type EventRestoreOutcome,
   type ManualFlightInput,
   type EventsRepo,
   type SessionContext,
@@ -231,6 +232,13 @@ export interface SessionStore {
    * projekcje.
    */
   restoreEvents(): Promise<void>;
+  /**
+   * Odtworzenie BEZ bramy wieku - druga połowa gestu „SYNCHRONIZUJ TERAZ" (issue #75
+   * pkt 1, ta sama logika co `refreshReferenceNow`): pilot pyta „co serwer wie TERAZ",
+   * a bez tego unieważnienie wpisane przez administratora czekało na telefonie
+   * do kwadransa mimo ręcznego ponaglenia.
+   */
+  restoreEventsNow(): Promise<void>;
   /** Wysyła jedną paczkę śladu kalibracyjnego (faza 5) - cicho, bez wpływu na UI. */
   uploadTraces(): Promise<void>;
   /** Uzgadnia motyw zalogowanego pilota (push `dirty` od razu, pull za bramą wieku). */
@@ -275,6 +283,37 @@ export const useSessionStore = create<SessionStore>((set, get) => {
       outboxCount: outbox.count,
       synced: outbox.synced,
     });
+  }
+
+  /**
+   * Wspólna ścieżka obu wejść odtworzenia rejestru (§4.9): pętla okazji podaje
+   * `restoreIfStale`, ręczne ponaglenie `restore` (issue #75 pkt 1). Licznik
+   * `streamRevision` podbija się TYLKO przy faktycznym dopisaniu wierszy: pusta
+   * dosyłka zdarza się przy każdej okazji i przeliczanie po niej całego rejestru
+   * na otwartym ekranie byłoby pracą bez skutku.
+   */
+  async function runEventRestore(
+    pull: (eventRestore: NonNullable<SessionStore['eventRestore']>) => Promise<EventRestoreOutcome>,
+  ): Promise<void> {
+    const { eventRestore } = get();
+    if (eventRestore == null) {
+      // Bez warstwy synca (testy) lokalny rejestr jest całą prawdą -
+      // nie ma na co czekać i nie ma co odtwarzać.
+      set({ streamHydrated: true });
+      return;
+    }
+
+    try {
+      const outcome = await pull(eventRestore);
+      if (outcome.kind === 'pulled' && outcome.inserted > 0) {
+        set((state) => ({ streamRevision: state.streamRevision + 1 }));
+        await refresh();
+      }
+    } finally {
+      // Także po niepowodzeniu: offline nie jest stanem, w którym ekran ma czekać -
+      // wtedy lokalny rejestr jest najlepszą dostępną prawdą i trzeba go pokazać.
+      set({ streamHydrated: true });
+    }
   }
 
   /**
@@ -572,28 +611,12 @@ export const useSessionStore = create<SessionStore>((set, get) => {
     },
 
     async restoreEvents() {
-      const { eventRestore } = get();
-      if (eventRestore == null) {
-        // Bez warstwy synca (testy) lokalny rejestr jest całą prawdą -
-        // nie ma na co czekać i nie ma co odtwarzać.
-        set({ streamHydrated: true });
-        return;
-      }
+      await runEventRestore((eventRestore) => eventRestore.restoreIfStale());
+    },
 
-      try {
-        const outcome = await eventRestore.restoreIfStale();
-        // Podbijamy licznik TYLKO przy faktycznym dopisaniu wierszy: pusta dosyłka
-        // zdarza się przy każdej okazji i przeliczanie po niej całego rejestru
-        // na otwartym ekranie byłoby pracą bez skutku.
-        if (outcome.kind === 'pulled' && outcome.inserted > 0) {
-          set((state) => ({ streamRevision: state.streamRevision + 1 }));
-          await refresh();
-        }
-      } finally {
-        // Także po niepowodzeniu: offline nie jest stanem, w którym ekran ma czekać -
-        // wtedy lokalny rejestr jest najlepszą dostępną prawdą i trzeba go pokazać.
-        set({ streamHydrated: true });
-      }
+    async restoreEventsNow() {
+      // Bez bramy wieku (issue #75 pkt 1) - patrz docblock w interfejsie.
+      await runEventRestore((eventRestore) => eventRestore.restore());
     },
 
     async uploadTraces() {

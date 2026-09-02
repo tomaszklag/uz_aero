@@ -27,7 +27,12 @@
 
 import { useEffect, useState } from 'react';
 
-import { operationIndexes, operationSignature, type EpochMillis } from '../../domain';
+import {
+  operationAnchor,
+  operationIndexes,
+  operationSignature,
+  type EpochMillis,
+} from '../../domain';
 import { useAuthStore } from '../store/authStore';
 import { useCurrentPilot, useSessionStore } from '../store';
 import { useAircraftRegistrations } from './useAircraftRegistrations';
@@ -69,7 +74,10 @@ export function useOperationSignatures(): OperationSignatureOf {
 
       for (const state of states) {
         const uuid = state.sessionUuid;
-        const startedAt = state.legs[0]?.startedAt;
+        // Ta sama kotwica, którą numeruje `operationIndexes` (issue #75): uruchomienie
+        // silnika, a przy operacji bez biegu - przejęcie. Doba w sygnaturze musi być
+        // dobą, w której kafelek stoi na liście.
+        const startedAt = operationAnchor(state);
         if (uuid == null || startedAt == null) continue;
 
         const index = indexes.get(uuid);

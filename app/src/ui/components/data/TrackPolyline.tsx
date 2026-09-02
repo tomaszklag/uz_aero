@@ -17,7 +17,7 @@
 import React from 'react';
 import { View, type ViewStyle } from 'react-native';
 
-import { polylineSegments, screenPath } from './screenPolyline';
+import { dashPath, polylineSegments, screenPath } from './screenPolyline';
 
 export interface Point2D {
   x: number;
@@ -30,6 +30,11 @@ export interface TrackPolylineProps {
   /** Grubość kreski (px). */
   width?: number;
   opacity?: number;
+  /**
+   * Kreska przerywana `[on, off]` w px łuku (issue #75 pkt 4 - kołowanie).
+   * Geometria cięcia i jej reguły: `dashPath` w `screenPolyline.ts`.
+   */
+  dash?: readonly [number, number];
   style?: ViewStyle;
 }
 
@@ -38,11 +43,14 @@ export function TrackPolyline({
   color,
   width = 2.5,
   opacity = 1,
+  dash,
   style,
 }: TrackPolylineProps) {
   if (points.length < 2) return null;
 
-  const segments = polylineSegments(screenPath(points), width);
+  const path = screenPath(points);
+  const pieces = dash != null ? dashPath(path, dash[0], dash[1]) : [path];
+  const segments = pieces.flatMap((piece) => polylineSegments(piece, width));
 
   return (
     <View pointerEvents="none" style={[{ position: 'absolute', inset: 0, opacity }, style]}>

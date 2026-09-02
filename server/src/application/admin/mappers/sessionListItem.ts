@@ -26,11 +26,12 @@ export function sessionListItem(join: AdminSessionJoin): AdminSessionListItem {
     /* Sygnaturę SKŁADA domena (issue #68) - tak samo, jak liczby składa projekcja.
        Napis zszyty tutaj z czterech pól byłby drugą konwencją nazw obok tej, którą
        telefon liczy u siebie, a rozjazd znaczyłby dwie nazwy jednego lotu. Fakty
-       przychodzą gotowe: znak i kod pilota ze złączeń, chwila uruchomienia z projekcji,
-       numer w dobie z zapytania. */
+       przychodzą gotowe: znak i kod pilota ze złączeń, KOTWICA numeracji z zapytania
+       (issue #75: uruchomienie silnika, a przy operacji bez biegu - przejęcie; to samo
+       wyrażenie, które policzyło numer), numer w dobie z zapytania. */
     signature: operationSignature({
       reg: join.reg,
-      startedAt: row.engineStartAt,
+      startedAt: join.signatureAt,
       picCode: join.picCode,
       index: join.dayIndex,
     }),

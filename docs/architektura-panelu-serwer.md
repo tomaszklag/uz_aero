@@ -1172,6 +1172,16 @@ projekcji per wiersz listy. Precyzyjnie:
 Nazwa reguły do zapamiętania: **agreguj wartości projekcji, nigdy nie odtwarzaj
 projekcji SQL-em.**
 
+Trzecia kategoria, dopisana przy issue #75: **PREDYKAT na kolumnach projekcji**
+(`pg/substanceSql.ts` - treść operacji, pustość, kotwica numeracji). Nie odtwarza
+projekcji (porównania i koalescencje, żadnej nowej liczby dnia), ale jest LUSTREM
+reguły z domeny (`operationSubstance.ts`) - czyli drugim zapisem tej samej reguły,
+a takie pary rozjeżdżają się cicho. Warunki brzegowe: wyrażenia mieszkają w JEDNYM
+module (ranga sygnatury, filtry list i agregaty składają się z tych samych napisów),
+a zgodność z domeną przybija test krzyżowy (`test/operationSignature.test.ts`),
+ten sam, który pilnuje numeracji dwóch torów. Nowy predykat bez takiego testu
+to wada, nie oszczędność.
+
 ### 7.2 Gdy panel potrzebuje nowej liczby - dokładamy KOLUMNĘ PROJEKCJI, nie wyrażenie
 
 To jest odpowiedź na napięcie „liczby z projekcji vs wydajność list". Migracja 10:

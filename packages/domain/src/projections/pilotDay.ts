@@ -19,6 +19,7 @@
  */
 
 import type { EpochMillis } from '../time';
+import { hasOperationSubstance, substanceFacts } from '../operationSubstance';
 import type { SessionState } from './session';
 
 /** Doba UTC jako liczba - północ 00:00:00.000Z. Klucz grupowania dnia pilota. */
@@ -47,8 +48,13 @@ export interface PilotDaySession {
   index: number;
   aircraftId: string;
   sessionUuid: string;
+  /**
+   * Kotwica wiersza: uruchomienie silnika, a przy operacji bez biegu (issue #75 pkt 3:
+   * zdanej ze zmienionym odczytem albo dolewką) - przejęcie maszyny. Ta sama kotwica,
+   * którą numeruje `operationIndexes`, bo numer kafelka MUSI być numerem sygnatury.
+   */
   startedAt: EpochMillis;
-  /** `null` = silnik nadal pracuje. */
+  /** `null` = silnik nadal pracuje. Przy operacji bez biegu: chwila zdania. */
   stoppedAt: EpochMillis | null;
   /** Czas blokowy sesji (ms); 0 dopóki bieg otwarty. */
   blockMs: number;
@@ -151,6 +157,38 @@ export function projectPilotDay(
       });
     }
 
+    /* OPERACJA BEZ BIEGU, ALE Z TREŚCIĄ (issue #75 pkt 3): zdanie ze zmienionym
+       odczytem paliwa/MH albo dolewką dostaje wiersz - kotwicą jest przejęcie,
+       godzinami zajęcie maszyny (przejęcie → zdanie), a blok i loty są zerowe.
+       Bez tego wiersza sygnatura takiej operacji wskazywałaby numer, którego
+       ekran 01 nie pokazuje - a numer kafelka i numer sygnatury to JEDEN numer.
+
+       Zapis bez treści wiersza nie dostaje (pusty jest śmieciem - issue #75 pkt 2,
+       niekompletny czeka w historii bez numeru), a decyzja zapada dopiero przy
+       ZDANIU - pełna reguła przy `operationAnchor`. */
+    if (
+      s.legs.length === 0 &&
+      s.closed &&
+      s.claimedAt != null &&
+      utcDayStart(s.claimedAt) === day &&
+      hasOperationSubstance(substanceFacts(s))
+    ) {
+      collected.push({
+        index: 0,
+        aircraftId: s.aircraftId,
+        sessionUuid: s.sessionUuid,
+        startedAt: s.claimedAt,
+        stoppedAt: s.closedAt,
+        blockMs: 0,
+        // W poprawnym strumieniu bez biegu nie ma lotów, więc obie wartości są zerowe;
+        // liczymy je mimo to tą samą funkcją, co wiersz biegu - strumień złamany
+        // (lot bez silnika) ma pokazać swoje loty, a nie cicho je zgubić.
+        flightMs: flightMsWithin(s, s.claimedAt, s.closedAt),
+        flightCount: flightCountWithin(s, s.claimedAt, s.closedAt),
+        manualEntry: s.manualEntry,
+      });
+    }
+
     /* Liczniki doby idą z LOTÓW, nie ze zdarzeń — więc kręgi trzeba doliczyć TU
        drugi raz (`projectSession` robi to po swojej stronie, na strumieniu).
        Bez tego doba pilota po cichu zaniżałaby lądowania przy każdym wpisie ręcznym
@@ -165,7 +203,13 @@ export function projectPilotDay(
     }
   }
 
-  collected.sort((a, b) => a.startedAt - b.startedAt);
+  // Remis kotwicy rozstrzyga `sessionUuid` - TA SAMA reguła, co w `operationIndexes`
+  // i w rannej SQL serwera: numer kafelka musi wyjść identyczny na trzech torach.
+  collected.sort(
+    (a, b) =>
+      a.startedAt - b.startedAt ||
+      (a.sessionUuid < b.sessionUuid ? -1 : a.sessionUuid > b.sessionUuid ? 1 : 0),
+  );
   collected.forEach((session, i) => {
     session.index = i + 1;
   });

@@ -40,6 +40,7 @@ import {
 } from '../keyset.ts';
 import { sessionColumns, toSessionRow, type SessionDbRow } from '../sessionDbRow.ts';
 import { SqlFilter } from '../sqlFilter.ts';
+import { anchorSql, emptySessionSql } from '../substanceSql.ts';
 
 /** Klucz porządku listy dni. `claim_time` jest NULL-owalne - stąd `NULLS LAST` i kursor. */
 const KEY: readonly [string, string] = ['s.claim_time', 's.session_uuid'];
@@ -60,6 +61,7 @@ const shapeOf = (direction: KeysetDirection): CursorShape => ({
 interface JoinedDbRow extends SessionDbRow {
   updated_at: string | Date;
   day_index: string | null;
+  signature_at: string | null;
   reg: string | null;
   aircraft_type: string | null;
   mh_format: string | null;
@@ -86,24 +88,29 @@ const SELECT = `
          -- jest miejscem wiersza wśród SĄSIADÓW, a ingest widzi jedną operację.
          --
          -- Reguła musi zgadzać się co do znaku z operationIndexes (@uzaero/domain),
-         -- bo telefon liczy ten sam numer u siebie, offline. Stąd komplet tych samych
-         -- czterech warunków: ten sam pilot, bez unieważnionych, wyłącznie operacje
-         -- z uruchomionym silnikiem, doba brana z uruchomienia. Remis rozstrzyga
-         -- session_uuid - w domenie z tego samego powodu, czyli dla determinizmu.
+         -- bo telefon liczy ten sam numer u siebie, offline. Stąd te same warunki:
+         -- ten sam pilot, bez unieważnionych, wyłącznie operacje z KOTWICĄ
+         -- (issue #75: uruchomienie silnika, a bez biegu - przejęcie zapisu zdanego
+         -- z treścią; wyrażenie w substanceSql.ts, lustro operationAnchor). Doba
+         -- i kolejność biorą się z kotwicy. Remis rozstrzyga session_uuid -
+         -- w domenie z tego samego powodu, czyli dla determinizmu.
          --
          -- Warunek dotyczy TEŻ WIERSZA PYTANEGO, nie tylko liczonych: bez części
          -- o statusie operacja unieważniona dostawała numer równy liczbie ważnych
          -- operacji przed nią - czyli NUMER SWOJEJ POPRZEDNICZKI. Dwie operacje
          -- o jednej sygnaturze to dokładna odwrotność tego, po co ona jest.
-         CASE WHEN s.engine_start_at IS NULL OR s.status = 'voided' THEN NULL ELSE (
+         CASE WHEN ${anchorSql('s')} IS NULL OR s.status = 'voided' THEN NULL ELSE (
            SELECT COUNT(*)
              FROM sessions x
             WHERE x.pic_id = s.pic_id
               AND x.status <> 'voided'
-              AND x.engine_start_at IS NOT NULL
-              AND x.engine_start_at / 86400000 = s.engine_start_at / 86400000
-              AND (x.engine_start_at, x.session_uuid) <= (s.engine_start_at, s.session_uuid)
+              AND ${anchorSql('x')} IS NOT NULL
+              AND ${anchorSql('x')} / 86400000 = ${anchorSql('s')} / 86400000
+              AND (${anchorSql('x')}, x.session_uuid) <= (${anchorSql('s')}, s.session_uuid)
          ) END                AS day_index,
+         -- Kotwica numeracji - z niej mapper bierze DOBĘ sygnatury. Liczona TYM SAMYM
+         -- wyrażeniem, co ranga wyżej, żeby mapper nie odtwarzał reguły po swojemu.
+         ${anchorSql('s')}    AS signature_at,
          a.reg                AS reg,
          a.type               AS aircraft_type,
          a.mh_format          AS mh_format,
@@ -142,6 +149,7 @@ const toJoin = (r: JoinedDbRow): AdminSessionJoin => ({
   row: toSessionRow(r),
   // `COUNT` wraca z Postgresa jako BIGINT, czyli tekst - jak reszta liczników tego pliku.
   dayIndex: r.day_index == null ? null : Number(r.day_index),
+  signatureAt: r.signature_at == null ? null : Number(r.signature_at),
   reg: r.reg,
   aircraftType: r.aircraft_type,
   mhFormat: toMhFormat(r.mh_format),
@@ -216,6 +224,11 @@ export class PgAdminSessionsRepo implements SessionsAdminPort {
    * w narzędziu, którego jedynym zadaniem jest nie zgadywać.
    */
   private applyFilters(filter: SqlFilter, f: SessionListFilter): void {
+    /* PUSTY ZAPIS NIE WCHODZI NA ŻADNĄ LISTĘ (issue #75 pkt 2): zdanie bez biegu,
+       lotów i zmian odczytów to śmieć, nie operacja - słowa właściciela. Filtr stoi
+       w applyFilters, więc obejmuje i stronę, i licznik `COUNT`. Adres bezpośredni
+       (`byUuid`) NIE filtruje: rejestr ma widzieć wszystko, jak przy unieważnieniu. */
+    filter.add(`NOT ${emptySessionSql('s')}`);
     filter.addOptional('s.claim_time >= ?', f.fromMs);
     filter.addOptional('s.claim_time <= ?', f.toMs);
     filter.addOptional('s.aircraft_id = ?', f.aircraftId);

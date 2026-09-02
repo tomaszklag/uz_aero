@@ -101,14 +101,14 @@ describe('operationIndexes', () => {
     expect(operationIndexes([axa, klm, nextDay], PIC).get('s-next')).toBe(1);
   });
 
-  it('pomija operacje unieważnione, cudze i bez biegu silnika', () => {
+  it('pomija operacje unieważnione, cudze i zapisy bez biegu i bez treści', () => {
     const voided = session({ sessionUuid: 's-void', legs: [leg('06:00', '07:00')], voided: true });
     const foreign = session({
       sessionUuid: 's-foreign',
       sessionPicId: 'ktos-inny',
       legs: [leg('06:30', '07:30')],
     });
-    // 09C: samolot zajęty, silnik nie ruszył - operacji lotniczej nie było.
+    // 09C bez odczytów w strumieniu: treści nie da się orzec - numeru nie ma.
     const noRun = session({ sessionUuid: 's-09c', claimedAt: at('06:45'), closed: true });
 
     const indexes = operationIndexes([voided, foreign, noRun, axa], PIC);
@@ -119,12 +119,47 @@ describe('operationIndexes', () => {
     expect(indexes.get('s-axa')).toBe(1);
   });
 
+  /* ── issue #75 pkt 3: zapis bez biegu, ale ze ZMIANĄ, dostaje numer ────────── */
+
+  const changedNoRun = session({
+    sessionUuid: 's-changed',
+    aircraftId: 'sp-fgk',
+    claimedAt: at('06:45'),
+    closed: true,
+    closedAt: at('07:50'),
+    fuel: { startL: 240, addedL: 0, endL: 236, consumedL: 4, lastReadingL: 236 },
+    mh: { start: 2815.2, end: 2815.2, deltaH: 0 },
+  });
+
+  it('zapis bez biegu ze zmienionym odczytem dostaje numer - kotwicą jest przejęcie', () => {
+    const indexes = operationIndexes([axa, changedNoRun], PIC);
+    // Przejęcie 06:45 wyprzedza uruchomienie 08:12, więc zmiana jest pierwsza.
+    expect(indexes.get('s-changed')).toBe(1);
+    expect(indexes.get('s-axa')).toBe(2);
+  });
+
+  it('zapis pusty (komplet równych odczytów) numeru nie dostaje i go nie zajmuje', () => {
+    const empty = session({
+      sessionUuid: 's-empty',
+      claimedAt: at('06:00'),
+      closed: true,
+      closedAt: at('06:30'),
+      fuel: { startL: 240, addedL: 0, endL: 240, consumedL: 0, lastReadingL: 240 },
+      mh: { start: 2815.2, end: 2815.2, deltaH: 0 },
+    });
+    const indexes = operationIndexes([empty, axa], PIC);
+    expect(indexes.get('s-empty')).toBeUndefined();
+    expect(indexes.get('s-axa')).toBe(1);
+  });
+
   it('daje ten sam numer, co kafelek „OPERACJA n" na ekranie 01', () => {
-    const sessions = [klm, axa];
+    // Z operacją bez biegu w zestawie - obie listy muszą ją widzieć tak samo.
+    const sessions = [klm, axa, changedNoRun];
     const indexes = operationIndexes(sessions, PIC);
     const day = projectPilotDay(sessions, PIC, utcDayStart(DAY0));
 
     expect(day.sessions.map((s) => [s.sessionUuid, s.index])).toEqual([
+      ['s-changed', indexes.get('s-changed')],
       ['s-axa', indexes.get('s-axa')],
       ['s-klm', indexes.get('s-klm')],
     ]);

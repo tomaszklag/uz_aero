@@ -299,22 +299,43 @@ byłaby drugą kopią na drucie: wpis ręczny dopisany PRZED istniejącą operac
 doby przenumerowuje ją, a zapisany numer wskazywałby po tym dwie operacje naraz.
 
 **Numer to ten sam numer, który ekran 01 pisze jako „OPERACJA n"** (§3.6a,
-`projectPilotDay`): operacje TEGO pilota, nieunieważnione, z uruchomionym silnikiem;
-doba i kolejność z chwili uruchomienia. Numeracja idzie po dobie PILOTA, a nie po dobie
-samolotu - i to jest warunek offline-first (§6): telefon ma w rejestrze wszystkie
-operacje swojego pilota (§4.1, jeden piszący), a cudzych na tej samej maszynie nie ma
-i mieć nie może. Jednoznaczności pilnuje kod PIC w środku napisu.
+`projectPilotDay`): operacje TEGO pilota, nieunieważnione, z KOTWICĄ - uruchomieniem
+silnika, a przy zapisie bez biegu (issue #75) przejęciem maszyny; doba i kolejność
+z chwili kotwicy. Numeracja idzie po dobie PILOTA, a nie po dobie samolotu - i to jest
+warunek offline-first (§6): telefon ma w rejestrze wszystkie operacje swojego pilota
+(§4.1, jeden piszący), a cudzych na tej samej maszynie nie ma i mieć nie może.
+Jednoznaczności pilnuje kod PIC w środku napisu.
 
 **Czasu w sygnaturze nie ma**: korekta czasu (§3.9) przesuwa uruchomienie o kilka minut,
 więc sygnatura z godziną opisywałaby po niej inną operację niż przed.
 
-**Operacja bez biegu silnika (09C) sygnatury nie ma** - numerujemy biegi silnika, więc
-zdanie samolotu bez uruchomienia nie ma czego numerować. Ekran pokazuje wtedy datę, znak
-i godziny, jak przed issue #68.
+**Zapis bez biegu silnika numeruje się TYLKO z treścią** (issue #75 pkt 3, sekcja
+§3.6d): zdanie ze zmienionym odczytem paliwa/MH albo z dolewką dostaje numer i sygnaturę
+z kotwicą przejęcia - dopiero po zdaniu, bo treść bez biegu orzeka się z odczytów
+końcowych. Zapis bez biegu i bez treści numeru nie ma: pusty znika z list w całości,
+niekompletny pokazuje datę, znak i godziny, jak przed issue #68.
 
-Serwer liczy ten sam numer rangą SQL (kolumny projekcji `sessions`), bo ingest widzi
-JEDNĄ operację i nie ma jak wypełnić kolumny zależnej od sąsiadów. Zgodność obu torów
-ma test krzyżowy.
+Serwer liczy ten sam numer rangą SQL (kolumny projekcji `sessions`, wyrażenia
+w `pg/substanceSql.ts`), bo ingest widzi JEDNĄ operację i nie ma jak wypełnić kolumny
+zależnej od sąsiadów. Zgodność obu torów ma test krzyżowy.
+
+### 3.6d Treść operacji i puste zdania (issue #75, 2026-09-02)
+
+Zapis „przejęcie → zdanie", w którym silnik nie ruszył, ma dwa rodzaje i granicę
+rozstrzyga domena (`operationSubstance.ts`: fakty + `hasOperationSubstance`,
+`isEmptyOperation`, `operationAnchor`):
+
+- **treść** = bieg silnika, lot, dolewka paliwa/oleju albo zmierzona zmiana odczytu
+  (paliwo lub MH przy zdaniu ≠ przy przejęciu). Zapis z treścią jest pełnoprawną
+  operacją: numer, sygnatura, kafelek na 01/12 z godzinami zajęcia maszyny;
+- **pusty** = zdany, bez treści, z KOMPLETEM czterech odczytów potwierdzających
+  pustość. Śmieć: nie pokazuje go żadna lista telefonu, dziennik panelu (L1+L2)
+  ani karta arkusza. Rejestr zostaje append-only - adres bezpośredni działa;
+- ekran 09C OSTRZEGA przed pustym zdaniem (amber, ze szkicu odczytu, gaśnie po
+  poprawce), ale nigdy nie blokuje: samolot trzeba oddać;
+- operacja UNIEWAŻNIONA (`session_void` - pilota albo administratora) znika z tych
+  samych list; unieważnienie administratora wraca na telefon zwykłym syncem (§4.9),
+  a filtr obejmuje też historię (12) i agregaty dziennika (L1).
 
 ### 3.6b Znane ryzyko: opcjonalny odczyt kontra analityka zużycia
 
@@ -701,7 +722,10 @@ zamyka pętlę.
   w kółko. Dedup po `uuid` należy do magazynu, więc wpis czekający jeszcze w outboxie
   zostaje nietknięty (o jego losie rozstrzyga wysyłka, nie odczyt)
 - **brama wieku 15 min** i pętla stron po ≤200 zdarzeń, z sufitem stron na przebieg;
-  przerwanie w połowie nie cofa niczego - kursor jest zapisywany po każdej stronie
+  przerwanie w połowie nie cofa niczego - kursor jest zapisywany po każdej stronie.
+  Ręczne ponaglenie („SYNCHRONIZUJ TERAZ" w 13, „PONÓW PRÓBĘ" w arkuszu SyncChipa)
+  pomija bramę (`restoreEventsNow`, issue #75 pkt 1) - pilot pyta „co serwer wie
+  TERAZ", a unieważnienie wpisane przez administratora nie ma czekać do kwadransa
 
 Dwie konsekwencje warte zapamiętania:
 

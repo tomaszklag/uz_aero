@@ -20,6 +20,7 @@
 
 import type { Queryable } from '../../../application/common/ports.ts';
 import type { LogAdminPort, LogAircraftAggregate } from '../../../application/admin/ports.ts';
+import { emptySessionSql } from '../substanceSql.ts';
 
 /** Doba UTC w milisekundach - dzielnik do liczenia DNI pracy maszyny. */
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -82,6 +83,12 @@ export class PgAdminLogRepo implements LogAdminPort {
          LEFT JOIN sessions s
            ON s.aircraft_id = a.id
           AND s.claim_time BETWEEN $1 AND $2
+          -- Operacja UNIEWAŻNIONA nie liczy się do sum floty (issue #75 pkt 1):
+          -- baner na ekranie operacji obiecuje „nie liczy się do sum dziennika",
+          -- a do 2026-09-02 ten JOIN liczył ją jak każdą inną. Pusty zapis
+          -- (zdanie bez biegu i bez zmian) odpada z tego samego powodu, co z list.
+          AND s.status <> 'voided'
+          AND NOT ${emptySessionSql('s')}
         GROUP BY a.id, a.reg, a.type, a.mh_format
         -- Alfabetycznie po znakach na kadłubie: pytanie brzmi „gdzie jest SP-KLM",
         -- nie „która maszyna wygrała". Jednostki poza służbą i tak wyróżnia panel.

@@ -516,6 +516,7 @@ export function StatsScreen({
           {trackLoaded && track != null && track.missing == null && (
             <TrackThumbnail
               line={track.track.line}
+              flights={track.flights}
               markers={track.markers}
               height={THUMB_HEIGHT}
               onPress={openTrack}

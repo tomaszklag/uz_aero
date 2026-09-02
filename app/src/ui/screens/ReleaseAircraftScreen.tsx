@@ -69,6 +69,7 @@ import {
   releaseBlocker,
   releasePayload,
 } from './logic/releaseAircraft';
+import { emptyReleaseWarning, readingsUntouched } from './logic/releaseWarnings';
 import type { NoFlightReason } from '../../domain';
 
 /**
@@ -153,6 +154,9 @@ export function ReleaseAircraftScreen({
 
   const withoutLeg = vm.withoutLeg;
   const blocker = releaseBlocker(projection, reading, reason);
+  // „Nic się nie zmieniło" (issue #75 pkt 2) - liczone ze szkicu odczytu, więc gaśnie
+  // samo, gdy pilot poprawi liczbę (ostrzeżenie warunkowe, Typ B). Nigdy nie blokuje.
+  const emptyWarning = withoutLeg ? emptyReleaseWarning(projection, reading) : null;
 
   return (
     <Screen
@@ -215,8 +219,15 @@ export function ReleaseAircraftScreen({
             {/* ── liczniki bez zmian ─────────────────────────────────────────
                 Nie każemy przepisywać tego samego. Ale furtka korekty zostaje, bo
                 licznik fizyczny jest ważniejszy od naszej rachuby (§4.1 pkt 5) -
-                ktoś mógł ruszyć samolot poza aplikacją. */}
-            <Card title="Liczniki" flush headerRight={<Tag label="bez zmian" />}>
+                ktoś mógł ruszyć samolot poza aplikacją. Plakietka „bez zmian" gaśnie
+                z pierwszą poprawką: nad zmienioną liczbą kłamała (issue #75). */}
+            <Card
+              title="Liczniki"
+              flush
+              headerRight={
+                readingsUntouched(vm.initial, reading) ? <Tag label="bez zmian" /> : undefined
+              }
+            >
               <UnchangedRow
                 label="Paliwo"
                 value={reading.fuelL != null ? `${Math.round(reading.fuelL)}` : '-'}
@@ -244,16 +255,24 @@ export function ReleaseAircraftScreen({
               </View>
             </Card>
 
-            <Banner
-              kind="status"
-              tone="blue"
-              icon="info"
-              text={
-                `Przejęcie samolotu zostaje w rejestrze - administrator widzi, że ` +
-                `${vm.aircraftId} był zajęty i dlaczego nie poleciał. Twój dzień liczy się ` +
-                'dalej: to nie był lot, ale byłeś na miejscu.'
-              }
-            />
+            {/* Jeden slot, dwa stany (issue #75 pkt 2): bez zmian - amber ostrzeżenie
+                „nic nie zostanie zapisane"; ze zmianą - niebieski status, bo wtedy zapis
+                NAPRAWDĘ trafia do dnia pilota i do panelu. Obu naraz nie ma: mówiłyby
+                o tym samym zdaniu dwie sprzeczne rzeczy. */}
+            {emptyWarning != null ? (
+              <Banner kind="warning" tone="amber" icon="warning" text={emptyWarning} />
+            ) : (
+              <Banner
+                kind="status"
+                tone="blue"
+                icon="info"
+                text={
+                  `Zapis zostaje w rejestrze - administrator widzi, że ` +
+                  `${vm.aircraftId} był zajęty i dlaczego nie poleciał. Twój dzień liczy się ` +
+                  'dalej: ta operacja dopisze się do listy z godzinami zajęcia maszyny.'
+                }
+              />
+            )}
           </>
         ) : (
           <>

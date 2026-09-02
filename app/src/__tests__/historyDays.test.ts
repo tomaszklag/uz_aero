@@ -225,3 +225,83 @@ describe('poprzednie dni (ekran 12)', () => {
     expect(remainingLabel(30_000)).toBe('zostało 1 min'); // zaokrąglenie W GÓRĘ - nie „0 min"
   });
 });
+
+/** Zapis bez biegu silnika (09C): claim → preflight → zdanie. Odczyt końcowy do wyboru. */
+async function writeNoRun(
+  repo: EventsRepo,
+  sessionUuid: string,
+  dayStart: number,
+  finalReading: { fuelL: number; mh: number },
+): Promise<void> {
+  const t = (offsetMin: number): number => dayStart + offsetMin * 60_000;
+  const base = { sessionUuid, aircraftId: 'SP-FGK', picId: 'TMK', dualId: null } as const;
+  await repo.appendEvent({ ...base, type: 'session_claim', payload: { mode: 'free' }, deviceTime: t(0) });
+  await repo.appendEvent({
+    ...base,
+    type: 'preflight_confirm',
+    payload: {
+      operation: 'skoki',
+      departureIcao: null,
+      arrivalIcao: null,
+      reading: { fuelL: 240, mh: 2815.2 },
+      client: null,
+      mhFormat: 'decimal',
+    },
+    deviceTime: t(1),
+  });
+  await repo.appendEvent({
+    ...base,
+    type: 'day_close',
+    payload: { finalReading, noFlightReason: 'weather' },
+    deviceTime: t(75),
+  });
+}
+
+describe('poprzednie dni - unieważnienie i treść operacji (issue #75)', () => {
+  it('sesja unieważniona (także przez administratora) wypada z historii i z plakietki', async () => {
+    const { repo, queries } = harness();
+    await writeDay(repo, 'sess-1', at(8, 0));
+    // Tak wraca unieważnienie z panelu: zwykłe zdarzenie strumienia (`GET /me/events`).
+    await repo.appendEvent({
+      sessionUuid: 'sess-1',
+      aircraftId: 'SP-AXA',
+      picId: 'TMK',
+      dualId: null,
+      type: 'session_void',
+      payload: { reason: 'wpis testowy' },
+      deviceTime: nextDay(8, 0),
+    });
+
+    const days = await queries.historyDays();
+    const groups = buildHistory(days, nextDay(9, 0));
+    expect(groups.editable).toHaveLength(0);
+    expect(groups.closed).toHaveLength(0);
+    expect(editableBadge(days, nextDay(9, 0))).toBeNull();
+  });
+
+  it('zapis PUSTY (odczyty równe przejęciu, bez biegu) nie ma karty ani plakietki', async () => {
+    const { repo, queries } = harness();
+    await writeNoRun(repo, 'sess-empty', at(9, 10), { fuelL: 240, mh: 2815.2 });
+
+    const days = await queries.historyDays();
+    const groups = buildHistory(days, nextDay(9, 0));
+    expect(groups.editable).toHaveLength(0);
+    expect(groups.closed).toHaveLength(0);
+    expect(editableBadge(days, nextDay(9, 0))).toBeNull();
+  });
+
+  it('zapis bez biegu ze ZMIENIONYM odczytem ma kartę z godzinami zajęcia maszyny', async () => {
+    const { repo, queries } = harness();
+    await writeNoRun(repo, 'sess-changed', at(9, 10), { fuelL: 236, mh: 2815.2 });
+
+    const groups = buildHistory(await queries.historyDays(), nextDay(9, 0));
+    expect(groups.editable.map((d) => d.sessionUuid)).toEqual(['sess-changed']);
+    // Godziny ZAJĘCIA (przejęcie → zdanie): jedyna para godzin, jaką ten zapis ma.
+    expect(groups.editable[0]!.times).toBe('09:10 → 10:25 UTC');
+    expect(groups.editable[0]!.stats).toEqual([
+      { k: 'Loty', v: '0' },
+      { k: 'Blok', v: '0:00' },
+      { k: 'Lot', v: '0:00' },
+    ]);
+  });
+});

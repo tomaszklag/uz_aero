@@ -35,18 +35,22 @@
  * z godziną opisywałaby po niej inną operację niż przed. Numer porządkowy przeżywa
  * korektę, dopóki nie zmienia kolejności operacji w dobie.
  *
- * ══ OPERACJA BEZ BIEGU SILNIKA SYGNATURY NIE MA ══
- * Zdanie samolotu bez lotu (09C: pogoda, usterka) zostawia sesję bez ani jednego
- * uruchomienia. Taki zapis NIE dostaje numeru i nie dostaje sygnatury - i to nie jest
- * dziura, tylko ta sama granica, którą rysuje `projectPilotDay`: numeruje operacje,
- * czyli biegi silnika. Wpisanie takiej sesji do numeracji przesunęłoby numery
- * operacjom, które na ekranie 01 stoją już ponumerowane (09C wiersza tam nie ma),
- * a wydanie jej numeru „obok" dałoby dwie operacje o jednej sygnaturze. Wołający
- * dostaje `null` i pokazuje kreskę - maszyna, doba i pilot opisują ten zapis dalej.
+ * ══ NUMER DOSTAJE OPERACJA Z TREŚCIĄ (issue #75 rozszerza #68) ══
+ * Do issue #75 numerowały się wyłącznie biegi silnika. Odtąd numer (i sygnaturę)
+ * dostaje też zapis bez biegu, w którym COŚ SIĘ ZMIENIŁO - odczyt paliwa albo licznika
+ * MH różni się od przejęcia, była dolewka (`operationSubstance.ts`). Kotwicą jest
+ * wtedy przejęcie (`claimedAt`), a decyzja zapada dopiero przy ZDANIU - pełna reguła
+ * i jej uzasadnienie przy `operationAnchor`.
+ *
+ * Zapis bez biegu i bez treści numeru nadal NIE MA: pusty (odczyty z obu stron równe)
+ * jest ukrywany w całości, a niekompletny pokazuje się w historii z kreską - maszyna,
+ * doba i pilot opisują go dalej. Granica jest ta sama, którą rysuje `projectPilotDay`,
+ * bo numer sygnatury MUSI być numerem z ekranu 01.
  */
 
 import type { EpochMillis } from './time';
 import type { SessionState } from './projections/session';
+import { operationAnchor } from './operationSubstance';
 import { utcDayStart } from './projections/pilotDay';
 
 /**
@@ -98,12 +102,13 @@ export function operationSignature(parts: OperationSignatureParts): string | nul
  *
  * REGUŁA JEST TA SAMA, CO W `projectPilotDay` i musi taka zostać - to ten sam numer
  * widziany z dwóch stron (kafelek 01 pisze go słowem, sygnatura cyfrą). Stąd te same
- * trzy warunki: liczy się operacje TEGO pilota, nieunieważnione, z uruchomionym
- * silnikiem; doba bierze się z uruchomienia, a kolejność z jego chwili.
+ * trzy warunki: liczy się operacje TEGO pilota, nieunieważnione, z KOTWICĄ
+ * (`operationAnchor`: uruchomienie silnika, a bez biegu - przejęcie zapisu zdanego
+ * z treścią, issue #75); doba i kolejność biorą się z kotwicy.
  *
  * Rozstrzygnięcie remisu po `sessionUuid` jest dodatkiem wobec projekcji (tam remis
  * rozstrzyga stabilność sortowania) i istnieje dla SERWERA: numer musi wyjść identyczny
- * z zapytania SQL, a tam kolejności wstawiania nie ma. Dwa uruchomienia jednego pilota
+ * z zapytania SQL, a tam kolejności wstawiania nie ma. Dwie kotwice jednego pilota
  * w tej samej milisekundzie to stan niemożliwy - chodzi o determinizm, nie o realny remis.
  *
  * Liczy WSZYSTKIE doby naraz, bo wołający (ekran 12, hook sygnatur) i tak trzyma cały
@@ -117,7 +122,7 @@ export function operationIndexes(
 
   for (const session of sessions) {
     const uuid = session.sessionUuid;
-    const startedAt = session.legs[0]?.startedAt;
+    const startedAt = operationAnchor(session);
     if (uuid == null || startedAt == null) continue;
     if (session.voided || session.sessionPicId !== picId) continue;
 

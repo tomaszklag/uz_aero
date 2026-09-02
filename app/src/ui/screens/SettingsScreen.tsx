@@ -71,6 +71,7 @@ export function SettingsScreen({
   const serverFlags = useSessionStore((s) => s.serverFlags);
   const syncNow = useSessionStore((s) => s.syncNow);
   const refreshReferenceNow = useSessionStore((s) => s.refreshReferenceNow);
+  const restoreEventsNow = useSessionStore((s) => s.restoreEventsNow);
   const projection = useSessionStore((s) => s.projection);
   const queries = useSessionStore((s) => s.queries);
   const repo = useSessionStore((s) => s.repo);
@@ -89,10 +90,11 @@ export function SettingsScreen({
 
   // ── synchronizacja: awaryjne ponaglenie OBU kierunków ─────────────────────
   // „SYNCHRONIZUJ TERAZ" dopycha kolejkę wysyłki I pobiera świeże dane referencyjne
-  // z pominięciem bramy wieku (issue #55): pilot, który sięga po ten przycisk, pyta
-  // „co serwer wie teraz" - sama wysyłka odpowiadała na pół pytania, a świeżo dodany
-  // przez administratora samolot czekał na bramę. Stempel wieku czytamy ponownie,
-  // żeby wiersz w „O aplikacji" pokazał skutek od razu.
+  // ORAZ zdarzenia z rejestru serwera - wszystko z pominięciem bram wieku (issue #55,
+  // rozszerzone przy issue #75 pkt 1): pilot, który sięga po ten przycisk, pyta
+  // „co serwer wie teraz", a bez dosyłki zdarzeń unieważnienie wpisane przez
+  // administratora czekało na telefonie do kwadransa mimo ręcznego ponaglenia.
+  // Stempel wieku czytamy ponownie, żeby wiersz w „O aplikacji" pokazał skutek od razu.
   const [syncing, setSyncing] = useState(false);
   const runManualSync = useCallback(async (): Promise<void> => {
     setSyncing(true);
@@ -100,12 +102,13 @@ export function SettingsScreen({
       // 'manual': ten przycisk jest awaryjnym ponagleniem, więc czeka dłużej
       // niż pętla tła (patrz `SyncTrigger`).
       await syncNow('manual');
+      await restoreEventsNow();
       await refreshReferenceNow();
       await readRefStamp();
     } finally {
       setSyncing(false);
     }
-  }, [readRefStamp, refreshReferenceNow, syncNow]);
+  }, [readRefStamp, refreshReferenceNow, restoreEventsNow, syncNow]);
   // „Offline" znamy wyłącznie z wyniku OSTATNIEJ próby (§4.3) - innego pojęcia o sieci
   // aplikacja nie ma i nie udaje, że ma.
   const offline = lastSync?.kind === 'offline';

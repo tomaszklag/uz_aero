@@ -9,6 +9,7 @@
  */
 
 import {
+  dashPath,
   polylineSegments,
   screenPath,
   MIN_SCREEN_STEP_PX,
@@ -174,5 +175,64 @@ describe('odcinki łamanej - nadmiar na styku', () => {
     );
 
     expect(segments).toHaveLength(1);
+  });
+});
+
+describe('dashPath (issue #75 pkt 4 - kołowanie przerywaną)', () => {
+  it('tnie prostą po długości łuku: kreska, przerwa, kreska', () => {
+    const line: Point2D[] = [
+      { x: 0, y: 0 },
+      { x: 20, y: 0 },
+    ];
+    expect(dashPath(line, 4, 4)).toEqual([
+      [
+        { x: 0, y: 0 },
+        { x: 4, y: 0 },
+      ],
+      [
+        { x: 8, y: 0 },
+        { x: 12, y: 0 },
+      ],
+      [
+        { x: 16, y: 0 },
+        { x: 20, y: 0 },
+      ],
+    ]);
+  });
+
+  it('kreska przechodząca przez wierzchołek zachowuje załamanie w środku', () => {
+    // Załamanie w (6, 0) wypada wewnątrz pierwszej kreski [0..8].
+    const bent: Point2D[] = [
+      { x: 0, y: 0 },
+      { x: 6, y: 0 },
+      { x: 6, y: 10 },
+    ];
+    const pieces = dashPath(bent, 8, 4);
+    expect(pieces[0]).toEqual([
+      { x: 0, y: 0 },
+      { x: 6, y: 0 },
+      { x: 6, y: 2 },
+    ]);
+  });
+
+  it('łamana krótsza niż jedna kreska zostaje jednym kawałkiem', () => {
+    const short: Point2D[] = [
+      { x: 0, y: 0 },
+      { x: 2, y: 0 },
+    ];
+    expect(dashPath(short, 4, 4)).toEqual([[{ x: 0, y: 0 }, { x: 2, y: 0 }]]);
+  });
+
+  it('mniej niż dwa punkty nie ma czego ciąć', () => {
+    expect(dashPath([], 4, 4)).toEqual([]);
+    expect(dashPath([{ x: 1, y: 1 }], 4, 4)).toEqual([]);
+  });
+
+  it('wzór niedodatni oddaje całość jednym kawałkiem - kreska bez przerwy nie istnieje', () => {
+    const line: Point2D[] = [
+      { x: 0, y: 0 },
+      { x: 20, y: 0 },
+    ];
+    expect(dashPath(line, 0, 4)).toEqual([[...line]]);
   });
 });

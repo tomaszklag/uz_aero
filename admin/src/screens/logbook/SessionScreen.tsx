@@ -258,6 +258,9 @@ function TrackCard({ track, pending, manualEntry, departureIcao, flights }: Trac
     MAP_WIDTH,
     MAP_HEIGHT,
     departureIcao,
+    // Okna lotów z projekcji sesji (issue #75 pkt 4): dzielą trasę na kołowanie
+    // i loty - koperta śladu niesie samą geometrię (issue #47).
+    flights,
   );
   const profile = profilePlot(track.profile, PROFILE_WIDTH, PROFILE_HEIGHT);
 

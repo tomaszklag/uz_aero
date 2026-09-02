@@ -49,6 +49,8 @@
 
 import { projectSession, type FlagStatus, type FlagType } from '@uzaero/domain';
 
+import { isEmptySessionRow } from '../mappers/operationFacts.ts';
+
 import {
   buildDaySheet,
   sheetDay,
@@ -193,7 +195,11 @@ export class DayExporter {
      * Doba, w której wycofano wszystko, wygląda odtąd jak doba bez sesji (`no_events`) -
      * i tym właśnie jest. Nazwy powodów zostają bez zmian: czyta je panel (`A05`).
      */
-    const rows = all.filter((r) => r.status !== 'voided');
+    /* PUSTY ZAPIS też nie istnieje dla karty (issue #75 pkt 2): zdanie bez biegu,
+       lotów i zmian odczytów nie jest operacją, więc blok samych kresek w dokumencie
+       klubu byłby dokładnie tym śmieciem, który telefon i panel już filtrują.
+       Ta sama reguła, ten sam mapper faktów, co wszędzie (`operationFacts.ts`). */
+    const rows = all.filter((r) => r.status !== 'voided' && !isEmptySessionRow(r));
     if (rows.length === 0) return { exported: false, reason: 'no_events' };
     // Wyzwalaczem jest ZDANIE SAMOLOTU - wystarczy jedno w całej dobie (§4.7).
     if (!rows.some((r) => r.status === 'closed')) return { exported: false, reason: 'session_open' };

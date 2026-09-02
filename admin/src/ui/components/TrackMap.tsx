@@ -38,8 +38,13 @@ export interface MarkerPlacement {
 }
 
 export interface MapPlot {
-  /** Punkty łamanej w formacie atrybutu `points` SVG. */
-  polyline: string;
+  /**
+   * Trasa w FAZACH (issue #75 pkt 4): kołowanie rysuje się przerywaną szarą, loty
+   * pełną zieloną - jak na ekranie 14 telefonu. Każdy przebieg to punkty w formacie
+   * atrybutu `points` SVG; sąsiednie przebiegi dzielą punkt graniczny, więc łamane
+   * stykają się bez dziury.
+   */
+  route: { phase: 'taxi' | 'flight'; points: string }[];
   airfields: AirfieldPlacement[];
   markers: MarkerPlacement[];
   scale: { label: string; pixels: number };
@@ -100,15 +105,34 @@ export function TrackMap({ plot, width, height }: TrackMapProps) {
           </g>
         ))}
 
-        <polyline
-          points={plot.polyline}
-          fill="none"
-          stroke="var(--green)"
-          strokeWidth={3}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          opacity={0.92}
-        />
+        {/* Kołowanie przerywaną szarą, loty pełną zieloną (issue #75 pkt 4) -
+            ta sama konwencja, co ekran 14 telefonu i miniatura na 10. */}
+        {plot.route.map((run, i) =>
+          run.phase === 'flight' ? (
+            <polyline
+              key={i}
+              points={run.points}
+              fill="none"
+              stroke="var(--green)"
+              strokeWidth={3}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              opacity={0.92}
+            />
+          ) : (
+            <polyline
+              key={i}
+              points={run.points}
+              fill="none"
+              stroke="var(--text-muted)"
+              strokeWidth={2}
+              strokeDasharray="5 5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              opacity={0.9}
+            />
+          ),
+        )}
 
         {plot.markers.map((marker) => (
           <g key={marker.label}>
@@ -140,7 +164,11 @@ export function TrackMap({ plot, width, height }: TrackMapProps) {
       <div className="map-legend">
         <div className="legend-row">
           <span className="legend-dot line" style={{ background: 'var(--green)' }} />
-          Trasa
+          Lot
+        </div>
+        <div className="legend-row">
+          <span className="legend-dash" />
+          Kołowanie
         </div>
         <div className="legend-row">
           <span className="legend-dot" style={{ background: 'var(--green)' }} />
