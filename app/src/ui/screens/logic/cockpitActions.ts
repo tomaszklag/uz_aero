@@ -12,9 +12,11 @@
  * O tym, że kołowanie trwa, mówi PROJEKCJA (`taxiing`), nie faza z GPS: przycisk
  * ZAPISUJE zdarzenia, więc musi patrzeć na to, co jest w rejestrze - fazę z GPS
  * autodetekcja i tak zamienia na zdarzenie `taxi` w chwili wykrycia ruchu, więc oba
- * źródła schodzą się same. Tap w „Taxi" zapisuje kołowanie OD RAZU, bez arkusza 05f
- * i bez okna COFNIJ - taxi nie wyznacza żadnego czasu, pomyłka kosztuje jeden wiersz
- * w logu (ta sama zasada, którą autodetekcja stosuje od 2026-08-04).
+ * źródła schodzą się same. „Taxi" zapisuje kołowanie bez arkusza 05f i bez okna
+ * COFNIJ - taxi nie wyznacza żadnego czasu, pomyłka kosztuje jeden wiersz w logu
+ * (ta sama zasada, którą autodetekcja stosuje od 2026-08-04). Od issue #67 przycisk
+ * główny i STOP wymagają PRZYTRZYMANIA 1 s zamiast tapnięcia („na klik mogą zdarzyć
+ * się pomyłki") - gest jest własnością `CockpitActions`, nie tego modelu.
  *
  * PRZYCISK NIE MÓWI O STANIE ODBIORNIKA (decyzja 2026-08-12) - ani nazwą, ani kolorem.
  * Przy utracie GPS nazywał się „Taxi · ręcznie" / „Landing · ręcznie" i awansował na

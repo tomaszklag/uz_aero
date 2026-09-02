@@ -4,9 +4,11 @@
  * Jeden przycisk na wszystkie akcje z mockupów, z trzema rzeczami, które w kokpicie
  * nie są ozdobnikiem:
  *
- *  1. **Przytrzymanie zamiast tapnięcia** (`holdMs`) - START/STOP ENGINE wymagają 2 s
- *     (§3.2). W wibracjach i rękawicach przypadkowe dotknięcie jest realne, a te dwie
- *     akcje wyznaczają czasy blokowe. Pasek postępu pokazuje, ile jeszcze trzymać.
+ *  1. **Przytrzymanie zamiast tapnięcia** (`holdMs`) - akcje zapisujące zdarzenie
+ *     wymagają 1 s (§3.2, czas z issue #67; stała i podpisy: `holdGesture.ts`,
+ *     mechanika: `hooks/useHold.ts`). W wibracjach i rękawicach przypadkowe
+ *     dotknięcie jest realne, a np. START ENGINE wyznacza czas blokowy.
+ *     Pasek postępu pokazuje, ile jeszcze trzymać.
  *  2. **Blokada z podanym powodem** (`disabledReason`) - zasada „nigdy cichy błąd"
  *     (§6 pkt 3). Powód renderujemy jako WIDOCZNY tekst, nie tooltip: `title` w RN
  *     nie istnieje, a pilot i tak nie ma czym najechać. Powód stoi WEWNĄTRZ przycisku,
@@ -15,14 +17,16 @@
  *  3. **Cel dotykowy ≥ 44 px** - próg dla rękawic; wymuszony `minHeight`.
  */
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { Animated, Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 
+import { useHold } from '../../hooks/useHold';
 import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
 import { Icon, type IconName } from '../foundation/Icon';
 import { Tag } from '../status/Tag';
 import { toneColors, type Tone } from '../tone';
+import { holdConfirmHint } from './holdGesture';
 
 /**
  * `solid`   - `.btn-primary` z mockupów: pełne wypełnienie akcentem, ciemny napis.
@@ -59,7 +63,7 @@ export interface ActionButtonProps {
   tone?: Tone;
   variant?: ActionVariant;
   size?: ActionSize;
-  /** Podpis pod etykietą (np. „przytrzymaj 2 s", „zapisze odczyt MH"). */
+  /** Podpis pod etykietą (np. „przytrzymaj 1 s", „zapisze odczyt MH"). */
   hint?: string;
   /**
    * Ikona przed etykietą - podawana NAZWĄ, nie gotowym elementem.
@@ -130,38 +134,7 @@ export function ActionButton({
   const c = toneColors(theme, tone);
   const disabled = disabledReason != null || disabledProp || busy;
 
-  const [holding, setHolding] = useState(false);
-  const progress = useRef(new Animated.Value(0)).current;
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const cancelHold = useCallback(() => {
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = null;
-    setHolding(false);
-    progress.stopAnimation();
-    Animated.timing(progress, { toValue: 0, duration: 120, useNativeDriver: false }).start();
-  }, [progress]);
-
-  useEffect(() => () => cancelHold(), [cancelHold]);
-
-  const startHold = useCallback(() => {
-    if (disabled) return;
-    if (holdMs <= 0) {
-      onPress();
-      return;
-    }
-    setHolding(true);
-    progress.setValue(0);
-    Animated.timing(progress, {
-      toValue: 1,
-      duration: holdMs,
-      useNativeDriver: false,
-    }).start();
-    timer.current = setTimeout(() => {
-      cancelHold();
-      onPress();
-    }, holdMs);
-  }, [cancelHold, disabled, holdMs, onPress, progress]);
+  const { holding, progress, pressProps } = useHold({ holdMs, disabled, onTrigger: onPress });
 
   const solid = variant === 'solid';
   const hero = size === 'hero';
@@ -188,11 +161,9 @@ export function ActionButton({
       <Pressable
         accessibilityRole="button"
         accessibilityState={{ disabled }}
-        accessibilityHint={holdMs > 0 ? `Przytrzymaj ${Math.round(holdMs / 1000)} sekundy` : undefined}
+        accessibilityHint={holdMs > 0 ? holdConfirmHint(holdMs) : undefined}
         disabled={disabled}
-        onPressIn={holdMs > 0 ? startHold : undefined}
-        onPressOut={holdMs > 0 ? cancelHold : undefined}
-        onPress={holdMs > 0 ? undefined : startHold}
+        {...pressProps}
         style={({ pressed }) => {
           const filled = fillsOnPress && pressed && !disabled;
           return [

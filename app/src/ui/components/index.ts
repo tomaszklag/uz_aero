@@ -141,6 +141,9 @@ export * from './data/ClaimStrip';
 export * from './data/FuelStrip';
 export * from './data/ActionGrid';
 export * from './data/ActionButton';
+// Czas i podpisy gestu przytrzymania (issue #67) - wspólne dla `ActionButton`,
+// `CockpitActions` i ekranów, które podają `holdMs`/`hint` (hero START ENGINE).
+export * from './data/holdGesture';
 export * from './data/DetectToast';
 
 // Ustawienia
