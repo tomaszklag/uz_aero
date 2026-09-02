@@ -133,14 +133,15 @@ describe('werdykt normy', () => {
     expect(view.totalValue).toBe('28 L');
   });
 
-  it('bez normy maszyny werdyktu nie ma, ale wynik i POWÓD braku są', () => {
+  it('bez normy maszyny werdyktu nie ma - i karta o tym MILCZY (issue #69)', () => {
     const view = manualFuelBalanceView(draft(), null, null)!;
 
     expect(view.totalValue).toBe('28 L');
     expect(view.verdict).toBeNull();
     expect(view.details).toBeNull();
-    // „-" bez wyjaśnienia wygląda jak awaria aplikacji (§6 pkt 3).
-    expect(view.naNote).toContain('normy');
+    // Brak normy nie jest brakiem danych pilota - zdanie o nim tłumaczyło budowę
+    // analityki w środku formularza.
+    expect(view.naNote).toBeNull();
   });
 
   it('z normą podaje werdykt I szczegóły pod plakietką', () => {
@@ -166,10 +167,12 @@ describe('werdykt normy', () => {
     expect(view.verdict!.tone).toBe('amber');
   });
 
-  it('bez kompletu odczytów werdyktu nie ma - i mówi, czego brakuje', () => {
+  it('bez kompletu odczytów werdyktu nie ma - a brak widać w PUSTYM POLU wyżej', () => {
+    // Cisza zamiast „brakuje odczytu przy zdaniu" (issue #69): pilot właśnie wypełnia
+    // formularz i puste pole nad kartą mówi to samo (reguła z issue #55).
     const view = manualFuelBalanceView(draft({ fuel: { foundL: 112, addedL: 0, afterL: null } }), norm, null)!;
     expect(view.verdict).toBeNull();
-    expect(view.naNote).toContain('odczytu');
+    expect(view.naNote).toBeNull();
 
     const mh = manualMhBalanceView(draft({ mhBefore: null }), norm, 'decimal')!;
     expect(mh.verdict).toBeNull();

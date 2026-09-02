@@ -54,7 +54,10 @@ export interface BalanceSummaryProps {
    * Wołający podaje gotowy element, bo tylko on wie, kiedy cache się odświeżył.
    */
   freshness?: React.ReactNode;
-  /** Dlaczego werdyktu nie ma; wyklucza się z `verdict`. */
+  /**
+   * Dlaczego werdyktu nie ma; wyklucza się z `verdict`. Od issue #69 przychodzi
+   * wyłącznie przy zerowym biegu silnika - inne braki nie niosą zdania.
+   */
   naNote?: string | null;
   style?: ViewStyle;
 }

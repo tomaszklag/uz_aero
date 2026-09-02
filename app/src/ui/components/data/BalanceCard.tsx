@@ -12,10 +12,11 @@
  * i stoi jako pełnoprawna sekcja ekranu, więc ma nagłówek karty, wynik w skali nagłówka
  * i wiersz werdyktu, którego tamten nie ma.
  *
- * ══ WERDYKT ALBO POWÓD JEGO BRAKU - NIGDY CISZA ══
- * Gdy nie ma z czym porównać (silnik nie pracował, brak odczytu, samolot bez normy),
- * karta pisze o tym zdaniem. Pusty pasek albo kreska wyglądałyby jak awaria aplikacji
- * (§6 pkt 3), a przy liczbach z licznika to najgorsze możliwe wrażenie.
+ * ══ BRAK WERDYKTU MILCZY - POZA ZEROWYM BIEGIEM (issue #69) ══
+ * Karta bez werdyktu kończy się na sumie: brak normy to zwykły stan młodej maszyny,
+ * a brakujący odczyt widać kreską w wierszu rachunku - zdanie pod spodem mówiło to
+ * drugi raz. Jedyny `naNote` to zerowy bieg silnika (09C): tam zgodne odczyty bez
+ * słowa wyglądałyby na brak danych, a są informacją (mockup `10a`).
  *
  * ══ SZCZEGÓŁY NORMY POD TAPNIĘCIEM (issue #40 pkt 7 i 8) ══
  * Do issue #40 pod każdym rachunkiem stało pasmo („Oczekiwane po tej sesji: 23 – 35 L")

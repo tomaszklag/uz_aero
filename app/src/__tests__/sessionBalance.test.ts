@@ -160,7 +160,9 @@ describe('rachunek paliwa', () => {
 
     expect(view.totalValue).toBe('27 L');
     expect(view.verdict).toBeNull();
-    expect(view.naNote).toContain('nie ma jeszcze policzonej normy');
+    // Cisza, nie zdanie „nie ma jeszcze policzonej normy" (issue #69): opisywało
+    // wnętrze analityki komuś, kto nic z tym nie zrobi.
+    expect(view.naNote).toBeNull();
   });
 
   it('brak odczytu przy zdaniu wyklucza werdykt, nie rachunek', () => {
@@ -171,7 +173,9 @@ describe('rachunek paliwa', () => {
 
     expect(view.totalValue).toBe('-');
     expect(view.verdict).toBeNull();
-    expect(view.naNote).toContain('brakuje odczytu przy zdaniu');
+    // Brak odczytu widać w wierszu „Odczyt przy zdaniu  -" tuż wyżej (issue #69) -
+    // zdanie pod rachunkiem mówiło to samo drugi raz.
+    expect(view.naNote).toBeNull();
   });
 });
 
@@ -217,8 +221,9 @@ describe('rachunek motogodzin', () => {
     expect(view.totalValue).toBe('+1:35');
     expect(view.verdict).toBeNull();
     // Licznik nie ma drabiny do dokumentacji (issue #66) - żadna instrukcja nie podaje
-    // przelicznika obrotomierza - więc mówi o przelicznikach, a nie o „normie" wprost.
-    expect(view.naNote).toContain('nie ma jeszcze policzonych przeliczników licznika');
+    // przelicznika obrotomierza - więc to stan KAŻDEJ młodej maszyny przez tygodnie.
+    // Karta o nim MILCZY (issue #69), zamiast tłumaczyć budowę analityki.
+    expect(view.naNote).toBeNull();
   });
 
   it('format licznika dziesiętnego przechodzi do wszystkich wartości', () => {
@@ -270,10 +275,4 @@ describe('norma z dokumentacji na karcie rachunku (issue #66)', () => {
     expect(detail(view, 'Odchyłka od dokumentacji')).toBeUndefined();
   });
 
-  it('brak obu norm mówi o OBU - drugą da się naprawić w panelu', () => {
-    const view = fuelBalance(session(), null, 2, null);
-
-    expect(view.verdict).toBeNull();
-    expect(view.naNote).toContain('ani wpisanego spalania z dokumentacji');
-  });
 });
