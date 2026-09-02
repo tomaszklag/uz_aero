@@ -26,6 +26,7 @@ import { maskTimeUtcInput } from '../../format';
 import { useTheme } from '../../theme';
 import { useSheetInputFocus } from '../../hooks/useSheetInputFocus';
 import { AppText } from '../foundation/AppText';
+import type { TrailRow } from '../readouts/Trail';
 import { Sheet, type SheetRow } from './Sheet';
 import { cursorAtEnd, selectionApplied, type SelectionRange } from './sheetSelection';
 import { VALUE_FIELD } from './valueFieldMetrics';
@@ -56,6 +57,13 @@ export interface ReadingSheetProps {
   initialText: string;
   /** Wiersze odniesienia pod polem edycji. */
   rows?: SheetRow[];
+  /**
+   * Szlak podpowiedzi (historia odczytu: tankowania, loty, przejęcie) - rysuje go
+   * RAMA między ostrzeżeniem a wierszami (uwaga z urządzenia, 2026-09-02: „podobnie
+   * przenieśmy informacje o odczytach paliwa i motogodzin do popupów" - sekcje 02A
+   * zostają przy samym stanie, historia mieszka tam, gdzie się z nią porównuje).
+   */
+  trail?: TrailRow[];
   /** Tekst → liczba; `null` gdy wpis jest niepoprawny (blokuje potwierdzenie). */
   parse: (text: string) => number | null;
   /** Ostrzeżenie zależne od wpisanej wartości; `null` = brak zastrzeżeń. */
@@ -83,6 +91,7 @@ export function ReadingSheet({
   tone = 'amber',
   initialText,
   rows = [],
+  trail = [],
   parse,
   warningFor,
   keyboard = 'decimal',
@@ -172,6 +181,7 @@ export function ReadingSheet({
       visible={visible}
       title={title}
       rows={rows}
+      trail={trail}
       {...(warning != null ? { warning } : {})}
       warningTone="amber"
       confirmLabel="POTWIERDŹ"

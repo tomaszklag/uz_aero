@@ -19,7 +19,7 @@
  * a zegar telefonu bywa przestawiony (audyt wyłapał wybór po `closeTime`).
  */
 
-import type { Handover, OilHandover } from '@uzaero/domain';
+import type { Event, EventOf, Handover, HandoverTrailEntry, OilHandover } from '@uzaero/domain';
 
 import type { AircraftSeed, SessionRow } from './ports.ts';
 
@@ -79,6 +79,12 @@ export type HandoverSource =
 export interface HandoverPick {
   handover: Handover;
   source: HandoverSource;
+  /**
+   * Sesja, z której pochodzi przekazanie - klucz do dociągnięcia jej strumienia
+   * i zbudowania szlaku (`handoverTrail`). `null` przy stanie początkowym z panelu
+   * (issue #66): wpis administratora nie ma historii, którą dałoby się opowiedzieć.
+   */
+  sessionUuid: string | null;
 }
 
 /**
@@ -151,6 +157,7 @@ export function pickHandover(
         oil,
       },
       source: 'open_session',
+      sessionUuid: newerOpen.sessionUuid,
     };
   }
 
@@ -164,6 +171,7 @@ export function pickHandover(
         oil,
       },
       source: 'initial',
+      sessionUuid: null,
     };
   }
 
@@ -175,7 +183,78 @@ export function pickHandover(
       oil,
     },
     source: 'handover',
+    sessionUuid: closedBase.sessionUuid,
   };
+}
+
+/**
+ * SZLAK PRZEKAZANIA (uwaga z urządzenia, 2026-09-02) - historia sesji, z której
+ * pochodzi przekazanie, jako ogniwa osi czasu telefonu (`Handover.trail`).
+ * Do tej pory pole istniało wyłącznie w typie i w mockupie 02A - serwer nigdy go
+ * nie wypełniał, więc „ładna oś zdarzeń" nie miała na telefonie żadnych danych.
+ *
+ * Ogniwa od najstarszego:
+ *  1. `claim`  - przejęcie sesji-źródła: licznik przed włączeniem (`mhStart`)
+ *                i paliwo ZASTANE (`fuelStartL`), czyli to, co zostało z POPRZEDNIEGO
+ *                przekazania. Dzień bez tankowania opowiada się w całości tym ogniwem
+ *                i lotem („mogłem nie tankować, tylko lecieć na paliwie, które
+ *                zostało z poprzednika - to powinno wynikać z ostatniego przekazania");
+ *  2. `refuel` - każde tankowanie sesji, po czasie zdarzenia (`gpsTime ?? deviceTime`);
+ *  3. `flight` - zdanie samolotu: czas blokowy i odczyty końcowe. Tylko dla sesji
+ *                ZAMKNIĘTEJ - przekazanie z sesji w toku (`open_session`) kończy
+ *                szlak na tankowaniach.
+ *
+ * Dane, nie zdania (docblock `HandoverTrailEntry`) - formatowanie należy do telefonu.
+ * Tankowania wymagają STRUMIENIA sesji (projekcja niesie tylko ich sumę) - wołający
+ * dociąga go przez `EventsStorePort.sessionStreams`, jednym zapytaniem dla całej
+ * floty (wzorzec analityki, §7.7).
+ */
+export function handoverTrail(base: SessionRow, events: readonly Event[]): HandoverTrailEntry[] {
+  const entries: HandoverTrailEntry[] = [];
+
+  if (base.claimTime != null) {
+    entries.push({
+      kind: 'claim',
+      at: base.claimTime,
+      pilotId: base.picId,
+      fuelDeltaL: null,
+      fuelAfterL: base.fuelStartL,
+      mhAfter: base.mhStart,
+      durationMs: null,
+    });
+  }
+
+  const refuels = events
+    .filter((e): e is EventOf<'refuel'> => e.type === 'refuel')
+    .map((e) => ({ at: e.gpsTime ?? e.deviceTime, pilotId: e.picId, payload: e.payload }))
+    .sort((a, b) => a.at - b.at);
+  for (const refuel of refuels) {
+    entries.push({
+      kind: 'refuel',
+      at: refuel.at,
+      pilotId: refuel.pilotId,
+      fuelDeltaL: refuel.payload.addedL,
+      fuelAfterL: refuel.payload.afterL,
+      mhAfter: null,
+      durationMs: null,
+    });
+  }
+
+  if (base.status === 'closed' && base.closeTime != null) {
+    entries.push({
+      kind: 'flight',
+      at: base.closeTime,
+      pilotId: base.picId,
+      fuelDeltaL: null,
+      fuelAfterL: base.fuelEndL,
+      // Czas blokowy, nie sam lot: paliwo schodzi przez cały bieg silnika i to jego
+      // mianownikiem posługują się normy (§3.6b) - „latał 1:30" ma znaczyć operację.
+      durationMs: base.blockMs,
+      mhAfter: base.mhEnd,
+    });
+  }
+
+  return entries;
 }
 
 /**

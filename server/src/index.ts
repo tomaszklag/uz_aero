@@ -185,7 +185,7 @@ const sessionTrack = new SessionTrackQueries(db, events, new FsTraceSource(env.T
 
 const app = buildServer({
   auth: new AuthCommands(pilots, new PgRefreshTokens(db, clock), hasher, tokens, clock),
-  reference: new ReferenceQueries(new PgReferenceRepo(db), db, sessions, consumptionNorms),
+  reference: new ReferenceQueries(new PgReferenceRepo(db), db, sessions, consumptionNorms, events),
   ingest: new IngestCommands(db, events, sessions, flags, aircraftConfig, exporter, { events, norms: consumptionNorms, phases: phaseTimeline }, clock),
   // Droga POWROTNA outboxa (§4.9, issue #32) - własny adapter obok `PgEventsStore`,
   // bo to inne pytanie do tej samej tabeli: tamten czyta strumień JEDNEJ sesji przy

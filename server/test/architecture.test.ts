@@ -219,7 +219,7 @@ describe('granice, których nie pilnuje kompilator', () => {
     expect(users).toEqual(['application/admin/correctionCandidate.ts']);
   });
 
-  it('`sessionStreams` woła WYŁĄCZNIE analityka zużycia - obie jej strony', () => {
+  it('`sessionStreams` wołają WYŁĄCZNIE analityka zużycia i szlak przekazania', () => {
     // Odczyt strumieni WIELU sesji naraz jest jedynym miejscem, w którym serwer sięga do
     // rejestru poza kartą dnia i śladem lotu (§7.5, §7.7). Metoda jest wygodna i właśnie
     // dlatego groźna: użyta w liście zamieniłaby stronę wyników w pełny przegląd
@@ -229,12 +229,17 @@ describe('granice, których nie pilnuje kompilator', () => {
     // pilnuje DOSTĘPU (kto w ogóle może zawołać). Deklaracja portu i jego adapter są
     // z listy wyłączone - tam metoda z natury musi wystąpić.
     //
-    // Lista ma DWIE pozycje i obie są tym samym rachunkiem policzonym dla innego odbiorcy:
+    // Pierwsze dwie pozycje to ten sam rachunek policzony dla innego odbiorcy:
     // `queries/consumption.ts` liczy pełen raport dla panelu (`A10a`), a
     // `common/consumptionNorm.ts` - skróconą normę dla telefonów (`GET /reference`,
-    // ekrany 04/06/10). Druga pozycja weszła świadomie razem z etapem 3; **dopisanie
-    // trzeciej jest decyzją, nie refaktorem** - każdy nowy wołający otwiera rejestr
-    // kolejnej ścieżce odczytu.
+    // ekrany 04/06/10). Trzecia weszła ŚWIADOMIE 2026-09-02 (szlak przekazania,
+    // uwaga z urządzenia): `queries/reference.ts` dociąga strumienie SESJI-ŹRÓDEŁ
+    // przekazań, bo tankowania nie mieszczą się w projekcji (niesie ich sumę, nie
+    // zdarzenia) - jedna sesja na maszynę, jednym zapytaniem dla całej floty, czyli
+    // dokładnie wzorzec, dla którego ta metoda istnieje. To nadal nie jest lista
+    // odtwarzająca projekcję: czyta FAKTY, których projekcja nie ma.
+    // **Dopisanie kolejnej pozycji jest decyzją, nie refaktorem** - każdy nowy
+    // wołający otwiera rejestr kolejnej ścieżce odczytu.
     const users = filesUnder('.')
       .filter((f) => codeOf(f).includes('sessionStreams'))
       .filter(
@@ -246,6 +251,7 @@ describe('granice, których nie pilnuje kompilator', () => {
     expect(users).toEqual([
       'application/admin/queries/consumption.ts',
       'application/common/consumptionNorm.ts',
+      'application/mobile/queries/reference.ts',
     ]);
   });
 

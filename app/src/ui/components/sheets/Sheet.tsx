@@ -42,6 +42,7 @@ import { useKeyboardHeight } from '../../hooks/useKeyboardHeight';
 import { AppText } from '../foundation/AppText';
 import { ActionButton } from '../data/ActionButton';
 import { InlineNote } from '../status/InlineNote';
+import { Trail, type TrailRow } from '../readouts/Trail';
 import { SheetSurface } from './SheetSurface';
 import { toneColors, type Tone } from '../tone';
 
@@ -58,11 +59,21 @@ export interface SheetRow {
 export interface SheetProps {
   visible: boolean;
   title: string;
-  /** Wiersze „klucz - wartość" nad ostrzeżeniem (np. aktywny PIC, ostatni sync). */
+  /** Wiersze „klucz - wartość" pod ostrzeżeniem i szlakiem (konfiguracja, rachunki). */
   rows?: SheetRow[];
   /** Treść ostrzeżenia - co dokładnie się stanie po potwierdzeniu. */
   warning?: string;
   warningTone?: Tone;
+  /**
+   * SZLAK PODPOWIEDZI między ostrzeżeniem a wierszami odniesienia - kropka, tytuł
+   * ze stemplem, linia szczegółów (`Trail`, ten sam co przy odczytach na ekranie).
+   * Uwagi z urządzenia (2026-09-02): historia odczytu mieszka w arkuszu, czyli tam,
+   * gdzie pilot wpisuje liczbę do porównania - najpierw olej, potem „podobnie
+   * przenieśmy paliwo i motogodziny". Szlak jest domknięty od dołu taką samą kreską,
+   * jaką się otwiera (podpowiedź stoi we własnej ramce), a ostrzeżenie go WYPRZEDZA -
+   * pilot najpierw dostaje odpowiedź o swojej liczbie, potem kontekst.
+   */
+  trail?: TrailRow[];
   /**
    * Napis akcji potwierdzającej. **Opcjonalny**: arkusz wyszukiwarki (`AirfieldSheet`)
    * kończy się w chwili wyboru pozycji z listy, więc nie ma czego potwierdzać -
@@ -111,28 +122,13 @@ export interface SheetProps {
   children?: React.ReactNode;
 }
 
-/**
- * Ostrzeżenie arkusza - `.modal-warning` z mockupów 02B/02I: trójkąt + JEDNO zdanie
- * mono w kolorze tonu, bez tytułu (uwaga z urządzenia, 2026-09-02 - wcześniejszy
- * `Banner` z tytułem „Zanim potwierdzisz" miał szary tekst i brak ikony; nazwa
- * wzorca z issue #55 zostaje w docblokach). Kształtem jest `InlineNote`: przypis
- * do wpisywanej wartości.
- *
- * Wyeksportowane osobno, bo miejsce ostrzeżenia to „zaraz pod polami wpisu",
- * a w arkuszu oleju między polami a wierszami stoi jeszcze szlak podpowiedzi -
- * `OilSheet` renderuje ostrzeżenie sam, tym komponentem, żeby wygląd miał jedną
- * definicję.
- */
-export function SheetWarning({ text, tone = 'amber' }: { text: string; tone?: Tone }) {
-  return <InlineNote icon="warning" tone={tone} text={text} />;
-}
-
 export function Sheet({
   visible,
   title,
   rows = [],
   warning,
   warningTone = 'amber',
+  trail = [],
   confirmLabel,
   confirmTone = 'green',
   confirmDisabledReason = null,
@@ -202,15 +198,25 @@ export function Sheet({
           wartości. */}
       {children}
 
-      {/* Ostrzeżenie arkusza ZARAZ POD POLAMI wpisu, przed wierszami odniesienia
-          (uwaga z urządzenia, 2026-09-02, trzecia tura: na końcu treści ginęło pod
-          wysuniętą klawiaturą, a przypięte nad akcjami stało za daleko od pola -
-          pilot patrzy tam, gdzie pisze, i tam ma dostać odpowiedź). Ostrzeżenie
-          liczy się na każdą zmianę pola, więc pod polem jest „live" naprawdę.
-          Kształt = `SheetWarning` (`.modal-warning` z mockupów); arkusz, którego
-          children niosą własną treść POD polami (szlak oleju), wstawia je SAM
-          w tym miejscu i nie podaje `warning` ramie. */}
-      {warning != null && <SheetWarning text={warning} tone={warningTone} />}
+      {/* Ostrzeżenie arkusza ZARAZ POD POLAMI wpisu, przed szlakiem i wierszami
+          odniesienia (uwaga z urządzenia, 2026-09-02, trzecia tura: na końcu treści
+          ginęło pod wysuniętą klawiaturą, a przypięte nad akcjami stało za daleko
+          od pola - pilot patrzy tam, gdzie pisze, i tam ma dostać odpowiedź).
+          Liczy się na każdą zmianę pola, więc pod polem jest „live" naprawdę.
+          Kształt = `.modal-warning` z mockupów: trójkąt + JEDNO zdanie mono
+          w kolorze tonu, bez tytułu (wcześniejszy `Banner` z tytułem „Zanim
+          potwierdzisz" miał szary tekst i brak ikony; nazwa wzorca z issue #55
+          zostaje w docblokach). */}
+      {warning != null && <InlineNote icon="warning" tone={warningTone} text={warning} />}
+
+      {/* Szlak podpowiedzi + kreska domykająca (patrz nota przy propie `trail`);
+          kreska tylko, gdy pod szlakiem COŚ stoi - inaczej wisiałaby nad akcjami. */}
+      <Trail rows={trail} />
+      {trail.length > 0 && rows.length > 0 && (
+        <View
+          style={{ borderTopWidth: theme.borderWidth, borderTopColor: theme.colors.border }}
+        />
+      )}
 
       {rows.map((row) => (
         <View key={row.label} style={styles.row}>

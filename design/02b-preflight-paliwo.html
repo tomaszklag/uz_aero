@@ -129,11 +129,26 @@
     padding: 0 2px;
   }
   .modal-ref-val { color: var(--text-secondary); }
+  /* Szlak historii odczytu (uwaga z urządzenia, 2026-09-02: przeniesiony z sekcji
+     02A do arkusza) - te same klasy, co szlaki na 02A. */
+  .trail { display:flex; flex-direction:column; gap:0; border-top:1px solid var(--border); margin-top:2px; padding-top:10px; }
+  .trail-row { display:flex; align-items:flex-start; gap:10px; padding-bottom:10px; position:relative; }
+  .trail-row:last-child { padding-bottom:0; }
+  .trail-line { position:absolute; left:7px; top:16px; bottom:0; width:1px; background:var(--border); }
+  .trail-row:last-child .trail-line { display:none; }
+  .trail-dot { width:15px; height:15px; border-radius:50%; flex-shrink:0; margin-top:1px; }
+  .trail-dot.amber { background:var(--amber-muted); border:1px solid var(--amber-border); }
+  .trail-dot.neutral { background:var(--surface-raised); border:1px solid var(--border-strong); }
+  .trail-body { flex:1; }
+  .trail-title { font-family:var(--font-body); font-size:11px; font-weight:400; color:var(--text-secondary); }
+  .trail-title.amber { color:var(--amber); }
+  .trail-meta { font-family:var(--font-mono); font-size:9px; color:var(--text-muted); margin-top:2px; line-height:1.5; }
+  .trail-meta b { color:var(--text-secondary); font-weight:500; }
   .modal-warning {
     display: flex; align-items: flex-start; gap: 9px;
     background: var(--amber-muted); border: 1px solid var(--amber-border);
     border-radius: 12px; padding: 12px 14px;
-    font-family: var(--font-mono); font-size: 10px; color: var(--amber); line-height: 1.6;
+    font-family: var(--font-body); font-size: 12px; color: var(--amber); line-height: 1.5;
   }
   .modal-warning strong { color: var(--amber); }
   .modal-actions { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; }
@@ -268,12 +283,35 @@
           <span>Odczyt różni się od szacunku o <strong>−30 L</strong>. Sprawdź stan zbiorników przed zatwierdzeniem.</span>
         </div>
 
+        <!-- SZLAK HISTORII przeniesiony z sekcji 02A (uwaga z urządzenia, 2026-09-02:
+             „podobnie przenieśmy informacje o odczytach paliwa i motogodzin do
+             popupów", jak wcześniej olej) - domknięty od dołu taką samą kreską,
+             jaką się otwiera. -->
+        <div class="trail">
+          <div class="trail-row">
+            <div class="trail-line"></div>
+            <div class="trail-dot amber"></div>
+            <div class="trail-body">
+              <div class="trail-title amber">Tankowanie · 21 CZERWCA 09:15</div>
+              <div class="trail-meta">dolano <b>+45 L</b> · w zbiorniku <b>185 L</b></div>
+            </div>
+          </div>
+          <div class="trail-row">
+            <div class="trail-dot neutral"></div>
+            <div class="trail-body">
+              <div class="trail-title">J. Kowalski latał · 1h 30min</div>
+              <div class="trail-meta">śr. <b>17.5 L/h</b> · zostało <b>150 L</b></div>
+            </div>
+          </div>
+        </div>
+        <div style="border-top:1px solid var(--border);"></div>
+
         <div class="modal-ref">
           <span>Przekazane przez poprzednika</span>
           <span class="modal-ref-val">150 L</span>
         </div>
         <div class="modal-ref">
-          <span>Pojemność zbiorników · SP-AXA</span>
+          <span>Pojemność zbiorników</span>
           <span class="modal-ref-val">330 L</span>
         </div>
 

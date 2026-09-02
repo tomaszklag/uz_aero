@@ -91,6 +91,19 @@
   .modal-cursor { display:inline-block; width:2px; height:24px; background:var(--amber); margin-left:4px; vertical-align:middle; animation:blink 1s step-end infinite; }
   @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0; } }
   .modal-ref { display:flex; justify-content:space-between; align-items:center; font-family:var(--font-mono); font-size:10px; color:var(--text-muted); padding:0 2px; }
+  /* Szlak historii odczytu (uwaga z urządzenia, 2026-09-02: przeniesiony z sekcji
+     02A do arkusza) - te same klasy, co szlaki na 02A. */
+  .trail { display:flex; flex-direction:column; gap:0; border-top:1px solid var(--border); margin-top:2px; padding-top:10px; }
+  .trail-row { display:flex; align-items:flex-start; gap:10px; padding-bottom:10px; position:relative; }
+  .trail-row:last-child { padding-bottom:0; }
+  .trail-line { position:absolute; left:7px; top:16px; bottom:0; width:1px; background:var(--border); }
+  .trail-row:last-child .trail-line { display:none; }
+  .trail-dot { width:15px; height:15px; border-radius:50%; flex-shrink:0; margin-top:1px; }
+  .trail-dot.neutral { background:var(--surface-raised); border:1px solid var(--border-strong); }
+  .trail-body { flex:1; }
+  .trail-title { font-family:var(--font-body); font-size:11px; font-weight:400; color:var(--text-secondary); }
+  .trail-meta { font-family:var(--font-mono); font-size:9px; color:var(--text-muted); margin-top:2px; line-height:1.5; }
+  .trail-meta b { color:var(--text-secondary); font-weight:500; }
   .modal-warning { display:flex; align-items:flex-start; gap:9px; background:var(--amber-muted); border:1px solid var(--amber-border); border-radius:12px; padding:12px 14px; font-family:var(--font-mono); font-size:10px; color:var(--amber); line-height:1.6; }
   .modal-actions { display:grid; grid-template-columns:1fr 2fr; gap:8px; }
   .modal-btn-cancel { display:flex; align-items:center; justify-content:center; padding:15px; border-radius:14px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text-secondary); font-family:var(--font-display); font-size:17px; letter-spacing:2px; text-decoration:none; cursor:pointer; }
@@ -163,18 +176,40 @@
           <span class="modal-input-unit">MH</span>
         </div>
 
+        <!-- Kolejność ramy arkusza (przegląd 2026-09-02): pole → ostrzeżenie (zaraz
+             pod polem, „live") → szlak historii przeniesiony z sekcji 02A (domknięty
+             kreską) → wiersze odniesienia → akcje. -->
+        <div class="modal-warning">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span>Odczyt różni się od szacunku o <strong>+1:30</strong>. Sprawdź licznik silnika.</span>
+        </div>
+
+        <div class="trail">
+          <div class="trail-row">
+            <div class="trail-line"></div>
+            <div class="trail-dot neutral"></div>
+            <div class="trail-body">
+              <div class="trail-title">Przejęcie SP-AXA · 21 CZERWCA 07:00</div>
+              <div class="trail-meta">przed włączeniem <b>1 230:30 MH</b></div>
+            </div>
+          </div>
+          <div class="trail-row">
+            <div class="trail-dot neutral"></div>
+            <div class="trail-body">
+              <div class="trail-title">J. Kowalski latał · 1h 30min</div>
+              <div class="trail-meta">śr. <b>0:51 MH/1h</b> · po wyłączeniu <b>1 234:30 MH</b></div>
+            </div>
+          </div>
+        </div>
+        <div style="border-top:1px solid var(--border);"></div>
+
         <div class="modal-ref">
           <span>Przekazane przez poprzednika</span>
           <span style="color: var(--text-secondary);">1 234:30 MH</span>
         </div>
         <div class="modal-ref">
-          <span>Format licznika · SP-AXA</span>
+          <span>Format licznika</span>
           <span style="color: var(--text-secondary);">hh:mm</span>
-        </div>
-
-        <div class="modal-warning">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <span>Odczyt różni się od szacunku o <strong>+1:30</strong>. Sprawdź licznik silnika.</span>
         </div>
 
         <div class="modal-actions">

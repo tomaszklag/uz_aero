@@ -2,11 +2,13 @@
  * UZ Aero - Readout (sekcja odczytu z mockupu 02a)
  *
  * Blok „jedna wartość z licznika": etykieta, duża liczba z jednostką, adnotacja
- * świeżości, podpis konfiguracyjny i przycisk korekty po prawej. Pod spodem opcjonalna
- * oś czasu (`Trail`) i dowolna wstawka (pasek poziomu paliwa).
+ * świeżości, podpis konfiguracyjny i przycisk korekty po prawej; opcjonalna wstawka
+ * (pasek poziomu) i ostrzeżenie wewnątrz karty. Oś czasu (`Trail`) NIE jest już
+ * częścią sekcji - historia odczytu mieszka w ARKUSZU korekty (`Sheet.trail`,
+ * uwagi z urządzenia 2026-09-02: najpierw olej, potem paliwo i MH „podobnie").
  *
- * W 02a występuje dwa razy - paliwo i motogodziny - i wróci przy zamknięciu dnia (09)
- * oraz tankowaniu (06). Dlatego jest komponentem, a nie dwoma kopiami w ekranie.
+ * W 02a występuje trzy razy - paliwo, motogodziny, olej. Dlatego jest komponentem,
+ * a nie kopiami w ekranie.
  *
  * Zasada `CLAUDE.md`, którą ten blok realizuje: **liczniki fizyczne > dane z serwera**.
  * Wartość z przekazania jest pokazana jako podpowiedź (z adnotacją wieku), a korekta
@@ -23,7 +25,6 @@ import { AppText } from '../foundation/AppText';
 import { FreshnessNote, type Freshness } from '../status/FreshnessNote';
 import { Icon } from '../foundation/Icon';
 import { InlineNote } from '../status/InlineNote';
-import { Trail, type TrailRow } from './Trail';
 import { toneColors, type Tone } from '../tone';
 
 export interface ReadoutProps {
@@ -60,8 +61,6 @@ export interface ReadoutProps {
    * `missing={false}` mówi: pusto, ale to nie jest brak - pokaż resztę sekcji.
    */
   missing?: boolean;
-  /** Historia prowadząca do tej wartości. */
-  trail?: TrailRow[];
   /**
    * Ostrzeżenie warunkowe o wartości - WEWNĄTRZ karty, na jej dole (uwaga
    * z urządzenia, 2026-09-02): stojące pod kartą czytało się jak osobny komunikat
@@ -84,7 +83,6 @@ export function Readout({
   correctLabel = 'Koryguj',
   missingLabel = 'Wpisz odczyt',
   missing: missingOverride,
-  trail = [],
   warning = null,
   style,
 }: ReadoutProps) {
@@ -182,8 +180,6 @@ export function Readout({
           </AppText>
         </Pressable>
       </View>
-
-      {!missing && <Trail rows={trail} />}
 
       {/* Patrz nota przy propie `warning`: ostrzeżenie o wartości mieszka w karcie. */}
       {warning != null && <InlineNote icon="warning" tone="amber" text={warning} />}

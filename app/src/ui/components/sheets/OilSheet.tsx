@@ -23,8 +23,8 @@ import { useTheme } from '../../theme';
 import { useSheetInputFocus } from '../../hooks/useSheetInputFocus';
 import { AppText } from '../foundation/AppText';
 import { Tag } from '../status/Tag';
-import { Trail, type TrailRow } from '../readouts/Trail';
-import { Sheet, SheetWarning, type SheetRow } from './Sheet';
+import type { TrailRow } from '../readouts/Trail';
+import { Sheet, type SheetRow } from './Sheet';
 import { cursorAtEnd, selectionApplied, type SelectionRange } from './sheetSelection';
 import { VALUE_FIELD } from './valueFieldMetrics';
 import { toneColors } from '../tone';
@@ -39,9 +39,8 @@ export interface OilSheetProps {
   /** Wiersze odniesienia (minimum / zbiornik) - stałe dla otwarcia. */
   rows?: SheetRow[];
   /**
-   * Szlak podpowiedzi POD polami (ostatni pomiar → oczekiwanie z normy) - ten sam
-   * kształt, co szlaki paliwa i MH na ekranie 02A (druga tura uwagi z 2026-09-02:
-   * wiersze label→wartość dawały „za dużo linijek tekstu"). Pomijany = bez szlaku
+   * Szlak podpowiedzi (ostatni pomiar → oczekiwanie z normy) - rysuje go RAMA
+   * (`Sheet.trail`: ostrzeżenie → szlak → kreska → wiersze). Pomijany = bez szlaku
    * (wpis ręczny podaje własne odniesienie zwykłym wierszem).
    */
   trail?: TrailRow[];
@@ -139,17 +138,15 @@ export function OilSheet({
      jest blokadą, więc jego zdanie stoi w przycisku; „Zanim potwierdzisz" zostaje dla
      poziomu, który wygląda podejrzanie, ale zapisać się da. Czerwień znika z banera
      razem z tym przypadkiem - nieczytelny wpis znaczy już czerwona ramka POLA, a to
-     ona wskazuje, KTÓRE z dwóch pól poprawić.
-
-     Ostrzeżenie renderuje TEN arkusz, nie rama (`SheetWarning` między polami
-     a szlakiem): ma stać ZARAZ POD POLAMI (uwaga z urządzenia, 2026-09-02 - na dole
-     treści ginęło pod wysuniętą klawiaturą), a w children jest jeszcze szlak, który
-     ostrzeżenie musi wyprzedzić. */
+     ona wskazuje, KTÓRE z dwóch pól poprawić. Kolejność ostrzeżenie → szlak →
+     wiersze trzyma RAMA (`Sheet`). */
   return (
     <Sheet
       visible={visible}
       title="Pomiar oleju"
       rows={afterRow != null ? [...rows, afterRow] : rows}
+      {...(warning != null ? { warning } : {})}
+      trail={trail}
       confirmLabel="ZAPISZ"
       confirmDisabledReason={invalid ? 'Nie rozumiem tej wartości - popraw wpis' : null}
       onConfirm={() => onConfirm(level.value, added.value)}
@@ -213,22 +210,6 @@ export function OilSheet({
           L
         </AppText>
       </View>
-
-      {/* Ostrzeżenie ZARAZ POD POLAMI - widoczne przy wysuniętej klawiaturze
-          i „live" na każdą zmianę wartości (patrz komentarz nad `return`). */}
-      {warning != null && <SheetWarning text={warning} />}
-
-      {/* Szlak podpowiedzi POD polami, NAD wierszami konfiguracji: pilot wpisuje
-          liczbę i o dwa centymetry niżej widzi, z czym ją porównać. */}
-      <Trail rows={trail} />
-      {/* Separator domykający szlak od dołu (uwaga z urządzenia, 2026-09-02) - ta
-          sama kreska, którą szlak otwiera od góry: podpowiedź stoi we własnej ramce,
-          a wiersze konfiguracji (minimum/zbiornik) zaczynają się czysto. */}
-      {trail.length > 0 && (
-        <View
-          style={{ borderTopWidth: theme.borderWidth, borderTopColor: theme.colors.border }}
-        />
-      )}
     </Sheet>
   );
 }

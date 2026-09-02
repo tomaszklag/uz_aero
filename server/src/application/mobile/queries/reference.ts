@@ -12,12 +12,18 @@
  * świeżo policzoną normę (przeliczenie z panelu nie rusza ani floty, ani sesji).
  */
 
-import type { ConsumptionNorm, ReferenceAircraft } from '@uzaero/domain';
+import type { ConsumptionNorm, Event, ReferenceAircraft } from '@uzaero/domain';
 
-import { activeClaim, latestHandover, sessionsStamp } from '../../common/aircraftStateView.ts';
+import {
+  activeClaim,
+  handoverTrail,
+  pickHandover,
+  sessionsStamp,
+} from '../../common/aircraftStateView.ts';
 import type {
   ConsumptionNormPort,
   Database,
+  EventsStorePort,
   ReferencePort,
   ReferenceSnapshot,
   SessionRow,
@@ -36,6 +42,7 @@ export class ReferenceQueries {
     private readonly db: Database,
     private readonly sessions: SessionsProjectionPort,
     private readonly norms: ConsumptionNormPort,
+    private readonly events: EventsStorePort,
   ) {}
 
   async get(): Promise<ReferenceView> {
@@ -51,16 +58,44 @@ export class ReferenceQueries {
     // a pytanie per maszyna byłoby N+1 na ścieżce odpytywanej co kwadrans.
     const norms: Map<string, ConsumptionNorm> = await this.norms.all(this.db);
 
+    // Stan początkowy z panelu (issue #66) wchodzi TYLKO wtedy, gdy maszyna nie ma
+    // ani jednej zdanej sesji - rozstrzyga to `pickHandover`, nie ten wiersz.
+    const picks = new Map(
+      snapshot.aircraft.map((a) => [
+        a.id,
+        pickHandover(byAircraft.get(a.id) ?? [], snapshot.initial.get(a.id) ?? null),
+      ]),
+    );
+
+    // SZLAK PRZEKAZANIA (uwaga z urządzenia, 2026-09-02): tankowania sesji-źródła nie
+    // mieszczą się w projekcji (niesie ich sumę, nie zdarzenia), więc strumienie
+    // sesji-źródeł dociągamy JEDNYM zapytaniem dla całej floty - wzorzec analityki
+    // (§7.7), nie odczyt per maszyna.
+    const baseUuids = [...picks.values()]
+      .map((pick) => pick?.sessionUuid ?? null)
+      .filter((uuid): uuid is string => uuid != null);
+    const streams: Map<string, Event[]> =
+      baseUuids.length > 0 ? await this.events.sessionStreams(this.db, baseUuids) : new Map();
+
     const aircraft: ReferenceAircraft[] = snapshot.aircraft.map((a) => {
       const sessions = byAircraft.get(a.id) ?? [];
       const claim = activeClaim(sessions);
+      const pick = picks.get(a.id) ?? null;
+      const base =
+        pick?.sessionUuid != null
+          ? sessions.find((s) => s.sessionUuid === pick.sessionUuid)
+          : undefined;
+      const handover =
+        pick == null
+          ? null
+          : base == null
+            ? pick.handover
+            : { ...pick.handover, trail: handoverTrail(base, streams.get(base.sessionUuid) ?? []) };
       return {
         ...a,
         claimPicId: claim?.picId ?? null,
         claimSince: claim?.since ?? null,
-        // Stan początkowy z panelu (issue #66) wchodzi TYLKO wtedy, gdy maszyna nie ma
-        // ani jednej zdanej sesji - rozstrzyga to `pickHandover`, nie ten wiersz.
-        handover: latestHandover(sessions, snapshot.initial.get(a.id) ?? null),
+        handover,
         // Brak wpisu = model poniżej progu publikacji. Telefon nie pokaże wtedy
         // porównania z normą - i to jest właściwe zachowanie, nie brak danych.
         consumption: norms.get(a.id) ?? null,

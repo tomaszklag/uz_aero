@@ -228,6 +228,199 @@ describe('norma zużycia w kanale referencyjnym (etap 3, 2026-08-05)', () => {
   });
 });
 
+/**
+ * SZLAK PRZEKAZANIA (uwaga z urządzenia, 2026-09-02): oś zdarzeń z mockupu 02A
+ * istniała wyłącznie w typie (`Handover.trail`) - serwer nigdy jej nie wypełniał
+ * i telefon nie miał czego narysować. Ogniwa opowiadają sesję-źródło przekazania:
+ * przejęcie (co ZASTAŁ poprzednik - czyli wcześniejsze przekazanie), tankowania,
+ * zdanie. Dzień bez tankowania opowiada się przejęciem i lotem - „mogłem lecieć
+ * na paliwie, które zostało z poprzednika".
+ */
+describe('szlak przekazania w /reference (2026-09-02)', () => {
+  const DAY = Date.UTC(2026, 5, 22);
+  const at = (h: number, m: number): number => DAY + (h * 60 + m) * 60_000;
+  let seq = 0;
+  // Prefiks ≥ 8 znaków: koperta `/events` wymaga uuid o długości min. 8.
+  const mk = (sess: string, type: string, time: number, payload: object) => ({
+    uuid: `trail-ref-${++seq}`,
+    sessionUuid: sess,
+    aircraftId: 'SP-AXA',
+    picId: 'TMK',
+    dualId: null,
+    type,
+    deviceTime: time,
+    gpsTime: time,
+    payload,
+    schemaVersion: 1,
+  });
+
+  it('sesja z tankowaniem: przejęcie → tankowanie → zdanie, w porządku czasu', async () => {
+    const { app } = await testHarness();
+    const token = await authed(app);
+
+    const sync = await app.inject({
+      method: 'POST',
+      url: '/events',
+      headers: { authorization: `Bearer ${token}` },
+      payload: {
+        events: [
+          mk('sess-trail-1', 'session_claim', at(8, 0), { mode: 'free' }),
+          mk('sess-trail-1', 'preflight_confirm', at(8, 0), {
+            operation: 'skoki',
+            reading: { fuelL: 150, mh: 1230.5 },
+            mhFormat: 'hhmm',
+          }),
+          mk('sess-trail-1', 'refuel', at(8, 5), { beforeL: 150, addedL: 45, afterL: 195 }),
+          mk('sess-trail-1', 'engine_start', at(8, 10), {}),
+          mk('sess-trail-1', 'engine_stop', at(10, 30), {}),
+          mk('sess-trail-1', 'day_close', at(10, 40), {
+            finalReading: { fuelL: 120, mh: 1232.7 },
+          }),
+        ],
+      },
+    });
+    expect(sync.statusCode).toBe(200);
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/reference',
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const axa = res.json().aircraft.find((a: { reg: string }) => a.reg === 'SP-AXA');
+
+    expect(axa.handover.trail).toEqual([
+      // Paliwo i licznik ZASTANE = poprzednie przekazanie; telefon rysuje z tego
+      // wiersz „zastane 150 L z przekazania" i „przed włączeniem 1 230:30".
+      {
+        kind: 'claim',
+        at: at(8, 0),
+        pilotId: 'TMK',
+        fuelDeltaL: null,
+        fuelAfterL: 150,
+        mhAfter: 1230.5,
+        durationMs: null,
+      },
+      {
+        kind: 'refuel',
+        at: at(8, 5),
+        pilotId: 'TMK',
+        fuelDeltaL: 45,
+        fuelAfterL: 195,
+        mhAfter: null,
+        durationMs: null,
+      },
+      // Czas trwania = czas BLOKOWY (bieg silnika 8:10→10:30), bo to jego
+      // mianownikiem posługują się normy zużycia.
+      {
+        kind: 'flight',
+        at: at(10, 40),
+        pilotId: 'TMK',
+        fuelDeltaL: null,
+        fuelAfterL: 120,
+        mhAfter: 1232.7,
+        durationMs: 140 * 60_000,
+      },
+    ]);
+  });
+
+  it('sesja BEZ tankowania: przejęcie + zdanie wystarczą do opowieści', async () => {
+    const { app } = await testHarness();
+    const token = await authed(app);
+
+    await app.inject({
+      method: 'POST',
+      url: '/events',
+      headers: { authorization: `Bearer ${token}` },
+      payload: {
+        events: [
+          mk('sess-trail-2', 'session_claim', at(8, 0), { mode: 'free' }),
+          mk('sess-trail-2', 'preflight_confirm', at(8, 0), {
+            operation: 'skoki',
+            reading: { fuelL: 185, mh: 1230.5 },
+            mhFormat: 'hhmm',
+          }),
+          mk('sess-trail-2', 'engine_start', at(8, 10), {}),
+          mk('sess-trail-2', 'engine_stop', at(9, 40), {}),
+          mk('sess-trail-2', 'day_close', at(9, 50), {
+            finalReading: { fuelL: 150, mh: 1232.0 },
+          }),
+        ],
+      },
+    });
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/reference',
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const axa = res.json().aircraft.find((a: { reg: string }) => a.reg === 'SP-AXA');
+
+    expect(axa.handover.trail.map((e: { kind: string }) => e.kind)).toEqual(['claim', 'flight']);
+    expect(axa.handover.trail[0]).toMatchObject({ fuelAfterL: 185, mhAfter: 1230.5 });
+    expect(axa.handover.trail[1]).toMatchObject({ fuelAfterL: 150, mhAfter: 1232.0 });
+  });
+
+  it('przekazanie z sesji W TOKU kończy szlak przed zdaniem; stan początkowy szlaku nie ma', async () => {
+    const { app, db } = await testHarness();
+    const token = await authed(app);
+
+    // Stan początkowy z panelu (issue #66): przekazanie jest, historii nie ma.
+    await db.query(
+      `UPDATE aircraft
+          SET initial_mh = 1236.5, initial_fuel_l = 112, updated_at = now()
+        WHERE id = 'SP-FGK'`,
+    );
+
+    // Zamknięta baza + NOWSZA sesja w toku ze świeżymi odczytami: przekazanie
+    // przechodzi na sesję otwartą (`open_session`), a jej opowieść nie ma jeszcze
+    // zdania - szlak kończy się na przejęciu.
+    const sync = await app.inject({
+      method: 'POST',
+      url: '/events',
+      headers: { authorization: `Bearer ${token}` },
+      payload: {
+        events: [
+          mk('sess-trail-3a', 'session_claim', at(8, 0), { mode: 'free' }),
+          mk('sess-trail-3a', 'preflight_confirm', at(8, 0), {
+            operation: 'skoki',
+            reading: { fuelL: 185, mh: 1230.5 },
+            mhFormat: 'hhmm',
+          }),
+          mk('sess-trail-3a', 'engine_start', at(8, 10), {}),
+          mk('sess-trail-3a', 'engine_stop', at(9, 40), {}),
+          mk('sess-trail-3a', 'day_close', at(9, 50), {
+            finalReading: { fuelL: 150, mh: 1232.0 },
+          }),
+          mk('sess-trail-3b', 'session_claim', at(11, 0), { mode: 'free' }),
+          mk('sess-trail-3b', 'preflight_confirm', at(11, 0), {
+            operation: 'skoki',
+            reading: { fuelL: 150, mh: 1232.0 },
+            mhFormat: 'hhmm',
+          }),
+        ],
+      },
+    });
+    expect(sync.statusCode).toBe(200);
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/reference',
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const body = res.json();
+
+    const axa = body.aircraft.find((a: { reg: string }) => a.reg === 'SP-AXA');
+    expect(axa.handover.byPilotId).toBe('TMK');
+    expect(axa.handover.at).toBe(at(11, 0));
+    expect(axa.handover.trail.map((e: { kind: string }) => e.kind)).toEqual(['claim']);
+    expect(axa.handover.trail[0]).toMatchObject({ at: at(11, 0), fuelAfterL: 150 });
+
+    const fgk = body.aircraft.find((a: { reg: string }) => a.reg === 'SP-FGK');
+    expect(fgk.handover.byPilotId).toBeNull();
+    expect(fgk.handover.trail).toBeUndefined();
+  });
+});
+
 // ── przekazanie oleju (issue #60, etap D) ───────────────────────────────────────
 
 describe('przekazanie oleju w /reference (issue #60)', () => {

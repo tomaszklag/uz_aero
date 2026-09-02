@@ -50,12 +50,16 @@ export interface OilConfig {
   normLPerH: number | null;
 }
 
-/** Ogniwo szlaku podpowiedzi w ARKUSZU pomiaru - strukturalnie zgodne z `TrailRow`. */
+/**
+ * Ogniwo szlaku podpowiedzi w ARKUSZU pomiaru - strukturalnie zgodne z `TrailRow`.
+ * Bez pola tonu: wszystkie ogniwa są neutralne (uwaga z urządzenia, 2026-09-02 -
+ * „czemu na zielono?"; zieleń niczego tu nie odróżniała, a olej pisze się
+ * standardowym stylem).
+ */
 export interface OilTrailRow {
   id: string;
   title: string;
   meta: string;
-  tone?: 'green';
 }
 
 /**
@@ -240,10 +244,13 @@ export function oilClaimView(input: OilClaimInput): OilClaimView {
     });
   }
   if (exp != null) {
+    // „Latano", nie „Od pomiaru" (uwaga z urządzenia, 2026-09-02): ogniwo mówi,
+    // ile maszyna LATAŁA - jak wiersze „J. Kowalski latał" przy paliwie i MH.
+    // Bez nazwiska, bo od pomiaru mogło latać wielu pilotów (interwał olejowy
+    // biegnie przez wiele operacji), a rejestr niesie tu samą deltę licznika.
     trail.push({
       id: 'oil-expect',
-      tone: 'green',
-      title: `Od pomiaru · ${motoHours(exp.deltaMh, input.mhFormat)} MH`,
+      title: `Latano · ${motoHours(exp.deltaMh, input.mhFormat)} MH`,
       meta: `norma ${rateLabel(exp.rate)} → na bagnecie oczekuj ≈ ${oilLitres(exp.expectedL)}`,
     });
   }

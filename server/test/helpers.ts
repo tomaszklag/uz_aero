@@ -214,7 +214,7 @@ export async function testHarness(
 
   const app = buildServer({
     auth: new AuthCommands(pilots, new PgRefreshTokens(db, clock), hasher, tokens, clock),
-    reference: new ReferenceQueries(new PgReferenceRepo(db), db, sessions, consumptionNorms),
+    reference: new ReferenceQueries(new PgReferenceRepo(db), db, sessions, consumptionNorms, events),
     ingest: new IngestCommands(db, events, sessions, flags, aircraftConfig, exporter, { events, norms: consumptionNorms, phases: phaseTimeline }, clock),
     // Odtworzenie rejestru telefonu (§4.9, issue #32) - prawdziwy adapter, więc test
     // wysyła zdarzenia przez `POST /events` i odbiera je przez `GET /me/events`,

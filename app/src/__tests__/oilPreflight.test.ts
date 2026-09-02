@@ -61,9 +61,10 @@ describe('sekcja oleju - przed pomiarem', () => {
     expect(v.trail[0]!.meta).toContain(oilLitres(10.6));
     expect(v.trail[0]!.meta).toContain(motoHours(1230.5, 'hhmm'));
 
-    // ΔMH = 4,0 h · norma 0,12 L/h → oczekiwane 10,6 − 0,48 ≈ 10,1 L
-    expect(v.trail[1]!.tone).toBe('green');
-    expect(v.trail[1]!.title).toContain(motoHours(4, 'hhmm'));
+    // ΔMH = 4,0 h · norma 0,12 L/h → oczekiwane 10,6 − 0,48 ≈ 10,1 L.
+    // „Latano", neutralnie (uwaga z urządzenia, 2026-09-02) - jak wiersze
+    // „J. Kowalski latał" przy paliwie i MH, bez zieleni.
+    expect(v.trail[1]!.title).toBe(`Latano · ${motoHours(4, 'hhmm')} MH`);
     expect(v.trail[1]!.meta).toContain(oilLitres(10.12));
     expect(v.trail[1]!.meta).toContain('0,12 L/h');
   });

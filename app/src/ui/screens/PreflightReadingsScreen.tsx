@@ -43,7 +43,7 @@ import {
 } from '../components';
 import { useTheme } from '../theme';
 import { useGps } from '../bootstrap/servicesContext';
-import { useCurrentPilot, useSessionStore } from '../store';
+import { useCurrentPilot, useEduBanner, useSessionStore } from '../store';
 import { usePreflightDraft } from '../store/preflightDraft';
 // Import wprost z infrastruktury (jak composition root w `appBootstrap`) - moduł
 // dotyka `react-native`, więc nie ma go w barrelu.
@@ -109,6 +109,8 @@ export function PreflightReadingsScreen({
   const [pilots, setPilots] = useState<ReferencePilot[]>([]);
   const [editing, setEditing] = useState<'fuel' | 'mh' | 'oil' | null>(null);
   const [busy, setBusy] = useState(false);
+  // Baner „skąd te wartości" - pouczający, schowanie trwałe per pilot (2026-09-02).
+  const [originDismissed, setOriginDismissed] = useEduBanner('handover-origin');
 
   const queries = useSessionStore((s) => s.queries);
   React.useEffect(() => {
@@ -221,7 +223,10 @@ export function PreflightReadingsScreen({
    */
   const freshness: Freshness = draft.readingSource === 'manual' ? 'manual' : serverFreshness;
 
-  // ── oś czasu: dane → napisy ──────────────────────────────────────────────────
+  // ── oś czasu: dane → napisy - SZLAKI DO ARKUSZY (uwaga z urządzenia,
+  // 2026-09-02: „podobnie przenieśmy informacje o odczytach paliwa i motogodzin
+  // do popupów", jak wcześniej olej). Sekcje na ekranie zostają przy samym stanie;
+  // historia stoi tam, gdzie pilot wpisuje liczbę do porównania. ─────────────────
   const trails = useMemo(() => {
     const entries = [...(handover?.trail ?? [])].sort((a, b) => a.at - b.at);
     const fuel: TrailRow[] = [];
@@ -249,6 +254,16 @@ export function PreflightReadingsScreen({
           title: `Przejęcie · ${stamp(e.at)}`,
           meta: `przed włączeniem ${motoHours(e.mhAfter, mhFormat)} MH`,
         });
+        // Paliwo ZASTANE przy przejęciu, czyli poprzednie przekazanie (uwaga
+        // z urządzenia, 2026-09-02): dzień bez tankowania też ma się opowiedzieć -
+        // „mogłem lecieć na paliwie, które zostało z poprzednika".
+        if (e.fuelAfterL != null) {
+          fuel.push({
+            id: `f-${e.at}`,
+            title: `Przejęcie · ${stamp(e.at)}`,
+            meta: `zastane ${litres(e.fuelAfterL)} z przekazania`,
+          });
+        }
       }
 
       if (e.kind === 'flight') {
@@ -390,6 +405,58 @@ export function PreflightReadingsScreen({
           />
         )}
 
+        {/* ── skąd te wartości - NA SAMEJ GÓRZE (uwagi z urządzenia, 2026-09-02):
+            pilot ma wiedzieć, na co patrzy, ZANIM spojrzy na liczby. Dwa banery,
+            dwa pytania: skąd wartości (POUCZAJĄCY `edu` - niebieski, ZAMYKALNY do
+            mini-chipu, stan schowania trwały per pilot; wyjaśnienie przydaje się
+            do czasu, aż spowszednieje) → co z nimi zrobić (bursztynowa instrukcja,
+            NIEzamykalna - to procedura, nie onboarding). Zdanie „ewentualne
+            nieścisłości zostaną rozwiązane przez koordynatora" WYCIĘTE -
+            odpowiadało na obawę, której pilot nie zgłosił.
+
+            Świadomie NIE piszemy „poświadczył": serwer buduje przekazanie albo
+            z zamkniętego dnia, albo z dnia jeszcze trwającego (`latestHandover`),
+            a typ `Handover` tych dwóch przypadków nie rozróżnia. Godzina we własnej
+            linii, bo to jedyna wartość, której szuka się tu wzrokiem. */}
+        {handover != null && (
+          <Banner
+            kind="edu"
+            tone="blue"
+            // Nagłówek NIEBIESKIM boldem, opis jasnym body - to gotowa para
+            // `title`/`text` komponentu, nie własny skład.
+            title={
+              // `byPilotId === null` znaczy „nikt tego nie przekazał": STAN POCZĄTKOWY
+              // wpisany w panelu (issue #66) - pierwszy lot tej maszyny w UZ Aero.
+              handover.byPilotId == null
+                ? 'Stan początkowy z panelu'
+                : 'Wartości z ostatniego przekazania'
+            }
+            text={[
+              handover.byPilotId == null
+                ? `To pierwszy lot ${aircraft.reg} w UZ Aero - odczyty wpisał administrator.`
+                : handover.byPilotId === pilotId
+                  ? `To Twoje własne odczyty z ostatniego dnia na ${aircraft.reg}.`
+                  : `${aircraft.reg} przekazał ${pilotName(handover.byPilotId)}.`,
+              // Przy stanie początkowym `at` jest chwilą ZAPISU W PANELU, nie pomiaru.
+              handover.byPilotId == null
+                ? `Wpis z ${stampUtcLt(handover.at)}`
+                : `Stan z ${stampUtcLt(handover.at)}`,
+            ].join('\n')}
+            collapsedLabel="Skąd te wartości?"
+            dismissed={originDismissed}
+            onDismiss={setOriginDismissed}
+          />
+        )}
+        {/* Bez doklejki „Twój odczyt z przyrządów jest ważniejszy…" (kolejna tura):
+            instrukcja ma być instrukcją - hierarchię źródeł i tak egzekwuje ekran. */}
+        {handover != null && (
+          <InlineNote
+            icon="warning"
+            tone="amber"
+            text="Zweryfikuj ilość paliwa w zbiornikach i aktualny stan licznika motogodzin."
+          />
+        )}
+
         {/* ── paliwo ──────────────────────────────────────────────────────── */}
         <Readout
           label="Paliwo na pokładzie"
@@ -400,7 +467,6 @@ export function PreflightReadingsScreen({
           syncedAt={syncedAt}
           gauge={<LevelBar ratio={draft.fuelL / capacity} tone="amber" />}
           caption={`${Math.round((draft.fuelL / capacity) * 100)}% pojemności · zbiorniki ${capacity} L`}
-          trail={trails.fuel}
           onCorrect={() => setEditing('fuel')}
         />
 
@@ -415,50 +481,11 @@ export function PreflightReadingsScreen({
           unit="MH"
           freshness={freshness}
           syncedAt={syncedAt}
-          trail={trails.mh}
           onCorrect={() => setEditing('mh')}
         />
 
-        {/* ── skąd te wartości (`.certified-row`) ───────────────────────────
-            Mockup miał tu suchą pieczątkę „Poświadczył J. Kowalski · 21 JUNE · 17:30".
-            Pilot zapytał wprost, co ten komunikat mówi i po kim przejmuje samolot -
-            czyli pieczątka nie odpowiadała na jedyne pytanie, które w tym miejscu ma
-            znaczenie: czyje są liczby stojące wyżej i co z nimi zrobić. Teraz mówi to
-            wprost, z jawną strefą czasu.
-
-            Świadomie NIE piszemy „poświadczył": serwer buduje przekazanie albo
-            z zamkniętego dnia, albo z dnia jeszcze trwającego (`latestHandover`), a typ
-            `Handover` tych dwóch przypadków nie rozróżnia. Słowo o poświadczeniu byłoby
-            w drugim przypadku nieprawdą - a to ekran, na którym zaufanie do liczb jest
-            całą treścią. */}
-        {handover != null && (
-          <InlineNote
-            icon="check"
-            tone="green"
-            // Trzy akapity = trzy pytania w kolejności, w jakiej zadaje je pilot:
-            // czyje to liczby → z kiedy → co mam z nimi zrobić. Godzina we własnej
-            // linii, bo to jedyna wartość, której szuka się tu wzrokiem.
-            text={[
-              // `byPilotId === null` znaczy „nikt tego nie przekazał": to jest STAN
-              // POCZĄTKOWY wpisany w panelu (issue #66), czyli pierwszy lot tej maszyny
-              // w UZ Aero. Zdanie o poprzednim pilocie byłoby tu nieprawdą - a to ekran,
-              // na którym zaufanie do liczb jest całą treścią.
-              handover.byPilotId == null
-                ? `Odczyty powyżej to stan początkowy ${aircraft.reg} wpisany w panelu - ` +
-                  'to pierwszy lot tej maszyny w UZ Aero.'
-                : handover.byPilotId === pilotId
-                  ? `Odczyty powyżej to Twoje własne, z ostatniego dnia na ${aircraft.reg}.`
-                  : `Odczyty powyżej przekazał ${pilotName(handover.byPilotId)} - to po nim przejmujesz ${aircraft.reg}.`,
-              // Przy stanie początkowym `at` jest chwilą ZAPISU W PANELU, nie pomiaru -
-              // i etykieta musi to mówić, inaczej byłaby inną wielkością pod tą samą nazwą.
-              handover.byPilotId == null
-                ? `Wpis z ${stampUtcLt(handover.at)}`
-                : `Stan z ${stampUtcLt(handover.at)}`,
-              'Sprawdź go na licznikach. Twój odczyt jest ważniejszy, a ewentualne ' +
-                'nieścisłości zostaną rozwiązane przez koordynatora.',
-            ].join('\n')}
-          />
-        )}
+        {/* Blok „skąd te wartości" przeniesiony NA GÓRĘ ekranu (uwaga z urządzenia,
+            2026-09-02) - patrz komentarz nad banerami. */}
 
         {/* ── olej silnikowy (issue #60) - POMIAR, nie potwierdzenie ──────────
             Paliwo i MH wyżej pilot POTWIERDZA (przekazane wartości stoją wpisane);
@@ -524,15 +551,17 @@ export function PreflightReadingsScreen({
         unit="L"
         tone="amber"
         initialText={String(Math.round(draft.fuelL))}
+        trail={trails.fuel}
         rows={[
           {
             label: 'Przekazane przez poprzednika',
             value: handover != null ? litres(handover.reading.fuelL) : 'brak danych',
           },
           {
-            // Rejestracja zostaje tam, gdzie nagłówek ekranu jest zasłonięty arkuszem,
-            // a pilot właśnie nadpisuje odczyt - samo słowo „konfiguracja" nic nie wnosiło.
-            label: `Pojemność zbiorników · ${aircraft.reg}`,
+            // Bez znaku rejestracyjnego (uwaga z urządzenia, 2026-09-02, jak przy
+            // oleju): arkusz dotyczy maszyny, którą pilot właśnie trzyma - znak
+            // niczego nie odróżniał, tylko wydłużał wiersz.
+            label: 'Pojemność zbiorników',
             value: litres(capacity),
           },
         ]}
@@ -559,13 +588,14 @@ export function PreflightReadingsScreen({
         tone="neutral"
         initialText={motoHours(draft.mh, mhFormat)}
         mask={(t) => maskMotoHoursInput(t, mhFormat)}
+        trail={trails.mh}
         rows={[
           {
             label: 'Przekazane przez poprzednika',
             value: handover != null ? `${motoHours(handover.reading.mh, mhFormat)} MH` : 'brak danych',
           },
           {
-            label: `Format licznika · ${aircraft.reg}`,
+            label: 'Format licznika',
             value: mhFormat === 'hhmm' ? 'hh:mm' : 'dziesiętny',
           },
         ]}

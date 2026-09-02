@@ -1584,7 +1584,7 @@ Uwagi z urządzenia do kroku liczników (NOWY LOT · 3/3):
   SZLAKIEM** („koncepcja ciekawa, ale lepiej dać to do popup"; druga tura: „styl,
   który był wcześniej, był lepszy - trzeba tylko go przenieść do popup", bo wiersze
   label→wartość dawały „za dużo linijek tekstu"): `oilClaimView().trail` renderuje
-  w arkuszu 02I ten sam `Trail`, co szlaki paliwa/MH na ekranie - kropka, tytuł ze
+  w arkuszu 02I ten sam `Trail`, co szlaki paliwa/MH - kropka, tytuł ze
   stemplem („Ostatni pomiar · 21 CZERWCA 07:02 - J. Kowalski", meta z bagnetem
   i kotwicą MH), zielone ogniwo oczekiwania. Stoi POD polami, NAD wierszami
   konfiguracji (min/zbiornik), **domknięty od dołu taką samą kreską, jaką otwiera
@@ -1629,12 +1629,11 @@ Uwagi z urządzenia do kroku liczników (NOWY LOT · 3/3):
   Kształt ma JEDNĄ definicję (`SheetWarning` w `Sheet.tsx`); arkusz oleju renderuje
   je sam między polami a szlakiem, bo jego children niosą treść pod polami.
   Mockupy 02B/02I za tym (baner nad wierszami odniesienia)
-- **wiersze arkusza oleju BEZ znaku rejestracyjnego** (kolejna tura): „Minimum przed
-  lotem · SP-AXA" → „Minimum przed lotem", tak samo zbiornik - arkusz dotyczy
-  maszyny, którą pilot właśnie trzyma (02A) albo wybrał w kroku 1 (15), więc znak
-  niczego nie odróżniał, tylko wydłużał wiersz. Rejestracja przy „Pojemności
-  zbiorników" w arkuszu PALIWA zostaje do osobnej decyzji - tam broni łańcucha MH
-  przed odczytem wpisanym dla złej maszyny
+- **wiersze arkuszy odczytu BEZ znaków rejestracyjnych** (dwie tury): „Minimum przed
+  lotem · SP-AXA" → „Minimum przed lotem", tak samo zbiornik oleju, „Pojemność
+  zbiorników" i „Format licznika" - arkusz dotyczy maszyny, którą pilot właśnie
+  trzyma (02A) albo wybrał w kroku 1 (15), więc znak niczego nie odróżniał, tylko
+  wydłużał wiersz
 - **„Po dolewce" podaje SAM rachunek - bez „powyżej minimum" i bez zieleni**
   (kolejna tura): jedno i drugie sugerowało, że oleju WYSTARCZY, a wystarczalność
   zależy od długości lotu, o której konfiguracyjne minimum nic nie wie. O zejściu
@@ -1643,6 +1642,42 @@ Uwagi z urządzenia do kroku liczników (NOWY LOT · 3/3):
   renderuje `InlineNote` na dole karty - ostrzeżenie stojące POD kartą czytało się
   jak osobny komunikat ekranu, a dotyczy liczby nad sobą. Sekcja oleju na 02A
   przeszła na ten prop; reguła obowiązuje każdy przyszły `Readout` z ostrzeżeniem
+- **szlaki PALIWA i MH też przeniesione do arkuszy** (kolejna tura: „możemy podobnie
+  przenieść informacje o odczytach paliwa i motogodzin do popupów?"). Mechanika
+  jest odtąd RAMOWA: `Sheet.trail` renderuje szlak między ostrzeżeniem a wierszami
+  odniesienia (z kreską domykającą), a olej, paliwo i MH tylko podają ogniwa -
+  `OilSheet` przestał składać własną kolejność, `Readout` STRACIŁ slot `trail`
+  (sekcje 02A mówią samym stanem: wartość, świeżość, podziałka, podpis). Mockupy:
+  szlaki w modalach 02A oraz w 02B/02C, sekcje bez nich. **Szlak przekazania
+  dostał wreszcie DANE**: `Handover.trail` istniał wyłącznie w typie i mockupie -
+  serwer nigdy go nie wypełniał, więc oś na telefonie była pusta. `handoverTrail`
+  w `aircraftStateView` buduje ogniwa sesji-źródła (przejęcie z ZASTANYM paliwem
+  i licznikiem - czyli poprzednim przekazaniem, bo „mogłem nie tankować, tylko
+  lecieć na paliwie, które zostało z poprzednika" - tankowania ze strumienia,
+  zdanie z czasem blokowym), a `/reference` dociąga strumienie sesji-źródeł JEDNYM
+  `sessionStreams` dla całej floty (wzorzec analityki §7.7). Ogniwo `claim` rysuje
+  się odtąd także na osi PALIWA („zastane 185 L z przekazania"). W szlaku OLEJU
+  ogniwo oczekiwania jest NEUTRALNE i mówi „Latano · 4:00 MH" (nie „Od pomiaru",
+  nie na zielono - kolejna tura): jak wiersze „J. Kowalski latał" przy paliwie/MH,
+  bez nazwiska, bo od pomiaru mogło latać wielu pilotów
+- **banery „skąd te wartości" NA SAMEJ GÓRZE 02A** (kilka tur jednej uwagi): pilot
+  ma wiedzieć, na co patrzy, ZANIM spojrzy na liczby. Dwa banery, dwa pytania:
+  (1) POUCZAJĄCY `Banner kind="edu"` - niebieski nagłówek boldem („Wartości
+  z ostatniego przekazania" / „Stan początkowy z panelu") + jasny opis (kto
+  przekazał, stan z kiedy), ZAMYKALNY do mini-chipu „Skąd te wartości?"
+  (`useEduBanner('handover-origin')`, trwale per pilot); (2) bursztynowa
+  INSTRUKCJA (InlineNote, niezamykalna): „Zweryfikuj ilość paliwa w zbiornikach
+  i aktualny stan licznika motogodzin." - bez doklejki „Twój odczyt z przyrządów
+  jest ważniejszy…" (kolejna tura: instrukcja ma być instrukcją). Zdanie
+  „ewentualne nieścisłości zostaną rozwiązane przez koordynatora" WYCIĘTE -
+  odpowiadało na obawę, której pilot nie zgłosił
+- **jedna czcionka banerów i przypisów: body 14** (kolejna tura: „mamy 2 style
+  czcionek, na żółtym mniejsza - ładniejsza jest na niebieskim"): `InlineNote`
+  przeszedł z mono 10 na TĘ SAMĄ metrykę body, którą pisze `Banner` - różnicę ról
+  niesie rozmiar pudełka i kolor tonu, nie krój pisma. Obejmuje wszystkie przypisy
+  i ostrzeżenia arkuszy (to jeden komponent); mockupy 02A/02B/02I poszły za tym
+  (`.none-box`/`.modal-warning`/`.hint-text` = Archivo 12), pozostałe pliki
+  designu dociągną się przy najbliższym dotknięciu
 - **pole dużej wartości w arkuszach odczytu ZMNIEJSZONE ~30%** („input zajmuje
   strasznie dużo miejsca" - przy dwóch polach arkusza oleju nadmiar liczył się
   podwójnie): cyfry 22 zamiast 30–32, padding 8, z PODŁOGĄ 46 dp celu dotykowego.
