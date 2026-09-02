@@ -445,6 +445,10 @@ wpisać w zgłoszenie ani znaleźć wzrokiem na liście.
   reguła, przez którą nazwę karty arkusza liczy wyłącznie serwer
 - gdzie stoi: kafelek operacji (01, 12), nagłówek ekranu 10, potwierdzenie usunięcia
   wpisu (10L), grid i nagłówek DZIENNIKA w panelu, potwierdzenie unieważnienia w panelu
+- **na ekranie 10 sygnatura JEST tytułem nagłówka** (przegląd 2026-09-02): wiersz
+  „OPERACJA" nad nią powtarzał kategorię, którą sygnatura już niesie, i kosztował
+  linię - podtytułem zostaje samo zadanie. „OPERACJA" wraca wyłącznie bez sygnatury
+  (operacja niekompletna nie ma jej z czego złożyć); `headerIdentity` w `StatsScreen`
 - **W KARCIE ARKUSZA SYGNATURY NIE MA** i to nie jest przeoczenie: kolumna `Operacja`
   spina sześć bloków JEDNEGO dokumentu etykietami `S1`, `S2`, a karta jest dobą
   SAMOLOTU - numer z sygnatury (doba PILOTA) nie zgadzałby się z kolejnością zmian
@@ -1531,22 +1535,23 @@ na osi przez unieważnienie i dopisanie, parytet z tankowaniem) - dochodziła pi
 - **karta „Olej" stoi za Motogodzinami** (kolejność mediów z 02A i 15), ale jest
   RACHUNKIEM BEZ WERDYKTU: zdanie samolotu oleju nie mierzy, więc zużycia jednej
   operacji nie ma z czego policzyć - interwał biegnie pomiar→pomiar przez wiele
-  operacji. Wiersze: pomiar przy przejęciu, dolane (z licznikiem dolewek, wzorem
-  „Dolane · 2 tankowania"), suma „Po dolewkach". `logic/sessionOil.ts` z testami
+  operacji. Wiersze: „Odczyt przy przejęciu", „Dolane", suma „Po dolewkach".
+  `logic/sessionOil.ts` z testami. **Etykiety wyrównane do karty paliwa przy
+  przeglądzie 2026-09-02** („Pomiar przy przejęciu" obok „Odczytu przy przejęciu"
+  było rozbieżnością słownika, nie rozróżnieniem), a **licznik dolewek USUNIĘTY tym
+  samym przeglądem**: wzór „Dolane · 2 tankowania" ma sens przy paliwie, gdzie
+  tankowań bywa kilka - olej dolewa się praktycznie raz, więc „· 1 dolewka" przy
+  każdej operacji mówiła to samo i niczego nie odróżniała (reguła SyncChipa)
 - **werdyktu nie ma i nie ma zdania o jego braku**: `naNote` tłumaczy sytuacyjny
   brak porównania, a tu porównanie nie istnieje jako pojęcie - stały przypis
   świeciłby przy każdej operacji (reguła SyncChipa z issue #12)
-- **zero pokazuje się TYLKO przy pomiarze**: operacja z pomiarem mówi „nie dolewano"
-  (0,0 L), operacja sprzed modułu oleju dostaje KRESKI - „0,0 L" przy braku pomiaru
+- **zero pokazuje się TYLKO przy odczycie**: operacja z odczytem mówi „nie dolewano"
+  (0,0 L), operacja sprzed modułu oleju dostaje KRESKI - „0,0 L" przy braku odczytu
   byłoby faktem wziętym znikąd (ta sama reguła, którą dziennik panelu pokazuje brak
   odczytu jako kreskę). Kreska sumy bez bursztynu - to zwykły stan starych danych
-- **licznik dolewek liczy się ze strumienia EFEKTYWNEGO** (para z przejęcia = jedna
-  dolewka, każde `oil_add` kolejna): dolewka unieważniona korektą nie wchodzi do sumy
-  w projekcji, więc nie może wchodzić do licznika obok niej. (`refuelCount` paliwa
-  liczy z surowego - zastana drobna skaza, nieskopiowana)
 - **karta jest czystym odczytem w OBU trybach**, jak Paliwo i Motogodziny - korekta
   wchodzi osią (wiersz „Przejęcie" → 10F), nie ołówkiem na karcie
-- mockupy: karta na 10 (pomiar + dolewka), 10A (pomiar bez dolewki), 10B (kreski -
+- mockupy: karta na 10 (odczyt + dolewka), 10A (odczyt bez dolewki), 10B (kreski -
   operacja sprzed modułu), 10D (tryb edycji, bez zmian względem odczytu); podpisy
   przejęcia na 10A/10D dostały wreszcie człon „olej …" z issue #60
 

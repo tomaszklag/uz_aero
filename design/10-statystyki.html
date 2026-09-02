@@ -372,19 +372,21 @@
 
   <div class="screen">
     <!-- App Header -->
-    <!-- Tytuł „OPERACJA", nie „ROZLICZENIE" (issue #38 pkt 1): ekran opisuje jeden bieg
-         silnika od przejęcia do zdania, a rozliczeniem był w modelu, w którym stał na
-         ścieżce zamykania dnia i sam był bramką („ZATWIERDŹ → SYNC"). Bramka zniknęła
-         przy issue #23, nazwa została.
-         Chip SYNC USUNIĘTY: online nie rysuje nic (issue #12). -->
+    <!-- TYTUŁEM JEST SYGNATURA (przegląd 2026-09-02): wiersz „OPERACJA" nad nią
+         powtarzał kategorię, którą sygnatura już niesie, i kosztował linię nagłówka -
+         podtytułem zostaje samo zadanie. „OPERACJA" wraca wyłącznie bez sygnatury
+         (operacja niekompletna nie ma jej z czego złożyć). Wcześniejsze nazwy:
+         „ROZLICZENIE" odeszło przy issue #38 pkt 1 (bramka „ZATWIERDŹ → SYNC"
+         zniknęła przy issue #23). Chip SYNC USUNIĘTY: online nie rysuje nic
+         (issue #12). -->
     <div class="app-header">
       <a href="01-moj-dzien.html" class="back-btn" title="Wróć do Mój dzień">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         Dzień
       </a>
       <div class="app-header-center">
-        <span class="screen-title">OPERACJA</span>
-        <span class="header-subtitle">SP-AXA/2026-08-06/TMK/1 · SKOKI</span>
+        <span class="screen-title">SP-AXA/2026-08-06/TMK/1</span>
+        <span class="header-subtitle">SKOKI</span>
       </div>
       <!-- BEZ PLAKIETKI Z LICZBĄ LOTÓW (issue #40): stopka osi mówi „STARTY 2" trzy
            centymetry niżej, a plakietka świecąca przy każdej normalnej operacji uczy oko
@@ -726,10 +728,12 @@
            brak porównania, a tu porównanie nie istnieje jako pojęcie; stały przypis
            świeciłby przy każdej operacji (reguła SyncChipa z issue #12).
 
-           Licznik dolewek w etykiecie jak przy paliwie („Dolane · 2 tankowania"):
-           para z przejęcia liczy się jako jedna dolewka, każde `oil_add` z kokpitu
-           jako kolejna. Operacja sprzed modułu oleju dostaje kreski, nie zera -
-           „0,0 L" przy braku pomiaru byłoby faktem wziętym znikąd.
+           Etykiety spójne z kartą paliwa („Odczyt przy przejęciu"), ale BEZ
+           licznika dolewek (przegląd 2026-09-02): olej dolewa się praktycznie raz,
+           więc „· 1 dolewka" przy każdej operacji mówiła to samo i niczego nie
+           odróżniała (reguła SyncChipa z issue #12). Operacja sprzed modułu oleju
+           dostaje kreski, nie zera - „0,0 L" przy braku odczytu byłoby faktem
+           wziętym znikąd.
 
            Korekta NIE TU: karta jest czystym odczytem w obu trybach, jak paliwo
            i motogodziny. Pomiar i dolewkę przy przejęciu poprawia się na osi
@@ -738,11 +742,11 @@
       <div class="section-card">
         <div class="section-card-head amber">Olej</div>
         <div class="calc-row">
-          <span class="calc-key"><span class="op"></span>Pomiar przy przejęciu</span>
+          <span class="calc-key"><span class="op"></span>Odczyt przy przejęciu</span>
           <span class="calc-val">10,2 L</span>
         </div>
         <div class="calc-row">
-          <span class="calc-key"><span class="op">+</span>Dolane · 1 dolewka</span>
+          <span class="calc-key"><span class="op">+</span>Dolane</span>
           <span class="calc-val">0,5 L</span>
         </div>
         <div class="calc-total">
