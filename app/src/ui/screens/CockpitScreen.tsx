@@ -40,6 +40,8 @@ import {
   DetectToast,
   DropSheet,
   FuelStrip,
+  HOLD_MS,
+  holdConfirmHint,
   LeaveCockpitSheet,
   ManualEventSheet,
   NoGpsBanner,
@@ -615,10 +617,11 @@ export function CockpitScreen({
           primaryLabel={actions.primaryLabel}
           primaryIcon={actions.primaryIcon}
           onPrimary={() => {
-            // Kołowanie zapisuje się OD RAZU - bez arkusza 05f i bez okna COFNIJ:
-            // taxi nie wyznacza żadnego czasu, pomyłka kosztuje jeden wiersz w logu
-            // (ta sama zasada co przy autodetekcji). Start i lądowanie idą przez
-            // arkusz, bo ich czas trafia do dokumentów i bywa cofany.
+            // Kołowanie zapisuje się BEZ arkusza 05f i bez okna COFNIJ: taxi nie
+            // wyznacza żadnego czasu, pomyłka kosztuje jeden wiersz w logu (ta sama
+            // zasada co przy autodetekcji). Start i lądowanie idą przez arkusz,
+            // bo ich czas trafia do dokumentów i bywa cofany. Przed pomyłką na klik
+            // chroni przytrzymanie 1 s - gest siedzi w `CockpitActions` (issue #67).
             if (actions.primary === 'taxi') {
               if (!busy) void run(() => taxi('manual', null));
             } else {
@@ -815,9 +818,9 @@ export function CockpitScreen({
             tone="green"
             size="hero"
             icon="start"
-            holdMs={2000}
+            holdMs={HOLD_MS}
             busy={busy}
-            hint="Przytrzymaj 2 sekundy aby potwierdzić"
+            hint={holdConfirmHint(HOLD_MS)}
             onPress={handleStart}
           />
         )}

@@ -301,7 +301,7 @@ export function StatsScreen({
     [projection, norm, refuelCount, fuelNominal],
   );
   const mh = useMemo(() => mhBalance(projection, norm), [projection, norm]);
-  const oil = useMemo(() => oilCard(projection, events), [projection, events]);
+  const oil = useMemo(() => oilCard(projection), [projection]);
 
   // Dzień bez sesji nie ma czego podsumowywać - pokazujemy to wprost, zamiast
   // rysować siatkę myślników.
@@ -328,24 +328,26 @@ export function StatsScreen({
     projection.drops.count > 0 ||
     (projection.operation != null && isJumpOperation(projection.operation));
 
+  const header = headerIdentity(
+    signature,
+    projection.aircraftId,
+    projection.claimedAt,
+    projection.operation,
+  );
+
   return (
     <Screen
       scroll
       padded={false}
       header={
         <ScreenHeader
-          title="OPERACJA"
+          title={header.title}
           size="md"
           // Powrót JEST i prowadzi tam, skąd się tu wchodzi (mockup 10: „‹ Dzień",
           // 10b: „‹ Dni"): kafelkiem sesji na 01 i takim samym kafelkiem w historii (12).
           onBack={() => navigation.navigate(backScreen)}
           backLabel={readOnly ? 'Dni' : 'Dzień'}
-          subtitle={subtitle(
-            signature,
-            projection.aircraftId,
-            projection.claimedAt,
-            projection.operation,
-          )}
+          subtitle={header.subtitle}
           right={
             <>
               {/* „RĘCZNIE" - fakt o pochodzeniu CAŁEJ operacji (wpis z ekranu 15,
@@ -895,31 +897,36 @@ function issuesTitle(count: number): string {
 }
 
 /**
- * Podtytuł: „SP-AXA/2026-09-01/AKO/1 · SKOKI" (mockup 10, sygnatura z issue #68).
+ * Nagłówek ekranu: SYGNATURA JEST TYTUŁEM („SP-AXA/2026-09-01/AKO/1", issue #68),
+ * a podtytułem samo zadanie („SKOKI"). Słowo „OPERACJA" nad sygnaturą powtarzało
+ * kategorię, którą sygnatura już niesie - uwaga z przeglądu 2026-09-02: „wystarczy
+ * sama sygnatura i zaoszczędzimy miejsce" (mockup 10).
+ *
+ * Bez sygnatury (operacja niekompletna, strumień legacy) tytułem wraca „OPERACJA",
+ * a podtytuł skleja dawną parę znak · data - sygnatury nie ma z czego złożyć.
  *
  * Godzin tu nie ma - przejęcie i zdanie stoją na osi czasu razem z odczytami, a trzeci
  * napis w nagłówku walczyłby z nimi o tę samą linię.
  */
-function subtitle(
+function headerIdentity(
   signature: string | null,
   aircraftId: string | null,
   claimedAt: number | null,
   operation: Parameters<typeof operationTag>[0] | null,
-): string {
-  // SYGNATURA WYPIERA ZNAK I DATĘ, bo niesie jedno i drugie: para „SP-AXA · 06 SIE"
-  // obok napisu zaczynającego się od „SP-AXA/2026-09-01" powtarzałaby te same dwa
-  // fakty w jednej linii. Bez sygnatury wraca dawny podtytuł.
-  const identity =
-    signature != null
-      ? [signature]
-      : [aircraftId, claimedAt != null ? dateUtcDayMonth(claimedAt) : null];
+): { title: string; subtitle: string | undefined } {
+  const task = operation != null ? operationTag(operation) : null;
+
+  if (signature != null) {
+    return { title: signature, subtitle: task ?? undefined };
+  }
 
   // Rodzaj operacji stoi NA KOŃCU i to jest odporność na skracanie: podtytuł ma
   // `numberOfLines={1}`, więc przy wąskim nagłówku ucina się OGON - czyli „SKOKI",
-  // a nie identyfikator. Sygnatura ucięta wielokropkiem przestaje identyfikować.
-  return [...identity, operation != null ? operationTag(operation) : null]
-    .filter((part): part is string => part != null && part !== '')
-    .join(' · ');
+  // a nie identyfikator.
+  const parts = [aircraftId, claimedAt != null ? dateUtcDayMonth(claimedAt) : null, task].filter(
+    (part): part is string => part != null && part !== '',
+  );
+  return { title: 'OPERACJA', subtitle: parts.length > 0 ? parts.join(' · ') : undefined };
 }
 
 /** „TMK · zalogowany (Ty)" - kod pilota z cache'u referencyjnego. */

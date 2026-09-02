@@ -50,7 +50,7 @@ Aplikacja pilota to **React Native**, panel to **web**. To nie jest różnica st
   `solarColors.surfaceHover`: token bierze się z weba, gdzie jest stanem `:hover`,
   a na telefonie znaczy powierzchnię „przygaszoną". Ten sam token znaczy co innego
   po obu stronach.
-- Wymagania są rozłączne. `ActionButton` w aplikacji ma **przytrzymanie 2 s**, cel dotykowy
+- Wymagania są rozłączne. `ActionButton` w aplikacji ma **przytrzymanie 1 s**, cel dotykowy
   ≥ 44 px i widoczny powód blokady, bo pilot pracuje w rękawicach i w wibracjach
   (`docs/architektura-kodu.md` §2). `.btn` z `SZABLON.html` to `min-height:36px` i `:hover`.
   Wspólny komponent musiałby być sumą tych dwóch, czyli nie służyć żadnemu.

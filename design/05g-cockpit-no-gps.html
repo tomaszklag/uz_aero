@@ -211,13 +211,15 @@
      rozpoznał stanu), a brak fixa i zła detekcja przy zdrowym odbiorniku znaczą dla
      niego to samo. O czujniku mówi baner i komórki siatki. */
   .primary-btn {
-    display: flex; align-items: center; justify-content: center; gap: 9px;
-    padding: 16px 12px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    padding: 10px 12px;
     background: var(--surface-raised); border: 1px solid var(--border-strong);
     border-radius: 14px; color: var(--text-primary);
     font-family: var(--font-display); font-size: 20px; letter-spacing: 2px;
     cursor: pointer; text-decoration: none;
   }
+  .primary-btn-main { display: flex; align-items: center; gap: 9px; }
+  .hold-lbl { font-family: var(--font-mono); font-size: 7px; letter-spacing: 1px; text-transform: uppercase; opacity: 0.7; }
   .zrzut-btn {
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
     padding: 12px 14px;
@@ -494,9 +496,12 @@
          technicznym i „innych" NIE MA GO W OGÓLE - nie ma czego wynosić, więc `drop` nie
          może się wydarzyć. To brak akcji, a nie wyszarzenie z powodem. -->
     <div class="action-row">
-      <a href="05f-zdarzenie-reczne.html" class="primary-btn" title="Autodetekcja stoi - lądowanie zapiszesz wyłącznie ręcznie; czas cofniesz stepperami">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="18 13 12 19 6 13"/></svg>
-        Landing
+      <a href="05f-zdarzenie-reczne.html" class="primary-btn" title="Autodetekcja stoi - lądowanie zapiszesz wyłącznie ręcznie; czas cofniesz stepperami · przytrzymaj 1 s aby potwierdzić">
+        <span class="primary-btn-main">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="18 13 12 19 6 13"/></svg>
+          Landing
+        </span>
+        <span class="hold-lbl">przytrzymaj 1 s</span>
       </a>
       <!-- Zrzut AKTYWNY mimo reguły „tylko w Cruise" (2026-08-11): bez fixa faza jest
            nieznana, a ręczny zapis to jedyna droga - bramka fazy bez danych o fazie

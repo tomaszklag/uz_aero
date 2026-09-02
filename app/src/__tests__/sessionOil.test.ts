@@ -1,14 +1,15 @@
 /**
  * UZ Aero - test karty OLEJU na ekranie operacji (issue #70).
  *
- * Karta niesie SAME FAKTY (pomiar przy przejęciu, dolewki, stan po nich) - zużycia
+ * Karta niesie SAME FAKTY (odczyt przy przejęciu, dolane, stan po nich) - zużycia
  * jednej operacji nie da się policzyć, bo zdanie samolotu oleju nie mierzy (issue #60).
  * Testy pilnują trzech granic:
- *  • zero pokazuje się TYLKO przy pomiarze - operacja bez śladu oleju dostaje kreski,
+ *  • zero pokazuje się TYLKO przy odczycie - operacja bez śladu oleju dostaje kreski,
  *    a nie „0,0 L" wzięte znikąd;
- *  • dolewka bez pomiaru zostawia sumę pustą (dolewka poziomu nie zna);
- *  • licznik dolewek liczy się ze strumienia EFEKTYWNEGO - dolewka unieważniona
- *    korektą nie wchodzi do sumy w projekcji, więc nie może wchodzić do licznika.
+ *  • dolewka bez odczytu zostawia sumę pustą (dolewka poziomu nie zna);
+ *  • etykieta „Dolane" jest STAŁA - licznika dolewek nie ma (przegląd 2026-09-02:
+ *    olej dolewa się praktycznie raz, liczba niczego nie odróżniała), a suma i tak
+ *    liczy się w projekcji ze strumienia efektywnego.
  */
 
 import { oilCard } from '../ui/screens/logic/sessionOil';
@@ -42,7 +43,7 @@ function event<T extends EventType>(
   } as Event;
 }
 
-/** Operacja z kompletem oleju: pomiar + dolewka przy przejęciu, dolewka z kokpitu. */
+/** Operacja z kompletem oleju: odczyt + dolewka przy przejęciu, dolewka z kokpitu. */
 function oilSession(preflightOil: { oilL?: number | null; oilAddedL?: number | null }): Event[] {
   seq = 0;
   return [
@@ -61,26 +62,26 @@ function oilSession(preflightOil: { oilL?: number | null; oilAddedL?: number | n
 }
 
 function card(events: Event[]) {
-  return oilCard(projectSession(events), events);
+  return oilCard(projectSession(events));
 }
 
 describe('karta oleju', () => {
-  it('pomiar, dolewki i stan po nich - z licznikiem dolewek w etykiecie', () => {
+  it('odczyt, dolane i stan po nich - dolewki z obu źródeł sumują się', () => {
     const events = oilSession({ oilL: 10.2, oilAddedL: 0.5 });
     events.splice(4, 0, event('oil_add', at(9, 58), { addedL: 0.5 }, 'oil-1'));
 
     const view = card(events);
 
     expect(view.rows).toEqual([
-      { id: 'level', op: '', label: 'Pomiar przy przejęciu', value: '10,2 L' },
-      { id: 'added', op: '+', label: 'Dolane · 2 dolewki', value: '1,0 L' },
+      { id: 'level', op: '', label: 'Odczyt przy przejęciu', value: '10,2 L' },
+      { id: 'added', op: '+', label: 'Dolane', value: '1,0 L' },
     ]);
     expect(view.totalLabel).toBe('Po dolewkach');
     expect(view.totalValue).toBe('11,2 L');
     expect(view.totalTone).toBe('amber');
   });
 
-  it('pomiar bez dolewki: zero jest odczytem, etykieta bez licznika', () => {
+  it('odczyt bez dolewki: zero jest odczytem', () => {
     const view = card(oilSession({ oilL: 10.2 }));
 
     expect(view.rows[0]!.value).toBe('10,2 L');
@@ -97,16 +98,16 @@ describe('karta oleju', () => {
     expect(view.totalTone).toBe('neutral');
   });
 
-  it('dolewka bez pomiaru (bagnet gorący) zostawia sumę pustą', () => {
+  it('dolewka bez odczytu (bagnet gorący) zostawia sumę pustą', () => {
     const view = card(oilSession({ oilAddedL: 0.5 }));
 
     expect(view.rows[0]!.value).toBe('-');
-    expect(view.rows[1]).toEqual({ id: 'added', op: '+', label: 'Dolane · 1 dolewka', value: '0,5 L' });
+    expect(view.rows[1]).toEqual({ id: 'added', op: '+', label: 'Dolane', value: '0,5 L' });
     // Dolewka poziomu nie zna - suma „10,7" z powietrza byłaby gorsza od kreski.
     expect(view.totalValue).toBe('-');
   });
 
-  it('dolewka unieważniona korektą wypada z licznika razem z sumą', () => {
+  it('dolewka unieważniona korektą wypada z sumy', () => {
     const events = oilSession({ oilL: 10.2 });
     events.splice(4, 0, event('oil_add', at(9, 58), { addedL: 0.5 }, 'oil-1'));
     events.push(
@@ -115,12 +116,11 @@ describe('karta oleju', () => {
 
     const view = card(events);
 
-    // Suma w projekcji już dolewki nie widzi - licznik obok niej mówi to samo.
     expect(view.rows[1]).toEqual({ id: 'added', op: '+', label: 'Dolane', value: '0,0 L' });
     expect(view.totalValue).toBe('10,2 L');
   });
 
-  it('dolewka dopisana korektą amend wchodzi do licznika', () => {
+  it('dolewka dopisana korektą amend wchodzi do sumy', () => {
     const events = oilSession({ oilL: 10.2 });
     const preflight = events[1]!;
     events.push(
@@ -133,7 +133,6 @@ describe('karta oleju', () => {
 
     const view = card(events);
 
-    expect(view.rows[1]!.label).toBe('Dolane · 1 dolewka');
     expect(view.rows[1]!.value).toBe('0,5 L');
     expect(view.totalValue).toBe('10,7 L');
   });

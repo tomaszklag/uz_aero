@@ -911,13 +911,13 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `PhaseHero` | plakietka + faza lotu 54 px + prędkość pionowa | `.phase-hero` |
 | `ParamGrid` | sztywna siatka 2×2 parametrów GPS; `stale` (- - po utracie fixa, przypis **amber** jak baner - 2026-08-12) i `note` (skąd wartość) | `.param-grid`, `.param-stale-note` (05g) |
 | `NoGpsBanner` | baner-przyrząd braku fixa GPS (status): wiek fixa i co dalej. **Zawsze AMBER i bez przycisków** (2026-08-12) - trzy stany (rozruch / utrata / brak uprawnienia) różni TREŚĆ, bo dla pilota znaczą to samo; czerwień pochodziła z rejestru ryzyk §8, który stopniuje skutki, nie banery. „Zapisz zdarzenie" i „Lista ręczna" dublowały pasek akcji i kafelek z 04, a na przyrządzie czytały się jak drugi pasek | `.no-gps` (05g) |
-| `CockpitActions` | dolny pasek: zapis ręczny, zrzut (tylko dzień skokowy - bez `onDrop` przycisku NIE MA), STOP z powodem blokady | `.action-row` |
+| `CockpitActions` | dolny pasek: zapis ręczny, zrzut (tylko dzień skokowy - bez `onDrop` przycisku NIE MA), STOP z powodem blokady. **Zapis ręczny i STOP na przytrzymanie 1 s** (issue #67) z mikropodpisem „przytrzymaj 1 s"; przy zablokowanym STOP podpis gestu ustępuje powodowi. Zrzut i załadunek na klik - otwierają arkusz, który sam jest potwierdzeniem | `.action-row` |
 | `SessionAxis` | **JEDYNY log zdarzeń w aplikacji** (issue #44): kolumna czasu, kropki na pionowej kresce, podpis pod nazwą, jedna rzecz w prawej krawędzi. Rysuje operację i w kokpicie (04, 05), i w podglądzie (04B), i w rozliczeniu (10). Role dokłada wywołujący, nie przełącznik trybu: kokpit podaje wiersz `live` i znaczniki outboxa (`pending`), rozliczenie stopkę sum i - w edycji - `onCorrect` (wtedy wiersz rośnie do 44 px). **Zieleń ma tylko `live` i start** - historia jest neutralna | `.axis` (04, 05, 10) |
 | ~~`EventLog`~~ | USUNIĘTY przy issue #44. Był drugim logiem tej samej operacji: szyna z ikonami w plakietkach, chipy licznika i paliwa, pełnoszerokie pasy tankowania, separatory „Lot n". Ta sama operacja czytała się przez to dwa razy inaczej - inne nazwy zdarzeń, inne kolory tego samego lądowania, inne miejsce na te same liczby | - |
 | `ClaimStrip` | pasek operacji CUDZEGO samolotu (04B): czyja maszyna, od kiedy, ile lotów - **przyrząd, nie nawigacja**. Zastąpił `DutyStrip` w etapie C5 (czasu służby w kokpicie NIE MA, §3.2), a 2026-08-10 stracił wariant klikalny razem z paskiem we WŁASNYM kokpicie: z 04/05 nie prowadzi żadna droga na 01 (`CLAUDE.md`, „Kokpit jest stanem modalnym") | `.claim-strip` (04B) |
 | `FuelStrip` | odczyt paliwa + szacunek wystarczalności; ton z `fuelTone` (amber godzinę przed rezerwą, czerwony na rezerwie). **Na 04 stoi tylko przy znanej normie** - bez niej byłby samą liczbą, tą samą co podpis kafelka „Tankowanie" (`logic/cockpitFuel.ts`, 2026-08-10) | `.fuel-strip` (04) |
 | `ActionGrid` | siatka 2×2 akcji naziemnych z podpisem stanu | `.action-grid` |
-| `ActionButton` | akcja z **przytrzymaniem 2 s** i blokadą **z podanym powodem** | `.btn-primary`, `.start-engine`, `.start-btn` (01) |
+| `ActionButton` | akcja z **przytrzymaniem 1 s** (issue #67) i blokadą **z podanym powodem** | `.btn-primary`, `.start-engine`, `.start-btn` (01) |
 | `Sheet` | arkusz od dołu dla decyzji dotykających innych | `.modal-overlay` (przejęcie) |
 | `PinChangeSheet` | zmiana PIN w trzech krokach (obecny→nowy→powtórz), offline | arkusz PIN z 13 |
 | `ManualEntrySheet` | pełny wpis §3.8: cztery czasy ze stepperami ±1 min (przytrzymanie powtarza) + uwagi | „Nowy wpis ręczny" (08) |
@@ -928,6 +928,15 @@ Trzy rzeczy w `ActionButton` nie są ozdobnikiem: przytrzymanie chroni przed
 przypadkowym dotknięciem w wibracjach, powód blokady jest **widocznym tekstem** (nie
 tooltipem - `title` w RN nie istnieje), a cel dotykowy ma ≥ 44 px, bo pilot pracuje
 w rękawicach.
+
+**Gest przytrzymania jest JEDEN w całej aplikacji** (issue #67: „na klik mogą zdarzyć
+się pomyłki"): 1 s dla każdej akcji, która zapisuje zdarzenie - START ENGINE (hero),
+STOP i zapis ręczny w pasku akcji. Czas i podpisy (z odmianą - „1 sekundę", nie
+„1 sekundy") mieszkają w `components/data/holdGesture.ts` (czyste, z testem), mechanika
+timera i paska postępu w hooku `hooks/useHold.ts` - `ActionButton` i `CockpitActions`
+wołają ten sam hook, bo druga kopia rozjechałaby się przy pierwszej poprawce (historia
+`TimeStepper`). Do issue #67 START wymagał 2 s, a STOP i zapis ręczny działały na klik -
+wbrew mockupom, które na STOP deklarowały przytrzymanie od początku.
 
 `CheckIcon` powstał, bo zaznaczenie w `CardPicker` było wyłącznie zielonym krążkiem -
 czyli sygnałem **wyłącznie kolorystycznym**. W słońcu, w motywach jasnych i przy

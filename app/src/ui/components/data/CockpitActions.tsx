@@ -12,15 +12,28 @@
  *
  * Pasek stoi w stałym miejscu niezależnie od tego, jak długi jest log - w locie pilot
  * sięga po te przyciski, nie patrząc.
+ *
+ * **Zapis ręczny i STOP wymagają przytrzymania 1 s** (issue #67: „na klik mogą
+ * zdarzyć się pomyłki") - tap w Taxi zapisywał zdarzenie do rejestru OD RAZU,
+ * a STOP kończył jedyny bieg operacji. Gest jest własnością PRZYCISKU, nie stanu
+ * sekwencji: „Take off" i „Landing" tylko otwierają arkusz 05f, ale ten sam przycisk
+ * raz na klik, raz na przytrzymanie byłby nie do nauczenia. Oba niosą mikropodpis
+ * „przytrzymaj 1 s" - gest niestandardowy bez podpisu wygląda po tapnięciu jak
+ * zawieszona aplikacja (§6 pkt 3); przy zablokowanym STOP podpis gestu USTĘPUJE
+ * powodowi blokady, dokładnie jak `disabledReason` wygrywa z `hint` w `ActionButton`.
+ * Zrzut i załadunek zostają na klik: niczego nie zapisują - otwierają arkusz,
+ * który sam jest potwierdzeniem.
  */
 
 import React from 'react';
-import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
+import { Animated, Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 
+import { useHold } from '../../hooks/useHold';
 import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
 import { Icon, type IconName } from '../foundation/Icon';
 import { toneColors } from '../tone';
+import { HOLD_MS, holdConfirmHint, holdShortLabel } from './holdGesture';
 
 export interface CockpitActionsProps {
   /**
@@ -75,6 +88,7 @@ export function CockpitActions({
   const { theme } = useTheme();
   const blue = toneColors(theme, 'blue');
   const red = toneColors(theme, 'red');
+  const primaryHold = useHold({ holdMs: HOLD_MS, onTrigger: onPrimary });
 
   return (
     <View
@@ -87,7 +101,8 @@ export function CockpitActions({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={primaryLabel}
-        onPress={onPrimary}
+        accessibilityHint={holdConfirmHint(HOLD_MS)}
+        {...primaryHold.pressProps}
         style={({ pressed }) => [
           styles.primary,
           {
@@ -99,9 +114,19 @@ export function CockpitActions({
           },
         ]}
       >
-        <Icon name={primaryIcon} size={20} color={theme.colors.textPrimary} />
-        <AppText variant="button" style={styles.primaryLabel}>
-          {primaryLabel}
+        {/* Pasek postępu przytrzymania - przycisk jest bez tonu, więc pasek też:
+            rozjaśnienie tła zamiast koloru akcentu. */}
+        {primaryHold.holding && (
+          <HoldProgress progress={primaryHold.progress} color={theme.colors.surfaceHover} />
+        )}
+        <View style={styles.primaryMain}>
+          <Icon name={primaryIcon} size={20} color={theme.colors.textPrimary} />
+          <AppText variant="button" style={styles.primaryLabel}>
+            {primaryLabel}
+          </AppText>
+        </View>
+        <AppText variant="mono" style={[styles.sublabel, { color: theme.colors.textPrimary }]}>
+          {holdShortLabel(HOLD_MS)}
         </AppText>
       </Pressable>
 
@@ -134,10 +159,13 @@ export function CockpitActions({
       <SideButton
         icon="stop"
         label="STOP"
-        sublabel={stopDisabledReason != null ? 'po LDG' : undefined}
+        // Powód blokady wygrywa z podpisem gestu (issue #67) - dopóki STOP nie działa,
+        // odpowiedzią na tapnięcie jest „po LDG", nie instrukcja przytrzymania.
+        sublabel={stopDisabledReason != null ? 'po LDG' : holdShortLabel(HOLD_MS)}
         colors={red}
         display
         disabledReason={stopDisabledReason}
+        holdMs={HOLD_MS}
         onPress={onStop}
       />
     </View>
@@ -151,6 +179,7 @@ function SideButton({
   colors,
   display = false,
   disabledReason,
+  holdMs = 0,
   onPress,
 }: {
   icon: IconName;
@@ -159,19 +188,22 @@ function SideButton({
   colors: { accent: string; muted: string; border: string };
   display?: boolean;
   disabledReason: string | null;
+  /** 0 = zwykłe tapnięcie (zrzut, załadunek - otwierają arkusz potwierdzenia). */
+  holdMs?: number;
   onPress: () => void;
 }) {
   const { theme } = useTheme();
   const disabled = disabledReason != null;
+  const hold = useHold({ holdMs, disabled, onTrigger: onPress });
 
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
-      accessibilityHint={disabledReason ?? undefined}
+      accessibilityHint={disabledReason ?? (holdMs > 0 ? holdConfirmHint(holdMs) : undefined)}
       disabled={disabled}
-      onPress={onPress}
+      {...hold.pressProps}
       style={({ pressed }) => [
         styles.side,
         {
@@ -184,6 +216,9 @@ function SideButton({
         },
       ]}
     >
+      {/* Druga warstwa `muted` na tle `muted` - ciemniejszy pas, ten sam trik,
+          którym pasek postępu `ActionButton` rysuje się na wariancie `primary`. */}
+      {hold.holding && <HoldProgress progress={hold.progress} color={colors.muted} />}
       <Icon name={icon} size={18} color={colors.accent} />
       <AppText
         variant={display ? 'buttonSmall' : 'mono'}
@@ -200,17 +235,35 @@ function SideButton({
   );
 }
 
+/** Pasek postępu przytrzymania - wypełnia przycisk od lewej (por. `ActionButton`). */
+function HoldProgress({ progress, color }: { progress: Animated.Value; color: string }) {
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        StyleSheet.absoluteFill,
+        {
+          backgroundColor: color,
+          width: progress.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
+        },
+      ]}
+    />
+  );
+}
+
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'stretch', gap: 10 },
   primary: {
     flex: 1,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 9,
+    gap: 3,
     minHeight: 56,
     paddingHorizontal: 12,
+    paddingVertical: 10,
+    overflow: 'hidden',
   },
+  primaryMain: { flexDirection: 'row', alignItems: 'center', gap: 9 },
   primaryLabel: { fontSize: 20, lineHeight: 22, letterSpacing: 2 },
   side: {
     minWidth: 76,
@@ -220,6 +273,7 @@ const styles = StyleSheet.create({
     gap: 3,
     paddingHorizontal: 14,
     paddingVertical: 12,
+    overflow: 'hidden',
   },
   sideLabel: { fontSize: 8, letterSpacing: 1.5, textTransform: 'uppercase' },
   sublabel: { fontSize: 7, letterSpacing: 1, textTransform: 'uppercase', opacity: 0.7 },
