@@ -13,9 +13,10 @@
  * i panel odpowiadałyby na to samo pytanie dwiema arytmetykami.
  *
  * ══ `null` ZNACZY „NIE MA CZEGO POKAZAĆ" ══
- * I ekran wtedy MILCZY o normie zamiast pokazywać zero albo kreskę bez wyjaśnienia -
- * ta sama reguła, co w `fuelNorm.ts`. Sesja bez pracy silnika (09C) nie ma z czym
- * porównywać zużycia i mówi to wprost.
+ * I ekran wtedy MILCZY o normie - od issue #69 dosłownie, bez zdania „Nie porównujemy
+ * z normą…": brak normy czy przeliczników to zwykły stan młodej maszyny (nie brak
+ * danych pilota), a brak odczytu widać w wierszu rachunku tuż wyżej. Jedyny powód,
+ * który mówi o sobie wprost, to zerowy bieg silnika (09C) - patrz `naNote` na dole.
  */
 
 import {
@@ -79,11 +80,14 @@ export interface BalanceView {
   totalLabel: string;
   totalValue: string;
   totalTone: Tone;
-  /** `null` = nie ma z czym porównać; wtedy ekran pokazuje `naNote`. */
+  /** `null` = nie ma z czym porównać. */
   verdict: BalanceVerdict | null;
   /** Szczegóły normy - istnieją dokładnie wtedy, co `verdict`. */
   details: BalanceDetails | null;
-  /** Dlaczego werdyktu nie ma. Wykluczające się z `verdict`. */
+  /**
+   * Dlaczego werdyktu nie ma - od issue #69 WYŁĄCZNIE przy zerowym biegu silnika;
+   * pozostałe braki milczą. Wykluczające się z `verdict`.
+   */
   naNote: string | null;
 }
 
@@ -180,15 +184,7 @@ export function fuelBalanceOf(
     totalTone: 'amber',
     verdict: verdictOf(fuel.consumedL, expectation),
     details: fuelDetails(facts, fuel.consumedL, norm, expectation, nominalLPerH),
-    naNote: naNote(
-      facts,
-      expectation,
-      fuel.consumedL != null,
-      // Brak normy znaczy tu DWIE rzeczy naraz i drugą da się naprawić od ręki:
-      // wystarczy, że administrator uzupełni kartę samolotu (issue #66).
-      'Nie porównujemy z normą - ten samolot nie ma jeszcze policzonej normy ani ' +
-        'wpisanego spalania z dokumentacji.',
-    ),
+    naNote: naNote(facts, expectation, fuel.consumedL != null),
   };
 }
 
@@ -235,12 +231,7 @@ export function mhBalanceOf(
     totalTone: delta != null && delta > 0 ? 'green' : 'neutral',
     verdict: verdictOf(delta, expectation),
     details: mhDetails(facts, delta, norm, expectation, format),
-    naNote: naNote(
-      facts,
-      expectation,
-      delta != null,
-      'Nie porównujemy z normą - ten samolot nie ma jeszcze policzonych przeliczników licznika.',
-    ),
+    naNote: naNote(facts, expectation, delta != null),
   };
 }
 
@@ -496,29 +487,34 @@ const COUNTER_LABEL: Record<'hobbs' | 'tach' | 'unknown', string> = {
 };
 
 /**
- * Dlaczego werdyktu nie ma. Trzy różne powody, trzy różne zdania - „-" bez wyjaśnienia
- * wygląda jak awaria aplikacji (§6 pkt 3).
+ * Dlaczego werdyktu nie ma - JEDNO zdanie zamiast czterech (issue #69: „skoro nie ma
+ * danych, to po co zajmować UI?").
+ *
+ * Zostaje wyłącznie zerowy bieg silnika, bo tylko on mówi o TEJ OPERACJI i odpowiada
+ * na pytanie, które przy zdaniu bez lotu naprawdę pada: dwa zgodne odczyty bez werdyktu
+ * wyglądałyby na brak danych, a są informacją (mockup `10a` pokazuje to zdanie celowo).
+ *
+ * Dwa zdania WYCIĘTE i dlaczego:
+ * - „nie ma jeszcze policzonej normy / przeliczników" opisywało wnętrze analityki
+ *   komuś, kto nic z tym nie zrobi (kategoria przypisów z issue #43/#72). Paliwo ma
+ *   od issue #66 normę z dokumentacji WYMAGANĄ na karcie samolotu, więc ta gałąź
+ *   prawie wymarła; licznik przeliczników z instrukcji nie dostanie nigdy - to stan
+ *   każdej młodej maszyny przez tygodnie, nie usterka;
+ * - „brakuje odczytu przy zdaniu" powtarzało kreskę z wiersza rachunku tuż wyżej,
+ *   a we wpisie ręcznym mówiło o polu, które pilot właśnie widzi puste (issue #55:
+ *   blokadę widoczną z kontrolki się nie opisuje).
  */
 function naNote(
   facts: BalanceTimes,
   expectation: Expectation | null,
   hasActual: boolean,
-  /**
-   * Zdanie na wypadek „normy nie ma". PALIWO i MOTOGODZINY mówią tu co innego, bo od
-   * issue #66 mają różne drabiny: paliwo schodzi jeszcze na dokumentację jednostki,
-   * a licznik nie ma czym - żadna instrukcja nie podaje przelicznika obrotomierza.
-   */
-  noNorm: string,
 ): string | null {
   if (expectation != null && hasActual) return null;
 
   if (facts.blockMs <= 0) {
     return 'Nie porównujemy z normą - silnik nie pracował, a norma opisuje godzinę jego pracy.';
   }
-  if (!hasActual) {
-    return 'Nie porównujemy z normą - brakuje odczytu przy zdaniu samolotu.';
-  }
-  return noNorm;
+  return null;
 }
 
 /**

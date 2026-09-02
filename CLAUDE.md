@@ -1498,6 +1498,31 @@ Siedem uwag właściciela do karty z 2026-09-01; pełny zapis `docs/panel-2.0.md
   obrotomierzowy na ziemi przyrasta wolniej - wtedy ΔMH jest przybliżeniem; dokładniejszy
   przelicznik przyjdzie z modelem MH analityki w fazie 2 modułu oleju)
 
+## Brak normy MILCZY na karcie rachunku (issue #69, 2026-09-02)
+„Zamiast wyświetlać «Nie porównujemy z normą…» to lepiej nic nie wyświetlać. Skoro nie ma
+danych to po co zajmować UI?" Z czterech zdań `naNote` (`sessionBalance.ts`) zostaje
+JEDNO - reszta to cisza, na obu powierzchniach naraz (ekran 10 i krok 4 wpisu ręcznego,
+bo obie wołają ten sam rdzeń):
+- **zostaje „silnik nie pracował"**: mówi o TEJ operacji (zdanie bez lotu, 09C)
+  i odpowiada na pytanie, które tam naprawdę pada - dwa zgodne odczyty bez słowa
+  wyglądałyby na brak danych, a są informacją. Mockup `10a` pokazuje je celowo
+  i zostaje bez zmian
+- **„nie ma jeszcze policzonej normy / przeliczników licznika" WYCIĘTE**: opisywało
+  wnętrze analityki komuś, kto nic z tym nie zrobi (kategoria przypisów z issue #43/#72).
+  Dla paliwa gałąź i tak prawie wymarła - norma z dokumentacji jest od issue #66
+  WYMAGANA na karcie samolotu (stare wiersze floty z `null` świadomie odpuszczone);
+  dla licznika była stanem KAŻDEJ młodej maszyny przez tygodnie, bo żadna instrukcja
+  nie podaje przelicznika obrotomierza - a stan domyślny nie dostaje zdania (reguła
+  SyncChipa z issue #12)
+- **„brakuje odczytu przy zdaniu" WYCIĘTE**: powtarzało kreskę z wiersza „Odczyt przy
+  zdaniu" tuż wyżej, a we wpisie ręcznym opisywało pole, które pilot właśnie widzi
+  puste (issue #55: blokady widocznej z kontrolki się nie opisuje). Obejmowało też
+  edycję 10d z kokpitu przed zdaniem - tam brak werdyktu tłumaczy się sam, bo operacja
+  jeszcze trwa
+- docblock `BalanceCard` „werdykt albo powód jego braku - nigdy cisza" przestał
+  obowiązywać: §6 pkt 3 dotyczy BLOKAD akcji, a brak plakietki werdyktu akcją nie
+  jest - karta i tak pokazuje pełny rachunek
+
 ## Karta „Olej" na logu operacji (issue #70, 2026-09-02)
 Zgłoszenie: „brakuje sekcji z olejem oraz możliwości modyfikacji tych danych
 z komentarzem tak jak to jest dla innych pól". Druga połowa istniała już od issue #60
