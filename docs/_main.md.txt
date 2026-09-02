@@ -908,11 +908,13 @@ zużycia dla telefonów).
 | `service_status` | `active` / `disabled` | dostępność na liście wyboru |
 | `oil_min_l` | C182: 8,5 | ostrzeżenie "dolej co najmniej…" na kroku liczników (#60) |
 | `oil_capacity_l` | C182: 11,4 | sufit pomiaru i dolewki oleju - siostra `capacity_l` (#60) |
-| `oil_norm_l_per_h` | C182: 0,12 | oczekiwany poziom oleju względem ΔMH (#60) |
+| `oil_norm_l_per_h` | C182: 0,12 | norma zużycia oleju na godzinę PRACY SILNIKA (#66 uwagi); w rachunku oczekiwania miarą godzin pracy jest ΔMH (#60) |
 | `fuel_norm_l_per_h` | C182: 18 | norma spalania na godzinę PRACY SILNIKA (#66) |
 
-Wszystkie cztery pola z dołu tabeli są **opcjonalne**: `null` znaczy „nie prowadzimy"
-i wtedy odpowiedni moduł MILCZY, zamiast orzekać z zera.
+Cztery pola z dołu tabeli są w BAZIE nullowalne (`null` = „nie prowadzimy" i wtedy
+odpowiedni moduł MILCZY, zamiast orzekać z zera - stare wiersze tak zostają), ale
+**formularz panelu wymaga ich od uwag do issue #66**: nowej maszyny bez kompletu oleju
+i norm nie da się już założyć.
 
 **Obie normy są NOMINALNE - z instrukcji użytkowania.** Obowiązują dopóty, dopóki
 analityka nie policzy własnej stawki z lotów tej maszyny (§3.6b): **wyliczona wygrywa
@@ -927,6 +929,12 @@ składa z niego przekazanie (§4.5) wyłącznie dla maszyny bez ani jednej zdane
 z `Handover.byPilotId = null` („nikt nie przekazał"). Od pierwszego zdania samolotu
 przestaje cokolwiek znaczyć. Zero jest tu WARTOŚCIĄ (nowy silnik, puste zbiorniki),
 inaczej niż w normach wyżej.
+
+W panelu pola nazywają się **„Aktualny stan"** i stoją w sekcjach Paliwo / Olej /
+Motogodziny (uwagi do issue #66): przy tworzeniu wpisuje je administrator (WYMAGANE),
+a od chwili, gdy maszynę prowadzi dziennik (`reading.source ≠ 'initial'`), są DO
+ODCZYTU z wartościami z ostatniego odczytu - kolumny `initial_*` zostają wtedy w bazie
+jako zapis historyczny, którego formularz nie rusza.
 
 ---
 

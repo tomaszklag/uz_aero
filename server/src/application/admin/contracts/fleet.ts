@@ -67,6 +67,28 @@ export interface AdminAircraftReading {
   byPilotId: string | null;
   byPilotName: string | null;
   /**
+   * Ostatni znany stan OLEJU (L): pomiar z bagnetu + dolewki zapisane po nim - liczy
+   * SERWER z `Handover.oil` (ta sama zasada, co `oilAfterL` na liście operacji: panel
+   * formatuje, nie liczy). Zużycia od pomiaru ta liczba NIE odejmuje, bo oleju po
+   * locie się nie mierzy (issue #60) - dokładniejszej odpowiedzi rejestr nie ma.
+   *
+   * `null` = dziennik nie zna ani jednego pomiaru, a w panelu nie wpisano stanu
+   * początkowego oleju. Karta samolotu pokazuje wtedy kreskę (uwagi do issue #66:
+   * pola „Aktualny stan" przy edycji są do odczytu i wynikają z zapisów w dzienniku).
+   */
+  oilL: number | null;
+  /**
+   * Ile z `oilL` to dolewki zapisane PO pomiarze - dana do PODPISU pola („pomiar
+   * + dolewki 2,0 L"), żeby suma nie udawała odczytu z bagnetu. `null` razem z `oilL`.
+   */
+  oilAddedSinceL: number | null;
+  /**
+   * Kiedy zmierzono olej (epoch ms UTC) - osobno od `at`, bo interwał olejowy biegnie
+   * pomiar→pomiar przez wiele operacji i bywa dużo starszy niż odczyt paliwa/MH.
+   * `null` razem z `oilL`.
+   */
+  oilAt: number | null;
+  /**
    * Skąd wzięta. `handover` = z zamkniętego dnia (świadome przekazanie);
    * `open_session` = z dnia, który jeszcze trwa (np. po tankowaniu);
    * `initial` = stan początkowy wpisany w panelu, bo maszyna jeszcze nie latała

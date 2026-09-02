@@ -4,10 +4,13 @@
  * Moduł CZYSTY (bez Reacta, bez sieci) - decyzje o treści, nie o układzie.
  *
  * == CO TU WOLNO SPRAWDZAC ==
- * Kształt wpisu (to, co serwer odrzuciłby jako `400 bad_request`) ORAZ te dwie reguły,
- * które widać wprost w polach: pojemność większa od zera i minimum oleju nie większe
- * od zbiornika. Obie mówią TYM SAMYM zdaniem, co odmowa serwera (`aircraftRefusal.ts`),
- * więc nie są drugą regułą - są tą samą regułą powiedzianą wcześniej.
+ * Kształt wpisu (to, co serwer odrzuciłby jako `400 bad_request`), WYMAGALNOŚĆ pól
+ * (uwagi do issue #66: olej, normy i - przy tworzeniu - „Aktualny stan" nie są
+ * opcjonalne; to reguła FORMULARZA, serwer dalej przyjmuje `null` starych wierszy)
+ * ORAZ reguły, które widać wprost w polach: wartości dodatnie, minimum oleju nie
+ * większe od zbiornika, stan w granicach pojemności. Wszystkie mówią TYM SAMYM
+ * zdaniem, co odmowa serwera (`aircraftRefusal.ts`), więc nie są drugą regułą -
+ * są tą samą regułą powiedzianą wcześniej.
  *
  * Czego tu NIE MA: „czy wolno wyłączyć jednostkę ze służby". To zależy od otwartych
  * sesji, czyli od stanu świata, a nie od zawartości pól - pyta o to ekran, bo ma liczbę
@@ -43,7 +46,11 @@ export interface AircraftDraft {
   oilNormLPerH: string;
   /** Norma nominalna spalania z dokumentacji (issue #66). */
   fuelNormLPerH: string;
-  /** Stan początkowy jednostki (issue #66) - zerowe ogniwo łańcucha odczytów. */
+  /**
+   * „Aktualny stan" jednostki (issue #66 + uwagi) - zerowe ogniwo łańcucha odczytów.
+   * Identyfikatory zostają `initial*` (tak nazywają się kolumny i pola API); na ekranie
+   * pole nazywa się „Aktualny stan", a czy jest edytowalne, mówi `InitialFieldsMode`.
+   */
   initialMh: string;
   initialFuelL: string;
   initialOilL: string;
@@ -134,6 +141,25 @@ export type AircraftField =
   | 'initialOilL';
 
 /**
+ * Co formularz robi z polami „Aktualny stan" (`initial*`) - uwagi do issue #66:
+ *
+ *  - `required` - NOWY samolot: pola do wpisania i WYMAGANE (zamówienie z issue #66:
+ *    „jak dodaję samolot to powinno być pole w którym wpiszę startowy stan…");
+ *  - `editable` - edycja jednostki, której stanu nie prowadzi jeszcze dziennik
+ *    (`reading` z panelu albo żaden): liczba jest nadal wyłącznie wpisem administratora,
+ *    więc ma on prawo ją poprawić. Puste pole jest tu legalne - wymóg przy edycji
+ *    blokowałby niezwiązaną poprawkę (np. wyłączenie ze służby) na starym wierszu;
+ *  - `locked` - edycja jednostki, która już lata: pola są DO ODCZYTU (wartości
+ *    z dziennika, `currentState.ts`), więc szkicu `initial*` nie ocenia się i nie
+ *    wysyła wcale. Bez tego korekta pojemności potrafiłaby zapalić błąd na polu,
+ *    którego na ekranie nie ma.
+ *
+ * Kto wybiera tryb: ekran, bo tylko on wie, czy tworzy i co mówi `reading.source`
+ * (`currentStateLocked`).
+ */
+export type InitialFieldsMode = 'required' | 'editable' | 'locked';
+
+/**
  * == PUSTE POLE WYMAGANE NIE DOSTAJE ZDANIA ==
  * Reguła przeniesiona wprost z aplikacji pilota (`CLAUDE.md`, issue #55): brak wpisu
  * widać z formularza NAD przyciskiem, więc przycisk jest po prostu nieczynny.
@@ -172,7 +198,7 @@ function yearOf(text: string): number | null {
   return Number(trimmed);
 }
 
-export function verdictOf(draft: AircraftDraft): AircraftVerdict {
+export function verdictOf(draft: AircraftDraft, initialFields: InitialFieldsMode): AircraftVerdict {
   const invalid: AircraftField[] = [];
   let blocker: string | null = null;
   let complete = true;
@@ -209,62 +235,73 @@ export function verdictOf(draft: AircraftDraft): AircraftVerdict {
   else if (capacity == null) fail('capacityL', 'Pojemność w litrach, np. 1100.');
   else if (capacity <= 0) fail('capacityL', CAPACITY_NOT_POSITIVE);
 
-  // Olej jest OPCJONALNY w całości, ale każde wypełnione pole musi być liczbą
-  // dodatnią - puste znaczy „nie prowadzimy", a zero nie znaczy nic.
-  const oil: [AircraftField, string][] = [
-    ['oilMinL', draft.oilMinL],
-    ['oilCapacityL', draft.oilCapacityL],
-    ['oilNormLPerH', draft.oilNormLPerH],
-  ];
-  for (const [field, text] of oil) {
-    if (text.trim() === '') continue;
-    const value = litresOf(text);
-    if (value == null) fail(field, 'Wpisz liczbę albo zostaw pole puste.');
-    else if (value <= 0) fail(field, OIL_NOT_POSITIVE);
-  }
-
-  // Norma spalania z dokumentacji - ta sama reguła, co przy oleju (issue #66).
-  if (draft.fuelNormLPerH.trim() !== '') {
-    const value = litresOf(draft.fuelNormLPerH);
-    if (value == null) fail('fuelNormLPerH', 'Wpisz liczbę albo zostaw pole puste.');
-    else if (value <= 0) fail('fuelNormLPerH', FUEL_NORM_NOT_POSITIVE);
-  }
-
   /*
-   * Stan początkowy: ZERO jest tu WARTOŚCIĄ, nie brakiem (nowy silnik ma 0 na liczniku,
-   * maszyna przyjęta z pustymi zbiornikami - 0 litrów), więc nie sprawdzamy dodatniości.
-   * Ta różnica wobec norm wyżej jest treścią tych pól, a nie przeoczeniem.
-   *
-   * Ujemnych też tu nie sprawdzamy i to NIE jest luka: oba parsery przyjmują wyłącznie
-   * cyfry, więc „-5" nie jest dla nich liczbą i wypada zdaniem o nieczytelnym wpisie.
-   * Reguła `initial_negative` żyje na serwerze, bo tam JSON potrafi przynieść minus.
+   * Konfiguracja oleju i normy z dokumentacji są WYMAGANE (uwagi do issue #66, pkt 1
+   * i 5: „olej musi być wymagany zawsze", „pola nie powinny być opcjonalne"). Puste
+   * pole blokuje zapis samym brakiem - widać je w formularzu nad przyciskiem
+   * (reguła issue #55) - a wpisane musi być liczbą DODATNIĄ: zero L/h nie jest stanem
+   * świata, tylko literówką.
    */
-  const initial: [AircraftField, string, (t: string) => number | null][] = [
-    ['initialMh', draft.initialMh, mhOf],
-    ['initialFuelL', draft.initialFuelL, litresOf],
-    ['initialOilL', draft.initialOilL, litresOf],
+  const positives: [AircraftField, string, string][] = [
+    ['oilMinL', draft.oilMinL, OIL_NOT_POSITIVE],
+    ['oilCapacityL', draft.oilCapacityL, OIL_NOT_POSITIVE],
+    ['oilNormLPerH', draft.oilNormLPerH, OIL_NOT_POSITIVE],
+    ['fuelNormLPerH', draft.fuelNormLPerH, FUEL_NORM_NOT_POSITIVE],
   ];
-  for (const [field, text, parse] of initial) {
-    if (text.trim() === '') continue;
-    if (parse(text) == null) fail(field, 'Wpisz liczbę albo zostaw pole puste.');
+  for (const [field, text, refusal] of positives) {
+    if (text.trim() === '') {
+      missing();
+      continue;
+    }
+    const value = litresOf(text);
+    if (value == null) fail(field, 'Wpisz liczbę.');
+    else if (value <= 0) fail(field, refusal);
   }
 
+  // Reguła konfiguracji PRZED sufitami stanu: gdy obie odzywają się naraz (obniżony
+  // zbiornik), pierwszeństwo ma zdanie o samej konfiguracji.
   const oilMin = litresOf(draft.oilMinL);
   const oilCapacity = litresOf(draft.oilCapacityL);
   if (oilMin != null && oilCapacity != null && oilMin > oilCapacity) {
     fail('oilMinL', OIL_MIN_ABOVE_CAPACITY);
   }
 
-  // Oba sufity mówią TYM SAMYM zdaniem, co odmowa serwera - to jest ta sama reguła
-  // powiedziana wcześniej, a nie druga (patrz nagłówek pliku).
-  const initialFuel = litresOf(draft.initialFuelL);
-  if (initialFuel != null && capacity != null && capacity > 0 && initialFuel > capacity) {
-    fail('initialFuelL', INITIAL_FUEL_OVER_CAPACITY);
-  }
+  /*
+   * „Aktualny stan": ZERO jest tu WARTOŚCIĄ, nie brakiem (nowy silnik ma 0 na
+   * liczniku, maszyna przyjęta z pustymi zbiornikami - 0 litrów), więc nie sprawdzamy
+   * dodatniości. Ta różnica wobec norm wyżej jest treścią tych pól, a nie przeoczeniem.
+   * Wymagane są WYŁĄCZNIE przy tworzeniu; w trybie `locked` nie ocenia się ich wcale,
+   * bo nie ma ich na ekranie (patrz `InitialFieldsMode`).
+   *
+   * Ujemnych też tu nie sprawdzamy i to NIE jest luka: oba parsery przyjmują wyłącznie
+   * cyfry, więc „-5" nie jest dla nich liczbą i wypada zdaniem o nieczytelnym wpisie.
+   * Reguła `initial_negative` żyje na serwerze, bo tam JSON potrafi przynieść minus.
+   */
+  if (initialFields !== 'locked') {
+    const initial: [AircraftField, string, (t: string) => number | null][] = [
+      ['initialMh', draft.initialMh, mhOf],
+      ['initialFuelL', draft.initialFuelL, litresOf],
+      ['initialOilL', draft.initialOilL, litresOf],
+    ];
+    for (const [field, text, parse] of initial) {
+      if (text.trim() === '') {
+        if (initialFields === 'required') missing();
+        continue;
+      }
+      if (parse(text) == null) fail(field, 'Wpisz liczbę.');
+    }
 
-  const initialOil = litresOf(draft.initialOilL);
-  if (initialOil != null && oilCapacity != null && initialOil > oilCapacity) {
-    fail('initialOilL', INITIAL_OIL_OVER_CAPACITY);
+    // Oba sufity mówią TYM SAMYM zdaniem, co odmowa serwera - to jest ta sama reguła
+    // powiedziana wcześniej, a nie druga (patrz nagłówek pliku).
+    const initialFuel = litresOf(draft.initialFuelL);
+    if (initialFuel != null && capacity != null && capacity > 0 && initialFuel > capacity) {
+      fail('initialFuelL', INITIAL_FUEL_OVER_CAPACITY);
+    }
+
+    const initialOil = litresOf(draft.initialOilL);
+    if (initialOil != null && oilCapacity != null && initialOil > oilCapacity) {
+      fail('initialOilL', INITIAL_OIL_OVER_CAPACITY);
+    }
   }
 
   return { invalid, complete, blocker };
@@ -304,10 +341,17 @@ export function createBodyOf(draft: AircraftDraft): CreateAircraftBody {
  *
  * Porównujemy WARTOSCI, nie napisy: „1100" i „1100,0" to ta sama pojemność, a wysłanie
  * jej jako zmiany dałoby wpis w dzienniku audytu o zmianie, której nie było.
+ *
+ * W trybie `locked` pola `initial*` NIE wchodzą do ciała wcale - są na ekranie do
+ * odczytu (wartości z dziennika), więc szkic nie ma prawa ich ruszyć. To nie jest
+ * ostrożność na wyrost: `draftOf` formatuje licznik do napisu, a formatowanie
+ * z zaokrągleniem (`1236.55` → „1236.6") czytane z powrotem różni się od bazy
+ * i wysłałoby „poprawkę", której nikt nie zrobił, na pole, którego nie widać.
  */
 export function updateBodyOf(
   before: AircraftListItemDto,
   draft: AircraftDraft,
+  initialFields: InitialFieldsMode,
 ): UpdateAircraftBody {
   const body: UpdateAircraftBody = {};
   const next = createBodyOf(draft);
@@ -326,15 +370,20 @@ export function updateBodyOf(
   if (next.oilCapacityL !== before.oilCapacityL) body.oilCapacityL = next.oilCapacityL;
   if (next.oilNormLPerH !== before.oilNormLPerH) body.oilNormLPerH = next.oilNormLPerH;
   if (next.fuelNormLPerH !== before.fuelNormLPerH) body.fuelNormLPerH = next.fuelNormLPerH;
-  if (next.initialMh !== before.initialMh) body.initialMh = next.initialMh;
-  if (next.initialFuelL !== before.initialFuelL) body.initialFuelL = next.initialFuelL;
-  if (next.initialOilL !== before.initialOilL) body.initialOilL = next.initialOilL;
+  if (initialFields !== 'locked') {
+    if (next.initialMh !== before.initialMh) body.initialMh = next.initialMh;
+    if (next.initialFuelL !== before.initialFuelL) body.initialFuelL = next.initialFuelL;
+    if (next.initialOilL !== before.initialOilL) body.initialOilL = next.initialOilL;
+  }
 
   return body;
 }
 
-export const hasChanges = (before: AircraftListItemDto, draft: AircraftDraft): boolean =>
-  Object.keys(updateBodyOf(before, draft)).length > 0;
+export const hasChanges = (
+  before: AircraftListItemDto,
+  draft: AircraftDraft,
+  initialFields: InitialFieldsMode,
+): boolean => Object.keys(updateBodyOf(before, draft, initialFields)).length > 0;
 
 /**
  * Czy ten zapis PROBUJE wyłączyć jednostkę, na której ktoś jeszcze lata.

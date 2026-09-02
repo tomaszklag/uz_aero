@@ -10,7 +10,10 @@
  * Rachunek oczekiwania: `oczekiwane = pomiar + dolewki po nim − stawka × ΔMH`, gdzie
  * kotwicą jest odczyt MH przy tamtym pomiarze, a ΔMH liczy się do BIEŻĄCEGO odczytu
  * ze szkicu - poprawka licznika na tym samym ekranie od razu przelicza oczekiwanie.
- * Stawka pochodzi dziś z konfiguracji floty (norma nominalna z dokumentacji silnika);
+ * Stawka pochodzi dziś z konfiguracji floty (norma nominalna z dokumentacji silnika,
+ * L NA GODZINĘ PRACY SILNIKA - ten sam mianownik, co norma paliwa; uwagi do issue #66),
+ * a ΔMH jest jej miarą godzin pracy: jedyny zegar maszyny znany offline przez cudze
+ * operacje. Przy liczniku obrotomierzowym to przybliżenie (na ziemi przyrasta wolniej);
  * w fazie 2 stawka WYLICZONA z pomiarów (analityka, §4.8) wygra z nominalną - podmiana
  * zajdzie tutaj, w `expectation()`, i nigdzie indziej.
  *

@@ -19,10 +19,12 @@ import type { FleetRefusalDto, PilotRefusalDto } from '../../api/dto';
 const REFUSALS: Record<FleetRefusalDto, string> = {
   capacity_not_positive: 'Podaj pojemność zbiorników większą od zera.',
   open_session: 'Ktoś ma teraz ten samolot. Wyłącz go, gdy pilot skończy lot.',
-  oil_not_positive: 'Wartości oleju muszą być większe od zera. Puste pole znaczy „nie prowadzimy".',
+  // Bez zdania o pustym polu: pola oleju i norm są w formularzu WYMAGANE (uwagi do
+  // issue #66), więc „puste znaczy nie prowadzimy" przestało być prawdą o ekranie.
+  // Serwer nadal przyjmuje `null` (stare wiersze) - to zdanie mówi o zerze i minusie.
+  oil_not_positive: 'Wartości oleju muszą być większe od zera.',
   oil_min_above_capacity: 'Minimum oleju nie może być większe od zbiornika.',
-  fuel_norm_not_positive:
-    'Spalanie z dokumentacji musi być większe od zera. Puste pole znaczy „nie znamy".',
+  fuel_norm_not_positive: 'Zużycie z dokumentacji musi być większe od zera.',
   // Zero jest tu WARTOŚCIĄ (nowy silnik, puste zbiorniki), więc zdanie mówi o minusie,
   // a nie o „większe od zera" jak przy normach.
   initial_negative: 'Stan początkowy nie może być ujemny.',

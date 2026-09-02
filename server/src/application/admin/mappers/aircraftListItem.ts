@@ -104,6 +104,9 @@ function claimOf(state: AircraftStateInput): AdminAircraftClaim | null {
 function readingOf(state: AircraftStateInput): AdminAircraftReading | null {
   const handover = state.handover;
   if (handover == null) return null;
+  // Suma „pomiar + dolewki po nim" liczy się TUTAJ, nie w panelu - ta sama zasada,
+  // co przy `fuelToleranceL` wyżej i `oilAfterL` na liście operacji.
+  const oil = handover.oil ?? null;
   return {
     mh: handover.reading.mh,
     fuelL: handover.reading.fuelL,
@@ -111,6 +114,9 @@ function readingOf(state: AircraftStateInput): AdminAircraftReading | null {
     byPilotId: handover.byPilotId,
     byPilotName:
       handover.byPilotId == null ? null : (state.labels.get(handover.byPilotId)?.name ?? null),
+    oilL: oil == null ? null : oil.levelL + oil.addedSinceL,
+    oilAddedSinceL: oil == null ? null : oil.addedSinceL,
+    oilAt: oil?.at ?? null,
     source: state.readingSource ?? 'handover',
   };
 }
