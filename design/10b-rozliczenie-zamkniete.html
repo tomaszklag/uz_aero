@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero - 10B Sesja (podgląd)</title>
+<title>UZ Aero - 10B Operacja (podgląd)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -70,7 +70,7 @@
     text-decoration:none; padding:5px 8px; border-radius:6px; border:1px solid var(--border);
   }
   .back-btn:hover { color:var(--text-secondary); border-color:var(--border-strong); }
-  /* Okno korekty po ZDANIU samolotu (jedno na sesję) - 24 h samodzielnie, potem administrator */
+  /* Okno korekty po ZDANIU samolotu (jedno na operację) - 24 h samodzielnie, potem administrator */
   .correction-window {
     display:flex; align-items:flex-start; gap:9px;
     background:var(--blue-muted); border:1px solid rgba(52,152,219,0.28);
@@ -96,7 +96,7 @@
   }
   .badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
   /* Plakietka trybu podglądu jest NEUTRALNA, nie ostrzegawcza: zamknięte okno korekty
-     to normalny etap życia sesji, a nie usterka. Ostrzega baner, nie nagłówek. */
+     to normalny etap życia operacji, a nie usterka. Ostrzega baner, nie nagłówek. */
   .badge.dim { color:var(--text-secondary); background:var(--surface-hover); border-color:var(--border-strong); }
 
   .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
@@ -125,7 +125,7 @@
   .section-card-head .spacer { flex:1; }
   .head-note { font-size:8px; letter-spacing:1px; color:var(--text-muted); text-transform:none; }
 
-  /* ===== ŚLAD SESJI =====
+  /* ===== ŚLAD OPERACJI =====
      Ślad rysuje CAŁY BIEG SILNIKA (issue #38 pkt 2): kołowanie jaśniejszą linią,
      loty pełną, a każdy start i każde lądowanie ma na trasie swój znacznik.
      Do issue #38 mapy tu nie było w ogóle - ślad mieszkał piętro niżej, na
@@ -159,7 +159,7 @@
   .tl-dot.blue { background:transparent; border:1.4px solid var(--blue); }
   .tl-dash { width:10px; height:0; border-top:1.4px dashed var(--text-muted); }
 
-  /* ===== OŚ SESJI =====
+  /* ===== OŚ OPERACJI =====
      Zamiast tabeli lotów (issue #38 pkt 7 i 8): uruchomienie → starty i lądowania
      → wyłączenie, w jednej kolumnie czasu. Tabela była siatką pięciu kolumn, z których
      dwie powtarzały to samo (czas lotu obok pary godzin), a jedna świeciła „AUTO"
@@ -191,7 +191,7 @@
   .axis-dot.green { background:var(--green); }
   .axis-dot.red { background:var(--red); }
   .axis-dot.blue { background:var(--blue); }
-  /* Tankowanie i zmiana załogi - zdarzenia POZA pracą silnika (issue #44); ta sesja
+  /* Tankowanie i zmiana załogi - zdarzenia POZA pracą silnika (issue #44); ta operacja
      akurat żadnego nie ma, ale inwentarz osi jest jeden dla wszystkich ekranów. */
   .axis-dot.amber { background:var(--amber); }
   /* Otoczka 2 px w kolorze karty - ta sama, którą ma kropka wypełniona: kreska osi
@@ -249,7 +249,7 @@
   .calc-total-val { font-family:var(--font-display); font-size:26px; letter-spacing:1.5px; line-height:1; }
   .calc-total-val.amber { color:var(--amber); }
   .calc-total-val.green { color:var(--green); }
-  /* Werdykt: liczba pilota kontra to, czego model się spodziewał po TEJ sesji.
+  /* Werdykt: liczba pilota kontra to, czego model się spodziewał po TEJ operacji.
      Pasmo pochodzi z rozrzutu obserwacji, nie z przedziału ufności - patrz
      `packages/domain/src/consumption/expectation.ts`. */
   /* Na karcie sama plakietka; pasmo, stawki i działanie w arkuszu (issue #40 pkt 7 i 8).
@@ -306,7 +306,7 @@
   }
   .note-text { font-size:12px; color:var(--text-secondary); line-height:1.55; }
 
-  /* Buttons - BRAK. Podgląd sesji po oknie korekty nie ma ani jednej akcji zapisu,
+  /* Buttons - BRAK. Podgląd operacji po oknie korekty nie ma ani jednej akcji zapisu,
      a powrót mieszka w nagłówku (issue #42, 2026-08-13). Klasy `.btn-row`,
      `.btn-secondary` i `.btn-primary` zostały usunięte razem z pasem akcji, żeby
      nikt nie odtworzył go „bo styl już jest". */
@@ -329,7 +329,7 @@
 
 <header class="canvas-label">
   <span class="film-strip">UZ AERO - 10B</span>
-  <span class="slug">sesja po oknie · podgląd</span>
+  <span class="slug">operacja po oknie · podgląd</span>
   <span class="canvas-meta"><span class="pulse"></span>Ekran 10B</span>
 </header>
 
@@ -344,16 +344,16 @@
   </div>
 
   <div class="screen">
-    <!-- Powrót prowadzi do „Poprzednich dni" (12), bo TYLKO stamtąd wchodzi się w sesję
-         po oknie: na 01 stoją sesje dzisiejsze, a te mają okno otwarte. -->
+    <!-- Powrót prowadzi do „Poprzednich dni" (12), bo TYLKO stamtąd wchodzi się w operację
+         po oknie: na 01 stoją operacje dzisiejsze, a te mają okno otwarte. -->
     <div class="app-header">
       <a href="12-historia.html" class="back-btn" title="Wróć do Poprzednich dni">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         Dni
       </a>
       <div class="app-header-center">
-        <span class="screen-title">SESJA</span>
-        <span class="header-subtitle">SP-KLM · 28 LIP · PRZELOT</span>
+        <span class="screen-title">OPERACJA</span>
+        <span class="header-subtitle">SP-KLM/2026-07-28/TMK/1 · PRZELOT</span>
       </div>
       <div class="app-header-right">
         <!-- Tryb ekranu wprost: bez tej plakietki brak ołówków wygląda jak awaria,
@@ -374,15 +374,15 @@
 
       <div class="section-card">
         <div class="section-card-head">
-          Przebieg sesji
+          Przebieg operacji
           <span class="spacer"></span>
           <span class="head-note">czasy UTC</span>
         </div>
 
         <!-- Ślad zostaje klikalny: oglądanie to nie zapis. Zapis GPS ma retencję 14 dni,
-             więc przy starszych sesjach 14 pokaże wariant „ślad niedostępny" (14B) -
+             więc przy starszych operacjach 14 pokaże wariant „ślad niedostępny" (14B) -
              i to jest inna sprawa niż zamknięte okno korekty. -->
-        <a href="14-slad.html" class="track-thumb" title="Otwórz pełny ślad sesji">
+        <a href="14-slad.html" class="track-thumb" title="Otwórz pełny ślad operacji">
           <svg viewBox="0 0 365 168" preserveAspectRatio="xMidYMid meet">
             <rect x="0" y="0" width="365" height="168" fill="#0F1216"/>
 
@@ -416,7 +416,7 @@
         </a>
 
         <!-- Oś jest tu identyczna jak na 10 - od issue #40 ołówków nie ma NIGDZIE, więc
-             podgląd przestał się różnić od trybu edycji przebiegiem sesji. Różnica
+             podgląd przestał się różnić od trybu edycji przebiegiem operacji. Różnica
              została jedna i mocniejsza: nie ma przycisku „EDYTUJ DANE" pod ekranem.
              (Wyszarzony ołówek pozostaje zakazany - issue #35 pkt 5.) -->
         <div class="axis">
@@ -566,7 +566,7 @@
           <span class="info-key">Dual</span>
           <span>
             <span class="info-val">-</span>
-            <div class="info-note">sesja jednoosobowa</div>
+            <div class="info-note">operacja jednoosobowa</div>
           </span>
         </div>
       </div>
@@ -575,7 +575,7 @@
            tłumaczy liczby wyżej, a podgląd odbiera prawo do zmiany, nie do czytania. -->
       <div class="section-card">
         <div class="section-card-head">Notatki</div>
-        <!-- Bez stempla - patrz komentarz w 10: notatka sesji jest jedna. -->
+        <!-- Bez stempla - patrz komentarz w 10: notatka operacji jest jedna. -->
         <div class="note-block">
           <span class="note-text">Przebazowanie do Poznania na przegląd - powrót innym pilotem.</span>
         </div>
@@ -598,21 +598,21 @@
   <a class="vp-item" href="10-statystyki.html">
     <span class="vp-badge">10</span>
     <span class="vp-body">
-      <span class="vp-name">Sesja - z lotami</span>
-      <span class="vp-when">Okno korekty otwarte (sesja jeszcze niezdana albo zdana mniej niż 24 h temu): ta sama oś czasu, ale pod ekranem stoi „EDYTUJ DANE", a baner jest niebieski i niesie termin.</span>
+      <span class="vp-name">Operacja - z lotami</span>
+      <span class="vp-when">Okno korekty otwarte (operacja jeszcze niezdana albo zdana mniej niż 24 h temu): ta sama oś czasu, ale pod ekranem stoi „EDYTUJ DANE", a baner jest niebieski i niesie termin.</span>
     </span>
   </a>
   <a class="vp-item" href="10a-statystyki-zero.html">
     <span class="vp-badge amber">10A</span>
     <span class="vp-body">
-      <span class="vp-name">Sesja - bez lotu</span>
+      <span class="vp-name">Operacja - bez lotu</span>
       <span class="vp-when">Samolot zdany bez ani jednego lotu: oś ma dwa punkty, werdykty milczą, wielką liczbą stoi czas trzymania maszyny.</span>
     </span>
   </a>
   <a class="vp-item active" href="10b-rozliczenie-zamkniete.html">
     <span class="vp-badge amber">10B</span>
     <span class="vp-body">
-      <span class="vp-name">Sesja - po oknie (podgląd)</span>
+      <span class="vp-name">Operacja - po oknie (podgląd)</span>
       <span class="vp-when">Minęły 24 h od zdania samolotu. Te same liczby i ta sama kolejność sekcji, ale bez ani jednego elementu zapisu: znika „Edytuj dane", a amber baner z kłódką zastępuje termin. Ślad i arkusz normy zostają klikalne - oglądanie to nie zapis. Wejście: karta z grupy „Zamknięte" na 12.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
@@ -620,14 +620,14 @@
   <a class="vp-item" href="10c-norma-detale.html">
     <span class="vp-badge">10C</span>
     <span class="vp-body">
-      <span class="vp-name">Sesja - arkusz normy</span>
-      <span class="vp-when">Po tapnięciu w plakietkę werdyktu: stawki normy, średnia tej sesji, rozpisane działanie i pasmo. Otwiera się także w podglądzie.</span>
+      <span class="vp-name">Operacja - arkusz normy</span>
+      <span class="vp-when">Po tapnięciu w plakietkę werdyktu: stawki normy, średnia tej operacji, rozpisane działanie i pasmo. Otwiera się także w podglądzie.</span>
     </span>
   </a>
   <a class="vp-item" href="10d-edycja.html">
     <span class="vp-badge amber">10D</span>
     <span class="vp-body">
-      <span class="vp-name">Sesja - tryb edycji</span>
+      <span class="vp-name">Operacja - tryb edycji</span>
       <span class="vp-when">Stan, w który TEN ekran przechodzi w oknie 24 h. Po oknie jest nieosiągalny: nie ma przycisku, który by go włączył, a wyszarzony byłby obietnicą akcji, którą reguły i tak odrzucą. Znaczniki „popr." przy poprawionych wierszach zostają widoczne, bo mówią o danych, nie o prawie zapisu - a historia zmian (10I) otwiera się także tutaj.</span>
     </span>
   </a>
@@ -638,7 +638,7 @@
   <span>·</span>
   <a href="12-historia.html">← 12 Poprzednie dni</a>
   <span>·</span>
-  <a href="10-statystyki.html">10 Sesja</a>
+  <a href="10-statystyki.html">10 Operacja</a>
   <a href="10a-statystyki-zero.html">10A Bez lotu</a>
   <a href="10b-rozliczenie-zamkniete.html" class="active">10B Podgląd</a>
   <a href="10c-norma-detale.html">10C Norma</a>

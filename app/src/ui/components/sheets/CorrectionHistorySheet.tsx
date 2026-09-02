@@ -135,9 +135,9 @@ export function CorrectionHistorySheet({
       ))}
 
       {/* KOTWICA: co niosło zdarzenie, zanim ktokolwiek je poprawił. Sama para
-          „kiedy → co", bez podpisu o źródle („autodetekcja · GPS", „zapis sesji"):
+          „kiedy → co", bez podpisu o źródle („autodetekcja · GPS", „zapis operacji"):
           prowenienecja nie jest pytaniem pilota - ta sama reguła, przez którą issue #40
-          zdjęło plakietki „AUTO" i „RĘCZNIE" z osi sesji. */}
+          zdjęło plakietki „AUTO" i „RĘCZNIE" z osi operacji. */}
       {origin != null && (
         <View style={[styles.item, { borderTopColor: theme.colors.border }]}>
           <AppText variant="mono" tone="muted" style={styles.when}>

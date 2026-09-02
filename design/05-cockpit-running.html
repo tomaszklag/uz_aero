@@ -144,9 +144,9 @@
   .param-value.amber { color: var(--amber); }
   .param-cell.amber-bg { background: rgba(243,156,18,0.04); }
 
-  /* ===== LOG SESJI = OŚ SESJI (issue #44) =====
+  /* ===== LOG OPERACJI = OŚ OPERACJI (issue #44) =====
      Ten sam inwentarz klas, co na 04 i na 10 - pełne uzasadnienie stoi w 04. W skrócie:
-     kokpit i rozliczenie pokazują TĘ SAMĄ sesję i nie ma powodu, żeby raz wyglądała jak
+     kokpit i rozliczenie pokazują TĘ SAMĄ operację i nie ma powodu, żeby raz wyglądała jak
      szyna z ikonami i chipami, a raz jak kolumna czasu z kropkami.
 
      W locie różnice są DWIE i obie wymuszone stanem:
@@ -382,12 +382,12 @@
           <div class="param-unit">L</div>
         </div>
       </div>
-      <!-- FLIGHT TIME = CZAS LOTU CAŁEJ SESJI, nie bieżącego wyniesienia (zgłoszenie
+      <!-- FLIGHT TIME = CZAS LOTU CAŁEJ OPERACJI, nie bieżącego wyniesienia (zgłoszenie
            z urządzenia, 2026-08-12): 0:44 + 0:42 z logu niżej plus 0:53 lotu otwartego.
            Wcześniej kafelek pokazywał sam licznik lotu bieżącego - wtedy każdy
            poprzedni lot znikał z przyrządu w chwili oderwania, a lot DOPISANY RĘCZNIE
            (05F, 08) nie ruszał go w ogóle i wyglądał jak zgubiony zapis. Czas
-           bieżącego lotu stoi w logu sesji („W locie… 00:53:14"), więc kafelek go
+           bieżącego lotu stoi w logu operacji („W locie… 00:53:14"), więc kafelek go
            nie powtarza. -->
       <div class="param-cell">
         <div class="param-label">Flight Time</div>
@@ -398,17 +398,17 @@
     </div>
 
 
-    <!-- LOG SESJI (issue #44 - ta sama oś, co na 04 i 10)
-         KARTA POJAWIA SIĘ DOPIERO, GDY W SESJI COŚ ZASZŁO (issue #19): potrzebne jest
+    <!-- LOG OPERACJI (issue #44 - ta sama oś, co na 04 i 10)
+         KARTA POJAWIA SIĘ DOPIERO, GDY W OPERACJI COŚ ZASZŁO (issue #19): potrzebne jest
          zdarzenie operacyjne - kołowanie, start, lądowanie albo zrzut. Zaraz po START
          ENGINE oś składałaby się z przejęcia, uruchomienia i wiersza „na żywo", czyli
          z rzeczy, które ekran mówi już gdzie indziej; kokpit wygląda wtedy tak jak 05A
          przed wykryciem kołowania, tylko bez tej karty.
-         Sumy sesji (Blok, Czas lotu) w locie NIE MAJĄ jeszcze wartości - silnik pracuje,
+         Sumy operacji (Blok, Czas lotu) w locie NIE MAJĄ jeszcze wartości - silnik pracuje,
          więc stopki osi tu nie ma; pojawia się po jego zatrzymaniu, na 04. -->
     <div class="session-log">
       <div class="session-log-header">
-        <span class="session-log-title">Log sesji · UTC</span>
+        <span class="session-log-title">Log operacji · UTC</span>
         <span class="session-log-count">LOT #3</span>
       </div>
 

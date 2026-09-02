@@ -75,7 +75,7 @@ export function manualFlightWarnings(
         warnings.push({
           id: 'session-overlap',
           text:
-            `Czasy zachodzą na Twoją SESJĘ ${s.index} na ${s.aircraftId.toUpperCase()} ` +
+            `Czasy zachodzą na Twoją OPERACJĘ ${s.index} na ${s.aircraftId.toUpperCase()} ` +
             `(${timeUtc(s.startedAt)} → ${s.stoppedAt != null ? timeUtc(s.stoppedAt) : '…'}). ` +
             'Jeden pilot nie leci dwiema maszynami naraz.',
         });
@@ -139,7 +139,7 @@ export function manualFlightWarnings(
     warnings.push({
       id: 'no-flight',
       text:
-        'Nie dodałeś ani jednego lotu - sesja zapisze się jako bieg silnika bez lotu. ' +
+        'Nie dodałeś ani jednego lotu - operacja zapisze się jako bieg silnika bez lotu. ' +
         'Dopisz lot, jeśli go pominąłeś.',
     });
   }

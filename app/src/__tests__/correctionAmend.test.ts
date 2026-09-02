@@ -212,7 +212,7 @@ describe('amend - skład zrzutu', () => {
  * Do tej poprawki nie dało się jej zmienić w ogóle: tekst z kroku „zadanie" wracał
  * do autora wyłącznie do czytania.
  */
-describe('amend - notatka sesji', () => {
+describe('amend - notatka operacji', () => {
   it('poprawia notatkę z zadania', () => {
     const { events, preflight } = session();
     expect(projectSession(events).notes).toBeNull();
@@ -267,7 +267,7 @@ describe('amend - notatka sesji', () => {
  * złamania append-only: opisuje chwilę zapisu, nie fakt o sesji. Dlatego preflight
  * dostał `dualId` w payloadzie, a projekcja czyta go z PIERWSZEŃSTWEM.
  */
-describe('amend - drugi pilot całej sesji', () => {
+describe('amend - drugi pilot całej operacji', () => {
   it('deklaracja z preflightu wygrywa z nagłówkami zdarzeń', () => {
     const { events, preflight } = session();
     // Nagłówki niosą AKO - tak zapisał telefon w chwili lotu.
@@ -283,7 +283,7 @@ describe('amend - drugi pilot całej sesji', () => {
     expect(stream.every((e) => e.type === 'event_correction' || e.dualId === 'AKO')).toBe(true);
   });
 
-  it('`dualId: null` znaczy „sesja jednoosobowa" - to deklaracja, nie brak', () => {
+  it('`dualId: null` znaczy „operacja jednoosobowa" - to deklaracja, nie brak', () => {
     const { events, preflight } = session();
     const withDual = events.map((e) => ({ ...e, dualId: 'AKO' }) as Event);
     const stream = [
@@ -293,7 +293,7 @@ describe('amend - drugi pilot całej sesji', () => {
     expect(projectSession(stream).dualId).toBeNull();
   });
 
-  it('bez deklaracji obowiązuje nagłówek - sesje sprzed tej zmiany liczą się jak dawniej', () => {
+  it('bez deklaracji obowiązuje nagłówek - operacje sprzed tej zmiany liczą się jak dawniej', () => {
     const { events } = session();
     const withDual = events.map((e) => ({ ...e, dualId: 'AKO' }) as Event);
     expect(projectSession(withDual).dualId).toBe('AKO');

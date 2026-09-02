@@ -78,7 +78,7 @@ function axis(events: Event[] = sessionEvents(), now = at(12, 0)) {
   return buildSessionAxis(projectSession(events), events, now);
 }
 
-describe('oś sesji', () => {
+describe('oś operacji', () => {
   it('idzie chronologicznie od przejęcia do zdania', () => {
     const { rows } = axis();
 
@@ -344,7 +344,7 @@ describe('stopka osi', () => {
     ]);
   });
 
-  it('sesja bez pracy silnika zamienia blok na czas TRZYMANIA maszyny', () => {
+  it('operacja bez pracy silnika zamienia blok na czas TRZYMANIA maszyny', () => {
     // 09C: pilot wziął samolot, pogoda go zatrzymała, zdał bez uruchamiania silnika.
     // Zero w wielkiej cyfrze nie jest odpowiedzią na żadne pytanie - zajętość jest.
     const bezLotu: Event[] = [
@@ -367,7 +367,7 @@ describe('stopka osi', () => {
     expect(rows.map((row) => row.kind)).toEqual(['claim', 'release']);
   });
 
-  it('sesja jeszcze niezdana liczy trzymanie do teraz', () => {
+  it('operacja jeszcze niezdana liczy trzymanie do teraz', () => {
     const trwa: Event[] = [
       event('session_claim', at(9, 10), { mode: 'free' }),
       event('preflight_confirm', at(9, 10), {
@@ -473,7 +473,7 @@ describe('znacznik poprawki', () => {
  * ostemplowane chwilą ZAPISU (11:43) - i tak ma zostać, bo od niego liczy się okno
  * korekty (`manualFlight.test.ts`).
  */
-describe('oś sesji wpisanej ręcznie', () => {
+describe('oś operacji wpisanej ręcznie', () => {
   function manualEvents(): Event[] {
     return [
       event('session_claim', at(12, 0), {
@@ -532,7 +532,7 @@ describe('oś sesji wpisanej ręcznie', () => {
     expect(timeOf('engineStop')).toBe('13:50');
   });
 
-  it('sesja z DETEKCJI pokazuje wszystkie godziny - tam każda jest zmierzona', () => {
+  it('operacja z DETEKCJI pokazuje wszystkie godziny - tam każda jest zmierzona', () => {
     const rows = axis().rows;
     expect(rows.find((r) => r.kind === 'claim')!.time).not.toBe('');
     expect(rows.find((r) => r.kind === 'release')!.time).not.toBe('');

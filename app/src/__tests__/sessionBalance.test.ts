@@ -90,7 +90,7 @@ describe('rachunek paliwa', () => {
     expect(view.rows[1]!.value).toBe('0 L');
   });
 
-  it('werdykt liczy oczekiwanie z PROPORCJI faz tej sesji', () => {
+  it('werdykt liczy oczekiwanie z PROPORCJI faz tej operacji', () => {
     // 1:16 lotu × 20 L/h + 0:27 ziemi × 8 L/h ≈ 29,0 L. Rozrzut ±10% dałby 26–32 L,
     // ale pasmo rozpycha PODŁOGA z błędu odczytu (±6 L, `policy.ts`): przy tak małym
     // zużyciu dwa odczyty paliwomierza są mniej dokładne niż sam model.
@@ -98,19 +98,19 @@ describe('rachunek paliwa', () => {
 
     expect(view.verdict?.label).toBe('✓ W NORMIE');
     expect(view.verdict?.tone).toBe('green');
-    expect(detail(view, 'Oczekiwane po tej sesji')).toBe('23 L – 35 L');
+    expect(detail(view, 'Oczekiwane po tej operacji')).toBe('23 L – 35 L');
     expect(view.details?.note).toContain('1:16 lotu × 20 L/h + 0:27 ziemi × 8 L/h ≈ 29 L');
   });
 
-  it('arkusz normy zestawia stawki z rzeczywistą średnią TEJ sesji (issue #40 pkt 7)', () => {
+  it('arkusz normy zestawia stawki z rzeczywistą średnią TEJ operacji (issue #40 pkt 7)', () => {
     const view = fuelBalance(session(), norm(), 2, null);
 
     expect(view.details?.title).toBe('NORMA PALIWA');
     expect(view.details?.summary).toContain('W normie - 27 L przy oczekiwanych 23 L – 35 L');
-    expect(detail(view, 'Zużyte w tej sesji')).toBe('27 L');
+    expect(detail(view, 'Zużyte w tej operacji')).toBe('27 L');
     // 27 L na 1:43 pracy silnika ≈ 16 L/h - mniej niż stawka lotu, bo prawie pół
     // godziny silnik pracował na ziemi. Po to ta liczba w arkuszu stoi.
-    expect(detail(view, 'Średnia tej sesji')).toBe('16 L/h');
+    expect(detail(view, 'Średnia tej operacji')).toBe('16 L/h');
     expect(detail(view, 'Norma w locie')).toBe('20 L/h');
     expect(detail(view, 'Norma na ziemi')).toBe('8 L/h');
     expect(detail(view, 'Podstawa')).toBe('90 dni');
@@ -136,7 +136,7 @@ describe('rachunek paliwa', () => {
     const view = fuelBalance(session(), norm({ airLPerH: null, groundLPerH: null }), 2, null);
 
     // 1:43 × 15 L/h ≈ 25,8 L, pasmo z centyli okna (12–18 L/h) rozepchane do podłogi.
-    expect(detail(view, 'Oczekiwane po tej sesji')).toBe('20 L – 32 L');
+    expect(detail(view, 'Oczekiwane po tej operacji')).toBe('20 L – 32 L');
     expect(detail(view, 'Norma')).toBe('15 L/h pracy silnika');
     // Arkusz mówi wprost, że model nie rozdzielił faz - to słabsza odpowiedź niż
     // stawki fazowe i pilot ma prawo o tym wiedzieć.
@@ -193,10 +193,10 @@ describe('rachunek motogodzin', () => {
     const view = mhBalance(session(), norm());
 
     expect(view.verdict?.label).toBe('↑ POWYŻEJ NORMY');
-    expect(detail(view, 'Oczekiwane po tej sesji')).toBe('+1:21 – +1:33');
+    expect(detail(view, 'Oczekiwane po tej operacji')).toBe('+1:21 – +1:33');
     expect(detail(view, 'Przelicznik w locie')).toBe('1,00 MH/h');
     expect(detail(view, 'Przelicznik na ziemi')).toBe('0,40 MH/h');
-    expect(detail(view, 'Podstawa')).toBe('12 sesji · licznik obrotomierzowy');
+    expect(detail(view, 'Podstawa')).toBe('12 operacji · licznik obrotomierzowy');
     expect(view.details?.title).toBe('NORMA MOTOGODZIN');
   });
 
@@ -260,7 +260,7 @@ describe('norma z dokumentacji na karcie rachunku (issue #66)', () => {
     // 27 L na 1:43 to 15,7 L/h → −21% wobec 20; norma maszyny 15 L/h → −25%.
     // Odchyłkę liczymy z wartości DOKŁADNEJ, nie z zaokrąglonej „16 L/h" z wiersza
     // wyżej - zaokrąglanie dwa razy dodaje błąd, którego nikt nie zamawiał.
-    expect(detail(view, 'Odchyłka od dokumentacji')).toBe('ta sesja −21% · norma maszyny −25%');
+    expect(detail(view, 'Odchyłka od dokumentacji')).toBe('ta operacja −21% · norma maszyny −25%');
   });
 
   it('bez wpisanej dokumentacji wiersze odniesienia NIE POWSTAJĄ', () => {

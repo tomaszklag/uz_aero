@@ -123,8 +123,8 @@ function payloadWithLine(): SessionTrackPayload {
   };
 }
 
-describe('ślad sesji - powody braku', () => {
-  it('bez zasięgu: powód „offline", a czasy sesji ZOSTAJĄ', async () => {
+describe('ślad operacji - powody braku', () => {
+  it('bez zasięgu: powód „offline", a czasy operacji ZOSTAJĄ', async () => {
     const { commands, clock, queries } = setup({ kind: 'unreachable' });
     await flownSession(commands, clock);
 
@@ -174,14 +174,14 @@ describe('ślad sesji - powody braku', () => {
     expect(view!.pendingFixes).toBe(9);
   });
 
-  it('sesja wpisana ręcznie: powód „manual", bo trasy nigdy nie było', async () => {
+  it('operacja wpisana ręcznie: powód „manual", bo trasy nigdy nie było', async () => {
     const { commands, clock, queries } = setup({ kind: 'missing' });
     await flownSession(commands, clock, { manual: true });
 
     expect((await queries.bySession(SESSION))!.missing).toBe('manual');
   });
 
-  it('sesji spoza rejestru nie ma o co pytać serwera', async () => {
+  it('operacji spoza rejestru nie ma o co pytać serwera', async () => {
     const { queries, source } = setup({ kind: 'missing' });
 
     expect(await queries.bySession('nie-ma-takiej')).toBeNull();
@@ -189,7 +189,7 @@ describe('ślad sesji - powody braku', () => {
   });
 });
 
-describe('ślad sesji - znaczniki', () => {
+describe('ślad operacji - znaczniki', () => {
   it('powstają z REJESTRU, a pozycje dobierają się z linii serwera', async () => {
     const { commands, clock, queries } = setup({ kind: 'track', payload: payloadWithLine() });
     await flownSession(commands, clock);

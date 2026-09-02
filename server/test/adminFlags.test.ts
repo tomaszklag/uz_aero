@@ -241,7 +241,7 @@ describe('rozwiązanie flagi (A03a)', () => {
     expect(sheet.statusCode).toBe(200);
     expect(sheet.json().rows).toContainEqual(['Samolot', 'SP-AXA']);
     // Obie zmiany w jednym dokumencie: zdana i ta, która maszyny jeszcze nie oddała.
-    expect(sheet.json().rows).toContainEqual(['Sesje', '2']);
+    expect(sheet.json().rows).toContainEqual(['Operacje', '2']);
   });
 
   it('pilot NIE MOŻE - 403 z podaną wymaganą zdolnością, flaga zostaje otwarta', async () => {

@@ -158,7 +158,7 @@ export function TrackThumbnail({ line, height, width, markers, onPress }: TrackT
   if (onPress == null) return <View pointerEvents="none">{body}</View>;
 
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel="Otwórz pełny ślad sesji" onPress={onPress}>
+    <Pressable accessibilityRole="button" accessibilityLabel="Otwórz pełny ślad operacji" onPress={onPress}>
       {body}
     </Pressable>
   );

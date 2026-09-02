@@ -283,6 +283,13 @@ export interface SessionListFilter {
  */
 export interface AdminSessionJoin {
   row: SessionRow;
+  /**
+   * Numer operacji w dobie jej PILOTA (1-based) - ostatni człon sygnatury (issue #68).
+   *
+   * Liczy go zapytanie, bo to miejsce wiersza wśród SĄSIADÓW, a nie jego własna
+   * kolumna. `null` = operacja bez uruchomienia silnika, czyli bez numeru.
+   */
+  dayIndex: number | null;
   reg: string | null;
   aircraftType: string | null;
   mhFormat: MhFormat | null;

@@ -96,7 +96,7 @@ describe('adres korekty na osi', () => {
     expect(rowByKind(rows, 'engineStart').targetUuid).toBe('engine-on');
   });
 
-  it('przejęcie sesji BEZ preflightu nie ma czego adresować', () => {
+  it('przejęcie operacji BEZ preflightu nie ma czego adresować', () => {
     const events = sessionEvents().filter((e) => e.type !== 'preflight_confirm');
     expect(rowByKind(rowsOf(events), 'claim').targetUuid).toBeNull();
   });
@@ -203,7 +203,7 @@ describe('co wolno dopisać', () => {
     ]);
   });
 
-  it('klamry silnika nie ma na żadnej liście - sesja ma jeden bieg', () => {
+  it('klamry silnika nie ma na żadnej liście - operacja ma jeden bieg', () => {
     for (const operation of ['skoki', 'ferry', 'egzamin', 'techniczny', 'inne'] as const) {
       const types = addableTypes(operation).map((t) => t.type as string);
       expect(types).not.toContain('engine_start');

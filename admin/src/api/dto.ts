@@ -342,6 +342,15 @@ export interface LogReportDto {
  */
 export interface SessionListItemDto {
   sessionUuid: string;
+  /**
+   * SYGNATURA OPERACJI - „SP-AXA/2026-09-01/AKO/1" (issue #68). Liczy ją SERWER; panel
+   * nigdy nie skleja jej u siebie, bo druga konwencja nazw znaczyłaby, że pilot
+   * i administrator mówią o jednym locie dwoma napisami.
+   *
+   * `null` = nie ma jej z czego złożyć (samolot spoza rejestru, operacja bez biegu
+   * silnika) - wiersz identyfikuje się wtedy datą, maszyną i godzinami, jak dotąd.
+   */
+  signature: string | null;
   aircraftId: string;
   reg: string | null;
   aircraftType: string | null;

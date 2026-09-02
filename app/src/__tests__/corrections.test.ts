@@ -249,13 +249,13 @@ describe('reguły korekty', () => {
     } as Event;
   }
 
-  it('odrzuca cel spoza sesji', () => {
+  it('odrzuca cel spoza operacji', () => {
     const { events } = day();
     const v = checkAppend(projectSession(events), candidateFor(events, 'ghost', { action: 'void' }));
     expect(v.some((x) => x.code === 'CORRECTION_TARGET_NOT_FOUND')).toBe(true);
   });
 
-  it('odrzuca korektę zdarzeń cyklu życia sesji (preflight, day_close)', () => {
+  it('odrzuca korektę zdarzeń cyklu życia operacji (preflight, day_close)', () => {
     const preflight = event('preflight_confirm', at(8, 0), {
       operation: 'skoki',
       reading: { fuelL: 150, mh: 1234.5 },

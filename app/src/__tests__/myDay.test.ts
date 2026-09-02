@@ -92,8 +92,23 @@ describe('buildMyDay - scenariusz mockupu 01', () => {
   it('lista jest płaską osią czasu z rejestracją na kafelku - bez grupowania', () => {
     const cards = vm().sessions;
 
-    expect(cards.map((c) => c.title)).toEqual(['SESJA 1', 'SESJA 2', 'SESJA 3']);
+    expect(cards.map((c) => c.title)).toEqual(['OPERACJA 1', 'OPERACJA 2', 'OPERACJA 3']);
     expect(cards.map((c) => c.aircraft)).toEqual(['SP-AXA', 'SP-AXA', 'SP-KLM']);
+  });
+
+  /**
+   * SYGNATURA JEST WSTRZYKIWANA, NIE LICZONA TUTAJ (issue #68): numer operacji w dobie
+   * to jej miejsce wśród SĄSIADÓW, a ten model widzi już gotową listę. Test pilnuje
+   * granicy - kafelek ma przepisać to, co dostał, i nie składać napisu po swojemu.
+   */
+  it('przepisuje sygnaturę operacji ze wstrzykniętego rezolwera', () => {
+    const cards = buildMyDay(dayOf(axa(), klm()), regOf, (uuid) => `sig:${uuid}`).sessions;
+
+    expect(cards.map((c) => c.signature)).toEqual(['sig:s-axa', 'sig:s-axa', 'sig:s-klm']);
+  });
+
+  it('bez rezolwera sygnatury kafelek jej nie ma - i to jest stan poprawny', () => {
+    expect(vm().sessions.every((c) => c.signature === null)).toBe(true);
   });
 
   /**
@@ -111,7 +126,7 @@ describe('buildMyDay - scenariusz mockupu 01', () => {
     expect(cards[0]!.aircraft).not.toContain('sp-axa');
     expect(cards[0]!.aircraft).toBe('- -');
   });
-  it('kafelek sesji niesie czasy, liczbę lotów i oba czasy trwania', () => {
+  it('kafelek operacji niesie czasy, liczbę lotów i oba czasy trwania', () => {
     const card = vm().sessions[0]!;
 
     expect(card.times).toBe('08:12 → 09:05 UTC');
@@ -143,7 +158,8 @@ describe('buildMyDay - scenariusz mockupu 01', () => {
     expect(Object.keys(card).sort()).toEqual(
       // `manual` doszedł 2026-08-16 (plakietka „RĘCZNIE") - na OBU ekranach naraz,
       // bo niesie go wspólny `SessionCardVm`.
-      ['aircraft', 'manual', 'sessionUuid', 'stats', 'times', 'title'].sort(),
+      // 'signature' doszedł przy issue #68 - też na OBU ekranach naraz.
+      ['aircraft', 'manual', 'sessionUuid', 'signature', 'stats', 'times', 'title'].sort(),
     );
     expect(card.stats.map((s) => s.k)).toEqual(['Loty', 'Blok', 'Lot']);
   });
@@ -201,7 +217,7 @@ describe('buildMyDay - dzień pusty (wariant 01A)', () => {
     expect(totalLabel(vm.totals.block)).toBe('- -');
   });
 
-  it('doba z sesją nie jest pusta', () => {
+  it('doba z operacją nie jest pusta', () => {
     const vm = buildMyDay(dayOf(axa()));
 
     expect(vm.empty).toBe(false);

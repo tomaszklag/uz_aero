@@ -50,7 +50,7 @@ export function OutboxGuard({
           variant="body"
           style={[styles.text, { color: theme.colors.amber, fontFamily: theme.fontFamily.bodySemiBold }]}
         >
-          {`${eventsCount(count)} z dzisiejszej sesji`}
+          {`${eventsCount(count)} z dzisiejszej operacji`}
         </AppText>
         {tail}
       </AppText>

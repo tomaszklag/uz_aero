@@ -14,10 +14,16 @@
  * samolot, nie per zmianę pilota - więc jednostką jest DOBA, a sesje są jej wierszami.
  *
  * ══ KSZTAŁT KOLUMN I DLACZEGO TAKI ══
- * Karta ma sześć bloków, a spina je JEDNA rzecz: kolumna `Sesja` z etykietą `S1`, `S2`…
- * Etykiety są PORZĄDKOWE w obrębie karty (chronologicznie po chwili przejęcia), nie
- * globalne - nazwa sesji to uuid, którego w dokumencie klubu nikt nie czyta, a numer
- * zmiany jest tym, czym człowiek się posługuje („pierwsza zmiana", „druga zmiana").
+ * Karta ma sześć bloków, a spina je JEDNA rzecz: kolumna `Operacja` z etykietą `S1`,
+ * `S2`… Etykiety są PORZĄDKOWE w obrębie TEJ karty (chronologicznie po chwili
+ * przejęcia) i nie są sygnaturą z issue #68 - ta numeruje dobę PILOTA, a karta jest
+ * dobą SAMOLOTU, więc jej ostatni człon nie zgadzałby się z kolejnością zmian
+ * w dokumencie. Krótka etykieta jest tu zresztą tym, po co ta kolumna istnieje:
+ * spina sześć bloków jednego dokumentu, a nie identyfikuje lotu na zewnątrz.
+ *
+ * Rodzaj operacji nazywa się w tej karcie `Zadanie` - jak na ekranie 02E telefonu
+ * i w gridzie panelu. Dwie różne rzeczy nie mogą nosić jednej nazwy w jednym wierszu
+ * nagłówka, a „operacja" znaczy od issue #68 sam lot.
  *
  *  1. **Nagłówek** - samolot, doba, ile zmian, czas blokowy doby. Plus adnotacja
  *     „Niekompletna", gdy któraś sesja jest wstrzymana flagą (§4.7: bramka obejmuje
@@ -181,7 +187,29 @@ export interface DaySheetSession {
  */
 export interface DaySheetExclusion {
   sessionUuid: string;
+  /**
+   * Bieg silnika i kod PIC-a - tym nazywamy operację, której na karcie NIE MA
+   * (issue #68).
+   *
+   * Uuid był tu jedynym opisem i nie opisywał niczego: adnotację czyta człowiek
+   * szukający brakującej zmiany w dokumencie klubu, a `7c1e5a9b-…` nie pozwala jej
+   * znaleźć ani na liście panelu, ani w pamięci. Sygnatury użyć się tu nie da:
+   * jej numer należy do doby PILOTA, a karta zna dobę SAMOLOTU - godziny biegu
+   * i kod załogi mają ten sam skutek bez dodatkowego zapytania.
+   */
+  engineStartAt: number | null;
+  engineStopAt: number | null;
+  pic: string | null;
   flagIds: readonly number[];
+}
+
+/** „08:12 → 10:34 · TMK" - opis operacji wykluczonej z karty. */
+export function exclusionLabel(gap: DaySheetExclusion): string {
+  const run =
+    gap.engineStartAt == null
+      ? 'bez uruchomienia silnika'
+      : `${timeUtc(gap.engineStartAt)} → ${timeUtc(gap.engineStopAt)}`;
+  return gap.pic == null ? run : `${run} · ${gap.pic}`;
 }
 
 /** Wejście karty: doba jednej maszyny razem z jej sesjami. */
@@ -219,21 +247,21 @@ export function buildDaySheet(input: DaySheetDay): DaySheet | null {
   const rows: string[][] = [
     ['UZ Aero - doba samolotu', `${input.day} (UTC)`],
     ['Samolot', input.aircraftId],
-    ['Sesje', String(input.sessions.length)],
+    ['Operacje', String(input.sessions.length)],
     ['Czas blokowy doby', hhmm(input.sessions.reduce((sum, s) => sum + s.state.blockTimeMs, 0))],
   ];
 
   for (const gap of input.excluded) {
     rows.push([
       'Niekompletna',
-      `sesja ${gap.sessionUuid} poza kartą - ${gap.flagIds.map((id) => `flaga #${id}`).join(', ')}`,
+      `operacja ${exclusionLabel(gap)} poza kartą - ${gap.flagIds.map((id) => `flaga #${id}`).join(', ')}`,
     ]);
   }
 
   rows.push(
     [],
-    ['Sesje doby · czasy UTC'],
-    ['Sesja', 'PIC', 'Dual', 'Operacja', 'Przejęcie', 'Zdanie', 'Block', 'Stan'],
+    ['Operacje doby · czasy UTC'],
+    ['Operacja', 'PIC', 'Dual', 'Zadanie', 'Przejęcie', 'Zdanie', 'Block', 'Stan'],
     ...input.sessions.map((s) => [
       labelOf(s),
       s.crew.pic ?? '-',
@@ -247,7 +275,7 @@ export function buildDaySheet(input: DaySheetDay): DaySheet | null {
 
     [],
     ['Loty · czasy UTC'],
-    ['Sesja', '#', 'Takeoff', 'Landing', 'Block', 'Metoda'],
+    ['Operacja', '#', 'Takeoff', 'Landing', 'Block', 'Metoda'],
     ...input.sessions.flatMap((s) =>
       s.state.flights.map((f) => [
         labelOf(s),
@@ -261,7 +289,7 @@ export function buildDaySheet(input: DaySheetDay): DaySheet | null {
 
     [],
     ['Paliwo (L)'],
-    ['Sesja', 'Start', 'Dolane', 'Zużyte', 'Koniec'],
+    ['Operacja', 'Start', 'Dolane', 'Zużyte', 'Koniec'],
     ...input.sessions.map((s) => [
       labelOf(s),
       litres(s.state.fuel.startL),
@@ -279,7 +307,7 @@ export function buildDaySheet(input: DaySheetDay): DaySheet | null {
 
     [],
     ['Motogodziny'],
-    ['Sesja', 'Start', 'Koniec', 'Delta'],
+    ['Operacja', 'Start', 'Koniec', 'Delta'],
     ...input.sessions.map((s) => [
       labelOf(s),
       motoHours(s.state.mh.start, s.state.mhFormat),
@@ -298,7 +326,7 @@ export function buildDaySheet(input: DaySheetDay): DaySheet | null {
     rows.push(
       [],
       ['Olej (L)'],
-      ['Sesja', 'Pomiar', 'Dolane'],
+      ['Operacja', 'Pomiar', 'Dolane'],
       ...input.sessions.map((s) => [
         labelOf(s),
         oilNoUnit(s.state.oil.levelL),
@@ -357,7 +385,7 @@ function dropRows(
   return [
     [],
     ['Zrzuty'],
-    ['Sesja', 'Wyniesienia', 'Skoczkowie'],
+    ['Operacja', 'Wyniesienia', 'Skoczkowie'],
     ...jumping.map((s) => [
       labelOf(s),
       String(s.state.drops.count),

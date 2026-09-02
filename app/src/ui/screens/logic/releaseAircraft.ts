@@ -220,7 +220,7 @@ export function handoverText(
 
   return (
     `${head} następny pilot jako PRZEKAZANIE. Stają się ogniwem łańcucha ${aircraftId}: ` +
-    'serwer porówna z nimi start kolejnej sesji i oznaczy dziury albo cofnięcia licznika.'
+    'serwer porówna z nimi start kolejnej operacji i oznaczy dziury albo cofnięcia licznika.'
   );
 }
 
@@ -246,7 +246,7 @@ export function balanceRows(
   const run = state.legs[0];
   if (run != null) {
     rows.push({
-      key: 'Sesja',
+      key: 'Operacja',
       value: `${timeUtc(run.startedAt)} → ${
         run.stoppedAt != null ? timeUtc(run.stoppedAt) : 'trwa'
       } · ${flightsBadge(state.flights.length)}`,
@@ -313,7 +313,7 @@ export const RELEASE_CTA = 'ZDAJ I ZATWIERDŹ LOG';
  */
 export const RELEASE_NOTICE =
   'Zdajesz samolot, nie kończysz dnia. Loty zostają w „Mój dzień", a jeśli za chwilę ' +
-  'przejmiesz inny samolot, jego sesja dopisze się do listy dnia.';
+  'przejmiesz inny samolot, jego operacja dopisze się do listy dnia.';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Blokada zapisu

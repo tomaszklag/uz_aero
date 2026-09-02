@@ -64,13 +64,21 @@ const DASH = '- -';
  *   identyfikator UDAJE znak i przez wiele tur udawał go skutecznie, bo w świecie
  *   testowym identyfikatorem BYŁ znak („sp-axa").
  */
-export function buildMyDay(day: PilotDay, regOf: (id: string) => string | null = () => null): MyDayVm {
+export function buildMyDay(
+  day: PilotDay,
+  regOf: (id: string) => string | null = () => null,
+  signatureOf: (sessionUuid: string) => string | null = () => null,
+): MyDayVm {
   return {
     sessions: day.sessions.map((session) => ({
       sessionUuid: session.sessionUuid,
       // Numer w dobie zastąpił kolumnę `.leg-num` starej tabeli: niesie kolejność,
       // której same godziny nie niosą, gdy pilot przegląda listę kątem oka.
-      title: `SESJA ${session.index}`,
+      // Ten sam numer stoi w ostatnim członie sygnatury (issue #68) i to nie jest
+      // zbieg okoliczności: `operationIndexes` liczy go tą samą regułą, co
+      // `projectPilotDay`. Dwa różne numery na jednym kafelku byłyby sprzecznością.
+      title: `OPERACJA ${session.index}`,
+      signature: signatureOf(session.sessionUuid),
       aircraft: regOf(session.aircraftId) ?? DASH,
       times: sessionTimes(session.startedAt, session.stoppedAt),
       stats: sessionStats(session.flightCount, session.blockMs, session.flightMs),

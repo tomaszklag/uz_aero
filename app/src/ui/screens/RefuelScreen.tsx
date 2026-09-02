@@ -159,7 +159,7 @@ export function RefuelScreen({
       ? 'Odczyt z paliwomierza'
       : referenceLabel != null
         ? `Ostatni odczyt: ${referenceLabel}`
-        : 'Brak odczytu w tej sesji - wpisz stan z paliwomierza';
+        : 'Brak odczytu w tej operacji - wpisz stan z paliwomierza';
 
   // ── blokada zapisu - zawsze z podanym powodem, nigdy ciche wyszarzenie ─────────
   const disabledReason =
@@ -300,7 +300,7 @@ export function RefuelScreen({
             tone="neutral"
             text={
               reference == null
-                ? 'Kalkulacja zużycia pojawi się po pierwszym odczycie paliwa w tej sesji.'
+                ? 'Kalkulacja zużycia pojawi się po pierwszym odczycie paliwa w tej operacji.'
                 : 'Silnik nie pracował od ostatniego odczytu (albo paliwa jest więcej niż wtedy) - nie ma z czego policzyć średniego zużycia.'
             }
           />

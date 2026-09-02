@@ -74,7 +74,7 @@
   .param-value.amber { color:var(--amber); }
   .param-unit { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); }
 
-  /* OŚ SESJI (issue #44) - ten sam inwentarz, co na 04, 05 i 10; pełny komentarz stoi
+  /* OŚ OPERACJI (issue #44) - ten sam inwentarz, co na 04, 05 i 10; pełny komentarz stoi
      w 04. Tutaj dochodzi jeden stan własny: zdarzenie WŁAŚNIE WYKRYTE, które czeka
      w oknie COFNIJ - kropka kreskowana i plakietka przy nazwie, bo zapis jeszcze nie
      jest ostateczny. */
@@ -286,7 +286,7 @@
         <div class="param-label">Fuel on Board</div>
         <div style="display:flex;align-items:baseline;gap:6px;"><div class="param-value">~139</div><div class="param-unit">L</div></div>
       </div>
-      <!-- Czas lotu CAŁEJ SESJI (patrz komentarz w 05). To PIERWSZY lot sesji, więc suma
+      <!-- Czas lotu CAŁEJ OPERACJI (patrz komentarz w 05). To PIERWSZY lot operacji, więc suma
            lotów zamkniętych jest zerowa i kafelek pokazuje sam licznik na żywo. -->
       <div class="param-cell">
         <div class="param-label">Flight Time</div>
@@ -294,11 +294,11 @@
       </div>
     </div>
 
-    <!-- Karta logu pokazuje się dopiero, gdy w sesji jest zdarzenie OPERACYJNE
+    <!-- Karta logu pokazuje się dopiero, gdy w operacji jest zdarzenie OPERACYJNE
          (issue #19) - tu jest ich kilka. -->
     <div class="session-log">
       <div class="session-log-header">
-        <span class="session-log-title">Log sesji · UTC</span>
+        <span class="session-log-title">Log operacji · UTC</span>
         <span class="session-log-count">LOT #1</span>
       </div>
       <div class="axis">

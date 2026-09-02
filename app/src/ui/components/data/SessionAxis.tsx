@@ -216,7 +216,7 @@ export function SessionAxis({
     return (
       <View style={[{ padding: theme.spacing.lg }, style]}>
         <AppText variant="mono" tone="muted">
-          {emptyText ?? 'Brak zdarzeń w tej sesji.'}
+          {emptyText ?? 'Brak zdarzeń w tej operacji.'}
         </AppText>
       </View>
     );

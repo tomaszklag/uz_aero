@@ -112,19 +112,19 @@ const soft = (v: RuleViolation[]): string[] => codes(warningsOf(v));
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe('koperta sesji - tożsamość i single-writer', () => {
+describe('koperta operacji - tożsamość i single-writer', () => {
   it('pierwszym zdarzeniem musi być session_claim', () => {
     expect(hard(check([], ev('engine_start', {})))).toEqual(['SESSION_NOT_CLAIMED']);
     expect(check([], claim())).toEqual([]);
   });
 
-  it('drugi claim tej samej sesji jest odrzucany', () => {
+  it('drugi claim tej samej operacji jest odrzucany', () => {
     expect(hard(check([claim()], ev('session_claim', { mode: 'free' }, { t: min(1) })))).toEqual([
       'SESSION_ALREADY_CLAIMED',
     ]);
   });
 
-  it('zdarzenie z cudzej sesji / cudzego samolotu jest odrzucane', () => {
+  it('zdarzenie z cudzej operacji / cudzego samolotu jest odrzucane', () => {
     expect(
       hard(check(ground(), ev('engine_start', {}, { t: min(12), sessionUuid: 'inna' }))),
     ).toContain('SESSION_MISMATCH');
@@ -133,7 +133,7 @@ describe('koperta sesji - tożsamość i single-writer', () => {
     ).toContain('AIRCRAFT_MISMATCH');
   });
 
-  it('single-writer: pisze tylko PIC, który otworzył sesję (§4.1 pkt 3)', () => {
+  it('single-writer: pisze tylko PIC, który otworzył operację (§4.1 pkt 3)', () => {
     expect(hard(check(ground(), ev('engine_start', {}, { t: min(12), picId: 'inny-pilot' })))).toEqual(
       ['WRITER_MISMATCH'],
     );
@@ -155,7 +155,7 @@ describe('cykl silnika', () => {
     ]);
   });
 
-  it('drugi bieg silnika w sesji jest odrzucany - sesja = jeden bieg (2026-08-10)', () => {
+  it('drugi bieg silnika w operacji jest odrzucany - operacja = jeden bieg (2026-08-10)', () => {
     // Po STOP ENGINE jedyną drogą naprzód jest zdanie samolotu (09b); kolejny lot
     // to NOWE przejęcie. Bez tej gwardii stary model („kolejne wzloty w sesji")
     // wracałby tylnymi drzwiami przez każdy zapis ręczny albo replay.
@@ -405,7 +405,7 @@ describe('zamknięcie dnia', () => {
     expect(check([claim(), preflight()], close)).toEqual([]);
   });
 
-  it('sesja ZE WZLOTAMI nie jest o powód pytana', () => {
+  it('operacja ZE WZLOTAMI nie jest o powód pytana', () => {
     expect(soft(check(afterCycle(), dayClose()))).not.toContain('NO_FLIGHT_WITHOUT_REASON');
   });
 
@@ -664,7 +664,7 @@ describe('załoga', () => {
     expect(check(ground(), change)).toEqual([]);
   });
 
-  it('zmiana PIC w ramach sesji jest odrzucana (single-writer, §3.5)', () => {
+  it('zmiana PIC w ramach operacji jest odrzucana (single-writer, §3.5)', () => {
     const change = ev(
       'crew_change',
       { role: 'pic', pilotOutId: PIC, pilotInId: 'pic-2' },

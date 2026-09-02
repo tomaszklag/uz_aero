@@ -317,7 +317,7 @@ describe('koperta śladu przez sieć', () => {
     expect(payload.usableCount).toBe(601);
   });
 
-  it('sesja bez nagrania daje ten sam kształt, nie inny wariant', () => {
+  it('operacja bez nagrania daje ten sam kształt, nie inny wariant', () => {
     const empty = buildSessionTrackPayload('S-2', [], {
       airborne: [],
       engineFrom: sec(0),

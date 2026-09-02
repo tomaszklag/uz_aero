@@ -59,7 +59,7 @@
      Wzorzec od issue #23 pkt 7 - JEDEN dla całej aplikacji: tytuł i podtytuł
      wyrównane DO LEWEJ, ustawienia zawsze PO PRAWEJ. SyncChip stoi przed zębatką
      i online NIE RYSUJE NIC (issue #12) - wariant offline pokazuje 01C.
-     Licznika sesji w nagłówku nie ma (issue #23 pkt 6): liczbę sesji widać na liście. */
+     Licznika operacji w nagłówku nie ma (issue #23 pkt 6): liczbę operacji widać na liście. */
   .app-header {
     display:flex; align-items:center; justify-content:space-between; gap:10px;
     padding:8px 6px 8px 16px; border-bottom:1px solid var(--border); flex-shrink:0;
@@ -85,7 +85,7 @@
      nie ma już reguły, którą musiałby tłumaczyć. */
 
   /* ===== Log dnia =====
-     Serce ekranu po issue #23: PŁASKA oś czasu sesji doby, posortowana po
+     Serce ekranu po issue #23: PŁASKA oś czasu operacji doby, posortowana po
      uruchomieniu silnika. Samolot jest INFORMACJĄ kafelka, nie osią grupowania -
      grupy per maszyna kłamały o przebiegu dnia przy każdej przesiadce.
 
@@ -96,10 +96,10 @@
      dwa widoki jednej rzeczy każą pilotowi sprawdzać, czy aplikacja mówi o tym samym.
 
      RÓŻNIC WOBEC 12 SĄ DWIE, obie wymuszone treścią:
-      1. nagłówkiem kafelka jest NUMER SESJI w dobie, nie data. Data stoi w nagłówku
+      1. nagłówkiem kafelka jest NUMER OPERACJI w dobie, nie data. Data stoi w nagłówku
          ekranu i jest wspólna dla wszystkich kafelków - powtórzona trzy razy byłaby
          szumem, a numer niesie kolejność, którą wcześniej dawała kolumna `.leg-num`;
-      2. kafelki NIE są niebieskie. Na 12 błękit oddziela sesje w oknie korekty od
+      2. kafelki NIE są niebieskie. Na 12 błękit oddziela operacje w oknie korekty od
          zamkniętych; tu wszystkie są w oknie (doba trwa krócej niż 24 h), więc kolor
          świecący przy każdym kafelku przestaje cokolwiek znaczyć - ta sama reguła,
          dla której SyncChip online nie rysuje nic (issue #12). */
@@ -111,16 +111,21 @@
   }
   .day-card:hover { border-color:var(--border-strong); }
   .day-top { display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
-  /* Nagłówek kafelka - na 12 jest tu data, tu numer sesji. Ta sama skala i ten sam
+  /* Nagłówek kafelka - na 12 jest tu data, tu numer operacji. Ta sama skala i ten sam
      krój, bo to ta sama rola: co to za kafelek. */
   .day-title { font-family:var(--font-display); font-size:21px; letter-spacing:1.5px; color:var(--text-primary); line-height:1; }
   .day-title-row { display:flex; align-items:center; gap:8px; }
-  /* Plakietka „RĘCZNIE" (przebudowa 15, 2026-08-16) - sesja wpisana po fakcie
-     z ekranu 15. Neutralna ramka bez wypełnienia: fakt o POCHODZENIU całej sesji,
-     nie ostrzeżenie. Przy tytule, bo mówi o sesji jako całości; wiersze osi na 10
+  /* Plakietka „RĘCZNIE" (przebudowa 15, 2026-08-16) - operacja wpisana po fakcie
+     z ekranu 15. Neutralna ramka bez wypełnienia: fakt o POCHODZENIU całej operacji,
+     nie ostrzeżenie. Przy tytule, bo mówi o operacji jako całości; wiersze osi na 10
      znaczników nie dostają (issue #40 pkt 6 zostaje w mocy). */
   .day-tag { font-family:var(--font-mono); font-size:7.5px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); border:1px solid var(--border-strong); border-radius:5px; padding:2px 5px; }
   .day-ac { font-family:var(--font-mono); font-size:11px; letter-spacing:1.5px; color:var(--green); }
+  /* SYGNATURA OPERACJI (issue #68) - „SP-AXA/2026-08-06/TMK/1". Zastępuje znak
+     maszyny, bo zaczyna się od niego; własna linia, bo identyfikatora nie wolno uciąć
+     wielokropkiem. Odstęp międzyliterowy węższy niż przy znaku: przy 23 znakach 1,5 px
+     rozpycha napis na całą szerokość karty. */
+  .day-sig { font-family:var(--font-mono); font-size:11px; line-height:14px; letter-spacing:0.5px; color:var(--green); margin-top:-4px; }
   /* Godziny biegu silnika ze znacznikiem strefy - jak na 12. Bieg jeszcze otwarty
      kończy się wielokropkiem („13:40 → … UTC"), nie udaje zamkniętego. */
   .day-times { font-family:var(--font-mono); font-size:10px; letter-spacing:0.5px; color:var(--text-muted); margin-top:-4px; }
@@ -129,7 +134,7 @@
   .stat-k { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
   .stat-v { font-family:var(--font-mono); font-size:13px; font-weight:700; color:var(--text-secondary); }
   /* Pas akcji w tonie neutralnym - kształt i napis jak na 12 („OTWÓRZ I POPRAW"),
-     bo to ta sama akcja: ekran sesji (10) z ołówkami przy zdarzeniach. */
+     bo to ta sama akcja: ekran operacji (10) z ołówkami przy zdarzeniach. */
   .cta-open {
     display:flex; align-items:center; justify-content:center; gap:8px; min-height:44px;
     border-radius:11px; border:1px solid var(--border-strong); background:var(--surface-raised);
@@ -140,7 +145,7 @@
   /* Sumy doby: Blok i Loty - własna karta pod listą kafelków. Kafla „Służba" nie ma
      (issue #23 pkt 2): czas „od pierwszej do ostatniej czynności" niczego nie mierzył. */
   .totals-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
-  /* Trzy kolumny od 2026-08-16 - Loty · Blok · Lot, tak jak na kafelku sesji. */
+  /* Trzy kolumny od 2026-08-16 - Loty · Blok · Lot, tak jak na kafelku operacji. */
   .totals { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1px; background:var(--border); }
   .total-cell { background:var(--surface); padding:10px 12px; display:flex; flex-direction:column; gap:3px; }
   .total-key { font-family:var(--font-mono); font-size:7px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
@@ -156,8 +161,8 @@
      jest jedna.
 
      „ROZPOCZNIJ LOT" JEST `.btn-primary` NA KAŻDYM WARIANCIE DOBY (zgłoszenie
-     z urządzenia, 2026-08-16): do tej pory po pierwszej sesji zamieniał się w szary
-     - ekran uczył się dwa razy w ciągu jednego dnia, a druga sesja nie jest mniej
+     z urządzenia, 2026-08-16): do tej pory po pierwszej operacji zamieniał się w szary
+     - ekran uczył się dwa razy w ciągu jednego dnia, a druga operacja nie jest mniej
      ważna od pierwszej. MIEJSCE: pod logiem dnia, nad wpisem ręcznym (uwaga
      z urządzenia, 2026-08-26) - log jest właściwą treścią ekranu domowego, więc
      stoi pierwszy; jednakowo na 01, 01A i 01C. */
@@ -247,21 +252,21 @@
 
     <div class="scroll">
 
-      <!-- Log dnia: płaska oś czasu sesji (issue #23 pkt 3). Kafelek = jedna sesja
+      <!-- Log dnia: płaska oś czasu operacji (issue #23 pkt 3). Kafelek = jedna operacja
            (bieg silnika z lotami w środku), rejestracja jest informacją kafelka.
-           Sesje na liście są już ZATWIERDZONE - zdanie samolotu (09b) potwierdziło
+           Operacje na liście są już ZATWIERDZONE - zdanie samolotu (09b) potwierdziło
            dane, więc po locie niczego się nie potwierdza ani nie wysyła ponownie.
-           Kafelek prowadzi do DETALI TEJ SESJI (10): ślad biegu silnika, oś czasu,
+           Kafelek prowadzi do DETALI TEJ OPERACJI (10): ślad biegu silnika, oś czasu,
            rachunek paliwa i MH, i tam korekty. Wejścia w ślad z listy NIE MA
-           (issue #25 pkt 2) - ślad otwiera się miniaturą na ekranie sesji.
+           (issue #25 pkt 2) - ślad otwiera się miniaturą na ekranie operacji.
            TEN SAM KOMPONENT stoi na „Poprzednich dniach" (12) - issue #42. -->
       <div class="group-lbl">Log dnia</div>
 
       <a href="10-statystyki.html" class="day-card">
         <div class="day-top">
-          <span class="day-title">SESJA 1</span>
-          <span class="day-ac">SP-AXA</span>
+          <span class="day-title">OPERACJA 1</span>
         </div>
+        <div class="day-sig">SP-AXA/2026-08-06/TMK/1</div>
         <div class="day-times">08:12 → 09:05 UTC</div>
         <div class="day-stats">
           <span class="stat"><span class="stat-k">Loty</span><span class="stat-v">2</span></span>
@@ -276,9 +281,9 @@
 
       <a href="10-statystyki.html" class="day-card">
         <div class="day-top">
-          <span class="day-title">SESJA 2</span>
-          <span class="day-ac">SP-AXA</span>
+          <span class="day-title">OPERACJA 2</span>
         </div>
+        <div class="day-sig">SP-AXA/2026-08-06/TMK/2</div>
         <div class="day-times">10:20 → 11:02 UTC</div>
         <div class="day-stats">
           <span class="stat"><span class="stat-k">Loty</span><span class="stat-v">1</span></span>
@@ -294,12 +299,12 @@
       <a href="10-statystyki.html" class="day-card">
         <div class="day-top">
           <span class="day-title-row">
-            <span class="day-title">SESJA 3</span>
-            <!-- Sesja wpisana po fakcie z ekranu 15 (telefon został w hangarze). -->
+            <span class="day-title">OPERACJA 3</span>
+            <!-- Operacja wpisana po fakcie z ekranu 15 (telefon został w hangarze). -->
             <span class="day-tag">RĘCZNIE</span>
           </span>
-          <span class="day-ac">SP-KLM</span>
         </div>
+        <div class="day-sig">SP-KLM/2026-08-06/TMK/3</div>
         <div class="day-times">13:40 → 15:10 UTC</div>
         <div class="day-stats">
           <span class="stat"><span class="stat-k">Loty</span><span class="stat-v">2</span></span>
@@ -313,9 +318,9 @@
       </a>
 
       <!-- Sumy doby pod listą - jedyna wielkość, która NIE należy do pojedynczej
-           sesji, więc jako jedyna została kartą własnego kształtu.
+           operacji, więc jako jedyna została kartą własnego kształtu.
 
-           TA SAMA TRÓJKA, CO NA KAFELKU SESJI: Loty · Blok · Lot (2026-08-16).
+           TA SAMA TRÓJKA, CO NA KAFELKU OPERACJI: Loty · Blok · Lot (2026-08-16).
            Do tej pory była tu para, w której komórka „Loty" niosła CZAS w powietrzu,
            a liczbę lotów spychała do podpisu „5 st / 5 ldg" - czyli etykieta mówiła
            o jednej wielkości, a wartość o drugiej. Podpis dublował przy tym sam siebie:
@@ -376,14 +381,14 @@
     <span class="vp-badge">01</span>
     <span class="vp-body">
       <span class="vp-name">Dzień w toku</span>
-      <span class="vp-when">Standard po pierwszej sesji: płaska oś czasu sesji doby (kafelek = jeden bieg silnika z lotami w środku, rejestracja jako informacja kafelka - bez grupowania po maszynie), sumy Blok / Loty. Kafelek jest TYM SAMYM komponentem, co na „Poprzednich dniach" (issue #42) - z numerem sesji zamiast daty, bo data stoi w nagłówku ekranu. Klamry służby i „Zamknij dzień" nie ma (issue #23) - dzień pilota to lista sesji, niczego się nie otwiera ani nie zamyka.</span>
+      <span class="vp-when">Standard po pierwszej operacji: płaska oś czasu operacji doby (kafelek = jeden bieg silnika z lotami w środku, rejestracja jako informacja kafelka - bez grupowania po maszynie), sumy Blok / Loty. Kafelek jest TYM SAMYM komponentem, co na „Poprzednich dniach" (issue #42) - z numerem operacji zamiast daty, bo data stoi w nagłówku ekranu. Klamry służby i „Zamknij dzień" nie ma (issue #23) - dzień pilota to lista operacji, niczego się nie otwiera ani nie zamyka.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
   <a class="vp-item" href="01a-moj-dzien-pusty.html">
     <span class="vp-badge blue">01A</span>
     <span class="vp-body">
-      <span class="vp-name">Początek dnia - zero sesji</span>
+      <span class="vp-name">Początek dnia - zero operacji</span>
       <span class="vp-when">Pilot wszedł do aplikacji i nie przejął jeszcze nic: pusty log dnia („- -", nigdy zera), cały ekran prowadzi do przejęcia samolotu.</span>
     </span>
   </a>
@@ -402,7 +407,7 @@
   <a href="00-login.html">← 00 Login</a>
   <span>·</span>
   <a href="01-moj-dzien.html" class="active">01 Mój dzień</a>
-  <a href="01a-moj-dzien-pusty.html">01A Zero sesji</a>
+  <a href="01a-moj-dzien-pusty.html">01A Zero operacji</a>
   <a href="01c-moj-dzien-offline.html">01C Offline</a>
   <span>·</span>
   <a href="12-historia.html">12 Poprzednie dni</a>

@@ -223,7 +223,7 @@ describe('unieważnienie sesji z panelu (2026-08-31)', () => {
 
     // Przed unieważnieniem: dwie karty (po jednym zdaniu każda) i obie zmiany w treści.
     expect(sheets.calls).toHaveLength(2);
-    expect(sheets.calls[1]!.rows).toContainEqual(['Sesje', '2']);
+    expect(sheets.calls[1]!.rows).toContainEqual(['Operacje', '2']);
 
     const res = await voidSession(app, MORNING, {
       token: admin,
@@ -261,7 +261,7 @@ describe('unieważnienie sesji z panelu (2026-08-31)', () => {
     expect(sheets.calls).toHaveLength(3);
     const card = sheets.calls[2]!;
     expect(card.tab).toBe('2026-06-22_SP-AXA');
-    expect(card.rows).toContainEqual(['Sesje', '1']);
+    expect(card.rows).toContainEqual(['Operacje', '1']);
     // Kod pilota wycofanej zmiany nie ma prawa stać nigdzie w dokumencie klubu.
     expect(card.rows.flat()).not.toContain('KRZ');
     expect(card.rows.flat()).toContain('PWI');

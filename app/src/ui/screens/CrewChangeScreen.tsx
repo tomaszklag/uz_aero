@@ -177,7 +177,7 @@ export function CrewChangeScreen({
           ))}
         </Card>
 
-        {/* ── A: zmiana Duala - zdarzenie w tej samej sesji ────────────── */}
+        {/* ── A: zmiana Duala - zdarzenie w tej samej operacji ────────────── */}
         <Card
           title="A · Zmiana drugiego pilota (Dual)"
           header="inline"
@@ -188,7 +188,7 @@ export function CrewChangeScreen({
             <AppText variant="micro" tone="muted">
               Wychodzący DUAL
             </AppText>
-            {/* Odczyt, nie kontrolka - kto wychodzi, wynika ze stanu sesji. */}
+            {/* Odczyt, nie kontrolka - kto wychodzi, wynika ze stanu operacji. */}
             <View style={styles.readonly}>
               <AppText variant="mono" tone="secondary">
                 {currentDual != null
@@ -229,17 +229,17 @@ export function CrewChangeScreen({
           <Caption text="Zdarzenie crew_change · zapis natychmiastowy, wysyłka automatyczna gdy wróci sieć" />
         </Card>
 
-        {/* ── B: przekazanie samolotu - kończy sesję ───────────────────── */}
+        {/* ── B: przekazanie samolotu - kończy operację ───────────────────── */}
         <Card
           title="B · Przekazanie samolotu innemu PIC"
           header="inline"
-          headerRight={<Tag label="kończy Twoją sesję" tone="amber" />}
+          headerRight={<Tag label="kończy Twoją operację" tone="amber" />}
         >
           <AppText variant="body" tone="secondary" style={styles.explain}>
             <AppText variant="body" tone="primary" style={styles.explain}>
               Nie wybierasz tu nowego dowódcy.
             </AppText>
-            {' Dane sesji zapisuje wyłącznie telefon aktywnego PIC (zasada jednego piszącego '}
+            {' Dane operacji zapisuje wyłącznie telefon aktywnego PIC (zasada jednego piszącego '}
             {'urządzenia), więc nowy dowódca przejmuje samolot '}
             <AppText variant="body" tone="primary" style={styles.explain}>
               ze swojego telefonu.
@@ -294,7 +294,7 @@ export function CrewChangeScreen({
           tone="blue"
           title="Dlaczego dwie osobne sekcje?"
           text={
-            'Zmiana Dual to zwykłe zdarzenie w Twojej sesji - zapisujesz je sam, także bez zasięgu. ' +
+            'Zmiana Dual to zwykłe zdarzenie w Twojej operacji - zapisujesz je sam, także bez zasięgu. ' +
             'Zmiana PIC to przekazanie prawa zapisu innemu urządzeniu, więc nie da się jej wykonać ' +
             'za kogoś. Każdy pilot ma osobny licznik czasu blokowego. Przy samolotach z wymogiem ' +
             'załogi 2-osobowej (np. An-2) Dual nie może pozostać pusty.'

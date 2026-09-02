@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero - 01A Mój dzień (zero sesji)</title>
+<title>UZ Aero - 01A Mój dzień (zero operacji)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -75,7 +75,7 @@
   .scroll > * { flex-shrink:0; }
 
   /* ===== Log dnia - stan pusty =====
-     Od issue #42 log dnia to LISTA KAFELKÓW sesji (ten sam komponent, co na 12),
+     Od issue #42 log dnia to LISTA KAFELKÓW operacji (ten sam komponent, co na 12),
      więc pusty dzień jest po prostu listą bez kafelków: etykieta grupy, karta ze
      stanem pustym i sumy. Nagłówka `.day-head` nie ma - zastąpiła go etykieta
      `.group-lbl`, ta sama, co nad kartami na „Poprzednich dniach". */
@@ -90,10 +90,10 @@
   .empty-title { font-family:var(--font-display); font-size:19px; letter-spacing:1.5px; color:var(--text-secondary); }
   .empty-desc { font-size:11px; color:var(--text-muted); line-height:1.55; max-width:260px; }
 
-  /* Sumy doby: Blok i Loty - „- -" zamiast zer: brak sesji to niewiedza, nie wynik
+  /* Sumy doby: Blok i Loty - „- -" zamiast zer: brak operacji to niewiedza, nie wynik
      (wzorzec z 10A). Kafla „Służba" nie ma (issue #23 pkt 2). */
   .totals-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
-  /* Trzy kolumny od 2026-08-16 - Loty · Blok · Lot, tak jak na kafelku sesji. */
+  /* Trzy kolumny od 2026-08-16 - Loty · Blok · Lot, tak jak na kafelku operacji. */
   .totals { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1px; background:var(--border); }
   .total-cell { background:var(--surface); padding:10px 12px; display:flex; flex-direction:column; gap:3px; }
   .total-key { font-family:var(--font-mono); font-size:7px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
@@ -145,11 +145,11 @@
 
 <header class="canvas-label">
   <span class="film-strip">UZ AERO - 01A</span>
-  <span class="slug">mój dzień · zero sesji</span>
+  <span class="slug">mój dzień · zero operacji</span>
   <span class="canvas-meta"><span class="pulse"></span>Wariant ekranu 01</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup - Mój dzień, zero sesji">
+<main class="phone" role="region" aria-label="Mockup - Mój dzień, zero operacji">
   <div class="status-bar">
     <span>08:55</span>
     <span class="status-right">
@@ -178,7 +178,7 @@
 
       <!-- Pusty log dnia: pokazany, ale bez wartości - nie udajemy zer.
            Ta sama etykieta grupy i te same sumy, co na 01 - brakuje wyłącznie
-           kafelków sesji, bo nie ma jeszcze ani jednej. -->
+           kafelków operacji, bo nie ma jeszcze ani jednej. -->
       <div class="group-lbl">Log dnia</div>
 
       <div class="empty-card">
@@ -187,14 +187,14 @@
             <path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7l-8.2-1.8L3 7l7 4-2 3-4-1-2 2 4 2 2 4 2-2-1-4 3-2 4 7 2-1.2Z"/>
           </svg>
           <!-- TEKST ZAPOWIADA ZAWARTOŚĆ, NIE TŁUMACZY MECHANIKI (2026-08-16).
-               Poprzedni napis („Sesje pojawią się tu same, gdy przejmiesz samolot
+               Poprzedni napis („Operacje pojawią się tu same, gdy przejmiesz samolot
                i uruchomisz silnik. Nic nie trzeba otwierać.") łamał słownik
                („przejmiesz" = odebranie maszyny INNEMU pilotowi), zaprzeczał
                czynności, której w modelu nie ma („otwieranie dnia"), powtarzał
-               obietnicę spod zielonego przycisku i mówił „LOTU" w tytule, a „Sesje"
+               obietnicę spod zielonego przycisku i mówił „LOTU" w tytule, a „Operacje"
                w opisie. Tytuł nazywa FAKT o dobie, opis wylicza, co tu stanie. -->
           <span class="empty-title">DZIŚ BEZ LOTÓW</span>
-          <span class="empty-desc">Po pierwszym locie stanie tu karta sesji: czasy bloku, starty i lądowania, paliwo.</span>
+          <span class="empty-desc">Po pierwszym locie stanie tu karta operacji: czasy bloku, starty i lądowania, paliwo.</span>
         </div>
       </div>
 
@@ -231,7 +231,7 @@
       <!-- WPIS RĘCZNY JEST TU TAKŻE PRZY PUSTYM DNIU (zgłoszenie z urządzenia,
            2026-08-14). Do tej pory pusty dzień miał wyłącznie zielony przycisk -
            a pilot, który przyleciał bez telefonu (padła bateria, aparat został
-           w kurtce) i nie ma dziś ANI JEDNEJ sesji, nie miał wtedy jak wpisać lotu.
+           w kurtce) i nie ma dziś ANI JEDNEJ operacji, nie miał wtedy jak wpisać lotu.
            Wejście znikało dokładnie w stanie, dla którego wpis ręczny powstał (§3.8).
            Waga zostaje drugorzędna: to droga awaryjna, nie codzienna. -->
       <a href="15-reczny-lot.html" class="btn-secondary">
@@ -255,14 +255,14 @@
     <span class="vp-badge">01</span>
     <span class="vp-body">
       <span class="vp-name">Dzień w toku</span>
-      <span class="vp-when">Standard po pierwszej sesji: płaska oś czasu sesji doby (rejestracja jako informacja wiersza), sumy Blok / Loty.</span>
+      <span class="vp-when">Standard po pierwszej operacji: płaska oś czasu operacji doby (rejestracja jako informacja wiersza), sumy Blok / Loty.</span>
     </span>
   </a>
   <a class="vp-item active" href="01a-moj-dzien-pusty.html">
     <span class="vp-badge blue">01A</span>
     <span class="vp-body">
-      <span class="vp-name">Początek dnia - zero sesji</span>
-      <span class="vp-when">Pilot wszedł do aplikacji i nie przejął jeszcze nic: pusty log dnia („- -", nigdy zera), cały ekran prowadzi do przejęcia samolotu. Niczego się nie otwiera - dzień zaczyna się pierwszą sesją (issue #23).</span>
+      <span class="vp-name">Początek dnia - zero operacji</span>
+      <span class="vp-when">Pilot wszedł do aplikacji i nie przejął jeszcze nic: pusty log dnia („- -", nigdy zera), cały ekran prowadzi do przejęcia samolotu. Niczego się nie otwiera - dzień zaczyna się pierwszą operacją (issue #23).</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -281,7 +281,7 @@
   <a href="00-login.html">← 00 Login</a>
   <span>·</span>
   <a href="01-moj-dzien.html">01 Mój dzień</a>
-  <a href="01a-moj-dzien-pusty.html" class="active">01A Zero sesji</a>
+  <a href="01a-moj-dzien-pusty.html" class="active">01A Zero operacji</a>
   <a href="01c-moj-dzien-offline.html">01C Offline</a>
   <span>·</span>
   <a href="12-historia.html">12 Poprzednie dni</a>

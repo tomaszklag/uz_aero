@@ -149,7 +149,7 @@ export function TrackScreen({
 
   const header = (
     <ScreenHeader
-      title="ŚLAD SESJI"
+      title="ŚLAD OPERACJI"
       // Podtytuł 1:1 z mockupu 14: rejestracja · dzień i miesiąc · liczba lotów.
       // Bez „· UTC" (wzorzec nagłówków po issue #23) i bez godzin - te stoją przy
       // znacznikach na mapie i w nagłówku karty trasy.
@@ -160,7 +160,7 @@ export function TrackScreen({
       }
       size="md"
       onBack={navigation.goBack}
-      backLabel="Sesja"
+      backLabel="Operacja"
       right={<SyncChip />}
     />
   );
@@ -185,10 +185,10 @@ export function TrackScreen({
     return (
       <Screen scroll padded={false} header={header}>
         <View style={styles.content}>
-          <Card title="Nie ma takiej sesji">
+          <Card title="Nie ma takiej operacji">
             <AppText variant="body" tone="muted">
-              Tej sesji nie ma w rejestrze na tym telefonie. Wróć do „Mój dzień" i otwórz
-              sesję z listy.
+              Tej operacji nie ma w rejestrze na tym telefonie. Wróć do „Mój dzień" i otwórz
+              operację z listy.
             </AppText>
           </Card>
         </View>
@@ -284,7 +284,7 @@ export function TrackScreen({
             }
             flush
           >
-            {/* Sumy CAŁEJ sesji: dwa loty to jeden zapis, więc dystans i czas liczą się
+            {/* Sumy CAŁEJ operacji: dwa loty to jeden zapis, więc dystans i czas liczą się
                 przez oba. Rozbicie per lot stoi na osi czasu ekranu 10. */}
             <StatBlock title="Podsumowanie" first>
               {/* Bez licznika punktów: „1 412 z 1 508" opisywało JAKOŚĆ NAGRANIA, czyli
@@ -533,7 +533,7 @@ function MissingTrack({ view }: { view: SessionTrackView }) {
         </AppText>
       </Card>
 
-      <Card title="Co wiadomo o tej sesji" flush>
+      <Card title="Co wiadomo o tej operacji" flush>
         <StatGrid
           columns={2}
           cells={[

@@ -94,7 +94,7 @@ function issues(events: Event[], limits: AircraftLimits = LIMITS): RuleViolation
 
 const codes = (v: RuleViolation[]): string[] => v.map((x) => x.code);
 
-describe('sesja spójna', () => {
+describe('operacja spójna', () => {
   it('nie ma nic do powiedzenia', () => {
     expect(issues(healthy())).toEqual([]);
   });
@@ -149,7 +149,7 @@ describe('klamra biegu silnika', () => {
     expect(found.find((v) => v.code === 'EVENT_OUTSIDE_RUN')?.message).toContain('10:30');
   });
 
-  it('sesja bez pracy silnika (09C) nie ma czego naruszyć', () => {
+  it('operacja bez pracy silnika (09C) nie ma czego naruszyć', () => {
     const events = [claim(), preflight(), dayClose(150, 1234.5)];
     expect(codes(issues(events))).not.toContain('EVENT_OUTSIDE_RUN');
   });

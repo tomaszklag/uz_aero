@@ -8,13 +8,13 @@
 > ## ⚠ STATUS (aktualizacja 2026-08-11): przebudowa flow WYLĄDOWAŁA, słownik „duty" jest historią
 >
 > Nota z 2026-08-07 niżej opisywała okres przejściowy (design przebudowany, kod nie).
-> Od tego czasu: etapy B–D flow ✅, pivot „sesja = jeden bieg silnika" (2026-08-10) ✅,
+> Od tego czasu: etapy B–D flow ✅, pivot „operacja = jeden bieg silnika" (2026-08-10) ✅,
 > a **klamra służby została usunięta w całości** (issue #23, 2026-08-11 - `dutyStart`/
 > `dutyEnd`/`DUTY_END_BEFORE_START` nie istnieją; `projections/duty.ts` →
 > `projections/pilotDay.ts`, `projectDuty` → `projectPilotDay`). Każde wystąpienie
 > „dutyStart", „klamra służby", „wzlot" czy `leg_close` w dalszej części dokumentu
 > czytaj jako narrację HISTORYCZNĄ. Specyfikacją modelu jest `_main.md.txt` §3.6/§3.6a
-> i `CLAUDE.md` (sekcje „Sesja = jeden bieg silnika" i „Dzień pilota = lista sesji").
+> i `CLAUDE.md` (sekcje „Operacja = jeden bieg silnika" i „Dzień pilota = lista operacji").
 >
 > (Nota z 2026-08-07, zachowana jako historia:) Decyzja z 2026-08-06 (`_main.md.txt`
 > §3.6a) odwróciła fundament: dzień służby przestał być kontenerem na loty, jednostką
@@ -31,7 +31,7 @@ app/               aplikacja; w `src/domain` został shim `export * from '@uzaer
 server/            backend; importuje TĘ SAMĄ domenę
 ```
 
-**Po co wspólny pakiet:** serwer liczy sesje `projectSession` i sprawdza te same
+**Po co wspólny pakiet:** serwer liczy operacje `projectSession` i sprawdza te same
 inwarianty co telefon. Dwie implementacje rozjechałyby się przy pierwszej zmianie -
 a rozjazd klient/serwer w liczeniu czasów to błąd, którego nie widać do końca miesiąca.
 
@@ -42,20 +42,20 @@ i osobnej bazy odczytu - projekcje odświeżane synchronicznie w transakcji przy
 zdarzeń. Przy skali klubu każdy dodatkowy ruchomy element to koszt bez zysku.
 
 Stan po M2: `POST /events` (idempotencja po uuid, single-writer egzekwowany tożsamością
-z JWT **i** - po audycie - zgodnością z `pic_id` istniejącej sesji, plus walidacja
-payloadów per typ zdarzenia i `pg_advisory_xact_lock` per sesja), projekcja `sessions`
+z JWT **i** - po audycie - zgodnością z `pic_id` istniejącej operacji, plus walidacja
+payloadów per typ zdarzenia i `pg_advisory_xact_lock` per operacja), projekcja `sessions`
 odświeżana w transakcji przyjęcia, flagi łańcucha MH (`mh_gap` / `mh_regression` /
 `session_overlap` - czysta funkcja `server/src/domain/mhChain.ts`, tolerancja
 `MH_TOLERANCE_H` z domeny), `GET /aircraft/:id/state`, `GET /sessions/:uuid/sync-status`
-i `GET /reference` wzbogacone o claim/przekazanie z projekcji sesji (ETag liczy też
-znacznik sesji). Serwer projektuje sesje `projectSession` z `@uzaero/domain` - liczby
+i `GET /reference` wzbogacone o claim/przekazanie z projekcji operacji (ETag liczy też
+znacznik operacji). Serwer projektuje operacje `projectSession` z `@uzaero/domain` - liczby
 kanonicznego dnia wychodzą identyczne jak na ekranie 10 telefonu, co przybija test
 integracyjny.
 
 Stan po M3 (app ↔ serwer): `ServerPort` + adapter fetch (`infrastructure/api/`),
 `AuthService` na `expo-secure-store` (§3.0: wygasły token ≠ wylogowanie, logout blokowany
 niepustym outboxem), `SyncEngine` (§4.3: paczki ≤ 500, duplikaty = dostarczone, jedna
-rotacja tokenu, offline ≠ auth_expired) podpięty do store'u sesji (`attachSync` /
+rotacja tokenu, offline ≠ auth_expired) podpięty do store'u operacji (`attachSync` /
 `syncNow`), pętla okazji `useSyncLoop` (start, powrót z tła, przyrost outboxa, puls 60 s),
 ekran 00-login za bramką `AuthGate` i sekcja „Synchronizacja" w Ustawieniach (13) -
 kolejka, ostatnia wysyłka, uwagi serwera §4.5 i awaryjne ponaglenie; osobny ekran 11
@@ -85,7 +85,7 @@ push rekordu `dirty` przy każdej okazji (outbox preferencji - zmiana motywu NIG
 nie czeka na sieć), pull za bramą wieku 15 min, LWW po stemplu DECYZJI pilota
 w OBIE strony (adoptujemy wyłącznie stan ściśle nowszy; adopcję ogłasza
 `onApplied`, którym ThemeProvider przemalowuje ekran na żywo), offline/wygasła
-sesja/obcy profil = `skipped`. Po stronie serwera `pilots.theme` + `pilots.theme_updated_at` dokładają
+operacja/obcy profil = `skipped`. Po stronie serwera `pilots.theme` + `pilots.theme_updated_at` dokładają
 `pilots.theme`/`theme_updated_at` (prefs są 1:1 z pilotem - osobna tabela to
 przerost), a trasy `GET/PUT /me/prefs` (`http/routes/mobile/prefs.ts`, tożsamość WYŁĄCZNIE
 z tokenu) piszą przez `PrefsCommands` + `PgPilotPrefsRepo`, gdzie warunek LWW
@@ -99,20 +99,20 @@ stanów - `signed_out` → 00a login, `pin_setup` → „Ustaw PIN" (ten sam uk�
 mockupu konfiguracji nie ma, spec §3.0 wymaga PIN-u po provisioning), `locked` → 00
 odblokowanie (w 100% offline, solony SHA-256 w `expo-secure-store`; własna
 implementacja skrótu w `infrastructure/auth/sha256.ts` - powody w docblocku),
-`signed_in` → `ResumeGate`: otwarta sesja z `session_meta` (§5.2) wraca prosto do
+`signed_in` → `ResumeGate`: otwarta operacja z `session_meta` (§5.2) wraca prosto do
 kokpitu, inaczej ekran 01 (start dnia: „NOWY DZIEŃ LOTNY" → preflight, stopka ze
 stemplem cache referencyjnego).
 
 > ⚠ **ETAP C - dychotomia `ResumeGate` przestaje obowiązywać.** `01` nie jest już „startem
 > dnia" z jednym przyciskiem, tylko **ekranem domowym osiągalnym ZAWSZE** - także przy
-> otwartej sesji samolotu (kokpit ma do niego wyjście przez pasek sesji). `ResumeGate`
+> otwartej operacji samolotu (kokpit ma do niego wyjście przez pasek operacji). `ResumeGate`
 > może co najwyżej wybierać ekran startowy, nie odbierać dostępu do domu.
 >
 > Konsekwencja, którą trzeba rozwiązać osobno: argument bezpieczeństwa przy ekranie 12
 > („historia osiągalna tylko ze splasha, więc bez otwartego dnia w tle") upada razem z tą
-> dychotomią. Ładowanie zamkniętej sesji do store'u przy żywej sesji w tle to realne ryzyko
+> dychotomią. Ładowanie zamkniętej operacji do store'u przy żywej operacji w tle to realne ryzyko
 > nadpisania stanu - albo `12` czyta bez ładowania do store'u, albo potrzebna jest inna
-> bariera. Blokowanie wejścia na `01` przy otwartej sesji jest złym rozwiązaniem, bo łamie
+> bariera. Blokowanie wejścia na `01` przy otwartej operacji jest złym rozwiązaniem, bo łamie
 > regułę „wszystko wraca do 01".
 
 „Nie pamiętam PIN" nie czyści poświadczeń (nadpisuje
@@ -122,24 +122,24 @@ z mockupu 00 odłożony (wymagałby `expo-local-authentication`).
 Eksport arkuszy (§4.7, serwer): `application/common/export/` - `buildDaySheet` (czysta funkcja
 `DaySheetDay` → karta; nazwa `YYYY-MM-DD_SP-XXX` bajt w bajt zgodna z `sheetTabName`
 aplikacji, treść = ekrany 10/11, MH w formacie samolotu) i `DayExporter` (po commicie
-ingestu, dla sesji zamkniętych po przetworzeniu; spóźnione dane → rewizja +1).
+ingestu, dla operacji zamkniętych po przetworzeniu; spóźnione dane → rewizja +1).
 Dziennik `export_log` (append-only - historia rewizji to jedyny ślad rozjazdu
 arkusz↔rejestr); `sync-status.exportUrl` z ostatniej rewizji. Awarię Sheets łapie ingest -
 telefon dostał 200 za PRZYJĘCIE, arkusz to skutek, nie warunek.
 
-**Karta = DOBA SAMOLOTU** (decyzja 2026-08-07), nie sesja: agregat wszystkich
-sesji maszyny w dobie UTC wyznaczonej przez `session_claim` (`sessions.claim_time` -
+**Karta = DOBA SAMOLOTU** (decyzja 2026-08-07), nie operacja: agregat wszystkich
+operacji maszyny w dobie UTC wyznaczonej przez `session_claim` (`sessions.claim_time` -
 **nie `dutyStart`**, bo meldunek jest po §3.6a opcjonalny i bramka na nim odrzucałaby każdą
-sesję z przebudowanego flow). Sesje są WIERSZAMI karty, etykietowanymi `S1`, `S2`…
-chronologicznie; `Sesja` jest pierwszą kolumną tabeli lotów, bo numer lotu liczy się
-w obrębie sesji. Bramki: doba bez sesji (`no_events`) / nikt jeszcze nie zdał maszyny
-(`session_open`) / otwarta flaga `aircraft_overlap` - ale **wyłącznie dla sesji nią
+operację z przebudowanego flow). Operacje są WIERSZAMI karty, etykietowanymi `S1`, `S2`…
+chronologicznie; `Operacja` jest pierwszą kolumną tabeli lotów, bo numer lotu liczy się
+w obrębie operacji. Bramki: doba bez operacji (`no_events`) / nikt jeszcze nie zdał maszyny
+(`session_open`) / otwarta flaga `aircraft_overlap` - ale **wyłącznie dla operacji nią
 objętych** (`overlap_flag`), reszta doby idzie do arkusza z adnotacją „Niekompletna".
-Rewizja należy do PARY (doba, samolot): `export_log` ma po jednym wierszu na sesję
+Rewizja należy do PARY (doba, samolot): `export_log` ma po jednym wierszu na operację
 wchodzącą do rewizji, wszystkie z tym samym numerem, bo `sync-status` pyta o link po
-sesji. Blokada advisory (`ExportLogPort.lock`) obejmuje ten sam klucz co rewizja.
+operacji. Blokada advisory (`ExportLogPort.lock`) obejmuje ten sam klucz co rewizja.
 Skład doby czyta `SessionsProjectionPort.listByAircraftDay` (projekcja), a tabelę lotów -
-`projectSession` per sesja (strumień).
+`projectSession` per operacja (strumień).
 
 Karty mieszkają W BAZIE (decyzja 2026-07-28: nie czekamy na Google): adapter
 `PgSheets` (`infrastructure/pg/common/sheetsRepo.ts`) zapisuje dosłowne wiersze karty do
@@ -193,17 +193,17 @@ spreadem). **Zaległości audytu UI domknięte 2026-07-29** - ostatnia pozycja
 przy M3); nota na 13 mówi nową prawdę: profil pilota, wędruje między urządzeniami.
 
 Ekran 12 („Poprzednie dni"): `queries.historyDays()` grupuje CAŁY lokalny strumień
-po sesjach i projektuje każdą tym samym `projectSession` - karta i ekran 10 nie mogą
+po operacjach i projektuje każdą tym samym `projectSession` - karta i ekran 10 nie mogą
 się różnić liczbami. Reszta jest czystą funkcją `screens/historyDays.ts`:
-- **doba bieżąca odpada** (issue #35) - te sesje mieszkają na 01, na TAKICH SAMYCH
+- **doba bieżąca odpada** (issue #35) - te operacje mieszkają na 01, na TAKICH SAMYCH
   kafelkach (issue #42: `DayCard` + `screens/logic/sessionCard.ts`, jeden kształt na
-  oba ekrany; na 01 nagłówkiem jest numer sesji w dobie, bo data stoi w nagłówku
+  oba ekrany; na 01 nagłówkiem jest numer operacji w dobie, bo data stoi w nagłówku
   ekranu). Kotwicą doby jest URUCHOMIENIE silnika, awaryjnie przejęcie
-  (`sessionDay`) - ta sama reguła co w `projectPilotDay`, żeby sesja spod północy nie
+  (`sessionDay`) - ta sama reguła co w `projectPilotDay`, żeby operacja spod północy nie
   wpadła w dziurę między ekranami ani nie pokazała się w obu naraz;
-- **podział na grupy robi okno korekty**; sesja TRZYMANA nie jest historią (ma kokpit
+- **podział na grupy robi okno korekty**; operacja TRZYMANA nie jest historią (ma kokpit
   przez `ResumeGate`);
-- **obie grupy są klikalne** - „OTWÓRZ I POPRAW" i „ZOBACZ SZCZEGÓŁY" ładują sesję do
+- **obie grupy są klikalne** - „OTWÓRZ I POPRAW" i „ZOBACZ SZCZEGÓŁY" ładują operację do
   store'u i otwierają 10. Po oknie ekran 10 rysuje się w trybie podglądu
   (`readOnly = !correctionWindow(...).open`): bez „EDYTUJ DANE", czyli bez jedynych
   drzwi do korekty (issue #40 zabrał ołówki z osi), a od issue #42 bez całej stopki -
@@ -214,7 +214,7 @@ się różnić liczbami. Reszta jest czystą funkcją `screens/historyDays.ts`:
   „oczekuje" / „w trakcie wysyłania" bierze się z wyniku OSTATNIEJ próby synca, bo
   innego pojęcia „online" aplikacja nie ma.
 
-Plakietka okna korekty na 01 pokazuje najświeższą sesję w oknie - również z pominięciem
+Plakietka okna korekty na 01 pokazuje najświeższą operację w oknie - również z pominięciem
 doby bieżącej, inaczej obiecywałaby coś, czego pilot w 12 nie znajdzie. Od issue #42
 jedzie jako `badge` przycisku „POPRZEDNIE DNI" (`ActionButton`), a nie obok własnego
 linku: wejście w historię jest przyciskiem takim samym, jak dwa nad nim.
@@ -257,7 +257,7 @@ i wycena: `design/admin/ANALIZA.md`.
   awans byłby luką; rola przy odświeżeniu idzie z KONTA, nie ze starego tokenu, więc
   odebranie uprawnień działa od razu, a nie po wygaśnięciu 90-dniowego refresha.
 - ~~**Flaga nie ma jak się zamknąć.**~~ **ZROBIONE 2026-07-31** - przekrój 1, opis niżej.
-- ~~**Korekta administracyjna** musi stemplować zdarzenie `picId` PIC-a sesji (inaczej
+- ~~**Korekta administracyjna** musi stemplować zdarzenie `picId` PIC-a operacji (inaczej
   `WRITER_MISMATCH`), pomijać wyłącznie `CORRECTION_WINDOW_EXPIRED` i wywołać re-eksport.~~
   **ZROBIONE 2026-07-31** - przekrój 3, opis niżej.
 - ~~**Projekcja `sessions` nie niesie `operation`, `dutyStart` ani `client`**~~ **ZROBIONE
@@ -268,19 +268,19 @@ i wycena: `design/admin/ANALIZA.md`.
 
 > ⚠ **ETAP B/D - to jest najgroźniejsza mina całej przebudowy.**
 > `claim_time` **jest** `dutyStart` z `preflight_confirm`. Po usunięciu czasu meldowania
-> z przejęcia (2026-08-06) `dutyStart` będzie `null` dla praktycznie każdej sesji, a razem
+> z przejęcia (2026-08-06) `dutyStart` będzie `null` dla praktycznie każdej operacji, a razem
 > z nim wyzeruje się: klucz sortowania listy dni, kursor keyset (`claim_time DESC NULLS
 > LAST` - predykat trójgałęziowy zaprojektowany pod przypadek brzegowy, który stanie się
 > większościowy), indeks `idx_sessions_day`, filtr zakresu dat w A02, `openSessionsUndated`
 > w statystykach A08/A09 i kolumna „Dzień" w panelu. Sześciu konsumentów jednej kolumny.
 >
 > **Decyzja 2026-08-07** (`_main.md.txt`, log): `claim_time` = czas zdarzenia `session_claim`
-> (istnieje zawsze, jest pierwsze w sesji). Klamra służby przenosi się do osobnej projekcji
+> (istnieje zawsze, jest pierwsze w operacji). Klamra służby przenosi się do osobnej projekcji
 > per pilot per doba UTC. Wymaga migracji z backfillem i `rebuild-projections` - którego
 > niezerowy dry-run jest normalnie incydentem, a **tu będzie ogromny i oczekiwany**.
 - **Tabela audytu `admin_audit` nie istnieje.** Niezmienność wymuszamy uprawnieniami
   (`GRANT INSERT, SELECT` dla roli aplikacyjnej), nie dyscypliną programisty.
-- **Brak list i filtrów** (sesje, zdarzenia, flagi), zapisu kont i floty, agregatów
+- **Brak list i filtrów** (operacje, zdarzenia, flagi), zapisu kont i floty, agregatów
   statystycznych oraz sesji przeglądarkowej - `authorize` czyta dziś wyłącznie `Bearer`.
 - **Rate-limit na `/auth/*` awansuje** z listy wyżej: panel wystawia formularz logowania
   w przeglądarce.
@@ -305,7 +305,7 @@ i `TIME_OVERLAP`) i serwer produkuje wszystkie:
   rachunku - `ReferenceRepo` buduje całą migawkę floty z ETagiem i czyta poza nią).
 - `clock_drift` dostał własny moduł `domain/clockDrift.ts`, bo jest własnością
   POJEDYNCZEGO zdarzenia, nie łańcucha. Liczy się na strumieniu dnia, który ingest
-  i tak ma wczytany. **Jedna flaga na sesję, nie jedna na zdarzenie**: przestawiony
+  i tak ma wczytany. **Jedna flaga na operację, nie jedna na zdarzenie**: przestawiony
   zegar to własność telefonu na czas dnia, a dwadzieścia flag o tym samym zegarze
   nauczyłoby wyłącznie ignorowania skrzynki. Raportujemy maksimum rozjazdu i wskazujemy
   najgorszy zapis - bez tropu administrator ma flagę i nic więcej.
@@ -369,7 +369,7 @@ cyklem życia flagi, bo obie zmniejszają ryzyko wszystkiego, co po nich:
    a migracje 3 (`ADD CONSTRAINT`) i 6 (`ADD COLUMN`) nie mają `IF NOT EXISTS`, więc
    powtórka wywalała się i **blokowała start serwera**.
    Naprawa odsłoniła drugą wadę, której nie było widać w kodzie, a którą pokazał
-   prawdziwy silnik w teście: po nieudanej migracji jawne `BEGIN` zostawia sesję
+   prawdziwy silnik w teście: po nieudanej migracji jawne `BEGIN` zostawia operację
    w stanie *aborted transaction*, więc każde kolejne polecenie na tym połączeniu
    dostaje „current transaction is aborted" - jedna zła migracja zatruwała połączenie
    na resztę jego życia. Runner robi teraz jawny `ROLLBACK` przed przekazaniem błędu
@@ -451,13 +451,13 @@ administrator nie miał czym jej wprowadzić.
   „dwie puste listy". (3) `test/architecture.test.ts`: literał `'administrative'` wolno mieć
   DOKŁADNIE jednemu plikowi produkcyjnemu serwera.
 - **Korekta administratora NIE idzie przez `POST /events`.** Ta trasa należy do telefonu
-  i jej single-writer (podpis w paczce + porównanie z PIC-em istniejącej sesji) zostaje
+  i jej single-writer (podpis w paczce + porównanie z PIC-em istniejącej operacji) zostaje
   nietknięty. Panel dostaje własną trasę `POST /admin/api/sessions/:uuid/corrections`
   ze zdolnością `events.correct` (pisanie
   w cudzym rejestrze to inna odpowiedzialność niż wyjaśnianie rozbieżności).
-- **Zdarzenie stemplujemy PIC-em SESJI, nie administratorem** (`AdminCorrectionCommands`
+- **Zdarzenie stemplujemy PIC-em OPERACJI, nie administratorem** (`AdminCorrectionCommands`
   w `application/admin/commands/corrections.ts`). `picId` odpowiada na pytanie „czyja to
-  sesja", nie „kto to wpisał": konto administratora zerwałoby single-writer i zafałszowało
+  operacja", nie „kto to wpisał": konto administratora zerwałoby single-writer i zafałszowało
   atrybucję nalotu. Kto to zrobił, mówią `events.source_device` (`admin:<pilotId>`)
   i `admin_audit` - i tylko one. Powód korekty (pole obowiązkowe w A02b) idzie do audytu,
   nie do rejestru: rejestr opisuje lot, nie motywację człowieka przy biurku.
@@ -466,7 +466,7 @@ administrator nie miał czym jej wprowadzić.
   jest zwykłym zdarzeniem), przeliczenie projekcji `sessionRowFrom` z pełnego strumienia,
   ślad audytu, a po commicie wymuszony re-eksport karty (`export_log` +1 rewizja). Limity
   samolotu czytamy `AircraftConfigPort` W TEJ SAMEJ transakcji - tak jak ingest. Blokada
-  `pg_advisory_xact_lock` per sesja jest tu z tego samego powodu co w `IngestCommands`:
+  `pg_advisory_xact_lock` per operacja jest tu z tego samego powodu co w `IngestCommands`:
   bez niej paczka dosyłana równolegle przez telefon nadpisałaby wiersz `sessions` stanem
   sprzed korekty.
 - **Flag łańcucha NIE przeliczamy.** Ich wejściem są odczyty z `preflight_confirm`
@@ -481,12 +481,12 @@ administrator nie miał czym jej wprowadzić.
 > łańcucha trzeba będzie przeliczać albo świadomie zdecydować, że nie, i uzasadnić to
 > na nowo.
 - **Odmowy są wariantami wyniku, nie wyjątkami na granicy HTTP** (wzorzec `ResolveFlagOutcome`):
-  404 nieznana sesja, **422 `rule_violation`** z listą naruszeń. Rozdział 400 od 422 jest
+  404 nieznana operacja, **422 `rule_violation`** z listą naruszeń. Rozdział 400 od 422 jest
   celowy: 400 znaczy „popraw formularz", 422 - „domena odmawia i oto powód". To pierwsze
   422 w repo; wcześniej nie było endpointu, który odrzucałby poprawnie zbudowane żądanie
   regułą domenową.
   > ⚠ **ETAP D (2026-08-07): `400 day_open` USUNIĘTE.** Brzmiało „dzień otwarty = pilot
-  > poprawia sam w trybie edycji sesji". Po §3.6a zdanie samolotu jest OPCJONALNE, więc brak `day_close`
+  > poprawia sam w trybie edycji operacji". Po §3.6a zdanie samolotu jest OPCJONALNE, więc brak `day_close`
   > przestał znaczyć „dzień trwa" i bramka odmawiałaby korekty przede wszystkim tam, gdzie
   > jest potrzebna. Administrator nie jest NIGDY blokowany; kolizja z pilotem jedzie jako
   > `warnings` (`ADMIN_EDIT_SESSION_ACTIVE`, `ADMIN_EDIT_PILOT_WINDOW_OPEN`) w ciele
@@ -506,7 +506,7 @@ pierwszy, w którym trzeba było rozstrzygnąć, skąd biorą się jego liczby.
   i dubluje wiersze - najgorszy tryb awarii narzędzia diagnostycznego. Razem ~200 linii
   z testami (`test/sqlFilter.test.ts`, `test/keyset.test.ts`). `addOptional` rozróżnia
   `undefined` („nie ustawiono filtra") od `null` („ustawiono na nic"), a predykat kursora
-  ma gałąź dla `NULLS LAST`, bo `claim_time` jest NULL-owalne (sesja bez preflightu).
+  ma gałąź dla `NULLS LAST`, bo `claim_time` jest NULL-owalne (operacja bez preflightu).
 - **Migracja 11: `sessions.operation` i `sessions.client`** + `CHECK` na słowniku operacji
   (ten sam powód co przy `flags.type`: adapter wczytuje wartość do zamkniętej unii).
   `OperationType` jest teraz wyprowadzony z tablicy `OPERATION_TYPES` w `@uzaero/domain`
@@ -516,13 +516,13 @@ pierwszy, w którym trzeba było rozstrzygnąć, skąd biorą się jego liczby.
   samej liczby (docblock `application/common/mappers/sessionRow.ts` opisuje też konsekwencje tej nazwy).
 - **Przebudowa projekcji ze strumienia** (`AdminMaintenanceCommands.rebuildProjections`,
   CLI `npm run rebuild-projections`) - WARUNEK KONIECZNY każdej nowej kolumny projekcji: `upsert` uruchamia
-  dopiero następna paczka zdarzeń sesji, a dla dnia zamkniętego takiej paczki już nie
+  dopiero następna paczka zdarzeń operacji, a dla dnia zamkniętego takiej paczki już nie
   będzie, więc bez przeliczenia kolumna „Operacja" byłaby pusta dla całej historii.
   **Dry-run jest trybem domyślnym, a niezerowa różnica to INCYDENT, nie sukces**: projekcja
   jest odświeżana w tej samej transakcji co przyjęcie zdarzeń, więc w normalnej pracy
   różnicy być nie może, a zapis wyrówna liczby i skasuje jedyny ślad po przyczynie -
   dlatego `write` wymaga jawnego powodu, który trafia do audytu (ślad powstaje także dla
-  dry-runu). Listę sesji bierzemy z `events`, nie z `sessions`: wiersz, którego NIE MA,
+  dry-runu). Listę operacji bierzemy z `events`, nie z `sessions`: wiersz, którego NIE MA,
   jest najcięższym przypadkiem dryfu, a lista z projekcji nie umiałaby go zobaczyć.
   Nadpisywane wiersze biorą `pg_advisory_xact_lock` i są przeliczane po ponownym odczycie
   strumienia - inaczej narzędzie do wykrywania dryfu samo by go tworzyło, wyścigając się
@@ -530,7 +530,7 @@ pierwszy, w którym trzeba było rozstrzygnąć, skąd biorą się jego liczby.
 - **Trzy trasy odczytu** (`GET /admin/api/sessions`, `/sessions/:uuid`, `/flags`), wszystkie
   ze zdolnością `panel.access` - czyta każdy, kto ma wejście do panelu, piszą węższe
   zdolności. Odmowy są wariantami wyniku: uszkodzony kursor → **400 `bad_cursor`** (wartość
-  z zewnątrz, nie awaria serwera), nieznana sesja → 404.
+  z zewnątrz, nie awaria serwera), nieznana operacja → 404.
 - **Reguła twarda, teraz pilnowana MASZYNOWO:** *agreguj wartości projekcji, nigdy nie
   odtwarzaj projekcji SQL-em*. `test/contract.test.ts` liczy odczyty `sessionEvents`
   przez dekorator prawdziwego adaptera: lista dni ma ich ZERO, karta dnia - dokładnie
@@ -629,7 +629,7 @@ te wchodzą następnym przekrojem.
   **ZROBIONE 2026-08-01 razem z przekrojem A06** (`http/authorize.ts`:
   `authorizeAccount` czyta konto po kluczu głównym przy każdym żądaniu `/admin/api/*`;
   `adminRoute` buduje `Actor` z KONTA, nie z claimu). Konto nieaktywne daje 401, rola
-  bez zdolności 403 - obie decyzje natychmiast, a nie po wygaśnięciu 8-godzinnej sesji.
+  bez zdolności 403 - obie decyzje natychmiast, a nie po wygaśnięciu 8-godzinnej operacji.
   Bez tego przycisk „Deaktywuj" na A06 obiecywałby coś, co dzieje się dopiero pod
   wieczór. Przybite testami: `roles.test.ts` („konto DEAKTYWOWANE po wydaniu tokenu →
   401", „odebranie roli działa NATYCHMIAST") i `adminAccounts.test.ts` („DEAKTYWACJA
@@ -720,7 +720,7 @@ Wybory infrastrukturalne serwera (i dlaczego):
   je podnieść bez unieważniania haseł;
 - **JWT HS256 własnym modułem** (~70 linii na `createHmac`) - potrzebny dokładnie jeden
   wariant, a stały nagłówek wyklucza confusion algorytmów; refresh tokeny są OSOBNO,
-  nieprzezroczyste i rotowane (hash w bazie → wyciek tabeli nie daje sesji, jedno
+  nieprzezroczyste i rotowane (hash w bazie → wyciek tabeli nie daje operacji, jedno
   użycie unieważnia token);
 - **PGlite w testach** - Postgres w procesie Node: ten sam trik co `node:sqlite`
   w aplikacji; testy przechodzą przez prawdziwe endpointy (`app.inject`) i prawdziwy
@@ -740,7 +740,7 @@ Refaktor niczego z tego nie dokładał - **nazwał to i postawił granice**, ora
 
 ### Problem, który to rozwiązuje
 
-Kolejne audyty designu wyłapywały stany, które nigdy nie powinny powstać: paliwo rosnące w locie bez tankowania, cofnięty licznik motogodzin, `engine_stop` w powietrzu, dwa urządzenia piszące do jednej sesji. Wyłapywało je ludzkie oko i grep po mockupach. **Architektura ma sprawić, że takie stany są nie do zapisania** - nie „odradzane w dokumentacji".
+Kolejne audyty designu wyłapywały stany, które nigdy nie powinny powstać: paliwo rosnące w locie bez tankowania, cofnięty licznik motogodzin, `engine_stop` w powietrzu, dwa urządzenia piszące do jednej operacji. Wyłapywało je ludzkie oko i grep po mockupach. **Architektura ma sprawić, że takie stany są nie do zapisania** - nie „odradzane w dokumentacji".
 
 Dlatego istnieje warstwa `domain/rules`: 34 kody naruszeń, sprawdzane przy każdym zapisie.
 
@@ -791,7 +791,7 @@ root i nawigację. Ekran nie wie, skąd biorą się zależności.
 
 Kilkanaście czystych modułów (`sessionAxis`, `sessionBalance`, `refuelMath`, `cockpitLog`,
 `historyDays`, `syncStatus`, `operations`, `cockpitFuel`…) liczących to, co ekran pokazuje:
-oś czasu sesji, rachunki paliwa i motogodzin z werdyktem, arytmetykę dolewki, log cyklu,
+oś czasu operacji, rachunki paliwa i motogodzin z werdyktem, arytmetykę dolewki, log cyklu,
 listę dni, nazwy operacji. Bywa, że moduł
 rozstrzyga nie wartość, a PODZIAŁ RÓL między elementami ekranu - `cockpitFuel.ts` mówi,
 czy litry niesie pasek paliwa, czy podpis kafelka „Tankowanie", żeby ta sama liczba nie
@@ -852,12 +852,12 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `SkeletonScreen` | skeleton **ramy** dla bramek startu w `App.tsx` - nagłówek i blok treści, bez udawania konkretnego ekranu | `LOADERY.html` |
 | `CheckIcon` | ptaszek „✓" bez `react-native-svg` (obrócony prostokąt, 2 krawędzie) | `.aircraft-check` |
 | `Avatar` | kafelek z inicjałami (albo z kodem pilota - `code`), 40/32 px | `.pilot-avatar`, `.crew-avatar` |
-| `AppBar` | pasek **sesji samolotu**: samolot, trasa, wskaźnik łączności | `.app-bar` / `.compact-bar` |
+| `AppBar` | pasek **operacji samolotu**: samolot, trasa, wskaźnik łączności | `.app-bar` / `.compact-bar` |
 | `ScreenHeader` | nagłówek **formularza**: tytuł, krok, powrót, wariant wyśrodkowany | `.app-header` |
 | `IdentityStrip` | kto jest zalogowany (awatar, nazwisko, rola) | `.pilot-strip` |
 | `Card` | karta; nagłówek `bar` (kokpit) albo `inline` (formularz) | `.day-log` / `.section` / `.form-card` (00a) |
 | `SyncChip` | **jedyny** globalny wskaźnik sieci; online nic nie rysuje, offline SAM pill `OFFLINE · n` - tapnięcie otwiera arkusz szczegółów (kolejka, ostatni sync z `syncStamp`, wiek danych referencyjnych; issue #23 pkt 5) | reguła z `CLAUDE.md` |
-| `StatusChip` | chipy **stanu sesji** (GROUND, RUNNING, cache) | `.ground-chip` |
+| `StatusChip` | chipy **stanu operacji** (GROUND, RUNNING, cache) | `.ground-chip` |
 | `Tag` | **przypisy** przy pozycji listy/nagłówku (8–11 px) | `.pic-lock-tag`, `.optional-tag`, `.step-badge` |
 | `Banner` | trzy typy: `status` / `warning` / `edu` (zamykalny → mini-`?`) | taksonomia z `design-notes.md` |
 | `CardPicker` | wybór z **listy kart** (nigdy natywny select), układ jednowierszowy; pozycja `peek` = do podglądu, nie do wyboru (ikona oka w miejscu kółka) | `.aircraft-option`, `.crew-option` |
@@ -876,7 +876,7 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `LevelBar` | pasek poziomu wobec pojemności | wskaźnik paliwa w 02a |
 | `Trail` | oś czasu prowadząca do wartości przekazania | `.trail` |
 | `InlineNote` | przypis w kolorowym pudełku (mono 10 px + ikona) | `.certified-row`, `.none-box` |
-| `PeekBanner` | pasek „oglądasz cudzą sesję" ze źródłem i wiekiem danych | `.ro-banner` (04b) |
+| `PeekBanner` | pasek „oglądasz cudzą operację" ze źródłem i wiekiem danych | `.ro-banner` (04b) |
 | `OutboxGuard` | amber-box ochrony konta przy niepustym outboxie (§3.0) | `.outbox-guard` (00, 13) |
 | `RefDataStamp` | stempel cache referencyjnego: kropka + „sync HH:MM UTC" | `.ref-sync` (13; z 01 usunięty - issue #23 pkt 5: stempel mieszka w arkuszu SyncChipa) |
 | `Caption` | wyśrodkowany podpis pod akcją (mono 9 px) | `.takeover-hint`, `.actions-reason` |
@@ -894,7 +894,7 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `ResultBar` | samodzielny pasek wyniku z rachunkiem, na tonowanym tle | `.result-row` (06) |
 | `CalcBox` | wyliczenie zużycia paliwa z podaniem składników | `.calc-box` |
 | `GaugeHero`, `ScaleBar` | wskaźnik FOB z podziałką | `.fob-indicator` |
-| `SessionHero` | czas blokowy SESJI wielką czcionką + zakres (10). Nazwany `DutyHero` do etapu C5 - na karcie jednej maszyny bohaterem jest sesja, nie służba pilota | `.duty-hero` |
+| `SessionHero` | czas blokowy OPERACJI wielką czcionką + zakres (10). Nazwany `DutyHero` do etapu C5 - na karcie jednej maszyny bohaterem jest operacja, nie służba pilota | `.duty-hero` |
 | `DayCard` | karta dnia w historii; wariant `editable` = niebieska ramka + pas „OTWÓRZ I POPRAW" | `.day-card` (12) |
 | `CrewCard`, `CrewGrid` | karty załogi ze statystykami | `.crew-card` |
 | `DataTable` | tabela lotów z celem korekty ≥ 44 px | `.data-table` |
@@ -902,7 +902,7 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `CounterRow` | licznik sztuk z przyciskami 46 px | `.type-row` (05e) |
 | `DropSheet`, `ManualEventSheet` | arkusze zrzutu i wpisu ręcznego nad kokpitem | 05e / 05f |
 | `CorrectionSheet` | arkusz korekty CZASU: ±1 min, wpływ na czasy, powód, historia zmian, strefa „nie było" | 10e |
-| `ReadingCorrectionSheet` | arkusz korekty ODCZYTU (paliwo + MH przy przejęciu/zdaniu). Bez czasu i bez unieważnienia - sesja bez liczb przy zdaniu nie przekaże maszyny dalej | 10f |
+| `ReadingCorrectionSheet` | arkusz korekty ODCZYTU (paliwo + MH przy przejęciu/zdaniu). Bez czasu i bez unieważnienia - operacja bez liczb przy zdaniu nie przekaże maszyny dalej | 10f |
 | `DropCorrectionSheet` | arkusz korekty ZRZUTU: czas i skład razem; wysokość zostaje odczytem z GPS | 10g |
 | `AddEventSheet` | dopisanie brakującego faktu: siatka typów (bez klamry silnika), czas, uwaga | 10h |
 | `CorrectionHistorySheet` | „było → jest", kto, kiedy, powód + zapis pierwotny. Sam odczyt, także w podglądzie (10b) | 10i |
@@ -912,9 +912,9 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `ParamGrid` | sztywna siatka 2×2 parametrów GPS; `stale` (- - po utracie fixa, przypis **amber** jak baner - 2026-08-12) i `note` (skąd wartość) | `.param-grid`, `.param-stale-note` (05g) |
 | `NoGpsBanner` | baner-przyrząd braku fixa GPS (status): wiek fixa i co dalej. **Zawsze AMBER i bez przycisków** (2026-08-12) - trzy stany (rozruch / utrata / brak uprawnienia) różni TREŚĆ, bo dla pilota znaczą to samo; czerwień pochodziła z rejestru ryzyk §8, który stopniuje skutki, nie banery. „Zapisz zdarzenie" i „Lista ręczna" dublowały pasek akcji i kafelek z 04, a na przyrządzie czytały się jak drugi pasek | `.no-gps` (05g) |
 | `CockpitActions` | dolny pasek: zapis ręczny, zrzut (tylko dzień skokowy - bez `onDrop` przycisku NIE MA), STOP z powodem blokady | `.action-row` |
-| `SessionAxis` | **JEDYNY log zdarzeń w aplikacji** (issue #44): kolumna czasu, kropki na pionowej kresce, podpis pod nazwą, jedna rzecz w prawej krawędzi. Rysuje sesję i w kokpicie (04, 05), i w podglądzie (04B), i w rozliczeniu (10). Role dokłada wywołujący, nie przełącznik trybu: kokpit podaje wiersz `live` i znaczniki outboxa (`pending`), rozliczenie stopkę sum i - w edycji - `onCorrect` (wtedy wiersz rośnie do 44 px). **Zieleń ma tylko `live` i start** - historia jest neutralna | `.axis` (04, 05, 10) |
-| ~~`EventLog`~~ | USUNIĘTY przy issue #44. Był drugim logiem tej samej sesji: szyna z ikonami w plakietkach, chipy licznika i paliwa, pełnoszerokie pasy tankowania, separatory „Lot n". Ta sama sesja czytała się przez to dwa razy inaczej - inne nazwy zdarzeń, inne kolory tego samego lądowania, inne miejsce na te same liczby | - |
-| `ClaimStrip` | pasek sesji CUDZEGO samolotu (04B): czyja maszyna, od kiedy, ile lotów - **przyrząd, nie nawigacja**. Zastąpił `DutyStrip` w etapie C5 (czasu służby w kokpicie NIE MA, §3.2), a 2026-08-10 stracił wariant klikalny razem z paskiem we WŁASNYM kokpicie: z 04/05 nie prowadzi żadna droga na 01 (`CLAUDE.md`, „Kokpit jest stanem modalnym") | `.claim-strip` (04B) |
+| `SessionAxis` | **JEDYNY log zdarzeń w aplikacji** (issue #44): kolumna czasu, kropki na pionowej kresce, podpis pod nazwą, jedna rzecz w prawej krawędzi. Rysuje operację i w kokpicie (04, 05), i w podglądzie (04B), i w rozliczeniu (10). Role dokłada wywołujący, nie przełącznik trybu: kokpit podaje wiersz `live` i znaczniki outboxa (`pending`), rozliczenie stopkę sum i - w edycji - `onCorrect` (wtedy wiersz rośnie do 44 px). **Zieleń ma tylko `live` i start** - historia jest neutralna | `.axis` (04, 05, 10) |
+| ~~`EventLog`~~ | USUNIĘTY przy issue #44. Był drugim logiem tej samej operacji: szyna z ikonami w plakietkach, chipy licznika i paliwa, pełnoszerokie pasy tankowania, separatory „Lot n". Ta sama operacja czytała się przez to dwa razy inaczej - inne nazwy zdarzeń, inne kolory tego samego lądowania, inne miejsce na te same liczby | - |
+| `ClaimStrip` | pasek operacji CUDZEGO samolotu (04B): czyja maszyna, od kiedy, ile lotów - **przyrząd, nie nawigacja**. Zastąpił `DutyStrip` w etapie C5 (czasu służby w kokpicie NIE MA, §3.2), a 2026-08-10 stracił wariant klikalny razem z paskiem we WŁASNYM kokpicie: z 04/05 nie prowadzi żadna droga na 01 (`CLAUDE.md`, „Kokpit jest stanem modalnym") | `.claim-strip` (04B) |
 | `FuelStrip` | odczyt paliwa + szacunek wystarczalności; ton z `fuelTone` (amber godzinę przed rezerwą, czerwony na rezerwie). **Na 04 stoi tylko przy znanej normie** - bez niej byłby samą liczbą, tą samą co podpis kafelka „Tankowanie" (`logic/cockpitFuel.ts`, 2026-08-10) | `.fuel-strip` (04) |
 | `ActionGrid` | siatka 2×2 akcji naziemnych z podpisem stanu | `.action-grid` |
 | `ActionButton` | akcja z **przytrzymaniem 2 s** i blokadą **z podanym powodem** | `.btn-primary`, `.start-engine`, `.start-btn` (01) |
@@ -998,7 +998,7 @@ Ekran pyta o jedno: `const skeleton = useSkeleton(!loaded)`. Reszta to układ.
    === 0` znaczyło naraz „jeszcze nie wiem" i „nie ma ani jednego". Każdy odczyt listy
    potrzebuje osobnej flagi `loaded` - nie da się jej wyprowadzić z długości wyniku.
 2. **Skeleton nie zastępuje triady świeżości.** Dane z serwera mają własną skalę
-   `live` / `cache` / `brak` (§6 pkt 2 wymagań). „Serwer jeszcze nie potwierdził tej sesji"
+   `live` / `cache` / `brak` (§6 pkt 2 wymagań). „Serwer jeszcze nie potwierdził tej operacji"
    (11) jest ODPOWIEDZIĄ, nie oczekiwaniem - plamka obiecywałaby coś, co może nie przyjść.
    Tak samo `disabled` z podanym powodem (04B) zostaje tym, czym jest.
 3. **Skeleton nie zastępuje stanu pustego.** „DZIŚ BEZ LOTÓW" wolno napisać dopiero,
@@ -1007,7 +1007,7 @@ Ekran pyta o jedno: `const skeleton = useSkeleton(!loaded)`. Reszta to układ.
    oddaje `null` zamiast pustej doby.
 
 Wysokości plamek przepisujemy z komponentu, który zastąpią (`CardPicker` 56, `ActionButton
-size="md"` 48, `DayCard` 116) - dlatego skeleton listy sesji na 01 jest lokalnym
+size="md"` 48, `DayCard` 116) - dlatego skeleton listy operacji na 01 jest lokalnym
 komponentem ekranu obok `SessionRow`, a nie kolejnym wariantem w DS: geometria wiersza
 i jego skeleton mają się zmieniać w jednym pliku, w jednym commicie.
 
@@ -1143,7 +1143,7 @@ Dokument może się zdezaktualizować; test nie.
 Każda intencja pilota przechodzi tę samą drogę (`application/commands/sessionCommands.ts`):
 
 ```
-1. wczytaj strumień sesji z magazynu        stan trwały, nie ekranowy
+1. wczytaj strumień operacji z magazynu        stan trwały, nie ekranowy
 2. zbuduj projekcję  projectSession()       co wiemy o dniu
 3. ostempluj kandydata  repo.stampEvent()   uuid + oba zegary (device + GPS)
 4. sprawdź inwarianty  checkAppend()        domena, czysta funkcja
@@ -1171,7 +1171,7 @@ To najważniejsza decyzja w tej warstwie.
 Reguła kciuka: *niemożliwe → error; wymagające rozstrzygnięcia przez człowieka → warning*.
 
 **Punkt odniesienia łańcucha MH: `lastKnownMh(state)`, nie `state.mh.start`** (2026-08-07).
-Reguła powstała, gdy `leg_close` niósł odczyt (2026-08-06→08-10): sesja miała więcej niż
+Reguła powstała, gdy `leg_close` niósł odczyt (2026-08-06→08-10): operacja miała więcej niż
 jedno wskazanie licznika i porównywanie wyłącznie ze stanem przy przejęciu przepuszczało
 wartość niższą od tej, którą pilot sam wpisał chwilę wcześniej - formalnie „wyższą niż na
 starcie", faktycznie cofnięty licznik. Zasada zostaje po pivocie (ostatni ZNANY odczyt,
@@ -1188,7 +1188,7 @@ przy samolocie.
 
 ### Grupy naruszeń (`domain/rules/violations.ts`)
 
-sesja i single-writer · preflight · silnik i lot · paliwo · motogodziny · zrzuty · załoga · wpis ręczny i zamknięcie dnia · zegary.
+operacja i single-writer · preflight · silnik i lot · paliwo · motogodziny · zrzuty · załoga · wpis ręczny i zamknięcie dnia · zegary.
 
 Nazwy pokrywające się z flagami serwera (`MH_REGRESSION`, `FUEL_MISMATCH`, `CLOCK_DRIFT`) są **celowo** takie same - ten sam język po obu stronach.
 
@@ -1246,10 +1246,10 @@ saver zabija proces). Konstrukcja, warstwa po warstwie:
   false`); paczki bez żywego sinka idą przez `gps/backgroundFixRouting.ts` do
   `gps/headlessTraceWriter.ts`, który pisze do `gps_trace` **tym samym**
   `TraceRecorder` + `appendTrace` co ścieżka żywa - `TraceSync` i `replay.ts` nie
-  odróżniają trybów. Sesję wskazuje meta `active_session_uuid` (zapis w `claim`,
+  odróżniają trybów. Operację wskazuje meta `active_session_uuid` (zapis w `claim`,
   czyszczenie w `releaseAircraft` - zdanie SAMOLOTU, nie zamknięcie dnia - uzgodnienie
   w `loadSession`); bez niej paczka idzie do kosza - fix bez atrybucji mógłby trafić
-  do cudzej sesji.
+  do cudzej operacji.
 - **Uprawnienia**: usłudze pierwszoplanowej wystarcza while-in-use - o „w tle" NIE
   prosimy (na Androidzie 11+ to wycieczka do ustawień bez korzyści). Dialogi
   (lokalizacja + powiadomienia 13+) wychodzą przy zatwierdzeniu preflight na 02a
@@ -1281,7 +1281,7 @@ Aplikacja mobilna dla kilkudziesięciu pilotów. Poniższe rozwiązania rozwiąz
 - **Kontener DI** - zależności wstrzykujemy konstruktorem, jest ich kilka. Kontener dodałby magię i konfigurację, nic nie upraszczając.
 - **Mediator / event bus** - komendy wołamy wprost. Pośrednik utrudniłby czytanie ścieżki wykonania.
 - **Osobna baza read-model** - projekcje liczą się w pamięci w kilka ms (§5.2). Druga baza to drugie źródło prawdy do zsynchronizowania.
-- **Agregaty DDD z tożsamością encji** - sesja dnia to strumień zdarzeń, nie graf obiektów. `SessionState` + czyste reguły dają to samo bez ceremonii.
+- **Agregaty DDD z tożsamością encji** - operacja dnia to strumień zdarzeń, nie graf obiektów. `SessionState` + czyste reguły dają to samo bez ceremonii.
 - **Mappery DTO ↔ domena w obie strony** - typy zdarzeń są serializowalne; podwójne mapowanie to praca bez zysku.
 - **Generyczne repozytorium** - mamy jeden strumień zdarzeń i cache referencyjny; `EventsRepo` opisuje je wprost.
 
@@ -1336,7 +1336,7 @@ i przelicznik motogodzin. Podział plików idzie wzorcem `track/`: typy → czys
 | `nnls.ts` | regresja z więzem nieujemności - wyliczeniowy zbiór aktywny |
 | `fit.ts` | dopasowanie RAZEM z przedziałami ufności (t-Studenta, nie bootstrap) |
 | `policy.ts` | wszystkie progi i bramka publikacji |
-| `intervals.ts` | ekstrakcja interwałów z jednej sesji (korekty przed arytmetyką) |
+| `intervals.ts` | ekstrakcja interwałów z jednej operacji (korekty przed arytmetyką) |
 | `model.ts` | drabina degradacji faz + wykluczanie odstających |
 | `mhModel.ts` | przeliczniki MH + rozpoznanie typu licznika |
 | `summary.ts` | ilorazy sum, pasmo centylowe, trend miesięczny |
@@ -1366,9 +1366,9 @@ Dokładając metrykę:
    tę trasę odpytuje każdy telefon co kwadrans.
 
 > ⚠ **ETAP B/D - wyzwalacz przeliczenia normy znika razem z `day_close`.** Trzeba wskazać
-> nowy: zdanie samolotu (spójne z „przekazanie zamyka sesję") albo każdy `leg_close`
+> nowy: zdanie samolotu (spójne z „przekazanie zamyka operację") albo każdy `leg_close`
 > z odczytem (częściej, ale drożej). Osobno: `_main.md.txt` §3.6b opisuje ryzyko, że przy
-> opcjonalnym odczycie dzień skokowy da JEDEN interwał paliwowy na całą sesję - czyli
+> opcjonalnym odczycie dzień skokowy da JEDEN interwał paliwowy na całą operację - czyli
 > dokładnie przypadek, w którym `MAX_VARIANCE_INFLATION` odrzuci rozdział ziemia/lot.
 > Progów **nie stroimy w dyskusji**; rozstrzyga `consumptionReplay.ts`, ale musi dostać
 > dane w nowym kształcie, których nie ma nawet w scenariuszu demo.
@@ -1385,7 +1385,7 @@ przepuszcza wynik, w którym stawka ziemi wychodzi WYŻSZA niż stawka lotu. Dru
 między jego dwiema niewiadomymi znamy z góry - patrz docblok `trustworthy` w `mhModel.ts`.
 
 **Fazy pionowe cache'ujemy przy śladzie, nie w bazie.** `consumption/phaseTimeline.ts`
-zależy wyłącznie od nagrania, więc `<sesja>.phases.json` obok `<sesja>.ndjson` unieważnia
+zależy wyłącznie od nagrania, więc `<operacja>.phases.json` obok `<operacja>.ndjson` unieważnia
 się rozmiarem pliku źródłowego i wersją formatu - a korekta czasu startu (10e) go NIE
 unieważnia, bo okno lotu nie wchodzi do tego rachunku. Podbij `TIMELINE_VERSION`
 w `server/src/infrastructure/traces/fsPhaseTimeline.ts` przy każdej zmianie progów fazy.
@@ -1413,14 +1413,14 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 | `imu.test.ts` | matematyki czujników inercyjnych: pułapka „3 %", niezmienniczość względem ułożenia telefonu, zamrożenie filtra grawitacji z budżetem, agregaty okna, tor barometryczny |
 | `sqliteSchema.test.ts` | DDL na prawdziwym silniku SQLite - patrz niżej |
 | `format.test.ts` | formatowania i **parsowania** odczytów w obie strony |
-| `cockpitLog.test.ts` | tego, co kokpit dokłada do wspólnej osi sesji: wiersz „na żywo", znaczniki outboxa, stopka sum po zatrzymaniu silnika, bramka karty logu |
+| `cockpitLog.test.ts` | tego, co kokpit dokłada do wspólnej osi operacji: wiersz „na żywo", znaczniki outboxa, stopka sum po zatrzymaniu silnika, bramka karty logu |
 | `flightPhase.test.ts` | fazy lotu i prędkości pionowej - patrz niżej |
 | `refuelMath.test.ts` | wyliczeń tankowania: zużycie L/h, limit dolewki, podziałka |
-| `statsDay.test.ts` | odmian wspólnych ekranowi sesji: liczebnik lotów, rozbicie skoczków |
-| `sessionAxis.test.ts` | osi czasu sesji (10): kolejność zdarzeń, adresy uuid, kołowanie z samą godziną, numer lotu przy STARCIE i po prawej, brak ołówka i plakietki wpisu ręcznego (issue #40), stopka (blok / czas lotu / starty), sesja bez pracy silnika |
-| `sessionBalance.test.ts` | rachunków paliwa i MH: oczekiwanie liczone z PROPORCJI faz tej sesji, podłoga pasma z błędu odczytu, arkusz normy istniejący dokładnie razem z werdyktem, powód zamiast kreski, gdy nie ma z czym porównywać |
-| `sessionNotes.test.ts` | notatek sesji (10): notatka z zadania i uwagi wpisów ręcznych w jednej liście chronologicznej, pusty tekst nie udaje notatki |
-| `cockpitPeek.test.ts` | podglądu cudzej sesji: świeżość migawki, treść ostrzeżeń |
+| `statsDay.test.ts` | odmian wspólnych ekranowi operacji: liczebnik lotów, rozbicie skoczków |
+| `sessionAxis.test.ts` | osi czasu operacji (10): kolejność zdarzeń, adresy uuid, kołowanie z samą godziną, numer lotu przy STARCIE i po prawej, brak ołówka i plakietki wpisu ręcznego (issue #40), stopka (blok / czas lotu / starty), operacja bez pracy silnika |
+| `sessionBalance.test.ts` | rachunków paliwa i MH: oczekiwanie liczone z PROPORCJI faz tej operacji, podłoga pasma z błędu odczytu, arkusz normy istniejący dokładnie razem z werdyktem, powód zamiast kreski, gdy nie ma z czym porównywać |
+| `sessionNotes.test.ts` | notatek operacji (10): notatka z zadania i uwagi wpisów ręcznych w jednej liście chronologicznej, pusty tekst nie udaje notatki |
+| `cockpitPeek.test.ts` | podglądu cudzej operacji: świeżość migawki, treść ostrzeżeń |
 | `crewChange.test.ts` | atrybucji block time per pilot i blokad zmiany Duala |
 | `corrections.test.ts` | nakładania korekt (retime/void, „ostatnia wygrywa") i ich reguł |
 | `correctionAmend.test.ts` | korekty WARTOŚCI (issue #43): odczyty i skład zrzutu w projekcji, niezależność czasu od wartości, białej listy pól, regresji na analitykę zużycia |
@@ -1435,14 +1435,14 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 | `eventRestore.test.ts` | odtworzenia rejestru §4.9 (issue #32): odbudowa strona po stronie, pobrane NIE wchodzi do outboxa, dedup chroni wpis czekający w kolejce, kursor per pilot, przerwanie w połowie nie cofa postępu |
 | `claimMode.test.ts` | trybu przejęcia §4.4: `takeover_online` tylko z odpowiedzią serwera, żywy poprzednik wygrywa z cache, „już wolny" gasi przejęcie |
 | `pinCrypto.test.ts` | własnego SHA-256 (wektory NIST + node:crypto dla UTF-8) i solonego skrótu PIN-u - rekord nigdy nie niesie PIN-u wprost |
-| `historyDays.test.ts` | ekranu 12: doba bieżąca poza listą (i sesja spod północy po stronie doby uruchomienia), podział wg okna korekty, sesja trzymana poza historią, plakietka wysyłki z outboxa sesji w dwóch odmianach, plakietka na 01, odliczanie |
+| `historyDays.test.ts` | ekranu 12: doba bieżąca poza listą (i operacja spod północy po stronie doby uruchomienia), podział wg okna korekty, operacja trzymana poza historią, plakietka wysyłki z outboxa operacji w dwóch odmianach, plakietka na 01, odliczanie |
 | `traceRecorder.test.ts` | śladu kalibracyjnego: zapis fixów/markerów, retencja po zegarze urządzenia, księgowość wysyłki (offline zostawia wpisy), limit paczki |
 | `gpsLoss.test.ts` | napisów 05g (wiek fixa, baner, „- -" z czasem) i formatu pozycji DDM z ekranu 13 (półkule, zera wiodące) |
 | `themePrefsSync.test.ts` | uzgadniania motywu pilota przez `/me/prefs`: LWW po stemplu decyzji w obie strony, `dirty` jak outbox, brama wieku pulla, offline = `skipped` |
 | `themePrefsStore.test.ts` | rekordu motywu per pilot: izolacja pilotów na wspólnym telefonie, migracja starego klucza per telefon, odporność na zepsuty zapis |
 | `themeName.test.ts` | nazwy motywu z profilu (issue #72): dwa motywy w rejestrze, motyw wycofany schodzi do tej samej JASNOŚCI, nazwa nieznana i klucz z prototypu do domyślnego |
 | `locationToFix.test.ts` | translacji odczytu platformy: null-nie-zero (regres do `?? 0`), `−1` = brak, jednostki m→ft i m/s→kt, czas z fixa zamiast zegara urządzenia |
-| `backgroundFixRouting.test.ts` | routingu paczek z taska tła: żywy sink > zapis headless > kosz - fix bez sesji nie wchodzi do śladu |
+| `backgroundFixRouting.test.ts` | routingu paczek z taska tła: żywy sink > zapis headless > kosz - fix bez operacji nie wchodzi do śladu |
 | `backgroundModePolicy.test.ts` | usługi pierwszoplanowej GPS: adopcja bez restartu po headless, `retry-later` przy próbie startu z tła, sprzątanie osieroconej usługi |
 
 **Korekta to jedyne miejsce, gdzie prawda projekcji odkleja się od surowego
@@ -1461,13 +1461,13 @@ nie podlegają poprawce, czas z przyszłości odpada, a po `day_close` obowiązu
 
 **Trzecia akcja: `amend` (issue #43).** Poprawia WARTOŚĆ zamiast czasu - odczyt paliwa
 i motogodzin przy przejęciu (`preflight_confirm.reading`) i zdaniu
-(`day_close.finalReading`), skład zrzutu, notatkę sesji (`notes`) oraz DRUGIEGO PILOTA
+(`day_close.finalReading`), skład zrzutu, notatkę operacji (`notes`) oraz DRUGIEGO PILOTA
 (`preflight_confirm.dualId`). To ostatnie pole powstało razem z akcją: Dual żył wyłącznie
 w NAGŁÓWKU zdarzeń, a nagłówek opisuje chwilę zapisu i jest append-only, więc poprawka
-musiałaby przepisać go we wszystkich zdarzeniach sesji. Deklaracja z preflightu wygrywa
+musiałaby przepisać go we wszystkich zdarzeniach operacji. Deklaracja z preflightu wygrywa
 w `projectSession` z nagłówkiem - i tylko dzięki temu korekta działa WSTECZ. Te dwa pierwsze typy przestały być całkiem
 niekorygowalne, ale wyłącznie tą drogą: `retime`/`void` na nich nadal odrzuca
-`CORRECTION_TARGET_NOT_ALLOWED`, bo unieważnienie zostawiłoby sesję bez początku albo
+`CORRECTION_TARGET_NOT_ALLOWED`, bo unieważnienie zostawiłoby operację bez początku albo
 bez końca łańcucha MH. Białą listę pól per typ celu trzyma `AMEND_ALLOWED`
 w `rules/sessionRules.ts` (`CORRECTION_FIELD_NOT_ALLOWED`), a wartości przechodzą przez
 te same progi, co przy pierwszym zapisie - korekta nie jest furtką omijającą reguły.
@@ -1662,7 +1662,7 @@ fałszywa detekcja oznaczona przez człowieka, której rejestr zdarzeń nie widz
 Tor CAŁKOWICIE osobny od rejestru: tabela `gps_trace` (migracja 2 SQLite aplikacji, poza
 outboxem, własna księgowość `uploaded_at`), wysyłka `TraceSync` jako OSTATNI krok pętli
 okazji (jedna paczka ≤ 2000/okazję - ślad nie konkuruje o łącze z rejestrem dnia) na
-`POST /traces`; serwer (`FsTraceSink`) odkłada NDJSON per sesja w `TRACES_DIR`
+`POST /traces`; serwer (`FsTraceSink`) odkłada NDJSON per operacja w `TRACES_DIR`
 z dopisanym `pilotId` z JWT.
 
 **Od issue #47 nagranie jest PRZESYŁKĄ, nie zbiorem.** Potwierdzone wiersze kasuje
@@ -1689,7 +1689,7 @@ bo jej **objawem był brak objawu**.
 `projectSession` obsługuje czas blokowy DWIEMA drogami. Para `engine_start`/`engine_stop`
 tworzy wpis w `state.legs` (do etapu B2a tablica nazywała się `engineRuns`);
 `manual_log_entry` (pojedynczy wpis ręczny §3.8; CAŁY lot z ekranu 15 idzie od
-2026-08-16 kompletem zwykłych zdarzeń sesji, nie tym typem) dokłada odcinek
+2026-08-16 kompletem zwykłych zdarzeń operacji, nie tym typem) dokłada odcinek
 off-block→on-block **wprost do `blockTimeMs`, bez wpisu w `legs`**. Jest to sensowne - wpis ręczny nie opisuje cyklu
 silnika, tylko zaraportowany czas - ale każdy, kto liczy czas pracy silnika z samych
 `legs`, dostanie w dniu z wpisem ręcznym mianownik za mały.

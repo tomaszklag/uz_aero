@@ -13,6 +13,7 @@ export * from './events';
 export * from './flags';
 export * from './reference';
 export * from './projections';
+export * from './signature';
 export * from './rules';
 export * from './detection/thresholds';
 export * from './detection/geo';

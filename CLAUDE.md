@@ -19,27 +19,27 @@ i `@uzaero/format` (czasy UTC, czas blokowy, motogodziny, litry). Wszystkie trzy
 z RN/DOM. `app/src/ui/theme/tokens.ts` i `app/src/ui/format.ts` są shimami zgodności -
 kod ekranów importuje po staremu.
 Fazy z `docs/_main.md.txt` §10: 1–4 ✅ **wobec modelu sprzed 2026-08-06** (ekrany 00–12 komplet; sync end-to-end z eksportem §4.7 na kartach W BAZIE - `exported_sheets` + `GET /sheets/:tab`; adapter Google Sheets = opcjonalna przyszła podmiana portu `SheetsPort`, gdy będzie klucz) · **faza 8 = przebudowa flow, WYPRZEDZA fazę 5** (patrz niżej) · potem: 5 testy z pilotami, 6 wdrożenie + backlog audytu.
-Faza 7 **panel administracyjny (web)** - backend wdrożony w całości (role, `/admin/*`, cykl życia flagi, audyt) i **nietknięty**; klient web przepisany na **PANEL 2.0** (2026-08-30, gałąź `panel-2.0`): dwa moduły - **PILOCI i SAMOLOTY** - zamiast jedenastu ekranów, bez banerów wyjaśniających, bez kafli z licznikami, z paskiem górnym zamiast kolumny bocznej. Trzeci moduł - **DZIENNIK** (2026-08-30): trzy poziomy (flota w zakresie dat → grid sesji jednej maszyny → jedna sesja z osią zdarzeń), dziewięć kolumn zamiast siedemnastu, wyłącznie ODCZYTY - zero szacunków i prognoz, brak odczytu widoczny jako kreska. Wymagał migracji 3 (osiem kolumn projekcji: bieg silnika, koperta lotów, lotniska, dolewka paliwa, wpis ręczny, olej do lotu) i **przebudowy projekcji na istniejących wierszach**. Decyzje, reguły redakcyjne i liczby: **`docs/panel-2.0.md`**; szkielet warstw dalej w `docs/architektura-panelu-frontend.md`. Pozostałe ekrany (pulpit, dni, flagi, zdarzenia, eksporty, audyt, statystyki, analityka, konserwacja) usunięte z kodu i odzyskiwalne z historii gita - wracają pojedynczo, każdy przepisany pod reguły 2.0. **`design/admin/` (23 ekrany, `SZABLON.html`, `ANALIZA.md`) jest odtąd ARCHIWUM panelu 1.0**, nie specyfikacją.
+Faza 7 **panel administracyjny (web)** - backend wdrożony w całości (role, `/admin/*`, cykl życia flagi, audyt) i **nietknięty**; klient web przepisany na **PANEL 2.0** (2026-08-30, gałąź `panel-2.0`): dwa moduły - **PILOCI i SAMOLOTY** - zamiast jedenastu ekranów, bez banerów wyjaśniających, bez kafli z licznikami, z paskiem górnym zamiast kolumny bocznej. Trzeci moduł - **DZIENNIK** (2026-08-30): trzy poziomy (flota w zakresie dat → grid operacji jednej maszyny → jedna operacja z osią zdarzeń), dziewięć kolumn zamiast siedemnastu, wyłącznie ODCZYTY - zero szacunków i prognoz, brak odczytu widoczny jako kreska. Wymagał migracji 3 (osiem kolumn projekcji: bieg silnika, koperta lotów, lotniska, dolewka paliwa, wpis ręczny, olej do lotu) i **przebudowy projekcji na istniejących wierszach**. Decyzje, reguły redakcyjne i liczby: **`docs/panel-2.0.md`**; szkielet warstw dalej w `docs/architektura-panelu-frontend.md`. Pozostałe ekrany (pulpit, dni, flagi, zdarzenia, eksporty, audyt, statystyki, analityka, konserwacja) usunięte z kodu i odzyskiwalne z historii gita - wracają pojedynczo, każdy przepisany pod reguły 2.0. **`design/admin/` (23 ekrany, `SZABLON.html`, `ANALIZA.md`) jest odtąd ARCHIWUM panelu 1.0**, nie specyfikacją.
 **Analityka zużycia** (2026-08-05) - wdrożona end-to-end: domena `packages/domain/src/consumption/` (interwały paliwowe odczyt→odczyt, NNLS per faza, przelicznik MH z automatycznym rozpoznaniem obrotomierz/Hobbs, oś faz pionowych ze śladu), `GET /admin/api/fleet/:id/consumption` + ekran A10a/A10b w panelu, norma zużycia w aplikacji pilota (migracja serwera 19 + SQLite 4, ekrany 04/06/10). Reguła czytania strumienia poza listami: `docs/architektura-panelu-serwer.md` §7.7; przepis „nowa metryka analityki": `docs/architektura-kodu.md` §7.
 **Rozszerzona przy issue #38 (2026-08-12)**: norma telefonu niesie parę stawek fazowych
 (ziemia + powietrze) i przeliczniki MH, a `consumption/expectation.ts` liczy z nich
-oczekiwanie dla KONKRETNEJ sesji - patrz sekcja „Norma zużycia liczy się PER SESJA" niżej.
+oczekiwanie dla KONKRETNEJ operacji - patrz sekcja „Norma zużycia liczy się PER OPERACJA" niżej.
 **Progi analityki są DO KALIBRACJI** (`consumption/policy.ts`) - służy do tego `server/scripts/consumptionReplay.ts`, który puszcza realną historię przez ten sam kod, co serwer. Pierwszy przebieg (2026-08-05) znalazł pięć wad, każda ma test regresyjny; nie strojimy tych progów w dyskusji.
-**PIVOT MODELU 2026-08-10 - SESJA = JEDEN BIEG SILNIKA** (sekcja „Sesja = jeden bieg
+**PIVOT MODELU 2026-08-10 - OPERACJA = JEDEN BIEG SILNIKA** (sekcja „Operacja = jeden bieg
 silnika" niżej). Story użytkownika częściowo odwraca przebudowę z 2026-08-06: `leg_close`
 do usunięcia, ekran 09 scala się z 09b, odczyty przy zdaniu OBOWIĄZKOWE, 09a ginie.
 Etapy pivotu: **A' design+docs ✅** → **B' domena ✅** (SESSION_ALREADY_RAN; `leg_close`
 wycięty z domeny, app i serwera z mechaniczną kaskadą; okno korekty = 24 h od ZDANIA
 z domkniętą granicą; `CURRENT_SCHEMA_VERSION` z powrotem = 1; kanoniczny dzień 22 JUNE
-przebudowany na TRZY sesje z łańcuchem MH przez zdania) → **C' app ✅** (kokpit
-w dwóch stanach ground z hero ZDAJ SAMOLOT, log = płaska oś jednej sesji bez `DayLog`,
+przebudowany na TRZY operacje z łańcuchem MH przez zdania) → **C' app ✅** (kokpit
+w dwóch stanach ground z hero ZDAJ SAMOLOT, log = płaska oś jednej operacji bez `DayLog`,
 09b z przeglądem lotów i „ZDAJ I ZATWIERDŹ LOG", 01 bez karty claimu, NOWY ekran 15
 `ManualFlightScreen` + komenda `manualFlight` z próbą generalną przed zapisem) →
 **D' serwer+panel ✅** (oś zdarzeń i plakietki bez `leg_close`, okno korekty „od zdania"
-w banerach, słownik sesja/lot w kontraktach) → **E' seed+demo ✅** (generator: `DemoRun`
+w banerach, słownik operacja/lot w kontraktach) → **E' seed+demo ✅** (generator: `DemoRun`
 z tablicą LOTÓW zamiast tablicy wzlotów, `ConfirmStyle` i `gaugeNoise` wycięte, próba
-techniczna scala się z oblotem w JEDEN bieg, przerwany bieg = OSOBNA sesja z sufiksem
-uuid `-r2` i handoffem, dolewka PO zatrzymaniu jako materiał logu 04; 52 sesje).
+techniczna scala się z oblotem w JEDEN bieg, przerwany bieg = OSOBNA operacja z sufiksem
+uuid `-r2` i handoffem, dolewka PO zatrzymaniu jako materiał logu 04; 52 operacje).
 **PIVOT DOMKNIĘTY W KODZIE.** (Zdanie „`seed` + `seed:demo` stawiają świat od nowa"
 przestało obowiązywać przy issue #50 - patrz niżej.)
 **ISSUE #50 (2026-08-26) - SEED = SAM ADMINISTRATOR, DANE DEMO USUNIĘTE.**
@@ -54,12 +54,12 @@ kasuje wierszy i fikcyjne SP-AXA zostawałoby na telefonach testerów na zawsze.
 Kalibracja §3.6b poczeka na dane PRAWDZIWE z testów - po to one są.
 Baza dev wyczyszczona i postawiona od nowa (`docker rm -f uzaero-pg` → `db:up` → `seed`).
 **ISSUE #23 (2026-08-11) - KLAMRA SŁUŻBY USUNIĘTA W CAŁOŚCI** (sekcja „Dzień pilota =
-lista sesji" niżej). Zamyka temat odłożony przy pivocie: z modelu znikły
+lista operacji" niżej). Zamyka temat odłożony przy pivocie: z modelu znikły
 `preflight_confirm.dutyStart`, `day_close.dutyEnd`, reguła `DUTY_END_BEFORE_START`
 i projekcja klamry (`projections/duty.ts` → `projections/pilotDay.ts`,
 `projectDuty` → `projectPilotDay`); z designu ekran `01b` i sekcja „Służba" na 01
 (w zamian wariant `01c` - offline + arkusz szczegółów syncu). Ekran 01 = płaski log
-sesji (bez grupowania po maszynie) + sumy Blok/Loty; nagłówki wg jednego wzorca
+operacji (bez grupowania po maszynie) + sumy Blok/Loty; nagłówki wg jednego wzorca
 (tytuł do lewej, ustawienia po prawej); SyncChip = sam pill z arkuszem pod tapnięciem.
 Opisy etapów B–D niżej zostają jako historia - częściowo już cofnięte.
 **PRZEBUDOWA FLOW** (od 2026-08-06, gałąź `poc-zmiany-flow`) - dzień służby przestał
@@ -105,14 +105,14 @@ i tymczasowy: mockupy prowadzą, kod dogania. **Nie „naprawiaj" ekranów RN po
   czyli materiał, na którym `consumptionReplay.ts` da się uruchomić sensownie. Pierwszy
   przebieg (bez strojenia) pokazał: próg 30 min stoi 2 min pod typowym wzlotem skokowym;
   dzień skokowy NIE ROZDZIELA ziemi od lotu przy żadnej liczbie danych (stała proporcja
-  faz → `collinear`), rozdział wychodzi tylko na maszynie z różnorodnym ruchem; sesja
+  faz → `collinear`), rozdział wychodzi tylko na maszynie z różnorodnym ruchem; operacja
   „skrupulatna" produkuje do 25% interwałów degeneracyjnych między ostatnim `leg_close`
   a zdaniem samolotu. **Progów nadal NIE stroimy w dyskusji** - to osobna decyzja
   po kalibracji na tych danych (`docs/_main.md.txt` §3.6b).
 - **Etap C** `app/` (ekrany 1:1 z nowych mockupów) - w toku:
   - **C1 ✅** komendy i store: `closeLeg`, `releaseAircraft` (dawne `dayClose`).
   - **C2 ✅** ekran 01 „Mój dzień" - `logic/myDay.ts` + `logic/heldAircraft.ts`.
-    Dwa modele, bo to dwie OSIE: służba pilota przekrojowo po maszynach vs jedna sesja.
+    Dwa modele, bo to dwie OSIE: służba pilota przekrojowo po maszynach vs jedna operacja.
   - **C3 ✅** ekrany 09/09A (`LegCloseScreen`) i 09B/09C (`ReleaseAircraftScreen`) -
     po jednym pliku na parę, bo wariant to STAN tego samego ekranu, nie osobny ekran:
     seria skokowa włącza się obecnością zrzutu, 09C brakiem wzlotów. Logika w
@@ -121,16 +121,16 @@ i tymczasowy: mockupy prowadzą, kod dogania. **Nie „naprawiaj" ekranów RN po
     USUNIĘTY razem z trasą w nawigacji - zapis `session_claim` + `preflight_confirm`
     przeniósł się pod „PRZEJMIJ I LEĆ" na 02a. Godziny meldunku nie ma już ani w szkicu,
     ani w payloadzie. Konsekwencja: `dutyStart` w projekcji jest odtąd zwykle `null`,
-    więc czytelnicy przeszli na `claimedAt` (historia, sortowanie sesji, nazwa karty
-    arkusza, załoga). **Karta historii mierzy SESJĘ (przejęcie → zdanie), nie „Duty"** -
+    więc czytelnicy przeszli na `claimedAt` (historia, sortowanie operacji, nazwa karty
+    arkusza, załoga). **Karta historii mierzy OPERACJĘ (przejęcie → zdanie), nie „Duty"** -
     służba należy do pilota i potrafi objąć kilka maszyn.
-  - **C5 ✅** kokpit i nawigacja. `DutyStrip` → **`ClaimStrip`** (pasek sesji: czyja
+  - **C5 ✅** kokpit i nawigacja. `DutyStrip` → **`ClaimStrip`** (pasek operacji: czyja
     maszyna, od kiedy, ile wzlotów). **Od 2026-08-10 pasek został tylko w 04B** - patrz
     „Kokpit jest stanem modalnym" niżej. `DutyHero` → **`SessionHero`** na ekranie 10, gdzie bohaterem jest czas
-    blokowy sesji, nie służba. **`SplashScreen` i `EndOfDayScreen` USUNIĘTE** - 01 jest
+    blokowy operacji, nie służba. **`SplashScreen` i `EndOfDayScreen` USUNIĘTE** - 01 jest
     ekranem domowym, a zdanie samolotu zastąpiło zamknięcie dnia. STOP ENGINE prowadzi
     na 09. Wznowienie po restarcie w `navigation/resumeTarget.ts`: pytamy o `closed`,
-    bo `dutyEnd` po §3.6a nie odróżnia już sesji trwającej od zdanej.
+    bo `dutyEnd` po §3.6a nie odróżnia już operacji trwającej od zdanej.
   - **ETAP C DOMKNIĘTY** - aplikacja jest spójnie klikalna: 01 → 02/02e/02a → kokpit →
     09 → 09b → 01.
 - **Etap D ✅ DOMKNIĘTY** serwer + panel:
@@ -139,12 +139,12 @@ i tymczasowy: mockupy prowadzą, kod dogania. **Nie „naprawiaj" ekranów RN po
     więc potwierdzenia wzlotów wracały jako `400 bad_payload` - cały etap C nie miał
     jak się zsynchronizować.
   - **D3 ✅** karta arkusza = DOBA SAMOLOTU (migracja 23): jedna karta na (doba, maszyna),
-    sesje jako jej wiersze z kolumną `Sesja`; rewizja per karta, bramka flagi zawężona
-    do sesji objętych flagą. Stary eksporter odrzucał KAŻDĄ sesję z nowego flow
+    operacje jako jej wiersze z kolumną `Operacja`; rewizja per karta, bramka flagi zawężona
+    do operacji objętych flagą. Stary eksporter odrzucał KAŻDĄ operację z nowego flow
     (bramka `dutyStart == null → no_preflight`).
   - **D4 ✅** `session_overlap` → `aircraft_overlap` (bramka arkusza) + `pilot_overlap`
     (nakładka grafiku, nowy `server/src/domain/pilotOverlap.ts`), migracja 22.
-    Zetknięcie sesji co do minuty NIE jest nakładką - to normalny dzień po §3.6a.
+    Zetknięcie operacji co do minuty NIE jest nakładką - to normalny dzień po §3.6a.
   - **D2 ✅** bramka `400 day_open` **USUNIĘTA** (decyzja 2026-08-07): administrator może
     edytować ZAWSZE. `DayStillOpen` i `reason: 'day_open'` znikły z komendy i query
     korekt, trasa podglądu ma dziś JEDNĄ odmowę (404). Zamiast odmowy jedzie
@@ -157,7 +157,7 @@ i tymczasowy: mockupy prowadzą, kod dogania. **Nie „naprawiaj" ekranów RN po
     się nie budował). Napisy poszły za nazwami: „duty 6:24" → „zajęty 6:24" na pulpicie,
     „Dzień otwarty" → „Samolot zajęty" na A02, kafel „Czas służby (duty)" na A02a
     zastąpiony przez „Samolot zajęty" (przejęcie → zdanie) - służba należy do PILOTA
-    i obejmuje kilka maszyn, więc na karcie JEDNEJ sesji była pomyłką kategorii.
+    i obejmuje kilka maszyn, więc na karcie JEDNEJ operacji była pomyłką kategorii.
     Kolumna „Dzień" na A02 i A05 niesie teraz godzinę przejęcia, bo dwie zmiany dnia
     dzielą datę, a na A05 także NAZWĘ KARTY (karta = doba samolotu). Skrzynka flag
     rozróżnia `aircraft_overlap` (bramka arkusza) od `pilot_overlap` (grafik pilota).
@@ -171,14 +171,14 @@ i tymczasowy: mockupy prowadzą, kod dogania. **Nie „naprawiaj" ekranów RN po
     już tylko w narracji historycznej (legenda A03, `index.html`, `ANALIZA.md`).
 - **Dane demo i schemat bazy (2026-08-08)** - dwa zadania po etapie D:
   - **Generator demo przebudowany** (`server/scripts/demo/`): `dayStream.ts` → `sessionStream.ts`,
-    `DemoDay` → `DemoSession`. (HISTORIA sprzed pivotu - ówczesna sesja miała TABLICĘ
-    wzlotów i `leg_close`; od etapu E' pivotu sesja ma JEDEN bieg `DemoRun` z tablicą
+    `DemoDay` → `DemoSession`. (HISTORIA sprzed pivotu - ówczesna operacja miała TABLICĘ
+    wzlotów i `leg_close`; od etapu E' pivotu operacja ma JEDEN bieg `DemoRun` z tablicą
     lotów, patrz status na górze.) Payloady NIE niosą klamry służby, jest
-    `noFlightReason` (09C), dwie zmiany jednej maszyny w dobie i zetknięcie sesji co do
-    minuty. **52 sesje, 6 typów flag na 7 egzemplarzach** - patologie są
+    `noFlightReason` (09C), dwie zmiany jednej maszyny w dobie i zetknięcie operacji co do
+    minuty. **52 operacje, 6 typów flag na 7 egzemplarzach** - patologie są
     mniejszością (panel ma pokazywać normalny klub, nie klub, w którym wszystko zepsute).
     `pilot_overlap` spadł z 5 do 1 ZAMIERZONEGO; regułę, która to trzyma („pilot z otwartą
-    sesją nie siada do innej maszyny"), opisuje docblock `scenario.ts`.
+    operacją nie siada do innej maszyny"), opisuje docblock `scenario.ts`.
   - **Migracje ZGNIECIONE w jedną bazową** (`SCHEMA_VERSION = 1`). Uzasadnienia z 23
     docbloków przeniesione do komentarzy SQL przy kolumnach; historia pułapek (trzy
     podejścia do `NULLS LAST`, sprostowania `UNIQUE` dziennika eksportu, dwa przesunięcia
@@ -315,48 +315,48 @@ formularza z powrotem („Wróć" ← tytuł → badge kroku). Nie projektuj ekr
 po lewej ani tytułem na środku bez powrotu - 01 był takim wyjątkiem i przestał nim być.
 
 ## Strefa czasowa
-**UTC jest domyślnym czasem wszędzie** - log samolotu, sesje dnia, T/O, LDG, tankowanie, arkusz. Czas nieoznaczony = UTC.
+**UTC jest domyślnym czasem wszędzie** - log samolotu, operacje dnia, T/O, LDG, tankowanie, arkusz. Czas nieoznaczony = UTC.
 LT nie pojawia się już nigdzie: jedynym miejscem był meldunek klamry służby na `01`, usunięty razem z klamrą (issue #23).
 Logi i tabele oznaczaj jawnie („Log dnia · UTC", „Lista lotów · czasy UTC").
 
 ## Screen flow (kolejność ekranów - model 2026-08-10, bez klamry od issue #23)
 ```
-00-login → 01-moj-dzien (EKRAN DOMOWY - płaski log sesji dnia; warianty: 01a pusty,
+00-login → 01-moj-dzien (EKRAN DOMOWY - płaski log operacji dnia; warianty: 01a pusty,
   01c offline + arkusz szczegółów synchronizacji)
 01-moj-dzien → 02-samolot → 02e-zadanie → 02a-liczniki → „ROZPOCZNIJ LOT"
 → 04a-kokpit PRZED URUCHOMIENIEM (tankowanie / załadunek skoczków w dniu skokowym /
   zmiana załogi / zdanie bez lotu 09c)
-→ START ENGINE → 05-cockpit-running (wiele startów i lądowań = LOTÓW w jednej sesji)
+→ START ENGINE → 05-cockpit-running (wiele startów i lądowań = LOTÓW w jednej operacji)
 → STOP ENGINE → 04-kokpit PO ZATRZYMANIU (hero = ZDAJ SAMOLOT; tankowanie nadal;
   drugiego START ENGINE NIE MA - kolejny lot to nowe przejęcie)
-→ 09b-zdaj-samolot (odczyty paliwa i MH OBOWIĄZKOWE = zatwierdzenie logu sesji;
+→ 09b-zdaj-samolot (odczyty paliwa i MH OBOWIĄZKOWE = zatwierdzenie logu operacji;
   wariant 09c: zdanie bez lotu) → 01-moj-dzien
 01-moj-dzien → 15-reczny-lot (wpis CAŁEGO lotu po fakcie - STEPPER 4 kroków od
   2026-08-16: 15 data+samolot+Dual (data pierwsza - issue #58) → 15a zadanie →
   15b czasy i loty → 15c liczniki; arkusze: 15d czas zdarzenia na TimeStepperze,
   15e data lotu na KALENDARZU miesięcznym)
-01-moj-dzien → 12-historia („Poprzednie dni" - sesje spoza dzisiejszej doby);
-  KAFELEK sesji → 10-statystyki (ekran SESJI: detale i korekty TEJ sesji)
+01-moj-dzien → 12-historia („Poprzednie dni" - operacje spoza dzisiejszej doby);
+  KAFELEK operacji → 10-statystyki (ekran OPERACJI: detale i korekty TEJ operacji)
 12-historia → karta w oknie 24 h → 10-statystyki; karta po oknie → 10b (ten sam
   ekran w trybie PODGLĄDU: bez „Edytuj dane")
 10-statystyki → „EDYTUJ DANE" → 10d (TRYB EDYCJI tego samego ekranu - issue #43;
   ołówek przy każdym wierszu osi, arkusze: 10e czas zdarzenia · 10f paliwo i MH przy
   przejęciu/zdaniu · 10g zrzut · 10h dodaj wpis · 10i historia zmian)
   · PLAKIETKA WERDYKTU → 10c (arkusz normy)
-04-kokpit PO ZATRZYMANIU → kafelek „Popraw dane sesji" → 10d → powrót do KOKPITU
+04-kokpit PO ZATRZYMANIU → kafelek „Popraw dane operacji" → 10d → powrót do KOKPITU
   (jedyne wejście w edycję sprzed zdania samolotu; kokpit jest modalny)
 EKRANÓW 08 I 04C NIE MA (usunięte 2026-08-13, issue #43) - lista ręczna była drugim
-  widokiem tej samej sesji, a arkusz korekty żyje dalej jako 10e
-10-statystyki → MINIATURA ŚLADU → 14-slad (pełny ślad CAŁEJ sesji: kołowanie,
+  widokiem tej samej operacji, a arkusz korekty żyje dalej jako 10e
+10-statystyki → MINIATURA ŚLADU → 14-slad (pełny ślad CAŁEJ operacji: kołowanie,
   wszystkie starty i lądowania, profil pionowy z przerwą na ziemi).
   EKRANU 16 NIE MA (usunięty 2026-08-12, issue #38) - szczegóły pojedynczego lotu
-  wróciły na oś czasu sesji, bo dublowały ekran wyżej
+  wróciły na oś czasu operacji, bo dublowały ekran wyżej
 EKRANU 11 NIE MA (usunięty 2026-08-12) - stan wysyłki, uwagi serwera i awaryjne
   „Synchronizuj teraz" to SEKCJA w Ustawieniach (13); kolejkę i ostatnią wysyłkę
   pokazuje też arkusz pod SyncChipem
 ```
 **Wszystko wraca do 01, nie do kokpitu.** Dzień pilota nie ma „startu" ani „końca" jako
-kroków flow: zaczyna się pierwszą sesją i NICZYM się nie domyka - „Zamknij dzień",
+kroków flow: zaczyna się pierwszą operacją i NICZYM się nie domyka - „Zamknij dzień",
 ekran 01b i klamra służby zostały usunięte (issue #23). Wyjście działa też offline -
 niepusty outbox nigdy nie więzi pilota na ostatnim ekranie (§4.1).
 
@@ -367,7 +367,7 @@ akcje ground (06/07/08) i 09 wracają do kokpitu. Wyjątkiem są ustawienia (13)
 wraca się tym samym krokiem.
 Konsekwencje przy każdej zmianie kokpitu:
 - **nie dokładaj linków na 01** - ani paska, ani przycisku, ani wpisu w nagłówku. Pasek
-  sesji `ClaimStrip` z linkiem „Mój dzień →" był jedyną taką drogą i został USUNIĘTY
+  operacji `ClaimStrip` z linkiem „Mój dzień →" był jedyną taką drogą i został USUNIĘTY
   z 04/04A (żyje wyłącznie w 04B, gdzie opisuje CUDZĄ maszynę i nie prowadzi nikąd)
 - z tego samego powodu kokpit nie powtarza tego, co mówi już pasek górny (maszyna, trasa)
   ani nagłówek logu dnia (liczba cykli) - 04A pokazywał tak „jeszcze żadnego wzlotu"
@@ -381,82 +381,151 @@ Konsekwencje przy każdej zmianie kokpitu:
   `usePreventRemove(holdsAircraft(projection), …)` i zamiast wyjścia pokazuje arkusz 04d
   („TRZYMASZ SP-AXA" → ZOSTAŃ / ZDAJ SAMOLOT). `usePreventRemove`, nie `BackHandler`,
   bo obejmuje także gest cofania krawędzią. Warunek pyta o TRZYMANIE maszyny, nie
-  o istnienie sesji - inaczej zablokowałby powrót 09B → 01, który w stosie zdejmuje
+  o istnienie operacji - inaczej zablokowałby powrót 09B → 01, który w stosie zdejmuje
   kokpit. Blokada bez komunikatu jest zakazana (§6 pkt 3: przycisk, który nic nie robi,
   wygląda jak zawieszona aplikacja)
 
-## Sesja = jeden bieg silnika (decyzja 2026-08-10)
+## Operacja = jeden bieg silnika (decyzja 2026-08-10)
 Story użytkownika zdefiniował model na nowo; częściowo odwraca §3.6a z 2026-08-06:
-- **sesja** = od URUCHOMIENIA do ZATRZYMANIA silnika - dokładnie jeden bieg na sesję.
-  **Lot** = od startu do lądowania; w jednej sesji wiele lotów (w tym touch and go).
-  Słowo **„wzlot" jest WYCOFANE** ze słownika - zlało się z sesją.
+- **operacja** = od URUCHOMIENIA do ZATRZYMANIA silnika - dokładnie jeden bieg na operację.
+  **Lot** = od startu do lądowania; w jednej operacji wiele lotów (w tym touch and go).
+  Słowo **„wzlot" jest WYCOFANE** ze słownika - zlało się z operacją.
 - po STOP ENGINE **nie ma drugiego startu**: hero kokpitu zmienia się w „ZDAJ SAMOLOT"
   (09b). Kolejny lot = NOWE przejęcie (02 → 02e → 02a).
-- odczyty paliwa i MH przy zdaniu są **OBOWIĄZKOWE** i są zatwierdzeniem logu sesji;
+- odczyty paliwa i MH przy zdaniu są **OBOWIĄZKOWE** i są zatwierdzeniem logu operacji;
   trafiają do logu jako kolejne wpisy. `leg_close` znika z domeny, ekrany 09 i 09a
   znikają z designu, 09c (zdanie bez lotu - pogoda/usterka) zostaje wariantem 09b.
 - tankowanie mieszka w kokpicie: PRZED uruchomieniem i PO zatrzymaniu (przed zdaniem).
   Zmiana załogi tylko PRZED uruchomieniem - po biegu nowa załoga = nowe przejęcie.
-- kokpit pokazuje WYŁĄCZNIE bieżącą sesję - bez „Log dnia", bez „CYKL n", bez harmonijki
+- kokpit pokazuje WYŁĄCZNIE bieżącą operację - bez „Log dnia", bez „CYKL n", bez harmonijki
   wielu cykli. Kokpit pozostaje stanem modalnym (sekcja wyżej).
-- na 01 lista sesji dnia (różne zadania, różne maszyny) + ręczny wpis CAŁEGO lotu (15).
-- zysk uboczny analityki: każda sesja domknięta odczytami z OBU stron - znika patologia
+- na 01 lista operacji dnia (różne zadania, różne maszyny) + ręczny wpis CAŁEGO lotu (15).
+- zysk uboczny analityki: każda operacja domknięta odczytami z OBU stron - znika patologia
   interwałów degeneracyjnych między ostatnim `leg_close` a zdaniem (§3.6b).
 
-## Dzień pilota = lista sesji (issue #23, 2026-08-11 - klamra służby USUNIĘTA)
-Reguła w jednym zdaniu: **do pilota w danej dobie UTC przypisana jest lista sesji
+## Sygnatura operacji lotniczej (issue #68, 2026-09-01)
+Zgłoszenie: „brakuje nam nazwy operacji - wyświetlamy w różnych miejscach guid".
+Uuid nadaje się do ADRESOWANIA (klucz w bazie, ścieżka w panelu, cel korekty) i do
+niczego więcej: `7c1e5a9b-…-83b4` nie da się przeczytać przez telefon administratorowi,
+wpisać w zgłoszenie ani znaleźć wzrokiem na liście.
+
+    SP-AXA/2026-09-01/AKO/1
+    └ znak  └ doba     └ PIC └ która operacja tego pilota w tej dobie
+
+- **SKŁADA JĄ DOMENA** (`packages/domain/src/signature.ts`: `operationSignature`,
+  `operationIndexes`) i **liczy się przy każdym wyświetleniu**, jak czas blokowy.
+  Zapisana w `session_claim` byłaby drugą kopią na drucie: wpis ręczny dopisany PRZED
+  istniejącą operacją tej samej doby przenumerowuje ją, a zapisany numer wskazywałby
+  po tym dwie operacje naraz
+- **NUMER TO TEN SAM NUMER, KTÓRY EKRAN 01 PISZE JAKO „OPERACJA n"**
+  (`PilotDaySession.index`). Dwa różne numery na jednym kafelku byłyby sprzecznością,
+  więc reguła jest JEDNA: operacje TEGO pilota, nieunieważnione, z uruchomionym
+  silnikiem; doba i kolejność z chwili uruchomienia
+- **NUMERUJE DOBĘ PILOTA, NIE DOBĘ SAMOLOTU** - i to jest warunek offline-first: telefon
+  ma wszystkie operacje SWOJEGO pilota w lokalnym rejestrze (§4.1: jeden piszący),
+  a operacji cudzych na tej samej maszynie nie ma i mieć nie może. Sygnatura wychodzi
+  więc bez sieci, jak reszta danych operacji (§6 pkt 1). Jednoznaczności pilnuje kod PIC
+  w środku napisu
+- **CZASU W SYGNATURZE NIE MA** i to jest decyzja: korekta czasu (issue #43) przesuwa
+  uruchomienie o kilka minut, więc sygnatura z godziną opisywałaby po niej inną operację
+  niż przed. Numer porządkowy przeżywa korektę, dopóki nie zmienia kolejności w dobie
+- **OPERACJA BEZ BIEGU SILNIKA SYGNATURY NIE MA** (09C: zdanie bez lotu - pogoda,
+  usterka). Nie jest to dziura, tylko ta sama granica, którą rysuje `projectPilotDay`:
+  numerujemy operacje, czyli biegi silnika. Wpisanie takiej operacji do numeracji
+  przesunęłoby numery tym, które ekran 01 ma już ponumerowane, a numer „obok" dałby
+  dwie operacje o jednej sygnaturze. Ekran pokazuje wtedy to, co przed issue #68:
+  datę, znak i godziny
+- **SERWER LICZY TEN SAM NUMER SQL-em** (`PgAdminSessionsRepo`, ranga po kolumnach
+  projekcji - nie da się jej wypełnić przy zapisie, bo ingest widzi JEDNĄ operację).
+  Rozjazd dwóch torów znaczyłby dwie nazwy jednego lotu, więc pilnuje ich test
+  krzyżowy `server/test/operationSignature.test.ts` - i to on złapał pierwszą wersję,
+  w której operacja unieważniona dostawała numer swojej poprzedniczki
+- **PANEL NIGDY NIE SKLEJA SYGNATURY U SIEBIE** - dostaje ją gotową w DTO. Ta sama
+  reguła, przez którą nazwę karty arkusza liczy wyłącznie serwer
+- gdzie stoi: kafelek operacji (01, 12), nagłówek ekranu 10, potwierdzenie usunięcia
+  wpisu (10L), grid i nagłówek DZIENNIKA w panelu, potwierdzenie unieważnienia w panelu
+- **W KARCIE ARKUSZA SYGNATURY NIE MA** i to nie jest przeoczenie: kolumna `Operacja`
+  spina sześć bloków JEDNEGO dokumentu etykietami `S1`, `S2`, a karta jest dobą
+  SAMOLOTU - numer z sygnatury (doba PILOTA) nie zgadzałby się z kolejnością zmian
+  w tym dokumencie. Rodzaj operacji nazywa się tam odtąd `Zadanie`, jak na 02E i w panelu
+
+## Słownik: „operacja lotnicza" zamiast „sesji" (issue #68)
+Drugie zdanie zgłoszenia: **„sesja" powinno ewoluować w słowo kluczowe „operacja
+lotnicza" - bardziej czytelne biznesowo.** Przemianowane zostały NAPISY (aplikacja
+pilota, panel, karta arkusza, komunikaty reguł domeny), mockupy `design/*.html`
+i dokumentacja.
+
+- **identyfikatory w kodzie zostają angielskie**: `sessionUuid`, `projectSession`,
+  `SessionState`, `session_claim`, `/sessions/:uuid`. Reguła „nazwy w kodzie po
+  angielsku" nie zmienia się przez zmianę słownika po polsku, a przemianowanie
+  `session_claim` znaczyłoby migrację rejestru append-only
+- **polska odmiana zgadza się co do znaku**: `sesj` → `operacj` obsługuje wszystkie
+  przypadki (sesja→operacja, sesji→operacji, sesję→operację). Dlatego podmiana była
+  mechaniczna i dlatego wymagała jednego strażnika - patrz niżej
+- **„SESJA" MA W TYM PROJEKCIE DRUGIE ZNACZENIE i ono ZOSTAJE**: sesja logowania
+  (panelu, przeglądarki, telefonu). „Sesja wygasła. Zaloguj się jeszcze raz",
+  `ADMIN_SESSION_TTL_SEC`, `refresh_tokens`, ciasteczko `uzaero_admin` - tam „sesja"
+  znaczy dostęp, nie lot. Przemianowanie ich byłoby błędem rzeczowym
+- **`design/admin/` (archiwum panelu 1.0) NIE zostało przemianowane** - to zamrożony
+  zapis decyzji sprzed 2026-08-30, nie specyfikacja
+- komentarze w kodzie przemianowano tam, gdzie i tak zmieniał się plik; reszta mówi
+  „sesja" dalej i nie jest to niespójność do naprawiania hurtem - docblock stoi obok
+  identyfikatora, który nazywa się `session`
+
+## Dzień pilota = lista operacji (issue #23, 2026-08-11 - klamra służby USUNIĘTA)
+Reguła w jednym zdaniu: **do pilota w danej dobie UTC przypisana jest lista operacji
 i nic ponadto.** Klamra służby („loty zapisywane, służba deklarowana", 2026-08-06)
 przeżyła pięć dni - czas „od meldunku do zamknięcia" niczego nie mierzył, a wymagał
 deklaracji, przycisku „Zamknij dzień" i osobnych reguł. Konsekwencje:
-- dzień należy do **pilota** i obejmuje sesje na różnych maszynach - na 01 jako PŁASKA
+- dzień należy do **pilota** i obejmuje operacje na różnych maszynach - na 01 jako PŁASKA
   oś czasu (rejestracja to informacja kafelka, NIE oś grupowania); sumy doby w TEJ SAMEJ
-  trójce, co kafelek sesji: Loty · Blok · Lot (2026-08-16 - podpis „5 st / 5 ldg" był
+  trójce, co kafelek operacji: Loty · Blok · Lot (2026-08-16 - podpis „5 st / 5 ldg" był
   liczbą lotów powiedzianą dwa razy, a komórka „Loty" niosła CZAS zamiast liczby)
-- dnia **nie otwiera się ani nie zamyka** - zaczyna się pierwszą sesją; „Zamknij dzień",
+- dnia **nie otwiera się ani nie zamyka** - zaczyna się pierwszą operacją; „Zamknij dzień",
   ekran `01b` i edu-baner o klamrze nie istnieją
 - z modelu znikły: `preflight_confirm.dutyStart`, `day_close.dutyEnd`, reguła
   `DUTY_END_BEFORE_START`, projekcja klamry (`projectDuty` → **`projectPilotDay`**:
-  lista sesji + sumy, `projections/pilotDay.ts`)
+  lista operacji + sumy, `projections/pilotDay.ts`)
 - **zdanie samolotu już POTWIERDZA dane** - po locie niczego się nie potwierdza ani nie
   wysyła ponownie (decyzja biznesowa przy issue #23; z ekranu 10 zniknął „ZATWIERDŹ →
-  SYNC"). Detale sesji (10) otwiera KAFELEK sesji na 01 - tam się ogląda i koryguje
-- okno korekty jest JEDNO, per sesja: 24 h od ZDANIA samolotu; drzwiami są kafelek
-  sesji na 01 i historia (12)
-- **zdanie samolotu nie kończy dnia pilota** - kolejna maszyna dopisze się do listy sesji
+  SYNC"). Detale operacji (10) otwiera KAFELEK operacji na 01 - tam się ogląda i koryguje
+- okno korekty jest JEDNO, per operacja: 24 h od ZDANIA samolotu; drzwiami są kafelek
+  operacji na 01 i historia (12)
+- **zdanie samolotu nie kończy dnia pilota** - kolejna maszyna dopisze się do listy operacji
 - odczyt liczników przy zdaniu (09b) pozostaje **OBOWIĄZKOWY** (przekazanie + ogniwo
-  łańcucha MH); jednostką potwierdzenia pozostaje SESJA (pivot 2026-08-10)
+  łańcucha MH); jednostką potwierdzenia pozostaje OPERACJA (pivot 2026-08-10)
 - łańcuch MH nie ma z dniem pilota nic wspólnego: to oś samolotu
-Pełny opis: `docs/_main.md.txt` §3.6, §3.6a - czytane RAZEM z sekcją „Sesja = jeden bieg
+Pełny opis: `docs/_main.md.txt` §3.6, §3.6a - czytane RAZEM z sekcją „Operacja = jeden bieg
 silnika" wyżej.
 
-## Poprzednie dni = sesje spoza dzisiejszej doby (issue #35, 2026-08-12)
+## Poprzednie dni = operacje spoza dzisiejszej doby (issue #35, 2026-08-12)
 Ekran 12 przestał być drugą listą tych samych lotów, co „Mój dzień":
-- **kafelek = SESJA, nie doba** - doba z dwiema sesjami daje dwie karty, rozróżnione
+- **kafelek = OPERACJA, nie doba** - doba z dwiema operacjami daje dwie karty, rozróżnione
   godzinami biegu silnika. Kafelek-doba nie miałby czego otworzyć: jego celem jest
   rozliczenie (10), a ono opisuje JEDNĄ maszynę
-- **dzisiejszych sesji tam nie ma** - mieszkają na 01, na TAKICH SAMYCH kafelkach
+- **dzisiejszych operacji tam nie ma** - mieszkają na 01, na TAKICH SAMYCH kafelkach
   (issue #42). Doba liczy się tak samo jak na 01 (kotwicą jest URUCHOMIENIE silnika,
-  awaryjnie przejęcie - `sessionDay` w `logic/historyDays.ts`), więc sesja spod północy
+  awaryjnie przejęcie - `sessionDay` w `logic/historyDays.ts`), więc operacja spod północy
   nie wpada w dziurę między ekranami. Plakietka wejścia na 01 pomija dziś z tego samego powodu
-- **metryki kafelka = metryki kafelka sesji z 01**: Loty · Blok · Lot. Skoczkowie zeszli
+- **metryki kafelka = metryki kafelka operacji z 01**: Loty · Blok · Lot. Skoczkowie zeszli
   do szczegółów lotu, czas trzymania maszyny wypadł
 - **„Wysłane" i „Okno minęło" nie istnieją**. Pierwsze jest stanem domyślnym (reguła
   SyncChipa z issue #12), więc zostaje sama plakietka zaległości w dwóch odmianach:
   `queued` („Oczekuje na przesłanie · n") i `sending` („W trakcie wysyłania · n") -
   rozstrzyga wynik OSTATNIEJ próby synca, bo innego pojęcia „online" aplikacja nie ma
-- **sesja po oknie 24 h otwiera się do PODGLĄDU** (`design/10b-rozliczenie-zamkniete.html`):
+- **operacja po oknie 24 h otwiera się do PODGLĄDU** (`design/10b-rozliczenie-zamkniete.html`):
   ten sam ekran 10 bez ani jednego elementu zapisu - amber baner zamiast terminu,
   plakietka „Podgląd” w nagłówku, powrót do 12. Od issue #40 różnica jest DOKŁADNIE
   JEDNA: nie ma przycisku „EDYTUJ DANE" (ołówków przy wierszach nie ma już nigdzie, więc
-  przestały odróżniać tryby). Warunkiem jest `!correctionWindow(...).open` - sesja
+  przestały odróżniać tryby). Warunkiem jest `!correctionWindow(...).open` - operacja
   jeszcze niezdana ma okno otwarte i działa jak dotąd. Wyszarzony przycisk jest
   ZAKAZANY: obiecuje akcję, którą reguły odrzucą
 
-## Ślad należy do SESJI (issue #38, 2026-08-12 - odwraca #25)
-Zapis GPS powstaje w JEDNYM ciągu: od uruchomienia do zatrzymania silnika. Sesja ma więc
-swój ślad, a loty są jego ODCINKAMI - zdanie z issue #25 („sesja z trzema lotami nie ma
+## Ślad należy do OPERACJI (issue #38, 2026-08-12 - odwraca #25)
+Zapis GPS powstaje w JEDNYM ciągu: od uruchomienia do zatrzymania silnika. Operacja ma więc
+swój ślad, a loty są jego ODCINKAMI - zdanie z issue #25 („operacja z trzema lotami nie ma
 swojego śladu") było fałszywe technicznie i kosztowało jeden ekran pośredni. Droga jest
-odtąd dwuczłonowa: **10 (sesja) → 14 (pełny ślad)**.
+odtąd dwuczłonowa: **10 (operacja) → 14 (pełny ślad)**.
 - **miniatura śladu stoi WPROST na 10**, razem z osią czasu - znacznik na trasie i wiersz
   osi to ten sam start albo to samo lądowanie, więc rozdzielone na dwa ekrany kazały
   pilotowi zestawiać je z pamięci
@@ -464,17 +533,17 @@ odtąd dwuczłonowa: **10 (sesja) → 14 (pełny ślad)**.
   wszystkie starty i lądowania jako znaczniki, profil pionowy z PRZERWĄ NA ZIEMI między
   wyniesieniami (ta przerwa nie jest dziurą w zapisie - to czas, który od issue #38
   wchodzi wprost do normy zużycia)
-- **z list wejść w ślad nadal NIE MA** (to z #25 zostaje): numer sesji na kafelku 01 jest
-  samą liczbą porządkową. Wejście jest jedno - miniatura na ekranie sesji
+- **z list wejść w ślad nadal NIE MA** (to z #25 zostaje): numer operacji na kafelku 01 jest
+  samą liczbą porządkową. Wejście jest jedno - miniatura na ekranie operacji
 - **`14b` = brak zapisu** (wpis ręczny albo nagranie, które nie dotarło): stan pusty
   z POWODEM. Retencja z tego powodu ZNIKŁA - patrz issue #47 niżej
 - **EKRAN 16 USUNIĘTY** razem z `16a`: jego treść wróciła tam, skąd przyszła - zrzuty
-  na oś czasu sesji (jako zdarzenia w czasie, bo nimi są), czasy do wierszy osi, korekta
+  na oś czasu operacji (jako zdarzenia w czasie, bo nimi są), czasy do wierszy osi, korekta
   do ołówka wiersza (od issue #40 - do przycisku „EDYTUJ DANE"). Kod:
   `FlightDetailsScreen.tsx`, `logic/flightDetails.ts` i trasa `FlightDetails` skasowane;
-  `TrackThumbnail` przeniesiony na ekran sesji
+  `TrackThumbnail` przeniesiony na ekran operacji
 
-## Log sesji: jedne drzwi do korekty, norma pod plakietką (issue #40, 2026-08-13)
+## Log operacji: jedne drzwi do korekty, norma pod plakietką (issue #40, 2026-08-13)
 Osiem uwag z urządzenia do ekranu 10 (`design/10`, `10a`, `10b` + NOWY `10c`). Wspólny
 mianownik: **ekran ma odpowiadać, a nie oferować** - każdy powtórzony ołówek, plakietka
 i liczba, których pilot nie czyta, kosztują miejsce w kolumnie, w której coś naprawdę
@@ -500,7 +569,7 @@ stoi.
   czego w wierszu nie ma. Oba końce osi mają oddech (12 px): PRZEJĘCIE nie klei się do
   śladu, ZDANIE nie czyta się jak pierwszy wiersz stopki z sumami
 - **nagłówek bez plakietki z liczbą lotów**: stopka osi mówi „STARTY 2" trzy centymetry
-  niżej, a plakietka świecąca przy każdej normalnej sesji uczy oko pomijać róg nagłówka
+  niżej, a plakietka świecąca przy każdej normalnej operacji uczy oko pomijać róg nagłówka
   (reguła SyncChipa z issue #12). Zostaje sam stan ODCHYLONY - amber „bez lotu" na 10A
   i „Podgląd" na 10B
 - **notatki mają wreszcie swoje miejsce** (pkt 5): karta na końcu ekranu zbiera notatkę
@@ -511,7 +580,7 @@ stoi.
   pilota - metoda zostaje w rejestrze i w panelu. Reguła z issue #38 („AUTO" nie świeci
   przy każdym wierszu) dociągnięta do końca
 - **z rachunku zostaje SAMA plakietka werdyktu** (pkt 7 i 8), a pasmo, stawki normy,
-  średnia TEJ sesji i rozpisane działanie przenoszą się do arkusza pod tapnięciem
+  średnia TEJ operacji i rozpisane działanie przenoszą się do arkusza pod tapnięciem
   (`design/10c-norma-detale.html`, `BalanceDetails` w `logic/sessionBalance.ts`). Karta
   odpowiada „czy dobrze", arkusz „dlaczego tak". **Wiek normy (§4.8) idzie tam razem
   z liczbami** - adnotacja o cache'u przy samej plakietce nie miałaby czego kwalifikować.
@@ -519,19 +588,19 @@ stoi.
   zmiany danych, nie do ich zrozumienia. Celem dotknięcia jest CAŁY wiersz - plakietka
   ma 9 px czcionki
 
-## Jeden kafelek sesji i jeden przycisk (issue #42, 2026-08-13)
+## Jeden kafelek operacji i jeden przycisk (issue #42, 2026-08-13)
 Zasada: **jedna rzecz ma w aplikacji JEDEN kształt.** „Mój dzień" (01) i „Poprzednie
-dni" (12) pokazywały tę samą sesję na dwa sposoby - 01 własną tabelą `.leg-row`, 12
+dni" (12) pokazywały tę samą operację na dwa sposoby - 01 własną tabelą `.leg-row`, 12
 kafelkiem `.day-card` - a na 01 stały obok siebie trzy przyciski w trzech krojach.
-- **kafelek sesji = `DayCard` na OBU ekranach**; kształt (nagłówek, rejestracja, godziny
+- **kafelek operacji = `DayCard` na OBU ekranach**; kształt (nagłówek, rejestracja, godziny
   biegu silnika, trójka Loty · Blok · Lot) liczy `screens/logic/sessionCard.ts`, wspólny
   dla `myDay.ts` i `historyDays.ts`. Dokładając pole „bo na jednym ekranie wygodniej",
   zaczynasz rozjazd od nowa - pilnuje tego test kształtu w `myDay.test.ts`
 - **różnice są DWIE i obie wymuszone treścią**: (1) nagłówkiem kafelka jest data (12)
-  albo numer sesji w dobie (01 - data stoi w nagłówku ekranu, więc na kafelku byłaby
+  albo numer operacji w dobie (01 - data stoi w nagłówku ekranu, więc na kafelku byłaby
   szumem); (2) stopka z plakietką wysyłki i terminem korekty istnieje tylko w historii
-- **na 01 kafelki NIE są niebieskie**, choć wszystkie dzisiejsze sesje są w oknie korekty:
-  na 12 błękit ODDZIELA sesje w oknie od zamkniętych, a kolor przy każdej pozycji listy
+- **na 01 kafelki NIE są niebieskie**, choć wszystkie dzisiejsze operacje są w oknie korekty:
+  na 12 błękit ODDZIELA operacje w oknie od zamkniętych, a kolor przy każdej pozycji listy
   niczego nie oddziela (reguła SyncChipa z issue #12)
 - **przycisk to zawsze `ActionButton`** - „Poprzednie dni" były przyciskiem-linkiem
   pisanym Archivo obok dwóch pisanych Bebas. Plakietka okna korekty wjechała do przycisku
@@ -544,7 +613,7 @@ kafelkiem `.day-card` - a na 01 stały obok siebie trzy przyciski w trzech kroja
   i tak ma być
 - **„DODAJ LOT RĘCZNIE" jest na 01 ZAWSZE**, także przy pustym dniu (zgłoszenie
   z urządzenia, 2026-08-14). Do tej pory pusty dzień miał wyłącznie zielone „ROZPOCZNIJ
-  LOT", więc pilot bez ani jednej sesji nie miał jak wpisać lotu odbytego bez telefonu -
+  LOT", więc pilot bez ani jednej operacji nie miał jak wpisać lotu odbytego bez telefonu -
   a to jest dokładnie sytuacja, dla której wpis ręczny istnieje (§3.8). Decyzję trzyma
   `myDayActions` w `logic/myDay.ts`, żeby dało się ją przetestować (warunek w JSX
   przeżył tę dziurę bez jednego czerwonego testu)
@@ -552,15 +621,15 @@ kafelkiem `.day-card` - a na 01 stały obok siebie trzy przyciski w trzech kroja
   z urządzenia, 2026-08-16 i 2026-08-26): zawsze zielony główny, POD logiem dnia
   i NAD „DODAJ LOT RĘCZNIE" - jednakowo na 01, 01A i 01C. Log jest właściwą treścią
   ekranu domowego, więc stoi pierwszy; wcześniej pusty dzień miał przycisk zielony
-  na górze, a dzień z sesjami szary pod sumami - ekran uczył się dwa razy w ciągu
-  jednego dnia, a druga sesja nie jest mniej ważna od pierwszej. `myDayActions` jest
+  na górze, a dzień z operacjami szary pod sumami - ekran uczył się dwa razy w ciągu
+  jednego dnia, a druga operacja nie jest mniej ważna od pierwszej. `myDayActions` jest
   BEZARGUMENTOWE, a kolejność jego tablicy JEST kolejnością na ekranie - pas akcji
   nie czeka na wczytanie strumienia, więc skeleton nie trzyma plamki po przyciskach.
   Przypis „Odczytasz paliwo i motogodziny…" USUNIĘTY (2026-08-26): opisywał kroki
   formularza, które pilot i tak zaraz zobaczy
 
-## Edycja danych sesji = TRYB ekranu 10, nie osobny ekran (issue #43, 2026-08-13)
-„EDYTUJ DANE" prowadziło na ekran 08 (lista ręczna) - drugi widok tej samej sesji, z inną
+## Edycja danych operacji = TRYB ekranu 10, nie osobny ekran (issue #43, 2026-08-13)
+„EDYTUJ DANE" prowadziło na ekran 08 (lista ręczna) - drugi widok tej samej operacji, z inną
 osią, innym słownikiem i jedyną możliwą korektą: czas albo unieważnienie. Poprawić odczyt
 paliwa, licznik motogodzin ani składu zrzutu nie dało się w ogóle, a o tym, że dana była
 kiedykolwiek zmieniana, pilot nie dowiadywał się znikąd.
@@ -576,7 +645,7 @@ kiedykolwiek zmieniana, pilot nie dowiadywał się znikąd.
   (`fuelL`, `mh`, `jumpers`, `notes`, `dualId`), nie czas. Biała lista pól jest wąska i zależy od typu celu;
   `preflight_confirm` i `day_close` przestały być całkiem niekorygowalne, ale wyłącznie
   przez `amend` - `retime`/`void` na nich nadal odrzuca `CORRECTION_TARGET_NOT_ALLOWED`,
-  bo unieważnienie zdania rozbiłoby sesję w pół. `refuel` `amend`-a NIE dostaje: niesie
+  bo unieważnienie zdania rozbiłoby operację w pół. `refuel` `amend`-a NIE dostaje: niesie
   spójną trójkę before/added/after, więc poprawia się przez unieważnienie i dopisanie
 - **historia zmian jest w strumieniu z definicji** - rejestr jest append-only, więc
   `correctionHistory` tylko go czyta. Widać w niej także korekty administratora, bo od
@@ -584,9 +653,9 @@ kiedykolwiek zmieniana, pilot nie dowiadywał się znikąd.
   zostaje widoczny w trybie ODCZYTU: to fakt o danych, nie akcja
 - **niespójności wykrywa domena na CAŁYM strumieniu** (`rules/consistency.ts`), inaczej
   niż `checkAppend`, który pyta o kandydata do zapisu: „lot bez lądowania" jest zdaniem
-  o sesji, nie o wpisie. Baner w trybie edycji nazywa fakt i mówi, czym się go naprawia
+  o operacji, nie o wpisie. Baner w trybie edycji nazywa fakt i mówi, czym się go naprawia
 - **ekran 08 i arkusz 04C SKASOWANE**. Kokpit po zatrzymaniu silnika dostaje kafelek
-  „Popraw dane sesji" → 10d z powrotem DO KOKPITU: bez niego pilot nie miałby jak naprawić
+  „Popraw dane operacji" → 10d z powrotem DO KOKPITU: bez niego pilot nie miałby jak naprawić
   brakującego lądowania przed zdaniem samolotu, a zdanie zatwierdza log. To nie łamie
   modalności kokpitu - maszyna zostaje w jego rękach
 - **powód korekty jest OPCJONALNY** (jedno pole w każdym arkuszu): wymagany byłby tarciem
@@ -596,19 +665,19 @@ kiedykolwiek zmieniana, pilot nie dowiadywał się znikąd.
   otwiera TEN SAM arkusz, w którym powstała (02e) - pusty tekst ją kasuje. Dual wymagał
   zmiany MODELU: żył wyłącznie w nagłówku zdarzeń (`Event.dualId`), a nagłówka nie da się
   poprawić bez łamania append-only, więc `preflight_confirm` dostał pole `dualId` i to ono
-  wygrywa w projekcji. Poprawka działa WSTECZ na całą sesję („wpisałem złego drugiego
+  wygrywa w projekcji. Poprawka działa WSTECZ na całą operację („wpisałem złego drugiego
   pilota"); zmiana załogi W TRAKCIE to nadal `crew_change` i ekran 07 - inne pytanie,
   inne zdarzenie. PIC-a nie da się zmienić w ogóle (`PIC_CHANGE_NOT_ALLOWED`)
 - **GODZINA PRZEJĘCIA jest korygowalna, a jej korekta potrafi PRZESUNĄĆ CAŁY BIEG**
   (uwaga z urządzenia). `session_claim` przyjmuje odtąd `retime` (i wyłącznie jego -
-  `void` zabrałby sesji właściciela). Przesunięcie w tył jest zwykłą poprawką; w przód,
+  `void` zabrałby operacji właściciela). Przesunięcie w tył jest zwykłą poprawką; w przód,
   ZA uruchomienie silnika, pociąga wszystkie zdarzenia biegu o tyle, żeby uruchomienie
   wypadło dokładnie w nowej godzinie przejęcia - czasy trwania zostają, bo przesuwamy,
   nie skracamy. Ekran zapowiada to ZANIM pilot zapisze (`logic/claimRetime.ts` liczy
   plan, `useSessionEdit` go wykonuje jako N korekt). Kaskada NIE RUSZA `day_close`: od
   niego liczy się okno 24 h, więc przesuwanie go własną poprawką przedłużałoby sobie
   termin. Bieg, który po przesunięciu wyszedłby poza zdanie samolotu, jest odmawiany
-  z powodem - zamiast produkować sesję z silnikiem pracującym po oddaniu maszyny.
+  z powodem - zamiast produkować operację z silnikiem pracującym po oddaniu maszyny.
   **Zdanie samolotu godziny NIE MA** i to jest ta sama reguła widziana z drugiej strony
 - **ołówek nigdy nie jest akcją główną**: otwarcie korekty wygląda tak samo przy wierszu
   osi, przy notatce i przy Dualu - ikona w stałej kolumnie, nigdy wypełniona pigułka
@@ -616,11 +685,11 @@ kiedykolwiek zmieniana, pilot nie dowiadywał się znikąd.
 - **WEJŚCIE NIE MOŻE ZNIKAĆ RAZEM Z RZECZĄ, KTÓREJ DOTYCZY** - reguła wyciągnięta
   z dwóch zgłoszeń naraz (2026-08-14). Karta „Notatki" w trybie ODCZYTU nadal istnieje
   tylko z treścią (issue #40), ale w trybie EDYCJI dochodzi drugie wejście - wiersz
-  „Dodaj notatkę do sesji" - inaczej sesja bez notatki nie miałaby jak notatki dostać.
+  „Dodaj notatkę do operacji" - inaczej operacja bez notatki nie miałaby jak notatki dostać.
   Ten sam błąd co znikające „DODAJ LOT RĘCZNIE" przy pustym dniu (issue #42 wyżej):
   affordancja gasła dokładnie w stanie, w którym jest potrzebna. Dopisanie ma PLUS,
   nie ołówek - ołówek obiecuje poprawianie istniejącej wartości
-- **notatka sesji jest DOKŁADNIE JEDNA i stąd dwie reguły** (uwaga z urządzenia,
+- **notatka operacji jest DOKŁADNIE JEDNA i stąd dwie reguły** (uwaga z urządzenia,
   2026-08-14). Niesie ją jedno pole payloadu `preflight_confirm`, więc: (1) wiersz
   dopisania istnieje WYŁĄCZNIE przy jej braku - obok istniejącej obiecywałby drugą,
   a naprawdę nadpisałby pierwszą (`missingSessionNote` w `logic/sessionNotes.ts`,
@@ -674,11 +743,11 @@ kiedykolwiek zmieniana, pilot nie dowiadywał się znikąd.
   zerowej zmianie „Zapisz" jest po prostu nieaktywny** - `ActionButton.disabled` bez
   powodu, bo powód widać w kontrolce wyżej. To NIE jest odwołanie reguły §6 pkt 3:
   `disabledReason` zostaje dla blokad, których z ekranu nie widać
-- **plakietki „bez lotu" w nagłówku sesji NIE MA**: oś bez ani jednego lotu, zerowa
+- **plakietki „bez lotu" w nagłówku operacji NIE MA**: oś bez ani jednego lotu, zerowa
   stopka i powód zdania mówią to trzy razy; róg nagłówka trzyma stan TRYBU (edycja,
   podgląd), a nie kolejny opis danych
 - **„DODAJ WPIS" jest OSTATNIM WIERSZEM OSI**, nie przyciskiem na dnie ekranu: dopisywany
-  fakt trafia do przebiegu sesji, więc wejście stoi tam, gdzie skończy się jego skutek
+  fakt trafia do przebiegu operacji, więc wejście stoi tam, gdzie skończy się jego skutek
 - **licznik motogodzin wpisuje się z klawiatury NUMERYCZNEJ** (uwaga z urządzenia,
   2026-08-14). Format hh:mm wymuszał dotąd pełną QWERTY, bo dwukropka nie ma na
   numerycznej - a QWERTY zajmuje pół ekranu i podsuwa podpowiedzi słownikowe pod liczbę
@@ -687,7 +756,7 @@ kiedykolwiek zmieniana, pilot nie dowiadywał się znikąd.
   formatu licznika i pilnuje, żeby był dokładnie jeden. Tryb `text` w `ReadingSheet`
   został usunięty - nie ma go do czego przywracać
 - **kotwica historii to sama para „kiedy → co"**: podpis o źródle zapisu („autodetekcja ·
-  GPS", „zapis sesji") zniknął razem z plakietkami „AUTO"/„RĘCZNIE" z osi (issue #40) -
+  GPS", „zapis operacji") zniknął razem z plakietkami „AUTO"/„RĘCZNIE" z osi (issue #40) -
   prowenienecja nie jest pytaniem pilota, tylko rejestru i panelu
 - **wiersz „Historia zmian" istnieje TYLKO wtedy, gdy jest historia**: zerowy licznik to
   szum, nie informacja - ta sama reguła, którą issue #40 wyrzuciło „Notatki -"
@@ -708,8 +777,8 @@ kroków (jak 02 → 02E → 02A): data+samolot+Dual → zadanie → czasy → li
   wpisywała twardo `operation: 'inne'` i `dualId: null` - lot szkolny z kartki gubił
   drugiego pilota bezpowrotnie. Podpowiedzi z ostatniego dnia TU NIE MA (inaczej niż
   na 02E): wpis opisuje konkretny lot z przeszłości, podstawianie robiłoby domysł
-- **dowolnie wiele lotów w jednym biegu** - od issue #62 na OSI SESJI, nie na płaskiej
-  liście (sekcja „Krok 3 wpisu ręcznego = OŚ SESJI" niżej), z „DODAJ LOT" jako ostatnim
+- **dowolnie wiele lotów w jednym biegu** - od issue #62 na OSI OPERACJI, nie na płaskiej
+  liście (sekcja „Krok 3 wpisu ręcznego = OŚ OPERACJI" niżej), z „DODAJ LOT" jako ostatnim
   wierszem (wzorzec „DODAJ WPIS" z issue #43). Stara wersja przyjmowała jedną parę
   i odsyłała dzień skokowy do dziesięciu arkuszy korekty po zapisaniu.
   Zrzuty tylko w dniu skokowym (issue #19 - brak sekcji, nie blokada)
@@ -720,15 +789,15 @@ kroków (jak 02 → 02E → 02A): data+samolot+Dual → zadanie → czasy → li
   przy zatrzymanym śmigle): blokada mówi to przy przycisku, a komenda wstawia dolewkę
   w jej miejscu czasowym, żeby próba generalna odrzuciła zapis nazwanym błędem
 - **ostrzeżenia NIE blokują** (`logic/manualFlightWarnings.ts`): kolizje czasów
-  z WŁASNYMI sesjami liczą się z lokalnego rejestru, łańcuch MH i paliwa z ostatniego
+  z WŁASNYMI operacjami liczą się z lokalnego rejestru, łańcuch MH i paliwa z ostatniego
   przekazania w cache (z adnotacją wieku, §4.8) - wszystko offline. Kolizje z cudzymi
-  sesjami rozstrzyga serwer flagą `aircraft_overlap` (§4.5). Blokują wyłącznie rzeczy,
+  operacjami rozstrzyga serwer flagą `aircraft_overlap` (§4.5). Blokują wyłącznie rzeczy,
   które domena odrzuci twardo (kolejność czasów, cofnięty licznik) - fakt lotu jest
   cenniejszy niż kompletność formularza. Granicę pilnują testy obu modułów
-- **sesja z wpisu niesie JAWNY znacznik** `session_claim.manualEntry` - z metody
+- **operacja z wpisu niesie JAWNY znacznik** `session_claim.manualEntry` - z metody
   zdarzeń nie da się go wywieść (`manual` niesie też lot z ręcznymi przyciskami),
   a heurystyka po stemplach padłaby przy odtworzeniu rejestru. Plakietka „RĘCZNIE"
-  stoi na kafelku sesji (01/12, `DayCard.titleTag`) i w nagłówku rozliczenia (10) -
+  stoi na kafelku operacji (01/12, `DayCard.titleTag`) i w nagłówku rozliczenia (10) -
   **nie przy wierszach osi** (issue #40 pkt 6 zostaje: świeciłyby wszystkie naraz)
 - **bez tagów „wymagane"**: wymagalność jest stanem DOMYŚLNYM formularza, plakietka
   przy każdej sekcji nie odróżniała niczego od niczego (reguła SyncChipa z issue #12).
@@ -768,7 +837,7 @@ kroków (jak 02 → 02E → 02A): data+samolot+Dual → zadanie → czasy → li
   - **rośnie OBA liczniki**: `touchAndGo: 4` to 5 lądowań i 5 startów (start otwierający
     plus cztery po kręgach). Arytmetykę trzymają PROJEKCJE, nie czytelnicy - i są DWIE:
     `projections/session.ts` liczy ze strumienia, `projections/pilotDay.ts` z LOTÓW.
-    Bez tej drugiej doba pilota po cichu zaniżałaby lądowania (sesja 5, dzień 1, obie
+    Bez tej drugiej doba pilota po cichu zaniżałaby lądowania (operacja 5, dzień 1, obie
     liczby na innych ekranach); ma na to własny test
   - **NIE DZIELIMY koperty na równe odcinki**: pięć par wymyślonych minut wyglądałoby
     na osi jak zapisane, a arkusz korekty pozwoliłby je „poprawiać" jak fakty. Rejestr
@@ -953,7 +1022,7 @@ Dziesięć uwag z urządzenia wokół wpisu ręcznego (15) i design systemu:
   się odbył, więc „jeszcze nie wiem, dokąd" nie istnieje. Jedyny wymóg czysto
   produktowy w blokadzie (reszta to twarde odmowy domeny)
 - **skeleton „Mojego dnia" = JEDNA plamka-kafelek** + trójka sum: część wspólna doby
-  pustej (karta „DZIŚ BEZ LOTÓW" ma tę samą wysokość 156 dp) i doby z sesjami -
+  pustej (karta „DZIŚ BEZ LOTÓW" ma tę samą wysokość 156 dp) i doby z operacjami -
   dwie plamki zgadywały wariant i przy pustym dniu pół ekranu skakało
 - **arkusz Klient/Notatka nie ogłasza braku podpowiedzi**: zdanie „podpowiedzi
   wymagają połączenia - wpisz wartość ręcznie" USUNIĘTE (opisywało budowę aplikacji
@@ -1124,7 +1193,7 @@ poprawka dosięgła ośmiu arkuszy naraz.
   o zawartości katalogu - „katalog zna tylko polskie lotniska" opisywało budowę aplikacji
   komuś, kto wpisuje kod lotniska docelowego
 
-### Krok 3 wpisu ręcznego = OŚ SESJI (issue #62 pkt 8–10)
+### Krok 3 wpisu ręcznego = OŚ OPERACJI (issue #62 pkt 8–10)
 Krok 3 pokazywał DWIE PŁASKIE LISTY obok siebie („Loty" i „Zrzuty"), więc zrzut nie miał
 jak powiedzieć, do którego lotu należy - mimo że model to wie: `DropPayload` **nie ma**
 pola z numerem lotu i mieć nie musi, bo przynależność jest ZAWIERANIEM SIĘ W CZASIE
@@ -1153,7 +1222,7 @@ i tak sprawdza ją `DROP_ON_GROUND` (`rules/consistency.ts`). Wiedział model, m
   z urządzenia; mockup `15H` = ten sam układ, co `15B`). Karta niosła parę godzin, którą
   oś rysuje jako swój pierwszy i ostatni wiersz - „dubluje się «bieg silnika» z tym, co
   mam na osi czasu, nie ma sensu ten input". Oba końce startują z `--:--` i SAME są
-  wejściem w wpisanie godziny, więc pusty krok 3 i krok 3 z pełną sesją to ten sam ekran
+  wejściem w wpisanie godziny, więc pusty krok 3 i krok 3 z pełną operacją to ten sam ekran
   w dwóch stanach. Stopka sum czeka na bieg (trójka zer byłaby liczbą o niczym), a wiersza
   „DODAJ LOT" nie ma, dopóki oba końce nie mają godziny - to BRAK AKCJI, nie wyszarzony
   przycisk (zasada z 10B i 02G); powód niesie „DALEJ" bursztynem w środku
@@ -1171,7 +1240,7 @@ i tak sprawdza ją `DROP_ON_GROUND` (`rules/consistency.ts`). Wiedział model, m
   albo pomiar - to wynika z godzin, kiedy samolot został uruchomiony i wyłączony."
   Szkic trzyma `{ foundL, addedL, afterL }`, a kolejność pól zastępuje godziny:
   zastane → dolane → (lot) → zostało.
-  - **ZASTANE wykrywa się z sesji poprzedzającej** (`readings-chain`) - razem
+  - **ZASTANE wykrywa się z operacji poprzedzającej** (`readings-chain`) - razem
     z LICZNIKIEM, bo jedna odpowiedź niesie oba (ósma tura). Reguły podstawiania
     i granica „czego nie podstawiamy": sekcja o łańcuchu niżej
   - **dolewka nie jest już pozycją listy**: jedna liczba, a zdarzenie `refuel` składa się
@@ -1225,14 +1294,14 @@ i tak sprawdza ją `DROP_ON_GROUND` (`rules/consistency.ts`). Wiedział model, m
   - **`ManualBalance` i spółka USUNIĘTE**: były DRUGIM rachunkiem tej samej wielkości,
     a takie pary rozjeżdżają się przy pierwszej poprawce jednej z nich. Została
     `manualPhaseTimes` (czasy faz ze szkicu) i dwa adaptery
-- **CIĄGŁOŚĆ ODCZYTÓW Z SĄSIEDNIMI SESJAMI** (piąta i szósta tura;
+- **CIĄGŁOŚĆ ODCZYTÓW Z SĄSIEDNIMI OPERACJAMI** (piąta i szósta tura;
   `GET /aircraft/:id/readings-chain`, `server/src/domain/readingsChain.ts`,
   `logic/readingsContinuity.ts`, `hooks/useReadingsChain.ts`): maszyna nie tankuje się
-  sama między sesjami, więc ile jeden pilot zostawił, tyle następny powinien zastać.
-  Trasa oddaje DWA punkty - odczyt przy zdaniu sesji poprzedzającej i przy przejęciu
+  sama między operacjami, więc ile jeden pilot zostawił, tyle następny powinien zastać.
+  Trasa oddaje DWA punkty - odczyt przy zdaniu operacji poprzedzającej i przy przejęciu
   następnej - i obejmuje PALIWO, MOTOGODZINY oraz OLEJ.
   - **olej idzie WŁASNĄ osią**: bagnet tuż po locie kłamie, więc zdanie samolotu oleju
-    NIE MIERZY (issue #60), a interwał biegnie pomiar→pomiar przez wiele sesji. Olej
+    NIE MIERZY (issue #60), a interwał biegnie pomiar→pomiar przez wiele operacji. Olej
     dostaje przez to KOTWICĘ (ostatni pomiar nie późniejszy niż pytana chwila + suma
     dolewek od niej, kształt `Handover.oil`), a nie parę „przed/po". „Ile powinno zostać
     po tym locie" nie jest pytaniem, na które rejestr umie odpowiedzieć
@@ -1287,7 +1356,7 @@ i tak sprawdza ją `DROP_ON_GROUND` (`rules/consistency.ts`). Wiedział model, m
   wyniesienia lot po locie. Poprzednik liczy się porządkiem CZASU, nie kolejnością
   dopisywania - zrzuty wpisuje się w dowolnej kolejności, a poprawka godziny je przestawia
 - **nowy lot dziedziczy granice BIEGU** (`nextFlightTimes`): pierwszy bierze cały bieg
-  (przy sesji z jednym lotem to od razu wartość właściwa), każdy kolejny biegnie od
+  (przy operacji z jednym lotem to od razu wartość właściwa), każdy kolejny biegnie od
   ostatniego lądowania do wyłączenia silnika. Stare „10 minut po ostatnim lądowaniu,
   30 minut długości" brało się znikąd i wymagało dwóch poprawek
 - **nowy zrzut ląduje w PIERWSZYM locie bez zrzutu** (`nextDropAt`) - do #62 każdy trafiał
@@ -1324,7 +1393,7 @@ i minimum oleju) **były wdrożone przy issue #60** - doszły punkty 1 i 4.
   godzinę pracy silnika. Podstawienie jej zaniżyłoby rezerwę - „błąd w tę stronę jest
   niedopuszczalny" (docblock `liftsRemaining`)
 - **DOKUMENTACJA JAKO WARTOŚĆ REFERENCYJNA**: gdy model JUŻ jest, arkusz 10C dokłada
-  dwa wiersze - „Z dokumentacji" i „Odchyłka od dokumentacji · ta sesja −21% · norma
+  dwa wiersze - „Z dokumentacji" i „Odchyłka od dokumentacji · ta operacja −21% · norma
   maszyny −25%". To jest druga połowa zgłoszenia („można badać, jakie jest odchylenie
   nowej średniej oraz średniej z operacji od wartości referencyjnej")
 - **STAN POCZĄTKOWY JEST ZEROWYM OGNIWEM ŁAŃCUCHA, nie polem na drucie.** Nie jedzie na
@@ -1354,42 +1423,42 @@ i minimum oleju) **były wdrożone przy issue #60** - doszły punkty 1 i 4.
 „Daj możliwość usunięcia całego lotu. Ta operacja powinna być poprzedzona jeszcze
 potwierdzeniem użytkownika, aby nie było przypadkowego usunięcia."
 - **NOWE ZDARZENIE, nie `void` na przejęciu**: domena tego drugiego ODMAWIA i słusznie -
-  `session_claim` jest tożsamością sesji, a `preflight_confirm`/`day_close` trzymają
+  `session_claim` jest tożsamością operacji, a `preflight_confirm`/`day_close` trzymają
   końce łańcucha MH. Skasowanie CAŁOŚCI jest innym faktem niż skasowanie kawałka i ma
   własny zapis, zamiast obchodzić istniejące reguły
-- **rejestr zostaje APPEND-ONLY**: nic nie znika z bazy. Sesja przestaje się LICZYĆ -
+- **rejestr zostaje APPEND-ONLY**: nic nie znika z bazy. Operacja przestaje się LICZYĆ -
   wypada z dnia pilota, z sum, z historii i z eksportu - ale jej strumień zostaje razem
   z powodem. Administrator ma widzieć, że wpis był i został wycofany; zniknięcie bez
   śladu byłoby w rejestrze lotniczym wadą, nie funkcją
 - **filtr stoi W `projectPilotDay`**, w jednym miejscu: gdyby pomijał go ekran, wycofana
-  sesja znikałaby z listy, ale nadal dokładała się do „Blok" i „Loty"
-- **na serwerze to TRZECI STATUS sesji** (`voided`; kolumna jest zwykłym TEXT-em bez
+  operacja znikałaby z listy, ale nadal dokładała się do „Blok" i „Loty"
+- **na serwerze to TRZECI STATUS operacji** (`voided`; kolumna jest zwykłym TEXT-em bez
   CHECK-a, więc wchodzi bez migracji). Oba krytyczne wykluczenia są napisane jako
   „musi być `closed`", więc działają same: eksport do arkusza (`dayExporter`) i ŁAŃCUCH
   MH (`aircraftStateView`) pomijają taki wiersz. Lista eksportów mówi `impossible`,
-  nie `waiting` - sesja wycofana nie czeka na nic
+  nie `waiting` - operacja wycofana nie czeka na nic
 - **uprawnienie TO SAMO, co przy korekcie**: typ jest w `CORRECTION_EVENT_TYPES`, więc
   pilot ma 24 h od zdania, a administrator nie jest blokowany nigdy. Reguły odrzucają
-  unieważnienie sesji nieotwartej (`SESSION_VOID_NO_SESSION`) i drugie z rzędu
+  unieważnienie operacji nieotwartej (`SESSION_VOID_NO_SESSION`) i drugie z rzędu
   (`SESSION_ALREADY_VOIDED`)
 - **w APLIKACJI PILOTA wejście jest JEDNO i tylko w trybie EDYCJI** (`10D` → arkusz `10L`), na samym dole,
   za wszystkim: intencją wchodzącego w edycję jest poprawka, a kasowanie jest wyjściem
   awaryjnym. Przycisk OBRAMOWANY, nie wypełniony - czerwień mówi „uwaga", nie „zrób to";
   pełnowymiarowy, inaczej niż kosz w linii tytułu arkusza (issue #43), bo kosz kasuje
   jedno zdarzenie, a ten przycisk CAŁY wpis
-- **arkusz nazywa KONKRETNY wpis** (maszyna, bieg silnika, Loty·Blok·Lot): dwie sesje
+- **arkusz nazywa KONKRETNY wpis** (maszyna, bieg silnika, Loty·Blok·Lot): dwie operacje
   tej samej maszyny w dobie różnią się wyłącznie godzinami. Baner mówi o SKUTKU
   („zapis zostaje w rejestrze i widzi go administrator") - to NIE jest przypis o budowie
   rejestru, tylko odpowiedź na pytanie, które pilot zada sobie przed tapnięciem
   w czerwony przycisk. Powód OPCJONALNY, jak przy każdej korekcie
 - **ADMINISTRATOR MA DRUGĄ DROGĘ, BEZ OKNA** (zamówienie 2026-08-31: „z poziomu admina
-  powinienem mieć możliwość w dowolnym momencie usunięcia sesji"). `POST
+  powinienem mieć możliwość w dowolnym momencie usunięcia operacji"). `POST
   /admin/api/sessions/:uuid/void` na zdolności `events.correct`, karta na dole ekranu
-  sesji w DZIENNIKU panelu. „W dowolnym momencie" obejmuje sesję W TOKU - kolizja
+  operacji w DZIENNIKU panelu. „W dowolnym momencie" obejmuje operację W TOKU - kolizja
   z pilotem jest ostrzeżeniem (`ADMIN_EDIT_SESSION_ACTIVE`), nie odmową, dokładnie jak
   przy korekcie. Powód jest tam WYMAGANY (w telefonie opcjonalny): pilot wycofuje własny
   wpis, administrator - cudzy lot. Decyzje i trzy naprawione miejsca, w których status
-  `voided` nie docierał poza kolumnę w bazie (karta arkusza z wycofaną sesją, martwa
+  `voided` nie docierał poza kolumnę w bazie (karta arkusza z wycofaną operacją, martwa
   plakietka w panelu, maszyna zajęta bez końca): `docs/panel-2.0.md` §9.4b
 
 ## Motywy: DWA i przełącznik ciemny/jasny (issue #72, 2026-09-01)
@@ -1439,9 +1508,9 @@ ekran z podglądem motywów jest do usunięcia i nie jest już potrzebny."
   ekranów aplikacji; kolory mockupów dalej stoją w bloku `:root` ich `<head>`, a równość
   z tokenami przybija `app/src/__tests__/tokensCssVars.test.ts`
 
-## Log zdarzeń jest JEDEN - kokpit rysuje oś sesji (issue #44, 2026-08-14)
-Aplikacja miała dwa style logu tej samej sesji: oś na ekranie sesji (10) i osobny
-`EventLog` w kokpicie (04, 05, 04B). Ta sama sesja czytała się przez to dwa razy inaczej,
+## Log zdarzeń jest JEDEN - kokpit rysuje oś operacji (issue #44, 2026-08-14)
+Aplikacja miała dwa style logu tej samej operacji: oś na ekranie operacji (10) i osobny
+`EventLog` w kokpicie (04, 05, 04B). Ta sama operacja czytała się przez to dwa razy inaczej,
 choć oba widoki opisują JEDEN bieg silnika - raz oglądany w trakcie, raz po wszystkim.
 Zostaje oś: `components/data/SessionAxis.tsx` + builder `logic/sessionAxis.ts`.
 - **`EventLog` SKASOWANY** razem z całym swoim inwentarzem: szyną ikon w plakietkach,
@@ -1461,7 +1530,7 @@ Zostaje oś: `components/data/SessionAxis.tsx` + builder `logic/sessionAxis.ts`.
   TRWANIA, a te w tej osi stoją po prawej (tam, gdzie czas lotu przy lądowaniu).
   W powietrzu liczy od startu, na ziemi od uruchomienia silnika
 - **znika czas kołowania i podpis „blok 1:13"**: pierwszy materializował się dopiero przy
-  starcie, więc nigdy nie pomógł temu, kto kołuje; drugi jest sumą SESJI i mieszka
+  starcie, więc nigdy nie pomógł temu, kto kołuje; drugi jest sumą OPERACJI i mieszka
   w stopce osi. Stopka w kokpicie pojawia się dopiero po zatrzymaniu silnika (jest co
   sumować) i **nie powtarza trasy** - ta stoi w pasku górnym
 - **liczba lotów schodzi z nagłówka karty**: mówi ją stopka trzy centymetry niżej.
@@ -1485,10 +1554,10 @@ znikać, wraca po reinstalacji i jest na nowym telefonie.
 - **koperta niesie WYŁĄCZNIE geometrię** (linia, profil, log, statystyki). Rejestracja,
   loty, czasy i czas w powietrzu liczą się dalej z LOKALNEGO rejestru (§6 pkt 1) - stąd
   wariant `14c` (bez zasięgu) pokazuje komplet czasów i mówi wprost, że brakuje rysunku.
-  Dołożenie danych rejestru do tej koperty tworzy DRUGĄ prawdę o sesji: pilnuje tego test
+  Dołożenie danych rejestru do tej koperty tworzy DRUGĄ prawdę o operacji: pilnuje tego test
 - **to jedyny świadomy wyjątek od offline-first** (decyzja użytkownika przy wyborze
   wariantu): ślad jest materiałem do OGLĄDANIA po locie, nie przyrządem w locie. Reguła
-  „dane sesji nie mają wariantu z cache" zostaje nietknięta
+  „dane operacji nie mają wariantu z cache" zostaje nietknięta
 - **cztery powody braku znaczą co innego** i nie wolno ich zwijać do jednego: `manual`
   (wpis ręczny), `no-record` (serwer nie ma), `pending-upload` (nagranie czeka
   w kolejce NA TYM telefonie), `offline` (jest, brakuje drogi). „Brak śladu" pokazany
@@ -1499,7 +1568,7 @@ znikać, wraca po reinstalacji i jest na nowym telefonie.
 - **LOGU PUNKTÓW NIE MA** ani na ekranie, ani w kopercie (przegląd 2026-08-15): tabela
   surowych fixów ze stanem bramki jakości jest materiałem do STROJENIA PROGÓW, a nie
   odpowiedzią na pytanie pilota - została w nagraniu czytanym przez `replay.ts`
-  (panel 2.0 również jej nie pokazuje: ekran sesji rysuje mapę i profil, nie tabelę). Ekran nie ma też banera o pochodzeniu danych ani podpowiedzi o gestach:
+  (panel 2.0 również jej nie pokazuje: ekran operacji rysuje mapę i profil, nie tabelę). Ekran nie ma też banera o pochodzeniu danych ani podpowiedzi o gestach:
   jedno i drugie opowiadało o BUDOWIE aplikacji komuś, kto ogląda swój lot
 - **atrybucji źródeł katalogu nie ma na mapie** (2026-08-15) - obowiązek ODbL spełnia
   `docs/dane-lotnisk.md` §3.2. To zamiana miejsca, nie przeoczenie: przywrócenie napisu
@@ -1554,14 +1623,14 @@ znikać, wraca po reinstalacji i jest na nowym telefonie.
   (`logic/trackDistance.ts`). Na osi czasu proporcji między czasem a drogą NIE MA: pięć
   minut wznoszenia to inna droga niż pięć minut przelotu, a pięć minut postoju to zero.
   Dlatego liczba zmienia się przy przesuwaniu wykresu i to jest poprawne - opisuje to
-  miejsce lotu, a nie średnią z całej sesji
+  miejsce lotu, a nie średnią z całej operacji
 - **kolejność ekranu: mapa → profil → statystyki**. Metryki spod mapy zeszły do karty
   statystyk (razem ze średnim wznoszeniem i zejściem spod profilu), żeby oba wykresy
   przylegały do siebie - kursor je sprzęga, więc pilot patrzy na nie na przemian
 
-## Norma zużycia liczy się PER SESJA, nie per godzina (issue #38, 2026-08-12)
-Werdykt „w normie" porównywał L/h sesji z pasmem blokowym samolotu - czyli z liczbą
-policzoną na średniej mieszance faz z 90 dni. Sesja z długim kołowaniem wychodziła przez
+## Norma zużycia liczy się PER OPERACJA, nie per godzina (issue #38, 2026-08-12)
+Werdykt „w normie" porównywał L/h operacji z pasmem blokowym samolotu - czyli z liczbą
+policzoną na średniej mieszance faz z 90 dni. Operacja z długim kołowaniem wychodziła przez
 to „poniżej normy" bez żadnego powodu poza proporcją ziemi do powietrza, a motogodziny
 nie miały normy w ogóle: ekran twierdził, że ΔMH RÓWNA SIĘ czasowi blokowemu, czemu
 `consumption/mhModel.ts` wprost zaprzecza (obrotomierz na ziemi przyrasta wolniej niż zegar).
@@ -1587,7 +1656,7 @@ nie miały normy w ogóle: ekran twierdził, że ΔMH RÓWNA SIĘ czasowi blokow
 - Pierwsze logowanie: login + hasło na `00-login.html` (konta zakłada administrator w bazie, BEZ samodzielnej rejestracji i BEZ Google OAuth - decyzja odwrócona 2026-07-22; wymaga sieci); codzienny powrót = odblokowanie PIN-em (działa offline)
 - **Rozpoczęcie lotu ma trwać kilka sekund** - trzy kroki (samolot+Dual → zadanie → liczniki) i „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej
 - **Nazewnictwo wejścia w lot** (decyzja 2026-08-12): główny przycisk na 01 i CTA kroku 3 to **„ROZPOCZNIJ LOT"**, a nagłówek kroków brzmi **„NOWY LOT · n/3"**. Słowa **„przejmij / przejęcie" używamy WYŁĄCZNIE tam, gdzie maszynę odbiera się INNEMU pilotowi** (podgląd 04B, modal claimu, `session_claim` w rejestrze) - pilot startujący na wolnym samolocie niczego nie przejmuje, tylko zaczyna latać. Identyfikatory w kodzie (`claim`, `takeover`, `Preflight*`) zostają: to nazwy techniczne, nie napisy
-- Tożsamość pilota jest znana w całej sesji - NIE pytamy o kod pilota w formularzach
+- Tożsamość pilota jest znana w całej operacji - NIE pytamy o kod pilota w formularzach
 - Samolot wybieramy z listy zarejestrowanych jednostek (dropdown/lista kart), NIE pole tekstowe
 - Rodzaj operacji - siatka kart z ikonami, NIE select. Nazwy dla pilota: Skoki / **Przelot** / Egzamin / Lot tech. / Inne (wartości w rejestrze zostają angielskie - `ferry` to identyfikator, nie napis)
 - **Rodzaj operacji wyznacza pola trasy** (issue #13): skoki = JEDNO lotnisko (startują i lądują na tym samym placu), pozostałe operacje = para start → lądowanie. Reguła mieszka w domenie (`isSameFieldOperation`) i tą samą odpowiedzią uzbraja bramkę lądowania w detekcji - formularz i detekcja nie mają jak się rozjechać
@@ -1598,11 +1667,11 @@ nie miały normy w ogóle: ekran twierdził, że ΔMH RÓWNA SIĘ czasowi blokow
 Pełna architektura: `docs/_main.md.txt` (sekcje 4–6). Zasady twarde:
 
 - **Brak sieci NIGDY nie blokuje pracy pilota** - sieć to okazja do synca, nie warunek. Jedyny świadomy wyjątek: utworzenie profilu (pierwsze logowanie / zapomniany PIN) wymaga sieci - tryb awaryjny bez tożsamości został rozważony i ODRZUCONY, nie proponuj go ponownie
-- Zapis = lokalne zdarzenie append-only (SQLite, UUID) → outbox wysyła automatycznie, gdy jest sieć; eksport do Sheets robi serwer (**pilot niczego nie eksportuje ręcznie**). Osobnego ekranu statusu NIE MA od 2026-08-12 - był trzecim widokiem tej samej sesji (tabela lotów i „dane dnia" = ekran 10) i drugim wskaźnikiem sieci (kolejka = arkusz SyncChipa). Została sekcja w Ustawieniach (13): kolejka, ostatnia udana wysyłka, **uwagi serwera** (§4.5 - jedyne ich miejsce w aplikacji, bo SyncChip pojawia się tylko offline) i awaryjne „Synchronizuj teraz"
-- **Outbox ma DRUGI kierunek** (issue #32, 2026-08-12): `GET /me/events` odbudowuje lokalny rejestr z serwera po czyszczeniu pamięci aplikacji, reinstalacji albo na nowym telefonie (`application/sync/eventRestore.ts`, kursor per pilot, zapis od razu ze stemplem wysyłki). **To NIE jest wyjątek od offline-first - to jego warunek**: pobranie zasila REJESTR, nie EKRAN. „Mój dzień", „Historia dni" i statystyki dalej liczą się WYŁĄCZNIE z lokalnego strumienia (§6 pkt 1), więc nie wolno kazać im pytać serwera. Jedyny ślad w UI jest negatywny - dopóki pierwsze odtworzenie nie wróci, ekran nie rysuje stanu pustego (`streamHydrated` w store sesji), bo „jeszcze żadnego lotu" pokazane pilotowi z trzema sesjami wygląda jak utrata danych. Pełny opis: `docs/_main.md.txt` §4.9
-- **Ślad GPS jest JEDYNYM świadomym wyjątkiem** (issue #47, 2026-08-14): nagranie idzie na serwer i telefon kasuje kopię, więc ekran 14 bez zasięgu nie narysuje trasy (wariant `14c` mówi to wprost i pokazuje czasy z lokalnego rejestru). Wyjątek dotyczy WYŁĄCZNIE geometrii - czasy, loty i rozliczenie sesji liczą się lokalnie jak dotąd. Sekcja „Ślad idzie z SERWERA" wyżej, pełny opis: `docs/_main.md.txt` §4.10
+- Zapis = lokalne zdarzenie append-only (SQLite, UUID) → outbox wysyła automatycznie, gdy jest sieć; eksport do Sheets robi serwer (**pilot niczego nie eksportuje ręcznie**). Osobnego ekranu statusu NIE MA od 2026-08-12 - był trzecim widokiem tej samej operacji (tabela lotów i „dane dnia" = ekran 10) i drugim wskaźnikiem sieci (kolejka = arkusz SyncChipa). Została sekcja w Ustawieniach (13): kolejka, ostatnia udana wysyłka, **uwagi serwera** (§4.5 - jedyne ich miejsce w aplikacji, bo SyncChip pojawia się tylko offline) i awaryjne „Synchronizuj teraz"
+- **Outbox ma DRUGI kierunek** (issue #32, 2026-08-12): `GET /me/events` odbudowuje lokalny rejestr z serwera po czyszczeniu pamięci aplikacji, reinstalacji albo na nowym telefonie (`application/sync/eventRestore.ts`, kursor per pilot, zapis od razu ze stemplem wysyłki). **To NIE jest wyjątek od offline-first - to jego warunek**: pobranie zasila REJESTR, nie EKRAN. „Mój dzień", „Historia dni" i statystyki dalej liczą się WYŁĄCZNIE z lokalnego strumienia (§6 pkt 1), więc nie wolno kazać im pytać serwera. Jedyny ślad w UI jest negatywny - dopóki pierwsze odtworzenie nie wróci, ekran nie rysuje stanu pustego (`streamHydrated` w store operacji), bo „jeszcze żadnego lotu" pokazane pilotowi z trzema operacjami wygląda jak utrata danych. Pełny opis: `docs/_main.md.txt` §4.9
+- **Ślad GPS jest JEDYNYM świadomym wyjątkiem** (issue #47, 2026-08-14): nagranie idzie na serwer i telefon kasuje kopię, więc ekran 14 bez zasięgu nie narysuje trasy (wariant `14c` mówi to wprost i pokazuje czasy z lokalnego rejestru). Wyjątek dotyczy WYŁĄCZNIE geometrii - czasy, loty i rozliczenie operacji liczą się lokalnie jak dotąd. Sekcja „Ślad idzie z SERWERA" wyżej, pełny opis: `docs/_main.md.txt` §4.10
 - Komponenty dzielimy wg źródła danych:
-  1. **dane sesji** (timery, log samolotu na `04`, lista sesji doby na `01`, liczniki, statystyki) - lokalne, zawsze świeże, zero wariantów offline
+  1. **dane operacji** (timery, log samolotu na `04`, lista operacji doby na `01`, liczniki, statystyki) - lokalne, zawsze świeże, zero wariantów offline
   2. **dane z serwera** (przekazanie FOB/MH, status claim, lista pilotów) - 3 stany świeżości: `live` (bez adnotacji) / `cache` ("· z cache · sync 21 JUN 17:30", amber) / `brak` ("brak danych - wpisz z licznika")
   3. **akcje wymagające sieci** (pierwsze logowanie, zmiana konta, ręczny sync) - offline: disabled z podanym powodem, nigdy cichy błąd
 - Jeden globalny wskaźnik łączności: SyncChip - nie rozsiewamy komunikatów o braku sieci po ekranach. **Online nie rysuje NIC** (decyzja 2026-08-06, issue #12: „zsynchronizowano" to stan domyślny, a plakietka świecąca przez 99% czasu uczy oko ignorować róg ekranu). Offline: **SAM pill** `OFFLINE · n`; tapnięcie otwiera arkusz szczegółów synchronizacji (kolejka, ostatni udany sync, wiek danych referencyjnych - issue #23 pkt 5, wzorzec `01c`). Stemple syncu nie wiszą na ekranie na stałe. **Arkusz MA akcję „PONÓW PRÓBĘ"** (uwaga z urządzenia, 2026-08-30) - odwraca to zdanie z issue #23 („arkusz jest INFORMACYJNY, bez akcji: przycisk-atrapa uczyłby, że trzeba pomagać"), bo ponowienie NIE JEST atrapą: robi to samo, co „SYNCHRONIZUJ TERAZ" w ustawieniach (dopycha kolejkę i pyta o dane referencyjne z pominięciem bramy wieku, issue #55). Znikły za to stopka odsyłająca po ten przycisk do ustawień oraz zdanie „brak zasięgu niczego nie blokuje" - drugie odpowiadało na obawę, której pilot nie zgłosił, a przez to ją podsuwało
@@ -1659,7 +1728,7 @@ Gdy tworzysz prompt dla agenta do tworzenia HTML mockupów, zawsze dołącz:
 5. Nazwy plików do stworzenia i docelowy katalog `d:\uz_areo\design\`
 6. Gdy ekran pokazuje dane z serwera - stany świeżości `live`/`cache`/`brak` i SyncChip (sekcja Offline-first wyżej). **Online SyncChip nie rysuje NIC** - plakietka istnieje wyłącznie offline
 7. Gdy ekran ma warianty - panel „Warianty tego ekranu" na canvasie z opisem kiedy który (sekcja Nawigacja i warianty wyżej)
-8. **Gdy ekran dotyka czasu, dnia albo zamknięcia czegokolwiek - sekcje „Sesja = jeden bieg silnika" i „Dzień pilota = lista sesji" wyżej**: sesja = jeden bieg silnika (po STOP nie ma drugiego startu - hero to ZDAJ SAMOLOT), lot = start→lądowanie, słowo „wzlot" wycofane; jednostką potwierdzenia jest SESJA, odczyty przy zdaniu (`09b`) OBOWIĄZKOWE; dzień pilota to LISTA SESJI - klamry służby, meldunku i „Zamknij dzień" NIE MA (issue #23); zdanie samolotu NIE kończy dnia. Bez tego punktu agent zbuduje ekran poprawny wizualnie i błędny modelowo - dokładnie tak powstał flow, który właśnie przebudowaliśmy
+8. **Gdy ekran dotyka czasu, dnia albo zamknięcia czegokolwiek - sekcje „Operacja = jeden bieg silnika" i „Dzień pilota = lista operacji" wyżej**: operacja = jeden bieg silnika (po STOP nie ma drugiego startu - hero to ZDAJ SAMOLOT), lot = start→lądowanie, słowo „wzlot" wycofane; jednostką potwierdzenia jest OPERACJA, odczyty przy zdaniu (`09b`) OBOWIĄZKOWE; dzień pilota to LISTA OPERACJI - klamry służby, meldunku i „Zamknij dzień" NIE MA (issue #23); zdanie samolotu NIE kończy dnia. Bez tego punktu agent zbuduje ekran poprawny wizualnie i błędny modelowo - dokładnie tak powstał flow, który właśnie przebudowaliśmy
 9. **Gdy ekran czeka na jakikolwiek odczyt** - sekcja „Stan ładowania" niżej i arkusz
    `design/LOADERY.html`: skeleton w geometrii docelowej, nigdy spinner, nigdy pustka;
    stan pusty i triada świeżości `live`/`cache`/`brak` zostają osobnymi rzeczami

@@ -259,7 +259,7 @@ export function CockpitReadonlyScreen({
         {/* ── stan samolotu wg serwera (`.ground-chip`) ──────────────────────── */}
         <StatusChip label={status.label} tone={status.tone} style={{ alignSelf: 'center' }} />
 
-        {/* ── pasek sesji cudzego samolotu (`.claim-strip`) ───────────────────
+        {/* ── pasek operacji cudzego samolotu (`.claim-strip`) ───────────────────
             Stało tu „Duty KRZ 02:31". Czas pracy innego pilota nie jest informacją
             o SAMOLOCIE i nie wnosi nic do decyzji o przejęciu (§3.6a) - liczy się,
             od kiedy maszyna jest zajęta i ile już zrobiła. */}
@@ -271,7 +271,7 @@ export function CockpitReadonlyScreen({
           />
         )}
 
-        {/* ── log cudzej sesji - ta sama oś, co we własnym kokpicie (issue #44), bez
+        {/* ── log cudzej operacji - ta sama oś, co we własnym kokpicie (issue #44), bez
             ołówków: podgląd niczego nie zapisuje. Ale też niczego nie upraszcza -
             to na podstawie tego logu zapada decyzja o przejęciu maszyny. ───── */}
         <Card title={peekLogTitle(aircraft?.reg ?? aircraftId, picCode, projection)} flush>
@@ -279,8 +279,8 @@ export function CockpitReadonlyScreen({
             rows={logRows}
             emptyText={
               snapshot == null
-                ? 'Nie mamy migawki tej sesji - log pojawi się po połączeniu z serwerem.'
-                : 'Serwer nie zna jeszcze żadnego zdarzenia z tej sesji.'
+                ? 'Nie mamy migawki tej operacji - log pojawi się po połączeniu z serwerem.'
+                : 'Serwer nie zna jeszcze żadnego zdarzenia z tej operacji.'
             }
           />
         </Card>

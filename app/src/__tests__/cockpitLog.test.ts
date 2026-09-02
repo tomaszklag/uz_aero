@@ -65,7 +65,7 @@ function axis(events: Event[], now = at(12, 40)) {
   return buildCockpitAxis(events, projectSession(events), now);
 }
 
-describe('log kokpitu = oś sesji (issue #44)', () => {
+describe('log kokpitu = oś operacji (issue #44)', () => {
   it('zaczyna się PRZEJĘCIEM z odczytem, a nie chipami przy uruchomieniu silnika', () => {
     // Do issue #44 kokpit pomijał przejęcie, a odczyt startowy wisiał jako chipy „MH …"
     // i „112 L" przy „Start engine" - przy zdarzeniu, które go nie wykonało.
@@ -212,7 +212,7 @@ describe('stopka i bramka karty', () => {
   });
 });
 
-describe('podgląd cudzej sesji (04B)', () => {
+describe('podgląd cudzej operacji (04B)', () => {
   it('nie ma wiersza „na żywo" ani znaczników outboxa', () => {
     // Outbox opisuje TEN telefon; cudze zdarzenia przyszły z serwera, więc strzałka
     // mówiłaby o kolejce, której nie znamy. Migawka nie jest też podglądem na żywo.

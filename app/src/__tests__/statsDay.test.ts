@@ -26,7 +26,7 @@ describe('plakietka lotów - trzy formy liczebnika', () => {
     expect(flightsBadge(22)).toBe('22 loty');
   });
 
-  it('zero to też forma daleka - sesja bez lotu jest normalną sesją', () => {
+  it('zero to też forma daleka - operacja bez lotu jest normalną operacją', () => {
     expect(flightsBadge(0)).toBe('0 lotów');
   });
 });

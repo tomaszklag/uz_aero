@@ -241,7 +241,7 @@ export function SettingsScreen({
 
         {/* ── synchronizacja: STAN, nie osobny ekran ────────────────────────
             Ekran 11 usunięty (2026-08-12) - patrz docblock modułu. Trzy wiersze
-            i jeden przycisk awaryjny; niczego tu nie ma o danych sesji, bo od tego
+            i jeden przycisk awaryjny; niczego tu nie ma o danych operacji, bo od tego
             jest rozliczenie (10). */}
         <Card title="Synchronizacja" header="inline">
           <KeyValueRow
@@ -264,14 +264,14 @@ export function SettingsScreen({
             value={serverNoticeLabel(serverFlags.length, lastSyncAt != null)}
             valueTone={serverFlags.length > 0 ? 'amber' : 'green'}
           />
-          {/* Jedna flaga potrafi objąć kilka sesji (§4.5), więc wiersz mówi ILE -
+          {/* Jedna flaga potrafi objąć kilka operacji (§4.5), więc wiersz mówi ILE -
               bez tego pilot nie wie, czy chodzi o dzisiejszy lot, czy o cały tydzień. */}
           {serverFlags.map((flag) => (
             <KeyValueRow
               key={flag.type}
               divider
               label={flagLabel(flag.type)}
-              value={`${flag.sessionUuids.length} ${plural(flag.sessionUuids.length, 'sesja', 'sesje', 'sesji')}`}
+              value={`${flag.sessionUuids.length} ${plural(flag.sessionUuids.length, 'operacja', 'operacje', 'operacji')}`}
               valueTone="amber"
             />
           ))}
@@ -323,7 +323,7 @@ export function SettingsScreen({
           <KeyValueRow divider label="Aplikacja" value={`UZ Aero${version != null ? ` · v${version}` : ''}`} />
           <KeyValueRow
             divider
-            label="Samolot sesji"
+            label="Samolot operacji"
             value={
               projection.aircraftId != null
                 ? `${projection.aircraftId}${aircraftType != null ? ` · ${aircraftType}` : ''}`

@@ -73,7 +73,7 @@ describe('godzina przejęcia - bez kaskady', () => {
     expect(result.kind).toBe('simple');
   });
 
-  it('sesja bez pracy silnika (09C) nie ma czego ciągnąć', () => {
+  it('operacja bez pracy silnika (09C) nie ma czego ciągnąć', () => {
     const events = sessionEvents().filter(
       (e) => e.type !== 'engine_start' && e.type !== 'engine_stop' && e.type !== 'takeoff' && e.type !== 'landing',
     );

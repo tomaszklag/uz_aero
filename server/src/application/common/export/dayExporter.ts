@@ -234,9 +234,20 @@ export class DayExporter {
       });
     }
 
-    const excluded: DaySheetExclusion[] = rows
-      .filter((r) => blockedBy.has(r.sessionUuid))
-      .map((r) => ({ sessionUuid: r.sessionUuid, flagIds: blockedBy.get(r.sessionUuid) ?? [] }));
+    /* Wykluczoną operację opisujemy jej biegiem silnika i załogą (issue #68), a nie
+       uuid-em. Strumienia dla niej NIE wczytujemy - wszystko, czego adnotacja
+       potrzebuje, stoi już w wierszu projekcji. */
+    const excluded: DaySheetExclusion[] = [];
+    for (const row of rows) {
+      if (!blockedBy.has(row.sessionUuid)) continue;
+      excluded.push({
+        sessionUuid: row.sessionUuid,
+        engineStartAt: row.engineStartAt,
+        engineStopAt: row.engineStopAt,
+        pic: await this.codeOf(row.picId),
+        flagIds: blockedBy.get(row.sessionUuid) ?? [],
+      });
+    }
 
     const sheet = buildDaySheet({ day, aircraftId, sessions, excluded });
     // Nieosiągalne przy powyższych bramkach (`buildDaySheet` odmawia wyłącznie przy

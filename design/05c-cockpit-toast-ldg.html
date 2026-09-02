@@ -74,7 +74,7 @@
   .param-value.amber { color:var(--amber); }
   .param-unit { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); }
 
-  /* OŚ SESJI (issue #44) - ten sam inwentarz, co na 04, 05 i 10; pełny komentarz stoi
+  /* OŚ OPERACJI (issue #44) - ten sam inwentarz, co na 04, 05 i 10; pełny komentarz stoi
      w 04. Stan własny tego ekranu: zdarzenie WŁAŚCIE WYKRYTE, czekające w oknie COFNIJ
      - kropka kreskowana i plakietka przy nazwie (jak na 05B). */
   .session-log { flex:1; overflow-y:auto; scrollbar-width:none; background:var(--surface); border-bottom:1px solid var(--border); }
@@ -279,18 +279,18 @@
         <div class="param-label">Fuel on Board</div>
         <div style="display:flex;align-items:baseline;gap:6px;"><div class="param-value">~92</div><div class="param-unit">L</div></div>
       </div>
-      <!-- Czas lotu CAŁEJ SESJI (0:44 + 0:42 + 0:53 otwartego) - patrz komentarz przy
+      <!-- Czas lotu CAŁEJ OPERACJI (0:44 + 0:42 + 0:53 otwartego) - patrz komentarz przy
            tym kafelku w 05. Lądowanie wisi jeszcze w toaście, więc lot trzeci liczy
            się dalej jako otwarty. -->
       <div class="param-cell">
         <div class="param-label">Flight Time</div>
         <div style="display:flex;align-items:baseline;gap:6px;"><div class="param-value" style="color:var(--text-secondary)">02:19</div></div>
-    <!-- Karta logu pokazuje się dopiero, gdy w sesji jest zdarzenie OPERACYJNE
-         (issue #19) - tu jest ich pełna sesja. Oś jest ta sama, co na 04 i na 10
+    <!-- Karta logu pokazuje się dopiero, gdy w operacji jest zdarzenie OPERACYJNE
+         (issue #19) - tu jest ich pełna operacja. Oś jest ta sama, co na 04 i na 10
          (issue #44); ostatni wiersz czeka w oknie COFNIJ. -->
     <div class="session-log">
       <div class="session-log-header">
-        <span class="session-log-title">Log sesji · UTC</span>
+        <span class="session-log-title">Log operacji · UTC</span>
         <span class="session-log-count">LOT #3</span>
       </div>
       <div class="axis">

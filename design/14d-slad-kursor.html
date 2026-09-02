@@ -204,7 +204,7 @@
 
 <div class="canvas-label">
   <div class="film-strip">14D · KURSOR I ZOOM</div>
-  <div class="slug">app / sesja / ślad - w trakcie gestu</div>
+  <div class="slug">app / operacja / ślad - w trakcie gestu</div>
   <div class="canvas-meta"><span class="pulse"></span>UZ AERO</div>
 </div>
 
@@ -220,16 +220,16 @@
   <div class="screen">
 
     <div class="app-header">
-      <!-- Powrót do SESJI (10). Do issue #38 ślad otwierał się ze szczegółów lotu (16)
+      <!-- Powrót do OPERACJI (10). Do issue #38 ślad otwierał się ze szczegółów lotu (16)
            i opisywał JEDEN lot - ale zapis GPS powstaje w jednym ciągu, od uruchomienia
            do wyłączenia silnika, więc dzielenie go na loty było krojeniem nagrania na
            kawałki po to, żeby pilot oglądał je po kolei. Ekran 16 został usunięty. -->
       <a href="10-statystyki.html" class="back-btn">
         <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 2.5L4 6.5l4 4"/></svg>
-        Sesja
+        Operacja
       </a>
       <div class="app-header-center">
-        <div class="screen-title">ŚLAD SESJI</div>
+        <div class="screen-title">ŚLAD OPERACJI</div>
         <div class="header-subtitle">SP-AXA · 06 SIE · 2 loty</div>
       </div>
       <div class="app-header-right">
@@ -335,7 +335,7 @@
             <circle cx="88" cy="158" r="1.8" fill="var(--blue)"/>
             <text x="26" y="152" class="axis-label" fill="#3498DB" font-size="7.5">ZRZUT 2 · 09:33</text>
 
-            <!-- STARTY I LĄDOWANIA - wszystkie cztery, bo sesja miała dwa loty
+            <!-- STARTY I LĄDOWANIA - wszystkie cztery, bo operacja miała dwa loty
                  (issue #38 pkt 2). Podpisy z numerem, żeby dało się je przypisać
                  do wierszy osi czasu na 10. -->
             <circle cx="152" cy="218" r="6" fill="var(--green)"/>
@@ -429,7 +429,7 @@
             <text x="0" y="85"  class="axis-label">5 000</text>
             <text x="0" y="122" class="axis-label">1 000</text>
 
-            <!-- DWA WYNIESIENIA, jeden wykres: profil rysuje się w osi CZASU SESJI,
+            <!-- DWA WYNIESIENIA, jeden wykres: profil rysuje się w osi CZASU OPERACJI,
                  więc przerwa między lądowaniem a kolejnym startem (kołowanie, załadunek)
                  jest jego częścią. To ona pokazuje, ile maszyna stała z pracującym
                  silnikiem - a od issue #38 ta liczba wchodzi wprost do normy zużycia. -->
@@ -462,7 +462,7 @@
 
             <!-- ZNACZNIKI: te same cztery rodzaje, co na mapie (issue #47 pkt 2) -
                  start, zrzut, maksimum, lądowanie - i każdy z CZASEM. Do issue #47 profil
-                 pokazywał sam szczyt, więc dwa wykresy jednej sesji podpisywały co innego
+                 pokazywał sam szczyt, więc dwa wykresy jednej operacji podpisywały co innego
                  i nie dało się przełożyć zdarzenia z jednego na drugie. -->
             <!-- PODPIS TO SAMA GODZINA, a rodzaj niesie KOLOR - ten sam, co w legendzie
                  mapy nad wykresem: zielony start, czerwone lądowanie, błękitny zrzut.
@@ -511,7 +511,7 @@
       <!-- ══ STATYSTYKI (issue #47 pkt 3) ══════════════════════════════════ -->
       <!-- Wszystko liczy się z TEGO SAMEGO śladu, co linia i profil wyżej - żadna
            z tych liczb nie wchodzi do rejestru ani do rozliczenia. To opis lotu, nie
-           dokument: dlatego stoi na ekranie śladu, a nie na ekranie sesji (10). -->
+           dokument: dlatego stoi na ekranie śladu, a nie na ekranie operacji (10). -->
       <div class="section-card">
         <div class="section-card-head">
           Statystyki lotu
@@ -519,7 +519,7 @@
           <span class="head-note">z zapisu GPS</span>
         </div>
 
-        <!-- Sumy CAŁEJ sesji: dwa loty to jeden zapis, więc dystans i czas liczą się
+        <!-- Sumy CAŁEJ operacji: dwa loty to jeden zapis, więc dystans i czas liczą się
              przez oba. Rozbicie per lot stoi na osi czasu ekranu 10. -->
         <div class="stat-block">
           <div class="stat-block-head">Podsumowanie</div>
@@ -672,7 +672,7 @@
   <a class="vp-item" href="14-slad.html">
     <span class="vp-badge">14</span>
     <span class="vp-body">
-      <span class="vp-name">Ślad sesji - pełny</span>
+      <span class="vp-name">Ślad operacji - pełny</span>
       <span class="vp-when">Stan spoczynku: cały bieg silnika w kadrze, bez kursora. Ten sam ekran bez palca na wykresie.</span>
     </span>
   </a>
@@ -680,7 +680,7 @@
     <span class="vp-badge amber">14C</span>
     <span class="vp-body">
       <span class="vp-name">Bez zasięgu</span>
-      <span class="vp-when">Ślad jest na serwerze, ale telefon nie ma jak go pobrać. Jedyny stan, w którym ekran 14 potrzebuje sieci - i dlatego mówi to wprost, zamiast udawać, że śladu nie ma. Czasy i liczby sesji zostają, bo liczą się z rejestru na telefonie.</span>
+      <span class="vp-when">Ślad jest na serwerze, ale telefon nie ma jak go pobrać. Jedyny stan, w którym ekran 14 potrzebuje sieci - i dlatego mówi to wprost, zamiast udawać, że śladu nie ma. Czasy i liczby operacji zostają, bo liczą się z rejestru na telefonie.</span>
     </span>
   </a>
   <a class="vp-item active" href="14d-slad-kursor.html">
@@ -695,7 +695,7 @@
     <span class="vp-badge dim">14B</span>
     <span class="vp-body">
       <span class="vp-name">Brak śladu</span>
-      <span class="vp-when">Sesja wpisana ręcznie (15 / 05F) albo nagranie, które nigdy nie dotarło na serwer. Nie ma czego rysować - stan pusty tłumaczy powód zamiast pokazywać pustą mapę.</span>
+      <span class="vp-when">Operacja wpisana ręcznie (15 / 05F) albo nagranie, które nigdy nie dotarło na serwer. Nie ma czego rysować - stan pusty tłumaczy powód zamiast pokazywać pustą mapę.</span>
     </span>
   </a>
 </aside>
@@ -703,7 +703,7 @@
 <nav class="nav-strip">
   <a href="index.html">↩ Index</a>
   <span>·</span>
-  <a href="10-statystyki.html">← 10 Sesja</a>
+  <a href="10-statystyki.html">← 10 Operacja</a>
   <span>·</span>
   <a href="14-slad.html">14 Ślad</a>
   <a href="14b-slad-brak.html">14B Brak</a>

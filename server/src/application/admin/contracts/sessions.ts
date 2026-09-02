@@ -24,6 +24,18 @@ import type { AdminFlagListItem } from './flags.ts';
 /** Jeden dzień lotny na liście `A02`. Czasy zdarzeń w epoch ms UTC, stemple w ISO. */
 export interface AdminSessionListItem {
   sessionUuid: string;
+  /**
+   * SYGNATURA OPERACJI - „SP-AXA/2026-09-01/AKO/1" (issue #68).
+   *
+   * Nazwa, którą operacja ma dla ludzi: uuid adresuje, sygnatura identyfikuje. Panel
+   * NIE SKLEJA jej u siebie - druga konwencja nazw znaczyłaby, że administrator
+   * i pilot mówią o jednym locie dwoma napisami (ta sama reguła, przez którą nazwę
+   * karty arkusza liczy wyłącznie serwer).
+   *
+   * `null` = nie ma jej z czego złożyć: samolot spoza rejestru, konto pilota usunięte
+   * albo operacja bez ani jednego uruchomienia silnika (zdanie bez lotu, 09C).
+   */
+  signature: string | null;
 
   aircraftId: string;
   /** Rejestracja z `aircraft`; `null` = samolot spoza rejestru (dane sprzed wpisu). */

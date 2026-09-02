@@ -154,11 +154,11 @@
     position: relative; z-index: 1;
   }
 
-  /* ===== LOG SESJI = OŚ SESJI (issue #44) =====
+  /* ===== LOG OPERACJI = OŚ OPERACJI (issue #44) =====
      Kokpit i rozliczenie (10) rysują odtąd TEN SAM log: ten sam inwentarz klas, te same
      reguły. Do issue #44 były to dwa komponenty - kokpit miał szynę z ikonami
      w plakietkach, chipy licznika i paliwa oraz pełnoszerokie pasy tankowania, a ekran
-     sesji jedną kolumnę czasu z kropkami. Ta sama sesja czytała się więc dwa razy
+     operacji jedną kolumnę czasu z kropkami. Ta sama operacja czytała się więc dwa razy
      inaczej, choć to jedna oś czasu: raz oglądana w trakcie, raz po wszystkim.
 
      Co odeszło razem ze starym stylem:
@@ -170,7 +170,7 @@
       • pełnoszerokie pasy TANKOWANIA → zwykły wiersz w tonie amber. Zdarzenie naziemne
         dzieje się w tym samym czasie co reszta i nie ma powodu wychodzić poza kolumnę;
       • czas trwania KOŁOWANIA (materializował się dopiero przy starcie, więc nigdy nie
-        pomógł temu, kto kołuje) i podpis „blok 1:13" przy wyłączeniu - sumy sesji
+        pomógł temu, kto kołuje) i podpis „blok 1:13" przy wyłączeniu - sumy operacji
         mieszkają w stopce osi, tam gdzie na 10. */
   .session-log {
     background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
@@ -188,8 +188,8 @@
      nie czyta się jak pierwszy wiersz stopki z sumami. */
   .axis { padding: 12px 0; }
   /* WIERSZ JEST NISKI (28 px): oś kokpitu nie ma ani jednego celu dotknięcia - korekta
-     wychodzi kafelkiem „Popraw dane sesji" (issue #43) - więc nie musi trzymać rytmu
-     44 px. Cała sesja skokowa mieści się dzięki temu bez przewijania. */
+     wychodzi kafelkiem „Popraw dane operacji" (issue #43) - więc nie musi trzymać rytmu
+     44 px. Cała operacja skokowa mieści się dzięki temu bez przewijania. */
   .axis-row {
     display: grid; grid-template-columns: 52px 14px 1fr auto;
     align-items: center; gap: 8px; padding: 0 12px 0 10px; min-height: 28px;
@@ -231,7 +231,7 @@
   .axis-right { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
   .axis-flight { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.5px; color: var(--text-muted); }
   .axis-dur { font-family: var(--font-mono); font-size: 11px; color: var(--green); }
-  /* Stopka osi - sumy sesji, ta sama co na 10. W kokpicie pojawia się dopiero wtedy,
+  /* Stopka osi - sumy operacji, ta sama co na 10. W kokpicie pojawia się dopiero wtedy,
      gdy jest co sumować (silnik przestał pracować): „BLOK 00:00" przy pracującym
      silniku byłoby liczbą o niczym. Trasy stopka NIE powtarza - stoi w pasku górnym. */
   .axis-foot {
@@ -269,7 +269,7 @@
   .action-sub { font-size: 10px; color: var(--text-muted); line-height: 1.3; }
 
   /* ===== PASKI POD BOHATEREM =====
-     `.claim-strip` / `.claim-icon` / `.claim-val` zniknęły razem z paskiem sesji
+     `.claim-strip` / `.claim-icon` / `.claim-val` zniknęły razem z paskiem operacji
      (2026-08-10) - pasek został wyłącznie w 04B. `.strip-left` i `.strip-label`
      ZOSTAJĄ: używa ich pasek paliwa niżej. */
   .strip-left { display: flex; align-items: center; gap: 8px; }
@@ -309,7 +309,7 @@
 <header class="canvas-label">
   <span class="film-strip">UZ AERO - 04</span>
   <span class="slug">cockpit · po zatrzymaniu silnika</span>
-  <span class="canvas-meta"><span class="pulse"></span>Sesja zakończona</span>
+  <span class="canvas-meta"><span class="pulse"></span>Operacja zakończona</span>
 </header>
 
 <main class="phone" role="region" aria-label="Mockup - Cockpit Ground State">
@@ -351,21 +351,21 @@
     <!-- SCROLL -->
     <div class="scroll">
 
-      <!-- HERO: ZDAJ SAMOLOT - sesja jest zakończona (model 2026-08-10).
-           TU STAŁ START ENGINE. Sesja = JEDEN bieg silnika: po STOP ENGINE drugiego
+      <!-- HERO: ZDAJ SAMOLOT - operacja jest zakończona (model 2026-08-10).
+           TU STAŁ START ENGINE. Operacja = JEDEN bieg silnika: po STOP ENGINE drugiego
            startu nie ma, więc hero mówi jedyną rzecz, która została do zrobienia -
            oddanie maszyny z odczytami (09b). Kolejny lot to NOWE przejęcie (02).
            Przed zdaniem wolno jeszcze dolać paliwa (kafelek niżej) - dolewka
-           trafia do logu sesji jak każdy inny wpis. -->
+           trafia do logu operacji jak każdy inny wpis. -->
       <a href="09b-zdaj-samolot.html" class="release-hero">
         <div class="release-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0D0D0D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
         </div>
         <div class="release-hero-label">ZDAJ SAMOLOT</div>
-        <div class="release-hero-hint">Odczyt paliwa i motogodzin · zatwierdzenie logu sesji</div>
+        <div class="release-hero-hint">Odczyt paliwa i motogodzin · zatwierdzenie logu operacji</div>
       </a>
 
-      <!-- TU STAŁ PASEK SESJI SAMOLOTU - USUNIĘTY 2026-08-10.
+      <!-- TU STAŁ PASEK OPERACJI SAMOLOTU - USUNIĘTY 2026-08-10.
            Niósł dwie rzeczy i obie okazały się zbędne:
 
            1. link „Mój dzień →", czyli JEDYNĄ drogę powrotną z kokpitu na 01. Tej drogi
@@ -373,7 +373,7 @@
               wychodzi wyłącznie przez „Zdaj samolot" (09B). Dopóki maszyna jest w jego
               rękach, jego ekranem jest kokpit;
            2. „SP-AXA · Twój od 08:04 · 2 wzloty" - maszynę i trasę mówi pasek górny,
-              a przebieg sesji log niżej. Przed pierwszym uruchomieniem silnika (04A)
+              a przebieg operacji log niżej. Przed pierwszym uruchomieniem silnika (04A)
               zostawał z tego wielki napis „jeszcze żadnego wzlotu".
 
            Sam pasek żyje dalej w 04B: tam opisuje CUDZĄ maszynę przed decyzją
@@ -405,16 +405,16 @@
         </div>
       </div>
 
-      <!-- LOG SESJI - wyłącznie bieżąca sesja (model 2026-08-10).
+      <!-- LOG OPERACJI - wyłącznie bieżąca operacja (model 2026-08-10).
            TU STAŁA HARMONIJKA „CYKL 1 / CYKL 2" z tankowaniem między cyklami, czyli
-           przekrój CAŁEGO dnia samolotu. Sesja = jeden bieg silnika, więc kokpit nie ma
+           przekrój CAŁEGO dnia samolotu. Operacja = jeden bieg silnika, więc kokpit nie ma
            już czego harmonijkować: log to płaska oś zdarzeń od przejęcia do teraz,
            a historia dnia mieszka na 01 i w rozliczeniu (10). Słowo „cykl" wycofane
-           razem z modelem - w sesji liczą się LOTY (start → lądowanie).
+           razem z modelem - w operacji liczą się LOTY (start → lądowanie).
            Odczyty przy zdaniu dopiszą się na koniec tej samej osi (09b).
 
            OD ISSUE #44 TO DOKŁADNIE TA SAMA OŚ, CO NA 10 - jeden inwentarz klas i jedne
-           reguły. Kokpit i rozliczenie pokazują tę samą sesję i nie ma powodu, żeby raz
+           reguły. Kokpit i rozliczenie pokazują tę samą operację i nie ma powodu, żeby raz
            wyglądała jak szyna z ikonami, a raz jak kolumna czasu z kropkami. Różnice są
            dwie i obie wymuszone stanem: kokpit nie ma jeszcze wiersza ZDANIE (samolot
            wciąż jest w rękach pilota), a w locie (05) oś kończy się wierszem „na żywo". -->
@@ -422,13 +422,13 @@
         <div class="session-log-header">
           <!-- Link „Szczegóły" USUNIĘTY razem z ekranem 08 (issue #43): prowadził do
                drugiego widoku tego samego logu. Poprawianie ma dziś JEDNO wejście -
-               kafelek „Popraw dane sesji" w pasku akcji niżej. Dwa wejścia do tej samej
+               kafelek „Popraw dane operacji" w pasku akcji niżej. Dwa wejścia do tej samej
                czynności na jednym ekranie to ta sama wada, którą kokpit zdjął z siebie
                przy banerze GPS (decyzja 2026-08-12). -->
           <!-- Liczba lotów zeszła z nagłówka do stopki osi (issue #44): stopka mówi
                „STARTY 2" trzy centymetry niżej, a jedna liczba w dwóch miejscach jednej
                karty to ta sama wada, którą issue #40 zdjęło z nagłówka ekranu 10. -->
-          <span class="session-log-title">Log sesji · SP-AXA · UTC</span>
+          <span class="session-log-title">Log operacji · SP-AXA · UTC</span>
         </div>
 
         <div class="axis">
@@ -443,7 +443,7 @@
             <span class="axis-right"></span>
           </div>
 
-          <!-- Tankowanie PRZED uruchomieniem - wpis tej sesji jak każdy inny. Do issue #44
+          <!-- Tankowanie PRZED uruchomieniem - wpis tej operacji jak każdy inny. Do issue #44
                wychodziło pełnoszerokim pasem na tle amber; zdarzenie naziemne dzieje się
                w tym samym czasie co reszta i nie ma powodu wychodzić poza kolumnę. -->
           <div class="axis-row">
@@ -497,7 +497,7 @@
 
           <!-- WYŁĄCZENIE bez odczytów: paliwo i MH pilot poda przy ZDANIU (09b) i dopiero
                tam staną się wpisami logu. Podpis „blok 1:13" zszedł do stopki (issue #44)
-               - czas blokowy jest sumą sesji, a nie opisem tego jednego zdarzenia. -->
+               - czas blokowy jest sumą operacji, a nie opisem tego jednego zdarzenia. -->
           <div class="axis-row">
             <span class="axis-time">12:28</span>
             <span class="axis-mark"><span class="axis-dot"></span></span>
@@ -506,7 +506,7 @@
           </div>
 
           <!-- Tankowanie PO zatrzymaniu - wolno dolać przed zdaniem (decyzja 2026-08-10);
-               dolewka jest wpisem sesji, a odczyt końcowy na 09b i tak ją zweryfikuje.
+               dolewka jest wpisem operacji, a odczyt końcowy na 09b i tak ją zweryfikuje.
                Strzałka ↑ = zdarzenie czeka w outboxie; to jedyne miejsce, w którym stan
                wysyłki schodzi do pojedynczego wpisu. -->
           <div class="axis-row">
@@ -543,10 +543,10 @@
              bo inaczej FOB znika z całego ekranu.
            Reguła ma test: `app/src/__tests__/cockpitFuel.test.ts`. -->
       <!-- Po zatrzymaniu silnika zostają DWIE akcje (model 2026-08-10):
-           • Zmiana załogi ZNIKŁA - sesja się skończyła, nowa załoga = nowe przejęcie
+           • Zmiana załogi ZNIKŁA - operacja się skończyła, nowa załoga = nowe przejęcie
              (07 żyje w stanie PRZED uruchomieniem, 04a);
            • kafelek „Zdaj samolot" ZNIKŁ - zdanie awansowało na hero wyżej;
-           • Lista ręczna zostaje: naprawa przegapionych zdarzeń TEJ sesji przed
+           • Lista ręczna zostaje: naprawa przegapionych zdarzeń TEJ operacji przed
              zatwierdzeniem logu na 09b. -->
       <div class="action-grid">
         <a href="06-tankowanie.html" class="action-card amber">
@@ -570,8 +570,8 @@
             <div class="action-sub">Minimum 8,5 L</div>
           </div>
         </a>
-        <!-- POPRAW DANE SESJI (issue #43) - kafelek prowadzi do TRYBU EDYCJI ekranu
-             sesji (10D) i wraca tu, do kokpitu. Zastąpił „Listę ręczną" (08), która
+        <!-- POPRAW DANE OPERACJI (issue #43) - kafelek prowadzi do TRYBU EDYCJI ekranu
+             operacji (10D) i wraca tu, do kokpitu. Zastąpił „Listę ręczną" (08), która
              była drugim widokiem tego samego logu z własnymi ołówkami: korekta ma
              odtąd jedne drzwi i jeden kształt.
              Wejście stoi w kokpicie, bo kokpit jest stanem modalnym - bez niego pilot
@@ -582,7 +582,7 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>
           </div>
           <div>
-            <div class="action-label">Popraw dane sesji</div>
+            <div class="action-label">Popraw dane operacji</div>
             <div class="action-sub">Czasy, odczyty, brakujące wpisy</div>
           </div>
         </a>
@@ -598,14 +598,14 @@
     <span class="vp-badge">04A</span>
     <span class="vp-body">
       <span class="vp-name">Przed uruchomieniem silnika</span>
-      <span class="vp-when">Zaraz po przejęciu - pusty log sesji, START ENGINE, tankowanie i zmiana załogi. Jedyny stan ground PRZED startem; nie „start dnia" - dzień pilota mógł zacząć się wcześniej, na innej maszynie.</span>
+      <span class="vp-when">Zaraz po przejęciu - pusty log operacji, START ENGINE, tankowanie i zmiana załogi. Jedyny stan ground PRZED startem; nie „start dnia" - dzień pilota mógł zacząć się wcześniej, na innej maszynie.</span>
     </span>
   </a>
   <a class="vp-item active" href="04-cockpit-ground.html">
     <span class="vp-badge">04</span>
     <span class="vp-body">
       <span class="vp-name">Po zatrzymaniu silnika</span>
-      <span class="vp-when">Sesja zakończona (sesja = jeden bieg silnika, 2026-08-10): hero ZDAJ SAMOLOT - drugiego START ENGINE nie ma, log jednej sesji, tankowanie dozwolone przed zdaniem.</span>
+      <span class="vp-when">Operacja zakończona (operacja = jeden bieg silnika, 2026-08-10): hero ZDAJ SAMOLOT - drugiego START ENGINE nie ma, log jednej operacji, tankowanie dozwolone przed zdaniem.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -619,8 +619,8 @@
   <a class="vp-item" href="10d-edycja.html">
     <span class="vp-badge amber">10D</span>
     <span class="vp-body">
-      <span class="vp-name">Popraw dane sesji (tryb edycji)</span>
-      <span class="vp-when">Autodetekcja pomyliła się albo czegoś nie zapisała: kafelek w pasku akcji otwiera tryb edycji ekranu sesji i wraca do kokpitu. Zastąpił „Listę ręczną" (08) i arkusz 04C - korekta ma jedne drzwi, w tym także przed zdaniem samolotu.</span>
+      <span class="vp-name">Popraw dane operacji (tryb edycji)</span>
+      <span class="vp-when">Autodetekcja pomyliła się albo czegoś nie zapisała: kafelek w pasku akcji otwiera tryb edycji ekranu operacji i wraca do kokpitu. Zastąpił „Listę ręczną" (08) i arkusz 04C - korekta ma jedne drzwi, w tym także przed zdaniem samolotu.</span>
     </span>
   </a>
   <a class="vp-item" href="04d-wyjscie-z-kokpitu.html">
@@ -639,7 +639,7 @@
   <a href="04a-cockpit-ground.html">04A Przed startem</a>
   <a href="04-cockpit-ground.html" class="active">04 Po zatrzymaniu</a>
   <a href="04b-cockpit-readonly.html">04B Podgląd</a>
-  <a href="10d-edycja.html">10D Edycja sesji</a>
+  <a href="10d-edycja.html">10D Edycja operacji</a>
   <a href="04d-wyjscie-z-kokpitu.html">04D Blokada wyjścia</a>
   <a href="05-cockpit-running.html">05 Running →</a>
   <span>·</span>

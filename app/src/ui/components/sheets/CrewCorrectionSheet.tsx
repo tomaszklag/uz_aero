@@ -82,14 +82,14 @@ export function CrewCorrectionSheet({
       onCancel={onCancel}
     >
       {/*
-        Nagłówek nie powtarza „cała sesja": zakres poprawki jest treścią przypisu pod
+        Nagłówek nie powtarza „cała operacja": zakres poprawki jest treścią przypisu pod
         listą, gdzie stoi razem z powodem („czas blokowy przypisze się…") i z tym, czego
         ten arkusz NIE robi (zmiana załogi w trakcie). Napisany dwa razy - raz jako
         etykieta bez wyjaśnienia, raz jako zdanie - pierwszy raz nie mówi nic.
       */}
       <CardPicker
         options={[
-          { value: NONE, label: 'Bez Duala', note: 'sesja jednoosobowa' },
+          { value: NONE, label: 'Bez Duala', note: 'operacja jednoosobowa' },
           ...options.map((pilot) => ({
             value: pilot.id,
             label: pilot.name,
@@ -110,7 +110,7 @@ export function CrewCorrectionSheet({
 
       <View style={styles.note}>
         <AppText variant="mono" tone="muted" style={styles.noteText}>
-          Poprawka obejmuje CAŁĄ sesję - czas blokowy przypisze się wskazanej osobie od
+          Poprawka obejmuje CAŁĄ operację - czas blokowy przypisze się wskazanej osobie od
           przejęcia do zdania. Jeśli drugi pilot zmienił się W TRAKCIE, to nie jest to
           miejsce: taką zmianę zapisuje się w kokpicie, przed uruchomieniem silnika.
         </AppText>

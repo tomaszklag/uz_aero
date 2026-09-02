@@ -619,7 +619,7 @@ export function ManualFlightScreen({
             {/* Notatka MA WŁASNE MIEJSCE (zgłoszenie z urządzenia) - do przebudowy
                 mieszkała w arkuszu czasów, czyli w oknie służącym do czegoś innego. */}
             <Card
-              title="Notatka do sesji"
+              title="Notatka do operacji"
               header="inline"
               headerRight={<Tag label="opcjonalne" tone="neutral" />}
             >
@@ -635,7 +635,7 @@ export function ManualFlightScreen({
           </>
         )}
 
-        {/* ══ KROK 3 - PRZEBIEG SESJI: bieg silnika, a w nim loty i zrzuty ═══
+        {/* ══ KROK 3 - PRZEBIEG OPERACJI: bieg silnika, a w nim loty i zrzuty ═══
             Do issue #62 były tu DWIE PŁASKIE LISTY („Loty" i „Zrzuty"), przez co
             zrzut nie miał jak pokazać, do którego lotu należy - mimo że domena
             definiuje to zawieraniem się w czasie (`DROP_ON_GROUND`). Odtąd jest oś,
@@ -647,18 +647,18 @@ export function ManualFlightScreen({
                 niosła parę godzin, którą oś rysuje jako swój pierwszy i ostatni wiersz -
                 „dubluje się «bieg silnika» z tym, co mam na osi czasu, nie ma sensu ten
                 input". Oba końce osi startują z `--:--` i SĄ wejściem w ich wpisanie,
-                więc pusty krok 3 i krok 3 z pełną sesją to ten sam ekran w dwóch
+                więc pusty krok 3 i krok 3 z pełną operacją to ten sam ekran w dwóch
                 stanach, a nie dwa różne układy.
 
                 Reguła „nie da się dodać lotu bez biegu silnika" (pkt 10) zostaje
                 w mocy - pilnuje jej BRAK wiersza „DODAJ LOT", nie wyszarzony przycisk
                 (zasada z 10B i 02G). Powód niesie „DALEJ" na dole.
 
-                Karta ma pasek nagłówka i `flush` - dokładnie jak „Przebieg sesji"
+                Karta ma pasek nagłówka i `flush` - dokładnie jak „Przebieg operacji"
                 na ekranie rozliczenia: oś sama trzyma swoje wiersze, a stopka sum
                 ma dobijać do krawędzi. Bez „czasy UTC" w nagłówku (inaczej niż tam):
                 podtytuł kroku mówi to zdanie o dwie linie wyżej. */}
-            <Card title="Przebieg sesji" flush>
+            <Card title="Przebieg operacji" flush>
                 <SessionAxis
                   rows={axis.rows}
                   foot={axis.foot}
@@ -680,7 +680,7 @@ export function ManualFlightScreen({
 
               {/* Dopisanie jako OSTATNIE WIERSZE OSI, nie przyciski pod kartą
                   (wzorzec „DODAJ WPIS", issue #43): nowy lot i nowy zrzut trafią
-                  w przebieg sesji, więc wejście stoi tam, gdzie skończy się skutek.
+                  w przebieg operacji, więc wejście stoi tam, gdzie skończy się skutek.
 
                   „DODAJ LOT" istnieje dopiero z BIEGIEM SILNIKA (issue #62 pkt 10):
                   lot bez niego nie ma w czym się zawierać, a nowy lot dziedziczy
@@ -723,7 +723,7 @@ export function ManualFlightScreen({
               />
             )}
 
-            {/* Sesja bez ani jednego lotu (uwaga z urządzenia, 2026-08-29): „mogła być
+            {/* Operacja bez ani jednego lotu (uwaga z urządzenia, 2026-08-29): „mogła być
                 taka sytuacja, że uruchomiłem i wyłączyłem, ale nie wykonałem żadnego
                 lotu". To ten sam stan, co 09C na żywo, więc NIE BLOKUJE - mówi tylko,
                 co się zapisze. Baner stoi tam, gdzie da się go naprawić: wiersz
@@ -737,7 +737,7 @@ export function ManualFlightScreen({
                   kind="warning"
                   tone="amber"
                   icon="warning"
-                  text="Nie dodałeś ani jednego lotu - sesja zapisze się jako bieg silnika bez lotu. Dopisz lot, jeśli go pominąłeś."
+                  text="Nie dodałeś ani jednego lotu - operacja zapisze się jako bieg silnika bez lotu. Dopisz lot, jeśli go pominąłeś."
                 />
               )}
 
@@ -999,7 +999,7 @@ export function ManualFlightScreen({
 
       <TextEntrySheet
         visible={sheet?.kind === 'notes'}
-        title="NOTATKA DO SESJI"
+        title="NOTATKA DO OPERACJI"
         initialText={draft.notes ?? ''}
         placeholder="np. skąd pochodzi ten wpis"
         multiline
@@ -1244,7 +1244,7 @@ export function ManualFlightScreen({
 
            Olej ma JEDEN wiersz łańcucha, nie parę: bagnet tuż po locie kłamie, więc
            zdanie samolotu oleju nie mierzy (issue #60) i interwał biegnie pomiar→pomiar
-           przez wiele sesji. Ostrzegamy tylko o oleju, którego PRZYBYŁO bez dolewki -
+           przez wiele operacji. Ostrzegamy tylko o oleju, którego PRZYBYŁO bez dolewki -
            ubytek jest normalnym zużyciem. */
         warningFor={(l, a) =>
           oilEntryWarning(l, a, oilConfig, null) ?? oilContinuityWarnings(chain, l)[0]?.text ?? null

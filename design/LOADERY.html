@@ -93,10 +93,10 @@
      co wersja z danymi, więc gdy doba dojdzie, NIC się nie przesuwa.
 
      JEDNA plamka-kafelek (issue #58 pkt 6). Doba ma dwa warianty - kartę stanu
-     pustego (01A) albo listę kafelków sesji - a skeleton obiecuje ich CZĘŚĆ WSPÓLNĄ
+     pustego (01A) albo listę kafelków operacji - a skeleton obiecuje ich CZĘŚĆ WSPÓLNĄ
      (reguła 2): przynajmniej jedną kartę tej wysokości. Dwie plamki zgadywały wariant
-     z sesjami; najczęstszy start dnia (zero lotów) podmieniał je na JEDNĄ kartę
-     „DZIŚ BEZ LOTÓW" i pół ekranu skakało. Karta stanu pustego i kafelek sesji mają
+     z operacjami; najczęstszy start dnia (zero lotów) podmieniał je na JEDNĄ kartę
+     „DZIŚ BEZ LOTÓW" i pół ekranu skakało. Karta stanu pustego i kafelek operacji mają
      tę samą wysokość (156 px - ten sam kafelek, co w historii), więc jedna plamka
      pasuje do obu przyszłości. Plamką jest CAŁY kafelek, nie jego wnętrze (issue #42):
      nagłówek, rejestracja, godziny i trójka metryk przychodzą razem, jednym odczytem. */
@@ -187,7 +187,7 @@
       <!-- Etykieta grupy jest STAŁA - „Log dnia" nie jest daną, więc rysuje się od razu.
            Skeletonem jest JEDEN kafelek i trzy sumy (issue #58 pkt 6): część wspólna
            doby pustej (jedna karta „DZIŚ BEZ LOTÓW" tej samej wysokości) i doby
-           z sesjami (przynajmniej jeden kafelek). Skeleton pokazuje KSZTAŁT listy,
+           z operacjami (przynajmniej jeden kafelek). Skeleton pokazuje KSZTAŁT listy,
            nie jej długość - a dwie plamki zgadywały wariant. -->
       <div class="group-lbl">Log dnia</div>
 
@@ -243,7 +243,7 @@
     <div class="inv-row"><span class="inv-key">wiersz listy</span><span class="skel" style="height:44px;border-radius:8px;"></span></div>
     <div class="inv-row"><span class="inv-key">przycisk · 48 px</span><span class="skel" style="height:48px;border-radius:12px;"></span></div>
     <div class="inv-row"><span class="inv-key">karta · 96 px</span><span class="skel" style="height:96px;border-radius:14px;"></span></div>
-    <div class="inv-row"><span class="inv-key">kafelek sesji · 156 px</span><span class="skel" style="height:156px;border-radius:14px;"></span></div>
+    <div class="inv-row"><span class="inv-key">kafelek operacji · 156 px</span><span class="skel" style="height:156px;border-radius:14px;"></span></div>
   </div>
 </aside>
 
@@ -262,7 +262,7 @@
     <span class="vp-badge">2</span>
     <span class="vp-body">
       <span class="vp-name">Plamka tylko tam, gdzie coś na pewno przyjdzie</span>
-      <span class="vp-when">Wiersze logu, sumy doby, przycisk akcji - te elementy będą. Plakietka okna korekty przy „Poprzednie dni" może nie przyjść nigdy, więc miejsca się dla niej NIE rezerwuje; gdy przyjdzie, dopisze się w linii. Gdy warianty różnią się kształtem (pusty dzień = jeden przycisk z przypisem, dzień z sesjami = dwa przyciski), skeleton obiecuje ich część wspólną.</span>
+      <span class="vp-when">Wiersze logu, sumy doby, przycisk akcji - te elementy będą. Plakietka okna korekty przy „Poprzednie dni" może nie przyjść nigdy, więc miejsca się dla niej NIE rezerwuje; gdy przyjdzie, dopisze się w linii. Gdy warianty różnią się kształtem (pusty dzień = jeden przycisk z przypisem, dzień z operacjami = dwa przyciski), skeleton obiecuje ich część wspólną.</span>
     </span>
   </div>
 
@@ -278,7 +278,7 @@
     <span class="vp-badge amber">4</span>
     <span class="vp-body">
       <span class="vp-name">Skeleton to nie stan pusty</span>
-      <span class="vp-when">„DZIŚ BEZ LOTÓW" (01A) wolno napisać dopiero wtedy, gdy wiadomo, że jest pusto - czyli po odtworzeniu rejestru z serwera (§4.9). Do tej chwili miejsce trzyma skeleton. Pusty stan pokazany komuś, kto ma dziś trzy sesje, wygląda jak utrata danych; plamki nie kłamią o niczym.</span>
+      <span class="vp-when">„DZIŚ BEZ LOTÓW" (01A) wolno napisać dopiero wtedy, gdy wiadomo, że jest pusto - czyli po odtworzeniu rejestru z serwera (§4.9). Do tej chwili miejsce trzyma skeleton. Pusty stan pokazany komuś, kto ma dziś trzy operacje, wygląda jak utrata danych; plamki nie kłamią o niczym.</span>
     </span>
   </div>
 
@@ -294,7 +294,7 @@
     <span class="vp-badge red">6</span>
     <span class="vp-body">
       <span class="vp-name">Skeleton nie jest interaktywny</span>
-      <span class="vp-when">Pod plamką nie ma przycisku do trafienia - kafelek sesji ma swój rozmiar i swoje miejsce, ale nie prowadzi jeszcze nigdzie. Czytnik ekranu dostaje jeden komunikat „Ładowanie" na blok, a nie listę pustych elementów.</span>
+      <span class="vp-when">Pod plamką nie ma przycisku do trafienia - kafelek operacji ma swój rozmiar i swoje miejsce, ale nie prowadzi jeszcze nigdzie. Czytnik ekranu dostaje jeden komunikat „Ładowanie" na blok, a nie listę pustych elementów.</span>
     </span>
   </div>
 
@@ -312,14 +312,14 @@
   <a class="vp-item" href="01-moj-dzien.html">
     <span class="vp-badge">01</span>
     <span class="vp-body">
-      <span class="vp-name">Mój dzień - log sesji doby</span>
-      <span class="vp-when">Stan pokazany na tym arkuszu: JEDNA plamka-kafelek i trzy sumy (issue #58 pkt 6) - część wspólna doby pustej i doby z sesjami, więc podmiana na kartę „DZIŚ BEZ LOTÓW" niczym nie skacze. Kafelek jest tym samym komponentem, co w historii (issue #42), więc i plamka po nim ma jeden rozmiar. Do czasu odtworzenia rejestru (§4.9) skeleton stoi także zamiast stanu pustego 01A.</span>
+      <span class="vp-name">Mój dzień - log operacji doby</span>
+      <span class="vp-when">Stan pokazany na tym arkuszu: JEDNA plamka-kafelek i trzy sumy (issue #58 pkt 6) - część wspólna doby pustej i doby z operacjami, więc podmiana na kartę „DZIŚ BEZ LOTÓW" niczym nie skacze. Kafelek jest tym samym komponentem, co w historii (issue #42), więc i plamka po nim ma jeden rozmiar. Do czasu odtworzenia rejestru (§4.9) skeleton stoi także zamiast stanu pustego 01A.</span>
     </span>
   </a>
   <a class="vp-item" href="12-historia.html">
     <span class="vp-badge">12</span>
     <span class="vp-body">
-      <span class="vp-name">Poprzednie dni - karty sesji</span>
+      <span class="vp-name">Poprzednie dni - karty operacji</span>
       <span class="vp-when">Dwie karty w geometrii `DayCard` zamiast pustego ekranu; „BRAK POPRZEDNICH DNI" dopiero po odtworzeniu rejestru.</span>
     </span>
   </a>
@@ -340,8 +340,8 @@
   <a class="vp-item" href="10-statystyki.html">
     <span class="vp-badge">10</span>
     <span class="vp-body">
-      <span class="vp-name">Sesja - miniatura śladu i pełny ślad (14)</span>
-      <span class="vp-when">Ślad czyta się z osobnego magazynu (setki punktów), więc czekanie bywa widoczne. Miniatura na 10, mapa i profil pionowy na 14 dostają plamki w swoich wymiarach. Oś czasu sesji plamek NIE potrzebuje - liczy się z lokalnego rejestru, tak samo jak rachunki paliwa i motogodzin.</span>
+      <span class="vp-name">Operacja - miniatura śladu i pełny ślad (14)</span>
+      <span class="vp-when">Ślad czyta się z osobnego magazynu (setki punktów), więc czekanie bywa widoczne. Miniatura na 10, mapa i profil pionowy na 14 dostają plamki w swoich wymiarach. Oś czasu operacji plamek NIE potrzebuje - liczy się z lokalnego rejestru, tak samo jak rachunki paliwa i motogodzin.</span>
     </span>
   </a>
   <a class="vp-item" href="13-ustawienia.html">
@@ -355,7 +355,7 @@
     <span class="vp-badge blue">↑</span>
     <span class="vp-body">
       <span class="vp-name">Start aplikacji</span>
-      <span class="vp-when">Trzy bramki przed pierwszym ekranem (fonty i baza, poświadczenia, wznowienie sesji) miały spinner na środku czerni. Mają teraz skeleton RAMY - pasek nagłówka i blok treści - bo za nimi idzie się na 01, do kokpitu albo na login i plamki w kształcie logu dnia byłyby obietnicą nie do dotrzymania.</span>
+      <span class="vp-when">Trzy bramki przed pierwszym ekranem (fonty i baza, poświadczenia, wznowienie operacji) miały spinner na środku czerni. Mają teraz skeleton RAMY - pasek nagłówka i blok treści - bo za nimi idzie się na 01, do kokpitu albo na login i plamki w kształcie logu dnia byłyby obietnicą nie do dotrzymania.</span>
     </span>
   </div>
 </aside>
@@ -366,7 +366,7 @@
     <span class="vp-badge amber">13</span>
     <span class="vp-body">
       <span class="vp-name">Uwagi serwera - to nie jest czekanie</span>
-      <span class="vp-when">Dane z serwera mają swoją własną skalę: `live` / `cache` / `brak` (§6 pkt 2). „Serwer jeszcze nie potwierdził sprawdzenia tej sesji" to ODPOWIEDŹ, a nie oczekiwanie - może nie zmienić się do najbliższej synchronizacji, więc plamka obiecywałaby coś, co nie przyjdzie.</span>
+      <span class="vp-when">Dane z serwera mają swoją własną skalę: `live` / `cache` / `brak` (§6 pkt 2). „Serwer jeszcze nie potwierdził sprawdzenia tej operacji" to ODPOWIEDŹ, a nie oczekiwanie - może nie zmienić się do najbliższej synchronizacji, więc plamka obiecywałaby coś, co nie przyjdzie.</span>
     </span>
   </a>
   <a class="vp-item" href="04b-cockpit-readonly.html">
@@ -379,7 +379,7 @@
   <a class="vp-item" href="10-statystyki.html">
     <span class="vp-badge amber">10</span>
     <span class="vp-body">
-      <span class="vp-name">Sesja - identyfikator to wartość</span>
+      <span class="vp-name">Operacja - identyfikator to wartość</span>
       <span class="vp-when">Karty załogi pokazują kod pilota z cache, a do czasu odczytu jego identyfikator. To nie jest dziura po danej - to ta sama dana, tylko mniej ładna. Reguła 3: co znamy lokalnie, nie czeka.</span>
     </span>
   </a>
@@ -391,7 +391,7 @@
   <a href="LOADERY.html" class="active">Wzorzec ładowania</a>
   <span>·</span>
   <a href="01-moj-dzien.html">01 Mój dzień</a>
-  <a href="01a-moj-dzien-pusty.html">01A Zero sesji</a>
+  <a href="01a-moj-dzien-pusty.html">01A Zero operacji</a>
   <a href="12-historia.html">12 Poprzednie dni</a>
   <a href="02-preflight.html">02 Nowy lot</a>
   <a href="07-zmiana-zalogi.html">07 Załoga</a>

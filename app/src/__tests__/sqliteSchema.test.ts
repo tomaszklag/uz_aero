@@ -122,13 +122,13 @@ describe('schemat lokalnej bazy (node:sqlite)', () => {
     db.close();
   });
 
-  it('events ma indeksy po sesji i po outboxie', () => {
+  it('events ma indeksy po operacji i po outboxie', () => {
     const db = migratedDb();
     expect(indexesOf(db, 'events')).toEqual(['idx_events_outbox', 'idx_events_session']);
     db.close();
   });
 
-  it('indeks sesji jest faktycznie używany przez zapytanie adaptera', () => {
+  it('indeks operacji jest faktycznie używany przez zapytanie adaptera', () => {
     // Sam fakt istnienia indeksu nic nie znaczy, jeśli planer go nie wybiera.
     const db = migratedDb();
     const plan = db

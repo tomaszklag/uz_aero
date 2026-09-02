@@ -177,7 +177,7 @@ describe('eksport dziennego arkusza (§4.7)', () => {
     // Nagłówek doby - data UTC, samolot, ile zmian, czas blokowy doby.
     expect(sheet.rows).toContainEqual(['UZ Aero - doba samolotu', '2026-06-22 (UTC)']);
     expect(sheet.rows).toContainEqual(['Samolot', 'SP-AXA']);
-    expect(sheet.rows).toContainEqual(['Sesje', '1']);
+    expect(sheet.rows).toContainEqual(['Operacje', '1']);
     expect(sheet.rows).toContainEqual(['Czas blokowy doby', '02:22']);
 
     // Wiersz zmiany: załoga kodami, operacja, przejęcie → zdanie, block, stan.
@@ -193,7 +193,7 @@ describe('eksport dziennego arkusza (§4.7)', () => {
     ]);
 
     // Tabela lotów: sesja, czasy UTC, czas lotu, metoda detekcji.
-    expect(sheet.rows).toContainEqual(['Sesja', '#', 'Takeoff', 'Landing', 'Block', 'Metoda']);
+    expect(sheet.rows).toContainEqual(['Operacja', '#', 'Takeoff', 'Landing', 'Block', 'Metoda']);
     expect(sheet.rows).toContainEqual(['S1', '1', '08:25', '09:18', '00:53', 'AUTO']);
 
     // Bilans paliwa: 150 + 0 − 62 = 88 L - liczby z ekranu 10, nie własna arytmetyka.
@@ -368,12 +368,14 @@ describe('karta = doba samolotu (§4.7)', () => {
     const card = sheets.calls[1]!;
     expect(card.rows).toContainEqual(['UZ Aero - doba samolotu', '2026-06-22 (UTC)']);
     expect(card.rows).toContainEqual(['Samolot', 'SP-AXA']);
-    expect(card.rows).toContainEqual(['Sesje', '2']);
+    expect(card.rows).toContainEqual(['Operacje', '2']);
+    // Kolumna spinająca nazywa się „Operacja" (issue #68), a rodzaj operacji -
+    // „Zadanie": dwie różne rzeczy nie mogą nosić jednej nazwy w jednym wierszu.
     expect(card.rows).toContainEqual([
-      'Sesja',
+      'Operacja',
       'PIC',
       'Dual',
-      'Operacja',
+      'Zadanie',
       'Przejęcie',
       'Zdanie',
       'Block',
@@ -401,7 +403,7 @@ describe('karta = doba samolotu (§4.7)', () => {
     ]);
 
     // Wiersz lotu daje się przypisać do sesji - administrator ma wiedzieć, kto co latał.
-    expect(card.rows).toContainEqual(['Sesja', '#', 'Takeoff', 'Landing', 'Block', 'Metoda']);
+    expect(card.rows).toContainEqual(['Operacja', '#', 'Takeoff', 'Landing', 'Block', 'Metoda']);
     expect(card.rows).toContainEqual(['S1', '1', '08:25', '09:18', '00:53', 'AUTO']);
     expect(card.rows).toContainEqual(['S2', '1', '17:20', '17:50', '00:30', 'AUTO']);
 
@@ -556,12 +558,22 @@ describe('daySheetContent (czysta funkcja)', () => {
       day: '2026-06-22',
       aircraftId: 'SP-AXA',
       sessions: [{ sessionUuid: 'sess-ok', state, crew: { pic: 'TMK', dual: null } }],
-      excluded: [{ sessionUuid: 'sess-sporna', flagIds: [12] }],
+      excluded: [
+        {
+          sessionUuid: 'sess-sporna',
+          engineStartAt: at(13, 5),
+          engineStopAt: at(14, 20),
+          pic: 'KRZ',
+          flagIds: [12],
+        },
+      ],
     });
 
+    // Adnotację czyta człowiek szukający brakującej zmiany - uuid nie pozwalał jej
+    // znaleźć ani na liście panelu, ani w pamięci (issue #68).
     expect(sheet?.rows).toContainEqual([
       'Niekompletna',
-      'sesja sess-sporna poza kartą - flaga #12',
+      'operacja 13:05 → 14:20 · KRZ poza kartą - flaga #12',
     ]);
   });
 });

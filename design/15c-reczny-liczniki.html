@@ -219,9 +219,9 @@
       <!-- PALIWO MA TRZY STANY, NIE JEDEN (zgłoszenie z urządzenia, 2026-08-16).
            Do tej pory wpis ręczny pytał WYŁĄCZNIE o stan po locie, a stan początkowy
            brał z ostatniego przekazania w cache - czyli zgadywał wielkość, którą pilot
-           odczytał z paliwomierza i ma zapisaną na kartce. Sesja z dolewką nie dawała
+           odczytał z paliwomierza i ma zapisaną na kartce. Operacja z dolewką nie dawała
            się wpisać w ogóle: różnica „przed minus po" wychodziła ujemna i całe zużycie
-           tej sesji szło do analityki jako nonsens (`consumption/intervals.ts`).
+           tej operacji szło do analityki jako nonsens (`consumption/intervals.ts`).
 
            TE SAME ARKUSZE, CO WSZĘDZIE INDZIEJ: `ReadingSheet` z klawiaturą numeryczną
            dla litrów i maską dla motogodzin (issue #43). -->
@@ -246,7 +246,7 @@
                się podwójnie. Szkic trzyma odtąd ZASTANE - i cofać nie ma już czego.
 
            Kolejność pól zastępuje godziny: zastane → dolane → (lot) → zostało.
-           ZASTANE wykrywa się z sesji poprzedzającej (readings-chain) i pokazuje ze
+           ZASTANE wykrywa się z operacji poprzedzającej (readings-chain) i pokazuje ze
            ŹRÓDŁEM - żeby liczba nie udawała odczytu z paliwomierza. Pilot poprawia ją
            jednym tapnięciem: przyrząd fizyczny bije rachubę. -->
       <div class="section">
@@ -353,9 +353,9 @@
         <div class="field-sub">po dolewce 9,2 L</div>
       </div>
 
-      <!-- OSTRZEŻENIA liczone z LOKALNEGO rejestru (kolizje z własnymi sesjami)
+      <!-- OSTRZEŻENIA liczone z LOKALNEGO rejestru (kolizje z własnymi operacjami)
            i z cache referencyjnego (łańcuch MH i paliwa maszyny) - bez pytania serwera,
-           więc działają offline. Kolizje z sesjami INNYCH pilotów rozstrzygnie i tak
+           więc działają offline. Kolizje z operacjami INNYCH pilotów rozstrzygnie i tak
            serwer: oznaczy je flagą `aircraft_overlap`, a uwaga wróci na telefon (§4.5).
            ŻADNE Z NICH NIE BLOKUJE ZAPISU. -->
       <div class="warn-list">
@@ -363,7 +363,7 @@
              z CUDZYM odczytem, czyli o czymś, czego pilot nie widzi nigdzie indziej.
              Reszta ostrzeżeń dotyczy jego własnych liczb, które ma na tym samym ekranie.
 
-             Źródłem jest `GET /aircraft/:id/readings-chain` - odczyt przy zdaniu sesji
+             Źródłem jest `GET /aircraft/:id/readings-chain` - odczyt przy zdaniu operacji
              POPRZEDZAJĄCEJ i przy przejęciu NASTĘPNEJ. Przekazanie z `/reference` na to
              pytanie nie odpowiada: to jeden punkt („ile jest teraz"), a wpis ręczny pyta
              o czwartek, gdy maszyna zdążyła już polatać z kimś innym.
@@ -415,7 +415,7 @@
         <div class="warn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           <span class="warn-body">
-            <span class="warn-text"><b>Czasy zachodzą na Twoją SESJĘ 2</b> na SP-KLM (10:20 → 11:02). Jeden pilot nie leci dwiema maszynami naraz.</span>
+            <span class="warn-text"><b>Czasy zachodzą na Twoją OPERACJĘ 2</b> na SP-KLM (10:20 → 11:02). Jeden pilot nie leci dwiema maszynami naraz.</span>
           </span>
         </div>
         <!-- OSTRZEŻENIA Z CACHE SĄ TU WYPARTE (issue #62, piąta tura) - dlatego nie ma

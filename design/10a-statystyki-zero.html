@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero - 10A Sesja bez lotu</title>
+<title>UZ Aero - 10A Operacja bez lotu</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -70,7 +70,7 @@
     text-decoration:none; padding:5px 8px; border-radius:6px; border:1px solid var(--border);
   }
   .back-btn:hover { color:var(--text-secondary); border-color:var(--border-strong); }
-  /* Okno korekty po ZDANIU samolotu (jedno na sesję) - 24 h samodzielnie, potem administrator */
+  /* Okno korekty po ZDANIU samolotu (jedno na operację) - 24 h samodzielnie, potem administrator */
   .correction-window {
     display:flex; align-items:flex-start; gap:9px;
     background:var(--blue-muted); border:1px solid rgba(52,152,219,0.28);
@@ -117,7 +117,7 @@
   .section-card-head .spacer { flex:1; }
   .head-note { font-size:8px; letter-spacing:1px; color:var(--text-muted); text-transform:none; }
 
-  /* ===== ŚLAD SESJI =====
+  /* ===== ŚLAD OPERACJI =====
      Ślad rysuje CAŁY BIEG SILNIKA (issue #38 pkt 2): kołowanie jaśniejszą linią,
      loty pełną, a każdy start i każde lądowanie ma na trasie swój znacznik.
      Do issue #38 mapy tu nie było w ogóle - ślad mieszkał piętro niżej, na
@@ -151,7 +151,7 @@
   .tl-dot.blue { background:transparent; border:1.4px solid var(--blue); }
   .tl-dash { width:10px; height:0; border-top:1.4px dashed var(--text-muted); }
 
-  /* ===== OŚ SESJI =====
+  /* ===== OŚ OPERACJI =====
      Zamiast tabeli lotów (issue #38 pkt 7 i 8): uruchomienie → starty i lądowania
      → wyłączenie, w jednej kolumnie czasu. Tabela była siatką pięciu kolumn, z których
      dwie powtarzały to samo (czas lotu obok pary godzin), a jedna świeciła „AUTO"
@@ -258,7 +258,7 @@
   .info-note { font-family:var(--font-mono); font-size:8px; letter-spacing:0.5px; color:var(--text-muted); margin-top:3px; }
 
   /* ===== NOTATKI (issue #40 pkt 5) - patrz komentarz na 10 =====
-     Sesja bez lotu ma je tym bardziej: powód zdania mówi CO, notatka bywa jedynym
+     Operacja bez lotu ma je tym bardziej: powód zdania mówi CO, notatka bywa jedynym
      miejscem, w którym stoi SZCZEGÓŁ (numer usterki, ustalenie z mechanikiem). */
   .note-block { padding:10px 12px; display:flex; flex-direction:column; gap:4px; }
   .note-block + .note-block { border-top:1px solid var(--border); }
@@ -297,7 +297,7 @@
 
 <header class="canvas-label">
   <span class="film-strip">UZ AERO - 10A</span>
-  <span class="slug">sesja bez lotu · maszyna zajęta</span>
+  <span class="slug">operacja bez lotu · maszyna zajęta</span>
   <span class="canvas-meta"><span class="pulse"></span>Ekran 10A</span>
 </header>
 
@@ -318,11 +318,11 @@
         Dzień
       </a>
       <div class="app-header-center">
-        <span class="screen-title">SESJA</span>
-        <span class="header-subtitle">SP-ANK · 06 SIE · SKOKI</span>
+        <span class="screen-title">OPERACJA</span>
+        <span class="header-subtitle">SP-ANK/2026-08-06/TMK/2 · SKOKI</span>
       </div>
       <div class="app-header-right">
-        <!-- PLAKIETKI „bez lotu" NIE MA (uwaga z urządzenia, 2026-08-14): sesja bez
+        <!-- PLAKIETKI „bez lotu" NIE MA (uwaga z urządzenia, 2026-08-14): operacja bez
              startu opisuje się sama - oś ma dwa punkty, stopka pokazuje zero startów,
              a w miejscu śladu stoi POWÓD zdania. Plakietka mówiła to czwarty raz,
              w rogu, w którym reszta ekranu trzyma stan TRYBU (edycja / podgląd). -->
@@ -336,13 +336,13 @@
         <span class="cw-text">Dane możesz poprawiać teraz i jeszcze przez <b>24 h po zdaniu samolotu</b> - do 07 SIE 10:25 UTC. Później korektę nanosi administrator.</span>
       </div>
 
-      <!-- ══ PRZEBIEG SESJI - DWA PUNKTY ═════════════════════════════════════
+      <!-- ══ PRZEBIEG OPERACJI - DWA PUNKTY ═════════════════════════════════════
            Silnik nie ruszył, więc oś ma dokładnie tyle, ile się wydarzyło:
            przejęcie i zdanie. Rysowanie pustej ramki mapy albo osi z myślnikami
            udawałoby, że czegoś brakuje - a tu niczego nie brakuje. -->
       <div class="section-card">
         <div class="section-card-head">
-          Przebieg sesji
+          Przebieg operacji
           <span class="spacer"></span>
           <span class="head-note">czasy UTC</span>
         </div>
@@ -368,7 +368,7 @@
         </div>
 
         <!-- Zamiast bloku i czasu w powietrzu (oba zerowe) wielką liczbą stoi TRZYMANIE
-             maszyny: to jedyna wielkość, która w tej sesji naprawdę urosła. -->
+             maszyny: to jedyna wielkość, która w tej operacji naprawdę urosła. -->
         <div class="axis-foot">
           <div class="axis-foot-item">
             <span class="axis-foot-val">01:15</span>
@@ -469,7 +469,7 @@
       <!-- ══ NOTATKI (issue #40 pkt 5) ═══════════════════════════════════════ -->
       <div class="section-card">
         <div class="section-card-head">Notatki</div>
-        <!-- Bez stempla: notatka sesji jest jedna, więc podpis z godziną preflightu
+        <!-- Bez stempla: notatka operacji jest jedna, więc podpis z godziną preflightu
              niczego nie rozróżniał (zgłoszenie z urządzenia, 2026-08-14). -->
         <div class="note-block">
           <span class="note-text">Skoki dla SKY CAMP - grupa tandemów zamówiona na 10:00.</span>
@@ -477,7 +477,7 @@
       </div>
 
       <div class="btn-row">
-        <!-- Od issue #43 przycisk prowadzi TU SAMO co przy sesji z lotami: w tryb
+        <!-- Od issue #43 przycisk prowadzi TU SAMO co przy operacji z lotami: w tryb
              edycji tego ekranu (10D). Do tej pory odsyłał na 09C, bo bez lotów jedyne,
              co dało się poprawić, to odczyty - a te wpisywało się przy zdaniu. Teraz
              odczyty poprawia się na osi (10F), więc drugie drzwi przestały być potrzebne
@@ -501,14 +501,14 @@
   <a class="vp-item" href="10-statystyki.html">
     <span class="vp-badge">10</span>
     <span class="vp-body">
-      <span class="vp-name">Sesja - z lotami</span>
+      <span class="vp-name">Operacja - z lotami</span>
       <span class="vp-when">Standard: ślad całego biegu silnika ze znacznikami startów i lądowań, oś czasu od przejęcia do zdania (z kołowaniem), rachunki paliwa i motogodzin z plakietką werdyktu (SP-AXA, 06 SIE - 2 loty).</span>
     </span>
   </a>
   <a class="vp-item active" href="10a-statystyki-zero.html">
     <span class="vp-badge amber">10A</span>
     <span class="vp-body">
-      <span class="vp-name">Sesja - bez lotu</span>
+      <span class="vp-name">Operacja - bez lotu</span>
       <span class="vp-when">Samolot zdany bez ani jednego lotu (pogoda, usterka): oś ma dwa punkty, w miejscu śladu stoi powód, a werdykty paliwa i MH MILCZĄ - norma opisuje godzinę pracy silnika, więc przy zerze nie ma z czym porównywać. Odczyty liczników są, bo przekazanie obowiązuje też bez lotu. Wielką liczbą stoi czas TRZYMANIA maszyny: to jedyna wielkość, która urosła.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
@@ -516,21 +516,21 @@
   <a class="vp-item" href="10b-rozliczenie-zamkniete.html">
     <span class="vp-badge amber">10B</span>
     <span class="vp-body">
-      <span class="vp-name">Sesja - po oknie (podgląd)</span>
+      <span class="vp-name">Operacja - po oknie (podgląd)</span>
       <span class="vp-when">Minęły 24 h od zdania: te same liczby bez ani jednego elementu zapisu (bez „Edytuj dane"). Cel karty z grupy „Zamknięte" na 12.</span>
     </span>
   </a>
   <a class="vp-item" href="10c-norma-detale.html">
     <span class="vp-badge">10C</span>
     <span class="vp-body">
-      <span class="vp-name">Sesja - arkusz normy</span>
+      <span class="vp-name">Operacja - arkusz normy</span>
       <span class="vp-when">Szczegóły pod plakietką werdyktu. Tu niedostępny: bez pracy silnika nie ma werdyktu, więc nie ma czego otwierać.</span>
     </span>
   </a>
   <a class="vp-item" href="10d-edycja.html">
     <span class="vp-badge amber">10D</span>
     <span class="vp-body">
-      <span class="vp-name">Sesja - tryb edycji</span>
+      <span class="vp-name">Operacja - tryb edycji</span>
       <span class="vp-when">Po „EDYTUJ DANE" - także tutaj: oś bez lotów ma przejęcie, klamrę silnika i zdanie, a każdy z tych wierszy da się poprawić. Odczyty paliwa i MH otwiera arkusz 10F.</span>
     </span>
   </a>
@@ -541,7 +541,7 @@
   <span>·</span>
   <a href="09c-zdaj-bez-lotu.html">← 09C Bez lotu</a>
   <span>·</span>
-  <a href="10-statystyki.html">10 Sesja</a>
+  <a href="10-statystyki.html">10 Operacja</a>
   <a href="10a-statystyki-zero.html" class="active">10A Bez lotu</a>
   <a href="10b-rozliczenie-zamkniete.html">10B Podgląd</a>
   <a href="10c-norma-detale.html">10C Norma</a>

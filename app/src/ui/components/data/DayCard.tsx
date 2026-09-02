@@ -28,9 +28,21 @@ import { Icon, type IconName } from '../foundation/Icon';
 import { toneColors } from '../tone';
 
 export interface DayCardProps {
-  /** Nagłówek kafelka: „22 CZERWCA 2026" (12) albo „SESJA 1" (01). */
+  /** Nagłówek kafelka: „22 CZERWCA 2026" (12) albo „OPERACJA 1" (01). */
   title: string;
-  /** Znak samolotu („SP-AXA"). */
+  /**
+   * SYGNATURA OPERACJI - „SP-AXA/2026-09-01/AKO/1" (issue #68).
+   *
+   * ZASTĘPUJE znak samolotu, a nie stoi obok niego: sygnatura zaczyna się od tego
+   * samego znaku, więc para powtarzałaby go dwa razy w odległości centymetra. Znak
+   * wraca tam, gdzie sygnatury nie ma z czego złożyć (maszyna spoza cache'u floty,
+   * operacja bez biegu silnika) - kafelek wygląda wtedy jak przed issue #68.
+   *
+   * Własna linia, a nie prawa krawędź tytułu: identyfikatora nie wolno skrócić
+   * wielokropkiem, a 23 znaki w połowie szerokości telefonu skrócić trzeba.
+   */
+  signature?: string | null;
+  /** Znak samolotu („SP-AXA") - pokazywany, gdy nie ma sygnatury. */
   aircraft: string;
   /** Godziny biegu silnika („08:12 → 10:34 UTC"); `null` = silnik nie ruszył. */
   times?: string | null;
@@ -56,6 +68,7 @@ export interface DayCardProps {
 
 export function DayCard({
   title,
+  signature = null,
   aircraft,
   times = null,
   stats,
@@ -114,15 +127,23 @@ export function DayCard({
             rysowania. Wywołało to co innego (identyfikator zamiast znaku, patrz
             `buildMyDay`), ale rama ma być odporna na DŁUGĄ wartość niezależnie od
             tego, skąd się wzięła: jedna linia i skracanie. */}
-        <AppText
-          variant="mono"
-          numberOfLines={1}
-          ellipsizeMode="tail"
-          style={[styles.aircraft, { color: theme.colors.green }]}
-        >
-          {aircraft}
-        </AppText>
+        {signature == null && (
+          <AppText
+            variant="mono"
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            style={[styles.aircraft, { color: theme.colors.green }]}
+          >
+            {aircraft}
+          </AppText>
+        )}
       </View>
+
+      {signature != null && (
+        <AppText variant="mono" style={[styles.signature, { color: theme.colors.green }]}>
+          {signature}
+        </AppText>
+      )}
 
       {times != null && (
         <AppText variant="mono" tone="muted" style={styles.times}>
@@ -208,6 +229,11 @@ const styles = StyleSheet.create({
   },
   // `flexShrink` z `maxWidth`: znak ustępuje tytułowi, ale nie znika do zera.
   aircraft: { fontSize: 11, letterSpacing: 1.5, flexShrink: 1, maxWidth: '55%' },
+  /* Sygnatura: ten sam stopień co znak, ale WĘŻSZY odstęp międzyliterowy - 1,5 przy
+     23 znakach rozpychało napis na całą szerokość i kleiło go do krawędzi karty.
+     Bez `numberOfLines`: identyfikator ucięty wielokropkiem przestaje identyfikować,
+     więc w skrajnym wypadku ma się zawinąć, a nie zniknąć. */
+  signature: { fontSize: 11, lineHeight: 14, letterSpacing: 0.5, marginTop: -4 },
   /** `.day-times` - dosunięte do daty ujemnym marginesem, tak jak w mockupie. */
   times: { fontSize: 10, lineHeight: 13, letterSpacing: 0.5, marginTop: -5 },
   stats: { flexDirection: 'row', gap: 14, flexWrap: 'wrap' },

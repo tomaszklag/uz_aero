@@ -230,6 +230,7 @@ describe('DTO listy dni ↔ wiersz projekcji', () => {
 
   const join: AdminSessionJoin = {
     row,
+    dayIndex: 2,
     reg: 'SP-AXA',
     aircraftType: 'Cessna 182',
     mhFormat: 'hhmm',
@@ -260,6 +261,22 @@ describe('DTO listy dni ↔ wiersz projekcji', () => {
       // Od 2026-08-07 nazwa kolumny i nazwa pola DTO znaczą to samo.
       claimedAt: row.claimTime,
     });
+  });
+
+  /**
+   * SYGNATURA (issue #68) - jedyne pole DTO, które POWSTAJE w mapperze, a nie jest
+   * przepisane. Nie jest to wyłom: składa je domena (`operationSignature`), a mapper
+   * dostarcza jej cztery gotowe fakty. Test pilnuje, że bierze je z właściwych miejsc -
+   * doba idzie z URUCHOMIENIA SILNIKA (08:12), a nie z przejęcia.
+   */
+  it('składa sygnaturę operacji ze złączeń i kolumn projekcji', () => {
+    expect(sessionListItem(join).signature).toBe('SP-AXA/2026-06-22/TMK/2');
+  });
+
+  it('nie ma sygnatury bez któregokolwiek członu - napis z kreską nie identyfikuje', () => {
+    expect(sessionListItem({ ...join, picCode: null }).signature).toBeNull();
+    expect(sessionListItem({ ...join, reg: null }).signature).toBeNull();
+    expect(sessionListItem({ ...join, dayIndex: null }).signature).toBeNull();
   });
 });
 

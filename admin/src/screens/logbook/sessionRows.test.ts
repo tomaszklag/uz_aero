@@ -8,6 +8,7 @@ const at = (h: number, m: number): number => DAY + h * 3600_000 + m * 60_000;
 
 const session: SessionListItemDto = {
   sessionUuid: 's-1',
+  signature: 'SP-KLM/2026-08-12/TMK/1',
   aircraftId: 'a-1',
   reg: 'SP-KLM',
   aircraftType: 'Cessna 182',
@@ -74,13 +75,13 @@ describe('brak odczytu zostaje brakiem', () => {
     expect(open.moto.to).toBe('-');
   });
 
-  it('sesja OTWARTA mówi „w toku", a nie kreską', () => {
+  it('operacja OTWARTA mówi „w toku", a nie kreską', () => {
     // To nie jest brak odczytu, tylko fakt, że jeszcze nie nastąpił.
     const open = sessionRow({ ...session, status: 'active', engineStopAt: null });
     expect(open.engine.to).toBe('w toku');
   });
 
-  it('sesja BEZ LOTU nie dostaje trasy - opisywałaby lot, którego nie było', () => {
+  it('operacja BEZ LOTU nie dostaje trasy - opisywałaby lot, którego nie było', () => {
     const noFlight = sessionRow({
       ...session,
       firstTakeoffAt: null,

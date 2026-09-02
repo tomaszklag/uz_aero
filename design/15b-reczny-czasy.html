@@ -87,13 +87,13 @@
   .field-time.empty { color:var(--text-placeholder); font-weight:400; font-family:var(--font-body); font-size:15px; line-height:20px; letter-spacing:0; }
   .field-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); line-height:1.5; }
 
-  /* ===== OŚ SESJI - TEN SAM KOMPONENT, CO W KOKPICIE I W ROZLICZENIU (issue #62) =====
+  /* ===== OŚ OPERACJI - TEN SAM KOMPONENT, CO W KOKPICIE I W ROZLICZENIU (issue #62) =====
 
      Do issue #62 krok 3 był DWIEMA PŁASKIMI LISTAMI obok siebie: „Loty" i „Zrzuty".
      Zgłoszenie z urządzenia trafiło w sedno: „na jednym biegu silnika wykonałem kilka
      zrzutów w kilku lotach" - a formularz nie miał jak pokazać, który zrzut należy do
      którego lotu. Nie dlatego, że model tego nie wie: `DROP_ON_GROUND` w domenie
-     sprawdza dokładnie zawieranie się zrzutu w oknie lotu, a oś sesji i kokpit od
+     sprawdza dokładnie zawieranie się zrzutu w oknie lotu, a oś operacji i kokpit od
      zawsze wyrażają przynależność POZYCJĄ W CZASIE. Wiedział model, milczał ekran.
 
      Odpowiedzią jest oś - ta sama, którą pilot ogląda w kokpicie w trakcie lotu
@@ -150,7 +150,7 @@
   .axis-row.warned .axis-name { color:var(--amber); }
   .axis-row.warned .axis-flight { color:var(--amber); }
   /* Dopisanie jest OSTATNIM WIERSZEM osi, nie przyciskiem pod nią (wzorzec „DODAJ
-     WPIS", issue #43): nowy lot trafi w przebieg sesji, więc wejście stoi tam, gdzie
+     WPIS", issue #43): nowy lot trafi w przebieg operacji, więc wejście stoi tam, gdzie
      skończy się jego skutek. Plus, nie ołówek - ołówek obiecuje poprawianie
      istniejącej wartości. */
   .axis-add { display:flex; align-items:center; justify-content:center; gap:8px; min-height:44px; border-top:1px solid var(--border); font-family:var(--font-mono); font-size:10px; letter-spacing:1.5px; color:var(--green); text-decoration:none; }
@@ -232,13 +232,13 @@
            się «bieg silnika» z tym, co mam na osi czasu, nie ma sensu ten input”.
 
            Oba końce osi SĄ wejściem w ich wpisanie, więc pusty krok 3 (15H) i krok 3
-           z pełną sesją to odtąd TEN SAM ekran w dwóch stanach, a nie dwa układy.
+           z pełną operacją to odtąd TEN SAM ekran w dwóch stanach, a nie dwa układy.
 
            Podpisu „blok 1:36 · czas w powietrzu 1:06” też tu nie ma: te dwie liczby
            stoją w stopce osi, a stopka jest ich jedynym miejscem - tak samo jak na
            ekranie rozliczenia (issue #38 pkt 9). -->
 
-      <!-- PRZEBIEG SESJI - JEDNA OŚ zamiast dwóch płaskich list (issue #62 pkt 9 i 10).
+      <!-- PRZEBIEG OPERACJI - JEDNA OŚ zamiast dwóch płaskich list (issue #62 pkt 9 i 10).
 
            Zrzut stoi MIĘDZY startem a lądowaniem swojego lotu i niesie jego numer po
            prawej. Przynależność nie jest tu osobnym polem, tylko POZYCJĄ - dokładnie
@@ -250,7 +250,7 @@
            blokada z powodem. Skład zostaje opcjonalny: `null` znaczy „nie podano",
            a nie „zero skoczków". -->
       <div class="section flush">
-        <div class="section-head"><span class="section-label">Przebieg sesji</span></div>
+        <div class="section-head"><span class="section-label">Przebieg operacji</span></div>
 
         <div class="axis">
           <a href="15d-reczny-czas-arkusz.html" class="axis-row">
@@ -398,8 +398,8 @@
         </div>
 
         <!-- Dopisanie jako OSTATNIE WIERSZE KARTY: nowy lot i nowy zrzut trafią w przebieg
-             sesji, więc wejście stoi tam, gdzie skończy się jego skutek. Nowy lot bierze
-             godziny BIEGU SILNIKA (issue #62 pkt 8): przy sesji z jednym lotem to jest
+             operacji, więc wejście stoi tam, gdzie skończy się jego skutek. Nowy lot bierze
+             godziny BIEGU SILNIKA (issue #62 pkt 8): przy operacji z jednym lotem to jest
              od razu wartość właściwa, a przy kolejnych - od ostatniego lądowania do
              wyłączenia silnika. -->
         <a href="15d-reczny-czas-arkusz.html" class="axis-add">
@@ -429,7 +429,7 @@
            do czego należeć.
 
            TRZECI BANER TEGO KROKU (uwaga z urządzenia, 2026-08-29): „Nie dodałeś ani
-           jednego lotu - sesja zapisze się jako bieg silnika bez lotu. Dopisz lot,
+           jednego lotu - operacja zapisze się jako bieg silnika bez lotu. Dopisz lot,
            jeśli go pominąłeś".
 
            To ODWRÓCENIE decyzji z przebudowy 15 (2026-08-16), która odrzucała taki wpis
@@ -440,7 +440,7 @@
               żadnego lotu"
 
            - i to jest DOKŁADNIE ten sam stan, który flow na żywo ma jako 09C („zdanie
-           bez lotu": pogoda, usterka, próba silnika). Skoro sesja bez lotu jest legalna
+           bez lotu": pogoda, usterka, próba silnika). Skoro operacja bez lotu jest legalna
            w locie, to jest legalna także z kartki; blokada odbierała pilotowi możliwość
            zapisania czasu, w którym maszyna była zajęta. Domena trzyma tę samą granicę:
            `NO_FLIGHT_WITHOUT_REASON` jest u niej MIĘKKĄ flagą, nie odmową. -->
@@ -480,7 +480,7 @@
   <a class="vp-item active" href="15b-reczny-czasy.html">
     <span class="vp-badge">15B</span>
     <span class="vp-body">
-      <span class="vp-name">Krok 3 - przebieg sesji</span>
+      <span class="vp-name">Krok 3 - przebieg operacji</span>
       <span class="vp-when">Oś z wpisanym biegiem silnika: dowolnie wiele lotów w środku, a zrzuty dnia skokowego stoją W SWOICH lotach i noszą ich numer (issue #62 pkt 9). Każdy wiersz otwiera swój arkusz - końce biegu tak samo jak starty i lądowania, bo osobnej karty „Bieg silnika" już nie ma.</span>
     </span>
     <span class="vp-tag">ten ekran</span>

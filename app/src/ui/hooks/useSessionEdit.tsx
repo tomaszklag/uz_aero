@@ -206,7 +206,7 @@ export function useSessionEdit(
 
   const [note, setNote] = useState<{ uuid: string; text: string; label: string } | null>(null);
   const openNote = useCallback(
-    (targetUuid: string, text: string, label = 'Notatka sesji') =>
+    (targetUuid: string, text: string, label = 'Notatka operacji') =>
       setNote({ uuid: targetUuid, text, label }),
     [],
   );
@@ -377,7 +377,7 @@ export function useSessionEdit(
       out.push({ label: 'Pojemność zbiorników', value: litres(aircraft.capacityL) });
     }
     if (projection.fuel.consumedL != null) {
-      out.push({ label: 'Zużycie sesji', value: litres(projection.fuel.consumedL) });
+      out.push({ label: 'Zużycie operacji', value: litres(projection.fuel.consumedL) });
     }
     // Sufit dla pól olejowych - tylko tam, gdzie te pola w ogóle są (przejęcie).
     if (readingTarget?.type === 'preflight_confirm' && aircraft?.oilCapacityL != null) {
@@ -617,8 +617,8 @@ export function useSessionEdit(
           rows={readingRows}
           warning={
             readingTarget.type === 'day_close'
-              ? 'Ten odczyt jest przekazaniem maszyny: od niego zaczyna się następna sesja tego samolotu i to on domyka łańcuch motogodzin.'
-              : 'Ten odczyt otwiera łańcuch motogodzin sesji - zmiana przeliczy zużycie i porównanie z normą.'
+              ? 'Ten odczyt jest przekazaniem maszyny: od niego zaczyna się następna operacja tego samolotu i to on domyka łańcuch motogodzin.'
+              : 'Ten odczyt otwiera łańcuch motogodzin operacji - zmiana przeliczy zużycie i porównanie z normą.'
           }
           /* Odczyt to paliwo, licznik, przy przejęciu godzina - i od issue #60 olej.
              Notatka i Dual siedzą w tym samym zdarzeniu, ale są innym pytaniem i mają
@@ -702,7 +702,7 @@ export function useSessionEdit(
           (`notes: null`), bo „usuń" i „wyczyść pole" to dla pilota jedno. */}
       <TextEntrySheet
         visible={note != null}
-        title={(note?.label ?? 'Notatka sesji').toUpperCase()}
+        title={(note?.label ?? 'Notatka operacji').toUpperCase()}
         initialText={note?.text ?? ''}
         placeholder="np. drugi zbiornik nie trzyma wskazania"
         multiline

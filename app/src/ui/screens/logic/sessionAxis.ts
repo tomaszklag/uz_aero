@@ -253,7 +253,7 @@ export function buildSessionAxis(
          kolejność.
 
          Klucz sortowania bierze więc WCZEŚNIEJSZĄ z dwóch chwil - symetrycznie do
-         zdania, które bierze późniejszą. Sesja na żywo nic na tym nie traci: tam
+         zdania, które bierze późniejszą. Operacja na żywo nic na tym nie traci: tam
          przejęcie faktycznie poprzedza wszystko. */
       at: firstEventAt(events, projection.claimedAt),
       time: declaredTime(projection.claimedAt, projection.manualEntry, true),
@@ -448,12 +448,12 @@ export function buildSessionAxis(
          godziną z formularza - i słusznie: od niego liczy się okno korekty, więc wpis
          sprzed dwóch dni rodziłby się z oknem już wygasłym (decyzja z przebudowy 15,
          przybita testem w `manualFlight.test.ts`). Zdanie niesie więc chwilę ZAPISU,
-         która z przebiegiem sesji nie ma nic wspólnego i potrafi wypaść przed nim.
+         która z przebiegiem operacji nie ma nic wspólnego i potrafi wypaść przed nim.
 
-         Oś sortuje po `at`, więc bierze tu PÓŹNIEJSZĄ z dwóch chwil. Dla sesji na żywo
+         Oś sortuje po `at`, więc bierze tu PÓŹNIEJSZĄ z dwóch chwil. Dla operacji na żywo
          nic to nie zmienia (zdanie i tak następuje po wyłączeniu), a wpisowi ręcznemu
          przywraca kolejność przyczynową. To jest klucz SORTOWANIA, nie twierdzenie
-         o godzinie - godziny ten wiersz w sesji ręcznej i tak nie pokazuje. */
+         o godzinie - godziny ten wiersz w operacji ręcznej i tak nie pokazuje. */
       at: Math.max(projection.closedAt, lastEventAt(rows)),
       time: declaredTime(projection.closedAt, projection.manualEntry, true),
       name: 'Zdanie',

@@ -60,6 +60,7 @@ import { useSkeleton } from '../hooks/useSkeleton';
 import { utcDayStart } from '../../domain';
 import { dateUtcLong, plural } from '../format';
 import { useAircraftRegistrations } from '../hooks/useAircraftRegistrations';
+import { useOperationSignatures } from '../hooks/useOperationSignatures';
 import { buildMyDay, myDayActions, totalLabel } from './logic/myDay';
 import { editableBadge } from './logic/historyDays';
 
@@ -216,11 +217,11 @@ export function MyDayScreen({
       }
     >
       <View style={styles.content}>
-        {/* ── log dnia: płaska oś czasu sesji + sumy ─────────────────────────
+        {/* ── log dnia: płaska oś czasu operacji + sumy ─────────────────────────
             Etykieta grupy zamiast nagłówka karty (issue #42): kafelki są osobnymi
             kartami, więc lista nie mieszka już w jednym pojemniku. Znacznik strefy
             zszedł do kafelka („08:12 → 09:05 UTC"), gdzie stoi przy samej godzinie.
-            Kafelek prowadzi do detali TEJ sesji (10) - zdanie samolotu już
+            Kafelek prowadzi do detali TEJ operacji (10) - zdanie samolotu już
             POTWIERDZIŁO dane, więc jest to oglądanie i korekta, nie zatwierdzanie. */}
         {ready && vm != null && (
           <>
@@ -254,7 +255,7 @@ export function MyDayScreen({
                 />
               ))
             )}
-            {/* Sumy doby: jedyna wielkość, która NIE należy do pojedynczej sesji -
+            {/* Sumy doby: jedyna wielkość, która NIE należy do pojedynczej operacji -
                 stąd własna karta pod listą, a nie stopka któregoś z kafelków. */}
             <Card flush>
               <StatGrid cells={totals} columns={3} />
@@ -274,7 +275,7 @@ export function MyDayScreen({
 
             Blok NIE czeka na `ready`: o dobie nie mówi ani słowa, więc rysuje się
             w pierwszej klatce. Ikona wpisu to `edit`, nie strzałki `takeover`
-            (zgłoszenie przy issue #23): mockup 01 rysuje tu DOPISANIE sesji,
+            (zgłoszenie przy issue #23): mockup 01 rysuje tu DOPISANIE operacji,
             a `maximize-2` znaczy przejęcie CUDZEJ maszyny. */}
         {actions.map((action) => (
           <ActionButton
@@ -339,7 +340,7 @@ function EmptySessions() {
         DZIŚ BEZ LOTÓW
       </AppText>
       <AppText variant="body" tone="muted" style={styles.emptyDesc}>
-        Po pierwszym locie stanie tu karta sesji: czasy bloku, starty i lądowania, paliwo.
+        Po pierwszym locie stanie tu karta operacji: czasy bloku, starty i lądowania, paliwo.
       </AppText>
     </View>
   );
