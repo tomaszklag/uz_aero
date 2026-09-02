@@ -71,7 +71,7 @@ export function missingTrackCopy(
     return {
       title: 'Bez zapisu GPS',
       text:
-        'Ta sesja została wpisana ręcznie, więc nie ma z czego narysować trasy. Czasy są ' +
+        'Ta operacja została wpisana ręcznie, więc nie ma z czego narysować trasy. Czasy są ' +
         'prawdziwe - pochodzą z Twojego wpisu, nie z odbiornika.',
       banner: null,
     };
@@ -80,9 +80,9 @@ export function missingTrackCopy(
   return {
     title: 'Ślad niedostępny',
     text:
-      'Serwer nie ma nagrania tej sesji. Nagranie mogło nie powstać (brak zgody na ' +
+      'Serwer nie ma nagrania tej operacji. Nagranie mogło nie powstać (brak zgody na ' +
       'lokalizację, wyczerpana bateria) albo nigdy nie dotarło z telefonu, na którym ' +
-      'powstało. Czasy i statystyki sesji są kompletne - brakuje wyłącznie trasy.',
+      'powstało. Czasy i statystyki operacji są kompletne - brakuje wyłącznie trasy.',
     banner: null,
   };
 }

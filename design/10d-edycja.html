@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero - 10D Sesja · tryb edycji</title>
+<title>UZ Aero - 10D Operacja · tryb edycji</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -88,7 +88,7 @@
      Typ „ostrzeżenie warunkowe": znika sam, gdy log przestaje być sprzeczny - nie ma
      przycisku zamknięcia, bo zamknięcie nie naprawia danych. Wykrywa go domena na
      CAŁYM strumieniu (`rules/consistency.ts`), a nie przy zapisie pojedynczego
-     zdarzenia: „lot bez lądowania" jest zdaniem o sesji, nie o wpisie. */
+     zdarzenia: „lot bez lądowania" jest zdaniem o operacji, nie o wpisie. */
   .issues { background:var(--amber-muted); border:1px solid var(--amber-border); border-radius:12px; overflow:hidden; }
   .issues-head { display:flex; align-items:center; gap:8px; padding:10px 12px; }
   .issues-icon { color:var(--amber); flex-shrink:0; }
@@ -117,7 +117,7 @@
   .section-card-head .spacer { flex:1; }
   .head-note { font-size:8px; letter-spacing:1px; color:var(--text-muted); text-transform:none; }
 
-  /* ===== OŚ SESJI W TRYBIE EDYCJI =====
+  /* ===== OŚ OPERACJI W TRYBIE EDYCJI =====
      Wiersz wraca do 44 px (w trybie odczytu ma 28 - issue #40). To nie jest cofnięcie
      tamtej decyzji, tylko jej druga połowa: tam wiersz NIE BYŁ celem dotknięcia i rytm
      44 px był marnowaniem kolumny, tutaj CAŁY wiersz jest przyciskiem otwierającym
@@ -281,11 +281,11 @@
 
 <header class="canvas-label">
   <span class="film-strip">UZ AERO - 10D</span>
-  <span class="slug">sesja · tryb edycji</span>
+  <span class="slug">operacja · tryb edycji</span>
   <span class="canvas-meta"><span class="pulse"></span>Wariant 10</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup - Sesja w trybie edycji">
+<main class="phone" role="region" aria-label="Mockup - Operacja w trybie edycji">
   <div class="status-bar">
     <span>9:41</span>
     <span class="status-right">
@@ -305,8 +305,8 @@
         Dzień
       </a>
       <div class="app-header-center">
-        <span class="screen-title">SESJA</span>
-        <span class="header-subtitle">SP-AXA · 06 SIE · SKOKI</span>
+        <span class="screen-title">OPERACJA</span>
+        <span class="header-subtitle">SP-AXA/2026-08-06/TMK/1 · SKOKI</span>
       </div>
       <div class="app-header-right">
         <span class="mode-badge">
@@ -343,14 +343,14 @@
         <span class="cw-text">Poprawiasz samodzielnie do <b>07 SIE 11:20 UTC</b> - 24 h od zdania samolotu. Później korektę nanosi administrator.</span>
       </div>
 
-      <!-- ══ PRZEBIEG SESJI ═══════════════════════════════════════════════════
+      <!-- ══ PRZEBIEG OPERACJI ═══════════════════════════════════════════════════
            Miniatura śladu ZOSTAJE także w trybie edycji, choć nie da się jej
            poprawić: to jedyny obraz, na którym widać, że wiersz osi opisuje lot,
            którego kształt się zgadza (albo nie). Bez niej pilot poprawiałby czasy
            w oderwaniu od tego, co maszyna faktycznie zrobiła. -->
       <div class="section-card">
         <div class="section-card-head">
-          Przebieg sesji
+          Przebieg operacji
           <span class="spacer"></span>
           <span class="head-note">dotknij wiersza, aby poprawić</span>
         </div>
@@ -512,7 +512,7 @@
           </a>
 
           <!-- ZDANIE - arkusz odczytu (10F). Tu korekta rusza łańcuch MH następnej
-               sesji tej maszyny, więc arkusz mówi o tym wprost. -->
+               operacji tej maszyny, więc arkusz mówi o tym wprost. -->
           <a class="axis-row" href="10f-korekta-odczytu.html">
             <span class="axis-time dim">11:20</span>
             <span class="axis-mark"><span class="axis-dot hollow"></span></span>
@@ -530,7 +530,7 @@
         <!-- DOPISANIE FAKTU jako OSTATNIA POZYCJA OSI (uwaga z urządzenia, 2026-08-14).
              Wcześniej stało w pasie akcji na dnie ekranu - o pół ekranu od listy, do
              której dokłada wiersz. Kreska nad wierszem oddziela je od stopki z sumami,
-             żeby nie czytało się jak kolejne zdarzenie sesji. -->
+             żeby nie czytało się jak kolejne zdarzenie operacji. -->
         <a href="10h-dodaj-wpis.html" class="axis-add">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           DODAJ WPIS
@@ -591,7 +591,7 @@
            edytowalny wiersz jest tu jeden, a dwa ołówki obok siebie sugerowałyby,
            że oba są celami.
 
-           Poprawka Duala działa WSTECZ na całą sesję: czas blokowy w całości przypisuje
+           Poprawka Duala działa WSTECZ na całą operację: czas blokowy w całości przypisuje
            się wskazanej osobie. Zmiana załogi W TRAKCIE to inna rzecz (`crew_change`,
            ekran 07) i arkusz mówi o tym wprost.
 
@@ -624,19 +624,19 @@
       </div>
 
       <!-- ══ NOTATKI ═════════════════════════════════════════════════════════
-           Jedyna dana sesji pisana ZDANIEM - i pierwsza, w której literówkę widać
+           Jedyna dana operacji pisana ZDANIEM - i pierwsza, w której literówkę widać
            gołym okiem. W trybie edycji cały wiersz jest celem dotknięcia i otwiera
            TEN SAM arkusz, w którym notatka powstała (02e): to ta sama czynność, więc
            nie ma powodu, żeby wyglądała inaczej. Pusty tekst KASUJE notatkę.
 
-           BEZ STEMPLA: notatka sesji jest DOKŁADNIE JEDNA (jedno pole w payloadzie
+           BEZ STEMPLA: notatka operacji jest DOKŁADNIE JEDNA (jedno pole w payloadzie
            preflightu), więc „ZADANIE · 08:04" nie odróżniało jej od niczego - mówiło
            o godzinie potwierdzenia zadania, a po pierwszej poprawce treści wprost
            kłamało. Stempel zostaje przy uwagach wpisów ręcznych, bo tych bywa wiele.
 
-           I Z TEGO SAMEGO POWODU nie ma tu wiersza „Dodaj notatkę do sesji": obok
+           I Z TEGO SAMEGO POWODU nie ma tu wiersza „Dodaj notatkę do operacji": obok
            istniejącej obiecywałby drugą, a naprawdę nadpisałby pierwszą. Wiersz
-           dopisania pokazuje sesja, która notatki NIE MA - patrz komentarz niżej.
+           dopisania pokazuje operacja, która notatki NIE MA - patrz komentarz niżej.
 
            PLAKIETKA „POPR." - ta sama co przy wierszach osi i z tego samego powodu:
            tekst, który ktoś zmienił, nie jest tym, który pilot wpisał, więc znacznik
@@ -651,11 +651,11 @@
           </span>
           <svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--text-muted);flex-shrink:0;"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
         </a>
-        <!-- SESJA BEZ NOTATKI dostaje w tym miejscu JEDEN wiersz zamiast powyższego:
-             „Dodaj notatkę do sesji" z PLUSEM (ołówek obiecuje poprawianie istniejącej
+        <!-- OPERACJA BEZ NOTATKI dostaje w tym miejscu JEDEN wiersz zamiast powyższego:
+             „Dodaj notatkę do operacji" z PLUSEM (ołówek obiecuje poprawianie istniejącej
              wartości, a tu jeszcze niczego nie ma). Ten wiersz jest powodem, dla
              którego karta „Notatki" istnieje w trybie EDYCJI także pusta - w odczycie
-             nadal nie (issue #40). Bez niego sesja bez notatki nie miała jak notatki
+             nadal nie (issue #40). Bez niego operacja bez notatki nie miała jak notatki
              dostać: wejście znikało w stanie, w którym jest potrzebne. -->
       </div>
 
@@ -668,7 +668,7 @@
            przycisku, którego nikt nie szuka. Ta sama reguła, przez którą wyleciał
            przypis „odczytu nie da się unieważnić" z arkuszy korekty. -->
       <!-- „DODAJ WPIS" stał TU, obok „ZAKOŃCZ EDYCJĘ", i przeniósł się na KONIEC OSI
-           (uwaga z urządzenia, 2026-08-14): dopisywany fakt trafia do przebiegu sesji
+           (uwaga z urządzenia, 2026-08-14): dopisywany fakt trafia do przebiegu operacji
            i zwykle na jego koniec, więc wejście ma stać tam, gdzie skończy się jego
            skutek - a nie o pół ekranu niżej, za rachunkami paliwa i motogodzin. -->
       <div class="btn-row">
@@ -678,7 +678,7 @@
         </a>
       </div>
 
-      <!-- ══ STREFA DESTRUKCYJNA: UNIEWAŻNIENIE CAŁEJ SESJI ══════════════════
+      <!-- ══ STREFA DESTRUKCYJNA: UNIEWAŻNIENIE CAŁEJ OPERACJI ══════════════════
            (uwaga z urządzenia, 2026-08-30: „daj możliwość usunięcia całego lotu.
            Ta operacja powinna być poprzedzona jeszcze potwierdzeniem użytkownika,
            aby nie było przypadkowego usunięcia").
@@ -711,15 +711,15 @@
   <a class="vp-item" href="10-statystyki.html">
     <span class="vp-badge">10</span>
     <span class="vp-body">
-      <span class="vp-name">Sesja - odczyt</span>
+      <span class="vp-name">Operacja - odczyt</span>
       <span class="vp-when">Stan domyślny: oś czysto opisowa, wiersz 28 px, bez ołówków. Znacznik „popr." zostaje - mówi o danych, nie o możliwości zapisu - i tam JEST celem dotknięcia: otwiera historię zmian (10I), bo bez arkusza korekty nie ma innej drogi do pytania „co właściwie zmieniono".</span>
     </span>
   </a>
   <a class="vp-item active" href="10d-edycja.html">
     <span class="vp-badge amber">10D</span>
     <span class="vp-body">
-      <span class="vp-name">Sesja - tryb edycji</span>
-      <span class="vp-when">Po „EDYTUJ DANE" na 10 (albo z kokpitu po zatrzymaniu silnika, kafelkiem „Popraw dane sesji"): każdy wiersz osi staje się celem 44 px z ołówkiem, na górze wchodzą wykryte niespójności, a na końcu osi dochodzi wiersz „DODAJ WPIS". Wejście istnieje wyłącznie w oknie korekty - po 24 h od zdania ekran jest podglądem (10B).</span>
+      <span class="vp-name">Operacja - tryb edycji</span>
+      <span class="vp-when">Po „EDYTUJ DANE" na 10 (albo z kokpitu po zatrzymaniu silnika, kafelkiem „Popraw dane operacji"): każdy wiersz osi staje się celem 44 px z ołówkiem, na górze wchodzą wykryte niespójności, a na końcu osi dochodzi wiersz „DODAJ WPIS". Wejście istnieje wyłącznie w oknie korekty - po 24 h od zdania ekran jest podglądem (10B).</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -734,7 +734,7 @@
     <span class="vp-badge amber">10F</span>
     <span class="vp-body">
       <span class="vp-name">Arkusz - korekta odczytu</span>
-      <span class="vp-when">Ołówek przy przejęciu i zdaniu: paliwo i motogodziny. Bez czasu i bez unieważnienia - sesja bez odczytu przy zdaniu nie ma jak przekazać maszyny dalej.</span>
+      <span class="vp-when">Ołówek przy przejęciu i zdaniu: paliwo i motogodziny. Bez czasu i bez unieważnienia - operacja bez odczytu przy zdaniu nie ma jak przekazać maszyny dalej.</span>
     </span>
   </a>
   <a class="vp-item" href="10g-korekta-zrzutu.html">
@@ -775,7 +775,7 @@
   <a class="vp-item" href="10b-rozliczenie-zamkniete.html">
     <span class="vp-badge amber">10B</span>
     <span class="vp-body">
-      <span class="vp-name">Sesja - po oknie (podgląd)</span>
+      <span class="vp-name">Operacja - po oknie (podgląd)</span>
       <span class="vp-when">Minęły 24 h od zdania: „EDYTUJ DANE" nie ma, więc i tryb edycji jest nieosiągalny. Dalsze poprawki wprowadza administrator.</span>
     </span>
   </a>
@@ -784,7 +784,7 @@
 <nav class="nav-strip">
   <a href="index.html">↩ Index</a>
   <span>·</span>
-  <a href="10-statystyki.html">← 10 Sesja</a>
+  <a href="10-statystyki.html">← 10 Operacja</a>
   <a href="10d-edycja.html" class="active">10D Edycja</a>
   <a href="10e-korekta-zdarzenia.html">10E Zdarzenie</a>
   <a href="10f-korekta-odczytu.html">10F Odczyt</a>

@@ -5,7 +5,7 @@
 
 > ## ⚠ STATUS (2026-08-07): opisuje model sprzed 2026-08-06 - czytaj razem z §3.6a `_main.md.txt`
 >
-> Panel powstał przy założeniu **dzień lotny = sesja jednego samolotu**. Decyzja z 2026-08-06
+> Panel powstał przy założeniu **dzień lotny = operacja jednego samolotu**. Decyzja z 2026-08-06
 > je unieważniła: jednostką potwierdzenia jest wzlot, służba należy do pilota i może objąć
 > kilka maszyn, a zamknięcie dnia jest opcjonalne. Przebudowa panelu to **faza 8 etap D**.
 >
@@ -176,16 +176,16 @@
 > (liczniki vs policzone wiersze, `?state=X` vs wiersze o tym stanie);
 > (b) **kolizja nazw kart tego samego dnia** - `AdminExportListItem.overwrittenBy`. Dwie
 > ZAMKNIĘTE zmiany na jednym samolocie tego samego dnia budowały kartę o tej samej nazwie
-> (`sheetTabName` niesie dzień i samolot, nie sesję), a `exported_sheets` jest po `tab`
-> UPSERT-owane - druga nadpisywała pierwszą, flaga nakładki tego nie łapała (dotyczy sesji
+> (`sheetTabName` niesie dzień i samolot, nie operację), a `exported_sheets` jest po `tab`
+> UPSERT-owane - druga nadpisywała pierwszą, flaga nakładki tego nie łapała (dotyczy operacji
 > NIEZAMKNIĘTYCH), a monitor raportował obie jako „W arkuszu". Konwencji nazw ani schematu
 > wtedy **nie zmienialiśmy** (lustro `app/src/ui/screens/syncStatus.ts`, §4.7 - decyzja
 > produktowa dotykająca telefonu). Serwer wykrywał fakt po `(day, aircraft_id)`
 > w `export_log`, ekran go pokazywał, a podgląd karty ostrzegał, że wyświetla treść innej
-> sesji. **ZAMKNIĘTE 2026-08-07 (migracja 23): karta jest DOBĄ SAMOLOTU**, a zmiany są jej
+> operacji. **ZAMKNIĘTE 2026-08-07 (migracja 23): karta jest DOBĄ SAMOLOTU**, a zmiany są jej
 > wierszami - wada zniknęła z konstrukcji. Porównanie w `ow` idzie odtąd po REWIZJI (wiersze
 > jednej rewizji dzielą `exported_at`, więc stempel przestał rozstrzygać), a samo pole
-> zostaje: opisuje sesję WYŁĄCZONĄ z karty flagą i jest sygnalizatorem powrotu wady;
+> zostaje: opisuje operację WYŁĄCZONĄ z karty flagą i jest sygnalizatorem powrotu wady;
 > (c) **awaria adaptera arkuszy odróżniona od błędu po naszej stronie** - `SheetsAdapterError`
 > w `DayExporter` (opakowuje WYŁĄCZNIE wywołanie `writeDaySheet`) i `ExportFailureDto`
 > w kontrakcie. Wcześniej komenda łapała każdy wyjątek i zwracała `outcome: null`, a panel
@@ -218,7 +218,7 @@
 > miał pozycji opisującej narzędzia serwisowe, a każda istniejąca nazywa ZASÓB (flagi,
 > rejestr, konta, flota, progi, dziennik); przebudowa nie dotyczy żadnego z nich, tylko
 > projekcji wszystkich dni naraz. Zakres jest wąski: sprzątanie tokenów jedzie na
-> `accounts.manage` (ta sama tabela i ta sama władza, co unieważnianie sesji przy
+> `accounts.manage` (ta sama tabela i ta sama władza, co unieważnianie operacji przy
 > deaktywacji konta), a ponowienie eksportu na `fleet.manage` - dokładnie jak na `A05`;
 > (3) **kolejki ponowień z backoffem NIE MA i nie powstała.** Nieudany eksport nie zostawia
 > wiersza w żadnej tabeli (dziennik dostaje wpis po UDANYM zapisie karty, §4.7), więc
@@ -236,9 +236,9 @@
 > `application/admin/projectionScan.ts`. Komentarz uzasadniał branie blokady advisory na
 > każdą różnicę zdaniem „typowo zero albo kilka", ale scenariusz, dla którego ta funkcja
 > powstała i który ma własny test („wypełnia kolumny dołożone migracją 11"), to N =
-> **wszystkie** sesje. Przy 1291 sesjach jedna transakcja brałaby ~1291 blokad ze WSPÓLNEJ
+> **wszystkie** operacje. Przy 1291 operacjach jedna transakcja brałaby ~1291 blokad ze WSPÓLNEJ
 > tablicy klastra (domyślnie ~6400 slotów → realny `out of shared memory`), a każda z tych
-> sesji byłaby zamknięta dla ingestu aż do COMMIT-u, czyli przez cały ~4-minutowy przebieg.
+> operacji byłaby zamknięta dla ingestu aż do COMMIT-u, czyli przez cały ~4-minutowy przebieg.
 > Limit trzyma JEDNĄ transakcję (skutek i ślad zostają nierozdzielne), a reszta jedzie
 > w odpowiedzi jako `RebuildReport.remaining` i w `admin_audit.details` - administrator
 > powtarza przebudowę. Blokada wierszowa na `sessions` i porcjowanie transakcji zostały
@@ -273,7 +273,7 @@
 > `drop_alt_sum_ft`, `drop_alt_count` + częściowy `idx_sessions_closed_day`),
 > rozszerzenie `SessionRow`/`sessionRowFrom`/upsertu projekcji, w domenie
 > `DropSummary.altitudeSumFt`/`altitudeFixCount` (średnia zakresu składa się z SUMY
-> i LICZNIKA zrzutów z fixem - średnich per sesja nie da się składać), `StatsAdminPort`
+> i LICZNIKA zrzutów z fixem - średnich per operacja nie da się składać), `StatsAdminPort`
 > + `PgAdminStatsRepo`, `AdminStatsQueries`, `mappers/statsReport.ts`, `contracts/stats.ts`,
 > `GET /admin/api/stats` (`panel.access`, zakres po DNIU ZAMKNIĘCIA, domyślnie ostatnie
 > 30 dni od zegara serwera), `test/adminStats.test.ts` + rozszerzone
@@ -287,7 +287,7 @@
 > (dokładnie wg zastrzeżenia z aktualizacji przekroju 2);
 > (2) **atrybucja block time per pilot w `@uzaero/domain` (§10 poz. 8) NIE powstała** -
 > to decyzja o nowej projekcji domenowej (dotyka aplikacji pilota) i czeka na człowieka.
-> Ujęcie „per pilot" jedzie po PIC-u (jedynym pewnym dla całej sesji - single-writer);
+> Ujęcie „per pilot" jedzie po PIC-u (jedynym pewnym dla całej operacji - single-writer);
 > kolumny „Blok jako Dual" z mockupu NIE MA, bo `sessions.dual_id` niesie OSTATNIEGO
 > duala dnia i przy zmianie załogi przypisywałby mu cudze godziny - ekran mówi to
 > wprost pod tabelą;
@@ -1019,7 +1019,7 @@ trasy, nie zdaniem w ciele (§8.6).
 
 ### 5.7 Testy (`server/test/adminFlags.test.ts`, PGlite + `app.inject`)
 
-1. **Bramka działa przed:** dwie sesje otwarte tego samego samolotu → `session_overlap`
+1. **Bramka działa przed:** dwie operacje otwarte tego samego samolotu → `session_overlap`
    → `day_close` → `export_log` pusty, `GET /sheets/:tab` = 404.
 2. **Rozwiązanie odblokowuje:** `POST /admin/api/flags/:id/resolve` → 200 z `revision: 1`,
    `GET /sheets/:tab` zwraca wiersze karty. **To jest test, dla którego panel powstaje.**
@@ -1101,9 +1101,9 @@ znaczenia reguły, tylko wreszcie daje jej adresata.
 
 ```
 event_correction {
-  picId       = sessionPicId sesji     ← inaczej WRITER_MISMATCH, i słusznie
-  dualId      = dualId sesji
-  sessionUuid, aircraftId = z sesji
+  picId       = sessionPicId operacji     ← inaczej WRITER_MISMATCH, i słusznie
+  dualId      = dualId operacji
+  sessionUuid, aircraftId = z operacji
   deviceTime  = gpsTime = clock.now()
   payload     = { targetUuid, action: 'retime'|'void', newTime? }
 }
@@ -1113,7 +1113,7 @@ admin_audit   = { action:'event.correct', targetType:'event', targetId: targetUu
 ```
 
 > **Tożsamość administratora NIE wchodzi do zdarzenia.** `picId` w rejestrze odpowiada
-> na pytanie „czyja to sesja", nie „kto to wpisał". Na drugie pytanie odpowiadają
+> na pytanie „czyja to operacja", nie „kto to wpisał". Na drugie pytanie odpowiadają
 > `source_device` i `admin_audit` - i tylko one. Wpisanie tam id administratora
 > zerwałoby single-writer i zafałszowało atrybucję nalotu.
 
@@ -1138,16 +1138,16 @@ chroni outbox telefonu (§4.3), za darmo, bez nowego kodu.
 ### 6.5 Bramki, które zostają
 
 > **⚠ ZMIANA (D2, 2026-08-07): bramka `400 day_open` USUNIĘTA.** Pierwszy punkt tej listy
-> brzmiał „sesja bez `day_close` → korekta administracyjna odmówiona (`400 day_open`)".
+> brzmiał „operacja bez `day_close` → korekta administracyjna odmówiona (`400 day_open`)".
 > Reguła opierała się na równości „brak zamknięcia = dzień trwa", którą §3.6a unieważnił:
-> zdanie samolotu jest OPCJONALNE, więc sesja sprzed tygodnia wygląda tak samo jak ta
+> zdanie samolotu jest OPCJONALNE, więc operacja sprzed tygodnia wygląda tak samo jak ta
 > z dzisiejszego poranka - bramka odmawiałaby korekty przede wszystkim tam, gdzie jest
 > potrzebna. **Administrator nie jest NIGDY blokowany.** Kolizję opisują miękkie
 > naruszenia domeny (`ADMIN_EDIT_SESSION_ACTIVE`, `ADMIN_EDIT_PILOT_WINDOW_OPEN`), które
 > jadą jako `warnings` w podglądzie i w wyniku zapisu; panel rysuje z nich baner nad
 > formularzem i **nie wyszarza przycisku**. Decyduje człowiek.
 
-- cel korekty musi być w tej sesji i być korygowalnym typem - pilnuje `checkAppend`;
+- cel korekty musi być w tej operacji i być korygowalnym typem - pilnuje `checkAppend`;
 - odpowiedź niesie `state: SessionState` **po** korekcie (policzony `projectSession`),
   żeby panel odświeżył kartę dnia bez drugiego żądania i bez własnego liczenia.
 
@@ -1199,7 +1199,7 @@ CREATE INDEX IF NOT EXISTS idx_sessions_day ON sessions (claim_time DESC, sessio
 Migracja 10 **musi** wejść razem z przebudową projekcji
 (`POST /admin/api/maintenance/rebuild-projections`) - nowe kolumny w istniejących
 wierszach są puste i pozostaną puste, bo `upsert` uruchamia dopiero następna paczka
-zdarzeń tej sesji. Przebudowa i tak jest w zaległościach audytu; panel jest dla niej
+zdarzeń tej operacji. Przebudowa i tak jest w zaległościach audytu; panel jest dla niej
 naturalnym opakowaniem.
 
 ### 7.3 Paginacja - keyset, nigdy offset
@@ -1212,7 +1212,7 @@ awarii narzędzia diagnostycznego.
 | Lista | Klucz sortowania | Uwaga |
 |---|---|---|
 | `events` (A04) | `(received_at DESC, uuid DESC)` | oba `NOT NULL` - predykat jednogałęziowy |
-| `sessions` (A02) | `(claim_time DESC NULLS LAST, session_uuid DESC)` | `claim_time` jest NULL-owalne (sesja bez `preflight_confirm` - realny stan) → predykat trójgałęziowy, cały w `keyset.ts`, z testem |
+| `sessions` (A02) | `(claim_time DESC NULLS LAST, session_uuid DESC)` | `claim_time` jest NULL-owalne (operacja bez `preflight_confirm` - realny stan) → predykat trójgałęziowy, cały w `keyset.ts`, z testem |
 | `admin_audit` (A09) | `(created_at DESC, id DESC)` | - |
 | `flags` (A03) | `(created_at DESC, id DESC)` | - |
 
@@ -1245,22 +1245,22 @@ w aplikacji.
 ### 7.5 Karta dnia - jedyne miejsce z `projectSession` na żądanie
 
 - **Listy NIGDY nie wołają `projectSession`.** Czytają wyłącznie kolumny `sessions`.
-  N sesji × pełny strumień to jedyna rzecz, która mogłaby tu być wolna.
+  N operacji × pełny strumień to jedyna rzecz, która mogłaby tu być wolna.
 - **`GET /admin/api/sessions/:uuid` woła je raz**, na jednym strumieniu (dziesiątki
   zdarzeń - ułamek milisekundy), i zwraca `state: SessionState` w całości. Karta dnia
   (A02a) dostaje tabelę lotów, bilanse i oś zdarzeń **policzone przez serwer tym samym
   kodem, co telefon**. Panel formatuje (`mhFormat`, block HH:MM przez `@uzaero/domain`)
   i nic więcej.
 - **`GET /admin/api/stats/*` czyta wyłącznie kolumny `sessions`**, z `WHERE status =
-  'closed'` - sesje otwarte wypadają z sum (nie mają `mh_end` ani `fuel_end_l`, więc
+  'closed'` - operacje otwarte wypadają z sum (nie mają `mh_end` ani `fuel_end_l`, więc
   wliczenie ich zafałszowałoby delty), a odpowiedź niesie `openSessionsInRange`, żeby
-  UI mogło pokazać baner „w okresie są 2 sesje otwarte - ich liczby nie wchodzą do sum".
-  Osobno jedzie `openSessionsUndated`: sesja bez `claim_time` nie należy do ŻADNEGO
+  UI mogło pokazać baner „w okresie są 2 operacje otwarte - ich liczby nie wchodzą do sum".
+  Osobno jedzie `openSessionsUndated`: operacja bez `claim_time` nie należy do ŻADNEGO
   zakresu, więc liczona jest zawsze, zamiast znikać za predykatem `BETWEEN`.
 
   > **Sprostowanie 2026-08-07**: do przebudowy flow `claim_time` niosło `dutyStart`
-  > z preflightu, więc sesja z samym `session_claim` faktycznie bywała bez daty. Dziś
-  > kolumna niesie czas PRZEJĘCIA maszyny, a claim ma każda sesja (§4.4) - `openSessionsUndated`
+  > z preflightu, więc operacja z samym `session_claim` faktycznie bywała bez daty. Dziś
+  > kolumna niesie czas PRZEJĘCIA maszyny, a claim ma każda operacja (§4.4) - `openSessionsUndated`
   > zostaje jako licznik stanu WYŁĄCZNIE awaryjnego (rejestr niekompletny po imporcie).
 
 ### 7.6 Rozszerzenie `test/contract.test.ts`
@@ -1285,13 +1285,13 @@ dlaczego, zanim ktoś spróbuje ją tam zastosować.
 
 **Dlaczego kolumna projekcji nie wystarcza.** Model zużycia stoi na **interwałach
 paliwowych** - odcinkach między kolejnymi odczytami paliwomierza (`preflight_confirm`,
-para `refuel.beforeL`/`afterL`, `day_close`). Interwałów jest KILKA na sesję, więc nie są
+para `refuel.beforeL`/`afterL`, `day_close`). Interwałów jest KILKA na operację, więc nie są
 wartością wiersza; upchnięcie ich w JSONB dałoby kolumnę, po której i tak trzeba by
 liczyć `jsonb_array_elements` z arytmetyką - czyli dokładnie to odtwarzanie projekcji
 SQL-em, przed którym ostrzega §7.1. Co więcej, wynik modelu (`r_przelot = 40,9 L/h`)
 **nie należy do żadnego dnia** - opisuje okno. Nie ma wiersza, w którym mógłby stanąć.
 
-**Co wolno w zamian.** Przekrój analityczny może czytać strumień zdarzeń wielu sesji,
+**Co wolno w zamian.** Przekrój analityczny może czytać strumień zdarzeń wielu operacji,
 pod trzema warunkami:
 
 1. **Zero arytmetyki w SQL.** Zapytanie wykonuje `SELECT` (kolumny projekcji + wiersze
@@ -1307,7 +1307,7 @@ pod trzema warunkami:
 
 **Czego to NIE otwiera.** Listy nadal nie wołają `projectSession` ani `sessionStreams` -
 i to jest sprawdzane, nie deklarowane. `contract.test.ts` liczy OBIE drogi do rejestru
-osobno (`reads` dla pojedynczej sesji, `bulkReads` dla wielosesyjnej) i wymaga zera od
+osobno (`reads` dla pojedynczej operacji, `bulkReads` dla wielosesyjnej) i wymaga zera od
 list oraz dokładnie jednego odczytu zbiorczego od analityki. `architecture.test.ts`
 dokłada regułę po ścieżce: `sessionStreams` ma dokładnie jednego użytkownika
 (`application/admin/queries/consumption.ts`) - poza deklaracją portu i adapterem.
@@ -1360,13 +1360,13 @@ NIE MA i nie należy go obiecywać: `uniqueConflictOn` obsługuje formularze, gd
 jest zajętą wartością do poprawienia przez człowieka, a tutaj jest awarią serializacji.
 
 **(c) Karta arkusza dwa razy zmieniła znaczenie, a nazwa została.** `export_log.session_uuid`
-znaczyło „sesja, której to karta"; dziś znaczy **członkostwo sesji w rewizji**, bo karta
+znaczyło „operacja, której to karta"; dziś znaczy **członkostwo operacji w rewizji**, bo karta
 jest DOBĄ SAMOLOTU (§4.7). Rozważona i odrzucona była wersja normalizacyjnie czystsza -
 jeden wiersz na rewizję plus tabela członkostwa - i odpadła w jedynym miejscu, które się
-liczy: `GET /sessions/:uuid/sync-status` (dziś zaparkowany po stronie telefonu - patrz `SyncEngine.fetchStatus`) pyta o link PO SESJI, więc
+liczy: `GET /sessions/:uuid/sync-status` (dziś zaparkowany po stronie telefonu - patrz `SyncEngine.fetchStatus`) pyta o link PO OPERACJI, więc
 zmiana, która eksportu nie wyzwoliła, nie miałaby własnego wiersza i pilot zobaczyłby
 „jeszcze nie wyeksportowano" o danych, które są w arkuszu. Cena wybranego wariantu to
-dokładnie jedno zdanie: kolumna nazywa się „sesja", a znaczy „członkostwo".
+dokładnie jedno zdanie: kolumna nazywa się „operacja", a znaczy „członkostwo".
 Podobnie `exported_sheets.tab`: klucz `YYYY-MM-DD_SP-XXX` był od początku poprawny - to
 nie nazwa była za wąska, tylko TREŚĆ za wąska wobec nazwy (druga zmiana dnia nadpisywała
 pierwszą zamiast do niej dołączyć).
@@ -1428,7 +1428,7 @@ Dwa niezależne mechanizmy, bo `SameSite` sam w sobie jest polityką przeglądar
 2. **każda mutacja `/admin/api/*` wymaga nagłówka `X-UZ-Admin: 1`.** Przeglądarka nie
    ustawi własnego nagłówka w żądaniu cross-origin bez preflightu, a serwer nie wysyła
    żadnych nagłówków CORS - więc preflight nie przechodzi. Trzy linie w jednym
-   `preHandler`, taniej i mniej ruchomych części niż token CSRF w sesji.
+   `preHandler`, taniej i mniej ruchomych części niż token CSRF w operacji.
 
 Do tego panel jedzie z **tego samego origin** (§8.7), więc CORS-u nie ma w ogóle.
 
@@ -1458,7 +1458,7 @@ po 8 h. Rozwiązanie spójne z decyzją, która już zapadła w `AuthCommands.re
 // → Actor. Zdolności sprawdzamy przeciw roli Z KONTA, nie z claimu.
 ```
 
-Koszt: jedno `SELECT` po kluczu głównym na żądanie panelu (kilkaset żądań na sesję
+Koszt: jedno `SELECT` po kluczu głównym na żądanie panelu (kilkaset żądań na operację
 administratora). Zysk: dezaktywacja konta i odebranie roli działają **natychmiast**,
 a `Actor` niesie rolę z chwili akcji - czyli dokładnie to, co ma trafić do
 `admin_audit.actor_role`. Jeden odczyt obsługuje autoryzację i audyt.
@@ -1544,7 +1544,7 @@ niczego, co da się pokazać).
 
 | # | Przekrój | Zawartość serwerowa | Ekrany | Dlaczego tu |
 |---|---|---|---|---|
-| **0** | **Fundament panelu** | naprawa `migrate.ts` (§2.3) · migracja 8 `admin_audit` · `AdminAuditPort` + `PgAdminAuditRepo` · `AuditedWrite` · `domain/adminActions.ts` · `tokenFromRequest` + zmiana `authorize` · `adminCookie` · `requireAdminActor` · `adminRoute` · scope `/admin/api` · `POST auth/login`, `POST auth/logout`, `GET me` · rate-limit · `@fastify/static` pod `/admin` · `test/architecture.test.ts` | A00, A00a | nic nie wolno zapisać bez śladu, a bez sesji panel jest nieosiągalny. **Naprawa runnera migracji musi być pierwsza** - bez niej migracje 12–13 (`ADD CONSTRAINT`) nie są bezpiecznie zapisywalne |
+| **0** | **Fundament panelu** | naprawa `migrate.ts` (§2.3) · migracja 8 `admin_audit` · `AdminAuditPort` + `PgAdminAuditRepo` · `AuditedWrite` · `domain/adminActions.ts` · `tokenFromRequest` + zmiana `authorize` · `adminCookie` · `requireAdminActor` · `adminRoute` · scope `/admin/api` · `POST auth/login`, `POST auth/logout`, `GET me` · rate-limit · `@fastify/static` pod `/admin` · `test/architecture.test.ts` | A00, A00a | nic nie wolno zapisać bez śladu, a bez operacji panel jest nieosiągalny. **Naprawa runnera migracji musi być pierwsza** - bez niej migracje 12–13 (`ADD CONSTRAINT`) nie są bezpiecznie zapisywalne |
 | **1** | **Flaga → re-eksport** (wzorzec, §5) | migracja 9 · `FlagsAdminPort` + `PgAdminFlagsRepo` · `AdminFlagCommands.resolve` · `ExportOutcome` z `DayExporter` · `GET/POST /admin/api/flags*` | A03, A03a, A03b | **jedyny powód, dla którego panel powstaje teraz**: otwiera bramkę §4.7, której dziś nikt nie może otworzyć |
 | **2** | **Czytanie dni** | migracja 10 (5 kolumn + indeks) · rozszerzenie `sessionRowFrom` · `POST maintenance/rebuild-projections` · `SqlFilter` + `keyset` · `SessionsAdminPort.list` · `GET /admin/api/sessions`, `/sessions/:uuid` · rozszerzenie `contract.test.ts` | A02, A02a | przebudowa projekcji **musi** wejść w tym samym przekroju co migracja 10 - inaczej nowe kolumny są puste |
 | **3** | **Korekta administracyjna** | `WriteAuthority` w `@uzaero/domain` · `AdminCorrectionCommands` · `POST /admin/api/sessions/:uuid/corrections` | A02b | wymaga #2 (wybór celu na karcie dnia) i #0 (audyt) |

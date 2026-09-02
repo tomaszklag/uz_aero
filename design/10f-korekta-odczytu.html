@@ -120,7 +120,7 @@
   /* Ostrzeżenie warunkowe (Typ B): znika samo, gdy wartości wracają w zakres -
      nie ma „×", bo zamknięcie niczego by nie naprawiło. Mówi o SKUTKU, nie o błędzie:
      odczyt przy zdaniu jest ogniwem łańcucha motogodzin i punktem startowym
-     następnej sesji tej maszyny. */
+     następnej operacji tej maszyny. */
   .warn-box { display:flex; align-items:flex-start; gap:9px; background:var(--amber-muted); border:1px solid var(--amber-border); border-radius:12px; padding:11px 13px; }
   .warn-box svg { flex-shrink:0; margin-top:1px; color:var(--amber); }
   .warn-text { font-size:11px; color:var(--text-secondary); line-height:1.55; }
@@ -201,7 +201,7 @@
         Dzień
       </a>
       <div class="app-header-center">
-        <span class="screen-title">SESJA</span>
+        <span class="screen-title">OPERACJA</span>
         <span class="header-subtitle">SP-AXA · 06 SIE · SKOKI</span>
       </div>
       <span class="mode-badge">
@@ -212,7 +212,7 @@
 
     <div class="scroll">
       <div class="section-card">
-        <div class="section-card-head">Przebieg sesji</div>
+        <div class="section-card-head">Przebieg operacji</div>
         <div class="axis">
           <!-- Podświetlony wiersz to CEL arkusza: przejęcie. Tło i arkusz muszą mówić
                o tym samym zdarzeniu - inaczej pilot poprawia jedno, a patrzy na drugie. -->
@@ -341,7 +341,7 @@
           <span class="modal-ref-val">11,4 L</span>
         </div>
         <div class="modal-ref">
-          <span>Wpływ na zużycie sesji</span>
+          <span>Wpływ na zużycie operacji</span>
           <span class="modal-ref-val">27 L → 25 L</span>
         </div>
         <div class="modal-ref">
@@ -426,7 +426,7 @@
   <a href="10j-korekta-zalogi.html">10J Załoga</a>
   <a href="10k-korekta-notatki.html">10K Notatka</a>
   <span>·</span>
-  <a href="10-statystyki.html">10 Sesja</a>
+  <a href="10-statystyki.html">10 Operacja</a>
 </nav>
 
 </body>

@@ -165,9 +165,9 @@ const asAdmin = (stream: Event[], candidate: Event): RuleViolation[] =>
  * na końcu tej grupy.
  */
 const SAME_IN_BOTH_MODES: Array<[string, Event[], Event]> = [
-  ['pusta sesja bez claimu', [], ev('engine_start', {}, { t: min(12) })],
+  ['pusta operacja bez claimu', [], ev('engine_start', {}, { t: min(12) })],
   ['drugi claim', [claim()], ev('session_claim', { mode: 'free' }, { t: min(1) })],
-  ['cudza sesja', ground(), ev('engine_start', {}, { t: min(12), sessionUuid: 'inna' })],
+  ['cudza operacja', ground(), ev('engine_start', {}, { t: min(12), sessionUuid: 'inna' })],
   ['cudzy samolot', ground(), ev('engine_start', {}, { t: min(12), aircraftId: 'inny' })],
   ['cudzy PIC (single-writer)', ground(), ev('engine_start', {}, { t: min(12), picId: 'inny' })],
   ['zdarzenie bez zarzutu', ground(), ev('engine_start', {}, { t: min(12) })],
@@ -312,7 +312,7 @@ const SAME_IN_BOTH_MODES: Array<[string, Event[], Event]> = [
     ),
   ],
   [
-    'zmiana PIC w sesji',
+    'zmiana PIC w operacji',
     ground(),
     ev('crew_change', { role: 'pic', pilotOutId: PIC, pilotInId: 'pic-2' }, { t: min(160) }),
   ],
@@ -332,7 +332,7 @@ const SAME_IN_BOTH_MODES: Array<[string, Event[], Event]> = [
     ground(),
     ev('engine_start', {}, { t: min(12), gpsTime: min(12) - 300_000 }),
   ],
-  ['korekta celu spoza sesji', CLOSED_STREAM, correction('duch', min(310))],
+  ['korekta celu spoza operacji', CLOSED_STREAM, correction('duch', min(310))],
   ['korekta zdarzenia niekorygowalnego', CLOSED_STREAM, correction(CLOSED_PREFLIGHT.uuid, min(310))],
   [
     'poprawiony czas z przyszłości',
@@ -511,7 +511,7 @@ describe('B · po oknie 24 h administrator traci wyłącznie CORRECTION_WINDOW_E
   });
 
   it.each([
-    ['cel spoza sesji', correction('duch', LATE), 'CORRECTION_TARGET_NOT_FOUND'],
+    ['cel spoza operacji', correction('duch', LATE), 'CORRECTION_TARGET_NOT_FOUND'],
     [
       'cel niekorygowalny',
       correction(CLOSED_PREFLIGHT.uuid, LATE),

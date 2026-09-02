@@ -116,7 +116,7 @@ Gdy **nie było ani jednego fixa na postoju**, elewacja zostaje `null` i automat
 świadomie milczy przy lądowaniu: pilot ma wpis ręczny (05f) i korektę (10e), a zmyślone
 lądowanie kosztuje więcej niż jego brak.
 
-Weryfikacja na nagraniach (`server/traces/`, 6 sesji, w tym pełny lot z 6671 fixami):
+Weryfikacja na nagraniach (`server/traces/`, 6 operacji, w tym pełny lot z 6671 fixami):
 przebieg z elewacją `null` daje **identyczne** detekcje co przebieg z elewacją podaną
 z góry, a dobrana wartość zgadza się co do cyfry z medianą wysokości postojowych, której
 używa `server/scripts/replay.ts`. Narzędzie kalibracyjne liczyło elewację „z ziemi" od
@@ -430,7 +430,7 @@ Zatrzymanie ustawia **nową kotwicę** - poprzednia opisywała stanowisko sprzed
 i `motion.moving`. Flaga `taxiing` zeruje się przy starcie i przy lądowaniu, więc kołowanie
 jest **jednym wpisem otwierającym lot**.
 
-**Druga linia obrony mieszka w domenie** (decyzja 2026-08-04): projekcja sesji prowadzi
+**Druga linia obrony mieszka w domenie** (decyzja 2026-08-04): projekcja operacji prowadzi
 własny stan `taxiing` (otwiera `taxi`, zamyka dopiero `takeoff` albo `engine_stop`),
 a gwardia `ALREADY_TAXIING` w `sessionRules.ts` twardo odrzuca drugie `taxi` z rzędu.
 Flaga detektora żyje bowiem tylko tak długo, jak zamontowany ekran kokpitu - po powrocie
@@ -773,7 +773,7 @@ pokazany) i `undo` (COFNIJ pilota, czyli **fałszywa detekcja oznaczona przez cz
 której rejestr zdarzeń nie widzi) oraz agregaty czujników.
 
 ```bash
-cd server && npx tsx scripts/replay.ts traces/sesja.ndjson 800
+cd server && npx tsx scripts/replay.ts traces/operacja.ndjson 800
 ```
 
 Skrypt puszcza nagranie przez **ten sam `runDetector`**, który działa w telefonie, i zestawia

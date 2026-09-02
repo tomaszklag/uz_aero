@@ -89,7 +89,7 @@ class RefServer implements ServerPort {
   pushEvents = async (): Promise<PushResult> => ({ accepted: 0, duplicates: 0, flags: [] });
   pushTraces = async (_t: string, entries: unknown[]) => ({ accepted: entries.length });
   getSessionTrack = async (): Promise<never> => {
-    throw new Error('ta atrapa nie obsługuje śladu sesji');
+    throw new Error('ta atrapa nie obsługuje śladu operacji');
   };
   getAircraftState = async () => ({
     aircraftId: 'SP-AXA',

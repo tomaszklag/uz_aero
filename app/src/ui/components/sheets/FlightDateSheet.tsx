@@ -91,7 +91,7 @@ export function FlightDateSheet({
     <Sheet
       visible={visible}
       title="DATA LOTU"
-      rows={sessionsInfo != null ? [{ label: 'Sesje w tej dobie', value: sessionsInfo }] : []}
+      rows={sessionsInfo != null ? [{ label: 'Operacje w tej dobie', value: sessionsInfo }] : []}
       confirmLabel="ZAPISZ"
       onConfirm={() => onConfirm(value)}
       onCancel={onCancel}

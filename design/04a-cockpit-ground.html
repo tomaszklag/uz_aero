@@ -80,13 +80,13 @@
   .start-engine-label { font-family:var(--font-display); font-size:32px; letter-spacing:4px; color:var(--green); text-align:center; position:relative; z-index:1; text-shadow:0 0 20px rgba(46,204,113,0.3); }
   .start-engine-hint { font-family:var(--font-mono); font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); text-align:center; position:relative; z-index:1; }
 
-  /* Reguły `.claim-strip` / `.claim-*` usunięte razem z paskiem sesji (2026-08-10) -
+  /* Reguły `.claim-strip` / `.claim-*` usunięte razem z paskiem operacji (2026-08-10) -
      pasek został wyłącznie w 04B, gdzie opisuje CUDZĄ maszynę. `.strip-left`
      i `.strip-label` zostają: używa ich pasek paliwa niżej. */
   .strip-left { display:flex; align-items:center; gap:8px; }
   .strip-label { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
 
-  /* Pasek paliwa - tokeny 1:1 z 04, bo to ten sam komponent na innym etapie sesji. */
+  /* Pasek paliwa - tokeny 1:1 z 04, bo to ten sam komponent na innym etapie operacji. */
   .fuel-strip { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
   .fuel-strip-icon { color:var(--amber); }
   .fuel-strip-val { font-family:var(--font-mono); font-size:16px; font-weight:400; letter-spacing:2px; color:var(--text-primary); }
@@ -98,14 +98,14 @@
   .session-log-header { display:flex; align-items:center; justify-content:space-between; padding:9px 12px; border-bottom:1px solid var(--border); background:var(--surface-raised); }
   .session-log-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
 
-  /* OŚ SESJI (issue #44) - ten sam inwentarz, co na 04 i na 10; pełny komentarz przy
-     nim stoi w 04. Tu oś ma jeden wiersz i to nie jest stan pusty: sesja zaczyna się
+  /* OŚ OPERACJI (issue #44) - ten sam inwentarz, co na 04 i na 10; pełny komentarz przy
+     nim stoi w 04. Tu oś ma jeden wiersz i to nie jest stan pusty: operacja zaczyna się
      PRZEJĘCIEM, więc log od pierwszej sekundy ma co pokazać - godzinę i odczyt, który
      pilot spisał na 02a.
 
      `.session-log-empty` (kubek z kluczem i „Brak wpisów") USUNIĘTY: mówił „nic tu nie
-     ma" o sesji, która właśnie powstała, i był trzecią deklaracją braku na tym ekranie
-     obok usuniętego paska sesji. */
+     ma" o operacji, która właśnie powstała, i był trzecią deklaracją braku na tym ekranie
+     obok usuniętego paska operacji. */
   .axis { padding:12px 0; }
   .axis-row { display:grid; grid-template-columns:52px 14px 1fr auto; align-items:center; gap:8px; padding:0 12px 0 10px; min-height:28px; }
   .axis-time { font-family:var(--font-mono); font-size:11px; color:var(--text-primary); }
@@ -210,7 +210,7 @@
         <div class="start-engine-hint">Przytrzymaj 2 sekundy aby potwierdzić</div>
       </a>
 
-      <!-- TU STAŁ PASEK SESJI - USUNIĘTY 2026-08-10 (patrz komentarz w 04).
+      <!-- TU STAŁ PASEK OPERACJI - USUNIĘTY 2026-08-10 (patrz komentarz w 04).
            Ten wariant był jego najgorszym przypadkiem: świeżo przejęta maszyna nie ma
            czego pokazać, więc najmocniejszy typograficznie wiersz ekranu mówił „jeszcze
            żadnego wzlotu" - trzeci raz to samo, obok „0 cykli · 0 T/O" i „Brak zdarzeń".
@@ -236,14 +236,14 @@
         </div>
       </div>
 
-      <!-- LOG SESJI ZARAZ PO PRZEJĘCIU (issue #44)
+      <!-- LOG OPERACJI ZARAZ PO PRZEJĘCIU (issue #44)
            Stan pusty („Brak wpisów · Uruchom silnik…") ZNIKŁ, bo przestał być prawdą:
            oś zaczyna się PRZEJĘCIEM, a ono właśnie się wydarzyło. Wiersz niesie godzinę
            i odczyt spisany na 02a - czyli dokładnie to, co pilot zaraz porówna z tarczą.
            Stopki sum nie ma: silnik nie pracował, więc nie ma czego sumować. -->
       <div class="session-log">
         <div class="session-log-header">
-          <span class="session-log-title">Log sesji · SP-AXA · UTC</span>
+          <span class="session-log-title">Log operacji · SP-AXA · UTC</span>
         </div>
         <div class="axis">
           <div class="axis-row">
@@ -286,7 +286,7 @@
         <!-- ZAŁADUNEK (issue #21) - TYLKO dzień skokowy i TYLKO przed startem: pierwszy
              skład wsiada zwykle przy wyłączonym silniku, a zadeklarowane tu liczby
              wypełnią arkusz zrzutu 05E. Podpis jest STAŁY: zapisany załadunek widać
-             w logu sesji wyżej, a kokpit nie powtarza tego, co mówi log. -->
+             w logu operacji wyżej, a kokpit nie powtarza tego, co mówi log. -->
         <a href="05i-zaladunek.html" class="action-card blue">
           <div class="action-icon">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -305,7 +305,7 @@
             <div class="action-sub">PIC: TMK · DUAL: AKO</div>
           </div>
         </a>
-        <!-- „Lista ręczna" ZNIKŁA ze stanu przed startem (2026-08-10): sesja nie ma
+        <!-- „Lista ręczna" ZNIKŁA ze stanu przed startem (2026-08-10): operacja nie ma
              jeszcze zdarzeń, które można by naprawiać. Fallback GPS mieszka w locie (05f)
              i w stanie po zatrzymaniu (04). -->
         <a href="09c-zdaj-bez-lotu.html" class="action-card red">
@@ -330,7 +330,7 @@
     <span class="vp-badge">04A</span>
     <span class="vp-body">
       <span class="vp-name">Przed uruchomieniem silnika</span>
-      <span class="vp-when">Zaraz po przejęciu - pusty log sesji, START ENGINE, tankowanie i zmiana załogi. Jedyny stan ground PRZED startem; nie „start dnia" - dzień pilota mógł zacząć się wcześniej, na innej maszynie.</span>
+      <span class="vp-when">Zaraz po przejęciu - pusty log operacji, START ENGINE, tankowanie i zmiana załogi. Jedyny stan ground PRZED startem; nie „start dnia" - dzień pilota mógł zacząć się wcześniej, na innej maszynie.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -338,7 +338,7 @@
     <span class="vp-badge">04</span>
     <span class="vp-body">
       <span class="vp-name">Po zatrzymaniu silnika</span>
-      <span class="vp-when">Sesja zakończona (sesja = jeden bieg silnika, 2026-08-10): hero ZDAJ SAMOLOT - drugiego START ENGINE nie ma, log jednej sesji, tankowanie dozwolone przed zdaniem.</span>
+      <span class="vp-when">Operacja zakończona (operacja = jeden bieg silnika, 2026-08-10): hero ZDAJ SAMOLOT - drugiego START ENGINE nie ma, log jednej operacji, tankowanie dozwolone przed zdaniem.</span>
     </span>
   </a>
   <a class="vp-item" href="04b-cockpit-readonly.html">
@@ -351,8 +351,8 @@
   <a class="vp-item" href="10d-edycja.html">
     <span class="vp-badge blue">10D</span>
     <span class="vp-body">
-      <span class="vp-name">Popraw dane sesji (tryb edycji)</span>
-      <span class="vp-when">Czasy zdarzeń, odczyty paliwa i MH, skład zrzutu, brakujące wpisy. Przed uruchomieniem silnika kafelka jeszcze nie ma - pusta sesja nie ma czego poprawiać; wchodzi do paska akcji po zatrzymaniu silnika (04).</span>
+      <span class="vp-name">Popraw dane operacji (tryb edycji)</span>
+      <span class="vp-when">Czasy zdarzeń, odczyty paliwa i MH, skład zrzutu, brakujące wpisy. Przed uruchomieniem silnika kafelka jeszcze nie ma - pusta operacja nie ma czego poprawiać; wchodzi do paska akcji po zatrzymaniu silnika (04).</span>
     </span>
   </a>
   <a class="vp-item" href="04d-wyjscie-z-kokpitu.html">
@@ -372,7 +372,7 @@
   <a href="04a-cockpit-ground.html" class="active">04A Przed startem</a>
   <a href="04-cockpit-ground.html">04 Po zatrzymaniu</a>
   <a href="04b-cockpit-readonly.html">04B Podgląd</a>
-  <a href="10d-edycja.html">10D Edycja sesji</a>
+  <a href="10d-edycja.html">10D Edycja operacji</a>
   <a href="04d-wyjscie-z-kokpitu.html">04D Blokada wyjścia</a>
   <a href="05h-cockpit-idle.html">05H Idle →</a>
 </nav>

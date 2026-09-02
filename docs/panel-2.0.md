@@ -78,7 +78,7 @@ Reguły redakcyjne, wszystkie z konkretnym „przed → po" z panelu 1.0:
 
 1. **ekran mówi, co zrobić, nie jak działa system** - „Blokada dotyczy telefonów,
    które pobrały świeżą konfigurację…" → *(nic; a gdy wyłączona maszyna ma otwartą
-   sesję, wiersz mówi „ktoś jeszcze na nim lata")*;
+   operację, wiersz mówi „ktoś jeszcze na nim lata")*;
 2. **historia decyzji projektowych nie jest treścią interfejsu** - żadnego zdania
    zaczynającego się od „Sprostowanie z…" ani „to nie jest przeoczenie";
 3. **podpowiedź daje przykład, nie wykład** - 237 znaków o unikalności rejestracji
@@ -142,13 +142,13 @@ w pytaniu nie było.
 
 **Soft delete był od początku** - nazywał się tylko inaczej: konto `active = false`
 (w jednej transakcji zrywa sesje telefonu i unieważnia sesję panelu), samolot
-`serviceStatus = 'disabled'` z blokadą przy otwartej sesji.
+`serviceStatus = 'disabled'` z blokadą przy otwartej operacji.
 
 **Twarde usunięcie wymaga DWOCH warunków naraz:**
 
 1. **zero odwołań** - `refuseDelete` / `refuseDeleteAircraft`. Konto: brak zdarzeń (jako
-   PIC **i jako drugi pilot**, także po korekcie w payloadzie), sesji i wpisów audytu
-   jako sprawca. Samolot: brak zdarzeń, sesji, flag, dziennika eksportu i normy zużycia;
+   PIC **i jako drugi pilot**, także po korekcie w payloadzie), operacji i wpisów audytu
+   jako sprawca. Samolot: brak zdarzeń, operacji, flag, dziennika eksportu i normy zużycia;
 2. **rekord jest już wyłączony** - konto nieaktywne, samolot poza służbą.
 
 Drugi warunek NIE jest ostrożnością. `referenceSync` w aplikacji pilota robi wyłącznie
@@ -289,13 +289,13 @@ Ustalone przy przeglądzie kontraktu; każda pozycja to ekran, którego świadom
 Trzy rzeczy wyszły z przeglądu kontraktu i **nie są naprawione w tej gałęzi**, bo
 dotyczą serwera i aplikacji pilota, a nie panelu:
 
-1. **deaktywacja pilota z otwartą sesją nie jest niczym blokowana** (`accountGuards.ts`
+1. **deaktywacja pilota z otwartą operacją nie jest niczym blokowana** (`accountGuards.ts`
    pyta tylko o „siebie" i o ostatniego administratora). Refresh tokeny giną w tej
    samej transakcji, więc telefon przestaje synchronizować, a wylogowanie jest
    zablokowane przy niepustym outboksie - pilot zostaje z danymi, których nie ma jak
    oddać. Odpowiednikiem po stronie floty jest `refuseDisable` i on istnieje;
 2. **wymóg drugiego pilota jest regułą WYŁACZNIE kliencką** - domena i serwer nie
-   znają kodu `DUAL_REQUIRED`, więc sesja An-2 bez Duala przejdzie przez `POST /events`
+   znają kodu `DUAL_REQUIRED`, więc operacja An-2 bez Duala przejdzie przez `POST /events`
    bez śladu;
 3. **obniżenie pojemności zbiorników działa WSTECZ** - ingest liczy flagi rozjazdu
    paliwa na całej historii maszyny przy bieżącej pojemności, więc nowa wartość potrafi
@@ -316,8 +316,8 @@ więc widok musi być dwupoziomowy"*.
 | Poziom | Adres | Co pokazuje |
 |---|---|---|
 | 1 | `#/dziennik?od=&do=` | CAŁA flota w zakresie dat - także maszyny, które nie latały |
-| 2 | `#/dziennik/SP-KLM?od=&do=` | grid sesji jednej maszyny |
-| 3 | `#/dziennik/SP-KLM/<uuid>` | jedna sesja: oś zdarzeń i komplet odczytów |
+| 2 | `#/dziennik/SP-KLM?od=&do=` | grid operacji jednej maszyny |
+| 3 | `#/dziennik/SP-KLM/<uuid>` | jedna operacja: oś zdarzeń i komplet odczytów |
 
 W adresie stoi **rejestracja, nie identyfikator** - `#/dziennik/SP-KLM` człowiek
 przeczyta i wpisze z pamięci, a o to w wymogu „do wklejenia" chodziło. Zakres dat jedzie
@@ -340,6 +340,16 @@ mówi jak długo, przy locie dokąd, przy paliwie ile dolano.
 Rejestracji w wierszach poziomu 2 NIE MA: jesteśmy wewnątrz jednej maszyny, więc byłaby
 kolumną o stałej wartości. Stoi w tytule strony.
 
+**Pierwsza kolumna nazywa się odtąd `Operacja`** (issue #68) i niesie dwie linie: datę
+(mocną - po niej skanuje się listę jednej maszyny) i pod nią SYGNATURĘ, czyli
+`SP-AXA/2026-09-01/AKO/1`. Dziesiątej kolumny to nie kosztuje, a odpowiada na pytanie,
+na które uuid w pasku adresu nie odpowiadał: **jak nazwać ten lot w rozmowie**. Sygnaturę
+składa SERWER i podaje gotową w DTO - panel nigdy nie skleja jej u siebie, bo druga
+konwencja nazw znaczyłaby, że administrator i pilot mówią o jednym locie dwoma napisami
+(ta sama reguła, przez którą nazwę karty arkusza liczy wyłącznie serwer). Wiersz bez
+sygnatury - maszyna spoza rejestru, operacja bez biegu silnika - wygląda jak przed
+issue #68 i to jest stan poprawny, nie brak danych.
+
 ### 9.3 Tylko odczyty, żadnych szacunków
 
 Decyzja właściciela: *„nie wyświetlaj szacunków na tym gridzie - tutaj interesują mnie
@@ -351,7 +361,7 @@ tylko realne odczyty"*. Reguła obowiązuje CAŁY moduł:
   zastępcza. `0 L` znaczy pusty zbiornik, `—` znaczy „nikt nie zapisał";
 - przy parze bez jednej strony kreska zostaje PRZY strzałce, więc widać, którego
   odczytu brakuje;
-- sesja otwarta mówi **„w toku"**, bo to nie jest brak odczytu, tylko fakt, że jeszcze
+- operacja otwarta mówi **„w toku"**, bo to nie jest brak odczytu, tylko fakt, że jeszcze
   nie nastąpił;
 - norma zużycia i szacowany poziom oleju **nie wchodzą** - ani teraz, ani później.
 
@@ -364,7 +374,7 @@ dałoby wtedy liczbę wziętą znikąd.
 ### 9.4 Co musiało dojść po stronie serwera
 
 Sześć wartości zamówionego gridu **nie istniało nigdzie w projekcji** - nie dało się ich
-„doczytać" zapytaniem, bo lista sesji czyta wyłącznie kolumny tabeli (§7.1 architektury
+„doczytać" zapytaniem, bo lista operacji czyta wyłącznie kolumny tabeli (§7.1 architektury
 serwera). Migracja 3 dokłada osiem kolumn:
 
 `engine_start_at` · `engine_stop_at` · `first_takeoff_at` · `last_landing_at` ·
@@ -376,18 +386,18 @@ modelu zdarzeń. **Istniejące wiersze zostaną puste do czasu przebudowy projek
 
 Doszła też trasa `GET /admin/api/log` (poziom 1). Nie użyliśmy gotowego `/stats`, mimo
 że ma agregat per samolot, z dwóch powodów: filtruje po `close_time` (zdanie samolotu),
-a lista sesji po `claim_time` (przejęcie), i **liczy wyłącznie sesje zamknięte** - więc
+a lista operacji po `claim_time` (przejęcie), i **liczy wyłącznie operacje zamknięte** - więc
 dzisiejszy dzień byłby pusty do wieczora. Dwa poziomy jednego modułu liczące po dwóch
-osiach potrafią pokazać cztery sesje na jednym ekranie i pięć wierszy na drugim, a
+osiach potrafią pokazać cztery operacje na jednym ekranie i pięć wierszy na drugim, a
 narzędzie nadzoru, którego dwa ekrany się nie zgadzają, przestaje być narzędziem.
 
-### 9.4a Ślad GPS należy do SESJI (2026-08-31)
+### 9.4a Ślad GPS należy do OPERACJI (2026-08-31)
 
 Trasa panelu 1.0 (`GET /admin/api/sessions/:uuid/track/:flight`) oddawała ślad **jednego
 lotu**, wycinany z nagrania oknem start→lądowanie. Pochodziła sprzed issue #38 i była
 jedynym powodem, dla którego karta śladu nie weszła do poziomu 3 od razu. Dziś model mówi
 co innego: zapis GPS powstaje w JEDNYM ciągu od uruchomienia do wyłączenia silnika, więc
-należy do sesji, a loty są jego odcinkami. Ujęcie per lot kazało administratorowi oglądać
+należy do operacji, a loty są jego odcinkami. Ujęcie per lot kazało administratorowi oglądać
 dzień w kawałkach i gubiło wszystko, co działo się na ziemi.
 
 Zmiana ma trzy części i żadna nie jest kosmetyczna:
@@ -417,17 +427,17 @@ tutaj, ani w kopercie (issue #47). Legenda mapy opisuje RODZAJE znaczników, nie
 poszczególne znaczniki - w panelu 1.0 dzień skokowy dawał legendę dłuższą od mapy.
 
 Brak rysunku ma POWÓD i powody się nie zwijają do jednego: lot wpisany ręcznie nie miał
-nagrania z definicji, a sesja bez nagrania to co innego. „Brak śladu" pokazane przy locie
+nagrania z definicji, a operacja bez nagrania to co innego. „Brak śladu" pokazane przy locie
 z kartki byłoby kłamstwem o tym locie.
 
 ### 9.4b Unieważnienie wpisu (2026-08-31)
 
 Zamówienie właściciela produktu: *„z poziomu admina powinienem mieć możliwość
-w dowolnym momencie usunięcia sesji (cyklu silnika)"*. Zdarzenie `session_void` istniało
+w dowolnym momencie usunięcia operacji (cyklu silnika)"*. Zdarzenie `session_void` istniało
 od 2026-08-30 po stronie pilota (okno 24 h od zdania); tu dostaje drugą drogę.
 
 **Dziennik pozostaje modułem do CZYTANIA - to jedyny zapis, jaki w nim jest.** Stoi na
-samym dole poziomu 3, za śladem GPS: do sesji wchodzi się, żeby ją przeczytać, a wycofanie
+samym dole poziomu 3, za śladem GPS: do operacji wchodzi się, żeby ją przeczytać, a wycofanie
 wpisu jest wyjściem awaryjnym. Konto bez `events.correct` nie widzi karty w ogóle (§3.3).
 
 Sześć decyzji:
@@ -437,37 +447,37 @@ Sześć decyzji:
    (`session.void`, z kompletem tożsamości wpisu - po wycofaniu żadna lista go
    nie pokazuje). `DELETE` obiecywałby usunięcie, którego system nie robi;
 2. **osobna komenda, nie czwarta akcja korekty** - `corrections.ts` w całości mówi o CELU
-   wewnątrz sesji (`targetUuid`, podgląd „przed → po"). Unieważnienie nie ma celu i nie
+   wewnątrz operacji (`targetUuid`, podgląd „przed → po"). Unieważnienie nie ma celu i nie
    ma czego pokazywać w podglądzie: skutkiem jest zniknięcie całego wpisu z rachunków;
-3. **„w dowolnym momencie" znaczy też „w trakcie lotu"** - sesja nie musi być zdana.
+3. **„w dowolnym momencie" znaczy też „w trakcie lotu"** - operacja nie musi być zdana.
    Kolizja z pilotem, który wciąż trzyma maszynę, jest OSTRZEŻENIEM
    (`ADMIN_EDIT_SESSION_ACTIVE`), nie odmową - ta sama decyzja, co przy korekcie
    (2026-08-07). Twarde reguły domeny obowiązują administratora tak samo jak pilota:
-   sesja musi istnieć i nie może być już wycofana;
+   operacja musi istnieć i nie może być już wycofana;
 4. **powód jest WYMAGANY** - inaczej niż w telefonie, gdzie pilot wycofuje własny wpis
    i wie, co zrobił. Tu wycofuje się cudzy lot. Powód jedzie do zdarzenia (więc wraca
    na telefon pilota, §4.9), do dziennika audytu i na oś zdarzeń panelu;
 5. **potwierdzenie NAZYWA wpis** - dzień, bieg silnika, pilot, loty, czas blokowy.
-   Dwie sesje tej samej maszyny w jednej dobie różnią się wyłącznie godzinami, a wejście
-   w sesję bywa wklejonym linkiem. Fakty składa `voidFacts` z tego samego kształtu, który
+   Dwie operacje tej samej maszyny w jednej dobie różnią się wyłącznie godzinami, a wejście
+   w operację bywa wklejonym linkiem. Fakty składa `voidFacts` z tego samego kształtu, który
    stoi w gridzie poziomu 2;
-6. **karta arkusza powstaje od nowa, bez wycofanej sesji** - patrz niżej.
+6. **karta arkusza powstaje od nowa, bez wycofanej operacji** - patrz niżej.
 
 #### Trzy miejsca, w których `voided` nie działało
 
 Wdrożenie odsłoniło, że status z 2026-08-30 nie docierał nigdzie poza kolumnę `sessions.status`:
 
 - `toSessionRow` (`infrastructure/pg/sessionDbRow.ts`) zwijał wszystko, co nie jest
-  `closed`, do `active`. Skutki: eksporter budował kartę Z wycofaną sesją, panel nie miał
+  `closed`, do `active`. Skutki: eksporter budował kartę Z wycofaną operacją, panel nie miał
   jak zapalić plakietki „unieważniona", a `activeClaim` widział maszynę jako zajętą
   BEZ KOŃCA - pilot, który wycofał własny wpis, blokował samolot reszcie klubu;
-- `exportsRepo` zwijał go tak samo, więc gałąź „sesja wycofana nie czeka na eksport"
+- `exportsRepo` zwijał go tak samo, więc gałąź „operacja wycofana nie czeka na eksport"
   w `exportState` była nieosiągalna (monitor pokazywał `waiting` w nieskończoność);
-- `dayExporter` odsiewał wycofane sesje wyłącznie BRAMKAMI („musi być `closed`"), więc
+- `dayExporter` odsiewał wycofane operacje wyłącznie BRAMKAMI („musi być `closed`"), więc
   nie wyzwalały eksportu - ale przy karcie budowanej z innego powodu (druga zmiana tej
   maszyny) wchodziły do dokumentu klubu jak każda inna.
 
-Wszystkie trzy naprawione. **Została jedna dziura, świadomie**: gdy wycofano JEDYNĄ sesję
+Wszystkie trzy naprawione. **Została jedna dziura, świadomie**: gdy wycofano JEDYNĄ operację
 doby, karty nie ma z czego zbudować (`no_events`), więc zapisana wcześniej ZOSTAJE
 w arkuszu z nieaktualną treścią. Wyczyszczenie jej wymaga decyzji, czego klub ma się
 w tym miejscu dowiedzieć (pusta karta? adnotacja „wpis wycofany"?) - a zgadywanie treści
@@ -497,7 +507,7 @@ przy issue #60 - karta samolotu ma je od 2026-08-27. Dołożone są punkty 1 i 4
 | | **Zużycie z dokumentacji** | **Stan początkowy** |
 |---|---|---|
 | co opisuje | typ silnika | jedną chwilę tej maszyny |
-| jak długo prawdziwe | póki silnik ten sam | do pierwszej zdanej sesji |
+| jak długo prawdziwe | póki silnik ten sam | do pierwszej zdanej operacji |
 | pola | spalanie paliwa (L/h) · zużycie oleju (L/h) | motogodziny · paliwo · olej |
 | zero | LITERÓWKA - odmowa | WARTOŚĆ (nowy silnik, puste zbiorniki) |
 
@@ -514,7 +524,7 @@ ważną DOPÓKI analityka nie policzy własnej z lotów.
 
 Nie jedzie na telefon jako osobne pole. Serwer składa z niego **przekazanie**
 (`aircraftStateView.pickHandover`) i wysyła gotowe - dokładnie tak, jak składa je
-z ostatniej zdanej sesji. Wchodzi WYŁĄCZNIE wtedy, gdy rejestr nie ma czym odpowiedzieć,
+z ostatniej zdanej operacji. Wchodzi WYŁĄCZNIE wtedy, gdy rejestr nie ma czym odpowiedzieć,
 i tylko z kompletem pary (paliwo + licznik): połowa nie jest przekazaniem.
 
 Rozpoznaje się je po `Handover.byPilotId === null` - **nikt tej maszyny nie przekazał**.

@@ -50,5 +50,5 @@ export function trackFacts(track: SessionTrackDto): TrackFact[] {
 export function noTrackReason(manualEntry: boolean): string {
   return manualEntry
     ? 'Lot wpisany ręcznie - telefon nie nagrywał śladu.'
-    : 'Ta sesja nie ma nagrania GPS.';
+    : 'Ta operacja nie ma nagrania GPS.';
 }

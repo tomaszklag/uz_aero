@@ -80,7 +80,7 @@ describe('trackMarkers', () => {
     expect(markers).toHaveLength(1);
   });
 
-  it('lot bez lądowania (sesja w toku) daje sam start', () => {
+  it('lot bez lądowania (operacja w toku) daje sam start', () => {
     const markers = trackMarkers(track([min(0), min(5)]), [
       { index: 1, takeoffAt: min(0), landingAt: null },
     ]);
@@ -97,7 +97,7 @@ describe('trackMarkers', () => {
     expect(markers.filter((m) => m.ring === true).map((m) => m.label)).toEqual(['T/O 1']);
   });
 
-  it('sesja bez nagrania nie ma ani jednego znacznika', () => {
+  it('operacja bez nagrania nie ma ani jednego znacznika', () => {
     const markers = trackMarkers(track([]), [{ index: 1, takeoffAt: min(0), landingAt: min(10) }]);
 
     expect(markers).toEqual([]);

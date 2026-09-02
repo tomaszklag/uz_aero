@@ -52,9 +52,9 @@ describe('odmowa reguł rejestru (422)', () => {
   it('oddaje zdanie DOMENY, a nie własne tłumaczenie kodu', () => {
     const refused = http(422, {
       error: 'rule_violation',
-      violations: [{ code: 'SESSION_ALREADY_VOIDED', message: 'Ta sesja jest już unieważniona.' }],
+      violations: [{ code: 'SESSION_ALREADY_VOIDED', message: 'Ta operacja jest już unieważniona.' }],
     });
-    expect(ruleViolationMessage(refused)).toBe('Ta sesja jest już unieważniona.');
+    expect(ruleViolationMessage(refused)).toBe('Ta operacja jest już unieważniona.');
   });
 
   it('kilka naruszeń jedzie razem - żadne nie ginie po drodze', () => {

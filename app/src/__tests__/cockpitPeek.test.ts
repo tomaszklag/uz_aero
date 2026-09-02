@@ -147,7 +147,7 @@ describe('nagłówek logu', () => {
     expect(peekLogTitle('SP-FGK', 'KRZ', krzState)).toBe('Log SP-FGK · KRZ · UTC');
   });
 
-  it('bez migawki nie udaje pustej sesji', () => {
+  it('bez migawki nie udaje pustej operacji', () => {
     // Jedyny stan, który nagłówek nadal niesie - bo osi wtedy nie ma czym zapełnić,
     // a puste miejsce po logu czyta się jak „pilot nic nie zrobił".
     expect(peekLogTitle('SP-FGK', 'KRZ', null)).toBe('Log SP-FGK · KRZ · UTC · brak danych');
@@ -172,7 +172,7 @@ describe('chip stanu', () => {
     expect(peekStatusChip(airborne)).toEqual({ label: 'W powietrzu · wg serwera', tone: 'blue' });
   });
 
-  it('sesja zamknięta mówi o SAMOLOCIE, nie o dniu poprzednika', () => {
+  it('operacja zamknięta mówi o SAMOLOCIE, nie o dniu poprzednika', () => {
     // §3.6a: `day_close` zdaje MASZYNĘ i nie kończy dnia pilota - KRZ może za chwilę
     // wziąć drugi samolot. Napis „Dzień zamknięty" mówił o cudzej służbie coś, czego
     // ten strumień nie wie, i to na ekranie, którego tematem jest jedna maszyna.

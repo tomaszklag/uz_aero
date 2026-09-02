@@ -30,7 +30,7 @@
 - **Stany świeżości danych z serwera:** `live` (bez adnotacji) / `cache` ("· z cache ·
   sync 21 JUN 17:30", amber) / `brak` ("brak danych - wpisz z licznika", amber)
 - **SyncChip** `SYNC` / `OFFLINE · n` - jedyny globalny wskaźnik łączności
-- **Dane sesji (lokalne)** - timery, log, liczniki - bez wariantów offline
+- **Dane operacji (lokalne)** - timery, log, liczniki - bez wariantów offline
 - **Akcje wymagające sieci** - disabled z podanym powodem, nigdy cichy błąd
 - **Liczniki fizyczne > serwer** - dane z serwera to podpowiedź
 
@@ -41,7 +41,7 @@
 | Dzień scenariusza | 22 JUNE 2026 · EPKK · operacja: Skoki (skoki startują i lądują na tym samym lotnisku - jeden kod ICAO, nie para; issue #13) |
 | PIC zalogowany | Tomasz Małkiewicz · TMK · login `tmalkiewicz` · tomasz@uzaero.pl |
 | Dual | AKO |
-| Samolot sesji | SP-AXA · Cessna 182 · 2019 · zbiorniki 330 L · MH w formacie **hh:mm** (1 234:30) |
+| Samolot operacji | SP-AXA · Cessna 182 · 2019 · zbiorniki 330 L · MH w formacie **hh:mm** (1 234:30) |
 | Samolot zajęty | SP-FGK · C182 2017 · aktywny PIC: KRZ od 07:10 |
 | Samolot 2-osobowy | SP-ANK · An-2 1984 · 1700 L · wymaga Dual |
 | Wyłączony ze służby | SP-KWA · C172 2021 |
@@ -145,7 +145,7 @@
       wariantów (nie ma rodzeństwa do zlinkowania)
 - [x] Drobne 🟢 z audytu - ZROBIONE: 04 meldunek → „06:00 UTC" (spójnie z 04a); SyncChip
       na 03; separator MH ujednolicony w 12 chipach; index → v0.2.
-      Zostawione świadomie: 04b „07:10 LT" (inna sesja, spójna z claim w 02)
+      Zostawione świadomie: 04b „07:10 LT" (inna operacja, spójna z claim w 02)
 
 ---
 
@@ -217,11 +217,11 @@ obsłużona disabled-z-powodem i instrukcją proceduralną.
       wylogowania (.outbox-guard, disabled z powodem, nota o internecie), diagnostyka
       GPS (fix/wiek/dokładność/pozycja + Odśwież), o aplikacji (wersja + stempel danych
       referencyjnych). 8 zębatek (04, 04a, 05, 05a–05d, 05-themes) podpiętych
-- [x] Wznowienie sesji po ubiciu aplikacji - ZROBIONE 2026-07-28 W APLIKACJI, bez
-      wariantu mockupu: otwarta sesja z `session_meta` (§5.2) wraca po odblokowaniu
+- [x] Wznowienie operacji po ubiciu aplikacji - ZROBIONE 2026-07-28 W APLIKACJI, bez
+      wariantu mockupu: otwarta operacja z `session_meta` (§5.2) wraca po odblokowaniu
       PROSTO do kokpitu (routing `ResumeGate` w `App.tsx`), więc splash z przyciskiem
       „wróć do dnia" nie ma kiedy się pokazać - 01 pojawia się wyłącznie bez otwartego
-      dnia. Prostsze niż wariant ekranu i bez ryzyka rozwidlenia dnia drugą sesją
+      dnia. Prostsze niż wariant ekranu i bez ryzyka rozwidlenia dnia drugą operacją
 - [x] Stan zerowy w 09/10 - ZROBIONE 2026-07-28: **`09a` + `10a` (nowe)** - uczciwe zera,
       „Żaden lot nie został zapisany", odczyty końcowe nadal wymagane (łańcuch 4.5
       obowiązuje też bez lotów), zrzuty 0 z operacją; panele wariantów na 09/09a i 10/10a.

@@ -12,7 +12,7 @@ import { cockpitFlightTimeMs } from '../ui/screens/logic/cockpitFlightTime';
 const min = (m: number): number => m * 60_000;
 const T0 = Date.UTC(2026, 5, 22, 13, 24, 0);
 
-describe('cockpitFlightTimeMs - czas lotu sesji na przyrządzie', () => {
+describe('cockpitFlightTimeMs - czas lotu operacji na przyrządzie', () => {
   it('na ziemi pokazuje sumę lotów zamkniętych', () => {
     expect(cockpitFlightTimeMs({ closedMs: min(44), openTakeoffAt: null, now: T0 })).toBe(min(44));
   });
@@ -42,7 +42,7 @@ describe('cockpitFlightTimeMs - czas lotu sesji na przyrządzie', () => {
     expect(poWpisie - przedWpisem).toBe(min(38));
   });
 
-  it('pierwszy lot sesji: sam licznik na żywo, bez fałszywego doliczenia', () => {
+  it('pierwszy lot operacji: sam licznik na żywo, bez fałszywego doliczenia', () => {
     expect(cockpitFlightTimeMs({ closedMs: 0, openTakeoffAt: T0, now: T0 + min(3) })).toBe(min(3));
   });
 

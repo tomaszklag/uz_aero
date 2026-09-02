@@ -252,11 +252,11 @@ describe('bramka górna - znaleziona przebiegiem po realnej historii (2026-08-05
  * implementacji - to bezpośrednia konsekwencja decyzji z §3.6 i dokładnie ten kompromis,
  * który §3.6b opisuje jako znane ryzyko.
  */
-describe('interwały paliwowe - sesja domknięta odczytami z obu stron (2026-08-10)', () => {
+describe('interwały paliwowe - operacja domknięta odczytami z obu stron (2026-08-10)', () => {
   // Do 2026-08-10 stał tu blok `leg_close`: odczyt przy wzlocie dzielił sesję na dwa
   // interwały, a jego brak zostawiał jeden. Pivot skasował zdarzenie - granice stawia
   // wyłącznie przejęcie, tankowanie i zdanie, a KAŻDA sesja jest domknięta z obu stron.
-  it('sesja bez tankowań to dokładnie JEDEN interwał: przejęcie → zdanie', () => {
+  it('operacja bez tankowań to dokładnie JEDEN interwał: przejęcie → zdanie', () => {
     const { intervals } = buildFuelIntervals([
       preflight(at(8, 0), 150),
       event('engine_start', at(8, 12)),

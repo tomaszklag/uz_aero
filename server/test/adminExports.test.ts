@@ -692,7 +692,7 @@ describe('dwie zmiany jednego dnia w jednej karcie (A05)', () => {
     // Ta sama nazwa = ta sama treść - i to już NIE jest wprowadzanie w błąd, bo treść
     // opisuje dobę obojga, a nie dzień pracy jednego z nich.
     expect(amSheet.rows).toEqual(pmSheet.rows);
-    expect(amSheet.rows).toContainEqual(['Sesje', '2']);
+    expect(amSheet.rows).toContainEqual(['Operacje', '2']);
     expect(amSheet.rows.map((r: string[]) => r[1])).toContain('TMK');
     expect(amSheet.rows.map((r: string[]) => r[1])).toContain('KRZ');
 

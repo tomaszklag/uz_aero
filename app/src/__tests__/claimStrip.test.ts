@@ -50,7 +50,7 @@ beforeEach(() => {
   flightSeq = 0;
 });
 
-describe('pasek sesji - cudzy samolot (04B)', () => {
+describe('pasek operacji - cudzy samolot (04B)', () => {
   it('opisuje maszynę, a NIE czas pracy tamtego pilota', () => {
     // Wcześniej stało tu „Duty KRZ 02:31". Czas pracy innego pilota nie jest informacją
     // o samolocie i nie wnosi nic do decyzji o przejęciu.
@@ -114,7 +114,7 @@ describe('wznowienie po restarcie', () => {
     expect(resumeTarget(released)).toBe('MyDay');
   });
 
-  it('brak sesji zaczyna od „Mój dzień"', () => {
+  it('brak operacji zaczyna od „Mój dzień"', () => {
     expect(resumeTarget(null)).toBe('MyDay');
     expect(resumeTarget(emptySessionState())).toBe('MyDay');
   });

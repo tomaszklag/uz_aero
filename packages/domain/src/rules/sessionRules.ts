@@ -184,7 +184,7 @@ function checkEnvelope(
       v.push(
         error(
           'SESSION_NOT_CLAIMED',
-          'Sesja nie została rozpoczęta - najpierw przejmij samolot (preflight).',
+          'Operacja nie została rozpoczęta - najpierw przejmij samolot (preflight).',
           { type: candidate.type },
         ),
       );
@@ -194,12 +194,12 @@ function checkEnvelope(
 
   if (candidate.type === 'session_claim') {
     v.push(
-      error('SESSION_ALREADY_CLAIMED', 'Ta sesja jest już rozpoczęta - drugi claim nie jest możliwy.'),
+      error('SESSION_ALREADY_CLAIMED', 'Ta operacja jest już rozpoczęta - drugi claim nie jest możliwy.'),
     );
   }
   if (candidate.sessionUuid !== state.sessionUuid) {
     v.push(
-      error('SESSION_MISMATCH', 'Zdarzenie należy do innej sesji.', {
+      error('SESSION_MISMATCH', 'Zdarzenie należy do innej operacji.', {
         expected: state.sessionUuid,
         got: candidate.sessionUuid,
       }),
@@ -207,7 +207,7 @@ function checkEnvelope(
   }
   if (candidate.aircraftId !== state.aircraftId) {
     v.push(
-      error('AIRCRAFT_MISMATCH', 'Zdarzenie dotyczy innego samolotu niż sesja.', {
+      error('AIRCRAFT_MISMATCH', 'Zdarzenie dotyczy innego samolotu niż operacja.', {
         expected: state.aircraftId,
         got: candidate.aircraftId,
       }),
@@ -216,7 +216,7 @@ function checkEnvelope(
   // Single-writer (§4.1 pkt 3): w ramach sesji pisze wyłącznie telefon jej PIC-a.
   if (state.sessionPicId != null && candidate.picId !== state.sessionPicId) {
     v.push(
-      error('WRITER_MISMATCH', 'Sesję prowadzi inny PIC - tylko on może zapisywać zdarzenia.', {
+      error('WRITER_MISMATCH', 'Operację prowadzi inny PIC - tylko on może zapisywać zdarzenia.', {
         expected: state.sessionPicId,
         got: candidate.picId,
       }),
@@ -276,7 +276,7 @@ function checkCorrectionWindow(
       v.push(
         warning(
           'ADMIN_EDIT_SESSION_ACTIVE',
-          'Pilot nadal prowadzi tę sesję - może dopisać własne zdarzenia po synchronizacji.',
+          'Pilot nadal prowadzi tę operację - może dopisać własne zdarzenia po synchronizacji.',
         ),
       );
     }
@@ -287,7 +287,7 @@ function checkCorrectionWindow(
       v.push(
         warning(
           'ADMIN_EDIT_PILOT_WINDOW_OPEN',
-          'Pilot może jeszcze poprawić tę sesję samodzielnie (okno 24 h od zdania trwa).',
+          'Pilot może jeszcze poprawić tę operację samodzielnie (okno 24 h od zdania trwa).',
         ),
       );
     }
@@ -398,7 +398,7 @@ function checkByType(
         v.push(
           error(
             'SESSION_ALREADY_RAN',
-            'Ta sesja miała już swój bieg silnika - zdaj samolot; kolejny lot to nowe przejęcie.',
+            'Ta operacja miała już swój bieg silnika - zdaj samolot; kolejny lot to nowe przejęcie.',
           ),
         );
       }
@@ -610,7 +610,7 @@ function checkByType(
         v.push(
           error(
             'PIC_CHANGE_NOT_ALLOWED',
-            'Zmiana PIC = przejęcie sesji na telefonie nowego pilota: zamknij dzień, nowy PIC robi własny preflight.',
+            'Zmiana PIC = przejęcie operacji na telefonie nowego pilota: zamknij dzień, nowy PIC robi własny preflight.',
           ),
         );
       }
@@ -628,7 +628,7 @@ function checkByType(
         // Cel spoza tej sesji (albo literówka w uuid) - poprawka wisiałaby w próżni,
         // a serwer nie miałby czego scalić.
         v.push(
-          error('CORRECTION_TARGET_NOT_FOUND', 'Korygowane zdarzenie nie istnieje w tej sesji.'),
+          error('CORRECTION_TARGET_NOT_FOUND', 'Korygowane zdarzenie nie istnieje w tej operacji.'),
         );
         break;
       }
@@ -653,7 +653,7 @@ function checkByType(
         v.push(
           error(
             'CORRECTION_TARGET_NOT_ALLOWED',
-            'Przejęcia nie da się unieważnić - sesja zostałaby bez właściciela. Poprawić można jego godzinę.',
+            'Przejęcia nie da się unieważnić - operacja zostałaby bez właściciela. Poprawić można jego godzinę.',
           ),
         );
       }
@@ -816,11 +816,11 @@ function checkByType(
     case 'session_void': {
       if (state.sessionPicId == null) {
         v.push(
-          error('SESSION_VOID_NO_SESSION', 'Nie ma czego unieważnić - sesja nie została otwarta.'),
+          error('SESSION_VOID_NO_SESSION', 'Nie ma czego unieważnić - operacja nie została otwarta.'),
         );
       }
       if (state.voided) {
-        v.push(error('SESSION_ALREADY_VOIDED', 'Ta sesja jest już unieważniona.'));
+        v.push(error('SESSION_ALREADY_VOIDED', 'Ta operacja jest już unieważniona.'));
       }
       break;
     }

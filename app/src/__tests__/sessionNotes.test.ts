@@ -86,7 +86,7 @@ function amend(targetUuid: string, fields: object, when = at(11, 0)): Event {
   return event('event_correction', when, { targetUuid, action: 'amend', fields } as never);
 }
 
-describe('notatki sesji', () => {
+describe('notatki operacji', () => {
   it('zbiera notatkę z zadania i uwagi wpisu ręcznego w jednej liście', () => {
     expect(notes().map((note) => `${note.when ?? '-'} - ${note.text}`)).toEqual([
       '- - Drugi zbiornik nie trzyma wskazania.',
@@ -94,7 +94,7 @@ describe('notatki sesji', () => {
     ]);
   });
 
-  it('notatka sesji NIE MA stempla - miałby opisywać godzinę preflightu, nie ją', () => {
+  it('notatka operacji NIE MA stempla - miałby opisywać godzinę preflightu, nie ją', () => {
     // Zgłoszenie z urządzenia (2026-08-14): przy notatce świeciło „Zadanie · 08:06",
     // czyli czas POTWIERDZENIA zadania. Notatka sesji jest jedna, więc stempel niczego
     // nie rozróżniał, a po pierwszej poprawce treści zaczynał wprost kłamać.
@@ -113,7 +113,7 @@ describe('notatki sesji', () => {
     expect(notes().map((note) => note.id)).toEqual(['preflight', 'manual-1']);
   });
 
-  it('sesja bez ani jednej notatki daje pustą listę - ekran nie rysuje wtedy karty', () => {
+  it('operacja bez ani jednej notatki daje pustą listę - ekran nie rysuje wtedy karty', () => {
     expect(notes(sessionEvents({ taskNote: null, manualNote: null }))).toEqual([]);
   });
 
@@ -159,12 +159,12 @@ describe('cel dopisania notatki', () => {
     expect(fromTask?.targetUuid).toBe(noteTargetUuid(events));
   });
 
-  it('sesja bez preflightu nie ma czego adresować - ołówka wtedy nie ma', () => {
+  it('operacja bez preflightu nie ma czego adresować - ołówka wtedy nie ma', () => {
     const bezPreflightu = sessionEvents().filter((e) => e.type !== 'preflight_confirm');
     expect(noteTargetUuid(bezPreflightu)).toBeNull();
   });
 
-  it('dopisanie jest możliwe TYLKO przy braku notatki sesji', () => {
+  it('dopisanie jest możliwe TYLKO przy braku notatki operacji', () => {
     // Druga połowa tego samego zgłoszenia: przy istniejącej notatce wiersz „Dodaj
     // notatkę do sesji" obiecywał drugą, a naprawdę nadpisałby pierwszą - notatka
     // sesji to JEDNO pole w payloadzie preflightu.
@@ -179,7 +179,7 @@ describe('cel dopisania notatki', () => {
     expect(missingSessionNote(notes(poprawiona))).toBe(false);
   });
 
-  it('uwagi wpisów ręcznych nie zamykają drogi do notatki sesji', () => {
+  it('uwagi wpisów ręcznych nie zamykają drogi do notatki operacji', () => {
     // To dwa różne byty: uwaga należy do SWOJEGO wpisu i jest ich tyle, ile wpisów.
     // Gdyby liczyła się jak notatka sesji, sesja z wpisem ręcznym nie miałaby jak
     // dostać notatki własnej.

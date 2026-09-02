@@ -34,7 +34,7 @@ export interface SessionHeroProps {
 }
 
 export function SessionHero({
-  label = 'Czas blokowy sesji',
+  label = 'Czas blokowy operacji',
   value,
   range,
   tone = 'green',

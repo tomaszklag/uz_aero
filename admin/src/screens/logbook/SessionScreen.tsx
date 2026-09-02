@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: DZIENNIK, poziom 3 - jedna sesja (`#/dziennik/SP-KLM/<uuid>`).
+ * UZ Aero - panel 2.0: DZIENNIK, poziom 3 - jedna operacja (`#/dziennik/SP-KLM/<uuid>`).
  *
  * ══ PEŁNA STRONA, NIE SZUFLADA ══
  * Szuflady panelu 2.0 (konto, samolot) są formularzami JEDNEGO rekordu; tutaj treścią
@@ -68,11 +68,17 @@ export function SessionScreen() {
       ? ''
       : `${timeUtc(session.engineStartAt)} → ${timeUtc(session.engineStopAt)} UTC`;
 
+  /* NAZWA OPERACJI W PODTYTULE (issue #68). Wypiera datę, bo ją zawiera - para
+     „01.09 · SP-AXA/2026-09-01/…" powtarzałaby ten sam fakt w jednej linii. Link do
+     operacji bywa wklejony komuś, kto listy nigdy nie widział, więc identyfikacja
+     musi stać na stronie, a nie tylko w pasku adresu (gdzie stoi uuid). */
+  const identity = session?.signature ?? day;
+
   return (
     <>
       <PageHead
         title={reg.toUpperCase()}
-        sub={session == null ? undefined : `${day} · silnik ${engine}`}
+        sub={session == null ? undefined : `${identity} · silnik ${engine}`}
         actions={
           <>
             {session?.manualEntry === true ? <Pill tone="dim">ręcznie</Pill> : null}
@@ -112,7 +118,7 @@ export function SessionScreen() {
             <Card title="Log zdarzeń">
               <div className="table-wrap plain">
                 <table>
-                  <caption className="visually-hidden">Zdarzenia sesji</caption>
+                  <caption className="visually-hidden">Zdarzenia operacji</caption>
                   <thead>
                     <tr>
                       <th>Czas</th>
@@ -192,7 +198,7 @@ export function SessionScreen() {
               flights={detail.data?.state.flights ?? []}
             />
 
-            {/* Na samym DOLE i za wszystkim: do sesji wchodzi się, żeby ją przeczytać,
+            {/* Na samym DOLE i za wszystkim: do operacji wchodzi się, żeby ją przeczytać,
                 a wycofanie wpisu jest wyjściem awaryjnym. Bez zdolności `events.correct`
                 karty NIE MA (§3.3: brak uprawnień = brak przycisku), a przy wpisie już
                 wycofanym nie ma czego wycofywać - mówi to baner na górze. */}

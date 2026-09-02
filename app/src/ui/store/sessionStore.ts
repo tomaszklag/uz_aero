@@ -259,7 +259,7 @@ export const useSessionStore = create<SessionStore>((set, get) => {
   /** Akcje dnia wymagają wcześniejszego `claim`. */
   function requireContext(): SessionContext {
     const { context } = get();
-    if (!context) throw new Error('SessionStore: brak sesji (najpierw claim).');
+    if (!context) throw new Error('SessionStore: brak operacji (najpierw claim).');
     return context;
   }
 

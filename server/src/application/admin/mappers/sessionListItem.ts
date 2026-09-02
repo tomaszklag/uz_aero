@@ -13,6 +13,8 @@
  * projekcji wypełniana przez `sessionRowFrom`.
  */
 
+import { operationSignature } from '@uzaero/domain';
+
 import type { AdminSessionListItem } from '../contracts/sessions.ts';
 import type { AdminSessionJoin } from '../ports.ts';
 
@@ -20,6 +22,18 @@ export function sessionListItem(join: AdminSessionJoin): AdminSessionListItem {
   const { row } = join;
   return {
     sessionUuid: row.sessionUuid,
+
+    /* Sygnaturę SKŁADA domena (issue #68) - tak samo, jak liczby składa projekcja.
+       Napis zszyty tutaj z czterech pól byłby drugą konwencją nazw obok tej, którą
+       telefon liczy u siebie, a rozjazd znaczyłby dwie nazwy jednego lotu. Fakty
+       przychodzą gotowe: znak i kod pilota ze złączeń, chwila uruchomienia z projekcji,
+       numer w dobie z zapytania. */
+    signature: operationSignature({
+      reg: join.reg,
+      startedAt: row.engineStartAt,
+      picCode: join.picCode,
+      index: join.dayIndex,
+    }),
 
     aircraftId: row.aircraftId,
     reg: join.reg,

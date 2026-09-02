@@ -36,7 +36,7 @@ import type { DayRange } from './dateRanges';
 import { sessionRow, type CellPair, type SessionRow } from './sessionRows';
 
 const HEADERS = [
-  'Dzień',
+  'Operacja',
   'Bieg silnika',
   'Lot',
   'Loty',
@@ -90,12 +90,18 @@ export function AircraftLogScreen() {
 
   const columns: Column<SessionRow>[] = [
     {
+      /* Kolumna IDENTYFIKUJE, więc nazywa się jak to, co identyfikuje (issue #68).
+         Data zostaje linią mocną - po niej skanuje się listę jednej maszyny -
+         a sygnatura schodzi do drugiej linii: to nazwa do przeczytania albo
+         przepisania, nie klucz sortowania. Bez niej wiersz wygląda jak przed
+         issue #68 i to jest stan poprawny, nie brak danych. */
       key: 'day',
-      header: 'Dzień',
+      header: 'Operacja',
       render: (row) => (
         <>
           <span className="cell-strong">{row.day}</span>
           {row.manual ? <Pill tone="dim">ręcznie</Pill> : null}
+          {row.signature == null ? null : <span className="cell-sub">{row.signature}</span>}
         </>
       ),
     },
@@ -178,7 +184,7 @@ export function AircraftLogScreen() {
           skeleton={
             <TableSkeleton
               headers={HEADERS}
-              widths={[86, 96, 96, 20, 82, 54, 92, 110, 52, 60]}
+              widths={[150, 96, 96, 20, 82, 54, 92, 110, 52, 60]}
               rows={8}
             />
           }
@@ -192,7 +198,7 @@ export function AircraftLogScreen() {
           ) : (
             <>
               <DataTable
-                caption={`Sesje samolotu ${reg.toUpperCase()}`}
+                caption={`Operacje samolotu ${reg.toUpperCase()}`}
                 columns={columns}
                 rows={rows}
                 rowKey={(row) => row.sessionUuid}
@@ -205,7 +211,7 @@ export function AircraftLogScreen() {
                   awarii narzędzia, które ma odpowiadać „co ta maszyna robiła". */}
               {truncated ? (
                 <p className="list-foot">
-                  Pokazano {rows.length} z {sessions.data?.total ?? rows.length} sesji - zawęź
+                  Pokazano {rows.length} z {sessions.data?.total ?? rows.length} operacji - zawęź
                   zakres dat, żeby zobaczyć resztę.
                 </p>
               ) : null}

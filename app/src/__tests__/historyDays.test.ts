@@ -81,7 +81,7 @@ async function writeDay(
 }
 
 describe('poprzednie dni (ekran 12)', () => {
-  it('sesja w oknie → grupa „Możesz jeszcze poprawić" z terminem i odliczaniem', async () => {
+  it('operacja w oknie → grupa „Możesz jeszcze poprawić" z terminem i odliczaniem', async () => {
     const { repo, queries } = harness();
     await writeDay(repo, 'sess-1', at(8, 0)); // zdanie 16:45, okno do 23 CZE 16:45
 
@@ -115,7 +115,7 @@ describe('poprzednie dni (ekran 12)', () => {
     expect(day.remaining).toBe('zostało 7 h 45 min');
   });
 
-  it('po oknie 24 h sesja przechodzi do „Zamknięte"', async () => {
+  it('po oknie 24 h operacja przechodzi do „Zamknięte"', async () => {
     const { repo, queries } = harness();
     await writeDay(repo, 'sess-1', at(8, 0));
 
@@ -131,7 +131,7 @@ describe('poprzednie dni (ekran 12)', () => {
     expect(groups.closed[0]!.sessionUuid).toBe('sess-1');
   });
 
-  it('sesji z DZISIEJSZEJ doby tu nie ma - te stoją na „Mój dzień"', async () => {
+  it('operacji z DZISIEJSZEJ doby tu nie ma - te stoją na „Mój dzień"', async () => {
     const { repo, queries } = harness();
     await writeDay(repo, 'sess-1', at(8, 0));
 
@@ -146,7 +146,7 @@ describe('poprzednie dni (ekran 12)', () => {
     expect(tomorrow.editable).toHaveLength(1);
   });
 
-  it('sesja spod północy należy do doby URUCHOMIENIA silnika (tak jak na 01)', async () => {
+  it('operacja spod północy należy do doby URUCHOMIENIA silnika (tak jak na 01)', async () => {
     const { repo, queries } = harness();
     // Silnik rusza 22 CZE o 23:12, gaśnie 23 CZE o 01:34, zdanie 23 CZE o 07:45.
     await writeDay(repo, 'sess-noc', at(23, 0), 'SP-KLM');
@@ -157,7 +157,7 @@ describe('poprzednie dni (ekran 12)', () => {
     expect(groups.editable[0]!.times).toBe('23:12 → 01:34 UTC');
   });
 
-  it('sesja TRZYMANA nie jest historią - ma kokpit, nie kartę', async () => {
+  it('operacja TRZYMANA nie jest historią - ma kokpit, nie kartę', async () => {
     const { repo, queries } = harness();
     await writeDay(repo, 'sess-1', at(8, 0));
     // Druga sesja bez zdania samolotu.
@@ -203,7 +203,7 @@ describe('poprzednie dni (ekran 12)', () => {
     });
   });
 
-  it('plakietka na 01: najświeższa sesja w oknie, ale nigdy z dnia dzisiejszego', async () => {
+  it('plakietka na 01: najświeższa operacja w oknie, ale nigdy z dnia dzisiejszego', async () => {
     const { repo, queries } = harness();
     await writeDay(repo, 'sess-1', at(8, 0));
 

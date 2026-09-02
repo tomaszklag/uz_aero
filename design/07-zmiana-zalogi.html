@@ -300,18 +300,18 @@
       <div class="section">
         <div class="section-head-row">
           <div class="section-label">B · Przekazanie samolotu innemu PIC</div>
-          <span class="scope-tag net">kończy Twoją sesję</span>
+          <span class="scope-tag net">kończy Twoją operację</span>
         </div>
 
         <div class="handover-explain">
-          <b>Nie wybierasz tu nowego dowódcy.</b> Dane sesji zapisuje wyłącznie telefon aktywnego PIC
+          <b>Nie wybierasz tu nowego dowódcy.</b> Dane operacji zapisuje wyłącznie telefon aktywnego PIC
           (zasada jednego piszącego urządzenia), więc nowy dowódca przejmuje samolot <b>ze swojego telefonu</b>.
         </div>
 
         <div class="handover-steps">
           <div class="hstep"><span class="hstep-num">1</span><span><span style="color:var(--text-primary)">Zdajesz samolot odczytami końcowymi</span> - paliwomierz i licznik MH. To one są przekazaniem dla kolegi; bez nich zaczyna „od zera".</span></div>
           <div class="hstep"><span class="hstep-num">2</span><span>Nowy PIC na swoim telefonie: <span style="color:var(--text-primary)">Przejęcie → karta SP-AXA → Przejmij</span> i porównuje z tym, co widzi na licznikach.</span></div>
-          <div class="hstep"><span class="hstep-num">3</span><span>Rozliczenie tego samolotu idzie do wysyłki, a ten telefon przestaje zapisywać jego dane. <span style="color:var(--text-primary)">Twój dzień trwa dalej</span> - jeśli weźmiesz inną maszynę, dopisze się do listy sesji.</span></div>
+          <div class="hstep"><span class="hstep-num">3</span><span>Rozliczenie tego samolotu idzie do wysyłki, a ten telefon przestaje zapisywać jego dane. <span style="color:var(--text-primary)">Twój dzień trwa dalej</span> - jeśli weźmiesz inną maszynę, dopisze się do listy operacji.</span></div>
         </div>
 
         <a href="09b-zdaj-samolot.html" class="btn-danger">
@@ -329,7 +329,7 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         </div>
         <div class="info-text">
-          <strong style="color: var(--blue);">Dlaczego dwie osobne sekcje?</strong> Zmiana Dual to zwykłe zdarzenie w Twojej sesji -
+          <strong style="color: var(--blue);">Dlaczego dwie osobne sekcje?</strong> Zmiana Dual to zwykłe zdarzenie w Twojej operacji -
           zapisujesz je sam, także bez zasięgu. Zmiana PIC to <em>przekazanie prawa zapisu</em> innemu urządzeniu, więc nie da się
           jej wykonać za kogoś. Każdy pilot ma osobny licznik czasu blokowego. Przy samolotach z wymogiem załogi 2-osobowej
           (np. An-2) Dual nie może pozostać pusty.
@@ -354,7 +354,7 @@
   <span>·</span>
   <a href="06-tankowanie.html">06 Tankowanie</a>
   <a href="07-zmiana-zalogi.html" class="active">07 Zmiana załogi</a>
-  <a href="10d-edycja.html">10D Edycja sesji</a>
+  <a href="10d-edycja.html">10D Edycja operacji</a>
   <span>·</span>
   <a href="04-cockpit-ground.html">→ Kokpit</a>
   <span>·</span>
@@ -364,7 +364,7 @@
 <script>
   // Banery pouczające (Typ C): zamknięcie chowa baner i pokazuje mini-(?) w miejscu.
   // W aplikacji stan „schowany" zapisujemy NA STAŁE per pilot (localStorage) - baner
-  // nie wraca rozwinięty co sesję. Status i ostrzeżenia warunkowe NIE są zamykane.
+  // nie wraca rozwinięty co operację. Status i ostrzeżenia warunkowe NIE są zamykane.
   function eduCollapse(id){ document.getElementById(id).style.display='none'; document.getElementById(id+'-mini').style.display='inline-flex'; /* localStorage.setItem('seen:'+id,'1') */ }
   function eduExpand(id){ document.getElementById(id).style.display=''; document.getElementById(id+'-mini').style.display='none'; }
 </script>

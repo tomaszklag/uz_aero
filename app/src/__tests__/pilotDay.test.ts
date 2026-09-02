@@ -84,7 +84,7 @@ beforeEach(() => {
 describe('projectPilotDay - jeden dzień, dwa samoloty (scenariusz 01)', () => {
   const day = () => projectPilotDay([axa(), klm()], PIC, DAY0);
 
-  it('składa sesje z OBU maszyn w jedną płaską oś, uporządkowaną w czasie', () => {
+  it('składa operacje z OBU maszyn w jedną płaską oś, uporządkowaną w czasie', () => {
     const d = day();
 
     expect(d.sessions).toHaveLength(3);
@@ -103,7 +103,7 @@ describe('projectPilotDay - jeden dzień, dwa samoloty (scenariusz 01)', () => {
     expect(d.landingCount).toBe(3);
   });
 
-  it('czas lotu przypisuje się do sesji, w której lot się zaczął', () => {
+  it('czas lotu przypisuje się do operacji, w której lot się zaczął', () => {
     const d = day();
 
     expect(d.sessions[0]!.flightMs).toBe(41 * MIN);
@@ -112,7 +112,7 @@ describe('projectPilotDay - jeden dzień, dwa samoloty (scenariusz 01)', () => {
   });
 });
 
-describe('projectPilotDay - sesja w toku i dzień pusty', () => {
+describe('projectPilotDay - operacja w toku i dzień pusty', () => {
   it('otwarty bieg jest wierszem z `stoppedAt: null`, nie dziurą na liście', () => {
     const s = session({ aircraftId: 'sp-axa', legs: [leg('08:12', null)] });
 
@@ -123,7 +123,7 @@ describe('projectPilotDay - sesja w toku i dzień pusty', () => {
     expect(d.sessions[0]!.blockMs).toBe(0);
   });
 
-  it('doba bez sesji jest pusta, a nie zerowa', () => {
+  it('doba bez operacji jest pusta, a nie zerowa', () => {
     const d = projectPilotDay([], PIC, DAY0);
 
     expect(d.sessions).toHaveLength(0);
@@ -132,8 +132,8 @@ describe('projectPilotDay - sesja w toku i dzień pusty', () => {
   });
 });
 
-describe('projectPilotDay - granice doby i cudze sesje', () => {
-  it('odrzuca sesje prowadzone przez INNEGO pilota', () => {
+describe('projectPilotDay - granice doby i cudze operacje', () => {
+  it('odrzuca operacje prowadzone przez INNEGO pilota', () => {
     const foreign = session({ sessionPicId: 'krz', aircraftId: 'sp-fgk', legs: [leg('08:12', '09:05')] });
 
     const d = projectPilotDay([axa(), foreign], PIC, DAY0);
@@ -141,7 +141,7 @@ describe('projectPilotDay - granice doby i cudze sesje', () => {
     expect(d.sessions.every((x) => x.aircraftId === 'sp-axa')).toBe(true);
   });
 
-  it('sesja rozpoczęta przed północą należy do doby, w której WYSTARTOWAŁA', () => {
+  it('operacja rozpoczęta przed północą należy do doby, w której WYSTARTOWAŁA', () => {
     // Bieg 23:50 → 00:20 następnej doby. Gdyby przynależność szła po czasie
     // zamknięcia, jeden lot rozpadłby się na dwa dni - czyli dokładnie problem,
     // który przebudowa flow usunęła.
@@ -172,7 +172,7 @@ describe('projectPilotDay - granice doby i cudze sesje', () => {
   });
 });
 
-describe('projectPilotDay - liczba lotów sesji (kolumna „Loty" na 01)', () => {
+describe('projectPilotDay - liczba lotów operacji (kolumna „Loty" na 01)', () => {
   it('zlicza loty, które zaczęły się wewnątrz biegu', () => {
     const s = session({
       aircraftId: 'sp-axa',

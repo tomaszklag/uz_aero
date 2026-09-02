@@ -266,7 +266,7 @@ export function manualFlightStepBlocker(
          15 z uzasadnieniem „wpis nazywa się LOT RĘCZNY, więc lot jest jego treścią" -
          i to uzasadnienie było fałszywe: flow na żywo ma dla tego stanu WŁASNY ekran
          (09C, zdanie bez lotu - pogoda, usterka, próba silnika), a domena traktuje go
-         miękko (`NO_FLIGHT_WITHOUT_REASON` to flaga, nie odmowa). Skoro sesja bez lotu
+         miękko (`NO_FLIGHT_WITHOUT_REASON` to flaga, nie odmowa). Skoro operacja bez lotu
          jest legalna w locie, jest legalna także z kartki; blokada odbierała pilotowi
          zapisanie czasu, w którym maszyna była zajęta.
          Mówi o tym odtąd OSTRZEŻENIE (`manualFlightWarnings`), jak przy braku zrzutu. */

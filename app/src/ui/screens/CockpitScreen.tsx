@@ -570,19 +570,19 @@ export function CockpitScreen({
             </View>
           )}
 
-          {/* Log sesji - jedyny element bez własnej wysokości: rośnie z liczbą zdarzeń,
+          {/* Log operacji - jedyny element bez własnej wysokości: rośnie z liczbą zdarzeń,
               a przy krótkim logu rozpycha się do paska akcji (`flexGrow`), więc
               pełnoekranowa wstęga z mockupu zostaje. `flexShrink: 0` pilnuje, żeby się
               nie ścisnął, gdy sekcje wyżej zabiorą całą wysokość.
 
-              Karta pojawia się dopiero, gdy w sesji zaszło coś OPERACYJNEGO (issue #19,
+              Karta pojawia się dopiero, gdy w operacji zaszło coś OPERACYJNEGO (issue #19,
               `axis.hasEvents`): oś złożona z przejęcia, uruchomienia i wiersza „na żywo"
               powtarzałaby to, co ekran mówi wyżej. Nagłówek bez liczb T/O i LDG
               (issue #44) - mówi je sama oś, a słowo „cykl" odeszło razem z modelem
               wielu cykli. */}
           {axis.hasEvents && (
             <Card
-              title="Log sesji · UTC"
+              title="Log operacji · UTC"
               // Helper, nie wzór w JSX - inline'owe `+ (inFlight ? 1 : 0)` dawało
               // „Lot #2" w pierwszym locie (issue #21 pkt 1, `logic/flightNumber.ts`).
               headerRight={
@@ -599,7 +599,7 @@ export function CockpitScreen({
               contentStyle={{ flexGrow: 1 }}
             >
               {/* Bez `onCorrect`: w kokpicie oś jest wyłącznie potwierdzeniem zapisu.
-                  Poprawianie ma jedne drzwi - kafelek „Popraw dane sesji" po
+                  Poprawianie ma jedne drzwi - kafelek „Popraw dane operacji" po
                   zatrzymaniu silnika (issue #43). */}
               <SessionAxis rows={axis.rows} />
             </Card>
@@ -733,7 +733,7 @@ export function CockpitScreen({
           // łamie - maszyna zostaje w jego rękach, zmienia się tylko ekran.
           id: 'edit-session',
           icon: 'edit',
-          label: 'Popraw dane sesji',
+          label: 'Popraw dane operacji',
           // Odmiana z `flightsBadge` - „1 lotów" na żywym kokpicie wyglądało jak
           // literówka w przyrządzie. Ta sama funkcja liczy badge na 10.
           sub: `Czasy i odczyty · ${flightsBadge(projection.flights.length)}`,
@@ -797,7 +797,7 @@ export function CockpitScreen({
 
       <View style={{ padding: theme.spacing.lg, gap: 14 }}>
         {/* Hero mówi jedyną rzecz, która została do zrobienia. Po zatrzymaniu silnika
-            drugiego STARTU nie ma (sesja = jeden bieg, SESSION_ALREADY_RAN) - zostaje
+            drugiego STARTU nie ma (operacja = jeden bieg, SESSION_ALREADY_RAN) - zostaje
             oddanie maszyny z odczytami. Bez przytrzymania: to nawigacja do formularza
             z własnym potwierdzeniem, nie akcja nieodwracalna. */}
         {sessionEnded ? (
@@ -806,7 +806,7 @@ export function CockpitScreen({
             tone="red"
             size="hero"
             icon="end-day"
-            hint="Odczyt paliwa i motogodzin · zatwierdzenie logu sesji"
+            hint="Odczyt paliwa i motogodzin · zatwierdzenie logu operacji"
             onPress={() => navigation.navigate('ReleaseAircraft')}
           />
         ) : (
@@ -822,7 +822,7 @@ export function CockpitScreen({
           />
         )}
 
-        {/* KOKPIT JEST STANEM MODALNYM (decyzja 2026-08-10) - stąd nie ma paska sesji
+        {/* KOKPIT JEST STANEM MODALNYM (decyzja 2026-08-10) - stąd nie ma paska operacji
             ani żadnego innego wyjścia na 01. Kto trzyma samolot, oddaje go przez „Zdaj
             samolot" (09B); dopóki go trzyma, ekranem pilota jest kokpit.
 
@@ -852,12 +852,12 @@ export function CockpitScreen({
           // historia dnia mieszka na 01 i w rozliczeniu. Liczby lotów w tytule NIE MA
           // (issue #44): mówi ją stopka osi, a jedna liczba dwa razy na tej samej
           // karcie uczy oko pomijać nagłówek.
-          title="Log sesji · UTC"
+          title="Log operacji · UTC"
           flush
         >
-          {/* Ta sama oś, co na ekranie sesji (10) - bez ołówków, bo w kokpicie log jest
+          {/* Ta sama oś, co na ekranie operacji (10) - bez ołówków, bo w kokpicie log jest
               WYŁĄCZNIE potwierdzeniem zapisu; poprawianie ma jedne drzwi, kafelek
-              „Popraw dane sesji" niżej (issue #43).
+              „Popraw dane operacji" niżej (issue #43).
 
               Stopka sum pojawia się dopiero po zatrzymaniu silnika (`axis.foot` jest
               wtedy niepusta) - dopóki silnik pracuje, nie ma czego sumować. */}
@@ -894,7 +894,7 @@ function NoSession({ onStart }: { onStart: () => void }) {
     <Screen>
       <View style={{ flex: 1, justifyContent: 'center', gap: theme.spacing.md }}>
         <AppText variant="display" style={{ textAlign: 'center' }}>
-          BRAK SESJI
+          BRAK OPERACJI
         </AppText>
         <AppText variant="body" tone="muted" style={{ textAlign: 'center' }}>
           Dzień lotny zaczyna się od preflightu - wyboru samolotu i odczytu liczników.

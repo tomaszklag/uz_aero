@@ -302,9 +302,9 @@ function fuelDetails(
 
   const sessionLPerH = perBlockHour(consumed, facts);
   const rows: BalanceDetailRow[] = [
-    { label: 'Zużyte w tej sesji', value: litres(consumed) },
-    { label: 'Oczekiwane po tej sesji', value: bandOf(expectation, litres) },
-    { label: 'Średnia tej sesji', value: `${round(sessionLPerH)} L/h` },
+    { label: 'Zużyte w tej operacji', value: litres(consumed) },
+    { label: 'Oczekiwane po tej operacji', value: bandOf(expectation, litres) },
+    { label: 'Średnia tej operacji', value: `${round(sessionLPerH)} L/h` },
   ];
 
   /*
@@ -364,7 +364,7 @@ function fuelDetails(
     rows.push({
       label: 'Odchyłka od dokumentacji',
       value: [
-        `ta sesja ${percentOff(sessionLPerH, nominalLPerH)}`,
+        `ta operacja ${percentOff(sessionLPerH, nominalLPerH)}`,
         `norma maszyny ${percentOff(norm.blockLPerH, nominalLPerH)}`,
       ].join(' · '),
     });
@@ -384,7 +384,7 @@ function fuelDetails(
     // (podłoga pasma, `consumption/policy.ts`).
     note:
       `Jak to liczymy: ${equation}. Pasmo jest szersze niż rozrzut samego modelu, ` +
-      'bo zużycie sesji to różnica dwóch odczytów paliwomierza. Werdykt niczego nie ' +
+      'bo zużycie operacji to różnica dwóch odczytów paliwomierza. Werdykt niczego nie ' +
       'blokuje - to licznik w samolocie ma rację, nie model.',
   };
 }
@@ -420,16 +420,16 @@ function mhDetails(
   if (norm?.mh == null || expectation == null || delta == null) return null;
 
   const signed = (value: number) => signedMh(value, format);
-  const sessions = `${norm.mh.sessions} ${plural(norm.mh.sessions, 'sesja', 'sesje', 'sesji')}`;
+  const sessions = `${norm.mh.sessions} ${plural(norm.mh.sessions, 'operacja', 'operacje', 'operacji')}`;
 
   return {
     title: 'NORMA MOTOGODZIN',
     summary: summaryOf(delta, expectation, signed),
     rows: [
-      { label: 'Przyrost w tej sesji', value: signed(delta) },
-      { label: 'Oczekiwane po tej sesji', value: bandOf(expectation, signed) },
+      { label: 'Przyrost w tej operacji', value: signed(delta) },
+      { label: 'Oczekiwane po tej operacji', value: bandOf(expectation, signed) },
       {
-        label: 'Średnia tej sesji',
+        label: 'Średnia tej operacji',
         value: `${rate(perBlockHour(delta, facts))} MH/h`,
       },
       { label: 'Przelicznik w locie', value: `${rate(norm.mh.perFlightHour)} MH/h` },
@@ -468,7 +468,7 @@ function summaryOf(
  * Pilot ma prawo o tym wiedzieć, zanim uzna werdykt za wyrok.
  */
 const BASIS_NOTE: Record<Expectation['basis'], string> = {
-  phases: 'Pasmo liczy się dla TEJ mieszanki faz, nie dla średniej sesji tego samolotu.',
+  phases: 'Pasmo liczy się dla TEJ mieszanki faz, nie dla średniej operacji tego samolotu.',
   engine: 'Model nie rozdzielił jeszcze faz, więc pasmo opisuje samą godzinę pracy silnika.',
   nominal:
     'Pasmo pochodzi z dokumentacji jednostki, a nie z lotów tej maszyny - własną normę ' +

@@ -84,13 +84,13 @@
   .field-time.empty { color:var(--text-placeholder); font-weight:400; font-family:var(--font-body); font-size:15px; line-height:20px; letter-spacing:0; }
   .field-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); line-height:1.5; }
 
-  /* ===== OŚ SESJI - TEN SAM KOMPONENT, CO W KOKPICIE I W ROZLICZENIU (issue #62) =====
+  /* ===== OŚ OPERACJI - TEN SAM KOMPONENT, CO W KOKPICIE I W ROZLICZENIU (issue #62) =====
 
      Do issue #62 krok 3 był DWIEMA PŁASKIMI LISTAMI obok siebie: „Loty" i „Zrzuty".
      Zgłoszenie z urządzenia trafiło w sedno: „na jednym biegu silnika wykonałem kilka
      zrzutów w kilku lotach" - a formularz nie miał jak pokazać, który zrzut należy do
      którego lotu. Nie dlatego, że model tego nie wie: `DROP_ON_GROUND` w domenie
-     sprawdza dokładnie zawieranie się zrzutu w oknie lotu, a oś sesji i kokpit od
+     sprawdza dokładnie zawieranie się zrzutu w oknie lotu, a oś operacji i kokpit od
      zawsze wyrażają przynależność POZYCJĄ W CZASIE. Wiedział model, milczał ekran.
 
      Odpowiedzią jest oś - ta sama, którą pilot ogląda w kokpicie w trakcie lotu
@@ -150,7 +150,7 @@
   .axis-row.warned .axis-name { color:var(--amber); }
   .axis-row.warned .axis-flight { color:var(--amber); }
   /* Dopisanie jest OSTATNIM WIERSZEM osi, nie przyciskiem pod nią (wzorzec „DODAJ
-     WPIS", issue #43): nowy lot trafi w przebieg sesji, więc wejście stoi tam, gdzie
+     WPIS", issue #43): nowy lot trafi w przebieg operacji, więc wejście stoi tam, gdzie
      skończy się jego skutek. Plus, nie ołówek - ołówek obiecuje poprawianie
      istniejącej wartości. */
   .axis-add { display:flex; align-items:center; justify-content:center; gap:8px; min-height:44px; border-top:1px solid var(--border); font-family:var(--font-mono); font-size:10px; letter-spacing:1.5px; color:var(--green); text-decoration:none; }
@@ -244,7 +244,7 @@
            Stopki sum też nie ma - bez biegu silnika blok nie ma z czego wyjść, a trójka
            zer byłaby liczbą o niczym (reguła „zerowy licznik to szum” z issue #43). -->
       <div class="section flush">
-        <div class="section-head"><span class="section-label">Przebieg sesji</span></div>
+        <div class="section-head"><span class="section-label">Przebieg operacji</span></div>
 
         <div class="axis">
           <a href="15f-reczny-czas-pusty.html" class="axis-row">
@@ -302,7 +302,7 @@
   <a class="vp-item" href="15b-reczny-czasy.html">
     <span class="vp-badge">15B</span>
     <span class="vp-body">
-      <span class="vp-name">Krok 3 - przebieg sesji</span>
+      <span class="vp-name">Krok 3 - przebieg operacji</span>
       <span class="vp-when">Bieg wpisany: oś od uruchomienia do wyłączenia, loty w środku, zrzuty w swoich lotach.</span>
     </span>
   </a>

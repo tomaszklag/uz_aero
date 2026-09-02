@@ -78,7 +78,7 @@
      i nie da się jej „posprzątać". Dlatego nie ma tu żadnej akcji poza czytaniem. */
   .hist { display:flex; flex-direction:column; }
   .hist-item { display:grid; grid-template-columns:16px 1fr; gap:11px; }
-  /* Pion osi rysuje sam wiersz - jak na osi sesji (10). */
+  /* Pion osi rysuje sam wiersz - jak na osi operacji (10). */
   .hist-rail { position:relative; display:flex; justify-content:center; }
   .hist-rail::before { content:''; position:absolute; top:0; bottom:0; width:1px; background:var(--border-strong); }
   .hist-item:first-child .hist-rail::before { top:14px; }
@@ -162,7 +162,7 @@
         Dzień
       </a>
       <div class="app-header-center">
-        <span class="screen-title">SESJA</span>
+        <span class="screen-title">OPERACJA</span>
         <span class="header-subtitle">SP-AXA · 06 SIE · SKOKI</span>
       </div>
       <span class="mode-badge">
@@ -251,7 +251,7 @@
           <!-- KOTWICA: zapis pierwotny. Kropka pusta, bo to nie korekta, tylko fakt
                z terenu - i to on jest punktem odniesienia dla wszystkich strzałek wyżej.
 
-               BEZ PODPISU O ŹRÓDLE („autodetekcja · GPS", „zapis sesji") i bez przypisu
+               BEZ PODPISU O ŹRÓDLE („autodetekcja · GPS", „zapis operacji") i bez przypisu
                o append-only pod listą (zgłoszenie z urządzenia, 2026-08-14). Pierwsze
                było prowenienecją, o którą pilot nie pyta - ta sama reguła, przez którą
                issue #40 zdjęło plakietki „AUTO" i „RĘCZNIE" z osi. Drugie opisywało
@@ -321,7 +321,7 @@
   <a href="10j-korekta-zalogi.html">10J Załoga</a>
   <a href="10k-korekta-notatki.html">10K Notatka</a>
   <span>·</span>
-  <a href="10-statystyki.html">10 Sesja</a>
+  <a href="10-statystyki.html">10 Operacja</a>
 </nav>
 
 </body>

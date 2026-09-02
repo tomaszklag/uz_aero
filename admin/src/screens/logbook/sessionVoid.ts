@@ -25,6 +25,10 @@ const NONE = '—';
 export function voidFacts(s: SessionListItemDto): VoidFact[] {
   const row = sessionRow(s);
   return [
+    /* Sygnatura odpowiada na „który to wpis" jednym napisem (issue #68) i dlatego
+       stoi pierwsza. Bez niej wraca sama data, a rozróżnienie dwóch operacji tej
+       samej maszyny w dobie spada na wiersz „Silnik" - jak przed issue #68. */
+    ...(s.signature == null ? [] : [{ label: 'Operacja', value: s.signature }]),
     { label: 'Dzień', value: row.day },
     { label: 'Silnik', value: `${row.engine.from} → ${row.engine.to}` },
     { label: 'Pilot', value: row.pic },

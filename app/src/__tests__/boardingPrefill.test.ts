@@ -35,7 +35,7 @@ describe('boardingPrefill', () => {
 });
 
 describe('boardingInitialJumpers (2026-08-17)', () => {
-  it('czekający załadunek wygrywa z defaultem sesji', () => {
+  it('czekający załadunek wygrywa z defaultem operacji', () => {
     expect(
       boardingInitialJumpers(
         { jumpers: { tandem: 2, aff: 1, solo: 1 }, at: 1_700_000_000_000 },
@@ -44,7 +44,7 @@ describe('boardingInitialJumpers (2026-08-17)', () => {
     ).toEqual({ tandem: 2, aff: 1, solo: 1 });
   });
 
-  it('bez czekającego załadunku (pierwszy w sesji albo po zrzucie) podstawia default', () => {
+  it('bez czekającego załadunku (pierwszy w operacji albo po zrzucie) podstawia default', () => {
     expect(boardingInitialJumpers(null, { tandem: 4, aff: 0, solo: 0 })).toEqual({
       tandem: 4,
       aff: 0,

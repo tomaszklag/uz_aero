@@ -310,7 +310,7 @@ describe('manualFlightWarnings - ostrzegają, nigdy nie blokują', () => {
     expect(manualFlightWarnings(draft(), emptyCtx)).toEqual([]);
   });
 
-  it('kolizja czasów z własną sesją doby - z lokalnego rejestru', () => {
+  it('kolizja czasów z własną operacją doby - z lokalnego rejestru', () => {
     const day: PilotDay = {
       ...emptyPilotDay('tmk', DAY),
       sessions: [
@@ -331,10 +331,10 @@ describe('manualFlightWarnings - ostrzegają, nigdy nie blokują', () => {
     const warnings = manualFlightWarnings(draft(), { ...emptyCtx, pilotDay: day });
 
     expect(warnings.map((w) => w.id)).toContain('session-overlap');
-    expect(warnings.find((w) => w.id === 'session-overlap')!.text).toContain('SESJĘ 2');
+    expect(warnings.find((w) => w.id === 'session-overlap')!.text).toContain('OPERACJĘ 2');
   });
 
-  it('sesja z innej godziny doby NIE ostrzega', () => {
+  it('operacja z innej godziny doby NIE ostrzega', () => {
     const day: PilotDay = {
       ...emptyPilotDay('tmk', DAY),
       sessions: [

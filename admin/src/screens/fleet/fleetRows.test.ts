@@ -54,14 +54,14 @@ describe('stan służby', () => {
     expect(row.muted).toBe(false);
   });
 
-  it('wyłączona jednostka BEZ otwartej sesji też nie niesie ostrzeżenia', () => {
+  it('wyłączona jednostka BEZ otwartej operacji też nie niesie ostrzeżenia', () => {
     const row = fleetRow({ ...aircraft, serviceStatus: 'disabled' });
     expect(row.statusLabel).toBe('Wyłączony');
     expect(row.warning).toBeNull();
     expect(row.muted).toBe(true);
   });
 
-  it('wyłączona jednostka Z otwartą sesją - jedyny sygnał wyjątkowy tego ekranu', () => {
+  it('wyłączona jednostka Z otwartą operacją - jedyny sygnał wyjątkowy tego ekranu', () => {
     // Tego nie widać nigdzie indziej w panelu 2.0: maszyna zniknęła pilotom z listy,
     // a ktoś jej jeszcze nie zdał.
     const row = fleetRow({ ...aircraft, serviceStatus: 'disabled', openSessions: 2 });

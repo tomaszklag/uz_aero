@@ -15,6 +15,11 @@
  *
  * Podzapytania po `flags` i `export_log` nie łamią tej reguły: to inne tabele, czytane
  * wprost (typ flagi, numer rewizji), a nie liczby dnia policzone po raz drugi.
+ *
+ * Nie łamie jej też `day_index` (issue #68), choć czyta `sessions`: to RANGA wiersza
+ * wśród sąsiadów po kolumnach, które projekcja już policzyła - a nie te same liczby
+ * wyprowadzone drugi raz ze strumienia. Kolumny wypełnianej przy zapisie być tu nie
+ * może, bo ingest widzi JEDNĄ operację, a numer zależy od pozostałych operacji doby.
  */
 
 import { isFlagType, type FlagType, type MhFormat } from '@uzaero/domain';
@@ -54,6 +59,7 @@ const shapeOf = (direction: KeysetDirection): CursorShape => ({
 
 interface JoinedDbRow extends SessionDbRow {
   updated_at: string | Date;
+  day_index: string | null;
   reg: string | null;
   aircraft_type: string | null;
   mh_format: string | null;
@@ -73,6 +79,31 @@ interface JoinedDbRow extends SessionDbRow {
 const SELECT = `
   SELECT ${sessionColumns('s')},
          s.updated_at,
+         -- NUMER OPERACJI W DOBIE PILOTA - ostatni człon sygnatury (issue #68).
+         --
+         -- Nie łamie reguły §7.1: to RANGA po kolumnach projekcji, nie odtworzenie
+         -- projekcji ze strumienia. Nie da się jej też wypełnić przy zapisie, bo numer
+         -- jest miejscem wiersza wśród SĄSIADÓW, a ingest widzi jedną operację.
+         --
+         -- Reguła musi zgadzać się co do znaku z operationIndexes (@uzaero/domain),
+         -- bo telefon liczy ten sam numer u siebie, offline. Stąd komplet tych samych
+         -- czterech warunków: ten sam pilot, bez unieważnionych, wyłącznie operacje
+         -- z uruchomionym silnikiem, doba brana z uruchomienia. Remis rozstrzyga
+         -- session_uuid - w domenie z tego samego powodu, czyli dla determinizmu.
+         --
+         -- Warunek dotyczy TEŻ WIERSZA PYTANEGO, nie tylko liczonych: bez części
+         -- o statusie operacja unieważniona dostawała numer równy liczbie ważnych
+         -- operacji przed nią - czyli NUMER SWOJEJ POPRZEDNICZKI. Dwie operacje
+         -- o jednej sygnaturze to dokładna odwrotność tego, po co ona jest.
+         CASE WHEN s.engine_start_at IS NULL OR s.status = 'voided' THEN NULL ELSE (
+           SELECT COUNT(*)
+             FROM sessions x
+            WHERE x.pic_id = s.pic_id
+              AND x.status <> 'voided'
+              AND x.engine_start_at IS NOT NULL
+              AND x.engine_start_at / 86400000 = s.engine_start_at / 86400000
+              AND (x.engine_start_at, x.session_uuid) <= (s.engine_start_at, s.session_uuid)
+         ) END                AS day_index,
          a.reg                AS reg,
          a.type               AS aircraft_type,
          a.mh_format          AS mh_format,
@@ -109,6 +140,8 @@ const toFlagTypes = (values: string[] | null): FlagType[] => {
 
 const toJoin = (r: JoinedDbRow): AdminSessionJoin => ({
   row: toSessionRow(r),
+  // `COUNT` wraca z Postgresa jako BIGINT, czyli tekst - jak reszta liczników tego pliku.
+  dayIndex: r.day_index == null ? null : Number(r.day_index),
   reg: r.reg,
   aircraftType: r.aircraft_type,
   mhFormat: toMhFormat(r.mh_format),

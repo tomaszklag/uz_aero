@@ -30,8 +30,17 @@ export interface CardStat {
 export interface SessionCardVm {
   /** Sesja, którą kafelek opisuje - bez niej nie wiadomo, KTÓRY strumień otworzyć. */
   sessionUuid: string;
-  /** Nagłówek kafelka: „22 CZERWCA 2026" (12) albo „SESJA 1" (01). */
+  /** Nagłówek kafelka: „22 CZERWCA 2026" (12) albo „OPERACJA 1" (01). */
   title: string;
+  /**
+   * SYGNATURA OPERACJI - „SP-AXA/2026-09-01/AKO/1" (issue #68). Nazwa, którą operacja
+   * ma poza tym telefonem: ten sam napis stoi w panelu, więc pilot i administrator
+   * mówią o jednym locie tak samo.
+   *
+   * `null` = nie ma jej z czego złożyć (cache floty nie zna maszyny, operacja bez biegu
+   * silnika). Kafelek pokazuje wtedy sam znak, jak przed issue #68.
+   */
+  signature: string | null;
   aircraft: string;
   /** Godziny biegu silnika; `null`, gdy silnik nie ruszył ani razu. */
   times: string | null;

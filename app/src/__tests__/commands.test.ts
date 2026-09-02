@@ -284,7 +284,7 @@ describe('SessionCommands - pełny dzień przez komendy', () => {
     expect(outbox.synced).toBe(false);
   });
 
-  it('claim zapamiętuje bieżącą sesję w session_meta (wznowienie po restarcie)', async () => {
+  it('claim zapamiętuje bieżącą operację w session_meta (wznowienie po restarcie)', async () => {
     const { commands, queries, clock, seedCache } = setup();
     await seedCache();
     clock.set(min(-5));
@@ -355,7 +355,7 @@ describe('SessionCommands - active_session_uuid dla zapisu headless (GPS w tle)'
  * Tu zostaje gwardia, przez którą tamte testy nie miały prawa dalej istnieć:
  * ich helper `twoCycles()` budował DWA biegi w jednej sesji.
  */
-describe('jeden bieg silnika na sesję (2026-08-10)', () => {
+describe('jeden bieg silnika na operację (2026-08-10)', () => {
   it('drugi startEngine po zakończonym biegu jest odrzucany', async () => {
     const h = setup();
     await openDay(h.commands, h.clock);
@@ -379,7 +379,7 @@ describe('jeden bieg silnika na sesję (2026-08-10)', () => {
  * ZDARZEŃ (jadą w `gpsTime`, chwila zapisu zostaje w `deviceTime`), a próba generalna ma
  * chronić strumień przed osieroconą sesją - odrzucony komplet nie zapisuje NICZEGO.
  */
-describe('manualFlight - kompletna sesja po fakcie (ekrany 15 → 15C)', () => {
+describe('manualFlight - kompletna operacja po fakcie (ekrany 15 → 15C)', () => {
   const T_START = min(600);
   const t = (m: number): number => T_START + m * 60_000;
   const input = (over: object = {}) => ({
@@ -399,7 +399,7 @@ describe('manualFlight - kompletna sesja po fakcie (ekrany 15 → 15C)', () => {
     ...over,
   });
 
-  it('tworzy ZAMKNIĘTĄ sesję z jednym biegiem i jednym lotem o czasach pilota', async () => {
+  it('tworzy ZAMKNIĘTĄ operację z jednym biegiem i jednym lotem o czasach pilota', async () => {
     const h = setup();
     h.clock.set(min(700)); // zapis godzinę PO locie - wpis po fakcie
 
@@ -441,7 +441,7 @@ describe('manualFlight - kompletna sesja po fakcie (ekrany 15 → 15C)', () => {
    * Znacznik „RĘCZNIE" jest JAWNY na `session_claim` (2026-08-16): z metody zdarzeń
    * nie da się go wywieść, bo `manual` niesie też zwykły lot z ręcznymi przyciskami.
    */
-  it('sesja z wpisu niesie manualEntry; sesja z kokpitu NIE', async () => {
+  it('operacja z wpisu niesie manualEntry; operacja z kokpitu NIE', async () => {
     const h = setup();
     h.clock.set(min(700));
 
@@ -537,7 +537,7 @@ describe('manualFlight - kompletna sesja po fakcie (ekrany 15 → 15C)', () => {
     expect(await h.repo.getAllEvents()).toHaveLength(0);
   });
 
-  it('nie dotyka bieżącej sesji w session_meta - wpis historyczny nie jest „wznowieniem"', async () => {
+  it('nie dotyka bieżącej operacji w session_meta - wpis historyczny nie jest „wznowieniem"', async () => {
     const h = setup();
     h.clock.set(min(700));
 

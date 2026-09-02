@@ -190,7 +190,7 @@ export function AddEventSheet({
         kind="edu"
         tone="blue"
         text={
-          'Wpis dostanie w rejestrze znacznik „ręcznie" - na osi sesji wygląda jak każdy ' +
+          'Wpis dostanie w rejestrze znacznik „ręcznie" - na osi operacji wygląda jak każdy ' +
           'inny, a metodę widzi administrator w panelu.'
         }
         collapsedLabel="Skąd wiadomo, że wpis jest ręczny?"
@@ -199,7 +199,7 @@ export function AddEventSheet({
       <View style={styles.spacer} />
       <AppText variant="mono" tone="muted" style={styles.note}>
         Uruchomienia i wyłączenia silnika tu nie ma - zapisuje je przycisk w kokpicie,
-        a sesja ma dokładnie jeden bieg. Jeśli czas klamry jest zły, popraw go na osi.
+        a operacja ma dokładnie jeden bieg. Jeśli czas klamry jest zły, popraw go na osi.
       </AppText>
     </Sheet>
   );

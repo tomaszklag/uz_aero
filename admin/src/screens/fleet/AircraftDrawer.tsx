@@ -392,7 +392,7 @@ export function AircraftDrawer({ id, fleet, listPending, manages, onClose }: Air
       {/* ── STAN POCZĄTKOWY (issue #66) ────────────────────────────────────────
           To NIE jest konfiguracja, tylko jedna chwila: co pokazywały przyrządy, gdy
           jednostka trafiła do UZ Aero. Dostaje ją PIERWSZY pilot i nikt więcej -
-          od pierwszej zdanej sesji łańcuch prowadzą odczyty z lotów. Karta mówi to
+          od pierwszej zdanej operacji łańcuch prowadzą odczyty z lotów. Karta mówi to
           wprost, gdy tak już jest: pole, które przestało działać, a nadal wygląda
           na czynne, jest gorsze od jego braku. */}
       <Card

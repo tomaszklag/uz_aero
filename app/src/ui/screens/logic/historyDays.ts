@@ -107,12 +107,17 @@ function cardSpec(
   day: HistoryDay,
   pushing: boolean,
   regOf: (id: string) => string | null,
+  signatureOf: (sessionUuid: string) => string | null,
 ): DayCardSpec {
   const { state, pendingCount } = day;
   const leg = state.legs[0];
   return {
     sessionUuid: state.sessionUuid ?? '',
     title: state.claimedAt != null ? dateUtcLong(state.claimedAt) : '-',
+    // Nazwa operacji (issue #68) - ta sama, którą widzi administrator w panelu.
+    // Data powtarza się w niej i w tytule świadomie: sygnatura czyta się jako JEDEN
+    // napis-nazwę, a nie jako zestaw faktów do złożenia z osobna.
+    signature: state.sessionUuid == null ? null : signatureOf(state.sessionUuid),
     // Znak, nie identyfikator - patrz `buildMyDay`. Kafelek jest ten sam, więc
     // i ta granica jest ta sama.
     aircraft: (state.aircraftId != null ? regOf(state.aircraftId) : null) ?? '-',
@@ -137,13 +142,15 @@ function cardSpec(
  *
  * @param now      teraz (epoch ms) - wyznacza dobę dzisiejszą i stan okien korekty,
  * @param pushing  czy sync dosięga serwera (etykieta plakietki wysyłki),
- * @param regOf    identyfikator maszyny → jej ZNAK (patrz `buildMyDay`).
+ * @param regOf    identyfikator maszyny → jej ZNAK (patrz `buildMyDay`),
+ * @param signatureOf identyfikator sesji → jej SYGNATURA (`useOperationSignatures`).
  */
 export function buildHistory(
   days: HistoryDay[],
   now: number,
   pushing = false,
   regOf: (id: string) => string | null = () => null,
+  signatureOf: (sessionUuid: string) => string | null = () => null,
 ): HistoryGroups {
   const groups: HistoryGroups = { editable: [], closed: [] };
   const today = utcDayStart(now);
@@ -159,12 +166,12 @@ export function buildHistory(
     const window = correctionWindow(day.state, now);
     if (window.open && window.closesAt != null) {
       groups.editable.push({
-        ...cardSpec(day, pushing, regOf),
+        ...cardSpec(day, pushing, regOf, signatureOf),
         deadline: `Korekta do ${dateTimeUtcShort(window.closesAt)}`,
         remaining: remainingLabel(window.closesAt - now),
       });
     } else {
-      groups.closed.push(cardSpec(day, pushing, regOf));
+      groups.closed.push(cardSpec(day, pushing, regOf, signatureOf));
     }
   }
   return groups;

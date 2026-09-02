@@ -125,7 +125,7 @@
     color: var(--text-muted); text-align: center; line-height: 1.6; margin-top: -6px;
   }
 
-  /* ===== PASEK SESJI SAMOLOTU ===== */
+  /* ===== PASEK OPERACJI SAMOLOTU ===== */
   .claim-strip { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; }
   .strip-left { display: flex; align-items: center; gap: 8px; }
   .claim-icon { color: var(--blue); }
@@ -137,10 +137,10 @@
   .session-log { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
   .session-log-header { display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; border-bottom: 1px solid var(--border); background: var(--surface-raised); }
   .session-log-title { font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); }
-  /* OŚ SESJI (issue #44) - ten sam inwentarz, co na 04, 05 i 10; pełny komentarz stoi
-     w 04. Cudza sesja czyta się dokładnie tak samo jak własna: podgląd niczego nie
+  /* OŚ OPERACJI (issue #44) - ten sam inwentarz, co na 04, 05 i 10; pełny komentarz stoi
+     w 04. Cudza operacja czyta się dokładnie tak samo jak własna: podgląd niczego nie
      upraszcza, bo pilot ma na jej podstawie zdecydować, czy przejmuje maszynę.
-     Akordeon cykli odszedł razem z modelem wielu cykli (2026-08-10) - sesja ma jeden
+     Akordeon cykli odszedł razem z modelem wielu cykli (2026-08-10) - operacja ma jeden
      bieg silnika, więc nie ma czego zwijać. */
   .axis { padding: 12px 0; }
   .axis-row { display: grid; grid-template-columns: 52px 14px 1fr auto; align-items: center; gap: 8px; padding: 0 12px 0 10px; min-height: 28px; }
@@ -165,7 +165,7 @@
   .axis-dur { font-family: var(--font-mono); font-size: 11px; color: var(--green); }
   /* Znacznika outboxa (`.axis-pending`) tu NIE MA: kolejka wysyłki opisuje TEN telefon,
      a cudze zdarzenia przyszły z serwera - strzałka mówiłaby o kolejce, której nie znamy.
-     Stopki sum też nie ma: sesja trwa, więc nie ma czego sumować. */
+     Stopki sum też nie ma: operacja trwa, więc nie ma czego sumować. */
   /* read-only: BEZ kolumny edycji - podgląd nie edytuje logu */
 
   /* ===== ACTION GRID (disabled w podglądzie) ===== */
@@ -295,7 +295,7 @@
         GROUND · SILNIK WYŁĄCZONY · WG SERWERA
       </div>
 
-      <!-- PASEK SESJI SAMOLOTU - podgląd cudzej sesji.
+      <!-- PASEK OPERACJI SAMOLOTU - podgląd cudzej operacji.
            Wcześniej stał tu „Duty KRZ 02:31". Czas służby innego pilota nie jest
            informacją o SAMOLOCIE i nie ma czego wnosić do decyzji o przejęciu -
            liczy się, od kiedy maszyna jest zajęta i ile już zrobiła. -->
@@ -312,10 +312,10 @@
         <div class="claim-since">zajęty</div>
       </div>
 
-      <!-- LOG CUDZEJ SESJI (KRZ) - ta sama oś, co we własnym kokpicie i w rozliczeniu
+      <!-- LOG CUDZEJ OPERACJI (KRZ) - ta sama oś, co we własnym kokpicie i w rozliczeniu
            (issue #44). Podgląd nie ma prawa upraszczać: to na podstawie tego logu pilot
            decyduje, czy przejmuje maszynę.
-           Sumy sesji mówi PASEK wyżej („1 lot"), więc oś ich nie powtarza stopką. -->
+           Sumy operacji mówi PASEK wyżej („1 lot"), więc oś ich nie powtarza stopką. -->
       <div class="session-log">
         <div class="session-log-header">
           <span class="session-log-title">Log SP-FGK · KRZ · UTC</span>
@@ -442,14 +442,14 @@
     <span class="vp-badge">04A</span>
     <span class="vp-body">
       <span class="vp-name">Przed uruchomieniem silnika</span>
-      <span class="vp-when">Zaraz po przejęciu - pusty log sesji, START ENGINE, tankowanie i zmiana załogi. Jedyny stan ground PRZED startem; nie „start dnia" - dzień pilota mógł zacząć się wcześniej, na innej maszynie.</span>
+      <span class="vp-when">Zaraz po przejęciu - pusty log operacji, START ENGINE, tankowanie i zmiana załogi. Jedyny stan ground PRZED startem; nie „start dnia" - dzień pilota mógł zacząć się wcześniej, na innej maszynie.</span>
     </span>
   </a>
   <a class="vp-item" href="04-cockpit-ground.html">
     <span class="vp-badge">04</span>
     <span class="vp-body">
       <span class="vp-name">Po zatrzymaniu silnika</span>
-      <span class="vp-when">Sesja zakończona (sesja = jeden bieg silnika, 2026-08-10): hero ZDAJ SAMOLOT - drugiego START ENGINE nie ma, log jednej sesji, tankowanie dozwolone przed zdaniem.</span>
+      <span class="vp-when">Operacja zakończona (operacja = jeden bieg silnika, 2026-08-10): hero ZDAJ SAMOLOT - drugiego START ENGINE nie ma, log jednej operacji, tankowanie dozwolone przed zdaniem.</span>
     </span>
   </a>
   <a class="vp-item active" href="04b-cockpit-readonly.html">
@@ -463,8 +463,8 @@
   <a class="vp-item" href="10d-edycja.html">
     <span class="vp-badge blue">10D</span>
     <span class="vp-body">
-      <span class="vp-name">Popraw dane sesji (tryb edycji)</span>
-      <span class="vp-when">Poprawianie WŁASNEJ sesji: czasy zdarzeń, odczyty paliwa i MH, skład zrzutu, brakujące wpisy. Tego ekranu nie da się otworzyć dla cudzej maszyny - pisze wyłącznie PIC sesji (single-writer §4.4).</span>
+      <span class="vp-name">Popraw dane operacji (tryb edycji)</span>
+      <span class="vp-when">Poprawianie WŁASNEJ operacji: czasy zdarzeń, odczyty paliwa i MH, skład zrzutu, brakujące wpisy. Tego ekranu nie da się otworzyć dla cudzej maszyny - pisze wyłącznie PIC operacji (single-writer §4.4).</span>
     </span>
   </a>
   <a class="vp-item" href="04d-wyjscie-z-kokpitu.html">
@@ -482,7 +482,7 @@
   <a href="04a-cockpit-ground.html">04A Przed startem</a>
   <a href="04-cockpit-ground.html">04 Po zatrzymaniu</a>
   <a href="04b-cockpit-readonly.html" class="active">04B Podgląd</a>
-  <a href="10d-edycja.html">10D Edycja sesji</a>
+  <a href="10d-edycja.html">10D Edycja operacji</a>
   <a href="04d-wyjscie-z-kokpitu.html">04D Blokada wyjścia</a>
   <span>·</span>
   <a href="02-preflight.html">02 Nowy lot</a>
@@ -504,7 +504,7 @@
     document.getElementById('ss-desc').textContent = ssDesc[s];
   }
   // Akordeon cykli USUNIĘTY (issue #44) razem z ostatnim śladem modelu wielu cykli:
-  // oś sesji jest płaska, bo sesja to jeden bieg silnika.
+  // oś operacji jest płaska, bo operacja to jeden bieg silnika.
 </script>
 
 </body>

@@ -157,7 +157,7 @@ describe('EventsRepo + InMemoryAdapter', () => {
     expect(pilots[0]!.fetchedAt).toBe(12_345);
   });
 
-  it('session_meta: zapis i odczyt bieżącej sesji', async () => {
+  it('session_meta: zapis i odczyt bieżącej operacji', async () => {
     const { repo } = makeRepo();
     await repo.setCurrentSession({ sessionUuid: SESSION, pilotId: PIC, aircraftId: AC });
     expect(await repo.getCurrentSession()).toEqual({

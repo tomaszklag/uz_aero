@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+
 import type { SessionListItemDto } from '../../api/dto';
 import { voidFacts } from './sessionVoid';
 
@@ -8,6 +9,7 @@ const at = (h: number, m: number): number => DAY + h * 3600_000 + m * 60_000;
 
 const session: SessionListItemDto = {
   sessionUuid: 's-1',
+  signature: 'SP-KLM/2026-08-12/TMK/1',
   aircraftId: 'a-1',
   reg: 'SP-KLM',
   aircraftType: 'Cessna 182',
@@ -46,10 +48,12 @@ const session: SessionListItemDto = {
 };
 
 describe('potwierdzenie nazywa KONKRETNY wpis', () => {
-  it('niesie dzień, bieg silnika, pilota i to, co zniknie z rachunków', () => {
+  it('zaczyna się od NAZWY operacji, potem dzień, silnik, pilot i rachunki', () => {
     // Dwa wpisy tej samej maszyny w dobie różnią się wyłącznie godzinami - bez nich
     // pytanie „unieważnić?" nie ma jak odróżnić porannej zmiany od popołudniowej.
+    // Od issue #68 odróżnia je JEDEN napis i dlatego stoi pierwszy.
     expect(voidFacts(session)).toEqual([
+      { label: 'Operacja', value: 'SP-KLM/2026-08-12/TMK/1' },
       { label: 'Dzień', value: '12 AUG 2026' },
       { label: 'Silnik', value: '08:42 → 10:22' },
       { label: 'Pilot', value: 'T. Małkiewicz' },
@@ -58,14 +62,14 @@ describe('potwierdzenie nazywa KONKRETNY wpis', () => {
     ]);
   });
 
-  it('sesja W TOKU mówi „w toku", a nie kreskę przy godzinie wyłączenia', () => {
+  it('operacja W TOKU mówi „w toku", a nie kreskę przy godzinie wyłączenia', () => {
     // „W dowolnym momencie" obejmuje maszynę, którą ktoś właśnie trzyma - to jest
     // dokładnie ta sytuacja, w której wpis otwarty przez pomyłkę trzeba wycofać.
     const running = { ...session, status: 'active' as const, engineStopAt: null };
-    expect(voidFacts(running)[1]).toEqual({ label: 'Silnik', value: '08:42 → w toku' });
+    expect(voidFacts(running)[2]).toEqual({ label: 'Silnik', value: '08:42 → w toku' });
   });
 
-  it('sesja bez biegu silnika: kreska, nigdy zero', () => {
+  it('operacja bez biegu silnika: kreska, nigdy zero', () => {
     // `0:00` czytałoby się jak zmierzone zero, a tu nikt niczego nie zmierzył.
     const noRun = { ...session, engineStartAt: null, engineStopAt: null, blockMs: 0 };
     expect(voidFacts(noRun)).toContainEqual({ label: 'Czas blokowy', value: '—' });

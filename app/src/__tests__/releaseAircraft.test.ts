@@ -113,7 +113,7 @@ beforeEach(() => {
 });
 
 describe('buildRelease - który wariant i co wiemy', () => {
-  it('sesja z biegiem to 09B: pasek wyniku, przegląd lotów i godzina przejęcia', () => {
+  it('operacja z biegiem to 09B: pasek wyniku, przegląd lotów i godzina przejęcia', () => {
     const vm = buildRelease(session(), at('17:40'))!;
 
     expect(vm.withoutLeg).toBe(false);
@@ -131,7 +131,7 @@ describe('buildRelease - który wariant i co wiemy', () => {
     ]);
   });
 
-  it('sesja bez wzlotu to 09C - z miarą, jak długo samolot był zajęty', () => {
+  it('operacja bez wzlotu to 09C - z miarą, jak długo samolot był zajęty', () => {
     const vm = buildRelease(session({ legs: [], blockTimeMs: 0, flightTimeMs: 0 }), at('15:35'))!;
 
     expect(vm.withoutLeg).toBe(true);
@@ -203,12 +203,12 @@ describe('podpowiedzi pod odczytem końcowym', () => {
   });
 });
 
-describe('rozliczenie sesji', () => {
+describe('rozliczenie operacji', () => {
   it('wiersze są dokładnie te z mockupu 09B', () => {
     const rows = balanceRows(session(), { fuelL: 62, mh: 1241.15 }, norm());
 
     expect(rows.map((r) => [r.key, r.value])).toEqual([
-      ['Sesja', '13:40 → 15:10 · 1 lot'],
+      ['Operacja', '13:40 → 15:10 · 1 lot'],
       ['Paliwo start / koniec', '96 L → 62 L'],
       ['Średnie zużycie', '22,7 L/h · norma 20–24 L/h'],
       ['Motogodziny Δ', '+1:30'],
@@ -246,7 +246,7 @@ describe('releaseBlocker - odczyt jest tu WYMAGANY (§3.6)', () => {
     );
   });
 
-  it('progiem jest stan przy przejęciu - jedyny znany punkt łańcucha wewnątrz sesji', () => {
+  it('progiem jest stan przy przejęciu - jedyny znany punkt łańcucha wewnątrz operacji', () => {
     // Ekran musi ostrzegać dokładnie tam, gdzie komenda odmówi. Po 2026-08-10 nie ma
     // pośrednich odczytów per wzlot, więc próg to zawsze odczyt z przejęcia.
     const state = session({ legs: [leg('13:40', '15:10')] });
@@ -278,7 +278,7 @@ describe('releaseBlocker - odczyt jest tu WYMAGANY (§3.6)', () => {
     expect(releaseBlocker(empty, reading, 'weather')).toBeNull();
   });
 
-  it('sesja ZE WZLOTAMI nie pyta o powód - nie ma o co pytać', () => {
+  it('operacja ZE WZLOTAMI nie pyta o powód - nie ma o co pytać', () => {
     expect(releaseBlocker(session(), { fuelL: 62, mh: 1241.15 }, null)).toBeNull();
   });
 });

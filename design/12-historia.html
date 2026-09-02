@@ -51,7 +51,7 @@
 
   .group-lbl { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:2px 2px 0; }
 
-  /* karta SESJI (nie doby - patrz komentarz przy pierwszej karcie) */
+  /* karta OPERACJI (nie doby - patrz komentarz przy pierwszej karcie) */
   .day-card {
     background:var(--surface); border:1px solid var(--border); border-radius:14px;
     padding:13px 14px; display:flex; flex-direction:column; gap:9px;
@@ -63,7 +63,12 @@
   .day-top { display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
   .day-date { font-family:var(--font-display); font-size:21px; letter-spacing:1.5px; color:var(--text-primary); line-height:1; }
   .day-ac { font-family:var(--font-mono); font-size:11px; letter-spacing:1.5px; color:var(--green); }
-  /* Godziny biegu silnika - bez nich dwie sesje tej samej doby różnią się wyłącznie
+  /* SYGNATURA OPERACJI (issue #68) - „SP-AXA/2026-08-06/TMK/1". Zastępuje znak
+     maszyny, bo zaczyna się od niego; własna linia, bo identyfikatora nie wolno uciąć
+     wielokropkiem. Odstęp międzyliterowy węższy niż przy znaku: przy 23 znakach 1,5 px
+     rozpycha napis na całą szerokość karty. */
+  .day-sig { font-family:var(--font-mono); font-size:11px; line-height:14px; letter-spacing:0.5px; color:var(--green); margin-top:-4px; }
+  /* Godziny biegu silnika - bez nich dwie operacje tej samej doby różnią się wyłącznie
      rejestracją, a pilot latający dwa razy tą samą maszyną nie odróżniłby ich wcale. */
   .day-times { font-family:var(--font-mono); font-size:10px; letter-spacing:0.5px; color:var(--text-muted); margin-top:-4px; }
   .day-stats { display:flex; gap:14px; flex-wrap:wrap; }
@@ -82,7 +87,7 @@
 
   .cta-correct { display:flex; align-items:center; justify-content:center; gap:8px; min-height:44px; border-radius:11px; border:1px solid var(--blue-border); background:var(--blue-muted); color:var(--blue); font-family:var(--font-display); font-size:16px; letter-spacing:2px; text-decoration:none; }
   .cta-correct:hover { background:rgba(52,152,219,0.18); }
-  /* Podgląd sesji po oknie - ten sam kształt pasa, ton neutralny: to oglądanie,
+  /* Podgląd operacji po oknie - ten sam kształt pasa, ton neutralny: to oglądanie,
      nie akcja. Bez niego karta wyglądała na martwą i pilot nie miał jak sprawdzić,
      co właściwie zapisał (issue #35 pkt 2). */
   .cta-view { display:flex; align-items:center; justify-content:center; gap:8px; min-height:44px; border-radius:11px; border:1px solid var(--border-strong); background:var(--surface-raised); color:var(--text-secondary); font-family:var(--font-display); font-size:16px; letter-spacing:2px; text-decoration:none; }
@@ -114,7 +119,7 @@
 
 <header class="canvas-label">
   <span class="film-strip">UZ AERO - 12</span>
-  <span class="slug">poprzednie dni · sesje zamknięte</span>
+  <span class="slug">poprzednie dni · operacje zamknięte</span>
   <span class="canvas-meta"><span class="pulse"></span>Ekran 12</span>
 </header>
 
@@ -144,26 +149,26 @@
 
       <div class="group-lbl">Możesz jeszcze poprawić</div>
 
-      <!-- KARTA = SESJA, nie doba (decyzja przy issue #35).
-           Jedna sesja to jeden bieg silnika, więc doba z dwiema sesjami daje TU dwie
+      <!-- KARTA = OPERACJA, nie doba (decyzja przy issue #35).
+           Jedna operacja to jeden bieg silnika, więc doba z dwiema operacjami daje TU dwie
            karty z tą samą datą - i o to chodzi: kafelek otwiera rozliczenie (10),
            a rozliczenie opisuje JEDNĄ maszynę. Kafelek-doba nie miałby czego otworzyć,
            bo paliwo i motogodziny dwóch maszyn nie sumują się w jedną liczbę.
 
-           DZISIEJSZYCH SESJI TU NIE MA (issue #35 pkt 1) - stoją na „Mój dzień" (01),
+           DZISIEJSZYCH OPERACJI TU NIE MA (issue #35 pkt 1) - stoją na „Mój dzień" (01),
            na TAKICH SAMYCH kafelkach (issue #42: jeden komponent na oba ekrany, tam
-           z numerem sesji zamiast daty). Ekran nazywa się „Poprzednie dni” i pokazuje
+           z numerem operacji zamiast daty). Ekran nazywa się „Poprzednie dni” i pokazuje
            dokładnie to.
 
            UWAGA co do dat: dziś jest 12 SIE 2026, więc najświeższe karty to 11 SIE. -->
       <a href="10-statystyki.html" class="day-card editable">
         <div class="day-top">
           <span class="day-date">11 SIERPNIA 2026</span>
-          <span class="day-ac">SP-KLM</span>
         </div>
+        <div class="day-sig">SP-KLM/2026-08-11/TMK/2</div>
         <div class="day-times">14:20 → 16:02 UTC</div>
         <div class="day-stats">
-          <!-- Te same trzy wielkości i te same nazwy, co na kafelku sesji na „Mój dzień"
+          <!-- Te same trzy wielkości i te same nazwy, co na kafelku operacji na „Mój dzień"
                (issue #35 pkt 6; od issue #42 to dosłownie ten sam komponent):
                liczba lotów, czas blokowy, czas w powietrzu.
                Skoczkowie wypadli - są w szczegółach lotu, a na kafelku zajmowali
@@ -182,16 +187,16 @@
         </div>
       </a>
 
-      <!-- Druga sesja TEJ SAMEJ doby, inna maszyna - i z zaległością wysyłki.
+      <!-- Druga operacja TEJ SAMEJ doby, inna maszyna - i z zaległością wysyłki.
            Plakietka mówi, co się z zapisem dzieje: „oczekuje na przesłanie" (kolejka
            czeka na sieć) albo „w trakcie wysyłania" (pętla synca właśnie pracuje).
-           Trzeciego napisu nie ma - sesja wysłana nie pokazuje NICZEGO, bo to stan
+           Trzeciego napisu nie ma - operacja wysłana nie pokazuje NICZEGO, bo to stan
            domyślny (issue #35 pkt 3). -->
       <a href="10-statystyki.html" class="day-card editable">
         <div class="day-top">
           <span class="day-date">11 SIERPNIA 2026</span>
-          <span class="day-ac">SP-AXA</span>
         </div>
+        <div class="day-sig">SP-AXA/2026-08-11/TMK/1</div>
         <div class="day-times">08:12 → 10:34 UTC</div>
         <div class="day-stats">
           <span class="stat"><span class="stat-k">Loty</span><span class="stat-v">3</span></span>
@@ -213,7 +218,7 @@
 
       <div class="group-lbl" style="margin-top:4px;">Zamknięte</div>
 
-      <!-- SESJE PO OKNIE 24 H.
+      <!-- OPERACJE PO OKNIE 24 H.
            Karta jest klikalna tak samo jak ta z okna korekty - prowadzi do TEGO SAMEGO
            rozliczenia, tylko w wariancie bez edycji (10B): bez ołówków przy lotach
            i bez „Edytuj dane". Tag „Okno minęło" USUNIĘTY (issue #35 pkt 4): mówił to
@@ -221,8 +226,8 @@
       <a href="10b-rozliczenie-zamkniete.html" class="day-card">
         <div class="day-top">
           <span class="day-date">09 SIERPNIA 2026</span>
-          <span class="day-ac">SP-AXA</span>
         </div>
+        <div class="day-sig">SP-AXA/2026-08-09/TMK/1</div>
         <div class="day-times">07:48 → 09:06 UTC</div>
         <div class="day-stats">
           <span class="stat"><span class="stat-k">Loty</span><span class="stat-v">1</span></span>
@@ -236,19 +241,19 @@
         </div>
       </a>
 
-      <!-- Sesja zdana BEZ LOTU (09C) - pogoda, usterka, odwołane zadanie.
+      <!-- Operacja zdana BEZ LOTU (09C) - pogoda, usterka, odwołane zadanie.
            Silnik chodził 14 minut, w powietrze nikt nie poszedł: „Lot - -", nie zero.
            Kafelek istnieje, bo maszyna była zajęta i to jest fakt do obejrzenia. -->
       <a href="10b-rozliczenie-zamkniete.html" class="day-card">
         <div class="day-top">
           <span class="day-date">07 SIERPNIA 2026</span>
-          <span class="day-ac">SP-FGK</span>
         </div>
+        <div class="day-sig">SP-FGK/2026-08-07/TMK/1</div>
         <div class="day-times">11:02 → 11:16 UTC</div>
         <div class="day-stats">
           <span class="stat"><span class="stat-k">Loty</span><span class="stat-v">0</span></span>
           <span class="stat"><span class="stat-k">Blok</span><span class="stat-v">0:14</span></span>
-          <!-- „0:00", nie „- -": kafelek powtarza dokładnie to, co kafelek sesji na 01,
+          <!-- „0:00", nie „- -": kafelek powtarza dokładnie to, co kafelek operacji na 01,
                a tam czas lotu jest wyliczoną sumą i przy braku lotów wynosi zero. -->
           <span class="stat"><span class="stat-k">Lot</span><span class="stat-v">0:00</span></span>
         </div>
@@ -260,7 +265,7 @@
 
       <div class="locked-note">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        <span>Sesje po oknie 24 h możesz oglądać, ale nie zmieniać. Jeśli znalazłeś błąd - zgłoś go administratorowi; poprawka zostanie dopisana jako korekta, bez kasowania oryginalnego zapisu.</span>
+        <span>Operacje po oknie 24 h możesz oglądać, ale nie zmieniać. Jeśli znalazłeś błąd - zgłoś go administratorowi; poprawka zostanie dopisana jako korekta, bez kasowania oryginalnego zapisu.</span>
       </div>
 
     </div>
@@ -273,29 +278,29 @@
     <span class="vp-badge">12</span>
     <span class="vp-body">
       <span class="vp-name">Poprzednie dni</span>
-      <span class="vp-when">Wejście z „Mój dzień". Kafelek = JEDNA SESJA (bieg silnika), więc doba z dwiema sesjami daje dwie karty - kafelek otwiera ekran sesji, a ten opisuje jedną maszynę. Dzisiejszych sesji tu nie ma: te stoją na 01. Sesja w oknie 24 h jest niebieska i prowadzi do korekty; sesja po oknie - do podglądu bez edycji.</span>
+      <span class="vp-when">Wejście z „Mój dzień". Kafelek = JEDNA OPERACJA (bieg silnika), więc doba z dwiema operacjami daje dwie karty - kafelek otwiera ekran operacji, a ten opisuje jedną maszynę. Dzisiejszych operacji tu nie ma: te stoją na 01. Operacja w oknie 24 h jest niebieska i prowadzi do korekty; operacja po oknie - do podglądu bez edycji.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
   <a class="vp-item" href="10-statystyki.html">
     <span class="vp-badge">10</span>
     <span class="vp-body">
-      <span class="vp-name">Sesja - w oknie korekty</span>
-      <span class="vp-when">Bilans jednej sesji (paliwo, MH, zrzuty) z ołówkami przy lotach - tu prowadzi karta z grupy „Możesz jeszcze poprawić".</span>
+      <span class="vp-name">Operacja - w oknie korekty</span>
+      <span class="vp-when">Bilans jednej operacji (paliwo, MH, zrzuty) z ołówkami przy lotach - tu prowadzi karta z grupy „Możesz jeszcze poprawić".</span>
     </span>
   </a>
   <a class="vp-item" href="10b-rozliczenie-zamkniete.html">
     <span class="vp-badge amber">10B</span>
     <span class="vp-body">
-      <span class="vp-name">Sesja - po oknie (podgląd)</span>
+      <span class="vp-name">Operacja - po oknie (podgląd)</span>
       <span class="vp-when">Ten sam ekran bez jednego elementu edycji: brak ołówków w tabeli lotów, brak „Edytuj dane". Cel karty z grupy „Zamknięte" (issue #35 pkt 2).</span>
     </span>
   </a>
   <a class="vp-item" href="10d-edycja.html">
     <span class="vp-badge">10D</span>
     <span class="vp-body">
-      <span class="vp-name">Popraw dane sesji (tryb edycji)</span>
-      <span class="vp-when">Czasy zdarzeń, odczyty paliwa i MH, skład zrzutu i brakujące wpisy. Append-only. Osiągalny wyłącznie z sesji w oknie 24 h - karta z grupy „Zamknięte" otwiera podgląd (10B), w którym przycisku „Edytuj dane" nie ma.</span>
+      <span class="vp-name">Popraw dane operacji (tryb edycji)</span>
+      <span class="vp-when">Czasy zdarzeń, odczyty paliwa i MH, skład zrzutu i brakujące wpisy. Append-only. Osiągalny wyłącznie z operacji w oknie 24 h - karta z grupy „Zamknięte" otwiera podgląd (10B), w którym przycisku „Edytuj dane" nie ma.</span>
     </span>
   </a>
 </aside>
@@ -305,9 +310,9 @@
   <span>·</span>
   <a href="01-moj-dzien.html">← 01 Mój dzień</a>
   <a href="12-historia.html" class="active">12 Poprzednie dni</a>
-  <a href="10-statystyki.html">10 Sesja →</a>
+  <a href="10-statystyki.html">10 Operacja →</a>
   <a href="10b-rozliczenie-zamkniete.html">10B Podgląd</a>
-  <a href="10d-edycja.html">10D Edycja sesji</a>
+  <a href="10d-edycja.html">10D Edycja operacji</a>
 </nav>
 
 </body>

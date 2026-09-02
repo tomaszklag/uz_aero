@@ -89,7 +89,7 @@
   .scroll > * { flex-shrink:0; }
 
   /* ===== Log dnia (identyczny z 01 - treść pod arkuszem) =====
-     Kafelek sesji = ten sam komponent, co na „Poprzednich dniach" (issue #42).
+     Kafelek operacji = ten sam komponent, co na „Poprzednich dniach" (issue #42).
      Offline nie zmienia w nim NICZEGO: log dnia liczy się z lokalnego strumienia
      (§6 pkt 1), więc jest zawsze świeży - jedynym śladem sieci jest pill w nagłówku. */
   .group-lbl { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:2px 2px 0; }
@@ -102,6 +102,11 @@
   .day-top { display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
   .day-title { font-family:var(--font-display); font-size:21px; letter-spacing:1.5px; color:var(--text-primary); line-height:1; }
   .day-ac { font-family:var(--font-mono); font-size:11px; letter-spacing:1.5px; color:var(--green); }
+  /* SYGNATURA OPERACJI (issue #68) - „SP-AXA/2026-08-06/TMK/1". Zastępuje znak
+     maszyny, bo zaczyna się od niego; własna linia, bo identyfikatora nie wolno uciąć
+     wielokropkiem. Odstęp międzyliterowy węższy niż przy znaku: przy 23 znakach 1,5 px
+     rozpycha napis na całą szerokość karty. */
+  .day-sig { font-family:var(--font-mono); font-size:11px; line-height:14px; letter-spacing:0.5px; color:var(--green); margin-top:-4px; }
   .day-times { font-family:var(--font-mono); font-size:10px; letter-spacing:0.5px; color:var(--text-muted); margin-top:-4px; }
   .day-stats { display:flex; gap:14px; flex-wrap:wrap; }
   .stat { display:flex; flex-direction:column; gap:2px; }
@@ -113,7 +118,7 @@
     color:var(--text-secondary); font-family:var(--font-display); font-size:16px; letter-spacing:2px;
   }
   .totals-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
-  /* Trzy kolumny od 2026-08-16 - Loty · Blok · Lot, tak jak na kafelku sesji. */
+  /* Trzy kolumny od 2026-08-16 - Loty · Blok · Lot, tak jak na kafelku operacji. */
   .totals { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1px; background:var(--border); }
   .total-cell { background:var(--surface); padding:10px 12px; display:flex; flex-direction:column; gap:3px; }
   .total-key { font-family:var(--font-mono); font-size:7px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
@@ -247,9 +252,9 @@
 
       <a href="10-statystyki.html" class="day-card">
         <div class="day-top">
-          <span class="day-title">SESJA 1</span>
-          <span class="day-ac">SP-AXA</span>
+          <span class="day-title">OPERACJA 1</span>
         </div>
+        <div class="day-sig">SP-AXA/2026-08-06/TMK/1</div>
         <div class="day-times">08:12 → 09:05 UTC</div>
         <div class="day-stats">
           <span class="stat"><span class="stat-k">Loty</span><span class="stat-v">2</span></span>
@@ -264,9 +269,9 @@
 
       <a href="10-statystyki.html" class="day-card">
         <div class="day-top">
-          <span class="day-title">SESJA 2</span>
-          <span class="day-ac">SP-AXA</span>
+          <span class="day-title">OPERACJA 2</span>
         </div>
+        <div class="day-sig">SP-AXA/2026-08-06/TMK/2</div>
         <div class="day-times">10:20 → 11:02 UTC</div>
         <div class="day-stats">
           <span class="stat"><span class="stat-k">Loty</span><span class="stat-v">1</span></span>
@@ -281,9 +286,9 @@
 
       <a href="10-statystyki.html" class="day-card">
         <div class="day-top">
-          <span class="day-title">SESJA 3</span>
-          <span class="day-ac">SP-KLM</span>
+          <span class="day-title">OPERACJA 3</span>
         </div>
+        <div class="day-sig">SP-KLM/2026-08-06/TMK/3</div>
         <div class="day-times">13:40 → 15:10 UTC</div>
         <div class="day-stats">
           <span class="stat"><span class="stat-k">Loty</span><span class="stat-v">2</span></span>
@@ -411,13 +416,13 @@
     <span class="vp-badge">01</span>
     <span class="vp-body">
       <span class="vp-name">Dzień w toku</span>
-      <span class="vp-when">Standard po pierwszej sesji: płaska oś czasu sesji doby, sumy Blok / Loty. Online - bez pilla (SyncChip online nie rysuje nic, issue #12).</span>
+      <span class="vp-when">Standard po pierwszej operacji: płaska oś czasu operacji doby, sumy Blok / Loty. Online - bez pilla (SyncChip online nie rysuje nic, issue #12).</span>
     </span>
   </a>
   <a class="vp-item" href="01a-moj-dzien-pusty.html">
     <span class="vp-badge blue">01A</span>
     <span class="vp-body">
-      <span class="vp-name">Początek dnia - zero sesji</span>
+      <span class="vp-name">Początek dnia - zero operacji</span>
       <span class="vp-when">Pilot wszedł do aplikacji i nie przejął jeszcze nic: pusty log dnia, cały ekran prowadzi do przejęcia samolotu.</span>
     </span>
   </a>
@@ -444,7 +449,7 @@
   <a href="00-login.html">← 00 Login</a>
   <span>·</span>
   <a href="01-moj-dzien.html">01 Mój dzień</a>
-  <a href="01a-moj-dzien-pusty.html">01A Zero sesji</a>
+  <a href="01a-moj-dzien-pusty.html">01A Zero operacji</a>
   <a href="01c-moj-dzien-offline.html">01C Offline</a>
   <a href="01d-sync-stoi.html" class="active">01D Sync stoi</a>
   <span>·</span>

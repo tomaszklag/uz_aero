@@ -107,7 +107,7 @@
   .field-unit { font-family:var(--font-mono); font-size:12px; color:var(--text-secondary); }
   .field-sub { font-family:var(--font-mono); font-size:9px; color:var(--text-muted); margin-top:5px; letter-spacing:0.5px; }
 
-  /* Rozliczenie sesji - policzone, nie do wpisania */
+  /* Rozliczenie operacji - policzone, nie do wpisania */
   .balance-row {
     display:flex; align-items:center; justify-content:space-between;
     padding:9px 12px; border-bottom:1px solid var(--border);
@@ -177,7 +177,7 @@
 
 <header class="canvas-label">
   <span class="film-strip">UZ AERO - 09B</span>
-  <span class="slug">zdaj samolot · zatwierdzenie logu sesji</span>
+  <span class="slug">zdaj samolot · zatwierdzenie logu operacji</span>
   <span class="canvas-meta"><span class="pulse"></span>Po locie</span>
 </header>
 
@@ -219,11 +219,11 @@
 
       <!-- PRZEGLĄD LOTÓW - sekcja przejęta z dawnego ekranu 09 (scalenie 2026-08-10).
            Czasy pochodzą z detekcji i są TYLKO do przejrzenia: poprawki robi się
-           korektą w logu kokpitu (04C), zanim pilot zatwierdzi sesję tym ekranem.
+           korektą w logu kokpitu (04C), zanim pilot zatwierdzi operację tym ekranem.
            Zdanie samolotu jest zatwierdzeniem CAŁEGO logu - dlatego przegląd stoi
            nad odczytami: najpierw „czy to się zgadza", potem „ile zostało". -->
       <div class="form-section">
-        <div class="form-section-title"><span>Loty tej sesji · czasy UTC · z detekcji</span></div>
+        <div class="form-section-title"><span>Loty tej operacji · czasy UTC · z detekcji</span></div>
         <div class="balance-row">
           <span class="balance-key">Lot 1</span>
           <span class="balance-val">13:48 → 14:35 · 0:47</span>
@@ -238,7 +238,7 @@
         </div>
       </div>
 
-      <!-- Liczniki: odczyt WYMAGANY - zapis tego ekranu zatwierdza log sesji -->
+      <!-- Liczniki: odczyt WYMAGANY - zapis tego ekranu zatwierdza log operacji -->
       <div class="form-section">
         <div class="form-section-title">
           <span>Odczyt końcowy</span>
@@ -271,7 +271,7 @@
         <svg class="handover-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         <span class="handover-text">Te odczyty - <b>62 L</b> i <b>1 241:09 MH</b> - zobaczy następny pilot jako
         <strong>przekazanie</strong>. Stają się ogniwem łańcucha SP-KLM: serwer porównuje z nimi start
-        kolejnej sesji i flaguje dziury albo cofnięcia licznika.</span>
+        kolejnej operacji i flaguje dziury albo cofnięcia licznika.</span>
         <button class="edu-dismiss" onclick="eduCollapse('eduHandover')" title="Rozumiem - schowaj wyjaśnienie">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
@@ -284,7 +284,7 @@
       <div class="form-section">
         <div class="form-section-title"><span>Rozliczenie tego samolotu</span></div>
         <div class="balance-row">
-          <span class="balance-key">Sesja</span>
+          <span class="balance-key">Operacja</span>
           <span class="balance-val">13:40 → 15:10 · 2 loty</span>
         </div>
         <div class="balance-row">
@@ -306,7 +306,7 @@
       <div class="status-box">
         <svg class="status-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
         <span class="status-text">Zdajesz samolot, <b>nie kończysz dnia</b>. Loty zostają w „Mój dzień",
-        a jeśli za chwilę przejmiesz inny samolot, jego sesja dopisze się do listy dnia.</span>
+        a jeśli za chwilę przejmiesz inny samolot, jego operacja dopisze się do listy dnia.</span>
       </div>
 
       <a href="01-moj-dzien.html" class="btn-primary-red">
@@ -323,14 +323,14 @@
 <aside class="variants-panel">
   <div class="vp-title">Warianty tego ekranu - kiedy który?</div>
   <!-- Ekrany 09 (zamknięcie wzlotu) i 09A (seria skokowa) USUNIĘTE 2026-08-10:
-       sesja = jeden bieg silnika, więc nie ma już osobnego „zamknięcia wzlotu" -
+       operacja = jeden bieg silnika, więc nie ma już osobnego „zamknięcia wzlotu" -
        przegląd czasów przeszedł na ten ekran, a odczyty z opcjonalnych stały się
-       obowiązkowe. Seria skokowa to dziś JEDNA sesja z wieloma lotami. -->
+       obowiązkowe. Seria skokowa to dziś JEDNA operacja z wieloma lotami. -->
   <a class="vp-item active" href="09b-zdaj-samolot.html">
     <span class="vp-badge red">09B</span>
     <span class="vp-body">
       <span class="vp-name">Zdanie samolotu</span>
-      <span class="vp-when">Po STOP ENGINE (kokpit 04 prowadzi tu hero „ZDAJ SAMOLOT"). Odczyty paliwa i MH są OBOWIĄZKOWE - stają się przekazaniem i ogniwem łańcucha MH, a zapis ZATWIERDZA log całej sesji. Dzień pilota trwa dalej.</span>
+      <span class="vp-when">Po STOP ENGINE (kokpit 04 prowadzi tu hero „ZDAJ SAMOLOT"). Odczyty paliwa i MH są OBOWIĄZKOWE - stają się przekazaniem i ogniwem łańcucha MH, a zapis ZATWIERDZA log całej operacji. Dzień pilota trwa dalej.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>

@@ -8,13 +8,13 @@
 ## Przepływ ekranów (screen flow)
 
 > **Przebudowany 2026-08-06** (`_main.md.txt` §3.6a), a **2026-08-11 (issue #23) klamra
-> służby znikła w całości**: dzień pilota to lista sesji - niczego się nie otwiera ani
-> nie zamyka. Wszystko wraca do `01`, jednostką potwierdzenia jest sesja.
+> służby znikła w całości**: dzień pilota to lista operacji - niczego się nie otwiera ani
+> nie zamyka. Wszystko wraca do `01`, jednostką potwierdzenia jest operacja.
 
 ```
 00-login (odblokowanie PIN · warianty: 00a pełny login, 00b offline bez profilu)
-  → 01-moj-dzien          EKRAN DOMOWY - płaski log sesji dnia (oś czasu, rejestracja
-                          jako informacja wiersza; warianty: 01a zero sesji,
+  → 01-moj-dzien          EKRAN DOMOWY - płaski log operacji dnia (oś czasu, rejestracja
+                          jako informacja wiersza; warianty: 01a zero operacji,
                           01c offline + arkusz szczegółów synchronizacji)
 
 Nowy lot (trzy kroki, kilka sekund - nie otwiera doby):
@@ -25,7 +25,7 @@ Nowy lot (trzy kroki, kilka sekund - nie otwiera doby):
     02c-preflight-moto      (modal: korekta MH - wizualizacja)
   → 04a-cockpit-ground    (świeżo przejęty samolot, log pusty)
 
-Cockpit cycle (jeden bieg silnika na sesję):
+Cockpit cycle (jeden bieg silnika na operację):
   04a / 04-cockpit-ground   (silnik OFF - przed uruchomieniem / po zatrzymaniu: hero ZDAJ SAMOLOT)
   04b-cockpit-readonly      (podgląd cudzego samolotu - zajęty przez innego PIC)
     ↓ Start engine
@@ -41,22 +41,22 @@ Cockpit cycle (jeden bieg silnika na sesję):
     ↓ kolejny T/O → 05b  /  Stop engine → 04 (hero ZDAJ SAMOLOT)
 
   akcje ground: 04a (przed startem) → 06-tankowanie · 07-zmiana-zalogi;
-                04 (po zatrzymaniu) → 06-tankowanie · 10d-edycja (tryb edycji sesji, powrót do kokpitu)
+                04 (po zatrzymaniu) → 06-tankowanie · 10d-edycja (tryb edycji operacji, powrót do kokpitu)
 
-Zdanie samolotu (model 2026-08-10 - sesja = jeden bieg silnika; ekrany 09 i 09a USUNIĘTE):
+Zdanie samolotu (model 2026-08-10 - operacja = jeden bieg silnika; ekrany 09 i 09a USUNIĘTE):
   STOP ENGINE → 04 (hero ZDAJ SAMOLOT - drugiego startu nie ma) ↓
-  09b-zdaj-samolot          (przegląd lotów sesji + odczyt WYMAGANY - przekazanie,
-                             ogniwo łańcucha MH i ZATWIERDZENIE logu sesji;
+  09b-zdaj-samolot          (przegląd lotów operacji + odczyt WYMAGANY - przekazanie,
+                             ogniwo łańcucha MH i ZATWIERDZENIE logu operacji;
                              09c - zdanie bez lotu: pogoda, usterka)
-  → 01-moj-dzien            kolejna sesja dopisuje się do listy dnia;
+  → 01-moj-dzien            kolejna operacja dopisuje się do listy dnia;
                             z 01 także [15] ręczny wpis CAŁEGO lotu po fakcie
 
 Odnogi pod 01 (nie etapy dnia):
-  10-statystyki  SESJA: ślad całego biegu silnika ze znacznikami startów i lądowań,
+  10-statystyki  OPERACJA: ślad całego biegu silnika ze znacznikami startów i lądowań,
                  oś czasu (przejęcie → uruchomienie → kołowanie, starty, zrzuty,
                  lądowania → wyłączenie → zdanie), rachunki paliwa i motogodzin
                  zakończone PLAKIETKĄ werdyktu, notatki pilota. Wejście KAFELKIEM
-                 sesji na 01 albo takim samym kafelkiem w historii (10a - bez lotu,
+                 operacji na 01 albo takim samym kafelkiem w historii (10a - bez lotu,
                  10b - po oknie korekty, tylko odczyt, 10c - arkusz normy pod
                  plakietką); niczego się tu nie zatwierdza: zdanie samolotu już
                  potwierdziło dane, a czasy poprawia się przyciskiem EDYTUJ DANE
@@ -64,8 +64,8 @@ Odnogi pod 01 (nie etapy dnia):
     → 14-slad    pełny ślad pod miniaturą: trasa, profil pionowy z przerwą na ziemi,
                  log punktów (14b - stan zabezpieczający, gdy zapis zniknął).
                  Issue #38: ekran 16 usunięty - zapis GPS powstaje w JEDNYM ciągu,
-                 więc ślad opisuje SESJĘ, a loty są na nim znacznikami
-  12-historia    poprzednie dni pilota (sesje spoza dzisiejszej doby), okno korekty 24 h
+                 więc ślad opisuje OPERACJĘ, a loty są na nim znacznikami
+  12-historia    poprzednie dni pilota (operacje spoza dzisiejszej doby), okno korekty 24 h
   13-ustawienia  motyw · PIN · konto · synchronizacja (kolejka, uwagi serwera,
                  awaryjny sync - dawny ekran 11) · diagnostyka GPS
 ```
@@ -75,7 +75,7 @@ Odnogi pod 01 (nie etapy dnia):
 ## Preflight - założenia
 
 ### Tożsamość pilota i samolotu
-- Pilot loguje się raz na ekranie `00-login` - tożsamość znana przez całą sesję
+- Pilot loguje się raz na ekranie `00-login` - tożsamość znana przez całą operację
 - Logowanie = jednorazowe provisioning (online; konto zakłada administrator, bez Google OAuth);
   codzienne wejście = odblokowanie PIN-em offline; wygasły token nie wylogowuje
   (szczegóły: `docs/_main.md.txt` sekcja 3.0)
@@ -91,7 +91,7 @@ Odnogi pod 01 (nie etapy dnia):
 **Co zniknęło i dlaczego** (przebudowa flow, `_main.md.txt` §3.6a):
 - **czas meldowania z kroku 1** - pytanie „od kiedy jesteś na służbie" stało między pilotem
   a samolotem, a mierzyło wielkość, której model już nie zna: klamra służby została
-  usunięta w całości (issue #23) - dzień pilota to lista sesji i nie ma godziny, którą
+  usunięta w całości (issue #23) - dzień pilota to lista operacji i nie ma godziny, którą
   trzeba by deklarować. Rozpoczęcie lotu ma trwać kilka sekund, nie otwierać doby
 - **krok 4 (ekran 03, podsumowanie)** - powtarzał to, co pilot wpisał sekundę wcześniej,
   i był czwartym tapnięciem w drodze do samolotu. Odczyty z kroku 3 SĄ potwierdzeniem
@@ -111,16 +111,16 @@ ustępuje bez pytania - pierwsza zmiana któregokolwiek pola wyłącza ją do ko
 
 Sekcja „Służba" na 01 (meldunek / koniec służby / „Zamknij dzień") istniała między
 2026-08-06 a 2026-08-11 i została usunięta W CAŁOŚCI, razem z modelem: do pilota
-w danym dniu przypisana jest lista sesji i nie ma sensu opakowywać jej w klamrę
+w danym dniu przypisana jest lista operacji i nie ma sensu opakowywać jej w klamrę
 „od meldunku do zamknięcia" - ta wielkość niczego nie mierzyła. Ekran 01 pokazuje
-płaski log sesji (oś czasu; rejestracja jest informacją wiersza, nie osią grupowania)
+płaski log operacji (oś czasu; rejestracja jest informacją wiersza, nie osią grupowania)
 i dwie sumy: **Blok** i **Loty**. Edu-baner tłumaczący regułę klamry odszedł razem
-z regułą. Dnia się nie otwiera i nie zamyka - zaczyna się pierwszą sesją.
+z regułą. Dnia się nie otwiera i nie zamyka - zaczyna się pierwszą operacją.
 
 ### Strefa czasowa - reguła nadrzędna
 
 **UTC jest domyślnym czasem w całej aplikacji.** Wszystkie czasy zdarzeń (log samolotu,
-sesje dnia, T/O, LDG, tankowanie, start/stop silnika, arkusz w eksporcie) są w UTC -
+operacje dnia, T/O, LDG, tankowanie, start/stop silnika, arkusz w eksporcie) są w UTC -
 czas nieoznaczony = UTC.
 LT nie pojawia się już nigdzie: jedynym miejscem był meldunek klamry służby na `01`,
 usunięty razem z klamrą (issue #23).
@@ -166,14 +166,14 @@ a kokpitem, do którego prowadzi „ROZPOCZNIJ LOT":
 - Paliwo: 150 L
 - Motogodziny: 1 234:30 MH (format hh:mm z konfiguracji SP-AXA)
 - Godzina przejęcia: **08:04 UTC** - ta sama na 04A („Twój od 08:04"), na 04 i w rozliczeniu
-  sesji na 10. Log samolotu nie może zaczynać się przed tą godziną
+  operacji na 10. Log samolotu nie może zaczynać się przed tą godziną
 
 ---
 
 ## Cockpit Ground - założenia
 
 ### Dwa warianty ekranu
-- `04a-cockpit-ground` - **świeżo przejęty samolot**: log pusty, START ENGINE prominentny. NIE „start dnia" - dzień pilota mógł zacząć się wcześniej, na innej maszynie. Paska sesji tu NIE MA (2026-08-10): przy zerze wzlotów mówił „jeszcze żadnego wzlotu" jako trzecia deklaracja braku na jednym ekranie, a jego link „Mój dzień →" był jedyną drogą powrotną z kokpitu - a tej nie ma być, bo samolot oddaje się przez 09b
+- `04a-cockpit-ground` - **świeżo przejęty samolot**: log pusty, START ENGINE prominentny. NIE „start dnia" - dzień pilota mógł zacząć się wcześniej, na innej maszynie. Paska operacji tu NIE MA (2026-08-10): przy zerze wzlotów mówił „jeszcze żadnego wzlotu" jako trzecia deklaracja braku na jednym ekranie, a jego link „Mój dzień →" był jedyną drogą powrotną z kokpitu - a tej nie ma być, bo samolot oddaje się przez 09b
 - `04b-cockpit-readonly` - **podgląd cudzego samolotu** (single-writer): banner „tylko odczyt",
   log i stan z serwera, akcje disabled z podanym powodem, przycisk „Przejmij" → flow w 02
 - `04-cockpit-ground` - **w trakcie dnia**: log z historią cykli, akcje ground dostępne
@@ -292,7 +292,7 @@ wolno go zamknąć:
   ikona pytajnika + krótka etykieta); klik chipu przywraca baner. Kolor chipu = akcent
   banera (niebieski/zielony).
 - **Stan „schowany" zapamiętany NA STAŁE per pilot** (localStorage / profil) - to sedno.
-  Baner nie wraca rozwinięty co sesję; chip to rzadka furtka, nie powtarzalny obowiązek.
+  Baner nie wraca rozwinięty co operację; chip to rzadka furtka, nie powtarzalny obowiązek.
   Dzień 1 uczy pełnymi banerami, dzień 3 to czysty ekran z dyskretnymi chipami.
 - **Opcjonalny przycisk akcji pod treścią** (`Banner.action`, `.hint-action` w mockupach;
   uwaga z urządzenia, 2026-08-27): baner tłumaczący, skąd wzięło się coś na ekranie,

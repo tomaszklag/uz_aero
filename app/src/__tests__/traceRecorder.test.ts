@@ -40,7 +40,7 @@ class TraceServer implements ServerPort {
   }
 
   getSessionTrack = async (): Promise<never> => {
-    throw new Error('ta atrapa nie obsługuje śladu sesji');
+    throw new Error('ta atrapa nie obsługuje śladu operacji');
   };
 
   login = async (): Promise<AuthTokens> => ({ token: 'jwt-1', refreshToken: 'r1', pilot: PILOT });
@@ -96,7 +96,7 @@ const aFix = (sec: number) => ({
 });
 
 describe('TraceRecorder', () => {
-  it('zapisuje surowe fixy i markery z kontekstem sesji', async () => {
+  it('zapisuje surowe fixy i markery z kontekstem operacji', async () => {
     const { store, recorder } = harness();
 
     recorder.fix(aFix(0), 'sess-1');

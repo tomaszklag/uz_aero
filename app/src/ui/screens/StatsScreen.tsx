@@ -68,6 +68,7 @@ import { Sheet } from '../components/sheets/Sheet';
 import { useTheme } from '../theme';
 import { useCurrentPilot, useSessionStore } from '../store';
 import { useAircraft } from '../hooks/useAircraft';
+import { useOperationSignatures } from '../hooks/useOperationSignatures';
 import { useSessionEdit } from '../hooks/useSessionEdit';
 import { useSkeleton } from '../hooks/useSkeleton';
 import {
@@ -116,6 +117,11 @@ export function StatsScreen({
   // Norma zużycia z cache'u referencyjnego - jedyna dana z serwera na tym ekranie.
   // Reszta liczb jest projekcją lokalnych zdarzeń, więc zawsze świeża (§5.2).
   const aircraftRef = useAircraft(projection.aircraftId);
+  /* Nazwa operacji (issue #68). Liczy się z CAŁEGO lokalnego strumienia, bo numer
+     w dobie jest miejscem wśród sąsiadów - tej jednej projekcji nie starczy. */
+  const signatureOf = useOperationSignatures();
+  const signature =
+    projection.sessionUuid == null ? null : signatureOf(projection.sessionUuid);
   const norm = aircraftRef?.consumption ?? null;
   // Spalanie z dokumentacji jednostki (issue #66) - wchodzi dopiero wtedy, gdy modelu
   // tej maszyny jeszcze nie ma; rozstrzyga to domena, nie ten ekran.
@@ -302,7 +308,7 @@ export function StatsScreen({
       <Screen>
         <View style={{ flex: 1, justifyContent: 'center', gap: theme.spacing.md }}>
           <AppText variant="display" style={{ textAlign: 'center' }}>
-            BRAK DANYCH SESJI
+            BRAK DANYCH OPERACJI
           </AppText>
           <AppText variant="body" tone="muted" style={{ textAlign: 'center' }}>
             Ten ekran opisuje jeden bieg silnika. Zacznij lot, a wszystko wróci tu samo -
@@ -326,17 +332,22 @@ export function StatsScreen({
       padded={false}
       header={
         <ScreenHeader
-          title="SESJA"
+          title="OPERACJA"
           size="md"
           // Powrót JEST i prowadzi tam, skąd się tu wchodzi (mockup 10: „‹ Dzień",
           // 10b: „‹ Dni"): kafelkiem sesji na 01 i takim samym kafelkiem w historii (12).
           onBack={() => navigation.navigate(backScreen)}
           backLabel={readOnly ? 'Dni' : 'Dzień'}
-          subtitle={subtitle(projection.aircraftId, projection.claimedAt, projection.operation)}
+          subtitle={subtitle(
+            signature,
+            projection.aircraftId,
+            projection.claimedAt,
+            projection.operation,
+          )}
           right={
             <>
-              {/* „RĘCZNIE" - fakt o pochodzeniu CAŁEJ sesji (wpis z ekranu 15,
-                  decyzja 2026-08-16). W nagłówku, bo mówi o sesji jako całości;
+              {/* „RĘCZNIE" - fakt o pochodzeniu CAŁEJ operacji (wpis z ekranu 15,
+                  decyzja 2026-08-16). W nagłówku, bo mówi o operacji jako całości;
                   wiersze osi znaczników nie dostają (issue #40 pkt 6 - przy wpisie
                   ręcznym świeciłyby wszystkie naraz). Neutralna: to proweniencja,
                   nie ostrzeżenie. */}
@@ -350,7 +361,7 @@ export function StatsScreen({
               )}
               {/* Liczby lotów w nagłówku NIE MA (issue #40): stopka osi mówi „STARTY 2"
                   trzy centymetry niżej. Nie ma tu też plakietki „bez lotu" (uwaga
-                  z urządzenia, 2026-08-14) - sesja bez startu opisuje się sama: oś nie
+                  z urządzenia, 2026-08-14) - operacja bez startu opisuje się sama: oś nie
                   ma ani jednego lotu, stopka pokazuje zero, a przy zdaniu bez lotu stoi
                   jego POWÓD. Plakietka powtarzała to czwarty raz, w rogu, w którym reszta
                   ekranu trzyma stan TRYBU. */}
@@ -485,11 +496,11 @@ export function StatsScreen({
           closesAt={window24h.closesAt}
         />
 
-        {/* ── przebieg sesji: ślad + oś czasu ───────────────────────────────
+        {/* ── przebieg operacji: ślad + oś czasu ───────────────────────────────
             Mapa i oś stoją w JEDNEJ karcie, bo opisują to samo: znacznik na trasie
             i wiersz osi to ten sam start albo to samo lądowanie. */}
         <Card
-          title="Przebieg sesji"
+          title="Przebieg operacji"
           headerRight={
             <AppText variant="micro" tone="muted">
               czasy UTC
@@ -521,7 +532,7 @@ export function StatsScreen({
               tylko właściwość zapisu - mówi o niej plakietka „RĘCZNIE" w nagłówku.
 
               Karta znika razem z drogą na ekran 14, i tak ma być: nie ma po co wchodzić
-              w ekran śladu sesji, która śladu mieć nie może. */}
+              w ekran śladu operacji, która śladu mieć nie może. */}
           {trackLoaded && !projection.manualEntry && (track == null || track.missing != null) && (
             <View style={[styles.noTrack, { borderBottomColor: theme.colors.border }]}>
               {/* Powód braku śladu nazywa `missingTrackCopy` - ten sam moduł, co na
@@ -547,7 +558,7 @@ export function StatsScreen({
           <SessionAxis
             rows={axisRows}
             foot={axis.foot}
-            emptyText="Ta sesja nie ma jeszcze ani jednego zdarzenia."
+            emptyText="Ta operacja nie ma jeszcze ani jednego zdarzenia."
             onCorrect={editing ? edit.openRow : undefined}
             /* Historia otwiera się z plakietki „popr." w OBU trybach - patrz
                `CorrectedTag`. W odczycie to jedyne wejście, bo arkusza korekty
@@ -564,7 +575,7 @@ export function StatsScreen({
           {editing && (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Dodaj wpis do przebiegu sesji"
+              accessibilityLabel="Dodaj wpis do przebiegu operacji"
               onPress={edit.openAdd}
               style={({ pressed }) => [
                 styles.axisAdd,
@@ -608,7 +619,7 @@ export function StatsScreen({
           naNote={mh.naNote}
         />
 
-        {/* ── zrzuty: strona przychodowa sesji ──────────────────────────────
+        {/* ── zrzuty: strona przychodowa operacji ──────────────────────────────
             Pojedyncze wyniesienia stoją na osi czasu wyżej; tutaj zostaje suma,
             bo to ona idzie do rozliczenia z klientem. */}
         {showDrops && (
@@ -676,7 +687,7 @@ export function StatsScreen({
             value={
               projection.dualId != null
                 ? crewLabel(projection.dualId, currentPilotId, codeOf)
-                : 'brak - sesja jednoosobowa'
+                : 'brak - operacja jednoosobowa'
             }
             onCorrect={edit.openCrew}
             onHistory={edit.openCrewHistory}
@@ -684,14 +695,14 @@ export function StatsScreen({
         </Card>
 
         {/* ── notatki ───────────────────────────────────────────────────────
-            Wszystko, co pilot NAPISAŁ o tej sesji: notatka z kroku „zadanie" (02e)
+            Wszystko, co pilot NAPISAŁ o tej operacji: notatka z kroku „zadanie" (02e)
             i uwagi wpisów ręcznych (08, 15). Do issue #40 ten tekst nie wracał do
             autora nigdzie - widział go tylko administrator w panelu.
             Karta stoi na końcu, bo jest komentarzem do liczb wyżej.
 
             W trybie ODCZYTU istnieje tylko z treścią (issue #40: „Notatki -" byłoby
             wierszem o niczym). W trybie EDYCJI dochodzi drugie wejście - dopisanie
-            notatki sesji, której jeszcze nie ma: bez niego affordancja gasłaby
+            notatki operacji, której jeszcze nie ma: bez niego affordancja gasłaby
             dokładnie w stanie, w którym jest potrzebna. */}
         {(notes.length > 0 || canAddNote) && (
           <Card title="Notatki" flush>
@@ -702,7 +713,7 @@ export function StatsScreen({
                 <>
                   {/* Górny wiersz istnieje tylko wtedy, gdy ma co nieść.
                       Podpis - TYLKO tam, gdzie coś rozróżnia, czyli przy uwagach wpisów
-                      ręcznych: notatka sesji jest jedna, a stempel „Zadanie · 08:04"
+                      ręcznych: notatka operacji jest jedna, a stempel „Zadanie · 08:04"
                       mówił o godzinie preflightu, nie o niej.
                       „popr." - plakietka poprawionej treści, ta sama co przy wierszach
                       osi i z tego samego powodu: widoczna TAKŻE w trybie odczytu, bo to
@@ -721,7 +732,7 @@ export function StatsScreen({
                           onPress={() =>
                             edit.openNoteHistory(
                               note.targetUuid!,
-                              note.kind === 'session' ? 'Notatka sesji' : 'Uwaga wpisu ręcznego',
+                              note.kind === 'session' ? 'Notatka operacji' : 'Uwaga wpisu ręcznego',
                             )
                           }
                         />
@@ -752,13 +763,13 @@ export function StatsScreen({
                   key={note.id}
                   accessibilityRole="button"
                   accessibilityLabel={
-                    note.when == null ? 'Popraw notatkę sesji' : `Popraw notatkę: ${note.when}`
+                    note.when == null ? 'Popraw notatkę operacji' : `Popraw notatkę: ${note.when}`
                   }
                   onPress={() =>
                     edit.openNote(
                       note.targetUuid!,
                       note.text,
-                      note.kind === 'session' ? 'Notatka sesji' : 'Uwaga wpisu ręcznego',
+                      note.kind === 'session' ? 'Notatka operacji' : 'Uwaga wpisu ręcznego',
                     )
                   }
                   style={({ pressed }) => [
@@ -778,14 +789,14 @@ export function StatsScreen({
                 istniejącej wartości, a tu jeszcze niczego nie ma (ta sama zasada, co
                 w katalogu ikon).
 
-                Wiersz istnieje WYŁĄCZNIE wtedy, gdy notatki sesji jeszcze nie ma.
+                Wiersz istnieje WYŁĄCZNIE wtedy, gdy notatki operacji jeszcze nie ma.
                 Jest ona jedna - jedno pole w payloadzie preflightu - więc obok
                 istniejącej obiecywałby drugą, a naprawdę nadpisałby pierwszą. Gdy
                 notatka jest, jedyną czynnością zostaje jej poprawienie (ołówek wyżej). */}
             {canAddNote && (
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Dodaj notatkę do sesji"
+                accessibilityLabel="Dodaj notatkę do operacji"
                 onPress={() => edit.openNote(noteTarget, '')}
                 style={({ pressed }) => [
                   styles.note,
@@ -797,7 +808,7 @@ export function StatsScreen({
                 ]}
               >
                 <AppText variant="body" tone="muted" style={styles.noteAdd}>
-                  Dodaj notatkę do sesji
+                  Dodaj notatkę do operacji
                 </AppText>
                 <Icon name="add" size={13} color={theme.colors.textMuted} />
               </Pressable>
@@ -811,8 +822,8 @@ export function StatsScreen({
       {edit.sheets}
 
       {/* POTWIERDZENIE USUNIĘCIA (mockup 10L). Wiersze odniesienia nazywają KONKRETNY
-          wpis - dwie sesje tej samej maszyny w jednej dobie różnią się wyłącznie
-          godzinami biegu, więc „ta sesja" nie wystarczy.
+          wpis - dwie operacje tej samej maszyny w jednej dobie różnią się wyłącznie
+          godzinami biegu, więc „ta operacja" nie wystarczy.
 
           Baner mówi o SKUTKU, nie o budowie rejestru: „zapis zostaje i widzi go
           administrator" jest odpowiedzią na pytanie, które pilot zada sobie sam przed
@@ -824,7 +835,13 @@ export function StatsScreen({
         visible={voidOpen}
         title="USUNĄĆ CAŁY WPIS?"
         rows={[
-          { label: 'Samolot', value: aircraftRef?.reg ?? projection.aircraftId ?? '-' },
+          /* Sygnatura zamiast samego znaku: dwie operacje tej samej maszyny w dobie
+             różnią się wyłącznie godzinami, a ostatni człon sygnatury je rozróżnia
+             wprost. Bez sygnatury wraca sam znak - i wtedy robotę rozróżnienia
+             wykonuje wiersz „Bieg silnika" pod spodem. */
+          signature != null
+            ? { label: 'Operacja', value: signature }
+            : { label: 'Samolot', value: aircraftRef?.reg ?? projection.aircraftId ?? '-' },
           {
             label: 'Bieg silnika',
             value:
@@ -860,21 +877,29 @@ function issuesTitle(count: number): string {
 }
 
 /**
- * Podtytuł: „SP-AXA · 06 SIE · SKOKI" (mockup 10).
+ * Podtytuł: „SP-AXA/2026-09-01/AKO/1 · SKOKI" (mockup 10, sygnatura z issue #68).
  *
  * Godzin tu nie ma - przejęcie i zdanie stoją na osi czasu razem z odczytami, a trzeci
  * napis w nagłówku walczyłby z nimi o tę samą linię.
  */
 function subtitle(
+  signature: string | null,
   aircraftId: string | null,
   claimedAt: number | null,
   operation: Parameters<typeof operationTag>[0] | null,
 ): string {
-  return [
-    aircraftId,
-    claimedAt != null ? dateUtcDayMonth(claimedAt) : null,
-    operation != null ? operationTag(operation) : null,
-  ]
+  // SYGNATURA WYPIERA ZNAK I DATĘ, bo niesie jedno i drugie: para „SP-AXA · 06 SIE"
+  // obok napisu zaczynającego się od „SP-AXA/2026-09-01" powtarzałaby te same dwa
+  // fakty w jednej linii. Bez sygnatury wraca dawny podtytuł.
+  const identity =
+    signature != null
+      ? [signature]
+      : [aircraftId, claimedAt != null ? dateUtcDayMonth(claimedAt) : null];
+
+  // Rodzaj operacji stoi NA KOŃCU i to jest odporność na skracanie: podtytuł ma
+  // `numberOfLines={1}`, więc przy wąskim nagłówku ucina się OGON - czyli „SKOKI",
+  // a nie identyfikator. Sygnatura ucięta wielokropkiem przestaje identyfikować.
+  return [...identity, operation != null ? operationTag(operation) : null]
     .filter((part): part is string => part != null && part !== '')
     .join(' · ');
 }

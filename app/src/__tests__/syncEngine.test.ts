@@ -94,7 +94,7 @@ class ScriptedServer implements ServerPort {
   getReference = async () => ({ data: { aircraft: [], pilots: [] }, etag: null });
   pushTraces = async (_t: string, entries: unknown[]) => ({ accepted: entries.length });
   getSessionTrack = async (): Promise<never> => {
-    throw new Error('ta atrapa nie obsługuje śladu sesji');
+    throw new Error('ta atrapa nie obsługuje śladu operacji');
   };
 
   /** Droga powrotna (§4.9) ma własne testy - `eventRestore.test.ts`. */
@@ -298,7 +298,7 @@ describe('SyncEngine.fetchStatus (zaparkowane po usunięciu ekranu 11)', () => {
     exportUrl: null,
   };
 
-  it('zwraca stan sesji z serwera', async () => {
+  it('zwraca stan operacji z serwera', async () => {
     const repo = await repoWithEvents(0);
     const server = new ScriptedServer([]);
     server.statusScript = [STATUS];
@@ -392,7 +392,7 @@ describe('AuthService', () => {
     expect(await auth.verifyPin('1234')).toBe(false);
   });
 
-  it('rotacja tokenu NIE kasuje PIN-u - zamek przeżywa wygaśnięcie sesji (§3.0)', async () => {
+  it('rotacja tokenu NIE kasuje PIN-u - zamek przeżywa wygaśnięcie operacji (§3.0)', async () => {
     const credentials = new MemoryCredentials(CREDS);
     const auth = new AuthService(new ScriptedServer([]), credentials, new PinCrypto());
     await auth.setPin('1234');

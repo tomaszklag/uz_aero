@@ -209,13 +209,13 @@ describe('projectSession - pojedynczy cykl', () => {
   });
 });
 
-describe('kanoniczny dzień 22 JUNE - trzy sesje (zgodność z design-notes)', () => {
+describe('kanoniczny dzień 22 JUNE - trzy operacje (zgodność z design-notes)', () => {
   const s1 = projectSession(canonicalSession1());
   const s2 = projectSession(canonicalSession2());
   const s3 = projectSession(canonicalSession3());
   const day = projectPilotDay([s1, s2, s3], PIC, DAY0);
 
-  it('dzień: block 6:39 z trzech sesji 2:22 + 1:13 + 3:04 (projectPilotDay)', () => {
+  it('dzień: block 6:39 z trzech operacji 2:22 + 1:13 + 3:04 (projectPilotDay)', () => {
     expect(day.sessions).toHaveLength(3);
     expect(day.sessions.map((x) => x.blockMs)).toEqual([142 * MIN, 73 * MIN, 184 * MIN]);
     expect(day.blockTimeMs).toBe(399 * MIN);
@@ -227,7 +227,7 @@ describe('kanoniczny dzień 22 JUNE - trzy sesje (zgodność z design-notes)', (
     expect(day.landingCount).toBe(6);
   });
 
-  it('oś dnia: sesje ponumerowane ciągiem, w kolejności uruchomień silnika', () => {
+  it('oś dnia: operacje ponumerowane ciągiem, w kolejności uruchomień silnika', () => {
     // Klamra służby żyła tu do 2026-08-11 (meldunek/koniec) - usunięta z modelem
     // (issue #23). Dzień pilota to płaska lista sesji.
     expect(day.sessions.map((x) => x.index)).toEqual([1, 2, 3]);
@@ -238,7 +238,7 @@ describe('kanoniczny dzień 22 JUNE - trzy sesje (zgodność z design-notes)', (
     ]);
   });
 
-  it('paliwo dnia: 150 +48 −110 = 88 L, rozliczone per sesja', () => {
+  it('paliwo dnia: 150 +48 −110 = 88 L, rozliczone per operacja', () => {
     expect(s1.fuel.consumedL).toBe(38); // 150 → 112
     expect(s2.fuel.consumedL).toBe(22); // 112 +48 → 138
     expect(s3.fuel.consumedL).toBe(50); // 138 → 88
@@ -246,7 +246,7 @@ describe('kanoniczny dzień 22 JUNE - trzy sesje (zgodność z design-notes)', (
     expect(s3.fuel.endL).toBe(88);
   });
 
-  it('łańcuch MH biegnie PRZEZ sesje: zdanie jednej = przejęcie następnej (§4.5)', () => {
+  it('łańcuch MH biegnie PRZEZ operacje: zdanie jednej = przejęcie następnej (§4.5)', () => {
     expect(s1.mh.start).toBeCloseTo(mh('1234:30'), 5);
     expect(s1.mh.end).toBeCloseTo(mh('1236:52'), 5);
     expect(s2.mh.start).toBeCloseTo(s1.mh.end!, 5);
@@ -259,7 +259,7 @@ describe('kanoniczny dzień 22 JUNE - trzy sesje (zgodność z design-notes)', (
     expect(s3.mh.deltaH! * 60 * MIN).toBeCloseTo(s3.blockTimeMs, 0);
   });
 
-  it('zrzuty sesji skokowej: 3 wyniesienia, 13 skoczków, średnia wysokość', () => {
+  it('zrzuty operacji skokowej: 3 wyniesienia, 13 skoczków, średnia wysokość', () => {
     expect(s3.drops.count).toBe(3);
     expect(s3.drops.jumpers).toEqual({ tandem: 6, aff: 3, solo: 4 });
     expect(s3.drops.totalJumpers).toBe(13);
@@ -320,7 +320,7 @@ describe('kanoniczny dzień 22 JUNE - trzy sesje (zgodność z design-notes)', (
     expect(s.boarding).toBeNull();
   });
 
-  it('kontekst sesji i zamknięcie', () => {
+  it('kontekst operacji i zamknięcie', () => {
     expect(s1.operation).toBe('skoki');
     expect(s1.departureIcao).toBe('EPKK');
     expect(s1.mhFormat).toBe('hhmm');
@@ -342,7 +342,7 @@ describe('projectSession - notatka dnia (issue #14)', () => {
     expect(state.notes).toBe('Lot z uczniem\nDrugi zbiornik nie działa');
   });
 
-  it('sesja bez notatki ma `null`, a nie pusty napis', () => {
+  it('operacja bez notatki ma `null`, a nie pusty napis', () => {
     // Preflight bez pola `notes`; projekcja musi to znieść bez zmiany znaczenia
     // („nie napisano" to nie to samo co „napisano pustkę").
     expect(projectSession(canonicalSession1()).notes).toBeNull();
@@ -362,11 +362,11 @@ describe('projectSession - domyślny skład skoczków (2026-08-17)', () => {
     expect(state.jumperDefaults).toEqual({ tandem: 4, aff: 0, solo: 0 });
   });
 
-  it('sesja bez pola ma `null`', () => {
+  it('operacja bez pola ma `null`', () => {
     expect(projectSession(canonicalSession1()).jumperDefaults).toBeNull();
   });
 
-  it('boarding nie nadpisuje defaultu sesji - to dwa osobne stany', () => {
+  it('boarding nie nadpisuje defaultu operacji - to dwa osobne stany', () => {
     const state = projectSession([
       ev('preflight_confirm', '08:00', {
         operation: 'skoki',
@@ -431,7 +431,7 @@ describe('projectSession - preflight i zdanie to odczyty, nie deklaracje', () =>
     expect(s.mh.start).toBeCloseTo(mh('1239:39'), 6);
   });
 
-  it('zdanie samolotu domyka odczyty i sesję', () => {
+  it('zdanie samolotu domyka odczyty i operację', () => {
     const s = projectSession([
       ev('preflight_confirm', '08:00', {
         operation: 'ferry',
@@ -471,7 +471,7 @@ describe('projectSession - bieg silnika jako byt (Leg)', () => {
     expect(s.blockTimeMs).toBe(142 * MIN);
   });
 
-  it('projekcja jest totalna także dla strumienia ZŁAMANEGO (dwa biegi w sesji)', () => {
+  it('projekcja jest totalna także dla strumienia ZŁAMANEGO (dwa biegi w operacji)', () => {
     // Reguła SESSION_ALREADY_RAN odrzuca drugi start, ale projekcja musi opisać
     // również strumień, który powstał obok reguł (dwa telefony przed syncem) -
     // dwa biegi dają dwa wiersze, a nie cichą utratę drugiego.
@@ -597,10 +597,10 @@ describe('touch and go — licznik przy lądowaniu', () => {
     expect(s.flights[0]!.touchAndGo).toBeUndefined();
   });
 
-  it('doba pilota dolicza kręgi TAK SAMO — inaczej sesja i dzień mówiłyby co innego', () => {
+  it('doba pilota dolicza kręgi TAK SAMO — inaczej operacja i dzień mówiłyby co innego', () => {
     /* Liczniki doby idą z LOTÓW, nie ze zdarzeń, więc mają własną arytmetykę i własny
        sposób, żeby się rozjechać: bez tego dzień pokazywałby 1 lądowanie tam, gdzie
-       sesja pokazuje 5 — a obie liczby stoją na innych ekranach, więc nikt by nie
+       operacja pokazuje 5 — a obie liczby stoją na innych ekranach, więc nikt by nie
        zauważył. */
     const events = [
       ev('session_claim', '09:40', { mode: 'free', previousPicId: null }),
@@ -624,7 +624,7 @@ describe('touch and go — licznik przy lądowaniu', () => {
  * sesji ważność. Projekcja liczy dalej wszystko - administrator ma widzieć, CO zostało
  * wycofane - a wypada dopiero z DNIA PILOTA.
  */
-describe('session_void - sesja unieważniona', () => {
+describe('session_void - operacja unieważniona', () => {
   function voidedSession(): Event[] {
     return [
       ev('session_claim', '09:40', { mode: 'free', previousPicId: null }),
@@ -652,9 +652,9 @@ describe('session_void - sesja unieważniona', () => {
     expect(s.blockTimeMs).toBe(96 * MIN);
   });
 
-  it('sesja WYPADA z dnia pilota - i z listy, i z sum', () => {
+  it('operacja WYPADA z dnia pilota - i z listy, i z sum', () => {
     /* Filtr stoi w `projectPilotDay`, w jednym miejscu: gdyby pomijał go ekran,
-       wycofana sesja znikałaby z listy, ale nadal dokładała się do „Blok" i „Loty". */
+       wycofana operacja znikałaby z listy, ale nadal dokładała się do „Blok" i „Loty". */
     const day = projectPilotDay([projectSession(voidedSession())], PIC, DAY0);
 
     expect(day.sessions).toHaveLength(0);
@@ -662,7 +662,7 @@ describe('session_void - sesja unieważniona', () => {
     expect(day.takeoffCount).toBe(0);
   });
 
-  it('sesja WAŻNA liczy się jak dotąd - brak zdarzenia niczego nie zmienia', () => {
+  it('operacja WAŻNA liczy się jak dotąd - brak zdarzenia niczego nie zmienia', () => {
     const events = voidedSession().filter((e) => e.type !== 'session_void');
     const day = projectPilotDay([projectSession(events)], PIC, DAY0);
 

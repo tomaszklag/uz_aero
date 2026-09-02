@@ -53,7 +53,7 @@ describe('oś wpisu ręcznego', () => {
     expect(foot).toEqual([]);
   });
 
-  it('jeden koniec biegu też się rysuje - sesja ma dwa i widać, którego brakuje', () => {
+  it('jeden koniec biegu też się rysuje - operacja ma dwa i widać, którego brakuje', () => {
     const half = { ...emptyManualFlightDraft(DAY), engineStart: at(9, 42) };
     const { rows, foot } = buildManualFlightAxis(half, { jumpDay: false });
 
@@ -291,7 +291,7 @@ describe('wartości startowe dopisywanych pozycji', () => {
     expect(previousDrop(draft, at(10, 39))).toEqual(first);
   });
 
-  it('pierwszy zrzut sesji nie ma po kim dziedziczyć', () => {
+  it('pierwszy zrzut operacji nie ma po kim dziedziczyć', () => {
     expect(previousDrop(jumpDayDraft(), at(10, 1))).toBeNull();
   });
 

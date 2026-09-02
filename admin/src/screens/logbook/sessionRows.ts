@@ -32,6 +32,8 @@ export interface CellPair {
 
 export interface SessionRow {
   sessionUuid: string;
+  /** Nazwa operacji dla ludzi (issue #68); `null` = nie ma jej z czego złożyć. */
+  signature: string | null;
   day: string;
   /** Plakietka przy dacie - dotyczy CAŁEGO wiersza, nie żadnej pojedynczej liczby. */
   manual: boolean;
@@ -89,6 +91,8 @@ export function sessionRow(s: SessionListItemDto): SessionRow {
 
   return {
     sessionUuid: s.sessionUuid,
+    // Przepisana, nie sklejona: sygnaturę składa serwer (issue #68).
+    signature: s.signature,
     // Dobę bierzemy z PRZEJĘCIA, bo tą samą osią filtruje zakres - inaczej wiersz
     // mógłby wypaść poza zakres, w którym go pokazano.
     day: s.claimedAt == null ? NONE : dateUtcShort(s.claimedAt),

@@ -41,6 +41,7 @@ import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
 import { useSkeleton } from '../hooks/useSkeleton';
 import { useAircraftRegistrations } from '../hooks/useAircraftRegistrations';
+import { useOperationSignatures } from '../hooks/useOperationSignatures';
 import { buildHistory, type DayCardSpec, type EditableDaySpec } from './logic/historyDays';
 
 export function HistoryScreen({
@@ -92,7 +93,11 @@ export function HistoryScreen({
   /* Znak maszyny mieszka w cache referencyjnym, projekcja zna sam identyfikator -
      bez tego kafelek pokazywał UUID (zgłoszenie z urządzenia 2026-08-30). */
   const regOf = useAircraftRegistrations();
-  const groups = days != null ? buildHistory(days, Date.now(), pushing, regOf) : null;
+  /* Nazwa operacji (issue #68) - ta sama funkcja, co na 01: kafelek jest wspólny
+     (issue #42), więc i jego treść musi pochodzić z jednego rachunku. */
+  const signatureOf = useOperationSignatures();
+  const groups =
+    days != null ? buildHistory(days, Date.now(), pushing, regOf, signatureOf) : null;
   // Pustej historii wolno wierzyć dopiero po pierwszym uzgodnieniu rejestru z serwerem
   // (§4.9, issue #32): telefon zaraz po czyszczeniu pamięci pokazałby „BRAK POPRZEDNICH
   // DNI" komuś, kto ma za sobą sezon - a to jest dokładnie ten komunikat, który wygląda
@@ -146,14 +151,14 @@ export function HistoryScreen({
                 (issue #55 pkt 2): wzmianka „również bez zasięgu" opisywała budowę
                 aplikacji - skąd ekran liczy dane, jest pilotowi obojętne. */}
             <AppText variant="body" tone="muted" style={styles.emptyText}>
-              Po zmianie doby znajdziesz tu swoje wcześniejsze sesje - komplet czasów
+              Po zmianie doby znajdziesz tu swoje wcześniejsze operacje - komplet czasów
               i lotów każdej z nich, z możliwością poprawienia danych przez 24 h od
-              zdania samolotu. Dzisiejsze sesje są na ekranie „Mój dzień".
+              zdania samolotu. Dzisiejsze operacje są na ekranie „Mój dzień".
             </AppText>
           </View>
         )}
 
-        {/* ── sesje w oknie korekty ───────────────────────────────────────── */}
+        {/* ── operacje w oknie korekty ───────────────────────────────────────── */}
         {groups != null && groups.editable.length > 0 && (
           <>
             <GroupLabel text="Możesz jeszcze poprawić" />
@@ -161,6 +166,7 @@ export function HistoryScreen({
               <DayCard
                 key={day.sessionUuid}
                 title={day.title}
+                signature={day.signature}
                 aircraft={day.aircraft}
                 times={day.times}
                 stats={day.stats}
@@ -183,7 +189,7 @@ export function HistoryScreen({
           </>
         )}
 
-        {/* ── sesje po oknie: podgląd bez edycji (10b) ─────────────────────── */}
+        {/* ── operacje po oknie: podgląd bez edycji (10b) ─────────────────────── */}
         {groups != null && groups.closed.length > 0 && (
           <>
             <GroupLabel text="Zamknięte" style={styles.closedLabel} />
@@ -191,6 +197,7 @@ export function HistoryScreen({
               <DayCard
                 key={day.sessionUuid}
                 title={day.title}
+                signature={day.signature}
                 aircraft={day.aircraft}
                 times={day.times}
                 stats={day.stats}
@@ -211,7 +218,7 @@ export function HistoryScreen({
               {/* Kłódka, nie trójkąt - „zamknięte" to stan, nie ostrzeżenie (mockup 12). */}
               <Icon name="lock" size={14} color={theme.colors.textMuted} />
               <AppText variant="body" tone="secondary" style={styles.lockedText}>
-                Sesje po oknie 24 h możesz oglądać, ale nie zmieniać. Jeśli znalazłeś błąd
+                Operacje po oknie 24 h możesz oglądać, ale nie zmieniać. Jeśli znalazłeś błąd
                 - zgłoś go administratorowi; poprawka zostanie dopisana jako korekta, bez
                 kasowania oryginalnego zapisu.
               </AppText>
