@@ -47,61 +47,65 @@ function input(over: Partial<OilClaimInput> = {}): OilClaimInput {
 }
 
 describe('sekcja oleju - przed pomiarem', () => {
-  it('wartość pusta; podpowiedź (ostatni pomiar + oczekiwanie) to WIERSZE ARKUSZA', () => {
-    // Uwaga z urządzenia (2026-09-02): historia przy pomiarze idzie do arkusza,
-    // na ekranie zostaje sam stan pilota.
+  it('wartość pusta; podpowiedź to SZLAK do arkusza: ostatni pomiar + oczekiwanie', () => {
+    // Uwaga z urządzenia (2026-09-02, dwie tury): historia przy pomiarze idzie
+    // do arkusza, a jej kształtem jest szlak jak przy paliwie/MH - wiersze
+    // label→wartość dawały „za dużo linijek tekstu".
     const v = oilClaimView(input());
     expect(v.value).toBeNull();
     expect(v.gauge).toBeNull();
 
-    expect(v.sheetRows).toHaveLength(2);
-    expect(v.sheetRows[0]!.label).toContain('Ostatni pomiar');
-    expect(v.sheetRows[0]!.label).toContain('J. Kowalski');
-    expect(v.sheetRows[0]!.label).toContain('21 CZE 07:02');
-    expect(v.sheetRows[0]!.value).toBe(oilLitres(10.6));
+    expect(v.trail).toHaveLength(2);
+    expect(v.trail[0]!.title).toContain('Ostatni pomiar');
+    expect(v.trail[0]!.title).toContain('J. Kowalski');
+    expect(v.trail[0]!.meta).toContain(oilLitres(10.6));
+    expect(v.trail[0]!.meta).toContain(motoHours(1230.5, 'hhmm'));
 
     // ΔMH = 4,0 h · norma 0,12 L/h → oczekiwane 10,6 − 0,48 ≈ 10,1 L
-    expect(v.sheetRows[1]!.label).toContain(motoHours(4, 'hhmm'));
-    expect(v.sheetRows[1]!.value).toContain(oilLitres(10.12));
+    expect(v.trail[1]!.tone).toBe('green');
+    expect(v.trail[1]!.title).toContain(motoHours(4, 'hhmm'));
+    expect(v.trail[1]!.meta).toContain(oilLitres(10.12));
+    expect(v.trail[1]!.meta).toContain('0,12 L/h');
   });
 
-  it('dolewki zapisane po pomiarze wchodzą do oczekiwania i mają własny wiersz', () => {
+  it('dolewki zapisane po pomiarze wchodzą do oczekiwania i do meta szlaku', () => {
     const v = oilClaimView(input({ lastOil: { ...LAST, addedSinceL: 1.0 } }));
     // dolewka jest też faktem rachunku - pilot ma wiedzieć, że oczekiwanie ją widzi
-    expect(v.sheetRows[1]).toEqual({ label: 'Dolano od pomiaru', value: `+${oilLitres(1.0)}` });
+    expect(v.trail[0]!.meta).toContain(`+${oilLitres(1.0)}`);
     // 10,6 + 1,0 − 0,48 ≈ 11,1 L
-    expect(v.sheetRows[2]!.value).toContain(oilLitres(11.12));
+    expect(v.trail[1]!.meta).toContain(oilLitres(11.12));
   });
 
-  it('brak historii: arkusz bez wierszy podpowiedzi', () => {
-    expect(oilClaimView(input({ lastOil: null })).sheetRows).toEqual([]);
+  it('brak historii: szlak pusty', () => {
+    expect(oilClaimView(input({ lastOil: null })).trail).toEqual([]);
   });
 
   it('bez normy / bez kotwicy MH / przy cofniętym liczniku oczekiwania NIE MA', () => {
     const noNorm = oilClaimView(input({ config: { ...CONFIG, normLPerH: null } }));
-    expect(noNorm.sheetRows).toHaveLength(1);
+    expect(noNorm.trail).toHaveLength(1);
 
     const noAnchor = oilClaimView(input({ lastOil: { ...LAST, atMh: null } }));
-    expect(noAnchor.sheetRows).toHaveLength(1);
+    expect(noAnchor.trail).toHaveLength(1);
 
     const regressed = oilClaimView(input({ currentMh: 1230.0 }));
-    expect(regressed.sheetRows).toHaveLength(1);
+    expect(regressed.trail).toHaveLength(1);
   });
 
-  it('podpis to sama instrukcja pomiaru - min/zbiornik mówi podziałka, nie tekst', () => {
-    expect(oilClaimView(input()).caption).toBe('pomiar przy zimnym silniku');
-    expect(oilClaimView(input({ config: NO_CONFIG })).caption).toBe(
-      'pomiar przy zimnym silniku',
-    );
+  it('przed pomiarem podpisu nie ma - min/zbiornik mówi podziałka, instrukcji nie piszemy', () => {
+    // Druga uwaga z 2026-09-02: „pomiar przy zimnym silniku" wycięte - procedura
+    // pomiaru to wiedza pilota, nie treść ekranu.
+    expect(oilClaimView(input()).caption).toBe('');
+    expect(oilClaimView(input({ config: NO_CONFIG })).caption).toBe('');
   });
 });
 
 describe('sekcja oleju - po wpisie', () => {
-  it('wartość z pomiaru, podpis z rachunkiem dolewki', () => {
+  it('wartość to STAN silnika po dolewce, podpis rozbija go na składowe', () => {
+    // Trzecia uwaga z 2026-09-02: dużą liczbą jest, ile oleju JEST (8,2 + 1,0),
+    // a „odczytano · dolano" schodzi do podpisu.
     const v = oilClaimView(input({ enteredL: 8.2, addedL: 1.0 }));
-    expect(v.value).toBe('8,2');
-    expect(v.caption).toContain(`dolano +${oilLitres(1.0)}`);
-    expect(v.caption).toContain(`po dolewce ${oilLitres(9.2)}`);
+    expect(v.value).toBe('9,2');
+    expect(v.caption).toBe(`odczytano ${oilLitres(8.2)} · dolano +${oilLitres(1.0)}`);
   });
 
   it('bez dolewki podpisu nie ma wcale - stan domyślny nie dostaje zdania', () => {
@@ -179,25 +183,12 @@ describe('ostrzeżenia wpisu (arkusz i sekcja liczą TĄ SAMĄ funkcją)', () =>
 });
 
 describe('wiersz „Po dolewce"', () => {
-  it('istnieje tylko przy pomiarze Z dolewką; zielony od minimum w górę', () => {
-    expect(oilAfterRow(8.2, 1.0, CONFIG)).toEqual({
-      label: 'Po dolewce',
-      value: `${oilLitres(9.2)} · powyżej minimum`,
-      tone: 'green',
-    });
-    expect(oilAfterRow(8.2, null, CONFIG)).toBeNull();
-    expect(oilAfterRow(null, 1.0, CONFIG)).toBeNull();
-  });
-
-  it('poniżej minimum zostaje neutralny - ostrzega osobne ostrzeżenie, nie kolor wiersza', () => {
-    expect(oilAfterRow(7.0, 1.0, CONFIG)).toEqual({
-      label: 'Po dolewce',
-      value: oilLitres(8.0),
-    });
-    // bez skonfigurowanego minimum nie ma do czego porównać - sam rachunek
-    expect(oilAfterRow(8.2, 1.0, NO_CONFIG)).toEqual({
-      label: 'Po dolewce',
-      value: oilLitres(9.2),
-    });
+  it('istnieje tylko przy pomiarze Z dolewką i podaje SAM rachunek', () => {
+    // Bez „powyżej minimum" i bez zieleni (uwaga z urządzenia, 2026-09-02): jedno
+    // i drugie sugerowało, że oleju WYSTARCZY, a wystarczalność zależy od długości
+    // lotu - o zejściu pod minimum mówi osobne ostrzeżenie.
+    expect(oilAfterRow(8.2, 1.0)).toEqual({ label: 'Po dolewce', value: oilLitres(9.2) });
+    expect(oilAfterRow(8.2, null)).toBeNull();
+    expect(oilAfterRow(null, 1.0)).toBeNull();
   });
 });

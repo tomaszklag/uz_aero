@@ -28,6 +28,7 @@ import { useSheetInputFocus } from '../../hooks/useSheetInputFocus';
 import { AppText } from '../foundation/AppText';
 import { Sheet, type SheetRow } from './Sheet';
 import { cursorAtEnd, selectionApplied, type SelectionRange } from './sheetSelection';
+import { VALUE_FIELD } from './valueFieldMetrics';
 import { toneColors, type Tone } from '../tone';
 
 /**
@@ -182,12 +183,15 @@ export function ReadingSheet({
          pkt 7, druga tura: pojedynczy focus w onShow bywał nadal za wcześnie). */
       onShow={onShow}
     >
+      {/* Metryka pola wspólna z `OilSheet` (`valueFieldMetrics.ts`): zmniejszona ~30%
+          uwagą z urządzenia (2026-09-02), z podłogą 46 dp celu dotykowego. */}
       <View
         style={[
           styles.inputRow,
           {
-            paddingHorizontal: 16,
-            paddingVertical: 14,
+            minHeight: VALUE_FIELD.minHeight,
+            paddingHorizontal: VALUE_FIELD.paddingHorizontal,
+            paddingVertical: VALUE_FIELD.paddingVertical,
             borderRadius: theme.radius.lg - 2,
             borderWidth: theme.borderWidthStrong,
             borderColor:
@@ -223,8 +227,8 @@ export function ReadingSheet({
             flex: 1,
             padding: 0,
             fontFamily: theme.fontFamily.monoBold,
-            fontSize: 32,
-            letterSpacing: 2,
+            fontSize: VALUE_FIELD.fontSize,
+            letterSpacing: VALUE_FIELD.letterSpacing,
             color: valueColor,
           }}
         />
@@ -238,5 +242,5 @@ export function ReadingSheet({
 
 const styles = StyleSheet.create({
   inputRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  unit: { fontSize: 16 },
+  unit: { fontSize: VALUE_FIELD.unitFontSize },
 });

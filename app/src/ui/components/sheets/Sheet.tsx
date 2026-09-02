@@ -41,7 +41,7 @@ import { useTheme } from '../../theme';
 import { useKeyboardHeight } from '../../hooks/useKeyboardHeight';
 import { AppText } from '../foundation/AppText';
 import { ActionButton } from '../data/ActionButton';
-import { Banner } from '../status/Banner';
+import { InlineNote } from '../status/InlineNote';
 import { SheetSurface } from './SheetSurface';
 import { toneColors, type Tone } from '../tone';
 
@@ -109,6 +109,22 @@ export interface SheetProps {
    */
   headerAction?: React.ReactNode;
   children?: React.ReactNode;
+}
+
+/**
+ * Ostrzeżenie arkusza - `.modal-warning` z mockupów 02B/02I: trójkąt + JEDNO zdanie
+ * mono w kolorze tonu, bez tytułu (uwaga z urządzenia, 2026-09-02 - wcześniejszy
+ * `Banner` z tytułem „Zanim potwierdzisz" miał szary tekst i brak ikony; nazwa
+ * wzorca z issue #55 zostaje w docblokach). Kształtem jest `InlineNote`: przypis
+ * do wpisywanej wartości.
+ *
+ * Wyeksportowane osobno, bo miejsce ostrzeżenia to „zaraz pod polami wpisu",
+ * a w arkuszu oleju między polami a wierszami stoi jeszcze szlak podpowiedzi -
+ * `OilSheet` renderuje ostrzeżenie sam, tym komponentem, żeby wygląd miał jedną
+ * definicję.
+ */
+export function SheetWarning({ text, tone = 'amber' }: { text: string; tone?: Tone }) {
+  return <InlineNote icon="warning" tone={tone} text={text} />;
 }
 
 export function Sheet({
@@ -186,6 +202,16 @@ export function Sheet({
           wartości. */}
       {children}
 
+      {/* Ostrzeżenie arkusza ZARAZ POD POLAMI wpisu, przed wierszami odniesienia
+          (uwaga z urządzenia, 2026-09-02, trzecia tura: na końcu treści ginęło pod
+          wysuniętą klawiaturą, a przypięte nad akcjami stało za daleko od pola -
+          pilot patrzy tam, gdzie pisze, i tam ma dostać odpowiedź). Ostrzeżenie
+          liczy się na każdą zmianę pola, więc pod polem jest „live" naprawdę.
+          Kształt = `SheetWarning` (`.modal-warning` z mockupów); arkusz, którego
+          children niosą własną treść POD polami (szlak oleju), wstawia je SAM
+          w tym miejscu i nie podaje `warning` ramie. */}
+      {warning != null && <SheetWarning text={warning} tone={warningTone} />}
+
       {rows.map((row) => (
         <View key={row.label} style={styles.row}>
           {/* Etykieta ustępuje wartości i zawija się (`flexShrink`): wiersz „Ostatni
@@ -207,9 +233,6 @@ export function Sheet({
         </View>
       ))}
 
-      {warning != null && (
-        <Banner kind="status" tone={warningTone} title="Zanim potwierdzisz" text={warning} />
-      )}
     </SheetSurface>
   );
 }

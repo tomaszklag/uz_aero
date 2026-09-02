@@ -101,34 +101,51 @@
      w linii etykiety, tę samą, co „opcjonalne" przy Dualu i „wymagany · załoga 2-os.". */
   .modal-field-head { display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
   .optional-tag { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); background:var(--surface-raised); border:1px solid var(--border); border-radius:5px; padding:2px 6px; white-space:nowrap; }
+  /* Metryka pola zmniejszona ~30% (uwaga z urządzenia, 2026-09-02: „input zajmuje
+     strasznie dużo miejsca" - przy DWÓCH polach tego arkusza nadmiar liczył się
+     podwójnie). Cyfry 22 px, padding 8 px, min-height 46 px = cel dotykowy.
+     Wspólna z 02B/02C; w kodzie: valueFieldMetrics.ts.
+     BEZ BURSZTYNU (ta sama tura uwag): bursztyn jest rozróżnieniem PALIWA i zostaje
+     w 02B - olej pisze się standardowo, oba pola wyglądają jak pole „Dolano". */
   .modal-input-row {
     display: flex; align-items: center; gap: 10px;
-    background: var(--surface); border: 2px solid var(--amber-border);
-    border-radius: 14px; padding: 12px 18px;
-    box-shadow: 0 0 0 3px rgba(243,156,18,0.06);
+    background: var(--surface); border: 1px solid var(--border-strong);
+    border-radius: 14px; padding: 8px 16px; min-height: 46px;
   }
-  .modal-input-row.secondary { border: 1px solid var(--border-strong); box-shadow: none; }
   .modal-input-val {
-    font-family: var(--font-mono); font-size: 32px; font-weight: 700;
-    letter-spacing: 3px; color: var(--amber); flex: 1;
+    font-family: var(--font-mono); font-size: 22px; font-weight: 700;
+    letter-spacing: 2px; color: var(--text-primary); flex: 1;
   }
-  .modal-input-row.secondary .modal-input-val { color: var(--text-primary); }
   .modal-input-unit {
-    font-family: var(--font-mono); font-size: 18px; color: var(--text-secondary);
+    font-family: var(--font-mono); font-size: 14px; color: var(--text-secondary);
   }
   .modal-cursor {
-    display: inline-block; width: 2px; height: 32px; background: var(--amber);
+    display: inline-block; width: 2px; height: 24px; background: var(--text-primary);
     margin-left: 4px; vertical-align: middle;
     animation: blink 1s step-end infinite;
   }
   @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0; } }
+  /* Szlak podpowiedzi (druga tura 2026-09-02) - te same klasy, co szlaki paliwa/MH
+     na 02A: kropka, tytuł ze stemplem, jedna linia szczegółów. */
+  .trail { display:flex; flex-direction:column; gap:0; border-top:1px solid var(--border); margin-top:2px; padding-top:10px; }
+  .trail-row { display:flex; align-items:flex-start; gap:10px; padding-bottom:10px; position:relative; }
+  .trail-row:last-child { padding-bottom:0; }
+  .trail-line { position:absolute; left:7px; top:16px; bottom:0; width:1px; background:var(--border); }
+  .trail-row:last-child .trail-line { display:none; }
+  .trail-dot { width:15px; height:15px; border-radius:50%; flex-shrink:0; margin-top:1px; }
+  .trail-dot.neutral { background:var(--surface-raised); border:1px solid var(--border-strong); }
+  .trail-dot.green { background:var(--green-muted); border:1px solid var(--green-border); }
+  .trail-body { flex:1; }
+  .trail-title { font-family:var(--font-body); font-size:11px; font-weight:400; color:var(--text-secondary); }
+  .trail-title.green { color:var(--green); }
+  .trail-meta { font-family:var(--font-mono); font-size:9px; color:var(--text-muted); margin-top:2px; line-height:1.5; }
+  .trail-meta b { color:var(--text-secondary); font-weight:500; }
   .modal-ref {
     display: flex; justify-content: space-between; align-items: center;
     font-family: var(--font-mono); font-size: 10px; color: var(--text-muted);
     padding: 0 2px;
   }
   .modal-ref-val { color: var(--text-secondary); }
-  .modal-ref-val.green { color: var(--green); font-weight: 700; }
   .modal-warning {
     display: flex; align-items: flex-start; gap: 9px;
     background: var(--amber-muted); border: 1px solid var(--amber-border);
@@ -192,9 +209,11 @@
       </div>
       <div class="section">
         <div class="section-label">Olej silnikowy</div>
-        <!-- Bez „min/zbiornik" w podpisie (przegląd 2026-09-02) - po pomiarze mówi
-             je podziałka ze znacznikiem minimum, przed pomiarem stoi instrukcja. -->
-        <div class="field-input" style="font-family:var(--font-mono); font-size:18px; font-weight:700; color:var(--text-muted);">- - <span style="font-size:11px; font-weight:400;">L · pomiar przy zimnym silniku</span></div>
+        <!-- Bez „min/zbiornik" i bez instrukcji „pomiar przy zimnym silniku"
+             w podpisie (przegląd 2026-09-02, dwie tury) - po pomiarze konfigurację
+             mówi podziałka ze znacznikiem minimum, a procedura pomiaru to wiedza
+             pilota, nie treść ekranu. -->
+        <div class="field-input" style="font-family:var(--font-mono); font-size:18px; font-weight:700; color:var(--text-muted);">- - <span style="font-size:11px; font-weight:400;">L</span></div>
       </div>
     </div>
 
@@ -211,47 +230,68 @@
         </div>
 
         <div class="modal-field-head"><span class="modal-field-label">Dolano</span><span class="optional-tag">opcjonalne</span></div>
-        <div class="modal-input-row secondary">
+        <div class="modal-input-row">
           <span class="modal-input-val">1,0</span>
           <span class="modal-input-unit">L</span>
         </div>
 
-        <!-- Podpowiedź (ostatni pomiar → oczekiwanie) przeniesiona TU ze szlaku
-             sekcji (przegląd 2026-09-02): pilot porównuje z nią liczbę dokładnie
-             w chwili wpisywania. Stempel w skrócie niesie też wiek podpowiedzi. -->
-        <div class="modal-ref">
-          <span>Ostatni pomiar · 21 CZE 07:02 · J. Kowalski</span>
-          <span class="modal-ref-val">10,6 L</span>
-        </div>
-        <div class="modal-ref">
-          <span>Oczekiwane wg normy · po 4:00 MH</span>
-          <span class="modal-ref-val">≈ 10,1 L</span>
-        </div>
-        <div class="modal-ref">
-          <span>Minimum przed lotem · SP-AXA</span>
-          <span class="modal-ref-val">8,5 L</span>
-        </div>
-        <div class="modal-ref">
-          <span>Zbiornik oleju · SP-AXA</span>
-          <span class="modal-ref-val">11,4 L</span>
-        </div>
-        <!-- Stan po dolewce jest RACHUNKIEM (pomiar + dolano) - pokazujemy go,
-             bo to on decyduje „czy lecę", ale nie jest trzecim polem do wpisania.
-             Zielony dopiero, gdy przekracza minimum. -->
-        <div class="modal-ref">
-          <span>Po dolewce</span>
-          <span class="modal-ref-val green">9,2 L · powyżej minimum</span>
-        </div>
-
-        <!-- Dwa zdania, dwa różne ostrzeżenia jednej liczby: operacyjne (poniżej
-             minimum - dolej) i diagnostyczne (odchył od normy - możliwy ubytek).
-             Drugie jest racją istnienia normy: rosnące zużycie oleju to najtańszy
-             wczesny sygnał zużycia silnika. -->
+        <!-- OSTRZEŻENIE ZARAZ POD POLAMI (uwaga z urządzenia, 2026-09-02, trzecia
+             tura: na końcu treści ginęło pod wysuniętą klawiaturą - pilot patrzy
+             tam, gdzie pisze, i tam ma dostać odpowiedź; liczy się na każdą zmianę
+             wartości). Dwa zdania, dwa różne ostrzeżenia jednej liczby: operacyjne
+             (poniżej minimum - dolej) i diagnostyczne (odchył od normy - możliwy
+             ubytek); drugie jest racją istnienia normy - rosnące zużycie oleju to
+             najtańszy wczesny sygnał zużycia silnika. -->
         <div class="modal-warning">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           <span>Pomiar <strong>0,3 L poniżej minimum</strong> (8,5 L) - dolej przed lotem.
           Odczyt jest też <strong>1,9 L niżej</strong> niż oczekiwanie z normy - sprawdź,
           czy silnik nie traci oleju.</span>
+        </div>
+
+        <!-- Podpowiedź (ostatni pomiar → oczekiwanie) przeniesiona TU ze szlaku
+             sekcji (przegląd 2026-09-02) i renderowana JAKO SZLAK - druga tura tej
+             samej uwagi: wiersze label→wartość dawały „za dużo linijek tekstu".
+             Ten sam schemat i te same dane, co szlaki paliwa/MH na 02A; pilot
+             porównuje z nim liczbę dokładnie w chwili wpisywania. -->
+        <div class="trail">
+          <div class="trail-row">
+            <div class="trail-line"></div>
+            <div class="trail-dot neutral"></div>
+            <div class="trail-body">
+              <div class="trail-title">Ostatni pomiar · 21 CZERWCA 07:02 - J. Kowalski</div>
+              <div class="trail-meta">bagnet <b>10,6 L</b> · przy <b>1 230:30 MH</b></div>
+            </div>
+          </div>
+          <div class="trail-row">
+            <div class="trail-dot green"></div>
+            <div class="trail-body">
+              <div class="trail-title green">Od pomiaru · 4:00 MH</div>
+              <div class="trail-meta">norma <b>0,12 L/h</b> → na bagnecie oczekuj ≈ <b>10,1 L</b></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Separator domykający szlak (uwaga z urządzenia, 2026-09-02) - ta sama
+             kreska, którą szlak otwiera od góry. -->
+        <div style="border-top:1px solid var(--border);"></div>
+
+        <div class="modal-ref">
+          <span>Minimum przed lotem</span>
+          <span class="modal-ref-val">8,5 L</span>
+        </div>
+        <div class="modal-ref">
+          <span>Zbiornik oleju</span>
+          <span class="modal-ref-val">11,4 L</span>
+        </div>
+        <!-- Stan po dolewce jest RACHUNKIEM (pomiar + dolano) - pokazujemy go,
+             bo nie jest trzecim polem do wpisania. BEZ „powyżej minimum" i bez
+             zieleni (uwaga z urządzenia, 2026-09-02): sugerowały, że oleju
+             WYSTARCZY, a wystarczalność zależy od długości lotu - o zejściu pod
+             minimum mówi osobne ostrzeżenie wyżej. -->
+        <div class="modal-ref">
+          <span>Po dolewce</span>
+          <span class="modal-ref-val">9,2 L</span>
         </div>
 
         <div class="modal-actions">

@@ -22,6 +22,7 @@ import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
 import { FreshnessNote, type Freshness } from '../status/FreshnessNote';
 import { Icon } from '../foundation/Icon';
+import { InlineNote } from '../status/InlineNote';
 import { Trail, type TrailRow } from './Trail';
 import { toneColors, type Tone } from '../tone';
 
@@ -61,6 +62,12 @@ export interface ReadoutProps {
   missing?: boolean;
   /** Historia prowadząca do tej wartości. */
   trail?: TrailRow[];
+  /**
+   * Ostrzeżenie warunkowe o wartości - WEWNĄTRZ karty, na jej dole (uwaga
+   * z urządzenia, 2026-09-02): stojące pod kartą czytało się jak osobny komunikat
+   * ekranu, a dotyczy liczby nad sobą. Znika razem z warunkiem; `null` = brak.
+   */
+  warning?: string | null;
   style?: ViewStyle;
 }
 
@@ -78,6 +85,7 @@ export function Readout({
   missingLabel = 'Wpisz odczyt',
   missing: missingOverride,
   trail = [],
+  warning = null,
   style,
 }: ReadoutProps) {
   const { theme } = useTheme();
@@ -176,6 +184,9 @@ export function Readout({
       </View>
 
       {!missing && <Trail rows={trail} />}
+
+      {/* Patrz nota przy propie `warning`: ostrzeżenie o wartości mieszka w karcie. */}
+      {warning != null && <InlineNote icon="warning" tone="amber" text={warning} />}
     </View>
   );
 }

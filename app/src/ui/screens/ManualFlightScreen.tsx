@@ -1229,14 +1229,16 @@ export function ManualFlightScreen({
              rejestr umie odpowiedzieć. Pary „przed/po" olej NIE MA, bo bagnet tuż po
              locie kłamie i zdanie samolotu oleju nie mierzy (issue #60). */
           ...(oilReference(chain) != null ? [oilReference(chain)!] : []),
+          /* Bez znaku rejestracyjnego w etykietach (uwaga z urządzenia, 2026-09-02):
+             arkusz dotyczy maszyny wybranej w kroku 1 - znak niczego nie odróżniał. */
           ...(aircraft?.oilMinL != null
-            ? [{ label: `Minimum przed lotem · ${aircraft.reg}`, value: oilLitres(aircraft.oilMinL) }]
+            ? [{ label: 'Minimum przed lotem', value: oilLitres(aircraft.oilMinL) }]
             : []),
           ...(aircraft?.oilCapacityL != null
-            ? [{ label: `Zbiornik oleju · ${aircraft.reg}`, value: oilLitres(aircraft.oilCapacityL) }]
+            ? [{ label: 'Zbiornik oleju', value: oilLitres(aircraft.oilCapacityL) }]
             : []),
         ]}
-        afterRowFor={(l, a) => oilAfterRow(l, a, oilConfig)}
+        afterRowFor={oilAfterRow}
         /* Do konfiguracji jednostki (zbiornik, minimum) dochodzi CIĄGŁOŚĆ z ostatnim
            pomiarem (uwaga z urządzenia, 2026-08-29 - ta sama zasada, co przy paliwie
            i liczniku). Pierwszeństwo ma `oilEntryWarning`, bo mówi o stanie fizycznie

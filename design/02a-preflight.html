@@ -127,9 +127,13 @@
   .modal-sheet { background:var(--surface-raised); border-radius:24px 24px 0 0; padding:20px 18px 32px; display:flex; flex-direction:column; gap:14px; border-top:1px solid var(--border-strong); max-height:calc(100% - 56px); overflow-y:auto; }
   .modal-handle { width:36px; height:4px; border-radius:2px; background:var(--border-strong); align-self:center; margin-bottom:4px; }
   .modal-title { font-family:var(--font-display); font-size:22px; letter-spacing:2px; color:var(--text-primary); }
-  .modal-input-row { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--border-strong); border-radius:14px; padding:14px 16px; }
-  .modal-input-val { font-family:var(--font-mono); font-size:32px; font-weight:700; letter-spacing:2px; color:var(--amber); flex:1; }
-  .modal-input-unit { font-family:var(--font-mono); font-size:16px; color:var(--text-secondary); }
+  /* Metryka pola dużej wartości zmniejszona ~30% (uwaga z urządzenia, 2026-09-02:
+     „input zajmuje strasznie dużo miejsca") - cyfry 22 px zamiast 32, padding 8 px,
+     podłogą min-height 46 px = cel dotykowy. W kodzie: valueFieldMetrics.ts,
+     wspólne dla ReadingSheet i OilSheet. */
+  .modal-input-row { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--border-strong); border-radius:14px; padding:8px 16px; min-height:46px; }
+  .modal-input-val { font-family:var(--font-mono); font-size:22px; font-weight:700; letter-spacing:2px; color:var(--amber); flex:1; }
+  .modal-input-unit { font-family:var(--font-mono); font-size:14px; color:var(--text-secondary); }
   .modal-ref { display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:10px; color:var(--text-muted); padding:0 2px; }
   .modal-warning { display:flex; align-items:flex-start; gap:8px; background:var(--amber-muted); border:1px solid var(--amber-border); border-radius:10px; padding:10px 12px; font-family:var(--font-mono); font-size:10px; color:var(--amber); line-height:1.5; }
   .modal-actions { display:grid; grid-template-columns:1fr 2fr; gap:8px; }
@@ -296,7 +300,9 @@
             </div>
             <div class="fresh-note only-cache" title="Wartość z ostatniej synchronizacji - stan mógł się zmienić; licznik fizyczny pozostaje prawdą">Ostatnie pobrane · 21 CZE 17:30</div>
             <div class="fresh-note only-none">Brak danych - wpisz z licznika</div>
-            <div style="font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); margin-top:4px;">licznik w formacie hh:mm</div>
+            <!-- Bez podpisu „licznik w formacie hh:mm" (uwaga z urządzenia, 2026-09-02):
+                 format widać z wartości, a przy wpisywaniu mówi go wiersz „Format
+                 licznika" w arkuszu 02C - opis konfiguracji nie jest treścią odczytu. -->
           </div>
           <button class="koryguj-btn hide-none" onclick="document.getElementById('hours-modal').style.display='flex'">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -355,13 +361,16 @@
            jest wyłącznie wpis ręczny (15 - fakt lotu cenniejszy niż kompletność).
            Sekcja stoi ZA blokiem przekazania, bo nie jest jego częścią.
 
-           PO PRZEGLĄDZIE 2026-09-02 sekcja mówi wyłącznie: ile oleju jest i czy
-           dolano. Adnotacja „Twój pomiar z bagnetu" zniknęła (pomiar jest aktem
-           pilota z definicji - nie ma czego poświadczać), podpis „min/zbiornik"
-           zastąpiła PODZIAŁKA jak przy paliwie (wypełnienie = stan po dolewce,
-           bursztynowa kreska = minimum; pod minimum wypełnienie bursztynieje),
-           a szlak podpowiedzi (ostatni pomiar → oczekiwanie z normy) przeniósł się
-           do ARKUSZA - tam, gdzie pilot wpisuje liczbę, którą ma z nim porównać. -->
+           PO PRZEGLĄDZIE 2026-09-02 sekcja mówi wyłącznie: ile oleju JEST W SILNIKU.
+           Dużą liczbą jest STAN PO DOLEWCE (pomiar + dolano - z nim samolot idzie
+           w powietrze; tu 10,2 bez dolewki), a przy dolewce podpis rozbija go na
+           składowe: „odczytano 8,2 L · dolano +1,0 L". Adnotacja „Twój pomiar
+           z bagnetu" zniknęła (pomiar jest aktem pilota z definicji - nie ma czego
+           poświadczać), podpis „min/zbiornik" zastąpiła PODZIAŁKA jak przy paliwie
+           (wypełnienie = stan po dolewce, bursztynowa kreska = minimum; pod minimum
+           wypełnienie bursztynieje), a szlak podpowiedzi (ostatni pomiar →
+           oczekiwanie z normy) przeniósł się do ARKUSZA - tam, gdzie pilot wpisuje
+           liczbę, którą ma z nim porównać. -->
       <div class="section">
         <div class="section-header">
           <div>
@@ -376,7 +385,6 @@
               <div style="position:absolute; inset:0; width:89%; background:var(--text-secondary); border-radius:3px;"></div>
               <div style="position:absolute; left:75%; top:0; bottom:0; width:2px; margin-left:-1px; background:var(--amber);"></div>
             </div>
-            <div class="only-none" style="font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); margin-top:4px;">pomiar przy zimnym silniku</div>
           </div>
           <button class="koryguj-btn hide-none" onclick="document.getElementById('oil-modal').style.display='flex'">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -474,17 +482,20 @@
          przy bagnecie: zmierz → jeśli mało, dolej. Stan po dolewce jest RACHUNKIEM
          (pomiar + dolano), nie trzecim polem - inaczej niż trójka refuel, więc
          korekta amend nie rozjedzie arytmetyki. Wariant poniżej minimum: 02I.
-         Od przeglądu 2026-09-02 wiersze odniesienia niosą też PODPOWIEDŹ (ostatni
-         pomiar + oczekiwanie z normy) - przeniesioną tu ze szlaku sekcji: pilot
-         porównuje z nią liczbę dokładnie w chwili wpisywania. Data w skrócie,
-         bo wiersz to jedna linia; stempel niesie przy okazji wiek podpowiedzi. -->
+         Od przeglądu 2026-09-02 arkusz niesie też PODPOWIEDŹ przeniesioną z sekcji -
+         jako SZLAK (druga tura: wiersze label→wartość dawały „za dużo linijek"),
+         w tym samym schemacie i z tymi samymi danymi, co szlaki paliwa/MH wyżej:
+         ostatni pomiar ze stemplem i kotwicą MH → oczekiwanie z normy. Pilot
+         porównuje z nim liczbę dokładnie w chwili wpisywania. WARTOŚĆ OLEJU BEZ
+         BURSZTYNU (ta sama tura): bursztyn jest rozróżnieniem paliwa - olej pisze
+         się standardowo, jak pole „Dolano". -->
     <div id="oil-modal" class="modal-overlay" style="display:none;">
       <div class="modal-sheet">
         <div class="modal-handle"></div>
         <div class="modal-title">Pomiar oleju</div>
         <div style="font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted);">Bagnet - poziom zmierzony</div>
-        <div class="modal-input-row">
-          <span class="modal-input-val">10,2</span>
+        <div class="modal-input-row" style="border-color:var(--border-strong);">
+          <span class="modal-input-val" style="color:var(--text-primary);">10,2</span>
           <span class="modal-input-unit">L</span>
         </div>
         <div class="modal-field-head"><span class="modal-field-label">Dolano</span><span class="optional-tag">opcjonalne</span></div>
@@ -492,20 +503,34 @@
           <span class="modal-input-val" style="color:var(--text-muted);">0</span>
           <span class="modal-input-unit">L</span>
         </div>
-        <div class="modal-ref">
-          <span>Ostatni pomiar · 21 CZE 07:02 · J. Kowalski</span>
-          <span style="color:var(--text-secondary);">10,6 L</span>
+        <div class="trail">
+          <div class="trail-row">
+            <div class="trail-line"></div>
+            <div class="trail-dot neutral"></div>
+            <div class="trail-body">
+              <div class="trail-title">Ostatni pomiar · 21 CZERWCA 07:02 - J. Kowalski</div>
+              <!-- Bez segmentu „bez dolewek później": dolewka wchodzi do meta TYLKO,
+                   gdy była („dolano później +1,0 L") - stan domyślny bez zdania. -->
+              <div class="trail-meta">bagnet <b>10,6 L</b> · przy <b>1 230:30 MH</b></div>
+            </div>
+          </div>
+          <div class="trail-row">
+            <div class="trail-dot green"></div>
+            <div class="trail-body">
+              <div class="trail-title green">Od pomiaru · 4:00 MH</div>
+              <div class="trail-meta">norma <b>0,12 L/h</b> → na bagnecie oczekuj ≈ <b>10,1 L</b></div>
+            </div>
+          </div>
         </div>
+        <!-- Separator domykający szlak (uwaga z urządzenia, 2026-09-02) - ta sama
+             kreska, którą szlak otwiera od góry. -->
+        <div style="border-top:1px solid var(--border);"></div>
         <div class="modal-ref">
-          <span>Oczekiwane wg normy · po 4:00 MH</span>
-          <span style="color:var(--text-secondary);">≈ 10,1 L</span>
-        </div>
-        <div class="modal-ref">
-          <span>Minimum przed lotem · SP-AXA</span>
+          <span>Minimum przed lotem</span>
           <span style="color:var(--text-secondary);">8,5 L</span>
         </div>
         <div class="modal-ref">
-          <span>Zbiornik oleju · SP-AXA</span>
+          <span>Zbiornik oleju</span>
           <span style="color:var(--text-secondary);">11,4 L</span>
         </div>
         <div class="modal-actions">

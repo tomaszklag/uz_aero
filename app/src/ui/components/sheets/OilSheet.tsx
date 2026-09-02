@@ -23,8 +23,10 @@ import { useTheme } from '../../theme';
 import { useSheetInputFocus } from '../../hooks/useSheetInputFocus';
 import { AppText } from '../foundation/AppText';
 import { Tag } from '../status/Tag';
-import { Sheet, type SheetRow } from './Sheet';
+import { Trail, type TrailRow } from '../readouts/Trail';
+import { Sheet, SheetWarning, type SheetRow } from './Sheet';
 import { cursorAtEnd, selectionApplied, type SelectionRange } from './sheetSelection';
+import { VALUE_FIELD } from './valueFieldMetrics';
 import { toneColors } from '../tone';
 
 export interface OilSheetProps {
@@ -34,8 +36,15 @@ export interface OilSheetProps {
   initialAddedText: string;
   /** Tekst → litry; `null` dla wpisu nieczytelnego (pusty tekst NIE przechodzi tędy). */
   parse: (text: string) => number | null;
-  /** Wiersze odniesienia (oczekiwane / minimum / zbiornik) - stałe dla otwarcia. */
+  /** Wiersze odniesienia (minimum / zbiornik) - stałe dla otwarcia. */
   rows?: SheetRow[];
+  /**
+   * Szlak podpowiedzi POD polami (ostatni pomiar → oczekiwanie z normy) - ten sam
+   * kształt, co szlaki paliwa i MH na ekranie 02A (druga tura uwagi z 2026-09-02:
+   * wiersze label→wartość dawały „za dużo linijek tekstu"). Pomijany = bez szlaku
+   * (wpis ręczny podaje własne odniesienie zwykłym wierszem).
+   */
+  trail?: TrailRow[];
   /** Rachunek „Po dolewce" dla bieżącej pary; `null` = wiersza nie ma. */
   afterRowFor: (levelL: number | null, addedL: number | null) => SheetRow | null;
   /** Ostrzeżenie dla bieżącej pary (poniżej minimum / odchył / ponad zbiornik). */
@@ -58,13 +67,13 @@ export function OilSheet({
   initialAddedText,
   parse,
   rows = [],
+  trail = [],
   afterRowFor,
   warningFor,
   onConfirm,
   onCancel,
 }: OilSheetProps) {
   const { theme } = useTheme();
-  const amber = toneColors(theme, 'amber');
 
   const [levelText, setLevelText] = useState(initialLevelText);
   const [addedText, setAddedText] = useState(initialAddedText);
@@ -104,9 +113,13 @@ export function OilSheet({
   const afterRow = !invalid ? afterRowFor(level.value, added.value) : null;
   const warning = !invalid ? warningFor(level.value, added.value) : null;
 
+  // Metryka pola wspólna z `ReadingSheet` (`valueFieldMetrics.ts`) - bliźniacze pola
+  // już raz się rozjechały, a przy dwóch polach tego arkusza każdy nadmiar liczy się
+  // podwójnie.
   const inputFrame = (bad: boolean) => ({
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    minHeight: VALUE_FIELD.minHeight,
+    paddingHorizontal: VALUE_FIELD.paddingHorizontal,
+    paddingVertical: VALUE_FIELD.paddingVertical,
     borderRadius: theme.radius.lg - 2,
     borderWidth: theme.borderWidthStrong,
     borderColor: bad ? toneColors(theme, 'red').border : theme.colors.borderStrong,
@@ -117,8 +130,8 @@ export function OilSheet({
     flex: 1,
     padding: 0,
     fontFamily: theme.fontFamily.monoBold,
-    fontSize: 30,
-    letterSpacing: 2,
+    fontSize: VALUE_FIELD.fontSize,
+    letterSpacing: VALUE_FIELD.letterSpacing,
   } as const;
 
   /* Baner mówi o WARTOŚCI, przycisk o tym, czemu nie da się zapisać (uwaga z urządzenia,
@@ -126,14 +139,17 @@ export function OilSheet({
      jest blokadą, więc jego zdanie stoi w przycisku; „Zanim potwierdzisz" zostaje dla
      poziomu, który wygląda podejrzanie, ale zapisać się da. Czerwień znika z banera
      razem z tym przypadkiem - nieczytelny wpis znaczy już czerwona ramka POLA, a to
-     ona wskazuje, KTÓRE z dwóch pól poprawić. */
+     ona wskazuje, KTÓRE z dwóch pól poprawić.
+
+     Ostrzeżenie renderuje TEN arkusz, nie rama (`SheetWarning` między polami
+     a szlakiem): ma stać ZARAZ POD POLAMI (uwaga z urządzenia, 2026-09-02 - na dole
+     treści ginęło pod wysuniętą klawiaturą), a w children jest jeszcze szlak, który
+     ostrzeżenie musi wyprzedzić. */
   return (
     <Sheet
       visible={visible}
       title="Pomiar oleju"
       rows={afterRow != null ? [...rows, afterRow] : rows}
-      {...(warning != null ? { warning } : {})}
-      warningTone="amber"
       confirmLabel="ZAPISZ"
       confirmDisabledReason={invalid ? 'Nie rozumiem tej wartości - popraw wpis' : null}
       onConfirm={() => onConfirm(level.value, added.value)}
@@ -158,10 +174,13 @@ export function OilSheet({
             }
           }}
           selectionColor={theme.colors.selection}
-          cursorColor={amber.accent}
-          selectionHandleColor={amber.accent}
+          // Standardowy styl wartości, NIE bursztyn (uwaga z urządzenia, 2026-09-02):
+          // bursztyn jest rozróżnieniem PALIWA i tam zostaje - olej pisze się tak,
+          // jak pole „Dolano" niżej.
+          cursorColor={theme.colors.textPrimary}
+          selectionHandleColor={theme.colors.textPrimary}
           accessibilityLabel="Pomiar oleju - poziom z bagnetu"
-          style={[inputText, { color: amber.accent }]}
+          style={[inputText, { color: theme.colors.textPrimary }]}
         />
         <AppText variant="mono" tone="secondary" style={styles.unit}>
           L
@@ -194,6 +213,22 @@ export function OilSheet({
           L
         </AppText>
       </View>
+
+      {/* Ostrzeżenie ZARAZ POD POLAMI - widoczne przy wysuniętej klawiaturze
+          i „live" na każdą zmianę wartości (patrz komentarz nad `return`). */}
+      {warning != null && <SheetWarning text={warning} />}
+
+      {/* Szlak podpowiedzi POD polami, NAD wierszami konfiguracji: pilot wpisuje
+          liczbę i o dwa centymetry niżej widzi, z czym ją porównać. */}
+      <Trail rows={trail} />
+      {/* Separator domykający szlak od dołu (uwaga z urządzenia, 2026-09-02) - ta
+          sama kreska, którą szlak otwiera od góry: podpowiedź stoi we własnej ramce,
+          a wiersze konfiguracji (minimum/zbiornik) zaczynają się czysto. */}
+      {trail.length > 0 && (
+        <View
+          style={{ borderTopWidth: theme.borderWidth, borderTopColor: theme.colors.border }}
+        />
+      )}
     </Sheet>
   );
 }
@@ -203,5 +238,5 @@ const styles = StyleSheet.create({
   // Etykieta po lewej, plakietka właściwości po prawej - jak w komponencie `Field`.
   fieldHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: -6 },
   inputRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  unit: { fontSize: 16 },
+  unit: { fontSize: VALUE_FIELD.unitFontSize },
 });

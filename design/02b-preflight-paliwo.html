@@ -101,21 +101,24 @@
   .modal-title {
     font-family: var(--font-display); font-size: 24px; letter-spacing: 2px; color: var(--text-primary);
   }
+  /* Metryka pola zmniejszona ~30% (uwaga z urządzenia, 2026-09-02) - cyfry 22 px,
+     padding 8 px, min-height 46 px (cel dotykowy). Wspólna z arkuszem oleju 02I;
+     w kodzie: valueFieldMetrics.ts. */
   .modal-input-row {
     display: flex; align-items: center; gap: 10px;
     background: var(--surface); border: 2px solid var(--amber-border);
-    border-radius: 14px; padding: 14px 18px;
+    border-radius: 14px; padding: 8px 16px; min-height: 46px;
     box-shadow: 0 0 0 3px rgba(243,156,18,0.06);
   }
   .modal-input-val {
-    font-family: var(--font-mono); font-size: 36px; font-weight: 700;
-    letter-spacing: 3px; color: var(--amber); flex: 1;
+    font-family: var(--font-mono); font-size: 22px; font-weight: 700;
+    letter-spacing: 2px; color: var(--amber); flex: 1;
   }
   .modal-input-unit {
-    font-family: var(--font-mono); font-size: 18px; color: var(--text-secondary);
+    font-family: var(--font-mono); font-size: 14px; color: var(--text-secondary);
   }
   .modal-cursor {
-    display: inline-block; width: 2px; height: 36px; background: var(--amber);
+    display: inline-block; width: 2px; height: 24px; background: var(--amber);
     margin-left: 4px; vertical-align: middle;
     animation: blink 1s step-end infinite;
   }
@@ -222,16 +225,12 @@
           <span class="modal-input-unit">L</span>
         </div>
 
-        <div class="modal-ref">
-          <span>Przekazane przez poprzednika</span>
-          <span class="modal-ref-val">150 L</span>
-        </div>
-        <div class="modal-ref">
-          <span>Pojemność zbiorników · SP-AXA</span>
-          <span class="modal-ref-val">330 L</span>
-        </div>
+        <!-- BANER STOI ZARAZ POD POLEM WPISU, przed wierszami odniesienia (uwaga
+             z urządzenia, 2026-09-02, trzecia tura: na końcu treści ginął pod
+             wysuniętą klawiaturą - pilot patrzy tam, gdzie pisze, i tam ma dostać
+             odpowiedź; ostrzeżenie liczy się na każdą zmianę wartości).
 
-        <!-- BANER MÓWI O WARTOŚCI, PRZYCISK O TYM, CZEMU NIE DA SIĘ ZAPISAĆ
+             BANER MÓWI O WARTOŚCI, PRZYCISK O TYM, CZEMU NIE DA SIĘ ZAPISAĆ
              (uwaga z urządzenia, 2026-08-29). To są dwie różne rzeczy i mają dwa różne
              miejsca - a arkusz odczytu mieszał je w jednym banerze:
 
@@ -267,6 +266,15 @@
         <div class="modal-warning">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           <span>Odczyt różni się od szacunku o <strong>−30 L</strong>. Sprawdź stan zbiorników przed zatwierdzeniem.</span>
+        </div>
+
+        <div class="modal-ref">
+          <span>Przekazane przez poprzednika</span>
+          <span class="modal-ref-val">150 L</span>
+        </div>
+        <div class="modal-ref">
+          <span>Pojemność zbiorników · SP-AXA</span>
+          <span class="modal-ref-val">330 L</span>
         </div>
 
         <div class="modal-actions">

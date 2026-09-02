@@ -7,11 +7,15 @@
  * a serwerowe dane są wyłącznie podpowiedzią: ostatni pomiar plus rachunek oczekiwania.
  *
  * PODPOWIEDŹ MIESZKA W ARKUSZU, NIE W SEKCJI (uwaga z urządzenia, 2026-09-02): sekcja
- * na ekranie mówi wyłącznie, ile oleju jest TERAZ (pomiar pilota, podziałka ze
- * znacznikiem minimum) i czy dolano - historia pomiarów i oczekiwanie z normy stoją
- * jako wiersze odniesienia arkusza, czyli tam, gdzie pilot wpisuje liczbę, którą ma
- * z nimi porównać. Adnotacji świeżości sekcja nie nosi: własny pomiar nie ma czego
- * poświadczać, a wiek podpowiedzi niesie stempel w wierszu „Ostatni pomiar".
+ * na ekranie mówi wyłącznie, ile oleju JEST W SILNIKU (pomiar + dolewka dużą liczbą,
+ * podziałka ze znacznikiem minimum) i z czego to wynika („odczytano · dolano") -
+ * historia pomiaru i oczekiwanie z normy stoją w arkuszu, czyli tam, gdzie pilot
+ * wpisuje liczbę, którą ma z nimi porównać. KSZTAŁTEM podpowiedzi jest SZLAK
+ * (`Trail` - kropka, tytuł, linia szczegółów), ten sam co przy paliwie i MH na
+ * ekranie: pierwsza wersja przenosin składała ją w wiersze label→wartość arkusza
+ * i pilot dostał „za dużo linijek tekstu, nie do końca czytelne" (druga tura tej
+ * samej uwagi). Adnotacji świeżości sekcja nie nosi: własny pomiar nie ma czego
+ * poświadczać, a wiek podpowiedzi niesie stempel w tytule „Ostatni pomiar".
  *
  * Rachunek oczekiwania: `oczekiwane = pomiar + dolewki po nim − stawka × ΔMH`, gdzie
  * kotwicą jest odczyt MH przy tamtym pomiarze, a ΔMH liczy się do BIEŻĄCEGO odczytu
@@ -29,7 +33,7 @@
  * bo fakt lotu jest cenniejszy niż kompletność formularza.
  */
 
-import { dateTimeUtcShort, motoHours, oilLitres } from '../../format';
+import { motoHours, oilLitres, stampUtc } from '../../format';
 import type { MhFormat, OilHandover } from '../../../domain';
 
 /**
@@ -46,10 +50,12 @@ export interface OilConfig {
   normLPerH: number | null;
 }
 
-/** Wiersz odniesienia dla ARKUSZA pomiaru - strukturalnie zgodny z `SheetRow`. */
-export interface OilRefRow {
-  label: string;
-  value: string;
+/** Ogniwo szlaku podpowiedzi w ARKUSZU pomiaru - strukturalnie zgodne z `TrailRow`. */
+export interface OilTrailRow {
+  id: string;
+  title: string;
+  meta: string;
+  tone?: 'green';
 }
 
 /**
@@ -79,22 +85,30 @@ export interface OilClaimInput {
 }
 
 export interface OilClaimView {
-  /** Wartość sekcji („8,2"); `null` = „- -". */
+  /**
+   * Wartość sekcji - STAN SILNIKA po dolewce („9,2"); `null` = „- -". Duża liczba
+   * mówi, ile oleju JEST (trzecia uwaga z 2026-09-02), a rozbicie na składowe
+   * („odczytano · dolano") schodzi do podpisu.
+   */
   value: string | null;
   caption: string;
   /** Podziałka poziomu; `null` = nie ma czego rysować (bez pomiaru / bez zbiornika). */
   gauge: OilGauge | null;
   /**
-   * Podpowiedź (ostatni pomiar, dolewki po nim, oczekiwanie z normy) - WIERSZE ARKUSZA,
-   * nie sekcji. Uwaga z urządzenia (2026-09-02): historia przy pomiarze jest ciekawa,
-   * ale jej miejsce jest w arkuszu - na ekranie zostaje sam stan pilota i dolewka.
+   * Podpowiedź (ostatni pomiar → oczekiwanie z normy) - SZLAK renderowany w ARKUSZU,
+   * nie w sekcji. Uwaga z urządzenia (2026-09-02): historia przy pomiarze jest
+   * ciekawa, ale jej miejsce jest w popupie; kształtem jest `Trail`, jak przy
+   * paliwie i MH na ekranie - wiersze label→wartość dawały „za dużo linijek".
    */
-  sheetRows: OilRefRow[];
+  trail: OilTrailRow[];
   /** Ostrzeżenie pod sekcją (warunkowe - znika z warunkiem); `null` = brak. */
   warning: string | null;
   /** Oczekiwany poziom z normy - do ostrzeżeń arkusza; `null` = nie liczy się. */
   expectedL: number | null;
 }
+
+/** „0,12 L/h" - stawka z dwoma miejscami, bo norma oleju żyje w setnych litra. */
+const rateLabel = (rate: number): string => `${rate.toFixed(2).replace('.', ',')} L/h`;
 
 /** Litry bez jednostki do dużej wartości sekcji - jednostkę niesie osobny slot. */
 const bareLitres = (v: number): string => oilLitres(v).replace(/\sL$/, '');
@@ -157,11 +171,11 @@ export function oilEntryWarning(
   if (cap != null) {
     if (afterL != null && afterL > cap) {
       return added > 0
-        ? `Stan po dolewce (${oilLitres(afterL)}) przekracza zbiornik (${oilLitres(cap)}) - popraw wpis.`
-        : `Pomiar ${oilLitres(afterL)} przekracza zbiornik (${oilLitres(cap)}) - popraw wpis.`;
+        ? `Stan oleju po dolewce (${oilLitres(afterL)}) przekracza zbiornik (${oilLitres(cap)}) - popraw wpis.`
+        : `Pomiar oleju ${oilLitres(afterL)} przekracza zbiornik (${oilLitres(cap)}) - popraw wpis.`;
     }
     if (afterL == null && addedL != null && addedL > cap) {
-      return `Dolewka ${oilLitres(addedL)} przekracza zbiornik (${oilLitres(cap)}) - popraw wpis.`;
+      return `Dolewka oleju ${oilLitres(addedL)} przekracza zbiornik (${oilLitres(cap)}) - popraw wpis.`;
     }
   }
 
@@ -171,13 +185,13 @@ export function oilEntryWarning(
   if (config.minL != null && afterL < config.minL) {
     const missing = config.minL - afterL;
     parts.push(
-      `Poziom ${oilLitres(afterL)} poniżej minimum (${oilLitres(config.minL)}) - ` +
+      `Poziom oleju ${oilLitres(afterL)} poniżej minimum (${oilLitres(config.minL)}) - ` +
         `dolej co najmniej ${oilLitres(missing)} przed lotem.`,
     );
   }
   if (expectedL != null && expectedL - levelL >= OIL_DEVIATION_WARN_L) {
     parts.push(
-      `Pomiar jest ${oilLitres(expectedL - levelL)} niżej niż oczekiwanie z normy - ` +
+      `Pomiar oleju jest ${oilLitres(expectedL - levelL)} niżej niż oczekiwanie z normy - ` +
         'sprawdź, czy silnik nie traci oleju.',
     );
   }
@@ -186,23 +200,19 @@ export function oilEntryWarning(
 
 /**
  * Wiersz „Po dolewce" arkusza - istnieje wyłącznie, gdy jest CO liczyć (pomiar
- * z dolewką); dolewka w ciemno stanu nie zna, sam pomiar go nie zmienia. Zielony
- * dopiero od minimum w górę - poniżej ostrzega osobne ostrzeżenie, nie kolor wiersza,
- * a bez skonfigurowanego minimum nie ma do czego porównywać.
+ * z dolewką); dolewka w ciemno stanu nie zna, sam pomiar go nie zmienia.
+ *
+ * BEZ dopisku „powyżej minimum" i bez zieleni (uwaga z urządzenia, 2026-09-02):
+ * jedno i drugie sugerowało, że oleju WYSTARCZY - a wystarczalność zależy od
+ * długości lotu, o której konfiguracyjne minimum nic nie wie. Wiersz podaje sam
+ * rachunek; o zejściu POD minimum mówi osobne ostrzeżenie.
  */
 export function oilAfterRow(
   levelL: number | null,
   addedL: number | null,
-  config: OilConfig,
-): { label: string; value: string; tone?: 'green' } | null {
+): { label: string; value: string } | null {
   if (levelL == null || addedL == null || addedL <= 0) return null;
-  const afterL = levelL + addedL;
-  const aboveMin = config.minL != null && afterL >= config.minL;
-  return {
-    label: 'Po dolewce',
-    value: aboveMin ? `${oilLitres(afterL)} · powyżej minimum` : oilLitres(afterL),
-    ...(aboveMin ? { tone: 'green' as const } : {}),
-  };
+  return { label: 'Po dolewce', value: oilLitres(levelL + addedL) };
 }
 
 export function oilClaimView(input: OilClaimInput): OilClaimView {
@@ -210,45 +220,52 @@ export function oilClaimView(input: OilClaimInput): OilClaimView {
   const entered = enteredL != null || addedL != null;
   const exp = expectation(lastOil, config, input.currentMh);
 
-  // ── podpowiedź: ostatni pomiar → rachunek oczekiwania - do ARKUSZA ──────────
-  // Data w skrócie („21 CZE 07:02"), bo wiersz arkusza to jedna linia label→wartość;
-  // stempel niesie przy okazji wiek podpowiedzi, więc osobnej adnotacji świeżości
-  // sekcja nie potrzebuje.
-  const sheetRows: OilRefRow[] = [];
+  // ── podpowiedź: ostatni pomiar → rachunek oczekiwania - SZLAK do ARKUSZA ────
+  // Ten sam schemat i te same dane, co szlaki paliwa i MH na ekranie (druga tura
+  // uwagi z 2026-09-02): kropka, tytuł ze stemplem, jedna linia szczegółów.
+  // Dolewki po pomiarze są częścią meta („dolano później +…") - pilot ma wiedzieć,
+  // że rachunek oczekiwania je widzi.
+  const trail: OilTrailRow[] = [];
   if (lastOil != null) {
-    sheetRows.push({
-      label: `Ostatni pomiar · ${dateTimeUtcShort(lastOil.at)} · ${input.pilotName(lastOil.byPilotId)}`,
-      value: oilLitres(lastOil.levelL),
+    trail.push({
+      id: 'oil-last',
+      title: `Ostatni pomiar · ${stampUtc(lastOil.at)} - ${input.pilotName(lastOil.byPilotId)}`,
+      meta: [
+        `bagnet ${oilLitres(lastOil.levelL)}`,
+        lastOil.atMh != null ? `przy ${motoHours(lastOil.atMh, input.mhFormat)} MH` : null,
+        lastOil.addedSinceL > 0 ? `dolano później +${oilLitres(lastOil.addedSinceL)}` : null,
+      ]
+        .filter(Boolean)
+        .join(' · '),
     });
-    if (lastOil.addedSinceL > 0) {
-      // Dolewka jest też faktem rachunku - pilot ma wiedzieć, że oczekiwanie ją widzi.
-      sheetRows.push({ label: 'Dolano od pomiaru', value: `+${oilLitres(lastOil.addedSinceL)}` });
-    }
   }
   if (exp != null) {
-    sheetRows.push({
-      label: `Oczekiwane wg normy · po ${motoHours(exp.deltaMh, input.mhFormat)} MH`,
-      value: `≈ ${oilLitres(exp.expectedL)}`,
+    trail.push({
+      id: 'oil-expect',
+      tone: 'green',
+      title: `Od pomiaru · ${motoHours(exp.deltaMh, input.mhFormat)} MH`,
+      meta: `norma ${rateLabel(exp.rate)} → na bagnecie oczekuj ≈ ${oilLitres(exp.expectedL)}`,
     });
   }
 
-  // ── podpis: instrukcja do pomiaru; po wpisie sama dolewka ───────────────────
-  // Konfiguracji (min/zbiornik) tu nie ma - mówi ją podziałka ze znacznikiem minimum
-  // (uwaga z urządzenia, 2026-09-02). Pomiar bez dolewki podpisu nie dostaje wcale:
-  // „bez dolewki" przy każdym przejęciu niczego by nie odróżniało (reguła SyncChipa).
+  // ── wartość i podpis: STAN silnika dużą liczbą, składowe pod spodem ─────────
+  // Trzecia uwaga z 2026-09-02: „pokazać, ile jest oleju w silniku, a poniżej
+  // opisać: odczytano X, dolano Y". Dużą liczbą jest pomiar + dolewka - stan,
+  // z którym samolot idzie w powietrze, ten sam, który ocenia podziałka i próg
+  // minimum. Rozbicie na składowe schodzi do podpisu i istnieje TYLKO przy dolewce:
+  // bez niej stan RÓWNA SIĘ odczytowi, a „bez dolewki" przy każdym przejęciu
+  // niczego by nie odróżniało (reguła SyncChipa). Konfiguracji (min/zbiornik)
+  // i instrukcji pomiaru w podpisie nie ma - wcześniejsze uwagi z tego samego dnia.
+  const afterL = enteredL != null ? enteredL + (addedL ?? 0) : null;
   let caption = '';
-  if (!entered) {
-    // Instrukcja pomiaru stoi do chwili pomiaru - potem jest spełniona i schodzi.
-    caption = 'pomiar przy zimnym silniku';
-  } else if (addedL != null && addedL > 0) {
+  if (addedL != null && addedL > 0) {
     caption =
       enteredL != null
-        ? `dolano +${oilLitres(addedL)} → po dolewce ${oilLitres(enteredL + addedL)}`
+        ? `odczytano ${oilLitres(enteredL)} · dolano +${oilLitres(addedL)}`
         : `dolano +${oilLitres(addedL)}`;
   }
 
   // ── podziałka: stan po dolewce na tle zbiornika, minimum znacznikiem ────────
-  const afterL = enteredL != null ? enteredL + (addedL ?? 0) : null;
   const gauge: OilGauge | null =
     afterL != null && config.capacityL != null && config.capacityL > 0
       ? {
@@ -259,10 +276,10 @@ export function oilClaimView(input: OilClaimInput): OilClaimView {
       : null;
 
   return {
-    value: enteredL != null ? bareLitres(enteredL) : null,
+    value: afterL != null ? bareLitres(afterL) : null,
     caption,
     gauge,
-    sheetRows,
+    trail,
     warning: entered ? oilEntryWarning(enteredL, addedL, config, exp?.expectedL ?? null) : null,
     expectedL: exp?.expectedL ?? null,
   };

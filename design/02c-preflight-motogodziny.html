@@ -83,10 +83,12 @@
   .modal-sheet { background:var(--surface-raised); border-radius:24px 24px 0 0; padding:20px 18px 36px; display:flex; flex-direction:column; gap:16px; border-top:1px solid var(--border-strong); max-height:calc(100% - 56px); overflow-y:auto; }
   .modal-handle { width:36px; height:4px; border-radius:2px; background:var(--border-strong); align-self:center; margin-bottom:2px; }
   .modal-title { font-family:var(--font-display); font-size:24px; letter-spacing:2px; color:var(--text-primary); }
-  .modal-input-row { display:flex; align-items:center; gap:10px; background:var(--surface); border:2px solid var(--amber-border); border-radius:14px; padding:14px 18px; box-shadow:0 0 0 3px rgba(243,156,18,0.06); }
-  .modal-input-val { font-family:var(--font-mono); font-size:36px; font-weight:700; letter-spacing:3px; color:var(--amber); flex:1; }
-  .modal-input-unit { font-family:var(--font-mono); font-size:18px; color:var(--text-secondary); }
-  .modal-cursor { display:inline-block; width:2px; height:36px; background:var(--amber); margin-left:4px; vertical-align:middle; animation:blink 1s step-end infinite; }
+  /* Metryka pola zmniejszona ~30% (uwaga z urządzenia, 2026-09-02) - cyfry 22 px,
+     padding 8 px, min-height 46 px (cel dotykowy). W kodzie: valueFieldMetrics.ts. */
+  .modal-input-row { display:flex; align-items:center; gap:10px; background:var(--surface); border:2px solid var(--amber-border); border-radius:14px; padding:8px 16px; min-height:46px; box-shadow:0 0 0 3px rgba(243,156,18,0.06); }
+  .modal-input-val { font-family:var(--font-mono); font-size:22px; font-weight:700; letter-spacing:2px; color:var(--amber); flex:1; }
+  .modal-input-unit { font-family:var(--font-mono); font-size:14px; color:var(--text-secondary); }
+  .modal-cursor { display:inline-block; width:2px; height:24px; background:var(--amber); margin-left:4px; vertical-align:middle; animation:blink 1s step-end infinite; }
   @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0; } }
   .modal-ref { display:flex; justify-content:space-between; align-items:center; font-family:var(--font-mono); font-size:10px; color:var(--text-muted); padding:0 2px; }
   .modal-warning { display:flex; align-items:flex-start; gap:9px; background:var(--amber-muted); border:1px solid var(--amber-border); border-radius:12px; padding:12px 14px; font-family:var(--font-mono); font-size:10px; color:var(--amber); line-height:1.6; }

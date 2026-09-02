@@ -22,6 +22,12 @@
  * jednej rzeczy wyglądały jak dwie rzeczy. Egzekwowane tutaj, nie konwencją w ekranach,
  * bo konwencja już raz się rozjechała (trzy ekrany podawały `info`, jeden `sync`).
  *
+ * OSTRZEŻENIE MA TRÓJKĄT DOMYŚLNIE (uwaga z urządzenia, 2026-09-02): każdy `.warn-box`
+ * mockupów niesie ikonę, a `icon` zdany na wołającego raz już zawiódł - ostrzeżenie
+ * arkusza renderowało się bez ikony i z szarym tekstem, „odbiegało od designu".
+ * Dla `warning` ikona jest więc DOMYŚLNA (`icon` może ją nadal podmienić); `status`
+ * zostaje bez domyślnej, bo jego ikona nazywa KONKRETNY stan (sync, zegar, check).
+ *
  * `action` - opcjonalny przycisk POD treścią (np. „Wyczyść formularz" w banerze
  * o podstawionych danych na 02E): baner tłumaczący, skąd wzięły się wartości, jest
  * naturalnym miejscem decyzji „nie chcę ich". Slot jest częścią komponentu, żeby
@@ -78,8 +84,10 @@ export function Banner({
   const { theme } = useTheme();
   const c = toneColors(theme, tone ?? DEFAULT_TONE[kind]);
   const dismissible = kind === 'edu' && onDismiss != null;
-  // Pouczający PYTA - pytajnik wymuszony na poziomie DS (patrz docblock modułu).
-  const effectiveIcon: IconName | undefined = kind === 'edu' ? 'help' : icon;
+  // Pouczający PYTA (pytajnik wymuszony), ostrzeżenie OSTRZEGA (trójkąt domyślny) -
+  // oba na poziomie DS, patrz docblock modułu.
+  const effectiveIcon: IconName | undefined =
+    kind === 'edu' ? 'help' : kind === 'warning' ? (icon ?? 'warning') : icon;
 
   // Zwinięty baner pouczający - mini-chip w miejscu, w którym stał; TA SAMA ikona,
   // co w banerze rozwiniętym, żeby dwa stany jednej rzeczy wyglądały jak jedna rzecz.

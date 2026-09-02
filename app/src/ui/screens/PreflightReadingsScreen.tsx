@@ -332,15 +332,18 @@ export function PreflightReadingsScreen({
     addedL: draft.oilAddedL,
     pilotName,
   });
-  // Podpowiedź (ostatni pomiar → oczekiwanie) stoi w ARKUSZU, nad wierszami
-  // konfiguracji - uwaga z urządzenia, 2026-09-02; pełny wywód w `logic/oilPreflight.ts`.
+  // Podpowiedź (ostatni pomiar → oczekiwanie) stoi w ARKUSZU jako SZLAK (`trail`
+  // niżej), a wiersze odniesienia niosą samą konfigurację - uwaga z urządzenia,
+  // 2026-09-02 w dwóch turach; pełny wywód w `logic/oilPreflight.ts`.
+  // BEZ znaku rejestracyjnego w etykietach (kolejna tura tej samej uwagi): arkusz
+  // dotyczy maszyny, którą pilot właśnie trzyma, więc znak niczego nie odróżniał -
+  // tylko wydłużał wiersz.
   const oilSheetRows: SheetRow[] = [
-    ...oilView.sheetRows,
     ...(oilConfig.minL != null
-      ? [{ label: `Minimum przed lotem · ${aircraft.reg}`, value: oilLitres(oilConfig.minL) }]
+      ? [{ label: 'Minimum przed lotem', value: oilLitres(oilConfig.minL) }]
       : []),
     ...(oilConfig.capacityL != null
-      ? [{ label: `Zbiornik oleju · ${aircraft.reg}`, value: oilLitres(oilConfig.capacityL) }]
+      ? [{ label: 'Zbiornik oleju', value: oilLitres(oilConfig.capacityL) }]
       : []),
   ];
   return (
@@ -401,14 +404,17 @@ export function PreflightReadingsScreen({
           onCorrect={() => setEditing('fuel')}
         />
 
-        {/* ── motogodziny ─────────────────────────────────────────────────── */}
+        {/* ── motogodziny ───────────────────────────────────────────────────
+            Bez podpisu „licznik w formacie hh:mm" (uwaga z urządzenia, 2026-09-02):
+            format widać z samej wartości, a tam, gdzie pilot go potrzebuje - przy
+            wpisywaniu - mówi go wiersz odniesienia arkusza („Format licznika"). Podpis
+            konfiguracyjny na ekranie był opisem ustawień, nie treścią odczytu. */}
         <Readout
           label="Motogodziny silnika"
           value={missing && draft.mh <= 0 ? null : motoHours(draft.mh, mhFormat)}
           unit="MH"
           freshness={freshness}
           syncedAt={syncedAt}
-          caption={`licznik w formacie ${mhFormat === 'hhmm' ? 'hh:mm' : 'dziesiętnym'}`}
           trail={trails.mh}
           onCorrect={() => setEditing('mh')}
         />
@@ -463,11 +469,12 @@ export function PreflightReadingsScreen({
             stanem domyślnym formularza. Sekcja stoi ZA blokiem przekazania, bo nie
             jest jego częścią.
 
-            PO PRZEGLĄDZIE 2026-09-02 sekcja mówi wyłącznie: ile oleju jest (pomiar,
-            podziałka ze znacznikiem minimum - jak przy paliwie) i czy dolano. Bez
-            adnotacji świeżości („Twój pomiar z bagnetu" poświadczał akt, który jest
-            aktem z definicji), bez „min/zbiornik" w podpisie (mówi je podziałka)
-            i bez szlaku podpowiedzi - ten stoi w arkuszu (`oilSheetRows`). */}
+            PO PRZEGLĄDZIE 2026-09-02 sekcja mówi wyłącznie: ile oleju JEST W SILNIKU.
+            Dużą liczbą jest stan PO dolewce, podpis rozbija go na „odczytano ·
+            dolano" (tylko przy dolewce), a podziałka ze znacznikiem minimum stoi jak
+            przy paliwie. Bez adnotacji świeżości („Twój pomiar z bagnetu" poświadczał
+            akt, który jest aktem z definicji), bez „min/zbiornik" w podpisie (mówi je
+            podziałka) i bez szlaku podpowiedzi - ten stoi w arkuszu (`oilSheetRows`). */}
         <Readout
           label="Olej silnikowy"
           value={oilView.value}
@@ -484,14 +491,13 @@ export function PreflightReadingsScreen({
           }
           missing={false}
           correctLabel={draft.oilL != null || draft.oilAddedL != null ? 'Koryguj' : 'Wpisz pomiar'}
+          // Ostrzeżenie WEWNĄTRZ karty (uwaga z urządzenia, 2026-09-02): dotyczy
+          // wartości nad sobą, a stojące pod kartą czytało się jak osobny komunikat
+          // ekranu. Znika razem z warunkiem (dolewką albo poprawką); poniżej minimum
+          // NIE blokuje - PIC decyduje (D3).
+          warning={oilView.warning}
           onCorrect={() => setEditing('oil')}
         />
-
-        {/* Ostrzeżenie warunkowe - znika razem z warunkiem (dolewką albo poprawką),
-            nie zamyka się ręcznie. Poniżej minimum NIE blokuje: PIC decyduje (D3). */}
-        {oilView.warning != null && (
-          <InlineNote icon="warning" tone="amber" text={oilView.warning} />
-        )}
 
         {/* ── ostrzeżenia warunkowe (dawny ekran 03) ──────────────────────────
             Odziedziczone po usuniętym podsumowaniu: to jedyne dwa komunikaty, których
@@ -588,7 +594,8 @@ export function PreflightReadingsScreen({
         initialAddedText={oilValueText(draft.oilAddedL)}
         parse={parseLitres}
         rows={oilSheetRows}
-        afterRowFor={(l, a) => oilAfterRow(l, a, oilConfig)}
+        trail={oilView.trail}
+        afterRowFor={oilAfterRow}
         warningFor={(l, a) => oilEntryWarning(l, a, oilConfig, oilView.expectedL)}
         onConfirm={(l, a) => {
           draft.set('oilL', l);

@@ -1027,8 +1027,9 @@ Cztery uwagi z urządzenia; dwie z nich to reguły obowiązujące każdy nowy ek
 Dziesięć uwag z urządzenia wokół wpisu ręcznego (15) i design systemu:
 - **metryka wartości w kontrolce formularza = pole wpisu z arkusza: mono 16 / odstęp 1,5**
   (`ValueBox`, mockupy 15/15A–C/15E/02E/02F/09B). Kontrolka jest tym samym polem
-  oglądanym w spoczynku - 22 px robiło z każdej wartości bohatera ekranu. Wielkie
-  stopnie zostają w ARKUSZACH edycji (odczyt 32, `ReadingSheet`) - tam się wpisuje,
+  oglądanym w spoczynku - 22 px robiło z każdej wartości bohatera ekranu. Większe
+  stopnie zostają w ARKUSZACH edycji (`ReadingSheet`/`OilSheet`: odczyt 22 od uwagi
+  2026-09-02, wcześniej 30–32 - patrz `valueFieldMetrics.ts`) - tam się wpisuje,
   tu się czyta
 - **placeholder jest ZAWSZE składem tekstowym: body 15 w `--text-placeholder`**
   (trzecia i czwarta tura #58) - dokładnie jak placeholder arkusza notatki.
@@ -1579,19 +1580,76 @@ Uwagi z urządzenia do kroku liczników (NOWY LOT · 3/3):
   w `oilClaimView().gauge` (testy); bez pojemności podziałki nie ma, bez minimum -
   znacznika. Znacznik jest bursztynowy niezależnie od tonu wypełnienia: to granica
   ostrzeżenia, nie część poziomu
-- **podpowiedź (ostatni pomiar → oczekiwanie z normy) mieszka W ARKUSZU** („koncepcja
-  ciekawa, ale lepiej dać to do popup"): szlak sekcji zniknął, `oilClaimView().sheetRows`
-  stoją nad wierszami konfiguracji arkusza 02I - pilot porównuje z nimi liczbę w chwili
-  wpisywania, a stempel „21 CZE 07:02" niesie przy okazji wiek podpowiedzi (osobna
-  adnotacja świeżości nie ma czego kwalifikować). Na ekranie zostaje: ile oleju jest
-  i czy dolano - podpis wyłącznie przy dolewce, bo „bez dolewki" przy każdym przejęciu
-  niczego by nie odróżniało
+- **podpowiedź (ostatni pomiar → oczekiwanie z normy) mieszka W ARKUSZU i jest
+  SZLAKIEM** („koncepcja ciekawa, ale lepiej dać to do popup"; druga tura: „styl,
+  który był wcześniej, był lepszy - trzeba tylko go przenieść do popup", bo wiersze
+  label→wartość dawały „za dużo linijek tekstu"): `oilClaimView().trail` renderuje
+  w arkuszu 02I ten sam `Trail`, co szlaki paliwa/MH na ekranie - kropka, tytuł ze
+  stemplem („Ostatni pomiar · 21 CZERWCA 07:02 - J. Kowalski", meta z bagnetem
+  i kotwicą MH), zielone ogniwo oczekiwania. Stoi POD polami, NAD wierszami
+  konfiguracji (min/zbiornik), **domknięty od dołu taką samą kreską, jaką otwiera
+  się od góry** (kolejna tura) - podpowiedź stoi we własnej ramce; stempel niesie
+  przy okazji wiek podpowiedzi (osobna adnotacja świeżości nie ma czego
+  kwalifikować). **Wartość oleju w arkuszu BEZ
+  BURSZTYNU** (ta sama tura: „paliwo na żółto to dobre rozróżnienie - oleju nie
+  pokazuj na żółto"): oba pola 02I pisane standardowo, jak pole „Dolano"; bursztyn
+  zostaje przy paliwie (02B). Na ekranie zostaje: ile oleju
+  JEST W SILNIKU - **dużą liczbą sekcji jest STAN PO DOLEWCE** (trzecia tura:
+  „pokazać ile jest oleju, a poniżej opisać: odczytano X, dolano Y"), a podpis
+  rozbija go na składowe „odczytano 8,2 L · dolano +1,0 L" wyłącznie przy dolewce,
+  bo bez niej stan równa się odczytowi i „bez dolewki" przy każdym przejęciu
+  niczego by nie odróżniało. **Instrukcja „pomiar przy zimnym silniku" WYCIĘTA**
+  (druga tura tego samego dnia): procedura pomiaru to wiedza pilota, nie treść
+  ekranu - przed pomiarem sekcja stoi z samym „- -" i przyciskiem „Wpisz pomiar"
+- **podpis „licznik w formacie hh:mm" przy motogodzinach USUNIĘTY** (kolejna tura):
+  format widać z samej wartości, a tam, gdzie pilot go potrzebuje - przy wpisywaniu -
+  mówi go wiersz „Format licznika · SP-AXA" w arkuszu 02C. Opis konfiguracji nie jest
+  treścią odczytu (ta sama kategoria, co przypisy z issue #43/#72)
 - **powód blokady jest INSTRUKCJĄ, nie uzasadnieniem wymogu** („po co pisać na
   przycisku, że odczyt przy przejęciu jest obowiązkowy"): z `preflightBlocker` wycięte
   doklejki „- odczyt przy przejęciu jest obowiązkowy" i „- rozpoczną nowe ogniwo
   łańcucha" - skoro przycisk stoi, wymóg jest oczywisty, a budowa rejestru nie jest
   pytaniem pilota (kategoria przypisów z issue #43/#72). Zostaje pełne zdanie
   o cofniętym liczniku: ta blokada jest niewidoczna z kontrolki (issue #55)
+- **ostrzeżenie arkusza wygląda jak `.modal-warning` z mockupów** („warning na
+  telefonie odbiega od designu - biały tekst i brak ikonki"): `Sheet.warning`
+  renderuje się przez `InlineNote` (trójkąt + zdanie mono w kolorze tonu), nie przez
+  `Banner` z tytułem i szarym body. Napisu „Zanim potwierdzisz" mockup nigdy nie
+  rysował - to zostaje NAZWĄ wzorca z issue #55 (baner mówi o wartości, przycisk
+  o blokadzie). Do tego `Banner kind="warning"` dostaje trójkąt DOMYŚLNIE, jak
+  wymuszony pytajnik `edu` - ikona zdana na wołającego raz już zawiodła
+- **ostrzeżenie arkusza stoi ZARAZ POD POLAMI wpisu** (dwie tury: „walidacja jest
+  na utratę fokusa, a powinna być live" → „ginie pod klawiaturą - może powinno się
+  pojawiać zaraz pod inputami?"). Ostrzeżenie LICZYŁO SIĘ od zawsze na każdą zmianę
+  pola, ale renderowane na końcu przewijanej treści lądowało przy wysuniętej
+  klawiaturze poza widokiem - pokazywało się dopiero po jej schowaniu, czyli „po
+  utracie fokusa"; przypięcie nad akcjami (rozwiązanie pierwszej tury) przeżyło
+  jeden dzień, bo stało za daleko od pola. Odtąd `Sheet` renderuje `warning` zaraz
+  po `children`, przed wierszami odniesienia - pilot patrzy tam, gdzie pisze.
+  Kształt ma JEDNĄ definicję (`SheetWarning` w `Sheet.tsx`); arkusz oleju renderuje
+  je sam między polami a szlakiem, bo jego children niosą treść pod polami.
+  Mockupy 02B/02I za tym (baner nad wierszami odniesienia)
+- **wiersze arkusza oleju BEZ znaku rejestracyjnego** (kolejna tura): „Minimum przed
+  lotem · SP-AXA" → „Minimum przed lotem", tak samo zbiornik - arkusz dotyczy
+  maszyny, którą pilot właśnie trzyma (02A) albo wybrał w kroku 1 (15), więc znak
+  niczego nie odróżniał, tylko wydłużał wiersz. Rejestracja przy „Pojemności
+  zbiorników" w arkuszu PALIWA zostaje do osobnej decyzji - tam broni łańcucha MH
+  przed odczytem wpisanym dla złej maszyny
+- **„Po dolewce" podaje SAM rachunek - bez „powyżej minimum" i bez zieleni**
+  (kolejna tura): jedno i drugie sugerowało, że oleju WYSTARCZY, a wystarczalność
+  zależy od długości lotu, o której konfiguracyjne minimum nic nie wie. O zejściu
+  POD minimum mówi osobne ostrzeżenie; `oilAfterRow` stracił parametr konfiguracji
+- **ostrzeżenie sekcji stoi WEWNĄTRZ jej karty** (kolejna tura): `Readout.warning`
+  renderuje `InlineNote` na dole karty - ostrzeżenie stojące POD kartą czytało się
+  jak osobny komunikat ekranu, a dotyczy liczby nad sobą. Sekcja oleju na 02A
+  przeszła na ten prop; reguła obowiązuje każdy przyszły `Readout` z ostrzeżeniem
+- **pole dużej wartości w arkuszach odczytu ZMNIEJSZONE ~30%** („input zajmuje
+  strasznie dużo miejsca" - przy dwóch polach arkusza oleju nadmiar liczył się
+  podwójnie): cyfry 22 zamiast 30–32, padding 8, z PODŁOGĄ 46 dp celu dotykowego.
+  Metryka jest JEDNA dla `ReadingSheet` i `OilSheet` (`valueFieldMetrics.ts`) -
+  bliźniacze pola już raz się rozjechały i nikt tego nie widział. Hierarchia
+  z issue #58 zostaje: pole arkusza (22) > kontrolka formularza (mono 16).
+  Mockupy 02A/02B/02C/02I za tym (kursor 24, jednostka 14)
 
 ## Usunięcie CAŁEGO wpisu = `session_void` (uwaga z urządzenia, 2026-08-30)
 „Daj możliwość usunięcia całego lotu. Ta operacja powinna być poprzedzona jeszcze
