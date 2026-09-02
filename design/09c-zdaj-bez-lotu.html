@@ -132,6 +132,16 @@
   .status-text { font-size:11px; color:var(--text-secondary); line-height:1.55; }
   .status-text b { color:var(--blue); font-weight:600; }
 
+  /* Ostrzeżenie warunkowe (Typ B - znika samo, gdy pilot poprawi odczyt): „nic się
+     nie zmieniło" (issue #75 pkt 2). Ten sam slot, co .status-box - nigdy oba naraz. */
+  .warn-box {
+    background:var(--amber-muted); border:1px solid var(--amber-border);
+    border-radius:12px; padding:11px 13px; display:flex; align-items:flex-start; gap:9px;
+  }
+  .warn-icon { color:var(--amber); flex-shrink:0; margin-top:1px; }
+  .warn-text { font-size:11px; color:var(--text-secondary); line-height:1.55; }
+  .warn-text b { color:var(--amber); font-weight:600; }
+
   /* ===== Przyciski ===== */
   .btn-primary-amber {
     display:flex; align-items:center; justify-content:center; gap:10px;
@@ -258,12 +268,31 @@
         </div>
       </div>
 
+      <!-- JEDEN SLOT, DWA STANY (issue #75 pkt 2). Stan domyślny 09C to odczyty
+           RÓWNE przejęciu, więc mockup pokazuje ostrzeżenie: taki zapis jest pusty
+           i nie utworzy operacji - nie zobaczy go ani pilot na 01/12, ani
+           administrator w dzienniku. Ostrzeżenie jest warunkowe (Typ B): gaśnie,
+           gdy pilot poprawi odczyt ołówkiem wyżej albo zatankuje - wtedy w tym
+           miejscu staje niebieski status (drugi stan niżej, zakomentowany), bo
+           zapis ZE zmianą dostaje numer, sygnaturę i kafelek z godzinami zajęcia
+           (issue #75 pkt 3). Nigdy oba naraz: mówiłyby o jednym zdaniu dwie
+           sprzeczne rzeczy. NIE blokuje - samolot trzeba oddać tak czy inaczej. -->
+      <div class="warn-box">
+        <svg class="warn-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.8 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.8a2 2 0 0 0-3.4 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span class="warn-text">Silnik nie ruszył, a odczyty stoją na wartościach z przejęcia -
+        <b>nic się nie zmieniło, więc nic nie zostanie zapisane</b>: wpis nie pojawi się w Twoim dniu
+        ani w panelu. Jeśli coś się jednak zmieniło, popraw odczyt ołówkiem powyżej.</span>
+      </div>
+
+      <!-- Stan drugi (odczyt POPRAWIONY albo dolewka - zapis ma treść):
       <div class="status-box">
         <svg class="status-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        <span class="status-text">Przejęcie samolotu <b>zostaje w rejestrze</b> - administrator widzi, że
-        SP-ANK był zajęty od 09:10 i dlaczego nie poleciał. Twój dzień liczy się dalej: to nie był lot,
-        ale był na miejscu.</span>
+        <span class="status-text">Zapis <b>zostaje w rejestrze</b> - administrator widzi, że
+        SP-ANK był zajęty od 09:10 i dlaczego nie poleciał. Twój dzień liczy się dalej:
+        ta operacja dopisze się do listy z godzinami zajęcia maszyny.</span>
       </div>
+      -->
+
 
       <a href="01-moj-dzien.html" class="btn-primary-amber">
         ZDAJ SAMOLOT
@@ -290,7 +319,7 @@
     <span class="vp-badge amber">09C</span>
     <span class="vp-body">
       <span class="vp-name">Zdanie bez lotu</span>
-      <span class="vp-when">Pilot przejął samolot i nie poleciał - pogoda, usterka, odwołany skok. Silnik nie ruszył, więc nie ma czasów ani zużycia; odczyty wypełnione wartościami z przejęcia (MH bez zmian) z furtką korekty, a jedyne pytanie to powód. Wejście: kafelek „Zdaj samolot" w stanie PRZED uruchomieniem silnika (04A).</span>
+      <span class="vp-when">Pilot przejął samolot i nie poleciał - pogoda, usterka, odwołany skok. Silnik nie ruszył, więc nie ma czasów ani zużycia; odczyty wypełnione wartościami z przejęcia z furtką korekty, a jedyne pytanie to powód. Przy odczytach BEZ zmian amber ostrzeżenie mówi, że nic nie zostanie zapisane (zapis pusty - issue #75 pkt 2); poprawiony odczyt albo dolewka robią z zapisu operację z sygnaturą i kafelkiem godzin zajęcia (pkt 3). Wejście: kafelek „Zdaj samolot" w stanie PRZED uruchomieniem silnika (04A).</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>

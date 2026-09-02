@@ -20,11 +20,15 @@ import { StyleSheet, View } from 'react-native';
 import {
   airfieldsInView,
   boundsOf,
+  clipPhaseRuns,
   fitBounds,
   scaleBar,
   toScreen,
+  trackPhaseRuns,
   type Airfield,
   type LatLon,
+  type TrackFlightWindow,
+  type TrackPhaseRun,
   type TrackVertex,
 } from '../../../domain';
 import { useChartGesture } from '../../hooks/useChartGesture';
@@ -48,6 +52,14 @@ export interface TrackMapMarker {
 
 export interface TrackMapProps {
   line: readonly TrackVertex[];
+  /**
+   * Okna lotów z LOKALNEGO rejestru (issue #75 pkt 4): dzielą trasę na kołowanie
+   * (przerywana szara) i loty (pełna zielona) - jak w mockupie 14. Koperta śladu
+   * niesie samą geometrię (issue #47), więc granice faz przynosi wołający.
+   * `undefined` = wołający faz nie zna i całość rysuje się zielono; pusta lista
+   * = biegu nikt nie wzniósł i CAŁOŚĆ jest kołowaniem.
+   */
+  flights?: readonly TrackFlightWindow[];
   markers?: readonly TrackMapMarker[];
   width: number;
   height: number;
@@ -69,6 +81,7 @@ export interface TrackMapProps {
 
 export function TrackMap({
   line,
+  flights,
   markers = [],
   width,
   height,
@@ -77,6 +90,12 @@ export function TrackMap({
   highlight = null,
 }: TrackMapProps) {
   const { theme } = useTheme();
+
+  /** Podział trasy na fazy; `null` = wołający nie zna lotów i nie dzielimy wcale. */
+  const phaseRuns = useMemo<TrackPhaseRun[] | null>(
+    () => (flights == null ? null : trackPhaseRuns(line.map((vertex) => vertex.time), flights)),
+    [line, flights],
+  );
 
   const frame = useMemo(() => {
     // Kadr obejmuje ślad ORAZ znaczniki: lądowanie potrafi wypaść poza uproszczoną
@@ -123,14 +142,15 @@ export function TrackMap({
   /**
    * Fragment trasy mieszczący się w oknie profilu - JEDEN, bo linia jest uporządkowana
    * czasem, a okno jest przedziałem czasu (uzasadnienie: `highlightRuns.ts`).
+   * Trzymamy ZAKRES indeksów, nie gotowe punkty: fragment rysuje się tymi samymi
+   * fazami, co całość, więc przycina się przebiegi (`clipPhaseRuns`), nie listę punktów.
    */
-  const highlighted = useMemo<Point2D[]>(() => {
-    if (highlight == null || screenPoints.length === 0) return [];
-    const range = highlightRange(
+  const highlightedRange = useMemo<readonly [number, number] | null>(() => {
+    if (highlight == null || screenPoints.length === 0) return null;
+    return highlightRange(
       line.map((vertex) => vertex.time),
       highlight,
     );
-    return range == null ? [] : screenPoints.slice(range[0], range[1] + 1);
   }, [highlight, line, screenPoints]);
 
   const project = useCallback(
@@ -186,18 +206,35 @@ export function TrackMap({
         ))}
 
       {/* ── trasa: przygaszona całość + PODŚWIETLONY fragment z profilu ──── */}
-      {/* Bez okna z profilu rysujemy jedną linię w pełnej mocy. Z oknem: cała trasa
-          gaśnie, a jej fragment zostaje jasny - dzięki temu widać, GDZIE się patrzy,
-          nie tracąc z oczu reszty lotu. Fragmentów bywa kilka i tak ma być: nad polem
-          skoków samolot przechodzi tędy raz na wyniesienie. */}
-      <TrackPolyline
-        points={screenPoints}
-        color={theme.colors.green}
-        width={2.5}
-        opacity={highlight != null ? 0.22 : 1}
+      {/* Bez okna z profilu rysujemy trasę w pełnej mocy. Z oknem: cała trasa gaśnie,
+          a jej fragment zostaje jasny - dzięki temu widać, GDZIE się patrzy, nie tracąc
+          z oczu reszty lotu. Fragmentów bywa kilka i tak ma być: nad polem skoków
+          samolot przechodzi tędy raz na wyniesienie.
+          Fazy jak w mockupie 14 (issue #75 pkt 4): kołowanie przerywaną szarą,
+          loty pełną zieloną - w obu warstwach tak samo. */}
+      <PhasedTrack
+        screenPoints={screenPoints}
+        runs={phaseRuns}
+        opacity={highlightedRange != null ? 0.22 : 1}
+        taxiColor={theme.colors.textMuted}
+        flightColor={theme.colors.green}
       />
-      {highlighted.length > 1 && (
-        <TrackPolyline points={highlighted} color={theme.colors.green} width={2.5} />
+      {highlightedRange != null && (
+        <PhasedTrack
+          screenPoints={screenPoints.slice(highlightedRange[0], highlightedRange[1] + 1)}
+          runs={
+            phaseRuns == null
+              ? null
+              : clipPhaseRuns(phaseRuns, highlightedRange[0], highlightedRange[1]).map((run) => ({
+                  ...run,
+                  from: run.from - highlightedRange[0],
+                  to: run.to - highlightedRange[0],
+                }))
+          }
+          opacity={1}
+          taxiColor={theme.colors.textMuted}
+          flightColor={theme.colors.green}
+        />
       )}
 
       {/* ── znaczniki startu i lądowania ─────────────────────────────────── */}
@@ -275,6 +312,58 @@ export function TrackMap({
         </View>
       )}
     </View>
+  );
+}
+
+/**
+ * Trasa w fazach (issue #75 pkt 4): loty pełną zieloną, kołowanie przerywaną szarą -
+ * dokładnie jak mockup 14. Przebiegi DZIELĄ wierzchołek graniczny (`trackPhaseRuns`),
+ * więc łamane stykają się bez dziury; kolor szarości to ten sam `textMuted`, którym
+ * mapa podpisuje ICAO - kołowanie jest tłem opowieści, nie jej treścią.
+ *
+ * `runs == null` = wołający nie zna okien lotów; wtedy jedna zielona linia jak przed
+ * issue #75, bo zgadywanie faz z samej geometrii byłoby drugą detekcją.
+ */
+function PhasedTrack({
+  screenPoints,
+  runs,
+  opacity,
+  taxiColor,
+  flightColor,
+}: {
+  screenPoints: readonly Point2D[];
+  runs: readonly TrackPhaseRun[] | null;
+  opacity: number;
+  taxiColor: string;
+  flightColor: string;
+}) {
+  if (runs == null) {
+    return <TrackPolyline points={screenPoints} color={flightColor} width={2.5} opacity={opacity} />;
+  }
+
+  return (
+    <>
+      {runs.map((run) =>
+        run.phase === 'flight' ? (
+          <TrackPolyline
+            key={`${run.from}-${run.to}`}
+            points={screenPoints.slice(run.from, run.to + 1)}
+            color={flightColor}
+            width={2.5}
+            opacity={opacity}
+          />
+        ) : (
+          <TrackPolyline
+            key={`${run.from}-${run.to}`}
+            points={screenPoints.slice(run.from, run.to + 1)}
+            color={taxiColor}
+            width={2}
+            dash={[4, 4]}
+            opacity={opacity}
+          />
+        ),
+      )}
+    </>
   );
 }
 

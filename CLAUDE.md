@@ -429,12 +429,13 @@ wpisać w zgłoszenie ani znaleźć wzrokiem na liście.
 - **CZASU W SYGNATURZE NIE MA** i to jest decyzja: korekta czasu (issue #43) przesuwa
   uruchomienie o kilka minut, więc sygnatura z godziną opisywałaby po niej inną operację
   niż przed. Numer porządkowy przeżywa korektę, dopóki nie zmienia kolejności w dobie
-- **OPERACJA BEZ BIEGU SILNIKA SYGNATURY NIE MA** (09C: zdanie bez lotu - pogoda,
-  usterka). Nie jest to dziura, tylko ta sama granica, którą rysuje `projectPilotDay`:
-  numerujemy operacje, czyli biegi silnika. Wpisanie takiej operacji do numeracji
-  przesunęłoby numery tym, które ekran 01 ma już ponumerowane, a numer „obok" dałby
-  dwie operacje o jednej sygnaturze. Ekran pokazuje wtedy to, co przed issue #68:
-  datę, znak i godziny
+- **ZAPIS BEZ BIEGU SILNIKA dostaje sygnaturę TYLKO Z TREŚCIĄ** (issue #75 pkt 3
+  rozszerzyło #68): zdanie ze zmienionym odczytem paliwa/MH albo z dolewką numeruje
+  się kotwicą PRZEJĘCIA i dopiero po zdaniu (`operationAnchor`
+  w `packages/domain/src/operationSubstance.ts` - tam pełna reguła). Zapis bez biegu
+  i bez treści numeru nadal nie ma: pusty jest ukrywany w całości (sekcja issue #75
+  niżej), niekompletny pokazuje się w historii z kreską, jak przed #68. Granica
+  zostaje granicą `projectPilotDay`, bo numer sygnatury MUSI być numerem z ekranu 01
 - **SERWER LICZY TEN SAM NUMER SQL-em** (`PgAdminSessionsRepo`, ranga po kolumnach
   projekcji - nie da się jej wypełnić przy zapisie, bo ingest widzi JEDNĄ operację).
   Rozjazd dwóch torów znaczyłby dwie nazwy jednego lotu, więc pilnuje ich test
@@ -448,6 +449,52 @@ wpisać w zgłoszenie ani znaleźć wzrokiem na liście.
   spina sześć bloków JEDNEGO dokumentu etykietami `S1`, `S2`, a karta jest dobą
   SAMOLOTU - numer z sygnatury (doba PILOTA) nie zgadzałby się z kolejnością zmian
   w tym dokumencie. Rodzaj operacji nazywa się tam odtąd `Zadanie`, jak na 02E i w panelu
+
+## Treść operacji: puste zdania znikają, zmiany dostają numer (issue #75, 2026-09-02)
+Cztery uwagi UI; wspólny rdzeń pkt 2 i 3 to **treść operacji** -
+`packages/domain/src/operationSubstance.ts` (fakty + `hasOperationSubstance`,
+`isEmptyOperation`, `operationAnchor`), lustro SQL w `server/src/infrastructure/pg/substanceSql.ts`,
+zgodność torów przybija rozszerzony `server/test/operationSignature.test.ts`.
+- **pkt 1 - lot unieważniony przez admina ZNIKA z telefonu.** Łańcuch działał od zawsze
+  (`session_void` stemplowany PIC-em pilota → `GET /me/events` → lokalny rejestr →
+  `projectPilotDay` filtruje), ale **`buildHistory` (ekran 12) nie filtrował `voided`** -
+  lot znikał z 01, a jego karta stała na 12 dalej. Filtr dodany w `historyDays.ts`
+  (lista + plakietka wejścia), zgodnie z docblockiem projekcji („wypada z dnia pilota,
+  z historii, z sum"). Do tego ręczny sync ciągnie odtąd także zdarzenia
+  (`restoreEventsNow`, sekcja Offline-first) - unieważnienie nie czeka do kwadransa
+  na bramę wieku. Przy okazji NAPRAWIONE agregaty L1 dziennika (`logRepo`):
+  baner na ekranie operacji obiecywał „nie liczy się do sum dziennika", a `LEFT JOIN`
+  sumował unieważnione jak każde inne
+- **pkt 2 - PUSTA operacja jest śmieciem** (słowa właściciela): zdana, bez biegu, bez
+  lotów, z KOMPLETEM odczytów równych przejęciu i bez dolewek. Nie pokazuje jej ŻADNA
+  lista - 01, 12, plakietka „można poprawić", dziennik panelu (L1+L2), karta arkusza
+  (`dayExporter`). Rejestr zostaje append-only: adres bezpośredni (10 z linku, panel
+  L3 po uuid) działa dalej. Ekran 09C ostrzega PRZED zdaniem (amber, Typ B, ze szkicu
+  odczytu - gaśnie z pierwszą poprawką; `logic/releaseWarnings.ts`), że „nic nie
+  zostanie zapisane, bo nic nie zostało zmienione"; NIGDY nie blokuje - samolot trzeba
+  oddać. Plakietka „bez zmian" przy licznikach gaśnie po poprawce (nad zmienioną liczbą
+  kłamała). Niebieski status „Twój dzień liczy się dalej" stoi odtąd WYŁĄCZNIE w stanie
+  ze zmianą - jeden slot, dwa stany, nigdy oba
+- **pkt 3 - zapis bez biegu ZE ZMIANĄ jest operacją**: dostaje numer, sygnaturę
+  (kotwica: przejęcie - patrz sekcja sygnatury wyżej) i kafelek na 01/12 z godzinami
+  ZAJĘCIA maszyny (przejęcie → zdanie) oraz trójką 0 · 0:00 · 0:00. Decyzja zapada
+  dopiero PRZY ZDANIU (treść bez biegu orzeka się z odczytów końcowych - numer nadany
+  wcześniej i odebrany przenumerowałby sąsiadów w trakcie dnia); operacja trzymana bez
+  biegu wiersza nadal nie ma. Odczyt NIEKOMPLETNY (strumień legacy/złamany) nie jest
+  ani treścią, ani pustką: widoczny w historii bez numeru, jak przed #75
+- **pkt 4 - kołowanie inną linią niż lot** na KAŻDYM rysunku trasy: mapa 14, profil
+  pionowy, miniatura na 10, mapa w dzienniku panelu. Przerywana szara (`textMuted` /
+  `--text-muted`) kontra pełna zielona - dokładnie to, co mockupy 14 i 10 rysowały od
+  issue #38, a kod pomijał. Fazy dzieli DOMENA (`track/phases.ts`: `trackPhaseRuns` -
+  faza należy do ODCINKA, oba końce w oknie lotu; przebiegi dzielą wierzchołek
+  graniczny; bieg bez lotów = całość kołowaniem), a okna lotów przynosi WOŁAJĄCY
+  z rejestru/DTO - koperta śladu niesie samą geometrię (issue #47) i tak zostaje.
+  W RN kreskę przerywaną tnie `dashPath` (`screenPolyline.ts`) po długości łuku;
+  kawałki przechodzą przez `polylineSegments`, więc nadmiar styku (pół grubości
+  z każdej strony) wydłuża kreski dokładnie tak, jak `stroke-linecap: round` wydłuża
+  `stroke-dasharray` w SVG - wzór [4, 4] wygląda w obu technikach tak samo. Panel:
+  `mapPlot` oddaje trasę w przebiegach, legenda mapy dostała wiersz „Kołowanie";
+  `trackPhaseRuns` dopisany do imiennego wyjątku w `admin/test/architecture.test.ts`
 
 ## Słownik: „operacja lotnicza" zamiast „sesji" (issue #68)
 Drugie zdanie zgłoszenia: **„sesja" powinno ewoluować w słowo kluczowe „operacja
@@ -939,7 +986,11 @@ Cztery uwagi z urządzenia; dwie z nich to reguły obowiązujące każdy nowy ek
   i pobiera dane referencyjne z pominięciem bramy wieku (`refreshReferenceNow`
   w store → `ReferenceSync.refresh()`, ETag dalej działa) - pilot sięgający po
   przycisk awaryjny pyta „co serwer wie teraz", a sama wysyłka odpowiadała na pół
-  pytania. Stempel wieku danych w „O aplikacji" odświeża się od razu po przebiegu
+  pytania. Stempel wieku danych w „O aplikacji" odświeża się od razu po przebiegu.
+  **Od issue #75 pkt 1 ponagla też DOSYŁKĘ ZDARZEŃ** (`restoreEventsNow` →
+  `EventRestore.restore()`, bez bramy wieku §4.9) - bez tego unieważnienie wpisane
+  przez administratora czekało na telefonie do kwadransa mimo ręcznego ponaglenia;
+  „PONÓW PRÓBĘ" w arkuszu SyncChipa robi ten sam komplet
 - **„wstecz" z kroku 1 przy niepustym szkicu pyta o rezygnację** (`design/02h`,
   `AbandonDraftSheet` + `usePreventRemove` - ta sama mechanika co blokada kokpitu
   04D; od 2026-08-29 ten sam arkusz obsługuje wpis ręczny, patrz sekcja niżej).

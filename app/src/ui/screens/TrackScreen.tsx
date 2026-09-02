@@ -223,6 +223,9 @@ export function TrackScreen({
           <View>
             <TrackMap
               line={track.line}
+              // Okna lotów z LOKALNEGO rejestru (issue #75 pkt 4): kołowanie przerywaną
+              // szarą, loty pełną zieloną - koperta niesie samą geometrię (§4.10).
+              flights={view.flights}
               markers={onMap}
               width={contentWidth}
               height={MAP_HEIGHT}
@@ -252,6 +255,7 @@ export function TrackScreen({
           <View>
             <VerticalProfile
               profile={profile}
+              flights={view.flights}
               width={contentWidth}
               height={PROFILE_HEIGHT}
               markers={onProfile}

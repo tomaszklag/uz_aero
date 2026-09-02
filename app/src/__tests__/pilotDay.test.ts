@@ -186,3 +186,58 @@ describe('projectPilotDay - liczba lotów operacji (kolumna „Loty" na 01)', ()
     expect(d.blockTimeMs).toBe(53 * MIN);
   });
 });
+
+describe('projectPilotDay - zapis bez biegu silnika (issue #75)', () => {
+  /** 09C ze ZMIENIONYM odczytem paliwa: treść jest, biegu nie ma. */
+  function changedNoRun(): SessionState {
+    return session({
+      sessionUuid: 's-changed',
+      aircraftId: 'sp-fgk',
+      claimedAt: at('06:45'),
+      closed: true,
+      closedAt: at('07:50'),
+      fuel: { startL: 240, addedL: 0, endL: 236, consumedL: 4, lastReadingL: 236 },
+      mh: { start: 2815.2, end: 2815.2, deltaH: 0 },
+    });
+  }
+
+  it('operacja z treścią dostaje wiersz: godziny zajęcia, zero bloku i lotów', () => {
+    const d = projectPilotDay([changedNoRun(), axa()], PIC, DAY0);
+
+    expect(d.sessions.map((s) => s.sessionUuid)).toEqual(['s-changed', 's-axa', 's-axa']);
+    const row = d.sessions[0]!;
+    expect(row.startedAt).toBe(at('06:45'));
+    expect(row.stoppedAt).toBe(at('07:50'));
+    expect(row.blockMs).toBe(0);
+    expect(row.flightCount).toBe(0);
+    // Zero bloku i lotu nie rusza sum doby, ale maszyna wchodzi na listę użytych.
+    expect(d.aircraftIds).toContain('sp-fgk');
+  });
+
+  it('zapis pusty (komplet równych odczytów) wiersza nie dostaje', () => {
+    const empty = session({
+      sessionUuid: 's-empty',
+      aircraftId: 'sp-fgk',
+      claimedAt: at('06:00'),
+      closed: true,
+      closedAt: at('06:30'),
+      fuel: { startL: 240, addedL: 0, endL: 240, consumedL: 0, lastReadingL: 240 },
+      mh: { start: 2815.2, end: 2815.2, deltaH: 0 },
+    });
+
+    const d = projectPilotDay([empty, axa()], PIC, DAY0);
+    expect(d.sessions.map((s) => s.sessionUuid)).toEqual(['s-axa', 's-axa']);
+  });
+
+  it('zapis trzymany (nieoddany) bez biegu wiersza jeszcze nie ma', () => {
+    const held = session({
+      sessionUuid: 's-held',
+      aircraftId: 'sp-fgk',
+      claimedAt: at('06:45'),
+      fuel: { startL: 240, addedL: 48, endL: null, consumedL: null, lastReadingL: 288 },
+    });
+
+    const d = projectPilotDay([held, axa()], PIC, DAY0);
+    expect(d.sessions.map((s) => s.sessionUuid)).toEqual(['s-axa', 's-axa']);
+  });
+});

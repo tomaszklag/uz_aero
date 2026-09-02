@@ -287,9 +287,16 @@ export interface AdminSessionJoin {
    * Numer operacji w dobie jej PILOTA (1-based) - ostatni człon sygnatury (issue #68).
    *
    * Liczy go zapytanie, bo to miejsce wiersza wśród SĄSIADÓW, a nie jego własna
-   * kolumna. `null` = operacja bez uruchomienia silnika, czyli bez numeru.
+   * kolumna. `null` = zapis bez numeru: unieważniony albo bez kotwicy
+   * (bez biegu silnika i bez treści - issue #75, `operationAnchor` w domenie).
    */
   dayIndex: number | null;
+  /**
+   * KOTWICA numeracji (issue #75): uruchomienie silnika, a przy operacji bez biegu -
+   * przejęcie. Z niej bierze się doba w sygnaturze; liczona w TYM SAMYM zapytaniu,
+   * co `dayIndex`, żeby mapper nie odtwarzał reguły po swojemu. `null` = bez numeru.
+   */
+  signatureAt: number | null;
   reg: string | null;
   aircraftType: string | null;
   mhFormat: MhFormat | null;

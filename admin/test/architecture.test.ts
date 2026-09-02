@@ -241,7 +241,11 @@ describe('granice warstw panelu', () => {
       .filter((f) => f !== allowed);
     expect(offenders).toEqual([]);
 
-    // Co dokładnie wolno przez tę furtkę przejść - pięć funkcji geometrii i nic więcej.
+    // Co dokładnie wolno przez tę furtkę przejść - geometria wykresu i nic więcej.
+    // `trackPhaseRuns` (issue #75 pkt 4) mieści się w jej zakresie z tego samego powodu,
+    // co odwzorowanie: dzieli listę CZASÓW na przebiegi wg okien lotów z DTO - kopia
+    // tego podziału w panelu znaczyłaby, że kołowanie kończy się administratorowi
+    // w innym punkcie trasy niż pilotowi.
     const imported = [...codeOf(allowed).matchAll(/^\s{2}([a-zA-Z][a-zA-Z0-9]*),$/gm)].map(
       (m) => m[1],
     );
@@ -251,6 +255,7 @@ describe('granice warstw panelu', () => {
       'fitBounds',
       'scaleBar',
       'toScreen',
+      'trackPhaseRuns',
     ]);
   });
 

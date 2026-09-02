@@ -231,6 +231,9 @@ describe('DTO listy dni ↔ wiersz projekcji', () => {
   const join: AdminSessionJoin = {
     row,
     dayIndex: 2,
+    // Kotwica numeracji z zapytania (issue #75) - dla biegu silnika to chwila
+    // jego uruchomienia; mapper NIE liczy jej sam.
+    signatureAt: row.engineStartAt,
     reg: 'SP-AXA',
     aircraftType: 'Cessna 182',
     mhFormat: 'hhmm',

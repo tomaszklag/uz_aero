@@ -21,7 +21,13 @@
  * co właściwie zapisał.
  */
 
-import { correctionWindow, utcDayStart, type SessionState } from '../../../domain';
+import {
+  correctionWindow,
+  isEmptyOperation,
+  substanceFacts,
+  utcDayStart,
+  type SessionState,
+} from '../../../domain';
 import type { HistoryDay } from '../../../application';
 import { dateUtcLong } from '../../format';
 import { type SessionCardVm, sessionStats, sessionTimes } from './sessionCard';
@@ -122,8 +128,13 @@ function cardSpec(
     // i ta granica jest ta sama.
     aircraft: (state.aircraftId != null ? regOf(state.aircraftId) : null) ?? '-',
     // Godziny biegu silnika: bez nich dwie sesje tej samej doby na tej samej maszynie
-    // są nie do odróżnienia.
-    times: sessionTimes(leg?.startedAt ?? null, leg?.stoppedAt ?? null),
+    // są nie do odróżnienia. Sesja bez biegu (issue #75 pkt 3) pokazuje w tym miejscu
+    // zajęcie maszyny (przejęcie → zdanie) - jedyną parę godzin, jaką ma; to te same
+    // wartości, które wiersz tej operacji niesie na 01 (`projectPilotDay`).
+    times: sessionTimes(
+      leg?.startedAt ?? state.claimedAt,
+      leg != null ? leg.stoppedAt : state.closedAt,
+    ),
     // Loty / Blok / Lot - dokładnie to, co niesie kafelek sesji na „Mój dzień"
     // (issue #35 pkt 6; od issue #42 z tej samej funkcji). „Sesja" (czas trzymania
     // maszyny) i „Skoczków" wypadły: pierwsza była wielkością, o którą nikt nie pytał,
@@ -161,6 +172,14 @@ export function buildHistory(
     // „Zdaj samolot" `dutyEnd` NIE WYSYŁA, więc poprawnie zdana sesja wypadała z historii
     // W CAŁOŚCI - a to jedyny ekran, z którego pilot dosięga okna korekty.
     if (day.state.sessionUuid == null || !day.state.closed) continue;
+    /* Sesja UNIEWAŻNIONA wypada też z historii (issue #75 pkt 1): `projectPilotDay`
+       filtruje ją na 01 od 2026-08-30, a tu filtru nie było - więc lot wycofany przez
+       administratora znikał z „Mojego dnia", ale jego karta stała na 12 dalej,
+       wbrew docblockowi projekcji („wypada z dnia pilota, z historii, z sum"). */
+    if (day.state.voided) continue;
+    // Zapis PUSTY - zdany bez biegu, lotów i z odczytami równymi przejęciu - jest
+    // śmieciem (issue #75 pkt 2): karta obiecywałaby rozliczenie, w którym nic nie ma.
+    if (isEmptyOperation(substanceFacts(day.state))) continue;
     if (sessionDay(day.state) === today) continue;
 
     const window = correctionWindow(day.state, now);
@@ -194,6 +213,10 @@ export function editableBadge(days: HistoryDay[], now: number): string | null {
     // wyciszał plakietkę na każdej sesji bez deklaracji, czyli na prawie każdej.
     if (day.state.claimedAt == null) continue;
     if (!day.state.closed) continue;
+    // Te same wykluczenia, co lista niżej: plakietka obiecuje kartę, którą pilot
+    // znajdzie po wejściu - sesja unieważniona ani pusta karty nie ma (issue #75).
+    if (day.state.voided) continue;
+    if (isEmptyOperation(substanceFacts(day.state))) continue;
     if (sessionDay(day.state) === today) continue;
     if (correctionWindow(day.state, now).open) {
       // `dateTimeUtcShort` daje „22 CZE 16:45" - plakietka bierze samą datę.

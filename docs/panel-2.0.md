@@ -347,8 +347,11 @@ na które uuid w pasku adresu nie odpowiadał: **jak nazwać ten lot w rozmowie*
 składa SERWER i podaje gotową w DTO - panel nigdy nie skleja jej u siebie, bo druga
 konwencja nazw znaczyłaby, że administrator i pilot mówią o jednym locie dwoma napisami
 (ta sama reguła, przez którą nazwę karty arkusza liczy wyłącznie serwer). Wiersz bez
-sygnatury - maszyna spoza rejestru, operacja bez biegu silnika - wygląda jak przed
-issue #68 i to jest stan poprawny, nie brak danych.
+sygnatury - maszyna spoza rejestru, zapis bez biegu silnika i bez treści - wygląda jak
+przed issue #68 i to jest stan poprawny, nie brak danych. Od issue #75 zapis bez biegu,
+ale ZE zmianą (odczyt inny niż przy przejęciu, dolewka) sygnaturę MA - numeruje się
+kotwicą przejęcia, tym samym wyrażeniem SQL, które liczy numer
+(`pg/substanceSql.ts`, test krzyżowy z domeną).
 
 ### 9.3 Tylko odczyty, żadnych szacunków
 
@@ -412,12 +415,22 @@ Zmiana ma trzy części i żadna nie jest kosmetyczna:
    Nic jej nie wołało po przebudowie panelu, a jej istnienie było jedynym źródłem
    przekonania, że ślad jest własnością lotu;
 3. **wyjątek od „z domeny tylko typy" - JEDEN, imienny**. `screens/logbook/trackChart.ts`
-   importuje pięć WARTOŚCI (`airfieldsInView`, `boundsOf`, `fitBounds`, `scaleBar`,
-   `toScreen`) i tylko tyle - test architektury sprawdza zarówno listę plików, jak i listę
-   importów. To nie jest liczenie faktów o locie: dystans, pułap i statystyki przychodzą
-   policzone z serwera, a ten moduł przelicza stopnie na piksele. Alternatywą była kopia
+   importuje sześć WARTOŚCI (`airfieldsInView`, `boundsOf`, `fitBounds`, `scaleBar`,
+   `toScreen`, od issue #75 także `trackPhaseRuns`) i tylko tyle - test architektury
+   sprawdza zarówno listę plików, jak i listę importów. To nie jest liczenie faktów
+   o locie: dystans, pułap i statystyki przychodzą policzone z serwera, a ten moduł
+   przelicza stopnie na piksele (a `trackPhaseRuns` dzieli listę CZASÓW na przebiegi
+   wg okien lotów z DTO - kopia tego podziału znaczyłaby, że kołowanie kończy się
+   administratorowi w innym punkcie trasy niż pilotowi). Alternatywą była kopia
    tej matematyki w panelu, czyli ten sam lot narysowany administratorowi inaczej niż
-   pilotowi. **Dopisanie drugiej pozycji do listy jest decyzją produktową, nie refaktorem.**
+   pilotowi. **Dopisanie kolejnej pozycji do listy jest decyzją produktową, nie refaktorem.**
+
+**Kołowanie rysuje się inną linią niż lot** (issue #75 pkt 4): trasa przychodzi
+z `mapPlot` w PRZEBIEGACH FAZ - loty pełną zieloną, kołowanie przerywaną szarą
+(`--text-muted`), a legenda mapy dostała wiersz „Kołowanie". Fazy dzieli
+`trackPhaseRuns` z domeny na oknach lotów z DTO sesji, bo koperta śladu niesie samą
+geometrię (issue #47) - to ta sama konwencja i ten sam kod podziału, co ekran 14
+telefonu i miniatura na 10.
 
 Karta pokazuje mapę, profil pionowy i TRZY liczby (dystans, pułap, prędkość maksymalna).
 Reszta statystyk z koperty - czasy pięciu faz, jakość trzymania wysokości, liczniki bramki
@@ -483,7 +496,35 @@ w arkuszu z nieaktualną treścią. Wyczyszczenie jej wymaga decyzji, czego klub
 w tym miejscu dowiedzieć (pusta karta? adnotacja „wpis wycofany"?) - a zgadywanie treści
 dokumentu klubu nie jest robotą eksportera.
 
-### 9.5 Czego w pierwszej wersji nie ma
+Issue #75 odsłoniło CZWARTE miejsce: **agregaty poziomu 1** (`logRepo.byAircraft`).
+`LEFT JOIN sessions` liczył unieważnione operacje do dni, startów, bloku i paliwa floty,
+choć baner na poziomie 3 obiecuje „nie liczy się do sum dziennika". Naprawione tym samym
+warunkiem, który odsiewa puste zapisy (§9.5).
+
+### 9.5 Puste operacje nie wchodzą do dziennika (issue #75, 2026-09-02)
+
+Zamówienie właściciela: *„Mogą wystąpić puste operacje, czyli nie zmienił się bieg
+silnika oraz paliwo w zbiorniku. Takie wpisy to śmieci i nie powinny być traktowane
+jako pełne operacje."*
+
+**Pusty zapis** = zdany, bez biegu silnika, bez lotów, bez dolewek i z kompletem
+odczytów RÓWNYCH przejęciu. Regułę definiuje domena (`operationSubstance.ts` -
+ta sama, którą telefon filtruje swoje listy), a serwer ma jej lustro SQL
+w `pg/substanceSql.ts` z testem krzyżowym. Skutki w panelu:
+
+- **grid poziomu 2 i licznik strony** nie pokazują pustych zapisów wcale
+  (filtr w `applyFilters`, więc obejmuje też `COUNT`);
+- **agregaty poziomu 1** liczą bez nich (i bez unieważnionych - patrz §9.4b);
+- **karta arkusza** buduje się bez nich (`dayExporter`, obok filtru `voided`);
+- **adres bezpośredni działa dalej** (`byUuid` nie filtruje): rejestr widzi wszystko,
+  jak przy unieważnieniu - poziom 3 otwarty z wklejonego linku pokaże zapis
+  z osią zdarzeń i kreską zamiast sygnatury.
+
+Zapis bez biegu, ale ZE zmianą odczytu albo dolewką, NIE jest pusty - to pełnoprawna
+operacja z sygnaturą (§9.2) i wierszem w gridzie. Telefon ostrzega pilota przed pustym
+zdaniem na ekranie 09C, więc puste zapisy powinny być rzadkością, nie regułą.
+
+### 9.6 Czego w pierwszej wersji nie ma
 
 - **sum pod gridem** - poziom 1 podaje je dla tego samego zakresu;
 - **sortowania po każdej kolumnie** - serwer sortuje kursorem po czasie i tylko po nim;

@@ -22,7 +22,15 @@
 import React, { useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { boundsOf, fitBounds, toScreen, type LatLon, type TrackVertex } from '../../../domain';
+import {
+  boundsOf,
+  fitBounds,
+  toScreen,
+  trackPhaseRuns,
+  type LatLon,
+  type TrackFlightWindow,
+  type TrackVertex,
+} from '../../../domain';
 import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
 import { Icon } from '../foundation/Icon';
@@ -41,6 +49,12 @@ export interface TrackThumbnailMarker {
 
 export interface TrackThumbnailProps {
   line: readonly TrackVertex[];
+  /**
+   * Okna lotów z LOKALNEGO rejestru (issue #75 pkt 4): kołowanie rysuje się
+   * przerywaną szarą, jak na mockupie 10 i na pełnej mapie 14.
+   * `undefined` = jedna zielona linia, jak dotąd.
+   */
+  flights?: readonly TrackFlightWindow[];
   height: number;
   /** Szerokość; domyślnie miniatura wypełnia rodzica (karta ma własny padding). */
   width?: number;
@@ -52,10 +66,23 @@ export interface TrackThumbnailProps {
 /** Margines kadru (px) - mniejszy niż na 14, bo i rysunek jest mniejszy. */
 const PADDING = 18;
 
-export function TrackThumbnail({ line, height, width, markers, onPress }: TrackThumbnailProps) {
+export function TrackThumbnail({
+  line,
+  flights,
+  height,
+  width,
+  markers,
+  onPress,
+}: TrackThumbnailProps) {
   const { theme } = useTheme();
   const [measured, setMeasured] = React.useState(width ?? 0);
   const boxWidth = width ?? measured;
+
+  /** Fazy trasy (issue #75 pkt 4); `null` = wołający lotów nie zna, jedna linia. */
+  const phaseRuns = useMemo(
+    () => (flights == null ? null : trackPhaseRuns(line.map((vertex) => vertex.time), flights)),
+    [line, flights],
+  );
 
   const view = useMemo(() => {
     if (boxWidth <= 0) return null;
@@ -95,7 +122,31 @@ export function TrackThumbnail({ line, height, width, markers, onPress }: TrackT
         if (width == null) setMeasured(e.nativeEvent.layout.width);
       }}
     >
-      <TrackPolyline points={points} color={theme.colors.green} width={2.5} />
+      {/* Kołowanie „jaśniejszą, przerywaną" (mockup 10, issue #75 pkt 4) - te same
+          fazy, co na pełnej mapie 14; miniatura tylko streszcza rysunek. */}
+      {phaseRuns == null ? (
+        <TrackPolyline points={points} color={theme.colors.green} width={2.5} />
+      ) : (
+        phaseRuns.map((run) =>
+          run.phase === 'flight' ? (
+            <TrackPolyline
+              key={`${run.from}-${run.to}`}
+              points={points.slice(run.from, run.to + 1)}
+              color={theme.colors.green}
+              width={2.5}
+            />
+          ) : (
+            <TrackPolyline
+              key={`${run.from}-${run.to}`}
+              points={points.slice(run.from, run.to + 1)}
+              color={theme.colors.textMuted}
+              width={1.6}
+              dash={[3, 3]}
+              opacity={0.7}
+            />
+          ),
+        )
+      )}
 
       {dots.map((dot) => {
         if (dot.kind === 'takeoff') {

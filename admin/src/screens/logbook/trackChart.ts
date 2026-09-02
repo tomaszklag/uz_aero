@@ -26,8 +26,10 @@ import {
   fitBounds,
   scaleBar,
   toScreen,
+  trackPhaseRuns,
   type FlightProfile,
   type LatLon,
+  type TrackFlightWindow,
   type TrackVertex,
 } from '@uzaero/domain';
 
@@ -50,6 +52,11 @@ export interface MapMarkerInput {
  * Kafelków NIE MA (decyzja 2026-08-04): tłem jest siatka współrzędnych, a odniesienie
  * w terenie dają pasy startowe lotnisk z katalogu. Skala pod mapą przestaje więc być
  * ozdobą - to jedyna rzecz, która mówi, czy krąg ma dwa kilometry, czy dwadzieścia.
+ *
+ * Trasa wychodzi w FAZACH (issue #75 pkt 4): kołowanie osobno od lotów, żeby mapa
+ * narysowała je inną kreską - tak samo, jak telefon na ekranie 14. Podział liczy
+ * domena (`trackPhaseRuns`) z okien lotów SESJI, bo koperta śladu niesie samą
+ * geometrię (issue #47), a granice lotów są faktami rejestru.
  */
 export function mapPlot(
   line: readonly TrackVertex[],
@@ -57,6 +64,7 @@ export function mapPlot(
   width: number,
   height: number,
   departureIcao: string | null = null,
+  flights: readonly TrackFlightWindow[] = [],
 ): MapPlot | null {
   const positions: LatLon[] = [...line, ...markers.map((m) => m.position)];
   const bounds = boundsOf(positions);
@@ -66,13 +74,22 @@ export function mapPlot(
   const bar = scaleBar(view, line[0]?.lat ?? bounds.north);
   const metersPerPixel = bar.pixels > 0 ? bar.meters / bar.pixels : null;
 
+  const screenPoint = (point: TrackVertex): string => {
+    const p = toScreen(point, view);
+    return `${p.x.toFixed(1)},${p.y.toFixed(1)}`;
+  };
+
   return {
-    polyline: line
-      .map((point) => {
-        const p = toScreen(point, view);
-        return `${p.x.toFixed(1)},${p.y.toFixed(1)}`;
-      })
-      .join(' '),
+    route: trackPhaseRuns(
+      line.map((point) => point.time),
+      flights,
+    ).map((run) => ({
+      phase: run.phase,
+      points: line
+        .slice(run.from, run.to + 1)
+        .map(screenPoint)
+        .join(' '),
+    })),
 
     airfields: airfieldsInView(bounds, { preferredIcao: departureIcao }).map((airfield) => {
       const p = toScreen(airfield, view);

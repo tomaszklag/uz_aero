@@ -107,6 +107,13 @@
   height: 2.5px;
   border-radius: 2px;
 }
+/* Próbka kołowania (issue #75 pkt 4): przerywana szara, jak kreska na mapie. */
+.legend-dash {
+  width: 14px;
+  height: 0;
+  border-top: 2px dashed var(--text-muted);
+  flex-shrink: 0;
+}
 
 /* Profil pionowy - ten sam wykres co w aplikacji, na szerokości panelu. */
 .profile-chart {

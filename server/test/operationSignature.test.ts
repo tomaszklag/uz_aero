@@ -10,7 +10,8 @@
  * napisami, czyli dokładnie tę wadę, którą sygnatura miała usunąć.
  *
  * Reszta przypadków to granice reguły: unieważniona operacja nie zajmuje numeru,
- * operacja bez uruchomienia silnika nie dostaje go wcale, a doba numeruje się od nowa.
+ * doba numeruje się od nowa, a zapis bez biegu silnika (issue #75) dostaje numer
+ * TYLKO z treścią (zmieniony odczyt, dolewka) - pusty znika z list w całości.
  */
 
 import { operationIndexes, projectSession, type Event } from '@uzaero/domain';
@@ -54,6 +55,11 @@ interface OperationOptions {
   engineStartH: number;
   /** Bieg silnika w ogóle nie następuje (09C: pogoda, usterka). */
   noEngineRun?: boolean;
+  /**
+   * Odczyt końcowy przy zdaniu; domyślnie przy `noEngineRun` RÓWNY przejęciu
+   * (150 L / 1200 MH) - czyli zapis PUSTY (issue #75 pkt 2). Nadpisany = treść.
+   */
+  finalReading?: { fuelL: number; mh: number };
   voided?: boolean;
 }
 
@@ -99,8 +105,11 @@ function operation(o: OperationOptions) {
       'day_close',
       at(h + 1, 30, d),
       o.noEngineRun === true
-        ? { finalReading: { fuelL: 150, mh: 1200 }, noFlightReason: 'weather' }
-        : { finalReading: { fuelL: 120, mh: 1201 } },
+        ? {
+            finalReading: o.finalReading ?? { fuelL: 150, mh: 1200 },
+            noFlightReason: 'weather',
+          }
+        : { finalReading: o.finalReading ?? { fuelL: 120, mh: 1201 } },
       base,
     ),
   );
@@ -176,9 +185,9 @@ describe('sygnatura operacji w panelu', () => {
     expect(found.get('s-d1')).toBe('SP-AXA/2026-09-02/TMK/1');
   });
 
-  it('operacja bez uruchomienia silnika nie dostaje sygnatury ani nie zajmuje numeru', async () => {
-    // 09C: samolot zajęty, pogoda nie pozwoliła. Zapis istnieje i ma być widoczny,
-    // ale operacji lotniczej nie było - więc nie ma czego numerować.
+  it('zapis PUSTY (odczyty równe przejęciu) znika z listy i nie zajmuje numeru', async () => {
+    // 09C bez żadnej zmiany: śmieć (issue #75 pkt 2) - list go nie pokazuje wcale,
+    // a rejestr trzyma go dalej: adres bezpośredni odpowiada jak zawsze.
     const { app } = await testHarness();
     const tmk = await token(app, 'TMK');
 
@@ -188,8 +197,39 @@ describe('sygnatura operacji w panelu', () => {
     ]);
 
     const found = await signatures(app, tmk);
-    expect(found.get('s-09c')).toBeNull();
+    expect(found.has('s-09c')).toBe(false);
     expect(found.get('s-lot')).toBe('SP-AXA/2026-09-01/TMK/1');
+
+    // Rejestr widzi wszystko: szczegół operacji (oś zdarzeń) otwiera się dalej.
+    const detail = await app.inject({
+      method: 'GET',
+      url: '/admin/api/sessions/s-09c',
+      headers: { authorization: `Bearer ${tmk}` },
+    });
+    expect(detail.statusCode).toBe(200);
+    expect(detail.json().session.signature).toBeNull();
+  });
+
+  it('zapis bez biegu ze ZMIENIONYM odczytem dostaje sygnaturę z dobą przejęcia', async () => {
+    // Issue #75 pkt 3: „zmieniła tylko bieg silnika albo poziom paliwa […] też powinienem
+    // dostać sygnaturę". Kotwicą jest przejęcie (05:50), więc taki zapis numeruje się
+    // PRZED operacją z silnikiem uruchomionym o 10:12.
+    const { app } = await testHarness();
+    const tmk = await token(app, 'TMK');
+
+    await post(app, tmk, [
+      ...operation({
+        sessionUuid: 's-zmiana',
+        engineStartH: 7,
+        noEngineRun: true,
+        finalReading: { fuelL: 138, mh: 1200 },
+      }),
+      ...operation({ sessionUuid: 's-lot', engineStartH: 10 }),
+    ]);
+
+    const found = await signatures(app, tmk);
+    expect(found.get('s-zmiana')).toBe('SP-AXA/2026-09-01/TMK/1');
+    expect(found.get('s-lot')).toBe('SP-AXA/2026-09-01/TMK/2');
   });
 
   it('operacja unieważniona nie zajmuje numeru następnym', async () => {
@@ -243,6 +283,19 @@ describe('sygnatura operacji w panelu', () => {
         aircraftId: 'SP-FGK',
         engineStartH: 17,
       }) as unknown as Event[],
+      // Issue #75: zapis bez biegu ze zmianą (numeruje się z kotwicą przejęcia 11:50)
+      // i zapis pusty (numeru nie ma na żadnym torze).
+      's-e': operation({
+        sessionUuid: 's-e',
+        engineStartH: 12,
+        noEngineRun: true,
+        finalReading: { fuelL: 138, mh: 1200 },
+      }) as unknown as Event[],
+      's-f': operation({
+        sessionUuid: 's-f',
+        engineStartH: 20,
+        noEngineRun: true,
+      }) as unknown as Event[],
     };
 
     await post(app, tmk, Object.values(streams).flat());
@@ -265,11 +318,13 @@ describe('sygnatura operacji w panelu', () => {
       expect(fromPanel.get(uuid) ?? null).toBe(fromDomain.get(uuid) ?? null);
     }
     // Asercja o WARTOŚCIACH, nie tylko o zgodności: dwa tory zgodnie milczące
-    // przeszłyby pętlę wyżej bez mrugnięcia.
+    // przeszłyby pętlę wyżej bez mrugnięcia. Kotwica `s-e` to przejęcie 11:50,
+    // stąd numer między biegiem z 9:12 a biegiem z 17:12.
     expect([...fromDomain.entries()].sort()).toEqual([
       ['s-a', 1],
       ['s-b', 2],
-      ['s-d', 3],
+      ['s-d', 4],
+      ['s-e', 3],
     ]);
   });
 });

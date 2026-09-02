@@ -93,15 +93,17 @@ export function SyncChip({ status, outboxCount, lastSyncAt, refCheckedAt, style 
   const lastAttemptAt = useSessionStore((st) => st.lastAttemptAt);
   const syncNow = useSessionStore((st) => st.syncNow);
   const refreshReferenceNow = useSessionStore((st) => st.refreshReferenceNow);
+  const restoreEventsNow = useSessionStore((st) => st.restoreEventsNow);
 
   const count = outboxCount ?? storeCount;
   const indicator = status ?? syncIndicator(count, storeLastSync);
   const syncedAt = lastSyncAt !== undefined ? lastSyncAt : storeLastSyncAt;
 
-  /* Ponowienie to TA SAMA para wywołań, co „SYNCHRONIZUJ TERAZ" w ustawieniach:
-     dopchnięcie kolejki i pytanie o dane referencyjne z pominięciem bramy wieku
-     (issue #55). Pilot sięgający po przycisk awaryjny pyta „co serwer wie teraz",
-     a sama wysyłka odpowiadałaby na pół pytania.
+  /* Ponowienie to TEN SAM zestaw wywołań, co „SYNCHRONIZUJ TERAZ" w ustawieniach:
+     dopchnięcie kolejki, dosyłka zdarzeń z rejestru serwera (issue #75 pkt 1 -
+     m.in. unieważnienia wpisane przez administratora) i pytanie o dane referencyjne,
+     wszystko z pominięciem bram wieku (issue #55). Pilot sięgający po przycisk
+     awaryjny pyta „co serwer wie teraz", a sama wysyłka odpowiadałaby na pół pytania.
 
      Store bywa pusty (katalog stylów, testy komponentów) - wtedy akcji po prostu nie ma,
      zamiast przycisku, który nic nie robi (§6 pkt 3). */
@@ -114,11 +116,12 @@ export function SyncChip({ status, outboxCount, lastSyncAt, refCheckedAt, style 
       // przycisk sięga się wtedy, gdy długo nic nie szło, czyli gdy serwer zdążył
       // się uśpić - a zimny start bywa dłuższy niż limit pętli tła.
       await syncNow('manual');
+      await restoreEventsNow?.();
       await refreshReferenceNow?.();
     } finally {
       setRetrying(false);
     }
-  }, [refreshReferenceNow, syncNow]);
+  }, [refreshReferenceNow, restoreEventsNow, syncNow]);
 
   const report = syncReport(indicator, count, storeLastSync);
   const attempt = attemptStamp(storeLastSync, lastAttemptAt);

@@ -69,6 +69,66 @@ export function screenPath(
   return out;
 }
 
+/**
+ * Kreska PRZERYWANA: tnie łamaną na kawałki „on" rozdzielone przerwami „off",
+ * licząc po długości łuku (issue #75 pkt 4 - kołowanie na mapie śladu).
+ *
+ * To jest ZAMIERZONA dziura, więc nie łamie reguły ciągłości z docblocku modułu:
+ * tamta broni przed dziurą PRZYPADKOWĄ (pominięty odcinek), a tu każdy kawałek
+ * przechodzi dalej przez `polylineSegments` i dostaje swój nadmiar na stykach
+ * WEWNĄTRZ kawałka. Zaokrąglone końce wydłużają przy tym każdą kreskę o grubość
+ * (pół z każdej strony) - dokładnie tak samo, jak `stroke-linecap: round` wydłuża
+ * kreski `stroke-dasharray` w mockupach SVG, więc wzór [4, 4] wygląda w obu
+ * technikach tak samo.
+ *
+ * Granica kawałka wypada w ŚRODKU odcinka - punkt graniczny jest interpolowany,
+ * a wierzchołek, przez który kreska przechodzi, zostaje w kawałku (załamanie
+ * wewnątrz kreski ma być widoczne, nie ścięte).
+ */
+export function dashPath(
+  path: readonly Point2D[],
+  onPx: number,
+  offPx: number,
+): Point2D[][] {
+  if (path.length < 2 || onPx <= 0 || offPx <= 0) return path.length >= 2 ? [[...path]] : [];
+
+  const pieces: Point2D[][] = [];
+  let piece: Point2D[] = [path[0]!];
+  let drawing = true;
+  let remaining = onPx;
+
+  for (let i = 1; i < path.length; i++) {
+    const from = path[i - 1]!;
+    const to = path[i]!;
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const span = Math.sqrt(dx * dx + dy * dy);
+    if (span === 0) continue;
+
+    let travelled = 0;
+    while (travelled < span - 1e-9) {
+      const step = Math.min(remaining, span - travelled);
+      travelled += step;
+      const point: Point2D = {
+        x: from.x + (dx * travelled) / span,
+        y: from.y + (dy * travelled) / span,
+      };
+      if (drawing) piece.push(point);
+      remaining -= step;
+
+      if (remaining <= 1e-9) {
+        if (drawing && piece.length >= 2) pieces.push(piece);
+        drawing = !drawing;
+        remaining = drawing ? onPx : offPx;
+        piece = drawing ? [point] : [];
+      }
+    }
+  }
+
+  if (drawing && piece.length >= 2) pieces.push(piece);
+  return pieces;
+}
+
 /** Jeden prostokąt do narysowania: pozycja lewego górnego rogu PRZED obrotem. */
 export interface PolylineSegment {
   left: number;

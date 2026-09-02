@@ -21,7 +21,8 @@ import React, { useCallback, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { timeUtc } from '../../format';
-import type { FlightProfile } from '../../../domain';
+import { trackPhaseRuns } from '../../../domain';
+import type { FlightProfile, TrackFlightWindow } from '../../../domain';
 import { useChartGesture } from '../../hooks/useChartGesture';
 import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
@@ -85,6 +86,12 @@ export interface VerticalProfileMarker {
 
 export interface VerticalProfileProps {
   profile: FlightProfile;
+  /**
+   * Okna lotów z LOKALNEGO rejestru (issue #75 pkt 4): czas na ziemi rysuje się
+   * przerywaną szarą, wyniesienia pełną zieloną - jak w mockupie 14 („PRZERWA NA
+   * ZIEMI" między wyniesieniami). `undefined` = jedna zielona krzywa, jak dotąd.
+   */
+  flights?: readonly TrackFlightWindow[];
   width: number;
   height: number;
   markers?: readonly VerticalProfileMarker[];
@@ -113,6 +120,7 @@ export interface VerticalProfileProps {
 
 export function VerticalProfile({
   profile,
+  flights,
   width,
   height,
   markers = [],
@@ -122,6 +130,15 @@ export function VerticalProfile({
   onWindowChange,
 }: VerticalProfileProps) {
   const { theme } = useTheme();
+
+  /** Fazy po PRÓBKACH profilu (indeksy 1:1 z `plot.points`); `null` = bez podziału. */
+  const phaseRuns = useMemo(
+    () =>
+      flights == null
+        ? null
+        : trackPhaseRuns(profile.samples.map((sample) => sample.time), flights),
+    [profile, flights],
+  );
 
   const plot = useMemo(() => {
     const { samples } = profile;
@@ -368,7 +385,30 @@ export function VerticalProfile({
           />
         ))}
 
-        <TrackPolyline points={curvePoints} color={theme.colors.green} width={2} />
+        {/* Krzywa w fazach (issue #75 pkt 4): ziemia przerywaną szarą, wyniesienia
+            pełną zieloną - „przerwa na ziemi" z mockupu 14 przestaje udawać lot. */}
+        {phaseRuns == null ? (
+          <TrackPolyline points={curvePoints} color={theme.colors.green} width={2} />
+        ) : (
+          phaseRuns.map((run) =>
+            run.phase === 'flight' ? (
+              <TrackPolyline
+                key={`${run.from}-${run.to}`}
+                points={curvePoints.slice(run.from, run.to + 1)}
+                color={theme.colors.green}
+                width={2}
+              />
+            ) : (
+              <TrackPolyline
+                key={`${run.from}-${run.to}`}
+                points={curvePoints.slice(run.from, run.to + 1)}
+                color={theme.colors.textMuted}
+                width={1.6}
+                dash={[4, 4]}
+              />
+            ),
+          )
+        )}
 
         {markers.map((marker, index) => {
           const x = timeX(marker.at);

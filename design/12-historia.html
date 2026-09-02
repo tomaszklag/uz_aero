@@ -243,7 +243,15 @@
 
       <!-- Operacja zdana BEZ LOTU (09C) - pogoda, usterka, odwołane zadanie.
            Silnik chodził 14 minut, w powietrze nikt nie poszedł: „Lot - -", nie zero.
-           Kafelek istnieje, bo maszyna była zajęta i to jest fakt do obejrzenia. -->
+           Kafelek istnieje, bo maszyna była zajęta i to jest fakt do obejrzenia.
+
+           GRANICE PO ISSUE #75: zapis, w którym silnik NIE ruszył, ma kafelek TYLKO
+           wtedy, gdy coś się zmieniło (odczyt paliwa/MH inny niż przy przejęciu albo
+           dolewka) - wtedy godzinami kafelka jest zajęcie maszyny (przejęcie → zdanie),
+           a sygnatura numeruje się kotwicą przejęcia. Zapis pusty (komplet odczytów
+           równych przejęciu) nie istnieje na żadnej liście - ekran 09C ostrzega o tym
+           przed zdaniem. Operacja unieważniona (przez pilota 10L albo administratora
+           w panelu) też kafelka nie ma - unieważnienie wraca na telefon syncem. -->
       <a href="10b-rozliczenie-zamkniete.html" class="day-card">
         <div class="day-top">
           <span class="day-date">07 SIERPNIA 2026</span>

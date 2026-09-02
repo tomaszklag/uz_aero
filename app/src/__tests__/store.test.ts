@@ -233,6 +233,40 @@ describe('useSessionStore', () => {
       store().reset();
       expect(store().streamHydrated).toBe(false);
     });
+
+    it('`restoreEventsNow` pyta serwer BEZ bramy wieku - druga połowa ręcznego syncu', async () => {
+      // Issue #75 pkt 1: unieważnienie wpisane przez administratora ma zejść na telefon
+      // od razu po „SYNCHRONIZUJ TERAZ"/„PONÓW PRÓBĘ", a nie do kwadransa później.
+      const { store } = attach();
+      const gated: number[] = [];
+      const forced: number[] = [];
+      const restore = {
+        restoreIfStale: async (): Promise<EventRestoreOutcome> => {
+          gated.push(1);
+          return { kind: 'fresh' };
+        },
+        restore: async (): Promise<EventRestoreOutcome> => {
+          forced.push(1);
+          return { kind: 'pulled', fetched: 1, inserted: 1, complete: true };
+        },
+      } as unknown as EventRestore;
+      useSessionStore
+        .getState()
+        .attachSync(
+          null as unknown as SyncEngine,
+          null as unknown as ReferenceSync,
+          null as unknown as TraceSync,
+          null as unknown as ThemePrefsSync,
+          restore,
+        );
+
+      const before = store().streamRevision;
+      await store().restoreEventsNow();
+      expect(gated).toHaveLength(0);
+      expect(forced).toHaveLength(1);
+      // Dopisany wiersz przelicza projekcje, jak w drodze z pętli okazji.
+      expect(store().streamRevision).toBe(before + 1);
+    });
   });
 
   /**
