@@ -275,15 +275,18 @@
              przejęciu, więc sam krok liczników nie wystarcza. Jak tankowanie - przy
              zatrzymanym śmigle, przed uruchomieniem i po wyłączeniu. Otwiera ARKUSZ
              jednej liczby (wzorzec 02B), nie ekran: poziomu po dolewce nie ma jak
-             uczciwie zmierzyć, pyta się o samą ilość. Podpis niesie minimum
-             z konfiguracji - pomiar z przejęcia stoi w logu wyżej (stan modalny). -->
+             uczciwie zmierzyć, pyta się o samą ilość. Podpis niesie STAN silnika
+             (pomiar z przejęcia + dolewki), jak „Na pokładzie" przy paliwie (uwaga
+             z urządzenia, 2026-09-03 - zamiast „Minimum x L"); minimum mówi
+             podziałka na 02A i ostrzeżenia. Bez pomiaru w strumieniu podpis wraca
+             do „Olej silnikowy". -->
         <a href="04a-cockpit-ground.html" class="action-card">
           <div class="action-icon">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
           </div>
           <div>
             <div class="action-label">Dolej olej</div>
-            <div class="action-sub">Minimum 8,5 L</div>
+            <div class="action-sub">W silniku 9,2 L</div>
           </div>
         </a>
         <!-- ZAŁADUNEK (issue #21) - TYLKO dzień skokowy i TYLKO przed startem: pierwszy

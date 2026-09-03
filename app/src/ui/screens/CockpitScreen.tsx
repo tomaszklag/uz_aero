@@ -62,6 +62,7 @@ import { holdsAircraft } from '../navigation/resumeTarget';
 import { useSessionStore } from '../store';
 import { useGps, useSensors } from '../bootstrap/servicesContext';
 import { useAircraft } from '../hooks/useAircraft';
+import { usePilotCode } from '../hooks/usePilots';
 import { useOperationSignatures } from '../hooks/useOperationSignatures';
 import { useFlightDetection } from '../hooks/useFlightDetection';
 import { useSensorTrace } from '../hooks/useSensorTrace';
@@ -154,6 +155,9 @@ export function CockpitScreen({
   // Konfiguracja i norma zużycia z cache'u referencyjnego - do paska paliwa (mockup 04).
   // Dane lokalne, więc kokpit nigdy nie czeka na sieć.
   const aircraft = useAircraft(projection.aircraftId);
+  // Kody pilotów do kafelka załogi (uwaga z urządzenia, 2026-09-03: przy DUAL
+  // wyświetlał się surowy identyfikator - ta sama klasa błędu, co guid na 07).
+  const pilotCode = usePilotCode();
 
   /**
    * TYTUŁEM PASKA JEST SYGNATURA OPERACJI (uwaga z urządzenia, 2026-09-02: nagłówek
@@ -727,15 +731,17 @@ export function CockpitScreen({
 
   /**
    * Dolewka oleju (issue #60, decyzja 2026-08-27) - jak tankowanie: PRZED uruchomieniem
-   * i PO zatrzymaniu, przy zatrzymanym śmigle. Podpis niesie minimum z konfiguracji
-   * (odniesienie decyzji „czy dolewać"), nie pomiar z przejęcia - ten stoi w logu
-   * sesji niżej, a kokpit nie powtarza tego, co mówi log (reguła stanu modalnego).
+   * i PO zatrzymaniu, przy zatrzymanym śmigle. Podpis niesie STAN silnika (pomiar
+   * z przejęcia + dolewki), jak „Na pokładzie" przy paliwie (uwaga z urządzenia,
+   * 2026-09-03: „zamiast «Minimum x L» napisz jak dla paliwa «W silniku x L»") -
+   * minimum mówi podziałka na 02A i ostrzeżenia, nie podpis kafelka. Bez pomiaru
+   * w strumieniu (stary zapis) zostaje nazwa medium - liczby nie zmyślamy.
    */
   const oilAction: ActionCardSpec = {
     id: 'oil',
     icon: 'oil',
     label: 'Dolej olej',
-    sub: aircraft?.oilMinL != null ? `Minimum ${oilLitres(aircraft.oilMinL)}` : 'Olej silnikowy',
+    sub: projection.oil.afterL != null ? `W silniku ${oilLitres(projection.oil.afterL)}` : 'Olej silnikowy',
     onPress: () => setOilOpen(true),
   };
 
@@ -782,7 +788,9 @@ export function CockpitScreen({
           id: 'crew',
           icon: 'crew',
           label: 'Zmiana załogi',
-          sub: `PIC: ${projection.picId ?? '-'}${projection.dualId != null ? ` · DUAL: ${projection.dualId}` : ''}`,
+          // KODY pilotów, nie surowe identyfikatory (uwaga z urządzenia,
+          // 2026-09-03) - w produkcji id to uuid z panelu.
+          sub: `PIC: ${pilotCode(projection.picId) ?? '-'}${projection.dualId != null ? ` · DUAL: ${pilotCode(projection.dualId)}` : ''}`,
           onPress: () => navigation.navigate('CrewChange'),
         },
         {

@@ -384,6 +384,12 @@ Konsekwencje przy każdej zmianie kokpitu:
   wystarczalności, ton ostrzeżenia i adnotacja o źródle); bez normy paska nie ma i FOB
   niesie podpis kafelka „Tankowanie". Podział ról ma test i mieszka w
   `app/src/ui/screens/logic/cockpitFuel.ts` - nie rozstrzygaj tego w JSX
+- **kafelek „Dolej olej" niesie STAN silnika, nie konfigurację** (uwaga
+  z urządzenia, 2026-09-03: „zamiast «Minimum x L» napisz jak dla paliwa
+  «W silniku x L»"): podpis = pomiar z przejęcia + dolewki
+  (`projection.oil.afterL`), analogicznie do „Na pokładzie" przy paliwie;
+  minimum mówi podziałka na 02A i ostrzeżenia. Bez pomiaru w strumieniu (stary
+  zapis) podpis wraca do „Olej silnikowy" - liczby nie zmyślamy
 - **reguła obowiązuje też przycisk sprzętowy** (wdrożone 2026-08-10): kokpit trzyma
   `usePreventRemove(holdsAircraft(projection), …)` i zamiast wyjścia pokazuje arkusz 04d
   („TRZYMASZ SP-AXA" → ZOSTAŃ / ZDAJ SAMOLOT). `usePreventRemove`, nie `BackHandler`,
@@ -1833,7 +1839,13 @@ nie architekturą:
 - **wiersze załogi piszą KOD pilota z cache floty, nie surowy identyfikator** („przy
   Dualu wyświetla się guid zamiast nazwy użytkownika" - w produkcji piloci mają
   identyfikatory UUID z panelu; ta sama klasa błędu, co guid w pasku kokpitu).
-  Surowy id zostaje ostatnią deską ratunku dla pilota spoza cache'u
+  Surowy id zostaje ostatnią deską ratunku dla pilota spoza cache'u.
+  **Ta sama poprawka na kafelku „Zmiana załogi" w kokpicie** (2026-09-03: podpis
+  kafelka sklejał surowe `picId`/`dualId`, choć mockup 04A od zawsze pisał
+  „PIC: TMK · DUAL: AKO") - kody rozwiązuje odtąd hook `usePilotCode`
+  (`hooks/usePilots.ts`, wzorzec `useAircraft`): `queries.pilots()` ładowało
+  sobie już SZEŚĆ ekranów własnymi kopiami, siódma kopia byłaby dokładnie tym,
+  przed czym ostrzega docblock tamtego hooka
 - **licznik „block" TYKA przy pracującym silniku** (pytanie z urządzenia: „czy
   aktualizuje się czas block?"). Rachunek `blockSince` był dobry (otwarty cykl domyka
   „teraz"), ale „teraz" pochodziło z renderu - licznik na ekranie stał. Sekundowy
