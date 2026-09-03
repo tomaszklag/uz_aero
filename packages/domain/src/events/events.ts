@@ -327,6 +327,49 @@ export interface SessionVoidPayload {
    * na wycofany wpis nie ma jak się dowiedzieć dlaczego.
    */
   reason: string | null;
+  /**
+   * KTO unieważnił (issue #81). Do 2026-09-03 pola nie było, bo „telefon nie ma
+   * ekranu, na którym różnica »kto wycofał« cokolwiek by zmieniła". Ma od issue #81:
+   * unieważnienie z panelu KOŃCZY operację, którą pilot być może właśnie prowadzi -
+   * telefon musi je odróżnić od własnego wycofania, żeby zejść z kokpitu, wstrzymać
+   * outbox tej operacji i powiedzieć pilotowi, co się stało. Brak pola = `pilot`
+   * (własne unieważnienie z arkusza 10L nie musi go wysyłać), jak przy korekcie.
+   */
+  source?: CorrectionSource;
+}
+
+/**
+ * `session_close` - ZAKOŃCZENIE OPERACJI PRZEZ ADMINISTRATORA (issue #81, 2026-09-03).
+ *
+ * ══ DLACZEGO NOWE ZDARZENIE, A NIE `day_close` Z PANELU ══
+ * `day_close` jest ZDANIEM samolotu przez pilota: niesie obowiązkowe odczyty
+ * (przekazanie dla następnego), a domena pilnuje przy nim, że silnik stoi
+ * (`ENGINE_RUNNING_AT_DAY_CLOSE`) i że licznik się nie cofnął (`MH_REGRESSION`).
+ * Administrator zamyka operację OSIEROCONĄ - taką, której pilot nie zdał, bo telefon
+ * padł, został w kabinie albo nigdy nie odzyskał zasięgu - i o stanie maszyny w tej
+ * chwili nie wie nic pewnego: w rejestrze serwera silnik potrafi „pracować" od trzech
+ * dni. Zdarzenie z fałszywymi odczytami byłoby zmyśleniem, a poluzowanie twardych
+ * reguł `day_close` dla panelu złamałoby zasadę „twarde reguły są w obu trybach
+ * IDENTYCZNE" (`writeAuthority.test.ts`). Stąd osobny fakt: „tę operację zakończył
+ * administrator" - bez odczytów, z powodem.
+ *
+ * ══ SKUTKI ══
+ *  • projekcja: `closed = true` (maszyna wolna, `activeClaim` jej nie widzi),
+ *    `closedByAdmin = true`, `adminCloseReason`; odczyty końcowe zostają `null`,
+ *    więc ogniwem łańcucha MH ta operacja NIE jest (`pickHandover` ją pomija) -
+ *    stan maszyny ustawia administrator osobną akcją w karcie samolotu;
+ *  • okno korekty pilota ZAMYKA SIĘ NATYCHMIAST (`correctionWindow`): operacji
+ *    zakończonej administracyjnie pilot już nie poprawia, a jego zaległe zapisy
+ *    do niej telefon wstrzymuje w outboksie (§4.9 - „wstrzymane zapisy");
+ *  • na telefon wraca przez `GET /me/events` jak każde zdarzenie sesji.
+ *
+ * Tworzy je WYŁĄCZNIE panel (`commands/sessionClose.ts`); telefon nie ma komendy,
+ * która by je składała, a `POST /events` odrzuca je w kopercie. To nie jest reguła
+ * domeny (domena nie zna ról) - to własność POWIERZCHNI, jak `source: 'admin'`.
+ */
+export interface SessionClosePayload {
+  /** Powód zakończenia - w panelu WYMAGANY (zamyka się cudzy lot); `null` = nie podano. */
+  reason: string | null;
 }
 
 /**
@@ -573,6 +616,7 @@ export interface EventPayloadMap {
   manual_log_entry: ManualLogEntryPayload;
   day_close: DayClosePayload;
   session_void: SessionVoidPayload;
+  session_close: SessionClosePayload;
   event_correction: EventCorrectionPayload;
 }
 
@@ -596,6 +640,7 @@ export const EVENT_TYPES: readonly EventType[] = [
   'manual_log_entry',
   'day_close',
   'session_void',
+  'session_close',
   'event_correction',
 ];
 

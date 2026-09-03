@@ -122,6 +122,17 @@ export function correctionWindow(state: SessionState, now: EpochMillis): Correct
   if (!state.closed || state.closedAt == null) {
     return { confirmed: false, open: true, closesAt: null, remainingMs: 0 };
   }
+  /*
+   * ZAKOŃCZENIE ADMINISTRACYJNE ZAMYKA OKNO OD RAZU (issue #81). Operacja, o której
+   * zdecydował panel, nie jest już do poprawiania przez pilota - jego zaległe zapisy
+   * telefon i tak wstrzymuje, a korekta dopisana tu po fakcie rozjechałaby rejestr
+   * z decyzją administratora. To jest JEDYNA gałąź reguł zależna od uprawnienia
+   * (`checkCorrectionWindow` uchyla ją administratorowi), więc dokładnie tędy ma iść
+   * także ta odmowa - bez drugiej reguły „tylko admin" w domenie, która nie zna ról.
+   */
+  if (state.closedByAdmin) {
+    return { confirmed: true, open: false, closesAt: null, remainingMs: 0 };
+  }
   const closesAt = state.closedAt + CORRECTION_WINDOW_MS;
   // Granica jest DOMKNIĘTA: równo 24 h jeszcze przechodzi, milisekundę dalej już nie -
   // ta sama ostra krawędź, którą miały okna per wzlot (pilnuje jej writeAuthority).
@@ -226,6 +237,10 @@ function checkEnvelope(
   if (state.closed) {
     if (candidate.type === 'day_close') {
       v.push(error('DAY_ALREADY_CLOSED', 'Samolot jest już zdany.'));
+    } else if (candidate.type === 'session_close') {
+      // Zakończenie administracyjne operacji już zakończonej (zdanej albo zamkniętej
+      // przez panel wcześniej) nie ma czego kończyć - ten sam kod, co drugie zdanie.
+      v.push(error('DAY_ALREADY_CLOSED', 'Ta operacja jest już zakończona.'));
     } else if (!CORRECTION_EVENT_TYPES.includes(candidate.type)) {
       v.push(
         error(
@@ -310,7 +325,11 @@ function checkCorrectionWindow(
   return [
     error(
       'CORRECTION_WINDOW_EXPIRED',
-      'Minęło 24 h od zdania samolotu - tę poprawkę wprowadzi administrator.',
+      // Ten sam kod, dwa powody (issue #81): okno mogło minąć albo zamknąć je
+      // zakończenie administracyjne - zdanie musi nazwać ten, który zaszedł.
+      state.closedByAdmin
+        ? 'Tę operację zakończył administrator - poprawki wprowadza już tylko on.'
+        : 'Minęło 24 h od zdania samolotu - tę poprawkę wprowadzi administrator.',
     ),
   ];
 }
@@ -824,6 +843,17 @@ function checkByType(
       }
       break;
     }
+
+    /**
+     * `session_close` - zakończenie administracyjne (issue #81). Reguł per typ NIE MA
+     * i to jest decyzja: zdarzenie nie niesie odczytów (nie ma czego liczyć w łańcuchu
+     * MH) i nie pyta o stan silnika - zamyka operację OSIEROCONĄ, o której rejestr wie
+     * tylko tyle, ile zdążył dostać. Jedyna twarda reguła („już zakończona") mieszka
+     * w kopercie, obok drugiego zdania. Że tworzy je wyłącznie panel, pilnuje
+     * POWIERZCHNIA (koperta `POST /events`), nie domena - ta nie zna ról.
+     */
+    case 'session_close':
+      break;
 
     default:
       assertNever(candidate);

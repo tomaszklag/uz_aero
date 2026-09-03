@@ -53,6 +53,7 @@ import {
   AIRCRAFT_IN_USE,
   fleetRefusalMessage,
 } from './aircraftRefusal';
+import { AircraftReadingsCard } from './AircraftReadingsCard';
 import { currentStateLocked, currentStateView } from './currentState';
 import { mhFormatExample, mhFormatLabel, MH_FORMAT_ORDER } from './fleetRows';
 
@@ -439,6 +440,13 @@ export function AircraftDrawer({ id, fleet, listPending, manages, onClose }: Air
           </Field>
         )}
       </Card>
+
+      {/* POPRAWA ODCZYTÓW (issue #81) - osobna akcja, gdy maszynę prowadzi już dziennik
+          (pola „Aktualny stan" są wtedy do odczytu). Dopóki jedynym źródłem jest wpis
+          z panelu, poprawia się go wprost w polach wyżej - druga droga byłaby dublem. */}
+      {aircraft != null && !readOnly && state != null ? (
+        <AircraftReadingsCard aircraft={aircraft} mhFormat={draft.mhFormat} />
+      ) : null}
 
       {aircraft == null || readOnly ? null : (
         <Card title="Usuwanie">

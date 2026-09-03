@@ -37,6 +37,8 @@ import type {
   TraceEntry,
   TracePort,
   TraceStats,
+  WithheldEvent,
+  WithheldReason,
 } from '../../application/ports';
 // Schemat trzymamy osobno, bo dzięki temu da się go uruchomić w Node i przetestować
 // na prawdziwym silniku SQLite - patrz `schema.ts` i `sqliteSchema.test.ts`.
@@ -193,7 +195,11 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort {
 
   async getUnsyncedEvents(): Promise<Event[]> {
     const rows = await this.getDb().getAllAsync<EventRow>(
-      'SELECT * FROM events WHERE synced_at IS NULL ORDER BY rowid ASC',
+      // Wstrzymane WYPADŁY z kolejki (issue #81), choć `synced_at` mają dalej NULL.
+      `SELECT * FROM events
+        WHERE synced_at IS NULL
+          AND uuid NOT IN (SELECT uuid FROM withheld_events)
+        ORDER BY rowid ASC`,
     );
     return rows.map(rowToEvent);
   }
@@ -213,6 +219,41 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort {
         await db.runAsync('UPDATE events SET synced_at = ? WHERE uuid = ?', [syncedAt, uuid]);
       }
     });
+  }
+
+  async withholdEvents(
+    uuids: string[],
+    reason: WithheldReason,
+    withheldAt: EpochMillis,
+  ): Promise<void> {
+    if (uuids.length === 0) return;
+    const db = this.getDb();
+    await db.withTransactionAsync(async () => {
+      for (const uuid of uuids) {
+        // `INSERT OR IGNORE` + `SELECT` z `events`: nieznany uuid wypada sam (nie ma
+        // z czego wziąć sesji), a drugie wstrzymanie tego samego zostawia pierwszą decyzję.
+        await db.runAsync(
+          `INSERT OR IGNORE INTO withheld_events (uuid, session_uuid, reason, withheld_at)
+           SELECT uuid, session_uuid, ?, ? FROM events WHERE uuid = ?`,
+          [reason, withheldAt, uuid],
+        );
+      }
+    });
+  }
+
+  async getWithheldEvents(): Promise<WithheldEvent[]> {
+    const rows = await this.getDb().getAllAsync<{
+      uuid: string;
+      session_uuid: string;
+      reason: string;
+      withheld_at: number;
+    }>('SELECT * FROM withheld_events ORDER BY withheld_at ASC, rowid ASC');
+    return rows.map((r) => ({
+      uuid: r.uuid,
+      sessionUuid: r.session_uuid,
+      reason: r.reason as WithheldReason,
+      withheldAt: r.withheld_at,
+    }));
   }
 
   // ── reference cache ─────────────────────────────────────────────────────────

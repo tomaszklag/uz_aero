@@ -195,6 +195,14 @@ export interface SessionState {
   voidedAt: EpochMillis | null;
   /** Po co unieważniono; `null` = nie podano albo sesja ważna. */
   voidReason: string | null;
+  /**
+   * Unieważnił ADMINISTRATOR z panelu (`session_void.source === 'admin'`, issue #81).
+   * Telefon pyta o to w jednym celu: unieważnienie cudzej ręki KOŃCZY operację, którą
+   * pilot być może właśnie prowadzi - kokpit ma z niej zejść, outbox wstrzymać zaległe
+   * zapisy, a ekran 01 powiedzieć, co się stało. Własne unieważnienie (arkusz 10L)
+   * niczego takiego nie wymaga - pilot sam je wykonał.
+   */
+  voidedByAdmin: boolean;
 
   operation: OperationType | null;
   departureIcao: string | null;
@@ -259,13 +267,24 @@ export interface SessionState {
   /** Załadunek czekający na zrzut; `null` = brak (nikt nie siedzi / już wynieśli). */
   boarding: BoardingState | null;
 
-  /** Czy padł `day_close` (zdanie samolotu). */
+  /** Czy operacja jest zakończona: padł `day_close` (zdanie) albo `session_close` (admin). */
   closed: boolean;
   /**
-   * Czas zdarzenia `day_close` (null dopóki dzień otwarty). Od niego liczy się
-   * 24-godzinne okno korekty (decyzja 2026-07-23) - patrz `domain/rules`.
+   * Czas PIERWSZEGO zakończenia - `day_close` (null dopóki dzień otwarty). Od niego
+   * liczy się 24-godzinne okno korekty (decyzja 2026-07-23) - patrz `domain/rules`.
+   * Przy zakończeniu administracyjnym bez zdania to czas `session_close`.
    */
   closedAt: EpochMillis | null;
+  /**
+   * OPERACJĘ ZAKOŃCZYŁ ADMINISTRATOR (`session_close`, issue #81). Zdania samolotu
+   * mogło nie być wcale (operacja osierocona) albo padło później, z telefonu, który
+   * o zakończeniu jeszcze nie wiedział - wtedy oba fakty stoją w strumieniu, a ten
+   * znacznik mówi, że o operacji zdecydował panel. Okno korekty pilota jest wtedy
+   * zamknięte (`correctionWindow`), a jego zaległe zapisy telefon wstrzymuje.
+   */
+  closedByAdmin: boolean;
+  /** Powód zakończenia administracyjnego; `null` = nie podano albo zakończył pilot. */
+  adminCloseReason: string | null;
   eventCount: number;
   /**
    * Indeks zdarzeń korygowalnych (uuid → typ) - z SUROWEGO strumienia, sprzed nałożenia
@@ -293,6 +312,7 @@ export function emptySessionState(): SessionState {
     voided: false,
     voidedAt: null,
     voidReason: null,
+    voidedByAdmin: false,
     operation: null,
     departureIcao: null,
     arrivalIcao: null,
@@ -327,6 +347,8 @@ export function emptySessionState(): SessionState {
     boarding: null,
     closed: false,
     closedAt: null,
+    closedByAdmin: false,
+    adminCloseReason: null,
     eventCount: 0,
     eventIndex: {},
     lastEventAt: null,
@@ -554,6 +576,8 @@ export function projectSession(events: Event[]): SessionState {
         state.voided = true;
         state.voidedAt = t;
         state.voidReason = event.payload.reason;
+        // Cudza ręka (issue #81): brak pola = własne unieważnienie z arkusza 10L.
+        state.voidedByAdmin = event.payload.source === 'admin';
         break;
       }
 
@@ -563,7 +587,24 @@ export function projectSession(events: Event[]): SessionState {
         state.fuel.lastReadingL = p.finalReading.fuelL;
         state.mh.end = p.finalReading.mh;
         state.closed = true;
-        state.closedAt = t;
+        // PIERWSZE zakończenie wyznacza `closedAt`: zdanie z telefonu, który zdążył
+        // je zapisać po zakończeniu administracyjnym (issue #81), nie przesuwa kotwicy
+        // okna korekty - to okno jest i tak zamknięte, a kotwica ma mówić prawdę o tym,
+        // kiedy operacja przestała trwać.
+        state.closedAt = state.closedAt ?? t;
+        break;
+      }
+
+      case 'session_close': {
+        // ZAKOŃCZENIE ADMINISTRACYJNE (issue #81): operacja przestaje trwać, maszyna jest
+        // wolna, ale ODCZYTÓW końcowych nie ma - `fuel.endL`/`mh.end` zostają takie,
+        // jakie były (z reguły `null`), więc ta operacja nie jest ogniwem łańcucha MH.
+        // Stanu silnika NIE dotykamy: rejestr mówi prawdę o tym, co wie - a wie tyle,
+        // że ostatnim zapisanym faktem było uruchomienie. Kokpit pyta o `closed`.
+        state.closed = true;
+        state.closedAt = state.closedAt ?? t;
+        state.closedByAdmin = true;
+        state.adminCloseReason = event.payload.reason;
         break;
       }
 

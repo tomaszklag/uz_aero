@@ -210,7 +210,18 @@ export function HistoryScreen({
                 onPress={() => void openDay(day.sessionUuid)}
                 // Tag „Okno minęło" USUNIĘTY (issue #35 pkt 4): mówił to samo, co
                 // etykieta grupy nad kartami i przypis z kłódką pod nimi.
-                foot={day.upload != null ? <UploadTag day={day} /> : undefined}
+                // „Zakończył administrator" (issue #81) ZOSTAJE: odróżnia tę kartę od
+                // reszty zamkniętych - bez odczytów końcowych i bez prawa do poprawek.
+                foot={
+                  day.upload != null || day.adminClosed ? (
+                    <>
+                      {day.adminClosed && (
+                        <Tag label="Zakończył administrator" tone="amber" icon="warning" />
+                      )}
+                      {day.upload != null && <UploadTag day={day} />}
+                    </>
+                  ) : undefined
+                }
               />
             ))}
 

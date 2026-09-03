@@ -25,7 +25,7 @@ import {
 import type { TokenService } from '../../../application/common/ports.ts';
 import { authorize } from '../../authorize.ts';
 import { tokenFromRequest } from '../../tokenFromRequest.ts';
-import { payloadValid } from './eventPayloads.ts';
+import { ADMIN_ONLY_EVENT_TYPES, payloadValid } from './eventPayloads.ts';
 
 /** Eksportowana dla testu kontraktowego zod ↔ typ domenowy. */
 export const eventEnvelope = z.object({
@@ -74,6 +74,13 @@ export function registerEventsRoutes(
     // retry telefonu albo NaN na stałe w projekcji. 400 mówi klientowi „nie ponawiaj".
     if (parsed.data.events.some((e) => !payloadValid(e.type, e.payload))) {
       return reply.code(400).send({ error: 'bad_payload' });
+    }
+
+    // Zdarzenia PANELU (issue #81): telefon nie ma jak ich złożyć, więc taka paczka jest
+    // próbą zapisu spoza uprawnień - 403 w całości, jak przy cudzym PIC-u (bez wiersza
+    // w bazie i bez rozjazdu księgowości outboxa).
+    if (parsed.data.events.some((e) => ADMIN_ONLY_EVENT_TYPES.includes(e.type))) {
+      return reply.code(403).send({ error: 'admin_only_event' });
     }
 
     const outcome = await ingest.ingest(

@@ -24,6 +24,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
+import type { AdminAircraftReadingCommands } from '../../../application/admin/commands/aircraftReadings.ts';
 import type { AdminFleetCommands } from '../../../application/admin/commands/fleet.ts';
 import type { AdminFleetQueries } from '../../../application/admin/queries/fleet.ts';
 import { refuseCapacity } from '../../../domain/fleetGuards.ts';
@@ -160,10 +161,24 @@ const patchBody = z.object({
 
 const idParams = z.object({ id: z.string().min(1).max(100) });
 
+/**
+ * Odczyt wpisany ręką administratora (issue #81). Liczby bez `.positive()` - jak przy
+ * stanie początkowym: „nieujemne i w granicach zbiorników" jest REGUŁĄ (`fleetGuards`),
+ * nie kształtem żądania. Komentarz WYMAGANY: nadpisuje się cudze odczyty, więc powód
+ * jest treścią wpisu - ta sama decyzja, co przy unieważnieniu z panelu.
+ */
+const readingBody = z.object({
+  mh: z.coerce.number().finite().min(-1_000_000).max(1_000_000),
+  fuelL: z.coerce.number().finite().min(-1_000_000).max(1_000_000),
+  oilL: oilValue.default(null),
+  note: z.string().trim().min(1).max(2000),
+});
+
 export function registerAdminFleetRoutes(
   app: FastifyInstance,
   fleet: AdminFleetCommands,
   queries: AdminFleetQueries,
+  readings: AdminAircraftReadingCommands,
   gate: AdminGate,
 ): void {
   adminRoute(
@@ -271,6 +286,34 @@ export function registerAdminFleetRoutes(
 
       // 204, nie 200 z wierszem: wiersza już nie ma, więc nie ma czego oddać.
       return reply.code(204).send();
+    },
+  );
+
+  adminRoute(
+    app,
+    gate,
+    // `POST`, nie `PATCH`: nic w konfiguracji się nie zmienia - powstaje NOWY wpis
+    // w append-only tabeli odczytów (issue #81), jak nowy fakt w rejestrze.
+    { method: 'POST', url: '/fleet/:id/readings', capability: 'fleet.manage' },
+    async (req, reply, actor) => {
+      const params = idParams.safeParse(req.params);
+      if (!params.success) return reply.code(400).send({ error: 'bad_request' });
+
+      const body = readingBody.safeParse(req.body);
+      if (!body.success) return reply.code(400).send({ error: 'bad_request' });
+
+      const outcome = await readings.record(actor, {
+        aircraftId: params.data.id,
+        mh: body.data.mh,
+        fuelL: body.data.fuelL,
+        oilL: body.data.oilL,
+        note: body.data.note,
+      });
+      if (!outcome.ok) return refusal(reply, outcome);
+
+      // Odpowiedź = świeży wiersz listy, jak po `PATCH`: karta samolotu ma od razu
+      // zobaczyć nowy odczyt z podpisem administratora, bez drugiego pobrania listy.
+      return reply.code(201).send({ aircraft: await queries.item(params.data.id) });
     },
   );
 }

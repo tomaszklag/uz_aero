@@ -20,7 +20,7 @@
  * bo nakłada je sama projekcja.
  */
 
-import type { Event } from '@uzaero/domain';
+import { projectSession, type Event } from '@uzaero/domain';
 
 import { clockDriftFlag } from '../../../domain/clockDrift.ts';
 import { chainFlags, type ChainLink } from '../../../domain/mhChain.ts';
@@ -45,6 +45,12 @@ import type {
 export interface IngestResult {
   accepted: number;
   duplicates: number;
+  /**
+   * Uuidy zdarzeń WSTRZYMANYCH (issue #81): sesja zakończona albo unieważniona przez
+   * administratora nie przyjmuje już nic z telefonu. Nie weszły do rejestru i nie
+   * wejdą - telefon ma je oznaczyć u siebie jako wstrzymane, nie ponawiać.
+   */
+  withheld: string[];
   /** Otwarte flagi dotykające przysłanych sesji - telefon pokaże je na ekranie 11. */
   flags: FlagRecord[];
 }
@@ -109,11 +115,38 @@ export class IngestCommands {
         await tx.query('SELECT pg_advisory_xact_lock(hashtext($1))', [sessionUuid]);
       }
 
-      const { accepted, duplicates } = await this.events.insertBatch(tx, batch, sourceDevice);
+      /*
+       * OPERACJA ZAKOŃCZONA PRZEZ ADMINISTRATORA NIE PRZYJMUJE JUŻ NIC Z TELEFONU
+       * (issue #81). Telefon sam wstrzymuje takie zapisy, zanim je wyśle (pyta serwer
+       * PRZED wysyłką, `SyncEngine`), ale wyścig jest realny: paczka mogła wyjść
+       * w tej samej sekundzie, w której panel zamykał operację. Wtedy ZATRZYMUJEMY ją
+       * TU - zdarzenia wstrzymane nie wchodzą do rejestru, a telefon dostaje ich listę
+       * (`withheld`) i oznacza je u siebie tak samo, jak te wstrzymane z własnej woli.
+       *
+       * To jedyny wyjątek od „serwer nie odrzuca, flaguje" (§4.5) - i świadomy: decyzja
+       * administratora o zamknięciu jest ostatnim słowem o tej operacji, a zdanie
+       * dosłane po niej (albo lądowanie „po" zakończeniu) rozjechałoby rejestr
+       * z decyzją człowieka, który widział całą sytuację.
+       *
+       * Sprawdzamy WYŁĄCZNIE sesje, których wiersz projekcji nie jest `active`: paczka
+       * do sesji otwartej albo nowej to norma i nie ma za co płacić odczytem strumienia.
+       */
+      const withheld: string[] = [];
+      let toInsert = batch;
+      for (const sessionUuid of new Set(batch.map((e) => e.sessionUuid))) {
+        const existing = await this.sessions.get(tx, sessionUuid);
+        if (existing == null || existing.status === 'active') continue;
+        const state = projectSession(await this.events.sessionEvents(tx, sessionUuid));
+        if (!state.closedByAdmin && !state.voidedByAdmin) continue;
+        for (const e of batch) if (e.sessionUuid === sessionUuid) withheld.push(e.uuid);
+        toInsert = toInsert.filter((e) => e.sessionUuid !== sessionUuid);
+      }
+
+      const { accepted, duplicates } = await this.events.insertBatch(tx, toInsert, sourceDevice);
 
       // Projekcje przeliczamy per DOTKNIĘTA sesja - pełny strumień, nie przyrost.
       // Strumień dnia to dziesiątki zdarzeń; odtwarzalność > mikrooptymalizacja.
-      const sessionUuids = [...new Set(batch.map((e) => e.sessionUuid))];
+      const sessionUuids = [...new Set(toInsert.map((e) => e.sessionUuid))];
       const closedNow: string[] = [];
 
       for (const sessionUuid of sessionUuids) {
@@ -176,7 +209,7 @@ export class IngestCommands {
       }
 
       const flags = await openFlagsFor(this.flags, tx, sessionUuids);
-      return { accepted, duplicates, flags, closedNow };
+      return { accepted, duplicates, flags, closedNow, withheld };
     });
 
     // Eksport §4.7 - PO commicie i poza gwarancjami odpowiedzi: telefon dostaje 200

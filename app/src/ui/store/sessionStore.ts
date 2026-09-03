@@ -276,13 +276,31 @@ export const useSessionStore = create<SessionStore>((set, get) => {
     const queries = requireQueries();
     const { context } = get();
     const events = context ? await queries.sessionEvents(context.sessionUuid) : [];
+    const projection = context
+      ? await queries.sessionState(context.sessionUuid)
+      : emptySessionState();
     const outbox = await queries.outboxStatus();
     set({
       events,
-      projection: context ? await queries.sessionState(context.sessionUuid) : emptySessionState(),
+      projection,
       outboxCount: outbox.count,
       synced: outbox.synced,
     });
+
+    /*
+     * OPERACJĘ ZAKOŃCZYŁ KTOŚ INNY NIŻ TEN TELEFON (issue #81): zakończenie albo
+     * unieważnienie z panelu przyszło dosyłką (§4.9) i zamknęło bieżącą operację bez
+     * udziału komendy `releaseAircraft`/`voidSession` - a to one czyszczą klucz usługi
+     * GPS w tle. Bez tego fixy dalej przypisywałyby się do operacji, której już nie ma.
+     * Ta sama reguła, co przy wznowieniu (`loadSession`): pytamy o `closed`/`voided`.
+     */
+    if (context != null && (projection.closedByAdmin || projection.voidedByAdmin)) {
+      try {
+        await get().repo?.deleteMeta(SESSION_META_KEYS.activeSessionUuid);
+      } catch {
+        // Świadomie cicho - jak w `loadSession`: dzień pilota jest ważniejszy niż ślad.
+      }
+    }
   }
 
   /**
@@ -591,11 +609,28 @@ export const useSessionStore = create<SessionStore>((set, get) => {
     },
 
     async syncNow(trigger) {
-      const { sync, applySyncOutcome, refreshOutbox } = get();
+      const { sync, applySyncOutcome, refreshOutbox, outboxCount } = get();
       if (sync == null) return; // testy żyją bez serwera - to nie błąd
+
+      /*
+       * NAJPIERW PYTAMY, POTEM WYSYŁAMY (issue #81): przy niepustym outboksie telefon
+       * dociąga dosyłkę z serwera BEZ bramy wieku, zanim cokolwiek wyśle. Jeśli
+       * administrator w międzyczasie zakończył albo unieważnił operację, decyzja jest
+       * już w lokalnym rejestrze, gdy silnik przemiata kolejkę - i zaległe zapisy tej
+       * operacji nie wychodzą. Do issue #81 kolejność była odwrotna („najpierw oddaj to,
+       * co masz tylko ty") i zdanie z telefonu potrafiło dojechać PO zakończeniu
+       * administracyjnym. Koszt: jedno krótkie żądanie z kursorem przed wysyłką -
+       * zwykle pusta strona. Bez zaległości nie ma o co pytać.
+       */
+      if (outboxCount > 0) {
+        await runEventRestore((eventRestore) => eventRestore.restore());
+      }
+
       const outcome = await sync.syncOnce(trigger);
       applySyncOutcome(outcome);
-      if (outcome.kind === 'synced') await refreshOutbox();
+      // Po KAŻDYM przebiegu, nie tylko udanym: przemiatanie przed wysyłką potrafi
+      // wstrzymać zapisy i zmniejszyć kolejkę także wtedy, gdy sieci nie było.
+      await refreshOutbox();
     },
 
     async refreshReference() {

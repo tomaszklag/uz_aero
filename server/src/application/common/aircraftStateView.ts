@@ -21,7 +21,7 @@
 
 import type { Event, EventOf, Handover, HandoverTrailEntry, OilHandover } from '@uzaero/domain';
 
-import type { AircraftSeed, SessionRow } from './ports.ts';
+import type { AdminReading, AircraftSeed, SessionRow } from './ports.ts';
 
 export interface ActiveClaim {
   picId: string;
@@ -74,7 +74,15 @@ export type HandoverSource =
    * maszyna jeszcze nie latała. Panel podpisuje tym kolumnę odczytu, a telefon poznaje
    * ten wariant po `Handover.byPilotId === null`.
    */
-  | 'initial';
+  | 'initial'
+  /**
+   * ODCZYT WPISANY RĘKĄ ADMINISTRATORA (issue #81) - nadrzędny stan z karty samolotu,
+   * z komentarzem. Konkurent zdania w łańcuchu MH: wygrał, bo stoi w nim dalej niż
+   * ostatnie zdanie (albo równie daleko, a jest późniejszy). Telefon poznaje ten
+   * wariant po `Handover.origin === 'admin'`; `byPilotId` jest `null`, bo nikt tej
+   * maszyny nie PRZEKAZAŁ - ktoś zdecydował, co pokazują przyrządy.
+   */
+  | 'admin';
 
 export interface HandoverPick {
   handover: Handover;
@@ -82,9 +90,16 @@ export interface HandoverPick {
   /**
    * Sesja, z której pochodzi przekazanie - klucz do dociągnięcia jej strumienia
    * i zbudowania szlaku (`handoverTrail`). `null` przy stanie początkowym z panelu
-   * (issue #66): wpis administratora nie ma historii, którą dałoby się opowiedzieć.
+   * (issue #66) i przy odczycie administratora (issue #81): wpis z panelu nie ma
+   * historii, którą dałoby się opowiedzieć.
    */
   sessionUuid: string | null;
+  /**
+   * Konto administratora, które wpisało odczyt, i jego komentarz - WYŁĄCZNIE przy
+   * `source: 'admin'` (panel podpisuje nimi pole „Aktualny stan"). Poza tym `null`.
+   */
+  enteredBy: string | null;
+  note: string | null;
 }
 
 /**
@@ -98,8 +113,9 @@ export interface HandoverPick {
 export function latestHandover(
   sessions: readonly SessionRow[],
   seed: AircraftSeed | null,
+  override: AdminReading | null,
 ): Handover | null {
-  return pickHandover(sessions, seed)?.handover ?? null;
+  return pickHandover(sessions, seed, override)?.handover ?? null;
 }
 
 /**
@@ -108,41 +124,67 @@ export function latestHandover(
  *   opcjonalny: wołający, który go nie ma (bo nie czyta konfiguracji floty), musi
  *   napisać `null` i tym samym zadeklarować, że pierwszy lot maszyny zobaczy „brak
  *   danych". Domyślna wartość zamieniłaby tę decyzję w przeoczenie.
+ * @param override ostatni odczyt wpisany ręką administratora (issue #81) - KONKURENT
+ *   zdania samolotu: bazą przekazania zostaje ten, kto stoi dalej w łańcuchu MH
+ *   (przy remisie licznika - późniejszy zegarem). Też WYMAGANY, z tego samego powodu.
  */
 export function pickHandover(
   sessions: readonly SessionRow[],
   seed: AircraftSeed | null,
+  override: AdminReading | null,
 ): HandoverPick | null {
   // Olej jest NIEZALEŻNY od tego, która sesja niesie przekazanie paliwa/MH:
   // pomiar biegnie własnym łańcuchem pomiar→pomiar (issue #60).
-  const oil = latestOilHandover(sessions, { seed });
+  const oil = latestOilHandover(sessions, { seed, override });
 
   const closed = sessions
     .filter((s) => s.status === 'closed' && s.mhEnd != null && s.fuelEndL != null)
     .sort((a, b) => (b.mhEnd ?? 0) - (a.mhEnd ?? 0) || (b.closeTime ?? 0) - (a.closeTime ?? 0));
-  const closedBase = closed[0];
+  const closedSession = closed[0];
+
+  /*
+   * ODCZYT ADMINISTRATORA KONTRA ZDANIE (issue #81): porządek łańcucha MH, jak wszędzie
+   * w tym pliku („timestampy są drugorzędne"). Wpis z wyższym licznikiem niż ostatnie
+   * zdanie wyprzedza je; zdanie z wyższym licznikiem - wpis. Przy równym liczniku
+   * rozstrzyga zegar, bo obie liczby opisują tę samą chwilę łańcucha i nowsza mówi
+   * więcej. Wpis jest zawsze parą (kolumny NOT NULL), więc nie ma tu filtru połówek.
+   */
+  const closedBase: ChainBase | null =
+    closedSession == null
+      ? null
+      : {
+          kind: 'session',
+          fuelL: closedSession.fuelEndL!,
+          mh: closedSession.mhEnd!,
+          at: closedSession.closeTime ?? 0,
+          session: closedSession,
+        };
+  const adminBase: ChainBase | null =
+    override == null
+      ? null
+      : { kind: 'admin', fuelL: override.fuelL, mh: override.mh, at: override.at, reading: override };
+  const chainBase = furtherInChain(closedBase, adminBase);
 
   /*
    * Zerowe ogniwo łańcucha: wpis z panelu wchodzi DOPIERO przy braku zdanej sesji
-   * i tylko z KOMPLETEM pary (paliwo + licznik). Połówka nie jest przekazaniem -
-   * `Handover.reading` niesie obie wielkości naraz, a zero udające drugą z nich
-   * byłoby gorsze od milczenia (ta sama reguła, co przy filtrze sesji wyżej).
+   * (i braku odczytu administratora) i tylko z KOMPLETEM pary (paliwo + licznik).
+   * Połówka nie jest przekazaniem - `Handover.reading` niesie obie wielkości naraz,
+   * a zero udające drugą z nich byłoby gorsze od milczenia.
    */
-  const seedBase =
-    closedBase == null && seed != null && seed.fuelL != null && seed.mh != null
-      ? { fuelL: seed.fuelL, mh: seed.mh, at: seed.enteredAt }
-      : null;
+  const base: ChainBase | null =
+    chainBase ??
+    (seed != null && seed.fuelL != null && seed.mh != null
+      ? { kind: 'initial', fuelL: seed.fuelL, mh: seed.mh, at: seed.enteredAt }
+      : null);
 
-  if (closedBase == null && seedBase == null) return null;
+  if (base == null) return null;
 
   // Od czego liczy się „nowsza sesja w toku": zdanie maszyny albo wpis w panelu.
-  const baseAt = closedBase != null ? (closedBase.closeTime ?? 0) : seedBase!.at;
-
   const newerOpen = sessions
     .filter(
       (s) =>
         s.status === 'active' &&
-        (s.claimTime ?? 0) > baseAt &&
+        (s.claimTime ?? 0) > base.at &&
         s.fuelLastL != null &&
         s.mhLast != null,
     )
@@ -158,33 +200,70 @@ export function pickHandover(
       },
       source: 'open_session',
       sessionUuid: newerOpen.sessionUuid,
+      enteredBy: null,
+      note: null,
     };
   }
 
-  if (closedBase == null) {
-    return {
-      handover: {
-        reading: { fuelL: seedBase!.fuelL, mh: seedBase!.mh },
-        // Nikt tej maszyny nie przekazał - patrz docblock `Handover.byPilotId`.
-        byPilotId: null,
-        at: seedBase!.at,
-        oil,
-      },
-      source: 'initial',
-      sessionUuid: null,
-    };
+  switch (base.kind) {
+    case 'session':
+      return {
+        handover: {
+          reading: { fuelL: base.fuelL, mh: base.mh },
+          byPilotId: base.session.picId,
+          at: base.at,
+          oil,
+        },
+        source: 'handover',
+        sessionUuid: base.session.sessionUuid,
+        enteredBy: null,
+        note: null,
+      };
+    case 'admin':
+      return {
+        handover: {
+          reading: { fuelL: base.fuelL, mh: base.mh },
+          // Nikt nie PRZEKAZAŁ - ktoś ZDECYDOWAŁ; patrz docblock `Handover.origin`.
+          byPilotId: null,
+          at: base.at,
+          oil,
+          origin: 'admin',
+        },
+        source: 'admin',
+        sessionUuid: null,
+        enteredBy: base.reading.byPilotId,
+        note: base.reading.note,
+      };
+    case 'initial':
+      return {
+        handover: {
+          reading: { fuelL: base.fuelL, mh: base.mh },
+          // Nikt tej maszyny nie przekazał - patrz docblock `Handover.byPilotId`.
+          byPilotId: null,
+          at: base.at,
+          oil,
+          origin: 'initial',
+        },
+        source: 'initial',
+        sessionUuid: null,
+        enteredBy: null,
+        note: null,
+      };
   }
+}
 
-  return {
-    handover: {
-      reading: { fuelL: closedBase.fuelEndL!, mh: closedBase.mhEnd! },
-      byPilotId: closedBase.picId,
-      at: closedBase.closeTime ?? 0,
-      oil,
-    },
-    source: 'handover',
-    sessionUuid: closedBase.sessionUuid,
-  };
+/** Kandydat na bazę przekazania - ogniwo łańcucha MH z jednego z trzech źródeł. */
+type ChainBase =
+  | { kind: 'session'; fuelL: number; mh: number; at: number; session: SessionRow }
+  | { kind: 'admin'; fuelL: number; mh: number; at: number; reading: AdminReading }
+  | { kind: 'initial'; fuelL: number; mh: number; at: number };
+
+/** Które z dwóch ogniw stoi DALEJ w łańcuchu MH; przy remisie licznika - późniejsze. */
+function furtherInChain(a: ChainBase | null, b: ChainBase | null): ChainBase | null {
+  if (a == null) return b;
+  if (b == null) return a;
+  if (a.mh !== b.mh) return a.mh > b.mh ? a : b;
+  return a.at >= b.at ? a : b;
 }
 
 /**
@@ -285,6 +364,14 @@ export function latestOilHandover(
      * w liczniku, a nie w zegarze (`oilPreflight.expectation()`).
      */
     seed?: AircraftSeed | null;
+    /**
+     * Odczyt administratora (issue #81) - KONKURENT pomiaru z przejęcia, gdy niesie
+     * olej: kotwicą zostaje ten, kto stoi dalej w łańcuchu MH (`override.mh` kontra
+     * `mhStart` pomiaru; przy remisie - późniejszy zegarem). Wpis bez oleju nie bierze
+     * udziału - kotwica zostaje przy rejestrze. Przy `asOf` liczy się tylko wpis sprzed
+     * pytanej chwili, jak sesje.
+     */
+    override?: AdminReading | null;
   } = {},
 ): OilHandover | null {
   const inScope =
@@ -300,6 +387,36 @@ export function latestOilHandover(
         (b.claimTime ?? 0) - (a.claimTime ?? 0),
     );
   const anchor = measured[0];
+
+  const override =
+    opts.override != null &&
+    opts.override.oilL != null &&
+    (opts.asOf == null || opts.override.at <= opts.asOf)
+      ? opts.override
+      : null;
+
+  /*
+   * ODCZYT ADMINISTRATORA WYGRYWA, gdy stoi dalej w łańcuchu niż pomiar z przejęcia
+   * (albo równie daleko, a jest późniejszy) - lub gdy pomiaru nie ma wcale. Dolewki
+   * „za" wpisem liczą się po liczniku przejęcia, a przy jego braku po zegarze - tą samą
+   * regułą, którą liczy się sesje za kotwicą-pomiarem.
+   */
+  const overrideWins =
+    override != null &&
+    (anchor == null ||
+      (anchor.mhStart ?? -Infinity) < override.mh ||
+      ((anchor.mhStart ?? -Infinity) === override.mh && (anchor.claimTime ?? 0) <= override.at));
+  if (override != null && overrideWins) {
+    const after = (s: SessionRow): boolean =>
+      s.mhStart != null ? s.mhStart > override.mh : (s.claimTime ?? 0) > override.at;
+    return {
+      levelL: override.oilL!,
+      atMh: override.mh,
+      at: override.at,
+      byPilotId: null,
+      addedSinceL: inScope.filter(after).reduce((sum, s) => sum + (s.oilAddedL ?? 0), 0),
+    };
+  }
 
   /*
    * Bez ani jednego pomiaru kotwicą jest wpis z panelu. Dolewki zapisane po nim liczą

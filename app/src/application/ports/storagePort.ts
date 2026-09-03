@@ -40,6 +40,16 @@ export interface StoragePort {
   getAllEvents(): Promise<Event[]>;
   /** Oznacza wskazane `uuid` jako wysłane (ustawia `syncedAt`). Nieznane `uuid` pomija. */
   markSynced(uuids: string[], syncedAt: EpochMillis): Promise<void>;
+  /**
+   * WSTRZYMUJE zdarzenia (issue #81): operację zakończył albo unieważnił administrator,
+   * więc jej zaległe zapisy NIE MOGĄ już wyjść na serwer. Wiersz zostaje w `events`
+   * (rejestr jest append-only, ekran dalej go czyta), `syncedAt` zostaje `null`
+   * (serwer tego nie potwierdził i nie potwierdzi), a osobna tabela mówi, że ten uuid
+   * WYPADŁ z outboxa. `getUnsyncedEvents` takich wierszy nie oddaje.
+   */
+  withholdEvents(uuids: string[], reason: WithheldReason, withheldAt: EpochMillis): Promise<void>;
+  /** Wszystkie wstrzymane zapisy - do liczników na ekranie 01 i w historii. */
+  getWithheldEvents(): Promise<WithheldEvent[]>;
 
   // ── cache referencyjny (§4.8, §5.2) ──────────────────────────────────────────
   upsertAircraft(rows: ReferenceAircraft[]): Promise<void>;
@@ -78,3 +88,20 @@ export const SESSION_META_KEYS = {
 } as const;
 
 export type SessionMetaKey = (typeof SESSION_META_KEYS)[keyof typeof SESSION_META_KEYS];
+
+/**
+ * Dlaczego zapis WYPADŁ z outboxa (issue #81):
+ *  • `admin_close` - operację zakończył administrator (`session_close`);
+ *  • `admin_void`  - operację unieważnił administrator (`session_void` z `source: 'admin'`);
+ *  • `server`      - serwer odrzucił zapis w ingeście jako dosłany do operacji
+ *                    zakończonej przez administratora (wyścig z wysyłką).
+ * Trzy nazwy, jeden skutek: zapis zostaje w rejestrze telefonu, na serwer nie wyjdzie.
+ */
+export type WithheldReason = 'admin_close' | 'admin_void' | 'server';
+
+export interface WithheldEvent {
+  uuid: string;
+  sessionUuid: string;
+  reason: WithheldReason;
+  withheldAt: EpochMillis;
+}

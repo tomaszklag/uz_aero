@@ -404,3 +404,102 @@ describe('AuthService', () => {
     expect((await credentials.load())?.refreshToken).toBe('r2');
   });
 });
+
+/**
+ * ZAPISY WSTRZYMANE (issue #81): operacja zakończona albo unieważniona przez
+ * administratora nie wysyła już nic z telefonu. Dwie drogi, jeden skutek.
+ */
+describe('SyncEngine - zapisy wstrzymane (issue #81)', () => {
+  /** Operacja otwarta z zaległym zdaniem w outboksie + decyzja panelu dosłana z serwera. */
+  async function orphanedRepo(decision: 'session_close' | 'session_void'): Promise<EventsRepo> {
+    let seq = 0;
+    const repo = new EventsRepo(new InMemoryAdapter(), {
+      clock: new FixedClock(T0),
+      generateId: () => `id-${(seq += 1)}`,
+    });
+    const base = { sessionUuid: 'sess-1', aircraftId: 'SP-AXA', picId: 'TMK', dualId: null } as const;
+    await repo.appendEvent({ ...base, type: 'session_claim', payload: { mode: 'free' } });
+    await repo.appendEvent({
+      ...base,
+      type: 'preflight_confirm',
+      payload: { operation: 'skoki', reading: { fuelL: 150, mh: 1234.5 } },
+    });
+    // Przejęcie i preflight zdążyły wyjść; reszta czeka.
+    await repo.markSynced(['id-1', 'id-2']);
+    await repo.appendEvent({ ...base, type: 'engine_start', payload: {}, deviceTime: T0 + 60_000 });
+    await repo.appendEvent({ ...base, type: 'engine_stop', payload: {}, deviceTime: T0 + 3_600_000 });
+    await repo.appendEvent({
+      ...base,
+      type: 'day_close',
+      payload: { finalReading: { fuelL: 100, mh: 1235.5 } },
+      deviceTime: T0 + 3_700_000,
+    });
+    // Decyzja panelu przyszła dosyłką - ze stemplem wysyłki, jak każde zdarzenie z serwera.
+    await repo.appendFromServer([
+      {
+        uuid: 'admin-1',
+        ...base,
+        type: decision,
+        deviceTime: T0 + 7_200_000,
+        gpsTime: T0 + 7_200_000,
+        payload: decision === 'session_close' ? { reason: 'Telefon padł.' } : { reason: 'Pomyłka.', source: 'admin' },
+        schemaVersion: 1,
+      },
+    ]);
+    return repo;
+  }
+
+  it('operacja zakończona przez panel: zaległe zapisy WYPADAJĄ z outboxa, bez rozmowy z serwerem', async () => {
+    const repo = await orphanedRepo('session_close');
+    expect(await repo.getOutboxCount()).toBe(3);
+    const server = new ScriptedServer([]);
+
+    const outcome = await engineWith(repo, server).syncOnce();
+
+    // Nic do wysłania - i nic nie wyszło, choć trzy zapisy czekały.
+    expect(outcome).toEqual({ kind: 'idle' });
+    expect(server.pushes).toHaveLength(0);
+    expect(await repo.getOutboxCount()).toBe(0);
+    // Zostają w rejestrze (ekran dalej je czyta), z nazwanym powodem.
+    expect((await repo.getSessionEvents('sess-1')).map((e) => e.type)).toContain('day_close');
+    expect((await repo.getWithheld()).map((w) => w.reason)).toEqual(['admin_close', 'admin_close', 'admin_close']);
+  });
+
+  it('unieważnienie z panelu wstrzymuje tak samo - własne unieważnienie nie', async () => {
+    const byAdmin = await orphanedRepo('session_void');
+    await engineWith(byAdmin, new ScriptedServer([])).syncOnce();
+    expect((await byAdmin.getWithheld()).map((w) => w.reason)).toEqual(['admin_void', 'admin_void', 'admin_void']);
+
+    // Własne wycofanie (bez `source`) jest zwykłym zapisem do wysłania.
+    const repo = await repoWithEvents(1);
+    await repo.appendEvent({
+      sessionUuid: 'sess-1',
+      aircraftId: 'SP-AXA',
+      picId: 'TMK',
+      dualId: null,
+      type: 'session_void',
+      payload: { reason: null },
+    });
+    const server = new ScriptedServer([ok(2)]);
+    expect(await engineWith(repo, server).syncOnce()).toEqual({ kind: 'synced', pushed: 2, flags: [] });
+    expect(await repo.getWithheld()).toEqual([]);
+  });
+
+  it('serwer wyścignął decyzję: `withheld` w odpowiedzi oznacza zapisy wstrzymane, nie wysłane', async () => {
+    const repo = await repoWithEvents(3);
+    const queued = (await repo.getOutbox()).map((e) => e.uuid);
+    const server = new ScriptedServer([{ accepted: 1, duplicates: 0, flags: [], withheld: [queued[1]!, queued[2]!] }]);
+
+    const outcome = await engineWith(repo, server).syncOnce();
+
+    expect(outcome).toEqual({ kind: 'synced', pushed: 1, flags: [] });
+    expect(await repo.getOutboxCount()).toBe(0);
+    expect((await repo.getEvent(queued[0]!))?.syncedAt).toBe(T0);
+    // Wstrzymane NIE dostają stempla wysyłki - serwer ich nie ma i mieć nie będzie.
+    expect((await repo.getEvent(queued[1]!))?.syncedAt).toBeNull();
+    expect((await repo.getWithheld()).map((w) => [w.uuid, w.reason])).toEqual([
+      [queued[1], 'server'],
+      [queued[2], 'server'],
+    ]);
+  });
+});

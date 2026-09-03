@@ -64,7 +64,7 @@
  * nie kosztuje.
  */
 
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 /**
  * Migracja bazowa - CAŁY schemat serwera.
@@ -584,11 +584,58 @@ export const MIGRATION_4 = `
   ALTER TABLE aircraft ADD COLUMN IF NOT EXISTS initial_oil_l  DOUBLE PRECISION;
 `;
 
+/**
+ * Migracja 5: ODCZYTY MASZYNY WPISANE RĘKĄ ADMINISTRATORA (issue #81).
+ *
+ * ══ CO TO JEST ══
+ * Nadrzędny stan licznika, paliwa i oleju wpisany w karcie samolotu Z KOMENTARZEM -
+ * po zakończeniu administracyjnym operacji osieroconej (która nie ma odczytów końcowych),
+ * po tankowaniu poza aplikacją, po remoncie silnika. Wchodzi do wyboru przekazania
+ * (`aircraftStateView.pickHandover`) jako KONKURENT zdania samolotu: wygrywa ten, kto
+ * stoi dalej w łańcuchu MH (wyższy licznik; przy remisie - późniejszy). Kolejne zdanie
+ * z wyższym licznikiem wypiera go samo.
+ *
+ * ══ DLACZEGO OSOBNA TABELA, A NIE `initial_*` W `aircraft` ══
+ * Bo to jest INNY rodzaj liczby niż stan początkowy: tamten opisuje JEDNĄ chwilę
+ * wprowadzenia jednostki i przestaje znaczyć od pierwszej zdanej operacji; ten jest
+ * decyzją administratora, która ma wyprzedzać historię i którą wolno podjąć wiele razy.
+ * Tabela jest APPEND-ONLY, jak rejestr zdarzeń: każdy wpis zostaje z autorem, chwilą
+ * i komentarzem - dokładnie tak, jak korekta odczytu w aplikacji pilota niesie powód.
+ * `UPDATE` na `aircraft` zostawiłby po sobie wyłącznie wpis audytu.
+ *
+ * ══ DLACZEGO NIE ZDARZENIE REJESTRU ══
+ * Zdarzenia należą do OPERACJI i do PIC-a (single-writer §4.4) i wracają na telefon
+ * jego właściciela przez `GET /me/events`. Odczyt maszyny nie należy do żadnej operacji
+ * ani do żadnego pilota - to własność samolotu. Telefony dostają go tak, jak każdy stan
+ * maszyny: gotowym przekazaniem w `GET /reference` (`Handover.origin = 'admin'`).
+ *
+ * `oil_l` NULL-owalne (olej nie zawsze jest znany), reszta NOT NULL: połówka pary
+ * paliwo + licznik nie jest przekazaniem (ta sama reguła, co przy stanie początkowym).
+ * Zmiana ADDYTYWNA wobec bazy produkcyjnej.
+ */
+export const MIGRATION_5 = `
+  CREATE TABLE IF NOT EXISTS aircraft_readings (
+    id          BIGSERIAL PRIMARY KEY,
+    aircraft_id TEXT             NOT NULL,
+    mh          DOUBLE PRECISION NOT NULL,
+    fuel_l      DOUBLE PRECISION NOT NULL,
+    oil_l       DOUBLE PRECISION,
+    note        TEXT             NOT NULL,
+    by_pilot_id TEXT             NOT NULL,
+    created_at  TIMESTAMPTZ      NOT NULL DEFAULT now()
+  );
+
+  -- Ostatni wpis maszyny - jedyne pytanie, jakie ktokolwiek zadaje tej tabeli.
+  CREATE INDEX IF NOT EXISTS idx_aircraft_readings_latest
+    ON aircraft_readings (aircraft_id, created_at DESC, id DESC);
+`;
+
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
   MIGRATION_2,
   MIGRATION_3,
   MIGRATION_4,
+  MIGRATION_5,
 ];
 
 /**
@@ -614,4 +661,5 @@ export const MIGRATION_TITLES: readonly string[] = [
   'Moduł oleju (issue #60): konfiguracja floty (minimum, zbiornik, norma nominalna) i projekcja pomiaru z dolewkami w sesji',
   'Log dnia (panel 2.0): bieg silnika, koperta lotów, lotniska i suma dolewek paliwa w projekcji sesji',
   'Normy z dokumentacji i stan początkowy (issue #66): nominalne spalanie paliwa oraz startowe motogodziny, paliwo i olej jednostki',
+  'Odczyty maszyny wpisane przez administratora (issue #81): nadrzędny stan licznika, paliwa i oleju z komentarzem, konkurent zdania w łańcuchu przekazania',
 ];

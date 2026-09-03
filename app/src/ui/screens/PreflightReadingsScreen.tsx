@@ -446,18 +446,24 @@ export function PreflightReadingsScreen({
             // `title`/`text` komponentu, nie własny skład.
             title={
               // `byPilotId === null` znaczy „nikt tego nie przekazał": STAN POCZĄTKOWY
-              // wpisany w panelu (issue #66) - pierwszy lot tej maszyny w UZ Aero.
+              // wpisany w panelu (issue #66) - pierwszy lot tej maszyny w UZ Aero -
+              // albo ODCZYT ADMINISTRATORA (issue #81, `origin: 'admin'`): ktoś
+              // ZDECYDOWAŁ, co pokazują przyrządy, np. po zakończeniu operacji osieroconej.
               handover.byPilotId == null
-                ? 'Stan początkowy z panelu'
+                ? handover.origin === 'admin'
+                  ? 'Odczyty wpisał administrator'
+                  : 'Stan początkowy z panelu'
                 : 'Wartości z ostatniego przekazania'
             }
             text={[
               handover.byPilotId == null
-                ? `To pierwszy lot ${aircraft.reg} w UZ Aero - odczyty wpisał administrator.`
+                ? handover.origin === 'admin'
+                  ? `Aktualny stan ${aircraft.reg} ustawiono w panelu - nadrzędnie wobec ostatniego zdania.`
+                  : `To pierwszy lot ${aircraft.reg} w UZ Aero - odczyty wpisał administrator.`
                 : handover.byPilotId === pilotId
                   ? `To Twoje własne odczyty z ostatniego dnia na ${aircraft.reg}.`
                   : `${aircraft.reg} przekazał ${pilotName(handover.byPilotId)}.`,
-              // Przy stanie początkowym `at` jest chwilą ZAPISU W PANELU, nie pomiaru.
+              // Przy wpisie z panelu `at` jest chwilą ZAPISU W PANELU, nie pomiaru.
               handover.byPilotId == null
                 ? `Wpis z ${stampUtcLt(handover.at)}`
                 : `Stan z ${stampUtcLt(handover.at)}`,

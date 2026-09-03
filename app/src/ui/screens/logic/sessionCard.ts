@@ -51,6 +51,12 @@ export interface SessionCardVm {
    * osi (issue #40 pkt 6: przy wpisie ręcznym świeciłyby wszystkie naraz).
    */
   manual: boolean;
+  /**
+   * Operację ZAKOŃCZYŁ ADMINISTRATOR (`session_close`, issue #81) - plakietka w stopce
+   * kafelka na 01 i 12. Fakt o CAŁEJ operacji, jak „RĘCZNIE": bez odczytów końcowych,
+   * bez prawa do poprawek, z zaległymi zapisami wstrzymanymi w telefonie.
+   */
+  adminClosed: boolean;
 }
 
 /**

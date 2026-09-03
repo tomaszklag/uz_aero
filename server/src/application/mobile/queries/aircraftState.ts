@@ -65,7 +65,9 @@ export class StateQueries {
       // z panelu (issue #66). Świadomie: `GET /aircraft/:id/state` jest dziś trasą
       // uśpioną - aplikacja bierze przekazanie z `/reference`, gdzie stan początkowy
       // wchodzi. Dołożenie tu portu floty byłoby zależnością dla nikogo.
-      handover: latestHandover(sessions, null),
+      // Bez stanu początkowego i bez odczytu administratora (issue #81) - trasa uśpiona,
+      // nie czyta konfiguracji floty; pierwszy lot maszyny zobaczy tu „brak danych".
+      handover: latestHandover(sessions, null, null),
       lastSyncAt: (await this.events.lastReceivedAt(this.db, aircraftId))?.toISOString() ?? null,
     };
   }

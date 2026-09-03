@@ -13,9 +13,11 @@ import { z } from 'zod';
 
 import { AdminCorrectionCommands } from './application/admin/commands/corrections.ts';
 import { AdminSessionVoidCommands } from './application/admin/commands/sessionVoid.ts';
+import { AdminSessionCloseCommands } from './application/admin/commands/sessionClose.ts';
 import { AdminExportCommands } from './application/admin/commands/exports.ts';
 import { AdminFlagCommands } from './application/admin/commands/flags.ts';
 import { AdminFleetCommands } from './application/admin/commands/fleet.ts';
+import { AdminAircraftReadingCommands } from './application/admin/commands/aircraftReadings.ts';
 import { AdminMaintenanceCommands } from './application/admin/commands/maintenance.ts';
 import { AdminPilotCommands } from './application/admin/commands/pilots.ts';
 import { AdminAuditQueries } from './application/admin/queries/audit.ts';
@@ -33,6 +35,7 @@ import { AdminConsumptionQueries } from './application/admin/queries/consumption
 import { AdminLogQueries } from './application/admin/queries/log.ts';
 import { AdminStatsQueries } from './application/admin/queries/stats.ts';
 import { AuditedWrite } from './application/admin/auditedWrite.ts';
+import { PgAircraftReadingsRepo } from './infrastructure/pg/common/aircraftReadingsRepo.ts';
 import { AuthCommands } from './application/common/commands/auth.ts';
 import { IngestCommands } from './application/mobile/commands/ingest.ts';
 import { PrefsCommands } from './application/mobile/commands/prefs.ts';
@@ -174,7 +177,16 @@ const hasher = new ScryptHasher();
 // claimu i przekazania (`application/common/aircraftStateView.ts`) oraz rozwiązuje próg
 // flagi funkcją domeny. Drugie wyliczenie tych rzeczy na pulpicie dałoby dwie odpowiedzi
 // na pytanie „kto trzyma ten samolot".
-const adminFleetQueries = new AdminFleetQueries(db, adminFleetRepo, sessions, adminPilotsRepo);
+// Odczyty wpisane ręką administratora (issue #81) - JEDEN adapter dla obu powierzchni:
+// `GET /reference` i karta samolotu w panelu liczą z niego to samo przekazanie.
+const aircraftReadings = new PgAircraftReadingsRepo();
+const adminFleetQueries = new AdminFleetQueries(
+  db,
+  adminFleetRepo,
+  sessions,
+  adminPilotsRepo,
+  aircraftReadings,
+);
 
 // Ślad sesji stoi TU z tego samego powodu: DWÓCH konsumentów, jedna geometria. Telefon
 // dostaje go przez bramkę właściciela (`MySessionTrackQueries`), panel wprost - bo ślad
@@ -185,7 +197,14 @@ const sessionTrack = new SessionTrackQueries(db, events, new FsTraceSource(env.T
 
 const app = buildServer({
   auth: new AuthCommands(pilots, new PgRefreshTokens(db, clock), hasher, tokens, clock),
-  reference: new ReferenceQueries(new PgReferenceRepo(db), db, sessions, consumptionNorms, events),
+  reference: new ReferenceQueries(
+    new PgReferenceRepo(db),
+    db,
+    sessions,
+    consumptionNorms,
+    events,
+    aircraftReadings,
+  ),
   ingest: new IngestCommands(db, events, sessions, flags, aircraftConfig, exporter, { events, norms: consumptionNorms, phases: phaseTimeline }, clock),
   // Droga POWROTNA outboxa (§4.9, issue #32) - własny adapter obok `PgEventsStore`,
   // bo to inne pytanie do tej samej tabeli: tamten czyta strumień JEDNEJ sesji przy
@@ -238,6 +257,14 @@ const app = buildServer({
   // etykietą, nie kluczem: zdarzenia wiążą się z `aircraft_id`, więc przemalowanie
   // znaków na kadłubie nie ma prawa oderwać samolotu od jego nalotu.
   adminFleet: new AdminFleetCommands(auditedWrite, adminFleetRepo, randomUUID),
+  // Odczyty wpisane ręką administratora (issue #81) - osobna komenda i osobny wpis
+  // audytu, bo to nie jest konfiguracja jednostki, tylko decyzja o jednej chwili.
+  adminAircraftReadings: new AdminAircraftReadingCommands(
+    auditedWrite,
+    adminFleetRepo,
+    aircraftReadings,
+    clock,
+  ),
   // Zapytania floty dostają projekcję sesji, bo claim i ostatni odczyt liczników są
   // REGUŁĄ (`application/common/aircraftStateView.ts`) - tą samą, którą `GET /reference`
   // liczy dla telefonu. Drugie wyliczenie w SQL-u panelu dałoby dwie odpowiedzi na
@@ -269,6 +296,17 @@ const app = buildServer({
   // karta doby ma po wycofaniu wpisu powstać od nowa, bez niego. Flag łańcucha NIE
   // dostaje - wycofana sesja wypada z łańcucha MH sama, bo przestaje być `closed`.
   adminSessionVoid: new AdminSessionVoidCommands(
+    auditedWrite,
+    events,
+    sessions,
+    aircraftConfig,
+    exporter,
+    clock,
+    randomUUID,
+  ),
+  // Zakończenie administracyjne operacji osieroconej (issue #81) - te same zależności,
+  // co unieważnienie: zdarzenie do rejestru, projekcja, eksport karty PO commicie.
+  adminSessionClose: new AdminSessionCloseCommands(
     auditedWrite,
     events,
     sessions,

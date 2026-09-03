@@ -324,6 +324,7 @@ describe('manualFlightWarnings - ostrzegają, nigdy nie blokują', () => {
           flightMs: 35 * 60_000,
           flightCount: 1,
           manualEntry: false,
+          closedByAdmin: false,
         },
       ],
     };
@@ -348,6 +349,7 @@ describe('manualFlightWarnings - ostrzegają, nigdy nie blokują', () => {
           flightMs: 60 * 60_000,
           flightCount: 2,
           manualEntry: false,
+          closedByAdmin: false,
         },
       ],
     };

@@ -40,6 +40,7 @@ import { REFERENCE_META_CHECKED_AT } from '../../application';
 import {
   ActionButton,
   AppText,
+  Banner,
   Card,
   DayCard,
   GroupLabel,
@@ -50,8 +51,11 @@ import {
   SkeletonRows,
   StatGrid,
   SyncChip,
+  Tag,
   type StatCell,
 } from '../components';
+import { useAdminNotices } from '../hooks/useAdminNotices';
+import { adminNoticeText } from './logic/adminNotices';
 import { useTheme } from '../theme';
 import { useCurrentPilot, useSessionStore } from '../store';
 import { useAuthStore } from '../store/authStore';
@@ -111,7 +115,12 @@ export function MyDayScreen({
   /* Znak maszyny mieszka w cache referencyjnym, projekcja zna sam identyfikator -
      bez tego kafelek pokazywał UUID (zgłoszenie z urządzenia 2026-08-30). */
   const regOf = useAircraftRegistrations();
+  const signatureOf = useOperationSignatures();
   const vm = pilotDay != null ? buildMyDay(pilotDay, regOf) : null;
+
+  // Decyzje administratora o moich operacjach (issue #81) - z lokalnego rejestru,
+  // z pamięcią potwierdzeń; komunikat mówi kto, kiedy, dlaczego i co z zapisami.
+  const adminNotices = useAdminNotices();
 
   // Pas akcji nie zależy od doby (`myDayActions` bez argumentów od 2026-08-16), więc
   // liczy się raz i poza czekaniem na strumień. Kolejność tablicy jest kolejnością
@@ -217,6 +226,27 @@ export function MyDayScreen({
       }
     >
       <View style={styles.content}>
+        {/* ── decyzje administratora o MOICH operacjach (issue #81) ────────────
+            Zakończenie albo unieważnienie z panelu przyszło dosyłką: kokpit zszedł,
+            zaległe zapisy zostały wstrzymane, a pilot ma się dowiedzieć DLACZEGO stoi
+            na tym ekranie - zanim spojrzy na log. Baner typu `status` (to zdarzenie,
+            nie pouczenie), ale z przyciskiem: pilot POTWIERDZA, że przeczytał, i baner
+            nie wraca. Operacja unieważniona nie ma innego śladu na ekranie. */}
+        {adminNotices.notices.map((notice) => {
+          const text = adminNoticeText(notice, regOf, signatureOf);
+          return (
+            <Banner
+              key={notice.sessionUuid}
+              kind="status"
+              tone="amber"
+              icon="warning"
+              title={text.title}
+              text={text.text}
+              action={{ label: 'ROZUMIEM', onPress: () => adminNotices.acknowledge(notice.sessionUuid) }}
+            />
+          );
+        })}
+
         {/* ── log dnia: płaska oś czasu operacji + sumy ─────────────────────────
             Etykieta grupy zamiast nagłówka karty (issue #42): kafelki są osobnymi
             kartami, więc lista nie mieszka już w jednym pojemniku. Znacznik strefy
@@ -248,10 +278,21 @@ export function MyDayScreen({
                   // Ekran 10 opisuje sesję ze store'u, więc najpierw ładujemy wskazany
                   // strumień - ta sama droga, którą chodzi historia (12).
                   onPress={() => {
+                    // `from: 'MyDay'`: operacja zakończona przez administratora otwiera
+                    // się w PODGLĄDZIE (okno korekty zamknięte), a podgląd bez tego
+                    // parametru wracałby do historii - kafelek stoi tutaj.
                     void loadSession(session.sessionUuid).then(() =>
-                      navigation.navigate('Stats'),
+                      navigation.navigate('Stats', { from: 'MyDay' }),
                     );
                   }}
+                  // Plakietka stanu w stopce (issue #81) - fakt o CAŁEJ operacji, jak
+                  // „RĘCZNIE" przy tytule; kafelek zostaje nieniebieski, bo poprawek
+                  // w tej operacji już nie ma.
+                  foot={
+                    session.adminClosed ? (
+                      <Tag label="Zakończył administrator" tone="amber" icon="warning" />
+                    ) : undefined
+                  }
                 />
               ))
             )}

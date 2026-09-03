@@ -40,6 +40,13 @@ export interface PushResult {
   duplicates: number;
   /** Otwarte flagi dotykające wysłanych sesji - do pokazania na ekranie 11. */
   flags: SessionFlag[];
+  /**
+   * Uuidy zdarzeń WSTRZYMANYCH przez serwer (issue #81): operacja zakończona albo
+   * unieważniona przez administratora nie przyjmuje już nic z telefonu. Nie weszły
+   * do rejestru i nie wejdą - telefon oznacza je jako wstrzymane, nie ponawia.
+   * Brak pola = starszy serwer, czyli nic nie wstrzymano.
+   */
+  withheld?: string[];
 }
 
 /**

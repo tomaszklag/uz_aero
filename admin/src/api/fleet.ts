@@ -105,3 +105,20 @@ export function updateAircraft(id: string, body: UpdateAircraftBody): Promise<Ai
 export function deleteAircraft(id: string): Promise<void> {
   return apiDelete(`/fleet/${encodeURIComponent(id)}`);
 }
+
+/**
+ * ODCZYT WPISANY RĘKĄ ADMINISTRATORA (issue #81) - nadrzędny stan licznika, paliwa
+ * i oleju z komentarzem. `POST`, nie `PATCH`: nic w konfiguracji się nie zmienia,
+ * powstaje NOWY wpis w append-only tabeli odczytów. Komentarz WYMAGANY.
+ */
+export interface RecordReadingBody {
+  mh: number;
+  fuelL: number;
+  /** `null` = stan oleju nieznany; kotwica oleju zostaje przy dzienniku. */
+  oilL: number | null;
+  note: string;
+}
+
+export function recordReading(id: string, body: RecordReadingBody): Promise<AircraftChangeDto> {
+  return apiPost<AircraftChangeDto>(`/fleet/${encodeURIComponent(id)}/readings`, body);
+}

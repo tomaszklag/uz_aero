@@ -40,6 +40,8 @@ const NAMES: Record<EventType, string> = {
   manual_log_entry: 'Wpis ręczny',
   day_close: 'Zdanie samolotu',
   session_void: 'Unieważnienie wpisu',
+  // Zakończenie administracyjne (issue #81) - nazwa mówi, że to nie było zdanie.
+  session_close: 'Zakończenie przez administratora',
   event_correction: 'Korekta',
 };
 
@@ -107,7 +109,8 @@ export function eventDetail(event: Event): string | null {
     }
 
     case 'session_void':
-      // Powód jest CAŁĄ treścią tego wiersza: sam fakt wycofania mówi już nazwa.
+    case 'session_close':
+      // Powód jest CAŁĄ treścią tego wiersza: sam fakt wycofania / zakończenia mówi już nazwa.
       return text(payload, 'reason');
 
     case 'takeoff':

@@ -141,6 +141,7 @@ function cardSpec(
     // druga mieszka w szczegółach lotu, do których ta karta prowadzi.
     stats: sessionStats(state.flights.length, state.blockTimeMs, state.flightTimeMs),
     manual: state.manualEntry,
+    adminClosed: state.closedByAdmin,
     upload: uploadSpec(pendingCount, pushing),
   };
 }

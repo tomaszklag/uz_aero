@@ -60,12 +60,26 @@ const stamp = (at: number): string => `${stampUtc(at)} UTC`;
  * zmierzyć (oleju po locie się nie mierzy, issue #60).
  */
 export function currentStateView(reading: AircraftReadingDto, mhFormat: MhFormat): CurrentStateView {
-  const readingHint = `Z dziennika · odczyt ${stamp(reading.at)}.`;
+  const readingHint = readingOrigin(reading);
   return {
     mh: { value: motoHours(reading.mh, mhFormat), hint: readingHint },
     fuel: { value: bare(litres(reading.fuelL)), hint: readingHint },
     oil: oilField(reading),
   };
+}
+
+/**
+ * Podpis pochodzenia liczby. Odczyt wpisany ręką administratora (issue #81) mówi KTO
+ * i DLACZEGO - to jest cała różnica między nim a odczytem z dziennika, więc komentarz
+ * stoi przy liczbie, którą tłumaczy, a nie w osobnym wierszu.
+ */
+function readingOrigin(reading: AircraftReadingDto): string {
+  if (reading.source === 'admin') {
+    const who = reading.byPilotName == null ? 'administratora' : `administratora ${reading.byPilotName}`;
+    const note = reading.note == null ? '' : ` ${reading.note}`;
+    return `Wpis ${who} · ${stamp(reading.at)}.${note}`;
+  }
+  return `Z dziennika · odczyt ${stamp(reading.at)}.`;
 }
 
 /**
@@ -84,8 +98,14 @@ function oilField(reading: AircraftReadingDto): CurrentStateField {
       ? ` + dolewki ${oilLitres(reading.oilAddedSinceL)}`
       : '';
   const when = reading.oilAt == null ? '' : ` ${stamp(reading.oilAt)}`;
+  // Kotwica oleju z wpisu administratora (issue #81) ma ten sam stempel, co odczyt -
+  // wtedy podpis mówi o wpisie, nie o pomiarze z bagnetu, którego nie było.
+  const origin =
+    reading.source === 'admin' && reading.oilAt === reading.at
+      ? 'Wpis administratora'
+      : 'Z dziennika · pomiar';
   return {
     value: bare(oilLitres(reading.oilL)),
-    hint: `Z dziennika · pomiar${when}${added}.`,
+    hint: `${origin}${when}${added}.`,
   };
 }

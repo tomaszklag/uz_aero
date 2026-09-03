@@ -159,7 +159,8 @@ describe('buildMyDay - scenariusz mockupu 01', () => {
       // `manual` doszedł 2026-08-16 (plakietka „RĘCZNIE") - na OBU ekranach naraz,
       // bo niesie go wspólny `SessionCardVm`.
       // 'signature' doszedł przy issue #68 - też na OBU ekranach naraz.
-      ['aircraft', 'manual', 'sessionUuid', 'signature', 'stats', 'times', 'title'].sort(),
+      // 'adminClosed' doszedł przy issue #81 (plakietka „Zakończył administrator") - też.
+      ['adminClosed', 'aircraft', 'manual', 'sessionUuid', 'signature', 'stats', 'times', 'title'].sort(),
     );
     expect(card.stats.map((s) => s.k)).toEqual(['Loty', 'Blok', 'Lot']);
   });

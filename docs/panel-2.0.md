@@ -645,3 +645,101 @@ motogodzinę"). To zmiana DEKLARACJI jednostki (etykieta w panelu, docblock
 zegarem maszyny znanym offline przez cudze operacje - Hobbs mierzy godziny pracy 1:1,
 obrotomierzowy przyrasta na ziemi wolniej i wtedy ΔMH jest przybliżeniem. Dokładniejszy
 przelicznik przyjdzie z modelem MH analityki (faza 2 modułu oleju).
+
+## 11. Operacja osierocona: zakończenie przez administratora i odczyty z panelu (issue #81, 2026-09-03)
+
+Zamówienie właściciela: *„admin powinien móc zakończyć rozpoczęty dowolny lot przez
+panel. Taki lot mógłby od razu opcjonalnie oznaczyć jako usunięty. […] jak telefon
+odbierze sygnał z api powinien też zakończyć taki lot lokalnie z jakimś komunikatem
+[…] Nie możemy pozwolić, [żeby zdanie z telefonu] zostało wysłane na serwer"* oraz
+*„przez panel powinienem móc modyfikować odczyty, które będą nadrzędne […] jako
+oddzielna akcja […] z komentarzem"*. Cel: koniec z osieroconymi lotami i sztuczną
+zajętością maszyn.
+
+### 11.1 Skąd bierze się operacja osierocona
+
+Telefon PIC-a jest jedynym piszącym operacji (§4.1). Gdy padnie w locie, zostanie
+w kabinie albo nie odzyska zasięgu, serwer ma przejęcie, może uruchomienie silnika -
+i nic więcej, na zawsze. `activeClaim` widzi maszynę jako zajętą, dziennik pokazuje
+operację „w toku" bez końca, a następny pilot na 02 dostaje cudzy claim. Dotąd jedyną
+drogą było unieważnienie (§9.4b) - które wyrzuca prawdziwy lot z nalotu.
+
+### 11.2 Zakończenie: nowe zdarzenie, nie `day_close` w imieniu pilota
+
+`session_close` = „tę operację zakończył administrator", z powodem, BEZ odczytów.
+Trzy powody, dla których nie jest to `day_close`:
+
+1. zdanie niesie OBOWIĄZKOWE odczyty (przekazanie), a administrator przy biurku nie
+   wie, co pokazują przyrządy - zdarzenie z fałszywymi liczbami byłoby zmyśleniem;
+2. `day_close` ma twarde reguły o stanie silnika (`ENGINE_RUNNING_AT_DAY_CLOSE`), a
+   w rejestrze serwera osierocony silnik „pracuje" od godzin; poluzowanie reguł dla
+   panelu złamałoby zasadę „twarde reguły identyczne w obu trybach"
+   (`writeAuthority.test.ts`);
+3. inny fakt = inny zapis. Rejestr zostaje append-only i mówi prawdę: zdania nie było.
+
+Skutki w projekcji: `closed` (maszyna wolna), `closedByAdmin`, `adminCloseReason`;
+odczyty końcowe `null`, więc operacja NIE jest ogniwem łańcucha MH (`pickHandover` ją
+pomija) - liczy się do nalotu i sum, ale nie przekazuje maszyny nikomu. Okno korekty
+pilota zamyka się natychmiast (`correctionWindow`), administrator poprawia dalej.
+
+**Domena nie zna ról**, więc „tylko panel" pilnuje powierzchnia: `POST /events` odrzuca
+`session_close` w kopercie (`403 admin_only_event`), a telefon nie ma komendy, która by
+je składała. To ta sama technika, co znacznik `source: 'admin'` przy korekcie.
+
+### 11.3 Jedna karta dla operacji w toku, dwa fakty w rejestrze
+
+Na poziomie 3 dziennika operacja `active` dostaje JEDNĄ kartę „Zakończenie operacji":
+powód (wymagany) + wybór „zostaw w dzienniku" / „od razu unieważnij" (lista kart, jak
+każdy wybór w tym systemie). „Od razu unieważnij" dopisuje w tym samym ruchu
+`session_void` z `source: 'admin'` - dwa fakty, jedna decyzja, jeden wpis audytu
+`session.close` z kompletem tożsamości wpisu. Karta „Unieważnienie wpisu" (§9.4b)
+zostaje dla operacji ZAKOŃCZONYCH; dwie karty z dwoma wyjściami awaryjnymi obok siebie
+kazałyby wybierać między rzeczami, które nie są alternatywą.
+
+`session_void` z panelu nosi odtąd `source: 'admin'` - §9.4b mówiło, że telefon nie ma
+ekranu, na którym różnica „kto wycofał" cokolwiek by zmieniła. Ma od issue #81: cudze
+unieważnienie KOŃCZY operację, którą pilot być może właśnie prowadzi.
+
+### 11.4 Co robi telefon (offline-first)
+
+- **najpierw pyta, potem wysyła**: przy niepustym outboksie dosyłka `GET /me/events`
+  idzie bez bramy wieku PRZED wysyłką, żeby decyzja panelu była w lokalnym rejestrze,
+  zanim silnik synca przemiecie kolejkę;
+- **zapisy wstrzymane**: zaległe zdarzenia operacji zakończonej albo unieważnionej przez
+  panel wypadają z outboxa na zawsze (`withheld_events`, przemiatanie przed każdą
+  wysyłką), ale ZOSTAJĄ w rejestrze telefonu - ekran 10 dalej pokazuje pilotowi jego
+  wersję, plakietka „Oczekuje na przesłanie" ich nie liczy;
+- **serwer ma drugą zaporę na wyścig**: ingest odrzuca bez wpisu zdarzenia do operacji
+  z `closedByAdmin`/`voidedByAdmin` i zwraca ich uuidy w `withheld` - jedyny świadomy
+  wyjątek od „serwer nie odrzuca, flaguje" (§4.5);
+- **kokpit schodzi na 01 sam**, klucz usługi GPS jest czyszczony, a na 01 stoi baner
+  z przyciskiem „ROZUMIEM": która operacja (sygnatura), powód, ile zapisów nie wyjdzie.
+  Kafelki 01/12 mają plakietkę „Zakończył administrator", oś operacji własny wiersz
+  z powodem, ekran 10 tryb podglądu z banerem zamiast „minęły 24 h".
+
+### 11.5 Odczyty administratora: tabela, nie zdarzenie i nie `initial_*`
+
+`aircraft_readings` (migracja 5, append-only): licznik, paliwo, olej (opcjonalny),
+komentarz WYMAGANY, autor, chwila. `POST /admin/api/fleet/:id/readings`, audyt
+`aircraft.reading`. Dlaczego nie zdarzenie: zdarzenia należą do operacji i do PIC-a
+i wracają na jego telefon - odczyt maszyny nie należy do nikogo poza samolotem. Dlaczego
+nie `initial_*`: stan początkowy opisuje jedną chwilę wprowadzenia jednostki (§10.2),
+a wpis administratora jest decyzją, która ma WYPRZEDZAĆ historię i powtarzać się.
+
+**Wchodzi do `pickHandover` jako konkurent zdania w porządku łańcucha MH**: bazą
+przekazania zostaje ten, kto stoi dalej (wyższy licznik; remis - późniejszy zegarem),
+więc kolejne zdanie z wyższym licznikiem wypiera wpis samo. Panel: `reading.source:
+'admin'` + `note` + nazwisko administratora; pola „Aktualny stan" są wtedy do odczytu,
+a poprawia się je kartą „Poprawa odczytów" (tryb `locked`). Telefon: `Handover.origin:
+'admin'`, na 02A „odczyty wpisał administrator"; ETag `/reference` zmienia się z każdym
+wpisem, więc 304 nie zamraża poprawki.
+
+**Czego wpis NIE dotyka** (świadoma granica pierwszej wersji): rejestru zdarzeń, flag
+łańcucha (wystawia je ingest na parach sesji), analityki zużycia (interwały wewnątrz
+operacji) i sąsiadów wpisu ręcznego (`readings-chain`).
+
+### 11.6 Dług: makiety
+
+Nowe stany aplikacji pilota (baner na 01, baner i wiersz osi na 10, plakietka kafelka)
+powstały w kodzie bez makiet w `design/`. Reguła „ekran wdrażamy 1:1 z `design/*.html`"
+zostaje w mocy - makiety trzeba dorobić, a rozjazd jest zgłoszony właścicielowi.

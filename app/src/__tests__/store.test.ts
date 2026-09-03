@@ -234,6 +234,49 @@ describe('useSessionStore', () => {
       expect(store().streamHydrated).toBe(false);
     });
 
+    it('syncNow przy NIEPUSTYM outboksie najpierw pyta serwer (bez bramy wieku), potem wysyła (issue #81)', async () => {
+      // Decyzja panelu o zakończeniu operacji ma być w lokalnym rejestrze, ZANIM
+      // silnik przemiecie kolejkę - inaczej zdanie z telefonu wyścignęłoby ją na serwer.
+      const { clock, store } = attach();
+      const calls: string[] = [];
+      const restore = {
+        restoreIfStale: async (): Promise<EventRestoreOutcome> => {
+          calls.push('restoreIfStale');
+          return { kind: 'fresh' };
+        },
+        restore: async (): Promise<EventRestoreOutcome> => {
+          calls.push('restore');
+          return { kind: 'pulled', fetched: 0, inserted: 0, complete: true };
+        },
+      } as unknown as EventRestore;
+      const sync = {
+        syncOnce: async () => {
+          calls.push('push');
+          return { kind: 'idle' as const };
+        },
+      } as unknown as SyncEngine;
+      useSessionStore
+        .getState()
+        .attachSync(
+          sync,
+          null as unknown as ReferenceSync,
+          null as unknown as TraceSync,
+          null as unknown as ThemePrefsSync,
+          restore,
+        );
+
+      // Pusty outbox: nie ma o co pytać - sama wysyłka (czyli `idle`).
+      await store().syncNow();
+      expect(calls).toEqual(['push']);
+
+      // Zaległość w kolejce: najpierw dosyłka z serwera, potem wysyłka.
+      calls.length = 0;
+      await openDay(clock);
+      expect(store().outboxCount).toBeGreaterThan(0);
+      await store().syncNow();
+      expect(calls).toEqual(['restore', 'push']);
+    });
+
     it('`restoreEventsNow` pyta serwer BEZ bramy wieku - druga połowa ręcznego syncu', async () => {
       // Issue #75 pkt 1: unieważnienie wpisane przez administratora ma zejść na telefon
       // od razu po „SYNCHRONIZUJ TERAZ"/„PONÓW PRÓBĘ", a nie do kwadransa później.
