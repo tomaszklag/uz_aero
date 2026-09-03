@@ -1696,6 +1696,20 @@ Uwagi z urządzenia do kroku liczników (NOWY LOT · 3/3):
   z issue #58 zostaje: pole arkusza (22) > kontrolka formularza (mono 16).
   Mockupy 02A/02B/02C/02I za tym (kursor 24, jednostka 14)
 
+## Tankowanie (06) po przeglądzie 2026-09-02
+- **korekta odczytu FOB = OŁÓWEK W ROGU karty** (dwie tury): bursztynowy „Koryguj
+  z paliwomierza" pod wielką liczbą czytał się jak główna akcja ekranu, a wyciszona
+  pigułka „Zmień odczyt" nadal była „duża i w miejscu, które sugeruje klikanie" -
+  wyśrodkowana kontrolka pod herosem to pozycja CTA niezależnie od koloru. Odtąd
+  `GaugeHero` rysuje `IconAction` (ołówek) w prawym górnym rogu - ustalona
+  affordancja poprawiania (issue #43), nie konkuruje z celem ekranu (DOLEWKA);
+  napis „Zmień odczyt" został etykietą czytnika ekranu
+- **powód blokady bez doklejki**: „Ustaw ilość dolaną - zapis bez dolewki nie miałby
+  czego rejestrować" → „Ustaw ilość dolanego paliwa" (powód jest instrukcją, nie
+  uzasadnieniem wymogu - jak w `preflightBlocker`; brzmienie z kolejnej tury).
+  Zdania o silniku i pojemności zostają w całości: tych blokad nie widać z kontrolki
+  nad przyciskiem
+
 ## Zmiana załogi (07) po przeglądzie 2026-09-02
 Sześć uwag z urządzenia; wspólny mianownik ten sam, co na 02A - ekran mówi decyzją,
 nie architekturą:
@@ -1703,7 +1717,9 @@ nie architekturą:
   Dual albo „Bez drugiego pilota", jeden zapis). Osobna sekcja „A" powtarzała stan
   załogi stojący wiersz wyżej. Pusty wybór blokuje bez zdania (widać z listy - wąski
   wyjątek issue #55); rezygnację przy wymogu załogi 2-os. blokuje powód przy samej
-  pozycji listy
+  pozycji listy. Przycisk NEUTRALNY, nie zielony (kolejna tura): zmiana Duala to
+  opcja, nie następny krok procedury - zieleń jest głównym akcentem i czytała się
+  jak CTA ekranu
 - **wiersze załogi piszą KOD pilota z cache floty, nie surowy identyfikator** („przy
   Dualu wyświetla się guid zamiast nazwy użytkownika" - w produkcji piloci mają
   identyfikatory UUID z panelu; ta sama klasa błędu, co guid w pasku kokpitu).

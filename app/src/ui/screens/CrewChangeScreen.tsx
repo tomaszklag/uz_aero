@@ -214,9 +214,12 @@ export function CrewChangeScreen({
             />
           ))}
 
+          {/* Neutralny, nie zielony (uwaga z urządzenia, 2026-09-02): zmiana Duala
+              to OPCJA, a nie następny krok procedury - zieleń jest głównym akcentem
+              i czytała się jak CTA ekranu (ta sama reguła, co przy ołówkach korekt). */}
           <ActionButton
             label="ZMIEŃ DRUGIEGO PILOTA"
-            tone="green"
+            tone="neutral"
             variant="secondary"
             size="md"
             icon="crew"

@@ -148,7 +148,11 @@
   .hstep { display:flex; align-items:flex-start; gap:9px; font-size:11px; color:var(--text-secondary); line-height:1.5; }
   .hstep-num { width:18px; height:18px; border-radius:50%; flex-shrink:0; background:var(--amber-muted); border:1px solid var(--amber-border); color:var(--amber); font-family:var(--font-mono); font-size:9px; font-weight:700; display:flex; align-items:center; justify-content:center; margin-top:1px; }
 
-  .btn-secondary-green { display:flex; align-items:center; justify-content:center; gap:9px; width:100%; padding:14px; border-radius:14px; background:var(--green); color:#0D0D0D; font-family:var(--font-display); font-size:18px; letter-spacing:2.5px; text-decoration:none; cursor:pointer; box-shadow:0 0 20px rgba(46,204,113,0.25); }
+  /* Neutralny, nie zielony (uwaga z urządzenia, 2026-09-02): zmiana Duala to OPCJA,
+     nie następny krok procedury - zieleń jest głównym akcentem i czytała się jak
+     CTA ekranu. Metryka jak `ActionButton` neutral/secondary. */
+  .btn-neutral { display:flex; align-items:center; justify-content:center; gap:9px; width:100%; padding:14px; border-radius:14px; background:var(--surface-raised); border:1px solid var(--border-strong); color:var(--text-secondary); font-family:var(--font-display); font-size:18px; letter-spacing:2.5px; text-decoration:none; cursor:pointer; transition:border-color .15s; }
+  .btn-neutral:hover { border-color:var(--text-muted); }
   .btn-danger { display:flex; align-items:center; justify-content:center; gap:9px; width:100%; padding:14px; border-radius:14px; background:transparent; border:1px solid var(--red-border); color:var(--red); font-family:var(--font-display); font-size:17px; letter-spacing:2.5px; text-decoration:none; cursor:pointer; transition:background .15s; }
   .btn-danger:hover { background:var(--red-muted); }
   /* Przypisy `.action-hint` pod przyciskami USUNIĘTE (przegląd 2026-09-02):
@@ -227,7 +231,7 @@
              wyżej, a plakietka „zapis lokalny · offline OK" i przypis o crew_change
              opisywały budowę aplikacji. Baner „dlaczego dwie sekcje" zszedł razem
              z podziałem, który tłumaczył. -->
-        <button class="btn-secondary-green" onclick="document.getElementById('dual-modal').style.display='flex'">
+        <button class="btn-neutral" onclick="document.getElementById('dual-modal').style.display='flex'">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           ZMIEŃ DRUGIEGO PILOTA
         </button>

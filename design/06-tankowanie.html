@@ -86,6 +86,7 @@
 
   /* FOB Indicator */
   .fob-indicator {
+    position: relative;
     background: var(--amber-muted); border: 1px solid var(--amber-border);
     border-radius: 20px; padding: 20px 20px 16px;
     display: flex; flex-direction: column; align-items: center; gap: 4px;
@@ -96,6 +97,14 @@
   .fob-unit { font-family: var(--font-mono); font-size: 28px; font-weight: 400; color: var(--amber); opacity: 0.6; margin-left: -4px; }
   .fob-row { display: flex; align-items: baseline; gap: 6px; }
   .fob-subtext { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px; margin-top: 4px; text-align: center; }
+  /* Korekta odczytu = OŁÓWEK W ROGU karty (uwagi z urządzenia, 2026-09-02, dwie
+     tury): bursztynowy „Koryguj z paliwomierza" czytał się jak główna akcja ekranu,
+     a wyciszona pigułka pod liczbą nadal była „duża i w miejscu, które sugeruje
+     klikanie" - wyśrodkowana kontrolka pod herosem to pozycja CTA niezależnie od
+     koloru. Ołówek to ustalona affordancja poprawiania (issue #43); celem ekranu
+     jest DOLEWKA. 36 px rysunku + zapas = próg 44 px (IconAction). */
+  .fob-correct { position:absolute; top:8px; right:8px; width:36px; height:36px; display:flex; align-items:center; justify-content:center; border:none; border-radius:10px; background:transparent; color:var(--text-muted); cursor:pointer; }
+  .fob-correct:hover { background:rgba(255,255,255,0.05); color:var(--text-secondary); }
   .fob-bar { width: 100%; height: 8px; border-radius: 4px; background: rgba(0,0,0,0.35); border: 1px solid var(--amber-border); margin-top: 10px; position: relative; overflow: hidden; }
   .fob-bar-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 34%; background: var(--amber); border-radius: 4px; box-shadow: 0 0 8px rgba(243,156,18,0.4); }
   .fob-bar-labels { width: 100%; display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 9px; color: var(--text-muted); margin-top: 5px; }
@@ -211,6 +220,9 @@
         <div class="fob-bar"><div class="fob-bar-fill"></div></div>
         <div class="fob-bar-labels"><span>0 L</span><span>pojemność: 330 L</span></div>
         <div class="fob-subtext">Obliczone z ostatnich operacji silnika</div>
+        <button class="fob-correct" title="Zmień odczyt">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
       </div>
 
       <!-- Sekcja: Dolano -->

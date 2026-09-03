@@ -162,11 +162,14 @@ export function RefuelScreen({
         : 'Brak odczytu w tej operacji - wpisz stan z paliwomierza';
 
   // ── blokada zapisu - zawsze z podanym powodem, nigdy ciche wyszarzenie ─────────
+  // Powód jest INSTRUKCJĄ, nie uzasadnieniem wymogu (uwaga z urządzenia, 2026-09-02):
+  // doklejka „zapis bez dolewki nie miałby czego rejestrować" tłumaczyła wymóg,
+  // który przy zerowej dolewce jest oczywisty.
   const disabledReason =
     projection.engineRunning
       ? 'Wyłącz silnik - tankowania przy pracującym silniku nie zapiszemy'
       : addedL <= 0
-        ? 'Ustaw ilość dolaną - zapis bez dolewki nie miałby czego rejestrować'
+        ? 'Ustaw ilość dolanego paliwa'
         : capacityL != null && afterL > capacityL
           ? `Stan po tankowaniu (${litres(afterL)}) przekracza pojemność ${litres(capacityL)} - popraw odczyt przed tankowaniem`
           : null;
@@ -220,7 +223,10 @@ export function RefuelScreen({
           ratio={capacityL != null ? beforeL / capacityL : null}
           scale={capacityL != null ? ['0 L', `pojemność: ${capacityL} L`] : []}
           caption={gaugeCaption}
-          correctLabel="Koryguj z paliwomierza"
+          // „Zmień odczyt", nie „Koryguj z paliwomierza" (uwaga z urządzenia,
+          // 2026-09-02): długi bursztynowy napis rzucał się w oczy i sugerował,
+          // że to tutaj wpisuje się tankowanie - a celem ekranu jest DOLEWKA.
+          correctLabel="Zmień odczyt"
           onCorrect={() => setEditingBefore(true)}
         />
 

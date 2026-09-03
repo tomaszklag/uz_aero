@@ -17,11 +17,11 @@
  */
 
 import React from 'react';
-import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
-import { Icon } from '../foundation/Icon';
+import { IconAction } from '../data/IconAction';
 import { ScaleBar } from './ScaleBar';
 import { toneColors, type Tone } from '../tone';
 
@@ -38,7 +38,15 @@ export interface GaugeHeroProps {
   scale?: string[];
   /** Podpis pod paskiem - skąd ta wartość pochodzi. */
   caption?: string;
-  /** Korekta wartości odczytem z licznika. Bez niej karta jest czystym odczytem. */
+  /**
+   * Korekta wartości odczytem z licznika. Bez niej karta jest czystym odczytem.
+   * Wejściem jest OŁÓWEK W ROGU karty (uwagi z urządzenia, 2026-09-02, dwie tury:
+   * bursztynowy napis pod wielką liczbą czytał się jak główna akcja ekranu
+   * tankowania, a wyciszona pigułka nadal była „duża i w miejscu, które sugeruje
+   * klikanie" - wyśrodkowana kontrolka pod herosem to pozycja CTA niezależnie od
+   * koloru). Ołówek to ustalona affordancja poprawiania (issue #43); `correctLabel`
+   * zostaje etykietą dla czytnika ekranu.
+   */
   onCorrect?: () => void;
   correctLabel?: string;
   style?: ViewStyle;
@@ -53,7 +61,7 @@ export function GaugeHero({
   scale = [],
   caption,
   onCorrect,
-  correctLabel = 'Koryguj z licznika',
+  correctLabel = 'Zmień odczyt',
   style,
 }: GaugeHeroProps) {
   const { theme } = useTheme();
@@ -110,30 +118,14 @@ export function GaugeHero({
       )}
 
       {onCorrect != null && (
-        // Cel dotykowy 44 px - ten sam próg dla rękawic co w `ActionButton` i `Readout`.
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`${correctLabel}: ${label}`}
-          onPress={onCorrect}
-          style={({ pressed }) => [
-            styles.correct,
-            {
-              minHeight: 44,
-              marginTop: 6,
-              paddingHorizontal: theme.spacing.lg,
-              borderRadius: theme.radius.sm,
-              borderWidth: theme.borderWidth,
-              borderColor: c.border,
-              backgroundColor: theme.colors.surface,
-              opacity: pressed ? 0.7 : 1,
-            },
-          ]}
-        >
-          <Icon name="edit" size={11} color={c.accent} />
-          <AppText variant="mono" style={[styles.correctLabel, { color: c.accent }]}>
-            {correctLabel}
-          </AppText>
-        </Pressable>
+        // Ołówek w stałym rogu, nie kontrolka pod liczbą - patrz nota przy `onCorrect`.
+        <View style={styles.corner}>
+          <IconAction
+            name="edit"
+            accessibilityLabel={`${correctLabel}: ${label}`}
+            onPress={onCorrect}
+          />
+        </View>
       )}
     </View>
   );
@@ -147,6 +139,5 @@ const styles = StyleSheet.create({
   unit: { fontSize: 28, lineHeight: 32, letterSpacing: 0, opacity: 0.6 },
   bar: { marginTop: 10 },
   caption: { fontSize: 10, letterSpacing: 0.5, lineHeight: 14, textAlign: 'center', marginTop: 4 },
-  correct: { flexDirection: 'row', alignItems: 'center', gap: 7 },
-  correctLabel: { fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' },
+  corner: { position: 'absolute', top: 8, right: 8 },
 });
