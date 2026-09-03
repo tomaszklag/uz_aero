@@ -390,6 +390,21 @@ Konsekwencje przy każdej zmianie kokpitu:
   (`projection.oil.afterL`), analogicznie do „Na pokładzie" przy paliwie;
   minimum mówi podziałka na 02A i ostrzeżenia. Bez pomiaru w strumieniu (stary
   zapis) podpis wraca do „Olej silnikowy" - liczby nie zmyślamy
+- **PO uruchomieniu silnika litry kokpitu są SZACUNKIEM i mówią to** (kolejna
+  tura: „jak silnik został uruchomiony, mamy tylko szacunki - «W silniku około»,
+  «Na pokładzie około» - i co jakiś czas odświeżamy wartości"): przed pierwszym
+  biegiem wartości są odczytami (bez „około"); po nim FOB liczy `estimateFob`
+  (ta sama logika, co 06/09B - wypiera nieaktualny odczyt i zasila pasek paliwa,
+  wystarczalność, ton i komórkę „Fuel on board" w locie), olej `cockpitOilSub`
+  (`logic/cockpitOil.ts`: pomiar + dolewki − norma oleju × czas pracy silnika).
+  Odświeżanie CO 5 MINUT, nie co sekundę (trzecia tura: „wystarczy co 5 minut") -
+  zegar szacunków to sekundowy tick skwantowany do kubełka `ESTIMATE_REFRESH_MS`,
+  a memo przelicza rachunek dopiero przy zmianie kubełka; drobniejszy krok
+  udawałby precyzję, której szacunek nie ma (5 min ≈ nieco ponad litr przy
+  typowej normie). Po zgaszeniu silnika wartości zamierają same (czas pracy
+  stoi). Bez normy zostaje ostatni zapis z „około" - dopisek mówi wtedy
+  o niepewności bez rachunku; `buildCockpitFuel.estimated` i `cockpitOilSub`
+  mają testy
 - **reguła obowiązuje też przycisk sprzętowy** (wdrożone 2026-08-10): kokpit trzyma
   `usePreventRemove(holdsAircraft(projection), …)` i zamiast wyjścia pokazuje arkusz 04d
   („TRZYMASZ SP-AXA" → ZOSTAŃ / ZDAJ SAMOLOT). `usePreventRemove`, nie `BackHandler`,

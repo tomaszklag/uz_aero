@@ -43,6 +43,13 @@ export function buildCockpitFuel(input: {
   fobL: number | null;
   addedL: number;
   norm: ConsumptionNorm | null;
+  /**
+   * Silnik już pracował w tej operacji, więc litry są SZACUNKIEM (z normy, gdy
+   * jest; bez niej nieaktualnym odczytem) - podpis dostaje „około" (uwaga
+   * z urządzenia, 2026-09-03). Przed pierwszym uruchomieniem wartość jest
+   * odczytem albo przekazaniem i „około" by ją podważało.
+   */
+  estimated: boolean;
 }): CockpitFuelView {
   const endurance = enduranceLabel(input.fobL, input.norm);
 
@@ -60,11 +67,9 @@ export function buildCockpitFuel(input: {
     };
   }
 
+  const aboard = `Na pokładzie:${input.estimated ? ' około' : ''} ${litres(input.fobL)}`;
   return {
     strip: null,
-    refuelSub:
-      input.addedL > 0
-        ? `Na pokładzie: ${litres(input.fobL)} · dolane ${litres(input.addedL)}`
-        : `Na pokładzie: ${litres(input.fobL)}`,
+    refuelSub: input.addedL > 0 ? `${aboard} · dolane ${litres(input.addedL)}` : aboard,
   };
 }

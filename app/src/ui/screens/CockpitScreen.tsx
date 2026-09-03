@@ -74,6 +74,8 @@ import { buildCockpitAxis } from './logic/cockpitLog';
 import { currentFlightNumber } from './logic/flightNumber';
 import { fuelTone } from './logic/fuelNorm';
 import { buildCockpitFuel } from './logic/cockpitFuel';
+import { cockpitOilSub } from './logic/cockpitOil';
+import { engineTimeInWindow, estimateFob } from './logic/refuelMath';
 import { flightsBadge } from './logic/statsDay';
 import {
   gpsAcquiringText,
@@ -86,6 +88,9 @@ import {
 import { operationTag, routeLabel } from './logic/operations';
 import { isJumpOperation, isSameFieldOperation } from '../../domain';
 import type { Event, FlightPhase } from '../../domain';
+
+/** Co ile odświeżamy SZACUNKI paliwa i oleju (uwaga z urządzenia: „wystarczy co 5 minut"). */
+const ESTIMATE_REFRESH_MS = 5 * 60_000;
 
 /** Sekundowy tick - tylko gdy jest co odliczać. */
 function useTicker(active: boolean): number {
@@ -299,20 +304,47 @@ export function CockpitScreen({
   const jumpDay = projection.operation != null && isJumpOperation(projection.operation);
 
   /**
+   * PO uruchomieniu silnika litry są SZACUNKIEM (uwaga z urządzenia, 2026-09-03):
+   * `estimateFob` (ta sama logika, co 06/09B) wypiera nieaktualny odczyt - FOB
+   * w locie spada razem z zużyciem z normy. Bez normy zostaje ostatni odczyt,
+   * a „około" w podpisach mówi o niepewności bez rachunku.
+   *
+   * Odświeżanie CO 5 MINUT, nie co sekundę (druga tura tej samej uwagi): zegar
+   * szacunków to sekundowy tick skwantowany do kubełka - memo przelicza rachunek
+   * dopiero przy zmianie kubełka, choć ekran i tak renderuje się co sekundę dla
+   * zegarów. 5 minut to przy typowej normie nieco ponad litr - drobniejszy krok
+   * udawałby precyzję, której szacunek nie ma. Silnik zgaszony = czas pracy
+   * stoi, więc szacunek zamiera sam.
+   */
+  const engineRan = projection.legs.length > 0;
+  const estimateNow = Math.floor(now / ESTIMATE_REFRESH_MS) * ESTIMATE_REFRESH_MS;
+  const norm = aircraft?.consumption ?? null;
+  const fuelEstimate = useMemo(
+    () => (engineRan ? estimateFob(events, projection, norm, estimateNow) : null),
+    [engineRan, events, projection, norm, estimateNow],
+  );
+  const displayFobL = fuelEstimate?.fobL ?? projection.fuel.lastReadingL;
+  const oilEngineMs = useMemo(
+    () => (engineRan ? engineTimeInWindow(projection, events, 0, estimateNow) : 0),
+    [engineRan, projection, events, estimateNow],
+  );
+
+  /**
    * Ton odczytu paliwa z szacunku czasu lotu (issue #19): amber godzinę przed rezerwą,
    * czerwony na rezerwie. `null` = brak normy, czyli nie ma czym kolorować - odczyt
    * zostaje neutralny zamiast świecić na pomarańczowo przy pełnych zbiornikach.
    */
-  const fuelToneNow = fuelTone(projection.fuel.lastReadingL, aircraft?.consumption ?? null);
+  const fuelToneNow = fuelTone(displayFobL, norm);
 
   /**
    * Podział ról między paskiem paliwa i kafelkiem „Tankowanie" - jedna liczba, jedno
    * miejsce (`logic/cockpitFuel.ts`). Ekran sam tego NIE rozstrzyga, bo reguła ma test.
    */
   const fuel = buildCockpitFuel({
-    fobL: projection.fuel.lastReadingL,
+    fobL: displayFobL,
     addedL: projection.fuel.addedL,
-    norm: aircraft?.consumption ?? null,
+    norm,
+    estimated: engineRan,
   });
 
   /** Komunikaty wspólne dla obu trybów - nigdy cichy błąd (§6 pkt 3). */
@@ -537,7 +569,7 @@ export function CockpitScreen({
                     { label: 'Altitude', value: '- -', unit: 'FT', stale: true, note: staleCellNote(lastFixAt) },
                     {
                       label: 'Fuel on board',
-                      value: `~${Math.round(projection.fuel.lastReadingL ?? 0)}`,
+                      value: `~${Math.round(displayFobL ?? 0)}`,
                       unit: 'L',
                       // Ton z szacunku, nie „zawsze amber" - patrz `fuelToneNow`.
                       tone: fuelToneNow ?? 'neutral',
@@ -564,10 +596,11 @@ export function CockpitScreen({
                       unit: 'FT',
                     },
                     {
-                      // Tylda jak w mockupach 05/05g: to ostatni ODCZYT, nie stan
-                      // bieżący - w locie paliwa jest już mniej i „~" mówi to wprost.
+                      // Tylda jak w mockupach 05/05g - a od 2026-09-03 liczba pod nią
+                      // naprawdę jest szacunkiem: `displayFobL` odejmuje zużycie
+                      // z normy i spada w locie razem z tickerem.
                       label: 'Fuel on board',
-                      value: `~${Math.round(projection.fuel.lastReadingL ?? 0)}`,
+                      value: `~${Math.round(displayFobL ?? 0)}`,
                       unit: 'L',
                       // AMBER TYLKO WTEDY, GDY JEST O CO (issue #19): kolor ostrzegawczy
                       // świecący przy pełnych zbiornikach przestaje cokolwiek znaczyć.
@@ -734,14 +767,19 @@ export function CockpitScreen({
    * i PO zatrzymaniu, przy zatrzymanym śmigle. Podpis niesie STAN silnika (pomiar
    * z przejęcia + dolewki), jak „Na pokładzie" przy paliwie (uwaga z urządzenia,
    * 2026-09-03: „zamiast «Minimum x L» napisz jak dla paliwa «W silniku x L»") -
-   * minimum mówi podziałka na 02A i ostrzeżenia, nie podpis kafelka. Bez pomiaru
-   * w strumieniu (stary zapis) zostaje nazwa medium - liczby nie zmyślamy.
+   * po biegu silnika z „około" i zużyciem z normy oleju (`cockpitOilSub`). Minimum
+   * mówi podziałka na 02A i ostrzeżenia, nie podpis kafelka.
    */
   const oilAction: ActionCardSpec = {
     id: 'oil',
     icon: 'oil',
     label: 'Dolej olej',
-    sub: projection.oil.afterL != null ? `W silniku ${oilLitres(projection.oil.afterL)}` : 'Olej silnikowy',
+    sub: cockpitOilSub({
+      afterL: projection.oil.afterL,
+      ratePerH: aircraft?.oilNormLPerH ?? null,
+      engineMs: oilEngineMs,
+      engineRan,
+    }),
     onPress: () => setOilOpen(true),
   };
 
@@ -864,7 +902,10 @@ export function CockpitScreen({
             niżej; decyzję i podział ról opisuje `logic/cockpitFuel.ts` (2026-08-10). */}
         {fuel.strip != null && (
           <FuelStrip
-            fuel={litres(projection.fuel.lastReadingL)}
+            // Po biegu silnika `displayFobL` jest szacunkiem z normy - pasek
+            // i wystarczalność mówią wtedy o stanie BIEŻĄCYM, nie o odczycie
+            // sprzed lotu (uwaga z urządzenia, 2026-09-03).
+            fuel={litres(displayFobL)}
             tone={fuelToneNow ?? 'neutral'}
             endurance={fuel.strip.endurance}
             source={fuel.strip.source}

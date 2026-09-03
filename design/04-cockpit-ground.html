@@ -391,7 +391,12 @@
            Bez normy paska NIE MA i litry niesie kafelek - jego podpis jest
            KOMPLEMENTARNY, nie stały (patrz komentarz przy siatce akcji). -->
       <!-- Ten mockup pokazuje stan Z NORMĄ; wariant bez normy = ten sam ekran bez tego
-           paska i z „Na pokładzie: 141 L" w kafelku. -->
+           paska i z „Na pokładzie: około 141 L" w kafelku. PO BIEGU SILNIKA litry są
+           SZACUNKIEM (uwaga z urządzenia, 2026-09-03): FOB paska i kafelka liczy
+           `estimateFob` (odczyt − zużycie z normy za czas pracy, ta sama logika co
+           06/09B), wartość odświeża się CO 5 MINUT (druga tura: „nie trzeba co
+           sekundę"), a podpis kafelka bez paska dostaje „około". PRZED
+           uruchomieniem (04A) wartości są odczytami - bez „około". -->
       <div class="fuel-strip">
         <div class="strip-left">
           <div class="fuel-strip-icon">
@@ -542,8 +547,8 @@
              pasek; zostaje zaproszenie do akcji, a po dolewce „Dolane dziś: 45 L”
              (fakt, którego pasek nie zna);
            • nie ma paska (brak normy) → kafelek przejmuje stan zbiorników:
-             „Na pokładzie: 141 L", a po dolewce OBIE liczby („· dolane 45 L"),
-             bo inaczej FOB znika z całego ekranu.
+             „Na pokładzie: 141 L" (po biegu silnika „około 141 L"), a po dolewce
+             OBIE liczby („· dolane 45 L"), bo inaczej FOB znika z całego ekranu.
            Reguła ma test: `app/src/__tests__/cockpitFuel.test.ts`. -->
       <!-- Po zatrzymaniu silnika zostają DWIE akcje (model 2026-08-10):
            • Zmiana załogi ZNIKŁA - operacja się skończyła, nowa załoga = nowe przejęcie
@@ -572,9 +577,12 @@
             <div class="action-label">Dolej olej</div>
             <!-- STAN silnika (pomiar z przejęcia + dolewki), jak „Na pokładzie"
                  przy paliwie (uwaga z urządzenia, 2026-09-03: zamiast „Minimum
-                 x L") - minimum mówi podziałka na 02A i ostrzeżenia. Bez pomiaru
-                 w strumieniu podpis wraca do „Olej silnikowy". -->
-            <div class="action-sub">W silniku 9,2 L</div>
+                 x L") - minimum mówi podziałka na 02A i ostrzeżenia. PO BIEGU
+                 silnika (jak tu) z „około" i zużyciem z normy oleju za czas
+                 pracy (`cockpitOilSub`: 9,2 − norma × 2:22 ≈ 9,1); przed
+                 uruchomieniem (04A) bez „około". Bez pomiaru w strumieniu
+                 podpis wraca do „Olej silnikowy". -->
+            <div class="action-sub">W silniku około 9,1 L</div>
           </div>
         </a>
         <!-- POPRAW DANE OPERACJI (issue #43) - kafelek prowadzi do TRYBU EDYCJI ekranu
