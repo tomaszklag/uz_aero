@@ -11,7 +11,7 @@
   :root {
     --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
     --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
-    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A; --text-placeholder: #565656;
     --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
     --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
     --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
@@ -84,17 +84,22 @@
   .scroll { flex: 1; overflow-y: auto; padding: 14px 16px 24px; display: flex; flex-direction: column; gap: 12px; scrollbar-width: none; }
   .scroll::-webkit-scrollbar { display: none; }
 
-  /* FOB Indicator */
+  /* FOB Indicator - NEUTRALNY, nie bursztynowy (uwaga z urządzenia, 2026-09-03:
+     „może to pole nie powinno być żółte?"): to pole ODCZYTU wymaganego od pilota,
+     nie ostrzeżenie - bursztyn zostaje na dolewce i wyniku. Pusty stan „- -"
+     placeholderem (wzorzec sekcji oleju z 02A); wypełniony pisze wartość
+     text-primary. Paska poziomu już nie ma - oś pojemności mierzy wyłącznie
+     miarka wyniku (ta sama tura: „usuń miarki przy FOB i dolewce"). */
   .fob-indicator {
     position: relative;
-    background: var(--amber-muted); border: 1px solid var(--amber-border);
+    background: var(--surface); border: 1px solid var(--border);
     border-radius: 20px; padding: 20px 20px 16px;
     display: flex; flex-direction: column; align-items: center; gap: 4px;
-    box-shadow: 0 0 30px rgba(243,156,18,0.08);
   }
-  .fob-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--amber); opacity: 0.7; }
-  .fob-value { font-family: var(--font-mono); font-size: 64px; font-weight: 700; color: var(--amber); line-height: 1; letter-spacing: -2px; }
-  .fob-unit { font-family: var(--font-mono); font-size: 28px; font-weight: 400; color: var(--amber); opacity: 0.6; margin-left: -4px; }
+  .fob-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--text-muted); }
+  .fob-value { font-family: var(--font-mono); font-size: 64px; font-weight: 700; color: var(--text-primary); line-height: 1; letter-spacing: -2px; }
+  .fob-value.empty { color: var(--text-placeholder); }
+  .fob-unit { font-family: var(--font-mono); font-size: 28px; font-weight: 400; color: var(--text-secondary); opacity: 0.6; margin-left: -4px; }
   .fob-row { display: flex; align-items: baseline; gap: 6px; }
   .fob-subtext { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px; margin-top: 4px; text-align: center; }
   /* Korekta odczytu = OŁÓWEK W ROGU karty (uwagi z urządzenia, 2026-09-02, dwie
@@ -105,9 +110,6 @@
      jest DOLEWKA. 36 px rysunku + zapas = próg 44 px (IconAction). */
   .fob-correct { position:absolute; top:8px; right:8px; width:36px; height:36px; display:flex; align-items:center; justify-content:center; border:none; border-radius:10px; background:transparent; color:var(--text-muted); cursor:pointer; }
   .fob-correct:hover { background:rgba(255,255,255,0.05); color:var(--text-secondary); }
-  .fob-bar { width: 100%; height: 8px; border-radius: 4px; background: rgba(0,0,0,0.35); border: 1px solid var(--amber-border); margin-top: 10px; position: relative; overflow: hidden; }
-  .fob-bar-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 34%; background: var(--amber); border-radius: 4px; box-shadow: 0 0 8px rgba(243,156,18,0.4); }
-  .fob-bar-labels { width: 100%; display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 9px; color: var(--text-muted); margin-top: 5px; }
 
   /* Section */
   .section { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
@@ -123,11 +125,9 @@
     box-shadow: 0 0 0 3px rgba(243,156,18,0.06);
   }
 
-  /* Slider */
-  .slider-track { position: relative; height: 6px; background: var(--surface-raised); border-radius: 3px; margin: 2px 0; border: 1px solid var(--border); }
-  .slider-fill { position: absolute; left: 0; top: 0; height: 100%; width: 22%; background: var(--amber); border-radius: 3px; box-shadow: 0 0 8px rgba(243,156,18,0.4); }
-  .slider-thumb { position: absolute; top: 50%; transform: translate(-50%, -50%); left: 22%; width: 16px; height: 16px; background: var(--amber); border: 2px solid #0D0D0D; border-radius: 50%; box-shadow: 0 0 0 3px rgba(243,156,18,0.3); }
-  .slider-labels { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 9px; color: var(--text-muted); margin-top: 6px; }
+  /* Suwak-wskaźnik pod dolewką USUNIĘTY (uwaga z urządzenia, 2026-09-03: „skoro
+     mam miarkę na stanie po tankowaniu, usuń miarki przy FOB i dolano") - trzy
+     paski mówiły tę samą oś trzy razy. */
 
   /* Result row - BURSZTYN, nie zieleń (uwaga z urządzenia, 2026-09-03: „zielony
      jest do czegoś innego raczej"): to liczba o paliwie, a zieleń jest akcentem
@@ -141,13 +141,15 @@
   .result-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--amber); opacity: 0.8; }
   .result-val { font-family: var(--font-mono); font-size: 28px; font-weight: 700; color: var(--amber); letter-spacing: -0.5px; white-space: nowrap; }
   .result-formula { font-family: var(--font-mono); font-size: 10px; color: var(--amber); opacity: 0.6; margin-top: 2px; }
-  /* Miarka wyniku (ta sama uwaga): zastane przygaszonym odcinkiem, dolewka pełnym
-     akcentem - trzy liczby rachunku widziane na tle pojemności. Jasna część rośnie
-     razem z wpisem dolewki. Bez znanej pojemności miarki nie ma (jak przy FOB).
+  /* Miarka wyniku (ta sama uwaga): zastane NEUTRALNĄ szarością, dolewka akcentem -
+     trzy liczby rachunku widziane na tle pojemności; bursztynowa część rośnie razem
+     z wpisem dolewki. Bez znanej pojemności miarki nie ma (jak przy FOB).
      Rynienka CIEMNA jak w `.fob-bar` (uwaga z urządzenia, 2026-09-03: „źle wygląda
-     żółty pasek na żółtym tle") - surface-raised zlewała bursztyn z bursztynem. */
+     żółty pasek na żółtym tle"), a zastane NIE jest przygaszonym bursztynem (druga
+     tura: „nadal żółty na żółtym") - dwa poziomy bursztynu na bursztynowej karcie
+     zlewały się w jedno; różne HUE czyta się z kąta oka, różna jasność nie. */
   .result-bar { position: relative; height: 6px; background: rgba(0,0,0,0.35); border: 1px solid var(--amber-border); border-radius: 3px; overflow: hidden; }
-  .result-bar-base { position: absolute; left: 0; top: 0; height: 100%; background: var(--amber); opacity: 0.45; }
+  .result-bar-base { position: absolute; left: 0; top: 0; height: 100%; background: rgba(255,255,255,0.4); }
   .result-bar-add { position: absolute; top: 0; height: 100%; background: var(--amber); box-shadow: 0 0 8px rgba(243,156,18,0.4); }
   .result-bar-labels { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 9px; color: var(--text-muted); }
 
@@ -182,6 +184,10 @@
     box-shadow: 0 0 24px rgba(243,156,18,0.3);
   }
   .btn-amber:hover { box-shadow: 0 0 40px rgba(243,156,18,0.5); }
+  /* Blokada z powodem W przycisku (issue #55): bez przygaszenia opacity -
+     wyszarzenie niosą kolory, bursztynowy powód musi zostać ostrzeżeniem. */
+  .btn-amber.disabled { background: var(--surface-hover); color: var(--text-muted); box-shadow: none; pointer-events: none; cursor: not-allowed; flex-direction: column; gap: 6px; }
+  .btn-reason { font-family: var(--font-mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--amber); text-align: center; line-height: 1.5; }
 </style>
 </head>
 <body>
@@ -223,56 +229,63 @@
     <!-- Scroll Content -->
     <div class="scroll">
 
-      <!-- FOB Indicator -->
+      <!-- FOB Indicator - DWA PRZYPADKI BIZNESOWE (opis użytkownika, 2026-09-03):
+
+           1. samolot NIE LATAŁ od ostatniego odczytu (tankowanie przed lotem -
+              przypadek CZĘSTSZY): wartość wychodzi z PRZEKAZANIA potwierdzonego
+              w preflighcie i pole wypełnia się samo - pilot tylko dolewa:
+
+              <div class="fob-value">160</div><div class="fob-unit">L</div>
+              <div class="fob-subtext">z przekazania · tankowanie 10:48 UTC</div>
+
+              (osobny akt „potwierdź" z wcześniejszej wersji dublował preflight
+              i został cofnięty tym samym opisem);
+
+           2. samolot LATAŁ (tankowanie między lotami - rzadkie; RENDEROWANE
+              NIŻEJ): pole WYMAGA pomiaru, więc stoi PUSTE („- -"), a szacunek
+              z normy (ostatni odczyt − zużycie z normy za czas pracy silnika;
+              stawki fazowe, gdy model je rozdzielił) jest SUGESTIĄ w podpisie.
+              Historię „ile miał · ile latał · ile mógł spalić" opowiada SZLAK
+              w arkuszu pomiaru (patrz komentarz przy Dolano). Ołówek wpisuje
+              odczyt rzeczywisty: pole pisze liczbę text-primary, podpis
+              „Odczyt z paliwomierza", pojawia się pudełko „Rzeczywiste zużycie"
+              i wynik z miarką.
+
+           Bez normy podpis pustego pola niesie sam ostatni odczyt
+           („Ostatni odczyt: preflight 08:00 UTC · 150 L"). -->
       <div class="fob-indicator">
         <div class="fob-label">FOB przed tankowaniem</div>
         <div class="fob-row">
-          <div class="fob-value">112</div>
-          <div class="fob-unit">L</div>
+          <div class="fob-value empty">- -</div>
         </div>
-        <div class="fob-bar"><div class="fob-bar-fill"></div></div>
-        <div class="fob-bar-labels"><span>0 L</span><span>pojemność: 330 L</span></div>
-        <!-- STAN WEJŚCIOWY EKRANU (uwaga z urządzenia, 2026-09-03): FOB to SZACUNEK
-             Z NORMY - ostatni odczyt minus zużycie z normy za czas pracy silnika
-             (stawki fazowe, gdy model je rozdzielił; inaczej blokowa). Podpowiedź
-             niesie źródło przy liczbie i nie udaje odczytu z przyrządu (reguła
-             `readingsPrefill`); ołówek wpisuje ODCZYT RZECZYWISTY - podpis zmienia
-             się wtedy na „Odczyt z paliwomierza", a pudełko niżej na „Rzeczywiste
-             zużycie". Bez normy: sam ostatni odczyt („Ostatni odczyt: preflight
-             08:00 UTC"), bez pudełka. -->
-        <div class="fob-subtext">szacunek z normy samolotu (90 dni) - decyduje paliwomierz</div>
+        <div class="fob-subtext">szacunek z normy samolotu: ~112 L</div>
         <button class="fob-correct" title="Zmień odczyt">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         </button>
       </div>
 
-      <!-- Calc Box - POD kartą FOB, nie na dnie ekranu (uwaga z urządzenia,
-           2026-09-03): rachunek objaśnia liczbę stojącą wyżej, więc stoi przy
-           niej, jak szlak przy wartości w arkuszach. DWA STANY (ta sama tura:
-           „szacowana ilość paliwa, a po odczycie rzeczywista - rzeczywiste
-           zużycie"); niżej wyrenderowany stan WEJŚCIOWY. Bez rachunku (brak
-           normy, brak odczytu odniesienia, silnik nie pracował) pudełka nie ma
-           WCALE (reguła issue #69); przypis o punkcie kontrolnym i cache'u
-           wycięty (kategoria przypisów z issue #43/#72). -->
-      <div class="calc-box">
-        <div class="calc-title">Szacunek z normy</div>
-        <div class="calc-row">
-          <span class="calc-row-label">Ostatni odczyt · preflight 08:00 UTC</span>
-          <span class="calc-row-val">150 L</span>
-        </div>
-        <div class="calc-row">
-          <span class="calc-row-label">Czas pracy silnika (od odczytu)</span>
-          <span class="calc-row-val">2h 22 min</span>
-        </div>
-        <div class="calc-divider"></div>
-        <div class="calc-row">
-          <span class="calc-row-label">Zużycie z normy</span>
-          <span class="calc-highlight">~38 L</span>
-        </div>
-      </div>
-      <!-- STAN PO ODCZYCIE (ołówek → „Stan przed tankowaniem"): to samo pudełko
-           przełącza się na rachunek RZECZYWISTY - werdykt względem normy istnieje
-           tylko tu, bo szacunek wyprowadzony z normy „zgadzałby się" z nią zawsze:
+      <!-- HISTORIA SPRZED POMIARU = SZLAK W ARKUSZU „Stan przed tankowaniem"
+           (uwaga z urządzenia, 2026-09-03: „mamy już ciekawy komponent, który
+           obrazuje statystyki z ostatniego lotu [w preflighcie przy potwierdzaniu
+           paliwa] - użyj analogicznych, po co wymyślać na nowo"). Pudełko
+           „Szacunek z normy" na ekranie SKASOWANE - ogniwa `Trail` jak na 02B,
+           między ostrzeżeniem a wierszami odniesienia arkusza (rama `Sheet.trail`):
+
+             ● Ostatni odczyt · preflight 08:00 UTC
+               w zbiorniku 150 L
+             ● Latano · 2h 22 min
+               zużycie z normy ~38 L
+             ● Szacunkowo zostało ~112 L          (ogniwo ZIELONE, jak
+               z normy samolotu (90 dni) -         oczekiwanie oleju na 02I)
+               zweryfikuj z paliwomierza
+
+           Wiersz odniesienia arkusza nie powtarza wtedy odczytu (niesie go
+           pierwsze ogniwo); zostaje „Pojemność zbiorników · 330 L". -->
+
+      <!-- STAN PO POMIARZE (ołówek → „Stan przed tankowaniem"): na ekranie
+           pojawia się pudełko rachunku RZECZYWISTEGO - werdykt względem normy
+           istnieje tylko tu, bo szacunek wyprowadzony z normy „zgadzałby się"
+           z nią zawsze:
 
            <div class="calc-box">
              <div class="calc-title">Rzeczywiste zużycie</div>
@@ -321,45 +334,39 @@
           <div style="font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.5px; color: var(--text-muted);">maks. dolewka: 218 L (do pełna) · zbiorniki 330 L</div>
         </div>
 
-        <!-- Fake Slider -->
-        <div>
-          <div class="slider-track">
-            <div class="slider-fill"></div>
-            <div class="slider-thumb"></div>
-          </div>
-          <div class="slider-labels">
-            <span>0 L</span>
-            <span>55 L</span>
-            <span>110 L</span>
-            <span>165 L</span>
-            <span>218 L</span>
-          </div>
-        </div>
+        <!-- Suwak-wskaźnik USUNIĘTY (2026-09-03) - patrz nota przy dawnym
+             bloku `.slider-*` w CSS. -->
       </div>
 
-      <!-- Result -->
-      <div class="result-row">
-        <div class="result-head">
-          <div>
-            <div class="result-label">Stan po tankowaniu</div>
-            <div class="result-formula">112 + 48,7 = 160,7 L · 49% pojemności</div>
-          </div>
-          <div class="result-val">160,7 L</div>
-        </div>
-        <!-- Miarka: zastane 112/330 = 34% przygaszone, dolane 48,7/330 = 15% pełnym
-             akcentem - łącznie 160,7 L, czyli 49% pojemności. -->
-        <div class="result-bar">
-          <div class="result-bar-base" style="width: 34%;"></div>
-          <div class="result-bar-add" style="left: 34%; width: 15%;"></div>
-        </div>
-        <div class="result-bar-labels"><span>0 L</span><span>pojemność: 330 L</span></div>
-      </div>
+      <!-- Result - DOPIERO Z POMIAREM: bez stanu przed tankowaniem suma nie
+           istnieje, a wiersz z kreską udawałby wynik (reguła issue #69).
+           Po wpisaniu odczytu (112 L) sekcja wygląda tak:
 
-      <!-- Amber Button -->
-      <a href="04-cockpit-ground.html" class="btn-amber">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+           <div class="result-row">
+             <div class="result-head">
+               <div>
+                 <div class="result-label">Stan po tankowaniu</div>
+                 <div class="result-formula">112 + 48,7 = 160,7 L · 49% pojemności</div>
+               </div>
+               <div class="result-val">160,7 L</div>
+             </div>
+             Miarka: zastane 112/330 = 34% szarością, dolane 48,7/330 = 15%
+             bursztynem - łącznie 160,7 L, czyli 49% pojemności. Podziałka ćwiartek
+             na osi POJEMNOŚCI - refuelScale(330). To JEDYNA miarka ekranu.
+             <div class="result-bar">
+               <div class="result-bar-base" style="width: 34%;"></div>
+               <div class="result-bar-add" style="left: 34%; width: 15%;"></div>
+             </div>
+             <div class="result-bar-labels"><span>0 L</span><span>85 L</span><span>165 L</span><span>250 L</span><span>330 L</span></div>
+           </div>
+      -->
+
+      <!-- Amber Button - zablokowany do czasu pomiaru, powód W przycisku
+           (issue #55); po pomiarze wraca pełny `.btn-amber` z „ZAPISZ TANKOWANIE". -->
+      <div class="btn-amber disabled">
         ZAPISZ TANKOWANIE
-      </a>
+        <span class="btn-reason">Wpisz stan paliwa z paliwomierza</span>
+      </div>
 
     </div>
   </div>

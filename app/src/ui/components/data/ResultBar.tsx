@@ -41,8 +41,8 @@ export interface ResultBarProps {
   /** Rachunek prowadzący do wartości („112 + 48 = 160 L · 48% pojemności"). */
   formula?: string | null;
   /**
-   * Miarka pod wynikiem (uwaga z urządzenia, 2026-09-03): stan zastany przygaszonym
-   * odcinkiem 0→`baseRatio`, dolewka pełnym akcentem do `ratio` - trzy liczby
+   * Miarka pod wynikiem (uwaga z urządzenia, 2026-09-03): stan zastany neutralną
+   * szarością 0→`baseRatio`, dolewka akcentem tonu do `ratio` - trzy liczby
    * z rachunku widziane na tle pojemności. Brak = sam wiersz, jak dotąd.
    */
   gauge?: { ratio: number; baseRatio?: number | null; scale?: string[] } | null;

@@ -1748,10 +1748,15 @@ Uwagi z urządzenia do kroku liczników (NOWY LOT · 3/3):
   odczytem, ile dolano i ile łącznie"): to liczba o paliwie, a zieleń jest akcentem
   głównym (silnik, CTA) i robiła z wyniku rachunku osobny komunikat „OK"; czerwień
   zostaje dla wyniku łamiącego limit. Pod wierszem miarka na tle pojemności:
-  zastane przygaszonym odcinkiem (opacity 0.45), dolewka pełnym akcentem - jasna
-  część rośnie razem ze Stepperem. Proporcje liczy `refuelGauge` w `refuelMath.ts`
-  (z testami; `null` bez pojemności - pasek bez mianownika nic nie mówi, jak przy
-  FOB); segmenty rysuje `LevelBar.baseRatio` (przez `ScaleBar` i `ResultBar.gauge`)
+  zastane NEUTRALNĄ szarością (rgba biała 0.4), dolewka akcentem - bursztynowa
+  część rośnie razem ze Stepperem. Zastane NIE jest przygaszonym bursztynem
+  (trzecia tura: „nadal żółty na żółtym") - dwa poziomy bursztynu na bursztynowej
+  karcie zlewały się w jedno; różne HUE czyta się z kąta oka, różna jasność nie.
+  Proporcje liczy `refuelGauge` w `refuelMath.ts` (z testami; `null` bez
+  pojemności - pasek bez mianownika nic nie mówi, jak przy FOB); segmenty rysuje
+  `LevelBar.baseRatio` (przez `ScaleBar` i `ResultBar.gauge`). Pod miarką
+  podziałka ćwiartek jak pod dolewką (kolejna tura) - ten sam `refuelScale`,
+  tylko na osi POJEMNOŚCI; ostatnia etykieta to pojemność zbiorników
 - **pasek na TONOWANEJ karcie ma CIEMNĄ rynienkę** (kolejna tura: „źle wygląda
   żółty pasek na żółtym tle"): rynienka z `surfaceRaised` zlewała bursztynowe
   wypełnienie z bursztynową kartą. `LevelBar.trackColor` + stała `TINTED_TRACK`
@@ -1759,23 +1764,41 @@ Uwagi z urządzenia do kroku liczników (NOWY LOT · 3/3):
   przyciemnia tło karty, więc działa na obu motywach); używają jej wskaźnik FOB
   (`GaugeHero`) i miarka wyniku (`ResultBar`). Paski na kartach neutralnych
   (olej na 02A) zostają przy `surfaceRaised`
-- **FOB na wejściu to SZACUNEK Z NORMY, po odczycie stan RZECZYWISTY** (kolejne
-  tury: „zrób ten szacunek z normy jako podpowiedź" + „chcemy szacowaną ilość
-  paliwa, a po odczycie rzeczywistą - rzeczywiste zużycie"). Do tej pory ekran
-  pokazywał ostatni odczyt SPRZED lotu udający stan bieżący, a rachunek przy nim
-  zużycie ~0. `estimateFob` w `refuelMath.ts` (z testami): ostatni odczyt −
-  zużycie z normy za czas pracy silnika od odczytu - stawki FAZOWE, gdy model je
-  rozdzielił (czas lotu z `flightSpans`, offline), inaczej blokowa (drabina jak
-  w `consumption/expectation.ts`, issue #38); wynik zaokrąglony do PEŁNYCH litrów
-  (podpowiedź nie udaje precyzji) z podłogą 0. Podpis pod liczbą niesie źródło
-  („szacunek z normy samolotu (90 dni) - decyduje paliwomierz" - brzmienie z paska
-  kokpitu, reguła `readingsPrefill`); ołówek wpisuje odczyt rzeczywisty. Pudełko
-  rachunku ma DWA stany: „Szacunek z normy" (odczyt odniesienia, czas pracy,
-  zużycie z normy - BEZ werdyktu, bo norma nie ocenia samej siebie) → „Rzeczywiste
-  zużycie" (plus średnia L/h i werdykt). `null` bez normy/odczytu/biegu silnika -
-  ekran wraca do samego ostatniego odczytu, bez pudełka. Do zapisu `refuel`
-  średnia idzie WYŁĄCZNIE po prawdziwym odczycie - liczona z podpowiedzi byłaby
-  normą przebraną za pomiar
+- **FOB przed tankowaniem ma DWA PRZYPADKI BIZNESOWE** (opis użytkownika,
+  2026-09-03, po kilku turach; wcześniejsze przymiarki - szacunek jako wartość
+  pola, potem pigułka POTWIERDŹ przy świeżym odczycie - wprowadzone i COFNIĘTE
+  tego samego dnia: potwierdzanie dublowało preflight, nie proponować ponownie):
+  - **samolot NIE LATAŁ od ostatniego odczytu** (tankowanie przed lotem -
+    przypadek CZĘSTSZY): wartość wychodzi z PRZEKAZANIA potwierdzonego
+    w preflighcie i pole wypełnia się samo (podpis „z przekazania · preflight
+    08:00 UTC") - pilot tylko dolewa
+  - **samolot LATAŁ** (tankowanie między lotami - rzadkie): pole WYMAGA pomiaru -
+    karta `GaugeHero` NEUTRALNA (bursztyn zostaje na dolewce i wyniku), PUSTA
+    („- -" placeholderem, wzorzec sekcji oleju z 02A), ZAPISZ blokuje „Wpisz stan
+    paliwa z paliwomierza". SUGESTIA w podpisie („szacunek z normy samolotu:
+    ~112 L") - liczy ją `estimateFob` w `refuelMath.ts` (z testami): ostatni
+    odczyt − zużycie z normy za czas pracy silnika; stawki FAZOWE, gdy model je
+    rozdzielił (czas lotu z `flightSpans`, offline), inaczej blokowa (drabina jak
+    w `consumption/expectation.ts`, issue #38); pełne litry, podłoga 0
+  - **historię „ile miał · ile latał · ile mógł spalić" opowiada SZLAK w arkuszu
+    pomiaru** (uwaga: „mamy już ciekawy komponent, który obrazuje statystyki
+    z ostatniego lotu [preflight, potwierdzanie paliwa] - użyj analogicznych, po
+    co wymyślać na nowo"): ogniwa `Trail` przez `Sheet.trail` jak na 02B - odczyt
+    → „Latano · 2h 22 min · zużycie z normy ~38 L" → ZIELONE „Szacunkowo zostało
+    ~112 L" (jak ogniwo oczekiwania oleju na 02I). Pudełko „Szacunek z normy" na
+    ekranie SKASOWANE - było wymyślaniem szlaku na nowo. Arkusz startuje PUSTY
+    (podstawiony szacunek dałoby się zatwierdzić bez patrzenia na paliwomierz),
+    wiersz odniesienia nie powtarza odczytu, gdy niesie go ogniwo szlaku
+  - **po pomiarze ekran pokazuje „Rzeczywiste zużycie"** (`CalcBox`: odczyt
+    odniesienia, czas pracy, zużycie, średnia L/h + werdykt normy - werdykt TYLKO
+    tu, bo szacunek wyprowadzony z normy „zgadzałby się" z nią zawsze). Bez
+    normy/odczytu/biegu pudełka nie ma. Wynik z miarką pojawia się dopiero
+    z wartością „przed" (z przekazania albo z pomiaru); `consumptionLPerH`
+    w zapisie wychodzi tylko z pomiaru
+- **miarka jest JEDNA - na wyniku** (ta sama tura: „skoro mam miarkę na stanie po
+  tankowaniu, usuń miarki przy FOB i dolano"): pasek poziomu zniknął z karty FOB
+  (`GaugeHero` nie ma już `ratio`/`scale`) i spod dolewki (suwak-wskaźnik) - trzy
+  paski mówiły tę samą oś pojemności trzy razy
 
 ## Zmiana załogi (07) po przeglądzie 2026-09-02
 Sześć uwag z urządzenia; wspólny mianownik ten sam, co na 02A - ekran mówi decyzją,

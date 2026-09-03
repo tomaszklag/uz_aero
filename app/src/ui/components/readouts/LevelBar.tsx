@@ -17,6 +17,14 @@ import { View, type ViewStyle } from 'react-native';
 import { useTheme } from '../../theme';
 import { toneColors, type Tone } from '../tone';
 
+/**
+ * Wypełnienie odcinka ZASTANEGO (`baseRatio`): półprzezroczysta biel, nie kolor
+ * z palety - na ciemnej rynience daje jasną szarość w każdym motywie, a od odcinka
+ * dolewki różni się HUE, nie samą jasnością. Bez eksportu: to szczegół rysowania
+ * segmentów, mockup 06 trzyma tę samą wartość w `.result-bar-base`.
+ */
+const BASE_FILL = 'rgba(255,255,255,0.4)';
+
 export interface LevelBarProps {
   /** Wypełnienie 0–1; wartości spoza zakresu przycinamy. */
   ratio: number;
@@ -31,9 +39,12 @@ export interface LevelBarProps {
   /**
    * Granica stanu ZASTANEGO (0–1) - miarka „Stan po tankowaniu" na 06 (uwaga
    * z urządzenia, 2026-09-03: „zaznaczyć, ile jest przed odczytem, ile dolano i ile
-   * łącznie"). Odcinek 0→base rysuje się przygaszonym akcentem (co już było),
-   * base→ratio pełnym (co właśnie dolano) - jasna część rośnie razem ze Stepperem,
-   * więc pasek odpowiada na wpis na żywo. `null`/brak = wypełnienie jednolite.
+   * łącznie"). Odcinek 0→base rysuje się NEUTRALNĄ szarością (co już było),
+   * base→ratio akcentem tonu (co właśnie dolano) - bursztynowa część rośnie razem
+   * ze Stepperem, więc pasek odpowiada na wpis na żywo. Zastane NIE jest
+   * przygaszonym akcentem (druga tura tej samej uwagi: „nadal żółty na żółtym") -
+   * dwa poziomy bursztynu na bursztynowej karcie zlewały się w jedno; różne HUE
+   * czyta się z kąta oka, różna jasność nie. `null`/brak = wypełnienie jednolite.
    */
   baseRatio?: number | null;
   /**
@@ -106,8 +117,7 @@ export function LevelBar({
               top: 0,
               bottom: 0,
               width: `${base * 100}%`,
-              backgroundColor: c.accent,
-              opacity: 0.45,
+              backgroundColor: BASE_FILL,
             }}
           />
           <View

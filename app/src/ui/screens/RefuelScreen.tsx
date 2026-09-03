@@ -2,8 +2,9 @@
  * UZ Aero - 06 TANKOWANIE
  *
  * Odwzorowanie mockupu `design/06-tankowanie.html`, sekcja po sekcji:
- * [nagłówek TANKOWANIE + SyncChip] → [karta FOB przed tankowaniem] → [sekcja DOLANO:
- * ilość + podziałka] → [pasek STAN PO TANKOWANIU] → [kalkulacja zużycia] → [ZAPISZ].
+ * [nagłówek TANKOWANIE + SyncChip] → [pole FOB przed tankowaniem - WYMAGANY pomiar]
+ * → [rachunek: szacunek z normy / rzeczywiste zużycie] → [sekcja DOLANO]
+ * → [STAN PO TANKOWANIU z miarką] → [ZAPISZ].
  *
  * Ekran zapisuje jedno zdarzenie `refuel` z TRZEMA liczbami (przed / dolano / po),
  * a domena odrzuca je, gdy się nie sumują albo gdy stan po tankowaniu przekracza
@@ -12,10 +13,13 @@
  *
  * Trzy rzeczy wynikają z zasad projektu, nie z mockupu:
  *  • **suwak zastąpił Stepper** - audyt użyteczności odrzucił uchwyt 16 px na torze
- *    312 px (≈1,4 L na piksel w rękawicach); pasek został wyłącznie wskaźnikiem
- *    (patrz `Stepper` i `ScaleBar`);
- *  • **stan przed tankowaniem da się skorygować** - nasza rachuba to ostatni odczyt
- *    paliwomierza, a licznik fizyczny bije rachubę (`CLAUDE.md`);
+ *    312 px (≈1,4 L na piksel w rękawicach); jedyną miarką ekranu jest odtąd pasek
+ *    wyniku (uwaga z urządzenia, 2026-09-03);
+ *  • **stan przed tankowaniem ma dwa przypadki biznesowe** - samolot NIE LATAŁ
+ *    od odczytu (tankowanie przed lotem, częstsze): wartość z przekazania
+ *    potwierdzonego w preflighcie, pilot tylko dolewa; samolot LATAŁ (między
+ *    lotami, rzadkie): pole puste WYMAGA pomiaru, sugestia z normy w podpisie,
+ *    historia szlakiem w arkuszu - paliwomierz bije rachubę (`CLAUDE.md`);
  *  • **brak sieci niczego nie blokuje** - zdarzenie idzie do outboxa, a jedynym
  *    wskaźnikiem łączności jest SyncChip.
  */
@@ -34,17 +38,18 @@ import {
   Icon,
   ReadingSheet,
   ResultBar,
-  ScaleBar,
   Screen,
   ScreenHeader,
   Stepper,
   SyncChip,
+  type TrailRow,
 } from '../components';
 import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
 import { litres, parseLitres, timeUtc } from '../format';
 import {
   addedLitresText,
+  engineTimeInWindow,
   estimateConsumption,
   estimateFob,
   hoursMinutes,
@@ -78,7 +83,7 @@ export function RefuelScreen({
 
   const [aircraft, setAircraft] = useState<ReferenceAircraft | null>(null);
   const [addedL, setAddedL] = useState(0);
-  /** Odczyt z paliwomierza nadpisujący naszą rachubę; `null` = trzymamy się rachuby. */
+  /** Odczyt wpisany przez pilota z paliwomierza; `null` = pomiaru jeszcze nie ma. */
   const [beforeOverride, setBeforeOverride] = useState<number | null>(null);
   const [editingBefore, setEditingBefore] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -101,28 +106,38 @@ export function RefuelScreen({
 
   const reg = aircraft?.reg ?? aircraftId ?? '-';
   const capacityL = aircraft?.capacityL ?? null;
-  const computedBeforeL = projection.fuel.lastReadingL;
 
   // Norma tego samolotu (serwer, ekran `A10a`) - podstawa szacunku FOB i punkt
   // odniesienia dla wyniku. `null` znaczy „model poniżej progu publikacji".
   const norm = aircraft?.consumption ?? null;
 
-  // Szacunek FOB z normy jako PODPOWIEDŹ (uwaga z urządzenia, 2026-09-03): bez niej
-  // ekran pokazywał odczyt sprzed lotu udający stan bieżący. Ekran ma DWA stany:
-  // szacowana ilość paliwa na wejściu → rzeczywista po odczycie ołówkiem
-  // (`beforeOverride`), a pudełko rachunku niżej mówi, na który z nich patrzysz.
+  // DWA PRZYPADKI BIZNESOWE (opis użytkownika, 2026-09-03):
+  //  1. samolot NIE LATAŁ od ostatniego odczytu (tankowanie przed lotem -
+  //     przypadek CZĘSTSZY): stan wynika z przekazania potwierdzonego
+  //     w preflighcie, więc pole wypełnia się samo i pilot tylko dolewa.
+  //     Osobny akt „potwierdź" (wersja z 2026-09-03) dublował preflight - cofnięty;
+  //  2. samolot LATAŁ (tankowanie między lotami - rzadkie): pole WYMAGA pomiaru
+  //     i stoi puste z sugestią z normy w podpisie, a historię „ile miał, ile
+  //     latał, ile mógł spalić" opowiada SZLAK w arkuszu pomiaru - ten sam
+  //     komponent, co przy potwierdzaniu paliwa w preflighcie (02B).
   const estimate = useMemo(
     () => estimateFob(events, projection, norm, openedAt),
     [events, projection, norm, openedAt],
   );
-  const fobEstimated = beforeOverride == null && estimate != null;
-  const beforeL = beforeOverride ?? (estimate?.fobL ?? computedBeforeL ?? 0);
-  const maxAdd = maxAddableL(beforeL, capacityL);
-  const afterL = beforeL + addedL;
-
   const reference = useMemo(() => lastFuelReference(events), [events]);
+  const engineSinceRef = useMemo(
+    () => (reference == null ? 0 : engineTimeInWindow(projection, events, reference.at, openedAt)),
+    [reference, projection, events, openedAt],
+  );
+  const freshReference = reference != null && engineSinceRef <= 0;
+  const beforeL: number | null =
+    beforeOverride ?? (freshReference ? reference.fuelL : null);
+  const maxAdd = maxAddableL(beforeL ?? 0, capacityL);
+  const afterL = beforeL == null ? null : beforeL + addedL;
+
   const consumption = useMemo(
-    () => estimateConsumption(events, projection, beforeL, openedAt),
+    () =>
+      beforeL == null ? null : estimateConsumption(events, projection, beforeL, openedAt),
     [events, projection, beforeL, openedAt],
   );
 
@@ -133,15 +148,15 @@ export function RefuelScreen({
   }, [consumption, norm]);
 
   const save = useCallback(async () => {
+    // Blokada z powodem stoi w przycisku; ta bramka trzyma tylko typy.
+    if (beforeL == null || afterL == null) return;
     setBusy(true);
     try {
       await refuel({
         beforeL,
         addedL,
         afterL,
-        // Średnia idzie do zapisu WYŁĄCZNIE po prawdziwym odczycie: liczona ze
-        // stanu podstawionego z normy byłaby normą przebraną za pomiar.
-        consumptionLPerH: beforeOverride != null ? (consumption?.lPerH ?? null) : null,
+        consumptionLPerH: consumption?.lPerH ?? null,
       });
       navigation.goBack();
     } catch {
@@ -150,7 +165,7 @@ export function RefuelScreen({
     } finally {
       setBusy(false);
     }
-  }, [addedL, afterL, beforeL, beforeOverride, consumption, navigation, refuel]);
+  }, [addedL, afterL, beforeL, consumption, navigation, refuel]);
 
   if (context == null) {
     return (
@@ -164,9 +179,9 @@ export function RefuelScreen({
     );
   }
 
-  // ── podpis pod wskaźnikiem: skąd wzięliśmy stan przed tankowaniem ──────────────
-  // Podpowiedź niesie ŹRÓDŁO przy liczbie i nie udaje odczytu z przyrządu - ta sama
-  // reguła, co `readingsPrefill` we wpisie ręcznym; brzmienie z paska paliwa kokpitu.
+  // ── podpis pod polem: sugestia albo źródło wartości ────────────────────────────
+  // Sugestia niesie ŹRÓDŁO przy liczbie i nie udaje odczytu z przyrządu - ta sama
+  // reguła, co `readingsPrefill` we wpisie ręcznym.
   const referenceLabel =
     reference == null
       ? null
@@ -174,11 +189,40 @@ export function RefuelScreen({
   const gaugeCaption =
     beforeOverride != null
       ? 'Odczyt z paliwomierza'
-      : fobEstimated
-        ? `szacunek z normy samolotu (${norm!.windowDays} dni) - decyduje paliwomierz`
-        : referenceLabel != null
-          ? `Ostatni odczyt: ${referenceLabel}`
-          : 'Brak odczytu w tej operacji - wpisz stan z paliwomierza';
+      : freshReference
+        ? `z przekazania · ${referenceLabel}`
+        : estimate != null
+          ? `szacunek z normy samolotu: ~${estimate.fobL} L`
+          : referenceLabel != null
+            ? `Ostatni odczyt: ${referenceLabel} · ${litres(reference!.fuelL)}`
+            : 'Brak odczytu w tej operacji';
+
+  // Szlak do arkusza pomiaru - TEN SAM komponent, co przy potwierdzaniu paliwa
+  // w preflighcie (uwaga z urządzenia, 2026-09-03: „mamy już ciekawy komponent,
+  // który obrazuje statystyki z ostatniego lotu - użyj analogicznych"). Ogniwa
+  // jak na 02B: odczyt → ile latano i ile z tego wychodzi z normy → zielone
+  // oczekiwanie, dokładnie jak ogniwo oczekiwania oleju na 02I.
+  const beforeTrail: TrailRow[] =
+    estimate == null || referenceLabel == null
+      ? []
+      : [
+          {
+            id: 'ref',
+            title: `Ostatni odczyt · ${referenceLabel}`,
+            meta: `w zbiorniku ${litres(estimate.reference.fuelL)}`,
+          },
+          {
+            id: 'flown',
+            title: `Latano · ${hoursMinutes(estimate.engineMs)}`,
+            meta: `zużycie z normy ~${Math.round(estimate.usedL)} L`,
+          },
+          {
+            id: 'left',
+            tone: 'green',
+            title: `Szacunkowo zostało ~${estimate.fobL} L`,
+            meta: `z normy samolotu (${norm!.windowDays} dni) - zweryfikuj z paliwomierza`,
+          },
+        ];
 
   // Wiersz odniesienia obu pudełek rachunku: od którego odczytu liczymy.
   const referenceRow =
@@ -193,15 +237,18 @@ export function RefuelScreen({
   const disabledReason =
     projection.engineRunning
       ? 'Wyłącz silnik - tankowania przy pracującym silniku nie zapiszemy'
-      : addedL <= 0
-        ? 'Ustaw ilość dolanego paliwa'
-        : capacityL != null && afterL > capacityL
-          ? `Stan po tankowaniu (${litres(afterL)}) przekracza pojemność ${litres(capacityL)} - popraw odczyt przed tankowaniem`
-          : null;
+      : beforeL == null
+        ? 'Wpisz stan paliwa z paliwomierza'
+        : addedL <= 0
+          ? 'Ustaw ilość dolanego paliwa'
+          : capacityL != null && afterL != null && afterL > capacityL
+            ? `Stan po tankowaniu (${litres(afterL)}) przekracza pojemność ${litres(capacityL)} - popraw odczyt przed tankowaniem`
+            : null;
 
-  const overCapacity = capacityL != null && afterL > capacityL;
-  const percentAfter = capacityL != null ? Math.round((afterL / capacityL) * 100) : null;
-  const resultGauge = refuelGauge(beforeL, addedL, capacityL);
+  const overCapacity = capacityL != null && afterL != null && afterL > capacityL;
+  const percentAfter =
+    capacityL != null && afterL != null ? Math.round((afterL / capacityL) * 100) : null;
+  const resultGauge = beforeL == null ? null : refuelGauge(beforeL, addedL, capacityL);
 
   return (
     <Screen
@@ -241,13 +288,16 @@ export function RefuelScreen({
     >
       <View style={{ gap: theme.spacing.md }}>
         {/* ── FOB przed tankowaniem (`.fob-indicator`) ──────────────────────── */}
+        {/* Neutralne pole stanu (uwagi z urządzenia, 2026-09-03): gdy samolot nie
+            latał od odczytu, wartość wychodzi z PRZEKAZANIA potwierdzonego
+            w preflighcie i pilot tylko dolewa (przypadek częstszy); gdy latał -
+            pole stoi puste z sugestią z normy, a historię opowiada szlak
+            w arkuszu pomiaru. Bez paska poziomu: oś pojemności mierzy odtąd
+            wyłącznie miarka wyniku. */}
         <GaugeHero
           label="FOB przed tankowaniem"
-          value={String(Math.round(beforeL))}
+          value={beforeL == null ? null : String(Math.round(beforeL))}
           unit="L"
-          tone="amber"
-          ratio={capacityL != null ? beforeL / capacityL : null}
-          scale={capacityL != null ? ['0 L', `pojemność: ${capacityL} L`] : []}
           caption={gaugeCaption}
           // „Zmień odczyt", nie „Koryguj z paliwomierza" (uwaga z urządzenia,
           // 2026-09-02): długi bursztynowy napis rzucał się w oczy i sugerował,
@@ -256,26 +306,12 @@ export function RefuelScreen({
           onCorrect={() => setEditingBefore(true)}
         />
 
-        {/* ── RACHUNEK POD KARTĄ FOB (`.calc-box`) ───────────────────────────── */}
-        {/* POD liczbą, którą objaśnia (uwaga z urządzenia, 2026-09-03), w DWÓCH
-            stanach ekranu: szacunek z normy na wejściu → rzeczywiste zużycie po
-            odczycie ołówkiem. Werdykt względem normy TYLKO przy rzeczywistym -
-            szacunek wyprowadzony Z normy zawsze „zgadzałby się" z nią sam ze sobą.
-            Bez rachunku ekran o nim MILCZY („jeśli nie ma z czego, to po co to
-            w ogóle wyświetlać?" - reguła issue #69). */}
-        {fobEstimated && estimate != null && (
-          <CalcBox
-            title="Szacunek z normy"
-            rows={[
-              ...(referenceRow == null ? [] : [referenceRow]),
-              {
-                label: 'Czas pracy silnika (od odczytu)',
-                value: hoursMinutes(estimate.engineMs),
-              },
-            ]}
-            total={{ label: 'Zużycie z normy', value: `~${Math.round(estimate.usedL)} L` }}
-          />
-        )}
+        {/* ── RZECZYWISTE ZUŻYCIE (`.calc-box`) ──────────────────────────────── */}
+        {/* Po pomiarze ołówkiem - rachunek z DWÓCH odczytów, z werdyktem normy.
+            Historia sprzed pomiaru (ile latał, ile mógł spalić) mieszka w SZLAKU
+            arkusza, nie w drugim pudełku na ekranie (uwaga z urządzenia,
+            2026-09-03: „użyj analogicznych komponentów, po co wymyślać na nowo").
+            Bez rachunku ekran o nim MILCZY (reguła issue #69). */}
         {beforeOverride != null && consumption != null && (
           <CalcBox
             title="Rzeczywiste zużycie"
@@ -297,7 +333,8 @@ export function RefuelScreen({
           />
         )}
 
-        {/* ── DOLANO (`.section` + `.field` + `.slider-*`) ───────────────────── */}
+        {/* ── DOLANO (`.section` + `.field`; suwak-wskaźnik USUNIĘTY - jedyną
+            miarką ekranu jest pasek wyniku) ──────────────────────────────────── */}
         <Card header="inline" title="Dolano">
           {/* Bez etykiety „Ilość dolana" - powtarzała nagłówek karty słowo w słowo
               (uwaga z urządzenia, 2026-09-03; ta sama reguła, co „URUCHOMIENIE" nad
@@ -336,35 +373,39 @@ export function RefuelScreen({
               }}
             />
           </Field>
-
-          {/* Pasek jest WSKAŹNIKIEM, nie kontrolką - wartość ustawia Stepper wyżej. */}
-          {maxAdd != null && maxAdd > 0 && (
-            <ScaleBar ratio={addedL / maxAdd} tone="amber" scale={refuelScale(maxAdd)} />
-          )}
         </Card>
 
         {/* ── STAN PO TANKOWANIU (`.result-row`) ─────────────────────────────── */}
-        {/* Rachunek nie zaokrągla dolewki: „112 + 48,7 = 160,7 L" - zaokrąglona
+        {/* Dopiero z pomiarem: bez stanu przed tankowaniem suma nie istnieje,
+            a wiersz z kreską udawałby wynik (reguła issue #69).
+            Rachunek nie zaokrągla dolewki: „112 + 48,7 = 160,7 L" - zaokrąglona
             suma obok dokładnego wpisu wyglądałaby jak błąd arytmetyki.
             Bursztyn, nie zieleń (uwaga z urządzenia, 2026-09-03) - to liczba
             o paliwie, a zieleń jest akcentem głównym; miarka pod wierszem pokazuje
-            zastane (przygaszone) + dolane (pełny akcent) na tle pojemności. */}
-        <ResultBar
-          label="Stan po tankowaniu"
-          value={`${addedLitresText(afterL)} L`}
-          formula={[
-            `${Math.round(beforeL)} + ${addedLitresText(addedL)} = ${addedLitresText(afterL)} L`,
-            percentAfter != null ? `${percentAfter}% pojemności` : null,
-          ]
-            .filter(Boolean)
-            .join(' · ')}
-          gauge={
-            resultGauge == null
-              ? null
-              : { ...resultGauge, scale: ['0 L', `pojemność: ${capacityL} L`] }
-          }
-          tone={overCapacity ? 'red' : 'amber'}
-        />
+            zastane (neutralna szarość) + dolane (bursztyn) na tle pojemności.
+            To JEDYNA miarka ekranu (kolejna tura): paski przy FOB i pod dolewką
+            mówiły tę samą oś trzy razy. */}
+        {beforeL != null && afterL != null && (
+          <ResultBar
+            label="Stan po tankowaniu"
+            value={`${addedLitresText(afterL)} L`}
+            formula={[
+              `${Math.round(beforeL)} + ${addedLitresText(addedL)} = ${addedLitresText(afterL)} L`,
+              percentAfter != null ? `${percentAfter}% pojemności` : null,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+            // Podziałka ćwiartek jak pod dolewką kiedyś (uwaga z urządzenia,
+            // 2026-09-03) - na osi POJEMNOŚCI, bo tę oś mierzy miarka; ostatnia
+            // etykieta to pojemność zbiorników.
+            gauge={
+              resultGauge == null || capacityL == null
+                ? null
+                : { ...resultGauge, scale: refuelScale(capacityL) }
+            }
+            tone={overCapacity ? 'red' : 'amber'}
+          />
+        )}
 
         {/* ── komunikaty: nigdy cichy błąd (§6 pkt 3) ────────────────────────── */}
         {lastError != null && (
@@ -387,12 +428,15 @@ export function RefuelScreen({
         title="Stan przed tankowaniem"
         unit="L"
         tone="amber"
-        initialText={String(Math.round(beforeL))}
+        // Pole startuje PUSTE, gdy pomiaru jeszcze nie było - podstawiony szacunek
+        // dałoby się zatwierdzić bez patrzenia na paliwomierz, a historia stoi
+        // w szlaku niżej. Własną poprawkę wolno poprawiać dalej.
+        initialText={beforeOverride == null ? '' : String(Math.round(beforeOverride))}
+        // Szlak jak w arkuszach preflightu (02B): odczyt → latano → oczekiwanie.
+        // Wiersz odniesienia nie powtarza wtedy odczytu - niesie go pierwsze ogniwo.
+        trail={beforeTrail}
         rows={[
-          {
-            label: 'Nasza rachuba (ostatni odczyt)',
-            value: computedBeforeL != null ? litres(computedBeforeL) : 'brak odczytu',
-          },
+          ...(beforeTrail.length > 0 || referenceRow == null ? [] : [referenceRow]),
           {
             // Rejestracja zostaje tylko w arkuszu - on zasłania nagłówek (jak na 02a/02b).
             label: `Pojemność zbiorników · ${reg}`,
@@ -404,9 +448,9 @@ export function RefuelScreen({
           if (capacityL != null && v > capacityL) {
             return `Wpisane ${litres(v)} przekracza pojemność ${litres(capacityL)}. Sprawdź odczyt.`;
           }
-          if (computedBeforeL != null && v > computedBeforeL) {
+          if (reference != null && v > reference.fuelL) {
             return (
-              `Paliwa jest więcej niż przy ostatnim odczycie (${litres(computedBeforeL)}). ` +
+              `Paliwa jest więcej niż przy ostatnim odczycie (${litres(reference.fuelL)}). ` +
               'Sprawdź, czy ktoś nie tankował poza aplikacją - zapis dostanie flagę do wyjaśnienia.'
             );
           }
