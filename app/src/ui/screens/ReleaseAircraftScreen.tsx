@@ -24,7 +24,7 @@
  * z klamrą służby (issue #23, 2026-08-11).
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import {
@@ -70,6 +70,12 @@ import {
   releasePayload,
 } from './logic/releaseAircraft';
 import { emptyReleaseWarning, readingsUntouched } from './logic/releaseWarnings';
+import {
+  engineTimeInWindow,
+  estimateFob,
+  fuelEstimateTrail,
+  lastFuelReference,
+} from './logic/refuelMath';
 import type { NoFlightReason } from '../../domain';
 
 /**
@@ -110,6 +116,7 @@ export function ReleaseAircraftScreen({
   navigation: { navigate: (s: string) => void; goBack: () => void };
 }) {
   const projection = useSessionStore((s) => s.projection);
+  const events = useSessionStore((s) => s.events);
   const lastError = useSessionStore((s) => s.lastError);
   const releaseAircraft = useSessionStore((s) => s.releaseAircraft);
 
@@ -128,10 +135,29 @@ export function ReleaseAircraftScreen({
   const now = useHalfMinuteTicker();
   const vm = buildRelease(projection, now);
 
-  // Wartość pola podąża za rejestrem, dopóki pilot jej nie nadpisze - dzięki temu
-  // późne wczytanie sesji nie zostawia pustego formularza z pustym stanem startowym.
+  // Szacunek paliwa z normy - TA SAMA logika i ogniwa, co na tankowaniu (uwaga
+  // z urządzenia, 2026-09-03: „na zdaniu też pokaż szacunek z normy - analogiczne,
+  // nawet te same komponenty"): `estimateFob` + szlak `fuelEstimateTrail`.
+  const norm = aircraft?.consumption ?? null;
+  const estimate = useMemo(
+    () => estimateFob(events, projection, norm, now),
+    [events, projection, norm, now],
+  );
+  const reference = useMemo(() => lastFuelReference(events), [events]);
+  const engineSinceRef = useMemo(
+    () => (reference == null ? 0 : engineTimeInWindow(projection, events, reference.at, now)),
+    [reference, projection, events, now],
+  );
+  const freshReference = reference != null && engineSinceRef <= 0;
+
+  // Wartość pola podąża za rejestrem TYLKO, gdy odczyt jest AKTUALNY (silnik od
+  // niego nie pracował - 09C i tankowanie tuż po locie). Po biegu silnika pole
+  // paliwa stoi puste i WYMAGA pomiaru, a normę niesie sugestia - ta sama reguła
+  // dwóch przypadków, co na 06 (opis biznesowy użytkownika, 2026-09-03); wcześniej
+  // prefill z nieaktualnego odczytu udawał stan bieżący. MH zostaje przy rejestrze:
+  // licznik nie „spala się" w tle, a jego wartość końcową i tak pilnuje blokada.
   const reading = {
-    fuelL: fuelEdit ?? vm?.initial.fuelL ?? null,
+    fuelL: fuelEdit ?? (freshReference ? (vm?.initial.fuelL ?? null) : null),
     mh: mhEdit ?? vm?.initial.mh ?? null,
   };
 
@@ -296,7 +322,19 @@ export function ReleaseAircraftScreen({
               headerRight={<Tag label="wymagane" tone="red" />}
               contentStyle={styles.counters}
             >
-              <Field label="Paliwo na pokładzie" hint={finalFuelHint(projection, reading.fuelL)}>
+              <Field
+                label="Paliwo na pokładzie"
+                // Sugestia z normy przy PUSTYM polu, ze źródłem (reguła
+                // `readingsPrefill`) - znika, gdy pilot wpisze odczyt.
+                hint={[
+                  finalFuelHint(projection, reading.fuelL),
+                  reading.fuelL == null && estimate != null
+                    ? `szacunek z normy: ~${estimate.fobL} L`
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+              >
                 <ValueBox
                   value={reading.fuelL != null ? `${Math.round(reading.fuelL)}` : ''}
                   placeholder="odczytaj z paliwomierza"
@@ -363,6 +401,9 @@ export function ReleaseAircraftScreen({
         unit="L"
         tone="amber"
         initialText={reading.fuelL != null ? `${Math.round(reading.fuelL)}` : ''}
+        // Szlak jak na 06 i w arkuszach preflightu: odczyt → latano · zużycie
+        // z normy → zielone „Szacunkowo zostało" (wspólny `fuelEstimateTrail`).
+        trail={estimate == null || norm == null ? [] : fuelEstimateTrail(estimate, norm.windowDays)}
         rows={[
           { label: 'Przy przejęciu', value: litres(projection.fuel.startL) },
           { label: 'Dolane w tej operacji', value: litres(projection.fuel.addedL) },

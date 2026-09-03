@@ -16,6 +16,8 @@ import {
   engineTimeInWindow,
   estimateConsumption,
   estimateFob,
+  fuelEstimateTrail,
+  fuelReferenceLabel,
   hoursMinutes,
   lastFuelReference,
   maxAddableL,
@@ -246,6 +248,31 @@ describe('szacunek FOB z normy (podpowiedź na wejściu w 06)', () => {
       event('engine_stop', at(10, 34)),
     ];
     expect(estimateFob(events, projectSession(events), norm(), at(10, 48))!.fobL).toBe(0);
+  });
+});
+
+describe('szlak szacunku (wspólny dla 06 i 09B)', () => {
+  it('trzy ogniwa: odczyt → latano z normą → zielone „zostało"', () => {
+    const est = estimateFob(canonicalDay, projectSession(canonicalDay), norm(), at(10, 48))!;
+    const rows = fuelEstimateTrail(est, 90);
+
+    expect(rows.map((r) => r.title)).toEqual([
+      'Ostatni odczyt · preflight 08:00 UTC',
+      'Latano · 2h 22 min',
+      'Szacunkowo zostało ~112 L',
+    ]);
+    expect(rows[0]!.meta).toBe('w zbiorniku 150 L');
+    expect(rows[1]!.meta).toBe('zużycie z normy ~38 L');
+    expect(rows[2]!.tone).toBe('green');
+  });
+
+  it('podpis źródła odróżnia preflight od tankowania', () => {
+    expect(fuelReferenceLabel({ at: at(8, 0), fuelL: 150, source: 'preflight' })).toBe(
+      'preflight 08:00 UTC',
+    );
+    expect(fuelReferenceLabel({ at: at(10, 48), fuelL: 160, source: 'refuel' })).toBe(
+      'tankowanie 10:48 UTC',
+    );
   });
 });
 

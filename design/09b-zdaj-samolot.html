@@ -247,6 +247,19 @@
         <div class="counters">
           <div>
             <div class="field-label">Paliwo na pokładzie</div>
+            <!-- SZACUNEK Z NORMY JAK NA TANKOWANIU (uwaga z urządzenia, 2026-09-03:
+                 „na zdaniu też pokaż szacunek - analogiczne, nawet te same
+                 komponenty i logika"; wspólne `estimateFob` + `fuelEstimateTrail`).
+                 Po biegu silnika pole startuje PUSTE (placeholder „odczytaj
+                 z paliwomierza") - prefill z odczytu SPRZED lotu udawał stan
+                 bieżący - a podpis niesie wtedy sugestię ze źródłem:
+                 „przy przejęciu 96 L · bez tankowania · szacunek z normy: ~60 L".
+                 Arkusz odczytu dostaje TEN SAM szlak, co 06/02B: ● Ostatni odczyt
+                 · preflight 08:00 UTC (w zbiorniku 96 L) → ● Latano · 1:30
+                 (zużycie z normy ~36 L) → ● ZIELONE „Szacunkowo zostało ~60 L".
+                 Gdy silnik NIE pracował od odczytu (09C, tankowanie tuż po
+                 locie), pole wypełnia rejestr - jak dotąd. RENDEROWANY stan:
+                 odczyt już wpisany (62 L). -->
             <a href="09b-zdaj-samolot.html" class="field-input">
               <span class="field-value">62</span>
               <span class="field-unit">L</span>

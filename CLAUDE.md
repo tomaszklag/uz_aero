@@ -1799,6 +1799,16 @@ Uwagi z urządzenia do kroku liczników (NOWY LOT · 3/3):
   tankowaniu, usuń miarki przy FOB i dolano"): pasek poziomu zniknął z karty FOB
   (`GaugeHero` nie ma już `ratio`/`scale`) i spod dolewki (suwak-wskaźnik) - trzy
   paski mówiły tę samą oś pojemności trzy razy
+- **ZDANIE SAMOLOTU (09B) dostaje TEN SAM szacunek z normy** (kolejna tura:
+  „analogiczne i nawet te same komponenty i logika") - `estimateFob`
+  i `fuelEstimateTrail` są wspólne (dlatego mieszkają w `refuelMath.ts`, odtąd
+  logice OBU ekranów): po biegu silnika pole „Paliwo na pokładzie" startuje
+  PUSTE (prefill z odczytu sprzed lotu udawał stan bieżący - ta sama pułapka,
+  co na 06), podpis niesie sugestię „szacunek z normy: ~60 L", a arkusz odczytu
+  końcowego ten sam szlak trzech ogniw. Gdy silnik NIE pracował od odczytu
+  (09C, tankowanie tuż po locie), pole wypełnia rejestr jak dotąd - reguła
+  świeżości identyczna z 06. MH zostaje przy rejestrze: licznik nie „spala się"
+  w tle, a wartość końcową pilnuje blokada cofnięcia
 
 ## Zmiana załogi (07) po przeglądzie 2026-09-02
 Sześć uwag z urządzenia; wspólny mianownik ten sam, co na 02A - ekran mówi decyzją,

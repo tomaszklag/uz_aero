@@ -1,9 +1,12 @@
 /**
- * UZ Aero - arytmetyka ekranu TANKOWANIE (mockup 06).
+ * UZ Aero - arytmetyka stanu paliwa: TANKOWANIE (06) i ZDANIE SAMOLOTU (09B).
  *
- * Osobny moduł bez importów React Native, bo to jedyna nietrywialna logika tego ekranu
+ * Osobny moduł bez importów React Native, bo to jedyna nietrywialna logika tych ekranów
  * i jedyna, której pomyłka nie objawi się niczym widocznym - zła średnia L/h wygląda
- * dokładnie tak samo jak dobra.
+ * dokładnie tak samo jak dobra. Szacunek z normy i jego szlak są WSPÓLNE dla obu
+ * ekranów (uwaga z urządzenia, 2026-09-03: „to powinny być analogiczne i nawet te
+ * same komponenty i logika") - drugi egzemplarz rozjechałby się przy pierwszej
+ * poprawce jednego z nich.
  *
  * Co tu liczymy i skąd bierzemy dane:
  *  • **punkt odniesienia** - ostatni BEZPOŚREDNI odczyt paliwomierza w strumieniu
@@ -28,6 +31,7 @@ import {
   type Event,
   type SessionState,
 } from '../../../domain';
+import { litres, timeUtc } from '../../format';
 
 const HOUR_MS = 3_600_000;
 
@@ -182,6 +186,51 @@ export function estimateFob(
     engineMs,
     reference,
   };
+}
+
+/** Podpis źródła odczytu odniesienia - „preflight 08:00 UTC" / „tankowanie 10:48 UTC". */
+export function fuelReferenceLabel(reference: FuelReference): string {
+  return `${reference.source === 'preflight' ? 'preflight' : 'tankowanie'} ${timeUtc(reference.at)} UTC`;
+}
+
+/** Ogniwo szlaku - strukturalnie zgodne z `TrailRow` (logika nie importuje z UI). */
+export interface FuelTrailRow {
+  id: string;
+  title: string;
+  meta: string;
+  tone?: 'green';
+}
+
+/**
+ * Szlak szacunku do arkusza odczytu paliwa - TEN SAM komponent i te same ogniwa
+ * na 06 (stan przed tankowaniem) i 09B (odczyt końcowy przy zdaniu); wzorzec
+ * z arkuszy preflightu (uwaga z urządzenia, 2026-09-03: „mamy już ciekawy
+ * komponent, który obrazuje statystyki z ostatniego lotu - użyj analogicznych").
+ * Ogniwa: odczyt → ile latano i ile z tego wychodzi z normy → ZIELONE
+ * oczekiwanie, jak ogniwo oczekiwania oleju na 02I.
+ */
+export function fuelEstimateTrail(
+  estimate: FobEstimate,
+  windowDays: number,
+): FuelTrailRow[] {
+  return [
+    {
+      id: 'ref',
+      title: `Ostatni odczyt · ${fuelReferenceLabel(estimate.reference)}`,
+      meta: `w zbiorniku ${litres(estimate.reference.fuelL)}`,
+    },
+    {
+      id: 'flown',
+      title: `Latano · ${hoursMinutes(estimate.engineMs)}`,
+      meta: `zużycie z normy ~${Math.round(estimate.usedL)} L`,
+    },
+    {
+      id: 'left',
+      tone: 'green',
+      title: `Szacunkowo zostało ~${estimate.fobL} L`,
+      meta: `z normy samolotu (${windowDays} dni) - zweryfikuj z paliwomierza`,
+    },
+  ];
 }
 
 /** Ile jeszcze wejdzie do pełna. `null` = pojemność nieznana (brak konfiguracji w cache). */

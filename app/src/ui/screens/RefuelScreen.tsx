@@ -46,12 +46,14 @@ import {
 } from '../components';
 import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
-import { litres, parseLitres, timeUtc } from '../format';
+import { litres, parseLitres } from '../format';
 import {
   addedLitresText,
   engineTimeInWindow,
   estimateConsumption,
   estimateFob,
+  fuelEstimateTrail,
+  fuelReferenceLabel,
   hoursMinutes,
   lastFuelReference,
   maxAddableL,
@@ -182,10 +184,7 @@ export function RefuelScreen({
   // ── podpis pod polem: sugestia albo źródło wartości ────────────────────────────
   // Sugestia niesie ŹRÓDŁO przy liczbie i nie udaje odczytu z przyrządu - ta sama
   // reguła, co `readingsPrefill` we wpisie ręcznym.
-  const referenceLabel =
-    reference == null
-      ? null
-      : `${reference.source === 'preflight' ? 'preflight' : 'tankowanie'} ${timeUtc(reference.at)} UTC`;
+  const referenceLabel = reference == null ? null : fuelReferenceLabel(reference);
   const gaugeCaption =
     beforeOverride != null
       ? 'Odczyt z paliwomierza'
@@ -197,32 +196,10 @@ export function RefuelScreen({
             ? `Ostatni odczyt: ${referenceLabel} · ${litres(reference!.fuelL)}`
             : 'Brak odczytu w tej operacji';
 
-  // Szlak do arkusza pomiaru - TEN SAM komponent, co przy potwierdzaniu paliwa
-  // w preflighcie (uwaga z urządzenia, 2026-09-03: „mamy już ciekawy komponent,
-  // który obrazuje statystyki z ostatniego lotu - użyj analogicznych"). Ogniwa
-  // jak na 02B: odczyt → ile latano i ile z tego wychodzi z normy → zielone
-  // oczekiwanie, dokładnie jak ogniwo oczekiwania oleju na 02I.
+  // Szlak do arkusza pomiaru - wspólny builder z 09B (`fuelEstimateTrail`),
+  // ten sam komponent, co przy potwierdzaniu paliwa w preflighcie.
   const beforeTrail: TrailRow[] =
-    estimate == null || referenceLabel == null
-      ? []
-      : [
-          {
-            id: 'ref',
-            title: `Ostatni odczyt · ${referenceLabel}`,
-            meta: `w zbiorniku ${litres(estimate.reference.fuelL)}`,
-          },
-          {
-            id: 'flown',
-            title: `Latano · ${hoursMinutes(estimate.engineMs)}`,
-            meta: `zużycie z normy ~${Math.round(estimate.usedL)} L`,
-          },
-          {
-            id: 'left',
-            tone: 'green',
-            title: `Szacunkowo zostało ~${estimate.fobL} L`,
-            meta: `z normy samolotu (${norm!.windowDays} dni) - zweryfikuj z paliwomierza`,
-          },
-        ];
+    estimate == null || norm == null ? [] : fuelEstimateTrail(estimate, norm.windowDays);
 
   // Wiersz odniesienia obu pudełek rachunku: od którego odczytu liczymy.
   const referenceRow =
