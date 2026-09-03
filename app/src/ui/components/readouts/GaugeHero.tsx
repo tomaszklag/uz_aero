@@ -23,7 +23,7 @@ import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
 import { IconAction } from '../data/IconAction';
 import { ScaleBar } from './ScaleBar';
-import { toneColors, type Tone } from '../tone';
+import { TINTED_TRACK, toneColors, type Tone } from '../tone';
 
 export interface GaugeHeroProps {
   /** Etykieta nad wartością, np. „FOB przed tankowaniem". */
@@ -108,7 +108,16 @@ export function GaugeHero({
       </View>
 
       {ratio != null && (
-        <ScaleBar ratio={ratio} tone={tone} scale={scale} height={8} style={styles.bar} />
+        // Ciemna rynienka jak `.fob-bar` w mockupie: pasek leży na tonowanej karcie,
+        // więc rynienka z surfaceRaised zlewała się z tłem (uwaga 2026-09-03).
+        <ScaleBar
+          ratio={ratio}
+          tone={tone}
+          scale={scale}
+          height={8}
+          trackColor={TINTED_TRACK}
+          style={styles.bar}
+        />
       )}
 
       {caption != null && (

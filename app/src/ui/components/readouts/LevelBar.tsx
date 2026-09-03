@@ -28,17 +28,47 @@ export interface LevelBarProps {
    * nie część poziomu. `null`/brak = pasek bez znacznika, jak przy paliwie.
    */
   markerRatio?: number | null;
+  /**
+   * Granica stanu ZASTANEGO (0–1) - miarka „Stan po tankowaniu" na 06 (uwaga
+   * z urządzenia, 2026-09-03: „zaznaczyć, ile jest przed odczytem, ile dolano i ile
+   * łącznie"). Odcinek 0→base rysuje się przygaszonym akcentem (co już było),
+   * base→ratio pełnym (co właśnie dolano) - jasna część rośnie razem ze Stepperem,
+   * więc pasek odpowiada na wpis na żywo. `null`/brak = wypełnienie jednolite.
+   */
+  baseRatio?: number | null;
+  /**
+   * Tło rynienki. Domyślnie `surfaceRaised` (pasek na neutralnej karcie); na karcie
+   * TONOWANEJ (bursztynowy FOB, wynik tankowania) podaj ciemną rynienkę
+   * `rgba(0,0,0,0.35)` - jak `.fob-bar` w mockupie 06. Bez tego bursztynowe
+   * wypełnienie leżało na bursztynowym tle i pasek ginął (uwaga z urządzenia,
+   * 2026-09-03: „źle wygląda żółty pasek na żółtym tle").
+   */
+  trackColor?: string;
   width?: number;
   style?: ViewStyle;
 }
 
-export function LevelBar({ ratio, tone = 'amber', markerRatio = null, width = 130, style }: LevelBarProps) {
+export function LevelBar({
+  ratio,
+  tone = 'amber',
+  markerRatio = null,
+  baseRatio = null,
+  trackColor,
+  width = 130,
+  style,
+}: LevelBarProps) {
   const { theme } = useTheme();
   const c = toneColors(theme, tone);
   const clamped = Math.max(0, Math.min(1, Number.isFinite(ratio) ? ratio : 0));
   const marker =
     markerRatio != null && Number.isFinite(markerRatio)
       ? Math.max(0, Math.min(1, markerRatio))
+      : null;
+  // Granica zastanego nie wychodzi poza wypełnienie: „więcej było, niż jest" to stan
+  // niewyrażalny na miarce dolewki.
+  const base =
+    baseRatio != null && Number.isFinite(baseRatio)
+      ? Math.max(0, Math.min(clamped, baseRatio))
       : null;
 
   return (
@@ -52,20 +82,46 @@ export function LevelBar({ ratio, tone = 'amber', markerRatio = null, width = 13
           borderRadius: 3,
           borderWidth: theme.borderWidth,
           borderColor: c.border,
-          backgroundColor: theme.colors.surfaceRaised,
+          backgroundColor: trackColor ?? theme.colors.surfaceRaised,
           overflow: 'hidden',
         },
         style,
       ]}
     >
-      <View
-        style={{
-          width: `${clamped * 100}%`,
-          height: '100%',
-          borderRadius: 3,
-          backgroundColor: c.accent,
-        }}
-      />
+      {base == null ? (
+        <View
+          style={{
+            width: `${clamped * 100}%`,
+            height: '100%',
+            borderRadius: 3,
+            backgroundColor: c.accent,
+          }}
+        />
+      ) : (
+        <>
+          <View
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: `${base * 100}%`,
+              backgroundColor: c.accent,
+              opacity: 0.45,
+            }}
+          />
+          <View
+            style={{
+              position: 'absolute',
+              left: `${base * 100}%`,
+              top: 0,
+              bottom: 0,
+              width: `${(clamped - base) * 100}%`,
+              backgroundColor: c.accent,
+            }}
+          />
+        </>
+      )}
       {marker != null && (
         <View
           style={{

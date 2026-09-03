@@ -23,6 +23,10 @@ import type { Tone } from '../tone';
 export interface ScaleBarProps {
   /** Wypełnienie 0–1 (przycinane przez `LevelBar`). */
   ratio: number;
+  /** Granica stanu zastanego - patrz `LevelBar.baseRatio` (miarka dolewki na 06). */
+  baseRatio?: number | null;
+  /** Tło rynienki - patrz `LevelBar.trackColor` (ciemna na tonowanej karcie). */
+  trackColor?: string;
   tone?: Tone;
   /**
    * Podpisy podziałki, od lewej do prawej. Skrajne trzymają się krawędzi paska -
@@ -34,13 +38,23 @@ export interface ScaleBarProps {
   style?: ViewStyle;
 }
 
-export function ScaleBar({ ratio, tone = 'amber', scale = [], height = 6, style }: ScaleBarProps) {
+export function ScaleBar({
+  ratio,
+  baseRatio = null,
+  trackColor,
+  tone = 'amber',
+  scale = [],
+  height = 6,
+  style,
+}: ScaleBarProps) {
   const { theme } = useTheme();
 
   return (
     <View style={[{ width: '100%', gap: 5 }, style]}>
       <LevelBar
         ratio={ratio}
+        baseRatio={baseRatio}
+        trackColor={trackColor}
         tone={tone}
         style={{ width: '100%', height, borderRadius: height / 2 }}
       />

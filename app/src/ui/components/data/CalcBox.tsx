@@ -1,15 +1,20 @@
 /**
  * UZ Aero - CalcBox (`.calc-box` z mockupu 06)
  *
- * Tonowane pudełko z rozpisanym RACHUNKIEM: kilka wierszy „skąd to wiemy", linia,
- * wyróżniony wiersz wyniku i przypis mówiący, co z tym wynikiem zrobić.
+ * Pudełko z rozpisanym RACHUNKIEM: kilka wierszy „skąd to wiemy", linia
+ * i wyróżniony wiersz wyniku.
  *
  * Dlaczego osobny komponent, a nie `StatGrid`: siatka bilansowa odpowiada na
  * pytanie „co zapiszę" (klucz nad wartością, komórki równorzędne).
  * Tutaj wiersze są **przesłankami**, a nie danymi do zapisu - jeden z nich jest
- * wnioskiem i musi się wyróżniać, a całość niesie zastrzeżenie („punkt kontrolny,
- * zweryfikuj z dokumentacją"). Wartości z CalcBox-a nie trafiają wprost do rejestru:
- * to szacunek pomocniczy, obliczony z odczytów, a nie zmierzony.
+ * wnioskiem i musi się wyróżniać. Wartości z CalcBox-a nie trafiają wprost do
+ * rejestru: to szacunek pomocniczy, obliczony z odczytów, a nie zmierzony.
+ *
+ * Domyślnie NEUTRALNY (uwaga z urządzenia, 2026-09-03: „czemu Kalkulacja zużycia
+ * jest na żółtym polu?") - rachunek jest informacją, nie ostrzeżeniem, a bursztyn
+ * przy każdym tankowaniu robił z normalnego stanu alarm. Przypisu `note` nie ma:
+ * zdanie o punkcie kontrolnym i cache'u opisywało budowę analityki komuś, kto
+ * przyszedł zatankować (kategoria przypisów z issue #43/#72).
  */
 
 import React from 'react';
@@ -31,13 +36,11 @@ export interface CalcBoxProps {
   rows: CalcRow[];
   /** Wniosek: po linii, wartość wyróżniona akcentem. */
   total?: CalcRow | null;
-  /** Przypis pod rachunkiem - co pilot ma z tym zrobić. */
-  note?: string | null;
   tone?: Tone;
   style?: ViewStyle;
 }
 
-export function CalcBox({ title, rows, total, note, tone = 'amber', style }: CalcBoxProps) {
+export function CalcBox({ title, rows, total, tone = 'neutral', style }: CalcBoxProps) {
   const { theme } = useTheme();
   const c = toneColors(theme, tone);
 
@@ -84,19 +87,15 @@ export function CalcBox({ title, rows, total, note, tone = 'amber', style }: Cal
                 fontSize: 15,
                 lineHeight: 20,
                 letterSpacing: 0.5,
-                color: c.accent,
+                // Wniosek ma się wyróżniać także w pudełku neutralnym - `c.accent`
+                // dałby tam textSecondary, czyli ten sam ton co przesłanki.
+                color: tone === 'neutral' ? theme.colors.textPrimary : c.accent,
               }}
             >
               {total.value}
             </AppText>
           </View>
         </>
-      )}
-
-      {note != null && (
-        <AppText variant="body" tone="muted" style={styles.note}>
-          {note}
-        </AppText>
       )}
     </View>
   );
@@ -110,5 +109,4 @@ const styles = StyleSheet.create({
   // Linia oddzielająca przesłanki od wniosku (`.calc-divider`) - cieńsza od obramowania
   // pudełka, bo dzieli treść wewnątrz, a nie odgradza od reszty ekranu.
   divider: { height: 1, marginVertical: 2, opacity: 0.4 },
-  note: { fontSize: 10, lineHeight: 14 },
 });

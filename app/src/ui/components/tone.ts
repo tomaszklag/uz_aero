@@ -12,6 +12,16 @@
 
 import type { Theme } from '../theme/tokens';
 
+/**
+ * Rynienka paska poziomu leżącego na TONOWANEJ karcie (`.fob-bar` z mockupu 06):
+ * półprzezroczysta czerń działa na obu motywach, bo przyciemnia tło karty zamiast
+ * podmieniać je na kolor z palety. Jedna stała, żeby wskaźnik FOB i miarka wyniku
+ * tankowania nie rozjechały się o odcień (uwaga z urządzenia, 2026-09-03:
+ * „źle wygląda żółty pasek na żółtym tle" - rynienka z `surfaceRaised` zlewała
+ * bursztynowe wypełnienie z bursztynową kartą).
+ */
+export const TINTED_TRACK = 'rgba(0,0,0,0.35)';
+
 export type Tone = 'green' | 'amber' | 'red' | 'blue' | 'neutral';
 
 export interface ToneColors {

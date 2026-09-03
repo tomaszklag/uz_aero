@@ -28,7 +28,13 @@ import { Tag } from '../status/Tag';
 import { toneColors, type Tone } from '../tone';
 
 export interface FieldProps {
-  label: string;
+  /**
+   * Opcjonalna, bo etykieta nie powtarza nagłówka (issue #62: „URUCHOMIENIE" nad
+   * polem „Uruchomienie (UTC)"; uwaga z urządzenia 2026-09-03: „Ilość dolana" pod
+   * nagłówkiem karty „Dolano"). Pole będące jedyną treścią nazwanej sekcji bierze
+   * z `Field` samą oprawę - podpowiedź i odstępy - bez wiersza etykiety.
+   */
+  label?: string;
   /** Znacznik po prawej stronie etykiety („opcjonalne", „wymagane"). */
   tag?: { label: string; tone?: Tone };
   /**
@@ -54,17 +60,21 @@ export interface FieldProps {
 export function Field({ label, tag, labelNote, hint, children, style }: FieldProps) {
   return (
     <View style={[{ gap: 5 }, style]}>
-      <View style={styles.labelRow}>
-        <AppText variant="mono" tone="muted" style={styles.label}>
-          {label}
-        </AppText>
-        {labelNote != null && (
-          <AppText variant="mono" tone="muted" style={styles.labelNote}>
-            {labelNote}
-          </AppText>
-        )}
-        {tag != null && <Tag label={tag.label} tone={tag.tone ?? 'neutral'} />}
-      </View>
+      {(label != null || labelNote != null || tag != null) && (
+        <View style={styles.labelRow}>
+          {label != null && (
+            <AppText variant="mono" tone="muted" style={styles.label}>
+              {label}
+            </AppText>
+          )}
+          {labelNote != null && (
+            <AppText variant="mono" tone="muted" style={styles.labelNote}>
+              {labelNote}
+            </AppText>
+          )}
+          {tag != null && <Tag label={tag.label} tone={tag.tone ?? 'neutral'} />}
+        </View>
+      )}
 
       {children}
 

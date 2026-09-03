@@ -1709,6 +1709,73 @@ Uwagi z urządzenia do kroku liczników (NOWY LOT · 3/3):
   uzasadnieniem wymogu - jak w `preflightBlocker`; brzmienie z kolejnej tury).
   Zdania o silniku i pojemności zostają w całości: tych blokad nie widać z kontrolki
   nad przyciskiem
+- **dolewkę da się WPISAĆ z klawiatury, z miejscami po przecinku** (kolejna tura:
+  „ktoś wpisuje poprawny odczyt z licznika tankowania i tam są wartości po
+  przecinku"): tap w wartość otwiera decimal-pad (`Stepper.edit` + `parseLitres` -
+  kropka i przecinek znaczą to samo), przyciski ± dalej chodzą po pełnych litrach.
+  Miejsca po przecinku ZOSTAJĄ w wartości i w rachunku („112 + 48,7 = 160,7 L") -
+  zaokrąglenie okłamywałoby pilota o jego własnym wpisie (`addedLitresText`
+  w `refuelMath.ts`, do dwóch miejsc - dystrybutor liczy po 0,01 L)
+- **bez rachunku ekran o nim MILCZY** (uwaga z urządzenia, 2026-09-03: „jeśli nie ma
+  z czego policzyć, to po co to w ogóle wyświetlać?"): przy `estimateConsumption ==
+  null` (brak odczytu odniesienia, silnik nie pracował, paliwa przybyło) nie ma ani
+  pudełka, ani zdania w jego miejscu - komunikat tłumaczył budowę rachunku, nie dane
+  pilota. Ta sama reguła, którą issue #69 zastosowało do braku normy na karcie
+  rachunku
+- **etykieta „Ilość dolana" USUNIĘTA** (ta sama tura): powtarzała nagłówek karty
+  „Dolano" słowo w słowo - reguła „przy jednej kontrolce etykieta nie powtarza
+  tytułu" z issue #62. `Field.label` jest odtąd opcjonalne: pole będące jedyną
+  treścią nazwanej sekcji bierze z `Field` samą oprawę (podpowiedź, odstępy)
+- **kalkulacja zużycia jest NEUTRALNA i bez przypisu** (ta sama tura: „czemu na
+  żółtym polu? po co tłumaczyć coś o punkcie kontrolnym i cache?"): rachunek jest
+  informacją, nie ostrzeżeniem - bursztyn przy każdym tankowaniu robił z normalnego
+  stanu alarm. `CalcBox` domyślnie neutralny (wniosek wyróżnia `textPrimary`),
+  prop `note` WYCIĘTY z komponentu: zdanie o punkcie kontrolnym i cache'u opisywało
+  budowę analityki komuś, kto przyszedł zatankować (kategoria przypisów
+  z issue #43/#72). Werdykt normy zostaje kolorem przy swoim wierszu
+- **kalkulacja stoi POD KARTĄ FOB, nie na dnie ekranu** (pytanie z urządzenia,
+  2026-09-03: „to można wyliczyć i oszacować - czy to jest Kalkulacja zużycia? może
+  lepiej dać to na górze?"). Odpowiedź brzmi: FOB na górze to OSTATNI ODCZYT
+  paliwomierza (rachuby zużycia ekran nie robi), a kalkulacja liczy W DRUGĄ STRONĘ -
+  z wpisanego stanu i czasu pracy silnika od odczytu wyprowadza średnią L/h
+  i werdykt względem normy, czyli KONTROLĘ wiarygodności liczby wyżej. Dlatego stoi
+  bezpośrednio pod nią (wyjaśnienie przy liczbie, której dotyczy - reguła szlaków)
+  i reaguje na żywo na korektę ołówkiem. Podpis mockupu „Obliczone z ostatnich
+  operacji silnika" poprawiony na „Odczyt z paliwomierza" - obiecywał rachubę,
+  której nie ma
+- **„Stan po tankowaniu" na BURSZTYNIE, z miarką** (uwagi z urządzenia, 2026-09-03:
+  „zielony jest do czegoś innego raczej" + „dodać miarkę - zaznaczyć, ile jest przed
+  odczytem, ile dolano i ile łącznie"): to liczba o paliwie, a zieleń jest akcentem
+  głównym (silnik, CTA) i robiła z wyniku rachunku osobny komunikat „OK"; czerwień
+  zostaje dla wyniku łamiącego limit. Pod wierszem miarka na tle pojemności:
+  zastane przygaszonym odcinkiem (opacity 0.45), dolewka pełnym akcentem - jasna
+  część rośnie razem ze Stepperem. Proporcje liczy `refuelGauge` w `refuelMath.ts`
+  (z testami; `null` bez pojemności - pasek bez mianownika nic nie mówi, jak przy
+  FOB); segmenty rysuje `LevelBar.baseRatio` (przez `ScaleBar` i `ResultBar.gauge`)
+- **pasek na TONOWANEJ karcie ma CIEMNĄ rynienkę** (kolejna tura: „źle wygląda
+  żółty pasek na żółtym tle"): rynienka z `surfaceRaised` zlewała bursztynowe
+  wypełnienie z bursztynową kartą. `LevelBar.trackColor` + stała `TINTED_TRACK`
+  (`rgba(0,0,0,0.35)` - dokładnie `.fob-bar` z mockupu: półprzezroczysta czerń
+  przyciemnia tło karty, więc działa na obu motywach); używają jej wskaźnik FOB
+  (`GaugeHero`) i miarka wyniku (`ResultBar`). Paski na kartach neutralnych
+  (olej na 02A) zostają przy `surfaceRaised`
+- **FOB na wejściu to SZACUNEK Z NORMY, po odczycie stan RZECZYWISTY** (kolejne
+  tury: „zrób ten szacunek z normy jako podpowiedź" + „chcemy szacowaną ilość
+  paliwa, a po odczycie rzeczywistą - rzeczywiste zużycie"). Do tej pory ekran
+  pokazywał ostatni odczyt SPRZED lotu udający stan bieżący, a rachunek przy nim
+  zużycie ~0. `estimateFob` w `refuelMath.ts` (z testami): ostatni odczyt −
+  zużycie z normy za czas pracy silnika od odczytu - stawki FAZOWE, gdy model je
+  rozdzielił (czas lotu z `flightSpans`, offline), inaczej blokowa (drabina jak
+  w `consumption/expectation.ts`, issue #38); wynik zaokrąglony do PEŁNYCH litrów
+  (podpowiedź nie udaje precyzji) z podłogą 0. Podpis pod liczbą niesie źródło
+  („szacunek z normy samolotu (90 dni) - decyduje paliwomierz" - brzmienie z paska
+  kokpitu, reguła `readingsPrefill`); ołówek wpisuje odczyt rzeczywisty. Pudełko
+  rachunku ma DWA stany: „Szacunek z normy" (odczyt odniesienia, czas pracy,
+  zużycie z normy - BEZ werdyktu, bo norma nie ocenia samej siebie) → „Rzeczywiste
+  zużycie" (plus średnia L/h i werdykt). `null` bez normy/odczytu/biegu silnika -
+  ekran wraca do samego ostatniego odczytu, bez pudełka. Do zapisu `refuel`
+  średnia idzie WYŁĄCZNIE po prawdziwym odczycie - liczona z podpowiedzi byłaby
+  normą przebraną za pomiar
 
 ## Zmiana załogi (07) po przeglądzie 2026-09-02
 Sześć uwag z urządzenia; wspólny mianownik ten sam, co na 02A - ekran mówi decyzją,

@@ -32,7 +32,6 @@ import {
   Field,
   GaugeHero,
   Icon,
-  InlineNote,
   ReadingSheet,
   ResultBar,
   ScaleBar,
@@ -45,10 +44,13 @@ import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
 import { litres, parseLitres, timeUtc } from '../format';
 import {
+  addedLitresText,
   estimateConsumption,
+  estimateFob,
   hoursMinutes,
   lastFuelReference,
   maxAddableL,
+  refuelGauge,
   refuelScale,
 } from './logic/refuelMath';
 import { compareToNorm, normLabel, verdictLabel } from './logic/fuelNorm';
@@ -100,7 +102,21 @@ export function RefuelScreen({
   const reg = aircraft?.reg ?? aircraftId ?? '-';
   const capacityL = aircraft?.capacityL ?? null;
   const computedBeforeL = projection.fuel.lastReadingL;
-  const beforeL = beforeOverride ?? computedBeforeL ?? 0;
+
+  // Norma tego samolotu (serwer, ekran `A10a`) - podstawa szacunku FOB i punkt
+  // odniesienia dla wyniku. `null` znaczy „model poniżej progu publikacji".
+  const norm = aircraft?.consumption ?? null;
+
+  // Szacunek FOB z normy jako PODPOWIEDŹ (uwaga z urządzenia, 2026-09-03): bez niej
+  // ekran pokazywał odczyt sprzed lotu udający stan bieżący. Ekran ma DWA stany:
+  // szacowana ilość paliwa na wejściu → rzeczywista po odczycie ołówkiem
+  // (`beforeOverride`), a pudełko rachunku niżej mówi, na który z nich patrzysz.
+  const estimate = useMemo(
+    () => estimateFob(events, projection, norm, openedAt),
+    [events, projection, norm, openedAt],
+  );
+  const fobEstimated = beforeOverride == null && estimate != null;
+  const beforeL = beforeOverride ?? (estimate?.fobL ?? computedBeforeL ?? 0);
   const maxAdd = maxAddableL(beforeL, capacityL);
   const afterL = beforeL + addedL;
 
@@ -110,9 +126,6 @@ export function RefuelScreen({
     [events, projection, beforeL, openedAt],
   );
 
-  // Norma tego samolotu (serwer, ekran `A10a`) - punkt odniesienia dla dzisiejszego
-  // wyniku. `null` znaczy „model poniżej progu publikacji"; wiersz wtedy nie powstaje.
-  const norm = aircraft?.consumption ?? null;
   const normRow = useMemo(() => {
     const label = normLabel(norm);
     const verdict = verdictLabel(compareToNorm(consumption?.lPerH ?? null, norm));
@@ -126,7 +139,9 @@ export function RefuelScreen({
         beforeL,
         addedL,
         afterL,
-        consumptionLPerH: consumption?.lPerH ?? null,
+        // Średnia idzie do zapisu WYŁĄCZNIE po prawdziwym odczycie: liczona ze
+        // stanu podstawionego z normy byłaby normą przebraną za pomiar.
+        consumptionLPerH: beforeOverride != null ? (consumption?.lPerH ?? null) : null,
       });
       navigation.goBack();
     } catch {
@@ -135,7 +150,7 @@ export function RefuelScreen({
     } finally {
       setBusy(false);
     }
-  }, [addedL, afterL, beforeL, consumption, navigation, refuel]);
+  }, [addedL, afterL, beforeL, beforeOverride, consumption, navigation, refuel]);
 
   if (context == null) {
     return (
@@ -150,6 +165,8 @@ export function RefuelScreen({
   }
 
   // ── podpis pod wskaźnikiem: skąd wzięliśmy stan przed tankowaniem ──────────────
+  // Podpowiedź niesie ŹRÓDŁO przy liczbie i nie udaje odczytu z przyrządu - ta sama
+  // reguła, co `readingsPrefill` we wpisie ręcznym; brzmienie z paska paliwa kokpitu.
   const referenceLabel =
     reference == null
       ? null
@@ -157,9 +174,17 @@ export function RefuelScreen({
   const gaugeCaption =
     beforeOverride != null
       ? 'Odczyt z paliwomierza'
-      : referenceLabel != null
-        ? `Ostatni odczyt: ${referenceLabel}`
-        : 'Brak odczytu w tej operacji - wpisz stan z paliwomierza';
+      : fobEstimated
+        ? `szacunek z normy samolotu (${norm!.windowDays} dni) - decyduje paliwomierz`
+        : referenceLabel != null
+          ? `Ostatni odczyt: ${referenceLabel}`
+          : 'Brak odczytu w tej operacji - wpisz stan z paliwomierza';
+
+  // Wiersz odniesienia obu pudełek rachunku: od którego odczytu liczymy.
+  const referenceRow =
+    reference == null || referenceLabel == null
+      ? null
+      : { label: `Ostatni odczyt · ${referenceLabel}`, value: litres(reference.fuelL) };
 
   // ── blokada zapisu - zawsze z podanym powodem, nigdy ciche wyszarzenie ─────────
   // Powód jest INSTRUKCJĄ, nie uzasadnieniem wymogu (uwaga z urządzenia, 2026-09-02):
@@ -176,6 +201,7 @@ export function RefuelScreen({
 
   const overCapacity = capacityL != null && afterL > capacityL;
   const percentAfter = capacityL != null ? Math.round((afterL / capacityL) * 100) : null;
+  const resultGauge = refuelGauge(beforeL, addedL, capacityL);
 
   return (
     <Screen
@@ -230,10 +256,53 @@ export function RefuelScreen({
           onCorrect={() => setEditingBefore(true)}
         />
 
+        {/* ── RACHUNEK POD KARTĄ FOB (`.calc-box`) ───────────────────────────── */}
+        {/* POD liczbą, którą objaśnia (uwaga z urządzenia, 2026-09-03), w DWÓCH
+            stanach ekranu: szacunek z normy na wejściu → rzeczywiste zużycie po
+            odczycie ołówkiem. Werdykt względem normy TYLKO przy rzeczywistym -
+            szacunek wyprowadzony Z normy zawsze „zgadzałby się" z nią sam ze sobą.
+            Bez rachunku ekran o nim MILCZY („jeśli nie ma z czego, to po co to
+            w ogóle wyświetlać?" - reguła issue #69). */}
+        {fobEstimated && estimate != null && (
+          <CalcBox
+            title="Szacunek z normy"
+            rows={[
+              ...(referenceRow == null ? [] : [referenceRow]),
+              {
+                label: 'Czas pracy silnika (od odczytu)',
+                value: hoursMinutes(estimate.engineMs),
+              },
+            ]}
+            total={{ label: 'Zużycie z normy', value: `~${Math.round(estimate.usedL)} L` }}
+          />
+        )}
+        {beforeOverride != null && consumption != null && (
+          <CalcBox
+            title="Rzeczywiste zużycie"
+            rows={[
+              ...(referenceRow == null ? [] : [referenceRow]),
+              {
+                label: 'Czas pracy silnika (od odczytu)',
+                value: hoursMinutes(consumption.engineMs),
+              },
+              { label: 'Zużycie w tym czasie', value: `~${Math.round(consumption.usedL)} L` },
+              // Porównanie z normą samolotu - wiersz pojawia się TYLKO wtedy, gdy serwer
+              // ją przysłał. Bez normy nie ma tu kreski ani zera: brak podpowiedzi nie
+              // jest wartością do pokazania (mockup 06).
+              ...(normRow == null ? [] : [normRow]),
+            ]}
+            // Bez miejsc po przecinku (i z tyldą, jak w mockupie): to szacunek z dwóch
+            // odczytów paliwomierza, a ten nie ma dokładności uzasadniającej „16,1 L/h".
+            total={{ label: 'Średnie zużycie', value: `~${Math.round(consumption.lPerH)} L/h` }}
+          />
+        )}
+
         {/* ── DOLANO (`.section` + `.field` + `.slider-*`) ───────────────────── */}
         <Card header="inline" title="Dolano">
+          {/* Bez etykiety „Ilość dolana" - powtarzała nagłówek karty słowo w słowo
+              (uwaga z urządzenia, 2026-09-03; ta sama reguła, co „URUCHOMIENIE" nad
+              polem „Uruchomienie (UTC)" w issue #62). */}
           <Field
-            label="Ilość dolana"
             hint={
               maxAdd != null
                 ? `maks. dolewka: ${Math.round(maxAdd)} L (do pełna) · zbiorniki ${capacityL} L`
@@ -251,7 +320,20 @@ export function RefuelScreen({
               max={maxAdd ?? undefined}
               unit="L"
               tone="amber"
-              format={(v) => String(Math.round(v))}
+              // Miejsca po przecinku ZOSTAJĄ, gdy pilot je wpisał - patrz
+              // `addedLitresText`; przyciski ± dalej chodzą po pełnych litrach.
+              format={addedLitresText}
+              // Wpis z klawiatury po tapnięciu w wartość (uwaga z urządzenia,
+              // 2026-09-02): przyciski szybkiego wyboru nie niosą odczytu
+              // z licznika dystrybutora - „48,7 L" to 10 tapnięć albo jedno wpisanie.
+              // `decimal-pad` + `parseLitres` (kropka i przecinek znaczą to samo).
+              edit={{
+                toText: addedLitresText,
+                parse: parseLitres,
+                keyboardType: 'decimal-pad',
+                maxLength: 6,
+                label: 'Ilość dolanego paliwa',
+              }}
             />
           </Field>
 
@@ -262,55 +344,27 @@ export function RefuelScreen({
         </Card>
 
         {/* ── STAN PO TANKOWANIU (`.result-row`) ─────────────────────────────── */}
+        {/* Rachunek nie zaokrągla dolewki: „112 + 48,7 = 160,7 L" - zaokrąglona
+            suma obok dokładnego wpisu wyglądałaby jak błąd arytmetyki.
+            Bursztyn, nie zieleń (uwaga z urządzenia, 2026-09-03) - to liczba
+            o paliwie, a zieleń jest akcentem głównym; miarka pod wierszem pokazuje
+            zastane (przygaszone) + dolane (pełny akcent) na tle pojemności. */}
         <ResultBar
           label="Stan po tankowaniu"
-          value={litres(afterL)}
+          value={`${addedLitresText(afterL)} L`}
           formula={[
-            `${Math.round(beforeL)} + ${Math.round(addedL)} = ${Math.round(afterL)} L`,
+            `${Math.round(beforeL)} + ${addedLitresText(addedL)} = ${addedLitresText(afterL)} L`,
             percentAfter != null ? `${percentAfter}% pojemności` : null,
           ]
             .filter(Boolean)
             .join(' · ')}
-          tone={overCapacity ? 'red' : 'green'}
+          gauge={
+            resultGauge == null
+              ? null
+              : { ...resultGauge, scale: ['0 L', `pojemność: ${capacityL} L`] }
+          }
+          tone={overCapacity ? 'red' : 'amber'}
         />
-
-        {/* ── KALKULACJA ZUŻYCIA (`.calc-box`) ───────────────────────────────── */}
-        {consumption != null ? (
-          <CalcBox
-            title="Kalkulacja zużycia"
-            rows={[
-              {
-                label: 'Czas pracy silnika (od odczytu)',
-                value: hoursMinutes(consumption.engineMs),
-              },
-              { label: 'Zużycie w tym czasie', value: `~${Math.round(consumption.usedL)} L` },
-              // Porównanie z normą samolotu - wiersz pojawia się TYLKO wtedy, gdy serwer
-              // ją przysłał. Bez normy nie ma tu kreski ani zera: brak podpowiedzi nie
-              // jest wartością do pokazania (mockup 06).
-              ...(normRow == null ? [] : [normRow]),
-            ]}
-            // Bez miejsc po przecinku (i z tyldą, jak w mockupie): to szacunek z dwóch
-            // odczytów paliwomierza, a ten nie ma dokładności uzasadniającej „16,1 L/h".
-            total={{ label: 'Średnie zużycie', value: `~${Math.round(consumption.lPerH)} L/h` }}
-            note={
-              norm == null
-                ? 'Punkt kontrolny - zweryfikuj z dokumentacją samolotu'
-                : 'Punkt kontrolny - zweryfikuj z dokumentacją samolotu. Norma uczy się z historii odczytów; wynik wyraźnie poza nią to powód, żeby sprawdzić odczyt. Paliwomierz wygrywa.'
-            }
-          />
-        ) : (
-          // Puste miejsce po rachunku byłoby mylące: pilot ma wiedzieć, DLACZEGO średniej
-          // nie ma, zamiast szukać jej wzrokiem.
-          <InlineNote
-            icon="info"
-            tone="neutral"
-            text={
-              reference == null
-                ? 'Kalkulacja zużycia pojawi się po pierwszym odczycie paliwa w tej operacji.'
-                : 'Silnik nie pracował od ostatniego odczytu (albo paliwa jest więcej niż wtedy) - nie ma z czego policzyć średniego zużycia.'
-            }
-          />
-        )}
 
         {/* ── komunikaty: nigdy cichy błąd (§6 pkt 3) ────────────────────────── */}
         {lastError != null && (

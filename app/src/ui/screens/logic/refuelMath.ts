@@ -21,11 +21,15 @@
 import {
   blockSpans,
   eventTime,
+  flightSpans,
   spanTimeInWindow,
+  type ConsumptionNorm,
   type EpochMillis,
   type Event,
   type SessionState,
 } from '../../../domain';
+
+const HOUR_MS = 3_600_000;
 
 /** Ostatni bezpośredni odczyt paliwomierza w strumieniu zdarzeń. */
 export interface FuelReference {
@@ -117,7 +121,67 @@ export function estimateConsumption(
   const usedL = reference.fuelL - beforeL;
   if (usedL < 0) return null;
 
-  return { engineMs, usedL, lPerH: usedL / (engineMs / 3_600_000), reference };
+  return { engineMs, usedL, lPerH: usedL / (engineMs / HOUR_MS), reference };
+}
+
+/** Szacunek stanu paliwa z normy - podpowiedź na wejściu w ekran 06. */
+export interface FobEstimate {
+  /**
+   * Szacowany FOB (ostatni odczyt − zużycie z normy), ZAOKRĄGLONY do pełnych litrów
+   * z podłogą 0. Podpowiedź nie udaje precyzji, której nie ma - miejsca po przecinku
+   * są zarezerwowane dla wpisu pilota (dolewka z licznika dystrybutora).
+   */
+  fobL: number;
+  /** Zużycie z normy w oknie od odczytu (L, niezaokrąglone - do wiersza „~38 L"). */
+  usedL: number;
+  /** Czas pracy silnika od odczytu (ms). */
+  engineMs: number;
+  reference: FuelReference;
+}
+
+/**
+ * Szacuje stan paliwa „teraz" z ostatniego odczytu i normy samolotu (uwaga
+ * z urządzenia, 2026-09-03: „zrób ten szacunek z normy jako podpowiedź") - żeby
+ * pilot wchodzący w tankowanie nie oglądał odczytu sprzed lotu udającego stan
+ * bieżący.
+ *
+ * Stawki FAZOWE, gdy model je rozdzielił (czas lotu × stawka lotu + reszta biegu
+ * × stawka ziemi), inaczej stawka blokowa - ta sama drabina, co w
+ * `consumption/expectation.ts`: dzień z długim kołowaniem liczony samą stawką
+ * blokową przeszacowałby zużycie (issue #38). Czas lotu przychodzi z projekcji
+ * (`flightSpans`), więc szacunek wychodzi offline, jak reszta danych operacji.
+ *
+ * `null` = nie ma czego podpowiedzieć (ekran wraca do ostatniego odczytu):
+ *  • brak normy - nie zgadujemy stawki,
+ *  • brak odczytu odniesienia - nie ma od czego odjąć,
+ *  • silnik nie pracował od odczytu - odczyt JEST stanem bieżącym, szacunek
+ *    niczego by nie dodał, a podpis „szacunek" podważałby prawdziwą liczbę.
+ */
+export function estimateFob(
+  events: Event[],
+  state: SessionState,
+  norm: ConsumptionNorm | null,
+  now: EpochMillis,
+): FobEstimate | null {
+  if (norm == null) return null;
+  const reference = lastFuelReference(events);
+  if (reference == null) return null;
+
+  const engineMs = engineTimeInWindow(state, events, reference.at, now);
+  if (engineMs <= 0) return null;
+
+  const airMs = Math.min(engineMs, spanTimeInWindow(flightSpans(state), reference.at, now));
+  const usedL =
+    norm.airLPerH != null && norm.groundLPerH != null
+      ? (norm.airLPerH * airMs + norm.groundLPerH * (engineMs - airMs)) / HOUR_MS
+      : (norm.blockLPerH * engineMs) / HOUR_MS;
+
+  return {
+    fobL: Math.max(0, Math.round(reference.fuelL - usedL)),
+    usedL,
+    engineMs,
+    reference,
+  };
 }
 
 /** Ile jeszcze wejdzie do pełna. `null` = pojemność nieznana (brak konfiguracji w cache). */
@@ -140,6 +204,45 @@ export function refuelScale(maxL: number): string[] {
     `${round5(maxL * 0.75)} L`,
     `${Math.round(maxL)} L`,
   ];
+}
+
+/** Miarka pod wynikiem: stan zastany i dolewka na tle pojemności (0–1). */
+export interface RefuelGauge {
+  /** Wypełnienie CAŁKOWITE po dolewce (stan zastany + dolane). */
+  ratio: number;
+  /** Granica „ile było przed dolewką" - odcinek 0→base rysuje się przygaszony. */
+  baseRatio: number;
+}
+
+/**
+ * Proporcje miarki „Stan po tankowaniu" (uwaga z urządzenia, 2026-09-03: „dodać
+ * miarkę - zaznaczyć, ile jest przed odczytem, ile dolano i ile łącznie").
+ * `null` bez znanej pojemności - pasek bez mianownika nie ma czego pokazać
+ * (ta sama reguła, co przy wskaźniku FOB). Przepełnienie przycina się do 1,
+ * a o łamaniu limitu mówi ton i blokada zapisu, nie geometria paska.
+ */
+export function refuelGauge(
+  beforeL: number,
+  addedL: number,
+  capacityL: number | null,
+): RefuelGauge | null {
+  if (capacityL == null || capacityL <= 0) return null;
+  const clamp = (v: number): number => Math.max(0, Math.min(1, v));
+  const baseRatio = clamp(beforeL / capacityL);
+  return { ratio: clamp((beforeL + addedL) / capacityL), baseRatio };
+}
+
+/**
+ * Ilość dolana jako napis - Z miejscami po przecinku, gdy pilot je wpisał (uwaga
+ * z urządzenia, 2026-09-02: „ktoś wpisuje poprawny odczyt z licznika tankowania
+ * i tam są wartości po przecinku"). Dystrybutor liczy po 0,01 L, więc do dwóch
+ * miejsc; wartość z przycisków ± jest całkowita i pisze się bez ogona „,00" -
+ * zaokrąglanie w górę okłamywałoby pilota o jego własnym wpisie (§6 pkt 3).
+ * Przecinek po polsku, jak w `oilLitres`.
+ */
+export function addedLitresText(value: number): string {
+  const rounded = Math.round(value * 100) / 100;
+  return String(rounded).replace('.', ',');
 }
 
 /**

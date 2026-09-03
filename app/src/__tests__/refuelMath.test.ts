@@ -12,14 +12,17 @@
  */
 
 import {
+  addedLitresText,
   engineTimeInWindow,
   estimateConsumption,
+  estimateFob,
   hoursMinutes,
   lastFuelReference,
   maxAddableL,
+  refuelGauge,
   refuelScale,
 } from '../ui/screens/logic/refuelMath';
-import { projectSession, type Event } from '../domain';
+import { projectSession, type ConsumptionNorm, type Event } from '../domain';
 
 const DAY = Date.UTC(2026, 5, 22);
 const at = (h: number, m: number): number => DAY + (h * 60 + m) * 60_000;
@@ -177,6 +180,109 @@ describe('limity dolewki i podziałka', () => {
 
   it('podziałka odwzorowuje `.slider-labels` z mockupu', () => {
     expect(refuelScale(218)).toEqual(['0 L', '55 L', '110 L', '165 L', '218 L']);
+  });
+});
+
+/** Norma z serwera do testów szacunku - domyślnie sama stawka blokowa 16 L/h. */
+function norm(overrides: Partial<ConsumptionNorm> = {}): ConsumptionNorm {
+  return {
+    windowDays: 90,
+    blockLPerHLow: 15,
+    blockLPerHHigh: 17,
+    blockLPerH: 16,
+    airLPerH: null,
+    groundLPerH: null,
+    litersPerFlight: null,
+    fuelRatioLow: null,
+    fuelRatioHigh: null,
+    mh: null,
+    intervals: 42,
+    engineMs: 100 * 3_600_000,
+    computedAt: DAY,
+    ...overrides,
+  };
+}
+
+describe('szacunek FOB z normy (podpowiedź na wejściu w 06)', () => {
+  it('odtwarza mockup: 150 L − 16 L/h × 2:22 ≈ 112 L', () => {
+    const est = estimateFob(canonicalDay, projectSession(canonicalDay), norm(), at(10, 48));
+    expect(est).not.toBeNull();
+    expect(est!.fobL).toBe(112);
+    expect(est!.usedL).toBeCloseTo(16 * (142 / 60));
+    expect(est!.reference.fuelL).toBe(150);
+  });
+
+  it('ze stawkami fazowymi liczy czas lotu osobno od ziemi', () => {
+    // Lot 08:20–10:20 (2 h w powietrzu), reszta biegu (22 min) na ziemi.
+    const events = [
+      ...canonicalDay,
+      event('takeoff', at(8, 20)),
+      event('landing', at(10, 20)),
+    ];
+    const est = estimateFob(
+      events,
+      projectSession(events),
+      norm({ airLPerH: 18, groundLPerH: 8 }),
+      at(10, 48),
+    );
+    // 18 × 2 + 8 × (22/60) = 38,93 → 150 − 38,93 ≈ 111.
+    expect(est!.usedL).toBeCloseTo(18 * 2 + 8 * (22 / 60));
+    expect(est!.fobL).toBe(111);
+  });
+
+  it('bez normy nie zgaduje - null', () => {
+    expect(estimateFob(canonicalDay, projectSession(canonicalDay), null, at(10, 48))).toBeNull();
+  });
+
+  it('silnik nie pracował od odczytu = null (odczyt JEST stanem bieżącym)', () => {
+    const events = [preflight(at(8, 0), 150)];
+    expect(estimateFob(events, projectSession(events), norm(), at(8, 30))).toBeNull();
+  });
+
+  it('szacunek nie schodzi poniżej zera', () => {
+    const events = [
+      preflight(at(8, 0), 10),
+      event('engine_start', at(8, 12)),
+      event('engine_stop', at(10, 34)),
+    ];
+    expect(estimateFob(events, projectSession(events), norm(), at(10, 48))!.fobL).toBe(0);
+  });
+});
+
+describe('miarka stanu po tankowaniu', () => {
+  it('odwzorowuje liczby z mockupu: 112 zastane + 48,7 dolane na 330 L', () => {
+    const g = refuelGauge(112, 48.7, 330);
+    expect(g).not.toBeNull();
+    expect(g!.baseRatio).toBeCloseTo(112 / 330);
+    expect(g!.ratio).toBeCloseTo(160.7 / 330);
+  });
+
+  it('bez pojemności miarki nie ma - pasek bez mianownika nic nie mówi', () => {
+    expect(refuelGauge(112, 48, null)).toBeNull();
+  });
+
+  it('przepełnienie przycina się do 1 - o limicie mówi ton, nie geometria', () => {
+    const g = refuelGauge(300, 60, 330);
+    expect(g!.ratio).toBe(1);
+    expect(g!.baseRatio).toBeCloseTo(300 / 330);
+  });
+});
+
+describe('format ilości dolanej', () => {
+  it('miejsca po przecinku zostają, gdy pilot je wpisał (licznik dystrybutora)', () => {
+    // Uwaga z urządzenia (2026-09-02): odczyt z licznika tankowania bywa
+    // ułamkowy - zaokrąglenie okłamywałoby pilota o jego własnym wpisie.
+    expect(addedLitresText(48.7)).toBe('48,7');
+    expect(addedLitresText(48.72)).toBe('48,72');
+  });
+
+  it('wartość całkowita (przyciski ±) pisze się bez ogona „,00"', () => {
+    expect(addedLitresText(48)).toBe('48');
+    expect(addedLitresText(0)).toBe('0');
+  });
+
+  it('szum zmiennoprzecinkowy przycina się do setnych', () => {
+    expect(addedLitresText(48.7 + 5)).toBe('53,7');
   });
 });
 
