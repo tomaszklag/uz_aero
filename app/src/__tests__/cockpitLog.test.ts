@@ -191,15 +191,26 @@ describe('stopka i bramka karty', () => {
     expect(axis(sessionEvents()).foot.some((i) => i.id === 'route')).toBe(false);
   });
 
-  it('karta logu zapala się dopiero przy zdarzeniu operacyjnym (issue #19)', () => {
+  /**
+   * ODWRÓCONE WOBEC ISSUE #19 (issue #84, zgłoszenie z urządzenia): „dopiero jak
+   * zaloguję zdarzenie taxi, pojawiają się wpisy «przejęcie» i «uruchomienie» -
+   * a powinny się raczej pojawić od razu". Pusty log po uruchomieniu silnika czytał się
+   * jak brak zapisu, a to jest jedyne pytanie, które pilot do tej karty ma.
+   */
+  it('karta logu zapala się już przy przejęciu i uruchomieniu', () => {
     const poUruchomieniu = sessionEvents().filter(
       (e) => e.type === 'session_claim' || e.type === 'preflight_confirm' || e.uuid === 'engine-on',
     );
-    // Przejęcie + uruchomienie + „na żywo" to jeszcze nie przebieg sesji.
-    expect(axis(poUruchomieniu, at(11, 20)).hasEvents).toBe(false);
+    expect(axis(poUruchomieniu, at(11, 20)).hasEvents).toBe(true);
 
     const zKolowaniem = [...poUruchomieniu, event('taxi', at(11, 26), { method: 'auto' })];
     expect(axis(zKolowaniem, at(11, 30)).hasEvents).toBe(true);
+  });
+
+  it('sam wiersz „na żywo" karty nie zapala - nie jest zapisem rejestru', () => {
+    // Sesja bez ani jednego zdarzenia w strumieniu: oś ma wtedy najwyżej licznik stanu,
+    // a ten mówi o czasie, który stoi już w przyrządach kokpitu.
+    expect(axis([], at(11, 20)).hasEvents).toBe(false);
   });
 
   it('samo tankowanie przed startem też zapala kartę', () => {

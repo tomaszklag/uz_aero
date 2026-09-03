@@ -67,7 +67,6 @@ export * from './input/ReasonField';
 export * from './readouts/Readout';
 export * from './readouts/LevelBar';
 export * from './readouts/ScaleBar';
-export * from './readouts/GaugeHero';
 export * from './readouts/Trail';
 
 // Warstwy nad ekranem

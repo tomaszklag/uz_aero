@@ -23,11 +23,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import {
-  CommonActions,
-  usePreventRemove,
-  type NavigationAction,
-} from '@react-navigation/native';
+import { CommonActions, type NavigationAction } from '@react-navigation/native';
 
 import {
   AbandonDraftSheet,
@@ -60,6 +56,7 @@ import { Icon } from '../components/foundation/Icon';
 import { useTheme } from '../theme';
 import { useCurrentPilot, useSessionStore } from '../store';
 import { usePilotDay } from '../hooks/usePilotDay';
+import { useAbandonExit } from '../hooks/useAbandonExit';
 import { uuidv4 } from '../../infrastructure/id';
 import {
   dateTimeUtcShort,
@@ -75,6 +72,7 @@ import {
 } from '../format';
 import {
   oilAfterRow,
+  oilClaimView,
   oilEntryWarning,
   oilValueText,
   type OilConfig,
@@ -112,13 +110,13 @@ import {
   mhBeforeReference,
   mhContinuityWarnings,
   oilContinuityWarnings,
-  oilReference,
 } from './logic/readingsContinuity';
 import {
   prefillSource,
   readingsPrefill,
   type AppliedPrefill,
 } from './logic/readingsPrefill';
+import { fuelChainTrail, mhChainTrail } from './logic/readingsTrail';
 import { useReadingsChain } from '../hooks/useReadingsChain';
 import type { RemoteReadingsChain } from '../../application';
 import { manualFuelBalanceView, manualMhBalanceView } from './logic/manualFlightBalance';
@@ -180,24 +178,18 @@ export function ManualFlightScreen({
    * Ta sama mechanika, co przy rezygnacji z preflightu (issue #55) i przy blokadzie
    * kokpitu (04D) - `usePreventRemove`, bo obejmuje i przycisk, i gest.
    */
-  const [leaveAction, setLeaveAction] = useState<NavigationAction | null>(null);
-  const [leaving, setLeaving] = useState(false);
   const dirty = manualFlightDirty(draft, pristineDay);
 
-  usePreventRemove(!leaving && (stepIndex > 0 || dirty), ({ data }) => {
-    // Z dalszego kroku „wstecz" znaczy KROK WSTECZ - akcję nawigacji porzucamy.
-    if (stepIndex > 0) {
-      setStepIndex((i) => i - 1);
-      return;
-    }
-    setLeaveAction(data.action);
+  /* Sekwencję wyjścia trzyma wspólny hook (issue #84 pkt 7): potwierdzenie rezygnacji
+     wywracało aplikację, bo zdejmowało ekran spod okna arkusza, które jeszcze się
+     zamykało - uzasadnienie faz w `hooks/abandonExit.ts`. Tutaj zostaje to, co jest
+     treścią TEGO ekranu: z dalszego kroku „wstecz" znaczy KROK WSTECZ i o rezygnację
+     nie pyta w ogóle. */
+  const exit = useAbandonExit(navigation, stepIndex > 0 || dirty, () => {
+    if (stepIndex === 0) return false;
+    setStepIndex((i) => i - 1);
+    return true;
   });
-
-  // Zatrzymana akcja jedzie dopiero PO re-renderze z opuszczoną bramką: dispatch w tym
-  // samym tiku trafiłby w listener pamiętający jeszcze bramkę podniesioną (issue #55).
-  useEffect(() => {
-    if (leaving && leaveAction != null) navigation.dispatch(leaveAction);
-  }, [leaving, leaveAction, navigation]);
 
   // ── dane referencyjne: flota i piloci (do wyboru Duala) ────────────────────
   const [fleet, setFleet] = useState<ReferenceAircraft[]>([]);
@@ -431,6 +423,36 @@ export function ManualFlightScreen({
     () => manualMhBalanceView(draft, norm, mhFormat),
     [draft, norm, mhFormat],
   );
+  /* SZLAK OLEJU - dokładnie ten sam builder, co na 02A (issue #84 pkt 3 i 4: „ta sama
+     sytuacja dla oleju […] powinniśmy mieć podobne komponenty jak na ekranie
+     definiowania nowego lotu krok 3"). Kotwicą jest tu sąsiad z łańcucha, nie
+     przekazanie z cache: wpis dotyczy przeszłej chwili. Oczekiwania z normy nie
+     będzie, bo `oilConfig.normLPerH` jest świadomie `null` (rachunek „ile powinno
+     być TERAZ" mówiłby o innym dniu) - zostaje samo ogniwo ostatniego pomiaru. */
+  const oilView = useMemo(
+    () =>
+      oilClaimView({
+        config: oilConfig,
+        lastOil: chain?.oil ?? null,
+        currentMh: draft.mhBefore ?? 0,
+        mhFormat,
+        enteredL: draft.oilL,
+        addedL: draft.oilAddedL,
+        pilotName: (id) => pilots.find((p) => p.id === id)?.name ?? id ?? 'Poprzedni pilot',
+      }),
+    // `oilConfig` powstaje przy każdym renderze - do zależności wchodzą jego pola.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      chain,
+      draft.mhBefore,
+      draft.oilL,
+      draft.oilAddedL,
+      mhFormat,
+      pilots,
+      oilConfig.minL,
+      oilConfig.capacityL,
+    ],
+  );
   /* Norma jest DANĄ Z SERWERA, więc niesie adnotację wieku (§4.8) - ta sama, co przy
      ostrzeżeniach łańcucha. Od 2026-08-29 idzie tą samą drogą, co na ekranie 10:
      stoi W ARKUSZU szczegółów, przy liczbach, których dotyczy - na karcie została
@@ -440,6 +462,17 @@ export function ManualFlightScreen({
     norm != null && aircraft?.fetchedAt != null ? (
       <FreshnessNote state="cache" syncedAt={dateTimeUtcShort(aircraft.fetchedAt)} />
     ) : null;
+  /* Szlaki arkuszy odczytu (issue #84 pkt 1, 2 i 4) - liczone RAZ, bo wchodzą i do
+     `trail`, i do decyzji „czy wiersz odniesienia jest jeszcze potrzebny". Pole
+     dolewki paliwa szlaku nie ma i mieć nie może: rejestr nie wie, ile pilot
+     zatankował - zna wyłącznie stany po obu stronach. */
+  const fuelTrail =
+    sheet?.kind === 'fuel' && sheet.which !== 'added'
+      ? fuelChainTrail(chain, sheet.which === 'after' ? 'after' : 'found')
+      : [];
+  const mhTrail =
+    sheet?.kind === 'mh' ? mhChainTrail(chain, sheet.which ?? 'before', mhFormat) : [];
+
   // Granice godzin wpisu = doba lotu; stepper nie ucieknie w cudzy dzień.
   const dayMin = draft.day;
   const dayMax = draft.day + 24 * HOUR - MIN;
@@ -466,7 +499,7 @@ export function ManualFlightScreen({
              które zachowują się różnie, to była pierwsza połowa zgłoszenia. */
           onBack={() => {
             if (stepIndex > 0) setStepIndex(stepIndex - 1);
-            else if (dirty) setLeaveAction(CommonActions.navigate('MyDay'));
+            else if (dirty) exit.ask(CommonActions.navigate('MyDay'));
             else navigation.navigate('MyDay');
           }}
           backLabel={stepIndex === 0 ? 'Mój dzień' : 'Wróć'}
@@ -877,22 +910,41 @@ export function ManualFlightScreen({
                 z kartki sprzed tygodnia może uczciwego pomiaru nie mieć, a fakt lotu
                 jest cenniejszy niż kompletność formularza (reguła flow 15 - blokera
                 NIE MA). Stąd tag „opcjonalnie": tu naprawdę odróżnia. */}
-            <Card title="Olej · opcjonalnie" header="inline">
-              <Field label="Pomiar i dolewka">
+            {/* OPCJONALNOŚĆ MÓWI PLAKIETKA, NIE SŁOWO W TYTULE (issue #84 pkt 5:
+                „dla oleju labelka «opcjonalnie» powinna być jako taki badge - tak
+                robimy w innych miejscach"). „Olej · opcjonalnie" czytało się jak
+                NAZWA sekcji, choć opisuje jej właściwość - a właściwość ma w tym
+                systemie jeden kształt, ten sam co przy Dualu i przy Kliencie.
+
+                DWA POLA, NIE JEDNO (pkt 3: „daj dla dolewki oleju oddzielny input
+                na głównym ekranie - teraz dla paliwa i motogodzin mam każde pole
+                jako oddzielny input"). Pomiar i dolewka to dwie różne liczby i dwa
+                różne pytania, więc mają dwa wiersze - jak zastane/dolane/po locie
+                przy paliwie. Arkusz zostaje JEDEN, bo przy bagnecie to jedna
+                czynność: zmierz → jeśli mało, dolej. */}
+            <Card
+              title="Olej"
+              header="inline"
+              headerRight={<Tag label="opcjonalne" tone="neutral" />}
+            >
+              <Field label="Pomiar z bagnetu">
                 <ValueBox
-                  value={(() => {
-                    if (draft.oilL != null) {
-                      return (draft.oilAddedL ?? 0) > 0
-                        ? `${oilValueText(draft.oilL)} + ${oilValueText(draft.oilAddedL)}`
-                        : oilValueText(draft.oilL);
-                    }
-                    return draft.oilAddedL != null ? `+ ${oilValueText(draft.oilAddedL)}` : '';
-                  })()}
-                  placeholder="pomiar z bagnetu"
+                  value={oilValueText(draft.oilL)}
+                  placeholder="poziom na bagnecie"
                   unit="L"
                   actionIcon="edit"
                   onPress={() => setSheet({ kind: 'oil' })}
-                  accessibilityLabel="Olej - pomiar i dolewka"
+                  accessibilityLabel="Olej - pomiar z bagnetu"
+                />
+              </Field>
+              <Field label="Dolewka">
+                <ValueBox
+                  value={oilValueText(draft.oilAddedL)}
+                  placeholder="nie dolewałem"
+                  unit="L"
+                  actionIcon="edit"
+                  onPress={() => setSheet({ kind: 'oil' })}
+                  accessibilityLabel="Olej - ile dolano"
                 />
               </Field>
               {draft.oilL != null && (draft.oilAddedL ?? 0) > 0 && (
@@ -1151,7 +1203,12 @@ export function ManualFlightScreen({
            a co zastał następny. Stan zastany JEST podstawiany z poprzedniego lotu
            (siódma tura - decyzja użytkownika), ale źródło zostaje widoczne i pilot
            poprawia go jednym tapnięciem: paliwomierz bije rachubę. */
-        rows={fuelSheetRows(sheet, chain, aircraft?.handover ?? null)}
+        /* SZLAK ZAMIAST WIERSZA (issue #84 pkt 1): sąsiad z łańcucha opowiada się
+           tym samym komponentem, co historia odczytu przy przejęciu (02B). Wiersz
+           odniesienia zostaje wyłącznie tam, gdzie szlaku nie ma - inaczej ta sama
+           liczba stałaby w arkuszu dwa razy. */
+        trail={fuelTrail}
+        rows={fuelTrail.length > 0 ? [] : fuelSheetRows(sheet, chain, aircraft?.handover ?? null)}
         /* Ostrzeżenie o WPISYWANEJ liczbie (uwaga z urządzenia, 2026-08-29): sufit
            zbiornika i rozjazd z sąsiadem w łańcuchu. Do tej pory jedno i drugie
            odzywało się dopiero na kroku 4 - czyli po zamknięciu arkusza, gdy liczby
@@ -1193,7 +1250,10 @@ export function ManualFlightScreen({
            odczyt sąsiada ze źródłem, a bez łańcucha ostatnie przekazanie z cache.
            Łańcuch MH jest osią SAMOLOTU (§4.5), więc sąsiad mówi wprost, od czego ten
            wpis powinien zaczynać i na czym kończyć. */
-        rows={mhSheetRows(sheet, chain, mhFormat, aircraft?.handover ?? null)}
+        trail={mhTrail}
+        rows={
+          mhTrail.length > 0 ? [] : mhSheetRows(sheet, chain, mhFormat, aircraft?.handover ?? null)
+        }
         /* Jak przy paliwie: cofnięty licznik i rozjazd z sąsiadem mówią przy polu,
            a nie dopiero w podsumowaniu kroku 4. */
         warningFor={(v) =>
@@ -1223,12 +1283,12 @@ export function ManualFlightScreen({
         initialLevelText={oilValueText(draft.oilL)}
         initialAddedText={oilValueText(draft.oilAddedL)}
         parse={parseLitres}
+        /* KOTWICA POMIARU JAKO SZLAK (issue #84 pkt 3), ten sam co na 02I: mówi,
+           od czego ten poziom miał startować - jedyne pytanie ciągłości, na które
+           rejestr umie odpowiedzieć. Pary „przed/po" olej NIE MA, bo bagnet tuż po
+           locie kłamie i zdanie samolotu oleju nie mierzy (issue #60). */
+        trail={oilView.trail}
         rows={[
-          /* KOTWICA POMIARU idzie pierwsza (issue #62, szósta tura): mówi, od czego
-             ten poziom miał startować - a to jest jedyne pytanie ciągłości, na które
-             rejestr umie odpowiedzieć. Pary „przed/po" olej NIE MA, bo bagnet tuż po
-             locie kłamie i zdanie samolotu oleju nie mierzy (issue #60). */
-          ...(oilReference(chain) != null ? [oilReference(chain)!] : []),
           /* Bez znaku rejestracyjnego w etykietach (uwaga z urządzenia, 2026-09-02):
              arkusz dotyczy maszyny wybranej w kroku 1 - znak niczego nie odróżniał. */
           ...(aircraft?.oilMinL != null
@@ -1262,29 +1322,35 @@ export function ManualFlightScreen({
           (`design/02h`). Wiersze odniesienia tylko dla FAKTYCZNYCH wyborów: kreska
           niczego nie przypomina. Data stoi w nich zawsze, bo jest pierwszym pytaniem
           kroku 1 i pilot mógł ją zmienić jako jedyną rzecz. */}
-      <AbandonDraftSheet
-        visible={leaveAction != null && !leaving}
-        title="ZREZYGNOWAĆ Z WPISU RĘCZNEGO?"
-        rows={[
-          { label: 'Data lotu', value: dateUtcDayMonth(draft.day) },
-          ...(aircraft != null
-            ? [{ label: 'Wybrany samolot', value: `${aircraft.reg} · ${aircraft.type}` }]
-            : []),
-          ...(draft.operation != null
-            ? [{ label: 'Zadanie', value: operationLabel(draft.operation) }]
-            : []),
-          ...(draft.flights.length > 0
-            ? [
-                {
-                  label: 'Wpisane loty',
-                  value: draft.flights.length === 1 ? '1 lot' : `${draft.flights.length} loty`,
-                },
-              ]
-            : []),
-        ]}
-        onStay={() => setLeaveAction(null)}
-        onAbandon={() => setLeaving(true)}
-      />
+      {/* Arkusz WYPADA Z DRZEWA razem z potwierdzeniem (issue #84 pkt 7), zamiast
+          chować się i trzymać okno modala przez czas animacji wyjazdu - dlatego
+          warunek stoi tutaj, a nie w propie `visible`: rama arkusza przeżywa własną
+          niewidzialność i to ona była usterką (`hooks/abandonExit.ts`). */}
+      {exit.sheetMounted && (
+        <AbandonDraftSheet
+          visible
+          title="ZREZYGNOWAĆ Z WPISU RĘCZNEGO?"
+          rows={[
+            { label: 'Data lotu', value: dateUtcDayMonth(draft.day) },
+            ...(aircraft != null
+              ? [{ label: 'Wybrany samolot', value: `${aircraft.reg} · ${aircraft.type}` }]
+              : []),
+            ...(draft.operation != null
+              ? [{ label: 'Zadanie', value: operationLabel(draft.operation) }]
+              : []),
+            ...(draft.flights.length > 0
+              ? [
+                  {
+                    label: 'Wpisane loty',
+                    value: draft.flights.length === 1 ? '1 lot' : `${draft.flights.length} loty`,
+                  },
+                ]
+              : []),
+          ]}
+          onStay={exit.stay}
+          onAbandon={exit.leave}
+        />
+      )}
     </Screen>
   );
 }

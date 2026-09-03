@@ -893,7 +893,7 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `ResultRow` | stopka sekcji: opis + wyliczona wartość nad linią | `.result-row` (09) |
 | `ResultBar` | samodzielny pasek wyniku z rachunkiem, na tonowanym tle | `.result-row` (06) |
 | `CalcBox` | wyliczenie zużycia paliwa z podaniem składników | `.calc-box` |
-| `GaugeHero`, `ScaleBar` | wskaźnik FOB z podziałką | `.fob-indicator` |
+| `ScaleBar` | podziałka wartości pod paskiem poziomu | `.slider-labels` (06) |
 | `SessionHero` | czas blokowy OPERACJI wielką czcionką + zakres (10). Nazwany `DutyHero` do etapu C5 - na karcie jednej maszyny bohaterem jest operacja, nie służba pilota | `.duty-hero` |
 | `DayCard` | karta dnia w historii; wariant `editable` = niebieska ramka + pas „OTWÓRZ I POPRAW" | `.day-card` (12) |
 | `CrewCard`, `CrewGrid` | karty załogi ze statystykami | `.crew-card` |
@@ -1434,6 +1434,10 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 | `flightPhase.test.ts` | fazy lotu i prędkości pionowej - patrz niżej |
 | `refuelMath.test.ts` | wyliczeń tankowania: zużycie L/h, limit dolewki, podziałka |
 | `statsDay.test.ts` | odmian wspólnych ekranowi operacji: liczebnik lotów, rozbicie skoczków |
+| `readingsTrail.test.ts` | szlaku odczytu w arkuszach wpisu ręcznego (issue #84): wybór sąsiada z łańcucha per pole, milczenie bez odpowiedzi serwera |
+| `releaseTrail.test.ts` | szlaku odczytu przy zdaniu samolotu (issue #84): przejęcie, tankowania i czas pracy silnika stoją także BEZ normy; ogniwo oczekiwania tylko z nią |
+| `pilotWarnings.test.ts` | odsiewu flag diagnostycznych z ekranu pilota (issue #84): rozjazd zegara znika, każda inna flaga przechodzi |
+| `abandonExit.test.ts` | kolejności wyjścia z formularza po rezygnacji (issue #84): arkusz nigdy nie stoi w drzewie razem z wypuszczoną nawigacją |
 | `sessionAxis.test.ts` | osi czasu operacji (10): kolejność zdarzeń, adresy uuid, kołowanie z samą godziną, numer lotu przy STARCIE i po prawej, brak ołówka i plakietki wpisu ręcznego (issue #40), stopka (blok / czas lotu / starty), operacja bez pracy silnika |
 | `sessionBalance.test.ts` | rachunków paliwa i MH: oczekiwanie liczone z PROPORCJI faz tej operacji, podłoga pasma z błędu odczytu, arkusz normy istniejący dokładnie razem z werdyktem, powód zamiast kreski, gdy nie ma z czym porównywać |
 | `sessionNotes.test.ts` | notatek operacji (10): notatka z zadania i uwagi wpisów ręcznych w jednej liście chronologicznej, pusty tekst nie udaje notatki |

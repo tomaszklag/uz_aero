@@ -84,32 +84,41 @@
   .scroll { flex: 1; overflow-y: auto; padding: 14px 16px 24px; display: flex; flex-direction: column; gap: 12px; scrollbar-width: none; }
   .scroll::-webkit-scrollbar { display: none; }
 
-  /* FOB Indicator - NEUTRALNY, nie bursztynowy (uwaga z urządzenia, 2026-09-03:
-     „może to pole nie powinno być żółte?"): to pole ODCZYTU wymaganego od pilota,
-     nie ostrzeżenie - bursztyn zostaje na dolewce i wyniku. Pusty stan „- -"
-     placeholderem (wzorzec sekcji oleju z 02A); wypełniony pisze wartość
-     text-primary. Paska poziomu już nie ma - oś pojemności mierzy wyłącznie
-     miarka wyniku (ta sama tura: „usuń miarki przy FOB i dolewce"). */
-  .fob-indicator {
-    position: relative;
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 20px; padding: 20px 20px 16px;
-    display: flex; flex-direction: column; align-items: center; gap: 4px;
-  }
-  .fob-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--text-muted); }
-  .fob-value { font-family: var(--font-mono); font-size: 64px; font-weight: 700; color: var(--text-primary); line-height: 1; letter-spacing: -2px; }
-  .fob-value.empty { color: var(--text-placeholder); }
-  .fob-unit { font-family: var(--font-mono); font-size: 28px; font-weight: 400; color: var(--text-secondary); opacity: 0.6; margin-left: -4px; }
-  .fob-row { display: flex; align-items: baseline; gap: 6px; }
-  .fob-subtext { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px; margin-top: 4px; text-align: center; }
-  /* Korekta odczytu = OŁÓWEK W ROGU karty (uwagi z urządzenia, 2026-09-02, dwie
-     tury): bursztynowy „Koryguj z paliwomierza" czytał się jak główna akcja ekranu,
-     a wyciszona pigułka pod liczbą nadal była „duża i w miejscu, które sugeruje
-     klikanie" - wyśrodkowana kontrolka pod herosem to pozycja CTA niezależnie od
-     koloru. Ołówek to ustalona affordancja poprawiania (issue #43); celem ekranu
-     jest DOLEWKA. 36 px rysunku + zapas = próg 44 px (IconAction). */
-  .fob-correct { position:absolute; top:8px; right:8px; width:36px; height:36px; display:flex; align-items:center; justify-content:center; border:none; border-radius:10px; background:transparent; color:var(--text-muted); cursor:pointer; }
-  .fob-correct:hover { background:rgba(255,255,255,0.05); color:var(--text-secondary); }
+  /* SEKCJA ODCZYTU - BLIŹNIACZA Z KROKIEM 3 NOWEGO LOTU (issue #84, zgłoszenie
+     z urządzenia: „mam sekcje, które różnią się od tego, co już wypracowaliśmy.
+     Mamy już analogiczny ekran i tu powinien wyglądać bliźniaczo. Nie wyświetlasz
+     też miarek").
+
+     Do tej pory stała tu karta-przyrząd `.fob-indicator` z cyframi 64 px - kształt,
+     którego nie ma nigdzie indziej w aplikacji. Odczyt paliwa przed tankowaniem jest
+     DOKŁADNIE tym samym pytaniem, co „Paliwo na pokładzie" na 02A, więc klasy są
+     odtąd te same: `.section` / `.section-header` / `.value-big` / `.koryguj-btn`.
+
+     PODZIAŁKA POZIOMU WRACA i to jest świadome cofnięcie połowy decyzji z 2026-09-03
+     („usuń miarki przy FOB i dolewce"): tamten rachunek zakładał wielką liczbę na
+     własnej karcie, przy której druga oś pojemności byłaby powtórzeniem. W sekcji
+     `Readout` podziałka jest jedyną rzeczą mówiącą „ile to jest z pełnych zbiorników" -
+     a od tego zaczyna się decyzja, ile dolać. Miarka wyniku niżej zostaje: mierzy
+     STAN PO dolewce, czyli inną liczbę. */
+  /* `.section` i `.section-label` są już zdefiniowane niżej (karta „Dolano") - sekcja
+     odczytu używa DOKŁADNIE ich, bo to ten sam kształt karty. */
+  .section-header { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .section-left { flex:1; display:flex; flex-direction:column; gap:4px; }
+  .value-row { display:flex; align-items:baseline; gap:6px; }
+  .value-big { font-family:var(--font-mono); font-size:30px; font-weight:700; line-height:1; }
+  .value-big.amber { color:var(--amber); }
+  .value-none { font-family:var(--font-mono); font-size:30px; font-weight:700; line-height:1; color:var(--text-muted); }
+  .value-unit { font-family:var(--font-mono); font-size:15px; font-weight:400; color:var(--text-secondary); }
+  .value-caption { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; line-height:13px; color:var(--text-muted); }
+  /* Korekta odczytu to `.koryguj-btn` z 02A - ta sama afordancja i ten sam cel 44 px.
+     Ołówek w rogu karty (2026-09-02) był własnością karty-przyrządu i odchodzi razem
+     z nią: w sekcji przycisk stoi po prawej stronie wartości, jak przy paliwie,
+     motogodzinach i oleju na 02A. */
+  .koryguj-btn { display:flex; align-items:center; gap:6px; background:none; border:1px solid var(--border-strong); border-radius:10px; padding:0 14px; min-height:44px; color:var(--text-secondary); font-family:var(--font-mono); font-size:10px; letter-spacing:1px; cursor:pointer; text-transform:uppercase; flex-shrink:0; }
+  .koryguj-btn:hover { background:rgba(255,255,255,0.04); }
+  /* Podziałka poziomu - ta sama, co przy paliwie i oleju na 02A. */
+  .level-bar { margin-top:6px; width:130px; height:6px; border-radius:3px; background:var(--surface-raised); border:1px solid var(--amber-border); position:relative; overflow:hidden; }
+  .level-bar > span { position:absolute; inset:0; background:var(--amber); border-radius:3px; }
 
   /* Section */
   .section { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
@@ -144,7 +153,7 @@
   /* Miarka wyniku (ta sama uwaga): zastane NEUTRALNĄ szarością, dolewka akcentem -
      trzy liczby rachunku widziane na tle pojemności; bursztynowa część rośnie razem
      z wpisem dolewki. Bez znanej pojemności miarki nie ma (jak przy FOB).
-     Rynienka CIEMNA jak w `.fob-bar` (uwaga z urządzenia, 2026-09-03: „źle wygląda
+     Rynienka CIEMNA (uwaga z urządzenia, 2026-09-03: „źle wygląda
      żółty pasek na żółtym tle"), a zastane NIE jest przygaszonym bursztynem (druga
      tura: „nadal żółty na żółtym") - dwa poziomy bursztynu na bursztynowej karcie
      zlewały się w jedno; różne HUE czyta się z kąta oka, różna jasność nie. */
@@ -229,14 +238,15 @@
     <!-- Scroll Content -->
     <div class="scroll">
 
-      <!-- FOB Indicator - DWA PRZYPADKI BIZNESOWE (opis użytkownika, 2026-09-03):
+      <!-- SEKCJA FOB - DWA PRZYPADKI BIZNESOWE (opis użytkownika, 2026-09-03):
 
            1. samolot NIE LATAŁ od ostatniego odczytu (tankowanie przed lotem -
               przypadek CZĘSTSZY): wartość wychodzi z PRZEKAZANIA potwierdzonego
               w preflighcie i pole wypełnia się samo - pilot tylko dolewa:
 
-              <div class="fob-value">160</div><div class="fob-unit">L</div>
-              <div class="fob-subtext">z przekazania · tankowanie 10:48 UTC</div>
+              <span class="value-big amber">160</span><span class="value-unit">L</span>
+              <div class="value-caption">z przekazania · tankowanie 10:48 UTC</div>
+              <div class="level-bar"><span style="width:48%"></span></div>
 
               (osobny akt „potwierdź" z wcześniejszej wersji dublował preflight
               i został cofnięty tym samym opisem);
@@ -248,20 +258,29 @@
               Historię „ile miał · ile latał · ile mógł spalić" opowiada SZLAK
               w arkuszu pomiaru (patrz komentarz przy Dolano). Ołówek wpisuje
               odczyt rzeczywisty: pole pisze liczbę text-primary, podpis
-              „Odczyt z paliwomierza", pojawia się pudełko „Rzeczywiste zużycie"
+              „Twój pomiar ze zbiorników", pojawia się pudełko „Rzeczywiste zużycie"
               i wynik z miarką.
 
            Bez normy podpis pustego pola niesie sam ostatni odczyt
            („Ostatni odczyt: preflight 08:00 UTC · 150 L"). -->
-      <div class="fob-indicator">
-        <div class="fob-label">FOB przed tankowaniem</div>
-        <div class="fob-row">
-          <div class="fob-value empty">- -</div>
+      <div class="section">
+        <div class="section-header">
+          <div class="section-left">
+            <div class="section-label">FOB przed tankowaniem</div>
+            <div class="value-row">
+              <span class="value-none">- -</span>
+              <span class="value-unit">L</span>
+            </div>
+            <div class="value-caption">szacunek z normy samolotu: ~112 L</div>
+            <!-- Podziałka poziomu pojawia się z WARTOŚCIĄ; pusty stan jej nie ma,
+                 bo nie ma czego rysować:
+                 <div class="level-bar"><span style="width:48%"></span></div> -->
+          </div>
+          <button class="koryguj-btn">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Wpisz pomiar
+          </button>
         </div>
-        <div class="fob-subtext">szacunek z normy samolotu: ~112 L</div>
-        <button class="fob-correct" title="Zmień odczyt">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-        </button>
       </div>
 
       <!-- HISTORIA SPRZED POMIARU = SZLAK W ARKUSZU „Stan przed tankowaniem"
@@ -365,7 +384,7 @@
            (issue #55); po pomiarze wraca pełny `.btn-amber` z „ZAPISZ TANKOWANIE". -->
       <div class="btn-amber disabled">
         ZAPISZ TANKOWANIE
-        <span class="btn-reason">Wpisz stan paliwa z paliwomierza</span>
+        <span class="btn-reason">Wpisz stan paliwa w zbiornikach</span>
       </div>
 
     </div>

@@ -202,77 +202,21 @@ export function finalMhHint(state: SessionState, mh: number | null): string {
   return parts.join(' · ');
 }
 
-/**
- * Treść banera pouczającego: co się stanie z tymi dwiema liczbami.
+/*
+ * `handoverText` i `balanceRows` USUNIĘTE (issue #84, uwagi z urządzenia 3 i 4:
+ * „po co pisać ten baner «Odczyt z tego ekranu zobaczy…» - do usunięcia" oraz
+ * „sekcja «Rozliczenie tego samolotu» jest do usunięcia").
  *
- * To jedyne zdanie na ekranie, które tłumaczy, DLACZEGO odczyt jest tu wymagany -
- * i dlatego wypisuje wartości, a nie mówi ogólnikami o „przekazaniu".
- */
-export function handoverText(
-  aircraftId: string,
-  reading: DraftReading,
-  format: MhFormat,
-): string {
-  const head =
-    reading.fuelL != null && reading.mh != null
-      ? `Te odczyty - ${litres(reading.fuelL)} i ${motoHours(reading.mh, format)} MH - zobaczy`
-      : 'Odczyty z tego ekranu zobaczy';
-
-  return (
-    `${head} następny pilot jako PRZEKAZANIE. Stają się ogniwem łańcucha ${aircraftId}: ` +
-    'serwer porówna z nimi start kolejnej operacji i oznaczy dziury albo cofnięcia licznika.'
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Rozliczenie sesji
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Wiersze karty „Rozliczenie tego samolotu" (09B).
+ * Baner tłumaczył budowę łańcucha MH komuś, kto stoi przy samolocie i ma spisać dwie
+ * liczby - ta sama kategoria przypisów, którą issue #43 wyrzuciło z arkuszy korekty,
+ * a issue #72 z ustawień. Karta rozliczenia była z kolei TRZECIĄ kopią tych samych
+ * liczb na jednym ekranie: paliwo start i koniec stoją w polach odczytu tuż wyżej,
+ * przyrost licznika wychodzi z tej samej pary, a średnie zużycie z werdyktem pokazuje
+ * ekran operacji (10) zaraz po zdaniu - tam, gdzie pilot pyta „czy się zgadza",
+ * zamiast w formularzu, który ma trwać kilkanaście sekund.
  *
- * `norma` przychodzi z serwera policzona (analityka A10a) - ten moduł jej nie liczy,
- * dokłada tylko pasmo obok dzisiejszego wyniku. Bez normy wiersz pokazuje sam wynik:
- * brak podpowiedzi jest lepszy od podpowiedzi wziętej z sufitu (`fuelNorm.ts`).
+ * `BalanceRowVm` zostaje w typach ekranu 10; `burnLabel` odszedł razem z kartą.
  */
-export function balanceRows(
-  state: SessionState,
-  reading: DraftReading,
-  norm: ConsumptionNorm | null,
-): BalanceRowVm[] {
-  const format = state.mhFormat ?? 'decimal';
-  const rows: BalanceRowVm[] = [];
-
-  const run = state.legs[0];
-  if (run != null) {
-    rows.push({
-      key: 'Operacja',
-      value: `${timeUtc(run.startedAt)} → ${
-        run.stoppedAt != null ? timeUtc(run.stoppedAt) : 'trwa'
-      } · ${flightsBadge(state.flights.length)}`,
-      amber: false,
-    });
-  }
-
-  rows.push({
-    key: 'Paliwo start / koniec',
-    value: `${litres(state.fuel.startL)} → ${litres(reading.fuelL)}`,
-    amber: true,
-  });
-
-  rows.push({ key: 'Średnie zużycie', value: burnLabel(state, reading, norm), amber: true });
-
-  rows.push({
-    key: 'Motogodziny Δ',
-    value:
-      state.mh.start != null && reading.mh != null
-        ? signed(reading.mh - state.mh.start, format)
-        : '-',
-    amber: false,
-  });
-
-  return rows;
-}
 
 /**
  * Zużycie sesji (L) = start + dolane − koniec, dokładnie tak, jak liczy je projekcja
@@ -319,13 +263,16 @@ export function releasePayload(
  */
 export const RELEASE_CTA = 'ZDAJ I ZATWIERDŹ LOG';
 
-/**
- * Baner typu STATUS pod formularzem - przyrząd, nie ozdoba. Niesie najważniejsze
- * zdanie przebudowy flow: zdajesz samolot, nie kończysz dnia.
+/*
+ * `RELEASE_NOTICE` USUNIĘTE (issue #84, uwaga 5: „po co baner «Zdajesz samolot, nie
+ * kończysz dnia…» - do usunięcia").
+ *
+ * Zdanie było najważniejszą tezą przebudowy flow z 2026-08-06 i dlatego stało na ekranie
+ * banerem - ale opisywało MODEL, nie tę operację. Pilot i tak zobaczy je w działaniu:
+ * po zdaniu wraca na „Mój dzień" z listą operacji, do której dopisze się każda kolejna
+ * maszyna. Model, który trzeba objaśniać przy każdym zdaniu samolotu, i tak nie
+ * przekonuje - a ten jest widoczny sam.
  */
-export const RELEASE_NOTICE =
-  'Zdajesz samolot, nie kończysz dnia. Loty zostają w „Mój dzień", a jeśli za chwilę ' +
-  'przejmiesz inny samolot, jego operacja dopisze się do listy dnia.';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Blokada zapisu
@@ -350,11 +297,14 @@ export function releaseBlocker(
   if (state.legs.length === 0 && reason == null) {
     return 'Wybierz powód - dlaczego samolot nie poleciał.';
   }
-  if (reading.fuelL == null) {
-    return 'Odczytaj paliwomierz - ten odczyt jest przekazaniem dla następnego pilota.';
-  }
-  if (reading.mh == null) {
-    return 'Odczytaj licznik motogodzin - bez niego łańcuch MH ma dziurę.';
+  /* JEDNO ZDANIE NA OBA POLA (issue #84: „jak przycisk «Zdaj i zatwierdź log» jest
+     disabled, to zmień tekst podpowiedzi - powinno być «Podaj odczyt paliwa
+     i motogodzin»"). Powód jest INSTRUKCJĄ, nie uzasadnieniem wymogu: doklejki
+     „to przekazanie dla następnego pilota" i „bez niego łańcuch MH ma dziurę"
+     tłumaczyły budowę rejestru komuś, kto ma po prostu spisać dwie liczby stojące
+     przed nim puste (ta sama reguła, co w `preflightBlocker` i na tankowaniu). */
+  if (reading.fuelL == null || reading.mh == null) {
+    return 'Podaj odczyt paliwa i motogodzin.';
   }
   return mhRegressionWarning(state, reading.mh);
 }

@@ -94,8 +94,11 @@
   .form-section-title .req { color:var(--red); letter-spacing:1.5px; }
   .counters { padding:12px; display:flex; flex-direction:column; gap:11px; }
   .field-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px; }
+  /* Pudełko jest NEUTRALNE, jak `ValueBox` w kodzie (issue #84, uwaga 2: „czemu tutaj
+     motogodziny wyświetlasz na żółto?"). Bursztyn zostaje rozróżnieniem PALIWA
+     i niesie go sama WARTOŚĆ (`.field-value.amber`), a nie tło kontrolki. */
   .field-input {
-    background:var(--amber-muted); border:1px solid var(--amber-border);
+    background:var(--surface-raised); border:1px solid var(--border-strong);
     border-radius:12px; padding:12px 14px; width:100%; min-height:52px;
     display:flex; align-items:center; justify-content:space-between; gap:10px;
     text-decoration:none; cursor:pointer;
@@ -103,7 +106,10 @@
   /* Metryka wartości = pole wpisu z arkusza (issue #58 pkt 5 i 9): mono 16 / 1.5.
      Kontrolka odczytu jest tą samą kontrolką, co na 15C i w trasie 02E - „jedna rzecz
      ma w aplikacji JEDEN kształt" (issue #42); wielkość edycji zostaje w arkuszu 02B. */
-  .field-value { color:var(--amber); font-family:var(--font-mono); font-size:16px; font-weight:700; letter-spacing:1.5px; line-height:22px; }
+  /* Bursztyn jest rozróżnieniem PALIWA (issue #84, uwaga 2) - licznik pisze się
+     neutralnie, jak w arkuszu oleju (02I) i w sekcji motogodzin na 02A. */
+  .field-value { color:var(--text-primary); font-family:var(--font-mono); font-size:16px; font-weight:700; letter-spacing:1.5px; line-height:22px; }
+  .field-value.amber { color:var(--amber); }
   .field-unit { font-family:var(--font-mono); font-size:12px; color:var(--text-secondary); }
   .field-sub { font-family:var(--font-mono); font-size:9px; color:var(--text-muted); margin-top:5px; letter-spacing:0.5px; }
 
@@ -239,36 +245,69 @@
         </div>
       </div>
 
-      <!-- Liczniki: odczyt WYMAGANY - zapis tego ekranu zatwierdza log operacji -->
+      <!-- Liczniki: odczyt WYMAGANY - zapis tego ekranu zatwierdza log operacji.
+           BEZ plakietki „wymagane" (issue #84, uwaga 7: „sekcja odczyt końcowy jest
+           domyślnie wymagana, więc nie ma sensu badge «wymagane»"): wymagalność jest
+           stanem domyślnym formularza, a plakietka przy jedynej sekcji z polami nie
+           odróżniała niczego od niczego. Oznaczamy WYŁĄCZNIE to, co opcjonalne. -->
       <div class="form-section">
         <div class="form-section-title">
           <span>Odczyt końcowy</span>
-          <span class="req">wymagane</span>
         </div>
         <div class="counters">
           <div>
             <div class="field-label">Paliwo na pokładzie</div>
             <!-- SZACUNEK Z NORMY JAK NA TANKOWANIU (uwaga z urządzenia, 2026-09-03:
                  „na zdaniu też pokaż szacunek - analogiczne, nawet te same
-                 komponenty i logika"; wspólne `estimateFob` + `fuelEstimateTrail`).
-                 Po biegu silnika pole startuje PUSTE (placeholder „odczytaj
-                 z paliwomierza") - prefill z odczytu SPRZED lotu udawał stan
-                 bieżący - a podpis niesie wtedy sugestię ze źródłem:
+                 komponenty i logika"). Po biegu silnika pole startuje PUSTE
+                 (placeholder „podaj stan paliwa") - prefill z odczytu SPRZED lotu
+                 udawał stan bieżący - a podpis niesie wtedy sugestię ze źródłem:
                  „przy przejęciu 96 L · bez tankowania · szacunek z normy: ~60 L".
-                 Arkusz odczytu dostaje TEN SAM szlak, co 06/02B: ● Ostatni odczyt
-                 · preflight 08:00 UTC (w zbiorniku 96 L) → ● Latano · 1:30
-                 (zużycie z normy ~36 L) → ● ZIELONE „Szacunkowo zostało ~60 L".
-                 Gdy silnik NIE pracował od odczytu (09C, tankowanie tuż po
-                 locie), pole wypełnia rejestr - jak dotąd. RENDEROWANY stan:
-                 odczyt już wpisany (62 L). -->
+
+                 PLACEHOLDER NIE MÓWI „odczytaj z paliwomierza" (issue #84, uwaga 1:
+                 „paliwo mierzy się za pomocą miarki") - słownik idzie za czynnością,
+                 którą pilot naprawdę wykonuje, jak „Twój pomiar ze zbiorników" na 02A.
+
+                 ARKUSZ ODCZYTU NIESIE SZLAK Z REJESTRU (ta sama uwaga: „kliknięcie
+                 w przycisk powinno otwierać popup […] co pokazuje, ile było przy
+                 przejęciu, ile dolano i ile latano"):
+
+                   ● Przejęcie · 13:40          zastane 96 L
+                   ● Tankowanie · 14:05         dolano +48 L · w zbiorniku 144 L
+                   ● Latano · 1h 30 min         zużycie z normy ~36 L
+                   ● Szacunkowo zostało ~60 L   (ZIELONE, z normy samolotu)
+
+                 Trzy pierwsze ogniwa to FAKTY tej operacji, więc stoją także bez
+                 policzonej normy - do issue #84 cały szlak wisiał na szacunku i przy
+                 młodej maszynie znikał w całości. Gdy silnik NIE pracował od odczytu
+                 (09C, tankowanie tuż po locie), pole wypełnia rejestr - jak dotąd.
+                 RENDEROWANY stan: odczyt już wpisany (62 L). -->
             <a href="09b-zdaj-samolot.html" class="field-input">
-              <span class="field-value">62</span>
+              <span class="field-value amber">62</span>
               <span class="field-unit">L</span>
             </a>
             <div class="field-sub">przy przejęciu 96 L · bez tankowania · zużyte 34 L</div>
           </div>
           <div>
             <div class="field-label">Motogodziny</div>
+            <!-- LICZNIK TEŻ STARTUJE PUSTY PO BIEGU SILNIKA (issue #84, uwaga 2:
+                 „czemu domyślnie mam wpisane motogodziny, skoro było uruchomienie
+                 silnika? Powinienem podać odczyt") - placeholder „podaj stan
+                 licznika". Między przejęciem a zdaniem silnik przepracował cały bieg,
+                 więc wartość z przejęcia jest z definicji nieaktualna: podstawiona
+                 dawała się zatwierdzić bez spojrzenia na tarczę i wchodziła do
+                 łańcucha MH jako ogniwo, którego nikt nie zmierzył. Ta sama pułapka,
+                 co przy paliwie.
+
+                 WARTOŚĆ PISZE SIĘ NEUTRALNIE, nie bursztynem (ta sama uwaga: „czemu
+                 tutaj motogodziny wyświetlasz na żółto?") - bursztyn jest w tej
+                 aplikacji rozróżnieniem PALIWA i przy liczniku nie odróżniał niczego.
+
+                 Arkusz niesie szlak jak przy paliwie: ● Przejęcie · 13:40 (licznik
+                 1 239:39 MH) → ● Latano · 1h 30 min (w powietrzu 1:16) → ● ZIELONE
+                 „Szacunkowo licznik pokaże ~1 241:09" (tylko z przelicznikami MH,
+                 których maszyna dorabia się później niż normy paliwa).
+                 RENDEROWANY stan: odczyt już wpisany. -->
             <a href="09b-zdaj-samolot.html" class="field-input">
               <span class="field-value">1 241:09</span>
               <span class="field-unit">MH</span>
@@ -278,50 +317,28 @@
         </div>
       </div>
 
-      <div class="handover-box" id="eduHandover">
-        <!-- Pytajnik zamiast strzałek przekazania (uwaga z urządzenia, 2026-08-27):
-             pouczający PYTA i nosi TĘ SAMĄ ikonę co zwinięty chip - reguła DS dla
-             banerów typu C, jednakowa na 02E, 05F, 07 i tutaj. -->
-        <svg class="handover-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        <span class="handover-text">Te odczyty - <b>62 L</b> i <b>1 241:09 MH</b> - zobaczy następny pilot jako
-        <strong>przekazanie</strong>. Stają się ogniwem łańcucha SP-KLM: serwer porównuje z nimi start
-        kolejnej operacji i flaguje dziury albo cofnięcia licznika.</span>
-        <button class="edu-dismiss" onclick="eduCollapse('eduHandover')" title="Rozumiem - schowaj wyjaśnienie">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-      </div>
-      <button class="edu-mini" id="eduHandover-mini" onclick="eduExpand('eduHandover')" title="Pokaż wyjaśnienie">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        Co znaczą te odczyty?
-      </button>
+      <!-- ══ EKRAN JEST FORMULARZEM DWÓCH LICZB I NICZYM WIĘCEJ (issue #84) ══
+           Stały tu jeszcze trzy rzeczy i wszystkie trzy odeszły jedną turą uwag
+           z urządzenia:
 
-      <div class="form-section">
-        <div class="form-section-title"><span>Rozliczenie tego samolotu</span></div>
-        <div class="balance-row">
-          <span class="balance-key">Operacja</span>
-          <span class="balance-val">13:40 → 15:10 · 2 loty</span>
-        </div>
-        <div class="balance-row">
-          <span class="balance-key">Paliwo start / koniec</span>
-          <span class="balance-val amber">96 L → 62 L</span>
-        </div>
-        <div class="balance-row">
-          <span class="balance-key">Średnie zużycie</span>
-          <span class="balance-val amber">22,7 L/h · norma 20–24 L/h</span>
-        </div>
-        <div class="balance-row">
-          <span class="balance-key">Motogodziny Δ</span>
-          <span class="balance-val">+1:30</span>
-        </div>
-      </div>
+            • baner „Te odczyty zobaczy następny pilot jako przekazanie…" (uwaga 3:
+              „po co pisać ten baner - do usunięcia") - tłumaczył budowę łańcucha MH
+              komuś, kto ma spisać dwie liczby stojąc przy samolocie. Ta sama kategoria
+              przypisów, którą issue #43 wyrzuciło z arkuszy korekty, a issue #72
+              z ustawień;
 
-      <!-- Typ A: przyrząd. Najważniejsze zdanie całej przebudowy - zdanie samolotu
-           NIE jest końcem dnia pilota. -->
-      <div class="status-box">
-        <svg class="status-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        <span class="status-text">Zdajesz samolot, <b>nie kończysz dnia</b>. Loty zostają w „Mój dzień",
-        a jeśli za chwilę przejmiesz inny samolot, jego operacja dopisze się do listy dnia.</span>
-      </div>
+            • sekcja „Rozliczenie tego samolotu" (uwaga 4) - TRZECIA kopia tych samych
+              liczb na jednym ekranie: paliwo start i koniec stoją w polach odczytu
+              wyżej, przyrost licznika wychodzi z tej samej pary, a średnie zużycie
+              z werdyktem pokazuje ekran operacji (10) zaraz po zdaniu;
+
+            • baner „Zdajesz samolot, nie kończysz dnia…" (uwaga 5) - opisywał MODEL,
+              nie tę operację. Pilot zobaczy go w działaniu, wracając na listę dnia;
+              model, który trzeba objaśniać przy każdym zdaniu, i tak nie przekonuje.
+
+           Historia operacji nie ginie: „ile było przy przejęciu, ile dolano, ile
+           latano" opowiada SZLAK w arkuszu odczytu (uwaga 1) - patrz komentarz przy
+           polu paliwa. -->
 
       <a href="01-moj-dzien.html" class="btn-primary-red">
         ZDAJ I ZATWIERDŹ LOG

@@ -2,16 +2,22 @@
  * UZ Aero - 09B ZDAJ SAMOLOT (mockupy `design/09b-zdaj-samolot.html` + `09c-zdaj-bez-lotu.html`).
  *
  * Koniec pracy z TĄ maszyną - i **nie koniec dnia pilota** (§3.6a). Loty zostają
- * w „Mój dzień", a kolejny samolot dopisze się do listy sesji tej samej doby.
- * To najważniejsze zdanie całej przebudowy flow i dlatego stoi na ekranie banerem
- * typu STATUS (przyrząd, niezamykalny), a nie w komentarzu do kodu.
+ * w „Mój dzień", a kolejny samolot dopisze się do listy operacji tej samej doby.
+ * To najważniejsze zdanie całej przebudowy flow, ale od issue #84 NIE stoi już na
+ * ekranie banerem: pilot zobaczy je w działaniu, wracając na listę dnia.
+ *
+ * ══ EKRAN JEST FORMULARZEM DWÓCH LICZB I NICZYM WIĘCEJ (issue #84) ══
+ * Zeszły z niego trzy rzeczy naraz: baner o łańcuchu MH, karta „Rozliczenie tego
+ * samolotu" i baner o modelu dnia. Pierwszy i trzeci tłumaczyły budowę systemu komuś,
+ * kto stoi przy samolocie; druga była trzecią kopią liczb z pól odczytu, a średnie
+ * zużycie z werdyktem i tak pokazuje ekran operacji zaraz po zdaniu.
  *
  * Jeden ekran, dwa stany rozstrzygane DANYMI, nie parametrem nawigacji:
  *
- *   • 09B - sesja ma loty: **odczyt liczników jest WYMAGANY**, bo staje się
- *     przekazaniem dla następnego pilota i ogniwem łańcucha MH (§4.5). Pod odczytem
- *     stoi rozliczenie sesji: loty, paliwo start → koniec, średnie zużycie na tle
- *     normy samolotu i przyrost licznika;
+ *   • 09B - operacja ma loty: **odczyt liczników jest WYMAGANY**, bo staje się
+ *     przekazaniem dla następnego pilota i ogniwem łańcucha MH (§4.5). OBA pola
+ *     startują puste po biegu silnika, a historię - ile było przy przejęciu, ile
+ *     dolano, ile latano - opowiada szlak w arkuszu (`logic/releaseTrail.ts`);
  *   • 09C - sesja bez ani jednego biegu (pogoda, usterka): silnik nie ruszył, więc nie
  *     ma czasów do potwierdzenia ani zużycia do rozliczenia. Liczniki zostają bez zmian
  *     - z furtką korekty, bo licznik fizyczny jest ważniejszy od naszej rachuby (§4.1
@@ -49,34 +55,21 @@ import {
   type GridOption,
 } from '../components';
 import { useTheme } from '../theme';
-import { useEduBanner, useSessionStore } from '../store';
+import { useSessionStore } from '../store';
 import { useAircraft } from '../hooks/useAircraft';
-import {
-  litres,
-  motoHours,
-  parseLitres,
-  maskMotoHoursInput,
-  parseMotoHours,
-} from '../format';
+import { motoHours, parseLitres, maskMotoHoursInput, parseMotoHours } from '../format';
 import {
   RELEASE_CTA,
-  RELEASE_NOTICE,
-  balanceRows,
   buildRelease,
   finalFuelHint,
   finalMhHint,
-  handoverText,
   mhRegressionWarning,
   releaseBlocker,
   releasePayload,
 } from './logic/releaseAircraft';
+import { fuelReleaseTrail, mhReleaseTrail } from './logic/releaseTrail';
 import { emptyReleaseWarning, readingsUntouched } from './logic/releaseWarnings';
-import {
-  engineTimeInWindow,
-  estimateFob,
-  fuelEstimateTrail,
-  lastFuelReference,
-} from './logic/refuelMath';
+import { engineTimeInWindow, estimateFob, lastFuelReference } from './logic/refuelMath';
 import type { NoFlightReason } from '../../domain';
 
 /**
@@ -126,7 +119,6 @@ export function ReleaseAircraftScreen({
   // i jedyna, bez której ekran po prostu milczy o normie (`fuelNorm.ts`).
   const aircraft = useAircraft(projection.aircraftId);
 
-  const [handoverDismissed, setHandoverDismissed] = useEduBanner('release-handover');
   /** `null` = pilot nie tknął pola; wtedy pokazujemy to, co wie rejestr. */
   const [fuelEdit, setFuelEdit] = useState<number | null>(null);
   const [mhEdit, setMhEdit] = useState<number | null>(null);
@@ -139,9 +131,10 @@ export function ReleaseAircraftScreen({
   const now = useHalfMinuteTicker();
   const vm = buildRelease(projection, now);
 
-  // Szacunek paliwa z normy - TA SAMA logika i ogniwa, co na tankowaniu (uwaga
-  // z urządzenia, 2026-09-03: „na zdaniu też pokaż szacunek z normy - analogiczne,
-  // nawet te same komponenty"): `estimateFob` + szlak `fuelEstimateTrail`.
+  // Szacunek paliwa z normy - TA SAMA logika, co na tankowaniu (uwaga z urządzenia,
+  // 2026-09-03: „na zdaniu też pokaż szacunek z normy - analogiczne, nawet te same
+  // komponenty"): `estimateFob` niesie sugestię pod polem, a historię operacji
+  // opowiada od issue #84 szlak z rejestru (`releaseTrail.ts`).
   const norm = aircraft?.consumption ?? null;
   const estimate = useMemo(
     () => estimateFob(events, projection, norm, now),
@@ -154,15 +147,30 @@ export function ReleaseAircraftScreen({
   );
   const freshReference = reference != null && engineSinceRef <= 0;
 
-  // Wartość pola podąża za rejestrem TYLKO, gdy odczyt jest AKTUALNY (silnik od
-  // niego nie pracował - 09C i tankowanie tuż po locie). Po biegu silnika pole
-  // paliwa stoi puste i WYMAGA pomiaru, a normę niesie sugestia - ta sama reguła
-  // dwóch przypadków, co na 06 (opis biznesowy użytkownika, 2026-09-03); wcześniej
-  // prefill z nieaktualnego odczytu udawał stan bieżący. MH zostaje przy rejestrze:
-  // licznik nie „spala się" w tle, a jego wartość końcową i tak pilnuje blokada.
+  /*
+   * Wartość pola podąża za rejestrem TYLKO, gdy odczyt jest AKTUALNY (silnik od niego
+   * nie pracował - 09C i tankowanie tuż po locie). Po biegu silnika pole paliwa stoi
+   * puste i WYMAGA pomiaru, a normę niesie sugestia - ta sama reguła dwóch przypadków,
+   * co na 06 (opis biznesowy użytkownika, 2026-09-03); wcześniej prefill
+   * z nieaktualnego odczytu udawał stan bieżący.
+   *
+   * LICZNIK TEŻ STARTUJE PUSTY PO BIEGU SILNIKA (issue #84, uwaga 2: „czemu domyślnie
+   * mam wpisane motogodziny, skoro było uruchomienie silnika? Powinienem podać odczyt").
+   *
+   * Docblock sprzed tej poprawki twierdził, że „licznik nie spala się w tle" - i to
+   * jest prawda o CZASIE POSTOJU, a nie o tej operacji: między przejęciem a zdaniem
+   * silnik przepracował cały bieg, więc wartość z przejęcia jest z definicji nieaktualna.
+   * Podstawiona wyglądała jak odczyt, dawała się zatwierdzić bez spojrzenia na tarczę
+   * i wchodziła do łańcucha MH jako ogniwo, którego nikt nie zmierzył. Dokładnie ta
+   * sama pułapka, którą 2026-09-03 usunięto przy paliwie.
+   *
+   * Bez biegu silnika (09C) wartość z rejestru zostaje: nie ma czego mierzyć od nowa,
+   * a furtka korekty i tak stoi obok.
+   */
+  const engineRan = projection.legs.length > 0;
   const reading = {
     fuelL: fuelEdit ?? (freshReference ? (vm?.initial.fuelL ?? null) : null),
-    mh: mhEdit ?? vm?.initial.mh ?? null,
+    mh: mhEdit ?? (engineRan ? null : (vm?.initial.mh ?? null)),
   };
 
   const release = useCallback(async () => {
@@ -332,13 +340,12 @@ export function ReleaseAircraftScreen({
               </View>
             </Card>
 
-            {/* ── odczyt końcowy: wymagany - zapis ZATWIERDZA log operacji ── */}
-            <Card
-              title="Odczyt końcowy"
-              flush
-              headerRight={<Tag label="wymagane" tone="red" />}
-              contentStyle={styles.counters}
-            >
+            {/* ── odczyt końcowy - zapis ZATWIERDZA log operacji ──────────────
+                BEZ plakietki „wymagane" (issue #84, uwaga 7): wymagalność jest stanem
+                DOMYŚLNYM formularza, więc plakietka przy jedynej sekcji z polami
+                niczego nie odróżniała od niczego (ta sama reguła, co przy przebudowie
+                wpisu ręcznego). Oznaczamy WYŁĄCZNIE to, co opcjonalne. */}
+            <Card title="Odczyt końcowy" flush contentStyle={styles.counters}>
               <Field
                 label="Paliwo na pokładzie"
                 // Sugestia z normy przy PUSTYM polu, ze źródłem (reguła
@@ -354,55 +361,40 @@ export function ReleaseAircraftScreen({
               >
                 <ValueBox
                   value={reading.fuelL != null ? `${Math.round(reading.fuelL)}` : ''}
-                  placeholder="odczytaj z paliwomierza"
+                  /* „PODAJ STAN PALIWA", nie „odczytaj z paliwomierza" (issue #84,
+                     uwaga 1): paliwo mierzy się miarką w zbiornikach, a nie czyta
+                     z przyrządu - napis nazywał czynność, której pilot nie wykonuje.
+                     Ta sama poprawka słownika, co „Twój pomiar ze zbiorników" na 02A. */
+                  placeholder="podaj stan paliwa"
                   unit="L"
                   tone="amber"
                   actionIcon="edit"
                   onPress={() => setEditing('fuel')}
-                  accessibilityLabel="Paliwo na pokładzie - wpisz odczyt końcowy"
+                  accessibilityLabel="Paliwo na pokładzie - podaj stan"
                 />
               </Field>
 
               <Field label="Motogodziny" hint={finalMhHint(projection, reading.mh)}>
                 <ValueBox
                   value={reading.mh != null ? motoHours(reading.mh, vm.mhFormat) : ''}
-                  placeholder="odczytaj z licznika"
+                  placeholder="podaj stan licznika"
                   unit="MH"
-                  tone="amber"
+                  /* NEUTRALNY, nie bursztynowy (issue #84, uwaga 2: „czemu tutaj
+                     motogodziny wyświetlasz na żółto?"). Bursztyn jest w tej aplikacji
+                     rozróżnieniem PALIWA - przy liczniku nie odróżniał niczego, tylko
+                     robił z dwóch pól jedną plamę. Tak samo jak w arkuszu oleju (02I)
+                     i w sekcji motogodzin na 02A. */
                   actionIcon="edit"
                   onPress={() => setEditing('mh')}
-                  accessibilityLabel="Motogodziny - wpisz odczyt końcowy"
+                  accessibilityLabel="Motogodziny - podaj stan licznika"
                 />
               </Field>
             </Card>
 
-            {/* ── co się stanie z tymi odczytami (baner pouczający, Typ C) ───── */}
-            <Banner
-              kind="edu"
-              tone="green"
-              text={handoverText(vm.aircraftId, reading, vm.mhFormat)}
-              collapsedLabel="Co znaczą te odczyty?"
-              dismissed={handoverDismissed}
-              onDismiss={setHandoverDismissed}
-            />
-
-            {/* ── rozliczenie: policzone, nie do wpisania ────────────────────── */}
-            <Card title="Rozliczenie tego samolotu" flush>
-              <View style={styles.balance}>
-                {balanceRows(projection, reading, aircraft?.consumption ?? null).map((row) => (
-                  <KeyValueRow
-                    key={row.key}
-                    label={row.key}
-                    value={row.value}
-                    valueTone={row.amber ? 'amber' : 'secondary'}
-                    divider
-                  />
-                ))}
-              </View>
-            </Card>
-
-            {/* ── Typ A: przyrząd, niezamykalny ─────────────────────────────── */}
-            <Banner kind="status" tone="blue" icon="info" text={RELEASE_NOTICE} />
+            {/* Baner „Odczyt z tego ekranu zobaczy…" i karta „Rozliczenie tego
+                samolotu" USUNIĘTE (issue #84, uwagi 3 i 4), razem z banerem
+                „Zdajesz samolot, nie kończysz dnia" (uwaga 5) - uzasadnienia stoją
+                w miejscach po nich w `logic/releaseAircraft.ts`. */}
           </>
         )}
 
@@ -418,13 +410,13 @@ export function ReleaseAircraftScreen({
         unit="L"
         tone="amber"
         initialText={reading.fuelL != null ? `${Math.round(reading.fuelL)}` : ''}
-        // Szlak jak na 06 i w arkuszach preflightu: odczyt → latano · zużycie
-        // z normy → zielone „Szacunkowo zostało" (wspólny `fuelEstimateTrail`).
-        trail={estimate == null || norm == null ? [] : fuelEstimateTrail(estimate, norm.windowDays)}
-        rows={[
-          { label: 'Przy przejęciu', value: litres(projection.fuel.startL) },
-          { label: 'Dolane w tej operacji', value: litres(projection.fuel.addedL) },
-        ]}
+        /* SZLAK Z REJESTRU, NIE Z SAMEJ NORMY (issue #84, uwaga 1: „kliknięcie
+           w przycisk powinno otwierać popup […] co pokazuje, ile było przy przejęciu,
+           ile dolano i ile latano"). Do tej pory szlak wisiał na `estimate`, więc
+           maszyna bez policzonego modelu nie pokazywała ani jednego ogniwa - a te trzy
+           liczby są FAKTAMI z tej operacji. Wiersze odniesienia odchodzą razem z tym:
+           powtarzały przejęcie i dolewki, które szlak wypisuje ze stemplami. */
+        trail={fuelReleaseTrail(projection, events, norm, aircraft?.fuelNormLPerH ?? null)}
         parse={parseLitres}
         onConfirm={(v) => {
           setFuelEdit(v);
@@ -456,13 +448,12 @@ export function ReleaseAircraftScreen({
         tone="neutral"
         mask={(t) => maskMotoHoursInput(t, vm.mhFormat)}
         initialText={reading.mh != null ? motoHours(reading.mh, vm.mhFormat) : ''}
-        rows={[
-          {
-            label: 'Przy przejęciu',
-            value: `${motoHours(projection.mh.start, vm.mhFormat)} MH`,
-          },
-          { label: 'Odniesienie', value: finalMhHint(projection, reading.mh) },
-        ]}
+        /* Ten sam kształt podpowiedzi, co przy paliwie (issue #84, uwaga 2:
+           „analogicznie popup do wpisania motogodzin"): skąd licznik startował, ile
+           maszyna pracowała i - z przelicznikami - ile powinien pokazać. Wiersz
+           „Odniesienie" z `finalMhHint` odszedł: powtarzał podpowiedź spod pola,
+           a sam licznik przy przejęciu niesie pierwsze ogniwo. */
+        trail={mhReleaseTrail(projection, norm, vm.mhFormat)}
         parse={parseMotoHours}
         warningFor={(v) => mhRegressionWarning(projection, v)}
         onConfirm={(v) => {

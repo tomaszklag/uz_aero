@@ -48,6 +48,7 @@ import {
 } from '../components';
 import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
+import { useAircraft } from '../hooks/useAircraft';
 import { missingTrackCopy } from './logic/missingTrack';
 import { useSkeleton } from '../hooks/useSkeleton';
 import { buildDistanceLookup } from './logic/trackDistance';
@@ -81,6 +82,8 @@ export function TrackScreen({
   const trackQueries = useSessionStore((s) => s.trackQueries);
 
   const [view, setView] = useState<SessionTrackView | null>(null);
+  /** Znak maszyny do nagłówka - z cache floty, więc bez sieci (issue #84). */
+  const aircraft = useAircraft(view?.aircraftId ?? null);
   const [loaded, setLoaded] = useState(false);
   const [cursorAt, setCursorAt] = useState<number | null>(null);
   /**
@@ -153,9 +156,15 @@ export function TrackScreen({
       // Podtytuł 1:1 z mockupu 14: rejestracja · dzień i miesiąc · liczba lotów.
       // Bez „· UTC" (wzorzec nagłówków po issue #23) i bez godzin - te stoją przy
       // znacznikach na mapie i w nagłówku karty trasy.
+      /* ZNAK, NIGDY SUROWY IDENTYFIKATOR (issue #84: „jak jest ekran ze śladem operacji,
+         to po co wyświetlasz tam guid w nagłówku?"). `aircraftId` jest w produkcji
+         uuid-em nadanym w panelu, a znak rozwiązuje cache floty - ta sama poprawka,
+         co w pasku kokpitu (2026-09-02) i przy kodach pilotów na 07. Surowy id zostaje
+         ostatnią deską ratunku: maszyna spoza cache'u nie ma znaku, a podtytuł nie może
+         zgubić informacji, której operacji ślad dotyczy. */
       subtitle={
         view != null
-          ? `${view.aircraftId ?? '-'} · ${dateUtcDayMonth(view.fromAt)} · ${flightsLabel(view.flights.length)}`
+          ? `${aircraft?.reg ?? view.aircraftId ?? '-'} · ${dateUtcDayMonth(view.fromAt)} · ${flightsLabel(view.flights.length)}`
           : undefined
       }
       size="md"

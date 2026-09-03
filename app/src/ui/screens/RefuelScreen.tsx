@@ -2,9 +2,15 @@
  * UZ Aero - 06 TANKOWANIE
  *
  * Odwzorowanie mockupu `design/06-tankowanie.html`, sekcja po sekcji:
- * [nagłówek TANKOWANIE + SyncChip] → [pole FOB przed tankowaniem - WYMAGANY pomiar]
- * → [rachunek: szacunek z normy / rzeczywiste zużycie] → [sekcja DOLANO]
+ * [nagłówek TANKOWANIE + SyncChip] → [sekcja FOB przed tankowaniem - WYMAGANY pomiar]
+ * → [rachunek: rzeczywiste zużycie] → [sekcja DOLANO]
  * → [STAN PO TANKOWANIU z miarką] → [ZAPISZ].
+ *
+ * ══ SEKCJE SĄ TE SAME, CO NA KROKU 3 NOWEGO LOTU (issue #84) ══
+ * Odczyt paliwa przed tankowaniem to dokładnie to samo pytanie, co „Paliwo na
+ * pokładzie" na 02A, więc dostaje ten sam komponent (`Readout` z podziałką), a nie
+ * własną kartę-przyrząd z cyframi 64 px. Karta `GaugeHero` została skasowana razem
+ * z tą zmianą - była jedynym takim kształtem w aplikacji.
  *
  * Ekran zapisuje jedno zdarzenie `refuel` z TRZEMA liczbami (przed / dolano / po),
  * a domena odrzuca je, gdy się nie sumują albo gdy stan po tankowaniu przekracza
@@ -34,9 +40,10 @@ import {
   CalcBox,
   Card,
   Field,
-  GaugeHero,
   Icon,
+  LevelBar,
   ReadingSheet,
+  Readout,
   ResultBar,
   Screen,
   ScreenHeader,
@@ -61,6 +68,7 @@ import {
   refuelScale,
 } from './logic/refuelMath';
 import { compareToNorm, normLabel, verdictLabel } from './logic/fuelNorm';
+import { pilotWarnings } from './logic/pilotWarnings';
 import type { ReferenceAircraft } from '../../domain';
 
 /** Krok dolewki. 5 L to podziałka, którą widać na dystrybutorze; 20 L to szybki przeskok. */
@@ -79,7 +87,9 @@ export function RefuelScreen({
   const events = useSessionStore((s) => s.events);
   const queries = useSessionStore((s) => s.queries);
   const synced = useSessionStore((s) => s.synced);
-  const warnings = useSessionStore((s) => s.warnings);
+  // Jak w kokpicie: flagi diagnostyczne (rozjazd zegara) zostają w rejestrze i w panelu,
+  // a nie na ekranie pilota - `logic/pilotWarnings.ts`, issue #84.
+  const warnings = pilotWarnings(useSessionStore((s) => s.warnings));
   const lastError = useSessionStore((s) => s.lastError);
   const refuel = useSessionStore((s) => s.refuel);
 
@@ -187,7 +197,9 @@ export function RefuelScreen({
   const referenceLabel = reference == null ? null : fuelReferenceLabel(reference);
   const gaugeCaption =
     beforeOverride != null
-      ? 'Odczyt z paliwomierza'
+      // Ten sam napis, co adnotacja `manual` sekcji paliwa na 02A: pomiar ze zbiorników,
+      // nie odczyt z przyrządu (issue #84 - słownik idzie za czynnością pilota).
+      ? 'Twój pomiar ze zbiorników'
       : freshReference
         ? `z przekazania · ${referenceLabel}`
         : estimate != null
@@ -215,7 +227,9 @@ export function RefuelScreen({
     projection.engineRunning
       ? 'Wyłącz silnik - tankowania przy pracującym silniku nie zapiszemy'
       : beforeL == null
-        ? 'Wpisz stan paliwa z paliwomierza'
+        // „W ZBIORNIKACH", nie „z paliwomierza" (issue #84): paliwo mierzy się miarką,
+        // a nie czyta z przyrządu - ta sama poprawka słownika, co przy zdaniu samolotu.
+        ? 'Wpisz stan paliwa w zbiornikach'
         : addedL <= 0
           ? 'Ustaw ilość dolanego paliwa'
           : capacityL != null && afterL != null && afterL > capacityL
@@ -264,22 +278,42 @@ export function RefuelScreen({
       }
     >
       <View style={{ gap: theme.spacing.md }}>
-        {/* ── FOB przed tankowaniem (`.fob-indicator`) ──────────────────────── */}
-        {/* Neutralne pole stanu (uwagi z urządzenia, 2026-09-03): gdy samolot nie
-            latał od odczytu, wartość wychodzi z PRZEKAZANIA potwierdzonego
-            w preflighcie i pilot tylko dolewa (przypadek częstszy); gdy latał -
-            pole stoi puste z sugestią z normy, a historię opowiada szlak
-            w arkuszu pomiaru. Bez paska poziomu: oś pojemności mierzy odtąd
-            wyłącznie miarka wyniku. */}
-        <GaugeHero
+        {/* ── FOB przed tankowaniem: SEKCJA JAK NA KROKU 3 NOWEGO LOTU ────────
+            Zgłoszenie z urządzenia (issue #84): „mam sekcje, które różnią się od tego,
+            co już wypracowaliśmy. Mamy już analogiczny ekran i tu powinien wyglądać
+            bliźniaczo. Nie wyświetlasz też miarek."
+
+            Do tej pory stała tu karta-przyrząd `GaugeHero` z cyframi 64 px - kształt,
+            którego nie ma nigdzie indziej w aplikacji. Odczyt paliwa przed tankowaniem
+            jest DOKŁADNIE tym samym pytaniem, co „Paliwo na pokładzie" na 02A, więc
+            dostaje ten sam komponent: etykieta, wartość z jednostką, podziałka poziomu
+            na tle pojemności, podpis mówiący, skąd liczba pochodzi, i ołówek w rogu.
+
+            PODZIAŁKA WRACA i to jest świadome cofnięcie połowy decyzji z 2026-09-03
+            („miarka jest JEDNA - na wyniku"): tamten rachunek zakładał, że pilot ma tu
+            wielką liczbę na własnej karcie, więc druga oś pojemności byłaby powtórzeniem.
+            W sekcji wielkości `Readout` podziałka jest jedyną rzeczą, która mówi „ile
+            to jest z pełnych zbiorników" - a od tego zaczyna się decyzja, ile dolać.
+
+            Dwa przypadki biznesowe zostają bez zmian: samolot NIE LATAŁ od odczytu -
+            wartość wychodzi z przekazania potwierdzonego w preflighcie; LATAŁ - pole
+            stoi puste z sugestią z normy, a historię opowiada szlak w arkuszu pomiaru. */}
+        <Readout
           label="FOB przed tankowaniem"
           value={beforeL == null ? null : String(Math.round(beforeL))}
           unit="L"
+          tone="amber"
           caption={gaugeCaption}
-          // „Zmień odczyt", nie „Koryguj z paliwomierza" (uwaga z urządzenia,
-          // 2026-09-02): długi bursztynowy napis rzucał się w oczy i sugerował,
-          // że to tutaj wpisuje się tankowanie - a celem ekranu jest DOLEWKA.
-          correctLabel="Zmień odczyt"
+          gauge={
+            beforeL != null && capacityL != null && capacityL > 0 ? (
+              <LevelBar ratio={beforeL / capacityL} tone="amber" />
+            ) : undefined
+          }
+          /* Pusta wartość NIE jest tu „brakiem danych" w rozumieniu §4.8 - jest polem
+             do wypełnienia, a podpis pod nim niesie sugestię, którą pilot ma z czym
+             porównać. Ta sama gałąź, co przy oleju na 02A. */
+          missing={false}
+          correctLabel={beforeL == null ? 'Wpisz pomiar' : 'Koryguj'}
           onCorrect={() => setEditingBefore(true)}
         />
 
