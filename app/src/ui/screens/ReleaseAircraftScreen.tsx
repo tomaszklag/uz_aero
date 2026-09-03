@@ -25,7 +25,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import {
   ActionButton,
@@ -34,6 +34,7 @@ import {
   Card,
   Field,
   Icon,
+  IconAction,
   KeyValueRow,
   OptionGrid,
   ReadingSheet,
@@ -42,6 +43,7 @@ import {
   SummaryStrip,
   SyncChip,
   Tag,
+  TextEntrySheet,
   ValueBox,
   toneColors,
   type GridOption,
@@ -50,7 +52,6 @@ import { useTheme } from '../theme';
 import { useEduBanner, useSessionStore } from '../store';
 import { useAircraft } from '../hooks/useAircraft';
 import {
-  dateUtcLong,
   litres,
   motoHours,
   parseLitres,
@@ -115,6 +116,7 @@ export function ReleaseAircraftScreen({
 }: {
   navigation: { navigate: (s: string) => void; goBack: () => void };
 }) {
+  const { theme } = useTheme();
   const projection = useSessionStore((s) => s.projection);
   const events = useSessionStore((s) => s.events);
   const lastError = useSessionStore((s) => s.lastError);
@@ -129,7 +131,9 @@ export function ReleaseAircraftScreen({
   const [fuelEdit, setFuelEdit] = useState<number | null>(null);
   const [mhEdit, setMhEdit] = useState<number | null>(null);
   const [reason, setReason] = useState<NoFlightReason | null>(null);
-  const [editing, setEditing] = useState<'fuel' | 'mh' | null>(null);
+  /** Komentarz do powodu (09C) - opcjonalny, wolny tekst; `''` = brak. */
+  const [note, setNote] = useState('');
+  const [editing, setEditing] = useState<'fuel' | 'mh' | 'note' | null>(null);
   const [busy, setBusy] = useState(false);
 
   const now = useHalfMinuteTicker();
@@ -165,7 +169,9 @@ export function ReleaseAircraftScreen({
     if (reading.fuelL == null || reading.mh == null) return;
     setBusy(true);
     try {
-      await releaseAircraft(releasePayload({ fuelL: reading.fuelL, mh: reading.mh }, reason));
+      await releaseAircraft(
+        releasePayload({ fuelL: reading.fuelL, mh: reading.mh }, reason, note),
+      );
       // Wszystko wraca do „Mój dzień", nie do kokpitu: samolotu już nie ma w ręce,
       // a dzień pilota trwa dalej.
       navigation.navigate('MyDay');
@@ -174,7 +180,7 @@ export function ReleaseAircraftScreen({
     } finally {
       setBusy(false);
     }
-  }, [navigation, reading.fuelL, reading.mh, reason, releaseAircraft]);
+  }, [navigation, note, reading.fuelL, reading.mh, reason, releaseAircraft]);
 
   if (vm == null) return <NoAircraft onBack={() => navigation.navigate('MyDay')} />;
 
@@ -193,7 +199,10 @@ export function ReleaseAircraftScreen({
           <ScreenHeader
             title="ZDAJ SAMOLOT"
             size="md"
-            subtitle={`${vm.aircraftId} · ${dateUtcLong(now)}`}
+            // Bez podtytułu (uwaga z urządzenia, 2026-09-03: „w nagłówku wyświetla się
+            // guid - po co, wystarczy sam nagłówek"): `aircraftId` to w produkcji uuid
+            // z panelu, a maszynę i datę mówi już oś operacji niżej. Mockupy 09B/09C
+            // od zawsze rysowały sam tytuł - kod dogania spec.
             onBack={navigation.goBack}
             backLabel="Kokpit"
             right={<SyncChip />}
@@ -279,25 +288,33 @@ export function ReleaseAircraftScreen({
               <View style={styles.reasons}>
                 <OptionGrid options={REASONS} value={reason} onChange={setReason} />
               </View>
+              {/* Komentarz do powodu - OPCJONALNY (uwaga z urządzenia, 2026-09-03):
+                  karta powodu mówi „usterka", ale nie mówi KTÓRA, a administrator
+                  czytający rejestr tydzień później nie ma już kogo zapytać. Plakietka
+                  „opcjonalne" przy etykiecie, nigdy słowo doklejone do nazwy; wpis
+                  w arkuszu tekstu jak notatka na 02E. */}
+              <View style={{ paddingHorizontal: theme.spacing.lg, paddingBottom: theme.spacing.lg }}>
+                <Field label="Komentarz" tag={{ label: 'opcjonalne' }}>
+                  <ValueBox
+                    variant="text"
+                    value={note}
+                    placeholder="np. przeciek oleju pod silnikiem"
+                    actionIcon="edit"
+                    onPress={() => setEditing('note')}
+                    accessibilityLabel="Komentarz do powodu - wpisz"
+                  />
+                </Field>
+              </View>
             </Card>
 
-            {/* Jeden slot, dwa stany (issue #75 pkt 2): bez zmian - amber ostrzeżenie
-                „nic nie zostanie zapisane"; ze zmianą - niebieski status, bo wtedy zapis
-                NAPRAWDĘ trafia do dnia pilota i do panelu. Obu naraz nie ma: mówiłyby
-                o tym samym zdaniu dwie sprzeczne rzeczy. */}
-            {emptyWarning != null ? (
+            {/* Zostaje SAMO ostrzeżenie „nic nie zostanie zapisane" przy zdaniu bez
+                zmian (issue #75 pkt 2). Niebieski status „Zapis zostaje w rejestrze -
+                administrator widzi…" USUNIĘTY (uwaga z urządzenia, 2026-09-03): opisywał
+                budowę rejestru i panelu komuś, kto chce tylko oddać samolot - kategoria
+                przypisów z issue #43/#72. Ze zmianą ekran o zapisie MILCZY: zapis jest
+                stanem domyślnym i nie dostaje zdania (reguła SyncChipa z issue #12). */}
+            {emptyWarning != null && (
               <Banner kind="warning" tone="amber" icon="warning" text={emptyWarning} />
-            ) : (
-              <Banner
-                kind="status"
-                tone="blue"
-                icon="info"
-                text={
-                  `Zapis zostaje w rejestrze - administrator widzi, że ` +
-                  `${vm.aircraftId} był zajęty i dlaczego nie poleciał. Twój dzień liczy się ` +
-                  'dalej: ta operacja dopisze się do listy z godzinami zajęcia maszyny.'
-                }
-              />
             )}
           </>
         ) : (
@@ -416,6 +433,22 @@ export function ReleaseAircraftScreen({
         onCancel={() => setEditing(null)}
       />
 
+      <TextEntrySheet
+        visible={editing === 'note'}
+        title="Komentarz do powodu"
+        initialText={note}
+        placeholder="np. przeciek oleju pod silnikiem"
+        multiline
+        maxLength={500}
+        // Bez podpowiedzi: komentarz opisuje konkretną sytuację, nie powtarzalny wybór.
+        suggestions={null}
+        onConfirm={(text) => {
+          setNote(text);
+          setEditing(null);
+        }}
+        onCancel={() => setEditing(null)}
+      />
+
       <ReadingSheet
         visible={editing === 'mh'}
         title="Odczyt końcowy motogodzin"
@@ -524,21 +557,14 @@ function UnchangedRow({
         {unit}
       </AppText>
       <View style={styles.spacer} />
-      <Pressable
-        accessibilityRole="button"
+      {/* Goły ołówek w stałej kolumnie (`IconAction`, issue #43), BEZ obramówki
+          (uwaga z urządzenia, 2026-09-03: „brzydko wyglądają") - ramka robiła
+          z ołówka drugi przycisk obok wartości. */}
+      <IconAction
+        name="edit"
         accessibilityLabel={`${label} ${value} ${unit} - popraw, jeśli różni się od stanu przy przejęciu`}
         onPress={onEdit}
-        style={({ pressed }) => [
-          styles.editButton,
-          {
-            borderWidth: theme.borderWidth,
-            borderColor: pressed ? theme.colors.amberBorder : theme.colors.borderStrong,
-            borderRadius: theme.radius.sm,
-          },
-        ]}
-      >
-        <Icon name="edit" size={15} color={theme.colors.textSecondary} />
-      </Pressable>
+      />
     </View>
   );
 }
@@ -590,7 +616,6 @@ const styles = StyleSheet.create({
   counterUnit: { fontSize: 10, lineHeight: 14 },
   spacer: { flex: 1 },
   // Cel dotykowy 44 px mimo drobnej ikony - ołówek stoi w gęstym wierszu.
-  editButton: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
 
   // ── stan pusty 09C ─────────────────────────────────────────────────────────
   empty: { alignItems: 'center', gap: 8, paddingVertical: 24, paddingHorizontal: 20 },

@@ -298,6 +298,18 @@ describe('payload i napisy zdania (issue #23 - jedna intencja)', () => {
     expect(releasePayload(reading, 'weather').noFlightReason).toBe('weather');
   });
 
+  it('komentarz do powodu wchodzi TYLKO z treścią - pusty i sam biały znak to brak klucza', () => {
+    // Opcjonalne pole (uwaga z urządzenia, 2026-09-03): „usterka" bez słowa KTÓRA
+    // jest dla administratora pytaniem, nie informacją.
+    expect(releasePayload(reading, 'malfunction', '  przeciek oleju  ')).toEqual({
+      finalReading: reading,
+      noFlightReason: 'malfunction',
+      noFlightNote: 'przeciek oleju',
+    });
+    expect('noFlightNote' in releasePayload(reading, 'malfunction', '   ')).toBe(false);
+    expect('noFlightNote' in releasePayload(reading, 'malfunction', null)).toBe(false);
+  });
+
   it('CTA i baner mówią, co się zaraz stanie - nie odwrotnie', () => {
     // Zdanie = zatwierdzenie logu sesji (2026-08-10) - napis to zapowiada,
     // a baner niesie najważniejsze zdanie przebudowy flow.

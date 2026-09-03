@@ -528,6 +528,15 @@ export interface DayClosePayload {
    * fakt zajęcia maszyny jest cenniejszy niż kompletność formularza.
    */
   noFlightReason?: NoFlightReason | null;
+  /**
+   * Komentarz do powodu - OPCJONALNY, wolny tekst (uwaga z urządzenia, 2026-09-03:
+   * „może warto dać opcjonalne pole z komentarzem doszczegóławiającym, dlaczego nie
+   * wykonano lotu"). Cztery karty powodu odpowiadają na „co", nie na „co dokładnie" -
+   * „usterka" bez słowa, KTÓRA, jest dla administratora pytaniem. Pusty tekst nie
+   * wchodzi do payloadu (brak klucza = null); pole ma sens tylko przy sesji bez lotu,
+   * jak `noFlightReason`.
+   */
+  noFlightNote?: string | null;
   /*
    * `dutyEnd` (godzina zakończenia służby) żyło tu do 2026-08-11 i zostało USUNIĘTE
    * razem z całą klamrą służby (issue #23) - zdanie samolotu kończy pracę z maszyną,

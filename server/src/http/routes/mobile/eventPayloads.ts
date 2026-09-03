@@ -185,6 +185,8 @@ export const PAYLOAD_SCHEMAS: Record<string, z.ZodTypeAny> = {
     finalReading: reading,
     /** Powód zdania bez uruchomienia silnika (09C); brak = miękka flaga w domenie. */
     noFlightReason: z.enum(['weather', 'malfunction', 'cancelled', 'other']).nullable().optional(),
+    /** Komentarz do powodu (2026-09-03) - wolny tekst, ten sam sufit co powód korekty. */
+    noFlightNote: z.string().max(500).nullable().optional(),
   }),
 
   /**

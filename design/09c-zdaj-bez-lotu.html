@@ -11,7 +11,7 @@
   :root {
     --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
     --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
-    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A; --text-placeholder: #565656;
     --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
     --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
     --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
@@ -104,15 +104,29 @@
   .counter-val { font-family:var(--font-display); font-size:24px; letter-spacing:1px; color:var(--text-primary); line-height:1; }
   .counter-unit { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); margin-left:5px; }
   .counter-spacer { flex:1; }
+  /* Ołówek BEZ obramówki (uwaga z urządzenia, 2026-09-03: „przyciski ołówka daj bez
+     obramówki, bo brzydko wyglądają") - ta sama goła ikona w stałej kolumnie, co przy
+     wierszach osi w trybie edycji (`IconAction`, issue #43); ramka robiła z ołówka
+     drugi przycisk obok wartości. Cel dotykowy 44 px zostaje. */
   .edit-btn {
-    background:none; border:1px solid var(--border-strong); border-radius:8px;
+    background:none; border:none; border-radius:8px;
     color:var(--text-secondary); text-decoration:none;
     min-width:44px; min-height:44px; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;
   }
-  .edit-btn:hover { border-color:var(--amber-border); color:var(--amber); }
+  .edit-btn:hover { color:var(--amber); }
 
   /* Powód - siatka kart z ikonami, nigdy natywny select */
   .reason-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:12px; }
+  /* Komentarz do powodu - OPCJONALNY (uwaga z urządzenia, 2026-09-03): pole tekstowe
+     w spoczynku (`ValueBox variant="text"`, jak notatka na 02E), plakietka
+     „opcjonalne" w linii etykiety - nigdy słowo doklejone do nazwy. Pusty = placeholder
+     w `--text-placeholder`; wpis otwiera arkusz tekstu. */
+  .comment-field { display:flex; flex-direction:column; gap:5px; padding:0 14px 14px; }
+  .comment-label { display:flex; align-items:center; justify-content:space-between; font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
+  .comment-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); border:1px solid var(--border-strong); border-radius:6px; padding:2px 6px; }
+  .comment-box { display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:46px; padding:11px 13px; border-radius:12px; border:1px solid var(--border-strong); background:var(--surface-raised); text-decoration:none; }
+  .comment-placeholder { font-family:var(--font-body); font-size:15px; color:var(--text-placeholder); }
+  .comment-box svg { color:var(--text-muted); flex-shrink:0; }
   .reason-card {
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
     min-height:74px; padding:10px 8px; border-radius:12px;
@@ -202,7 +216,8 @@
       </a>
       <div class="app-header-center">
         <span class="screen-title">ZDAJ SAMOLOT</span>
-        <span class="header-date">SP-ANK · 03 SIE</span>
+        <!-- Bez podtytułu (uwaga z urządzenia, 2026-09-03: „w nagłówku wyświetla się
+             guid - po co, wystarczy sam nagłówek"): maszynę i dobę mówi oś operacji. -->
       </div>
       <span class="header-slot"></span>
     </div>
@@ -266,6 +281,16 @@
             <span class="reason-label">Inne</span>
           </a>
         </div>
+        <!-- Komentarz do powodu - patrz nota przy `.comment-field` w CSS. Do rejestru
+             idzie jako `day_close.noFlightNote` (tylko z treścią; sufit 500 znaków,
+             ten sam co powód korekty). -->
+        <div class="comment-field">
+          <div class="comment-label"><span>Komentarz</span><span class="comment-tag">opcjonalne</span></div>
+          <a href="09c-zdaj-bez-lotu.html" class="comment-box" title="Wpisz komentarz do powodu">
+            <span class="comment-placeholder">np. przeciek oleju pod silnikiem</span>
+            <svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 8.5l1.8-0.5 5.4-5.4a1.2 1.2 0 0 0-1.7-1.7L1.6 6.3l-.6 1.8z"/></svg>
+          </a>
+        </div>
       </div>
 
       <!-- JEDEN SLOT, DWA STANY (issue #75 pkt 2). Stan domyślny 09C to odczyty
@@ -275,8 +300,8 @@
            gdy pilot poprawi odczyt ołówkiem wyżej albo zatankuje - wtedy w tym
            miejscu staje niebieski status (drugi stan niżej, zakomentowany), bo
            zapis ZE zmianą dostaje numer, sygnaturę i kafelek z godzinami zajęcia
-           (issue #75 pkt 3). Nigdy oba naraz: mówiłyby o jednym zdaniu dwie
-           sprzeczne rzeczy. NIE blokuje - samolot trzeba oddać tak czy inaczej. -->
+           (issue #75 pkt 3). NIE blokuje - samolot trzeba oddać tak czy inaczej.
+           Jedyny baner tego stanu - patrz nota niżej. -->
       <div class="warn-box">
         <svg class="warn-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.8 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.8a2 2 0 0 0-3.4 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         <span class="warn-text">Silnik nie ruszył, a odczyty stoją na wartościach z przejęcia -
@@ -284,14 +309,13 @@
         ani w panelu. Jeśli coś się jednak zmieniło, popraw odczyt ołówkiem powyżej.</span>
       </div>
 
-      <!-- Stan drugi (odczyt POPRAWIONY albo dolewka - zapis ma treść):
-      <div class="status-box">
-        <svg class="status-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        <span class="status-text">Zapis <b>zostaje w rejestrze</b> - administrator widzi, że
-        SP-ANK był zajęty od 09:10 i dlaczego nie poleciał. Twój dzień liczy się dalej:
-        ta operacja dopisze się do listy z godzinami zajęcia maszyny.</span>
-      </div>
-      -->
+      <!-- Stan drugi (odczyt POPRAWIONY albo dolewka - zapis ma treść): ekran o zapisie
+           MILCZY. Niebieski status „Zapis zostaje w rejestrze - administrator widzi,
+           że … był zajęty i dlaczego nie poleciał. Twój dzień liczy się dalej…"
+           USUNIĘTY (uwaga z urządzenia, 2026-09-03): opisywał budowę rejestru
+           i panelu komuś, kto chce tylko oddać samolot (kategoria przypisów
+           z issue #43/#72), a zapis jest stanem domyślnym i nie dostaje zdania
+           (reguła SyncChipa z issue #12). -->
 
 
       <a href="01-moj-dzien.html" class="btn-primary-amber">

@@ -184,6 +184,43 @@ describe('oś operacji', () => {
     );
     // zdanie samolotu zostaje bez oleju - bagnet tuż po locie kłamie
     expect(rows.find((row) => row.kind === 'release')!.sub).toBe('paliwo 171 L · 1236:05');
+
+    // STARY STRUMIEŃ: dolewka z payloadu przejęcia dostaje własny wiersz jak `oil_add`
+    // (uwaga z urządzenia, 2026-09-03: „nie doświetla się wpis z dolewką oleju przy
+    // przejęciu") - zaraz za przejęciem, z celem korekty w przejęciu (10F).
+    const claimIndex = rows.findIndex((row) => row.kind === 'claim');
+    const legacy = rows[claimIndex + 1]!;
+    expect(legacy.kind).toBe('oilAdd');
+    expect(legacy.name).toBe('Dolewka oleju');
+    expect(legacy.sub).toBe('+1,0 L');
+    expect(legacy.targetUuid).toBe(
+      withOil.find((e) => e.type === 'preflight_confirm')!.uuid,
+    );
+    expect(legacy.corrected).toBe(false);
+  });
+
+  it('nowy strumień: dolewka jako osobne oil_add - jeden wiersz, bez dublowania', () => {
+    const preflightAt = sessionEvents().find((e) => e.type === 'preflight_confirm')!;
+    const withOilAdd = [
+      ...sessionEvents().map((e) =>
+        e.type === 'preflight_confirm'
+          ? ({ ...e, payload: { ...e.payload, oilL: 8.2 } } as Event)
+          : e,
+      ),
+      {
+        ...preflightAt,
+        uuid: 'oil-add-1',
+        type: 'oil_add',
+        payload: { addedL: 1.0 },
+        deviceTime: (preflightAt.gpsTime ?? preflightAt.deviceTime) + 30_000,
+        gpsTime: (preflightAt.gpsTime ?? preflightAt.deviceTime) + 30_000,
+      } as Event,
+    ];
+    const rows = axis(withOilAdd).rows;
+    const oilRows = rows.filter((row) => row.kind === 'oilAdd');
+    expect(oilRows).toHaveLength(1);
+    expect(oilRows[0]!.targetUuid).toBe('oil-add-1');
+    expect(oilRows[0]!.sub).toBe('+1,0 L');
   });
 
   it('zrzut niesie skład i wysokość; brak obu nie robi pustego podpisu', () => {

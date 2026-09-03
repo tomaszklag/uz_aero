@@ -514,8 +514,12 @@ zgodność torów przybija rozszerzony `server/test/operationSignature.test.ts`.
   odczytu - gaśnie z pierwszą poprawką; `logic/releaseWarnings.ts`), że „nic nie
   zostanie zapisane, bo nic nie zostało zmienione"; NIGDY nie blokuje - samolot trzeba
   oddać. Plakietka „bez zmian" przy licznikach gaśnie po poprawce (nad zmienioną liczbą
-  kłamała). Niebieski status „Twój dzień liczy się dalej" stoi odtąd WYŁĄCZNIE w stanie
-  ze zmianą - jeden slot, dwa stany, nigdy oba
+  kłamała). Niebieski status „Zapis zostaje w rejestrze - administrator widzi… Twój
+  dzień liczy się dalej" USUNIĘTY (uwaga z urządzenia, 2026-09-03): opisywał budowę
+  rejestru i panelu komuś, kto chce tylko oddać samolot (kategoria przypisów
+  z issue #43/#72), a zapis jest stanem domyślnym i nie dostaje zdania (reguła
+  SyncChipa z issue #12) - w stanie ze zmianą ekran o zapisie MILCZY, zostaje samo
+  ostrzeżenie amber w stanie bez zmian
 - **pkt 3 - zapis bez biegu ZE ZMIANĄ jest operacją**: dostaje numer, sygnaturę
   (kotwica: przejęcie - patrz sekcja sygnatury wyżej) i kafelek na 01/12 z godzinami
   ZAJĘCIA maszyny (przejęcie → zdanie) oraz trójką 0 · 0:00 · 0:00. Decyzja zapada
@@ -1620,6 +1624,15 @@ korekty (amend vs unieważnij+dopisz) i dwa źródła sumy dla analityki oleju.
   się arkuszem 10H (`oil_add` był tam od issue #70)
 - **serwer bez zmian**: ingest zna `oil_add` od issue #60, a kolumna
   `sessions.oil_added_l` od zawsze sumuje payload + zdarzenia
+- **STARY STRUMIEŃ DOSTAJE WIERSZ OSI SYNTETYCZNIE** (uwaga z urządzenia tego
+  samego dnia: „nie doświetla się wpis z dolewką oleju przy przejęciu" - operacja
+  sprzed zmiany): `buildSessionAxis` rysuje `oilAddedL` z payloadu przejęcia jak
+  każde `oil_add` (wiersz „Dolewka oleju · +1,0 L" tuż za przejęciem), z celem
+  korekty w PRZEJĘCIU - tryb edycji dobiera arkusz po typie zdarzenia docelowego,
+  więc trafia w 10F, gdzie pole dolewki dla starych payloadów istnieje. Plakietka
+  „popr." pyta o pole `oilAddedL`, nie o dowolną poprawkę przejęcia. Oś ma JEDEN
+  kształt niezależnie od tego, kiedy zapis powstał; testy w `sessionAxis.test.ts`
+  (stary kształt → wiersz syntetyczny; nowy → jedno `oil_add`, bez dublowania)
 
 ## Sekcja oleju na 02A: podziałka zamiast tekstu, podpowiedź w arkuszu (2026-09-02)
 Uwagi z urządzenia do kroku liczników (NOWY LOT · 3/3):
@@ -1867,6 +1880,25 @@ Uwagi z urządzenia do kroku liczników (NOWY LOT · 3/3):
   rozjazd łapie literówkę w odczycie zdania albo tankowanie poza aplikacją.
   Bez normy / zastanego / lotów ogniwa nie ma (oczekiwanie bez lotów równałoby
   się przekazaniu - zdanie o niczym)
+
+## Zdanie samolotu (09B/09C) po przeglądzie 2026-09-03
+Trzy uwagi z urządzenia do ekranu zdania:
+- **nagłówek to sam tytuł „ZDAJ SAMOLOT"** („w nagłówku wyświetla się guid - po co"):
+  podtytuł sklejał `aircraftId` (w produkcji uuid z panelu) z datą, a mockupy 09B/09C
+  od zawsze rysowały sam tytuł - kod dogonił spec. Maszynę i datę mówi oś operacji
+- **komentarz do powodu zdania bez lotu - OPCJONALNY** („może warto dać opcjonalne
+  pole z komentarzem doszczegóławiającym, dlaczego nie wykonano lotu"): cztery karty
+  powodu odpowiadają na „co", nie „co dokładnie" - „usterka" bez słowa KTÓRA jest dla
+  administratora pytaniem. NOWE pole payloadu `day_close.noFlightNote` (domena +
+  walidacja serwera, sufit 500 znaków jak powód korekty; wchodzi TYLKO z treścią -
+  `releasePayload` przycina i pomija pusty, test w `releaseAircraft.test.ts`).
+  UI: `Field` z plakietką „opcjonalne" + `ValueBox variant="text"` pod siatką powodów,
+  wpis w `TextEntrySheet` bez podpowiedzi (komentarz opisuje konkretną sytuację).
+  Korekty komentarza po zdaniu (amend) na razie NIE MA - biała lista `day_close`
+  zostaje przy paliwie i MH; dołożyć razem z wejściem w 10F, gdy pilot o to poprosi
+- **ołówki przy licznikach 09C BEZ obramówki** („brzydko wyglądają"): `IconAction`
+  w stałej kolumnie, jak przy wierszach osi w trybie edycji (issue #43) - ramka
+  robiła z ołówka drugi przycisk obok wartości. Cel dotykowy 44 px zostaje
 
 ## Zmiana załogi (07) po przeglądzie 2026-09-02
 Sześć uwag z urządzenia; wspólny mianownik ten sam, co na 02A - ekran mówi decyzją,

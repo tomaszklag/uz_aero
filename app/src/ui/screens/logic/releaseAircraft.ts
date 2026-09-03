@@ -297,8 +297,20 @@ export function consumedL(state: SessionState, fuelL: number | null): number | n
 export function releasePayload(
   reading: { fuelL: number; mh: number },
   reason: NoFlightReason | null,
-): { finalReading: { fuelL: number; mh: number }; noFlightReason: NoFlightReason | null } {
-  return { finalReading: reading, noFlightReason: reason };
+  note: string | null = null,
+): {
+  finalReading: { fuelL: number; mh: number };
+  noFlightReason: NoFlightReason | null;
+  noFlightNote?: string;
+} {
+  // Komentarz do powodu (2026-09-03) wchodzi TYLKO z treścią: pusty tekst to brak
+  // klucza, nie pusty napis - tak samo, jak reszta pól opcjonalnych w rejestrze.
+  const trimmed = note?.trim() ?? '';
+  return {
+    finalReading: reading,
+    noFlightReason: reason,
+    ...(trimmed.length > 0 ? { noFlightNote: trimmed } : {}),
+  };
 }
 
 /**

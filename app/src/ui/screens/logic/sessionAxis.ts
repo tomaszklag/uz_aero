@@ -264,6 +264,32 @@ export function buildSessionAxis(
       targetUuid: target,
       corrected: target != null && corrected.has(target),
     });
+
+    // STARY STRUMIEŃ (sprzed 2026-09-03): dolewka oleju siedzi w payloadzie przejęcia
+    // (`oilAddedL`), nie w osobnym `oil_add`. Rysujemy ją jak każde `oil_add` - oś ma
+    // JEDEN kształt niezależnie od tego, kiedy zapis powstał; bez tego wiersza
+    // dolewka ze starych operacji nie miała na osi żadnego śladu (podpis przejęcia
+    // niesie sam pomiar zastany). Celem korekty jest przejęcie: arkusz 10F pokazuje
+    // wtedy pole dolewki, bo payload ją niesie. Plakietka „popr." pyta o TO pole,
+    // nie o dowolną poprawkę przejęcia.
+    const preflight = effective.find(
+      (e): e is EventOf<'preflight_confirm'> => e.type === 'preflight_confirm',
+    );
+    const legacyOilAddedL = preflight?.payload.oilAddedL ?? null;
+    if (preflight != null && legacyOilAddedL != null && legacyOilAddedL > 0) {
+      rows.push({
+        id: `${preflight.uuid}-oil-add`,
+        kind: 'oilAdd',
+        at: firstEventAt(events, projection.claimedAt),
+        time: declaredTime(projection.claimedAt, projection.manualEntry, true),
+        name: 'Dolewka oleju',
+        sub: `+${oilLitres(legacyOilAddedL)}`,
+        flight: null,
+        duration: null,
+        targetUuid: preflight.uuid,
+        corrected: correctionHistory(events, preflight.uuid).some((h) => h.field === 'oilAddedL'),
+      });
+    }
   }
 
   for (const event of effective) {
