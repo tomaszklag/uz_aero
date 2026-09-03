@@ -16,6 +16,7 @@ import {
   engineTimeInWindow,
   estimateConsumption,
   estimateFob,
+  expectedHandoverL,
   fuelEstimateTrail,
   fuelReferenceLabel,
   hoursMinutes,
@@ -273,6 +274,33 @@ describe('szlak szacunku (wspólny dla 06 i 09B)', () => {
     expect(fuelReferenceLabel({ at: at(10, 48), fuelL: 160, source: 'refuel' })).toBe(
       'tankowanie 10:48 UTC',
     );
+  });
+});
+
+describe('oczekiwany stan przekazania (ogniwo na przejęciu, 02A)', () => {
+  const claim = { kind: 'claim' as const, at: at(8, 0), pilotId: 'AKO', fuelDeltaL: null, fuelAfterL: 96, mhAfter: 1234.5, durationMs: null };
+  const flight = { kind: 'flight' as const, at: at(9, 0), pilotId: 'AKO', fuelDeltaL: null, fuelAfterL: 62, mhAfter: 1236, durationMs: 90 * 60_000 };
+  const refuel = { kind: 'refuel' as const, at: at(8, 30), pilotId: null, fuelDeltaL: 20, fuelAfterL: 116, mhAfter: null, durationMs: null };
+
+  it('zastane + dolewki − norma × czas lotów', () => {
+    // 96 + 20 − 16 L/h × 1,5 h = 92.
+    expect(expectedHandoverL([claim, refuel, flight], norm())).toEqual({
+      expectedL: 92,
+      engineMs: 90 * 60_000,
+    });
+  });
+
+  it('bez normy, bez zastanego i bez lotów - null, ekran milczy', () => {
+    expect(expectedHandoverL([claim, flight], null)).toBeNull();
+    expect(expectedHandoverL([{ ...claim, fuelAfterL: null }, flight], norm())).toBeNull();
+    // Bez lotów oczekiwanie równałoby się przekazaniu - zdanie o niczym.
+    expect(expectedHandoverL([claim, refuel], norm())).toBeNull();
+  });
+
+  it('nie schodzi poniżej zera', () => {
+    expect(
+      expectedHandoverL([{ ...claim, fuelAfterL: 10 }, flight], norm())!.expectedL,
+    ).toBe(0);
   });
 });
 

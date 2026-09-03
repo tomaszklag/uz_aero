@@ -50,6 +50,7 @@ import { usePreflightDraft } from '../store/preflightDraft';
 import { requestNotificationPermission } from '../../infrastructure/permissions/notificationPermission';
 import { claimDecision } from './logic/claimMode';
 import { preflightBlocker } from './logic/preflightGate';
+import { expectedHandoverL, fuelExpectationRow } from './logic/refuelMath';
 import {
   oilAfterRow,
   oilClaimView,
@@ -298,8 +299,19 @@ export function PreflightReadingsScreen({
       if (e.fuelAfterL != null) lastFuel = e.fuelAfterL;
     }
 
+    // Zielone ogniwo oczekiwania - TEN SAM szacunek z normy, co na tankowaniu
+    // i zdaniu (uwaga z urządzenia, 2026-09-03: „na przejęciu też pokaż").
+    // Tu liczy się z HISTORII przekazania (`expectedHandoverL`) i pracuje jako
+    // krzyżowa kontrola: rozjazd z wartością przekazania obok łapie literówkę
+    // w odczycie zdania albo tankowanie poza aplikacją.
+    const norm = aircraft?.consumption ?? null;
+    const expectation = expectedHandoverL(entries, norm);
+    if (expectation != null && norm != null) {
+      fuel.push(fuelExpectationRow(expectation.expectedL, norm.windowDays));
+    }
+
     return { fuel, mh };
-  }, [handover, mhFormat, pilotName]);
+  }, [aircraft, handover, mhFormat, pilotName]);
 
   const applyReading = useCallback(
     (key: 'fuelL' | 'mh', value: number) => {

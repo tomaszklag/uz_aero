@@ -29,6 +29,7 @@ import {
   type ConsumptionNorm,
   type EpochMillis,
   type Event,
+  type HandoverTrailEntry,
   type SessionState,
 } from '../../../domain';
 import { litres, timeUtc } from '../../format';
@@ -224,13 +225,69 @@ export function fuelEstimateTrail(
       title: `Latano · ${hoursMinutes(estimate.engineMs)}`,
       meta: `zużycie z normy ~${Math.round(estimate.usedL)} L`,
     },
-    {
-      id: 'left',
-      tone: 'green',
-      title: `Szacunkowo zostało ~${estimate.fobL} L`,
-      meta: `z normy samolotu (${windowDays} dni) - zweryfikuj z paliwomierza`,
-    },
+    fuelExpectationRow(estimate.fobL, windowDays),
   ];
+}
+
+/**
+ * ZIELONE ogniwo oczekiwania - jedno brzmienie na 06, 09B i 02A (przejęcie):
+ * ta sama liczba w trzech miejscach nie ma prawa nazywać się trzema zdaniami.
+ */
+export function fuelExpectationRow(expectedL: number, windowDays: number): FuelTrailRow {
+  return {
+    id: 'expect',
+    tone: 'green',
+    title: `Szacunkowo zostało ~${expectedL} L`,
+    meta: `z normy samolotu (${windowDays} dni) - zweryfikuj z paliwomierza`,
+  };
+}
+
+/** Oczekiwany stan przekazania policzony z historii poprzedniej operacji. */
+export interface HandoverExpectation {
+  /** Oczekiwane litry w zbiorniku (zaokrąglone, podłoga 0). */
+  expectedL: number;
+  /** Suma czasu lotów poprzedniej operacji (ms) - mianownik rachunku. */
+  engineMs: number;
+}
+
+/**
+ * Krzyżowa kontrola PRZEKAZANIA na ekranie przejęcia (uwaga z urządzenia,
+ * 2026-09-03: „na przejęciu też pokaż ten szacunek z normy"): zastane przy
+ * przejęciu poprzednika + jego dolewki − norma × czas lotów = ile POWINNO
+ * zostać. Rozjazd z wartością przekazania łapie literówkę w odczycie zdania
+ * albo tankowanie poza aplikacją - dokładnie to, co szacunek na 06/09B robi
+ * dla własnego pomiaru.
+ *
+ * Stawka BLOKOWA, nie fazowa - świadomie inaczej niż `estimateFob`: wpisy
+ * szlaku niosą czas lotu jako CZAS BLOKOWY operacji (`durationMs = blockMs`),
+ * bez podziału na fazy, a stawka blokowa jest liczona dokładnie na tę oś.
+ *
+ * `null` = nie ma czego liczyć (ekran milczy): brak normy, brak zastanego
+ * paliwa przy przejęciu poprzednika, zero czasu lotów (oczekiwanie równałoby
+ * się przekazaniu - zdanie o niczym). Kolejność wpisów bez znaczenia.
+ */
+export function expectedHandoverL(
+  entries: readonly HandoverTrailEntry[],
+  norm: ConsumptionNorm | null,
+): HandoverExpectation | null {
+  if (norm == null) return null;
+
+  const claim = entries.find((e) => e.kind === 'claim');
+  if (claim?.fuelAfterL == null) return null;
+
+  let engineMs = 0;
+  let addedL = 0;
+  for (const e of entries) {
+    if (e.kind === 'flight' && e.durationMs != null) engineMs += e.durationMs;
+    if (e.kind === 'refuel' && e.fuelDeltaL != null) addedL += e.fuelDeltaL;
+  }
+  if (engineMs <= 0) return null;
+
+  const usedL = (norm.blockLPerH * engineMs) / HOUR_MS;
+  return {
+    expectedL: Math.max(0, Math.round(claim.fuelAfterL + addedL - usedL)),
+    engineMs,
+  };
 }
 
 /** Ile jeszcze wejdzie do pełna. `null` = pojemność nieznana (brak konfiguracji w cache). */

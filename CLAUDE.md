@@ -1809,6 +1809,16 @@ Uwagi z urządzenia do kroku liczników (NOWY LOT · 3/3):
   (09C, tankowanie tuż po locie), pole wypełnia rejestr jak dotąd - reguła
   świeżości identyczna z 06. MH zostaje przy rejestrze: licznik nie „spala się"
   w tle, a wartość końcową pilnuje blokada cofnięcia
+- **PRZEJĘCIE (02A) dostaje to samo zielone ogniwo** (kolejna tura: „na przejęciu
+  też pokaż ten szacunek z normy") - szlak paliwa w arkuszu 02B kończy się
+  ogniwem `fuelExpectationRow` (jedno brzmienie na 06/09B/02A: „Szacunkowo
+  zostało ~X L"). Tu liczy je `expectedHandoverL` z HISTORII przekazania
+  (zastane przy przejęciu poprzednika + jego dolewki − norma × czas lotów)
+  stawką BLOKOWĄ - świadomie inaczej niż `estimateFob`, bo wpisy szlaku niosą
+  czas blokowy bez podziału na fazy. Rola: KRZYŻOWA KONTROLA przekazania -
+  rozjazd łapie literówkę w odczycie zdania albo tankowanie poza aplikacją.
+  Bez normy / zastanego / lotów ogniwa nie ma (oczekiwanie bez lotów równałoby
+  się przekazaniu - zdanie o niczym)
 
 ## Zmiana załogi (07) po przeglądzie 2026-09-02
 Sześć uwag z urządzenia; wspólny mianownik ten sam, co na 02A - ekran mówi decyzją,
