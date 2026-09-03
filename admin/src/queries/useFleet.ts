@@ -13,9 +13,11 @@ import {
   deleteAircraft,
   getFuelTolerance,
   listFleet,
+  recordReading,
   updateAircraft,
   type CreateAircraftBody,
   type FleetListQuery,
+  type RecordReadingBody,
   type UpdateAircraftBody,
 } from '../api/fleet';
 import { keys } from './keys';
@@ -84,6 +86,18 @@ export function useDeleteAircraft() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => deleteAircraft(id),
+    onSuccess: () => invalidateFleet(qc),
+  });
+}
+
+/**
+ * ODCZYT WPISANY RĘKĄ ADMINISTRATORA (issue #81) - nowy wpis, nie zmiana konfiguracji.
+ * Unieważnia listy floty: wiersz maszyny dostaje nowe „Aktualny stan" z podpisem.
+ */
+export function useRecordReading() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: RecordReadingBody }) => recordReading(id, body),
     onSuccess: () => invalidateFleet(qc),
   });
 }

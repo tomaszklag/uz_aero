@@ -64,6 +64,8 @@ export interface PilotDaySession {
   flightCount: number;
   /** Sesja wpisana ręcznie po fakcie (ekran 15) - plakietka „RĘCZNIE" na kafelku. */
   manualEntry: boolean;
+  /** Operację zakończył administrator (`session_close`, issue #81) - plakietka na kafelku. */
+  closedByAdmin: boolean;
 }
 
 /** Dzień pilota w jednej dobie UTC - lista sesji + sumy, przekrojowo po samolotach. */
@@ -154,6 +156,7 @@ export function projectPilotDay(
         flightMs: flightMsWithin(s, leg.startedAt, leg.stoppedAt),
         flightCount: flightCountWithin(s, leg.startedAt, leg.stoppedAt),
         manualEntry: s.manualEntry,
+        closedByAdmin: s.closedByAdmin,
       });
     }
 
@@ -186,6 +189,7 @@ export function projectPilotDay(
         flightMs: flightMsWithin(s, s.claimedAt, s.closedAt),
         flightCount: flightCountWithin(s, s.claimedAt, s.closedAt),
         manualEntry: s.manualEntry,
+        closedByAdmin: s.closedByAdmin,
       });
     }
 

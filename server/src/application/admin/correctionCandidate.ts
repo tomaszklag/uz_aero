@@ -94,9 +94,11 @@ export function correctionCandidate(
  * przejęciu (single-writer §4.4), a na pytanie „kto to zrobił" odpowiadają
  * `events.source_device` i `admin_audit`.
  *
- * Payload NIE dostaje znacznika `source: 'admin'` (korekta go ma): `session_void` niesie
- * sam powód, a telefon nie ma ekranu, na którym różnica „kto wycofał" cokolwiek by
- * zmieniła - sesja wypada z listy i z sum niezależnie od autora.
+ * Payload DOSTAJE znacznik `source: 'admin'` (od issue #81; do 2026-09-03 nie dostawał,
+ * bo „telefon nie ma ekranu, na którym różnica »kto wycofał« cokolwiek by zmieniła").
+ * Zmieniło się to, gdy unieważnienie z panelu zaczęło KOŃCZYĆ operację prowadzoną
+ * w tej chwili: telefon musi odróżnić cudze wycofanie od własnego, żeby zejść z kokpitu,
+ * wstrzymać zaległy outbox tej operacji i powiedzieć pilotowi, co się stało.
  */
 export function sessionVoidCandidate(
   state: SessionState,
@@ -105,6 +107,48 @@ export function sessionVoidCandidate(
   uuid: string,
   at: Date,
 ): Event {
+  return {
+    ...adminHeader(state, stream, uuid, at),
+    type: 'session_void',
+    payload: { reason, source: 'admin' },
+  };
+}
+
+/**
+ * Kandydat ZAKOŃCZENIA ADMINISTRACYJNEGO (`session_close`, issue #81) - trzecia droga
+ * zapisu panelu, oceniana tą samą parą funkcji niżej i z tego samego powodu tutaj.
+ *
+ * Bez odczytów: administrator zamyka operację osieroconą i nie wie, co pokazują
+ * przyrządy - stan maszyny wpisuje osobną akcją w karcie samolotu. Powód jest treścią
+ * zdarzenia (wraca na telefon pilota, stoi na osi w panelu, w audycie), a autorstwo
+ * wynika z TYPU: `session_close` powstaje wyłącznie tu.
+ */
+export function sessionCloseCandidate(
+  state: SessionState,
+  stream: readonly Event[],
+  reason: string | null,
+  uuid: string,
+  at: Date,
+): Event {
+  return {
+    ...adminHeader(state, stream, uuid, at),
+    type: 'session_close',
+    payload: { reason },
+  };
+}
+
+/**
+ * Nagłówek zdarzenia dopisywanego przez panel - z SESJI, nie od administratora:
+ * `picId` to PIC ustalony przy przejęciu (single-writer §4.4, `WRITER_MISMATCH`),
+ * a `deviceTime` = `gpsTime` = chwila decyzji przy biurku. Kto to zrobił, mówią
+ * `events.source_device` i `admin_audit`.
+ */
+function adminHeader(
+  state: SessionState,
+  stream: readonly Event[],
+  uuid: string,
+  at: Date,
+): Omit<Event, 'type' | 'payload'> {
   const now = at.getTime();
   const first = stream[0]!;
   return {
@@ -113,10 +157,8 @@ export function sessionVoidCandidate(
     aircraftId: state.aircraftId ?? first.aircraftId,
     picId: state.sessionPicId ?? first.picId,
     dualId: state.dualId,
-    type: 'session_void',
     deviceTime: now,
     gpsTime: now,
-    payload: { reason },
     schemaVersion: CURRENT_SCHEMA_VERSION,
     syncedAt: null,
   };

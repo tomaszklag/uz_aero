@@ -21,6 +21,7 @@ import {
   sessionsStamp,
 } from '../../common/aircraftStateView.ts';
 import type {
+  AircraftReadingsPort,
   ConsumptionNormPort,
   Database,
   EventsStorePort,
@@ -43,6 +44,8 @@ export class ReferenceQueries {
     private readonly sessions: SessionsProjectionPort,
     private readonly norms: ConsumptionNormPort,
     private readonly events: EventsStorePort,
+    /** Odczyty wpisane ręką administratora (issue #81) - konkurent zdania w przekazaniu. */
+    private readonly readings: AircraftReadingsPort,
   ) {}
 
   async get(): Promise<ReferenceView> {
@@ -58,12 +61,20 @@ export class ReferenceQueries {
     // a pytanie per maszyna byłoby N+1 na ścieżce odpytywanej co kwadrans.
     const norms: Map<string, ConsumptionNorm> = await this.norms.all(this.db);
 
+    // Odczyty wpisane ręką administratora (issue #81) - całej floty jednym zapytaniem,
+    // jak normy. Konkurują ze zdaniem w łańcuchu MH; rozstrzyga `pickHandover`.
+    const overrides = await this.readings.latestAll(this.db);
+
     // Stan początkowy z panelu (issue #66) wchodzi TYLKO wtedy, gdy maszyna nie ma
     // ani jednej zdanej sesji - rozstrzyga to `pickHandover`, nie ten wiersz.
     const picks = new Map(
       snapshot.aircraft.map((a) => [
         a.id,
-        pickHandover(byAircraft.get(a.id) ?? [], snapshot.initial.get(a.id) ?? null),
+        pickHandover(
+          byAircraft.get(a.id) ?? [],
+          snapshot.initial.get(a.id) ?? null,
+          overrides.get(a.id) ?? null,
+        ),
       ]),
     );
 
@@ -105,10 +116,13 @@ export class ReferenceQueries {
     const refStamp = snapshot.updatedAt?.getTime() ?? 0;
     const sessStamp = sessionsStamp([...byAircraft.values()].flat());
     const normStamp = (await this.norms.latestComputedAt(this.db))?.getTime() ?? 0;
+    // Wpis administratora zmienia przekazanie, więc musi zmienić ETag - inaczej 304
+    // zamrażałoby na telefonach odczyty sprzed poprawki (issue #81).
+    const readingStamp = (await this.readings.latestAt(this.db))?.getTime() ?? 0;
 
     return {
       snapshot: { ...snapshot, aircraft },
-      etag: `W/"ref-${refStamp}-${sessStamp}-${normStamp}"`,
+      etag: `W/"ref-${refStamp}-${sessStamp}-${normStamp}-${readingStamp}"`,
     };
   }
 }

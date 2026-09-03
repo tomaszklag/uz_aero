@@ -15,6 +15,8 @@ import type {
   TraceEntry,
   TracePort,
   TraceStats,
+  WithheldEvent,
+  WithheldReason,
 } from '../../application/ports';
 
 /**
@@ -33,6 +35,8 @@ export class InMemoryAdapter implements StoragePort, TracePort {
   private aircraft = new Map<string, ReferenceAircraft>();
   private pilots = new Map<string, ReferencePilot>();
   private meta = new Map<string, string>();
+  /** Zapisy wstrzymane decyzją administratora (issue #81) - lustro `withheld_events`. */
+  private withheld = new Map<string, WithheldEvent>();
 
   async init(): Promise<void> {
     // Nic do zrobienia - struktury istnieją od konstrukcji.
@@ -55,7 +59,8 @@ export class InMemoryAdapter implements StoragePort, TracePort {
   }
 
   async getUnsyncedEvents(): Promise<Event[]> {
-    return this.orderedEvents().filter((e) => e.syncedAt == null);
+    // Wstrzymane WYPADŁY z kolejki (issue #81), choć `syncedAt` mają dalej `null`.
+    return this.orderedEvents().filter((e) => e.syncedAt == null && !this.withheld.has(e.uuid));
   }
 
   async getAllEvents(): Promise<Event[]> {
@@ -67,6 +72,24 @@ export class InMemoryAdapter implements StoragePort, TracePort {
       const found = this.events.get(uuid);
       if (found) found.syncedAt = syncedAt;
     }
+  }
+
+  async withholdEvents(
+    uuids: string[],
+    reason: WithheldReason,
+    withheldAt: EpochMillis,
+  ): Promise<void> {
+    for (const uuid of uuids) {
+      const found = this.events.get(uuid);
+      // Nieznany uuid pomijamy, jak `markSynced`; drugi raz to samo - bez zmiany
+      // (pierwsza decyzja zostaje, jak `INSERT OR IGNORE` w SQLite).
+      if (found == null || this.withheld.has(uuid)) continue;
+      this.withheld.set(uuid, { uuid, sessionUuid: found.sessionUuid, reason, withheldAt });
+    }
+  }
+
+  async getWithheldEvents(): Promise<WithheldEvent[]> {
+    return [...this.withheld.values()].map(deepClone);
   }
 
   async upsertAircraft(rows: ReferenceAircraft[]): Promise<void> {

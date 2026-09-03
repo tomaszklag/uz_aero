@@ -100,6 +100,8 @@ describe('schemat PostgreSQL (kontrakt)', () => {
     // (2026-08-05), ale wypadła z tego kontraktu - czyli jedyna tabela schematu, której
     // literówka w nazwie kolumny nie zatrzymałaby żadnego testu.
     ['aircraft_consumption', ['aircraft_id', 'window_days', 'model', 'computed_at']],
+    // Odczyty wpisane ręką administratora (issue #81) - append-only, jak rejestr.
+    ['aircraft_readings', ['id', 'aircraft_id', 'mh', 'fuel_l', 'oil_l', 'note', 'by_pilot_id', 'created_at']],
   ])('tabela %s ma dokładnie uzgodnione kolumny', async (table, expected) => {
     const db = await migrated();
     expect(await columnsOf(db, table as string)).toEqual(expected);

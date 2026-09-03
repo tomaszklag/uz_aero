@@ -727,6 +727,19 @@ zamyka pętlę.
   pomija bramę (`restoreEventsNow`, issue #75 pkt 1) - pilot pyta „co serwer wie
   TERAZ", a unieważnienie wpisane przez administratora nie ma czekać do kwadransa
 
+- **najpierw pytamy, potem wysyłamy** (issue #81, 2026-09-03): przy niepustym outboksie
+  telefon robi dosyłkę BEZ bramy wieku PRZED wysyłką (`sessionStore.syncNow`). Decyzja
+  administratora o zakończeniu albo unieważnieniu operacji (`session_close`,
+  `session_void` z `source: 'admin'`) ma być w lokalnym rejestrze, zanim silnik synca
+  przemiecie kolejkę - inaczej zdanie zapisane offline wyścigałoby ją na serwer.
+  Koszt: jedno krótkie żądanie z kursorem, zwykle pusta strona
+- **zapisy WSTRZYMANE** (issue #81): zaległe zdarzenia operacji, którą administrator
+  zakończył albo unieważnił, wypadają z outboxa NA ZAWSZE (`withheld_events`, przemiatanie
+  `EventsRepo.withholdAdminEnded` przed każdą wysyłką), ale ZOSTAJĄ w rejestrze telefonu
+  ze stemplem `synced_at = null` - serwer ich nie ma i mieć nie będzie, ekran dalej je
+  pokazuje. Trzy powody: `admin_close`, `admin_void`, `server` (serwer odrzucił w ingeście
+  paczkę, która wyścignęła decyzję - jedyny wyjątek od „serwer nie odrzuca, flaguje")
+
 Dwie konsekwencje warte zapamiętania:
 
 - **kolejność wstawienia po odtworzeniu to kolejność PRZYJĘCIA przez serwer**, a nie
@@ -825,6 +838,8 @@ Typy zdarzeń:
 | `manual_log_entry` | off block / T/O / LDG / on block, uwagi |
 | `day_close` | **zdanie samolotu**: końcowy FOB + MH (przekazanie) oraz `noFlightReason` dla operacji bez ani jednego biegu silnika (09C: `weather` / `malfunction` / `cancelled` / `other`). Brak powodu przy takiej operacji to **miękka** flaga `NO_FLIGHT_WITHOUT_REASON` - odrzucenie zdarzenia skasowałoby jedyny ślad po tym, że maszyna stała zajęta. (`dutyEnd` usunięte 2026-08-11 razem z klamrą służby - issue #23) |
 | `event_correction` | `targetUuid` + opcjonalny `reason` + akcja: `retime` (nowy czas) · `void` („zdarzenia nie było") · `amend` (nowa WARTOŚĆ w payloadzie celu - issue #43) - append-only: oryginał zostaje, projekcja nakłada korekty przed liczeniem (ostatnia wygrywa); samodzielna korekta pilota do 24 h po zdaniu samolotu (decyzja 2026-07-23, kotwica per operacja od 2026-08-10). Biała lista pól `amend` zależy od typu celu: `fuelL`/`mh`/`notes`/`dualId` dla `preflight_confirm`, `fuelL`/`mh` dla `day_close`, `jumpers` dla `drop`, `notes` dla `manual_log_entry` - poza nią `CORRECTION_FIELD_NOT_ALLOWED`. Na `preflight_confirm` i `day_close` dozwolony jest WYŁĄCZNIE `amend`; `retime`/`void` odrzuca `CORRECTION_TARGET_NOT_ALLOWED`, bo unieważnienie zdania rozbiłoby operację w pół. `session_claim` przyjmuje wyłącznie `retime` (godzina przejęcia to zwykły fakt; `void` zabrałby operacji właściciela) - a przesunięcie jej ZA uruchomienie silnika pociąga cały bieg, patrz §3.8 |
+| `session_void` | unieważnienie CAŁEJ operacji (2026-08-30): `reason` opcjonalny; od issue #81 także `source: 'admin'`, gdy wycofał panel - telefon odróżnia po nim cudzą decyzję od własnej (schodzi z kokpitu, wstrzymuje zaległy outbox, pokazuje komunikat na 01) |
+| `session_close` | **ZAKOŃCZENIE ADMINISTRACYJNE operacji osieroconej** (issue #81, 2026-09-03): `reason` - powód z panelu (tam WYMAGANY). BEZ odczytów: administrator przy biurku nie wie, co pokazują przyrządy, a `day_close` z fałszywymi liczbami byłby zmyśleniem. Projekcja: `closed` + `closedByAdmin` + `adminCloseReason`, odczyty końcowe `null` - operacja NIE jest ogniwem łańcucha MH (stan maszyny wpisuje panel w `aircraft_readings`); okno korekty pilota zamyka się natychmiast. Tworzy je WYŁĄCZNIE panel (`POST /events` odrzuca ten typ: `403 admin_only_event`); wraca na telefon przez `GET /me/events` |
 
 > **Stan modelu (po pivocie 2026-08-10 i issue #23 z 2026-08-11).**
 >

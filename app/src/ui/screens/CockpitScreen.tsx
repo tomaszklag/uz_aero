@@ -207,6 +207,20 @@ export function CockpitScreen({
    * do «Mój dzień»").
    */
   usePreventRemove(holdsAircraft(projection), () => setLeaveOpen(true));
+
+  /**
+   * OPERACJĘ ZAKOŃCZYŁ ADMINISTRATOR (issue #81): zakończenie albo unieważnienie
+   * z panelu przyszło dosyłką z serwera, gdy pilot patrzył na kokpit. Maszyny już nie
+   * trzyma (`holdsAircraft` puściło bramkę wyżej), więc kokpit nie ma czego pokazywać -
+   * schodzimy na 01 tą samą drogą, którą wraca zdanie samolotu. Ekran 01 mówi wtedy,
+   * kto i dlaczego zakończył lot; tu nie ma na to miejsca ani chwili. Własne zdanie
+   * i własne unieważnienie NIE przechodzą tędy: nawigują same ze swoich ekranów.
+   */
+  const endedByAdmin = context != null && (projection.closedByAdmin || projection.voidedByAdmin);
+  useEffect(() => {
+    if (endedByAdmin) navigation.navigate('MyDay');
+  }, [endedByAdmin, navigation]);
+
   const engineOn = projection.engineRunning;
   const inFlight = projection.inFlight;
   const now = useTicker(engineOn);

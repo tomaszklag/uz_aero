@@ -88,6 +88,16 @@ export interface Handover {
   byPilotId: string | null;
   /** Kiedy powstało przekazanie (UTC). */
   at: EpochMillis;
+  /**
+   * SKĄD wzięło się przekazanie, gdy nie przekazał go żaden pilot (`byPilotId: null`):
+   *  • `initial` - stan początkowy jednostki wpisany w panelu (issue #66);
+   *  • `admin`   - odczyt wpisany ręką administratora w karcie samolotu (issue #81):
+   *    nadrzędny stan licznika, paliwa i oleju z komentarzem, który wyprzedził ostatnie
+   *    zdanie w łańcuchu MH. Ekran 02A mówi wtedy „odczyty wpisał administrator",
+   *    a nie „to pierwszy lot tej maszyny".
+   * Brak pola przy `byPilotId: null` = serwer sprzed issue #81, czyli stan początkowy.
+   */
+  origin?: 'initial' | 'admin';
   /** Historia prowadząca do tych wartości, od najstarszej. Puste = serwer jej nie podał. */
   trail?: HandoverTrailEntry[];
   /**

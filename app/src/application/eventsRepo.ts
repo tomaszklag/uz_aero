@@ -17,13 +17,21 @@
 
 import {
   CURRENT_SCHEMA_VERSION,
+  projectSession,
   type AppendEventInput,
   type EpochMillis,
   type Event,
   type ReferenceAircraft,
   type ReferencePilot,
 } from '../domain';
-import { SESSION_META_KEYS, type ClockPort, type IdPort, type StoragePort } from './ports';
+import {
+  SESSION_META_KEYS,
+  type ClockPort,
+  type IdPort,
+  type StoragePort,
+  type WithheldEvent,
+  type WithheldReason,
+} from './ports';
 
 /**
  * Zależności repozytorium - WYMAGANE, nie opcjonalne z domyślnymi wartościami.
@@ -185,6 +193,65 @@ export class EventsRepo {
    */
   markSynced(uuids: string[], syncedAt: EpochMillis = this.clock.now()): Promise<void> {
     return this.adapter.markSynced(uuids, syncedAt);
+  }
+
+  // ── zapisy wstrzymane (issue #81) ─────────────────────────────────────────────
+
+  /**
+   * WSTRZYMUJE wskazane zdarzenia: wypadają z outboxa na zawsze, zostają w rejestrze
+   * (patrz `StoragePort.withholdEvents`). Wołane, gdy o losie zapisu zdecydował ktoś
+   * inny niż ten telefon - administrator z panelu albo serwer w ingeście.
+   */
+  withholdEvents(
+    uuids: string[],
+    reason: WithheldReason,
+    withheldAt: EpochMillis = this.clock.now(),
+  ): Promise<void> {
+    return this.adapter.withholdEvents(uuids, reason, withheldAt);
+  }
+
+  /**
+   * PRZEMIATANIE OUTBOXA PRZED WYSYŁKĄ (issue #81): każda operacja, której zaległe
+   * zapisy czekają w kolejce, a którą administrator już ZAKOŃCZYŁ albo UNIEWAŻNIŁ
+   * (`session_close` / `session_void` z `source: 'admin'` - przyszły z serwera przez
+   * `GET /me/events`), oddaje te zapisy do wstrzymanych. Zwraca uuidy wstrzymane
+   * w tym przebiegu.
+   *
+   * ══ DLACZEGO TU, A NIE PRZY ODTWORZENIU ══
+   * Odtworzenie tylko DOPISUJE do rejestru (§4.9) i nie ma wiedzieć, co z tego wynika.
+   * Niezmiennik brzmi „outbox nigdy nie niesie zapisu do operacji zakończonej przez
+   * administratora" - i pilnuje go ten, kto z outboxa czyta, tuż przed wysyłką,
+   * na aktualnym stanie rejestru. Przemiatanie jest tanie: kolejka to kilka operacji,
+   * a strumień każdej i tak liczy się w pamięci.
+   */
+  async withholdAdminEnded(withheldAt: EpochMillis = this.clock.now()): Promise<string[]> {
+    const pending = await this.adapter.getUnsyncedEvents();
+    const bySession = new Map<string, Event[]>();
+    for (const event of pending) {
+      const list = bySession.get(event.sessionUuid);
+      if (list) list.push(event);
+      else bySession.set(event.sessionUuid, [event]);
+    }
+
+    const withheld: string[] = [];
+    for (const [sessionUuid, queued] of bySession) {
+      const state = projectSession(await this.adapter.getEventsBySession(sessionUuid));
+      const reason: WithheldReason | null = state.voidedByAdmin
+        ? 'admin_void'
+        : state.closedByAdmin
+          ? 'admin_close'
+          : null;
+      if (reason == null) continue;
+      const uuids = queued.map((e) => e.uuid);
+      await this.adapter.withholdEvents(uuids, reason, withheldAt);
+      withheld.push(...uuids);
+    }
+    return withheld;
+  }
+
+  /** Wszystkie wstrzymane zapisy - liczniki na ekranie 01 i w historii (12). */
+  getWithheld(): Promise<WithheldEvent[]> {
+    return this.adapter.getWithheldEvents();
   }
 
   // ── cache referencyjny (§4.8, §5.2) ──────────────────────────────────────────

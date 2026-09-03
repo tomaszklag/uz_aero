@@ -55,6 +55,21 @@ export const ADMIN_ACTIONS = [
    * przy `pilot.delete`, gdzie audyt jest jedynym śladem.
    */
   'session.void',
+  /**
+   * ZAKOŃCZENIE ADMINISTRACYJNE operacji (`session_close`, issue #81, 2026-09-03) -
+   * zamknięcie wpisu OSIEROCONEGO, którego pilot nie zdał. `details` niosą komplet
+   * tożsamości wpisu, powód i to, czy przy okazji unieważniono (`voided`), bo po
+   * zamknięciu maszyna jest wolna i nikt już nie zapyta, czemu nagle przestała być zajęta.
+   */
+  'session.close',
+  /**
+   * ODCZYTY MASZYNY WPISANE RĘKĄ ADMINISTRATORA (`aircraft_readings`, issue #81):
+   * nadrzędny stan licznika, paliwa i oleju z komentarzem - nowe ogniwo przekazania,
+   * które wypiera zdanie samolotu sprzed niego. Osobno od `aircraft.update`, bo to nie
+   * jest konfiguracja jednostki, tylko fakt o jednej chwili - z tego samego powodu
+   * stan początkowy ma osobne kolumny (issue #66).
+   */
+  'aircraft.reading',
   /** Zmiana tolerancji flag; progi detekcji są tylko do odczytu (`A08`). */
   'thresholds.update',
   'maintenance.rebuild_projections',

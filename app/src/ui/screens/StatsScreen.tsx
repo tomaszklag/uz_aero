@@ -492,6 +492,8 @@ export function StatsScreen({
           confirmed={window24h.confirmed}
           open={window24h.open}
           closesAt={window24h.closesAt}
+          closedByAdmin={projection.closedByAdmin}
+          adminReason={projection.adminCloseReason}
         />
 
         {/* ── przebieg operacji: ślad + oś czasu ───────────────────────────────
@@ -1010,12 +1012,35 @@ function CorrectionWindowBanner({
   confirmed,
   open,
   closesAt,
+  closedByAdmin,
+  adminReason,
 }: {
   /** Czy sesja jest już zatwierdzona zdaniem - dopiero wtedy okno w ogóle tyka. */
   confirmed: boolean;
   open: boolean;
   closesAt: number | null;
+  /** Operację zakończył administrator (issue #81) - okno zamknięte NIE przez upływ czasu. */
+  closedByAdmin: boolean;
+  adminReason: string | null;
 }) {
+  /*
+   * ZAKOŃCZENIE ADMINISTRACYJNE (issue #81): okno jest zamknięte, ale zdanie
+   * „minęły 24 godziny" byłoby nieprawdą - zamknęła je decyzja panelu. Baner nazywa
+   * ją i podaje powód: to jedyne miejsce na ekranie operacji, w którym pilot się go
+   * dowie (kafelek na 01 niesie samą plakietkę).
+   */
+  if (closedByAdmin) {
+    const why = adminReason == null || adminReason.trim() === '' ? '' : ` Powód: ${adminReason}`;
+    return (
+      <Banner
+        kind="status"
+        tone="amber"
+        icon="warning"
+        title="Operację zakończył administrator"
+        text={`Bez odczytów końcowych i bez poprawek z telefonu - dalsze zmiany wprowadza administrator.${why}`}
+      />
+    );
+  }
   /*
    * Baner mówi, KTO poprawia po oknie - i tyle (uwaga z urządzenia, 2026-08-14).
    * Zdanie „czasy zdarzeń poprawisz przyciskiem »EDYTUJ DANE« na dole ekranu"

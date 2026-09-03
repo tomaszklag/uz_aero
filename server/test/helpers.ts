@@ -26,9 +26,12 @@ import type {
 } from '../src/application/common/ports.ts';
 import { AdminCorrectionCommands } from '../src/application/admin/commands/corrections.ts';
 import { AdminSessionVoidCommands } from '../src/application/admin/commands/sessionVoid.ts';
+import { AdminSessionCloseCommands } from '../src/application/admin/commands/sessionClose.ts';
 import { AdminExportCommands } from '../src/application/admin/commands/exports.ts';
 import { AdminFlagCommands } from '../src/application/admin/commands/flags.ts';
 import { AdminFleetCommands } from '../src/application/admin/commands/fleet.ts';
+import { AdminAircraftReadingCommands } from '../src/application/admin/commands/aircraftReadings.ts';
+import { PgAircraftReadingsRepo } from '../src/infrastructure/pg/common/aircraftReadingsRepo.ts';
 import { AdminMaintenanceCommands } from '../src/application/admin/commands/maintenance.ts';
 import { AdminPilotCommands } from '../src/application/admin/commands/pilots.ts';
 import { AdminAuditQueries } from '../src/application/admin/queries/audit.ts';
@@ -206,7 +209,15 @@ export async function testHarness(
   const hasher = new ScryptHasher();
   // Zapytania floty mają DWÓCH konsumentów (trasy `A07` i pulpit) - jak w produkcyjnym
   // composition root, więc stoją w zmiennej, a nie w literale.
-  const adminFleetQueries = new AdminFleetQueries(db, adminFleetRepo, sessions, adminPilotsRepo);
+  // Odczyty administratora (issue #81) - jeden adapter dla telefonu i panelu, jak w produkcji.
+  const aircraftReadings = new PgAircraftReadingsRepo();
+  const adminFleetQueries = new AdminFleetQueries(
+    db,
+    adminFleetRepo,
+    sessions,
+    adminPilotsRepo,
+    aircraftReadings,
+  );
   // Ślad sesji też ma DWÓCH konsumentów (telefon i panel) i w produkcji jest jednym
   // egzemplarzem - odczyt wskazuje na TEN SAM katalog co zapis, więc test wysyła nagranie
   // przez `POST /traces` i odbiera je obiema trasami, czyli przechodzi drogę produkcyjną.
@@ -214,7 +225,14 @@ export async function testHarness(
 
   const app = buildServer({
     auth: new AuthCommands(pilots, new PgRefreshTokens(db, clock), hasher, tokens, clock),
-    reference: new ReferenceQueries(new PgReferenceRepo(db), db, sessions, consumptionNorms, events),
+    reference: new ReferenceQueries(
+      new PgReferenceRepo(db),
+      db,
+      sessions,
+      consumptionNorms,
+      events,
+      aircraftReadings,
+    ),
     ingest: new IngestCommands(db, events, sessions, flags, aircraftConfig, exporter, { events, norms: consumptionNorms, phases: phaseTimeline }, clock),
     // Odtworzenie rejestru telefonu (§4.9, issue #32) - prawdziwy adapter, więc test
     // wysyła zdarzenia przez `POST /events` i odbiera je przez `GET /me/events`,
@@ -266,6 +284,14 @@ export async function testHarness(
     // czytają z odpowiedzi, więc udawany generator kupiłby wyłącznie rozjazd
     // z composition rootem.
     adminFleet: new AdminFleetCommands(auditedWrite, adminFleetRepo, randomUUID),
+    // Odczyty administratora (issue #81) - ta sama brama audytu i ten sam adapter,
+    // z którego `GET /reference` liczy przekazanie.
+    adminAircraftReadings: new AdminAircraftReadingCommands(
+      auditedWrite,
+      adminFleetRepo,
+      aircraftReadings,
+      clock,
+    ),
     adminFleetQueries,
     // Eksporty (A05). Komenda ponowienia dostaje TEN SAM `exporter`, którym jedzie
     // ingest - także wtedy, gdy `options.sheets` podmienia arkusze na atrapę awarii.
@@ -294,6 +320,16 @@ export async function testHarness(
     // Unieważnienie CAŁEJ sesji (2026-08-31) - ten sam `exporter`, co korekta: test ma
     // móc sprawdzić, że karta doby powstaje po wycofaniu wpisu OD NOWA, bez niego.
     adminSessionVoid: new AdminSessionVoidCommands(
+      auditedWrite,
+      events,
+      sessions,
+      aircraftConfig,
+      exporter,
+      clock,
+      randomUUID,
+    ),
+    // Zakończenie administracyjne (issue #81) - jak unieważnienie, z tym samym eksporterem.
+    adminSessionClose: new AdminSessionCloseCommands(
       auditedWrite,
       events,
       sessions,

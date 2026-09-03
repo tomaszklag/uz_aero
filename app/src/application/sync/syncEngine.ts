@@ -145,6 +145,12 @@ export class SyncEngine {
   }
 
   private async drain(trigger: SyncTrigger): Promise<SyncOutcome> {
+    // NIEZMIENNIK (issue #81): outbox nigdy nie niesie zapisu do operacji, którą
+    // administrator zakończył albo unieważnił. Przemiatamy PRZED wysyłką, na aktualnym
+    // rejestrze - store pyta serwer o dosyłkę tuż przed tym wywołaniem, więc decyzja
+    // panelu sprzed chwili jest już w lokalnym strumieniu. Lokalna operacja, bez sieci.
+    await this.repo.withholdAdminEnded();
+
     let token = await this.auth.freshToken();
     if (token == null) return { kind: 'auth_expired' };
 
@@ -184,9 +190,17 @@ export class SyncEngine {
         throw error;
       }
 
+      // WSTRZYMANE PRZEZ SERWER (issue #81): paczka wyścignęła decyzję panelu - serwer
+      // nie wpisał tych zdarzeń i nie wpisze. Nie są dostarczone i nie są do ponowienia:
+      // wypadają z outboxa jako wstrzymane, dokładnie jak te przemiecione przed wysyłką.
+      const withheld = new Set(result.withheld ?? []);
+      if (withheld.size > 0) {
+        await this.repo.withholdEvents(batch.filter((e) => withheld.has(e.uuid)).map((e) => e.uuid), 'server');
+      }
+
       // Dostarczone = przyjęte + duplikaty. Duplikat to potwierdzenie z poprzedniej,
       // urwanej próby - oznaczenie go ponownie jako niewysłany zapętliłoby outbox.
-      await this.repo.markSynced(batch.map((e) => e.uuid));
+      await this.repo.markSynced(batch.filter((e) => !withheld.has(e.uuid)).map((e) => e.uuid));
       pushed += result.accepted + result.duplicates;
       flags.push(...result.flags);
     }

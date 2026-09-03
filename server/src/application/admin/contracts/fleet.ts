@@ -95,8 +95,14 @@ export interface AdminAircraftReading {
    * (issue #66). Rozróżnienie jest treścią podpisu w tabeli („przekazanie · 1 dzień"
    * vs „sesja otwarta" vs „stan początkowy"), a panel nie ma jak go odgadnąć - regułę
    * wyboru zna `application/common/aircraftStateView.ts`.
+   *
+   * `admin` = odczyt wpisany ręką administratora w karcie samolotu (issue #81), który
+   * wyprzedził ostatnie zdanie w łańcuchu MH. `byPilotId` jest wtedy `null` (nikt nie
+   * przekazał), `byPilotName` niesie nazwisko administratora, a `note` jego komentarz.
    */
-  source: 'handover' | 'open_session' | 'initial';
+  source: 'handover' | 'open_session' | 'initial' | 'admin';
+  /** Komentarz do odczytu administratora; `null` przy każdym innym `source`. */
+  note: string | null;
 }
 
 /** Jedna jednostka na liście `A07`. */

@@ -24,9 +24,16 @@ export type ResumeTarget = 'Cockpit' | 'MyDay';
  * niosło koniec służby. Od §3.6a `dutyEnd` jest opcjonalny, a ekran „Zdaj samolot" go
  * NIE wysyła - więc ten warunek zaczął odpowiadać „sesja trwa" dla każdej zdanej maszyny
  * i wrzucałby pilota do kokpitu samolotu, którego już nie ma.
+ *
+ * Od issue #81 pytamy TEŻ o `voided`: administrator potrafi unieważnić operację W TOKU
+ * (bez zamykania), a wycofanego wpisu nie da się prowadzić dalej - kokpit nad nim
+ * pokazywałby maszynę, której rejestr już pilotowi nie przypisuje. Zakończenie
+ * administracyjne (`session_close`) idzie przez `closed`, jak zdanie.
  */
 export function holdsAircraft(state: SessionState): boolean {
-  return state.sessionUuid != null && state.aircraftId != null && !state.closed;
+  return (
+    state.sessionUuid != null && state.aircraftId != null && !state.closed && !state.voided
+  );
 }
 
 /** Ekran startowy po wznowieniu. */

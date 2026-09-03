@@ -11,6 +11,8 @@ import Fastify, { type FastifyInstance } from 'fastify';
 
 import type { AdminCorrectionCommands } from '../application/admin/commands/corrections.ts';
 import type { AdminSessionVoidCommands } from '../application/admin/commands/sessionVoid.ts';
+import type { AdminSessionCloseCommands } from '../application/admin/commands/sessionClose.ts';
+import type { AdminAircraftReadingCommands } from '../application/admin/commands/aircraftReadings.ts';
 import type { AdminExportCommands } from '../application/admin/commands/exports.ts';
 import type { AdminFlagCommands } from '../application/admin/commands/flags.ts';
 import type { AdminFleetCommands } from '../application/admin/commands/fleet.ts';
@@ -58,6 +60,7 @@ import { registerAdminMeRoutes } from './routes/admin/me.ts';
 import { registerAdminPilotRoutes } from './routes/admin/pilots.ts';
 import { registerAdminSessionRoutes } from './routes/admin/sessions.ts';
 import { registerAdminSessionVoidRoutes } from './routes/admin/sessionVoid.ts';
+import { registerAdminSessionCloseRoutes } from './routes/admin/sessionClose.ts';
 import { registerAdminConsumptionRoutes } from './routes/admin/consumption.ts';
 import { registerAdminLogRoutes } from './routes/admin/log.ts';
 import { registerAdminStatsRoutes } from './routes/admin/stats.ts';
@@ -112,6 +115,12 @@ export interface ServerDeps {
    * do rejestru. Osobna komenda, bo osobne zdarzenie i osobny ślad w audycie.
    */
   adminSessionVoid: AdminSessionVoidCommands;
+  /**
+   * Zakończenie administracyjne operacji osieroconej (`session_close`, issue #81) -
+   * trzecia droga zapisu panelu. Osobna komenda z tego samego powodu, co unieważnienie:
+   * osobne zdarzenie, osobny ślad w audycie, opcjonalne unieważnienie w tym samym ruchu.
+   */
+  adminSessionClose: AdminSessionCloseCommands;
   adminPilots: AdminPilotCommands;
   /**
    * Konfiguracja floty (`A07`, `A07a`) - jedyna droga zmiany WEJŚĆ REGUŁ §4.5:
@@ -119,6 +128,11 @@ export interface ServerDeps {
    * i stanu służby. Zmiana wychodzi do telefonów wyłącznie przez ETag `GET /reference`.
    */
   adminFleet: AdminFleetCommands;
+  /**
+   * Odczyty maszyny wpisane ręką administratora (issue #81) - osobna komenda obok
+   * konfiguracji floty: decyzja o jednej chwili, nie właściwość jednostki.
+   */
+  adminAircraftReadings: AdminAircraftReadingCommands;
   /**
    * Ręczne ponowienie eksportu karty dnia (`A05`) - jedyna droga, którą człowiek może
    * dopchnąć do arkusza dzień, którego automat nie dowiózł. Bramek eksportera NIE omija.
@@ -236,10 +250,17 @@ export function buildServer(deps: ServerDeps, options: ServerOptions = {}): Fast
   registerAdminCorrectionRoutes(app, deps.adminCorrections, deps.adminCorrectionQueries, gate);
   registerAdminSessionRoutes(app, deps.adminSessionQueries, gate);
   registerAdminSessionVoidRoutes(app, deps.adminSessionVoid, gate);
+  registerAdminSessionCloseRoutes(app, deps.adminSessionClose, gate);
   registerAdminTrackRoutes(app, deps.adminSessionTrack, gate);
   registerAdminAuditRoutes(app, deps.adminAuditQueries, gate);
   registerAdminPilotRoutes(app, deps.adminPilots, deps.adminPilotQueries, gate);
-  registerAdminFleetRoutes(app, deps.adminFleet, deps.adminFleetQueries, gate);
+  registerAdminFleetRoutes(
+    app,
+    deps.adminFleet,
+    deps.adminFleetQueries,
+    deps.adminAircraftReadings,
+    gate,
+  );
   registerAdminExportRoutes(app, deps.adminExportQueries, deps.adminExports, gate);
   registerAdminEventRoutes(app, deps.adminEventQueries, gate);
   registerAdminDashboardRoutes(app, deps.adminDashboardQueries, gate);

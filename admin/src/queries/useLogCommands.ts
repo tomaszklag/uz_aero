@@ -12,8 +12,29 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { voidSession } from '../api/log';
+import { closeSession, voidSession } from '../api/log';
 import { keys } from './keys';
+
+/**
+ * ZAKOŃCZENIE ADMINISTRACYJNE operacji osieroconej (issue #81), opcjonalnie z jej
+ * unieważnieniem w tym samym ruchu.
+ *
+ * Unieważniamy DWA korzenie: dziennik (operacja zmienia status, wypada z „w toku")
+ * i LISTĘ FLOTY - maszyna przestaje być zajęta, a to jest zwykle cały powód, dla
+ * którego administrator tu przyszedł. Wynik mutacji do cache'u nie wchodzi, z tego
+ * samego powodu, co przy unieważnieniu.
+ */
+export function useCloseSession() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ uuid, reason, void: withVoid }: { uuid: string; reason: string; void: boolean }) =>
+      closeSession(uuid, reason, withVoid),
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: keys.log.all });
+      await qc.invalidateQueries({ queryKey: keys.fleet.lists });
+    },
+  });
+}
 
 /**
  * Unieważnienie CAŁEJ sesji.

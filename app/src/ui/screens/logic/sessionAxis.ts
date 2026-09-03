@@ -64,6 +64,8 @@ export type AxisKind =
   | 'landing'
   | 'engineStop'
   | 'release'
+  /** Zakończenie administracyjne (`session_close`, issue #81) - zamyka oś bez odczytów. */
+  | 'adminClose'
   | 'refuel'
   | 'oilAdd'
   | 'boarding'
@@ -211,6 +213,9 @@ const RANK: Record<AxisKind, number> = {
   landing: 5,
   engineStop: 6,
   release: 7,
+  // Zakończenie administracyjne stoi ZA zdaniem, gdy oba padły w tej samej chwili:
+  // to decyzja o operacji już opisanej, nie jej kolejny fakt.
+  adminClose: 7.5,
   // Stan trwający jest zawsze na końcu - dokłada go kokpit już po posortowaniu.
   live: 8,
 };
@@ -461,9 +466,37 @@ export function buildSessionAxis(
     }
   }
 
-  if (projection.closedAt != null) {
+  /*
+   * ZAKOŃCZENIE ADMINISTRACYJNE (`session_close`, issue #81) - własny wiersz, nie
+   * „Zdanie": zdania nie było, odczytów nie ma, a jest POWÓD. Zdarzenie rejestru
+   * z własną godziną, więc wiersz idzie po niej. Korekty nie ma (`targetUuid: null`):
+   * o tej operacji zdecydował panel i pilot już w niej nie pisze.
+   */
+  const adminClose = events.find((e): e is EventOf<'session_close'> => e.type === 'session_close');
+  if (adminClose != null) {
+    rows.push({
+      id: adminClose.uuid,
+      kind: 'adminClose',
+      at: Math.max(at(adminClose), lastEventAt(rows)),
+      time: timeUtc(at(adminClose)),
+      name: 'Zakończenie · administrator',
+      sub: adminClose.payload.reason,
+      flight: null,
+      duration: null,
+      targetUuid: null,
+      corrected: false,
+    });
+  }
+
+  // „Zdanie" tylko wtedy, gdy zdanie BYŁO: operację zakończoną wyłącznie przez panel
+  // zamyka wiersz wyżej, a „Zdanie" z kreskami zamiast odczytów kłamałoby o fakcie,
+  // który nie zaszedł. Zdanie dosłane z telefonu PO zakończeniu administracyjnym
+  // (wstrzymane w outboksie) zostaje widoczne - to nadal zapis tego telefonu.
+  const dayClose = events.find((e): e is EventOf<'day_close'> => e.type === 'day_close');
+  if (projection.closedAt != null && dayClose != null) {
     // Adresem korekty zdania jest `day_close` - to ON niesie odczyt końcowy.
-    const target = uuidOf('day_close');
+    const target = dayClose.uuid;
+    const closedAt = at(dayClose);
     rows.push({
       id: 'release',
       kind: 'release',
@@ -480,14 +513,14 @@ export function buildSessionAxis(
          nic to nie zmienia (zdanie i tak następuje po wyłączeniu), a wpisowi ręcznemu
          przywraca kolejność przyczynową. To jest klucz SORTOWANIA, nie twierdzenie
          o godzinie - godziny ten wiersz w operacji ręcznej i tak nie pokazuje. */
-      at: Math.max(projection.closedAt, lastEventAt(rows)),
-      time: declaredTime(projection.closedAt, projection.manualEntry, true),
+      at: Math.max(closedAt, lastEventAt(rows)),
+      time: declaredTime(closedAt, projection.manualEntry, true),
       name: 'Zdanie',
       sub: readingLine(projection.fuel.endL, projection.mh.end, mhFormat),
       flight: null,
       duration: null,
       targetUuid: target,
-      corrected: target != null && corrected.has(target),
+      corrected: corrected.has(target),
     });
   }
 

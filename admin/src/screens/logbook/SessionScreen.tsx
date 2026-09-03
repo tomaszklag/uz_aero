@@ -17,7 +17,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 
 import type { SessionListItemDto, SessionTrackDto } from '../../api/dto';
 import { can } from '../../auth/can';
-import { useVoidSession } from '../../queries/useLogCommands';
+import { useCloseSession, useVoidSession } from '../../queries/useLogCommands';
 import { useSessionDetail, useSessionTrack } from '../../queries/useLog';
 import { useSession } from '../../queries/useSession';
 import {
@@ -28,6 +28,7 @@ import {
   Field,
   LinkButton,
   Loadable,
+  OptionButton,
   PageHead,
   Pill,
   TextInput,
@@ -84,6 +85,11 @@ export function SessionScreen() {
             {session?.manualEntry === true ? <Pill tone="dim">ręcznie</Pill> : null}
             {session?.status === 'voided' ? <Pill tone="red">unieważniona</Pill> : null}
             {session?.status === 'active' ? <Pill tone="amber">w toku</Pill> : null}
+            {/* Zakończenie administracyjne (issue #81) - stan operacji, nie ostrzeżenie
+                o danych: kreski w odczytach końcowych mają swój powód i on tu stoi. */}
+            {session?.status === 'closed' && detail.data?.state.closedByAdmin === true ? (
+              <Pill tone="amber">zakończona przez administratora</Pill>
+            ) : null}
             <LinkButton to={back} variant="ghost">
               ← Dziennik {reg.toUpperCase()}
             </LinkButton>
@@ -112,6 +118,18 @@ export function SessionScreen() {
               <Banner tone="status">
                 Wpis wycofany - nie liczy się do nalotu pilota, do sum dziennika ani do
                 karty arkusza. Powód stoi na osi zdarzeń.
+              </Banner>
+            ) : null}
+
+            {session.status === 'closed' && detail.data?.state.closedByAdmin === true ? (
+              // Plakietka mówi CO, baner CO Z TEGO WYNIKA (issue #81): operacja liczy się
+              // dalej, ale bez odczytów końcowych - nie jest ogniwem łańcucha, a stan
+              // maszyny ustawia się w jej karcie. Pilot nie poprawia już nic.
+              <Banner tone="status">
+                Operację zakończył administrator - bez odczytów końcowych. Liczy się do
+                nalotu i sum dziennika, ale nie jest ogniwem przekazania: aktualny stan
+                maszyny wpisuje się w karcie samolotu. Zaległe zapisy pilota do tej
+                operacji telefon wstrzymuje. Powód stoi na osi zdarzeń.
               </Banner>
             ) : null}
 
@@ -202,7 +220,12 @@ export function SessionScreen() {
                 a wycofanie wpisu jest wyjściem awaryjnym. Bez zdolności `events.correct`
                 karty NIE MA (§3.3: brak uprawnień = brak przycisku), a przy wpisie już
                 wycofanym nie ma czego wycofywać - mówi to baner na górze. */}
-            {voidable && session.status !== 'voided' ? <VoidCard session={session} /> : null}
+            {/* Operacja W TOKU dostaje JEDNĄ kartę (issue #81): „Zakończ operację"
+                z przełącznikiem „od razu unieważnij". Unieważnienie samo w sobie zostaje
+                dla operacji zakończonych - dwie karty z dwoma wyjściami awaryjnymi
+                obok siebie kazałyby wybierać między rzeczami, które nie są alternatywą. */}
+            {voidable && session.status === 'active' ? <CloseCard session={session} /> : null}
+            {voidable && session.status === 'closed' ? <VoidCard session={session} /> : null}
           </>
         )}
       </Loadable>
@@ -392,6 +415,120 @@ function VoidCard({ session }: { session: SessionListItemDto }) {
               }
             >
               Unieważnij wpis
+            </Button>
+          </div>
+        </div>
+      ) : null}
+    </Card>
+  );
+}
+
+/**
+ * ZAKOŃCZENIE ADMINISTRACYJNE operacji W TOKU (issue #81).
+ *
+ * Ta sama konstrukcja, co unieważnienie: pytanie przy przycisku, potwierdzenie NAZYWA
+ * wpis, powód wymagany. Do tego JEDEN przełącznik: „od razu unieważnij" - bo lot otwarty
+ * przez pomyłkę zamyka się i wycofuje jednym ruchem, a lot prawdziwy, którego pilot
+ * nie zdał, zamyka się i LICZY. Rejestr dostaje dwa fakty, administrator podejmuje
+ * jedną decyzję. Zdanie pod przyciskiem mówi, czego ta operacja NIE dostanie (odczytów
+ * końcowych) i gdzie wpisuje się stan maszyny - to jest odpowiedź na pytanie, które
+ * administrator zada sobie po zamknięciu.
+ */
+function CloseCard({ session }: { session: SessionListItemDto }) {
+  const [asking, setAsking] = useState(false);
+  const [reason, setReason] = useState('');
+  const [withVoid, setWithVoid] = useState(false);
+  const close = useCloseSession();
+
+  const failure =
+    close.error == null ? null : (ruleViolationMessage(close.error) ?? errorMessage(close.error));
+
+  return (
+    <Card title="Zakończenie operacji">
+      <p className="hint">
+        Operacja w toku, której pilot nie zdał, blokuje maszynę. Zakończenie zwalnia ją
+        bez odczytów końcowych - aktualny stan licznika, paliwa i oleju wpisuje się potem
+        w karcie samolotu. Zaległe zapisy pilota do tej operacji telefon wstrzyma;
+        poprawek w niej pilot już nie naniesie.
+      </p>
+
+      {asking ? null : (
+        <Button variant="danger" size="sm" onClick={() => setAsking(true)}>
+          Zakończ operację
+        </Button>
+      )}
+
+      {asking ? (
+        <div className="confirm">
+          <p className="confirm-q">Zakończyć tę operację?</p>
+
+          {voidFacts(session).map((fact) => (
+            <div className="kv" key={fact.label}>
+              <span className="kv-k">{fact.label}</span>
+              <span className="kv-v">{fact.value}</span>
+            </div>
+          ))}
+
+          <Field
+            htmlFor="close-reason"
+            label="Powód"
+            hint="Zobaczy go pilot na telefonie; zostaje w dzienniku."
+          >
+            <TextInput
+              id="close-reason"
+              value={reason}
+              placeholder="np. telefon pilota padł w locie, maszyna stoi w hangarze"
+              onChange={(e) => setReason(e.target.value)}
+            />
+          </Field>
+
+          {/* Lista kart, nie checkbox - jak każdy wybór w tym systemie: obie drogi
+              widać naraz, z opisem skutku, a zaznaczona ma zieloną obramówkę. */}
+          <span className="label">Co z wpisem</span>
+          <div className="opt-list" role="radiogroup" aria-label="Co z wpisem po zakończeniu">
+            <OptionButton
+              name="Zakończ i zostaw w dzienniku"
+              desc="Lot był prawdziwy - liczy się do nalotu i sum, tylko bez odczytów końcowych."
+              selected={!withVoid}
+              onSelect={() => setWithVoid(false)}
+            />
+            <OptionButton
+              name="Zakończ i od razu unieważnij"
+              desc="Wpis otwarty przez pomyłkę - wypada z nalotu, sum dziennika i karty arkusza."
+              selected={withVoid}
+              onSelect={() => setWithVoid(true)}
+            />
+          </div>
+
+          {failure == null ? null : (
+            <Banner tone="danger" live>
+              {failure}
+            </Banner>
+          )}
+
+          <div className="confirm-actions">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setAsking(false);
+                close.reset();
+              }}
+            >
+              Anuluj
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              disabled={close.isPending || reason.trim() === ''}
+              onClick={() =>
+                close.mutate(
+                  { uuid: session.sessionUuid, reason: reason.trim(), void: withVoid },
+                  { onSuccess: () => setAsking(false) },
+                )
+              }
+            >
+              {withVoid ? 'Zakończ i unieważnij' : 'Zakończ operację'}
             </Button>
           </div>
         </div>

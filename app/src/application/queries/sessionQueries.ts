@@ -35,6 +35,12 @@ export interface HistoryDay {
   state: SessionState;
   /** Ile zdarzeń TEJ sesji czeka w outboksie (0 = „Wysłane"). */
   pendingCount: number;
+  /**
+   * Ile zapisów TEJ sesji WSTRZYMANO (issue #81): administrator zakończył albo
+   * unieważnił operację, więc te zapisy nie wyjdą na serwer nigdy. Nie wchodzą do
+   * `pendingCount` - komunikat na 01 mówi o nich osobno.
+   */
+  withheldCount: number;
 }
 
 export class SessionQueries {
@@ -97,6 +103,9 @@ export class SessionQueries {
    */
   async historyDays(): Promise<HistoryDay[]> {
     const events = await this.repo.getAllEvents();
+    // Zapisy wstrzymane (issue #81) NIE czekają na wysyłkę, choć `syncedAt` mają
+    // `null`: plakietka „Oczekuje na przesłanie" obiecywałaby coś, co się nie stanie.
+    const withheld = new Set((await this.repo.getWithheld()).map((w) => w.uuid));
     const bySession = new Map<string, Event[]>();
     for (const event of events) {
       const stream = bySession.get(event.sessionUuid);
@@ -106,7 +115,8 @@ export class SessionQueries {
     return [...bySession.values()]
       .map((stream) => ({
         state: projectSession(stream),
-        pendingCount: stream.filter((e) => e.syncedAt == null).length,
+        pendingCount: stream.filter((e) => e.syncedAt == null && !withheld.has(e.uuid)).length,
+        withheldCount: stream.filter((e) => withheld.has(e.uuid)).length,
       }))
       .sort((a, b) => (b.state.claimedAt ?? 0) - (a.state.claimedAt ?? 0));
   }

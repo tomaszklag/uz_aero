@@ -53,6 +53,13 @@ export interface AircraftStateInput {
    * drugiego boolean-a obok pierwszego pozwoliłoby wyrazić stan „i to, i to".
    */
   readingSource: HandoverSource | null;
+  /**
+   * Konto administratora, które WPISAŁO odczyt, i jego komentarz (issue #81) -
+   * wyłącznie przy `readingSource: 'admin'`; `null` poza tym. Podpis pola „Aktualny
+   * stan" w karcie samolotu: kto zdecydował i dlaczego.
+   */
+  enteredBy: string | null;
+  note: string | null;
   /** Nazwiska do claimu i odczytu; klucz = `pilotId`. */
   labels: ReadonlyMap<string, PilotLabel>;
 }
@@ -107,17 +114,21 @@ function readingOf(state: AircraftStateInput): AdminAircraftReading | null {
   // Suma „pomiar + dolewki po nim" liczy się TUTAJ, nie w panelu - ta sama zasada,
   // co przy `fuelToleranceL` wyżej i `oilAfterL` na liście operacji.
   const oil = handover.oil ?? null;
+  // Podpis: pilot, który PRZEKAZAŁ, albo administrator, który WPISAŁ (issue #81) -
+  // `byPilotId` zostaje `null` przy wpisie z panelu (nikt maszyny nie przekazał),
+  // a nazwisko idzie z konta administratora, żeby karta mówiła, kto zdecydował.
+  const signer = handover.byPilotId ?? state.enteredBy;
   return {
     mh: handover.reading.mh,
     fuelL: handover.reading.fuelL,
     at: handover.at,
     byPilotId: handover.byPilotId,
-    byPilotName:
-      handover.byPilotId == null ? null : (state.labels.get(handover.byPilotId)?.name ?? null),
+    byPilotName: signer == null ? null : (state.labels.get(signer)?.name ?? null),
     oilL: oil == null ? null : oil.levelL + oil.addedSinceL,
     oilAddedSinceL: oil == null ? null : oil.addedSinceL,
     oilAt: oil?.at ?? null,
     source: state.readingSource ?? 'handover',
+    note: state.note,
   };
 }
 

@@ -669,4 +669,83 @@ describe('session_void - operacja unieważniona', () => {
     expect(day.sessions).toHaveLength(1);
     expect(day.takeoffCount).toBe(1);
   });
+
+  it('unieważnienie Z PANELU niesie znacznik cudzej ręki; własne - nie (issue #81)', () => {
+    const own = projectSession(voidedSession());
+    expect(own.voidedByAdmin).toBe(false);
+
+    const byAdmin = projectSession([
+      ...voidedSession().filter((e) => e.type !== 'session_void'),
+      ev('session_void', '12:00', { reason: 'pomyłka maszyny', source: 'admin' }),
+    ]);
+    expect(byAdmin.voided).toBe(true);
+    expect(byAdmin.voidedByAdmin).toBe(true);
+  });
+});
+
+/**
+ * ZAKOŃCZENIE ADMINISTRACYJNE (issue #81): operacja osierocona - pilot nie zdał maszyny
+ * (telefon padł), panel ją zamyka bez odczytów. Liczy się dalej, ale nie jest ogniwem
+ * łańcucha i nie ma już poprawek z telefonu.
+ */
+describe('session_close - zakończenie przez administratora', () => {
+  function orphaned(): Event[] {
+    return [
+      ev('session_claim', '09:40', { mode: 'free', previousPicId: null }),
+      ev('preflight_confirm', '09:41', { operation: 'skoki', reading: { fuelL: 150, mh: 1234.5 } }),
+      ev('engine_start', '09:42', {}),
+      ev('takeoff', '10:00', { method: 'manual' }),
+      ev('landing', '10:40', { method: 'manual' }),
+    ];
+  }
+
+  it('zamyka operację BEZ odczytów końcowych i mówi, że zdecydował panel', () => {
+    const s = projectSession([
+      ...orphaned(),
+      ev('session_close', '14:00', { reason: 'Telefon pilota padł w locie.' }),
+    ]);
+
+    expect(s.closed).toBe(true);
+    expect(s.closedAt).toBe(at('14:00'));
+    expect(s.closedByAdmin).toBe(true);
+    expect(s.adminCloseReason).toBe('Telefon pilota padł w locie.');
+    // Odczytów nie zmyślamy - to nie jest ogniwo łańcucha MH.
+    expect(s.mh.end).toBeNull();
+    expect(s.fuel.endL).toBeNull();
+    // Stanu silnika nie dotykamy: rejestr wie tyle, ile dostał.
+    expect(s.engineRunning).toBe(true);
+  });
+
+  it('liczy się do dnia pilota - lot był prawdziwy, tylko nikt go nie zdał', () => {
+    const s = projectSession([...orphaned(), ev('session_close', '14:00', { reason: null })]);
+    const day = projectPilotDay([s], PIC, DAY0);
+
+    expect(day.sessions).toHaveLength(1);
+    expect(day.sessions[0]!.closedByAdmin).toBe(true);
+    expect(day.takeoffCount).toBe(1);
+  });
+
+  it('zdanie dosłane z telefonu PO zakończeniu nie przesuwa kotwicy - pierwsze zakończenie zostaje', () => {
+    const s = projectSession([
+      ...orphaned(),
+      ev('engine_stop', '11:18', {}),
+      ev('session_close', '14:00', { reason: 'x' }),
+      ev('day_close', '15:00', { finalReading: { fuelL: 100, mh: 1236.1 } }),
+    ]);
+
+    expect(s.closedByAdmin).toBe(true);
+    expect(s.closedAt).toBe(at('14:00'));
+    // Odczyty ze zdania są widoczne lokalnie - to nadal zapis tego telefonu.
+    expect(s.mh.end).toBe(1236.1);
+  });
+
+  it('zwykłe zdanie NIE nosi znacznika administratora', () => {
+    const s = projectSession([
+      ...orphaned(),
+      ev('engine_stop', '11:18', {}),
+      ev('day_close', '11:30', { finalReading: { fuelL: 100, mh: 1236.1 } }),
+    ]);
+    expect(s.closedByAdmin).toBe(false);
+    expect(s.adminCloseReason).toBeNull();
+  });
 });

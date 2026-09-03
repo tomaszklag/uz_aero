@@ -1977,6 +1977,71 @@ potwierdzeniem użytkownika, aby nie było przypadkowego usunięcia."
   `voided` nie docierał poza kolumnę w bazie (karta arkusza z wycofaną operacją, martwa
   plakietka w panelu, maszyna zajęta bez końca): `docs/panel-2.0.md` §9.4b
 
+## Operacja osierocona: zakończenie przez administratora i odczyty z panelu (issue #81, 2026-09-03)
+Zgłoszenie: „admin powinien móc zakończyć rozpoczęty dowolny lot przez panel […]
+opcjonalnie oznaczyć jako usunięty. Pamiętać o offline first […] Nie możemy pozwolić,
+żeby [zdanie z telefonu] zostało wysłane na serwer" oraz „admin przez panel powinien
+móc modyfikować odczyty, które będą nadrzędne (MH, paliwo, olej) […] jako oddzielna
+akcja, z komentarzem". Dzięki temu znikają osierocone loty i sztuczne zajętości maszyn.
+- **`session_close` = NOWE zdarzenie, nie `day_close` w imieniu pilota**: zdanie niesie
+  OBOWIĄZKOWE odczyty i twarde reguły o silniku (`ENGINE_RUNNING_AT_DAY_CLOSE`),
+  a administrator przy biurku nie wie, co pokazują przyrządy; poluzowanie reguł
+  `day_close` dla panelu złamałoby „twarde reguły identyczne w obu trybach"
+  (`writeAuthority.test.ts`). Nowy fakt: „tę operację zakończył administrator", z powodem,
+  BEZ odczytów - projekcja dostaje `closed` + `closedByAdmin` + `adminCloseReason`,
+  odczyty końcowe zostają `null`, więc operacja NIE jest ogniwem łańcucha MH
+  (`pickHandover` ją pomija). Reguł per typ nie ma; „już zakończona" = `DAY_ALREADY_CLOSED`
+- **domena nie zna ról, więc „tylko panel" pilnuje POWIERZCHNIA**: `POST /events`
+  odrzuca `session_close` w kopercie (`403 admin_only_event`, `ADMIN_ONLY_EVENT_TYPES`),
+  a telefon nie ma komendy, która by je składała. Jedyna gałąź zależna od uprawnienia
+  zostaje ta sama: `correctionWindow` zamyka okno pilota NATYCHMIAST po zakończeniu
+  administracyjnym (komunikat `CORRECTION_WINDOW_EXPIRED` mówi wtedy „zakończył
+  administrator"), administrator poprawia dalej
+- **jedna karta w panelu dla operacji W TOKU**: „Zakończenie operacji" z wyborem
+  „zostaw w dzienniku" / „od razu unieważnij" (lista kart, nie checkbox). Unieważnienie
+  w tym samym ruchu = DWA zdarzenia (`session_close` + `session_void` z `source: 'admin'`),
+  jedna decyzja, jeden wpis audytu `session.close`. Karta „Unieważnienie wpisu" zostaje
+  dla operacji ZAKOŃCZONYCH. `session_void` z panelu nosi odtąd `source: 'admin'`
+  (telefon musi odróżnić cudze wycofanie od własnego)
+- **TELEFON: najpierw pyta, potem wysyła** (`sessionStore.syncNow`): przy niepustym
+  outboksie dosyłka z `GET /me/events` idzie BEZ bramy wieku PRZED wysyłką, żeby decyzja
+  panelu była w lokalnym rejestrze, zanim silnik przemiecie kolejkę. Do #81 kolejność była
+  odwrotna i zdanie z telefonu potrafiło dojechać po zakończeniu administracyjnym
+- **ZAPISY WSTRZYMANE** (`withheld_events`, migracja SQLite 7; `EventsRepo.withholdAdminEnded`
+  w `SyncEngine.drain` PRZED każdą wysyłką): zaległe zapisy operacji zakończonej albo
+  unieważnionej przez administratora WYPADAJĄ z outboxa na zawsze, ale ZOSTAJĄ w rejestrze
+  (`synced_at` dalej `null` - serwer ich nie ma; ekran 10 dalej je pokazuje, plakietka
+  „Oczekuje na przesłanie" ich nie liczy). Trzy powody: `admin_close`, `admin_void`,
+  `server`. Niezmiennik: outbox nigdy nie niesie zapisu do operacji zakończonej przez panel
+- **serwer ma DRUGĄ zaporę na wyścig**: ingest sprawdza sesje o statusie innym niż
+  `active` i zdarzenia do operacji z `closedByAdmin`/`voidedByAdmin` ODRZUCA bez wpisu,
+  zwracając ich uuidy w `withheld` - telefon oznacza je jak własne wstrzymane. To jedyny
+  świadomy wyjątek od „serwer nie odrzuca, flaguje" (§4.5): decyzja administratora jest
+  ostatnim słowem o tej operacji
+- **kokpit schodzi na 01 sam** (`CockpitScreen`, efekt na `closedByAdmin || voidedByAdmin`;
+  `holdsAircraft` pyta też o `voided`), store czyści klucz usługi GPS, a na 01 stoi baner
+  `status` amber z przyciskiem „ROZUMIEM" (`logic/adminNotices.ts` + `useAdminNotices`):
+  KTÓRA operacja (sygnatura albo znak i chwila), POWÓD, los zapisów („3 zapisy nie wyjdą
+  na serwer"). Potwierdzenia trwają w `session_meta` (`admin.notices.acked`) - operacja
+  unieważniona nie ma innego śladu na ekranie. Kafelki 01/12 dostają plakietkę
+  „Zakończył administrator" (`SessionCardVm.adminClosed`), oś operacji własny wiersz
+  `adminClose` z powodem (bez ołówka; „Zdanie" tylko gdy zdanie BYŁO), ekran 10 baner
+  zamiast „minęły 24 h" i tryb PODGLĄDU
+- **ODCZYTY ADMINISTRATORA = tabela `aircraft_readings` (migracja 5), NIE zdarzenie i NIE
+  `initial_*`**: zdarzenia należą do operacji i PIC-a; stan początkowy opisuje jedną chwilę
+  wprowadzenia jednostki. Wpis (`POST /admin/api/fleet/:id/readings`, komentarz WYMAGANY,
+  audyt `aircraft.reading`, append-only) wchodzi do `pickHandover` jako KONKURENT zdania:
+  bazą przekazania zostaje ten, kto stoi DALEJ W ŁAŃCUCHU MH (wyższy licznik; remis -
+  późniejszy zegarem), więc kolejne zdanie wypiera go samo. Olej opcjonalny (bez niego
+  kotwica oleju zostaje przy rejestrze). Telefon dostaje `Handover.origin: 'admin'`
+  (02A: „odczyty wpisał administrator"), ETag `/reference` zmienia się z każdym wpisem.
+  Panel: `reading.source: 'admin'` + `note`, karta „Poprawa odczytów" w szufladzie
+  samolotu (tryb `locked`; przy `initial` poprawia się wprost w polach). Czego wpis NIE
+  dotyka: rejestru zdarzeń, flag łańcucha, analityki zużycia, `readings-chain` wpisu
+  ręcznego - świadoma granica pierwszej wersji
+- **makiet dla nowych stanów NIE MA** (baner na 01, baner na 10, wiersz osi) - zgłoszone
+  właścicielowi przy wdrożeniu jako dług; reguła „ekran 1:1 z `design/*.html`" zostaje
+
 ## Motywy: DWA i przełącznik ciemny/jasny (issue #72, 2026-09-01)
 „Niepotrzebnie mamy tak duży wybór motywów. Zostawmy domyślny ciemny oraz jasny jako
 »Solar«. Można usunąć całe to wybieranie i zostaje tylko switch ciemny/jasny. Dodatkowo

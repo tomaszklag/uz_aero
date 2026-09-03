@@ -793,3 +793,62 @@ describe('dolewka oleju z kokpitu - oil_add (issue #60, decyzja 2026-08-27)', ()
     ).toEqual(['CORRECTION_FIELD_NOT_ALLOWED']);
   });
 });
+
+/**
+ * ZAKOŃCZENIE ADMINISTRACYJNE (`session_close`, issue #81). Domena nie zna ról, więc
+ * reguły są identyczne dla obu trybów; „tylko panel" pilnuje koperta `POST /events`.
+ * Jedyna różnica idzie przez jedyną gałąź zależną od uprawnienia - okno korekty.
+ */
+describe('zakończenie administracyjne - session_close (issue #81)', () => {
+  const close = (t: number): Event => ev('session_close', { reason: 'Telefon padł.' }, { t });
+
+  it('zamyka operację osieroconą TAKŻE przy pracującym silniku - bez odczytów nie ma czego liczyć', () => {
+    // `day_close` przy pracującym silniku odbija (`ENGINE_RUNNING_AT_DAY_CLOSE`);
+    // zakończenie administracyjne nie pyta o silnik, bo o nim nie wie.
+    expect(check(running(), close(min(300)))).toEqual([]);
+    expect(check(inFlight(), close(min(300)))).toEqual([]);
+  });
+
+  it('operacji już zakończonej nie kończy się drugi raz - ten sam kod, co przy drugim zdaniu', () => {
+    const closed = [
+      ...afterCycle(),
+      ev('day_close', { finalReading: { fuelL: 112, mh: MH_START + 2.5 } }, { t: min(160) }),
+    ];
+    expect(hard(check(closed, close(min(170))))).toEqual(['DAY_ALREADY_CLOSED']);
+
+    const adminClosed = [...running(), close(min(300))];
+    expect(hard(check(adminClosed, close(min(310))))).toEqual(['DAY_ALREADY_CLOSED']);
+  });
+
+  it('po zakończeniu administracyjnym pilot nie dopisze zdarzeń ani KOREKT - okno jest zamknięte', () => {
+    const adminClosed = [...afterCycle(), close(min(300))];
+
+    // Zwykłe zdarzenie: zamknięta operacja, jak po zdaniu.
+    expect(hard(check(adminClosed, ev('day_close', { finalReading: { fuelL: 112, mh: MH_START + 2.5 } }, { t: min(310) })))).toEqual(['DAY_ALREADY_CLOSED']);
+
+    // Korekta: okno korekty zamyka się NATYCHMIAST, nie po 24 h - a zdanie mówi dlaczego.
+    const landing = adminClosed.find((e) => e.type === 'landing')!;
+    const correction = ev(
+      'event_correction',
+      { targetUuid: landing.uuid, action: 'retime', newTime: min(80) },
+      { t: min(305) },
+    );
+    const violations = check(adminClosed, correction);
+    expect(hard(violations)).toEqual(['CORRECTION_WINDOW_EXPIRED']);
+    expect(violations[0]!.message).toContain('zakończył administrator');
+
+    const window = correctionWindow(projectSession(adminClosed), min(305));
+    expect(window).toEqual({ confirmed: true, open: false, closesAt: null, remainingMs: 0 });
+  });
+
+  it('administrator NIE jest blokowany oknem - poprawia dalej, jak po 24 h', () => {
+    const adminClosed = [...afterCycle(), close(min(300))];
+    const landing = adminClosed.find((e) => e.type === 'landing')!;
+    const correction = ev(
+      'event_correction',
+      { targetUuid: landing.uuid, action: 'retime', newTime: min(80) },
+      { t: min(305) },
+    );
+    expect(hard(checkAppend(projectSession(adminClosed), correction, LIMITS, 'administrative'))).toEqual([]);
+  });
+});

@@ -247,6 +247,9 @@ describe('unieważnienie sesji z panelu (2026-08-31)', () => {
     expect(voided.uuid).toBe(res.json().voidUuid);
     expect(voided.payload).toEqual({
       reason: 'Wpis otwarty przez pomyłkę na SP-AXA - lot odbył się na SP-FGK.',
+      // Znacznik cudzej ręki (issue #81): telefon odróżnia po nim unieważnienie
+      // z panelu od własnego - to pierwsze KOŃCZY operację, którą pilot może prowadzić.
+      source: 'admin',
     });
     // Tożsamość w rejestrze to PIC SESJI - inaczej `WRITER_MISMATCH`, i słusznie.
     // Kto to zrobił, mówią `source_device` i dziennik audytu.

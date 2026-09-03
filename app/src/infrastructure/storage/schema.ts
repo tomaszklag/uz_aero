@@ -16,7 +16,7 @@
  */
 
 /** Wersja schematu - sterowana `PRAGMA user_version`. Podnieś przy każdej migracji. */
-export const SCHEMA_VERSION = 6;
+export const SCHEMA_VERSION = 7;
 
 /**
  * Migracja 0 → 1: pełny schemat początkowy.
@@ -219,6 +219,34 @@ export const MIGRATION_6 = `
   );
 `;
 
+/**
+ * Migracja 7: ZAPISY WSTRZYMANE - wypadły z outboxa decyzją administratora (issue #81).
+ *
+ * ══ PO CO ══
+ * Administrator zakończył albo unieważnił z panelu operację, którą ten telefon
+ * prowadził - jej zaległe zapisy (zdanie, lądowanie dosłane po fakcie) NIE MOGĄ już
+ * wyjść na serwer. Wiersz w `events` zostaje (rejestr jest append-only, ekran dalej
+ * pokazuje pilotowi jego wersję), `synced_at` zostaje `NULL` (serwer tego nie
+ * potwierdził i nie potwierdzi), a TA tabela mówi, że uuid wypadł z kolejki:
+ * `getUnsyncedEvents` pomija wszystko, co tu stoi.
+ *
+ * ══ DLACZEGO OSOBNA TABELA, A NIE KOLUMNA W `events` ══
+ * Ten sam powód, co przy każdej migracji od 4: `ADD COLUMN` w SQLite nie jest
+ * idempotentne, a komplet migracji musi przejść ponownie bez błędu
+ * (`sqliteSchema.test.ts`). Do tego to inny cykl życia: wstrzymanie jest decyzją
+ * o ZAPISIE (kiedy, dlaczego), nie polem samego zdarzenia - jak stempel wysyłki,
+ * który też jest księgowością telefonu, nie treścią rejestru.
+ */
+export const MIGRATION_7 = `
+  CREATE TABLE IF NOT EXISTS withheld_events (
+    uuid         TEXT PRIMARY KEY NOT NULL,
+    session_uuid TEXT NOT NULL,
+    reason       TEXT NOT NULL,
+    withheld_at  INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_withheld_session ON withheld_events (session_uuid);
+`;
+
 /** Migracje w kolejności stosowania: indeks = wersja docelowa − 1. */
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
@@ -227,4 +255,5 @@ export const MIGRATIONS: readonly string[] = [
   MIGRATION_4,
   MIGRATION_5,
   MIGRATION_6,
+  MIGRATION_7,
 ];

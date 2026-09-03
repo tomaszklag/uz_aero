@@ -23,7 +23,12 @@
 import { fuelToleranceL } from '@uzaero/domain';
 
 import { activeClaim, pickHandover } from '../../common/aircraftStateView.ts';
-import type { Database, SessionsProjectionPort } from '../../common/ports.ts';
+import type {
+  AdminReading,
+  AircraftReadingsPort,
+  Database,
+  SessionsProjectionPort,
+} from '../../common/ports.ts';
 import type {
   AdminAircraftListItem,
   AdminFleetPage,
@@ -49,6 +54,8 @@ export class AdminFleetQueries {
     private readonly sessions: SessionsProjectionPort,
     /** Nazwiska do claimu i odczytu - po `byId`, bo dotyczy najwyżej kilku kont. */
     private readonly pilots: PilotsAdminPort,
+    /** Odczyty wpisane ręką administratora (issue #81) - konkurent zdania w przekazaniu. */
+    private readonly readings: AircraftReadingsPort,
   ) {}
 
   async list(filter: FleetListFilter): Promise<AdminFleetPage> {
@@ -123,15 +130,19 @@ export class AdminFleetQueries {
   private async withState(joins: readonly AdminAircraftJoin[]): Promise<AdminAircraftListItem[]> {
     const states = new Map<string, ReturnType<typeof stateOf>>();
     const pilotIds = new Set<string>();
+    // Odczyty wpisane ręką administratora (issue #81) - całej floty jednym zapytaniem,
+    // jak w `ReferenceQueries`: panel i telefon mają dostać TEN SAM wybór przekazania.
+    const overrides = await this.readings.latestAll(this.db);
 
     for (const join of joins) {
       const rows = await this.sessions.listByAircraft(this.db, join.aircraft.id);
-      const state = stateOf(rows, join);
+      const state = stateOf(rows, join, overrides.get(join.aircraft.id) ?? null);
       states.set(join.aircraft.id, state);
       if (state.claim != null) pilotIds.add(state.claim.picId);
-      // `byPilotId === null` znaczy „stan początkowy z panelu" (issue #66) - nie ma
-      // konta do podpisania, więc nie ma o co pytać `pilots.byId`.
+      // `byPilotId === null` znaczy „stan początkowy z panelu" (issue #66) albo odczyt
+      // administratora (issue #81) - podpisem tego drugiego jest konto, które go wpisało.
       if (state.handover?.byPilotId != null) pilotIds.add(state.handover.byPilotId);
+      if (state.enteredBy != null) pilotIds.add(state.enteredBy);
     }
 
     const labels = new Map<string, PilotLabel>();
@@ -148,6 +159,8 @@ export class AdminFleetQueries {
         claim: state?.claim ?? null,
         handover: state?.handover ?? null,
         readingSource: state?.source ?? null,
+        enteredBy: state?.enteredBy ?? null,
+        note: state?.note ?? null,
         labels,
       });
     });
@@ -159,18 +172,30 @@ export class AdminFleetQueries {
  *
  * Stan początkowy (issue #66) bierze się z WIERSZA KONFIGURACJI, który lista i tak
  * ma w ręku - dzięki temu panel i telefon odpowiadają na „jaki jest ostatni znany
- * odczyt" tą samą funkcją, także dla maszyny, która jeszcze nie latała.
+ * odczyt" tą samą funkcją, także dla maszyny, która jeszcze nie latała. Odczyt
+ * administratora (issue #81) wchodzi tą samą funkcją, jako konkurent zdania.
  */
 function stateOf(
   rows: Awaited<ReturnType<SessionsProjectionPort['listByAircraft']>>,
   join: AdminAircraftJoin,
+  override: AdminReading | null,
 ) {
   const claim = activeClaim(rows);
-  const pick = pickHandover(rows, {
-    mh: join.aircraft.initialMh,
-    fuelL: join.aircraft.initialFuelL,
-    oilL: join.aircraft.initialOilL,
-    enteredAt: join.updatedAt.getTime(),
-  });
-  return { claim, handover: pick?.handover ?? null, source: pick?.source ?? null };
+  const pick = pickHandover(
+    rows,
+    {
+      mh: join.aircraft.initialMh,
+      fuelL: join.aircraft.initialFuelL,
+      oilL: join.aircraft.initialOilL,
+      enteredAt: join.updatedAt.getTime(),
+    },
+    override,
+  );
+  return {
+    claim,
+    handover: pick?.handover ?? null,
+    source: pick?.source ?? null,
+    enteredBy: pick?.enteredBy ?? null,
+    note: pick?.note ?? null,
+  };
 }

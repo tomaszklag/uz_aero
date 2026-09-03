@@ -14,6 +14,7 @@ import type {
   SessionDetailDto,
   SessionPageDto,
   SessionTrackDto,
+  SessionCloseResultDto,
   SessionVoidResultDto,
 } from './dto';
 import { apiGet, apiPost } from './httpClient';
@@ -81,4 +82,22 @@ export function loadSessionTrack(uuid: string): Promise<SessionTrackDto> {
  */
 export function voidSession(uuid: string, reason: string): Promise<SessionVoidResultDto> {
   return apiPost<SessionVoidResultDto>(`/sessions/${encodeURIComponent(uuid)}/void`, { reason });
+}
+
+/**
+ * ZAKOŃCZENIE ADMINISTRACYJNE operacji osieroconej (issue #81) - drugi zapis w module.
+ *
+ * `POST /close`, nie `PATCH status`: powstaje nowy fakt „tę operację zakończył
+ * administrator" (`session_close`), bez odczytów, z powodem. `withVoid` dopisuje w tym
+ * samym ruchu unieważnienie - jedna decyzja, jeden przycisk, dwa fakty w rejestrze.
+ */
+export function closeSession(
+  uuid: string,
+  reason: string,
+  withVoid: boolean,
+): Promise<SessionCloseResultDto> {
+  return apiPost<SessionCloseResultDto>(`/sessions/${encodeURIComponent(uuid)}/close`, {
+    reason,
+    void: withVoid,
+  });
 }

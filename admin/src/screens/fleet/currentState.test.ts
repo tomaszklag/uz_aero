@@ -13,9 +13,21 @@ const reading: AircraftReadingDto = {
   oilAddedSinceL: 0,
   oilAt: Date.UTC(2026, 5, 18, 7, 40),
   source: 'handover',
+  note: null,
 };
 
 const aircraft = { mhFormat: 'decimal', reading } as AircraftListItemDto;
+
+/** Odczyt wpisany ręką administratora (issue #81): olej z tego samego wpisu. */
+const adminReading: AircraftReadingDto = {
+  ...reading,
+  at: Date.UTC(2026, 8, 3, 12, 5),
+  byPilotId: null,
+  byPilotName: 'Tomasz Klag',
+  oilAt: Date.UTC(2026, 8, 3, 12, 5),
+  source: 'admin',
+  note: 'Odczyt z tarczy po zakończeniu operacji z 3 września.',
+};
 
 describe('currentStateLocked - granica „kto prowadzi tę liczbę"', () => {
   it('tworzenie i lista w drodze: pola do wpisania', () => {
@@ -67,5 +79,24 @@ describe('currentStateView - wartości z dziennika', () => {
     const view = currentStateView(bare, 'decimal');
     expect(view.oil.value).toBe('—');
     expect(view.oil.hint).toBe('W dzienniku nie ma pomiaru oleju.');
+  });
+
+  it('odczyt administratora (issue #81): pola do odczytu, a podpis mówi KTO i DLACZEGO', () => {
+    // Wpis z panelu, który wyprzedził zdanie, prowadzi maszynę tak samo jak dziennik -
+    // poprawia się go osobną akcją, nie polami stanu.
+    expect(currentStateLocked({ ...aircraft, reading: adminReading })).toBe(true);
+
+    const view = currentStateView(adminReading, 'decimal');
+    expect(view.fuel.hint).toBe(
+      'Wpis administratora Tomasz Klag · 3 WRZEŚNIA 12:05 UTC. Odczyt z tarczy po zakończeniu operacji z 3 września.',
+    );
+    expect(view.mh.hint).toBe(view.fuel.hint);
+    // Olej z TEGO SAMEGO wpisu nie udaje pomiaru z bagnetu.
+    expect(view.oil.hint).toBe('Wpis administratora 3 WRZEŚNIA 12:05 UTC.');
+  });
+
+  it('odczyt administratora BEZ oleju zostawia kotwicę oleju przy dzienniku', () => {
+    const view = currentStateView({ ...adminReading, oilAt: reading.oilAt }, 'decimal');
+    expect(view.oil.hint).toBe('Z dziennika · pomiar 18 CZERWCA 07:40 UTC.');
   });
 });

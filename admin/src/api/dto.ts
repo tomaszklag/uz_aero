@@ -254,7 +254,14 @@ export interface AircraftReadingDto {
   oilAddedSinceL: number | null;
   /** Kiedy zmierzono olej - bywa dużo starszy niż `at`. `null` razem z `oilL`. */
   oilAt: number | null;
-  source: 'handover' | 'open_session' | 'initial';
+  /**
+   * `admin` = odczyt wpisany ręką administratora (issue #81), który wyprzedził ostatnie
+   * zdanie w łańcuchu MH: `byPilotId` jest `null`, `byPilotName` niesie nazwisko
+   * administratora, `note` jego komentarz.
+   */
+  source: 'handover' | 'open_session' | 'initial' | 'admin';
+  /** Komentarz do odczytu administratora; `null` przy każdym innym `source`. */
+  note: string | null;
 }
 
 /** Lista floty. Bez kursora - klub ma kilka jednostek. */
@@ -468,6 +475,21 @@ export interface SessionVoidResultDto {
    */
   warnings: { code: string; message: string }[];
   /** Przebudowa karty arkusza; `null` = arkusz nie odpowiedział. */
+  reexport: { exported: boolean } | null;
+}
+
+/**
+ * Wynik ZAKOŃCZENIA ADMINISTRACYJNEGO operacji (`POST /sessions/:uuid/close`, issue #81).
+ * `voidUuid` niesie uuid dopisanego unieważnienia, gdy zamknięto „i od razu unieważnij";
+ * `state` liczy serwer, jak przy unieważnieniu.
+ */
+export interface SessionCloseResultDto {
+  sessionUuid: string;
+  closeUuid: string;
+  voidUuid: string | null;
+  recordedAt: string;
+  state: SessionState;
+  warnings: { code: string; message: string }[];
   reexport: { exported: boolean } | null;
 }
 

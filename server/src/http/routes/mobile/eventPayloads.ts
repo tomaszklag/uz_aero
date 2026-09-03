@@ -202,6 +202,19 @@ export const PAYLOAD_SCHEMAS: Record<string, z.ZodTypeAny> = {
    */
   session_void: z.object({
     reason: z.string().max(1000).nullable(),
+    // Kto unieważnił (issue #81): brak = pilot. Telefon własnego unieważnienia nie
+    // podpisuje, panel podpisuje `admin` - ten sam znacznik, co przy korekcie.
+    source: correctionSource,
+  }),
+
+  /**
+   * `session_close` - ZAKOŃCZENIE ADMINISTRACYJNE (issue #81). Schemat istnieje, bo
+   * `PAYLOAD_SCHEMAS` opisuje KOMPLET typów rejestru - ale telefon tego zdarzenia
+   * NIE WYSYŁA: koperta `POST /events` odrzuca je z nazwanym powodem
+   * (`ADMIN_ONLY_EVENT_TYPES`). Jedyną drogą zapisu jest `commands/sessionClose.ts`.
+   */
+  session_close: z.object({
+    reason: z.string().max(2000).nullable(),
   }),
 
   /**
@@ -259,3 +272,12 @@ export function payloadValid(type: string, payload: unknown): boolean {
   const schema = PAYLOAD_SCHEMAS[type];
   return schema != null && schema.safeParse(payload).success;
 }
+
+/**
+ * Typy, których TELEFON nie ma prawa przysłać (issue #81) - powstają wyłącznie
+ * w panelu, w imieniu PIC-a sesji. Domena ich nie odróżnia (nie zna ról), więc
+ * granica stoi tu, w kopercie: paczka z takim zdarzeniem wraca `403 admin_only_event`
+ * w całości, tak jak paczka podpisana cudzym PIC-em - to nie jest konflikt danych,
+ * tylko brak uprawnień.
+ */
+export const ADMIN_ONLY_EVENT_TYPES: readonly string[] = ['session_close'];

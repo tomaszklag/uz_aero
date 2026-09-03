@@ -579,6 +579,46 @@ describe('oś operacji wpisanej ręcznie', () => {
   });
 });
 
+describe('zakończenie administracyjne (issue #81)', () => {
+  /** Operacja osierocona: przejęcie, bieg bez wyłączenia - i decyzja panelu po godzinie. */
+  function orphaned(): Event[] {
+    const base = sessionEvents().filter((e) =>
+      ['session_claim', 'preflight_confirm', 'engine_start', 'takeoff', 'landing'].includes(e.type),
+    );
+    return [
+      ...base,
+      event('session_close', at(13, 40), { reason: 'Telefon pilota padł w locie.' }, 'close-1'),
+    ];
+  }
+
+  it('ma WŁASNY wiersz z powodem - „Zdania" bez zdania nie ma', () => {
+    const { rows } = axis(orphaned(), at(14, 0));
+    const close = rows.find((r) => r.kind === 'adminClose')!;
+    expect(close).toMatchObject({
+      id: 'close-1',
+      name: 'Zakończenie · administrator',
+      sub: 'Telefon pilota padł w locie.',
+      time: '13:40',
+      // Korekty nie ma: o tej operacji zdecydował panel.
+      targetUuid: null,
+    });
+    expect(rows.find((r) => r.kind === 'release')).toBeUndefined();
+    // Zamyka oś - stoi za ostatnim faktem lotu.
+    expect(rows[rows.length - 1]!.kind).toBe('adminClose');
+  });
+
+  it('zdanie dosłane z telefonu PO zakończeniu zostaje widoczne obok - oba fakty zaszły', () => {
+    const events = [
+      ...orphaned(),
+      event('day_close', at(15, 0), { finalReading: { fuelL: 80, mh: 1237.5 } }, 'late-close'),
+    ];
+    const { rows } = axis(events, at(16, 0));
+    const kinds = rows.map((r) => r.kind);
+    expect(kinds.indexOf('adminClose')).toBeLessThan(kinds.indexOf('release'));
+    expect(rows.find((r) => r.kind === 'release')!.targetUuid).toBe('late-close');
+  });
+});
+
 /** Strażnik typu: projekcja musi mieć wszystko, czego oś potrzebuje. */
 export type _AxisNeeds = Pick<
   SessionState,

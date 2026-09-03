@@ -202,6 +202,48 @@ export interface AircraftSeed {
   enteredAt: number;
 }
 
+/**
+ * ODCZYT MASZYNY WPISANY RĘKĄ ADMINISTRATORA (issue #81) - nadrzędny stan licznika,
+ * paliwa i oleju z komentarzem (tabela `aircraft_readings`, append-only).
+ *
+ * ══ TO JEST INNA LICZBA NIŻ STAN POCZĄTKOWY ══
+ * `AircraftSeed` mówi „od czego ta maszyna zaczyna" i przestaje znaczyć od pierwszej
+ * zdanej operacji. Ten typ mówi „administrator ZDECYDOWAŁ, że teraz jest tak" - i ma
+ * wyprzedzać historię: wchodzi do wyboru przekazania jako KONKURENT zdania samolotu
+ * (`aircraftStateView.pickHandover`), a wygrywa ten, kto stoi dalej w łańcuchu MH.
+ * Kolejne zdanie z wyższym licznikiem wypiera go samo - stąd `mh` jest obowiązkowe:
+ * bez licznika wpis nie ma miejsca w łańcuchu.
+ *
+ * Nie jedzie na telefon jako osobne pole: telefon dostaje z niego gotowe przekazanie
+ * z `origin: 'admin'` (ta sama zasada, co przy stanie początkowym).
+ */
+export interface AdminReading {
+  mh: number;
+  fuelL: number;
+  /** `null` = administrator nie znał stanu oleju; kotwica oleju zostaje przy rejestrze. */
+  oilL: number | null;
+  /** Komentarz - WYMAGANY: nadpisuje się cudze odczyty, więc powód jest treścią wpisu. */
+  note: string;
+  /** Konto administratora, które wpisało odczyt. */
+  byPilotId: string;
+  /** Chwila WPISU (epoch ms UTC) - nie pomiaru, jak przy stanie początkowym. */
+  at: number;
+}
+
+/**
+ * Port odczytów administratora - w `common/`, bo czytają go OBIE powierzchnie:
+ * `GET /reference` (telefon) i karta samolotu w panelu; pisze wyłącznie komenda panelu.
+ */
+export interface AircraftReadingsPort {
+  /** Ostatni wpis maszyny; `null` = nigdy nie wpisano. */
+  latest(db: Queryable, aircraftId: string): Promise<AdminReading | null>;
+  /** Ostatnie wpisy CAŁEJ floty jednym zapytaniem, klucz = `aircraft.id`. */
+  latestAll(db: Queryable): Promise<Map<string, AdminReading>>;
+  /** Najświeższy `created_at` w tabeli - składnik ETagu `/reference`. */
+  latestAt(db: Queryable): Promise<Date | null>;
+  insert(tx: Queryable, aircraftId: string, reading: AdminReading): Promise<void>;
+}
+
 /** Flota + piloci dla `GET /reference` (§4.6, §4.8). */
 export interface ReferenceSnapshot {
   aircraft: ReferenceAircraft[];

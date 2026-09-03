@@ -73,6 +73,8 @@ export type SessionAxisKind =
   | 'landing'
   | 'engineStop'
   | 'release'
+  /** Zakończenie administracyjne (issue #81) - koniec operacji BEZ zdania. */
+  | 'adminClose'
   | 'refuel'
   | 'oilAdd'
   | 'boarding'
@@ -141,6 +143,9 @@ const KIND_TONE: Record<SessionAxisKind, Tone> = {
   landing: 'red',
   engineStop: 'neutral',
   release: 'neutral',
+  // Amber, bo to stan odchylony od normalnego zakończenia - nie ostrzeżenie o danych,
+  // ale też nie zwykły koniec: zdania nie było, zdecydował panel.
+  adminClose: 'amber',
   refuel: 'amber',
   oilAdd: 'amber',
   boarding: 'blue',
@@ -158,6 +163,7 @@ const HOLLOW: Record<SessionAxisKind, boolean> = {
   landing: false,
   engineStop: false,
   release: true,
+  adminClose: true,
   refuel: false,
   oilAdd: false,
   boarding: false,
@@ -175,6 +181,7 @@ const DIMMED: Record<SessionAxisKind, boolean> = {
   landing: false,
   engineStop: false,
   release: true,
+  adminClose: false,
   refuel: true,
   oilAdd: true,
   boarding: true,
