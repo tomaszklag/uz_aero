@@ -165,8 +165,9 @@ describe('oś operacji', () => {
   it('końce osi niosą odczyty, do których odwołują się rachunki niżej', () => {
     const { rows } = axis();
 
-    expect(rows.find((row) => row.kind === 'claim')!.sub).toBe('odczyt 150 L · 1234:30');
-    expect(rows.find((row) => row.kind === 'release')!.sub).toBe('odczyt 171 L · 1236:05');
+    // „paliwo", nie „odczyt" (uwaga z urządzenia, 2026-09-03) - media nazwane.
+    expect(rows.find((row) => row.kind === 'claim')!.sub).toBe('paliwo 150 L · 1234:30');
+    expect(rows.find((row) => row.kind === 'release')!.sub).toBe('paliwo 171 L · 1236:05');
   });
 
   it('pomiar oleju wchodzi do podpisu przejęcia - zdanie oleju nie mierzy (issue #60)', () => {
@@ -176,11 +177,13 @@ describe('oś operacji', () => {
         : e,
     );
     const rows = axis(withOil).rows;
+    // SAM pomiar zastany, bez dolewki (uwaga z urządzenia, 2026-09-03):
+    // dolewka jest zdarzeniem przebiegu i ma na osi własny wiersz.
     expect(rows.find((row) => row.kind === 'claim')!.sub).toBe(
-      'odczyt 150 L · 1234:30 · olej 8,2 L (+1,0 L)',
+      'paliwo 150 L · 1234:30 · olej 8,2 L',
     );
     // zdanie samolotu zostaje bez oleju - bagnet tuż po locie kłamie
-    expect(rows.find((row) => row.kind === 'release')!.sub).toBe('odczyt 171 L · 1236:05');
+    expect(rows.find((row) => row.kind === 'release')!.sub).toBe('paliwo 171 L · 1236:05');
   });
 
   it('zrzut niesie skład i wysokość; brak obu nie robi pustego podpisu', () => {

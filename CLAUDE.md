@@ -1594,6 +1594,33 @@ na osi przez unieważnienie i dopisanie, parytet z tankowaniem) - dochodziła pi
   operacja sprzed modułu), 10D (tryb edycji, bez zmian względem odczytu); podpisy
   przejęcia na 10A/10D dostały wreszcie człon „olej …" z issue #60
 
+## Dolewka oleju przy przejęciu = zdarzenie `oil_add` (2026-09-03)
+Pytanie użytkownika („dolewka oleju i dolanie paliwa przy przejęciu to nie powinny
+być oddzielne eventy?") trafiło w realną asymetrię: paliwo JUŻ tak działało
+(tankowanie przed lotem to zawsze osobne `refuel`, także we wpisie ręcznym),
+a dolewka oleju z arkusza 02I była polem `oilAddedL` W ŚRODKU payloadu
+`preflight_confirm` - podczas gdy ta sama dolewka z kokpitu była zdarzeniem
+`oil_add`. Jeden fakt w dwóch kształtach kosztował: brak wiersza osi (po
+przycięciu podpisu przejęcia dolewka z 02I znikała z osi zupełnie), dwie drogi
+korekty (amend vs unieważnij+dopisz) i dwa źródła sumy dla analityki oleju.
+- **NOWE ZAPISY**: 02A i wpis ręczny składają `preflight_confirm` z SAMYM
+  pomiarem (`oilL`) + osobne `oil_add` przy dolewce (02A tuż po potwierdzeniu;
+  wpis ręczny w sekwencji za przejęciem, stempel = uruchomienie - silnik jeszcze
+  nie działa, więc `OIL_ADD_ENGINE_RUNNING` nie odbija). Dolewka ma odtąd WŁASNY
+  wiersz osi („Dolewka oleju · +0,5 L") i TĘ SAMĄ drogę korekty, co tankowanie
+- **REJESTR APPEND-ONLY - nic nie migrujemy**: pole `oilAddedL` w starych
+  strumieniach czytamy dalej (projekcje telefonu i serwera sumują OBA źródła
+  do jednej liczby, więc stare operacje liczą się bez zmian; treść operacji
+  idzie przez tę sumę). Biała lista `amend` zachowuje `oilAddedL` dla starych
+  zapisów
+- **pole „Olej - dolewka" w arkuszu 10F istnieje TYLKO, gdy payload ją niesie**
+  (stary strumień): amend dopisujący dolewkę do payloadu nowego strumienia
+  dublowałby fakt, który ma już własne zdarzenie (`ReadingOilFields.addedText:
+  string | null`, `null` = pola nie ma). W nowych strumieniach dolewkę dopisuje
+  się arkuszem 10H (`oil_add` był tam od issue #70)
+- **serwer bez zmian**: ingest zna `oil_add` od issue #60, a kolumna
+  `sessions.oil_added_l` od zawsze sumuje payload + zdarzenia
+
 ## Sekcja oleju na 02A: podziałka zamiast tekstu, podpowiedź w arkuszu (2026-09-02)
 Uwagi z urządzenia do kroku liczników (NOWY LOT · 3/3):
 - **adnotacja „Twój pomiar z bagnetu" USUNIĘTA**: pomiar jest aktem pilota z definicji,
@@ -1979,7 +2006,13 @@ Zostaje oś: `components/data/SessionAxis.tsx` + builder `logic/sessionAxis.ts`.
   albo brak danych, nie flaga „tryb kokpitu"
 - **odczyt startowy wraca do PRZEJĘCIA**: wisiał jako chipy przy „Start engine", czyli
   przy zdarzeniu, które go nie wykonało - bo log kokpitu nie miał wiersza przejęcia
-  w ogóle. Kokpit ma go odtąd tak samo jak 10, razem z podpisem „odczyt 112 L · 1 236:30"
+  w ogóle. Kokpit ma go odtąd tak samo jak 10, razem z podpisem odczytów.
+  **Podpis nazywa media** (uwaga z urządzenia, 2026-09-03): „paliwo 112 L ·
+  1 236:30 · olej 8,2 L" - słowo „odczyt" obok oleju nazwanego mediem przestało
+  odróżniać, a słownik jest JEDEN dla przejęcia i zdania (`readingLine`).
+  Olej w podpisie przejęcia to SAM POMIAR ZASTANY, bez „(+dolewka)" (druga tura:
+  „nie pisz, ile dolano, tylko ile zastano") - dolewka jest zdarzeniem przebiegu
+  i ma na osi własny wiersz, a powtórzona w nawiasie mówiła to samo dwa razy
 - **słownik jest jeden i polski**: „Uruchomienie", „Kołowanie", „Start", „Lądowanie",
   „Wyłączenie" - zamiast „Start engine", „Taxi", „Takeoff", „Landing", „Stop engine".
   Angielskie nazwy zostają tam, gdzie opisują FAZĘ lotu (hero 05), nie zapis w rejestrze

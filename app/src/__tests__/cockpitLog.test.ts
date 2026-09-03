@@ -73,7 +73,7 @@ describe('log kokpitu = oś operacji (issue #44)', () => {
 
     expect(rows[0]!.kind).toBe('claim');
     expect(rows[0]!.time).toBe('10:58');
-    expect(rows[0]!.sub).toBe('odczyt 112 L · 1236:30');
+    expect(rows[0]!.sub).toBe('paliwo 112 L · 1236:30');
     expect(rows.find((r) => r.kind === 'engineStart')!.sub).toBeNull();
   });
 

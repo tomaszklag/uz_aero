@@ -298,7 +298,12 @@ export function useSessionEdit(
 
   /**
    * Olej W MOCY (po korektach) - tylko dla przejęcia (issue #60): `day_close` oleju nie
-   * niesie, więc jego arkusz pól olejowych nie pokazuje. Puste teksty = wpisu nie było.
+   * niesie, więc jego arkusz pól olejowych nie pokazuje. Pusty tekst = wpisu nie było.
+   *
+   * Pole DOLEWKI istnieje wyłącznie, gdy payload przejęcia ją NIESIE (stary strumień
+   * sprzed 2026-09-03) - w nowych dolewka przy przejęciu jest osobnym `oil_add`
+   * z własnym wierszem osi i tam się ją poprawia; amend dopisujący `oilAddedL`
+   * do payloadu dublowałby fakt (projekcja sumuje OBA źródła).
    */
   const oilCurrent = useMemo(() => {
     if (readingTarget == null) return null;
@@ -306,7 +311,8 @@ export function useSessionEdit(
     if (current.type !== 'preflight_confirm') return null;
     return {
       levelText: oilValueText(current.payload.oilL ?? null),
-      addedText: oilValueText(current.payload.oilAddedL ?? null),
+      addedText:
+        current.payload.oilAddedL != null ? oilValueText(current.payload.oilAddedL) : null,
       parse: parseLitres,
     };
   }, [effectiveOf, readingTarget]);

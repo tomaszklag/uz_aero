@@ -490,13 +490,26 @@ export class SessionCommands {
           dualId: input.dualId,
           reading: input.initialReading,
           // Olej (issue #60) - pomiar żyje przy przejęciu, także we wpisie po fakcie.
-          ...(input.oilL != null || input.oilAddedL != null
-            ? { oilL: input.oilL ?? null, oilAddedL: input.oilAddedL ?? null }
-            : {}),
+          ...(input.oilL != null ? { oilL: input.oilL } : {}),
           notes: input.notes ?? null,
         },
         gpsTime: input.engine.start,
       },
+      // Dolewka oleju przy przejęciu = to samo zdarzenie `oil_add`, co dolewka
+      // z kokpitu (uwaga z urządzenia, 2026-09-03) - jeden byt, jeden kształt:
+      // wiersz osi, droga korekty (unieważnij + dopisz), źródło sumy analityki.
+      // Pole `oilAddedL` w payloadzie przejęcia zostało TYLKO do czytania starych
+      // strumieni. Stempel = uruchomienie, jak reszta bloku przejęcia; silnik
+      // jeszcze nie działa, więc OIL_ADD_ENGINE_RUNNING nie ma jak odbić.
+      ...(input.oilAddedL != null && input.oilAddedL > 0
+        ? [
+            {
+              type: 'oil_add',
+              payload: { addedL: input.oilAddedL },
+              gpsTime: input.engine.start,
+            } satisfies Draft,
+          ]
+        : []),
       ...refuelsBefore,
       { type: 'engine_start', payload: {}, gpsTime: input.engine.start },
       ...inRun,

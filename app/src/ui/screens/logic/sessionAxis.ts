@@ -83,7 +83,7 @@ export interface AxisRow {
   time: string;
   /** „Start", „Lądowanie", „Zrzut 2". */
   name: string;
-  /** Druga linia: „4 skoczków · 12 800 ft", „odczyt 150 L · 1 234:30". */
+  /** Druga linia: „4 skoczków · 12 800 ft", „paliwo 150 L · 1 234:30". */
   sub: string | null;
   /**
    * Numer lotu przy STARCIE („lot 1") - po prawej, nie pod nazwą i nie przy lądowaniu.
@@ -534,16 +534,20 @@ function heldMs(projection: SessionState, now: number): number | null {
 }
 
 /**
- * Podpis wiersza przejęcia i zdania: „odczyt 150 L · 1 234:30".
+ * Podpis wiersza przejęcia i zdania: „paliwo 150 L · 1 234:30".
  *
  * To NIE jest ozdobnik - rachunki paliwa i motogodzin niżej odwołują się do tych dwóch
  * chwil („odczyt przy przejęciu", „licznik przy zdaniu"), więc bez nich wiersze rachunku
  * wskazywałyby na moment, którego ekran nigdzie nie pokazuje. Brakujący odczyt po prostu
  * wypada z podpisu; pusty podpis znaczy „nic nie spisano" i tak też wygląda.
+ *
+ * „paliwo", nie „odczyt" (uwaga z urządzenia, 2026-09-03: „przy przejęciu pisz
+ * «paliwo x L · 1234:56 · olej x L»") - obok oleju nazwanego mediem słowo „odczyt"
+ * przestało odróżniać; słownik jest jeden dla przejęcia i zdania.
  */
 function readingLine(fuelL: number | null, mh: number | null, format: MhFormat): string | null {
   const parts: string[] = [];
-  if (fuelL != null) parts.push(`odczyt ${litres(fuelL)}`);
+  if (fuelL != null) parts.push(`paliwo ${litres(fuelL)}`);
   if (mh != null) parts.push(motoHours(mh, format));
   return parts.length > 0 ? parts.join(' · ') : null;
 }
@@ -551,17 +555,15 @@ function readingLine(fuelL: number | null, mh: number | null, format: MhFormat):
 /**
  * Podpis PRZEJĘCIA = odczyty + pomiar oleju (issue #60). Osobno od `readingLine`,
  * bo zdanie samolotu oleju NIE MIERZY (bagnet tuż po locie kłamie - olej nie spłynął)
- * i jego podpis ma zostać dokładnie taki, jaki był. Dolewka w nawiasie, wzorem
- * tankowania na tej samej osi („+48 L → 171 L"): ilość dolana jest faktem przebiegu,
- * nie przypisem.
+ * i jego podpis ma zostać dokładnie taki, jaki był. SAM POMIAR ZASTANY, bez dolewki
+ * (uwaga z urządzenia, 2026-09-03: „nie pisz, ile oleju dolano, tylko ile zastano") -
+ * dolewka jest zdarzeniem przebiegu i ma na tej osi WŁASNY wiersz, a powtórzona
+ * w nawiasie przy przejęciu mówiła to samo dwa razy.
  */
 function claimReadingLine(projection: SessionState, format: MhFormat): string | null {
   const base = readingLine(projection.fuel.startL, projection.mh.start, format);
-  const { levelL, addedL } = projection.oil;
-  const oil =
-    levelL != null
-      ? `olej ${oilLitres(levelL)}${addedL > 0 ? ` (+${oilLitres(addedL)})` : ''}`
-      : null;
+  const { levelL } = projection.oil;
+  const oil = levelL != null ? `olej ${oilLitres(levelL)}` : null;
   const parts = [base, oil].filter((p): p is string => p != null);
   return parts.length > 0 ? parts.join(' · ') : null;
 }

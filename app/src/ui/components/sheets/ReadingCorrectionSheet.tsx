@@ -50,7 +50,14 @@ export interface ReadingCorrection {
 export interface ReadingOilFields {
   /** Wartości w mocy, już sformatowane; pusty tekst = wpisu nie było. */
   levelText: string;
-  addedText: string;
+  /**
+   * `null` = pola dolewki NIE MA WCALE (uwaga z urządzenia, 2026-09-03): w nowych
+   * strumieniach dolewka przy przejęciu jest osobnym zdarzeniem `oil_add` z własnym
+   * wierszem osi i tam się ją poprawia (unieważnij + dopisz, parytet z tankowaniem).
+   * Pole edytuje wyłącznie dolewkę WPISANĄ w payload przejęcia (stare strumienie) -
+   * amend dopisujący ją do payloadu dublowałby fakt, który ma już własne zdarzenie.
+   */
+  addedText: string | null;
   /** Tekst → litry; `null` = wpis niepoprawny (pusty tekst NIE przechodzi tędy). */
   parse: (text: string) => number | null;
 }
@@ -163,9 +170,9 @@ export function ReadingCorrectionSheet({
   const fuelChanged = fuel.trim() !== fuelText.trim();
   const mhChanged = mh.trim() !== mhText.trim();
   const oilLevelState = oil != null ? oilFieldValue(oilLevel, oil.parse) : null;
-  const oilAddedState = oil != null ? oilFieldValue(oilAdded, oil.parse) : null;
+  const oilAddedState = oil?.addedText != null ? oilFieldValue(oilAdded, oil.parse) : null;
   const oilLevelChanged = oil != null && oilLevel.trim() !== oil.levelText.trim();
-  const oilAddedChanged = oil != null && oilAdded.trim() !== oil.addedText.trim();
+  const oilAddedChanged = oil?.addedText != null && oilAdded.trim() !== oil.addedText.trim();
   const timeChanged = time != null && at !== time.value;
   const readable =
     (!fuelChanged || fuelValue != null) &&
@@ -310,16 +317,22 @@ export function ReadingCorrectionSheet({
             }
             style={styles.cell}
           />
-          <TextField
-            label="Olej - dolewka"
-            value={oilAdded}
-            onChangeText={setOilAdded}
-            keyboardType="decimal-pad"
-            hint={
-              oilAddedChanged ? `było ${oil.addedText.trim() === '' ? '-' : oil.addedText}` : undefined
-            }
-            style={styles.cell}
-          />
+          {/* Pole dolewki tylko, gdy payload ją NIESIE (stary strumień) - patrz
+              docblock `ReadingOilFields.addedText`. */}
+          {oil.addedText != null && (
+            <TextField
+              label="Olej - dolewka"
+              value={oilAdded}
+              onChangeText={setOilAdded}
+              keyboardType="decimal-pad"
+              hint={
+                oilAddedChanged
+                  ? `było ${oil.addedText.trim() === '' ? '-' : oil.addedText}`
+                  : undefined
+              }
+              style={styles.cell}
+            />
+          )}
         </View>
       )}
 

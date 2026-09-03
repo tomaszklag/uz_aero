@@ -100,6 +100,7 @@ export function PreflightReadingsScreen({
   const synced = useSessionStore((s) => s.synced);
   const claim = useSessionStore((s) => s.claim);
   const confirmPreflight = useSessionStore((s) => s.confirmPreflight);
+  const addOil = useSessionStore((s) => s.addOil);
   const lastError = useSessionStore((s) => s.lastError);
   const sync = useSessionStore((s) => s.sync);
   const gps = useGps();
@@ -186,11 +187,13 @@ export function PreflightReadingsScreen({
         departureIcao: draft.departureIcao || null,
         arrivalIcao: draft.arrivalIcao || null,
         reading: { fuelL: draft.fuelL, mh: draft.mh },
-        // Olej (issue #60): klucze tylko przy faktycznym wpisie - sesja bez pomiaru
-        // nie niesie pustych pól, a brak klucza czyta się wszędzie tak samo jak null.
-        ...(draft.oilL != null || draft.oilAddedL != null
-          ? { oilL: draft.oilL, oilAddedL: draft.oilAddedL }
-          : {}),
+        // Olej (issue #60): klucz tylko przy faktycznym pomiarze - sesja bez pomiaru
+        // nie niesie pustego pola, a brak klucza czyta się wszędzie tak samo jak null.
+        // DOLEWKA NIE WCHODZI do payloadu (uwaga z urządzenia, 2026-09-03): jest tym
+        // samym faktem, co dolewka z kokpitu, więc zapisuje się tym samym zdarzeniem
+        // `oil_add` niżej - jeden byt, jeden kształt (wiersz osi, droga korekty,
+        // źródło sumy dla analityki). `oilAddedL` w starych strumieniach czytamy dalej.
+        ...(draft.oilL != null ? { oilL: draft.oilL } : {}),
         client: draft.client,
         notes: draft.notes,
         mhFormat,
@@ -200,6 +203,11 @@ export function PreflightReadingsScreen({
         jumperDefaults: isJumpOperation(draft.operation) ? draft.jumperDefaults : null,
       });
 
+      // Dolewka z arkusza 02I - osobne `oil_add`, jak dolewka z kokpitu.
+      if (draft.oilAddedL != null && draft.oilAddedL > 0) {
+        await addOil({ addedL: draft.oilAddedL });
+      }
+
       draft.reset();
       navigation.navigate('Cockpit');
     } catch {
@@ -207,7 +215,7 @@ export function PreflightReadingsScreen({
     } finally {
       setBusy(false);
     }
-  }, [aircraft, claim, confirmPreflight, draft, gps, mhFormat, navigation, pilotId, sync]);
+  }, [addOil, aircraft, claim, confirmPreflight, draft, gps, mhFormat, navigation, pilotId, sync]);
 
   /**
    * Stan świeżości (§4.8). Bez przekazania jest `brak` - niezależnie od sieci.

@@ -364,7 +364,24 @@
             <span class="axis-mark"><span class="axis-dot hollow"></span></span>
             <span class="axis-label">
               <span class="axis-name muted">Przejęcie</span>
-              <span class="axis-sub">odczyt 150 L · 1 234:30 · olej 10,2 L (+0,5 L)</span>
+              <span class="axis-sub">paliwo 150 L · 1 234:30 · olej 10,2 L</span>
+            </span>
+            <span class="axis-right"></span>
+            <span class="axis-pen">
+              <svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
+            </span>
+          </a>
+
+          <!-- DOLEWKA OLEJU PRZY PRZEJĘCIU = OSOBNE `oil_add` (uwaga z urządzenia,
+               2026-09-03): własny wiersz i TA SAMA droga korekty, co tankowanie -
+               unieważnij + dopisz (arkusz czasu 10E). Pole dolewki w arkuszu 10F
+               istnieje już tylko dla starych strumieni z `oilAddedL` w payloadzie. -->
+          <a class="axis-row" href="10e-korekta-zdarzenia.html">
+            <span class="axis-time dim">08:05</span>
+            <span class="axis-mark"><span class="axis-dot hollow"></span></span>
+            <span class="axis-label">
+              <span class="axis-name muted">Dolewka oleju</span>
+              <span class="axis-sub">+0,5 L</span>
             </span>
             <span class="axis-right"></span>
             <span class="axis-pen">
@@ -517,7 +534,7 @@
             <span class="axis-mark"><span class="axis-dot hollow"></span></span>
             <span class="axis-label">
               <span class="axis-name muted">Zdanie</span>
-              <span class="axis-sub">odczyt 171 L · 1 236:05</span>
+              <span class="axis-sub">paliwo 171 L · 1 236:05</span>
             </span>
             <span class="axis-right"></span>
             <span class="axis-pen">

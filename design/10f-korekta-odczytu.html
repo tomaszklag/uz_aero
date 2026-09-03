@@ -219,7 +219,7 @@
             <span class="axis-mark"><span class="axis-dot hollow amber"></span></span>
             <span class="axis-label">
               <span class="axis-name amber">Przejęcie · korygowane</span>
-              <span class="axis-sub">odczyt 150 L · 1 234:30</span>
+              <span class="axis-sub">paliwo 150 L · 1 234:30</span>
             </span>
             <span></span>
             <span class="axis-pen"><svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg></span>
@@ -308,10 +308,17 @@
           </div>
         </div>
 
-        <!-- OLEJ (issue #60) - para TYLKO przy PRZEJĘCIU: zdanie samolotu oleju nie
+        <!-- OLEJ (issue #60) - pola TYLKO przy PRZEJĘCIU: zdanie samolotu oleju nie
              mierzy (bagnet tuż po locie kłamie), więc jego arkusz tych pól nie ma.
              Wyczyszczone pole jest korektą „tego wpisu nie było" - puste przechodzi,
-             a podpowiedź po zmianie mówi „było -" przy braku oryginału. -->
+             a podpowiedź po zmianie mówi „było -" przy braku oryginału.
+             POLE DOLEWKI (drugie niżej) istnieje już TYLKO dla starych strumieni
+             z `oilAddedL` w payloadzie przejęcia (uwaga z urządzenia, 2026-09-03):
+             w nowych dolewka przy przejęciu jest osobnym zdarzeniem `oil_add`
+             z własnym wierszem osi i poprawia się ją tam, jak tankowanie
+             (unieważnij + dopisz) - amend dopisujący ją do payloadu dublowałby
+             fakt, bo projekcja sumuje oba źródła. Ten mockup pokazuje STARY
+             strumień; nowy ma tu sam pomiar. -->
         <div>
           <div class="field-label">Olej - pomiar i dolewka</div>
           <div class="reading-grid">

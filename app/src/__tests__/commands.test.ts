@@ -11,7 +11,7 @@
  * Wszystko na `InMemoryAdapter` - bez natywnego SQLite.
  */
 
-import { DomainRuleError, projectSession } from '../domain';
+import { DomainRuleError, projectSession, type EventOf } from '../domain';
 import { EventsRepo } from '../application/eventsRepo';
 import { SessionCommands, type SessionContext } from '../application/commands';
 import { SessionQueries } from '../application/queries';
@@ -450,6 +450,37 @@ describe('manualFlight - kompletna operacja po fakcie (ekrany 15 → 15C)', () =
 
     await h.commands.claim({ ...CTX, mode: 'free', previousPicId: null });
     expect((await h.queries.sessionState(SESSION)).manualEntry).toBe(false);
+  });
+
+  /**
+   * DOLEWKA PRZY PRZEJĘCIU = OSOBNE `oil_add` (uwaga z urządzenia, 2026-09-03):
+   * ten sam fakt, co dolewka z kokpitu, ma jeden kształt - wiersz osi, drogę
+   * korekty i źródło sumy. Payload przejęcia niesie odtąd SAM pomiar;
+   * `oilAddedL` w starych strumieniach czytamy dalej (projekcja sumuje oba źródła).
+   */
+  it('dolewka oleju przy przejęciu to osobne oil_add, nie pole payloadu', async () => {
+    const h = setup();
+    h.clock.set(min(700));
+
+    await h.commands.manualFlight(input({ oilL: 8.2, oilAddedL: 1.0 }));
+    const events = await h.repo.getSessionEvents('sess-manual');
+
+    const preflight = events.find(
+      (e) => e.type === 'preflight_confirm',
+    ) as EventOf<'preflight_confirm'>;
+    expect(preflight.payload.oilL).toBe(8.2);
+    expect('oilAddedL' in preflight.payload).toBe(false);
+
+    const oilAdd = events.find((e) => e.type === 'oil_add') as EventOf<'oil_add'>;
+    expect(oilAdd.payload.addedL).toBe(1.0);
+    // Stempel przejęcia - PRZED uruchomieniem, więc reguła silnika nie ma jak odbić.
+    expect(oilAdd.gpsTime).toBe(T_START);
+
+    // Projekcja widzi to samo, co przy starym kształcie: sumę z obu źródeł.
+    const s = await h.queries.sessionState('sess-manual');
+    expect(s.oil.levelL).toBe(8.2);
+    expect(s.oil.addedL).toBe(1.0);
+    expect(s.oil.afterL).toBeCloseTo(9.2);
   });
 
   it('przyjmuje WIELE lotów i sortuje je po czasie niezależnie od kolejności listy', async () => {
