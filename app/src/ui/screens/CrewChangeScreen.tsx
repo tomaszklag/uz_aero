@@ -1,20 +1,22 @@
 /**
  * UZ Aero - 07 ZMIANA ZAŁOGI.
  *
- * Odwzorowanie mockupu `design/07-zmiana-zalogi.html`: aktualna załoga → sekcja A
- * (zmiana Duala) → sekcja B (przekazanie samolotu) → baner „dlaczego dwie sekcje".
+ * Odwzorowanie mockupu `design/07-zmiana-zalogi.html`: aktualna załoga (z przyciskiem
+ * zmiany Duala - ARKUSZ) → przekazanie samolotu innemu PIC.
  *
- * Podział na A i B jest ARCHITEKTURĄ, nie układem graficznym:
+ * PO PRZEGLĄDZIE 2026-09-02 ekran ma dwie karty zamiast trzech sekcji: zmiana Duala
+ * przestała być osobną sekcją „A" - jest przyciskiem przy aktualnej załodze, który
+ * otwiera arkusz z wyborem (nowy Dual albo rezygnacja). Litera „B", plakietki zasięgu
+ * zapisu („zapis lokalny · offline OK", „kończy Twoją operację"), przypisy o mechanice
+ * („zdarzenie crew_change · zapis natychmiastowy…") i baner „dlaczego dwie sekcje"
+ * zniknęły - opisywały budowę aplikacji, nie decyzję pilota (kategoria z issue #43/#72).
  *
- *  • A - zmiana Duala to zdarzenie `crew_change` w TEJ SAMEJ sesji. Dzień trwa dalej,
- *    ten telefon pisze dalej. Zapis lokalny, offline OK.
- *  • B - zmiana PIC to przejęcie PRAWA ZAPISU przez inne urządzenie (§4.4 single-writer).
- *    Nie da się jej wykonać za kogoś: ten ekran może jedynie poprowadzić do zamknięcia
- *    dnia (09), gdzie powstają odczyty końcowe - przekazanie dla następnego pilota
- *    i domknięcie łańcucha MH (§4.5). Skrót „zmień PIC tutaj" gubiłby te odczyty.
- *
- * Domena pilnuje tego podziału twardą regułą (`PIC_CHANGE_NOT_ALLOWED`) - sekcja B nie
- * jest więc umowną konwencją UI, tylko jedyną legalną drogą.
+ * Architektura pod spodem BEZ ZMIAN:
+ *  • zmiana Duala to zdarzenie `crew_change` w TEJ SAMEJ operacji - zapis lokalny;
+ *  • zmiana PIC to przejęcie PRAWA ZAPISU przez inne urządzenie (§4.4 single-writer).
+ *    Ten ekran może jedynie poprowadzić do zdania samolotu (09B), gdzie powstają
+ *    odczyty końcowe - przekazanie dla następnego pilota i ogniwo łańcucha MH (§4.5).
+ *    Domena pilnuje tego twardą regułą (`PIC_CHANGE_NOT_ALLOWED`).
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -24,7 +26,6 @@ import {
   ActionButton,
   AppText,
   Banner,
-  Caption,
   Card,
   CardPicker,
   CrewRow,
@@ -34,12 +35,12 @@ import {
   SkeletonRows,
   StepList,
   SyncChip,
-  Tag,
   type PickerOption,
 } from '../components';
+import { Sheet } from '../components/sheets/Sheet';
 import { useTheme } from '../theme';
 import { useSkeleton } from '../hooks/useSkeleton';
-import { useCurrentPilot, useEduBanner, useSessionStore } from '../store';
+import { useCurrentPilot, useSessionStore } from '../store';
 import { duration, timeUtc } from '../format';
 import { NO_DUAL, crewRows, dualChangeBlocker } from './logic/crewChange';
 import type { ReferenceAircraft, ReferencePilot } from '../../domain';
@@ -61,8 +62,8 @@ export function CrewChangeScreen({
   const [pilots, setPilots] = useState<ReferencePilot[]>([]);
   const [aircraft, setAircraft] = useState<ReferenceAircraft | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [whyDismissed, setWhyDismissed] = useEduBanner('crew-two-sections');
   /**
    * Czy lista pilotów została przeczytana (issue #33). Bez tego przez chwilę stała tu
    * lista z jedną pozycją („Bez drugiego pilota"), a kandydaci dopisywali się nad nią
@@ -89,14 +90,41 @@ export function CrewChangeScreen({
     };
   }, [queries, projection.aircraftId]);
 
-  const now = Date.now();
+  /**
+   * Sekundowy tick przy pracującym silniku (uwaga z urządzenia, 2026-09-02: „czy
+   * aktualizuje się czas block?"). Rachunek `blockSince` liczył się dobrze - otwarty
+   * cykl domyka „teraz" - ale „teraz" pochodziło z ostatniego renderu, więc licznik
+   * na ekranie STAŁ. Ten sam wzorzec, co `useTicker(engineOn)` w kokpicie; przy
+   * zgaszonym silniku block i tak nie rośnie, więc tick byłby pustym przebiegiem.
+   */
+  const engineOn = projection.engineRunning;
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!engineOn) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [engineOn]);
+
   const rows = useMemo(() => crewRows(projection, events, now), [projection, events, now]);
+
+  /**
+   * Identyfikator → kod i nazwisko z cache floty (uwaga z urządzenia, 2026-09-02:
+   * przy Dualu „wyświetla się guid zamiast nazwy użytkownika" - w produkcji piloci
+   * mają identyfikatory UUID z panelu). Surowy id zostaje wyłącznie ostatnią deską
+   * ratunku dla pilota spoza cache'u - wiersz nie może zostać pusty.
+   */
+  const codeOf = useCallback(
+    (id: string | null): string | null =>
+      id == null ? null : (pilots.find((p) => p.id === id)?.code ?? id),
+    [pilots],
+  );
   const currentDual = pilots.find((p) => p.id === projection.dualId) ?? null;
 
   /**
    * Kandydaci na Duala: aktywni piloci poza PIC i poza obecnym Dualem, plus pozycja
    * „Bez drugiego pilota" - rezygnacja jest pełnoprawnym wyborem (mockup ma ją na
-   * liście), chyba że samolot wymaga załogi 2-osobowej: wtedy blokada z powodem.
+   * liście), chyba że samolot wymaga załogi 2-osobowej: wtedy blokada z powodem
+   * przy samej pozycji.
    */
   const options: PickerOption<string>[] = useMemo(() => {
     const list: PickerOption<string>[] = pilots
@@ -124,8 +152,15 @@ export function CrewChangeScreen({
     aircraft?.type ?? 'Ten samolot',
   );
 
+  const openSheet = useCallback(() => {
+    // Każde otwarcie zaczyna bez wyboru - arkusz nie pamięta porzuconej edycji
+    // (ta sama reguła, co w arkuszach odczytów).
+    setSelected(null);
+    setSheetOpen(true);
+  }, []);
+
   const save = useCallback(async () => {
-    if (selected == null || blocker != null) return;
+    if (busy || selected == null || blocker != null) return;
     setBusy(true);
     try {
       await crewChange({
@@ -133,13 +168,14 @@ export function CrewChangeScreen({
         pilotOutId: projection.dualId,
         pilotInId: selected === NO_DUAL ? null : selected,
       });
+      setSheetOpen(false);
       navigation.goBack();
     } catch {
-      // Twarde odrzucenie inwariantu jest w `lastError` - baner niżej.
+      // Twarde odrzucenie inwariantu jest w `lastError` - baner na ekranie.
     } finally {
       setBusy(false);
     }
-  }, [blocker, crewChange, navigation, projection.dualId, selected]);
+  }, [blocker, busy, crewChange, navigation, projection.dualId, selected]);
 
   return (
     <Screen
@@ -163,84 +199,41 @@ export function CrewChangeScreen({
       }
     >
       <View style={{ padding: theme.spacing.lg, gap: theme.spacing.md }}>
-        {/* ── aktualna załoga ──────────────────────────────────────────── */}
+        {/* ── aktualna załoga + zmiana Duala jednym przyciskiem ─────────────
+            (przegląd 2026-09-02: osobna sekcja „A" powtarzała stan załogi, który
+            stoi wiersz wyżej - wybór mieszka odtąd w arkuszu pod przyciskiem). */}
         <Card title="Aktualna załoga" header="inline">
           {rows.map((row) => (
             <CrewRow
               key={row.role}
               role={row.role}
-              pilotId={row.pilotId}
+              pilotId={codeOf(row.pilotId)}
               you={row.pilotId === pilotId}
               metaTop={row.since != null ? `od ${timeUtc(row.since)}` : undefined}
               metaBottom={row.since != null ? `block: ${duration(row.blockMs)}` : undefined}
             />
           ))}
-        </Card>
-
-        {/* ── A: zmiana Duala - zdarzenie w tej samej operacji ────────────── */}
-        <Card
-          title="A · Zmiana drugiego pilota (Dual)"
-          header="inline"
-          headerRight={<Tag label="zapis lokalny · offline OK" tone="green" />}
-        >
-          <View style={{ gap: 5 }}>
-            {/* `.field-label` - mikro-etykieta z tokenu (dryf światła 2 → 1.5 celowy). */}
-            <AppText variant="micro" tone="muted">
-              Wychodzący DUAL
-            </AppText>
-            {/* Odczyt, nie kontrolka - kto wychodzi, wynika ze stanu operacji. */}
-            <View style={styles.readonly}>
-              <AppText variant="mono" tone="secondary">
-                {currentDual != null
-                  ? `${currentDual.code} · ${currentDual.name}`
-                  : 'brak drugiego pilota'}
-              </AppText>
-            </View>
-          </View>
-
-          <View style={{ gap: 7 }}>
-            <AppText variant="micro" tone="muted">
-              Nowy DUAL
-            </AppText>
-            {!loaded ? (
-              skeleton ? (
-                <SkeletonRows rows={3} height={56} radius={theme.radius.md} gap={6} />
-              ) : null
-            ) : (
-              <CardPicker options={options} value={selected} onChange={setSelected} />
-            )}
-            {/* Lista pilotów to dane z serwera - wiek musi być widoczny (§4.8). */}
-            <FreshnessNote
-              state={synced ? 'live' : 'cache'}
-              syncedAt={pilots[0] != null ? timeUtc(pilots[0].fetchedAt) : null}
-            />
-          </View>
 
           <ActionButton
-            label="ZAPISZ ZMIANĘ DUAL"
+            label="ZMIEŃ DRUGIEGO PILOTA"
             tone="green"
-            variant="solid"
+            variant="secondary"
             size="md"
             icon="crew"
-            busy={busy}
-            disabledReason={blocker}
-            onPress={save}
+            onPress={openSheet}
           />
-          <Caption text="Zdarzenie crew_change · zapis natychmiastowy, wysyłka automatyczna gdy wróci sieć" />
         </Card>
 
-        {/* ── B: przekazanie samolotu - kończy operację ───────────────────── */}
-        <Card
-          title="B · Przekazanie samolotu innemu PIC"
-          header="inline"
-          headerRight={<Tag label="kończy Twoją operację" tone="amber" />}
-        >
+        {/* ── przekazanie samolotu innemu PIC ───────────────────────────────
+            Bez litery „B" i plakietki (przegląd 2026-09-02): sekcja jest jedna,
+            a nagłówek nazywa czynność - reszta to była typografia architektury. */}
+        <Card title="Przekazanie samolotu innemu PIC" header="inline">
           <AppText variant="body" tone="secondary" style={styles.explain}>
             <AppText variant="body" tone="primary" style={styles.explain}>
               Nie wybierasz tu nowego dowódcy.
             </AppText>
-            {' Dane operacji zapisuje wyłącznie telefon aktywnego PIC (zasada jednego piszącego '}
-            {'urządzenia), więc nowy dowódca przejmuje samolot '}
+            {' Dane operacji zapisuje wyłącznie telefon aktywnego PIC, więc nowy dowódca '}
+            {'przejmuje samolot '}
             <AppText variant="body" tone="primary" style={styles.explain}>
               ze swojego telefonu.
             </AppText>
@@ -250,24 +243,26 @@ export function CrewChangeScreen({
             steps={[
               {
                 parts: [
-                  { text: 'Zamykasz dzień odczytami końcowymi', emphasis: true },
+                  { text: 'Zdajesz samolot odczytami końcowymi', emphasis: true },
                   {
-                    text: ' - paliwomierz i licznik MH. To one są przekazaniem dla kolegi; bez nich zaczyna „od zera".',
+                    text: ' - paliwomierz i licznik MH. To one są przekazaniem dla następnego dowódcy.',
                   },
                 ],
               },
               {
                 parts: [
-                  { text: 'Nowy PIC na swoim telefonie: ' },
-                  { text: 'Preflight → karta samolotu → Przejmij', emphasis: true },
-                  { text: ' i porównuje z tym, co widzi na licznikach.' },
+                  { text: 'Nowy dowódca na swoim telefonie ' },
+                  { text: 'rozpoczyna lot i przejmuje ten samolot', emphasis: true },
+                  { text: ' z listy maszyn - przekazane odczyty porównuje z licznikami.' },
                 ],
               },
               {
                 parts: [
                   {
-                    text: 'Twój dzień idzie do statystyk i wysyłki; ten telefon przestaje zapisywać dane tego samolotu.',
+                    text: 'Rozliczenie tego samolotu idzie do wysyłki, a ten telefon przestaje zapisywać jego dane. ',
                   },
+                  { text: 'Twój dzień trwa dalej', emphasis: true },
+                  { text: ' - kolejna maszyna dopisze się do listy operacji.' },
                 ],
               },
             ]}
@@ -281,29 +276,58 @@ export function CrewChangeScreen({
             icon="end-day"
             onPress={() => navigation.navigate('ReleaseAircraft')}
           />
-          <Caption text="Prowadzi do zdania samolotu (odczyty końcowe) · działa offline - dane dojdą po powrocie zasięgu" />
         </Card>
 
         {lastError != null && (
           <Banner kind="warning" tone="red" icon="warning" title="Nie zapisano" text={lastError} />
         )}
-
-        {/* ── dlaczego dwie sekcje (baner pouczający, trwały per pilot) ── */}
-        <Banner
-          kind="edu"
-          tone="blue"
-          title="Dlaczego dwie osobne sekcje?"
-          text={
-            'Zmiana Dual to zwykłe zdarzenie w Twojej operacji - zapisujesz je sam, także bez zasięgu. ' +
-            'Zmiana PIC to przekazanie prawa zapisu innemu urządzeniu, więc nie da się jej wykonać ' +
-            'za kogoś. Każdy pilot ma osobny licznik czasu blokowego. Przy samolotach z wymogiem ' +
-            'załogi 2-osobowej (np. An-2) Dual nie może pozostać pusty.'
-          }
-          collapsedLabel="Dlaczego dwie sekcje?"
-          dismissed={whyDismissed}
-          onDismiss={setWhyDismissed}
-        />
       </View>
+
+      {/* ── arkusz zmiany Duala (przegląd 2026-09-02) ─────────────────────────
+          Nowy Dual ALBO rezygnacja - jedna lista, jeden zapis. Pusty wybór blokuje
+          bez zdania (widać z listy - wąski wyjątek issue #55); pozycję „Bez drugiego
+          pilota" przy wymogu załogi 2-os. blokuje jej własny powód. */}
+      <Sheet
+        visible={sheetOpen}
+        title="Zmiana drugiego pilota"
+        confirmLabel="ZAPISZ ZMIANĘ"
+        confirmDisabled={selected == null}
+        confirmDisabledReason={selected != null ? blocker : null}
+        onConfirm={() => void save()}
+        onCancel={() => setSheetOpen(false)}
+      >
+        <View style={{ gap: 5 }}>
+          <AppText variant="micro" tone="muted">
+            Wychodzący DUAL
+          </AppText>
+          {/* Odczyt, nie kontrolka - kto wychodzi, wynika ze stanu operacji. */}
+          <View style={styles.readonly}>
+            <AppText variant="mono" tone="secondary">
+              {currentDual != null
+                ? `${currentDual.code} · ${currentDual.name}`
+                : 'brak drugiego pilota'}
+            </AppText>
+          </View>
+        </View>
+
+        <View style={{ gap: 7 }}>
+          <AppText variant="micro" tone="muted">
+            Nowy DUAL
+          </AppText>
+          {!loaded ? (
+            skeleton ? (
+              <SkeletonRows rows={3} height={56} radius={theme.radius.md} gap={6} />
+            ) : null
+          ) : (
+            <CardPicker options={options} value={selected} onChange={setSelected} />
+          )}
+          {/* Lista pilotów to dane z serwera - wiek musi być widoczny (§4.8). */}
+          <FreshnessNote
+            state={synced ? 'live' : 'cache'}
+            syncedAt={pilots[0] != null ? timeUtc(pilots[0].fetchedAt) : null}
+          />
+        </View>
+      </Sheet>
     </Screen>
   );
 }

@@ -42,10 +42,10 @@
   .status-right { display:inline-flex; align-items:center; gap:6px; }
   .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; background:var(--bg); }
 
-  .compact-bar { display:flex; align-items:center; justify-content:space-between; padding:7px 14px; border-bottom:1px solid var(--border); background:var(--surface); flex-shrink:0; height:40px; }
+  .compact-bar { display:flex; align-items:center; justify-content:space-between; padding:7px 14px; border-bottom:1px solid var(--border); background:var(--surface); flex-shrink:0; min-height:40px; }
   .compact-right { display:flex; align-items:center; gap:8px; }
-  .compact-info { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); display:flex; align-items:center; gap:6px; }
-  .compact-aircraft { color:var(--green); font-weight:700; letter-spacing:1px; }
+  .compact-info { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); display:flex; flex-direction:column; align-items:flex-start; gap:1px; }
+  .compact-aircraft { color:var(--green); font-weight:700; letter-spacing:0.5px; }
   .compact-sep { color:var(--border-strong); }
   .running-badge { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; background:var(--green-muted); border:1px solid var(--green-border); font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); }
   .running-badge .live-dot { width:6px; height:6px; border-radius:50%; background:var(--green); animation:pulse 1.5s ease-in-out infinite; }
@@ -140,8 +140,7 @@
   <div class="screen">
     <div class="compact-bar">
       <div class="compact-info">
-        <span class="compact-aircraft">SP-AXA</span>
-        <span class="compact-sep">·</span>
+        <span class="compact-aircraft">SP-AXA/2026-08-06/TMK/1</span>
         <span>EPKK · SKOKI</span>
       </div>
       <div class="compact-right">

@@ -60,16 +60,18 @@
     padding: 7px 14px;
     border-bottom: 1px solid var(--border);
     background: var(--surface);
-    flex-shrink: 0; height: 40px;
+    flex-shrink: 0; min-height: 40px;
   }
   .compact-right { display: flex; align-items: center; gap: 8px; }
   .gear-btn { display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; background: transparent; border: 1px solid var(--border); border-radius: 7px; color: var(--text-muted); cursor: pointer; flex-shrink: 0; }
   .compact-info {
     font-family: var(--font-mono); font-size: 11px; letter-spacing: 1px;
     color: var(--text-secondary);
-    display: flex; align-items: center; gap: 6px;
+    /* KOLUMNA, nie rząd (2026-09-02): sygnatura operacji nad trasą - jak tytuł
+       i podtytuł w AppBar aplikacji; w jednym rzędzie 23 znaki łamały się brzydko. */
+    display: flex; flex-direction: column; align-items: flex-start; gap: 1px;
   }
-  .compact-aircraft { color: var(--green); font-weight: 700; letter-spacing: 1px; }
+  .compact-aircraft { color: var(--green); font-weight: 700; letter-spacing: 0.5px; }
   .compact-sep { color: var(--border-strong); }
   .running-badge {
     display: inline-flex; align-items: center; gap: 5px;
@@ -312,11 +314,15 @@
 
   <div class="screen">
 
-    <!-- COMPACT APP BAR -->
+    <!-- COMPACT APP BAR. Tytułem jest SYGNATURA operacji (uwaga z urządzenia,
+         2026-09-02: pasek pokazywał surowy identyfikator maszyny - guid z panelu).
+         Sygnatura ZASTĘPUJE znak, bo się od niego zaczyna (issue #68, reguła
+         z DayCard); węższy odstęp międzyliterowy (0,5), bo 23 znaki przy 1 px
+         rozpychały pasek. Przed uruchomieniem silnika operacja nie ma numeru
+         i pasek 04A pokazuje sam znak. -->
     <div class="compact-bar">
       <div class="compact-info">
-        <span class="compact-aircraft">SP-AXA</span>
-        <span class="compact-sep">·</span>
+        <span class="compact-aircraft">SP-AXA/2026-08-06/TMK/1</span>
         <!-- Dzień skoków: JEDEN kod ICAO, nie para (issue #13). Samolot wraca tam, skąd
              wystartował, więc oba kody w rekordzie są równe - para start → lądowanie
              opisywałaby trasę, której w tym dniu nie da się polecieć. Para zostaje na

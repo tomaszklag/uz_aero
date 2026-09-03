@@ -108,14 +108,6 @@
     border-radius: 5px; padding: 2px 6px; white-space: nowrap;
   }
 
-  /* Separator */
-  .change-separator {
-    display: flex; align-items: center; gap: 10px;
-    font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
-    color: var(--text-muted);
-  }
-  .change-separator::before, .change-separator::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-
   /* Field */
   .field { display: flex; flex-direction: column; gap: 5px; }
   .field-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); }
@@ -130,43 +122,11 @@
   .field-val.green { color: var(--green); }
   .lock-icon { color: var(--text-muted); }
 
-  /* Fields row (2-column) */
-  .fields-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  /* Baner „dlaczego dwie osobne sekcje" (info-box/edu) USUNIĘTY (przegląd
+     2026-09-02) razem z podziałem na sekcje A/B, który tłumaczył. */
 
-  /* Collapsed section */
-  .section.collapsed { opacity: 0.5; }
-
-  /* Info box */
-  .info-box {
-    position: relative;
-    background: var(--blue-muted); border: 1px solid rgba(52,152,219,0.28);
-    border-radius: 14px; padding: 13px 40px 13px 14px;
-    display: flex; gap: 10px; align-items: flex-start;
-  }
-  .info-icon { flex-shrink: 0; margin-top: 1px; }
-  /* Baner pouczający (Typ C) - zamykalny, zwija się w miejscu do (?) · patrz design-notes */
-  .edu-dismiss { position:absolute; top:7px; right:7px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; color:var(--text-muted); border-radius:8px; cursor:pointer; }
-  .edu-dismiss:hover { color:var(--text-secondary); background:rgba(255,255,255,0.05); }
-  .edu-mini { display:none; align-items:center; gap:6px; align-self:flex-start; padding:7px 12px; min-height:34px; border-radius:999px; border:1px solid var(--blue-border); background:var(--blue-muted); color:var(--blue); font-family:var(--font-mono); font-size:10px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; }
-  .info-text { font-family: var(--font-body); font-size: 12px; line-height: 1.5; color: var(--text-secondary); }
-
-  /* Primary button */
-  .btn-primary {
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-    width: 100%; padding: 18px; border-radius: 16px;
-    background: var(--green); color: #0D0D0D;
-    font-family: var(--font-display); font-size: 22px; letter-spacing: 3px;
-    border: none; text-decoration: none; cursor: pointer;
-    box-shadow: 0 0 24px rgba(46,204,113,0.3);
-  }
-  .btn-primary:hover { background: var(--green-hover); box-shadow: 0 0 40px rgba(46,204,113,0.5); }
-
-  /* ===== ROZDZIAŁ: Dual (lokalny) vs przekazanie PIC (single-writer) ===== */
-  .scope-tag { display:inline-flex; align-items:center; gap:5px; font-family:var(--font-mono); font-size:8px; letter-spacing:1.2px; text-transform:uppercase; padding:3px 8px; border-radius:5px; white-space:nowrap; }
-  .scope-tag.local { color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); }
-  .scope-tag.net { color:var(--amber); background:var(--amber-muted); border:1px solid var(--amber-border); }
-  .section-head-row { display:flex; align-items:center; justify-content:space-between; gap:10px; }
-
+  /* Plakietki zasięgu zapisu (.scope-tag „zapis lokalny…"/„kończy…") i litery sekcji
+     A/B USUNIĘTE (przegląd 2026-09-02) - opisywały budowę aplikacji, nie decyzję. */
   .pilot-list { display:flex; flex-direction:column; gap:6px; }
   .pilot-opt { display:flex; align-items:center; gap:11px; background:var(--surface-raised); border:1px solid var(--border); border-radius:12px; padding:10px 13px; cursor:pointer; transition:all .15s; }
   .pilot-opt:hover { border-color:var(--border-strong); }
@@ -191,7 +151,18 @@
   .btn-secondary-green { display:flex; align-items:center; justify-content:center; gap:9px; width:100%; padding:14px; border-radius:14px; background:var(--green); color:#0D0D0D; font-family:var(--font-display); font-size:18px; letter-spacing:2.5px; text-decoration:none; cursor:pointer; box-shadow:0 0 20px rgba(46,204,113,0.25); }
   .btn-danger { display:flex; align-items:center; justify-content:center; gap:9px; width:100%; padding:14px; border-radius:14px; background:transparent; border:1px solid var(--red-border); color:var(--red); font-family:var(--font-display); font-size:17px; letter-spacing:2.5px; text-decoration:none; cursor:pointer; transition:background .15s; }
   .btn-danger:hover { background:var(--red-muted); }
-  .action-hint { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.8px; color:var(--text-muted); text-align:center; line-height:1.6; }
+  /* Przypisy `.action-hint` pod przyciskami USUNIĘTE (przegląd 2026-09-02):
+     „zdarzenie crew_change · zapis natychmiastowy…" i „działa offline…" opisywały
+     mechanikę zapisu komuś, kto chce zmienić załogę. */
+
+  /* ===== MODAL: zmiana Duala (przegląd 2026-09-02 - wybór zszedł do arkusza) ===== */
+  .modal-overlay { position:absolute; inset:0; z-index:50; background:rgba(0,0,0,0.72); display:none; flex-direction:column; justify-content:flex-end; }
+  .modal-sheet { background:var(--surface-raised); border-radius:24px 24px 0 0; padding:20px 18px 36px; display:flex; flex-direction:column; gap:13px; border-top:1px solid var(--border-strong); max-height:calc(100% - 56px); overflow-y:auto; }
+  .modal-handle { width:36px; height:4px; border-radius:2px; background:var(--border-strong); align-self:center; margin-bottom:2px; }
+  .modal-title { font-family:var(--font-display); font-size:24px; letter-spacing:2px; color:var(--text-primary); }
+  .modal-actions { display:grid; grid-template-columns:1fr 2fr; gap:8px; }
+  .modal-btn-cancel { display:flex; align-items:center; justify-content:center; padding:15px; border-radius:14px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text-secondary); font-family:var(--font-display); font-size:17px; letter-spacing:2px; text-decoration:none; cursor:pointer; }
+  .modal-btn-confirm { display:flex; align-items:center; justify-content:center; padding:15px; border-radius:14px; border:none; background:var(--green); color:#0D0D0D; font-family:var(--font-display); font-size:17px; letter-spacing:2px; text-decoration:none; cursor:pointer; box-shadow:0 0 24px rgba(46,204,113,0.3); }
 </style>
 </head>
 <body>
@@ -250,14 +221,48 @@
           <div class="crew-name active">AKO</div>
           <div class="crew-meta">od 08:00<br/><span>block: 2:22</span></div>
         </div>
+
+        <!-- ZMIANA DUALA JEST PRZYCISKIEM PRZY ZAŁODZE, wybór w ARKUSZU (przegląd
+             2026-09-02): osobna sekcja „A" powtarzała stan załogi, który stoi wiersz
+             wyżej, a plakietka „zapis lokalny · offline OK" i przypis o crew_change
+             opisywały budowę aplikacji. Baner „dlaczego dwie sekcje" zszedł razem
+             z podziałem, który tłumaczył. -->
+        <button class="btn-secondary-green" onclick="document.getElementById('dual-modal').style.display='flex'">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          ZMIEŃ DRUGIEGO PILOTA
+        </button>
       </div>
 
-      <!-- ════ A: ZMIANA DUAL - zdarzenie lokalne ════ -->
+      <!-- ════ PRZEKAZANIE SAMOLOTU - single-writer ════ -->
       <div class="section">
-        <div class="section-head-row">
-          <div class="section-label">A · Zmiana drugiego pilota (Dual)</div>
-          <span class="scope-tag local">zapis lokalny · offline OK</span>
+        <div class="section-label">Przekazanie samolotu innemu PIC</div>
+
+        <div class="handover-explain">
+          <b>Nie wybierasz tu nowego dowódcy.</b> Dane operacji zapisuje wyłącznie telefon
+          aktywnego PIC, więc nowy dowódca przejmuje samolot <b>ze swojego telefonu</b>.
         </div>
+
+        <div class="handover-steps">
+          <div class="hstep"><span class="hstep-num">1</span><span><span style="color:var(--text-primary)">Zdajesz samolot odczytami końcowymi</span> - paliwomierz i licznik MH. To one są przekazaniem dla następnego dowódcy.</span></div>
+          <div class="hstep"><span class="hstep-num">2</span><span>Nowy dowódca na swoim telefonie <span style="color:var(--text-primary)">rozpoczyna lot i przejmuje ten samolot</span> z listy maszyn - przekazane odczyty porównuje z licznikami.</span></div>
+          <div class="hstep"><span class="hstep-num">3</span><span>Rozliczenie tego samolotu idzie do wysyłki, a ten telefon przestaje zapisywać jego dane. <span style="color:var(--text-primary)">Twój dzień trwa dalej</span> - kolejna maszyna dopisze się do listy operacji.</span></div>
+        </div>
+
+        <a href="09b-zdaj-samolot.html" class="btn-danger">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          PRZEKAŻ - ZDAJ SAMOLOT
+        </a>
+      </div>
+
+    </div>
+
+    <!-- DUAL MODAL - nowy Dual albo rezygnacja, jedna lista, jeden zapis.
+         Pusty wybór blokuje bez zdania (widać z listy - wąski wyjątek issue #55);
+         pozycję „Bez drugiego pilota" przy wymogu załogi 2-os. blokuje jej powód. -->
+    <div id="dual-modal" class="modal-overlay">
+      <div class="modal-sheet">
+        <div class="modal-handle"></div>
+        <div class="modal-title">Zmiana drugiego pilota</div>
 
         <div class="field">
           <div class="field-label">Wychodzący DUAL</div>
@@ -289,60 +294,11 @@
           <div class="cache-note" style="margin-top:7px;">Lista pilotów · ostatnie pobrane 21 CZE 17:30</div>
         </div>
 
-        <a href="04-cockpit-ground.html" class="btn-secondary-green">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          ZAPISZ ZMIANĘ DUAL
-        </a>
-        <div class="action-hint">Zdarzenie <span style="color:var(--text-secondary)">crew_change</span> · zapis natychmiastowy, wysyłka automatyczna gdy wróci sieć</div>
+        <div class="modal-actions">
+          <button onclick="document.getElementById('dual-modal').style.display='none'" class="modal-btn-cancel">Anuluj</button>
+          <button onclick="document.getElementById('dual-modal').style.display='none'" class="modal-btn-confirm">Zapisz zmianę</button>
+        </div>
       </div>
-
-      <!-- ════ B: PRZEKAZANIE SAMOLOTU - single-writer ════ -->
-      <div class="section">
-        <div class="section-head-row">
-          <div class="section-label">B · Przekazanie samolotu innemu PIC</div>
-          <span class="scope-tag net">kończy Twoją operację</span>
-        </div>
-
-        <div class="handover-explain">
-          <b>Nie wybierasz tu nowego dowódcy.</b> Dane operacji zapisuje wyłącznie telefon aktywnego PIC
-          (zasada jednego piszącego urządzenia), więc nowy dowódca przejmuje samolot <b>ze swojego telefonu</b>.
-        </div>
-
-        <div class="handover-steps">
-          <div class="hstep"><span class="hstep-num">1</span><span><span style="color:var(--text-primary)">Zdajesz samolot odczytami końcowymi</span> - paliwomierz i licznik MH. To one są przekazaniem dla kolegi; bez nich zaczyna „od zera".</span></div>
-          <div class="hstep"><span class="hstep-num">2</span><span>Nowy PIC na swoim telefonie: <span style="color:var(--text-primary)">Przejęcie → karta SP-AXA → Przejmij</span> i porównuje z tym, co widzi na licznikach.</span></div>
-          <div class="hstep"><span class="hstep-num">3</span><span>Rozliczenie tego samolotu idzie do wysyłki, a ten telefon przestaje zapisywać jego dane. <span style="color:var(--text-primary)">Twój dzień trwa dalej</span> - jeśli weźmiesz inną maszynę, dopisze się do listy operacji.</span></div>
-        </div>
-
-        <a href="09b-zdaj-samolot.html" class="btn-danger">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          PRZEKAŻ - ZDAJ SAMOLOT
-        </a>
-        <div class="action-hint">Prowadzi do zdania samolotu (odczyty końcowe) · działa offline - dane dojdą po powrocie zasięgu</div>
-      </div>
-
-      <!-- Info box (Typ C - pouczający, zamykalny) -->
-      <div class="info-box" id="eduWhy">
-        <div class="info-icon">
-          <!-- Pytajnik, nie wykrzyknik (uwaga z urządzenia, 2026-08-27): pouczający PYTA;
-               ta sama ikona co w zwiniętym chipie - reguła DS dla banerów typu C. -->
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        </div>
-        <div class="info-text">
-          <strong style="color: var(--blue);">Dlaczego dwie osobne sekcje?</strong> Zmiana Dual to zwykłe zdarzenie w Twojej operacji -
-          zapisujesz je sam, także bez zasięgu. Zmiana PIC to <em>przekazanie prawa zapisu</em> innemu urządzeniu, więc nie da się
-          jej wykonać za kogoś. Każdy pilot ma osobny licznik czasu blokowego. Przy samolotach z wymogiem załogi 2-osobowej
-          (np. An-2) Dual nie może pozostać pusty.
-        </div>
-        <button class="edu-dismiss" onclick="eduCollapse('eduWhy')" title="Rozumiem - schowaj wyjaśnienie">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-      </div>
-      <button class="edu-mini" id="eduWhy-mini" onclick="eduExpand('eduWhy')" title="Pokaż wyjaśnienie">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        Dlaczego dwie sekcje?
-      </button>
-
     </div>
   </div>
 </main>
@@ -360,14 +316,6 @@
   <span>·</span>
   <a href="01-moj-dzien.html">01 Mój dzień</a>
 </nav>
-
-<script>
-  // Banery pouczające (Typ C): zamknięcie chowa baner i pokazuje mini-(?) w miejscu.
-  // W aplikacji stan „schowany" zapisujemy NA STAŁE per pilot (localStorage) - baner
-  // nie wraca rozwinięty co operację. Status i ostrzeżenia warunkowe NIE są zamykane.
-  function eduCollapse(id){ document.getElementById(id).style.display='none'; document.getElementById(id+'-mini').style.display='inline-flex'; /* localStorage.setItem('seen:'+id,'1') */ }
-  function eduExpand(id){ document.getElementById(id).style.display=''; document.getElementById(id+'-mini').style.display='none'; }
-</script>
 
 </body>
 </html>

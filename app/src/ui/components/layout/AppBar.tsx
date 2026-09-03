@@ -16,7 +16,13 @@ import { AppText } from '../foundation/AppText';
 import { Icon } from '../foundation/Icon';
 
 export interface AppBarProps {
-  /** Znak samolotu (np. „SP-AXA"). */
+  /**
+   * Tytuł paska: SYGNATURA operacji („SP-AXA/2026-09-01/AKO/1"), a gdy operacja
+   * numeru jeszcze nie ma (przed uruchomieniem silnika) - sam znak samolotu.
+   * Sygnatura ZASTĘPUJE znak, bo się od niego zaczyna (issue #68, reguła z DayCard);
+   * surowego identyfikatora maszyny tu nie podajemy nigdy (uwaga z urządzenia,
+   * 2026-09-02: nagłówek kokpitu pokazywał guid z panelu).
+   */
   aircraft?: string | null;
   /** Druga linia: trasa i operacja (np. „EPKK → EPWA · SKOKI"). */
   subtitle?: string | null;
@@ -54,7 +60,15 @@ export function AppBar({
       ]}
     >
       <View style={styles.left}>
-        <AppText variant="mono" tone="green" style={styles.aircraft}>
+        {/* Sygnatura dostaje węższy odstęp międzyliterowy niż goły znak (reguła
+            z DayCard): 23 znaki przy ls 1,5 rozpychały pasek i spychały chipy.
+            Bez `numberOfLines` - identyfikator ucięty wielokropkiem przestaje
+            identyfikować, więc w skrajnym wypadku ma się zawinąć, nie zniknąć. */}
+        <AppText
+          variant="mono"
+          tone="green"
+          style={[styles.aircraft, (aircraft?.length ?? 0) > 8 && styles.signature]}
+        >
           {aircraft ?? '-'}
         </AppText>
         {subtitle != null && (
@@ -101,6 +115,7 @@ const styles = StyleSheet.create({
   },
   left: { flexShrink: 1, gap: 2 },
   aircraft: { letterSpacing: 1.5 },
+  signature: { fontSize: 12, lineHeight: 16, letterSpacing: 0.5 },
   subtitle: { fontSize: 11, lineHeight: 15, letterSpacing: 1 },
   right: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 0 },
   settings: { width: 26, height: 26, alignItems: 'center', justifyContent: 'center' },

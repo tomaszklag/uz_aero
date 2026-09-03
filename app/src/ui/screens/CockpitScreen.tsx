@@ -62,6 +62,7 @@ import { holdsAircraft } from '../navigation/resumeTarget';
 import { useSessionStore } from '../store';
 import { useGps, useSensors } from '../bootstrap/servicesContext';
 import { useAircraft } from '../hooks/useAircraft';
+import { useOperationSignatures } from '../hooks/useOperationSignatures';
 import { useFlightDetection } from '../hooks/useFlightDetection';
 import { useSensorTrace } from '../hooks/useSensorTrace';
 import { duration, hhmm, litres, oilLitres, parseLitres, thousands, timeUtc } from '../format';
@@ -153,6 +154,20 @@ export function CockpitScreen({
   // Konfiguracja i norma zużycia z cache'u referencyjnego - do paska paliwa (mockup 04).
   // Dane lokalne, więc kokpit nigdy nie czeka na sieć.
   const aircraft = useAircraft(projection.aircraftId);
+
+  /**
+   * TYTUŁEM PASKA JEST SYGNATURA OPERACJI (uwaga z urządzenia, 2026-09-02: nagłówek
+   * pokazywał surowy identyfikator maszyny - guid nadany w panelu). Sygnatura
+   * ZASTĘPUJE znak, bo się od niego zaczyna (reguła z DayCard, issue #68); przed
+   * uruchomieniem silnika operacja nie ma jeszcze numeru (issue #75) i tytułem jest
+   * sam znak z cache floty. Surowy id wchodzi wyłącznie jako ostatnia deska ratunku -
+   * maszyna spoza cache'u nie ma znaku, a pasek nie może zostać pusty.
+   */
+  const signatureOf = useOperationSignatures();
+  const barTitle =
+    (projection.sessionUuid != null ? signatureOf(projection.sessionUuid) : null) ??
+    aircraft?.reg ??
+    projection.aircraftId;
 
   const [busy, setBusy] = useState(false);
   const [dropOpen, setDropOpen] = useState(false);
@@ -446,7 +461,7 @@ export function CockpitScreen({
     return (
       <Screen padded={false}>
         <AppBar
-          aircraft={projection.aircraftId}
+          aircraft={barTitle}
           subtitle={[projection.departureIcao, projection.arrivalIcao].filter(Boolean).join(' → ')}
           compact
           right={
@@ -785,7 +800,7 @@ export function CockpitScreen({
   return (
     <Screen scroll padded={false}>
       <AppBar
-        aircraft={projection.aircraftId}
+        aircraft={barTitle}
         subtitle={[
           routeLabel(projection.operation, projection.departureIcao, projection.arrivalIcao),
           projection.operation == null ? null : operationTag(projection.operation),

@@ -451,7 +451,13 @@ wpisać w zgłoszenie ani znaleźć wzrokiem na liście.
 - **PANEL NIGDY NIE SKLEJA SYGNATURY U SIEBIE** - dostaje ją gotową w DTO. Ta sama
   reguła, przez którą nazwę karty arkusza liczy wyłącznie serwer
 - gdzie stoi: kafelek operacji (01, 12), nagłówek ekranu 10, potwierdzenie usunięcia
-  wpisu (10L), grid i nagłówek DZIENNIKA w panelu, potwierdzenie unieważnienia w panelu
+  wpisu (10L), grid i nagłówek DZIENNIKA w panelu, potwierdzenie unieważnienia w panelu,
+  **pasek górny KOKPITU** (uwaga z urządzenia, 2026-09-02: pasek pokazywał surowy
+  identyfikator maszyny - guid z panelu; sygnatura zastępuje znak, bo się od niego
+  zaczyna). Przed uruchomieniem silnika operacja nie ma numeru - pasek 04A pokazuje
+  sam ZNAK z cache floty; 04B (cudza maszyna) zostaje przy znaku, bo cudzej sygnatury
+  nie da się policzyć offline (numeruje dobę TAMTEGO pilota). Surowego id nie pisze
+  żaden nagłówek
 - **na ekranie 10 sygnatura JEST tytułem nagłówka I STOI SAMA** (przegląd 2026-09-02,
   w dwóch turach): wiersz „OPERACJA" nad nią powtarzał kategorię, którą sygnatura już
   niesie, i kosztował linię; podtytuł z zadaniem („SKOKI") odpadł drugą uwagą z tego
@@ -1689,6 +1695,33 @@ Uwagi z urządzenia do kroku liczników (NOWY LOT · 3/3):
   bliźniacze pola już raz się rozjechały i nikt tego nie widział. Hierarchia
   z issue #58 zostaje: pole arkusza (22) > kontrolka formularza (mono 16).
   Mockupy 02A/02B/02C/02I za tym (kursor 24, jednostka 14)
+
+## Zmiana załogi (07) po przeglądzie 2026-09-02
+Sześć uwag z urządzenia; wspólny mianownik ten sam, co na 02A - ekran mówi decyzją,
+nie architekturą:
+- **zmiana Duala jest PRZYCISKIEM przy „Aktualnej załodze", wybór w ARKUSZU** (nowy
+  Dual albo „Bez drugiego pilota", jeden zapis). Osobna sekcja „A" powtarzała stan
+  załogi stojący wiersz wyżej. Pusty wybór blokuje bez zdania (widać z listy - wąski
+  wyjątek issue #55); rezygnację przy wymogu załogi 2-os. blokuje powód przy samej
+  pozycji listy
+- **wiersze załogi piszą KOD pilota z cache floty, nie surowy identyfikator** („przy
+  Dualu wyświetla się guid zamiast nazwy użytkownika" - w produkcji piloci mają
+  identyfikatory UUID z panelu; ta sama klasa błędu, co guid w pasku kokpitu).
+  Surowy id zostaje ostatnią deską ratunku dla pilota spoza cache'u
+- **licznik „block" TYKA przy pracującym silniku** (pytanie z urządzenia: „czy
+  aktualizuje się czas block?"). Rachunek `blockSince` był dobry (otwarty cykl domyka
+  „teraz"), ale „teraz" pochodziło z renderu - licznik na ekranie stał. Sekundowy
+  tick jak w kokpicie, tylko przy `engineRunning`
+- **litery sekcji „A"/„B", plakietki zasięgu zapisu** („zapis lokalny · offline OK",
+  „kończy Twoją operację") **i przypisy pod przyciskami** („zdarzenie crew_change ·
+  zapis natychmiastowy…", „działa offline…") **USUNIĘTE** - opisywały budowę
+  aplikacji (kategoria z issue #43/#72). Baner „Dlaczego dwie osobne sekcje" zszedł
+  razem z podziałem, który tłumaczył
+- **sekcja przekazania PIC zredagowana**: bez „(zasada jednego piszącego urządzenia)"
+  i „bez nich zaczyna od zera"; krok 2 mówi słownikiem flow („Nowy dowódca na swoim
+  telefonie rozpoczyna lot i przejmuje ten samolot z listy maszyn - przekazane
+  odczyty porównuje z licznikami"). Architektura pod spodem bez zmian: PIC zmienia
+  się wyłącznie przez zdanie + przejęcie (`PIC_CHANGE_NOT_ALLOWED`)
 
 ## Usunięcie CAŁEGO wpisu = `session_void` (uwaga z urządzenia, 2026-08-30)
 „Daj możliwość usunięcia całego lotu. Ta operacja powinna być poprzedzona jeszcze
