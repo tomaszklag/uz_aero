@@ -2394,6 +2394,74 @@ nie miały normy w ogóle: ekran twierdził, że ΔMH RÓWNA SIĘ czasowi blokow
 - `null` znaczy „nie ma czego pokazać" i ekran wtedy MILCZY: brak przeliczników MH nie
   unieważnia normy paliwa i odwrotnie (inne wejście, inny próg publikacji)
 
+## Zgłaszanie błędów z aplikacji (issue #87, 2026-09-04) - NA CZAS TESTÓW
+Zgłoszenie: „na każdym ekranie i w każdym popup dodaj w prawym górnym rogu przycisk
+do zgłoszenia buga […] ten kontekst okna powinien być również dołączony do buga.
+Im więcej informacji tym lepiej." Kanał zwrotny na czas testów z pilotami; makieta
+decyzji: **`design/ZGLOSZENIA.html`**.
+- **PRZYCISK MIESZKA W RAMACH, NIE W EKRANACH** - `ScreenHeader`, `AppBar`
+  i `SheetSurface`. Ekranów jest kilkanaście, arkuszy dwadzieścia, więc nowy ekran
+  dostaje go w chwili powstania, bez ani jednej linijki u siebie (ta sama zasada, przez
+  którą sufit wysokości arkusza siedzi w `SheetSurface`). Stoi na SAMYM SKRAJU - za
+  zębatką (01), za `ThemeToggle` (kokpit), w rzędzie uchwytu arkusza: przez czas testów
+  to jedyny element obecny wszędzie, więc ma jeden adres pod kciukiem. **Cichy**
+  (`textMuted`, jak zębatka): amber przy każdym nagłówku uczyłby oko pomijać róg ekranu
+  (reguła SyncChipa z issue #12). Kolor niesie dopiero arkusz - bursztynowy, bo
+  zgłoszenie niczego nie niszczy
+- **NIE MA GO NA LOGOWANIU I PIN-ie**: zgłoszenie jedzie z tożsamością pilota, a przed
+  odblokowaniem jej nie ma. To świadoma dziura - „nie mogę się zalogować" zgłasza się
+  telefonem
+- **ARKUSZ OTWIERA SIĘ TAM, GDZIE STOI PRZYCISK** (`BugButton` trzyma własny
+  egzemplarz `BugReportSheet`). `Modal` na Androidzie jest osobnym oknem, a okno
+  otwarte z korzenia nie ma gwarancji, że stanie NAD oknem arkusza, z którego je
+  wywołano. Stąd też budowa arkusza wprost na `SheetSurface`, nie na `Sheet`: przez
+  `Sheet` domknąłby się CYKL IMPORTÓW (`Sheet` → `BugButton` → `BugReportSheet` →
+  `Sheet`), a cykl w Metro objawia się dopiero w locie. Rama dostała slot
+  `topRight` - przycisk podaje jej wołający, nigdy ona jego
+- **OFFLINE-FIRST, bez wyjątku**: zapis idzie do lokalnej tabeli (`bug_reports`,
+  SQLite 8), wysyłkę robi pętla okazji na SAMYM KOŃCU przebiegu - jak ślad
+  kalibracyjny (`BugReportSync`, `POST /me/bug-reports`, idempotencja po uuid,
+  potwierdzone znika z telefonu). Pilot zauważa błąd tam, gdzie pracuje, czyli często
+  bez zasięgu; formularz wymagający sieci nie pojechałby w teren, a tam odbywają się
+  testy
+- **KONTEKST ZBIERA SIĘ BEZ PYTANIA** (`bugContext.ts`, moduł czysty z testami):
+  trasa nawigacji + tytuł arkusza, sygnatura i uuid operacji, samolot, zadanie, stan
+  silnika i liczba lotów (z LOKALNEGO rejestru, więc też offline), pilot, wersja
+  aplikacji, system, model telefonu, motyw, wersja schematu bazy, stan łączności
+  z kolejką i stemplami, czas zgłoszenia i strefa telefonu. **`context` i wiersze
+  pokazane pilotowi powstają z JEDNEGO wywołania** - napis „Dołączamy automatycznie"
+  jest obietnicą, a lista pokazująca co innego, niż telefon wyśle, byłaby w narzędziu
+  do zgłaszania błędów gorsza niż brak listy
+- **ZRZUTU EKRANU NIE MA I NIE BĘDZIE**: wymaga modułu natywnego, a projekt ich unika
+  (ta sama reguła, przez którą mapa śladu ma własny renderer). Zamiast obrazka jedzie
+  STAN - z niego da się odtworzyć ekran, z obrazka nie da się odtworzyć danych
+- **WAGA JEST OPCJONALNA** (blokuje / utrudnia / drobiazg, bez wartości podstawionej):
+  zgłoszenie ma kosztować jedno zdanie, a nie decyzję. Pytanie brzmi „jak bardzo to
+  przeszkadza W PRACY", nie „jak trudne do naprawienia". Pusty opis blokuje przycisk
+  BEZ zdania (issue #55 - widać z kontrolki nad nim)
+- **POTWIERDZENIE MÓWI „ZAPISANE", NIE „WYSŁANE"** - drugi stan tego samego arkusza.
+  W chwili tapnięcia telefon nie wie, czy paczka dojdzie; zniknięcie arkusza bez słowa
+  wygląda tak samo przy sukcesie i przy awarii (reguła „każda akcja zostawia ślad")
+- **PANEL: moduł „Zgłoszenia"** (`#/zgloszenia`, czwarta zakładka) - lista z licznikami
+  wszystkich statusów i szuflada z pełnym opisem, kontekstem i zmianą statusu.
+  Cztery statusy: **nowe → w toku → rozwiązane / odrzucone**; widok domyślny to
+  „do zrobienia", bo archiwum przykryłoby robotę. Odczyt na `panel.access`, zmiana
+  statusu na NOWEJ zdolności `bugs.triage` (decyzja o CUDZYM zgłoszeniu, ślad
+  w audycie `bug.status`). Odrzucenie WYMAGA komentarza; treści zgłoszenia nie
+  zmienia nikt, kasowania nie ma - odrzucenie z powodem niesie więcej niż pusty wiersz
+- **KONTEKST WYPISUJE SIĘ CAŁY**, także pola, o których panel nie wie (`bugContextRows`
+  nazywa po polsku znane, resztę pokazuje pod surowym kluczem). Serwer nie waliduje
+  kształtu `context` i to jest decyzja: aplikacja dokłada tam nowe pola co tydzień
+  testów, a schemat po tamtej stronie znaczyłby wdrożenie serwera przy każdej takiej
+  zmianie - i odbicie `400` dokładnie wtedy, gdy zgłoszenie niesie najwięcej nowego
+- **JAK TO ZDJĄĆ PO TESTACH**: `BUG_REPORTER_ENABLED = false`
+  (`app/src/ui/components/bug/bugReporter.ts`) gasi przycisk we wszystkich trzech
+  ramach naraz. Usunięcie w całości: katalog `components/bug/`, `bugReportPort.ts`,
+  `bugReportSync.ts`, migracja SQLite 8, cztery wywołania w ramach, moduł
+  `admin/src/screens/bugs/` z arkuszem `styles/components/bugs.css` i zakładką,
+  po stronie serwera migracja 6 z trasami. Narzędzie fazy testów ma dać się usunąć
+  decyzją, a nie archeologią
+
 ## Pilot i samolot - UX
 - Pierwsze logowanie: login + hasło na `00-login.html` (konta zakłada administrator w bazie, BEZ samodzielnej rejestracji i BEZ Google OAuth - decyzja odwrócona 2026-07-22; wymaga sieci); codzienny powrót = odblokowanie PIN-em (działa offline)
 - **Rozpoczęcie lotu ma trwać kilka sekund** - trzy kroki (samolot+Dual → zadanie → liczniki) i „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej
