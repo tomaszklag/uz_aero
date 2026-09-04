@@ -14,7 +14,7 @@
     --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
     --green: #2ECC71; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
     --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28);
-    --red: #E74C3C; --red-muted: rgba(231,76,60,0.12);
+    --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28);
     --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -108,6 +108,14 @@
   .field-val { font-size: 15px; font-weight: 500; color: var(--text-muted); flex: 1; }
   .field-icon { color: var(--text-muted); flex-shrink: 0; }
 
+  .btn-google {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+    width: 100%; padding: 16px; border-radius: 14px;
+    background: var(--surface-raised); border: 1px solid var(--border-strong);
+    color: var(--text-primary); font-size: 15.5px; font-weight: 600;
+  }
+  .g-mark { width: 20px; height: 20px; flex-shrink: 0; }
+
   .btn-login {
     display: flex; align-items: center; justify-content: center; gap: 10px;
     width: 100%; padding: 16px; border-radius: 14px;
@@ -144,6 +152,7 @@
   .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
   .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
   .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .vp-badge.red { color:var(--red); background:var(--red-muted); border-color:var(--red-border); }
   .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
   .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
   .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
@@ -198,27 +207,25 @@
         </div>
       </div>
 
-      <!-- FORM (disabled) -->
+      <!--
+        PRZYCISK GOOGLE, WYGASZONY (nie: brak przycisku).
+
+        Wyjątek od zasady „wyszarzony przycisk jest zakazany" (10B) jest tu pozorny:
+        tamta reguła mówi o akcji, której REGUŁY nie dopuszczą - a ta jest dozwolona
+        i zadziała, tylko nie teraz. Baner nad nim niesie powód, więc pilot widzi
+        drogę, a nie ścianę. Znak „G" w oryginalnych barwach - jedyny wyjątek od
+        „tylko zmienne CSS" (znak towarowy, nie decyzja o kolorystyce).
+      -->
       <div class="form-card is-disabled">
-
-        <div class="field">
-          <div class="field-label">Login</div>
-          <div class="field-input">
-            <svg class="field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            <span class="field-val">nazwa użytkownika</span>
-          </div>
-        </div>
-
-        <div class="field">
-          <div class="field-label">Hasło</div>
-          <div class="field-input">
-            <svg class="field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <span class="field-val">••••••••</span>
-          </div>
-        </div>
-
-        <span class="btn-login">ZALOGUJ SIĘ</span>
-
+        <span class="btn-google">
+          <svg class="g-mark" viewBox="0 0 48 48" aria-hidden="true">
+            <path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h11.8c-.5 2.7-2 5-4.4 6.6v5.5h7.1c4.1-3.8 6.6-9.4 6.6-16.1z"/>
+            <path fill="#34A853" d="M24 46c5.9 0 10.9-2 14.5-5.4l-7.1-5.5c-2 1.3-4.5 2.1-7.4 2.1-5.7 0-10.5-3.8-12.2-9H4.5v5.7C8.1 41.1 15.5 46 24 46z"/>
+            <path fill="#FBBC05" d="M11.8 28.2c-.4-1.3-.7-2.7-.7-4.2s.2-2.9.7-4.2v-5.7H4.5C3 17.1 2.1 20.4 2.1 24s.9 6.9 2.4 9.9l7.3-5.7z"/>
+            <path fill="#EA4335" d="M24 10.8c3.2 0 6.1 1.1 8.4 3.3l6.3-6.3C34.9 4.2 29.9 2 24 2 15.5 2 8.1 6.9 4.5 14.1l7.3 5.7c1.7-5.2 6.5-9 12.2-9z"/>
+          </svg>
+          Kontynuuj z Google
+        </span>
       </div>
 
       <!-- RETRY -->
@@ -248,7 +255,7 @@
   <a class="vp-item" href="00a-login-full.html">
     <span class="vp-badge">00A</span>
     <span class="vp-body">
-      <span class="vp-name">Pełny login</span>
+      <span class="vp-name">Logowanie Google</span>
       <span class="vp-when">Brak profilu na telefonie (nowy / cudzy telefon), „Zaloguj jako inny pilot" albo „Nie pamiętam PIN". Wymaga internetu.</span>
     </span>
   </a>
@@ -256,9 +263,23 @@
     <span class="vp-badge amber">00B</span>
     <span class="vp-body">
       <span class="vp-name">Offline bez profilu</span>
-      <span class="vp-when">Jak 00A, ale bez sieci - logowanie niemożliwe (twarda granica, jedyny wyjątek od offline-first). Instrukcja zamiast martwego formularza.</span>
+      <span class="vp-when">Jak 00A, ale bez sieci - logowanie niemożliwe (twarda granica, jedyny wyjątek od offline-first). Instrukcja zamiast martwego przycisku.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="00c-oczekiwanie.html">
+    <span class="vp-badge amber">00C</span>
+    <span class="vp-body">
+      <span class="vp-name">Czeka na zatwierdzenie</span>
+      <span class="vp-when">Konto Google zweryfikowane, ale administrator jeszcze nie zatwierdził zgłoszenia.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="00d-odrzucone.html">
+    <span class="vp-badge red">00D</span>
+    <span class="vp-body">
+      <span class="vp-name">Zgłoszenie odrzucone</span>
+      <span class="vp-when">Administrator odrzucił zgłoszenie - z powodem widocznym na ekranie.</span>
+    </span>
   </a>
 </aside>
 
@@ -266,8 +287,10 @@
   <a href="index.html">↩ Index</a>
   <span>·</span>
   <a href="00-login.html">← 00 PIN</a>
-  <a href="00a-login-full.html">← 00A Pełny login</a>
+  <a href="00a-login-full.html">← 00A Google</a>
   <a href="00b-login-offline.html" class="active">00B Offline</a>
+  <a href="00c-oczekiwanie.html">00C Czeka →</a>
+  <a href="00d-odrzucone.html">00D Odrzucone →</a>
 </nav>
 
 </body>
