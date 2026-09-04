@@ -309,6 +309,21 @@ akcji. Arkusz bez sufitu dobijał do samej góry telefonu i czytał się jak now
   urządzenia, a psuła się już czterokrotnie
 - w mockupach ta sama reguła to `max-height: calc(100% - 56px)` + `overflow-y:auto`
   na `.modal-sheet`
+- **KLAWIATURA ARKUSZA NIE JEST KLAWIATURĄ EKRANU** (uwaga z urządzenia, 2026-09-04:
+  „czasem jak mam na manualnym locie przejście na ekran z przebiegiem operacji, to tak
+  jakby dwa razy muszę kliknąć DALEJ"). Zdarzenia klawiatury są w RN GLOBALNE, a arkusz
+  żyje we własnym oknie - więc `Screen` pod spodem kurczył się o wysokość klawiatury,
+  której u siebie nie ma, i dociągał listę (`useKeyboardAwareScroll`). Rachunek płacił
+  się przy ZAMYKANIU: `keyboardDidHide` pada na Androidzie dopiero po animacji chowania
+  (~300 ms), więc ekran stał jeszcze skrócony, pilot tapał „DALEJ" tam, gdzie go widział,
+  layout w tej samej chwili wracał na miejsce - i tapnięcie lądowało w pustce. Odtąd
+  `SheetSurface` zgłasza obecność na czas życia OKNA (`hooks/sheetPresence.ts` - LICZNIK,
+  bo zamykany arkusz i otwierany następny nachodzą na siebie), a `Screen` czyta
+  `useOwnKeyboardHeight`: pożyczoną klawiaturę oddaje dopiero, gdy naprawdę zniknie
+  (reguła `keyboardBorrowedBySheet` w `keyboardGeometry.ts`, z testem sekwencji).
+  Objaw widać było najwyraźniej na kroku 2 wpisu ręcznego, bo tam arkusz wchodzi
+  z klawiaturą sam, a „DALEJ" stoi tuż pod ostatnią kartą - ale mechanizm dotyczył
+  KAŻDEGO ekranu z arkuszem i dlatego poprawka siedzi w ramie, nie w ekranie
 
 ### Nawigacja i warianty mockupów (obowiązuje każdy nowy/zmieniany ekran)
 - Każdy plik: nav-strip z linkami do sąsiadów + karta w `index.html` (warianty literowe → sekcja "Warianty i stany")

@@ -60,6 +60,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '../../theme';
 import { sheetBottomPad, sheetMaxHeight } from '../../hooks/keyboardGeometry';
+import { registerSheet } from '../../hooks/sheetPresence';
 
 /**
  * Czas wysunięcia panelu. Dobrany pod animację klawiatury Androida (~250 ms): dwie
@@ -183,6 +184,19 @@ export function SheetSurface({
     // dopisanie zapętliłoby zamykanie na samym sobie.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, enter]);
+
+  /*
+   * EKRAN POD SPODEM NIE MA REAGOWAĆ NA KLAWIATURĘ TEGO ARKUSZA (zgłoszenie
+   * z urządzenia, 2026-09-04). Zgłaszamy się na czas życia OKNA, nie na czas
+   * `visible`: przy zamykaniu okno stoi jeszcze przez animację wyjazdu, a klawiatura
+   * schodzi dłużej niż ono - gdyby rejestracja gasła wcześniej, ekran odzyskałby
+   * cudzą klawiaturę na te kilkaset milisekund i przycisk pod arkuszem podskoczyłby
+   * dokładnie w chwili, w której pilot w niego celuje. Reszta: `sheetPresence.ts`.
+   */
+  useEffect(() => {
+    if (!mounted) return;
+    return registerSheet();
+  }, [mounted]);
 
   const maxHeight = sheetMaxHeight(windowHeight, keyboardHeight, insets.top);
   const bottomPad = sheetBottomPad(

@@ -142,3 +142,34 @@ export function scrollDeltaForInput(
 ): number {
   return Math.max(0, inputBottom + clearance - viewportBottom);
 }
+
+/**
+ * Czy wysunięta klawiatura należy do ARKUSZA stojącego nad ekranem (zgłoszenie
+ * z urządzenia, 2026-09-04: „czasem jak mam na manualnym locie przejście na ekran
+ * z przebiegiem operacji, to tak jakby dwa razy muszę kliknąć DALEJ").
+ *
+ * Zdarzenia klawiatury w RN są GLOBALNE dla aplikacji, a arkusz żyje we własnym oknie
+ * (`Modal`). Ekran pod spodem dostawał więc `keyboardDidShow` od pola, którego wcale
+ * nie ma: kurczył się o wysokość klawiatury i dociągał listę (`useKeyboardAwareScroll`),
+ * choć pilot patrzył na arkusz. Rachunek płacił się przy ZAMKNIĘCIU: `keyboardDidHide`
+ * pada na Androidzie dopiero po animacji chowania (~300 ms), więc przez ten czas
+ * ekran stał jeszcze skrócony - pilot tapał „DALEJ" tam, gdzie go widział, layout
+ * w międzyczasie wracał na miejsce, a tapnięcie lądowało w pustce. Drugie działało.
+ *
+ * Stan jest LEPKI: pożyczka gaśnie dopiero, gdy klawiatura naprawdę zniknie (`raw` = 0),
+ * a nie w chwili odmontowania arkusza - inaczej ekran odzyskiwałby cudzą klawiaturę na
+ * te kilkaset milisekund i skok wracałby tylnymi drzwiami.
+ *
+ * @param borrowed czy klawiatura była pożyczona arkuszowi przy poprzednim zdarzeniu
+ * @param rawHeight wysokość ze zdarzeń klawiatury - wspólna dla całej aplikacji
+ * @param sheetOpen czy nad ekranem stoi choć jeden arkusz (`sheetPresence`)
+ */
+export function keyboardBorrowedBySheet(
+  borrowed: boolean,
+  rawHeight: number,
+  sheetOpen: boolean,
+): boolean {
+  if (sheetOpen) return rawHeight > 0;
+  // Arkusz zniknął, ale klawiatura jeszcze schodzi - to nadal nie jest klawiatura ekranu.
+  return borrowed && rawHeight > 0;
+}
