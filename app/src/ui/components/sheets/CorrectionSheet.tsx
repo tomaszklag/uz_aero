@@ -32,6 +32,7 @@ import { HistoryLink } from '../data/HistoryLink';
 import { IconAction } from '../data/IconAction';
 import { ReasonField } from '../input/ReasonField';
 import { TimeStepper } from '../input/TimeStepper';
+import { BugButton } from '../bug/BugButton';
 import { SheetSurface } from './SheetSurface';
 
 export interface CorrectionRef {
@@ -110,6 +111,7 @@ export function CorrectionSheet({
     <SheetSurface
       visible={visible}
       onCancel={onCancel}
+      topRight={<BugButton sheet={'KOREKTA ZDARZENIA'} />}
       gap={13}
       paddingHorizontal={theme.spacing.lg + 2}
       paddingTop={theme.spacing.lg + 2}

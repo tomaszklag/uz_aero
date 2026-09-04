@@ -39,6 +39,10 @@ class TraceServer implements ServerPort {
     return { accepted: entries.length };
   }
 
+  pushBugReports = async (): Promise<never> => {
+    throw new Error('ta atrapa nie obsługuje zgłoszeń błędów');
+  };
+
   getSessionTrack = async (): Promise<never> => {
     throw new Error('ta atrapa nie obsługuje śladu operacji');
   };

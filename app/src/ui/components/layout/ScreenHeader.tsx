@@ -23,6 +23,7 @@ import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
 import { Icon } from '../foundation/Icon';
+import { BugButton } from '../bug/BugButton';
 import { Tag } from '../status/Tag';
 
 export interface ScreenHeaderProps {
@@ -119,10 +120,16 @@ export function ScreenHeader({
           )}
         </View>
 
-        <View style={[styles.right, styles.sideSlot]}>
-          {step != null && <Tag label={step} size="md" />}
-          {right}
-          {settingsButton}
+        {/* Przycisk zgłoszenia stoi POZA kolumną prawej strony (issue #87): kolumna
+            układa plakietkę kroku nad pillem łączności, a on ma być na SKRAJU,
+            w jednym miejscu na każdym ekranie i w każdym arkuszu. */}
+        <View style={[styles.rightWrap, styles.sideSlot]}>
+          <View style={styles.right}>
+            {step != null && <Tag label={step} size="md" />}
+            {right}
+            {settingsButton}
+          </View>
+          <BugButton />
         </View>
       </View>
     );
@@ -156,10 +163,13 @@ export function ScreenHeader({
 
       {/* Zębatka STOI ZA pillem łączności: pill pojawia się i znika (online nie rysuje
           nic - issue #12), a ustawienia mają stały adres na skraju ekranu. */}
-      <View style={[styles.right, styles.rightRow]}>
-        {step != null && <Tag label={step} size="md" />}
-        {right}
-        {settingsButton}
+      <View style={styles.rightWrap}>
+        <View style={[styles.right, styles.rightRow]}>
+          {step != null && <Tag label={step} size="md" />}
+          {right}
+          {settingsButton}
+        </View>
+        <BugButton />
       </View>
     </View>
   );
@@ -175,11 +185,17 @@ const styles = StyleSheet.create({
   centerText: { textAlign: 'center' },
   subtitle: { fontSize: 10, letterSpacing: 1, lineHeight: 14 },
   right: { alignItems: 'flex-end', gap: 5, flexShrink: 0 },
+  /** Rząd [istniejąca prawa strona][zgłoszenie] - patrz nota przy `BugButton`. */
+  rightWrap: { flexDirection: 'row', alignItems: 'center', gap: 2, flexShrink: 0 },
   /** Bez powrotu prawa kolumna układa się w RZĄD: [pill] [zębatka], wyrównane do środka. */
   rightRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   back: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   backLabel: { fontSize: 11, letterSpacing: 0.5 },
   // Równe sloty po obu stronach trzymają tytuł naprawdę na środku (mockup: min-width 56).
+  // Przycisk zgłoszenia (issue #87) świadomie NIE podnosi tej liczby: na ekranach
+  // z powrotem prawa strona jest zwykle pusta, więc 32 dp mieszczą się w slocie
+  // i tytuł zachowuje całą szerokość. Tam, gdzie stoi jeszcze plakietka kroku, slot
+  // urośnie sam - a to jest tańsze niż stałe zwężenie tytułu na WSZYSTKICH ekranach.
   sideSlot: { minWidth: 56 },
   // `.icon-btn`: wysokość 44 px - próg celu dotykowego dla rękawic, nie ozdoba.
   iconBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },

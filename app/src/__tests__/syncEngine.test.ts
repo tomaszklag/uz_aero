@@ -93,6 +93,11 @@ class ScriptedServer implements ServerPort {
 
   getReference = async () => ({ data: { aircraft: [], pilots: [] }, etag: null });
   pushTraces = async (_t: string, entries: unknown[]) => ({ accepted: entries.length });
+  // Zgłoszenia błędów (issue #87) jadą OSOBNYM torem - te przekroje ich nie dotyczą.
+  pushBugReports = async (_t: string, reports: unknown[]) => ({
+    accepted: reports.length,
+    duplicates: 0,
+  });
   getSessionTrack = async (): Promise<never> => {
     throw new Error('ta atrapa nie obsługuje śladu operacji');
   };

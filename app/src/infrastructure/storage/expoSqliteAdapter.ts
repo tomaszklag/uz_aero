@@ -32,6 +32,9 @@ import {
   type ServiceStatus,
 } from '../../domain';
 import type {
+  BugReport,
+  BugReportPort,
+  NewBugReport,
   NewTraceEntry,
   StoragePort,
   TraceEntry,
@@ -104,7 +107,7 @@ interface PilotRow {
   fetched_at: number;
 }
 
-export class ExpoSqliteAdapter implements StoragePort, TracePort {
+export class ExpoSqliteAdapter implements StoragePort, TracePort, BugReportPort {
   private db: SQLiteDatabase | null = null;
 
   constructor(private readonly databaseName: string = DB_NAME) {}
@@ -515,6 +518,57 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort {
     };
   }
 
+  // ── zgłoszenia błędów (issue #87, na czas testów) ────────────────────────────
+
+  async appendBugReport(report: NewBugReport): Promise<void> {
+    await this.getDb().runAsync(
+      `INSERT OR IGNORE INTO bug_reports
+         (uuid, created_at, severity, description, screen, app_version, session_uuid, context)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        report.uuid,
+        report.createdAt,
+        report.severity,
+        report.description,
+        report.screen,
+        report.appVersion,
+        report.sessionUuid,
+        JSON.stringify(report.context),
+      ],
+    );
+  }
+
+  async getPendingBugReports(limit: number): Promise<BugReport[]> {
+    const rows = await this.getDb().getAllAsync<BugReportRow>(
+      'SELECT * FROM bug_reports WHERE sent_at IS NULL ORDER BY created_at, uuid LIMIT ?',
+      [limit],
+    );
+    return rows.map(toBugReport);
+  }
+
+  async markBugReportsSent(uuids: string[], sentAt: EpochMillis): Promise<void> {
+    await this.getDb().withTransactionAsync(async () => {
+      const db = this.getDb();
+      for (const uuid of uuids) {
+        await db.runAsync('UPDATE bug_reports SET sent_at = ? WHERE uuid = ?', [sentAt, uuid]);
+      }
+    });
+  }
+
+  async purgeSentBugReports(): Promise<number> {
+    const result = await this.getDb().runAsync(
+      'DELETE FROM bug_reports WHERE sent_at IS NOT NULL',
+    );
+    return result.changes;
+  }
+
+  async pendingBugReportCount(): Promise<number> {
+    const row = await this.getDb().getFirstAsync<{ n: number }>(
+      'SELECT COUNT(*) AS n FROM bug_reports WHERE sent_at IS NULL',
+    );
+    return row?.n ?? 0;
+  }
+
   async clear(): Promise<void> {
     await this.getDb().execAsync(`
       DELETE FROM events;
@@ -524,8 +578,47 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort {
       DELETE FROM reference_pilots;
       DELETE FROM session_meta;
       DELETE FROM gps_trace;
+      DELETE FROM bug_reports;
     `);
   }
+}
+
+/** Wiersz `bug_reports` w bazie (snake_case jak w DDL). */
+interface BugReportRow {
+  uuid: string;
+  created_at: number;
+  severity: string | null;
+  description: string;
+  screen: string;
+  app_version: string | null;
+  session_uuid: string | null;
+  context: string;
+  sent_at: number | null;
+}
+
+/**
+ * Kontekst wraca z bazy NAPISEM i rozpakowuje się tutaj. Uszkodzony JSON (przerwany
+ * zapis, ręczna edycja bazy) nie może wywrócić wysyłki - zgłoszenie jedzie wtedy
+ * z pustym kontekstem, bo opis pilota jest jego treścią, a kontekst dodatkiem.
+ */
+function toBugReport(row: BugReportRow): BugReport {
+  let context: Record<string, unknown> = {};
+  try {
+    context = JSON.parse(row.context) as Record<string, unknown>;
+  } catch {
+    context = {};
+  }
+  return {
+    uuid: row.uuid,
+    createdAt: row.created_at,
+    severity: (row.severity as BugReport['severity']) ?? null,
+    description: row.description,
+    screen: row.screen,
+    appVersion: row.app_version,
+    sessionUuid: row.session_uuid,
+    context,
+    sentAt: row.sent_at,
+  };
 }
 
 /** Wiersz `gps_trace` w bazie (snake_case jak w DDL). */

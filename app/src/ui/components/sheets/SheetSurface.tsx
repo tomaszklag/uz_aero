@@ -97,6 +97,17 @@ export interface SheetSurfaceProps {
   /** Numpad PIN-u centruje treść; reszta arkuszy rozciąga ją na szerokość. */
   align?: 'stretch' | 'center';
   /**
+   * Akcja w PRAWYM GÓRNYM ROGU panelu, w rzędzie uchwytu.
+   *
+   * Powstała dla przycisku zgłoszenia błędu (issue #87: „w każdym popup, w prawym
+   * górnym rogu"). Nie w linii tytułu, bo tam mieszka kosz - akcja destrukcyjna
+   * arkusza korekty (issue #43) - a dwie ikony obok siebie kazałyby celować.
+   * Rama nie wie, co tu wchodzi: przycisk podaje `Sheet` i każdy arkusz budowany
+   * wprost na niej. Gdyby rama importowała go sama, arkusz zgłoszenia domknąłby
+   * cykl importów (patrz nagłówek `BugReportSheet`).
+   */
+  topRight?: React.ReactNode;
+  /**
    * Treść PRZYPIĘTA pod obszarem przewijania: rząd akcji, pole wpisu wyszukiwarki,
    * strefa destrukcyjna. To ona ma zostać widoczna, gdy treści jest za dużo.
    */
@@ -115,6 +126,7 @@ export function SheetSurface({
   keyboardHeight = 0,
   accentColor,
   align = 'stretch',
+  topRight,
   pinned,
   children,
 }: SheetSurfaceProps) {
@@ -277,7 +289,13 @@ export function SheetSurface({
             backgroundColor: theme.colors.surfaceRaised,
           }}
         >
-          <View style={[styles.handle, { backgroundColor: theme.colors.borderStrong }]} />
+          {/* Uchwyt zostaje WYŚRODKOWANY niezależnie od akcji obok: pozycja
+              bezwzględna nie zabiera mu miejsca, więc panel bez `topRight`
+              wygląda dokładnie tak, jak wyglądał. */}
+          <View style={styles.handleRow}>
+            <View style={[styles.handle, { backgroundColor: theme.colors.borderStrong }]} />
+            {topRight != null && <View style={styles.topRight}>{topRight}</View>}
+          </View>
 
           {/* `flexShrink` bez `flexGrow` - krótka treść nie rozciąga arkusza na siłę. */}
           <ScrollView
@@ -303,5 +321,17 @@ const styles = StyleSheet.create({
   overlay: { ...StyleSheet.absoluteFillObject },
   bottom: { flex: 1, justifyContent: 'flex-end' },
   scroll: { flexGrow: 0, flexShrink: 1 },
+  /**
+   * Rząd MIEŚCI przycisk (36 dp), a ujemne marginesy oddają z powrotem to, czego
+   * uchwyt nie potrzebuje - w pionie zajmuje więc dalej 4 dp i żaden arkusz nie
+   * zmienił przez to odstępów.
+   *
+   * Wysokość jest tu CELEM DOTYKOWYM, nie ozdobą: Android nie dostarcza dotknięć
+   * poza granice rodzica, więc przycisk wystający z rzędu o wysokości 4 dp miałby
+   * 4 dp aktywnej wysokości - i wyglądałby na zepsuty, choć byłby narysowany dobrze.
+   * Z tego samego powodu `right: 0`, a nie wartość ujemna wchodząca w padding panelu.
+   */
+  handleRow: { height: 36, marginTop: -16, marginBottom: -16, justifyContent: 'center' },
   handle: { width: 36, height: 4, borderRadius: 2, alignSelf: 'center' },
+  topRight: { position: 'absolute', right: 0, top: 2 },
 });

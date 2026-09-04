@@ -29,6 +29,7 @@ import { Banner } from '../status/Banner';
 import { Icon, type IconName } from '../foundation/Icon';
 import { InlineNote } from '../status/InlineNote';
 import { TimeStepper } from '../input/TimeStepper';
+import { BugButton } from '../bug/BugButton';
 import { SheetSurface } from './SheetSurface';
 import { toneColors } from '../tone';
 
@@ -87,6 +88,7 @@ export function ManualEventSheet({
     <SheetSurface
       visible={visible}
       onCancel={onCancel}
+      topRight={<BugButton sheet={type === 'takeoff' ? 'ZAPISZ START' : 'ZAPISZ LĄDOWANIE'} />}
       gap={13}
       /* Zapas z mockupu jako podłoga; nad paskiem nawigacji rama ustąpi więcej.
          Arkusz nie ma pól tekstowych - klawiatura go nie dotyczy. */

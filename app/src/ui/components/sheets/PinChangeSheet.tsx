@@ -18,6 +18,7 @@ import { AppText } from '../foundation/AppText';
 import { Icon } from '../foundation/Icon';
 import { Numpad } from '../input/Numpad';
 import { PinDots } from '../input/PinDots';
+import { BugButton } from '../bug/BugButton';
 import { SheetSurface } from './SheetSurface';
 
 const PIN_LENGTH = 4;
@@ -142,6 +143,7 @@ export function PinChangeSheet({
     <SheetSurface
       visible={visible}
       onCancel={onCancel}
+      topRight={<BugButton sheet={'ZMIEŃ PIN'} />}
       align="center"
       /* 26 dp z mockupu jako podłoga; nad paskiem nawigacji rama ustąpi więcej.
          PIN wpisuje się własnym numpadem, nie klawiaturą systemu. */

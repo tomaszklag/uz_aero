@@ -30,6 +30,7 @@ import { AppText } from '../foundation/AppText';
 import { ActionButton } from '../data/ActionButton';
 import { CounterRow } from '../input/CounterRow';
 import { toneColors } from '../tone';
+import { BugButton } from '../bug/BugButton';
 import { SheetSurface } from './SheetSurface';
 import type { JumperCounts } from './DropSheet';
 import { jumpersKey } from './jumpersKey';
@@ -94,6 +95,7 @@ export function BoardingSheet({
     <SheetSurface
       visible={visible}
       onCancel={onCancel}
+      topRight={<BugButton sheet={`ZAŁADUNEK · LOT ${flightNumber}`} />}
       keyboardHeight={keyboardHeight}
       designPad={theme.spacing.xxl + 2}
       accentColor={blue.border}

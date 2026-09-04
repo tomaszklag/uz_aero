@@ -21,6 +21,7 @@ import { SecureCredentials } from '../../infrastructure/auth/secureCredentials';
 import { PinCrypto } from '../../infrastructure/auth/pinCrypto';
 import {
   AuthService,
+  BugReportSync,
   EventRestore,
   FlightTrackQueries,
   HttpSessionTrackSource,
@@ -35,6 +36,7 @@ import { ExpoSensorsAdapter } from '../../infrastructure/sensors/expoSensorsAdap
 import type { GpsPort, SensorPort } from '../../application/ports';
 import { useSessionStore } from '../store';
 import { useAuthStore } from '../store/authStore';
+import { attachBugReporter } from '../components/bug/bugReporter';
 
 /** Stan startu aplikacji - UI musi wiedzieć, czy baza jest gotowa. */
 export type BootstrapStatus =
@@ -126,6 +128,11 @@ export function useAppBootstrap(): BootstrapStatus {
             // co wysyłka - pobrane zdarzenia są zwykłymi wierszami strumienia.
             new EventRestore(repo, server, auth),
           );
+
+        // Zgłoszenia błędów (issue #87, na czas testów): magazyn lokalny + wysyłka
+        // niskopriorytetowym torem, jak ślad kalibracyjny. Przycisk w ramach nie
+        // wie o composition root - dostaje jedno i drugie przez `attachBugReporter`.
+        attachBugReporter({ store: storage, sync: new BugReportSync(storage, server, auth) });
 
         setStatus({ phase: 'ready', trace });
       } catch (err) {

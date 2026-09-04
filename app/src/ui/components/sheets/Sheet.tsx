@@ -43,6 +43,7 @@ import { AppText } from '../foundation/AppText';
 import { ActionButton } from '../data/ActionButton';
 import { InlineNote } from '../status/InlineNote';
 import { Trail, type TrailRow } from '../readouts/Trail';
+import { BugButton } from '../bug/BugButton';
 import { SheetSurface } from './SheetSurface';
 import { toneColors, type Tone } from '../tone';
 
@@ -151,6 +152,7 @@ export function Sheet({
       onShow={onShow}
       keyboardHeight={keyboardHeight}
       designPad={theme.spacing.xxxl}
+      topRight={<BugButton sheet={title} />}
       /* Treść przewijana, akcje poza nią: gdy miejsca jest mało, skraca się to, co pilot
          może doczytać przewinięciem, a nie to, czym arkusz się zamyka. */
       pinned={
