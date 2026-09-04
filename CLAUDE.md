@@ -2499,7 +2499,18 @@ model danych, ryzyka i etapy: **`docs/logowanie-google.md`**.
   `(provider, subject)` od początku
 - **`app.json` dostaje `scheme`** (redirect OAuth) - zmiana NATYWNA, więc testerzy muszą
   dostać nowy build; w starym przycisk Google nie zadziała
-- **ETAPY A–C WDROŻONE W KODZIE (2026-09-04), D (aplikacja) i E (wdrożenie) czekają.**
+- **ETAP D (aplikacja) TEŻ WDROŻONY (2026-09-04)**: `ui/hooks/useGoogleSignIn.ts` jest
+  JEDYNYM miejscem znającym `expo-auth-session`; `scheme` w `app.json` to PAKIET
+  (`com.tomekklag.uzaero` - Google wymaga tego dla klientów Android, a dostawca składa
+  adres powrotu z `Application.applicationId`); identyfikator klienta Android to stała
+  buildu `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` (`app/.env.example`, do EAS w `eas.json`).
+  Zgłoszenie żyje pod OSOBNYM kluczem `SecureStore` (`StoredRegistration`) - wpisane do
+  `StoredCredentials` udawałoby profil. Wynik wymiany kodu przychodzi STANEM hooka
+  (`response.authentication.idToken`), nie z `promptAsync` - stąd strażnik czasu na
+  nieudaną wymianę, której dostawca nie zgłasza. Znak Google to czysty komponent RN
+  (`GoogleMark`: pierścień z czterech kolorowych krawędzi + maska + poprzeczka) - jedyne
+  miejsce w aplikacji z kolorami spoza tokenów, bo to znak towarowy
+- **ETAPY A–C WDROŻONE W KODZIE (2026-09-04), E (wdrożenie) czeka.**
   Serwer: `GOOGLE_WEB_CLIENT_ID` (WYMAGANY - bez niego nie wstaje) i
   `GOOGLE_ANDROID_CLIENT_ID` (opcjonalny), `SEED_ADMIN_EMAIL` zamiast `SEED_PASSWORD`;
   `scryptHasher`, `startPassword`, reset hasła i `PilotSecretDto` USUNIĘTE po obu

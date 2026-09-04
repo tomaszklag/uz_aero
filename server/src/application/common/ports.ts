@@ -226,6 +226,8 @@ export interface ExternalIdentity {
   status: IdentityStatus;
   rejectReason: string | null;
   createdAt: Date;
+  /** Chwila decyzji administratora; `null` dopóki zgłoszenie czeka. Ekran `00d` ją cytuje. */
+  decidedAt: Date | null;
 }
 
 /**

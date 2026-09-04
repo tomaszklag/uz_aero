@@ -25,6 +25,7 @@ interface IdentityRow {
   status: string;
   reject_reason: string | null;
   created_at: string | Date;
+  decided_at: string | Date | null;
 }
 
 const STATUSES: readonly IdentityStatus[] = ['pending', 'linked', 'rejected'];
@@ -42,9 +43,11 @@ const toIdentity = (r: IdentityRow): ExternalIdentity => ({
     : 'pending',
   rejectReason: r.reject_reason,
   createdAt: new Date(r.created_at),
+  decidedAt: r.decided_at == null ? null : new Date(r.decided_at),
 });
 
-const COLUMNS = 'provider, subject, pilot_id, email, name, status, reject_reason, created_at';
+const COLUMNS =
+  'provider, subject, pilot_id, email, name, status, reject_reason, created_at, decided_at';
 
 export class PgExternalIdentitiesRepo implements ExternalIdentitiesPort {
   constructor(private readonly db: Queryable) {}

@@ -81,6 +81,8 @@ export interface RegistrationView {
   status: 'pending' | 'rejected';
   rejectReason: string | null;
   createdAt: Date;
+  /** Chwila decyzji administratora - `00d` cytuje ją przy odrzuceniu; `null` gdy czeka. */
+  decidedAt: Date | null;
 }
 
 export type ProviderLoginResult =
@@ -333,4 +335,5 @@ const viewOf = (identity: ExternalIdentity): RegistrationView => ({
   status: identity.status === 'rejected' ? 'rejected' : 'pending',
   rejectReason: identity.rejectReason,
   createdAt: identity.createdAt,
+  decidedAt: identity.decidedAt,
 });

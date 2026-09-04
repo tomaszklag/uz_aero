@@ -28,12 +28,24 @@ const PILOT = { id: 'TMK', code: 'TMK', name: 'Tomasz Małkiewicz' };
 const CREDS: StoredCredentials = { token: 'jwt-1', refreshToken: 'r1', pilot: PILOT };
 
 class MemoryCredentials {
+  // Zgłoszenie rejestracyjne (logowanie Google) - nieużywane w tych testach.
+  loadRegistration = async (): Promise<null> => null;
+  saveRegistration = async (_registration: unknown): Promise<void> => {};
+  clearRegistration = async (): Promise<void> => {};
   load = async () => CREDS;
   save = async (_c: StoredCredentials) => {};
   clear = async () => {};
 }
 
 class BugServer implements ServerPort {
+  async loginWithGoogle(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async registrationStatus(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
   pushed: RemoteBugReport[][] = [];
   fail = false;
 

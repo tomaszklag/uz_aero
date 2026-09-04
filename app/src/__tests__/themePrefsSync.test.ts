@@ -35,6 +35,10 @@ const PILOT = { id: 'TMK', code: 'TMK', name: 'Tomasz Małkiewicz' };
 const CREDS: StoredCredentials = { token: 'jwt-1', refreshToken: 'r1', pilot: PILOT };
 
 class MemoryCredentials {
+  // Zgłoszenie rejestracyjne (logowanie Google) - nieużywane w tych testach.
+  loadRegistration = async (): Promise<null> => null;
+  saveRegistration = async (_registration: unknown): Promise<void> => {};
+  clearRegistration = async (): Promise<void> => {};
   constructor(private stored: StoredCredentials | null = CREDS) {}
   load = async () => this.stored;
   save = async (c: StoredCredentials) => {
@@ -56,6 +60,14 @@ class MemoryThemePrefs implements ThemePrefsPort {
 
 /** Serwer-skrypt dla `/me/prefs`: rejestruje wywołania, odpowiada z kolejek. */
 class PrefsServer implements ServerPort {
+  async loginWithGoogle(): Promise<never> {
+    throw new Error('nieużywane w tych testach');
+  }
+
+  async registrationStatus(): Promise<never> {
+    throw new Error('nieużywane w tych testach');
+  }
+
   getCalls: string[] = [];
   putCalls: { token: string; theme: string; themeUpdatedAt: string }[] = [];
   getScript: Array<RemoteThemePrefs | Error> = [];

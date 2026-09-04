@@ -233,7 +233,19 @@ Audyt: `registration.approve` / `registration.reject`.
   jest identyczny, więc podmiana na natywne SDK (ładniejszy wybór konta) to później
   decyzja wyłącznie o UX.
 - **`app.json` dostaje `scheme`** (redirect OAuth) - to zmiana natywna, więc testerzy
-  muszą zainstalować NOWY build; w starym przycisk Google nie zadziała.
+  muszą zainstalować NOWY build; w starym przycisk Google nie zadziała. **Schemat to
+  PAKIET aplikacji** (`com.tomekklag.uzaero`), nie dowolna nazwa: Google wymaga dla
+  klientów typu Android adresu powrotu w schemacie równym pakietowi, a dostawca
+  w `expo-auth-session` składa go z `Application.applicationId`. Drugi schemat `uzaero`
+  zostaje na przyszłe linki.
+- **Kod + PKCE, nie `id_token` wprost**: na Androidzie dostawca żąda kodu i wymienia go
+  sam bez sekretu klienta; token tożsamości jest w wyniku wymiany, który przychodzi
+  STANEM hooka, nie z obietnicy `promptAsync`. Nieudanej wymiany dostawca nie zgłasza
+  (odrzucona obietnica w jego efekcie), więc `useGoogleSignIn` ma strażnika czasu.
+- **Identyfikator klienta Android jest STAŁĄ buildu** (`EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID`,
+  `app/.env.example`; do EAS w `eas.json`). Build bez niego zostawia przycisk czynny,
+  a po tapnięciu mówi zdaniem, że logowania nie skonfigurowano - wyszarzony przycisk
+  bez słowa byłby zakazany (§6 pkt 3).
 
 ## 10. Panel też potrzebuje Google
 
@@ -294,6 +306,12 @@ To jest druga powierzchnia i osobna konfiguracja w Google Cloud - nie „przy ok
   przez Google Identity Services (`admin/src/auth/googleIdentity.ts`; CSP statycznego
   buildu dopuszcza wyłącznie ścieżki `accounts.google.com/gsi/`), karta konta bez
   haseł (e-mail wymagany PRZY ZAKŁADANIU - konto bez adresu Google nie ma jak wejść).
-- **D - aplikacja**: `expo-auth-session`, `scheme`, status `pending_approval`,
-  ekrany 00A/00B/00C/00D.
+- **D - aplikacja** ✅: `expo-auth-session` + `expo-web-browser` (hook `useGoogleSignIn` -
+  jedyne miejsce znające dostawcę), `scheme` = pakiet, `ServerPort.loginWithGoogle` /
+  `registrationStatus` z mapowaniem 200/202/403, zgłoszenie pod OSOBNYM kluczem magazynu
+  (`StoredRegistration` - to nie jest tożsamość), `AuthService` z trzema wyjściami
+  logowania i sprawdzaniem zgłoszenia, status `pending_approval` w `authStore`, ekrany
+  00A (jeden przycisk) i 00C/00D (jeden ekran, dwa stany, puls jak w pętli synca),
+  znak Google jako czysty komponent RN (bez SVG). Testy: `AuthService` na atrapach
+  portów, `loginMessage`, `registrationView`.
 - **E - wdrożenie**: e-maile w panelu → serwer → build, w tej kolejności.

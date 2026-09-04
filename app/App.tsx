@@ -42,6 +42,7 @@ import { useSkeleton } from './src/ui/hooks/useSkeleton';
 import { useSyncLoop } from './src/ui/hooks/useSyncLoop';
 import { LoginScreen } from './src/ui/screens/LoginScreen';
 import { PinScreen } from './src/ui/screens/PinScreen';
+import { RegistrationPendingScreen } from './src/ui/screens/RegistrationPendingScreen';
 
 /**
  * Tło okna natywnego - jedyna warstwa, której nie da się pomalować widokiem RN.
@@ -154,8 +155,9 @@ function AppRoot() {
 }
 
 /**
- * Bramka tożsamości (§3.0): bez profilu - 00a-login; z profilem bez PIN-u - „Ustaw
- * PIN"; z PIN-em - zamek 00; odblokowane - aplikacja. Pętla synca żyje TUTAJ, nad
+ * Bramka tożsamości (§3.0): bez profilu - 00a-login; ze zgłoszeniem czekającym na
+ * administratora - 00c/00d; z profilem bez PIN-u - „Ustaw PIN"; z PIN-em - zamek 00;
+ * odblokowane - aplikacja. Pętla synca żyje TUTAJ, nad
  * nawigatorem: okazje do wysyłki nie mogą zależeć od tego, który ekran jest otwarty
  * (silnik i bramkę `signed_in` pętla czyta sama ze store'ów).
  */
@@ -179,6 +181,10 @@ function AuthGate() {
   }
 
   if (status === 'signed_out') return <LoginScreen />;
+  // Konto Google potwierdzone, konta pilota jeszcze nie ma (logowanie Google,
+  // 2026-09-04): zgłoszenie czeka na administratora albo zostało odrzucone. To NIE jest
+  // profil - PIN-u nie ma czego chronić, więc bramka omija go w całości.
+  if (status === 'pending_approval') return <RegistrationPendingScreen />;
   if (status === 'pin_setup' || status === 'locked') return <PinScreen />;
 
   return <ResumeGate />;

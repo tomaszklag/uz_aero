@@ -90,7 +90,10 @@ Vite). Konfiguracja buildu i healthcheck: `railway.json`.
 8. **Sprawdzian**: `https://<domena>/health` → `{"ok":true}`, `https://<domena>/admin/`
    → logowanie panelu kontem Google z kroku 7. Flotę i konta pilotów załóż w A07/A06.
 9. **Aplikacja pilota**: build EAS z adresem serwera -
-   `EXPO_PUBLIC_API_URL=https://<domena>` (patrz `app/src/infrastructure/api/apiBaseUrl.ts`).
+   `EXPO_PUBLIC_API_URL=https://<domena>` (patrz `app/src/infrastructure/api/apiBaseUrl.ts`)
+   ORAZ `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` (klient Android z kroku 6; dopisz do
+   `eas.json` → `build.production.env`, a lokalnie do `app/.env` wg `app/.env.example`).
+   Build jest NOWY z konieczności: `scheme` w `app.json` to zmiana natywna.
 
 Koszt: plan Hobby (5 USD/mies. z wliczonym zużyciem) zwykle wystarcza na serwer + bazę
 przy ruchu klubowym. Backup: rejestr jest append-only i jest jedynym źródłem - ustaw
