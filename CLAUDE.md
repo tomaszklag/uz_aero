@@ -227,6 +227,29 @@ zakłada się w panelu (dane demo usunięte przy issue #50).
 - `Archivo` - body text, etykiety, przyciski
 - `JetBrains Mono` - cyfry timerów, kody ICAO, wartości GPS, kody pilotów
 
+### Ikona aplikacji = ZNAK Z EKRANU LOGOWANIA PANELU (2026-09-04)
+Wypełniony samolot `PlaneIcon` (`admin/src/ui/components/icons.tsx`) w `--green` na
+ciemnozielonym tle z poświatą - ten sam znak, który stoi w plakietce `.login-badge`
+panelu. Jedna marka na dwóch powierzchniach, więc znaku NIE rysujemy drugi raz.
+- **pliki w `app/assets/` są GENEROWANE** (`npm run icons` → `app/scripts/build-icons.js`):
+  `icon.png` 1024, para adaptive Androida (`foreground` na 40% boku - bezpieczna strefa,
+  `background` = sam gradient), `monochrome` 432 BIAŁĄ sylwetką (system barwi ją sam)
+  i `favicon.png` 48. Poprawka wchodzi przez generator i regenerację, nie ręczną edycją
+  PNG - ta sama reguła, co przy katalogu lotnisk (`packages/domain/scripts/`)
+- **bez zależności i bez modułu natywnego**: rasteryzacja wielokąta z antyaliasingiem
+  (poziomo analitycznie, pionowo 8 podwierszy) i koder PNG na `zlib` ze stdlib. Sharpa
+  ani ImageMagicka w tym repozytorium nie ma i nie dokładamy ich dla pięciu plików
+- **ścieżkę SVG trzyma generator, nie import z panelu**: `admin/` jest osobnym modułem
+  z TSX, a skrypt ma działać gołym `node`. Zmiana `PlaneIcon` w panelu wymaga więc
+  przeniesienia ścieżki ręcznie - jedyny koszt tego rozwiązania i dlatego stoi tu zapisany
+- **ikona zapieka się w APK**: podmiana widać dopiero w nowym buildzie EAS, w Expo Go
+  nie zmieni się wcale
+- **podgląd `design/IKONA.html` też jest GENEROWANY** (`app/scripts/build-icon-preview.js`):
+  ekran główny telefonu, cztery maski launcherów, motyw ikon Androida 13+ i rozmiary
+  rzeczywiste - z obrazami wklejonymi DATA URI, więc strona nie ciągnie niczego spoza
+  siebie. To jedyny plik w `design/`, który NIE JEST specyfikacją: tu kod prowadzi
+  obrazek, a podgląd ma pokazywać to, co naprawdę leży w `app/assets/`
+
 ### Phone frame (`design/*.html` - aplikacja pilota)
 Każdy mockup używa ramki telefonu 393×852px (iPhone 14 Pro) z `--phone-scale` do auto-skalowania.
 Struktura: `.canvas-label` → `.phone` (z Dynamic Island `::before`) → `.nav-strip`

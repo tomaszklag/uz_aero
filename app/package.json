@@ -50,7 +50,8 @@
     "web": "expo start --web",
     "test": "jest",
     "typecheck": "tsc --noEmit",
-    "build:phase-font": "node scripts/build-phase-font.mjs"
+    "build:phase-font": "node scripts/build-phase-font.mjs",
+    "icons": "node scripts/build-icons.js && node scripts/build-icon-preview.js"
   },
   "private": true
 }
