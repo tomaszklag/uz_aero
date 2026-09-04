@@ -132,3 +132,40 @@
   width: 100%;
   max-width: 400px;
 }
+
+/**
+ * Przycisk Google (2026-09-04). Rysuje go SKRYPT GOOGLE w tym kontenerze
+ * (`auth/googleIdentity.ts`), więc ostylować da się tylko ramę wokół niego:
+ * wyśrodkowanie i wysokość, żeby karta nie skakała, gdy przycisk wjeżdża.
+ * Dopóki nie ma go w drzewie (`pending`), kontener nie zajmuje miejsca - miejsce
+ * trzyma plamka o jego geometrii.
+ */
+.login-google {
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+}
+
+.login-google.pending {
+  min-height: 0;
+}
+
+/* Plamka w geometrii przycisku Google (44 px, pigułka) - nigdy pustka, nigdy spinner. */
+.login-google-skeleton {
+  height: 44px;
+  max-width: 336px;
+  margin: 0 auto;
+  border-radius: 22px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+}
+
+.login-status {
+  margin: 14px 0 0;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}

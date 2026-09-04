@@ -15,7 +15,8 @@ import { sessionRowFrom } from '../src/application/common/mappers/sessionRow.ts'
 import { sessionListItem } from '../src/application/admin/mappers/sessionListItem.ts';
 import type { AdminSessionJoin } from '../src/application/admin/ports.ts';
 import type { EventsStorePort } from '../src/application/common/ports.ts';
-import { TEST_PASSWORD, testHarness } from './helpers.ts';
+import { testHarness } from './helpers.ts';
+import { googleTokenFor } from './testIdentityProvider.ts';
 
 const DAY = Date.UTC(2026, 5, 22);
 const at = (h: number, m: number): number => DAY + (h * 60 + m) * 60_000;
@@ -360,8 +361,8 @@ describe('granica: listy panelu nie odtwarzają projekcji ze strumienia', () => 
 
     const login = await app.inject({
       method: 'POST',
-      url: '/auth/login',
-      payload: { login: 'TMK', password: TEST_PASSWORD },
+      url: '/auth/google',
+      payload: { idToken: googleTokenFor('TMK') },
     });
     const token = login.json().token as string;
     const auth = { authorization: `Bearer ${token}` };
@@ -404,8 +405,8 @@ describe('granica: listy panelu nie odtwarzają projekcji ze strumienia', () => 
 
     const login = await app.inject({
       method: 'POST',
-      url: '/auth/login',
-      payload: { login: 'TMK', password: TEST_PASSWORD },
+      url: '/auth/google',
+      payload: { idToken: googleTokenFor('TMK') },
     });
     const token = login.json().token as string;
     const auth = { authorization: `Bearer ${token}` };
@@ -482,8 +483,8 @@ describe('agregat statystyk = suma projekcji (wykonywalna wersja „panel nie li
     const { app } = await testHarness();
     const login = await app.inject({
       method: 'POST',
-      url: '/auth/login',
-      payload: { login: 'TMK', password: TEST_PASSWORD },
+      url: '/auth/google',
+      payload: { idToken: googleTokenFor('TMK') },
     });
     const auth = { authorization: `Bearer ${login.json().token as string}` };
 

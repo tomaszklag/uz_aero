@@ -8,7 +8,8 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { TEST_BASE_URL, TEST_PASSWORD, testHarness } from './helpers.ts';
+import { TEST_BASE_URL, testHarness } from './helpers.ts';
+import { googleTokenFor } from './testIdentityProvider.ts';
 
 const DAY = Date.UTC(2026, 5, 22);
 const at = (h: number, m: number): number => DAY + (h * 60 + m) * 60_000;
@@ -70,8 +71,8 @@ function day(sessionUuid = 'sess-1', overrides: Record<string, unknown> = {}) {
 async function login(app: Awaited<ReturnType<typeof testHarness>>['app'], who = 'TMK') {
   const res = await app.inject({
     method: 'POST',
-    url: '/auth/login',
-    payload: { login: who, password: TEST_PASSWORD },
+    url: '/auth/google',
+    payload: { idToken: googleTokenFor(who) },
   });
   return res.json().token as string;
 }

@@ -5,11 +5,12 @@
  * Warstwa `api/` nie zna Reacta ani cache'u - zwraca obietnice, a co z nimi zrobić,
  * decyduje `queries/`.
  *
- * == HASLA NIE MA W ZADNYM ZADANIU ==
- * `createPilot` i `resetPilotPassword` nie mają parametru hasła i nigdy go nie dostaną:
- * wartość generuje serwer i oddaje ją JEDEN RAZ w odpowiedzi. Panel nie ma jak przesłać
- * hasła, więc nie ma jak go zapisać ani wysłać drugi raz - to jest zabezpieczenie przez
- * kształt API, nie przez dyscyplinę.
+ * == HASLA NIE MA W ZADNYM ZADANIU - ANI W ZADNEJ ODPOWIEDZI ==
+ * Hasła zniknęły z produktu 2026-09-04 (`docs/logowanie-google.md`). Konto założone
+ * tutaj nie dostaje żadnego poświadczenia: dostęp daje dopiero PIERWSZE logowanie
+ * kontem Google o wpisanym `email` - serwer podpina wtedy tożsamość do tego wiersza.
+ * Dlatego e-mail jest w tym formularzu jedynym polem, od którego zależy, czy konto
+ * w ogóle da się użyć.
  *
  * == DOSTEPNOSC KONTA TO OSOBNE ZADANIE ==
  * `active` nie jedzie w `PATCH`-u i to jest decyzja serwera, nie uproszczenie panelu:
@@ -17,7 +18,7 @@
  * granicę ważności poświadczeń. To inna operacja niż poprawienie nazwiska.
  */
 
-import type { PilotChangeDto, PilotPageDto, PilotRole, PilotSecretDto } from './dto';
+import type { PilotChangeDto, PilotPageDto, PilotRole } from './dto';
 import { apiDelete, apiGet, apiPatch, apiPost } from './httpClient';
 
 /**
@@ -56,7 +57,7 @@ export function listPilots(query: PilotListQuery): Promise<PilotPageDto> {
   return apiGet<PilotPageDto>(`/pilots?${queryString(query)}`);
 }
 
-/** Tożsamość i rola nowego konta. Hasła NIE MA - generuje je serwer. */
+/** Tożsamość i rola nowego konta; `email` = adres konta Google, którym pilot wejdzie. */
 export interface CreatePilotBody {
   code: string;
   name: string;
@@ -64,8 +65,8 @@ export interface CreatePilotBody {
   role: PilotRole;
 }
 
-export function createPilot(body: CreatePilotBody): Promise<PilotSecretDto> {
-  return apiPost<PilotSecretDto>('/pilots', body);
+export function createPilot(body: CreatePilotBody): Promise<PilotChangeDto> {
+  return apiPost<PilotChangeDto>('/pilots', body);
 }
 
 /** `PATCH` opisuje ZMIANĘ, nie stan docelowy - pola nieustawione zostają bez zmian. */
@@ -82,10 +83,6 @@ export function updatePilot(id: string, body: UpdatePilotBody): Promise<PilotCha
 
 export function setPilotActive(id: string, active: boolean): Promise<PilotChangeDto> {
   return apiPost<PilotChangeDto>(`/pilots/${encodeURIComponent(id)}/active`, { active });
-}
-
-export function resetPilotPassword(id: string): Promise<PilotSecretDto> {
-  return apiPost<PilotSecretDto>(`/pilots/${encodeURIComponent(id)}/password-reset`);
 }
 
 /**

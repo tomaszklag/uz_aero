@@ -1,14 +1,17 @@
 /**
  * UZ Aero - panel 2.0: lista pilotów (`#/piloci`).
  *
- * Ekran ma jedną tabelę i nic poza nią. Czego tu NIE MA wobec panelu 1.0:
- * czterech kafli z licznikami (i ich czterech przypisów), liczb przy chipach, kolumny
- * „Zmieniono", kolumny „Dni lotne" (statystyka na ekranie konfiguracji), akcji
- * w wierszach oraz dwóch banerów i trzech kart wyjaśniających pod tabelą.
+ * Ekran ma jedną tabelę i - gdy ktoś czeka - KOLEJKĘ ZGŁOSZEŃ nad nią. Czego tu NIE MA
+ * wobec panelu 1.0: czterech kafli z licznikami (i ich czterech przypisów), liczb przy
+ * chipach, kolumny „Zmieniono", kolumny „Dni lotne" (statystyka na ekranie konfiguracji),
+ * akcji w wierszach oraz dwóch banerów i trzech kart wyjaśniających pod tabelą.
  *
- * Reset hasła i wyłączenie konta zeszły do karty konta, bo mają skutek, którego wiersz
- * tabeli nie ma jak opisać - a pytanie o skutek pada RAZ, przy akcji, nie dziesięć razy
- * pod rząd, przy każdym wierszu.
+ * == KOLEJKA ZGŁOSZEŃ (logowanie Google, 2026-09-04) ==
+ * Ludzie, którzy zalogowali się kontem Google i czekają na decyzję
+ * (`docs/logowanie-google.md` §8). Stoi NAD listą, bo to jest zadanie do zrobienia,
+ * a lista - stan; i stoi wyłącznie wtedy, gdy ktoś czeka. Pusta kolejka nie dostaje
+ * karty z zerem: to stan domyślny, a stan domyślny nie zajmuje ekranu (reguła SyncChipa).
+ * Widzi ją tylko konto z `accounts.manage` - to e-maile osób spoza klubu.
  */
 
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -16,8 +19,10 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { can } from '../../auth/can';
 import { useSessionState } from '../../auth/sessionContext';
 import { usePilots } from '../../queries/usePilots';
+import { useRegistrations } from '../../queries/useRegistrations';
 import {
   Banner,
+  Card,
   DataTable,
   EmptyState,
   FilterChip,
@@ -33,13 +38,17 @@ import { PeopleIcon, PlusIcon } from '../../ui/components/icons';
 import { errorMessage } from '../common/apiMessage';
 import { AccountDrawer } from './AccountDrawer';
 import { accountRow, type AccountRow } from './accountRows';
+import { RegistrationDrawer } from './RegistrationDrawer';
+import { registrationRow, type RegistrationRow } from './registrationRows';
 
 const HEADERS = ['Kod', 'Imię i nazwisko', 'E-mail', 'Rola', 'Status', ''];
 
 export function AccountsScreen() {
   const { session } = useSessionState();
   const navigate = useNavigate();
-  const { id } = useParams();
+  // `id` pod `piloci/:id?`, `subject` pod `piloci/zgloszenia/:subject` - ten sam ekran
+  // pod dwiema trasami, bo obie karty otwierają się NAD tą samą listą.
+  const { id, subject } = useParams();
   const [params, setParams] = useSearchParams();
 
   // Filtry mieszkają w adresie, nie w stanie komponentu: link „pokaż mi to samo, co
@@ -62,7 +71,13 @@ export function AccountsScreen() {
   });
 
   const manages = can(session?.capabilities, 'accounts.manage');
+  const registrations = useRegistrations(['pending'], manages);
+  const queue = (registrations.data?.items ?? []).map(registrationRow);
+
   const rows = (pilots.data?.items ?? []).map(accountRow);
+  const backToList = (): void => {
+    void navigate({ pathname: '/piloci', search: params.toString() });
+  };
 
   const columns: Column<AccountRow>[] = [
     { key: 'code', header: 'Kod', cellClass: 'reg', render: (row) => row.code },
@@ -105,6 +120,22 @@ export function AccountsScreen() {
     },
   ];
 
+  const queueColumns: Column<RegistrationRow>[] = [
+    { key: 'name', header: 'Imię u Google', cellClass: 'cell-strong', render: (row) => row.name },
+    { key: 'email', header: 'E-mail', cellClass: 'cell-sub', render: (row) => row.email },
+    { key: 'since', header: 'Czeka od', cellClass: 'cell-sub', render: (row) => row.sinceLabel },
+    {
+      key: 'actions',
+      header: '',
+      cellClass: 'row-actions',
+      render: (row) => (
+        <LinkButton to={`/piloci/zgloszenia/${encodeURIComponent(row.subject)}`} size="sm" variant="primary">
+          Rozpatrz
+        </LinkButton>
+      ),
+    },
+  ];
+
   return (
     <>
       <PageHead
@@ -120,6 +151,22 @@ export function AccountsScreen() {
           ) : undefined
         }
       />
+
+      {registrations.error == null ? null : (
+        <Banner tone="danger">{errorMessage(registrations.error)}</Banner>
+      )}
+
+      {queue.length === 0 ? null : (
+        <Card title={`ZGŁOSZENIA · ${queue.length}`}>
+          <DataTable
+            caption="Zgłoszenia czekające na decyzję"
+            columns={queueColumns}
+            rows={queue}
+            rowKey={(row) => `${row.provider}:${row.subject}`}
+            onRowClick={(row) => navigate(`/piloci/zgloszenia/${encodeURIComponent(row.subject)}`)}
+          />
+        </Card>
+      )}
 
       <div className="filters">
         <SearchInput
@@ -164,7 +211,16 @@ export function AccountsScreen() {
           listPending={pilots.isPending}
           manages={manages}
           selfId={session?.pilot.id ?? null}
-          onClose={() => navigate({ pathname: '/piloci', search: params.toString() })}
+          onClose={backToList}
+        />
+      )}
+
+      {subject == null ? null : (
+        <RegistrationDrawer
+          subject={subject}
+          registrations={registrations.data?.items ?? null}
+          listPending={registrations.isPending}
+          onClose={backToList}
         />
       )}
     </>
@@ -201,7 +257,7 @@ function EmptyAccounts({
     <EmptyState
       icon={<PeopleIcon size={20} />}
       title="Nie ma jeszcze żadnego pilota"
-      note="Konta zakłada administrator - aplikacja nie ma rejestracji."
+      note="Dodaj konto z adresem Google pilota albo poczekaj na jego zgłoszenie z aplikacji."
       action={
         manages ? (
           <LinkButton to="/piloci/nowy" variant="primary">

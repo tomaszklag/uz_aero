@@ -26,7 +26,8 @@ import { describe, expect, it } from 'vitest';
 import type { Queryable } from '../src/application/common/ports.ts';
 import type { EventListFilter } from '../src/application/admin/ports.ts';
 import { PgAdminEventsReadRepo } from '../src/infrastructure/pg/admin/eventsReadRepo.ts';
-import { TEST_PASSWORD, testHarness } from './helpers.ts';
+import { testHarness } from './helpers.ts';
+import { googleTokenFor } from './testIdentityProvider.ts';
 
 type Harness = Awaited<ReturnType<typeof testHarness>>;
 
@@ -38,8 +39,8 @@ const bearer = (t: string) => ({ authorization: `Bearer ${t}` });
 async function token(app: Harness['app'], who: string): Promise<string> {
   const res = await app.inject({
     method: 'POST',
-    url: '/auth/login',
-    payload: { login: who, password: TEST_PASSWORD },
+    url: '/auth/google',
+    payload: { idToken: googleTokenFor(who) },
   });
   return res.json().token as string;
 }

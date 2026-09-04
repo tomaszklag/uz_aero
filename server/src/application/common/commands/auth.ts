@@ -1,7 +1,7 @@
 /**
  * UZ Aero (serwer) - komendy uwierzytelnienia (§3.0, §4.6).
  *
- * `login` to jedyna operacja w systemie, która WYMAGA sieci po stronie telefonu
+ * Logowanie to jedyna operacja w systemie, która WYMAGA sieci po stronie telefonu
  * (jednorazowe provisioning) - dlatego jej wynik niesie wszystko, czego aplikacja
  * potrzebuje do pracy offline: tożsamość, parę tokenów. Cache referencyjny telefon
  * dociąga osobnym zapytaniem.
@@ -9,11 +9,24 @@
  * Model tokenów (decyzja 2026-07-22): JWT krótki (praca z API), refresh długi
  * i ROTOWANY (jednorazowy - zużycie wydaje następny). Wygasły JWT nie wylogowuje:
  * telefon po prostu odświeża przy najbliższej sieci.
+ *
+ * ══ HASŁA ZNIKŁY (2026-09-04, `docs/logowanie-google.md`) ══
+ * Jedyną drogą do konta jest dostawca zewnętrzny. Konsekwencja, którą widać w tym
+ * pliku: `verifyCredentials` i wyrównywanie czasu odpowiedzi przy nieznanym loginie
+ * przestały istnieć, bo nie ma już sekretu, którego trzeba bronić przed enumeracją -
+ * tożsamości dowodzi podpisany token Google, a nie coś, co użytkownik wpisuje.
+ *
+ * ══ TU ZAPADA DECYZJA O DOSTĘPIE I MA DOKŁADNIE JEDEN KSZTAŁT ══
+ * `linked` → tokeny. Wszystko inne → BRAK tokenu pilota. Nie ma tu stanu pośredniego
+ * „trochę zalogowany": zgłoszenie dostaje token REJESTRACYJNY, który otwiera jedną
+ * trasę i nie jest tożsamością (patrz `TokenService` w portach).
  */
 
 import type {
   Clock,
-  PasswordHasher,
+  ExternalIdentitiesPort,
+  ExternalIdentity,
+  IdentityProviderPort,
   PilotAccount,
   PilotsPort,
   RefreshTokensPort,
@@ -26,6 +39,15 @@ export const ACCESS_TTL_SEC = 60 * 60;
 
 /** Czas życia refresh tokenu (dni) - pokrywa sezon pracy w terenie bez logowania. */
 export const REFRESH_TTL_DAYS = 90;
+
+/**
+ * Czas życia tokenu ZGŁOSZENIA (dni).
+ *
+ * Długi, bo mierzy cierpliwość administratora, nie pilota: człowiek, który zgłosił się
+ * w piątek, ma po weekendzie zobaczyć swój stan bez przechodzenia przez Google od nowa.
+ * Ryzyko jest znikome - token nie jest tożsamością i otwiera jedną trasę tylko do odczytu.
+ */
+export const REGISTRATION_TTL_DAYS = 30;
 
 /**
  * Czas życia sesji panelu (s) - jeden dzień pracy przy biurku.
@@ -48,12 +70,29 @@ export interface AuthTokens {
   pilot: { id: string; code: string; name: string; role: PilotRole };
 }
 
-export type LoginResult =
-  | { ok: true; tokens: AuthTokens }
-  /** Jeden kod dla złego loginu i złego hasła - nie zdradzamy, które konta istnieją. */
-  | { ok: false; reason: 'invalid_credentials' | 'account_disabled' };
+/**
+ * Zgłoszenie tak, jak widzi je EKRAN `00c`/`00d` - imię i e-mail Z GOOGLE, nie z konta
+ * pilota (konta jeszcze nie ma). Powód odrzucenia jedzie razem, bo `00d` go cytuje.
+ */
+export interface RegistrationView {
+  provider: string;
+  name: string;
+  email: string;
+  status: 'pending' | 'rejected';
+  rejectReason: string | null;
+  createdAt: Date;
+}
 
-/** Konto tak, jak widzi je panel po zalogowaniu - bez hasła i bez pól technicznych. */
+export type ProviderLoginResult =
+  | { ok: true; tokens: AuthTokens }
+  /** Podpis, `iss`, `aud` albo termin nie przeszły - albo to nie jest nasz token. */
+  | { ok: false; reason: 'invalid_token' }
+  | { ok: false; reason: 'account_disabled' }
+  /** Zgłoszenie przyjęte i czeka (202) - jedyny wynik z tokenem rejestracyjnym. */
+  | { ok: false; reason: 'pending'; registration: RegistrationView; registrationToken: string }
+  | { ok: false; reason: 'rejected'; registration: RegistrationView };
+
+/** Konto tak, jak widzi je panel po zalogowaniu - bez pól technicznych. */
 export interface PanelPilot {
   id: string;
   code: string;
@@ -70,50 +109,96 @@ export interface PanelSession {
 
 export type PanelLoginResult =
   | { ok: true; session: PanelSession }
+  | { ok: false; reason: 'invalid_token' }
+  | { ok: false; reason: 'account_disabled' }
   /**
-   * `no_panel_access` jest ODRĘBNY od `invalid_credentials` i to jest decyzja
-   * produktowa z mockupu A00: konto pilota loguje się POPRAWNIE, a odbija się o rolę -
-   * i ma zobaczyć dlaczego („panel jest dla administratora i szefa wyszkolenia; pilot
-   * pracuje w aplikacji na telefonie"), zamiast dostać nieprawdziwe „złe hasło".
-   * Enumeracji kont to nie otwiera: żeby zobaczyć ten komunikat, trzeba już znać hasło.
+   * Konto Google BEZ konta pilota - zgłoszenie czeka albo zostało odrzucone.
+   * Odrębne od `no_panel_access`, bo to są dwie różne wiadomości: „nie ma jeszcze
+   * takiego konta" kontra „konto jest, ale panel go nie obejmuje".
    */
-  | { ok: false; reason: 'invalid_credentials' | 'account_disabled' | 'no_panel_access' };
+  | { ok: false; reason: 'not_registered' }
+  /**
+   * `no_panel_access` jest ODRĘBNY i to jest decyzja produktowa z mockupu A00: konto
+   * pilota loguje się POPRAWNIE, a odbija się o rolę - i ma zobaczyć dlaczego („panel
+   * jest dla administratora; pilot pracuje w aplikacji na telefonie").
+   */
+  | { ok: false; reason: 'no_panel_access' };
+
+/**
+ * Odpowiedź `GET /auth/registration`. `approved` niesie TOKENY, bo pilot zatwierdzony
+ * w międzyczasie ma wejść do aplikacji bez ponownego przechodzenia przez Google.
+ * `unknown` = zgłoszenia nie ma (odwołane, konto skasowane albo wyłączone).
+ */
+export type RegistrationStatus =
+  | { kind: 'pending' | 'rejected'; registration: RegistrationView }
+  | { kind: 'approved'; tokens: AuthTokens }
+  | { kind: 'unknown' };
 
 export class AuthCommands {
   constructor(
     private readonly pilots: PilotsPort,
     private readonly refreshTokens: RefreshTokensPort,
-    private readonly hasher: PasswordHasher,
+    private readonly identities: ExternalIdentitiesPort,
+    private readonly provider: IdentityProviderPort,
     private readonly tokens: TokenService,
     private readonly clock: Clock,
   ) {}
 
-  async login(login: string, password: string): Promise<LoginResult> {
-    const checked = await this.verifyCredentials(login, password);
-    if (!checked.ok) return checked;
+  /** Logowanie telefonu (§3.0) - prowisioning urządzenia albo zgłoszenie do zatwierdzenia. */
+  async loginWithProvider(idToken: string): Promise<ProviderLoginResult> {
+    const resolved = await this.resolve(idToken);
+    if (resolved.kind === 'invalid') return { ok: false, reason: 'invalid_token' };
+    if (resolved.kind === 'rejected') {
+      return { ok: false, reason: 'rejected', registration: viewOf(resolved.identity) };
+    }
+    if (resolved.kind === 'pending') {
+      return {
+        ok: false,
+        reason: 'pending',
+        registration: viewOf(resolved.identity),
+        registrationToken: this.tokens.signRegistration(
+          { provider: resolved.identity.provider, subject: resolved.identity.subject },
+          REGISTRATION_TTL_DAYS * 24 * 3600,
+        ),
+      };
+    }
+    if (!resolved.account.active) return { ok: false, reason: 'account_disabled' };
 
-    return { ok: true, tokens: await this.issueFor(checked.account) };
+    await this.identities.markLogin(
+      resolved.identity.provider,
+      resolved.identity.subject,
+      this.clock.now(),
+    );
+    return { ok: true, tokens: await this.issueFor(resolved.account) };
   }
 
   /**
-   * Logowanie do PANELU: te same poświadczenia, inny wynik.
+   * Logowanie do PANELU: ten sam dostawca, inny wynik.
    *
-   * Panel loguje się tą samą komendą co telefon (`application/common/` znaczy „obie
-   * powierzchnie"), bo weryfikacja hasła - razem z wyrównaniem czasu odpowiedzi przy
-   * nieznanym loginie - ma jedną implementację. Różnice są dwie i obie są istotne:
+   * Różnice wobec telefonu są dwie i obie są istotne:
    *  • brama `panel.access` - konto bez roli panelu NIE DOSTAJE sesji (nie tylko
    *    pustego ekranu): token, którym nic nie wolno, byłby poświadczeniem bez powodu;
    *  • brak refresh tokenu - przeglądarka nie dostaje drugiego poświadczenia (§8.4).
-   *    Wołanie `login()` „dla wygody" i porzucanie refresha zostawiałoby wiersz
-   *    w `refresh_tokens` po każdym wejściu do panelu, czyli martwe sesje bez końca.
+   *    Wołanie `loginWithProvider()` „dla wygody" i porzucanie refresha zostawiałoby
+   *    wiersz w `refresh_tokens` po każdym wejściu do panelu, czyli martwe sesje bez końca.
+   *
+   * Zgłoszenie NIE dostaje tu tokenu rejestracyjnego: ekran oczekiwania jest funkcją
+   * aplikacji pilota, a nie back-office'u.
    */
-  async panelLogin(login: string, password: string): Promise<PanelLoginResult> {
-    const checked = await this.verifyCredentials(login, password);
-    if (!checked.ok) return checked;
+  async panelLoginWithProvider(idToken: string): Promise<PanelLoginResult> {
+    const resolved = await this.resolve(idToken);
+    if (resolved.kind === 'invalid') return { ok: false, reason: 'invalid_token' };
+    if (resolved.kind !== 'linked') return { ok: false, reason: 'not_registered' };
+    if (!resolved.account.active) return { ok: false, reason: 'account_disabled' };
 
-    const { id, code, name, role } = checked.account;
+    const { id, code, name, role } = resolved.account;
     if (!can(role, 'panel.access')) return { ok: false, reason: 'no_panel_access' };
 
+    await this.identities.markLogin(
+      resolved.identity.provider,
+      resolved.identity.subject,
+      this.clock.now(),
+    );
     return {
       ok: true,
       session: {
@@ -121,6 +206,41 @@ export class AuthCommands {
         ttlSec: ADMIN_SESSION_TTL_SEC,
         pilot: { id, code, name, role },
       },
+    };
+  }
+
+  /**
+   * Odczyt tokenu ZGŁOSZENIA - `null`, gdy to nie jest token rejestracyjny.
+   *
+   * Metoda stoi tutaj, a nie w trasie z wstrzykniętym `TokenService`, żeby warstwa HTTP
+   * została cienka i żeby istniało jedno miejsce, w którym widać komplet: kto wydaje
+   * ten token (`loginWithProvider`) i kto go przyjmuje.
+   */
+  verifyRegistrationToken(token: string): { provider: string; subject: string } | null {
+    return this.tokens.verifyRegistration(token);
+  }
+
+  /**
+   * Stan zgłoszenia dla ekranu `00c` - odpowiedź na token REJESTRACYJNY.
+   *
+   * Zwraca też wynik `approved`, i to jest cała wartość tej trasy: pilot zatwierdzony
+   * w międzyczasie ma wejść do aplikacji bez przechodzenia przez Google od nowa.
+   */
+  async registrationStatus(provider: string, subject: string): Promise<RegistrationStatus> {
+    const identity = await this.identities.find(provider, subject);
+    if (identity == null) return { kind: 'unknown' };
+
+    if (identity.status === 'linked' && identity.pilotId != null) {
+      const account = await this.pilots.findById(identity.pilotId);
+      // Konto zatwierdzone, a potem wyłączone: nie ma tokenów i nie ma zgłoszenia -
+      // z punktu widzenia ekranu to jest stan „to konto już nie działa".
+      if (account == null || !account.active) return { kind: 'unknown' };
+      return { kind: 'approved', tokens: await this.issueFor(account) };
+    }
+
+    return {
+      kind: identity.status === 'rejected' ? 'rejected' : 'pending',
+      registration: viewOf(identity),
     };
   }
 
@@ -150,29 +270,41 @@ export class AuthCommands {
   }
 
   /**
-   * Wspólny rdzeń obu logowań: konto + hasło → konto ALBO powód odmowy.
+   * Wspólny rdzeń obu logowań: token dostawcy → stan tożsamości.
    *
-   * Hasło weryfikujemy TAKŻE dla nieistniejącego konta (stały koszt odpowiedzi) -
-   * inaczej czas odpowiedzi zdradzałby, które loginy istnieją. To zabezpieczenie ma
-   * jedną implementację właśnie dlatego, że druga kopia prędzej czy później zgubiłaby
-   * ten `else`, a różnicy czasów nie widać w żadnym teście funkcjonalnym.
+   * Tu mieszka PODPIĘCIE KONTA PO ZWERYFIKOWANYM E-MAILU (`docs/logowanie-google.md` §6) -
+   * jedyne miejsce w systemie, w którym e-mail cokolwiek uwierzytelnia. Stoi to na dwóch
+   * warunkach naraz: dostawca potwierdza adres (`emailVerified`), a `pilots.email` wpisuje
+   * wyłącznie administrator w panelu albo seed, więc jest to lista dopuszczonych pod jego
+   * kontrolą, nie dane od użytkownika. Po podpięciu `subject` jest przypięty na stałe
+   * i e-mail nie bierze już udziału w logowaniu nigdy więcej.
    */
-  private async verifyCredentials(
-    login: string,
-    password: string,
-  ): Promise<
-    | { ok: true; account: PilotAccount }
-    | { ok: false; reason: 'invalid_credentials' | 'account_disabled' }
-  > {
-    const account = await this.pilots.findByLogin(login);
-    const valid =
-      account != null
-        ? await this.hasher.verify(password, account.passwordHash)
-        : ((await this.hasher.verify(password, DUMMY_HASH)), false);
+  private async resolve(idToken: string): Promise<Resolved> {
+    const profile = await this.provider.verifyIdToken(idToken);
+    if (profile == null) return { kind: 'invalid' };
 
-    if (account == null || !valid) return { ok: false, reason: 'invalid_credentials' };
-    if (!account.active) return { ok: false, reason: 'account_disabled' };
-    return { ok: true, account };
+    let identity = await this.identities.find(profile.provider, profile.subject);
+
+    if (identity == null) {
+      if (profile.emailVerified) {
+        const claimed = await this.identities.claimByVerifiedEmail(profile);
+        if (claimed != null) identity = claimed;
+      }
+      identity ??= await this.identities.createPending(profile);
+    }
+
+    if (identity.status === 'rejected') return { kind: 'rejected', identity };
+    if (identity.status !== 'linked' || identity.pilotId == null) {
+      return { kind: 'pending', identity };
+    }
+
+    const account = await this.pilots.findById(identity.pilotId);
+    // Tożsamość wskazuje konto, którego nie ma: `ON DELETE CASCADE` czyni to stanem
+    // niemożliwym, ale odpowiedź „czekaj na zatwierdzenie" jest tu jedyną sensowną -
+    // dostępu nie ma, a zgłoszenie fizycznie istnieje.
+    if (account == null) return { kind: 'pending', identity };
+
+    return { kind: 'linked', identity, account };
   }
 
   private async issueFor(account: PilotAccount): Promise<AuthTokens> {
@@ -188,10 +320,17 @@ export class AuthCommands {
   }
 }
 
-/**
- * Hash-wydmuszka do wyrównania czasu odpowiedzi przy nieznanym loginie.
- * Poprawny format scrypt; hasła, które by go spełniało, nikt nie zna.
- */
-const DUMMY_HASH =
-  'scrypt$32768$8$1$AAAAAAAAAAAAAAAAAAAAAA==$' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==';
+type Resolved =
+  | { kind: 'invalid' }
+  | { kind: 'pending'; identity: ExternalIdentity }
+  | { kind: 'rejected'; identity: ExternalIdentity }
+  | { kind: 'linked'; identity: ExternalIdentity; account: PilotAccount };
+
+const viewOf = (identity: ExternalIdentity): RegistrationView => ({
+  provider: identity.provider,
+  name: identity.name,
+  email: identity.email,
+  status: identity.status === 'rejected' ? 'rejected' : 'pending',
+  rejectReason: identity.rejectReason,
+  createdAt: identity.createdAt,
+});

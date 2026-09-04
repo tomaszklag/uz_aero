@@ -237,9 +237,9 @@ export class PgAdminPilotsRepo implements PilotsAdminPort {
 
   async insert(tx: Queryable, account: NewPilotAccount): Promise<void> {
     await tx.query(
-      `INSERT INTO pilots (id, code, name, email, password_hash, active, role)
-       VALUES ($1, $2, $3, $4, $5, TRUE, $6)`,
-      [account.id, account.code, account.name, account.email, account.passwordHash, account.role],
+      `INSERT INTO pilots (id, code, name, email, active, role)
+       VALUES ($1, $2, $3, $4, TRUE, $5)`,
+      [account.id, account.code, account.name, account.email, account.role],
     );
   }
 
@@ -287,21 +287,6 @@ export class PgAdminPilotsRepo implements PilotsAdminPort {
     );
   }
 
-  async setPasswordHash(
-    tx: Queryable,
-    id: string,
-    passwordHash: string,
-    at: Date,
-  ): Promise<void> {
-    await tx.query(
-      `UPDATE pilots
-          SET password_hash = $2,
-              credentials_valid_from = GREATEST(credentials_valid_from, $3::timestamptz),
-              updated_at = now()
-        WHERE id = $1`,
-      [id, passwordHash, at.toISOString()],
-    );
-  }
 
   async countActiveAdmins(tx: Queryable): Promise<number> {
     const { rows } = await tx.query<{ n: string }>(

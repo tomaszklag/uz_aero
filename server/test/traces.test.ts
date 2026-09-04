@@ -10,13 +10,14 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { TEST_PASSWORD, testHarness } from './helpers.ts';
+import { testHarness } from './helpers.ts';
+import { googleTokenFor } from './testIdentityProvider.ts';
 
 async function login(app: Awaited<ReturnType<typeof testHarness>>['app']) {
   const res = await app.inject({
     method: 'POST',
-    url: '/auth/login',
-    payload: { login: 'TMK', password: TEST_PASSWORD },
+    url: '/auth/google',
+    payload: { idToken: googleTokenFor('TMK') },
   });
   return res.json().token as string;
 }

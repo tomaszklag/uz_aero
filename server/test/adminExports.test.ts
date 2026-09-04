@@ -23,7 +23,8 @@ import type {
   Queryable,
   SheetsPort,
 } from '../src/application/common/ports.ts';
-import { ADMIN_CSRF_HEADERS, TEST_PASSWORD, testHarness } from './helpers.ts';
+import { ADMIN_CSRF_HEADERS, testHarness } from './helpers.ts';
+import { googleTokenFor } from './testIdentityProvider.ts';
 
 const DAY = Date.UTC(2026, 5, 22);
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -208,8 +209,8 @@ async function flakyHarness() {
 async function login(app: Harness['app'], who: string): Promise<string> {
   const res = await app.inject({
     method: 'POST',
-    url: '/auth/login',
-    payload: { login: who, password: TEST_PASSWORD },
+    url: '/auth/google',
+    payload: { idToken: googleTokenFor(who) },
   });
   return res.json().token as string;
 }

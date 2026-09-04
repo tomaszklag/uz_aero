@@ -743,3 +743,78 @@ operacji) i sąsiadów wpisu ręcznego (`readings-chain`).
 Nowe stany aplikacji pilota (baner na 01, baner i wiersz osi na 10, plakietka kafelka)
 powstały w kodzie bez makiet w `design/`. Reguła „ekran wdrażamy 1:1 z `design/*.html`"
 zostaje w mocy - makiety trzeba dorobić, a rozjazd jest zgłoszony właścicielowi.
+
+## 12. Logowanie Google i zgłoszenia rejestracyjne (2026-09-04)
+
+Decyzje produktu i model danych: `docs/logowanie-google.md`. Tu wyłącznie to, co panel
+robi inaczej, niż mógłby - i dlaczego.
+
+### 12.1 Ekran logowania: jeden przycisk, który rysuje Google
+
+`LoginScreen` ma znak, baner odmowy i pusty kontener `.login-google`, w który skrypt
+Google Identity Services wstawia własny przycisk (`admin/src/auth/googleIdentity.ts` -
+jedyne miejsce panelu, które wie o tym skrypcie). Pola loginu i hasła zniknęły razem
+z hasłami.
+
+- **Identyfikator klienta przychodzi z serwera** (`GET /admin/api/auth/google-client`,
+  trasa publiczna), a nie z builda: panel to statyczne pliki spod `admin/dist` i te
+  same pliki mają działać na każdym wdrożeniu. Identyfikator nie jest sekretem - stoi
+  w każdym żądaniu do Google; konta chroni weryfikacja `aud` po stronie serwera.
+- **Dopóki przycisku nie ma, stoi plamka w jego geometrii** (`.login-google-skeleton`,
+  44 px, pigułka) - nigdy pustka i nigdy spinner, jak przy tabelach.
+- **CSP statycznego buildu ma odtąd JEDEN obcy origin**: cztery dyrektywy dopuszczają
+  dokładnie ścieżki `accounts.google.com/gsi/` z dokumentacji GIS i nic szerszego
+  (`server/src/http/routes/admin/staticPanel.ts`). Każda zaczyna się od `'self'`, bo
+  jawna dyrektywa przesłania `default-src`.
+- **Trzy odmowy, trzy zdania** (`loginMessage.ts`): konto Google bez konta w klubie
+  (`not_registered` - „poproś administratora o dodanie"), konto pilota bez panelu
+  (`no_panel_access`), konto wyłączone (`account_disabled` - mówione WPROST, bo
+  tożsamość jest już potwierdzona podpisem i nie ma czego ukrywać). „Złe hasło"
+  przestało istnieć; został „nie udało się potwierdzić konta Google".
+
+### 12.2 Kolejka zgłoszeń w module PILOCI
+
+- **Stoi NAD listą pilotów i tylko wtedy, gdy ktoś czeka.** Kolejka jest zadaniem do
+  zrobienia, lista - stanem; pusta kolejka nie dostaje karty z zerem (reguła SyncChipa:
+  stan domyślny nie zajmuje ekranu). Osobnego modułu nie ma: zatwierdzenie ZAKŁADA
+  konto, więc kontekstem decyzji jest lista, do której to konto trafi.
+- **Wszystkie trasy `/admin/api/registrations*` na `accounts.manage` - także ODCZYT**,
+  inaczej niż zgłoszenia błędów (tam lista jedzie na `panel.access`). Lista zgłoszeń to
+  e-maile i imiona ludzi SPOZA klubu; kto nie może założyć konta, nie ma powodu ich
+  oglądać. `useRegistrations` dostaje `enabled` z tej zdolności, żeby konto bez niej nie
+  wysyłało żądania, które wróci 403 czerwonym banerem nad listą, którą oglądać może.
+- **Karta zgłoszenia** (`#/piloci/zgloszenia/:subject`, `RegistrationDrawer`) to
+  formularz konta BEZ e-maila: adres jest tożsamością Google i administrator go nie
+  wpisuje. Kod podpowiada się z inicjałów (`proposeCode`, ogonki do ASCII, do czterech
+  liter), imię z Google jest punktem wyjścia, rola domyślnie `pilot`. Dwa przyciski,
+  żaden domyślny.
+- **Odrzucenie wymaga powodu i mówi, kto go przeczyta**: podpowiedź pola brzmi „ten
+  tekst zobaczy zgłaszający na swoim telefonie" - powód jedzie na ekran `00d`, nie do
+  dziennika. Trasa serwera odbija pusty powód `400`.
+- **Po decyzji karta zamienia się w podsumowanie** (jedno zdanie i „Zamknij"): formularz
+  pod spodem obiecywałby drugą decyzję, a ta odbiłaby się o `already_decided`. Wyścig
+  dwóch decyzji rozstrzyga SQL (`... AND status = 'pending'`), panel dostaje 409 ze
+  statusem i mówi, jaka decyzja już zapadła.
+- **Zatwierdzenie unieważnia DWIE listy** (`useRegistrationCommands`): zgłoszeń i
+  pilotów - bo zakłada konto. Zwróconego konta nie wstawia do cache'u, jak reszta
+  mutacji na kontach.
+
+### 12.3 Karta konta bez haseł
+
+- Zniknęły: karta z hasłem pokazanym raz, „Ustaw nowe hasło", `PilotSecretDto`,
+  `resetPilotPassword`. Po założeniu konta karta mówi JEDNO zdanie: kto i jakim kontem
+  Google wejdzie - „przy pierwszym logowaniu konto podepnie się samo".
+- **E-mail jest wymagany PRZY ZAKŁADANIU** (`missingEmail` w `AccountDrawer`), bo konto
+  bez adresu Google nie ma jak wejść; przy edycji nie - wymóg blokowałby niezwiązaną
+  poprawkę na starym wierszu (ta sama reguła, co „Aktualny stan" na karcie samolotu).
+  Etykieta pola: „E-mail konta Google", podpowiedź mówi o skutku braku.
+- **Zerwanie sesji ma jedną drogę: „Wyłącz konto"** (i ponowne włączenie, gdy dostęp ma
+  wrócić). Reset hasła był drugą i zniknął razem z hasłem; `setActive` przesuwa
+  `credentials_valid_from`, aktywacja go nie cofa, więc skutek jest ten sam.
+
+### 12.4 Lustro statusu zgłoszenia
+
+`RegistrationStatusDto` ma lustro w `test/mirrors.test.ts` jak pozostałe unie - z inną
+ścieżką po stronie serwera (`application/common/ports.ts`, nie `domain/`), bo status
+tożsamości jest kształtem magazynu, nie regułą klubu. Powód lustra ten sam: status
+dodany na serwerze i nieznany panelowi wyciekłby na ekran surowym napisem.

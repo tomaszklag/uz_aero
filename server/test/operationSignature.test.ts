@@ -17,7 +17,8 @@
 import { operationIndexes, projectSession, type Event } from '@uzaero/domain';
 import { describe, expect, it } from 'vitest';
 
-import { ADMIN_CSRF_HEADERS, TEST_PASSWORD, testHarness } from './helpers.ts';
+import { ADMIN_CSRF_HEADERS, testHarness } from './helpers.ts';
+import { googleTokenFor } from './testIdentityProvider.ts';
 
 type Harness = Awaited<ReturnType<typeof testHarness>>;
 
@@ -124,8 +125,8 @@ function operation(o: OperationOptions) {
 async function token(app: Harness['app'], who: string): Promise<string> {
   const res = await app.inject({
     method: 'POST',
-    url: '/auth/login',
-    payload: { login: who, password: TEST_PASSWORD },
+    url: '/auth/google',
+    payload: { idToken: googleTokenFor(who) },
   });
   return res.json().token as string;
 }

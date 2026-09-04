@@ -15,18 +15,19 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { ADMIN_CSRF_HEADERS, TEST_PASSWORD, testHarness } from './helpers.ts';
+import { ADMIN_CSRF_HEADERS, TEST_GOOGLE_WEB_CLIENT_ID, testHarness } from './helpers.ts';
+import { googleTokenFor, googleTokenForStranger } from './testIdentityProvider.ts';
 
 type Harness = Awaited<ReturnType<typeof testHarness>>;
 
 const ADMIN_SESSION_TTL_SEC = 8 * 60 * 60;
 
-function panelLogin(app: Harness['app'], login: string, password = TEST_PASSWORD) {
+function panelLogin(app: Harness['app'], who: string, idToken = googleTokenFor(who)) {
   return app.inject({
     method: 'POST',
     url: '/admin/api/auth/login',
     headers: ADMIN_CSRF_HEADERS,
-    payload: { login, password },
+    payload: { idToken },
   });
 }
 
@@ -95,22 +96,50 @@ describe('logowanie do panelu wydaje ciasteczko, nie token w ciele', () => {
     });
   });
 
-  it('złe hasło i nieistniejące konto dają IDENTYCZNĄ odpowiedź (A00a)', async () => {
+  it('token nie do zweryfikowania → 401 bez ciasteczka, bez wskazywania konta', async () => {
+    // Po wejściu Google nie ma już „złego hasła": tożsamości dowodzi podpis, więc
+    // jedyną odmową na tym poziomie jest „tego tokenu nie umiem sprawdzić". Odpowiedź
+    // nie mówi niczego o kontach - to samo dostaje token podrobiony i token cudzej
+    // aplikacji.
     const { app } = await testHarness();
 
-    const wrongPassword = await panelLogin(app, 'TMK', 'nie-to-haslo');
-    const noSuchAccount = await panelLogin(app, 'NIE-MA-TAKIEGO', 'nie-to-haslo');
+    const badToken = await panelLogin(app, 'TMK', 'nie-jest-tokenem');
+    const alsoBad = await panelLogin(app, 'NIE-MA-TAKIEGO', 'tez-nie-jest');
 
-    expect(wrongPassword.statusCode).toBe(401);
-    expect(noSuchAccount.statusCode).toBe(401);
-    expect(wrongPassword.json()).toEqual({ error: 'invalid_credentials' });
-    expect(noSuchAccount.json()).toEqual(wrongPassword.json());
-    expect(setCookieHeader(wrongPassword)).toBe('');
+    expect(badToken.statusCode).toBe(401);
+    expect(alsoBad.statusCode).toBe(401);
+    expect(badToken.json()).toEqual({ error: 'invalid_token' });
+    expect(alsoBad.json()).toEqual(badToken.json());
+    expect(setCookieHeader(badToken)).toBe('');
+  });
+
+  it('konto Google BEZ konta pilota → 403 `not_registered`, nie „złe poświadczenia"', async () => {
+    // Odrębna wiadomość od `no_panel_access`: tam konto istnieje i nie obejmuje panelu,
+    // tu konta jeszcze nie ma, bo zgłoszenie czeka na zatwierdzenie.
+    const { app } = await testHarness();
+    const res = await panelLogin(app, 'nieznajomy', googleTokenForStranger('obcy'));
+
+    expect(res.statusCode).toBe(403);
+    expect(res.json()).toEqual({ error: 'not_registered' });
+    expect(setCookieHeader(res)).toBe('');
+  });
+});
+
+describe('konfiguracja przycisku Google - `GET /admin/api/auth/google-client`', () => {
+  it('jest PUBLICZNA i oddaje identyfikator klienta WEB - pyta o nią ekran logowania', async () => {
+    // Bez sesji, bez nagłówka CSRF (to GET): ktoś, kto dopiero ma się zalogować, musi
+    // dostać identyfikator, żeby skrypt Google narysował przycisk. Identyfikator nie
+    // jest sekretem - konta chroni weryfikacja `aud`, nie tajność tej liczby.
+    const { app } = await testHarness();
+    const res = await app.inject({ method: 'GET', url: '/admin/api/auth/google-client' });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ clientId: TEST_GOOGLE_WEB_CLIENT_ID });
   });
 });
 
 describe('konto bez `panel.access` nie dostaje sesji panelu', () => {
-  it('pilot z POPRAWNYM hasłem odbija się o rolę - 403 z powodem, bez ciasteczka', async () => {
+  it('pilot z POPRAWNYM kontem Google odbija się o rolę - 403 z powodem, bez ciasteczka', async () => {
     // Mockup A00 mówi to wprost: „konto pilota zaloguje się poprawnie, ale zobaczy
     // komunikat". Odpowiedź musi więc być ODRÓŻNIALNA od złego hasła, inaczej pilot
     // szukałby błędu w haśle, którego nie ma.
@@ -127,8 +156,8 @@ describe('konto bez `panel.access` nie dostaje sesji panelu', () => {
     const { app } = await testHarness();
     const phone = await app.inject({
       method: 'POST',
-      url: '/auth/login',
-      payload: { login: 'PWI', password: TEST_PASSWORD },
+      url: '/auth/google',
+      payload: { idToken: googleTokenFor('PWI') },
     });
 
     const me = await app.inject({
@@ -168,8 +197,8 @@ describe('ciasteczko autoryzuje trasy panelu - i nie odbiera tego `Bearer`', () 
     const { app } = await testHarness();
     const phone = await app.inject({
       method: 'POST',
-      url: '/auth/login',
-      payload: { login: 'TMK', password: TEST_PASSWORD },
+      url: '/auth/google',
+      payload: { idToken: googleTokenFor('TMK') },
     });
 
     const me = await app.inject({
@@ -192,8 +221,8 @@ describe('ciasteczko autoryzuje trasy panelu - i nie odbiera tego `Bearer`', () 
     const adminCookie = sessionCookie(await panelLogin(app, 'TMK'));
     const pilot = await app.inject({
       method: 'POST',
-      url: '/auth/login',
-      payload: { login: 'PWI', password: TEST_PASSWORD },
+      url: '/auth/google',
+      payload: { idToken: googleTokenFor('PWI') },
     });
 
     const me = await app.inject({
@@ -254,7 +283,7 @@ describe('CSRF: mutacje panelu wymagają własnego nagłówka', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/admin/api/auth/login',
-      payload: { login: 'TMK', password: TEST_PASSWORD },
+      payload: { idToken: googleTokenFor('TMK') },
     });
 
     expect(res.statusCode).toBe(403);
@@ -275,8 +304,8 @@ describe('CSRF: mutacje panelu wymagają własnego nagłówka', () => {
     const { app } = await testHarness();
     const res = await app.inject({
       method: 'POST',
-      url: '/auth/login',
-      payload: { login: 'TMK', password: TEST_PASSWORD },
+      url: '/auth/google',
+      payload: { idToken: googleTokenFor('TMK') },
     });
     expect(res.statusCode).toBe(200);
   });

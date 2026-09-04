@@ -18,7 +18,8 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { TEST_PASSWORD, testHarness } from './helpers.ts';
+import { testHarness } from './helpers.ts';
+import { googleTokenFor } from './testIdentityProvider.ts';
 
 type App = Awaited<ReturnType<typeof testHarness>>['app'];
 
@@ -55,8 +56,8 @@ function envelope(spec: EventSpec) {
 async function login(app: App, who: string): Promise<string> {
   const res = await app.inject({
     method: 'POST',
-    url: '/auth/login',
-    payload: { login: who, password: TEST_PASSWORD },
+    url: '/auth/google',
+    payload: { idToken: googleTokenFor(who) },
   });
   return res.json().token as string;
 }

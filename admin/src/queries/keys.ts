@@ -10,10 +10,23 @@ import type { FleetListQuery } from '../api/fleet';
 import type { LogRangeQuery, SessionListQuery } from '../api/log';
 import type { BugListQuery } from '../api/bugReports';
 import type { PilotListQuery } from '../api/pilots';
+import type { RegistrationListQuery } from '../api/registrations';
 
 export const keys = {
   /** Tożsamość i zdolności zalogowanego (`GET /admin/api/me`). */
   me: ['me'] as const,
+  /** Identyfikator klienta Google dla przycisku logowania - konfiguracja, nie dane. */
+  googleClient: ['googleClient'] as const,
+
+  /**
+   * Zgłoszenia rejestracyjne (logowanie Google). KORZEŃ obejmuje wszystko, jak przy
+   * zgłoszeniach błędów: jedno pytanie o jednej naturze (kolejka z licznikami).
+   * Zatwierdzenie unieważnia TAKŻE `pilots.all`, bo zakłada konto.
+   */
+  registrations: {
+    all: ['registrations'] as const,
+    list: (query: RegistrationListQuery) => ['registrations', 'list', query] as const,
+  },
 
   /**
    * Konta pilotów.

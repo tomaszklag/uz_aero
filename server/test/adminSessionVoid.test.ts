@@ -22,7 +22,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { FakeSheets } from './fakes/fakeSheets.ts';
-import { ADMIN_CSRF_HEADERS, TEST_PASSWORD, testHarness } from './helpers.ts';
+import { ADMIN_CSRF_HEADERS, testHarness } from './helpers.ts';
+import { googleTokenFor } from './testIdentityProvider.ts';
 
 const DAY = Date.UTC(2026, 5, 22);
 const at = (h: number, m: number): number => DAY + (h * 60 + m) * 60_000;
@@ -36,7 +37,7 @@ type Harness = Awaited<ReturnType<typeof testHarness>>;
 
 function login(app: Harness['app'], who: string): Promise<string> {
   return app
-    .inject({ method: 'POST', url: '/auth/login', payload: { login: who, password: TEST_PASSWORD } })
+    .inject({ method: 'POST', url: '/auth/google', payload: { idToken: googleTokenFor(who) } })
     .then((res) => res.json().token as string);
 }
 

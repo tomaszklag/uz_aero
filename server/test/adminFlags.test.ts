@@ -13,7 +13,8 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { ADMIN_CSRF_HEADERS, TEST_PASSWORD, testHarness } from './helpers.ts';
+import { ADMIN_CSRF_HEADERS, testHarness } from './helpers.ts';
+import { googleTokenFor } from './testIdentityProvider.ts';
 
 const DAY = Date.UTC(2026, 5, 22);
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -91,8 +92,8 @@ type Harness = Awaited<ReturnType<typeof testHarness>>;
 async function login(app: Harness['app'], who: string): Promise<string> {
   const res = await app.inject({
     method: 'POST',
-    url: '/auth/login',
-    payload: { login: who, password: TEST_PASSWORD },
+    url: '/auth/google',
+    payload: { idToken: googleTokenFor(who) },
   });
   return res.json().token as string;
 }

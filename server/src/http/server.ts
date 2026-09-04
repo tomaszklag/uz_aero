@@ -52,6 +52,9 @@ import { registerAdminPanelStatic } from './routes/admin/staticPanel.ts';
 import type { AdminGate } from './routes/admin/adminRoute.ts';
 import { registerAdminAuditRoutes } from './routes/admin/audit.ts';
 import { registerAdminBugReportRoutes } from './routes/admin/bugReports.ts';
+import { registerAdminRegistrationRoutes } from './routes/admin/registrations.ts';
+import type { AdminRegistrationCommands } from '../application/admin/commands/registrations.ts';
+import type { AdminRegistrationQueries } from '../application/admin/queries/registrations.ts';
 import { registerAdminAuthRoutes } from './routes/admin/auth.ts';
 import { registerAdminCorrectionRoutes } from './routes/admin/corrections.ts';
 import { registerAdminDashboardRoutes } from './routes/admin/dashboard.ts';
@@ -204,6 +207,15 @@ export interface ServerDeps {
    */
   adminBugReportQueries: AdminBugReportQueries;
   adminBugReports: AdminBugReportCommands;
+  /** Zgłoszenia rejestracyjne (logowanie Google) - lista, zatwierdzenie, odrzucenie. */
+  adminRegistrationQueries: AdminRegistrationQueries;
+  adminRegistrations: AdminRegistrationCommands;
+  /**
+   * Identyfikator klienta Google WEB - jedyna konfiguracja, jakiej panel potrzebuje
+   * PRZED zalogowaniem (`GET /admin/api/auth/google-client`). Nie sekret: stoi
+   * w każdym żądaniu do Google; konta chroni weryfikacja `aud`, nie tajność liczby.
+   */
+  googleWebClientId: string;
 }
 
 export interface ServerOptions {
@@ -262,7 +274,7 @@ export function buildServer(deps: ServerDeps, options: ServerOptions = {}): Fast
   // i nikt by tego nie zauważył, bo wyglądałoby to jak działający panel.
   const gate: AdminGate = { tokens: deps.tokens, accounts: deps.pilots };
 
-  registerAdminAuthRoutes(app, deps.auth);
+  registerAdminAuthRoutes(app, deps.auth, deps.googleWebClientId);
   registerAdminMeRoutes(app, deps.adminMeQueries, gate);
   registerAdminFlagRoutes(app, deps.adminFlags, deps.adminFlagQueries, gate);
   registerAdminCorrectionRoutes(app, deps.adminCorrections, deps.adminCorrectionQueries, gate);
@@ -287,6 +299,12 @@ export function buildServer(deps: ServerDeps, options: ServerOptions = {}): Fast
   registerAdminConsumptionRoutes(app, deps.adminConsumptionQueries, gate);
   registerAdminMaintenanceRoutes(app, deps.adminMaintenanceQueries, deps.adminMaintenance, gate);
   registerAdminBugReportRoutes(app, deps.adminBugReportQueries, deps.adminBugReports, gate);
+  registerAdminRegistrationRoutes(
+    app,
+    deps.adminRegistrationQueries,
+    deps.adminRegistrations,
+    gate,
+  );
 
   // Statyczny build panelu - na końcu, żeby czytać ten plik w kolejności „API, potem
   // pliki"; w routerze i tak wygrywają trasy konkretne, nie kolejność rejestracji.

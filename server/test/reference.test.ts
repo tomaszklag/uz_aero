@@ -8,13 +8,14 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { TEST_PASSWORD, testHarness } from './helpers.ts';
+import { testHarness } from './helpers.ts';
+import { googleTokenFor } from './testIdentityProvider.ts';
 
 async function authed(app: Awaited<ReturnType<typeof testHarness>>['app']): Promise<string> {
   const login = await app.inject({
     method: 'POST',
-    url: '/auth/login',
-    payload: { login: 'TMK', password: TEST_PASSWORD },
+    url: '/auth/google',
+    payload: { idToken: googleTokenFor('TMK') },
   });
   return login.json().token as string;
 }

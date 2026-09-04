@@ -23,7 +23,8 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { TEST_PASSWORD, testHarness } from './helpers.ts';
+import { testHarness } from './helpers.ts';
+import { googleTokenFor } from './testIdentityProvider.ts';
 
 const DAY = Date.UTC(2026, 5, 22);
 const at = (h: number, m: number, s = 0): number => DAY + (h * 3600 + m * 60 + s) * 1000;
@@ -113,8 +114,8 @@ type Harness = Awaited<ReturnType<typeof testHarness>>;
 async function login(app: Harness['app'], who: string): Promise<string> {
   const res = await app.inject({
     method: 'POST',
-    url: '/auth/login',
-    payload: { login: who, password: TEST_PASSWORD },
+    url: '/auth/google',
+    payload: { idToken: googleTokenFor(who) },
   });
   return res.json().token as string;
 }

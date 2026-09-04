@@ -120,6 +120,8 @@ export interface ApiErrorDto {
   required?: Capability;
   /** 409 `conflict`: KTORE pole jest zajęte - bez tego formularz nie wie, co poprawić. */
   field?: 'code' | 'email' | 'reg';
+  /** 409 `already_decided` (zgłoszenie rejestracyjne): JAKĄ decyzję już podjęto. */
+  status?: string;
   /** 409 `refused`: DLACZEGO odmówiono. Odmowa bez powodu każe zgadywać, czy to awaria. */
   reason?: PilotRefusalDto | FleetRefusalDto;
   /**
@@ -137,17 +139,21 @@ export interface ApiErrorDto {
 /**
  * Jedno konto - wiersz `GET /admin/api/pilots`.
  *
- * Czego tu NIE MA i nie będzie: **hasła** (w bazie jest hash; jawne hasło istnieje
- * wyłącznie w odpowiedzi, która je wytworzyła) i **ostatniego logowania** (kolumny
- * nie ma w `pilots` i nikt jej nie zapisuje - wyliczenie jej z rotacji tokenów byłoby
- * inną wielkością pod tą samą etykietą).
+ * Czego tu NIE MA i nie będzie: **hasła** (hasła zniknęły z produktu 2026-09-04 -
+ * tożsamości dowodzi konto Google) i **ostatniego logowania** (kolumny nie ma
+ * w `pilots` i nikt jej nie zapisuje - wyliczenie jej z rotacji tokenów byłoby inną
+ * wielkością pod tą samą etykietą).
  */
 export interface PilotListItemDto {
   id: string;
-  /** Etykieta w arkuszu klubu i przy wyborze drugiego pilota; działa też jako login. */
+  /** Etykieta w arkuszu klubu i przy wyborze drugiego pilota. */
   code: string;
   name: string;
-  /** `null` = konto bez e-maila; pilot loguje się kodem. To normalny stan. */
+  /**
+   * Adres konta Google, którym pilot się loguje - JEDYNE poświadczenie konta.
+   * `null` = konto bez adresu, czyli takie, do którego nikt nie wejdzie, dopóki
+   * administrator go nie wpisze (`docs/logowanie-google.md` §6).
+   */
   email: string | null;
   active: boolean;
   role: PilotRole;
@@ -161,19 +167,7 @@ export interface PilotPageDto {
 }
 
 /**
- * Odpowiedź akcji, która WYTWORZYŁA hasło (założenie konta, reset).
- *
- * `password` widzimy jeden jedyny raz: nie ma go w bazie, nie ma w dzienniku audytu
- * i nie ma trasy „pokaż ponownie". Panel nie ma prawa go nigdzie zapisać - pokazuje
- * i zapomina razem z zamknięciem formularza.
- */
-export interface PilotSecretDto {
-  pilot: PilotListItemDto;
-  password: string;
-}
-
-/**
- * Odpowiedź zmiany konta bez hasła.
+ * Odpowiedź założenia i zmiany konta.
  *
  * **Wiersza z tej odpowiedzi NIE WSTAWIAMY do tabeli.** Serwer składa go skrótem
  * (`accountToWire` w `server/src/http/routes/admin/pilots.ts`) - mutacja oddaje
@@ -182,6 +176,46 @@ export interface PilotSecretDto {
  */
 export interface PilotChangeDto {
   pilot: PilotListItemDto;
+}
+
+// -- zgłoszenia rejestracyjne (logowanie Google) ---------------------------------
+
+/**
+ * Stan zgłoszenia. LUSTRO `RegistrationStatusWire` z kontraktu serwera
+ * (`server/src/application/admin/contracts/registrations.ts`).
+ */
+export type RegistrationStatusDto = 'pending' | 'linked' | 'rejected';
+
+/**
+ * Jedno zgłoszenie - wiersz kolejki I treść karty w jednym kształcie.
+ *
+ * `email` i `name` pochodzą Z GOOGLE: to jest to, co administrator widzi przy decyzji.
+ * Imię klubowe i kod nadaje dopiero zatwierdzenie; po nim `pilotCode` mówi, kim
+ * ta osoba jest w klubie.
+ */
+export interface RegistrationDto {
+  provider: string;
+  /** `sub` od dostawcy - identyfikator w adresie trasy decyzji i w adresie karty. */
+  subject: string;
+  email: string;
+  name: string;
+  status: RegistrationStatusDto;
+  /** Powód odrzucenia - pilot czyta go na ekranie `00d`, dlatego jest wymagany. */
+  rejectReason: string | null;
+  /** ISO 8601 UTC - pierwsze logowanie tym kontem Google. */
+  createdAt: string;
+  lastLoginAt: string | null;
+  decidedAt: string | null;
+  /** KOD administratora, który zdecydował; `null` = jeszcze bez decyzji. */
+  decidedBy: string | null;
+  pilotId: string | null;
+  pilotCode: string | null;
+}
+
+export interface RegistrationPageDto {
+  items: RegistrationDto[];
+  /** Liczniki po CAŁEJ tabeli - także statusów, których filtr nie pokazuje. */
+  counts: Record<RegistrationStatusDto, number>;
 }
 
 // -- flota ----------------------------------------------------------------------

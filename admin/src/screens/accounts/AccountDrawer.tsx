@@ -1,9 +1,15 @@
 /**
  * UZ Aero - panel 2.0: karta pilota - nowe konto i zmiana istniejącego (`#/piloci/:id`).
  *
- * Trzy sekcje i tyle: kim jest, co mu wolno, jak wchodzi. Panel 1.0 miał w tym miejscu
+ * Trzy sekcje i tyle: kim jest, co mu wolno, czy ma dostęp. Panel 1.0 miał w tym miejscu
  * pięć sekcji, sześć banerów i 2 700 znaków prozy tłumaczącej budowę systemu - w tym
  * cztery wiersze o rodzajach sesji, których pilot nigdy nie zobaczy.
+ *
+ * == HASLA ZNIKLY (2026-09-04, `docs/logowanie-google.md`) ==
+ * Karta nie pokazuje już hasła i nie ma „Ustaw nowe hasło": konto nie dostaje żadnego
+ * poświadczenia. Dostęp daje PIERWSZE logowanie kontem Google o wpisanym e-mailu -
+ * dlatego przy zakładaniu konta e-mail jest wymagany (konto bez niego nie ma jak
+ * wejść), a podsumowanie po założeniu mówi dokładnie to jedno zdanie.
  *
  * == SKUTEK MOWIMY PRZED AKCJA, NIE PO NIEJ ==
  * Wyłączenie konta pyta o potwierdzenie i w pytaniu mówi obie rzeczy, które trzeba
@@ -19,7 +25,6 @@ import type { PilotListItemDto } from '../../api/dto';
 import {
   useCreatePilot,
   useDeletePilot,
-  useResetPilotPassword,
   useSetPilotActive,
   useUpdatePilot,
 } from '../../queries/usePilotCommands';
@@ -64,13 +69,10 @@ export function AccountDrawer({
 
   const [draft, setDraft] = useState<AccountDraft>(EMPTY_ACCOUNT);
   /**
-   * Hasło pokazane raz. `created` znaczy „konto właśnie powstało" i zamienia kartę
-   * w podsumowanie: formularz znika, bo drugie kliknięcie „Utwórz konto" założyłoby
-   * drugie konto o tym samym nazwisku.
+   * Konto właśnie powstało - karta zamienia się w podsumowanie: formularz znika, bo
+   * drugie kliknięcie „Utwórz konto" założyłoby drugie konto o tym samym nazwisku.
    */
-  const [secret, setSecret] = useState<{ name: string; password: string; created: boolean } | null>(
-    null,
-  );
+  const [created, setCreated] = useState<PilotListItemDto | null>(null);
   /**
    * Które potwierdzenie jest otwarte. JEDEN stan, nie dwie flagi: dwa pytania „czy na
    * pewno" naraz w jednej karcie to dwa czerwone bloki, z których człowiek odpowiada
@@ -96,18 +98,15 @@ export function AccountDrawer({
   const create = useCreatePilot();
   const update = useUpdatePilot();
   const setActive = useSetPilotActive();
-  const reset = useResetPilotPassword();
   const remove = useDeletePilot();
 
-  const pending =
-    create.isPending ||
-    update.isPending ||
-    setActive.isPending ||
-    reset.isPending ||
-    remove.isPending;
-  const error = create.error ?? update.error ?? setActive.error ?? reset.error ?? remove.error;
+  const pending = create.isPending || update.isPending || setActive.isPending || remove.isPending;
+  const error = create.error ?? update.error ?? setActive.error ?? remove.error;
 
   const verdict = verdictOf(draft);
+  // Przy ZAKŁADANIU e-mail jest wymagany: bez adresu Google konto nie ma jak wejść.
+  // Przy edycji nie - wymóg blokowałby niezwiązaną poprawkę na starym wierszu.
+  const missingEmail = creating && draft.email.trim() === '';
   const changed = pilot == null ? true : hasChanges(pilot, draft);
   const readOnly = !manages;
 
@@ -125,7 +124,7 @@ export function AccountDrawer({
     if (pilot == null) {
       create.mutate(createBodyOf(draft), {
         onSuccess: (result) => {
-          setSecret({ name: result.pilot.name, password: result.password, created: true });
+          setCreated(result.pilot);
           setDone(null);
         },
       });
@@ -140,13 +139,13 @@ export function AccountDrawer({
   const title = creating ? 'NOWY PILOT' : (pilot?.name ?? 'PILOT').toUpperCase();
   const sub = pilot == null ? 'Nowe konto' : subtitleOf(pilot);
 
-  // Konto właśnie powstało: karta pokazuje wyłącznie hasło i wyjście. Formularz pod
-  // spodem obiecywałby drugi zapis, a on założyłby drugie konto.
-  if (secret?.created === true) {
+  // Konto właśnie powstało: karta pokazuje, JAK ten człowiek wejdzie, i wyjście.
+  // Formularz pod spodem obiecywałby drugi zapis, a on założyłby drugie konto.
+  if (created != null) {
     return (
       <Drawer
         title={title}
-        sub={`${secret.name} · konto założone`}
+        sub={`${created.name} · konto założone`}
         onClose={onClose}
         footer={
           <Button variant="primary" onClick={onClose}>
@@ -154,7 +153,11 @@ export function AccountDrawer({
           </Button>
         }
       >
-        <PasswordCard name={secret.name} password={secret.password} />
+        <Banner tone="ok" live>
+          Konto {created.code} założone. {created.name} wchodzi do aplikacji i panelu
+          kontem Google {created.email ?? ''} - przy pierwszym logowaniu konto podepnie
+          się samo.
+        </Banner>
       </Drawer>
     );
   }
@@ -178,7 +181,9 @@ export function AccountDrawer({
             <Button
               variant="primary"
               onClick={save}
-              disabled={pending || !verdict.complete || verdict.blocker != null || !changed}
+              disabled={
+                pending || !verdict.complete || missingEmail || verdict.blocker != null || !changed
+              }
               reason={verdict.blocker ?? undefined}
             >
               {pending ? 'Zapisuję…' : creating ? 'Utwórz konto' : 'Zapisz'}
@@ -196,14 +201,6 @@ export function AccountDrawer({
           </p>
         </Card>
       ) : null}
-
-      {secret == null ? null : (
-        <PasswordCard
-          name={secret.name}
-          password={secret.password}
-          onDismiss={() => setSecret(null)}
-        />
-      )}
 
       {generalError == null ? null : (
         <Banner tone="danger" live>
@@ -232,11 +229,7 @@ export function AccountDrawer({
           />
         </Field>
 
-        <Field
-          htmlFor="code"
-          label="Kod pilota"
-          hint="Krótki skrót przy każdym locie, np. TMK. Można się nim logować."
-        >
+        <Field htmlFor="code" label="Kod pilota" hint="Krótki skrót przy każdym locie, np. TMK.">
           <TextInput
             id="code"
             mono
@@ -250,8 +243,8 @@ export function AccountDrawer({
 
         <Field
           htmlFor="email"
-          label="E-mail"
-          hint="Można zostawić puste - wtedy pilot loguje się kodem."
+          label="E-mail konta Google"
+          hint="Tym adresem pilot loguje się do aplikacji - bez niego konto nie ma jak wejść."
         >
           <TextInput
             id="email"
@@ -282,30 +275,6 @@ export function AccountDrawer({
 
       {pilot == null || readOnly ? null : (
         <Card title="Dostęp">
-          <div className="access-row">
-            <span className="kv-k">Hasło</span>
-            <Button
-              variant="ok"
-              size="sm"
-              disabled={pending || !pilot.active}
-              reason={pilot.active ? undefined : 'najpierw włącz konto'}
-              onClick={() =>
-                reset.mutate(pilot.id, {
-                  onSuccess: (result) =>
-                    // `created: false` - to jest to samo hasło pokazane raz, ale konto
-                    // już istniało, więc formularz zostaje na ekranie.
-                    setSecret({
-                      name: result.pilot.name,
-                      password: result.password,
-                      created: false,
-                    }),
-                })
-              }
-            >
-              Ustaw nowe hasło
-            </Button>
-          </div>
-
           <div className="access-row">
             <span className="kv-k">Konto</span>
             {pilot.active ? (
@@ -416,57 +385,7 @@ export function AccountDrawer({
 
 /** Podtytuł karty: kod, e-mail i - gdy trzeba - stan konta. */
 function subtitleOf(pilot: PilotListItemDto): string {
-  const parts = [pilot.code, pilot.email ?? 'bez e-maila'];
+  const parts = [pilot.code, pilot.email ?? 'bez adresu Google'];
   if (!pilot.active) parts.push('konto wyłączone');
   return parts.join(' · ');
-}
-
-/**
- * Hasło pokazane JEDEN RAZ.
- *
- * Nie ma trasy „pokaż ponownie", więc karta musi to powiedzieć - ale jednym zdaniem
- * i takim, które mówi CO ZROBIC („zapisz je teraz"), a nie gdzie w bazie leży hash.
- */
-function PasswordCard({
-  name,
-  password,
-  onDismiss,
-}: {
-  name: string;
-  password: string;
-  onDismiss?: () => void;
-}) {
-  const [copied, setCopied] = useState(false);
-
-  const copy = async (): Promise<void> => {
-    // Schowek potrafi nie istnieć (stara przeglądarka) albo odmówić (brak zgody).
-    // Hasło jest wtedy nadal na ekranie i da się je przepisać - więc milczymy
-    // przyciskiem zamiast wywalać się błędem nad wypełnionym formularzem.
-    try {
-      await navigator.clipboard?.writeText(password);
-      setCopied(true);
-    } catch {
-      setCopied(false);
-    }
-  };
-
-  return (
-    <div className="secret">
-      <div className="secret-head">
-        <span className="secret-title">Hasło dla: {name}</span>
-        {onDismiss == null ? null : (
-          <button type="button" className="x-btn" aria-label="Ukryj hasło" onClick={onDismiss}>
-            ×
-          </button>
-        )}
-      </div>
-      <div className="secret-row">
-        <code className="secret-value">{password}</code>
-        <Button size="sm" onClick={() => void copy()}>
-          {copied ? 'Skopiowano' : 'Kopiuj'}
-        </Button>
-      </div>
-      <p className="hint">Zapisz je teraz - po zamknięciu okna nie da się go odczytać.</p>
-    </div>
-  );
 }
