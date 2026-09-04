@@ -4,59 +4,76 @@
  * Ten sam podział co `statsDay.ts`: logika prezentacji w czystych funkcjach,
  * testowalnych bez React Native.
  *
- * MODUŁ SCHUDŁ WRAZ Z EKRANEM 11 (2026-08-12). Był modelem widoku osobnego ekranu
- * synchronizacji, który okazał się trzecim widokiem tej samej sesji: licznik
- * „wysłane / wszystkie", podgląd arkusza, równanie paliwa i podsumowanie zrzutów
- * powtarzały ekran 10 albo arkusz pod SyncChipem. Poszły razem z ekranem
- * (`sheetTabName`, `sentProgress`, `sentLabel`, `dayDoneHint`, `flagCatalog`,
- * `fuelSummary`, `fuelEquation`, `dropsShort`, `dropsSummary`). Zostało to, co opisuje
- * rzeczy NIEISTNIEJĄCE gdzie indziej: uwagi serwera (§4.5).
+ * ══ MODUŁ SCHUDŁ DWA RAZY ══
+ * Raz razem z ekranem 11 (2026-08-12), który był trzecim widokiem tej samej operacji.
+ *
+ * Drugi raz przy issue #82, i to jest zmiana o CO POKAZUJEMY, nie o kształt:
+ *
+ *  • **katalog uwag serwera (`flagLabel`) i wiersz „Uwagi serwera" ZNIKNĘŁY.**
+ *    Zgłoszenie z urządzenia: „co to są «Uwagi serwera» oraz «dwa telefony piszą do
+ *    jednej maszyny»? […] wyświetlamy taką informację, ale nie bardzo jest co z tym
+ *    zrobić - widzę takie ostrzeżenie i nie wiem, co mam dalej zrobić i zareagować."
+ *    Racja: flagi §4.5 są narzędziem ADMINISTRATORA. Rozstrzyga je panel, a pilot
+ *    dostawał listę rzeczy, których nie naprawi - a to jest dokładnie ta kategoria,
+ *    którą issue #72 wyrzuciło z ustawień, a issue #84 z ekranu kokpitu (rozjazd
+ *    zegara). Flagi jadą dalej w odpowiedzi serwera i widzi je panel;
+ *
+ *  • **dwa stemple czasu scaliły się w JEDEN.** „Czemu mam dwa czasy, które się różnią,
+ *    czyli «ostatnia wysyłka» i «data synchronizacji»? To nie powinno być jakoś to samo,
+ *    w sensie jeden mechanizm synchronizacji?" - patrz `lastContactAt` niżej.
  */
 
-import type { FlagType } from '../../../domain';
+import { utcDayStart } from '../../../domain';
+import { dateTimeUtcShort, timeUtc } from '../../format';
 
 // Odmiana liczebników awansowała do `ui/format.ts` (używają jej też komponenty DS) -
 // re-eksport trzyma dotychczasowe importy ekranów i testów w mocy.
 export { eventsCount, plural } from '../../format';
 
 /**
- * Flagi §4.5 po polsku - KOMPLET sześciu typów, tymi samymi słowami co panel.
+ * KIEDY TELEFON OSTATNI RAZ ROZMAWIAŁ Z SERWEREM - jedna liczba zamiast dwóch.
  *
- * Napisy są przepisane z `admin/src/screens/flags/flagTypes.ts` (pole `short`) i to nie
- * jest kosmetyka: pilot dzwoni do administratora, żeby zapytać o uwagę, którą zobaczył
- * w Ustawieniach. Jeśli telefon mówi „nakładka czasowa", a panel „pilot rzekomo na dwóch
- * maszynach naraz", rozmawiają o dwóch różnych rzeczach. Kopia zamiast importu, bo
- * warstwa UI telefonu nie ma prawa importować z klienta panelu - pilnuje tego
- * `Record<FlagType, …>` niżej: dopisanie siódmego typu w domenie WYWALA KOMPILACJĘ
- * tego pliku.
+ * ══ CO TU BYŁO ŹLE ══
+ * Ustawienia pokazywały dwa stemple: „Ostatnia udana wysyłka" (wypchnięcie outboxa)
+ * i „Dane referencyjne · sync HH:MM" (potwierdzenie cache'u floty). To są faktycznie
+ * dwa kierunki jednego mechanizmu, ale z ekranu wyglądały jak dwa różne zegary - i o to
+ * właśnie padło pytanie.
  *
- * Do 2026-08-08 katalog znał trzy typy, w tym `session_overlap` skasowany w etapie D4 -
- * pilot widział więc surowe `aircraft_overlap` i `fuel_mismatch`, a jedyna „ładna" nazwa
- * opisywała flagę, której serwer już nie wystawia. Nieznany typ nadal wraca surowy:
- * techniczny kod jest lepszy od zgadywanej etykiety.
+ * Gorzej: wysyłka aktualizuje swój stempel WYŁĄCZNIE wtedy, gdy było co wysłać
+ * (`SyncOutcome.idle` przy pustej kolejce nie liczy się jako `synced`). Pilot bez
+ * zaległości widział więc godzinę zamrożoną sprzed kilku godzin obok świeżego stempla
+ * danych referencyjnych - dwie liczby, z których jedna wyglądała na awarię, a obie były
+ * poprawne. Zgłoszenie trafiło w prawdziwą usterkę, nie w kosmetykę.
+ *
+ * ══ DLACZEGO PÓŹNIEJSZY, A NIE WCZEŚNIEJSZY ══
+ * Bo pytanie brzmi „od kiedy nie mam kontaktu z serwerem", a nie „która z moich danych
+ * jest najstarsza". Starsze dane referencyjne przy świeżej wysyłce to normalny stan
+ * (brama wieku 15 min), a nie brak łączności - o zaległościach mówi osobny wiersz
+ * kolejki, i to on jest miejscem na złe wieści.
+ *
+ * `null` = jeszcze ani jednej udanej rozmowy.
  */
-const FLAG_LABELS: Record<FlagType, string> = {
-  aircraft_overlap: 'dwa telefony piszą do jednej maszyny',
-  pilot_overlap: 'pilot rzekomo na dwóch maszynach naraz',
-  mh_gap: 'dziura w łańcuchu MH',
-  mh_regression: 'licznik się cofnął',
-  fuel_mismatch: 'paliwo poza tolerancją',
-  clock_drift: 'zegar telefonu przestawiony',
-};
-
-export function flagLabel(type: string): string {
-  return FLAG_LABELS[type as FlagType] ?? type;
+export function lastContactAt(
+  pushedAt: number | null,
+  referenceCheckedAt: number | null,
+): number | null {
+  if (pushedAt == null) return referenceCheckedAt;
+  if (referenceCheckedAt == null) return pushedAt;
+  return Math.max(pushedAt, referenceCheckedAt);
 }
 
 /**
- * Wiersz „Uwagi serwera" w Ustawieniach - trzy stany, bo trzy różne rzeczy.
+ * Napis wiersza „Ostatnia synchronizacja".
  *
- * Cisza nie może znaczyć dwóch rzeczy naraz (§6 pkt 2): „serwer nic nie zgłasza" i
- * „serwer jeszcze nic nie widział" to zupełnie inne wiadomości dla pilota, który
- * właśnie zastanawia się, czy dzwonić do administratora. Flagi przychodzą w odpowiedzi
- * na wysyłkę, więc bez ani jednej udanej wysyłki nie wiemy NIC - i tak to nazywamy.
+ * SAMA GODZINA TYLKO W TEJ SAMEJ DOBIE UTC. „08:12 UTC" przy stemplu sprzed dwóch dni
+ * mówiłoby nieprawdę o tym, co pilot naprawdę chce wiedzieć - a właśnie zamrożony
+ * stempel bez daty był tym, co kazało zapytać, czy aplikacja w ogóle się synchronizuje.
+ *
+ * @param now chwila odczytu - podaje ją wołający, żeby funkcja została czysta.
  */
-export function serverNoticeLabel(count: number, everSynced: boolean): string {
-  if (!everSynced) return 'jeszcze nie sprawdzone';
-  return count === 0 ? 'brak uwag' : `${count}`;
+export function lastContactLabel(at: number | null, now: number): string {
+  if (at == null) return 'jeszcze żadnej';
+  return utcDayStart(at) === utcDayStart(now)
+    ? `${timeUtc(at)} UTC`
+    : `${dateTimeUtcShort(at)} UTC`;
 }

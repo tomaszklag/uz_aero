@@ -53,6 +53,7 @@ import {
   StatusChip,
   SyncChip,
   Tag,
+  ThemeToggle,
   type ActionCardSpec,
   type IconName,
   type Tone,
@@ -521,9 +522,13 @@ export function CockpitScreen({
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm }}>
               <SyncChip />
               <StatusChip label="Running" tone="green" />
+              {/* PRZEŁĄCZNIK JASNOŚCI W MIEJSCU ZĘBATKI (issue #82): ustawienia mają
+                  odtąd jedno wejście, na „Mój dzień", a jasność zostaje tam, gdzie
+                  jest odpowiedzią na słońce w ekranie - w locie pilot nie może zejść
+                  z kokpitu, żeby ją zmienić. */}
+              <ThemeToggle />
             </View>
           }
-          onSettings={() => navigation.navigate('Settings')}
         />
 
         {/*
@@ -871,10 +876,15 @@ export function CockpitScreen({
         ]
           .filter(Boolean)
           .join(' · ')}
-        right={<SyncChip />}
-        // `.settings-btn` z mockupu 04 → ekran 13 (ustawienia: motyw, PIN, konto,
-        // diagnostyka GPS).
-        onSettings={() => navigation.navigate('Settings')}
+        right={
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm }}>
+            <SyncChip />
+            {/* Zębatka `.settings-btn` z mockupu 04 USUNIĘTA (issue #82): ustawienia
+                mają jedno wejście, na „Mój dzień". W jej miejscu stoi przełącznik
+                jasności - patrz komentarz w trybie lotu wyżej. */}
+            <ThemeToggle />
+          </View>
+        }
       />
 
       <View style={{ padding: theme.spacing.lg, gap: 14 }}>

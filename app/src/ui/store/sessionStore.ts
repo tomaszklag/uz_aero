@@ -34,7 +34,6 @@ import {
   type OilAddPayload,
   type RefuelPayload,
   type RuleViolation,
-  type SessionFlag,
   type SessionState,
 } from '../../domain';
 import {
@@ -104,7 +103,7 @@ export interface SessionStore {
    * rejestr JEST całą prawdą i nie ma na co czekać.
    */
   streamHydrated: boolean;
-  /** Silnik synca - podłączany w composition root; ekran 11 pyta go o stan serwera. */
+  /** Silnik synca - podłączany w composition root (ekran 11 nie istnieje od 2026-08-12). */
   sync: SyncEngine | null;
   /** Odświeżanie cache referencyjnego (§4.8) - podłączane razem z silnikiem. */
   referenceSync: ReferenceSync | null;
@@ -114,7 +113,7 @@ export interface SessionStore {
   traceSync: TraceSync | null;
   /** Uzgadnianie motywu pilota przez `/me/prefs` (decyzja 2026-07-29) - ThemeProvider słucha adopcji. */
   themePrefs: ThemePrefsSync | null;
-  /** Wynik ostatniego przebiegu synca - SyncChip i ekran 11 czytają stąd. */
+  /** Wynik ostatniego przebiegu synca - czytają stąd SyncChip i sekcja synchronizacji (13). */
   lastSync: SyncOutcome | null;
   /** Chwila ostatniej UDANEJ wysyłki (epoch ms) - „ostatnia udana wysyłka 14:02 UTC". */
   lastSyncAt: number | null;
@@ -128,8 +127,13 @@ export interface SessionStore {
    * stoi, pill stoi). Bez tego pola tapnięcie było nieodróżnialne od martwego przycisku.
    */
   lastAttemptAt: number | null;
-  /** Otwarte flagi serwera dotykające naszych sesji (§4.5) - do pokazania na 11. */
-  serverFlags: SessionFlag[];
+  /*
+   * `serverFlags` USUNIĘTE (issue #82). Trzymały otwarte flagi §4.5 dotyczące operacji
+   * tego pilota wyłącznie po to, żeby Ustawienia mogły je wypisać - a pilot nie ma na
+   * nie żadnej reakcji: rozstrzyga je administrator w panelu. Serwer nadal odsyła je
+   * w odpowiedzi na wysyłkę (`SyncOutcome.flags`) i nadal widzi je panel; zniknął
+   * jedynie magazyn na telefonie, którego nikt już nie czytał.
+   */
   /** Miękkie flagi ostatniej udanej komendy (banner „zapisane, ale sprawdź"). */
   warnings: RuleViolation[];
   /** Komunikat ostatniego odrzucenia (twarda reguła) - null po udanej komendzie. */
@@ -385,7 +389,6 @@ export const useSessionStore = create<SessionStore>((set, get) => {
     lastSync: null,
     lastSyncAt: null,
     lastAttemptAt: null,
-    serverFlags: [],
     warnings: [],
     lastError: null,
 
@@ -602,9 +605,6 @@ export const useSessionStore = create<SessionStore>((set, get) => {
         lastSyncAt: outcome.kind === 'synced' ? Date.now() : state.lastSyncAt,
         // KAŻDY przebieg, także nieudany - to jest cała treść tego pola.
         lastAttemptAt: Date.now(),
-        // Flagi nadpisujemy przy KAŻDYM udanym syncu - serwer zwraca komplet otwartych,
-        // więc rozwiązane u administratora same znikają z ekranu 11.
-        serverFlags: outcome.kind === 'synced' ? outcome.flags : state.serverFlags,
       }));
     },
 
@@ -684,7 +684,6 @@ export const useSessionStore = create<SessionStore>((set, get) => {
         lastSync: null,
         lastSyncAt: null,
         lastAttemptAt: null,
-        serverFlags: [],
         warnings: [],
         lastError: null,
       });

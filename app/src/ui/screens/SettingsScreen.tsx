@@ -1,20 +1,32 @@
 /**
  * UZ Aero - 13 USTAWIENIA (mockup `design/13-ustawienia.html`).
  *
- * Sześć sekcji: motyw → bezpieczeństwo (PIN) → konto → synchronizacja → diagnostyka
- * GPS → o aplikacji.
+ * Pięć sekcji: motyw → synchronizacja → diagnostyka GPS → o aplikacji →
+ * bezpieczeństwo (PIN) → konto.
+ *
+ * ══ JEDNO WEJŚCIE I KOLEJNOŚĆ OD ISSUE #82 ══
+ * Zębatka stoi odtąd WYŁĄCZNIE na „Mój dzień" - z kokpitu zniknęła, a w jej miejscu
+ * pilot ma przełącznik jasności (`ThemeToggle`). Ustawienia były ostatnim wyjątkiem
+ * od modalności kokpitu (`CLAUDE.md`) i przestały nim być.
+ *
+ * PIN i wylogowanie zjechały NA KONIEC („daj wylogowanie na samym końcu, a przed nim
+ * zmianę PIN-u"): obie sekcje dotyczą DOSTĘPU do aplikacji, a wylogowanie jest jedyną
+ * rzeczą tutaj, której nie da się cofnąć bez internetu. Na górze stały na drodze
+ * każdego, kto przyszedł po cokolwiek innego.
  *
  * SEKCJA SYNCHRONIZACJI PRZEJĘŁA EKRAN 11 (2026-08-12). Tamten ekran był trzecim
- * widokiem tej samej sesji (tabela lotów i „dane dnia" = ekran 10) i drugim wskaźnikiem
- * sieci (kolejka i ostatnia wysyłka = arkusz pod SyncChipem), a jego „SYNCHRONIZUJ
- * TERAZ" przeczyło regule, którą sam arkusz zapisuje: outbox wysyła się sam. Zostały
- * tu dwie rzeczy, których naprawdę nie ma nigdzie indziej - **uwagi serwera** (§4.5)
- * i **awaryjne ponaglenie synchronizacji** (od issue #55 OBU kierunków: dopycha
- * kolejkę wysyłki i pobiera dane referencyjne z pominięciem bramy wieku - pilot
- * sięgający po ten przycisk pyta „co serwer wie teraz", nie „co wiedział kwadrans
- * temu"). Mieszkają w Ustawieniach, bo Ustawienia widać
- * ZAWSZE: SyncChip pojawia się wyłącznie offline, więc flaga wystawiona przez serwer
- * po udanej wysyłce nie miałaby się gdzie pokazać.
+ * widokiem tej samej operacji (tabela lotów i „dane dnia" = ekran 10) i drugim
+ * wskaźnikiem sieci (kolejka i ostatnia wysyłka = arkusz pod SyncChipem), a jego
+ * „SYNCHRONIZUJ TERAZ" przeczyło regule, którą sam arkusz zapisuje: outbox wysyła się
+ * sam. Została z niego JEDNA rzecz, której nie ma nigdzie indziej - **awaryjne
+ * ponaglenie synchronizacji** (od issue #55 OBU kierunków: dopycha kolejkę wysyłki
+ * i pobiera dane referencyjne z pominięciem bramy wieku; pilot sięgający po ten
+ * przycisk pyta „co serwer wie teraz", nie „co wiedział kwadrans temu").
+ *
+ * Uwagi serwera (§4.5) ZNIKNĘŁY stąd przy issue #82: to narzędzie administratora,
+ * a pilot dostawał listę rzeczy, których nie naprawi. Dwa stemple czasu scaliły się
+ * w jeden - uzasadnienie obu decyzji w `logic/syncStatus.ts`.
+ *
  * Wszystko, co tu można zrobić, DZIAŁA OFFLINE - jedyny wyjątek (ponowne logowanie po
  * wylogowaniu) jest opisany przy przycisku, a sam przycisk przy niepustym outboxie
  * stoi zablokowany Z POWODEM i amber-boxem (§3.0, wzorzec `.outbox-guard` z 00).
@@ -40,7 +52,6 @@ import {
   OutboxGuard,
   PinChangeSheet,
   ProfileChip,
-  RefDataStamp,
   Screen,
   ScreenHeader,
   SettingsAction,
@@ -52,7 +63,7 @@ import { useAuthStore } from '../store/authStore';
 import { useGps, useTrace } from '../bootstrap/servicesContext';
 import { formatLatLon, timeUtc } from '../format';
 import { fixAge } from './logic/gpsLoss';
-import { eventsCount, flagLabel, plural, serverNoticeLabel } from './logic/syncStatus';
+import { eventsCount, lastContactAt, lastContactLabel } from './logic/syncStatus';
 
 export function SettingsScreen({
   navigation,
@@ -68,12 +79,9 @@ export function SettingsScreen({
   const outboxCount = useSessionStore((s) => s.outboxCount);
   const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
   const lastSync = useSessionStore((s) => s.lastSync);
-  const serverFlags = useSessionStore((s) => s.serverFlags);
   const syncNow = useSessionStore((s) => s.syncNow);
   const refreshReferenceNow = useSessionStore((s) => s.refreshReferenceNow);
   const restoreEventsNow = useSessionStore((s) => s.restoreEventsNow);
-  const projection = useSessionStore((s) => s.projection);
-  const queries = useSessionStore((s) => s.queries);
   const repo = useSessionStore((s) => s.repo);
   const sessionReset = useSessionStore((s) => s.reset);
 
@@ -153,17 +161,11 @@ export function SettingsScreen({
     void readRefStamp();
   }, [readRefStamp]);
 
-  const [aircraftType, setAircraftType] = useState<string | null>(null);
-  useEffect(() => {
-    if (queries == null || projection.aircraftId == null) return;
-    let alive = true;
-    void queries.aircraftById(projection.aircraftId).then((a) => {
-      if (alive) setAircraftType(a?.type ?? null);
-    });
-    return () => {
-      alive = false;
-    };
-  }, [queries, projection.aircraftId]);
+  /*
+   * Odczyt typu maszyny odszedł razem z wierszem „Samolot operacji" (issue #82).
+   * Ustawienia nie mają nic wspólnego z operacją, którą pilot właśnie prowadzi -
+   * mówi o niej pasek kokpitu i kafelek na „Mój dzień".
+   */
 
   const [logoutError, setLogoutError] = useState<string | null>(null);
   const doLogout = useCallback(async () => {
@@ -190,7 +192,7 @@ export function SettingsScreen({
           title="USTAWIENIA"
           size="md"
           onBack={navigation.goBack}
-          backLabel="Kokpit"
+          backLabel="Mój dzień"
           right={<SyncChip />}
         />
       }
@@ -205,47 +207,14 @@ export function SettingsScreen({
           <ThemeSwitch />
         </Card>
 
-        {/* ── bezpieczeństwo ────────────────────────────────────────────────── */}
-        <Card title="Bezpieczeństwo" header="inline">
-          <SettingsAction
-            icon="settings"
-            name="Zmień PIN"
-            sub="najpierw obecny PIN, potem nowy"
-            onPress={() => {
-              setPinChanged(false);
-              setPinSheet(true);
-            }}
-          />
-          {pinChanged && (
-            <Banner kind="status" tone="green" icon="check" title="PIN zmieniony" text="Nowy PIN obowiązuje od teraz - stary przestał działać." />
-          )}
-        </Card>
-
-        {/* ── konto (§3.0: ochrona wylogowania) ─────────────────────────────── */}
-        <Card title="Konto" header="inline">
-          {pilot != null && <ProfileChip name={pilot.name} code={pilot.code} style={styles.profile} />}
-          <SettingsAction
-            icon="offline"
-            name="Wyloguj i zmień konto"
-            sub={
-              logoutBlocked
-                ? `niedostępne - ${eventsCount(outboxCount)} czeka na wysyłkę`
-                : 'ponowne logowanie wymaga internetu'
-            }
-            disabled={logoutBlocked}
-            onPress={() => void doLogout()}
-          />
-          {logoutBlocked && <OutboxGuard count={outboxCount} />}
-          {logoutError != null && (
-            <Banner kind="warning" tone="red" icon="warning" title="Nie wylogowano" text={logoutError} />
-          )}
-          <SectionNote text="Ponowne logowanie wymaga internetu - konta zakłada administrator." />
-        </Card>
-
         {/* ── synchronizacja: STAN, nie osobny ekran ────────────────────────
-            Ekran 11 usunięty (2026-08-12) - patrz docblock modułu. Trzy wiersze
+            Ekran 11 usunięty (2026-08-12) - patrz docblock modułu. DWA wiersze
             i jeden przycisk awaryjny; niczego tu nie ma o danych operacji, bo od tego
-            jest rozliczenie (10). */}
+            jest rozliczenie (10).
+
+            WIERSZ „UWAGI SERWERA" USUNIĘTY (issue #82): flagi §4.5 są narzędziem
+            administratora i pilot nie ma na nie żadnej reakcji - uzasadnienie
+            w `logic/syncStatus.ts`. */}
         <Card title="Synchronizacja" header="inline">
           <KeyValueRow
             divider
@@ -253,31 +222,15 @@ export function SettingsScreen({
             value={outboxCount === 0 ? 'pusta' : `${eventsCount(outboxCount)} czeka`}
             valueTone={outboxCount === 0 ? 'green' : 'amber'}
           />
+          {/* JEDEN STEMPEL ZAMIAST DWÓCH (issue #82): wysyłka i pobranie danych
+              referencyjnych to dwa kierunki jednego mechanizmu, a osobne godziny
+              wyglądały jak dwa różne zegary. Do tego stempel wysyłki stał zamrożony
+              przy pustej kolejce - patrz `lastContactAt`. */}
           <KeyValueRow
             divider
-            label="Ostatnia udana wysyłka"
-            value={lastSyncAt != null ? `${timeUtc(lastSyncAt)} UTC` : 'jeszcze żadnej'}
+            label="Ostatnia synchronizacja"
+            value={lastContactLabel(lastContactAt(lastSyncAt, refCheckedAt), now)}
           />
-          {/* Wiersz stoi ZAWSZE, także z „brak uwag": inaczej pilot nie odróżni
-              „serwer nic nie zgłasza" od „serwer nic nie sprawdził" (§6 pkt 2 -
-              cisza nie może znaczyć dwóch rzeczy naraz). */}
-          <KeyValueRow
-            divider
-            label="Uwagi serwera"
-            value={serverNoticeLabel(serverFlags.length, lastSyncAt != null)}
-            valueTone={serverFlags.length > 0 ? 'amber' : 'green'}
-          />
-          {/* Jedna flaga potrafi objąć kilka operacji (§4.5), więc wiersz mówi ILE -
-              bez tego pilot nie wie, czy chodzi o dzisiejszy lot, czy o cały tydzień. */}
-          {serverFlags.map((flag) => (
-            <KeyValueRow
-              key={flag.type}
-              divider
-              label={flagLabel(flag.type)}
-              value={`${flag.sessionUuids.length} ${plural(flag.sessionUuids.length, 'operacja', 'operacje', 'operacji')}`}
-              valueTone="amber"
-            />
-          ))}
           <ActionButton
             label="SYNCHRONIZUJ TERAZ"
             tone="neutral"
@@ -321,19 +274,59 @@ export function SettingsScreen({
           <GhostAction label="Odśwież" onPress={() => void subscribe()} />
         </Card>
 
-        {/* ── o aplikacji ───────────────────────────────────────────────────── */}
+        {/* ── o aplikacji ─────────────────────────────────────────────────────
+            Wiersz „Samolot operacji" USUNIĘTY (issue #82: „nie pisz tam «samolot
+            operacji» - to jest do usunięcia"). Mówił, którą maszynę pilot ma w ręce,
+            czyli to, co pasek kokpitu i kafelek na 01 niosą w kółko - a przy okazji
+            pisał SUROWY identyfikator z panelu, ta sama klasa błędu, co guid
+            w nagłówku śladu (issue #84).
+
+            Stempel danych referencyjnych też stąd zszedł: jest częścią jednej godziny
+            synchronizacji wyżej (`lastContactAt`), a nie osobną wiadomością. */}
         <Card title="O aplikacji" header="inline">
-          <KeyValueRow divider label="Aplikacja" value={`UZ Aero${version != null ? ` · v${version}` : ''}`} />
-          <KeyValueRow
-            divider
-            label="Samolot operacji"
-            value={
-              projection.aircraftId != null
-                ? `${projection.aircraftId}${aircraftType != null ? ` · ${aircraftType}` : ''}`
-                : '-'
-            }
+          <KeyValueRow label="Aplikacja" value={`UZ Aero${version != null ? ` · v${version}` : ''}`} />
+        </Card>
+
+        {/* ══ NA KOŃCU: PIN, A POD NIM WYLOGOWANIE (issue #82) ══════════════
+            „W ustawieniach daj wylogowanie na samym końcu, a przed nim zmianę PIN-u."
+            Obie sekcje dotyczą DOSTĘPU do aplikacji, więc stoją razem, a wylogowanie -
+            jedyna rzecz w tych ustawieniach, której nie da się cofnąć bez internetu -
+            zamyka ekran. Wcześniej stały na górze, zaraz pod motywem, czyli na drodze
+            pilota, który przyszedł tu po cokolwiek innego. */}
+        <Card title="Bezpieczeństwo" header="inline">
+          <SettingsAction
+            icon="settings"
+            name="Zmień PIN"
+            sub="najpierw obecny PIN, potem nowy"
+            onPress={() => {
+              setPinChanged(false);
+              setPinSheet(true);
+            }}
           />
-          <RefDataStamp checkedAt={refCheckedAt} style={styles.refRow} />
+          {pinChanged && (
+            <Banner kind="status" tone="green" icon="check" title="PIN zmieniony" text="Nowy PIN obowiązuje od teraz - stary przestał działać." />
+          )}
+        </Card>
+
+        {/* ── konto (§3.0: ochrona wylogowania) ─────────────────────────────── */}
+        <Card title="Konto" header="inline">
+          {pilot != null && <ProfileChip name={pilot.name} code={pilot.code} style={styles.profile} />}
+          <SettingsAction
+            icon="offline"
+            name="Wyloguj i zmień konto"
+            sub={
+              logoutBlocked
+                ? `niedostępne - ${eventsCount(outboxCount)} czeka na wysyłkę`
+                : 'ponowne logowanie wymaga internetu'
+            }
+            disabled={logoutBlocked}
+            onPress={() => void doLogout()}
+          />
+          {logoutBlocked && <OutboxGuard count={outboxCount} />}
+          {logoutError != null && (
+            <Banner kind="warning" tone="red" icon="warning" title="Nie wylogowano" text={logoutError} />
+          )}
+          <SectionNote text="Ponowne logowanie wymaga internetu - konta zakłada administrator." />
         </Card>
       </View>
 
@@ -410,6 +403,5 @@ function SectionNote({ text }: { text: string }) {
 const styles = StyleSheet.create({
   content: { padding: 14, gap: 12 },
   profile: { minWidth: 0, alignSelf: 'stretch' },
-  refRow: { paddingTop: 4 },
   note: { fontSize: 9, lineHeight: 14, letterSpacing: 0.5 },
 });

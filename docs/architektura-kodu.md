@@ -180,7 +180,8 @@ kończy dryf scrimów 0.7/0.74 w sześciu arkuszach, a token `radius.btn = 14` t
 wzorem - dryf promieni 13/14 (18 literałów w 11 komponentach DS; steppery i wiersze
 05e/05f przybijały 13, normalizacja celowa, odnotowana komentarzem przy każdym takim
 miejscu); duplikaty `.outbox-guard`
-i `.ref-sync` awansowane do DS (`OutboxGuard`, `RefDataStamp` - odmiana liczebników
+i `.ref-sync` awansowane do DS (`OutboxGuard`, `RefDataStamp` - ten drugi skasowany przy
+issue #82 razem z drugim stemplem czasu w ustawieniach; odmiana liczebników
 przeniesiona do `ui/format.ts`, bo DS nie może zależeć od helperów ekranów); kłódka
 zamiast trójkąta przy zamkniętych dniach (12); `SyncChip` na `AppText`; hitSlopy na
 małych z designu celach (mini-chip edu, „Nie pamiętam PIN", oko podglądu); jawny błąd
@@ -878,7 +879,7 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `InlineNote` | przypis w kolorowym pudełku (mono 10 px + ikona) | `.certified-row`, `.none-box` |
 | `PeekBanner` | pasek „oglądasz cudzą operację" ze źródłem i wiekiem danych | `.ro-banner` (04b) |
 | `OutboxGuard` | amber-box ochrony konta przy niepustym outboxie (§3.0) | `.outbox-guard` (00, 13) |
-| `RefDataStamp` | stempel cache referencyjnego: kropka + „sync HH:MM UTC" | `.ref-sync` (13; z 01 usunięty - issue #23 pkt 5: stempel mieszka w arkuszu SyncChipa) |
+| `ThemeToggle` | jednotapowa zmiana jasności w pasku kokpitu; ikona pokazuje SKUTEK, nie stan (issue #82) | `.settings-btn` / `.gear-btn` (04, 05) |
 | `Caption` | wyśrodkowany podpis pod akcją (mono 9 px) | `.takeover-hint`, `.actions-reason` |
 | `CrewRow` | wiersz aktualnej załogi: rola, kod, „od kiedy", block | `.crew-row` (07) |
 | `StepList` | numerowana procedura wychodząca poza ten telefon | `.handover-steps` (07) |
@@ -1430,6 +1431,7 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 | `imu.test.ts` | matematyki czujników inercyjnych: pułapka „3 %", niezmienniczość względem ułożenia telefonu, zamrożenie filtra grawitacji z budżetem, agregaty okna, tor barometryczny |
 | `sqliteSchema.test.ts` | DDL na prawdziwym silniku SQLite - patrz niżej |
 | `format.test.ts` | formatowania i **parsowania** odczytów w obie strony |
+| `syncStatus.test.ts` | sekcji „Synchronizacja" (13): odmiana liczebników i JEDNA godzina ostatniej rozmowy z serwerem - późniejszy z dwóch kierunków, z datą poza bieżącą dobą (issue #82) |
 | `cockpitLog.test.ts` | tego, co kokpit dokłada do wspólnej osi operacji: wiersz „na żywo", znaczniki outboxa, stopka sum po zatrzymaniu silnika, bramka karty logu |
 | `flightPhase.test.ts` | fazy lotu i prędkości pionowej - patrz niżej |
 | `refuelMath.test.ts` | wyliczeń tankowania: zużycie L/h, limit dolewki, podziałka |
@@ -1437,6 +1439,7 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 | `readingsTrail.test.ts` | szlaku odczytu w arkuszach wpisu ręcznego (issue #84): wybór sąsiada z łańcucha per pole, milczenie bez odpowiedzi serwera |
 | `releaseTrail.test.ts` | szlaku odczytu przy zdaniu samolotu (issue #84): przejęcie, tankowania i czas pracy silnika stoją także BEZ normy; ogniwo oczekiwania tylko z nią |
 | `pilotWarnings.test.ts` | odsiewu flag diagnostycznych z ekranu pilota (issue #84): rozjazd zegara znika, każda inna flaga przechodzi |
+| `themeToggle.test.ts` | przełącznika jasności w kokpicie (issue #82): ikona pokazuje motyw DOCELOWY, nieznana nazwa go nie unieruchamia |
 | `abandonExit.test.ts` | kolejności wyjścia z formularza po rezygnacji (issue #84): arkusz nigdy nie stoi w drzewie razem z wypuszczoną nawigacją |
 | `sessionAxis.test.ts` | osi czasu operacji (10): kolejność zdarzeń, adresy uuid, kołowanie z samą godziną, numer lotu przy STARCIE i po prawej, brak ołówka i plakietki wpisu ręcznego (issue #40), stopka (blok / czas lotu / starty), operacja bez pracy silnika |
 | `sessionBalance.test.ts` | rachunków paliwa i MH: oczekiwanie liczone z PROPORCJI faz tej operacji, podłoga pasma z błędu odczytu, arkusz normy istniejący dokładnie razem z werdyktem, powód zamiast kreski, gdy nie ma z czym porównywać |
@@ -1451,7 +1454,6 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 | `claimRetime.test.ts` | przesunięcia godziny przejęcia: kiedy sama korekta, kiedy KASKADA całego biegu (czasy trwania bez zmian, `day_close` nietknięty), a kiedy odmowa z powodem |
 | `correctionUi.test.ts` | zapowiedzi skutku korekty - „Wpływ na czas lotu" liczy ta sama projekcja |
 | `syncEngine.test.ts` | pętli wysyłki §4.3 i poświadczeń §3.0: duplikaty = dostarczone, offline ≠ auth_expired, jedna rotacja tokenu, `fetchStatus` dla ekranu 11 |
-| `syncStatus.test.ts` | prezentacji ekranu 11: odmiana liczebników, konwencja nazwy karty §4.7, licznik wysyłki z ogonem outboxa |
 | `referenceSync.test.ts` | odświeżania cache §4.8: nadpisanie seedu prawdą serwera, ETag/304 z podbiciem wieku, brama 15 min, offline nie psuje cache |
 | `eventRestore.test.ts` | odtworzenia rejestru §4.9 (issue #32): odbudowa strona po stronie, pobrane NIE wchodzi do outboxa, dedup chroni wpis czekający w kolejce, kursor per pilot, przerwanie w połowie nie cofa postępu |
 | `claimMode.test.ts` | trybu przejęcia §4.4: `takeover_online` tylko z odpowiedzią serwera, żywy poprzednik wygrywa z cache, „już wolny" gasi przejęcie |
