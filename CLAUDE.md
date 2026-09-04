@@ -222,6 +222,25 @@ zakłada się w panelu (dane demo usunięte przy issue #50).
 --bg:    #0D0D0D      /* tło główne */
 ```
 
+**W MOTYWIE JASNYM (`solar`) AKCENTY SĄ INNE I DOBIERANE RACHUNKIEM** (uwaga
+z urządzenia, 2026-09-04: „w jasnym motywie czerwony i zielony mało się wyróżniają,
+wyglądają raczej jak czarny"). Skarga NIE dotyczyła kontrastu - ten był aż nadto
+wysoki (zieleń 6,25, czerwień 8,99 wobec bieli, przy progu AA 4,5) - tylko
+KOLOROWOŚCI: barwa niesie w tej aplikacji znaczenie (zielony = w normie, czerwony =
+błąd, bursztyn = uwaga), a przy jasności 22-30% wszystkie cztery czytały się jak czerń.
+- **metoda**: w obrębie odcienia marki (ten sam hue, co w Night) bierzemy MAKSYMALNĄ
+  chromę CIELAB, jaka mieści się w kontraście ≥4,5 wobec tła I wobec karty. Nowe
+  wartości: `green #027E2B`, `amber #A25A01`, `red #D02A1E`, `blue #0069D1`
+- **próg trzyma test** (`app/src/__tests__/themeContrast.test.ts`) i to on jest miejscem
+  na kolejną taką uwagę: dolna granica broni czytelności, GÓRNA (kontrast ≤6,0 na bieli)
+  broni barwy - na starej palecie wywracały się trzy kolory z czterech
+- **zieleń zyskuje najmniej i to jest fizyka**: kanał zielony waży w luminancji 0,7152,
+  więc każde rozjaśnienie natychmiast zjada kontrast. Czerwony (0,2126) i niebieski
+  (0,0722) mają dużo więcej miejsca
+- **ten sam kolor bywa TŁEM przycisku `solid`**, na którym napis ma kolor `bg` (w jasnym
+  motywie biały) - czytelność napisu i czytelność koloru jako tekstu to ta sama liczba.
+  Rozjaśnianie „aż będzie ładnie" psuje oba naraz
+
 ### Czcionki
 - `Bebas Neue` - nagłówki display, timery duże, canvas labels
 - `Archivo` - body text, etykiety, przyciski
