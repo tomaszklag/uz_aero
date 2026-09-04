@@ -91,12 +91,8 @@
   .modal-sheet { background:var(--surface-raised); border-radius:24px 24px 0 0; padding:18px 18px 30px; display:flex; flex-direction:column; gap:12px; border-top:1px solid var(--border-strong); max-height:calc(100% - 56px); overflow-y:auto; }
   .modal-handle { width:36px; height:4px; border-radius:2px; background:var(--border-strong); align-self:center; margin-bottom:2px; }
   .modal-title { font-family:var(--font-display); font-size:22px; letter-spacing:2px; color:var(--text-primary); }
+  .target-line { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; color:var(--text-muted); }
 
-  .evt-card { display:flex; align-items:center; gap:11px; background:var(--surface); border:1px solid var(--amber-border); border-radius:14px; padding:12px 14px; }
-  .evt-icon { width:34px; height:34px; border-radius:10px; flex-shrink:0; background:var(--amber-muted); border:1px solid var(--amber-border); display:flex; align-items:center; justify-content:center; color:var(--amber); }
-  .evt-body { display:flex; flex-direction:column; gap:3px; flex:1; }
-  .evt-name { font-size:14px; font-weight:700; color:var(--text-primary); }
-  .evt-meta { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); }
 
   /* ===== DWA POLA ODCZYTU =====
      Paliwo i licznik stoją OBOK SIEBIE, bo spisuje się je jednym spojrzeniem na tablicę
@@ -241,22 +237,13 @@
         <div class="modal-handle"></div>
         <div class="modal-title">KOREKTA ODCZYTU</div>
 
-        <!-- Karta celu: NAZWA ZDARZENIA pełnym stopniem - odpowiedź na pierwsze pytanie
-             otwierającego arkusz, czyli „co ja właściwie poprawiam".
-
-             BEZ GODZINY pod spodem (zgłoszenie z urządzenia, 2026-08-14): ta sama
-             godzina stoi dwa centymetry niżej, w kontrolce, którą się ją zmienia.
-             Podpis „zapisano 08:04 UTC" ZOSTAJE w arkuszu ZDANIA samolotu - tam pola
-             czasu nie ma (`day_close` nie przyjmuje `retime`), więc jest jedynym
+        <!-- CEL KOREKTY = JEDNA LINIA MONO, dokładnie jak w arkuszu czasu (10E).
+             Karta z ramką, ikoną medium i nazwą pełnym stopniem robiła z przejęcia
+             i zdania korektę innego gatunku niż wszystkie pozostałe (uwaga z urządzenia,
+             2026-09-04). Godzina dokleja się do tej samej linii w arkuszu ZDANIA - tam
+             pola czasu nie ma (`day_close` nie przyjmuje `retime`), więc jest jedynym
              miejscem, w którym widać, czego dotyczy poprawka. -->
-        <div class="evt-card">
-          <div class="evt-icon">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V4a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v18"/><path d="M3 12h10"/><path d="M17 8h2a2 2 0 0 1 2 2v8a1 1 0 0 1-2 0v-5h-2"/></svg>
-          </div>
-          <div class="evt-body">
-            <span class="evt-name">Przejęcie samolotu</span>
-          </div>
-        </div>
+        <div class="target-line">PRZEJĘCIE SAMOLOTU</div>
 
         <!-- ══ GODZINA PRZEJĘCIA (uwaga z urządzenia) ═══════════════════════
              Zwykły fakt („wziąłem samolot o 9:00, nie o 8:04") i pilot musi umieć go

@@ -134,18 +134,41 @@ export const solarColors: ThemeColors = {
   textSecondary: '#2E2E2E',
   textMuted: '#666666',
   textPlaceholder: '#8A8A8A',
-  green: '#007030',
-  greenMuted: 'rgba(0,112,48,0.10)',
-  greenBorder: 'rgba(0,112,48,0.40)',
-  amber: '#9A5000',
-  amberMuted: 'rgba(154,80,0,0.10)',
-  amberBorder: 'rgba(154,80,0,0.40)',
-  red: '#980000',
-  redMuted: 'rgba(152,0,0,0.10)',
-  redBorder: 'rgba(152,0,0,0.40)',
-  blue: '#004890',
-  blueMuted: 'rgba(0,72,144,0.10)',
-  blueBorder: 'rgba(0,72,144,0.40)',
+  /*
+   * AKCENTY: NAJWIĘCEJ KOLORU, JAKI MIEŚCI SIĘ W PROGU CZYTELNOŚCI
+   * (uwaga z urządzenia, 2026-09-04: „w jasnym motywie czerwony i zielony mało się
+   * wyróżniają, wyglądają raczej jak czarny").
+   *
+   * Skarga NIE dotyczyła kontrastu - ten był aż nadto wysoki (zieleń 6,25, czerwień 8,99
+   * wobec bieli, przy progu AA 4,5). Dotyczyła KOLOROWOŚCI: barwa niesie tu znaczenie
+   * (zielony = w normie, czerwony = błąd, bursztyn = uwaga), a przy jasności 22-30%
+   * wszystkie cztery czytały się jak czerń. Kontrast był realizowany kosztem funkcji.
+   *
+   * Wartości dobrane rachunkiem, nie na oko: w obrębie odcienia marki (ten sam hue, co
+   * w Night) szukamy MAKSYMALNEJ chromy CIELAB przy zachowanym kontraście ≥4,5 wobec
+   * tła (`bg`) I wobec karty (`surfaceRaised`) - progu pilnuje `themeContrast.test.ts`.
+   *
+   * Dlaczego zieleń zyskuje najmniej: kanał zielony waży w luminancji 0,7152, więc
+   * każde rozjaśnienie natychmiast zjada kontrast. Czerwony (0,2126) i niebieski
+   * (0,0722) mają dużo więcej miejsca - stąd błękit skoczył z chromy 46 na 63,
+   * a czerwień z jasności 30% na 43%.
+   *
+   * Ten sam kolor bywa TŁEM przycisku `solid`, na którym napis ma kolor `bg` (w jasnym
+   * motywie: biały) - więc czytelność napisu i czytelność koloru jako tekstu to ta sama
+   * liczba i ciągną w tę samą stronę. Rozjaśnianie „aż będzie ładnie" psuje oba naraz.
+   */
+  green: '#027E2B',
+  greenMuted: 'rgba(2,126,43,0.10)',
+  greenBorder: 'rgba(2,126,43,0.40)',
+  amber: '#A25A01',
+  amberMuted: 'rgba(162,90,1,0.10)',
+  amberBorder: 'rgba(162,90,1,0.40)',
+  red: '#D02A1E',
+  redMuted: 'rgba(208,42,30,0.10)',
+  redBorder: 'rgba(208,42,30,0.40)',
+  blue: '#0069D1',
+  blueMuted: 'rgba(0,105,209,0.10)',
+  blueBorder: 'rgba(0,105,209,0.40)',
   overlay: 'rgba(0,0,0,0.74)',
   selection: 'rgba(0,0,0,0.16)',
 };

@@ -36,7 +36,6 @@ import type { MissingTrackReason, SessionTrackView } from '../../application';
 import { dateUtcDayMonth, duration, formatLatLon, plural, timeUtc } from '../format';
 import {
   AppText,
-  Banner,
   Card,
   Screen,
   ScreenHeader,
@@ -536,7 +535,7 @@ function feet(value: number): string {
 function MissingTrack({ view }: { view: SessionTrackView }) {
   const first = view.flights[0] ?? null;
   const last = view.flights[view.flights.length - 1] ?? null;
-  const copy = missingTrackCopy(view.missing!, view.pendingFixes);
+  const copy = missingTrackCopy(view.missing!);
 
   return (
     <View style={styles.content}>
@@ -564,8 +563,6 @@ function MissingTrack({ view }: { view: SessionTrackView }) {
           ]}
         />
       </Card>
-
-      {copy.banner != null && <Banner kind="status" tone="amber" text={copy.banner} />}
     </View>
   );
 }

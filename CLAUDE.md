@@ -222,10 +222,52 @@ zakłada się w panelu (dane demo usunięte przy issue #50).
 --bg:    #0D0D0D      /* tło główne */
 ```
 
+**W MOTYWIE JASNYM (`solar`) AKCENTY SĄ INNE I DOBIERANE RACHUNKIEM** (uwaga
+z urządzenia, 2026-09-04: „w jasnym motywie czerwony i zielony mało się wyróżniają,
+wyglądają raczej jak czarny"). Skarga NIE dotyczyła kontrastu - ten był aż nadto
+wysoki (zieleń 6,25, czerwień 8,99 wobec bieli, przy progu AA 4,5) - tylko
+KOLOROWOŚCI: barwa niesie w tej aplikacji znaczenie (zielony = w normie, czerwony =
+błąd, bursztyn = uwaga), a przy jasności 22-30% wszystkie cztery czytały się jak czerń.
+- **metoda**: w obrębie odcienia marki (ten sam hue, co w Night) bierzemy MAKSYMALNĄ
+  chromę CIELAB, jaka mieści się w kontraście ≥4,5 wobec tła I wobec karty. Nowe
+  wartości: `green #027E2B`, `amber #A25A01`, `red #D02A1E`, `blue #0069D1`
+- **próg trzyma test** (`app/src/__tests__/themeContrast.test.ts`) i to on jest miejscem
+  na kolejną taką uwagę: dolna granica broni czytelności, GÓRNA (kontrast ≤6,0 na bieli)
+  broni barwy - na starej palecie wywracały się trzy kolory z czterech
+- **zieleń zyskuje najmniej i to jest fizyka**: kanał zielony waży w luminancji 0,7152,
+  więc każde rozjaśnienie natychmiast zjada kontrast. Czerwony (0,2126) i niebieski
+  (0,0722) mają dużo więcej miejsca
+- **ten sam kolor bywa TŁEM przycisku `solid`**, na którym napis ma kolor `bg` (w jasnym
+  motywie biały) - czytelność napisu i czytelność koloru jako tekstu to ta sama liczba.
+  Rozjaśnianie „aż będzie ładnie" psuje oba naraz
+
 ### Czcionki
 - `Bebas Neue` - nagłówki display, timery duże, canvas labels
 - `Archivo` - body text, etykiety, przyciski
 - `JetBrains Mono` - cyfry timerów, kody ICAO, wartości GPS, kody pilotów
+
+### Ikona aplikacji = ZNAK Z EKRANU LOGOWANIA PANELU (2026-09-04)
+Wypełniony samolot `PlaneIcon` (`admin/src/ui/components/icons.tsx`) w `--green` na
+ciemnozielonym tle z poświatą - ten sam znak, który stoi w plakietce `.login-badge`
+panelu. Jedna marka na dwóch powierzchniach, więc znaku NIE rysujemy drugi raz.
+- **pliki w `app/assets/` są GENEROWANE** (`npm run icons` → `app/scripts/build-icons.js`):
+  `icon.png` 1024, para adaptive Androida (`foreground` na 40% boku - bezpieczna strefa,
+  `background` = sam gradient), `monochrome` 432 BIAŁĄ sylwetką (system barwi ją sam)
+  i `favicon.png` 48. Poprawka wchodzi przez generator i regenerację, nie ręczną edycją
+  PNG - ta sama reguła, co przy katalogu lotnisk (`packages/domain/scripts/`)
+- **bez zależności i bez modułu natywnego**: rasteryzacja wielokąta z antyaliasingiem
+  (poziomo analitycznie, pionowo 8 podwierszy) i koder PNG na `zlib` ze stdlib. Sharpa
+  ani ImageMagicka w tym repozytorium nie ma i nie dokładamy ich dla pięciu plików
+- **ścieżkę SVG trzyma generator, nie import z panelu**: `admin/` jest osobnym modułem
+  z TSX, a skrypt ma działać gołym `node`. Zmiana `PlaneIcon` w panelu wymaga więc
+  przeniesienia ścieżki ręcznie - jedyny koszt tego rozwiązania i dlatego stoi tu zapisany
+- **ikona zapieka się w APK**: podmiana widać dopiero w nowym buildzie EAS, w Expo Go
+  nie zmieni się wcale
+- **podgląd `design/IKONA.html` też jest GENEROWANY** (`app/scripts/build-icon-preview.js`):
+  ekran główny telefonu, cztery maski launcherów, motyw ikon Androida 13+ i rozmiary
+  rzeczywiste - z obrazami wklejonymi DATA URI, więc strona nie ciągnie niczego spoza
+  siebie. To jedyny plik w `design/`, który NIE JEST specyfikacją: tu kod prowadzi
+  obrazek, a podgląd ma pokazywać to, co naprawdę leży w `app/assets/`
 
 ### Phone frame (`design/*.html` - aplikacja pilota)
 Każdy mockup używa ramki telefonu 393×852px (iPhone 14 Pro) z `--phone-scale` do auto-skalowania.
@@ -309,6 +351,21 @@ akcji. Arkusz bez sufitu dobijał do samej góry telefonu i czytał się jak now
   urządzenia, a psuła się już czterokrotnie
 - w mockupach ta sama reguła to `max-height: calc(100% - 56px)` + `overflow-y:auto`
   na `.modal-sheet`
+- **KLAWIATURA ARKUSZA NIE JEST KLAWIATURĄ EKRANU** (uwaga z urządzenia, 2026-09-04:
+  „czasem jak mam na manualnym locie przejście na ekran z przebiegiem operacji, to tak
+  jakby dwa razy muszę kliknąć DALEJ"). Zdarzenia klawiatury są w RN GLOBALNE, a arkusz
+  żyje we własnym oknie - więc `Screen` pod spodem kurczył się o wysokość klawiatury,
+  której u siebie nie ma, i dociągał listę (`useKeyboardAwareScroll`). Rachunek płacił
+  się przy ZAMYKANIU: `keyboardDidHide` pada na Androidzie dopiero po animacji chowania
+  (~300 ms), więc ekran stał jeszcze skrócony, pilot tapał „DALEJ" tam, gdzie go widział,
+  layout w tej samej chwili wracał na miejsce - i tapnięcie lądowało w pustce. Odtąd
+  `SheetSurface` zgłasza obecność na czas życia OKNA (`hooks/sheetPresence.ts` - LICZNIK,
+  bo zamykany arkusz i otwierany następny nachodzą na siebie), a `Screen` czyta
+  `useOwnKeyboardHeight`: pożyczoną klawiaturę oddaje dopiero, gdy naprawdę zniknie
+  (reguła `keyboardBorrowedBySheet` w `keyboardGeometry.ts`, z testem sekwencji).
+  Objaw widać było najwyraźniej na kroku 2 wpisu ręcznego, bo tam arkusz wchodzi
+  z klawiaturą sam, a „DALEJ" stoi tuż pod ostatnią kartą - ale mechanizm dotyczył
+  KAŻDEGO ekranu z arkuszem i dlatego poprawka siedzi w ramie, nie w ekranie
 
 ### Nawigacja i warianty mockupów (obowiązuje każdy nowy/zmieniany ekran)
 - Każdy plik: nav-strip z linkami do sąsiadów + karta w `index.html` (warianty literowe → sekcja "Warianty i stany")
@@ -825,6 +882,27 @@ kiedykolwiek zmieniana, pilot nie dowiadywał się znikąd.
   oraz przypisy pod akcjami destrukcyjnymi („oznacza zdarzenie jako błędne (nie usuwa
   go z rejestru)", „wiersz zostaje w rejestrze"). Wszystkie opisywały wewnętrzną budowę
   rejestru komuś, kto o nią nie pytał - a napis na przycisku („TEGO LĄDOWANIA NIE BYŁO")
+  Tą samą drogą poszły (2026-09-04) ostrzeżenia arkusza korekty odczytu mówiące, CZYM
+  ten odczyt jest w rejestrze - „ten odczyt otwiera łańcuch motogodzin", „jest
+  przekazaniem maszyny": świeciły przy każdym otwarciu, nie mówiły nic o poprawianej
+  wartości i nie dawały się na nic zamienić. Ostrzeżenie zostaje tam, gdzie mówi
+  o SKUTKU konkretnej zmiany (przesunięcie biegu silnika przy korekcie godziny).
+  Tego samego dnia wyleciały z arkusza DOPISANIA wpisu (10H): niebieski baner „wpis
+  dostanie w rejestrze znacznik «ręcznie»…" (znacznik jest sprawą panelu, nie pilota)
+  i przypis „uruchomienia i wyłączenia silnika tu nie ma…" - siatka dostępnych typów
+  mówi to sama, samym brakiem takiego kafelka.
+- **KOREKTA ODCZYTU WYGLĄDA JAK KAŻDA INNA KOREKTA** (uwaga z urządzenia, 2026-09-04:
+  „korekta «zdania» i «przejęcia» wygląda trochę inaczej niż korekta innych zdarzeń […]
+  ma jakiś taki wielki pill z nazwą zdarzenia"). Cel korekty w 10F to odtąd JEDNA LINIA
+  MONO, dokładnie ta sama, co w arkuszu czasu 10E - karta z ramką, ikoną medium i nazwą
+  pełnym stopniem robiła z przejęcia i zdania korektę innego gatunku. To cofa decyzję
+  z 2026-08-14 („mono 9 px czytało się jak przypis"): spójność rodziny arkuszy waży
+  więcej niż wyrazistość jednego z nich. Godzina dokleja się do tej samej linii przy
+  ZDANIU, bo tam kontrolki czasu nie ma i to jedyne miejsce, gdzie ją widać.
+- **zerowa zmiana blokuje BEZ ZDANIA także tutaj** (ta sama uwaga: „po co pisać na
+  przycisku «Zmień którąś…»"): to wąski wyjątek reguły issue #55 - blokadę widać
+  z kontrolki nad przyciskiem, bo pilot patrzy na wartość, której jeszcze nie tknął.
+  Zdanie zostaje przy wpisie NIECZYTELNYM i przy twardej regule czasu.
   mówi już wszystko, co trzeba wiedzieć przed tapnięciem. Podpowiedź pod polem pojawia
   się WYŁĄCZNIE po zmianie i mówi, co było
 - **arkusz korekty nie krzyczy** (uwagi z urządzenia, 2026-08-14). Trzy rzeczy naraz:
@@ -1393,6 +1471,30 @@ i tak sprawdza ją `DROP_ON_GROUND` (`rules/consistency.ts`). Wiedział model, m
   - **`ManualBalance` i spółka USUNIĘTE**: były DRUGIM rachunkiem tej samej wielkości,
     a takie pary rozjeżdżają się przy pierwszej poprawce jednej z nich. Została
     `manualPhaseTimes` (czasy faz ze szkicu) i dwa adaptery
+  - **SZLAK TEJ OPERACJI W ARKUSZU ODCZYTU KOŃCOWEGO** (uwaga z urządzenia,
+    2026-09-04: „w manualnym locie z paliwem zastanym czemu nie dasz też info, ile
+    użytkownik przejął, ile dolał, ile latał i ile wpisał, że zostało. To samo
+    motogodziny i olej"). Szlaki wpisu ręcznego opowiadały wyłącznie o SĄSIEDZIE
+    z łańcucha, a o wpisywanej operacji nic - rachunek istniał, ale żeby go zobaczyć,
+    trzeba było zamknąć arkusz i tapnąć plakietkę werdyktu. Odtąd pola „po locie"
+    (paliwo i MH) niosą chronologię: zastane (ze źródłem) → dolane → latano (blok,
+    czas w powietrzu, zużycie z normy) → ZIELONE oczekiwanie → co zastał następny.
+    `logic/manualReadingsTrail.ts`, z testami; oczekiwanie liczą TE SAME
+    `expectedFuelL`/`expectedMhH`, z których powstaje werdykt karty, a zielone ogniwo
+    paliwa składa `fuelExpectationRow` - jedna liczba nie ma prawa nazywać się
+    czterema zdaniami na 06, 09B, 02A i tutaj (przy normie z DOKUMENTACJI ogniwo mówi
+    „z dokumentacji jednostki" zamiast okna centyli, bo pasmo jest tam zadeklarowane,
+    nie zmierzone). Pole DOLEWKI szlaku nie dostaje: rejestr nie wie, ile pilot
+    zatankował, a ze szkicu wyszłyby liczby stojące w polach obok
+  - **OLEJ DOSTAŁ OCZEKIWANIE Z NORMY** (ta sama uwaga): `oilConfig.normLPerH` było
+    we wpisie ręcznym `null` z uzasadnieniem „rachunek mówiłby o innym dniu" - prawdziwym
+    dla kotwicy z cache przekazania i nieprawdziwym od issue #62, bo kotwicę daje
+    `readings-chain` pytany o CHWILĘ URUCHOMIENIA tego wpisu. Arkusz oleju pokazuje
+    więc ten sam szlak, co 02I („Ostatni pomiar" → „Latano · ΔMH" → „na bagnecie
+    oczekuj ≈"), liczony tym samym `oilClaimView`
+  - **wiersz odniesienia gaśnie od OGNIWA SĄSIADA, nie od całego szlaku**: gdyby
+    bramkowała go cała tablica, wpis bez sieci (szlak operacji jest, łańcucha nie ma)
+    zostałby bez jedynego punktu odniesienia, jaki wtedy istnieje - przekazania z cache
 - **CIĄGŁOŚĆ ODCZYTÓW Z SĄSIEDNIMI OPERACJAMI** (piąta i szósta tura;
   `GET /aircraft/:id/readings-chain`, `server/src/domain/readingsChain.ts`,
   `logic/readingsContinuity.ts`, `hooks/useReadingsChain.ts`): maszyna nie tankuje się
@@ -2190,6 +2292,18 @@ znikać, wraca po reinstalacji i jest na nowym telefonie.
   (wpis ręczny), `no-record` (serwer nie ma), `pending-upload` (nagranie czeka
   w kolejce NA TYM telefonie), `offline` (jest, brakuje drogi). „Brak śladu" pokazany
   komuś, kto ma tylko wyłączone dane, jest kłamstwem o jego locie
+- **ale każdy z nich mieści się w JEDNYM krótkim zdaniu** (uwaga z urządzenia,
+  2026-09-04: „jak mam przeglądanie zapisanych śladów, to po co pisać «telefon nagrał
+  tę trasę i oddał ją serwerowi»? Lepiej dać info, że nie ma danych, i koniec").
+  Ekran braku trasy opowiadał MODEL PRZECHOWYWANIA śladu - kto nagrał, komu oddał,
+  że nie zajmuje pamięci telefonu i wraca po reinstalacji - czyli tę samą kategorię
+  przypisów, którą issue #43 wyrzuciło z arkuszy korekty, a issue #72 z ustawień.
+  Baner o modelu śladu USUNIĘTY w całości (`MissingTrackCopy` nie ma już pola
+  `banner`), liczba punktów w kolejce zeszła razem z nim (`pendingFixes` wypadło
+  z `SessionTrackView` - pilot nie ma z niej co zrobić), a `offline` jest jedynym
+  powodem, którego zdanie jest INSTRUKCJĄ („Wróć na ten ekran z zasięgiem"), bo jako
+  jedyny ma drogę wyjścia. Krótko ≠ jednakowo: rozróżnienia czterech powodów i braku
+  technicznego słownika pilnuje `missingTrack.test.ts`
 - **kompresja to RDP + zaokrąglenia** (`track/payload.ts`): linia w metrach, profil
   w stopach, współrzędne do 5 miejsc. Statystyki liczą się PRZED upraszczaniem -
   inaczej „max wznoszenie" zależałoby od tolerancji rysowania

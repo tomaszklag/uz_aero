@@ -22,6 +22,13 @@
  *
  * `KeyboardAvoidingView` świadomie odrzucony - patrz nota w `useKeyboardHeight`:
  * zachowuje się różnie na obu systemach i reaguje na translucent status bar.
+ *
+ * KLAWIATURA ARKUSZA TO NIE KLAWIATURA EKRANU (zgłoszenie z urządzenia, 2026-09-04:
+ * „tak jakby dwa razy muszę kliknąć DALEJ"). Zdarzenia klawiatury są w RN globalne,
+ * więc ekran kurczył się także wtedy, gdy pilot pisał w arkuszu stojącym NAD nim -
+ * a przy zamykaniu arkusza wracał na miejsce z opóźnieniem animacji chowania
+ * klawiatury i zjadał celowane w przycisk tapnięcie. Stąd `useOwnKeyboardHeight`
+ * zamiast `useKeyboardHeight`.
  */
 
 import React from 'react';
@@ -29,7 +36,7 @@ import { ScrollView, StyleSheet, View, type ViewProps, type ViewStyle } from 're
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
 import { useKeyboardAwareScroll } from '../../hooks/useKeyboardAwareScroll';
-import { useKeyboardHeight } from '../../hooks/useKeyboardHeight';
+import { useOwnKeyboardHeight } from '../../hooks/useOwnKeyboardHeight';
 import { useTheme } from '../../theme';
 
 export interface ScreenProps extends ViewProps {
@@ -79,7 +86,7 @@ export function Screen({
   ...rest
 }: ScreenProps) {
   const { theme } = useTheme();
-  const keyboard = useKeyboardHeight();
+  const keyboard = useOwnKeyboardHeight();
   const keyboardScroll = useKeyboardAwareScroll(keyboard);
   const bg: ViewStyle = { backgroundColor: theme.colors.bg };
   const pad: ViewStyle | null = padded ? { padding: theme.spacing.lg } : null;

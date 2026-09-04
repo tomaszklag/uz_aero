@@ -22,7 +22,6 @@ import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '../foundation/AppText';
 import type { IconName } from '../foundation/Icon';
-import { Banner } from '../status/Banner';
 import { OptionGrid } from '../input/OptionGrid';
 import { ReasonField } from '../input/ReasonField';
 import { TimeStepper } from '../input/TimeStepper';
@@ -185,22 +184,6 @@ export function AddEventSheet({
         onChangeText={setNote}
         placeholder="np. telefon stracił fixa na pasie"
       />
-
-      <Banner
-        kind="edu"
-        tone="blue"
-        text={
-          'Wpis dostanie w rejestrze znacznik „ręcznie" - na osi operacji wygląda jak każdy ' +
-          'inny, a metodę widzi administrator w panelu.'
-        }
-        collapsedLabel="Skąd wiadomo, że wpis jest ręczny?"
-      />
-
-      <View style={styles.spacer} />
-      <AppText variant="mono" tone="muted" style={styles.note}>
-        Uruchomienia i wyłączenia silnika tu nie ma - zapisuje je przycisk w kokpicie,
-        a operacja ma dokładnie jeden bieg. Jeśli czas klamry jest zły, popraw go na osi.
-      </AppText>
     </Sheet>
   );
 }
@@ -214,7 +197,6 @@ function parseNumber(text: string): number | null {
 }
 
 const styles = StyleSheet.create({
-  spacer: { height: 0 },
   note: { fontSize: 8.5, letterSpacing: 0.8, lineHeight: 14 },
   fuelGrid: { flexDirection: 'row', gap: 9 },
   fuelCell: { flex: 1 },

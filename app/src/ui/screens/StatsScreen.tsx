@@ -539,8 +539,8 @@ export function StatsScreen({
               {/* Powód braku śladu nazywa `missingTrackCopy` - ten sam moduł, co na
                   ekranie 14 (zgłoszenie z urządzenia, 2026-08-30). Do tej pory ten
                   ekran rozróżniał tylko wpis ręczny od reszty i tłumaczył brak trasy
-                  RETENCJĄ, której nie ma od issue #47. Baner z modułu tu nie wchodzi:
-                  mówi o modelu śladu, a to jest miniaturka, nie ekran o śladzie. */}
+                  RETENCJĄ, której nie ma od issue #47. Zdanie jest KRÓTKIE i nie tłumaczy
+                  budowy aplikacji - patrz `missingTrack.ts` (2026-09-04). */}
               <AppText variant="display" tone="secondary" style={styles.noTrackTitle}>
                 {noTrack(track).title.toUpperCase()}
               </AppText>
@@ -997,7 +997,7 @@ function CrewRow({
  * nie oddał nagrania i tyle wiemy - to jedyny powód, który nie wymaga niczego więcej.
  */
 function noTrack(track: SessionTrackView | null) {
-  return missingTrackCopy(track?.missing ?? 'no-record', track?.pendingFixes ?? 0);
+  return missingTrackCopy(track?.missing ?? 'no-record');
 }
 
 /**
