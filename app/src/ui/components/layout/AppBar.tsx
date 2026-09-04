@@ -9,11 +9,10 @@
  */
 
 import React from 'react';
-import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
-import { Icon } from '../foundation/Icon';
 
 export interface AppBarProps {
   /**
@@ -26,10 +25,15 @@ export interface AppBarProps {
   aircraft?: string | null;
   /** Druga linia: trasa i operacja (np. „EPKK → EPWA · SKOKI"). */
   subtitle?: string | null;
-  /** Prawa strona - zwykle `SyncChip`, ewentualnie akcje. */
+  /**
+   * Prawa strona - `SyncChip`, plakietka stanu i akcje paska.
+   *
+   * `onSettings` (koło zębate `.settings-btn` z mockupów kokpitu) USUNIĘTE przy
+   * issue #82: ustawienia mają odtąd JEDNO wejście, na „Mój dzień", a w miejscu
+   * zębatki w kokpicie stoi `ThemeToggle`. Nowej akcji nie dokładamy tu propem -
+   * pasek przyjmuje ją przez `right`, bo tylko wołający wie, co obok czego stoi.
+   */
   right?: React.ReactNode;
-  /** Koło zębate po prawej (`.settings-btn` z mockupów kokpitu). */
-  onSettings?: () => void;
   /** Kompaktowy wariant dla trybu w locie (mniej pionowego miejsca). */
   compact?: boolean;
   style?: ViewStyle;
@@ -39,7 +43,6 @@ export function AppBar({
   aircraft,
   subtitle,
   right,
-  onSettings,
   compact = false,
   style,
 }: AppBarProps) {
@@ -82,25 +85,6 @@ export function AppBar({
 
       <View style={styles.right}>
         {right}
-        {onSettings != null && (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Ustawienia"
-            onPress={onSettings}
-            hitSlop={10}
-            style={({ pressed }) => [
-              styles.settings,
-              {
-                borderRadius: 7,
-                borderWidth: theme.borderWidth,
-                borderColor: theme.colors.border,
-                opacity: pressed ? 0.6 : 1,
-              },
-            ]}
-          >
-            <Icon name="settings" size={16} color={theme.colors.textMuted} />
-          </Pressable>
-        )}
       </View>
     </View>
   );
@@ -118,5 +102,4 @@ const styles = StyleSheet.create({
   signature: { fontSize: 12, lineHeight: 16, letterSpacing: 0.5 },
   subtitle: { fontSize: 11, lineHeight: 15, letterSpacing: 1 },
   right: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 0 },
-  settings: { width: 26, height: 26, alignItems: 'center', justifyContent: 'center' },
 });

@@ -1,14 +1,20 @@
 /**
  * UZ Aero - testy sekcji „Synchronizacja" w Ustawieniach (`screens/logic/syncStatus.ts`).
  *
- * Plik schudł razem z ekranem 11 (2026-08-12): licznik „wysłane / wszystkie", nazwa
- * karty arkusza, równanie paliwa i podsumowanie zrzutów opisywały widok, który był
- * trzecią kopią ekranu 10, i zniknęły wraz z nim. Zostało to, co pilot nadal widzi:
- * odmiana liczebników (etykiety idą wprost do niego) i katalog uwag serwera, po którym
- * dzwoni do administratora.
+ * Plik schudł dwa razy. Raz razem z ekranem 11 (2026-08-12): licznik „wysłane /
+ * wszystkie", nazwa karty arkusza, równanie paliwa i podsumowanie zrzutów opisywały
+ * widok, który był trzecią kopią ekranu 10.
+ *
+ * Drugi raz przy issue #82: katalog uwag serwera (`flagLabel`) i stany wiersza „Uwagi
+ * serwera" (`serverNoticeLabel`) odeszły razem z sekcją, której pilot nie ma jak
+ * naprawić - rozstrzyga te flagi panel. Zostało to, co pilot nadal czyta: odmiana
+ * liczebników i JEDNA godzina ostatniej rozmowy z serwerem.
  */
 
-import { eventsCount, flagLabel, serverNoticeLabel } from '../ui/screens/logic/syncStatus';
+import { eventsCount, lastContactAt, lastContactLabel } from '../ui/screens/logic/syncStatus';
+
+const DAY = 24 * 3_600_000;
+const NOON = Date.UTC(2026, 8, 4, 12, 0);
 
 describe('eventsCount - polska liczba mnoga', () => {
   it.each([
@@ -25,45 +31,47 @@ describe('eventsCount - polska liczba mnoga', () => {
   });
 });
 
-describe('flagLabel', () => {
-  // Pilot nie może zobaczyć `aircraft_overlap` ani `fuel_mismatch` - to kody dla
-  // programisty. Katalog ma KOMPLET sześciu typów §4.5 i mówi dokładnie tymi samymi
-  // słowami co panel (`admin/src/screens/flags/flagTypes.ts`, pole `short`), bo pilot
-  // i administrator rozmawiają o tej samej fladze przez telefon.
-  it.each([
-    ['aircraft_overlap', 'dwa telefony piszą do jednej maszyny'],
-    ['pilot_overlap', 'pilot rzekomo na dwóch maszynach naraz'],
-    ['mh_gap', 'dziura w łańcuchu MH'],
-    ['mh_regression', 'licznik się cofnął'],
-    ['fuel_mismatch', 'paliwo poza tolerancją'],
-    ['clock_drift', 'zegar telefonu przestawiony'],
-  ])('%s → %s', (type, label) => {
-    expect(flagLabel(type)).toBe(label);
+describe('lastContactAt - jedna godzina zamiast dwóch', () => {
+  /**
+   * TO JEST TA USTERKA (issue #82). Stempel wysyłki aktualizuje się WYŁĄCZNIE, gdy
+   * było co wysłać, więc pilot bez zaległości widział godzinę sprzed kilku godzin
+   * obok świeżego stempla danych referencyjnych. Obie liczby poprawne, obraz fałszywy.
+   */
+  it('bierze PÓŹNIEJSZY z dwóch kierunków - pytanie brzmi „od kiedy nie mam kontaktu"', () => {
+    const rano = NOON - 4 * 3_600_000;
+
+    expect(lastContactAt(rano, NOON)).toBe(NOON);
+    expect(lastContactAt(NOON, rano)).toBe(NOON);
   });
 
-  it('nie zna już `session_overlap` - etap D4 rozdzielił go na dwie różne patologie', () => {
-    // Nazwa historyczna: żaden strumień po 2026-08-07 jej nie niesie, a katalog, który
-    // ją zna, uczy nieaktualnego modelu. Surowy kod jest tu WŁAŚCIWĄ odpowiedzią.
-    expect(flagLabel('session_overlap')).toBe('session_overlap');
+  it('jeden kierunek wystarcza, gdy drugiego jeszcze nie było', () => {
+    expect(lastContactAt(NOON, null)).toBe(NOON);
+    expect(lastContactAt(null, NOON)).toBe(NOON);
   });
 
-  it('nieznany typ wraca surowy - lepszy kod niż zgadywana etykieta', () => {
-    expect(flagLabel('whatever_new')).toBe('whatever_new');
+  it('bez ani jednej udanej rozmowy nie zmyślamy godziny', () => {
+    expect(lastContactAt(null, null)).toBeNull();
   });
 });
 
-describe('serverNoticeLabel - cisza nie może znaczyć dwóch rzeczy', () => {
-  // Flagi przychodzą w odpowiedzi na WYSYŁKĘ. Telefon, który jeszcze nigdy nie wysłał,
-  // nie wie nic - i musi to powiedzieć wprost, bo „brak uwag" znaczyłoby wtedy
-  // „sprawdzone i czysto" (§6 pkt 2).
-  it('bez ani jednej udanej wysyłki: nie wiemy nic', () => {
-    expect(serverNoticeLabel(0, false)).toBe('jeszcze nie sprawdzone');
-    expect(serverNoticeLabel(2, false)).toBe('jeszcze nie sprawdzone');
+describe('lastContactLabel', () => {
+  it('w tej samej dobie UTC wystarczy godzina', () => {
+    expect(lastContactLabel(Date.UTC(2026, 8, 4, 8, 12), NOON)).toBe('08:12 UTC');
   });
 
-  it('po wysyłce: brak uwag albo ich liczba', () => {
-    expect(serverNoticeLabel(0, true)).toBe('brak uwag');
-    expect(serverNoticeLabel(1, true)).toBe('1');
-    expect(serverNoticeLabel(3, true)).toBe('3');
+  /**
+   * Sama godzina przy stemplu sprzed dwóch dni mówiłaby nieprawdę o tym, co pilot
+   * naprawdę sprawdza - a właśnie zamrożony stempel bez daty kazał zapytać, czy
+   * aplikacja w ogóle się synchronizuje.
+   */
+  it('spoza doby niesie datę', () => {
+    const label = lastContactLabel(NOON - 2 * DAY, NOON);
+
+    expect(label).toContain('UTC');
+    expect(label).not.toBe('12:00 UTC');
+  });
+
+  it('brak kontaktu nazywa się wprost', () => {
+    expect(lastContactLabel(null, NOON)).toBe('jeszcze żadnej');
   });
 });

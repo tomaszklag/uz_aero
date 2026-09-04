@@ -42,7 +42,6 @@ export * from './status/PeekBanner';
 export * from './status/NoGpsBanner';
 export * from './status/Caption';
 export * from './status/OutboxGuard';
-export * from './status/RefDataStamp';
 export * from './status/CrewRow';
 export * from './status/StepList';
 export * from './status/PillButton';
@@ -67,7 +66,6 @@ export * from './input/ReasonField';
 export * from './readouts/Readout';
 export * from './readouts/LevelBar';
 export * from './readouts/ScaleBar';
-export * from './readouts/GaugeHero';
 export * from './readouts/Trail';
 
 // Warstwy nad ekranem
@@ -148,4 +146,5 @@ export * from './data/DetectToast';
 
 // Ustawienia
 export * from './settings/ThemeSwitch';
+export * from './settings/ThemeToggle';
 export * from './settings/SettingsAction';

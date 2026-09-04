@@ -120,8 +120,6 @@
   .btn-refresh:hover { background:var(--surface-hover); color:var(--text-primary); }
 
   /* ── o aplikacji ── */
-  .ref-sync { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-secondary); display:inline-flex; align-items:center; gap:7px; }
-  .ref-sync .dot { width:6px; height:6px; border-radius:50%; background:var(--amber); flex-shrink:0; }
 
   /* ── ARKUSZ ZMIANY PIN - offline, dwa kroki ── */
   .sheet-overlay { position:absolute; inset:0; z-index:50; background:rgba(0,0,0,0.74); display:none; flex-direction:column; justify-content:flex-end; }
@@ -168,7 +166,7 @@
 
 <header class="canvas-label">
   <span class="film-strip">UZ AERO - 13</span>
-  <span class="slug">ustawienia · motyw · pin · konto · gps</span>
+  <span class="slug">ustawienia · motyw · sync · gps · pin · konto</span>
   <span class="canvas-meta"><span class="pulse"></span>Ekran 13</span>
 </header>
 
@@ -185,9 +183,9 @@
 
   <div class="screen">
     <div class="app-header">
-      <a href="04-cockpit-ground.html" class="back-btn">
+      <a href="01-moj-dzien.html" class="back-btn">
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.5 1.5L3 5l3.5 3.5"/></svg>
-        Kokpit
+        Mój dzień
       </a>
       <span class="screen-title">USTAWIENIA</span>
       <div class="offline-chip" title="Brak sieci - 3 zapisy czekają na wysyłkę; wyślą się same po powrocie zasięgu. Ustawienia działają w pełni offline.">
@@ -214,50 +212,6 @@
         </div>
       </div>
 
-      <!-- ══ PIN ══ -->
-      <div class="form-section">
-        <div class="form-section-title">Bezpieczeństwo</div>
-        <button class="action-item" onclick="openPin()">
-          <span class="action-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          </span>
-          <span class="action-body">
-            <span class="action-name">Zmień PIN</span>
-            <span class="action-sub">najpierw obecny PIN, potem nowy</span>
-          </span>
-          <svg class="action-chevron" width="14" height="14" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5L7 5l-3.5 3.5"/></svg>
-        </button>
-      </div>
-
-      <!-- ══ KONTO ══ -->
-      <div class="form-section">
-        <div class="form-section-title">Konto</div>
-        <div class="profile-chip">
-          <div class="avatar">TM</div>
-          <div class="profile-text">
-            <span class="profile-name">Tomasz Małkiewicz</span>
-            <span class="profile-sub">TMK · tomasz@uzaero.pl</span>
-          </div>
-        </div>
-
-        <!-- Wylogowanie zablokowane: niepusty outbox (3.0) - disabled Z POWODEM, nigdy cichy błąd -->
-        <button class="action-item disabled" title="Zablokowane: 3 zapisy z dzisiejszej operacji nie dotarły jeszcze na serwer" aria-disabled="true">
-          <span class="action-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          </span>
-          <span class="action-body">
-            <span class="action-name">Wyloguj i zmień konto</span>
-            <span class="action-sub">niedostępne - 3 zapisy czekają na wysyłkę</span>
-          </span>
-        </button>
-
-        <div class="outbox-guard">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <span><b>3 zapisy z dzisiejszej sesji</b> nie dotarły jeszcze na serwer - wylogowanie by je skasowało. Wróć do zasięgu: wyślą się same i przycisk się odblokuje.</span>
-        </div>
-        <div class="section-note">Ponowne logowanie <b style="color:var(--amber)">wymaga internetu</b> - konta zakłada administrator.</div>
-      </div>
-
       <!-- ══ SYNCHRONIZACJA - STAN, nie osobny ekran ══
            Ekran 11 USUNIĘTY (2026-08-12): był trzecim widokiem tej samej operacji
            (tabela lotów i „dane dnia" = ekran 10) i drugim wskaźnikiem sieci (kolejka
@@ -276,16 +230,26 @@
             <span class="diag-key">Kolejka wysyłki</span>
             <span class="diag-val amber">3 zdarzenia czekają</span>
           </div>
+          <!-- JEDEN STEMPEL ZAMIAST DWÓCH (issue #82): „czemu mam dwa czasy, które się
+               różnią, czyli «ostatnia wysyłka» i «data synchronizacji»? To nie powinno
+               być jakoś to samo, w sensie jeden mechanizm synchronizacji?"
+
+               Racja, i to trafiona w usterkę: wysyłka aktualizowała swój stempel
+               WYŁĄCZNIE wtedy, gdy było co wysłać, więc pilot bez zaległości widział
+               godzinę sprzed kilku godzin obok świeżego stempla danych referencyjnych.
+               Jedna godzina odpowiada na pytanie, które naprawdę pada: od kiedy telefon
+               nie rozmawiał z serwerem. Data dochodzi poza bieżącą dobą UTC. -->
           <div class="diag-row">
-            <span class="diag-key">Ostatnia udana wysyłka</span>
+            <span class="diag-key">Ostatnia synchronizacja</span>
             <span class="diag-val">09:41 UTC</span>
           </div>
-          <!-- Uwagi serwera: wiersz stoi ZAWSZE, także z „brak uwag" - inaczej pilot
-               nie wie, czy serwer nic nie zgłasza, czy nic nie sprawdził. -->
-          <div class="diag-row">
-            <span class="diag-key">Uwagi serwera</span>
-            <span class="diag-val amber">1 · paliwo poza tolerancją</span>
-          </div>
+          <!-- Wiersz „Uwagi serwera" USUNIĘTY (issue #82): „co to są «Uwagi serwera»
+               oraz «dwa telefony piszą do jednej maszyny»? […] wyświetlamy taką
+               informację, ale nie bardzo jest co z tym zrobić - widzę takie ostrzeżenie
+               i nie wiem, co mam dalej zrobić i zareagować." Flagi §4.5 są narzędziem
+               ADMINISTRATORA i rozstrzyga je panel; pilot dostawał listę rzeczy, których
+               nie naprawi. Ta sama kategoria, którą issue #72 wyrzuciło z ustawień,
+               a issue #84 z kokpitu (rozjazd zegara). -->
         </div>
         <button class="btn-refresh">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
@@ -328,14 +292,64 @@
             <span class="diag-key">Aplikacja</span>
             <span class="diag-val">UZ Aero · <small>v1.0.0-alpha</small></span>
           </div>
-          <div class="diag-row">
-            <span class="diag-key">Samolot operacji</span>
-            <span class="diag-val">SP-AXA <small>· Cessna 182</small></span>
+          <!-- Wiersz „Samolot operacji" USUNIĘTY (issue #82: „nie pisz tam «samolot
+               operacji» - to jest do usunięcia"). Mówił, którą maszynę pilot ma w ręce,
+               czyli to, co pasek kokpitu i kafelek na 01 niosą w kółko - a w aplikacji
+               pisał przy tym SUROWY identyfikator z panelu.
+
+               Stempel `.ref-sync` też stąd zszedł: jest jednym z dwóch kierunków
+               synchronizacji, więc mieszka w jej jedynej godzinie wyżej. -->
+        </div>
+      </div>
+
+      <!-- ══ NA KOŃCU: PIN, A POD NIM WYLOGOWANIE (issue #82) ══
+           „W ustawieniach daj wylogowanie na samym końcu, a przed nim zmianę PIN-u."
+           Obie sekcje dotyczą DOSTĘPU do aplikacji, więc stoją razem, a wylogowanie -
+           jedyna rzecz w tych ustawieniach, której nie da się cofnąć bez internetu -
+           zamyka ekran. Na górze stały na drodze każdego, kto przyszedł tu po
+           cokolwiek innego. -->
+      <!-- ══ PIN ══ -->
+      <div class="form-section">
+        <div class="form-section-title">Bezpieczeństwo</div>
+        <button class="action-item" onclick="openPin()">
+          <span class="action-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </span>
+          <span class="action-body">
+            <span class="action-name">Zmień PIN</span>
+            <span class="action-sub">najpierw obecny PIN, potem nowy</span>
+          </span>
+          <svg class="action-chevron" width="14" height="14" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5L7 5l-3.5 3.5"/></svg>
+        </button>
+      </div>
+
+      <!-- ══ KONTO ══ -->
+      <div class="form-section">
+        <div class="form-section-title">Konto</div>
+        <div class="profile-chip">
+          <div class="avatar">TM</div>
+          <div class="profile-text">
+            <span class="profile-name">Tomasz Małkiewicz</span>
+            <span class="profile-sub">TMK · tomasz@uzaero.pl</span>
           </div>
         </div>
-        <div class="ref-sync" title="Samoloty, konfiguracje, piloci - pobierane z serwera przy każdym starcie z siecią; teraz offline, więc pokazujemy wiek danych">
-          <span class="dot"></span>Dane referencyjne · sync 09:41 UTC
+
+        <!-- Wylogowanie zablokowane: niepusty outbox (3.0) - disabled Z POWODEM, nigdy cichy błąd -->
+        <button class="action-item disabled" title="Zablokowane: 3 zapisy z dzisiejszej operacji nie dotarły jeszcze na serwer" aria-disabled="true">
+          <span class="action-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </span>
+          <span class="action-body">
+            <span class="action-name">Wyloguj i zmień konto</span>
+            <span class="action-sub">niedostępne - 3 zapisy czekają na wysyłkę</span>
+          </span>
+        </button>
+
+        <div class="outbox-guard">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span><b>3 zapisy z dzisiejszej sesji</b> nie dotarły jeszcze na serwer - wylogowanie by je skasowało. Wróć do zasięgu: wyślą się same i przycisk się odblokuje.</span>
         </div>
+        <div class="section-note">Ponowne logowanie <b style="color:var(--amber)">wymaga internetu</b> - konta zakłada administrator.</div>
       </div>
 
     </div>
@@ -381,15 +395,15 @@
     <span class="vp-badge">13</span>
     <span class="vp-body">
       <span class="vp-name">Ustawienia</span>
-      <span class="vp-when">Wejście zębatką z app-baru kokpitu (04, 04A, 05, 05A–05D). Wszystko tu działa offline - jedyna akcja wymagająca sieci (wylogowanie → ponowny login) jest disabled z podanym powodem, a przy niepustej kolejce wysyłki chroni ją amber-box (wzorzec z 00).</span>
+      <span class="vp-when">Wejście zębatką z „Mój dzień" (01) - JEDYNE w całej aplikacji od issue #82; kokpit ma w tym miejscu przełącznik jasności. Wszystko tu działa offline - jedyna akcja wymagająca sieci (wylogowanie → ponowny login) jest disabled z podanym powodem, a przy niepustej kolejce wysyłki chroni ją amber-box (wzorzec z 00).</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
-  <a class="vp-item" href="04-cockpit-ground.html">
-    <span class="vp-badge">04</span>
+  <a class="vp-item" href="01-moj-dzien.html">
+    <span class="vp-badge">01</span>
     <span class="vp-body">
-      <span class="vp-name">Kokpit - powrót</span>
-      <span class="vp-when">Strzałka wstecz wraca dokładnie tam, skąd przyszła zębatka.</span>
+      <span class="vp-name">Mój dzień - powrót</span>
+      <span class="vp-when">Strzałka wstecz wraca na listę operacji dnia - jedyne miejsce, z którego się tu wchodzi.</span>
     </span>
   </a>
 </aside>

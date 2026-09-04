@@ -8,14 +8,11 @@
  */
 
 import {
-  balanceRows,
   RELEASE_CTA,
-  RELEASE_NOTICE,
   buildRelease,
   consumedL,
   finalFuelHint,
   finalMhHint,
-  handoverText,
   releaseBlocker,
   releasePayload,
 } from '../ui/screens/logic/releaseAircraft';
@@ -194,39 +191,15 @@ describe('podpowiedzi pod odczytem końcowym', () => {
     );
   });
 
-  it('baner przekazania wypisuje obie wartości - to one są ogniwem łańcucha', () => {
-    const text = handoverText('SP-KLM', { fuelL: 62, mh: 1241.15 }, 'hhmm');
-
-    expect(text).toContain('62 L');
-    expect(text).toContain('1241:09 MH');
-    expect(text).toContain('SP-KLM');
-  });
 });
 
-describe('rozliczenie operacji', () => {
-  it('wiersze są dokładnie te z mockupu 09B', () => {
-    const rows = balanceRows(session(), { fuelL: 62, mh: 1241.15 }, norm());
-
-    expect(rows.map((r) => [r.key, r.value])).toEqual([
-      ['Operacja', '13:40 → 15:10 · 1 lot'],
-      ['Paliwo start / koniec', '96 L → 62 L'],
-      ['Średnie zużycie', '22,7 L/h · norma 20–24 L/h'],
-      ['Motogodziny Δ', '+1:30'],
-    ]);
-  });
-
-  it('bez normy z serwera zostaje sam wynik - nie zmyślamy pasma', () => {
-    const rows = balanceRows(session(), { fuelL: 62, mh: 1241.15 }, null);
-
-    expect(rows.find((r) => r.key === 'Średnie zużycie')!.value).toBe('22,7 L/h');
-  });
-
-  it('zero czasu blokowego nie daje średniej - dzielenie przez zero to nie statystyka', () => {
-    const rows = balanceRows(session({ blockTimeMs: 0 }), { fuelL: 62, mh: 1241.15 }, norm());
-
-    expect(rows.find((r) => r.key === 'Średnie zużycie')!.value).toBe('-');
-  });
-
+/*
+ * Testy `handoverText` i `balanceRows` USUNIĘTE razem z banerem przekazania i kartą
+ * „Rozliczenie tego samolotu" (issue #84, uwagi 3 i 4) - uzasadnienie stoi w miejscu
+ * po nich w `logic/releaseAircraft.ts`. `consumedL` zostaje: liczy je nadal ekran
+ * operacji, a „zero jest wynikiem, brak danych nie jest" to jego cała treść.
+ */
+describe('zużycie operacji', () => {
   it('zużycie: zero jest wynikiem, brak danych nie jest', () => {
     expect(consumedL(session(), 96)).toBe(0);
     expect(consumedL(session(), null)).toBeNull();
@@ -235,9 +208,15 @@ describe('rozliczenie operacji', () => {
 });
 
 describe('releaseBlocker - odczyt jest tu WYMAGANY (§3.6)', () => {
-  it('brak paliwa i brak MH blokują z osobnym powodem', () => {
-    expect(releaseBlocker(session(), { fuelL: null, mh: 1241 })).toContain('paliwomierz');
-    expect(releaseBlocker(session(), { fuelL: 62, mh: null })).toContain('licznik motogodzin');
+  it('brak któregokolwiek odczytu blokuje tym samym zdaniem', () => {
+    // JEDNO zdanie na oba pola (issue #84): powód blokady jest instrukcją, a nie
+    // wykładem o łańcuchu MH - puste pole pilot i tak widzi nad przyciskiem.
+    expect(releaseBlocker(session(), { fuelL: null, mh: 1241 })).toBe(
+      'Podaj odczyt paliwa i motogodzin.',
+    );
+    expect(releaseBlocker(session(), { fuelL: 62, mh: null })).toBe(
+      'Podaj odczyt paliwa i motogodzin.',
+    );
   });
 
   it('cofnięty licznik jest zatrzymany PRZED zapisem, a nie odrzucony po fakcie', () => {
@@ -310,11 +289,10 @@ describe('payload i napisy zdania (issue #23 - jedna intencja)', () => {
     expect('noFlightNote' in releasePayload(reading, 'malfunction', null)).toBe(false);
   });
 
-  it('CTA i baner mówią, co się zaraz stanie - nie odwrotnie', () => {
-    // Zdanie = zatwierdzenie logu sesji (2026-08-10) - napis to zapowiada,
-    // a baner niesie najważniejsze zdanie przebudowy flow.
+  it('CTA mówi, co się zaraz stanie - nie odwrotnie', () => {
+    // Zdanie = zatwierdzenie logu operacji (2026-08-10) i napis to zapowiada. Baner
+    // „Zdajesz samolot, nie kończysz dnia" odszedł przy issue #84 (uwaga 5): opisywał
+    // MODEL, a nie tę operację - pilot zobaczy go w działaniu, wracając na listę dnia.
     expect(RELEASE_CTA).toBe('ZDAJ I ZATWIERDŹ LOG');
-    expect(RELEASE_NOTICE).toContain('nie kończysz dnia');
-    expect(RELEASE_NOTICE).toContain('listy dnia');
   });
 });

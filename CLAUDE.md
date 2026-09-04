@@ -370,8 +370,9 @@ niepusty outbox nigdy nie więzi pilota na ostatnim ekranie (§4.1).
 ### Kokpit jest stanem modalnym (decyzja 2026-08-10)
 **Dopóki pilot trzyma samolot, z kokpitu nie ma wyjścia bokiem** - z 04/05 nie prowadzi
 żadna droga na 01. Maszynę oddaje się przez „Zdaj samolot" (09b) i to ona wraca na 01;
-akcje ground (06/07/08) i 09 wracają do kokpitu. Wyjątkiem są ustawienia (13), bo tam
-wraca się tym samym krokiem.
+akcje ground (06/07/08) i 09 wracają do kokpitu. **Od issue #82 nie ma już ani jednego
+wyjątku**: ustawienia (13) były ostatnim i zniknęły z paska kokpitu - zębatka stoi
+wyłącznie na 01, a w jej miejscu pilot ma przełącznik jasności (sekcja niżej).
 Konsekwencje przy każdej zmianie kokpitu:
 - **nie dokładaj linków na 01** - ani paska, ani przycisku, ani wpisu w nagłówku. Pasek
   operacji `ClaimStrip` z linkiem „Mój dzień →" był jedyną taką drogą i został USUNIĘTY
@@ -2041,6 +2042,46 @@ akcja, z komentarzem". Dzięki temu znikają osierocone loty i sztuczne zajęto�
   ręcznego - świadoma granica pierwszej wersji
 - **makiet dla nowych stanów NIE MA** (baner na 01, baner na 10, wiersz osi) - zgłoszone
   właścicielowi przy wdrożeniu jako dług; reguła „ekran 1:1 z `design/*.html`" zostaje
+
+## Ustawienia mają JEDNO wejście, kokpit ma jasność (issue #82, 2026-09-04)
+Pięć uwag ze zgłoszenia; wszystkie sprowadzają się do tego samego pytania „po co mi to
+tutaj":
+- **zębatka stoi WYŁĄCZNIE na 01** („zostawmy ustawienia takie, jakie są na głównym
+  ekranie; usuńmy wszędzie indziej"). Zniknęła z paska kokpitu (04/04A/05 i warianty),
+  a `AppBar` stracił prop `onSettings` - nowa akcja paska wchodzi przez `right`.
+  To domyka modalność kokpitu: ustawienia były jej ostatnim wyjątkiem
+- **w miejscu zębatki stoi PRZEŁĄCZNIK JASNOŚCI** (`ThemeToggle` + czysta decyzja
+  w `components/settings/themeTarget.ts`). Jasność zostaje w kokpicie, bo jest
+  odpowiedzią na SŁOŃCE, a nie na chęć konfigurowania aplikacji - w locie pilot nie
+  może zejść z ekranu, na którym pracuje. **IKONA POKAZUJE SKUTEK TAPNIĘCIA, NIE STAN**:
+  w motywie ciemnym stoi SŁOŃCE. To ta sama reguła, przez którą issue #72 odrzuciło
+  suwak - pilot nie ma zgadywać, co zrobi kontrolka; stan i tak widać, bo jest nim cały
+  ekran. `ThemeSwitch` z dwiema pozycjami zostaje w ustawieniach, gdzie wybór jest
+  świadomy i jest na niego miejsce
+- **PIN i wylogowanie NA KOŃCU ekranu 13**, w tej kolejności („daj wylogowanie na samym
+  końcu, a przed nim zmianę PIN-u"). Obie sekcje dotyczą DOSTĘPU, a wylogowanie jest
+  jedyną rzeczą w tych ustawieniach, której nie da się cofnąć bez internetu. Na górze
+  stały na drodze każdego, kto przyszedł po cokolwiek innego
+- **wiersz „Samolot operacji" USUNIĘTY** („to jest do usunięcia"): mówił, którą maszynę
+  pilot ma w ręce, czyli to, co pasek kokpitu i kafelek na 01 niosą w kółko - a pisał
+  przy tym SUROWY identyfikator z panelu (ta sama klasa błędu, co guid w nagłówku śladu,
+  issue #84)
+- **JEDEN STEMPEL CZASU ZAMIAST DWÓCH** („czemu mam dwa czasy, które się różnią […] to
+  nie powinno być jakoś to samo, w sensie jeden mechanizm synchronizacji?"). Pytanie
+  trafiło w USTERKĘ, nie w kosmetykę: stempel wysyłki aktualizował się WYŁĄCZNIE wtedy,
+  gdy było co wysłać (`SyncOutcome.idle` przy pustej kolejce nie jest `synced`), więc
+  pilot bez zaległości widział godzinę sprzed kilku godzin obok świeżego stempla danych
+  referencyjnych. Odtąd wiersz „Ostatnia synchronizacja" niesie PÓŹNIEJSZY z dwóch
+  kierunków (`lastContactAt` w `logic/syncStatus.ts`), bo pytanie brzmi „od kiedy nie
+  mam kontaktu z serwerem"; poza bieżącą dobą UTC dochodzi data, bo sama godzina przy
+  stemplu sprzed dwóch dni kłamie. `RefDataStamp` skasowany
+- **„UWAGI SERWERA" ZNIKNĘŁY Z APLIKACJI PILOTA** („widzę takie ostrzeżenie i nie wiem,
+  co mam dalej zrobić i zareagować"). Flagi §4.5 są narzędziem ADMINISTRATORA -
+  rozstrzyga je panel, a pilot dostawał listę rzeczy, których nie naprawi. Ta sama
+  kategoria, którą issue #72 wyrzuciło z ustawień, a issue #84 z kokpitu (rozjazd
+  zegara). Serwer nadal odsyła je w odpowiedzi na wysyłkę i nadal widzi je panel;
+  zniknął magazyn na telefonie (`sessionStore.serverFlags`) i katalog napisów
+  (`flagLabel`, `serverNoticeLabel`), którego nikt już nie czytał
 
 ## Motywy: DWA i przełącznik ciemny/jasny (issue #72, 2026-09-01)
 „Niepotrzebnie mamy tak duży wybór motywów. Zostawmy domyślny ciemny oraz jasny jako

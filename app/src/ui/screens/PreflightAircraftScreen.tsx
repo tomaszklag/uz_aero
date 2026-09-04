@@ -38,14 +38,15 @@
  *    `usePreventRemove` łapie przycisk sprzętowy i gest. Potwierdzenie CZYŚCI szkic,
  *    więc następne wejście zaczyna od nowa; wcześniej porzucony formularz wracał
  *    z wyborami sprzed godziny. Pusty formularz wychodzi bez pytania - arkusz nad
- *    niczym pytałby o zgodę na nic. Zapisana akcja nawigacji jedzie dopiero z efektu,
- *    PO re-renderze, w którym bramka opadła - dispatch w tym samym tiku trafiałby
- *    w listener pamiętający jeszcze bramkę podniesioną.
+ *    niczym pytałby o zgodę na nic. Kolejność wyjścia (arkusz z drzewa → klatka →
+ *    dopiero nawigacja) trzyma od issue #84 wspólny `useAbandonExit`, ten sam, którego
+ *    używa wpis ręczny: obie drogi do lotu miały tę samą kopię tej sekwencji i tę samą
+ *    wywrotkę na Androidzie.
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { usePreventRemove, type NavigationAction } from '@react-navigation/native';
+import type { NavigationAction } from '@react-navigation/native';
 
 import {
   AbandonDraftSheet,
@@ -64,6 +65,7 @@ import {
 } from '../components';
 import { useTheme } from '../theme';
 import { useCurrentPilot, useSessionStore } from '../store';
+import { useAbandonExit } from '../hooks/useAbandonExit';
 import { useSkeleton } from '../hooks/useSkeleton';
 import { usePreflightDraft } from '../store/preflightDraft';
 import { dualRequirementBlocker } from './logic/dualRequirement';
@@ -153,31 +155,18 @@ export function PreflightAircraftScreen({
   }, [noFleet, pilotId, queries, refreshReference, setPilotProfile]);
 
   // ── bramka „wstecz": rezygnacja z nowego lotu (issue #55, `design/02h`) ────────
-  /** Akcja nawigacji zatrzymana przez bramkę - arkusz jest otwarty, póki tu coś jest. */
-  const [leaveAction, setLeaveAction] = useState<NavigationAction | null>(null);
-  /** Pilot potwierdził rezygnację - bramka ma opaść i wypuścić zatrzymaną akcję. */
-  const [leaving, setLeaving] = useState(false);
-
   /*
    * Bramka pyta o WYBORY (`draft.dirty()`), nie o sam fakt bycia na ekranie: pusty
    * formularz wychodzi bez pytania. Warunek gaśnie też po ukończeniu flow - krok 3
    * czyści szkic PRZED wejściem do kokpitu, więc zdjęcie tego ekranu ze stosu przy
    * powrocie na 01 (po zdaniu samolotu) przechodzi bez arkusza.
+   *
+   * Sekwencja wyjścia mieszka od issue #84 pkt 7 we wspólnym `useAbandonExit`: obie
+   * drogi do lotu miały tę samą kopię i tę samą wywrotkę na Androidzie. Czyszczenie
+   * szkicu = „następne wejście zaczyna od nowa" (issue #55) i zarazem opuszczenie
+   * bramki, bo po nim `dirty()` jest fałszywe.
    */
-  usePreventRemove(draft.dirty() && !leaving, ({ data }) => setLeaveAction(data.action));
-
-  // Zatrzymana akcja jedzie dopiero PO re-renderze z opuszczoną bramką (patrz docblock).
-  useEffect(() => {
-    if (leaving && leaveAction != null) navigation.dispatch(leaveAction);
-  }, [leaving, leaveAction, navigation]);
-
-  const stayInForm = useCallback(() => setLeaveAction(null), []);
-  const confirmAbandon = useCallback(() => {
-    setLeaving(true);
-    // Czyszczenie szkicu = „następne wejście zaczyna od nowa" (issue #55) i zarazem
-    // opuszczenie bramki: po nim `dirty()` jest fałszywe.
-    draft.reset();
-  }, [draft]);
+  const exit = useAbandonExit(navigation, draft.dirty(), undefined, () => draft.reset());
 
   const selected = draft.aircraft;
 
@@ -396,25 +385,31 @@ export function PreflightAircraftScreen({
 
       {/* Wiersze odniesienia tylko dla FAKTYCZNYCH wyborów - kreska niczego nie
           przypomina (ta sama reguła, co godzina przejęcia w `LeaveCockpitSheet`). */}
-      <AbandonDraftSheet
-        visible={leaveAction != null && !leaving}
-        title="ZREZYGNOWAĆ Z NOWEGO LOTU?"
-        rows={[
-          ...(selected != null
-            ? [{ label: 'Wybrany samolot', value: `${selected.reg} · ${selected.type}` }]
-            : []),
-          ...(draft.dualId != null
-            ? [
-                {
-                  label: 'Drugi pilot',
-                  value: pilots.find((p) => p.id === draft.dualId)?.name ?? draft.dualId,
-                },
-              ]
-            : []),
-        ]}
-        onStay={stayInForm}
-        onAbandon={confirmAbandon}
-      />
+      {/* Warunek stoi TUTAJ, nie w propie `visible` (issue #84 pkt 7): rama arkusza
+          przeżywa własną niewidzialność o czas animacji wyjazdu, a okno modala jest
+          na Androidzie osobnym oknem systemu - zdejmowanie ekranu spod niego wywracało
+          aplikację (`hooks/abandonExit.ts`). */}
+      {exit.sheetMounted && (
+        <AbandonDraftSheet
+          visible
+          title="ZREZYGNOWAĆ Z NOWEGO LOTU?"
+          rows={[
+            ...(selected != null
+              ? [{ label: 'Wybrany samolot', value: `${selected.reg} · ${selected.type}` }]
+              : []),
+            ...(draft.dualId != null
+              ? [
+                  {
+                    label: 'Drugi pilot',
+                    value: pilots.find((p) => p.id === draft.dualId)?.name ?? draft.dualId,
+                  },
+                ]
+              : []),
+          ]}
+          onStay={exit.stay}
+          onAbandon={exit.leave}
+        />
+      )}
     </Screen>
   );
 }

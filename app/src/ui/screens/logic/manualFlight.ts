@@ -311,7 +311,11 @@ export function manualFlightStepBlocker(
         return 'Wpisz stan zastany: paliwo i motogodziny.';
       }
       if (afterL == null || draft.mhAfter == null) {
-        return 'Wpisz stan po locie - to przekazanie dla następnego pilota.';
+        // Powód jest INSTRUKCJĄ, nie uzasadnieniem wymogu (issue #84 pkt 6, ta sama
+        // reguła co w `preflightBlocker` i na tankowaniu): doklejka „to przekazanie
+        // dla następnego pilota" tłumaczyła, PO CO wypełnić pole, którego pustkę
+        // pilot ma przed oczami.
+        return 'Wpisz stan po locie.';
       }
 
       // FUEL_NEGATIVE / MH_NEGATIVE - wartość ujemna jest twardym błędem domeny.

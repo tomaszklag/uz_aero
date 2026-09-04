@@ -40,16 +40,28 @@ export interface CockpitAxis {
    */
   foot: AxisFootItem[];
   /**
-   * Czy w sesji zaszło cokolwiek OPERACYJNEGO (kołowanie, start, lądowanie, zrzut,
-   * tankowanie, załadunek, zmiana załogi). Karta logu w locie pojawia się dopiero wtedy
-   * (issue #19): oś złożona z przejęcia, uruchomienia i wiersza „na żywo" powtarzałaby
-   * to, co ekran mówi wyżej.
+   * Czy oś ma choć jeden ZAPIS Z REJESTRU - a więc czy karta logu ma co pokazać.
+   *
+   * ══ ZMIANA WOBEC ISSUE #19 (issue #84, zgłoszenie z urządzenia) ══
+   * „Jak zdefiniowałem nowy lot automatyczny i jestem na ekranie logowania zdarzeń, to
+   * dopiero jak zaloguję zdarzenie taxi, pojawiają się wpisy «przejęcie»
+   * i «uruchomienie» - a powinny się raczej pojawić od razu."
+   *
+   * Karta zapalała się dotąd dopiero przy pierwszym zdarzeniu OPERACYJNYM (kołowanie,
+   * start, tankowanie…), bo przejęcie i uruchomienie „powtarzałyby to, co ekran mówi
+   * wyżej". Rachunek okazał się zły w praktyce: pilot patrzy na log, żeby sprawdzić,
+   * CZY ZAPIS POWSTAŁ - a pusty ekran po przejęciu i uruchomieniu silnika odpowiada
+   * na to pytanie „nie". Powtórzenie jest tańsze od wątpliwości, czy aplikacja
+   * cokolwiek zarejestrowała.
+   *
+   * Wiersz „na żywo" się nie liczy: nie jest zapisem rejestru, tylko licznikiem stanu -
+   * karta złożona z samego niego mówiłaby o czasie, który stoi już w przyrządach.
    */
   hasEvents: boolean;
 }
 
-/** Wiersze, które nie są jeszcze przebiegiem sesji - po nich karta logu się nie zapala. */
-const QUIET: ReadonlySet<AxisRow['kind']> = new Set(['claim', 'engineStart', 'live']);
+/** Wiersz, który nie jest zapisem rejestru - sam z siebie karty logu nie zapala. */
+const QUIET: ReadonlySet<AxisRow['kind']> = new Set(['live']);
 
 /**
  * Buduje oś kokpitu z lokalnego strumienia sesji.

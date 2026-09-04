@@ -341,13 +341,29 @@
            tu naprawdę odróżnia. Jedno wejście otwiera TEN SAM arkusz co 02I (pomiar
            + dolewka); bez wiersza „Oczekiwane wg normy" - wpis opisuje przeszłość,
            a oczekiwanie liczy się względem bieżącego licznika, więc mówiłoby o innym
-           dniu (ta sama reguła, co brak podpowiedzi zadania na 15A). -->
+           dniu (ta sama reguła, co brak podpowiedzi zadania na 15A).
+
+           DWA POLA, NIE JEDNO (issue #84, uwaga 3: „daj dla dolewki oleju oddzielny
+           input na głównym ekranie - teraz dla paliwa i motogodzin mam każde pole jako
+           oddzielny input"). Pomiar i dolewka to dwie różne liczby i dwa różne pytania,
+           więc mają dwa wiersze - jak zastane / dolane / po locie przy paliwie. Arkusz
+           zostaje JEDEN, bo przy bagnecie to jedna czynność: zmierz → jeśli mało, dolej.
+
+           ARKUSZ NIESIE SZLAK (uwaga 3 i 4: „ten sam komponent, co podczas definiowania
+           lotu automatycznego"): ● Ostatni pomiar · 16 SIE 09:00 - J. Kowalski (bagnet
+           9,2 L · przy 1 232:24 MH). Bez ogniwa oczekiwania - patrz akapit wyżej. -->
       <div class="section">
         <div class="section-head"><span class="section-label">Olej</span><span class="optional-tag">opcjonalnie</span></div>
         <div class="field">
-          <span class="field-label">Pomiar i dolewka</span>
+          <span class="field-label">Pomiar z bagnetu</span>
           <a href="15c-reczny-liczniki.html" class="field-input">
-            <span class="field-val">8,2 + 1,0</span><span class="field-unit">L</span>
+            <span class="field-val">8,2</span><span class="field-unit">L</span>
+          </a>
+        </div>
+        <div class="field">
+          <span class="field-label">Dolewka</span>
+          <a href="15c-reczny-liczniki.html" class="field-input">
+            <span class="field-val">1,0</span><span class="field-unit">L</span>
           </a>
         </div>
         <div class="field-sub">po dolewce 9,2 L</div>

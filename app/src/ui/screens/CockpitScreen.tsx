@@ -53,6 +53,7 @@ import {
   StatusChip,
   SyncChip,
   Tag,
+  ThemeToggle,
   type ActionCardSpec,
   type IconName,
   type Tone,
@@ -71,6 +72,7 @@ import { boardingInitialJumpers, boardingPrefill } from './logic/boardingPrefill
 import { buildCockpitActions } from './logic/cockpitActions';
 import { cockpitFlightTimeMs } from './logic/cockpitFlightTime';
 import { buildCockpitAxis } from './logic/cockpitLog';
+import { pilotWarnings } from './logic/pilotWarnings';
 import { currentFlightNumber } from './logic/flightNumber';
 import { fuelTone } from './logic/fuelNorm';
 import { buildCockpitFuel } from './logic/cockpitFuel';
@@ -146,7 +148,9 @@ export function CockpitScreen({
   const context = useSessionStore((s) => s.context);
   const projection = useSessionStore((s) => s.projection);
   const events = useSessionStore((s) => s.events);
-  const warnings = useSessionStore((s) => s.warnings);
+  // Odsiew flag diagnostycznych (issue #84): rozjazd zegara telefonu z GPS jest
+  // sygnałem dla rejestru, nie dla pilota - `logic/pilotWarnings.ts`.
+  const warnings = pilotWarnings(useSessionStore((s) => s.warnings));
   const lastError = useSessionStore((s) => s.lastError);
   const startEngine = useSessionStore((s) => s.startEngine);
   const stopEngine = useSessionStore((s) => s.stopEngine);
@@ -518,9 +522,13 @@ export function CockpitScreen({
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm }}>
               <SyncChip />
               <StatusChip label="Running" tone="green" />
+              {/* PRZEŁĄCZNIK JASNOŚCI W MIEJSCU ZĘBATKI (issue #82): ustawienia mają
+                  odtąd jedno wejście, na „Mój dzień", a jasność zostaje tam, gdzie
+                  jest odpowiedzią na słońce w ekranie - w locie pilot nie może zejść
+                  z kokpitu, żeby ją zmienić. */}
+              <ThemeToggle />
             </View>
           }
-          onSettings={() => navigation.navigate('Settings')}
         />
 
         {/*
@@ -643,9 +651,10 @@ export function CockpitScreen({
               pełnoekranowa wstęga z mockupu zostaje. `flexShrink: 0` pilnuje, żeby się
               nie ścisnął, gdy sekcje wyżej zabiorą całą wysokość.
 
-              Karta pojawia się dopiero, gdy w operacji zaszło coś OPERACYJNEGO (issue #19,
-              `axis.hasEvents`): oś złożona z przejęcia, uruchomienia i wiersza „na żywo"
-              powtarzałaby to, co ekran mówi wyżej. Nagłówek bez liczb T/O i LDG
+              Karta pojawia się z PIERWSZYM zapisem rejestru, czyli już przy przejęciu
+              (issue #84, `axis.hasEvents` - odwraca bramkę z issue #19). Pusty log po
+              uruchomieniu silnika czytał się jak brak zapisu, a to jest jedyne pytanie,
+              które pilot do tej karty ma. Nagłówek bez liczb T/O i LDG
               (issue #44) - mówi je sama oś, a słowo „cykl" odeszło razem z modelem
               wielu cykli. */}
           {axis.hasEvents && (
@@ -867,10 +876,15 @@ export function CockpitScreen({
         ]
           .filter(Boolean)
           .join(' · ')}
-        right={<SyncChip />}
-        // `.settings-btn` z mockupu 04 → ekran 13 (ustawienia: motyw, PIN, konto,
-        // diagnostyka GPS).
-        onSettings={() => navigation.navigate('Settings')}
+        right={
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm }}>
+            <SyncChip />
+            {/* Zębatka `.settings-btn` z mockupu 04 USUNIĘTA (issue #82): ustawienia
+                mają jedno wejście, na „Mój dzień". W jej miejscu stoi przełącznik
+                jasności - patrz komentarz w trybie lotu wyżej. */}
+            <ThemeToggle />
+          </View>
+        }
       />
 
       <View style={{ padding: theme.spacing.lg, gap: 14 }}>
