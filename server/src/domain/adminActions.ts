@@ -75,6 +75,16 @@ export const ADMIN_ACTIONS = [
   'maintenance.rebuild_projections',
   'maintenance.retry_exports',
   'maintenance.prune_tokens',
+  /**
+   * Zmiana statusu ZGŁOSZENIA BŁĘDU z aplikacji pilota (issue #87).
+   *
+   * Jedyna zmiana, jakiej doznaje wiersz `bug_reports` po przyjęciu z telefonu -
+   * i decyzja o CUDZYM zgłoszeniu, więc ma ślad jak każda inna. `details` niosą
+   * przejście (`from` → `to`), komentarz i tożsamość zgłoszenia, bo zamknięte
+   * zgłoszenie wypada z domyślnego widoku listy i za tydzień trudniej je odnaleźć
+   * niż wpis w dzienniku.
+   */
+  'bug.status',
 ] as const;
 
 export type AdminAction = (typeof ADMIN_ACTIONS)[number];

@@ -97,7 +97,26 @@ export type Capability =
    * eksportu na `fleet.manage` (dokładnie jak na `A05` - druga zdolność dla tego
    * samego przycisku byłaby rozjazdem).
    */
-  | 'maintenance.run';
+  | 'maintenance.run'
+  /**
+   * Zmiana statusu ZGŁOSZENIA BŁĘDU z aplikacji pilota (issue #87, moduł
+   * „Zgłoszenia" panelu).
+   *
+   * ══ DLACZEGO NOWA POZYCJA ══
+   * Katalog nazywa ZASOBY, a zgłoszenie nie jest żadnym z dotychczasowych: nie jest
+   * flagą (tę wystawia serwer z reguł §4.5, a nie człowiek z telefonu), nie jest
+   * rejestrem ani kontem. Wpisanie go pod `flags.resolve` dałoby fałszywą odpowiedź
+   * na pytanie, po które ten plik istnieje - „co panel potrafi zmienić".
+   *
+   * ODCZYT listy zdolności NIE WYMAGA: idzie na `panel.access`. Zgłoszenia są tym,
+   * po co w czasie testów wchodzi się do panelu, a zamykanie ich przed kimkolwiek,
+   * kto ma tam wstęp, nie chroni niczego. Zdolność bramkuje DECYZJĘ o cudzym
+   * zgłoszeniu, tak jak `events.correct` bramkuje zapis w cudzej operacji.
+   *
+   * Wraca do rozważenia razem z trzecią rolą: „kto obsługuje zgłoszenia" to
+   * naturalny kandydat na uprawnienie kogoś, kto nie zarządza flotą ani kontami.
+   */
+  | 'bugs.triage';
 
 const CAPABILITIES: Readonly<Record<PilotRole, readonly Capability[]>> = {
   // Pilot pracuje wyłącznie w aplikacji na telefonie. Panel go nie dotyczy -
@@ -115,6 +134,7 @@ const CAPABILITIES: Readonly<Record<PilotRole, readonly Capability[]>> = {
     'thresholds.manage',
     'audit.read',
     'maintenance.run',
+    'bugs.triage',
   ],
 };
 

@@ -23,6 +23,7 @@ import type {
   ReferencePilot,
 } from '@uzaero/domain';
 
+import type { BugSeverity, BugStatus } from '../../domain/bugReports.ts';
 import type { PilotRole } from '../../domain/roles.ts';
 
 // ── magazyn ─────────────────────────────────────────────────────────────────────
@@ -244,6 +245,99 @@ export interface AircraftReadingsPort {
   insert(tx: Queryable, aircraftId: string, reading: AdminReading): Promise<void>;
 }
 
+// ── zgłoszenia błędów z aplikacji pilota (issue #87, na czas testów) ────────────
+
+/**
+ * Zgłoszenie tak, jak przyszło z telefonu. Kluczem jest `uuid` NADANY NA TELEFONIE -
+ * ta sama idempotencja, co w rejestrze zdarzeń: ponowienie wysyłki po zerwanym
+ * połączeniu nie robi drugiego zgłoszenia.
+ */
+export interface NewBugReport {
+  uuid: string;
+  /** Zegar TELEFONU - chwila, w której pilot to widział, nie chwila dostarczenia. */
+  createdAt: Date;
+  /** `null` = pilot nie wybrał wagi; pole jest w formularzu opcjonalne. */
+  severity: BugSeverity | null;
+  description: string;
+  /** Czytelna etykieta miejsca („KOKPIT · arkusz TANKOWANIE") - kolumna listy panelu. */
+  screen: string;
+  appVersion: string | null;
+  /** Operacja, przy której powstało zgłoszenie; `null` poza kokpitem i logiem. */
+  sessionUuid: string | null;
+  /**
+   * KOMPLET kontekstu okna - miejsce, operacja, wydanie, telefon, stan łączności.
+   *
+   * Nieprzezroczysty dla serwera i to jest decyzja: kształt będzie się zmieniał co
+   * tydzień testów, a nikt nie pyta go o nic poza „pokaż wszystko". Walidacja
+   * ogranicza się do rozmiaru (trasa) - bramka na polach kosztowałaby wdrożenie
+   * serwera przy każdej nowej rzeczy, którą telefon zaczyna dołączać.
+   */
+  context: Record<string, unknown>;
+}
+
+/**
+ * Zgłoszenie tak, jak widzi je panel: to, co przysłał telefon, plus obsługa.
+ *
+ * Kod i nazwisko przychodzą ZŁĄCZENIEM w adapterze, nie osobnym odpytaniem kont -
+ * ta sama decyzja, co w `AdminPilotJoin`. `null` znaczy „konta już nie ma": zgłoszenie
+ * zostaje, bo opisuje aplikację, a nie człowieka.
+ */
+export interface BugReportRecord extends NewBugReport {
+  pilotId: string;
+  pilotCode: string | null;
+  pilotName: string | null;
+  /** Zegar SERWERA - przy wysyłce po dwóch dniach bez zasięgu różnica jest treścią. */
+  receivedAt: Date;
+  status: BugStatus;
+  statusNote: string | null;
+  /** Identyfikator administratora, który przestawił status; `null` = nigdy nie zmieniano. */
+  statusBy: string | null;
+  /** Jego kod - napis dla człowieka, tym samym złączeniem co wyżej. */
+  statusByCode: string | null;
+  statusAt: Date | null;
+}
+
+/** Wynik przyjęcia paczki - kształt `PushResult` z ingestu, bo pytanie jest to samo. */
+export interface BugReportIntake {
+  accepted: number;
+  duplicates: number;
+}
+
+export interface BugReportsPort {
+  /**
+   * Wstawia paczkę, pomijając uuidy już znane. `db`, a nie `tx`: przyjęcie zgłoszenia
+   * nie ma nic do zsynchronizowania z rejestrem ani z projekcjami - to zapis obok
+   * systemu, nie w nim.
+   */
+  insertMany(db: Queryable, pilotId: string, reports: NewBugReport[]): Promise<BugReportIntake>;
+  /**
+   * Lista dla panelu, od najnowszego zgłoszenia. `statuses` puste = wszystkie.
+   *
+   * Bez keysetu, inaczej niż rejestr zdarzeń i dziennik audytu: to jest lista JEDNEJ
+   * fazy testów, liczona w setkach wierszy, a nie rosnący bez końca rejestr klubu.
+   * Stronicowanie dołożymy, gdy `limit` zacznie coś ucinać - dziś kosztowałoby
+   * kursor w adresie i nie odpowiadałoby na żadne pytanie.
+   */
+  list(
+    db: Queryable,
+    filter: { statuses: readonly BugStatus[]; limit: number },
+  ): Promise<BugReportRecord[]>;
+  byUuid(db: Queryable, uuid: string): Promise<BugReportRecord | null>;
+  /**
+   * Przestawia status. Zwraca `false`, gdy zgłoszenia nie ma - trasa robi z tego 404,
+   * zamiast udawać sukces na nieistniejącym wierszu.
+   *
+   * `tx`, bo to JEDYNA operacja panelu na tej tabeli i idzie przez `AuditedWrite`:
+   * decyzja o cudzym zgłoszeniu ma ślad w dzienniku, jak każda inna.
+   */
+  setStatus(
+    tx: Queryable,
+    uuid: string,
+    change: { status: BugStatus; note: string | null; by: string; at: Date },
+  ): Promise<boolean>;
+  /** Liczba zgłoszeń per status - plakietka przy zakładce panelu. */
+  countByStatus(db: Queryable): Promise<Record<BugStatus, number>>;
+}
 /** Flota + piloci dla `GET /reference` (§4.6, §4.8). */
 export interface ReferenceSnapshot {
   aircraft: ReferenceAircraft[];

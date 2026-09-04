@@ -18,9 +18,11 @@ import { AdminExportCommands } from './application/admin/commands/exports.ts';
 import { AdminFlagCommands } from './application/admin/commands/flags.ts';
 import { AdminFleetCommands } from './application/admin/commands/fleet.ts';
 import { AdminAircraftReadingCommands } from './application/admin/commands/aircraftReadings.ts';
+import { AdminBugReportCommands } from './application/admin/commands/bugReports.ts';
 import { AdminMaintenanceCommands } from './application/admin/commands/maintenance.ts';
 import { AdminPilotCommands } from './application/admin/commands/pilots.ts';
 import { AdminAuditQueries } from './application/admin/queries/audit.ts';
+import { AdminBugReportQueries } from './application/admin/queries/bugReports.ts';
 import { AdminCorrectionQueries } from './application/admin/queries/corrections.ts';
 import { AdminDashboardQueries } from './application/admin/queries/dashboard.ts';
 import { AdminEventQueries } from './application/admin/queries/events.ts';
@@ -36,8 +38,10 @@ import { AdminLogQueries } from './application/admin/queries/log.ts';
 import { AdminStatsQueries } from './application/admin/queries/stats.ts';
 import { AuditedWrite } from './application/admin/auditedWrite.ts';
 import { PgAircraftReadingsRepo } from './infrastructure/pg/common/aircraftReadingsRepo.ts';
+import { PgBugReportsRepo } from './infrastructure/pg/common/bugReportsRepo.ts';
 import { AuthCommands } from './application/common/commands/auth.ts';
 import { IngestCommands } from './application/mobile/commands/ingest.ts';
+import { BugReportCommands } from './application/mobile/commands/bugReports.ts';
 import { PrefsCommands } from './application/mobile/commands/prefs.ts';
 import { DayExporter } from './application/common/export/dayExporter.ts';
 import { MyEventQueries } from './application/mobile/queries/myEvents.ts';
@@ -180,6 +184,10 @@ const hasher = new ScryptHasher();
 // Odczyty wpisane ręką administratora (issue #81) - JEDEN adapter dla obu powierzchni:
 // `GET /reference` i karta samolotu w panelu liczą z niego to samo przekazanie.
 const aircraftReadings = new PgAircraftReadingsRepo();
+// Zgłoszenia błędów (issue #87) - JEDEN adapter dla obu powierzchni: telefon pisze,
+// panel czyta i przestawia status. Druga kopia zapytania byłaby pierwszym miejscem,
+// w którym lista zaczęłaby pokazywać co innego niż szuflada.
+const bugReports = new PgBugReportsRepo();
 const adminFleetQueries = new AdminFleetQueries(
   db,
   adminFleetRepo,
@@ -218,6 +226,9 @@ const app = buildServer({
   // dokłada JEDNO zdanie o uprawnieniu („to nie jest twoja sesja") i nic poza tym.
   sessionTrack: new MySessionTrackQueries(sessionTrack),
   prefs: new PrefsCommands(new PgPilotPrefsRepo(db)),
+  // Zgłoszenia z telefonu (issue #87) - bez transakcji i bez projekcji: zgłoszenie
+  // opisuje aplikację, nie lot, więc nie ma czego uzgadniać z rejestrem.
+  bugReports: new BugReportCommands(db, bugReports),
   // Podpowiedzi zadania dnia (issue #14) - własny adapter nad `sessions` obok
   // `PgSessionsProjection`, bo to inne pytanie: tamten czyta i pisze POJEDYNCZY wiersz
   // sesji, ten agreguje kolumny wielu wierszy w listę wartości do podpowiedzenia.
@@ -370,6 +381,10 @@ const app = buildServer({
   // Statystyki (A10) - czysty odczyt agregatów kolumn projekcji; zegar rozstrzyga
   // zakres domyślny „ostatnie 30 dni od dziś".
   adminStatsQueries: new AdminStatsQueries(db, new PgAdminStatsRepo(), clock),
+  // Moduł „Zgłoszenia" (issue #87). Zapytania dostają `db` wprost (czysty odczyt),
+  // komenda - bramę audytu: przestawienie statusu jest decyzją o CUDZYM zgłoszeniu.
+  adminBugReportQueries: new AdminBugReportQueries(db, bugReports),
+  adminBugReports: new AdminBugReportCommands(auditedWrite, bugReports, clock),
   adminLogQueries: new AdminLogQueries(db, new PgAdminLogRepo(), clock),
   // Analityka zużycia (A10a/A10b) - bierze TEN SAM magazyn zdarzeń, co reszta serwera:
   // strumienie sesji są jej wejściem, a licznik odczytów w `contract.test.ts` pilnuje,

@@ -31,10 +31,13 @@ import { AdminExportCommands } from '../src/application/admin/commands/exports.t
 import { AdminFlagCommands } from '../src/application/admin/commands/flags.ts';
 import { AdminFleetCommands } from '../src/application/admin/commands/fleet.ts';
 import { AdminAircraftReadingCommands } from '../src/application/admin/commands/aircraftReadings.ts';
+import { AdminBugReportCommands } from '../src/application/admin/commands/bugReports.ts';
 import { PgAircraftReadingsRepo } from '../src/infrastructure/pg/common/aircraftReadingsRepo.ts';
+import { PgBugReportsRepo } from '../src/infrastructure/pg/common/bugReportsRepo.ts';
 import { AdminMaintenanceCommands } from '../src/application/admin/commands/maintenance.ts';
 import { AdminPilotCommands } from '../src/application/admin/commands/pilots.ts';
 import { AdminAuditQueries } from '../src/application/admin/queries/audit.ts';
+import { AdminBugReportQueries } from '../src/application/admin/queries/bugReports.ts';
 import { AdminCorrectionQueries } from '../src/application/admin/queries/corrections.ts';
 import { AdminDashboardQueries } from '../src/application/admin/queries/dashboard.ts';
 import { AdminEventQueries } from '../src/application/admin/queries/events.ts';
@@ -51,6 +54,7 @@ import { AdminStatsQueries } from '../src/application/admin/queries/stats.ts';
 import { AuditedWrite } from '../src/application/admin/auditedWrite.ts';
 import { AuthCommands } from '../src/application/common/commands/auth.ts';
 import { IngestCommands } from '../src/application/mobile/commands/ingest.ts';
+import { BugReportCommands } from '../src/application/mobile/commands/bugReports.ts';
 import { PrefsCommands } from '../src/application/mobile/commands/prefs.ts';
 import { DayExporter } from '../src/application/common/export/dayExporter.ts';
 import { MyEventQueries } from '../src/application/mobile/queries/myEvents.ts';
@@ -211,6 +215,7 @@ export async function testHarness(
   // composition root, więc stoją w zmiennej, a nie w literale.
   // Odczyty administratora (issue #81) - jeden adapter dla telefonu i panelu, jak w produkcji.
   const aircraftReadings = new PgAircraftReadingsRepo();
+  const bugReportsRepo = new PgBugReportsRepo();
   const adminFleetQueries = new AdminFleetQueries(
     db,
     adminFleetRepo,
@@ -249,6 +254,7 @@ export async function testHarness(
     // więc test nie ma jak przeoczyć rozjazdu między mapą pilota a mapą administratora.
     adminSessionTrack: sessionTrack,
     prefs: new PrefsCommands(new PgPilotPrefsRepo(db)),
+    bugReports: new BugReportCommands(db, bugReportsRepo),
     // Podpowiedzi zadania dnia (issue #14) - PRAWDZIWY adapter nad projekcją, jak
     // w produkcyjnym composition root: test wysyła preflighty przez `POST /events`
     // i czyta podpowiedzi tą samą drogą, którą przejdą dane telefonu.
@@ -382,6 +388,8 @@ export async function testHarness(
     // Statystyki (A10) - jak w produkcyjnym composition root: czysty odczyt agregatów
     // kolumn projekcji, zegar rozstrzyga zakres domyślny.
     adminStatsQueries: new AdminStatsQueries(db, new PgAdminStatsRepo(), clock),
+    adminBugReportQueries: new AdminBugReportQueries(db, bugReportsRepo),
+    adminBugReports: new AdminBugReportCommands(auditedWrite, bugReportsRepo, clock),
     adminLogQueries: new AdminLogQueries(db, new PgAdminLogRepo(), clock),
     // Analityka zużycia (A10a/A10b) - dostaje TEN SAM `events`, co reszta harnessu,
     // więc dekorator liczący odczyty strumienia widzi też jej wywołania.

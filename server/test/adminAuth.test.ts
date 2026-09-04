@@ -67,6 +67,9 @@ describe('logowanie do panelu wydaje ciasteczko, nie token w ciele', () => {
         // z `capabilitiesOf('admin')`: porównanie z tą samą funkcją, którą trasa
         // woła, przechodziłoby przy każdej zmianie i nie mówiłoby nic.
         'maintenance.run',
+        // Obsługa zgłoszeń błędów (moduł „Zgłoszenia") - dopisana 2026-09-04
+        // razem z trasami issue #87.
+        'bugs.triage',
       ],
     });
 
