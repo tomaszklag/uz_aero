@@ -88,6 +88,11 @@ class RefServer implements ServerPort {
   login = async (): Promise<AuthTokens> => ({ token: 'jwt-1', refreshToken: 'r1', pilot: PILOT });
   pushEvents = async (): Promise<PushResult> => ({ accepted: 0, duplicates: 0, flags: [] });
   pushTraces = async (_t: string, entries: unknown[]) => ({ accepted: entries.length });
+  // Zgłoszenia błędów (issue #87) jadą OSOBNYM torem - te przekroje ich nie dotyczą.
+  pushBugReports = async (_t: string, reports: unknown[]) => ({
+    accepted: reports.length,
+    duplicates: 0,
+  });
   getSessionTrack = async (): Promise<never> => {
     throw new Error('ta atrapa nie obsługuje śladu operacji');
   };

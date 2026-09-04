@@ -64,7 +64,7 @@
  * nie kosztuje.
  */
 
-export const SCHEMA_VERSION = 5;
+export const SCHEMA_VERSION = 6;
 
 /**
  * Migracja bazowa - CAŁY schemat serwera.
@@ -630,12 +630,72 @@ export const MIGRATION_5 = `
     ON aircraft_readings (aircraft_id, created_at DESC, id DESC);
 `;
 
+/**
+ * Migracja 6: ZGŁOSZENIA BŁĘDÓW Z APLIKACJI PILOTA (issue #87).
+ *
+ * ══ CO TO JEST ══
+ * Kanał zwrotny NA CZAS TESTÓW Z PILOTAMI: przycisk w prawym górnym rogu każdego ekranu
+ * i każdego arkusza otwiera formularz, a telefon dosyła opis razem z KONTEKSTEM OKNA
+ * (miejsce, operacja, wydanie aplikacji, telefon, stan łączności). Panel czyta z tego
+ * listę i przestawia statusy.
+ *
+ * ══ DLACZEGO OSOBNA TABELA, A NIE ZDARZENIE REJESTRU ══
+ * Ten sam rachunek, co przy `aircraft_readings` i przy śladzie GPS: zdarzenia należą do
+ * OPERACJI i do PIC-a, wchodzą do projekcji, do sum i do karty arkusza. Zgłoszenie nie
+ * opisuje lotu - opisuje aplikację - więc w rejestrze byłoby ciałem obcym, które reguły
+ * musiałyby jawnie pomijać. Do tego rejestr jest wieczny, a zgłoszenia są materiałem
+ * roboczym jednej fazy projektu, jak `gps_trace` w telefonie.
+ *
+ * ══ KLUCZEM JEST UUID Z TELEFONU ══
+ * Dokładnie jak w `events`: wysyłka jest idempotentna (`ON CONFLICT DO NOTHING`), więc
+ * ponowienie po zerwanym połączeniu nie robi drugiego zgłoszenia. `created_at` to zegar
+ * TELEFONU (chwila, w której pilot to widział), `received_at` - zegar serwera; przy
+ * wysyłce po dwóch dniach bez zasięgu różnica jest treścią, nie usterką.
+ *
+ * `context` jako JSONB, bo jego kształt będzie się zmieniał co tydzień testów, a nikt
+ * nie pyta go o nic poza „pokaż wszystko". Trzy pola wyjęte obok (`screen`, `app_version`,
+ * `session_uuid`) są tym, po czym panel filtruje i co pokazuje w kolumnie tabeli.
+ *
+ * Zmiana ADDYTYWNA wobec bazy produkcyjnej.
+ */
+export const MIGRATION_6 = `
+  CREATE TABLE IF NOT EXISTS bug_reports (
+    uuid         TEXT PRIMARY KEY,
+    pilot_id     TEXT        NOT NULL,
+    -- Zegar TELEFONU: chwila, w której pilot zobaczył problem.
+    created_at   TIMESTAMPTZ NOT NULL,
+    -- Zegar SERWERA: chwila, w której zgłoszenie dojechało (offline bywa długi).
+    received_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    -- NULL = pilot nie wybrał wagi; pole jest opcjonalne w formularzu i tu też.
+    severity     TEXT,
+    description  TEXT        NOT NULL,
+    -- Czytelna etykieta miejsca (KOKPIT, arkusz TANKOWANIE) - kolumna listy panelu.
+    screen       TEXT        NOT NULL,
+    app_version  TEXT,
+    -- Operacja, przy której powstało zgłoszenie; NULL poza kokpitem i logiem.
+    session_uuid TEXT,
+    -- Komplet kontekstu okna - kształt zmienny, więc JSONB, a nie dwadzieścia kolumn.
+    context      JSONB       NOT NULL,
+    status       TEXT        NOT NULL DEFAULT 'new',
+    -- Ślad decyzji administratora: kto, kiedy i z jakim komentarzem przestawił status.
+    status_note  TEXT,
+    status_by    TEXT,
+    status_at    TIMESTAMPTZ
+  );
+
+  -- Lista panelu: filtr statusem, porządek od najnowszego. Klucz jest tekstowy, więc
+  -- remis na sekundzie rozstrzyga uuid - i indeks niesie go za darmo.
+  CREATE INDEX IF NOT EXISTS idx_bug_reports_list
+    ON bug_reports (status, created_at DESC, uuid DESC);
+`;
+
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
   MIGRATION_2,
   MIGRATION_3,
   MIGRATION_4,
   MIGRATION_5,
+  MIGRATION_6,
 ];
 
 /**
@@ -662,4 +722,5 @@ export const MIGRATION_TITLES: readonly string[] = [
   'Log dnia (panel 2.0): bieg silnika, koperta lotów, lotniska i suma dolewek paliwa w projekcji sesji',
   'Normy z dokumentacji i stan początkowy (issue #66): nominalne spalanie paliwa oraz startowe motogodziny, paliwo i olej jednostki',
   'Odczyty maszyny wpisane przez administratora (issue #81): nadrzędny stan licznika, paliwa i oleju z komentarzem, konkurent zdania w łańcuchu przekazania',
+  'Zgłoszenia błędów z aplikacji pilota (issue #87): opis, waga, kontekst okna i status obsługi - kanał zwrotny na czas testów z pilotami',
 ];

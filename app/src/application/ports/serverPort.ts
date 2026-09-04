@@ -16,6 +16,8 @@
  * powód).
  */
 
+import type { BugSeverity } from './bugReportPort';
+
 import type {
   Event,
   Handover,
@@ -203,6 +205,29 @@ export interface RemoteReadingsChain {
  * W logach API zostawał sukces, na ekranie „OFFLINE" - i to jest ta sprzeczność,
  * od której zaczęło się zgłoszenie.
  */
+/**
+ * Zgłoszenie błędu tak, jak jedzie na drut (issue #87) - `BugReport` bez `sentAt`
+ * i z czasem w ISO. Stempel wysyłki jest księgowością TELEFONU, więc kopercie
+ * serwera nic po nim; `createdAt` jedzie jako ISO, bo tak wygląda każdy czas
+ * w tym kontrakcie (`themeUpdatedAt`, `recordedAt`).
+ */
+export interface RemoteBugReport {
+  uuid: string;
+  createdAt: string;
+  severity: BugSeverity | null;
+  description: string;
+  screen: string;
+  appVersion: string | null;
+  sessionUuid: string | null;
+  context: Record<string, unknown>;
+}
+
+/** Wynik przyjęcia paczki zgłoszeń - kształt `PushResult`, bo pytanie to samo. */
+export interface BugReportPushResult {
+  accepted: number;
+  duplicates: number;
+}
+
 export type SyncTrigger = 'background' | 'manual';
 
 export interface ServerPort {
@@ -259,6 +284,13 @@ export interface ServerPort {
   getSessionTrack(token: string, sessionUuid: string): Promise<SessionTrackPayload>;
   /** Podpowiedzi do formularza zadania (`GET /me/task-suggestions`) - wyłącznie online. */
   getTaskSuggestions(token: string): Promise<RemoteTaskSuggestions>;
+  /**
+   * Zgłoszenia błędów z telefonu (`POST /me/bug-reports`, issue #87) - osobny,
+   * NISKOPRIORYTETOWY tor obok outboxa zdarzeń, jak ślad kalibracyjny. Duplikat
+   * jest sukcesem, nie błędem: serwer dedupuje po uuid, więc wysyłka „do skutku"
+   * jest bezpieczna.
+   */
+  pushBugReports(token: string, reports: RemoteBugReport[]): Promise<BugReportPushResult>;
   /** Preferencje pilota Z TOKENU (`GET /me/prefs`). */
   getPrefs(token: string): Promise<RemoteThemePrefs>;
   /**

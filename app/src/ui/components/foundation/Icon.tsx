@@ -102,6 +102,14 @@ const REGISTRY = {
   // wartości formularza, której pilot jeszcze nigdzie nie zapisał.
   clear: f('x'),
 
+  // zgłaszanie błędów (issue #87, na czas testów)
+  // Robak - jedyny glif, który mówi „usterka aplikacji", a nie „usterka samolotu"
+  // (`reason-malfunction` to klucz i znaczy niesprawność maszyny).
+  bug: m('bug-outline'),
+  // Waga „blokuje": przekreślone koło. NIE `stop` (kwadrat = zatrzymanie silnika)
+  // i nie `warning` - ten należy do wagi „utrudnia" i muszą się różnić kształtem.
+  blocker: f('x-circle'),
+
   // akcje kokpitu
   start: f('play'),
   stop: f('square'),

@@ -13,12 +13,14 @@ import type { AdminCorrectionCommands } from '../application/admin/commands/corr
 import type { AdminSessionVoidCommands } from '../application/admin/commands/sessionVoid.ts';
 import type { AdminSessionCloseCommands } from '../application/admin/commands/sessionClose.ts';
 import type { AdminAircraftReadingCommands } from '../application/admin/commands/aircraftReadings.ts';
+import type { AdminBugReportCommands } from '../application/admin/commands/bugReports.ts';
 import type { AdminExportCommands } from '../application/admin/commands/exports.ts';
 import type { AdminFlagCommands } from '../application/admin/commands/flags.ts';
 import type { AdminFleetCommands } from '../application/admin/commands/fleet.ts';
 import type { AdminMaintenanceCommands } from '../application/admin/commands/maintenance.ts';
 import type { AdminPilotCommands } from '../application/admin/commands/pilots.ts';
 import type { AdminAuditQueries } from '../application/admin/queries/audit.ts';
+import type { AdminBugReportQueries } from '../application/admin/queries/bugReports.ts';
 import type { AdminCorrectionQueries } from '../application/admin/queries/corrections.ts';
 import type { AdminDashboardQueries } from '../application/admin/queries/dashboard.ts';
 import type { AdminEventQueries } from '../application/admin/queries/events.ts';
@@ -37,6 +39,7 @@ import type { IngestCommands } from '../application/mobile/commands/ingest.ts';
 import type { MyEventQueries } from '../application/mobile/queries/myEvents.ts';
 import type { SessionTrackQueries } from '../application/common/queries/sessionTrack.ts';
 import type { MySessionTrackQueries } from '../application/mobile/queries/sessionTrack.ts';
+import type { BugReportCommands } from '../application/mobile/commands/bugReports.ts';
 import type { PrefsCommands } from '../application/mobile/commands/prefs.ts';
 import type { ReferenceQueries } from '../application/mobile/queries/reference.ts';
 import type { TaskSuggestionQueries } from '../application/mobile/queries/taskSuggestions.ts';
@@ -48,6 +51,7 @@ import { registerRequestLog } from './requestLog.ts';
 import { registerAdminPanelStatic } from './routes/admin/staticPanel.ts';
 import type { AdminGate } from './routes/admin/adminRoute.ts';
 import { registerAdminAuditRoutes } from './routes/admin/audit.ts';
+import { registerAdminBugReportRoutes } from './routes/admin/bugReports.ts';
 import { registerAdminAuthRoutes } from './routes/admin/auth.ts';
 import { registerAdminCorrectionRoutes } from './routes/admin/corrections.ts';
 import { registerAdminDashboardRoutes } from './routes/admin/dashboard.ts';
@@ -66,6 +70,7 @@ import { registerAdminLogRoutes } from './routes/admin/log.ts';
 import { registerAdminStatsRoutes } from './routes/admin/stats.ts';
 import { registerAdminTrackRoutes } from './routes/admin/tracks.ts';
 import { registerAuthRoutes } from './routes/common/auth.ts';
+import { registerBugReportRoutes } from './routes/mobile/bugReports.ts';
 import { registerEventsRoutes } from './routes/mobile/events.ts';
 import { registerPrefsRoutes } from './routes/mobile/prefs.ts';
 import { registerReferenceRoutes } from './routes/mobile/reference.ts';
@@ -95,6 +100,12 @@ export interface ServerDeps {
    */
   sessionTrack: MySessionTrackQueries;
   prefs: PrefsCommands;
+  /**
+   * Zgłoszenia błędów z telefonu (`POST /me/bug-reports`, issue #87) - kanał zwrotny
+   * NA CZAS TESTÓW z pilotami. Obok rejestru, nie w nim: zgłoszenie opisuje aplikację,
+   * a nie lot, więc nie ma czego zsynchronizować z projekcjami.
+   */
+  bugReports: BugReportCommands;
   /**
    * Podpowiedzi do zadania dnia (`GET /me/task-suggestions`, issue #14) - czysty odczyt
    * projekcji: oznaczenia klientów CAŁEGO klubu i notatki TEGO pilota.
@@ -187,6 +198,12 @@ export interface ServerDeps {
    * podgląd różnic nie ma prawa dopisywać do dziennika akcji, które się nie wydarzyły.
    */
   adminMaintenanceQueries: AdminMaintenanceQueries;
+  /**
+   * Moduł „Zgłoszenia" (issue #87): lista z licznikami statusów i zmiana statusu.
+   * Odczyt na `panel.access`, zapis na `bugs.triage` - patrz `routes/admin/bugReports.ts`.
+   */
+  adminBugReportQueries: AdminBugReportQueries;
+  adminBugReports: AdminBugReportCommands;
 }
 
 export interface ServerOptions {
@@ -233,6 +250,7 @@ export function buildServer(deps: ServerDeps, options: ServerOptions = {}): Fast
   registerSheetsRoutes(app, deps.sheets, deps.tokens);
   registerTracesRoutes(app, deps.traces, deps.sessionTrack, deps.tokens);
   registerPrefsRoutes(app, deps.prefs, deps.tokens);
+  registerBugReportRoutes(app, deps.bugReports, deps.tokens);
   registerTaskSuggestionRoutes(app, deps.taskSuggestions, deps.tokens);
 
   // Panel administracyjny - trasy per zasób, tak samo jak wyżej; prefiks `/admin/api`
@@ -268,6 +286,7 @@ export function buildServer(deps: ServerDeps, options: ServerOptions = {}): Fast
   registerAdminLogRoutes(app, deps.adminLogQueries, gate);
   registerAdminConsumptionRoutes(app, deps.adminConsumptionQueries, gate);
   registerAdminMaintenanceRoutes(app, deps.adminMaintenanceQueries, deps.adminMaintenance, gate);
+  registerAdminBugReportRoutes(app, deps.adminBugReportQueries, deps.adminBugReports, gate);
 
   // Statyczny build panelu - na końcu, żeby czytać ten plik w kolejności „API, potem
   // pliki"; w routerze i tak wygrywają trasy konkretne, nie kolejność rejestracji.

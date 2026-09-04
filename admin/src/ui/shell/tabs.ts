@@ -27,6 +27,9 @@ export const TABS: readonly Tab[] = [
   { to: '/dziennik', label: 'Dziennik' },
   { to: '/piloci', label: 'Piloci' },
   { to: '/samoloty', label: 'Samoloty' },
+  // Moduł NA CZAS TESTÓW z pilotami (issue #87) - ostatni, bo zniknie razem
+  // z fazą testów, a kolejność zakładek ma opisywać produkt, nie bieżący sprint.
+  { to: '/zgloszenia', label: 'Zgłoszenia' },
 ];
 
 /** Pierwsza zakładka jest ekranem startowym panelu - goły adres ląduje właśnie tu. */

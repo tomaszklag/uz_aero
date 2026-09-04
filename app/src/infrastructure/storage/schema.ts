@@ -16,7 +16,7 @@
  */
 
 /** Wersja schematu - sterowana `PRAGMA user_version`. Podnieś przy każdej migracji. */
-export const SCHEMA_VERSION = 7;
+export const SCHEMA_VERSION = 8;
 
 /**
  * Migracja 0 → 1: pełny schemat początkowy.
@@ -248,6 +248,39 @@ export const MIGRATION_7 = `
 `;
 
 /** Migracje w kolejności stosowania: indeks = wersja docelowa − 1. */
+/**
+ * Migracja 7 → 8: ZGŁOSZENIA BŁĘDÓW (issue #87, na czas testów z pilotami).
+ *
+ * ══ PO CO ══
+ * Przycisk w prawym górnym rogu każdego ekranu i każdego arkusza zapisuje TUTAJ, a
+ * pętla okazji wysyła na `POST /me/bug-reports`. Zapis lokalny, bo pilot zauważa błąd
+ * tam, gdzie pracuje - czyli często bez zasięgu (§4.1). Formularz wymagający sieci
+ * nie pojechałby w teren, a właśnie tam odbywają się testy.
+ *
+ * ══ DLACZEGO OSOBNA TABELA, A NIE `events` ══
+ * Ta sama granica, co przy `gps_trace`: rejestr opisuje LOT i jest wieczny, zgłoszenie
+ * opisuje APLIKACJĘ i ma własną wysyłkę (`sent_at`) oraz własne życie - potwierdzone
+ * znika z telefonu, bo jedyną kopią zostaje serwer (jak nagranie śladu, issue #47).
+ *
+ * `context` jako JSON w jednym polu, a nie dwadzieścia kolumn: telefon nie zadaje temu
+ * polu żadnego pytania - pakuje je i oddaje. Kolumnowo czyta się ślad GPS, bo tam
+ * naprawdę biegną zapytania analityczne.
+ */
+export const MIGRATION_8 = `
+  CREATE TABLE IF NOT EXISTS bug_reports (
+    uuid        TEXT PRIMARY KEY NOT NULL,
+    created_at  INTEGER NOT NULL,
+    severity    TEXT,
+    description TEXT NOT NULL,
+    screen      TEXT NOT NULL,
+    app_version TEXT,
+    session_uuid TEXT,
+    context     TEXT NOT NULL,
+    sent_at     INTEGER
+  );
+  CREATE INDEX IF NOT EXISTS idx_bug_reports_outbox ON bug_reports (sent_at);
+`;
+
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
   MIGRATION_2,
@@ -256,4 +289,5 @@ export const MIGRATIONS: readonly string[] = [
   MIGRATION_5,
   MIGRATION_6,
   MIGRATION_7,
+  MIGRATION_8,
 ];

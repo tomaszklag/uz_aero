@@ -10,6 +10,9 @@
 
 import type { EpochMillis, Event, ReferenceAircraft, ReferencePilot } from '../../domain';
 import type {
+  BugReport,
+  BugReportPort,
+  NewBugReport,
   NewTraceEntry,
   StoragePort,
   TraceEntry,
@@ -29,12 +32,14 @@ function deepClone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
 
-export class InMemoryAdapter implements StoragePort, TracePort {
+export class InMemoryAdapter implements StoragePort, TracePort, BugReportPort {
   private events = new Map<string, Event>();
   private order: string[] = [];
   private aircraft = new Map<string, ReferenceAircraft>();
   private pilots = new Map<string, ReferencePilot>();
   private meta = new Map<string, string>();
+  /** Zgłoszenia błędów (issue #87) - lustro `bug_reports`, w kolejności zapisu. */
+  private bugs: BugReport[] = [];
   /** Zapisy wstrzymane decyzją administratora (issue #81) - lustro `withheld_events`. */
   private withheld = new Map<string, WithheldEvent>();
 
@@ -170,6 +175,35 @@ export class InMemoryAdapter implements StoragePort, TracePort {
     };
   }
 
+  async appendBugReport(report: NewBugReport): Promise<void> {
+    // `INSERT OR IGNORE` z adaptera SQLite - ten sam kontrakt: uuid jest kluczem.
+    if (this.bugs.some((b) => b.uuid === report.uuid)) return;
+    this.bugs.push({ ...deepClone(report), sentAt: null });
+  }
+
+  async getPendingBugReports(limit: number): Promise<BugReport[]> {
+    return this.bugs
+      .filter((b) => b.sentAt == null)
+      .slice(0, limit)
+      .map((b) => deepClone(b));
+  }
+
+  async markBugReportsSent(uuids: string[], sentAt: EpochMillis): Promise<void> {
+    for (const bug of this.bugs) {
+      if (uuids.includes(bug.uuid)) bug.sentAt = sentAt;
+    }
+  }
+
+  async purgeSentBugReports(): Promise<number> {
+    const before = this.bugs.length;
+    this.bugs = this.bugs.filter((b) => b.sentAt == null);
+    return before - this.bugs.length;
+  }
+
+  async pendingBugReportCount(): Promise<number> {
+    return this.bugs.filter((b) => b.sentAt == null).length;
+  }
+
   async getMeta(key: string): Promise<string | null> {
     return this.meta.has(key) ? this.meta.get(key)! : null;
   }
@@ -189,6 +223,7 @@ export class InMemoryAdapter implements StoragePort, TracePort {
     this.pilots.clear();
     this.meta.clear();
     this.trace = [];
+    this.bugs = [];
   }
 
   /** Zdarzenia w kolejności wstawienia, jako kopie. */

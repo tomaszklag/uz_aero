@@ -24,6 +24,7 @@ import { NavigationContainer, DarkTheme, DefaultTheme } from '@react-navigation/
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { useTheme } from '../theme';
+import { setBugRoute } from '../components/bug/bugReporter';
 import { CockpitScreen } from '../screens/CockpitScreen';
 import { PreflightAircraftScreen } from '../screens/PreflightAircraftScreen';
 import { PreflightTaskScreen } from '../screens/PreflightTaskScreen';
@@ -113,7 +114,14 @@ export function RootNavigator({
   };
 
   return (
-    <NavigationContainer theme={navTheme}>
+    <NavigationContainer
+      theme={navTheme}
+      /* Bieżąca trasa dla kontekstu zgłoszenia błędu (issue #87). Tutaj, a nie
+         w ekranach: dzięki temu żaden ekran nie musi wiedzieć, że reporter istnieje,
+         a nowy ekran dostaje kontekst w chwili dopisania do stosu. */
+      onStateChange={(state) => setBugRoute(state?.routes[state.index ?? 0]?.name ?? null)}
+      onReady={() => setBugRoute(initialRouteName)}
+    >
       <Stack.Navigator
         initialRouteName={initialRouteName}
         screenOptions={{

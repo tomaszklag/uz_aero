@@ -13,6 +13,7 @@ import { StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
+import { BugButton } from '../bug/BugButton';
 
 export interface AppBarProps {
   /**
@@ -83,8 +84,11 @@ export function AppBar({
         )}
       </View>
 
+      {/* Zgłoszenie na SAMYM SKRAJU - za `ThemeToggle`, który zajął miejsce zębatki
+          przy issue #82. Kokpit zostaje modalny: arkusz nie prowadzi nigdzie. */}
       <View style={styles.right}>
         {right}
+        <BugButton />
       </View>
     </View>
   );

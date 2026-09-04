@@ -1,0 +1,39 @@
+/**
+ * UZ Aero - panel 2.0: moduł „Zgłoszenia" (issue #87).
+ *
+ * Trzy klasy, bo tyle brakowało bibliotece - reszta ekranu jedzie na tym, co już jest
+ * (`.card`, `.kv`, `.opt-list`, `.filters`, tabela). Arkusz istnieje osobno, a nie
+ * w `surfaces.css`, z tego samego powodu, co katalog `components/bug/` w aplikacji:
+ * narzędzie fazy testów ma dać się usunąć decyzją, nie archeologią.
+ */
+
+/**
+ * Opis zgłoszenia - jedyne miejsce w panelu, gdzie tekst przyszedł od CZŁOWIEKA
+ * i ma łamania linii, które coś znaczą (kroki odtworzenia bywają listą).
+ * `pre-wrap` je zachowuje, `break-word` broni układu przed wklejonym uuid-em.
+ */
+.bug-text {
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+/**
+ * Wartości kontekstu bywają długie (ścieżki, JSON dopisany przez aplikację), a kolumna
+ * `.kv-v` jest wąska. Łamiemy je zamiast rozpychać szufladę - to jest lista do
+ * przeczytania, nie tabela do porównywania.
+ */
+.bug-context .kv-v {
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+/*
+ * LICZBY PRZY FILTRACH nie mają tu własnej klasy i to jest decyzja: wchodzą
+ * w ETYKIETĘ chipa („Nowe · 7"), więc `FilterChip` zostaje nietknięty. Reguła
+ * „bez liczb przy chipach" z `filters.css` broniła przed DWIEMA liczbami o tym
+ * samym na jednym ekranie (chip kontra kafel) - kafli tu nie ma, a przy triażu
+ * „ile jest nowych" jest najważniejszą liczbą na stronie.
+ */

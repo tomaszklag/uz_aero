@@ -57,7 +57,8 @@ export type Capability =
   | 'fleet.manage'
   | 'thresholds.manage'
   | 'audit.read'
-  | 'maintenance.run';
+  | 'maintenance.run'
+  | 'bugs.triage';
 
 /** Konto zalogowane w panelu - stopka nawigacji i decyzje o widoczności akcji. */
 export interface PanelPilotDto {
@@ -504,3 +505,66 @@ export interface SessionCloseResultDto {
  * kopia w panelu tworzyłaby dokładnie ten rozjazd, przed którym miałaby chronić.
  */
 export type SessionTrackDto = SessionTrackPayload;
+
+
+// -- zgłoszenia błędów z aplikacji pilota (issue #87) ---------------------------
+
+/**
+ * Cykl życia zgłoszenia. LUSTRO `BUG_STATUSES` z `server/src/domain/bugReports.ts`,
+ * przybite `test/mirrors.test.ts`.
+ */
+export type BugStatusDto = 'new' | 'in_progress' | 'resolved' | 'rejected';
+
+/** Waga zgłoszona przez PILOTA. LUSTRO `BUG_SEVERITIES`; `null` = nie wybrał. */
+export type BugSeverityDto = 'blocking' | 'annoying' | 'minor';
+
+/**
+ * Jedno zgłoszenie - wiersz listy I treść szuflady w jednym kształcie.
+ *
+ * Bez podziału na „element listy" i „szczegóły", inaczej niż flota i konta: całą
+ * treścią zgłoszenia jest opis i kontekst, więc lista skrócona o kontekst
+ * oszczędzałaby kilobajty i kosztowała drugie żądanie przy każdym otwarciu wiersza.
+ */
+export interface BugReportDto {
+  uuid: string;
+  /** ISO UTC - zegar TELEFONU: chwila, w której pilot zobaczył problem. */
+  createdAt: string;
+  /** ISO UTC - zegar SERWERA. Różnica względem `createdAt` mierzy czas offline. */
+  receivedAt: string;
+  pilotId: string;
+  /** `null` = konta już nie ma; zgłoszenie zostaje, bo opisuje aplikację. */
+  pilotCode: string | null;
+  pilotName: string | null;
+  severity: BugSeverityDto | null;
+  description: string;
+  /** Czytelna etykieta miejsca („KOKPIT (04/05) · arkusz TANKOWANIE"). */
+  screen: string;
+  appVersion: string | null;
+  sessionUuid: string | null;
+  /**
+   * Komplet kontekstu okna, tak jak przysłał go telefon.
+   *
+   * Worek `Record<string, unknown>` - jak `details` w dzienniku audytu i z tego
+   * samego powodu: kształt należy do APLIKACJI i zmienia się co tydzień testów.
+   * Panel go WYPISUJE, nie interpretuje - poza kilkoma polami, które ma nazwane
+   * po polsku (`bugContextRows`).
+   */
+  context: Record<string, unknown>;
+  status: BugStatusDto;
+  statusNote: string | null;
+  /** KOD administratora, nie identyfikator; `null` = status nigdy nie zmieniany. */
+  statusBy: string | null;
+  statusAt: string | null;
+}
+
+/**
+ * Lista + liczniki per status.
+ *
+ * Liczniki jadą RAZEM z listą, a nie osobnym żądaniem: filtr ma pokazywać, ile jest
+ * w każdej szufladzie, także w tych, których właśnie nie widać - inaczej
+ * „Rozwiązane" wyglądałoby na puste, dopóki ktoś w nie nie kliknie.
+ */
+export interface BugReportPageDto {
+  items: BugReportDto[];
+  counts: Record<BugStatusDto, number>;
+}

@@ -64,7 +64,7 @@ const unionIn = (file: string, name: string): string[] =>
 const constIn = (file: string, name: string): string[] =>
   literalsInBlock(file, new RegExp(String.raw`export const ${name} = \[([\s\S]*?)\]`), name);
 
-/** Cztery lustra: unia w panelu -> deklaracja na serwerze. */
+/** Sześć luster: unia w panelu -> deklaracja na serwerze. */
 const MIRRORS = [
   {
     panel: 'Capability',
@@ -85,6 +85,19 @@ const MIRRORS = [
     panel: 'FleetRefusalDto',
     server: 'FleetRefusal',
     read: () => unionIn(join(SERVER, 'fleetGuards.ts'), 'FleetRefusal'),
+  },
+  // Zgłoszenia błędów (issue #87). Status i waga są zwykłym `TEXT`-em w bazie,
+  // więc bez tego lustra pozycja dodana na serwerze wyciekłaby na ekran klubu
+  // surowym `in_progress` - dokładnie ten tryb awarii, który opisuje nagłówek.
+  {
+    panel: 'BugStatusDto',
+    server: 'BUG_STATUSES',
+    read: () => constIn(join(SERVER, 'bugReports.ts'), 'BUG_STATUSES'),
+  },
+  {
+    panel: 'BugSeverityDto',
+    server: 'BUG_SEVERITIES',
+    read: () => constIn(join(SERVER, 'bugReports.ts'), 'BUG_SEVERITIES'),
   },
 ] as const;
 

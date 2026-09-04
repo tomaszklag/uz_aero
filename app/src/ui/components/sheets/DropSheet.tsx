@@ -30,6 +30,7 @@ import { ActionButton } from '../data/ActionButton';
 import { CounterRow } from '../input/CounterRow';
 import { Icon } from '../foundation/Icon';
 import { toneColors } from '../tone';
+import { BugButton } from '../bug/BugButton';
 import { SheetSurface } from './SheetSurface';
 import { jumpersKey } from './jumpersKey';
 
@@ -108,6 +109,7 @@ export function DropSheet({
     <SheetSurface
       visible={visible}
       onCancel={onCancel}
+      topRight={<BugButton sheet={`ZRZUT · LOT ${flightNumber}`} />}
       keyboardHeight={keyboardHeight}
       /* Zapas z mockupu jako podłoga; nad paskiem nawigacji rama ustąpi więcej. */
       designPad={theme.spacing.xxl + 2}

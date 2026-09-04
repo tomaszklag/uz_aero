@@ -30,6 +30,7 @@ describe('mapa uprawnień', () => {
       'thresholds.manage',
       'audit.read',
       'maintenance.run',
+      'bugs.triage',
     ] as const) {
       expect(can('pilot', capability)).toBe(false);
     }
@@ -48,6 +49,7 @@ describe('mapa uprawnień', () => {
       'thresholds.manage',
       'audit.read',
       'maintenance.run',
+      'bugs.triage',
     ] as const) {
       expect(can('admin', capability)).toBe(true);
     }

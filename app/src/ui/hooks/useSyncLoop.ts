@@ -15,6 +15,7 @@
 import { useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
 
+import { uploadPendingBugReports } from '../components/bug/bugReporter';
 import { useSessionStore } from '../store';
 import { useAuthStore } from '../store/authStore';
 
@@ -55,6 +56,9 @@ export function useSyncLoop(): void {
         // z własną bramą wieku - puls co 60 s nie zamienia się w odpytywanie.
         await syncThemePrefs();
         await uploadTraces();
+        // Zgłoszenia błędów (issue #87) - na samym końcu, jak ślad: rejestr dnia
+        // i cache referencyjny mają pierwszeństwo, bo od nich zależy praca.
+        await uploadPendingBugReports();
       } finally {
         inFlight.current = false;
       }

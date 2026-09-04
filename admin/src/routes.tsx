@@ -14,6 +14,7 @@ import { createHashRouter, Navigate } from 'react-router-dom';
 
 import { ShellRoute } from './auth/ShellRoute';
 import { AccountsScreen } from './screens/accounts/AccountsScreen';
+import { BugsScreen } from './screens/bugs/BugsScreen';
 import { AircraftLogScreen } from './screens/logbook/AircraftLogScreen';
 import { LogbookScreen } from './screens/logbook/LogbookScreen';
 import { SessionScreen } from './screens/logbook/SessionScreen';
@@ -46,6 +47,10 @@ export const router = createHashRouter([
       // to ten sam widok z pustym formularzem.
       { path: 'piloci/:id?', element: <AccountsScreen /> },
       { path: 'samoloty/:id?', element: <FleetScreen /> },
+
+      // Zgłoszenia: lista i karta pod JEDNĄ trasą, jak konta i flota - karta
+      // otwiera się NAD listą, więc lista ma zostać pod spodem jako kontekst.
+      { path: 'zgloszenia/:uuid?', element: <BugsScreen /> },
 
       // Adres spoza mapy prowadzi na ekran startowy. Osobnej strony „nie znaleziono"
       // nie ma świadomie: panel ma trzy moduły, więc taka strona opisywałaby literówkę

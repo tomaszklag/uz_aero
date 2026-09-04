@@ -8,6 +8,7 @@
 
 import type { FleetListQuery } from '../api/fleet';
 import type { LogRangeQuery, SessionListQuery } from '../api/log';
+import type { BugListQuery } from '../api/bugReports';
 import type { PilotListQuery } from '../api/pilots';
 
 export const keys = {
@@ -61,5 +62,16 @@ export const keys = {
     sessions: (query: SessionListQuery) => ['log', 'sessions', query] as const,
     session: (uuid: string) => ['log', 'session', uuid] as const,
     track: (uuid: string) => ['log', 'track', uuid] as const,
+  },
+
+  /**
+   * Zgłoszenia błędów (issue #87). KORZEŃ obejmuje wszystko i to jest właściwe:
+   * pod tym prefiksem żyje jedno pytanie o jednej naturze (lista z licznikami),
+   * więc zmiana statusu ma prawo unieważnić je w całości - inaczej niż przy
+   * flocie, gdzie obok listy mieszka próg będący funkcją czystą.
+   */
+  bugs: {
+    all: ['bugs'] as const,
+    list: (query: BugListQuery) => ['bugs', 'list', query] as const,
   },
 };

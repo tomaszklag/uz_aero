@@ -31,6 +31,7 @@ import './styles/components/skeleton.css';
 import './styles/components/login.css';
 import './styles/components/logbook.css';
 import './styles/components/track.css';
+import './styles/components/bugs.css';
 
 import { SessionProvider } from './auth/SessionProvider';
 import { createQueryClient } from './queries/client';

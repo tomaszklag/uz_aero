@@ -21,6 +21,8 @@
 
 import type {
   AuthTokens,
+  BugReportPushResult,
+  RemoteBugReport,
   PushResult,
   ReferenceFetch,
   RemoteEventPage,
@@ -138,6 +140,10 @@ export class HttpServerApi implements ServerPort {
 
   pushTraces(token: string, entries: unknown[]): Promise<{ accepted: number }> {
     return this.request('POST', '/traces', { token, body: { entries } });
+  }
+
+  pushBugReports(token: string, reports: RemoteBugReport[]): Promise<BugReportPushResult> {
+    return this.request('POST', '/me/bug-reports', { token, body: { reports } });
   }
 
   getSessionTrack(token: string, sessionUuid: string): Promise<SessionTrackPayload> {
