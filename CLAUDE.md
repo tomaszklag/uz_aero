@@ -1408,6 +1408,30 @@ i tak sprawdza ją `DROP_ON_GROUND` (`rules/consistency.ts`). Wiedział model, m
   - **`ManualBalance` i spółka USUNIĘTE**: były DRUGIM rachunkiem tej samej wielkości,
     a takie pary rozjeżdżają się przy pierwszej poprawce jednej z nich. Została
     `manualPhaseTimes` (czasy faz ze szkicu) i dwa adaptery
+  - **SZLAK TEJ OPERACJI W ARKUSZU ODCZYTU KOŃCOWEGO** (uwaga z urządzenia,
+    2026-09-04: „w manualnym locie z paliwem zastanym czemu nie dasz też info, ile
+    użytkownik przejął, ile dolał, ile latał i ile wpisał, że zostało. To samo
+    motogodziny i olej"). Szlaki wpisu ręcznego opowiadały wyłącznie o SĄSIEDZIE
+    z łańcucha, a o wpisywanej operacji nic - rachunek istniał, ale żeby go zobaczyć,
+    trzeba było zamknąć arkusz i tapnąć plakietkę werdyktu. Odtąd pola „po locie"
+    (paliwo i MH) niosą chronologię: zastane (ze źródłem) → dolane → latano (blok,
+    czas w powietrzu, zużycie z normy) → ZIELONE oczekiwanie → co zastał następny.
+    `logic/manualReadingsTrail.ts`, z testami; oczekiwanie liczą TE SAME
+    `expectedFuelL`/`expectedMhH`, z których powstaje werdykt karty, a zielone ogniwo
+    paliwa składa `fuelExpectationRow` - jedna liczba nie ma prawa nazywać się
+    czterema zdaniami na 06, 09B, 02A i tutaj (przy normie z DOKUMENTACJI ogniwo mówi
+    „z dokumentacji jednostki" zamiast okna centyli, bo pasmo jest tam zadeklarowane,
+    nie zmierzone). Pole DOLEWKI szlaku nie dostaje: rejestr nie wie, ile pilot
+    zatankował, a ze szkicu wyszłyby liczby stojące w polach obok
+  - **OLEJ DOSTAŁ OCZEKIWANIE Z NORMY** (ta sama uwaga): `oilConfig.normLPerH` było
+    we wpisie ręcznym `null` z uzasadnieniem „rachunek mówiłby o innym dniu" - prawdziwym
+    dla kotwicy z cache przekazania i nieprawdziwym od issue #62, bo kotwicę daje
+    `readings-chain` pytany o CHWILĘ URUCHOMIENIA tego wpisu. Arkusz oleju pokazuje
+    więc ten sam szlak, co 02I („Ostatni pomiar" → „Latano · ΔMH" → „na bagnecie
+    oczekuj ≈"), liczony tym samym `oilClaimView`
+  - **wiersz odniesienia gaśnie od OGNIWA SĄSIADA, nie od całego szlaku**: gdyby
+    bramkowała go cała tablica, wpis bez sieci (szlak operacji jest, łańcucha nie ma)
+    zostałby bez jedynego punktu odniesienia, jaki wtedy istnieje - przekazania z cache
 - **CIĄGŁOŚĆ ODCZYTÓW Z SĄSIEDNIMI OPERACJAMI** (piąta i szósta tura;
   `GET /aircraft/:id/readings-chain`, `server/src/domain/readingsChain.ts`,
   `logic/readingsContinuity.ts`, `hooks/useReadingsChain.ts`): maszyna nie tankuje się

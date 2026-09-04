@@ -230,15 +230,26 @@ export function fuelEstimateTrail(
 }
 
 /**
- * ZIELONE ogniwo oczekiwania - jedno brzmienie na 06, 09B i 02A (przejęcie):
- * ta sama liczba w trzech miejscach nie ma prawa nazywać się trzema zdaniami.
+ * ZIELONE ogniwo oczekiwania - jedno brzmienie na 06, 09B, 02A (przejęcie) i w arkuszach
+ * wpisu ręcznego: ta sama liczba w czterech miejscach nie ma prawa nazywać się czterema
+ * zdaniami.
+ *
+ * @param windowDays okno, z którego policzono normę modelu. `null` = liczba wyszła
+ *   ze SPALANIA Z DOKUMENTACJI (issue #66) - tam okna centyli nie ma i podanie
+ *   jakiegokolwiek byłoby zmyśleniem, więc ogniwo nazywa źródło zamiast dni.
  */
-export function fuelExpectationRow(expectedL: number, windowDays: number): FuelTrailRow {
+export function fuelExpectationRow(
+  expectedL: number,
+  windowDays: number | null,
+): FuelTrailRow {
   return {
     id: 'expect',
     tone: 'green',
     title: `Szacunkowo zostało ~${expectedL} L`,
-    meta: `z normy samolotu (${windowDays} dni) - zweryfikuj z paliwomierza`,
+    meta:
+      windowDays != null
+        ? `z normy samolotu (${windowDays} dni) - zweryfikuj z paliwomierza`
+        : 'z dokumentacji jednostki - zweryfikuj z paliwomierza',
   };
 }
 

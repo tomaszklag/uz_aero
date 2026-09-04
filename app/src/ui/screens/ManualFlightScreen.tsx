@@ -117,6 +117,7 @@ import {
   type AppliedPrefill,
 } from './logic/readingsPrefill';
 import { fuelChainTrail, mhChainTrail } from './logic/readingsTrail';
+import { manualFuelTrail, manualMhTrail } from './logic/manualReadingsTrail';
 import { useReadingsChain } from '../hooks/useReadingsChain';
 import type { RemoteReadingsChain } from '../../application';
 import { manualFuelBalanceView, manualMhBalanceView } from './logic/manualFlightBalance';
@@ -209,14 +210,20 @@ export function ManualFlightScreen({
 
   const aircraft = fleet.find((a) => a.id === draft.aircraftId) ?? null;
   /**
-   * Konfiguracja oleju do arkusza (issue #60). `normLPerH` ŚWIADOMIE null: wpis
-   * opisuje przeszłość, a oczekiwanie z normy liczy się względem bieżącego licznika -
-   * podpowiadałoby o innym dniu (ta sama reguła, co brak podpowiedzi zadania na 15A).
+   * Konfiguracja oleju do arkusza (issue #60).
+   *
+   * `normLPerH` był tu ŚWIADOMIE `null` z uzasadnieniem „oczekiwanie liczy się względem
+   * bieżącego licznika, więc podpowiadałoby o innym dniu". To było prawdą dla kotwicy
+   * z cache przekazania - i przestało nią być, odkąd kotwicę daje `readings-chain`
+   * (issue #62): trasa pytana jest o CHWILĘ URUCHOMIENIA tego wpisu, więc rachunek
+   * „ile powinno być na bagnecie" mówi o tamtym dniu, nie o dzisiejszym. Uwaga
+   * z urządzenia (2026-09-04) prosiła o tę sekwencję wprost: „ile latał i ile wpisał,
+   * że zostało - to samo motogodziny i olej".
    */
   const oilConfig: OilConfig = {
     minL: aircraft?.oilMinL ?? null,
     capacityL: aircraft?.oilCapacityL ?? null,
-    normLPerH: null,
+    normLPerH: aircraft?.oilNormLPerH ?? null,
   };
   const mhFormat = aircraft?.mhFormat ?? 'decimal';
 
@@ -466,12 +473,30 @@ export function ManualFlightScreen({
      `trail`, i do decyzji „czy wiersz odniesienia jest jeszcze potrzebny". Pole
      dolewki paliwa szlaku nie ma i mieć nie może: rejestr nie wie, ile pilot
      zatankował - zna wyłącznie stany po obu stronach. */
-  const fuelTrail =
+  /* Pole KOŃCOWE dostaje SEKWENCJĘ TEJ OPERACJI (uwaga z urządzenia, 2026-09-04:
+     „czemu nie dasz też info, ile użytkownik przejął, ile dolał, ile latał i ile
+     wpisał, że zostało"), a za nią ogniwo sąsiada z łańcucha - chronologicznie
+     to jest jedna oś: co zastałem → co dolałem → ile latałem → ile powinno zostać
+     → co zastał następny. Pole POCZĄTKOWE zostaje przy samym sąsiedzie: pyta
+     o stan zastany, a on jest jedyną odpowiedzią, jaką ma rejestr. */
+  /* Ogniwo SĄSIADA liczymy osobno, bo to ono decyduje o wierszu odniesienia: wiersz
+     znika wyłącznie wtedy, gdy tę samą liczbę mówi już szlak. Gdyby bramkowała go
+     cała tablica, wpis bez sieci (szlak operacji jest, łańcucha nie ma) zostałby
+     bez jedynego punktu odniesienia, jaki wtedy istnieje - przekazania z cache. */
+  const fuelChainRows =
     sheet?.kind === 'fuel' && sheet.which !== 'added'
       ? fuelChainTrail(chain, sheet.which === 'after' ? 'after' : 'found')
       : [];
-  const mhTrail =
+  const mhChainRows =
     sheet?.kind === 'mh' ? mhChainTrail(chain, sheet.which ?? 'before', mhFormat) : [];
+  const fuelTrail =
+    sheet?.kind === 'fuel' && sheet.which === 'after'
+      ? [...manualFuelTrail(draft, norm, fuelNominal, foundSrc ?? null), ...fuelChainRows]
+      : fuelChainRows;
+  const mhTrail =
+    sheet?.kind === 'mh' && sheet.which === 'after'
+      ? [...manualMhTrail(draft, norm, mhFormat, mhBeforeSrc ?? null), ...mhChainRows]
+      : mhChainRows;
 
   // Granice godzin wpisu = doba lotu; stepper nie ucieknie w cudzy dzień.
   const dayMin = draft.day;
@@ -1208,7 +1233,7 @@ export function ManualFlightScreen({
            odniesienia zostaje wyłącznie tam, gdzie szlaku nie ma - inaczej ta sama
            liczba stałaby w arkuszu dwa razy. */
         trail={fuelTrail}
-        rows={fuelTrail.length > 0 ? [] : fuelSheetRows(sheet, chain, aircraft?.handover ?? null)}
+        rows={fuelChainRows.length > 0 ? [] : fuelSheetRows(sheet, chain, aircraft?.handover ?? null)}
         /* Ostrzeżenie o WPISYWANEJ liczbie (uwaga z urządzenia, 2026-08-29): sufit
            zbiornika i rozjazd z sąsiadem w łańcuchu. Do tej pory jedno i drugie
            odzywało się dopiero na kroku 4 - czyli po zamknięciu arkusza, gdy liczby
@@ -1252,7 +1277,9 @@ export function ManualFlightScreen({
            wpis powinien zaczynać i na czym kończyć. */
         trail={mhTrail}
         rows={
-          mhTrail.length > 0 ? [] : mhSheetRows(sheet, chain, mhFormat, aircraft?.handover ?? null)
+          mhChainRows.length > 0
+            ? []
+            : mhSheetRows(sheet, chain, mhFormat, aircraft?.handover ?? null)
         }
         /* Jak przy paliwie: cofnięty licznik i rozjazd z sąsiadem mówią przy polu,
            a nie dopiero w podsumowaniu kroku 4. */
@@ -1275,9 +1302,10 @@ export function ManualFlightScreen({
       />
 
       {/* ── arkusz pomiaru oleju (issue #60) - TEN SAM komponent co na 02a ────
-          Bez wiersza „Oczekiwane wg normy": wpis opisuje przeszłość (patrz
-          `oilConfig` wyżej). Minimum i zbiornik zostają - to konfiguracja
-          jednostki, nie rachunek na dziś. */}
+          Od 2026-09-04 także z OCZEKIWANIEM z normy: kotwicą jest sąsiad z łańcucha,
+          pytany o chwilę uruchomienia TEGO wpisu, więc rachunek „ile powinno być na
+          bagnecie" mówi o tamtym dniu (patrz `oilConfig` wyżej). Minimum i zbiornik
+          zostają - to konfiguracja jednostki, nie rachunek na dziś. */}
       <OilSheet
         visible={sheet?.kind === 'oil'}
         initialLevelText={oilValueText(draft.oilL)}
