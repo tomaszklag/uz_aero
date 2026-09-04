@@ -621,11 +621,14 @@ export function useSessionEdit(
           maskMh={(text) => maskMotoHoursInput(text, mhFormat)}
           oil={oilCurrent}
           rows={readingRows}
-          warning={
-            readingTarget.type === 'day_close'
-              ? 'Ten odczyt jest przekazaniem maszyny: od niego zaczyna się następna operacja tego samolotu i to on domyka łańcuch motogodzin.'
-              : 'Ten odczyt otwiera łańcuch motogodzin operacji - zmiana przeliczy zużycie i porównanie z normą.'
-          }
+          /* Ostrzeżenia o tym, CZYM ten odczyt jest w rejestrze („otwiera łańcuch
+             motogodzin", „jest przekazaniem maszyny"), USUNIĘTE (uwaga z urządzenia,
+             2026-09-04: „po co też tam piszesz «ten licznik otwiera łańcuch»").
+             Świeciły przy KAŻDYM otwarciu arkusza, nie mówiły nic o poprawianej
+             wartości i nie dawały się na nic zamienić - czyli ta sama kategoria
+             przypisów o budowie rejestru, którą issue #43 wycięło z arkuszy korekty,
+             a #72 z ustawień. Ostrzeżenie w tym arkuszu zostaje przy `timeNote`, bo
+             tamto mówi o SKUTKU konkretnej zmiany godziny (i potrafi ją zablokować). */
           /* Odczyt to paliwo, licznik, przy przejęciu godzina - i od issue #60 olej.
              Notatka i Dual siedzą w tym samym zdarzeniu, ale są innym pytaniem i mają
              własne arkusze; zakres historii idzie za polami TEGO arkusza. */

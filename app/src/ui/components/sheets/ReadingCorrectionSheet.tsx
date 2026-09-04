@@ -21,15 +21,12 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
-import { Icon } from '../foundation/Icon';
 import { HistoryLink } from '../data/HistoryLink';
 import { Banner } from '../status/Banner';
 import { ReasonField } from '../input/ReasonField';
 import { TextField } from '../input/Field';
 import { TimeStepper } from '../input/TimeStepper';
-import { toneColors } from '../tone';
 import { Sheet, type SheetRow } from './Sheet';
 
 /** Wynik korekty - pola pominięte znaczą „nie ruszaj tej wartości". */
@@ -111,8 +108,6 @@ export interface ReadingCorrectionSheetProps {
   oil?: ReadingOilFields | null;
   /** Wiersze odniesienia: pojemność zbiorników, wpływ na zużycie, format licznika. */
   rows?: SheetRow[];
-  /** Ostrzeżenie o skutku - łańcuch MH, przekazanie następnemu pilotowi. */
-  warning?: string;
   historyCount?: number;
   onOpenHistory?: () => void;
   onSave: (fields: ReadingCorrection, reason: string | null) => void;
@@ -139,14 +134,11 @@ export function ReadingCorrectionSheet({
   maskMh,
   oil,
   rows,
-  warning,
   historyCount = 0,
   onOpenHistory,
   onSave,
   onCancel,
 }: ReadingCorrectionSheetProps) {
-  const { theme } = useTheme();
-  const amberTone = toneColors(theme, 'amber');
   const [fuel, setFuel] = useState(fuelText);
   const [mh, setMh] = useState(mhText);
   const [oilLevel, setOilLevel] = useState(oil?.levelText ?? '');
@@ -199,11 +191,18 @@ export function ReadingCorrectionSheet({
    */
   const blocker = !readable
     ? 'Nie rozumiem którejś z wartości - popraw wpis'
-    : !changed
-      ? 'Zmień którąś z wartości, żeby zapisać korektę'
-      : blocked
-        ? (timeNote?.text ?? 'Tej korekty nie da się zapisać')
-        : null;
+    : blocked
+      ? (timeNote?.text ?? 'Tej korekty nie da się zapisać')
+      : null;
+
+  /*
+   * ZEROWA ZMIANA BLOKUJE BEZ ZDANIA (uwaga z urządzenia, 2026-09-04: „po co pisać
+   * na przycisku «Zmień którąś…»"). To jest dokładnie ten WĄSKI wyjątek reguły
+   * issue #55: blokadę widać z kontrolki nad przyciskiem - pilot patrzy na wartość,
+   * której jeszcze nie tknął. Zdanie zostaje przy wpisie NIECZYTELNYM (czerwona ramka
+   * mówi które pole, nie mówi czemu nie ma zapisu) i przy twardej regule czasu.
+   */
+  const nothingChanged = readable && !changed;
 
   const confirm = (): void => {
     const fields: ReadingCorrection = {};
@@ -221,36 +220,21 @@ export function ReadingCorrectionSheet({
       visible={visible}
       title="KOREKTA ODCZYTU"
       rows={rows}
-      warning={warning}
       confirmLabel="ZAPISZ KOREKTĘ"
+      confirmDisabled={nothingChanged}
       confirmDisabledReason={blocker}
       onConfirm={confirm}
       onCancel={onCancel}
     >
-      {/* Karta celu jak w arkuszu czasu (10E): ikona, NAZWA ZDARZENIA pełnym stopniem
-          i godzina pod spodem. Mono 9 px wersalikami czytało się jak przypis, a to jest
-          odpowiedź na pierwsze pytanie otwierającego arkusz - co ja właściwie poprawiam. */}
-      <View
-        style={[
-          styles.targetCard,
-          {
-            borderRadius: theme.radius.md,
-            borderWidth: theme.borderWidth,
-            borderColor: amberTone.border,
-            backgroundColor: theme.colors.surface,
-          },
-        ]}
-      >
-        <Icon name="fuel" size={18} color={amberTone.accent} />
-        <View style={styles.targetBody}>
-          <AppText variant="label">{title}</AppText>
-          {subtitle != null && (
-            <AppText variant="mono" tone="muted" style={styles.targetMeta}>
-              {subtitle}
-            </AppText>
-          )}
-        </View>
-      </View>
+      {/* CEL KOREKTY = JEDEN WIERSZ MONO, dokładnie jak w arkuszu czasu (10E).
+          Karta z ramką, ikoną medium i nazwą pełnym stopniem robiła z przejęcia
+          i zdania korektę innego gatunku niż wszystkie pozostałe (uwaga z urządzenia,
+          2026-09-04: „korekta «zdania» i «przejęcia» wygląda inaczej […] ma jakiś taki
+          wielki pill z nazwą zdarzenia"). Godzina dokleja się do tej samej linii, bo
+          przy zdaniu kontrolki czasu nie ma i to jedyne miejsce, gdzie ją widać. */}
+      <AppText variant="mono" tone="muted" style={styles.target}>
+        {[title, subtitle].filter(Boolean).join(" · ").toUpperCase()}
+      </AppText>
 
       {/* CZAS zdarzenia - tylko przy przejęciu (patrz `time` w propsach). Stepper,
           nie pole tekstowe: to ta sama czynność, co korekta czasu na osi (10E), więc ma
@@ -357,9 +341,7 @@ export function ReadingCorrectionSheet({
 }
 
 const styles = StyleSheet.create({
-  targetCard: { flexDirection: 'row', alignItems: 'center', gap: 11, paddingHorizontal: 14, paddingVertical: 12 },
-  targetBody: { flex: 1, gap: 2 },
-  targetMeta: { fontSize: 9, letterSpacing: 1, textTransform: 'uppercase' },
+  target: { fontSize: 9, letterSpacing: 1.5 },
   grid: { flexDirection: 'row', gap: 9 },
   cell: { flex: 1 },
   error: { fontSize: 9, letterSpacing: 0.5, lineHeight: 13 },

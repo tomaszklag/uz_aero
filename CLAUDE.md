@@ -882,6 +882,27 @@ kiedykolwiek zmieniana, pilot nie dowiadywał się znikąd.
   oraz przypisy pod akcjami destrukcyjnymi („oznacza zdarzenie jako błędne (nie usuwa
   go z rejestru)", „wiersz zostaje w rejestrze"). Wszystkie opisywały wewnętrzną budowę
   rejestru komuś, kto o nią nie pytał - a napis na przycisku („TEGO LĄDOWANIA NIE BYŁO")
+  Tą samą drogą poszły (2026-09-04) ostrzeżenia arkusza korekty odczytu mówiące, CZYM
+  ten odczyt jest w rejestrze - „ten odczyt otwiera łańcuch motogodzin", „jest
+  przekazaniem maszyny": świeciły przy każdym otwarciu, nie mówiły nic o poprawianej
+  wartości i nie dawały się na nic zamienić. Ostrzeżenie zostaje tam, gdzie mówi
+  o SKUTKU konkretnej zmiany (przesunięcie biegu silnika przy korekcie godziny).
+  Tego samego dnia wyleciały z arkusza DOPISANIA wpisu (10H): niebieski baner „wpis
+  dostanie w rejestrze znacznik «ręcznie»…" (znacznik jest sprawą panelu, nie pilota)
+  i przypis „uruchomienia i wyłączenia silnika tu nie ma…" - siatka dostępnych typów
+  mówi to sama, samym brakiem takiego kafelka.
+- **KOREKTA ODCZYTU WYGLĄDA JAK KAŻDA INNA KOREKTA** (uwaga z urządzenia, 2026-09-04:
+  „korekta «zdania» i «przejęcia» wygląda trochę inaczej niż korekta innych zdarzeń […]
+  ma jakiś taki wielki pill z nazwą zdarzenia"). Cel korekty w 10F to odtąd JEDNA LINIA
+  MONO, dokładnie ta sama, co w arkuszu czasu 10E - karta z ramką, ikoną medium i nazwą
+  pełnym stopniem robiła z przejęcia i zdania korektę innego gatunku. To cofa decyzję
+  z 2026-08-14 („mono 9 px czytało się jak przypis"): spójność rodziny arkuszy waży
+  więcej niż wyrazistość jednego z nich. Godzina dokleja się do tej samej linii przy
+  ZDANIU, bo tam kontrolki czasu nie ma i to jedyne miejsce, gdzie ją widać.
+- **zerowa zmiana blokuje BEZ ZDANIA także tutaj** (ta sama uwaga: „po co pisać na
+  przycisku «Zmień którąś…»"): to wąski wyjątek reguły issue #55 - blokadę widać
+  z kontrolki nad przyciskiem, bo pilot patrzy na wartość, której jeszcze nie tknął.
+  Zdanie zostaje przy wpisie NIECZYTELNYM i przy twardej regule czasu.
   mówi już wszystko, co trzeba wiedzieć przed tapnięciem. Podpowiedź pod polem pojawia
   się WYŁĄCZNIE po zmianie i mówi, co było
 - **arkusz korekty nie krzyczy** (uwagi z urządzenia, 2026-08-14). Trzy rzeczy naraz:

@@ -92,7 +92,6 @@
   .type-card .tc-label { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; }
   /* Zrzut i załadunek ISTNIEJĄ tylko w dniu skokowym (issue #19): przy przelocie czy
      egzaminie tych dwóch kart po prostu nie ma - to brak akcji, nie blokada z powodem. */
-  .type-note { font-family:var(--font-mono); font-size:8px; letter-spacing:0.5px; color:var(--text-muted); line-height:1.6; }
 
   .time-stepper { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--green-border); border-radius:14px; padding:9px 11px; }
   .min-btn { min-width:62px; padding:0 10px; white-space:nowrap; height:44px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border-radius:12px; border:1px solid var(--border-strong); background:var(--surface-raised); color:var(--text-primary); font-family:var(--font-mono); font-size:12px; cursor:pointer; }
@@ -112,13 +111,6 @@
      nie treść, i ma zejść z oka po pierwszym znaku (uwaga z urządzenia). */
   .reason-input::placeholder { color:var(--text-placeholder); }
 
-  /* Informacja o metodzie - wpis dostanie w rejestrze znacznik `manual`. Pilotowi
-     mówimy to RAZ, tutaj, a nie plakietką przy każdym wierszu osi (issue #40 pkt 6):
-     sposób powstania zapisu jest sprawą rejestru i panelu, nie codziennego czytania. */
-  .method-note { display:flex; align-items:flex-start; gap:9px; background:var(--blue-muted); border:1px solid var(--blue-border); border-radius:12px; padding:11px 13px; }
-  .method-note svg { flex-shrink:0; margin-top:1px; color:var(--blue); }
-  .method-text { font-size:11px; color:var(--text-secondary); line-height:1.55; }
-  .method-text b { color:var(--blue); font-weight:600; }
 
   .modal-actions { display:grid; grid-template-columns:1fr 2fr; gap:8px; }
   .btn-cancel { display:flex; align-items:center; justify-content:center; padding:14px; border-radius:14px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text-secondary); font-family:var(--font-display); font-size:16px; letter-spacing:2px; text-decoration:none; cursor:pointer; }
@@ -226,7 +218,6 @@
               <span class="tc-label">Tankowanie</span>
             </a>
           </div>
-          <div class="type-note" style="margin-top:7px;">Uruchomienia i wyłączenia silnika tu nie ma - zapisuje je przycisk w kokpicie, a operacja ma dokładnie jeden bieg. Jeśli czas klamry jest zły, popraw go ołówkiem na osi.</div>
         </div>
 
         <div>
@@ -265,10 +256,6 @@
           <input class="reason-input" type="text" placeholder="Uwaga (opcjonalnie) - np. telefon stracił fixa na pasie" />
         </div>
 
-        <div class="method-note">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-          <span class="method-text">Wpis dostanie w rejestrze znacznik <b>ręcznie</b> - na osi operacji wygląda jak każdy inny, a metodę widzi administrator w panelu.</span>
-        </div>
 
         <div class="modal-actions">
           <a href="10d-edycja.html" class="btn-cancel">Anuluj</a>
