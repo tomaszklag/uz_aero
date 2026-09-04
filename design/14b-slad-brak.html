@@ -97,18 +97,6 @@
   .empty-text { font-size:12px; color:var(--text-muted); line-height:1.6; max-width:280px; }
   .empty-text b { color:var(--text-secondary); font-weight:600; }
 
-  .reason-list { display:flex; flex-direction:column; gap:1px; background:var(--border); }
-  .reason-row { background:var(--surface); padding:11px 13px; display:flex; align-items:flex-start; gap:10px; }
-  .reason-mark {
-    font-family:var(--font-mono); font-size:8px; letter-spacing:1px; text-transform:uppercase;
-    padding:3px 6px; border-radius:4px; flex-shrink:0; margin-top:1px;
-  }
-  .reason-mark.amber { color:var(--amber); background:var(--amber-muted); }
-  .reason-mark.dim { color:var(--text-muted); background:var(--surface-hover); }
-  .reason-body { display:flex; flex-direction:column; gap:3px; }
-  .reason-name { font-size:12px; font-weight:600; color:var(--text-primary); }
-  .reason-when { font-size:11px; color:var(--text-secondary); line-height:1.5; }
-
   /* Lot ręczny: dane czasowe SĄ, więc pokazujemy je zamiast udawać, że nie ma nic */
   .fallback-card { display:flex; flex-direction:column; gap:1px; background:var(--border); }
   .fallback-row { background:var(--surface); padding:10px 13px; display:flex; align-items:center; justify-content:space-between; }
@@ -180,8 +168,7 @@
           </svg>
           <div class="empty-title">BEZ ZAPISU GPS</div>
           <div class="empty-text">
-            Ta operacja została <b>wpisana ręcznie</b>, więc nie ma z czego narysować trasy.
-            Czasy są prawdziwe - pochodzą z Twojego wpisu, nie z odbiornika.
+            Ta operacja została <b>wpisana ręcznie</b>.
           </div>
         </div>
       </div>
@@ -209,40 +196,6 @@
           <div class="fallback-row">
             <span class="fallback-key">Źródło</span>
             <span class="fallback-val" style="color:var(--amber);">WPIS RĘCZNY</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Dwa powody, dla których śladu nie ma - pilot ma wiedzieć, który go dotyczy.
-           Od issue #47 NIE MA wśród nich retencji: ślad trzyma serwer i nie kasuje go
-           po 14 dniach. Retencja była limitem PAMIĘCI TELEFONU i zniknęła razem
-           z trzymaniem śladu na telefonie. Trzeci stan - „jest, ale nie ma zasięgu" -
-           to osobny ekran (14C), bo tam ślad ISTNIEJE i wystarczy sieć. -->
-      <div class="section-card">
-        <div class="section-card-head">Kiedy śladu nie ma</div>
-        <div class="reason-list">
-          <div class="reason-row">
-            <span class="reason-mark amber">ta operacja</span>
-            <span class="reason-body">
-              <span class="reason-name">Operacja wpisana ręcznie</span>
-              <span class="reason-when">
-                Lot dopisany ekranem „Dodaj lot ręcznie" (15) albo wpisem ręcznym z kokpitu
-                (05F) - GPS nie pracował albo detekcja go nie złapała. Zapis czasów jest
-                pełnoprawny, brakuje wyłącznie geometrii.
-              </span>
-            </span>
-          </div>
-          <div class="reason-row">
-            <span class="reason-mark dim">rzadkie</span>
-            <span class="reason-body">
-              <span class="reason-name">Nagranie nie dotarło na serwer</span>
-              <span class="reason-when">
-                Telefon nagrywa ślad i wysyła go przy pierwszej okazji, ale nagranie może
-                nie powstać wcale - odmowa dostępu do lokalizacji, wyczerpana bateria,
-                odinstalowana aplikacja przed wysyłką. Jeśli ślad wciąż CZEKA w kolejce
-                na tym telefonie, ekran mówi to wprost i podaje liczbę punktów.
-              </span>
-            </span>
           </div>
         </div>
       </div>

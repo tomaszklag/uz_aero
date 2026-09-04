@@ -94,8 +94,6 @@ export interface SessionTrackView {
   stats: TrackStats;
   /** Null = trasa jest. Wartość = nie ma czego rysować i to jest powód. */
   missing: MissingTrackReason | null;
-  /** Ile punktów nagrania czeka na wysyłkę z tego telefonu (dla `pending-upload`). */
-  pendingFixes: number;
 }
 
 /**
@@ -136,7 +134,7 @@ export class FlightTrackQueries {
     // Sesja bez pracy silnika (09C) nie ma czego rysować i nie jest to awaria zapisu:
     // maszyna stała. Ekran mówi to jednym zdaniem zamiast pustej mapy.
     if (leg == null) {
-      return this.empty(state, 'no-record', null, null, 0);
+      return this.empty(state, 'no-record', null, null);
     }
 
     const fromAt = leg.startedAt;
@@ -145,7 +143,7 @@ export class FlightTrackQueries {
     const outcome = await this.source.fetch(sessionUuid);
 
     if (outcome.kind === 'unreachable') {
-      return this.empty(state, 'offline', fromAt, toAt, await this.pending(sessionUuid, fromAt, toAt));
+      return this.empty(state, 'offline', fromAt, toAt);
     }
 
     const payload =
@@ -164,7 +162,7 @@ export class FlightTrackQueries {
           ? 'pending-upload'
           : 'no-record';
 
-      return this.empty(state, reason, fromAt, toAt, pending);
+      return this.empty(state, reason, fromAt, toAt);
     }
 
     const track: FlightTrack = {
@@ -192,7 +190,6 @@ export class FlightTrackQueries {
       profile: payload.profile,
       stats: payload.stats,
       missing: null,
-      pendingFixes: 0,
     };
   }
 
@@ -208,7 +205,6 @@ export class FlightTrackQueries {
     reason: MissingTrackReason,
     fromAt: number | null,
     toAt: number | null,
-    pendingFixes: number,
   ): SessionTrackView {
     return {
       aircraftId: state.aircraftId,
@@ -222,7 +218,6 @@ export class FlightTrackQueries {
       profile: emptyFlightProfile(),
       stats: emptyTrackStats(),
       missing: reason,
-      pendingFixes,
     };
   }
 }

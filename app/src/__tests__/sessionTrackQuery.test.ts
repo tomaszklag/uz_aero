@@ -145,7 +145,6 @@ describe('ślad operacji - powody braku', () => {
     const view = await queries.bySession(SESSION);
 
     expect(view!.missing).toBe('no-record');
-    expect(view!.pendingFixes).toBe(0);
   });
 
   it('nagranie czeka w kolejce NA TYM telefonie: powód „pending-upload"', async () => {
@@ -171,7 +170,6 @@ describe('ślad operacji - powody braku', () => {
     const view = await queries.bySession(SESSION);
 
     expect(view!.missing).toBe('pending-upload');
-    expect(view!.pendingFixes).toBe(9);
   });
 
   it('operacja wpisana ręcznie: powód „manual", bo trasy nigdy nie było', async () => {

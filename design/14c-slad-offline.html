@@ -124,15 +124,6 @@
   .fallback-key { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
   .fallback-val { font-family:var(--font-mono); font-size:12px; color:var(--text-primary); }
 
-  /* Baner STATUSU - opisuje stan przyrządu, nie jednorazową wskazówkę, więc bez `×` */
-  .status-banner {
-    display:flex; align-items:flex-start; gap:9px;
-    background:var(--amber-muted); border:1px solid var(--amber-border);
-    border-radius:12px; padding:11px 13px;
-  }
-  .status-icon { color:var(--amber); flex-shrink:0; margin-top:1px; }
-  .status-text { font-size:11px; color:var(--text-secondary); line-height:1.55; }
-  .status-text b { color:var(--amber); font-weight:600; }
 
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
   .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
@@ -196,17 +187,15 @@
             <path d="M15 38h22a9 9 0 0 0 1-17.9A13 13 0 0 0 13 22a8 8 0 0 0 2 16z"/>
             <path d="M8 8l38 38" stroke-width="1.8"/>
           </svg>
-          <div class="empty-title">ŚLAD JEST NA SERWERZE</div>
+          <div class="empty-title">ŚLAD NIEDOSTĘPNY</div>
           <div class="empty-text">
-            Telefon nagrał tę trasę i oddał ją serwerowi, ale <b>nie ma teraz jak jej
-            pobrać</b>. Wróć na ten ekran z zasięgiem - trasa, profil i statystyki
-            wczytają się w całości.
+            Wróć na ten ekran <b>z zasięgiem</b>.
           </div>
         </div>
       </div>
 
       <button class="btn-primary-off" disabled>POBIERZ ŚLAD</button>
-      <div class="btn-reason">wymaga połączenia z serwerem</div>
+      <div class="btn-reason">wymaga zasięgu</div>
 
       <!-- Co JEDNAK wiadomo - liczy się z rejestru na telefonie, więc jest zawsze.
            Ekran 14 stracił przez issue #47 wyłącznie GEOMETRIĘ; czasy operacji nigdy nie
@@ -234,18 +223,6 @@
             <span class="fallback-key">Loty</span>
             <span class="fallback-val">2 · 08:20 → 09:47</span>
           </div>
-        </div>
-      </div>
-
-      <div class="status-banner">
-        <svg class="status-icon" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
-          <circle cx="7" cy="7" r="6"/><path d="M7 6.5v4M7 4h.01"/>
-        </svg>
-        <div class="status-text">
-          <b>Ślad nie zajmuje już pamięci telefonu</b> - nagranie idzie na serwer i tam
-          zostaje na stałe, także po reinstalacji aplikacji i na nowym telefonie. Ceną
-          jest ten ekran: sama trasa wymaga zasięgu. Wszystko inne w aplikacji działa
-          offline tak samo jak dotąd.
         </div>
       </div>
 

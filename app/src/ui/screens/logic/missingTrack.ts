@@ -1,88 +1,63 @@
 /**
- * UZ Aero - DLACZEGO NIE MA ŚLADU: jedno zdanie na jeden powód (zgłoszenie
- * z urządzenia, 2026-08-30).
+ * UZ Aero - DLACZEGO NIE MA ŚLADU: jedno KRÓTKIE zdanie na jeden powód.
  *
- * ══ CO BYŁO NIE TAK ══
- * Ekran sesji (10) pisał przy braku śladu: „Ślad to materiał roboczy z retencją 14 dni -
- * starsze sesje mają komplet czasów i liczb, ale trasy już nie". To zdanie było
- * NIEPRAWDZIWE od issue #47: ślad przestał wtedy mieszkać na telefonie (nagrywa →
- * oddaje → kasuje), więc retencja jako reguła ŻYCIA śladu zniknęła - trasa idzie
- * z serwera, zostaje tam na stałe i wraca po reinstalacji oraz na nowym telefonie.
- * Zdanie przeżyło tamtą zmianę i przez dwa tygodnie tłumaczyło pilotowi brak trasy
- * powodem, który już nie istniał.
+ * ══ CO BYŁO NIE TAK (zgłoszenie z urządzenia, 2026-09-04) ══
+ * „Jak mam przeglądanie zapisanych śladów, to po co pisać »telefon nagrał tę trasę
+ * i oddał ją serwerowi«? To jest bez sensu - nie pisz tego tak technicznie. Lepiej
+ * dać info, że nie ma danych, i koniec."
  *
- * Drugą wadą było ZWIJANIE POWODÓW. CLAUDE.md mówi wprost: „cztery powody braku znaczą
- * co innego i nie wolno ich zwijać do jednego", a ekran 10 rozróżniał tylko wpis ręczny
- * od całej reszty - więc pilot bez zasięgu dostawał to samo zdanie, co pilot, którego
- * nagranie nigdy nie powstało. Ekran 14 miał to zrobione dobrze; ten moduł jest po to,
- * żeby oba ekrany mówiły JEDNO i nie mogły się rozejść.
+ * Ekran braku trasy opowiadał ARCHITEKTURĘ: kto nagrał, komu oddał, gdzie to teraz
+ * mieszka, że nie zajmuje pamięci telefonu i że wraca po reinstalacji. Pilot wchodzi
+ * obejrzeć swój lot, a nie poznać model przechowywania śladu - to ta sama kategoria
+ * przypisów, którą issue #43 wyrzuciło z arkuszy korekty, a issue #72 z ustawień:
+ * NA EKRANIE ZOSTAJE BLOKADA Z POWODEM ALBO INSTRUKCJA DO WYKONANIA. Stąd baner
+ * o modelu śladu zniknął w całości, a każdy powód zmieścił się w jednym zdaniu.
+ *
+ * ══ CO ZOSTAJE ══
+ * CZTERY POWODY DALEJ ZNACZĄ CO INNEGO i nie wolno ich zwijać do jednego (CLAUDE.md,
+ * issue #47): „brak śladu" pokazany komuś, kto ma tylko wyłączone dane, jest kłamstwem
+ * o jego locie. Krótko ≠ jednakowo - pilnuje tego test. Nie wraca też ani jedno zdanie
+ * o RETENCJI: ślad idzie z serwera i zostaje tam na stałe (issue #47).
  *
  * Czysty TypeScript: bez Reacta, bez zegara, bez I/O.
  */
 
-import { plural } from '../../format';
 import type { MissingTrackReason } from '../../../application';
 
 export interface MissingTrackCopy {
   /** Nagłówek kafelka/ekranu - nazywa STAN, nie powtarza słowa „ślad" trzy razy. */
   title: string;
-  /** Co się stało i co z tym zrobić. */
+  /** Jedno zdanie: co się stało albo co z tym zrobić. Nigdy jak to działa w środku. */
   text: string;
-  /**
-   * Baner pod treścią - tylko tam, gdzie jest co dopowiedzieć o SAMYM MODELU śladu
-   * (dziś: jeden stan). `null` = nic ponadto; ekran miniaturki i tak go nie rysuje.
-   */
-  banner: string | null;
 }
 
-/**
- * @param pendingFixes ile punktów czeka w kolejce na TYM telefonie - liczba ma sens
- *   wyłącznie przy `pending-upload` i tylko tam wchodzi do zdania.
- */
-export function missingTrackCopy(
-  reason: MissingTrackReason,
-  pendingFixes: number,
-): MissingTrackCopy {
+export function missingTrackCopy(reason: MissingTrackReason): MissingTrackCopy {
   if (reason === 'offline') {
+    // Jedyny powód z DROGĄ WYJŚCIA, więc jedyny, którego zdanie jest instrukcją.
     return {
-      title: 'Ślad jest na serwerze',
-      text:
-        'Telefon nagrał tę trasę i oddał ją serwerowi, ale nie ma teraz jak jej pobrać. ' +
-        'Wróć na ten ekran z zasięgiem - trasa, profil i statystyki wczytają się w całości.',
-      banner:
-        'Ślad nie zajmuje już pamięci telefonu: nagranie idzie na serwer i tam zostaje ' +
-        'na stałe, także po reinstalacji aplikacji i na nowym telefonie. Ceną jest ten ' +
-        'ekran - sama trasa wymaga zasięgu.',
+      title: 'Ślad niedostępny',
+      text: 'Wróć na ten ekran z zasięgiem.',
     };
   }
 
   if (reason === 'pending-upload') {
+    // Liczba punktów w kolejce zeszła razem z resztą technikaliów: pilot nie ma z niej
+    // co zrobić, a ekran odpowiada mu na „czy będzie", nie „ile wierszy leży".
     return {
       title: 'Nagranie czeka na wysyłkę',
-      text:
-        `To nagranie jest jeszcze na tym telefonie - ${pendingFixes.toLocaleString('pl-PL')} ` +
-        `${plural(pendingFixes, 'punkt', 'punkty', 'punktów')} w kolejce. Pójdzie przy ` +
-        'najbliższej okazji i wtedy ten ekran narysuje trasę.',
-      banner: null,
+      text: 'Trasa pojawi się po synchronizacji.',
     };
   }
 
   if (reason === 'manual') {
     return {
       title: 'Bez zapisu GPS',
-      text:
-        'Ta operacja została wpisana ręcznie, więc nie ma z czego narysować trasy. Czasy są ' +
-        'prawdziwe - pochodzą z Twojego wpisu, nie z odbiornika.',
-      banner: null,
+      text: 'Ta operacja została wpisana ręcznie.',
     };
   }
 
   return {
-    title: 'Ślad niedostępny',
-    text:
-      'Serwer nie ma nagrania tej operacji. Nagranie mogło nie powstać (brak zgody na ' +
-      'lokalizację, wyczerpana bateria) albo nigdy nie dotarło z telefonu, na którym ' +
-      'powstało. Czasy i statystyki operacji są kompletne - brakuje wyłącznie trasy.',
-    banner: null,
+    title: 'Brak śladu',
+    text: 'Nie ma zapisu GPS tej operacji.',
   };
 }

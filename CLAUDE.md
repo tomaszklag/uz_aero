@@ -2190,6 +2190,18 @@ znikać, wraca po reinstalacji i jest na nowym telefonie.
   (wpis ręczny), `no-record` (serwer nie ma), `pending-upload` (nagranie czeka
   w kolejce NA TYM telefonie), `offline` (jest, brakuje drogi). „Brak śladu" pokazany
   komuś, kto ma tylko wyłączone dane, jest kłamstwem o jego locie
+- **ale każdy z nich mieści się w JEDNYM krótkim zdaniu** (uwaga z urządzenia,
+  2026-09-04: „jak mam przeglądanie zapisanych śladów, to po co pisać «telefon nagrał
+  tę trasę i oddał ją serwerowi»? Lepiej dać info, że nie ma danych, i koniec").
+  Ekran braku trasy opowiadał MODEL PRZECHOWYWANIA śladu - kto nagrał, komu oddał,
+  że nie zajmuje pamięci telefonu i wraca po reinstalacji - czyli tę samą kategorię
+  przypisów, którą issue #43 wyrzuciło z arkuszy korekty, a issue #72 z ustawień.
+  Baner o modelu śladu USUNIĘTY w całości (`MissingTrackCopy` nie ma już pola
+  `banner`), liczba punktów w kolejce zeszła razem z nim (`pendingFixes` wypadło
+  z `SessionTrackView` - pilot nie ma z niej co zrobić), a `offline` jest jedynym
+  powodem, którego zdanie jest INSTRUKCJĄ („Wróć na ten ekran z zasięgiem"), bo jako
+  jedyny ma drogę wyjścia. Krótko ≠ jednakowo: rozróżnienia czterech powodów i braku
+  technicznego słownika pilnuje `missingTrack.test.ts`
 - **kompresja to RDP + zaokrąglenia** (`track/payload.ts`): linia w metrach, profil
   w stopach, współrzędne do 5 miejsc. Statystyki liczą się PRZED upraszczaniem -
   inaczej „max wznoszenie" zależałoby od tolerancji rysowania
