@@ -17,7 +17,8 @@
 import { describe, expect, it } from 'vitest';
 
 import type { AdminStatsReport } from '../src/application/admin/contracts/stats.ts';
-import { TEST_PASSWORD, testHarness } from './helpers.ts';
+import { testHarness } from './helpers.ts';
+import { googleTokenFor } from './testIdentityProvider.ts';
 
 type Harness = Awaited<ReturnType<typeof testHarness>>;
 
@@ -114,8 +115,8 @@ function flyingDay(o: DayOptions) {
 async function token(app: Harness['app'], who: string): Promise<string> {
   const res = await app.inject({
     method: 'POST',
-    url: '/auth/login',
-    payload: { login: who, password: TEST_PASSWORD },
+    url: '/auth/google',
+    payload: { idToken: googleTokenFor(who) },
   });
   return res.json().token as string;
 }

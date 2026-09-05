@@ -11,8 +11,21 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type { PanelSessionDto } from '../api/dto';
 import { isHttpError } from '../api/httpClient';
-import { login, logout, me, type LoginInput } from '../api/session';
+import { googleClient, login, logout, me, type LoginInput } from '../api/session';
 import { keys } from './keys';
+
+/**
+ * Identyfikator klienta Google - konfiguracja, nie dane: nie zmienia się w trakcie
+ * życia strony, więc `staleTime: Infinity`. Bez niego ekran logowania nie ma jak
+ * narysować przycisku, a błąd pobrania jest błędem sieci, nie logowania.
+ */
+export function useGoogleClient() {
+  return useQuery({
+    queryKey: keys.googleClient,
+    queryFn: () => googleClient(),
+    staleTime: Infinity,
+  });
+}
 
 /**
  * Sesja jako zapytanie, nie jako stan.

@@ -1,8 +1,8 @@
 /**
  * UZ Aero (serwer) - adapter kont pilotów (`PilotsPort`).
  *
- * Konta zakłada wyłącznie administrator/seed (decyzja 2026-07-22 - brak samodzielnej
- * rejestracji), więc adapter jest czystym odczytem; zapis mieszka w seedzie.
+ * Konta powstają przez zatwierdzenie zgłoszenia albo w panelu, więc adapter jest
+ * czystym ODCZYTEM ścieżki logowania; zapis mieszka w seedzie i w `PgAdminPilotsRepo`.
  */
 
 import type {
@@ -18,7 +18,6 @@ interface PilotRow {
   code: string;
   name: string;
   email: string | null;
-  password_hash: string;
   active: boolean;
   role: string;
 }
@@ -28,7 +27,6 @@ const toAccount = (r: PilotRow): PilotAccount => ({
   code: r.code,
   name: r.name,
   email: r.email,
-  passwordHash: r.password_hash,
   active: r.active,
   // Bazy pilnuje CHECK na `pilots.role`, ale adapter i tak nie ufa łańcuchowi znaków
   // z zewnątrz: nierozpoznana rola schodzi do najmniejszej, nigdy nie awansuje.
@@ -38,23 +36,20 @@ const toAccount = (r: PilotRow): PilotAccount => ({
 export class PgPilotsRepo implements PilotsPort {
   constructor(private readonly db: Queryable) {}
 
-  async findByLogin(login: string): Promise<PilotAccount | null> {
-    // Loginem jest kod pilota albo e-mail - oba unikalne; wielkość liter bez znaczenia,
-    // bo „TMK" i „tmk" to w intencji pilota to samo konto.
+  async findById(id: string): Promise<PilotAccount | null> {
+    // Kolumny WYPISANE IMIENNIE, nie `SELECT *`: kształt `PilotAccount` ma zmieniać się
+    // świadomie, a nie przy każdej nowej kolumnie na `pilots` (ta sama zasada, dla której
+    // `authSnapshot` niżej nigdy nie brał gwiazdki).
     const { rows } = await this.db.query<PilotRow>(
-      'SELECT * FROM pilots WHERE lower(code) = lower($1) OR lower(email) = lower($1)',
-      [login],
+      'SELECT id, code, name, email, active, role FROM pilots WHERE id = $1',
+      [id],
     );
     return rows[0] ? toAccount(rows[0]) : null;
   }
 
-  async findById(id: string): Promise<PilotAccount | null> {
-    const { rows } = await this.db.query<PilotRow>('SELECT * FROM pilots WHERE id = $1', [id]);
-    return rows[0] ? toAccount(rows[0]) : null;
-  }
-
   /**
-   * Odczyt BRAMY panelu - kolumny wypisane imiennie i bez `password_hash`.
+   * Odczyt BRAMY panelu - kolumny wypisane imiennie. Powstało po to, żeby pominąć
+   * `password_hash`; kolumna zniknęła migracją 7, a jawna lista zostaje z drugiego powodu:
    *
    * `SELECT *` z `findById` jest tu nie do przyjęcia z dwóch powodów naraz: wnosiłby
    * hash do warstwy HTTP przy każdym żądaniu panelu (a `PilotAuthSnapshot` powstał

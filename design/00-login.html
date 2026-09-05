@@ -14,7 +14,7 @@
     --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
     --green: #2ECC71; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
     --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28);
-    --red: #E74C3C; --red-muted: rgba(231,76,60,0.12);
+    --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28);
     --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -152,6 +152,7 @@
   .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
   .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
   .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .vp-badge.red { color:var(--red); background:var(--red-muted); border-color:var(--red-border); }
   .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
   .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
   .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
@@ -255,8 +256,29 @@
   <a class="vp-item" href="00a-login-full.html">
     <span class="vp-badge">00A</span>
     <span class="vp-body">
-      <span class="vp-name">Pełny login</span>
+      <span class="vp-name">Logowanie Google</span>
       <span class="vp-when">Pierwsze uruchomienie na tym telefonie albo reset PIN-u. Wymaga internetu.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="00b-login-offline.html">
+    <span class="vp-badge amber">00B</span>
+    <span class="vp-body">
+      <span class="vp-name">Offline bez profilu</span>
+      <span class="vp-when">Jak 00A, ale bez sieci - logowanie niemożliwe (twarda granica, jedyny wyjątek od offline-first).</span>
+    </span>
+  </a>
+  <a class="vp-item" href="00c-oczekiwanie.html">
+    <span class="vp-badge amber">00C</span>
+    <span class="vp-body">
+      <span class="vp-name">Czeka na zatwierdzenie</span>
+      <span class="vp-when">Konto Google zweryfikowane, ale administrator jeszcze nie zatwierdził zgłoszenia.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="00d-odrzucone.html">
+    <span class="vp-badge red">00D</span>
+    <span class="vp-body">
+      <span class="vp-name">Zgłoszenie odrzucone</span>
+      <span class="vp-when">Administrator odrzucił zgłoszenie - z powodem widocznym na ekranie.</span>
     </span>
   </a>
 </aside>
@@ -265,8 +287,10 @@
   <a href="index.html">↩ Index</a>
   <span>·</span>
   <a href="00-login.html" class="active">00 PIN</a>
-  <a href="00a-login-full.html">00A Pełny login →</a>
+  <a href="00a-login-full.html">00A Google →</a>
   <a href="00b-login-offline.html">00B Offline →</a>
+  <a href="00c-oczekiwanie.html">00C Czeka →</a>
+  <a href="00d-odrzucone.html">00D Odrzucone →</a>
   <span>·</span>
   <a href="01-moj-dzien.html">01 Mój dzień →</a>
 </nav>

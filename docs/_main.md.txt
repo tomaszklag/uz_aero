@@ -77,6 +77,7 @@ i zdaniu samolotu (zdanie zatwierdza log całej operacji).
 | 2026-08-08 | **Historia (ekran 12) listuje DOBĘ PILOTA, z przeglądaniem w głąb.** Rozstrzyga sprzeczność wykrytą audytem: mockup `12-historia.html` (etap A) obiecywał kartę doby pilota obejmującą kilka maszyn, a kod (decyzja C4) robił kartę na OPERACJĘ - obie zapisane, obie uzasadnione, wzajemnie się wykluczające. Wygrywa doba pilota, bo ekran odpowiada na pytanie „co dziś zrobiłem", a to pytanie zadaje CZŁOWIEK o swoją służbę, nie o maszynę. Operacja samolotu nie znika - staje się drugim poziomem: **doba pilota → operacja na konkretnym samolocie → wzloty i loty ze szczegółami**. Konsekwencja: karta doby czyta `projectDuty` (projekcja per pilot per doba UTC), a nie `projectSession`; `historyDays.ts` i zapytanie `historyDays()` wymagają przebudowy, bo dziś grupują po operacji. Kod ma dogonić mockup, nie odwrotnie |
 | 2026-08-12 | **Ekran 12 to OPERACJE spoza dzisiejszej doby - ODWRACA „historia listuje dobę pilota" z 2026-08-08** (issue #35). Tamta decyzja rozstrzygała sprzeczność mockup↔kod na korzyść karty-doby; dziś rozstrzygamy ją odwrotnie i to KOD miał rację. Powody: (1) pytanie „co dziś zrobiłem" ma już swój ekran - `01 Mój dzień` po issue #23 JEST listą operacji doby, więc karta-doba w historii powtarzałaby go drugi raz, tyle że innym kształtem; (2) celem kafelka jest rozliczenie (10), a ono opisuje JEDNĄ maszynę - paliwo i motogodziny dwóch samolotów nie sumują się w jedną liczbę, więc karta-doba nie miałaby czego otworzyć. Ekran nazywa się odtąd **„Poprzednie dni"** i NIE pokazuje operacji z doby bieżącej (te są na 01, z ołówkiem wiersza); doba operacji liczy się tą samą kotwicą co na 01 - uruchomieniem silnika. Metryki kafelka = metryki wiersza operacji z 01 (Loty · Blok · Lot). Operacja po oknie 24 h otwiera 10 w trybie PODGLĄDU (`design/10b`): bez ołówków, bez „Edytuj dane" - dotąd nie dało się jej otworzyć wcale |
 | 2026-07-31 | **Panel administratora - DECYZJA ODWRÓCONA** (odwraca 2026-07-24): powstaje jako **osobna aplikacja web**. Zakres v1 = pełny back-office (konta, flota, skrzynka flag, korekty po oknie 24 h, przegląd dni, rejestr zdarzeń, monitor eksportu, statystyki, audyt, progi), **dwie role** (`administrator` - wszystko; `szef wyszkolenia` - podgląd, statystyki, rozwiązywanie flag), stan floty **na żywo** oraz dane po fakcie. Powód: backend jest gotowy i wymaga obsługi, a §4.7 postawiło bramkę, której **nikt nie może otworzyć** - otwarta flaga `session_overlap` blokuje eksport karty dnia, a `status='resolved'` nie ustawia dziś żaden kod w `server/src`. Projekt UI: `design/admin/` (20 ekranów); zakres, mapowanie na endpointy i braki serwera: `design/admin/ANALIZA.md` |
+| 2026-09-04 | **Logowanie WYŁĄCZNIE przez Google - ODWRACA „Rezygnację z Google OAuth" z 2026-07-22** i razem z nią regułę „brak samodzielnej rejestracji". Hasła znikają z produktu na obu powierzchniach (aplikacja i panel); rejestruje się każdy, kto ma konto Google, a **konto pilota powstaje dopiero przy zatwierdzeniu przez administratora** - do tej chwili nie ma wiersza w `pilots`, więc nie ma tokenu i nie ma dostępu do żadnej trasy. Powód odwrócenia jest INNY niż argument z 2026-06-22 („Sheets wymaga konta Google", dawno nieaktualny): hasła są dziś jedyną częścią systemu obsługiwaną ręcznie, a `application/admin/commands/pilots.ts` powstał dlatego, że administrator zamknął się poza systemem bez żadnej ścieżki resetu. ODRZUCONE: flaga `approved_at` na `pilots` - wymusiłaby nullowalny `code` (sygnatura operacji, karty arkusza), nową bramę na ~20 trasach telefonu i odwróciłaby sens degradacji nierozpoznanej roli do `pilot` z bezpiecznika w lukę. Rola NIE jest bramką dostępu do aplikacji i nią nie zostaje. PIN i offline-first bez zmian - Google podmienia wyłącznie jednorazowy provisioning. Apple i Facebook na razie POZA zakresem (Apple: brak platformy iOS; Facebook: App Review). Decyzje, model danych i ryzyka: `docs/logowanie-google.md` |
 
 ---
 
@@ -103,10 +104,20 @@ i zdaniu samolotu (zdanie zatwierdza log całej operacji).
 Logowanie (jednorazowe provisioning urządzenia) jest rozdzielone od wejścia do aplikacji
 (codzienne odblokowanie):
 
-- logowanie kontem nadanym przez administratora (login + hasło; **brak samodzielnej
-  rejestracji** - użytkowników zakłada admin w bazie, reset hasła też u admina);
-  **pierwsze logowanie wymaga sieci** - weryfikacja na serwerze tworzy lokalny profil
-  pilota: tożsamość, JWT + refresh (`expo-secure-store`), PIN, cache referencyjny
+- logowanie **wyłącznie przez Google** (decyzja 2026-09-04, `docs/logowanie-google.md`);
+  haseł nie ma ani w aplikacji, ani w panelu. **Pierwsze logowanie wymaga sieci** -
+  weryfikacja tokenu na serwerze tworzy lokalny profil pilota: tożsamość, JWT + refresh
+  (`expo-secure-store`), PIN, cache referencyjny
+- **rejestracja jest otwarta, dostęp nie**: pierwsze logowanie nieznanym kontem Google
+  zakłada ZGŁOSZENIE, a konto pilota (wiersz w `pilots`, kod pilota, rola) tworzy
+  dopiero administrator w panelu. Do tej chwili nie ma konta, więc nie ma tokenu i nie
+  ma dostępu do żadnej trasy - **bramką jest brak konta, nie rola**. Pilot widzi wtedy
+  ekran `00c` („czeka na zatwierdzenie") albo `00d` (odrzucone, z powodem)
+- konto istniejące podpina się do Google przez **zweryfikowany e-mail**: gdy
+  `pilots.email` (wpisany przez administratora) zgadza się z adresem z tokenu, pierwsze
+  logowanie przejmuje to konto razem z całą historią lotów. To jedyne miejsce w systemie,
+  w którym e-mail cokolwiek uwierzytelnia - i stąd też bierze się wejście administratora
+  po wdrożeniu (`SEED_ADMIN_EMAIL`)
 - od tej pory wejście do aplikacji = **odblokowanie PIN-em, zero sieci**; 00-login
   z istniejącym profilem otwiera się w trybie PIN ("Zaloguj jako inny pilot" dostępne
   pod spodem, z adnotacją że wymaga internetu)
@@ -617,7 +628,8 @@ administratora/szefa wyszkolenia, nie w kokpicie).
 
 | Metoda | Endpoint | Cel |
 |--------|----------|-----|
-| POST | `/auth/login` | login + hasło → JWT sesji + refresh token |
+| POST | `/auth/google` | token Google → JWT sesji + refresh token; nieznane konto = zgłoszenie do zatwierdzenia (202) |
+| GET | `/auth/registration` | stan zgłoszenia dla ekranu `00c` (token rejestracyjny, NIE token pilota - patrz 3.0); po zatwierdzeniu wydaje tokeny pilota DOKŁADNIE RAZ i odmawia tokenowi starszemu niż `credentials_valid_from` konta (`docs/logowanie-google.md` §5, §14) |
 | POST | `/auth/refresh` | odświeżenie JWT (refresh długożyciowy - patrz 3.0) |
 | GET | `/reference` | samoloty + konfiguracje + piloci + claim/przekazanie per samolot; ETag (flota **i** operacje) do cache |
 | GET | `/aircraft/:id/state` | aktywny claim (kto, od kiedy), najświeższy znany stan FOB + MH - wyliczony z ostatnich zsynchronizowanych zdarzeń (przekazanie ze **zdania samolotu**, opcjonalny odczyt z `leg_close`, lub zdarzenia w trakcie operacji, np. tankowanie), `last_sync_at` |
@@ -881,8 +893,10 @@ ze strumienia zdarzeń - przy kilkuset zdarzeniach dziennie tabele agregujące s
 ### 5.3 PostgreSQL (serwer)
 
 ```
-pilots       - id, kod, imię i nazwisko, e-mail, password_hash, active, role
-               (konta zakłada i resetuje administrator - brak samodzielnej rejestracji)
+pilots       - id, kod, imię i nazwisko, e-mail, active, role (bez hasła - kolumna usunięta migracją 7)
+               (konto zakłada administrator, zatwierdzając zgłoszenie rejestracyjne)
+external_identities - (provider, subject) → pilot_id; status pending|linked|rejected
+               (rejestracja Google; BRAK wiersza w pilots = brak dostępu do czegokolwiek)
                role: pilot | training_lead | admin (decyzja 2026-07-31) -
                uprawnienia panelu siedzą na koncie pilota, bo szef wyszkolenia
                i administrator SĄ pilotami; mapa ról na zdolności: server/src/domain/roles.ts
@@ -1053,7 +1067,8 @@ jasność ekranu na max.
 
 ```
 [00 Login]  profil na telefonie → odblokowanie PIN-em (offline OK)
-            brak profilu → login + hasło od administratora (wymaga sieci; offline: komunikat)
+            brak profilu → logowanie Google (wymaga sieci; offline: komunikat 00b)
+            konto niezatwierdzone → 00c „czeka na zatwierdzenie" / 00d odrzucone
     ↓
 [01 Mój dzień]  EKRAN DOMOWY - płaski log OPERACJI dnia (kafelek = jeden bieg silnika
     │           z lotami w środku; rejestracja jako informacja kafelka), przekrojowo
@@ -1169,7 +1184,7 @@ per ekran: `docs/design-notes.md`. Changelog decyzji designu: `design/ZMIANY.md`
 | State | Zustand | Projekcje ze zdarzeń, bez boilerplate |
 | Lokalna baza | expo-sqlite | Zdarzenia append-only + cache referencyjny |
 | GPS | expo-location + expo-task-manager | Background location + czas z fixa |
-| Auth | login + hasło → JWT (konta od administratora) + expo-secure-store | Zero konfiguracji OAuth; tokeny i PIN lokalnie |
+| Auth | Google (expo-auth-session) → JWT + refresh + expo-secure-store | Znikają hasła obsługiwane ręcznie; tokeny i PIN lokalnie, PIN dalej w 100% offline |
 | Czas | epoch ms (UTC) + własny `ui/format.ts` | dayjs okazał się zbędny: wszystko w UTC, formaty (block, MH hh:mm/dziesiętne) własne |
 | Testy | Jest, czysty Node | Logika ekranów wyniesiona do czystych modułów → testy bez urządzenia i bez RNTL |
 
@@ -1324,7 +1339,7 @@ KONTRAKT API: sekcja 4.6. ZASADY: sekcje 4.1, 4.3, 4.8.
 - stan samolotu: GET /aircraft/:id/state na preflightcie i w trybie read-only
 - claim: session_claim jako zwykłe zdarzenie (sekcja 4.4 - warianty online/offline)
 - dwa zegary: każde zdarzenie z device_time + gps_time (z ostatniego fixa)
-- auth: POST /auth/login (login + hasło) → JWT + refresh w secure-store;
+- auth: POST /auth/google (token Google) → JWT + refresh w secure-store;
   offline unlock PIN-em bez wylogowania
 
 DELIVERABLE: moduł src/sync z testami (kolejka, retry, dedup odpowiedzi, ETag).
@@ -1353,7 +1368,7 @@ Cały ten blok „AGENT n" opisuje model sprzed pivotu (duty, day_close) i jest 
 Jesteś senior backend developerem (Node.js/TypeScript). Zbuduj serwis UZ Aero.
 
 STACK: Fastify + PostgreSQL + Docker (sekcja 9). SCHEMAT: sekcja 5.3.
-ENDPOINTY: sekcja 4.6 (auth login + hasło → JWT, reference z ETag, aircraft state,
+ENDPOINTY: sekcja 4.6 (auth Google → JWT, reference z ETag, aircraft state,
 przyjmowanie zdarzeń, sync-status).
 
 RDZEŃ - scalanie (sekcja 4.5): dedup po UUID (idempotentny POST /events); projekcja

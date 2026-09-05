@@ -62,8 +62,10 @@ describe('schemat PostgreSQL (kontrakt)', () => {
     [
       'pilots',
       // `theme`/`theme_updated_at`/`role`/`credentials_valid_from` na końcu: dołożone
-      // `ALTER`-em, w kolejności, w jakiej powstawały.
-      ['id', 'code', 'name', 'email', 'password_hash', 'active', 'updated_at', 'theme', 'theme_updated_at', 'role', 'credentials_valid_from'],
+      // `ALTER`-em, w kolejności, w jakiej powstawały. `password_hash` (między `email`
+      // a `active` w schemacie bazowym) ZNIKŁO migracją 7 - hasła nie mają już żadnej
+      // drogi logowania, a baza produkcyjna staje od zera (2026-09-05).
+      ['id', 'code', 'name', 'email', 'active', 'updated_at', 'theme', 'theme_updated_at', 'role', 'credentials_valid_from'],
     ],
     [
       'aircraft',

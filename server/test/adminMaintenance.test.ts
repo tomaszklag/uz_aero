@@ -23,7 +23,8 @@ import type {
 import type { EventsStorePort } from '../src/application/common/ports.ts';
 import { PROJECTION_DIFF_LIMIT } from '../src/application/admin/projectionScan.ts';
 import { MIGRATIONS, SCHEMA_VERSION } from '../src/infrastructure/pg/schema.ts';
-import { ADMIN_CSRF_HEADERS, TEST_PASSWORD, testHarness } from './helpers.ts';
+import { ADMIN_CSRF_HEADERS, testHarness } from './helpers.ts';
+import { googleTokenFor } from './testIdentityProvider.ts';
 
 const DAY = Date.UTC(2026, 5, 22);
 const at = (h: number, m: number): number => DAY + (h * 60 + m) * 60_000;
@@ -99,8 +100,8 @@ async function withDay(options: Parameters<typeof testHarness>[0] = {}) {
   const harness = await testHarness(options);
   const login = await harness.app.inject({
     method: 'POST',
-    url: '/auth/login',
-    payload: { login: 'TMK', password: TEST_PASSWORD },
+    url: '/auth/google',
+    payload: { idToken: googleTokenFor('TMK') },
   });
   const token = login.json().token as string;
 
@@ -602,8 +603,8 @@ describe('A11 · wygasłe refresh tokeny - jedyna operacja, która kasuje', () =
 
     const login = await harness.app.inject({
       method: 'POST',
-      url: '/auth/login',
-      payload: { login: 'PWI', password: TEST_PASSWORD },
+      url: '/auth/google',
+      payload: { idToken: googleTokenFor('PWI') },
     });
     const refreshToken = login.json().refreshToken as string;
 
@@ -709,8 +710,8 @@ describe('A11 · zdolności', () => {
   async function withoutTools(harness: Harness): Promise<Record<string, string>> {
     const login = await harness.app.inject({
       method: 'POST',
-      url: '/auth/login',
-      payload: { login: 'PWI', password: TEST_PASSWORD },
+      url: '/auth/google',
+      payload: { idToken: googleTokenFor('PWI') },
     });
     return { authorization: `Bearer ${login.json().token}` };
   }

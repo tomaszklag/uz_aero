@@ -32,12 +32,14 @@ import { AdminFlagCommands } from '../src/application/admin/commands/flags.ts';
 import { AdminFleetCommands } from '../src/application/admin/commands/fleet.ts';
 import { AdminAircraftReadingCommands } from '../src/application/admin/commands/aircraftReadings.ts';
 import { AdminBugReportCommands } from '../src/application/admin/commands/bugReports.ts';
+import { AdminRegistrationCommands } from '../src/application/admin/commands/registrations.ts';
 import { PgAircraftReadingsRepo } from '../src/infrastructure/pg/common/aircraftReadingsRepo.ts';
 import { PgBugReportsRepo } from '../src/infrastructure/pg/common/bugReportsRepo.ts';
 import { AdminMaintenanceCommands } from '../src/application/admin/commands/maintenance.ts';
 import { AdminPilotCommands } from '../src/application/admin/commands/pilots.ts';
 import { AdminAuditQueries } from '../src/application/admin/queries/audit.ts';
 import { AdminBugReportQueries } from '../src/application/admin/queries/bugReports.ts';
+import { AdminRegistrationQueries } from '../src/application/admin/queries/registrations.ts';
 import { AdminCorrectionQueries } from '../src/application/admin/queries/corrections.ts';
 import { AdminDashboardQueries } from '../src/application/admin/queries/dashboard.ts';
 import { AdminEventQueries } from '../src/application/admin/queries/events.ts';
@@ -65,8 +67,6 @@ import { SessionTrackQueries } from '../src/application/common/queries/sessionTr
 import { SheetQueries } from '../src/application/common/queries/sheets.ts';
 import { StateQueries } from '../src/application/mobile/queries/aircraftState.ts';
 import { Hs256Tokens } from '../src/infrastructure/auth/hs256Tokens.ts';
-import { ScryptHasher } from '../src/infrastructure/auth/scryptHasher.ts';
-import { generateStartPassword } from '../src/infrastructure/auth/startPassword.ts';
 import { PgAdminAuditReadRepo } from '../src/infrastructure/pg/admin/auditReadRepo.ts';
 import { PgAdminAuditRepo } from '../src/infrastructure/pg/admin/auditRepo.ts';
 import { PgAdminDashboardRepo } from '../src/infrastructure/pg/admin/dashboardRepo.ts';
@@ -77,6 +77,7 @@ import { PgAdminFlagsRepo } from '../src/infrastructure/pg/admin/flagsRepo.ts';
 import { PgAdminFleetRepo } from '../src/infrastructure/pg/admin/fleetRepo.ts';
 import { PgAdminMaintenanceRepo } from '../src/infrastructure/pg/admin/maintenanceRepo.ts';
 import { PgAdminPilotsRepo } from '../src/infrastructure/pg/admin/pilotsRepo.ts';
+import { PgAdminRegistrationsRepo } from '../src/infrastructure/pg/admin/registrationsRepo.ts';
 import { PgAdminRefreshTokensRepo } from '../src/infrastructure/pg/admin/refreshTokensRepo.ts';
 import { PgAdminSessionsRepo } from '../src/infrastructure/pg/admin/sessionsRepo.ts';
 import { PgAdminConsumptionRepo } from '../src/infrastructure/pg/admin/consumptionRepo.ts';
@@ -90,6 +91,7 @@ import { PgFlagsRepo } from '../src/infrastructure/pg/common/flagsRepo.ts';
 import { PgSessionsProjection } from '../src/infrastructure/pg/common/sessionsProjection.ts';
 import { migrate } from '../src/infrastructure/pg/migrate.ts';
 import { PgPilotPrefsRepo } from '../src/infrastructure/pg/mobile/pilotPrefsRepo.ts';
+import { PgExternalIdentitiesRepo } from '../src/infrastructure/pg/common/externalIdentitiesRepo.ts';
 import { PgPilotsRepo } from '../src/infrastructure/pg/common/pilotsRepo.ts';
 import { PgRefreshTokens } from '../src/infrastructure/pg/common/refreshTokensRepo.ts';
 import { PgMyEventsRepo } from '../src/infrastructure/pg/mobile/myEventsRepo.ts';
@@ -101,6 +103,7 @@ import { FsTraceSink } from '../src/infrastructure/traces/fsTraceSink.ts';
 import { FsTraceSource } from '../src/infrastructure/traces/fsTraceSource.ts';
 import { buildServer } from '../src/http/server.ts';
 import { seedTestWorld } from './testWorld.ts';
+import { TestIdentityProvider } from './testIdentityProvider.ts';
 
 export class TestClock implements Clock {
   constructor(private current = Date.UTC(2026, 5, 22, 8, 0, 0)) {}
@@ -119,8 +122,10 @@ export class TestClock implements Clock {
  */
 export const ADMIN_CSRF_HEADERS = { 'x-uz-admin': '1' } as const;
 
+/** Identyfikator klienta Google WEB w testach - panel pobiera go z `GET /admin/api/auth/google-client`. */
+export const TEST_GOOGLE_WEB_CLIENT_ID = 'test-web-client.apps.googleusercontent.com';
+
 export const TEST_SECRET = 'test-secret-o-dlugosci-co-najmniej-32-znakow';
-export const TEST_PASSWORD = 'poprawne-haslo-testowe';
 /** Celowo sztuczny host - nic tu nie nasłuchuje; testy przybijają PEŁNE URL-e kart. */
 export const TEST_BASE_URL = 'http://uzaero.test';
 
@@ -159,7 +164,7 @@ export async function testHarness(
   await migrate(db);
   // Świat referencyjny testów (dawny produkcyjny seed) - produkcyjny `seed()` stawia
   // od issue #50 wyłącznie konto administratora i ma własny `seed.test.ts`.
-  await seedTestWorld(db, new ScryptHasher(), TEST_PASSWORD);
+  await seedTestWorld(db);
 
   const clock = new TestClock();
   const tokens = new Hs256Tokens(TEST_SECRET, clock);
@@ -170,6 +175,8 @@ export async function testHarness(
   const flags = new PgFlagsRepo();
   const exportLog = new PgExportLogRepo();
   const pilots = new PgPilotsRepo(db);
+  const identities = new PgExternalIdentitiesRepo(db);
+  const identityProvider = new TestIdentityProvider();
 
   // Jak w produkcyjnym composition root: eksporter §4.7 jest domyślnie WŁĄCZONY
   // i pisze karty bazodanowym `PgSheets` - te same klasy co produkcja. Testy trybu
@@ -210,12 +217,14 @@ export async function testHarness(
   const adminExportsRepo = new PgAdminExportsRepo();
   // Konserwacja (A11) - jeden adapter na dwie drogi (podgląd i zapis), jak w produkcji.
   const adminMaintenanceRepo = new PgAdminMaintenanceRepo();
-  const hasher = new ScryptHasher();
   // Zapytania floty mają DWÓCH konsumentów (trasy `A07` i pulpit) - jak w produkcyjnym
   // composition root, więc stoją w zmiennej, a nie w literale.
   // Odczyty administratora (issue #81) - jeden adapter dla telefonu i panelu, jak w produkcji.
   const aircraftReadings = new PgAircraftReadingsRepo();
   const bugReportsRepo = new PgBugReportsRepo();
+  // Zgłoszenia rejestracyjne (logowanie Google) - adapter DECYZJI, osobny od adaptera
+  // ścieżki logowania (`PgExternalIdentitiesRepo`), jak przy kontach.
+  const adminRegistrationsRepo = new PgAdminRegistrationsRepo();
   const adminFleetQueries = new AdminFleetQueries(
     db,
     adminFleetRepo,
@@ -229,7 +238,17 @@ export async function testHarness(
   const sessionTrack = new SessionTrackQueries(db, events, new FsTraceSource(tracesDir));
 
   const app = buildServer({
-    auth: new AuthCommands(pilots, new PgRefreshTokens(db, clock), hasher, tokens, clock),
+    // Logowanie: PRAWDZIWE tożsamości w bazie (`PgExternalIdentitiesRepo`) i prawdziwa
+    // reguła podpięcia po e-mailu - atrapą jest wyłącznie weryfikacja podpisu Google,
+    // bo to cudza kryptografia (uzasadnienie w `testIdentityProvider.ts`).
+    auth: new AuthCommands(
+      pilots,
+      new PgRefreshTokens(db, clock),
+      identities,
+      identityProvider,
+      tokens,
+      clock,
+    ),
     reference: new ReferenceQueries(
       new PgReferenceRepo(db),
       db,
@@ -259,6 +278,8 @@ export async function testHarness(
     // w produkcyjnym composition root: test wysyła preflighty przez `POST /events`
     // i czyta podpowiedzi tą samą drogą, którą przejdą dane telefonu.
     taskSuggestions: new TaskSuggestionQueries(db, new PgTaskSuggestionsRepo()),
+    // Identyfikator klienta Google WEB - panel pobiera go z serwera, żeby narysować przycisk.
+    googleWebClientId: TEST_GOOGLE_WEB_CLIENT_ID,
     tokens,
     // Brama tras panelu czyta konto przy KAŻDYM żądaniu; na tym opierają się przypadki
     // „deaktywacja odcina natychmiast" (`roles.test.ts`, `adminAccounts.test.ts`).
@@ -280,9 +301,7 @@ export async function testHarness(
       auditedWrite,
       adminPilotsRepo,
       new PgAdminRefreshTokensRepo(),
-      hasher,
       randomUUID,
-      generateStartPassword,
       clock,
     ),
     adminPilotQueries: new AdminPilotQueries(db, adminPilotsRepo, clock),
@@ -390,6 +409,16 @@ export async function testHarness(
     adminStatsQueries: new AdminStatsQueries(db, new PgAdminStatsRepo(), clock),
     adminBugReportQueries: new AdminBugReportQueries(db, bugReportsRepo),
     adminBugReports: new AdminBugReportCommands(auditedWrite, bugReportsRepo, clock),
+    // Zgłoszenia rejestracyjne: zapytania czytają `db` wprost, komenda idzie przez bramę
+    // audytu i dostaje adapter KONT - zatwierdzenie zakłada konto tą samą drogą, co A06.
+    adminRegistrationQueries: new AdminRegistrationQueries(db, adminRegistrationsRepo),
+    adminRegistrations: new AdminRegistrationCommands(
+      auditedWrite,
+      adminRegistrationsRepo,
+      adminPilotsRepo,
+      randomUUID,
+      clock,
+    ),
     adminLogQueries: new AdminLogQueries(db, new PgAdminLogRepo(), clock),
     // Analityka zużycia (A10a/A10b) - dostaje TEN SAM `events`, co reszta harnessu,
     // więc dekorator liczący odczyty strumienia widzi też jej wywołania.
@@ -406,5 +435,5 @@ export async function testHarness(
 
   // `auditedWrite` i porty wychodzą na zewnątrz, żeby testy komend administracyjnych
   // wołanych POZA HTTP (przebudowa projekcji = CLI) składały je z tych samych klas.
-  return { app, db, clock, tokens, tracesDir, auditedWrite, events, sessions };
+  return { app, db, clock, tokens, tracesDir, auditedWrite, events, sessions, identityProvider };
 }

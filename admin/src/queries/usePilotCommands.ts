@@ -4,7 +4,7 @@
  * Mutacja deklaruje SWOJE unieważnienia tutaj, a nie na ekranie: dwa ekrany wołające
  * tę samą mutację nie mogą pamiętać dwóch różnych list.
  *
- * == WSZYSTKIE CZTERY UNIEWAZNIAJA CALY KORZEN `pilots` I ANI JEDNA NIE WSTAWIA
+ * == WSZYSTKIE UNIEWAZNIAJA CALY KORZEN `pilots` I ANI JEDNA NIE WSTAWIA
  *    ZWROCONEGO WIERSZA DO TABELI ==
  * Serwer składa wiersz w odpowiedzi mutacji skrótem (`accountToWire` w
  * `server/src/http/routes/admin/pilots.ts`): oddaje tożsamość i status konta, ale
@@ -19,7 +19,6 @@ import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-q
 import {
   createPilot,
   deletePilot,
-  resetPilotPassword,
   setPilotActive,
   updatePilot,
   type CreatePilotBody,
@@ -58,21 +57,6 @@ export function useSetPilotActive() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, active }: { id: string; active: boolean }) => setPilotActive(id, active),
-    onSuccess: () => invalidatePilots(qc),
-  });
-}
-
-/**
- * Reset hasła.
- *
- * Odpowiedź niesie hasło JEDEN RAZ - nie ma trasy „pokaż ponownie". Ekran pokazuje je
- * i zapomina razem z zamknięciem formularza; do cache'u nie trafia, bo cache przeżywa
- * zamknięcie ekranu, a hasło nie ma prawa.
- */
-export function useResetPilotPassword() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => resetPilotPassword(id),
     onSuccess: () => invalidatePilots(qc),
   });
 }

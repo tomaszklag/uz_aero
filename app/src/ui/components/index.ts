@@ -15,6 +15,7 @@ export * from './foundation/CheckIcon';
 export * from './foundation/Icon';
 export * from './foundation/Avatar';
 export * from './foundation/Brand';
+export * from './foundation/GoogleMark';
 export * from './foundation/KeyboardCollapse';
 // Wzorzec ładowania (issue #33, `design/LOADERY.html`): plamka trzymająca miejsce
 // po danej, której jeszcze nie ma, i jej najczęstszy kształt - lista wierszy.
@@ -113,6 +114,7 @@ export * from './data/CalcBox';
 export * from './data/SessionHero';
 export * from './data/CrewCard';
 export * from './data/DataTable';
+export * from './data/GoogleButton';
 export * from './data/SessionAxis';
 export * from './data/HistoryLink';
 export * from './data/IconAction';

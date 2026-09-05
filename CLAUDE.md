@@ -2462,8 +2462,91 @@ decyzji: **`design/ZGLOSZENIA.html`**.
   po stronie serwera migracja 6 z trasami. Narzędzie fazy testów ma dać się usunąć
   decyzją, a nie archeologią
 
+## Logowanie przez Google, rejestracja z zatwierdzeniem (2026-09-04, gałąź `logowanie-google`)
+**Odwraca decyzję z 2026-07-22** („brak samodzielnej rejestracji, brak Google OAuth").
+Hasła znikają z produktu w całości - z aplikacji pilota I z panelu. Pełne decyzje,
+model danych, ryzyka i etapy: **`docs/logowanie-google.md`**.
+- **BRAMKĄ JEST BRAK KONTA, NIE ROLA.** Zgłoszenie rejestracyjne żyje w osobnej tabeli
+  `external_identities`; wiersz w `pilots` powstaje DOPIERO przy zatwierdzeniu przez
+  administratora. Nie ma konta → nie ma czego podpisać w tokenie → `authorize()` odmawia
+  bez ani jednej nowej reguły. **Nie opieraj tego na kolumnie `role`**: `pilot` to dziś
+  NAJMNIEJSZE uprawnienia i cały system jest pod to zbudowany - `isPilotRole(...) ?
+  role : DEFAULT_ROLE` w dwóch repozytoriach i w `hs256Tokens` degraduje nieznaną rolę
+  do `pilot`, więc nadanie `pilot` znaczenia „wpuszczamy" zamieniłoby trzy bezpieczniki
+  w luki. ODRZUCONE z tego samego powodu: flaga `approved_at` na `pilots` (wymusza
+  nullowalny `code`, czyli sygnaturę operacji i karty arkusza, plus nową bramę na ~20
+  trasach telefonu)
+- **PIN i offline-first BEZ ZMIAN** - Google podmienia wyłącznie jednorazowy provisioning
+  (§3.0), który i tak zawsze wymagał sieci. `AuthService`, rotacja refresha, „wygasły
+  token ≠ wylogowanie", blokada wylogowania przy niepustym outboksie - nietknięte
+- **TOKEN REJESTRACYJNY JEST OSOBNYM TYPEM.** Ekran oczekiwania musi odpytywać serwer,
+  a zgłaszający nie ma konta. `verify()` MUSI zwracać `null` dla każdego tokenu
+  z claimem `purpose`, a `verifyRegistration()` dla każdego bez niego - inaczej token
+  rejestracyjny przechodzi zwykłą weryfikację (potrzebuje tylko `sub` i `code`) i jest
+  ważną tożsamością wskazującą nieistniejące konto, czyli `POST /events` pisze zdarzenia
+  z `pilot_id`, za którym nikt nie stoi. Test w OBIE strony
+- **PODPIĘCIE KONTA PO ZWERYFIKOWANYM E-MAILU** - jedyne miejsce w systemie, gdzie e-mail
+  cokolwiek uwierzytelnia. Działa, bo `pilots.email` wpisuje wyłącznie administrator
+  (panel/seed), czyli jest listą dopuszczonych, a nie danymi od użytkownika. Wymaga
+  `email_verified` od dostawcy i **zostaje wyłącznie dla Google** (Apple pozwala ukryć
+  adres, Facebook zwracał niezweryfikowane). Tą samą drogą wchodzi administrator po
+  wdrożeniu (`SEED_ADMIN_EMAIL`) i podpina się konto założone w A06 z adresem Google
+  ZANIM pilot zaloguje się pierwszy raz. **Baza produkcyjna staje przy wdrożeniu OD
+  ZERA (decyzja właściciela 2026-09-05)** - dotychczasowych kont z hasłami NIE
+  przenosimy, więc kolejność wdrożenia to: pusta baza → seed → serwer → build, bez
+  wpisywania e-maili zawczasu
+- **POWÓD ODRZUCENIA JEST W PANELU WYMAGANY**, bo pilot czyta go na ekranie `00d`.
+  Ekrany: `00a` (sam przycisk Google), `00b` (offline), `00c` (czeka na zatwierdzenie),
+  `00d` (odrzucone). `00` (PIN) bez zmian
+- **Apple i Facebook POZA zakresem**: Apple nie ma dziś platformy docelowej (EAS buduje
+  wyłącznie Androida), Facebook wymaga App Review. Model jest na nie gotowy - klucz
+  `(provider, subject)` od początku
+- **`app.json` dostaje `scheme`** (redirect OAuth) - zmiana NATYWNA, więc testerzy muszą
+  dostać nowy build; w starym przycisk Google nie zadziała
+- **ETAP D (aplikacja) TEŻ WDROŻONY (2026-09-04)**: `ui/hooks/useGoogleSignIn.ts` jest
+  JEDYNYM miejscem znającym `expo-auth-session`; `scheme` w `app.json` to PAKIET
+  (`com.tomekklag.uzaero` - Google wymaga tego dla klientów Android, a dostawca składa
+  adres powrotu z `Application.applicationId`); identyfikator klienta Android to stała
+  buildu `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` (`app/.env.example`, do EAS w `eas.json`).
+  Zgłoszenie żyje pod OSOBNYM kluczem `SecureStore` (`StoredRegistration`) - wpisane do
+  `StoredCredentials` udawałoby profil. Wynik wymiany kodu przychodzi STANEM hooka
+  (`response.authentication.idToken`), nie z `promptAsync` - stąd strażnik czasu na
+  nieudaną wymianę, której dostawca nie zgłasza. Znak Google to czysty komponent RN
+  (`GoogleMark`: pierścień z czterech kolorowych krawędzi + maska + poprzeczka) - jedyne
+  miejsce w aplikacji z kolorami spoza tokenów, bo to znak towarowy
+- **ETAPY A–C WDROŻONE W KODZIE (2026-09-04), E (wdrożenie) czeka.**
+  Serwer: `GOOGLE_WEB_CLIENT_ID` (WYMAGANY - bez niego nie wstaje) i
+  `GOOGLE_ANDROID_CLIENT_ID` (opcjonalny), `SEED_ADMIN_EMAIL` zamiast `SEED_PASSWORD`;
+  `scryptHasher`, `startPassword`, reset hasła i `PilotSecretDto` USUNIĘTE po obu
+  stronach; **kolumna `pilots.password_hash` USUNIĘTA migracją 7** (`DROP COLUMN` -
+  decyzja o bazie od zera 2026-09-05; pierwsza wersja zostawiała ją nullowalną „bo
+  produkcja"). **Zerwanie sesji ma odtąd jedną drogę: deaktywację** (+ ponowne włączenie;
+  `setActive` przesuwa `credentials_valid_from`, aktywacja go nie cofa) - reset hasła
+  był drugą i zniknął razem z hasłem. Panel: kolejka zgłoszeń NAD listą pilotów
+  wyłącznie gdy ktoś czeka (pusta nie dostaje karty z zerem - reguła SyncChipa),
+  wszystkie trasy `/admin/api/registrations*` na `accounts.manage` **także odczyt**
+  (e-maile osób spoza klubu), przycisk Google rysuje skrypt GIS w kontenerze
+  `.login-google` (plamka w jego geometrii, dopóki nie wjedzie), a CSP statycznego
+  buildu ma JEDEN obcy origin: ścieżki `accounts.google.com/gsi/`. Testy serwera
+  podstawiają wyłącznie weryfikację podpisu Google (`test/testIdentityProvider.ts` -
+  granica: nasza decyzja kontra cudza kryptografia), sama weryfikacja ma
+  `googleIdTokens.test.ts` na kluczu RSA z procesu
+- **AUDYT BEZPIECZEŃSTWA 2026-09-05 - trzy poprawki, każda z testem, który padał
+  przed nią** (`docs/logowanie-google.md` §14): (1) **token rejestracyjny wydaje
+  tokeny pilota RAZ** - `registrationStatus` odmawia, gdy `last_login_at` tożsamości
+  jest ustawione (ktoś już wszedł) albo token jest starszy niż `credentials_valid_from`
+  konta; pierwsza wersja wydawała świeżą parę przy każdym wywołaniu przez 30 dni, czyli
+  skopiowany token był fabryką refreshów odporną na deaktywację; (2) **`aud` per
+  powierzchnia** - `IdentityProviderPort.verifyIdToken(token, surface)`, `GoogleIdTokens`
+  dostaje `{ panel: Web, mobile: Android | null }`; wspólny zbiór pozwalał wymienić
+  token z przeglądarki na 90-dniowy refresh na trasie telefonu; (3) **podpięcie po
+  e-mailu obejmuje zgłoszenie `pending`** (`ON CONFLICT … DO UPDATE … WHERE status =
+  'pending'`) - bez tego rada panelu „wpisz adres w istniejącym koncie zamiast
+  zatwierdzać" zostawiała człowieka w kolejce na zawsze. Nowy `LoginSurface` w portach;
+  atrapa testowa ignoruje powierzchnię celowo (rozdział testuje prawdziwy weryfikator)
+
 ## Pilot i samolot - UX
-- Pierwsze logowanie: login + hasło na `00-login.html` (konta zakłada administrator w bazie, BEZ samodzielnej rejestracji i BEZ Google OAuth - decyzja odwrócona 2026-07-22; wymaga sieci); codzienny powrót = odblokowanie PIN-em (działa offline)
+- Pierwsze logowanie: **wyłącznie Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22 - haseł nie ma nigdzie; wymaga sieci); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero zatwierdzenie w panelu - patrz sekcja „Logowanie przez Google" niżej
 - **Rozpoczęcie lotu ma trwać kilka sekund** - trzy kroki (samolot+Dual → zadanie → liczniki) i „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej
 - **Nazewnictwo wejścia w lot** (decyzja 2026-08-12): główny przycisk na 01 i CTA kroku 3 to **„ROZPOCZNIJ LOT"**, a nagłówek kroków brzmi **„NOWY LOT · n/3"**. Słowa **„przejmij / przejęcie" używamy WYŁĄCZNIE tam, gdzie maszynę odbiera się INNEMU pilotowi** (podgląd 04B, modal claimu, `session_claim` w rejestrze) - pilot startujący na wolnym samolocie niczego nie przejmuje, tylko zaczyna latać. Identyfikatory w kodzie (`claim`, `takeover`, `Preflight*`) zostają: to nazwy techniczne, nie napisy
 - Tożsamość pilota jest znana w całej operacji - NIE pytamy o kod pilota w formularzach

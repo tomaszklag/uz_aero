@@ -22,7 +22,10 @@
 import type {
   AuthTokens,
   BugReportPushResult,
+  GoogleLoginResult,
+  RegistrationStatusResult,
   RemoteBugReport,
+  RemoteRegistration,
   PushResult,
   ReferenceFetch,
   RemoteEventPage,
@@ -49,8 +52,62 @@ function timeoutFor(trigger: SyncTrigger | undefined): number {
 export class HttpServerApi implements ServerPort {
   constructor(private readonly baseUrl: string) {}
 
-  login(login: string, password: string): Promise<AuthTokens> {
-    return this.request('POST', '/auth/login', { body: { login, password } });
+  /**
+   * Trzy odpowiedzi serwera, trzy stany - i to jest jedyne miejsce w aplikacji, które
+   * zna te kody. `202` NIE jest błędem (zgłoszenie przyjęte, czeka), a `403` z ciałem
+   * `registration_rejected` niesie POWÓD, który ekran `00d` cytuje - dlatego oba idą
+   * przez `send`, a nie `request`: `request` odrzuciłby je jako `ServerRejectedError`
+   * i zgubił treść. Limit jak przy ponowieniu z ręki: pilot stoi i patrzy.
+   */
+  async loginWithGoogle(idToken: string): Promise<GoogleLoginResult> {
+    const response = await this.send('POST', '/auth/google', {
+      body: { idToken },
+      timeoutMs: MANUAL_TIMEOUT_MS,
+    });
+
+    if (response.status === 200) {
+      return { kind: 'signed_in', tokens: (await response.json()) as AuthTokens };
+    }
+    if (response.status === 202) {
+      const body = (await response.json()) as {
+        registration: RemoteRegistration;
+        registrationToken: string;
+      };
+      return {
+        kind: 'pending',
+        registration: body.registration,
+        registrationToken: body.registrationToken,
+      };
+    }
+    if (response.status === 403) {
+      const body = (await response.json().catch(() => null)) as {
+        error?: string;
+        registration?: RemoteRegistration;
+      } | null;
+      if (body?.error === 'registration_rejected' && body.registration != null) {
+        return { kind: 'rejected', registration: body.registration };
+      }
+      throw new ServerRejectedError(403, body?.error ?? 'forbidden');
+    }
+    throw new ServerRejectedError(response.status, await errorCode(response));
+  }
+
+  async registrationStatus(registrationToken: string): Promise<RegistrationStatusResult> {
+    const body = await this.request<{
+      status: string;
+      tokens?: AuthTokens;
+      registration?: RemoteRegistration;
+    }>('GET', '/auth/registration', { token: registrationToken, timeoutMs: MANUAL_TIMEOUT_MS });
+
+    if (body.status === 'approved' && body.tokens != null) {
+      return { kind: 'approved', tokens: body.tokens };
+    }
+    if ((body.status === 'pending' || body.status === 'rejected') && body.registration != null) {
+      return { kind: body.status, registration: body.registration };
+    }
+    // Kształt spoza kontraktu: serwer odpowiedział, ale nie tym, co zna aplikacja.
+    // Głośno, nie cicho - inaczej ekran oczekiwania stałby w miejscu bez powodu.
+    throw new ServerRejectedError(200, 'bad_response');
   }
 
   refresh(refreshToken: string): Promise<AuthTokens> {

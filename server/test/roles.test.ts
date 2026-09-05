@@ -14,7 +14,8 @@ import { describe, expect, it } from 'vitest';
 import { authorizeAccount, credentialsRevoked } from '../src/http/authorize.ts';
 import { PgPilotsRepo } from '../src/infrastructure/pg/common/pilotsRepo.ts';
 import { can } from '../src/domain/roles.ts';
-import { TEST_PASSWORD, TEST_SECRET, testHarness } from './helpers.ts';
+import { TEST_SECRET, testHarness } from './helpers.ts';
+import { googleTokenFor } from './testIdentityProvider.ts';
 
 describe('mapa uprawnień', () => {
   it('pilot nie ma w panelu NICZEGO - z wejściem włącznie', () => {
@@ -343,8 +344,8 @@ describe('rola pochodzi z konta, nie z tokenu', () => {
 
     const login = await app.inject({
       method: 'POST',
-      url: '/auth/login',
-      payload: { login: 'TMK', password: TEST_PASSWORD },
+      url: '/auth/google',
+      payload: { idToken: googleTokenFor('TMK') },
     });
     expect(tokens.verify(login.json().token)?.role).toBe('admin');
 
@@ -376,8 +377,8 @@ describe('CHECK na `pilots.role`', () => {
   it('konto założone bez podanej roli dostaje `pilot`', async () => {
     const { db } = await testHarness();
     await db.query(
-      `INSERT INTO pilots (id, code, name, email, password_hash, active)
-       VALUES ('NEW', 'NEW', 'Nowe Konto', 'nowe@uzaero.pl', 'x', TRUE)`,
+      `INSERT INTO pilots (id, code, name, email, active)
+       VALUES ('NEW', 'NEW', 'Nowe Konto', 'nowe@uzaero.pl', TRUE)`,
     );
     const { rows } = await db.query<{ role: string }>(
       "SELECT role FROM pilots WHERE id = 'NEW'",

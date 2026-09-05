@@ -10,15 +10,16 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { TEST_PASSWORD, testHarness } from './helpers.ts';
+import { testHarness } from './helpers.ts';
+import { googleTokenFor } from './testIdentityProvider.ts';
 
 type App = Awaited<ReturnType<typeof testHarness>>['app'];
 
 async function authed(app: App, login = 'TMK'): Promise<string> {
   const res = await app.inject({
     method: 'POST',
-    url: '/auth/login',
-    payload: { login, password: TEST_PASSWORD },
+    url: '/auth/google',
+    payload: { idToken: googleTokenFor(login) },
   });
   return res.json().token as string;
 }

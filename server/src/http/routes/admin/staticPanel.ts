@@ -39,14 +39,27 @@ const ADMIN_DIST = fileURLToPath(new URL('../../../../../admin/dist', import.met
 
 /**
  * CSP dla panelu - możliwe, odkąd czcionki są self-hostowane (`admin/public/fonts/`,
- * §9): panel nie sięga poza własny origin po NIC. `style-src 'unsafe-inline'` zostaje
- * dla atrybutów `style={...}` Reacta (dynamiczne szerokości pasków i wykresów);
- * skrypty inline są zablokowane - build Vite ładuje wyłącznie moduły z `/admin/assets/`.
- * Nagłówek nadaje serwowanie statyczne, więc dev z Vite (HMR, preambuła inline
- * plugin-react) pozostaje nietknięty.
+ * §9): panel nie sięga poza własny origin po NIC POZA JEDNYM WYJĄTKIEM opisanym niżej.
+ * `style-src 'unsafe-inline'` zostaje dla atrybutów `style={...}` Reacta (dynamiczne
+ * szerokości pasków i wykresów); skrypty inline są zablokowane - build Vite ładuje
+ * wyłącznie moduły z `/admin/assets/`. Nagłówek nadaje serwowanie statyczne, więc dev
+ * z Vite (HMR, preambuła inline plugin-react) pozostaje nietknięty.
+ *
+ * ══ JEDYNY OBCY ORIGIN: `accounts.google.com` (logowanie Google, 2026-09-04) ══
+ * Przycisk „Kontynuuj z Google" rysuje skrypt Google Identity Services, a wybór konta
+ * odbywa się w jego ramce (`admin/src/auth/googleIdentity.ts`). Cztery dyrektywy
+ * dopuszczają DOKŁADNIE ścieżki z dokumentacji GIS i nic szerszego - każda z nich
+ * zaczyna się od `'self'`, bo jawna dyrektywa PRZESŁANIA `default-src`, a bez `'self'`
+ * własny build panelu przestałby się ładować. Nie ma tu `*.google.com` ani `gstatic`:
+ * przycisk standardowy nie sięga po obrazki spoza `gsi/`.
  */
 const PANEL_CSP =
-  "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; " +
+  "default-src 'self'; " +
+  "script-src 'self' https://accounts.google.com/gsi/client; " +
+  "style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style; " +
+  "frame-src https://accounts.google.com/gsi/; " +
+  "connect-src 'self' https://accounts.google.com/gsi/; " +
+  "img-src 'self' data:; " +
   "object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
 
 /**

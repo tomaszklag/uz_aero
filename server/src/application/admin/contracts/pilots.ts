@@ -96,21 +96,7 @@ export interface AdminPilotPage {
   daysTo: string;
 }
 
-/**
- * Odpowiedź akcji, która WYTWORZYŁA hasło (założenie konta, reset).
- *
- * `password` jest tu jedyny raz w całym systemie: nie ma go w bazie (jest hash), nie
- * ma w dzienniku audytu (jest sam fakt), nie ma w logach serwera i nie ma w URL-u.
- * Po zamknięciu szuflady nie da się go odczytać - jedynym wyjściem jest kolejny reset.
- */
-export interface PilotSecretDto {
-  pilot: AdminPilotListItem;
-  password: string;
-  /** Ile sesji pilota unieważniono przy okazji (reset zrywa wszystkie). */
-  revokedSessions: number;
-}
-
-/** Odpowiedź zmiany konta bez hasła: nowy stan wiersza + skutki uboczne. */
+/** Odpowiedź zmiany konta: nowy stan wiersza + skutki uboczne. */
 export interface PilotChangeDto {
   pilot: AdminPilotListItem;
   /** `0` przy zmianie tożsamości; przy deaktywacji - ile sesji zerwano. */

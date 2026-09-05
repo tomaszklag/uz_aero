@@ -106,7 +106,9 @@ describe('język interfejsu', () => {
     // Bez tego oba przypadki niżej przechodziłyby na pustej liście.
     const all = files.flatMap((file) => sentencesIn(codeOf(file)));
     expect(all.length).toBeGreaterThan(30);
-    expect(all).toContain('Nieprawidłowy login lub hasło.');
+    // Kotwica na zdaniu, które przeżyje zmiany logowania: „złe hasło" zniknęło razem
+    // z hasłami (2026-09-04), a wygaśnięcie sesji zostaje, dopóki jest sesja.
+    expect(all).toContain('Sesja wygasła. Zaloguj się jeszcze raz.');
 
     // Skaner odsiewa identyfikatory: klasy CSS i ścieżki nie są zdaniami.
     expect(sentencesIn("x('cell-sub')")).toEqual([]);

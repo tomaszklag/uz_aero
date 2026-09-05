@@ -13,11 +13,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import {
-  refuseDeactivate,
-  refusePasswordReset,
-  refuseRoleChange,
-} from '../src/domain/accountGuards.ts';
+import { refuseDeactivate, refuseRoleChange } from '../src/domain/accountGuards.ts';
 
 describe('odebranie roli', () => {
   it('administrator nie odbiera roli SOBIE - nawet gdy są inni administratorzy', () => {
@@ -138,12 +134,3 @@ describe('deaktywacja', () => {
   });
 });
 
-describe('reset hasła', () => {
-  it('konta NIEAKTYWNEGO nie resetujemy - hasło i tak nie zaloguje', () => {
-    expect(refusePasswordReset(false)).toBe('inactive_account');
-  });
-
-  it('konto aktywne - bez przeszkód', () => {
-    expect(refusePasswordReset(true)).toBeNull();
-  });
-});

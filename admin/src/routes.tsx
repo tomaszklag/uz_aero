@@ -45,6 +45,11 @@ export const router = createHashRouter([
       // przemontowywałaby ekran przy każdym otwarciu, czyli tabela migałaby dokładnie
       // wtedy, gdy jest potrzebna jako kontekst decyzji. `nowy` w miejscu identyfikatora
       // to ten sam widok z pustym formularzem.
+      // Karta ZGŁOSZENIA rejestracyjnego (logowanie Google) otwiera się NAD tą samą
+      // listą pilotów, co karta konta - zatwierdzenie zakłada konto, więc kontekstem
+      // decyzji jest lista, do której to konto trafi. Segment statyczny `zgloszenia`
+      // wygrywa z `:id?` rangą dopasowania, a `subject` Google jest napisem cyfr.
+      { path: 'piloci/zgloszenia/:subject', element: <AccountsScreen /> },
       { path: 'piloci/:id?', element: <AccountsScreen /> },
       { path: 'samoloty/:id?', element: <FleetScreen /> },
 

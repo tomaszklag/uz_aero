@@ -1,34 +1,35 @@
 /**
- * UZ Aero (serwer) - konta pilotów: zakładanie, edycja, reset hasła, deaktywacja
+ * UZ Aero (serwer) - konta pilotów: zakładanie, edycja, deaktywacja
  * (panel, mockupy `A06-piloci.html` i `A06a-konto.html`).
  *
- * ══ DLACZEGO TEN PLIK POWSTAJE AKURAT TERAZ ══
- * 2026-08-01 administrator nie mógł wejść do systemu, bo w całym produkcie nie było
- * ŻADNEJ ścieżki zmiany hasła: seed z założenia nie nadpisuje `password_hash`, CLI nie
- * ma, panelu kont nie było. Jedynym wyjściem był ręczny `UPDATE` z hashem policzonym
- * poza aplikacją - czyli operacja bez śladu, bez walidacji i bez świadka. Ten plik to
- * zamyka; `domain/accountGuards.ts` pilnuje, żeby przy okazji nie otworzył gorszej
- * dziury (jeden klik zostawiający klub bez administratora).
+ * ══ HASŁA ZNIKŁY (2026-09-04, `docs/logowanie-google.md`) ══
+ * Plik powstał 2026-08-01, bo administrator zamknął się poza systemem i nie było żadnej
+ * ścieżki zmiany hasła. Wejście Google zdejmuje tę klasę problemów u źródła: konto nie
+ * ma poświadczenia, które dałoby się zgubić albo zresetować. Zniknęły stąd `resetPassword`
+ * i generowanie hasła startowego; ZOSTAŁA cała reszta, bo konta nadal trzeba zakładać,
+ * przemianowywać i wyłączać.
  *
- * ══ CZTERY ZASADY, KTÓRE TA KOMENDA MUSI UTRZYMAĆ ══
+ * **Zerwanie sesji ma odtąd jedną drogę: deaktywację** (a gdy dostęp ma wrócić -
+ * deaktywację i ponowne włączenie). `credentials_valid_from` przesuwa `setActive`,
+ * a aktywacja znacznika NIE cofa, więc para operacji unieważnia poświadczenia obu
+ * powierzchni tak samo skutecznie, jak robił to reset hasła.
  *
- *  1. **Hasło generuje SERWER i oddaje je RAZ.** Panel nigdy hasła nie wysyła i nie ma
- *     trasy „pokaż ponownie". Do dziennika audytu idzie WYŁĄCZNIE fakt i komu - nigdy
- *     wartość, nigdy hash (`A09`: „Hasła, hashe, PIN-y - nigdy").
- *  2. **Deaktywacja i reset ZRYWAJĄ sesje - OBU powierzchni.** Refresh tokeny telefonu
+ * ══ TRZY ZASADY, KTÓRE TA KOMENDA MUSI UTRZYMAĆ ══
+ *
+ *  1. **Deaktywacja ZRYWA sesje - OBU powierzchni.** Refresh tokeny telefonu
  *     kasujemy z tabeli; sesji panelu skasować się nie da, bo jest podpisanym JWT
- *     w ciasteczku i nie ma dla niej wiersza. Dlatego te same dwie operacje przesuwają
+ *     w ciasteczku i nie ma dla niej wiersza. Dlatego ta sama operacja przesuwa
  *     `credentials_valid_from` konta, a brama odrzuca token wydany
  *     wcześniej (`http/authorize.ts`). Bez tego „Deaktywuj" jest obietnicą bez pokrycia
  *     w obie strony: pilot z żywym refreshem pracuje dalej, a wykradzione poświadczenie
- *     panelu przeżywa reset hasła o osiem godzin. Liczba unieważnionych TOKENÓW jedzie
+ *     panelu przeżywa odcięcie o osiem godzin. Liczba unieważnionych TOKENÓW jedzie
  *     do audytu i dotyczy wyłącznie telefonu - panel liczy się osobno, bo jego sesji
  *     nikt nie zliczał i zliczyć nie może.
- *  3. **Administrator nie odcina sam siebie** ani ostatniego administratora klubu -
+ *  2. **Administrator nie odcina sam siebie** ani ostatniego administratora klubu -
  *     odmowa jest jawna i z powodem (`AccountRefusal`), nigdy ciche ukrycie akcji.
  *     Populację administratorów chroni blokada advisory na stałym kluczu, wzięta
  *     PRZED policzeniem ich (`PilotsAdminPort.lockAdminPopulation`) - patrz `update`.
- *  4. **Konta, KTORE LATALO, się nie kasuje.** Deaktywacja odbiera dostęp; zdarzenia
+ *  3. **Konta, KTORE LATALO, się nie kasuje.** Deaktywacja odbiera dostęp; zdarzenia
  *     zostają w rejestrze (append-only) i dalej liczą się w statystykach, kartach dnia
  *     i łańcuchu motogodzin samolotu.
  *
@@ -47,12 +48,11 @@
 import {
   refuseDeactivate,
   refuseDelete,
-  refusePasswordReset,
   refuseRoleChange,
   type AccountRefusal,
 } from '../../../domain/accountGuards.ts';
 import type { PilotRole } from '../../../domain/roles.ts';
-import type { Clock, PasswordHasher } from '../../common/ports.ts';
+import type { Clock } from '../../common/ports.ts';
 import type { AuditedWrite } from '../auditedWrite.ts';
 import { uniqueConflictOn } from './uniqueConflict.ts';
 import type {
@@ -75,13 +75,6 @@ export interface UpdatePilotInput {
   name?: string;
   email?: string | null;
   role?: PilotRole;
-}
-
-export interface PilotSecret {
-  account: AdminPilotAccount;
-  /** Wartość jawna - jedyny raz w całym systemie. Trasa oddaje ją i zapomina. */
-  password: string;
-  revokedSessions: number;
 }
 
 export interface PilotChange {
@@ -146,12 +139,11 @@ export class AdminPilotCommands {
     private readonly write: AuditedWrite,
     private readonly pilots: PilotsAdminPort,
     private readonly sessions: RefreshTokensAdminPort,
-    private readonly hasher: PasswordHasher,
     /**
-     * Identyfikator konta i hasło startowe jako FUNKCJE w konstruktorze, nie porty:
-     * nie ma tu adaptera do podmiany (composition root podaje `randomUUID`
-     * i `generateStartPassword`), a port bez drugiej implementacji to koszt bez zysku
-     * - ta sama decyzja, co przy `newId` w `commands/corrections.ts`.
+     * Identyfikator konta jako FUNKCJA w konstruktorze, nie port: nie ma tu adaptera
+     * do podmiany (composition root podaje `randomUUID`), a port bez drugiej
+     * implementacji to koszt bez zysku - ta sama decyzja, co przy `newId`
+     * w `commands/corrections.ts`.
      *
      * `id` NIE jest kodem pilota i to jest reguła produktu, nie szczegół: zdarzenia
      * wiążą się z `id`, więc zmiana kodu nie przepisuje historii (mockup A06: „Kod
@@ -159,7 +151,6 @@ export class AdminPilotCommands {
      * odrywałaby konto od jego nalotu.
      */
     private readonly newId: () => string,
-    private readonly newPassword: () => string,
     /**
      * Zegar potrzebny WYŁĄCZNIE po to, żeby ostemplować unieważnienie poświadczeń
      * (`credentials_valid_from`). Nie bierzemy `now()` z SQL-a, bo wtedy w testach
@@ -169,12 +160,19 @@ export class AdminPilotCommands {
     private readonly clock: Clock,
   ) {}
 
-  async create(actor: Actor, input: CreatePilotInput): Promise<PilotOutcome<PilotSecret>> {
-    // Hasło i hash POWSTAJĄ PRZED transakcją: scrypt kosztuje ~100 ms, a trzymanie
-    // przez ten czas otwartej transakcji blokowałoby wiersze bez powodu. Hash hasła,
-    // które nie doczekało konta (rollback), jest wartością bez konsekwencji.
-    const password = this.newPassword();
-    const passwordHash = await this.hasher.hash(password);
+  /**
+   * Założenie konta WPROST z panelu - droga równoległa do zatwierdzenia zgłoszenia.
+   *
+   * Po wejściu Google (2026-09-04) konto nie dostaje żadnego poświadczenia: logowanie
+   * daje dopiero PODPIĘCIE konta Google, a warunkiem podpięcia jest `email` wpisany
+   * tutaj przez administratora (`docs/logowanie-google.md` §6). Ta droga istnieje po to,
+   * żeby dało się przygotować konto ZANIM człowiek pierwszy raz się zaloguje - i to
+   * właśnie nią podpinają się dotychczasowi piloci razem z całą swoją historią lotów.
+   *
+   * Konto BEZ e-maila jest legalne i bezużyteczne do logowania - tak jak dotąd konto
+   * z hasłem, którego nikt nie przekazał. Formularz panelu pilnuje tego po swojej stronie.
+   */
+  async create(actor: Actor, input: CreatePilotInput): Promise<PilotOutcome<AdminPilotAccount>> {
     const id = this.newId();
 
     try {
@@ -187,7 +185,7 @@ export class AdminPilotCommands {
         if (clash != null) throw new Conflict(clash);
 
         const created: AdminPilotAccount = { id, ...input, active: true };
-        await this.pilots.insert(tx, { ...created, passwordHash });
+        await this.pilots.insert(tx, created);
 
         return {
           result: created,
@@ -195,20 +193,19 @@ export class AdminPilotCommands {
             action: 'pilot.create',
             targetType: 'pilot',
             targetId: id,
-            // `passwordIssued: true` zamiast hasła i zamiast hasha. Wpis odpowiada na
-            // pytanie „czy to konto dostało poświadczenie i od kogo", a nie „jakie".
             details: {
               code: created.code,
               name: created.name,
+              // E-mail jest w tym wpisie NAJWAŻNIEJSZY: to on rozstrzyga, czyje konto
+              // Google podepnie się pod ten wiersz przy pierwszym logowaniu.
               email: created.email,
               role: created.role,
-              passwordIssued: true,
             },
           },
         };
       });
 
-      return { ok: true, result: { account, password, revokedSessions: 0 } };
+      return { ok: true, result: account };
     } catch (err) {
       return this.asOutcome(err);
     }
@@ -345,53 +342,6 @@ export class AdminPilotCommands {
     }
   }
 
-  /**
-   * Reset hasła: nowa wartość, hash w bazie, WSZYSTKIE sesje pilota unieważnione.
-   *
-   * Zerwanie sesji nie jest tu ostrożnością, tylko treścią operacji: sesja, która
-   * przeżywa zmianę poświadczeń, znaczy, że reset niczego nie odebrał temu, kto miał
-   * dostęp poprzednim hasłem. Skutek dla pilota opisuje mockup A06a: potrzebuje
-   * PEŁNEGO logowania przy sieci i ustawia PIN od nowa.
-   *
-   * `revokedSessions` liczy WYŁĄCZNIE refresh tokeny telefonu - sesji panelu nikt nie
-   * zliczał i zliczyć nie może, bo nie ma jej w bazie. Odbiera ją znacznik
-   * `credentials_valid_from`, a nie ta liczba; komunikat na ekranie musi więc mówić
-   * o obu rodzajach osobno i pozostać prawdziwy także przy `revokedSessions === 0`.
-   */
-  async resetPassword(actor: Actor, id: string): Promise<PilotOutcome<PilotSecret>> {
-    const password = this.newPassword();
-    const passwordHash = await this.hasher.hash(password);
-
-    try {
-      const result = await this.write.run(actor, async (tx) => {
-        const account = await this.pilots.byId(tx, id);
-        if (account == null) throw new PilotNotFound();
-
-        const refusal = refusePasswordReset(account.active);
-        if (refusal != null) throw new Refused(refusal);
-
-        await this.pilots.setPasswordHash(tx, id, passwordHash, this.clock.now());
-        const revokedSessions = await this.sessions.revokeAllFor(tx, id);
-
-        return {
-          result: { account, revokedSessions },
-          audit: {
-            action: 'pilot.password_reset',
-            targetType: 'pilot',
-            targetId: id,
-            // Ani hasła, ani hasha, ani nawet jego długości. Sam fakt, komu i ile
-            // sesji przy okazji zerwano - mockup A06a mówi to wprost przy banerze
-            // „Hasło widzisz wyłącznie teraz".
-            details: { code: account.code, passwordIssued: true, revokedSessions },
-          },
-        };
-      });
-
-      return { ok: true, result: { ...result, password } };
-    } catch (err) {
-      return this.asOutcome(err);
-    }
-  }
 
   /**
    * TRWAŁE usunięcie konta (2026-08-30).

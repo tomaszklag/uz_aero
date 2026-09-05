@@ -163,13 +163,9 @@ export function registerAdminPilotRoutes(
       });
       if (!outcome.ok) return refusal(reply, outcome);
 
-      // 201 i hasło W CIELE odpowiedzi - jedyny raz. Nie w nagłówku `Location`, nie
-      // w URL-u, nie w logu: adresy i nagłówki bywają zapisywane po drodze.
-      return reply.code(201).send({
-        pilot: accountToWire(outcome.result.account, new Date()),
-        password: outcome.result.password,
-        revokedSessions: outcome.result.revokedSessions,
-      });
+      // Samo konto - poświadczenia nie ma i mieć nie będzie. Dostęp daje dopiero
+      // podpięcie konta Google o tym `email` (`docs/logowanie-google.md` §6).
+      return reply.code(201).send({ pilot: accountToWire(outcome.result, new Date()) });
     },
   );
 
@@ -235,24 +231,6 @@ export function registerAdminPilotRoutes(
     },
   );
 
-  adminRoute(
-    app,
-    gate,
-    { method: 'POST', url: '/pilots/:id/password-reset', capability: 'accounts.manage' },
-    async (req, reply, actor) => {
-      const params = idParams.safeParse(req.params);
-      if (!params.success) return reply.code(400).send({ error: 'bad_request' });
-
-      const outcome = await pilots.resetPassword(actor, params.data.id);
-      if (!outcome.ok) return refusal(reply, outcome);
-
-      return reply.send({
-        pilot: accountToWire(outcome.result.account, new Date()),
-        password: outcome.result.password,
-        revokedSessions: outcome.result.revokedSessions,
-      });
-    },
-  );
 }
 
 /**

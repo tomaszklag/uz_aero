@@ -21,6 +21,7 @@ import {
   type ServerPort,
   type SessionSyncStatus,
   type StoredCredentials,
+  type StoredRegistration,
 } from '../application/ports';
 import type { SessionFlag } from '../domain';
 import { InMemoryAdapter } from '../infrastructure/storage/inMemoryAdapter';
@@ -42,6 +43,15 @@ class MemoryCredentials {
   clear = async () => {
     this.stored = null;
   };
+  // Zgłoszenie rejestracyjne (logowanie Google) - osobny klucz, jak w prawdziwym magazynie.
+  private registration: StoredRegistration | null = null;
+  loadRegistration = async () => this.registration;
+  saveRegistration = async (r: StoredRegistration) => {
+    this.registration = r;
+  };
+  clearRegistration = async () => {
+    this.registration = null;
+  };
 }
 
 /** Serwer-skrypt: kolejki zaprogramowanych odpowiedzi na `pushEvents` i `getSyncStatus`. */
@@ -60,8 +70,12 @@ class ScriptedServer implements ServerPort {
       ({ token: 'jwt-2', refreshToken: 'r2', pilot: PILOT } satisfies AuthTokens);
   }
 
-  async login(): Promise<AuthTokens> {
-    return { token: 'jwt-1', refreshToken: 'r1', pilot: PILOT };
+  async loginWithGoogle() {
+    return { kind: 'signed_in' as const, tokens: { token: 'jwt-1', refreshToken: 'r1', pilot: PILOT } };
+  }
+
+  async registrationStatus(): Promise<never> {
+    throw new Error('nieużywane w tych testach');
   }
 
   async refresh(): Promise<AuthTokens> {
@@ -364,7 +378,7 @@ describe('AuthService', () => {
     const credentials = new MemoryCredentials();
     const auth = new AuthService(new ScriptedServer([]), credentials, new PinCrypto());
 
-    await auth.login('TMK', 'haslo');
+    await auth.loginWithGoogle('token-google');
 
     expect(await credentials.load()).toMatchObject({ token: 'jwt-1', pilot: PILOT });
   });
@@ -393,7 +407,7 @@ describe('AuthService', () => {
     expect(JSON.stringify(stored)).not.toContain('1234');
 
     // „Nie pamiętam PIN" → pełny login → stary PIN nie ma prawa przeżyć.
-    await auth.login('TMK', 'haslo');
+    await auth.loginWithGoogle('token-google');
     expect(await auth.verifyPin('1234')).toBe(false);
   });
 

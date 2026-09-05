@@ -22,7 +22,7 @@ import type {
 
 import type { AdminAction } from '../../domain/adminActions.ts';
 import type { PilotRole } from '../../domain/roles.ts';
-import type { FlagRecord, Queryable, SessionRow } from '../common/ports.ts';
+import type { FlagRecord, IdentityStatus, Queryable, SessionRow } from '../common/ports.ts';
 import type { AdminEventCounts } from './contracts/events.ts';
 import type { AdminExportCounts, ExportState } from './contracts/exports.ts';
 
@@ -712,7 +712,6 @@ export interface NewPilotAccount {
   name: string;
   email: string | null;
   role: PilotRole;
-  passwordHash: string;
 }
 
 /** Zmiana tożsamości albo roli. Pola nieustawione zostają bez zmian. */
@@ -764,8 +763,6 @@ export interface PilotsAdminPort {
    * Aktywacja znacznika NIE cofa: token sprzed odcięcia ma zostać martwy.
    */
   setActive(tx: Queryable, id: string, active: boolean, at: Date): Promise<void>;
-  /** `at` jak wyżej - reset hasła unieważnia poświadczenia obu powierzchni naraz. */
-  setPasswordHash(tx: Queryable, id: string, passwordHash: string, at: Date): Promise<void>;
   /** Ile kont AKTYWNYCH ma rolę `admin` - wejście do `domain/accountGuards.ts`. */
   countActiveAdmins(tx: Queryable): Promise<number>;
   /**
@@ -820,6 +817,66 @@ export interface PilotsAdminPort {
  */
 export interface RefreshTokensAdminPort {
   revokeAllFor(tx: Queryable, pilotId: string): Promise<number>;
+}
+
+// ── zgłoszenia rejestracyjne (logowanie Google, 2026-09-04) ─────────────────────
+
+/**
+ * Zgłoszenie tak, jak widzi je PANEL: wiersz `external_identities` z dołączonymi
+ * KODAMI - konta zatwierdzonego i administratora, który zdecydował. Kody, nie
+ * identyfikatory, bo to lista dla człowieka.
+ */
+export interface RegistrationRecord {
+  provider: string;
+  subject: string;
+  /** Z tokenu Google - do decyzji; po zatwierdzeniu staje się `pilots.email`. */
+  email: string;
+  /** Imię z profilu Google - NIE `pilots.name`, to nadaje administrator. */
+  name: string;
+  status: IdentityStatus;
+  rejectReason: string | null;
+  createdAt: Date;
+  lastLoginAt: Date | null;
+  decidedAt: Date | null;
+  decidedByCode: string | null;
+  pilotId: string | null;
+  pilotCode: string | null;
+}
+
+/**
+ * Decyzje o zgłoszeniach - osobny port od `ExternalIdentitiesPort` (ścieżka logowania)
+ * z tego samego powodu, dla którego konta mają `PilotsPort` i `PilotsAdminPort`: inne
+ * pytanie, inny rytm (transakcja audytu), a logowanie nie ma jak zregresować od panelu.
+ */
+export interface RegistrationsAdminPort {
+  /** Kolejka: najstarsze pierwsze. `statuses` puste = wszystkie. */
+  list(
+    db: Queryable,
+    filter: { statuses: readonly IdentityStatus[]; limit: number },
+  ): Promise<RegistrationRecord[]>;
+  find(db: Queryable, provider: string, subject: string): Promise<RegistrationRecord | null>;
+  /** Liczniki po CAŁEJ tabeli - plakietka przy zakładce PILOCI. */
+  countByStatus(db: Queryable): Promise<Record<IdentityStatus, number>>;
+  /**
+   * Przejście `pending → linked` z kontem `pilotId`. Zwraca `false`, gdy zgłoszenia nie
+   * ma ALBO ma już decyzję - warunek `status = 'pending'` siedzi w SQL-u i to ON
+   * rozstrzyga wyścig dwóch decyzji, nie odczyt przed zapisem.
+   */
+  link(
+    tx: Queryable,
+    key: { provider: string; subject: string },
+    pilotId: string,
+    by: string,
+    at: Date,
+  ): Promise<boolean>;
+  /** Przejście `pending → rejected` z powodem; ta sama semantyka `false`, co w `link`. */
+  reject(
+    tx: Queryable,
+    key: { provider: string; subject: string },
+    reason: string,
+    by: string,
+    at: Date,
+  ): Promise<boolean>;
 }
 
 // ── flota (A07, A07a) ───────────────────────────────────────────────────────────

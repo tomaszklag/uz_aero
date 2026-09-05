@@ -85,6 +85,19 @@ export const ADMIN_ACTIONS = [
    * niż wpis w dzienniku.
    */
   'bug.status',
+  /**
+   * ZATWIERDZENIE zgłoszenia rejestracyjnego (logowanie Google, 2026-09-04): powstaje
+   * konto pilota, a tożsamość zewnętrzna przechodzi w `linked`. To JEST założenie konta,
+   * tylko zaczęte z drugiej strony - `details` niosą to samo, co `pilot.create`, plus
+   * e-mail i imię z Google, żeby dało się odtworzyć, KOGO administrator wpuścił.
+   */
+  'registration.approve',
+  /**
+   * ODRZUCENIE zgłoszenia - z powodem, który pilot czyta na ekranie `00d`. Odrzucone
+   * zgłoszenie wypada z domyślnego widoku listy, więc wpis w dzienniku jest miejscem,
+   * w którym za miesiąc widać, kto i dlaczego komuś odmówił.
+   */
+  'registration.reject',
 ] as const;
 
 export type AdminAction = (typeof ADMIN_ACTIONS)[number];

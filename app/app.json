@@ -3,6 +3,7 @@
     "name": "UZ Aero",
     "slug": "uz-aero",
     "version": "1.0.0",
+    "scheme": ["com.tomekklag.uzaero", "uzaero"],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -39,7 +40,8 @@
         {
           "isAndroidForegroundServiceEnabled": true
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "extra": {
       "eas": {

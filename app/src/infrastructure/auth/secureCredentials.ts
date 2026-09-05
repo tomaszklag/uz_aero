@@ -14,11 +14,35 @@
 
 import * as SecureStore from 'expo-secure-store';
 
-import type { CredentialsPort, StoredCredentials } from '../../application/ports';
+import type {
+  CredentialsPort,
+  StoredCredentials,
+  StoredRegistration,
+} from '../../application/ports';
 
 const KEY = 'uzaero.credentials.v1';
+/** Zgłoszenie rejestracyjne - OSOBNY klucz, bo to nie jest tożsamość (patrz port). */
+const REGISTRATION_KEY = 'uzaero.registration.v1';
 
 export class SecureCredentials implements CredentialsPort {
+  async loadRegistration(): Promise<StoredRegistration | null> {
+    const raw = await SecureStore.getItemAsync(REGISTRATION_KEY);
+    if (raw == null) return null;
+    try {
+      return JSON.parse(raw) as StoredRegistration;
+    } catch {
+      return null;
+    }
+  }
+
+  async saveRegistration(registration: StoredRegistration): Promise<void> {
+    await SecureStore.setItemAsync(REGISTRATION_KEY, JSON.stringify(registration));
+  }
+
+  async clearRegistration(): Promise<void> {
+    await SecureStore.deleteItemAsync(REGISTRATION_KEY);
+  }
+
   async load(): Promise<StoredCredentials | null> {
     const raw = await SecureStore.getItemAsync(KEY);
     if (raw == null) return null;

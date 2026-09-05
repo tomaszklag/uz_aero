@@ -37,7 +37,12 @@ export type AccountRefusal =
   | 'self_demote'
   /** Ostatni AKTYWNY administrator traci rolę albo dostęp - klub zostaje bez nikogo. */
   | 'last_admin'
-  /** Reset hasła konta nieaktywnego - hasło bez dostępu do niczego nie prowadzi. */
+  /**
+   * Konto nieaktywne przy operacji, która wymaga działającego dostępu.
+   *
+   * Do 2026-09-04 wystawiał go WYŁĄCZNIE reset hasła; hasła znikły, a wariant został,
+   * bo zatwierdzenie zgłoszenia pyta o to samo (konto wyłączone nie ma czego podpiąć).
+   */
   | 'inactive_account'
   /** Usunięcie własnego konta - to samo odcięcie, co deaktywacja, tylko nieodwracalne. */
   | 'self_delete'
@@ -100,19 +105,6 @@ export function refuseDeactivate(change: ActiveChange): AccountRefusal | null {
   if (change.actorPilotId === change.targetPilotId) return 'self_deactivate';
   if (change.currentRole === 'admin' && change.activeAdmins <= 1) return 'last_admin';
   return null;
-}
-
-/**
- * Reset hasła konta NIEAKTYWNEGO nie ma skutku, którego administrator oczekuje: konto
- * i tak nie zaloguje się ani w aplikacji, ani w panelu (`AuthCommands.verifyCredentials`
- * odbija `account_disabled` PO sprawdzeniu hasła). Wydane wtedy hasło startowe byłoby
- * poświadczeniem bez powodu, a administrator uznałby sprawę za załatwioną.
- *
- * Mockup A06 mówi to samo w wierszu listy: „Reset hasła" jest przy koncie nieaktywnym
- * wyszarzony z podpowiedzią „Konto nieaktywne - najpierw aktywuj".
- */
-export function refusePasswordReset(targetActive: boolean): AccountRefusal | null {
-  return targetActive ? null : 'inactive_account';
 }
 
 /**

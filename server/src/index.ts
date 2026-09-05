@@ -19,10 +19,12 @@ import { AdminFlagCommands } from './application/admin/commands/flags.ts';
 import { AdminFleetCommands } from './application/admin/commands/fleet.ts';
 import { AdminAircraftReadingCommands } from './application/admin/commands/aircraftReadings.ts';
 import { AdminBugReportCommands } from './application/admin/commands/bugReports.ts';
+import { AdminRegistrationCommands } from './application/admin/commands/registrations.ts';
 import { AdminMaintenanceCommands } from './application/admin/commands/maintenance.ts';
 import { AdminPilotCommands } from './application/admin/commands/pilots.ts';
 import { AdminAuditQueries } from './application/admin/queries/audit.ts';
 import { AdminBugReportQueries } from './application/admin/queries/bugReports.ts';
+import { AdminRegistrationQueries } from './application/admin/queries/registrations.ts';
 import { AdminCorrectionQueries } from './application/admin/queries/corrections.ts';
 import { AdminDashboardQueries } from './application/admin/queries/dashboard.ts';
 import { AdminEventQueries } from './application/admin/queries/events.ts';
@@ -51,9 +53,8 @@ import { TaskSuggestionQueries } from './application/mobile/queries/taskSuggesti
 import { SessionTrackQueries } from './application/common/queries/sessionTrack.ts';
 import { SheetQueries } from './application/common/queries/sheets.ts';
 import { StateQueries } from './application/mobile/queries/aircraftState.ts';
+import { GoogleIdTokens } from './infrastructure/auth/googleIdTokens.ts';
 import { Hs256Tokens } from './infrastructure/auth/hs256Tokens.ts';
-import { ScryptHasher } from './infrastructure/auth/scryptHasher.ts';
-import { generateStartPassword } from './infrastructure/auth/startPassword.ts';
 import { PgAdminAuditReadRepo } from './infrastructure/pg/admin/auditReadRepo.ts';
 import { PgAdminAuditRepo } from './infrastructure/pg/admin/auditRepo.ts';
 import { PgAdminDashboardRepo } from './infrastructure/pg/admin/dashboardRepo.ts';
@@ -64,6 +65,7 @@ import { PgAdminFlagsRepo } from './infrastructure/pg/admin/flagsRepo.ts';
 import { PgAdminFleetRepo } from './infrastructure/pg/admin/fleetRepo.ts';
 import { PgAdminMaintenanceRepo } from './infrastructure/pg/admin/maintenanceRepo.ts';
 import { PgAdminPilotsRepo } from './infrastructure/pg/admin/pilotsRepo.ts';
+import { PgAdminRegistrationsRepo } from './infrastructure/pg/admin/registrationsRepo.ts';
 import { PgAdminRefreshTokensRepo } from './infrastructure/pg/admin/refreshTokensRepo.ts';
 import { PgAdminSessionsRepo } from './infrastructure/pg/admin/sessionsRepo.ts';
 import { PgAdminConsumptionRepo } from './infrastructure/pg/admin/consumptionRepo.ts';
@@ -79,6 +81,7 @@ import { PgSessionsProjection } from './infrastructure/pg/common/sessionsProject
 import { migrate } from './infrastructure/pg/migrate.ts';
 import { seed } from './infrastructure/pg/seed.ts';
 import { PgPilotPrefsRepo } from './infrastructure/pg/mobile/pilotPrefsRepo.ts';
+import { PgExternalIdentitiesRepo } from './infrastructure/pg/common/externalIdentitiesRepo.ts';
 import { PgPilotsRepo } from './infrastructure/pg/common/pilotsRepo.ts';
 import { PgRefreshTokens } from './infrastructure/pg/common/refreshTokensRepo.ts';
 import { PgMyEventsRepo } from './infrastructure/pg/mobile/myEventsRepo.ts';
@@ -104,10 +107,25 @@ const env = z
     /**
      * Ustawione = serwer przy KAŻDYM starcie zapewnia konto `admin` (ten sam
      * idempotentny `seed()`, co `npm run seed`). Droga dla hostingu bez ręki na
-     * konsoli (Railway): jedna zmienna w UI zamiast tunelu do bazy. Powtórny start
-     * nie resetuje hasła ani `active` - dokłada najwyżej rolę admin (droga awaryjna).
+     * konsoli (Railway): jedna zmienna w UI zamiast tunelu do bazy.
+     *
+     * Wartością jest ADRES KONTA GOOGLE administratora - pierwsze logowanie tym kontem
+     * podpina je do wiersza `admin` (`docs/logowanie-google.md` §6) i to jest cały
+     * bootstrap dostępu do panelu.
      */
-    SEED_PASSWORD: z.string().min(8, 'SEED_PASSWORD: minimum 8 znaków').optional(),
+    SEED_ADMIN_EMAIL: z.string().email().optional(),
+    /**
+     * NASZE identyfikatory klienta Google - kontrola oddzielająca „ktoś zalogował się
+     * do UZ Aero" od „ktoś ma dowolny token Google" (`aud` w weryfikacji tokenu).
+     *
+     * **Web jest WYMAGANY**: to nim loguje się panel i to jego panel pobiera z serwera,
+     * żeby narysować przycisk (`GET /admin/api/auth/google-client`). Android jest
+     * opcjonalny do czasu builda aplikacji z Google - bez niego telefon się nie zaloguje,
+     * ale serwer wstaje i panel działa. Dwie zmienne zamiast listy po przecinku, bo
+     * jedna z nich ma ROLĘ (jedzie do panelu), a pozycja na liście roli nie niesie.
+     */
+    GOOGLE_WEB_CLIENT_ID: z.string().min(1),
+    GOOGLE_ANDROID_CLIENT_ID: z.string().min(1).optional(),
   })
   .parse(process.env);
 
@@ -117,10 +135,10 @@ const db = new PgDatabase(pool);
 
 await migrate(db);
 
-// Bootstrap konta administratora - patrz docblock SEED_PASSWORD w schemacie env.
-if (env.SEED_PASSWORD != null) {
-  await seed(db, new ScryptHasher(), { adminPassword: env.SEED_PASSWORD });
-  console.log('Seed: konto administratora „admin" zapewnione (SEED_PASSWORD ustawione).');
+// Bootstrap konta administratora - patrz docblock SEED_ADMIN_EMAIL w schemacie env.
+if (env.SEED_ADMIN_EMAIL != null) {
+  await seed(db, { adminEmail: env.SEED_ADMIN_EMAIL });
+  console.log(`Seed: konto „admin" czeka na podpięcie konta Google ${env.SEED_ADMIN_EMAIL}.`);
 }
 
 const tokens = new Hs256Tokens(env.JWT_SECRET, clock);
@@ -136,6 +154,10 @@ const phaseTimeline = new FsPhaseTimeline(env.TRACES_DIR, new FsTraceSource(env.
 const flags = new PgFlagsRepo();
 const exportLog = new PgExportLogRepo();
 const pilots = new PgPilotsRepo(db);
+// Tożsamości zewnętrzne (logowanie Google). JEDEN adapter dla ścieżki logowania;
+// decyzje administratora o zgłoszeniach mają własny, w transakcji audytu - ta sama
+// zasada, co przy kontach (`PgPilotsRepo` czyta, `PgAdminPilotsRepo` pisze).
+const identities = new PgExternalIdentitiesRepo(db);
 
 // Eksport §4.7 działa END-TO-END na adapterze bazodanowym: `day_close` → karta
 // w `exported_sheets` → wpis w `export_log` → link w sync-status, serwowany pod
@@ -174,7 +196,6 @@ const adminExportsRepo = new PgAdminExportsRepo();
 // powód istnienia - narzędzia serwisowe jednego ekranu - więc drugi adapter kupiłby
 // wyłącznie okazję do rozjazdu między tym, co pokazuje podgląd, a tym, co zapisze zapis.
 const adminMaintenanceRepo = new PgAdminMaintenanceRepo();
-const hasher = new ScryptHasher();
 
 // Zapytania floty stoją TU, a nie w literale niżej, bo mają DWÓCH konsumentów: trasy
 // `A07` i pulpit. Pulpit dostaje całą klasę, nie jej adapter - to ona zna regułę wyboru
@@ -188,6 +209,9 @@ const aircraftReadings = new PgAircraftReadingsRepo();
 // panel czyta i przestawia status. Druga kopia zapytania byłaby pierwszym miejscem,
 // w którym lista zaczęłaby pokazywać co innego niż szuflada.
 const bugReports = new PgBugReportsRepo();
+  // Zgłoszenia rejestracyjne (logowanie Google) - adapter DECYZJI, osobny od adaptera
+  // ścieżki logowania (`PgExternalIdentitiesRepo`), jak przy kontach.
+  const adminRegistrationsRepo = new PgAdminRegistrationsRepo();
 const adminFleetQueries = new AdminFleetQueries(
   db,
   adminFleetRepo,
@@ -204,7 +228,20 @@ const adminFleetQueries = new AdminFleetQueries(
 const sessionTrack = new SessionTrackQueries(db, events, new FsTraceSource(env.TRACES_DIR));
 
 const app = buildServer({
-  auth: new AuthCommands(pilots, new PgRefreshTokens(db, clock), hasher, tokens, clock),
+  // Logowanie (2026-09-04): tożsamość dowodzi podpisany token Google, a `identities`
+  // rozstrzyga, czy stoi za nim KONTO. `GoogleIdTokens` jest portem, więc testy
+  // podstawiają weryfikator z kluczem w procesie zamiast chodzić do Google.
+  auth: new AuthCommands(
+    pilots,
+    new PgRefreshTokens(db, clock),
+    identities,
+    new GoogleIdTokens(
+      { panel: env.GOOGLE_WEB_CLIENT_ID, mobile: env.GOOGLE_ANDROID_CLIENT_ID ?? null },
+      clock,
+    ),
+    tokens,
+    clock,
+  ),
   reference: new ReferenceQueries(
     new PgReferenceRepo(db),
     db,
@@ -233,6 +270,8 @@ const app = buildServer({
   // `PgSessionsProjection`, bo to inne pytanie: tamten czyta i pisze POJEDYNCZY wiersz
   // sesji, ten agreguje kolumny wielu wierszy w listę wartości do podpowiedzenia.
   taskSuggestions: new TaskSuggestionQueries(db, new PgTaskSuggestionsRepo()),
+  // Identyfikator klienta Google WEB - panel pobiera go z serwera, żeby narysować przycisk.
+  googleWebClientId: env.GOOGLE_WEB_CLIENT_ID,
   tokens,
   // Brama tras panelu czyta konto przy KAŻDYM żądaniu - bez tego „Deaktywuj" na A06
   // odcinałby dostęp dopiero po wygaśnięciu 8-godzinnej sesji (`http/authorize.ts`).
@@ -252,15 +291,13 @@ const app = buildServer({
   // Sesja przeglądarkowa czyta konto tym samym adapterem co logowanie telefonu -
   // panel i telefon logują się do tej samej tabeli kont, bo to ci sami ludzie.
   adminMeQueries: new AdminMeQueries(pilots),
-  // Konta (A06/A06a). Hasło startowe generuje SERWER - panel nigdy go nie wysyła,
-  // a wartość opuszcza system dokładnie raz, w odpowiedzi na akcję, która ją wytworzyła.
+  // Konta (A06/A06a). Po wejściu Google konto nie dostaje żadnego poświadczenia:
+  // dostęp daje dopiero podpięcie konta Google o wpisanym tu adresie e-mail.
   adminPilots: new AdminPilotCommands(
     auditedWrite,
     adminPilotsRepo,
     new PgAdminRefreshTokensRepo(),
-    hasher,
     randomUUID,
-    generateStartPassword,
     clock,
   ),
   adminPilotQueries: new AdminPilotQueries(db, adminPilotsRepo, clock),
@@ -385,6 +422,16 @@ const app = buildServer({
   // komenda - bramę audytu: przestawienie statusu jest decyzją o CUDZYM zgłoszeniu.
   adminBugReportQueries: new AdminBugReportQueries(db, bugReports),
   adminBugReports: new AdminBugReportCommands(auditedWrite, bugReports, clock),
+  // Zgłoszenia rejestracyjne: zapytania czytają `db` wprost, komenda idzie przez bramę
+  // audytu i dostaje adapter KONT - zatwierdzenie zakłada konto tą samą drogą, co A06.
+  adminRegistrationQueries: new AdminRegistrationQueries(db, adminRegistrationsRepo),
+  adminRegistrations: new AdminRegistrationCommands(
+    auditedWrite,
+    adminRegistrationsRepo,
+    adminPilotsRepo,
+    randomUUID,
+    clock,
+  ),
   adminLogQueries: new AdminLogQueries(db, new PgAdminLogRepo(), clock),
   // Analityka zużycia (A10a/A10b) - bierze TEN SAM magazyn zdarzeń, co reszta serwera:
   // strumienie sesji są jej wejściem, a licznik odczytów w `contract.test.ts` pilnuje,

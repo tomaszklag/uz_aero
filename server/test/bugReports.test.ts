@@ -17,14 +17,15 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { ADMIN_CSRF_HEADERS, TEST_PASSWORD, testHarness } from './helpers.ts';
+import { ADMIN_CSRF_HEADERS, testHarness } from './helpers.ts';
+import { googleTokenFor } from './testIdentityProvider.ts';
 
 type Harness = Awaited<ReturnType<typeof testHarness>>;
 type App = Harness['app'];
 
 const login = (app: App, who: string): Promise<string> =>
   app
-    .inject({ method: 'POST', url: '/auth/login', payload: { login: who, password: TEST_PASSWORD } })
+    .inject({ method: 'POST', url: '/auth/google', payload: { idToken: googleTokenFor(who) } })
     .then((res) => res.json().token as string);
 
 const bearer = (t: string) => ({ authorization: `Bearer ${t}` });

@@ -36,6 +36,42 @@ export interface AuthTokens {
   pilot: { id: string; code: string; name: string };
 }
 
+/**
+ * Zgłoszenie rejestracyjne tak, jak oddaje je serwer (`docs/logowanie-google.md` §7):
+ * imię i e-mail Z GOOGLE, nie z konta pilota - konta jeszcze nie ma. Ekrany `00c`/`00d`
+ * pokazują dokładnie to i nic więcej.
+ */
+export interface RemoteRegistration {
+  provider: string;
+  name: string;
+  email: string;
+  status: 'pending' | 'rejected';
+  /** Powód administratora - `00d` cytuje go dosłownie; `null` dopóki zgłoszenie czeka. */
+  rejectReason: string | null;
+  /** ISO 8601 UTC - pierwsze logowanie tym kontem Google. */
+  createdAt: string;
+  /** ISO 8601 UTC - chwila decyzji; `null` dopóki czeka. */
+  decidedAt: string | null;
+}
+
+/**
+ * Wynik `POST /auth/google` - TRZY stany, z których tylko pierwszy jest tożsamością.
+ * Token rejestracyjny otwiera wyłącznie `registrationStatus`; dostać go można TYLKO
+ * przy zgłoszeniu oczekującym (odrzucenie tokenu nie niesie).
+ */
+export type GoogleLoginResult =
+  | { kind: 'signed_in'; tokens: AuthTokens }
+  | { kind: 'pending'; registration: RemoteRegistration; registrationToken: string }
+  | { kind: 'rejected'; registration: RemoteRegistration };
+
+/**
+ * Wynik `GET /auth/registration`. `approved` niesie TOKENY - pilot zatwierdzony
+ * w międzyczasie wchodzi bez ponownego przechodzenia przez Google.
+ */
+export type RegistrationStatusResult =
+  | { kind: 'approved'; tokens: AuthTokens }
+  | { kind: 'pending' | 'rejected'; registration: RemoteRegistration };
+
 /** Wynik przyjęcia paczki przez serwer (§4.3, §4.5). */
 export interface PushResult {
   accepted: number;
@@ -231,7 +267,18 @@ export interface BugReportPushResult {
 export type SyncTrigger = 'background' | 'manual';
 
 export interface ServerPort {
-  login(login: string, password: string): Promise<AuthTokens>;
+  /**
+   * Logowanie tokenem tożsamości Google (2026-09-04, `docs/logowanie-google.md`).
+   * Jedyna czynność aplikacji, która wymaga sieci (§3.0) - i dlatego jedzie z limitem
+   * jak ponowienie z ręki pilota: człowiek stoi i patrzy, a serwer mógł się uśpić.
+   */
+  loginWithGoogle(idToken: string): Promise<GoogleLoginResult>;
+  /**
+   * Stan zgłoszenia dla ekranu `00c` - TOKENEM REJESTRACYJNYM, nie tokenem pilota.
+   * `ServerRejectedError` 401/404 znaczy „zgłoszenia już nie ma" (wygasło, konto
+   * skasowane) - wołający wraca na ekran logowania.
+   */
+  registrationStatus(registrationToken: string): Promise<RegistrationStatusResult>;
   refresh(refreshToken: string): Promise<AuthTokens>;
   pushEvents(
     token: string,

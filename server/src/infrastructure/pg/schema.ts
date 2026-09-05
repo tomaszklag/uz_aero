@@ -64,7 +64,7 @@
  * nie kosztuje.
  */
 
-export const SCHEMA_VERSION = 6;
+export const SCHEMA_VERSION = 7;
 
 /**
  * Migracja bazowa - CAŁY schemat serwera.
@@ -689,6 +689,81 @@ export const MIGRATION_6 = `
     ON bug_reports (status, created_at DESC, uuid DESC);
 `;
 
+/**
+ * Logowanie przez Google i rejestracja z zatwierdzeniem (2026-09-04) -
+ * `docs/logowanie-google.md`.
+ *
+ * ══ DLACZEGO OSOBNA TABELA, A NIE FLAGA NA `pilots` ══
+ * Rozważone i odrzucone (§3.3 tamtego dokumentu). Zgłaszający NIE MA konta pilota:
+ * nie ma kodu, imienia w brzmieniu klubowym ani roli - te nadaje administrator przy
+ * zatwierdzeniu. Wpisanie go do `pilots` wymagałoby nullowalnego `code`, a ten stoi
+ * pod sygnaturą operacji i nazwą karty arkusza; do tego konta niezatwierdzone
+ * zaśmiecałyby listę pilotów, wybór Duala, `pilot_overlap` i statystyki, a każda
+ * z ~20 tras telefonu potrzebowałaby nowej bramy.
+ *
+ * Przy tym kształcie brama jest DARMOWA: brak wiersza w `pilots` znaczy brak tożsamości
+ * do podpisania w tokenie, więc `authorize()` odmawia bez ani jednej nowej reguły.
+ *
+ * ══ KLUCZ TO `(provider, subject)`, NIGDY E-MAIL ══
+ * `subject` (`sub` od dostawcy) jest STAŁY; e-mail bywa po tamtej stronie zmieniany.
+ * Para w kluczu głównym otwiera też drogę Apple i Facebookowi bez zmiany modelu.
+ *
+ * ══ `password_hash` ZNIKA (`DROP COLUMN`) ══
+ * Pierwsza wersja tej migracji zostawiała kolumnę nullowalną „bo baza produkcyjna,
+ * migracje addytywne". Decyzja właściciela z 2026-09-05: baza produkcyjna staje przy
+ * wdrożeniu OD ZERA, więc nie ma hashy, które warto by przechować - a hasło nie ma już
+ * w produkcie ŻADNEJ drogi logowania. Na bazie z danymi ta migracja kasuje hashe
+ * bezpowrotnie i to jest zamierzone: hash bez ścieżki, która go sprawdza, jest wyłącznie
+ * sekretem do wycieku.
+ */
+export const MIGRATION_7 = `
+  CREATE TABLE IF NOT EXISTS external_identities (
+    -- 'google'; kolejni dostawcy dochodzą bez zmiany kształtu tabeli.
+    provider      TEXT NOT NULL,
+    -- \`sub\` z tokenu dostawcy: stały identyfikator konta, niezależny od e-maila.
+    subject       TEXT NOT NULL,
+    -- NULL, dopóki administrator nie zatwierdzi. To JEST brama dostępu.
+    pilot_id      TEXT REFERENCES pilots(id) ON DELETE CASCADE,
+    -- Z tokenu dostawcy - do pokazania administratorowi przy decyzji. NIE jest to
+    -- \`pilots.email\`: tamten wpisuje administrator i tylko tamten czemukolwiek służy
+    -- przy podpinaniu konta (patrz \`claim\` w commands/auth.ts).
+    email         TEXT NOT NULL,
+    -- Imię z profilu Google. NIE jest to \`pilots.name\` - brzmienie klubowe ustala
+    -- administrator przy zatwierdzeniu.
+    name          TEXT NOT NULL,
+    status        TEXT NOT NULL CHECK (status IN ('pending', 'linked', 'rejected')),
+    -- Powód odrzucenia. WYMAGANY po stronie panelu, bo pilot czyta go na ekranie 00D -
+    -- odrzucenie bez słowa zostawia człowieka przed ekranem, na którym nic nie zrobi.
+    reject_reason TEXT,
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+    decided_at    TIMESTAMPTZ,
+    decided_by    TEXT REFERENCES pilots(id),
+    last_login_at TIMESTAMPTZ,
+    PRIMARY KEY (provider, subject),
+
+    -- NIEZMIENNIK, NA KTÓRYM STOI CAŁA BRAMA: zatwierdzone <=> ma konto.
+    -- Bez niego dałoby się zapisać 'linked' bez pilota albo 'pending' z pilotem,
+    -- a wtedy pytanie „czy wolno mu wejść" miałoby dwie odpowiedzi zależnie od tego,
+    -- którą kolumnę ktoś przeczytał.
+    CONSTRAINT identity_linked_has_pilot
+      CHECK ((status = 'linked') = (pilot_id IS NOT NULL))
+  );
+
+  -- Jedno konto pilota = jedna tożsamość zewnętrzna. Bez tego dwa konta Google
+  -- wskazywałyby ten sam nalot, a \`claim\` po e-mailu nie miałby jak stwierdzić,
+  -- że konto jest już zajęte.
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_external_identities_pilot
+    ON external_identities (pilot_id) WHERE pilot_id IS NOT NULL;
+
+  -- Lista zgłoszeń w panelu: filtr statusem, najstarsze pierwsze (kolejka).
+  CREATE INDEX IF NOT EXISTS idx_external_identities_status
+    ON external_identities (status, created_at, subject);
+
+  -- Hasła zniknęły z produktu razem z kolumną (patrz docblock). \`IF EXISTS\` trzyma
+  -- idempotencję na wypadek powtórnego przebiegu na bazie już zmigrowanej.
+  ALTER TABLE pilots DROP COLUMN IF EXISTS password_hash;
+`;
+
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
   MIGRATION_2,
@@ -696,6 +771,7 @@ export const MIGRATIONS: readonly string[] = [
   MIGRATION_4,
   MIGRATION_5,
   MIGRATION_6,
+  MIGRATION_7,
 ];
 
 /**
@@ -723,4 +799,5 @@ export const MIGRATION_TITLES: readonly string[] = [
   'Normy z dokumentacji i stan początkowy (issue #66): nominalne spalanie paliwa oraz startowe motogodziny, paliwo i olej jednostki',
   'Odczyty maszyny wpisane przez administratora (issue #81): nadrzędny stan licznika, paliwa i oleju z komentarzem, konkurent zdania w łańcuchu przekazania',
   'Zgłoszenia błędów z aplikacji pilota (issue #87): opis, waga, kontekst okna i status obsługi - kanał zwrotny na czas testów z pilotami',
+  'Logowanie przez Google (2026-09-04): tożsamości zewnętrzne ze zgłoszeniem do zatwierdzenia przez administratora; hasło przestaje być wymagane',
 ];

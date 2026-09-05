@@ -59,6 +59,10 @@ function remote(uuid: string, over: Partial<Omit<Event, 'syncedAt'>> = {}) {
 }
 
 class MemoryCredentials {
+  // Zgłoszenie rejestracyjne (logowanie Google) - nieużywane w tych testach.
+  loadRegistration = async (): Promise<null> => null;
+  saveRegistration = async (_registration: unknown): Promise<void> => {};
+  clearRegistration = async (): Promise<void> => {};
   constructor(private stored: StoredCredentials | null) {}
   load = async () => this.stored;
   save = async (c: StoredCredentials) => {
@@ -71,6 +75,14 @@ class MemoryCredentials {
 
 /** Serwer-skrypt dla `GET /me/events`: rejestruje kursory, odpowiada z kolejki. */
 class PullServer implements ServerPort {
+  async loginWithGoogle(): Promise<never> {
+    throw new Error('nieużywane w tych testach');
+  }
+
+  async registrationStatus(): Promise<never> {
+    throw new Error('nieużywane w tych testach');
+  }
+
   calls: { token: string; cursor: string | null | undefined }[] = [];
   script: Array<RemoteEventPage | Error> = [];
 

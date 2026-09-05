@@ -48,13 +48,24 @@ export interface Database extends Queryable {
 
 // ── piloci i uwierzytelnienie ───────────────────────────────────────────────────
 
-/** Konto pilota po stronie serwera (zakłada administrator - brak rejestracji). */
+/**
+ * Konto pilota po stronie serwera.
+ *
+ * Powstaje przez ZATWIERDZENIE zgłoszenia rejestracyjnego albo wprost z panelu
+ * (administrator wpisuje wtedy e-mail, a konto podpina się przy pierwszym logowaniu
+ * Google - `docs/logowanie-google.md` §6). Hasha nie ma i mieć nie będzie: hasła znikły
+ * z produktu 2026-09-04.
+ */
 export interface PilotAccount {
   id: string;
   code: string;
   name: string;
+  /**
+   * Adres konta Google, którym ten pilot się loguje - JEDYNE pole, przez które e-mail
+   * cokolwiek uwierzytelnia, i wyłącznie przy PIERWSZYM podpięciu. Wpisuje je
+   * administrator albo seed, nigdy użytkownik.
+   */
   email: string | null;
-  passwordHash: string;
   active: boolean;
   /** Uprawnienia w panelu administracyjnym (`src/domain/roles.ts`). */
   role: PilotRole;
@@ -64,7 +75,7 @@ export interface PilotAccount {
  * Konto tak, jak widzi je BRAMA UPRAWNIEŃ panelu (`http/authorize.ts`) - bez hasha.
  *
  * Osobny typ od `PilotAccount` i to jest cała jego treść. `PilotAccount` istnieje dla
- * LOGOWANIA, więc niesie `passwordHash`; brama hasła nie weryfikuje, a mimo to czytała
+ * LOGOWANIA, więc niosło `passwordHash` (do 2026-09-04); brama hasła nie weryfikuje, a mimo to czytała
  * go przy KAŻDYM żądaniu panelu i wnosiła aż do warstwy HTTP (`AuthOutcome.account`).
  * Hash, który wjeżdża tam, gdzie nie jest potrzebny, prędzej czy później gdzieś się
  * zserializuje - jeden brak pola jest tańszy niż dyscyplina „pamiętaj, żeby go nie
@@ -86,7 +97,6 @@ export interface PilotAuthSnapshot {
 }
 
 export interface PilotsPort {
-  findByLogin(login: string): Promise<PilotAccount | null>;
   findById(id: string): Promise<PilotAccount | null>;
   /** Projekcja dla bramy panelu: rola, aktywność i znacznik unieważnienia - bez hasha. */
   authSnapshot(id: string): Promise<PilotAuthSnapshot | null>;
@@ -118,15 +128,6 @@ export interface PilotPrefsPort {
   setIfNewer(pilotId: string, theme: string, updatedAt: Date): Promise<void>;
 }
 
-/**
- * Hasła: `hash` przy zakładaniu konta (seed/admin), `verify` przy logowaniu.
- * Implementacja na `node:crypto` (scrypt) - patrz adapter, tam jest uzasadnienie.
- */
-export interface PasswordHasher {
-  hash(password: string): Promise<string>;
-  verify(password: string, stored: string): Promise<boolean>;
-}
-
 /** Podpisywanie i weryfikacja JWT sesji (HS256). */
 /** Tożsamość odczytana z tokenu - to, na podstawie czego trasy podejmują decyzje. */
 export interface Identity {
@@ -152,11 +153,48 @@ export interface VerifiedIdentity extends Identity {
   issuedAt: number;
 }
 
+/**
+ * Kto zgłosił się przez dostawcę zewnętrznego, ale NIE MA jeszcze konta pilota -
+ * adresat tokenu rejestracyjnego (`docs/logowanie-google.md` §5).
+ *
+ * Para `(provider, subject)` jest kluczem głównym `external_identities`, więc token
+ * nie potrzebuje żadnego surogatu: wskazuje wiersz wprost.
+ */
+export interface RegistrationIdentity {
+  provider: string;
+  subject: string;
+}
+
+/**
+ * Tożsamość zgłoszenia ODCZYTANA z tokenu razem z chwilą wydania (jak `VerifiedIdentity`).
+ * `issuedAt` = `iat` w sekundach epoki; `0` = brak claimu, czyli „wydany przed czasem" -
+ * domyślna wartość odbiera dostęp, nigdy go nie przyznaje.
+ */
+export interface VerifiedRegistration extends RegistrationIdentity {
+  issuedAt: number;
+}
+
 export interface TokenService {
   /** Zwraca podpisany token dostępu dla pilota. */
   sign(claims: Identity, ttlSec: number): string;
   /** Zwraca claims albo `null` - token zły/wygasły. Nigdy nie rzuca. */
   verify(token: string): VerifiedIdentity | null;
+
+  /**
+   * Token ZGŁOSZENIA - jedyne poświadczenie, jakie dostaje ktoś bez konta pilota.
+   * Otwiera dokładnie jedną trasę: `GET /auth/registration` (ekran `00c`).
+   */
+  signRegistration(claims: RegistrationIdentity, ttlSec: number): string;
+
+  /**
+   * ══ TE DWIE PARY MUSZĄ BYĆ ROZŁĄCZNE I TO JEST WŁASNOŚĆ BEZPIECZEŃSTWA ══
+   * `verify` odrzuca każdy token rejestracyjny, a `verifyRegistration` każdy token
+   * pilota. Bez tego rozdziału token zgłoszenia byłby ważną TOŻSAMOŚCIĄ wskazującą
+   * nieistniejące konto - a wtedy `POST /events` zapisywałby zdarzenia z `pilot_id`,
+   * za którym nikt nie stoi. Podpis HMAC tego nie łapie: token jest nasz, tylko
+   * wystawiony w innym celu.
+   */
+  verifyRegistration(token: string): VerifiedRegistration | null;
 }
 
 /**
@@ -173,6 +211,93 @@ export interface RefreshTokensPort {
    * wymaga sieci, więc łamałoby obietnicę §3.0. `null` = token nieznany/wygasły.
    */
   rotate(token: string, newExpiresAt: Date): Promise<{ pilotId: string; token: string } | null>;
+}
+
+// ── tożsamości zewnętrzne (logowanie Google) ────────────────────────────────────
+
+/** Stan zgłoszenia: `docs/logowanie-google.md` §3.1. */
+export type IdentityStatus = 'pending' | 'linked' | 'rejected';
+
+/**
+ * Konto U DOSTAWCY przez całe swoje życie: zgłoszenie → zatwierdzone albo odrzucone.
+ *
+ * `email` i `name` pochodzą Z TOKENU dostawcy i służą wyłącznie administratorowi przy
+ * decyzji. To NIE są `pilots.email` ani `pilots.name`: tamte wpisuje administrator,
+ * i tylko tamten e-mail cokolwiek znaczy przy podpinaniu konta.
+ */
+export interface ExternalIdentity {
+  provider: string;
+  subject: string;
+  /** `null` dopóki niezatwierdzone. Niepustość jest RÓWNOWAŻNA `status === 'linked'`. */
+  pilotId: string | null;
+  email: string;
+  name: string;
+  status: IdentityStatus;
+  rejectReason: string | null;
+  createdAt: Date;
+  /** Chwila decyzji administratora; `null` dopóki zgłoszenie czeka. Ekran `00d` ją cytuje. */
+  decidedAt: Date | null;
+  /**
+   * Pierwsze/ostatnie wejście na konto tą tożsamością. Dla tokenu rejestracyjnego to
+   * JEDNORAZOWOŚĆ: ustawione znaczy „ktoś już wszedł" (tym tokenem albo Googlem), więc
+   * skopiowany token nie może być fabryką kolejnych par tokenów (audyt 2026-09-05).
+   */
+  lastLoginAt: Date | null;
+}
+
+/**
+ * Profil odczytany z ZWERYFIKOWANEGO tokenu dostawcy - wyjście `IdentityProviderPort`.
+ *
+ * `emailVerified` jest polem osobnym i nieusuwalnym, bo od niego zależy jedyne miejsce
+ * w systemie, w którym e-mail cokolwiek uwierzytelnia (podpięcie konta, §6).
+ */
+export interface ProviderProfile {
+  provider: string;
+  subject: string;
+  email: string;
+  emailVerified: boolean;
+  name: string;
+}
+
+/**
+ * Weryfikacja tokenu tożsamości od dostawcy zewnętrznego.
+ *
+ * Port, a nie funkcja, właśnie dlatego, że ma DRUGĄ implementację: produkcja pobiera
+ * klucze Google przez sieć, a testy podstawiają weryfikator z kluczem w procesie.
+ * Bez tego każdy test logowania wymagałby internetu i cudzej infrastruktury.
+ */
+/**
+ * KTÓRA powierzchnia pyta - rozstrzyga dopuszczalne `aud` tokenu. Telefon loguje się
+ * klientem Android, panel klientem Web; token jednej powierzchni NIE otwiera drugiej.
+ * Bez tego rozdziału token zdobyty w kontekście przeglądarki (8-godzinna sesja bez
+ * refresha, §8.4) dałoby się wymienić na trasie telefonu na 90-dniowy refresh
+ * (audyt 2026-09-05).
+ */
+export type LoginSurface = 'mobile' | 'panel';
+
+export interface IdentityProviderPort {
+  /** `null` = token nieważny (podpis, `iss`, `aud` dla tej powierzchni, termin). Nigdy nie rzuca z powodu treści. */
+  verifyIdToken(idToken: string, surface: LoginSurface): Promise<ProviderProfile | null>;
+}
+
+export interface ExternalIdentitiesPort {
+  find(provider: string, subject: string): Promise<ExternalIdentity | null>;
+
+  /** Nowe zgłoszenie (`pending`) - konta pilota NIE tworzy. */
+  createPending(profile: ProviderProfile): Promise<ExternalIdentity>;
+
+  /**
+   * PODPIĘCIE do istniejącego konta po zweryfikowanym e-mailu (§6) - `null`, gdy nie
+   * ma do czego podpiąć. Wołający MUSI wcześniej sprawdzić `emailVerified`.
+   *
+   * Operacja jest JEDNYM poleceniem SQL i to jest wymóg, nie optymalizacja: rozbita na
+   * odczyt konta i zapis tożsamości zostawiałaby okno, w którym dwa równoległe
+   * logowania podpinają dwie tożsamości do jednego konta.
+   */
+  claimByVerifiedEmail(profile: ProviderProfile): Promise<ExternalIdentity | null>;
+
+  /** Stempel ostatniego wejścia - wyłącznie informacyjny, dla panelu. */
+  markLogin(provider: string, subject: string, at: Date): Promise<void>;
 }
 
 // ── dane referencyjne ───────────────────────────────────────────────────────────

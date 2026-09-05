@@ -56,6 +56,10 @@ const axa = (over: Partial<ReferenceAircraft> = {}): ReferenceAircraft => ({
 const tmk: ReferencePilot = { id: 'TMK', code: 'TMK', name: 'Tomasz Małkiewicz', active: true, fetchedAt: 0 };
 
 class MemoryCredentials {
+  // Zgłoszenie rejestracyjne (logowanie Google) - nieużywane w tych testach.
+  loadRegistration = async (): Promise<null> => null;
+  saveRegistration = async (_registration: unknown): Promise<void> => {};
+  clearRegistration = async (): Promise<void> => {};
   private stored: StoredCredentials | null = CREDS;
   load = async () => this.stored;
   save = async (c: StoredCredentials) => {
@@ -68,6 +72,14 @@ class MemoryCredentials {
 
 /** Serwer-skrypt dla `getReference`: rejestruje tokeny i ETagi, odpowiada z kolejki. */
 class RefServer implements ServerPort {
+  async loginWithGoogle(): Promise<never> {
+    throw new Error('nieużywane w tych testach');
+  }
+
+  async registrationStatus(): Promise<never> {
+    throw new Error('nieużywane w tych testach');
+  }
+
   calls: { token: string; etag: string | null }[] = [];
   script: Array<ReferenceFetch | Error> = [];
   refreshCalls = 0;

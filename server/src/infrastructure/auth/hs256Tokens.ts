@@ -15,8 +15,10 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import type {
   Clock,
   Identity,
+  RegistrationIdentity,
   TokenService,
   VerifiedIdentity,
+  VerifiedRegistration,
 } from '../../application/common/ports.ts';
 import { DEFAULT_ROLE, isPilotRole } from '../../domain/roles.ts';
 
@@ -26,9 +28,25 @@ const b64url = (data: Buffer | string): string =>
 /** Stały nagłówek - jedyny, jaki podpisujemy i jedyny, jaki akceptujemy. */
 const HEADER = b64url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
 
+/** Jedyna wartość claimu `purpose`, jaką ten serwer wydaje i rozpoznaje. */
+const REGISTRATION_PURPOSE = 'registration';
+
 interface Claims {
   sub: string;
-  code: string;
+  code?: string;
+  /**
+   * PRZEZNACZENIE tokenu. Nieobecne = token pilota/panelu (tak wygląda każdy token
+   * wydany do 2026-09-04 i każdy wydany przez `sign`). `'registration'` = poświadczenie
+   * kogoś, kto NIE MA konta pilota i czeka na zatwierdzenie.
+   *
+   * Claim istnieje wyłącznie po to, żeby `verify` i `verifyRegistration` były ROZŁĄCZNE
+   * (patrz `TokenService` w portach). Kontrola nie może opierać się na tym, że token
+   * rejestracyjny nie niesie `code` - to prawda przypadkowa, którą pierwsza zmiana
+   * kształtu claimów cicho unieważni.
+   */
+  purpose?: string;
+  /** Dostawca tożsamości - wyłącznie w tokenie rejestracyjnym. */
+  prv?: string;
   /** Rola panelu. Nieobecna w tokenach wydanych przed wprowadzeniem ról - patrz `verify`. */
   role?: string;
   /**
@@ -57,20 +75,15 @@ export class Hs256Tokens implements TokenService {
     return createHmac('sha256', this.secret).update(input).digest();
   }
 
-  sign(claims: Identity, ttlSec: number): string {
-    const issuedAt = Math.floor(this.clock.now().getTime() / 1000);
-    const payload: Claims = {
-      sub: claims.pilotId,
-      code: claims.code,
-      role: claims.role,
-      iat: issuedAt,
-      exp: issuedAt + ttlSec,
-    };
-    const body = `${HEADER}.${b64url(JSON.stringify(payload))}`;
-    return `${body}.${this.hmac(body).toString('base64url')}`;
-  }
-
-  verify(token: string): VerifiedIdentity | null {
+  /**
+   * Wspólny rdzeń OBU weryfikacji: kształt koperty, podpis, `sub` i termin ważności.
+   *
+   * Jedna implementacja, bo to są własności KOPERTY, a nie przeznaczenia tokenu -
+   * druga kopia prędzej czy później zgubiłaby `timingSafeEqual` albo kontrolę `exp`
+   * po jednej stronie, a różnicy nie widać w żadnym teście funkcjonalnym. Co RÓŻNI
+   * te dwie drogi, rozstrzygają wołający: claim `purpose`.
+   */
+  private claimsOf(token: string): Claims | null {
     const parts = token.split('.');
     if (parts.length !== 3 || parts[0] !== HEADER) return null;
 
@@ -90,10 +103,63 @@ export class Hs256Tokens implements TokenService {
     } catch {
       return null;
     }
-    if (typeof claims.sub !== 'string' || typeof claims.code !== 'string') return null;
+    if (typeof claims.sub !== 'string') return null;
     if (typeof claims.exp !== 'number' || claims.exp * 1000 <= this.clock.now().getTime()) {
       return null;
     }
+    return claims;
+  }
+
+  sign(claims: Identity, ttlSec: number): string {
+    const issuedAt = Math.floor(this.clock.now().getTime() / 1000);
+    const payload: Claims = {
+      sub: claims.pilotId,
+      code: claims.code,
+      role: claims.role,
+      iat: issuedAt,
+      exp: issuedAt + ttlSec,
+    };
+    const body = `${HEADER}.${b64url(JSON.stringify(payload))}`;
+    return `${body}.${this.hmac(body).toString('base64url')}`;
+  }
+
+  signRegistration(claims: RegistrationIdentity, ttlSec: number): string {
+    const issuedAt = Math.floor(this.clock.now().getTime() / 1000);
+    const payload: Claims = {
+      sub: claims.subject,
+      prv: claims.provider,
+      purpose: REGISTRATION_PURPOSE,
+      iat: issuedAt,
+      exp: issuedAt + ttlSec,
+    };
+    const body = `${HEADER}.${b64url(JSON.stringify(payload))}`;
+    return `${body}.${this.hmac(body).toString('base64url')}`;
+  }
+
+  verifyRegistration(token: string): VerifiedRegistration | null {
+    const claims = this.claimsOf(token);
+    if (claims == null) return null;
+    // Odwrotna strona rozdziału: token PILOTA nie otwiera trasy zgłoszenia.
+    if (claims.purpose !== REGISTRATION_PURPOSE) return null;
+    if (typeof claims.prv !== 'string' || claims.prv === '') return null;
+    // `iat` jak w `verify`: brak → 0, czyli „wydany przed czasem" - przegrywa z każdym
+    // unieważnieniem poświadczeń konta, które ten token miałby otworzyć.
+    const issuedAt = typeof claims.iat === 'number' ? claims.iat : 0;
+    return { provider: claims.prv, subject: claims.sub, issuedAt };
+  }
+
+  verify(token: string): VerifiedIdentity | null {
+    const claims = this.claimsOf(token);
+    if (claims == null) return null;
+
+    // ══ TOKEN O INNYM PRZEZNACZENIU NIE JEST TOŻSAMOŚCIĄ ══
+    // Token rejestracyjny jest podpisany naszym sekretem, więc HMAC go przepuszcza -
+    // odróżnia je wyłącznie ten claim. Bez tej linii poświadczenie kogoś BEZ konta
+    // pilota otwierałoby trasy telefonu, a `POST /events` pisałby zdarzenia
+    // z `pilot_id`, za którym nikt nie stoi.
+    if (claims.purpose != null) return null;
+
+    if (typeof claims.code !== 'string') return null;
 
     // Rola nieznana → `pilot`, czyli zero uprawnień w panelu. Dotyczy tokenów wydanych
     // przed wprowadzeniem ról: mają poprawny podpis, więc odrzucenie wylogowałoby telefony
