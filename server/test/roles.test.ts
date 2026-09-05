@@ -377,8 +377,8 @@ describe('CHECK na `pilots.role`', () => {
   it('konto założone bez podanej roli dostaje `pilot`', async () => {
     const { db } = await testHarness();
     await db.query(
-      `INSERT INTO pilots (id, code, name, email, password_hash, active)
-       VALUES ('NEW', 'NEW', 'Nowe Konto', 'nowe@uzaero.pl', 'x', TRUE)`,
+      `INSERT INTO pilots (id, code, name, email, active)
+       VALUES ('NEW', 'NEW', 'Nowe Konto', 'nowe@uzaero.pl', TRUE)`,
     );
     const { rows } = await db.query<{ role: string }>(
       "SELECT role FROM pilots WHERE id = 'NEW'",

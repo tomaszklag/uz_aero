@@ -75,7 +75,7 @@ export interface PilotAccount {
  * Konto tak, jak widzi je BRAMA UPRAWNIEŃ panelu (`http/authorize.ts`) - bez hasha.
  *
  * Osobny typ od `PilotAccount` i to jest cała jego treść. `PilotAccount` istnieje dla
- * LOGOWANIA, więc niesie `passwordHash`; brama hasła nie weryfikuje, a mimo to czytała
+ * LOGOWANIA, więc niosło `passwordHash` (do 2026-09-04); brama hasła nie weryfikuje, a mimo to czytała
  * go przy KAŻDYM żądaniu panelu i wnosiła aż do warstwy HTTP (`AuthOutcome.account`).
  * Hash, który wjeżdża tam, gdzie nie jest potrzebny, prędzej czy później gdzieś się
  * zserializuje - jeden brak pola jest tańszy niż dyscyplina „pamiętaj, żeby go nie

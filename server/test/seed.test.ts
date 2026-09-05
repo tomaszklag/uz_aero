@@ -59,14 +59,18 @@ describe('seed (bootstrap wdrożenia)', () => {
     expect(can(account!.role, 'panel.access')).toBe(true);
   });
 
-  it('konto założone seedem NIE MA hasła - hasła zniknęły z produktu', async () => {
+  it('konto założone seedem NIE MA hasła - hasła zniknęły z produktu razem z kolumną', async () => {
+    // Seed pisał tu kiedyś `password_hash = NULL`; od migracji 7 kolumny nie ma wcale,
+    // więc jedyne, co da się sprawdzić, to że seed na takim schemacie w ogóle wchodzi
+    // i że nic nie próbuje tej kolumny przywrócić.
     const db = await freshDb();
     await seed(db, { adminEmail: ADMIN_EMAIL });
 
-    const { rows } = await db.query<{ password_hash: string | null }>(
-      `SELECT password_hash FROM pilots WHERE id = 'admin'`,
+    const { rows } = await db.query(
+      `SELECT column_name FROM information_schema.columns
+        WHERE table_name = 'pilots' AND column_name = 'password_hash'`,
     );
-    expect(rows[0]?.password_hash).toBeNull();
+    expect(rows).toEqual([]);
   });
 
   it('PIERWSZE logowanie kontem Google o tym e-mailu przejmuje konto admina', async () => {

@@ -38,8 +38,8 @@ export async function seed(db: Queryable, options: { adminEmail: string }): Prom
   // i serwer nie wstanie. Tak ma być: to jest błąd konfiguracji wdrożenia, a cichy
   // bootstrap wskazujący nie to konto, co trzeba, byłby dużo gorszy niż odmowa startu.
   await db.query(
-    `INSERT INTO pilots (id, code, name, email, password_hash, active, role)
-     VALUES ($1, $2, $3, $4, NULL, TRUE, $5)
+    `INSERT INTO pilots (id, code, name, email, active, role)
+     VALUES ($1, $2, $3, $4, TRUE, $5)
      ON CONFLICT (id) DO UPDATE SET
        code = EXCLUDED.code, name = EXCLUDED.name, email = EXCLUDED.email,
        role = EXCLUDED.role, updated_at = now()`,

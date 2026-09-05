@@ -2518,7 +2518,9 @@ model danych, ryzyka i etapy: **`docs/logowanie-google.md`**.
   Serwer: `GOOGLE_WEB_CLIENT_ID` (WYMAGANY - bez niego nie wstaje) i
   `GOOGLE_ANDROID_CLIENT_ID` (opcjonalny), `SEED_ADMIN_EMAIL` zamiast `SEED_PASSWORD`;
   `scryptHasher`, `startPassword`, reset hasła i `PilotSecretDto` USUNIĘTE po obu
-  stronach. **Zerwanie sesji ma odtąd jedną drogę: deaktywację** (+ ponowne włączenie;
+  stronach; **kolumna `pilots.password_hash` USUNIĘTA migracją 7** (`DROP COLUMN` -
+  decyzja o bazie od zera 2026-09-05; pierwsza wersja zostawiała ją nullowalną „bo
+  produkcja"). **Zerwanie sesji ma odtąd jedną drogę: deaktywację** (+ ponowne włączenie;
   `setActive` przesuwa `credentials_valid_from`, aktywacja go nie cofa) - reset hasła
   był drugą i zniknął razem z hasłem. Panel: kolejka zgłoszeń NAD listą pilotów
   wyłącznie gdy ktoś czeka (pusta nie dostaje karty z zerem - reguła SyncChipa),

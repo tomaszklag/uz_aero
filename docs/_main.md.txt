@@ -893,7 +893,7 @@ ze strumienia zdarzeń - przy kilkuset zdarzeniach dziennie tabele agregujące s
 ### 5.3 PostgreSQL (serwer)
 
 ```
-pilots       - id, kod, imię i nazwisko, e-mail, password_hash (wycofany), active, role
+pilots       - id, kod, imię i nazwisko, e-mail, active, role (bez hasła - kolumna usunięta migracją 7)
                (konto zakłada administrator, zatwierdzając zgłoszenie rejestracyjne)
 external_identities - (provider, subject) → pilot_id; status pending|linked|rejected
                (rejestracja Google; BRAK wiersza w pilots = brak dostępu do czegokolwiek)

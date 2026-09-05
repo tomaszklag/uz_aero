@@ -330,13 +330,9 @@ describe('POST /admin/api/pilots - zakładanie konta', () => {
       role: 'pilot',
       email: 'k.zawadzka@uzaero.pl',
     });
-
-    // Konto NIE MA hasha - hasła zniknęły z produktu, a nie „są puste".
-    const stored = await db.query<{ password_hash: string | null }>(
-      'SELECT password_hash FROM pilots WHERE id = $1',
-      [pilot.id],
-    );
-    expect(stored.rows[0]?.password_hash).toBeNull();
+    // Hasha nie ma gdzie sprawdzać: kolumna `password_hash` zniknęła migracją 7
+    // (pilnuje tego lista kolumn w `schema.test.ts`), więc konto bez poświadczenia
+    // jest tu jedynym możliwym kształtem, a nie stanem do udowodnienia.
   });
 
   it('zajęty kod i zajęty e-mail → 409 z NAZWĄ pola, nie „naruszenie unikalności"', async () => {

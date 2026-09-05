@@ -708,9 +708,13 @@ export const MIGRATION_6 = `
  * `subject` (`sub` od dostawcy) jest STAŁY; e-mail bywa po tamtej stronie zmieniany.
  * Para w kluczu głównym otwiera też drogę Apple i Facebookowi bez zmiany modelu.
  *
- * Zmiana ADDYTYWNA wobec bazy produkcyjnej. `password_hash` schodzi na NULL-owalny
- * i przestaje być zapisywany - kolumny NIE kasujemy w tej iteracji, bo `DROP COLUMN`
- * jest nieodwracalny w chwili, gdy nowa droga logowania dopiero się sprawdza.
+ * ══ `password_hash` ZNIKA (`DROP COLUMN`) ══
+ * Pierwsza wersja tej migracji zostawiała kolumnę nullowalną „bo baza produkcyjna,
+ * migracje addytywne". Decyzja właściciela z 2026-09-05: baza produkcyjna staje przy
+ * wdrożeniu OD ZERA, więc nie ma hashy, które warto by przechować - a hasło nie ma już
+ * w produkcie ŻADNEJ drogi logowania. Na bazie z danymi ta migracja kasuje hashe
+ * bezpowrotnie i to jest zamierzone: hash bez ścieżki, która go sprawdza, jest wyłącznie
+ * sekretem do wycieku.
  */
 export const MIGRATION_7 = `
   CREATE TABLE IF NOT EXISTS external_identities (
@@ -755,9 +759,9 @@ export const MIGRATION_7 = `
   CREATE INDEX IF NOT EXISTS idx_external_identities_status
     ON external_identities (status, created_at, subject);
 
-  -- Hasło przestaje być wymagane: konto założone przez zatwierdzenie zgłoszenia
-  -- nie ma i nie będzie miało hasha.
-  ALTER TABLE pilots ALTER COLUMN password_hash DROP NOT NULL;
+  -- Hasła zniknęły z produktu razem z kolumną (patrz docblock). \`IF EXISTS\` trzyma
+  -- idempotencję na wypadek powtórnego przebiegu na bazie już zmigrowanej.
+  ALTER TABLE pilots DROP COLUMN IF EXISTS password_hash;
 `;
 
 export const MIGRATIONS: readonly string[] = [

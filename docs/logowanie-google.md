@@ -74,12 +74,15 @@ dostępu: **zatwierdzone ⟺ ma konto**. Bez niego dałoby się zapisać stan �
 pilota" albo „pending z pilotem" i pytanie „czy wolno mu wejść" miałoby dwie
 odpowiedzi zależnie od tego, którą kolumnę ktoś przeczytał.
 
-### 3.2 `pilots.password_hash` → NULL i koniec zapisu
+### 3.2 `pilots.password_hash` - kolumna USUNIĘTA (migracja 7)
 
-Kolumna staje się nullowalna i **nikt jej już nie wypełnia**. Nie kasujemy jej
-w tej iteracji: baza jest produkcyjna (migracje wyłącznie addytywne), a `DROP COLUMN`
-jest nieodwracalny w chwili, gdy nowa droga dopiero się sprawdza. Skasowanie -
-osobną migracją, gdy Google przeżyje sezon.
+Pierwsza wersja (2026-09-04) zostawiała kolumnę nullowalną i niewypełnianą: baza była
+produkcyjna (migracje wyłącznie addytywne), a `DROP COLUMN` jest nieodwracalny.
+**Decyzja właściciela z 2026-09-05 - baza produkcyjna staje przy wdrożeniu od zera -
+zdjęła ten powód**, więc migracja 7 robi `DROP COLUMN IF EXISTS password_hash`. Na bazie
+z danymi kasuje hashe bezpowrotnie i to jest zamierzone: hasło nie ma już w produkcie
+żadnej drogi logowania, a hash bez ścieżki, która go sprawdza, jest wyłącznie sekretem
+do wycieku.
 
 Znikają za to ze ścieżki logowania: `ScryptHasher`, `startPassword.ts`,
 `SEED_PASSWORD`, reset hasła w panelu (`refusePasswordReset`, `A06a`),

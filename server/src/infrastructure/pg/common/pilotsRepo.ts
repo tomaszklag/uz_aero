@@ -48,7 +48,8 @@ export class PgPilotsRepo implements PilotsPort {
   }
 
   /**
-   * Odczyt BRAMY panelu - kolumny wypisane imiennie i bez `password_hash`.
+   * Odczyt BRAMY panelu - kolumny wypisane imiennie. Powstało po to, żeby pominąć
+   * `password_hash`; kolumna zniknęła migracją 7, a jawna lista zostaje z drugiego powodu:
    *
    * `SELECT *` z `findById` jest tu nie do przyjęcia z dwóch powodów naraz: wnosiłby
    * hash do warstwy HTTP przy każdym żądaniu panelu (a `PilotAuthSnapshot` powstał
