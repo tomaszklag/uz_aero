@@ -136,6 +136,17 @@ rejestracyjny przeszedłby dzisiejszą weryfikację (wymaga `sub` i `code` - obu
 się dostarczyć) i byłby ważną tożsamością wskazującą nieistniejące konto, czyli
 `POST /events` pisałby zdarzenia z `pilot_id`, za którym nikt nie stoi.
 
+**Wydaje tokeny pilota DOKŁADNIE RAZ i respektuje unieważnienie** (poprawka po
+audycie 2026-09-05, §14). Pierwsza wersja odpowiadała `approved` + świeżą parą tokenów
+przy KAŻDYM wywołaniu przez 30 dni życia tokenu - skopiowany token rejestracyjny był
+więc fabryką refreshów, której nie zrywała nawet deaktywacja konta (jedyna droga
+unieważnienia po usunięciu haseł). Odtąd dwie bramy w `registrationStatus`:
+`last_login_at` tożsamości ustawione (ktoś już wszedł na to konto - tym tokenem albo
+Googlem) → `404`; token wydany przed `credentials_valid_from` konta → `404` (ta sama
+reguła, co brama panelu). Telefon na `404` czyści zgłoszenie i pokazuje logowanie,
+a zwykłe wejście przez Google to jedno tapnięcie - token po pierwszym użyciu nie ma
+już czego otwierać.
+
 ## 6. Bootstrap i podpięcie istniejących kont - claim po zweryfikowanym e-mailu
 
 Problem kury i jajka: po usunięciu haseł nikt nie wchodzi do panelu, więc nie ma kto
@@ -150,8 +161,14 @@ Ta sama mechanika obsługuje oba przypadki naraz:
 
 - **administrator**: `SEED_ADMIN_EMAIL` w seedzie zakłada konto `admin` z tym adresem
   (bez hasła), a pierwsze logowanie Googlem je przejmuje;
-- **dotychczasowi testerzy**: administrator wpisuje im e-mail w panelu (A06/A07 już
-  to pole ma) przed pierwszym logowaniem - konta i cała ich historia lotów zostają.
+- **konto założone w panelu ZANIM pilot zaloguje się pierwszy raz**: administrator
+  zakłada je w A06 z adresem Google pilota (albo dopisuje adres do konta, które już
+  czeka na zgłoszenie - §6 niżej), a pierwsze logowanie podpina się bez kolejki.
+
+Pierwsza wersja tego dokumentu wymieniała tu jeszcze „dotychczasowych testerów" -
+przeniesienie kont z hasłami razem z historią lotów. **Nieaktualne od 2026-09-05:
+baza produkcyjna staje przy wdrożeniu OD ZERA** (decyzja właściciela), więc kont do
+przeniesienia nie ma, a mechanika zostaje dla dwóch przypadków wyżej.
 
 Warunki przejęcia, wszystkie konieczne:
 
@@ -165,6 +182,14 @@ Warunki przejęcia, wszystkie konieczne:
    zatwierdzić - zakładając osobie, którą właśnie wyłączył, drugie konto;
 3. to konto nie ma jeszcze żadnej tożsamości zewnętrznej.
 
+Podpięcie próbujemy przy tożsamości **nieznanej I przy zgłoszeniu `pending`**
+(poprawka po audycie 2026-09-05, §14). Pierwsza wersja próbowała wyłącznie dla
+nieznanej - więc administrator, który zamiast zatwierdzać zgłoszenie wpisał adres
+w istniejącym koncie (dokładnie to radzi panel przy konflikcie e-maila), zostawiał
+człowieka w kolejce na zawsze: wiersz `pending` już był. Jedna instrukcja
+`INSERT … ON CONFLICT (provider, subject) DO UPDATE … WHERE status = 'pending'`
+obsługuje oba przypadki; zgłoszenie `rejected` NIE podpina się - decyzja zapadła.
+
 **To jedyne miejsce w systemie, w którym e-mail cokolwiek uwierzytelnia**, i stoi
 na tym, że `pilots.email` wpisuje wyłącznie administrator w panelu albo seed - czyli
 jest to lista dopuszczonych pod kontrolą administratora, a nie dane od użytkownika.
@@ -174,7 +199,11 @@ w logowaniu nigdy więcej.
 ## 7. Przepływ logowania
 
 `POST /auth/google { idToken }` → weryfikacja podpisu tokenu kluczami JWKS Google,
-sprawdzenie `iss`, `aud` (nasz client ID) i `exp`, a potem szukanie `(google, sub)`:
+sprawdzenie `iss`, `aud` i `exp`, a potem szukanie `(google, sub)`. **`aud` jest
+sprawdzane PER POWIERZCHNIA** (poprawka po audycie 2026-09-05, §14): trasa telefonu
+przyjmuje wyłącznie token klienta Android, trasa panelu wyłącznie token klienta Web.
+Jeden zbiór dla obu pozwalał wymienić token zdobyty w przeglądarce na trasie telefonu
+na 90-dniowy refresh, którego panel z założenia nie dostaje (§8.4):
 
 **`nonce` sprawdza APLIKACJA, nie serwer** - i to jest decyzja, nie przeoczenie.
 `nonce` broni przed powtórzeniem odpowiedzi autoryzacyjnej, a weryfikuje go ten, KTO
@@ -188,6 +217,7 @@ Kontrola po tej stronie wymagałaby, żeby to serwer wydawał nonce i pamiętał
 |---|---|
 | brak wiersza, e-mail pasuje do konta (§6) | `200` + tokeny pilota; tożsamość `linked` |
 | brak wiersza, e-mail nie pasuje | `202` + token rejestracyjny; nowy wiersz `pending` |
+| `pending`, e-mail pasuje do konta (§6) | `200` + tokeny pilota; wiersz przechodzi w `linked` |
 | `pending` | `202` + token rejestracyjny |
 | `rejected` | `403 registration_rejected` + powód |
 | `linked`, konto `active` | `200` + tokeny pilota (istniejące `issueFor`) |
@@ -271,9 +301,12 @@ To jest druga powierzchnia i osobna konfiguracja w Google Cloud - nie „przy ok
   adres przekaźnikiem, Facebook historycznie zwracał niezweryfikowane). Przejęcie
   konta z §6 zostaje **wyłącznie dla Google**, dopóki nie sprawdzimy tego per dostawca.
   Automatyczne łączenie kont po niezweryfikowanym e-mailu to klasyczne przejęcie konta.
-- **Testerzy stracą dostęp w dniu wdrożenia**, jeśli nie będą mieli wpisanego e-maila.
-  Kolejność wdrożenia jest więc sztywna: najpierw uzupełnić e-maile w panelu, potem
-  wypuścić serwer, potem build.
+- ~~**Testerzy stracą dostęp w dniu wdrożenia**, jeśli nie będą mieli wpisanego
+  e-maila~~ - **ryzyko ZDJĘTE 2026-09-05**: baza produkcyjna staje od zera, więc nie ma
+  kont, które mogłyby stracić dostęp. Kolejność wdrożenia upraszcza się do: pusta baza →
+  seed z `SEED_ADMIN_EMAIL` → serwer → build. Piloci zgłaszają się z aplikacji i czekają
+  na zatwierdzenie w A06, albo administrator zakłada im konta z e-mailem Google
+  zawczasu i wtedy pierwsze logowanie podpina się bez kolejki (§6).
 
 ## 12. Co musi zrobić właściciel (poza kodem)
 
@@ -290,6 +323,10 @@ To jest druga powierzchnia i osobna konfiguracja w Google Cloud - nie „przy ok
    „Authorized JavaScript origins" - bez tego skrypt Google odmówi narysowania przycisku.
 3. Publiczny adres polityki prywatności - wymagany przez ekran zgody.
 4. `SEED_ADMIN_EMAIL` na Railway przed uruchomieniem seeda.
+5. **Pusta baza** (decyzja 2026-09-05): nowa usługa Postgres albo wyczyszczona
+   dotychczasowa - migracje 1–7 i seed wchodzą na czysto, jedynym kontem jest `admin`,
+   flotę i konta pilotów zakłada się w panelu. Kopii starych kont ani ich historii
+   nie przenosimy.
 
 ## 13. Etapy
 
@@ -314,4 +351,30 @@ To jest druga powierzchnia i osobna konfiguracja w Google Cloud - nie „przy ok
   00A (jeden przycisk) i 00C/00D (jeden ekran, dwa stany, puls jak w pętli synca),
   znak Google jako czysty komponent RN (bez SVG). Testy: `AuthService` na atrapach
   portów, `loginMessage`, `registrationView`.
-- **E - wdrożenie**: e-maile w panelu → serwer → build, w tej kolejności.
+- **E - wdrożenie**: pusta baza → seed z `SEED_ADMIN_EMAIL` → serwer → build.
+  (Do 2026-09-05 pierwszym krokiem było „e-maile dotychczasowych kont w panelu" -
+  zdjęte razem z decyzją o bazie od zera, §11.)
+
+## 14. Weryfikacja po wdrożeniu kodu (2026-09-05)
+
+Przegląd bezpieczeństwa gałęzi przed wdrożeniem (zlecenie właściciela: „zrób w tym
+czasie weryfikację tego rozwiązania"). Trzy ustalenia, każde z testem, który padał
+na kodzie sprzed poprawki:
+
+| # | waga | ustalenie | poprawka |
+|---|---|---|---|
+| 1 | średnia | `GET /auth/registration` po zatwierdzeniu wydawało ŚWIEŻĄ parę tokenów przy każdym wywołaniu przez 30 dni, bez kontroli `credentials_valid_from` - skopiowany token rejestracyjny był fabryką refreshów, której nie zrywała deaktywacja konta (jedyna droga unieważnienia po usunięciu haseł) | tokeny wydawane RAZ: `last_login_at` tożsamości ustawione → `404`; token starszy niż `credentials_valid_from` → `404` (§5) |
+| 2 | niska | jeden weryfikator z sumą odbiorców Web + Android: token z `aud` klienta Web (kontekst przeglądarki, sesja 8 h bez refresha) przechodził na `POST /auth/google` i dawał 90-dniowy refresh - sprzeczne z §8.4 | `verifyIdToken(token, surface)`: telefon przyjmuje wyłącznie klienta Android, panel wyłącznie Web (§7) |
+| 3 | poprawność | po powstaniu wiersza `pending` podpięcie po e-mailu nie było już próbowane, więc rada panelu „wpisz adres w istniejącym koncie zamiast zatwierdzać" nie działała | podpięcie także dla `pending`, jednym `INSERT … ON CONFLICT DO UPDATE … WHERE status = 'pending'` (§6) |
+
+Czego przegląd NIE zakwestionował (sprawdzone celowo): rozłączność `verify` /
+`verifyRegistration` (§5), brama `accounts.manage` na odczycie kolejki, zatwierdzenie
+w jednej transakcji z audytem, CSP panelu z jednym obcym originem, brak `nonce` po
+stronie serwera (§7), podpięcie konta WYŁĄCZONEGO (§6 pkt 2).
+
+Poza kodem: weryfikator był uruchomiony przeciwko prawdziwemu JWKS Google
+(`https://www.googleapis.com/oauth2/v3/certs` - pobranie, `Cache-Control`, cache
+między wywołaniami, odmowa dla nieznanego `kid` i dla obcego podpisu pod prawdziwym
+`kid`), a migracja 7 przeciwko prawdziwemu Postgresowi na świeżej bazie. Logowanie
+z urządzenia i panelu z prawdziwym kontem Google czeka na konfigurację Google Cloud
+(§12) - to jedyna część, której testy nie zastępują.

@@ -30,6 +30,7 @@ import { createPublicKey, createVerify, type KeyObject } from 'node:crypto';
 import type {
   Clock,
   IdentityProviderPort,
+  LoginSurface,
   ProviderProfile,
 } from '../../application/common/ports.ts';
 
@@ -98,22 +99,29 @@ export class GoogleIdTokens implements IdentityProviderPort {
   private inFlight: Promise<Jwk[] | null> | null = null;
 
   /**
-   * @param audiences NASZE identyfikatory klienta - Web i Android mają OSOBNE, a token
-   *   niesie ten, dla którego został wydany. Zbiór, nie pojedyncza wartość, bo obie
-   *   powierzchnie logują się do tego samego serwera.
+   * @param audiences NASZE identyfikatory klienta PER POWIERZCHNIA: panel loguje się
+   *   klientem Web, telefon klientem Android, a token niesie ten, dla którego został
+   *   wydany. Rozdział jest kontrolą, nie porządkiem (audyt 2026-09-05): jeden zbiór
+   *   dla obu powierzchni pozwalał wymienić token zdobyty w przeglądarce na trasie
+   *   telefonu na 90-dniowy refresh, którego panel z założenia nie dostaje (§8.4).
+   *   `mobile: null` = klient Android jeszcze nie skonfigurowany - telefon dostaje wtedy
+   *   odmowę, ale serwer wstaje i panel działa.
    */
   constructor(
-    private readonly audiences: readonly string[],
+    private readonly audiences: { panel: string; mobile: string | null },
     private readonly clock: Clock,
     private readonly fetchJwks: JwksFetch = defaultJwksFetch,
   ) {
-    if (audiences.length === 0) {
-      // Pusty zbiór odbiorców przepuszczałby KAŻDY token Google - lepiej nie wstać.
-      throw new Error('GoogleIdTokens: potrzebny co najmniej jeden GOOGLE_CLIENT_ID.');
+    if (audiences.panel === '') {
+      // Pusty odbiorca przepuszczałby KAŻDY token Google - lepiej nie wstać.
+      throw new Error('GoogleIdTokens: potrzebny GOOGLE_WEB_CLIENT_ID.');
     }
   }
 
-  async verifyIdToken(idToken: string): Promise<ProviderProfile | null> {
+  async verifyIdToken(idToken: string, surface: LoginSurface): Promise<ProviderProfile | null> {
+    const expectedAudience = surface === 'panel' ? this.audiences.panel : this.audiences.mobile;
+    if (expectedAudience == null) return null;
+
     const parts = idToken.split('.');
     if (parts.length !== 3) return null;
 
@@ -136,7 +144,7 @@ export class GoogleIdTokens implements IdentityProviderPort {
     if (claims == null) return null;
 
     if (typeof claims.iss !== 'string' || !ISSUERS.has(claims.iss)) return null;
-    if (typeof claims.aud !== 'string' || !this.audiences.includes(claims.aud)) return null;
+    if (typeof claims.aud !== 'string' || claims.aud !== expectedAudience) return null;
     if (typeof claims.sub !== 'string' || claims.sub === '') return null;
 
     const nowSec = Math.floor(this.clock.now().getTime() / 1000);

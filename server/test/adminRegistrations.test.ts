@@ -154,6 +154,18 @@ describe('POST .../approve - zatwierdzenie ZAKŁADA konto', () => {
     const after = await db.query<{ count: unknown }>('SELECT count(*) AS count FROM pilots');
     expect(Number(after.rows[0]?.count)).toBe(Number(before.rows[0]?.count) + 1);
 
+    // Ekran `00c` dowiaduje się o zatwierdzeniu tokenem rejestracyjnym, bez Google
+    // od nowa - i dostaje tokeny pilota. RAZ (audyt 2026-09-05): kolejne wywołanie
+    // tym samym tokenem jest martwe, bo ktoś już na to konto wszedł.
+    const status = await app.inject({
+      method: 'GET',
+      url: '/auth/registration',
+      headers: { authorization: `Bearer ${registrationToken}` },
+    });
+    expect(status.statusCode).toBe(200);
+    expect(status.json().status).toBe('approved');
+    expect(status.json().tokens.pilot.code).toBe('JNO');
+
     // I to jest cała treść przekroju: TO SAMO konto Google wchodzi teraz do aplikacji.
     const login = await app.inject({
       method: 'POST',
@@ -163,15 +175,65 @@ describe('POST .../approve - zatwierdzenie ZAKŁADA konto', () => {
     expect(login.statusCode).toBe(200);
     expect(login.json().pilot).toMatchObject({ id: pilot.id, code: 'JNO', role: 'pilot' });
 
-    // …a ekran `00c` dowiaduje się o tym tokenem rejestracyjnym, bez Google od nowa.
-    const status = await app.inject({
+    const again = await app.inject({
       method: 'GET',
       url: '/auth/registration',
       headers: { authorization: `Bearer ${registrationToken}` },
     });
-    expect(status.statusCode).toBe(200);
-    expect(status.json().status).toBe('approved');
-    expect(status.json().tokens.pilot.code).toBe('JNO');
+    expect(again.statusCode).toBe(404);
+  });
+
+  it('zgłoszenie CZEKA, a administrator zakłada konto z tym e-mailem - następne logowanie podpina', async () => {
+    // Audyt 2026-09-05: rada panelu przy konflikcie e-maila brzmi „wpisz ten adres
+    // w istniejącym koncie zamiast zatwierdzać zgłoszenie". Pierwsza wersja `resolve`
+    // próbowała podpięcia wyłącznie dla konta NIEZNANEGO - wiersz `pending` już był,
+    // więc człowiek zostawał w kolejce na zawsze.
+    const { app } = await testHarness();
+    const token = await tokenOf(app, 'TMK');
+    await applyAs(app, 'nowak');
+
+    const created = await app.inject({
+      method: 'POST',
+      url: '/admin/api/pilots',
+      headers: admin(token),
+      payload: { code: 'JNO', name: 'Jan Nowak', email: 'nowak@gmail.com', role: 'pilot' },
+    });
+    expect(created.statusCode).toBe(201);
+
+    const login = await app.inject({
+      method: 'POST',
+      url: '/auth/google',
+      payload: { idToken: googleTokenForStranger('nowak') },
+    });
+    expect(login.statusCode).toBe(200);
+    expect(login.json().pilot.code).toBe('JNO');
+
+    // Zgłoszenie zniknęło z kolejki - jest podpięte, nie „czekające".
+    const queue = await list(app, token);
+    expect(queue.json().items).toEqual([]);
+    expect(queue.json().counts.pending).toBe(0);
+  });
+
+  it('zgłoszenie ODRZUCONE nie podpina się po e-mailu - decyzja zapadła', async () => {
+    const { app } = await testHarness();
+    const token = await tokenOf(app, 'TMK');
+    await applyAs(app, 'nowak');
+    await reject(app, token, 'nowak', { reason: 'nie z klubu' });
+
+    await app.inject({
+      method: 'POST',
+      url: '/admin/api/pilots',
+      headers: admin(token),
+      payload: { code: 'JNO', name: 'Jan Nowak', email: 'nowak@gmail.com', role: 'pilot' },
+    });
+
+    const login = await app.inject({
+      method: 'POST',
+      url: '/auth/google',
+      payload: { idToken: googleTokenForStranger('nowak') },
+    });
+    expect(login.statusCode).toBe(403);
+    expect(login.json().error).toBe('registration_rejected');
   });
 
   it('konto z rolą admin też da się założyć z zgłoszenia - i od razu wchodzi do panelu', async () => {

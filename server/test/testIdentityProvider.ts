@@ -14,7 +14,11 @@
  * tam, gdzie kończy się nasza decyzja, a zaczyna cudza biblioteka.
  */
 
-import type { IdentityProviderPort, ProviderProfile } from '../src/application/common/ports.ts';
+import type {
+  IdentityProviderPort,
+  LoginSurface,
+  ProviderProfile,
+} from '../src/application/common/ports.ts';
 import { TEST_PILOTS } from './testWorld.ts';
 
 /**
@@ -37,7 +41,12 @@ export class TestIdentityProvider implements IdentityProviderPort {
     this.extra.set(token, profile);
   }
 
-  async verifyIdToken(idToken: string): Promise<ProviderProfile | null> {
+  /**
+   * Powierzchnia jest tu IGNOROWANA celowo: atrapa sprawdza, co dzieje się PO
+   * weryfikacji, a rozdział odbiorców per powierzchnia testuje `googleIdTokens.test.ts`
+   * na prawdziwym weryfikatorze.
+   */
+  async verifyIdToken(idToken: string, _surface: LoginSurface): Promise<ProviderProfile | null> {
     const own = this.extra.get(idToken);
     if (own != null) return own;
 

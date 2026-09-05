@@ -629,7 +629,7 @@ administratora/szefa wyszkolenia, nie w kokpicie).
 | Metoda | Endpoint | Cel |
 |--------|----------|-----|
 | POST | `/auth/google` | token Google → JWT sesji + refresh token; nieznane konto = zgłoszenie do zatwierdzenia (202) |
-| GET | `/auth/registration` | stan zgłoszenia dla ekranu `00c` (token rejestracyjny, NIE token pilota - patrz 3.0) |
+| GET | `/auth/registration` | stan zgłoszenia dla ekranu `00c` (token rejestracyjny, NIE token pilota - patrz 3.0); po zatwierdzeniu wydaje tokeny pilota DOKŁADNIE RAZ i odmawia tokenowi starszemu niż `credentials_valid_from` konta (`docs/logowanie-google.md` §5, §14) |
 | POST | `/auth/refresh` | odświeżenie JWT (refresh długożyciowy - patrz 3.0) |
 | GET | `/reference` | samoloty + konfiguracje + piloci + claim/przekazanie per samolot; ETag (flota **i** operacje) do cache |
 | GET | `/aircraft/:id/state` | aktywny claim (kto, od kiedy), najświeższy znany stan FOB + MH - wyliczony z ostatnich zsynchronizowanych zdarzeń (przekazanie ze **zdania samolotu**, opcjonalny odczyt z `leg_close`, lub zdarzenia w trakcie operacji, np. tankowanie), `last_sync_at` |

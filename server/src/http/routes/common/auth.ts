@@ -62,7 +62,11 @@ export function registerAuthRoutes(app: FastifyInstance, auth: AuthCommands): vo
     const identity = raw == null ? null : auth.verifyRegistrationToken(raw);
     if (identity == null) return reply.code(401).send({ error: 'unauthorized' });
 
-    const status = await auth.registrationStatus(identity.provider, identity.subject);
+    const status = await auth.registrationStatus(
+      identity.provider,
+      identity.subject,
+      identity.issuedAt,
+    );
     if (status.kind === 'unknown') return reply.code(404).send({ error: 'not_found' });
     if (status.kind === 'approved') {
       // Zatwierdzono w międzyczasie - pilot wchodzi do aplikacji BEZ ponownego

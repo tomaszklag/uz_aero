@@ -165,6 +165,15 @@ export interface RegistrationIdentity {
   subject: string;
 }
 
+/**
+ * Tożsamość zgłoszenia ODCZYTANA z tokenu razem z chwilą wydania (jak `VerifiedIdentity`).
+ * `issuedAt` = `iat` w sekundach epoki; `0` = brak claimu, czyli „wydany przed czasem" -
+ * domyślna wartość odbiera dostęp, nigdy go nie przyznaje.
+ */
+export interface VerifiedRegistration extends RegistrationIdentity {
+  issuedAt: number;
+}
+
 export interface TokenService {
   /** Zwraca podpisany token dostępu dla pilota. */
   sign(claims: Identity, ttlSec: number): string;
@@ -185,7 +194,7 @@ export interface TokenService {
    * za którym nikt nie stoi. Podpis HMAC tego nie łapie: token jest nasz, tylko
    * wystawiony w innym celu.
    */
-  verifyRegistration(token: string): RegistrationIdentity | null;
+  verifyRegistration(token: string): VerifiedRegistration | null;
 }
 
 /**
@@ -228,6 +237,12 @@ export interface ExternalIdentity {
   createdAt: Date;
   /** Chwila decyzji administratora; `null` dopóki zgłoszenie czeka. Ekran `00d` ją cytuje. */
   decidedAt: Date | null;
+  /**
+   * Pierwsze/ostatnie wejście na konto tą tożsamością. Dla tokenu rejestracyjnego to
+   * JEDNORAZOWOŚĆ: ustawione znaczy „ktoś już wszedł" (tym tokenem albo Googlem), więc
+   * skopiowany token nie może być fabryką kolejnych par tokenów (audyt 2026-09-05).
+   */
+  lastLoginAt: Date | null;
 }
 
 /**
@@ -251,9 +266,18 @@ export interface ProviderProfile {
  * klucze Google przez sieć, a testy podstawiają weryfikator z kluczem w procesie.
  * Bez tego każdy test logowania wymagałby internetu i cudzej infrastruktury.
  */
+/**
+ * KTÓRA powierzchnia pyta - rozstrzyga dopuszczalne `aud` tokenu. Telefon loguje się
+ * klientem Android, panel klientem Web; token jednej powierzchni NIE otwiera drugiej.
+ * Bez tego rozdziału token zdobyty w kontekście przeglądarki (8-godzinna sesja bez
+ * refresha, §8.4) dałoby się wymienić na trasie telefonu na 90-dniowy refresh
+ * (audyt 2026-09-05).
+ */
+export type LoginSurface = 'mobile' | 'panel';
+
 export interface IdentityProviderPort {
-  /** `null` = token nieważny (podpis, `iss`, `aud`, termin). Nigdy nie rzuca z powodu treści. */
-  verifyIdToken(idToken: string): Promise<ProviderProfile | null>;
+  /** `null` = token nieważny (podpis, `iss`, `aud` dla tej powierzchni, termin). Nigdy nie rzuca z powodu treści. */
+  verifyIdToken(idToken: string, surface: LoginSurface): Promise<ProviderProfile | null>;
 }
 
 export interface ExternalIdentitiesPort {

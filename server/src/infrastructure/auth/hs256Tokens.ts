@@ -18,6 +18,7 @@ import type {
   RegistrationIdentity,
   TokenService,
   VerifiedIdentity,
+  VerifiedRegistration,
 } from '../../application/common/ports.ts';
 import { DEFAULT_ROLE, isPilotRole } from '../../domain/roles.ts';
 
@@ -135,13 +136,16 @@ export class Hs256Tokens implements TokenService {
     return `${body}.${this.hmac(body).toString('base64url')}`;
   }
 
-  verifyRegistration(token: string): RegistrationIdentity | null {
+  verifyRegistration(token: string): VerifiedRegistration | null {
     const claims = this.claimsOf(token);
     if (claims == null) return null;
     // Odwrotna strona rozdziału: token PILOTA nie otwiera trasy zgłoszenia.
     if (claims.purpose !== REGISTRATION_PURPOSE) return null;
     if (typeof claims.prv !== 'string' || claims.prv === '') return null;
-    return { provider: claims.prv, subject: claims.sub };
+    // `iat` jak w `verify`: brak → 0, czyli „wydany przed czasem" - przegrywa z każdym
+    // unieważnieniem poświadczeń konta, które ten token miałby otworzyć.
+    const issuedAt = typeof claims.iat === 'number' ? claims.iat : 0;
+    return { provider: claims.prv, subject: claims.sub, issuedAt };
   }
 
   verify(token: string): VerifiedIdentity | null {

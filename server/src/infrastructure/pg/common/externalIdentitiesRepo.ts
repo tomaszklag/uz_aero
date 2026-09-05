@@ -26,6 +26,7 @@ interface IdentityRow {
   reject_reason: string | null;
   created_at: string | Date;
   decided_at: string | Date | null;
+  last_login_at: string | Date | null;
 }
 
 const STATUSES: readonly IdentityStatus[] = ['pending', 'linked', 'rejected'];
@@ -44,10 +45,11 @@ const toIdentity = (r: IdentityRow): ExternalIdentity => ({
   rejectReason: r.reject_reason,
   createdAt: new Date(r.created_at),
   decidedAt: r.decided_at == null ? null : new Date(r.decided_at),
+  lastLoginAt: r.last_login_at == null ? null : new Date(r.last_login_at),
 });
 
 const COLUMNS =
-  'provider, subject, pilot_id, email, name, status, reject_reason, created_at, decided_at';
+  'provider, subject, pilot_id, email, name, status, reject_reason, created_at, decided_at, last_login_at';
 
 export class PgExternalIdentitiesRepo implements ExternalIdentitiesPort {
   constructor(private readonly db: Queryable) {}
@@ -92,6 +94,13 @@ export class PgExternalIdentitiesRepo implements ExternalIdentitiesPort {
     // mógłby zatwierdzić - zakładając osobie, którą właśnie wyłączył, drugie konto.
     // Tożsamość Google JEST tego człowieka niezależnie od stanu konta; odmowę
     // („account_disabled") orzeka komenda po podpięciu.
+    //
+    // ZGŁOSZENIE OCZEKUJĄCE też się podpina (`ON CONFLICT … DO UPDATE … WHERE
+    // status = 'pending'`) - poprawka po audycie 2026-09-05. Bez tego administrator,
+    // który zamiast zatwierdzać zgłoszenie wpisał adres w ISTNIEJĄCYM koncie (rada
+    // panelu przy konflikcie e-maila), zostawiał człowieka w kolejce na zawsze:
+    // wiersz `pending` już był, więc następne logowanie nigdy nie próbowało podpięcia.
+    // Odrzuconego NIE podpinamy - decyzja zapadła; `WHERE` przepuszcza wyłącznie `pending`.
     const { rows } = await this.db.query<IdentityRow>(
       `INSERT INTO external_identities (provider, subject, pilot_id, email, name, status)
        SELECT $1, $2, p.id, $3, $4, 'linked'
@@ -100,7 +109,10 @@ export class PgExternalIdentitiesRepo implements ExternalIdentitiesPort {
           AND NOT EXISTS (
                 SELECT 1 FROM external_identities e WHERE e.pilot_id = p.id
               )
-       ON CONFLICT (provider, subject) DO NOTHING
+       ON CONFLICT (provider, subject) DO UPDATE
+         SET pilot_id = EXCLUDED.pilot_id, status = 'linked',
+             email = EXCLUDED.email, name = EXCLUDED.name
+         WHERE external_identities.status = 'pending'
        RETURNING ${COLUMNS}`,
       [profile.provider, profile.subject, profile.email, profile.name],
     );

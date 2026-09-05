@@ -178,6 +178,76 @@ describe('POST /auth/google - konto NIEZNANE zakłada zgłoszenie', () => {
     });
   });
 
+  it('po zatwierdzeniu token rejestracyjny wydaje tokeny pilota RAZ - drugi raz dostaje 404', async () => {
+    // Audyt 2026-09-05: pierwsza wersja wydawała nową parę przy KAŻDYM wywołaniu przez
+    // 30 dni, więc skopiowany token był fabryką refreshów. Skopiowany token po
+    // zatwierdzeniu ma być bezużyteczny natychmiast po pierwszym wejściu.
+    const { app, db } = await testHarness();
+    const login = await app.inject({
+      method: 'POST',
+      url: '/auth/google',
+      payload: { idToken: googleTokenForStranger('nowy5') },
+    });
+    const registrationToken = login.json().registrationToken as string;
+
+    // Zatwierdzenie „ręką administratora" - bezpośrednio w bazie, bo trasy panelu
+    // testuje osobny plik; tu liczy się wyłącznie zachowanie tokenu rejestracyjnego.
+    await db.query(
+      `INSERT INTO pilots (id, code, name, email, active, role)
+       VALUES ('n5', 'NW5', 'Nowy Piąty', 'nowy5@gmail.com', TRUE, 'pilot')`,
+    );
+    await db.query(
+      `UPDATE external_identities SET status = 'linked', pilot_id = 'n5' WHERE subject = 'nowy5'`,
+    );
+
+    const first = await app.inject({
+      method: 'GET',
+      url: '/auth/registration',
+      headers: { authorization: `Bearer ${registrationToken}` },
+    });
+    expect(first.statusCode).toBe(200);
+    expect(first.json().status).toBe('approved');
+    expect(typeof first.json().tokens.refreshToken).toBe('string');
+
+    const second = await app.inject({
+      method: 'GET',
+      url: '/auth/registration',
+      headers: { authorization: `Bearer ${registrationToken}` },
+    });
+    expect(second.statusCode).toBe(404);
+  });
+
+  it('token rejestracyjny wydany PRZED unieważnieniem poświadczeń konta jest martwy', async () => {
+    // Deaktywacja (+ ponowne włączenie) jest po usunięciu haseł JEDYNĄ drogą zerwania
+    // sesji - musi obejmować także poświadczenie, którego jeszcze nikt nie zrealizował.
+    const { app, db, clock } = await testHarness();
+    const login = await app.inject({
+      method: 'POST',
+      url: '/auth/google',
+      payload: { idToken: googleTokenForStranger('nowy6') },
+    });
+    const registrationToken = login.json().registrationToken as string;
+
+    await db.query(
+      `INSERT INTO pilots (id, code, name, email, active, role)
+       VALUES ('n6', 'NW6', 'Nowy Szósty', 'nowy6@gmail.com', TRUE, 'pilot')`,
+    );
+    await db.query(
+      `UPDATE external_identities SET status = 'linked', pilot_id = 'n6' WHERE subject = 'nowy6'`,
+    );
+
+    // `iat` ma rozdzielczość sekundy - unieważnienie musi być od niego późniejsze.
+    clock.advance(1000);
+    await db.query(`UPDATE pilots SET credentials_valid_from = $1 WHERE id = 'n6'`, [clock.now()]);
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/auth/registration',
+      headers: { authorization: `Bearer ${registrationToken}` },
+    });
+    expect(res.statusCode).toBe(404);
+  });
+
   it('`GET /auth/registration` odrzuca token PILOTA - rozłączność działa w obie strony', async () => {
     const { app } = await testHarness();
     const pilotToken = (await loginAs(app, 'TMK')).json().token as string;

@@ -236,7 +236,7 @@ const app = buildServer({
     new PgRefreshTokens(db, clock),
     identities,
     new GoogleIdTokens(
-      [env.GOOGLE_WEB_CLIENT_ID, ...(env.GOOGLE_ANDROID_CLIENT_ID == null ? [] : [env.GOOGLE_ANDROID_CLIENT_ID])],
+      { panel: env.GOOGLE_WEB_CLIENT_ID, mobile: env.GOOGLE_ANDROID_CLIENT_ID ?? null },
       clock,
     ),
     tokens,

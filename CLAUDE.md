@@ -2490,7 +2490,11 @@ model danych, ryzyka i etapy: **`docs/logowanie-google.md`**.
   (panel/seed), czyli jest listą dopuszczonych, a nie danymi od użytkownika. Wymaga
   `email_verified` od dostawcy i **zostaje wyłącznie dla Google** (Apple pozwala ukryć
   adres, Facebook zwracał niezweryfikowane). Tą samą drogą wchodzi administrator po
-  wdrożeniu (`SEED_ADMIN_EMAIL`) i podpinają się dotychczasowi testerzy razem z historią
+  wdrożeniu (`SEED_ADMIN_EMAIL`) i podpina się konto założone w A06 z adresem Google
+  ZANIM pilot zaloguje się pierwszy raz. **Baza produkcyjna staje przy wdrożeniu OD
+  ZERA (decyzja właściciela 2026-09-05)** - dotychczasowych kont z hasłami NIE
+  przenosimy, więc kolejność wdrożenia to: pusta baza → seed → serwer → build, bez
+  wpisywania e-maili zawczasu
 - **POWÓD ODRZUCENIA JEST W PANELU WYMAGANY**, bo pilot czyta go na ekranie `00d`.
   Ekrany: `00a` (sam przycisk Google), `00b` (offline), `00c` (czeka na zatwierdzenie),
   `00d` (odrzucone). `00` (PIN) bez zmian
@@ -2525,6 +2529,19 @@ model danych, ryzyka i etapy: **`docs/logowanie-google.md`**.
   podstawiają wyłącznie weryfikację podpisu Google (`test/testIdentityProvider.ts` -
   granica: nasza decyzja kontra cudza kryptografia), sama weryfikacja ma
   `googleIdTokens.test.ts` na kluczu RSA z procesu
+- **AUDYT BEZPIECZEŃSTWA 2026-09-05 - trzy poprawki, każda z testem, który padał
+  przed nią** (`docs/logowanie-google.md` §14): (1) **token rejestracyjny wydaje
+  tokeny pilota RAZ** - `registrationStatus` odmawia, gdy `last_login_at` tożsamości
+  jest ustawione (ktoś już wszedł) albo token jest starszy niż `credentials_valid_from`
+  konta; pierwsza wersja wydawała świeżą parę przy każdym wywołaniu przez 30 dni, czyli
+  skopiowany token był fabryką refreshów odporną na deaktywację; (2) **`aud` per
+  powierzchnia** - `IdentityProviderPort.verifyIdToken(token, surface)`, `GoogleIdTokens`
+  dostaje `{ panel: Web, mobile: Android | null }`; wspólny zbiór pozwalał wymienić
+  token z przeglądarki na 90-dniowy refresh na trasie telefonu; (3) **podpięcie po
+  e-mailu obejmuje zgłoszenie `pending`** (`ON CONFLICT … DO UPDATE … WHERE status =
+  'pending'`) - bez tego rada panelu „wpisz adres w istniejącym koncie zamiast
+  zatwierdzać" zostawiała człowieka w kolejce na zawsze. Nowy `LoginSurface` w portach;
+  atrapa testowa ignoruje powierzchnię celowo (rozdział testuje prawdziwy weryfikator)
 
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **wyłącznie Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22 - haseł nie ma nigdzie; wymaga sieci); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero zatwierdzenie w panelu - patrz sekcja „Logowanie przez Google" niżej

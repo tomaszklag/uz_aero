@@ -27,10 +27,12 @@ import type {
   ExternalIdentitiesPort,
   ExternalIdentity,
   IdentityProviderPort,
+  LoginSurface,
   PilotAccount,
   PilotsPort,
   RefreshTokensPort,
   TokenService,
+  VerifiedRegistration,
 } from '../ports.ts';
 import { can, type PilotRole } from '../../../domain/roles.ts';
 
@@ -148,7 +150,7 @@ export class AuthCommands {
 
   /** Logowanie telefonu (§3.0) - prowisioning urządzenia albo zgłoszenie do zatwierdzenia. */
   async loginWithProvider(idToken: string): Promise<ProviderLoginResult> {
-    const resolved = await this.resolve(idToken);
+    const resolved = await this.resolve(idToken, 'mobile');
     if (resolved.kind === 'invalid') return { ok: false, reason: 'invalid_token' };
     if (resolved.kind === 'rejected') {
       return { ok: false, reason: 'rejected', registration: viewOf(resolved.identity) };
@@ -188,7 +190,7 @@ export class AuthCommands {
    * aplikacji pilota, a nie back-office'u.
    */
   async panelLoginWithProvider(idToken: string): Promise<PanelLoginResult> {
-    const resolved = await this.resolve(idToken);
+    const resolved = await this.resolve(idToken, 'panel');
     if (resolved.kind === 'invalid') return { ok: false, reason: 'invalid_token' };
     if (resolved.kind !== 'linked') return { ok: false, reason: 'not_registered' };
     if (!resolved.account.active) return { ok: false, reason: 'account_disabled' };
@@ -218,7 +220,7 @@ export class AuthCommands {
    * została cienka i żeby istniało jedno miejsce, w którym widać komplet: kto wydaje
    * ten token (`loginWithProvider`) i kto go przyjmuje.
    */
-  verifyRegistrationToken(token: string): { provider: string; subject: string } | null {
+  verifyRegistrationToken(token: string): VerifiedRegistration | null {
     return this.tokens.verifyRegistration(token);
   }
 
@@ -227,16 +229,44 @@ export class AuthCommands {
    *
    * Zwraca też wynik `approved`, i to jest cała wartość tej trasy: pilot zatwierdzony
    * w międzyczasie ma wejść do aplikacji bez przechodzenia przez Google od nowa.
+   *
+   * ══ WYDAJE TOKENY PILOTA DOKŁADNIE RAZ (audyt 2026-09-05) ══
+   * Pierwsza wersja wydawała nową parę przy KAŻDYM wywołaniu przez 30 dni życia tokenu -
+   * czyli skopiowany token rejestracyjny był fabryką refreshów, której nie zrywała nawet
+   * deaktywacja konta (jedyna droga unieważnienia po usunięciu haseł). Dwie bramy:
+   *  • `lastLoginAt` tożsamości ustawione = ktoś już wszedł na to konto (tym tokenem albo
+   *    Googlem) → `unknown`. Telefon dostaje 404, czyści zgłoszenie i pokazuje logowanie;
+   *    zwykłe wejście przez Google to jedno tapnięcie, a token nie ma czego otwierać;
+   *  • token wydany PRZED `credentials_valid_from` konta → `unknown` - ta sama reguła,
+   *    co brama panelu (`http/authorize.ts`): deaktywacja ma odcinać wszystko, także
+   *    poświadczenie, które jeszcze nikt nie zrealizował.
    */
-  async registrationStatus(provider: string, subject: string): Promise<RegistrationStatus> {
+  async registrationStatus(
+    provider: string,
+    subject: string,
+    issuedAt: number,
+  ): Promise<RegistrationStatus> {
     const identity = await this.identities.find(provider, subject);
     if (identity == null) return { kind: 'unknown' };
 
     if (identity.status === 'linked' && identity.pilotId != null) {
-      const account = await this.pilots.findById(identity.pilotId);
+      if (identity.lastLoginAt != null) return { kind: 'unknown' };
+
+      const snapshot = await this.pilots.authSnapshot(identity.pilotId);
       // Konto zatwierdzone, a potem wyłączone: nie ma tokenów i nie ma zgłoszenia -
       // z punktu widzenia ekranu to jest stan „to konto już nie działa".
-      if (account == null || !account.active) return { kind: 'unknown' };
+      if (snapshot == null || !snapshot.active) return { kind: 'unknown' };
+      if (
+        snapshot.credentialsValidFrom != null &&
+        issuedAt * 1000 < snapshot.credentialsValidFrom.getTime()
+      ) {
+        return { kind: 'unknown' };
+      }
+
+      const account = await this.pilots.findById(identity.pilotId);
+      if (account == null) return { kind: 'unknown' };
+      // Stempel PRZED wydaniem: to on zamyka tę drogę dla drugiego wywołania.
+      await this.identities.markLogin(provider, subject, this.clock.now());
       return { kind: 'approved', tokens: await this.issueFor(account) };
     }
 
@@ -281,19 +311,22 @@ export class AuthCommands {
    * kontrolą, nie dane od użytkownika. Po podpięciu `subject` jest przypięty na stałe
    * i e-mail nie bierze już udziału w logowaniu nigdy więcej.
    */
-  private async resolve(idToken: string): Promise<Resolved> {
-    const profile = await this.provider.verifyIdToken(idToken);
+  private async resolve(idToken: string, surface: LoginSurface): Promise<Resolved> {
+    const profile = await this.provider.verifyIdToken(idToken, surface);
     if (profile == null) return { kind: 'invalid' };
 
     let identity = await this.identities.find(profile.provider, profile.subject);
 
-    if (identity == null) {
-      if (profile.emailVerified) {
-        const claimed = await this.identities.claimByVerifiedEmail(profile);
-        if (claimed != null) identity = claimed;
-      }
-      identity ??= await this.identities.createPending(profile);
+    // Podpięcie próbujemy dla konta NIEZNANEGO i dla zgłoszenia, które JESZCZE CZEKA
+    // (audyt 2026-09-05): administrator naprawia „konto z tym adresem już istnieje"
+    // wpisując adres w istniejącym koncie albo zakładając je w A06 - a nie zatwierdzając
+    // zgłoszenie - i następne logowanie musi to zobaczyć. Odrzuconego nie podpinamy:
+    // decyzja zapadła (pilnuje tego też `WHERE status = 'pending'` w adapterze).
+    if ((identity == null || identity.status === 'pending') && profile.emailVerified) {
+      const claimed = await this.identities.claimByVerifiedEmail(profile);
+      if (claimed != null) identity = claimed;
     }
+    identity ??= await this.identities.createPending(profile);
 
     if (identity.status === 'rejected') return { kind: 'rejected', identity };
     if (identity.status !== 'linked' || identity.pilotId == null) {

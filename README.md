@@ -83,8 +83,10 @@ Vite). Konfiguracja buildu i healthcheck: `railway.json`.
 7. **Seed konta `admin`**: dopisz `SEED_ADMIN_EMAIL` - ADRES KONTA GOOGLE administratora.
    Serwer przy starcie zapewni konto `admin` BEZ hasła, a Twoje pierwsze logowanie tym
    kontem Google je PODPINA (idempotentnie: powtórny start nie zrywa podpięcia, dokłada
-   najwyżej rolę admin). Tą samą drogą podpinają się dotychczasowi piloci - wpisz im
-   e-maile w A06 **przed** wdrożeniem, inaczej stracą dostęp do swoich kont.
+   najwyżej rolę admin). Baza staje **od zera** (decyzja 2026-09-05), więc poza
+   `admin` nie ma kont do przeniesienia: piloci zgłaszają się z aplikacji i czekają na
+   zatwierdzenie w A06, a konto założone wcześniej w A06 z adresem Google pilota
+   podpina się przy jego pierwszym logowaniu bez kolejki.
    Alternatywa bez redeployu (wymaga TCP Proxy na usłudze Postgres): lokalnie
    `$env:SEED_ADMIN_EMAIL='…'; $env:DATABASE_URL='<DATABASE_PUBLIC_URL>'; npm run seed`.
 8. **Sprawdzian**: `https://<domena>/health` → `{"ok":true}`, `https://<domena>/admin/`
