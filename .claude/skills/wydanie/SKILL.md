@@ -45,16 +45,20 @@ Najkrótsza droga i domyślna po rozpoczęciu testów z pilotami.
 3. Zacommituj.
 4. `npm run update:prod -- -m "krótki opis zmiany"`
 
-Aktualizacja dociera do telefonów o **tym samym odcisku warstwy natywnej**
-(`runtimeVersion: fingerprint`). Pobiera się w tle i wchodzi przy **następnym
-uruchomieniu** aplikacji — nie natychmiast, i tak ma być: start nigdy nie czeka na sieć.
+Aktualizacja dociera do telefonów o **tym samym numerze wersji**
+(`runtimeVersion: appVersion`, czyli `version` z `app/app.json`). Pobiera się w tle
+i wchodzi przy **następnym uruchomieniu** aplikacji — nie natychmiast, i tak ma być:
+start nigdy nie czeka na sieć.
+
+**Przy ścieżce OTA nie podnoś `version`.** Numer wersji jest kluczem aktualizacji, więc
+podbity bez nowego APK wysłałby ją do wersji, której nikt nie ma na telefonie.
 
 Powiedz to użytkownikowi wprost. Inaczej sprawdzi telefon od razu, nie zobaczy zmiany
 i uzna, że wydanie nie zadziałało.
 
 **Jeśli OTA nie dochodzi do części telefonów**, prawie zawsze mają starszą binarkę
-o innym odcisku natywnym. To zachowanie poprawne, nie usterka: nie da się dowieźć JS-a,
-który potrzebuje nieobecnego kodu natywnego. Wtedy ścieżka B.
+o innym numerze wersji. To zachowanie poprawne, nie usterka: aktualizacja należy do
+linii APK, dla której powstała. Wtedy ścieżka B.
 
 ---
 
@@ -173,9 +177,15 @@ przeinstalować — pilot nie ma skąd tego wiedzieć.
   nikt spoza listy nie zaloguje się ani w aplikacji, ani w panelu.
 - **Zgłoszenia błędów niosą `updateId`**, więc po aktualizacji OTA da się rozpoznać, która
   wersja JS naprawdę działała. Wersja binarki („1.1.0 (build 2)") już tego nie rozstrzyga.
-- **Dodanie modułu natywnego zmienia odcisk `fingerprint`**, więc stare buildy przestają
-  dostawać aktualizacje. Zachowanie poprawne, ale znaczy, że po takiej zmianie trzeba
-  rozesłać APK — i uprzedzić o tym w „Dla testerów".
+- **Moduł natywny dołożony bez nowego APK wywraca stare telefony.** `runtimeVersion`
+  to `appVersion`, więc nic nie sprawdza tego za Ciebie: aktualizacja pójdzie do
+  wszystkich aplikacji o tym numerze wersji, także tych bez nowego kodu natywnego.
+  Dlatego decyzja z kroku 0 jest pierwsza, a nie ostatnia.
+- **Polityka `fingerprint` była próbowana i nie działa w tym monorepo** (2026-09-07):
+  odcisk powstaje w 180 ze 190 źródeł z hoistowanego `node_modules` czterech
+  workspace'ów, serwer EAS odtwarza go inaczej i build pada na „Runtime version
+  calculated on local machine not equal to runtime version calculated during build".
+  Nie wracaj do niej bez rozwiązania tamtego problemu.
 
 ## Czego ten skill nie robi
 
