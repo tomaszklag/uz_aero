@@ -12,6 +12,7 @@
  */
 
 import type { SessionListItemDto } from '../../api/dto';
+import { NONE } from '../common/values';
 import { sessionRow } from './sessionRows';
 
 /** Wiersz odniesienia w potwierdzeniu: co dokładnie zniknie z rachunków. */
@@ -19,8 +20,6 @@ export interface VoidFact {
   label: string;
   value: string;
 }
-
-const NONE = '—';
 
 export function voidFacts(s: SessionListItemDto): VoidFact[] {
   const row = sessionRow(s);

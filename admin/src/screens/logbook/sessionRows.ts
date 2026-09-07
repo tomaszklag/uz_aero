@@ -11,16 +11,17 @@
  * ją KWALIFIKUJE: przy biegu silnika mówi ile trwał, przy locie - dokąd poleciał.
  *
  * ══ BRAK ODCZYTU ZOSTAJE BRAKIEM ══
- * Kreskę stawiają formatery z `@uzaero/format` (`litres(null)` → `-`), a nie ten
- * moduł. Zero nigdy nie zastępuje braku: `0 L` znaczy pusty zbiornik, kreska znaczy
+ * Kreskę stawiają formatery z `screens/common/values` (`litres(null)` → `—`), a nie
+ * ten moduł. Zero nigdy nie zastępuje braku: `0 L` znaczy pusty zbiornik, kreska znaczy
  * „nikt nie zapisał". Przy parze bez jednej strony kreska zostaje PRZY strzałce,
  * żeby widać było, którego odczytu brakuje.
  */
 
-import { dateUtcShort, duration, litres, motoHours, oilLitres, shortName, timeUtc } from '@uzaero/format';
+import { dateUtcShort, duration, shortName } from '@uzaero/format';
 import type { OperationType } from '@uzaero/domain';
 
 import type { SessionListItemDto } from '../../api/dto';
+import { litres, motoHours, NONE, oilLitres, timeUtc } from '../common/values';
 
 /** Para wartości w jednej komórce + linia, która ją kwalifikuje. */
 export interface CellPair {
@@ -54,8 +55,6 @@ export interface SessionRow {
   oil: string;
   oilNote: string | null;
 }
-
-const NONE = '—';
 
 /**
  * Nazwy operacji PO POLSKU. `Record`, więc nowy rodzaj operacji w domenie wywala

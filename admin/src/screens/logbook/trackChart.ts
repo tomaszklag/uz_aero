@@ -37,6 +37,7 @@ import {
 // nie zna `screens/`, więc kierunek zależności biegnie tędy, a nie odwrotnie.
 import type { MapPlot } from '../../ui/components/TrackMap';
 import type { ProfileGridRow, ProfilePlot } from '../../ui/components/VerticalProfile';
+import { LABEL_OFFSET_X, LABEL_OFFSET_Y, visibleLabels } from './markerLabels';
 
 export interface MapMarkerInput {
   position: LatLon;
@@ -79,6 +80,24 @@ export function mapPlot(
     return `${p.x.toFixed(1)},${p.y.toFixed(1)}`;
   };
 
+  // Znaczniki rozstawiamy PRZED złożeniem wyniku, bo o podpisie jednego rozstrzyga
+  // położenie pozostałych - a to jest pytanie o całą listę, nie o pojedynczy element.
+  const placed = markers.map((marker) => {
+    const p = toScreen(marker.position, view);
+    return {
+      label: marker.label,
+      color: marker.color,
+      x: p.x,
+      y: p.y,
+      // Napis ma JEDNO miejsce powstania - `markerLabels.ts` liczy z tych samych
+      // odsunięć zderzenia podpisów, więc rysunek i test nie mają jak się rozjechać.
+      labelX: p.x + LABEL_OFFSET_X,
+      labelY: p.y + LABEL_OFFSET_Y,
+      ring: marker.ring === true,
+    };
+  });
+  const labelled = visibleLabels(placed);
+
   return {
     route: trackPhaseRuns(
       line.map((point) => point.time),
@@ -112,21 +131,18 @@ export function mapPlot(
       };
     }),
 
-    markers: markers.map((marker) => {
-      const p = toScreen(marker.position, view);
-      return {
-        label: marker.label,
-        color: marker.color,
-        x: p.x,
-        y: p.y,
-        ring: marker.ring === true,
-      };
-    }),
+    markers: placed.map((marker, i) => ({
+      ...marker,
+      // Podpis gaśnie tam, gdzie i tak byłby nieczytelny (`markerLabels.ts`) - kropka
+      // zostaje zawsze, bo to ona niesie miejsce i rodzaj zdarzenia.
+      labelled: labelled[i] === true,
+    })),
 
     scale: {
       // NM, nie kilometry: cały produkt liczy dystans w milach morskich (2026-08-15).
       label: `${bar.nm} NM`,
-      pixels: bar.pixels,
+      // UŁAMEK SZEROKOŚCI, nie piksele - patrz `MapPlot.scale` w `TrackMap.tsx`.
+      widthPct: (bar.pixels / width) * 100,
     },
   };
 }

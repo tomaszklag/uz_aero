@@ -33,6 +33,7 @@ import {
 } from '../../ui/components';
 import { PlaneIcon, PlusIcon } from '../../ui/components/icons';
 import { errorMessage } from '../common/apiMessage';
+import { NONE } from '../common/values';
 import { AircraftDrawer } from './AircraftDrawer';
 import { fleetRow, type FleetRow } from './fleetRows';
 
@@ -83,7 +84,7 @@ export function FleetScreen() {
     {
       key: 'dual',
       header: 'Drugi pilot',
-      render: (row) => (row.dualLabel == null ? '—' : <Pill tone="amber">{row.dualLabel}</Pill>),
+      render: (row) => (row.dualLabel == null ? NONE : <Pill tone="amber">{row.dualLabel}</Pill>),
     },
     {
       key: 'status',

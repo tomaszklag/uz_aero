@@ -264,18 +264,16 @@ tbody tr.flagged:hover {
   background: var(--amber-muted);
 }
 
-/* Stopka listy stronicowanej kursorem: podpis „pokazano N z M" i przycisk dokładający
-   kolejną stronę. `SZABLON.html` tej klasy nie ma, bo żaden mockup nie rysuje
-   paginacji - `A02` pokazuje dwanaście wierszy i kończy się banerem. Kursor keyset
-   jest jednak kontraktem serwera (`nextCursor` w każdej odpowiedzi), a lista przycięta
-   po cichu byłaby najgorszym trybem awarii narzędzia nadzoru: wyglądałaby na komplet. */
-.list-foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-}
+/* `.list-foot` MIESZKA W `logbook.css` i tylko tam (2026-09-07).
+
+   Stała tu druga reguła tej samej klasy - `display: flex` z `space-between` pod stopkę
+   stronicowaną: podpis „pokazano N z M" po lewej, przycisk „Pokaż więcej" po prawej.
+   Paginacji nie renderuje ani jeden ekran panelu 2.0; jedyne użycie
+   (`AircraftLogScreen`) to JEDNO zdanie prozy w `<p>`, które mówi, że lista jest
+   przycięta i co z tym zrobić. Dwie reguły dzieliły więc jedną klasę na pół
+   (`table.css` dawał układ, `logbook.css` typografię), a docblok bronił kształtu,
+   którego nic nie stawia - twierdząc przy tym, że „`SZABLON.html` tej klasy nie ma",
+   co przestało być prawdą razem z makietami panelu 2.0. */
 
 /**
  * Wiersz PRZYGASZONY - konto bez dostępu, samolot poza służbą.

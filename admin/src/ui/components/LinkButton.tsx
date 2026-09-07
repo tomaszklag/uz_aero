@@ -14,6 +14,8 @@
 import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
 
+import { reasonSuffix } from './reasonSuffix';
+
 /** Warianty jak w `Button` - `ok` to zielona obramówka (akcja przywracająca). */
 type Variant = 'primary' | 'ghost' | 'danger' | 'ok' | 'default';
 
@@ -43,7 +45,9 @@ export function LinkButton({
     return (
       <span className={`${classes} disabled`} aria-disabled="true" title={reason}>
         {children}
-        {reason == null ? null : ` - ${reason.toLowerCase()}`}
+        {/* Doklejka jak w `Button` - jeden przepis, żeby oba przyciski panelu mówiły
+            powód blokady tak samo (`reasonSuffix.ts`). */}
+        {reason == null ? null : ` - ${reasonSuffix(reason)}`}
       </span>
     );
   }

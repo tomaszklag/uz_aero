@@ -141,6 +141,27 @@
   background: var(--red-muted);
 }
 
+/**
+ * Pole DO ODCZYTU - „Aktualny stan" karty samolotu, gdy maszynę prowadzi już dziennik
+ * (uwagi do issue #66), i każde inne pole, którego edycja nic by nie zmieniła.
+ *
+ * DOPISANE 2026-09-07 przy makietach panelu 2.0: reguły nie było w `admin/src/styles/`
+ * wcale, więc `<TextInput disabled>` wyglądał DOKŁADNIE tak, jak pole czynne - a to jest
+ * ta sama pomyłka, przed którą broni `currentState.ts` („polem, które przestało działać,
+ * a nadal wygląda na czynne, nie da się nikim pokierować").
+ *
+ * Wartość zostaje pełnym kontrastem, bo to jest LICZBA, po którą się tu przyszło;
+ * gaśnie POWIERZCHNIA i kursor - pole ma czytać się jak wiersz danych, a nie jak
+ * formularz, który przestał odpowiadać. Tło `--surface` (a nie `--surface-raised`)
+ * zrównuje je z tłem karty: nic nie zaprasza do kliknięcia.
+ */
+.input:disabled {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text-primary);
+  cursor: default;
+}
+
 /* Pole wieloliniowe (komentarz rozstrzygnięcia flagi, A03a). Mockup używa na nim
    klasy `.input`; modyfikator dokłada tylko to, czego `<input>` nie ma - pionową
    zmianę rozmiaru i interlinię akapitu. Komentarz do flagi bywa dłuższy niż linijka,
@@ -301,4 +322,22 @@
 
 .access-row:last-child {
   border-bottom: none;
+}
+
+/**
+ * Wartość maszynowa w zdaniu i w wierszu - e-mail konta Google, stempel zgłoszenia,
+ * uuid wklejony w rozmowie.
+ *
+ * DOPISANE 2026-09-07 przy makietach panelu 2.0: `RegistrationDrawer.tsx` pisze
+ * `<span className="mono">` przy adresie i przy chwili zgłoszenia, a w całym
+ * `admin/src/styles/` była wyłącznie `.input.mono` i `td.mono` - adres jechał więc
+ * krojem tekstowym wbrew regule „kody i wartości zawsze mono".
+ *
+ * Klasa jest UTYLITĄ jednej właściwości i tylko dlatego wolno jej być utylitą: nie
+ * niesie ani koloru, ani rozmiaru, więc nie ma jak przemalować komponentu, w którym
+ * się pojawi.
+ */
+.mono {
+  font-family: var(--font-mono);
+  letter-spacing: 0.3px;
 }

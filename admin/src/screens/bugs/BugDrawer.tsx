@@ -22,6 +22,7 @@ import type { BugReportDto, BugStatusDto } from '../../api/dto';
 import { useSetBugStatus } from '../../queries/useBugReports';
 import { Banner, Button, Card, Drawer, Field, OptionButton, Pill } from '../../ui/components';
 import { errorMessage } from '../common/apiMessage';
+import { NONE } from '../common/values';
 import { bugContextRows } from './bugRows';
 import {
   BUG_STATUS_ORDER,
@@ -128,7 +129,7 @@ export function BugDrawer({ uuid, reports, listPending, onClose }: BugDrawerProp
       <Card title="Obsługa">
         {bug.statusAt == null ? null : (
           <p className="hint">
-            Ostatnia zmiana: <b>{bug.statusBy ?? '—'}</b>, {stamp(bug.statusAt)}.
+            Ostatnia zmiana: <b>{bug.statusBy ?? NONE}</b>, {stamp(bug.statusAt)}.
           </p>
         )}
 

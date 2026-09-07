@@ -245,10 +245,18 @@ describe('data dnia lotnego po polsku', () => {
     expect(monthYearUtc(Date.UTC(2027, 0, 1))).toBe('STYCZEŃ 2027');
   });
 
-  it('panel zostaje przy skrótach lotniczych - polonizacja dotyczy telefonu', () => {
-    // Kolumny dat w `design/admin/` i ich testy są napisane w tym zapisie; zmiana
-    // panelu to osobna decyzja, nie skutek uboczny zmiany na telefonie.
-    expect(dateUtcShort(Date.UTC(2026, 6, 31))).toBe('31 JUL 2026');
+  it('data panelu mówi po polsku i bez roku (2026-09-07)', () => {
+    // Skróty lotnicze („31 JUL 2026") stały tu, dopóki specyfikacją panelu były
+    // mockupy `design/admin/`. Te są od 2026-09-07 archiwum panelu 1.0, a makiety 2.0
+    // (`design/panel/`) piszą „6 WRZEŚNIA" - jak reszta dat w tym panelu.
+    expect(dateUtcShort(Date.UTC(2026, 6, 31))).toBe('31 LIPCA');
+    expect(dateUtcShort(Date.UTC(2026, 8, 6))).toBe('6 WRZEŚNIA');
+  });
+
+  it('stempel panelu to ta sama data plus godzina', () => {
+    expect(stampUtc(Date.UTC(2026, 8, 6, 11, 4))).toBe(
+      `${dateUtcShort(Date.UTC(2026, 8, 6, 11, 4))} 11:04`,
+    );
   });
 });
 

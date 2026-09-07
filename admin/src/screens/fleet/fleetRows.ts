@@ -9,11 +9,11 @@
  * zaczyna się back-office, który liczy inaczej niż produkt.
  */
 
-import { litres } from '@uzaero/format';
 import type { MhFormat } from '@uzaero/domain';
 
 import type { AircraftListItemDto } from '../../api/dto';
 import type { PillTone } from '../../ui/components';
+import { litres, NONE } from '../common/values';
 
 /**
  * Format licznika PO POLSKU.
@@ -63,7 +63,7 @@ export function fleetRow(aircraft: AircraftListItemDto): FleetRow {
     id: aircraft.id,
     reg: aircraft.reg,
     type: aircraft.type,
-    year: aircraft.year == null ? '—' : String(aircraft.year),
+    year: aircraft.year == null ? NONE : String(aircraft.year),
     capacity: litres(aircraft.capacityL),
     mhFormatLabel: mhFormatLabel(aircraft.mhFormat),
     mhFormatTone: mhFormatTone(aircraft.mhFormat),

@@ -7,6 +7,7 @@
 
 import type { PilotListItemDto, PilotRole } from '../../api/dto';
 import type { PillTone } from '../../ui/components';
+import { NONE } from '../common/values';
 
 /**
  * Nazwa roli DLA CZŁOWIEKA i jej ton.
@@ -56,7 +57,7 @@ export function accountRow(pilot: PilotListItemDto): AccountRow {
     id: pilot.id,
     code: pilot.code,
     name: pilot.name,
-    email: pilot.email ?? '—',
+    email: pilot.email ?? NONE,
     roleLabel: roleLabel(pilot.role),
     roleTone: roleTone(pilot.role),
     active: pilot.active,

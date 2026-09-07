@@ -12,10 +12,14 @@
    Złożony z nich w KOLEJNOŚCI KASKADY z `admin/src/main.tsx`:
    tokens → base → layout → shell → controls → surfaces → page → filters → table →
    drawer → skeleton → login → logbook → track → bugs.
-   Kolejność JEST znacząca i nie wolno jej przestawiać: `logbook.css` nadpisuje
-   `.list-foot` z `table.css`, a `tbody tr.voided` dokłada przekreślenie do reguł
-   tabeli. Arkusz przestawiony alfabetycznie wyglądałby prawie tak samo - i to
-   „prawie" byłoby awarią cichą.
+   Kolejność JEST znacząca i nie wolno jej przestawiać: `tbody tr.voided` z `logbook.css`
+   dokłada przekreślenie do reguł tabeli. Arkusz przestawiony alfabetycznie wyglądałby
+   prawie tak samo - i to „prawie" byłoby awarią cichą.
+   (Do 2026-09-07 stał tu drugi przykład: „`logbook.css` nadpisuje `.list-foot`
+   z `table.css`". To nie było nadpisanie, tylko JEDNA KLASA ROZBITA NA DWA ARKUSZE -
+   układ w `table.css`, typografia w `logbook.css`. Reguła z `table.css` opisywała
+   stopkę z przyciskiem „Pokaż więcej", której nie renderuje żaden ekran, więc
+   zniknęła; `.list-foot` ma odtąd jedno miejsce.)
 
    KIERUNEK: MAKIETA PROWADZI, KOD DOGANIA
    Odwrócenie decyzji `docs/panel-2.0.md` §3.7 („makiet HTML dla panelu 2.0 nie ma").
@@ -1650,18 +1654,10 @@ tbody tr.flagged:hover {
   background: var(--amber-muted);
 }
 
-/* Stopka listy stronicowanej kursorem: podpis „pokazano N z M" i przycisk dokładający
-   kolejną stronę. `SZABLON.html` tej klasy nie ma, bo żaden mockup nie rysuje
-   paginacji - `A02` pokazuje dwanaście wierszy i kończy się banerem. Kursor keyset
-   jest jednak kontraktem serwera (`nextCursor` w każdej odpowiedzi), a lista przycięta
-   po cichu byłaby najgorszym trybem awarii narzędzia nadzoru: wyglądałaby na komplet. */
-.list-foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-}
+/* `.list-foot` MIESZKA W SEKCJI 14 i tylko tam (2026-09-07) - patrz `table.css`.
+   Stała tu druga reguła tej samej klasy, pod stopkę stronicowaną z przyciskiem
+   „Pokaż więcej". Paginacji nie renderuje ani jeden ekran panelu 2.0, a jedyne użycie
+   to jedno zdanie prozy w `<p>` (`dziennik-maszyna.html`). */
 
 /**
  * Wiersz PRZYGASZONY - konto bez dostępu, samolot poza służbą.
@@ -2179,9 +2175,12 @@ tbody tr.voided td {
  * w palecie nie ma.
  */
 
+/* Wysokości TU NIE MA (2026-09-07): proporcje płótna niosą stałe `viewBox`
+   (`aspect-ratio` w atrybucie `style`), bo tylko wtedy skala jest jedna dla obu osi.
+   `height: 430px` przy szerokości karty ~1100 px rozciągało mapę o ~9% w poziomie
+   i krąg nadlotniskowy wychodził elipsą. */
 .map-canvas {
   position: relative;
-  height: 430px;
   background: #0f1216;
   border-radius: 10px;
   overflow: hidden;
@@ -2289,15 +2288,24 @@ tbody tr.voided td {
 }
 
 /* Profil pionowy - ten sam wykres co w aplikacji, na szerokości panelu. */
+/* Wysokości TU NIE MA (2026-09-07), z tego samego powodu, co przy `.map-canvas`:
+   `height: 220px` przy szerokości karty ~1100 px dawało skalę 1,134 w poziomie
+   i 0,909 w pionie, czyli ~25% zniekształcenia. Samej krzywej to nie psuło (czas
+   i wysokość nie mają wspólnej jednostki), ale podpisy osi rozciągały się w poziomie,
+   a znacznik szczytu `r=5` rysował się elipsą 5,67 × 4,55 px.
+
+   MECHANIZM JEST INNY NIŻ PRZY MAPIE I TO NIE JEST NIEKONSEKWENCJA: mapa ma `svg`
+   ustawione `position: absolute; inset: 0`, więc proporcję trzeba nadać PŁÓTNU
+   (`aspect-ratio`); profil ma `svg` w normalnym przepływie, więc `height: auto`
+   bierze ją wprost z `viewBox`. Cel obu jest ten sam - jedna skala dla obu osi. */
 .profile-chart {
   position: relative;
-  height: 220px;
   padding: 14px 16px 6px;
 }
 .profile-chart svg {
   display: block;
   width: 100%;
-  height: 100%;
+  height: auto;
   overflow: visible;
 }
 .axis-label {
