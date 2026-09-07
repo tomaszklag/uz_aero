@@ -2,8 +2,6 @@
 
 > Ekran domowy aplikacji: lista Twoich operacji z dzisiejszej doby z sumami, wejście w nowy lot, wpis lotu po fakcie i poprzednie dni.
 
-@screen 01-moj-dzien "Mój dzień z operacjami" | 01a-moj-dzien-pusty "Dzień bez lotów"
-
 ## Co widać
 
 - **Nagłówek** z Twoim kodem pilota i dzisiejszą datą, np. `TMK · 06 SIE 2026`.
@@ -15,6 +13,8 @@
 - **Zębatka** w prawym górnym rogu - [ustawienia](ustawienia). To jedyne wejście do ustawień w aplikacji. Obok niej, na czas testów, stoi przycisk zgłoszenia błędu - ten sam na każdym ekranie i w każdym arkuszu.
 
 Pusty dzień pokazuje kartę „DZIŚ BEZ LOTÓW" i kreski zamiast sum - nigdy zera.
+
+@screen 01-moj-dzien "Lista operacji z sumami" | 01a-moj-dzien-pusty "Dzień bez lotów"
 
 ## Jak to działa
 
@@ -37,6 +37,8 @@ Gdy wszystko jest wysłane, na ekranie **nie ma żadnej plakietki** - to stan do
 
 Tapnięcie plakietki otwiera arkusz z kolejką, ostatnią próbą, ostatnią udaną synchronizacją i przyciskiem **PONÓW PRÓBĘ**. Więcej: [praca bez zasięgu](praca-bez-zasiegu).
 
+@screen 01c-moj-dzien-offline "Arkusz synchronizacji po tapnięciu" | 01d-sync-stoi "Czerwony stan SYNC STOI"
+
 ## Komunikaty od administratora
 
 Jeśli administrator zakończył albo unieważnił Twoją operację z panelu, na ekranie stoi bursztynowy baner: która operacja, z jakiego powodu i co stało się z Twoimi zapisami (np. „2 zapisy z tego telefonu do tej operacji nie wyjdą na serwer"). Znika po tapnięciu **ROZUMIEM**. Operacja zakończona przez administratora zostaje na liście z plakietką; unieważniona znika z listy i z sum.
@@ -47,3 +49,5 @@ Jeśli administrator zakończył albo unieważnił Twoją operację z panelu, na
 - **Operacja zniknęła z listy** → sprawdź baner od administratora (unieważnienie) albo czy nie było to zdanie bez lotu bez żadnej zmiany odczytów - takiego zapisu aplikacja nie pokazuje, o czym ostrzegała przed zdaniem.
 - **Po reinstalacji lista jest pusta** → operacje wracają z serwera przy pierwszym połączeniu; daj aplikacji chwilę z zasięgiem albo użyj **SYNCHRONIZUJ TERAZ** w ustawieniach.
 - **Nie widzę zębatki** → jesteś w kokpicie; ustawienia są tylko na tym ekranie, a kokpit ma w tym miejscu przełącznik jasności.
+
+@screen 12-historia "Operacje z poprzednich dni"

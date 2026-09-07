@@ -2,13 +2,13 @@
 
 > Konto zakłada się kontem Google, a dostęp daje dopiero zatwierdzenie przez administratora klubu. Na co dzień aplikację odblokowuje PIN - także bez internetu.
 
-@screen 00a-login-full "Logowanie kontem Google" | 00c-oczekiwanie "Czeka na zatwierdzenie" | 00-login "Codzienne wejście PIN-em"
-
 ## Jak to przebiega
 
 1. **Zaloguj się kontem Google.** Tapnij **Kontynuuj z Google** i wybierz konto. Aplikacja bierze z niego tylko imię i adres e-mail - żeby administrator wiedział, kto się zgłasza. Haseł nie ma ani w aplikacji, ani w panelu.
 2. **Poczekaj na zatwierdzenie.** Zgłoszenie trafia do panelu klubu. Administrator zatwierdza je i nadaje kod pilota (np. `TMK`), który podpisuje Twoje operacje i stoi w ich sygnaturze. Ekran „czeka na zatwierdzenie" sam pyta klub o decyzję - przy każdym wejściu, po powrocie do aplikacji i co minutę, gdy telefon ma sieć; przycisk **SPRAWDŹ PONOWNIE** robi to od ręki.
 3. **Ustaw PIN.** Po zatwierdzeniu aplikacja prosi o PIN. Od tej chwili to nim wchodzisz do aplikacji - bez internetu.
+
+@screen 00a-login-full "Ekran logowania Google" | 00c-oczekiwanie "Czeka na zatwierdzenie" | 00-login "Codzienne wejście PIN-em"
 
 > **Wskazówka.** Jeśli administrator wpisał Twój adres Google w panelu wcześniej (zakładając Ci konto), zatwierdzenie nie jest potrzebne: konto podepnie się przy pierwszym logowaniu, razem ze swoją historią.
 
@@ -16,7 +16,7 @@
 
 Aplikacja pokazuje powód wpisany przez administratora i chwilę decyzji - powód jest w panelu wymagany właśnie dlatego, że czytasz go tutaj. Skontaktuj się z klubem; przycisk **ZALOGUJ INNYM KONTEM** pozwala zgłosić się innym adresem, na przykład klubowym, jeśli tego dotyczył powód.
 
-@screen 00d-odrzucone "Zgłoszenie odrzucone" | 00b-login-offline "Pierwsze logowanie bez sieci"
+@screen 00d-odrzucone "Powód wpisany przez administratora"
 
 ## Jak to działa
 
@@ -30,9 +30,13 @@ Google potwierdza tylko, kim jesteś; o dostępie decyduje klub. Konto pilota po
 
 Na ekranie PIN wybierz **Nie pamiętam PIN** i zaloguj się jeszcze raz kontem Google. To wymaga internetu. Gdy na telefonie czekają niewysłane zapisy, ta droga jest zablokowana z podanym powodem: odblokuj PIN-em i poczekaj na synchronizację - nowe logowanie mogłoby zostawić zapisy dnia bez właściciela.
 
+@screen 00b-login-offline "Logowanie bez sieci"
+
 ## Wylogowanie
 
 Wylogowanie jest w [ustawieniach](ustawienia), na samym końcu. Nie zadziała, dopóki na telefonie czekają niewysłane zapisy - najpierw muszą dojść do klubu, inaczej by przepadły. Ponowne logowanie wymaga internetu.
+
+@screen 13-ustawienia "Sekcja konta w ustawieniach"
 
 > **Uwaga.** Zapisy Twojego dnia powstają na tym telefonie, na którym latasz - to on jest ich źródłem, dopóki nie wyśle ich do klubu. Nie prowadź jednego dnia lotnego na dwóch telefonach.
 

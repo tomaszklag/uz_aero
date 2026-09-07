@@ -2,7 +2,7 @@
 
 > Operacje spoza dzisiejszej doby - na takich samych kafelkach jak na ekranie Mój dzień, w dwóch grupach: te, które możesz jeszcze poprawić, i te już zamknięte.
 
-@screen 12-historia "Poprzednie dni"
+@screen 12-historia "Kafelki z terminem korekty"
 
 ## Dwie grupy
 
@@ -23,7 +23,7 @@ Ten sam kształt, co na ekranie Mój dzień - różnią się dwie rzeczy: nagł�
 
 Tapnięcie kafelka otwiera [ekran operacji](operacja-i-korekty): w oknie korekty z możliwością edycji, po oknie w trybie podglądu.
 
-@screen 10b-rozliczenie-zamkniete "Operacja po oknie korekty"
+@screen 10-statystyki "Operacja w oknie korekty" | 10b-rozliczenie-zamkniete "Operacja po oknie korekty"
 
 ## Jak to działa
 
@@ -34,6 +34,8 @@ Lista liczy się na telefonie, z Twojego lokalnego zapisu - dlatego wygląda tak
 > **Założenie.** Podział na dwie grupy robi wyłącznie okno korekty. Przycisku edycji nie pokazujemy wyszarzonego - obiecywałby akcję, której reguły i tak nie dopuszczą; po oknie znika po prostu wejście w edycję. Więcej: [korekty i rejestr](korekty-i-rejestr).
 
 ## Częste problemy
+
+@screen 01-moj-dzien "Dzisiejsze operacje na Mój dzień" | 01d-sync-stoi "Czerwona plakietka łączności"
 
 - **Nie widzę wczorajszego wieczornego lotu** → doba liczy się w UTC od uruchomienia silnika. Latem lot uruchomiony po 02:00 czasu polskiego należy już do następnej doby, więc może stać na ekranie Mój dzień, a nie tutaj.
 - **Kafelek ma tylko ZOBACZ SZCZEGÓŁY** → minęły 24 godziny od zdania samolotu. Poprawkę wprowadzi administrator - zgłoś ją w klubie; zapis pierwotny i tak zostanie w dokumentacji.

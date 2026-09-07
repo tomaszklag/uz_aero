@@ -2,11 +2,13 @@
 
 > Cała operacja na mapie i na profilu wysokości: kołowanie przerywaną linią, loty pełną, wszystkie starty i lądowania jako znaczniki. Ślad wraca z serwera, więc jest też po reinstalacji i na nowym telefonie.
 
-@screen 14-slad "Ślad operacji" | 14d-slad-kursor "Kursor na profilu"
+@screen 14-slad "Ślad operacji"
 
 ## Jak tu wejść
 
 Wejście jest jedno: **miniatura śladu na [ekranie operacji](operacja-i-korekty)**, w karcie „Przebieg operacji" nad osią zdarzeń. Tapnięcie otwiera pełny ekran. Z list operacji - Mój dzień i Poprzednie dni - w ślad się nie wchodzi: najpierw wybiera się operację, potem jej trasę.
+
+@screen 10-statystyki "Miniatura śladu przy osi"
 
 ## Mapa
 
@@ -27,6 +29,8 @@ Wysokość z GPS w czasie, w stopach, z przerwami na ziemi między lotami. Jeden
 | jeden palec na profilu | kursor na obu wykresach |
 | dwa palce | przybliżenie i przesunięcie (mapa w obu osiach, profil tylko w czasie) |
 | dwuklik | powrót do całości |
+
+@screen 14d-slad-kursor "Kursor na profilu wysokości"
 
 > **Dlaczego tak.** Kursor prowadzi się wyłącznie na profilu, bo pytanie „co się działo o tej godzinie" ma sens tylko na osi czasu. Mapa osi czasu nie ma: nad polem skoków ten sam punkt trasy to pięć różnych przelotów, więc dotknięcie mapy musiałoby zgadywać, o który chodzi.
 
@@ -61,6 +65,8 @@ Telefon nagrywa pozycję co sekundę przez cały bieg silnika - także przy wyga
 > **Założenie.** Ślad należy do **operacji**, nie do pojedynczego lotu: zapis powstaje w jednym ciągu, od uruchomienia do zatrzymania silnika, a loty są jego odcinkami. Dlatego jeden ekran pokazuje wszystkie starty i lądowania jednego biegu.
 
 ## Częste problemy
+
+@screen 05g-cockpit-no-gps "Brak sygnału w kokpicie"
 
 - **Ekran mówi „Ślad niedostępny"** → to brak zasięgu, nie brak nagrania. Wróć w zasięg i otwórz ekran jeszcze raz.
 - **Ekran mówi „Nagranie czeka na wysyłkę"** → nagranie jest na tym telefonie. Wyjdzie samo z najbliższą synchronizacją; ponaglisz je przyciskiem **SYNCHRONIZUJ TERAZ** w [ustawieniach](ustawienia).

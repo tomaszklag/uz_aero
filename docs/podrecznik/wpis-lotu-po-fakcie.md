@@ -2,13 +2,13 @@
 
 > Lot odbyty bez telefonu wpisuje się w czterech krokach - o to samo, o co pyta zapis automatyczny: data i samolot, zadanie, czasy na osi operacji, liczniki.
 
-@screen 15-reczny-lot "Krok 1 · data i samolot" | 15b-reczny-czasy "Krok 3 · oś operacji" | 15c-reczny-liczniki "Krok 4 · liczniki"
-
 Wejście jest jedno: **DODAJ LOT RĘCZNIE** na ekranie [Mój dzień](moj-dzien) - także wtedy, gdy dzień jest jeszcze pusty. Ekran nazywa się „Lot ręczny" i prowadzi przez cztery kroki; ostatni kończy przycisk **ZAPISZ LOT**.
 
 ## Krok 1 · data, samolot, załoga
 
 Data jest pierwszym pytaniem - kalendarz miesięczny ze skrótami **Wczoraj** i **Dzisiaj**, bez dni przyszłych. Doba liczy się od uruchomienia silnika w czasie UTC, a zmiana daty przesuwa razem z nią wpisane już godziny. Samolot wybiera się z listy floty klubu; drugi pilot (Dual) jest opcjonalny, chyba że maszyna wymaga załogi dwuosobowej - wtedy powód blokady stoi w przycisku **DALEJ**.
+
+@screen 15-reczny-lot "Wybór maszyny i drugiego pilota" | 15e-reczny-data "Kalendarz miesięczny ze skrótami"
 
 ## Krok 2 · zadanie
 
@@ -16,7 +16,7 @@ Rodzaj operacji, lotniska, klient i notatka - te same pola, co przy rozpoczęciu
 
 > **Dlaczego tak.** Przy rozpoczęciu lotu trasę wolno zostawić pustą, bo start silnika ma trwać sekundy. Wpis po fakcie opisuje lot, który **już się odbył** - „jeszcze nie wiem, dokąd" tu nie istnieje.
 
-@screen 15a-reczny-zadanie "Krok 2 · zadanie" | 15e-reczny-data "Kalendarz daty lotu"
+@screen 15a-reczny-zadanie "Rodzaj operacji i lotniska"
 
 ## Krok 3 · przebieg operacji
 
@@ -26,6 +26,8 @@ Oś zaczyna się od dwóch pustych wierszy: **uruchomienie** i **wyłączenie** 
 - **Kręgi (touch and go)** wpisuje się liczbą przy lądowaniu, a podpis mówi, ile z tego wychodzi lądowań. Nie trzeba wpisywać pięciu par godzin.
 - **Zrzuty** (dzień skokowy) stoją między startem a lądowaniem swojego lotu i noszą jego numer; kolejny dziedziczy skład i wysokość po poprzednim. Zrzut poza wszystkimi lotami dostaje ostrzeżenie - popraw godzinę albo dopisz lot, w którym się odbył.
 - **Stopka z sumami Loty · Blok · Lot** liczy się na żywo.
+
+@screen 15h-reczny-czasy-bez-biegu "Pusta oś przed godzinami biegu" | 15b-reczny-czasy "Loty i zrzuty na osi" | 15i-reczny-dodaj-lot "Dodanie lotu z kręgami"
 
 Bieg bez ani jednego lotu (uruchomiłem, wyłączyłem, nie poleciałem) da się zapisać - ekran tylko ostrzega. Tak samo dzień skokowy bez zrzutu: składu i wysokości wyniesienia nie odtworzy nikt poza pilotem, który leciał.
 
@@ -39,6 +41,8 @@ Bieg bez ani jednego lotu (uruchomiłem, wyłączyłem, nie poleciałem) da się
 - **Zastane paliwo i licznik podpowiada operacja poprzedzająca** na tej maszynie - z podpisem, skąd liczba pochodzi (`z poprzedniego lotu · AKO`). Podpowiedź można nadpisać, a odczytów po locie nie podpowiada nic: to na nie odpowiadasz.
 - **Karty pokazują werdykt wobec normy** maszyny od razu; tapnięcie w plakietkę otwiera rachunek. Więcej: [norma zużycia](norma-zuzycia).
 
+@screen 15c-reczny-liczniki "Paliwo, motogodziny i olej"
+
 ## Co blokuje, a co tylko ostrzega
 
 | Blokuje (z powodem w przycisku) | Ostrzega (można zapisać) |
@@ -48,6 +52,8 @@ Bieg bez ani jednego lotu (uruchomiłem, wyłączyłem, nie poleciałem) da się
 | cofnięty licznik motogodzin | rozjazd odczytów z sąsiednią operacją tej maszyny |
 | paliwa po locie więcej niż zastane plus dolane | zużycie poza normą maszyny |
 | stan ponad pojemność zbiorników | nakładanie się czasów z Twoją inną operacją |
+
+@screen 15g-reczny-czas-kolejnosc "Blokada odwróconej pary godzin" | 15f-reczny-czas-pusty "Arkusz czasu bez wartości"
 
 ## Jak to działa
 

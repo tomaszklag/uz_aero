@@ -8,6 +8,8 @@
 2. Otwórz pobrany plik. Android zapyta o zgodę na instalowanie aplikacji spoza sklepu Play dla tego źródła (przeglądarka albo menedżer plików) - zezwól.
 3. Uruchom UZ Aero i przejdź do [pierwszego logowania](pierwsze-logowanie).
 
+@screen 00a-login-full "Pierwszy ekran po instalacji"
+
 > **Wskazówka.** Do pierwszego logowania i do wysyłki danych potrzebny jest internet. Do samego latania - nie. Zaloguj się przy sieci (hangar, dom), zanim pojedziesz w teren.
 
 ## Zgody, o które prosi aplikacja
@@ -15,17 +17,23 @@
 - **Lokalizacja** - aplikacja poprosi o nią przy rozpoczęciu lotu. Bez niej kokpit nie wykryje kołowania, startów ani lądowań i nie powstanie ślad na mapie. Wystarcza zgoda „podczas używania aplikacji".
 - **Powiadomienia** - podczas pracy silnika Android pokazuje powiadomienie „UZ Aero - rejestracja lotu". To ono utrzymuje zapis śladu przy wygaszonym ekranie i gaśnie samo po zatrzymaniu silnika.
 
+@screen 05g-cockpit-no-gps "Kokpit bez sygnału GPS" | 05f-zdarzenie-reczne "Ręczny zapis startu"
+
 > **Dlaczego tak.** Aplikacja nie prosi o dostęp do lokalizacji „w tle". Zapis przy wygaszonym ekranie utrzymuje właśnie to widoczne powiadomienie - pilot ma widzieć, że telefon nagrywa, a nie domyślać się tego. Nagrywanie w tle działa wyłącznie w czasie pracy silnika; po jego zatrzymaniu powiadomienie gaśnie samo.
 
 ## Aktualizacja
 
 Aktualizacja to instalacja nowego pliku z tej samej [strony pobierania](~/pobierz/) - na istniejącą aplikację, bez odinstalowywania. Dane na telefonie zostają: profil, PIN, zapis operacji i kolejka wysyłki. O nowych wersjach informuje strona [wydania i zmiany](~/wydania/); tam też stoi, kiedy aktualizacja wymaga czegoś więcej, na przykład ponownego zalogowania. Wersję, którą masz, podaje sekcja „O aplikacji" w [ustawieniach](ustawienia).
 
+@screen 13-ustawienia "Wersja w sekcji O aplikacji"
+
 ## Jak to działa
 
 Aplikacja trzyma na telefonie własny zapis Twoich operacji i wysyła go do klubu w tle. Nowa wersja instaluje się na ten sam zapis, więc nic z niego nie ginie - także wtedy, gdy w kolejce czekają niewysłane zdarzenia. Gdy aplikację odinstalujesz albo wyczyścisz jej dane, zapis na telefonie znika, ale to, co zdążyło dojść do klubu, wraca po ponownym zalogowaniu: aplikacja pobiera komplet Twoich operacji przy pierwszym połączeniu. Ślady GPS i tak ogląda się z serwera, więc wracają zawsze. Nie wracają tylko te zdarzenia, które nie zdążyły wyjść z kolejki wysyłki - ich jedynym egzemplarzem był stary telefon. Więcej: [synchronizacja](synchronizacja).
 
 > **Uwaga.** Przed odinstalowaniem albo zmianą telefonu sprawdź, czy kolejka wysyłki jest pusta: brak plakietki łączności w nagłówku i wiersz „Kolejka wysyłki · pusta" w [ustawieniach](ustawienia).
+
+@screen 01c-moj-dzien-offline "Kolejka wysyłki przed zmianą telefonu"
 
 ## Wymagania
 

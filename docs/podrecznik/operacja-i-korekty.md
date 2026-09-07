@@ -2,7 +2,7 @@
 
 > Każda operacja ma swój ekran: oś zdarzeń, ślad, rachunek paliwa i motogodzin wobec normy maszyny. Przez 24 godziny od zdania pilot poprawia własne wpisy; potem decyduje klub.
 
-@screen 10-statystyki "Ekran operacji" | 10d-edycja "Tryb edycji"
+@screen 10-statystyki "Ekran operacji"
 
 ## Jak tu wejść
 
@@ -20,11 +20,11 @@ Nagłówek nosi **sygnaturę** operacji, np. `SP-AXA/2026-09-05/TMK/1` - znak sa
 - **Załoga** - dowódca i drugi pilot.
 - **Notatki** - notatka z zadania i uwagi wpisów po fakcie; karta istnieje tylko wtedy, gdy coś w niej jest.
 
-@screen 10c-norma-detale "Arkusz normy" | 10i-historia-zmian "Historia zmian" | 10l-usun-sesje "Usunięcie wpisu"
-
 ## Okno korekty: 24 godziny od zdania
 
 Przycisk **EDYTUJ DANE** przełącza ten sam ekran w tryb edycji: każdy wiersz osi staje się celem dotknięcia z ołówkiem, na końcu osi dochodzi **DODAJ WPIS**, a na górze - wykryte niespójności („Lot 2 nie ma lądowania", „Zrzut zapisany na ziemi") z podpowiedzią, czym je naprawić. Ostrzegają, nigdy nie blokują. Wyjście z trybu to **ZAKOŃCZ EDYCJĘ**.
+
+@screen 10d-edycja "Tryb edycji" | 10e-korekta-zdarzenia "Arkusz korekty czasu" | 10f-korekta-odczytu "Korekta odczytów"
 
 | Co poprawiasz | Jak |
 |---|---|
@@ -38,13 +38,19 @@ Przycisk **EDYTUJ DANE** przełącza ten sam ekran w tryb edycji: każdy wiersz 
 
 Powód korekty jest opcjonalny, ale to jedyne, z czego administrator dowie się, dlaczego liczba się zmieniła. Dowódcy nie da się zmienić w ogóle - to zdanie samolotu i nowe przejęcie, nie korekta.
 
+@screen 10g-korekta-zrzutu "Korekta zrzutu" | 10h-dodaj-wpis "Dopisanie brakującego faktu" | 10j-korekta-zalogi "Zmiana drugiego pilota"
+
 ## Historia zmian
 
 Poprawiona wartość nosi plakietkę **popr.** - w obu trybach, także w podglądzie po oknie. Tapnięcie otwiera historię: kiedy, co było i co jest, kto zmienił (Ty albo administrator) i z jakim powodem. Zapis się dopisuje, nie nadpisuje - pierwotna wartość zostaje w dokumentacji klubu.
 
+@screen 10i-historia-zmian "Kolejne wersje wartości" | 10k-korekta-notatki "Notatka z wejściem w historię"
+
 ## Usunięcie całego wpisu
 
 Na samym dole trybu edycji, za wszystkim, stoi obramowany czerwony **USUŃ CAŁY WPIS**. Arkusz nazywa konkretną operację - sygnatura, godziny biegu silnika, Loty · Blok · Lot - i pyta o potwierdzenie; powód jest opcjonalny. Operacja przestaje się liczyć: wypada z Twojego dnia, z historii i z sum, przestaje trzymać samolot jako zajęty i nie jest już ogniwem łańcucha odczytów. Jej zapis zostaje w dokumentacji i widzi go administrator.
+
+@screen 10l-usun-sesje "Potwierdzenie usunięcia wpisu"
 
 ## Jak to działa
 

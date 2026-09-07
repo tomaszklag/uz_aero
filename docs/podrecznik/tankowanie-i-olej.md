@@ -2,8 +2,6 @@
 
 > Tankowanie zapisuje się w kokpicie przy zatrzymanym śmigle: przed uruchomieniem albo po zatrzymaniu silnika. Olej mierzy się przy przejęciu, a dolewkę zapisuje osobno.
 
-@screen 06-tankowanie "Tankowanie" | 02i-preflight-olej "Pomiar oleju przy przejęciu"
-
 ## Tankowanie
 
 Ekran tankowania ma trzy części:
@@ -13,6 +11,8 @@ Ekran tankowania ma trzy części:
 3. **Stan po tankowaniu** z miarką na tle pojemności zbiorników: szarym to, co było, bursztynem to, co dolano. Stan ponad pojemność blokuje zapis z powodem.
 
 Po pomiarze paliwa ekran pokazuje pod kartą **rzeczywiste zużycie** od ostatniego odczytu: odczyt odniesienia, czas pracy silnika, litry, średnią na godzinę i werdykt wobec normy maszyny - kontrolę wiarygodności liczby wyżej. Bez pomiaru, bez normy albo bez pracy silnika rachunku nie ma: aplikacja nie zgaduje.
+
+@screen 06-tankowanie "Dolewka i miarka pojemności" | 02b-preflight-paliwo "Szlak paliwa w arkuszu"
 
 > **Uwaga.** Tankowanie przy pracującym silniku jest niemożliwe - przycisk mówi to wprost. Dolewa się przy zatrzymanym śmigle; to samo dotyczy dolewki oleju.
 
@@ -27,6 +27,8 @@ Po pomiarze paliwa ekran pokazuje pod kartą **rzeczywiste zużycie** od ostatni
 
 W kokpicie kafelek **Dolej olej** pokazuje, ile oleju jest w silniku (pomiar plus dolewki); po uruchomieniu silnika - z dopiskiem „około", odświeżanym co 5 minut.
 
+@screen 02i-preflight-olej "Pomiar poniżej minimum" | 04a-cockpit-ground "Kafelek dolewki w kokpicie"
+
 ## Jak to działa
 
 Paliwo liczy się między odczytami. Każdy odczyt paliwomierza (przejęcie, pomiar przed tankowaniem, zdanie) i każde tankowanie (stan przed, dolano, stan po) jest punktem na osi paliwa tej maszyny; między dwoma punktami aplikacja zna czas pracy silnika, więc umie policzyć średnie zużycie i porównać je z normą. Szacunek „ile zostało" to ostatni pewny odczyt pomniejszony o zużycie z normy za czas pracy silnika - podpowiedź, nie pomiar. Olej idzie własną osią: od pomiaru do pomiaru, przez wiele operacji, bo bagnet tuż po locie kłamie. Oczekiwanie na bagnecie to ostatni pomiar plus dolewki minus norma oleju pomnożona przez motogodziny od tego pomiaru. Więcej: [norma zużycia](norma-zuzycia), [łańcuch odczytów](lancuch-odczytow).
@@ -34,6 +36,8 @@ Paliwo liczy się między odczytami. Każdy odczyt paliwomierza (przejęcie, pom
 > **Założenie.** Oleju nie mierzy się po locie, bo poziom na bagnecie ustala się dopiero po ostygnięciu silnika. Dlatego zużycie oleju jednej operacji nie ma werdyktu - ma go dopiero odcinek od pomiaru do pomiaru.
 
 > **Wskazówka.** Tankowanie zapomniane w kokpicie dopiszesz później: na ekranie operacji **EDYTUJ DANE** → **DODAJ WPIS** → Tankowanie (stan przed i dolano; stan po liczy się sam).
+
+@screen 10h-dodaj-wpis "Dopisanie zapomnianego tankowania"
 
 ## Częste problemy
 

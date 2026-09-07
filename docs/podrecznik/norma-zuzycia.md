@@ -2,7 +2,7 @@
 
 > Norma mówi, ile paliwa i motogodzin powinna była kosztować konkretna operacja. Bierze się z dokumentacji jednostki, a gdy maszyna ma dość lotów - z jej własnych lotów. Werdykt poza pasmem to bursztynowa informacja, nie oskarżenie.
 
-@screen 10-statystyki "Rachunek z werdyktem" | 10c-norma-detale "Arkusz „jak to policzone”"
+@screen 10-statystyki "Rachunek z werdyktem"
 
 ## Skąd bierze się norma
 
@@ -30,6 +30,8 @@ Na ekranie operacji karty Paliwo i Motogodziny kończy plakietka: **✓ W NORMIE
 
 Bez normy karta milczy - nie ma plakietki ani zdania o jej braku. Jedyny wyjątek to „silnik nie pracował".
 
+@screen 10c-norma-detale "Rozpisane działanie normy" | 10a-statystyki-zero "Silnik nie pracował"
+
 > **Uwaga.** Werdykt niczego nie blokuje i nie zmienia: paliwomierz i licznik mają rację, model tylko pyta. „Powyżej normy" przy normie z dokumentacji znaczy „powyżej tego, co obiecuje producent", a nie „powyżej tego, co ten egzemplarz zwykle pokazuje".
 
 ## Szacunek „ile zostało"
@@ -40,11 +42,15 @@ Ta sama norma daje szacunki tam, gdzie odczytu jeszcze nie ma:
 - **Tankowanie i zdanie samolotu** - po biegu silnika pole paliwa startuje puste, a podpis podpowiada „szacunek z normy: ~60 L"; arkusz pokazuje szlak: ostatni odczyt, ile latano, ile mogło się spalić.
 - **Przejęcie** - zielone ogniwo „Szacunkowo zostało ~X L" liczone z historii przekazania.
 
+@screen 05-cockpit-running "Szacunek paliwa w kokpicie" | 06-tankowanie "Szacunek przed tankowaniem" | 02b-preflight-paliwo "Zielone ogniwo przy przejęciu"
+
 > **Założenie.** Szacunek nigdy nie wchodzi do pola sam - wpisujesz to, co pokazuje paliwomierz. Podstawiona liczba dałaby się zatwierdzić bez patrzenia na przyrząd.
 
 ## Olej: oczekiwanie bez werdyktu
 
 Norma oleju daje oczekiwanie **między pomiarami**: arkusz pomiaru przy przejęciu pokazuje „Ostatni pomiar", „Latano · 4:00 MH" i „na bagnecie oczekuj ≈ 10,1 L", a kokpit „W silniku około 9,1 L". Werdyktu per operacja nie ma - oleju nie mierzy się przy zdaniu, więc zużycia jednej operacji nie da się policzyć; karta Olej na ekranie operacji to rachunek bez plakietki.
+
+@screen 02i-preflight-olej "Oczekiwanie na bagnecie"
 
 ## Norma jest do kalibracji
 

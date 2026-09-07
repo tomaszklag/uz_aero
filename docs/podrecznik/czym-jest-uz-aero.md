@@ -9,6 +9,8 @@ UZ Aero składa się z **aplikacji pilota** na Androida i **panelu klubu** w prz
 - **Aplikacja pilota** prowadzi przez dzień lotny: przejęcie samolotu z odczytami, kokpit z automatycznym wykrywaniem startów i lądowań, tankowanie, zdanie samolotu. Działa bez zasięgu - zapis zostaje na telefonie i wysyła się sam, gdy wróci sieć.
 - **[Panel klubu](panel-wprowadzenie)** to miejsce administratora: konta pilotów do zatwierdzenia, karty samolotów z normami zużycia, dziennik operacji z osią zdarzeń i śladem GPS, a na czas testów także zgłoszenia wysłane z aplikacji.
 
+@screen 01-moj-dzien "Ekran domowy aplikacji pilota"
+
 ## Trzy słowa, które warto znać
 
 | Słowo | Znaczenie |
@@ -16,6 +18,8 @@ UZ Aero składa się z **aplikacji pilota** na Androida i **panelu klubu** w prz
 | **Operacja** | Jeden bieg silnika - od przejęcia samolotu do jego zdania. W jednej operacji może być wiele lotów. |
 | **Lot** | Od startu do lądowania. Aplikacja liczy loty sama z GPS, także kręgi z touch and go. |
 | **Zdanie samolotu** | Zakończenie operacji z obowiązkowym odczytem paliwa i motogodzin. Zatwierdza log operacji i przekazuje maszynę następnemu pilotowi. |
+
+@screen 10-statystyki "Operacja z lotami na osi"
 
 Pełna lista pojęć: [słownik](slownik). Model w całości: [model operacji](model-operacji).
 
@@ -25,11 +29,13 @@ Pełna lista pojęć: [słownik](slownik). Model w całości: [model operacji](m
 2. **Kokpit** - START ENGINE i aplikacja pracuje sama: kołowanie, start, lądowanie, kolejne loty. Tankowanie, załadunek skoczków i zmiana załogi są pod ręką.
 3. **Zdanie samolotu** - STOP ENGINE, odczyty paliwa i motogodzin, gotowe. Operacja trafia na listę dnia z sumami; przez 24 godziny pilot może poprawić własne wpisy.
 
-@screen 01-moj-dzien "Mój dzień" | 05-cockpit-running "Kokpit w locie" | 09b-zdaj-samolot "Zdanie samolotu"
+@screen 02-preflight "Trzy kroki przed lotem" | 05-cockpit-running "Kokpit w locie" | 09b-zdaj-samolot "Odczyty przy zdaniu"
 
 ## Jak to działa
 
 Każde zdarzenie dnia lotnego - przejęcie, uruchomienie silnika, start, lądowanie, tankowanie, zdanie - jest wpisem w rejestrze na telefonie pilota. Wpis powstaje natychmiast, bez pytania serwera o zgodę, i nigdy nie jest nadpisywany: poprawka dopisuje się obok niego, a stara wartość zostaje. Z tego rejestru telefon sam liczy czas blokowy, liczbę lotów, rachunek paliwa i motogodzin oraz sygnaturę operacji. Kolejka wysyłki przekazuje wpisy do klubu, gdy jest sieć; tam łączą się w dziennik floty, dostają oznaczenia niespójności do wyjaśnienia i trafiają na kartę dnia samolotu. Panel klubu czyta ten sam dziennik - administrator widzi każdą operację razem z historią poprawek.
+
+@screen 01c-moj-dzien-offline "Kolejka wysyłki bez sieci"
 
 > **Założenie.** Telefon dowódcy jest źródłem prawdy o operacji, a klub - źródłem prawdy o flocie i historii. Dlatego brak zasięgu nie blokuje lotu, a decyzje o kontach, samolotach i spornych wpisach zapadają w panelu.
 

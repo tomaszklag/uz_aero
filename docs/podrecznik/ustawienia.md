@@ -2,7 +2,7 @@
 
 > Wejście do ustawień jest jedno: zębatka na ekranie Mój dzień. Kokpit ma w tym miejscu przełącznik jasności.
 
-@screen 13-ustawienia "Ustawienia"
+@screen 13-ustawienia "Sekcje od motywu po konto"
 
 ## Co gdzie stoi
 
@@ -15,6 +15,8 @@
 | **Bezpieczeństwo** | **Zmień PIN**: najpierw obecny, potem nowy. Po zmianie stary PIN przestaje działać od razu. |
 | **Konto** | Twoje imię i kod pilota oraz **Wyloguj i zmień konto** - na samym końcu ekranu. |
 
+@screen 01-moj-dzien "Zębatka na ekranie domowym" | 05-cockpit-running "Przełącznik jasności w kokpicie"
+
 ## Synchronizacja
 
 Wysyłka działa sama w tle, więc ten przycisk jest ponagleniem na wypadek, gdy coś stoi dłużej, niż powinno. **SYNCHRONIZUJ TERAZ** popycha kolejkę i w tej samej chwili pyta klub o świeże dane: flotę, pilotów, przekazania samolotów i decyzje administratora. Bez połączenia przycisk jest nieaktywny, a powód stoi w nim samym.
@@ -23,13 +25,19 @@ Wiersz **Ostatnia synchronizacja** to godzina ostatniego udanego kontaktu z klub
 
 > **Wskazówka.** Liczba zapisów w kolejce i wiek danych pobranych z panelu stoją w arkuszu pod plakietką łączności w nagłówku, nie na tym ekranie. Więcej: [praca bez zasięgu](praca-bez-zasiegu).
 
+@screen 01c-moj-dzien-offline "Arkusz pod plakietką łączności" | 01d-sync-stoi "Kolejka stoi po odmowie"
+
 ## Diagnostyka GPS
 
 Sekcja czyta odbiornik telefonu wprost i z siecią nie ma nic wspólnego. Zaglądasz tu wtedy, gdy kokpit przestał wykrywać starty i lądowania: **Status** mówi, czy jest ustalona pozycja (`FIX`), czy odbiornik milczy, czy aplikacja w ogóle nie dostała zgody na lokalizację. **Dokładność** poniżej kilkunastu metrów to normalna praca; **Ostatni fix** starszy niż kilkanaście sekund oznacza, że wykrywanie faz jest wstrzymane i start z lądowaniem trzeba zapisać przyciskami. Więcej: [wykrywanie faz lotu](wykrywanie-faz-lotu).
 
+@screen 05g-cockpit-no-gps "Kokpit bez sygnału odbiornika"
+
 ## PIN i konto
 
 Obie sekcje dotyczą dostępu do aplikacji i dlatego stoją razem, na końcu. PIN zmienia się bez internetu - sprawdza go telefon. Wylogowanie internetu wymaga, bo ponowne wejście to logowanie kontem Google, a konta zakłada administrator klubu. Więcej: [pierwsze logowanie](pierwsze-logowanie).
+
+@screen 00-login "Codzienne wejście PIN-em" | 00a-login-full "Ponowne logowanie kontem Google"
 
 > **Dlaczego tak.** Wylogowanie jest zablokowane, dopóki w kolejce czeka choć jeden zapis. Niewysłane zapisy dnia istnieją wyłącznie na tym telefonie - wylogowanie zostawiłoby je bez właściciela. Wróć do zasięgu: wyślą się same i przycisk odblokuje się sam.
 

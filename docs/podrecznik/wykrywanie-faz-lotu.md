@@ -2,7 +2,7 @@
 
 > Po START ENGINE telefon czyta odbiornik GPS i sam dopisuje do osi operacji kołowanie, każdy start i każde lądowanie. Uruchomienie i wyłączenie silnika zawsze zapisuje pilot - a gdy GPS zawiedzie, także starty i lądowania.
 
-@screen 05-cockpit-running "Kokpit w locie" | 05g-cockpit-no-gps "Bez sygnału GPS" | 05f-zdarzenie-reczne "Zdarzenie ręczne"
+@screen 05-cockpit-running "Kokpit w locie"
 
 ## Trzy pytania
 
@@ -22,6 +22,8 @@ Z odbiornika GPS przychodzą pozycja, prędkość nad ziemią, wysokość, kurs 
 - **Lot** - automat wypatruje już tylko lądowania.
 - **Lądowanie** - niska prędkość **i** niska wysokość nad lotniskiem **i** brak ciasnego zakrętu, utrzymane kilka sekund. Sam spadek prędkości to codzienność zakrętu; dopiero razem z wysokością znaczy „jestem na ziemi". Dobieg zapisuje się jako kołowanie.
 
+@screen 05h-cockpit-idle "Postój po uruchomieniu" | 05a-cockpit-taxi "Kołowanie przed startem" | 05d-cockpit-taxi-post "Kołowanie po lądowaniu"
+
 > **Założenie.** Bez wysokości automat lądowania nie wykryje - milczy świadomie, bo zmyślone lądowanie kosztuje więcej niż jego brak. Brakujące lądowanie dopisuje pilot.
 
 ## „Czy" i „kiedy" to dwa pytania
@@ -29,6 +31,8 @@ Z odbiornika GPS przychodzą pozycja, prędkość nad ziemią, wysokość, kurs 
 Decyzja, **czy** coś się wydarzyło, zapada późno i na mocnych przesłankach; **kiedy** - tego automat szuka wstecz w zapisie ostatnich minut. Start to ostatnia chwila z kołami na ziemi, lądowanie - pierwsza chwila serii przy ziemi, kołowanie - ostatnia chwila przy stanowisku. Na oś trafia ta cofnięta godzina, więc czas na upewnienie się nie kosztuje dokładności w dokumentach.
 
 Wykryty start i lądowanie pokazują się najpierw jako powiadomienie „Wykryto: Takeoff" z odliczaniem: brak reakcji przez kilka sekund to zapis, **COFNIJ** znaczy, że zapisu nie będzie. Kołowanie okna nie ma - błędny wpis dokłada wiersz, a nie psuje rozliczenia.
+
+@screen 05b-cockpit-inflight-toast "Odliczanie po wykryciu startu" | 05c-cockpit-toast-ldg "Odliczanie po wykryciu lądowania"
 
 ## Skoki mają jedno lotnisko
 
@@ -38,6 +42,8 @@ Rodzaj operacji z kroku 2 rozpoczęcia lotu steruje detekcją. Skoki startują i
 
 Przycisk ręczny w pasku kokpitu jest zawsze widoczny i nazywa kolejne zdarzenie: **Taxi**, **Take off**, **Landing**. Wymaga przytrzymania przez sekundę; w arkuszu godzinę cofniesz o ±1 min albo wpiszesz z klawiatury, bo pilot orientuje się po fakcie. Zdarzenie ręczne wygląda na osi tak samo jak wykryte; skąd pochodzi, widzi klub w dzienniku.
 
+@screen 05f-zdarzenie-reczne "Arkusz zdarzenia ręcznego"
+
 ## Gdy GPS zawiedzie
 
 Po kilkunastu sekundach ciszy kokpit pokazuje baner „GPS: brak sygnału · autodetekcja wstrzymana". Timery liczą dalej z zegara, a sieć to osobna sprawa - zapisy wysyłają się normalnie.
@@ -45,6 +51,8 @@ Po kilkunastu sekundach ciszy kokpit pokazuje baner „GPS: brak sygnału · aut
 - W locie start i lądowanie zapisujesz przyciskami ręcznymi.
 - Po STOP ENGINE kafelek **Popraw dane operacji** → **DODAJ WPIS** dopisuje przegapione zdarzenia, zanim zdasz samolot.
 - Lot bez telefonu wpisujesz przez **DODAJ LOT RĘCZNIE** - taki wpis nie ma śladu GPS. Przerwa w sygnale zostawia dziurę w śladzie.
+
+@screen 05g-cockpit-no-gps "Baner braku sygnału"
 
 ## Zrzut skoczków
 

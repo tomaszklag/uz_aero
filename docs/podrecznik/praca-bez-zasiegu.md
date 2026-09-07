@@ -2,11 +2,11 @@
 
 > Brak sieci nigdy nie blokuje pracy pilota. Wszystko zapisuje się na telefonie i wychodzi do klubu samo, gdy wróci zasięg. Sieć jest okazją do wysyłki, nie warunkiem.
 
-@screen 01c-moj-dzien-offline "Bez sieci · kolejka czeka" | 01d-sync-stoi "Serwer odmówił"
-
 ## Co działa bez internetu
 
 Wszystko, co dotyczy operacji: wejście PIN-em, rozpoczęcie lotu, kokpit z wykrywaniem startów i lądowań, tankowanie i olej, zdanie samolotu, wpis lotu po fakcie, korekty, Mój dzień i Poprzednie dni. Norma zużycia, werdykty i sygnatura operacji też liczą się na telefonie - z Twojego lokalnego zapisu, bez pytania serwera o cokolwiek.
+
+@screen 05-cockpit-running "Kokpit w locie" | 09b-zdaj-samolot "Zdanie samolotu z odczytami"
 
 ## Co wymaga sieci
 
@@ -16,6 +16,8 @@ Wszystko, co dotyczy operacji: wejście PIN-em, rozpoczęcie lotu, kokpit z wykr
 - **Świeże dane z klubu**: lista floty i pilotów, przekazanie z ostatniego zdania cudzej operacji, podpowiedzi odczytów we wpisie po fakcie. Bez sieci aplikacja pracuje na kopii z ostatniego połączenia i mówi o tym przy samej wartości - bursztynową adnotacją **Ostatnie pobrane** z datą. Gdy nie ma nawet kopii, pisze „Brak danych - wpisz z licznika".
 
 Żadna z tych rzeczy nie zatrzymuje lotu. Odczyty z przyrządów są ważniejsze od podpowiedzi, a rozjazd z przekazaniem jest ostrzeżeniem, nie blokadą - patrz [łańcuch odczytów](lancuch-odczytow).
+
+@screen 02d-preflight-offline "Wartości z ostatniego połączenia" | 14c-slad-offline "Ślad wymaga zasięgu"
 
 ## Wskaźnik łączności
 
@@ -28,6 +30,8 @@ Plakietka w nagłówku istnieje tylko wtedy, gdy coś stoi. Stan „wszystko wys
 | **SYNC STOI · n** (czerwony) | serwer odpowiedział i odmówił albo wygasła sesja; kolejka sama nie ruszy | tapnij plakietkę: baner nazywa powód, podaje kod dla administratora i drogę wyjścia |
 
 Tapnięcie otwiera arkusz „Synchronizacja": ile zapisów czeka w kolejce, **Ostatnia próba** z godziną i wynikiem („brak sieci", „odrzucone"), **Ostatnia udana synchronizacja**, wiek danych pobranych z panelu oraz przycisk **PONÓW PRÓBĘ**. Ponowienie robi to samo, co **SYNCHRONIZUJ TERAZ** w [ustawieniach](ustawienia).
+
+@screen 01-moj-dzien "Brak plakietki · wszystko wysłane" | 01c-moj-dzien-offline "OFFLINE · arkusz synchronizacji" | 01d-sync-stoi "SYNC STOI · serwer odmówił"
 
 > **Dlaczego tak.** „OFFLINE" znaczy wynik ostatniej próby, a nie samą obecność zapisów w kolejce. Bursztyn mówi w tej aplikacji „poczekaj, samo przejdzie", więc odmowy serwera nie wolno tak nazwać: sieć wtedy jest, a kolejka mimo to stoi i sama nie ruszy. Dlatego ten stan ma osobny, czerwony kolor.
 
@@ -46,6 +50,8 @@ Każde zdarzenie - przejęcie, uruchomienie silnika, wykryty start, tankowanie, 
 > **Założenie.** Jeden telefon, jeden pilot. Zapisy Twojego dnia powstają na tym telefonie, na którym latasz - to on jest ich źródłem, dopóki nie wyśle ich do klubu. Dlatego jednego dnia lotnego nie prowadzi się na dwóch telefonach, a wylogowanie jest zablokowane przy niepustej kolejce: to, co jeszcze nie doszło, nie ma skąd wrócić.
 
 ## Częste problemy
+
+@screen 13-ustawienia "SYNCHRONIZUJ TERAZ w ustawieniach"
 
 - **Plakietka mówi OFFLINE, choć mam zasięg** → ostatnia próba nie doszła; bywa tak przy słabym połączeniu albo gdy serwer klubu dopiero się budzi. Tapnij plakietkę i **PONÓW PRÓBĘ** - to ponowienie czeka dłużej niż wysyłka w tle.
 - **Czerwone SYNC STOI** → serwer odpowiedział i odmówił albo trzeba zalogować się ponownie. Twoje zapisy są bezpieczne na telefonie. Zrób to, co mówi baner; przy odmowie przekaż administratorowi kod, który w nim stoi.
