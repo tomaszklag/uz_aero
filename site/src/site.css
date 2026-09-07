@@ -274,6 +274,10 @@ footer a:hover { color: var(--green); }
   .offline-card { padding: 30px; }
   .modules li { grid-template-columns: 1fr; gap: 4px; }
   .browser { transform: none; overflow-x: auto; }
+}
+
+/* nagłówek: linki znikają dopiero, gdy przestają się mieścić obok marki i CTA */
+@media (max-width: 760px) {
   .top nav a:not(.cta) { display: none; }
 }
 @media (max-width: 560px) {
@@ -323,7 +327,6 @@ footer a:hover { color: var(--green); }
   .stage .front, .stage .back { animation: none; }
   .stage .glow { filter: blur(18px); }
   .offline-card::after { display: none; }
-  .top nav a.cta { padding: 12px 16px; }
   footer a { padding: 8px 0; display: inline-block; }
   .btn { padding: 16px 22px 14px; }
 }
@@ -357,6 +360,17 @@ footer a:hover { color: var(--green); }
 .dl.wide { display: grid; width: 100%; }
 .dl-note { display: flex; gap: 6px 16px; flex-wrap: wrap; margin-top: 12px; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-muted); }
 .dl-note span::before { content: '◆'; color: var(--green); font-size: 7px; margin-right: 8px; vertical-align: 2px; }
+
+/* ten sam przycisk pobierania w pasku górnym: gradient, blask i strzałka w skali nagłówka */
+.top nav a.cta.dl { gap: 10px; padding: 5px 8px 5px 5px; border-radius: 999px; color: #0D0D0D;
+  background: linear-gradient(135deg, #4AE88F 0%, #2ECC71 48%, #1FAF5C 100%);
+  box-shadow: 0 10px 28px rgba(46,204,113,0.28), inset 0 1px 0 rgba(255,255,255,0.4), 0 0 0 1px rgba(46,204,113,0.45); }
+.top nav a.cta.dl:hover { transform: translateY(-1px); box-shadow: 0 14px 36px rgba(46,204,113,0.42), inset 0 1px 0 rgba(255,255,255,0.4), 0 0 0 1px rgba(46,204,113,0.6); }
+.top nav a.cta.dl .dl-ico { width: 30px; height: 30px; border-radius: 999px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 4px 12px rgba(0,0,0,0.25); }
+.top nav a.cta.dl .dl-ico svg { width: 17px; height: 17px; }
+.top nav a.cta.dl .dl-txt b { font-size: 19px; letter-spacing: 1.6px; }
+.top nav a.cta.dl .dl-arr { width: 26px; height: 26px; border-width: 1.2px; }
+.top nav a.cta.dl .dl-arr svg { width: 14px; height: 14px; }
 .top nav a.on { color: var(--text-primary); background: rgba(255,255,255,0.06); }
 @media (prefers-reduced-motion: reduce) { .dl::before, .dl:hover .dl-arr svg { animation: none; } }
 @media (max-width: 560px) {
@@ -372,5 +386,8 @@ footer a:hover { color: var(--green); }
 @media (max-width: 560px) {
   .top .wrap { gap: 8px; }
   .brand-name { white-space: nowrap; font-size: 24px; }
-  .top nav a.cta { white-space: nowrap; padding: 10px 12px; letter-spacing: 1px; font-size: 10.5px; }
+  .top nav a.cta.dl { gap: 8px; padding: 4px 6px 4px 4px; }
+  .top nav a.cta.dl .dl-ico { width: 28px; height: 28px; }
+  .top nav a.cta.dl .dl-txt b { font-size: 17px; }
+  .top nav a.cta.dl .dl-arr { width: 24px; height: 24px; }
 }
