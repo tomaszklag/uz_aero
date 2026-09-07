@@ -1,10 +1,10 @@
 # Wydania UZ Aero
 
 <!--
-Ten plik jest ŹRÓDŁEM strony „Wydania i zmiany" (https://tomaszklag.github.io/uzaero/wydania/).
+Ten plik jest ŹRÓDŁEM strony „Wydania i zmiany" (/wydania/ na stronie UZ Aero).
 Piszemy go dla pilotów, testerów i klubów - językiem korzyści, bez nazw plików i identyfikatorów.
 
-Format (świadomie wąski, parsuje go tools/render-changelog.mjs w repozytorium strony):
+Format (świadomie wąski, parsuje go site/tools/render-changelog.mjs):
   ## <wersja> (build <numer>) · <data słownie>     - jedno wydanie, najnowsze na górze
   ## W przygotowaniu                                 - to, co weszło do kodu od ostatniego builda
   > jedno zdanie o wydaniu                           - opcjonalnie, tuż pod nagłówkiem
@@ -21,10 +21,12 @@ Format (świadomie wąski, parsuje go tools/render-changelog.mjs w repozytorium 
 
 Rytm: przy nowym buildzie produkcyjnym sekcja „W przygotowaniu" dostaje nagłówek
 z wersją, buildem i datą (numer builda = appBuildVersion z EAS), a nad nią powstaje
-pusta „W przygotowaniu"; z planu znika zrealizowany kamień milowy. Potem w repozytorium strony:
-  node tools/update-download.mjs --app D:/uz_areo/app [--release]
-  node tools/render-changelog.mjs --src D:/uz_areo/docs/CHANGELOG.md
+pusta „W przygotowaniu"; z planu znika zrealizowany kamień milowy. Potem:
+  node site/tools/update-download.mjs [--release]     - cel strony pobierania
+  npm run site                                        - podgląd lokalny (site/dist)
   git commit -am "Wydanie <wersja> (<build>)" && git push
+Strona buduje się razem z obrazem serwera, więc push do gałęzi wdrożeniowej publikuje
+i aplikację, i changelog - osobnego repozytorium strony nie ma od 2026-09-07.
 -->
 
 Wersja aplikacji to `wersja (build)` - wersję podnosimy przy wydaniu, numer builda rośnie
@@ -67,6 +69,7 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 - Serwer stawiamy z **pustą bazą**: konta z wcześniejszych testów nie przechodzą. Każdy loguje się kontem Google i czeka na zatwierdzenie przez administratora; flotę zakłada administrator w panelu.
 - Uwagi z testów zgłaszacie przyciskiem w prawym górnym rogu każdego ekranu - zgłoszenie zabiera ze sobą kontekst (ekran, operacja, samolot, wersja) i wysyła się samo, gdy wróci zasięg. Trafia do modułu **Zgłoszenia** w panelu.
 - Na co zwrócić uwagę: logowanie Google i ustawianie PIN-u, jasny motyw w słońcu, przytrzymanie 1 s na przyciskach kokpitu, wpis lotu po fakcie z podpowiedzią odczytów.
+- **Strona, dokumentacja i panel klubu stoją pod jednym adresem.** Podręcznik, wydania i strona pobierania przeprowadziły się z osobnego serwisu na ten sam serwer, co panel - stare adresy warto podmienić w zakładkach.
 
 ## 1.0.0 (build 1) · 26 sierpnia 2026
 

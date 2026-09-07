@@ -150,6 +150,12 @@ export async function testHarness(
      * w testach zwykle nie ma → `/admin/` odpowiada 404 i żaden test na tym nie polega.
      */
     adminDistDir?: string;
+    /**
+     * Podmiana katalogu strony publicznej - wyłącznie `siteStatic.test.ts`. Bez podmiany
+     * rejestracja wskazuje realne `site/dist`, które istnieje TYLKO po `npm run site`:
+     * żaden inny test nie ma prawa polegać na tym, że coś tam leży.
+     */
+    siteDistDir?: string;
   } = {},
 ) {
   const pglite = new PGlite();
@@ -431,7 +437,11 @@ export async function testHarness(
     ),
     // Dziennik żądań na konsoli zgaszony: kilkaset linii na przebieg zakryłoby to,
     // po co czyta się wynik testów. Sam format ma własny test jednostkowy.
-  }, { requestLog: false, adminDistDir: options.adminDistDir });
+  }, {
+    requestLog: false,
+    adminDistDir: options.adminDistDir,
+    siteDistDir: options.siteDistDir,
+  });
 
   // `auditedWrite` i porty wychodzą na zewnątrz, żeby testy komend administracyjnych
   // wołanych POZA HTTP (przebudowa projekcji = CLI) składały je z tych samych klas.

@@ -5,12 +5,22 @@
 **/node_modules
 .git
 .expo
+*.md
 
 app/*
 !app/package.json
 
-design/
-docs/
 traces/
 server/traces/
-*.md
+
+# Wynik budowania strony - obraz robi go u siebie (etap `site-build`), a lokalny
+# bywa nieświeży i tylko pogrubia kontekst.
+site/dist/
+
+# `design/` WCHODZI do kontekstu od 2026-09-07: to źródła żywych ekranów strony
+# publicznej, czytane tam, gdzie leżą (kopii makiet nie ma już nigdzie). Z `docs/`
+# obraz potrzebuje dokładnie dwóch rzeczy - podręcznika i changelogu; reszta
+# dokumentacji projektu (w tym PDF) nie jest mu do niczego potrzebna.
+docs/*
+!docs/podrecznik
+!docs/CHANGELOG.md

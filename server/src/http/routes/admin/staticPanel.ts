@@ -21,8 +21,11 @@
  *  • trasy API są w routerze KONKRETNE (`/admin/api/...`), więc wygrywają z wildcardem
  *    plików - przybija to test w `adminStatic.test.ts`.
  *
- * `GET /admin` (bez ukośnika) i `GET /` przekierowują na `/admin/`: panel jest jedyną
- * treścią serwera przeznaczoną dla przeglądarki, a goły adres wpisuje człowiek.
+ * `GET /admin` (bez ukośnika) przekierowuje na `/admin/` - goły adres wpisuje człowiek.
+ * `GET /` do panelu JUŻ NIE NALEŻY: od 2026-09-07 stoi tam strona publiczna
+ * (`../site/staticSite.ts`), więc przekierowanie stąd zniknęło razem ze zdaniem „panel
+ * jest jedyną treścią serwera przeznaczoną dla przeglądarki". Trasy panelu są w routerze
+ * bardziej konkretne niż wildcard strony, więc kolejność rejestracji nic tu nie znaczy.
  */
 
 import { fileURLToPath } from 'node:url';
@@ -92,5 +95,4 @@ export function registerAdminPanelStatic(app: FastifyInstance, distDir: string =
     },
   });
   app.get('/admin', (_req, reply) => reply.redirect('/admin/'));
-  app.get('/', (_req, reply) => reply.redirect('/admin/'));
 }

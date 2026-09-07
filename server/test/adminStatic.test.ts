@@ -39,11 +39,12 @@ describe('statyczny build panelu', () => {
     const asset = await app.inject({ method: 'GET', url: '/admin/assets/app.js' });
     expect(asset.statusCode).toBe(200);
 
-    for (const url of ['/admin', '/']) {
-      const redirect = await app.inject({ method: 'GET', url });
-      expect(redirect.statusCode).toBe(302);
-      expect(redirect.headers.location).toBe('/admin/');
-    }
+    // Goły `/admin` prowadzi do panelu; `/` NIE - od 2026-09-07 stoi tam strona
+    // publiczna (`siteStatic.test.ts`), a panel przestał być jedyną treścią serwera
+    // przeznaczoną dla przeglądarki.
+    const redirect = await app.inject({ method: 'GET', url: '/admin' });
+    expect(redirect.statusCode).toBe(302);
+    expect(redirect.headers.location).toBe('/admin/');
   });
 
   it('cache z §9: hashowane assets = rok immutable, index.html = no-cache', async () => {
@@ -83,8 +84,8 @@ describe('statyczny build panelu', () => {
 
     expect((await app.inject({ method: 'GET', url: '/admin/' })).statusCode).toBe(404);
 
-    const root = await app.inject({ method: 'GET', url: '/' });
-    expect(root.statusCode).toBe(302);
-    expect(root.headers.location).toBe('/admin/');
+    const redirect = await app.inject({ method: 'GET', url: '/admin' });
+    expect(redirect.statusCode).toBe(302);
+    expect(redirect.headers.location).toBe('/admin/');
   });
 });

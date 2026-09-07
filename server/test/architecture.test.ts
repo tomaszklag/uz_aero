@@ -321,24 +321,31 @@ describe('granice, których nie pilnuje kompilator', () => {
     // do `common/` (panel i `GET /reference` liczą claim tym samym kodem). Przeniesienie
     // było słuszne, ale okazało się, że osi nie pilnowało nic - reguła istniała wyłącznie
     // w dokumencie, a dokument nie wywala budowania.
-    const surfaceOf = (file: string): 'admin' | 'mobile' | 'common' | null => {
-      const match = /^(?:application|http\/routes|infrastructure\/pg)\/(admin|mobile|common)\//.exec(
+    // TRZECIA POWIERZCHNIA od 2026-09-07: `site` - strona publiczna pod `/` (landing,
+    // pobieranie, wydania, dokumentacja), przeniesiona z osobnego repozytorium. Serwuje
+    // anonimowego gościa, więc nie jest ani panelem, ani telefonem, ani ich częścią
+    // wspólną - i tak jak tamte nie ma prawa niczego od nich importować.
+    type Surface = 'admin' | 'mobile' | 'common' | 'site';
+
+    const surfaceOf = (file: string): Surface | null => {
+      const match = /^(?:application|http\/routes|infrastructure\/pg)\/(admin|mobile|common|site)\//.exec(
         file,
       );
-      return (match?.[1] as 'admin' | 'mobile' | 'common' | undefined) ?? null;
+      return (match?.[1] as Surface | undefined) ?? null;
     };
 
     /** Powierzchnia, do której PROWADZI import - po samym kształcie ścieżki względnej. */
-    const targetSurface = (spec: string): 'admin' | 'mobile' | 'common' | null => {
-      const match = /(?:^|\/)(admin|mobile|common)\//.exec(spec);
-      return (match?.[1] as 'admin' | 'mobile' | 'common' | undefined) ?? null;
+    const targetSurface = (spec: string): Surface | null => {
+      const match = /(?:^|\/)(admin|mobile|common|site)\//.exec(spec);
+      return (match?.[1] as Surface | undefined) ?? null;
     };
 
     /** Kogo NIE WOLNO importować, będąc w danej powierzchni. */
-    const forbidden: Record<'admin' | 'mobile' | 'common', readonly string[]> = {
-      common: ['admin', 'mobile'],
-      mobile: ['admin'],
-      admin: ['mobile'],
+    const forbidden: Record<Surface, readonly string[]> = {
+      common: ['admin', 'mobile', 'site'],
+      mobile: ['admin', 'site'],
+      admin: ['mobile', 'site'],
+      site: ['admin', 'mobile', 'common'],
     };
 
     const files = filesUnder('.');
@@ -348,7 +355,9 @@ describe('granice, których nie pilnuje kompilator', () => {
     expect(files.filter((f) => surfaceOf(f) === 'common').length).toBeGreaterThan(3);
     expect(files.filter((f) => surfaceOf(f) === 'admin').length).toBeGreaterThan(10);
     expect(files.filter((f) => surfaceOf(f) === 'mobile').length).toBeGreaterThan(3);
+    expect(files.filter((f) => surfaceOf(f) === 'site').length).toBeGreaterThan(0);
     expect(surfaceOf('application/common/aircraftStateView.ts')).toBe('common');
+    expect(surfaceOf('http/routes/site/staticSite.ts')).toBe('site');
     expect(targetSurface('../../admin/ports.ts')).toBe('admin');
     expect(targetSurface('./ports.ts')).toBe(null);
 

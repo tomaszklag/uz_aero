@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UZ Aero - chronometraż, który prowadzi się sam</title>
+<meta name="description" content="UZ Aero - chronometraż dla aeroklubów i stref zrzutu. Starty, lądowania, paliwo i motogodziny zapisują się same na telefonie pilota, także bez zasięgu.">
+<meta property="og:title" content="UZ Aero - chronometraż, który prowadzi się sam">
+<meta property="og:description" content="Dziennik lotów, paliwo i motogodziny bez papieru i przepisywania. Klub widzi całą flotę w jednym panelu. Działa bez zasięgu.">
+<meta name="theme-color" content="#0D0D0D">
+<link rel="icon" href="favicon.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+<div class="backdrop" aria-hidden="true"></div>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="./" aria-label="UZ Aero - strona główna">
+      <span class="mark"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg></span>
+      <span class="brand-name">UZ <em>AERO</em></span>
+    </a>
+    <nav aria-label="Sekcje">
+      <a href="#dla-kogo">Dla kogo</a><a href="#korzysci">Korzyści</a><a href="#ekrany">Aplikacja</a><a href="#offline">Bez zasięgu</a><a href="#panel">Panel</a><a href="#wdrozenie">Wdrożenie</a><a href="pobierz/">Pobierz</a><a href="wydania/">Wydania</a><a href="dokumentacja/">Dokumentacja</a><a class="cta" href="#kontakt">Umów prezentację</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+<section class="hero">
+  <div class="hero-copy">
+    <div class="chips">
+      <span class="chip live"><i></i>Dla aeroklubów, stref zrzutu i szkół latania</span>
+      <span class="chip">Android + panel w przeglądarce</span>
+      <span class="chip">działa bez zasięgu</span>
+    </div>
+    <h1>Chronometraż,<br>który <span class="grad">prowadzi się sam.</span></h1>
+    <p class="lead">Pilot odczytuje liczniki przy przejęciu i zdaniu samolotu. Resztę zapisuje telefon:
+    starty, lądowania, czas blokowy, paliwo i motogodziny. Dane trafiają do klubu same, gdy tylko jest
+    zasięg. Zarząd widzi flotę bez czekania na kartkę, mechanik ma resurs bez luk, a wieczorne
+    przepisywanie znika.</p>
+    <div class="cta">
+      <a class="btn primary" href="#ekrany">Zobacz aplikację <span class="arr">→</span></a>
+      <a class="btn ghost" href="#kontakt">Umów prezentację</a>
+    </div>
+    <ul class="facts">
+      <li><b>0</b><span>kartek do przepisania</span></li>
+      <li><b>1</b><span>dziennik dla całej floty i wszystkich pilotów</span></li>
+      <li><b>24 h</b><span>na poprawkę pilota, potem decyduje klub</span></li>
+    </ul>
+  </div>
+  <div class="stage" aria-hidden="true">
+    <div class="glow"></div>
+    <div class="device back"><iframe src="screens/14-slad.html" title="Ślad operacji" loading="lazy" scrolling="no" tabindex="-1"></iframe></div>
+    <div class="device front"><iframe src="screens/05-cockpit-running.html" title="Kokpit w locie" loading="eager" scrolling="no" tabindex="-1"></iframe></div>
+    <p class="device-cap cap">kokpit w locie · ślad po locie</p>
+  </div>
+</section>
+
+</main>
+
+<div class="marquee" aria-hidden="true">
+  <div class="track">
+    <ul>
+      <li>start i lądowanie <b>zapisane automatycznie</b></li><li>paliwo <b>rozliczone na każdą operację</b></li><li>motogodziny <b>bez luk między pilotami</b></li><li>działa <b>bez zasięgu</b></li><li>karta dnia <b>bez przepisywania</b></li><li>nowy pilot <b>gotowy tego samego dnia</b></li><li>jeden dziennik <b>dla całego klubu</b></li>
+    </ul>
+    <ul>
+      <li>start i lądowanie <b>zapisane automatycznie</b></li><li>paliwo <b>rozliczone na każdą operację</b></li><li>motogodziny <b>bez luk między pilotami</b></li><li>działa <b>bez zasięgu</b></li><li>karta dnia <b>bez przepisywania</b></li><li>nowy pilot <b>gotowy tego samego dnia</b></li><li>jeden dziennik <b>dla całego klubu</b></li>
+    </ul>
+  </div>
+</div>
+
+<main class="wrap">
+
+<section class="section" id="dla-kogo">
+  <div class="head reveal">
+    <div>
+      <p class="kicker">Dla kogo</p>
+      <h2 class="h-display">Każdy w klubie dostaje<br>swoją odpowiedź</h2>
+    </div>
+    <p class="sub">Jedna aplikacja, trzy pytania, na które dziś odpowiada się przez telefon albo z kartki.</p>
+  </div>
+  <div class="who reveal">
+    <div><span class="tag">Zarząd</span><h3>Ile lata i pali każda maszyna</h3><p>Operacje, czas blokowy i zużycie paliwa całej floty - dzień po dniu, bez zbierania kartek od pilotów i bez arkusza, który ktoś musi uzupełnić.</p></div>
+    <div><span class="tag">Mechanik</span><h3>Resurs bez luk</h3><p>Stan licznika motogodzin przekazywany z pilota na pilota, dolewki oleju i zużycie obok normy maszyny. Odchyłka widoczna, zanim stanie się usterką.</p></div>
+    <div><span class="tag">Szef wyszkolenia</span><h3>Kto, z kim, na czym</h3><p>Każda operacja z załogą, zadaniem i śladem lotu na mapie - do omówienia z uczniem i do wyjaśnienia każdego zdarzenia.</p></div>
+  </div>
+  <p class="who-pilot reveal"><b>A pilot?</b> Dwa odczyty liczników - przy przejęciu i zdaniu samolotu. Resztę zapisuje telefon.</p>
+</section>
+
+<section class="section" id="korzysci">
+  <div class="head reveal">
+    <div>
+      <p class="kicker">Co zyskuje klub</p>
+      <h2 class="h-display">Dziennik, paliwo i resurs<br>zgadzają się same</h2>
+    </div>
+    <p class="sub">To, co dziś robicie długopisem i arkuszem kalkulacyjnym, aplikacja zapisuje w tle. Pilotowi zostaje jedno: spojrzeć na przyrządy przy przejęciu i zdaniu samolotu.</p>
+  </div>
+  <div class="bento">
+    <div class="tile w2 h2 reveal">
+      <span class="tag">Automatyczna rejestracja</span>
+      <svg class="art" viewBox="0 0 600 400" preserveAspectRatio="none" aria-hidden="true">
+        <defs><linearGradient id="prof" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#2ECC71" stop-opacity=".35"/><stop offset="1" stop-color="#2ECC71" stop-opacity="0"/></linearGradient></defs>
+        <path d="M0 300 L70 300 C110 300 120 170 170 150 C210 135 230 130 260 130 C300 130 320 200 360 260 L400 300 L430 300 C460 300 470 190 510 170 C540 158 560 160 600 220 L600 400 L0 400 Z" fill="url(#prof)"/>
+        <path d="M0 300 L70 300 C110 300 120 170 170 150 C210 135 230 130 260 130 C300 130 320 200 360 260 L400 300 L430 300 C460 300 470 190 510 170 C540 158 560 160 600 220" fill="none" stroke="#2ECC71" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M0 300 L70 300 M400 300 L430 300" stroke="#7A7A7A" stroke-width="2.5" stroke-dasharray="6 6"/>
+        <circle cx="70" cy="300" r="5" fill="#2ECC71"/><circle cx="400" cy="300" r="5" fill="#F39C12"/><circle cx="430" cy="300" r="5" fill="#2ECC71"/>
+        <text x="60" y="330" font-family="JetBrains Mono, monospace" font-size="12" fill="#7A7A7A">START · 07:04</text>
+        <text x="372" y="330" font-family="JetBrains Mono, monospace" font-size="12" fill="#7A7A7A">LĄDOWANIE · 07:31</text>
+      </svg>
+      <h3>Starty i lądowania zapisują się same</h3>
+      <p>Telefon rozpoznaje z GPS kołowanie, start i lądowanie - także każdy krąg. Czasy są z zegara, nie z pamięci po całym dniu. Gdy GPS zawiedzie, pilot zapisuje zdarzenie jednym przyciskiem.</p>
+    </div>
+    <div class="tile w2 reveal">
+      <span class="tag">Paliwo i motogodziny</span>
+      <div class="chain"><code>1 234:16</code><span class="link">pilot A →</span><code>1 236:30</code><span class="link">pilot B →</span><code class="now">1 238:31</code></div>
+      <h3>Rozliczone między pilotami, nie na koniec miesiąca</h3>
+      <p>Ile pilot zastał, dolał i zostawił - następny widzi to na starcie i potwierdza z przyrządów. Klub zna zużycie każdej operacji, a mechanik ma stan licznika bez luk. Koniec z pytaniem „kto ostatni tankował".</p>
+    </div>
+    <div class="tile reveal">
+      <span class="tag">Kontrola kosztów</span>
+      <div class="bar"><span class="band"></span><span class="fact"></span></div>
+      <span class="verdict">W NORMIE · 17,9 L/h</span>
+      <p>Po każdej operacji zużycie staje obok normy tej maszyny. Odchyłkę widać od razu - zanim stanie się kosztem albo usterką silnika.</p>
+    </div>
+    <div class="tile reveal">
+      <span class="tag">Dziennik, któremu można ufać</span>
+      <div class="big">24<small>h</small></div>
+      <p>Pilot poprawia własny wpis przez dobę, później decyduje administrator klubu. Każda poprawka zostaje w historii: kto, kiedy, co było i co jest.</p>
+    </div>
+    <div class="tile reveal">
+      <span class="tag">Jedna zasada dla wszystkich</span>
+      <div class="big">1<small>bieg silnika = 1 operacja</small></div>
+      <p>Od uruchomienia do wyłączenia silnika, z odczytem liczników na obu końcach. Nikt nie spiera się, co było lotem, a resurs nie ma dziur.</p>
+    </div>
+    <div class="tile reveal">
+      <span class="tag">Strefy zrzutu</span>
+      <h3>Skoczkowie policzeni przy każdym wyniesieniu</h3>
+      <p>Załadunek i zrzut w dwóch tapnięciach: skład (tandem, AFF, solo), wysokość z GPS i klient. Karta dnia ma gotowe podsumowanie wyniesień.</p>
+    </div>
+    <div class="tile w2 reveal">
+      <span class="tag">Lot bez telefonu?</span>
+      <div class="timeline four"><div class="on">data i samolot</div><div class="on">zadanie</div><div>czasy i loty</div><div>liczniki</div></div>
+      <h3>Pilot wpisze go w kilka minut</h3>
+      <p>Wpis po fakcie zadaje te same pytania, co lot na żywo, i podpowiada stan paliwa i licznika z poprzedniego lotu tej maszyny. Nic nie ginie, nawet gdy telefon został w samochodzie.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="ekrany">
+  <div class="head reveal">
+    <div>
+      <p class="kicker">Aplikacja pilota</p>
+      <h2 class="h-display">Prosta jak kartka,<br>mądrzejsza niż arkusz</h2>
+    </div>
+    <div class="head-side"><p class="sub">Ciemny motyw do kokpitu, jasny na pełne słońce, duże przyciski i zero zbędnych pytań. Poniżej prawdziwe ekrany aplikacji - przewiń w bok.</p><div class="dl-wrap"><a class="dl" href="pobierz/"><span class="dl-ico"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85a.63.63 0 0 0-.83.22l-1.88 3.24a11.43 11.43 0 0 0-8.94 0L5.65 5.67a.63.63 0 0 0-.83-.22c-.3.16-.42.54-.26.85L6.4 9.48A10.81 10.81 0 0 0 1 18h22a10.81 10.81 0 0 0-5.4-8.52zM7 15.25a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5zm10 0a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5z"/></svg></span><span class="dl-txt"><b>Pobierz na Androida</b><small>Plik APK · bez sklepu Play</small></span><span class="dl-arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 11 5 5 5-5"/><path d="M5 20h14"/></svg></span></a><p class="dl-note"><span>instalacja w minutę</span><span>nowa wersja pod tym samym adresem</span></p></div></div>
+  </div>
+  <div class="gallery reveal">
+    <figure><div class="device" style="--s:0.5"><iframe src="screens/01-moj-dzien.html" title="Mój dzień" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe></div>
+      <figcaption><span>ekran domowy</span><b>Mój dzień</b><p>Operacje dnia, loty i czas blokowy na jednym ekranie. Stąd pilot zaczyna każdy lot i tu wraca po zdaniu samolotu.</p></figcaption></figure>
+    <figure><div class="device" style="--s:0.5"><iframe src="screens/02a-preflight.html" title="Rozpoczęcie lotu" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe></div>
+      <figcaption><span>rozpoczęcie lotu</span><b>Trzy kroki i lecisz</b><p>Samolot, zadanie, liczniki. Stan po poprzednim pilocie już czeka - wystarczy porównać z przyrządami i potwierdzić.</p></figcaption></figure>
+    <figure><div class="device" style="--s:0.5"><iframe src="screens/05-cockpit-running.html" title="Kokpit w locie" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe></div>
+      <figcaption><span>w locie</span><b>Kokpit</b><p>Faza lotu, czas od startu, szacunek paliwa na pokładzie i przebieg operacji. Pilot patrzy, nie pisze.</p></figcaption></figure>
+    <figure><div class="device" style="--s:0.5"><iframe src="screens/14-slad.html" title="Ślad operacji" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe></div>
+      <figcaption><span>po locie</span><b>Ślad na mapie</b><p>Trasa i profil wysokości całej operacji: do omówienia z uczniem, do wyjaśnienia zdarzenia, do archiwum klubu.</p></figcaption></figure>
+    <figure><div class="device" style="--s:0.5"><iframe src="screens/00a-login-full.html" title="Logowanie" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe></div>
+      <figcaption><span>pierwsze uruchomienie</span><b>Bez haseł</b><p>Pilot loguje się kontem Google, które już ma. Na co dzień wchodzi PIN-em, także bez internetu.</p></figcaption></figure>
+    <figure><div class="device" style="--s:0.5"><iframe src="screens/00c-oczekiwanie.html" title="Oczekiwanie na zatwierdzenie" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe></div>
+      <figcaption><span>nowy pilot</span><b>Zgłasza się sam</b><p>Nowa osoba loguje się kontem Google i czeka. Wy nadajecie jej w panelu kod pilota, a telefon sam zauważy, że konto jest gotowe.</p></figcaption></figure>
+  </div>
+</section>
+
+<section class="section" id="offline">
+  <div class="offline-card reveal">
+    <p class="kicker">Działa tam, gdzie latacie</p>
+    <h2 class="h-display">Bez zasięgu też działa. Zawsze.</h2>
+    <p class="lead">Lotniska trawiaste rzadko mają dobry zasięg. UZ Aero zapisuje wszystko na telefonie
+    i wysyła, gdy sieć wróci. Pilot nie zauważa różnicy, klub nie traci ani jednego zapisu. Internet
+    jest potrzebny do pierwszego logowania i do wysyłki - nie do pracy.</p>
+    <div class="three">
+      <div><b>Zapis w chwili zdarzenia</b><p>Start, lądowanie, tankowanie, zrzut: każde trafia do dziennika od razu, na telefonie. Nie ma „przypomnę sobie wieczorem".</p></div>
+      <div><b>Wysyłka w tle</b><p>Gdy pojawia się sieć, dane jadą do klubu same. Jeden wskaźnik mówi, ile zapisów czeka, i znika, gdy wszystko dotarło.</p><span class="pill-amber"><i></i>OFFLINE · 3</span></div>
+      <div><b>Logowanie raz, PIN na co dzień</b><p>Kontem Google pilot loguje się tylko przy pierwszym uruchomieniu. Potem wystarczy PIN - także w polu, bez internetu.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="panel">
+  <div class="panel-grid">
+    <div class="reveal">
+      <p class="kicker">Panel klubu · zarząd, mechanik, szef wyszkolenia</p>
+      <h2 class="h-display">Cała flota w jednym oknie</h2>
+      <p class="sub" style="margin-bottom:0">Kto lata, na czym, ile spalił i kiedy zdał samolot - na bieżąco, bez czekania na kartkę.
+      Karta dnia każdej maszyny powstaje sama, każda korekta ma historię, a operację, której pilot nie
+      zamknął, kończycie z panelu - z powodem zapisanym w historii.</p>
+      <ul class="modules">
+        <li><b>PILOCI</b><span>konta i role, zatwierdzanie zgłoszeń nowych pilotów, wyłączanie odchodzących. Bez haseł, więc bez resetów.</span></li>
+        <li><b>SAMOLOTY</b><span>pojemność zbiorników, normy zużycia paliwa i oleju, minimum oleju, aktualny stan liczników. Aplikacja pilnuje tego u każdego pilota.</span></li>
+        <li><b>DZIENNIK</b><span>operacje floty w trzech krokach: dzień, maszyna, pojedyncza operacja ze śladem GPS. Wyłącznie odczyty z przyrządów, żadnych szacunków.</span></li>
+        <li><b>ZGŁOSZENIA</b><span>uwagi pilotów wysłane prosto z aplikacji, razem z tym, co mieli na ekranie. Wiecie, co poprawić, zanim ktoś zadzwoni.</span></li>
+      </ul>
+    </div>
+    <div class="browser-wrap reveal">
+      <div class="browser" aria-label="Podgląd panelu administratora">
+        <div class="chrome"><i></i><i></i><i></i><span class="url">panel klubu / dziennik</span></div>
+        <div class="pbar"><span class="pname">UZ <em>AERO</em></span><span class="tabs"><span>PILOCI</span><span>SAMOLOTY</span><span class="on">DZIENNIK</span><span>ZGŁOSZENIA</span></span><span class="who-badge">TMK · admin</span></div>
+        <div class="ptitle"><b>SP-AXA · 5 września 2026</b><span>czasy UTC</span></div>
+        <table class="log">
+          <thead><tr><th>Operacja</th><th>Przejęcie</th><th>Zdanie</th><th>Loty</th><th>Blok</th><th>Paliwo</th><th>MH</th></tr></thead>
+          <tbody>
+            <tr><td class="g">SP-AXA/2026-09-05/TMK/1</td><td>06:52</td><td>09:31</td><td>3</td><td>2:14</td><td>−38 L</td><td>1 236:30</td></tr>
+            <tr><td class="g">SP-AXA/2026-09-05/AKO/1</td><td>09:40</td><td>12:05</td><td>4</td><td>2:01</td><td>−41 L</td><td>1 238:31</td></tr>
+            <tr><td class="g">SP-AXA/2026-09-05/JNO/1</td><td>12:20</td><td class="dim">w toku</td><td>1</td><td class="dim">1:07</td><td class="dim">-</td><td class="dim">-</td></tr>
+            <tr><td class="a">SP-AXA/2026-09-04/TMK/2</td><td>15:10</td><td>15:22</td><td>0</td><td>0:00</td><td class="dim">bez lotu · pogoda</td><td>1 234:16</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="wdrozenie">
+  <div class="head reveal">
+    <div>
+      <p class="kicker">Wdrożenie</p>
+      <h2 class="h-display">Start w jeden dzień</h2>
+    </div>
+    <p class="sub">Nic nie instalujecie w klubie i nikogo nie wysyłacie na szkolenie. Administrator wpisuje flotę w panelu, piloci instalują aplikację i logują się kontem Google, Wy nadajecie im kody pilota.</p>
+  </div>
+  <div class="steps">
+    <div class="step reveal">
+      <span class="n">1</span>
+      <div class="device" style="--s:0.42"><iframe src="screens/00a-login-full.html" title="Ekran logowania" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe></div>
+      <div><h3>Pilot instaluje aplikację i loguje się kontem Google</h3><p>Aplikację pobiera się z <a href="pobierz/">tej strony</a> - plik APK na Androida (krok po kroku: <a href="dokumentacja/pierwsze-logowanie/">pierwsze logowanie i PIN</a>). Bez nowych haseł: z konta Google bierzemy tylko to, co potrzebne do założenia konta, imię i adres e-mail.</p></div>
+    </div>
+    <div class="step reveal">
+      <span class="n">2</span>
+      <div class="device" style="--s:0.42"><iframe src="screens/00c-oczekiwanie.html" title="Ekran oczekiwania" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe></div>
+      <div><h3>Klub zatwierdza</h3><p>Zgłoszenie pojawia się w panelu. Nadajecie kod pilota i rolę, a telefon sam zauważy, że konto jest gotowe.</p></div>
+    </div>
+    <div class="step reveal">
+      <span class="n">3</span>
+      <div class="plain" aria-hidden="true">PIN<span class="dots"><i></i><i></i><i></i><i></i></span></div>
+      <div><h3>PIN i pierwszy lot</h3><p>Od tej chwili pilot wchodzi PIN-em, a flota klubu jest już na jego telefonie.</p></div>
+    </div>
+  </div>
+  <ul class="know reveal">
+    <li><b>Warto wiedzieć</b></li>
+    <li>Aplikacja działa na Androidzie; wersji na iPhone'a na razie nie ma.</li>
+    <li>Karta dnia każdej maszyny powstaje na serwerze klubu, nie w zewnętrznym arkuszu.</li>
+    <li>Do pierwszego logowania i do wysyłki danych potrzebny jest internet - do samego latania nie.</li>
+  </ul>
+  <p class="note reveal"><b>Dane należą do klubu.</b> Konto Google nie daje dostępu do niczego, dopóki go nie zatwierdzicie.
+  Dziennik operacji jest własnością klubu: nie sprzedajemy go i nie przekazujemy osobom trzecim; przechowuje go
+  dostawca hostingu na nasze zlecenie. Szczegóły: <a href="prywatnosc.html">polityka prywatności</a> i <a href="regulamin.html">regulamin</a>.</p>
+</section>
+
+<section class="section contact reveal" id="kontakt">
+  <p class="kicker">Kontakt</p>
+  <h2 class="h-display">Zobaczcie UZ Aero<br>na własnej flocie</h2>
+  <p class="sub">Pokażemy aplikację na Waszych samolotach i uruchomimy sezon próbny z kilkoma pilotami - bez zobowiązań. Po nim zdecydujecie, czy papierowy chronometraż zostaje w hangarze.</p>
+  <div class="cta"><a class="btn primary" href="https://github.com/tomaszklag" rel="noopener">Umów prezentację <span class="arr">→</span></a></div>
+</section>
+
+<div class="outro reveal" aria-hidden="true"><div class="word">UZ <em>AERO</em></div></div>
+
+<footer>
+  <span>UZ Aero · projekt prowadzony przez Tomasza Klaga · 2026</span>
+  <nav><a href="pobierz/">Pobierz aplikację</a><a href="wydania/">Wydania i zmiany</a><a href="dokumentacja/">Dokumentacja</a><a href="prywatnosc.html">Polityka prywatności</a><a href="regulamin.html">Regulamin</a><a href="https://github.com/tomaszklag" rel="noopener">GitHub</a></nav>
+</footer>
+
+</main>
+
+<script>
+  // Pojawianie sekcji przy przewijaniu; bez JS wszystko i tak jest widoczne po chwili.
+  (function () {
+    var els = document.querySelectorAll('.reveal');
+    if (!('IntersectionObserver' in window) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      els.forEach(function (e) { e.classList.add('in'); }); return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
+    els.forEach(function (e) { io.observe(e); });
+    setTimeout(function () { els.forEach(function (e) { e.classList.add('in'); }); }, 2500);
+  })();
+</script>
+</body>
+</html>

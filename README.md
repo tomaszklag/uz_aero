@@ -10,8 +10,9 @@ server/           backend (auth, sync zdarzeń, flagi, API panelu)
 packages/domain   wspólna domena - zdarzenia, reguły, projekcje
 packages/tokens   tokeny designu (palety, skale, typografia, emiter zmiennych CSS)
 packages/format   wspólne formatowanie liczb domeny na napisy
-docs/             architektura systemu i kodu
+docs/             architektura systemu i kodu (i źródła podręcznika: docs/podrecznik/)
 design/           mockupy HTML = specyfikacja ekranów
+site/             strona publiczna: landing, pobieranie, wydania, dokumentacja
 ```
 
 ## Pierwsze uruchomienie
@@ -30,6 +31,7 @@ możesz zostawić, na produkcji zmień `JWT_SECRET`, `GOOGLE_CLIENT_IDS` i `SEED
 | `npm run app` | Metro bundler - telefon z dev clientem łapie go sam / QR |
 | `npm run server` | backend na `http://localhost:3000` (watch) |
 | `npm run admin` | panel na `http://localhost:5173/admin/` (proxy `/admin/api` → serwer; **wymaga uruchomionego serwera**) |
+| `npm run site` | strona publiczna do `site/dist` (landing, wydania, podręcznik z żywymi ekranami) - otwórz `site/dist/index.html` albo wejdź na `http://localhost:3000/` przy uruchomionym serwerze |
 | `npm run db:up` | Postgres w Dockerze (tworzy kontener przy pierwszym razie) |
 | `npm run db:down` | zatrzymanie bazy |
 | `npm run seed` | migracje + konto administratora (`admin`, BEZ hasła - podpina się kontem Google z `SEED_ADMIN_EMAIL`) |
@@ -53,9 +55,11 @@ curl -s -X POST localhost:3000/auth/login -H "content-type: application/json" -d
 
 ## Wdrożenie: Railway
 
-Jeden obraz Dockera (`Dockerfile` w korzeniu) niesie API **i statyczny build panelu**
-(`/admin/` - ten sam origin, więc ciasteczko `SameSite=Strict` działa jak w dev za proxy
-Vite). Konfiguracja buildu i healthcheck: `railway.json`.
+Jeden obraz Dockera (`Dockerfile` w korzeniu) niesie trzy rzeczy: **API**, **statyczny
+build panelu** (`/admin/` - ten sam origin, więc ciasteczko `SameSite=Strict` działa jak
+w dev za proxy Vite) i **stronę publiczną** pod `/` (landing, pobieranie, wydania,
+dokumentacja; od 2026-09-07 - wcześniej GitHub Pages w osobnym repozytorium, patrz
+`site/README.md`). Konfiguracja buildu i healthcheck: `railway.json`.
 
 1. **Projekt**: railway.com → New Project → Deploy from GitHub repo (`uz_aero`).
    Railway wykryje `Dockerfile` przez `railway.json`.
@@ -67,8 +71,8 @@ Vite). Konfiguracja buildu i healthcheck: `railway.json`.
      widzi adres proxy zamiast człowieka),
    - `PUBLIC_BASE_URL` = `https://<domena-uslugi>` (po kroku 5 - linki do kart arkusza
      klikane z telefonu).
-   `TRACES_DIR` jest ustawiony w obrazie - nie podawaj go; build panelu serwer
-   znajduje sam (ścieżka wbudowana w obraz).
+   `TRACES_DIR` jest ustawiony w obrazie - nie podawaj go; build panelu i stronę serwer
+   znajduje sam (ścieżki wbudowane w obraz).
 4. **Wolumen na ślady GPS**: usługa → prawy przycisk → Attach Volume, mount path **`/data`**.
    Telefon kasuje nagranie po wysyłce (issue #47) - kopia na serwerze jest JEDYNĄ,
    bez wolumenu ginie przy każdym deployu.
@@ -80,6 +84,11 @@ Vite). Konfiguracja buildu i healthcheck: `railway.json`.
    Wpisz je jako `GOOGLE_WEB_CLIENT_ID` (WYMAGANY - loguje się nim panel) i
    `GOOGLE_ANDROID_CLIENT_ID` (od builda aplikacji z Google); **bez pierwszego serwer
    nie wstanie** (pusty zbiór odbiorców przepuszczałby każdy token Google).
+   Ekran zgody pyta o adres polityki prywatności i regulaminu - od przeprowadzki strony
+   są to `https://<domena>/prywatnosc.html` i `https://<domena>/regulamin.html`, a domena
+   musi być na liście **Authorized domains** (weryfikacja w Search Console). To jest
+   argument za własną domeną: adres wygenerowany przez Railway trzeba by weryfikować
+   plikiem, a przy każdej zmianie hostingu - od nowa.
 7. **Seed konta `admin`**: dopisz `SEED_ADMIN_EMAIL` - ADRES KONTA GOOGLE administratora.
    Serwer przy starcie zapewni konto `admin` BEZ hasła, a Twoje pierwsze logowanie tym
    kontem Google je PODPINA (idempotentnie: powtórny start nie zrywa podpięcia, dokłada
@@ -89,7 +98,8 @@ Vite). Konfiguracja buildu i healthcheck: `railway.json`.
    podpina się przy jego pierwszym logowaniu bez kolejki.
    Alternatywa bez redeployu (wymaga TCP Proxy na usłudze Postgres): lokalnie
    `$env:SEED_ADMIN_EMAIL='…'; $env:DATABASE_URL='<DATABASE_PUBLIC_URL>'; npm run seed`.
-8. **Sprawdzian**: `https://<domena>/health` → `{"ok":true}`, `https://<domena>/admin/`
+8. **Sprawdzian**: `https://<domena>/health` → `{"ok":true}`, `https://<domena>/`
+   → strona (landing, `/pobierz/`, `/wydania/`, `/dokumentacja/`), `https://<domena>/admin/`
    → logowanie panelu kontem Google z kroku 7. Flotę i konta pilotów załóż w A07/A06.
 9. **Aplikacja pilota**: build EAS z adresem serwera -
    `EXPO_PUBLIC_API_URL=https://<domena>` (patrz `app/src/infrastructure/api/apiBaseUrl.ts`)
@@ -98,7 +108,9 @@ Vite). Konfiguracja buildu i healthcheck: `railway.json`.
    Build jest NOWY z konieczności: `scheme` w `app.json` to zmiana natywna.
 
 Koszt: plan Hobby (5 USD/mies. z wliczonym zużyciem) zwykle wystarcza na serwer + bazę
-przy ruchu klubowym. Backup: rejestr jest append-only i jest jedynym źródłem - ustaw
+przy ruchu klubowym. Strona nie dokłada usługi ani buildu, ale jej transfer idzie odtąd
+przez Railway - dlatego **APK zostaje na GitHub Releases** (`site/README.md`), a nie
+w obrazie. Backup: rejestr jest append-only i jest jedynym źródłem - ustaw
 w Railway backupy Postgresa albo cykliczne `pg_dump` po `DATABASE_PUBLIC_URL`.
 
 ## Zasady

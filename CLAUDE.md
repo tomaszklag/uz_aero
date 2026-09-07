@@ -2553,22 +2553,51 @@ model danych, ryzyka i etapy: **`docs/logowanie-google.md`**.
   zatwierdzać" zostawiała człowieka w kolejce na zawsze. Nowy `LoginSurface` w portach;
   atrapa testowa ignoruje powierzchnię celowo (rozdział testuje prawdziwy weryfikator)
 
-## Wydania, changelog i strona publiczna (2026-09-06)
-Wchodzimy w fazę testów i wersjonowania. Punkt wejścia dla pilotów, testerów i klubów to
-**https://tomaszklag.github.io/uzaero/** (repo strony: `tomaszklag/tomaszklag.github.io`,
-GitHub Pages; landing sprzedażowy, `pobierz/` = stały adres APK, `wydania/` = changelog,
-polityka prywatności i regulamin - wymagane przez ekran zgody Google).
+## Wydania, changelog i strona publiczna (2026-09-06; przeprowadzka 2026-09-07)
+Wchodzimy w fazę testów i wersjonowania. Punkt wejścia dla pilotów, testerów i klubów:
+landing sprzedażowy, `pobierz/` = adres APK, `wydania/` = changelog,
+`dokumentacja/` = podręcznik, polityka prywatności i regulamin (wymagane przez ekran
+zgody Google).
+**STRONA STOI NA TYM SAMYM SERWERZE, CO PANEL I API** (decyzja właściciela 2026-09-07,
+odwraca GitHub Pages): źródła w `site/src/`, budowanie `npm run site`
+(`site/tools/build.mjs`), wynik `site/dist` serwowany pod `/` przez
+`server/src/http/routes/site/staticSite.ts`; panel zostaje pod `/admin/`, API pod
+`/admin/api/`. Obraz buduje stronę własnym etapem (`site-build` w `Dockerfile`,
+bez `npm ci` - skrypty jadą na samej stdlib node).
+- **osobnego repozytorium strony JUŻ NIE MA** (`tomaszklag/tomaszklag.github.io`).
+  Leżało w nim 2,9 MB, z czego **2,1 MB to 71 z 75 makiet `design/` skopiowanych
+  bajt w bajt** plus wygenerowany podręcznik - a repozytorium aplikacji jest publiczne,
+  więc drugie niczego nie chroniło; było wyłącznie miejscem na wynik renderowania.
+  Decyzje i układ katalogów: `site/README.md`
+- **każda treść ma JEDNO źródło i czyta się je tam, gdzie leży**: `docs/CHANGELOG.md`
+  → wydania, `docs/podrecznik/` → dokumentacja, `design/*.html` → żywe ekrany.
+  `site/dist` jest w .gitignore, więc kopii nie ma nigdzie
+- **`site/` NIE JEST workspace'em npm** i to jest decyzja: skrypty nie mają ani jednej
+  zależności, a dopisanie katalogu do `workspaces` ruszyłoby lockfile i obie linijki
+  `npm ci -w …` w `Dockerfile` - za nic
+- **wszystkie odnośniki strony są WZGLĘDNE** i to dzięki temu przeprowadzka nie tknęła
+  ani jednej strony treści: ten sam katalog działał pod `/uzaero/` na Pages i działa
+  pod `/`. Nowa strona ma trzymać tę własność
+- **APK zostaje na GitHub Releases**, nie na hostingu: to pliki po kilkadziesiąt MB,
+  a Railway liczy transfer
+- **CSP strony jest LUŹNIEJSZA niż panelu w dwóch miejscach** (`script-src`
+  `'unsafe-inline'` - makiety mają skrypty w treści pliku; fonty z Google). Strona nie ma
+  sesji ani pola do wpisywania, ale stoi na TYM SAMYM origin co panel, więc właściwym
+  domknięciem jest osobna nazwa hosta po podpięciu własnej domeny (`uzaero.pl` strona,
+  `app.uzaero.pl` panel i API) - powód stoi w docblocku `staticSite.ts`
 - **`docs/CHANGELOG.md` jest ŹRÓDŁEM strony wydań** - pisany dla pilotów i klubów językiem
   korzyści, bez nazw plików i identyfikatorów. Sekcja „W przygotowaniu" rośnie razem
   z PR-ami (każdy PR, który zmienia coś widocznego, dopisuje punkt); przy buildzie
   produkcyjnym dostaje nagłówek `## <wersja> (build <N>) · <data>`, a nad nią powstaje
-  pusta „W przygotowaniu". Format parsuje `tools/render-changelog.mjs` w repo strony
+  pusta „W przygotowaniu". Format parsuje `site/tools/render-changelog.mjs`
   (`##` wydanie, `>` streszczenie, `###` grupy, `-` punkty, komentarze HTML pomijane)
 - **wersjonowanie**: `version` w `app/app.json` podnosimy przy wydaniu; numer builda to
   `appBuildVersion` z EAS (build 1 = 2026-08-26, commit `3b7653e`)
-- **rytm wydania**: bump wersji → `eas build --profile production` → w repo strony
-  `node tools/update-download.mjs --app D:/uz_areo/app [--release]` (cel strony pobierania)
-  i `node tools/render-changelog.mjs --src D:/uz_areo/docs/CHANGELOG.md` → push.
+- **rytm wydania**: bump wersji → `eas build --profile production` →
+  `node site/tools/update-download.mjs [--release]` (podmienia cel przycisku w ŹRÓDLE,
+  `site/src/pobierz/index.html`) → `npm run site` na podgląd → push. Push do gałęzi
+  wdrożeniowej publikuje aplikację i stronę JEDNYM obrazem - drugiego repozytorium
+  ani drugiego wdrożenia nie ma.
   **Artefakty EAS wygasają po kilku tygodniach** (build z 2026-08-16 zwracał 404 już
   2026-09-06), więc na dłużej `--release`: APK jako GitHub Release w `tomaszklag/uz_aero`
   pod trwałym `releases/latest/download/uzaero.apk`
@@ -2577,11 +2606,10 @@ polityka prywatności i regulamin - wymagane przez ekran zgody Google).
   (w planach). Pierwszy kamień milowy = następne wydanie: jego wersja i termin trafiają na
   tablicę stanu i do nagłówka „W przygotowaniu". Terminy są orientacyjne i podaje je
   właściciel - nie zmyślamy dat
-- **`docs/podrecznik/` jest ŹRÓDŁEM modułu „Dokumentacja"** (`/uzaero/dokumentacja/`):
+- **`docs/podrecznik/` jest ŹRÓDŁEM modułu „Dokumentacja"** (`/dokumentacja/`):
   `spis.md` (rozdziały i kolejność stron) + `<slug>.md` na stronę; renderuje
-  `tools/render-docs.mjs --src D:/uz_areo/docs/podrecznik --design D:/uz_areo/design`
-  w repo strony (drzewko, wyszukiwarka w przeglądarce, spis „na tej stronie", żywe ekrany
-  makiet przez dyrektywę `@screen`). Piszemy dla pilota i administratora, który szuka
+  `site/tools/render-docs.mjs` (drzewko, wyszukiwarka w przeglądarce, spis „na tej
+  stronie", żywe ekrany makiet przez dyrektywy `@screen` i `@panel`). Piszemy dla pilota i administratora, który szuka
   pomocy: jak działa funkcja i jakie są założenia, ale językiem biznesowym - bez nazw
   plików, identyfikatorów, numerów issue i żargonu (format i reguły: komentarz w `spis.md`).
   Zmiana ekranu w PR = zmiana odpowiedniej strony podręcznika
@@ -2589,9 +2617,13 @@ polityka prywatności i regulamin - wymagane przez ekran zgody Google).
   „w dokumentacji brakuje screenów, mamy przecież makiety"). Galeria hurtem na górze
   strony nie liczy się jako ilustracja - dyrektywa `@screen` idzie pod akapit, krok
   formularza albo arkusz, który opisuje. Limit: 5 linii i 10 ekranów na stronę (makieta
-  waży ~30 KB i ładuje się przy przewijaniu). Panel makiet NIE MA i jego strony zostają
-  bez ekranów (`docs/panel-2.0.md` §3.7)
-- **strona pobierania i landing mają jeden komponent przycisku** (`.dl` w `site.css`);
+  waży ~30 KB i ładuje się przy przewijaniu). Strony panelu mają własną dyrektywę
+  `@panel` (ramka okna przeglądarki, makiety z `design/panel/`) - odkąd panel wrócił
+  do design-first (`docs/panel-2.0.md` §3.7), zdanie „panel makiet NIE MA" jest
+  nieaktualne. **`design/panel/` MUSI być zacommitowane**: obraz buduje stronę
+  z repozytorium, więc brakująca makieta `@panel` wywraca build, a nie stronę
+- **strona pobierania i landing mają jeden komponent przycisku** (`.dl`
+  w `site/src/site.css`);
   `update-download.mjs` dalej podmienia `#apk-link` i `#apk-meta` - te znaczniki siedzą
   w przycisku, nie ruszać ich
 

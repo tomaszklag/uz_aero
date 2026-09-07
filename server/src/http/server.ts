@@ -49,6 +49,7 @@ import type { PilotsPort, TokenService, TraceSinkPort } from '../application/com
 import { registerAdminCsrfGuard } from './adminCsrf.ts';
 import { registerRequestLog } from './requestLog.ts';
 import { registerAdminPanelStatic } from './routes/admin/staticPanel.ts';
+import { registerPublicSiteStatic } from './routes/site/staticSite.ts';
 import type { AdminGate } from './routes/admin/adminRoute.ts';
 import { registerAdminAuditRoutes } from './routes/admin/audit.ts';
 import { registerAdminBugReportRoutes } from './routes/admin/bugReports.ts';
@@ -232,6 +233,7 @@ export interface ServerOptions {
    * buildu) = `/admin/` odpowiada 404, panel jedzie z Vite.
    */
   adminDistDir?: string;
+  siteDistDir?: string;
   /**
    * Zaufanie nagłówkom `X-Forwarded-*` (hosting za proxy TLS, np. Railway). Bez tego
    * `req.ip` - a więc `actor_ip` w dzienniku audytu - pokazywałby dla wszystkich adres
@@ -306,9 +308,12 @@ export function buildServer(deps: ServerDeps, options: ServerOptions = {}): Fast
     gate,
   );
 
-  // Statyczny build panelu - na końcu, żeby czytać ten plik w kolejności „API, potem
-  // pliki"; w routerze i tak wygrywają trasy konkretne, nie kolejność rejestracji.
+  // Pliki statyczne - na końcu, żeby czytać ten plik w kolejności „API, potem pliki";
+  // w routerze i tak wygrywają trasy konkretne, nie kolejność rejestracji. Panel idzie
+  // PIERWSZY, bo to jego rejestracja dekoruje `reply.sendFile`, a strona ma
+  // `decorateReply: false` - druga dekoracja tej samej nazwy przewraca start.
   registerAdminPanelStatic(app, options.adminDistDir);
+  registerPublicSiteStatic(app, options.siteDistDir);
 
   app.get('/health', async () => ({ ok: true }));
 
