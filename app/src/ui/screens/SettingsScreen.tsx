@@ -38,10 +38,10 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import Constants from 'expo-constants';
 
 import { GPS_STALE_SEC, type GpsFix } from '../../domain';
 import { REFERENCE_META_CHECKED_AT } from '../../application';
+import { appRelease } from '../../infrastructure/release/nativeRelease';
 import {
   ActionButton,
   AppText,
@@ -62,6 +62,7 @@ import { useSessionStore } from '../store';
 import { useAuthStore } from '../store/authStore';
 import { useGps, useTrace } from '../bootstrap/servicesContext';
 import { formatLatLon, timeUtc } from '../format';
+import { versionRowValue } from './logic/appVersion';
 import { fixAge } from './logic/gpsLoss';
 import { eventsCount, lastContactAt, lastContactLabel } from './logic/syncStatus';
 
@@ -181,7 +182,9 @@ export function SettingsScreen({
 
   const gpsFresh = receivedAt != null && now - receivedAt <= GPS_STALE_SEC * 1000;
   const logoutBlocked = outboxCount > 0;
-  const version = Constants.expoConfig?.version;
+  // Wydanie ZAINSTALOWANEGO pakietu (`expo-application`) - to samo źródło, co
+  // w zgłoszeniu błędu; `null` = Expo Go albo brak danych, wiersz pokazuje kreskę.
+  const release = appRelease();
 
   return (
     <Screen
@@ -282,9 +285,18 @@ export function SettingsScreen({
             w nagłówku śladu (issue #84).
 
             Stempel danych referencyjnych też stąd zszedł: jest częścią jednej godziny
-            synchronizacji wyżej (`lastContactAt`), a nie osobną wiadomością. */}
+            synchronizacji wyżej (`lastContactAt`), a nie osobną wiadomością.
+
+            WIERSZ „WERSJA" (2026-09-06, faza testów): „1.0.0 (build 1)" - wersja i numer
+            builda z ZAINSTALOWANEGO pakietu (`infrastructure/release/nativeRelease.ts`),
+            nie z konfiguracji Expo, która numeru builda nie zna. Tym samym zdaniem
+            opisują się wydania w CHANGELOG i to samo jedzie w zgłoszeniu błędu - tester
+            ma umieć powiedzieć, co ma na telefonie. W Expo Go (pakiet nie nasz) i bez
+            danych stoi kreska. Wersja zeszła z wiersza „Aplikacja": jedna liczba stoi
+            na karcie raz. */}
         <Card title="O aplikacji" header="inline">
-          <KeyValueRow label="Aplikacja" value={`UZ Aero${version != null ? ` · v${version}` : ''}`} />
+          <KeyValueRow divider label="Aplikacja" value="UZ Aero" />
+          <KeyValueRow label="Wersja" value={versionRowValue(release)} />
         </Card>
 
         {/* ══ NA KOŃCU: PIN, A POD NIM WYLOGOWANIE (issue #82) ══════════════

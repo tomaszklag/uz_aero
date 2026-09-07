@@ -200,11 +200,21 @@ describe('granice warstw', () => {
     expect(users).toEqual(['infrastructure/sensors/expoSensorsAdapter.ts']);
   });
 
+  it('tylko czytnik wydania dotyka expo-application', () => {
+    // Wersja aplikacji ma JEDNO źródło - karta „O aplikacji" (13) i zgłoszenie błędu
+    // czytają ten sam napis. Drugi import tego modułu byłby drugim źródłem.
+    const users = sourceFiles('.')
+      .filter((f) => importsOf(f).some((s) => s === 'expo-application'))
+      .sort();
+    expect(users).toEqual(['infrastructure/release/nativeRelease.ts']);
+  });
+
   it('barrel infrastruktury nie wciąga modułów natywnych (testy w Node)', () => {
     const barrel = importsOf('infrastructure/index.ts');
     expect(barrel).not.toContain('./storage/expoSqliteAdapter');
     expect(barrel).not.toContain('./gps/expoLocationAdapter');
     expect(barrel).not.toContain('./sensors/expoSensorsAdapter');
+    expect(barrel).not.toContain('./release/nativeRelease');
     // Moduły usługi GPS w tle: task (expo-task-manager), writer headless (wciąga
     // adapter SQLite) i prośba o uprawnienie powiadomień (react-native).
     expect(barrel).not.toContain('./gps/backgroundLocationTask');
