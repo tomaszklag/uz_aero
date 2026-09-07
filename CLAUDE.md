@@ -2545,6 +2545,42 @@ model danych, ryzyka i etapy: **`docs/logowanie-google.md`**.
   zatwierdzać" zostawiała człowieka w kolejce na zawsze. Nowy `LoginSurface` w portach;
   atrapa testowa ignoruje powierzchnię celowo (rozdział testuje prawdziwy weryfikator)
 
+## Wydania, changelog i strona publiczna (2026-09-06)
+Wchodzimy w fazę testów i wersjonowania. Punkt wejścia dla pilotów, testerów i klubów to
+**https://tomaszklag.github.io/uzaero/** (repo strony: `tomaszklag/tomaszklag.github.io`,
+GitHub Pages; landing sprzedażowy, `pobierz/` = stały adres APK, `wydania/` = changelog,
+polityka prywatności i regulamin - wymagane przez ekran zgody Google).
+- **`docs/CHANGELOG.md` jest ŹRÓDŁEM strony wydań** - pisany dla pilotów i klubów językiem
+  korzyści, bez nazw plików i identyfikatorów. Sekcja „W przygotowaniu" rośnie razem
+  z PR-ami (każdy PR, który zmienia coś widocznego, dopisuje punkt); przy buildzie
+  produkcyjnym dostaje nagłówek `## <wersja> (build <N>) · <data>`, a nad nią powstaje
+  pusta „W przygotowaniu". Format parsuje `tools/render-changelog.mjs` w repo strony
+  (`##` wydanie, `>` streszczenie, `###` grupy, `-` punkty, komentarze HTML pomijane)
+- **wersjonowanie**: `version` w `app/app.json` podnosimy przy wydaniu; numer builda to
+  `appBuildVersion` z EAS (build 1 = 2026-08-26, commit `3b7653e`)
+- **rytm wydania**: bump wersji → `eas build --profile production` → w repo strony
+  `node tools/update-download.mjs --app D:/uz_areo/app [--release]` (cel strony pobierania)
+  i `node tools/render-changelog.mjs --src D:/uz_areo/docs/CHANGELOG.md` → push.
+  **Artefakty EAS wygasają po kilku tygodniach** (build z 2026-08-16 zwracał 404 już
+  2026-09-06), więc na dłużej `--release`: APK jako GitHub Release w `tomaszklag/uz_aero`
+  pod trwałym `releases/latest/download/uzaero.apk`
+- **plan wydań w tym samym pliku**: sekcja `## Plan wydań` z kamieniami milowymi
+  `### <wersja> · <termin>` i punktami `- [x]` (gotowe) / `- [~]` (w toku) / `- [ ]`
+  (w planach). Pierwszy kamień milowy = następne wydanie: jego wersja i termin trafiają na
+  tablicę stanu i do nagłówka „W przygotowaniu". Terminy są orientacyjne i podaje je
+  właściciel - nie zmyślamy dat
+- **`docs/podrecznik/` jest ŹRÓDŁEM modułu „Dokumentacja"** (`/uzaero/dokumentacja/`):
+  `spis.md` (rozdziały i kolejność stron) + `<slug>.md` na stronę; renderuje
+  `tools/render-docs.mjs --src D:/uz_areo/docs/podrecznik --design D:/uz_areo/design`
+  w repo strony (drzewko, wyszukiwarka w przeglądarce, spis „na tej stronie", żywe ekrany
+  makiet przez dyrektywę `@screen`). Piszemy dla pilota i administratora, który szuka
+  pomocy: jak działa funkcja i jakie są założenia, ale językiem biznesowym - bez nazw
+  plików, identyfikatorów, numerów issue i żargonu (format i reguły: komentarz w `spis.md`).
+  Zmiana ekranu w PR = zmiana odpowiedniej strony podręcznika
+- **strona pobierania i landing mają jeden komponent przycisku** (`.dl` w `site.css`);
+  `update-download.mjs` dalej podmienia `#apk-link` i `#apk-meta` - te znaczniki siedzą
+  w przycisku, nie ruszać ich
+
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **wyłącznie Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22 - haseł nie ma nigdzie; wymaga sieci); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero zatwierdzenie w panelu - patrz sekcja „Logowanie przez Google" niżej
 - **Rozpoczęcie lotu ma trwać kilka sekund** - trzy kroki (samolot+Dual → zadanie → liczniki) i „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej
