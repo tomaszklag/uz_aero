@@ -30,7 +30,7 @@ Po oknie ekran otwiera się w podglądzie: bez **EDYTUJ DANE**, z banerem „Min
 | zrzut | godzina i skład; wysokość zostaje z GPS |
 | tankowanie, dolewka oleju | unieważnienie i dopisanie na nowo - to trzy liczby, które muszą się zgadzać |
 | notatka, drugi pilot | ten sam arkusz, w którym powstały; pusta notatka znika, drugi pilot zmienia się dla całej operacji wstecz |
-| brakujący fakt | **DODAJ WPIS**: start, lądowanie, kołowanie, zrzut, załadunek, tankowanie |
+| brakujący fakt | **DODAJ WPIS**: start, lądowanie, kołowanie, tankowanie, dolewka oleju, a w dniu skokowym także zrzut i załadunek |
 
 Powód korekty jest u pilota opcjonalny: wymagany byłby tarciem, a bez niego administrator patrzący na zmienioną liczbę nie ma jak dowiedzieć się dlaczego. Trafia do historii zmian i do panelu.
 
