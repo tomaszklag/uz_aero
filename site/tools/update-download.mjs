@@ -36,14 +36,24 @@ const argv = process.argv.slice(2);
 const flag = (name) => argv.includes(`--${name}`);
 const opt = (name) => { const i = argv.indexOf(`--${name}`); return i >= 0 ? argv[i + 1] : undefined; };
 const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
-const run = (cmd, args, options = {}) => execFileSync(cmd, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'], shell: process.platform === 'win32', ...options });
+/**
+ * Powłoka WYŁĄCZNIE dla `.cmd` - na Windowsie `npx.cmd` bez niej nie ruszy (node od
+ * wersji 20 nie uruchamia plików wsadowych przez execFile). Dla `gh` i `curl` jest
+ * SZKODLIWA: z `shell: true` argumenty są sklejane i parsowane po raz drugi, więc
+ * `--title UZ Aero 1.1.0 (build 2)` rozpada się na kawałki, a nawiasy powłoka bierze
+ * za swoje („no matches found for `Aero`"). Bez powłoki argumenty jadą dosłownie.
+ */
+const run = (cmd, args, options = {}) => execFileSync(cmd, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'], shell: cmd.endsWith('.cmd'), ...options });
 
 let build;
 if (opt('url')) {
   build = { url: opt('url'), version: opt('version') ?? '?', number: opt('build') ?? '?', date: new Date() };
 } else {
   const appDir = resolve(opt('app') ?? resolve(here, '../../app'));
-  const json = run(npx, ['eas', 'build:list', '--platform', 'android', '--profile', 'production', '--status', 'finished', '--limit', '1', '--non-interactive', '--json'], { cwd: appDir });
+  // `eas-cli`, nie `eas`: pakiet nazywa się tak w rejestrze i tak wołają go skrypty
+  // w `app/package.json`. Skrót `eas` działa tylko przy instalacji globalnej, a bez
+  // niej `npx` odbija się o „could not determine executable to run".
+  const json = run(npx, ['eas-cli', 'build:list', '--platform', 'android', '--profile', 'production', '--status', 'finished', '--limit', '1', '--non-interactive', '--json'], { cwd: appDir });
   const [latest] = JSON.parse(json);
   if (!latest?.artifacts?.applicationArchiveUrl) throw new Error('EAS nie zwrócił skończonego builda produkcyjnego z artefaktem.');
   build = { url: latest.artifacts.applicationArchiveUrl, version: latest.appVersion, number: latest.appBuildVersion, date: new Date(latest.createdAt) };

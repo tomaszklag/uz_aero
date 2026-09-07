@@ -34,7 +34,9 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 ## W przygotowaniu
 
-> Następne wydanie testowe: logowanie kontem Google zamiast haseł, panel klubu 2.0 i porządki po pierwszych tygodniach testów. Wymaga ponownej instalacji aplikacji.
+## 1.1.0 (build 2) · 7 września 2026
+
+> Wydanie otwierające testy z pilotami: logowanie kontem Google zamiast haseł, panel klubu 2.0 i porządki po pierwszych tygodniach testów. Wymaga ponownej instalacji aplikacji.
 
 ### Nowości
 
@@ -92,21 +94,11 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 <!-- Terminy są orientacyjne i zostają na stronie do potwierdzenia przez właściciela projektu. -->
 
-### 1.1.0 · planowane na wrzesień 2026
-
-> Wydanie otwierające testy z pilotami: logowanie kontem Google w produkcji, panel klubu 2.0 i świeży build aplikacji na czystym serwerze.
-
-- [x] Logowanie kontem Google i zatwierdzanie kont w panelu
-- [x] Panel klubu 2.0: Piloci, Samoloty, Dziennik
-- [x] Olej, wpis lotu po fakcie na osi operacji, dwa motywy
-- [~] Publikacja aplikacji u Google - logowanie dowolnym kontem, bez listy testerów
-- [ ] Wersja i numer builda w „O aplikacji"
-- [ ] Nowy build i serwer z pustą bazą - start testów z pilotami
-
 ### 1.2.0 · po pierwszych tygodniach testów
 
 > Poprawki z testów i kalibracja normy zużycia na prawdziwych lotach.
 
+- [~] Publikacja aplikacji u Google - logowanie dowolnym kontem, bez listy testerów
 - [ ] Kalibracja progów normy paliwa i motogodzin na danych z testów
 - [ ] Analityka oleju: zużycie między pomiarami i norma z lotów maszyny
 - [ ] Panel: pulpit floty, skrzynka flag i eksporty kart dnia w regułach 2.0
