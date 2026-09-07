@@ -21,6 +21,7 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.tomekklag.uzaero",
+      "versionCode": 1,
       "permissions": [
         "android.permission.POST_NOTIFICATIONS",
         "android.permission.ACCESS_COARSE_LOCATION",

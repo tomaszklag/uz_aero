@@ -19,7 +19,8 @@ const AT = Date.UTC(2026, 8, 4, 9, 41, 7);
 const input = (over: Partial<BugContextInput> = {}): BugContextInput => ({
   place: { route: 'Stats', sheet: null },
   release: {
-    appVersion: '1.4.0',
+    // Napis wydania „wersja (build N)" - ten sam, który pilot czyta w Ustawieniach (13).
+    appVersion: '1.4.0 (build 7)',
     platform: 'android',
     osVersion: '14',
     deviceModel: 'Pixel 7a',
@@ -81,13 +82,13 @@ describe('kontekst zgłoszenia', () => {
   it('niesie wydanie, urządzenie, motyw i stan łączności - bez pytania pilota', () => {
     const view = buildBugContext(input());
 
-    expect(rowOf(view, 'Aplikacja')).toBe('1.4.0');
+    expect(rowOf(view, 'Aplikacja')).toBe('1.4.0 (build 7)');
     expect(rowOf(view, 'Telefon')).toBe('Pixel 7a · android 14 · motyw NIGHT');
     expect(rowOf(view, 'Synchronizacja')).toBe('kolejka 0 · ostatnia 09:38 UTC');
     expect(rowOf(view, 'Czas zgłoszenia')).toBe('2026-09-04 09:41:07 UTC');
 
     expect(view.context).toMatchObject({
-      appVersion: '1.4.0',
+      appVersion: '1.4.0 (build 7)',
       platform: 'android',
       osVersion: '14',
       deviceModel: 'Pixel 7a',

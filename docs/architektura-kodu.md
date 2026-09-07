@@ -1224,11 +1224,26 @@ Porty w `application/ports/`, każdy z realnym powodem:
 | `GpsPort` | Lot trwa 45 minut i wymaga samolotu. Port pozwala **odtworzyć trasę** z serii fixów i sprawdzić detekcję w milisekundach. Implementacje: `expoLocationAdapter` (urządzenie), `replayGpsAdapter` (testy i podgląd). |
 | `SensorPort` | Czujniki pokładowe (barometr, akcelerometr, żyroskop). Osobno od GPS, bo mają inne właściwości: brak własnego zegara, fizyczna NIEOBECNOŚĆ na części urządzeń i próbkowanie 50 Hz. Oddaje **agregaty sekundowe**, nie surowe próbki. Implementacje: `expoSensorsAdapter` (urządzenie), `nullSensorAdapter` (brak czujników / testy). |
 
-Moduły natywne (`expo-sqlite`, `expo-location`, `expo-sensors`, `expo-task-manager`)
-są importowane **wyłącznie** przez swoje adaptery/moduły i nie trafiają do barrela
-infrastruktury - inaczej testy w Node przestałyby działać. Pilnuje tego rodzina
-testów exact-list w `architecture.test.ts` (po jednym na moduł natywny + wykluczenia
-barrela + strażnik importu taska w `app/index.ts`).
+Moduły natywne (`expo-sqlite`, `expo-location`, `expo-sensors`, `expo-task-manager`,
+`expo-application`) są importowane **wyłącznie** przez swoje adaptery/moduły i nie
+trafiają do barrela infrastruktury - inaczej testy w Node przestałyby działać. Pilnuje
+tego rodzina testów exact-list w `architecture.test.ts` (po jednym na moduł natywny
++ wykluczenia barrela + strażnik importu taska w `app/index.ts`).
+
+**Wersja aplikacji ma JEDNO źródło** (2026-09-06, faza testów): `infrastructure/release/
+nativeRelease.ts` czyta `expo-application` - wersję i numer builda ZAINSTALOWANEGO
+pakietu, nie konfiguracji Expo (ta numeru builda nie zna). Czysty `ownRelease.ts` obok
+rozstrzyga, czy pakiet jest nasz (w Expo Go `expo-application` opisuje Expo Go), a format
+„wersja (build N)" - ten sam, którym opisują się wydania w `docs/CHANGELOG.md` - składa
+`ui/screens/logic/appVersion.ts`. Czytają z tego karta „O aplikacji" (13) i zgłoszenie
+błędu (`deviceRelease.ts`), więc ekran, zgłoszenie i panel mówią jednym napisem.
+
+**Numer builda PODBIJA SIĘ RĘCZNIE** przed każdym wydaniem: `android.versionCode`
+w `app/app.json`, w tym samym commicie, co wpis na liście wydań. `eas.json` ma
+`appVersionSource: "local"`, więc EAS bierze numer stąd, a nie z własnego licznika -
+decyzja świadoma, bo wtedy numer widziany przez testera stoi w repozytorium i da się go
+przypisać do commita. Reguła mieszka tutaj, bo JSON nie przyjmuje komentarza. Bez
+podbicia dwa różne APK przedstawią się testerowi tym samym „build N".
 
 **`GpsPort.start()` = subskrypcja JEDNEGO odbiorcy, nie przełącznik odbiornika.**
 Zwrócona funkcja wypisuje wyłącznie jego; odbiornik gaśnie dopiero, gdy zejdzie ostatni

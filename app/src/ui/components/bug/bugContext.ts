@@ -35,6 +35,10 @@ export interface BugPlace {
 
 /** Wydanie i urządzenie - zbiera `deviceRelease.ts`, bo to jedyne pytanie do RN. */
 export interface BugRelease {
+  /**
+   * „1.0.0 (build 1)" - TEN SAM napis, który pilot czyta w „O aplikacji" (13); jedno
+   * źródło dla obu (`infrastructure/release/nativeRelease.ts`). `null` = nie znamy.
+   */
   appVersion: string | null;
   platform: string;
   osVersion: string | null;

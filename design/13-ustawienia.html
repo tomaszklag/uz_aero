@@ -290,7 +290,18 @@
         <div>
           <div class="diag-row">
             <span class="diag-key">Aplikacja</span>
-            <span class="diag-val">UZ Aero · <small>v1.0.0-alpha</small></span>
+            <span class="diag-val">UZ Aero</span>
+          </div>
+          <!-- WERSJA I NUMER BUILDA (2026-09-06, faza testów): „wersja (build N)" - dokładnie
+               tym zdaniem opisują wydania docs/CHANGELOG.md i strona wydań, więc tester ma
+               umieć odczytać je z telefonu bez tłumaczenia. Źródłem jest ZAINSTALOWANY pakiet
+               (expo-application: versionName + versionCode), nie konfiguracja Expo, która
+               numeru builda nie zna; ten sam napis jedzie w zgłoszeniu błędu. W Expo Go
+               (pakiet nie nasz) i bez danych w wierszu stoi kreska „-". Wersja zeszła
+               z wiersza „Aplikacja" - jedna liczba stoi na karcie raz. -->
+          <div class="diag-row">
+            <span class="diag-key">Wersja</span>
+            <span class="diag-val">1.0.0 (build 1)</span>
           </div>
           <!-- Wiersz „Samolot operacji" USUNIĘTY (issue #82: „nie pisz tam «samolot
                operacji» - to jest do usunięcia"). Mówił, którą maszynę pilot ma w ręce,
