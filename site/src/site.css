@@ -210,13 +210,6 @@ table.log tr:last-child td { padding-bottom: 16px; }
 .know li:not(:first-child) { padding-left: 14px; border-left: 2px solid var(--green-border); }
 .pbar .who-badge { margin-left: auto; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); }
 
-/* kontakt */
-.contact { text-align: center; padding-top: 110px; }
-.contact .kicker::before { display: none; }
-.contact .h-display { margin: 0 auto; max-width: 820px; }
-.contact .sub { margin: 18px auto 30px; }
-.contact .cta { justify-content: center; margin: 0; }
-
 /* CTA końcowe + stopka */
 .outro { margin-top: 90px; text-align: center; padding: 0 0 24px; }
 .outro .word { font-family: var(--font-display); font-size: clamp(90px, 18vw, 240px); line-height: 0.85; letter-spacing: 2px; background: linear-gradient(180deg, rgba(232,232,232,0.9), rgba(232,232,232,0.15)); -webkit-background-clip: text; background-clip: text; color: transparent; user-select: none; }
