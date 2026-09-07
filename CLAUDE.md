@@ -2577,6 +2577,12 @@ polityka prywatności i regulamin - wymagane przez ekran zgody Google).
   pomocy: jak działa funkcja i jakie są założenia, ale językiem biznesowym - bez nazw
   plików, identyfikatorów, numerów issue i żargonu (format i reguły: komentarz w `spis.md`).
   Zmiana ekranu w PR = zmiana odpowiedniej strony podręcznika
+- **ŻYWY EKRAN STOI PRZY SEKCJI, KTÓREJ DOTYCZY** (uwaga użytkownika 2026-09-07:
+  „w dokumentacji brakuje screenów, mamy przecież makiety"). Galeria hurtem na górze
+  strony nie liczy się jako ilustracja - dyrektywa `@screen` idzie pod akapit, krok
+  formularza albo arkusz, który opisuje. Limit: 5 linii i 10 ekranów na stronę (makieta
+  waży ~30 KB i ładuje się przy przewijaniu). Panel makiet NIE MA i jego strony zostają
+  bez ekranów (`docs/panel-2.0.md` §3.7)
 - **strona pobierania i landing mają jeden komponent przycisku** (`.dl` w `site.css`);
   `update-download.mjs` dalej podmienia `#apk-link` i `#apk-meta` - te znaczniki siedzą
   w przycisku, nie ruszać ich
