@@ -2613,11 +2613,21 @@ bez `npm ci` - skrypty jadą na samej stdlib node).
     uprawnienia, `scheme`, pakiet. Wtedy podbija się `version` I `android.versionCode`
     w `app/app.json` (`appVersionSource: local`, więc EAS czyta je stamtąd; „build N"
     w changelogu to `versionCode`);
-  - **`runtimeVersion` = `fingerprint`** - Expo liczy odcisk warstwy natywnej i sam
-    odcina aktualizacje, które do niej nie pasują. Skutek do zapamiętania: dołożenie
-    modułu natywnego zmienia odcisk, więc STARE buildy przestają dostawać aktualizacje.
-    To jest poprawne - nie da się dowieźć JS-a wymagającego nieobecnego kodu natywnego -
-    ale znaczy, że trzeba wtedy rozesłać nowy APK;
+  - **`runtimeVersion` = `appVersion`, a NIE `fingerprint`** (2026-09-07). Fingerprint
+    liczy odcisk warstwy natywnej i sam odcinałby niepasujące aktualizacje - ładniejsze
+    w teorii, ale w TYM monorepo nie działa: odcisk powstaje z zawartości drzewa,
+    a **180 ze 190 jego źródeł to pliki z hoistowanego `node_modules`** wspólnego dla
+    czterech workspace'ów. Serwer budujący EAS odtwarza ten katalog po swojemu, odciski
+    się rozjeżdżają i build pada na „Runtime version calculated on local machine not
+    equal to runtime version calculated during build". Sprawdzone eksperymentalnie -
+    `app/.env` i inne pliki lokalne nie mają z tym nic wspólnego;
+  - **stąd twarda reguła: `version` PODNOSI SIĘ WYŁĄCZNIE PRZY NOWYM APK.** Przy
+    `appVersion` numer wersji JEST kluczem aktualizacji, więc podbicie go bez builda
+    osierociłoby wszystkie zainstalowane aplikacje (aktualizacja poszłaby do wersji,
+    której nikt nie ma). Odwrotny błąd jest groźniejszy: moduł natywny dołożony bez
+    nowego APK dowozi starym telefonom JS wymagający nieobecnego kodu i je wywraca.
+    Fingerprint bronił przed tym sam; `appVersion` polega na dyscyplinie i dlatego
+    decyzja „OTA czy APK" stoi na początku skilla `wydanie`, a nie na końcu;
   - **`fallbackToCacheTimeout: 0` stoi JAWNIE**: start aplikacji nigdy nie czeka na
     sieć (§4.1 - brak sieci NIGDY nie blokuje pracy pilota). Aktualizacja pobiera się
     w tle i wchodzi przy NASTĘPNYM uruchomieniu, więc pilot bez zasięgu nie zauważy nic;
