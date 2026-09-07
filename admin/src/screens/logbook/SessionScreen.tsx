@@ -11,7 +11,7 @@
  * wklejony komuś, kto poziomu 2 nigdy nie widział.
  */
 
-import { dateUtcShort, litres, motoHours, oilLitres, timeUtc } from '@uzaero/format';
+import { dateUtcShort } from '@uzaero/format';
 import { useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 
@@ -37,6 +37,7 @@ import {
 } from '../../ui/components';
 import { PlaneIcon } from '../../ui/components/icons';
 import { errorMessage, ruleViolationMessage } from '../common/apiMessage';
+import { litres, motoHours, NONE, oilLitres, timeUtc } from '../common/values';
 import { operationLabel } from './sessionRows';
 import { voidFacts } from './sessionVoid';
 import { timelineRow } from './timelineRows';
@@ -172,15 +173,15 @@ export function SessionScreen() {
             </Card>
 
             <Card title="Szczegóły">
-              <Detail label="Pilot" value={session.picName ?? session.picCode ?? '—'} />
-              <Detail label="Drugi pilot" value={session.dualName ?? '—'} />
+              <Detail label="Pilot" value={session.picName ?? session.picCode ?? NONE} />
+              <Detail label="Drugi pilot" value={session.dualName ?? NONE} />
               <Detail label="Zadanie" value={operationLabel(session.operation)} />
-              <Detail label="Klient" value={session.client ?? '—'} />
+              <Detail label="Klient" value={session.client ?? NONE} />
               <Detail
                 label="Trasa"
                 value={
                   session.departureIcao == null
-                    ? '—'
+                    ? NONE
                     : session.arrivalIcao == null || session.arrivalIcao === session.departureIcao
                       ? session.departureIcao
                       : `${session.departureIcao} → ${session.arrivalIcao}`
@@ -189,7 +190,7 @@ export function SessionScreen() {
               <Detail label="Loty" value={String(session.flightsCount)} />
               <Detail
                 label="Starty i lądowania"
-                value={`${session.takeoffCount ?? '—'} / ${session.landingCount ?? '—'}`}
+                value={`${session.takeoffCount ?? NONE} / ${session.landingCount ?? NONE}`}
               />
               <Detail
                 label="Paliwo"

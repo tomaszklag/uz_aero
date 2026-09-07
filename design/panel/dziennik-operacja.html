@@ -332,8 +332,13 @@
       <div class="card">
         <div class="card-title">Ślad GPS</div>
 
-        <div class="map-canvas" style="height:430px">
-          <svg class="map-overlay" viewBox="0 0 1000 430" preserveAspectRatio="none">
+        <!-- PŁÓTNO TRZYMA PROPORCJE `viewBox`, a nie stałą wysokość (2026-09-07).
+             Przy `height: 430px` szerokość karty (~1100 px) rozciągała rysunek o ~9%
+             w poziomie i krąg nadlotniskowy wychodził ELIPSĄ. `aspect-ratio` daje jedną
+             skalę dla obu osi przy każdej szerokości okna - i dopiero wtedy podziałka
+             pod mapą może być czymkolwiek mierzona. -->
+        <div class="map-canvas" style="aspect-ratio: 1000 / 430">
+          <svg class="map-overlay" viewBox="0 0 1000 430">
             <g class="map-grid">
               <line x1="60" y1="0" x2="60" y2="430"/><line x1="120" y1="0" x2="120" y2="430"/>
               <line x1="180" y1="0" x2="180" y2="430"/><line x1="240" y1="0" x2="240" y2="430"/>
@@ -378,7 +383,19 @@
 
             <!-- Znaczniki: kolor niesie RODZAJ (start zielony, lądowanie błękitne),
                  numer przy znaczniku mówi, który to lot. Pierścień dostaje WYŁĄCZNIE
-                 pierwszy start - inaczej nie widać, gdzie zaczyna się bieg silnika. -->
+                 pierwszy start - inaczej nie widać, gdzie zaczyna się bieg silnika.
+
+                 PODPIS GAŚNIE PRZY ZAGĘSZCZENIU (2026-09-07). Dzień skokowy to dwanaście
+                 znaczników w czterdziestu pikselach: każdy z własnym napisem, wszystkie
+                 jeden na drugim, ani jednego do odczytania - czyli dwanaście podpisów
+                 mówiło mniej niż jeden. Kropka zostaje ZAWSZE (niesie miejsce i rodzaj
+                 zdarzenia), znika sam napis i tylko tam, gdzie i tak byłby nieczytelny.
+                 Numery lotów są na tej samej stronie, na osi zdarzeń sesji.
+
+                 Które napisy zostają, rozstrzyga zderzenie prostokątów tekstu
+                 (`admin/src/screens/logbook/markerLabels.ts`) - dla TYCH pozycji wychodzą
+                 dwa: „T/O 1" (pierwszy w kolejności, ten sam, co z pierścieniem) i „T/O 4".
+                 Lot po trasie zachowuje wszystkie podpisy, bo jego znaczniki stoją osobno. -->
             <g>
               <circle cx="389.2" cy="300.9" r="15" fill="none" stroke="var(--green)" stroke-width="1.6" opacity="0.4"/>
               <circle cx="389.2" cy="300.9" r="7" fill="var(--green)"/>
@@ -386,11 +403,9 @@
             </g>
             <g>
               <circle cx="397.0" cy="296.5" r="7" fill="var(--green)"/>
-              <text x="409.0" y="300.5" class="axis-label" fill="var(--green)" font-size="10">T/O 2</text>
             </g>
             <g>
               <circle cx="404.8" cy="292.1" r="7" fill="var(--green)"/>
-              <text x="416.8" y="296.1" class="axis-label" fill="var(--green)" font-size="10">T/O 3</text>
             </g>
             <g>
               <circle cx="412.5" cy="287.7" r="7" fill="var(--green)"/>
@@ -398,35 +413,27 @@
             </g>
             <g>
               <circle cx="420.3" cy="283.3" r="7" fill="var(--green)"/>
-              <text x="432.3" y="287.3" class="axis-label" fill="var(--green)" font-size="10">T/O 5</text>
             </g>
             <g>
               <circle cx="428.0" cy="278.9" r="7" fill="var(--green)"/>
-              <text x="440.0" y="282.9" class="axis-label" fill="var(--green)" font-size="10">T/O 6</text>
             </g>
             <g>
               <circle cx="423.1" cy="277.1" r="7" fill="var(--blue)"/>
-              <text x="435.1" y="281.1" class="axis-label" fill="var(--blue)" font-size="10">LDG 1</text>
             </g>
             <g>
               <circle cx="417.1" cy="280.6" r="7" fill="var(--blue)"/>
-              <text x="429.1" y="284.6" class="axis-label" fill="var(--blue)" font-size="10">LDG 2</text>
             </g>
             <g>
               <circle cx="411.1" cy="284.1" r="7" fill="var(--blue)"/>
-              <text x="423.1" y="288.1" class="axis-label" fill="var(--blue)" font-size="10">LDG 3</text>
             </g>
             <g>
               <circle cx="405.1" cy="287.7" r="7" fill="var(--blue)"/>
-              <text x="417.1" y="291.7" class="axis-label" fill="var(--blue)" font-size="10">LDG 4</text>
             </g>
             <g>
               <circle cx="399.1" cy="291.2" r="7" fill="var(--blue)"/>
-              <text x="411.1" y="295.2" class="axis-label" fill="var(--blue)" font-size="10">LDG 5</text>
             </g>
             <g>
               <circle cx="393.1" cy="294.7" r="7" fill="var(--blue)"/>
-              <text x="405.1" y="298.7" class="axis-label" fill="var(--blue)" font-size="10">LDG 6</text>
             </g>
           </svg>
 
@@ -440,7 +447,11 @@
           <!-- Bez kafelków podziałka jest JEDYNYM odniesieniem odległości. -->
           <div class="map-scale">
             <span class="map-scale-label">1 NM</span>
-            <span class="map-scale-bar" style="width: 308px"></span>
+            <!-- UŁAMEK SZEROKOŚCI, nie piksele: długość podziałki liczy się w jednostkach
+                 `viewBox` (1000 na szerokość), a pasek jest elementem HTML NAD mapą.
+                 Wstawiona wprost jako `px`, liczba jednostek mówiła o ~9% mniejszej
+                 odległości, niż pasek pokrywał - czyli podziałka kłamała. -->
+            <span class="map-scale-bar" style="width: 30.8%"></span>
           </div>
 
           <div class="map-attrib">lotniska: OurAirports · © OpenStreetMap</div>
@@ -466,8 +477,13 @@
 
         <!-- Profil obejmuje CAŁY bieg silnika, więc płaskie odcinki przy podstawie to
              czas na ziemi między lotami, a nie dziura w zapisie. -->
-        <div class="profile-chart" style="height:220px">
-          <svg viewBox="0 0 940 220" preserveAspectRatio="none">
+        <!-- Wysokości NIE narzucamy (2026-09-07): `height: auto` w arkuszu bierze ją
+             wprost z `viewBox`, więc skala jest jedna dla obu osi. Przy `height:220px`
+             i `preserveAspectRatio="none"` rysunek rozjeżdżał się o ~25% - krzywej to
+             nie psuło (czas i wysokość nie mają wspólnej jednostki), ale podpisy osi
+             rozciągały się w poziomie, a znacznik szczytu rysował się elipsą. -->
+        <div class="profile-chart">
+          <svg viewBox="0 0 940 220">
             <defs>
               <linearGradient id="alt-fill-panel" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stop-color="var(--green)" stop-opacity="0.28"/>

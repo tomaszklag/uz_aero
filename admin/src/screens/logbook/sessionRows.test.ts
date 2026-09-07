@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { SessionListItemDto } from '../../api/dto';
+import { NONE } from '../common/values';
 import { operationLabel, routeNote, sessionRow } from './sessionRows';
 
 const DAY = Date.UTC(2026, 7, 12);
@@ -69,10 +70,12 @@ describe('pary w jednej komórce', () => {
 
 describe('brak odczytu zostaje brakiem', () => {
   it('kreska stoi PRZY strzałce, więc widać, którego odczytu brakuje', () => {
+    // PÓŁPAUZA, nie dywiz (2026-09-07): grid mieszał obie kreski w jednym wierszu -
+    // patrz `screens/common/values.ts`.
     const open = sessionRow({ ...session, fuelEndL: null, mhEnd: null });
     expect(open.fuel.from).toBe('112 L');
-    expect(open.fuel.to).toBe('-');
-    expect(open.moto.to).toBe('-');
+    expect(open.fuel.to).toBe(NONE);
+    expect(open.moto.to).toBe(NONE);
   });
 
   it('operacja OTWARTA mówi „w toku", a nie kreską', () => {
@@ -89,7 +92,7 @@ describe('brak odczytu zostaje brakiem', () => {
       flightsCount: 0,
     });
     expect(noFlight.flight.note).toBeNull();
-    expect(noFlight.flight.from).toBe('-');
+    expect(noFlight.flight.from).toBe(NONE);
     expect(noFlight.flights).toBe('0');
   });
 });
@@ -105,7 +108,7 @@ describe('olej', () => {
     // Dolewka bez pomiaru poziomu nie zna, więc domena oddaje wtedy brak. Gdyby panel
     // liczył `pomiar + dolewka`, pokazałby w tym wypadku liczbę wziętą znikąd.
     const blind = sessionRow({ ...session, oilLevelL: null, oilAfterL: null, oilAddedL: 1 });
-    expect(blind.oil).toBe('-');
+    expect(blind.oil).toBe(NONE);
   });
 
   it('bez dolewki druga linia milczy', () => {

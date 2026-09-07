@@ -19,10 +19,11 @@
  * `fuelToleranceL`.
  */
 
-import { litres, motoHours, oilLitres, stampUtc } from '@uzaero/format';
+import { stampUtc } from '@uzaero/format';
 import type { MhFormat } from '@uzaero/domain';
 
 import type { AircraftListItemDto, AircraftReadingDto } from '../../api/dto';
+import { litres, motoHours, NONE, oilLitres } from '../common/values';
 
 /** Jedno pole stanu w trybie odczytu: tekst pola + podpis pochodzenia. */
 export interface CurrentStateField {
@@ -91,7 +92,7 @@ function readingOrigin(reading: AircraftReadingDto): string {
  */
 function oilField(reading: AircraftReadingDto): CurrentStateField {
   if (reading.oilL == null) {
-    return { value: '—', hint: 'W dzienniku nie ma pomiaru oleju.' };
+    return { value: NONE, hint: 'W dzienniku nie ma pomiaru oleju.' };
   }
   const added =
     reading.oilAddedSinceL != null && reading.oilAddedSinceL > 0

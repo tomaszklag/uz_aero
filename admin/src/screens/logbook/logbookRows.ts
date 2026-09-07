@@ -10,9 +10,11 @@
  * która liczy to samo inaczej i na innych danych.
  */
 
-import { hhmm, litres, motoHours } from '@uzaero/format';
+import { hhmm } from '@uzaero/format';
 
 import type { LogAircraftDto } from '../../api/dto';
+// Kreska braku i formatery, które ją stawiają - półpauza panelu, nie dywiz telefonu.
+import { litres, motoHours, NONE } from '../common/values';
 
 export interface LogbookRow {
   aircraftId: string;
@@ -36,12 +38,6 @@ export interface LogbookRow {
   idle: boolean;
 }
 
-/**
- * Kreska braku. JEDNO miejsce, w którym powstaje - żeby „nie wiadomo" wyglądało
- * wszędzie tak samo i nigdy nie zamieniło się w zero.
- */
-const NONE = '—';
-
 export function logbookRow(a: LogAircraftDto): LogbookRow {
   const idle = a.sessions === 0;
   return {
@@ -57,7 +53,7 @@ export function logbookRow(a: LogAircraftDto): LogbookRow {
     // Sumy czasu w „HH:MM" - dziesiątki godzin w miesiącu nie mieszczą się w „H:MM".
     engine: hhmm(a.blockMs),
     airborne: hhmm(a.flightMs),
-    // `litres(null)` sam oddaje kreskę: bilans z dziurą nie jest bilansem.
+    // `litres(null)` sam oddaje półpauzę: bilans z dziurą nie jest bilansem.
     fuel: litres(a.fuelConsumedL),
     moto: motoHours(a.mhDeltaH, a.mhFormat),
 

@@ -53,8 +53,13 @@ export function VerticalProfile({
   peakLabel,
 }: VerticalProfileProps) {
   return (
-    <div className="profile-chart" style={{ height }}>
-      <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
+    /* Wysokości NIE narzucamy: `height: auto` w arkuszu bierze ją wprost z `viewBox`,
+       więc skala jest jedna dla obu osi. `height: 220px` z `preserveAspectRatio="none"`
+       rozjeżdżało rysunek o ~25% przy pełnej szerokości karty - krzywej to nie psuło
+       (czas i wysokość nie mają wspólnej jednostki), ale podpisy osi rozciągały się
+       w poziomie, a znacznik szczytu rysował się elipsą. */
+    <div className="profile-chart">
+      <svg viewBox={`0 0 ${width} ${height}`}>
         <defs>
           <linearGradient id="alt-fill-panel" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="var(--green)" stopOpacity="0.28" />

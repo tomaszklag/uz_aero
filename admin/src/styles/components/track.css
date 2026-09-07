@@ -6,9 +6,11 @@
  * w palecie nie ma.
  */
 
+/* Wysokości TU NIE MA: proporcje płótna niosą stałe `viewBox` (`aspectRatio` w stylu
+   komponentu), bo tylko wtedy skala jest jedna dla obu osi. Reguła `height: 430px`
+   przy szerokości ~1100 px rozciągała mapę o ~9% w poziomie - patrz `TrackMap.tsx`. */
 .map-canvas {
   position: relative;
-  height: 430px;
   background: #0f1216;
   border-radius: 10px;
   overflow: hidden;
@@ -115,16 +117,29 @@
   flex-shrink: 0;
 }
 
-/* Profil pionowy - ten sam wykres co w aplikacji, na szerokości panelu. */
+/* Profil pionowy - ten sam wykres co w aplikacji, na szerokości panelu.
+
+   Wysokości TU NIE MA z tego samego powodu, co przy `.map-canvas`: `height: 220px`
+   przy szerokości karty ~1100 px dawało skalę 1,134 w poziomie i 0,909 w pionie,
+   czyli ~25% zniekształcenia. Osie profilu (czas × wysokość) nie mają wspólnej
+   jednostki, więc SAMEJ krzywej to nie psuło - psuło wszystko, co na niej leży
+   w jednostkach rysunku: podpisy osi rozjeżdżały się w poziomie, a znacznik szczytu
+   `r=5` rysował się elipsą 5,67 × 4,55 px.
+
+   MECHANIZM JEST INNY NIŻ PRZY MAPIE I TO NIE JEST NIEKONSEKWENCJA. Mapa ma `svg`
+   ustawione `position: absolute; inset: 0`, więc obie jej krawędzie wyznacza płótno
+   i proporcję trzeba nadać PŁÓTNU (`aspect-ratio`). Profil ma `svg` w normalnym
+   przepływie, więc wystarczy `height: auto` - wysokość wychodzi wtedy wprost
+   z `viewBox`, bez powtarzania tych liczb w arkuszu. Cel obu zabiegów jest ten sam:
+   jedna skala dla obu osi. */
 .profile-chart {
   position: relative;
-  height: 220px;
   padding: 14px 16px 6px;
 }
 .profile-chart svg {
   display: block;
   width: 100%;
-  height: 100%;
+  height: auto;
   overflow: visible;
 }
 .axis-label {

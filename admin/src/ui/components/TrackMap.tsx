@@ -34,6 +34,15 @@ export interface MarkerPlacement {
   color: string;
   x: number;
   y: number;
+  /** Miejsce NAPISU - liczy je `markerLabels.ts`, razem z decyzją o jego widoczności. */
+  labelX: number;
+  labelY: number;
+  /**
+   * Czy napis się mieści. Przy dniu skokowym kilkanaście znaczników wypada w tych
+   * samych czterdziestu pikselach i podpisy kładły się jeden na drugim - gasi je
+   * `visibleLabels`, a kropka zostaje zawsze (niesie miejsce i rodzaj zdarzenia).
+   */
+  labelled: boolean;
   ring: boolean;
 }
 
@@ -47,7 +56,15 @@ export interface MapPlot {
   route: { phase: 'taxi' | 'flight'; points: string }[];
   airfields: AirfieldPlacement[];
   markers: MarkerPlacement[];
-  scale: { label: string; pixels: number };
+  /**
+   * Podziałka jako UŁAMEK SZEROKOŚCI PŁÓTNA, nie w pikselach - i to jest cała treść
+   * usterki z 2026-09-07. Długość liczy się w jednostkach `viewBox` (1000 na szerokość),
+   * a pasek jest elementem HTML nad mapą: wstawiona wprost, liczba jednostek trafiała
+   * w CSS jako piksele i podziałka mówiła o ~9% mniejszej odległości, niż pokrywała.
+   * Ułamek jest odporny na rozmiar okna, bo `viewBox` i płótno są zawsze tej samej
+   * szerokości - a jednostki nie mają jak drugi raz udać pikseli.
+   */
+  scale: { label: string; widthPct: number };
 }
 
 interface TrackMapProps {
@@ -66,8 +83,15 @@ export function TrackMap({ plot, width, height }: TrackMapProps) {
   for (let y = GRID_STEP; y < height; y += GRID_STEP) horizontals.push(y);
 
   return (
-    <div className="map-canvas" style={{ height }}>
-      <svg className="map-overlay" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
+    /* ── PŁÓTNO TRZYMA PROPORCJE `viewBox`, NIE STAŁĄ WYSOKOŚĆ ─────────────────
+       Do 2026-09-07 karta miała `height: 430px`, a `viewBox` 1000×430 rozciągał się
+       na jej szerokość (~1100 px) z `preserveAspectRatio="none"`. Poziom rósł więc
+       o ~9% względem pionu i krąg nadlotniskowy rysował się ELIPSĄ - na mapie, której
+       jedynym zadaniem jest pokazać kształt lotu. `aspect-ratio` z tych samych stałych
+       zdejmuje problem u źródła: skala jest jedna dla obu osi przy każdej szerokości
+       okna, więc nie ma czego prostować ani czym kadrować. */
+    <div className="map-canvas" style={{ aspectRatio: `${width} / ${height}` }}>
+      <svg className="map-overlay" viewBox={`0 0 ${width} ${height}`}>
         {/* ── siatka współrzędnych: podkład, który zastąpił kafelki ──────── */}
         <g className="map-grid">
           {verticals.map((x) => (
@@ -148,15 +172,17 @@ export function TrackMap({ plot, width, height }: TrackMapProps) {
               />
             )}
             <circle cx={marker.x} cy={marker.y} r={7} fill={marker.color} />
-            <text
-              x={marker.x + 12}
-              y={marker.y + 4}
-              className="axis-label"
-              fill={marker.color}
-              fontSize={10}
-            >
-              {marker.label}
-            </text>
+            {marker.labelled && (
+              <text
+                x={marker.labelX}
+                y={marker.labelY}
+                className="axis-label"
+                fill={marker.color}
+                fontSize={10}
+              >
+                {marker.label}
+              </text>
+            )}
           </g>
         ))}
       </svg>
@@ -183,7 +209,7 @@ export function TrackMap({ plot, width, height }: TrackMapProps) {
       {/* Bez kafelków podziałka jest JEDYNYM odniesieniem odległości. */}
       <div className="map-scale">
         <span className="map-scale-label">{plot.scale.label}</span>
-        <span className="map-scale-bar" style={{ width: plot.scale.pixels }} />
+        <span className="map-scale-bar" style={{ width: `${plot.scale.widthPct}%` }} />
       </div>
 
       {/* Atrybucja ODbL - część pasów w katalogu pochodzi z OpenStreetMap. */}

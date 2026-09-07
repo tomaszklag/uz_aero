@@ -16,15 +16,13 @@ import { dateTimeUtcShort } from '@uzaero/format';
 
 import type { BugReportDto } from '../../api/dto';
 import type { PillTone } from '../../ui/components';
+import { NONE } from '../common/values';
 import {
   bugSeverityLabel,
   bugSeverityTone,
   bugStatusLabel,
   bugStatusTone,
 } from './bugStatus';
-
-/** Kreska braku - JEDNO miejsce, w którym powstaje. */
-const NONE = '—';
 
 /** Ile znaków opisu wchodzi do komórki tabeli, zanim urwie się wielokropkiem. */
 const EXCERPT_MAX = 90;
