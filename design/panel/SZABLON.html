@@ -229,9 +229,10 @@
         </table>
       </div>
 
-      <div class="list-foot">
-        <span>Pokazano 3 z 3 operacji</span>
-      </div>
+      <!-- Stopki tu NIE MA i to jest jej reguła (sprostowanie 2026-09-07): `.list-foot`
+           pojawia się WYŁĄCZNIE przy liście przyciętej limitem. Ta ma trzy wiersze z trzech,
+           więc podpis „Pokazano 3 z 3" mówiłby o niczym. Kształt stopki - patrz inwentarz
+           DataTable niżej i `dziennik-maszyna.html`. -->
 
     </div>
   </div>
@@ -376,7 +377,12 @@
           <button type="button" class="btn danger sm">Wyłącz konto</button>
         </div>
         <div class="confirm">
-          <div class="confirm-q">Wyłączyć konto Tomasza Małkiewicza?</div>
+          <!-- DWUKROPEK, nie dopełniacz (2026-09-07). Szablon pisał tu „konto Tomasza
+               Małkiewicza?", a panel składa napis z imienia i nazwiska pilota - odmiany
+               dowolnego nazwiska nie da się złożyć w kodzie („Kowal" → „Kowal", ale
+               „Małkiewicz" → „Małkiewicza"), więc szablon obiecywał brzmienie, którego
+               ekran nie umie wyprodukować. Dwukropek jest poprawny dla KAŻDEGO. -->
+          <div class="confirm-q">Wyłączyć konto: Tomasz Małkiewicz?</div>
           <span class="hint">Telefon przestanie się synchronizować od razu. Loty i odczyty zostają w dzienniku - konto da się włączyć z powrotem.</span>
           <div class="confirm-actions">
             <button type="button" class="btn sm">Nie</button>
@@ -547,10 +553,12 @@
             </tbody>
           </table>
         </div>
-        <div class="list-foot">
-          <span>Pokazano 4 z 4 jednostek</span>
-          <button type="button" class="btn sm">Pokaż więcej</button>
-        </div>
+        <!-- STOPKA MÓWI, ŻE LISTA JEST PRZYCIĘTA - i tylko wtedy istnieje (sprostowanie
+             2026-09-07). Szablon pokazywał tu „Pokazano 4 z 4" z przyciskiem „Pokaż więcej",
+             czyli komplet z dokładką i paginację, której nie ma ani jeden ekran panelu 2.0.
+             Ekran renderuje jedno zdanie i mówi w nim, CO ZROBIĆ z resztą - lista ucięta
+             po cichu wygląda jak komplet, a to najgorszy tryb awarii narzędzia nadzoru. -->
+        <p class="list-foot">Pokazano 50 z 214 operacji - zawęź zakres dat, żeby zobaczyć resztę.</p>
         <span class="inv-mark">wiersz 2 = otwarty w szufladzie · wiersz 3 = poza służbą (samo przygaszenie) · wiersz 4 = unieważniony (przekreślenie)</span>
       </div>
     </article>
@@ -656,9 +664,29 @@
                   <span class="spacer"></span>
                   <span class="pill dim">Z dziennika</span>
                 </div>
-                <div class="kv"><span class="kv-k">Paliwo</span><span class="kv-v">108 <small>L · odczyt 6 WRZ 11:04</small></span></div>
-                <div class="kv"><span class="kv-k">Motogodziny</span><span class="kv-v">1238:52</span></div>
-                <div class="kv"><span class="kv-k">Olej</span><span class="kv-v">9,2 <small>L · pomiar 6 WRZ 08:40</small></span></div>
+                <!-- POLA DO ODCZYTU, nie wiersze klucz-wartość (sprostowanie 2026-09-07).
+                     Szablon pokazywał tu `.kv`, a ekran floty renderuje pola formularza
+                     wyłączone (`.field` + `.input:disabled` + `.hint`) - i tak ma zostać:
+                     „Aktualny stan" WCHODZI do formularza przy tworzeniu jednostki
+                     (zerowe ogniwo łańcucha odczytów, issue #66), a gaśnie dopiero, gdy
+                     liczbę przejmie dziennik. Pole, które raz jest polem, a raz wierszem
+                     tabeli, kazałoby czytać ten sam formularz dwa razy. Podpis pod polem
+                     mówi SKĄD jest liczba - `.kv` nie miało na to miejsca. -->
+                <div class="field">
+                  <label class="label" for="d-state-fuel">Paliwo (L)</label>
+                  <input class="input mono" id="d-state-fuel" value="108" disabled>
+                  <span class="hint">Z dziennika · odczyt 6 WRZEŚNIA 11:04 UTC.</span>
+                </div>
+                <div class="field">
+                  <label class="label" for="d-state-mh">Motogodziny</label>
+                  <input class="input mono" id="d-state-mh" value="1238:52" disabled>
+                  <span class="hint">Z dziennika · odczyt 6 WRZEŚNIA 11:04 UTC.</span>
+                </div>
+                <div class="field">
+                  <label class="label" for="d-state-oil">Olej (L)</label>
+                  <input class="input mono" id="d-state-oil" value="9,2" disabled>
+                  <span class="hint">Z dziennika · pomiar 6 WRZEŚNIA 08:40.</span>
+                </div>
               </div>
             </div>
             <div class="drawer-foot">

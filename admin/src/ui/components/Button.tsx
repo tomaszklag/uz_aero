@@ -13,6 +13,8 @@
 
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
+import { reasonSuffix } from './reasonSuffix';
+
 /**
  * `ok` to zielona OBRAMÓWKA (`.btn.ok`), czyli odwrotność `danger` - akcja
  * przywracająca („Aktywuj" konta na A06). `primary` zostaje akcją GŁÓWNĄ ekranu
@@ -63,8 +65,10 @@ export function Button({
     <button type="button" {...rest} {...(blocked ? { title: reason } : {})} className={classes}>
       {children}
       {/* Powód pokazujemy WYŁĄCZNIE przy faktycznej blokadzie: dopisany do przycisku
-          czynnego byłby zdaniem o stanie, którego nie ma. */}
-      {blocked ? ` - ${reason.toLowerCase()}` : null}
+          czynnego byłby zdaniem o stanie, którego nie ma. Kształt doklejki (kropka
+          zdaniowa, wielkość pierwszej litery) rozstrzyga `reasonSuffix`; `title` niesie
+          PEŁNE zdanie, bo tam jest ono zdaniem. */}
+      {blocked ? ` - ${reasonSuffix(reason)}` : null}
     </button>
   );
 }

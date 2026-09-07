@@ -130,42 +130,29 @@ export function dateUtcDayMonth(t: EpochMillis): string {
   return `${pad2(d.getUTCDate())} ${MONTHS_PL[d.getUTCMonth()]!.slice(0, 3)}`;
 }
 
-/** Miesiące dla PANELU - trzyliterowe skróty lotnicze; powód rozdziału przy `dateUtcShort`. */
-const MONTHS_SHORT = [
-  'JAN',
-  'FEB',
-  'MAR',
-  'APR',
-  'MAY',
-  'JUN',
-  'JUL',
-  'AUG',
-  'SEP',
-  'OCT',
-  'NOV',
-  'DEC',
-];
-
 /**
- * Data jako „31 JUL 2026" (UTC) - zapis GĘSTY, z mockupów panelu (`design/admin/`:
- * zegar w topbarze, kolumny dat w tabelach, stopki kart).
+ * Data jako „6 WRZEŚNIA" (UTC) - dzień i miesiąc BEZ roku; kolumna „Dzień" w gridzie
+ * dziennika panelu i podtytuł ekranu operacji.
  *
- * ISTNIEJE OBOK `dateUtcLong` i to nie jest niedopatrzenie, tylko różnica powierzchni:
- * telefon pokazuje datę raz, w plakietce dnia, i stać go na pełną nazwę miesiąca;
- * panel powtarza ją w każdym wierszu tabeli, gdzie cztery znaki więcej to inna
- * szerokość kolumny.
+ * ══ BYŁO „6 SEP 2026", CZYLI PO ANGIELSKU I Z ROKIEM (do 2026-09-07) ══
+ * Poprzedni docblok bronił skrótów lotniczych jednym argumentem: „w nich są napisane
+ * wszystkie 23 mockupy `design/admin/`". Ten argument wygasł razem z panelem 1.0 -
+ * `design/admin/` jest od 2026-09-07 archiwum i nie jest specyfikacją niczego
+ * (`docs/panel-2.0.md` §3.7), a makiety panelu 2.0 (`design/panel/`) piszą „6 WRZEŚNIA".
  *
- * DWIE TABLICE MIESIĘCY, NIE JEDNA - to też jest decyzja, nie przeoczenie. Do issue #12
- * skrót był prefiksem pełnej nazwy (obie po angielsku) i jedna tablica obsługiwała oba
- * zapisy. Telefon mówi teraz do pilota po polsku, a panel został przy skrótach lotniczych,
- * bo w nich są napisane wszystkie 23 mockupy `design/admin/` i wszystkie kolumny jego tabel.
- * Zmiana zapisu w panelu to osobna decyzja produktowa - nie skutek uboczny polonizacji
- * plakietki na telefonie. (Polskie skróty złożyłyby się z dopełniacza równie dobrze:
- * CZERWCA → CZE.)
+ * Drugi powód jest wewnętrzny: panel mówił datą w TRZECH dialektach naraz. Stempel
+ * odczytu szedł przez `stampUtc` („6 WRZEŚNIA 11:04"), czas zgłoszenia przez
+ * `dateTimeUtcShort` („6 WRZ 19:47"), a kolumna dnia po angielsku - w tej samej
+ * przeglądarce, u tego samego człowieka. Polszczyzna była już większością; to ostatnie
+ * miejsce ją dogania. Rok znika z tego samego powodu, co w obu pozostałych zapisach:
+ * dziennik ogląda się w JAWNIE wybranym zakresie dat, który stoi na tym samym ekranie.
+ *
+ * Cena jest policzona: najdłuższa data rośnie z „16 SEP 2026" (11 znaków) do
+ * „16 PAŹDZIERNIKA" (15). Kolumna daty ma na to miejsce, a makieta tę szerokość rysuje.
  */
 export function dateUtcShort(t: EpochMillis): string {
   const d = new Date(t);
-  return `${d.getUTCDate()} ${MONTHS_SHORT[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+  return `${d.getUTCDate()} ${MONTHS_PL[d.getUTCMonth()]}`;
 }
 
 /** Czas trwania jako „H:MM" (block time, duty). */
@@ -433,7 +420,10 @@ export function litres(value: number | null): string {
  * samego formatu to dokładnie problem, przeciw któremu ten pakiet istnieje.
  */
 export function stampUtc(epochMs: number): string {
-  return `${dateUtcLong(epochMs).replace(/ \d{4}$/, '')} ${timeUtc(epochMs)}`;
+  // Od 2026-09-07 to jest wprost złożenie daty panelu z godziną - `dateUtcShort` mówi
+  // dokładnie „6 WRZEŚNIA", więc odcinanie roku wyrażeniem regularnym z gotowego napisu
+  // przestało być potrzebne.
+  return `${dateUtcShort(epochMs)} ${timeUtc(epochMs)}`;
 }
 
 /**

@@ -256,7 +256,11 @@
           <!-- JEDEN stan potwierdzenia na kartę, nie dwie flagi: dwa czerwone bloki
                naraz znaczą, że człowiek odpowie na niewłaściwy. -->
           <div class="confirm">
-            <p class="confirm-q">Wyłączyć konto Anna Kowal?</p>
+            <!-- DWUKROPEK (2026-09-07): pytanie musi nazwać konto, a polszczyzna
+                 chciałaby tu dopełniacza („konto Anny Kowal"). Odmiany dowolnego
+                 nazwiska nie da się złożyć w kodzie, więc dwukropek stawia je
+                 w mianowniku i jest poprawny dla KAŻDEGO pilota. -->
+            <p class="confirm-q">Wyłączyć konto: Anna Kowal?</p>
             <p class="hint">Przestanie się logować od razu - na telefonie i w panelu. Zapisane loty zostają w systemie.</p>
             <div class="confirm-actions">
               <button type="button" class="btn ghost sm">Anuluj</button>
@@ -269,7 +273,10 @@
                nie niesie liczby lotów - więc ten wraca dopiero odmową serwera. -->
           <div class="access-row">
             <span class="kv-k">Usuń trwale</span>
-            <button type="button" class="btn danger sm" disabled title="Najpierw wyłącz konto.">Usuń konto - najpierw wyłącz konto.</button>
+            <!-- Powód doklejony do etykiety BEZ kropki zdaniowej (2026-09-07): napis na
+                 przycisku jest nazwą czynności, a nie zdaniem - kropka lądowała w środku.
+                 Pełne zdanie zostaje w `title`, bo tam jest zdaniem. -->
+            <button type="button" class="btn danger sm" disabled title="Najpierw wyłącz konto.">Usuń konto - najpierw wyłącz konto</button>
           </div>
         </div>
 

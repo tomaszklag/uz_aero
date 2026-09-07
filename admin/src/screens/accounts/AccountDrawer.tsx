@@ -306,7 +306,13 @@ export function AccountDrawer({
 
           {confirm === 'disable' ? (
             <div className="confirm">
-              <p className="confirm-q">Wyłączyć konto {pilot.name}?</p>
+              {/* DWUKROPEK, nie „konto Anny Kowal" (2026-09-07). Pytanie musi nazwać
+                  konto, a polszczyzna chciałaby tu dopełniacza - odmiany dowolnego
+                  nazwiska nie da się złożyć w kodzie („Kowal" → „Kowal", ale
+                  „Małkiewicz" → „Małkiewicza"), więc szablon obiecywał brzmienie,
+                  którego panel nie umie wyprodukować. Dwukropek stawia nazwisko
+                  w mianowniku i jest poprawny dla KAŻDEGO. */}
+              <p className="confirm-q">Wyłączyć konto: {pilot.name}?</p>
               <p className="hint">
                 Przestanie się logować od razu - na telefonie i w panelu. Zapisane loty
                 zostają w systemie.
@@ -355,7 +361,7 @@ export function AccountDrawer({
 
           {confirm === 'delete' ? (
             <div className="confirm">
-              <p className="confirm-q">Usunąć konto {pilot.name}?</p>
+              <p className="confirm-q">Usunąć konto: {pilot.name}?</p>
               <p className="hint">
                 Zniknie z listy na zawsze - tego nie da się cofnąć. Jeśli konto ma
                 zapisane loty, zostanie tylko wyłączone.
