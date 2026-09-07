@@ -35,6 +35,8 @@ Moduł na czas testów z pilotami. Każdy ekran i arkusz aplikacji (poza logowan
 
 @panel dziennik-flota "Dziennik · ekran startowy panelu"
 
+@panel zgloszenia-lista "Zgłoszenia z aplikacji · widok Do zrobienia"
+
 ## Jak to działa
 
 - **Jeden dziennik, dwie powierzchnie.** Aplikacja pilota i panel pracują na tym samym dzienniku operacji. To, co pilot zapisze na telefonie, dociera do klubu z najbliższym połączeniem; to, co zdecyduje administrator (zatwierdzenie konta, zakończenie operacji, unieważnienie, poprawa odczytów), telefon pobiera przy najbliższym połączeniu - zwykle w ciągu kwadransa, a od razu po **SYNCHRONIZUJ TERAZ** w ustawieniach aplikacji. Szczegóły: [synchronizacja](synchronizacja).
