@@ -70,6 +70,7 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 - Uwagi z testów zgłaszacie przyciskiem w prawym górnym rogu każdego ekranu - zgłoszenie zabiera ze sobą kontekst (ekran, operacja, samolot, wersja) i wysyła się samo, gdy wróci zasięg. Trafia do modułu **Zgłoszenia** w panelu.
 - Na co zwrócić uwagę: logowanie Google i ustawianie PIN-u, jasny motyw w słońcu, przytrzymanie 1 s na przyciskach kokpitu, wpis lotu po fakcie z podpowiedzią odczytów.
 - **Strona, dokumentacja i panel klubu stoją pod jednym adresem.** Podręcznik, wydania i strona pobierania przeprowadziły się z osobnego serwisu na ten sam serwer, co panel - stare adresy warto podmienić w zakładkach.
+- **Poprawki będą przychodzić same.** Od tego wydania aplikacja aktualizuje się w tle: pobiera zmianę, gdy ma zasięg, i włącza ją przy następnym uruchomieniu. Ponowna instalacja będzie potrzebna tylko przy większych zmianach - napiszemy o tym wprost w opisie wydania.
 - **Mniej danych do pobrania na słabym łączu.** Strona, podręcznik, panel i odpowiedzi serwera jadą spakowane - panel klubu ładuje się ze 134 kB zamiast 425 kB, strona trzykrotnie lżej. Widać to najbardziej na jednej kresce zasięgu.
 
 ## 1.0.0 (build 1) · 26 sierpnia 2026

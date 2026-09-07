@@ -106,6 +106,10 @@ dokumentacja; od 2026-09-07 - wcześniej GitHub Pages w osobnym repozytorium, pa
    ORAZ `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` (klient Android z kroku 6; dopisz do
    `eas.json` → `build.production.env`, a lokalnie do `app/.env` wg `app/.env.example`).
    Build jest NOWY z konieczności: `scheme` w `app.json` to zmiana natywna.
+   **Kolejne poprawki nie wymagają już builda**: od 1.1.0 aplikacja ma EAS Update, więc
+   zmiany w JS (ekrany, reguły, `packages/*`) wypuszcza się przez `npm run update:prod`
+   i docierają same przy następnym uruchomieniu. Nowy APK dopiero przy zmianie NATYWNEJ -
+   szczegóły i pułapki w `CLAUDE.md`, sekcja o aktualizacjach OTA.
 
 Koszt: plan Hobby (5 USD/mies. z wliczonym zużyciem) zwykle wystarcza na serwer + bazę
 przy ruchu klubowym. Strona nie dokłada usługi ani buildu, ale jej transfer idzie odtąd

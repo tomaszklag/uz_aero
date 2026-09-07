@@ -14,6 +14,12 @@
  * `null` = wydania nie znamy (Expo Go opisuje siebie): wiersz „Aplikacja" wtedy nie
  * powstaje, tak jak nie powstają wiersze operacji bez operacji.
  *
+ * ══ WYDANIE BINARKI TO NIE WYDANIE KODU (2026-09-07) ══
+ * Po włączeniu EAS Update `appVersion` opisuje APK, a nie działający bundle JS.
+ * Dlatego obok niego jedzie `updateId` z `infrastructure/release/otaUpdate.ts` -
+ * bez tego każde zgłoszenie po pierwszej aktualizacji byłoby nierozróżnialne od
+ * zgłoszenia sprzed niej, a to jest cała wartość tego modułu w fazie testów.
+ *
  * ══ BEZ INNYCH ZALEŻNOŚCI ══
  * `expo-device` dałoby ładniejsze pola urządzenia, ale projekt nie dokłada modułów
  * natywnych dla wygody (ta sama reguła, przez którą mapa śladu ma własny renderer,
@@ -23,6 +29,7 @@
 import { Platform } from 'react-native';
 
 import { appRelease } from '../../../infrastructure/release/nativeRelease';
+import { otaUpdate } from '../../../infrastructure/release/otaUpdate';
 import { SCHEMA_VERSION } from '../../../infrastructure/storage/schema';
 import { releaseLabel } from '../../screens/logic/appVersion';
 import type { BugRelease } from './bugContext';
@@ -40,6 +47,7 @@ function constant(key: string): string | null {
 
 export function deviceRelease(): BugRelease {
   const release = appRelease();
+  const update = otaUpdate();
   return {
     appVersion: release == null ? null : releaseLabel(release),
     platform: Platform.OS,
@@ -49,5 +57,9 @@ export function deviceRelease(): BugRelease {
     osVersion: constant('Release') ?? constant('osVersion') ?? String(Platform.Version),
     deviceModel: constant('Model') ?? constant('systemName'),
     schemaVersion: SCHEMA_VERSION,
+    // `embedded` nie jedzie osobno: pusty `updateId` znaczy dokładnie to samo,
+    // a dwa pola o jednym fakcie rozjeżdżają się przy pierwszej zmianie.
+    updateId: update?.embedded === false ? update.updateId : null,
+    updateChannel: update?.channel ?? null,
   };
 }

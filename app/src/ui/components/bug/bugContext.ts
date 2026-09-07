@@ -45,6 +45,16 @@ export interface BugRelease {
   deviceModel: string | null;
   /** Wersja lokalnego schematu bazy - odróżnia telefon po aktualizacji od sprzed niej. */
   schemaVersion: number;
+  /**
+   * Identyfikator bundle'a JS z EAS Update (`infrastructure/release/otaUpdate.ts`).
+   * Od włączenia aktualizacji OTA `appVersion` NIE WYSTARCZA: jedna binarka
+   * „1.1.0 (build 2)" obsługuje wiele wydań kodu, a zgłoszenie ma powiedzieć, które
+   * z nich było na ekranie. `null` = bundle wbudowany w APK albo wyłączone
+   * aktualizacje (Expo Go, dev client).
+   */
+  updateId: string | null;
+  /** Kanał aktualizacji (`production` / `development`) albo `null`. */
+  updateChannel: string | null;
 }
 
 /**
@@ -190,6 +200,11 @@ export function buildBugContext(input: BugContextInput): BugContextView {
     osVersion: release.osVersion,
     deviceModel: release.deviceModel,
     schemaVersion: release.schemaVersion,
+    // Wydanie JS obok wydania binarki - patrz docblock `BugRelease.updateId`.
+    // Do `rows` to NIE wchodzi, dokładnie jak `schemaVersion`: identyfikator
+    // bundle'a jest faktem dla naprawiającego, nie odpowiedzią dla pilota.
+    updateId: release.updateId,
+    updateChannel: release.updateChannel,
     theme,
     // ── łączność ──
     syncState: sync.state,

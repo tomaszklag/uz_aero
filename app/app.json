@@ -2,7 +2,14 @@
   "expo": {
     "name": "UZ Aero",
     "slug": "uz-aero",
-    "version": "1.0.0",
+    "version": "1.1.0",
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/7f130401-7aa0-48bf-87a0-0841f3f0231d",
+      "fallbackToCacheTimeout": 0
+    },
     "scheme": ["com.tomekklag.uzaero", "uzaero"],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -21,7 +28,7 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.tomekklag.uzaero",
-      "versionCode": 1,
+      "versionCode": 2,
       "permissions": [
         "android.permission.POST_NOTIFICATIONS",
         "android.permission.ACCESS_COARSE_LOCATION",
