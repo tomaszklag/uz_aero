@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UZ Aero - Spis makiet panelu 2.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="panel.css">
+</head>
+
+<body>
+
+<div class="idx-hero">
+  <h1>UZ <span>AERO</span> · PANEL 2.0</h1>
+  <div class="idx-hero-sub">Makiety panelu administracyjnego · specyfikacja UI</div>
+</div>
+
+<p class="idx-lead">
+  <b>Panel wraca do design-first.</b> Decyzja z <code>docs/panel-2.0.md</code> §3.7 („makiet HTML dla panelu 2.0 nie ma,
+  bo panel widać w przeglądarce w chwili zapisania pliku") została odwrócona przez właściciela projektu: od teraz ekran
+  panelu powstaje tak samo jak ekran pilota - najpierw makieta, potem kod. <b>Makieta prowadzi, kod dogania.</b>
+  Panel 2.0 już istnieje, więc pierwsze makiety odwzorowują stan dzisiejszy - i to one są odtąd punktem odniesienia
+  przy każdej zmianie. Wątpliwość do makiety = rozmowa przed implementacją, a nie cicha poprawka w <code>admin/</code>.
+</p>
+
+<p class="idx-lead">
+  Wspólny arkusz to <code>panel.css</code> - złożony z <code>admin/src/styles/</code> w kolejności kaskady, z tymi samymi
+  nazwami klas. To jest warunek przenoszenia w obie strony: grep po <code>cell-sub</code> ma znajdować jednocześnie makietę
+  i ekran. Nowy komponent dokładamy do <code>SZABLON.html</code>, nie do pojedynczej makiety.
+  <code>design/admin/</code> (23 pliki) opisuje panel 1.0 i jest <b>archiwum</b> - nie kopiuj stamtąd układów.
+</p>
+
+<section class="canvas-section">
+  <div class="canvas-section-title">Fundament</div>
+  <div class="idx-grid">
+    <a class="idx-card" href="SZABLON.html">
+      <span class="idx-badge">BAZA</span>
+      <span class="idx-body">
+        <span class="idx-name">SZABLON</span>
+        <span class="idx-route">rama okna · pasek górny · inwentarz</span>
+        <span class="idx-when">Od tego pliku zaczyna się każda nowa makieta panelu: gotowy <code>&lt;head&gt;</code>, okno przeglądarki 1440×900, kanoniczny pasek górny z czterema zakładkami i inwentarz komponentów z podpisem, kiedy którego używać.</span>
+      </span>
+    </a>
+  </div>
+</section>
+
+<!-- ══ ZAPOWIEDZI ══
+     Karty poniżej mają linki do plików, które JESZCZE NIE POWSTAŁY (`.idx-card.soon`
+     wygasza je i odbiera reakcję na kursor - link prowadzący donikąd ma wyglądać jak
+     zapowiedź, nie jak zepsuty odnośnik). Kolejność jest kolejnością zakładek panelu,
+     a nie kolejnością powstawania. Robiąc makietę: usuń klasę `soon` z jej karty.
+     Ekrany odwzorowują stan panelu na 2026-09-07 - inwentarz ekranów pochodzi
+     z `admin/src/screens/` i `admin/src/routes.tsx`. -->
+
+<section class="canvas-section">
+  <div class="canvas-section-title">Dziennik</div>
+  <div class="idx-grid">
+    <a class="idx-card" href="dziennik-flota.html">
+      <span class="idx-badge">L1</span>
+      <span class="idx-body">
+        <span class="idx-name">dziennik-flota</span>
+        <span class="idx-route">#/dziennik?od=&amp;do=</span>
+        <span class="idx-when">Ekran startowy panelu. CAŁA flota w zakresie dat - także maszyny, które nie latały. Wiersz prowadzi w głąb, do operacji jednej maszyny.</span>
+      </span>
+    </a>
+    <a class="idx-card" href="dziennik-maszyna.html">
+      <span class="idx-badge">L2</span>
+      <span class="idx-body">
+        <span class="idx-name">dziennik-maszyna</span>
+        <span class="idx-route">#/dziennik/SP-AXA?od=&amp;do=</span>
+        <span class="idx-when">Grid operacji jednej maszyny: dziewięć kolumn danych, para godzin w jednej komórce, druga linia ją kwalifikuje. Wyłącznie odczyty - brak odczytu widać jako kreskę, operacja otwarta mówi „w toku".</span>
+      </span>
+    </a>
+    <a class="idx-card" href="dziennik-operacja.html">
+      <span class="idx-badge">L3</span>
+      <span class="idx-body">
+        <span class="idx-name">dziennik-operacja</span>
+        <span class="idx-route">#/dziennik/SP-AXA/&lt;uuid&gt;</span>
+        <span class="idx-when">Jedna operacja: oś zdarzeń, komplet odczytów, ślad GPS całego biegu silnika (mapa i profil pionowy, kołowanie inną linią niż lot) oraz - na samym dole - zakończenie operacji w toku albo unieważnienie wpisu.</span>
+      </span>
+    </a>
+  </div>
+</section>
+
+<section class="canvas-section">
+  <div class="canvas-section-title">Piloci</div>
+  <div class="idx-grid">
+    <a class="idx-card" href="piloci-lista.html">
+      <span class="idx-badge">P1</span>
+      <span class="idx-body">
+        <span class="idx-name">piloci-lista</span>
+        <span class="idx-route">#/piloci</span>
+        <span class="idx-when">Konta klubu. Nad listą - i tylko wtedy, gdy ktoś czeka - stoi kolejka zgłoszeń rejestracyjnych: pusta kolejka nie dostaje karty z zerem.</span>
+      </span>
+    </a>
+    <a class="idx-card" href="piloci-konto.html">
+      <span class="idx-badge">P2</span>
+      <span class="idx-body">
+        <span class="idx-name">piloci-konto</span>
+        <span class="idx-route">#/piloci/&lt;id&gt;</span>
+        <span class="idx-when">Szuflada konta: dane pilota, e-mail konta Google i sekcja „Dostęp" z wyłączeniem konta. Haseł nie ma - zerwanie sesji ma jedną drogę, a skutek mówi się przed akcją, nie banerem po niej.</span>
+      </span>
+    </a>
+    <a class="idx-card" href="piloci-zgloszenie.html">
+      <span class="idx-badge">P3</span>
+      <span class="idx-body">
+        <span class="idx-name">piloci-zgloszenie</span>
+        <span class="idx-route">#/piloci/zgloszenia/&lt;subject&gt;</span>
+        <span class="idx-when">Decyzja o zgłoszeniu rejestracyjnym: formularz konta bez e-maila (adres jest tożsamością Google), dwa przyciski i żaden domyślny. Odrzucenie wymaga powodu - przeczyta go zgłaszający na swoim telefonie.</span>
+      </span>
+    </a>
+  </div>
+</section>
+
+<section class="canvas-section">
+  <div class="canvas-section-title">Samoloty</div>
+  <div class="idx-grid">
+    <a class="idx-card" href="samoloty-lista.html">
+      <span class="idx-badge">S1</span>
+      <span class="idx-body">
+        <span class="idx-name">samoloty-lista</span>
+        <span class="idx-route">#/samoloty</span>
+        <span class="idx-when">Flota: konfiguracja jednostek, bez stanu operacyjnego. Jeden wyjątek został świadomie - jednostka wyłączona ze służby, na której ktoś jeszcze lata.</span>
+      </span>
+    </a>
+    <a class="idx-card" href="samoloty-karta.html">
+      <span class="idx-badge">S2</span>
+      <span class="idx-body">
+        <span class="idx-name">samoloty-karta</span>
+        <span class="idx-route">#/samoloty/&lt;id&gt;</span>
+        <span class="idx-when">Karta samolotu w sekcjach MEDIAMI: Paliwo, Olej, Motogodziny. Wszystkie pola wymagane; „Aktualny stan" jest do wpisania, dopóki jedynym źródłem jest panel, i do odczytu, gdy maszynę prowadzi już dziennik. Osobna karta „Poprawa odczytów" z wymaganym komentarzem.</span>
+      </span>
+    </a>
+  </div>
+</section>
+
+<section class="canvas-section">
+  <div class="canvas-section-title">Zgłoszenia błędów · na czas testów</div>
+  <div class="idx-grid">
+    <a class="idx-card" href="zgloszenia-lista.html">
+      <span class="idx-badge">Z1</span>
+      <span class="idx-body">
+        <span class="idx-name">zgloszenia-lista</span>
+        <span class="idx-route">#/zgloszenia</span>
+        <span class="idx-when">Skrzynka zgłoszeń z aplikacji pilota, cztery statusy: nowe → w toku → rozwiązane / odrzucone. Widok domyślny to „do zrobienia", bo archiwum przykryłoby robotę. Moduł znika razem z fazą testów.</span>
+      </span>
+    </a>
+    <a class="idx-card" href="zgloszenia-szuflada.html">
+      <span class="idx-badge">Z2</span>
+      <span class="idx-body">
+        <span class="idx-name">zgloszenia-szuflada</span>
+        <span class="idx-route">#/zgloszenia/&lt;id&gt;</span>
+        <span class="idx-when">Pełny opis od pilota (z łamaniami linii, które coś znaczą), cały kontekst zebrany przez telefon i zmiana statusu. Odrzucenie wymaga komentarza; treści zgłoszenia nie zmienia nikt, kasowania nie ma.</span>
+      </span>
+    </a>
+  </div>
+</section>
+
+<section class="canvas-section">
+  <div class="canvas-section-title">Logowanie</div>
+  <div class="idx-grid">
+    <a class="idx-card" href="00-logowanie.html">
+      <span class="idx-badge">00</span>
+      <span class="idx-body">
+        <span class="idx-name">00-logowanie</span>
+        <span class="idx-route">#/logowanie</span>
+        <span class="idx-when">Ekran przed ramą - nie ma paska górnego, bo nie wiadomo, kto patrzy. Jeden przycisk Google (rysuje go skrypt dostawcy, więc do czasu jego wjazdu stoi plamka w jego geometrii), znak marki z poświatą i - w razie odmowy - jedno zdanie mówiące, co zrobić. Jedyne miejsce w panelu z gradientem.</span>
+      </span>
+    </a>
+  </div>
+</section>
+
+<nav class="nav-strip">
+  <a href="index.html" class="active">Spis makiet panelu</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon i inwentarz</a>
+  <span>·</span>
+  <a href="../index.html">Makiety telefonu →</a>
+  <span>·</span>
+  <a href="../admin/index.html">Archiwum panelu 1.0 →</a>
+</nav>
+
+</body>
+</html>

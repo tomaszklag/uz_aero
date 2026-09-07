@@ -1,0 +1,2986 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   UZ AERO - PANEL 2.0 · WSPÓLNY ARKUSZ MAKIET
+   ══════════════════════════════════════════════════════════════════════════════
+
+   CZYM JEST TEN PLIK
+   Odpowiednik bloku `<style>` z makiet telefonu (`design/*.html`), tylko wyniesiony
+   do osobnego pliku - bo makiet panelu będzie kilkanaście, a `<head>` kopiowany
+   kilkanaście razy rozjeżdża się przy pierwszej poprawce. Makieta linkuje go jednym
+   wierszem: `<link rel="stylesheet" href="panel.css">`.
+
+   ODPOWIADA ARKUSZOM `admin/src/styles/`
+   Złożony z nich w KOLEJNOŚCI KASKADY z `admin/src/main.tsx`:
+   tokens → base → layout → shell → controls → surfaces → page → filters → table →
+   drawer → skeleton → login → logbook → track → bugs.
+   Kolejność JEST znacząca i nie wolno jej przestawiać: `logbook.css` nadpisuje
+   `.list-foot` z `table.css`, a `tbody tr.voided` dokłada przekreślenie do reguł
+   tabeli. Arkusz przestawiony alfabetycznie wyglądałby prawie tak samo - i to
+   „prawie" byłoby awarią cichą.
+
+   KIERUNEK: MAKIETA PROWADZI, KOD DOGANIA
+   Odwrócenie decyzji `docs/panel-2.0.md` §3.7 („makiet HTML dla panelu 2.0 nie ma").
+   Panel wraca do design-first, tak jak aplikacja pilota. Nowy komponent dokładamy
+   NAJPIERW TUTAJ, a potem przenosimy do `admin/src/styles/components/` - nie odwrotnie.
+   Pierwsze makiety odwzorowują stan dzisiejszy, bo panel 2.0 już istnieje w kodzie.
+
+   NAZWY KLAS SĄ DOSŁOWNIE TE Z PANELU
+   To jest warunek przenoszenia w obie strony: grep po `cell-sub` ma znajdować
+   JEDNOCZEŚNIE makietę i ekran, a recenzent ma móc porównać DOM z plikiem HTML
+   linia w linię. Nowa klasa w makiecie = ta sama nazwa w kodzie; przemianowanie
+   po jednej stronie zrywa tę parę i nikt tego nie zauważy.
+
+   TOKENY
+   Pochodzą z `packages/tokens` (motyw `night`), przez generowany `admin/src/styles/
+   tokens.css`. Panel ma JEDEN motyw i nie ma przełącznika: motyw jasny aplikacji
+   istnieje dla kokpitu w słońcu, a administrator siedzi przy biurku.
+   Wartości poprawia się w pakiecie tokenów i regeneruje - nie tutaj.
+
+   CZCIONKI
+   Z Google Fonts, przez `<link>` w `<head>` makiety - nie z self-hostowanych woff2,
+   którymi jedzie panel (`admin/src/styles/fonts.css`). Makieta ma się otwierać
+   z dysku dwuklikiem, jak makiety telefonu; `@font-face` ze ścieżkami `/fonts/*`
+   działa wyłącznie na serwerze panelu. Kroje i wagi są te same, więc metryka też.
+
+   LITERAŁY KOLORÓW
+   Jest ich kilka i każdy jest KOPIĄ z panelu razem z uzasadnieniem stojącym przy nim
+   (odcień nagłówka tabeli, tło płótna mapy, przyciemnienie przesłony szuflady, chrome
+   okna przeglądarki). Nie wymyślamy tokenów, których design nie zatwierdził, i nie
+   podmieniamy wartości „bo prawie pasuje" - to psułoby wierność w obie strony.
+   NOWY komponent używa WYŁĄCZNIE zmiennych.
+
+   OSTATNIA SEKCJA TO RAMA MAKIETY
+   Kanwa, okno przeglądarki 1440×900 i inwentarz to klasy, których w panelu NIE MA
+   i mieć nie będzie - panel jest całą stroną, a nie obrazkiem na kanwie. Stoją na
+   końcu i są wyraźnie oznaczone: przenoszenie ich do `admin/` jest błędem.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   01. TOKENY
+   źródło: admin/src/styles/tokens.css (generowany z packages/tokens)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════════════
+   PLIK GENEROWANY - NIE EDYTUJ RĘCZNIE.
+   Źródło: packages/tokens (THEMES.night) · generator: packages/tokens/scripts/emitCss.ts
+   Odtworzenie: npm run tokens:css --workspace admin
+   Równość pliku ze źródłem przybija admin/test/tokens.generated.test.ts.
+
+   Panel ma JEDEN motyw (night) i nie ma przełącznika: motyw jasny aplikacji
+   istnieje dla kokpitu w słońcu, a administrator siedzi przy biurku
+   (docs/architektura-panelu-frontend.md §1.6).
+
+   Wymiarów ramy panelu (--sidebar-w, --topbar-h) TU NIE MA i nie będzie -
+   to układ jednej powierzchni, a nie token produktu. Mieszkają w layout.css.
+   ══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #0D0D0D;
+  --bg-tint: #111318;
+  --surface: #141414;
+  --surface-raised: #1A1A1A;
+  --surface-hover: #222222;
+  --border: #252525;
+  --border-strong: #333333;
+  --hairline: rgba(255,255,255,0.04);
+  --text-primary: #E8E8E8;
+  --text-secondary: #888888;
+  --text-muted: #7A7A7A;
+  --text-placeholder: #565656;
+  --green: #2ECC71;
+  --green-hover: #3DDC82;
+  --green-muted: rgba(46,204,113,0.12);
+  --green-border: rgba(46,204,113,0.28);
+  --green-glow: rgba(46,204,113,0.4);
+  --amber: #F39C12;
+  --amber-muted: rgba(243,156,18,0.12);
+  --amber-border: rgba(243,156,18,0.28);
+  --amber-glow: rgba(243,156,18,0.35);
+  --red: #E74C3C;
+  --red-muted: rgba(231,76,60,0.12);
+  --red-border: rgba(231,76,60,0.28);
+  --red-glow: rgba(231,76,60,0.4);
+  --blue: #3498DB;
+  --blue-muted: rgba(52,152,219,0.12);
+  --blue-border: rgba(52,152,219,0.28);
+  --overlay: rgba(0,0,0,0.74);
+  --selection: rgba(255,255,255,0.22);
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-body: 'Archivo', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   02. CZCIONKI
+   źródło: admin/src/styles/fonts.css - zastąpione linkiem Google Fonts
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * UZ Aero - panel: CZCIONKI.
+ *
+ * Odpowiednik `admin/src/styles/fonts.css`, który w panelu emituje kilkanaście
+ * deklaracji `@font-face` ze ścieżkami `/fonts/*.woff2` (self-hosting, §9 architektury
+ * frontendu). W makiecie tych deklaracji NIE MA i to jest świadome: ścieżka absolutna
+ * od korzenia serwisu nie działa przy pliku otwartym z dysku, a makieta ma się otwierać
+ * dwuklikiem - jak makiety telefonu.
+ *
+ * Kroje ciągnie `<link>` z Google Fonts w `<head>` każdej makiety:
+ *   Bebas Neue · Archivo 400,500,600,700 · JetBrains Mono 400,500,700
+ *
+ * JetBrains Mono 700 jest na tej liście, choć wygląda na nadmiar: panel pisze nim
+ * plakietki (`.pill`), wartości klucz-wartość (`.kv-v`) i wyróżnione zegary
+ * (`.clock-val.amber`). Bez wagi 700 przeglądarka podstawia pogrubienie sztuczne,
+ * a makieta ma pokazywać to, co zobaczy człowiek w panelu - nie przybliżenie.
+ * Archivo 800 nie wchodzi: żadna reguła panelu go nie deklaruje.
+ *
+ * Nazwy rodzin niesie `tokens.css` (`--font-display`, `--font-body`, `--font-mono`),
+ * więc arkusz nie powtarza ich u siebie ani razu.
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   03. RESET I KORZEŃ DOKUMENTU
+   źródło: admin/src/styles/base.css
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * UZ Aero - panel: reset, korzeń dokumentu i stany globalne.
+ *
+ * Odpowiednik `<style>` z `design/admin/SZABLON.html` w części, która w mockupie
+ * dotyczy `body` i `.browser`. Różnica jest jedna i wynika z natury rzeczy: w mockupie
+ * `body` jest KANWĄ wokół obrazka przeglądarki (stąd gradienty i `--app-scale`),
+ * a w panelu `body` JEST tą przeglądarką. Dlatego tło korzenia to `var(--bg)`,
+ * czyli tło `.browser`, a skalowania mockupu nie ma tu w ogóle.
+ */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/**
+ * Widoczny fokus klawiatury - DOCHODZI do design systemu razem z pierwszym ekranem
+ * (`docs/architektura-panelu-frontend.md` §7). Szablon miał dotąd tylko `:focus-within`
+ * na `.search` i `.input:focus`, a panel jest nawigowany klawiaturą: tabele, filtry,
+ * formularze. `:focus-visible`, nie `:focus`, żeby kliknięcie myszą nie rysowało
+ * obwódki tam, gdzie nikt jej nie potrzebuje.
+ */
+:focus-visible {
+  outline: 2px solid var(--green-border);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Pasek przewijania treści - jak w szablonie (`.content::-webkit-scrollbar`). */
+::selection {
+  background: var(--selection);
+}
+
+/**
+ * Treść WYŁĄCZNIE dla czytnika ekranu - podpis tabeli (`<caption>`).
+ *
+ * DOCHODZI do design systemu razem z pierwszą tabelą, tak jak `:focus-visible`
+ * doszedł razem z pierwszym formularzem. W mockupie tabelę nazywa nagłówek strony
+ * stojący nad nią; czytnik ekranu potrzebuje tej nazwy WEWNĄTRZ tabeli, bo czyta ją
+ * jako osobny obiekt i inaczej ogłasza „tabela, 8 kolumn" bez słowa o tym, czego
+ * dotyczy. Widoczny `<caption>` zmieniłby wygląd, więc go chowamy - nie usuwamy.
+ */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   04. WYMIARY RAMY I SZKIELET UKŁADU
+   źródło: admin/src/styles/layout.css
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * UZ Aero - panel 2.0: WYMIARY RAMY i szkielet układu.
+ *
+ * Osobny plik od `tokens.css` i to jest twarda linia: tokeny to wartości PRODUKTU,
+ * wspólne z aplikacją pilota; `--topbar-h` to wymiar jednej powierzchni. Telefon nie
+ * ma paska panelu, więc ta zmienna nie ma czego szukać w pakiecie tokenów.
+ *
+ * `--sidebar-w` zniknęła razem z kolumną boczną (patrz `ui/shell/tabs.ts`).
+ */
+
+:root {
+  --topbar-h: 56px;
+  /* Treść nie rozlewa się na pełną szerokość monitora: wiersz tabeli szerszy niż
+     to oko przenosi między kolumnami, gubiąc wiersz w połowie drogi. */
+  --content-max: 1180px;
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 26px 22px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: var(--content-max);
+  margin: 0 auto;
+}
+
+/* Kolumna scrollowana: dzieci NIE mogą się kurczyć - inaczej `.table-wrap`
+   z `overflow:hidden` obcina wiersze, zamiast pozwolić `.content` przewinąć. */
+.content > *,
+.drawer-body > * {
+  flex-shrink: 0;
+}
+
+.content::-webkit-scrollbar {
+  width: 10px;
+}
+
+.content::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 99px;
+  border: 3px solid var(--bg);
+}
+
+/** Ekran PRZED ramą (logowanie) - kolumna wyśrodkowana w oknie. */
+.centered {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+/** Siatka dwóch pól w rzędzie (rok i pojemność, minimum i zbiornik oleju). */
+.field-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   05. PASEK GÓRNY
+   źródło: admin/src/styles/components/shell.css
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * UZ Aero - panel 2.0: pasek górny (znak, zakładki, zalogowany).
+ *
+ * Cała rama panelu to ten jeden pasek - kolumny bocznej nie ma (uzasadnienie przy
+ * `ui/shell/tabs.ts`). Wysokość i kolory bez zmian wobec panelu 1.0, żeby produkt
+ * został tym samym produktem: 56 px, tło `--surface`, włos `--border` pod spodem.
+ */
+
+.topbar {
+  height: var(--topbar-h);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 0 22px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  flex-shrink: 0;
+}
+
+.brand-mark {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: var(--green-muted);
+  border: 1px solid var(--green-border);
+  color: var(--green);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brand-name {
+  font-family: var(--font-display);
+  font-size: 18px;
+  letter-spacing: 2.5px;
+  color: var(--text-primary);
+}
+
+/* Zakładki modułów. Aktywna niesie zielony spód - ten sam sygnał, którym pozycja
+   nawigacji panelu 1.0 mówiła „tu jesteś". */
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 14px;
+  border-bottom: 2px solid transparent;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+
+.tab:hover {
+  color: var(--text-primary);
+}
+
+.tab.active {
+  color: var(--green);
+  border-bottom-color: var(--green);
+}
+
+.topbar-right {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.who-name {
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   06. PRZYCISKI I POLA FORMULARZA
+   źródło: admin/src/styles/components/controls.css
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * UZ Aero - panel: przyciski i pola formularza.
+ *
+ * Klasy i wartości 1:1 z `design/admin/SZABLON.html` (sekcje „przyciski"
+ * i „formularze"). Wzorzec pól jest ten sam co w aplikacji pilota:
+ * `--surface-raised`, promień 12, fokus zielony.
+ */
+
+/* ── przyciski ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 8px 15px;
+  border-radius: 10px;
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  font-weight: 600;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn:hover {
+  background: var(--surface-hover);
+}
+
+.btn.primary {
+  background: var(--green);
+  border-color: var(--green);
+  color: #0a0a0a;
+}
+
+.btn.primary:hover {
+  filter: brightness(1.08);
+}
+
+.btn.danger {
+  color: var(--red);
+  border-color: var(--red-border);
+  background: var(--red-muted);
+}
+
+.btn.ghost {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text-secondary);
+}
+
+/* Zielona OBRAMÓWKA, nie zielone wypełnienie - akcja PRZYWRACAJĄCA („Aktywuj" konta
+   na A06), czyli odwrotność `.btn.danger` i o tej samej wadze wizualnej. `.primary`
+   zostaje zarezerwowana dla akcji głównej ekranu; w kolumnie tabeli byłoby jej
+   kilkanaście naraz i żadna nie byłaby główna. */
+.btn.ok {
+  color: var(--green);
+  border-color: var(--green-border);
+  background: var(--green-muted);
+}
+
+.btn:disabled,
+/**
+ * Blokada przycisku - ATRYBUT i klasa, oba tak samo.
+ *
+ * `:disabled` doszło w panelu 2.0 i to nie było ozdobą: `.btn.disabled` opisywało
+ * wyłącznie LINK zablokowany (`<span class="btn disabled">`), więc `<button disabled>`
+ * wyglądał dokładnie tak samo jak czynny. Zielony przycisk „Zaloguj się", który nie
+ * reaguje na kliknięcie, czyta się jak zawieszona aplikacja - a to jest pierwszy
+ * przycisk, jaki człowiek w tym panelu widzi.
+ */
+.btn:disabled,
+.btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn.sm {
+  min-height: 30px;
+  padding: 5px 11px;
+  font-size: 11.5px;
+  border-radius: 8px;
+}
+
+/* Przycisk na całą szerokość karty - A00: „Zaloguj się" ma `width:100%` i wyższy
+   cel niż standardowe 36 px. W mockupie stoi to inline; tutaj dostaje modyfikator,
+   bo jest własnością WZORCA formularza, a nie tego jednego ekranu. */
+.btn.block {
+  width: 100%;
+  min-height: 42px;
+}
+
+/* ── pola ── */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.input {
+  min-height: 40px;
+  border-radius: 12px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  padding: 10px 13px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 13px;
+  outline: none;
+  width: 100%;
+}
+
+.input:focus {
+  border-color: var(--green-border);
+}
+
+.input.mono {
+  font-family: var(--font-mono);
+  letter-spacing: 0.5px;
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+/* Pole odrzucone przez serwer (A00a: obramowanie i tło w czerwieni). Modyfikator,
+   nie styl inline - stan błędu pola wróci na każdym formularzu panelu. */
+.input.invalid {
+  border-color: var(--red-border);
+  background: var(--red-muted);
+}
+
+/**
+ * Pole DO ODCZYTU - „Aktualny stan" karty samolotu, gdy maszynę prowadzi już dziennik
+ * (uwagi do issue #66), i każde inne pole, którego edycja nic by nie zmieniła.
+ *
+ * DOPISANE PRZY MAKIETACH 2026-09-07: `admin/src/styles/` nie ma tej reguły wcale, więc
+ * `<TextInput disabled>` wygląda w panelu DOKŁADNIE tak, jak pole czynne - a to jest
+ * ta sama pomyłka, przed którą broni `currentState.ts` („polem, które przestało działać,
+ * a nadal wygląda na czynne, nie da się nikim pokierować").
+ *
+ * Wartość zostaje pełnym kontrastem, bo to jest LICZBA, po którą się tu przyszło;
+ * gaśnie POWIERZCHNIA i kursor - pole ma czytać się jak wiersz danych, a nie jak
+ * formularz, który przestał odpowiadać. Tło `--surface` (a nie `--surface-raised`)
+ * zrównuje je z tłem karty: nic nie zaprasza do kliknięcia.
+ */
+.input:disabled {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text-primary);
+  cursor: default;
+}
+
+/* Pole wieloliniowe (komentarz rozstrzygnięcia flagi, A03a). Mockup używa na nim
+   klasy `.input`; modyfikator dokłada tylko to, czego `<input>` nie ma - pionową
+   zmianę rozmiaru i interlinię akapitu. Komentarz do flagi bywa dłuższy niż linijka,
+   a przycinanie go do czterech wierszy zniechęcałoby do napisania tego, co za pół
+   roku będzie jedynym śladem decyzji. */
+.input.area {
+  resize: vertical;
+  line-height: 1.5;
+  min-height: 92px;
+}
+
+.hint {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.hint b {
+  color: var(--amber);
+  font-weight: 600;
+}
+
+/* Pole z przyciskami W JEDNEJ LINII - hasło startowe + „kopiuj" (A06a). Przyciski są
+   RODZEŃSTWEM pola, a nie jego zawartością, bo `<input>` nie ma dzieci; wysokości
+   równa `align-items: stretch`, żeby 40 px pola i 36 px przycisku nie rozjeżdżały się
+   w pionie. */
+.field-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.field-row .input {
+  flex: 1;
+}
+
+/* ── wybór jako lista kart ──
+   ZAKAZ natywnego `<select>` (`CLAUDE.md`) - wybór to zawsze widoczna lista kart.
+   W szufladzie flagi ta sama lista służy do nawigacji w głąb (sesje objęte sprawą). */
+.opt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Siatka zamiast kolumny - dwie karty wyboru obok siebie ALBO dwa pola formularza
+   w jednym rzędzie (`A07a`: „Rok produkcji" + „Pojemność zbiorników"). Klasa jest
+   w `SZABLON.html` przy wyborze kart, a mockup floty używa jej dla pól - bo to jest
+   ta sama rzecz: rząd, który zwija się na wąskim ekranie. `auto-fit` z minimum 200 px
+   robi to bez media query. */
+.opt-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 8px;
+}
+
+/* `font`, `text-align` i `width` obsługują wariant `<button>` (wybór akcji korekty,
+   A02b): przeglądarka narzuca przyciskowi własną czcionkę i wyśrodkowanie, a karta
+   ma wyglądać identycznie niezależnie od znacznika. `<label>` z mockupu nie jest
+   osiągalny z klawiatury, więc w panelu wybór jest przyciskiem - i to on dyktuje
+   te trzy właściwości. */
+.opt {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 13px;
+  cursor: pointer;
+  min-height: 50px;
+  text-decoration: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  width: 100%;
+}
+
+.opt:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.opt:hover {
+  background: var(--surface-hover);
+}
+
+.opt.selected {
+  border-color: var(--green-border);
+  background: rgba(46, 204, 113, 0.05);
+  box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.05);
+}
+
+.opt-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.opt-name {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.opt-desc {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.opt-check {
+  color: var(--green);
+  opacity: 0;
+  flex-shrink: 0;
+}
+
+.opt.selected .opt-check {
+  opacity: 1;
+}
+
+/* Szewron pozycji prowadzącej w głąb - zajmuje miejsce `.opt-check`, bo mówi to
+   samo („to jest do kliknięcia”), tylko o ruchu, a nie o zaznaczeniu. */
+.opt-go {
+  color: var(--text-muted);
+  flex-shrink: 0;
+  display: flex;
+}
+
+/**
+ * Podpowiedź pod polem w tonie błędu - „ten kod ma już inny pilot".
+ *
+ * Stoi pod polem, którego dotyczy, a nie w banerze nad formularzem: baner każe
+ * szukać, które z czterech pól poprawić, a czerwona ramka bez zdania nie mówi dlaczego.
+ */
+.hint.danger {
+  color: var(--red);
+}
+
+/**
+ * Wiersz sekcji „Dostęp": nazwa rzeczy po lewej, akcja po prawej.
+ *
+ * Nie tabela klucz-wartość, bo po prawej stronie nie stoi WARTOŚĆ, tylko przycisk -
+ * a wiersz, w którym jedno i drugie wygląda tak samo, uczy klikać w liczby.
+ */
+.access-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.access-row:last-child {
+  border-bottom: none;
+}
+
+/**
+ * Wartość maszynowa w zdaniu i w wierszu - e-mail konta Google, stempel zgłoszenia,
+ * uuid wklejony w rozmowie.
+ *
+ * DOPISANE PRZY MAKIETACH 2026-09-07: `RegistrationDrawer.tsx` pisze
+ * `<span className="mono">` przy adresie i przy chwili zgłoszenia, a w całym
+ * `admin/src/styles/` NIE MA reguły `.mono` - jest wyłącznie `.input.mono` i `td.mono`.
+ * Adres jedzie więc dziś krojem tekstowym, choć reguła panelu brzmi „kody i wartości
+ * zawsze mono". Klasa jest UTYLITĄ jednej właściwości i tylko dlatego wolno jej być
+ * utylitą: nie niesie ani koloru, ani rozmiaru, więc nie ma jak przemalować komponentu,
+ * w którym się pojawi.
+ */
+.mono {
+  font-family: var(--font-mono);
+  letter-spacing: 0.3px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   07. KARTY, PLAKIETKI, BANERY, STANY PUSTE
+   źródło: admin/src/styles/components/surfaces.css
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * UZ Aero - panel: karty, plakietki, banery i stany puste.
+ *
+ * Klasy i wartości 1:1 z `design/admin/SZABLON.html`. Jeden plik dla całej rodziny
+ * „powierzchni i etykiet", bo to jedna warstwa wizualna i jeden zestaw tonów -
+ * rozbicie na pięć plików po kilkanaście linii utrudniałoby porównanie z szablonem,
+ * a to porównanie jest tu jedyną formą kontroli.
+ *
+ * Są tu WYŁĄCZNIE klasy komponentów, które już istnieją. Reszta inwentarza szablonu
+ * (`.page-head`, `.no-access`, `.table-wrap`, `.drawer`, `.tl`, `.kv`, `.tiles`…)
+ * dochodzi razem z ekranem, który jej wymaga - arkusz stylów dla komponentu,
+ * którego nie ma, jest martwym kodem udającym postęp.
+ */
+
+/* ── karta ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card-title {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.card-title::before {
+  content: '';
+  width: 3px;
+  height: 11px;
+  border-radius: 2px;
+  background: var(--border-strong);
+  flex-shrink: 0;
+}
+
+.card-title .spacer {
+  margin-left: auto;
+}
+
+/* ── plakietki stanu ── */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+.pill.green {
+  color: var(--green);
+  background: var(--green-muted);
+  border-color: var(--green-border);
+}
+
+.pill.amber {
+  color: var(--amber);
+  background: var(--amber-muted);
+  border-color: var(--amber-border);
+}
+
+.pill.red {
+  color: var(--red);
+  background: var(--red-muted);
+  border-color: var(--red-border);
+}
+
+.pill.blue {
+  color: var(--blue);
+  background: var(--blue-muted);
+  border-color: var(--blue-border);
+}
+
+.pill.dim {
+  color: var(--text-muted);
+  background: var(--surface-raised);
+  border-color: var(--border);
+}
+
+.pill .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.pill .dot.live {
+  animation: pulse 1800ms ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 4px var(--green-muted);
+    opacity: 1;
+  }
+  50% {
+    box-shadow: 0 0 0 8px transparent;
+    opacity: 0.6;
+  }
+}
+
+/* ── banery: trzy typy z `docs/design-notes.md` + `ok` ── */
+.banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border-radius: 12px;
+  padding: 11px 14px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  border: 1px solid;
+}
+
+.banner svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.banner b {
+  font-weight: 700;
+}
+
+.banner.status {
+  background: var(--blue-muted);
+  border-color: var(--blue-border);
+  color: var(--text-secondary);
+}
+
+.banner.status svg,
+.banner.status b {
+  color: var(--blue);
+}
+
+.banner.warn {
+  background: var(--amber-muted);
+  border-color: var(--amber-border);
+  color: var(--text-secondary);
+}
+
+.banner.warn svg,
+.banner.warn b {
+  color: var(--amber);
+}
+
+.banner.danger {
+  background: var(--red-muted);
+  border-color: var(--red-border);
+  color: var(--text-secondary);
+}
+
+.banner.danger svg,
+.banner.danger b {
+  color: var(--red);
+}
+
+.banner.ok {
+  background: var(--green-muted);
+  border-color: var(--green-border);
+  color: var(--text-secondary);
+}
+
+.banner.ok svg,
+.banner.ok b {
+  color: var(--green);
+}
+
+/* ── stan pusty ── */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 52px 20px;
+  text-align: center;
+}
+
+.empty-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}
+
+.empty-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  letter-spacing: 1.5px;
+  color: var(--text-secondary);
+}
+
+.empty-note {
+  font-size: 12px;
+  color: var(--text-muted);
+  max-width: 380px;
+  line-height: 1.6;
+}
+
+/* ── wiersz klucz/wartość (szczegóły, audyt) ── */
+.kv {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.kv:last-child {
+  border-bottom: none;
+}
+
+.kv-k {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.kv-v {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 700;
+  text-align: right;
+  letter-spacing: 0.3px;
+}
+
+.kv-v.green {
+  color: var(--green);
+}
+
+.kv-v.amber {
+  color: var(--amber);
+}
+
+.kv-v.red {
+  color: var(--red);
+}
+
+/* `.blue` dołożony 2026-08-01 razem z A06: mockup używał go w karcie „Rola w panelu",
+   a szablon go nie definiował. Ton informacyjny, jak `.pill.blue`. */
+.kv-v.blue {
+  color: var(--blue);
+}
+
+.kv-v small {
+  font-size: 9.5px;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+/* Wartość SPRZED zmiany w zestawieniu „przed → po" (`A02b`). Wygaszona, bo czyta się
+   ją jako punkt odniesienia, a nie jako liczbę do zapamiętania - uwaga ma zostać przy
+   wartości po prawej stronie strzałki. */
+.kv-v .was {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+/* ══ LISTA SZCZEGÓŁÓW - pola workowatego JSON-a w komórce tabeli (`A09`) ══
+   Osobny komponent od `.kv`, a nie jego wariant, bo odpowiada na inne pytanie. `.kv`
+   jest zestawieniem liczb w karcie: wartość stoi po prawej i wytłuszczona, żeby czytało
+   się kolumnę. Tu wartością bywa całe zdanie (komentarz do flagi, powód korekty),
+   a kluczy jest tyle, ile akurat zapisała komenda - prawe wyrównanie rozjechałoby
+   akapit, a dwa tory pozwalają czytać w dół po nazwach pól. */
+.det {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.det-row {
+  display: grid;
+  grid-template-columns: 132px 1fr;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.det-k {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.det-v {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  /* UUID-y i base64 nie mają spacji, a kolumna „Szczegóły" jest wąska - bez tego
+     jeden identyfikator rozpycha całą tabelę. */
+  overflow-wrap: anywhere;
+}
+
+/* Pole, którego panel nie umie NAZWAĆ: zostaje pokazane z surowym kluczem i surową
+   wartością, wygaszone - ale obecne. Dziennik audytu, który ukrywa pole, bo go nie zna,
+   przestaje być narzędziem nadzoru. */
+.det-v.raw {
+  color: var(--text-muted);
+}
+
+.det-empty {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+/* Stan „twoja rola tego nie obejmuje" (`.no-access` z `SZABLON.html`). Bliźniak
+   `.empty`, ale osobna klasa: pusty ekran i ekran zamknięty to dwie różne wiadomości,
+   a jedna klasa na oba kazałaby zgadywać, czy danych nie ma, czy się ich nie widzi. */
+.no-access {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+/* Odwołanie do pliku źródłowego - panel bywa czytany razem z repozytorium. */
+.code-ref {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 3px 8px;
+  letter-spacing: 0.3px;
+}
+
+/**
+ * Pytanie o potwierdzenie NIEODWRACALNEJ akcji - w miejscu, w którym ją kliknięto.
+ *
+ * Nie `window.confirm` i nie osobne okno nad szufladą: pytanie ma stać przy przycisku,
+ * którego dotyczy, i nieść oba zdania, po które człowiek sięga - co z dostępem i co
+ * z danymi. Ton czerwony, bo pyta o odcięcie, a nie o zapis.
+ */
+.confirm {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--red-muted);
+  border: 1px solid var(--red-border);
+}
+
+.confirm-q {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/**
+ * HASŁO POKAZANE JEDEN RAZ.
+ *
+ * Ton zielony, bo to wynik udanej akcji, a nie ostrzeżenie - ostrzeżeniem jest
+ * jedno zdanie pod spodem („zapisz je teraz"). Wartość jest `mono` i duża, bo bywa
+ * przepisywana z ekranu na kartkę.
+ */
+.secret {
+  padding: 13px;
+  border-radius: 10px;
+  background: var(--green-muted);
+  border: 1px solid var(--green-border);
+}
+
+.secret-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 9px;
+}
+
+.secret-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--green);
+}
+
+.secret-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.secret-value {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  letter-spacing: 1.5px;
+  color: var(--text-primary);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 11px;
+  user-select: all;
+  overflow-wrap: anywhere;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   08. NAGŁÓWEK STRONY I KAFLE
+   źródło: admin/src/styles/components/page.css
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * UZ Aero - panel: nagłówek strony i kafle podsumowań.
+ *
+ * Klasy i wartości 1:1 z `design/admin/SZABLON.html` (sekcje „nagłówek strony"
+ * i „karty i kafle" w części kaflowej). Karty (`.card`) mieszkają w `surfaces.css`,
+ * bo są powierzchnią ogólną - kafel jest wskaźnikiem i chodzi w siatce.
+ */
+
+/* ── nagłówek strony ── */
+.page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.page-title {
+  font-family: var(--font-display);
+  font-size: 30px;
+  letter-spacing: 2px;
+  line-height: 1;
+}
+
+.page-sub {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  margin-top: 6px;
+  line-height: 1.5;
+  max-width: 640px;
+}
+
+.page-actions {
+  display: flex;
+  gap: 9px;
+  flex-shrink: 0;
+}
+
+/* ── kafle ── */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+/* Kafel bywa linkiem w głąb (pulpit) i zwykłym pudełkiem (podsumowania) - jedna
+   definicja obsługuje oba, bo `text-decoration`/`color` na nie-linku nic nie robi. */
+.tile {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.tile:hover {
+  border-color: var(--border-strong);
+}
+
+.tile-key {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.tile-val {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.5px;
+}
+
+.tile-val small {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  letter-spacing: 0;
+}
+
+.tile-val.green {
+  color: var(--green);
+}
+
+.tile-val.amber {
+  color: var(--amber);
+}
+
+.tile-val.red {
+  color: var(--red);
+}
+
+.tile-val.blue {
+  color: var(--blue);
+}
+
+.tile-note {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+/* Wartość w SIATCE liczb (`.day-grid`), a nie w kaflu - 28 px rozbija czterokomórkową
+   kratkę w wąskiej kolumnie bocznej pulpitu. Modyfikator, nie druga klasa wartości:
+   kolor, rodzina i światło zostają te same, zmienia się wyłącznie stopień. */
+.tile-val.sm {
+  font-size: 22px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   09. WYSZUKIWANIE I ZAWĘŻENIA
+   źródło: admin/src/styles/components/filters.css
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * UZ Aero - panel 2.0: pasek nad tabelą - wyszukiwanie i zawężenia.
+ *
+ * Dwie różnice wobec zwykłego HTML-a i obie są tym samym: `.search` jest `<label>`,
+ * a `.chip` - `<button>`. Zyskuje na tym klawiatura, bo filtr, którego nie da się
+ * ustawić bez myszy, psuje scenariusz „przygotuj link do tego wycinka".
+ *
+ * Czego tu nie ma: LICZB przy chipach. W panelu 1.0 chip niósł liczbę trafień, a kafel
+ * nad nim - liczbę po całym klubie; dwie różne liczby o tym samym na jednym ekranie
+ * wymagały przypisu wyjaśniającego różnicę.
+ */
+
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+.search {
+  flex: 1;
+  min-width: 220px;
+  max-width: 340px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 12px;
+}
+
+.search:focus-within {
+  border-color: var(--green-border);
+}
+
+.search svg {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.search input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  min-width: 0;
+}
+
+.search input::placeholder {
+  color: var(--text-placeholder);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.chip:hover {
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+.chip.on {
+  background: var(--green-muted);
+  border-color: var(--green-border);
+  color: var(--green);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   10. TABELA
+   źródło: admin/src/styles/components/table.css
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * UZ Aero - panel: TABELA, kręgosłup back-office'u.
+ *
+ * Klasy i wartości 1:1 z `design/admin/SZABLON.html` (sekcja „TABELA"). Reguła,
+ * której nie wolno tu zgubić: **liczby zawsze mono i do prawej** (`.num`), bo panel
+ * czyta się kolumną, a proporcjonalna czcionka przesuwa cyfry względem siebie.
+ */
+
+.table-wrap {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+/* Tabela zagnieżdżona w karcie (historia rozwiązanych, legenda typów) - bez własnej
+   ramki i tła, bo ramkę niesie już karta. W mockupie stoi to stylem inline; tutaj
+   dostaje nazwę, bo klasa bez nazwy jest klasą, której nikt nie znajdzie greppem. */
+.table-wrap.plain {
+  border: none;
+  border-radius: 0;
+  background: none;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead th {
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 500;
+  padding: 11px 14px;
+  /* Odcień nagłówka tabeli NIE JEST tokenem - nie ma go ani w palecie `@uzaero/tokens`,
+     ani w `:root` szablonu; stoi tam literałem, tak samo jak `#0a0a0c` sidebara. Kopiujemy
+     wartość zamiast wymyślać token, którego design nie zatwierdził. */
+  background: #101010;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+thead th.sortable {
+  /* Padding przechodzi na przycisk w środku, żeby cały obszar nagłówka był celem
+     kliknięcia - inaczej klikalna byłaby wyłącznie sama etykieta. */
+  padding: 0;
+}
+
+/* Nagłówek sortowalny jest PRZYCISKIEM, nie klikalnym `<th>`: mockup rysuje kursor
+   na komórce, ale komórka z `onClick` jest nieosiągalna z klawiatury, a panel jest
+   nią nawigowany. Przycisk dziedziczy całą typografię nagłówka, więc wygląd zostaje
+   ten sam - zmienia się tylko to, że da się go dosięgnąć tabem. */
+thead th.sortable > button {
+  width: 100%;
+  padding: 11px 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  text-align: inherit;
+  white-space: nowrap;
+}
+
+thead th.sortable > button:hover {
+  color: var(--text-secondary);
+}
+
+thead th.num.sortable > button {
+  text-align: right;
+}
+
+thead th .arrow {
+  color: var(--green);
+  margin-left: 4px;
+}
+
+tbody td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--hairline);
+  font-size: 12.5px;
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+tbody tr:hover {
+  background: var(--surface-raised);
+}
+
+tbody tr.clickable {
+  cursor: pointer;
+}
+
+/* Wiersz otwarty w szufladzie - mockup `A03a` zaznacza go tłem i zieloną krawędzią
+   od strony treści, żeby po zamknięciu szuflady wzrok wrócił tam, gdzie był. */
+tbody tr.opened {
+  background: var(--surface-raised);
+  box-shadow: inset 3px 0 0 var(--green);
+}
+
+td.num,
+td.mono,
+th.num {
+  font-family: var(--font-mono);
+  letter-spacing: 0.3px;
+}
+
+td.num,
+th.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+td.dim {
+  color: var(--text-secondary);
+}
+
+.cell-strong {
+  font-weight: 600;
+}
+
+.cell-sub {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* ŚWIEŻOŚĆ w komórce tabeli - podpis `.cell-sub` niosący WIEK danych z telefonu.
+   Trzy stany §4.8 dosłownie: `fresh` = live (bez zastrzeżeń), `stale` = cache
+   starszy niż doba, `none` = brak danych. Modyfikator, a nie osobna klasa, bo to
+   nadal ten sam podpis - zmienia się wyłącznie to, co mówi o jego wiarygodności.
+   Nazwy są DOSŁOWNIE te z `SZABLON.html`; do 2026-08-01 ekran `A07` wypisywał
+   `fresh-fresh`/`fresh-stale`/`fresh-none`, czyli klasy, których nie definiował
+   żaden arkusz - odczyt sprzed trzech minut i sprzed dwóch dni wyglądały tak samo,
+   choć karta obok obiecywała amber. */
+.cell-sub.fresh {
+  color: var(--green);
+}
+
+.cell-sub.stale {
+  color: var(--amber);
+}
+
+.cell-sub.none {
+  color: var(--text-muted);
+}
+
+/* Wiek sprawy, która leży ZA DŁUGO. W mockupie stoi to jako styl inline
+   (`color:var(--red);font-weight:700`) na wybranych wierszach - tutaj jest klasą,
+   bo o tym, które wiersze są stare, rozstrzyga próg w `flagRows.ts`, a nie autor
+   pliku HTML. Wygląd bez zmian. */
+.cell-age.old {
+  color: var(--red);
+  font-weight: 700;
+}
+
+.reg {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+/* Link W TREŚCI komórki - zawęża listę do tej wartości (`A09`: konto działającego,
+   identyfikator obiektu). Wygląda jak treść, nie jak przycisk, i to jest cała jego
+   racja bytu: dwa `.btn` na wiersz w tabeli o sześciu kolumnach zamieniają listę
+   w farmę guzików. Kreska jest przerywana i wygaszona, więc nie konkuruje z liczbami
+   obok; kolor zapala się dopiero pod kursorem i przy fokusie z klawiatury. */
+.cell-link {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px dashed var(--border-strong);
+}
+
+.cell-link:hover,
+.cell-link:focus-visible {
+  color: var(--green);
+  border-bottom-color: var(--green-border);
+}
+
+.row-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+/* WARTOŚĆ ZEGARA w komórce tabeli (`A04`: `device_time`, `gps_time`, `Δ zegarów`).
+   W mockupie stoi to stylem inline (`style="color:var(--amber)"`); tutaj jest klasą,
+   bo o tym, który zegar się rozjechał, rozstrzyga PRÓG Z SERWERA, a nie autor pliku
+   HTML. Trzy tony, trzy różne zdania: `dim` - zegary się zgadzają, `amber` - rozjazd
+   ponad próg `CLOCK_DRIFT`, `red` - nie ma czego porównać, bo nie było fixa GPS. */
+.clock-val.amber {
+  color: var(--amber);
+  font-weight: 700;
+}
+
+.clock-val.red {
+  color: var(--red);
+}
+
+.clock-val.dim {
+  color: var(--text-secondary);
+}
+
+/* Wartość zegara, którą KOREKTA przestawiła (`A04`, `retime`). Przekreślenie znaczy
+   „to już nie jest liczba, którą liczy projekcja"; nowy czas stoi pod spodem jako
+   `.cell-sub`. Bez tego zdarzenie po korekcie było w tabeli nieodróżnialne od
+   nietkniętego - kolumny pokazywały wartości surowe, a jedyna wzmianka mieszkała
+   w rozwinięciu, które trzeba otworzyć osobno dla każdego wiersza.
+   Reguła stoi PO tonach, żeby wygaszenie wygrywało z czerwienią „brak fixa": wiersz
+   bez fixa, któremu korekta NADAŁA czas, ma obie klasy naraz.
+   Ta sama semantyka, co `.tl-row.voided` na osi karty dnia i `tbody tr.voided` niżej. */
+.clock-val.struck {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+/* Zdarzenie UNIEWAŻNIONE korektą (`A04`). Wiersz ZOSTAJE w tabeli - rejestr jest
+   append-only i to właśnie te wiersze tłumaczą, dlaczego liczby dnia różnią się
+   od tego, co zapisał telefon. Przekreślamy czasy i identyfikatory, nie całą treść:
+   plakietka typu i nazwisko pilota mają być czytelne, bo po nich się szuka.
+   Ta sama semantyka, co `.tl-row.voided` na osi karty dnia. */
+tbody tr.voided td.num,
+tbody tr.voided td.mono {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+/* ROZWINIĘCIE WIERSZA (`A04`: payload + nagłówek zdarzenia) - wiersz-satelita pod
+   wierszem właściwym, przez całą szerokość tabeli. Osobny `<tr>`, a nie szuflada
+   z boku, bo mockup pokazuje treść DOKŁADNIE pod wierszem, którego dotyczy:
+   przy dochodzeniu porównuje się sąsiednie zdarzenia, a szuflada zasłania listę.
+   Kolejność ma znaczenie - reguła stoi PO `tbody tr:hover`, żeby najechanie myszą
+   nie podświetlało satelity jak osobnego wiersza listy. */
+tbody tr.row-expand:hover {
+  background: none;
+}
+
+tbody tr.row-expand > td {
+  padding: 0 14px 16px;
+  background: var(--surface-raised);
+}
+
+/* Dzień z OTWARTĄ FLAGĄ. W mockupie `A02-dni.html` stoi to stylem inline
+   (`style="background:var(--amber-muted)"`) na dwóch wierszach - tutaj jest klasą,
+   bo o tym, który wiersz ma flagę, rozstrzyga `openFlags` z odpowiedzi serwera,
+   a nie autor pliku HTML. Wygląd bez zmian.
+   Kolejność ma znaczenie: reguła stoi PO `tbody tr:hover`, żeby najechanie myszą
+   nie zdejmowało bursztynu z wiersza, który jest wyróżniony z powodu. */
+tbody tr.flagged,
+tbody tr.flagged:hover {
+  background: var(--amber-muted);
+}
+
+/* Stopka listy stronicowanej kursorem: podpis „pokazano N z M" i przycisk dokładający
+   kolejną stronę. `SZABLON.html` tej klasy nie ma, bo żaden mockup nie rysuje
+   paginacji - `A02` pokazuje dwanaście wierszy i kończy się banerem. Kursor keyset
+   jest jednak kontraktem serwera (`nextCursor` w każdej odpowiedzi), a lista przycięta
+   po cichu byłaby najgorszym trybem awarii narzędzia nadzoru: wyglądałaby na komplet. */
+.list-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/**
+ * Wiersz PRZYGASZONY - konto bez dostępu, samolot poza służbą.
+ *
+ * Sam kolor, bez przekreśleń i bez ikony: to nadal prawdziwy wiersz, który da się
+ * otworzyć i poprawić, a nie zapis unieważniony. Serwer stawia takie wiersze na końcu
+ * listy, więc przygaszenie mówi „to już nie pracuje", a nie „to jest błąd".
+ */
+tbody tr.muted td {
+  color: var(--text-muted);
+}
+
+tbody tr.muted .reg,
+tbody tr.muted .cell-strong {
+  color: var(--text-secondary);
+}
+
+/* Druga linia komórki w tonie ostrzeżenia - jednostka wyłączona, na której ktoś
+   jeszcze lata. Jedyne miejsce w panelu 2.0, gdzie wiersz mówi coś ponad dane. */
+.cell-sub.warn {
+  color: var(--amber);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   11. SZUFLADA SZCZEGÓŁU
+   źródło: admin/src/styles/components/drawer.css
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * UZ Aero - panel: szuflada szczegółu.
+ *
+ * Klasy i wartości 1:1 z `design/admin/SZABLON.html` (sekcja „szuflada szczegółu").
+ *
+ * **Pozycjonowanie `fixed`, nie `absolute`.** Ekran renderuje się WEWNĄTRZ `.content`,
+ * które ma `overflow-y:auto` - szuflada `absolute` przewijałaby się razem z listą
+ * i kończyła na jej wysokości. `fixed` daje warstwę nad całym oknem i nie zależy
+ * od przewinięcia.
+ *
+ * **Przesłona zaczyna się od LEWEJ KRAWEDZI OKNA.** Do panelu 2.0 stało tu
+ * `left: var(--sidebar-w)`, bo warstwa miała omijać kolumnę boczną - a kolumna
+ * zniknęła razem z całą zmienną. Deklaracja z nieistniejącą zmienną jest NIEWAZNA,
+ * więc `left` schodziło do `auto` i przesłona traciła szerokość: tło się nie
+ * przyciemniało, a kliknięcie obok szuflady jej nie zamykało. Awaria cicha - nic
+ * nie krzyczy, tylko dwie rzeczy przestają działać.
+ */
+
+.drawer-scrim {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  /* NIE `var(--overlay)`: token niesie 0,74 (przyciemnienie modala w aplikacji
+     pilota), a szuflada panelu przyciemnia listę słabiej - 0,55 z szablonu - bo
+     lista pod spodem ma dalej być czytelna. To jest sens szuflady: kontekst zostaje. */
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 60;
+  /* Przesłona jest `<button>` (kliknięcie w tło to akcja), więc zdejmujemy z niej
+     wygląd przycisku - zostaje sama powierzchnia. */
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 520px;
+  background: var(--surface);
+  border-left: 1px solid var(--border-strong);
+  z-index: 61;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -24px 0 60px rgba(0, 0, 0, 0.5);
+}
+
+/* Szuflada SZERSZA - dla szuflady, która jest formularzem, a nie podglądem: korekta
+   administratora (`A02b`) niesie kartę „przed → po", pole powodu i pełny opis skutków,
+   a w 520 px każdy wiersz klucz–wartość łamie się na dwie linie. Modyfikator, bo
+   szerokość jest własnością TREŚCI szuflady, nie jednego ekranu. */
+.drawer.wide {
+  width: 660px;
+}
+
+.drawer-head {
+  flex-shrink: 0;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.drawer-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 1.5px;
+  line-height: 1;
+}
+
+.drawer-sub {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  line-height: 1.6;
+}
+
+.drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.drawer-foot {
+  flex-shrink: 0;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 9px;
+  justify-content: flex-end;
+}
+
+/* Notatka po lewej stronie akcji stopki - stała własność szuflady, nie treść ekranu:
+   mówi, czego to okno NIE zrobi („brak edycji · brak kasowania" w `A02b`). */
+.drawer-note {
+  margin-right: auto;
+  align-self: center;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.x-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--surface-raised);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.x-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   12. PLAMKI ŁADOWANIA
+   źródło: admin/src/styles/components/skeleton.css
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * UZ Aero - panel 2.0: PLAMKI ŁADOWANIA.
+ *
+ * Reguła produktu (CLAUDE.md, issue #33): ekran czekający na odczyt rysuje plamki
+ * W GEOMETRII DOCELOWEJ - nigdy spinnera i nigdy pustki. Panel 1.0 nie miał tego
+ * wdrożonego wcale (`isPending ? null : …`), więc podczas pobierania listy obszar
+ * tabeli był po prostu pusty i nie dało się odróżnić „wczytuję" od „nie ma nikogo".
+ *
+ * Puls przezroczystości, nie shimmer: gradient wędrujący pod maską to druga animacja
+ * i drugi powód do przemalowania - a plamka ma być tłem, nie przedstawieniem.
+ */
+
+.skeleton {
+  background: var(--surface-raised);
+  border-radius: 6px;
+  animation: skeleton-pulse 1.25s ease-in-out infinite;
+}
+
+/* Wszystkie plamki ekranu pulsują RAZEM (wspólny czas trwania i faza z animacji CSS),
+   bo rozjechane fazy czytają się jak kilka niezależnych rzeczy, które się psują. */
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+
+/* Plamka w komórce tabeli - wysokość wiersza tekstu, szerokość z atrybutu `style`,
+   bo różni się kolumna po kolumnie i jest wymiarem układu, nie tokenem. */
+.skeleton.cell {
+  height: 11px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   13. EKRAN LOGOWANIA
+   źródło: admin/src/styles/components/login.css
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * UZ Aero - panel 2.0: EKRAN LOGOWANIA.
+ *
+ * Osobny arkusz, bo to jedyny ekran panelu, który nie jest tabelą ani formularzem
+ * w szufladzie - i jedyny, na którym marka ma prawo być duża. Reszta panelu jest
+ * gęsta z zawodu (back-office), a tu na ekranie stoją dwa pola: gęstość nie ma czego
+ * oszczędzać, a oddech jest jedyną rzeczą, która odróżnia stronę logowania od
+ * formularza wklejonego na czarne tło.
+ *
+ * Zgłoszenie z urządzenia (2026-08-30): „brakuje paddingów i nie wygląda nowocześnie".
+ * Ekran korzystał z generycznej `.card` (16/18 px) i pól o wysokości 40 px, czyli
+ * wymiarów dobranych do tabeli z ośmioma kolumnami.
+ */
+
+/**
+ * Poświata pod treścią - jedyny gradient w panelu i jedyne miejsce, gdzie tło nie
+ * jest płaskie. Rysuje ją TŁO SEKCJI, nie osobny element: pusty `div` istniejący
+ * wyłącznie po to, żeby coś rozmyć, jest elementem bez treści w drzewie dostępności.
+ */
+.login {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  padding: 40px 24px 64px;
+  overflow-y: auto;
+  background:
+    radial-gradient(600px 320px at 50% 30%, var(--green-muted), transparent 70%),
+    radial-gradient(900px 500px at 50% 0%, var(--bg-tint), transparent 60%);
+}
+
+.login-mark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.login-badge {
+  width: 68px;
+  height: 68px;
+  border-radius: 22px;
+  background: var(--surface-raised);
+  border: 1px solid var(--green-border);
+  color: var(--green);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Poświata zamiast wypełnienia: znak ma świecić, a nie być zieloną plamą. */
+  box-shadow:
+    0 0 0 6px var(--green-muted),
+    0 18px 40px -18px var(--green-glow);
+}
+
+.login-title {
+  font-family: var(--font-display);
+  font-size: 44px;
+  letter-spacing: 7px;
+  /* Bebas Neue ma duży odstęp wewnętrzny; bez tego podpis odkleja się od nazwy. */
+  line-height: 0.9;
+  color: var(--text-primary);
+  /* Wersaliki mają odstęp PO ostatniej literze, więc blok wygląda na przesunięty
+     w lewo. Wcięcie o połowę odstępu wyrównuje go optycznie do środka. */
+  text-indent: 7px;
+}
+
+.login-note {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/**
+ * Karta formularza. Własna, nie `.card`: tam padding jest dobrany do gęstej treści
+ * back-office'u, a tu ma być powietrze.
+ */
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 32px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  /* Delikatne rozjaśnienie od góry - powierzchnia dostaje kierunek światła zamiast
+     płaskiej plamy. Wartość jest tak mała, że nie zmienia tonu, tylko krawędź. */
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.028), transparent 120px),
+    var(--surface);
+  box-shadow: 0 30px 70px -30px rgba(0, 0, 0, 0.9);
+}
+
+/* Odstęp między polami trzyma FORMULARZ, nie karta: karta ma jedno dziecko, więc
+   `gap` na niej nie miałby czego rozsunąć. */
+.login-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Pola logowania są WYŻSZE niż w reszcie panelu: na ekranie są dwa, więc nie ma
+   czego upychać, a 48 px to wygodny cel także na tablecie w hangarze. */
+.login-card .input {
+  min-height: 48px;
+  border-radius: 13px;
+  padding: 12px 15px;
+  font-size: 14px;
+}
+
+.login-card .label {
+  font-size: 9px;
+  letter-spacing: 2px;
+}
+
+.login-card .field {
+  gap: 8px;
+}
+
+.login-card .btn {
+  min-height: 48px;
+  border-radius: 13px;
+  font-size: 15px;
+  /* Odstęp od ostatniego pola większy niż między polami - przycisk kończy formularz,
+     a nie jest jego trzecim wierszem. */
+  margin-top: 4px;
+}
+
+/* Baner błędu trzyma szerokość karty, żeby kolumna miała jedną krawędź. */
+.login-banner {
+  width: 100%;
+  max-width: 400px;
+}
+
+/**
+ * Przycisk Google (2026-09-04). Rysuje go SKRYPT GOOGLE w tym kontenerze
+ * (`auth/googleIdentity.ts`), więc ostylować da się tylko ramę wokół niego:
+ * wyśrodkowanie i wysokość, żeby karta nie skakała, gdy przycisk wjeżdża.
+ * Dopóki nie ma go w drzewie (`pending`), kontener nie zajmuje miejsca - miejsce
+ * trzyma plamka o jego geometrii.
+ */
+.login-google {
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+}
+
+.login-google.pending {
+  min-height: 0;
+}
+
+/* Plamka w geometrii przycisku Google (44 px, pigułka) - nigdy pustka, nigdy spinner. */
+.login-google-skeleton {
+  height: 44px;
+  max-width: 336px;
+  margin: 0 auto;
+  border-radius: 22px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+}
+
+.login-status {
+  margin: 14px 0 0;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/**
+ * PRZYCISK GOOGLE - ATRAPA WYŁĄCZNIE DLA MAKIETY (dopisane 2026-09-07).
+ *
+ * W panelu ten przycisk rysuje SKRYPT GOOGLE we wnętrzu `.login-google`, więc
+ * `admin/src/styles/` nie ma dla niego ani jednej reguły i mieć nie może. Klasa
+ * należy tu do tej samej rodziny, co `.drawer-demo`: istnieje WYŁĄCZNIE
+ * w `design/panel/*.html`, a przeniesienie jej do panelu byłoby podrobieniem
+ * cudzego przycisku, nie porządkowaniem. Bez niej makieta jedynego ekranu
+ * logowania pokazywałaby szarą plamkę w miejscu jedynej akcji, jaką ten ekran ma.
+ *
+ * KOLORY SĄ GOOGLE'A i to jedyne miejsce w tym arkuszu z wartością spoza palety -
+ * dokładnie ten sam wyjątek, który w aplikacji pilota ma komponent `GoogleMark`:
+ * znaku towarowego nie wolno przemalować na tokeny marki.
+ *
+ * Geometria trzyma się plamki (`.login-google-skeleton`): 44 px i pigułka, żeby
+ * atrapa stała dokładnie w miejscu, które w panelu rezerwuje skeleton.
+ */
+.login-google-mock {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  height: 44px;
+  width: 100%;
+  max-width: 336px;
+  padding: 0 20px;
+  border: 1px solid #747775;
+  border-radius: 22px;
+  background: #ffffff;
+  color: #1f1f1f;
+  font-family: 'Roboto', var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.15px;
+  cursor: pointer;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   14. DZIENNIK - PARY, BRAKI, ZAKRES DAT
+   źródło: admin/src/styles/components/logbook.css
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * UZ Aero - panel 2.0: DZIENNIK - komórki par, braki i kontrolka zakresu dat.
+ *
+ * Trzy rzeczy, których reszta panelu nie potrzebowała: para wartości w jednej komórce,
+ * ton braku i pola daty. Wszystko inne (tabela, karta, plakietka, chip) grid bierze
+ * z istniejącego inwentarza.
+ */
+
+/* Para „08:42 → 10:22" w jednej linii. Strzałka jest WYGASZONA, bo nie jest wartością
+   - to znak relacji między dwiema, które nią są. */
+.cell-pair {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.cell-arrow {
+  color: var(--text-muted);
+  padding: 0 5px;
+}
+
+/* Wejście w głąb z wiersza poziomu 1 - sam znak, bo cały wiersz jest klikalny. */
+.cell-go {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* Wiersz UNIEWAŻNIONY: zostaje w tabeli, bo rejestr jest append-only, a znikający
+   wiersz byłby kłamstwem o dniu. Przekreślenie mówi, że fakt został cofnięty. */
+tbody tr.voided td {
+  color: var(--text-muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--red-border);
+}
+
+/* Podpis pod tabelą przyciętą limitem - lista ucięta po cichu wygląda jak komplet. */
+.list-foot {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding: 4px 2px;
+}
+
+/**
+ * Pole daty. Natywne `input[type=date]` - panel jest stroną, więc kalendarz ma od
+ * przeglądarki; `color-scheme` przestawia jej własny widżet na ciemny.
+ */
+.daterange {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  padding: 0 10px;
+}
+
+.daterange:focus-within {
+  border-color: var(--green-border);
+}
+
+.daterange input {
+  color-scheme: dark;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+
+.daterange-sep {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   15. ŚLAD GPS - MAPA I PROFIL PIONOWY
+   źródło: admin/src/styles/components/track.css
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * UZ Aero - panel 2.0: mapa śladu i profil pionowy (ekran sesji, poziom 3).
+ *
+ * Kolory wyłącznie z tokenów poza JEDNYM wyjątkiem: tło płótna mapy musi być
+ * ciemniejsze od powierzchni karty, żeby ślad miał na czym leżeć, a takiego stopnia
+ * w palecie nie ma.
+ */
+
+.map-canvas {
+  position: relative;
+  height: 430px;
+  background: #0f1216;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.map-canvas svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.map-overlay {
+  position: absolute;
+  inset: 0;
+}
+
+/* Siatka współrzędnych - podkład, który zastąpił kafelki (decyzja 2026-08-04). */
+.map-grid line {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+/* Pas startowy lotniska: jedyny szczegół terenu, jaki rysujemy. */
+.map-runway {
+  fill: var(--border-strong);
+}
+.map-airfield-dot {
+  fill: var(--border-strong);
+}
+
+.map-scale {
+  position: absolute;
+  left: 12px;
+  bottom: 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.map-scale-bar {
+  height: 5px;
+  border: 1px solid var(--text-secondary);
+  border-top: none;
+}
+.map-scale-label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: var(--text-secondary);
+  letter-spacing: 1px;
+}
+
+/* Atrybucja katalogu lotnisk: licencja ODbL wymaga podpisu przy publicznym użyciu
+   danych OSM, więc stoi przy mapie, a nie w odległej stopce. */
+.map-attrib {
+  position: absolute;
+  right: 8px;
+  bottom: 7px;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: var(--text-muted);
+  background: rgba(13, 13, 13, 0.72);
+  padding: 3px 7px;
+  border-radius: 5px;
+  letter-spacing: 0.3px;
+}
+
+/* Legenda opisuje RODZAJE znaczników, więc ma stałe trzy wiersze niezależnie od tego,
+   ile lotów miała sesja - patrz nagłówek `TrackMap.tsx`. */
+.map-legend {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(13, 13, 13, 0.78);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 9px 11px;
+}
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-secondary);
+  letter-spacing: 0.3px;
+}
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.legend-dot.line {
+  width: 14px;
+  height: 2.5px;
+  border-radius: 2px;
+}
+/* Próbka kołowania (issue #75 pkt 4): przerywana szara, jak kreska na mapie. */
+.legend-dash {
+  width: 14px;
+  height: 0;
+  border-top: 2px dashed var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* Profil pionowy - ten sam wykres co w aplikacji, na szerokości panelu. */
+.profile-chart {
+  position: relative;
+  height: 220px;
+  padding: 14px 16px 6px;
+}
+.profile-chart svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.axis-label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  fill: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+.grid-line {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+.grid-line.dashed {
+  stroke-dasharray: 2 4;
+}
+
+/* Liczby pod mapą: dystans, pułap, prędkość. Trzy, nie trzynaście - reszta statystyk
+   jest materiałem do strojenia progów, nie odpowiedzią na pytanie z tego ekranu. */
+.track-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px;
+  padding: 12px 2px 2px;
+}
+.track-fact {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.track-fact-k {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.track-fact-v {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+/* Podpis pod profilem - wysokość jest GPS-owa i to trzeba powiedzieć. */
+.profile-foot {
+  padding: 6px 16px 12px;
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   16. ZGŁOSZENIA BŁĘDÓW
+   źródło: admin/src/styles/components/bugs.css
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * UZ Aero - panel 2.0: moduł „Zgłoszenia" (issue #87).
+ *
+ * Trzy klasy, bo tyle brakowało bibliotece - reszta ekranu jedzie na tym, co już jest
+ * (`.card`, `.kv`, `.opt-list`, `.filters`, tabela). Arkusz istnieje osobno, a nie
+ * w `surfaces.css`, z tego samego powodu, co katalog `components/bug/` w aplikacji:
+ * narzędzie fazy testów ma dać się usunąć decyzją, nie archeologią.
+ */
+
+/**
+ * Opis zgłoszenia - jedyne miejsce w panelu, gdzie tekst przyszedł od CZŁOWIEKA
+ * i ma łamania linii, które coś znaczą (kroki odtworzenia bywają listą).
+ * `pre-wrap` je zachowuje, `break-word` broni układu przed wklejonym uuid-em.
+ */
+.bug-text {
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+/**
+ * Wartości kontekstu bywają długie (ścieżki, JSON dopisany przez aplikację), a kolumna
+ * `.kv-v` jest wąska. Łamiemy je zamiast rozpychać szufladę - to jest lista do
+ * przeczytania, nie tabela do porównywania.
+ */
+.bug-context .kv-v {
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+/*
+ * LICZBY PRZY FILTRACH nie mają tu własnej klasy i to jest decyzja: wchodzą
+ * w ETYKIETĘ chipa („Nowe · 7"), więc `FilterChip` zostaje nietknięty. Reguła
+ * „bez liczb przy chipach" z `filters.css` broniła przed DWIEMA liczbami o tym
+ * samym na jednym ekranie (chip kontra kafel) - kafli tu nie ma, a przy triażu
+ * „ile jest nowych" jest najważniejszą liczbą na stronie.
+ */
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   RAMA MAKIETY - KANWA, OKNO PRZEGLĄDARKI, INWENTARZ
+   ══════════════════════════════════════════════════════════════════════════════
+
+   WSZYSTKO PONIŻEJ ISTNIEJE WYŁĄCZNIE W `design/panel/*.html`.
+   Panel jest CAŁĄ stroną w przeglądarce, więc nie ma ani kanwy, ani obrazka okna,
+   ani inwentarza komponentów - i nie ma ich mieć. Przeniesienie którejkolwiek z tych
+   klas do `admin/src/styles/` jest błędem, a nie porządkowaniem.
+
+   Klasy przeniesione z `design/admin/SZABLON.html` (archiwum panelu 1.0) bez zmian:
+   `.canvas-label`, `.film-strip`, `.slug`, `.canvas-meta`, `.variants-panel` z rodziną
+   `vp-*`, `.nav-strip`, `.browser`, `.chrome*`. Rama okna działa dokładnie tak, jak
+   `--phone-scale` w makietach telefonu.
+
+   RÓŻNICA WOBEC 1.0: `.shell` NIE JEST SIATKĄ.
+   W archiwum `.shell` była gridem `var(--sidebar-w) 1fr`, bo panel miał kolumnę boczną.
+   Panel 2.0 jej nie ma (`ui/shell/tabs.ts`), więc `.shell` jest tu KOLUMNĄ - dokładnym
+   odpowiednikiem `#root` z `base.css`: pasek górny i pod nim treść.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── kanwa ──
+   `base.css` maluje `body` na tło panelu, bo tam `body` JEST przeglądarką. Tutaj
+   `body` jest KANWĄ wokół obrazka okna, więc dostaje gradienty i układ kolumnowy -
+   ta sama zamiana, którą opisuje nagłówek `base.css`, tylko w drugą stronę.
+   `height:100%` z `base.css` też schodzi: kanwa rośnie z inwentarzem. */
+html,
+body {
+  height: auto;
+  min-height: 100%;
+}
+
+body {
+  /* Dokładnie ten sam trik, co `--phone-scale` w makietach telefonu. */
+  --app-scale: min(1, calc((100vh - 250px) / 900px), calc((100vw - 60px) / 1440px));
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% 0%, var(--green-muted), transparent 60%),
+    linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+  background-attachment: fixed;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 44px 24px 80px;
+  gap: 26px;
+}
+
+/* ── etykieta ekranu na kanwie ── */
+.canvas-label {
+  width: 100%;
+  max-width: 1440px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: baseline;
+  gap: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.film-strip {
+  font-family: var(--font-display);
+  font-size: 34px;
+  letter-spacing: 3px;
+  line-height: 1;
+}
+
+.slug {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  border-left: 1px solid var(--border);
+  padding-left: 18px;
+}
+
+.canvas-meta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  letter-spacing: 1px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Kropka bierze `@keyframes pulse` z `surfaces.css` - ta sama animacja, co w `.pill
+   .dot.live`, co do wartości. Druga definicja pod tą samą nazwą byłaby zapytaniem
+   o to, która wygra. */
+.canvas-meta .pulse {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 0 4px var(--green-muted);
+  animation: pulse 1800ms ease-in-out infinite;
+}
+
+/* ── panel „Warianty tego ekranu" ──
+   Reguła z `CLAUDE.md`: ekran mający warianty dostaje na kanwie panel z linkami do
+   całej rodziny I OPISEM, kiedy który wariant się wyświetla. */
+.variants-panel {
+  width: 100%;
+  max-width: 1440px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 12px 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 7px;
+}
+
+.vp-title {
+  grid-column: 1 / -1;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 0 2px 2px;
+}
+
+.vp-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 11px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-raised);
+  text-decoration: none;
+}
+
+.vp-item:hover {
+  border-color: var(--green-border);
+}
+
+.vp-item.active {
+  border-color: var(--green-border);
+  background: rgba(46, 204, 113, 0.05);
+  pointer-events: none;
+}
+
+.vp-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--green);
+  background: var(--green-muted);
+  border: 1px solid var(--green-border);
+  border-radius: 6px;
+  padding: 3px 7px;
+  flex-shrink: 0;
+}
+
+.vp-badge.amber {
+  color: var(--amber);
+  background: var(--amber-muted);
+  border-color: var(--amber-border);
+}
+
+.vp-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.vp-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.vp-when {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.vp-tag {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--green);
+  margin-top: 3px;
+  white-space: nowrap;
+}
+
+/* ── pasek nawigacji między makietami ── */
+.nav-strip {
+  width: 100%;
+  max-width: 1440px;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.nav-strip a {
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 4px 8px;
+  border-radius: 5px;
+}
+
+.nav-strip a:hover,
+.nav-strip a.active {
+  color: var(--green);
+}
+
+.nav-strip span {
+  color: var(--border-strong);
+}
+
+/* ══ OKNO PRZEGLĄDARKI - desktopowy odpowiednik `.phone` ══
+   `transform: scale()` robi tu DWIE rzeczy naraz i druga jest niewidoczna, dopóki
+   się nie zepsuje: skaluje makietę do okna ORAZ czyni `.browser` blokiem
+   zawierającym dla potomków `position: fixed`. Dzięki temu szuflada (`.drawer`,
+   `.drawer-scrim`) - w panelu przypięta do okna przeglądarki - w makiecie przypina
+   się do RAMY, bez zmiany ani jednej właściwości w `drawer.css`. Zdjęcie transformu
+   („przecież przy 1:1 nic nie robi") wyprowadziłoby szufladę poza obrazek. */
+.browser {
+  width: 1440px;
+  height: 900px;
+  border-radius: 14px;
+  background: var(--bg);
+  /* Chrome okna: dwa odcienie skopiowane z `design/admin/SZABLON.html`. Nie są
+     tokenami produktu - opisują OBRAZEK przeglądarki, którego panel nie ma. */
+  border: 1px solid #1c1e24;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.03),
+    0 40px 120px rgba(0, 0, 0, 0.7),
+    0 24px 48px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+  position: relative;
+  isolation: isolate;
+  flex-shrink: 0;
+  transform: scale(var(--app-scale));
+  transform-origin: top center;
+  margin-bottom: calc((var(--app-scale) - 1) * 900px);
+  display: flex;
+  flex-direction: column;
+}
+
+.chrome {
+  height: 40px;
+  flex-shrink: 0;
+  background: #0a0a0c;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 14px;
+}
+
+.chrome-dots {
+  display: flex;
+  gap: 7px;
+  flex-shrink: 0;
+}
+
+.chrome-dots i {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--border-strong);
+}
+
+.chrome-url {
+  flex: 1;
+  max-width: 460px;
+  height: 24px;
+  border-radius: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 10px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+.chrome-url svg {
+  color: var(--green);
+  flex-shrink: 0;
+}
+
+.chrome-url b {
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+/* Wnętrze okna = pasek górny + treść. Odpowiednik `#root` z `base.css`; kolumna,
+   nie siatka, bo kolumny bocznej w panelu 2.0 nie ma. */
+.shell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  /* SZUFLADA W RAMIE MAKIETY (dopisane 2026-09-07).
+     `.drawer` i `.drawer-scrim` są `position: fixed`, więc blokiem zawierającym jest
+     najbliższy przodek z transformem - czyli `.browser`. Warstwa zaczynałaby się od
+     GÓRY OBRAZKA i przykrywała pasek chrome przeglądarki, którego panel nie ma:
+     w produkcie `top: 0` to góra OKNA, a chrome jest nad dokumentem, poza nim.
+     Własny kontekst na `.shell` przesuwa granicę dokładnie tam, gdzie w panelu leży
+     sama z siebie - jedna deklaracja w RAMIE MAKIETY zamiast zmiany w `drawer.css`. */
+  transform: translateZ(0);
+}
+
+/* ══ INWENTARZ KOMPONENTÓW ══
+   Stoi POD ramą, na kanwie: rama pokazuje ekran, inwentarz pokazuje CZĘŚCI, z których
+   się go składa. Każda pozycja niesie nazwę komponentu z `admin/src/ui/components/`,
+   zdanie „kiedy się go używa" i klasy do skopiowania - bo makieta jest źródłem
+   znaczników, a nie tylko obrazkiem. */
+.canvas-section {
+  width: 100%;
+  max-width: 1440px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.canvas-section-title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.canvas-section-title::before {
+  content: '';
+  width: 4px;
+  height: 22px;
+  border-radius: 2px;
+  background: var(--green);
+  box-shadow: 0 0 10px var(--green-glow);
+  flex-shrink: 0;
+}
+
+.inv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.inv {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Pozycja na całą szerokość siatki - tabela i szuflada nie mieszczą się w połowie. */
+.inv.full {
+  grid-column: 1 / -1;
+}
+
+.inv-head {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.inv-name {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+.inv-when {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.inv-classes {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.inv-classes b {
+  color: var(--green);
+  font-weight: 400;
+}
+
+/* Podłoże demonstracji jest TŁEM PANELU, nie powierzchnią karty: komponent na
+   `--surface` postawiony na `--surface` traci krawędź i wygląda inaczej niż
+   w ekranie. */
+.inv-demo {
+  background: var(--bg);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.inv-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+}
+
+/* Podpis stanu W demonstracji - „tak wygląda wiersz wyłączony". Mono i drobny,
+   żeby nie czytał się jak treść komponentu. */
+.inv-mark {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Szuflada w inwentarzu. `transform` robi to samo, co w `.browser`: zamienia
+   `position: fixed` szuflady w pozycjonowanie WZGLĘDEM TEGO PUDEŁKA. Bez tego
+   demonstracja przykryłaby całą stronę i nie dałoby się jej zamknąć. */
+.drawer-demo {
+  position: relative;
+  height: 430px;
+  overflow: hidden;
+  transform: translateZ(0);
+  background: var(--bg);
+}
+
+/* Szuflada makiety ma 520 px szerokości przy oknie 1440 - w pudełku inwentarza
+   zajmuje tę samą część, więc proporcja zostaje czytelna. */
+.drawer-demo .drawer {
+  width: 460px;
+}
+
+/* ══ SPIS MAKIET (`design/panel/index.html`) ══
+   Prefiks `idx-`, bo karta spisu jest INNYM bytem niż `.card` panelu (tam kolumna
+   z tytułem mono; tu link z odznaką po lewej) - a dwie definicje pod jedną nazwą
+   znaczyłyby, że spis przemalowuje karty we wszystkich makietach naraz. */
+.idx-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0 18px;
+}
+
+.idx-hero h1 {
+  font-family: var(--font-display);
+  font-size: 46px;
+  letter-spacing: 5px;
+  line-height: 1;
+  text-align: center;
+}
+
+.idx-hero h1 span {
+  color: var(--green);
+}
+
+.idx-hero-sub {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* Akapit o zmianie decyzji - stoi RAZ, na górze spisu, bo dotyczy całego katalogu,
+   a nie żadnej pojedynczej makiety. */
+.idx-lead {
+  width: 100%;
+  max-width: 1000px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.idx-lead b {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.idx-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+}
+
+.idx-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 18px;
+  text-decoration: none;
+  color: var(--text-primary);
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+}
+
+.idx-card:hover {
+  background: var(--surface-hover);
+  border-color: var(--green-border);
+}
+
+/* Makieta, której jeszcze nie ma. Przygaszona i BEZ reakcji na kursor: link
+   prowadzący donikąd ma wyglądać jak zapowiedź, a nie jak zepsuty odnośnik. */
+.idx-card.soon {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.idx-badge {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--green);
+  background: var(--green-muted);
+  border: 1px solid var(--green-border);
+  border-radius: 8px;
+  min-width: 34px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 7px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.idx-card.soon .idx-badge {
+  color: var(--text-muted);
+  background: var(--surface-raised);
+  border-color: var(--border);
+}
+
+.idx-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.idx-name {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+/* Adres w panelu - po nim się ten ekran znajduje i o nim się rozmawia. */
+.idx-route {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.8px;
+  color: var(--green);
+}
+
+.idx-card.soon .idx-route {
+  color: var(--text-muted);
+}
+
+.idx-when {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}

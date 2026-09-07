@@ -235,17 +235,30 @@ nie większe od zbiornika), formularz blokuje TĄ SAMĄ stałą, którą wyświe
 odmowie serwera - to nie jest druga kopia reguły, tylko ta sama reguła powiedziana
 wcześniej.
 
-### 3.7 Makiet HTML dla panelu 2.0 nie ma
+### 3.7 Makiety panelu: decyzja ODWRÓCONA 2026-09-07
 
-`design/admin/` (23 pliki) opisuje panel 1.0 i zostaje jako **archiwum**. Nowe ekrany
-powstały bez makiet - a razem z nimi zniknął test `classInventory.test.ts`, który
-przybijał inwentarz klas CSS do `SZABLON.html`.
+**Panel wraca do design-first** (decyzja właściciela): najpierw powstaje makieta HTML,
+potem kod - dokładnie ta sama reguła, co w aplikacji pilota. Makiety panelu 2.0 mieszkają
+w **`design/panel/`** (`SZABLON.html` + `panel.css` + ekrany); `design/admin/` (23 pliki)
+zostaje archiwum panelu 1.0 i nie jest specyfikacją niczego.
 
-Powód jest wąski i dotyczy WYŁĄCZNIE panelu: makieta zastępuje oglądanie rzeczy,
-której jeszcze nie da się uruchomić. Aplikacja pilota to spełnia (ekran RN wymaga
-buildu i urządzenia), panel - nie: jest stroną, którą widać w przeglądarce w chwili
-zapisania pliku. Reguła „ekran RN wdrażamy 1:1 z `design/*.html`" **zostaje w mocy
-dla `app/`** i nic w niej nie zmieniamy.
+**Co obowiązuje odtąd:** nowy ekran panelu zaczyna się od skopiowania
+`design/panel/SZABLON.html`; nowy komponent dokładamy do `design/panel/panel.css`,
+a dopiero potem przenosimy do `admin/src/styles/`. Wątpliwość do makiety = rozmowa przed
+implementacją, nie cicha zmiana w kodzie. Makiety są też ilustracją podręcznika: strony
+panelu osadzają je w ramce okna przeglądarki (dyrektywa `@panel` w `docs/podrecznik/`).
+
+**Poprzedni zapis i dlaczego upadł.** Do 2026-09-07 stało tu: „makieta zastępuje oglądanie
+rzeczy, której nie da się jeszcze uruchomić - a panel widać w przeglądarce w chwili zapisania
+pliku". Rachunek pomijał dwie rzeczy. Pierwsza: oglądanie panelu wymaga serwera z danymi,
+a te po issue #50 są puste - „widać od razu" przestało być prawdą. Druga: bez makiety nie ma
+miejsca, w którym układ rozstrzyga się PRZED napisaniem ekranu, więc decyzje projektowe
+zapadały w JSX. Pierwsze makiety 2.0 odwzorowują stan zastany (panel już istnieje); od nich
+prowadzi kod.
+
+Test `classInventory.test.ts`, który przybijał inwentarz klas CSS do szablonu, zniknął razem
+z panelem 1.0 i na razie nie wraca - zgodność makiet z kodem trzyma dziś wspólna lista klas
+w `panel.css` i przegląd, nie automat.
 
 ## 4. Liczby
 

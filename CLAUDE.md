@@ -273,20 +273,28 @@ panelu. Jedna marka na dwóch powierzchniach, więc znaku NIE rysujemy drugi raz
 Każdy mockup używa ramki telefonu 393×852px (iPhone 14 Pro) z `--phone-scale` do auto-skalowania.
 Struktura: `.canvas-label` → `.phone` (z Dynamic Island `::before`) → `.nav-strip`
 
-### Browser frame (`design/admin/*.html` - panel 1.0, ARCHIWUM)
-> **Panel 2.0 nie ma makiet i to jest decyzja** (`docs/panel-2.0.md` §3.7): makieta
-> zastępuje oglądanie rzeczy, której nie da się jeszcze uruchomić, a panel jest stroną
-> widoczną w przeglądarce w chwili zapisania pliku. Reguła „ekran wdrażamy 1:1
-> z `design/*.html`" **zostaje w mocy dla aplikacji pilota** (`app/`) i nic w niej nie
-> zmieniamy. Poniższy opis dotyczy archiwum 1.0.
+### Browser frame (`design/panel/*.html` - panel 2.0)
+> **PANEL WRACA DO DESIGN-FIRST** (decyzja właściciela 2026-09-07, odwraca zapis
+> „panel 2.0 nie ma makiet"): najpierw powstaje makieta HTML, potem kod - ta sama reguła,
+> co w aplikacji pilota. Uzasadnienie i historia: `docs/panel-2.0.md` §3.7.
+> **`design/admin/` (23 pliki) zostaje ARCHIWUM panelu 1.0** i nie jest specyfikacją.
 
 Panel to **aplikacja web**, więc ramką jest okno przeglądarki 1440×900 z `--app-scale`
 (działa dokładnie jak `--phone-scale`) i paskiem chrome zamiast Dynamic Island.
-Struktura: `.canvas-label` → `.browser` (`.chrome` → `.shell` = `.sidebar` + `.main`) → `.nav-strip`.
-**Nowy ekran panelu zaczyna się od skopiowania `<head>` z `design/admin/SZABLON.html`** -
-tam mieszkają tokeny, rama, kanoniczny sidebar i inwentarz komponentów back-office'u
-(tabele, plakietki stanu, szuflada `.drawer`, oś zdarzeń, stany puste). Nowy komponent
-dokładamy do szablonu, nie do pojedynczego ekranu.
+Struktura: `.canvas-label` → `.browser` (`.chrome` → treść) → `.nav-strip`. Panel 2.0 nie
+ma kolumny bocznej - całą ramą jest pasek górny z czterema zakładkami.
+- **nowy ekran panelu zaczyna się od skopiowania `design/panel/SZABLON.html`** - tam stoi
+  kanoniczny pasek górny i INWENTARZ komponentów (tabela, plakietki, chipy filtrów,
+  szuflada, karta, baner, stan pusty, plamki ładowania)
+- **style makiet mieszkają w `design/panel/panel.css`**, wspólnym dla wszystkich makiet
+  panelu (makiety telefonu trzymają je w `<head>`, ale panelowych będzie kilkanaście).
+  Nazwy klas są DOKŁADNIE te, co w `admin/src/styles/` - to warunek przenoszenia w obie
+  strony. Nowy komponent dokładamy do `panel.css`, potem do kodu panelu
+- **makiety panelu ilustrują podręcznik**: strony panelu w `docs/podrecznik/` osadzają je
+  dyrektywą `@panel` (ramka okna przeglądarki), tak jak strony aplikacji osadzają `@screen`
+- panel ma JEDEN motyw (`night`) i nie ma przełącznika - jasny istnieje dla kokpitu
+  w słońcu, a administrator siedzi przy biurku
+
 Tokeny, czcionki i wszystkie reguły niżej obowiązują tak samo - inne urządzenie, ten sam produkt.
 
 ### Czas zdarzenia - JEDNA kontrolka (2026-08-14)

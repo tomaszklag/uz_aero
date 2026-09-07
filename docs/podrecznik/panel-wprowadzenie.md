@@ -16,6 +16,8 @@ Panel jest dla administratorów. Jeśli po wybraniu konta Google panel nie może
 
 Sesja panelu trwa osiem godzin od zalogowania; potem panel prosi o ponowne logowanie. Wyłączenie konta w module Piloci zrywa jego sesje od razu - w panelu i w aplikacji.
 
+@panel 00-logowanie "Logowanie kontem Google"
+
 ## Moduły
 
 Nawigacja to jeden pasek u góry z czterema zakładkami. Ekranem startowym jest Dziennik: konta i flotę zakłada się raz na sezon, dziennik ogląda się co tydzień.
@@ -30,6 +32,8 @@ Nawigacja to jeden pasek u góry z czterema zakładkami. Ekranem startowym jest 
 ### Zgłoszenia
 
 Moduł na czas testów z pilotami. Każdy ekran i arkusz aplikacji (poza logowaniem i PIN-em) ma w prawym górnym rogu przycisk zgłoszenia. Zgłoszenie zabiera ze sobą kontekst - ekran, operację (sygnaturę), samolot, zadanie, stan silnika, liczbę lotów, wersję aplikacji, model telefonu, stan łączności i kolejki wysyłki - i wychodzi z telefonu samo, gdy jest sieć; pilot widzi „zapisane", nie „wysłane", bo w chwili tapnięcia telefon nie wie, czy ma zasięg. W panelu lista pokazuje domyślnie robotę (**Do zrobienia** = nowe i w toku), a filtry z licznikami pozostałe statusy; wiersz otwiera kartę z opisem, obsługą i pełnym kontekstem. Cztery statusy: **Nowe → W toku → Rozwiązane / Odrzucone**. Odrzucenie wymaga komentarza, treści zgłoszenia nie zmienia nikt, kasowania nie ma - zgłoszenie nietrafione zamyka się odrzuceniem z powodem. Odpowiedzi do pilota z panelu nie ma: testy trwają krótko, a klub ma telefony.
+
+@panel dziennik-flota "Dziennik · ekran startowy panelu"
 
 ## Jak to działa
 

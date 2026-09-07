@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UZ Aero - Panel 2.0 · Logowanie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="panel.css">
+</head>
+
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">LOGOWANIE</span>
+  <span class="slug">panel/00-logowanie · #/logowanie · ekran przed ramą</span>
+  <span class="canvas-meta"><span class="pulse"></span>Jeden przycisk · haseł nie ma</span>
+</header>
+
+<aside class="variants-panel">
+  <div class="vp-title">Warianty tego ekranu</div>
+  <a class="vp-item active" href="00-logowanie.html">
+    <span class="vp-badge">00</span>
+    <span class="vp-body">
+      <span class="vp-name">Spoczynek - jeden przycisk Google</span>
+      <span class="vp-when">Stan domyślny. Ekran ma jedno zadanie i tyle na nim stoi: znak, nazwa i przycisk. Nie ma tu wykładu o uprawnieniach ani zdania „konta zakłada administrator" - kto nie może wejść, dowie się tego po wybraniu konta.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="00-logowanie.html#odmowa">
+    <span class="vp-badge amber">ODMOWA</span>
+    <span class="vp-body">
+      <span class="vp-name">Konto rozpoznane, wejścia nie ma</span>
+      <span class="vp-when">Trzy różne odmowy, trzy różne drogi wyjścia - drugie okno niżej i sekcja „Wszystkie stany". Baner wchodzi MIĘDZY znak a kartę, więc nic nie skacze.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="dziennik-flota.html">
+    <span class="vp-badge">L1</span>
+    <span class="vp-body">
+      <span class="vp-name">Po zalogowaniu: DZIENNIK</span>
+      <span class="vp-when">Ekran startowy panelu. Sesja żyjąca odsyła tu z <code>#/logowanie</code> także przy powrocie „wstecz", nie tylko przy wklejonym adresie.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="SZABLON.html">
+    <span class="vp-badge amber">BAZA</span>
+    <span class="vp-body">
+      <span class="vp-name">Szablon i inwentarz komponentów</span>
+      <span class="vp-when">Uwaga: ten ekran jako JEDYNY nie używa paska górnego - przed zalogowaniem nie wiadomo, kto patrzy, więc nie ma czego w nim napisać.</span>
+    </span>
+  </a>
+</aside>
+
+<!-- ══ EKRAN PRZED RAMĄ ══
+     Wewnątrz `.shell` nie ma paska górnego: zakładki i nazwisko zalogowanego opisują
+     kogoś, kogo jeszcze nie znamy. `.login` bierze całą wysokość okna i jest JEDYNYM
+     miejscem w panelu z gradientem i z dużą marką - reszta jest gęsta z zawodu
+     (back-office), a tu na ekranie stoi jedna akcja: gęstość nie ma czego oszczędzać. -->
+<main class="browser" role="region" aria-label="Logowanie do panelu UZ Aero">
+
+  <div class="chrome">
+    <span class="chrome-dots"><i></i><i></i><i></i></span>
+    <span class="chrome-url">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <b>panel.uzaero.pl</b>/#/logowanie
+    </span>
+  </div>
+
+  <div class="shell">
+    <div class="login">
+
+      <div class="login-mark">
+        <span class="login-badge">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+        </span>
+        <span class="login-title">UZ AERO</span>
+        <span class="login-note">Panel administracyjny</span>
+      </div>
+
+      <div class="login-card">
+        <!-- PRZYCISK RYSUJE GOOGLE, NIE MY. `.login-google` jest pustym kontenerem,
+             w który skrypt Google Identity Services wstawia własny przycisk. Poniżej
+             stoi ATRAPA (`.login-google-mock`) - klasa istniejąca wyłącznie w makiecie,
+             żeby było widać, co użytkownik naprawdę zobaczy. Identyfikator klienta
+             przychodzi z serwera, a nie z builda: panel to statyczne pliki i te same
+             pliki mają działać na każdym wdrożeniu. -->
+        <div class="login-google">
+          <button type="button" class="login-google-mock">
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="#4285F4" d="M23.06 12.25c0-.85-.08-1.67-.22-2.45H12v4.63h6.2a5.3 5.3 0 0 1-2.3 3.48v2.89h3.72c2.18-2 3.44-4.96 3.44-8.55z"/>
+              <path fill="#34A853" d="M12 24c3.11 0 5.72-1.03 7.62-2.79l-3.72-2.89c-1.03.69-2.35 1.1-3.9 1.1-3 0-5.54-2.02-6.45-4.74H1.7v2.98A11.5 11.5 0 0 0 12 24z"/>
+              <path fill="#FBBC05" d="M5.55 14.68a6.9 6.9 0 0 1 0-4.41V7.29H1.7a11.5 11.5 0 0 0 0 10.37l3.85-2.98z"/>
+              <path fill="#EA4335" d="M12 4.75c1.69 0 3.21.58 4.4 1.72l3.3-3.3C17.72 1.24 15.11 0 12 0 7.48 0 3.57 2.6 1.7 6.38l3.85 2.98C6.46 6.77 9 4.75 12 4.75z"/>
+            </svg>
+            Zaloguj się przez Google
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="00-logowanie.html" class="active">Logowanie</a>
+  <span>·</span>
+  <a href="dziennik-flota.html">Dziennik · flota →</a>
+  <span>·</span>
+  <a href="dziennik-maszyna.html">Dziennik · maszyna</a>
+  <span>·</span>
+  <a href="dziennik-operacja.html">Dziennik · operacja</a>
+  <span>·</span>
+  <a href="piloci-lista.html">Piloci</a>
+  <span>·</span>
+  <a href="samoloty-lista.html">Samoloty</a>
+  <span>·</span>
+  <a href="zgloszenia-lista.html">Zgłoszenia</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+<!-- ══ DRUGIE OKNO: ODMOWA ══
+     Baner wchodzi MIĘDZY znak a kartę i trzyma szerokość karty, żeby kolumna miała
+     jedną krawędź. Przycisk zostaje na miejscu: odmowa dotycząca JEDNEGO konta nie
+     odbiera prawa spróbowania z innego. -->
+<header class="canvas-label" id="odmowa">
+  <span class="film-strip">ODMOWA</span>
+  <span class="slug">panel/00-logowanie · konto Google bez konta w klubie</span>
+  <span class="canvas-meta">Ton bursztynowy · idź po administratora</span>
+</header>
+
+<main class="browser" role="region" aria-label="Logowanie - konto spoza klubu">
+
+  <div class="chrome">
+    <span class="chrome-dots"><i></i><i></i><i></i></span>
+    <span class="chrome-url">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <b>panel.uzaero.pl</b>/#/logowanie
+    </span>
+  </div>
+
+  <div class="shell">
+    <div class="login">
+
+      <div class="login-mark">
+        <span class="login-badge">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+        </span>
+        <span class="login-title">UZ AERO</span>
+        <span class="login-note">Panel administracyjny</span>
+      </div>
+
+      <div class="login-banner">
+        <div class="banner warn" role="alert">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span>W klubie nie ma konta z tym adresem Google. Poproś administratora o jego dodanie.</span>
+        </div>
+      </div>
+
+      <div class="login-card">
+        <div class="login-google">
+          <button type="button" class="login-google-mock">
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="#4285F4" d="M23.06 12.25c0-.85-.08-1.67-.22-2.45H12v4.63h6.2a5.3 5.3 0 0 1-2.3 3.48v2.89h3.72c2.18-2 3.44-4.96 3.44-8.55z"/>
+              <path fill="#34A853" d="M12 24c3.11 0 5.72-1.03 7.62-2.79l-3.72-2.89c-1.03.69-2.35 1.1-3.9 1.1-3 0-5.54-2.02-6.45-4.74H1.7v2.98A11.5 11.5 0 0 0 12 24z"/>
+              <path fill="#FBBC05" d="M5.55 14.68a6.9 6.9 0 0 1 0-4.41V7.29H1.7a11.5 11.5 0 0 0 0 10.37l3.85-2.98z"/>
+              <path fill="#EA4335" d="M12 4.75c1.69 0 3.21.58 4.4 1.72l3.3-3.3C17.72 1.24 15.11 0 12 0 7.48 0 3.57 2.6 1.7 6.38l3.85 2.98C6.46 6.77 9 4.75 12 4.75z"/>
+            </svg>
+            Zaloguj się przez Google
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="00-logowanie.html" class="active">Logowanie</a>
+  <span>·</span>
+  <a href="dziennik-flota.html">Dziennik · flota →</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+<section class="canvas-section">
+  <div class="canvas-section-title">Wszystkie stany ekranu</div>
+  <div class="inv-grid">
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Zanim Google narysuje przycisk</span>
+        <span class="inv-when">Skrypt dostawcy jedzie z sieci, więc przez chwilę tego przycisku po prostu nie ma w drzewie. W jego miejscu stoi PLAMKA w jego geometrii (44 px, pigułka) - nigdy spinner i nigdy pustka, ta sama reguła, co przy tabelach. Bez niej karta skakałaby w chwili wjazdu przycisku.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="login-card">
+          <div class="login-google-skeleton" aria-hidden="true"></div>
+          <div class="login-google pending"></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Konto wybrane, serwer sprawdza podpis</span>
+        <span class="inv-when">Podpis tokenu weryfikuje serwer, więc między wyborem konta a wejściem jest realna chwila. Zdanie stoi POD przyciskiem i mówi, co się dzieje - to nie jest blokada, tylko postęp czynności, o którą człowiek właśnie poprosił.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="login-card">
+          <div class="login-google">
+            <button type="button" class="login-google-mock">
+              <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="#4285F4" d="M23.06 12.25c0-.85-.08-1.67-.22-2.45H12v4.63h6.2a5.3 5.3 0 0 1-2.3 3.48v2.89h3.72c2.18-2 3.44-4.96 3.44-8.55z"/>
+                <path fill="#34A853" d="M12 24c3.11 0 5.72-1.03 7.62-2.79l-3.72-2.89c-1.03.69-2.35 1.1-3.9 1.1-3 0-5.54-2.02-6.45-4.74H1.7v2.98A11.5 11.5 0 0 0 12 24z"/>
+                <path fill="#FBBC05" d="M5.55 14.68a6.9 6.9 0 0 1 0-4.41V7.29H1.7a11.5 11.5 0 0 0 0 10.37l3.85-2.98z"/>
+                <path fill="#EA4335" d="M12 4.75c1.69 0 3.21.58 4.4 1.72l3.3-3.3C17.72 1.24 15.11 0 12 0 7.48 0 3.57 2.6 1.7 6.38l3.85 2.98C6.46 6.77 9 4.75 12 4.75z"/>
+              </svg>
+              Zaloguj się przez Google
+            </button>
+          </div>
+          <p class="login-status">Logowanie…</p>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv full">
+      <div class="inv-head">
+        <span class="inv-name">Trzy odmowy, trzy zdania</span>
+        <span class="inv-when">Po wejściu Google „złe hasło" przestało istnieć: tożsamości dowodzi podpisany token, więc na poziomie poświadczeń została JEDNA odmowa („tego tokenu nie umiem sprawdzić"). Wszystkie pozostałe dotyczą KONTA, które serwer już rozpoznał - i każda ma inną drogę wyjścia, więc każda ma własne zdanie. Ton bursztynowy znaczy „idź po administratora", czerwony - „spróbuj jeszcze raz". Konto wyłączone mówi się WPROST: tożsamość jest już potwierdzona podpisem, więc nie ma czego ukrywać.</span>
+      </div>
+      <div class="inv-demo">
+        <span class="inv-mark">403 not_registered - konto Google poprawne, w klubie nie ma konta z tym adresem</span>
+        <div class="login-banner">
+          <div class="banner warn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span>W klubie nie ma konta z tym adresem Google. Poproś administratora o jego dodanie.</span>
+          </div>
+        </div>
+
+        <span class="inv-mark">403 no_panel_access - konto jest, ale to konto pilota</span>
+        <div class="login-banner">
+          <div class="banner warn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span>To konto nie ma dostępu do panelu. Poproś administratora o nadanie roli.</span>
+          </div>
+        </div>
+
+        <span class="inv-mark">401 account_disabled - konto wyłączone; próbowanie ponownie nic nie zmieni</span>
+        <div class="login-banner">
+          <div class="banner warn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span>To konto jest wyłączone. Poproś administratora o włączenie.</span>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv full">
+      <div class="inv-head">
+        <span class="inv-name">Awarie - ton czerwony, bo warto spróbować jeszcze raz</span>
+        <span class="inv-when">Trzy różne miejsca, w których coś może paść, i trzy różne zdania: sam token, serwer i skrypt dostawcy. Przy nieznanej odmowie KOD ZOSTAJE W ZDANIU - to jedyna rzecz, którą człowiek może przekazać dalej, a „coś poszło nie tak" nie pomaga nikomu.</span>
+      </div>
+      <div class="inv-demo">
+        <span class="inv-mark">401 - podpisu tokenu nie da się potwierdzić</span>
+        <div class="login-banner">
+          <div class="banner danger">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            <span>Nie udało się potwierdzić konta Google. Spróbuj jeszcze raz.</span>
+          </div>
+        </div>
+
+        <span class="inv-mark">serwer nie odpowiada (nie ma statusu - `fetch` rzucił, zanim cokolwiek wróciło)</span>
+        <div class="login-banner">
+          <div class="banner danger">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            <span>Nie ma połączenia z serwerem. Spróbuj za chwilę.</span>
+          </div>
+        </div>
+
+        <span class="inv-mark">skrypt Google nie dojechał - przycisku nie będzie wcale</span>
+        <div class="login-banner">
+          <div class="banner danger">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            <span>Nie udało się wczytać logowania Google. Sprawdź połączenie z internetem.</span>
+          </div>
+        </div>
+
+        <span class="inv-mark">odmowa nieznana - kod w zdaniu</span>
+        <div class="login-banner">
+          <div class="banner danger">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            <span>Logowanie nie powiodło się (kod 502).</span>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv full">
+      <div class="inv-head">
+        <span class="inv-name">Czego na tym ekranie NIE MA</span>
+        <span class="inv-when">Lista jest częścią specyfikacji, bo każda z tych rzeczy tu kiedyś stała: <b>pola loginu i hasła</b> (haseł nie ma w produkcie od 2026-09-04 - ani w panelu, ani na telefonie; zerwanie sesji ma jedną drogę, którą jest wyłączenie konta), <b>zdanie „konta zakłada administrator"</b> (opis budowy produktu pokazywany komuś, kto chce się zalogować), <b>wykład o uprawnieniach</b> przed wyborem konta, <b>odnośnik „nie pamiętam hasła"</b> i <b>samodzielna rejestracja z formularzem</b> - zgłoszenie powstaje przez ten sam przycisk Google, a decyzję o nim podejmuje administrator w module PILOCI.</span>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="00-logowanie.html" class="active">Logowanie</a>
+  <span>·</span>
+  <a href="dziennik-flota.html">Dziennik · flota →</a>
+  <span>·</span>
+  <a href="piloci-lista.html">Piloci</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+</body>
+</html>

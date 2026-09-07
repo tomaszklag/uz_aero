@@ -15,6 +15,8 @@ Po decyzji karta zamienia się w jedno zdanie podsumowania. Jeśli ktoś rozstrz
 
 > **Założenie.** Rejestracja jest otwarta dla każdego z kontem Google, a dostęp daje dopiero zatwierdzenie - o tym, kto lata w klubie, decyduje klub. Do decyzji taka osoba nie ma w systemie nic: żadnego kodu, którym podpisuje się operacje, i żadnego wiersza na liście pilotów ani w wyborze drugiego pilota. Dlatego odrzucenie musi mieć powód: bez niego człowiek zostaje przed ekranem, na którym nie da się już nic zrobić. Szerzej: [konta i bezpieczeństwo](konta-i-bezpieczenstwo).
 
+@panel piloci-lista "Kolejka zgłoszeń nad listą kont"
+
 ## Konto założone zawczasu
 
 Znanego pilota można dopisać, zanim w ogóle sięgnie po aplikację: **Dodaj pilota**, imię i nazwisko, kod, rola i **adres e-mail jego konta Google**. Adres jest przy zakładaniu wymagany, bo to on wpuszcza - konto bez niego nie ma jak wejść. Pierwsze logowanie tym kontem Google podpina się do przygotowanego konta i omija kolejkę. Tą samą drogą wchodzi pierwszy administrator klubu, którego adres podaje się przy uruchomieniu.
@@ -23,6 +25,8 @@ Znanego pilota można dopisać, zanim w ogóle sięgnie po aplikację: **Dodaj p
 
 Kolumny: kod, imię i nazwisko, adres, rola i status. Wyszukiwarka obejmuje nazwisko, kod i adres, filtr zawęża listę do aktywnych, a nagłówek nazwiska odwraca kolejność. Konta wyłączone są przygaszone i stoją na końcu. Wiersz otwiera kartę konta, a adres z paska przeglądarki niesie i zawężenie, i otwartą kartę - link wklejony koledze pokazuje to samo.
 
+@panel piloci-zgloszenie "Zatwierdzenie z nadaniem kodu"
+
 ## Karta konta
 
 Trzy sekcje: **Dane pilota** (imię i nazwisko, kod pilota, e-mail konta Google), **Rola** (pilot albo administrator, każda z jednym zdaniem o tym, co otwiera) i **Dostęp**.
@@ -30,6 +34,8 @@ Trzy sekcje: **Dane pilota** (imię i nazwisko, kod pilota, e-mail konta Google)
 - **Wyłącz konto** pyta o potwierdzenie i w pytaniu mówi obie rzeczy, które trzeba wiedzieć: logowanie przestaje działać od razu - w aplikacji i w panelu - a zapisane loty zostają. Ponowne włączenie przywraca konto; pilot loguje się jeszcze raz.
 - **Usuń konto** działa dopiero wtedy, gdy konto jest **już wyłączone** i nie ma za sobą ani jednego zapisu - także jako drugi pilot. W każdym innym przypadku panel mówi powód: w przycisku albo odmową („To konto ma zapisane loty - możesz je tylko wyłączyć").
 - **Własnego konta nie da się wyłączyć ani usunąć**, a ostatniemu aktywnemu administratorowi nie da się odebrać roli. Obie blokady chronią przed tym samym: klubem, który został bez nikogo z dostępem do panelu.
+
+@panel piloci-konto "Szuflada konta pilota"
 
 ## Jak to działa
 

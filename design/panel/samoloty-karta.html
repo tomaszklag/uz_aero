@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UZ Aero - Panel 2.0 · Samoloty: karta jednostki</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="panel.css">
+</head>
+
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">SAMOLOTY · KARTA JEDNOSTKI</span>
+  <span class="slug">panel/samoloty-karta · #/samoloty/&lt;id&gt; · S2</span>
+  <span class="canvas-meta"><span class="pulse"></span>Odwzorowuje AircraftDrawer.tsx + AircraftReadingsCard.tsx</span>
+</header>
+
+<aside class="variants-panel">
+  <div class="vp-title">Warianty tego ekranu</div>
+  <a class="vp-item active" href="samoloty-karta.html">
+    <span class="vp-badge">S2</span>
+    <span class="vp-body">
+      <span class="vp-name">„Aktualny stan" DO ODCZYTU - maszynę prowadzi dziennik</span>
+      <span class="vp-when">Pierwsza rama niżej. Odkąd maszyna lata, tę samą liczbę prowadzi ostatnie zdanie samolotu - wpis z panelu przestaje cokolwiek znaczyć, więc pola pokazują wartości z odczytu <b>z podpisem pochodzenia</b> i nie dają się edytować. Poprawia się je osobną kartą.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="samoloty-karta.html#nowy">
+    <span class="vp-badge">S2a</span>
+    <span class="vp-body">
+      <span class="vp-name">„Aktualny stan" DO WPISANIA - nowa jednostka</span>
+      <span class="vp-when">Druga rama niżej. Przy zakładaniu (i dopóki jedynym źródłem odczytu jest wpis z panelu) stan wpisuje administrator - własną literówkę wolno poprawić. To <b>zerowe ogniwo łańcucha odczytów</b>: pierwszy pilot dostanie te liczby jako przekazanie.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="samoloty-karta.html">
+    <span class="vp-badge amber">S2b</span>
+    <span class="vp-body">
+      <span class="vp-name">Poprawa odczytów - komentarz WYMAGANY</span>
+      <span class="vp-when">Karta na dole pierwszej ramy. Jedyna droga, którą administrator NADPISUJE odczyty: po zakończeniu operacji osieroconej, po tankowaniu poza aplikacją, po remoncie. Nadrzędne wobec ostatniego zdania, dopóki kolejne zdanie nie pokaże wyższego licznika.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="samoloty-lista.html">
+    <span class="vp-badge">S1</span>
+    <span class="vp-body">
+      <span class="vp-name">Lista floty pod spodem</span>
+      <span class="vp-when">Kart „Zużycie z dokumentacji" i „Stan początkowy" NIE MA: sekcje idą mediami, a pojemność, norma i minimum stoją przy medium, którego dotyczą.</span>
+    </span>
+  </a>
+</aside>
+
+<!-- ══ RAMA 1: JEDNOSTKA PROWADZONA PRZEZ DZIENNIK ══ -->
+<main class="browser" role="region" aria-label="Panel UZ Aero - karta samolotu SP-AXA">
+
+  <div class="chrome">
+    <span class="chrome-dots"><i></i><i></i><i></i></span>
+    <span class="chrome-url">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <b>panel.uzaero.pl</b>/#/samoloty/3f9a…610
+    </span>
+  </div>
+
+  <div class="shell">
+
+    <header class="topbar">
+      <span class="brand">
+        <span class="brand-mark">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+        </span>
+        <span class="brand-name">UZ AERO</span>
+      </span>
+
+      <nav class="tabs" aria-label="Sekcje panelu">
+        <a class="tab" href="dziennik-flota.html">Dziennik</a>
+        <a class="tab" href="piloci-lista.html">Piloci</a>
+        <a class="tab active" href="samoloty-lista.html">Samoloty</a>
+        <a class="tab" href="zgloszenia-lista.html">Zgłoszenia</a>
+      </nav>
+
+      <div class="topbar-right">
+        <span class="who-name">Tomasz Małkiewicz</span>
+        <button type="button" class="btn ghost sm">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="14 17 19 12 14 7"/><line x1="19" y1="12" x2="9" y2="12"/></svg>
+          Wyloguj
+        </button>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">SAMOLOTY</h1>
+        </div>
+        <div class="page-actions">
+          <a class="btn primary" href="samoloty-karta.html#nowy">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Dodaj samolot
+          </a>
+        </div>
+      </div>
+
+      <div class="filters">
+        <label class="search">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input value="" placeholder="Szukaj: rejestracja, typ" aria-label="Szukaj samolotu">
+        </label>
+        <button type="button" class="chip on" aria-pressed="true">Wszystkie</button>
+        <button type="button" class="chip" aria-pressed="false">W służbie</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <caption class="visually-hidden">Samoloty</caption>
+          <thead>
+            <tr>
+              <th>Rejestracja</th>
+              <th class="num">Rok</th>
+              <th class="num">Paliwo</th>
+              <th>Licznik</th>
+              <th>Drugi pilot</th>
+              <th>Stan</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="clickable">
+              <td><span class="reg">SP-AXA</span><span class="cell-sub">Cessna 182</span></td>
+              <td class="num cell-sub">1979</td>
+              <td class="num">185 L</td>
+              <td><span class="pill blue">godziny i minuty</span></td>
+              <td>—</td>
+              <td><span class="pill green"><span class="dot"></span>W służbie</span></td>
+              <td class="row-actions"><a class="btn ghost sm" href="samoloty-karta.html">Edytuj</a></td>
+            </tr>
+            <tr class="clickable">
+              <td><span class="reg">SP-GTX</span><span class="cell-sub">Cessna 152</span></td>
+              <td class="num cell-sub">—</td>
+              <td class="num">98 L</td>
+              <td><span class="pill dim">dziesiętny</span></td>
+              <td>—</td>
+              <td><span class="pill green"><span class="dot"></span>W służbie</span></td>
+              <td class="row-actions"><a class="btn ghost sm" href="samoloty-karta.html">Edytuj</a></td>
+            </tr>
+            <tr class="clickable">
+              <td><span class="reg">SP-KLM</span><span class="cell-sub">An-2</span></td>
+              <td class="num cell-sub">1978</td>
+              <td class="num">1200 L</td>
+              <td><span class="pill blue">godziny i minuty</span></td>
+              <td><span class="pill amber">wymagany</span></td>
+              <td><span class="pill green"><span class="dot"></span>W służbie</span></td>
+              <td class="row-actions"><a class="btn ghost sm" href="samoloty-karta.html">Edytuj</a></td>
+            </tr>
+            <tr class="clickable muted">
+              <td><span class="reg">SP-TWG</span><span class="cell-sub">Zlin 526</span></td>
+              <td class="num cell-sub">1971</td>
+              <td class="num">145 L</td>
+              <td><span class="pill dim">dziesiętny</span></td>
+              <td>—</td>
+              <td>
+                <span class="pill red"><span class="dot"></span>Wyłączony</span>
+                <span class="cell-sub warn">ktoś jeszcze na nim lata</span>
+              </td>
+              <td class="row-actions"><a class="btn ghost sm" href="samoloty-karta.html">Edytuj</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+    <!-- ══ KARTA SAMOLOTU ══
+         Sekcje idą MEDIAMI: Samolot → Ustawienia dla pilota → Paliwo → Olej →
+         Motogodziny → Poprawa odczytów → Usuwanie. Wszystkie pola sekcji mediów są
+         WYMAGANE - plakietek „opcjonalne" nie ma, a puste pole blokuje zapis samym
+         brakiem. Wyjątek: „Aktualny stan" jest wymagany wyłącznie PRZY TWORZENIU. -->
+    <button type="button" class="drawer-scrim" aria-label="Zamknij szufladę"></button>
+    <div class="drawer" role="dialog" aria-modal="true" aria-label="SP-AXA">
+
+      <div class="drawer-head">
+        <div>
+          <div class="drawer-title">SP-AXA</div>
+          <div class="drawer-sub">Cessna 182</div>
+        </div>
+        <button type="button" class="x-btn" aria-label="Zamknij">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="drawer-body">
+
+        <div class="card">
+          <div class="card-title">Samolot</div>
+          <div class="field">
+            <label class="label" for="reg">Rejestracja</label>
+            <input class="input mono" id="reg" value="SP-AXA">
+            <span class="hint">Znaki z kadłuba, np. SP-KLM.</span>
+          </div>
+          <div class="field-pair">
+            <div class="field">
+              <label class="label" for="type">Typ</label>
+              <input class="input" id="type" value="Cessna 182">
+              <span class="hint">np. Cessna 182.</span>
+            </div>
+            <div class="field">
+              <label class="label" for="year">Rok produkcji</label>
+              <input class="input mono" id="year" inputmode="numeric" value="1979">
+              <span class="hint">Można zostawić puste.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Ustawienia dla pilota</div>
+
+          <span class="label">Drugi pilot</span>
+          <div class="opt-list" role="radiogroup" aria-label="Wymóg drugiego pilota">
+            <button type="button" class="opt selected" role="radio" aria-checked="true">
+              <span class="opt-body">
+                <span class="opt-name">Nieobowiązkowy</span>
+                <span class="opt-desc">Pilot może lecieć sam.</span>
+              </span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opt" role="radio" aria-checked="false">
+              <span class="opt-body">
+                <span class="opt-name">Wymagany</span>
+                <span class="opt-desc">Bez drugiego pilota aplikacja nie pozwoli zacząć lotu.</span>
+              </span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+          </div>
+
+          <span class="label">Stan</span>
+          <div class="opt-list" role="radiogroup" aria-label="Stan służby">
+            <button type="button" class="opt selected" role="radio" aria-checked="true">
+              <span class="opt-body">
+                <span class="opt-name">W służbie</span>
+                <span class="opt-desc">Pilot widzi go na liście samolotów.</span>
+              </span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opt" role="radio" aria-checked="false">
+              <span class="opt-body">
+                <span class="opt-name">Wyłączony</span>
+                <span class="opt-desc">Znika z listy. Zapisane loty zostają.</span>
+              </span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- PALIWO: pojemność (wyprowadzona z sekcji „Samolot"), norma z dokumentacji
+             i aktualny stan - trzy liczby o jednym medium, w jednym miejscu. -->
+        <div class="card">
+          <div class="card-title">Paliwo</div>
+          <div class="field-pair">
+            <div class="field">
+              <label class="label" for="capacity">Pojemność zbiorników (L)</label>
+              <input class="input mono" id="capacity" inputmode="decimal" value="185">
+            </div>
+            <div class="field">
+              <label class="label" for="fuel-norm">Zużycie z dokumentacji (L/h)</label>
+              <input class="input mono" id="fuel-norm" inputmode="decimal" value="32,0">
+              <span class="hint">Na godzinę pracy silnika.</span>
+            </div>
+          </div>
+          <!-- DO ODCZYTU: liczbę prowadzi dziennik, a podpis mówi SKĄD jest. Pole
+               edytowalne nad wartością, której edycja nic nie zmienia, było treścią
+               zgłoszenia - polem, które przestało działać, a nadal wygląda na czynne,
+               nie da się nikim pokierować. -->
+          <div class="field">
+            <label class="label" for="state-fuel">Aktualny stan (L)</label>
+            <input class="input mono" id="state-fuel" value="108" disabled>
+            <span class="hint">Z dziennika · odczyt 6 WRZEŚNIA 11:04 UTC.</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Olej</div>
+          <div class="field-pair">
+            <div class="field">
+              <label class="label" for="oil-capacity">Zbiornik oleju (L)</label>
+              <input class="input mono" id="oil-capacity" inputmode="decimal" value="12">
+            </div>
+            <div class="field">
+              <label class="label" for="oil-min">Minimum przed lotem (L)</label>
+              <input class="input mono" id="oil-min" inputmode="decimal" value="8">
+            </div>
+          </div>
+          <div class="field">
+            <label class="label" for="oil-norm">Zużycie z dokumentacji (L/h)</label>
+            <input class="input mono" id="oil-norm" inputmode="decimal" value="0,4">
+            <span class="hint">Na godzinę pracy silnika - jak przy paliwie.</span>
+          </div>
+          <!-- Olej idzie WŁASNĄ osią (pomiar→pomiar przez wiele operacji), więc ma
+               własny stempel - bywa dużo starszy niż odczyt paliwa - a dolewki zapisane
+               po pomiarze wchodzą do wartości i podpis mówi to TYLKO wtedy, gdy jakieś
+               były: inaczej suma udawałaby odczyt z bagnetu. Bez pomiaru w dzienniku
+               pole pokazuje KRESKĘ, nigdy zero. -->
+          <div class="field">
+            <label class="label" for="state-oil">Aktualny stan (L)</label>
+            <input class="input mono" id="state-oil" value="9,2" disabled>
+            <span class="hint">Z dziennika · pomiar 6 WRZEŚNIA 08:40 + dolewki 1,0 L.</span>
+          </div>
+        </div>
+
+        <!-- MOTOGODZINY: format licznika zjechał tu z „Ustawień dla pilota" - opisuje
+             licznik, a nie pilota. Przykład przy nazwie rozstrzyga: „3907:48" widać
+             na przyrządzie i nie trzeba nic tłumaczyć. -->
+        <div class="card">
+          <div class="card-title">Motogodziny</div>
+          <span class="label">Format licznika</span>
+          <div class="opt-list" role="radiogroup" aria-label="Format licznika motogodzin">
+            <button type="button" class="opt" role="radio" aria-checked="false">
+              <span class="opt-body">
+                <span class="opt-name">dziesiętny - 3907.8</span>
+                <span class="opt-desc">Pilot wpisuje jedną liczbę.</span>
+              </span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opt selected" role="radio" aria-checked="true">
+              <span class="opt-body">
+                <span class="opt-name">godziny i minuty - 3907:48</span>
+                <span class="opt-desc">Pilot wpisuje godziny i minuty.</span>
+              </span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+          </div>
+          <div class="field">
+            <label class="label" for="state-mh">Aktualny stan</label>
+            <input class="input mono" id="state-mh" value="1238:52" disabled>
+            <span class="hint">Z dziennika · odczyt 6 WRZEŚNIA 11:04 UTC.</span>
+          </div>
+        </div>
+
+        <!-- ══ POPRAWA ODCZYTÓW ══
+             Osobna akcja, nie pola „Aktualny stan": ta karta istnieje WYŁĄCZNIE wtedy,
+             gdy maszynę prowadzi dziennik. Dopóki jedynym źródłem jest wpis z panelu,
+             poprawia się go wprost w polach wyżej - druga droga byłaby dublem.
+             Ta sama konstrukcja, co unieważnienie w dzienniku: pytanie przy przycisku,
+             formularz w miejscu, komentarz WYMAGANY. -->
+        <div class="card">
+          <div class="card-title">Poprawa odczytów</div>
+          <p class="hint">Nowy stan licznika, paliwa i oleju wpisany ręką administratora - nadrzędny wobec ostatniego zdania, dopóki kolejne zdanie nie pokaże wyższego licznika. Pilot zobaczy go przy przejęciu jako „odczyty wpisał administrator". Wpis zostaje w dzienniku z komentarzem.</p>
+
+          <div class="confirm">
+            <!-- Szkic startuje z BIEŻĄCEGO stanu: poprawia się jedną liczbę, a nie
+                 przepisuje trzy. -->
+            <div class="field-pair">
+              <div class="field">
+                <label class="label" for="reading-mh">Motogodziny</label>
+                <input class="input mono" id="reading-mh" inputmode="decimal" value="1238:52">
+                <span class="hint">Format licznika: 3907:48.</span>
+              </div>
+              <div class="field">
+                <label class="label" for="reading-fuel">Paliwo (L)</label>
+                <input class="input mono" id="reading-fuel" inputmode="decimal" value="108">
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="label" for="reading-oil">Olej (L)</label>
+              <input class="input mono" id="reading-oil" inputmode="decimal" value="9,2">
+              <span class="hint">Puste = stan oleju nieznany.</span>
+            </div>
+
+            <div class="field">
+              <label class="label" for="reading-note">Komentarz</label>
+              <input class="input" id="reading-note" value="" placeholder="np. odczyt z tarczy po zakończeniu operacji z 3 września">
+              <span class="hint">Skąd te liczby - zostaje w dzienniku przy wpisie.</span>
+            </div>
+
+            <!-- Nadpisuje się CUDZE odczyty, więc powód jest treścią wpisu: puste pole
+                 wymagane blokuje zapis samym brakiem, bez zdania - widać je nad
+                 przyciskiem. -->
+            <div class="confirm-actions">
+              <button type="button" class="btn ghost sm">Anuluj</button>
+              <button type="button" class="btn primary sm" disabled>Zapisz odczyt</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Usuwanie</div>
+          <!-- Powód blokady stoi W PRZYCISKU, bo stan służby widać z listy i z sekcji
+               wyżej. Drugiego warunku (brak zapisanych lotów) panel nie zna. -->
+          <div class="access-row">
+            <span class="kv-k">Usuń trwale</span>
+            <button type="button" class="btn danger sm" disabled title="Najpierw wyłącz samolot ze służby.">Usuń samolot - najpierw wyłącz samolot ze służby.</button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="drawer-foot">
+        <button type="button" class="btn ghost">Anuluj</button>
+        <button type="button" class="btn primary" disabled>Zapisz</button>
+      </div>
+
+    </div>
+
+  </div>
+</main>
+
+<section class="canvas-section" id="nowy">
+  <div class="canvas-section-title">Wariant S2a · nowa jednostka - „Aktualny stan" do wpisania</div>
+</section>
+
+<!-- ══ RAMA 2: NOWA JEDNOSTKA ══
+     Te same sekcje mediów, ale pola „Aktualny stan" są CZYNNE i WYMAGANE: to zerowe
+     ogniwo łańcucha odczytów, z którego serwer złoży przekazanie dla pierwszego pilota.
+     Zero jest tu WARTOŚCIĄ (nowy silnik, puste zbiorniki) - inaczej niż w normach,
+     gdzie zero jest literówką. Kart „Poprawa odczytów" i „Usuwanie" nie ma:
+     nie ma jeszcze czego nadpisywać ani czego usuwać. -->
+<main class="browser" role="region" aria-label="Panel UZ Aero - nowy samolot">
+
+  <div class="chrome">
+    <span class="chrome-dots"><i></i><i></i><i></i></span>
+    <span class="chrome-url">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <b>panel.uzaero.pl</b>/#/samoloty/nowy
+    </span>
+  </div>
+
+  <div class="shell">
+
+    <header class="topbar">
+      <span class="brand">
+        <span class="brand-mark">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+        </span>
+        <span class="brand-name">UZ AERO</span>
+      </span>
+
+      <nav class="tabs" aria-label="Sekcje panelu">
+        <a class="tab" href="dziennik-flota.html">Dziennik</a>
+        <a class="tab" href="piloci-lista.html">Piloci</a>
+        <a class="tab active" href="samoloty-lista.html">Samoloty</a>
+        <a class="tab" href="zgloszenia-lista.html">Zgłoszenia</a>
+      </nav>
+
+      <div class="topbar-right">
+        <span class="who-name">Tomasz Małkiewicz</span>
+        <button type="button" class="btn ghost sm">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="14 17 19 12 14 7"/><line x1="19" y1="12" x2="9" y2="12"/></svg>
+          Wyloguj
+        </button>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">SAMOLOTY</h1>
+        </div>
+        <div class="page-actions">
+          <a class="btn primary" href="samoloty-karta.html#nowy">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Dodaj samolot
+          </a>
+        </div>
+      </div>
+
+      <div class="filters">
+        <label class="search">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input value="" placeholder="Szukaj: rejestracja, typ" aria-label="Szukaj samolotu">
+        </label>
+        <button type="button" class="chip on" aria-pressed="true">Wszystkie</button>
+        <button type="button" class="chip" aria-pressed="false">W służbie</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <caption class="visually-hidden">Samoloty</caption>
+          <thead>
+            <tr>
+              <th>Rejestracja</th>
+              <th class="num">Rok</th>
+              <th class="num">Paliwo</th>
+              <th>Licznik</th>
+              <th>Drugi pilot</th>
+              <th>Stan</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="clickable">
+              <td><span class="reg">SP-AXA</span><span class="cell-sub">Cessna 182</span></td>
+              <td class="num cell-sub">1979</td>
+              <td class="num">185 L</td>
+              <td><span class="pill blue">godziny i minuty</span></td>
+              <td>—</td>
+              <td><span class="pill green"><span class="dot"></span>W służbie</span></td>
+              <td class="row-actions"><a class="btn ghost sm" href="samoloty-karta.html">Edytuj</a></td>
+            </tr>
+            <tr class="clickable">
+              <td><span class="reg">SP-GTX</span><span class="cell-sub">Cessna 152</span></td>
+              <td class="num cell-sub">—</td>
+              <td class="num">98 L</td>
+              <td><span class="pill dim">dziesiętny</span></td>
+              <td>—</td>
+              <td><span class="pill green"><span class="dot"></span>W służbie</span></td>
+              <td class="row-actions"><a class="btn ghost sm" href="samoloty-karta.html">Edytuj</a></td>
+            </tr>
+            <tr class="clickable">
+              <td><span class="reg">SP-KLM</span><span class="cell-sub">An-2</span></td>
+              <td class="num cell-sub">1978</td>
+              <td class="num">1200 L</td>
+              <td><span class="pill blue">godziny i minuty</span></td>
+              <td><span class="pill amber">wymagany</span></td>
+              <td><span class="pill green"><span class="dot"></span>W służbie</span></td>
+              <td class="row-actions"><a class="btn ghost sm" href="samoloty-karta.html">Edytuj</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+    <button type="button" class="drawer-scrim" aria-label="Zamknij szufladę"></button>
+    <div class="drawer" role="dialog" aria-modal="true" aria-label="NOWY SAMOLOT">
+
+      <div class="drawer-head">
+        <div>
+          <div class="drawer-title">NOWY SAMOLOT</div>
+          <div class="drawer-sub">Nowa jednostka floty</div>
+        </div>
+        <button type="button" class="x-btn" aria-label="Zamknij">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="drawer-body">
+
+        <div class="card">
+          <div class="card-title">Samolot</div>
+          <div class="field">
+            <label class="label" for="n-reg">Rejestracja</label>
+            <input class="input mono" id="n-reg" value="SP-NRD">
+            <span class="hint">Znaki z kadłuba, np. SP-KLM.</span>
+          </div>
+          <div class="field-pair">
+            <div class="field">
+              <label class="label" for="n-type">Typ</label>
+              <input class="input" id="n-type" value="Cessna 172">
+              <span class="hint">np. Cessna 182.</span>
+            </div>
+            <div class="field">
+              <label class="label" for="n-year">Rok produkcji</label>
+              <input class="input mono" id="n-year" inputmode="numeric" value="1998">
+              <span class="hint">Można zostawić puste.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Ustawienia dla pilota</div>
+
+          <span class="label">Drugi pilot</span>
+          <div class="opt-list" role="radiogroup" aria-label="Wymóg drugiego pilota">
+            <button type="button" class="opt selected" role="radio" aria-checked="true">
+              <span class="opt-body">
+                <span class="opt-name">Nieobowiązkowy</span>
+                <span class="opt-desc">Pilot może lecieć sam.</span>
+              </span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opt" role="radio" aria-checked="false">
+              <span class="opt-body">
+                <span class="opt-name">Wymagany</span>
+                <span class="opt-desc">Bez drugiego pilota aplikacja nie pozwoli zacząć lotu.</span>
+              </span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+          </div>
+
+          <span class="label">Stan</span>
+          <div class="opt-list" role="radiogroup" aria-label="Stan służby">
+            <button type="button" class="opt selected" role="radio" aria-checked="true">
+              <span class="opt-body">
+                <span class="opt-name">W służbie</span>
+                <span class="opt-desc">Pilot widzi go na liście samolotów.</span>
+              </span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opt" role="radio" aria-checked="false">
+              <span class="opt-body">
+                <span class="opt-name">Wyłączony</span>
+                <span class="opt-desc">Znika z listy. Zapisane loty zostają.</span>
+              </span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Paliwo</div>
+          <div class="field-pair">
+            <div class="field">
+              <label class="label" for="n-capacity">Pojemność zbiorników (L)</label>
+              <input class="input mono" id="n-capacity" inputmode="decimal" value="155">
+            </div>
+            <div class="field">
+              <label class="label" for="n-fuel-norm">Zużycie z dokumentacji (L/h)</label>
+              <input class="input mono" id="n-fuel-norm" inputmode="decimal" value="30,0">
+              <span class="hint">Na godzinę pracy silnika.</span>
+            </div>
+          </div>
+          <div class="field">
+            <label class="label" for="n-initial-fuel">Aktualny stan (L)</label>
+            <input class="input mono" id="n-initial-fuel" inputmode="decimal" value="120">
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Olej</div>
+          <div class="field-pair">
+            <div class="field">
+              <label class="label" for="n-oil-capacity">Zbiornik oleju (L)</label>
+              <input class="input mono" id="n-oil-capacity" inputmode="decimal" value="8">
+            </div>
+            <div class="field">
+              <label class="label" for="n-oil-min">Minimum przed lotem (L)</label>
+              <input class="input mono" id="n-oil-min" inputmode="decimal" value="5">
+            </div>
+          </div>
+          <div class="field">
+            <label class="label" for="n-oil-norm">Zużycie z dokumentacji (L/h)</label>
+            <input class="input mono" id="n-oil-norm" inputmode="decimal" value="0,3">
+            <span class="hint">Na godzinę pracy silnika - jak przy paliwie.</span>
+          </div>
+          <div class="field">
+            <label class="label" for="n-initial-oil">Aktualny stan (L)</label>
+            <input class="input mono" id="n-initial-oil" inputmode="decimal" value="6,5">
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Motogodziny</div>
+          <span class="label">Format licznika</span>
+          <div class="opt-list" role="radiogroup" aria-label="Format licznika motogodzin">
+            <button type="button" class="opt selected" role="radio" aria-checked="true">
+              <span class="opt-body">
+                <span class="opt-name">dziesiętny - 3907.8</span>
+                <span class="opt-desc">Pilot wpisuje jedną liczbę.</span>
+              </span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opt" role="radio" aria-checked="false">
+              <span class="opt-body">
+                <span class="opt-name">godziny i minuty - 3907:48</span>
+                <span class="opt-desc">Pilot wpisuje godziny i minuty.</span>
+              </span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+          </div>
+          <!-- Licznik przyjmuje OBA zapisy naraz - administrator przepisuje liczbę
+               z tarczy i nie ma się zastanawiać, jak jednostka jest skonfigurowana.
+               Podpowiedź pokazuje format TEJ maszyny. -->
+          <div class="field">
+            <label class="label" for="n-initial-mh">Aktualny stan</label>
+            <input class="input mono" id="n-initial-mh" inputmode="decimal" value="482.4">
+            <span class="hint">Format licznika: 3907.8.</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="drawer-foot">
+        <button type="button" class="btn ghost">Anuluj</button>
+        <button type="button" class="btn primary">Dodaj samolot</button>
+      </div>
+
+    </div>
+
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="samoloty-lista.html">S1 Samoloty</a>
+  <span>·</span>
+  <a href="samoloty-karta.html" class="active">S2 Karta samolotu</a>
+  <span>·</span>
+  <a href="piloci-konto.html">P2 Konto pilota</a>
+  <span>·</span>
+  <a href="dziennik-maszyna.html">L2 Operacje maszyny →</a>
+  <span>·</span>
+  <a href="zgloszenia-szuflada.html">Z2 Zgłoszenie błędu</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+</body>
+</html>

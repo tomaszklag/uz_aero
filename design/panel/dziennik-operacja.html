@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UZ Aero - Panel 2.0 · Dziennik: jedna operacja</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="panel.css">
+</head>
+
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">DZIENNIK · OPERACJA</span>
+  <span class="slug">panel/dziennik-operacja · #/dziennik/SP-AXA/&lt;uuid&gt; · poziom 3</span>
+  <span class="canvas-meta"><span class="pulse"></span>Pełna strona, nie szuflada</span>
+</header>
+
+<aside class="variants-panel">
+  <div class="vp-title">Trzy poziomy dziennika</div>
+  <a class="vp-item" href="dziennik-flota.html">
+    <span class="vp-badge">L1</span>
+    <span class="vp-body">
+      <span class="vp-name">Cała flota w zakresie dat</span>
+      <span class="vp-when">Dwa poziomy wyżej.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="dziennik-maszyna.html">
+    <span class="vp-badge">L2</span>
+    <span class="vp-body">
+      <span class="vp-name">Operacje jednej maszyny</span>
+      <span class="vp-when">Stąd się tu wchodzi i tu wraca link „← Dziennik SP-AXA" - razem z zakresem dat, który był ustawiony.</span>
+    </span>
+  </a>
+  <a class="vp-item active" href="dziennik-operacja.html">
+    <span class="vp-badge">L3</span>
+    <span class="vp-body">
+      <span class="vp-name">Jedna operacja</span>
+      <span class="vp-when">PEŁNA STRONA, nie szuflada: szuflady panelu są formularzami jednego rekordu, a tu treścią jest dokument - oś kilkudziesięciu zdarzeń i komplet odczytów. Do operacji wchodzi się, żeby JĄ przeczytać.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="SZABLON.html">
+    <span class="vp-badge amber">BAZA</span>
+    <span class="vp-body">
+      <span class="vp-name">Szablon i inwentarz komponentów</span>
+      <span class="vp-when">Rama okna, pasek górny i klasy do skopiowania.</span>
+    </span>
+  </a>
+</aside>
+
+<main class="browser" role="region" aria-label="Operacja SP-AXA/2026-09-06/TMA/1">
+
+  <div class="chrome">
+    <span class="chrome-dots"><i></i><i></i><i></i></span>
+    <span class="chrome-url">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <b>panel.uzaero.pl</b>/#/dziennik/SP-AXA/7c1e5a9b-4d02-4a17-9f56-2b0e4c8a83b4
+    </span>
+  </div>
+
+  <div class="shell">
+
+    <header class="topbar">
+      <span class="brand">
+        <span class="brand-mark">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+        </span>
+        <span class="brand-name">UZ AERO</span>
+      </span>
+
+      <nav class="tabs" aria-label="Sekcje panelu">
+        <a class="tab active" href="dziennik-flota.html">Dziennik</a>
+        <a class="tab" href="piloci-lista.html">Piloci</a>
+        <a class="tab" href="samoloty-lista.html">Samoloty</a>
+        <a class="tab" href="zgloszenia-lista.html">Zgłoszenia</a>
+      </nav>
+
+      <div class="topbar-right">
+        <span class="who-name">Tomasz Małkiewicz</span>
+        <button type="button" class="btn ghost sm">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="14 17 19 12 14 7"/><line x1="19" y1="12" x2="9" y2="12"/></svg>
+          Wyloguj
+        </button>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <!-- Rejestracja w tytule jest POWTÓRZONA z poziomu 2 świadomie: link do operacji
+           bywa wklejony komuś, kto poziomu 2 nigdy nie widział. Podtytuł niesie
+           SYGNATURĘ - nazwę operacji do przeczytania przez telefon - i wypiera nią
+           datę, bo ją zawiera. Uuid zostaje w pasku adresu i nigdzie indziej. -->
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">SP-AXA</h1>
+          <p class="page-sub">SP-AXA/2026-09-06/TMA/1 · silnik 08:42 → 11:04 UTC</p>
+        </div>
+        <div class="page-actions">
+          <a class="btn ghost" href="dziennik-maszyna.html">← Dziennik SP-AXA</a>
+        </div>
+      </div>
+
+      <!-- ══ OŚ ZDARZEŃ ══
+           SEKUNDY SĄ TU KONIECZNE: reszta produktu liczy czasy do minuty, bo tyle
+           znaczą dla pilota i dla księgowości klubu, ale rejestr czyta się inaczej -
+           różnica między `Lądowanie 10:16:02` a `10:16:22` rozstrzyga, KTÓRE zdarzenie
+           poprawiła korekta. Kolumna „Szczegół" bywa pusta i tak ma być: nazwa mówi
+           wtedy wszystko, a wypisywanie czegokolwiek na siłę zamieniłoby ją w szum.
+           Nazwy są polskie i te same, co w aplikacji pilota („Uruchomienie", nie
+           „Start engine"). -->
+      <div class="card">
+        <div class="card-title">Log zdarzeń</div>
+        <div class="table-wrap plain">
+          <table>
+            <caption class="visually-hidden">Zdarzenia operacji</caption>
+            <thead>
+              <tr>
+                <th>Czas</th>
+                <th>Zdarzenie</th>
+                <th>Szczegół</th>
+                <th>Zapis</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="num">08:31:06</td>
+                <td class="cell-strong">Przejęcie</td>
+                <td class="cell-sub"></td>
+                <td class="cell-sub">auto</td>
+              </tr>
+              <tr>
+                <td class="num">08:33:41</td>
+                <td class="cell-strong">Zadanie</td>
+                <td class="cell-sub">EPZG · 185 L</td>
+                <td class="cell-sub">auto</td>
+              </tr>
+              <tr>
+                <td class="num">08:42:11</td>
+                <td class="cell-strong">Uruchomienie</td>
+                <td class="cell-sub"></td>
+                <td class="cell-sub">auto</td>
+              </tr>
+              <tr>
+                <td class="num">08:48:29</td>
+                <td class="cell-strong">Kołowanie</td>
+                <td class="cell-sub"></td>
+                <td class="cell-sub">auto</td>
+              </tr>
+
+              <tr>
+                <td class="num">09:01:12</td>
+                <td class="cell-strong">Start</td>
+                <td class="cell-sub"></td>
+                <td class="cell-sub">auto</td>
+              </tr>
+              <tr>
+                <td class="num">09:12:05</td>
+                <td class="cell-strong">Zrzut</td>
+                <td class="cell-sub">8 skoczków · 4000 ft</td>
+                <td class="cell-sub">ręcznie</td>
+              </tr>
+              <tr>
+                <td class="num">09:17:44</td>
+                <td class="cell-strong">Lądowanie</td>
+                <td class="cell-sub"></td>
+                <td class="cell-sub">auto</td>
+              </tr>
+
+              <tr>
+                <td class="num">09:20:38</td>
+                <td class="cell-strong">Start</td>
+                <td class="cell-sub"></td>
+                <td class="cell-sub">auto</td>
+              </tr>
+              <tr>
+                <td class="num">09:31:26</td>
+                <td class="cell-strong">Zrzut</td>
+                <td class="cell-sub">8 skoczków · 4000 ft</td>
+                <td class="cell-sub">ręcznie</td>
+              </tr>
+              <tr>
+                <td class="num">09:36:59</td>
+                <td class="cell-strong">Lądowanie</td>
+                <td class="cell-sub"></td>
+                <td class="cell-sub">auto</td>
+              </tr>
+
+              <tr>
+                <td class="num">09:40:12</td>
+                <td class="cell-strong">Start</td>
+                <td class="cell-sub"></td>
+                <td class="cell-sub">auto</td>
+              </tr>
+              <tr>
+                <td class="num">09:51:03</td>
+                <td class="cell-strong">Zrzut</td>
+                <td class="cell-sub">7 skoczków · 4000 ft</td>
+                <td class="cell-sub">ręcznie</td>
+              </tr>
+              <tr>
+                <td class="num">09:56:41</td>
+                <td class="cell-strong">Lądowanie</td>
+                <td class="cell-sub"></td>
+                <td class="cell-sub">auto</td>
+              </tr>
+
+              <tr>
+                <td class="num">09:59:55</td>
+                <td class="cell-strong">Start</td>
+                <td class="cell-sub"></td>
+                <td class="cell-sub">auto</td>
+              </tr>
+              <tr>
+                <td class="num">10:10:48</td>
+                <td class="cell-strong">Zrzut</td>
+                <td class="cell-sub">8 skoczków · 4250 ft</td>
+                <td class="cell-sub">ręcznie</td>
+              </tr>
+              <!-- CZAS PO KOREKCIE. Wartość pierwotna zostaje - przekreślona, bo to już
+                   nie jest liczba, którą liczy projekcja - a nowa stoi pod spodem.
+                   Bez tego zdarzenie po korekcie było w tabeli nieodróżnialne od
+                   nietkniętego. Kto poprawił, mówi druga linia nazwy. -->
+              <tr>
+                <td class="num">
+                  <span class="clock-val struck">10:16:22</span>
+                  <span class="cell-sub">10:16:02</span>
+                </td>
+                <td class="cell-strong">
+                  Lądowanie
+                  <span class="cell-sub">poprawił administrator</span>
+                </td>
+                <td class="cell-sub"></td>
+                <td class="cell-sub">auto</td>
+              </tr>
+
+              <tr>
+                <td class="num">10:20:04</td>
+                <td class="cell-strong">Start</td>
+                <td class="cell-sub"></td>
+                <td class="cell-sub">auto</td>
+              </tr>
+              <tr>
+                <td class="num">10:31:11</td>
+                <td class="cell-strong">Zrzut</td>
+                <td class="cell-sub">6 skoczków · 4000 ft</td>
+                <td class="cell-sub">ręcznie</td>
+              </tr>
+              <!-- ZDARZENIE UNIEWAŻNIONE korektą: fałszywe lądowanie z autodetekcji.
+                   Wiersz ZOSTAJE w tabeli - rejestr jest append-only i to właśnie takie
+                   wiersze tłumaczą, dlaczego liczby operacji różnią się od tego, co
+                   zapisał telefon. -->
+              <tr class="voided">
+                <td class="num">10:33:52</td>
+                <td class="cell-strong">Lądowanie</td>
+                <td class="cell-sub"></td>
+                <td class="cell-sub">auto</td>
+              </tr>
+              <tr>
+                <td class="num">10:36:50</td>
+                <td class="cell-strong">Lądowanie</td>
+                <td class="cell-sub"></td>
+                <td class="cell-sub">auto</td>
+              </tr>
+
+              <tr>
+                <td class="num">10:41:33</td>
+                <td class="cell-strong">Start</td>
+                <td class="cell-sub"></td>
+                <td class="cell-sub">auto</td>
+              </tr>
+              <tr>
+                <td class="num">10:52:27</td>
+                <td class="cell-strong">Zrzut</td>
+                <td class="cell-sub">7 skoczków · 4000 ft</td>
+                <td class="cell-sub">ręcznie</td>
+              </tr>
+              <tr>
+                <td class="num">10:58:06</td>
+                <td class="cell-strong">Lądowanie</td>
+                <td class="cell-sub"></td>
+                <td class="cell-sub">auto</td>
+              </tr>
+
+              <tr>
+                <td class="num">11:04:37</td>
+                <td class="cell-strong">Wyłączenie</td>
+                <td class="cell-sub"></td>
+                <td class="cell-sub">auto</td>
+              </tr>
+              <tr>
+                <td class="num">11:09:52</td>
+                <td class="cell-strong">Zdanie samolotu</td>
+                <td class="cell-sub">108 L</td>
+                <td class="cell-sub">auto</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ══ SZCZEGÓŁY ══
+           Komplet odczytów w wierszach klucz-wartość. Kreska znaczy „nikt nie zapisał",
+           zero znaczy zero: „Dolano paliwa 0 L" mówi, że tankowania nie było, a nie że
+           nie wiadomo. Szacunków tu nie ma - ani normy, ani przewidywanego oleju. -->
+      <div class="card">
+        <div class="card-title">Szczegóły</div>
+        <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v">Tomasz Małkiewicz</span></div>
+        <div class="kv"><span class="kv-k">Drugi pilot</span><span class="kv-v">—</span></div>
+        <div class="kv"><span class="kv-k">Zadanie</span><span class="kv-v">Skoki</span></div>
+        <div class="kv"><span class="kv-k">Klient</span><span class="kv-v">Strefa Spadochronowa Przylep</span></div>
+        <div class="kv"><span class="kv-k">Trasa</span><span class="kv-v">EPZG</span></div>
+        <div class="kv"><span class="kv-k">Loty</span><span class="kv-v">6</span></div>
+        <div class="kv"><span class="kv-k">Starty i lądowania</span><span class="kv-v">6 / 6</span></div>
+        <div class="kv"><span class="kv-k">Paliwo</span><span class="kv-v">185 L → 108 L</span></div>
+        <div class="kv"><span class="kv-k">Dolano paliwa</span><span class="kv-v">0 L</span></div>
+        <div class="kv"><span class="kv-k">Motogodziny</span><span class="kv-v">1236:30 → 1238:52</span></div>
+        <div class="kv"><span class="kv-k">Olej przed lotem</span><span class="kv-v">9,2 L</span></div>
+        <div class="kv"><span class="kv-k">Dolano oleju</span><span class="kv-v">0,0 L</span></div>
+        <div class="kv"><span class="kv-k">Olej do lotu</span><span class="kv-v">9,2 L</span></div>
+      </div>
+
+      <!-- ══ ŚLAD GPS ══
+           Ślad należy do OPERACJI, nie do lotu: zapis powstaje w jednym ciągu od
+           uruchomienia do wyłączenia silnika, a loty są jego odcinkami. Kołowanie
+           rysuje się PRZERYWANĄ SZARĄ, lot PEŁNĄ ZIELONĄ - ta sama konwencja, co na
+           telefonie. Tłem jest siatka współrzędnych i pas startowy z katalogu: panel
+           nie pobiera kafelków ani niczego innego z sieci. Legenda opisuje RODZAJE,
+           nie poszczególne znaczniki - przy dniu skokowym byłaby dłuższa od mapy. -->
+      <div class="card">
+        <div class="card-title">Ślad GPS</div>
+
+        <div class="map-canvas" style="height:430px">
+          <svg class="map-overlay" viewBox="0 0 1000 430" preserveAspectRatio="none">
+            <g class="map-grid">
+              <line x1="60" y1="0" x2="60" y2="430"/><line x1="120" y1="0" x2="120" y2="430"/>
+              <line x1="180" y1="0" x2="180" y2="430"/><line x1="240" y1="0" x2="240" y2="430"/>
+              <line x1="300" y1="0" x2="300" y2="430"/><line x1="360" y1="0" x2="360" y2="430"/>
+              <line x1="420" y1="0" x2="420" y2="430"/><line x1="480" y1="0" x2="480" y2="430"/>
+              <line x1="540" y1="0" x2="540" y2="430"/><line x1="600" y1="0" x2="600" y2="430"/>
+              <line x1="660" y1="0" x2="660" y2="430"/><line x1="720" y1="0" x2="720" y2="430"/>
+              <line x1="780" y1="0" x2="780" y2="430"/><line x1="840" y1="0" x2="840" y2="430"/>
+              <line x1="900" y1="0" x2="900" y2="430"/><line x1="960" y1="0" x2="960" y2="430"/>
+              <line x1="0" y1="60" x2="1000" y2="60"/><line x1="0" y1="120" x2="1000" y2="120"/>
+              <line x1="0" y1="180" x2="1000" y2="180"/><line x1="0" y1="240" x2="1000" y2="240"/>
+              <line x1="0" y1="300" x2="1000" y2="300"/><line x1="0" y1="360" x2="1000" y2="360"/>
+              <line x1="0" y1="420" x2="1000" y2="420"/>
+            </g>
+
+            <!-- Lotnisko POD śladem: pas w skali mapy, obrócony o kurs (060° → -30°
+                 w układzie ekranu), i podpis „ICAO · nazwa". -->
+            <g>
+              <rect x="269.4" y="324.5" width="150" height="4" class="map-runway" transform="rotate(-30 344.4 326.5)"/>
+              <text x="353.4" y="340.5" class="axis-label">EPZG · Zielona Góra-Przylep</text>
+            </g>
+
+            <polyline points="259.7,390.0 265.0,381.2 270.3,368.8" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-dasharray="5 5" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+
+            <polyline points="270.3,368.8 420.3,282.4 460.0,52.0 550.4,49.4 629.9,75.3 677.8,122.0 682.7,176.8 644.3,225.3 573.9,254.9 490.7,258.4 416.8,235.6 371.2,193.3 365.0,143.1 398.7,98.2 462.2,70.2 538.1,66.0 606.3,85.8 649.2,123.8 656.3,169.5 627.1,210.7 570.3,236.8 501.6,241.6 439.4,224.5 399.6,190.7 391.7,149.6 416.8,112.2 467.1,88.0 528.5,82.9 584.7,97.5 460.9,241.8 420.3,282.4 344.4,326.5 291.5,352.5" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.92"/>
+            <polyline points="291.5,352.5 277.4,375.9 265.0,382.9 270.3,368.8" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-dasharray="5 5" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+
+            <polyline points="270.3,368.8 420.3,282.4 456.0,50.3 552.7,47.6 637.7,75.1 689.0,124.9 694.2,183.4 653.1,235.0 577.8,266.6 488.8,270.3 409.8,246.1 361.0,201.0 354.4,147.4 390.4,99.5 458.4,69.7 539.6,65.2 612.5,86.3 658.3,126.8 666.0,175.5 634.8,219.5 574.0,247.4 500.5,252.4 434.0,234.2 391.3,198.1 383.0,154.3 409.8,114.4 463.6,88.7 529.3,83.3 589.4,98.8 460.9,241.8 420.3,282.4 344.4,326.5 291.5,354.1" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.92"/>
+            <polyline points="291.5,354.1 277.4,375.9 265.0,382.9 270.3,368.8" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-dasharray="5 5" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+
+            <polyline points="270.3,368.8 420.3,282.4 452.0,48.6 555.0,45.7 645.5,74.9 700.2,127.8 705.7,189.9 662.0,244.8 581.7,278.3 487.0,282.2 402.8,256.5 350.9,208.6 343.8,151.7 382.1,100.8 454.5,69.2 541.0,64.4 618.7,86.8 667.5,129.9 675.7,181.6 642.4,228.3 577.7,257.9 499.5,263.3 428.5,243.9 383.1,205.6 374.2,159.1 402.8,116.7 460.1,89.3 530.0,83.6 594.0,100.1 460.9,241.8 420.3,282.4 344.4,326.5 291.5,355.7" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.92"/>
+            <polyline points="291.5,355.7 277.4,375.9 265.0,382.9 270.3,368.8" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-dasharray="5 5" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+
+            <polyline points="270.3,368.8 420.3,282.4 448.0,46.8 557.3,43.8 653.4,74.7 711.4,130.7 717.2,196.4 670.8,254.5 585.7,290.0 485.1,294.2 395.8,266.9 340.7,216.2 333.2,156.0 373.9,102.2 450.7,68.7 542.5,63.6 624.9,87.3 676.7,132.9 685.4,187.6 650.1,237.0 581.4,268.4 498.4,274.1 423.1,253.6 374.9,213.0 365.5,163.8 395.8,118.9 456.5,90.0 530.8,83.9 598.7,101.4 460.9,241.8 420.3,282.4 344.4,326.5 291.5,357.3" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.92"/>
+            <polyline points="291.5,357.3 277.4,375.9 265.0,382.9 270.3,368.8" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-dasharray="5 5" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+
+            <polyline points="270.3,368.8 420.3,282.4 444.0,45.1 559.6,41.9 661.2,74.5 722.6,133.6 728.7,203.0 679.7,264.3 589.6,301.7 483.2,306.1 388.8,277.3 330.5,223.8 322.6,160.3 365.6,103.5 446.9,68.2 543.9,62.8 631.1,87.9 685.9,135.9 695.1,193.7 657.7,245.8 585.1,278.9 497.3,284.9 417.7,263.2 366.7,220.5 356.7,168.5 388.8,121.2 453.0,90.7 531.6,84.2 603.4,102.7 460.9,241.8 420.3,282.4 344.4,326.5 291.5,358.9" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.92"/>
+            <polyline points="291.5,358.9 277.4,375.9 265.0,382.9 270.3,368.8" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-dasharray="5 5" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+
+            <polyline points="270.3,368.8 420.3,282.4 440.0,43.4 562.0,40.0 669.0,74.4 733.7,136.5 740.3,209.5 688.5,274.0 593.5,313.4 481.4,318.0 381.8,287.8 320.3,231.5 312.0,164.6 357.4,104.8 443.0,67.6 545.4,62.0 637.3,88.4 695.1,139.0 704.8,199.7 665.4,254.6 588.8,289.4 496.2,295.7 412.2,272.9 358.5,227.9 348.0,173.3 381.8,123.4 449.5,91.3 532.4,84.6 608.1,104.0 460.9,241.8 420.3,282.4 344.4,326.5 291.5,360.4" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.92"/>
+            <polyline points="291.5,360.4 277.4,375.9 265.0,382.9" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-dasharray="5 5" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+
+            <!-- Znaczniki: kolor niesie RODZAJ (start zielony, lądowanie błękitne),
+                 numer przy znaczniku mówi, który to lot. Pierścień dostaje WYŁĄCZNIE
+                 pierwszy start - inaczej nie widać, gdzie zaczyna się bieg silnika. -->
+            <g>
+              <circle cx="389.2" cy="300.9" r="15" fill="none" stroke="var(--green)" stroke-width="1.6" opacity="0.4"/>
+              <circle cx="389.2" cy="300.9" r="7" fill="var(--green)"/>
+              <text x="401.2" y="304.9" class="axis-label" fill="var(--green)" font-size="10">T/O 1</text>
+            </g>
+            <g>
+              <circle cx="397.0" cy="296.5" r="7" fill="var(--green)"/>
+              <text x="409.0" y="300.5" class="axis-label" fill="var(--green)" font-size="10">T/O 2</text>
+            </g>
+            <g>
+              <circle cx="404.8" cy="292.1" r="7" fill="var(--green)"/>
+              <text x="416.8" y="296.1" class="axis-label" fill="var(--green)" font-size="10">T/O 3</text>
+            </g>
+            <g>
+              <circle cx="412.5" cy="287.7" r="7" fill="var(--green)"/>
+              <text x="424.5" y="291.7" class="axis-label" fill="var(--green)" font-size="10">T/O 4</text>
+            </g>
+            <g>
+              <circle cx="420.3" cy="283.3" r="7" fill="var(--green)"/>
+              <text x="432.3" y="287.3" class="axis-label" fill="var(--green)" font-size="10">T/O 5</text>
+            </g>
+            <g>
+              <circle cx="428.0" cy="278.9" r="7" fill="var(--green)"/>
+              <text x="440.0" y="282.9" class="axis-label" fill="var(--green)" font-size="10">T/O 6</text>
+            </g>
+            <g>
+              <circle cx="423.1" cy="277.1" r="7" fill="var(--blue)"/>
+              <text x="435.1" y="281.1" class="axis-label" fill="var(--blue)" font-size="10">LDG 1</text>
+            </g>
+            <g>
+              <circle cx="417.1" cy="280.6" r="7" fill="var(--blue)"/>
+              <text x="429.1" y="284.6" class="axis-label" fill="var(--blue)" font-size="10">LDG 2</text>
+            </g>
+            <g>
+              <circle cx="411.1" cy="284.1" r="7" fill="var(--blue)"/>
+              <text x="423.1" y="288.1" class="axis-label" fill="var(--blue)" font-size="10">LDG 3</text>
+            </g>
+            <g>
+              <circle cx="405.1" cy="287.7" r="7" fill="var(--blue)"/>
+              <text x="417.1" y="291.7" class="axis-label" fill="var(--blue)" font-size="10">LDG 4</text>
+            </g>
+            <g>
+              <circle cx="399.1" cy="291.2" r="7" fill="var(--blue)"/>
+              <text x="411.1" y="295.2" class="axis-label" fill="var(--blue)" font-size="10">LDG 5</text>
+            </g>
+            <g>
+              <circle cx="393.1" cy="294.7" r="7" fill="var(--blue)"/>
+              <text x="405.1" y="298.7" class="axis-label" fill="var(--blue)" font-size="10">LDG 6</text>
+            </g>
+          </svg>
+
+          <div class="map-legend">
+            <div class="legend-row"><span class="legend-dot line" style="background: var(--green)"></span>Lot</div>
+            <div class="legend-row"><span class="legend-dash"></span>Kołowanie</div>
+            <div class="legend-row"><span class="legend-dot" style="background: var(--green)"></span>Start</div>
+            <div class="legend-row"><span class="legend-dot" style="background: var(--blue)"></span>Lądowanie</div>
+          </div>
+
+          <!-- Bez kafelków podziałka jest JEDYNYM odniesieniem odległości. -->
+          <div class="map-scale">
+            <span class="map-scale-label">1 NM</span>
+            <span class="map-scale-bar" style="width: 308px"></span>
+          </div>
+
+          <div class="map-attrib">lotniska: OurAirports · © OpenStreetMap</div>
+        </div>
+
+        <!-- TRZY liczby, nie trzynaście. Czasy pięciu faz, jakość trzymania wysokości
+             i liczniki bramki jakości są materiałem do strojenia progów detekcji,
+             a nie odpowiedzią na pytanie, z którym się na ten ekran wchodzi. -->
+        <div class="track-facts">
+          <div class="track-fact">
+            <span class="track-fact-k">Dystans</span>
+            <span class="track-fact-v">128,4 NM</span>
+          </div>
+          <div class="track-fact">
+            <span class="track-fact-k">Pułap</span>
+            <span class="track-fact-v">4 250 ft</span>
+          </div>
+          <div class="track-fact">
+            <span class="track-fact-k">Prędkość maks.</span>
+            <span class="track-fact-v">118 kt</span>
+          </div>
+        </div>
+
+        <!-- Profil obejmuje CAŁY bieg silnika, więc płaskie odcinki przy podstawie to
+             czas na ziemi między lotami, a nie dziura w zapisie. -->
+        <div class="profile-chart" style="height:220px">
+          <svg viewBox="0 0 940 220" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="alt-fill-panel" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--green)" stop-opacity="0.28"/>
+                <stop offset="100%" stop-color="var(--green)" stop-opacity="0.02"/>
+              </linearGradient>
+            </defs>
+
+            <g>
+              <line x1="52" y1="10" x2="932" y2="10" class="grid-line dashed"/>
+              <text x="0" y="13" class="axis-label">4450</text>
+            </g>
+            <g>
+              <line x1="52" y1="54.5" x2="932" y2="54.5" class="grid-line dashed"/>
+              <text x="0" y="57.5" class="axis-label">3352</text>
+            </g>
+            <g>
+              <line x1="52" y1="99" x2="932" y2="99" class="grid-line dashed"/>
+              <text x="0" y="102" class="axis-label">2255</text>
+            </g>
+            <g>
+              <line x1="52" y1="143.5" x2="932" y2="143.5" class="grid-line dashed"/>
+              <text x="0" y="146.5" class="axis-label">1158</text>
+            </g>
+            <g>
+              <line x1="52" y1="188" x2="932" y2="188" class="grid-line"/>
+              <text x="0" y="191" class="axis-label">61</text>
+            </g>
+
+            <polygon points="52,188 52.0,179.9 165.4,179.9 169.5,178.7 177.9,154.5 186.3,133.9 194.7,114.7 203.1,96.3 211.5,78.7 219.9,61.5 228.3,44.7 236.7,28.2 242.5,58.5 248.4,84.7 254.2,109.5 260.0,133.5 265.8,157.0 271.6,179.9 274.2,179.9 285.4,179.9 289.6,178.7 297.9,154.5 306.2,133.9 314.6,114.7 322.9,96.3 331.3,78.7 339.6,61.5 347.9,44.7 356.3,28.2 362.0,58.5 367.7,84.7 373.4,109.5 379.1,133.5 384.9,157.0 390.6,179.9 393.1,179.9 406.3,179.9 410.4,178.7 418.8,154.5 427.2,133.9 435.6,114.7 444.0,96.3 452.3,78.7 460.7,61.5 469.1,44.7 477.5,28.2 483.3,58.5 489.1,84.7 494.9,109.5 500.7,133.5 506.5,157.0 512.3,179.9 514.9,179.9 528.1,179.9 532.3,178.7 540.7,152.8 549.1,130.8 557.5,110.3 565.9,90.8 574.3,71.9 582.7,53.6 591.1,35.6 599.5,18.1 604.9,50.4 610.3,78.3 615.7,104.8 621.1,130.4 626.4,155.4 631.8,179.9 634.4,179.9 652.6,179.9 656.8,178.7 665.3,154.5 673.9,133.9 682.5,114.7 691.1,96.3 699.7,78.7 708.3,61.5 716.9,44.7 725.4,28.2 731.3,58.5 737.1,84.7 742.9,109.5 748.7,133.5 754.5,157.0 760.3,179.9 762.9,179.9 785.4,179.9 789.5,178.7 797.9,154.5 806.3,133.9 814.7,114.7 823.2,96.3 831.6,78.7 840.0,61.5 848.4,44.7 856.8,28.2 862.6,58.5 868.5,84.7 874.3,109.5 880.1,133.5 885.9,157.0 891.7,179.9 894.3,179.9 932.0,179.9 932,188" fill="url(#alt-fill-panel)"/>
+
+            <polyline points="52.0,179.9 165.4,179.9 169.5,178.7 177.9,154.5 186.3,133.9 194.7,114.7 203.1,96.3 211.5,78.7 219.9,61.5 228.3,44.7 236.7,28.2 242.5,58.5 248.4,84.7 254.2,109.5 260.0,133.5 265.8,157.0 271.6,179.9 274.2,179.9 285.4,179.9 289.6,178.7 297.9,154.5 306.2,133.9 314.6,114.7 322.9,96.3 331.3,78.7 339.6,61.5 347.9,44.7 356.3,28.2 362.0,58.5 367.7,84.7 373.4,109.5 379.1,133.5 384.9,157.0 390.6,179.9 393.1,179.9 406.3,179.9 410.4,178.7 418.8,154.5 427.2,133.9 435.6,114.7 444.0,96.3 452.3,78.7 460.7,61.5 469.1,44.7 477.5,28.2 483.3,58.5 489.1,84.7 494.9,109.5 500.7,133.5 506.5,157.0 512.3,179.9 514.9,179.9 528.1,179.9 532.3,178.7 540.7,152.8 549.1,130.8 557.5,110.3 565.9,90.8 574.3,71.9 582.7,53.6 591.1,35.6 599.5,18.1 604.9,50.4 610.3,78.3 615.7,104.8 621.1,130.4 626.4,155.4 631.8,179.9 634.4,179.9 652.6,179.9 656.8,178.7 665.3,154.5 673.9,133.9 682.5,114.7 691.1,96.3 699.7,78.7 708.3,61.5 716.9,44.7 725.4,28.2 731.3,58.5 737.1,84.7 742.9,109.5 748.7,133.5 754.5,157.0 760.3,179.9 762.9,179.9 785.4,179.9 789.5,178.7 797.9,154.5 806.3,133.9 814.7,114.7 823.2,96.3 831.6,78.7 840.0,61.5 848.4,44.7 856.8,28.2 862.6,58.5 868.5,84.7 874.3,109.5 880.1,133.5 885.9,157.0 891.7,179.9 894.3,179.9 932.0,179.9" fill="none" stroke="var(--green)" stroke-width="2.6" stroke-linecap="round"/>
+
+            <g>
+              <line x1="599.5" y1="6" x2="599.5" y2="198" stroke="var(--blue)" stroke-width="1.2" stroke-dasharray="4 4"/>
+              <circle cx="599.5" cy="18.1" r="5" fill="var(--blue)"/>
+              <text x="607.5" y="34.1" class="axis-label" fill="var(--blue)" font-size="9.5">szczyt 4250 ft</text>
+            </g>
+
+            <text x="52" y="214" class="axis-label">08:42</text>
+            <text x="900" y="214" class="axis-label">11:04</text>
+          </svg>
+        </div>
+        <p class="profile-foot">
+          Wysokość z GPS - potrafi różnić się od wysokościomierza o kilkaset stóp.
+          Przerwa w wykresie to czas na ziemi między lotami.
+        </p>
+      </div>
+
+      <!-- ══ JEDYNY ZAPIS TEGO MODUŁU ══
+           Dziennik jest do CZYTANIA. Karta stoi na samym dole i za wszystkim - także
+           za śladem GPS - bo do operacji wchodzi się, żeby ją przeczytać, a wycofanie
+           wpisu jest wyjściem awaryjnym. Konto bez zdolności `events.correct` NIE WIDZI
+           tej karty w ogóle: brak uprawnień znaczy brak przycisku, nie przycisk
+           wyszarzony. Ekranu korekty pojedynczych zdarzeń w panelu nie ma. -->
+      <div class="card">
+        <div class="card-title">Unieważnienie wpisu</div>
+        <p class="hint">
+          Wycofany wpis wypada z nalotu pilota, z sum dziennika i z karty arkusza. Sam zapis
+          zostaje razem z powodem - widać, że lot był i że go wycofano.
+        </p>
+        <div>
+          <button type="button" class="btn danger sm">Unieważnij wpis</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="00-logowanie.html">Logowanie</a>
+  <span>·</span>
+  <a href="dziennik-flota.html">Dziennik · flota</a>
+  <span>·</span>
+  <a href="dziennik-maszyna.html">← Dziennik · maszyna</a>
+  <span>·</span>
+  <a href="dziennik-operacja.html" class="active">Dziennik · operacja</a>
+  <span>·</span>
+  <a href="piloci-lista.html">Piloci</a>
+  <span>·</span>
+  <a href="samoloty-lista.html">Samoloty</a>
+  <span>·</span>
+  <a href="zgloszenia-lista.html">Zgłoszenia</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════════════════════════════
+     ZAPISY ADMINISTRATORA - DWA I TYLKO DWA
+     Który się pokaże, rozstrzyga STAN operacji: w toku dostaje „Zakończenie operacji",
+     zakończona - „Unieważnienie wpisu". Nigdy oba naraz: dwa wyjścia awaryjne obok
+     siebie kazałyby wybierać między rzeczami, które nie są alternatywą.
+     ══════════════════════════════════════════════════════════════════════════════ -->
+
+<section class="canvas-section">
+  <div class="canvas-section-title">Zapisy administratora</div>
+  <div class="inv-grid">
+
+    <article class="inv full">
+      <div class="inv-head">
+        <span class="inv-name">Unieważnienie wpisu · pytanie po tapnięciu</span>
+        <span class="inv-when">Pytanie stoi W MIEJSCU, w którym kliknięto - nie w oknie nad stroną i nie w systemowym <code>confirm</code>. Potwierdzenie NAZYWA konkretny wpis: dwie operacje tej samej maszyny w jednej dobie różnią się wyłącznie godzinami, a wejście w operację bywa wklejonym linkiem. Powód jest WYMAGANY (inaczej niż w telefonie, gdzie pilot wycofuje własny lot) i nie dostaje zdania przy przycisku - puste pole widać w kontrolce tuż nad nim.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="card">
+          <div class="card-title">Unieważnienie wpisu</div>
+          <p class="hint">
+            Wycofany wpis wypada z nalotu pilota, z sum dziennika i z karty arkusza. Sam zapis
+            zostaje razem z powodem - widać, że lot był i że go wycofano.
+          </p>
+          <div class="confirm">
+            <p class="confirm-q">Unieważnić ten wpis?</p>
+            <!-- Sygnatura odpowiada na „który to wpis" JEDNYM napisem, więc stoi pierwsza.
+                 Fakty składa ten sam kod, który buduje wiersz gridu poziomu 2 - drugie
+                 formatowanie tych samych wartości rozjechałoby się dokładnie tam, gdzie
+                 człowiek podejmuje decyzję nieodwracalną. -->
+            <div class="kv"><span class="kv-k">Operacja</span><span class="kv-v">SP-AXA/2026-09-06/TMA/1</span></div>
+            <div class="kv"><span class="kv-k">Dzień</span><span class="kv-v">6 WRZEŚNIA</span></div>
+            <div class="kv"><span class="kv-k">Silnik</span><span class="kv-v">08:42 → 11:04</span></div>
+            <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v">T. Małkiewicz</span></div>
+            <div class="kv"><span class="kv-k">Loty</span><span class="kv-v">6</span></div>
+            <div class="kv"><span class="kv-k">Czas blokowy</span><span class="kv-v">2:22</span></div>
+            <div class="field">
+              <label class="label" for="void-reason">Powód</label>
+              <input class="input" id="void-reason" value="" placeholder="np. wpis otwarty przez pomyłkę na tej maszynie">
+              <span class="hint">Zobaczy go pilot na telefonie; zostaje w dzienniku.</span>
+            </div>
+            <div class="confirm-actions">
+              <button type="button" class="btn ghost sm">Anuluj</button>
+              <button type="button" class="btn danger sm">Unieważnij wpis</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv full">
+      <div class="inv-head">
+        <span class="inv-name">Zakończenie operacji · tylko dla operacji W TOKU</span>
+        <span class="inv-when">Operacja, której pilot nie zdał, blokuje maszynę reszcie klubu. Zakończenie zwalnia ją BEZ ODCZYTÓW KOŃCOWYCH - administrator przy biurku nie wie, co pokazują przyrządy - więc taka operacja nie jest ogniwem przekazania, a stan maszyny wpisuje się potem w jej karcie. Wybór „co z wpisem" jest LISTĄ KART, nie polem wyboru: obie drogi widać naraz, z opisem skutku. Jedna decyzja administratora, dwa fakty w rejestrze.</span>
+      </div>
+      <div class="inv-demo">
+        <!-- Nagłówek TEJ operacji: plakietka mówi CO (operacja w toku), a nie co z tego
+             wynika. Sygnatura w podtytule jest ta sama, co na kafelku telefonu. -->
+        <div class="page-head">
+          <div>
+            <h1 class="page-title">SP-AXA</h1>
+            <p class="page-sub">SP-AXA/2026-09-06/AKO/1 · silnik 13:10 → - UTC</p>
+          </div>
+          <div class="page-actions">
+            <span class="pill amber"><span class="dot live"></span>w toku</span>
+            <a class="btn ghost" href="dziennik-maszyna.html">← Dziennik SP-AXA</a>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Zakończenie operacji</div>
+          <p class="hint">
+            Operacja w toku, której pilot nie zdał, blokuje maszynę. Zakończenie zwalnia ją
+            bez odczytów końcowych - aktualny stan licznika, paliwa i oleju wpisuje się potem
+            w karcie samolotu. Zaległe zapisy pilota do tej operacji telefon wstrzyma;
+            poprawek w niej pilot już nie naniesie.
+          </p>
+          <div class="confirm">
+            <p class="confirm-q">Zakończyć tę operację?</p>
+            <div class="kv"><span class="kv-k">Operacja</span><span class="kv-v">SP-AXA/2026-09-06/AKO/1</span></div>
+            <div class="kv"><span class="kv-k">Dzień</span><span class="kv-v">6 WRZEŚNIA</span></div>
+            <div class="kv"><span class="kv-k">Silnik</span><span class="kv-v">13:10 → w toku</span></div>
+            <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v">A. Kowal</span></div>
+            <div class="kv"><span class="kv-k">Loty</span><span class="kv-v">1</span></div>
+            <!-- Kreska, nie zero: operacja bez wyłączenia silnika nie ma czasu
+                 blokowego, a `0:00` czytałoby się jak zmierzone zero. -->
+            <div class="kv"><span class="kv-k">Czas blokowy</span><span class="kv-v">—</span></div>
+
+            <div class="field">
+              <label class="label" for="close-reason">Powód</label>
+              <input class="input" id="close-reason" value="Telefon pilota padł w locie, maszyna stoi w hangarze.">
+              <span class="hint">Zobaczy go pilot na telefonie; zostaje w dzienniku.</span>
+            </div>
+
+            <span class="label">Co z wpisem</span>
+            <div class="opt-list" role="radiogroup" aria-label="Co z wpisem po zakończeniu">
+              <button type="button" class="opt selected" role="radio" aria-checked="true">
+                <span class="opt-body">
+                  <span class="opt-name">Zakończ i zostaw w dzienniku</span>
+                  <span class="opt-desc">Lot był prawdziwy - liczy się do nalotu i sum, tylko bez odczytów końcowych.</span>
+                </span>
+                <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </button>
+              <button type="button" class="opt" role="radio" aria-checked="false">
+                <span class="opt-body">
+                  <span class="opt-name">Zakończ i od razu unieważnij</span>
+                  <span class="opt-desc">Wpis otwarty przez pomyłkę - wypada z nalotu, sum dziennika i karty arkusza.</span>
+                </span>
+                <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </button>
+            </div>
+
+            <div class="confirm-actions">
+              <button type="button" class="btn ghost sm">Anuluj</button>
+              <button type="button" class="btn danger sm">Zakończ operację</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<section class="canvas-section">
+  <div class="canvas-section-title">Stany operacji</div>
+  <div class="inv-grid">
+
+    <article class="inv full">
+      <div class="inv-head">
+        <span class="inv-name">Plakietki w nagłówku i banery pod nim</span>
+        <span class="inv-when">Podział jest twardy: <b>plakietka mówi CO</b> (wpis ręczny, operacja unieważniona, w toku, zakończona przez administratora), a <b>baner mówi, CO Z TEGO WYNIKA</b>. Bez banera czerwona plakietka nad wypełnioną kartą czyta się jak ostrzeżenie o danych, a nie jak informacja, że tych liczb nikt już nie liczy. Banery panelu nie są zamykalne i nie ma ich stale na ekranie.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="inv-row">
+          <span class="pill dim">ręcznie</span>
+          <span class="pill red">unieważniona</span>
+          <span class="pill amber">w toku</span>
+          <span class="pill amber">zakończona przez administratora</span>
+        </div>
+        <span class="inv-mark">wpis wycofany - plakietka <b>red</b> + ten baner</span>
+        <div class="banner status">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span>Wpis wycofany - nie liczy się do nalotu pilota, do sum dziennika ani do karty arkusza. Powód stoi na osi zdarzeń.</span>
+        </div>
+        <span class="inv-mark">zakończona przez administratora - plakietka <b>amber</b> + ten baner</span>
+        <div class="banner status">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span>Operację zakończył administrator - bez odczytów końcowych. Liczy się do nalotu i sum dziennika, ale nie jest ogniwem przekazania: aktualny stan maszyny wpisuje się w karcie samolotu. Zaległe zapisy pilota do tej operacji telefon wstrzymuje. Powód stoi na osi zdarzeń.</span>
+        </div>
+        <span class="inv-mark">odmowa reguł domeny po tapnięciu w „unieważnij" - ktoś wycofał ten wpis w drugim oknie</span>
+        <div class="banner danger">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          <span>Ta operacja jest już unieważniona.</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Brak rysunku ma POWÓD</span>
+        <span class="inv-when">Powodów nie wolno zwijać do jednego: „brak śladu" pokazane przy locie wpisanym z kartki jest kłamstwem o tym locie. Panel zna dwa z czterech powodów telefonu - pozostałe dwa opisują stan URZĄDZENIA, którego przeglądarka nie ma jak znać.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="card">
+          <div class="card-title">Ślad GPS</div>
+          <div class="empty">
+            <span class="empty-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg></span>
+            <span class="empty-title">Bez mapy</span>
+            <span class="empty-note">Lot wpisany ręcznie - telefon nie nagrywał śladu.</span>
+          </div>
+        </div>
+        <span class="inv-mark">operacja bez nagrania: „Ta operacja nie ma nagrania GPS."</span>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Wczytywanie</span>
+        <span class="inv-when">Dwa odczyty, dwa niezależne czekania: karta operacji ma kilkadziesiąt zdarzeń, nagranie - kilkaset wierzchołków po kompresji, więc ślad idzie OSOBNYM żądaniem i dociąga się pod gotowym ekranem. Plamki w geometrii wierszy osi; mapa - plamka o połowie wysokości płótna.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="card">
+          <div class="card-title">Log zdarzeń</div>
+          <span class="skeleton cell" style="width:320px; margin-bottom:10px"></span>
+          <span class="skeleton cell" style="width:320px; margin-bottom:10px"></span>
+          <span class="skeleton cell" style="width:320px; margin-bottom:10px"></span>
+          <span class="skeleton cell" style="width:320px; margin-bottom:10px"></span>
+          <span class="skeleton cell" style="width:320px; margin-bottom:10px"></span>
+          <span class="skeleton cell" style="width:320px; margin-bottom:10px"></span>
+        </div>
+        <div class="card">
+          <div class="card-title">Ślad GPS</div>
+          <span class="skeleton" style="display:block; height:215px"></span>
+        </div>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="dziennik-maszyna.html">← Dziennik · maszyna</a>
+  <span>·</span>
+  <a href="dziennik-operacja.html" class="active">Dziennik · operacja</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+</body>
+</html>

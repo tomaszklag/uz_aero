@@ -8,6 +8,8 @@ Kolumny: rejestracja z typem, rok, pojemność zbiorników, format licznika, wym
 
 Jedyny sygnał operacyjny na tym ekranie to maszyna **wyłączona, na której ktoś jeszcze lata** - jej wiersz mówi to wprost. Znaczy dokładnie tyle, że jednostka zniknęła pilotom z listy wyboru w połowie czyjegoś dnia. Reszta stanu bieżącego - kto trzyma maszynę teraz, ostatnie odczyty, ile latała - należy do [dziennika](panel-dziennik); tutaj ustawia się samolot raz na sezon.
 
+@panel samoloty-lista "Lista floty klubu"
+
 ## Karta samolotu
 
 Sekcje idą mediami, bo administrator myśli „olej", a nie „kategoria liczby":
@@ -25,6 +27,8 @@ Pojemności, minimum oleju i obie normy są **wymagane** - puste pole blokuje za
 Zmiana pojemności zbiorników zmienia przy okazji próg, od którego klub dostaje sygnał o rozjeździe paliwa między operacjami; panel pisze wtedy pod polem nową i dotychczasową wartość progu.
 
 > **Uwaga.** Wymóg drugiego pilota jest regułą aplikacji: bez wskazanego drugiego pilota nie da się na takiej maszynie rozpocząć lotu ani wpisać go po fakcie. Nie jest to jednak dopuszczenie do lotu - o tym decyduje klub, nie karta samolotu.
+
+@panel samoloty-karta "Karta samolotu · sekcje mediami"
 
 ## Aktualny stan: zerowe ogniwo łańcucha
 
