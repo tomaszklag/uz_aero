@@ -1,17 +1,17 @@
 /**
- * UZ Aero — testy WARSTWY KOMEND (`application/commands`).
+ * UZ Aero - testy WARSTWY KOMEND (`application/commands`).
  *
- * Rules mówią „czy wolno", komendy — „co się faktycznie stało z bazą". Tu pilnujemy
+ * Rules mówią „czy wolno", komendy - „co się faktycznie stało z bazą". Tu pilnujemy
  * rzeczy, których czysta funkcja nie pokaże:
  *  - odrzucone zdarzenie NIE zostawia śladu w strumieniu ani w outboxie,
  *  - miękka flaga NIE blokuje zapisu i wraca do UI,
  *  - limity samolotu pochodzą z cache referencyjnego (offline → reguła śpi),
  *  - kanoniczny dzień przechodzi przez komendy od claimu do zamknięcia.
  *
- * Wszystko na `InMemoryAdapter` — bez natywnego SQLite.
+ * Wszystko na `InMemoryAdapter` - bez natywnego SQLite.
  */
 
-import { DomainRuleError, projectSession } from '../domain';
+import { DomainRuleError, projectSession, type EventOf } from '../domain';
 import { EventsRepo } from '../application/eventsRepo';
 import { SessionCommands, type SessionContext } from '../application/commands';
 import { SessionQueries } from '../application/queries';
@@ -80,7 +80,7 @@ async function openDay(commands: SessionCommands, clock: FixedClock): Promise<vo
   });
 }
 
-describe('SessionCommands — odrzucenie nie zostawia śladu', () => {
+describe('SessionCommands - odrzucenie nie zostawia śladu', () => {
   it('takeoff bez pracującego silnika rzuca i nic nie zapisuje', async () => {
     const { commands, repo, clock, seedCache } = setup();
     await seedCache();
@@ -139,7 +139,7 @@ describe('SessionCommands — odrzucenie nie zostawia śladu', () => {
   });
 });
 
-describe('SessionCommands — miękkie flagi nie blokują zapisu', () => {
+describe('SessionCommands - miękkie flagi nie blokują zapisu', () => {
   it('zrzut poza lotem zapisuje się i wraca z ostrzeżeniem', async () => {
     const { commands, repo, clock, seedCache } = setup();
     await seedCache();
@@ -175,7 +175,7 @@ describe('SessionCommands — miękkie flagi nie blokują zapisu', () => {
     expect(first.warnings).toEqual([]);
   });
 
-  it('zrzut z zerowym składem zapisuje `jumpers: null` — „nie podano", nie „zero" (issue #21)', async () => {
+  it('zrzut z zerowym składem zapisuje `jumpers: null` - „nie podano", nie „zero" (issue #21)', async () => {
     // Arkusz nie ma pola „bez deklaracji": pilot po prostu nie rusza liczników.
     // Znak tej decyzji normalizuje komenda, żeby nie zależał od ekranu.
     const { commands, clock, seedCache } = setup();
@@ -214,13 +214,13 @@ describe('SessionCommands — miękkie flagi nie blokują zapisu', () => {
     const bare = await commands.boarding(CTX, { jumpers: { tandem: 0, aff: 0, solo: 0 } });
     expect(bare.event.type === 'boarding' && bare.event.payload.jumpers).toBeNull();
 
-    // Prefill dla arkusza zrzutu bierze się z projekcji — ostatni załadunek wygrywa.
+    // Prefill dla arkusza zrzutu bierze się z projekcji - ostatni załadunek wygrywa.
     const state = projectSession(await repo.getSessionEvents(SESSION));
     expect(state.boarding).toEqual({ jumpers: null, at: min(17) });
   });
 });
 
-describe('SessionCommands — limity z cache referencyjnego (§4.8)', () => {
+describe('SessionCommands - limity z cache referencyjnego (§4.8)', () => {
   it('z cache: tankowanie ponad pojemność zbiorników jest odrzucane', async () => {
     const { commands, clock, seedCache } = setup(true);
     await seedCache();
@@ -243,7 +243,7 @@ describe('SessionCommands — limity z cache referencyjnego (§4.8)', () => {
   });
 });
 
-describe('SessionCommands — pełny dzień przez komendy', () => {
+describe('SessionCommands - pełny dzień przez komendy', () => {
   it('kanoniczny cykl przechodzi i daje spójną projekcję', async () => {
     const { commands, queries, repo, clock, seedCache } = setup();
     await seedCache();
@@ -278,13 +278,13 @@ describe('SessionCommands — pełny dzień przez komendy', () => {
     expect(state.drops.totalJumpers).toBe(4);
     expect(state.closed).toBe(true);
 
-    // Wszystko czeka w outboxie — sieć nie była potrzebna do żadnej z tych akcji (§4.1).
+    // Wszystko czeka w outboxie - sieć nie była potrzebna do żadnej z tych akcji (§4.1).
     const outbox = await queries.outboxStatus();
     expect(outbox.count).toBe((await repo.getAllEvents()).length);
     expect(outbox.synced).toBe(false);
   });
 
-  it('claim zapamiętuje bieżącą sesję w session_meta (wznowienie po restarcie)', async () => {
+  it('claim zapamiętuje bieżącą operację w session_meta (wznowienie po restarcie)', async () => {
     const { commands, queries, clock, seedCache } = setup();
     await seedCache();
     clock.set(min(-5));
@@ -298,10 +298,10 @@ describe('SessionCommands — pełny dzień przez komendy', () => {
   });
 });
 
-describe('SessionCommands — active_session_uuid dla zapisu headless (GPS w tle)', () => {
+describe('SessionCommands - active_session_uuid dla zapisu headless (GPS w tle)', () => {
   // Klucz żyje dokładnie tak długo, jak pilot TRZYMA SAMOLOT: writer headless czyta go
   // po śmierci procesu, więc osierocona wartość przypisałaby fixy do cudzej sesji,
-  // a brakująca — wyrzuciła ślad do kosza. Inny cykl życia niż `current_session_uuid`,
+  // a brakująca - wyrzuciła ślad do kosza. Inny cykl życia niż `current_session_uuid`,
   // którego nikt nie czyści (`navigation/resumeTarget.ts` decyduje po `state.closed`).
 
   it('claim zapisuje klucz, udane day_close go czyści', async () => {
@@ -326,7 +326,7 @@ describe('SessionCommands — active_session_uuid dla zapisu headless (GPS w tle
     clock.set(min(12));
     await commands.startEngine(CTX, { fieldElevationFt: 780 });
 
-    // Zamknięcie dnia przy pracującym silniku jest odrzucane — usługa tła ma dalej
+    // Zamknięcie dnia przy pracującym silniku jest odrzucane - usługa tła ma dalej
     // wiedzieć, do której sesji pisać.
     clock.set(min(30));
     await expect(
@@ -341,7 +341,7 @@ describe('SessionCommands — active_session_uuid dla zapisu headless (GPS w tle
     await seedCache();
     clock.set(min(-5));
     await commands.claim({ ...CTX, mode: 'free' });
-    // Czysty stan klucza — inaczej nie odróżnimy „nie zapisał" od „zapisał to samo".
+    // Czysty stan klucza - inaczej nie odróżnimy „nie zapisał" od „zapisał to samo".
     await adapter.deleteMeta(SESSION_META_KEYS.activeSessionUuid);
 
     await expect(commands.claim({ ...CTX, mode: 'free' })).rejects.toBeInstanceOf(DomainRuleError);
@@ -351,11 +351,11 @@ describe('SessionCommands — active_session_uuid dla zapisu headless (GPS w tle
 
 /**
  * Sesja = jeden bieg silnika (2026-08-10). Blok `closeLeg` (potwierdzenie wzlotu)
- * zniknął razem z komendą i zdarzeniem — sesję zatwierdza `releaseAircraft`.
+ * zniknął razem z komendą i zdarzeniem - sesję zatwierdza `releaseAircraft`.
  * Tu zostaje gwardia, przez którą tamte testy nie miały prawa dalej istnieć:
  * ich helper `twoCycles()` budował DWA biegi w jednej sesji.
  */
-describe('jeden bieg silnika na sesję (2026-08-10)', () => {
+describe('jeden bieg silnika na operację (2026-08-10)', () => {
   it('drugi startEngine po zakończonym biegu jest odrzucany', async () => {
     const h = setup();
     await openDay(h.commands, h.clock);
@@ -373,13 +373,13 @@ describe('jeden bieg silnika na sesję (2026-08-10)', () => {
 });
 
 /**
- * Ręczny wpis CAŁEGO lotu (ekran 15) — komenda składa kompletną sesję po fakcie.
+ * Ręczny wpis CAŁEGO lotu (ekran 15) - komenda składa kompletną sesję po fakcie.
  *
  * Dwie własności są tu ważniejsze od szczęśliwej ścieżki: czasy pilota mają być czasami
  * ZDARZEŃ (jadą w `gpsTime`, chwila zapisu zostaje w `deviceTime`), a próba generalna ma
- * chronić strumień przed osieroconą sesją — odrzucony komplet nie zapisuje NICZEGO.
+ * chronić strumień przed osieroconą sesją - odrzucony komplet nie zapisuje NICZEGO.
  */
-describe('manualFlight — kompletna sesja po fakcie (ekrany 15 → 15C)', () => {
+describe('manualFlight - kompletna operacja po fakcie (ekrany 15 → 15C)', () => {
   const T_START = min(600);
   const t = (m: number): number => T_START + m * 60_000;
   const input = (over: object = {}) => ({
@@ -399,9 +399,9 @@ describe('manualFlight — kompletna sesja po fakcie (ekrany 15 → 15C)', () =>
     ...over,
   });
 
-  it('tworzy ZAMKNIĘTĄ sesję z jednym biegiem i jednym lotem o czasach pilota', async () => {
+  it('tworzy ZAMKNIĘTĄ operację z jednym biegiem i jednym lotem o czasach pilota', async () => {
     const h = setup();
-    h.clock.set(min(700)); // zapis godzinę PO locie — wpis po fakcie
+    h.clock.set(min(700)); // zapis godzinę PO locie - wpis po fakcie
 
     await h.commands.manualFlight(input());
     const s = await h.queries.sessionState('sess-manual');
@@ -414,14 +414,14 @@ describe('manualFlight — kompletna sesja po fakcie (ekrany 15 → 15C)', () =>
     expect(s.blockTimeMs).toBe(54 * 60_000);
     expect(s.fuel.startL).toBe(121);
     expect(s.fuel.endL).toBe(98);
-    // Okno korekty rusza od TERAZ (zapis), nie od przeszłego zatrzymania silnika —
+    // Okno korekty rusza od TERAZ (zapis), nie od przeszłego zatrzymania silnika -
     // inaczej wpis sprzed dwóch dni rodziłby się z oknem już wygasłym.
     expect(s.closedAt).toBe(min(700));
   });
 
   /**
    * PARITA Z LOTEM AUTOMATYCZNYM (2026-08-16): zadanie z kroku 2 ląduje w payloadzie
-   * `preflight_confirm` — poprzednia wersja wpisywała twardo `operation: 'inne'`
+   * `preflight_confirm` - poprzednia wersja wpisywała twardo `operation: 'inne'`
    * i lot szkolny z kartki gubił Duala bezpowrotnie.
    */
   it('niesie komplet zadania: operację, lotnisko, klienta i Duala', async () => {
@@ -441,7 +441,7 @@ describe('manualFlight — kompletna sesja po fakcie (ekrany 15 → 15C)', () =>
    * Znacznik „RĘCZNIE" jest JAWNY na `session_claim` (2026-08-16): z metody zdarzeń
    * nie da się go wywieść, bo `manual` niesie też zwykły lot z ręcznymi przyciskami.
    */
-  it('sesja z wpisu niesie manualEntry; sesja z kokpitu NIE', async () => {
+  it('operacja z wpisu niesie manualEntry; operacja z kokpitu NIE', async () => {
     const h = setup();
     h.clock.set(min(700));
 
@@ -450,6 +450,37 @@ describe('manualFlight — kompletna sesja po fakcie (ekrany 15 → 15C)', () =>
 
     await h.commands.claim({ ...CTX, mode: 'free', previousPicId: null });
     expect((await h.queries.sessionState(SESSION)).manualEntry).toBe(false);
+  });
+
+  /**
+   * DOLEWKA PRZY PRZEJĘCIU = OSOBNE `oil_add` (uwaga z urządzenia, 2026-09-03):
+   * ten sam fakt, co dolewka z kokpitu, ma jeden kształt - wiersz osi, drogę
+   * korekty i źródło sumy. Payload przejęcia niesie odtąd SAM pomiar;
+   * `oilAddedL` w starych strumieniach czytamy dalej (projekcja sumuje oba źródła).
+   */
+  it('dolewka oleju przy przejęciu to osobne oil_add, nie pole payloadu', async () => {
+    const h = setup();
+    h.clock.set(min(700));
+
+    await h.commands.manualFlight(input({ oilL: 8.2, oilAddedL: 1.0 }));
+    const events = await h.repo.getSessionEvents('sess-manual');
+
+    const preflight = events.find(
+      (e) => e.type === 'preflight_confirm',
+    ) as EventOf<'preflight_confirm'>;
+    expect(preflight.payload.oilL).toBe(8.2);
+    expect('oilAddedL' in preflight.payload).toBe(false);
+
+    const oilAdd = events.find((e) => e.type === 'oil_add') as EventOf<'oil_add'>;
+    expect(oilAdd.payload.addedL).toBe(1.0);
+    // Stempel przejęcia - PRZED uruchomieniem, więc reguła silnika nie ma jak odbić.
+    expect(oilAdd.gpsTime).toBe(T_START);
+
+    // Projekcja widzi to samo, co przy starym kształcie: sumę z obu źródeł.
+    const s = await h.queries.sessionState('sess-manual');
+    expect(s.oil.levelL).toBe(8.2);
+    expect(s.oil.addedL).toBe(1.0);
+    expect(s.oil.afterL).toBeCloseTo(9.2);
   });
 
   it('przyjmuje WIELE lotów i sortuje je po czasie niezależnie od kolejności listy', async () => {
@@ -490,14 +521,14 @@ describe('manualFlight — kompletna sesja po fakcie (ekrany 15 → 15C)', () =>
     expect(s.drops.count).toBe(1);
     expect(s.drops.jumpers).toEqual({ tandem: 2, aff: 0, solo: 1 });
     expect((drop.payload as { client: string }).client).toBe('Skydive ZG');
-    // W strumieniu zrzut stoi MIĘDZY startem a lądowaniem — porządek czasu, nie formularza.
+    // W strumieniu zrzut stoi MIĘDZY startem a lądowaniem - porządek czasu, nie formularza.
     expect(events.indexOf(drop)).toBeGreaterThan(events.indexOf(takeoff));
     expect(events.indexOf(drop)).toBeLessThan(events.indexOf(landing));
   });
 
   /**
    * PALIWO MA TRZY STANY (2026-08-16): przed uruchomieniem, dolewki, po locie.
-   * Dolewka przed biegiem wchodzi do strumienia PRZED `engine_start` — sesja
+   * Dolewka przed biegiem wchodzi do strumienia PRZED `engine_start` - sesja
    * z tankowaniem daje się wreszcie wpisać, a rachunek zużycia się domyka.
    */
   it('dolewka przed uruchomieniem zapisuje się i nie psuje rachunku paliwa', async () => {
@@ -515,14 +546,14 @@ describe('manualFlight — kompletna sesja po fakcie (ekrany 15 → 15C)', () =>
 
     expect(s.closed).toBe(true);
     expect(s.fuel.addedL).toBe(48);
-    // 112 przy przejęciu + 48 dolane − 76 po locie = 84 L zużycia — trójka się domyka.
+    // 112 przy przejęciu + 48 dolane − 76 po locie = 84 L zużycia - trójka się domyka.
     expect(s.fuel.consumedL).toBe(112 + 48 - 76);
   });
 
   /**
    * Dolewka w ŚRODKU biegu silnika jest błędem danych, nie wariantem: dolewa się
    * przy zatrzymanym śmigle. Komenda wstawia ją w jej miejscu czasowym, więc próba
-   * generalna odrzuca CAŁY wpis nazwanym błędem — zamiast cicho przesuwać zdarzenie.
+   * generalna odrzuca CAŁY wpis nazwanym błędem - zamiast cicho przesuwać zdarzenie.
    */
   it('dolewka w środku biegu odrzuca cały wpis (REFUEL_ENGINE_RUNNING)', async () => {
     const h = setup();
@@ -537,7 +568,7 @@ describe('manualFlight — kompletna sesja po fakcie (ekrany 15 → 15C)', () =>
     expect(await h.repo.getAllEvents()).toHaveLength(0);
   });
 
-  it('nie dotyka bieżącej sesji w session_meta — wpis historyczny nie jest „wznowieniem"', async () => {
+  it('nie dotyka bieżącej operacji w session_meta - wpis historyczny nie jest „wznowieniem"', async () => {
     const h = setup();
     h.clock.set(min(700));
 
@@ -550,7 +581,7 @@ describe('manualFlight — kompletna sesja po fakcie (ekrany 15 → 15C)', () =>
     const h = setup();
     h.clock.set(min(700));
 
-    // Cofnięty licznik MH odbije się dopiero na `day_close` — czyli na OSTATNIM
+    // Cofnięty licznik MH odbije się dopiero na `day_close` - czyli na OSTATNIM
     // kandydacie. Bez próby generalnej wszystkie wcześniejsze już byłyby w bazie.
     await expect(
       h.commands.manualFlight(input({ finalReading: { fuelL: 98, mh: MH_START - 1 } })),

@@ -1,6 +1,6 @@
 import { registerRootComponent } from 'expo';
 
-// Rejestracja taska lokalizacji MUSI nastąpić przy KAŻDYM załadowaniu bundle'a —
+// Rejestracja taska lokalizacji MUSI nastąpić przy KAŻDYM załadowaniu bundle'a -
 // także w starcie headless po śmierci procesu, gdy `App` nigdy się nie montuje
 // (usługa GPS w tle przeżywa proces; patrz `backgroundLocationTask.ts`).
 import './src/infrastructure/gps/backgroundLocationTask';

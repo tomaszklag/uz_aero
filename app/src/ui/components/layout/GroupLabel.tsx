@@ -1,9 +1,9 @@
 /**
- * UZ Aero — GroupLabel (`.group-lbl` z mockupów 12 i 01)
+ * UZ Aero - GroupLabel (`.group-lbl` z mockupów 12 i 01)
  *
  * Mikro-etykieta mono w wersalikach nad grupą kart: „Możesz jeszcze poprawić",
  * „Zamknięte", „Log dnia". Nie jest nagłówkiem karty (ten mieszka w `Card`) ani
- * tytułem ekranu — opisuje sąsiadującą LISTĘ, nie pojedynczy pojemnik.
+ * tytułem ekranu - opisuje sąsiadującą LISTĘ, nie pojedynczy pojemnik.
  *
  * Osobny komponent od issue #42: obie listy kafelków sesji stoją pod taką etykietą,
  * a kopia w każdym ekranie z osobna była dokładnie tym drobnym dryfem (raz `micro`,

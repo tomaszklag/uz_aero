@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) — flaga + złączenia → DTO skrzynki (`A03`).
+ * UZ Aero (serwer) - flaga + złączenia → DTO skrzynki (`A03`).
  *
  * Czysta funkcja, testowana bez bazy (wzorzec `application/sessionRow.ts`).
  *

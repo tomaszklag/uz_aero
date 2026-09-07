@@ -1,12 +1,12 @@
 /**
- * UZ Aero — lotnisko z katalogu → wiersz listy podpowiedzi.
+ * UZ Aero - lotnisko z katalogu → wiersz listy podpowiedzi.
  *
  * Mieszka PRZY komponencie, a nie w `ui/screens/logic/`, bo opisuje kształt wiersza
- * `AirfieldSuggestions` — a ten kształt jest własnością komponentu (patrz nagłówek
+ * `AirfieldSuggestions` - a ten kształt jest własnością komponentu (patrz nagłówek
  * `AirfieldSuggestions.tsx`). Do issue #14 mapowanie stało w logice ekranu i to
  * wystarczało: podpowiedzi składał wyłącznie ekran 02E. Odkąd tę samą listę rysuje
  * arkusz wyboru lotniska (`sheets/AirfieldSheet.tsx`), komponent musiałby sięgać do
- * logiki ekranu po własny kształt danych — czyli w odwrotną stronę niż biegną tu
+ * logiki ekranu po własny kształt danych - czyli w odwrotną stronę niż biegną tu
  * zależności. `routeSuggestions.ts` re-eksportuje tę funkcję, więc ekrany i testy
  * importują ją tak jak dotąd (ta sama droga, którą wcześniej przeszły `hhmm`
  * i `dateTimeUtcShort`).
@@ -22,7 +22,7 @@ import type { AirfieldRow } from './AirfieldSuggestions';
  * Kurs pasa podajemy MAGNETYCZNY, bo taki jest w lotnictwie kursem domyślnym: tak opisane
  * są progi, tak podaje go wieża i taki pilot odczyta z busoli. Katalog trzyma kurs
  * GEOGRAFICZNY (mapa śladu obraca nim pas na siatce zorientowanej na północ geograficzną),
- * więc przeliczamy tutaj — w warstwie, która mówi do pilota.
+ * więc przeliczamy tutaj - w warstwie, która mówi do pilota.
  *
  * Zostają STOPNIE, a nie oznaczenie progu („06/24"): oznaczenie jest zaokrąglone do
  * dziesiątek i bywa dodatkowo przesunięte decyzją zarządzającego lotniskiem, a kurs

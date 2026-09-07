@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 10H Dodaj wpis</title>
+<title>UZ Aero - 10H Dodaj wpis</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -54,7 +54,6 @@
   .app-header-center { display:flex; flex-direction:column; align-items:center; gap:1px; flex:1; min-width:0; }
   .back-btn { display:inline-flex; align-items:center; gap:5px; min-height:34px; font-family:var(--font-mono); font-size:11px; color:var(--text-muted); text-decoration:none; padding:5px 8px; border-radius:6px; border:1px solid var(--border); }
   .screen-title { font-family:var(--font-display); font-size:20px; letter-spacing:2px; color:var(--text-primary); }
-  .header-subtitle { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
   .mode-badge { display:inline-flex; align-items:center; gap:5px; font-family:var(--font-mono); font-size:10px; letter-spacing:1px; color:var(--amber); background:var(--amber-muted); border:1px solid var(--amber-border); padding:4px 10px; border-radius:999px; }
   .scroll { flex:1; overflow:hidden; padding:14px; display:flex; flex-direction:column; gap:12px; }
   .scroll > * { flex-shrink:0; }
@@ -76,29 +75,27 @@
   .modal-title { font-family:var(--font-display); font-size:22px; letter-spacing:2px; color:var(--text-primary); }
   .field-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px; }
 
-  /* ===== SIATKA TYPÓW =====
-     Karty z ikonami, nie natywny `<select>` (CLAUDE.md). Sześć pozycji to KOMPLET
-     faktów operacyjnych, które da się dopisać po fakcie — dokładnie ta lista, którą
-     domena uznaje za korygowalną. Klamry silnika tu nie ma i mówi o tym przypis:
-     uruchomienie i wyłączenie zapisuje przycisk w kokpicie, a sesja ma jeden bieg. */
-  .type-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; }
-  .type-card {
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
-    min-height:74px; padding:10px 6px; border-radius:13px;
-    border:1px solid var(--border); background:var(--surface); color:var(--text-secondary);
-    text-decoration:none; cursor:pointer;
-  }
-  .type-card:hover { border-color:var(--border-strong); color:var(--text-primary); }
-  .type-card.selected { border-color:var(--green-border); background:var(--green-muted); color:var(--green); box-shadow:0 0 0 3px rgba(46,204,113,0.06); }
-  .type-card .tc-label { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; }
-  /* Zrzut i załadunek ISTNIEJĄ tylko w dniu skokowym (issue #19): przy przelocie czy
-     egzaminie tych dwóch kart po prostu nie ma — to brak akcji, nie blokada z powodem. */
-  .type-note { font-family:var(--font-mono); font-size:8px; letter-spacing:0.5px; color:var(--text-muted); line-height:1.6; }
+  /* ===== SIATKA TYPÓW = `.op-grid`, TA SAMA CO WSZĘDZIE (2026-09-07) =====
+     Karty z ikonami, nie natywny `<select>` (CLAUDE.md). Ten arkusz miał do dziś własną
+     siatkę (`.type-grid`: trzy kolumny, ikona NAD etykietą, karta 74 px) - jedyną taką
+     w całym projekcie. Wybór rodzaju ma JEDEN kształt: dwie kolumny, ikona OBOK
+     etykiety (`.op-grid` z 02, 02D, 02E, 02F, 15A), bo to ta sama czynność - wskazanie
+     jednej pozycji z krótkiej, stałej listy. Trzecia kolumna niczego nie kupowała:
+     etykiety są krótkie, więc karta i tak stała pusta, a „Dolewka oleju" łamała się
+     na dwie linie. Przy okazji arkusz zrobił się o ~70 px niższy.
+
+     Co siatka pokazuje i dlaczego akurat tyle - przy samej siatce, w markupie. */
+  .op-grid { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+  .op-option { display:flex; align-items:center; gap:8px; padding:10px 11px; border-radius:12px; border:1px solid var(--border); background:var(--surface-raised); cursor:pointer; }
+  .op-option.selected { border-color:var(--green-border); background:var(--green-muted); }
+  .op-icon { color:var(--text-muted); display:flex; }
+  .op-option.selected .op-icon, .op-option.selected .op-label { color:var(--green); }
+  .op-label { font-size:12px; color:var(--text-secondary); }
 
   .time-stepper { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--green-border); border-radius:14px; padding:9px 11px; }
   .min-btn { min-width:62px; padding:0 10px; white-space:nowrap; height:44px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border-radius:12px; border:1px solid var(--border-strong); background:var(--surface-raised); color:var(--text-primary); font-family:var(--font-mono); font-size:12px; cursor:pointer; }
   .min-btn:hover { border-color:var(--green-border); background:var(--green-muted); }
-  /* Godzina do WPISANIA z klawiatury — patrz komentarz w 10E. Krok jest JEDEN (minuta)
+  /* Godzina do WPISANIA z klawiatury - patrz komentarz w 10E. Krok jest JEDEN (minuta)
      także tutaj: dopisywany fakt bywa odległy o kwadranse, ale od tego jest wpis
      z klawiatury, a nie drugi rząd przycisków. */
   .time-val { flex:1; text-align:center; font-family:var(--font-mono); font-size:28px; font-weight:700; letter-spacing:2px; color:var(--text-primary); cursor:text; }
@@ -113,13 +110,6 @@
      nie treść, i ma zejść z oka po pierwszym znaku (uwaga z urządzenia). */
   .reason-input::placeholder { color:var(--text-placeholder); }
 
-  /* Informacja o metodzie — wpis dostanie w rejestrze znacznik `manual`. Pilotowi
-     mówimy to RAZ, tutaj, a nie plakietką przy każdym wierszu osi (issue #40 pkt 6):
-     sposób powstania zapisu jest sprawą rejestru i panelu, nie codziennego czytania. */
-  .method-note { display:flex; align-items:flex-start; gap:9px; background:var(--blue-muted); border:1px solid var(--blue-border); border-radius:12px; padding:11px 13px; }
-  .method-note svg { flex-shrink:0; margin-top:1px; color:var(--blue); }
-  .method-text { font-size:11px; color:var(--text-secondary); line-height:1.55; }
-  .method-text b { color:var(--blue); font-weight:600; }
 
   .modal-actions { display:grid; grid-template-columns:1fr 2fr; gap:8px; }
   .btn-cancel { display:flex; align-items:center; justify-content:center; padding:14px; border-radius:14px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text-secondary); font-family:var(--font-display); font-size:16px; letter-spacing:2px; text-decoration:none; cursor:pointer; }
@@ -149,12 +139,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 10H</span>
+  <span class="film-strip">UZ AERO - 10H</span>
   <span class="slug">dodaj wpis · fakt operacyjny</span>
   <span class="canvas-meta"><span class="pulse"></span>Arkusz 10D</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Dodawanie brakującego wpisu">
+<main class="phone" role="region" aria-label="Mockup - Dodawanie brakującego wpisu">
   <div class="status-bar">
     <span>9:41</span>
     <span class="status-right">
@@ -171,8 +161,7 @@
         Dzień
       </a>
       <div class="app-header-center">
-        <span class="screen-title">SESJA</span>
-        <span class="header-subtitle">SP-AXA · 06 SIE · SKOKI</span>
+        <span class="screen-title">SP-AXA/2026-08-06/TMK/1</span>
       </div>
       <span class="mode-badge">
         <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
@@ -189,7 +178,7 @@
         </div>
         <div class="issue-row">
           <span class="issue-dot"></span>
-          <span class="issue-text"><b>Lot 2 nie ma lądowania.</b> Silnik stanął o 09:55, a ostatni start był o 09:12 — dopisz lądowanie.</span>
+          <span class="issue-text"><b>Lot 2 nie ma lądowania.</b> Silnik stanął o 09:55, a ostatni start był o 09:12 - dopisz lądowanie.</span>
         </div>
       </div>
     </div>
@@ -200,35 +189,65 @@
         <div class="modal-handle"></div>
         <div class="modal-title">DODAJ WPIS</div>
 
+        <!-- SIEDEM TYPÓW = komplet faktów operacyjnych, które domena uznaje za
+             korygowalne, w kolejności z aplikacji: start · lądowanie · kołowanie ·
+             [zrzut · załadunek] · tankowanie · dolewka oleju.
+
+             ZRZUT I ZAŁADUNEK POKAZUJĄ SIĘ WYŁĄCZNIE W DNIU SKOKOWYM (issue #19) - ten
+             arkusz rysuje operację skokową, więc widać komplet. Przy przelocie, egzaminie
+             czy locie technicznym siatka ma PIĘĆ kart: to brak akcji, nie blokada
+             z powodem - zrzut nie może się tam wydarzyć.
+
+             DOLEWKA OLEJU (issue #60) domyka listę: `oil_add` - podobnie jak tankowanie -
+             nie ma korekty wartości (`amend`), więc dopisanie jest jedyną drogą naprawy
+             po unieważnieniu błędnej dolewki. Pyta o JEDNĄ liczbę (ile dolano): poziomu
+             po dolewce nie ma jak uczciwie zmierzyć na gorącym silniku. -->
         <div>
           <div class="field-label">Co się wydarzyło</div>
-          <div class="type-grid">
-            <a class="type-card" href="10h-dodaj-wpis.html">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg>
-              <span class="tc-label">Start</span>
-            </a>
-            <a class="type-card selected" href="10h-dodaj-wpis.html">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="18 13 12 19 6 13"/></svg>
-              <span class="tc-label">Lądowanie</span>
-            </a>
-            <a class="type-card" href="10h-dodaj-wpis.html">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18h6l3-6 3 6h6"/><circle cx="12" cy="6" r="2.5"/></svg>
-              <span class="tc-label">Kołowanie</span>
-            </a>
-            <a class="type-card" href="10h-dodaj-wpis.html">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 10a7 7 0 0 1 14 0"/><path d="M5 10v4l7 6 7-6v-4"/><path d="M12 20v-6"/></svg>
-              <span class="tc-label">Zrzut</span>
-            </a>
-            <a class="type-card" href="10h-dodaj-wpis.html">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="3"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M17 11h5M19.5 8.5v5"/></svg>
-              <span class="tc-label">Załadunek</span>
-            </a>
-            <a class="type-card" href="10h-dodaj-wpis.html">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V4a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v18"/><path d="M3 12h10"/><path d="M17 8h2a2 2 0 0 1 2 2v8a1 1 0 0 1-2 0v-5h-2"/></svg>
-              <span class="tc-label">Tankowanie</span>
-            </a>
+          <div class="op-grid">
+            <div class="op-option">
+              <div class="op-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg>
+              </div>
+              <div class="op-label">Start</div>
+            </div>
+            <div class="op-option selected">
+              <div class="op-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="18 13 12 19 6 13"/></svg>
+              </div>
+              <div class="op-label">Lądowanie</div>
+            </div>
+            <div class="op-option">
+              <div class="op-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18h6l3-6 3 6h6"/><circle cx="12" cy="6" r="2.5"/></svg>
+              </div>
+              <div class="op-label">Kołowanie</div>
+            </div>
+            <div class="op-option">
+              <div class="op-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 10a7 7 0 0 1 14 0"/><path d="M5 10v4l7 6 7-6v-4"/><path d="M12 20v-6"/></svg>
+              </div>
+              <div class="op-label">Zrzut</div>
+            </div>
+            <div class="op-option">
+              <div class="op-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="3"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M17 11h5M19.5 8.5v5"/></svg>
+              </div>
+              <div class="op-label">Załadunek</div>
+            </div>
+            <div class="op-option">
+              <div class="op-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V4a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v18"/><path d="M3 12h10"/><path d="M17 8h2a2 2 0 0 1 2 2v8a1 1 0 0 1-2 0v-5h-2"/></svg>
+              </div>
+              <div class="op-label">Tankowanie</div>
+            </div>
+            <div class="op-option">
+              <div class="op-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+              </div>
+              <div class="op-label">Dolewka oleju</div>
+            </div>
           </div>
-          <div class="type-note" style="margin-top:7px;">Uruchomienia i wyłączenia silnika tu nie ma — zapisuje je przycisk w kokpicie, a sesja ma dokładnie jeden bieg. Jeśli czas klamry jest zły, popraw go ołówkiem na osi.</div>
         </div>
 
         <div>
@@ -246,9 +265,13 @@
 
              TANKOWANIE ma dodatkowo DWA POLA (stan przed · dolano), bo niesie trójkę
              przed/dolane/po (§3.4), a domena pilnuje jej arytmetyki (`FUEL_ARITHMETIC`).
-             Stan PO liczymy sami z tej pary — wpisywanie wszystkich trzech liczb to
+             Stan PO liczymy sami z tej pary - wpisywanie wszystkich trzech liczb to
              zaproszenie do wpisu, który reguła odrzuci. „Stan przed" podpowiada ostatni
-             odczyt paliwomierza z sesji. -->
+             odczyt paliwomierza z operacji.
+
+             DOLEWKA OLEJU ma JEDNO pole („Dolano", w litrach) - i to jest cała różnica
+             wobec tankowania: rachunek traktuje dolewkę jako składnik interwału
+             pomiar→pomiar, a nie jego granicę, więc nie ma trójki do domknięcia. -->
         <div class="modal-ref">
           <span>Domyka lot</span>
           <span class="modal-ref-val">Lot 2 · start 09:12</span>
@@ -264,13 +287,9 @@
 
         <div class="reason-box">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          <input class="reason-input" type="text" placeholder="Uwaga (opcjonalnie) — np. telefon stracił fixa na pasie" />
+          <input class="reason-input" type="text" placeholder="Uwaga (opcjonalnie) - np. telefon stracił fixa na pasie" />
         </div>
 
-        <div class="method-note">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-          <span class="method-text">Wpis dostanie w rejestrze znacznik <b>ręcznie</b> — na osi sesji wygląda jak każdy inny, a metodę widzi administrator w panelu.</span>
-        </div>
 
         <div class="modal-actions">
           <a href="10d-edycja.html" class="btn-cancel">Anuluj</a>
@@ -285,12 +304,12 @@
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Arkusze trybu edycji — kiedy który?</div>
+  <div class="vp-title">Arkusze trybu edycji - kiedy który?</div>
   <a class="vp-item" href="10e-korekta-zdarzenia.html">
     <span class="vp-badge blue">10E</span>
     <span class="vp-body">
       <span class="vp-name">Korekta zdarzenia (czas)</span>
-      <span class="vp-when">Zdarzenie JEST w logu, ale ma zły czas — albo nie zaszło wcale.</span>
+      <span class="vp-when">Zdarzenie JEST w logu, ale ma zły czas - albo nie zaszło wcale.</span>
     </span>
   </a>
   <a class="vp-item" href="10f-korekta-odczytu.html">
@@ -311,7 +330,7 @@
     <span class="vp-badge">10H</span>
     <span class="vp-body">
       <span class="vp-name">Dodaj wpis</span>
-      <span class="vp-when">Zdarzenia NIE MA w logu w ogóle: GPS zgubił lądowanie, zrzut nie został zapisany, tankowanie umknęło. Sześć typów = komplet faktów operacyjnych, które domena uznaje za korygowalne; zrzut i załadunek pojawiają się tylko w dniu skokowym. Wybór typu zmienia dolną część arkusza: lądowanie pokazuje, który lot domyka, tankowanie dokłada parę pól (stan przed · dolano) i samo liczy stan po. Wejście: przycisk „DODAJ WPIS" w pasie akcji trybu edycji (10D) — także wprost z banera niespójności.</span>
+      <span class="vp-when">Zdarzenia NIE MA w logu w ogóle: GPS zgubił lądowanie, zrzut nie został zapisany, tankowanie umknęło. Siedem typów = komplet faktów operacyjnych, które domena uznaje za korygowalne; zrzut i załadunek pojawiają się tylko w dniu skokowym, więc poza nim siatka ma pięć kart. Wybór typu zmienia dolną część arkusza: lądowanie pokazuje, który lot domyka, tankowanie dokłada parę pól (stan przed · dolano) i samo liczy stan po, a dolewka oleju jedno pole („dolano"). Wejście: przycisk „DODAJ WPIS" w pasie akcji trybu edycji (10D) - także wprost z banera niespójności.</span>
     </span>
     <span class="vp-tag">ten arkusz</span>
   </a>
@@ -319,7 +338,7 @@
     <span class="vp-badge">15</span>
     <span class="vp-body">
       <span class="vp-name">Ręczny wpis całego lotu</span>
-      <span class="vp-when">Gdy brakuje nie zdarzenia, tylko CAŁEJ sesji — telefon był wyłączony, lot poszedł na papier. Osobne wejście z „Mój dzień" (01), bo tworzy nową sesję zamiast poprawiać istniejącą.</span>
+      <span class="vp-when">Gdy brakuje nie zdarzenia, tylko CAŁEJ operacji - telefon był wyłączony, lot poszedł na papier. Osobne wejście z „Mój dzień" (01), bo tworzy nową operację zamiast poprawiać istniejącą.</span>
     </span>
   </a>
 </aside>

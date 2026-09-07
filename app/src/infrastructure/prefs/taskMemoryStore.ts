@@ -1,9 +1,9 @@
 /**
- * UZ Aero — pamięć OSTATNIEGO ZADANIA: rodzaj operacji i klient per pilot, trasa per
+ * UZ Aero - pamięć OSTATNIEGO ZADANIA: rodzaj operacji i klient per pilot, trasa per
  * samolot (magazyn klucz→wartość, produkcyjnie AsyncStorage).
  *
  * Po co to istnieje: krok „co dziś robimy" (02e) opisuje rzeczy, które z dnia na dzień
- * najczęściej się NIE zmieniają — skoki nad tym samym lotniskiem, dla tego samego
+ * najczęściej się NIE zmieniają - skoki nad tym samym lotniskiem, dla tego samego
  * klienta. Bez pamięci ten krok byłby codziennym tapnięciem w pusty formularz, żeby
  * zostawić wszystko jak było. Z pamięcią pilot **potwierdza to, co widzi**, a formularz
  * wypełnia się tylko wtedy, gdy coś się faktycznie zmieniło.
@@ -13,25 +13,25 @@
  * a rodzaj operacji i zleceniodawca chodzą za człowiekiem, także gdy przesiądzie się
  * na inny samolot.
  *
- * To PREFERENCJA INTERFEJSU, nie fakt z dnia lotnego — dlatego AsyncStorage, a nie
+ * To PREFERENCJA INTERFEJSU, nie fakt z dnia lotnego - dlatego AsyncStorage, a nie
  * rejestr zdarzeń (ten jest append-only i opisuje lot, nie podpowiedzi formularza).
  * Zapis nigdy nie jest źródłem prawdy: to, co trafia do rejestru, pilot zatwierdza
  * świadomie na ekranie 03.
  *
- * Klasa dostaje magazyn KONSTRUKTOREM, jak `ThemePrefsStore` — dzięki temu format
+ * Klasa dostaje magazyn KONSTRUKTOREM, jak `ThemePrefsStore` - dzięki temu format
  * zapisu sprawdzamy w Node, bez urządzenia.
  */
 
 import type { OperationType } from '../../domain';
 import type { KeyValueStorage } from './themePrefsStore';
 
-/** Rodzaj operacji i oznaczenie klienta — zapamiętane per pilot. */
+/** Rodzaj operacji i oznaczenie klienta - zapamiętane per pilot. */
 export interface RememberedTask {
   operation: OperationType;
   client: string | null;
 }
 
-/** Para lotnisk — zapamiętana per samolot. */
+/** Para lotnisk - zapamiętana per samolot. */
 export interface RememberedRoute {
   departureIcao: string;
   arrivalIcao: string;
@@ -85,7 +85,7 @@ function decodeTask(raw: string | null): RememberedTask | null {
   }
 }
 
-/** Kody ICAO trzymamy tak, jak je zapisano — walidacja długości należy do formularza. */
+/** Kody ICAO trzymamy tak, jak je zapisano - walidacja długości należy do formularza. */
 function decodeRoute(raw: string | null): RememberedRoute | null {
   if (raw == null) return null;
   try {

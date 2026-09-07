@@ -1,12 +1,15 @@
 /**
- * UZ Aero — panel: profil pionowy lotu (`A02c-slad.html`, sekcja „Profil pionowy").
+ * UZ Aero - panel 2.0: profil pionowy sesji.
  *
  * Jak `TrackMap`: CZYSTY UKŁAD, zero arytmetyki. Współrzędne, siatkę i podpisy liczy
- * `profilePlot` (`screens/track/trackChart.ts`), tutaj zostaje rozmieszczenie.
+ * `profilePlot` (`screens/logbook/trackChart.ts`), tutaj zostaje rozmieszczenie.
  *
- * Wysokość jest GPS-owa, nie ciśnieniowa — ekran mówi o tym w stopce pod wykresem,
- * bo różnica względem wysokościomierza w kokpicie potrafi sięgnąć kilkuset stóp,
- * a ten widok bywa czytany obok dokumentów pilota.
+ * Wykres opisuje CAŁY bieg silnika, więc przerwa między wyniesieniami nie jest dziurą
+ * w zapisie - to czas na ziemi między lotami (issue #38).
+ *
+ * Wysokość jest GPS-owa, nie ciśnieniowa - ekran mówi o tym pod wykresem, bo różnica
+ * względem wysokościomierza w kokpicie potrafi sięgnąć kilkuset stóp, a ten widok bywa
+ * czytany obok dokumentów pilota.
  */
 
 import { timeUtc } from '@uzaero/format';
@@ -18,15 +21,15 @@ export interface ProfileGridRow {
   solid: boolean;
 }
 
-/** Kształt oczekiwany przez komponent — typ przy komponencie, jak w `TrackMap`. */
+/** Kształt oczekiwany przez komponent - typ przy komponencie, jak w `TrackMap`. */
 export interface ProfilePlot {
   polyline: string;
-  /** Ta sama łamana domknięta do podstawy — wypełnienie pod krzywą. */
+  /** Ta sama łamana domknięta do podstawy - wypełnienie pod krzywą. */
   area: string;
   grid: ProfileGridRow[];
   left: number;
   plotWidth: number;
-  /** Szczyt lotu w pikselach; `null`, gdy profil go nie zna. */
+  /** Szczyt sesji w pikselach; `null`, gdy profil go nie zna. */
   peak: { x: number; y: number } | null;
 }
 
@@ -34,7 +37,7 @@ interface VerticalProfileProps {
   plot: ProfilePlot;
   width: number;
   height: number;
-  /** Czas pierwszego i ostatniego odczytu — podpisy osi. */
+  /** Czas pierwszego i ostatniego odczytu - podpisy osi. */
   startAt: number;
   endAt: number;
   /** Podpis szczytu; pusty napis = szczytu nie pokazujemy. */
@@ -50,8 +53,13 @@ export function VerticalProfile({
   peakLabel,
 }: VerticalProfileProps) {
   return (
-    <div className="profile-chart" style={{ height }}>
-      <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
+    /* Wysokości NIE narzucamy: `height: auto` w arkuszu bierze ją wprost z `viewBox`,
+       więc skala jest jedna dla obu osi. `height: 220px` z `preserveAspectRatio="none"`
+       rozjeżdżało rysunek o ~25% przy pełnej szerokości karty - krzywej to nie psuło
+       (czas i wysokość nie mają wspólnej jednostki), ale podpisy osi rozciągały się
+       w poziomie, a znacznik szczytu rysował się elipsą. */
+    <div className="profile-chart">
+      <svg viewBox={`0 0 ${width} ${height}`}>
         <defs>
           <linearGradient id="alt-fill-panel" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="var(--green)" stopOpacity="0.28" />

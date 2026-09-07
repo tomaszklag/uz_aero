@@ -1,8 +1,8 @@
 /**
- * UZ Aero — SettingsAction (`.action-item` z mockupu 13-ustawienia)
+ * UZ Aero - SettingsAction (`.action-item` z mockupu 13-ustawienia)
  *
  * Wiersz akcji sekcji ustawień: ikona, nazwa, podpis, strzałka. Podpis nie jest
- * ozdobnikiem — przy zablokowanej akcji niesie POWÓD blokady (ton amber), zgodnie
+ * ozdobnikiem - przy zablokowanej akcji niesie POWÓD blokady (ton amber), zgodnie
  * z zasadą „nigdy cichy błąd" (§6 pkt 3); wiersz zostaje widoczny, tylko przygaszony.
  */
 
@@ -17,7 +17,7 @@ import { Icon, type IconName } from '../foundation/Icon';
 export interface SettingsActionProps {
   icon: IconName;
   name: string;
-  /** Podpis pod nazwą; przy `disabled` renderowany amber — tu mieszka powód blokady. */
+  /** Podpis pod nazwą; przy `disabled` renderowany amber - tu mieszka powód blokady. */
   sub: string;
   disabled?: boolean;
   onPress: () => void;

@@ -1,11 +1,11 @@
 /**
- * UZ Aero (serwer) — wiersz dziennika + złączenie → DTO panelu (funkcja CZYSTA).
+ * UZ Aero (serwer) - wiersz dziennika + złączenie → DTO panelu (funkcja CZYSTA).
  *
  * Ten sam wzorzec, co `sessionListItem` i `flagListItem`: mapowanie na kontrakt jest
  * czystą funkcją, żeby dało się je sprawdzić bez bazy, a adapter zajmował się wyłącznie
  * SQL-em.
  *
- * Mapper NICZEGO nie interpretuje — nie tłumaczy kodu akcji, nie nazywa roli, nie
+ * Mapper NICZEGO nie interpretuje - nie tłumaczy kodu akcji, nie nazywa roli, nie
  * zagląda do `details`. To nie jest oszczędność: dziennik audytu, którego serwer
  * „poprawia" po drodze, przestaje być zapisem tego, co się zdarzyło. Jedyna zmiana
  * kształtu to `Date` → ISO 8601, bo JSON nie ma typu daty.

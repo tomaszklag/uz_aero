@@ -1,10 +1,10 @@
 /**
- * UZ Aero — test składania NORMY dla telefonu (issue #38).
+ * UZ Aero - test składania NORMY dla telefonu (issue #38).
  *
  * Norma jest jedynym kanałem, którym analityka dociera do pilota, więc test idzie tą
  * samą drogą, co serwer: syntetyczne interwały → `consumptionSummary` → `fitConsumptionModel`
  * → `fitMhModel` → `buildConsumptionNorm`. Sprawdzanie samego złożenia obiektu na
- * atrapach modelu przepuściłoby dokładnie te błędy, które tu są groźne — sklejenie faz
+ * atrapach modelu przepuściłoby dokładnie te błędy, które tu są groźne - sklejenie faz
  * i dobór interwałów do pasma rozrzutu.
  */
 
@@ -23,7 +23,7 @@ const START = Date.UTC(2026, 5, 1);
 
 /**
  * Interwał o zadanych czasach faz i zużyciu policzonym z zadanych stawek.
- * Proporcje faz muszą się między interwałami RÓŻNIĆ — to ta zmienność identyfikuje stawki.
+ * Proporcje faz muszą się między interwałami RÓŻNIĆ - to ta zmienność identyfikuje stawki.
  */
 function interval(
   index: number,
@@ -61,7 +61,7 @@ function interval(
   };
 }
 
-/** Osiem interwałów o różnych proporcjach faz — komplet ponad progami publikacji. */
+/** Osiem interwałów o różnych proporcjach faz - komplet ponad progami publikacji. */
 function eightIntervals(airLPerH = 20, groundLPerH = 8, noise: number[] = []): FuelInterval[] {
   const shape: Array<[number, number]> = [
     [3.0, 0.6],
@@ -82,7 +82,7 @@ function eightIntervals(airLPerH = 20, groundLPerH = 8, noise: number[] = []): F
 const VERTICAL = { ground: 8, climb: 30, cruise: 18, descent: 10 };
 
 /**
- * Interwał ZE ŚLADEM — z rozbiciem lotu na wznoszenie, przelot i zniżanie.
+ * Interwał ZE ŚLADEM - z rozbiciem lotu na wznoszenie, przelot i zniżanie.
  * Zużycie liczone z czterech stawek, żeby model miał co odzyskać.
  */
 function traced(
@@ -122,7 +122,7 @@ function equation(index: number, flightH: number, groundH: number, kF: number, k
   };
 }
 
-/** Sześć zdanych sesji o różnych proporcjach — ponad `MIN_PUBLISH_MH_DAYS`. */
+/** Sześć zdanych sesji o różnych proporcjach - ponad `MIN_PUBLISH_MH_DAYS`. */
 function sixEquations(kFlight = 1, kGround = 0.4): MhEquation[] {
   const shape: Array<[number, number]> = [
     [4.0, 0.5],
@@ -175,7 +175,7 @@ describe('norma dla telefonu', () => {
     const zaszumione = build(eightIntervals(20, 8, [1.5, -1, 1, -1.5, 1, -1, 1.5, -1.5]))!;
 
     // Dane idealne: model trafia w każdy interwał, więc pasmo jest punktem. To NIE jest
-    // powód do radości — dlatego oczekiwanie ma podłogę z błędu odczytu (`policy.ts`).
+    // powód do radości - dlatego oczekiwanie ma podłogę z błędu odczytu (`policy.ts`).
     expect(czyste.fuelRatioLow).toBeCloseTo(1, 6);
     expect(czyste.fuelRatioHigh).toBeCloseTo(1, 6);
 
@@ -184,7 +184,7 @@ describe('norma dla telefonu', () => {
   });
 
   it('brak przeliczników licznika nie unieważnia normy paliwa', () => {
-    // Trzy sesje to mniej niż `MIN_PUBLISH_MH_DAYS` — paliwo zostaje, MH milczy.
+    // Trzy sesje to mniej niż `MIN_PUBLISH_MH_DAYS` - paliwo zostaje, MH milczy.
     const norm = build(eightIntervals(), sixEquations().slice(0, 3))!;
 
     expect(norm.airLPerH).toBeCloseTo(20, 3);
@@ -197,14 +197,14 @@ describe('norma dla telefonu', () => {
 
   /**
    * Telefon nie ma faz pionowych, więc model czterofazowy trzeba skleić do pary stawek.
-   * Do issue #38 stawką lotu był sam PRZELOT — najniższa z trzech — więc dla maszyny
+   * Do issue #38 stawką lotu był sam PRZELOT - najniższa z trzech - więc dla maszyny
    * spędzającej połowę czasu na wznoszeniu (dzień skokowy) norma zaniżała zużycie,
    * a razem z nim rezerwę paliwa w kokpicie.
    */
   it('model czterofazowy skleja się średnią ważoną, nie samym przelotem', () => {
     // Proporcje faz muszą się między interwałami mocno różnić (dzień skokowy obok
     // przelotu), inaczej regresja nie rozdzieli wznoszenia od przelotu i model zejdzie
-    // o szczebel — bramka `MAX_VARIANCE_INFLATION` pilnuje tego celowo.
+    // o szczebel - bramka `MAX_VARIANCE_INFLATION` pilnuje tego celowo.
     const shapes: Array<[number, number, number, number]> = [
       [0.5, 1.6, 0.1, 1.0],
       [1.5, 0.2, 2.5, 0.3],

@@ -1,9 +1,9 @@
 /**
- * UZ Aero — testy uzgadniania MOTYWU PILOTA (`application/sync/themePrefsSync.ts`,
+ * UZ Aero - testy uzgadniania MOTYWU PILOTA (`application/sync/themePrefsSync.ts`,
  * decyzja 2026-07-29: motyw jest preferencją pilota i wędruje między urządzeniami).
  *
  * Sedno: LWW po stemplu DECYZJI działa w OBIE strony (nasz nowszy wygrywa na serwerze,
- * serwerowy nowszy wygrywa u nas — także gdy to my pchaliśmy), `dirty` zachowuje się
+ * serwerowy nowszy wygrywa u nas - także gdy to my pchaliśmy), `dirty` zachowuje się
  * jak outbox (wysyłka przy każdej okazji, offline niczego nie psuje), a brama wieku
  * wycisza pull z pulsu co 60 s.
  */
@@ -35,6 +35,10 @@ const PILOT = { id: 'TMK', code: 'TMK', name: 'Tomasz Małkiewicz' };
 const CREDS: StoredCredentials = { token: 'jwt-1', refreshToken: 'r1', pilot: PILOT };
 
 class MemoryCredentials {
+  // Zgłoszenie rejestracyjne (logowanie Google) - nieużywane w tych testach.
+  loadRegistration = async (): Promise<null> => null;
+  saveRegistration = async (_registration: unknown): Promise<void> => {};
+  clearRegistration = async (): Promise<void> => {};
   constructor(private stored: StoredCredentials | null = CREDS) {}
   load = async () => this.stored;
   save = async (c: StoredCredentials) => {
@@ -45,7 +49,7 @@ class MemoryCredentials {
   };
 }
 
-/** Rekordy motywu w pamięci — port lokalnego magazynu bez AsyncStorage. */
+/** Rekordy motywu w pamięci - port lokalnego magazynu bez AsyncStorage. */
 class MemoryThemePrefs implements ThemePrefsPort {
   records = new Map<string, ThemePrefRecord>();
   read = async (pilotId: string) => this.records.get(pilotId) ?? null;
@@ -56,6 +60,14 @@ class MemoryThemePrefs implements ThemePrefsPort {
 
 /** Serwer-skrypt dla `/me/prefs`: rejestruje wywołania, odpowiada z kolejek. */
 class PrefsServer implements ServerPort {
+  async loginWithGoogle(): Promise<never> {
+    throw new Error('nieużywane w tych testach');
+  }
+
+  async registrationStatus(): Promise<never> {
+    throw new Error('nieużywane w tych testach');
+  }
+
   getCalls: string[] = [];
   putCalls: { token: string; theme: string; themeUpdatedAt: string }[] = [];
   getScript: Array<RemoteThemePrefs | Error> = [];
@@ -66,7 +78,7 @@ class PrefsServer implements ServerPort {
     throw new Error('nieużywane w tych testach');
   }
 
-  /** Droga powrotna (§4.9) ma własne testy — `eventRestore.test.ts`. */
+  /** Droga powrotna (§4.9) ma własne testy - `eventRestore.test.ts`. */
   async pullEvents(): Promise<RemoteEventPage> {
     return { events: [], nextCursor: null, hasMore: false };
   }
@@ -100,10 +112,14 @@ class PrefsServer implements ServerPort {
   pushTraces = async () => {
     throw new Error('nieużywane w tych testach');
   };
+  pushBugReports = async () => {
+    throw new Error('nieużywane w tych testach');
+  };
   getSessionTrack = async (): Promise<never> => {
     throw new Error('nieużywane w tych testach');
   };
   getReference = async () => ({ data: null, etag: null });
+  getReadingsChain = async () => ({ before: null, after: null, oil: null });
   getAircraftState = async () => ({
     aircraftId: 'SP-AXA',
     claimPicId: null,
@@ -150,7 +166,7 @@ describe('ThemePrefsSync', () => {
     sync.onApplied((pilotId, theme) => applied.push(`${pilotId}:${theme}`));
 
     await prefs.write('TMK', { theme: 'paper', updatedAt: T0 - 60_000, dirty: true });
-    // Drugi telefon TEGO pilota zapisał `solar` minutę PÓŹNIEJ — serwer odpowiada zwycięzcą.
+    // Drugi telefon TEGO pilota zapisał `solar` minutę PÓŹNIEJ - serwer odpowiada zwycięzcą.
     server.putScript = [{ theme: 'solar', themeUpdatedAt: iso(T0 - 1) }];
 
     expect(await sync.syncIfStale('TMK')).toBe('pulled');
@@ -193,13 +209,13 @@ describe('ThemePrefsSync', () => {
     expect(await sync.syncIfStale('TMK')).toBe('fresh'); // puls co 60 s ≠ zapytanie co 60 s
     expect(server.getCalls).toHaveLength(1);
 
-    // Zmiana motywu nie czeka na bramę — dirty to outbox preferencji.
+    // Zmiana motywu nie czeka na bramę - dirty to outbox preferencji.
     await prefs.write('TMK', { theme: 'paper', updatedAt: T0, dirty: true });
     server.putScript = [{ theme: 'paper', themeUpdatedAt: iso(T0) }];
     expect(await sync.syncIfStale('TMK')).toBe('pushed');
   });
 
-  it('offline: `skipped`, rekord z dirty NIETKNIĘTY — następna okazja spróbuje znowu', async () => {
+  it('offline: `skipped`, rekord z dirty NIETKNIĘTY - następna okazja spróbuje znowu', async () => {
     const { prefs, server, sync } = harness();
     const local: ThemePrefRecord = { theme: 'paper', updatedAt: T0, dirty: true };
     await prefs.write('TMK', local);
@@ -208,7 +224,7 @@ describe('ThemePrefsSync', () => {
     expect(await sync.syncIfStale('TMK')).toBe('skipped');
     expect(await prefs.read('TMK')).toEqual(local);
 
-    // Zasięg wrócił — ta sama zmiana wychodzi bez straty.
+    // Zasięg wrócił - ta sama zmiana wychodzi bez straty.
     server.putScript = [{ theme: 'paper', themeUpdatedAt: iso(T0) }];
     expect(await sync.syncIfStale('TMK')).toBe('pushed');
     expect(await prefs.read('TMK')).toEqual({ ...local, dirty: false });
@@ -253,7 +269,7 @@ describe('ThemePrefsSync', () => {
     };
 
     expect(await sync.syncIfStale('TMK')).toBe('pushed');
-    // Świeższa decyzja przeżyła: dirty stoi, stempel nie cofnięty — wyśle ją następny przebieg.
+    // Świeższa decyzja przeżyła: dirty stoi, stempel nie cofnięty - wyśle ją następny przebieg.
     expect(await prefs.read('TMK')).toEqual({ theme: 'amber', updatedAt: T0, dirty: true });
   });
 });

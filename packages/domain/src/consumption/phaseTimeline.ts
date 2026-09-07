@@ -1,22 +1,22 @@
 /**
- * UZ Aero — oś faz pionowych lotu (wznoszenie / przelot / zniżanie) ze śladu GPS.
+ * UZ Aero - oś faz pionowych lotu (wznoszenie / przelot / zniżanie) ze śladu GPS.
  *
  * ══ PO CO ══
  * Model zużycia rozdziela paliwo między fazy, ale ziemia/powietrze to podział zgrubny:
  * wznoszenie pali wyraźnie więcej niż przelot, a zniżanie wyraźnie mniej. Żeby model
  * mógł je rozróżnić, każdy interwał paliwowy musi wiedzieć, ile czasu spędził w każdej
- * z nich — a tego rejestr zdarzeń nie wie. Wie ślad GPS.
+ * z nich - a tego rejestr zdarzeń nie wie. Wie ślad GPS.
  *
  * ══ KLUCZOWA FAKTORYZACJA ══
  * Ta oś zależy WYŁĄCZNIE od śladu i od niczego więcej. Podział na ziemię i powietrze
- * pochodzi z rejestru (`takeoff`/`landing`), podział lotu na fazy pionowe — z wysokości.
+ * pochodzi z rejestru (`takeoff`/`landing`), podział lotu na fazy pionowe - z wysokości.
  * Rozdzielenie tych dwóch źródeł jest tym, co czyni wynik cache'owalnym: korekta czasu
  * startu (04c) zmienia okno lotu, ale nie zmienia ANI JEDNEGO odcinka tej osi. Gdyby
  * funkcja czytała rejestr, każda korekta unieważniałaby zapisany wynik.
  *
  * ══ TA SAMA METODA, CO NAPIS W KOKPICIE ══
  * Prędkość pionowa liczy się nachyleniem regresji w oknie `VS_WINDOW_SEC`, a progiem
- * jest `VS_THRESHOLD_FPM` — dokładnie jak w `detection/flightPhase.ts`. Druga, własna
+ * jest `VS_THRESHOLD_FPM` - dokładnie jak w `detection/flightPhase.ts`. Druga, własna
  * definicja „wznoszenia" rozjechałaby się z tym, co pilot widział na ekranie, i nikt
  * by tego nie zauważył aż do rozmowy o konkretnym locie.
  */
@@ -27,7 +27,7 @@ import { slopePerSecond, type TimePoint } from '../detection/regression';
 import { isUsablePoint, type TrackPoint } from '../track/point';
 import { mergeSpans, spanTimeInWindow, type ClosedSpan, type Span } from './timeInPhase';
 
-/** Faza pionowa — podzbiór faz kokpitu, bez stanów naziemnych. */
+/** Faza pionowa - podzbiór faz kokpitu, bez stanów naziemnych. */
 export type VerticalPhase = 'climb' | 'cruise' | 'descent';
 
 /** Odcinek jednej fazy pionowej. */
@@ -37,7 +37,7 @@ export interface PhaseSegment {
   phase: VerticalPhase;
 }
 
-/** Czasy faz pionowych w oknie (ms) — wejście modelu czterofazowego. */
+/** Czasy faz pionowych w oknie (ms) - wejście modelu czterofazowego. */
 export interface PhaseTimes {
   climbMs: number;
   cruiseMs: number;
@@ -50,13 +50,13 @@ const FEET_PER_MINUTE = 60;
 /**
  * Buduje oś faz pionowych z punktów śladu.
  *
- * Bierze wyłącznie punkty przyjęte przez bramkę jakości i mające wysokość — odrzucony
+ * Bierze wyłącznie punkty przyjęte przez bramkę jakości i mające wysokość - odrzucony
  * fix z wysokością 8 000 ft w środku wznoszenia wyprodukowałby fazę, której nie było,
  * a to ten sam błąd, przed którym bramka chroni detektor.
  *
  * Każdemu punktowi przypisujemy fazę z prędkości pionowej policzonej w oknie KOŃCZĄCYM
  * się na nim, po czym sklejamy sąsiednie punkty o tej samej fazie w odcinki. Punkt bez
- * dającej się policzyć prędkości (za mało historii, przerwa w sygnale) dostaje `cruise` —
+ * dającej się policzyć prędkości (za mało historii, przerwa w sygnale) dostaje `cruise` -
  * ten sam stan domyślny, co w kokpicie, i z tego samego powodu: brak wiedzy o zmianie
  * wysokości nie jest dowodem na wznoszenie.
  */
@@ -68,7 +68,7 @@ export interface VerticalSpeedSample {
 }
 
 /**
- * Prędkość pionowa PUNKT PO PUNKCIE — wspólne wejście osi faz i statystyk śladu.
+ * Prędkość pionowa PUNKT PO PUNKCIE - wspólne wejście osi faz i statystyk śladu.
  *
  * Wydzielone przy issue #47: ekran śladu podaje „max wznoszenie" i „max opadanie",
  * a policzone własną pętlą byłyby DRUGĄ definicją wznoszenia w tym samym pakiecie.
@@ -111,7 +111,7 @@ export function buildPhaseTimeline(points: readonly TrackPoint[]): PhaseSegment[
     }
 
     if (phase !== openPhase) {
-      // Odcinek kończy się NA tym punkcie — zmiana fazy zaszła gdzieś między nim
+      // Odcinek kończy się NA tym punkcie - zmiana fazy zaszła gdzieś między nim
       // a poprzednim, a bez lepszej wiedzy dzielimy je w miejscu pomiaru.
       if (point.time > openFrom) segments.push({ from: openFrom, to: point.time, phase: openPhase });
       openPhase = phase;
@@ -131,7 +131,7 @@ export function buildPhaseTimeline(points: readonly TrackPoint[]): PhaseSegment[
  * Czasy faz pionowych w oknie `[since, until]`, ograniczone do odcinków W POWIETRZU.
  *
  * Przecięcie z `airborne` jest konieczne, nie kosmetyczne: ślad nagrywa się przy
- * pracującym silniku, więc zawiera też kołowanie — a wysokość GPS potrafi na ziemi
+ * pracującym silniku, więc zawiera też kołowanie - a wysokość GPS potrafi na ziemi
  * dryfować o kilkadziesiąt stóp i wyprodukować „wznoszenie" na płycie.
  */
 export function phaseTimesInWindow(
@@ -152,7 +152,7 @@ export function phaseTimesInWindow(
       if (to > from) clipped.push({ from, to });
     }
 
-    // Odcinki fazy przecinamy z czasem w powietrzu — `spanTimeInWindow` scala nakładki
+    // Odcinki fazy przecinamy z czasem w powietrzu - `spanTimeInWindow` scala nakładki
     // i przycina do okna, więc wystarczy podać mu oba zbiory po kolei.
     let total = 0;
     for (const span of mergeSpans(clipped)) {
@@ -166,14 +166,14 @@ export function phaseTimesInWindow(
 }
 
 /**
- * Faza punktu `i` — z prędkości pionowej w oknie CENTROWANYM na nim.
+ * Faza punktu `i` - z prędkości pionowej w oknie CENTROWANYM na nim.
  *
  * ══ DLACZEGO CENTROWANE, A NIE WSTECZ (poprawka z testu) ══
- * Kokpit liczy prędkość pionową z okna kończącego się „teraz", bo innego nie ma —
+ * Kokpit liczy prędkość pionową z okna kończącego się „teraz", bo innego nie ma -
  * działa na strumieniu. Tutaj analizujemy NAGRANIE, więc przyszłość każdego punktu jest
  * dostępna, a okno wstecz miało konkretną wadę: pierwsze punkty lotu nie mają historii,
  * więc regresja zwracała `null` i początek wznoszenia lądował w `cruise`. Wychodziło to
- * jako „przelot zaraz po starcie" — czyli faza, której nie było, przypisana do momentu,
+ * jako „przelot zaraz po starcie" - czyli faza, której nie było, przypisana do momentu,
  * w którym samolot pali najwięcej.
  *
  * Okno centrowane daje też fazy przesunięte we WŁAŚCIWE miejsce: zmiana wykryta wstecz
@@ -201,7 +201,7 @@ function verticalSpeedAt(
 }
 
 /**
- * Faza z prędkości pionowej. Brak wyniku regresji daje `cruise` — ten sam stan domyślny,
+ * Faza z prędkości pionowej. Brak wyniku regresji daje `cruise` - ten sam stan domyślny,
  * co w kokpicie, i z tego samego powodu: brak wiedzy o zmianie wysokości nie jest
  * dowodem na wznoszenie.
  */

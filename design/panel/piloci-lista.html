@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UZ Aero - Panel 2.0 · Piloci: lista kont</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="panel.css">
+</head>
+
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">PILOCI · LISTA KONT</span>
+  <span class="slug">panel/piloci-lista · #/piloci · P1</span>
+  <span class="canvas-meta"><span class="pulse"></span>Odwzorowuje AccountsScreen.tsx</span>
+</header>
+
+<aside class="variants-panel">
+  <div class="vp-title">Warianty i sąsiedzi tego ekranu</div>
+  <a class="vp-item active" href="piloci-lista.html">
+    <span class="vp-badge">P1</span>
+    <span class="vp-body">
+      <span class="vp-name">Lista kont + kolejka zgłoszeń</span>
+      <span class="vp-when">Stan pokazany niżej: dwie osoby czekają na decyzję, więc karta <b>ZGŁOSZENIA</b> stoi nad listą. <b>Pusta kolejka nie dostaje karty z zerem</b> - znika w całości, a ekran zaczyna się od paska zawężeń.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="piloci-konto.html">
+    <span class="vp-badge">P2</span>
+    <span class="vp-body">
+      <span class="vp-name">Szuflada konta</span>
+      <span class="vp-when">Otwiera ją wiersz listy albo „Edytuj" w kolumnie akcji. Ten sam ekran pod adresem <code>#/piloci/&lt;id&gt;</code> - lista zostaje pod spodem.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="piloci-zgloszenie.html">
+    <span class="vp-badge">P3</span>
+    <span class="vp-body">
+      <span class="vp-name">Szuflada zgłoszenia</span>
+      <span class="vp-when">Otwiera ją „Rozpatrz" w kolejce. Decyzja ZAKŁADA konto, więc kontekstem jest lista, do której to konto trafi - osobnego modułu nie ma.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="samoloty-lista.html">
+    <span class="vp-badge amber">S1</span>
+    <span class="vp-body">
+      <span class="vp-name">Samoloty - ta sama kompozycja</span>
+      <span class="vp-when">Nagłówek → zawężenia → tabela → szuflada. Dwa moduły konfiguracji czyta się tak samo, więc różnicą są wyłącznie kolumny.</span>
+    </span>
+  </a>
+</aside>
+
+<!-- ══ EKRAN: LISTA KONT ══
+     Kompozycja 1:1 z `admin/src/screens/accounts/AccountsScreen.tsx`:
+     PageHead (bez podtytułu - tytuł „PILOCI" nad kolumną nazwisk nie wymaga zdania)
+     → karta kolejki (warunkowa) → pasek zawężeń → tabela. Bez kafli z licznikami,
+     bez liczb przy chipach, bez stopki „pokazano n z m" - tych rzeczy ekran nie ma. -->
+<main class="browser" role="region" aria-label="Panel UZ Aero - lista pilotów">
+
+  <div class="chrome">
+    <span class="chrome-dots"><i></i><i></i><i></i></span>
+    <span class="chrome-url">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <b>panel.uzaero.pl</b>/#/piloci
+    </span>
+  </div>
+
+  <div class="shell">
+
+    <header class="topbar">
+      <span class="brand">
+        <span class="brand-mark">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+        </span>
+        <span class="brand-name">UZ AERO</span>
+      </span>
+
+      <nav class="tabs" aria-label="Sekcje panelu">
+        <a class="tab" href="dziennik-flota.html">Dziennik</a>
+        <a class="tab active" href="piloci-lista.html">Piloci</a>
+        <a class="tab" href="samoloty-lista.html">Samoloty</a>
+        <a class="tab" href="zgloszenia-lista.html">Zgłoszenia</a>
+      </nav>
+
+      <div class="topbar-right">
+        <span class="who-name">Tomasz Małkiewicz</span>
+        <button type="button" class="btn ghost sm">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="14 17 19 12 14 7"/><line x1="19" y1="12" x2="9" y2="12"/></svg>
+          Wyloguj
+        </button>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">PILOCI</h1>
+        </div>
+        <div class="page-actions">
+          <a class="btn primary" href="piloci-konto.html">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Dodaj pilota
+          </a>
+        </div>
+      </div>
+
+      <!-- ══ KOLEJKA ZGŁOSZEŃ REJESTRACYJNYCH ══
+           Stoi NAD listą, bo to zadanie do zrobienia, a lista jest stanem - i stoi
+           WYŁĄCZNIE wtedy, gdy ktoś czeka. Pusta kolejka nie dostaje karty z zerem:
+           stan domyślny nie zajmuje ekranu (reguła SyncChipa). Widzi ją tylko konto
+           z `accounts.manage` - to są e-maile ludzi spoza klubu. -->
+      <div class="card">
+        <div class="card-title">ZGŁOSZENIA · 2</div>
+        <div class="table-wrap">
+          <table>
+            <caption class="visually-hidden">Zgłoszenia czekające na decyzję</caption>
+            <thead>
+              <tr>
+                <th>Imię u Google</th>
+                <th>E-mail</th>
+                <th>Czeka od</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="clickable">
+                <td class="cell-strong">Michał Sowa</td>
+                <td class="cell-sub">michal.sowa@gmail.com</td>
+                <td class="cell-sub">6 WRZ 18:22 UTC</td>
+                <td class="row-actions"><a class="btn primary sm" href="piloci-zgloszenie.html">Rozpatrz</a></td>
+              </tr>
+              <tr class="clickable">
+                <td class="cell-strong">Ewa Dąbek</td>
+                <td class="cell-sub">ewa.dabek@gmail.com</td>
+                <td class="cell-sub">7 WRZ 07:05 UTC</td>
+                <td class="row-actions"><a class="btn primary sm" href="piloci-zgloszenie.html">Rozpatrz</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="filters">
+        <label class="search">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input value="" placeholder="Szukaj: nazwisko, kod, e-mail" aria-label="Szukaj pilota">
+        </label>
+        <button type="button" class="chip on" aria-pressed="true">Wszyscy</button>
+        <button type="button" class="chip" aria-pressed="false">Aktywni</button>
+      </div>
+
+      <!-- Kolumny 1:1 z `columns` w AccountsScreen: Kod (`.reg`) · Imię i nazwisko
+           (jedyna sortowalna - porządek jedzie w adresie jako `?kolejnosc=z-a`) ·
+           E-mail (`.cell-sub`, kreska przy braku) · Rola · Status · akcja.
+           Konto bez dostępu jest przygaszone (`tr.muted`) i serwer stawia je na końcu. -->
+      <div class="table-wrap">
+        <table>
+          <caption class="visually-hidden">Piloci</caption>
+          <thead>
+            <tr>
+              <th>Kod</th>
+              <th class="sortable" aria-sort="ascending"><button type="button">Imię i nazwisko<span class="arrow" aria-hidden="true">↑</span></button></th>
+              <th>E-mail</th>
+              <th>Rola</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="clickable">
+              <td class="reg">AKO</td>
+              <td class="cell-strong">Anna Kowal</td>
+              <td class="cell-sub">anna.kowal@gmail.com</td>
+              <td><span class="pill dim">Pilot</span></td>
+              <td><span class="pill green"><span class="dot"></span>Aktywny</span></td>
+              <td class="row-actions"><a class="btn ghost sm" href="piloci-konto.html">Edytuj</a></td>
+            </tr>
+            <tr class="clickable">
+              <td class="reg">JWR</td>
+              <td class="cell-strong">Jakub Wrona</td>
+              <td class="cell-sub">jakub.wrona@gmail.com</td>
+              <td><span class="pill dim">Pilot</span></td>
+              <td><span class="pill green"><span class="dot"></span>Aktywny</span></td>
+              <td class="row-actions"><a class="btn ghost sm" href="piloci-konto.html">Edytuj</a></td>
+            </tr>
+            <!-- Konto bez adresu Google: kreska, nie pusta komórka. To normalny stan
+                 starego wiersza - dopóki administrator nie wpisze adresu, nikt tym
+                 kontem nie wejdzie, a plakietka „Aktywny" mówi wyłącznie o dostępie. -->
+            <tr class="clickable">
+              <td class="reg">KLI</td>
+              <td class="cell-strong">Krzysztof Lis</td>
+              <td class="cell-sub">—</td>
+              <td><span class="pill dim">Pilot</span></td>
+              <td><span class="pill green"><span class="dot"></span>Aktywny</span></td>
+              <td class="row-actions"><a class="btn ghost sm" href="piloci-konto.html">Edytuj</a></td>
+            </tr>
+            <tr class="clickable">
+              <td class="reg">MZI</td>
+              <td class="cell-strong">Marta Zięba</td>
+              <td class="cell-sub">marta.zieba@gmail.com</td>
+              <td><span class="pill dim">Pilot</span></td>
+              <td><span class="pill green"><span class="dot"></span>Aktywny</span></td>
+              <td class="row-actions"><a class="btn ghost sm" href="piloci-konto.html">Edytuj</a></td>
+            </tr>
+            <!-- Rola panelowa jest `blue`: to INFORMACJA (ten człowiek wchodzi do panelu).
+                 „Pilot" zostaje `dim`, bo jest stanem domyślnym, a plakietka świecąca
+                 przy każdym wierszu uczy oko pomijać kolumnę. -->
+            <tr class="clickable">
+              <td class="reg">TMA</td>
+              <td class="cell-strong">Tomasz Małkiewicz</td>
+              <td class="cell-sub">tomasz.malkiewicz@uzaero.pl</td>
+              <td><span class="pill blue">Administrator</span></td>
+              <td><span class="pill green"><span class="dot"></span>Aktywny</span></td>
+              <td class="row-actions"><a class="btn ghost sm" href="piloci-konto.html">Edytuj</a></td>
+            </tr>
+            <tr class="clickable muted">
+              <td class="reg">PNO</td>
+              <td class="cell-strong">Paweł Nowak</td>
+              <td class="cell-sub">pawel.nowak@gmail.com</td>
+              <td><span class="pill dim">Pilot</span></td>
+              <td><span class="pill dim">Nieaktywny</span></td>
+              <td class="row-actions"><a class="btn ghost sm" href="piloci-konto.html">Edytuj</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="piloci-lista.html" class="active">P1 Piloci</a>
+  <span>·</span>
+  <a href="piloci-konto.html">P2 Konto</a>
+  <span>·</span>
+  <a href="piloci-zgloszenie.html">P3 Zgłoszenie</a>
+  <span>·</span>
+  <a href="samoloty-lista.html">S1 Samoloty</a>
+  <span>·</span>
+  <a href="zgloszenia-lista.html">Z1 Zgłoszenia błędów</a>
+  <span>·</span>
+  <a href="dziennik-flota.html">L1 Dziennik →</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+</body>
+</html>

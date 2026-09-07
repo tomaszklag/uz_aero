@@ -1,10 +1,10 @@
 /**
- * UZ Aero — test LICZNIKA POPRAWEK PER POLE (issue #43, uwagi z urządzenia).
+ * UZ Aero - test LICZNIKA POPRAWEK PER POLE (issue #43, uwagi z urządzenia).
  *
  * Ta jedna liczba zapala plakietkę „popr." przy wierszu osi, przy notatce i przy drugim
  * pilocie, a potem podpisuje wejście w historię zmian. Cały jej sens jest w zawężeniu:
  * `preflight_confirm` niesie paliwo, licznik motogodzin, notatkę i Duala w JEDNYM
- * payloadzie, więc licznik per zdarzenie zapalałby wszystkie cztery znaczniki naraz —
+ * payloadzie, więc licznik per zdarzenie zapalałby wszystkie cztery znaczniki naraz -
  * i każdy z nich kłamałby o trzech pozostałych.
  */
 
@@ -38,7 +38,7 @@ function event<T extends EventType>(
   } as Event;
 }
 
-/** Sesja z jednym lądowaniem i preflightem — dwa różne cele korekty. */
+/** Sesja z jednym lądowaniem i preflightem - dwa różne cele korekty. */
 function base(): Event[] {
   seq = 0;
   return [
@@ -74,7 +74,7 @@ describe('licznik poprawek per pole', () => {
   });
 
   it('liczy TYLKO pytane pole, choć payload niesie cztery', () => {
-    // Sedno całej rzeczy: jedna korekta paliwa, jedna notatki, jedna Duala — i każde
+    // Sedno całej rzeczy: jedna korekta paliwa, jedna notatki, jedna Duala - i każde
     // pytanie musi dostać swoją jedynkę, a nie wspólną trójkę.
     const events = [
       ...base(),
@@ -90,7 +90,7 @@ describe('licznik poprawek per pole', () => {
 
   it('kilka pól w jednej korekcie liczy się osobno', () => {
     // `amend` bywa wielopolowy (arkusz odczytu zapisuje paliwo i licznik razem),
-    // a historia rozbija go na wpis per pole — licznik musi widzieć to samo.
+    // a historia rozbija go na wpis per pole - licznik musi widzieć to samo.
     const events = [
       ...base(),
       correction('preflight-1', { action: 'amend', fields: { fuelL: 148, mh: 1234.6 } }),
@@ -109,7 +109,7 @@ describe('licznik poprawek per pole', () => {
   });
 
   it('unieważnienie nie jest zmianą ŻADNEGO pola', () => {
-    // `void` nie rusza wartości, tylko to, czy zdarzenie w ogóle obowiązuje — a wiersz
+    // `void` nie rusza wartości, tylko to, czy zdarzenie w ogóle obowiązuje - a wiersz
     // unieważniony i tak znika z osi, więc nie ma przy czym zapalić plakietki.
     const events = [...base(), correction('landing-1', { action: 'void' })];
 
@@ -128,7 +128,7 @@ describe('licznik poprawek per pole', () => {
   });
 
   it('brak adresu daje zero, a nie wyjątek', () => {
-    // Sesja bez preflightu w strumieniu — ekran ma wtedy po prostu nie rysować plakietki.
+    // Sesja bez preflightu w strumieniu - ekran ma wtedy po prostu nie rysować plakietki.
     expect(fieldChanges(base(), null, ['notes'])).toBe(0);
   });
 });

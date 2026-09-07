@@ -1,10 +1,10 @@
 /**
- * UZ Aero (serwer) — reguły, które BRONIĄ konfiguracji floty (`A07`, `A07a`).
+ * UZ Aero (serwer) - reguły, które BRONIĄ konfiguracji floty (`A07`, `A07a`).
  *
  * Lustro `accountGuards.ts` i ta sama zasada: reguła „czego nie wolno zrobić" mieszka
  * w `domain/`, jest czysta i ma test, a komenda wyłącznie ją woła. Rozsianie tych
  * warunków po `commands/fleet.ts` dałoby konstrukcję, w której nikt nie wie, ile
- * warunków obowiązuje przy zapisie samolotu — a to jest dokładnie ten rodzaj wiedzy,
+ * warunków obowiązuje przy zapisie samolotu - a to jest dokładnie ten rodzaj wiedzy,
  * po którą sięga się dopiero wtedy, gdy coś już poszło źle.
  *
  * ══ CZEGO TE REGUŁY PILNUJĄ ══
@@ -13,28 +13,44 @@
  *     `fuelToleranceL(capacityL)` przy wartości ≤ 0 cofa się do progu 10 L, więc
  *     samolot z pojemnością 0 dostawałby po cichu tolerancję flagi `FUEL_MISMATCH`
  *     wziętą z podłogi, a inwariant „stan po tankowaniu ≤ pojemność" (§3.4) przestałby
- *     cokolwiek znaczyć. Zero w tej kolumnie nie jest stanem świata — jest literówką,
+ *     cokolwiek znaczyć. Zero w tej kolumnie nie jest stanem świata - jest literówką,
  *     której skutek widać dopiero tydzień później, na fladze, która nie powstała.
  *
  *  2. **Samolotu z OTWARTĄ sesją nie wyłącza się ze służby.** Wyłączenie zabiera
  *     jednostkę z listy wyboru w aplikacji, ale pilot, który tę maszynę trzyma,
- *     już jej nie wybiera — on nią LATA. Zabranie mu samolotu ze słownika w połowie
+ *     już jej nie wybiera - on nią LATA. Zabranie mu samolotu ze słownika w połowie
  *     dnia zostawia go z sesją wskazującą jednostkę, której konfiguracji telefon nie
  *     odświeży poprawnie przy następnym starcie. Odmowa jest jawna i z powodem:
  *     administrator ma zobaczyć „poczekaj do zamknięcia dnia", a nie zastanawiać się,
  *     czy panel się zepsuł.
  *
  * **Czego tu NIE MA:** unikalności rejestracji. Ta jest własnością BAZY (indeks
- * `UNIQUE` na `aircraft.reg`) i sprawdzenia przed zapisem w porcie — funkcja czysta
+ * `UNIQUE` na `aircraft.reg`) i sprawdzenia przed zapisem w porcie - funkcja czysta
  * nie ma jak jej ocenić, bo nie zna reszty floty, a udawanie, że zna, kończy się
  * regułą przegrywającą każdy wyścig.
  */
 
 /**
- * Kody odmowy. Surowe (`zasób_czynność`) — nazwanie ich po polsku jest sprawą panelu,
+ * Kody odmowy. Surowe (`zasób_czynność`) - nazwanie ich po polsku jest sprawą panelu,
  * tak samo jak przy `AccountRefusal`: serwer nie zna języka interfejsu.
  */
-export type FleetRefusal = 'capacity_not_positive' | 'open_session';
+export type FleetRefusal =
+  | 'capacity_not_positive'
+  | 'open_session'
+  | 'oil_not_positive'
+  | 'oil_min_above_capacity'
+  /** Norma spalania z dokumentacji ≤ 0 - zero L/h nie jest stanem świata (issue #66). */
+  | 'fuel_norm_not_positive'
+  /** Stan początkowy ujemny - licznik ani zbiornik nie schodzą pod zero (issue #66). */
+  | 'initial_negative'
+  /** Startowe paliwo ponad pojemność zbiorników - ten sam inwariant, co §3.4. */
+  | 'initial_fuel_over_capacity'
+  /** Startowy olej ponad zbiornik oleju - siostra reguły wyżej. */
+  | 'initial_oil_over_capacity'
+  /** Usunięcie jednostki, która nadal jest w służbie - patrz `refuseDeleteAircraft`. */
+  | 'aircraft_in_service'
+  /** Usunięcie jednostki, do której coś się odwołuje - zostałaby historia bez maszyny. */
+  | 'has_history';
 
 /**
  * Pojemność zbiorników. `null` = pole nietknięte w `PATCH`-u, więc nie ma czego oceniać.
@@ -50,11 +66,11 @@ export function refuseCapacity(capacityL: number | null): FleetRefusal | null {
 
 /**
  * Wyłączenie ze służby. `openSessions` to liczba sesji tego samolotu BEZ `day_close`
- * — czyli sesji, które w tej chwili trwają.
+ * - czyli sesji, które w tej chwili trwają.
  *
  * Reguła działa WYŁĄCZNIE w jedną stronę: przywrócenie do służby przy otwartej sesji
  * jest w porządku (to naprawa pomyłki), a zmiana pojemności czy formatu MH przy
- * otwartej sesji też — mockup `A07a` mówi o tym wprost: „Samolot z otwartą sesją
+ * otwartej sesji też - mockup `A07a` mówi o tym wprost: „Samolot z otwartą sesją
  * dokończy dzień na konfiguracji, którą pobrał rano".
  */
 export function refuseDisable(input: {
@@ -63,5 +79,130 @@ export function refuseDisable(input: {
 }): FleetRefusal | null {
   if (input.nextStatus !== 'disabled') return null;
   if (input.openSessions > 0) return 'open_session';
+  return null;
+}
+
+/**
+ * Konfiguracja OLEJU (issue #60) - ocena na wartościach EFEKTYWNYCH po zmianie
+ * (komenda składa `before + patch`, bo PATCH niesie różnicę, a reguła orzeka o stanie).
+ *
+ * `null` = pole nieskonfigurowane i to jest stan LEGALNY (moduł dla jednostki milczy)
+ * - inaczej niż pojemność zbiorników, która jest obowiązkowa. Odrzucamy za to:
+ *  • wartości niedodatnie/nieskończone - zero litrów oleju nie jest stanem świata,
+ *    jest literówką, a minimum 0 wyłączałoby ostrzeżenie po cichu;
+ *  • minimum PONAD pojemność - ostrzeżenie „dolej co najmniej…" żądałoby wtedy
+ *    stanu, którego zbiornik fizycznie nie mieści, przy KAŻDYM pomiarze.
+ */
+export function refuseOil(input: {
+  oilMinL: number | null;
+  oilCapacityL: number | null;
+  oilNormLPerH: number | null;
+}): FleetRefusal | null {
+  const positive = (v: number | null): boolean => v == null || (Number.isFinite(v) && v > 0);
+  if (!positive(input.oilMinL) || !positive(input.oilCapacityL) || !positive(input.oilNormLPerH)) {
+    return 'oil_not_positive';
+  }
+  if (input.oilMinL != null && input.oilCapacityL != null && input.oilMinL > input.oilCapacityL) {
+    return 'oil_min_above_capacity';
+  }
+  return null;
+}
+
+/**
+ * NORMA NOMINALNA SPALANIA (issue #66) - liczba z instrukcji użytkowania, L na godzinę
+ * pracy silnika.
+ *
+ * Reguła jest ta sama, co przy oleju i z tego samego powodu: `null` jest stanem
+ * LEGALNYM („nie wpisano - ekran milczy o normie"), a zero nie jest stanem świata,
+ * tylko literówką, której skutek widać dopiero na werdykcie, który nigdy nie zapada.
+ */
+export function refuseFuelNorm(fuelNormLPerH: number | null): FleetRefusal | null {
+  if (fuelNormLPerH == null) return null;
+  if (!Number.isFinite(fuelNormLPerH) || fuelNormLPerH <= 0) return 'fuel_norm_not_positive';
+  return null;
+}
+
+/**
+ * STAN POCZĄTKOWY jednostki (issue #66) - co pokazywały przyrządy, gdy maszyna trafiła
+ * do UZ Aero. Ocena na wartościach EFEKTYWNYCH po zmianie, jak przy oleju.
+ *
+ * ══ DLACZEGO ZERO JEST TU LEGALNE, A PRZY NORMACH NIE ══
+ * Bo to są dwa różne rodzaje liczb. Norma zerowa jest niemożliwa - silnik pracujący
+ * bez paliwa nie istnieje - więc zero znaczy „ktoś się pomylił". Stan początkowy zerowy
+ * jest zwyczajnym faktem: nowy silnik ma 0 na liczniku, a maszyna przyjęta z pustymi
+ * zbiornikami ma 0 litrów. Odrzucamy więc wyłącznie wartości UJEMNE i nieskończone.
+ *
+ * ══ DWA SUFITY, BO DWA ZBIORNIKI ══
+ * Startowe paliwo ponad `capacityL` i startowy olej ponad `oilCapacityL` to ten sam
+ * inwariant, którego pilnuje domena przy tankowaniu (§3.4, `FUEL_OVER_CAPACITY`) -
+ * tyle że wpisany ręką w panelu, więc bez ani jednego zdarzenia, które mogłoby go
+ * złapać później. Sufit oleju śpi przy nieskonfigurowanym zbiorniku: bez pojemności
+ * nie ma do czego porównywać (ta sama zasada, co w `FUEL_OVER_CAPACITY`).
+ */
+export function refuseInitialState(input: {
+  initialMh: number | null;
+  initialFuelL: number | null;
+  initialOilL: number | null;
+  /** Pojemność zbiorników paliwa - sufit `initialFuelL`. */
+  capacityL: number | null;
+  /** Pojemność zbiornika oleju; `null` = nieskonfigurowana, sufit oleju śpi. */
+  oilCapacityL: number | null;
+}): FleetRefusal | null {
+  const sane = (v: number | null): boolean => v == null || (Number.isFinite(v) && v >= 0);
+  if (!sane(input.initialMh) || !sane(input.initialFuelL) || !sane(input.initialOilL)) {
+    return 'initial_negative';
+  }
+  if (
+    input.initialFuelL != null &&
+    input.capacityL != null &&
+    input.initialFuelL > input.capacityL
+  ) {
+    return 'initial_fuel_over_capacity';
+  }
+  if (
+    input.initialOilL != null &&
+    input.oilCapacityL != null &&
+    input.initialOilL > input.oilCapacityL
+  ) {
+    return 'initial_oil_over_capacity';
+  }
+  return null;
+}
+
+/**
+ * Stan jednostki w chwili próby USUNIĘCIA.
+ *
+ * `references` to LICZBA odwołań do tej maszyny w całym systemie: zdarzenia, sesje,
+ * flagi, dziennik eksportu, karty arkusza i wiersz normy zużycia. Liczy je
+ * repozytorium jednym zapytaniem - domena nie zna SQL-a, ale zna regułę.
+ */
+export interface AircraftDeletion {
+  inService: boolean;
+  references: number;
+}
+
+/**
+ * Usunięcie jednostki - odmowa albo `null`.
+ *
+ * ══ TA SAMA DWUSTOPNIOWOŚĆ, CO PRZY KONCIE, I TU WAŻNIEJSZA ══
+ * Kasujemy wyłącznie maszynę JUŻ WYŁĄCZONĄ ze służby, bo telefon nie ma ścieżki
+ * usuwania wiersza (`referenceSync` robi wyłącznie `upsertAircraft`). Jednostka
+ * skasowana na serwerze zostałaby na telefonie z ostatnim znanym stanem - czyli
+ * W SŁUŻBIE, a więc **WYBIERALNA**: pilot zacząłby lot na maszynie, której serwer nie
+ * zna, i wysłał zdarzenia z nieznanym `aircraft_id`. Przy koncie skutkiem byłby duch
+ * na liście drugich pilotów; tutaj - sesja bez maszyny.
+ *
+ * Wyłączenie ze służby jedzie natomiast normalną drogą (`GET /reference`), a aplikacja
+ * pokazuje taką jednostkę z czerwonym tagiem i BLOKUJE wybór. Kolejność „wyłącz →
+ * poczekaj na sync → usuń" zamyka więc dziurę mechanizmem, który już istnieje.
+ *
+ * `references > 0` blokuje twardo: w tym schemacie NIE MA ani jednego klucza obcego
+ * wskazującego `aircraft(id)` - `events`, `sessions`, `flags`, `export_log`,
+ * `exported_sheets` i `aircraft_consumption` trzymają zwykły tekst. Baza nie
+ * powstrzymałaby kasowania; powstrzymuje ta funkcja.
+ */
+export function refuseDeleteAircraft(deletion: AircraftDeletion): FleetRefusal | null {
+  if (deletion.inService) return 'aircraft_in_service';
+  if (deletion.references > 0) return 'has_history';
   return null;
 }

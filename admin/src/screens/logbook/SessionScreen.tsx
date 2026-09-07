@@ -1,0 +1,549 @@
+/**
+ * UZ Aero - panel 2.0: DZIENNIK, poziom 3 - jedna operacja (`#/dziennik/SP-KLM/<uuid>`).
+ *
+ * ══ PEŁNA STRONA, NIE SZUFLADA ══
+ * Szuflady panelu 2.0 (konto, samolot) są formularzami JEDNEGO rekordu; tutaj treścią
+ * jest dokument: oś kilkudziesięciu zdarzeń i komplet odczytów. Argument za szufladą
+ * („kontekst listy zostaje pod spodem") tu nie działa - do sesji wchodzi się, żeby JĄ
+ * przeczytać, a zakres dat wraca razem z linkiem powrotnym.
+ *
+ * Rejestracja jest w tytule powtórzona z poziomu 2 świadomie: link do sesji bywa
+ * wklejony komuś, kto poziomu 2 nigdy nie widział.
+ */
+
+import { dateUtcShort } from '@uzaero/format';
+import { useState } from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
+
+import type { SessionListItemDto, SessionTrackDto } from '../../api/dto';
+import { can } from '../../auth/can';
+import { useCloseSession, useVoidSession } from '../../queries/useLogCommands';
+import { useSessionDetail, useSessionTrack } from '../../queries/useLog';
+import { useSession } from '../../queries/useSession';
+import {
+  Banner,
+  Button,
+  Card,
+  EmptyState,
+  Field,
+  LinkButton,
+  Loadable,
+  OptionButton,
+  PageHead,
+  Pill,
+  TextInput,
+  TrackMap,
+  VerticalProfile,
+} from '../../ui/components';
+import { PlaneIcon } from '../../ui/components/icons';
+import { errorMessage, ruleViolationMessage } from '../common/apiMessage';
+import { litres, motoHours, NONE, oilLitres, timeUtc } from '../common/values';
+import { operationLabel } from './sessionRows';
+import { voidFacts } from './sessionVoid';
+import { timelineRow } from './timelineRows';
+import { mapPlot, peakLabel, profilePlot } from './trackChart';
+import { hasTrack, noTrackReason, trackFacts } from './trackFacts';
+import { trackMarkers } from './trackMarkers';
+
+export function SessionScreen() {
+  const { reg = '', uuid } = useParams();
+  const [params] = useSearchParams();
+  const back = `/dziennik/${reg}?od=${params.get('od') ?? ''}&do=${params.get('do') ?? ''}`;
+
+  const detail = useSessionDetail(uuid);
+  const session = detail.data?.session;
+  const rows = (detail.data?.timeline ?? []).map(timelineRow);
+
+  // Ślad idzie OSOBNYM żądaniem: karta sesji ma kilkadziesiąt zdarzeń, nagranie -
+  // kilkaset wierzchołków po kompresji. Mapa dociąga się pod gotowym ekranem, zamiast
+  // opóźniać jego pierwsze wyświetlenie.
+  const track = useSessionTrack(uuid);
+
+  // Pisanie w cudzym rejestrze to `events.correct` - ta sama zdolność, co przy korekcie.
+  // Serwer egzekwuje ją niezależnie; tu decyduje wyłącznie o tym, czy przycisk ISTNIEJE.
+  const me = useSession();
+  const voidable = can(me.data?.capabilities, 'events.correct');
+
+  const day = session?.claimedAt == null ? '' : dateUtcShort(session.claimedAt);
+  const engine =
+    session == null
+      ? ''
+      : `${timeUtc(session.engineStartAt)} → ${timeUtc(session.engineStopAt)} UTC`;
+
+  /* NAZWA OPERACJI W PODTYTULE (issue #68). Wypiera datę, bo ją zawiera - para
+     „01.09 · SP-AXA/2026-09-01/…" powtarzałaby ten sam fakt w jednej linii. Link do
+     operacji bywa wklejony komuś, kto listy nigdy nie widział, więc identyfikacja
+     musi stać na stronie, a nie tylko w pasku adresu (gdzie stoi uuid). */
+  const identity = session?.signature ?? day;
+
+  return (
+    <>
+      <PageHead
+        title={reg.toUpperCase()}
+        sub={session == null ? undefined : `${identity} · silnik ${engine}`}
+        actions={
+          <>
+            {session?.manualEntry === true ? <Pill tone="dim">ręcznie</Pill> : null}
+            {session?.status === 'voided' ? <Pill tone="red">unieważniona</Pill> : null}
+            {session?.status === 'active' ? <Pill tone="amber">w toku</Pill> : null}
+            {/* Zakończenie administracyjne (issue #81) - stan operacji, nie ostrzeżenie
+                o danych: kreski w odczytach końcowych mają swój powód i on tu stoi. */}
+            {session?.status === 'closed' && detail.data?.state.closedByAdmin === true ? (
+              <Pill tone="amber">zakończona przez administratora</Pill>
+            ) : null}
+            <LinkButton to={back} variant="ghost">
+              ← Dziennik {reg.toUpperCase()}
+            </LinkButton>
+          </>
+        }
+      />
+
+      {detail.error == null ? null : <Banner tone="danger">{errorMessage(detail.error)}</Banner>}
+
+      <Loadable
+        pending={detail.isPending}
+        skeleton={
+          <Card title="Log zdarzeń">
+            {[0, 1, 2, 3, 4, 5].map((row) => (
+              <span key={row} className="skeleton cell" style={{ width: 320, marginBottom: 10 }} />
+            ))}
+          </Card>
+        }
+      >
+        {session == null ? null : (
+          <>
+            {session.status === 'voided' ? (
+              // Plakietka w nagłówku mówi CO, ten baner mówi CO Z TEGO WYNIKA. Bez niego
+              // czerwony pill nad wypełnioną kartą czyta się jak ostrzeżenie o danych,
+              // a nie jak informacja, że tych liczb nikt już nie liczy.
+              <Banner tone="status">
+                Wpis wycofany - nie liczy się do nalotu pilota, do sum dziennika ani do
+                karty arkusza. Powód stoi na osi zdarzeń.
+              </Banner>
+            ) : null}
+
+            {session.status === 'closed' && detail.data?.state.closedByAdmin === true ? (
+              // Plakietka mówi CO, baner CO Z TEGO WYNIKA (issue #81): operacja liczy się
+              // dalej, ale bez odczytów końcowych - nie jest ogniwem łańcucha, a stan
+              // maszyny ustawia się w jej karcie. Pilot nie poprawia już nic.
+              <Banner tone="status">
+                Operację zakończył administrator - bez odczytów końcowych. Liczy się do
+                nalotu i sum dziennika, ale nie jest ogniwem przekazania: aktualny stan
+                maszyny wpisuje się w karcie samolotu. Zaległe zapisy pilota do tej
+                operacji telefon wstrzymuje. Powód stoi na osi zdarzeń.
+              </Banner>
+            ) : null}
+
+            <Card title="Log zdarzeń">
+              <div className="table-wrap plain">
+                <table>
+                  <caption className="visually-hidden">Zdarzenia operacji</caption>
+                  <thead>
+                    <tr>
+                      <th>Czas</th>
+                      <th>Zdarzenie</th>
+                      <th>Szczegół</th>
+                      <th>Zapis</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((row) => (
+                      <tr key={row.uuid} className={row.voided ? 'voided' : undefined}>
+                        <td className="num">
+                          <span className={row.correctedTime == null ? undefined : 'clock-val struck'}>
+                            {row.time}
+                          </span>
+                          {row.correctedTime == null ? null : (
+                            <span className="cell-sub">{row.correctedTime}</span>
+                          )}
+                        </td>
+                        <td className="cell-strong">
+                          {row.name}
+                          {row.adminCorrected ? (
+                            <span className="cell-sub">poprawił administrator</span>
+                          ) : null}
+                        </td>
+                        <td className="cell-sub">{row.detail ?? ''}</td>
+                        <td className="cell-sub">{row.source}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+
+            <Card title="Szczegóły">
+              <Detail label="Pilot" value={session.picName ?? session.picCode ?? NONE} />
+              <Detail label="Drugi pilot" value={session.dualName ?? NONE} />
+              <Detail label="Zadanie" value={operationLabel(session.operation)} />
+              <Detail label="Klient" value={session.client ?? NONE} />
+              <Detail
+                label="Trasa"
+                value={
+                  session.departureIcao == null
+                    ? NONE
+                    : session.arrivalIcao == null || session.arrivalIcao === session.departureIcao
+                      ? session.departureIcao
+                      : `${session.departureIcao} → ${session.arrivalIcao}`
+                }
+              />
+              <Detail label="Loty" value={String(session.flightsCount)} />
+              <Detail
+                label="Starty i lądowania"
+                value={`${session.takeoffCount ?? NONE} / ${session.landingCount ?? NONE}`}
+              />
+              <Detail
+                label="Paliwo"
+                value={`${litres(session.fuelStartL)} → ${litres(session.fuelEndL)}`}
+              />
+              <Detail label="Dolano paliwa" value={litres(session.fuelAddedL)} />
+              <Detail
+                label="Motogodziny"
+                value={`${motoHours(session.mhStart, session.mhFormat)} → ${motoHours(session.mhEnd, session.mhFormat)}`}
+              />
+              <Detail
+                label="Olej przed lotem"
+                value={oilLitres(session.oilLevelL)}
+              />
+              <Detail label="Dolano oleju" value={oilLitres(session.oilAddedL)} />
+              <Detail label="Olej do lotu" value={oilLitres(session.oilAfterL)} />
+            </Card>
+
+            <TrackCard
+              track={track.data}
+              pending={track.isPending}
+              manualEntry={session.manualEntry === true}
+              departureIcao={session.departureIcao}
+              flights={detail.data?.state.flights ?? []}
+            />
+
+            {/* Na samym DOLE i za wszystkim: do operacji wchodzi się, żeby ją przeczytać,
+                a wycofanie wpisu jest wyjściem awaryjnym. Bez zdolności `events.correct`
+                karty NIE MA (§3.3: brak uprawnień = brak przycisku), a przy wpisie już
+                wycofanym nie ma czego wycofywać - mówi to baner na górze. */}
+            {/* Operacja W TOKU dostaje JEDNĄ kartę (issue #81): „Zakończ operację"
+                z przełącznikiem „od razu unieważnij". Unieważnienie samo w sobie zostaje
+                dla operacji zakończonych - dwie karty z dwoma wyjściami awaryjnymi
+                obok siebie kazałyby wybierać między rzeczami, które nie są alternatywą. */}
+            {voidable && session.status === 'active' ? <CloseCard session={session} /> : null}
+            {voidable && session.status === 'closed' ? <VoidCard session={session} /> : null}
+          </>
+        )}
+      </Loadable>
+    </>
+  );
+}
+
+/** Płótno mapy i profilu w JEDNOSTKACH RYSUNKU - CSS rozciąga je na szerokość karty. */
+const MAP_WIDTH = 1000;
+const MAP_HEIGHT = 430;
+const PROFILE_WIDTH = 940;
+const PROFILE_HEIGHT = 220;
+
+interface TrackCardProps {
+  track: SessionTrackDto | undefined;
+  pending: boolean;
+  manualEntry: boolean;
+  departureIcao: string | null;
+  flights: readonly { index: number; takeoffAt: number; landingAt: number | null }[];
+}
+
+/**
+ * Ślad CAŁEJ sesji: od uruchomienia do wyłączenia silnika (issue #38). Kołowanie jest
+ * częścią rysunku, a loty jego odcinkami - stąd znaczniki z numerami lotów zamiast
+ * czterech osobnych map.
+ */
+function TrackCard({ track, pending, manualEntry, departureIcao, flights }: TrackCardProps) {
+  if (pending) {
+    return (
+      <Card title="Ślad GPS">
+        <span className="skeleton" style={{ display: 'block', height: MAP_HEIGHT / 2 }} />
+      </Card>
+    );
+  }
+
+  // Brak rysunku ma POWÓD i wariantów jest kilka - „brak śladu" pokazane przy locie
+  // z kartki byłoby kłamstwem o tym locie.
+  if (!hasTrack(track)) {
+    return (
+      <Card title="Ślad GPS">
+        <EmptyState
+          icon={<PlaneIcon size={20} />}
+          title="Bez mapy"
+          note={noTrackReason(manualEntry)}
+        />
+      </Card>
+    );
+  }
+
+  const plot = mapPlot(
+    track.line,
+    trackMarkers(track, flights),
+    MAP_WIDTH,
+    MAP_HEIGHT,
+    departureIcao,
+    // Okna lotów z projekcji sesji (issue #75 pkt 4): dzielą trasę na kołowanie
+    // i loty - koperta śladu niesie samą geometrię (issue #47).
+    flights,
+  );
+  const profile = profilePlot(track.profile, PROFILE_WIDTH, PROFILE_HEIGHT);
+
+  return (
+    <Card title="Ślad GPS">
+      {plot == null ? null : <TrackMap plot={plot} width={MAP_WIDTH} height={MAP_HEIGHT} />}
+
+      <div className="track-facts">
+        {trackFacts(track).map((fact) => (
+          <div className="track-fact" key={fact.label}>
+            <span className="track-fact-k">{fact.label}</span>
+            <span className="track-fact-v">{fact.value}</span>
+          </div>
+        ))}
+      </div>
+
+      {profile == null || track.startedAt == null || track.endedAt == null ? null : (
+        <>
+          <VerticalProfile
+            plot={profile}
+            width={PROFILE_WIDTH}
+            height={PROFILE_HEIGHT}
+            startAt={track.startedAt}
+            endAt={track.endedAt}
+            peakLabel={peakLabel(track.profile)}
+          />
+          <p className="profile-foot">
+            Wysokość z GPS - potrafi różnić się od wysokościomierza o kilkaset stóp.
+            Przerwa w wykresie to czas na ziemi między lotami.
+          </p>
+        </>
+      )}
+    </Card>
+  );
+}
+
+/**
+ * UNIEWAŻNIENIE CAŁEGO WPISU (2026-08-31).
+ *
+ * ══ PYTANIE STOI PRZY PRZYCISKU, KTÓREGO DOTYCZY ══
+ * Nie `window.confirm` i nie okno nad stroną - ta sama konstrukcja, co przy trwałym
+ * usunięciu konta (`.confirm` w `AccountDrawer`). Różnica jest jedna i wymuszona
+ * treścią: potwierdzenie NAZYWA konkretny wpis, bo dwie sesje tej samej maszyny
+ * w jednej dobie różnią się wyłącznie godzinami.
+ *
+ * Powód jest WYMAGANY (serwer odrzuca puste) i nie dostaje zdania przy przycisku:
+ * puste pole widać w kontrolce tuż nad nim. Zdanie należy się blokadzie, której
+ * z ekranu nie widać - a tej widać.
+ */
+function VoidCard({ session }: { session: SessionListItemDto }) {
+  const [asking, setAsking] = useState(false);
+  const [reason, setReason] = useState('');
+  const withdraw = useVoidSession();
+
+  // Odmowa REGUŁ ma zdanie od domeny („Ta sesja jest już unieważniona"); wszystko
+  // inne - od panelu. Wyścig jest realny: ktoś mógł wycofać ten wpis w drugim oknie.
+  const failure =
+    withdraw.error == null
+      ? null
+      : (ruleViolationMessage(withdraw.error) ?? errorMessage(withdraw.error));
+
+  return (
+    <Card title="Unieważnienie wpisu">
+      <p className="hint">
+        Wycofany wpis wypada z nalotu pilota, z sum dziennika i z karty arkusza. Sam zapis
+        zostaje razem z powodem - widać, że lot był i że go wycofano.
+      </p>
+
+      {asking ? null : (
+        <Button variant="danger" size="sm" onClick={() => setAsking(true)}>
+          Unieważnij wpis
+        </Button>
+      )}
+
+      {asking ? (
+        <div className="confirm">
+          <p className="confirm-q">Unieważnić ten wpis?</p>
+
+          {voidFacts(session).map((fact) => (
+            <div className="kv" key={fact.label}>
+              <span className="kv-k">{fact.label}</span>
+              <span className="kv-v">{fact.value}</span>
+            </div>
+          ))}
+
+          <Field
+            htmlFor="void-reason"
+            label="Powód"
+            hint="Zobaczy go pilot na telefonie; zostaje w dzienniku."
+          >
+            <TextInput
+              id="void-reason"
+              value={reason}
+              placeholder="np. wpis otwarty przez pomyłkę na tej maszynie"
+              onChange={(e) => setReason(e.target.value)}
+            />
+          </Field>
+
+          {failure == null ? null : (
+            <Banner tone="danger" live>
+              {failure}
+            </Banner>
+          )}
+
+          <div className="confirm-actions">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setAsking(false);
+                // Odmowa sprzed chwili nie ma prawa czekać na następne otwarcie -
+                // opisywałaby próbę, o której nikt już nie pamięta.
+                withdraw.reset();
+              }}
+            >
+              Anuluj
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              disabled={withdraw.isPending || reason.trim() === ''}
+              onClick={() =>
+                withdraw.mutate(
+                  { uuid: session.sessionUuid, reason: reason.trim() },
+                  // Po udanym wycofaniu karta i tak znika (wpis ma status `voided`),
+                  // ale zamykamy pytanie jawnie: odświeżenie listy jest asynchroniczne.
+                  { onSuccess: () => setAsking(false) },
+                )
+              }
+            >
+              Unieważnij wpis
+            </Button>
+          </div>
+        </div>
+      ) : null}
+    </Card>
+  );
+}
+
+/**
+ * ZAKOŃCZENIE ADMINISTRACYJNE operacji W TOKU (issue #81).
+ *
+ * Ta sama konstrukcja, co unieważnienie: pytanie przy przycisku, potwierdzenie NAZYWA
+ * wpis, powód wymagany. Do tego JEDEN przełącznik: „od razu unieważnij" - bo lot otwarty
+ * przez pomyłkę zamyka się i wycofuje jednym ruchem, a lot prawdziwy, którego pilot
+ * nie zdał, zamyka się i LICZY. Rejestr dostaje dwa fakty, administrator podejmuje
+ * jedną decyzję. Zdanie pod przyciskiem mówi, czego ta operacja NIE dostanie (odczytów
+ * końcowych) i gdzie wpisuje się stan maszyny - to jest odpowiedź na pytanie, które
+ * administrator zada sobie po zamknięciu.
+ */
+function CloseCard({ session }: { session: SessionListItemDto }) {
+  const [asking, setAsking] = useState(false);
+  const [reason, setReason] = useState('');
+  const [withVoid, setWithVoid] = useState(false);
+  const close = useCloseSession();
+
+  const failure =
+    close.error == null ? null : (ruleViolationMessage(close.error) ?? errorMessage(close.error));
+
+  return (
+    <Card title="Zakończenie operacji">
+      <p className="hint">
+        Operacja w toku, której pilot nie zdał, blokuje maszynę. Zakończenie zwalnia ją
+        bez odczytów końcowych - aktualny stan licznika, paliwa i oleju wpisuje się potem
+        w karcie samolotu. Zaległe zapisy pilota do tej operacji telefon wstrzyma;
+        poprawek w niej pilot już nie naniesie.
+      </p>
+
+      {asking ? null : (
+        <Button variant="danger" size="sm" onClick={() => setAsking(true)}>
+          Zakończ operację
+        </Button>
+      )}
+
+      {asking ? (
+        <div className="confirm">
+          <p className="confirm-q">Zakończyć tę operację?</p>
+
+          {voidFacts(session).map((fact) => (
+            <div className="kv" key={fact.label}>
+              <span className="kv-k">{fact.label}</span>
+              <span className="kv-v">{fact.value}</span>
+            </div>
+          ))}
+
+          <Field
+            htmlFor="close-reason"
+            label="Powód"
+            hint="Zobaczy go pilot na telefonie; zostaje w dzienniku."
+          >
+            <TextInput
+              id="close-reason"
+              value={reason}
+              placeholder="np. telefon pilota padł w locie, maszyna stoi w hangarze"
+              onChange={(e) => setReason(e.target.value)}
+            />
+          </Field>
+
+          {/* Lista kart, nie checkbox - jak każdy wybór w tym systemie: obie drogi
+              widać naraz, z opisem skutku, a zaznaczona ma zieloną obramówkę. */}
+          <span className="label">Co z wpisem</span>
+          <div className="opt-list" role="radiogroup" aria-label="Co z wpisem po zakończeniu">
+            <OptionButton
+              name="Zakończ i zostaw w dzienniku"
+              desc="Lot był prawdziwy - liczy się do nalotu i sum, tylko bez odczytów końcowych."
+              selected={!withVoid}
+              onSelect={() => setWithVoid(false)}
+            />
+            <OptionButton
+              name="Zakończ i od razu unieważnij"
+              desc="Wpis otwarty przez pomyłkę - wypada z nalotu, sum dziennika i karty arkusza."
+              selected={withVoid}
+              onSelect={() => setWithVoid(true)}
+            />
+          </div>
+
+          {failure == null ? null : (
+            <Banner tone="danger" live>
+              {failure}
+            </Banner>
+          )}
+
+          <div className="confirm-actions">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setAsking(false);
+                close.reset();
+              }}
+            >
+              Anuluj
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              disabled={close.isPending || reason.trim() === ''}
+              onClick={() =>
+                close.mutate(
+                  { uuid: session.sessionUuid, reason: reason.trim(), void: withVoid },
+                  { onSuccess: () => setAsking(false) },
+                )
+              }
+            >
+              {withVoid ? 'Zakończ i unieważnij' : 'Zakończ operację'}
+            </Button>
+          </div>
+        </div>
+      ) : null}
+    </Card>
+  );
+}
+
+/** Wiersz klucz-wartość karty szczegółów. */
+function Detail({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="kv">
+      <span className="kv-k">{label}</span>
+      <span className="kv-v">{value}</span>
+    </div>
+  );
+}

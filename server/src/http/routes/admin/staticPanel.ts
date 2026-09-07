@@ -1,28 +1,31 @@
 /**
- * UZ Aero (serwer) — statyczny build panelu pod `/admin/`
+ * UZ Aero (serwer) - statyczny build panelu pod `/admin/`
  * (`docs/architektura-panelu-frontend.md` §9, wdrożone przy hostingu 2026-08-26).
  *
- * Serwuje katalog `admin/dist` (Vite z `base: '/admin/'`) spod ścieżki WBUDOWANEJ —
+ * Serwuje katalog `admin/dist` (Vite z `base: '/admin/'`) spod ścieżki WBUDOWANEJ -
  * rejestracja jest bezwarunkowa. Env `ADMIN_DIST_DIR` usunięta 2026-08-26: miała
  * dokładnie dwa stany (nieustawiona w dev, stała w obrazie Dockera), więc była
  * przełącznikiem, którego nikt nie ustawiał ręcznie. Brakujący katalog nie przeszkadza:
- * `@fastify/static` odnotowuje go ostrzeżeniem i `/admin/` odpowiada 404 — dev bez
+ * `@fastify/static` odnotowuje go ostrzeżeniem i `/admin/` odpowiada 404 - dev bez
  * buildu działa jak dotąd, panel jedzie z Vite (`npm run admin`), które proxuje
  * `/admin/api` do serwera; oba warianty dają ten sam origin, na którym stoi ciasteczko
  * `SameSite=Strict`. Świadomy koszt: `admin/dist` zbudowany lokalnie będzie w dev
- * serwowany pod `:3000/admin/` także wtedy, gdy jest nieświeży — źródłem prawdy w dev
+ * serwowany pod `:3000/admin/` także wtedy, gdy jest nieświeży - źródłem prawdy w dev
  * pozostaje Vite.
  *
  * Decyzje wprost z §9:
- *  • **BEZ fallbacku SPA** — panel routuje hashem (`#/dni/<uuid>`), więc serwer obsługuje
+ *  • **BEZ fallbacku SPA** - panel routuje hashem (`#/dni/<uuid>`), więc serwer obsługuje
  *    dokładnie `GET /admin/` (index.html) i pliki buildu. Wildcard „wszystko → index"
- *    musiałby omijać zasoby i nie połykać 404 z API — realne źródło błędów, którego
+ *    musiałby omijać zasoby i nie połykać 404 z API - realne źródło błędów, którego
  *    za jeden znak `#` w adresie nie kupujemy;
  *  • trasy API są w routerze KONKRETNE (`/admin/api/...`), więc wygrywają z wildcardem
- *    plików — przybija to test w `adminStatic.test.ts`.
+ *    plików - przybija to test w `adminStatic.test.ts`.
  *
- * `GET /admin` (bez ukośnika) i `GET /` przekierowują na `/admin/`: panel jest jedyną
- * treścią serwera przeznaczoną dla przeglądarki, a goły adres wpisuje człowiek.
+ * `GET /admin` (bez ukośnika) przekierowuje na `/admin/` - goły adres wpisuje człowiek.
+ * `GET /` do panelu JUŻ NIE NALEŻY: od 2026-09-07 stoi tam strona publiczna
+ * (`../site/staticSite.ts`), więc przekierowanie stąd zniknęło razem ze zdaniem „panel
+ * jest jedyną treścią serwera przeznaczoną dla przeglądarki". Trasy panelu są w routerze
+ * bardziej konkretne niż wildcard strony, więc kolejność rejestracji nic tu nie znaczy.
  */
 
 import { fileURLToPath } from 'node:url';
@@ -31,27 +34,40 @@ import fastifyStatic from '@fastify/static';
 import type { FastifyInstance } from 'fastify';
 
 /**
- * Build panelu liczony od TEGO pliku, nie od cwd — cwd różni się między obrazem
+ * Build panelu liczony od TEGO pliku, nie od cwd - cwd różni się między obrazem
  * (`/repo`, CMD startuje z korzenia) a dev (`server/`, skrypty npm workspace),
  * a układ katalogów jest w obu ten sam: `<repo>/admin/dist`.
  */
 const ADMIN_DIST = fileURLToPath(new URL('../../../../../admin/dist', import.meta.url));
 
 /**
- * CSP dla panelu — możliwe, odkąd czcionki są self-hostowane (`admin/public/fonts/`,
- * §9): panel nie sięga poza własny origin po NIC. `style-src 'unsafe-inline'` zostaje
- * dla atrybutów `style={...}` Reacta (dynamiczne szerokości pasków i wykresów);
- * skrypty inline są zablokowane — build Vite ładuje wyłącznie moduły z `/admin/assets/`.
- * Nagłówek nadaje serwowanie statyczne, więc dev z Vite (HMR, preambuła inline
- * plugin-react) pozostaje nietknięty.
+ * CSP dla panelu - możliwe, odkąd czcionki są self-hostowane (`admin/public/fonts/`,
+ * §9): panel nie sięga poza własny origin po NIC POZA JEDNYM WYJĄTKIEM opisanym niżej.
+ * `style-src 'unsafe-inline'` zostaje dla atrybutów `style={...}` Reacta (dynamiczne
+ * szerokości pasków i wykresów); skrypty inline są zablokowane - build Vite ładuje
+ * wyłącznie moduły z `/admin/assets/`. Nagłówek nadaje serwowanie statyczne, więc dev
+ * z Vite (HMR, preambuła inline plugin-react) pozostaje nietknięty.
+ *
+ * ══ JEDYNY OBCY ORIGIN: `accounts.google.com` (logowanie Google, 2026-09-04) ══
+ * Przycisk „Kontynuuj z Google" rysuje skrypt Google Identity Services, a wybór konta
+ * odbywa się w jego ramce (`admin/src/auth/googleIdentity.ts`). Cztery dyrektywy
+ * dopuszczają DOKŁADNIE ścieżki z dokumentacji GIS i nic szerszego - każda z nich
+ * zaczyna się od `'self'`, bo jawna dyrektywa PRZESŁANIA `default-src`, a bez `'self'`
+ * własny build panelu przestałby się ładować. Nie ma tu `*.google.com` ani `gstatic`:
+ * przycisk standardowy nie sięga po obrazki spoza `gsi/`.
  */
 const PANEL_CSP =
-  "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; " +
+  "default-src 'self'; " +
+  "script-src 'self' https://accounts.google.com/gsi/client; " +
+  "style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style; " +
+  "frame-src https://accounts.google.com/gsi/; " +
+  "connect-src 'self' https://accounts.google.com/gsi/; " +
+  "img-src 'self' data:; " +
   "object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
 
 /**
  * Cache z §9: Vite hashuje nazwy plików w `assets/`, więc raz pobrany plik nie zmieni
- * treści pod tą samą nazwą — rok i `immutable`. Cała reszta buildu odwrotnie —
+ * treści pod tą samą nazwą - rok i `immutable`. Cała reszta buildu odwrotnie -
  * `no-cache` (rewalidacja przy każdym wejściu): `index.html` wskazuje świeże hashe
  * (bez tego administrator po wdrożeniu siedzi na starym bundlu i zgłasza błędy
  * z wersji, która już nie istnieje), a pliki z `admin/public/` (fonty) Vite kopiuje
@@ -63,14 +79,14 @@ function cacheControlFor(filePath: string): string {
     : 'no-cache';
 }
 
-/** `distDir` podmieniają WYŁĄCZNIE testy — `adminStatic.test.ts` podstawia katalog tymczasowy. */
+/** `distDir` podmieniają WYŁĄCZNIE testy - `adminStatic.test.ts` podstawia katalog tymczasowy. */
 export function registerAdminPanelStatic(app: FastifyInstance, distDir: string = ADMIN_DIST): void {
   app.register(fastifyStatic, {
     root: distDir,
     prefix: '/admin/',
     index: 'index.html',
     // Wtyczka dokłada własny `cache-control` (z `maxAge`) PO wywołaniu `setHeaders`
-    // i ten by wygrał — dlatego jej emisja jest wyłączona, a nagłówek w całości
+    // i ten by wygrał - dlatego jej emisja jest wyłączona, a nagłówek w całości
     // stawia `setHeaders` per plik.
     cacheControl: false,
     setHeaders: (res, filePath) => {
@@ -79,5 +95,4 @@ export function registerAdminPanelStatic(app: FastifyInstance, distDir: string =
     },
   });
   app.get('/admin', (_req, reply) => reply.redirect('/admin/'));
-  app.get('/', (_req, reply) => reply.redirect('/admin/'));
 }

@@ -1,20 +1,20 @@
 /**
- * UZ Aero (serwer) — adapter ODCZYTU rejestru zdarzeń (`AdminEventsReadPort`, `A04`).
+ * UZ Aero (serwer) - adapter ODCZYTU rejestru zdarzeń (`AdminEventsReadPort`, `A04`).
  *
  * Osobny plik od `eventsRepo.ts` z tego samego powodu, dla którego port jest osobny:
  * tamten odpowiada na dwa wąskie pytania o kolumny techniczne pojedynczego zdarzenia
  * (`source_device`, uuidy korekt panelu) i wołany jest z karty dnia. Ten czyta listę
  * ze złączeniem trzech tabel, sześcioma filtrami, kursorem i licznikami. Osobny też od
- * `common/eventsStore.ts`, który obsługuje INGEST i oddaje byty domenowe — ten oddaje
+ * `common/eventsStore.ts`, który obsługuje INGEST i oddaje byty domenowe - ten oddaje
  * kolumny, bo panel pyta o wiersz, nie o zdarzenie.
  *
  * ══ NIEZNANY TYP I NIEZNANY PAYLOAD NIE MAJĄ PRAWA WYWRÓCIĆ ODCZYTU ══
- * W adapterach flag i operacji stoi strażnik rzucający na wartościach spoza katalogu —
+ * W adapterach flag i operacji stoi strażnik rzucający na wartościach spoza katalogu -
  * bo tam wartość jest pilnowana `CHECK`-iem w bazie, więc jej naruszenie znaczy ręczną
  * ingerencję w dane. **Tutaj takiego strażnika NIE MA i nie wolno go dodać.** Kolumna
  * `events.type` celowo nie ma `CHECK`-a, a `payload` jest `JSONB`
  * dowolnego kształtu. Strażnik przy odczycie znaczyłby, że narzędzie śledcze przestaje
- * się otwierać przez własną historię — dokładnie wtedy, gdy jest potrzebne.
+ * się otwierać przez własną historię - dokładnie wtedy, gdy jest potrzebne.
  *
  * Czego tu NIE MA: `UPDATE` i `DELETE`. Rejestr jest append-only, a brak tych zdań
  * w kodzie jest jedną z warstw tej gwarancji (obok `test/architecture.test.ts`).
@@ -38,16 +38,16 @@ import {
 import { SqlFilter } from '../sqlFilter.ts';
 
 /**
- * Klucz porządku rejestru — dokładnie ten, pod który stoi `idx_events_received`
+ * Klucz porządku rejestru - dokładnie ten, pod który stoi `idx_events_received`
  * po ujednoliceniu reguły `NULLS` (`architektura-panelu-serwer.md` §7.8). Obie kolumny
  * są `NOT NULL` (`uuid` jest kluczem głównym), stąd
  * `k1Nullable: false`: gałąź `IS NULL` byłaby martwym warunkiem, a martwy warunek
  * w `WHERE` potrafi odciąć planerowi indeks. Ta sama deklaracja zdejmuje `NULLS LAST`
  * z `ORDER BY`, dzięki czemu jeden indeks obsługuje `?sort=desc` skanem w przód
- * i `?sort=asc` skanem wstecz (`keysetOrderBy`, reguła `NULLS` — §7.8).
+ * i `?sort=asc` skanem wstecz (`keysetOrderBy`, reguła `NULLS` - §7.8).
  *
  * `uuid` jako tie-breaker, bo CAŁA paczka z jednego synca ma identyczny `received_at`
- * — `now()` w Postgresie zwraca czas rozpoczęcia transakcji. Bez rozstrzygnięcia
+ * - `now()` w Postgresie zwraca czas rozpoczęcia transakcji. Bez rozstrzygnięcia
  * granica strony wypadałaby w środku paczki i gubiła z niej wiersze.
  */
 const KEY: readonly [string, string] = ['e.received_at', 'e.uuid'];
@@ -57,7 +57,7 @@ const KEY: readonly [string, string] = ['e.received_at', 'e.uuid'];
  * do Postgresa: `timestamp` (kolumna `TIMESTAMPTZ`, więc kursor niesie ISO 8601 UTC,
  * a nie dowolny napis → `22007`), `k1Nullable: false` (`received_at` jest `NOT NULL`,
  * kursor z `null` pochodzi z innego zapytania) i `k2: 'string'` (uuid jest `TEXT`,
- * więc każdy napis jest tu legalną wartością — inaczej niż przy `BIGSERIAL` audytu).
+ * więc każdy napis jest tu legalną wartością - inaczej niż przy `BIGSERIAL` audytu).
  */
 const shapeOf = (direction: KeysetDirection): CursorShape => ({
   k1: 'timestamp',
@@ -78,7 +78,7 @@ interface EventDbRow {
   dual_code: string | null;
   dual_name: string | null;
   type: string;
-  /** `BIGINT` — sterownik oddaje `int8` NAPISEM, nie liczbą. */
+  /** `BIGINT` - sterownik oddaje `int8` NAPISEM, nie liczbą. */
   device_time: string | number;
   gps_time: string | number | null;
   payload: unknown;
@@ -89,7 +89,7 @@ interface EventDbRow {
 
 /**
  * `LEFT JOIN`, nigdy `INNER`: skasowany samolot i skasowane konto nie mogą usuwać
- * zdarzeń z rejestru. Wiersz zostaje widoczny z samymi identyfikatorami — i to jest
+ * zdarzeń z rejestru. Wiersz zostaje widoczny z samymi identyfikatorami - i to jest
  * przypadek, w którym rejestr jest najbardziej potrzebny.
  */
 const SELECT = `
@@ -130,7 +130,7 @@ const toRow = (r: EventDbRow): AdminEventRow => ({
   deviceTime: Number(r.device_time),
   gpsTime: r.gps_time == null ? null : Number(r.gps_time),
   // BEZ `?? {}`: `payload` jest `NOT NULL` w schemacie, ale JSON-owy `null` jest
-  // legalną wartością `JSONB` — i ma dojechać do panelu jako `null`, a nie jako pusty
+  // legalną wartością `JSONB` - i ma dojechać do panelu jako `null`, a nie jako pusty
   // obiekt. Rejestr pokazuje to, co przyszło.
   payload: r.payload,
   schemaVersion: r.schema_version,
@@ -157,7 +157,7 @@ export class PgAdminEventsReadRepo implements AdminEventsReadPort {
     applyFilters(page, filter);
     keysetPredicate(KEY, cursor, page, shape);
 
-    // +1 wiersz ponad limit to cała detekcja „czy jest następna strona" — drugi
+    // +1 wiersz ponad limit to cała detekcja „czy jest następna strona" - drugi
     // `COUNT` na to nie odpowiada, bo mógłby się zmienić między zapytaniami.
     const limitParam = page.bind(filter.limit + 1);
     const { rows } = await db.query<EventDbRow>(
@@ -181,17 +181,17 @@ export class PgAdminEventsReadRepo implements AdminEventsReadPort {
   }
 
   /**
-   * Korekty celujące w wiersze TEJ strony — także spoza filtra i spoza zakresu dat.
+   * Korekty celujące w wiersze TEJ strony - także spoza filtra i spoza zakresu dat.
    *
    * Osobne zapytanie zamiast `LEFT JOIN LATERAL` w zapytaniu strony, bo to są dwa różne
    * pytania i mają różny zasięg: strona jest zawężona filtrem, a korekta unieważniająca
    * zdarzenie sprzed miesiąca mogła powstać wczoraj. Złączenie w zapytaniu strony
-   * musiałoby więc i tak wyłamać się z jej `WHERE` — czyli byłoby tym samym zapytaniem,
+   * musiałoby więc i tak wyłamać się z jej `WHERE` - czyli byłoby tym samym zapytaniem,
    * tylko trudniejszym do przeczytania i do zaplanowania.
    *
    * Stoi pod `idx_events_correction_target`: indeks CZĘŚCIOWY po
    * `payload->>'targetUuid'` wyłącznie dla `type = 'event_correction'`. Bez niego to
-   * jest pełne skanowanie rejestru raz na stronę — dokładnie ten koszt, przed którym
+   * jest pełne skanowanie rejestru raz na stronę - dokładnie ten koszt, przed którym
    * broni kursor.
    *
    * `IN (…)` składamy z osobnych miejsc na wartości, a nie przez `= ANY ($n)` z tablicą:
@@ -200,7 +200,7 @@ export class PgAdminEventsReadRepo implements AdminEventsReadPort {
    *
    * ══ `ORDER BY` JEST TU DEKLARACJĄ PORZĄDKU, A NIE OPTYMALIZACJĄ ══
    * `applyCorrections` sortuje strumień STABILNIE po czasie zdarzenia, więc przy REMISIE
-   * czasu o zwycięzcy decyduje kolejność, w jakiej korekty weszły do strumienia — czyli
+   * czasu o zwycięzcy decyduje kolejność, w jakiej korekty weszły do strumienia - czyli
    * kolejność wierszy z bazy. Bez `ORDER BY` daje ją układ sterty: ta sama para korekt
    * dawała raz wiersz przekreślony, raz nie, a zmieniało się to po `VACUUM` albo po
    * przepakowaniu tabeli. W testach z zamrożonym zegarem remis jest stanem DOMYŚLNYM,
@@ -229,7 +229,7 @@ export class PgAdminEventsReadRepo implements AdminEventsReadPort {
    * Liczniki kafli WYŁĄCZNIE dla pierwszej strony; kolejne dostają `null`, a panel
    * niesie liczby z pierwszej.
    *
-   * **Powód: liczniki są własnością ZAPYTANIA, nie strony** — nie zmieniają się przy
+   * **Powód: liczniki są własnością ZAPYTANIA, nie strony** - nie zmieniają się przy
    * przewijaniu, więc płacimy za nie RAZ. Liczenie ich przy każdej stronie jest tym
    * samym błędem, przed którym broni kursor: `events` jest najszybciej rosnącą tabelą
    * w systemie, a pełny `COUNT` skanuje ją całą, więc koszt strony przestałby być stały.
@@ -238,7 +238,7 @@ export class PgAdminEventsReadRepo implements AdminEventsReadPort {
    * pytanie o jeden zbiór, a trzy przebiegi po rosnącej tabeli różniłyby się między
    * sobą przy dosyłce outboxa w trakcie liczenia.
    *
-   * **Warunki są te same co strony, ale BEZ kursora** — licznik opisuje cały wynik
+   * **Warunki są te same co strony, ale BEZ kursora** - licznik opisuje cały wynik
    * filtra, a nie resztę po kursorze. `COUNT` bez złączeń: żaden filtr nie sięga do
    * `pilots` ani `aircraft` (szukamy po identyfikatorach, nie po nazwiskach), więc
    * złączenie byłoby tu wyłącznie kosztem.
@@ -253,7 +253,7 @@ export class PgAdminEventsReadRepo implements AdminEventsReadPort {
 
     const conditions = new SqlFilter();
     applyFilters(conditions, filter);
-    // Próg jedzie PARAMETREM z `@uzaero/domain` — wpisany w tekst zapytania byłby drugą
+    // Próg jedzie PARAMETREM z `@uzaero/domain` - wpisany w tekst zapytania byłby drugą
     // definicją tolerancji obok tej, którą liczy flagę `CLOCK_DRIFT` przy ingescie.
     const threshold = conditions.bind(driftThresholdMs);
 
@@ -279,7 +279,7 @@ export class PgAdminEventsReadRepo implements AdminEventsReadPort {
 }
 
 /**
- * Wszystkie filtry są OPCJONALNE i pomijane, gdy nieustawione — numerację `$n` nadaje
+ * Wszystkie filtry są OPCJONALNE i pomijane, gdy nieustawione - numerację `$n` nadaje
  * `SqlFilter`, żeby nie było jej w tym pliku wcale.
  *
  * Zakres dat idzie po `received_at`, czyli po TEJ SAMEJ kolumnie, co porządek i kursor

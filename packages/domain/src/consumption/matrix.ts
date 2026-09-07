@@ -1,17 +1,17 @@
 /**
- * UZ Aero — mała gęsta algebra dla regresji zużycia (najwyżej cztery niewiadome).
+ * UZ Aero - mała gęsta algebra dla regresji zużycia (najwyżej cztery niewiadome).
  *
  * DLACZEGO WŁASNA, A NIE BIBLIOTEKA: `@uzaero/domain` ma zero zależności i jest to
- * egzekwowane testem architektury (`app/src/__tests__/architecture.test.ts`) — domenę
+ * egzekwowane testem architektury (`app/src/__tests__/architecture.test.ts`) - domenę
  * dzielą aplikacja i serwer, więc każdy import wiązałby OBIE strony z jego obecnością.
  * Przy `n ≤ 4` cała potrzebna algebra to sto linii bez pętli iteracyjnych.
  *
  * Ten plik NIE ZNA pojęć dziedzinowych: nie ma tu paliwa, faz ani interwałów. Wektory
- * i macierze wchodzą, wektory i macierze wychodzą — tak samo jak `detection/regression.ts`
+ * i macierze wchodzą, wektory i macierze wychodzą - tak samo jak `detection/regression.ts`
  * nie wie, że liczy prędkość pionową.
  *
  * Konwencja: macierz to tablica WIERSZY (`m[i][j]` = wiersz i, kolumna j). Wszystkie
- * funkcje są czyste — wejście nietknięte, wynik nowy.
+ * funkcje są czyste - wejście nietknięte, wynik nowy.
  */
 
 /** Iloczyn macierz × wektor. */
@@ -38,7 +38,7 @@ export function transposeMultiply(
   return out;
 }
 
-/** Macierz Grama `AᵀA` — symetryczna, rozmiaru `columns × columns`. */
+/** Macierz Grama `AᵀA` - symetryczna, rozmiaru `columns × columns`. */
 export function gramMatrix(
   a: readonly (readonly number[])[],
   columns: number,
@@ -75,7 +75,7 @@ export function columnNorms(
 /**
  * Rozkład Choleskiego macierzy symetrycznej dodatnio określonej: `M = LLᵀ`.
  *
- * `null`, gdy macierz nie jest dodatnio określona — a to jest DOKŁADNIE ten sygnał,
+ * `null`, gdy macierz nie jest dodatnio określona - a to jest DOKŁADNIE ten sygnał,
  * którego szukamy: znaczy, że kolumny są (numerycznie) współliniowe, czyli faz nie da
  * się od siebie odróżnić. Wykrycie osobliwości jest tu funkcją, nie awarią; wywołujący
  * schodzi wtedy na model z mniejszą liczbą faz (`model.ts`).

@@ -1,8 +1,8 @@
 /**
- * UZ Aero — panel: `src/styles/tokens.css` MUSI być tym, co emituje `@uzaero/tokens`.
+ * UZ Aero - panel: `src/styles/tokens.css` MUSI być tym, co emituje `@uzaero/tokens`.
  *
  * Po co ten test, skoro plik jest generowany: bo generowany plik leżący w repozytorium
- * jest plikiem — da się go otworzyć i „poprawić kolor na szybko". Taka poprawka wygląda
+ * jest plikiem - da się go otworzyć i „poprawić kolor na szybko". Taka poprawka wygląda
  * w diffie zupełnie normalnie, a znika przy najbliższym uruchomieniu generatora,
  * czyli w najgorszym możliwym momencie: gdy nikt już nie pamięta, że coś zmieniał.
  *
@@ -30,18 +30,18 @@ describe('admin/src/styles/tokens.css', () => {
     expect(content).toBe(renderTokensCss(THEMES.night));
   });
 
-  it('zawiera blok `:root` z `themeCssBlock(THEMES.night)` — bez pośrednictwa generatora', () => {
+  it('zawiera blok `:root` z `themeCssBlock(THEMES.night)` - bez pośrednictwa generatora', () => {
     // Osobne sprawdzenie, żeby błąd w `renderTokensCss` nie mógł uzgodnić obu stron
     // ze sobą nawzajem: tu porównujemy z emiterem pakietu wprost.
     expect(content).toContain(themeCssBlock(THEMES.night));
   });
 
-  it('ostrzega, że jest generowany — i jest to PIERWSZA rzecz w pliku', () => {
+  it('ostrzega, że jest generowany - i jest to PIERWSZA rzecz w pliku', () => {
     expect(content.startsWith(TOKENS_CSS_HEADER)).toBe(true);
     expect(TOKENS_CSS_HEADER).toContain('PLIK GENEROWANY');
   });
 
-  it('ma dokładnie JEDEN blok `:root` — panel nie ma przełącznika motywów', () => {
+  it('ma dokładnie JEDEN blok `:root` - panel nie ma przełącznika motywów', () => {
     // Drugi blok znaczyłby, że ktoś zaczął dokładać motyw „na zapas" (§1.6).
     expect(content.match(/:root\s*\{/g)).toHaveLength(1);
     expect(content).not.toContain('data-theme');
@@ -55,7 +55,7 @@ describe('admin/src/styles/tokens.css', () => {
     expect(content.match(/^\s+--[a-z0-9-]+:/gm)?.length ?? 0).toBeGreaterThan(20);
   });
 
-  it('NIE deklaruje wymiarów ramy panelu — to nie są tokeny produktu', () => {
+  it('NIE deklaruje wymiarów ramy panelu - to nie są tokeny produktu', () => {
     // `--sidebar-w` i `--topbar-h` mieszkają w `layout.css`: tokeny są wspólne
     // z telefonem, a telefon nie ma sidebara (§1.3).
     //

@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: przyciski i pola formularza.
+ * UZ Aero - panel: przyciski i pola formularza.
  *
  * Klasy i wartości 1:1 z `design/admin/SZABLON.html` (sekcje „przyciski"
  * i „formularze"). Wzorzec pól jest ten sam co w aplikacji pilota:
@@ -52,7 +52,7 @@
   color: var(--text-secondary);
 }
 
-/* Zielona OBRAMÓWKA, nie zielone wypełnienie — akcja PRZYWRACAJĄCA („Aktywuj" konta
+/* Zielona OBRAMÓWKA, nie zielone wypełnienie - akcja PRZYWRACAJĄCA („Aktywuj" konta
    na A06), czyli odwrotność `.btn.danger` i o tej samej wadze wizualnej. `.primary`
    zostaje zarezerwowana dla akcji głównej ekranu; w kolumnie tabeli byłoby jej
    kilkanaście naraz i żadna nie byłaby główna. */
@@ -62,6 +62,16 @@
   background: var(--green-muted);
 }
 
+.btn:disabled,
+/**
+ * Blokada przycisku - ATRYBUT i klasa, oba tak samo.
+ *
+ * `:disabled` doszło w panelu 2.0 i to nie było ozdobą: `.btn.disabled` opisywało
+ * wyłącznie LINK zablokowany (`<span class="btn disabled">`), więc `<button disabled>`
+ * wyglądał dokładnie tak samo jak czynny. Zielony przycisk „Zaloguj się", który nie
+ * reaguje na kliknięcie, czyta się jak zawieszona aplikacja - a to jest pierwszy
+ * przycisk, jaki człowiek w tym panelu widzi.
+ */
 .btn:disabled,
 .btn.disabled {
   opacity: 0.4;
@@ -75,7 +85,7 @@
   border-radius: 8px;
 }
 
-/* Przycisk na całą szerokość karty — A00: „Zaloguj się" ma `width:100%` i wyższy
+/* Przycisk na całą szerokość karty - A00: „Zaloguj się" ma `width:100%` i wyższy
    cel niż standardowe 36 px. W mockupie stoi to inline; tutaj dostaje modyfikator,
    bo jest własnością WZORCA formularza, a nie tego jednego ekranu. */
 .btn.block {
@@ -125,14 +135,35 @@
 }
 
 /* Pole odrzucone przez serwer (A00a: obramowanie i tło w czerwieni). Modyfikator,
-   nie styl inline — stan błędu pola wróci na każdym formularzu panelu. */
+   nie styl inline - stan błędu pola wróci na każdym formularzu panelu. */
 .input.invalid {
   border-color: var(--red-border);
   background: var(--red-muted);
 }
 
+/**
+ * Pole DO ODCZYTU - „Aktualny stan" karty samolotu, gdy maszynę prowadzi już dziennik
+ * (uwagi do issue #66), i każde inne pole, którego edycja nic by nie zmieniła.
+ *
+ * DOPISANE 2026-09-07 przy makietach panelu 2.0: reguły nie było w `admin/src/styles/`
+ * wcale, więc `<TextInput disabled>` wyglądał DOKŁADNIE tak, jak pole czynne - a to jest
+ * ta sama pomyłka, przed którą broni `currentState.ts` („polem, które przestało działać,
+ * a nadal wygląda na czynne, nie da się nikim pokierować").
+ *
+ * Wartość zostaje pełnym kontrastem, bo to jest LICZBA, po którą się tu przyszło;
+ * gaśnie POWIERZCHNIA i kursor - pole ma czytać się jak wiersz danych, a nie jak
+ * formularz, który przestał odpowiadać. Tło `--surface` (a nie `--surface-raised`)
+ * zrównuje je z tłem karty: nic nie zaprasza do kliknięcia.
+ */
+.input:disabled {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text-primary);
+  cursor: default;
+}
+
 /* Pole wieloliniowe (komentarz rozstrzygnięcia flagi, A03a). Mockup używa na nim
-   klasy `.input`; modyfikator dokłada tylko to, czego `<input>` nie ma — pionową
+   klasy `.input`; modyfikator dokłada tylko to, czego `<input>` nie ma - pionową
    zmianę rozmiaru i interlinię akapitu. Komentarz do flagi bywa dłuższy niż linijka,
    a przycinanie go do czterech wierszy zniechęcałoby do napisania tego, co za pół
    roku będzie jedynym śladem decyzji. */
@@ -153,7 +184,7 @@
   font-weight: 600;
 }
 
-/* Pole z przyciskami W JEDNEJ LINII — hasło startowe + „kopiuj" (A06a). Przyciski są
+/* Pole z przyciskami W JEDNEJ LINII - hasło startowe + „kopiuj" (A06a). Przyciski są
    RODZEŃSTWEM pola, a nie jego zawartością, bo `<input>` nie ma dzieci; wysokości
    równa `align-items: stretch`, żeby 40 px pola i 36 px przycisku nie rozjeżdżały się
    w pionie. */
@@ -168,7 +199,7 @@
 }
 
 /* ── wybór jako lista kart ──
-   ZAKAZ natywnego `<select>` (`CLAUDE.md`) — wybór to zawsze widoczna lista kart.
+   ZAKAZ natywnego `<select>` (`CLAUDE.md`) - wybór to zawsze widoczna lista kart.
    W szufladzie flagi ta sama lista służy do nawigacji w głąb (sesje objęte sprawą). */
 .opt-list {
   display: flex;
@@ -176,9 +207,9 @@
   gap: 8px;
 }
 
-/* Siatka zamiast kolumny — dwie karty wyboru obok siebie ALBO dwa pola formularza
+/* Siatka zamiast kolumny - dwie karty wyboru obok siebie ALBO dwa pola formularza
    w jednym rzędzie (`A07a`: „Rok produkcji" + „Pojemność zbiorników"). Klasa jest
-   w `SZABLON.html` przy wyborze kart, a mockup floty używa jej dla pól — bo to jest
+   w `SZABLON.html` przy wyborze kart, a mockup floty używa jej dla pól - bo to jest
    ta sama rzecz: rząd, który zwija się na wąskim ekranie. `auto-fit` z minimum 200 px
    robi to bez media query. */
 .opt-grid {
@@ -190,7 +221,7 @@
 /* `font`, `text-align` i `width` obsługują wariant `<button>` (wybór akcji korekty,
    A02b): przeglądarka narzuca przyciskowi własną czcionkę i wyśrodkowanie, a karta
    ma wyglądać identycznie niezależnie od znacznika. `<label>` z mockupu nie jest
-   osiągalny z klawiatury, więc w panelu wybór jest przyciskiem — i to on dyktuje
+   osiągalny z klawiatury, więc w panelu wybór jest przyciskiem - i to on dyktuje
    te trzy właściwości. */
 .opt {
   display: flex;
@@ -256,10 +287,57 @@
   opacity: 1;
 }
 
-/* Szewron pozycji prowadzącej w głąb — zajmuje miejsce `.opt-check`, bo mówi to
+/* Szewron pozycji prowadzącej w głąb - zajmuje miejsce `.opt-check`, bo mówi to
    samo („to jest do kliknięcia”), tylko o ruchu, a nie o zaznaczeniu. */
 .opt-go {
   color: var(--text-muted);
   flex-shrink: 0;
   display: flex;
+}
+
+/**
+ * Podpowiedź pod polem w tonie błędu - „ten kod ma już inny pilot".
+ *
+ * Stoi pod polem, którego dotyczy, a nie w banerze nad formularzem: baner każe
+ * szukać, które z czterech pól poprawić, a czerwona ramka bez zdania nie mówi dlaczego.
+ */
+.hint.danger {
+  color: var(--red);
+}
+
+/**
+ * Wiersz sekcji „Dostęp": nazwa rzeczy po lewej, akcja po prawej.
+ *
+ * Nie tabela klucz-wartość, bo po prawej stronie nie stoi WARTOŚĆ, tylko przycisk -
+ * a wiersz, w którym jedno i drugie wygląda tak samo, uczy klikać w liczby.
+ */
+.access-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.access-row:last-child {
+  border-bottom: none;
+}
+
+/**
+ * Wartość maszynowa w zdaniu i w wierszu - e-mail konta Google, stempel zgłoszenia,
+ * uuid wklejony w rozmowie.
+ *
+ * DOPISANE 2026-09-07 przy makietach panelu 2.0: `RegistrationDrawer.tsx` pisze
+ * `<span className="mono">` przy adresie i przy chwili zgłoszenia, a w całym
+ * `admin/src/styles/` była wyłącznie `.input.mono` i `td.mono` - adres jechał więc
+ * krojem tekstowym wbrew regule „kody i wartości zawsze mono".
+ *
+ * Klasa jest UTYLITĄ jednej właściwości i tylko dlatego wolno jej być utylitą: nie
+ * niesie ani koloru, ani rozmiaru, więc nie ma jak przemalować komponentu, w którym
+ * się pojawi.
+ */
+.mono {
+  font-family: var(--font-mono);
+  letter-spacing: 0.3px;
 }

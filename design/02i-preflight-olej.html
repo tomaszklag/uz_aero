@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UZ Aero - 02I Nowy lot · Pomiar oleju</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
+    --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28);
+    --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28);
+    --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    --phone-scale: min(1, calc((100vh - 240px) / 852px), calc((100vw - 60px) / 393px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+
+  .canvas-label {
+    width: 100%; max-width: 460px;
+    display: grid; grid-template-columns: auto 1fr auto;
+    align-items: baseline; gap: 20px;
+    padding-bottom: 18px; border-bottom: 1px solid var(--border);
+  }
+  .film-strip { font-family: var(--font-display); font-size: 34px; letter-spacing: 3px; line-height: 1; }
+  .slug { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; border-left: 1px solid var(--border); padding-left: 18px; }
+  .canvas-meta { font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); letter-spacing: 1px; }
+
+  .phone {
+    width: 393px; height: 852px; border-radius: 54px;
+    background: var(--bg);
+    border: 10px solid #0D0E12;
+    box-shadow: 0 0 0 1px #1C1E24, 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);
+    overflow: hidden; position: relative; isolation: isolate; flex-shrink: 0;
+    transform: scale(var(--phone-scale)); transform-origin: top center;
+    margin-bottom: calc((var(--phone-scale) - 1) * 852px);
+  }
+  .phone::before { content:''; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:24px; background:#000; z-index:100; }
+  .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
+
+  .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
+  .status-right { display:inline-flex; align-items:center; gap:6px; }
+  .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
+
+  .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--green); }
+  .nav-strip span { color:var(--border-strong); }
+
+  /* Tło ekranu (krok 3, przyciemnione) */
+  .app-header { display:flex; align-items:flex-start; justify-content:space-between; padding:14px 16px 12px; border-bottom:1px solid var(--border); flex-shrink:0; }
+  .screen-title { font-family:var(--font-display); font-size:26px; letter-spacing:3px; color:var(--text-primary); line-height:1; }
+  .screen-subtitle { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); letter-spacing:1px; margin-top:3px; }
+  .step-badge { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:4px 10px; flex-shrink:0; white-space:nowrap; }
+  .scroll { flex:1; overflow:hidden; padding:14px 16px; display:flex; flex-direction:column; gap:12px; }
+  .section { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:14px; display:flex; flex-direction:column; gap:12px; opacity:0.4; }
+  .section-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
+  .field-input { background:var(--surface-raised); border:1px solid var(--border); border-radius:12px; padding:11px 13px; display:flex; align-items:center; justify-content:space-between; }
+
+  /* ===== MODAL ===== */
+  .modal-overlay {
+    position: absolute; inset: 0; z-index: 50;
+    background: rgba(0,0,0,0.72);
+    display: flex; flex-direction: column; justify-content: flex-end;
+  }
+  /* Sufit arkusza: pas tła nad nim ma być WIDOCZNY, inaczej arkusz z dużą treścią
+     dobija do góry telefonu i czyta się jak nowy ekran (SHEET_TOP_GAP = 56 dp). */
+  .modal-sheet {
+    background: var(--surface-raised); border-radius: 24px 24px 0 0;
+    padding: 20px 18px 36px; display: flex; flex-direction: column; gap: 13px;
+    border-top: 1px solid var(--border-strong);
+    max-height: calc(100% - 56px); overflow-y: auto;
+  }
+  .modal-handle {
+    width: 36px; height: 4px; border-radius: 2px; background: var(--border-strong);
+    align-self: center; margin-bottom: 2px;
+  }
+  .modal-title {
+    font-family: var(--font-display); font-size: 24px; letter-spacing: 2px; color: var(--text-primary);
+  }
+  .modal-field-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); margin-bottom: -5px; }
+  /* ETYKIETA Z PIGUŁKĄ „opcjonalne" (uwaga z urządzenia, 2026-08-29). Doklejone do
+     nazwy słowo („Dolano · opcjonalnie") czytało się jak część nazwy pola, a nie jak
+     jego WŁAŚCIWOŚĆ - a właściwość pola ma w tym systemie jeden kształt: pigułkę
+     w linii etykiety, tę samą, co „opcjonalne" przy Dualu i „wymagany · załoga 2-os.". */
+  .modal-field-head { display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+  .optional-tag { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); background:var(--surface-raised); border:1px solid var(--border); border-radius:5px; padding:2px 6px; white-space:nowrap; }
+  /* Metryka pola zmniejszona ~30% (uwaga z urządzenia, 2026-09-02: „input zajmuje
+     strasznie dużo miejsca" - przy DWÓCH polach tego arkusza nadmiar liczył się
+     podwójnie). Cyfry 22 px, padding 8 px, min-height 46 px = cel dotykowy.
+     Wspólna z 02B/02C; w kodzie: valueFieldMetrics.ts.
+     BEZ BURSZTYNU (ta sama tura uwag): bursztyn jest rozróżnieniem PALIWA i zostaje
+     w 02B - olej pisze się standardowo, oba pola wyglądają jak pole „Dolano". */
+  .modal-input-row {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface); border: 1px solid var(--border-strong);
+    border-radius: 14px; padding: 8px 16px; min-height: 46px;
+  }
+  .modal-input-val {
+    font-family: var(--font-mono); font-size: 22px; font-weight: 700;
+    letter-spacing: 2px; color: var(--text-primary); flex: 1;
+  }
+  .modal-input-unit {
+    font-family: var(--font-mono); font-size: 14px; color: var(--text-secondary);
+  }
+  .modal-cursor {
+    display: inline-block; width: 2px; height: 24px; background: var(--text-primary);
+    margin-left: 4px; vertical-align: middle;
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0; } }
+  /* Szlak podpowiedzi (druga tura 2026-09-02) - te same klasy, co szlaki paliwa/MH
+     na 02A: kropka, tytuł ze stemplem, jedna linia szczegółów. */
+  .trail { display:flex; flex-direction:column; gap:0; border-top:1px solid var(--border); margin-top:2px; padding-top:10px; }
+  .trail-row { display:flex; align-items:flex-start; gap:10px; padding-bottom:10px; position:relative; }
+  .trail-row:last-child { padding-bottom:0; }
+  .trail-line { position:absolute; left:7px; top:16px; bottom:0; width:1px; background:var(--border); }
+  .trail-row:last-child .trail-line { display:none; }
+  .trail-dot { width:15px; height:15px; border-radius:50%; flex-shrink:0; margin-top:1px; }
+  .trail-dot.neutral { background:var(--surface-raised); border:1px solid var(--border-strong); }
+  .trail-dot.green { background:var(--green-muted); border:1px solid var(--green-border); }
+  .trail-body { flex:1; }
+  .trail-title { font-family:var(--font-body); font-size:11px; font-weight:400; color:var(--text-secondary); }
+  .trail-title.green { color:var(--green); }
+  .trail-meta { font-family:var(--font-mono); font-size:9px; color:var(--text-muted); margin-top:2px; line-height:1.5; }
+  .trail-meta b { color:var(--text-secondary); font-weight:500; }
+  .modal-ref {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: var(--font-mono); font-size: 10px; color: var(--text-muted);
+    padding: 0 2px;
+  }
+  .modal-ref-val { color: var(--text-secondary); }
+  .modal-warning {
+    display: flex; align-items: flex-start; gap: 9px;
+    background: var(--amber-muted); border: 1px solid var(--amber-border);
+    border-radius: 12px; padding: 12px 14px;
+    font-family: var(--font-body); font-size: 12px; color: var(--amber); line-height: 1.5;
+  }
+  .modal-warning strong { color: var(--amber); }
+  .modal-actions { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; }
+  .modal-btn-cancel {
+    display: flex; align-items: center; justify-content: center;
+    padding: 15px; border-radius: 14px; border: 1px solid var(--border-strong);
+    background: var(--surface); color: var(--text-secondary);
+    font-family: var(--font-display); font-size: 17px; letter-spacing: 2px;
+    text-decoration: none; cursor: pointer;
+  }
+  .modal-btn-confirm {
+    display: flex; align-items: center; justify-content: center;
+    padding: 15px; border-radius: 14px; border: none;
+    background: var(--green); color: #0D0D0D;
+    font-family: var(--font-display); font-size: 17px; letter-spacing: 2px;
+    text-decoration: none; cursor: pointer;
+    box-shadow: 0 0 24px rgba(46,204,113,0.3);
+  }
+</style>
+</head>
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">UZ AERO - 02I</span>
+  <span class="slug">przejęcie · pomiar oleju · poniżej minimum</span>
+  <span class="canvas-meta">Modal · issue #60</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Pomiar oleju modal">
+  <div class="status-bar">
+    <span>9:41</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+    <!-- TŁO: krok 3 (przyciemniony przez overlay) -->
+    <div class="app-header">
+      <div>
+        <div class="screen-title">NOWY LOT</div>
+        <div class="screen-subtitle">SP-AXA · Cessna 182</div>
+      </div>
+      <div class="step-badge">3 / 3</div>
+    </div>
+    <div class="scroll">
+      <div class="section">
+        <div class="section-label">Paliwo na pokładzie</div>
+        <div class="field-input" style="font-family:var(--font-mono); font-size:18px; font-weight:700; color:var(--amber);">150 <span style="font-size:11px; color:var(--text-muted); font-weight:400;">L · przekazane</span></div>
+      </div>
+      <div class="section">
+        <div class="section-label">Motogodziny silnika</div>
+        <div class="field-input" style="font-family:var(--font-mono); font-size:18px; font-weight:700;">1 234:30 <span style="font-size:11px; color:var(--text-muted); font-weight:400;">MH · przekazane</span></div>
+      </div>
+      <div class="section">
+        <div class="section-label">Olej silnikowy</div>
+        <!-- Bez „min/zbiornik" i bez instrukcji „pomiar przy zimnym silniku"
+             w podpisie (przegląd 2026-09-02, dwie tury) - po pomiarze konfigurację
+             mówi podziałka ze znacznikiem minimum, a procedura pomiaru to wiedza
+             pilota, nie treść ekranu. -->
+        <div class="field-input" style="font-family:var(--font-mono); font-size:18px; font-weight:700; color:var(--text-muted);">- - <span style="font-size:11px; font-weight:400;">L</span></div>
+      </div>
+    </div>
+
+    <!-- MODAL OVERLAY -->
+    <div class="modal-overlay">
+      <div class="modal-sheet">
+        <div class="modal-handle"></div>
+        <div class="modal-title">Pomiar oleju</div>
+
+        <div class="modal-field-label">Bagnet - poziom zmierzony</div>
+        <div class="modal-input-row">
+          <span class="modal-input-val">8,2<span class="modal-cursor"></span></span>
+          <span class="modal-input-unit">L</span>
+        </div>
+
+        <div class="modal-field-head"><span class="modal-field-label">Dolano</span><span class="optional-tag">opcjonalne</span></div>
+        <div class="modal-input-row">
+          <span class="modal-input-val">1,0</span>
+          <span class="modal-input-unit">L</span>
+        </div>
+
+        <!-- OSTRZEŻENIE ZARAZ POD POLAMI (uwaga z urządzenia, 2026-09-02, trzecia
+             tura: na końcu treści ginęło pod wysuniętą klawiaturą - pilot patrzy
+             tam, gdzie pisze, i tam ma dostać odpowiedź; liczy się na każdą zmianę
+             wartości). Dwa zdania, dwa różne ostrzeżenia jednej liczby: operacyjne
+             (poniżej minimum - dolej) i diagnostyczne (odchył od normy - możliwy
+             ubytek); drugie jest racją istnienia normy - rosnące zużycie oleju to
+             najtańszy wczesny sygnał zużycia silnika. -->
+        <div class="modal-warning">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span>Pomiar <strong>0,3 L poniżej minimum</strong> (8,5 L) - dolej przed lotem.
+          Odczyt jest też <strong>1,9 L niżej</strong> niż oczekiwanie z normy - sprawdź,
+          czy silnik nie traci oleju.</span>
+        </div>
+
+        <!-- Podpowiedź (ostatni pomiar → oczekiwanie) przeniesiona TU ze szlaku
+             sekcji (przegląd 2026-09-02) i renderowana JAKO SZLAK - druga tura tej
+             samej uwagi: wiersze label→wartość dawały „za dużo linijek tekstu".
+             Ten sam schemat i te same dane, co szlaki paliwa/MH na 02A; pilot
+             porównuje z nim liczbę dokładnie w chwili wpisywania. -->
+        <div class="trail">
+          <div class="trail-row">
+            <div class="trail-line"></div>
+            <div class="trail-dot neutral"></div>
+            <div class="trail-body">
+              <div class="trail-title">Ostatni pomiar · 21 CZERWCA 07:02 - J. Kowalski</div>
+              <div class="trail-meta">bagnet <b>10,6 L</b> · przy <b>1 230:30 MH</b></div>
+            </div>
+          </div>
+          <div class="trail-row">
+            <div class="trail-dot neutral"></div>
+            <div class="trail-body">
+              <div class="trail-title">Latano · 4:00 MH</div>
+              <div class="trail-meta">norma <b>0,12 L/h</b> → na bagnecie oczekuj ≈ <b>10,1 L</b></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Separator domykający szlak (uwaga z urządzenia, 2026-09-02) - ta sama
+             kreska, którą szlak otwiera od góry. -->
+        <div style="border-top:1px solid var(--border);"></div>
+
+        <div class="modal-ref">
+          <span>Minimum przed lotem</span>
+          <span class="modal-ref-val">8,5 L</span>
+        </div>
+        <div class="modal-ref">
+          <span>Zbiornik oleju</span>
+          <span class="modal-ref-val">11,4 L</span>
+        </div>
+        <!-- Stan po dolewce jest RACHUNKIEM (pomiar + dolano) - pokazujemy go,
+             bo nie jest trzecim polem do wpisania. BEZ „powyżej minimum" i bez
+             zieleni (uwaga z urządzenia, 2026-09-02): sugerowały, że oleju
+             WYSTARCZY, a wystarczalność zależy od długości lotu - o zejściu pod
+             minimum mówi osobne ostrzeżenie wyżej. -->
+        <div class="modal-ref">
+          <span>Po dolewce</span>
+          <span class="modal-ref-val">9,2 L</span>
+        </div>
+
+        <div class="modal-actions">
+          <a href="02a-preflight.html" class="modal-btn-cancel">Anuluj</a>
+          <a href="02a-preflight.html" class="modal-btn-confirm">Zapisz</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="02-preflight.html">← 02 Preflight</a>
+  <a href="02a-preflight.html">02A Paliwo/MH</a>
+  <a href="02b-preflight-paliwo.html">02B Paliwo modal</a>
+  <a href="02c-preflight-motogodziny.html">02C MH modal</a>
+  <a href="02i-preflight-olej.html" class="active">02I Olej modal</a>
+  <span>·</span>
+  <a href="04a-cockpit-ground.html">04A Kokpit →</a>
+</nav>
+
+</body>
+</html>

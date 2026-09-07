@@ -1,19 +1,19 @@
 /**
- * UZ Aero — pobranie pasów startowych z Overpass API.
+ * UZ Aero - pobranie pasów startowych z Overpass API.
  *
  * Jedno zapytanie o cały kraj zamiast promienia wokół każdego lotniska: publiczny serwer
  * Overpassa jest darmowy i współdzielony, więc sto małych zapytań byłoby zwyczajnie
- * nieuprzejme — a i tak trwałoby dłużej.
+ * nieuprzejme - a i tak trwałoby dłużej.
  *
  * Serwer bywa przeciążony (504 „too busy", 502 z mirrora), więc próbujemy kolejno kilku
  * końcówek. Gdy żadna nie odpowie, generator ma jeszcze drogę przez plik podręczny
- * (\`--osm-cache\`) — regeneracja katalogu nie może zależeć od tego, czy akurat teraz
+ * (\`--osm-cache\`) - regeneracja katalogu nie może zależeć od tego, czy akurat teraz
  * publiczny serwer ma dobry dzień.
  */
 
 import type { OverpassWay } from './osmRunways';
 
-/** Prostokąt obejmujący Polskę z zapasem — te same granice, co kontrola w testach katalogu. */
+/** Prostokąt obejmujący Polskę z zapasem - te same granice, co kontrola w testach katalogu. */
 export const POLAND_RUNWAYS_QUERY = `[out:json][timeout:300];
 way["aeroway"="runway"](48.9,14.0,55.0,24.2);
 out geom;`;
@@ -23,7 +23,7 @@ const ENDPOINTS = [
   'https://overpass.kumi.systems/api/interpreter',
 ];
 
-/** Nagłówek z kontaktem — Overpass odrzuca ruch bez rozpoznawalnego klienta (406). */
+/** Nagłówek z kontaktem - Overpass odrzuca ruch bez rozpoznawalnego klienta (406). */
 const HEADERS = {
   'Content-Type': 'application/x-www-form-urlencoded',
   'User-Agent': 'uzaero-airfield-generator (https://github.com/tomaszklag/uz_aero)',

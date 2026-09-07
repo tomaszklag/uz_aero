@@ -1,5 +1,5 @@
 /**
- * UZ Aero — WSPÓLNY RYTM SKELETONÓW (issue #33, wzorzec `design/LOADERY.html` reguła 7).
+ * UZ Aero - WSPÓLNY RYTM SKELETONÓW (issue #33, wzorzec `design/LOADERY.html` reguła 7).
  *
  * Jedna `Animated.Value` na całą aplikację, nie jedna na plamkę. Powód jest wizualny:
  * plamek na ekranie ładowania są dziesiątki (trzy wiersze logu to już czternaście),
@@ -9,9 +9,9 @@
  *
  * Puls przezroczystością, nie przesuwany gradient jak `.skel` w panelu webowym
  * (`design/admin/SZABLON.html`): gradienty w React Native wymagają modułu natywnego,
- * którego projekt konsekwentnie unika (ta sama decyzja co przy mapie śladu — własny
+ * którego projekt konsekwentnie unika (ta sama decyzja co przy mapie śladu - własny
  * renderer zamiast MapLibre). `opacity` jedzie przez `useNativeDriver` na wątku UI,
- * więc animacja nie zwalnia nawet wtedy, gdy JS jest zajęty odczytem z SQLite —
+ * więc animacja nie zwalnia nawet wtedy, gdy JS jest zajęty odczytem z SQLite -
  * czyli DOKŁADNIE wtedy, kiedy skeleton jest na ekranie.
  *
  * Pętla chodzi tylko wtedy, gdy jest co animować: licznik subskrybentów zatrzymuje ją,
@@ -25,7 +25,7 @@ import { AccessibilityInfo, Animated, Easing } from 'react-native';
 /** Pełny cykl (jasno → ciemno → jasno). Ten sam, co `@keyframes skel` w mockupie. */
 export const SKELETON_CYCLE_MS = 1400;
 
-/** Dolna granica pulsu — plamka nigdy nie gaśnie do zera, bo ma trzymać miejsce. */
+/** Dolna granica pulsu - plamka nigdy nie gaśnie do zera, bo ma trzymać miejsce. */
 export const SKELETON_OPACITY_MIN = 0.45;
 
 /**
@@ -79,7 +79,7 @@ export function useSkeletonPulse(): Animated.Value {
     if (reduceMotion == null) {
       // Pytamy RAZ, przy pierwszej plamce w życiu procesu. Odpowiedź przychodzi
       // asynchronicznie, więc pętla rusza od razu i zostaje zatrzymana, jeśli system
-      // powie, że animacji sobie nie życzy — odwrotna kolejność kosztowałaby opóźnienie
+      // powie, że animacji sobie nie życzy - odwrotna kolejność kosztowałaby opóźnienie
       // startu na każdym urządzeniu, żeby obsłużyć mniejszość.
       reduceMotion = false;
       void AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {

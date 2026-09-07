@@ -1,5 +1,5 @@
 /**
- * UZ Aero — PORT magazynu lokalnego (docs/_main.md.txt §5.2).
+ * UZ Aero - PORT magazynu lokalnego (docs/_main.md.txt §5.2).
  *
  * To jest port w rozumieniu architektury heksagonalnej: aplikacja mówi, czego potrzebuje
  * od magazynu; infrastruktura dostarcza implementację (`ExpoSqliteAdapter` w telefonie,
@@ -10,15 +10,15 @@
  * a rdzeń logiki (repo, projekcje, reguły, outbox, dedup) musi być testowalny bez telefonu.
  *
  * KONTRAKT PORZĄDKU: „chronologicznie" = **kolejność wstawienia** (append-only).
- * Świadomie NIE sortujemy po `deviceTime` — offline zegar telefonu może cofnąć się
+ * Świadomie NIE sortujemy po `deviceTime` - offline zegar telefonu może cofnąć się
  * w trakcie dnia (§4.1 pkt 6, §4.5); realna kolejność akcji pilota = kolejność zapisu.
  * (Porządek CZASOWY, potrzebny do arytmetyki, przywraca dopiero `projectSession`.)
  *
  * KONTRAKT IDEMPOTENCJI: `insertEvent` ignoruje duplikat `uuid` i zwraca `false`
- * (dedup po UUID, §4.1) — to na tym stoi „ponowny append nie duplikuje" z repo.
+ * (dedup po UUID, §4.1) - to na tym stoi „ponowny append nie duplikuje" z repo.
  *
  * KONTRAKT WALIDACJI: port NIE zna reguł domenowych i celowo przyjmie każde zdarzenie.
- * Inwarianty egzekwuje warstwa komend (`application/commands`) PRZED zapisem — magazyn
+ * Inwarianty egzekwuje warstwa komend (`application/commands`) PRZED zapisem - magazyn
  * musi umieć odtworzyć dowolną historię, także zastaną.
  */
 
@@ -40,6 +40,16 @@ export interface StoragePort {
   getAllEvents(): Promise<Event[]>;
   /** Oznacza wskazane `uuid` jako wysłane (ustawia `syncedAt`). Nieznane `uuid` pomija. */
   markSynced(uuids: string[], syncedAt: EpochMillis): Promise<void>;
+  /**
+   * WSTRZYMUJE zdarzenia (issue #81): operację zakończył albo unieważnił administrator,
+   * więc jej zaległe zapisy NIE MOGĄ już wyjść na serwer. Wiersz zostaje w `events`
+   * (rejestr jest append-only, ekran dalej go czyta), `syncedAt` zostaje `null`
+   * (serwer tego nie potwierdził i nie potwierdzi), a osobna tabela mówi, że ten uuid
+   * WYPADŁ z outboxa. `getUnsyncedEvents` takich wierszy nie oddaje.
+   */
+  withholdEvents(uuids: string[], reason: WithheldReason, withheldAt: EpochMillis): Promise<void>;
+  /** Wszystkie wstrzymane zapisy - do liczników na ekranie 01 i w historii. */
+  getWithheldEvents(): Promise<WithheldEvent[]>;
 
   // ── cache referencyjny (§4.8, §5.2) ──────────────────────────────────────────
   upsertAircraft(rows: ReferenceAircraft[]): Promise<void>;
@@ -59,7 +69,7 @@ export interface StoragePort {
 }
 
 /**
- * Klucze `session_meta` (§5.2 — key/value bieżącej sesji i zalogowanego pilota).
+ * Klucze `session_meta` (§5.2 - key/value bieżącej sesji i zalogowanego pilota).
  * Trzymane jako string↔string; wartości strukturalne serializujemy do JSON.
  * Mieszkają przy porcie, bo są kontraktem MAGAZYNU, nie pojęciem domenowym.
  */
@@ -68,9 +78,9 @@ export const SESSION_META_KEYS = {
   currentPilotId: 'current_pilot_id',
   currentAircraftId: 'current_aircraft_id',
   /**
-   * Sesja TRZYMANEGO SAMOLOTU — dla writera headless (GPS w tle po śmierci procesu).
+   * Sesja TRZYMANEGO SAMOLOTU - dla writera headless (GPS w tle po śmierci procesu).
    * Inny cykl życia niż `current_session_uuid` (ten nigdy nie jest czyszczony,
-   * o wznowieniu decyduje `state.closed` — `navigation/resumeTarget.ts`): zapis przy
+   * o wznowieniu decyduje `state.closed` - `navigation/resumeTarget.ts`): zapis przy
    * claimie, czyszczenie przy zdaniu samolotu (`releaseAircraft`), uzgodnienie przy
    * wznowieniu. Brak klucza = fixy do kosza.
    */
@@ -78,3 +88,20 @@ export const SESSION_META_KEYS = {
 } as const;
 
 export type SessionMetaKey = (typeof SESSION_META_KEYS)[keyof typeof SESSION_META_KEYS];
+
+/**
+ * Dlaczego zapis WYPADŁ z outboxa (issue #81):
+ *  • `admin_close` - operację zakończył administrator (`session_close`);
+ *  • `admin_void`  - operację unieważnił administrator (`session_void` z `source: 'admin'`);
+ *  • `server`      - serwer odrzucił zapis w ingeście jako dosłany do operacji
+ *                    zakończonej przez administratora (wyścig z wysyłką).
+ * Trzy nazwy, jeden skutek: zapis zostaje w rejestrze telefonu, na serwer nie wyjdzie.
+ */
+export type WithheldReason = 'admin_close' | 'admin_void' | 'server';
+
+export interface WithheldEvent {
+  uuid: string;
+  sessionUuid: string;
+  reason: WithheldReason;
+  withheldAt: EpochMillis;
+}

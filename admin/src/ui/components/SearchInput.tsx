@@ -1,7 +1,7 @@
 /**
- * UZ Aero — panel: pole wyszukiwania w pasku filtrów (`.search` z `SZABLON.html`).
+ * UZ Aero - panel: pole wyszukiwania w pasku filtrów (`.search` z `SZABLON.html`).
  *
- * Cała etykieta jest `<label>` — kliknięcie w lupę ustawia fokus w polu, dokładnie
+ * Cała etykieta jest `<label>` - kliknięcie w lupę ustawia fokus w polu, dokładnie
  * jak w mockupie, i bez własnej obsługi zdarzeń.
  *
  * Skrót `/` ustawia fokus (`docs/architektura-panelu-frontend.md` §7) i jest
@@ -17,7 +17,7 @@ interface SearchInputProps {
   placeholder: string;
   ariaLabel: string;
   onChange: (value: string) => void;
-  /** Wywołane po Enterze — wyszukiwanie jedzie do serwera, nie filtruje wierszy. */
+  /** Wywołane po Enterze - wyszukiwanie jedzie do serwera, nie filtruje wierszy. */
   onSubmit: () => void;
 }
 
@@ -28,7 +28,7 @@ export function SearchInput({ value, placeholder, ariaLabel, onChange, onSubmit 
     const onKey = (event: KeyboardEvent): void => {
       if (event.key !== '/') return;
       // Ukośnik jest znakiem, więc przechwytujemy go WYŁĄCZNIE wtedy, gdy nikt go
-      // właśnie nie pisze — inaczej nie dałoby się wpisać go w komentarz do flagi.
+      // właśnie nie pisze - inaczej nie dałoby się wpisać go w komentarz do flagi.
       const active = document.activeElement;
       const typing =
         active instanceof HTMLInputElement ||

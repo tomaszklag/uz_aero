@@ -1,9 +1,9 @@
 /**
- * UZ Aero — parser światowej siatki undulacji EGM96 („WW15MGH.GRD", NGA).
+ * UZ Aero - parser światowej siatki undulacji EGM96 („WW15MGH.GRD", NGA).
  *
  * Format (readme.txt pakietu interpolacyjnego NGA): pierwsza linia to nagłówek
  * `-90 90 0 360 .25 .25` (południe, północ, zachód, wschód, krok N-S, krok E-W
- * w stopniach), dalej 721×1441 wartości w METRACH — pasma od 90°N ku południowi,
+ * w stopniach), dalej 721×1441 wartości w METRACH - pasma od 90°N ku południowi,
  * w paśmie od 0°E ku wschodowi. Kolumny 0° i 360° są OBIE w pliku (szew powtórzony)
  * i ta redundancja jest tu sprawdzana: rozjazd szwu znaczy, że plik jest ucięty
  * albo przesunięty, a wtedy KAŻDA wartość ląduje na złych współrzędnych.
@@ -15,7 +15,7 @@ export const WORLD_ROWS = 721;
 export const WORLD_COLS = 1441;
 export const WORLD_STEP_DEG = 0.25;
 
-/** Nagłówek, którego wymagamy co do wartości — inny plik to inne dane, nie „prawie te". */
+/** Nagłówek, którego wymagamy co do wartości - inny plik to inne dane, nie „prawie te". */
 const EXPECTED_HEADER = [-90, 90, 0, 360, WORLD_STEP_DEG, WORLD_STEP_DEG] as const;
 
 /**
@@ -29,7 +29,7 @@ export function parseWorldGrd(text: string): GeoidGrid {
   const tokens = text.trim().split(/\s+/);
   const expected = EXPECTED_HEADER.length + WORLD_ROWS * WORLD_COLS;
   if (tokens.length !== expected) {
-    throw new Error(`WW15MGH.GRD: ${tokens.length} tokenów zamiast ${expected} — plik ucięty albo to nie ta siatka`);
+    throw new Error(`WW15MGH.GRD: ${tokens.length} tokenów zamiast ${expected} - plik ucięty albo to nie ta siatka`);
   }
 
   EXPECTED_HEADER.forEach((want, i) => {

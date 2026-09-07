@@ -1,5 +1,5 @@
 /**
- * UZ Aero — testy repozytorium + InMemoryAdapter (warstwa danych, §4.1/§4.3/§4.8).
+ * UZ Aero - testy repozytorium + InMemoryAdapter (warstwa danych, §4.1/§4.3/§4.8).
  * Rdzeń: append→odczyt, outbox (`synced_at IS NULL`), markSynced, dedup po uuid,
  * dwa zegary (deviceTime + gpsTime), cache referencyjny z fetchedAt.
  */
@@ -91,7 +91,7 @@ describe('EventsRepo + InMemoryAdapter', () => {
     expect(aBack!.syncedAt).toBe(99_999);
   });
 
-  it('dedup po uuid — ponowny append tego samego uuid nie duplikuje', async () => {
+  it('dedup po uuid - ponowny append tego samego uuid nie duplikuje', async () => {
     const { repo } = makeRepo();
     const first = await repo.appendEvent(engineStart({ uuid: 'fixed', deviceTime: 1 }));
     const second = await repo.appendEvent(engineStart({ uuid: 'fixed', deviceTime: 999 }));
@@ -130,6 +130,12 @@ describe('EventsRepo + InMemoryAdapter', () => {
         claimSince: null,
         handover: null,
         consumption: null,
+        // Konfiguracja oleju (issue #60) - musi przeżyć rundę zapis→odczyt.
+        oilMinL: 8.5,
+        oilCapacityL: 11.4,
+        oilNormLPerH: 0.12,
+        // Norma nominalna spalania (issue #66) - siostra normy oleju, ta sama runda.
+        fuelNormLPerH: 18.5,
       },
     ]);
     await repo.upsertPilots([{ id: 'pic-1', code: 'KRZ', name: 'Jan Kowalski', active: true }]);
@@ -141,13 +147,17 @@ describe('EventsRepo + InMemoryAdapter', () => {
 
     const byId = await repo.getAircraftById('ac-1');
     expect(byId?.capacityL).toBe(330);
+    expect(byId?.oilMinL).toBe(8.5);
+    expect(byId?.oilCapacityL).toBe(11.4);
+    expect(byId?.oilNormLPerH).toBe(0.12);
+    expect(byId?.fuelNormLPerH).toBe(18.5);
 
     const pilots = await repo.getPilots();
     expect(pilots[0]!.code).toBe('KRZ');
     expect(pilots[0]!.fetchedAt).toBe(12_345);
   });
 
-  it('session_meta: zapis i odczyt bieżącej sesji', async () => {
+  it('session_meta: zapis i odczyt bieżącej operacji', async () => {
     const { repo } = makeRepo();
     await repo.setCurrentSession({ sessionUuid: SESSION, pilotId: PIC, aircraftId: AC });
     expect(await repo.getCurrentSession()).toEqual({

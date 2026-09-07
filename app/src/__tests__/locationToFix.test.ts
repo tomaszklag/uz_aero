@@ -1,10 +1,10 @@
 /**
- * UZ Aero — translacja odczytu platformy na fix domeny.
+ * UZ Aero - translacja odczytu platformy na fix domeny.
  *
  * Strażnik kontraktu null-nie-zero (poprawka 2026-07-30): Android przy małych
  * prędkościach nie podaje prędkości albo zeruje ją filtrem static-hold, a `-1`
  * to jego idiom „niedostępne". Regres do dawnego `?? 0` podawał detektorowi
- * pomiar, którego nikt nie wykonał — i opóźniał wykrycie kołowania.
+ * pomiar, którego nikt nie wykonał - i opóźniał wykrycie kołowania.
  */
 
 import { geoidUndulationM } from '../domain';
@@ -28,7 +28,7 @@ const raw = (over: Partial<RawLocation['coords']> = {}, timestamp = 1_723_456_78
   timestamp,
 });
 
-describe('locationToFix — brak pomiaru to null, nigdy zero', () => {
+describe('locationToFix - brak pomiaru to null, nigdy zero', () => {
   it('brak prędkości (null) → groundSpeedKt: null', () => {
     expect(locationToFix(raw({ speed: null })).groundSpeedKt).toBeNull();
   });
@@ -49,7 +49,7 @@ describe('locationToFix — brak pomiaru to null, nigdy zero', () => {
   });
 });
 
-describe('locationToFix — jednostki i zegar', () => {
+describe('locationToFix - jednostki i zegar', () => {
   it('m/s → węzły', () => {
     const fix = locationToFix(raw({ speed: 10 }));
     expect(fix.groundSpeedKt).toBeCloseTo(10 * MPS_TO_KNOTS, 6);
@@ -70,7 +70,7 @@ describe('locationToFix — jednostki i zegar', () => {
   });
 
   it('czas fixa pochodzi z timestampu GPS, nie z zegara urządzenia', () => {
-    // Zegar urządzenia celowo „przestawiony" — fix ma nieść czas GPS (§4.5).
+    // Zegar urządzenia celowo „przestawiony" - fix ma nieść czas GPS (§4.5).
     const nowSpy = jest.spyOn(Date, 'now').mockReturnValue(999);
     try {
       expect(locationToFix(raw({}, 1_723_456_789_000)).time).toBe(1_723_456_789_000);
@@ -87,7 +87,7 @@ describe('locationToFix — jednostki i zegar', () => {
   });
 });
 
-describe('locationToFix — regresja EPNL (zgłoszenie 2026-08-11)', () => {
+describe('locationToFix - regresja EPNL (zgłoszenie 2026-08-11)', () => {
   it('na EPNL surowe ~950 ft elipsoidalnie pokazuje się jako ~830 ft AMSL', () => {
     // Elewacja EPNL (Łososina Dolna) to 830 ft AMSL, a loger wskazywał ~950 ft:
     // różnica to undulacja geoidy (~37 m). 289,56 m = dokładnie 950 ft.

@@ -1,10 +1,10 @@
 /**
- * UZ Aero (serwer) — trasy preferencji pilota: `GET /me/prefs` i `PUT /me/prefs`
+ * UZ Aero (serwer) - trasy preferencji pilota: `GET /me/prefs` i `PUT /me/prefs`
  * (decyzja 2026-07-29: motyw wędruje za pilotem między urządzeniami).
  *
  * Cienkie jak reszta: zod → komenda → status. Tożsamość WYŁĄCZNIE z tokenu (`/me`),
- * nigdy z body — jeden pilot nie ma jak pisać w cudzym profilu. Odpowiedź PUT jest
- * ZAWSZE stanem autorytatywnym po operacji (LWW rozstrzyga komenda + SQL) — starszy
+ * nigdy z body - jeden pilot nie ma jak pisać w cudzym profilu. Odpowiedź PUT jest
+ * ZAWSZE stanem autorytatywnym po operacji (LWW rozstrzyga komenda + SQL) - starszy
  * stempel dostaje 200 ze zwycięzcą w treści, nie błąd: przegrana w LWW to normalny
  * wynik uzgadniania, a nie wina żądania.
  */
@@ -18,7 +18,7 @@ import { authorize } from '../../authorize.ts';
 import { tokenFromRequest } from '../../tokenFromRequest.ts';
 
 /**
- * Serwer nie zna listy motywów (tokeny UI aplikacji) — pilnuje tylko, żeby nazwa
+ * Serwer nie zna listy motywów (tokeny UI aplikacji) - pilnuje tylko, żeby nazwa
  * była niepustym, krótkim tekstem, a stempel poprawnym ISO (UTC, jak `toISOString`).
  */
 const putBody = z.object({

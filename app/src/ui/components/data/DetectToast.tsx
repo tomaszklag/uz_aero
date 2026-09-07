@@ -1,17 +1,17 @@
 /**
- * UZ Aero — DetectToast (autodetekcja startu / lądowania)
+ * UZ Aero - DetectToast (autodetekcja startu / lądowania)
  *
  * Arkusz od dołu, który pojawia się, gdy GPS wykryje zdarzenie. Hierarchia jest
  * **odwrotna niż podpowiada intuicja** i wynika wprost z §3.2:
  *
  *   brak reakcji = ZAPIS.  Jedyną akcją pilota jest COFNIJ.
  *
- * Dlatego duży, wyraźny przycisk to „COFNIJ", a nie „Potwierdź" — potwierdzanie
+ * Dlatego duży, wyraźny przycisk to „COFNIJ", a nie „Potwierdź" - potwierdzanie
  * dublowałoby to, co i tak nastąpi, i uczyłoby pilota, że musi reagować przy każdym
  * locie. Licznik sekund jest czytelny (nie 3-pikselowy pasek), bo to jedyna informacja
  * o tym, ile czasu zostało na reakcję.
  *
- * Komponent jest bezstanowy w kwestii odliczania — czas podaje rodzic, który i tak
+ * Komponent jest bezstanowy w kwestii odliczania - czas podaje rodzic, który i tak
  * musi wiedzieć, kiedy wysłać komendę.
  */
 
@@ -30,7 +30,7 @@ export interface DetectToastProps {
   detail?: string;
   /** Sekundy pozostałe do zapisu. */
   secondsLeft: number;
-  /** Etykieta cofnięcia — dopasowana do sytuacji („COFNIJ — TO PRZELOT"). */
+  /** Etykieta cofnięcia - dopasowana do sytuacji („COFNIJ - TO PRZELOT"). */
   undoLabel?: string;
   onUndo: () => void;
   style?: ViewStyle;

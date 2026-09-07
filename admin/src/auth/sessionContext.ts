@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: kontekst sesji i jego JEDYNY czytnik.
+ * UZ Aero - panel: kontekst sesji i jego JEDYNY czytnik.
  *
  * Osobny plik od `SessionProvider.tsx` i to nie z upodobania do małych plików, tylko
  * z twardego powodu narzędziowego: **Fast Refresh odświeża moduł tylko wtedy, gdy ten
@@ -9,15 +9,15 @@
  *     [vite] invalidate /src/auth/SessionProvider.tsx:
  *     Could not Fast Refresh ("useSessionState" export is incompatible)
  *
- * …a unieważnienie szło w górę do `main.tsx`, który niczego nie przyjmuje — więc każda
+ * …a unieważnienie szło w górę do `main.tsx`, który niczego nie przyjmuje - więc każda
  * edycja providera przeładowywała CAŁĄ stronę zamiast podmienić komponent. W panelu
  * znaczy to utratę stanu ekranu i ponowne `GET /me` przy każdym zapisie pliku.
  *
  * Dlaczego kontekst i hook zostają RAZEM, mimo rozbijania na atomy: to jedna
- * odpowiedzialność — dostęp do stanu sesji. Rozdzielenie ich kazałoby eksportować sam
+ * odpowiedzialność - dostęp do stanu sesji. Rozdzielenie ich kazałoby eksportować sam
  * obiekt kontekstu szerzej, a wtedy `useContext(SessionContext)` z pominięciem hooka
  * omijałby rzut niżej i wracał ciche `null`. Plik nie zawiera JSX i nie ma czego
- * odświeżać, więc nie jest granicą Fast Refresh — i dobrze, bo tożsamość kontekstu
+ * odświeżać, więc nie jest granicą Fast Refresh - i dobrze, bo tożsamość kontekstu
  * MUSI przetrwać odświeżenie komponentów, które go czytają.
  */
 
@@ -28,17 +28,17 @@ import type { PanelSessionDto } from '../api/dto';
 /**
  * Stan sesji PANELU: kto jest zalogowany i czy już to wiemy.
  *
- * Przedrostek `Panel` nie jest ozdobą — `SessionState` w tym repozytorium jest już
+ * Przedrostek `Panel` nie jest ozdobą - `SessionState` w tym repozytorium jest już
  * zajęte przez projekcję dnia lotnego z `@uzaero/domain` (silnik, loty, paliwo,
  * motogodziny). Obie nazwy spotykają się w `screens/day/DayScreen.tsx`, więc
  * gołe `SessionState` znaczyłoby tam dwie zupełnie różne rzeczy. Ta sama konwencja
  * co `PanelSessionDto` w `api/dto.ts`.
  */
 export interface PanelSessionState {
-  /** `null` = nie ma sesji (nie „jeszcze nie wiemy" — od tego jest `loading`). */
+  /** `null` = nie ma sesji (nie „jeszcze nie wiemy" - od tego jest `loading`). */
   session: PanelSessionDto | null;
   loading: boolean;
-  /** Awaria SIECI, nie odmowa serwera — 401/403 są normalną odpowiedzią `null`. */
+  /** Awaria SIECI, nie odmowa serwera - 401/403 są normalną odpowiedzią `null`. */
   error: unknown;
 }
 

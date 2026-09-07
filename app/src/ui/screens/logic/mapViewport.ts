@@ -1,10 +1,10 @@
 /**
- * UZ Aero — KADR MAPY ŚLADU: przybliżenie i przesunięcie (issue #47 pkt 8).
+ * UZ Aero - KADR MAPY ŚLADU: przybliżenie i przesunięcie (issue #47 pkt 8).
  *
  * Czysta matematyka, osobno od `PanResponder`: gest jest wejściem, kadr wyjściem,
  * a między nimi nie ma nic do zgadywania. Dzięki temu reguły, które na urządzeniu
- * najłatwiej zepsuć — „mapa nie ucieka poza krawędź", „szczypta trzyma się palców",
- * „dwuklik wraca do całości" — dają się sprawdzić testem zamiast palcem.
+ * najłatwiej zepsuć - „mapa nie ucieka poza krawędź", „szczypta trzyma się palców",
+ * „dwuklik wraca do całości" - dają się sprawdzić testem zamiast palcem.
  *
  * ══ DLACZEGO KADR, A NIE `transform` NA WIDOKU ══
  * Skalowanie całego widoku byłoby jedną linijką, ale powiększyłoby też PODPISY:
@@ -16,7 +16,7 @@
 import type { Point2D } from '../../components/data/TrackPolyline';
 
 export interface MapViewport {
-  /** 1 = cały ślad w kadrze. Powyżej — przybliżenie. */
+  /** 1 = cały ślad w kadrze. Powyżej - przybliżenie. */
   scale: number;
   offsetX: number;
   offsetY: number;
@@ -30,7 +30,7 @@ export const IDENTITY_VIEWPORT: MapViewport = { scale: 1, offsetX: 0, offsetY: 0
  *
  * Przy ×8 podziałka schodzi z kilometrów do setek metrów, czyli do rozdzielczości,
  * w której widać już pojedyncze zakręty nad progiem pasa. Wyżej rośnie tylko błąd
- * pozycji GPS — powiększalibyśmy szum odbiornika, nie trasę.
+ * pozycji GPS - powiększalibyśmy szum odbiornika, nie trasę.
  */
 export const MAX_MAP_SCALE = 8;
 
@@ -47,7 +47,7 @@ export function applyViewport(point: Point2D, viewport: MapViewport): Point2D {
   };
 }
 
-/** Odwrotność `applyViewport` — z dotknięcia ekranu na współrzędną bazową. */
+/** Odwrotność `applyViewport` - z dotknięcia ekranu na współrzędną bazową. */
 export function unapplyViewport(point: Point2D, viewport: MapViewport): Point2D {
   return {
     x: (point.x - viewport.offsetX) / viewport.scale,
@@ -97,7 +97,7 @@ export function panViewport(
 /**
  * Dociąga kadr tak, żeby nie było widać pustki poza rysunkiem.
  *
- * Przy `scale = 1` jedynym dozwolonym offsetem jest zero — bez tego mapa dałaby się
+ * Przy `scale = 1` jedynym dozwolonym offsetem jest zero - bez tego mapa dałaby się
  * odsunąć w bok i pilot zobaczyłby puste tło zamiast trasy, nie wiedząc, że wystarczy
  * ją przesunąć z powrotem.
  */
@@ -113,7 +113,7 @@ export function clampViewport(viewport: MapViewport, size: ViewportSize): MapVie
   };
 }
 
-/** Czy kadr jest ruszony — decyduje o pokazaniu wyjścia „całość" (dwuklik). */
+/** Czy kadr jest ruszony - decyduje o pokazaniu wyjścia „całość" (dwuklik). */
 export function isZoomed(viewport: MapViewport): boolean {
   return viewport.scale > 1.001;
 }

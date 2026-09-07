@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) — adapter ODCZYTU dziennika audytu (`AdminAuditReadPort`, `A09`).
+ * UZ Aero (serwer) - adapter ODCZYTU dziennika audytu (`AdminAuditReadPort`, `A09`).
  *
  * Osobny plik od `auditRepo.ts` z tego samego powodu, dla którego port jest osobny:
  * tamten ma jedną metodę i jeden `INSERT`, wołany z wnętrza `AuditedWrite` w gorącej
@@ -7,7 +7,7 @@
  * nie ma jak zregresować od zmian w liście.
  *
  * ══ NIEZNANY KOD AKCJI NIE MA PRAWA WYWRÓCIĆ ODCZYTU ══
- * W adapterach flag i operacji stoi strażnik, który RZUCA na wartości spoza katalogu —
+ * W adapterach flag i operacji stoi strażnik, który RZUCA na wartości spoza katalogu -
  * bo tam wartość jest bytem żywym, pilnowanym `CHECK`-iem w bazie (migracje 8 i 11),
  * więc jej naruszenie znaczy ręczną ingerencję w dane. **Tutaj takiego strażnika NIE MA
  * i nie wolno go dodać.** Kolumna `action` celowo nie ma `CHECK`-a (komentarz nad
@@ -37,8 +37,8 @@ import {
 import { SqlFilter } from '../sqlFilter.ts';
 
 /**
- * Klucz porządku dziennika — dokładnie ten, pod który stoi `idx_audit_created`
- * (reguła `NULLS` — `architektura-panelu-serwer.md` §7.8). Obie kolumny są `NOT NULL`,
+ * Klucz porządku dziennika - dokładnie ten, pod który stoi `idx_audit_created`
+ * (reguła `NULLS` - `architektura-panelu-serwer.md` §7.8). Obie kolumny są `NOT NULL`,
  * stąd `k1Nullable: false`: gałąź `IS NULL`
  * byłaby martwym warunkiem, a martwy warunek w `WHERE` potrafi odciąć planerowi indeks.
  */
@@ -47,12 +47,12 @@ const KEY: readonly [string, string] = ['a.created_at', 'a.id'];
 /**
  * Kształt kursora dziennika. Trzy deklaracje, z których każda coś ODRZUCA:
  *
- *  • `k1: 'timestamp'` — kolumna wiodąca to `TIMESTAMPTZ`, więc kursor niesie ją ISO
+ *  • `k1: 'timestamp'` - kolumna wiodąca to `TIMESTAMPTZ`, więc kursor niesie ją ISO
  *    8601 UTC. Sam `typeof === 'string'` przepuszczałby tu dowolny napis prosto
  *    do Postgresa (`22007`, czyli 500 zamiast 400);
- *  • `k1Nullable: false` — `created_at` jest `NOT NULL`, więc kursor z `null` pochodzi
+ *  • `k1Nullable: false` - `created_at` jest `NOT NULL`, więc kursor z `null` pochodzi
  *    z innego zapytania; przepuszczony wywołałby wyjątek w `keysetPredicate`;
- *  • `k2: 'integer'` — tie-breakerem jest `BIGSERIAL`, który na drucie jedzie NAPISEM;
+ *  • `k2: 'integer'` - tie-breakerem jest `BIGSERIAL`, który na drucie jedzie NAPISEM;
  *    `"abc"` kończyło się w bazie błędem `22P02`.
  */
 const shapeOf = (direction: KeysetDirection): CursorShape => ({
@@ -63,7 +63,7 @@ const shapeOf = (direction: KeysetDirection): CursorShape => ({
 });
 
 interface AuditDbRow {
-  /** `BIGSERIAL` — sterownik oddaje `int8` NAPISEM, nie liczbą (patrz `toJoin`). */
+  /** `BIGSERIAL` - sterownik oddaje `int8` NAPISEM, nie liczbą (patrz `toJoin`). */
   id: string | number;
   created_at: string | Date;
   actor_pilot_id: string;
@@ -79,7 +79,7 @@ interface AuditDbRow {
 
 /**
  * `LEFT JOIN pilots`, nigdy `INNER`: `actor_pilot_id` nie ma klucza obcego (rejestr
- * jest starszy niż klucze — zaległość audytu), a nawet gdyby miał, konto skasowane
+ * jest starszy niż klucze - zaległość audytu), a nawet gdyby miał, konto skasowane
  * albo przepisane nie może usuwać wpisów z dziennika. Wpis bez konta zostaje widoczny
  * z samym identyfikatorem.
  */
@@ -111,7 +111,7 @@ const toJoin = (r: AuditDbRow): AdminAuditJoin => ({
   action: r.action,
   targetType: r.target_type,
   targetId: r.target_id,
-  // Kolumna jest `NOT NULL DEFAULT '{}'`, więc `null` tu nie powstaje — ale wiersz
+  // Kolumna jest `NOT NULL DEFAULT '{}'`, więc `null` tu nie powstaje - ale wiersz
   // wpisany ręcznie w psql może mieć `details: null`, a dziennik ma się otworzyć
   // także wtedy.
   details: r.details ?? {},
@@ -131,7 +131,7 @@ export class PgAdminAuditReadRepo implements AdminAuditReadPort {
     applyFilters(page, filter);
     keysetPredicate(KEY, cursor, page, shape);
 
-    // +1 wiersz ponad limit to cała detekcja „czy jest następna strona" — drugi
+    // +1 wiersz ponad limit to cała detekcja „czy jest następna strona" - drugi
     // `COUNT` na to nie odpowiada, bo mógłby się zmienić między zapytaniami.
     const limitParam = page.bind(filter.limit + 1);
     const { rows } = await db.query<AuditDbRow>(
@@ -153,11 +153,11 @@ export class PgAdminAuditReadRepo implements AdminAuditReadPort {
    * `COUNT(*)` WYŁĄCZNIE dla pierwszej strony; kolejne dostają `null`, a panel niesie
    * liczbę z pierwszej.
    *
-   * **Powód: liczba wpisów w zawężeniu jest własnością ZAPYTANIA, nie strony** — nie
+   * **Powód: liczba wpisów w zawężeniu jest własnością ZAPYTANIA, nie strony** - nie
    * zmienia się przy przewijaniu, więc płacimy za nią RAZ, przy pierwszym pytaniu.
    * Liczenie jej przy każdej stronie jest tym samym błędem, przed którym broni kursor:
    * `admin_audit` z natury tylko przyrasta i sam ekran `A09` deklaruje go jako tabelę
-   * bez górnej granicy, a pełny `COUNT` skanuje ją całą — przy 4 000 wierszy jest już
+   * bez górnej granicy, a pełny `COUNT` skanuje ją całą - przy 4 000 wierszy jest już
    * kilkadziesiąt razy droższy od strony i rośnie liniowo, podczas gdy koszt strony
    * jest stały. Paginacja kursorem, do której doklejono `COUNT` na każde żądanie, ma
    * dokładnie tę charakterystykę, której miała zapobiec.
@@ -168,7 +168,7 @@ export class PgAdminAuditReadRepo implements AdminAuditReadPort {
    *
    * `COUNT` bez złączenia: żaden filtr nie sięga do `pilots` (szukamy po identyfikatorze
    * konta, nie po nazwisku), więc złączenie byłoby tu wyłącznie kosztem. Warunki są te
-   * same co strony, ale BEZ kursora — licznik opisuje cały wynik filtra, a nie resztę
+   * same co strony, ale BEZ kursora - licznik opisuje cały wynik filtra, a nie resztę
    * po kursorze.
    */
   private async count(
@@ -190,7 +190,7 @@ export class PgAdminAuditReadRepo implements AdminAuditReadPort {
 }
 
 /**
- * Wszystkie filtry są OPCJONALNE i pomijane, gdy nieustawione — numerację `$n` nadaje
+ * Wszystkie filtry są OPCJONALNE i pomijane, gdy nieustawione - numerację `$n` nadaje
  * `SqlFilter`, żeby nie było jej w tym pliku wcale.
  *
  * `IN (…)` składamy z osobnych miejsc na wartości, a nie przez `= ANY ($n)` z tablicą:

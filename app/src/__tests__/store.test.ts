@@ -1,11 +1,11 @@
 /**
- * UZ Aero — testy store'u sesji (cienka warstwa nad `application`).
+ * UZ Aero - testy store'u sesji (cienka warstwa nad `application`).
  *
- * Store nie ma własnej logiki dnia — sprawdzamy dokładnie to, za co odpowiada:
+ * Store nie ma własnej logiki dnia - sprawdzamy dokładnie to, za co odpowiada:
  * przekazanie kontekstu do komend, odświeżenie projekcji po zapisie, wystawienie
  * ostrzeżeń i błędu do UI oraz licznik outboxa dla SyncChip.
  *
- * Zustand działa w Node — store testuje się bez renderowania czegokolwiek.
+ * Zustand działa w Node - store testuje się bez renderowania czegokolwiek.
  */
 
 import { DomainRuleError } from '../domain';
@@ -93,15 +93,15 @@ describe('useSessionStore', () => {
     await openDay(clock);
 
     clock.set(min(25));
-    // Ta sama reguła, ten sam wyjątek do wołającego — ale pilot nic nie nacisnął,
+    // Ta sama reguła, ten sam wyjątek do wołającego - ale pilot nic nie nacisnął,
     // więc czerwony baner „Nie zapisano" opisywałby pomyłkę MASZYNY jako jego stratę.
     await expect(store().takeoff('auto')).rejects.toBeInstanceOf(DomainRuleError);
 
     expect(store().lastError).toBeNull();
-    expect(store().events).toHaveLength(2); // nic nie doszło — cisza dotyczy tylko UI
+    expect(store().events).toHaveLength(2); // nic nie doszło - cisza dotyczy tylko UI
   });
 
-  it('cisza obejmuje WYŁĄCZNIE odmowę reguły — awaria zapisu zostaje widoczna', async () => {
+  it('cisza obejmuje WYŁĄCZNIE odmowę reguły - awaria zapisu zostaje widoczna', async () => {
     const { repo, clock, store } = attach();
     await openDay(clock);
     clock.set(min(12));
@@ -153,7 +153,7 @@ describe('useSessionStore', () => {
   it('loadSession otwartego dnia odtwarza active_session_uuid (upgrade w środku dnia)', async () => {
     const { repo, clock, store } = attach();
     await openDay(clock);
-    // Stan sprzed tej wersji aplikacji: dzień otwarty, klucza nie ma — writer headless
+    // Stan sprzed tej wersji aplikacji: dzień otwarty, klucza nie ma - writer headless
     // nie miałby do czego przypisać fixów po śmierci procesu.
     await repo.deleteMeta(SESSION_META_KEYS.activeSessionUuid);
 
@@ -162,12 +162,12 @@ describe('useSessionStore', () => {
   });
 
   /**
-   * Odtworzenie rejestru (§4.9, issue #32) — store jest tu cienki i odpowiada
+   * Odtworzenie rejestru (§4.9, issue #32) - store jest tu cienki i odpowiada
    * dokładnie za dwie rzeczy: powiedzieć ekranom, KIEDY pustemu rejestrowi wolno
    * wierzyć, i kazać im przeliczyć projekcje, gdy pobranie coś dopisało.
    */
   describe('restoreEvents', () => {
-    /** Warstwa synca podmieniona w całości — store'a interesuje tylko WYNIK. */
+    /** Warstwa synca podmieniona w całości - store'a interesuje tylko WYNIK. */
     function attachRestore(...script: EventRestoreOutcome[]) {
       const calls: number[] = [];
       const restore = {
@@ -191,7 +191,7 @@ describe('useSessionStore', () => {
 
     it('podłączenie warstwy synca wstrzymuje wiarę w pusty rejestr do pierwszego pobrania', async () => {
       const { store } = attach();
-      // Bez warstwy synca lokalny rejestr JEST całą prawdą — nie ma na co czekać.
+      // Bez warstwy synca lokalny rejestr JEST całą prawdą - nie ma na co czekać.
       expect(store().streamHydrated).toBe(true);
 
       attachRestore({ kind: 'pulled', fetched: 0, inserted: 0, complete: true });
@@ -201,7 +201,7 @@ describe('useSessionStore', () => {
       expect(store().streamHydrated).toBe(true);
     });
 
-    it('offline też odblokowuje ekran — bez sieci lokalny rejestr jest całą prawdą', async () => {
+    it('offline też odblokowuje ekran - bez sieci lokalny rejestr jest całą prawdą', async () => {
       const { store } = attach();
       attachRestore({ kind: 'skipped' });
 
@@ -225,7 +225,7 @@ describe('useSessionStore', () => {
       expect(store().streamRevision).toBe(1);
     });
 
-    it('wylogowanie cofa zgodę na pusty rejestr — na telefonie może usiąść kolega', async () => {
+    it('wylogowanie cofa zgodę na pusty rejestr - na telefonie może usiąść kolega', async () => {
       const { store } = attach();
       attachRestore({ kind: 'skipped' });
       await store().restoreEvents();
@@ -233,21 +233,98 @@ describe('useSessionStore', () => {
       store().reset();
       expect(store().streamHydrated).toBe(false);
     });
+
+    it('syncNow przy NIEPUSTYM outboksie najpierw pyta serwer (bez bramy wieku), potem wysyła (issue #81)', async () => {
+      // Decyzja panelu o zakończeniu operacji ma być w lokalnym rejestrze, ZANIM
+      // silnik przemiecie kolejkę - inaczej zdanie z telefonu wyścignęłoby ją na serwer.
+      const { clock, store } = attach();
+      const calls: string[] = [];
+      const restore = {
+        restoreIfStale: async (): Promise<EventRestoreOutcome> => {
+          calls.push('restoreIfStale');
+          return { kind: 'fresh' };
+        },
+        restore: async (): Promise<EventRestoreOutcome> => {
+          calls.push('restore');
+          return { kind: 'pulled', fetched: 0, inserted: 0, complete: true };
+        },
+      } as unknown as EventRestore;
+      const sync = {
+        syncOnce: async () => {
+          calls.push('push');
+          return { kind: 'idle' as const };
+        },
+      } as unknown as SyncEngine;
+      useSessionStore
+        .getState()
+        .attachSync(
+          sync,
+          null as unknown as ReferenceSync,
+          null as unknown as TraceSync,
+          null as unknown as ThemePrefsSync,
+          restore,
+        );
+
+      // Pusty outbox: nie ma o co pytać - sama wysyłka (czyli `idle`).
+      await store().syncNow();
+      expect(calls).toEqual(['push']);
+
+      // Zaległość w kolejce: najpierw dosyłka z serwera, potem wysyłka.
+      calls.length = 0;
+      await openDay(clock);
+      expect(store().outboxCount).toBeGreaterThan(0);
+      await store().syncNow();
+      expect(calls).toEqual(['restore', 'push']);
+    });
+
+    it('`restoreEventsNow` pyta serwer BEZ bramy wieku - druga połowa ręcznego syncu', async () => {
+      // Issue #75 pkt 1: unieważnienie wpisane przez administratora ma zejść na telefon
+      // od razu po „SYNCHRONIZUJ TERAZ"/„PONÓW PRÓBĘ", a nie do kwadransa później.
+      const { store } = attach();
+      const gated: number[] = [];
+      const forced: number[] = [];
+      const restore = {
+        restoreIfStale: async (): Promise<EventRestoreOutcome> => {
+          gated.push(1);
+          return { kind: 'fresh' };
+        },
+        restore: async (): Promise<EventRestoreOutcome> => {
+          forced.push(1);
+          return { kind: 'pulled', fetched: 1, inserted: 1, complete: true };
+        },
+      } as unknown as EventRestore;
+      useSessionStore
+        .getState()
+        .attachSync(
+          null as unknown as SyncEngine,
+          null as unknown as ReferenceSync,
+          null as unknown as TraceSync,
+          null as unknown as ThemePrefsSync,
+          restore,
+        );
+
+      const before = store().streamRevision;
+      await store().restoreEventsNow();
+      expect(gated).toHaveLength(0);
+      expect(forced).toHaveLength(1);
+      // Dopisany wiersz przelicza projekcje, jak w drodze z pętli okazji.
+      expect(store().streamRevision).toBe(before + 1);
+    });
   });
 
   /**
    * WYŚCIG RĘCZNEGO PRZYCISKU Z AUTODETEKCJĄ (zgłoszenie z urządzenia, 2026-08-26:
    * „Kołowanie" 2x pod rząd w logu). Pilot tapie „Taxi" w tej samej sekundzie,
    * w której automat wykrywa ruch z tych samych fixów. Obrona miała dwie warstwy
-   * i obie mają to samo ślepe pole — ZAPIS W LOCIE:
+   * i obie mają to samo ślepe pole - ZAPIS W LOCIE:
    *  • sito `taxiWrite` (ścieżka auto) czyta `projection.taxiing`, a projekcja
    *    odświeża się dopiero PO zakończeniu zapisu;
-   *  • twarda reguła `ALREADY_TAXIING` czyta stan z bazy PRZED dopisaniem — dwa
+   *  • twarda reguła `ALREADY_TAXIING` czyta stan z bazy PRZED dopisaniem - dwa
    *    nakładające się zapisy oba widzą „kołowania nie ma" i oba wchodzą.
    * Stąd serializacja w store: drugi zapis czeka na pierwszy i ogląda ŚWIEŻĄ
-   * projekcję — duplikat oddaje wynik tamtego zapisu zamiast dopisywać własny.
+   * projekcję - duplikat oddaje wynik tamtego zapisu zamiast dopisywać własny.
    */
-  describe('taxi — zapisy zserializowane, wyścig nie duplikuje kołowania', () => {
+  describe('taxi - zapisy zserializowane, wyścig nie duplikuje kołowania', () => {
     it('równoległe manual+auto dają JEDNO zdarzenie taxi, bez błędu dla pilota', async () => {
       const { repo, clock, store } = attach();
       await openDay(clock);
@@ -259,13 +336,13 @@ describe('useSessionStore', () => {
 
       const taxis = (await repo.getAllEvents()).filter((e) => e.type === 'taxi');
       expect(taxis).toHaveLength(1);
-      // Duplikat rozstrzygnięty po cichu — pilot nie dostaje błędu o stanie,
+      // Duplikat rozstrzygnięty po cichu - pilot nie dostaje błędu o stanie,
       // który właśnie chciał osiągnąć.
       expect(store().lastError).toBeNull();
       expect(store().projection.taxiing).toBe(true);
     });
 
-    it('po starcie kołowanie wolno zapisać znów — serializacja nie zjada nowego faktu', async () => {
+    it('po starcie kołowanie wolno zapisać znów - serializacja nie zjada nowego faktu', async () => {
       const { repo, clock, store } = attach();
       await openDay(clock);
       clock.set(min(12));
@@ -277,7 +354,7 @@ describe('useSessionStore', () => {
       clock.set(min(40));
       await store().landing('manual');
 
-      // Dobieg po lądowaniu — nowy wpis, nie duplikat (kołowanie zamknął start).
+      // Dobieg po lądowaniu - nowy wpis, nie duplikat (kołowanie zamknął start).
       clock.set(min(41));
       await store().taxi('auto', null, min(41));
 
@@ -290,7 +367,7 @@ describe('useSessionStore', () => {
     const { repo, clock, store } = attach();
     await openDay(clock);
     clock.set(min(300));
-    // BEZ `dutyEnd` — tak zdaje samolot ekran 09B (§3.6a). Z podaną godziną fixture
+    // BEZ `dutyEnd` - tak zdaje samolot ekran 09B (§3.6a). Z podaną godziną fixture
     // ukrywał wadę: klucz usługi w tle zostawał przy sesji, której pilot już nie ma.
     await store().releaseAircraft({ finalReading: { fuelL: 150, mh: 1234.5 } });
     // Symulacja crasha między day_close a czyszczeniem klucza.

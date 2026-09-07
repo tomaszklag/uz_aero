@@ -1,8 +1,8 @@
 /**
- * UZ Aero — barrel warstwy DOMENY (czysty TypeScript).
+ * UZ Aero - barrel warstwy DOMENY (czysty TypeScript).
  *
  * Reguła twarda: w `src/domain/**` NIE MA importów Reacta, React Native, Expo, SQLite
- * ani Zustanda. Domena to typy zdarzeń, reguły i projekcje — musi dać się uruchomić
+ * ani Zustanda. Domena to typy zdarzeń, reguły i projekcje - musi dać się uruchomić
  * w gołym Node (i dlatego testuje się ją bez natywnej bazy).
  * Egzekucja: `src/__tests__/architecture.test.ts` + reguła ESLint opisana
  * w `docs/architektura-kodu.md`.
@@ -13,6 +13,8 @@ export * from './events';
 export * from './flags';
 export * from './reference';
 export * from './projections';
+export * from './signature';
+export * from './operationSubstance';
 export * from './rules';
 export * from './detection/thresholds';
 export * from './detection/geo';
@@ -35,6 +37,7 @@ export * from './track/profile';
 export * from './track/sample';
 export * from './track/stats';
 export * from './track/payload';
+export * from './track/phases';
 export * from './track/mercator';
 export * from './airfields';
 export * from './airfieldSearch';

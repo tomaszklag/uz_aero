@@ -1,15 +1,15 @@
 /**
- * UZ Aero — ADAPTER `IdPort`: generator UUID v4 (klucz idempotencji zdarzeń, §4.1).
+ * UZ Aero - ADAPTER `IdPort`: generator UUID v4 (klucz idempotencji zdarzeń, §4.1).
  *
  * Wymóg testowalności (CLAUDE.md, brief Fazy 1): warstwa danych musi działać w Node/Jest
  * bez modułów natywnych. Dlatego NIE zależymy od `expo-crypto`. Zamiast tego bierzemy
  * najlepsze dostępne źródło losowości:
- *   1. `crypto.randomUUID()`      — Node 19+ oraz RN z polyfillem (preferowane),
- *   2. `crypto.getRandomValues()` — składamy v4 ręcznie,
- *   3. `Math.random()`            — fallback ostateczny (NIE kryptograficzny).
+ *   1. `crypto.randomUUID()`      - Node 19+ oraz RN z polyfillem (preferowane),
+ *   2. `crypto.getRandomValues()` - składamy v4 ręcznie,
+ *   3. `Math.random()`            - fallback ostateczny (NIE kryptograficzny).
  *
  * W realnym RN bezpieczniej wstrzyknąć `expo-crypto`.randomUUID przez `EventsRepo`
- * (opcja `generateId`) — repozytorium to umożliwia. Tu chodzi o poprawny, unikalny
+ * (opcja `generateId`) - repozytorium to umożliwia. Tu chodzi o poprawny, unikalny
  * klucz dedup, nie o sekret.
  */
 

@@ -1,24 +1,25 @@
 /**
- * UZ Aero (serwer) — testy `/me/prefs` (decyzja 2026-07-29: motyw jest preferencją
+ * UZ Aero (serwer) - testy `/me/prefs` (decyzja 2026-07-29: motyw jest preferencją
  * PILOTA i wędruje między urządzeniami przez serwer).
  *
- * Sedno kontraktu: LWW po stemplu DECYZJI z telefonu (`themeUpdatedAt`) — starszy
- * stempel NIE nadpisuje, nowszy tak — a odpowiedź PUT jest ZAWSZE stanem
+ * Sedno kontraktu: LWW po stemplu DECYZJI z telefonu (`themeUpdatedAt`) - starszy
+ * stempel NIE nadpisuje, nowszy tak - a odpowiedź PUT jest ZAWSZE stanem
  * autorytatywnym po operacji, bo to z niej telefon-przegrany dowiaduje się,
  * jaki motyw wybrał ten sam pilot na innym urządzeniu.
  */
 
 import { describe, expect, it } from 'vitest';
 
-import { TEST_PASSWORD, testHarness } from './helpers.ts';
+import { testHarness } from './helpers.ts';
+import { googleTokenFor } from './testIdentityProvider.ts';
 
 type App = Awaited<ReturnType<typeof testHarness>>['app'];
 
 async function authed(app: App, login = 'TMK'): Promise<string> {
   const res = await app.inject({
     method: 'POST',
-    url: '/auth/login',
-    payload: { login, password: TEST_PASSWORD },
+    url: '/auth/google',
+    payload: { idToken: googleTokenFor(login) },
   });
   return res.json().token as string;
 }
@@ -67,7 +68,7 @@ describe('/me/prefs', () => {
     expect((await get(app, token)).json()).toEqual({ theme: 'paper', themeUpdatedAt: T1 });
   });
 
-  it('LWW: starszy stempel NIE nadpisuje — odpowiedź niesie zwycięzcę do adopcji', async () => {
+  it('LWW: starszy stempel NIE nadpisuje - odpowiedź niesie zwycięzcę do adopcji', async () => {
     const { app } = await testHarness();
     const token = await authed(app);
     await put(app, token, 'solar', T2); // drugi telefon pilota zapisał później podjętą decyzję
@@ -94,7 +95,7 @@ describe('/me/prefs', () => {
     });
   });
 
-  it('preferencja jest per pilot Z TOKENU — zapis TMK nie przecieka do AKO', async () => {
+  it('preferencja jest per pilot Z TOKENU - zapis TMK nie przecieka do AKO', async () => {
     const { app } = await testHarness();
     const tmk = await authed(app);
     const ako = await authed(app, 'AKO');

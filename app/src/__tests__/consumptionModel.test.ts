@@ -1,9 +1,9 @@
 /**
- * UZ Aero — test modelu zużycia paliwa per faza.
+ * UZ Aero - test modelu zużycia paliwa per faza.
  *
  * Model odpowiada na pytanie, którego nikt nie zmierzył: ile samolot pali na ziemi,
  * a ile w powietrzu. Odpowiedź jest wnioskiem z wielu interwałów, więc test buduje dane
- * o ZNANYCH stawkach i sprawdza, czy model je odzyskuje — a przede wszystkim, czy
+ * o ZNANYCH stawkach i sprawdza, czy model je odzyskuje - a przede wszystkim, czy
  * MILCZY tam, gdzie dane nie pozwalają rozdzielić faz. Cichy podział przypadkowy
  * byłby tu gorszy od braku odpowiedzi, bo wygląda jak wiedza.
  */
@@ -49,7 +49,7 @@ function interval(
 }
 
 /**
- * Sześć interwałów o RÓŻNYCH proporcjach ziemia/powietrze — to ta zmienność pozwala
+ * Sześć interwałów o RÓŻNYCH proporcjach ziemia/powietrze - to ta zmienność pozwala
  * rozdzielić stawki. Łącznie ponad 10 h silnika, więc bramka publikacji przechodzi.
  */
 function variedIntervals(groundRate: number, airRate: number, noise: number[] = []): FuelInterval[] {
@@ -84,7 +84,7 @@ describe('rozdzielenie faz', () => {
     expect(model.tracedIntervals).toBe(0);
   });
 
-  it('podaje udział czasu każdej fazy — wstęga na ekranie', () => {
+  it('podaje udział czasu każdej fazy - wstęga na ekranie', () => {
     const model = fitConsumptionModel(variedIntervals(12, 42));
     const ground = model.rates.find((r) => r.phase === 'ground')!;
     const air = model.rates.find((r) => r.phase === 'air')!;
@@ -97,7 +97,7 @@ describe('rozdzielenie faz', () => {
 describe('degradacja, gdy faz nie da się rozdzielić', () => {
   it('schodzi do jednej fazy, gdy proporcje są STAŁE we wszystkich interwałach', () => {
     // Każdy interwał ma ziemię i lot w tej samej proporcji 1:3. Podział zużycia między
-    // te dwie fazy jest wtedy dowolny — każdy pasuje tak samo dobrze.
+    // te dwie fazy jest wtedy dowolny - każdy pasuje tak samo dobrze.
     const constant = [1, 2, 3, 4, 5, 6].map((n) => interval(n, n * 0.5, n * 1.5, 12, 42));
     const model = fitConsumptionModel(constant);
 
@@ -131,7 +131,7 @@ describe('odstające', () => {
   it('wyklucza interwał, którego model nie tłumaczy, i pokazuje go osobno', () => {
     const base = variedIntervals(12, 42, [0.4, -0.3, 0.2, -0.4, 0.3, -0.2]);
     const rogue = interval(9, 1.0, 2.0, 12, 42);
-    rogue.consumedL += 60; // 60 L z powietrza — pomyłka odczytu albo dolewka spoza aplikacji
+    rogue.consumedL += 60; // 60 L z powietrza - pomyłka odczytu albo dolewka spoza aplikacji
 
     const model = fitConsumptionModel([...base, rogue]);
 
@@ -158,7 +158,7 @@ describe('niepewność', () => {
   });
 
   it('współczynnik inflacji wariancji rośnie, gdy fazy są skorelowane', () => {
-    // Fazy prawie proporcjonalne — model jeszcze je rozdziela, ale płaci niepewnością.
+    // Fazy prawie proporcjonalne - model jeszcze je rozdziela, ale płaci niepewnością.
     const nearlyConstant = [1, 2, 3, 4, 5, 6].map((n) =>
       interval(n, n * 0.5, n * 1.5 + (n % 2 === 0 ? 0.4 : -0.4), 12, 42, n % 2 === 0 ? 0.3 : -0.3),
     );
@@ -182,9 +182,9 @@ function rate(
 }
 
 describe('bramki znalezione przebiegiem po realnej historii (2026-08-05)', () => {
-  it('nie publikuje podziału, którego dane nie rozstrzygają — mimo wąskich przedziałów', () => {
+  it('nie publikuje podziału, którego dane nie rozstrzygają - mimo wąskich przedziałów', () => {
     // Sedno wady, którą złapał przebieg: dni o prawie stałej proporcji faz dają model
-    // idealnie dopasowany (σ ≈ 0), więc przedziały wychodzą wąskie — a podział jest
+    // idealnie dopasowany (σ ≈ 0), więc przedziały wychodzą wąskie - a podział jest
     // DOWOLNY. Poprzednia wersja publikowała wtedy „na ziemi 52 L/h, w locie 37 L/h",
     // czyli fizyczny absurd z wiarygodnie wyglądającym ±. Sam przedział tego nie widzi;
     // widzi to dopiero współczynnik inflacji wariancji.

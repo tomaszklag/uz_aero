@@ -1,20 +1,22 @@
 /**
- * UZ Aero — panel: przycisk, który jest LINKIEM (`<a class="btn">` z `SZABLON.html`).
+ * UZ Aero - panel: przycisk, który jest LINKIEM (`<a class="btn">` z `SZABLON.html`).
  *
  * Osobny komponent od `Button`, bo to inny element i inne zachowanie: link można
- * otworzyć w nowej karcie, skopiować i wkleić — a `Button` z `navigate()` w `onClick`
+ * otworzyć w nowej karcie, skopiować i wkleić - a `Button` z `navigate()` w `onClick`
  * tego nie umie i psuje scenariusz deep linków, dla którego panel istnieje.
  *
  * `disabled` NIGDY nie występuje bez `reason`, tak samo jak w `Button`: **powód
  * blokady jest widocznym tekstem, nie tooltipem**. Link zablokowany przestaje być
- * linkiem (`<span>`), a nie „linkiem z `preventDefault`" — link, który wygląda jak
+ * linkiem (`<span>`), a nie „linkiem z `preventDefault`" - link, który wygląda jak
  * link i nie działa, jest osiągalny tabem i myli klawiaturę.
  */
 
 import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
 
-/** Warianty jak w `Button` — `ok` to zielona obramówka (akcja przywracająca). */
+import { reasonSuffix } from './reasonSuffix';
+
+/** Warianty jak w `Button` - `ok` to zielona obramówka (akcja przywracająca). */
 type Variant = 'primary' | 'ghost' | 'danger' | 'ok' | 'default';
 
 interface LinkButtonProps {
@@ -22,7 +24,7 @@ interface LinkButtonProps {
   variant?: Variant;
   size?: 'sm' | 'md';
   disabled?: boolean;
-  /** Wymagany, gdy `disabled` — dopisuje się do etykiety i trafia do `title`. */
+  /** Wymagany, gdy `disabled` - dopisuje się do etykiety i trafia do `title`. */
   reason?: string;
   children: ReactNode;
 }
@@ -43,7 +45,9 @@ export function LinkButton({
     return (
       <span className={`${classes} disabled`} aria-disabled="true" title={reason}>
         {children}
-        {reason == null ? null : ` — ${reason.toLowerCase()}`}
+        {/* Doklejka jak w `Button` - jeden przepis, żeby oba przyciski panelu mówiły
+            powód blokady tak samo (`reasonSuffix.ts`). */}
+        {reason == null ? null : ` - ${reasonSuffix(reason)}`}
       </span>
     );
   }

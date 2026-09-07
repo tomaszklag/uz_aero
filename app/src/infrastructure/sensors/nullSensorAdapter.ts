@@ -1,8 +1,8 @@
 /**
- * UZ Aero — adapter czujników, który nie ma czujników.
+ * UZ Aero - adapter czujników, który nie ma czujników.
  *
  * Po co osobna klasa zamiast `null` w composition roocie: reszta kodu ma nie wiedzieć,
- * czy telefon ma barometr. Ścieżka „brak czujnika" jest normalna, nie awaryjna —
+ * czy telefon ma barometr. Ścieżka „brak czujnika" jest normalna, nie awaryjna -
  * barometru nie mają tańsze Androidy i nigdy nie będą, a UZ Aero musi na nich działać
  * dokładnie tak samo. Obiekt, który milczy, jest uczciwszy niż `if` rozsiany po
  * wywołaniach.

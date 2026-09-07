@@ -1,12 +1,12 @@
 /**
- * UZ Aero (serwer) — KONTRAKT skrzynki flag (`A03`).
+ * UZ Aero (serwer) - KONTRAKT skrzynki flag (`A03`).
  *
  * Wyłącznie typy; jedyny dozwolony import to `@uzaero/domain` (patrz `sessions.ts`).
  */
 
 import type { FlagStatus, FlagType } from '@uzaero/domain';
 
-/** Jedna sprawa w skrzynce. Rozbieżność (`details`) niesie adapter — kształt zależy od typu. */
+/** Jedna sprawa w skrzynce. Rozbieżność (`details`) niesie adapter - kształt zależy od typu. */
 export interface AdminFlagListItem {
   id: number;
   type: FlagType;
@@ -27,7 +27,7 @@ export interface AdminFlagListItem {
   resolutionNote: string | null;
 
   /**
-   * Czy ta flaga TRZYMA kartę dnia poza arkuszem — kolumna „Skutek" i pierwszy klucz
+   * Czy ta flaga TRZYMA kartę dnia poza arkuszem - kolumna „Skutek" i pierwszy klucz
    * sortowania skrzynki.
    *
    * Wartość jest wyliczona, a nie zapisana, i wynika WPROST z bramki eksportera
@@ -39,15 +39,15 @@ export interface AdminFlagListItem {
 }
 
 /**
- * Skrzynka. Bez kursora, w przeciwieństwie do listy dni — i to jest decyzja, nie
+ * Skrzynka. Bez kursora, w przeciwieństwie do listy dni - i to jest decyzja, nie
  * przeoczenie: porządek skrzynki (`blokujące eksport → najstarsze`) ma trzy składowe,
  * a kursor keyset opisuje parę. Skrzynka jest zbiorem SPRAW DO ZAMKNIĘCIA, więc jej
  * naturalny rozmiar to kilkanaście pozycji; twardy limit i dokładny `total` mówią
  * prawdę o tym, ile jeszcze zostało. Kursor dokładamy, gdy (i jeśli) skrzynka zacznie
- * być przeglądana stronami — wtedy razem z trzyskładnikowym kluczem.
+ * być przeglądana stronami - wtedy razem z trzyskładnikowym kluczem.
  */
 export interface AdminFlagPage {
   items: AdminFlagListItem[];
-  /** Liczba flag spełniających filtr — także wtedy, gdy limit obciął listę. */
+  /** Liczba flag spełniających filtr - także wtedy, gdy limit obciął listę. */
   total: number;
 }

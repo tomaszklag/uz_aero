@@ -1,9 +1,9 @@
 /**
- * UZ Aero — mapa śladu lotu (mockup `14-slad.html`).
+ * UZ Aero - mapa śladu lotu (mockup `14-slad.html`).
  *
  * **Bez kafelków** (decyzja 2026-08-04). Ślad rysuje się na siatce współrzędnych,
  * a odniesienie w terenie dają LOTNISKA z katalogu (`packages/domain/src/airfields.ts`):
- * pas startowy z podpisem ICAO. Zysk jest podwójny — ekran przestał zależeć od sieci
+ * pas startowy z podpisem ICAO. Zysk jest podwójny - ekran przestał zależeć od sieci
  * w jakimkolwiek stopniu, a przy okazji zniknął problem dostawcy kafelków, jego klucza
  * i regulaminu.
  *
@@ -20,11 +20,15 @@ import { StyleSheet, View } from 'react-native';
 import {
   airfieldsInView,
   boundsOf,
+  clipPhaseRuns,
   fitBounds,
   scaleBar,
   toScreen,
+  trackPhaseRuns,
   type Airfield,
   type LatLon,
+  type TrackFlightWindow,
+  type TrackPhaseRun,
   type TrackVertex,
 } from '../../../domain';
 import { useChartGesture } from '../../hooks/useChartGesture';
@@ -35,31 +39,39 @@ import { formatNm } from './distanceScaleBar';
 import { highlightRange } from './highlightRuns';
 import { TrackPolyline, type Point2D } from './TrackPolyline';
 
-/** Odstęp linii siatki (px) — gęściej robi się szum pod śladem. */
+/** Odstęp linii siatki (px) - gęściej robi się szum pod śladem. */
 const GRID_STEP = 60;
 
 export interface TrackMapMarker {
   position: LatLon;
   color: string;
   label: string;
-  /** Pierścień wokół punktu — wyróżnia start spośród zwykłych znaczników. */
+  /** Pierścień wokół punktu - wyróżnia start spośród zwykłych znaczników. */
   ring?: boolean;
 }
 
 export interface TrackMapProps {
   line: readonly TrackVertex[];
+  /**
+   * Okna lotów z LOKALNEGO rejestru (issue #75 pkt 4): dzielą trasę na kołowanie
+   * (przerywana szara) i loty (pełna zielona) - jak w mockupie 14. Koperta śladu
+   * niesie samą geometrię (issue #47), więc granice faz przynosi wołający.
+   * `undefined` = wołający faz nie zna i całość rysuje się zielono; pusta lista
+   * = biegu nikt nie wzniósł i CAŁOŚĆ jest kołowaniem.
+   */
+  flights?: readonly TrackFlightWindow[];
   markers?: readonly TrackMapMarker[];
   width: number;
   height: number;
-  /** ICAO z preflightu — to lotnisko pokazujemy zawsze, także spoza kadru. */
+  /** ICAO z preflightu - to lotnisko pokazujemy zawsze, także spoza kadru. */
   departureIcao?: string | null;
-  /** Chwila pod palcem — kursor sprzężony z profilem (issue #47 pkt 7). */
+  /** Chwila pod palcem - kursor sprzężony z profilem (issue #47 pkt 7). */
   cursorAt?: number | null;
   /**
    * Okno czasu widoczne na PROFILU; `null` = profil pokazuje całość.
    *
    * Mapa PODŚWIETLA odpowiadający fragment trasy, zamiast na niego przeskakiwać
-   * (decyzja z przeglądu). Przeskok byłby wygodny tylko w jedną stronę — droga z mapy
+   * (decyzja z przeglądu). Przeskok byłby wygodny tylko w jedną stronę - droga z mapy
    * na profil jest wieloznaczna, bo nad tym samym placem samolot bywa pięć razy
    * w jednej sesji, a podświetlenie pokazuje wtedy uczciwie WSZYSTKIE przeloty
    * mieszczące się w oknie. Przy okazji mapa nie ucieka spod palca.
@@ -69,6 +81,7 @@ export interface TrackMapProps {
 
 export function TrackMap({
   line,
+  flights,
   markers = [],
   width,
   height,
@@ -77,6 +90,12 @@ export function TrackMap({
   highlight = null,
 }: TrackMapProps) {
   const { theme } = useTheme();
+
+  /** Podział trasy na fazy; `null` = wołający nie zna lotów i nie dzielimy wcale. */
+  const phaseRuns = useMemo<TrackPhaseRun[] | null>(
+    () => (flights == null ? null : trackPhaseRuns(line.map((vertex) => vertex.time), flights)),
+    [line, flights],
+  );
 
   const frame = useMemo(() => {
     // Kadr obejmuje ślad ORAZ znaczniki: lądowanie potrafi wypaść poza uproszczoną
@@ -92,7 +111,7 @@ export function TrackMap({
     [frame, departureIcao],
   );
 
-  /** Punkty trasy w kadrze 1:1 — do nich odnosi się przybliżenie i szukanie kursora. */
+  /** Punkty trasy w kadrze 1:1 - do nich odnosi się przybliżenie i szukanie kursora. */
   const basePoints: Point2D[] = useMemo(
     () => (frame == null ? [] : line.map((p) => toScreen(p, frame.view))),
     [line, frame],
@@ -121,16 +140,17 @@ export function TrackMap({
   );
 
   /**
-   * Fragment trasy mieszczący się w oknie profilu — JEDEN, bo linia jest uporządkowana
+   * Fragment trasy mieszczący się w oknie profilu - JEDEN, bo linia jest uporządkowana
    * czasem, a okno jest przedziałem czasu (uzasadnienie: `highlightRuns.ts`).
+   * Trzymamy ZAKRES indeksów, nie gotowe punkty: fragment rysuje się tymi samymi
+   * fazami, co całość, więc przycina się przebiegi (`clipPhaseRuns`), nie listę punktów.
    */
-  const highlighted = useMemo<Point2D[]>(() => {
-    if (highlight == null || screenPoints.length === 0) return [];
-    const range = highlightRange(
+  const highlightedRange = useMemo<readonly [number, number] | null>(() => {
+    if (highlight == null || screenPoints.length === 0) return null;
+    return highlightRange(
       line.map((vertex) => vertex.time),
       highlight,
     );
-    return range == null ? [] : screenPoints.slice(range[0], range[1] + 1);
   }, [highlight, line, screenPoints]);
 
   const project = useCallback(
@@ -145,7 +165,7 @@ export function TrackMap({
     if (frame == null) return null;
     // Podziałka jest WSKAŹNIKIEM PRZYBLIŻENIA (mockup 14D): przy ×2,4 czyta „500 m"
     // zamiast „2 km". Liczymy ją więc na kadrze 1:1 dla proporcjonalnie krótszego
-    // odcinka, a wynik rozciągamy z powrotem — dzięki temu liczba zostaje okrągła.
+    // odcinka, a wynik rozciągamy z powrotem - dzięki temu liczba zostaje okrągła.
     const maxPx = Math.min(90, width * 0.3) / gesture.viewport.scale;
     const base = scaleBar(frame.view, line[0]?.lat ?? 52, maxPx);
     return { nm: base.nm, meters: base.meters, pixels: base.pixels * gesture.viewport.scale };
@@ -186,18 +206,35 @@ export function TrackMap({
         ))}
 
       {/* ── trasa: przygaszona całość + PODŚWIETLONY fragment z profilu ──── */}
-      {/* Bez okna z profilu rysujemy jedną linię w pełnej mocy. Z oknem: cała trasa
-          gaśnie, a jej fragment zostaje jasny — dzięki temu widać, GDZIE się patrzy,
-          nie tracąc z oczu reszty lotu. Fragmentów bywa kilka i tak ma być: nad polem
-          skoków samolot przechodzi tędy raz na wyniesienie. */}
-      <TrackPolyline
-        points={screenPoints}
-        color={theme.colors.green}
-        width={2.5}
-        opacity={highlight != null ? 0.22 : 1}
+      {/* Bez okna z profilu rysujemy trasę w pełnej mocy. Z oknem: cała trasa gaśnie,
+          a jej fragment zostaje jasny - dzięki temu widać, GDZIE się patrzy, nie tracąc
+          z oczu reszty lotu. Fragmentów bywa kilka i tak ma być: nad polem skoków
+          samolot przechodzi tędy raz na wyniesienie.
+          Fazy jak w mockupie 14 (issue #75 pkt 4): kołowanie przerywaną szarą,
+          loty pełną zieloną - w obu warstwach tak samo. */}
+      <PhasedTrack
+        screenPoints={screenPoints}
+        runs={phaseRuns}
+        opacity={highlightedRange != null ? 0.22 : 1}
+        taxiColor={theme.colors.textMuted}
+        flightColor={theme.colors.green}
       />
-      {highlighted.length > 1 && (
-        <TrackPolyline points={highlighted} color={theme.colors.green} width={2.5} />
+      {highlightedRange != null && (
+        <PhasedTrack
+          screenPoints={screenPoints.slice(highlightedRange[0], highlightedRange[1] + 1)}
+          runs={
+            phaseRuns == null
+              ? null
+              : clipPhaseRuns(phaseRuns, highlightedRange[0], highlightedRange[1]).map((run) => ({
+                  ...run,
+                  from: run.from - highlightedRange[0],
+                  to: run.to - highlightedRange[0],
+                }))
+          }
+          opacity={1}
+          taxiColor={theme.colors.textMuted}
+          flightColor={theme.colors.green}
+        />
       )}
 
       {/* ── znaczniki startu i lądowania ─────────────────────────────────── */}
@@ -256,7 +293,7 @@ export function TrackMap({
       {/* ŹRÓDŁA KATALOGU NIE STOJĄ NA MAPIE (decyzja 2026-08-15). Podpis „lotniska:
           OurAirports · © OpenStreetMap" wisiał w rogu przy każdym otwarciu i mówił
           o pochodzeniu danych komuś, kto ogląda swój lot. Atrybucja została przeniesiona
-          do dokumentacji (`docs/dane-lotnisk.md` §3.3) — obowiązek ODbL zostaje
+          do dokumentacji (`docs/dane-lotnisk.md` §3.3) - obowiązek ODbL zostaje
           spełniony tam, gdzie ktokolwiek go szuka. Nie przywracaj jej na mapę bez
           rozmowy: to była świadoma zamiana miejsca, nie przeoczenie. */}
 
@@ -279,9 +316,61 @@ export function TrackMap({
 }
 
 /**
+ * Trasa w fazach (issue #75 pkt 4): loty pełną zieloną, kołowanie przerywaną szarą -
+ * dokładnie jak mockup 14. Przebiegi DZIELĄ wierzchołek graniczny (`trackPhaseRuns`),
+ * więc łamane stykają się bez dziury; kolor szarości to ten sam `textMuted`, którym
+ * mapa podpisuje ICAO - kołowanie jest tłem opowieści, nie jej treścią.
+ *
+ * `runs == null` = wołający nie zna okien lotów; wtedy jedna zielona linia jak przed
+ * issue #75, bo zgadywanie faz z samej geometrii byłoby drugą detekcją.
+ */
+function PhasedTrack({
+  screenPoints,
+  runs,
+  opacity,
+  taxiColor,
+  flightColor,
+}: {
+  screenPoints: readonly Point2D[];
+  runs: readonly TrackPhaseRun[] | null;
+  opacity: number;
+  taxiColor: string;
+  flightColor: string;
+}) {
+  if (runs == null) {
+    return <TrackPolyline points={screenPoints} color={flightColor} width={2.5} opacity={opacity} />;
+  }
+
+  return (
+    <>
+      {runs.map((run) =>
+        run.phase === 'flight' ? (
+          <TrackPolyline
+            key={`${run.from}-${run.to}`}
+            points={screenPoints.slice(run.from, run.to + 1)}
+            color={flightColor}
+            width={2.5}
+            opacity={opacity}
+          />
+        ) : (
+          <TrackPolyline
+            key={`${run.from}-${run.to}`}
+            points={screenPoints.slice(run.from, run.to + 1)}
+            color={taxiColor}
+            width={2}
+            dash={[4, 4]}
+            opacity={opacity}
+          />
+        ),
+      )}
+    </>
+  );
+}
+
+/**
  * Lotnisko: pas startowy w skali mapy plus kod ICAO.
  *
- * Pas rysujemy PROSTOKĄTEM obróconym o kurs progu — w tej skali to jedyny szczegół,
+ * Pas rysujemy PROSTOKĄTEM obróconym o kurs progu - w tej skali to jedyny szczegół,
  * który daje się rozpoznać, a przy okazji mówi pilotowi, z której strony podchodził.
  * Gdy skala nie jest znana albo pas wyszedłby krótszy niż kilka pikseli, zostaje sam
  * znacznik: kreska nie do odczytania jest gorsza niż jej brak.
@@ -317,7 +406,7 @@ function AirfieldMark({
             height: 3,
             backgroundColor: surface,
             // Kurs geograficzny liczy się od północy zgodnie z ruchem wskazówek,
-            // a obrót w układzie ekranu od osi X — stąd −90°.
+            // a obrót w układzie ekranu od osi X - stąd −90°.
             transform: [{ rotate: `${runway.headingDeg - 90}deg` }],
           }}
         />
@@ -336,7 +425,7 @@ function AirfieldMark({
   );
 }
 
-/** Siatka współrzędnych — podkład, który zastąpił kafelki. */
+/** Siatka współrzędnych - podkład, który zastąpił kafelki. */
 function CoordinateGrid({
   width,
   height,

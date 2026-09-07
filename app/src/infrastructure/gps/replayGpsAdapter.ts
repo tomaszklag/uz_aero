@@ -1,7 +1,7 @@
 /**
- * UZ Aero — adapter GPS odtwarzający zadaną serię fixów.
+ * UZ Aero - adapter GPS odtwarzający zadaną serię fixów.
  *
- * Po co: pozwala przejść cały lot — start, zrzut, lądowanie — bez samolotu i bez
+ * Po co: pozwala przejść cały lot - start, zrzut, lądowanie - bez samolotu i bez
  * czekania w czasie rzeczywistym. Używany w testach oraz do ręcznego sprawdzenia
  * detekcji na urządzeniu (podstawiony zamiast `ExpoLocationAdapter`).
  *
@@ -34,12 +34,12 @@ export class ReplayGpsAdapter implements GpsPort {
     return 'granted';
   }
 
-  /** Odtworzenie nie ma tła ani usługi — tryb jest bez znaczenia. */
+  /** Odtworzenie nie ma tła ani usługi - tryb jest bez znaczenia. */
   async setBackgroundMode(): Promise<void> {}
 
   /**
    * Jak w adapterze urządzenia: każde wywołanie to własna subskrypcja odbiorcy.
-   * Odtwarzanie rusza z pierwszym słuchaczem i gaśnie z ostatnim — kto dołączy
+   * Odtwarzanie rusza z pierwszym słuchaczem i gaśnie z ostatnim - kto dołączy
    * w trakcie, słyszy resztę serii, bo jeden odbiornik nie odtwarza trasy od nowa
    * osobno dla każdego ekranu.
    */
@@ -69,7 +69,7 @@ export class ReplayGpsAdapter implements GpsPort {
     };
 
     if (interval === 0) {
-      // Bez opóźnień: cała seria synchronicznie — deterministyczne w testach.
+      // Bez opóźnień: cała seria synchronicznie - deterministyczne w testach.
       for (const fix of this.fixes) {
         this.last = fix;
         this.fanout.emit(fix);

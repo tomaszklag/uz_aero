@@ -1,12 +1,12 @@
 /**
- * UZ Aero (serwer) — kto jest zalogowany w panelu (`GET /admin/api/me`).
+ * UZ Aero (serwer) - kto jest zalogowany w panelu (`GET /admin/api/me`).
  *
  * Osobne zapytanie, a nie pole w odpowiedzi logowania, bo ciasteczko sesji jest
- * `HttpOnly`: po odświeżeniu karty JavaScript panelu NIE MA jak odczytać, kim jest —
+ * `HttpOnly`: po odświeżeniu karty JavaScript panelu NIE MA jak odczytać, kim jest -
  * musi zapytać serwer. To jest jedyny powód istnienia tej trasy i całej jej treści.
  *
  * Zwracamy konto, a nie claims z tokenu: nazwisko do stopki sidebara (`.who-name`)
- * w tokenie nie siedzi i siedzieć nie powinno — token ma być mały i nieciekawy.
+ * w tokenie nie siedzi i siedzieć nie powinno - token ma być mały i nieciekawy.
  */
 
 import type { PilotsPort } from '../../common/ports.ts';

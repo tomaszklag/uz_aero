@@ -1,5 +1,5 @@
 /**
- * UZ Aero — geometria na kuli: pozycja i odległość.
+ * UZ Aero - geometria na kuli: pozycja i odległość.
  *
  * Osobny moduł, bo z tych dwóch rzeczy korzystają teraz trzy niezależne tory detekcji
  * (geofence lądowania, test plauzybilności skoku, kotwica postoju przy kołowaniu).
@@ -10,7 +10,7 @@
 const EARTH_RADIUS_NM = 3440.065;
 const toRad = (deg: number): number => (deg * Math.PI) / 180;
 
-/** Metry na milę morską — progi bliskiego zasięgu (kotwica postoju) myśli się w metrach. */
+/** Metry na milę morską - progi bliskiego zasięgu (kotwica postoju) myśli się w metrach. */
 export const METERS_PER_NM = 1852;
 
 /** Pozycja geograficzna (stopnie dziesiętne). */
@@ -29,7 +29,7 @@ export function distanceNm(a: LatLon, b: LatLon): number {
   return 2 * EARTH_RADIUS_NM * Math.asin(Math.sqrt(s));
 }
 
-/** Odległość w metrach — wygodne przy progach rzędu kilkunastu metrów. */
+/** Odległość w metrach - wygodne przy progach rzędu kilkunastu metrów. */
 export function distanceM(a: LatLon, b: LatLon): number {
   return distanceNm(a, b) * METERS_PER_NM;
 }

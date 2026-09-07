@@ -1,23 +1,23 @@
 /**
- * UZ Aero (serwer) — `npm run rebuild-projections`: przebudowa projekcji `sessions`
+ * UZ Aero (serwer) - `npm run rebuild-projections`: przebudowa projekcji `sessions`
  * ze strumienia zdarzeń (mockup `A11-konserwacja.html`).
  *
  * Wzorzec `seedCli.ts`: własna pula, walidacja env przez `zod`, jeden przebieg, koniec.
- * Ten skrypt jest MINI COMPOSITION ROOTEM — składa te same klasy co `index.ts`, tylko
+ * Ten skrypt jest MINI COMPOSITION ROOTEM - składa te same klasy co `index.ts`, tylko
  * bez serwera HTTP. Od 2026-08-02 panel woła TE SAME klasy trasami
  * `GET /admin/api/maintenance/projections/compare` i `POST …/projections/rebuild`;
  * ten plik zostaje jako droga awaryjna, bo przebudowa bywa potrzebna dokładnie wtedy,
  * gdy panel nie wstaje.
  *
  * ── Dwa kroki, nie jeden ────────────────────────────────────────────────────────
- * Domyślnie `dry_run`: przelicza i porównuje, NICZEGO nie zapisując — i od 2026-08-02
+ * Domyślnie `dry_run`: przelicza i porównuje, NICZEGO nie zapisując - i od 2026-08-02
  * robi to ZAPYTANIE (`AdminMaintenanceQueries`), nie komenda. Porównanie nie zostawia
  * już wpisu w `admin_audit`, bo dziennik nadzoru nie może opisywać rzeczy, które się
  * nie wydarzyły. Zapis wymaga jawnego `REBUILD_MODE=write` **i** `REBUILD_REASON`, bo
  * nadpisanie wyrównuje liczby i tym samym kasuje jedyny ślad po tym, co je rozjechało.
  *
  * ── Kto to zrobił ───────────────────────────────────────────────────────────────
- * `REBUILD_ACTOR` musi wskazywać ISTNIEJĄCE konto — rola do dziennika audytu idzie
+ * `REBUILD_ACTOR` musi wskazywać ISTNIEJĄCE konto - rola do dziennika audytu idzie
  * z konta, nie z env (`admin_audit.actor_role` ma być rolą Z CHWILI AKCJI). Wymyślona
  * tożsamość w dzienniku byłaby gorsza niż jej brak, a `ip` zostaje `null`, bo tu
  * naprawdę nie ma żądania HTTP.
@@ -41,7 +41,7 @@ import { migrate } from '../infrastructure/pg/migrate.ts';
 const env = z
   .object({
     DATABASE_URL: z.string().url(),
-    /** Id konta wykonującego operację — trafia do `admin_audit.actor_pilot_id`. */
+    /** Id konta wykonującego operację - trafia do `admin_audit.actor_pilot_id`. */
     REBUILD_ACTOR: z.string().min(1, 'REBUILD_ACTOR: id konta administratora'),
     REBUILD_MODE: z.enum(['dry_run', 'write']).default('dry_run'),
     REBUILD_REASON: z.string().optional(),
@@ -95,7 +95,7 @@ if (!outcome.ok) {
   if (outcome.reason === 'nothing_to_rebuild') {
     // Nie jest to awaria: projekcja się zgadza, więc zapis nie ma czego zapisać
     // i świadomie NIE zostawia wpisu w dzienniku. Kod 0, bo cron ma milczeć.
-    console.log('\nProjekcja zgadza się ze strumieniem. Nic do nadpisania — bez wpisu w audycie.\n');
+    console.log('\nProjekcja zgadza się ze strumieniem. Nic do nadpisania - bez wpisu w audycie.\n');
     process.exit(0);
   }
   console.error('REBUILD_REASON jest wymagany dla REBUILD_MODE=write (trafia do audytu).');
@@ -103,13 +103,13 @@ if (!outcome.ok) {
 }
 
 report(outcome.report);
-// Niezerowa różnica to INCYDENT — kod wyjścia mówi to samo, co tekst, żeby przebieg
+// Niezerowa różnica to INCYDENT - kod wyjścia mówi to samo, co tekst, żeby przebieg
 // z crona nie przeszedł niezauważony.
 process.exit(outcome.report.rowsDiffering > 0 ? 2 : 0);
 
 function report(r: RebuildReport): void {
   const tryb = r.mode === 'dry_run' ? 'PORÓWNANIE (bez zapisu)' : 'ZAPIS';
-  console.log(`\nPrzebudowa projekcji sessions — ${tryb}`);
+  console.log(`\nPrzebudowa projekcji sessions - ${tryb}`);
   console.log(`  sesji w rejestrze:  ${r.sessions}`);
   console.log(`  wierszy różnych:    ${r.rowsDiffering}`);
   console.log(`  pól różnych:        ${r.fieldsDiffering}`);
@@ -121,15 +121,15 @@ function report(r: RebuildReport): void {
   }
 
   if (r.remaining > 0) {
-    // Limit jest bezpiecznikiem, nie całością — i nie ma prawa być cichy. Bez tego
+    // Limit jest bezpiecznikiem, nie całością - i nie ma prawa być cichy. Bez tego
     // zdania przebieg z crona wyglądałby na komplet przy 1091 nietkniętych sesjach.
     const co = r.mode === 'write' ? 'NIE ZOSTAŁO nadpisanych' : 'nie mieści się w raporcie';
-    console.log(`  ${co}: ${r.remaining} — uruchom ponownie, żeby dojść do reszty`);
+    console.log(`  ${co}: ${r.remaining} - uruchom ponownie, żeby dojść do reszty`);
   }
 
   console.log('\n  sesja                                 dzień       pole            w sessions → z przeliczenia');
   for (const diff of r.diffs) {
-    const day = diff.day ?? '—         ';
+    const day = diff.day ?? '-         ';
     if (diff.missing) {
       console.log(`  ${diff.sessionUuid}  ${day}  BRAK WIERSZA W PROJEKCJI`);
       continue;
@@ -144,10 +144,10 @@ function report(r: RebuildReport): void {
   console.log(
     [
       '',
-      'UWAGA: różnica NIE jest sukcesem tej operacji — jest incydentem do zbadania.',
+      'UWAGA: różnica NIE jest sukcesem tej operacji - jest incydentem do zbadania.',
       'Projekcja jest odświeżana w tej samej transakcji, w której serwer przyjmuje',
       'zdarzenia, więc w normalnej pracy różnicy być NIE MOŻE. Wyjaśnienia są dwa:',
-      '  • wydanie domeny zmieniło regułę liczenia — wtedy przebudowa jest tym,',
+      '  • wydanie domeny zmieniło regułę liczenia - wtedy przebudowa jest tym,',
       '    czego trzeba (strumień jest nietknięty, przeliczy go nowy kod);',
       '  • albo coś zadziało się poza normalną pracą serwera: ręczny UPDATE, import,',
       '    odtworzenie z kopii zrobionej w połowie strumienia.',

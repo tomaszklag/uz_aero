@@ -1,8 +1,8 @@
 /**
- * UZ Aero — trwały stan banerów pouczających (typ `edu`).
+ * UZ Aero - trwały stan banerów pouczających (typ `edu`).
  *
- * `CLAUDE.md` (sekcja „Banery — trzy typy") stawia twardy wymóg: stan schowania banera
- * pouczającego jest zapamiętany **NA STAŁE per pilot**. Powód jest praktyczny — baner
+ * `CLAUDE.md` (sekcja „Banery - trzy typy") stawia twardy wymóg: stan schowania banera
+ * pouczającego jest zapamiętany **NA STAŁE per pilot**. Powód jest praktyczny - baner
  * `edu` jest pomocny za pierwszym razem i szumem przy każdym kolejnym. Gdyby wracał
  * po każdym otwarciu ekranu, pilot zamykałby go w kółko i wzorzec byłby gorszy niż
  * jego brak.
@@ -11,7 +11,7 @@
  * nie fakt z dnia lotnego. Rejestr jest append-only i opisuje lot, nie ustawienia.
  *
  * Klucz zawiera identyfikator pilota, bo na jednym telefonie może pracować kilku
- * (przejęcie samolotu, zmiana załogi) — wyjaśnienie schowane przez jednego nie ma
+ * (przejęcie samolotu, zmiana załogi) - wyjaśnienie schowane przez jednego nie ma
  * znikać drugiemu.
  */
 
@@ -25,7 +25,7 @@ const key = (pilotId: string, bannerId: string): string => `uzaero.edu.${pilotId
 /**
  * Zwraca `[schowany, ustawSchowany]` dla banera o danym identyfikatorze.
  *
- * Do czasu odczytu z dysku baner jest **widoczny** — lepiej pokazać wyjaśnienie o ułamek
+ * Do czasu odczytu z dysku baner jest **widoczny** - lepiej pokazać wyjaśnienie o ułamek
  * sekundy za długo niż mignąć nim komuś, kto już je schował.
  */
 export function useEduBanner(bannerId: string): [boolean, (next: boolean) => void] {
@@ -44,7 +44,7 @@ export function useEduBanner(bannerId: string): [boolean, (next: boolean) => voi
 
   const update = useCallback(
     (next: boolean) => {
-      // Stan lokalny zmieniamy od razu — zapis na dysk jest efektem ubocznym, a nie
+      // Stan lokalny zmieniamy od razu - zapis na dysk jest efektem ubocznym, a nie
       // warunkiem reakcji interfejsu.
       setDismissed(next);
       void AsyncStorage.setItem(key(pilotId, bannerId), next ? '1' : '0');

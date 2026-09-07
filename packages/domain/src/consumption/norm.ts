@@ -1,20 +1,20 @@
 /**
- * UZ Aero — norma zużycia dla APLIKACJI PILOTA (ekrany 04, 06, 10).
+ * UZ Aero - norma zużycia dla APLIKACJI PILOTA (ekrany 04, 06, 10).
  *
  * ══ DLACZEGO OSOBNY WIDOK, A NIE CAŁY MODEL ══
  * Panel dostaje wszystko: stawki per faza, przedziały, reszty, interwały ze źródłami.
- * Telefon dostaje kilkanaście liczb i nic więcej — bo tyle mieści się w pytaniach, które
+ * Telefon dostaje kilkanaście liczb i nic więcej - bo tyle mieści się w pytaniach, które
  * zadaje pilot: „czy dzisiejsze 16 L/h to normalne", „na ile mi jeszcze starczy" i (od
  * issue #38) „czy licznik pokazał tyle, ile powinien". Wysyłanie do telefonu pełnego
- * modelu byłoby przenoszeniem ciężaru analizy tam, gdzie nie ma jej kto wykonać —
+ * modelu byłoby przenoszeniem ciężaru analizy tam, gdzie nie ma jej kto wykonać -
  * a przy okazji rozdmuchaniem odpowiedzi, którą każdy telefon pobiera co kwadrans.
  *
  * ══ PRÓG PUBLIKACJI OBOWIĄZUJE TU TAK SAMO ══
  * `null` znaczy „nie ma czego pokazać" i ekran ma wtedy MILCZEĆ o normie, a nie
  * pokazywać zera. Pilot, który zobaczy „norma 0 L/h", straci zaufanie do wszystkich
- * pozostałych liczb na tym ekranie — i słusznie. Dotyczy to osobno paliwa i osobno
+ * pozostałych liczb na tym ekranie - i słusznie. Dotyczy to osobno paliwa i osobno
  * motogodzin: samolot potrafi mieć opublikowane stawki paliwa i jeszcze nie mieć
- * przeliczników licznika (inne wejście, inny próg — `MIN_PUBLISH_MH_DAYS`).
+ * przeliczników licznika (inne wejście, inny próg - `MIN_PUBLISH_MH_DAYS`).
  */
 
 import type { EpochMillis } from '../time';
@@ -25,7 +25,7 @@ import type { MhModel } from './mhModel';
 import type { ConsumptionSummary } from './summary';
 import { fuelRatioBand, mhRatioBand } from './ratio';
 
-/** Wejście składania normy — cztery rzeczy policzone nad tym samym oknem. */
+/** Wejście składania normy - cztery rzeczy policzone nad tym samym oknem. */
 export interface ConsumptionNormInput {
   summary: ConsumptionSummary;
   model: ConsumptionModel;
@@ -42,10 +42,10 @@ export interface ConsumptionNormInput {
  * Składa normę z metryk zbiorczych, modelu fazowego i modelu motogodzin.
  *
  * `null`, gdy model paliwa nie przeszedł bramki publikacji albo pasma nie da się
- * policzyć — czyli dokładnie wtedy, gdy panel pokazuje ekran `A10b`. Model MH jest
+ * policzyć - czyli dokładnie wtedy, gdy panel pokazuje ekran `A10b`. Model MH jest
  * dokładany niezależnie: jego brak nie unieważnia normy paliwa i odwrotnie.
  *
- * @param windowDays szerokość okna, z którego liczono — podpis „· 90 dni" na ekranie.
+ * @param windowDays szerokość okna, z którego liczono - podpis „· 90 dni" na ekranie.
  */
 export function buildConsumptionNorm(
   input: ConsumptionNormInput,
@@ -79,7 +79,7 @@ export function buildConsumptionNorm(
 }
 
 /**
- * Para stawek (ziemia, powietrze) — jedyny podział, który telefon umie zastosować.
+ * Para stawek (ziemia, powietrze) - jedyny podział, który telefon umie zastosować.
  *
  * ══ DLACZEGO MODEL CZTEROFAZOWY SIĘ TU SKLEJA ══
  * Telefon nie ma faz pionowych: zna czas lotu i czas blokowy z własnej projekcji, a
@@ -88,10 +88,10 @@ export function buildConsumptionNorm(
  * ważąc fazy ich udziałem w oknie.
  *
  * ══ DLACZEGO ŚREDNIA WAŻONA, A NIE SAM PRZELOT ══
- * Do issue #38 stawką lotu był `cruise` — „bo to on opisuje większość czasu w powietrzu".
+ * Do issue #38 stawką lotu był `cruise` - „bo to on opisuje większość czasu w powietrzu".
  * Dla dnia skokowego to nieprawda: wyniesienie to prawie samo wznoszenie i zniżanie,
  * a `cruise` jest najniższą ze stawek. Błąd szedł w najgorszą możliwą stronę, bo tej
- * samej liczby używa szacunek rezerwy paliwa (`liftsRemaining`) — zaniżona stawka
+ * samej liczby używa szacunek rezerwy paliwa (`liftsRemaining`) - zaniżona stawka
  * zawyża pozostały czas lotu. Średnia ważona proporcjami okna opisuje maszynę tak,
  * jak ona faktycznie lata.
  */

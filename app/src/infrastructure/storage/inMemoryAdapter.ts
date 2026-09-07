@@ -1,8 +1,8 @@
 /**
- * UZ Aero — magazyn w pamięci: implementacja referencyjna i testowa `StoragePort`.
+ * UZ Aero - magazyn w pamięci: implementacja referencyjna i testowa `StoragePort`.
  *
  * Dzięki niemu CAŁY rdzeń (repo, komendy, reguły, projekcje, outbox, dedup) testuje się
- * w Node/Jest bez natywnego `expo-sqlite` — to jest powód istnienia portu.
+ * w Node/Jest bez natywnego `expo-sqlite` - to jest powód istnienia portu.
  *
  * Trzyma zdarzenia w mapie `uuid → Event` plus tablicę `order` (kolejność wstawienia).
  * Zwraca i przyjmuje KOPIE, więc testy nie mogą przypadkiem zmutować stanu magazynu.
@@ -10,32 +10,41 @@
 
 import type { EpochMillis, Event, ReferenceAircraft, ReferencePilot } from '../../domain';
 import type {
+  BugReport,
+  BugReportPort,
+  NewBugReport,
   NewTraceEntry,
   StoragePort,
   TraceEntry,
   TracePort,
   TraceStats,
+  WithheldEvent,
+  WithheldReason,
 } from '../../application/ports';
 
 /**
  * Głęboka kopia struktur JSON-serializowalnych. Payloady zdarzeń i rekordy cache to
- * czyste dane (liczby, stringi, null, obiekty/tablice) — round-trip przez JSON jest
- * bezpieczny i izoluje magazyn od mutacji przez wołającego. (Brak Date — czas trzymamy
+ * czyste dane (liczby, stringi, null, obiekty/tablice) - round-trip przez JSON jest
+ * bezpieczny i izoluje magazyn od mutacji przez wołającego. (Brak Date - czas trzymamy
  * jako epoch ms; `undefined` znika, co jest pożądane dla pól opcjonalnych.)
  */
 function deepClone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
 
-export class InMemoryAdapter implements StoragePort, TracePort {
+export class InMemoryAdapter implements StoragePort, TracePort, BugReportPort {
   private events = new Map<string, Event>();
   private order: string[] = [];
   private aircraft = new Map<string, ReferenceAircraft>();
   private pilots = new Map<string, ReferencePilot>();
   private meta = new Map<string, string>();
+  /** Zgłoszenia błędów (issue #87) - lustro `bug_reports`, w kolejności zapisu. */
+  private bugs: BugReport[] = [];
+  /** Zapisy wstrzymane decyzją administratora (issue #81) - lustro `withheld_events`. */
+  private withheld = new Map<string, WithheldEvent>();
 
   async init(): Promise<void> {
-    // Nic do zrobienia — struktury istnieją od konstrukcji.
+    // Nic do zrobienia - struktury istnieją od konstrukcji.
   }
 
   async insertEvent(event: Event): Promise<boolean> {
@@ -55,7 +64,8 @@ export class InMemoryAdapter implements StoragePort, TracePort {
   }
 
   async getUnsyncedEvents(): Promise<Event[]> {
-    return this.orderedEvents().filter((e) => e.syncedAt == null);
+    // Wstrzymane WYPADŁY z kolejki (issue #81), choć `syncedAt` mają dalej `null`.
+    return this.orderedEvents().filter((e) => e.syncedAt == null && !this.withheld.has(e.uuid));
   }
 
   async getAllEvents(): Promise<Event[]> {
@@ -67,6 +77,24 @@ export class InMemoryAdapter implements StoragePort, TracePort {
       const found = this.events.get(uuid);
       if (found) found.syncedAt = syncedAt;
     }
+  }
+
+  async withholdEvents(
+    uuids: string[],
+    reason: WithheldReason,
+    withheldAt: EpochMillis,
+  ): Promise<void> {
+    for (const uuid of uuids) {
+      const found = this.events.get(uuid);
+      // Nieznany uuid pomijamy, jak `markSynced`; drugi raz to samo - bez zmiany
+      // (pierwsza decyzja zostaje, jak `INSERT OR IGNORE` w SQLite).
+      if (found == null || this.withheld.has(uuid)) continue;
+      this.withheld.set(uuid, { uuid, sessionUuid: found.sessionUuid, reason, withheldAt });
+    }
+  }
+
+  async getWithheldEvents(): Promise<WithheldEvent[]> {
+    return [...this.withheld.values()].map(deepClone);
   }
 
   async upsertAircraft(rows: ReferenceAircraft[]): Promise<void> {
@@ -147,6 +175,35 @@ export class InMemoryAdapter implements StoragePort, TracePort {
     };
   }
 
+  async appendBugReport(report: NewBugReport): Promise<void> {
+    // `INSERT OR IGNORE` z adaptera SQLite - ten sam kontrakt: uuid jest kluczem.
+    if (this.bugs.some((b) => b.uuid === report.uuid)) return;
+    this.bugs.push({ ...deepClone(report), sentAt: null });
+  }
+
+  async getPendingBugReports(limit: number): Promise<BugReport[]> {
+    return this.bugs
+      .filter((b) => b.sentAt == null)
+      .slice(0, limit)
+      .map((b) => deepClone(b));
+  }
+
+  async markBugReportsSent(uuids: string[], sentAt: EpochMillis): Promise<void> {
+    for (const bug of this.bugs) {
+      if (uuids.includes(bug.uuid)) bug.sentAt = sentAt;
+    }
+  }
+
+  async purgeSentBugReports(): Promise<number> {
+    const before = this.bugs.length;
+    this.bugs = this.bugs.filter((b) => b.sentAt == null);
+    return before - this.bugs.length;
+  }
+
+  async pendingBugReportCount(): Promise<number> {
+    return this.bugs.filter((b) => b.sentAt == null).length;
+  }
+
   async getMeta(key: string): Promise<string | null> {
     return this.meta.has(key) ? this.meta.get(key)! : null;
   }
@@ -166,6 +223,7 @@ export class InMemoryAdapter implements StoragePort, TracePort {
     this.pilots.clear();
     this.meta.clear();
     this.trace = [];
+    this.bugs = [];
   }
 
   /** Zdarzenia w kolejności wstawienia, jako kopie. */

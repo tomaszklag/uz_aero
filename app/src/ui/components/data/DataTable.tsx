@@ -1,19 +1,19 @@
 /**
- * UZ Aero — DataTable (`.data-table` z mockupu 10)
+ * UZ Aero - DataTable (`.data-table` z mockupu 10)
  *
  * Tabela wierszy danych: nagłówek kolumn, wiersze rozdzielone włosową linią, opcjonalny
  * **cel korekty** na końcu każdego wiersza.
  *
  * Dlaczego tabela, a nie lista kart: lista lotów jest jedynym miejscem, w którym pilot
  * porównuje sześć rekordów tej samej struktury i szuka tego jednego z błędnym czasem.
- * Kolumny ustawiają cyfry jedna pod drugą — w kartach ta sama informacja rozpłynęłaby się
+ * Kolumny ustawiają cyfry jedna pod drugą - w kartach ta sama informacja rozpłynęłaby się
  * po ekranie i błąd trzeba by czytać, zamiast go zobaczyć.
  *
  * Dwie rzeczy nie są ozdobnikiem:
- *  • **Cel korekty ≥ 44 px** — ten sam próg co w `SessionAxis` w trybie edycji. GPS klasy konsumenckiej
+ *  • **Cel korekty ≥ 44 px** - ten sam próg co w `SessionAxis` w trybie edycji. GPS klasy konsumenckiej
  *    gwarantuje fałszywe detekcje (§8), więc naprawa błędu nie może być trudniejsza niż
  *    jego popełnienie. To wniosek z audytu, nie preferencja.
- *  • **Powód blokady jako widoczny tekst** — gdy korekta jest niedostępna, ołówki gasną,
+ *  • **Powód blokady jako widoczny tekst** - gdy korekta jest niedostępna, ołówki gasną,
  *    a pod tabelą staje jedno zdanie „dlaczego". Nigdy cichy błąd (§6 pkt 3); jedno
  *    zdanie pod tabelą, a nie sześć powtórzeń przy wierszach.
  */
@@ -34,15 +34,15 @@ export interface DataColumn {
 
 export interface DataCell {
   text: string;
-  /** Z tonem komórka staje się chipem (AUTO / RĘCZNIE), bez — zwykłym tekstem. */
+  /** Z tonem komórka staje się chipem (AUTO / RĘCZNIE), bez - zwykłym tekstem. */
   chip?: Tone;
   /** Przygaszona kolumna porządkowa („#"). */
   muted?: boolean;
   /**
    * Zamienia komórkę w cel dotykowy (mockup 14: numer lotu otwiera ślad).
    *
-   * Świadomie na KOMÓRCE, a nie na całym wierszu: wiersz lotu ma już jeden cel —
-   * ołówek korekty — i drugi, obejmujący całą szerokość, przechwytywałby dotknięcia
+   * Świadomie na KOMÓRCE, a nie na całym wierszu: wiersz lotu ma już jeden cel -
+   * ołówek korekty - i drugi, obejmujący całą szerokość, przechwytywałby dotknięcia
    * przeznaczone dla niego. Podkreślenie pod tekstem mówi, że tu się klika.
    */
   onPress?: () => void;
@@ -62,13 +62,13 @@ export interface DataTableProps {
   rows: DataTableRow[];
   /** Otwiera korektę wiersza (04c). Bez tego kolumny akcji w ogóle nie ma. */
   onCorrect?: (id: string) => void;
-  /** Blokuje korektę — ołówki gasną, powód pokazujemy pod tabelą. */
+  /** Blokuje korektę - ołówki gasną, powód pokazujemy pod tabelą. */
   correctDisabledReason?: string | null;
   emptyText?: string;
   style?: ViewStyle;
 }
 
-/** Szerokość celu korekty — 46 px trzyma dotyk powyżej progu 44 px dla rękawic. */
+/** Szerokość celu korekty - 46 px trzyma dotyk powyżej progu 44 px dla rękawic. */
 const CORRECT_WIDTH = 46;
 
 export function DataTable({
@@ -201,7 +201,7 @@ export function DataTable({
         </View>
       ))}
 
-      {/* Powód blokady — widoczny tekst pod tabelą (§6 pkt 3). */}
+      {/* Powód blokady - widoczny tekst pod tabelą (§6 pkt 3). */}
       {correctable && disabled && (
         <View
           style={{
@@ -220,7 +220,7 @@ export function DataTable({
 }
 
 const styles = StyleSheet.create({
-  // Wcięcie od krawędzi karty — `.data-table th/td { padding: … 8px }`.
+  // Wcięcie od krawędzi karty - `.data-table th/td { padding: … 8px }`.
   row: { flexDirection: 'row', alignItems: 'center', paddingLeft: 8 },
   headCell: { paddingHorizontal: 4, paddingVertical: 8 },
   headLabel: { fontSize: 8, lineHeight: 12, letterSpacing: 1.5, textTransform: 'uppercase' },

@@ -1,5 +1,5 @@
 /**
- * UZ Aero — SKALE NIEZALEŻNE OD MOTYWU.
+ * UZ Aero - SKALE NIEZALEŻNE OD MOTYWU.
  *
  * Odstępy i promienie nie zmieniają się między motywami: motyw zmienia kolory, nie
  * geometrię. Trzymanie ich osobno od palet sprawia, że dodanie szóstego motywu nie
@@ -25,8 +25,8 @@ export const radius = {
   md: 12,
   /**
    * Kanon dla przycisków, kafli akcji, klawiszy i pól-kontrolek (num-btn, action-card,
-   * step-btn, day-card, time-input…). Mockupy wahają się między 13 a 14 px — steppery
-   * i wiersze 05e/05f dają 13 — dryf 13 → 14 znormalizowany celowo, wzorem
+   * step-btn, day-card, time-input…). Mockupy wahają się między 13 a 14 px - steppery
+   * i wiersze 05e/05f dają 13 - dryf 13 → 14 znormalizowany celowo, wzorem
    * `colors.overlay`, który zakończył dryf scrimów.
    */
   btn: 14,

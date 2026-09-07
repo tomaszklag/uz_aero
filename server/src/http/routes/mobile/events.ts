@@ -1,15 +1,15 @@
 /**
- * UZ Aero (serwer) — trasy rejestru zdarzeń telefonu: `POST /events` (§4.3–4.5)
+ * UZ Aero (serwer) - trasy rejestru zdarzeń telefonu: `POST /events` (§4.3–4.5)
  * i `GET /me/events` (§4.9, issue #32).
  *
  * Koperta zdarzenia (§5.1) waliduje to, co chroni BAZĘ (typy kolumn, limity długości),
- * nie semantykę lotu — serwer przyjmuje i flaguje, nie odrzuca (§4.5). Payload idzie
+ * nie semantykę lotu - serwer przyjmuje i flaguje, nie odrzuca (§4.5). Payload idzie
  * jako JSON: jego znaczenie zna wspólna domena, a `schemaVersion` w każdym zdarzeniu
  * pozwala starszym klientom żyć obok nowszych.
  *
  * Obie trasy w jednym pliku, bo to JEDEN zasób z dwoma kierunkami: wysyłka outboxa
  * i odtworzenie rejestru na urządzeniu, które go straciło. Ta sama koperta w obie
- * strony — dlatego jest tu jedna definicja, a nie dwie żyjące osobno.
+ * strony - dlatego jest tu jedna definicja, a nie dwie żyjące osobno.
  */
 
 import type { FastifyInstance } from 'fastify';
@@ -25,7 +25,7 @@ import {
 import type { TokenService } from '../../../application/common/ports.ts';
 import { authorize } from '../../authorize.ts';
 import { tokenFromRequest } from '../../tokenFromRequest.ts';
-import { payloadValid } from './eventPayloads.ts';
+import { ADMIN_ONLY_EVENT_TYPES, payloadValid } from './eventPayloads.ts';
 
 /** Eksportowana dla testu kontraktowego zod ↔ typ domenowy. */
 export const eventEnvelope = z.object({
@@ -47,7 +47,7 @@ const eventsBody = z.object({
 });
 
 /**
- * Zapytanie o stronę własnego rejestru. Bez filtrów po dacie, typie czy samolocie —
+ * Zapytanie o stronę własnego rejestru. Bez filtrów po dacie, typie czy samolocie -
  * to nie jest przeglądarka rejestru (od tego jest `A04` w panelu), tylko odtworzenie
  * strumienia. Filtr znaczyłby tu „odbuduj niepełną historię", czyli dokładnie ten stan,
  * z którego telefon próbuje wyjść.
@@ -76,6 +76,13 @@ export function registerEventsRoutes(
       return reply.code(400).send({ error: 'bad_payload' });
     }
 
+    // Zdarzenia PANELU (issue #81): telefon nie ma jak ich złożyć, więc taka paczka jest
+    // próbą zapisu spoza uprawnień - 403 w całości, jak przy cudzym PIC-u (bez wiersza
+    // w bazie i bez rozjazdu księgowości outboxa).
+    if (parsed.data.events.some((e) => ADMIN_ONLY_EVENT_TYPES.includes(e.type))) {
+      return reply.code(403).send({ error: 'admin_only_event' });
+    }
+
     const outcome = await ingest.ingest(
       who.pilotId,
       parsed.data.events as unknown as Event[],
@@ -93,7 +100,7 @@ export function registerEventsRoutes(
    * jak w całym `/me/*`: gdyby pilot mógł podać `picId` w zapytaniu, endpoint
    * odbudowujący własny strumień stałby się czytnikiem cudzych dni.
    *
-   * Pusty rejestr to `{ events: [], nextCursor: null }` ze statusem 200, nie 404 —
+   * Pusty rejestr to `{ events: [], nextCursor: null }` ze statusem 200, nie 404 -
    * pilot bez ani jednej sesji jest stanem normalnym (pierwszy dzień w klubie).
    */
   app.get('/me/events', async (req, reply) => {
@@ -109,7 +116,7 @@ export function registerEventsRoutes(
       query.data.limit,
     );
     // 400, nie 500: kursor przychodzi z zewnątrz. Ciche zaczęcie od pierwszej strony
-    // byłoby gorsze — telefon dopisałby do rejestru drugą kopię tego, co już ma
+    // byłoby gorsze - telefon dopisałby do rejestru drugą kopię tego, co już ma
     // (dedup po uuid by ją zjadł), sądząc jednocześnie, że posunął się naprzód.
     if (!outcome.ok) return reply.code(400).send({ error: outcome.reason });
 

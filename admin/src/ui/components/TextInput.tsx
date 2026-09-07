@@ -1,7 +1,7 @@
 /**
- * UZ Aero — panel: pole tekstowe (`.input` z `SZABLON.html`).
+ * UZ Aero - panel: pole tekstowe (`.input` z `SZABLON.html`).
  *
- * `mono` dla kodów, UUID-ów i wartości liczbowych — reguła tabel obowiązuje też
+ * `mono` dla kodów, UUID-ów i wartości liczbowych - reguła tabel obowiązuje też
  * w formularzach. `invalid` dla pola odrzuconego przez serwer (A00a: hasło).
  */
 

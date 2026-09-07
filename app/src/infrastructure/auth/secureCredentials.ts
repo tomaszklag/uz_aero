@@ -1,12 +1,12 @@
 /**
- * UZ Aero — ADAPTER `CredentialsPort` na `expo-secure-store` (§3.0, §5.2).
+ * UZ Aero - ADAPTER `CredentialsPort` na `expo-secure-store` (§3.0, §5.2).
  *
- * Tokeny i profil idą do Keystore Androida — wyciągnięcie plików aplikacji z urządzenia
+ * Tokeny i profil idą do Keystore Androida - wyciągnięcie plików aplikacji z urządzenia
  * nie daje sesji. Wszystko pod JEDNYM kluczem jako JSON: komplet poświadczeń jest
  * niepodzielny (token bez profilu jest bezużyteczny, profil bez tokenów kłamie),
  * więc zapis częściowy nie ma prawa istnieć.
  *
- * ⚠️ Moduł natywny — pierwszy raz zadziała po przebudowie dev clienta
+ * ⚠️ Moduł natywny - pierwszy raz zadziała po przebudowie dev clienta
  * (`npm run android`). Do tego czasu `load()` rzuci przy imporcie natywnym; composition
  * root łapie to i trzyma aplikację na ekranie logowania z czytelnym powodem, zamiast
  * wywracać się na starcie.
@@ -14,18 +14,42 @@
 
 import * as SecureStore from 'expo-secure-store';
 
-import type { CredentialsPort, StoredCredentials } from '../../application/ports';
+import type {
+  CredentialsPort,
+  StoredCredentials,
+  StoredRegistration,
+} from '../../application/ports';
 
 const KEY = 'uzaero.credentials.v1';
+/** Zgłoszenie rejestracyjne - OSOBNY klucz, bo to nie jest tożsamość (patrz port). */
+const REGISTRATION_KEY = 'uzaero.registration.v1';
 
 export class SecureCredentials implements CredentialsPort {
+  async loadRegistration(): Promise<StoredRegistration | null> {
+    const raw = await SecureStore.getItemAsync(REGISTRATION_KEY);
+    if (raw == null) return null;
+    try {
+      return JSON.parse(raw) as StoredRegistration;
+    } catch {
+      return null;
+    }
+  }
+
+  async saveRegistration(registration: StoredRegistration): Promise<void> {
+    await SecureStore.setItemAsync(REGISTRATION_KEY, JSON.stringify(registration));
+  }
+
+  async clearRegistration(): Promise<void> {
+    await SecureStore.deleteItemAsync(REGISTRATION_KEY);
+  }
+
   async load(): Promise<StoredCredentials | null> {
     const raw = await SecureStore.getItemAsync(KEY);
     if (raw == null) return null;
     try {
       return JSON.parse(raw) as StoredCredentials;
     } catch {
-      // Uszkodzony wpis traktujemy jak brak profilu — droga przez 00-login,
+      // Uszkodzony wpis traktujemy jak brak profilu - droga przez 00-login,
       // a nie crash pętli synca przy każdej okazji.
       return null;
     }

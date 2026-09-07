@@ -1,16 +1,26 @@
 /**
- * UZ Aero — PALETY MOTYWÓW.
+ * UZ Aero - PALETY MOTYWÓW.
  *
- * ŹRÓDŁO PRAWDY: `design/05-themes.html`. Motyw Night pochodzi z bloku `:root`,
- * pozostałe cztery z `.phone[data-theme="…"]` — w pliku HTML nadpisują tylko część
- * zmiennych, a reszta kaskaduje z Night. Odwzorowujemy to spreadem `nightColors`
- * i nadpisaniem dokładnie tych samych tokenów, które nadpisuje CSS. Wartości są
- * SKOPIOWANE z mockupu — nie wymyślone.
+ * DWA MOTYWY (issue #72, 2026-09-01): **Night** - ciemny, domyślny - i **Solar** -
+ * jasny, o maksymalnym kontraście, do pracy w pełnym słońcu. Paper, Sky i Amber/NVG
+ * zostały usunięte: pięć palet dawało wybór, którego pilot nie ma po co dokonywać,
+ * a każda dokładała czwarty i piąty odcień do każdej decyzji o kolorze. Wartości
+ * usuniętych palet są w historii gita.
+ *
+ * ŹRÓDŁO PRAWDY: **ten plik**. Do issue #72 był nim `design/05-themes.html` (mockup
+ * podglądu motywów, skasowany razem z ekranem, który pokazywał) - odtąd palety żyją
+ * w kodzie, a mockupy aplikacji biorą kolory z bloku `:root` swojego `<head>`.
+ * Kopia dla panelu (`admin/src/styles/tokens.css`) jest GENEROWANA stąd, a równości
+ * z `design/admin/SZABLON.html` pilnuje `app/src/__tests__/tokensCssVars.test.ts`.
+ *
+ * Solar nadpisuje część tokenów Night i dziedziczy resztę spreadem `...nightColors` -
+ * odwzorowanie kaskady, którą miał mockup (`[data-theme="solar"]` nadpisywał wybrane
+ * zmienne, reszta spływała z `:root`).
  *
  * Zasada twarda (`CLAUDE.md`): kolory wyłącznie stąd, zero hardcoded hex w komponentach.
  */
 
-export type ThemeName = 'night' | 'paper' | 'solar' | 'sky' | 'amber';
+export type ThemeName = 'night' | 'solar';
 
 /** Pełny zestaw tokenów kolorów jednego motywu. */
 export interface ThemeColors {
@@ -26,12 +36,12 @@ export interface ThemeColors {
   textSecondary: string;
   textMuted: string;
   /**
-   * Podpowiedź w pustym polu (`placeholder`) — o stopień SŁABSZA niż `textMuted`.
+   * Podpowiedź w pustym polu (`placeholder`) - o stopień SŁABSZA niż `textMuted`.
    *
    * Osobny token, bo to nie jest treść, tylko instrukcja, którą pilot przeczyta raz
    * i która ma zniknąć z oka po pierwszym znaku (uwaga z urządzenia, 2026-08-14:
    * „placeholdery powinny być bardziej subtelne"). W `textMuted` konkurowały wagą
-   * z wpisaną wartością obok — a puste pole wyglądało jak wypełnione.
+   * z wpisaną wartością obok - a puste pole wyglądało jak wypełnione.
    *
    * Rozmiaru nie różnicujemy: `placeholder` dziedziczy stopień pisma pola i inaczej
    * się nie da, więc cała różnica siedzi w kontraście.
@@ -53,14 +63,14 @@ export interface ThemeColors {
   blue: string;
   blueMuted: string;
   blueBorder: string;
-  /** Przyciemnienie pod arkuszami (scrim) — jedna wartość, koniec dryfu 0.7/0.74. */
+  /** Przyciemnienie pod arkuszami (scrim) - jedna wartość, koniec dryfu 0.7/0.74. */
   overlay: string;
   /**
    * Tło zaznaczonego tekstu w polach edycji.
    *
    * NEUTRALNE z premedytacją, choć akcent byłby „w tonie": wartości w arkuszach są
    * pisane kolorem tonu (paliwo bursztynem, godzina błękitem), a zaznaczenie w tym samym
-   * odcieniu zlewa się z cyframi w jednolity prostokąt — pilot nie widzi ani wartości,
+   * odcieniu zlewa się z cyframi w jednolity prostokąt - pilot nie widzi ani wartości,
    * ani tego, że jest zaznaczona (zgłoszenie z urządzenia, 2026-07-30). Szara przepuszczalna
    * podkładka zostawia glify czytelne w każdym tonie.
    */
@@ -68,7 +78,7 @@ export interface ThemeColors {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// NIGHT — motyw domyślny (05-themes.html :root)
+// NIGHT - motyw domyślny (ciemny)
 // ─────────────────────────────────────────────────────────────────────────────
 export const nightColors: ThemeColors = {
   bg: '#0D0D0D',
@@ -104,44 +114,7 @@ export const nightColors: ThemeColors = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PAPER — jasny, ciepła biel "papierowej mapy" ([data-theme="paper"])
-// ─────────────────────────────────────────────────────────────────────────────
-export const paperColors: ThemeColors = {
-  ...nightColors,
-  bg: '#F4EEE1',
-  bgTint: '#FAF5EA',
-  surface: '#FBF7ED',
-  surfaceRaised: '#EFE8D6',
-  // 05-themes.html nie nadpisuje `--surface-hover` w motywach jasnych, bo na webie to
-  // stan `:hover`, którego na telefonie nie ma. My używamy tego tokenu jako powierzchni
-  // „przygaszonej" — bez wartości per motyw dziedziczyłby czerń z Night i dawał
-  // prawie czarny prostokąt na jasnym tle. Wartość: o stopień ciemniejsza od `raised`.
-  surfaceHover: '#E4DAC4',
-  border: '#D9CEB6',
-  borderStrong: '#B3A583',
-  hairline: 'rgba(60,40,10,0.08)',
-  textPrimary: '#241C10',
-  textSecondary: '#544A3A',
-  textMuted: '#6E6250',
-  textPlaceholder: '#8E8474',
-  green: '#1E7A40',
-  greenMuted: 'rgba(30,122,64,0.12)',
-  greenBorder: 'rgba(30,122,64,0.38)',
-  amber: '#9E5C00',
-  amberMuted: 'rgba(158,92,0,0.12)',
-  amberBorder: 'rgba(158,92,0,0.38)',
-  red: '#A62A18',
-  redMuted: 'rgba(166,42,24,0.12)',
-  redBorder: 'rgba(166,42,24,0.38)',
-  blue: '#205C90',
-  blueMuted: 'rgba(32,92,144,0.10)',
-  blueBorder: 'rgba(32,92,144,0.38)',
-  overlay: 'rgba(0,0,0,0.74)',
-  selection: 'rgba(36,28,16,0.16)',
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SOLAR — jasny, maksymalny kontrast, ostre słońce ([data-theme="solar"])
+// SOLAR - motyw jasny, maksymalny kontrast, ostre słońce
 // ─────────────────────────────────────────────────────────────────────────────
 export const solarColors: ThemeColors = {
   ...nightColors,
@@ -149,7 +122,11 @@ export const solarColors: ThemeColors = {
   bgTint: '#F8F8F8',
   surface: '#FFFFFF',
   surfaceRaised: '#F0F0F0',
-  surfaceHover: '#E2E2E2', // patrz komentarz przy `paperColors.surfaceHover`
+  // `surfaceHover` bierze się z weba, gdzie jest stanem `:hover` - telefon go nie ma,
+  // więc używamy tego tokenu jako powierzchni „przygaszonej". Bez własnej wartości
+  // dziedziczyłby czerń z Night i dawał prawie czarny prostokąt na jasnym tle;
+  // wartość: o stopień ciemniejsza od `raised`.
+  surfaceHover: '#E2E2E2',
   border: '#A8A8A8',
   borderStrong: '#5E5E5E',
   hairline: 'rgba(0,0,0,0.08)',
@@ -157,80 +134,41 @@ export const solarColors: ThemeColors = {
   textSecondary: '#2E2E2E',
   textMuted: '#666666',
   textPlaceholder: '#8A8A8A',
-  green: '#007030',
-  greenMuted: 'rgba(0,112,48,0.10)',
-  greenBorder: 'rgba(0,112,48,0.40)',
-  amber: '#9A5000',
-  amberMuted: 'rgba(154,80,0,0.10)',
-  amberBorder: 'rgba(154,80,0,0.40)',
-  red: '#980000',
-  redMuted: 'rgba(152,0,0,0.10)',
-  redBorder: 'rgba(152,0,0,0.40)',
-  blue: '#004890',
-  blueMuted: 'rgba(0,72,144,0.10)',
-  blueBorder: 'rgba(0,72,144,0.40)',
+  /*
+   * AKCENTY: NAJWIĘCEJ KOLORU, JAKI MIEŚCI SIĘ W PROGU CZYTELNOŚCI
+   * (uwaga z urządzenia, 2026-09-04: „w jasnym motywie czerwony i zielony mało się
+   * wyróżniają, wyglądają raczej jak czarny").
+   *
+   * Skarga NIE dotyczyła kontrastu - ten był aż nadto wysoki (zieleń 6,25, czerwień 8,99
+   * wobec bieli, przy progu AA 4,5). Dotyczyła KOLOROWOŚCI: barwa niesie tu znaczenie
+   * (zielony = w normie, czerwony = błąd, bursztyn = uwaga), a przy jasności 22-30%
+   * wszystkie cztery czytały się jak czerń. Kontrast był realizowany kosztem funkcji.
+   *
+   * Wartości dobrane rachunkiem, nie na oko: w obrębie odcienia marki (ten sam hue, co
+   * w Night) szukamy MAKSYMALNEJ chromy CIELAB przy zachowanym kontraście ≥4,5 wobec
+   * tła (`bg`) I wobec karty (`surfaceRaised`) - progu pilnuje `themeContrast.test.ts`.
+   *
+   * Dlaczego zieleń zyskuje najmniej: kanał zielony waży w luminancji 0,7152, więc
+   * każde rozjaśnienie natychmiast zjada kontrast. Czerwony (0,2126) i niebieski
+   * (0,0722) mają dużo więcej miejsca - stąd błękit skoczył z chromy 46 na 63,
+   * a czerwień z jasności 30% na 43%.
+   *
+   * Ten sam kolor bywa TŁEM przycisku `solid`, na którym napis ma kolor `bg` (w jasnym
+   * motywie: biały) - więc czytelność napisu i czytelność koloru jako tekstu to ta sama
+   * liczba i ciągną w tę samą stronę. Rozjaśnianie „aż będzie ładnie" psuje oba naraz.
+   */
+  green: '#027E2B',
+  greenMuted: 'rgba(2,126,43,0.10)',
+  greenBorder: 'rgba(2,126,43,0.40)',
+  amber: '#A25A01',
+  amberMuted: 'rgba(162,90,1,0.10)',
+  amberBorder: 'rgba(162,90,1,0.40)',
+  red: '#D02A1E',
+  redMuted: 'rgba(208,42,30,0.10)',
+  redBorder: 'rgba(208,42,30,0.40)',
+  blue: '#0069D1',
+  blueMuted: 'rgba(0,105,209,0.10)',
+  blueBorder: 'rgba(0,105,209,0.40)',
   overlay: 'rgba(0,0,0,0.74)',
   selection: 'rgba(0,0,0,0.16)',
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SKY — jasny, chłodna tonacja błękitno-szara ([data-theme="sky"])
-// ─────────────────────────────────────────────────────────────────────────────
-export const skyColors: ThemeColors = {
-  ...nightColors,
-  bg: '#E9EFF5',
-  bgTint: '#F2F6FA',
-  surface: '#F7FAFD',
-  surfaceRaised: '#E1E9F1',
-  surfaceHover: '#D3DDE8', // patrz komentarz przy `paperColors.surfaceHover`
-  border: '#B7C5D3',
-  borderStrong: '#7E93A8',
-  hairline: 'rgba(15,30,44,0.08)',
-  textPrimary: '#0F1E2C',
-  textSecondary: '#334454',
-  textMuted: '#556579',
-  textPlaceholder: '#7B8998',
-  green: '#14784A',
-  greenMuted: 'rgba(20,120,74,0.12)',
-  greenBorder: 'rgba(20,120,74,0.40)',
-  amber: '#A05E00',
-  amberMuted: 'rgba(160,94,0,0.12)',
-  amberBorder: 'rgba(160,94,0,0.40)',
-  red: '#A82418',
-  redMuted: 'rgba(168,36,24,0.10)',
-  redBorder: 'rgba(168,36,24,0.40)',
-  blue: '#16528E',
-  blueMuted: 'rgba(22,82,142,0.10)',
-  blueBorder: 'rgba(22,82,142,0.40)',
-  overlay: 'rgba(0,0,0,0.74)',
-  selection: 'rgba(15,30,44,0.16)',
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// AMBER / NVG — ciemny, bursztyn na czerni, zero błękitu ([data-theme="amber"])
-// W pliku HTML nadpisuje tylko amber/blue + bg/surface/border/text; green i red
-// (oraz ich warianty) kaskadują z Night — dlatego tu również dziedziczą.
-// ─────────────────────────────────────────────────────────────────────────────
-export const amberColors: ThemeColors = {
-  ...nightColors,
-  bg: '#070400',
-  bgTint: '#0F0800',
-  surface: '#100600',
-  surfaceRaised: '#190D00',
-  border: '#2A1600',
-  borderStrong: '#3C2000',
-  hairline: 'rgba(255,176,32,0.04)',
-  textPrimary: '#FFB020',
-  textSecondary: '#D09030',
-  textMuted: '#A87020',
-  textPlaceholder: '#7A5218',
-  amber: '#FF7800',
-  amberMuted: 'rgba(255,120,0,0.12)',
-  amberBorder: 'rgba(255,120,0,0.32)',
-  blue: '#60A0F0',
-  blueMuted: 'rgba(96,160,240,0.10)',
-  blueBorder: 'rgba(96,160,240,0.32)',
-  overlay: 'rgba(0,0,0,0.74)',
-  // Motyw NVG nie dopuszcza białego światła — podkładka też jest bursztynowa.
-  selection: 'rgba(255,176,32,0.22)',
 };

@@ -1,11 +1,11 @@
 /**
- * UZ Aero — tokeny kontra mockupy: zmienne CSS emitowane z `@uzaero/tokens` muszą
+ * UZ Aero - tokeny kontra mockupy: zmienne CSS emitowane z `@uzaero/tokens` muszą
  * zgadzać się z blokiem `:root` w `design/admin/SZABLON.html`.
  *
  * Po co ten test. Tokeny są kodem, ale ŹRÓDŁEM PRAWDY jest mockup (`CLAUDE.md`:
  * „mockupy w `design/` to zatwierdzona specyfikacja"). Dopóki konsumentem była jedna
  * aplikacja, rozjazd wychodził na oczy przy pierwszym spojrzeniu na ekran. Panel
- * webowy czyta te same wartości OKRĘŻNĄ drogą — przez `themeCssVars` — więc literówka
+ * webowy czyta te same wartości OKRĘŻNĄ drogą - przez `themeCssVars` - więc literówka
  * w palecie dałaby panel w innym odcieniu niż zatwierdzony projekt i nikt by tego nie
  * złapał, bo obie strony byłyby „zgodne ze sobą".
  *
@@ -38,7 +38,7 @@ describe('zmienne CSS panelu pochodzą z tych samych tokenów co aplikacja', () 
 
   it('mockup i emiter mają realną część wspólną (kontrola testu)', () => {
     // Bez tego zielony wynik niżej mógłby znaczyć „zero wspólnych nazw", czyli
-    // porównanie pustego zbioru — test przechodziłby przy dowolnie rozjechanej palecie.
+    // porównanie pustego zbioru - test przechodziłby przy dowolnie rozjechanej palecie.
     const shared = Object.keys(emitted).filter((name) => mockup.has(name));
     expect(shared.length).toBeGreaterThan(20);
     // Kotwice: gdyby konwencja nazw kiedyś się zmieniła, chcemy wiedzieć od razu.

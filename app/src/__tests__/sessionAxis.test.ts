@@ -1,7 +1,7 @@
 /**
- * UZ Aero — test OSI CZASU sesji (ekran 10, issue #38 pkt 7 i 8; issue #40 pkt 1, 3, 4, 6).
+ * UZ Aero - test OSI CZASU sesji (ekran 10, issue #38 pkt 7 i 8; issue #40 pkt 1, 3, 4, 6).
  *
- * Oś zastąpiła tabelę lotów i opisuje CAŁY bieg silnika — od issue #40 razem
+ * Oś zastąpiła tabelę lotów i opisuje CAŁY bieg silnika - od issue #40 razem
  * z kołowaniem, bez kolumny ołówka i bez plakietki „RĘCZNIE".
  *
  * Scenariusz jest ten sam, co w mockupie 10: przejęcie 08:04, silnik 08:12 → 09:55,
@@ -18,7 +18,7 @@ const at = (h: number, m: number): number => DAY + (h * 60 + m) * 60_000;
 
 let seq = 0;
 
-/** Zdarzenie w strumieniu sesji — nagłówek minimalny, tyle ile czyta projekcja. */
+/** Zdarzenie w strumieniu sesji - nagłówek minimalny, tyle ile czyta projekcja. */
 function event<T extends EventType>(
   type: T,
   time: number,
@@ -41,7 +41,7 @@ function event<T extends EventType>(
   } as Event;
 }
 
-/** Kanoniczna sesja z mockupu 10 — dwa loty, dwa zrzuty, komplet odczytów. */
+/** Kanoniczna sesja z mockupu 10 - dwa loty, dwa zrzuty, komplet odczytów. */
 function sessionEvents(): Event[] {
   seq = 0;
   return [
@@ -78,7 +78,7 @@ function axis(events: Event[] = sessionEvents(), now = at(12, 0)) {
   return buildSessionAxis(projectSession(events), events, now);
 }
 
-describe('oś sesji', () => {
+describe('oś operacji', () => {
   it('idzie chronologicznie od przejęcia do zdania', () => {
     const { rows } = axis();
 
@@ -112,7 +112,7 @@ describe('oś sesji', () => {
   it('oś nie niesie już ani ołówka, ani plakietki wpisu ręcznego (issue #40 pkt 1 i 6)', () => {
     // Sposób powstania zapisu i prawo do korekty przestały być sprawą tego ekranu:
     // korekta wychodzi przyciskiem „EDYTUJ DANE", a metoda zostaje w rejestrze.
-    // Wiersz `to-2` jest w scenariuszu wpisem RĘCZNYM — i wygląda jak każdy inny.
+    // Wiersz `to-2` jest w scenariuszu wpisem RĘCZNYM - i wygląda jak każdy inny.
     const { rows } = axis();
 
     for (const row of rows) {
@@ -121,7 +121,7 @@ describe('oś sesji', () => {
     }
   });
 
-  it('kołowanie niesie samą godzinę — czasu trwania nie liczymy', () => {
+  it('kołowanie niesie samą godzinę - czasu trwania nie liczymy', () => {
     // „Ile trwało kołowanie" jest ciekawostką w rozliczeniu sesji: do bloku i tak
     // wchodzi cały bieg silnika. Czas zostaje w kokpicie, gdzie pilot patrzy na zegar
     // w trakcie przygotowania do startu.
@@ -143,7 +143,7 @@ describe('oś sesji', () => {
     );
   });
 
-  it('numer lotu idzie w prawą kolumnę i pada RAZ — przy starcie', () => {
+  it('numer lotu idzie w prawą kolumnę i pada RAZ - przy starcie', () => {
     // Druga linia w połowie wierszy kosztowała wysokość, którą sesja skokowa zamienia
     // w przewijanie. Przy lądowaniu numeru nie ma: prawą kolumnę zajmuje tam czas lotu,
     // czyli liczba, po którą pilot sięga, a para start → lądowanie czyta się w pionie.
@@ -151,11 +151,11 @@ describe('oś sesji', () => {
     const { rows } = axis();
     const flights = rows.filter((row) => row.kind === 'takeoff' || row.kind === 'landing');
 
-    expect(flights.map((row) => `${row.kind} ${row.flight ?? '—'}`)).toEqual([
+    expect(flights.map((row) => `${row.kind} ${row.flight ?? '-'}`)).toEqual([
       'takeoff lot 1',
-      'landing —',
+      'landing -',
       'takeoff lot 2',
-      'landing —',
+      'landing -',
     ]);
     expect(flights.every((row) => row.sub == null)).toBe(true);
     expect(rows.find((row) => row.id === 'drop-1')!.flight).toBeNull();
@@ -165,8 +165,62 @@ describe('oś sesji', () => {
   it('końce osi niosą odczyty, do których odwołują się rachunki niżej', () => {
     const { rows } = axis();
 
-    expect(rows.find((row) => row.kind === 'claim')!.sub).toBe('odczyt 150 L · 1234:30');
-    expect(rows.find((row) => row.kind === 'release')!.sub).toBe('odczyt 171 L · 1236:05');
+    // „paliwo", nie „odczyt" (uwaga z urządzenia, 2026-09-03) - media nazwane.
+    expect(rows.find((row) => row.kind === 'claim')!.sub).toBe('paliwo 150 L · 1234:30');
+    expect(rows.find((row) => row.kind === 'release')!.sub).toBe('paliwo 171 L · 1236:05');
+  });
+
+  it('pomiar oleju wchodzi do podpisu przejęcia - zdanie oleju nie mierzy (issue #60)', () => {
+    const withOil = sessionEvents().map((e) =>
+      e.type === 'preflight_confirm'
+        ? ({ ...e, payload: { ...e.payload, oilL: 8.2, oilAddedL: 1.0 } } as Event)
+        : e,
+    );
+    const rows = axis(withOil).rows;
+    // SAM pomiar zastany, bez dolewki (uwaga z urządzenia, 2026-09-03):
+    // dolewka jest zdarzeniem przebiegu i ma na osi własny wiersz.
+    expect(rows.find((row) => row.kind === 'claim')!.sub).toBe(
+      'paliwo 150 L · 1234:30 · olej 8,2 L',
+    );
+    // zdanie samolotu zostaje bez oleju - bagnet tuż po locie kłamie
+    expect(rows.find((row) => row.kind === 'release')!.sub).toBe('paliwo 171 L · 1236:05');
+
+    // STARY STRUMIEŃ: dolewka z payloadu przejęcia dostaje własny wiersz jak `oil_add`
+    // (uwaga z urządzenia, 2026-09-03: „nie doświetla się wpis z dolewką oleju przy
+    // przejęciu") - zaraz za przejęciem, z celem korekty w przejęciu (10F).
+    const claimIndex = rows.findIndex((row) => row.kind === 'claim');
+    const legacy = rows[claimIndex + 1]!;
+    expect(legacy.kind).toBe('oilAdd');
+    expect(legacy.name).toBe('Dolewka oleju');
+    expect(legacy.sub).toBe('+1,0 L');
+    expect(legacy.targetUuid).toBe(
+      withOil.find((e) => e.type === 'preflight_confirm')!.uuid,
+    );
+    expect(legacy.corrected).toBe(false);
+  });
+
+  it('nowy strumień: dolewka jako osobne oil_add - jeden wiersz, bez dublowania', () => {
+    const preflightAt = sessionEvents().find((e) => e.type === 'preflight_confirm')!;
+    const withOilAdd = [
+      ...sessionEvents().map((e) =>
+        e.type === 'preflight_confirm'
+          ? ({ ...e, payload: { ...e.payload, oilL: 8.2 } } as Event)
+          : e,
+      ),
+      {
+        ...preflightAt,
+        uuid: 'oil-add-1',
+        type: 'oil_add',
+        payload: { addedL: 1.0 },
+        deviceTime: (preflightAt.gpsTime ?? preflightAt.deviceTime) + 30_000,
+        gpsTime: (preflightAt.gpsTime ?? preflightAt.deviceTime) + 30_000,
+      } as Event,
+    ];
+    const rows = axis(withOilAdd).rows;
+    const oilRows = rows.filter((row) => row.kind === 'oilAdd');
+    expect(oilRows).toHaveLength(1);
+    expect(oilRows[0]!.targetUuid).toBe('oil-add-1');
+    expect(oilRows[0]!.sub).toBe('+1,0 L');
   });
 
   it('zrzut niesie skład i wysokość; brak obu nie robi pustego podpisu', () => {
@@ -181,7 +235,7 @@ describe('oś sesji', () => {
     expect(axis(bezSkladu).rows.find((row) => row.id === 'drop-1')!.sub).toBeNull();
   });
 
-  it('lot w powietrzu nie znika z osi — brakuje mu tylko lądowania', () => {
+  it('lot w powietrzu nie znika z osi - brakuje mu tylko lądowania', () => {
     const wPowietrzu = sessionEvents().filter(
       (e) => e.uuid !== 'ldg-2' && e.uuid !== 'engine-off' && e.type !== 'day_close',
     );
@@ -205,11 +259,11 @@ describe('oś sesji', () => {
 });
 
 /**
- * ZDARZENIA NAZIEMNE (issue #44) — tankowanie, załadunek i zmiana załogi.
+ * ZDARZENIA NAZIEMNE (issue #44) - tankowanie, załadunek i zmiana załogi.
  *
  * Oś ich nie znała, a to był błąd, nie decyzja: rachunek paliwa na tym samym ekranie
  * mówi „dolane · 2 tankowania", arkusz 10H pozwala tankowanie DOPISAĆ, a wpis znikał
- * bez śladu. Log kokpitu pokazywał je od zawsze — pełnoszerokim pasem, bo miał własny
+ * bez śladu. Log kokpitu pokazywał je od zawsze - pełnoszerokim pasem, bo miał własny
  * komponent; teraz komponent jest jeden.
  */
 describe('zdarzenia naziemne', () => {
@@ -229,7 +283,7 @@ describe('zdarzenia naziemne', () => {
   });
 
   it('tankowanie po zdaniu ustawia się na końcu, przed niczym', () => {
-    // Sortuje CZAS, nie typ — dolewka po zamknięciu sesji nie ma prawa wskoczyć
+    // Sortuje CZAS, nie typ - dolewka po zamknięciu sesji nie ma prawa wskoczyć
     // między loty tylko dlatego, że jest zdarzeniem naziemnym.
     const zTankowaniem = [
       ...sessionEvents(),
@@ -257,7 +311,28 @@ describe('zdarzenia naziemne', () => {
     expect(kinds.indexOf('refuel')).toBeLessThan(kinds.indexOf('engineStart'));
   });
 
-  it('załadunek niesie skład, a bez deklaracji — sam fakt', () => {
+  it('dolewka oleju wchodzi na oś z ilością; przy równym stemplu stoi przed silnikiem (issue #60)', () => {
+    const zOlejem = [
+      ...sessionEvents(),
+      event('refuel', at(8, 12), { beforeL: 130, addedL: 20, afterL: 150 }, 'refuel-rowno'),
+      event('oil_add', at(8, 12), { addedL: 1.0 }, 'oil-1'),
+    ];
+    const rows = axis(zOlejem).rows;
+    const oil = rows.find((r) => r.kind === 'oilAdd')!;
+
+    expect(oil.name).toBe('Dolewka oleju');
+    // Sama ilość - poziomu po dolewce nie ma jak zmierzyć (silnik zwykle gorący),
+    // a pomiar z przejęcia stoi wyżej na tej samej osi.
+    expect(oil.sub).toBe('+1,0 L');
+    expect(oil.targetUuid).toBe('oil-1');
+
+    const kinds = rows.map((r) => r.kind);
+    expect(kinds.indexOf('oilAdd')).toBeLessThan(kinds.indexOf('engineStart'));
+    // ...ale za tankowaniem o tym samym stemplu (jedna pauza, stały porządek).
+    expect(kinds.indexOf('refuel')).toBeLessThan(kinds.indexOf('oilAdd'));
+  });
+
+  it('załadunek niesie skład, a bez deklaracji - sam fakt', () => {
     const zZaladunkiem = [
       ...sessionEvents(),
       event('boarding', at(8, 14), { jumpers: { tandem: 2, aff: 1, solo: 1 } }, 'boarding-1'),
@@ -266,7 +341,7 @@ describe('zdarzenia naziemne', () => {
     const rows = axis(zZaladunkiem).rows;
 
     expect(rows.find((r) => r.id === 'boarding-1')!.sub).toBe('4 skoczków');
-    // `null` to „nie podano", a nie zero — wiersz mówi tyle, ile wiemy (issue #21).
+    // `null` to „nie podano", a nie zero - wiersz mówi tyle, ile wiemy (issue #21).
     expect(rows.find((r) => r.id === 'boarding-2')!.sub).toBeNull();
   });
 
@@ -280,12 +355,12 @@ describe('zdarzenia naziemne', () => {
     expect(row.kind).toBe('crew');
     expect(row.name).toBe('Zmiana załogi');
     // Myślnik = fotela nie było zajętego (dołączenie Duala), a nie „nie wiemy kto".
-    expect(row.sub).toBe('DUAL: — → AKO');
+    expect(row.sub).toBe('DUAL: - → AKO');
   });
 
   it('uwaga bez czasów (wpis ręczny z samą notatką) nie jest punktem osi', () => {
     // `manual_log_entry` niesie dziś sam tekst i mieszka w karcie „Notatki" (issue #40
-    // pkt 5). Na osi byłby zdarzeniem bez przebiegu — czymś, co się nie wydarzyło.
+    // pkt 5). Na osi byłby zdarzeniem bez przebiegu - czymś, co się nie wydarzyło.
     const zNotatka = [
       ...sessionEvents(),
       event('manual_log_entry', at(10, 0), { notes: 'Drugi zbiornik nie trzyma wskazania' }),
@@ -309,9 +384,9 @@ describe('stopka osi', () => {
     ]);
   });
 
-  it('sesja bez pracy silnika zamienia blok na czas TRZYMANIA maszyny', () => {
+  it('operacja bez pracy silnika zamienia blok na czas TRZYMANIA maszyny', () => {
     // 09C: pilot wziął samolot, pogoda go zatrzymała, zdał bez uruchamiania silnika.
-    // Zero w wielkiej cyfrze nie jest odpowiedzią na żadne pytanie — zajętość jest.
+    // Zero w wielkiej cyfrze nie jest odpowiedzią na żadne pytanie - zajętość jest.
     const bezLotu: Event[] = [
       event('session_claim', at(9, 10), { mode: 'free' }),
       event('preflight_confirm', at(9, 10), {
@@ -332,7 +407,7 @@ describe('stopka osi', () => {
     expect(rows.map((row) => row.kind)).toEqual(['claim', 'release']);
   });
 
-  it('sesja jeszcze niezdana liczy trzymanie do teraz', () => {
+  it('operacja jeszcze niezdana liczy trzymanie do teraz', () => {
     const trwa: Event[] = [
       event('session_claim', at(9, 10), { mode: 'free' }),
       event('preflight_confirm', at(9, 10), {
@@ -373,7 +448,7 @@ describe('stopka osi', () => {
 });
 
 /**
- * Plakietka „popr." (issue #43) — jedyny ślad edycji widoczny także w trybie ODCZYTU.
+ * Plakietka „popr." (issue #43) - jedyny ślad edycji widoczny także w trybie ODCZYTU.
  * To fakt o danych, nie akcja: liczba obok nie jest tą, którą zapisał przyrząd.
  */
 describe('znacznik poprawki', () => {
@@ -422,10 +497,125 @@ describe('znacznik poprawki', () => {
   it('korekta NIECZYTELNA nie kłamie o stanie zapisu', () => {
     const events = [
       ...sessionEvents(),
-      // Payload, którego domena nie rozumie — nic nie zmienił, więc nie ma o czym mówić.
+      // Payload, którego domena nie rozumie - nic nie zmienił, więc nie ma o czym mówić.
       correction('ldg-1', { action: 'unknown-action', newTime: at(9, 3) }),
     ];
     expect(axis(events).rows.find((r) => r.id === 'ldg-1')?.corrected).toBe(false);
+  });
+});
+
+/**
+ * WPIS RĘCZNY: OŚ MÓWI TYLKO O GODZINACH, KTÓRE PILOT PODAŁ (zgłoszenie z urządzenia,
+ * 2026-08-30: „mam «zdanie» przed «przejęciem» i «tankowaniem». Jak jest lot ręczny, to
+ * czas «zdanie», «przejęcie» i «tankowanie» nie są poprawne").
+ *
+ * Sesja wpisana po fakcie: bieg 12:00 → 13:50 podany przez pilota, ale `day_close`
+ * ostemplowane chwilą ZAPISU (11:43) - i tak ma zostać, bo od niego liczy się okno
+ * korekty (`manualFlight.test.ts`).
+ */
+describe('oś operacji wpisanej ręcznie', () => {
+  function manualEvents(): Event[] {
+    return [
+      event('session_claim', at(12, 0), {
+        mode: 'free',
+        previousPicId: null,
+        manualEntry: true,
+      }),
+      event('preflight_confirm', at(12, 0), {
+        operation: 'skoki',
+        reading: { fuelL: 630, mh: 1002.1 },
+      } as EventOf<'preflight_confirm'>['payload']),
+      event('refuel', at(11, 59), { beforeL: 630, addedL: 180, afterL: 810 }, 'refuel-1'),
+      event('engine_start', at(12, 0), {}, 'm-engine-on'),
+      event('takeoff', at(12, 8), { method: 'manual' }, 'm-to'),
+      event('landing', at(13, 46), { method: 'manual' }, 'm-ldg'),
+      event('engine_stop', at(13, 50), {}, 'm-engine-off'),
+      // Chwila ZAPISU formularza - wcześniejsza niż bieg, bo wpis powstał osobno.
+      event('day_close', at(11, 43), { finalReading: { fuelL: 605, mh: 1003.1 } }),
+    ];
+  }
+
+  it('ZDANIE zamyka oś, choć zapisano je wcześniej niż bieg silnika', () => {
+    const rows = axis(manualEvents()).rows;
+    expect(rows[rows.length - 1]!.kind).toBe('release');
+    // …i nie stoi przed przejęciem, co było treścią zgłoszenia.
+    expect(rows.findIndex((r) => r.kind === 'release')).toBeGreaterThan(
+      rows.findIndex((r) => r.kind === 'claim'),
+    );
+  });
+
+  it('PRZEJĘCIE otwiera oś - przed tankowaniem, które składa się minutę wcześniej', () => {
+    // Dolewka wpisu ręcznego siada minutę PRZED uruchomieniem, a przejęcie na nim -
+    // więc tankowanie wypadało przed chwilą, od której pilot dysponuje maszyną.
+    const rows = axis(manualEvents()).rows;
+    expect(rows[0]!.kind).toBe('claim');
+    expect(rows.findIndex((r) => r.kind === 'refuel')).toBeGreaterThan(0);
+  });
+  it('godziny WYPROWADZONE są puste - przejęcie, zdanie i tankowanie', () => {
+    // Pilot podał bieg silnika i godziny lotów; te trzy chwile są konwencją, nie
+    // pomiarem. Godzina przy nich udawałaby zapamiętaną wartość.
+    const rows = axis(manualEvents()).rows;
+    const timeOf = (kind: string) => rows.find((r) => r.kind === kind)!.time;
+
+    expect(timeOf('claim')).toBe('');
+    expect(timeOf('release')).toBe('');
+    expect(timeOf('refuel')).toBe('');
+  });
+
+  it('godziny ZADEKLAROWANE zostają - bieg silnika i loty', () => {
+    const rows = axis(manualEvents()).rows;
+    const timeOf = (kind: string) => rows.find((r) => r.kind === kind)!.time;
+
+    expect(timeOf('engineStart')).toBe('12:00');
+    expect(timeOf('takeoff')).toBe('12:08');
+    expect(timeOf('landing')).toBe('13:46');
+    expect(timeOf('engineStop')).toBe('13:50');
+  });
+
+  it('operacja z DETEKCJI pokazuje wszystkie godziny - tam każda jest zmierzona', () => {
+    const rows = axis().rows;
+    expect(rows.find((r) => r.kind === 'claim')!.time).not.toBe('');
+    expect(rows.find((r) => r.kind === 'release')!.time).not.toBe('');
+  });
+});
+
+describe('zakończenie administracyjne (issue #81)', () => {
+  /** Operacja osierocona: przejęcie, bieg bez wyłączenia - i decyzja panelu po godzinie. */
+  function orphaned(): Event[] {
+    const base = sessionEvents().filter((e) =>
+      ['session_claim', 'preflight_confirm', 'engine_start', 'takeoff', 'landing'].includes(e.type),
+    );
+    return [
+      ...base,
+      event('session_close', at(13, 40), { reason: 'Telefon pilota padł w locie.' }, 'close-1'),
+    ];
+  }
+
+  it('ma WŁASNY wiersz z powodem - „Zdania" bez zdania nie ma', () => {
+    const { rows } = axis(orphaned(), at(14, 0));
+    const close = rows.find((r) => r.kind === 'adminClose')!;
+    expect(close).toMatchObject({
+      id: 'close-1',
+      name: 'Zakończenie · administrator',
+      sub: 'Telefon pilota padł w locie.',
+      time: '13:40',
+      // Korekty nie ma: o tej operacji zdecydował panel.
+      targetUuid: null,
+    });
+    expect(rows.find((r) => r.kind === 'release')).toBeUndefined();
+    // Zamyka oś - stoi za ostatnim faktem lotu.
+    expect(rows[rows.length - 1]!.kind).toBe('adminClose');
+  });
+
+  it('zdanie dosłane z telefonu PO zakończeniu zostaje widoczne obok - oba fakty zaszły', () => {
+    const events = [
+      ...orphaned(),
+      event('day_close', at(15, 0), { finalReading: { fuelL: 80, mh: 1237.5 } }, 'late-close'),
+    ];
+    const { rows } = axis(events, at(16, 0));
+    const kinds = rows.map((r) => r.kind);
+    expect(kinds.indexOf('adminClose')).toBeLessThan(kinds.indexOf('release'));
+    expect(rows.find((r) => r.kind === 'release')!.targetUuid).toBe('late-close');
   });
 });
 

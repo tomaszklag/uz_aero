@@ -1,7 +1,7 @@
 /**
- * UZ Aero — test normy zużycia w aplikacji pilota.
+ * UZ Aero - test normy zużycia w aplikacji pilota.
  *
- * Norma jest podpowiedzią, na której pilot może oprzeć decyzję o paliwie — więc każdy
+ * Norma jest podpowiedzią, na której pilot może oprzeć decyzję o paliwie - więc każdy
  * przypadek „nie wiem" musi kończyć się `null`, a nie liczbą. Test pilnuje przede
  * wszystkim tego, a dopiero potem poprawności arytmetyki.
  */
@@ -37,7 +37,7 @@ const norm = (over: Partial<ConsumptionNorm> = {}): ConsumptionNorm => ({
 });
 
 describe('porównanie z normą', () => {
-  it('wynik w paśmie to „w normie" — łącznie z krawędziami', () => {
+  it('wynik w paśmie to „w normie" - łącznie z krawędziami', () => {
     expect(compareToNorm(16, norm())).toBe('w-normie');
     expect(compareToNorm(15, norm())).toBe('w-normie');
     expect(compareToNorm(17, norm())).toBe('w-normie');
@@ -60,7 +60,7 @@ describe('porównanie z normą', () => {
 });
 
 describe('podpis normy', () => {
-  it('zaokrągla do pełnych litrów — paliwomierz nie ma lepszej rozdzielczości', () => {
+  it('zaokrągla do pełnych litrów - paliwomierz nie ma lepszej rozdzielczości', () => {
     expect(normLabel(norm({ blockLPerHLow: 15.2, blockLPerHHigh: 16.8 }))).toBe(
       'norma tego samolotu 15–17 L/h · 90 dni',
     );
@@ -84,7 +84,7 @@ describe('ile jeszcze wyniesień', () => {
   });
 
   it('paliwo poniżej rezerwy to `null`, nie zero', () => {
-    // Zero znaczyłoby „starczy na rezerwę, ale nie na lot" — a tu nie starcza nawet
+    // Zero znaczyłoby „starczy na rezerwę, ale nie na lot" - a tu nie starcza nawet
     // na rezerwę i jest to zupełnie inna sytuacja.
     expect(liftsRemaining(10, norm())).toBeNull();
   });
@@ -95,7 +95,7 @@ describe('ile jeszcze wyniesień', () => {
 
   it('bez stawki lotu nie zgaduje rezerwy', () => {
     // Model zdegradowany do jednej fazy nie ma `airLPerH`. Liczenie rezerwy stawką
-    // blokową ZANIŻYŁOBY ją, czyli zawyżyło liczbę wyniesień — błąd w najgorszą stronę.
+    // blokową ZANIŻYŁOBY ją, czyli zawyżyło liczbę wyniesień - błąd w najgorszą stronę.
     expect(liftsRemaining(141, norm({ airLPerH: null }))).toBeNull();
   });
 
@@ -103,7 +103,7 @@ describe('ile jeszcze wyniesień', () => {
     expect(liftsRemaining(141, norm({ litersPerFlight: null }))).toBeNull();
   });
 
-  it('bez normy i bez odczytu paliwa — `null`', () => {
+  it('bez normy i bez odczytu paliwa - `null`', () => {
     expect(liftsRemaining(141, null)).toBeNull();
     expect(liftsRemaining(null, norm())).toBeNull();
   });
@@ -121,7 +121,7 @@ describe('ile jeszcze czasu lotu', () => {
 });
 
 describe('zdanie dla paska paliwa (mockup 04)', () => {
-  it('preferuje wyniesienia — to jednostka, w której myśli pilot skoków', () => {
+  it('preferuje wyniesienia - to jednostka, w której myśli pilot skoków', () => {
     expect(enduranceLabel(141, norm())).toBe(
       `wystarczy na ~5 wyniesień do rezerwy ${RESERVE_MINUTES} min`,
     );
@@ -144,23 +144,23 @@ describe('zdanie dla paska paliwa (mockup 04)', () => {
 });
 
 /**
- * Kolor odczytu paliwa (issue #19). Do tej pory paliwo świeciło na pomarańczowo zawsze —
- * także przy pełnych zbiornikach — więc kolor nie niósł żadnej informacji. Teraz wynika
+ * Kolor odczytu paliwa (issue #19). Do tej pory paliwo świeciło na pomarańczowo zawsze -
+ * także przy pełnych zbiornikach - więc kolor nie niósł żadnej informacji. Teraz wynika
  * z szacunku czasu lotu, a testy pilnują obu granic i tego, że BEZ NORMY nie zmyślamy tonu.
  */
 describe('ton odczytu paliwa', () => {
   // Stawka lotu 20 L/h: 45 min = 15 L, 1:45 = 35 L.
-  it('rezerwa i mniej — czerwony', () => {
+  it('rezerwa i mniej - czerwony', () => {
     expect(fuelTone(15, norm())).toBe('red');
     expect(fuelTone(9, norm())).toBe('red');
   });
 
-  it('godzina nad rezerwą — amber', () => {
+  it('godzina nad rezerwą - amber', () => {
     expect(fuelTone(35, norm())).toBe('amber');
     expect(fuelTone(20, norm())).toBe('amber');
   });
 
-  it('powyżej progu ostrzegawczego — bez tonu ostrzegawczego', () => {
+  it('powyżej progu ostrzegawczego - bez tonu ostrzegawczego', () => {
     expect(fuelTone(36, norm())).toBe('neutral');
     expect(fuelTone(141, norm())).toBe('neutral');
   });

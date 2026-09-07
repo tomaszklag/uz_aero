@@ -1,5 +1,5 @@
 /**
- * UZ Aero — panel: plakietka stanu (`.pill` z `SZABLON.html`).
+ * UZ Aero - panel: plakietka stanu (`.pill` z `SZABLON.html`).
  *
  * `dot` = kropka w tonie akcentu, `live` = kropka pulsująca (stan TRWAJĄCY, np.
  * samolot w locie). Puls bez trwania byłby ozdobą, a ruch na ekranie ma znaczyć,

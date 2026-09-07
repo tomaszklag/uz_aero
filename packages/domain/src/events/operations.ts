@@ -1,12 +1,12 @@
 /**
- * UZ Aero — co RODZAJ OPERACJI mówi o kształcie dnia.
+ * UZ Aero - co RODZAJ OPERACJI mówi o kształcie dnia.
  *
  * Operacja to nie jest sama etykieta w statystykach: przesądza, ile lotnisk ma ten dzień.
- * Skoki startują i lądują na tym samym placu — samolot krąży nad polem i wraca tam, skąd
+ * Skoki startują i lądują na tym samym placu - samolot krąży nad polem i wraca tam, skąd
  * wystartował. Przelot (dawniej „ferry"), egzamin, lot techniczny i „inne" mogą skończyć
  * gdzie indziej, więc opisuje je PARA kodów.
  *
- * Ta wiedza już raz zamieszkała w kodzie — detektor lotu włącza bramkę lądowania
+ * Ta wiedza już raz zamieszkała w kodzie - detektor lotu włącza bramkę lądowania
  * (`sameFieldOnly`, `LANDING_FIELD_VICINITY_NM`) właśnie dla skoków, żeby fix z drugiego
  * końca Polski nie zamknął lotu. Do issue #13 formularz preflightu o tym nie wiedział
  * i pytał o dwa kody ICAO także przy skokach, każąc pilotowi wpisać ten sam dwa razy.
@@ -27,7 +27,7 @@ export function isSameFieldOperation(operation: OperationType): boolean {
 }
 
 /**
- * Czy w tym dniu w ogóle wynosi się skoczków — czyli czy zdarzenie `drop` ma sens.
+ * Czy w tym dniu w ogóle wynosi się skoczków - czyli czy zdarzenie `drop` ma sens.
  *
  * Zrzut jest STRONĄ PRZYCHODOWĄ dnia skokowego (§3.7): niesie liczbę skoczków w rozbiciu
  * na typy, dziedziczy klienta z preflightu i wchodzi do rozliczenia. Przelot, egzamin,
@@ -35,7 +35,7 @@ export function isSameFieldOperation(operation: OperationType): boolean {
  * dnia był ofertą zapisania zdarzenia, które nie mogło się wydarzyć (issue #19).
  *
  * Predykat jest osobny od `isSameFieldOperation`, choć dziś oba odpowiadają `true` dla tej
- * samej wartości — bo odpowiadają na różne pytania. Gdyby doszła operacja „zloty" (jedno
+ * samej wartości - bo odpowiadają na różne pytania. Gdyby doszła operacja „zloty" (jedno
  * lotnisko, zero skoczków), rozjechałyby się natychmiast, a złączenie ich w jeden predykat
  * kazałoby wtedy szukać, które z dwóch znaczeń miał na myśli każdy z wołających.
  */

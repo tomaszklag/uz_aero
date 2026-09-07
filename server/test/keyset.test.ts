@@ -1,7 +1,7 @@
 /**
- * UZ Aero (serwer) — kursor keyset: kodowanie i predykat „wiersze PO kursorze".
+ * UZ Aero (serwer) - kursor keyset: kodowanie i predykat „wiersze PO kursorze".
  *
- * Predykat musi opisywać DOKŁADNIE ten sam porządek, co `ORDER BY` — rozjazd tych dwóch
+ * Predykat musi opisywać DOKŁADNIE ten sam porządek, co `ORDER BY` - rozjazd tych dwóch
  * nie jest błędem, który da się zobaczyć: strona po prostu gubi albo dubluje wiersze,
  * a lista dalej wygląda sensownie. Dlatego oba powstają w jednym module i mają wspólny
  * test.
@@ -52,7 +52,7 @@ describe('kursor', () => {
     expect(decodeCursor(encodeCursor(key, DAYS), DAYS)).toEqual(key);
   });
 
-  it('klucz z NULL-em przeżywa podróż — to realny stan, nie przypadek brzegowy', () => {
+  it('klucz z NULL-em przeżywa podróż - to realny stan, nie przypadek brzegowy', () => {
     // Sesja bez `preflight_confirm` nie ma duty startu, więc kursor na granicy strony
     // potrafi mieć `k1: null`. Zgubienie tego przy dekodowaniu zatrzymałoby listę
     // dokładnie na ogonie NULL-i.
@@ -63,7 +63,7 @@ describe('kursor', () => {
   });
 
   it('nieczytelny kursor daje `null`, NIGDY wyjątek', () => {
-    // Kursor przychodzi z zewnątrz — to 400 na trasie, nie 500 z serwera.
+    // Kursor przychodzi z zewnątrz - to 400 na trasie, nie 500 z serwera.
     expect(decodeCursor('to-nie-jest-base64-json', DAYS)).toBeNull();
     expect(decodeCursor(b64('{}'), DAYS)).toBeNull();
     expect(decodeCursor(b64('[1,2]'), DAYS)).toBeNull();
@@ -74,11 +74,11 @@ describe('kursor', () => {
 
   it('kursor SPARSOWANY, ale niezgodny z typem kolumny, też daje `null`', () => {
     // To była realna luka: takie kursory są poprawnym JSON-em, więc przechodziły dalej
-    // i wywracały się dopiero w Postgresie na porównaniu z BIGINT — administrator
+    // i wywracały się dopiero w Postgresie na porównaniu z BIGINT - administrator
     // dostawał 500 z treścią błędu SQL-a zamiast 400.
     expect(decodeCursor(b64('{"k1":"abc","k2":"sess-1","d":"desc"}'), DAYS)).toBeNull();
     expect(decodeCursor(b64('{"k1":0.5,"k2":"sess-1","d":"desc"}'), DAYS)).toBeNull();
-    // 1e30 mieści się w `number`, ale nie w BIGINT — stąd `Number.isSafeInteger`.
+    // 1e30 mieści się w `number`, ale nie w BIGINT - stąd `Number.isSafeInteger`.
     expect(decodeCursor(b64('{"k1":1e30,"k2":"sess-1","d":"desc"}'), DAYS)).toBeNull();
 
     // Symetrycznie dla kolumny tekstowej: liczba nie jest kluczem tekstowym.
@@ -90,7 +90,7 @@ describe('kursor', () => {
 
   it('kolumna TIMESTAMPTZ przyjmuje WYŁĄCZNIE ISO 8601 UTC, nie dowolny napis', () => {
     // Dziennik audytu sortuje po `created_at`, więc kursor niesie stempel NAPISEM.
-    // Sprawdzanie samego `typeof` przepuszczało tu cokolwiek — a Postgres odpowiadał
+    // Sprawdzanie samego `typeof` przepuszczało tu cokolwiek - a Postgres odpowiadał
     // na to błędem składni daty, czyli 500 z wartości przysłanej przez klienta.
     expect(decodeCursor(b64('{"k1":"2026-06-22T14:19:02.000Z","k2":"41","d":"desc"}'), AUDIT)).toEqual(
       { k1: '2026-06-22T14:19:02.000Z', k2: '41' },
@@ -99,16 +99,16 @@ describe('kursor', () => {
     expect(decodeCursor(b64('{"k1":"wczoraj","k2":"41","d":"desc"}'), AUDIT)).toBeNull();
     expect(decodeCursor(b64('{"k1":"2026-06-22","k2":"41","d":"desc"}'), AUDIT)).toBeNull();
     expect(decodeCursor(b64('{"k1":1780000000000,"k2":"41","d":"desc"}'), AUDIT)).toBeNull();
-    // Kształt się zgadza, ale takiej daty nie ma — w bazie skończyłoby się błędem.
+    // Kształt się zgadza, ale takiej daty nie ma - w bazie skończyłoby się błędem.
     expect(decodeCursor(b64('{"k1":"2026-13-45T99:99:99Z","k2":"41","d":"desc"}'), AUDIT)).toBeNull();
   });
 
   it('`k1: null` na kolumnie NOT NULL jest ODRZUCANY, a nie przepuszczany do predykatu', () => {
     // Najgorszy wariant z trzech: `keysetPredicate` na takim kluczu RZUCA, więc kursor
-    // przepuszczony tutaj zamieniał 400 na 500 — i to nie hipotetycznie, tylko dla
+    // przepuszczony tutaj zamieniał 400 na 500 - i to nie hipotetycznie, tylko dla
     // każdego, kto podmienił `k1` w adresie.
     expect(decodeCursor(b64('{"k1":null,"k2":"41","d":"desc"}'), AUDIT)).toBeNull();
-    // Ta sama wartość na kolumnie NULL-owalnej jest poprawna — deklaracja wołającego
+    // Ta sama wartość na kolumnie NULL-owalnej jest poprawna - deklaracja wołającego
     // jest tu jedyną różnicą.
     expect(decodeCursor(b64('{"k1":null,"k2":"sess-9","d":"desc"}'), DAYS)).toEqual({
       k1: null,
@@ -116,7 +116,7 @@ describe('kursor', () => {
     });
   });
 
-  it('tie-breaker `BIGSERIAL` musi być liczbą — napis „abc" kończył się błędem 22P02', () => {
+  it('tie-breaker `BIGSERIAL` musi być liczbą - napis „abc" kończył się błędem 22P02', () => {
     expect(decodeCursor(b64('{"k1":"2026-06-22T14:19:02.000Z","k2":"abc","d":"desc"}'), AUDIT)).toBeNull();
     expect(decodeCursor(b64('{"k1":"2026-06-22T14:19:02.000Z","k2":41,"d":"desc"}'), AUDIT)).toBeNull();
     // Dziewiętnaście cyfr może wyjść poza `BIGINT` (błąd 22003), więc też odpada.
@@ -124,7 +124,7 @@ describe('kursor', () => {
       decodeCursor(b64('{"k1":"2026-06-22T14:19:02.000Z","k2":"9999999999999999999","d":"desc"}'), AUDIT),
     ).toBeNull();
 
-    // Dla klucza TEKSTOWEGO ten sam napis jest w pełni poprawny — o typie tie-breakera
+    // Dla klucza TEKSTOWEGO ten sam napis jest w pełni poprawny - o typie tie-breakera
     // decyduje deklaracja wołającego, a nie zgadywanie po zawartości.
     expect(decodeCursor(b64('{"k1":1780000000000,"k2":"abc","d":"desc"}'), DAYS)).toEqual({
       k1: 1_780_000_000_000,
@@ -132,7 +132,7 @@ describe('kursor', () => {
     });
   });
 
-  it('KIERUNEK jest częścią kursora — kursor z `desc` nie działa przy `asc`', () => {
+  it('KIERUNEK jest częścią kursora - kursor z `desc` nie działa przy `asc`', () => {
     // Kursor opisuje POZYCJĘ W PORZĄDKU, więc użyty w porządku odwrotnym opisuje coś
     // innego niż mówi: strona wychodzi wewnętrznie niespójna, a niespójna strona
     // wygląda jak dane, nie jak błąd. Stąd odrzucenie, czyli 400 na trasie.
@@ -141,7 +141,7 @@ describe('kursor', () => {
     expect(decodeCursor(desc, DAYS)).not.toBeNull();
     expect(decodeCursor(desc, shape({ direction: 'asc' }))).toBeNull();
 
-    // Kursor bez kierunku (postać sprzed tej zmiany) też jest nieczytelny — udawanie,
+    // Kursor bez kierunku (postać sprzed tej zmiany) też jest nieczytelny - udawanie,
     // że „pewnie desc", byłoby zgadywaniem w miejscu, w którym zgadywać nie wolno.
     expect(decodeCursor(b64('{"k1":1780000000000,"k2":"sess-1"}'), DAYS)).toBeNull();
   });
@@ -149,7 +149,7 @@ describe('kursor', () => {
 
 describe('porządek i predykat', () => {
   it('klucz NULL-owalny dostaje `NULLS LAST` JAWNIE w obu kierunkach', () => {
-    // PostgreSQL domyślnie daje NULLS LAST dla ASC i NULLS FIRST dla DESC — poleganie
+    // PostgreSQL domyślnie daje NULLS LAST dla ASC i NULLS FIRST dla DESC - poleganie
     // na domyślnym zachowaniu znaczyłoby dwa różne porządki pod jedną nazwą. Dla
     // `claim_time` (dzień bez preflightu nie ma duty startu) to nie jest teoria:
     // wiersze bez wartości raz stałyby na początku listy, raz na końcu.
@@ -161,10 +161,10 @@ describe('porządek i predykat', () => {
     );
   });
 
-  it('klucz `NOT NULL` NIE dostaje `NULLS` — dopisek odbierałby indeks w jedną stronę', () => {
+  it('klucz `NOT NULL` NIE dostaje `NULLS` - dopisek odbierałby indeks w jedną stronę', () => {
     // Dla kolumny bez NULL-i dopisek nie zmienia WYNIKU, ale planer dopasowuje porządek
     // SKŁADNIOWO: indeks `(x DESC, y DESC)` obsługuje `DESC, DESC` skanem w przód
-    // i `ASC, ASC` skanem wstecz — czyli dokładnie zapisy DOMYŚLNE. `DESC NULLS LAST`
+    // i `ASC, ASC` skanem wstecz - czyli dokładnie zapisy DOMYŚLNE. `DESC NULLS LAST`
     // wyłamuje pierwszy, `ASC NULLS LAST` drugi. Ta pułapka wróciła trzy razy
     // (migracje 12, 16, 17), za każdym razem przesuwając wadę na drugi kierunek.
     const AUDIT_KEY: readonly [string, string] = ['a.created_at', 'a.id'];
@@ -209,14 +209,14 @@ describe('porządek i predykat', () => {
     );
   });
 
-  it('kolumna NOT NULL dostaje predykat dwugałęziowy — martwy warunek odcina indeks', () => {
+  it('kolumna NOT NULL dostaje predykat dwugałęziowy - martwy warunek odcina indeks', () => {
     expect(predicate({ k1: '2026-07-31', k2: '17' }, { k1Nullable: false }).where).toBe(
       'WHERE (s.claim_time < $1 OR (s.claim_time = $2 AND s.session_uuid < $3))',
     );
   });
 
   it('kursor z NULL-em na kolumnie zadeklarowanej jako NOT NULL rzuca', () => {
-    // Sprzeczność wołającego z samym sobą — po stronie KODU, bo z drutu taki kursor
+    // Sprzeczność wołającego z samym sobą - po stronie KODU, bo z drutu taki kursor
     // nie przejdzie (`decodeCursor` odrzuca go na tej samej deklaracji `k1Nullable`).
     // Cisza dałaby tu pustą stronę bez powodu.
     expect(() => predicate({ k1: null, k2: 'x' }, { k1Nullable: false })).toThrow(/NOT NULL/);

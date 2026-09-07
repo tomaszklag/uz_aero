@@ -1,17 +1,17 @@
 /**
- * UZ Aero — skład, którym otwierają się liczniki arkuszy skokowych (issue #28).
+ * UZ Aero - skład, którym otwierają się liczniki arkuszy skokowych (issue #28).
  *
  * Jeden załadunek CZEKAJĄCY na zrzut (`SessionState.boarding`) zasila DWA arkusze:
- *  • zrzut 05e — pilot w locie tylko potwierdza listę (issue #21 pkt 5),
- *  • załadunek 05i otwarty PONOWNIE — zgłoszenie z urządzenia (issue #28): pilot
+ *  • zrzut 05e - pilot w locie tylko potwierdza listę (issue #21 pkt 5),
+ *  • załadunek 05i otwarty PONOWNIE - zgłoszenie z urządzenia (issue #28): pilot
  *    deklarował skład przed uruchomieniem silnika, po uruchomieniu wszedł w „Załadunek"
  *    i zobaczył same zera. Arkusz kasował liczniki przy każdym otwarciu, więc jedyna
- *    droga do zmiany deklaracji prowadziła przez wpisanie jej od nowa — z pamięci.
+ *    droga do zmiany deklaracji prowadziła przez wpisanie jej od nowa - z pamięci.
  *
  * Stąd wspólna funkcja: oba arkusze czytają ten sam stan tą samą regułą i nie mają
  * jak się rozjechać.
  *
- * Załadunek BEZ liczb (`jumpers: null` — „skład niepodany", nie „zero skoczków")
+ * Załadunek BEZ liczb (`jumpers: null` - „skład niepodany", nie „zero skoczków")
  * nie jest prefillem: liczniki startują od zera i podpisu też NIE MA. Zerowa lista
  * z adnotacją „skład z załadunku" wyglądałaby jak deklaracja pustego samolotu,
  * a pilot zadeklarował tylko sam fakt wejścia skoczków na pokład.
@@ -34,13 +34,13 @@ export function boardingPrefill(boarding: BoardingState | null): BoardingPrefill
 }
 
 /**
- * Skład, którym otwiera się arkusz ZAŁADUNKU (05i) konkretnie — z fallbackiem na
+ * Skład, którym otwiera się arkusz ZAŁADUNKU (05i) konkretnie - z fallbackiem na
  * domyślny skład sesji (`SessionState.jumperDefaults`, ustawiony na kroku „zadanie",
  * 02e), gdy nie ma czekającego załadunku do pokazania (pierwszy załadunek sesji albo
  * kolejny po tym, jak `drop` skonsumował poprzedni skład).
  *
  * Dotyczy WYŁĄCZNIE załadunku: zrzut (05e) nadal czyta `boardingPrefill()` wprost i nie
- * dostaje tego fallbacku — podstawienie defaultu tam sugerowałoby fizyczny fakt („tylu
+ * dostaje tego fallbacku - podstawienie defaultu tam sugerowałoby fizyczny fakt („tylu
  * skoczków wyszło"), którego nikt jeszcze nie potwierdził.
  */
 export function boardingInitialJumpers(

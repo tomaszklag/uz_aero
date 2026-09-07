@@ -1,10 +1,10 @@
 /**
- * UZ Aero — STATYSTYKI ŚLADU DO POKAZANIA (issue #47 pkt 3, mockup `14-slad.html`).
+ * UZ Aero - STATYSTYKI ŚLADU DO POKAZANIA (issue #47 pkt 3, mockup `14-slad.html`).
  *
  * Domena liczy (`@uzaero/domain` → `track/stats.ts`), ten plik decyduje, co z tego
  * WCHODZI NA EKRAN i w jakiej postaci. Rozdział jest ten sam, co przy rachunku normy
  * (`sessionBalance.ts`): warunek „blok milczy" to decyzja o ekranie, nie o liczbie,
- * a warunek w JSX byłby nie do przetestowania — dokładnie tak przeżyła dziurę reguła
+ * a warunek w JSX byłby nie do przetestowania - dokładnie tak przeżyła dziurę reguła
  * „DODAJ LOT RĘCZNIE" przy pustym dniu (issue #42).
  */
 
@@ -18,7 +18,7 @@ export interface StatCell {
   tone?: 'green' | 'blue' | 'amber';
 }
 
-/** Odcinek paska faz — proporcja i podpis w legendzie. */
+/** Odcinek paska faz - proporcja i podpis w legendzie. */
 export interface PhaseBarSegment {
   key: 'climb' | 'cruise' | 'descent' | 'taxi' | 'standing';
   label: string;
@@ -34,13 +34,13 @@ export interface TrackStatsView {
 }
 
 /**
- * `null` w każdym bloku znaczy „nie ma czego pokazać" i ekran wtedy MILCZY — nie rysuje
+ * `null` w każdym bloku znaczy „nie ma czego pokazać" i ekran wtedy MILCZY - nie rysuje
  * karty z kreskami. Brak prędkości nie unieważnia czasów faz i odwrotnie: to trzy różne
  * pytania do tego samego nagrania (reguła z issue #38).
  */
 /**
  * @param averages średnie prędkości pionowe z profilu. Stały pod wykresem do przeglądu
- *   issue #47 — zeszły do statystyk, bo są liczbą o CAŁYM locie, a nie podpisem rysunku.
+ *   issue #47 - zeszły do statystyk, bo są liczbą o CAŁYM locie, a nie podpisem rysunku.
  */
 export function trackStatsView(
   stats: TrackStats,
@@ -74,7 +74,7 @@ function speedCells(
     { label: 'Max opad.', value: fpm(speed.maxDescentFtPerMin), unit: 'ft/min' },
     {
       label: 'Śr. GS',
-      value: speed.averageInFlightKt == null ? '— —' : Math.round(speed.averageInFlightKt).toString(),
+      value: speed.averageInFlightKt == null ? '- -' : Math.round(speed.averageInFlightKt).toString(),
       unit: 'kt',
     },
     { label: 'Śr. wzn.', value: fpm(averages.climbFtPerMin), unit: 'ft/min' },
@@ -97,7 +97,7 @@ function phaseBar(stats: TrackStats): { segments: PhaseBarSegment[]; totalMs: nu
   const totalMs = segments.reduce((sum, segment) => sum + segment.ms, 0);
   if (totalMs <= 0) return null;
 
-  // Faza zerowa wypada Z LEGENDY, ale pasek i tak jej nie narysuje — wiersz „Przelot
+  // Faza zerowa wypada Z LEGENDY, ale pasek i tak jej nie narysuje - wiersz „Przelot
   // 0 min" przy dniu skokowym byłby informacją o niczym.
   return { segments: segments.filter((segment) => segment.ms > 0), totalMs };
 }
@@ -123,9 +123,9 @@ function levelCells(stats: TrackStats): { cells: StatCell[]; levelMs: number } |
   };
 }
 
-/** Prędkość pionowa ze znakiem — „+1 240" czyta się inaczej niż „1 240". */
+/** Prędkość pionowa ze znakiem - „+1 240" czyta się inaczej niż „1 240". */
 function fpm(value: number | null): string {
-  if (value == null) return '— —';
+  if (value == null) return '- -';
   const rounded = Math.round(value);
   return rounded > 0 ? `+${rounded.toLocaleString('pl-PL')}` : rounded.toLocaleString('pl-PL');
 }

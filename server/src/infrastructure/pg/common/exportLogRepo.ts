@@ -1,13 +1,13 @@
 /**
- * UZ Aero (serwer) — adapter dziennika eksportu (`ExportLogPort`).
+ * UZ Aero (serwer) - adapter dziennika eksportu (`ExportLogPort`).
  *
  * `day` idzie w obie strony jako NAPIS `YYYY-MM-DD`: przy zapisie Postgres sam
  * rzutuje na DATE, przy odczycie bierzemy `day::text`. Sterowniki (pg, PGlite)
- * parsują DATE do JS `Date` o PÓŁNOCY LOKALNEJ — `toISOString()` na takiej dacie
+ * parsują DATE do JS `Date` o PÓŁNOCY LOKALNEJ - `toISOString()` na takiej dacie
  * cofa dzień w każdej strefie na wschód od Greenwich, czyli dokładnie u nas.
  * Tekst z bazy nie ma czego przekręcić.
  *
- * Od 2026-08-07 (karta = doba samolotu) jedna rewizja to N wierszy — po jednym na sesję
+ * Od 2026-08-07 (karta = doba samolotu) jedna rewizja to N wierszy - po jednym na sesję
  * wchodzącą do karty. Klucz rewizji jest parą (doba, samolot), a `session_uuid` jest
  * CZŁONKOSTWEM: po nim pyta `sync-status` telefonu i monitor panelu.
  */
@@ -35,7 +35,7 @@ export class PgExportLogRepo implements ExportLogPort {
    * `hashtext` zwęża napis do `int4`, więc kolizja dwóch różnych kart jest możliwa
    * i nieszkodliwa: kosztuje szeregowanie dwóch eksportów, które i tak trwają
    * milisekundy. Prefiks jest tu po to, żeby taka kolizja nie mogła zajść MIĘDZY
-   * dziedzinami — blokada dziennika i blokada samolotu o tym samym haszu
+   * dziedzinami - blokada dziennika i blokada samolotu o tym samym haszu
    * zatrzymywałyby się nawzajem bez żadnego powodu.
    */
   async lock(tx: Queryable, day: string, aircraftId: string): Promise<void> {
@@ -45,7 +45,7 @@ export class PgExportLogRepo implements ExportLogPort {
   }
 
   /**
-   * Najświeższy wiersz TEJ SESJI — po `exported_at`, nie po `revision`.
+   * Najświeższy wiersz TEJ SESJI - po `exported_at`, nie po `revision`.
    *
    * Numer rewizji jest odtąd numerem KARTY, a jedna sesja teoretycznie może należeć
    * do dwóch kart (korekta czasu przejęcia przesuwająca sesję przez północ), których
@@ -74,7 +74,7 @@ export class PgExportLogRepo implements ExportLogPort {
   /**
    * `MAX(revision)` po parze (doba, samolot); `0` = karty jeszcze nie było.
    *
-   * `MAX`, a nie `ORDER BY … LIMIT 1`, bo pytamy o jedną liczbę, a nie o wiersz —
+   * `MAX`, a nie `ORDER BY … LIMIT 1`, bo pytamy o jedną liczbę, a nie o wiersz -
    * i bo wierszy o tym numerze jest tyle, ile sesji w karcie.
    */
   async latestRevision(db: Queryable, day: string, aircraftId: string): Promise<number> {
@@ -87,7 +87,7 @@ export class PgExportLogRepo implements ExportLogPort {
   }
 
   /**
-   * Cała rewizja JEDNYM `INSERT`-em — wiersze karty nie mają prawa wejść po kawałku.
+   * Cała rewizja JEDNYM `INSERT`-em - wiersze karty nie mają prawa wejść po kawałku.
    *
    * Miejsca `$n` rozwijamy ręcznie zamiast wysłać tablicę uuidów do `unnest`:
    * serializacja tablicy do literału Postgresa jest zachowaniem STEROWNIKA, a testy

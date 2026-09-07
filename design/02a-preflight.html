@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 02A Nowy lot · Paliwo & MH</title>
+<title>UZ Aero - 02A Nowy lot · Paliwo & MH</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -15,7 +15,7 @@
     --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
     --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28);
     --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28);
-    --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12);
+    --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
     --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -84,7 +84,7 @@
   .value-big.amber { color:var(--amber); }
   .value-unit { font-size:15px; font-weight:400; color:var(--text-secondary); }
 
-  /* Trail — oś czasu przekazania */
+  /* Trail - oś czasu przekazania */
   .trail { display:flex; flex-direction:column; gap:0; border-top:1px solid var(--border); margin-top:2px; padding-top:10px; }
   .trail-row { display:flex; align-items:flex-start; gap:10px; padding-bottom:10px; position:relative; }
   .trail-row:last-child { padding-bottom:0; }
@@ -103,14 +103,26 @@
 
   /* Certified badge */
   /* flex-start, nie center: wyjaśnienie ma trzy linie, ikona ma stać przy pierwszej */
-  .certified-row { display:flex; align-items:flex-start; gap:8px; background:var(--green-muted); border:1px solid var(--green-border); border-radius:10px; padding:8px 11px; margin-top:2px; }
-  .certified-icon { color:var(--green); flex-shrink:0; }
-  /* Akapity, nie jeden blok: odstęp większy niż interlinia, żeby podział było widać */
-  .certified-text { font-family:var(--font-mono); font-size:9px; color:var(--green); line-height:1.5; display:flex; flex-direction:column; gap:5px; }
-  .certified-text b, .certified-lead { font-weight:700; }
+  /* „Skąd te wartości" = BANER POUCZAJĄCY (edu) z design systemu - NIEBIESKI
+     (informacja, nie potwierdzenie), ZAMYKALNY „×" do mini-chipu, stan schowania
+     trwały per pilot (uwagi z urządzenia, 2026-09-02). Klasy jak na 02E. */
+  .hint-box { position:relative; display:flex; align-items:flex-start; gap:8px; background:var(--blue-muted); border:1px solid var(--blue-border); border-radius:10px; padding:9px 40px 9px 11px; }
+  /* Para z komponentu Banner: nagłówek NIEBIESKIM boldem, opis jasnym body. */
+  .hint-text { font-family:var(--font-body); font-size:12px; color:var(--text-secondary); line-height:1.5; display:flex; flex-direction:column; gap:5px; }
+  .hint-lead { color:var(--blue); font-weight:700; }
+  .edu-dismiss { position:absolute; top:5px; right:5px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; color:var(--text-muted); border:none; background:transparent; border-radius:8px; cursor:pointer; }
+  .edu-dismiss:hover { color:var(--text-secondary); background:rgba(255,255,255,0.05); }
+  .edu-mini { display:none; align-items:center; gap:6px; align-self:flex-start; padding:7px 12px; min-height:34px; border-radius:999px; border:1px solid var(--blue-border); background:var(--blue-muted); color:var(--blue); font-family:var(--font-mono); font-size:10px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; }
 
   .btn-primary { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; padding:18px; border-radius:16px; background:var(--green); color:#0D0D0D; font-family:var(--font-display); font-size:22px; letter-spacing:3px; border:none; text-decoration:none; cursor:pointer; box-shadow:0 0 24px rgba(46,204,113,0.3); }
 
+  /* ETYKIETA Z PIGUŁKĄ „opcjonalne" (uwaga z urządzenia, 2026-08-29). Doklejone do
+     nazwy słowo („Dolano · opcjonalnie") czytało się jak część nazwy pola, a nie jak
+     jego WŁAŚCIWOŚĆ - a właściwość pola ma w tym systemie jeden kształt: pigułkę
+     w linii etykiety, tę samą, co „opcjonalne" przy Dualu. */
+  .modal-field-head { display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+  .modal-field-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
+  .optional-tag { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); background:var(--surface-raised); border:1px solid var(--border); border-radius:5px; padding:2px 6px; white-space:nowrap; }
   .koryguj-btn { display:flex; align-items:center; gap:6px; background:none; border:1px solid var(--border-strong); border-radius:10px; padding:0 14px; min-height:44px; color:var(--text-secondary); font-family:var(--font-mono); font-size:10px; letter-spacing:1px; cursor:pointer; text-transform:uppercase; }
 
   /* MODAL */
@@ -120,11 +132,15 @@
   .modal-sheet { background:var(--surface-raised); border-radius:24px 24px 0 0; padding:20px 18px 32px; display:flex; flex-direction:column; gap:14px; border-top:1px solid var(--border-strong); max-height:calc(100% - 56px); overflow-y:auto; }
   .modal-handle { width:36px; height:4px; border-radius:2px; background:var(--border-strong); align-self:center; margin-bottom:4px; }
   .modal-title { font-family:var(--font-display); font-size:22px; letter-spacing:2px; color:var(--text-primary); }
-  .modal-input-row { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--border-strong); border-radius:14px; padding:14px 16px; }
-  .modal-input-val { font-family:var(--font-mono); font-size:32px; font-weight:700; letter-spacing:2px; color:var(--amber); flex:1; }
-  .modal-input-unit { font-family:var(--font-mono); font-size:16px; color:var(--text-secondary); }
+  /* Metryka pola dużej wartości zmniejszona ~30% (uwaga z urządzenia, 2026-09-02:
+     „input zajmuje strasznie dużo miejsca") - cyfry 22 px zamiast 32, padding 8 px,
+     podłogą min-height 46 px = cel dotykowy. W kodzie: valueFieldMetrics.ts,
+     wspólne dla ReadingSheet i OilSheet. */
+  .modal-input-row { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--border-strong); border-radius:14px; padding:8px 16px; min-height:46px; }
+  .modal-input-val { font-family:var(--font-mono); font-size:22px; font-weight:700; letter-spacing:2px; color:var(--amber); flex:1; }
+  .modal-input-unit { font-family:var(--font-mono); font-size:14px; color:var(--text-secondary); }
   .modal-ref { display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:10px; color:var(--text-muted); padding:0 2px; }
-  .modal-warning { display:flex; align-items:flex-start; gap:8px; background:var(--amber-muted); border:1px solid var(--amber-border); border-radius:10px; padding:10px 12px; font-family:var(--font-mono); font-size:10px; color:var(--amber); line-height:1.5; }
+  .modal-warning { display:flex; align-items:flex-start; gap:8px; background:var(--amber-muted); border:1px solid var(--amber-border); border-radius:10px; padding:10px 12px; font-family:var(--font-body); font-size:12px; color:var(--amber); line-height:1.5; }
   .modal-actions { display:grid; grid-template-columns:1fr 2fr; gap:8px; }
   .modal-btn-cancel { display:flex; align-items:center; justify-content:center; padding:14px; border-radius:14px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text-secondary); font-family:var(--font-display); font-size:16px; letter-spacing:2px; cursor:pointer; }
   .modal-btn-confirm { display:flex; align-items:center; justify-content:center; padding:14px; border-radius:14px; border:none; background:var(--green); color:#0D0D0D; font-family:var(--font-display); font-size:16px; letter-spacing:2px; cursor:pointer; box-shadow:0 0 20px rgba(46,204,113,0.3); }
@@ -138,7 +154,7 @@
   /* ===== STANY ŚWIEŻOŚCI live/cache/brak (przełącznik na canvasie steruje data-state) ===== */
   .phone[data-state="live"] .only-cache, .phone[data-state="live"] .only-none, .phone[data-state="live"] .only-offline { display:none !important; }
   .phone[data-state="cache"] .only-none, .phone[data-state="cache"] .only-live { display:none !important; }
-  /* Świeżość danych i łączność to DWIE ORTOGONALNE OSIE — stan `brak` zdarza się także
+  /* Świeżość danych i łączność to DWIE ORTOGONALNE OSIE - stan `brak` zdarza się także
      online (nowy samolot, pierwszy dzień po wpisaniu do floty), więc nie pokazujemy tu OFFLINE. */
   .phone[data-state="none"] .only-cache, .phone[data-state="none"] .only-offline { display:none !important; }
   .phone[data-state="none"] .hide-none { display:none !important; }
@@ -146,9 +162,12 @@
   .fresh-note::before { content:''; width:5px; height:5px; border-radius:50%; background:var(--amber); flex-shrink:0; }
   .value-none { font-family:var(--font-mono); font-size:30px; font-weight:700; line-height:1; color:var(--text-muted); }
   .koryguj-btn.amber { border-color:var(--amber-border); color:var(--amber); background:var(--amber-muted); }
-  .none-box { display:flex; align-items:flex-start; gap:8px; background:var(--amber-muted); border:1px solid var(--amber-border); border-radius:12px; padding:11px 13px; font-family:var(--font-mono); font-size:10px; color:var(--amber); line-height:1.55; }
-  .btn-primary.disabled { background:var(--surface-hover); color:var(--text-muted); box-shadow:none; pointer-events:none; cursor:not-allowed; }
-  .btn-reason { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); text-align:center; }
+  .none-box { display:flex; align-items:flex-start; gap:8px; background:var(--amber-muted); border:1px solid var(--amber-border); border-radius:12px; padding:11px 13px; font-family:var(--font-body); font-size:12px; color:var(--amber); line-height:1.5; }
+  /* Powód blokady stoi WEWNĄTRZ przycisku (issue #55): tekst POD przyciskiem pojawiał
+     się i znikał razem ze stanem, skacząc layoutem reszty ekranu. Bursztyn, bo to
+     ostrzeżenie o brakującym warunku, nie opis przycisku. */
+  .btn-primary.disabled { background:var(--surface-hover); color:var(--text-muted); box-shadow:none; pointer-events:none; cursor:not-allowed; flex-direction:column; gap:6px; }
+  .btn-reason { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--amber); text-align:center; line-height:1.5; }
 
   /* ===== STATE SWITCH (canvas) ===== */
   .state-switch { width:100%; max-width:460px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
@@ -159,7 +178,7 @@
   .ss-btn[data-state="cache"].active, .ss-btn[data-state="none"].active { background:var(--amber-muted); border-color:var(--amber-border); color:var(--amber); }
   .ss-desc { width:100%; font-family:var(--font-mono); font-size:9px; color:var(--text-muted); letter-spacing:0.5px; padding-left:2px; }
 
-  /* ===== VARIANTS PANEL (canvas — skróty do wariantów ekranu) ===== */
+  /* ===== VARIANTS PANEL (canvas - skróty do wariantów ekranu) ===== */
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
   .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
   .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; transition:all .15s; }
@@ -176,8 +195,8 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 02A</span>
-  <span class="slug">przejęcie · paliwo & motogodziny · stany świeżości</span>
+  <span class="film-strip">UZ AERO - 02A</span>
+  <span class="slug">przejęcie · paliwo & motogodziny & olej · stany świeżości</span>
   <span class="canvas-meta">Krok 3 / 3</span>
 </header>
 
@@ -186,10 +205,10 @@
   <button class="ss-btn active" data-state="live" onclick="setState('live')">Live</button>
   <button class="ss-btn" data-state="cache" onclick="setState('cache')">Cache</button>
   <button class="ss-btn" data-state="none" onclick="setState('none')">Brak</button>
-  <span class="ss-desc" id="ss-desc">Jest sieć — przekazanie na żywo z serwera (ostatnie zsynchronizowane zdarzenia).</span>
+  <span class="ss-desc" id="ss-desc">Jest sieć - przekazanie na żywo z serwera (ostatnie zsynchronizowane zdarzenia).</span>
 </div>
 
-<main class="phone" id="phone" data-state="live" role="region" aria-label="Mockup — Preflight krok 2">
+<main class="phone" id="phone" data-state="live" role="region" aria-label="Mockup - Preflight krok 2">
   <div class="status-bar">
     <span>9:41</span>
     <span class="status-right">
@@ -206,14 +225,14 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         Wróć
       </a>
-      <!-- Samolot RAZ, w nagłówku — zamiast „z konfiguracji SP-AXA" w każdym podpisie -->
+      <!-- Samolot RAZ, w nagłówku - zamiast „z konfiguracji SP-AXA" w każdym podpisie -->
       <div class="header-center">
         <div class="screen-title">NOWY LOT</div>
         <div class="screen-subtitle">SP-AXA · Cessna 182</div>
       </div>
       <div class="header-right">
         <div class="step-badge">3 / 3</div>
-        <div class="sync-chip offline only-offline" title="Brak sieci — zdarzenia zapiszą się lokalnie; wartości przekazania z cache lub z liczników">
+        <div class="sync-chip offline only-offline" title="Brak sieci - zdarzenia zapiszą się lokalnie; wartości przekazania z cache lub z liczników">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
           OFFLINE
         </div>
@@ -222,12 +241,48 @@
 
     <div class="scroll">
 
-      <!-- STAN BRAK — wyjaśnienie (sekcja 4.4/4.5: liczniki rozpoczynają łańcuch) -->
+      <!-- STAN BRAK - wyjaśnienie (sekcja 4.4/4.5: liczniki rozpoczynają łańcuch) -->
       <div class="none-box only-none">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         <span>Brak danych przekazania dla SP-AXA (pusty cache / przejęcie offline).
-        Wpisz odczyty z <strong>fizycznych liczników</strong> — Twój odczyt rozpocznie
+        Wpisz odczyty z <strong>fizycznych liczników</strong> - Twój odczyt rozpocznie
         nowe ogniwo łańcucha; serwer scali dane po synchronizacji.</span>
+      </div>
+
+      <!-- SKĄD TE WARTOŚCI - NA SAMEJ GÓRZE, przed sekcjami (uwagi z urządzenia,
+           2026-09-02): pilot ma wiedzieć, na co patrzy, ZANIM spojrzy na liczby.
+           Dwa banery, dwa pytania: skąd wartości (POUCZAJĄCY edu - niebieski,
+           zamykalny do mini-chipu, ikona-pytajnik wymuszona przez DS) → co z nimi
+           zrobić (bursztynowa instrukcja, niezamykalna). Zdanie „ewentualne
+           nieścisłości zostaną rozwiązane przez koordynatora" WYCIĘTE - odpowiadało
+           na obawę, której pilot nie zgłosił. Nie „poświadczył": przekazanie bywa
+           zbudowane z dnia jeszcze trwającego. Godzina we własnej linii, bo tej
+           się szuka wzrokiem. -->
+      <div class="hint-box hide-none" id="eduHandoverOrigin">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <div class="hint-text">
+          <span class="hint-lead">Wartości z ostatniego przekazania</span>
+          <span>SP-AXA przekazał J. Kowalski.</span>
+          <span>Stan z 21 CZERWCA 17:30 UTC · 19:30 LT</span>
+        </div>
+        <button class="edu-dismiss" onclick="eduCollapse('eduHandoverOrigin')" title="Rozumiem - schowaj wyjaśnienie">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <button class="edu-mini hide-none" id="eduHandoverOrigin-mini" onclick="eduExpand('eduHandoverOrigin')" title="Pokaż wyjaśnienie">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Skąd te wartości?
+      </button>
+
+      <!-- DRUGI BANER: instrukcja weryfikacji (ta sama uwaga) - NIEZAMYKALNA. Zasada
+           CLAUDE.md „liczniki fizyczne > dane z serwera" powiedziana wprost, przy
+           wartościach, których dotyczy. -->
+      <!-- Bez doklejki „Twój odczyt z przyrządów jest ważniejszy…" (kolejna tura):
+           instrukcja ma być instrukcją. -->
+      <div class="none-box hide-none">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>Zweryfikuj <strong>ilość paliwa w zbiornikach</strong> i <strong>aktualny
+        stan licznika motogodzin</strong>.</span>
       </div>
 
       <!-- SEKCJA: PALIWO -->
@@ -237,11 +292,11 @@
             <div class="section-label">Paliwo na pokładzie</div>
             <div class="value-row" style="margin-top:4px;">
               <span class="value-big amber hide-none">150</span>
-              <span class="value-none only-none">— —</span>
+              <span class="value-none only-none">- -</span>
               <span class="value-unit">L</span>
             </div>
-            <div class="fresh-note only-cache" title="Wartość z ostatniej synchronizacji — stan mógł się zmienić; licznik fizyczny pozostaje prawdą">Ostatnie pobrane · 21 CZE 17:30</div>
-            <div class="fresh-note only-none">Brak danych — wpisz z licznika</div>
+            <div class="fresh-note only-cache" title="Wartość z ostatniej synchronizacji - stan mógł się zmienić; licznik fizyczny pozostaje prawdą">Ostatnie pobrane · 21 CZE 17:30</div>
+            <div class="fresh-note only-none">Brak danych - wpisz z licznika</div>
             <div class="hide-none" style="margin-top:6px; width:130px; height:6px; border-radius:3px; background:var(--surface-raised); border:1px solid var(--amber-border); position:relative; overflow:hidden;"><div style="position:absolute; inset:0; width:45%; background:var(--amber); border-radius:3px;"></div></div>
             <div style="font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); margin-top:4px;">45% pojemności · zbiorniki 330 L</div>
           </div>
@@ -254,24 +309,10 @@
             Wpisz odczyt
           </button>
         </div>
-
-        <div class="trail hide-none">
-          <div class="trail-row">
-            <div class="trail-line"></div>
-            <div class="trail-dot amber"></div>
-            <div class="trail-body">
-              <div class="trail-title amber">Tankowanie · 21 CZERWCA 09:15</div>
-              <div class="trail-meta">dolano <b>+45 L</b> · w zbiorniku <b>185 L</b></div>
-            </div>
-          </div>
-          <div class="trail-row">
-            <div class="trail-dot neutral"></div>
-            <div class="trail-body">
-              <div class="trail-title">J. Kowalski latał · 1h 30min</div>
-              <div class="trail-meta">śr. <b>17.5 L/h</b> · zostało <b>150 L</b></div>
-            </div>
-          </div>
-        </div>
+        <!-- SZLAK HISTORII PRZENIESIONY DO MODALA (uwaga z urządzenia, 2026-09-02:
+             „podobnie przenieśmy informacje o odczytach paliwa i motogodzin do
+             popupów", jak wcześniej olej). Sekcja mówi samym stanem: wartość,
+             świeżość, podziałka, podpis. -->
       </div>
 
       <!-- SEKCJA: MOTOGODZINY -->
@@ -281,12 +322,14 @@
             <div class="section-label">Motogodziny silnika</div>
             <div class="value-row" style="margin-top:4px;">
               <span class="value-big hide-none">1 234:30</span>
-              <span class="value-none only-none">— —:—</span>
+              <span class="value-none only-none">- -:-</span>
               <span class="value-unit">MH</span>
             </div>
-            <div class="fresh-note only-cache" title="Wartość z ostatniej synchronizacji — stan mógł się zmienić; licznik fizyczny pozostaje prawdą">Ostatnie pobrane · 21 CZE 17:30</div>
-            <div class="fresh-note only-none">Brak danych — wpisz z licznika</div>
-            <div style="font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); margin-top:4px;">licznik w formacie hh:mm</div>
+            <div class="fresh-note only-cache" title="Wartość z ostatniej synchronizacji - stan mógł się zmienić; licznik fizyczny pozostaje prawdą">Ostatnie pobrane · 21 CZE 17:30</div>
+            <div class="fresh-note only-none">Brak danych - wpisz z licznika</div>
+            <!-- Bez podpisu „licznik w formacie hh:mm" (uwaga z urządzenia, 2026-09-02):
+                 format widać z wartości, a przy wpisywaniu mówi go wiersz „Format
+                 licznika" w arkuszu 02C - opis konfiguracji nie jest treścią odczytu. -->
           </div>
           <button class="koryguj-btn hide-none" onclick="document.getElementById('hours-modal').style.display='flex'">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -297,8 +340,161 @@
             Wpisz odczyt
           </button>
         </div>
+        <!-- Szlak historii przeniesiony do modala - patrz komentarz przy paliwie. -->
+      </div>
 
-        <div class="trail hide-none">
+      <!-- Blok „skąd te wartości" przeniesiony NA GÓRĘ ekranu (uwaga z urządzenia,
+           2026-09-02) - patrz komentarz nad banerami. -->
+
+      <!-- SEKCJA: OLEJ (issue #60) - POMIAR, nie potwierdzenie przekazania.
+           Paliwo i MH wyżej pilot POTWIERDZA (przekazane wartości stoją wpisane);
+           oleju nikt nie przekazuje - bagnet czyta się TERAZ. Dlatego wartość zaczyna
+           PUSTA (prefill oczekiwaną fabrykowałby pomiar), a pomiar jest krokiem
+           WYMAGANYM (decyzja 2026-08-27): bez niego ROZPOCZNIJ LOT stoi z powodem
+           w przycisku. Tagu „opcjonalnie" NIE MA - wymagalność jest stanem domyślnym
+           formularza. Ekran pokazuje stan PO POMIARZE (10,2 L); wyjątkiem od wymogu
+           jest wyłącznie wpis ręczny (15 - fakt lotu cenniejszy niż kompletność).
+           Sekcja stoi ZA blokiem przekazania, bo nie jest jego częścią.
+
+           PO PRZEGLĄDZIE 2026-09-02 sekcja mówi wyłącznie: ile oleju JEST W SILNIKU.
+           Dużą liczbą jest STAN PO DOLEWCE (pomiar + dolano - z nim samolot idzie
+           w powietrze; tu 10,2 bez dolewki), a przy dolewce podpis rozbija go na
+           składowe: „odczytano 8,2 L · dolano +1,0 L". Adnotacja „Twój pomiar
+           z bagnetu" zniknęła (pomiar jest aktem pilota z definicji - nie ma czego
+           poświadczać), podpis „min/zbiornik" zastąpiła PODZIAŁKA jak przy paliwie
+           (wypełnienie = stan po dolewce, bursztynowa kreska = minimum; pod minimum
+           wypełnienie bursztynieje), a szlak podpowiedzi (ostatni pomiar →
+           oczekiwanie z normy) przeniósł się do ARKUSZA - tam, gdzie pilot wpisuje
+           liczbę, którą ma z nim porównać. -->
+      <div class="section">
+        <div class="section-header">
+          <div>
+            <div class="section-label">Olej silnikowy</div>
+            <div class="value-row" style="margin-top:4px;">
+              <span class="value-big hide-none" style="color:var(--text-primary);">10,2</span>
+              <span class="value-none only-none">- -</span>
+              <span class="value-unit">L</span>
+            </div>
+            <!-- Podziałka: 10,2 / 11,4 L ≈ 89% wypełnienia; minimum 8,5 L ≈ 75%. -->
+            <div class="hide-none" style="margin-top:6px; width:130px; height:6px; border-radius:3px; background:var(--surface-raised); border:1px solid var(--border); position:relative; overflow:hidden;">
+              <div style="position:absolute; inset:0; width:89%; background:var(--text-secondary); border-radius:3px;"></div>
+              <div style="position:absolute; left:75%; top:0; bottom:0; width:2px; margin-left:-1px; background:var(--amber);"></div>
+            </div>
+          </div>
+          <button class="koryguj-btn hide-none" onclick="document.getElementById('oil-modal').style.display='flex'">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Koryguj
+          </button>
+          <button class="koryguj-btn amber only-none" onclick="document.getElementById('oil-modal').style.display='flex'">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Wpisz pomiar
+          </button>
+        </div>
+      </div>
+
+      <!-- CTA - ostatni krok. Ekranu „podsumowanie" (dawny 03) już nie ma: był tapem,
+           który powtarzał to, co pilot przed chwilą wpisał, a rozpoczęcie lotu ma trwać
+           kilka sekund. Odczyty z tego ekranu SĄ potwierdzeniem.
+           Napis „PRZEJMIJ I LEĆ" ustąpił „ROZPOCZNIJ LOT" (decyzja 2026-08-12): pilot
+           zaczyna latanie, a nie „przejmuje" cokolwiek - słowo „przejęcie" zostaje
+           wyłącznie tam, gdzie maszynę odbiera się INNEMU pilotowi (modal, 04B). -->
+      <a href="04a-cockpit-ground.html" class="btn-primary hide-none" style="margin-top:auto;">
+        ROZPOCZNIJ LOT
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+      <!-- Powód blokady WEWNĄTRZ przycisku (issue #55) - napis pod przyciskiem
+           skakał layoutem, gdy blokada się zwalniała. -->
+      <!-- Powód pada POJEDYNCZO, w kolejności czynności przy maszynie (`preflightBlocker`):
+           najpierw liczniki, potem WYMAGANY pomiar oleju, na końcu wiarygodność licznika.
+           Stan „brak" pokazuje pierwszy z nich. POWÓD JEST INSTRUKCJĄ, nie uzasadnieniem
+           wymogu (uwaga z urządzenia, 2026-09-02): doklejki „jest obowiązkowy" /
+           „rozpoczną nowe ogniwo łańcucha" wycięte - skoro przycisk stoi, wymóg jest
+           oczywisty, a budowa rejestru nie jest pytaniem pilota. -->
+      <span class="btn-primary disabled only-none" style="margin-top:auto;">
+        ROZPOCZNIJ LOT
+        <span class="btn-reason">Wprowadź odczyty paliwa i MH z liczników</span>
+      </span>
+
+    </div>
+
+    <!-- FUEL MODAL. Kolejność = rama arkusza (przegląd 2026-09-02): pole →
+         ostrzeżenie (zaraz pod polem, „live") → SZLAK HISTORII przeniesiony
+         z sekcji (domknięty kreską) → wiersze odniesienia → akcje. -->
+    <div id="fuel-modal" class="modal-overlay" style="display:none;">
+      <div class="modal-sheet">
+        <div class="modal-handle"></div>
+        <div class="modal-title">Odczyt paliwa</div>
+        <div class="modal-input-row">
+          <span class="modal-input-val">120</span>
+          <span class="modal-input-unit">L</span>
+        </div>
+        <div class="modal-warning">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span>Odczyt różni się od przekazanego o <strong>−30 L</strong>. Sprawdź stan zbiorników. Czy na pewno chcesz zapisać ten odczyt?</span>
+        </div>
+        <div class="trail">
+          <div class="trail-row">
+            <div class="trail-line"></div>
+            <div class="trail-dot amber"></div>
+            <div class="trail-body">
+              <div class="trail-title amber">Tankowanie · 21 CZERWCA 09:15</div>
+              <div class="trail-meta">dolano <b>+45 L</b> · w zbiorniku <b>185 L</b></div>
+            </div>
+          </div>
+          <div class="trail-row">
+            <div class="trail-line"></div>
+            <div class="trail-dot neutral"></div>
+            <div class="trail-body">
+              <div class="trail-title">J. Kowalski latał · 1h 30min</div>
+              <div class="trail-meta">śr. <b>17.5 L/h</b> · zostało <b>150 L</b></div>
+            </div>
+          </div>
+          <!-- ZIELONE ogniwo oczekiwania - TEN SAM szacunek z normy, co na 06/09B
+               (uwaga z urządzenia, 2026-09-03: „na przejęciu też pokaż"; wspólny
+               `fuelExpectationRow`). Tu liczony z HISTORII przekazania
+               (`expectedHandoverL`: zastane 140 + dolane 45 − 16 L/h × 1,5 h ≈ 161)
+               stawką BLOKOWĄ - wpisy szlaku niosą czas blokowy bez podziału na
+               fazy. Krzyżowa kontrola: rozjazd z „Przekazane przez poprzednika"
+               łapie literówkę w odczycie zdania albo tankowanie poza aplikacją.
+               Bez normy / zastanego / lotów ogniwa nie ma (ekran milczy). -->
+          <div class="trail-row">
+            <div class="trail-dot green"></div>
+            <div class="trail-body">
+              <div class="trail-title green">Szacunkowo zostało ~161 L</div>
+              <div class="trail-meta">z normy samolotu (90 dni) - zweryfikuj z paliwomierza</div>
+            </div>
+          </div>
+        </div>
+        <div style="border-top:1px solid var(--border);"></div>
+        <div class="modal-ref">
+          <span>Przekazane przez poprzednika</span>
+          <span style="color:var(--text-secondary);">150 L</span>
+        </div>
+        <div class="modal-ref">
+          <span>Pojemność zbiorników</span>
+          <span style="color:var(--text-secondary);">330 L</span>
+        </div>
+        <div class="modal-actions">
+          <button onclick="document.getElementById('fuel-modal').style.display='none'" class="modal-btn-cancel">Anuluj</button>
+          <button onclick="document.getElementById('fuel-modal').style.display='none'" class="modal-btn-confirm">Potwierdź</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- HOURS MODAL - ta sama rama, co paliwo wyżej. -->
+    <div id="hours-modal" class="modal-overlay" style="display:none;">
+      <div class="modal-sheet">
+        <div class="modal-handle"></div>
+        <div class="modal-title">Odczyt motogodzin</div>
+        <div class="modal-input-row">
+          <span class="modal-input-val">1 236:00</span>
+          <span class="modal-input-unit">MH</span>
+        </div>
+        <div class="modal-warning">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span>Odczyt różni się od przekazanego o <strong>+1:30</strong>. Sprawdź licznik silnika.</span>
+        </div>
+        <div class="trail">
           <div class="trail-row">
             <div class="trail-line"></div>
             <div class="trail-dot neutral"></div>
@@ -315,91 +511,14 @@
             </div>
           </div>
         </div>
-      </div>
-
-      <!-- Skąd te wartości — raz dla obu odczytów.
-           Nie „poświadczył": przekazanie bywa zbudowane z dnia jeszcze trwającego,
-           więc słowo o poświadczeniu byłoby wtedy nieprawdą. Zamiast pieczątki —
-           odpowiedź na pytanie pilota: czyje to liczby i co z nimi zrobić. -->
-      <div class="certified-row hide-none">
-        <div class="certified-icon">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        </div>
-        <!-- Trzy akapity = trzy pytania pilota po kolei: czyje to liczby → z kiedy →
-             co z nimi zrobić. Godzina we własnej linii, bo tej się szuka wzrokiem. -->
-        <div class="certified-text">
-          <div class="certified-lead">Odczyty powyżej przekazał J. Kowalski — to po nim przejmujesz SP-AXA.</div>
-          <div>Stan z 21 CZERWCA 17:30 UTC · 19:30 LT</div>
-          <div>Sprawdź go na licznikach. Twój odczyt jest ważniejszy, a ewentualne
-          nieścisłości zostaną rozwiązane przez koordynatora.</div>
-        </div>
-      </div>
-
-      <!-- CTA — ostatni krok. Ekranu „podsumowanie" (dawny 03) już nie ma: był tapem,
-           który powtarzał to, co pilot przed chwilą wpisał, a rozpoczęcie lotu ma trwać
-           kilka sekund. Odczyty z tego ekranu SĄ potwierdzeniem.
-           Napis „PRZEJMIJ I LEĆ" ustąpił „ROZPOCZNIJ LOT" (decyzja 2026-08-12): pilot
-           zaczyna latanie, a nie „przejmuje" cokolwiek — słowo „przejęcie" zostaje
-           wyłącznie tam, gdzie maszynę odbiera się INNEMU pilotowi (modal, 04B). -->
-      <a href="04a-cockpit-ground.html" class="btn-primary hide-none" style="margin-top:auto;">
-        ROZPOCZNIJ LOT
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-      </a>
-      <div class="only-none" style="margin-top:auto; display:flex; flex-direction:column; gap:8px;">
-        <span class="btn-primary disabled">ROZPOCZNIJ LOT</span>
-        <span class="btn-reason">Wprowadź odczyty paliwa i MH z liczników — rozpoczną nowe ogniwo łańcucha</span>
-      </div>
-
-    </div>
-
-    <!-- FUEL MODAL -->
-    <div id="fuel-modal" class="modal-overlay" style="display:none;">
-      <div class="modal-sheet">
-        <div class="modal-handle"></div>
-        <div class="modal-title">Odczyt paliwa</div>
-        <div class="modal-input-row">
-          <span class="modal-input-val">120</span>
-          <span class="modal-input-unit">L</span>
-        </div>
-        <div class="modal-ref">
-          <span>Przekazane przez poprzednika</span>
-          <span style="color:var(--text-secondary);">150 L</span>
-        </div>
-        <div class="modal-ref">
-          <span>Pojemność zbiorników · SP-AXA</span>
-          <span style="color:var(--text-secondary);">330 L</span>
-        </div>
-        <div class="modal-warning">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <span>Odczyt różni się od przekazanego o <strong>−30 L</strong>. Sprawdź stan zbiorników. Czy na pewno chcesz zapisać ten odczyt?</span>
-        </div>
-        <div class="modal-actions">
-          <button onclick="document.getElementById('fuel-modal').style.display='none'" class="modal-btn-cancel">Anuluj</button>
-          <button onclick="document.getElementById('fuel-modal').style.display='none'" class="modal-btn-confirm">Potwierdź</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- HOURS MODAL -->
-    <div id="hours-modal" class="modal-overlay" style="display:none;">
-      <div class="modal-sheet">
-        <div class="modal-handle"></div>
-        <div class="modal-title">Odczyt motogodzin</div>
-        <div class="modal-input-row">
-          <span class="modal-input-val">1 236:00</span>
-          <span class="modal-input-unit">MH</span>
-        </div>
+        <div style="border-top:1px solid var(--border);"></div>
         <div class="modal-ref">
           <span>Przekazane przez poprzednika</span>
           <span style="color:var(--text-secondary);">1 234:30 MH</span>
         </div>
         <div class="modal-ref">
-          <span>Format licznika · SP-AXA</span>
+          <span>Format licznika</span>
           <span style="color:var(--text-secondary);">hh:mm</span>
-        </div>
-        <div class="modal-warning">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <span>Odczyt różni się od przekazanego o <strong>+1:30</strong>. Sprawdź licznik silnika.</span>
         </div>
         <div class="modal-actions">
           <button onclick="document.getElementById('hours-modal').style.display='none'" class="modal-btn-cancel">Anuluj</button>
@@ -408,16 +527,78 @@
       </div>
     </div>
 
+    <!-- OIL MODAL (issue #60) - dwa pola, bo pomiar i dolewka to jedna czynność
+         przy bagnecie: zmierz → jeśli mało, dolej. Stan po dolewce jest RACHUNKIEM
+         (pomiar + dolano), nie trzecim polem - inaczej niż trójka refuel, więc
+         korekta amend nie rozjedzie arytmetyki. Wariant poniżej minimum: 02I.
+         Od przeglądu 2026-09-02 arkusz niesie też PODPOWIEDŹ przeniesioną z sekcji -
+         jako SZLAK (druga tura: wiersze label→wartość dawały „za dużo linijek"),
+         w tym samym schemacie i z tymi samymi danymi, co szlaki paliwa/MH wyżej:
+         ostatni pomiar ze stemplem i kotwicą MH → oczekiwanie z normy. Pilot
+         porównuje z nim liczbę dokładnie w chwili wpisywania. WARTOŚĆ OLEJU BEZ
+         BURSZTYNU (ta sama tura): bursztyn jest rozróżnieniem paliwa - olej pisze
+         się standardowo, jak pole „Dolano". -->
+    <div id="oil-modal" class="modal-overlay" style="display:none;">
+      <div class="modal-sheet">
+        <div class="modal-handle"></div>
+        <div class="modal-title">Pomiar oleju</div>
+        <div style="font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted);">Bagnet - poziom zmierzony</div>
+        <div class="modal-input-row" style="border-color:var(--border-strong);">
+          <span class="modal-input-val" style="color:var(--text-primary);">10,2</span>
+          <span class="modal-input-unit">L</span>
+        </div>
+        <div class="modal-field-head"><span class="modal-field-label">Dolano</span><span class="optional-tag">opcjonalne</span></div>
+        <div class="modal-input-row" style="border-color:var(--border-strong);">
+          <span class="modal-input-val" style="color:var(--text-muted);">0</span>
+          <span class="modal-input-unit">L</span>
+        </div>
+        <div class="trail">
+          <div class="trail-row">
+            <div class="trail-line"></div>
+            <div class="trail-dot neutral"></div>
+            <div class="trail-body">
+              <div class="trail-title">Ostatni pomiar · 21 CZERWCA 07:02 - J. Kowalski</div>
+              <!-- Bez segmentu „bez dolewek później": dolewka wchodzi do meta TYLKO,
+                   gdy była („dolano później +1,0 L") - stan domyślny bez zdania. -->
+              <div class="trail-meta">bagnet <b>10,6 L</b> · przy <b>1 230:30 MH</b></div>
+            </div>
+          </div>
+          <div class="trail-row">
+            <div class="trail-dot neutral"></div>
+            <div class="trail-body">
+              <div class="trail-title">Latano · 4:00 MH</div>
+              <div class="trail-meta">norma <b>0,12 L/h</b> → na bagnecie oczekuj ≈ <b>10,1 L</b></div>
+            </div>
+          </div>
+        </div>
+        <!-- Separator domykający szlak (uwaga z urządzenia, 2026-09-02) - ta sama
+             kreska, którą szlak otwiera od góry. -->
+        <div style="border-top:1px solid var(--border);"></div>
+        <div class="modal-ref">
+          <span>Minimum przed lotem</span>
+          <span style="color:var(--text-secondary);">8,5 L</span>
+        </div>
+        <div class="modal-ref">
+          <span>Zbiornik oleju</span>
+          <span style="color:var(--text-secondary);">11,4 L</span>
+        </div>
+        <div class="modal-actions">
+          <button onclick="document.getElementById('oil-modal').style.display='none'" class="modal-btn-cancel">Anuluj</button>
+          <button onclick="document.getElementById('oil-modal').style.display='none'" class="modal-btn-confirm">Zapisz</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Warianty ekranu liczników (krok 3) — kiedy który?</div>
+  <div class="vp-title">Warianty ekranu liczników (krok 3) - kiedy który?</div>
   <a class="vp-item active" href="02a-preflight.html">
     <span class="vp-badge">02A</span>
     <span class="vp-body">
       <span class="vp-name">Paliwo & motogodziny</span>
-      <span class="vp-when">Krok 2 preflightu — wartości przekazane przez poprzednika. Przełącznik nad telefonem: stany świeżości live / cache / brak (architektura 4.8).</span>
+      <span class="vp-when">Krok 2 preflightu - wartości przekazane przez poprzednika. Przełącznik nad telefonem: stany świeżości live / cache / brak (architektura 4.8).</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -425,14 +606,21 @@
     <span class="vp-badge amber">02B</span>
     <span class="vp-body">
       <span class="vp-name">Modal odczytu paliwa</span>
-      <span class="vp-when">Po tapnięciu „Koryguj" (lub „Wpisz odczyt" w stanie brak) przy paliwie — świadoma korekta z ostrzeżeniem o rozbieżności ponad próg.</span>
+      <span class="vp-when">Po tapnięciu „Koryguj" (lub „Wpisz odczyt" w stanie brak) przy paliwie - świadoma korekta z ostrzeżeniem o rozbieżności ponad próg.</span>
     </span>
   </a>
   <a class="vp-item" href="02c-preflight-motogodziny.html">
     <span class="vp-badge amber">02C</span>
     <span class="vp-body">
       <span class="vp-name">Modal odczytu motogodzin</span>
-      <span class="vp-when">Po tapnięciu „Koryguj" / „Wpisz odczyt" przy MH — jak 02B; format licznika (hh:mm / dziesiętny) z konfiguracji samolotu.</span>
+      <span class="vp-when">Po tapnięciu „Koryguj" / „Wpisz odczyt" przy MH - jak 02B; format licznika (hh:mm / dziesiętny) z konfiguracji samolotu.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="02i-preflight-olej.html">
+    <span class="vp-badge amber">02I</span>
+    <span class="vp-body">
+      <span class="vp-name">Modal pomiaru oleju</span>
+      <span class="vp-when">Po tapnięciu „Wpisz pomiar" / „Koryguj" przy oleju - bagnet + dolewka, ostrzeżenie poniżej minimum z konfiguracji samolotu. Pomiar WYMAGANY (decyzja 2026-08-27): bez niego ROZPOCZNIJ LOT stoi z powodem w przycisku; wyjątkiem wpis ręczny (15).</span>
     </span>
   </a>
 </aside>
@@ -445,26 +633,32 @@
   <a href="02a-preflight.html" class="active">02A Paliwo/MH</a>
   <a href="02b-preflight-paliwo.html">02B Paliwo modal</a>
   <a href="02c-preflight-motogodziny.html">02C MH modal</a>
+  <a href="02i-preflight-olej.html">02I Olej modal</a>
   <span>·</span>
   <a href="04a-cockpit-ground.html">04A Kokpit →</a>
 </nav>
 
 <script>
   // Przełącznik stanów świeżości przekazania (architektura 4.8):
-  // live  — sieć jest, wartości na żywo z serwera (ostatnie zsynchronizowane zdarzenia)
-  // cache — offline, wartości z ostatniej synchronizacji + adnotacja wieku
-  // none  — brak przekazania (pusty cache / przejęcie offline) — liczniki rozpoczynają łańcuch
+  // live  - sieć jest, wartości na żywo z serwera (ostatnie zsynchronizowane zdarzenia)
+  // cache - offline, wartości z ostatniej synchronizacji + adnotacja wieku
+  // none  - brak przekazania (pusty cache / przejęcie offline) - liczniki rozpoczynają łańcuch
   const phoneEl = document.getElementById('phone');
   const ssDesc = {
-    live: 'Jest sieć — przekazanie na żywo z serwera (ostatnie zsynchronizowane zdarzenia).',
-    cache: 'Brak sieci — wartości z ostatniej synchronizacji (21 CZE 17:30); licznik fizyczny pozostaje prawdą.',
-    none: 'Brak przekazania — nowy samolot we flocie albo przejęcie bez danych. Zdarza się też przy działającej sieci (dlatego chip pokazuje SYNC): świeżość danych i łączność to dwie różne osie. Odczyty z liczników rozpoczynają nowe ogniwo łańcucha.'
+    live: 'Jest sieć - przekazanie na żywo z serwera (ostatnie zsynchronizowane zdarzenia).',
+    cache: 'Brak sieci - wartości z ostatniej synchronizacji (21 CZE 17:30); licznik fizyczny pozostaje prawdą.',
+    none: 'Brak przekazania - nowy samolot we flocie albo przejęcie bez danych. Zdarza się też przy działającej sieci (dlatego chip pokazuje SYNC): świeżość danych i łączność to dwie różne osie. Odczyty z liczników rozpoczynają nowe ogniwo łańcucha.'
   };
   function setState(s) {
     phoneEl.dataset.state = s;
     document.querySelectorAll('.ss-btn').forEach(b => b.classList.toggle('active', b.dataset.state === s));
     document.getElementById('ss-desc').textContent = ssDesc[s];
   }
+
+  // Baner pouczający (edu): „×" zwija do mini-chipu, chip rozwija z powrotem.
+  // W aplikacji stan schowania jest trwały per pilot (`useEduBanner`).
+  function eduCollapse(id){ document.getElementById(id).style.display='none'; document.getElementById(id+'-mini').style.display='inline-flex'; }
+  function eduExpand(id){ document.getElementById(id).style.display=''; document.getElementById(id+'-mini').style.display='none'; }
 </script>
 
 </body>

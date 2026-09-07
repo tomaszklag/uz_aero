@@ -1,25 +1,25 @@
 /**
- * UZ Aero — próbkowanie logu punktów do wyświetlenia.
+ * UZ Aero - próbkowanie logu punktów do wyświetlenia.
  *
  * Lot ma ~1 500 punktów, a log na ekranie ma być czytelny i lekki (telefon rysuje go
- * w liście, panel wysyła przez sieć). Pokazujemy więc co N sekund — ale z jednym
+ * w liście, panel wysyła przez sieć). Pokazujemy więc co N sekund - ale z jednym
  * wyjątkiem, który jest sednem tej funkcji: **punkty odrzucone pokazujemy ZAWSZE**.
  *
  * Powód jest wprost z przeznaczenia ekranu. Log istnieje po to, żeby zobaczyć, gdzie
- * bramka jakości zadziałała i dlaczego — próbkowanie, które zgubiłoby akurat ten jeden
+ * bramka jakości zadziałała i dlaczego - próbkowanie, które zgubiłoby akurat ten jeden
  * fix z dokładnością 68 m, zabrałoby logowi całą jego wartość. Odrzuconych jest z natury
  * mało (kilkadziesiąt na lot), więc nie psuje to ani rozmiaru, ani czytelności.
  */
 
 import { isUsablePoint, type TrackPoint } from './point';
 
-/** Domyślny krok próbkowania — co pół minuty, jak w mockupach 14 i A02c. */
+/** Domyślny krok próbkowania - co pół minuty, jak w mockupach 14 i A02c. */
 export const DEFAULT_LOG_SAMPLE_MS = 30_000;
 
 /**
  * Zwraca punkty do pokazania w logu: co `everyMs` plus wszystkie odrzucone.
  *
- * Pierwszy i ostatni punkt zostają zawsze — to start i koniec lotu, czyli wiersze,
+ * Pierwszy i ostatni punkt zostają zawsze - to start i koniec lotu, czyli wiersze,
  * które czyta się najczęściej.
  */
 export function sampleTrackLog(

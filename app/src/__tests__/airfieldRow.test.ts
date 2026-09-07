@@ -1,9 +1,9 @@
 /**
- * UZ Aero — testy wiersza listy lotnisk (`ui/components/input/airfieldRow.ts`).
+ * UZ Aero - testy wiersza listy lotnisk (`ui/components/input/airfieldRow.ts`).
  *
  * Wiersz niesie jedną rzecz, którą łatwo pokazać źle: KURS PASA. Katalog trzyma kurs
  * geograficzny (mapa śladu obraca nim pas na siatce zorientowanej na północ geograficzną),
- * a pilot czyta z tabliczki progu kurs magnetyczny — pomyłka o deklinację to pomyłka
+ * a pilot czyta z tabliczki progu kurs magnetyczny - pomyłka o deklinację to pomyłka
  * o cały próg przy zaokrągleniu do dziesiątek.
  *
  * Testy powstały przy podpowiedziach pod wierszem trasy (`routeSuggestions.test.ts`);
@@ -29,12 +29,12 @@ describe('airfieldRow', () => {
       runway: { headingDeg: 65, lengthM: 2500, source: 'ourairports' },
     });
 
-    // Katalog trzyma 65° geograficznych, a pilot czyta 060 — czyli próg 06.
+    // Katalog trzyma 65° geograficznych, a pilot czyta 060 - czyli próg 06.
     expect(row.meta).toBe('pas 060° · 2500 m · 194 ft');
   });
 
   it('przelicza deklinację per lotnisko, a nie jedną dla całego kraju', () => {
-    // Ten sam kurs geograficzny na zachodzie i wschodzie kraju daje różne magnetyczne —
+    // Ten sam kurs geograficzny na zachodzie i wschodzie kraju daje różne magnetyczne -
     // rozpiętość deklinacji przez Polskę to ~3°, czyli więcej niż rozdzielczość podpisu.
     const west = airfieldRow({
       ...airfield('EPSC', 'Szczecin'),

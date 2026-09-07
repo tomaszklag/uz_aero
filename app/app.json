@@ -3,6 +3,7 @@
     "name": "UZ Aero",
     "slug": "uz-aero",
     "version": "1.0.0",
+    "scheme": ["com.tomekklag.uzaero", "uzaero"],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -20,6 +21,7 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.tomekklag.uzaero",
+      "versionCode": 1,
       "permissions": [
         "android.permission.POST_NOTIFICATIONS",
         "android.permission.ACCESS_COARSE_LOCATION",
@@ -39,7 +41,8 @@
         {
           "isAndroidForegroundServiceEnabled": true
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "extra": {
       "eas": {

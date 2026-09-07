@@ -1,23 +1,24 @@
 /**
- * UZ Aero (serwer) — ślad sesji dla telefonu (`GET /me/sessions/:uuid/track`, issue #47).
+ * UZ Aero (serwer) - ślad sesji dla telefonu (`GET /me/sessions/:uuid/track`, issue #47).
  *
  * Ta trasa jest drogą POWROTNĄ nagrania: telefon oddaje surowe fixy przez `POST /traces`,
  * kasuje swoją kopię i odtąd rysuje ekran 14 z tego, co odda serwer. Test przechodzi
- * dokładnie tę drogę — wysyła ślad prawdziwą trasą i czyta go prawdziwą trasą — bo test,
+ * dokładnie tę drogę - wysyła ślad prawdziwą trasą i czyta go prawdziwą trasą - bo test,
  * który wstawiałby wiersze obok niej, potwierdzałby wyłącznie własne wyobrażenie
  * o formacie zapisu.
  *
  * Trzy rzeczy, których pilnuje najmocniej:
- *  1. **zakres to CAŁY bieg silnika**, nie okno lotu — kołowanie należy do śladu sesji
+ *  1. **zakres to CAŁY bieg silnika**, nie okno lotu - kołowanie należy do śladu sesji
  *     (issue #38), inaczej mapa zaczynałaby się w powietrzu,
- *  2. **cudza sesja to 404**, nie 403 — patrz komentarz w trasie,
- *  3. **koperta nie niesie danych rejestru** (rejestracji, lotów, czasów) — te telefon
+ *  2. **cudza sesja to 404**, nie 403 - patrz komentarz w trasie,
+ *  3. **koperta nie niesie danych rejestru** (rejestracji, lotów, czasów) - te telefon
  *     liczy lokalnie i druga ich wersja z sieci byłaby drugą prawdą o sesji.
  */
 
 import { describe, expect, it } from 'vitest';
 
-import { TEST_PASSWORD, testHarness } from './helpers.ts';
+import { testHarness } from './helpers.ts';
+import { googleTokenFor } from './testIdentityProvider.ts';
 
 const DAY = Date.UTC(2026, 5, 22);
 const at = (h: number, m: number, s = 0): number => DAY + (h * 3600 + m * 60 + s) * 1000;
@@ -88,8 +89,8 @@ type Harness = Awaited<ReturnType<typeof testHarness>>;
 async function login(app: Harness['app'], who = 'TMK'): Promise<string> {
   const res = await app.inject({
     method: 'POST',
-    url: '/auth/login',
-    payload: { login: who, password: TEST_PASSWORD },
+    url: '/auth/google',
+    payload: { idToken: googleTokenFor(who) },
   });
   return res.json().token as string;
 }
@@ -129,7 +130,7 @@ async function flownWithTrace(
 }
 
 describe('GET /me/sessions/:uuid/track', () => {
-  it('oddaje CAŁY bieg silnika — kołowanie należy do śladu sesji', async () => {
+  it('oddaje CAŁY bieg silnika - kołowanie należy do śladu sesji', async () => {
     const { app, token, harness } = await flownWithTrace([
       fix(at(8, 15), { gs: 12 }), // kołowanie przed startem
       fix(at(8, 30), { lat: BASE.lat + NM }),
@@ -169,11 +170,11 @@ describe('GET /me/sessions/:uuid/track', () => {
     await harness.app.close();
   });
 
-  it('koperta nie powtarza danych rejestru — telefon liczy je lokalnie', async () => {
+  it('koperta nie powtarza danych rejestru - telefon liczy je lokalnie', async () => {
     const { app, token, harness } = await flownWithTrace([fix(at(8, 30))]);
     const body = (await getTrack(app, token)).json();
 
-    // Gdyby te pola tu weszły, powstałaby druga prawda o sesji — przysłana z sieci
+    // Gdyby te pola tu weszły, powstałaby druga prawda o sesji - przysłana z sieci
     // i rozjeżdżająca się z lokalną po pierwszej korekcie administratora.
     expect(body).not.toHaveProperty('aircraftId');
     expect(body).not.toHaveProperty('flights');

@@ -1,22 +1,22 @@
 /**
- * UZ Aero — odwzorowanie Web Mercator i dobór kafelków mapy.
+ * UZ Aero - odwzorowanie Web Mercator i dobór kafelków mapy.
  *
  * DLACZEGO WŁASNE, A NIE BIBLIOTEKA MAPOWA: aplikacja pilota unika modułów natywnych
- * z premedytacją (`ui/components/foundation/CheckIcon.tsx` — ptaszek rysowany layoutem,
+ * z premedytacją (`ui/components/foundation/CheckIcon.tsx` - ptaszek rysowany layoutem,
  * żeby nie wciągać `react-native-svg`). Biblioteka mapowa to najcięższy możliwy moduł
  * natywny i wymusiłaby przebudowę dev clienta u każdego, kto klonuje repo. Ekran śladu
- * jest RETROSPEKTYWNY — pokazuje zamknięty lot, nie prowadzi nawigacji — więc potrzebuje
+ * jest RETROSPEKTYWNY - pokazuje zamknięty lot, nie prowadzi nawigacji - więc potrzebuje
  * odwzorowania i siatki obrazków, a nie silnika mapowego z pełnym GL.
  *
  * Ta sama matematyka obsługuje obie powierzchnie: telefon układa z niej `<Image>`,
  * panel `<img>` i `<svg>`. Kafelki są standardowe (schemat XYZ, 256 px), więc źródło
- * da się wymienić na dowolnego dostawcę OSM bez ruszania tego pliku — a gdyby kiedyś
+ * da się wymienić na dowolnego dostawcę OSM bez ruszania tego pliku - a gdyby kiedyś
  * wróciła decyzja o pełnym MapLibre, to jest jedyne miejsce do wyrzucenia.
  */
 
 import type { LatLon } from '../detection/geo';
 
-/** Bok kafelka w pikselach — standard schematu XYZ. */
+/** Bok kafelka w pikselach - standard schematu XYZ. */
 export const TILE_SIZE = 256;
 
 /** Granica szerokości w Web Mercator: bieguny są w nieskończoności. */
@@ -152,7 +152,7 @@ export function toScreen(position: LatLon, view: MapView): PixelPoint {
  * Kafelki potrzebne do pokrycia widoku, z gotowymi pozycjami na ekranie.
  *
  * Kafelki spoza zakresu osi X zawijamy modulo (mapa jest cylindrem), a spoza osi Y
- * pomijamy — nad biegunem nie ma czego rysować.
+ * pomijamy - nad biegunem nie ma czego rysować.
  */
 export function tilesFor(view: MapView): TileRef[] {
   const count = 2 ** view.zoom;
@@ -177,18 +177,18 @@ export function tilesFor(view: MapView): TileRef[] {
   return tiles;
 }
 
-/** Mila morska w metrach — jednostka odległości W CAŁEJ APLIKACJI. */
+/** Mila morska w metrach - jednostka odległości W CAŁEJ APLIKACJI. */
 const METERS_PER_NM = 1852;
 
 /**
  * Długość podziałki skali: ile pikseli odpowiada „ładnej" liczbie MIL MORSKICH.
  *
- * Szukamy największej wartości z ciągu 1-2-5, która mieści się w `maxPx` — tak działają
+ * Szukamy największej wartości z ciągu 1-2-5, która mieści się w `maxPx` - tak działają
  * podziałki na wszystkich mapach i dzięki temu pod kreską stoi „2 NM", a nie „1,87 NM".
  *
  * ══ DLACZEGO NM, A NIE METRY (2026-08-15) ══
- * Podziałka liczyła kiedyś w metrach i kilometrach, a wszystko inne w tym produkcie —
- * dystans sesji, statystyki, profil — w milach morskich. Na jednym ekranie stały przez
+ * Podziałka liczyła kiedyś w metrach i kilometrach, a wszystko inne w tym produkcie -
+ * dystans sesji, statystyki, profil - w milach morskich. Na jednym ekranie stały przez
  * to dwie jednostki tej samej wielkości i pilot musiał je w głowie przeliczać, żeby
  * zestawić podziałkę z liczbą pod mapą.
  *

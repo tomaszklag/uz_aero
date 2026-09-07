@@ -2,7 +2,7 @@
   "name": "@uzaero/server",
   "version": "0.0.0",
   "private": true,
-  "description": "UZ Aero — backend: przyjmowanie zdarzeń, scalanie sesji, flagi, eksport do Sheets",
+  "description": "UZ Aero - backend: przyjmowanie zdarzeń, scalanie sesji, flagi, eksport do Sheets",
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
@@ -14,6 +14,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@fastify/compress": "^9.2.0",
     "@fastify/cookie": "^11.0.2",
     "@fastify/static": "^8.0.4",
     "@uzaero/domain": "*",

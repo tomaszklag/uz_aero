@@ -1,0 +1,76 @@
+/**
+ * UZ Aero - panel 2.0: DZIENNIK - komórki par, braki i kontrolka zakresu dat.
+ *
+ * Trzy rzeczy, których reszta panelu nie potrzebowała: para wartości w jednej komórce,
+ * ton braku i pola daty. Wszystko inne (tabela, karta, plakietka, chip) grid bierze
+ * z istniejącego inwentarza.
+ */
+
+/* Para „08:42 → 10:22" w jednej linii. Strzałka jest WYGASZONA, bo nie jest wartością
+   - to znak relacji między dwiema, które nią są. */
+.cell-pair {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.cell-arrow {
+  color: var(--text-muted);
+  padding: 0 5px;
+}
+
+/* Wejście w głąb z wiersza poziomu 1 - sam znak, bo cały wiersz jest klikalny. */
+.cell-go {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* Wiersz UNIEWAŻNIONY: zostaje w tabeli, bo rejestr jest append-only, a znikający
+   wiersz byłby kłamstwem o dniu. Przekreślenie mówi, że fakt został cofnięty. */
+tbody tr.voided td {
+  color: var(--text-muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--red-border);
+}
+
+/* Podpis pod tabelą przyciętą limitem - lista ucięta po cichu wygląda jak komplet. */
+.list-foot {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding: 4px 2px;
+}
+
+/**
+ * Pole daty. Natywne `input[type=date]` - panel jest stroną, więc kalendarz ma od
+ * przeglądarki; `color-scheme` przestawia jej własny widżet na ciemny.
+ */
+.daterange {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  padding: 0 10px;
+}
+
+.daterange:focus-within {
+  border-color: var(--green-border);
+}
+
+.daterange input {
+  color-scheme: dark;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+
+.daterange-sep {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}

@@ -1,8 +1,8 @@
 /**
- * UZ Aero — PinDots (`.pin-dots` z mockupu 00)
+ * UZ Aero - PinDots (`.pin-dots` z mockupu 00)
  *
  * Wskaźnik postępu wpisywania PIN-u: cztery kropki, wypełnione zielono. Zły PIN
- * barwi kropki czerwono i potrząsa rzędem — to jedyny komunikat odmowy (mockup nie
+ * barwi kropki czerwono i potrząsa rzędem - to jedyny komunikat odmowy (mockup nie
  * ma tekstu błędu; kolor + ruch mówią wszystko i nie zdradzają nic).
  */
 
@@ -15,7 +15,7 @@ export interface PinDotsProps {
   /** Ile cyfr już wpisano (0–length). */
   filled: number;
   length?: number;
-  /** Tryb odmowy — czerwone kropki + potrząśnięcie przy każdej zmianie na `true`. */
+  /** Tryb odmowy - czerwone kropki + potrząśnięcie przy każdej zmianie na `true`. */
   error?: boolean;
   style?: ViewStyle;
 }

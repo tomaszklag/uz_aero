@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 01C Mój dzień (offline + szczegóły synchronizacji)</title>
+<title>UZ Aero - 01C Mój dzień (offline + szczegóły synchronizacji)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -55,10 +55,10 @@
   .nav-strip a.active { color:var(--green); }
   .nav-strip span { color:var(--border-strong); }
 
-  /* ===== App header ===== — tytuł do lewej, ustawienia po prawej (issue #23 pkt 7).
-     Offline: przed zębatką stoi amber pill „OFFLINE · n" — JEDYNY ślad sieci na
+  /* ===== App header ===== - tytuł do lewej, ustawienia po prawej (issue #23 pkt 7).
+     Offline: przed zębatką stoi amber pill „OFFLINE · n" - JEDYNY ślad sieci na
      ekranie (issue #23 pkt 5). To przycisk: tapnięcie otwiera arkusz szczegółów
-     synchronizacji (niżej). Stempla syncu pod pillem już NIE MA — mieszka w arkuszu. */
+     synchronizacji (niżej). Stempla syncu pod pillem już NIE MA - mieszka w arkuszu. */
   .app-header {
     display:flex; align-items:center; justify-content:space-between; gap:10px;
     padding:8px 6px 8px 16px; border-bottom:1px solid var(--border); flex-shrink:0;
@@ -84,10 +84,10 @@
   .scroll::-webkit-scrollbar { display:none; }
   .scroll > * { flex-shrink:0; }
 
-  /* ===== Log dnia (identyczny z 01 — treść pod arkuszem) =====
-     Kafelek sesji = ten sam komponent, co na „Poprzednich dniach" (issue #42).
+  /* ===== Log dnia (identyczny z 01 - treść pod arkuszem) =====
+     Kafelek operacji = ten sam komponent, co na „Poprzednich dniach" (issue #42).
      Offline nie zmienia w nim NICZEGO: log dnia liczy się z lokalnego strumienia
-     (§6 pkt 1), więc jest zawsze świeży — jedynym śladem sieci jest pill w nagłówku. */
+     (§6 pkt 1), więc jest zawsze świeży - jedynym śladem sieci jest pill w nagłówku. */
   .group-lbl { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:2px 2px 0; }
   .day-card {
     background:var(--surface); border:1px solid var(--border); border-radius:14px;
@@ -98,6 +98,11 @@
   .day-top { display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
   .day-title { font-family:var(--font-display); font-size:21px; letter-spacing:1.5px; color:var(--text-primary); line-height:1; }
   .day-ac { font-family:var(--font-mono); font-size:11px; letter-spacing:1.5px; color:var(--green); }
+  /* SYGNATURA OPERACJI (issue #68) - „SP-AXA/2026-08-06/TMK/1". Zastępuje znak
+     maszyny, bo zaczyna się od niego; własna linia, bo identyfikatora nie wolno uciąć
+     wielokropkiem. Odstęp międzyliterowy węższy niż przy znaku: przy 23 znakach 1,5 px
+     rozpycha napis na całą szerokość karty. */
+  .day-sig { font-family:var(--font-mono); font-size:11px; line-height:14px; letter-spacing:0.5px; color:var(--green); margin-top:-4px; }
   .day-times { font-family:var(--font-mono); font-size:10px; letter-spacing:0.5px; color:var(--text-muted); margin-top:-4px; }
   .day-stats { display:flex; gap:14px; flex-wrap:wrap; }
   .stat { display:flex; flex-direction:column; gap:2px; }
@@ -109,13 +114,13 @@
     color:var(--text-secondary); font-family:var(--font-display); font-size:16px; letter-spacing:2px;
   }
   .totals-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
-  /* Trzy kolumny od 2026-08-16 — Loty · Blok · Lot, tak jak na kafelku sesji. */
+  /* Trzy kolumny od 2026-08-16 - Loty · Blok · Lot, tak jak na kafelku operacji. */
   .totals { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1px; background:var(--border); }
   .total-cell { background:var(--surface); padding:10px 12px; display:flex; flex-direction:column; gap:3px; }
   .total-key { font-family:var(--font-mono); font-size:7px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
   .total-val { font-family:var(--font-display); font-size:24px; letter-spacing:1px; line-height:1; color:var(--text-primary); }
   .total-sub { font-family:var(--font-mono); font-size:8px; color:var(--text-muted); }
-  /* Jeden krój na wszystkie przyciski ekranu (issue #42) — patrz 01. Akcja główna
+  /* Jeden krój na wszystkie przyciski ekranu (issue #42) - patrz 01. Akcja główna
      jest `.btn-primary` niezależnie od doby; stoi pod logiem, nad wpisem ręcznym
      (2026-08-26). */
   .btn-primary {
@@ -143,7 +148,7 @@
      Ten sam prymityw .modal-overlay / .modal-sheet co 04c/04d. Zbiera w JEDNYM
      miejscu wszystko, co wcześniej wisiało na ekranie na stałe (issue #23 pkt 5):
      stan kolejki, stempel ostatniego udanego syncu i wiek danych referencyjnych.
-     Arkusz jest INFORMACYJNY — bez akcji „wyślij teraz": outbox wysyła sam,
+     Arkusz jest INFORMACYJNY - bez akcji „wyślij teraz": outbox wysyła sam,
      gdy wróci sieć (§4.1), a przycisk-atrapa uczyłby, że trzeba pomagać. */
   .modal-overlay { position:absolute; inset:0; z-index:50; background:rgba(0,0,0,0.72); display:flex; flex-direction:column; justify-content:flex-end; }
   /* Sufit arkusza: pas tła nad nim ma być WIDOCZNY, inaczej arkusz z dużą treścią
@@ -163,7 +168,21 @@
   .sheet-row-key { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); }
   .sheet-row-val { font-family:var(--font-mono); font-size:11px; color:var(--text-primary); display:inline-flex; align-items:center; gap:7px; }
   .sheet-row-val .dot { width:6px; height:6px; border-radius:50%; background:var(--green); }
+  /* Ton WARTOŚCI, nie ozdoba wiersza: "brak sieci" i "odrzucone" to werdykty o próbie
+     (ta sama reguła, co `SheetRow.tone` w kodzie - issue #60). */
+  .sheet-row-val.amber { color:var(--amber); }
+  .sheet-row-val.red   { color:var(--red); }
   .sheet-note { font-size:11px; color:var(--text-secondary); line-height:1.55; }
+  /* Para akcji arkusza: 1 : 2, jak w każdym innym (`.modal-actions`). Ponowienie jest
+     akcją GŁÓWNĄ, bo to po nie pilot tu wszedł; „Zamknij" zostaje wyjściem. */
+  .sheet-actions { display:grid; grid-template-columns:1fr 2fr; gap:8px; }
+  .sheet-retry {
+    display:flex; align-items:center; justify-content:center;
+    padding:13px; border-radius:14px; border:none;
+    background:var(--green); color:#0D0D0D;
+    font-family:var(--font-display); font-size:16px; letter-spacing:2px;
+    text-decoration:none; cursor:pointer;
+  }
   .sheet-close {
     display:flex; align-items:center; justify-content:center; gap:8px;
     width:100%; min-height:46px; padding:13px; border-radius:12px;
@@ -191,12 +210,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 01C</span>
+  <span class="film-strip">UZ AERO - 01C</span>
   <span class="slug">mój dzień · offline + szczegóły syncu</span>
   <span class="canvas-meta"><span class="pulse"></span>Wariant ekranu 01</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Mój dzień offline, arkusz synchronizacji">
+<main class="phone" role="region" aria-label="Mockup - Mój dzień offline, arkusz synchronizacji">
   <div class="status-bar">
     <span>17:25</span>
     <span class="status-right">
@@ -207,14 +226,14 @@
 
   <div class="screen">
 
-    <!-- App Header — pill OFFLINE przed zębatką; tapnięcie otwiera arkusz niżej -->
+    <!-- App Header - pill OFFLINE przed zębatką; tapnięcie otwiera arkusz niżej -->
     <div class="app-header">
       <div class="app-header-left">
         <span class="screen-title">MÓJ DZIEŃ</span>
         <span class="header-subtitle">TMK · 06 SIE 2026</span>
       </div>
       <div class="app-header-right">
-        <a href="01c-moj-dzien-offline.html" class="sync-chip" title="Szczegóły synchronizacji — arkusz na dole ekranu">
+        <a href="01c-moj-dzien-offline.html" class="sync-chip" title="Szczegóły synchronizacji - arkusz na dole ekranu">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6"/></svg>
           OFFLINE · 2
         </a>
@@ -229,9 +248,9 @@
 
       <a href="10-statystyki.html" class="day-card">
         <div class="day-top">
-          <span class="day-title">SESJA 1</span>
-          <span class="day-ac">SP-AXA</span>
+          <span class="day-title">OPERACJA 1</span>
         </div>
+        <div class="day-sig">SP-AXA/2026-08-06/TMK/1</div>
         <div class="day-times">08:12 → 09:05 UTC</div>
         <div class="day-stats">
           <span class="stat"><span class="stat-k">Loty</span><span class="stat-v">2</span></span>
@@ -246,9 +265,9 @@
 
       <a href="10-statystyki.html" class="day-card">
         <div class="day-top">
-          <span class="day-title">SESJA 2</span>
-          <span class="day-ac">SP-AXA</span>
+          <span class="day-title">OPERACJA 2</span>
         </div>
+        <div class="day-sig">SP-AXA/2026-08-06/TMK/2</div>
         <div class="day-times">10:20 → 11:02 UTC</div>
         <div class="day-stats">
           <span class="stat"><span class="stat-k">Loty</span><span class="stat-v">1</span></span>
@@ -263,9 +282,9 @@
 
       <a href="10-statystyki.html" class="day-card">
         <div class="day-top">
-          <span class="day-title">SESJA 3</span>
-          <span class="day-ac">SP-KLM</span>
+          <span class="day-title">OPERACJA 3</span>
         </div>
+        <div class="day-sig">SP-KLM/2026-08-06/TMK/3</div>
         <div class="day-times">13:40 → 15:10 UTC</div>
         <div class="day-stats">
           <span class="stat"><span class="stat-k">Loty</span><span class="stat-v">2</span></span>
@@ -309,11 +328,11 @@
       <a href="12-historia.html" class="btn-secondary">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
         POPRZEDNIE DNI
-        <span class="history-badge">05 SIE — można poprawić</span>
+        <span class="history-badge">05 SIE - można poprawić</span>
       </a>
     </div>
 
-    <!-- Arkusz szczegółów synchronizacji — otwarty tapnięciem w pill OFFLINE.
+    <!-- Arkusz szczegółów synchronizacji - otwarty tapnięciem w pill OFFLINE.
          Wszystkie stemple syncu mieszkają TU, nie na ekranie (issue #23 pkt 5). -->
     <div class="modal-overlay">
       <div class="modal-sheet">
@@ -321,14 +340,30 @@
 
         <div class="sheet-status">
           <span class="dot"></span>
-          <span class="sheet-status-text"><b>Offline</b> — 2 zdarzenia czekają w kolejce.
-          Wyślą się same, gdy wróci sieć; brak zasięgu niczego nie blokuje.</span>
+          <!-- „brak zasięgu niczego nie blokuje" USUNIĘTE (uwaga z urządzenia,
+               2026-08-30). Zdanie odpowiadało na obawę, której pilot nie zgłosił -
+               a przez to ją podsuwało. Ta sama kategoria przypisów, którą issue #43
+               wyrzuciło z arkuszy korekty. Zostaje sam fakt i to, co się z nim stanie. -->
+          <span class="sheet-status-text"><b>Offline</b> - 2 zdarzenia czekają w kolejce.
+          Wyślą się same, gdy wróci sieć.</span>
         </div>
 
         <div class="sheet-rows">
           <div class="sheet-row">
             <span class="sheet-row-key">W kolejce</span>
             <span class="sheet-row-val">2 zdarzenia</span>
+          </div>
+          <!-- OSTATNIA PRÓBA - wiersz dołożony po uwadze z urządzenia (2026-08-30:
+               "klikam «ponów próbę» i nie dostaję żadnego feedback czy się udało").
+               Przy nieudanym ponowieniu NIC innego w arkuszu się nie zmienia: kolejka
+               stoi, stempel udanego syncu stoi, pill stoi - więc tapnięcie wyglądało
+               jak przycisk, który nie działa. Ten wiersz jest dowodem, że próba się
+               odbyła, i mówi, czym się skończyła. Stoi NAD stemplem udanego syncu, bo
+               odpowiada na świeższe pytanie ("co się właśnie stało"), a tamten na
+               pytanie o wiek danych. -->
+          <div class="sheet-row">
+            <span class="sheet-row-key">Ostatnia próba</span>
+            <span class="sheet-row-val amber">17:42 UTC - brak sieci</span>
           </div>
           <div class="sheet-row">
             <span class="sheet-row-key">Ostatnia udana synchronizacja</span>
@@ -340,9 +375,22 @@
           </div>
         </div>
 
-        <span class="sheet-note">Pełną kolejkę i historię wysyłki znajdziesz w „Ustawienia → Status synchronizacji".</span>
+        <!-- DROGOWSKAZ DO USTAWIEŃ USUNIĘTY, A W JEGO MIEJSCE WESZŁA AKCJA
+             (uwaga z urządzenia, 2026-08-30). Stopka odsyłała po przycisk „Synchronizuj
+             teraz" do innego ekranu - a skoro pilot otworzył ten arkusz właśnie z tym
+             pytaniem, przycisk ma stać tutaj.
 
-        <a href="01-moj-dzien.html" class="sheet-close">ZAMKNIJ</a>
+             ODWRACA TO DECYZJĘ Z issue #23 („arkusz jest INFORMACYJNY, bez akcji -
+             outbox wysyła sam, a przycisk-atrapa uczyłby, że trzeba pomagać").
+             Uzasadnienie było połowiczne: outbox faktycznie wysyła sam, ale ponowienie
+             NIE JEST atrapą - robi dokładnie to, co „SYNCHRONIZUJ TERAZ" w ustawieniach
+             (dopycha kolejkę i pyta o dane referencyjne z pominięciem bramy wieku,
+             issue #55). Pilot pyta „czy teraz?", a odpowiedź „poczekaj albo idź do
+             ustawień" była gorsza niż jedno tapnięcie. -->
+        <div class="sheet-actions">
+          <a href="01c-moj-dzien-offline.html" class="sheet-close">ZAMKNIJ</a>
+          <a href="01c-moj-dzien-offline.html" class="sheet-retry">PONÓW PRÓBĘ</a>
+        </div>
       </div>
     </div>
 
@@ -350,28 +398,35 @@
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Warianty tego ekranu — kiedy który?</div>
+  <div class="vp-title">Warianty tego ekranu - kiedy który?</div>
   <a class="vp-item" href="01-moj-dzien.html">
     <span class="vp-badge">01</span>
     <span class="vp-body">
       <span class="vp-name">Dzień w toku</span>
-      <span class="vp-when">Standard po pierwszej sesji: płaska oś czasu sesji doby, sumy Blok / Loty. Online — bez pilla (SyncChip online nie rysuje nic, issue #12).</span>
+      <span class="vp-when">Standard po pierwszej operacji: płaska oś czasu operacji doby, sumy Blok / Loty. Online - bez pilla (SyncChip online nie rysuje nic, issue #12).</span>
     </span>
   </a>
   <a class="vp-item" href="01a-moj-dzien-pusty.html">
     <span class="vp-badge blue">01A</span>
     <span class="vp-body">
-      <span class="vp-name">Początek dnia — zero sesji</span>
+      <span class="vp-name">Początek dnia - zero operacji</span>
       <span class="vp-when">Pilot wszedł do aplikacji i nie przejął jeszcze nic: pusty log dnia, cały ekran prowadzi do przejęcia samolotu.</span>
     </span>
   </a>
   <a class="vp-item active" href="01c-moj-dzien-offline.html">
     <span class="vp-badge amber">01C</span>
     <span class="vp-body">
-      <span class="vp-name">Offline — pill i szczegóły synchronizacji</span>
-      <span class="vp-when">Brak sieci: amber pill „OFFLINE · n" przed zębatką (jedyny ślad sieci, bez stempla pod spodem). Tapnięcie otwiera ten arkusz: kolejka, ostatnia udana synchronizacja, wiek danych referencyjnych (issue #23 pkt 5). Arkusz jest informacyjny — wysyłką zarządza outbox sam (§4.1). Wzorzec pilla i arkusza obowiązuje KAŻDY ekran z SyncChipem.</span>
+      <span class="vp-name">Offline - pill i szczegóły synchronizacji</span>
+      <span class="vp-when">Brak sieci: amber pill „OFFLINE · n" przed zębatką (jedyny ślad sieci, bez stempla pod spodem). Tapnięcie otwiera ten arkusz: kolejka, ostatnia udana synchronizacja, wiek danych referencyjnych (issue #23 pkt 5). Arkusz podaje też wynik OSTATNIEJ PRÓBY i przycisk "Ponów próbę". Wzorzec pilla i arkusza obowiązuje KAŻDY ekran z SyncChipem.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="01d-sync-stoi.html">
+    <span class="vp-badge amber">01D</span>
+    <span class="vp-body">
+      <span class="vp-name">Sync stoi - kolejka się nie opróżni sama</span>
+      <span class="vp-when">Serwer ODPOWIEDZIAŁ i odmówił (albo sesja wygasła). To NIE jest offline: sieć jest, więc "wyślą się same, gdy wróci sieć" byłoby nieprawdą - a dokładnie tak wyglądał ten stan do 2026-08-30. Czerwony pill, powód i droga wyjścia w arkuszu.</span>
+    </span>
   </a>
 </aside>
 
@@ -381,8 +436,9 @@
   <a href="00-login.html">← 00 Login</a>
   <span>·</span>
   <a href="01-moj-dzien.html">01 Mój dzień</a>
-  <a href="01a-moj-dzien-pusty.html">01A Zero sesji</a>
+  <a href="01a-moj-dzien-pusty.html">01A Zero operacji</a>
   <a href="01c-moj-dzien-offline.html" class="active">01C Offline</a>
+  <a href="01d-sync-stoi.html">01D Sync stoi</a>
   <span>·</span>
   <a href="12-historia.html">12 Poprzednie dni</a>
   <span>·</span>

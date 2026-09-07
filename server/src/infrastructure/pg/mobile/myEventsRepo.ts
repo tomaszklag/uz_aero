@@ -1,13 +1,13 @@
 /**
- * UZ Aero (serwer) — adapter odtworzenia rejestru telefonu (`MyEventsPort`, §4.9).
+ * UZ Aero (serwer) - adapter odtworzenia rejestru telefonu (`MyEventsPort`, §4.9).
  *
  * Osobny plik od `common/eventsStore.ts` z tego samego powodu, dla którego port jest
  * osobny: tamten obsługuje INGEST i czyta strumień JEDNEJ sesji (albo garści sesji)
  * bez stronicowania. Ten czyta rejestr JEDNEGO PILOTA przez wszystkie jego sesje,
- * kursorem, w porządku przyjęcia — to inne pytanie i inny indeks.
+ * kursorem, w porządku przyjęcia - to inne pytanie i inny indeks.
  *
  * Czego tu NIE MA: `UPDATE`, `DELETE` i strażnika typów. Rejestr jest append-only,
- * a `events.type` celowo nie ma `CHECK`-a (katalog typów mieszka w `@uzaero/domain`) —
+ * a `events.type` celowo nie ma `CHECK`-a (katalog typów mieszka w `@uzaero/domain`) -
  * telefon ma odzyskać to, co kiedyś zapisał, także gdy katalog zdążył się zmienić.
  */
 
@@ -25,10 +25,10 @@ import {
 import { SqlFilter } from '../sqlFilter.ts';
 
 /**
- * Klucz porządku — ten sam, pod który stoi `idx_events_received (received_at DESC,
+ * Klucz porządku - ten sam, pod który stoi `idx_events_received (received_at DESC,
  * uuid DESC)`. Kierunek ROSNĄCY obsługuje ten indeks skanem wstecz, bo `keysetOrderBy`
  * nie dokleja `NULLS` przy kluczu `NOT NULL` (reguła §7.8 `architektura-panelu-serwer.md`
- * — dopisek wyłamałby jeden z dwóch kierunków).
+ * - dopisek wyłamałby jeden z dwóch kierunków).
  */
 const KEY: readonly [string, string] = ['received_at', 'uuid'];
 
@@ -37,7 +37,7 @@ const KEY: readonly [string, string] = ['received_at', 'uuid'];
  * z zewnątrz PRZED Postgresem: obie kolumny są `NOT NULL` (`uuid` jest kluczem głównym),
  * a `received_at` jest `TIMESTAMPTZ`, więc kursor niesie ISO 8601 UTC, nie dowolny napis.
  *
- * `direction: 'asc'` jest częścią kursora i jest sprawdzany przy odczycie — kursor wydany
+ * `direction: 'asc'` jest częścią kursora i jest sprawdzany przy odczycie - kursor wydany
  * przez listę panelu (`desc`) opisuje pozycję w INNYM porządku, więc nie ma prawa
  * przejść tutaj jako „prawie pasujący".
  */
@@ -55,7 +55,7 @@ interface EventDbRow {
   pic_id: string;
   dual_id: string | null;
   type: string;
-  /** `BIGINT` — sterownik oddaje `int8` NAPISEM, nie liczbą. */
+  /** `BIGINT` - sterownik oddaje `int8` NAPISEM, nie liczbą. */
   device_time: string | number;
   gps_time: string | number | null;
   payload: unknown;
@@ -94,7 +94,7 @@ export class PgMyEventsRepo implements MyEventsPort {
     filter.add('pic_id = ?', picId);
     keysetPredicate(KEY, key, filter, SHAPE);
 
-    // +1 wiersz ponad limit to cała detekcja „czy jest następna strona" — `COUNT`
+    // +1 wiersz ponad limit to cała detekcja „czy jest następna strona" - `COUNT`
     // na to nie odpowiada, bo rejestr rośnie MIĘDZY zapytaniami (telefony dosyłają
     // outboxy dokładnie wtedy, gdy ten telefon odtwarza swój).
     const limitParam = filter.bind(limit + 1);
@@ -110,7 +110,7 @@ export class PgMyEventsRepo implements MyEventsPort {
 
     const page = rows.slice(0, limit);
     const last = page[page.length - 1];
-    // Kursor za OSTATNIM oddanym wierszem — także gdy strona była ostatnia: telefon
+    // Kursor za OSTATNIM oddanym wierszem - także gdy strona była ostatnia: telefon
     // ma go zapamiętać i wrócić z nim po dosyłkę. `null` wyłącznie dla strony pustej,
     // bo tam nie ma pozycji do opisania (wołający zostaje przy tym, co miał).
     const nextCursor =

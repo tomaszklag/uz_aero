@@ -1,17 +1,17 @@
 /**
- * UZ Aero — ile TA sesja POWINNA była spalić i o ile powinien pójść licznik (issue #38).
+ * UZ Aero - ile TA sesja POWINNA była spalić i o ile powinien pójść licznik (issue #38).
  *
  * ══ PYTANIE, NA KTÓRE TO ODPOWIADA ══
- * „Wpisałem 27 litrów i +1:35 na liczniku — czy to normalne dla tej maszyny po TAKIM
+ * „Wpisałem 27 litrów i +1:35 na liczniku - czy to normalne dla tej maszyny po TAKIM
  * locie?" Do issue #38 ekran 10 odpowiadał na pytanie o jedną trzecią węższe: porównywał
  * L/h sesji z pasmem blokowym samolotu, czyli z liczbą policzoną na innej mieszance faz.
  * Sesja z długim kołowaniem wychodziła wtedy „poniżej normy" bez żadnego powodu poza
- * proporcją ziemi do powietrza, a motogodziny nie miały normy w ogóle — ekran twierdził
+ * proporcją ziemi do powietrza, a motogodziny nie miały normy w ogóle - ekran twierdził
  * po prostu, że ΔMH równa się czasowi blokowemu (czemu `mhModel.ts` wprost zaprzecza).
  *
  * ══ JEDNO RÓWNANIE, DWIE WIELKOŚCI ══
- * Paliwo i motogodziny liczą się TĄ SAMĄ formułą — `wielkość = k_lot·t_lot + k_ziemia·t_ziemia`
- * — bo opisują to samo zjawisko: silnik pracuje inaczej w powietrzu niż na wolnych
+ * Paliwo i motogodziny liczą się TĄ SAMĄ formułą - `wielkość = k_lot·t_lot + k_ziemia·t_ziemia`
+ * - bo opisują to samo zjawisko: silnik pracuje inaczej w powietrzu niż na wolnych
  * obrotach. Stąd wspólny typ wyniku i wspólny werdykt; ekran ma dzięki temu jedną formę
  * prezentacji dla obu (issue #38 pkt 5), a nie dwie przypadkowo różne.
  *
@@ -24,15 +24,20 @@
  */
 
 import type { ConsumptionNorm } from '../reference';
-import { FUEL_BAND_FLOOR_L, HOUR_MS, MH_BAND_FLOOR_H } from './policy';
+import {
+  FUEL_BAND_FLOOR_L,
+  HOUR_MS,
+  MH_BAND_FLOOR_H,
+  NOMINAL_BAND_RATIO,
+} from './policy';
 
 /**
- * Czasy jednej sesji — wejście przewidywania.
+ * Czasy jednej sesji - wejście przewidywania.
  *
  * Bierzemy CZAS BLOKOWY i czas w powietrzu, a ziemię liczymy sami, bo to jedyny sposób,
  * żeby ujemna ziemia nie weszła do równania. Czas lotu większy niż czas pracy silnika
  * jest niemożliwy fizycznie i znaczy rozjazd w rejestrze (ręczny wpis nachodzący na
- * bieg silnika) — ten sam przypadek, który `buildMhEquation` oznacza jako `clamped`.
+ * bieg silnika) - ten sam przypadek, który `buildMhEquation` oznacza jako `clamped`.
  */
 export interface SessionPhaseTimes {
   /** Czas pracy silnika: uruchomienie → zatrzymanie (ms). */
@@ -41,12 +46,22 @@ export interface SessionPhaseTimes {
   flightMs: number;
 }
 
-/** Na czym stoi przewidywanie — ekran mówi to wprost, bo to zmienia jego wiarygodność. */
+/** Na czym stoi przewidywanie - ekran mówi to wprost, bo to zmienia jego wiarygodność. */
 export type ExpectationBasis =
   /** Rozdzielone fazy: osobna stawka na ziemi i w powietrzu. */
   | 'phases'
-  /** Sama godzina pracy silnika — model nie rozdzielił faz, pasmo z centyli okna. */
-  | 'engine';
+  /** Sama godzina pracy silnika - model nie rozdzielił faz, pasmo z centyli okna. */
+  | 'engine'
+  /**
+   * Norma Z DOKUMENTACJI jednostki (issue #66) - maszyna nie ma jeszcze własnego modelu.
+   *
+   * Najsłabszy szczebel drabiny i jedyny, na którym pasmo jest ZADEKLAROWANE
+   * (`NOMINAL_BAND_RATIO`), a nie zmierzone: liczba pochodzi z instrukcji użytkowania,
+   * nie z lotów TEJ maszyny. Ekran musi to powiedzieć - werdykt „powyżej normy" znaczy
+   * tu „powyżej tego, co obiecuje producent", a nie „powyżej tego, co ten egzemplarz
+   * zwykle pokazuje".
+   */
+  | 'nominal';
 
 /** Przewidywanie razem z pasmem, w którym wynik uznajemy za normalny. */
 export interface Expectation {
@@ -63,28 +78,56 @@ export type NormVerdict = 'w-normie' | 'powyzej' | 'ponizej';
  * Ile paliwa POWINNA była spalić ta sesja.
  *
  * `null` = nie ma czego pokazać (brak normy albo silnik nie pracował) i ekran ma wtedy
- * MILCZEĆ — ta sama reguła, co w całym module normy.
+ * MILCZEĆ - ta sama reguła, co w całym module normy.
  *
  * Schodzenie po drabinie modeli jest tu takie samo jak w `model.ts`: gdy stawek fazowych
  * nie ma (model zdegradowany do jednej fazy), przewidujemy z godziny pracy silnika
- * i pasma centylowego. To słabsza odpowiedź, ale uczciwa — i ekran ją rozpozna po `basis`.
+ * i pasma centylowego. To słabsza odpowiedź, ale uczciwa - i ekran ją rozpozna po `basis`.
+ *
+ * ══ TRZECI SZCZEBEL: NORMA Z DOKUMENTACJI (issue #66) ══
+ * Zgłoszenie brzmiało: „dla pierwszych lotów gdzie nie ma jeszcze danych nie ma jak
+ * wyliczyć normy i odchyleń". Dopóki model tej maszyny nie przeszedł bramki publikacji,
+ * `norm` jest `null` i ekran milczał - a to jest dokładnie ten okres, w którym pilot
+ * jeszcze nie zna maszyny i podpowiedź przydaje mu się najbardziej.
+ *
+ * `nominalLPerH` (`ReferenceAircraft.fuelNormLPerH`) to średnie spalanie NA GODZINĘ
+ * PRACY SILNIKA z instrukcji użytkowania - ten sam mianownik, co `blockLPerH`, więc
+ * wchodzi dokładnie w miejsce stawki blokowej. **Wyliczona wygrywa z wpisaną**: model
+ * opisuje TEN egzemplarz, a dokumentacja - typ. Ta sama kolejność, co przy oleju
+ * (`oilPreflight.ts`, issue #60).
  */
 export function expectedFuelL(
   norm: ConsumptionNorm | null,
   times: SessionPhaseTimes,
+  nominalLPerH: number | null = null,
 ): Expectation | null {
-  if (norm == null) return null;
   const split = phaseHours(times);
   if (split == null) return null;
+  const blockH = split.flightH + split.groundH;
+
+  if (norm == null) {
+    if (nominalLPerH == null || nominalLPerH <= 0) return null;
+    // Pasmo ZADEKLAROWANE, nie zmierzone - patrz `NOMINAL_BAND_RATIO`. Dokumentacja
+    // podaje punkt, a nie rozrzut, więc udawanie centyli byłoby tu zmyśleniem.
+    const value = nominalLPerH * blockH;
+    return withFloor(
+      {
+        value,
+        low: value * (1 - NOMINAL_BAND_RATIO),
+        high: value * (1 + NOMINAL_BAND_RATIO),
+        basis: 'nominal',
+      },
+      FUEL_BAND_FLOOR_L,
+    );
+  }
 
   if (norm.groundLPerH != null && norm.airLPerH != null) {
     const value = norm.airLPerH * split.flightH + norm.groundLPerH * split.groundH;
     return band(value, norm.fuelRatioLow, norm.fuelRatioHigh, FUEL_BAND_FLOOR_L, 'phases');
   }
 
-  // Bez rozdzielonych faz zostaje stawka blokowa — wtedy pasmo bierzemy wprost z centyli
+  // Bez rozdzielonych faz zostaje stawka blokowa - wtedy pasmo bierzemy wprost z centyli
   // okna, bo to jest dokładnie to samo pytanie zadane o godzinę pracy silnika.
-  const blockH = split.flightH + split.groundH;
   return withFloor(
     {
       value: norm.blockLPerH * blockH,
@@ -99,7 +142,7 @@ export function expectedFuelL(
 /**
  * O ile POWINIEN był pójść licznik motogodzin w tej sesji.
  *
- * `null`, gdy przeliczników nie ma — czyli gdy samolot nie uzbierał jeszcze pięciu
+ * `null`, gdy przeliczników nie ma - czyli gdy samolot nie uzbierał jeszcze pięciu
  * zdanych sesji (`MIN_PUBLISH_MH_DAYS`) albo dopasowanie nie przeszło bramki fizycznej.
  * Wtedy ekran nie orzeka o odczycie pilota w żaden sposób.
  */
@@ -118,7 +161,7 @@ export function expectedMhH(
 /**
  * Werdykt: czy wynik mieści się w paśmie.
  *
- * Granice należą do pasma (porównania nieostre) — wynik dokładnie na krawędzi jest
+ * Granice należą do pasma (porównania nieostre) - wynik dokładnie na krawędzi jest
  * jeszcze normalny. Przy pasmach ściągniętych do podłogi przyrządu (`policy.ts`) to nie
  * jest formalność: różnica jednej podziałki licznika trafia wtedy w krawędź co chwilę.
  */
@@ -146,7 +189,7 @@ function phaseHours(times: SessionPhaseTimes): { flightH: number; groundH: numbe
 /**
  * Pasmo wokół przewidywania: rozrzut obserwacji, ale nie węższe niż podziałka przyrządu.
  *
- * Brak rozrzutu (`null`) nie unieważnia przewidywania — zostaje sama podłoga, czyli
+ * Brak rozrzutu (`null`) nie unieważnia przewidywania - zostaje sama podłoga, czyli
  * „tyle, ile wynosi błąd odczytu". Przewidywanie bez pasma byłoby gorsze: sugerowałoby
  * dokładność, której nie ma.
  */

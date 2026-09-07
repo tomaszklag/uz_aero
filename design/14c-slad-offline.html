@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 14C Ślad bez zasięgu</title>
+<title>UZ Aero - 14C Ślad bez zasięgu</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -67,7 +67,7 @@
   }
   .screen-title { font-family:var(--font-display); font-size:20px; letter-spacing:2px; color:var(--text-primary); }
   .header-subtitle { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
-  /* SyncChip: SAM pill, bez stempla pod spodem — online nie rysuje nic (issue #12) */
+  /* SyncChip: SAM pill, bez stempla pod spodem - online nie rysuje nic (issue #12) */
   .sync-chip {
     display:inline-flex; align-items:center; gap:5px;
     min-height:34px; padding:3px 11px; border-radius:999px;
@@ -104,35 +104,11 @@
   .empty-text { font-size:12px; color:var(--text-muted); line-height:1.6; max-width:286px; }
   .empty-text b { color:var(--text-secondary); font-weight:600; }
 
-  /* Akcja WYMAGAJĄCA SIECI: nieaktywna z podanym powodem, nigdy cichy błąd (§ offline-first
-     pkt 3). Powodu NIE widać z ekranu — pill w nagłówku mówi „offline", ale nie mówi,
-     czego ten przycisk od sieci chce — więc `disabledReason` zostaje (issue #43). */
-  .btn-primary-off {
-    display:flex; align-items:center; justify-content:center; gap:8px;
-    width:100%; padding:15px; border-radius:12px;
-    background:var(--surface-raised); border:1px solid var(--border-strong);
-    color:var(--text-muted); font-family:var(--font-display); font-size:22px; letter-spacing:2px;
-    cursor:not-allowed;
-  }
-  .btn-reason {
-    text-align:center; font-family:var(--font-mono); font-size:9px; letter-spacing:1px;
-    color:var(--text-muted); margin-top:-4px;
-  }
-
   .fallback-card { display:flex; flex-direction:column; gap:1px; background:var(--border); }
   .fallback-row { background:var(--surface); padding:10px 13px; display:flex; align-items:center; justify-content:space-between; }
   .fallback-key { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
   .fallback-val { font-family:var(--font-mono); font-size:12px; color:var(--text-primary); }
 
-  /* Baner STATUSU — opisuje stan przyrządu, nie jednorazową wskazówkę, więc bez `×` */
-  .status-banner {
-    display:flex; align-items:flex-start; gap:9px;
-    background:var(--amber-muted); border:1px solid var(--amber-border);
-    border-radius:12px; padding:11px 13px;
-  }
-  .status-icon { color:var(--amber); flex-shrink:0; margin-top:1px; }
-  .status-text { font-size:11px; color:var(--text-secondary); line-height:1.55; }
-  .status-text b { color:var(--amber); font-weight:600; }
 
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
   .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
@@ -152,7 +128,7 @@
 
 <div class="canvas-label">
   <div class="film-strip">14C · BEZ ZASIĘGU</div>
-  <div class="slug">app / sesja / ślad offline</div>
+  <div class="slug">app / operacja / ślad offline</div>
   <div class="canvas-meta"><span class="pulse"></span>UZ AERO</div>
 </div>
 
@@ -170,10 +146,10 @@
     <div class="app-header">
       <a href="10-statystyki.html" class="back-btn">
         <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 2.5L4 6.5l4 4"/></svg>
-        Sesja
+        Operacja
       </a>
       <div class="app-header-center">
-        <div class="screen-title">ŚLAD SESJI</div>
+        <div class="screen-title">ŚLAD OPERACJI</div>
         <div class="header-subtitle">SP-AXA · 06 SIE · 2 loty</div>
       </div>
       <!-- Pill OFFLINE to JEDYNY wskaźnik sieci w aplikacji (issue #12) i on już mówi,
@@ -196,24 +172,28 @@
             <path d="M15 38h22a9 9 0 0 0 1-17.9A13 13 0 0 0 13 22a8 8 0 0 0 2 16z"/>
             <path d="M8 8l38 38" stroke-width="1.8"/>
           </svg>
-          <div class="empty-title">ŚLAD JEST NA SERWERZE</div>
+          <div class="empty-title">ŚLAD NIEDOSTĘPNY</div>
           <div class="empty-text">
-            Telefon nagrał tę trasę i oddał ją serwerowi, ale <b>nie ma teraz jak jej
-            pobrać</b>. Wróć na ten ekran z zasięgiem — trasa, profil i statystyki
-            wczytają się w całości.
+            Wróć na ten ekran <b>z zasięgiem</b>.
           </div>
         </div>
       </div>
 
-      <button class="btn-primary-off" disabled>POBIERZ ŚLAD</button>
-      <div class="btn-reason">wymaga połączenia z serwerem</div>
+      <!-- PRZYCISKU „POBIERZ ŚLAD" TU NIE MA i nie ma go po co dokładać (2026-09-07).
+           Ekran pobiera ślad SAM przy wejściu, więc jedyną drogą wyjścia jest wrócić tu
+           z zasięgiem - i dokładnie to mówi zdanie wyżej. Przycisk mógłby stać na tym
+           ekranie WYŁĄCZNIE wyszarzony (w zasięgu ekran rysuje mapę, a nie ten stan),
+           czyli obiecywałby akcję, której nigdy nie da się wykonać - a to jest zakazane
+           (issue #40, 10B). Powód `offline` jest jedynym z czterech, którego zdanie jest
+           INSTRUKCJĄ, bo jako jedyny ma drogę wyjścia (issue #47); instrukcja tę rolę
+           już pełni i drugiego nośnika nie potrzebuje. -->
 
-      <!-- Co JEDNAK wiadomo — liczy się z rejestru na telefonie, więc jest zawsze.
-           Ekran 14 stracił przez issue #47 wyłącznie GEOMETRIĘ; czasy sesji nigdy nie
+      <!-- Co JEDNAK wiadomo - liczy się z rejestru na telefonie, więc jest zawsze.
+           Ekran 14 stracił przez issue #47 wyłącznie GEOMETRIĘ; czasy operacji nigdy nie
            zależały od śladu i nie zaczynają zależeć teraz. -->
       <div class="section-card">
         <div class="section-card-head">
-          Co wiadomo o tej sesji
+          Co wiadomo o tej operacji
           <span class="spacer"></span>
           <span class="head-note">z rejestru · czasy UTC</span>
         </div>
@@ -237,28 +217,16 @@
         </div>
       </div>
 
-      <div class="status-banner">
-        <svg class="status-icon" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
-          <circle cx="7" cy="7" r="6"/><path d="M7 6.5v4M7 4h.01"/>
-        </svg>
-        <div class="status-text">
-          <b>Ślad nie zajmuje już pamięci telefonu</b> — nagranie idzie na serwer i tam
-          zostaje na stałe, także po reinstalacji aplikacji i na nowym telefonie. Ceną
-          jest ten ekran: sama trasa wymaga zasięgu. Wszystko inne w aplikacji działa
-          offline tak samo jak dotąd.
-        </div>
-      </div>
-
     </div>
   </div>
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Warianty tego ekranu — kiedy który?</div>
+  <div class="vp-title">Warianty tego ekranu - kiedy który?</div>
   <a class="vp-item" href="14-slad.html">
     <span class="vp-badge">14</span>
     <span class="vp-body">
-      <span class="vp-name">Ślad sesji — pełny</span>
+      <span class="vp-name">Ślad operacji - pełny</span>
       <span class="vp-when">Serwer odpowiedział: trasa, profil pionowy ze znacznikami, statystyki lotu i log punktów.</span>
     </span>
   </a>
@@ -266,7 +234,7 @@
     <span class="vp-badge amber">14C</span>
     <span class="vp-body">
       <span class="vp-name">Bez zasięgu</span>
-      <span class="vp-when">Telefon nie ma jak pobrać śladu. JEDYNY stan, w którym ekran 14 potrzebuje sieci — i dlatego mówi to wprost zamiast pokazywać pustą mapę albo udawać, że trasy nie ma. Czasy sesji zostają, bo liczą się z lokalnego rejestru. Nie mylić z 14B: tam trasy nie ma i nie będzie.</span>
+      <span class="vp-when">Telefon nie ma jak pobrać śladu. JEDYNY stan, w którym ekran 14 potrzebuje sieci - i dlatego mówi to wprost zamiast pokazywać pustą mapę albo udawać, że trasy nie ma. Czasy operacji zostają, bo liczą się z lokalnego rejestru. Nie mylić z 14B: tam trasy nie ma i nie będzie.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -281,7 +249,7 @@
     <span class="vp-badge dim">14B</span>
     <span class="vp-body">
       <span class="vp-name">Brak śladu</span>
-      <span class="vp-when">Sesja wpisana ręcznie albo nagranie, które nigdy nie powstało — zasięg tu nic nie zmieni.</span>
+      <span class="vp-when">Operacja wpisana ręcznie albo nagranie, które nigdy nie powstało - zasięg tu nic nie zmieni.</span>
     </span>
   </a>
 </aside>
@@ -289,7 +257,7 @@
 <nav class="nav-strip">
   <a href="index.html">↩ Index</a>
   <span>·</span>
-  <a href="10-statystyki.html">← 10 Sesja</a>
+  <a href="10-statystyki.html">← 10 Operacja</a>
   <span>·</span>
   <a href="14-slad.html">14 Ślad</a>
   <a href="14b-slad-brak.html">14B Brak</a>

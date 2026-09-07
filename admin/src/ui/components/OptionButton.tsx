@@ -1,13 +1,13 @@
 /**
- * UZ Aero — panel: pozycja listy kart jako WYBÓR (`.opt` jako `<button>`).
+ * UZ Aero - panel: pozycja listy kart jako WYBÓR (`.opt` jako `<button>`).
  *
  * Trzeci wariant tej samej karty: `OptionLink` prowadzi w głąb, a ten zaznacza opcję.
- * Mockup używa tu `<label class="opt">` z `onclick` — w panelu jest to `<button>`,
+ * Mockup używa tu `<label class="opt">` z `onclick` - w panelu jest to `<button>`,
  * bo etykieta bez powiązanego `<input>` nie jest osiągalna z klawiatury ani ogłaszana
  * przez czytnik ekranu, a wybór akcji korekty (`retime` vs `void`) to decyzja, która
  * zmienia liczby w rejestrze klubu.
  *
- * `role="radio"` z `aria-checked`, bo to jest wybór JEDNEJ opcji z zamkniętego zbioru —
+ * `role="radio"` z `aria-checked`, bo to jest wybór JEDNEJ opcji z zamkniętego zbioru -
  * `aria-pressed` opisywałby przełącznik, czyli coś, co da się mieć włączone naraz.
  *
  * Klasy zostają dokładnie te z `SZABLON.html` (`.opt`, `.opt-body`, `.opt-name`,
@@ -19,7 +19,7 @@ import { CheckIcon } from './icons';
 
 interface OptionButtonProps {
   name: string;
-  /** Druga linia: mono, drobna — payload i skutek, nie zdania. */
+  /** Druga linia: mono, drobna - payload i skutek, nie zdania. */
   desc: string;
   selected: boolean;
   disabled?: boolean;

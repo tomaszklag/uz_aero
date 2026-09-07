@@ -1,18 +1,18 @@
 /**
- * UZ Aero (serwer) — trasa rejestru zdarzeń (`GET /admin/api/events`, mockup
+ * UZ Aero (serwer) - trasa rejestru zdarzeń (`GET /admin/api/events`, mockup
  * `A04-zdarzenia.html`).
  *
  * ══ ZDOLNOŚĆ: `panel.access`, A NIE NOWA ══
- * Rejestr czytają OBIE role panelu (`design/admin/ANALIZA.md`: „Rejestr zdarzeń —
+ * Rejestr czytają OBIE role panelu (`design/admin/ANALIZA.md`: „Rejestr zdarzeń -
  * przeglądarka (A04) | admin ✅ | szef wyszkolenia ✅ (odczyt)"), a `panel.access` mają
  * dokładnie te dwie. Osobna zdolność `events.read` nie odrzuciłaby ani jednego żądania,
- * które przechodzi dziś — a mnożenie zdolności bez potrzeby rozmywa odpowiedź na
+ * które przechodzi dziś - a mnożenie zdolności bez potrzeby rozmywa odpowiedź na
  * pytanie „kto co może" (`domain/roles.ts`). Zdolność `events.correct` (wyłącznie
- * administrator) dotyczy ZAPISU i tej trasy nie dotyczy w ogóle — ekran pokazuje
+ * administrator) dotyczy ZAPISU i tej trasy nie dotyczy w ogóle - ekran pokazuje
  * przycisk korekty zablokowany z powodem, a nie ukryty.
  *
  * Cienka jak reszta repo: zod → zapytanie → status. Trasa nie zna ani SQL-a, ani
- * porządku listy — tłumaczy query string na filtr i wynik na kod HTTP.
+ * porządku listy - tłumaczy query string na filtr i wynik na kod HTTP.
  */
 
 import type { FastifyInstance } from 'fastify';
@@ -28,7 +28,7 @@ import { dayParam, endOfDay } from './dayRange.ts';
  * Filtr po typie przepuszcza WYŁĄCZNIE kody z katalogu domeny.
  *
  * ══ DLACZEGO STRAŻNIK NA WEJŚCIU, SKORO ODCZYT PRZEPUSZCZA NIEZNANE TYPY ══
- * To nie jest sprzeczność, tylko dwa różne pytania — ta sama para, co przy dzienniku
+ * To nie jest sprzeczność, tylko dwa różne pytania - ta sama para, co przy dzienniku
  * audytu. Wiersz w bazie może nieść typ spoza katalogu (kolumna `events.type` celowo
  * nie ma `CHECK`-a) i lista pokazuje go dosłownie. Ale FILTR jest pytaniem zadanym
  * przez klienta, a pytanie o typ, którego system nie zna, nie ma poprawnej odpowiedzi:
@@ -44,7 +44,7 @@ const eventType = z.string().refine((value): value is EventType => KNOWN_TYPES.h
 /**
  * Parametr POWTARZALNY (`?type=takeoff&type=landing`), wzorem `?action=` w audycie:
  * ekran filtruje chipami, a chip bywa grupą typów. Fastify oddaje powtórzony parametr
- * tablicą, pojedynczy — napisem; unia obsługuje oba i oddaje zawsze tablicę, żeby
+ * tablicą, pojedynczy - napisem; unia obsługuje oba i oddaje zawsze tablicę, żeby
  * dalsza część kodu nie znała tej różnicy.
  */
 const eventTypes = z
@@ -53,15 +53,15 @@ const eventTypes = z
 
 const listQuery = z.object({
   type: eventTypes.optional(),
-  /** DOKŁADNY uuid zdarzenia — wklejenie go z telefonu to główny scenariusz `A04`. */
+  /** DOKŁADNY uuid zdarzenia - wklejenie go z telefonu to główny scenariusz `A04`. */
   uuid: z.string().min(1).max(200).optional(),
   sessionUuid: z.string().min(1).max(200).optional(),
   aircraftId: z.string().min(1).max(100).optional(),
-  /** Dopasowuje PIC-a albo Duala — dzień szkolny należy do obu. */
+  /** Dopasowuje PIC-a albo Duala - dzień szkolny należy do obu. */
   pilotId: z.string().min(1).max(100).optional(),
   /** Dokładna wartość `events.source_device`, np. `admin:TMK` albo znacznik telefonu. */
   sourceDevice: z.string().min(1).max(200).optional(),
-  /** Zakres po CZASIE PRZYJĘCIA (`received_at`) — tej samej osi, co porządek listy. */
+  /** Zakres po CZASIE PRZYJĘCIA (`received_at`) - tej samej osi, co porządek listy. */
   from: dayParam.optional(),
   to: dayParam.optional(),
   sort: z.enum(['asc', 'desc']).default('desc'),
@@ -99,7 +99,7 @@ export function registerAdminEventRoutes(
 
       const outcome = await events.list(filter);
       // 400, nie 500: kursor przychodzi z zewnątrz. Milczące zaczęcie od pierwszej
-      // strony byłoby gorsze — panel pokazałby początek rejestru, sądząc, że przewinął.
+      // strony byłoby gorsze - panel pokazałby początek rejestru, sądząc, że przewinął.
       if (!outcome.ok) return reply.code(400).send({ error: 'bad_cursor' });
 
       return reply.send(outcome.page);

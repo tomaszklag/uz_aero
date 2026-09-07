@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UZ Aero - 15H Lot ręczny · krok 3/4 bez biegu silnika</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A; --text-placeholder: #5A5A5A;
+    --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28);
+    --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28);
+    --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    --phone-scale: min(1, calc((100vh - 240px) / 852px), calc((100vw - 60px) / 393px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+  .canvas-label { width:100%; max-width:460px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+  .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
+  .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
+  .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
+  .phone {
+    width:393px; height:852px; border-radius:54px; background:var(--bg);
+    border:10px solid #0D0E12;
+    box-shadow:0 0 0 1px #1C1E24, 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);
+    overflow:hidden; position:relative; isolation:isolate; flex-shrink:0;
+    transform:scale(var(--phone-scale)); transform-origin:top center;
+    margin-bottom:calc((var(--phone-scale) - 1) * 852px);
+  }
+  .phone::before { content:''; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:24px; background:#000; z-index:100; }
+  .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
+  .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
+  .status-right { display:inline-flex; align-items:center; gap:6px; }
+  .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
+  .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--green); }
+  .nav-strip span { color:var(--border-strong); }
+
+  .app-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 12px; border-bottom:1px solid var(--border); flex-shrink:0; }
+  .app-header .header-center { flex:1; text-align:center; }
+  .back-btn, .step-badge { min-width:56px; }
+  .screen-title { font-family:var(--font-display); font-size:26px; letter-spacing:3px; color:var(--text-primary); line-height:1; }
+  .screen-subtitle { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); letter-spacing:1px; margin-top:3px; }
+  .step-badge { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:4px 10px; flex-shrink:0; white-space:nowrap; }
+  .back-btn { display:flex; align-items:center; gap:6px; font-family:var(--font-mono); font-size:11px; color:var(--text-muted); text-decoration:none; letter-spacing:0.5px; }
+  .header-right { display:flex; align-items:center; gap:8px; }
+
+  .scroll { flex:1; overflow-y:auto; padding:14px 16px 20px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
+  .scroll::-webkit-scrollbar { display:none; }
+  .spacer { flex:1; min-height:8px; }
+
+  .section { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:14px; display:flex; flex-direction:column; gap:12px; }
+  .section-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .section-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
+  .optional-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); background:var(--surface-raised); border:1px solid var(--border); border-radius:6px; padding:2px 6px; }
+
+  /* Para godzin biegu silnika - dwie kolumny, bo to jedna wielkość o dwóch końcach. */
+  .time-pair { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .field { display:flex; flex-direction:column; gap:6px; }
+  .field-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
+  .field-input { background:var(--surface-raised); border:1px solid var(--border-strong); border-radius:12px; padding:12px 14px; display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:46px; cursor:pointer; text-decoration:none; }
+  .field-input:hover { border-color:var(--green-border); }
+  /* Metryka wartości = pole wpisu z arkusza (issue #58 pkt 5 i 9): mono 16 / 1.5;
+     placeholder ZAWSZE składem tekstowym (trzecia tura #58): body 15
+     w --text-placeholder, jak w arkuszu notatki - instrukcja, nie wartość. */
+  .field-time { font-family:var(--font-mono); font-size:16px; font-weight:700; letter-spacing:1.5px; color:var(--text-primary); }
+  .field-time.empty { color:var(--text-placeholder); font-weight:400; font-family:var(--font-body); font-size:15px; line-height:20px; letter-spacing:0; }
+  .field-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); line-height:1.5; }
+
+  /* ===== OŚ OPERACJI - TEN SAM KOMPONENT, CO W KOKPICIE I W ROZLICZENIU (issue #62) =====
+
+     Do issue #62 krok 3 był DWIEMA PŁASKIMI LISTAMI obok siebie: „Loty" i „Zrzuty".
+     Zgłoszenie z urządzenia trafiło w sedno: „na jednym biegu silnika wykonałem kilka
+     zrzutów w kilku lotach" - a formularz nie miał jak pokazać, który zrzut należy do
+     którego lotu. Nie dlatego, że model tego nie wie: `DROP_ON_GROUND` w domenie
+     sprawdza dokładnie zawieranie się zrzutu w oknie lotu, a oś operacji i kokpit od
+     zawsze wyrażają przynależność POZYCJĄ W CZASIE. Wiedział model, milczał ekran.
+
+     Odpowiedzią jest oś - ta sama, którą pilot ogląda w kokpicie w trakcie lotu
+     i w rozliczeniu po nim (`SessionAxis`, issue #44). Jedna rzecz ma w tej aplikacji
+     jeden kształt, a wpis ręczny opisuje TEN SAM bieg silnika, co zapis automatyczny.
+
+     Trzy rzeczy wynikają z tego za darmo:
+      • zrzut stoi MIĘDZY startem a lądowaniem swojego lotu i niesie jego numer po
+        prawej - przynależność widać, zamiast trzeba jej szukać (pkt 9);
+      • nowy lot dziedziczy godziny BIEGU SILNIKA, bo oś ma dwa końce i to one są
+        jego naturalnymi granicami (pkt 8);
+      • dopóki biegu nie ma, oś nie istnieje - więc nie ma też czego do niej dodać
+        (pkt 10). Patrz wariant 15H.
+
+     Wiersz ma tu 44 px, nie 28: w rozliczeniu oś jest opisowa i rytm celu dotykowego
+     marnowałby kolumnę (issue #40), a tutaj KAŻDY wiersz otwiera swój arkusz. */
+  .axis { padding:6px 0; }
+  .axis-row {
+    display:grid; grid-template-columns:52px 14px 1fr auto 18px;
+    align-items:center; gap:8px; padding:0 12px 0 10px; min-height:44px;
+    text-decoration:none; cursor:pointer;
+  }
+  .axis-row:hover { background:var(--surface-hover); }
+  .axis-time { font-family:var(--font-mono); font-size:11px; color:var(--text-primary); }
+  .axis-time.dim { color:var(--text-secondary); }
+  /* Koniec biegu bez godziny - placeholder w miejscu wartości, bo wiersz JEST wejściem
+     w jej wpisanie (issue #62, czwarta tura). */
+  .axis-time.empty { color:var(--text-placeholder); }
+  /* Pion osi rysuje sam wiersz: kropka + kreska do sąsiada. Osobny element linii
+     rozjeżdżałby się przy wierszach o różnej wysokości. */
+  .axis-mark { position:relative; align-self:stretch; display:flex; justify-content:center; }
+  .axis-mark::before { content:''; position:absolute; top:0; bottom:0; width:1px; background:var(--border-strong); }
+  .axis-row:first-child .axis-mark::before { top:50%; }
+  .axis-row.last .axis-mark::before { bottom:50%; }
+  .axis-dot {
+    position:relative; align-self:center; width:9px; height:9px; border-radius:50%;
+    background:var(--border-strong); border:2px solid var(--surface); box-shadow:0 0 0 2px var(--surface);
+  }
+  .axis-dot.green { background:var(--green); }
+  .axis-dot.red { background:var(--red); }
+  .axis-dot.blue { background:var(--blue); }
+  .axis-dot.amber { background:var(--amber); }
+  .axis-label { display:flex; flex-direction:column; gap:1px; min-width:0; }
+  .axis-name { font-family:var(--font-mono); font-size:10px; letter-spacing:1.4px; text-transform:uppercase; color:var(--text-primary); display:flex; align-items:center; gap:6px; }
+  .axis-name.muted { color:var(--text-secondary); }
+  .axis-sub { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
+  .axis-right { display:flex; align-items:center; justify-content:flex-end; gap:8px; }
+  /* Numer lotu po PRAWEJ - przy starcie mówi „który lot się tu zaczyna", a przy
+     ZRZUCIE „do którego lotu on należy" (issue #62 pkt 9). To ta sama kolumna
+     i to samo pytanie, więc ta sama odpowiedź. */
+  .axis-flight { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
+  .axis-dur { font-family:var(--font-mono); font-size:11px; color:var(--green); }
+  .axis-pen { display:flex; align-items:center; justify-content:center; color:var(--text-muted); }
+  .axis-row:hover .axis-pen { color:var(--green); }
+  /* Zrzut poza jakimkolwiek lotem - miękka reguła domeny `DROP_ON_GROUND`, do issue #62
+     pokazywana dopiero na kroku 4. Ostrzeżenie ma stać tam, gdzie da się je naprawić. */
+  .axis-row.warned .axis-name { color:var(--amber); }
+  .axis-row.warned .axis-flight { color:var(--amber); }
+  /* Dopisanie jest OSTATNIM WIERSZEM osi, nie przyciskiem pod nią (wzorzec „DODAJ
+     WPIS", issue #43): nowy lot trafi w przebieg operacji, więc wejście stoi tam, gdzie
+     skończy się jego skutek. Plus, nie ołówek - ołówek obiecuje poprawianie
+     istniejącej wartości. */
+  .axis-add { display:flex; align-items:center; justify-content:center; gap:8px; min-height:44px; border-top:1px solid var(--border); font-family:var(--font-mono); font-size:10px; letter-spacing:1.5px; color:var(--green); text-decoration:none; }
+  .axis-add:hover { background:var(--surface-hover); }
+  .axis-add.muted { color:var(--text-muted); }
+  .axis-foot { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border-top:1px solid var(--border); background:var(--surface-raised); }
+  .axis-foot-item { display:flex; flex-direction:column; gap:2px; }
+  .axis-foot-val { font-family:var(--font-display); font-size:20px; letter-spacing:1.5px; line-height:1; color:var(--text-primary); }
+  .axis-foot-val.green { color:var(--green); }
+  .axis-foot-key { font-family:var(--font-mono); font-size:7px; letter-spacing:1.2px; text-transform:uppercase; color:var(--text-muted); }
+  /* Karta osi nie ma wewnętrznego odstępu: oś sama trzyma swoje wiersze, a stopka
+     sum ma dobijać do krawędzi, tak jak w rozliczeniu. */
+  .section.flush { padding:0; gap:0; overflow:hidden; }
+  .section.flush .section-head { padding:14px 14px 8px; }
+
+  .btn-primary { display:flex; align-items:center; justify-content:center; gap:10px; background:var(--green); color:#0A0A0A; border:none; border-radius:14px; padding:16px; font-family:var(--font-display); font-size:22px; letter-spacing:3px; text-decoration:none; box-shadow:0 0 30px rgba(46,204,113,0.35); }
+  /* Powód blokady WEWNĄTRZ przycisku, nigdy pod nim (issue #55). Przycisk z powodem
+     NIE dostaje przygaszenia opacity - bursztyn pod 0.45 przestaje być ostrzeżeniem. */
+  .btn-primary.disabled { background:var(--surface-hover); color:var(--text-muted); box-shadow:none; cursor:not-allowed; flex-direction:column; gap:6px; }
+  .btn-reason { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--amber); text-align:center; line-height:1.5; }
+
+  .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
+  .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; transition:all .15s; }
+  .vp-item:hover { border-color:var(--green-border); }
+  .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
+  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-badge.blue { color:var(--blue); background:var(--blue-muted); border-color:var(--blue-border); }
+  .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
+  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-top:3px; white-space:nowrap; }
+</style>
+</head>
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">UZ AERO - 15H</span>
+  <span class="slug">lot ręczny · krok 3 bez biegu silnika</span>
+  <span class="canvas-meta">Stan wejścia</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Lot ręczny, krok 3 bez wpisanego biegu silnika">
+  <div class="status-bar">
+    <span>16:22</span>
+    <span class="status-right">
+      <svg width="17" height="11" viewBox="0 0 17 11" fill="none"><rect x="0" y="7" width="3" height="4" rx="0.6" fill="currentColor"/><rect x="4.5" y="5" width="3" height="6" rx="0.6" fill="currentColor"/><rect x="9" y="2.5" width="3" height="8.5" rx="0.6" fill="currentColor"/><rect x="13.5" y="0" width="3" height="11" rx="0.6" fill="currentColor" opacity="0.4"/></svg>
+      <svg width="15" height="11" viewBox="0 0 15 11" fill="none"><path d="M7.5 9.5 9.9 7c-1.3-1.2-3.4-1.2-4.8 0l2.4 2.5Z" fill="currentColor"/><path d="M3.4 4.9C5.6 2.7 9.4 2.7 11.6 4.9l1.4-1.4C10 0.6 5 0.6 2 3.5l1.4 1.4Z" fill="currentColor" opacity="0.5"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+    <div class="app-header">
+      <a href="15a-reczny-zadanie.html" class="back-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Wróć
+      </a>
+      <div class="header-center">
+        <div class="screen-title">LOT RĘCZNY</div>
+        <div class="screen-subtitle">SP-AXA · 16 SIE · CZASY UTC</div>
+      </div>
+      <div class="header-right">
+        <div class="step-badge">3 / 4</div>
+      </div>
+    </div>
+
+    <div class="scroll">
+
+      <!-- KROK 3 ZACZYNA SIĘ OD BIEGU SILNIKA I TYLKO OD NIEGO (issue #62 pkt 10),
+           ALE JEST TYM SAMYM EKRANEM, CO 15B (czwarta tura z urządzenia).
+
+           Do czwartej tury stała tu karta „Bieg silnika” z parą pól, a oś pojawiała
+           się dopiero po ich wypełnieniu - czyli krok 3 miewał DWA różne układy,
+           a w pełnym stanie te same dwie godziny stały w karcie i na osi naraz
+           („dubluje się «bieg silnika» z tym, co mam na osi czasu”).
+
+           Odtąd oś istnieje od pierwszej sekundy, a jej dwa końce startują z „--:--”
+           i SAME są wejściem w wpisanie godziny. Wypełnienie obu zamienia ten ekran
+           w 15B - bez zmiany układu, tylko z dopisanymi wierszami.
+
+           Reguła „nie da się dodać lotu bez biegu silnika” zostaje w mocy i pilnuje jej
+           BRAK wiersza „DODAJ LOT”, a nie wyszarzony przycisk: wyszarzony obiecywałby
+           akcję, którą reguły i tak odrzucą (ta sama zasada, co brak „EDYTUJ DANE”
+           w podglądzie po oknie korekty, 10B, i brak „DALEJ” przy pustej flocie, 02G).
+
+           Powodu nie tłumaczymy tu zdaniem: niesie go „DALEJ” na dole ekranu,
+           bursztynem wewnątrz przycisku (issue #55).
+
+           Stopki sum też nie ma - bez biegu silnika blok nie ma z czego wyjść, a trójka
+           zer byłaby liczbą o niczym (reguła „zerowy licznik to szum” z issue #43). -->
+      <div class="section flush">
+        <div class="section-head"><span class="section-label">Przebieg operacji</span></div>
+
+        <div class="axis">
+          <a href="15f-reczny-czas-pusty.html" class="axis-row">
+            <span class="axis-time empty">--:--</span>
+            <span class="axis-mark"><span class="axis-dot"></span></span>
+            <span class="axis-label"><span class="axis-name">Uruchomienie</span></span>
+            <span class="axis-right"></span>
+            <span class="axis-pen"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>
+          </a>
+          <a href="15f-reczny-czas-pusty.html" class="axis-row last">
+            <span class="axis-time empty">--:--</span>
+            <span class="axis-mark"><span class="axis-dot"></span></span>
+            <span class="axis-label"><span class="axis-name">Wyłączenie</span></span>
+            <span class="axis-right"></span>
+            <span class="axis-pen"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>
+          </a>
+        </div>
+      </div>
+
+      <div class="spacer"></div>
+
+      <span class="btn-primary disabled">
+        DALEJ
+        <span class="btn-reason">Wpisz godziny biegu silnika: uruchomienie i wyłączenie</span>
+      </span>
+
+    </div>
+  </div>
+</main>
+
+<aside class="variants-panel">
+  <div class="vp-title">Kroki wpisu ręcznego - co gdzie</div>
+  <a class="vp-item" href="15-reczny-lot.html">
+    <span class="vp-badge">15</span>
+    <span class="vp-body">
+      <span class="vp-name">Krok 1 - data i samolot</span>
+      <span class="vp-when">Maszyna, data lotu, opcjonalny Dual.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="15a-reczny-zadanie.html">
+    <span class="vp-badge">15A</span>
+    <span class="vp-body">
+      <span class="vp-name">Krok 2 - zadanie</span>
+      <span class="vp-when">Rodzaj operacji, lotniska, klient, notatka.</span>
+    </span>
+  </a>
+  <a class="vp-item active" href="15h-reczny-czasy-bez-biegu.html">
+    <span class="vp-badge amber">15H</span>
+    <span class="vp-body">
+      <span class="vp-name">Krok 3 bez biegu silnika</span>
+      <span class="vp-when">Stan, w którym krok 3 się otwiera - TEN SAM układ, co 15B. Oś już jest, ale oba jej końce mają „--:--" i to one są wejściem w wpisanie godzin; stopki sum nie ma, bo blok nie ma z czego wyjść. „DODAJ LOT" pojawi się dopiero z biegiem silnika, a wpisanie obu godzin zamienia ten ekran w 15B bez zmiany układu.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="15b-reczny-czasy.html">
+    <span class="vp-badge">15B</span>
+    <span class="vp-body">
+      <span class="vp-name">Krok 3 - przebieg operacji</span>
+      <span class="vp-when">Bieg wpisany: oś od uruchomienia do wyłączenia, loty w środku, zrzuty w swoich lotach.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="15c-reczny-liczniki.html">
+    <span class="vp-badge">15C</span>
+    <span class="vp-body">
+      <span class="vp-name">Krok 4 - liczniki i paliwo</span>
+      <span class="vp-when">Paliwo przed / dolewki / po, motogodziny przed i po, ostrzeżenia.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="15f-reczny-czas-pusty.html">
+    <span class="vp-badge blue">15F</span>
+    <span class="vp-body">
+      <span class="vp-name">Arkusz czasu bez wartości</span>
+      <span class="vp-when">Otwiera się z każdego z dwóch pól wyżej.</span>
+    </span>
+  </a>
+</aside>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="15a-reczny-zadanie.html">← 15A Krok 2</a>
+  <span>·</span>
+  <a href="15b-reczny-czasy.html">15B Krok 3</a>
+  <span>·</span>
+  <a href="15h-reczny-czasy-bez-biegu.html" class="active">15H Bez biegu</a>
+  <span>·</span>
+  <a href="15c-reczny-liczniki.html">15C Krok 4 →</a>
+</nav>
+
+</body>
+</html>

@@ -1,12 +1,12 @@
 /**
- * UZ Aero — przelicznik motogodzin na godzinę zegara, wyznaczony z danych.
+ * UZ Aero - przelicznik motogodzin na godzinę zegara, wyznaczony z danych.
  *
  * ══ PROBLEM, KTÓRY TEN MODEL ROZWIĄZUJE ══
  * Przyrost licznika motogodzin w dniu NIE równa się czasowi blokowemu i nie ma prawa
  * się równać. Licznik obrotomierzowy zlicza obroty silnika przeliczone na godziny przy
  * obrotach znamionowych: w powietrzu silnik pracuje blisko nich (k ≈ 1), na ziemi na
  * wolnych obrotach (k ≈ 0,4). Dzień z długim kołowaniem daje więc ΔMH wyraźnie mniejszą
- * od bloku — i to jest poprawne działanie przyrządu, nie rozjazd danych.
+ * od bloku - i to jest poprawne działanie przyrządu, nie rozjazd danych.
  *
  * Model: `ΔMH_dnia = k_lot · t_lot + k_ziemia · t_ziemia`, jedno równanie na zamknięty
  * dzień. Niewiadome `k` są stałymi maszyny, więc identyfikuje je zmienność PROPORCJI faz
@@ -15,10 +15,10 @@
  *
  * ══ TYP LICZNIKA WYKRYWAMY, NIE KONFIGURUJEMY ══
  * `aircraft.mh_format` mówi, jak licznik WYŚWIETLA wartość (dziesiętnie czy hh:mm), a nie
- * jak ją zlicza. O tym drugim nikt w systemie nie wie — i nie ma potrzeby, żeby ktoś
+ * jak ją zlicza. O tym drugim nikt w systemie nie wie - i nie ma potrzeby, żeby ktoś
  * wpisywał to ręcznie, skoro dane odpowiadają wprost: przelicznik bliski jedności w OBU
  * fazach to licznik godzinowy (Hobbs), wyraźnie niższy na ziemi to obrotomierzowy.
- * Rozstrzyga przedział ufności, a nie próg „na oko" — czyli ta sama liczba, którą i tak
+ * Rozstrzyga przedział ufności, a nie próg „na oko" - czyli ta sama liczba, którą i tak
  * pokazujemy na ekranie.
  */
 
@@ -33,7 +33,7 @@ import { HOUR_MS, MIN_PUBLISH_MH_DAYS } from './policy';
  *
  * Próg praktyczny obok statystycznego, dołożony po przebiegu na realnej historii
  * (2026-08-05). Przy danych wewnętrznie spójnych σ reszt schodzi do zera, więc przedziały
- * ufności też — i wtedy KAŻDA różnica staje się „istotna": model orzekał licznik
+ * ufności też - i wtedy KAŻDA różnica staje się „istotna": model orzekał licznik
  * obrotomierzowy na podstawie 1,00 kontra 0,99. Statystyka miała rację (różnica jest
  * pewna), ale odpowiedź była bez sensu, bo trzy minuty na godzinę to nie jest różnica
  * między typami licznika, tylko szum odczytu z tarczy.
@@ -46,7 +46,7 @@ export type CounterKind =
   | 'hobbs'
   /** Obrotomierzowy: na ziemi przyrasta wolniej niż zegar. */
   | 'tach'
-  /** Za mało danych albo przedziały nierozstrzygające — nie zgadujemy. */
+  /** Za mało danych albo przedziały nierozstrzygające - nie zgadujemy. */
   | 'unknown';
 
 /** Jeden dzień w zestawieniu „fakt kontra model" (tabela na `A10a`). */
@@ -81,7 +81,7 @@ export interface MhModel {
   rows: MhFit[];
 }
 
-/** Pusty model — brak danych albo brak dopasowania. */
+/** Pusty model - brak danych albo brak dopasowania. */
 export function emptyMhModel(rejected = 0): MhModel {
   return {
     published: false,
@@ -147,7 +147,7 @@ export function fitMhModel(equations: readonly MhEquation[]): MhModel {
 /**
  * Dzień wchodzi do modelu, gdy silnik w ogóle pracował i licznik poszedł do przodu.
  *
- * Ujemny przyrost to nie jest przypadek do dopasowania — to rozjazd łańcucha odczytów,
+ * Ujemny przyrost to nie jest przypadek do dopasowania - to rozjazd łańcucha odczytów,
  * którym zajmuje się flaga `mh_regression` (§4.5). Wpuszczony do regresji ciągnąłby
  * oba przeliczniki w dół i psuł liczby dla wszystkich pozostałych dni.
  */
@@ -157,10 +157,10 @@ function isUsableEquation(equation: MhEquation): boolean {
 }
 
 /**
- * Czy wynikowi wolno stanąć na ekranie — bramka FIZYCZNA.
+ * Czy wynikowi wolno stanąć na ekranie - bramka FIZYCZNA.
  *
  * Przelicznik na ziemi wyższy niż w locie znaczyłby licznik chodzący szybciej na wolnych
- * obrotach. Taki nie istnieje — ani obrotomierzowy, ani godzinowy. Wynik, który to
+ * obrotach. Taki nie istnieje - ani obrotomierzowy, ani godzinowy. Wynik, który to
  * twierdzi, jest artefaktem danych (rozjazd łańcucha odczytów, dzień z zapomnianym
  * wyłączeniem silnika), więc go NIE PUBLIKUJEMY. Znalezione przebiegiem po realnej
  * historii 2026-08-05: An-2 dawał „w locie 0,90, na ziemi 1,20" i model podawał to
@@ -169,7 +169,7 @@ function isUsableEquation(equation: MhEquation): boolean {
  * ══ DLACZEGO TU NIE MA BRAMKI NA WSPÓŁLINIOWOŚĆ (a przy paliwie jest) ══
  * Bo ten model ma dwie niewiadome o ZNANEJ z góry relacji: `k_ziemia ≤ k_lot`. Warunek
  * wyżej wyczerpuje więc to, co bramka VIF miałaby tu wykryć, i robi to bez odrzucania
- * wyników użytecznych — pierwsza wersja z progiem VIF wycinała samolot o przedziałach
+ * wyników użytecznych - pierwsza wersja z progiem VIF wycinała samolot o przedziałach
  * ±0,07 i ±0,14, czyli odpowiedź całkiem precyzyjną. Model paliwa ma do czterech faz
  * i relacji między nimi nie zna z góry, więc tam VIF zostaje jedyną obroną przed
  * podziałem wyznaczonym przez szum.
@@ -187,12 +187,12 @@ function trustworthy(
 /**
  * Rozstrzyga typ licznika przedziałami ORAZ progiem praktycznym.
  *
- * `hobbs` — przeliczniki są nieodróżnialne od siebie i oba zgodne z jednością.
- * `tach`  — ziemia leży niżej niż lot i to NA TYLE, żeby różnica coś znaczyła:
+ * `hobbs` - przeliczniki są nieodróżnialne od siebie i oba zgodne z jednością.
+ * `tach`  - ziemia leży niżej niż lot i to NA TYLE, żeby różnica coś znaczyła:
  *           przedziały muszą się rozejść, a sama różnica przekroczyć
  *           `MH_MIN_DISTINGUISHABLE`. Sam rozjazd przedziałów nie wystarcza, bo przy
  *           danych bez szumu przedziały są zerowe i „istotna" robi się różnica 0,01.
- * `unknown` — wszystko inne. Milczenie jest tu odpowiedzią, nie brakiem odpowiedzi.
+ * `unknown` - wszystko inne. Milczenie jest tu odpowiedzią, nie brakiem odpowiedzi.
  */
 function classifyCounter(
   flight: number,
@@ -205,7 +205,7 @@ function classifyCounter(
   const difference = flight - ground;
 
   if (Math.abs(difference) < MH_MIN_DISTINGUISHABLE) {
-    // Przeliczniki nierozróżnialne — licznik chodzi tak samo w obu fazach. To Hobbs,
+    // Przeliczniki nierozróżnialne - licznik chodzi tak samo w obu fazach. To Hobbs,
     // o ile chodzi 1:1 z zegarem; inaczej mamy licznik o nieznanej charakterystyce.
     const nearOne = (value: number, ci: number) =>
       Math.abs(value - 1) <= Math.max(ci, MH_MIN_DISTINGUISHABLE);

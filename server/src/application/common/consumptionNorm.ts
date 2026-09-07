@@ -1,15 +1,15 @@
 /**
- * UZ Aero (serwer) — liczenie i zapis NORMY ZUŻYCIA samolotu.
+ * UZ Aero (serwer) - liczenie i zapis NORMY ZUŻYCIA samolotu.
  *
  * ══ DLACZEGO W `common/`, A NIE W `admin/` ══
  * Normę produkuje analityka panelu, ale konsumuje ją aplikacja pilota (`GET /reference`,
  * ekrany 04/06/10). Oś powierzchni z `architecture.test.ts` mówi wprost: `mobile/` nie
  * może importować z `admin/`, a `common/` nie może z żadnej z nich. Kod wspólny dla obu
- * końców musi więc wylądować tutaj — dokładnie jak `aircraftStateView.ts`, przeniesiony
+ * końców musi więc wylądować tutaj - dokładnie jak `aircraftStateView.ts`, przeniesiony
  * z `mobile/` do `common/` przy pierwszym konsumencie po stronie panelu.
  *
  * ══ KIEDY TO SIĘ LICZY ══
- * Po przyjęciu paczki zdarzeń, dla samolotów, których dzień właśnie się zamknął —
+ * Po przyjęciu paczki zdarzeń, dla samolotów, których dzień właśnie się zamknął -
  * i to POZA transakcją ingestu. Telefon dostaje 200 za PRZYJĘCIE zdarzeń; przeliczenie
  * modelu jest skutkiem, nie warunkiem. Awaria regresji nie ma prawa zamienić dostarczonej
  * paczki w wieczny retry outboxa (ten sam argument, co przy eksporcie karty dnia).
@@ -37,7 +37,7 @@ import type {
 /**
  * Okno, z którego liczy się norma dla telefonu (90 dni).
  *
- * Ta sama szerokość, co domyślny zakres ekranu `A10a` — żeby liczba w kokpicie i liczba
+ * Ta sama szerokość, co domyślny zakres ekranu `A10a` - żeby liczba w kokpicie i liczba
  * w panelu opisywały ten sam okres. Rozjazd między nimi byłby pytaniem, na które nikt
  * nie umiałby odpowiedzieć przy telefonie w ręku.
  */
@@ -51,7 +51,7 @@ export interface ConsumptionNormPorts {
   /**
    * Oś faz pionowych ze śladu GPS; pominięta = model liczy się na dwóch fazach
    * (ziemia / powietrze). Norma dla telefonu potrzebuje stawki LOTU, a tę daje już
-   * model dwufazowy — rozbicie na fazy pionowe zwiększa jej dokładność, ale nie jest
+   * model dwufazowy - rozbicie na fazy pionowe zwiększa jej dokładność, ale nie jest
    * warunkiem jej istnienia.
    */
   phases?: PhaseTimelinePort;
@@ -60,7 +60,7 @@ export interface ConsumptionNormPorts {
 /**
  * Przelicza i zapisuje normę dla jednego samolotu.
  *
- * `null` w wyniku znaczy „model poniżej progu publikacji" — wtedy wiersz jest KASOWANY,
+ * `null` w wyniku znaczy „model poniżej progu publikacji" - wtedy wiersz jest KASOWANY,
  * a nie zostawiany. Norma, która przestała się publikować (wyzerowana po remoncie, zbyt
  * mało świeżych dni), nie ma prawa dalej podpowiadać pilotowi starej liczby.
  */
@@ -76,7 +76,7 @@ export async function recomputeConsumptionNorm(
   const streams = await ports.events.sessionStreams(db, sessionUuids);
 
   const intervals: FuelInterval[] = [];
-  // Równania licznika — jedno na ZDANĄ sesję (`MhEquation`). Do issue #38 były tu
+  // Równania licznika - jedno na ZDANĄ sesję (`MhEquation`). Do issue #38 były tu
   // wyrzucane: `buildFuelIntervals` zwracało je razem z interwałami, a norma brała same
   // interwały. Telefon nie miał więc czym odpowiedzieć na „czy licznik pokazał tyle,
   // ile powinien" i ekran 10 zastępował odpowiedź twierdzeniem, że ΔMH = czas blokowy.
@@ -90,7 +90,7 @@ export async function recomputeConsumptionNorm(
   }
 
   // Kolejność ma znaczenie: metryki zbiorcze liczą się na interwałach PRZED oznaczeniem
-  // odstających, a pasmo rozrzutu (w `buildConsumptionNorm`) — już po nim.
+  // odstających, a pasmo rozrzutu (w `buildConsumptionNorm`) - już po nim.
   const summary = consumptionSummary(intervals);
   const model = fitConsumptionModel(intervals);
 

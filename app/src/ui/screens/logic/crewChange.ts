@@ -1,9 +1,9 @@
 /**
- * UZ Aero — logika ekranu 07 (zmiana załogi), czysta i testowalna bez React Native.
+ * UZ Aero - logika ekranu 07 (zmiana załogi), czysta i testowalna bez React Native.
  *
  * Najtrudniejsze pytanie tego ekranu brzmi: „od kiedy i ile block time ma KAŻDY członek
  * załogi z osobna". Mockup pokazuje przy obu wierszach „od 08:00 · block: 2:22", ale
- * Dual mógł wejść w połowie dnia — wtedy jego block time liczy się wyłącznie z cykli
+ * Dual mógł wejść w połowie dnia - wtedy jego block time liczy się wyłącznie z cykli
  * silnika, które zaszły PO jego wejściu. Do dokumentów każdy pilot wpisuje własny czas,
  * więc przybliżenie „wszyscy mają tyle co dzień" byłoby fałszem rozliczeniowym.
  */
@@ -23,7 +23,7 @@ export interface CrewRowModel {
 /**
  * Część cykli silnika przypadająca na okres od `since` do `now`.
  *
- * Cykl otwarty liczy się do „teraz" — dokładnie tak, jak robi to licznik na kokpicie.
+ * Cykl otwarty liczy się do „teraz" - dokładnie tak, jak robi to licznik na kokpicie.
  * Cykl, który zaczął się przed wejściem pilota, liczy się od momentu wejścia: pilot
  * nie zapisuje sobie czasu, przy którym go nie było.
  */
@@ -44,7 +44,7 @@ export function blockSince(
 /**
  * Od kiedy AKTUALNY Dual jest w załodze.
  *
- * Domyślnie od przejęcia samolotu (preflight ustawia załogę), a jeśli był zmieniany —
+ * Domyślnie od przejęcia samolotu (preflight ustawia załogę), a jeśli był zmieniany -
  * od OSTATNIEGO `crew_change`, które go wprowadziło. Zdarzenia przeglądamy od końca,
  * bo interesuje nas ostatnia zmiana, nie historia wszystkich.
  */
@@ -61,7 +61,7 @@ export function dualSince(
   return claimedAt;
 }
 
-/** Wiersze „Aktualna załoga" — dane, nie napisy; formatowanie należy do ekranu. */
+/** Wiersze „Aktualna załoga" - dane, nie napisy; formatowanie należy do ekranu. */
 export function crewRows(
   projection: SessionState,
   events: readonly Event[],
@@ -94,7 +94,7 @@ export function crewRows(
 /**
  * Wartość „bez drugiego pilota" na liście wyboru.
  *
- * Sentinel zamiast `null`, bo `CardPicker` operuje na łańcuchach — a rezygnacja z Duala
+ * Sentinel zamiast `null`, bo `CardPicker` operuje na łańcuchach - a rezygnacja z Duala
  * jest pełnoprawnym wyborem (mockup ma ją jako pozycję listy), nie brakiem wyboru.
  */
 export const NO_DUAL = '__none__' as const;
@@ -114,8 +114,8 @@ export function dualChangeBlocker(
   if (selected == null) return 'Wybierz nowego Duala albo „Bez drugiego pilota"';
   const next = selected === NO_DUAL ? null : selected;
   if (next == null && dualRequired) {
-    return `${aircraftLabel} wymaga załogi 2-osobowej — miejsce Duala nie może zostać puste`;
+    return `${aircraftLabel} wymaga załogi 2-osobowej - miejsce Duala nie może zostać puste`;
   }
-  if (next === currentDualId) return 'Wybrany pilot już jest Dualem — nie ma czego zmieniać';
+  if (next === currentDualId) return 'Wybrany pilot już jest Dualem - nie ma czego zmieniać';
   return null;
 }

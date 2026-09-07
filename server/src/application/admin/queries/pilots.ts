@@ -1,8 +1,8 @@
 /**
- * UZ Aero (serwer) — lista kont pilotów (`A06`) i DANE REFERENCYJNE dla filtrów.
+ * UZ Aero (serwer) - lista kont pilotów (`A06`) i DANE REFERENCYJNE dla filtrów.
  *
  * Ta trasa ma dwóch odbiorców i to jest w niej najważniejsze. Pierwszy: ekran kont,
- * który potrzebuje statusu, roli i liczników. Drugi: filtry innych list panelu —
+ * który potrzebuje statusu, roli i liczników. Drugi: filtry innych list panelu -
  * `A02` nie ma dziś filtra po pilocie wyłącznie dlatego, że nie było skąd wziąć listy
  * nazwisk (`SessionListFilter.pilotId` czeka gotowy w porcie). Dlatego lista jest
  * kompletna i bez kursora: klub ma kilkanaście kont, a lista, którą trzeba stronicować,
@@ -18,13 +18,13 @@ import type { AdminPilotPage } from '../contracts/pilots.ts';
 import { pilotCounts, pilotListItem, pilotScopeCounts } from '../mappers/pilotListItem.ts';
 import type { PilotListFilter, PilotsAdminPort } from '../ports.ts';
 
-/** Filtr ekranu bez okna dni lotnych — okno dokłada ta klasa (patrz `monthOf`). */
+/** Filtr ekranu bez okna dni lotnych - okno dokłada ta klasa (patrz `monthOf`). */
 export type PilotQuery = Omit<PilotListFilter, 'fromMs' | 'toMs'> & {
   fromMs?: number;
   toMs?: number;
 };
 
-/** `YYYY-MM-DD` z epoch ms UTC — do echa okna w odpowiedzi. */
+/** `YYYY-MM-DD` z epoch ms UTC - do echa okna w odpowiedzi. */
 function dayString(ms: number): string {
   return new Date(ms).toISOString().slice(0, 10);
 }
@@ -33,7 +33,7 @@ function dayString(ms: number): string {
  * Bieżący miesiąc UTC jako domyślne okno „dni lotnych".
  *
  * Mockup pisze w nagłówku kolumny konkretny miesiąc („Dni lotne · LIP 2026"), więc
- * okno MUSI być jawne — liczba bez okna nie znaczy nic, a okno wybrane po cichu
+ * okno MUSI być jawne - liczba bez okna nie znaczy nic, a okno wybrane po cichu
  * kazałoby panelowi zgadywać podpis. Odpowiedź niesie `daysFrom`/`daysTo`, żeby
  * nagłówek kolumny opisywał to, co serwer naprawdę policzył.
  */
@@ -55,7 +55,7 @@ export class AdminPilotQueries {
     const fromMs = query.fromMs ?? month.fromMs;
     const toMs = query.toMs ?? month.toMs;
 
-    // Trzy zapytania, trzy różne pytania — i dlatego nie da się ich skleić: wiersze
+    // Trzy zapytania, trzy różne pytania - i dlatego nie da się ich skleić: wiersze
     // w bieżącym zawężeniu, liczby o KLUBIE (kafle) i liczby o WYSZUKIWANIU (chipy).
     // Chip z liczbą jest obietnicą „tyle zobaczysz", więc nie wolno mu nosić liczby
     // kafla; kafel opisuje klub, więc nie wolno mu drgać przy wpisywaniu frazy.
@@ -72,7 +72,7 @@ export class AdminPilotQueries {
       scopes: pilotScopeCounts(scopes),
       daysFrom: dayString(fromMs),
       // `toMs` jest KOŃCEM doby (`2026-07-31T23:59:59.999Z`), a `dayString` czyta
-      // z ISO, czyli z UTC — więc wychodzi ten sam dzień, którego granicę opisuje.
+      // z ISO, czyli z UTC - więc wychodzi ten sam dzień, którego granicę opisuje.
       daysTo: dayString(toMs),
     };
   }

@@ -1,8 +1,8 @@
 /**
- * UZ Aero (serwer) — adapter flag (`FlagsPort`).
+ * UZ Aero (serwer) - adapter flag (`FlagsPort`).
  *
  * Flagi żyją dłużej niż dzień lotny (open → resolved u administratora) i bywają
- * przypięte do PARY sesji (nakładka po przejęciu offline) — stąd osobna tabela,
+ * przypięte do PARY sesji (nakładka po przejęciu offline) - stąd osobna tabela,
  * a nie kolumna w `sessions`.
  */
 
@@ -22,7 +22,7 @@ interface FlagDbRow {
 const toFlag = (r: FlagDbRow): FlagRecord => {
   // Wartość spoza katalogu jest niemożliwa: pisze tu wyłącznie `ensureOpen` (typowany
   // na `FlagType`), a pilnuje tego `flags_type_known` w bazie. Jeśli mimo to wystąpi,
-  // znaczy to, że ktoś zdjął ograniczenie albo grzebał ręcznie — i wtedy CICHE
+  // znaczy to, że ktoś zdjął ograniczenie albo grzebał ręcznie - i wtedy CICHE
   // pominięcie byłoby najgorszą z opcji, bo flaga istnieje po to, żeby być widoczna.
   if (!isFlagType(r.type)) {
     throw new Error(`Nieznany typ flagi w bazie: ${r.type} (id ${r.id})`);
@@ -43,10 +43,10 @@ export class PgFlagsRepo implements FlagsPort {
     flag: { type: FlagType; aircraftId: string; sessionUuids: string[]; details: Record<string, unknown> },
   ): Promise<void> {
     const uuids = [...flag.sessionUuids].sort();
-    // Dedupe po (typ, zestaw sesji) — CELOWO obejmuje też flagi `resolved`: anomalia
+    // Dedupe po (typ, zestaw sesji) - CELOWO obejmuje też flagi `resolved`: anomalia
     // łańcucha jest trwała (odczyty się nie zmienią), więc ponowne otwarcie po decyzji
     // administratora produkowałoby szum uczący ignorowania flag. Nowa sesja w nakładce
-    // = nowy zestaw = nowa flaga. Ostatnim słowem jest UNIQUE w bazie (`uq_flags_type_sessions`) —
+    // = nowy zestaw = nowa flaga. Ostatnim słowem jest UNIQUE w bazie (`uq_flags_type_sessions`) -
     // sam SELECT-then-INSERT przegrywa wyścig równoległych transakcji.
     await tx.query(
       `INSERT INTO flags (type, aircraft_id, session_uuids, details)

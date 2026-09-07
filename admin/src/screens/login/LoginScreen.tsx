@@ -1,180 +1,108 @@
 /**
- * UZ Aero — panel: EKRAN LOGOWANIA (`design/admin/A00-login.html`, wariant błędu A00a).
+ * UZ Aero - panel 2.0: logowanie.
  *
- * Wdrożony sekcja po sekcji z mockupu: znak marki nad kartą, karta formularza 420 px,
- * baner wyjaśniający role, stopka ze stemplem UTC. Wariant A00a dokłada baner odmowy
- * NAD kartą i plakietkę statusu w jej tytule.
+ * Ekran ma jedno zadanie i tyle na nim stoi: znak i JEDEN przycisk Google. Czego tu
+ * NIE MA i dlaczego (to jest cała treść tej przebudowy, podtrzymana po wejściu Google):
+ *  • **„Konta zakłada administrator…"** - opis tego, jak zbudowany jest produkt,
+ *    pokazywany komuś, kto chce się zalogować;
+ *  • **„Panel jest dla administratora…"** - wykład o uprawnieniach przed wyborem konta;
+ *  • **pola loginu i hasła** - hasła zniknęły z produktu 2026-09-04
+ *    (`docs/logowanie-google.md`); tożsamości dowodzi konto Google.
  *
- * Czego z A00a NIE wdrażamy i dlaczego: **licznika prób („zostały 3 z 5")**. Mockup
- * mówi to o sobie sam — „liczby 5 prób / 15 minut są WARTOŚCIAMI ROBOCZYMI… tych dwóch
- * progów NIE przepisuj do kodu bez ustalenia" — a rate-limit `/auth/*` jest zaległością
- * serwera (faza 6). Licznik prób bez działającego limitu byłby napisem, który kłamie.
+ * Kto nie może wejść, dowie się tego po wybraniu konta - jednym zdaniem i dopiero
+ * wtedy, gdy to pytanie faktycznie padło (`loginMessage.ts`).
+ *
+ * == PRZYCISK RYSUJE GOOGLE, NIE MY ==
+ * Element `.login-google` jest pustym kontenerem, w który skrypt Google wstawia swój
+ * przycisk (`auth/googleIdentity.ts`). Dopóki nie ma identyfikatora klienta albo
+ * skrypt jeszcze jedzie, w tym miejscu stoi plamka o wysokości przycisku - nie spinner
+ * i nie pustka, ta sama reguła co dla tabel panelu.
  */
 
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Navigate } from 'react-router-dom';
 
-import { isHttpError } from '../../api/httpClient';
-import { useLogin } from '../../queries/useSession';
-import { Banner, Button, Card, Field, Pill, TextInput } from '../../ui/components';
-import { PlaneIcon, SignInIcon } from '../../ui/components/icons';
-import { loginMessage, type LoginMessage } from './loginMessages';
-
-/** Szerokość karty i banerów z mockupu — wymiar układu jednego ekranu. */
-const COLUMN = { width: 420 } as const;
+import { renderGoogleButton } from '../../auth/googleIdentity';
+import { useSessionState } from '../../auth/sessionContext';
+import { useGoogleClient, useLogin } from '../../queries/useSession';
+import { Banner } from '../../ui/components';
+import { PlaneIcon } from '../../ui/components/icons';
+import { HOME } from '../../ui/shell/tabs';
+import { loginMessage } from './loginMessage';
 
 export function LoginScreen() {
-  const [login, setLogin] = useState('');
-  const [password, setPassword] = useState('');
-  const [message, setMessage] = useState<LoginMessage | null>(null);
-  const [status, setStatus] = useState<number | null>(null);
+  const { session } = useSessionState();
+  const login = useLogin();
+  const client = useGoogleClient();
 
-  const mutation = useLogin();
+  const slot = useRef<HTMLDivElement | null>(null);
+  /** Skrypt Google nie dojechał - powód do pokazania zamiast pustego miejsca. */
+  const [scriptError, setScriptError] = useState<string | null>(null);
+  const [rendered, setRendered] = useState(false);
 
-  function submit(event: FormEvent) {
-    event.preventDefault();
-    setMessage(null);
+  const clientId = client.data?.clientId ?? null;
+  const mutate = login.mutate;
 
-    mutation.mutate(
-      { login: login.trim(), password },
-      {
-        onError: (error) => {
-          const httpStatus = isHttpError(error) ? error.status : null;
-          const code = isHttpError(error) ? error.body.error : null;
-          setStatus(httpStatus);
-          setMessage(loginMessage(httpStatus, code));
-          // Hasło czyścimy po KAŻDEJ odmowie (A00a: „pole wyczyszczone po odrzuceniu"),
-          // login zostaje — poprawianie literówki w loginie nie ma być karane
-          // przepisywaniem obu pól.
-          setPassword('');
-        },
-      },
-    );
-  }
+  useEffect(() => {
+    const parent = slot.current;
+    if (parent == null || clientId == null) return;
+
+    let alive = true;
+    renderGoogleButton(parent, clientId, (idToken) => mutate({ idToken }))
+      .then(() => {
+        if (alive) setRendered(true);
+      })
+      .catch((error: unknown) => {
+        if (alive) setScriptError(error instanceof Error ? error.message : 'Nie udało się wczytać logowania Google');
+      });
+    return () => {
+      alive = false;
+    };
+  }, [clientId, mutate]);
+
+  // Sesja żyje -> na ekranie logowania nie ma czego robić. Dotyczy też powrotu
+  // „wstecz" po zalogowaniu, nie tylko wklejonego adresu.
+  if (session != null) return <Navigate to={HOME} replace />;
+
+  const message =
+    login.error != null
+      ? loginMessage(login.error)
+      : client.error != null
+        ? { tone: 'danger' as const, text: 'Nie ma połączenia z serwerem. Spróbuj za chwilę.' }
+        : scriptError != null
+          ? { tone: 'danger' as const, text: 'Nie udało się wczytać logowania Google. Sprawdź połączenie z internetem.' }
+          : null;
 
   return (
-    <div className="centered">
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 9,
-          marginBottom: 4,
-        }}
-      >
-        <span
-          style={{
-            width: 64,
-            height: 64,
-            borderRadius: 18,
-            background: 'var(--green-muted)',
-            border: '1px solid var(--green-border)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--green)',
-          }}
-        >
-          <PlaneIcon size={32} />
+    <div className="login">
+      <div className="login-mark">
+        <span className="login-badge">
+          <PlaneIcon size={28} />
         </span>
-        <span style={{ fontFamily: 'var(--font-display)', fontSize: 40, letterSpacing: 6, lineHeight: 1 }}>
-          UZ AERO
-        </span>
-        <span
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 9,
-            letterSpacing: 2.5,
-            textTransform: 'uppercase',
-            color: 'var(--text-muted)',
-          }}
-        >
-          Panel administracyjny
-        </span>
+        <span className="login-title">UZ AERO</span>
+        <span className="login-note">Panel administracyjny</span>
       </div>
 
       {message == null ? null : (
-        <Banner tone={message.tone} live style={COLUMN}>
-          <b>{message.title}</b> {message.detail}
-        </Banner>
+        <div className="login-banner">
+          <Banner tone={message.tone} live>
+            {message.text}
+          </Banner>
+        </div>
       )}
 
-      <form onSubmit={submit} style={COLUMN}>
-        <Card
-          title="Logowanie"
-          actions={
-            status == null ? undefined : <Pill tone={status === 403 ? 'amber' : 'red'}>{status}</Pill>
-          }
-          style={{ gap: 13 }}
-        >
-          <Field htmlFor="login" label="Login">
-            <TextInput
-              id="login"
-              name="login"
-              autoComplete="username"
-              autoFocus
-              placeholder="login albo e-mail"
-              value={login}
-              onChange={(e) => setLogin(e.target.value)}
-            />
-          </Field>
-
-          <Field
-            htmlFor="password"
-            label="Hasło"
-            hint={
-              message?.markPassword === true
-                ? 'Pole wyczyszczone po odrzuceniu — wpisz hasło jeszcze raz.'
-                : undefined
-            }
-          >
-            <TextInput
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              placeholder="••••••••"
-              invalid={message?.markPassword === true}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </Field>
-
-          <Button
-            type="submit"
-            variant="primary"
-            block
-            disabled={mutation.isPending || login.trim().length === 0 || password.length === 0}
-          >
-            <SignInIcon />
-            {mutation.isPending ? 'Logowanie…' : 'Zaloguj się'}
-          </Button>
-
-          <span className="hint">
-            Konta zakłada administrator w bazie. Panel nie ma samodzielnej rejestracji ani logowania
-            przez Google — jedyne wejście to login i hasło.
-          </span>
-        </Card>
-      </form>
-
-      {message == null ? (
-        <Banner tone="status" style={COLUMN}>
-          <b>Panel jest dla dwóch ról.</b> Konto pilota zaloguje się poprawnie, ale zobaczy tylko
-          komunikat: „to konto nie ma roli administratora ani szefa wyszkolenia — panel jest tylko
-          dla nich; pilot loguje się w aplikacji na telefonie".
-        </Banner>
-      ) : null}
-
-      <span
-        style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: 10,
-          letterSpacing: 1.2,
-          color: 'var(--text-muted)',
-        }}
-      >
-        panel działa wyłącznie online
-      </span>
+      <div className="login-card">
+        {/* Plamka w geometrii przycisku, dopóki Google go nie narysuje - nigdy pustka. */}
+        {rendered || scriptError != null ? null : (
+          <div className="login-google-skeleton" aria-hidden="true" />
+        )}
+        <div
+          ref={slot}
+          className={rendered ? 'login-google' : 'login-google pending'}
+          aria-busy={login.isPending}
+        />
+        {login.isPending ? <p className="login-status">Logowanie…</p> : null}
+      </div>
     </div>
   );
 }

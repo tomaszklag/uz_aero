@@ -1,16 +1,16 @@
 /**
- * UZ Aero — DropCorrectionSheet (mockup `design/10g` „Korekta zrzutu")
+ * UZ Aero - DropCorrectionSheet (mockup `design/10g` „Korekta zrzutu")
  *
  * Czas i skład wyniesienia w JEDNYM arkuszu, bo przy zrzucie obie rzeczy mylą się tak
  * samo często: GPS zapisał moment otwarcia drzwi minutę wcześniej, a skoczków wyszło
  * pięciu zamiast czterech. Dwa osobne arkusze kazałyby przechodzić tę samą drogę dwa razy.
  *
- * Wysokość zostaje ODCZYTEM (`CLAUDE.md`: dane z pomiaru mają pierwszeństwo) — to
+ * Wysokość zostaje ODCZYTEM (`CLAUDE.md`: dane z pomiaru mają pierwszeństwo) - to
  * średnia z okna 15 s wokół zrzutu (`detection/dropAltitude.ts`), więc wpisanie jej
  * ręcznie zamieniłoby pomiar na zgadywanie.
  *
  * Skład jest OPCJONALNY (issue #21 pkt 5): `null` znaczy „niepodany", nie zero. Dlatego
- * arkusz rozróżnia „nikt nie wyskoczył" od „nie wiem, ilu" — tego drugiego nie da się
+ * arkusz rozróżnia „nikt nie wyskoczył" od „nie wiem, ilu" - tego drugiego nie da się
  * wyrazić licznikami, więc służy do tego osobna akcja „nie podano".
  */
 
@@ -29,7 +29,7 @@ import { TimeStepper } from '../input/TimeStepper';
 import { Field } from '../input/Field';
 import { Sheet } from './Sheet';
 
-/** Co zmieniła korekta — pola pominięte znaczą „bez zmiany". */
+/** Co zmieniła korekta - pola pominięte znaczą „bez zmiany". */
 export interface DropCorrection {
   newTime?: number;
   jumpers?: JumperCounts | null;
@@ -37,7 +37,7 @@ export interface DropCorrection {
 
 export interface DropCorrectionSheetProps {
   visible: boolean;
-  /** „Zrzut 2 · lot 2" — cel korekty. */
+  /** „Zrzut 2 · lot 2" - cel korekty. */
   title: string;
   originalTime: number;
   /** Skład w mocy TERAZ; `null` = niepodany. */
@@ -45,7 +45,7 @@ export interface DropCorrectionSheetProps {
   /** Wysokość z GPS („12 600 FT"); `null` = zrzut bez fixa. */
   altitude: string | null;
   formatTime: (t: number) => string;
-  /** Górna granica czasu (zwykle „teraz”) — korekta w przyszłość to przepowiednia. */
+  /** Górna granica czasu (zwykle „teraz”) - korekta w przyszłość to przepowiednia. */
   maxTime: number;
   busy?: boolean;
   historyCount?: number;
@@ -55,7 +55,7 @@ export interface DropCorrectionSheetProps {
   onCancel: () => void;
 }
 
-/** Zakres korekty czasu (min) — dalej niż godzina to nie korekta, tylko inny zrzut. */
+/** Zakres korekty czasu (min) - dalej niż godzina to nie korekta, tylko inny zrzut. */
 const MAX_SHIFT_MIN = 60;
 
 const EMPTY: JumperCounts = { tandem: 0, aff: 0, solo: 0 };
@@ -149,7 +149,7 @@ export function DropCorrectionSheet({
         </View>
       )}
 
-      <Field label="Skład — ilu wyskoczyło" tag={{ label: 'opcjonalne' }}>
+      <Field label="Skład - ilu wyskoczyło" tag={{ label: 'opcjonalne' }}>
         <View style={{ gap: 7 }}>
           <CounterRow
             label="Tandem"
@@ -184,7 +184,7 @@ export function DropCorrectionSheet({
       </View>
 
       {/* „Nie podano" ≠ zero (issue #21 pkt 5). Licznikami tego nie da się wyrazić,
-          więc dostaje własną, dyskretną akcję — a znika, gdy skład i tak jest pusty. */}
+          więc dostaje własną, dyskretną akcję - a znika, gdy skład i tak jest pusty. */}
       {counts != null && (
         <ActionButton
           label="SKŁADU NIE PODANO"

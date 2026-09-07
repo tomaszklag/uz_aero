@@ -1,8 +1,8 @@
 /**
- * UZ Aero — formatowanie do wyświetlenia (warstwa UI).
+ * UZ Aero - formatowanie do wyświetlenia (warstwa UI).
  *
  * Domena trzyma liczby (ms, litry, godziny dziesiętne); tutaj zamieniamy je na napisy.
- * Czas pokazujemy w UTC — to domyślna strefa całej aplikacji (`CLAUDE.md`, sekcja
+ * Czas pokazujemy w UTC - to domyślna strefa całej aplikacji (`CLAUDE.md`, sekcja
  * „Strefa czasowa"): czas nieoznaczony = UTC, LT tylko przy meldunku.
  */
 
@@ -12,13 +12,13 @@ const pad2 = (n: number): string => String(n).padStart(2, '0');
 
 /** Czas zdarzenia jako „HH:MM" UTC. */
 export function timeUtc(t: EpochMillis | null): string {
-  if (t == null) return '—';
+  if (t == null) return '-';
   const d = new Date(t);
   return `${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}`;
 }
 
 /**
- * Czas zdarzenia z SEKUNDAMI jako „HH:MM:SS" UTC — oś zdarzeń panelu (`A02a`).
+ * Czas zdarzenia z SEKUNDAMI jako „HH:MM:SS" UTC - oś zdarzeń panelu (`A02a`).
  *
  * ISTNIEJE OBOK `timeUtc` I TO NIE JEST DUPLIKAT. Telefon i arkusz pokazują czasy
  * z dokładnością do minuty, bo tyle znaczy dla pilota i dla księgowości klubu.
@@ -28,25 +28,25 @@ export function timeUtc(t: EpochMillis | null): string {
  * odbierałoby mu to, po co istnieje.
  */
 export function timeUtcSeconds(t: EpochMillis | null): string {
-  if (t == null) return '—';
+  if (t == null) return '-';
   const d = new Date(t);
   return `${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}:${pad2(d.getUTCSeconds())}`;
 }
 
 /**
- * Czas lokalny urządzenia jako „HH:MM" — WYŁĄCZNIE jako wartość drugorzędna przy
+ * Czas lokalny urządzenia jako „HH:MM" - WYŁĄCZNIE jako wartość drugorzędna przy
  * meldunku (`CLAUDE.md`: „LT tylko jako wartość drugorzędna"). Mockup pokazuje scenariusz
  * UTC+2; tutaj bierzemy prawdziwą strefę telefonu, bo to ona odpowiada na pytanie pilota
  * „która to u mnie godzina".
  */
 export function timeLocal(t: EpochMillis | null): string {
-  if (t == null) return '—';
+  if (t == null) return '-';
   const d = new Date(t);
   return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 }
 
 /**
- * Miesiące dla TELEFONU — po polsku, w dopełniaczu („22 CZERWCA 2026").
+ * Miesiące dla TELEFONU - po polsku, w dopełniaczu („22 CZERWCA 2026").
  *
  * Aplikacja pilota mówi po polsku każdym napisem, więc angielska nazwa miesiąca
  * w plakietce dnia lotnego była jedynym obcym słowem na ekranie (zgłoszenie z urządzenia,
@@ -68,23 +68,50 @@ const MONTHS_PL = [
   'GRUDNIA',
 ];
 
-/** Data dnia lotnego jako „22 CZERWCA 2026" (UTC) — badge z mockupu 02. */
+/** Data dnia lotnego jako „22 CZERWCA 2026" (UTC) - badge z mockupu 02. */
 export function dateUtcLong(t: EpochMillis): string {
   const d = new Date(t);
   return `${d.getUTCDate()} ${MONTHS_PL[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
 }
 
 /**
- * Data i godzina jako „23 CZE 16:45" (UTC) — stempel z ekranów telefonu: termin okna
+ * Miesiące w MIANOWNIKU - nagłówek kalendarza daty lotu (issue #58). Osobna tablica
+ * obok dopełniaczowej `MONTHS_PL`, bo to inna rola gramatyczna: „22 czerwca" czyta się
+ * jako datę, ale nagłówek miesiąca to nazwa własna („CZERWIEC 2026"), nie data.
+ * Dopełniacz w nagłówku brzmiałby jak urwane zdanie.
+ */
+const MONTHS_PL_NOMINATIVE = [
+  'STYCZEŃ',
+  'LUTY',
+  'MARZEC',
+  'KWIECIEŃ',
+  'MAJ',
+  'CZERWIEC',
+  'LIPIEC',
+  'SIERPIEŃ',
+  'WRZESIEŃ',
+  'PAŹDZIERNIK',
+  'LISTOPAD',
+  'GRUDZIEŃ',
+];
+
+/** Nagłówek miesiąca kalendarza jako „SIERPIEŃ 2026" (UTC). */
+export function monthYearUtc(t: EpochMillis): string {
+  const d = new Date(t);
+  return `${MONTHS_PL_NOMINATIVE[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+}
+
+/**
+ * Data i godzina jako „23 CZE 16:45" (UTC) - stempel z ekranów telefonu: termin okna
  * korekty (10, 12), wiek migawki cudzej sesji (04b), stan cache przy odczytach.
  *
  * Data jest tu konieczna, a nie ozdobna: okno korekty zamyka się 24 h po zamknięciu dnia,
- * więc prawie zawsze wypada NASTĘPNEGO dnia — sama godzina wyglądałaby jak „za chwilę".
+ * więc prawie zawsze wypada NASTĘPNEGO dnia - sama godzina wyglądałaby jak „za chwilę".
  *
  * Skrót miesiąca jest PREFIKSEM pełnej nazwy z `MONTHS_PL` (CZERWCA → CZE, PAŹDZIERNIKA
  * → PAŹ), więc jedna tablica obsługuje oba zapisy telefonu i nie ma jak się rozjechać.
  * Mieszka tu, a nie w `ui/screens/logic/statsDay.ts` (gdzie powstał), bo czyta go też
- * komponent wskaźnika łączności — dokładnie tą samą drogą, którą wcześniej przeszło `hhmm`.
+ * komponent wskaźnika łączności - dokładnie tą samą drogą, którą wcześniej przeszło `hhmm`.
  */
 export function dateTimeUtcShort(t: EpochMillis): string {
   const d = new Date(t);
@@ -93,52 +120,39 @@ export function dateTimeUtcShort(t: EpochMillis): string {
 }
 
 /**
- * Data jako „06 SIE" (UTC) — dzień i skrót miesiąca BEZ roku; podtytuł nagłówka śladu
+ * Data jako „06 SIE" (UTC) - dzień i skrót miesiąca BEZ roku; podtytuł nagłówka śladu
  * (mockup 14: „Lot 3 · 06 SIE · SP-KLM"). Rok tam nie mieści się obok rejestracji,
  * a ślad ogląda się w kontekście dnia, który i tak jest na ekranie obok. Skrót jest
- * prefiksem pełnej nazwy z `MONTHS_PL` — ta sama zasada co w `dateTimeUtcShort`.
+ * prefiksem pełnej nazwy z `MONTHS_PL` - ta sama zasada co w `dateTimeUtcShort`.
  */
 export function dateUtcDayMonth(t: EpochMillis): string {
   const d = new Date(t);
   return `${pad2(d.getUTCDate())} ${MONTHS_PL[d.getUTCMonth()]!.slice(0, 3)}`;
 }
 
-/** Miesiące dla PANELU — trzyliterowe skróty lotnicze; powód rozdziału przy `dateUtcShort`. */
-const MONTHS_SHORT = [
-  'JAN',
-  'FEB',
-  'MAR',
-  'APR',
-  'MAY',
-  'JUN',
-  'JUL',
-  'AUG',
-  'SEP',
-  'OCT',
-  'NOV',
-  'DEC',
-];
-
 /**
- * Data jako „31 JUL 2026" (UTC) — zapis GĘSTY, z mockupów panelu (`design/admin/`:
- * zegar w topbarze, kolumny dat w tabelach, stopki kart).
+ * Data jako „6 WRZEŚNIA" (UTC) - dzień i miesiąc BEZ roku; kolumna „Dzień" w gridzie
+ * dziennika panelu i podtytuł ekranu operacji.
  *
- * ISTNIEJE OBOK `dateUtcLong` i to nie jest niedopatrzenie, tylko różnica powierzchni:
- * telefon pokazuje datę raz, w plakietce dnia, i stać go na pełną nazwę miesiąca;
- * panel powtarza ją w każdym wierszu tabeli, gdzie cztery znaki więcej to inna
- * szerokość kolumny.
+ * ══ BYŁO „6 SEP 2026", CZYLI PO ANGIELSKU I Z ROKIEM (do 2026-09-07) ══
+ * Poprzedni docblok bronił skrótów lotniczych jednym argumentem: „w nich są napisane
+ * wszystkie 23 mockupy `design/admin/`". Ten argument wygasł razem z panelem 1.0 -
+ * `design/admin/` jest od 2026-09-07 archiwum i nie jest specyfikacją niczego
+ * (`docs/panel-2.0.md` §3.7), a makiety panelu 2.0 (`design/panel/`) piszą „6 WRZEŚNIA".
  *
- * DWIE TABLICE MIESIĘCY, NIE JEDNA — to też jest decyzja, nie przeoczenie. Do issue #12
- * skrót był prefiksem pełnej nazwy (obie po angielsku) i jedna tablica obsługiwała oba
- * zapisy. Telefon mówi teraz do pilota po polsku, a panel został przy skrótach lotniczych,
- * bo w nich są napisane wszystkie 23 mockupy `design/admin/` i wszystkie kolumny jego tabel.
- * Zmiana zapisu w panelu to osobna decyzja produktowa — nie skutek uboczny polonizacji
- * plakietki na telefonie. (Polskie skróty złożyłyby się z dopełniacza równie dobrze:
- * CZERWCA → CZE.)
+ * Drugi powód jest wewnętrzny: panel mówił datą w TRZECH dialektach naraz. Stempel
+ * odczytu szedł przez `stampUtc` („6 WRZEŚNIA 11:04"), czas zgłoszenia przez
+ * `dateTimeUtcShort` („6 WRZ 19:47"), a kolumna dnia po angielsku - w tej samej
+ * przeglądarce, u tego samego człowieka. Polszczyzna była już większością; to ostatnie
+ * miejsce ją dogania. Rok znika z tego samego powodu, co w obu pozostałych zapisach:
+ * dziennik ogląda się w JAWNIE wybranym zakresie dat, który stoi na tym samym ekranie.
+ *
+ * Cena jest policzona: najdłuższa data rośnie z „16 SEP 2026" (11 znaków) do
+ * „16 PAŹDZIERNIKA" (15). Kolumna daty ma na to miejsce, a makieta tę szerokość rysuje.
  */
 export function dateUtcShort(t: EpochMillis): string {
   const d = new Date(t);
-  return `${d.getUTCDate()} ${MONTHS_SHORT[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+  return `${d.getUTCDate()} ${MONTHS_PL[d.getUTCMonth()]}`;
 }
 
 /** Czas trwania jako „H:MM" (block time, duty). */
@@ -147,7 +161,7 @@ export function duration(ms: number): string {
   return `${Math.floor(totalMin / 60)}:${pad2(totalMin % 60)}`;
 }
 
-/** Czas trwania jako „HH:MM:SS" — dla liczników odliczających na żywo. */
+/** Czas trwania jako „HH:MM:SS" - dla liczników odliczających na żywo. */
 export function durationLong(ms: number): string {
   const totalSec = Math.max(0, Math.floor(ms / 1000));
   return [Math.floor(totalSec / 3600), Math.floor((totalSec % 3600) / 60), totalSec % 60]
@@ -160,7 +174,7 @@ export function durationLong(ms: number): string {
  * W danych zawsze trzymamy godziny dziesiętne; `hhmm` to wyłącznie prezentacja.
  */
 export function motoHours(value: number | null, format: 'decimal' | 'hhmm' | null): string {
-  if (value == null) return '—';
+  if (value == null) return '-';
   if (format === 'hhmm') {
     const h = Math.floor(value);
     const m = Math.round((value - h) * 60);
@@ -171,7 +185,7 @@ export function motoHours(value: number | null, format: 'decimal' | 'hhmm' | nul
 }
 
 /**
- * Odwrotność `motoHours` — wpis pilota na godziny dziesiętne.
+ * Odwrotność `motoHours` - wpis pilota na godziny dziesiętne.
  *
  * Przyjmujemy oba zapisy niezależnie od skonfigurowanego formatu, bo pilot przepisuje
  * to, co widzi na liczniku, a nie to, co ustawił administrator: „1234:30" i „1234,5"
@@ -196,12 +210,12 @@ export function parseMotoHours(text: string): number | null {
  * Pilot przepisuje liczbę z tarczy i sięga po ten znak, który ma pod palcem: klawiatura
  * numeryczna Androida daje przecinek albo kropkę, a licznika hh:mm i tak nie da się na
  * niej wpisać, bo dwukropka na niej nie ma. Maska przyjmuje więc `.`, `,` i `:` jako
- * JEDNO i to samo — i zamienia na znak właściwy dla formatu (`:` przy hh:mm, `.` przy
+ * JEDNO i to samo - i zamienia na znak właściwy dla formatu (`:` przy hh:mm, `.` przy
  * godzinach dziesiętnych). Dzięki temu pole obsługuje się klawiaturą numeryczną
  * (`decimal-pad`), a nie pełną QWERTY, która zajmuje pół ekranu i podsuwa podpowiedzi
  * słownikowe (zgłoszenie z urządzenia, 2026-08-14).
  *
- * Separator jest DOKŁADNIE JEDEN — drugi i każdy następny znika, zamiast produkować
+ * Separator jest DOKŁADNIE JEDEN - drugi i każdy następny znika, zamiast produkować
  * „1234:30:15". Wpis krótszy albo urwany („1234:") zostaje bez zmian: to normalny stan
  * w połowie pisania, a o tym, czy wartość ma sens, orzeka `parseMotoHours`.
  */
@@ -215,7 +229,7 @@ export function maskMotoHoursInput(text: string, format: 'decimal' | 'hhmm' | nu
       out += ch;
       continue;
     }
-    // Pierwszy separator — jakikolwiek by nie był — staje się TYM separatorem.
+    // Pierwszy separator - jakikolwiek by nie był - staje się TYM separatorem.
     // Wiodący („,5") odrzucamy: liczba zaczyna się od części całkowitej.
     if ((ch === '.' || ch === ',' || ch === ':') && !used && out.length > 0) {
       out += separator;
@@ -236,22 +250,44 @@ export function parseLitres(text: string): number | null {
  * Wpis godziny w trakcie pisania → „HH:MM". Dwukropek stawia maska, nie pilot.
  *
  * Powód: klawiatura numeryczna Androida nie ma dwukropka, a pełna QWERTY dla czterech
- * cyfr to zła zamiana — zajmuje pół ekranu i podstawia podpowiedzi słownikowe. Pilot
+ * cyfr to zła zamiana - zajmuje pół ekranu i podstawia podpowiedzi słownikowe. Pilot
  * wbija „0800", maska pokazuje „08:00" (zgłoszenie z urządzenia: arkusz godziny meldunku).
  *
- * Liczą się wyłącznie cyfry i tylko cztery pierwsze — resztę ucinamy, zamiast pozwolić
+ * ══ KROPKA I PRZECINEK ZNACZĄ DWUKROPEK (issue #62 pkt 2) ══
+ * Klawiatura numeryczna Androida dwukropka nie ma, ale kropkę albo przecinek - owszem,
+ * i to w nie zawsze tym samym miejscu. Do issue #62 maska wycinała je razem z resztą
+ * niecyfr, więc „8.30" zostawało jako „830" i wychodziło z maski jako **„83:0"**:
+ * `parseTimeUtcOnDay` odrzucał to (83 > 23), a `Stepper` cicho zostawiał wartość sprzed
+ * edycji. Pilot widział wtedy godzinę, której nie wpisał, i przyciski ±1 min przesuwające
+ * nie tę liczbę, co trzeba - jedno zgłoszenie z urządzenia opisało oba objawy naraz.
+ *
+ * Reguła jest więc ta sama, co w `maskMotoHoursInput`: PIERWSZY separator - jakikolwiek
+ * by nie był - kończy część godzinową i staje się dwukropkiem. Wiodący („:30") odrzucamy,
+ * bo godzina zaczyna liczbę; jednocyfrową godzinę przed separatorem dopełniamy zerem,
+ * skoro pilot sam powiedział, że już ją skończył.
+ *
+ * Liczą się wyłącznie cyfry i tylko cztery pierwsze - resztę ucinamy, zamiast pozwolić
  * na „08:0012". Wpis krótszy zostaje krótki („08:0"), bo to normalny stan w połowie
  * pisania; o tym, czy wartość ma sens, orzeka `parseTimeUtcOnDay`.
  */
 export function maskTimeUtcInput(text: string): string {
-  const digits = text.replace(/\D/g, '').slice(0, 4);
-  return digits.length <= 2 ? digits : `${digits.slice(0, 2)}:${digits.slice(2)}`;
+  const separator = text.search(/[.,:]/);
+  if (separator < 0) {
+    const digits = text.replace(/\D/g, '').slice(0, 4);
+    return digits.length <= 2 ? digits : `${digits.slice(0, 2)}:${digits.slice(2)}`;
+  }
+
+  const hours = text.slice(0, separator).replace(/\D/g, '').slice(0, 2);
+  // Separator bez godziny przed nim nie ma czego zamykać - czekamy na cyfrę.
+  if (hours.length === 0) return '';
+  const minutes = text.slice(separator + 1).replace(/\D/g, '').slice(0, 2);
+  return `${hours.padStart(2, '0')}:${minutes}`;
 }
 
 /**
  * „08:00" → znacznik czasu tego samego dnia UTC (`reference` daje dzień lotny).
  *
- * Pilot wpisuje godzinę, nie datę — meldunek i zakończenie duty należą do dnia, który
+ * Pilot wpisuje godzinę, nie datę - meldunek i zakończenie duty należą do dnia, który
  * właśnie poprawia, więc datę bierzemy z wartości sprzed edycji, a nie z „teraz".
  * `null` = wpis nieczytelny; wołający ma wtedy zablokować zapis (§6 pkt 3: nigdy cichy błąd).
  */
@@ -272,7 +308,7 @@ export function parseTimeUtcOnDay(text: string, reference: EpochMillis): EpochMi
 }
 
 /**
- * Maska wpisu daty „16.08.2026" — kropki stawia maska, pilot pisze same cyfry.
+ * Maska wpisu daty „16.08.2026" - kropki stawia maska, pilot pisze same cyfry.
  *
  * Ta sama umowa, co `maskTimeUtcInput` dla godziny: separator nie istnieje na
  * klawiaturze numerycznej, więc stawiamy go za pilota. Powstała dla arkusza daty
@@ -290,7 +326,7 @@ export function maskDateUtcInput(text: string): string {
  * wartości odniesienia): przy wpisywaniu lotu sprzed paru dni rok się nie zmienia,
  * a osiem cyfr zamiast czterech to dwa razy dłuższe pisanie najczęstszej poprawki.
  *
- * `null` = wpis nieczytelny ALBO dzień nie istnieje w kalendarzu — przewinięcie
+ * `null` = wpis nieczytelny ALBO dzień nie istnieje w kalendarzu - przewinięcie
  * „31.04" na 1 maja byłoby cichą zmianą daty, czyli tym samym kłamstwem, przed
  * którym broni się `parseDateTimeUtc`.
  */
@@ -311,12 +347,12 @@ export function parseDateUtc(text: string, reference: EpochMillis): EpochMillis 
 }
 
 /**
- * Znacznik czasu jako „2026-07-30 13:01:33" — PEŁNA data i sekundy, w UTC.
+ * Znacznik czasu jako „2026-07-30 13:01:33" - PEŁNA data i sekundy, w UTC.
  *
  * Zapis pola korekty administratora (`design/admin/A02b-korekta.html`). Istnieje obok
  * `timeUtcSeconds` i `dateUtcShort`, bo to nie jest ich złożenie: korekta przesuwa
  * zdarzenie w rejestrze, więc pole musi nieść DZIEŃ (poprawiany czas potrafi przeskoczyć
- * północ UTC) i musi być zapisem, który da się z powrotem odczytać maszynowo —
+ * północ UTC) i musi być zapisem, który da się z powrotem odczytać maszynowo -
  * „30 JUL 2026 13:01:33" nie jest. Stąd ISO-podobne `YYYY-MM-DD`, a nie zapis lotniczy.
  *
  * Para z `parseDateTimeUtc`: co ta funkcja wypisze, tamta przyjmie.
@@ -332,7 +368,7 @@ export function dateTimeUtc(t: EpochMillis): string {
  *
  * ══ PARSUJEMY RĘCZNIE, BO `new Date(napis)` PARSUJE LOKALNIE ══
  * `new Date('2026-07-30 13:01:33')` to w specyfikacji zapis niestandardowy, więc
- * przeglądarka rozumie go jako czas LOKALNY — w Warszawie latem wynik jest przesunięty
+ * przeglądarka rozumie go jako czas LOKALNY - w Warszawie latem wynik jest przesunięty
  * o dwie godziny i nic tego nie sygnalizuje. Byłaby to najgorsza możliwa awaria tego
  * pola: korekta czasu zdarzenia, która sama przesuwa czas o strefę, wygląda jak
  * poprawna i zapisuje kłamstwo do rejestru klubu. Dlatego rozbieramy napis regexem
@@ -340,7 +376,7 @@ export function dateTimeUtc(t: EpochMillis): string {
  *
  * Sekundy są OPCJONALNE (brak = `:00`), bo przy przepisywaniu godziny z książki
  * samolotu sekund często po prostu nie ma. Dzień walidujemy przez porównanie z wynikiem
- * (`31 kwietnia` przewinąłby się na 1 maja i przeszedł bez tego kroku) — cicha zmiana
+ * (`31 kwietnia` przewinąłby się na 1 maja i przeszedł bez tego kroku) - cicha zmiana
  * daty jest tu równie groźna jak cicha zmiana strefy.
  */
 export function parseDateTimeUtc(text: string): EpochMillis | null {
@@ -372,13 +408,38 @@ export function shortName(name: string): string {
   return `${parts[0]![0]!.toUpperCase()}. ${parts.slice(1).join(' ')}`;
 }
 
-/** Paliwo w litrach — bez miejsc po przecinku, bo paliwomierz i tak nie jest precyzyjny. */
+/** Paliwo w litrach - bez miejsc po przecinku, bo paliwomierz i tak nie jest precyzyjny. */
 export function litres(value: number | null): string {
-  return value == null ? '—' : `${Math.round(value)} L`;
+  return value == null ? '-' : `${Math.round(value)} L`;
 }
 
 /**
- * „3 500" — tysiące rozdzielone spacją (mockup 05: Altitude w FT).
+ * „21 CZERWCA 09:15" - datownik osi czasu przekazania (mockup 02a): dzień i miesiąc
+ * bez roku + godzina. Czas nieoznaczony = UTC. Do issue #60 przepis żył jako prywatny
+ * `stamp()` ekranu liczników; sekcja oleju potrzebuje go w logice, a dwie kopie tego
+ * samego formatu to dokładnie problem, przeciw któremu ten pakiet istnieje.
+ */
+export function stampUtc(epochMs: number): string {
+  // Od 2026-09-07 to jest wprost złożenie daty panelu z godziną - `dateUtcShort` mówi
+  // dokładnie „6 WRZEŚNIA", więc odcinanie roku wyrażeniem regularnym z gotowego napisu
+  // przestało być potrzebne.
+  return `${dateUtcShort(epochMs)} ${timeUtc(epochMs)}`;
+}
+
+/**
+ * Olej w litrach - JEDNO miejsce po przecinku (issue #60). Bagnet czyta się
+ * z dokładnością ćwierci litra, więc zaokrąglenie do pełnych litrów (jak `litres`)
+ * zjadałoby całą treść pomiaru: 10,2 i 10,6 L to dwa różne stany, „10 L" i „11 L" -
+ * fikcja precyzji w złą stronę. Przecinek po polsku, jak w mockupach; parsery litrów
+ * przyjmują go od zawsze.
+ */
+export function oilLitres(value: number | null): string {
+  if (value == null) return '-';
+  return `${(Math.round(value * 10) / 10).toFixed(1).replace('.', ',')} L`;
+}
+
+/**
+ * „3 500" - tysiące rozdzielone spacją (mockup 05: Altitude w FT).
  * Ujemne dostają minus typograficzny „−" jak pozostałe odczyty; GPS potrafi
  * oddać wysokość pod poziomem morza.
  */
@@ -407,6 +468,16 @@ export function eventsCount(n: number): string {
 }
 
 /**
+ * „1 lądowanie" / „2 lądowania" / „5 lądowań" (uwaga z urządzenia, 2026-08-29 - kręgi
+ * we wpisie ręcznym). Mieszka tu, nie w helperze ekranu, bo tę samą liczbę odmienia
+ * arkusz lotu (podpis „razem N w tym locie") i oś sesji (nazwa wiersza lądowania),
+ * a dwie odmiany tego samego rzeczownika rozjechałyby się przy pierwszej poprawce.
+ */
+export function landingsCount(n: number): string {
+  return `${n} ${plural(n, 'lądowanie', 'lądowania', 'lądowań')}`;
+}
+
+/**
  * WIEK jako wartość względna: „3 dni 3 h", „6 h 41 min", „26 min".
  *
  * Reguła świeżości panelu (`design/admin/SZABLON.html`, sekcja `.fresh`): *„Wiek
@@ -414,7 +485,7 @@ export function eventsCount(n: number): string {
  * aktualne, a nie o której dotarły"*. Skrzynka flag (`A03`) ma z tego całą kolumnę,
  * bo flaga leżąca trzeci dzień jest innym problemem niż ta sprzed godziny.
  *
- * Dwa człony, nigdy trzy — „3 dni 3 h 12 min" jest dokładniejsze i nieczytelne,
+ * Dwa człony, nigdy trzy - „3 dni 3 h 12 min" jest dokładniejsze i nieczytelne,
  * a przy ocenie „czy to pilne" minuty przy dniach nie znaczą nic. Człon drugi znika,
  * gdy jest zerem („2 dni", nie „2 dni 0 h"), dokładnie jak w mockupach.
  *
@@ -436,7 +507,7 @@ export function relativeAge(ms: number): string {
 }
 
 /**
- * Pozycja jako „50°04.7'N 019°47.1'E" — stopnie i minuty dziesiętne (mockup 13).
+ * Pozycja jako „50°04.7'N 019°47.1'E" - stopnie i minuty dziesiętne (mockup 13).
  *
  * Format lotniczy, nie geodezyjny: mapy lotnicze i GPS-y pokładowe używają właśnie
  * DDM (stopnie + minuty z dziesiętną), więc pilot porówna wartość wzrokiem 1:1.
@@ -453,13 +524,13 @@ export function formatLatLon(lat: number, lon: number): string {
 }
 
 /**
- * Czas trwania jako „HH:MM" Z WIODĄCYM ZEREM — format czasów z mockupu 10 (statystyki)
+ * Czas trwania jako „HH:MM" Z WIODĄCYM ZEREM - format czasów z mockupu 10 (statystyki)
  * i kart arkusza (§4.7).
  *
  * ISTNIEJE OBOK `duration`, KTÓRA DAJE „H:MM" BEZ ZERA, I TO NIE JEST NIEDOPATRZENIE.
  * Każda z nich jest wierna innemu zatwierdzonemu mockupowi: kokpit, koniec dnia
  * i historia pokazują `6:39`, a ekran statystyk i wyeksportowana karta `06:39`.
- * Scalenie ich „w ramach porządków" zepsułoby jeden z dwóch — dlatego obie mają
+ * Scalenie ich „w ramach porządków" zepsułoby jeden z dwóch - dlatego obie mają
  * własną nazwę i własny komentarz, zamiast jednej funkcji z flagą, którą ktoś
  * kiedyś ustawi odwrotnie.
  */

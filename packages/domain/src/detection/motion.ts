@@ -1,9 +1,9 @@
 /**
- * UZ Aero — „stoi czy jedzie": automat ruchu oparty na PRZEMIESZCZENIU.
+ * UZ Aero - „stoi czy jedzie": automat ruchu oparty na PRZEMIESZCZENIU.
  *
  * DLACZEGO OSOBNY TOR: wykrycie początku kołowania było najsłabszym punktem detekcji
  * i nie dało się go naprawić przesuwaniem progu prędkości. Prędkość chwilowa jest
- * w tym zakresie najgorszą dostępną wielkością — na granicy czułości dopplera i pod
+ * w tym zakresie najgorszą dostępną wielkością - na granicy czułości dopplera i pod
  * filtrem static-hold odbiornika, który zaparkowanemu telefonowi wpisuje twarde zero.
  *
  * Pytanie „czy samolot ruszył ze stanowiska" jest z natury pytaniem o POŁOŻENIE, nie
@@ -11,12 +11,12 @@
  * ruszył, jest po pół minuty ponad sto metrów dalej. Ta sama informacja, kilka razy
  * lepszy kontrast.
  *
- * KOTWICA to centroid pozycji z postoju, nie pojedynczy fix — uśrednienie zjada dryf.
+ * KOTWICA to centroid pozycji z postoju, nie pojedynczy fix - uśrednienie zjada dryf.
  * Odświeżamy ją, dopóki samolot jest bezspornie na stanowisku (w promieniu
  * `TAXI_ANCHOR_RADIUS_M`); gdy zacznie się oddalać, kotwica zostaje tam, gdzie stał,
  * bo inaczej goniłaby samolot i ruch nigdy nie przekroczyłby progu.
  *
- * Kanał prędkościowy zostaje jako wsparcie — dla fixów bez pozycji i dla ruszenia tak
+ * Kanał prędkościowy zostaje jako wsparcie - dla fixów bez pozycji i dla ruszenia tak
  * energicznego, że próg prędkości pada wcześniej niż próg przemieszczenia.
  */
 
@@ -47,7 +47,7 @@ export function createMotionState(): MotionState {
  *
  * `signalBroken` przekazuje detektor: po przerwie w sygnale nie wolno „domknąć"
  * warunku prędkościowego z rozpędu, bo nikt nie obserwował, co działo się w środku.
- * Przemieszczenia to nie dotyczy — ono jest odporne z natury: jeśli po przerwie
+ * Przemieszczenia to nie dotyczy - ono jest odporne z natury: jeśli po przerwie
  * samolot jest 200 m od stanowiska, to naprawdę tam jest.
  */
 export function stepMotion(
@@ -67,7 +67,7 @@ export function stepMotion(
   };
 
   // ── kotwica ────────────────────────────────────────────────────────────────
-  // Odświeżamy TYLKO na postoju i tylko dopóki jesteśmy przy niej — inaczej
+  // Odświeżamy TYLKO na postoju i tylko dopóki jesteśmy przy niej - inaczej
   // centroid wędrowałby razem z kołującym samolotem.
   if (!next.moving && here != null) {
     const nearAnchor = next.anchor == null || distanceM(here, next.anchor) <= t.TAXI_ANCHOR_RADIUS_M;
@@ -86,11 +86,11 @@ export function stepMotion(
     // Kanał główny: oddalenie od kotwicy ponad próg. Dwa zabezpieczenia dopisane po
     // zgłoszeniu z terenu (2026-08-04: telefon odłożony na stole „kołował"):
     //
-    //  • próg POWIĘKSZONY o deklarowaną niepewność fixa — bramka jakości wpuszcza
+    //  • próg POWIĘKSZONY o deklarowaną niepewność fixa - bramka jakości wpuszcza
     //    dokładność do 50 m, a próg ruchu to 25 m, więc pojedynczy słaby fix umiał
     //    „przenieść" odbiornik za próg; fix przyznający się do ±40 m nie może
     //    dowodzić ruchu o 25 m,
-    //  • warunek musi się UTRZYMAĆ przez okno potwierdzenia — odskok multipathu
+    //  • warunek musi się UTRZYMAĆ przez okno potwierdzenia - odskok multipathu
     //    wraca do kotwicy po paru sekundach, prawdziwe kołowanie tylko się oddala.
     //    Późniejsze potwierdzenie nic nie kosztuje: do rejestru idzie moment
     //    retro-datowany (`taxiOnset`), nie moment decyzji.
@@ -109,7 +109,7 @@ export function stepMotion(
       next.moveCandidateSince = null;
     }
 
-    // Kanał wsparcia: prędkość ponad progiem utrzymana przez okno potwierdzenia —
+    // Kanał wsparcia: prędkość ponad progiem utrzymana przez okno potwierdzenia -
     // WYŁĄCZNIE gdy przemieszczenia nie da się policzyć (fix bez pozycji). Gdy pozycja
     // jest i mówi „przy kotwicy", szum dopplera nie ma prawa jej przegłosować: kanał
     // o kontraście ~24:1 nie może przegrywać z kanałem ~7:1 (rachunek: `trends.ts`).

@@ -1,7 +1,7 @@
 /**
- * UZ Aero — test LOGIKI TRYBU EDYCJI (issue #43, mockupy `design/10d`–`10h`).
+ * UZ Aero - test LOGIKI TRYBU EDYCJI (issue #43, mockupy `design/10d`–`10h`).
  *
- * Trzy rozstrzygnięcia, z których każde jest regułą, a nie wyglądem — i dlatego każde
+ * Trzy rozstrzygnięcia, z których każde jest regułą, a nie wyglądem - i dlatego każde
  * ma tu swój test:
  *  • KTÓRY arkusz otwiera wiersz osi (czas / odczyt / zrzut),
  *  • KTÓRY wiersz jest podejrzany (niespójności przypięte do konkretnego zdarzenia),
@@ -9,7 +9,7 @@
  *
  * Osobno pilnujemy ADRESU korekty: końce osi (przejęcie, zdanie) pochodzą z projekcji,
  * a poprawia się w nich payload `preflight_confirm` i `day_close`. Pomyłka w tym miejscu
- * jest niewidoczna na ekranie i kosztowna w rejestrze — arkusz otwarłby się na cudzym
+ * jest niewidoczna na ekranie i kosztowna w rejestrze - arkusz otwarłby się na cudzym
  * zdarzeniu.
  */
 
@@ -82,7 +82,7 @@ const rowByKind = (rows: AxisRow[], kind: string): AxisRow =>
   rows.find((r) => r.kind === kind)!;
 
 describe('adres korekty na osi', () => {
-  it('przejęcie celuje w preflight, a zdanie w zdanie samolotu — nie w claim', () => {
+  it('przejęcie celuje w preflight, a zdanie w zdanie samolotu - nie w claim', () => {
     const rows = rowsOf(sessionEvents());
     expect(rowByKind(rows, 'claim').targetUuid).toBe('preflight-1');
     expect(rowByKind(rows, 'release').targetUuid).toBe('close-1');
@@ -96,7 +96,7 @@ describe('adres korekty na osi', () => {
     expect(rowByKind(rows, 'engineStart').targetUuid).toBe('engine-on');
   });
 
-  it('przejęcie sesji BEZ preflightu nie ma czego adresować', () => {
+  it('przejęcie operacji BEZ preflightu nie ma czego adresować', () => {
     const events = sessionEvents().filter((e) => e.type !== 'preflight_confirm');
     expect(rowByKind(rowsOf(events), 'claim').targetUuid).toBeNull();
   });
@@ -151,7 +151,7 @@ describe('niespójności przypięte do wierszy', () => {
     const drop = rowByKind(marked, 'drop');
 
     expect(drop.warned).toBe(true);
-    expect(drop.sub).toBe('na ziemi — sprawdź czas');
+    expect(drop.sub).toBe('na ziemi - sprawdź czas');
     // Podpis ZASTĘPUJE dotychczasowy: w chwili, gdy coś się nie zgadza, ważniejsze
     // jest to, co się nie zgadza, niż wysokość zrzutu.
     expect(drop.sub).not.toContain('ft');
@@ -164,7 +164,7 @@ describe('niespójności przypięte do wierszy', () => {
     expect(rowByKind(marked, 'claim').sub).toBe(rowByKind(rows, 'claim').sub);
   });
 
-  it('niespójność BEZ adresu nie oznacza żadnego wiersza — zostaje w banerze', () => {
+  it('niespójność BEZ adresu nie oznacza żadnego wiersza - zostaje w banerze', () => {
     const rows = rowsOf(sessionEvents());
     const marked = withIssues(rows, [issue('FUEL_INCREASE_WITHOUT_REFUEL')]);
     expect(marked.every((row) => row.warned !== true)).toBe(true);
@@ -189,19 +189,21 @@ describe('co wolno dopisać', () => {
       'drop',
       'boarding',
       'refuel',
+      'oil_add',
     ]);
   });
 
-  it('przelot ich NIE MA — to brak akcji, nie blokada z powodem (issue #19)', () => {
+  it('przelot ich NIE MA - to brak akcji, nie blokada z powodem (issue #19)', () => {
     expect(addableTypes('ferry').map((t) => t.type)).toEqual([
       'takeoff',
       'landing',
       'taxi',
       'refuel',
+      'oil_add',
     ]);
   });
 
-  it('klamry silnika nie ma na żadnej liście — sesja ma jeden bieg', () => {
+  it('klamry silnika nie ma na żadnej liście - operacja ma jeden bieg', () => {
     for (const operation of ['skoki', 'ferry', 'egzamin', 'techniczny', 'inne'] as const) {
       const types = addableTypes(operation).map((t) => t.type as string);
       expect(types).not.toContain('engine_start');
@@ -209,12 +211,13 @@ describe('co wolno dopisać', () => {
     }
   });
 
-  it('bez znanej operacji zostaje sam rdzeń — nie zgadujemy dnia skokowego', () => {
+  it('bez znanej operacji zostaje sam rdzeń - nie zgadujemy dnia skokowego', () => {
     expect(addableTypes(null).map((t) => t.type)).toEqual([
       'takeoff',
       'landing',
       'taxi',
       'refuel',
+      'oil_add',
     ]);
   });
 });

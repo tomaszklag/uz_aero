@@ -1,9 +1,9 @@
 /**
- * UZ Aero (serwer) — operacje serwisowe panelu (`A11-konserwacja.html`).
+ * UZ Aero (serwer) - operacje serwisowe panelu (`A11-konserwacja.html`).
  *
  * Maszyneria przebudowy projekcji leżała w repozytorium od przekroju 2 z testami i BEZ
  * ANI JEDNEJ TRASY. Ten plik jest pierwszym wywołaniem jej drogą produkcyjną, więc
- * przypadki idą przez `app.inject` na PGlite — z prawdziwą bramą uprawnień, prawdziwym
+ * przypadki idą przez `app.inject` na PGlite - z prawdziwą bramą uprawnień, prawdziwym
  * `AuditedWrite` i prawdziwym CSRF. Dni powstają przez `POST /events`, żeby porównywać
  * się z projekcją, którą naprawdę zapisuje ingest, a nie z tą, którą test sobie wyobraża.
  *
@@ -23,7 +23,8 @@ import type {
 import type { EventsStorePort } from '../src/application/common/ports.ts';
 import { PROJECTION_DIFF_LIMIT } from '../src/application/admin/projectionScan.ts';
 import { MIGRATIONS, SCHEMA_VERSION } from '../src/infrastructure/pg/schema.ts';
-import { ADMIN_CSRF_HEADERS, TEST_PASSWORD, testHarness } from './helpers.ts';
+import { ADMIN_CSRF_HEADERS, testHarness } from './helpers.ts';
+import { googleTokenFor } from './testIdentityProvider.ts';
 
 const DAY = Date.UTC(2026, 5, 22);
 const at = (h: number, m: number): number => DAY + (h * 60 + m) * 60_000;
@@ -65,11 +66,11 @@ const fullDay = () => [
 ];
 
 /**
- * `count` sesji o JEDNYM zdarzeniu każda — tyle wystarcza, żeby projekcja miała wiersz,
+ * `count` sesji o JEDNYM zdarzeniu każda - tyle wystarcza, żeby projekcja miała wiersz,
  * a `sessionUuids` (czytające `DISTINCT session_uuid FROM events`) je zobaczyło.
  *
  * Uuidy są dopełnione zerami, bo skan idzie `ORDER BY session_uuid`: dzięki temu wiadomo
- * DOKŁADNIE, które sesje wejdą do limitu, a które zostaną — inaczej asercja o „reszcie"
+ * DOKŁADNIE, które sesje wejdą do limitu, a które zostaną - inaczej asercja o „reszcie"
  * zależałaby od porządku leksykograficznego liczb.
  */
 function manySessions(count: number) {
@@ -92,15 +93,15 @@ type Harness = Awaited<ReturnType<typeof testHarness>>;
 /**
  * Zestaw z jednym pełnym dniem lotnym w rejestrze i zalogowanym administratorem.
  *
- * `login` to `TMK` z ziarna (`infrastructure/pg/seed.ts`) — konto z rolą `admin`,
+ * `login` to `TMK` z ziarna (`infrastructure/pg/seed.ts`) - konto z rolą `admin`,
  * czyli jedyną, która ma dziś `maintenance.run`.
  */
 async function withDay(options: Parameters<typeof testHarness>[0] = {}) {
   const harness = await testHarness(options);
   const login = await harness.app.inject({
     method: 'POST',
-    url: '/auth/login',
-    payload: { login: 'TMK', password: TEST_PASSWORD },
+    url: '/auth/google',
+    payload: { idToken: googleTokenFor('TMK') },
   });
   const token = login.json().token as string;
 
@@ -151,7 +152,7 @@ async function auditRows(db: Harness['db']) {
 }
 
 describe('A11 · porównanie projekcji: ZAPYTANIE, nie komenda', () => {
-  it('na zdrowej bazie melduje ZERO różnic — i to jest wynik oczekiwany', async () => {
+  it('na zdrowej bazie melduje ZERO różnic - i to jest wynik oczekiwany', async () => {
     const { compare } = await withDay();
 
     expect(await compare()).toMatchObject({
@@ -167,7 +168,7 @@ describe('A11 · porównanie projekcji: ZAPYTANIE, nie komenda', () => {
   it('NICZEGO NIE ZAPISUJE i NIE ZOSTAWIA ŚLADU W AUDYCIE', async () => {
     // To jest przypadek, dla którego porównanie przestało być trybem komendy.
     // Do 2026-08-02 `dry_run` szedł przez `AuditedWrite`, więc każdy podgląd dopisywał
-    // wiersz do `admin_audit` — dziennik nadzoru opisywał wtedy akcje, których nie było.
+    // wiersz do `admin_audit` - dziennik nadzoru opisywał wtedy akcje, których nie było.
     const { db, compare } = await withDay();
 
     // Symulujemy dryf tak, jak mógłby powstać naprawdę: ręczny `UPDATE` w bazie,
@@ -197,7 +198,7 @@ describe('A11 · porównanie projekcji: ZAPYTANIE, nie komenda', () => {
       { field: 'flightsCount', stored: 6, computed: 1 },
     ]);
 
-    // Baza nietknięta — i dziennik audytu też.
+    // Baza nietknięta - i dziennik audytu też.
     expect(await projectionOf(db)).toMatchObject({ flights_count: 6, block_ms: 111 });
     expect(await auditRows(db)).toEqual([]);
   });
@@ -215,7 +216,7 @@ describe('A11 · porównanie projekcji: ZAPYTANIE, nie komenda', () => {
 });
 
 describe('A11 · nadpisanie projekcji: komenda przez bramę audytu', () => {
-  it('zapis wymaga POWODU — bez niego nic się nie dzieje i nie ma śladu', async () => {
+  it('zapis wymaga POWODU - bez niego nic się nie dzieje i nie ma śladu', async () => {
     const { db, rebuild } = await withDay();
     await db.query('UPDATE sessions SET flights_count = 6 WHERE session_uuid = $1', ['sess-1']);
 
@@ -294,7 +295,7 @@ describe('A11 · nadpisanie projekcji: komenda przez bramę audytu', () => {
   it('wypełnia kolumny statystyk w wierszach sprzed migracji', async () => {
     // Ten sam powód, co przy `operation`/`client`: `upsert` uruchamia dopiero następna paczka
     // zdarzeń sesji, a dla dnia zamkniętego takiej paczki już nie będzie. Bez
-    // przeliczenia statystyki `A10` widziałyby w całej historii `NULL` — i uczciwie
+    // przeliczenia statystyki `A10` widziałyby w całej historii `NULL` - i uczciwie
     // pokazywałyby kreskę zamiast startów, paliwa i zrzutów.
     const { db, compare, rebuild } = await withDay();
     await db.query(
@@ -305,7 +306,7 @@ describe('A11 · nadpisanie projekcji: komenda przez bramę audytu', () => {
     );
 
     // `projectionDiff` iteruje po polach wiersza PRZELICZONEGO, więc nowe kolumny
-    // wchodzą do porównania same — pierwsza przebudowa po migracji MUSI je zobaczyć.
+    // wchodzą do porównania same - pierwsza przebudowa po migracji MUSI je zobaczyć.
     const fields = (await compare()).diffs[0]!.fields.map((f) => f.field);
     expect(fields).toEqual(
       expect.arrayContaining([
@@ -333,11 +334,11 @@ describe('A11 · nadpisanie projekcji: komenda przez bramę audytu', () => {
       drop_alt_sum_ft: 0,
       drop_alt_count: 0,
     });
-    // Delta liczników to liczba zmiennoprzecinkowa — porównanie z tolerancją.
+    // Delta liczników to liczba zmiennoprzecinkowa - porównanie z tolerancją.
     expect(row.mh_delta_h as number).toBeCloseTo(1241.15 - 1234.5, 9);
   });
 
-  it('NIE DOTYKA rejestru zdarzeń — ani przy porównaniu, ani przy zapisie', async () => {
+  it('NIE DOTYKA rejestru zdarzeń - ani przy porównaniu, ani przy zapisie', async () => {
     const { db, compare, rebuild } = await withDay();
     const before = await db.query<{ n: string }>('SELECT COUNT(*) AS n FROM events');
     const digest = await db.query<{ d: string }>(
@@ -361,17 +362,17 @@ describe('A11 · nadpisanie projekcji: komenda przez bramę audytu', () => {
     // ══ CO TEN PRZYPADEK SPRAWDZA, A CZEGO NIE ══
     // Przebudowa czyta strumień i nadpisuje `sessions`; ingest robi to samo w swojej
     // transakcji. Bez szeregowania przebudowa mogłaby nadpisać wiersz policzony ze
-    // strumienia ŚWIEŻSZEGO niż jej własny odczyt — czyli cofnąć liczby dnia po cichu.
+    // strumienia ŚWIEŻSZEGO niż jej własny odczyt - czyli cofnąć liczby dnia po cichu.
     //
     // PGlite ma JEDNO połączenie, więc prawdziwej równoległości nie odtworzy i tego
     // wyścigu nie da się tu wywołać (to samo ograniczenie, co przy `ExportLogPort.lock`,
     // `uq_export_log_card_revision`). Testowalna jest KOLEJNOŚĆ: w chwili odczytu poprzedzającego zapis
     // blokada advisory musi już być trzymana przez tę transakcję. Dekorator portu pyta
-    // o to `pg_locks` — czyli sam silnik, a nie nasz kod.
+    // o to `pg_locks` - czyli sam silnik, a nie nasz kod.
     const held: number[] = [];
     // Dekorator wypisuje metody JAWNIE, a nie przez `{...real}`: rozsypanie instancji
     // klasy kopiuje wyłącznie własne pola, więc metody z prototypu (`insertBatch`!)
-    // przepadłyby po cichu — a wtedy `POST /events` nie zapisałby ani jednego zdarzenia
+    // przepadłyby po cichu - a wtedy `POST /events` nie zapisałby ani jednego zdarzenia
     // i test przeszedłby na pustej bazie, twierdząc, że sprawdził blokadę.
     const spy = (real: EventsStorePort): EventsStorePort => ({
       insertBatch: (tx, events, sourceDevice) => real.insertBatch(tx, events, sourceDevice),
@@ -393,7 +394,7 @@ describe('A11 · nadpisanie projekcji: komenda przez bramę audytu', () => {
     held.length = 0;
     expect((await rebuild({ reason: 'Kolejność blokady.' })).statusCode).toBe(200);
 
-    // Pierwszy odczyt to SKAN (bez blokady — blokowanie tysięcy sesji na czas skanu
+    // Pierwszy odczyt to SKAN (bez blokady - blokowanie tysięcy sesji na czas skanu
     // zatrzymywałoby ingest), ostatni to odczyt tuż przed `upsert` i ten JEST pod blokadą.
     expect(held.length).toBeGreaterThanOrEqual(2);
     expect(held[0]).toBe(0);
@@ -403,7 +404,7 @@ describe('A11 · nadpisanie projekcji: komenda przez bramę audytu', () => {
 
 describe('A11 · nadpisanie BEZ RÓŻNIC nie jest operacją i nie ma prawa trafić do dziennika', () => {
   it('zdrowa projekcja → 409 `nothing_to_rebuild`, `admin_audit` zostaje pusty', async () => {
-    // Dziennik nadzoru nie opisuje rzeczy, które się nie wydarzyły — ta sama zasada,
+    // Dziennik nadzoru nie opisuje rzeczy, które się nie wydarzyły - ta sama zasada,
     // dla której podgląd korekty i porównanie projekcji nie idą przez `AuditedWrite`.
     // „Nadpisano 0 wierszy" jest wpisem o niczym.
     const { db, rebuild } = await withDay();
@@ -427,11 +428,11 @@ describe('A11 · nadpisanie BEZ RÓŻNIC nie jest operacją i nie ma prawa trafi
     const again = await rebuild({ reason: 'Wyjaśnione wydaniem.' });
     expect(again.statusCode).toBe(409);
     expect(again.json()).toMatchObject({ error: 'nothing_to_rebuild' });
-    // Jeden skutek, jeden ślad — a nie dwa ślady po jednym skutku.
+    // Jeden skutek, jeden ślad - a nie dwa ślady po jednym skutku.
     expect(await auditRows(db)).toHaveLength(1);
   });
 
-  it('brak powodu wygrywa z brakiem różnic — 400, bo to wada ŻĄDANIA', async () => {
+  it('brak powodu wygrywa z brakiem różnic - 400, bo to wada ŻĄDANIA', async () => {
     // Kolejność sprawdzeń jest treścią: „popraw formularz" i „nie ma co robić" to dwa
     // różne zdania, a pierwsze da się wypowiedzieć bez czytania całego rejestru.
     const { rebuild } = await withDay();
@@ -441,7 +442,7 @@ describe('A11 · nadpisanie BEZ RÓŻNIC nie jest operacją i nie ma prawa trafi
   });
 });
 
-describe('A11 · limit przebiegu — granica jest, i jest WIDOCZNA', () => {
+describe('A11 · limit przebiegu - granica jest, i jest WIDOCZNA', () => {
   /** Rejestr z `PROJECTION_DIFF_LIMIT + 1` rozjechanymi sesjami plus zdrowy `sess-1`. */
   async function withOverflow() {
     const harness = await withDay();
@@ -455,7 +456,7 @@ describe('A11 · limit przebiegu — granica jest, i jest WIDOCZNA', () => {
     });
     expect(ingest.statusCode).toBe(200);
 
-    // Rozjeżdżamy WSZYSTKIE naraz — tak wygląda scenariusz, dla którego przebudowa
+    // Rozjeżdżamy WSZYSTKIE naraz - tak wygląda scenariusz, dla którego przebudowa
     // w ogóle powstała (zmiana reguły liczenia albo kolumna dołożona migracją):
     // N to nie „zero albo kilka", tylko wszystkie sesje w bazie.
     await harness.db.query("UPDATE sessions SET flights_count = 99 WHERE session_uuid LIKE 'bulk-%'");
@@ -476,7 +477,7 @@ describe('A11 · limit przebiegu — granica jest, i jest WIDOCZNA', () => {
 
   it('zapis nadpisuje TYLE, ile opisuje raport, i zostawia resztę na kolejne wywołanie', async () => {
     // Bez limitu ta jedna transakcja brałaby `PROJECTION_DIFF_LIMIT + 1` blokad advisory
-    // i trzymała je do COMMIT-u — czyli przez cały przebieg telefony nie dosyłałyby
+    // i trzymała je do COMMIT-u - czyli przez cały przebieg telefony nie dosyłałyby
     // paczek dla nadpisywanych dni, a wspólna tablica blokad klastra dostawałaby
     // tysiące wpisów z jednego żądania.
     const { db, compare, rebuild } = await withOverflow();
@@ -489,7 +490,7 @@ describe('A11 · limit przebiegu — granica jest, i jest WIDOCZNA', () => {
       rowsDiffering: PROJECTION_DIFF_LIMIT + 1,
     });
 
-    // Zostało dokładnie tyle, ile powiedział raport — i da się to domknąć powtórzeniem.
+    // Zostało dokładnie tyle, ile powiedział raport - i da się to domknąć powtórzeniem.
     expect(await compare()).toMatchObject({ rowsDiffering: 1, remaining: 0 });
     expect((await rebuild({ reason: 'Domknięcie reszty.' })).statusCode).toBe(200);
     expect(await compare()).toMatchObject({ rowsDiffering: 0, remaining: 0 });
@@ -502,8 +503,8 @@ describe('A11 · limit przebiegu — granica jest, i jest WIDOCZNA', () => {
   });
 });
 
-describe('A11 · wygasłe refresh tokeny — jedyna operacja, która kasuje', () => {
-  /** Dwa martwe tokeny i jeden żywy. Wartości są dowolne — w bazie i tak leżą skróty. */
+describe('A11 · wygasłe refresh tokeny - jedyna operacja, która kasuje', () => {
+  /** Dwa martwe tokeny i jeden żywy. Wartości są dowolne - w bazie i tak leżą skróty. */
   async function withTokens(harness: Harness) {
     // Czyścimy najpierw, bo logowanie administratora w `withDay` zostawia własny,
     // PRAWDZIWY refresh token. Bez tego liczby w asercjach opisywałyby zestaw testowy,
@@ -540,7 +541,7 @@ describe('A11 · wygasłe refresh tokeny — jedyna operacja, która kasuje', ()
     expect(res.statusCode).toBe(200);
     const body = res.json() as RefreshTokenScanDto;
 
-    // Zegar testu stoi na 22 JUN 2026 08:00 UTC — dwa tokeny są już martwe.
+    // Zegar testu stoi na 22 JUN 2026 08:00 UTC - dwa tokeny są już martwe.
     expect(body).toMatchObject({
       total: 3,
       expired: 2,
@@ -553,7 +554,7 @@ describe('A11 · wygasłe refresh tokeny — jedyna operacja, która kasuje', ()
     expect(await auditRows(harness.db)).toEqual([]);
   });
 
-  it('BEZ POTWIERDZENIA W ŻĄDANIU serwer odmawia — panel nie jest bramką', async () => {
+  it('BEZ POTWIERDZENIA W ŻĄDANIU serwer odmawia - panel nie jest bramką', async () => {
     // „Panel bramkuje" to ta sama pomyłka, co „rola siedzi w tokenie": `POST` da się
     // wysłać bez panelu. Gołe żądanie i żądanie z cudzym słowem odbijają się tak samo.
     const harness = await withDay();
@@ -572,7 +573,7 @@ describe('A11 · wygasłe refresh tokeny — jedyna operacja, która kasuje', ()
     expect(await auditRows(harness.db)).toEqual([]);
   });
 
-  it('KASUJE WYŁĄCZNIE WYGASŁE — token ważny przeżywa czyszczenie', async () => {
+  it('KASUJE WYŁĄCZNIE WYGASŁE - token ważny przeżywa czyszczenie', async () => {
     // Pomyłka tutaj wylogowuje pilotów w terenie: ponowne logowanie jest jedyną
     // czynnością w systemie, która wymaga sieci (§3.0).
     const harness = await withDay();
@@ -593,7 +594,7 @@ describe('A11 · wygasłe refresh tokeny — jedyna operacja, która kasuje', ()
     expect(rows.map((r) => r.token_hash)).toEqual(['hash-zywy']);
   });
 
-  it('sesja pilota z ŻYWYM tokenem działa PO czyszczeniu — koniec z obietnicą na słowo', async () => {
+  it('sesja pilota z ŻYWYM tokenem działa PO czyszczeniu - koniec z obietnicą na słowo', async () => {
     // Wykonywalna postać zdania z ekranu: „żaden pilot nie zostanie przez to wylogowany".
     // Token jest tu PRAWDZIWY (z `POST /auth/login`), więc test nie sprawdza własnego
     // wiersza w tabeli, tylko to, czy da się nim jeszcze odnowić dostęp.
@@ -602,8 +603,8 @@ describe('A11 · wygasłe refresh tokeny — jedyna operacja, która kasuje', ()
 
     const login = await harness.app.inject({
       method: 'POST',
-      url: '/auth/login',
-      payload: { login: 'PWI', password: TEST_PASSWORD },
+      url: '/auth/google',
+      payload: { idToken: googleTokenFor('PWI') },
     });
     const refreshToken = login.json().refreshToken as string;
 
@@ -617,7 +618,7 @@ describe('A11 · wygasłe refresh tokeny — jedyna operacja, która kasuje', ()
     expect(refreshed.statusCode).toBe(200);
   });
 
-  it('audyt niesie LICZBY I ZAKRES DAT — nigdy wartości ani skrótów tokenów', async () => {
+  it('audyt niesie LICZBY I ZAKRES DAT - nigdy wartości ani skrótów tokenów', async () => {
     const harness = await withDay();
     await withTokens(harness);
 
@@ -655,7 +656,7 @@ describe('A11 · wygasłe refresh tokeny — jedyna operacja, która kasuje', ()
   });
 });
 
-describe('A11 · stan schematu — wyłącznie odczyt', () => {
+describe('A11 · stan schematu - wyłącznie odczyt', () => {
   it('mówi, co zna KOD i co odnotowała BAZA, migracja po migracji', async () => {
     const harness = await withDay();
 
@@ -678,7 +679,7 @@ describe('A11 · stan schematu — wyłącznie odczyt', () => {
 
   it('baza STARSZA niż kod pokazuje brakującą pozycję, zamiast ją ukryć', async () => {
     // Stan po awarii runnera w starcie. Lista budowana z `schema_migrations` nie
-    // umiałaby powiedzieć, CZEGO brakuje — pokazałaby komplet o jeden krótszy.
+    // umiałaby powiedzieć, CZEGO brakuje - pokazałaby komplet o jeden krótszy.
     const harness = await withDay();
     await harness.db.query('DELETE FROM schema_migrations WHERE version = $1', [
       MIGRATIONS.length,
@@ -699,20 +700,25 @@ describe('A11 · stan schematu — wyłącznie odczyt', () => {
 });
 
 describe('A11 · zdolności', () => {
-  /** Konto z ziarna, które ma wejście do panelu, ale nie ma narzędzi serwisowych. */
-  async function trainingLead(harness: Harness): Promise<Record<string, string>> {
-    await harness.db.query("UPDATE pilots SET role = 'training_lead' WHERE id = 'AKO'");
+  /**
+   * Konto z ziarna, które nie ma narzędzi serwisowych.
+   *
+   * Do 2026-08-30 podmiotem była rola pośrednia (wejście do panelu bez `maintenance.run`).
+   * Po jej wycofaniu tę samą odmowę - i tę samą zdolność w treści - dostaje token
+   * zwykłego pilota, bo brama pyta o ZDOLNOŚĆ, a nie o wejście do panelu.
+   */
+  async function withoutTools(harness: Harness): Promise<Record<string, string>> {
     const login = await harness.app.inject({
       method: 'POST',
-      url: '/auth/login',
-      payload: { login: 'AKO', password: TEST_PASSWORD },
+      url: '/auth/google',
+      payload: { idToken: googleTokenFor('PWI') },
     });
     return { authorization: `Bearer ${login.json().token}` };
   }
 
-  it('szef wyszkolenia dostaje 403 na KAŻDEJ trasie konserwacji, z podaną zdolnością', async () => {
+  it('konto bez zdolności dostaje 403 na KAŻDEJ trasie konserwacji, z podaną zdolnością', async () => {
     const harness = await withDay();
-    const headers = await trainingLead(harness);
+    const headers = await withoutTools(harness);
 
     const cases: [string, string, string][] = [
       ['GET', '/admin/api/maintenance/projections/compare', 'maintenance.run'],

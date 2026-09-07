@@ -1,5 +1,5 @@
 /**
- * UZ Aero — PhaseHero (`.phase-hero` z mockupu 05)
+ * UZ Aero - PhaseHero (`.phase-hero` z mockupu 05)
  *
  * Główny display kokpitu w locie: kwadratowa plakietka z ikoną fazy przy lewej
  * krawędzi i obok nazwa fazy ogromną czcionką (54 px / ls 6) z linią kontekstu.
@@ -25,11 +25,11 @@ import { toneColors, type Tone } from '../tone';
 export interface PhaseHeroProps {
   /** Nazwa fazy: Taxi, Climb, Cruise, Descent, Engine Idle. */
   phase: string;
-  /** Linia pod fazą — kontekst, nie ozdobnik (np. „+1 200 FT/MIN"). */
+  /** Linia pod fazą - kontekst, nie ozdobnik (np. „+1 200 FT/MIN"). */
   detail?: string;
   tone?: Tone;
   icon?: IconName;
-  /** Chip po prawej — drugorzędny wobec fazy. */
+  /** Chip po prawej - drugorzędny wobec fazy. */
   aside?: React.ReactNode;
   style?: ViewStyle;
 }
@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
   wrap: { alignItems: 'flex-start' },
   body: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   // Plakietka nie jest przyciskiem, ale mockup (`.phase-hero-icon`, 14 px) rysuje ją tym
-  // samym promieniem co rodzinę kafli — bierzemy kanon `radius.btn`, nie literał.
+  // samym promieniem co rodzinę kafli - bierzemy kanon `radius.btn`, nie literał.
   iconBox: { width: 52, height: 52, borderRadius: radius.btn, alignItems: 'center', justifyContent: 'center' },
   texts: { gap: 3 },
   phase: { fontSize: 54, lineHeight: 56, letterSpacing: 6 },

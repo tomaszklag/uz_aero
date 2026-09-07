@@ -1,18 +1,18 @@
 /**
- * UZ Aero (serwer) — składanie `WHERE` z filtrów OPCJONALNYCH.
+ * UZ Aero (serwer) - składanie `WHERE` z filtrów OPCJONALNYCH.
  *
- * Ten plik (razem z `keyset.ts`) jest tym, co wchodzi ZAMIAST query buildera — decyzja
+ * Ten plik (razem z `keyset.ts`) jest tym, co wchodzi ZAMIAST query buildera - decyzja
  * „bez ORM-a i bez query buildera" (`docs/architektura-panelu-serwer.md` §2.4) zostawia
  * dokładnie jedną realną dziurę: listy panelu mają sześć–osiem filtrów, z których każdy
  * bywa nieustawiony.
  *
  * **Dlaczego to musi być moduł, a nie pętla w adapterze.** Ręczne sklejanie fragmentów
  * z licznikiem `$n` jest najbardziej podatnym na pomyłkę kodem w całym panelu:
- * przesunięcie numeracji o jeden NIE JEST błędem typów ani składni — jest cichym
+ * przesunięcie numeracji o jeden NIE JEST błędem typów ani składni - jest cichym
  * porównaniem złej kolumny ze złą wartością, które przechodzi testy „czy zwraca
  * wiersze". Tu numeracja powstaje w jednym miejscu i ma testy.
  *
- * **Wartości ZAWSZE jadą parametrem** — klasa nie ma metody wklejającej wartość do
+ * **Wartości ZAWSZE jadą parametrem** - klasa nie ma metody wklejającej wartość do
  * tekstu SQL-a i nie wolno jej dodać. To jedyna gwarancja, że filtr z panelu nie
  * stanie się powierzchnią wstrzyknięcia.
  */
@@ -22,7 +22,7 @@ export class SqlFilter {
   private readonly values: unknown[] = [];
 
   /**
-   * Dopisuje warunek. `?` w `fragment` to miejsce na wartość — numer `$n` nadaje
+   * Dopisuje warunek. `?` w `fragment` to miejsce na wartość - numer `$n` nadaje
    * klasa, w kolejności wywołań.
    *
    * Niezgodność liczby `?` z liczbą wartości RZUCA. To jest pomyłka programisty
@@ -46,7 +46,7 @@ export class SqlFilter {
   /**
    * Filtr OPCJONALNY: pomijany, gdy wartość jest NIEUSTAWIONA (`undefined`).
    *
-   * `null` jest wartością, nie brakiem — `addOptional('dual_id = ?', null)` zbuduje
+   * `null` jest wartością, nie brakiem - `addOptional('dual_id = ?', null)` zbuduje
    * poprawny (choć nigdy nieprawdziwy) warunek, bo `= NULL` to w SQL-u co innego niż
    * `IS NULL`. Rozróżnienie „nie ustawiono" od „ustawiono na nic" jest tu jedynym
    * powodem, dla którego ta metoda istnieje osobno od `add`.
@@ -61,19 +61,19 @@ export class SqlFilter {
    *
    * Kolejność wywołań `add`/`bind` nie musi odpowiadać kolejności w tekście SQL-a:
    * numer jest zapisany w zwróconym napisie, a tablica parametrów jest indeksowana
-   * pozycyjnie — to jest właśnie ta księgowość, której nie chcemy prowadzić ręcznie.
+   * pozycyjnie - to jest właśnie ta księgowość, której nie chcemy prowadzić ręcznie.
    */
   bind(value: unknown): string {
     this.values.push(value);
     return `$${this.values.length}`;
   }
 
-  /** `''` przy zerze warunków (nie `WHERE TRUE` — pusty napis wkleja się wszędzie). */
+  /** `''` przy zerze warunków (nie `WHERE TRUE` - pusty napis wkleja się wszędzie). */
   where(): string {
     return this.fragments.length === 0 ? '' : `WHERE ${this.fragments.join(' AND ')}`;
   }
 
-  /** Parametry w kolejności numerów `$n`. Kopia — wołający nie ma czego popsuć. */
+  /** Parametry w kolejności numerów `$n`. Kopia - wołający nie ma czego popsuć. */
   params(): unknown[] {
     return [...this.values];
   }

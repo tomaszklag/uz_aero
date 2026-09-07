@@ -1,14 +1,14 @@
 /**
- * UZ Aero (serwer) — adapter dziennika audytu panelu (`AdminAuditPort`).
+ * UZ Aero (serwer) - adapter dziennika audytu panelu (`AdminAuditPort`).
  *
  * Jedna metoda i jeden `INSERT`. To nie jest zalążek do rozbudowy: `admin_audit` jest
- * append-only, więc `UPDATE` i `DELETE` nie mają się tu z czego wziąć — a ich BRAK
+ * append-only, więc `UPDATE` i `DELETE` nie mają się tu z czego wziąć - a ich BRAK
  * w adapterze jest jedną z trzech warstw tej gwarancji (obok testu architektury
  * i docelowego `GRANT INSERT, SELECT`).
  *
  * `db` przychodzi PARAMETREM, nie polem klasy: wpis musi jechać transakcją skutku,
  * który opisuje (`AuditedWrite`). Adapter z własnym uchwytem do puli otworzyłby drugie
- * połączenie i tym samym drugą transakcję — czyli dokładnie ten rozjazd, przed którym
+ * połączenie i tym samym drugą transakcję - czyli dokładnie ten rozjazd, przed którym
  * cały mechanizm broni.
  */
 

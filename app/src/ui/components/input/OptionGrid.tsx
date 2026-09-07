@@ -1,14 +1,14 @@
 /**
- * UZ Aero — OptionGrid (`.op-grid` z mockupu 02)
+ * UZ Aero - OptionGrid (`.op-grid` z mockupu 02)
  *
- * Siatka kart z ikonami — obowiązkowa forma wyboru rodzaju operacji. `CLAUDE.md` mówi
- * wprost: *Rodzaj operacji — siatka kart z ikonami, NIE select*. Powód jest praktyczny:
+ * Siatka kart z ikonami - obowiązkowa forma wyboru rodzaju operacji. `CLAUDE.md` mówi
+ * wprost: *Rodzaj operacji - siatka kart z ikonami, NIE select*. Powód jest praktyczny:
  * operacja jest wybierana raz dziennie, opcji jest pięć i wszystkie mieszczą się na ekranie,
  * więc ukrywanie ich za rozwijaną listą tylko dokłada tapnięcie.
  *
  * Różnica wobec `CardPicker`: tam pozycje mają zmienną, długą treść (samolot z typem,
  * blokadą PIC, podglądem) i muszą być pełnej szerokości. Tu opcje są krótkie, stałe
- * i rozpoznawalne po ikonie — dwie kolumny są czytelniejsze i krótsze do przewijania.
+ * i rozpoznawalne po ikonie - dwie kolumny są czytelniejsze i krótsze do przewijania.
  */
 
 import React from 'react';

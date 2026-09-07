@@ -1,5 +1,5 @@
 /**
- * UZ Aero — FRAGMENT TRASY W OKNIE CZASU (issue #47, podświetlenie zamiast przeskoku).
+ * UZ Aero - FRAGMENT TRASY W OKNIE CZASU (issue #47, podświetlenie zamiast przeskoku).
  *
  * Profil przybliżony do wycinka czasu mówi mapie, KTÓRY to wycinek; mapa przygasza całą
  * trasę i rozjaśnia tę część. Ta funkcja odpowiada na jedyne pytanie, jakie przy tym
@@ -10,7 +10,7 @@
  * razy". Test pokazał, że to nieporozumienie: linia jest uporządkowana czasem, a okno
  * jest przedziałem czasu, więc pasujące wierzchołki zawsze leżą OBOK SIEBIE. Kilka
  * przelotów nad tym samym placem to jeden ciągły kawałek linii, który po prostu zawija
- * się w pętle — i tak też się podświetla. Lista byłaby konstrukcją na wypadek sytuacji,
+ * się w pętle - i tak też się podświetla. Lista byłaby konstrukcją na wypadek sytuacji,
  * która nie ma jak zajść.
  *
  * Zakres dostaje po JEDNYM wierzchołku zapasu z obu stron. Bez tego podświetlenie
@@ -38,6 +38,6 @@ export function highlightRange(
   const start = Math.max(0, first - 1);
   const end = Math.min(times.length - 1, last + 1);
 
-  // Jeden wierzchołek to nie odcinek — nie ma czego rysować.
+  // Jeden wierzchołek to nie odcinek - nie ma czego rysować.
   return end > start ? [start, end] : null;
 }

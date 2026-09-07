@@ -1,22 +1,22 @@
 /**
- * UZ Aero — BRAMKA SKELETONU: kiedy plamki wolno pokazać, a kiedy trzeba je utrzymać.
+ * UZ Aero - BRAMKA SKELETONU: kiedy plamki wolno pokazać, a kiedy trzeba je utrzymać.
  *
  * Reguła 5 wzorca (`design/LOADERY.html`) i jedyny kawałek tego wzorca, który jest
- * logiką, a nie wyglądem — dlatego mieszka osobno i ma test.
+ * logiką, a nie wyglądem - dlatego mieszka osobno i ma test.
  *
  * Problem jest w rozkładzie czasów, nie w samym czekaniu. Prawie wszystko, na co czeka
  * ta aplikacja, jest LOKALNE (SQLite): doba pilota, historia dni, cache referencyjny.
- * Typowy odczyt to kilkadziesiąt milisekund — skeleton pokazany natychmiast byłby
+ * Typowy odczyt to kilkadziesiąt milisekund - skeleton pokazany natychmiast byłby
  * mrugnięciem, które czyta się gorzej niż spokojna pustka. Ale ten sam odczyt na
  * strumieniu po sezonie albo zaraz po odtworzeniu rejestru z serwera (§4.9) trwa
  * zauważalnie i wtedy pustka wygląda jak zawieszona aplikacja.
  *
  * Stąd dwa progi:
- *  • `SKELETON_DELAY_MS` — dopóki czekanie jest krótsze, ekran nie rysuje NIC. Zwykły
+ *  • `SKELETON_DELAY_MS` - dopóki czekanie jest krótsze, ekran nie rysuje NIC. Zwykły
  *    odczyt kończy się w tym oknie i pilot widzi po prostu gotową treść;
- *  • `SKELETON_MIN_MS` — gdy plamki zdążyły się pojawić, zostają na minimalny czas.
+ *  • `SKELETON_MIN_MS` - gdy plamki zdążyły się pojawić, zostają na minimalny czas.
  *    Bez tego dane, które przyszły 20 ms po progu, kasowałyby skeleton w połowie
- *    pierwszego pulsu — czyli produkowały dokładnie to mignięcie, którego próg unika.
+ *    pierwszego pulsu - czyli produkowały dokładnie to mignięcie, którego próg unika.
  *
  * Funkcja jest czysta i pytana o KONKRETNĄ chwilę; harmonogramem przerysowań zajmuje
  * się `useSkeleton`.
@@ -56,7 +56,7 @@ export function skeletonVisible({
 }
 
 /**
- * Za ile milisekund odpowiedź `skeletonVisible` sama się zmieni — `null`, gdy stan jest
+ * Za ile milisekund odpowiedź `skeletonVisible` sama się zmieni - `null`, gdy stan jest
  * stabilny i nie ma po co budzić Reacta. Hook zamienia to na jeden `setTimeout`.
  */
 export function skeletonNextChangeIn({

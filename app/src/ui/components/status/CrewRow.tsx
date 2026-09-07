@@ -1,12 +1,12 @@
 /**
- * UZ Aero — CrewRow (`.crew-row` z mockupu 07)
+ * UZ Aero - CrewRow (`.crew-row` z mockupu 07)
  *
  * Wiersz aktualnej załogi: badge roli, kod pilota dużym mono, opcjonalny znacznik
  * „zalogowany · Ty" i metadane po prawej (od kiedy, block time).
  *
- * Czym różni się od `CrewCard` (ekran 10): karta jest PODSUMOWANIEM dnia — statystyki
+ * Czym różni się od `CrewCard` (ekran 10): karta jest PODSUMOWANIEM dnia - statystyki
  * w pionie, do przepisania do dokumentów. Wiersz jest STANEM „kto teraz siedzi w kabinie"
- * — jedna linia, czytana przed decyzją o zmianie. Puste miejsce Duala to pełnoprawny
+ * - jedna linia, czytana przed decyzją o zmianie. Puste miejsce Duala to pełnoprawny
  * wiersz z kreską, nie brak wiersza: mockup pokazuje je zawsze, bo „nie ma Duala"
  * jest informacją.
  */
@@ -21,7 +21,7 @@ import { Tag } from './Tag';
 import { toneColors } from '../tone';
 
 export interface CrewRowProps {
-  /** Badge roli — „PIC" / „DUAL". */
+  /** Badge roli - „PIC" / „DUAL". */
   role: string;
   /** Kod pilota; null = miejsce puste. */
   pilotId: string | null;
@@ -29,7 +29,7 @@ export interface CrewRowProps {
   you?: boolean;
   /** Pierwsza linia metadanych po prawej (np. „od 08:00"). */
   metaTop?: string;
-  /** Druga linia (np. „block: 2:22") — jaśniejsza, bo to wartość, nie etykieta. */
+  /** Druga linia (np. „block: 2:22") - jaśniejsza, bo to wartość, nie etykieta. */
   metaBottom?: string;
   style?: ViewStyle;
 }

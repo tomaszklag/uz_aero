@@ -1,11 +1,11 @@
 /**
- * UZ Aero — migawka cudzej sesji → treść ekranu 04b (`design/04b-cockpit-readonly.html`).
+ * UZ Aero - migawka cudzej sesji → treść ekranu 04b (`design/04b-cockpit-readonly.html`).
  *
  * Osobny moduł z tego samego powodu co `cockpitLog.ts` i `statsDay.ts`: to jedyna
  * nietrywialna logika prezentacji tego ekranu i jedyna, którą da się sprawdzić bez
  * React Native.
  *
- * Cała treść tego ekranu należy do KATEGORII (b) z `CLAUDE.md` — dane z serwera. Nie ma
+ * Cała treść tego ekranu należy do KATEGORII (b) z `CLAUDE.md` - dane z serwera. Nie ma
  * tu ani jednej wartości liczonej z własnego strumienia zdarzeń, więc każde zdanie musi
  * nieść stan świeżości (§4.8). Dlatego stopka `.ro-meta` powstaje TUTAJ, razem z tekstem
  * banera, a nie jako doklejona później adnotacja: napis o stanie samolotu i napis o wieku
@@ -23,7 +23,7 @@ import { timeUtc } from '../../format';
 // skrótów miesięcy dałby dwa różne zapisy tej samej rzeczy w jednej aplikacji.
 import { dateTimeUtcShort } from './statsDay';
 
-/** Stan danych z serwera wg §4.8 — bez `manual`, bo tu nie ma czego wpisać z licznika. */
+/** Stan danych z serwera wg §4.8 - bez `manual`, bo tu nie ma czego wpisać z licznika. */
 export type PeekFreshness = 'live' | 'cache' | 'brak';
 
 /** Fragment zdania banera; `strong` = wyróżnienie (kontrakt z `components/PeekBanner`). */
@@ -36,7 +36,7 @@ export interface PeekTextSegment {
  * Migawka cudzej sesji tak, jak przychodzi z serwera: surowy strumień zdarzeń plus
  * moment pobrania.
  *
- * Zdarzenia, a nie gotowe podsumowanie — bo `projectSession()` jest czystą funkcją
+ * Zdarzenia, a nie gotowe podsumowanie - bo `projectSession()` jest czystą funkcją
  * domeny i policzy z nich dokładnie ten sam stan, który widzi pilot prowadzący. Gdyby
  * serwer przysyłał wyliczone liczby, mielibyśmy drugie miejsce, w którym powstaje
  * prawda o dniu, i pierwszy rozjazd byłby kwestią czasu.
@@ -50,7 +50,7 @@ export interface PeekSnapshot {
 /**
  * Do ilu migawka jest jeszcze „na żywo".
  *
- * Podgląd pobieramy przy wejściu na ekran i nie odświeżamy go w tle — po kilku minutach
+ * Podgląd pobieramy przy wejściu na ekran i nie odświeżamy go w tle - po kilku minutach
  * czytania to już nie jest stan bieżący, tylko zapamiętany. Próg jest celowo krótki:
  * fałszywe „live" jest gorsze od nadmiarowego „cache", bo pilot podejmuje na tej podstawie
  * decyzję o przejęciu samolotu.
@@ -70,7 +70,7 @@ export function peekFreshness(
 /**
  * Wiek migawki słowami („sprzed 12 min", „stan sprzed ponad doby").
  *
- * Sama data pobrania nie odpowiada na pytanie pilota — „21 JUN 17:30" wymaga policzenia
+ * Sama data pobrania nie odpowiada na pytanie pilota - „21 JUN 17:30" wymaga policzenia
  * w głowie, ile to godzin temu, a to jest właśnie ta liczba, od której zależy, czy warto
  * ufać stanowi paliwa.
  */
@@ -89,7 +89,7 @@ export interface PeekBannerInput {
   claimSince: EpochMillis | null;
   /** Kiedy pobrano migawkę (UTC); null przy stanie `brak`. */
   fetchedAt: EpochMillis | null;
-  /** Ostatnie zdarzenie w migawce (UTC) — „ostatnia aktywność KRZ 09:38". */
+  /** Ostatnie zdarzenie w migawce (UTC) - „ostatnia aktywność KRZ 09:38". */
   lastActivityAt: EpochMillis | null;
   now: EpochMillis;
 }
@@ -98,22 +98,22 @@ export interface PeekBannerModel {
   /** Ton pudełka: informacja vs uwaga na wiek danych. */
   tone: 'blue' | 'amber';
   text: PeekTextSegment[];
-  /** `.stale-warn` — czego ten stan może już nie obejmować. */
+  /** `.stale-warn` - czego ten stan może już nie obejmować. */
   warning: string | null;
-  /** `.ro-meta` — pochodzenie i wiek danych. */
+  /** `.ro-meta` - pochodzenie i wiek danych. */
   meta: string;
   /** Kropka przy stopce. */
   metaTone: 'green' | 'amber';
 }
 
-/** „KRZ · od 07:10" — wyróżniony fragment zdania o prowadzącym. */
+/** „KRZ · od 07:10" - wyróżniony fragment zdania o prowadzącym. */
 function leadPilot(picCode: string | null, claimSince: EpochMillis | null): string {
   const who = picCode ?? 'inny pilot';
   return claimSince != null ? `${who} · od ${timeUtc(claimSince)}` : who;
 }
 
 /**
- * Baner `.ro-banner` — jedyne miejsce, które mówi wprost, dlaczego ekran nic nie zapisuje.
+ * Baner `.ro-banner` - jedyne miejsce, które mówi wprost, dlaczego ekran nic nie zapisuje.
  *
  * Zdanie o single-writerze („dane zapisuje wyłącznie jego telefon") jest tu, a nie
  * w drobnym druku, bo to ono tłumaczy wszystkie blokady niżej. Bez niego wyszarzona
@@ -126,7 +126,7 @@ export function peekBanner(input: PeekBannerInput): PeekBannerModel {
   const text: PeekTextSegment[] = [
     { text: 'Samolot prowadzi ' },
     { text: leadPilot(picCode, claimSince), strong: true },
-    { text: '. Dane zapisuje wyłącznie jego telefon — Ty widzisz stan pobrany z serwera.' },
+    { text: '. Dane zapisuje wyłącznie jego telefon - Ty widzisz stan pobrany z serwera.' },
   ];
 
   if (freshness === 'live') {
@@ -145,19 +145,19 @@ export function peekBanner(input: PeekBannerInput): PeekBannerModel {
     return {
       tone: 'amber',
       text,
-      warning: `Brak łączności — to ostatni znany stan. ${who} mógł już wylądować, zatankować albo zamknąć dzień.`,
+      warning: `Brak łączności - to ostatni znany stan. ${who} mógł już wylądować, zatankować albo zamknąć dzień.`,
       meta: `Ostatnie pobrane dane · ${dateTimeUtcShort(fetchedAt)} · stan ${snapshotAgeLabel(now - fetchedAt)}`,
       metaTone: 'amber',
     };
   }
 
   // `brak` (§4.8): nigdy nie pobraliśmy tej sesji. Puste miejsce po logu wyglądałoby jak
-  // „pilot nic nie zrobił" — a to zupełnie inna informacja niż „nie wiemy, co zrobił".
+  // „pilot nic nie zrobił" - a to zupełnie inna informacja niż „nie wiemy, co zrobił".
   return {
     tone: 'amber',
     text,
-    warning: 'Nie mamy jeszcze żadnej migawki tego dnia — przebieg pokażemy po pierwszym połączeniu z serwerem.',
-    meta: 'Brak danych z serwera — przebieg dnia nieznany',
+    warning: 'Nie mamy jeszcze żadnej migawki tego dnia - przebieg pokażemy po pierwszym połączeniu z serwerem.',
+    meta: 'Brak danych z serwera - przebieg dnia nieznany',
     metaTone: 'amber',
   };
 }
@@ -166,18 +166,18 @@ export function peekBanner(input: PeekBannerInput): PeekBannerModel {
  * `cyclesLabel` („1 cykl" / „3 cykle" / „6 cykli") USUNIĘTE przy issue #44 razem
  * z liczbą cykli w nagłówku logu. Słowo „cykl" wypadło ze słownika przy pivocie
  * 2026-08-10 (sesja = jeden bieg silnika), a tu przetrwało w napisie widocznym dla
- * pilota — na przekór modelowi, w którym ta liczba zawsze wynosi jeden.
+ * pilota - na przekór modelowi, w którym ta liczba zawsze wynosi jeden.
  */
 
 /**
  * Nagłówek karty logu: „Log SP-FGK · KRZ · UTC" (mockup 04b).
  *
  * Samolot stoi PRZED pilotem, bo to log jednej MASZYNY. Do 2026-08-08 stało tu „Log dnia
- * KRZ", czyli obietnica przekroju przez cały dzień poprzednika — a po §3.6a jego dzień
+ * KRZ", czyli obietnica przekroju przez cały dzień poprzednika - a po §3.6a jego dzień
  * może objąć kilka samolotów i ten ekran o pozostałych nic nie wie.
  *
  * Liczb w nagłówku NIE MA (issue #44): starty policzy oko na samej osi, a liczba cykli
- * była pozostałością po modelu wielu biegów silnika. Zostaje stan „brak danych" — bo
+ * była pozostałością po modelu wielu biegów silnika. Zostaje stan „brak danych" - bo
  * on mówi o czymś, czego na osi nie widać: że migawki po prostu nie mamy.
  */
 export function peekLogTitle(
@@ -217,12 +217,12 @@ export function peekStatusChip(state: SessionState | null): PeekStatus {
  *
  * Treść przyszła tu z arkusza potwierdzenia, który do issue #12 otwierał się na liście
  * samolotów (02). Arkusz pytał „PRZEJMIJ SP-FGK?" nad listą, na której nie widać było ani
- * stanu maszyny, ani tego, co poprzednik zdążył zrobić — czyli nad ekranem BEZ przesłanek
+ * stanu maszyny, ani tego, co poprzednik zdążył zrobić - czyli nad ekranem BEZ przesłanek
  * do tej decyzji. Tutaj przesłanki są (baner podglądu, chip stanu, log dnia), więc
  * ostrzeżenie stoi obok nich, a nie w osobnym oknie nad czymś innym.
  *
  * Offline mówi więcej niż online i tak ma być: claim jest optymistyczny (§4.4), więc
- * przejęcie bez sieci DZIAŁA — pilot musi to wiedzieć, zanim zrezygnuje z lotu, czekając
+ * przejęcie bez sieci DZIAŁA - pilot musi to wiedzieć, zanim zrezygnuje z lotu, czekając
  * na zasięg. Jednocześnie ma wiedzieć, czym płaci: odczyty wpisze z liczników, a kolizja
  * z poprzednikiem zostanie oznaczona do wyjaśnienia.
  */
@@ -230,7 +230,7 @@ export function takeoverWarning(freshness: PeekFreshness, picCode: string | null
   const who = picCode ?? 'poprzedni PIC';
   const base =
     `${who} może mieć niewysłane dane. Po przejęciu tylko Ty będziesz wysyłać dane dla tego ` +
-    'samolotu — zweryfikuj odczyty paliwa i MH z liczników w kolejnym kroku. Spóźnione dane ' +
+    'samolotu - zweryfikuj odczyty paliwa i MH z liczników w kolejnym kroku. Spóźnione dane ' +
     'poprzednika serwer scali automatycznie.';
 
   if (freshness === 'live') return base;
@@ -241,14 +241,14 @@ export function takeoverWarning(freshness: PeekFreshness, picCode: string | null
 }
 
 /**
- * Podpis POD „PRZEJMIJ SAMOLOT" (`.takeover-hint`) — dokąd prowadzi ten przycisk.
+ * Podpis POD „PRZEJMIJ SAMOLOT" (`.takeover-hint`) - dokąd prowadzi ten przycisk.
  *
  * Od issue #12 przycisk naprawdę przejmuje: wybiera ten samolot w preflightcie i wraca
- * na krok 1. Nic jeszcze nie trafia do rejestru — `session_claim` powstaje dopiero przy
- * potwierdzeniu na ekranie 3 — i pilot ma prawo to wiedzieć, zanim naciśnie przycisk
+ * na krok 1. Nic jeszcze nie trafia do rejestru - `session_claim` powstaje dopiero przy
+ * potwierdzeniu na ekranie 3 - i pilot ma prawo to wiedzieć, zanim naciśnie przycisk
  * z napisem „PRZEJMIJ".
  */
 export function takeoverHint(reg: string | null): string {
   const what = reg ?? 'ten samolot';
-  return `Wrócisz do nowego lotu z wybranym ${what} — zapisze się dopiero po potwierdzeniu odczytów`;
+  return `Wrócisz do nowego lotu z wybranym ${what} - zapisze się dopiero po potwierdzeniu odczytów`;
 }

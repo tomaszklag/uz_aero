@@ -1,9 +1,9 @@
 /**
- * UZ Aero (serwer) — role kont i brama uprawnień panelu (decyzja 2026-07-31).
+ * UZ Aero (serwer) - role kont i brama uprawnień panelu (decyzja 2026-07-31).
  *
  * Trzy rzeczy, które MUSZĄ trzymać, bo ich złamanie jest luką, a nie usterką:
- *  1. brak roli nigdy nie awansuje — nieznana wartość schodzi do `pilot`;
- *  2. rola jedzie z KONTA, nie z tokenu — odebranie uprawnień działa przy odświeżeniu
+ *  1. brak roli nigdy nie awansuje - nieznana wartość schodzi do `pilot`;
+ *  2. rola jedzie z KONTA, nie z tokenu - odebranie uprawnień działa przy odświeżeniu
  *     ORAZ przy każdym żądaniu panelu (zmiana 2026-08-01, przekrój A06);
  *  3. baza nie przyjmuje roli spoza słownika (CHECK na `pilots.role`).
  */
@@ -14,27 +14,32 @@ import { describe, expect, it } from 'vitest';
 import { authorizeAccount, credentialsRevoked } from '../src/http/authorize.ts';
 import { PgPilotsRepo } from '../src/infrastructure/pg/common/pilotsRepo.ts';
 import { can } from '../src/domain/roles.ts';
-import { TEST_PASSWORD, TEST_SECRET, testHarness } from './helpers.ts';
+import { TEST_SECRET, testHarness } from './helpers.ts';
+import { googleTokenFor } from './testIdentityProvider.ts';
 
 describe('mapa uprawnień', () => {
-  it('pilot nie ma w panelu NICZEGO — z wejściem włącznie', () => {
-    expect(can('pilot', 'panel.access')).toBe(false);
-    expect(can('pilot', 'flags.resolve')).toBe(false);
-    expect(can('pilot', 'accounts.manage')).toBe(false);
+  it('pilot nie ma w panelu NICZEGO - z wejściem włącznie', () => {
+    // Lista wypisana w całości, a nie trzy przykłady: po wycofaniu roli pośredniej
+    // (2026-08-30) to JEDYNY przypadek mówiący „tej zdolności się nie dostaje",
+    // więc musi widzieć każdą nową pozycję katalogu - tak samo jak przypadek niżej.
+    for (const capability of [
+      'panel.access',
+      'flags.resolve',
+      'events.correct',
+      'accounts.manage',
+      'fleet.manage',
+      'thresholds.manage',
+      'audit.read',
+      'maintenance.run',
+      'bugs.triage',
+    ] as const) {
+      expect(can('pilot', capability)).toBe(false);
+    }
   });
 
-  it('szef wyszkolenia rozstrzyga flagi, ale nie pisze w cudzym rejestrze ani w kontach', () => {
-    expect(can('training_lead', 'panel.access')).toBe(true);
-    expect(can('training_lead', 'flags.resolve')).toBe(true);
-    expect(can('training_lead', 'events.correct')).toBe(false);
-    expect(can('training_lead', 'accounts.manage')).toBe(false);
-    expect(can('training_lead', 'thresholds.manage')).toBe(false);
-    expect(can('training_lead', 'audit.read')).toBe(false);
-    // Narzędzia serwisowe (`A11`) — nadpisanie projekcji dotyka liczb WSZYSTKICH dni
-    // klubu naraz, więc zostaje przy jednej roli, tak jak korekta rejestru.
-    expect(can('training_lead', 'maintenance.run')).toBe(false);
-  });
-
+  // Przypadek roli pośredniej („rozstrzyga flagi, ale nie pisze w rejestrze ani
+  // w kontach") wypadł razem z rolą `training_lead` 2026-08-30 - dziś każdy, kto
+  // wchodzi do panelu, ma komplet i mówi o tym ten przypadek.
   it('administrator ma komplet', () => {
     for (const capability of [
       'panel.access',
@@ -45,6 +50,7 @@ describe('mapa uprawnień', () => {
       'thresholds.manage',
       'audit.read',
       'maintenance.run',
+      'bugs.triage',
     ] as const) {
       expect(can('admin', capability)).toBe(true);
     }
@@ -53,17 +59,17 @@ describe('mapa uprawnień', () => {
 
 describe('unieważnienie poświadczeń (`pilots.credentials_valid_from`)', () => {
   // Zaokrąglenie jest tu istotne, a nie kosmetyczne: `iat` ma rozdzielczość SEKUNDY
-  // (RFC 7519), a znacznik — milisekundy. Reguła musi więc jawnie wybrać, w którą
+  // (RFC 7519), a znacznik - milisekundy. Reguła musi więc jawnie wybrać, w którą
   // stronę myli się na granicy, i wybiera stronę odebrania dostępu.
   const at = (iso: string): Date => new Date(iso);
   const seconds = (iso: string): number => Math.floor(new Date(iso).getTime() / 1000);
 
-  it('konto bez znacznika przepuszcza wszystko — także token bez `iat`', () => {
+  it('konto bez znacznika przepuszcza wszystko - także token bez `iat`', () => {
     expect(credentialsRevoked(null, seconds('2026-08-01T10:00:00.000Z'))).toBe(false);
     expect(credentialsRevoked(null, 0)).toBe(false);
   });
 
-  it('token wydany PRZED unieważnieniem ginie, wydany PO — żyje', () => {
+  it('token wydany PRZED unieważnieniem ginie, wydany PO - żyje', () => {
     const marker = at('2026-08-01T10:00:00.000Z');
     expect(credentialsRevoked(marker, seconds('2026-08-01T09:59:59.000Z'))).toBe(true);
     expect(credentialsRevoked(marker, seconds('2026-08-01T10:00:01.000Z'))).toBe(false);
@@ -85,7 +91,7 @@ describe('unieważnienie poświadczeń (`pilots.credentials_valid_from`)', () =>
 });
 
 describe('brama uprawnień tras panelu', () => {
-  it('bez tokenu → 401, nie 403 — to dwie różne wiadomości', async () => {
+  it('bez tokenu → 401, nie 403 - to dwie różne wiadomości', async () => {
     const { db, tokens } = await testHarness();
     const outcome = await authorizeAccount(tokens, new PgPilotsRepo(db), null, 'panel.access');
     expect(outcome).toEqual({ ok: false, status: 401, body: { error: 'unauthorized' } });
@@ -109,13 +115,17 @@ describe('brama uprawnień tras panelu', () => {
     });
   });
 
-  it('szef wyszkolenia przechodzi na flagach i odbija się na kontach', async () => {
+  it('brama odpowiada PER ZDOLNOŚĆ - przepuszcza na flagach, odbija na kontach', async () => {
+    // Do 2026-08-30 obie odpowiedzi padały na JEDEN token (rola pośrednia miała
+    // `flags.resolve`, nie miała `accounts.manage`). Po jej wycofaniu ta sama para
+    // wymaga dwóch podmiotów - katalog zdolności i brama zostają nietknięte.
     const { db, tokens } = await testHarness();
     const accounts = new PgPilotsRepo(db);
-    const token = tokens.sign({ pilotId: 'AKO', code: 'AKO', role: 'training_lead' }, 3600);
+    const admin = tokens.sign({ pilotId: 'TMK', code: 'TMK', role: 'admin' }, 3600);
+    const pilot = tokens.sign({ pilotId: 'PWI', code: 'PWI', role: 'pilot' }, 3600);
 
-    expect((await authorizeAccount(tokens, accounts, token, 'flags.resolve')).ok).toBe(true);
-    expect(await authorizeAccount(tokens, accounts, token, 'accounts.manage')).toMatchObject({
+    expect((await authorizeAccount(tokens, accounts, admin, 'flags.resolve')).ok).toBe(true);
+    expect(await authorizeAccount(tokens, accounts, pilot, 'accounts.manage')).toMatchObject({
       status: 403,
       body: { required: 'accounts.manage' },
     });
@@ -141,7 +151,7 @@ describe('brama uprawnień tras panelu', () => {
     });
   });
 
-  it('brama czyta PROJEKCJĘ konta — hash hasła nie wjeżdża do warstwy HTTP', async () => {
+  it('brama czyta PROJEKCJĘ konta - hash hasła nie wjeżdża do warstwy HTTP', async () => {
     // `AdminPilotAccount` powstał po to, żeby hash nie jechał tam, gdzie nie musi,
     // a brama tę zasadę omijała: `findById` robi `SELECT *`, więc `password_hash`
     // wjeżdżał do `AuthOutcome` przy KAŻDYM żądaniu panelu i dalej, do `actorFrom`.
@@ -170,7 +180,7 @@ describe('brama uprawnień tras panelu', () => {
 
   it('POŚWIADCZENIE STARSZE NIŻ JEGO UNIEWAŻNIENIE → 401, choć konto jest aktywne', async () => {
     // Trzeci warunek bramy i jedyny, który dosięga sesji PANELU. Konto istnieje, jest
-    // aktywne i ma rolę — a mimo to token nie przechodzi, bo został wydany przed
+    // aktywne i ma rolę - a mimo to token nie przechodzi, bo został wydany przed
     // resetem hasła. Bez tego wykradzione ciasteczko panelu przeżywa reset o osiem
     // godzin, czyli o cały TTL sesji.
     const { db, tokens, clock } = await testHarness();
@@ -192,7 +202,7 @@ describe('brama uprawnień tras panelu', () => {
     });
 
     // …a token wydany PO unieważnieniu przechodzi. Znacznik odcina przeszłość,
-    // nie konto — inaczej reset hasła zamykałby drogę powrotną, którą otwiera.
+    // nie konto - inaczej reset hasła zamykałby drogę powrotną, którą otwiera.
     const fresh = tokens.sign({ pilotId: 'TMK', code: 'TMK', role: 'admin' }, 3600);
     expect((await authorizeAccount(tokens, accounts, fresh, 'accounts.manage')).ok).toBe(true);
   });
@@ -202,9 +212,9 @@ describe('brama uprawnień tras panelu', () => {
     const accounts = new PgPilotsRepo(db);
     const token = tokens.sign({ pilotId: 'TMK', code: 'TMK', role: 'admin' }, 3600);
 
-    await db.query("UPDATE pilots SET role = 'training_lead' WHERE id = 'TMK'");
+    await db.query("UPDATE pilots SET role = 'pilot' WHERE id = 'TMK'");
 
-    // Token nadal NIESIE `admin` — i to jest sedno: brama go nie pyta o rolę.
+    // Token nadal NIESIE `admin` - i to jest sedno: brama go nie pyta o rolę.
     expect(tokens.verify(token)?.role).toBe('admin');
     expect(await authorizeAccount(tokens, accounts, token, 'accounts.manage')).toMatchObject({
       status: 403,
@@ -216,7 +226,7 @@ describe('brama uprawnień tras panelu', () => {
 describe('zgodność wstecz tokenów', () => {
   it('token wydany PRZED wprowadzeniem ról (bez claimu roli) czyta się jako pilot', async () => {
     // Odrzucenie takiego tokenu wylogowałoby telefony w terenie bez powodu, a cichy
-    // awans byłby luką — jedyne bezpieczne wyjście to najmniejsza rola.
+    // awans byłby luką - jedyne bezpieczne wyjście to najmniejsza rola.
     //
     // UWAGA na to, czego ten przypadek NIE mówi od 2026-08-01: brama panelu nie pyta
     // tokenu o rolę, więc taki token OTWIERA panel, jeśli konto pod nim jest w bazie
@@ -246,7 +256,7 @@ describe('zgodność wstecz tokenów', () => {
       // …a brak `iat` czyta się jako `0`, czyli „wydany przed czasem". Wartość domyślna
       // idzie w stronę ODEBRANIA dostępu: taki token przegrywa z każdym znacznikiem
       // unieważnienia poświadczeń. Osobny przypadek niżej pokazuje obie strony tej
-      // decyzji — token bez `iat` żyje, dopóki nikt niczego nie unieważnił.
+      // decyzji - token bez `iat` żyje, dopóki nikt niczego nie unieważnił.
       issuedAt: 0,
     });
   });
@@ -301,7 +311,7 @@ describe('zgodność wstecz tokenów', () => {
   it('stary token OTWIERA panel, bo o rolę pyta się KONTA, nie claimu', async () => {
     // Odwrotność poprzedniego przypadku i skutek uboczny decyzji „rola z konta":
     // token bez roli należy do konta, które JEST administratorem, więc panel go
-    // wpuszcza. To jest właściwe zachowanie — poświadczenie mówi KIM jesteś,
+    // wpuszcza. To jest właściwe zachowanie - poświadczenie mówi KIM jesteś,
     // a uprawnienia są własnością konta, nie kopii sprzed godzin.
     const { db, tokens, clock } = await testHarness();
 
@@ -334,8 +344,8 @@ describe('rola pochodzi z konta, nie z tokenu', () => {
 
     const login = await app.inject({
       method: 'POST',
-      url: '/auth/login',
-      payload: { login: 'TMK', password: TEST_PASSWORD },
+      url: '/auth/google',
+      payload: { idToken: googleTokenFor('TMK') },
     });
     expect(tokens.verify(login.json().token)?.role).toBe('admin');
 
@@ -367,8 +377,8 @@ describe('CHECK na `pilots.role`', () => {
   it('konto założone bez podanej roli dostaje `pilot`', async () => {
     const { db } = await testHarness();
     await db.query(
-      `INSERT INTO pilots (id, code, name, email, password_hash, active)
-       VALUES ('NEW', 'NEW', 'Nowe Konto', 'nowe@uzaero.pl', 'x', TRUE)`,
+      `INSERT INTO pilots (id, code, name, email, active)
+       VALUES ('NEW', 'NEW', 'Nowe Konto', 'nowe@uzaero.pl', TRUE)`,
     );
     const { rows } = await db.query<{ role: string }>(
       "SELECT role FROM pilots WHERE id = 'NEW'",

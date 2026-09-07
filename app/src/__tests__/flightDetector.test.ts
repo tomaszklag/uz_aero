@@ -1,9 +1,9 @@
 /**
- * UZ Aero — testy automatu detekcji startu i lądowania (§3.3).
+ * UZ Aero - testy automatu detekcji startu i lądowania (§3.3).
  *
  * Sens tych testów: consumer-grade GPS kłamie. Dokumentacja (§8) klasyfikuje fałszywe
- * detekcje jako ryzyko 🔴, a scenariusze, które je wywołują — ciasny zakręt, turbulencje,
- * utrata sygnału, static-hold odbiornika — w powietrzu trafiają się rzadko i nie da się
+ * detekcje jako ryzyko 🔴, a scenariusze, które je wywołują - ciasny zakręt, turbulencje,
+ * utrata sygnału, static-hold odbiornika - w powietrzu trafiają się rzadko i nie da się
  * ich wyklikać na biurku. Tutaj odtwarzamy je deterministycznie.
  *
  * Po przebudowie 2026-07-30 doszła druga rodzina asercji, równie ważna jak „czy wykryto":
@@ -24,7 +24,7 @@ import {
 } from '../domain';
 import { GPS_THRESHOLDS as T } from '../domain';
 
-const FIELD_ELEV = 800; // elewacja lotniska (ft) — z fixa przy ENGINE START
+const FIELD_ELEV = 800; // elewacja lotniska (ft) - z fixa przy ENGINE START
 const T0 = Date.UTC(2026, 5, 22, 8, 0, 0);
 
 /** Sekunda scenariusza → epoch ms. */
@@ -35,7 +35,7 @@ const FIELD = { lat: 50.078, lon: 19.785 };
 const nmNorth = (nm: number) => ({ lat: FIELD.lat + nm / 60, lon: FIELD.lon });
 const mNorth = (m: number) => nmNorth(m / 1852);
 
-/** Seria fixów co sekundę, BEZ pozycji — tor prędkościowy w izolacji. */
+/** Seria fixów co sekundę, BEZ pozycji - tor prędkościowy w izolacji. */
 function series(
   fromSec: number,
   count: number,
@@ -52,7 +52,7 @@ function series(
 /**
  * Seria fixów z POZYCJĄ przesuwającą się na północ z zadaną prędkością.
  * `doppler: false` odtwarza odbiornik, który prędkości nie podaje (albo podaje zero
- * mimo ruchu) — czyli dokładnie sytuację, w której stary algorytm był ślepy.
+ * mimo ruchu) - czyli dokładnie sytuację, w której stary algorytm był ślepy.
  */
 function rolling(
   fromSec: number,
@@ -83,7 +83,7 @@ function parked(
     time: t(fromSec + i),
     groundSpeedKt: 'doppler' in opts ? opts.doppler! : 0,
     altitudeFt: FIELD_ELEV,
-    // Deterministyczny „szum" — sinus zamiast losowości, żeby test był powtarzalny.
+    // Deterministyczny „szum" - sinus zamiast losowości, żeby test był powtarzalny.
     ...mNorth(drift * Math.sin(i * 1.7)),
   }));
 }
@@ -96,7 +96,7 @@ describe('detekcja startu', () => {
     const { detections, state } = runDetector(onGround(), series(0, 8, 60, FIELD_ELEV));
 
     // Seria zaczyna się od razu powyżej progu startu, więc automat nigdy nie widzi
-    // samolotu „ruszającego" — kołowanie ma własny zestaw testów niżej.
+    // samolotu „ruszającego" - kołowanie ma własny zestaw testów niżej.
     expect(detections.map((d) => d.detection)).toEqual(['takeoff']);
     expect(state.phase).toBe('airborne');
   });
@@ -109,11 +109,11 @@ describe('detekcja startu', () => {
   });
 
   it('krótka szpilka prędkości (poniżej czasu potwierdzenia) NIE wywołuje startu', () => {
-    // 2 s szybko, potem znów wolno — typowy artefakt słabego fixa na płycie.
+    // 2 s szybko, potem znów wolno - typowy artefakt słabego fixa na płycie.
     const fixes = [...series(0, 2, 60, FIELD_ELEV), ...series(2, 8, 5, FIELD_ELEV)];
     const { detections, state } = runDetector(onGround(), fixes);
 
-    // Szpilka nie daje STARTU. Kołowanie owszem — samolot naprawdę ruszył i to jest
+    // Szpilka nie daje STARTU. Kołowanie owszem - samolot naprawdę ruszył i to jest
     // osobna, tańsza informacja: fałszywy wpis kołowania dodaje wiersz w logu,
     // fałszywy start psułby czas lotu.
     expect(detections.map((d) => d.detection)).toEqual(['taxi']);
@@ -140,7 +140,7 @@ describe('detekcja startu', () => {
 });
 
 /**
- * WETO HAMOWANIA — zamyka dziurę, przez którą dobieg po lądowaniu potrafił zostać
+ * WETO HAMOWANIA - zamyka dziurę, przez którą dobieg po lądowaniu potrafił zostać
  * uznany za rozbieg. Samolot przechodzi wtedy przez próg startu Z GÓRY, przy wygasającej
  * histerezie, i po samej prędkości wygląda identycznie jak start.
  */
@@ -193,7 +193,7 @@ describe('detekcja lądowania', () => {
   });
 
   it('bez wysokości w fixie NIE zgadujemy lądowania (milczenie zamiast fałszywki)', () => {
-    // Sam niski GS bez wysokości — świadomie nie wykrywamy; pilot ma wpis ręczny (05f).
+    // Sam niski GS bez wysokości - świadomie nie wykrywamy; pilot ma wpis ręczny (05f).
     const { detections, state } = runDetector(airborne(), series(0, 16, 5, null));
 
     expect(detections).toHaveLength(0);
@@ -210,7 +210,7 @@ describe('detekcja lądowania', () => {
   });
 
   it('WETO ZAKRĘTU: wolno i nisko, ale kurs obraca się 5 °/s → to manewr, nie przyziemienie', () => {
-    // Druga, niezależna obrona przed ryzykiem 🔴 z §8 — i to za darmo, bo kurs nad
+    // Druga, niezależna obrona przed ryzykiem 🔴 z §8 - i to za darmo, bo kurs nad
     // ziemią jest w każdym odczycie lokalizacji. Przyziemienie ma kurs stabilny.
     const turning = series(0, 16, 20, FIELD_ELEV + 10).map((f, i) => ({
       ...f,
@@ -231,10 +231,10 @@ describe('detekcja lądowania', () => {
 });
 
 /**
- * RETRO-DATOWANIE — najważniejsza rodzina testów po przebudowie.
+ * RETRO-DATOWANIE - najważniejsza rodzina testów po przebudowie.
  *
  * Do dokumentów trafia `at`, nie `confirmedAt`. Wcześniej te dwie wartości były tym
- * samym, przez co KAŻDE zdarzenie było w logu systematycznie spóźnione — a ponieważ
+ * samym, przez co KAŻDE zdarzenie było w logu systematycznie spóźnione - a ponieważ
  * w logu stała po prostu jakaś godzina, nikt tego nie widział.
  */
 describe('retro-datowanie zdarzeń', () => {
@@ -243,7 +243,7 @@ describe('retro-datowanie zdarzeń', () => {
       ...[20, 30, 40, 50, 60, 70].map((kt, i) => ({
         time: t(i),
         groundSpeedKt: kt,
-        altitudeFt: FIELD_ELEV, // AGL 0 — koła na pasie
+        altitudeFt: FIELD_ELEV, // AGL 0 - koła na pasie
       })),
       // Oderwanie między t=6 a t=7: wysokość zaczyna rosnąć.
       ...[20, 60, 120, 200, 300, 400, 500, 620].map((agl, i) => ({
@@ -281,7 +281,7 @@ describe('retro-datowanie zdarzeń', () => {
 
     expect(landing).toBeDefined();
     expect(landing.at).toBe(t(5));
-    // Okno potwierdzenia (8 s) plus opóźnienie mediany prędkości — kilkanaście sekund,
+    // Okno potwierdzenia (8 s) plus opóźnienie mediany prędkości - kilkanaście sekund,
     // dokładnie tyle, ile wcześniej lądowanie było spóźnione w dokumentach.
     expect(landing.confirmedAt - landing.at).toBeGreaterThanOrEqual(10_000);
   });
@@ -301,7 +301,7 @@ describe('retro-datowanie zdarzeń', () => {
 });
 
 /**
- * KOŁOWANIE Z PRZEMIESZCZENIA — sedno naprawy „ciężko wykryć początek taxi".
+ * KOŁOWANIE Z PRZEMIESZCZENIA - sedno naprawy „ciężko wykryć początek taxi".
  *
  * Prędkość chwilowa w tym zakresie jest na granicy czułości dopplera, a odbiornik
  * dodatkowo zeruje ją filtrem static-hold. Przemieszczenie widzi to samo zjawisko
@@ -338,7 +338,7 @@ describe('kołowanie wykrywane z przemieszczenia', () => {
 });
 
 /**
- * KANAŁ RUCHU KONTRA NIERUCHOMY TELEFON — zgłoszenie z terenu 2026-08-04: telefon
+ * KANAŁ RUCHU KONTRA NIERUCHOMY TELEFON - zgłoszenie z terenu 2026-08-04: telefon
  * odłożony na stole, pozycja realnie bez zmian, a w logu wylądowało `taxi`.
  *
  * Trzy tryby porażki, każdy z własnym testem: pojedynczy odskok pozycji (multipath)
@@ -349,7 +349,7 @@ describe('kołowanie wykrywane z przemieszczenia', () => {
 describe('kanał ruchu kontra nieruchomy telefon (zgłoszenie 2026-08-04)', () => {
   it('pojedynczy odskok pozycji (35 m przez 2 s, multipath) NIE wywołuje kołowania', () => {
     // Implikowana prędkość odskoku (~68 kt) przechodzi bramkę plauzybilności, więc
-    // jedyną obroną jest wymóg UTRZYMANIA warunku — prawdziwe kołowanie się oddala,
+    // jedyną obroną jest wymóg UTRZYMANIA warunku - prawdziwe kołowanie się oddala,
     // odbicie wraca do kotwicy po paru sekundach.
     const fixes: GpsFix[] = [
       ...parked(0, 30, { doppler: 0 }),
@@ -362,7 +362,7 @@ describe('kanał ruchu kontra nieruchomy telefon (zgłoszenie 2026-08-04)', () =
   });
 
   it('offset mniejszy niż deklarowana niepewność (30 m przy accuracyM 40) NIE wywołuje kołowania', () => {
-    // Odbiornik sam przyznaje, że może mylić się o 40 m — taki fix nie może dowodzić
+    // Odbiornik sam przyznaje, że może mylić się o 40 m - taki fix nie może dowodzić
     // ruchu o 30 m, choćby utrzymywał się dowolnie długo. Bramka jakości go wpuszcza
     // (50 m), więc próg ruchu musi uwzględnić niepewność pomiaru.
     const offset: GpsFix[] = Array.from({ length: 12 }, (_, i) => ({
@@ -386,7 +386,7 @@ describe('kanał ruchu kontra nieruchomy telefon (zgłoszenie 2026-08-04)', () =
 
   it('prawdziwe kołowanie z dobrą dokładnością: wykryte, onset wciąż przy zwolnieniu hamulców', () => {
     // Kontrola kosztu odczulenia: potwierdzenie przychodzi później, ale do rejestru
-    // idzie moment retro-datowany — czas w logu nie ma prawa się pogorszyć.
+    // idzie moment retro-datowany - czas w logu nie ma prawa się pogorszyć.
     const fixes = [
       ...parked(0, 20).map((f) => ({ ...f, accuracyM: 5 })),
       ...rolling(20, 15, 8, FIELD_ELEV).map((f) => ({ ...f, accuracyM: 5 })),
@@ -401,7 +401,7 @@ describe('kanał ruchu kontra nieruchomy telefon (zgłoszenie 2026-08-04)', () =
 
 describe('histereza (cooldown)', () => {
   it('po starcie ignoruje kolejne detekcje przez czas histerezy', () => {
-    // Start, a zaraz po nim warunki „lądowania" — bez histerezy powstałby lot 0-sekundowy.
+    // Start, a zaraz po nim warunki „lądowania" - bez histerezy powstałby lot 0-sekundowy.
     const fixes = [
       ...series(0, 8, 60, FIELD_ELEV),
       ...series(8, 25, 0, FIELD_ELEV), // wolno i nisko, ale w oknie histerezy
@@ -452,7 +452,7 @@ describe('odporność na sygnał', () => {
 
   it('brak elewacji i brak postoju: start wykrywany po GS, lądowanie wcale', () => {
     // Automat od pierwszego fixa widzi rozpędzony samolot, więc nie ma postoju, z którego
-    // dałoby się dobrać elewację — i wtedy nadal świadomie milczy przy lądowaniu.
+    // dałoby się dobrać elewację - i wtedy nadal świadomie milczy przy lądowaniu.
     const noElev = createDetectorState(null);
 
     const up = runDetector(noElev, series(0, 8, 60, 1200));
@@ -464,7 +464,7 @@ describe('odporność na sygnał', () => {
   });
 
   it('brak elewacji przy ENGINE START: dobiera ją z pierwszego fixa na postoju', () => {
-    // Silnik odpalony w hangarze albo przy zimnym odbiorniku — wysokości w tej chwili nie
+    // Silnik odpalony w hangarze albo przy zimnym odbiorniku - wysokości w tej chwili nie
     // ma. Do issue #5 zostawało to `null` na CAŁY lot i wyłączało lądowanie.
     const noElev = createDetectorState(null);
 
@@ -487,7 +487,7 @@ describe('odporność na sygnał', () => {
 
   it('nie bierze elewacji z powietrza, gdy samolot jest w ruchu', () => {
     // Gdyby wystarczyła sama faza `ground`, automat ze spóźnionym startem zapisałby jako
-    // „elewację lotniska" wysokość przelotową — a stąd AGL ≈ 0 i fałszywe lądowanie.
+    // „elewację lotniska" wysokość przelotową - a stąd AGL ≈ 0 i fałszywe lądowanie.
     const noElev = createDetectorState(null);
 
     const { state } = runDetector(noElev, rolling(0, 8, 90, 4000));
@@ -509,7 +509,7 @@ describe('pełny cykl lotu', () => {
     ];
     const { detections, state } = runDetector(onGround(), fixes);
 
-    // Ostatnie kołowanie to zjazd z pasa — otwiera kolejny lot, tak jak w mockupie 05.
+    // Ostatnie kołowanie to zjazd z pasa - otwiera kolejny lot, tak jak w mockupie 05.
     expect(detections.map((d) => d.detection)).toEqual(['taxi', 'takeoff', 'landing', 'taxi']);
     expect(state.phase).toBe('ground');
   });
@@ -518,9 +518,9 @@ describe('pełny cykl lotu', () => {
 /**
  * Kołowanie ma inną „cenę pomyłki" niż start i lądowanie: nie wyznacza żadnego czasu
  * w dokumentach, tylko otwiera lot w logu. Dlatego zapisuje się od razu (bez okna
- * „COFNIJ") — i tym bardziej nie może migotać.
+ * „COFNIJ") - i tym bardziej nie może migotać.
  */
-describe('detekcja kołowania — tor prędkościowy', () => {
+describe('detekcja kołowania - tor prędkościowy', () => {
   it('ruszenie z miejsca daje DOKŁADNIE jedno zdarzenie, nie jedno na fix', () => {
     const { detections } = runDetector(onGround(), series(0, 20, 12, FIELD_ELEV));
 
@@ -544,7 +544,7 @@ describe('detekcja kołowania — tor prędkościowy', () => {
     expect(runDetector(onGround(), fixes).detections).toHaveLength(0);
   });
 
-  it('po lądowaniu kołowanie zapada PONOWNIE — to już następny lot', () => {
+  it('po lądowaniu kołowanie zapada PONOWNIE - to już następny lot', () => {
     // Mockup 05: „14:08 Landing" i zaraz „14:08 Taxi" otwierające Lot 2.
     const fixes: GpsFix[] = [
       ...series(0, 14, 20, FIELD_ELEV + 10), // dobieg → landing
@@ -556,7 +556,7 @@ describe('detekcja kołowania — tor prędkościowy', () => {
   });
 
   it('w powietrzu kołowanie nie jest wykrywane', () => {
-    // Wolny przelot ma GS ponad progiem kołowania — bez warunku fazy sypałby zdarzeniami.
+    // Wolny przelot ma GS ponad progiem kołowania - bez warunku fazy sypałby zdarzeniami.
     const { detections } = runDetector(airborne(), series(0, 12, 60, FIELD_ELEV + 3000));
 
     expect(detections).toHaveLength(0);
@@ -564,7 +564,7 @@ describe('detekcja kołowania — tor prędkościowy', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Zakłócenia GPS (audyt 2026-07-29): jamming to częściej DEGRADACJA niż cisza —
+// Zakłócenia GPS (audyt 2026-07-29): jamming to częściej DEGRADACJA niż cisza -
 // fixy przychodzą, ale kłamią.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -582,7 +582,7 @@ describe('bramka jakości fixa (zakłócenia)', () => {
     expect(
       fixUsable({ time: t(0), groundSpeedKt: T.MAX_PLAUSIBLE_SPEED_KT + 50, altitudeFt: 900 }),
     ).toBe(false);
-    // Brak pomiaru NIE dyskwalifikuje — odrzucamy tylko pozytywnie zły pomiar.
+    // Brak pomiaru NIE dyskwalifikuje - odrzucamy tylko pozytywnie zły pomiar.
     expect(fixUsable({ time: t(0), groundSpeedKt: 60, altitudeFt: 900, accuracyM: null })).toBe(
       true,
     );
@@ -590,14 +590,14 @@ describe('bramka jakości fixa (zakłócenia)', () => {
   });
 
   it('w locie strumień „wolno i nisko" ze śmieciową dokładnością NIE ląduje samolotu', () => {
-    // Zagłuszany odbiornik raportuje niską prędkość i wysokość przy dokładności 120 m —
+    // Zagłuszany odbiornik raportuje niską prędkość i wysokość przy dokładności 120 m -
     // bez bramki byłoby to podręcznikowe fałszywe lądowanie w powietrzu.
     const garbage = series(0, 20, 15, FIELD_ELEV + 5).map((f) => ({ ...f, accuracyM: 120 }));
 
     expect(runDetector(airborne(), garbage).detections).toHaveLength(0);
   });
 
-  it('śmieciowy fix nie trafia do bufora historii — cechy trendowe liczymy z czystych danych', () => {
+  it('śmieciowy fix nie trafia do bufora historii - cechy trendowe liczymy z czystych danych', () => {
     const step = stepDetector(onGround(), {
       time: t(0),
       groundSpeedKt: 15,
@@ -608,7 +608,7 @@ describe('bramka jakości fixa (zakłócenia)', () => {
     expect(step.state.history.fixes).toHaveLength(0);
   });
 
-  it('po śmieciach wraca dobry sygnał — detekcja działa od nowa, bez pamięci o śmieciu', () => {
+  it('po śmieciach wraca dobry sygnał - detekcja działa od nowa, bez pamięci o śmieciu', () => {
     const fixes: GpsFix[] = [
       ...series(0, 5, 15, FIELD_ELEV + 5).map((f) => ({ ...f, accuracyM: 200 })), // śmieci
       ...series(5, 14, 20, FIELD_ELEV + 5).map((f) => ({ ...f, accuracyM: 5 })), // zdrowy dobieg
@@ -620,9 +620,9 @@ describe('bramka jakości fixa (zakłócenia)', () => {
     ]);
   });
 
-  it('teleportacja pozycji (spoofing) zeruje kandydata — szpilka GS nie robi startu', () => {
+  it('teleportacja pozycji (spoofing) zeruje kandydata - szpilka GS nie robi startu', () => {
     // Na postoju: pozycja skacze o 5 NM między sekundami (implikowane tysiące kt),
-    // a odbiornik deklaruje niewinne 60 kt — dokładnie profil rozbiegu.
+    // a odbiornik deklaruje niewinne 60 kt - dokładnie profil rozbiegu.
     const fixes: GpsFix[] = Array.from({ length: 10 }, (_, i) => ({
       time: t(i),
       groundSpeedKt: 60,
@@ -646,7 +646,7 @@ describe('geofence lądowania (operacja jednolotniskowa)', () => {
     return { ...state, phase: 'airborne' as const, lastPosition: null };
   };
 
-  it('„wolno i nisko" 5 NM od pola to artefakt, nie przyziemienie — cisza', () => {
+  it('„wolno i nisko" 5 NM od pola to artefakt, nie przyziemienie - cisza', () => {
     const far = series(10, 14, 20, FIELD_ELEV + 5).map((f) => ({ ...f, ...nmNorth(5) }));
 
     expect(runDetector(airborneAtField(), far).detections).toHaveLength(0);
@@ -661,7 +661,7 @@ describe('geofence lądowania (operacja jednolotniskowa)', () => {
     ]);
   });
 
-  it('przelot (bez bramki) ląduje na INNYM lotnisku jak dotąd — regresja niedopuszczalna', () => {
+  it('przelot (bez bramki) ląduje na INNYM lotnisku jak dotąd - regresja niedopuszczalna', () => {
     const away = series(0, 14, 20, FIELD_ELEV + 5).map((f) => ({ ...f, ...nmNorth(150) }));
 
     expect(runDetector(airborne(), away).detections.map((d) => d.detection)).toEqual([
@@ -670,7 +670,7 @@ describe('geofence lądowania (operacja jednolotniskowa)', () => {
     ]);
   });
 
-  it('brak pozycji w fixie nie blokuje lądowania — bramka tnie tylko pozytywnie zły pomiar', () => {
+  it('brak pozycji w fixie nie blokuje lądowania - bramka tnie tylko pozytywnie zły pomiar', () => {
     const noPos = series(10, 14, 20, FIELD_ELEV + 5); // fixy bez lat/lon
 
     expect(runDetector(airborneAtField(), noPos).detections.map((d) => d.detection)).toEqual([
@@ -699,22 +699,22 @@ describe('uzgodnienie fazy z rejestrem', () => {
     expect(syncDetectorPhase(air, true)).toBe(air);
   });
 
-  it('rejestr mówi „w locie" — automat przestawia się na wypatrywanie lądowania', () => {
+  it('rejestr mówi „w locie" - automat przestawia się na wypatrywanie lądowania', () => {
     // Tak wygląda automat po ręcznym starcie z kokpitu albo po restarcie w locie.
     const stale = { ...onGround(), candidateSince: t(3), taxiing: true };
     const synced = syncDetectorPhase(stale, true);
 
     expect(synced.phase).toBe('airborne');
-    // Kandydat zbierał się pod warunek startu — po przestawieniu nie ma czego liczyć.
+    // Kandydat zbierał się pod warunek startu - po przestawieniu nie ma czego liczyć.
     expect(synced.candidateSince).toBeNull();
     expect(synced.taxiing).toBe(false);
   });
 
-  it('rejestr mówi „na ziemi" — automat wraca do wypatrywania startu', () => {
+  it('rejestr mówi „na ziemi" - automat wraca do wypatrywania startu', () => {
     expect(syncDetectorPhase(airborne(), false).phase).toBe('ground');
   });
 
-  it('histereza przeżywa uzgodnienie — „COFNIJ" nie wystawia tego samego toasta na nowo', () => {
+  it('histereza przeżywa uzgodnienie - „COFNIJ" nie wystawia tego samego toasta na nowo', () => {
     // Warunek, który wywołał cofniętą detekcję, zwykle trzyma się jeszcze kilkanaście
     // sekund. Wyzerowana histereza odpaliłaby ją ponownie na następnym fixie.
     const undone = { ...airborne(), cooldownUntil: t(60) };
@@ -728,7 +728,7 @@ describe('uzgodnienie fazy z rejestrem', () => {
     const afterUndo = runDetector(onGround(), series(0, 8, 60, FIELD_ELEV)).state;
     expect(afterUndo.phase).toBe('airborne');
 
-    // Prawdziwy start dwie minuty później — poza histerezą, więc nic go nie tłumi.
+    // Prawdziwy start dwie minuty później - poza histerezą, więc nic go nie tłumi.
     const realTakeoff = series(120, 12, 60, FIELD_ELEV + 200);
     expect(runDetector(afterUndo, realTakeoff).detections).toEqual([]);
 

@@ -1,23 +1,23 @@
 /**
- * UZ Aero — panel: REGUŁA PUŁAPKI FOKUSU w szufladzie (moduł CZYSTY).
+ * UZ Aero - panel: REGUŁA PUŁAPKI FOKUSU w szufladzie (moduł CZYSTY).
  *
  * ══ DLACZEGO SZUFLADA MUSI ŁAPAĆ FOKUS ══
  * `.drawer` jest warstwą modalną nad listą (`aria-modal="true"`), a lista pod spodem
- * zostaje w drzewie DOM — bo o to w szufladzie chodzi: kontekst listy ma nie zniknąć.
+ * zostaje w drzewie DOM - bo o to w szufladzie chodzi: kontekst listy ma nie zniknąć.
  * Skutek uboczny jest jednak taki, że `Tab` z ostatniego pola formularza schodzi
  * do TABELI POD SPODEM: użytkownik klawiatury wychodzi z okna, którego nie zamknął,
  * i wpisuje w wiersze, których nie widzi pod przesłoną. Deklaracja `aria-modal` mówi
  * wtedy nieprawdę.
  *
  * Sama REGUŁA jest czysta i mieszka tutaj (test w Node), a czytanie listy elementów
- * skupialnych i wołanie `focus()` zostaje w komponencie — to jedyna część, która
+ * skupialnych i wołanie `focus()` zostaje w komponencie - to jedyna część, która
  * wymaga DOM-u. Ten sam podział, co przy każdej decyzji o treści w panelu.
  */
 
 /**
  * Który element ma dostać fokus po naciśnięciu `Tab` wewnątrz pułapki.
  *
- * `null` = **nie ingerujemy** — przeglądarka przeniesie fokus sama i zrobi to lepiej
+ * `null` = **nie ingerujemy** - przeglądarka przeniesie fokus sama i zrobi to lepiej
  * (zna kolejność `tabindex`, elementy ukryte, shadow DOM). Ingerujemy WYŁĄCZNIE na
  * krawędziach, bo tylko tam domyślne zachowanie wyprowadza poza warstwę modalną.
  *

@@ -1,24 +1,24 @@
 /**
- * UZ Aero — 12 POPRZEDNIE DNI (mockup `design/12-historia.html`).
+ * UZ Aero - 12 POPRZEDNIE DNI (mockup `design/12-historia.html`).
  *
  * Bez tego ekranu obietnica „możesz poprawić przez 24 h" nie miała drzwi (§ decyzja
  * 2026-07-23): sesja w oknie korekty stoi wyróżniona na górze i otwiera się w ekranie
- * 10, skąd „EDYTUJ DANE" prowadzi do listy ręcznej (08) i korekty 04c — od issue #40
- * to JEDYNE drzwi zapisu. Sesje po oknie są do ODCZYTU — od issue #35
+ * 10, skąd „EDYTUJ DANE" prowadzi do listy ręcznej (08) i korekty 04c - od issue #40
+ * to JEDYNE drzwi zapisu. Sesje po oknie są do ODCZYTU - od issue #35
  * też się otwierają, tyle że w wariancie bez elementów zapisu (`design/10b`): przedtem
  * karta była martwa i pilot nie miał jak sprawdzić, co właściwie zapisał.
  *
  * Ekran pokazuje dni WCZEŚNIEJSZE (issue #35 pkt 1). Dzisiejsze sesje mieszkają na
- * „Mój dzień" (01), na TAKICH SAMYCH kafelkach `DayCard` (issue #42) — druga lista tych
+ * „Mój dzień" (01), na TAKICH SAMYCH kafelkach `DayCard` (issue #42) - druga lista tych
  * samych lotów kazałaby pilotowi zgadywać, która jest prawdziwa, a dwa różne kształty
  * tej samej sesji kazałyby mu zgadywać, czy „Blok" znaczy tam to samo, co tutaj.
  *
  * Wszystko liczy się z LOKALNEGO strumienia (`historyDays` grupuje zdarzenia po
- * sesjach i projektuje tym samym kodem co ekran 10) — historia działa w pełni offline;
+ * sesjach i projektuje tym samym kodem co ekran 10) - historia działa w pełni offline;
  * jedyną „serwerową" informacją jest plakietka wysyłki, a i ona liczy się z outboxa.
  *
  * „OTWÓRZ I POPRAW" oraz „ZOBACZ SZCZEGÓŁY" ładują wskazaną sesję do store'u
- * (`loadSession`) — bezpieczne, bo z kokpitu nie ma tu drogi (kokpit jest stanem
+ * (`loadSession`) - bezpieczne, bo z kokpitu nie ma tu drogi (kokpit jest stanem
  * modalnym), więc żadna trzymana maszyna nie zostaje w tle.
  */
 
@@ -40,6 +40,8 @@ import {
 import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
 import { useSkeleton } from '../hooks/useSkeleton';
+import { useAircraftRegistrations } from '../hooks/useAircraftRegistrations';
+import { useOperationSignatures } from '../hooks/useOperationSignatures';
 import { buildHistory, type DayCardSpec, type EditableDaySpec } from './logic/historyDays';
 
 export function HistoryScreen({
@@ -53,7 +55,6 @@ export function HistoryScreen({
   const synced = useSessionStore((s) => s.synced);
   const outboxCount = useSessionStore((s) => s.outboxCount);
   const lastSync = useSessionStore((s) => s.lastSync);
-  const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
   const streamRevision = useSessionStore((s) => s.streamRevision);
   const streamHydrated = useSessionStore((s) => s.streamHydrated);
 
@@ -61,7 +62,7 @@ export function HistoryScreen({
 
   // Świeże dane przy każdym wejściu; `outboxCount` w zależnościach odświeża plakietki
   // wysyłki, gdy pętla synca opróżni kolejkę, kiedy ekran jest otwarty, a
-  // `streamRevision` — całą listę, gdy odtworzenie z serwera dopisze dni (§4.9).
+  // `streamRevision` - całą listę, gdy odtworzenie z serwera dopisze dni (§4.9).
   useEffect(() => {
     if (queries == null) return;
     let alive = true;
@@ -84,15 +85,22 @@ export function HistoryScreen({
   /**
    * Czy kolejka faktycznie jedzie. Aplikacja nie zna stanu „online" inaczej niż po
    * wyniku ostatniej próby wysyłki (§4.3): przebieg zakończony `synced`/`idle` dosięgnął
-   * serwera, więc zaległe zdarzenia są w drodze. Cokolwiek innego — brak sieci, wygasły
-   * token, odrzucenie — znaczy „czeka", i tak to nazywamy.
+   * serwera, więc zaległe zdarzenia są w drodze. Cokolwiek innego - brak sieci, wygasły
+   * token, odrzucenie - znaczy „czeka", i tak to nazywamy.
    */
   const pushing = lastSync?.kind === 'synced' || lastSync?.kind === 'idle';
 
-  const groups = days != null ? buildHistory(days, Date.now(), pushing) : null;
+  /* Znak maszyny mieszka w cache referencyjnym, projekcja zna sam identyfikator -
+     bez tego kafelek pokazywał UUID (zgłoszenie z urządzenia 2026-08-30). */
+  const regOf = useAircraftRegistrations();
+  /* Nazwa operacji (issue #68) - ta sama funkcja, co na 01: kafelek jest wspólny
+     (issue #42), więc i jego treść musi pochodzić z jednego rachunku. */
+  const signatureOf = useOperationSignatures();
+  const groups =
+    days != null ? buildHistory(days, Date.now(), pushing, regOf, signatureOf) : null;
   // Pustej historii wolno wierzyć dopiero po pierwszym uzgodnieniu rejestru z serwerem
   // (§4.9, issue #32): telefon zaraz po czyszczeniu pamięci pokazałby „BRAK POPRZEDNICH
-  // DNI" komuś, kto ma za sobą sezon — a to jest dokładnie ten komunikat, który wygląda
+  // DNI" komuś, kto ma za sobą sezon - a to jest dokładnie ten komunikat, który wygląda
   // jak utrata danych. Historia NIEPUSTA nie czeka na nic: ona nigdy nie kłamie.
   const empty =
     groups != null &&
@@ -120,18 +128,12 @@ export function HistoryScreen({
           size="md"
           onBack={navigation.goBack}
           backLabel="Dzień"
-          right={
-            <SyncChip
-              status={synced ? 'synced' : 'offline'}
-              outboxCount={outboxCount}
-              lastSyncAt={lastSyncAt}
-            />
-          }
+          right={<SyncChip />}
         />
       }
     >
       <View style={styles.content}>
-        {/* Dwie karty w geometrii `DayCard`: data, godziny, statystyki i pas akcji —
+        {/* Dwie karty w geometrii `DayCard`: data, godziny, statystyki i pas akcji -
             czyli część WSPÓLNA obu grup (wzorzec `design/LOADERY.html` reguła 2).
             Stopki plamka nie obiecuje, bo karta zamknięta bez zaległości wysyłki jej
             nie ma. Stan pusty czeka na swoją kolej: wolno go napisać dopiero, gdy
@@ -145,14 +147,18 @@ export function HistoryScreen({
             <AppText variant="display" style={styles.emptyTitle}>
               BRAK POPRZEDNICH DNI
             </AppText>
+            {/* Tekst mówi o WARTOŚCI ekranu (rozliczenia, okno korekty), nie o technice
+                (issue #55 pkt 2): wzmianka „również bez zasięgu" opisywała budowę
+                aplikacji - skąd ekran liczy dane, jest pilotowi obojętne. */}
             <AppText variant="body" tone="muted" style={styles.emptyText}>
-              Dzisiejsze sesje znajdziesz w „Mój dzień". Tutaj trafiają po zmianie doby —
-              wszystko liczone z zapisu na telefonie, również bez zasięgu.
+              Po zmianie doby znajdziesz tu swoje wcześniejsze operacje - komplet czasów
+              i lotów każdej z nich, z możliwością poprawienia danych przez 24 h od
+              zdania samolotu. Dzisiejsze operacje są na ekranie „Mój dzień".
             </AppText>
           </View>
         )}
 
-        {/* ── sesje w oknie korekty ───────────────────────────────────────── */}
+        {/* ── operacje w oknie korekty ───────────────────────────────────────── */}
         {groups != null && groups.editable.length > 0 && (
           <>
             <GroupLabel text="Możesz jeszcze poprawić" />
@@ -160,6 +166,7 @@ export function HistoryScreen({
               <DayCard
                 key={day.sessionUuid}
                 title={day.title}
+                signature={day.signature}
                 aircraft={day.aircraft}
                 times={day.times}
                 stats={day.stats}
@@ -182,7 +189,7 @@ export function HistoryScreen({
           </>
         )}
 
-        {/* ── sesje po oknie: podgląd bez edycji (10b) ─────────────────────── */}
+        {/* ── operacje po oknie: podgląd bez edycji (10b) ─────────────────────── */}
         {groups != null && groups.closed.length > 0 && (
           <>
             <GroupLabel text="Zamknięte" style={styles.closedLabel} />
@@ -190,28 +197,40 @@ export function HistoryScreen({
               <DayCard
                 key={day.sessionUuid}
                 title={day.title}
+                signature={day.signature}
                 aircraft={day.aircraft}
                 times={day.times}
                 stats={day.stats}
                 {...(day.manual ? { titleTag: 'RĘCZNIE' } : {})}
                 // Oko, nie ołówek: po oknie 24 h ekran 10 otwiera się bez ołówków
-                // przy lotach i bez „Edytuj dane" — obiecywanie tu korekty byłoby
+                // przy lotach i bez „Edytuj dane" - obiecywanie tu korekty byłoby
                 // obietnicą, której reguły i tak nie dotrzymają.
                 ctaLabel="ZOBACZ SZCZEGÓŁY"
                 ctaIcon="peek"
                 onPress={() => void openDay(day.sessionUuid)}
                 // Tag „Okno minęło" USUNIĘTY (issue #35 pkt 4): mówił to samo, co
                 // etykieta grupy nad kartami i przypis z kłódką pod nimi.
-                foot={day.upload != null ? <UploadTag day={day} /> : undefined}
+                // „Zakończył administrator" (issue #81) ZOSTAJE: odróżnia tę kartę od
+                // reszty zamkniętych - bez odczytów końcowych i bez prawa do poprawek.
+                foot={
+                  day.upload != null || day.adminClosed ? (
+                    <>
+                      {day.adminClosed && (
+                        <Tag label="Zakończył administrator" tone="amber" icon="warning" />
+                      )}
+                      {day.upload != null && <UploadTag day={day} />}
+                    </>
+                  ) : undefined
+                }
               />
             ))}
 
             <View style={styles.lockedNote}>
-              {/* Kłódka, nie trójkąt — „zamknięte" to stan, nie ostrzeżenie (mockup 12). */}
+              {/* Kłódka, nie trójkąt - „zamknięte" to stan, nie ostrzeżenie (mockup 12). */}
               <Icon name="lock" size={14} color={theme.colors.textMuted} />
               <AppText variant="body" tone="secondary" style={styles.lockedText}>
-                Sesje po oknie 24 h możesz oglądać, ale nie zmieniać. Jeśli znalazłeś błąd
-                — zgłoś go administratorowi; poprawka zostanie dopisana jako korekta, bez
+                Operacje po oknie 24 h możesz oglądać, ale nie zmieniać. Jeśli znalazłeś błąd
+                - zgłoś go administratorowi; poprawka zostanie dopisana jako korekta, bez
                 kasowania oryginalnego zapisu.
               </AppText>
             </View>
@@ -223,10 +242,10 @@ export function HistoryScreen({
 }
 
 /**
- * Plakietka wysyłki — TYLKO gdy coś czeka w kolejce (issue #35 pkt 3).
+ * Plakietka wysyłki - TYLKO gdy coś czeka w kolejce (issue #35 pkt 3).
  *
  * „Wysłane" nie istnieje: to stan domyślny, a napis powtarzany przy prawie każdej
- * karcie uczy oko pomijać stopkę — ta sama reguła, dla której SyncChip online nie
+ * karcie uczy oko pomijać stopkę - ta sama reguła, dla której SyncChip online nie
  * rysuje nic (issue #12).
  */
 function UploadTag({ day }: { day: DayCardSpec | EditableDaySpec }) {

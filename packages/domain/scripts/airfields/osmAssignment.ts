@@ -1,5 +1,5 @@
 /**
- * UZ Aero — który pas z OSM należy do którego lotniska.
+ * UZ Aero - który pas z OSM należy do którego lotniska.
  *
  * Overpass pytamy JEDNYM zapytaniem o wszystkie `aeroway=runway` w granicach Polski
  * (~830 wayów) zamiast o promień wokół każdego lotniska osobno: jedno zapytanie zamiast
@@ -13,7 +13,7 @@
 import { distanceM, type LatLon } from './geo';
 import type { OverpassWay } from './osmRunways';
 
-/** Lotnisko z pozycją — tyle wystarczy, żeby przypisać pasy. */
+/** Lotnisko z pozycją - tyle wystarczy, żeby przypisać pasy. */
 export interface PlacedAirfield extends LatLon {
   readonly icao: string;
 }
@@ -22,12 +22,12 @@ export interface PlacedAirfield extends LatLon {
  * Jak daleko od punktu odniesienia lotniska może leżeć jego pas.
  *
  * Punkt z OurAirports bywa wpisany na płycie, na wieży albo przy bramie, a najdłuższe
- * pasy w Polsce mają ~2,5 km — dwa i pół kilometra mieszczą oba te rozjazdy, a wciąż
+ * pasy w Polsce mają ~2,5 km - dwa i pół kilometra mieszczą oba te rozjazdy, a wciąż
  * są ciaśniejsze niż odstęp między jakąkolwiek parą polskich lotnisk.
  */
 export const MAX_RUNWAY_DISTANCE_M = 2500;
 
-/** Środek waya — do przypisania wystarczy punkt między jego końcami. */
+/** Środek waya - do przypisania wystarczy punkt między jego końcami. */
 function midpointOf(way: OverpassWay): LatLon | null {
   const geometry = way.geometry;
   if (geometry == null || geometry.length < 2) return null;
@@ -39,7 +39,7 @@ function midpointOf(way: OverpassWay): LatLon | null {
 /**
  * Waye pogrupowane po kodzie ICAO najbliższego lotniska.
  *
- * Waye dalsze niż `maxDistanceM` od każdego lotniska wypadają — to pasy lotnisk spoza
+ * Waye dalsze niż `maxDistanceM` od każdego lotniska wypadają - to pasy lotnisk spoza
  * katalogu (wojskowych, heliportów, zagranicznych przy granicy).
  */
 export function assignWaysToAirfields(

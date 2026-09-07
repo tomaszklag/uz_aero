@@ -1,11 +1,11 @@
 /**
- * UZ Aero — test LOGU KOKPITU (mockupy 04, 04B, 05).
+ * UZ Aero - test LOGU KOKPITU (mockupy 04, 04B, 05).
  *
- * Log jest jedynym potwierdzeniem zapisu, jakie widzi pilot — jeśli pokaże złe czasy,
+ * Log jest jedynym potwierdzeniem zapisu, jakie widzi pilot - jeśli pokaże złe czasy,
  * błąd nie objawi się niczym innym niż niepoprawnym wpisem w arkuszu na koniec miesiąca.
  *
  * Od issue #44 kokpit rysuje TĘ SAMĄ oś, co rozliczenie (10): kształt wierszy pilnuje
- * `sessionAxis.test.ts`, a ten plik sprawdza wyłącznie to, co kokpit dokłada od siebie —
+ * `sessionAxis.test.ts`, a ten plik sprawdza wyłącznie to, co kokpit dokłada od siebie -
  * wiersz „na żywo", znaczniki outboxa, stopkę sum i bramkę karty logu.
  */
 
@@ -65,15 +65,15 @@ function axis(events: Event[], now = at(12, 40)) {
   return buildCockpitAxis(events, projectSession(events), now);
 }
 
-describe('log kokpitu = oś sesji (issue #44)', () => {
+describe('log kokpitu = oś operacji (issue #44)', () => {
   it('zaczyna się PRZEJĘCIEM z odczytem, a nie chipami przy uruchomieniu silnika', () => {
     // Do issue #44 kokpit pomijał przejęcie, a odczyt startowy wisiał jako chipy „MH …"
-    // i „112 L" przy „Start engine" — przy zdarzeniu, które go nie wykonało.
+    // i „112 L" przy „Start engine" - przy zdarzeniu, które go nie wykonało.
     const { rows } = axis(sessionEvents());
 
     expect(rows[0]!.kind).toBe('claim');
     expect(rows[0]!.time).toBe('10:58');
-    expect(rows[0]!.sub).toBe('odczyt 112 L · 1236:30');
+    expect(rows[0]!.sub).toBe('paliwo 112 L · 1236:30');
     expect(rows.find((r) => r.kind === 'engineStart')!.sub).toBeNull();
   });
 
@@ -165,7 +165,7 @@ describe('znacznik outboxa', () => {
 
   it('sięga też końców osi, bo one też są zdarzeniami rejestru', () => {
     // Przejęcie ma własne `id` (pochodzi z projekcji), ale niesie je `preflight_confirm`
-    // — i to jego stan wysyłki opisujemy, przez `targetUuid`.
+    // - i to jego stan wysyłki opisujemy, przez `targetUuid`.
     const zKolejka = sessionEvents().map((e) =>
       e.type === 'preflight_confirm' ? ({ ...e, syncedAt: null } as Event) : e,
     );
@@ -187,19 +187,30 @@ describe('stopka i bramka karty', () => {
     ]);
   });
 
-  it('stopka NIE powtarza trasy — ta stoi w pasku górnym kokpitu', () => {
+  it('stopka NIE powtarza trasy - ta stoi w pasku górnym kokpitu', () => {
     expect(axis(sessionEvents()).foot.some((i) => i.id === 'route')).toBe(false);
   });
 
-  it('karta logu zapala się dopiero przy zdarzeniu operacyjnym (issue #19)', () => {
+  /**
+   * ODWRÓCONE WOBEC ISSUE #19 (issue #84, zgłoszenie z urządzenia): „dopiero jak
+   * zaloguję zdarzenie taxi, pojawiają się wpisy «przejęcie» i «uruchomienie» -
+   * a powinny się raczej pojawić od razu". Pusty log po uruchomieniu silnika czytał się
+   * jak brak zapisu, a to jest jedyne pytanie, które pilot do tej karty ma.
+   */
+  it('karta logu zapala się już przy przejęciu i uruchomieniu', () => {
     const poUruchomieniu = sessionEvents().filter(
       (e) => e.type === 'session_claim' || e.type === 'preflight_confirm' || e.uuid === 'engine-on',
     );
-    // Przejęcie + uruchomienie + „na żywo" to jeszcze nie przebieg sesji.
-    expect(axis(poUruchomieniu, at(11, 20)).hasEvents).toBe(false);
+    expect(axis(poUruchomieniu, at(11, 20)).hasEvents).toBe(true);
 
     const zKolowaniem = [...poUruchomieniu, event('taxi', at(11, 26), { method: 'auto' })];
     expect(axis(zKolowaniem, at(11, 30)).hasEvents).toBe(true);
+  });
+
+  it('sam wiersz „na żywo" karty nie zapala - nie jest zapisem rejestru', () => {
+    // Sesja bez ani jednego zdarzenia w strumieniu: oś ma wtedy najwyżej licznik stanu,
+    // a ten mówi o czasie, który stoi już w przyrządach kokpitu.
+    expect(axis([], at(11, 20)).hasEvents).toBe(false);
   });
 
   it('samo tankowanie przed startem też zapala kartę', () => {
@@ -212,7 +223,7 @@ describe('stopka i bramka karty', () => {
   });
 });
 
-describe('podgląd cudzej sesji (04B)', () => {
+describe('podgląd cudzej operacji (04B)', () => {
   it('nie ma wiersza „na żywo" ani znaczników outboxa', () => {
     // Outbox opisuje TEN telefon; cudze zdarzenia przyszły z serwera, więc strzałka
     // mówiłaby o kolejce, której nie znamy. Migawka nie jest też podglądem na żywo.

@@ -1,21 +1,21 @@
 /**
- * UZ Aero — GESTY WYKRESÓW ŚLADU (issue #47 pkt 7 i 8).
+ * UZ Aero - GESTY WYKRESÓW ŚLADU (issue #47 pkt 7 i 8).
  *
  * Jeden hook dla mapy i dla profilu, bo oba odpowiadają na te same dotknięcia:
- *  • **jeden palec** — kursor: pokazuje, co działo się w tej chwili, i podaje ją wyżej,
+ *  • **jeden palec** - kursor: pokazuje, co działo się w tej chwili, i podaje ją wyżej,
  *    żeby DRUGI wykres pokazał ten sam moment (sprzężenie),
- *  • **dwa palce** — przybliżenie i przesunięcie kadru (tylko tam, gdzie ma sens: mapa),
- *  • **dwuklik** — powrót do całości.
+ *  • **dwa palce** - przybliżenie i przesunięcie kadru (tylko tam, gdzie ma sens: mapa),
+ *  • **dwuklik** - powrót do całości.
  *
  * ══ DLACZEGO `PanResponder`, A NIE `react-native-gesture-handler` ══
  * Projekt świadomie unika modułów NATYWNYCH (patrz `TrackPolyline`, `TrackMap`): każdy
  * dokłada przebudowę dev clienta u każdego, kto sklonuje repo. `PanResponder` jest
- * w rdzeniu RN i obsługuje wielodotyk przez `nativeEvent.touches` — do szczypty
+ * w rdzeniu RN i obsługuje wielodotyk przez `nativeEvent.touches` - do szczypty
  * i przeciągnięcia to wystarcza.
  *
  * ══ PODZIAŁ ODPOWIEDZIALNOŚCI ══
  * Ten plik zajmuje się WYŁĄCZNIE dotknięciami: ile palców, gdzie, jak daleko od
- * poprzedniej klatki. Co z tego wynika dla kadru, liczy `logic/mapViewport.ts` —
+ * poprzedniej klatki. Co z tego wynika dla kadru, liczy `logic/mapViewport.ts` -
  * czysto i z testami, bo to tam mieszkają reguły, których palcem się nie sprawdzi.
  */
 
@@ -33,7 +33,7 @@ import {
 
 /** Maksymalna przerwa między tapnięciami uznana za dwuklik (ms). */
 const DOUBLE_TAP_MS = 300;
-/** I maksymalne rozjechanie palca między nimi (px) — inaczej to dwa różne tapnięcia. */
+/** I maksymalne rozjechanie palca między nimi (px) - inaczej to dwa różne tapnięcia. */
 const DOUBLE_TAP_SLOP = 24;
 
 export interface ChartGestureOptions {
@@ -41,8 +41,8 @@ export interface ChartGestureOptions {
   /** Dotknięcie w układzie EKRANU wykresu; `null` = palec zszedł. */
   onScrub: (point: Point2D | null) => void;
   /**
-   * Czy JEDEN palec prowadzi kursor. Profil: tak — ma oś czasu, więc dotknięcie wskazuje
-   * chwilę. Mapa: NIE (decyzja z przeglądu) — kursor przychodzi na nią z profilu, a jeden
+   * Czy JEDEN palec prowadzi kursor. Profil: tak - ma oś czasu, więc dotknięcie wskazuje
+   * chwilę. Mapa: NIE (decyzja z przeglądu) - kursor przychodzi na nią z profilu, a jeden
    * palec zostaje ekranowi na przewijanie. Mapa zajmuje 300 px wysokości i gdyby łapała
    * każde przeciągnięcie, przewinięcie strony palcem po trasie byłoby niemożliwe.
    */
@@ -50,7 +50,7 @@ export interface ChartGestureOptions {
   zoomable?: boolean;
   /**
    * Oś przybliżenia. Mapa ma dwie (`both`), profil JEDNĄ (`x`): jego pionem jest
-   * wysokość dobrana do zakresu lotu, więc rozciąganie jej niczego nie odsłania —
+   * wysokość dobrana do zakresu lotu, więc rozciąganie jej niczego nie odsłania -
    * a rozciągnięcie CZASU owszem, bo to ono rozdziela zdarzenia leżące na sobie.
    * Przy `x` krotność bierze się z rozjazdu palców w POZIOMIE: rozsunięcie ich
    * w pionie nie jest gestem o czasie i nie ma prawa nic zmienić.
@@ -108,7 +108,7 @@ export function useChartGesture({
         },
 
         onStartShouldSetPanResponder: () => scrub,
-        // Bez kursora przejmujemy dopiero DWA palce — jeden zostaje ekranowi.
+        // Bez kursora przejmujemy dopiero DWA palce - jeden zostaje ekranowi.
         onMoveShouldSetPanResponder: (event) => scrub || event.nativeEvent.touches.length >= 2,
         // Wykres jest wewnątrz ekranu przewijanego w pionie: gdy już prowadzi kursor,
         // nie oddaje gestu przewijaniu w połowie ruchu.
@@ -140,7 +140,7 @@ export function useChartGesture({
             const previous = pinchDistance.current;
             pinchDistance.current = distance;
 
-            // Pierwsza klatka dwoma palcami ustala tylko odniesienie — bez tego
+            // Pierwsza klatka dwoma palcami ustala tylko odniesienie - bez tego
             // skok z „brak dystansu" na „dystans" wywaliłby zoom w maksimum.
             if (previous == null || previous === 0) {
               lastTouch.current = focus;
@@ -152,7 +152,7 @@ export function useChartGesture({
             setViewport((current) => {
               const zoomed = pinchViewport(current, focus, distance / previous, sizeRef.current);
               const from = lastTouch.current;
-              // Przesunięcie ogniska między klatkami to PRZESUNIĘCIE kadru — dzięki
+              // Przesunięcie ogniska między klatkami to PRZESUNIĘCIE kadru - dzięki
               // temu jeden gest robi obie rzeczy, tak jak w każdej mapie.
               const moved =
                 from == null
@@ -202,7 +202,7 @@ export function useChartGesture({
  * Pozycja dotknięcia WZGLĘDEM wykresu.
  *
  * `locationX/locationY` z `touches[i]` liczą się od krawędzi elementu, który dotknięcie
- * przyjął — czyli od kontenera wykresu, bo to na nim wiszą te uchwyty.
+ * przyjął - czyli od kontenera wykresu, bo to na nim wiszą te uchwyty.
  */
 function touchPoint(event: GestureResponderEvent, index: number): Point2D | null {
   const touch = event.nativeEvent.touches[index];

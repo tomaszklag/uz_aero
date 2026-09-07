@@ -1,9 +1,9 @@
 /**
- * UZ Aero — spoina TRYBU EDYCJI sesji (issue #43): oś → arkusz → komenda.
+ * UZ Aero - spoina TRYBU EDYCJI sesji (issue #43): oś → arkusz → komenda.
  *
  * Zastąpiła `useEventCorrection`, która umiała jedno: otworzyć arkusz korekty czasu
  * z logu (04, 08). Po issue #43 wejście jest jedno (oś sesji w trybie edycji), ale
- * arkuszy jest pięć — bo pięć jest różnych pytań: czas zdarzenia, odczyt paliwa i MH,
+ * arkuszy jest pięć - bo pięć jest różnych pytań: czas zdarzenia, odczyt paliwa i MH,
  * skład zrzutu, dopisanie brakującego faktu, historia zmian.
  *
  * Hook trzyma całe okablowanie w jednym miejscu: znalezienie celu, zbudowanie wierszy
@@ -11,7 +11,7 @@
  * pod oś, `openAdd` pod przycisk i gotowe arkusze do wyrenderowania.
  *
  * Cel znajdujemy po uuid w SUROWYM strumieniu (nie efektywnym): korygować można też
- * zdarzenie już poprawione — kolejna korekta po prostu zastępuje poprzednią.
+ * zdarzenie już poprawione - kolejna korekta po prostu zastępuje poprzednią.
  */
 
 import React, { useCallback, useMemo, useState } from 'react';
@@ -49,6 +49,7 @@ import {
   hhmm,
   litres,
   motoHours,
+  oilLitres,
   parseLitres,
   maskMotoHoursInput,
   parseMotoHours,
@@ -56,6 +57,7 @@ import {
   timeUtc,
 } from '../format';
 import { correctionImpact, methodBadgeFor, voidLabelFor } from '../screens/logic/correction';
+import { oilValueText } from '../screens/logic/oilPreflight';
 import type { AxisRow } from '../screens/logic/sessionAxis';
 import { claimRetimePlan } from '../screens/logic/claimRetime';
 import { fieldLabel, needsFieldLabels } from '../screens/logic/correctionHistoryRows';
@@ -66,7 +68,7 @@ import {
   type EditTarget,
 } from '../screens/logic/sessionEdit';
 
-/** Ikony typów w arkuszu „Dodaj wpis" — słownik ekranu, nie rejestru. */
+/** Ikony typów w arkuszu „Dodaj wpis" - słownik ekranu, nie rejestru. */
 const ADD_ICON = {
   takeoff: 'takeoff',
   landing: 'landing',
@@ -74,16 +76,17 @@ const ADD_ICON = {
   drop: 'drop',
   boarding: 'boarding',
   refuel: 'refuel',
+  oil_add: 'oil',
 } as const;
 
 export interface SessionEditApi {
-  /** Pod `SessionAxis.onCorrect` — otwiera arkusz właściwy dla wiersza. */
+  /** Pod `SessionAxis.onCorrect` - otwiera arkusz właściwy dla wiersza. */
   openRow: (rowId: string) => void;
   /** Pod przycisk „DODAJ WPIS". */
   openAdd: () => void;
   /**
-   * Pod ołówek przy notatce (issue #43). Notatka nie stoi na osi — ma własną kartę
-   * na końcu ekranu — więc ma własne wejście; arkusz jest ten sam co przy jej
+   * Pod ołówek przy notatce (issue #43). Notatka nie stoi na osi - ma własną kartę
+   * na końcu ekranu - więc ma własne wejście; arkusz jest ten sam co przy jej
    * pisaniu (02e), bo to ta sama czynność.
    *
    * `label` nazywa TEN tekst („Notatka sesji", „Uwaga wpisu ręcznego") i wchodzi
@@ -91,13 +94,13 @@ export interface SessionEditApi {
    */
   openNote: (targetUuid: string, text: string, label?: string) => void;
   /**
-   * Pod ołówek przy karcie „Załoga" (issue #43). Dual — jak notatka — nie stoi na osi,
+   * Pod ołówek przy karcie „Załoga" (issue #43). Dual - jak notatka - nie stoi na osi,
    * bo nie jest zdarzeniem w czasie, tylko faktem o CAŁEJ sesji.
    */
   openCrew: () => void;
   /**
    * Historia zmian BEZ przechodzenia przez arkusz korekty (issue #43, uwaga
-   * z urządzenia) — pod plakietkę „popr.".
+   * z urządzenia) - pod plakietkę „popr.".
    *
    * Istnieje, bo znacznik poprawki widać w OBU trybach, a arkusz korekty, który niesie
    * wejście w historię, tylko w edycji. W trybie odczytu (i w podglądzie po oknie 24 h)
@@ -114,9 +117,9 @@ export interface SessionEditApi {
 export interface SessionEditOptions {
   /** `picId` → kod pilota (TMK). Bez niej historia pokaże surowe identyfikatory. */
   codeOf?: (pilotId: string) => string;
-  /** Kto jest zalogowany — do dopisku „(Ty)" w historii. */
+  /** Kto jest zalogowany - do dopisku „(Ty)" w historii. */
   currentPilotId?: string | null;
-  /** Piloci z cache'u referencyjnego — lista wyboru Duala (§4.8, działa offline). */
+  /** Piloci z cache'u referencyjnego - lista wyboru Duala (§4.8, działa offline). */
   pilots?: readonly { id: string; code: string; name: string }[];
 }
 
@@ -133,6 +136,7 @@ export function useSessionEdit(
   const drop = useSessionStore((s) => s.drop);
   const boarding = useSessionStore((s) => s.boarding);
   const refuel = useSessionStore((s) => s.refuel);
+  const addOil = useSessionStore((s) => s.addOil);
   const manualLogEntry = useSessionStore((s) => s.manualLogEntry);
 
   const aircraft = useAircraft(projection.aircraftId);
@@ -143,10 +147,10 @@ export function useSessionEdit(
   /**
    * Otwarta historia zmian. Nie sam uuid, bo zdarzenie potrafi nieść KILKA korygowalnych
    * rzeczy naraz: `preflight_confirm` to paliwo, licznik, notatka i Dual w jednym.
-   * Historia otwarta z arkusza notatki musi mówić o notatce — lista wszystkich poprawek
+   * Historia otwarta z arkusza notatki musi mówić o notatce - lista wszystkich poprawek
    * preflightu byłaby odpowiedzią na pytanie, którego pilot nie zadał.
    *
-   * `only == null` = pełna historia zdarzenia (arkusz czasu, zrzutu — tam cel ma jeden wymiar).
+   * `only == null` = pełna historia zdarzenia (arkusz czasu, zrzutu - tam cel ma jeden wymiar).
    */
   const [history, setHistory] = useState<{
     uuid: string;
@@ -169,7 +173,7 @@ export function useSessionEdit(
 
   /**
    * Historia wiersza osi. Zakres bierze się z ARKUSZA, którym ten wiersz się poprawia:
-   * przejęcie i zdanie mają arkusz odczytu, więc pytanie brzmi o paliwo, licznik i czas —
+   * przejęcie i zdanie mają arkusz odczytu, więc pytanie brzmi o paliwo, licznik i czas -
    * notatka i Dual siedzą w tym samym zdarzeniu, ale są innym pytaniem i mają własne
    * plakietki. Reszta wierszy ma jeden wymiar, więc zakresu nie potrzebuje.
    */
@@ -182,7 +186,13 @@ export function useSessionEdit(
       setHistory({
         uuid: found.event.uuid,
         title: found.label,
-        only: found.sheet === 'reading' ? READING_FIELDS : undefined,
+        // Zakres idzie za POLAMI arkusza celu: przejęcie niesie też olej (issue #60).
+        only:
+          found.sheet === 'reading'
+            ? found.event.type === 'preflight_confirm'
+              ? CLAIM_READING_FIELDS
+              : READING_FIELDS
+            : undefined,
       });
     },
     [events, rows],
@@ -196,7 +206,7 @@ export function useSessionEdit(
 
   const [note, setNote] = useState<{ uuid: string; text: string; label: string } | null>(null);
   const openNote = useCallback(
-    (targetUuid: string, text: string, label = 'Notatka sesji') =>
+    (targetUuid: string, text: string, label = 'Notatka operacji') =>
       setNote({ uuid: targetUuid, text, label }),
     [],
   );
@@ -205,7 +215,7 @@ export function useSessionEdit(
   const openCrew = useCallback(() => setCrewOpen(true), []);
 
   /**
-   * Adres korekty załogi: `preflight_confirm`. Dual jest tam FAKTEM o całej sesji —
+   * Adres korekty załogi: `preflight_confirm`. Dual jest tam FAKTEM o całej sesji -
    * w nagłówkach zdarzeń zostaje tożsamość z chwili zapisu i zostać musi (append-only).
    */
   const preflight = useMemo(() => preflightUuid(events), [events]);
@@ -215,27 +225,27 @@ export function useSessionEdit(
     setHistory({ uuid: preflight, title: 'Drugi pilot', only: DUAL_FIELDS });
   }, [preflight]);
 
-  /** Lista wyboru bez PIC-a tej sesji — `DUAL_IS_PIC` i tak by go odrzucił. */
+  /** Lista wyboru bez PIC-a tej sesji - `DUAL_IS_PIC` i tak by go odrzucił. */
   const crewOptions = useMemo(
     () => (options.pilots ?? []).filter((p) => p.id !== projection.sessionPicId),
     [options.pilots, projection.sessionPicId],
   );
 
-  /** Strumień EFEKTYWNY — wartości „w mocy teraz", czyli po wcześniejszych korektach. */
+  /** Strumień EFEKTYWNY - wartości „w mocy teraz", czyli po wcześniejszych korektach. */
   const effective = useMemo(() => applyCorrections(events), [events]);
   const effectiveOf = useCallback(
     (uuid: string): Event | undefined => effective.find((e) => e.uuid === uuid),
     [effective],
   );
 
-  /** Zapis korekty. Odrzucenie reguł ląduje w `lastError` — pokazuje je ekran. */
+  /** Zapis korekty. Odrzucenie reguł ląduje w `lastError` - pokazuje je ekran. */
   const save = useCallback(
     async (payload: Parameters<typeof correctEvent>[0]) => {
       setBusy(true);
       try {
         await correctEvent(payload);
       } catch {
-        // Twarde naruszenie (np. okno 24 h minęło) — komunikat jest w store.
+        // Twarde naruszenie (np. okno 24 h minęło) - komunikat jest w store.
       } finally {
         setBusy(false);
         setTarget(null);
@@ -287,10 +297,31 @@ export function useSessionEdit(
   }, [effectiveOf, readingTarget]);
 
   /**
-   * Pole czasu arkusza odczytu — TYLKO przy przejęciu (uwaga z urządzenia, issue #43).
+   * Olej W MOCY (po korektach) - tylko dla przejęcia (issue #60): `day_close` oleju nie
+   * niesie, więc jego arkusz pól olejowych nie pokazuje. Pusty tekst = wpisu nie było.
+   *
+   * Pole DOLEWKI istnieje wyłącznie, gdy payload przejęcia ją NIESIE (stary strumień
+   * sprzed 2026-09-03) - w nowych dolewka przy przejęciu jest osobnym `oil_add`
+   * z własnym wierszem osi i tam się ją poprawia; amend dopisujący `oilAddedL`
+   * do payloadu dublowałby fakt (projekcja sumuje OBA źródła).
+   */
+  const oilCurrent = useMemo(() => {
+    if (readingTarget == null) return null;
+    const current = effectiveOf(readingTarget.uuid) ?? readingTarget;
+    if (current.type !== 'preflight_confirm') return null;
+    return {
+      levelText: oilValueText(current.payload.oilL ?? null),
+      addedText:
+        current.payload.oilAddedL != null ? oilValueText(current.payload.oilAddedL) : null,
+      parse: parseLitres,
+    };
+  }, [effectiveOf, readingTarget]);
+
+  /**
+   * Pole czasu arkusza odczytu - TYLKO przy przejęciu (uwaga z urządzenia, issue #43).
    *
    * Granice: nie wcześniej niż doba wstecz od bieżącej godziny przejęcia (dalej to nie
-   * korekta, tylko inna sesja) i nie później niż „teraz" — czas z przyszłości odrzuca
+   * korekta, tylko inna sesja) i nie później niż „teraz" - czas z przyszłości odrzuca
    * i tak reguła `CORRECTION_TIME_IN_FUTURE`.
    */
   const claimUuid =
@@ -315,7 +346,7 @@ export function useSessionEdit(
     };
   }, [claimUuid, events, projection]);
 
-  /** Zapis godziny przejęcia — jedna korekta albo kaskada, wg planu. */
+  /** Zapis godziny przejęcia - jedna korekta albo kaskada, wg planu. */
   const saveClaimTime = useCallback(
     async (newTime: number, reason: string | null) => {
       if (claimUuid == null) return;
@@ -324,7 +355,7 @@ export function useSessionEdit(
 
       setBusy(true);
       try {
-        // Każdy krok to OSOBNA korekta — rejestr jest append-only, więc „przesunięcie
+        // Każdy krok to OSOBNA korekta - rejestr jest append-only, więc „przesunięcie
         // sesji" nie jest jedną operacją, tylko zbiorem faktów o poszczególnych
         // zdarzeniach. Powód wpisujemy do wszystkich: w historii każdego z nich ma
         // stać to samo zdanie, bo to była jedna decyzja pilota.
@@ -337,7 +368,7 @@ export function useSessionEdit(
           });
         }
       } catch {
-        // Twarde naruszenie jest w `lastError` — pokazuje je ekran.
+        // Twarde naruszenie jest w `lastError` - pokazuje je ekran.
       } finally {
         setBusy(false);
         setTarget(null);
@@ -352,14 +383,18 @@ export function useSessionEdit(
       out.push({ label: 'Pojemność zbiorników', value: litres(aircraft.capacityL) });
     }
     if (projection.fuel.consumedL != null) {
-      out.push({ label: 'Zużycie sesji', value: litres(projection.fuel.consumedL) });
+      out.push({ label: 'Zużycie operacji', value: litres(projection.fuel.consumedL) });
+    }
+    // Sufit dla pól olejowych - tylko tam, gdzie te pola w ogóle są (przejęcie).
+    if (readingTarget?.type === 'preflight_confirm' && aircraft?.oilCapacityL != null) {
+      out.push({ label: 'Zbiornik oleju', value: oilLitres(aircraft.oilCapacityL) });
     }
     out.push({
       label: 'Format licznika',
       value: mhFormat === 'hhmm' ? 'hh:mm' : 'godziny dziesiętne',
     });
     return out;
-  }, [aircraft, mhFormat, projection.fuel.consumedL]);
+  }, [aircraft, mhFormat, projection.fuel.consumedL, readingTarget]);
 
   // ── arkusz zrzutu (10G) ─────────────────────────────────────────────────────
 
@@ -374,7 +409,7 @@ export function useSessionEdit(
 
   /**
    * Zawężenie historii do wybranych pól. Wpisy o samym FAKCIE (`void`, `unvoid`) mają
-   * `field: null` i w widoku zawężonym nie mają czego opisywać — a zawęża się wyłącznie
+   * `field: null` i w widoku zawężonym nie mają czego opisywać - a zawęża się wyłącznie
    * historię pól `preflight_confirm`, którego unieważnić i tak nie wolno.
    */
   const scoped = useCallback(
@@ -399,7 +434,7 @@ export function useSessionEdit(
     return events.find((e) => e.uuid === history.uuid) ?? null;
   }, [events, history]);
 
-  /** Sam kod pilota — bez „(Ty)". Wartość pola „drugi pilot" jest DANĄ, nie autorem. */
+  /** Sam kod pilota - bez „(Ty)". Wartość pola „drugi pilot" jest DANĄ, nie autorem. */
   const whoCode = useCallback(
     (pilotId: string): string => options.codeOf?.(pilotId) ?? pilotId,
     [options],
@@ -413,7 +448,7 @@ export function useSessionEdit(
     [options, whoCode],
   );
 
-  /** Podpisy pól — tylko przy liście mieszanej; uzasadnienie w `correctionHistoryRows`. */
+  /** Podpisy pól - tylko przy liście mieszanej; uzasadnienie w `correctionHistoryRows`. */
   const labelled = useMemo(() => needsFieldLabels(historyEntries), [historyEntries]);
 
   const historyItems = useMemo(
@@ -430,7 +465,7 @@ export function useSessionEdit(
         to: formatValue(entry.field, entry.to, mhFormat, whoCode),
         verdict:
           entry.kind === 'void'
-            ? 'unieważnione — „tego nie było"'
+            ? 'unieważnione - „tego nie było"'
             : entry.kind === 'unvoid'
               ? 'przywrócone kolejną poprawką'
               : null,
@@ -461,7 +496,7 @@ export function useSessionEdit(
     [projection.operation],
   );
 
-  /** Domyślny czas nowego wpisu: koniec biegu silnika, a przy sesji w toku — teraz. */
+  /** Domyślny czas nowego wpisu: koniec biegu silnika, a przy sesji w toku - teraz. */
   const addInitialTime = useMemo(() => {
     const leg = projection.legs[projection.legs.length - 1];
     return leg?.stoppedAt ?? Date.now();
@@ -506,6 +541,9 @@ export function useSessionEdit(
         else if (type === 'drop') await drop({ jumpers: EMPTY_JUMPERS, at: time });
         else if (type === 'boarding') await boarding({ jumpers: EMPTY_JUMPERS, at: time });
         else if (type === 'refuel' && extra?.refuel != null) await refuel(extra.refuel, time);
+        else if (type === 'oil_add' && extra?.oilAddedL != null) {
+          await addOil({ addedL: extra.oilAddedL }, time);
+        }
       } catch {
         // Odrzucenie reguł jest w `lastError`.
       } finally {
@@ -513,7 +551,7 @@ export function useSessionEdit(
         setAdding(false);
       }
       /*
-       * Uwaga pilota (`note`) idzie osobnym zdarzeniem `manual_log_entry` — pojedyncze
+       * Uwaga pilota (`note`) idzie osobnym zdarzeniem `manual_log_entry` - pojedyncze
        * fakty operacyjne nie mają w payloadzie pola na tekst i dokładanie go tam tylko
        * po to, żeby uwaga miała gdzie usiąść, rozsypałoby ją po pięciu kształtach.
        * Wpis bez czasów niesie SAM tekst i pokazuje się w karcie „Notatki" na ekranie
@@ -527,7 +565,7 @@ export function useSessionEdit(
         }
       }
     },
-    [boarding, drop, landing, manualLogEntry, refuel, taxi, takeoff],
+    [addOil, boarding, drop, landing, manualLogEntry, refuel, taxi, takeoff],
   );
 
   // ── arkusze ─────────────────────────────────────────────────────────────────
@@ -564,7 +602,7 @@ export function useSessionEdit(
           /*
            * Podpis z godziną TYLKO wtedy, gdy arkusz nie ma pola czasu (uwaga
            * z urządzenia, 2026-08-14). Przy przejęciu ta sama godzina stoi dwa
-           * centymetry niżej — w kontrolce, którą się ją zmienia — więc na karcie celu
+           * centymetry niżej - w kontrolce, którą się ją zmienia - więc na karcie celu
            * była powtórzeniem. Przy zdaniu pola czasu nie ma (`day_close` nie przyjmuje
            * `retime`), a wtedy podpis jest jedynym miejscem, w którym pilot widzi,
            * czego dotyczy poprawka.
@@ -574,27 +612,35 @@ export function useSessionEdit(
               ? null
               : `zapisano ${timeUtc(readingTarget.gpsTime ?? readingTarget.deviceTime)} UTC`
           }
-          /* Pole czasu WYŁĄCZNIE przy przejęciu — uzasadnienie w propsach arkusza. */
+          /* Pole czasu WYŁĄCZNIE przy przejęciu - uzasadnienie w propsach arkusza. */
           time={claimTimeField}
           fuelText={String(Math.round(reading.fuelL))}
           mhText={motoHours(reading.mh, mhFormat)}
           parseFuel={parseLitres}
           parseMh={parseMotoHours}
           maskMh={(text) => maskMotoHoursInput(text, mhFormat)}
+          oil={oilCurrent}
           rows={readingRows}
-          warning={
-            readingTarget.type === 'day_close'
-              ? 'Ten odczyt jest przekazaniem maszyny: od niego zaczyna się następna sesja tego samolotu i to on domyka łańcuch motogodzin.'
-              : 'Ten odczyt otwiera łańcuch motogodzin sesji — zmiana przeliczy zużycie i porównanie z normą.'
-          }
-          /* Odczyt to paliwo, licznik i — przy przejęciu — godzina. Notatka i Dual
-             siedzą w tym samym zdarzeniu, ale są innym pytaniem i mają własne arkusze. */
-          historyCount={historyCountOf(readingTarget.uuid, READING_FIELDS)}
+          /* Ostrzeżenia o tym, CZYM ten odczyt jest w rejestrze („otwiera łańcuch
+             motogodzin", „jest przekazaniem maszyny"), USUNIĘTE (uwaga z urządzenia,
+             2026-09-04: „po co też tam piszesz «ten licznik otwiera łańcuch»").
+             Świeciły przy KAŻDYM otwarciu arkusza, nie mówiły nic o poprawianej
+             wartości i nie dawały się na nic zamienić - czyli ta sama kategoria
+             przypisów o budowie rejestru, którą issue #43 wycięło z arkuszy korekty,
+             a #72 z ustawień. Ostrzeżenie w tym arkuszu zostaje przy `timeNote`, bo
+             tamto mówi o SKUTKU konkretnej zmiany godziny (i potrafi ją zablokować). */
+          /* Odczyt to paliwo, licznik, przy przejęciu godzina - i od issue #60 olej.
+             Notatka i Dual siedzą w tym samym zdarzeniu, ale są innym pytaniem i mają
+             własne arkusze; zakres historii idzie za polami TEGO arkusza. */
+          historyCount={historyCountOf(
+            readingTarget.uuid,
+            oilCurrent != null ? CLAIM_READING_FIELDS : READING_FIELDS,
+          )}
           onOpenHistory={() =>
             setHistory({
               uuid: readingTarget.uuid,
               title: target?.label ?? '',
-              only: READING_FIELDS,
+              only: oilCurrent != null ? CLAIM_READING_FIELDS : READING_FIELDS,
             })
           }
           onSave={({ newTime, ...fields }, reason) => {
@@ -660,12 +706,12 @@ export function useSessionEdit(
         onCancel={() => setAdding(false)}
       />
 
-      {/* Notatka: ten sam arkusz, co przy jej pisaniu na 02e — to ta sama czynność,
+      {/* Notatka: ten sam arkusz, co przy jej pisaniu na 02e - to ta sama czynność,
           więc nie ma powodu, żeby wyglądała inaczej. Pusty tekst KASUJE notatkę
           (`notes: null`), bo „usuń" i „wyczyść pole" to dla pilota jedno. */}
       <TextEntrySheet
         visible={note != null}
-        title={(note?.label ?? 'Notatka sesji').toUpperCase()}
+        title={(note?.label ?? 'Notatka operacji').toUpperCase()}
         initialText={note?.text ?? ''}
         placeholder="np. drugi zbiornik nie trzyma wskazania"
         multiline
@@ -738,9 +784,21 @@ const EMPTY_JUMPERS: JumperCounts = { tandem: 0, aff: 0, solo: 0 };
  *
  * `preflight_confirm` niesie cztery korygowalne rzeczy naraz i każda ma własny arkusz,
  * więc każdy pyta o swoją. Bez tego zawężenia poprawka paliwa zapalałaby licznik historii
- * przy notatce — i odwrotnie.
+ * przy notatce - i odwrotnie.
  */
 const READING_FIELDS: readonly CorrectionField[] = ['time', 'fuelL', 'mh'];
+/**
+ * Zakres arkusza odczytu PRZEJĘCIA - z olejem (issue #60): pomiar i dolewka żyją
+ * w tym samym arkuszu co paliwo i licznik, więc jego licznik historii i zawężenie
+ * obejmują całą piątkę. Zdanie (`day_close`) oleju nie niesie i zostaje przy trójce.
+ */
+const CLAIM_READING_FIELDS: readonly CorrectionField[] = [
+  'time',
+  'fuelL',
+  'mh',
+  'oilL',
+  'oilAddedL',
+];
 const NOTE_FIELDS: readonly CorrectionField[] = ['notes'];
 const DUAL_FIELDS: readonly CorrectionField[] = ['dualId'];
 
@@ -753,17 +811,23 @@ function formatValue(
 ): string | null {
   if (field == null) return null;
   // `null` przy notatce i Dualu jest WARTOŚCIĄ („skasowano", „sam pilot"), a nie brakiem
-  // danych — i musi się przeczytać jako zmiana, inaczej wiersz historii milczy o tym,
+  // danych - i musi się przeczytać jako zmiana, inaczej wiersz historii milczy o tym,
   // co się właśnie stało. Przy liczbach `null` znaczy „nie było czego zastąpić".
   if (value == null) {
     if (field === 'notes') return 'bez notatki';
     if (field === 'dualId') return 'bez drugiego pilota';
+    // Olej: `null` to wycofany pomiar / brak dolewki (issue #60) - zmiana ma się przeczytać.
+    if (field === 'oilL') return 'bez pomiaru';
+    if (field === 'oilAddedL') return 'bez dolewki';
     return null;
   }
   if (field === 'time') return typeof value === 'number' ? timeUtc(value) : null;
   if (field === 'fuelL') return typeof value === 'number' ? litres(value) : null;
   if (field === 'mh') return typeof value === 'number' ? motoHours(value, mhFormat) : null;
-  // Drugi pilot jest identyfikatorem, a pilot czyta KOD (AKO) — surowe uuid w historii
+  if (field === 'oilL' || field === 'oilAddedL') {
+    return typeof value === 'number' ? litres(value) : null;
+  }
+  // Drugi pilot jest identyfikatorem, a pilot czyta KOD (AKO) - surowe uuid w historii
   // nie mówiłoby nic nikomu.
   if (field === 'dualId') return typeof value === 'string' ? codeOf(value) : null;
   // Notatkę pokazujemy w cudzysłowie i w całości: to zdanie, a nie odczyt, więc
@@ -776,7 +840,7 @@ function formatValue(
 /**
  * Kotwica historii: co niosło zdarzenie, zanim ktokolwiek je poprawił.
  *
- * Zawężona historia dostaje zawężoną kotwicę — w historii notatki „150 L · 1234,5 MH"
+ * Zawężona historia dostaje zawężoną kotwicę - w historii notatki „150 L · 1234,5 MH"
  * byłoby odpowiedzią na inne pytanie.
  */
 function originalValueOf(
@@ -797,7 +861,7 @@ function originalValueOf(
             ? (event.payload.dualId !== undefined ? event.payload.dualId : event.dualId)
             : null;
       const text = formatValue(field, value, mhFormat, codeOf);
-      return text ?? '—';
+      return text ?? '-';
     }
   }
   if (event.type === 'preflight_confirm') {

@@ -1,11 +1,11 @@
 /**
- * UZ Aero — czysta decyzja adaptera GPS: co zrobić z usługą pierwszoplanową.
+ * UZ Aero - czysta decyzja adaptera GPS: co zrobić z usługą pierwszoplanową.
  *
  * Wołana przy każdym uzbrajaniu/rozbrajaniu i przy watchdogowej odbudowie nasłuchu.
  * Kluczowe rozstrzygnięcia:
- *  - `(service, started)` → `none` — ADOPCJA usługi zastanej po headless-restarcie;
+ *  - `(service, started)` → `none` - ADOPCJA usługi zastanej po headless-restarcie;
  *    restart mrugałby powiadomieniem i wycinał dziurę w śladzie,
- *  - `(service, !started, !appActive)` → `retry-later` — Android pozwala wystartować
+ *  - `(service, !started, !appActive)` → `retry-later` - Android pozwala wystartować
  *    usługę pierwszoplanową wyłącznie aplikacji na pierwszym planie; ponowienie
  *    przy najbliższym `AppState === 'active'`.
  */

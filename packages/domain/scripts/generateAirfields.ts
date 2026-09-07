@@ -1,5 +1,5 @@
 /**
- * UZ Aero — generator katalogu polskich lotnisk (`packages/domain/src/airfields.ts`).
+ * UZ Aero - generator katalogu polskich lotnisk (`packages/domain/src/airfields.ts`).
  *
  * URUCHOMIENIE (z korzenia repo, pliki CSV pobrane wcześniej z ourairports.com):
  *
@@ -7,7 +7,7 @@
  *     --airports=./airports.csv --runways=./runways.csv --osm-cache=./osm-runways.json
  *
  * \`--osm-cache\` jest opcjonalny i działa w obie strony: gdy plik istnieje, generator
- * czyta z niego odpowiedź Overpassa, a gdy nie — pobiera ją i zapisuje. Dzięki temu
+ * czyta z niego odpowiedź Overpassa, a gdy nie - pobiera ją i zapisuje. Dzięki temu
  * powtórna generacja daje ten sam wynik i nie obciąża publicznego serwera.
  *
  * Cała logika siedzi w \`airfields/\` i jest pokryta testami (\`app/src/__tests__/
@@ -80,4 +80,4 @@ console.log('');
 console.log(`zapisano:   ${outPath}`);
 console.log(`lotnisk:    ${records.length}`);
 console.log(`z pasem:    ${withRunway.length} (OurAirports: ${withRunway.length - fromOsm.length}, OSM: ${fromOsm.length})`);
-console.log(`bez pasa:   ${withoutRunway.length}${withoutRunway.length === 0 ? '' : ` — ${withoutRunway.map((r) => r.icao).join(', ')}`}`);
+console.log(`bez pasa:   ${withoutRunway.length}${withoutRunway.length === 0 ? '' : ` - ${withoutRunway.map((r) => r.icao).join(', ')}`}`);

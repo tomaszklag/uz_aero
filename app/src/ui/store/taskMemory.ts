@@ -1,13 +1,13 @@
 /**
- * UZ Aero — hak nad `TaskMemoryStore`: podpowiedź zadania z ostatniego dnia.
+ * UZ Aero - hak nad `TaskMemoryStore`: podpowiedź zadania z ostatniego dnia.
  *
  * Dzieli się na dwie czynności, bo dzieją się w innych momentach:
- *  • `remembered` — odczyt przy wejściu na krok „co dziś robimy" (02e), zanim pilot
+ *  • `remembered` - odczyt przy wejściu na krok „co dziś robimy" (02e), zanim pilot
  *    czegokolwiek dotknie;
- *  • `remember(...)` — zapis przy przejściu DALEJ, czyli wtedy, gdy pilot świadomie
+ *  • `remember(...)` - zapis przy przejściu DALEJ, czyli wtedy, gdy pilot świadomie
  *    zaakceptował wartości (nie po każdym stuknięciu w formularz).
  *
- * `null` w `remembered` znaczy „nie ma czego podpowiedzieć" — pierwszy dzień pilota
+ * `null` w `remembered` znaczy „nie ma czego podpowiedzieć" - pierwszy dzień pilota
  * albo pierwszy dzień na tym samolocie. To normalny stan, nie błąd.
  */
 
@@ -28,7 +28,7 @@ export interface TaskMemory {
   task: RememberedTask | null;
   /** Trasa tego samolotu; `null` przy pierwszym dniu na nim. */
   route: RememberedRoute | null;
-  /** Czy odczyt z dysku się zakończył — przed nim nie podpowiadamy niczego. */
+  /** Czy odczyt z dysku się zakończył - przed nim nie podpowiadamy niczego. */
   ready: boolean;
   remember: (task: RememberedTask, route: RememberedRoute) => void;
 }
@@ -60,7 +60,7 @@ export function useTaskMemory(aircraftId: string | null): TaskMemory {
 
   const remember = useCallback(
     (nextTask: RememberedTask, nextRoute: RememberedRoute) => {
-      // Zapis jest skutkiem ubocznym przejścia dalej — interfejs na niego nie czeka.
+      // Zapis jest skutkiem ubocznym przejścia dalej - interfejs na niego nie czeka.
       void store.writeTask(pilotId, nextTask);
       if (aircraftId != null) void store.writeRoute(aircraftId, nextRoute);
     },

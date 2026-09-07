@@ -1,8 +1,8 @@
 /**
- * UZ Aero — ReasonField: powód korekty (issue #43, arkusze `design/10e`–`10g`).
+ * UZ Aero - ReasonField: powód korekty (issue #43, arkusze `design/10e`–`10g`).
  *
- * Jedno pole, OPCJONALNE, w każdym arkuszu korekty. Wymagane byłoby tarciem w polu —
- * pilot poprawia literówkę w minucie, a nie pisze uzasadnienia do protokołu — ale gdy
+ * Jedno pole, OPCJONALNE, w każdym arkuszu korekty. Wymagane byłoby tarciem w polu -
+ * pilot poprawia literówkę w minucie, a nie pisze uzasadnienia do protokołu - ale gdy
  * powód jest, administrator patrzący na zmieniony odczyt paliwa nie musi dzwonić i pytać.
  * Trafia do historii zmian (`10i`) i na oś zdarzeń w panelu.
  *

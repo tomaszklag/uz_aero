@@ -1,0 +1,41 @@
+/**
+ * UZ Aero - panel 2.0: PLAMKI ŁADOWANIA.
+ *
+ * Reguła produktu (CLAUDE.md, issue #33): ekran czekający na odczyt rysuje plamki
+ * W GEOMETRII DOCELOWEJ - nigdy spinnera i nigdy pustki. Panel 1.0 nie miał tego
+ * wdrożonego wcale (`isPending ? null : …`), więc podczas pobierania listy obszar
+ * tabeli był po prostu pusty i nie dało się odróżnić „wczytuję" od „nie ma nikogo".
+ *
+ * Puls przezroczystości, nie shimmer: gradient wędrujący pod maską to druga animacja
+ * i drugi powód do przemalowania - a plamka ma być tłem, nie przedstawieniem.
+ */
+
+.skeleton {
+  background: var(--surface-raised);
+  border-radius: 6px;
+  animation: skeleton-pulse 1.25s ease-in-out infinite;
+}
+
+/* Wszystkie plamki ekranu pulsują RAZEM (wspólny czas trwania i faza z animacji CSS),
+   bo rozjechane fazy czytają się jak kilka niezależnych rzeczy, które się psują. */
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+
+/* Plamka w komórce tabeli - wysokość wiersza tekstu, szerokość z atrybutu `style`,
+   bo różni się kolumna po kolumnie i jest wymiarem układu, nie tokenem. */
+.skeleton.cell {
+  height: 11px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}

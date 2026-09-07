@@ -1,17 +1,17 @@
 /**
- * UZ Aero (serwer) — konta pilotów w panelu (`/admin/api/pilots*`, `A06` i `A06a`).
+ * UZ Aero (serwer) - konta pilotów w panelu (`/admin/api/pilots*`, `A06` i `A06a`).
  *
  * Przekrój, który powstał z awarii: 2026-08-01 administrator nie mógł się zalogować,
  * bo w produkcie nie było ŻADNEJ ścieżki zmiany hasła. Ten plik pilnuje, żeby ścieżka
- * istniała — i żeby przy okazji nie dało się nią odciąć całego klubu.
+ * istniała - i żeby przy okazji nie dało się nią odciąć całego klubu.
  *
  * Cztery własności, których złamanie jest luką, a nie usterką:
- *  1. **hasło nie występuje nigdzie poza jedną odpowiedzią** — ani w `admin_audit`,
+ *  1. **hasło nie występuje nigdzie poza jedną odpowiedzią** - ani w `admin_audit`,
  *     ani w bazie (tam jest hash), a mimo to DZIAŁA przy logowaniu;
- *  2. **deaktywacja i reset zrywają sesje** — a liczba zerwanych trafia do audytu;
- *  3. **administrator nie odcina sam siebie ani ostatniego administratora** — odmowa
+ *  2. **deaktywacja i reset zrywają sesje** - a liczba zerwanych trafia do audytu;
+ *  3. **administrator nie odcina sam siebie ani ostatniego administratora** - odmowa
  *     jest jawna i z powodem;
- *  4. **szef wyszkolenia widzi listę, ale nie zmienia kont** — 403 z podaną zdolnością.
+ *  4. **konto bez `accounts.manage` nie zmienia kont** - 403 z podaną zdolnością.
  *
  * Zero atrap: PGlite, prawdziwe klasy, `app.inject`, prawdziwy scrypt i prawdziwy
  * generator hasła.
@@ -26,17 +26,16 @@ import { uniqueConflictField } from '../src/application/admin/commands/pilots.ts
 import { AuditedWrite } from '../src/application/admin/auditedWrite.ts';
 import type { PilotsAdminPort } from '../src/application/admin/ports.ts';
 import type { Database, Queryable } from '../src/application/common/ports.ts';
-import { ScryptHasher } from '../src/infrastructure/auth/scryptHasher.ts';
-import { generateStartPassword } from '../src/infrastructure/auth/startPassword.ts';
 import { PgAdminAuditRepo } from '../src/infrastructure/pg/admin/auditRepo.ts';
 import { PgAdminPilotsRepo } from '../src/infrastructure/pg/admin/pilotsRepo.ts';
 import { PgAdminRefreshTokensRepo } from '../src/infrastructure/pg/admin/refreshTokensRepo.ts';
-import { ADMIN_CSRF_HEADERS, TEST_PASSWORD, testHarness } from './helpers.ts';
+import { ADMIN_CSRF_HEADERS, testHarness } from './helpers.ts';
+import { googleTokenFor } from './testIdentityProvider.ts';
 
 type Harness = Awaited<ReturnType<typeof testHarness>>;
 
-async function login(app: Harness['app'], who: string, password = TEST_PASSWORD) {
-  return app.inject({ method: 'POST', url: '/auth/login', payload: { login: who, password } });
+async function login(app: Harness['app'], who: string) {
+  return app.inject({ method: 'POST', url: '/auth/google', payload: { idToken: googleTokenFor(who) } });
 }
 
 async function tokenOf(app: Harness['app'], who: string): Promise<string> {
@@ -75,15 +74,8 @@ const setActive = (app: Harness['app'], token: string, id: string, active: boole
     payload: { active },
   });
 
-const resetPassword = (app: Harness['app'], token: string, id: string) =>
-  app.inject({
-    method: 'POST',
-    url: `/admin/api/pilots/${id}/password-reset`,
-    headers: admin(token),
-  });
-
 /**
- * Sesja PRZEGLĄDARKOWA panelu — ta, której nie da się skasować z bazy, bo jej tam nie
+ * Sesja PRZEGLĄDARKOWA panelu - ta, której nie da się skasować z bazy, bo jej tam nie
  * ma. Zwraca gotowy nagłówek `cookie`, czyli dokładnie to, co odeśle przeglądarka.
  */
 async function panelSession(app: Harness['app'], who: string): Promise<{ cookie: string }> {
@@ -91,7 +83,7 @@ async function panelSession(app: Harness['app'], who: string): Promise<{ cookie:
     method: 'POST',
     url: '/admin/api/auth/login',
     headers: ADMIN_CSRF_HEADERS,
-    payload: { login: who, password: TEST_PASSWORD },
+    payload: { idToken: googleTokenFor(who) },
   });
   const cookie = res.cookies.find((c) => c.name === 'uzaero_admin');
   if (cookie == null) throw new Error(`logowanie do panelu nie wydało ciasteczka (${who})`);
@@ -105,14 +97,14 @@ const panelMe = (app: Harness['app'], session: { cookie: string }) =>
  * Komenda kont złożona z TYCH SAMYCH klas co produkcja, ale wołana poza HTTP.
  *
  * Potrzebna do dwóch przypadków, których przez `app.inject` postawić się nie da:
- *  • **wyścig o unikalność** — sprawdzenie przed zapisem trzeba wtedy oślepić
+ *  • **wyścig o unikalność** - sprawdzenie przed zapisem trzeba wtedy oślepić
  *    (`blindConflictCheck`), bo inaczej złapie kolizję pierwsze i do bazy nic nie
  *    dojedzie; a to właśnie zachowanie BAZY jest tu przedmiotem testu;
- *  • **druga transakcja w kolejce po blokadzie advisory** — jej `Actor` jest kontem,
+ *  • **druga transakcja w kolejce po blokadzie advisory** - jej `Actor` jest kontem,
  *    które w międzyczasie przestało być administratorem, więc brama HTTP odbiłaby je
  *    wcześniej (403) i test nigdy nie dotknąłby reguły.
  *
- * `queries` (gdy podane) zbiera SQL wykonany W TRANSAKCJI — dekorujemy OBSERWACJĘ,
+ * `queries` (gdy podane) zbiera SQL wykonany W TRANSAKCJI - dekorujemy OBSERWACJĘ,
  * nie zachowanie, dokładnie jak `options.events` w `helpers.ts`.
  */
 function pilotCommands(
@@ -142,14 +134,12 @@ function pilotCommands(
     new AuditedWrite(db, new PgAdminAuditRepo(), harness.clock),
     repo,
     new PgAdminRefreshTokensRepo(),
-    new ScryptHasher(),
     randomUUID,
-    generateStartPassword,
     harness.clock,
   );
 }
 
-/** `Actor` administratora — komenda pyta o `pilotId`, resztę dokłada dziennik audytu. */
+/** `Actor` administratora - komenda pyta o `pilotId`, resztę dokłada dziennik audytu. */
 const actor = (pilotId: string) => ({ pilotId, role: 'admin' as const, ip: null });
 
 async function auditRows(db: Harness['db']) {
@@ -167,37 +157,38 @@ async function auditRows(db: Harness['db']) {
   return rows;
 }
 
-describe('GET /admin/api/pilots — lista kont i dane referencyjne', () => {
+describe('GET /admin/api/pilots - lista kont i dane referencyjne', () => {
+  // Osobny przypadek „rola pośrednia listę CZYTA" wypadł razem z rolą `training_lead`
+  // (2026-08-30): dziś listę czyta dokładnie ten, kto ma wejście do panelu, czyli
+  // administrator - i mówi o tym ten przypadek.
   it('administrator dostaje komplet kont z licznikami po CAŁYM klubie', async () => {
     const { app } = await testHarness();
     const res = await listPilots(app, await tokenOf(app, 'TMK'));
 
     expect(res.statusCode).toBe(200);
     const body = res.json();
-    // Seed: TMK admin, AKO training_lead, PWI/JSE/KRZ piloci.
+    // Seed: TMK i AKO administratorzy, PWI/JSE/KRZ piloci.
     expect(body.items).toHaveLength(5);
     expect(body.counts).toEqual({
       total: 5,
       active: 5,
       inactive: 0,
-      admin: 1,
-      trainingLead: 1,
+      admin: 2,
       pilot: 3,
       // Zero dni lotnych, bo świeży harness nie ma jeszcze ani jednej sesji.
       flyingDays: 0,
     });
     // Okno „dni lotnych" jedzie w odpowiedzi, żeby nagłówek kolumny w panelu opisywał
-    // to, co serwer NAPRAWDĘ policzył — a nie miesiąc, który panel sobie założył.
+    // to, co serwer NAPRAWDĘ policzył - a nie miesiąc, który panel sobie założył.
     expect(body.daysFrom).toMatch(/^\d{4}-\d{2}-01$/);
     expect(body.daysTo).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 
-  it('nie oddaje hasła ani hasha — w żadnym polu, w żadnym wierszu', async () => {
+  it('nie oddaje hasła ani hasha - w żadnym polu, w żadnym wierszu', async () => {
     const { app } = await testHarness();
     const res = await listPilots(app, await tokenOf(app, 'TMK'));
 
     expect(res.body).not.toContain('scrypt$');
-    expect(res.body).not.toContain(TEST_PASSWORD);
     for (const item of res.json().items) {
       expect(Object.keys(item).sort()).toEqual([
         'active',
@@ -212,22 +203,16 @@ describe('GET /admin/api/pilots — lista kont i dane referencyjne', () => {
     }
   });
 
-  it('SZEF WYSZKOLENIA listę czyta — potrzebuje jej do statystyk i flag', async () => {
-    const { app } = await testHarness();
-    const res = await listPilots(app, await tokenOf(app, 'AKO'));
-    expect(res.statusCode).toBe(200);
-    expect(res.json().items).toHaveLength(5);
-  });
-
   it('filtruje po roli, statusie i szuka po kodzie/nazwisku/e-mailu', async () => {
     const { app } = await testHarness();
     const token = await tokenOf(app, 'TMK');
 
-    expect((await listPilots(app, token, '?role=admin')).json().items).toHaveLength(1);
-    // Chip „Z rolą panelu" to DWIE role naraz — parametr jest powtarzalny.
+    expect((await listPilots(app, token, '?role=admin')).json().items).toHaveLength(2);
+    // Parametr jest POWTARZALNY - chip „Z rolą panelu" był dwiema rolami naraz
+    // i wróci nią razem z trzecią rolą, więc kształt zapytania zostaje sprawdzony.
     expect(
-      (await listPilots(app, token, '?role=admin&role=training_lead')).json().items,
-    ).toHaveLength(2);
+      (await listPilots(app, token, '?role=admin&role=pilot')).json().items,
+    ).toHaveLength(5);
     expect((await listPilots(app, token, '?active=true')).json().items).toHaveLength(5);
     expect((await listPilots(app, token, '?q=kowalska')).json().items).toEqual([
       expect.objectContaining({ code: 'AKO' }),
@@ -236,21 +221,21 @@ describe('GET /admin/api/pilots — lista kont i dane referencyjne', () => {
     expect((await listPilots(app, token, '?q=PIOTR@')).json().items).toEqual([
       expect.objectContaining({ code: 'PWI' }),
     ]);
-    // Metaznak `LIKE` jest w tym polu ZWYKŁYM znakiem — inaczej „%" pokazywałoby
+    // Metaznak `LIKE` jest w tym polu ZWYKŁYM znakiem - inaczej „%" pokazywałoby
     // wszystko pod etykietą zawężenia.
     expect((await listPilots(app, token, '?q=%25')).json().items).toEqual([]);
   });
 
-  it('liczniki są niezależne od filtra — kafel opisuje klub, nie zawężenie', async () => {
+  it('liczniki są niezależne od filtra - kafel opisuje klub, nie zawężenie', async () => {
     const { app } = await testHarness();
     const body = (await listPilots(app, await tokenOf(app, 'TMK'), '?role=admin')).json();
 
-    expect(body.items).toHaveLength(1);
-    expect(body.total).toBe(1);
+    expect(body.items).toHaveLength(2);
+    expect(body.total).toBe(2);
     expect(body.counts.total).toBe(5);
   });
 
-  it('LICZNIKI CHIPÓW respektują wyszukiwanie, a kafle nie — to dwa różne pytania', async () => {
+  it('LICZNIKI CHIPÓW respektują wyszukiwanie, a kafle nie - to dwa różne pytania', async () => {
     // Chip z liczbą jest obietnicą „tyle wierszy zobaczysz po kliknięciu". Do
     // 2026-08-01 chipy nosiły liczby kafli, więc po wpisaniu frazy tabela miała jeden
     // wiersz, a chip „Nieaktywni" nadal pokazywał 2 i po kliknięciu dawał zero wierszy.
@@ -258,7 +243,7 @@ describe('GET /admin/api/pilots — lista kont i dane referencyjne', () => {
     const token = await tokenOf(app, 'TMK');
     await setActive(app, token, 'JSE', false);
 
-    // Bez wyszukiwania chipy zgadzają się z kaflami — to ta sama populacja.
+    // Bez wyszukiwania chipy zgadzają się z kaflami - to ta sama populacja.
     const all = (await listPilots(app, token)).json();
     expect(all.scopes).toEqual({ total: 5, active: 4, inactive: 1, panel: 2 });
     expect(all.counts).toMatchObject({ total: 5, active: 4, inactive: 1 });
@@ -276,9 +261,9 @@ describe('GET /admin/api/pilots — lista kont i dane referencyjne', () => {
   });
 });
 
-describe('POST /admin/api/pilots — zakładanie konta', () => {
-  it('serwer generuje hasło, oddaje je RAZ i tym hasłem da się zalogować', async () => {
-    const { app } = await testHarness();
+describe('POST /admin/api/pilots - zakładanie konta', () => {
+  it('konto powstaje BEZ poświadczenia, a dostęp daje dopiero podpięcie konta Google', async () => {
+    const { app, identityProvider } = await testHarness();
     const token = await tokenOf(app, 'TMK');
 
     const created = await createPilot(app, token, {
@@ -289,22 +274,37 @@ describe('POST /admin/api/pilots — zakładanie konta', () => {
     });
 
     expect(created.statusCode).toBe(201);
-    const { pilot, password } = created.json();
+    const { pilot } = created.json();
     // Kod normalizuje się do wersalików: „kza" i „KZA" to w intencji ten sam kod.
     expect(pilot.code).toBe('KZA');
     expect(pilot.active).toBe(true);
-    // `id` NIE jest kodem — zdarzenia wiążą się z `id`, więc zmiana kodu nie może
+    // `id` NIE jest kodem - zdarzenia wiążą się z `id`, więc zmiana kodu nie może
     // odrywać konta od jego nalotu (mockup A06: „kod jest etykietą, nie kluczem").
     expect(pilot.id).not.toBe(pilot.code);
-    expect(password).toMatch(/^[a-z2-9]{4}-[a-z2-9]{4}-[a-z2-9]{4}$/);
+    // Odpowiedź nie niesie ŻADNEGO poświadczenia - nie ma już czego wydawać.
+    expect(created.json().password).toBeUndefined();
 
-    // I to jest cała treść przekroju: nowe konto NAPRAWDĘ się loguje.
-    const logged = await login(app, 'KZA', password);
+    // I to jest cała treść przekroju: konto założone w panelu NAPRAWDĘ się loguje -
+    // ale dopiero kontem Google o wpisanym wyżej adresie (`docs/logowanie-google.md` §6).
+    identityProvider.register('token-kza', {
+      provider: 'google',
+      subject: 'google-sub-kza',
+      email: 'k.zawadzka@uzaero.pl',
+      emailVerified: true,
+      name: 'Katarzyna Zawadzka',
+    });
+    const logged = await app.inject({
+      method: 'POST',
+      url: '/auth/google',
+      payload: { idToken: 'token-kza' },
+    });
+
     expect(logged.statusCode).toBe(200);
+    expect(logged.json().pilot.code).toBe('KZA');
     expect(logged.json().pilot.role).toBe('pilot');
   });
 
-  it('hasła nie ma w dzienniku audytu ANI w bazie — w bazie jest hash', async () => {
+  it('audyt niesie tożsamość konta i E-MAIL, bo to on rozstrzyga o podpięciu', async () => {
     const { app, db } = await testHarness();
     const created = await createPilot(app, await tokenOf(app, 'TMK'), {
       code: 'KZA',
@@ -312,7 +312,7 @@ describe('POST /admin/api/pilots — zakładanie konta', () => {
       email: 'k.zawadzka@uzaero.pl',
       role: 'pilot',
     });
-    const { pilot, password } = created.json();
+    const { pilot } = created.json();
 
     const rows = await auditRows(db);
     expect(rows).toHaveLength(1);
@@ -323,16 +323,16 @@ describe('POST /admin/api/pilots — zakładanie konta', () => {
       target_type: 'pilot',
       target_id: pilot.id,
     });
-    // Wpis mówi, ŻE hasło wydano — nie jakie.
-    expect(rows[0]?.details).toMatchObject({ code: 'KZA', role: 'pilot', passwordIssued: true });
-    expect(JSON.stringify(rows[0]?.details)).not.toContain(password);
-
-    const stored = await db.query<{ password_hash: string }>(
-      'SELECT password_hash FROM pilots WHERE id = $1',
-      [pilot.id],
-    );
-    expect(stored.rows[0]?.password_hash).toMatch(/^scrypt\$/);
-    expect(stored.rows[0]?.password_hash).not.toContain(password);
+    // E-mail w dzienniku jest po wejściu Google NAJWAŻNIEJSZY: to on rozstrzyga,
+    // czyje konto Google podepnie się pod ten wiersz przy pierwszym logowaniu.
+    expect(rows[0]?.details).toMatchObject({
+      code: 'KZA',
+      role: 'pilot',
+      email: 'k.zawadzka@uzaero.pl',
+    });
+    // Hasha nie ma gdzie sprawdzać: kolumna `password_hash` zniknęła migracją 7
+    // (pilnuje tego lista kolumn w `schema.test.ts`), więc konto bez poświadczenia
+    // jest tu jedynym możliwym kształtem, a nie stanem do udowodnienia.
   });
 
   it('zajęty kod i zajęty e-mail → 409 z NAZWĄ pola, nie „naruszenie unikalności"', async () => {
@@ -369,9 +369,9 @@ describe('POST /admin/api/pilots — zakładanie konta', () => {
     expect(await auditRows(db)).toEqual([]);
   });
 
-  it('szef wyszkolenia NIE zakłada kont — 403 z podaną zdolnością', async () => {
+  it('konto bez `accounts.manage` nie zakłada kont - 403 z podaną zdolnością', async () => {
     const { app, db } = await testHarness();
-    const res = await createPilot(app, await tokenOf(app, 'AKO'), {
+    const res = await createPilot(app, await tokenOf(app, 'PWI'), {
       code: 'NEW',
       name: 'Nowe Konto',
       email: 'nowe@uzaero.pl',
@@ -397,19 +397,19 @@ describe('POST /admin/api/pilots — zakładanie konta', () => {
   });
 });
 
-describe('PATCH /admin/api/pilots/:id — tożsamość i rola', () => {
+describe('PATCH /admin/api/pilots/:id - tożsamość i rola', () => {
   it('zapisuje zmianę i wpisuje do audytu DIFF, nie stan po zmianie', async () => {
     const { app, db } = await testHarness();
     const res = await patchPilot(app, await tokenOf(app, 'TMK'), 'PWI', {
       name: 'Piotr Wiśniewski-Nowak',
-      role: 'training_lead',
+      role: 'admin',
     });
 
     expect(res.statusCode).toBe(200);
     expect(res.json().pilot).toMatchObject({
       code: 'PWI',
       name: 'Piotr Wiśniewski-Nowak',
-      role: 'training_lead',
+      role: 'admin',
     });
 
     const rows = await auditRows(db);
@@ -418,7 +418,7 @@ describe('PATCH /admin/api/pilots/:id — tożsamość i rola', () => {
       code: 'PWI',
       changes: {
         name: { from: 'Piotr Wiśniewski', to: 'Piotr Wiśniewski-Nowak' },
-        role: { from: 'pilot', to: 'training_lead' },
+        role: { from: 'pilot', to: 'admin' },
       },
     });
   });
@@ -436,7 +436,7 @@ describe('PATCH /admin/api/pilots/:id — tożsamość i rola', () => {
     expect(await auditRows(db)).toEqual([]);
   });
 
-  it('zmiana kodu NIE odrywa konta od historii — `id` zostaje ten sam', async () => {
+  it('zmiana kodu NIE odrywa konta od historii - `id` zostaje ten sam', async () => {
     const { app, db } = await testHarness();
     const res = await patchPilot(app, await tokenOf(app, 'TMK'), 'PWI', { code: 'PWN' });
 
@@ -451,7 +451,7 @@ describe('PATCH /admin/api/pilots/:id — tożsamość i rola', () => {
     expect(rows[0]).toEqual({ id: 'PWI', code: 'PWN' });
   });
 
-  it('administrator nie odbiera roli SOBIE — 409 z powodem, nie ciche 200', async () => {
+  it('administrator nie odbiera roli SOBIE - 409 z powodem, nie ciche 200', async () => {
     const { app, db } = await testHarness();
     const res = await patchPilot(app, await tokenOf(app, 'TMK'), 'TMK', { role: 'pilot' });
 
@@ -465,14 +465,19 @@ describe('PATCH /admin/api/pilots/:id — tożsamość i rola', () => {
     expect(await auditRows(db)).toEqual([]);
   });
 
-  it('administrator, który został SAM, nie odbierze roli sobie — `self_demote`', async () => {
+  it('administrator, który został SAM, nie odbierze roli sobie - `self_demote`', async () => {
     // Nazwa mówi teraz to, co przypadek robi. Do 2026-08-01 nazywał się „OSTATNI
-    // aktywny administrator nie traci roli — nawet cudzą ręką" i asertował
+    // aktywny administrator nie traci roli - nawet cudzą ręką" i asertował
     // `self_demote`, czyli nie dotykał gałęzi `last_admin` w ogóle: nie umiałby upaść
     // przy jej usunięciu, a pilnował jej z nazwy. Przez gałąź `last_admin` przechodzi
     // osobny przypadek niżej („wyścig o populację administratorów").
     const { app, db } = await testHarness();
     const token = await tokenOf(app, 'TMK');
+
+    // Świat testowy ma DWA konta administratorów (TMK, AKO), a ten przypadek opisuje
+    // klub, w którym na końcu zostaje JEDEN - więc AKO schodzi do pilota, zanim ruch
+    // się zacznie. Jawnie w teście, bo to warunek przypadku, a nie własność świata.
+    await db.query("UPDATE pilots SET role = 'pilot' WHERE id = 'AKO'");
 
     // Drugi administrator, żeby dało się w ogóle wykonać ruch odbierający rolę…
     await patchPilot(app, token, 'PWI', { role: 'admin' });
@@ -480,7 +485,7 @@ describe('PATCH /admin/api/pilots/:id — tożsamość i rola', () => {
     const second = await tokenOf(app, 'PWI');
     expect((await patchPilot(app, second, 'TMK', { role: 'pilot' })).statusCode).toBe(200);
 
-    // PWI został sam. Odmowa jest tu `self_demote`, bo to on sam wykonuje ruch —
+    // PWI został sam. Odmowa jest tu `self_demote`, bo to on sam wykonuje ruch -
     // i to jest jedyna droga, jaką ten stan da się osiągnąć jednym żądaniem.
     const refused = await patchPilot(app, second, 'PWI', { role: 'pilot' });
     expect(refused.statusCode).toBe(409);
@@ -499,7 +504,7 @@ describe('wyścig o populację administratorów', () => {
    * administratora i bez ścieżki ratunkowej.
    *
    * `SELECT COUNT(*)` niczego nie blokuje, transakcje jadą w READ COMMITTED, a dwie
-   * degradacje piszą do RÓŻNYCH wierszy — więc nic ich nie serializuje. Dwóch
+   * degradacje piszą do RÓŻNYCH wierszy - więc nic ich nie serializuje. Dwóch
    * administratorów odbierających sobie rolę równolegle: obaj widzą „jest dwóch",
    * obaj commitują, zostaje zero. Serializuje je dopiero blokada advisory na stałym
    * kluczu, wzięta PRZED odczytem licznika.
@@ -520,7 +525,7 @@ describe('wyścig o populację administratorów', () => {
     expect(lock).toBeLessThan(count);
   });
 
-  it('deaktywacja też staje w tej kolejce — aktywacja zmienia populację tak samo', async () => {
+  it('deaktywacja też staje w tej kolejce - aktywacja zmienia populację tak samo', async () => {
     const harness = await testHarness();
     const queries: string[] = [];
     const commands = pilotCommands(harness, { queries });
@@ -535,15 +540,19 @@ describe('wyścig o populację administratorów', () => {
     // Stan odtwarza dokładnie to, co po naprawie widzi druga transakcja: obaj
     // administratorzy ruszyli naraz, pierwsza degradacja zdążyła, a druga wchodzi do
     // reguły z licznikiem przeczytanym PO niej. Jej `Actor` (TMK) nie jest już wtedy
-    // administratorem, więc brama HTTP odbiłaby żądanie wcześniej — dlatego komendę
+    // administratorem, więc brama HTTP odbiłaby żądanie wcześniej - dlatego komendę
     // wołamy wprost, tak jak robi to `rebuildProjectionsCli`.
     const harness = await testHarness();
     const commands = pilotCommands(harness);
 
+    // Wyścig ma być między DWOMA administratorami, a świat testowy ma trzeciego (AKO)
+    // - z nim żadna z degradacji nie byłaby tą ostatnią i gałąź nigdy by nie zaszła.
+    await harness.db.query("UPDATE pilots SET role = 'pilot' WHERE id = 'AKO'");
+
     // Dwóch administratorów: TMK (seed) i PWI.
     expect((await commands.update(actor('TMK'), 'PWI', { role: 'admin' })).ok).toBe(true);
 
-    // Pierwsza transakcja wyścigu: PWI odbiera rolę TMK. Przechodzi — jest dwóch.
+    // Pierwsza transakcja wyścigu: PWI odbiera rolę TMK. Przechodzi - jest dwóch.
     expect((await commands.update(actor('PWI'), 'TMK', { role: 'pilot' })).ok).toBe(true);
 
     // Druga transakcja wyścigu, wpuszczona przez blokadę dopiero teraz.
@@ -560,6 +569,10 @@ describe('wyścig o populację administratorów', () => {
   it('deaktywacja ostatniego administratora cudzą ręką → `last_admin`, konto zostaje', async () => {
     const harness = await testHarness();
     const commands = pilotCommands(harness);
+
+    // Jak wyżej: trzeci administrator ze świata testowego zdejmowałby z PWI status
+    // ostatniego, a to jego dotyczy ten przypadek.
+    await harness.db.query("UPDATE pilots SET role = 'pilot' WHERE id = 'AKO'");
 
     expect((await commands.update(actor('TMK'), 'PWI', { role: 'admin' })).ok).toBe(true);
     expect((await commands.update(actor('PWI'), 'TMK', { role: 'pilot' })).ok).toBe(true);
@@ -578,7 +591,7 @@ describe('wyścig o unikalność kodu i e-maila', () => {
   /**
    * Sprawdzenie przed zapisem i `INSERT` to dwa kroki, a między nimi mieści się druga
    * transakcja z tym samym kodem. Do 2026-08-01 przegrany wyścig wychodził z komendy
-   * jako nieznany błąd i lądował jako **500** — czyli „coś się zepsuło" na zdarzenie,
+   * jako nieznany błąd i lądował jako **500** - czyli „coś się zepsuło" na zdarzenie,
    * które ma gotowe wyjaśnienie i gotowy formularz do poprawienia.
    *
    * Wyścigu na PGlite (jedno połączenie) rozegrać się nie da, więc oślepiamy
@@ -612,7 +625,7 @@ describe('wyścig o unikalność kodu i e-maila', () => {
   });
 
   it('rozpoznaje 23505 po nazwie ograniczenia i po `detail`, a reszty NIE zgaduje', async () => {
-    // Sterowniki podają raz jedno, raz drugie — a nierozpoznane ograniczenie ma
+    // Sterowniki podają raz jedno, raz drugie - a nierozpoznane ograniczenie ma
     // zostać awarią (500), bo `pilots_pkey` znaczyłoby kolizję uuid-ów, nie zajęty kod.
     expect(uniqueConflictField({ code: '23505', constraint: 'pilots_code_key' })).toBe('code');
     expect(uniqueConflictField({ code: '23505', constraint: 'pilots_email_key' })).toBe('email');
@@ -626,12 +639,12 @@ describe('wyścig o unikalność kodu i e-maila', () => {
   });
 });
 
-describe('POST /admin/api/pilots/:id/active — deaktywacja i aktywacja', () => {
+describe('POST /admin/api/pilots/:id/active - deaktywacja i aktywacja', () => {
   it('deaktywacja ZRYWA sesje pilota i zapisuje ich liczbę w audycie', async () => {
     const { app, db } = await testHarness();
     const token = await tokenOf(app, 'TMK');
 
-    // Pilot loguje się z dwóch urządzeń — dwa żywe refresh tokeny.
+    // Pilot loguje się z dwóch urządzeń - dwa żywe refresh tokeny.
     const first = await login(app, 'PWI');
     await login(app, 'PWI');
     expect(
@@ -678,27 +691,27 @@ describe('POST /admin/api/pilots/:id/active — deaktywacja i aktywacja', () => 
       method: 'POST',
       url: '/admin/api/auth/login',
       headers: ADMIN_CSRF_HEADERS,
-      payload: { login: 'AKO', password: TEST_PASSWORD },
+      payload: { idToken: googleTokenFor('AKO') },
     });
     expect(panel.statusCode).toBe(401);
   });
 
-  it('DEAKTYWACJA ODCINA PANEL NATYCHMIAST — nie po ośmiu godzinach sesji', async () => {
-    // Sedno rozstrzygnięcia „rola i aktywność przy każdym żądaniu". Token szefa
-    // wyszkolenia jest ważny kryptograficznie jeszcze przez godzinę, a mimo to kolejne
-    // żądanie panelu dostaje 401 — bo za poświadczeniem nie stoi już nikt.
+  it('DEAKTYWACJA ODCINA PANEL NATYCHMIAST - nie po ośmiu godzinach sesji', async () => {
+    // Sedno rozstrzygnięcia „rola i aktywność przy każdym żądaniu". Token odciętego
+    // administratora jest ważny kryptograficznie jeszcze przez godzinę, a mimo to
+    // kolejne żądanie panelu dostaje 401 - bo za poświadczeniem nie stoi już nikt.
     const { app } = await testHarness();
-    const leadToken = await tokenOf(app, 'AKO');
-    expect((await listPilots(app, leadToken)).statusCode).toBe(200);
+    const cutOff = await tokenOf(app, 'AKO');
+    expect((await listPilots(app, cutOff)).statusCode).toBe(200);
 
     await setActive(app, await tokenOf(app, 'TMK'), 'AKO', false);
 
-    const after = await listPilots(app, leadToken);
+    const after = await listPilots(app, cutOff);
     expect(after.statusCode).toBe(401);
     expect(after.json()).toEqual({ error: 'unauthorized' });
   });
 
-  it('administrator nie deaktywuje SIEBIE — 409 z powodem', async () => {
+  it('administrator nie deaktywuje SIEBIE - 409 z powodem', async () => {
     const { app, db } = await testHarness();
     const res = await setActive(app, await tokenOf(app, 'TMK'), 'TMK', false);
 
@@ -712,7 +725,7 @@ describe('POST /admin/api/pilots/:id/active — deaktywacja i aktywacja', () => 
     expect(await auditRows(db)).toEqual([]);
   });
 
-  it('aktywacja wraca jako `pilot.update` — katalog akcji nie ma `pilot.activate`', async () => {
+  it('aktywacja wraca jako `pilot.update` - katalog akcji nie ma `pilot.activate`', async () => {
     const { app, db } = await testHarness();
     const token = await tokenOf(app, 'TMK');
 
@@ -741,64 +754,11 @@ describe('POST /admin/api/pilots/:id/active — deaktywacja i aktywacja', () => 
   });
 });
 
-describe('POST /admin/api/pilots/:id/password-reset — jedyna ścieżka zmiany hasła', () => {
-  it('nowe hasło działa, stare przestaje, sesje są zerwane', async () => {
-    const { app, db } = await testHarness();
-    const token = await tokenOf(app, 'TMK');
-
-    const before = await login(app, 'PWI');
-    expect(before.statusCode).toBe(200);
-
-    const res = await resetPassword(app, token, 'PWI');
-    expect(res.statusCode).toBe(200);
-    const { password, revokedSessions } = res.json();
-    expect(revokedSessions).toBe(1);
-
-    // Stare hasło nie działa…
-    expect((await login(app, 'PWI', TEST_PASSWORD)).statusCode).toBe(401);
-    // …nowe działa…
-    expect((await login(app, 'PWI', password)).statusCode).toBe(200);
-    // …a stara sesja nie przeżyła zmiany poświadczeń.
-    const refreshed = await app.inject({
-      method: 'POST',
-      url: '/auth/refresh',
-      payload: { refreshToken: before.json().refreshToken },
-    });
-    expect(refreshed.statusCode).toBe(401);
-
-    const rows = await auditRows(db);
-    expect(rows[0]).toMatchObject({ action: 'pilot.password_reset', target_id: 'PWI' });
-    expect(rows[0]?.details).toEqual({ code: 'PWI', passwordIssued: true, revokedSessions: 1 });
-    expect(JSON.stringify(rows[0]?.details)).not.toContain(password);
-  });
-
-  it('RESET ZABIJA SESJĘ PANELU — tę, której nie ma w żadnej tabeli', async () => {
-    // Najcięższa własność tego przekroju. Sesja panelu to podpisany JWT w ciasteczku
-    // `uzaero_admin` z TTL 8 h — `revokeAllFor` kasuje `refresh_tokens`, czyli sesje
-    // TELEFONU, i nie ma czego skasować tutaj. Przed `pilots.credentials_valid_from` wykradzione
-    // poświadczenie panelu przeżywało reset hasła o cały TTL, a ekran A06a pisał
-    // „Aktywne sesje pilota — unieważnione".
-    const { app, clock } = await testHarness();
-    const admin = await tokenOf(app, 'TMK');
-
-    // AKO (szef wyszkolenia) siedzi w panelu z ważnym ciasteczkiem…
-    const session = await panelSession(app, 'AKO');
-    expect((await panelMe(app, session)).statusCode).toBe(200);
-
-    // …mija sekunda (`iat` ma rozdzielczość sekundy, więc reset w tej samej sekundzie
-    // co logowanie nie ma jak być od niego późniejszy)…
-    clock.advance(1000);
-    expect((await resetPassword(app, admin, 'AKO')).statusCode).toBe(200);
-
-    // …i to samo ciasteczko przestaje otwierać cokolwiek. Bez czekania na wygaśnięcie.
-    const after = await panelMe(app, session);
-    expect(after.statusCode).toBe(401);
-    expect(after.json()).toEqual({ error: 'unauthorized' });
-
-    // Konto NIE jest zablokowane — droga powrotna działa nowym hasłem.
-    expect((await panelMe(app, await panelSession(app, 'TMK'))).statusCode).toBe(200);
-  });
-
+describe('unieważnianie sesji - po wejściu Google jedyną drogą jest deaktywacja', () => {
+  // Reset hasła był do 2026-09-04 drugą drogą unieważnienia poświadczeń i miał tu
+  // własne przypadki. Po usunięciu haseł zostaje deaktywacja - i to ona musi zrywać
+  // sesję PANELU, tej bowiem nie ma w żadnej tabeli (podpisany JWT w ciasteczku).
+  // Gdyby przestała, odcięcie konta byłoby obietnicą bez pokrycia przez osiem godzin.
   it('DEAKTYWACJA zabija sesję panelu tak samo, a AKTYWACJA nie ożywia starej', async () => {
     // Aktywacja świadomie NIE cofa znacznika: token sprzed odcięcia ma zostać martwy,
     // bo przywrócenie dostępu jest decyzją o KONCIE, a nie o poświadczeniu, które
@@ -818,51 +778,6 @@ describe('POST /admin/api/pilots/:id/password-reset — jedyna ścieżka zmiany 
     // …a świeże logowanie po aktywacji działa (znacznik odcina przeszłość, nie konto).
     expect((await panelMe(app, await panelSession(app, 'AKO'))).statusCode).toBe(200);
   });
-
-  it('administrator może zresetować hasło SOBIE — to jest ścieżka ratunkowa', async () => {
-    // Scenariusz z 2026-08-01: hasło administratora przepadło. Blokada „nie sobie"
-    // dotyczy ODEBRANIA dostępu, nie jego odzyskania.
-    const { app } = await testHarness();
-    const res = await resetPassword(app, await tokenOf(app, 'TMK'), 'TMK');
-
-    expect(res.statusCode).toBe(200);
-    expect((await login(app, 'TMK', res.json().password)).statusCode).toBe(200);
-  });
-
-  it('kolejny reset daje INNE hasło — nie ma trasy „pokaż poprzednie"', async () => {
-    const { app } = await testHarness();
-    const token = await tokenOf(app, 'TMK');
-
-    const first = (await resetPassword(app, token, 'PWI')).json().password;
-    const second = (await resetPassword(app, token, 'PWI')).json().password;
-
-    expect(second).not.toBe(first);
-    expect((await login(app, 'PWI', first)).statusCode).toBe(401);
-    expect((await login(app, 'PWI', second)).statusCode).toBe(200);
-  });
-
-  it('konta NIEAKTYWNEGO nie resetujemy — 409 `inactive_account`', async () => {
-    const { app } = await testHarness();
-    const token = await tokenOf(app, 'TMK');
-    await setActive(app, token, 'PWI', false);
-
-    const res = await resetPassword(app, token, 'PWI');
-    expect(res.statusCode).toBe(409);
-    expect(res.json()).toEqual({ error: 'refused', reason: 'inactive_account' });
-  });
-
-  it('szef wyszkolenia nie resetuje cudzych haseł — 403', async () => {
-    const { app } = await testHarness();
-    const res = await resetPassword(app, await tokenOf(app, 'AKO'), 'PWI');
-    expect(res.statusCode).toBe(403);
-    expect(res.json()).toEqual({ error: 'forbidden', required: 'accounts.manage' });
-  });
-
-  it('nieznane konto → 404, a nie 500 ani ciche 200', async () => {
-    const { app } = await testHarness();
-    const res = await resetPassword(app, await tokenOf(app, 'TMK'), 'NIE-MA-TAKIEGO');
-    expect(res.statusCode).toBe(404);
-  });
 });
 
 describe('CSRF i sesja przeglądarkowa', () => {
@@ -877,5 +792,147 @@ describe('CSRF i sesja przeglądarkowa', () => {
 
     expect(res.statusCode).toBe(403);
     expect(await auditRows(db)).toEqual([]);
+  });
+});
+
+/**
+ * USUWANIE KONTA (2026-08-30).
+ *
+ * Operacja jest NIEODWRACALNA i jedyna taka w panelu, więc przekrój sprawdza nie tylko
+ * ścieżkę udaną, ale KAŻDĄ z trzech odmów osobno - a przy „ma historię" także wariant,
+ * który najłatwiej przeoczyć: konto, które nigdy nie było PIC-em, ale poleciało jako
+ * drugi pilot.
+ */
+describe('usunięcie konta', () => {
+  const deletePilot = (app: Harness['app'], token: string, id: string) =>
+    app.inject({ method: 'DELETE', url: `/admin/api/pilots/${id}`, headers: admin(token) });
+
+  /** Wiersz zdarzenia WPROST do bazy - pytamy o regułę usuwania, nie o ingest. */
+  const insertEvent = (
+    db: Harness['db'],
+    over: { uuid: string; picId: string; dualId?: string | null },
+  ) =>
+    db.query(
+      `INSERT INTO events (uuid, session_uuid, aircraft_id, pic_id, dual_id, type,
+                           device_time, payload, schema_version)
+       VALUES ($1, 's-1', 'SP-AXA', $2, $3, 'engine_start', 1, '{}'::jsonb, 1)`,
+      [over.uuid, over.picId, over.dualId ?? null],
+    );
+
+  /** Konto świeże i już wyłączone - jedyny stan, z którego usunięcie ma prawo przejść. */
+  async function disposable(app: Harness['app'], token: string): Promise<string> {
+    const created = await createPilot(app, token, { code: 'TMP', name: 'Konto Pomyłkowe' });
+    const id = created.json().pilot.id as string;
+    await setActive(app, token, id, false);
+    return id;
+  }
+
+  it('kasuje konto BEZ historii - wiersz znika, a audyt niesie tożsamość', async () => {
+    const { app, db } = await testHarness();
+    const token = await tokenOf(app, 'TMK');
+    const id = await disposable(app, token);
+
+    const res = await deletePilot(app, token, id);
+
+    expect(res.statusCode).toBe(204);
+    const { rows } = await db.query('SELECT id FROM pilots WHERE id = $1', [id]);
+    expect(rows).toHaveLength(0);
+
+    // Wpis audytu jest po tej operacji JEDYNYM śladem konta, więc musi nieść komplet
+    // tożsamości - `target_id` jest uuid-em, którego nikt nie rozpozna.
+    const audit = (await auditRows(db)).find((row) => row.action === 'pilot.delete');
+    expect(audit).toMatchObject({ target_type: 'pilot', target_id: id, actor_pilot_id: 'TMK' });
+    expect(audit?.details).toMatchObject({ code: 'TMP', name: 'Konto Pomyłkowe', role: 'pilot' });
+  });
+
+  it('ODMAWIA, dopóki konto ma dostęp - usuwanie jest dwustopniowe', async () => {
+    // Nie jest to formalność: telefon nie ma ścieżki kasowania wiersza, więc konto
+    // usunięte „na gorąco" zostałoby na nim jako AKTYWNE. Wyłączenie jedzie normalną
+    // drogą przez `GET /reference` i aplikacja po nim filtruje.
+    const { app, db } = await testHarness();
+    const token = await tokenOf(app, 'TMK');
+    const created = await createPilot(app, token, { code: 'TMP', name: 'Konto Pomyłkowe' });
+    const id = created.json().pilot.id as string;
+
+    const res = await deletePilot(app, token, id);
+
+    expect(res.statusCode).toBe(409);
+    expect(res.json()).toMatchObject({ error: 'refused', reason: 'account_active' });
+    const { rows } = await db.query('SELECT id FROM pilots WHERE id = $1', [id]);
+    expect(rows).toHaveLength(1);
+  });
+
+  it('ODMAWIA kontu, które latało jako PIC', async () => {
+    const { app, db } = await testHarness();
+    const token = await tokenOf(app, 'TMK');
+    const id = await disposable(app, token);
+    await insertEvent(db, { uuid: 'e-pic', picId: id });
+
+    const res = await deletePilot(app, token, id);
+
+    expect(res.statusCode).toBe(409);
+    expect(res.json()).toMatchObject({ error: 'refused', reason: 'has_history' });
+  });
+
+  it('ODMAWIA kontu, które poleciało wyłącznie jako DRUGI PILOT', async () => {
+    // Przypadek najłatwiejszy do przeoczenia: konto nie jest PIC-em ani jednej sesji,
+    // a mimo to stoi w cudzym rejestrze i w karcie arkusza.
+    const { app, db } = await testHarness();
+    const token = await tokenOf(app, 'TMK');
+    const id = await disposable(app, token);
+    await insertEvent(db, { uuid: 'e-dual', picId: 'TMK', dualId: id });
+
+    const res = await deletePilot(app, token, id);
+
+    expect(res.statusCode).toBe(409);
+    expect(res.json()).toMatchObject({ error: 'refused', reason: 'has_history' });
+  });
+
+  it('ODMAWIA kontu, które jest SPRAWCĄ w dzienniku audytu', async () => {
+    // Administrator, który coś w klubie zrobił, zostaje w dzienniku - dziennik bez
+    // tożsamości sprawcy przestaje być dziennikiem.
+    const { app, db } = await testHarness();
+    const token = await tokenOf(app, 'TMK');
+    const id = await disposable(app, token);
+    await db.query(
+      `INSERT INTO admin_audit (actor_pilot_id, actor_role, action, target_type, target_id)
+       VALUES ($1, 'admin', 'flag.resolve', 'flag', '1')`,
+      [id],
+    );
+
+    const res = await deletePilot(app, token, id);
+
+    expect(res.statusCode).toBe(409);
+    expect(res.json()).toMatchObject({ error: 'refused', reason: 'has_history' });
+  });
+
+  it('ODMAWIA usunięcia WŁASNEGO konta', async () => {
+    const { app } = await testHarness();
+    const token = await tokenOf(app, 'TMK');
+
+    const res = await deletePilot(app, token, 'TMK');
+
+    expect(res.statusCode).toBe(409);
+    expect(res.json()).toMatchObject({ error: 'refused', reason: 'self_delete' });
+  });
+
+  it('nieznane konto to 404, a nie ciche 204', async () => {
+    const { app } = await testHarness();
+    const res = await deletePilot(app, await tokenOf(app, 'TMK'), 'nie-ma-takiego');
+
+    expect(res.statusCode).toBe(404);
+  });
+
+  it('konto bez zdolności `accounts.manage` dostaje 403 i niczego nie kasuje', async () => {
+    const { app, db } = await testHarness();
+    const admin = await tokenOf(app, 'TMK');
+    const id = await disposable(app, admin);
+
+    const res = await deletePilot(app, await tokenOf(app, 'PWI'), id);
+
+    expect(res.statusCode).toBe(403);
+    expect(res.json()).toMatchObject({ required: 'accounts.manage' });
+    const { rows } = await db.query('SELECT id FROM pilots WHERE id = $1', [id]);
+    expect(rows).toHaveLength(1);
   });
 });

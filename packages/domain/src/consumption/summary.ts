@@ -1,20 +1,20 @@
 /**
- * UZ Aero — metryki zbiorcze zużycia: ilorazy sum, rozrzut i trend miesięczny.
+ * UZ Aero - metryki zbiorcze zużycia: ilorazy sum, rozrzut i trend miesięczny.
  *
  * ══ ILORAZ SUM, NIGDY ŚREDNIA ILORAZÓW ══
  * Reguła całego tego modułu mieści się w jednym zdaniu i jest ważniejsza niż wygląda:
  * średnią okna liczymy jako `Σ litrów / Σ godzin`, a nie jako średnią z dziennych L/h.
- * Powód jest arytmetyczny, nie stylistyczny — średnia ilorazów daje każdemu interwałowi
+ * Powód jest arytmetyczny, nie stylistyczny - średnia ilorazów daje każdemu interwałowi
  * tę samą wagę, więc dwudziestominutowy odcinek z błędem odczytu ±3 L waży tyle samo,
  * co trzygodzinny przelot. Iloraz sum rozkłada błąd przyrządu na cały nalot okna.
  *
  * ══ CZYM TO SIĘ RÓŻNI OD MODELU (`model.ts`) ══
- * Tu nie ma żadnej regresji ani przypisania paliwa do faz — są sumy i dzielenie.
+ * Tu nie ma żadnej regresji ani przypisania paliwa do faz - są sumy i dzielenie.
  * Dlatego te liczby są dostępne OD PIERWSZEGO DNIA, także wtedy, gdy stawek fazowych
  * jeszcze nie wolno pokazać (bramka publikacji). Ekran `A10b` stoi właśnie na nich.
  *
  * Uwaga o niespójności, która niespójnością nie jest: model liczy `L/h` ważąc interwały
- * KWADRATEM czasu (regresja minimalizuje błąd w litrach), a ten moduł — liniowo. Obie
+ * KWADRATEM czasu (regresja minimalizuje błąd w litrach), a ten moduł - liniowo. Obie
  * liczby są poprawne i obie są potrzebne; nie należy ich „ujednolicać".
  */
 
@@ -23,9 +23,9 @@ import { isUsableInterval, type FuelInterval } from './interval';
 import { percentile } from './percentile';
 import { HOUR_MS } from './policy';
 
-/** Punkt trendu — jeden miesiąc kalendarzowy UTC. */
+/** Punkt trendu - jeden miesiąc kalendarzowy UTC. */
 export interface MonthlyPoint {
-  /** Klucz `YYYY-MM` (UTC) — oś wykresu i klucz sortowania w jednym. */
+  /** Klucz `YYYY-MM` (UTC) - oś wykresu i klucz sortowania w jednym. */
   month: string;
   litersTotal: number;
   engineMs: number;
@@ -34,7 +34,7 @@ export interface MonthlyPoint {
   litersPerBlockHour: number | null;
 }
 
-/** Metryki zbiorcze okna — kafle nagłówkowe `A10a` i norma dla aplikacji. */
+/** Metryki zbiorcze okna - kafle nagłówkowe `A10a` i norma dla aplikacji. */
 export interface ConsumptionSummary {
   /** Liczba interwałów, które weszły do sum (po odrzuceniach). */
   intervals: number;
@@ -43,17 +43,17 @@ export interface ConsumptionSummary {
   flightMs: number;
   flights: number;
 
-  /** `Σ L / Σ h lotu` — do planowania misji; zawiera też paliwo spalone na ziemi. */
+  /** `Σ L / Σ h lotu` - do planowania misji; zawiera też paliwo spalone na ziemi. */
   litersPerFlightHour: number | null;
-  /** `Σ L / Σ h pracy silnika` — ta sama definicja, co „Śr. L/h" w statystykach zakresu. */
+  /** `Σ L / Σ h pracy silnika` - ta sama definicja, co „Śr. L/h" w statystykach zakresu. */
   litersPerBlockHour: number | null;
-  /** `Σ L / Σ lotów` — dla dni skokowych czyta się to jako „na wyniesienie". */
+  /** `Σ L / Σ lotów` - dla dni skokowych czyta się to jako „na wyniesienie". */
   litersPerFlight: number | null;
 
   /**
    * Pasmo typowego zużycia na godzinę pracy silnika: 10. i 90. centyl stawek liczonych
    * per interwał. To jest liczba dla APLIKACJI („norma tego samolotu 15–17 L/h"), i jest
-   * czymś innym niż przedział ufności stawki z modelu — patrz uwaga niżej.
+   * czymś innym niż przedział ufności stawki z modelu - patrz uwaga niżej.
    */
   blockLPerHP10: number | null;
   blockLPerHP90: number | null;
@@ -63,7 +63,7 @@ export interface ConsumptionSummary {
   lastDay: EpochMillis | null;
 }
 
-/** Puste podsumowanie — brak interwałów w oknie. */
+/** Puste podsumowanie - brak interwałów w oknie. */
 export function emptyConsumptionSummary(): ConsumptionSummary {
   return {
     intervals: 0,
@@ -83,14 +83,14 @@ export function emptyConsumptionSummary(): ConsumptionSummary {
 }
 
 /**
- * Liczy metryki zbiorcze z interwałów okna. Bierze wyłącznie interwały PRZYJĘTE —
+ * Liczy metryki zbiorcze z interwałów okna. Bierze wyłącznie interwały PRZYJĘTE -
  * odrzucone (ujemne zużycie, za krótkie) nie mają prawa wejść do żadnej sumy.
  *
  * ══ DLACZEGO PASMO CENTYLOWE, A NIE PRZEDZIAŁ UFNOŚCI ══
  * To są odpowiedzi na dwa różne pytania i pomylenie ich byłoby cichym błędem.
- * Panel pyta „jak dokładnie znamy stawkę fazy" — odpowiada przedział ufności z modelu.
+ * Panel pyta „jak dokładnie znamy stawkę fazy" - odpowiada przedział ufności z modelu.
  * Ekran tankowania pyta „czy dzisiejsze 16 L/h mieści się w tym, co ten samolot zwykle
- * pokazuje" — a na to odpowiada ROZRZUT zaobserwowanych interwałów. Przy stu równaniach
+ * pokazuje" - a na to odpowiada ROZRZUT zaobserwowanych interwałów. Przy stu równaniach
  * przedział ufności jest wąski (±1,6) i werdykt „poza normą" zapalałby się na zupełnie
  * normalnej zmienności między lotami.
  */
@@ -162,7 +162,7 @@ function over(numerator: number, denominator: number): number | null {
   return denominator > 0 ? numerator / denominator : null;
 }
 
-/** Klucz `YYYY-MM` w UTC — bez zależności od strefy, jak wszystko w tym projekcie. */
+/** Klucz `YYYY-MM` w UTC - bez zależności od strefy, jak wszystko w tym projekcie. */
 function monthKey(at: EpochMillis): string {
   const date = new Date(at);
   const month = date.getUTCMonth() + 1;

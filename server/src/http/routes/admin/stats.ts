@@ -1,20 +1,20 @@
 /**
- * UZ Aero (serwer) — trasa statystyk (`GET /admin/api/stats`, mockup `A10`).
+ * UZ Aero (serwer) - trasa statystyk (`GET /admin/api/stats`, mockup `A10`).
  *
  * Cienka jak reszta: zod → zapytanie → status. Trasa nie zna ani SQL-a, ani reguły
- * „tylko dni zamknięte" — tłumaczy wyłącznie query string na filtr.
+ * „tylko dni zamknięte" - tłumaczy wyłącznie query string na filtr.
  *
  * ══ ZDOLNOŚĆ: `panel.access` ══
  * Mockup nie zastrzega statystyk dla administratora, a szef wyszkolenia jest ich
  * głównym odbiorcą (nalot per pilot to jego codzienne pytanie). Ekran jest WYŁĄCZNIE
- * do odczytu — zero komend, zero `AuditedWrite` — więc istniejąca zdolność wejścia
+ * do odczytu - zero komend, zero `AuditedWrite` - więc istniejąca zdolność wejścia
  * do panelu wystarcza; nowej nie wymyślamy.
  *
- * Zakres dat jedzie wspólnym parserem `dayRange.ts` (walidacja round-trip — data
+ * Zakres dat jedzie wspólnym parserem `dayRange.ts` (walidacja round-trip - data
  * przewinięta w kalendarzu to 400, nie cicho inny miesiąc), a górna granica jest
  * domykana do KOŃCA doby. Zakres odwrócony (`from > to`) to wada żądania: raport
  * o okresie, który nie istnieje, nie ma poprawnej odpowiedzi, więc 400 zamiast
- * wiarygodnie wyglądających zer. Guard mieszka w ZAPYTANIU (`rangeFrom`), nie tu —
+ * wiarygodnie wyglądających zer. Guard mieszka w ZAPYTANIU (`rangeFrom`), nie tu -
  * dopiero po rozstrzygnięciu domyślnych widać odwrócenie jednostronne (`?from=`
  * z przyszłości bez `to`), bo drugą granicę domyka zegar serwera.
  */

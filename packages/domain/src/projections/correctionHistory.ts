@@ -1,8 +1,8 @@
 /**
- * UZ Aero — HISTORIA ZMIAN jednego zdarzenia (issue #43, mockup `design/10i`).
+ * UZ Aero - HISTORIA ZMIAN jednego zdarzenia (issue #43, mockup `design/10i`).
  *
  * ══ DLACZEGO TO W OGÓLE JEST MOŻLIWE ══
- * Bo rejestr jest append-only. Korekta nie edytuje celu — dopisuje `event_correction`,
+ * Bo rejestr jest append-only. Korekta nie edytuje celu - dopisuje `event_correction`,
  * a oryginał zostaje w strumieniu. Historia zmian nie jest więc osobnym dziennikiem,
  * który trzeba prowadzić (i który dałoby się rozjechać z danymi), tylko ODCZYTEM tego,
  * co i tak leży w rejestrze. Ten moduł go czyta i zamienia na listę „było → jest".
@@ -10,44 +10,52 @@
  * ══ DLACZEGO W DOMENIE, A NIE W EKRANIE ══
  * Bo pytają o nią DWIE powierzchnie: arkusz historii w aplikacji pilota i oś zdarzeń
  * w panelu administratora. Liczone dwa razy rozjechałyby się przy pierwszej zmianie
- * reguły składania (a ta jest nieoczywista — patrz „per wymiar" niżej).
+ * reguły składania (a ta jest nieoczywista - patrz „per wymiar" niżej).
  *
  * ══ SKŁADANIE „BYŁO → JEST" ══
  * Wartość „przed" bierze się z poprzedniego stanu, nie z oryginału: druga korekta czasu
  * odnosi się do pierwszej poprawionej godziny, a nie do odczytu GPS. Dlatego przewijamy
- * korekty chronologicznie, trzymając bieżący stan każdego wymiaru osobno — dokładnie tak,
+ * korekty chronologicznie, trzymając bieżący stan każdego wymiaru osobno - dokładnie tak,
  * jak robi to `applyCorrections`, i z tego samego powodu: czas i wartości są niezależne
  * (`retime` po `amend` nie cofa poprawionej liczby).
  *
  * Wpisy NIECZYTELNE pomijamy tak samo jak tam. Historia ma opisywać to, co faktycznie
- * policzyła projekcja — inaczej pilot czytałby o zmianie, której nigdzie nie widać.
+ * policzyła projekcja - inaczej pilot czytałby o zmianie, której nigdzie nie widać.
  */
 
 import type { EpochMillis } from '../time';
 import type { CorrectionFields, Event, EventOf, JumperCounts } from '../events/events';
 
 /** Który wymiar zdarzenia zmieniła poprawka. */
-export type CorrectionField = 'time' | 'fuelL' | 'mh' | 'jumpers' | 'notes' | 'dualId';
+export type CorrectionField =
+  | 'time'
+  | 'fuelL'
+  | 'mh'
+  | 'oilL'
+  | 'oilAddedL'
+  | 'jumpers'
+  | 'notes'
+  | 'dualId';
 
 /**
- * Wartość pola w historii — czas i liczby jako `number`, skład zrzutu jako trójka,
+ * Wartość pola w historii - czas i liczby jako `number`, skład zrzutu jako trójka,
  * notatka jako napis. `null` znaczy „nie było czego zastąpić" albo „skasowano".
  */
 export type CorrectionValue = number | string | JumperCounts | null;
 
 /** Jedna zmiana JEDNEGO pola. Korekta wielopolowa (`amend`) daje kilka wpisów. */
 export interface CorrectionHistoryEntry {
-  /** UUID zdarzenia korygującego — kilka wpisów może dzielić jeden uuid. */
+  /** UUID zdarzenia korygującego - kilka wpisów może dzielić jeden uuid. */
   correctionUuid: string;
   /** Kiedy zapisano poprawkę (nie: kiedy zaszło korygowane zdarzenie). */
   at: EpochMillis;
-  /** Kto zapisał — `picId` z korekty. Korektę administratora stempluje PIC sesji (§4.4). */
+  /** Kto zapisał - `picId` z korekty. Korektę administratora stempluje PIC sesji (§4.4). */
   byPilotId: string;
   /**
    * Czy poprawkę naniósł administrator w panelu.
    *
    * Czytamy to z `payload.source`, bo z nagłówka NIE DA SIĘ: korekta administratora
-   * niesie `picId` pilota sesji (single-writer). Brak pola = pilot — telefon nie
+   * niesie `picId` pilota sesji (single-writer). Brak pola = pilot - telefon nie
    * stempluje własnych poprawek.
    */
   byAdmin: boolean;
@@ -66,7 +74,7 @@ export interface CorrectionHistoryEntry {
 /** Czas zdarzenia: GPS ma pierwszeństwo przed zegarem telefonu (§5.1, dwa zegary). */
 const at = (e: Event): EpochMillis => e.gpsTime ?? e.deviceTime;
 
-/** Wartość pola w zdarzeniu ŹRÓDŁOWYM — punkt startowy łańcucha „było → jest". */
+/** Wartość pola w zdarzeniu ŹRÓDŁOWYM - punkt startowy łańcucha „było → jest". */
 function originalValue(target: Event, field: CorrectionField): CorrectionValue {
   if (field === 'time') return at(target);
   if (field === 'jumpers') return target.type === 'drop' ? (target.payload.jumpers ?? null) : null;
@@ -77,10 +85,17 @@ function originalValue(target: Event, field: CorrectionField): CorrectionValue {
     return null;
   }
   if (field === 'dualId') {
-    // Bez deklaracji w payloadzie obowiązywał NAGŁÓWEK — i to on jest wartością
+    // Bez deklaracji w payloadzie obowiązywał NAGŁÓWEK - i to on jest wartością
     // „przed", bo to jego widział pilot na ekranie przed poprawką.
     if (target.type !== 'preflight_confirm') return null;
     return target.payload.dualId !== undefined ? target.payload.dualId : target.dualId;
+  }
+  // Olej (issue #60): brak pola w zapisie pierwotnym = „pomiaru/dolewki nie było" - null.
+  if (field === 'oilL') {
+    return target.type === 'preflight_confirm' ? (target.payload.oilL ?? null) : null;
+  }
+  if (field === 'oilAddedL') {
+    return target.type === 'preflight_confirm' ? (target.payload.oilAddedL ?? null) : null;
   }
 
   const reading =
@@ -93,24 +108,33 @@ function originalValue(target: Event, field: CorrectionField): CorrectionValue {
   return field === 'fuelL' ? reading.fuelL : reading.mh;
 }
 
-/** Pola `amend` w kolejności, w jakiej mają stanąć w historii (paliwo przed licznikiem). */
+/** Pola `amend` w kolejności, w jakiej mają stanąć w historii (paliwo przed licznikiem, olej za nim). */
 const AMEND_FIELDS: readonly Exclude<CorrectionField, 'time'>[] = [
   'fuelL',
   'mh',
+  'oilL',
+  'oilAddedL',
   'jumpers',
   'notes',
   'dualId',
 ];
 
 /**
- * Czy payload niesie to pole. `jumpers: null` (skład niepodany) i `notes: null`
- * (notatka skasowana) są WARTOŚCIAMI, więc obecność liczy się po kluczu.
+ * Pola, w których `null` jest WARTOŚCIĄ (skład niepodany, notatka skasowana, sesja
+ * jednoosobowa, pomiar/dolewka oleju wycofane) - obecność liczy się po samym kluczu.
  */
+const NULL_IS_VALUE: ReadonlySet<Exclude<CorrectionField, 'time'>> = new Set([
+  'jumpers',
+  'notes',
+  'dualId',
+  'oilL',
+  'oilAddedL',
+]);
+
+/** Czy payload niesie to pole - dla pól z `NULL_IS_VALUE` rozstrzyga sam klucz. */
 function hasField(fields: CorrectionFields, field: Exclude<CorrectionField, 'time'>): boolean {
-  // `jumpers`, `notes` i `dualId` mogą nieść `null` jako WARTOŚĆ (skład niepodany,
-  // notatka skasowana, sesja jednoosobowa) — dla nich liczy się sam klucz.
   if (!(field in fields)) return false;
-  if (field === 'jumpers' || field === 'notes' || field === 'dualId') return true;
+  if (NULL_IS_VALUE.has(field)) return true;
   return fields[field] !== undefined;
 }
 
@@ -125,7 +149,7 @@ function fieldValue(
 }
 
 /**
- * Historia poprawek jednego zdarzenia — od NAJSTARSZEJ do najnowszej.
+ * Historia poprawek jednego zdarzenia - od NAJSTARSZEJ do najnowszej.
  *
  * Kolejność jest chronologiczna, bo taka wychodzi ze składania „było → jest"; ekran
  * odwraca ją u siebie (mockup `10i` pokazuje najnowszą na górze, żeby stan aktualny
@@ -146,7 +170,7 @@ export function correctionHistory(
     .filter((e) => (e.payload as { targetUuid?: unknown })?.targetUuid === targetUuid)
     .sort((a, b) => at(a) - at(b));
 
-  // Bieżący stan każdego wymiaru — zaczynamy od wartości ze zdarzenia źródłowego.
+  // Bieżący stan każdego wymiaru - zaczynamy od wartości ze zdarzenia źródłowego.
   const current = new Map<CorrectionField, CorrectionValue>();
   const valueOf = (field: CorrectionField): CorrectionValue =>
     current.has(field) ? (current.get(field) as CorrectionValue) : originalValue(target, field);
@@ -172,7 +196,7 @@ export function correctionHistory(
     };
 
     if (payload?.action === 'void') {
-      // Powtórzone unieważnienie nie jest zmianą — nic się po nim nie dzieje inaczej.
+      // Powtórzone unieważnienie nie jest zmianą - nic się po nim nie dzieje inaczej.
       if (voided) continue;
       voided = true;
       out.push({ ...base, field: null, from: null, to: null, kind: 'void' });
@@ -198,7 +222,7 @@ export function correctionHistory(
       }
     }
 
-    // Poprawka czegokolwiek przywraca zdarzenie do życia (`applyCorrections`) — i to jest
+    // Poprawka czegokolwiek przywraca zdarzenie do życia (`applyCorrections`) - i to jest
     // osobny fakt w historii, nie skutek uboczny wiersza o zmianie wartości.
     if (voided && out.length > entriesBefore) {
       voided = false;

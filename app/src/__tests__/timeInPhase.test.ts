@@ -1,11 +1,11 @@
 /**
- * UZ Aero — test czasu pracy silnika i czasu lotu w oknie.
+ * UZ Aero - test czasu pracy silnika i czasu lotu w oknie.
  *
  * Ten plik istnieje przez konkretną awarię (2026-08-05). Ekran 06 liczył czas pracy
  * silnika wyłącznie z `state.legs`, a `projectSession` obsługuje `manual_log_entry`
  * inaczej niż parę `engine_start`/`engine_stop`: dokłada czas off-block→on-block wprost
  * do `blockTimeMs` i NIE tworzy wpisu w `legs`. W dniu z wpisem ręcznym mianownik
- * był więc za mały, a średnia L/h — zawyżona. Nie było tego jak zauważyć: zła średnia
+ * był więc za mały, a średnia L/h - zawyżona. Nie było tego jak zauważyć: zła średnia
  * wygląda dokładnie tak samo jak dobra.
  *
  * Pierwszy test poniżej jest testem REGRESYJNYM na tę wadę. Drugi blok pilnuje rzeczy,
@@ -107,7 +107,7 @@ describe('czas pracy silnika obejmuje wpis ręczny (regresja z 2026-08-05)', () 
 describe('odcinki nakładające się scalamy, a nie sumujemy', () => {
   it('nie liczy tych samych minut dwa razy', () => {
     // Pilot dopisał ręcznie wzlot, który aplikacja też zarejestrowała. Suma długości
-    // dałaby 4 h, a silnik pracował 3 h — mianownik zawyżony, L/h zaniżone.
+    // dałaby 4 h, a silnik pracował 3 h - mianownik zawyżony, L/h zaniżone.
     const manual = event('manual_log_entry', at(12, 0), {
       offBlock: at(9, 0),
       onBlock: at(11, 0),
@@ -119,7 +119,7 @@ describe('odcinki nakładające się scalamy, a nie sumujemy', () => {
     ];
     const state = projectSession(events);
 
-    // Projekcja sumuje oba źródła bez scalania — i to jest jej definicja („ile czasu
+    // Projekcja sumuje oba źródła bez scalania - i to jest jej definicja („ile czasu
     // zaraportowano"). Nasza miara odpowiada na inne pytanie: „ile silnik pracował".
     expect(state.blockTimeMs).toBe(minutes(240));
     expect(spanTimeInWindow(blockSpans(state, events), at(0, 0), at(23, 59))).toBe(
@@ -158,7 +158,7 @@ describe('przycinanie do okna', () => {
     );
   });
 
-  it('cykl otwarty domyka do końca okna — „licz do teraz"', () => {
+  it('cykl otwarty domyka do końca okna - „licz do teraz"', () => {
     const events = [event('engine_start', at(8, 0))];
     const state = projectSession(events);
 

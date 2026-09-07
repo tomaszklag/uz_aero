@@ -1,5 +1,5 @@
 /**
- * UZ Aero — ADAPTER `StoragePort` na `expo-sqlite` (docs/_main.md.txt §5.2).
+ * UZ Aero - ADAPTER `StoragePort` na `expo-sqlite` (docs/_main.md.txt §5.2).
  *
  * Schemat: `events` (append-only + `synced_at` NULL = outbox), `reference_aircraft`,
  * `reference_pilots`, `session_meta`. Payloady i `handover` trzymamy jako JSON w TEXT,
@@ -9,7 +9,7 @@
  * TEXT, więc niejawny `rowid` rośnie z każdym INSERT). Idempotencja: `INSERT OR IGNORE`
  * + sprawdzenie `changes` (0 = duplikat `uuid`).
  *
- * ⚠️ Ten plik importuje `expo-sqlite` (moduł natywny) — NIE jest importowany w testach
+ * ⚠️ Ten plik importuje `expo-sqlite` (moduł natywny) - NIE jest importowany w testach
  * Node/Jest (te używają `InMemoryAdapter`). Podłączamy go w warstwie aplikacji.
  */
 
@@ -32,14 +32,19 @@ import {
   type ServiceStatus,
 } from '../../domain';
 import type {
+  BugReport,
+  BugReportPort,
+  NewBugReport,
   NewTraceEntry,
   StoragePort,
   TraceEntry,
   TracePort,
   TraceStats,
+  WithheldEvent,
+  WithheldReason,
 } from '../../application/ports';
 // Schemat trzymamy osobno, bo dzięki temu da się go uruchomić w Node i przetestować
-// na prawdziwym silniku SQLite — patrz `schema.ts` i `sqliteSchema.test.ts`.
+// na prawdziwym silniku SQLite - patrz `schema.ts` i `sqliteSchema.test.ts`.
 import { MIGRATIONS, SCHEMA_VERSION } from './schema';
 
 const DB_NAME = 'uzaero.db';
@@ -74,10 +79,24 @@ interface AircraftRow {
   handover: string | null;
   fetched_at: number;
   /**
-   * JSON normy zużycia z `reference_consumption` (migracja 4) — dołączany `LEFT JOIN`-em.
+   * JSON normy zużycia z `reference_consumption` (migracja 4) - dołączany `LEFT JOIN`-em.
    * `null` znaczy „model poniżej progu publikacji albo nigdy nie pobrany", a nie zero.
    */
   consumption: string | null;
+  /**
+   * Konfiguracja oleju z `reference_oil` (migracja 5, issue #60) - `LEFT JOIN`-em.
+   * `null` w każdej kolumnie = administrator nie skonfigurował albo serwer sprzed
+   * Etapu D; sekcja oleju działa wtedy bez podpowiedzi.
+   */
+  oil_min_l: number | null;
+  oil_capacity_l: number | null;
+  oil_norm_l_per_h: number | null;
+  /**
+   * Nominalne spalanie z `reference_fuel` (migracja 6, issue #66) - `LEFT JOIN`-em.
+   * `null` = administrator nie wpisał albo serwer sprzed issue #66; ekran rozliczenia
+   * milczy wtedy o normie, dopóki analityka nie policzy własnej.
+   */
+  fuel_norm_l_per_h: number | null;
 }
 
 interface PilotRow {
@@ -88,7 +107,7 @@ interface PilotRow {
   fetched_at: number;
 }
 
-export class ExpoSqliteAdapter implements StoragePort, TracePort {
+export class ExpoSqliteAdapter implements StoragePort, TracePort, BugReportPort {
   private db: SQLiteDatabase | null = null;
 
   constructor(private readonly databaseName: string = DB_NAME) {}
@@ -99,26 +118,26 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort {
     await db.execAsync('PRAGMA journal_mode = WAL;');
     // Dwa połączenia współistnieją przez chwilę przy zimnym starcie z działającą
     // usługą GPS w tle (writer headless + bootstrap aplikacji). Oba robią pojedyncze
-    // INSERT-y — krótki czekacz zamienia rzadki SQLITE_BUSY w niezauważalną pauzę.
+    // INSERT-y - krótki czekacz zamienia rzadki SQLITE_BUSY w niezauważalną pauzę.
     await db.execAsync('PRAGMA busy_timeout = 2000;');
 
     const versionRow = await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version;');
     const current = versionRow?.user_version ?? 0;
 
-    // Migracje stosujemy po kolei od bieżącej wersji — jedno źródło DDL (`schema.ts`),
+    // Migracje stosujemy po kolei od bieżącej wersji - jedno źródło DDL (`schema.ts`),
     // wspólne z testem schematu.
     for (let v = current; v < MIGRATIONS.length; v += 1) {
       await db.execAsync(MIGRATIONS[v]);
     }
 
-    // PRAGMA nie przyjmuje parametrów — wartość to nasza stała liczbowa (bezpieczne).
+    // PRAGMA nie przyjmuje parametrów - wartość to nasza stała liczbowa (bezpieczne).
     await db.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION};`);
   }
 
 
   /**
    * Zamyka połączenie. Potrzebne wyłącznie writerowi headless: gdy aplikacja wstaje,
-   * jej bootstrap otwiera własne połączenie do TEGO SAMEGO pliku — drugie żywe
+   * jej bootstrap otwiera własne połączenie do TEGO SAMEGO pliku - drugie żywe
    * połączenie potrafi unieważnić pierwsze po stronie natywnej
    * (`NativeDatabase.prepareAsync → NullPointerException` na głównym zapisie).
    */
@@ -179,7 +198,11 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort {
 
   async getUnsyncedEvents(): Promise<Event[]> {
     const rows = await this.getDb().getAllAsync<EventRow>(
-      'SELECT * FROM events WHERE synced_at IS NULL ORDER BY rowid ASC',
+      // Wstrzymane WYPADŁY z kolejki (issue #81), choć `synced_at` mają dalej NULL.
+      `SELECT * FROM events
+        WHERE synced_at IS NULL
+          AND uuid NOT IN (SELECT uuid FROM withheld_events)
+        ORDER BY rowid ASC`,
     );
     return rows.map(rowToEvent);
   }
@@ -199,6 +222,41 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort {
         await db.runAsync('UPDATE events SET synced_at = ? WHERE uuid = ?', [syncedAt, uuid]);
       }
     });
+  }
+
+  async withholdEvents(
+    uuids: string[],
+    reason: WithheldReason,
+    withheldAt: EpochMillis,
+  ): Promise<void> {
+    if (uuids.length === 0) return;
+    const db = this.getDb();
+    await db.withTransactionAsync(async () => {
+      for (const uuid of uuids) {
+        // `INSERT OR IGNORE` + `SELECT` z `events`: nieznany uuid wypada sam (nie ma
+        // z czego wziąć sesji), a drugie wstrzymanie tego samego zostawia pierwszą decyzję.
+        await db.runAsync(
+          `INSERT OR IGNORE INTO withheld_events (uuid, session_uuid, reason, withheld_at)
+           SELECT uuid, session_uuid, ?, ? FROM events WHERE uuid = ?`,
+          [reason, withheldAt, uuid],
+        );
+      }
+    });
+  }
+
+  async getWithheldEvents(): Promise<WithheldEvent[]> {
+    const rows = await this.getDb().getAllAsync<{
+      uuid: string;
+      session_uuid: string;
+      reason: string;
+      withheld_at: number;
+    }>('SELECT * FROM withheld_events ORDER BY withheld_at ASC, rowid ASC');
+    return rows.map((r) => ({
+      uuid: r.uuid,
+      sessionUuid: r.session_uuid,
+      reason: r.reason as WithheldReason,
+      withheldAt: r.withheld_at,
+    }));
   }
 
   // ── reference cache ─────────────────────────────────────────────────────────
@@ -250,15 +308,52 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort {
             [a.id, JSON.stringify(a.consumption), a.fetchedAt],
           );
         }
+
+        // Konfiguracja oleju (migracja 5, issue #60) - ta sama reguła co przy normie:
+        // brak konfiguracji z serwera KASUJE wpis, żeby wykreślone w panelu minimum
+        // nie ostrzegało pilota do końca życia telefonu.
+        const oilConfigured = a.oilMinL != null || a.oilCapacityL != null || a.oilNormLPerH != null;
+        if (!oilConfigured) {
+          await db.runAsync('DELETE FROM reference_oil WHERE aircraft_id = ?', [a.id]);
+        } else {
+          await db.runAsync(
+            `INSERT INTO reference_oil (aircraft_id, min_l, capacity_l, norm_l_per_h, fetched_at)
+             VALUES (?, ?, ?, ?, ?)
+             ON CONFLICT(aircraft_id) DO UPDATE SET
+               min_l=excluded.min_l, capacity_l=excluded.capacity_l,
+               norm_l_per_h=excluded.norm_l_per_h, fetched_at=excluded.fetched_at`,
+            [a.id, a.oilMinL ?? null, a.oilCapacityL ?? null, a.oilNormLPerH ?? null, a.fetchedAt],
+          );
+        }
+
+        // Norma nominalna spalania (migracja 6, issue #66) - ta sama reguła, co wyżej:
+        // brak wartości z serwera KASUJE wiersz, żeby wykreślona w panelu liczba
+        // nie orzekała o lotach do końca życia telefonu.
+        if (a.fuelNormLPerH == null) {
+          await db.runAsync('DELETE FROM reference_fuel WHERE aircraft_id = ?', [a.id]);
+        } else {
+          await db.runAsync(
+            `INSERT INTO reference_fuel (aircraft_id, norm_l_per_h, fetched_at)
+             VALUES (?, ?, ?)
+             ON CONFLICT(aircraft_id) DO UPDATE SET
+               norm_l_per_h=excluded.norm_l_per_h, fetched_at=excluded.fetched_at`,
+            [a.id, a.fuelNormLPerH, a.fetchedAt],
+          );
+        }
       }
     });
   }
 
   async getAircraft(): Promise<ReferenceAircraft[]> {
     const rows = await this.getDb().getAllAsync<AircraftRow>(
-      `SELECT a.*, c.model AS consumption
+      `SELECT a.*, c.model AS consumption,
+              o.min_l AS oil_min_l, o.capacity_l AS oil_capacity_l,
+              o.norm_l_per_h AS oil_norm_l_per_h,
+              f.norm_l_per_h AS fuel_norm_l_per_h
          FROM reference_aircraft a
          LEFT JOIN reference_consumption c ON c.aircraft_id = a.id
+         LEFT JOIN reference_oil o ON o.aircraft_id = a.id
+         LEFT JOIN reference_fuel f ON f.aircraft_id = a.id
         ORDER BY a.reg ASC`,
     );
     return rows.map(rowToAircraft);
@@ -266,9 +361,14 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort {
 
   async getAircraftById(id: string): Promise<ReferenceAircraft | null> {
     const row = await this.getDb().getFirstAsync<AircraftRow>(
-      `SELECT a.*, c.model AS consumption
+      `SELECT a.*, c.model AS consumption,
+              o.min_l AS oil_min_l, o.capacity_l AS oil_capacity_l,
+              o.norm_l_per_h AS oil_norm_l_per_h,
+              f.norm_l_per_h AS fuel_norm_l_per_h
          FROM reference_aircraft a
          LEFT JOIN reference_consumption c ON c.aircraft_id = a.id
+         LEFT JOIN reference_oil o ON o.aircraft_id = a.id
+         LEFT JOIN reference_fuel f ON f.aircraft_id = a.id
         WHERE a.id = ?`,
       [id],
     );
@@ -418,16 +518,107 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort {
     };
   }
 
+  // ── zgłoszenia błędów (issue #87, na czas testów) ────────────────────────────
+
+  async appendBugReport(report: NewBugReport): Promise<void> {
+    await this.getDb().runAsync(
+      `INSERT OR IGNORE INTO bug_reports
+         (uuid, created_at, severity, description, screen, app_version, session_uuid, context)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        report.uuid,
+        report.createdAt,
+        report.severity,
+        report.description,
+        report.screen,
+        report.appVersion,
+        report.sessionUuid,
+        JSON.stringify(report.context),
+      ],
+    );
+  }
+
+  async getPendingBugReports(limit: number): Promise<BugReport[]> {
+    const rows = await this.getDb().getAllAsync<BugReportRow>(
+      'SELECT * FROM bug_reports WHERE sent_at IS NULL ORDER BY created_at, uuid LIMIT ?',
+      [limit],
+    );
+    return rows.map(toBugReport);
+  }
+
+  async markBugReportsSent(uuids: string[], sentAt: EpochMillis): Promise<void> {
+    await this.getDb().withTransactionAsync(async () => {
+      const db = this.getDb();
+      for (const uuid of uuids) {
+        await db.runAsync('UPDATE bug_reports SET sent_at = ? WHERE uuid = ?', [sentAt, uuid]);
+      }
+    });
+  }
+
+  async purgeSentBugReports(): Promise<number> {
+    const result = await this.getDb().runAsync(
+      'DELETE FROM bug_reports WHERE sent_at IS NOT NULL',
+    );
+    return result.changes;
+  }
+
+  async pendingBugReportCount(): Promise<number> {
+    const row = await this.getDb().getFirstAsync<{ n: number }>(
+      'SELECT COUNT(*) AS n FROM bug_reports WHERE sent_at IS NULL',
+    );
+    return row?.n ?? 0;
+  }
+
   async clear(): Promise<void> {
     await this.getDb().execAsync(`
       DELETE FROM events;
       DELETE FROM reference_aircraft;
       DELETE FROM reference_consumption;
+      DELETE FROM reference_oil;
       DELETE FROM reference_pilots;
       DELETE FROM session_meta;
       DELETE FROM gps_trace;
+      DELETE FROM bug_reports;
     `);
   }
+}
+
+/** Wiersz `bug_reports` w bazie (snake_case jak w DDL). */
+interface BugReportRow {
+  uuid: string;
+  created_at: number;
+  severity: string | null;
+  description: string;
+  screen: string;
+  app_version: string | null;
+  session_uuid: string | null;
+  context: string;
+  sent_at: number | null;
+}
+
+/**
+ * Kontekst wraca z bazy NAPISEM i rozpakowuje się tutaj. Uszkodzony JSON (przerwany
+ * zapis, ręczna edycja bazy) nie może wywrócić wysyłki - zgłoszenie jedzie wtedy
+ * z pustym kontekstem, bo opis pilota jest jego treścią, a kontekst dodatkiem.
+ */
+function toBugReport(row: BugReportRow): BugReport {
+  let context: Record<string, unknown> = {};
+  try {
+    context = JSON.parse(row.context) as Record<string, unknown>;
+  } catch {
+    context = {};
+  }
+  return {
+    uuid: row.uuid,
+    createdAt: row.created_at,
+    severity: (row.severity as BugReport['severity']) ?? null,
+    description: row.description,
+    screen: row.screen,
+    appVersion: row.app_version,
+    sessionUuid: row.session_uuid,
+    context,
+    sentAt: row.sent_at,
+  };
 }
 
 /** Wiersz `gps_trace` w bazie (snake_case jak w DDL). */
@@ -532,6 +723,10 @@ function rowToAircraft(row: AircraftRow): ReferenceAircraft {
     claimSince: row.claim_since,
     handover: row.handover ? (JSON.parse(row.handover) as Handover) : null,
     consumption: row.consumption ? (JSON.parse(row.consumption) as ConsumptionNorm) : null,
+    oilMinL: row.oil_min_l ?? null,
+    oilCapacityL: row.oil_capacity_l ?? null,
+    oilNormLPerH: row.oil_norm_l_per_h ?? null,
+    fuelNormLPerH: row.fuel_norm_l_per_h ?? null,
     fetchedAt: row.fetched_at,
   };
 }

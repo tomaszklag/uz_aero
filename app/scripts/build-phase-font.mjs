@@ -1,16 +1,16 @@
 /**
- * UZ Aero — generator fontu ikon faz lotu (assets/fonts/UZAeroPhases.ttf).
+ * UZ Aero - generator fontu ikon faz lotu (assets/fonts/UZAeroPhases.ttf).
  *
  * Dlaczego font, a nie react-native-svg: projekt świadomie nie dokłada modułów
  * natywnych ponad expo-font (nagłówek `Icon.tsx`), a font ładuje się przez Metro
- * bez przebudowy dev clienta. Źródłem prawdy są SVG w assets/phase-icons/ —
+ * bez przebudowy dev clienta. Źródłem prawdy są SVG w assets/phase-icons/ -
  * te same kształty wklejamy do mockupów rodziny 05.
  *
- * Uruchomienie: npm run build:phase-font (wynik commitujemy do repo — build
+ * Uruchomienie: npm run build:phase-font (wynik commitujemy do repo - build
  * aplikacji NIE zależy od tego skryptu).
  *
  * Kontrakt ze `src/ui/components/foundation/Icon.tsx`: nazwy plików i punkty
- * kodowe muszą zgadzać się z mapą PHASE_GLYPHS — zmieniasz tu, zmień i tam.
+ * kodowe muszą zgadzać się z mapą PHASE_GLYPHS - zmieniasz tu, zmień i tam.
  */
 
 import { createWriteStream, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
@@ -23,7 +23,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const srcDir = join(root, 'assets', 'phase-icons');
 const outDir = join(root, 'assets', 'fonts');
 
-/** Punkty kodowe w obszarze prywatnym — stałe, żeby TTF był odtwarzalny. */
+/** Punkty kodowe w obszarze prywatnym - stałe, żeby TTF był odtwarzalny. */
 const GLYPHS = [
   { file: 'phase-taxi.svg', name: 'plane-taxi', codepoint: 0xe001 },
   { file: 'phase-propeller.svg', name: 'propeller', codepoint: 0xe002 },

@@ -1,8 +1,8 @@
 /**
- * UZ Aero — wysyłka śladu kalibracyjnego (faza 5).
+ * UZ Aero - wysyłka śladu kalibracyjnego (faza 5).
  *
  * Osobny, NISKOPRIORYTETOWY tor obok outboxa zdarzeń: pętla okazji woła go na końcu
- * przebiegu (po zdarzeniach i cache referencyjnym), jedna paczka na okazję — ślad
+ * przebiegu (po zdarzeniach i cache referencyjnym), jedna paczka na okazję - ślad
  * nigdzie się nie śpieszy, a nie wolno mu konkurować o łącze z rejestrem dnia.
  *
  * Księgowość jak w outboksie: wysłane wpisy dostają `uploadedAt`; brak odpowiedzi
@@ -14,7 +14,7 @@ import type { AuthService } from '../auth/authService';
 import type { ServerPort, TracePort } from '../ports';
 import { authorizedFetch } from './authorizedFetch';
 
-/** Paczka wysyłki — ~2000 wpisów ≈ 200 KB JSON; poniżej limitu koperty serwera. */
+/** Paczka wysyłki - ~2000 wpisów ≈ 200 KB JSON; poniżej limitu koperty serwera. */
 export const TRACE_BATCH_LIMIT = 2000;
 
 export class TraceSync {
@@ -41,7 +41,7 @@ export class TraceSync {
     );
     // Potwierdzone nagranie znika z telefonu (issue #47): od tej chwili jedyną jego
     // kopią jest serwer i to stamtąd pobiera je ekran 14. Dzień lotny to dziesiątki
-    // tysięcy wierszy — trzymanie ich drugi raz kosztowałoby pamięć urządzenia
+    // tysięcy wierszy - trzymanie ich drugi raz kosztowałoby pamięć urządzenia
     // dokładnie po nic. Kasujemy WSZYSTKO potwierdzone, nie tylko tę paczkę: sprząta
     // to także wiersze oznaczone tuż przed ubiciem procesu w poprzednim przebiegu.
     await this.store.purgeUploadedTrace();

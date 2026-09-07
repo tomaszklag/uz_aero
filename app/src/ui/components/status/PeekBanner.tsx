@@ -1,5 +1,5 @@
 /**
- * UZ Aero — PeekBanner (`.ro-banner` z mockupu 04b)
+ * UZ Aero - PeekBanner (`.ro-banner` z mockupu 04b)
  *
  * Baner podglądu cudzej sesji: ikona oka, nagłówek display, zdanie o tym, kto prowadzi
  * samolot, opcjonalne ostrzeżenie o wieku danych i **stopka z pochodzeniem danych**.
@@ -7,13 +7,13 @@
  * Dlaczego to nie jest `Banner kind="status"`, skoro taksonomia z `CLAUDE.md` mówi, że
  * „tylko-odczyt" jest banerem statusu: bo `Banner` niesie tytuł + tekst i na tym kończy.
  * Ten ekran czyta CUDZĄ sesję z serwera, więc §4.8 wymaga, żeby razem ze stanem szła
- * informacja, SKĄD ten stan pochodzi i ile ma lat — a to trzecia linia, w środku tego
+ * informacja, SKĄD ten stan pochodzi i ile ma lat - a to trzecia linia, w środku tego
  * samego pudełka. Rozbicie jej na osobny `FreshnessNote` pod banerem rozłączyłoby
  * twierdzenie („silnik wyłączony") od jego zastrzeżenia („wg danych sprzed doby"),
  * czyli dokładnie to, przed czym §4.8 ostrzega.
  *
  * Druga różnica wobec `FreshnessNote`: tam `live` **milczy** (cisza = świeżo, bo wartość
- * dotyczy własnego samolotu). Tutaj milczeć nie wolno — nawet dane pobrane sekundę temu
+ * dotyczy własnego samolotu). Tutaj milczeć nie wolno - nawet dane pobrane sekundę temu
  * opisują telefon innego pilota, więc stopka pojawia się w każdym stanie.
  */
 
@@ -32,13 +32,13 @@ export interface PeekTextSegment {
 }
 
 export interface PeekBannerProps {
-  /** Nagłówek display, np. „PODGLĄD — TYLKO ODCZYT". */
+  /** Nagłówek display, np. „PODGLĄD - TYLKO ODCZYT". */
   title: string;
   /** Zdanie główne. Tablica segmentów pozwala wyróżnić fragment bez parsowania napisu. */
   text: PeekTextSegment[] | string;
-  /** Ostrzeżenie o nieaktualności (mockup `.stale-warn`) — tylko przy danych z cache. */
+  /** Ostrzeżenie o nieaktualności (mockup `.stale-warn`) - tylko przy danych z cache. */
   warning?: string | null;
-  /** Stopka `.ro-meta`: skąd dane i z kiedy. Obowiązkowa — patrz nagłówek pliku. */
+  /** Stopka `.ro-meta`: skąd dane i z kiedy. Obowiązkowa - patrz nagłówek pliku. */
   meta: string;
   /** Kropka przy stopce: zielona = pobrane teraz, amber = z cache. */
   metaTone?: Tone;
@@ -86,7 +86,7 @@ export function PeekBanner({
         </AppText>
 
         {/* Wyróżnienie idzie zagnieżdżonym <Text>, więc zdanie zostaje jednym akapitem
-            i łamie się normalnie — sklejanie kilku osobnych napisów w wierszu psułoby
+            i łamie się normalnie - sklejanie kilku osobnych napisów w wierszu psułoby
             zawijanie przy dłuższych kodach pilotów. */}
         <AppText variant="body" tone="secondary" style={styles.text}>
           {segments.map((segment, index) =>

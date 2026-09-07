@@ -1,14 +1,14 @@
 /**
- * UZ Aero (serwer) — trasy dni lotnych panelu (`GET /admin/api/sessions*`,
+ * UZ Aero (serwer) - trasy dni lotnych panelu (`GET /admin/api/sessions*`,
  * mockupy `A02-dni.html` i `A02a-dzien.html`).
  *
  * Cienkie jak reszta repo: zod → zapytanie → status. Trasa nie zna ani SQL-a, ani
- * porządku listy, ani tego, jak liczą się dni — tłumaczy wyłącznie query string na
+ * porządku listy, ani tego, jak liczą się dni - tłumaczy wyłącznie query string na
  * filtr i wynik na kod HTTP.
  *
  * Zdolność `panel.access`: odczyt dni ma administrator i szef wyszkolenia. Korekta,
  * czyli jedyna operacja PISZĄCA na tym zasobie, mieszka w `corrections.ts` i wymaga
- * `events.correct` — pisanie w cudzym rejestrze to inna odpowiedzialność niż czytanie.
+ * `events.correct` - pisanie w cudzym rejestrze to inna odpowiedzialność niż czytanie.
  */
 
 import type { FastifyInstance } from 'fastify';
@@ -72,7 +72,7 @@ export function registerAdminSessionRoutes(
 
       const outcome = await sessions.list(filter);
       // 400, nie 500: kursor przychodzi z zewnątrz, więc jego uszkodzenie jest wadą
-      // żądania. Milczące zaczęcie od pierwszej strony byłoby gorsze — panel
+      // żądania. Milczące zaczęcie od pierwszej strony byłoby gorsze - panel
       // pokazałby początek listy, sądząc, że przewinął dalej.
       if (!outcome.ok) return reply.code(400).send({ error: 'bad_cursor' });
 

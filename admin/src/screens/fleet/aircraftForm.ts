@@ -1,280 +1,417 @@
 /**
- * UZ Aero — panel: FORMULARZ SAMOLOTU (`A07a`) — walidacja i szkic (moduł CZYSTY).
+ * UZ Aero - panel 2.0: formularz samolotu - szkic, ocena i ZMIANA do wysłania.
  *
- * Serwer sprawdza to samo (`http/routes/admin/fleet.ts` + `domain/fleetGuards.ts`),
- * więc to NIE JEST zabezpieczenie. To różnica między „przycisk mówi, czego brakuje"
- * a „serwer odbija 400 bez wyjaśnienia" — i dlatego reguły są tu LUSTREM reguł serwera,
- * wypisanym obok z podaniem, czego dotyczą.
+ * Moduł CZYSTY (bez Reacta, bez sieci) - decyzje o treści, nie o układzie.
  *
- * ══ DLACZEGO POJEMNOŚĆ MA WŁASNY PARSER, A NIE `Number(text)` ══
- * Bo pole wypełnia człowiek z polską klawiaturą: „1100", „1 100", „1100,5" mają znaczyć
- * to samo. `Number('1100,5')` daje `NaN`, a `parseFloat('1 100')` — `1`. Obie pomyłki
- * kończą się zapisem pojemności, której nikt nie wpisał, czyli przesunięciem progu
- * flagi `FUEL_MISMATCH` bez wiedzy administratora. Ten sam powód, dla którego
- * `@uzaero/format` ma `parseLitres` dla telefonu.
+ * == CO TU WOLNO SPRAWDZAC ==
+ * Kształt wpisu (to, co serwer odrzuciłby jako `400 bad_request`), WYMAGALNOŚĆ pól
+ * (uwagi do issue #66: olej, normy i - przy tworzeniu - „Aktualny stan" nie są
+ * opcjonalne; to reguła FORMULARZA, serwer dalej przyjmuje `null` starych wierszy)
+ * ORAZ reguły, które widać wprost w polach: wartości dodatnie, minimum oleju nie
+ * większe od zbiornika, stan w granicach pojemności. Wszystkie mówią TYM SAMYM
+ * zdaniem, co odmowa serwera (`aircraftRefusal.ts`), więc nie są drugą regułą -
+ * są tą samą regułą powiedzianą wcześniej.
+ *
+ * Czego tu NIE MA: „czy wolno wyłączyć jednostkę ze służby". To zależy od otwartych
+ * sesji, czyli od stanu świata, a nie od zawartości pól - pyta o to ekran, bo ma liczbę
+ * z listy, i tak samo pyta serwer, bo tylko on wie, jak jest naprawdę.
  */
 
-import type { MhFormat, ServiceStatus } from '@uzaero/domain';
-import { parseLitres } from '@uzaero/format';
+import { motoHours, parseLitres, parseMotoHours } from '@uzaero/format';
+import type { MhFormat } from '@uzaero/domain';
 
 import type { AircraftListItemDto } from '../../api/dto';
 import type { CreateAircraftBody, UpdateAircraftBody } from '../../api/fleet';
+import {
+  AIRCRAFT_IN_SERVICE,
+  CAPACITY_NOT_POSITIVE,
+  FUEL_NORM_NOT_POSITIVE,
+  INITIAL_FUEL_OVER_CAPACITY,
+  INITIAL_OIL_OVER_CAPACITY,
+  OIL_MIN_ABOVE_CAPACITY,
+  OIL_NOT_POSITIVE,
+} from './aircraftRefusal';
 
+/** Stan pól formularza. Liczby jako NAPISY - tak, jak wychodzą z `<input>`. */
 export interface AircraftDraft {
   reg: string;
   type: string;
   year: string;
-  capacity: string;
+  capacityL: string;
   mhFormat: MhFormat;
   dualRequired: boolean;
-  serviceStatus: ServiceStatus;
+  serviceStatus: 'active' | 'disabled';
+  oilMinL: string;
+  oilCapacityL: string;
+  oilNormLPerH: string;
+  /** Norma nominalna spalania z dokumentacji (issue #66). */
+  fuelNormLPerH: string;
+  /**
+   * „Aktualny stan" jednostki (issue #66 + uwagi) - zerowe ogniwo łańcucha odczytów.
+   * Identyfikatory zostają `initial*` (tak nazywają się kolumny i pola API); na ekranie
+   * pole nazywa się „Aktualny stan", a czy jest edytowalne, mówi `InitialFieldsMode`.
+   */
+  initialMh: string;
+  initialFuelL: string;
+  initialOilL: string;
 }
 
-/** Lustro `reg` z trasy: 3–10 znaków, litery, cyfry i myślnik. */
-export const REG_MIN = 3;
-export const REG_MAX = 10;
-/** Lustro `type` z trasy. */
-export const TYPE_MIN = 2;
-export const TYPE_MAX = 60;
-/** Lustro `year` z trasy — zakres tabliczki znamionowej, nie fantazji. */
-export const YEAR_MIN = 1900;
-export const YEAR_MAX = 2100;
-
-export interface FieldState {
-  ok: boolean;
-  /** Powód odmowy — WIDOCZNY tekst pod polem, nigdy tooltip; `null` = pole w porządku. */
-  message: string | null;
-}
-
-const OK: FieldState = { ok: true, message: null };
-
-/**
- * Rejestrację normalizujemy do WERSALIKÓW, a nie odrzucamy małych liter: „sp-klm"
- * i „SP-KLM" to w intencji administratora ta sama maszyna. Serwer robi dokładnie to
- * samo — panel pokazuje wynik od razu, żeby wielka litera nie była niespodzianką
- * po zapisie.
- */
-export function normalizeReg(value: string): string {
-  return value.trim().toUpperCase();
-}
-
-export function regState(value: string): FieldState {
-  const reg = normalizeReg(value);
-  if (reg.length === 0) {
-    return {
-      ok: false,
-      message:
-        'Rejestracja jest wymagana — widać ją w logu dnia, w nazwie karty arkusza i w każdej fladze.',
-    };
-  }
-  if (reg.length < REG_MIN || reg.length > REG_MAX) {
-    return { ok: false, message: `Rejestracja: od ${REG_MIN} do ${REG_MAX} znaków.` };
-  }
-  if (!/^[A-Z0-9-]+$/.test(reg)) {
-    return { ok: false, message: 'Rejestracja: wyłącznie litery, cyfry i myślnik, bez spacji.' };
-  }
-  return OK;
-}
-
-export function typeState(value: string): FieldState {
-  const text = value.trim();
-  if (text.length === 0) {
-    return { ok: false, message: 'Typ jest wymagany — bez niego wiersz floty nie ma podpisu.' };
-  }
-  if (text.length < TYPE_MIN || text.length > TYPE_MAX) {
-    return { ok: false, message: `Typ: od ${TYPE_MIN} do ${TYPE_MAX} znaków.` };
-  }
-  return OK;
-}
-
-/**
- * Rok jest OPCJONALNY, bo kolumna `aircraft.year` jest `NULL`-owalna — tabliczka bez
- * daty produkcji to realny przypadek. Puste pole znaczy „nie wiadomo", a nie „rok 0".
- */
-export function yearState(value: string): FieldState {
-  const text = value.trim();
-  if (text === '') return OK;
-  if (!/^\d{4}$/.test(text)) {
-    return { ok: false, message: 'Rok produkcji: cztery cyfry albo puste pole.' };
-  }
-  const year = Number(text);
-  if (year < YEAR_MIN || year > YEAR_MAX) {
-    return { ok: false, message: `Rok produkcji: między ${YEAR_MIN} a ${YEAR_MAX}.` };
-  }
-  return OK;
-}
-
-/** Wpis pojemności → litry; `null` = wpis nieczytelny (patrz nagłówek pliku). */
-export function parseCapacity(value: string): number | null {
-  return parseLitres(value);
-}
-
-export function capacityState(value: string): FieldState {
-  const capacityL = parseCapacity(value);
-  if (capacityL == null) {
-    return { ok: false, message: 'Pojemność zbiorników: liczba w litrach, np. 1100.' };
-  }
-  if (capacityL <= 0) {
-    return {
-      ok: false,
-      // Powód, nie „popraw pole": zero cofa tolerancję flagi do podłogi 10 L i unieważnia
-      // inwariant „stan po tankowaniu ≤ pojemność". Serwer odmawia z tym samym kodem.
-      message:
-        'Pojemność musi być większa od zera — z niej wynika próg flagi FUEL_MISMATCH i limit wpisu tankowania.',
-    };
-  }
-  return OK;
-}
-
-export interface FormState {
-  reg: FieldState;
-  type: FieldState;
-  year: FieldState;
-  capacity: FieldState;
-  /** Czy wolno wysłać. */
-  ok: boolean;
-  /** Powód blokady przycisku — WIDOCZNY tekst, nigdy sam wyszarzony przycisk. */
-  reason: string | null;
-}
-
-export function formState(draft: AircraftDraft): FormState {
-  const reg = regState(draft.reg);
-  const type = typeState(draft.type);
-  const year = yearState(draft.year);
-  const capacity = capacityState(draft.capacity);
-  const ok = reg.ok && type.ok && year.ok && capacity.ok;
-
-  return {
-    reg,
-    type,
-    year,
-    capacity,
-    ok,
-    reason: ok ? null : 'Popraw pola oznaczone niżej — serwer odrzuci ten zapis.',
-  };
-}
-
-/** Pusty formularz „Dodaj samolot" — stan służby domyślnie „w służbie" (mockup A07a). */
-export const EMPTY_DRAFT: AircraftDraft = {
+export const EMPTY_AIRCRAFT: AircraftDraft = {
   reg: '',
   type: '',
   year: '',
-  capacity: '',
+  capacityL: '',
+  // Domyślny licznik dziesiętny - tak wygląda większość przyrządów w klubie,
+  // a wybór i tak jest jawny (dwie karty, żadna nie jest „resztą").
   mhFormat: 'decimal',
   dualRequired: false,
   serviceStatus: 'active',
+  oilMinL: '',
+  oilCapacityL: '',
+  oilNormLPerH: '',
+  fuelNormLPerH: '',
+  initialMh: '',
+  initialFuelL: '',
+  initialOilL: '',
 };
 
-/** Jednostka z listy → szkic formularza (wejście „Edytuj"). */
+/** Liczba -> pole tekstowe. `null` to pole PUSTE, nie napis „null" i nie zero. */
+const textOf = (value: number | null): string => (value == null ? '' : String(value));
+
+/** Motogodziny -> pole tekstowe W FORMACIE LICZNIKA tej maszyny (dziesiętny / hh:mm). */
+const mhTextOf = (value: number | null, format: MhFormat): string =>
+  value == null ? '' : motoHours(value, format);
+
 export function draftOf(aircraft: AircraftListItemDto): AircraftDraft {
   return {
     reg: aircraft.reg,
     type: aircraft.type,
-    year: aircraft.year == null ? '' : String(aircraft.year),
-    capacity: String(aircraft.capacityL),
+    year: textOf(aircraft.year),
+    capacityL: textOf(aircraft.capacityL),
     mhFormat: aircraft.mhFormat,
     dualRequired: aircraft.dualRequired,
-    serviceStatus: aircraft.serviceStatus,
-  };
-}
-
-/** Szkic → ciało `POST /fleet`. Wołane wyłącznie po `formState(...).ok`. */
-export function createBody(draft: AircraftDraft): CreateAircraftBody {
-  return {
-    reg: normalizeReg(draft.reg),
-    type: draft.type.trim(),
-    year: draft.year.trim() === '' ? '' : Number(draft.year.trim()),
-    capacityL: parseCapacity(draft.capacity) ?? 0,
-    mhFormat: draft.mhFormat,
-    dualRequired: draft.dualRequired,
-    serviceStatus: draft.serviceStatus,
+    serviceStatus: aircraft.serviceStatus === 'disabled' ? 'disabled' : 'active',
+    oilMinL: textOf(aircraft.oilMinL),
+    oilCapacityL: textOf(aircraft.oilCapacityL),
+    oilNormLPerH: textOf(aircraft.oilNormLPerH),
+    fuelNormLPerH: textOf(aircraft.fuelNormLPerH),
+    // Licznik pokazujemy W FORMACIE TEJ MASZYNY: administrator przepisuje liczbę
+    // z tarczy, a tarcza zegarowa pokazuje „1236:30", nie „1236.5". W danych
+    // motogodziny są zawsze dziesiętne - to jest wyłącznie sposób zapisu.
+    initialMh: mhTextOf(aircraft.initialMh, aircraft.mhFormat),
+    initialFuelL: textOf(aircraft.initialFuelL),
+    initialOilL: textOf(aircraft.initialOilL),
   };
 }
 
 /**
- * Szkic → ciało `PATCH /fleet/:id`, wyłącznie POLA ZMIENIONE.
+ * KIEDY przestawić szkic na dane z serwera - klucz synchronizacji formularza.
  *
- * `PATCH` opisuje różnicę, a nie stan docelowy, więc wysyłanie niezmienionych pól nie
- * jest tylko marnotrawstwem: dziennik audytu zapisuje DIFF, a serwer odmawia zapisu
- * bez zmian (`no_changes`). Formularz, który wysyła wszystko, kazałby administratorowi
- * czytać w dzienniku „rejestracja z SP-KLM na SP-KLM".
+ * `null` znaczy „jeszcze nie ma czym": przy wejściu z linku (albo po odświeżeniu karty)
+ * szuflada montuje się ZANIM przyjdzie lista, więc jednostki jeszcze nie ma. Formularz
+ * przestawiony wtedy raz, przy montowaniu, zostawał pusty na zawsze.
+ *
+ * Klucz zmienia się wyłącznie przy zmianie TOŻSAMOŚCI edytowanej jednostki - nie przy
+ * każdym odświeżeniu listy, więc przeładowanie danych po zapisie nie kasuje wpisu.
  */
-export function updateBody(
-  before: AircraftListItemDto,
-  draft: AircraftDraft,
-): UpdateAircraftBody {
-  const body: UpdateAircraftBody = {};
+export function draftKey(creating: boolean, aircraft: AircraftListItemDto | null): string | null {
+  if (creating) return 'nowy';
+  return aircraft?.id ?? null;
+}
+
+/**
+ * Rejestrację normalizujemy do WERSALIKOW dokładnie tak, jak robi to serwer:
+ * „sp-klm" i „SP-KLM" to ta sama maszyna, a indeks unikalności jest wrażliwy na
+ * wielkość liter - bez normalizacji dałoby się założyć drugi wiersz tego samego
+ * samolotu.
+ */
+export const normalizeReg = (reg: string): string => reg.trim().toUpperCase();
+
+export type AircraftField =
+  | 'reg'
+  | 'type'
+  | 'year'
+  | 'capacityL'
+  | 'oilMinL'
+  | 'oilCapacityL'
+  | 'oilNormLPerH'
+  | 'fuelNormLPerH'
+  | 'initialMh'
+  | 'initialFuelL'
+  | 'initialOilL';
+
+/**
+ * Co formularz robi z polami „Aktualny stan" (`initial*`) - uwagi do issue #66:
+ *
+ *  - `required` - NOWY samolot: pola do wpisania i WYMAGANE (zamówienie z issue #66:
+ *    „jak dodaję samolot to powinno być pole w którym wpiszę startowy stan…");
+ *  - `editable` - edycja jednostki, której stanu nie prowadzi jeszcze dziennik
+ *    (`reading` z panelu albo żaden): liczba jest nadal wyłącznie wpisem administratora,
+ *    więc ma on prawo ją poprawić. Puste pole jest tu legalne - wymóg przy edycji
+ *    blokowałby niezwiązaną poprawkę (np. wyłączenie ze służby) na starym wierszu;
+ *  - `locked` - edycja jednostki, która już lata: pola są DO ODCZYTU (wartości
+ *    z dziennika, `currentState.ts`), więc szkicu `initial*` nie ocenia się i nie
+ *    wysyła wcale. Bez tego korekta pojemności potrafiłaby zapalić błąd na polu,
+ *    którego na ekranie nie ma.
+ *
+ * Kto wybiera tryb: ekran, bo tylko on wie, czy tworzy i co mówi `reading.source`
+ * (`currentStateLocked`).
+ */
+export type InitialFieldsMode = 'required' | 'editable' | 'locked';
+
+/**
+ * == PUSTE POLE WYMAGANE NIE DOSTAJE ZDANIA ==
+ * Reguła przeniesiona wprost z aplikacji pilota (`CLAUDE.md`, issue #55): brak wpisu
+ * widać z formularza NAD przyciskiem, więc przycisk jest po prostu nieczynny.
+ * Zdanie zostaje dla wpisu NIECZYTELNEGO - czerwona ramka mówi, KTORE pole,
+ * ale nie mówi, co jest z nim nie tak.
+ */
+export interface AircraftVerdict {
+  /** Pola z wpisem NIE DO ODCZYTANIA - czerwona ramka. Puste pola tu NIE wchodzą. */
+  invalid: AircraftField[];
+  /** `false` = brakuje czegoś wymaganego. Bez zdania - brak widać w polach. */
+  complete: boolean;
+  /** Zdanie dla przycisku; `null` także wtedy, gdy formularz jest po prostu pusty. */
+  blocker: string | null;
+}
+
+const REG_PATTERN = /^[A-Z0-9-]+$/;
+
+/**
+ * Litry z pola tekstowego. `parseLitres` z `@uzaero/format` - ten sam parser, którego
+ * używa aplikacja pilota, więc przecinek i kropka znaczą to samo po obu stronach.
+ */
+const litresOf = (text: string): number | null => parseLitres(text.trim());
+
+/**
+ * Licznik z pola tekstowego. `parseMotoHours` przyjmuje OBA zapisy naraz („1236.5"
+ * i „1236:30") niezależnie od `mhFormat` - administrator przepisujący liczbę z tarczy
+ * nie ma się zastanawiać, jak jednostka jest skonfigurowana. Wynikiem są zawsze
+ * godziny dziesiętne, bo tylko takie jadą do bazy.
+ */
+const mhOf = (text: string): number | null => parseMotoHours(text.trim());
+
+/** Rok jako CZTERY CYFRY - własny parser, bo `parseLitres` przyjąłby „19,99". */
+function yearOf(text: string): number | null {
+  const trimmed = text.trim();
+  if (!/^\d{4}$/.test(trimmed)) return null;
+  return Number(trimmed);
+}
+
+export function verdictOf(draft: AircraftDraft, initialFields: InitialFieldsMode): AircraftVerdict {
+  const invalid: AircraftField[] = [];
+  let blocker: string | null = null;
+  let complete = true;
+
+  /** Wpis nieczytelny: czerwona ramka I zdanie. */
+  const fail = (field: AircraftField, message: string): void => {
+    invalid.push(field);
+    blocker ??= message;
+  };
+  /** Pole wymagane, jeszcze puste: sam brak zapisu, bez ramki i bez zdania. */
+  const missing = (): void => {
+    complete = false;
+  };
 
   const reg = normalizeReg(draft.reg);
-  if (reg !== before.reg) body.reg = reg;
-
   const type = draft.type.trim();
-  if (type !== before.type) body.type = type;
 
-  const year = draft.year.trim();
-  const beforeYear = before.year == null ? '' : String(before.year);
-  if (year !== beforeYear) body.year = year === '' ? '' : Number(year);
+  if (reg === '') missing();
+  else if (reg.length < 3 || reg.length > 10) fail('reg', 'Rejestracja ma od 3 do 10 znaków.');
+  else if (!REG_PATTERN.test(reg)) fail('reg', 'Rejestracja: litery, cyfry i myślnik.');
 
-  const capacityL = parseCapacity(draft.capacity);
-  if (capacityL != null && capacityL !== before.capacityL) body.capacityL = capacityL;
+  if (type === '') missing();
+  else if (type.length < 2) fail('type', 'Typ samolotu: co najmniej 2 znaki.');
 
-  if (draft.mhFormat !== before.mhFormat) body.mhFormat = draft.mhFormat;
-  if (draft.dualRequired !== before.dualRequired) body.dualRequired = draft.dualRequired;
-  if (draft.serviceStatus !== before.serviceStatus) body.serviceStatus = draft.serviceStatus;
+  if (draft.year.trim() !== '') {
+    const year = yearOf(draft.year);
+    if (year == null || year < 1900 || year > 2100) {
+      fail('year', 'Rok produkcji: cztery cyfry albo puste pole.');
+    }
+  }
+
+  const capacity = litresOf(draft.capacityL);
+  if (draft.capacityL.trim() === '') missing();
+  else if (capacity == null) fail('capacityL', 'Pojemność w litrach, np. 1100.');
+  else if (capacity <= 0) fail('capacityL', CAPACITY_NOT_POSITIVE);
+
+  /*
+   * Konfiguracja oleju i normy z dokumentacji są WYMAGANE (uwagi do issue #66, pkt 1
+   * i 5: „olej musi być wymagany zawsze", „pola nie powinny być opcjonalne"). Puste
+   * pole blokuje zapis samym brakiem - widać je w formularzu nad przyciskiem
+   * (reguła issue #55) - a wpisane musi być liczbą DODATNIĄ: zero L/h nie jest stanem
+   * świata, tylko literówką.
+   */
+  const positives: [AircraftField, string, string][] = [
+    ['oilMinL', draft.oilMinL, OIL_NOT_POSITIVE],
+    ['oilCapacityL', draft.oilCapacityL, OIL_NOT_POSITIVE],
+    ['oilNormLPerH', draft.oilNormLPerH, OIL_NOT_POSITIVE],
+    ['fuelNormLPerH', draft.fuelNormLPerH, FUEL_NORM_NOT_POSITIVE],
+  ];
+  for (const [field, text, refusal] of positives) {
+    if (text.trim() === '') {
+      missing();
+      continue;
+    }
+    const value = litresOf(text);
+    if (value == null) fail(field, 'Wpisz liczbę.');
+    else if (value <= 0) fail(field, refusal);
+  }
+
+  // Reguła konfiguracji PRZED sufitami stanu: gdy obie odzywają się naraz (obniżony
+  // zbiornik), pierwszeństwo ma zdanie o samej konfiguracji.
+  const oilMin = litresOf(draft.oilMinL);
+  const oilCapacity = litresOf(draft.oilCapacityL);
+  if (oilMin != null && oilCapacity != null && oilMin > oilCapacity) {
+    fail('oilMinL', OIL_MIN_ABOVE_CAPACITY);
+  }
+
+  /*
+   * „Aktualny stan": ZERO jest tu WARTOŚCIĄ, nie brakiem (nowy silnik ma 0 na
+   * liczniku, maszyna przyjęta z pustymi zbiornikami - 0 litrów), więc nie sprawdzamy
+   * dodatniości. Ta różnica wobec norm wyżej jest treścią tych pól, a nie przeoczeniem.
+   * Wymagane są WYŁĄCZNIE przy tworzeniu; w trybie `locked` nie ocenia się ich wcale,
+   * bo nie ma ich na ekranie (patrz `InitialFieldsMode`).
+   *
+   * Ujemnych też tu nie sprawdzamy i to NIE jest luka: oba parsery przyjmują wyłącznie
+   * cyfry, więc „-5" nie jest dla nich liczbą i wypada zdaniem o nieczytelnym wpisie.
+   * Reguła `initial_negative` żyje na serwerze, bo tam JSON potrafi przynieść minus.
+   */
+  if (initialFields !== 'locked') {
+    const initial: [AircraftField, string, (t: string) => number | null][] = [
+      ['initialMh', draft.initialMh, mhOf],
+      ['initialFuelL', draft.initialFuelL, litresOf],
+      ['initialOilL', draft.initialOilL, litresOf],
+    ];
+    for (const [field, text, parse] of initial) {
+      if (text.trim() === '') {
+        if (initialFields === 'required') missing();
+        continue;
+      }
+      if (parse(text) == null) fail(field, 'Wpisz liczbę.');
+    }
+
+    // Oba sufity mówią TYM SAMYM zdaniem, co odmowa serwera - to jest ta sama reguła
+    // powiedziana wcześniej, a nie druga (patrz nagłówek pliku).
+    const initialFuel = litresOf(draft.initialFuelL);
+    if (initialFuel != null && capacity != null && capacity > 0 && initialFuel > capacity) {
+      fail('initialFuelL', INITIAL_FUEL_OVER_CAPACITY);
+    }
+
+    const initialOil = litresOf(draft.initialOilL);
+    if (initialOil != null && oilCapacity != null && initialOil > oilCapacity) {
+      fail('initialOilL', INITIAL_OIL_OVER_CAPACITY);
+    }
+  }
+
+  return { invalid, complete, blocker };
+}
+
+/**
+ * Pojemność z pola jako liczba - dla podpowiedzi o progu.
+ *
+ * Osobna funkcja, a nie pole werdyktu: ekran pyta o nią przy KAŻDYM naciśnięciu
+ * klawisza (żeby zapytać serwer o próg), a werdykt liczy się przy zapisie.
+ */
+export const capacityValue = (draft: AircraftDraft): number | null => litresOf(draft.capacityL);
+
+export function createBodyOf(draft: AircraftDraft): CreateAircraftBody {
+  return {
+    reg: normalizeReg(draft.reg),
+    type: draft.type.trim(),
+    // Pusty rok jedzie jako `''`, nie `null` - taki jest schemat po drugiej stronie
+    // (unia liczby i pustego napisu); `null` odbiłby się o `400 bad_request`.
+    year: yearOf(draft.year) ?? '',
+    capacityL: litresOf(draft.capacityL) ?? 0,
+    mhFormat: draft.mhFormat,
+    dualRequired: draft.dualRequired,
+    serviceStatus: draft.serviceStatus,
+    oilMinL: litresOf(draft.oilMinL),
+    oilCapacityL: litresOf(draft.oilCapacityL),
+    oilNormLPerH: litresOf(draft.oilNormLPerH),
+    fuelNormLPerH: litresOf(draft.fuelNormLPerH),
+    initialMh: mhOf(draft.initialMh),
+    initialFuelL: litresOf(draft.initialFuelL),
+    initialOilL: litresOf(draft.initialOilL),
+  };
+}
+
+/**
+ * Szkic -> ciało `PATCH`, czyli WYŁACZNIE to, co się zmieniło.
+ *
+ * Porównujemy WARTOSCI, nie napisy: „1100" i „1100,0" to ta sama pojemność, a wysłanie
+ * jej jako zmiany dałoby wpis w dzienniku audytu o zmianie, której nie było.
+ *
+ * W trybie `locked` pola `initial*` NIE wchodzą do ciała wcale - są na ekranie do
+ * odczytu (wartości z dziennika), więc szkic nie ma prawa ich ruszyć. To nie jest
+ * ostrożność na wyrost: `draftOf` formatuje licznik do napisu, a formatowanie
+ * z zaokrągleniem (`1236.55` → „1236.6") czytane z powrotem różni się od bazy
+ * i wysłałoby „poprawkę", której nikt nie zrobił, na pole, którego nie widać.
+ */
+export function updateBodyOf(
+  before: AircraftListItemDto,
+  draft: AircraftDraft,
+  initialFields: InitialFieldsMode,
+): UpdateAircraftBody {
+  const body: UpdateAircraftBody = {};
+  const next = createBodyOf(draft);
+
+  // Rejestrację porównujemy PO OBU stronach po normalizacji - ta sama pułapka, co
+  // przy kodzie pilota: wiersz założony z pominięciem trasy (seed, `INSERT` ręką)
+  // ma małe litery, a wpis znormalizowany różniłby się od niego zawsze.
+  if (next.reg !== normalizeReg(before.reg)) body.reg = next.reg;
+  if (next.type !== before.type) body.type = next.type;
+  if ((next.year === '' ? null : next.year) !== before.year) body.year = next.year;
+  if (next.capacityL !== before.capacityL) body.capacityL = next.capacityL;
+  if (next.mhFormat !== before.mhFormat) body.mhFormat = next.mhFormat;
+  if (next.dualRequired !== before.dualRequired) body.dualRequired = next.dualRequired;
+  if (next.serviceStatus !== before.serviceStatus) body.serviceStatus = next.serviceStatus;
+  if (next.oilMinL !== before.oilMinL) body.oilMinL = next.oilMinL;
+  if (next.oilCapacityL !== before.oilCapacityL) body.oilCapacityL = next.oilCapacityL;
+  if (next.oilNormLPerH !== before.oilNormLPerH) body.oilNormLPerH = next.oilNormLPerH;
+  if (next.fuelNormLPerH !== before.fuelNormLPerH) body.fuelNormLPerH = next.fuelNormLPerH;
+  if (initialFields !== 'locked') {
+    if (next.initialMh !== before.initialMh) body.initialMh = next.initialMh;
+    if (next.initialFuelL !== before.initialFuelL) body.initialFuelL = next.initialFuelL;
+    if (next.initialOilL !== before.initialOilL) body.initialOilL = next.initialOilL;
+  }
 
   return body;
 }
 
-/** Czy formularz w ogóle coś zmienia — bez tego przycisk „Zapisz" prosi o 400. */
-export function hasChanges(before: AircraftListItemDto, draft: AircraftDraft): boolean {
-  return Object.keys(updateBody(before, draft)).length > 0;
-}
+export const hasChanges = (
+  before: AircraftListItemDto,
+  draft: AircraftDraft,
+  initialFields: InitialFieldsMode,
+): boolean => Object.keys(updateBodyOf(before, draft, initialFields)).length > 0;
 
-export interface ChoiceOption<T extends string> {
-  id: T;
-  name: string;
-  desc: string;
+/**
+ * Czy ten zapis PROBUJE wyłączyć jednostkę, na której ktoś jeszcze lata.
+ *
+ * Pytanie zadaje ekran, bo ma liczbę otwartych sesji z listy - i zadaje je PRZED
+ * wysłaniem, żeby powiedzieć powód przy przycisku zamiast czekać na `409`.
+ * Serwer pilnuje tego niezależnie: jego odpowiedź jest prawdą, ta funkcja - uprzejmością.
+ */
+export function disablesAircraftInUse(
+  before: AircraftListItemDto,
+  draft: AircraftDraft,
+): boolean {
+  return (
+    draft.serviceStatus === 'disabled' &&
+    before.serviceStatus !== 'disabled' &&
+    before.openSessions > 0
+  );
 }
 
 /**
- * Opisy formatu licznika 1:1 z mockupu `A07a` — to jedyne miejsce w produkcie, w którym
- * człowiek czyta, CO ten wybór zmienia, zanim go dokona.
+ * Dlaczego NIE DA SIĘ usunąć jednostki - albo `null`, gdy próba ma sens.
+ *
+ * Sprawdzamy WYŁĄCZNIE stan służby, bo tylko on jest widoczny z listy. Drugiego
+ * warunku (brak historii) panel nie zna i nie zgaduje - wraca odmową serwera.
+ *
+ * Pytamy o stan ZAPISANY, nie o szkic: dopóki „Wyłączony" nie jest zapisane, telefony
+ * o nim nie wiedzą - a to na nich opiera się cała dwustopniowość tej operacji.
  */
-export const MH_FORMAT_OPTIONS: readonly ChoiceOption<MhFormat>[] = [
-  {
-    id: 'decimal',
-    name: 'Dziesiętny — 3907.8',
-    desc: 'Licznik z dziesiętną częścią godziny. Pilot wpisuje jedną liczbę.',
-  },
-  {
-    id: 'hhmm',
-    name: 'Godziny i minuty — 3907:48',
-    desc: 'Licznik z minutami. Pilot wpisuje dwa pola: godziny i minuty 00–59.',
-  },
-];
-
-export const DUAL_OPTIONS: readonly ChoiceOption<'no' | 'yes'>[] = [
-  {
-    id: 'no',
-    name: 'Nieobowiązkowy',
-    desc: 'Pilot może zacząć dzień sam. Dual pozostaje polem opcjonalnym.',
-  },
-  {
-    id: 'yes',
-    name: 'Wymagany',
-    desc: 'Preflight bez wskazanego Duala jest zablokowany — pilot nie przejdzie do potwierdzenia.',
-  },
-];
-
-export const SERVICE_OPTIONS: readonly ChoiceOption<ServiceStatus>[] = [
-  {
-    id: 'active',
-    name: 'W służbie',
-    desc: 'Widoczny na liście wyboru samolotu w aplikacji pilota.',
-  },
-  {
-    id: 'disabled',
-    name: 'Wyłączony ze służby',
-    desc: 'Znika z listy wyboru w aplikacji. Historia, statystyki i łańcuch MH zostają bez zmian.',
-  },
-];
+export function deleteBlocker(aircraft: AircraftListItemDto): string | null {
+  return aircraft.serviceStatus === 'disabled' ? null : AIRCRAFT_IN_SERVICE;
+}

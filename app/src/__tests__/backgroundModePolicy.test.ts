@@ -1,16 +1,16 @@
 /**
- * UZ Aero — polityka usługi pierwszoplanowej GPS.
+ * UZ Aero - polityka usługi pierwszoplanowej GPS.
  *
  * Dwa przypadki są tu obroną przed realnymi awariami:
- *  - adopcja (`none` przy działającej usłudze) — restart po powrocie z headless
+ *  - adopcja (`none` przy działającej usłudze) - restart po powrocie z headless
  *    mrugałby powiadomieniem i wycinał dziurę w śladzie kalibracyjnym,
- *  - `retry-later` z tła — start usługi pierwszoplanowej spoza pierwszego planu
+ *  - `retry-later` z tła - start usługi pierwszoplanowej spoza pierwszego planu
  *    kończy się `ForegroundServiceStartNotAllowedException` i crashem uzbrajania.
  */
 
 import { serviceCommand } from '../infrastructure/gps/backgroundModePolicy';
 
-describe('serviceCommand — usługa pierwszoplanowa GPS', () => {
+describe('serviceCommand - usługa pierwszoplanowa GPS', () => {
   it('silnik gra, usługi nie ma, aplikacja na ekranie → start', () => {
     expect(serviceCommand({ desired: 'service', started: false, appActive: true })).toBe('start');
   });

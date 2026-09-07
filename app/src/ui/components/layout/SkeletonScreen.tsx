@@ -1,17 +1,17 @@
 /**
- * UZ Aero — SKELETON RAMY APLIKACJI: bramki startu, zanim wiadomo, jaki ekran przyjdzie.
+ * UZ Aero - SKELETON RAMY APLIKACJI: bramki startu, zanim wiadomo, jaki ekran przyjdzie.
  *
  * Trzy momenty w `App.tsx` czekają, zanim jakikolwiek ekran ma prawo się narysować:
  * otwarcie bazy i wczytanie fontów, odczyt magazynu poświadczeń i wznowienie sesji.
  * Do issue #33 każdy z nich pokazywał `ActivityIndicator` na środku czerni.
  *
- * Ten skeleton celowo NIE UDAJE konkretnego ekranu — po tych bramkach idzie się na 01,
+ * Ten skeleton celowo NIE UDAJE konkretnego ekranu - po tych bramkach idzie się na 01,
  * do kokpitu albo na login, a plamki w kształcie logu dnia pokazane przed ekranem
  * logowania byłyby obietnicą nie do dotrzymania (wzorzec `design/LOADERY.html` reguła 2:
  * skeleton obiecuje część wspólną). Rezerwuje więc wyłącznie to, co mają wszystkie
  * ekrany: pasek nagłówka nad linią i blok treści pod nim.
  *
- * Splash z logo świadomie odrzucony — `SplashScreen` został z aplikacji usunięty
+ * Splash z logo świadomie odrzucony - `SplashScreen` został z aplikacji usunięty
  * (etap C5) i nie wraca tylnymi drzwiami jako ekran ładowania.
  */
 
@@ -26,7 +26,7 @@ export function SkeletonScreen() {
   const { theme } = useTheme();
 
   return (
-    // Obszar bezpieczny jak w `Screen` — bez niego pasek nagłówka wchodziłby pod status
+    // Obszar bezpieczny jak w `Screen` - bez niego pasek nagłówka wchodziłby pod status
     // bar (Android rysuje edge-to-edge od SDK 54) i skeleton obiecywałby układ przesunięty
     // o wysokość wcięcia względem ekranu, który za chwilę przyjdzie.
     <SafeAreaView

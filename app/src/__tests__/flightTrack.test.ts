@@ -1,14 +1,14 @@
 /**
- * UZ Aero — testy projekcji śladu lotu (mapa, profil, log punktów).
+ * UZ Aero - testy projekcji śladu lotu (mapa, profil, log punktów).
  *
  * Sens tych testów jest ten sam co przy detektorze: consumer-grade GPS kłamie, a ślad
  * rysujemy Z TEGO SAMEGO zapisu, który kłamał. Różnica jest taka, że detektor kłamstwo
- * ignoruje, a ekran śladu ma je POKAZAĆ z powodem — więc testujemy nie tylko „czy
+ * ignoruje, a ekran śladu ma je POKAZAĆ z powodem - więc testujemy nie tylko „czy
  * odrzucono", ale „czy powód jest ten, którego oczekuje kolumna Uwagi".
  *
  * Osobna rodzina asercji pilnuje SPÓJNOŚCI z detektorem: gdyby ktoś zmienił próg
  * dokładności w `thresholds.ts` tylko dla jednej ścieżki, ślad przestałby pokazywać to,
- * co naprawdę widział algorytm — a po to właśnie istnieje.
+ * co naprawdę widział algorytm - a po to właśnie istnieje.
  */
 
 import {
@@ -32,7 +32,7 @@ const t = (sec: number) => T0 + sec * 1000;
 const BASE = { lat: 52.1387, lon: 15.7986 };
 const NM = 1 / 60;
 
-/** Wpis śladu z rozsądnymi wartościami domyślnymi — test nadpisuje tylko to, co bada. */
+/** Wpis śladu z rozsądnymi wartościami domyślnymi - test nadpisuje tylko to, co bada. */
 function fix(sec: number, over: Partial<RawTrackEntry> = {}): RawTrackEntry {
   return {
     kind: 'fix',
@@ -56,13 +56,13 @@ function straightClimb(): RawTrackEntry[] {
 
 const WINDOW = { takeoffAt: t(0), landingAt: t(600) };
 
-describe('buildFlightTrack — okno lotu', () => {
+describe('buildFlightTrack - okno lotu', () => {
   it('bierze wyłącznie fixy z przedziału takeoff…landing', () => {
     const entries = [
-      fix(-60), // przed startem — kołowanie
+      fix(-60), // przed startem - kołowanie
       fix(30),
       fix(60),
-      fix(900), // po lądowaniu — kołowanie z powrotem
+      fix(900), // po lądowaniu - kołowanie z powrotem
     ];
 
     const track = buildFlightTrack(entries, { takeoffAt: t(0), landingAt: t(120) });
@@ -76,24 +76,24 @@ describe('buildFlightTrack — okno lotu', () => {
     expect(track.totalCount).toBe(10);
   });
 
-  it('pomija wiersze czujników — do trasy idą tylko fixy', () => {
+  it('pomija wiersze czujników - do trasy idą tylko fixy', () => {
     const entries = [fix(30), { kind: 'sensor', time: t(45) } as RawTrackEntry, fix(60)];
     const track = buildFlightTrack(entries, WINDOW);
     expect(track.totalCount).toBe(2);
   });
 
-  it('sortuje wpisy po czasie — zapis wsadowy potrafi je pomieszać', () => {
+  it('sortuje wpisy po czasie - zapis wsadowy potrafi je pomieszać', () => {
     const track = buildFlightTrack([fix(90), fix(30), fix(60)], WINDOW);
     expect(track.points.map((p) => p.time)).toEqual([t(30), t(60), t(90)]);
   });
 
-  it('brak fixów w oknie daje pusty ślad (lot ręczny — wariant 14B)', () => {
+  it('brak fixów w oknie daje pusty ślad (lot ręczny - wariant 14B)', () => {
     const track = buildFlightTrack([fix(900)], WINDOW);
     expect(track).toEqual(emptyFlightTrack());
   });
 });
 
-describe('buildFlightTrack — bramka jakości', () => {
+describe('buildFlightTrack - bramka jakości', () => {
   it('odrzuca fix z dokładnością gorszą niż próg, z powodem accuracy', () => {
     const entries = [fix(30), fix(60, { accuracyM: T.MAX_FIX_ACCURACY_M + 18 }), fix(90)];
     const track = buildFlightTrack(entries, WINDOW);
@@ -103,7 +103,7 @@ describe('buildFlightTrack — bramka jakości', () => {
     expect(track.totalCount).toBe(3);
   });
 
-  it('odrzucony punkt zostaje w logu — panel pokazuje go z powodem', () => {
+  it('odrzucony punkt zostaje w logu - panel pokazuje go z powodem', () => {
     const track = buildFlightTrack([fix(30, { accuracyM: 120 })], WINDOW);
     expect(track.points).toHaveLength(1);
     expect(track.line).toHaveLength(0);
@@ -112,7 +112,7 @@ describe('buildFlightTrack — bramka jakości', () => {
   it('odrzuca teleportację jako jump', () => {
     const entries = [
       fix(30),
-      // 40 NM w 30 s to ~4800 kt — multipath albo spoofing.
+      // 40 NM w 30 s to ~4800 kt - multipath albo spoofing.
       fix(60, { lat: BASE.lat + 40 * NM }),
       fix(90),
     ];
@@ -120,11 +120,11 @@ describe('buildFlightTrack — bramka jakości', () => {
     expect(track.points[1]!.rejected).toBe('jump');
   });
 
-  it('odrzucony punkt NIE jest odniesieniem skoku — inaczej ginie cały ogon trasy', () => {
+  it('odrzucony punkt NIE jest odniesieniem skoku - inaczej ginie cały ogon trasy', () => {
     const entries = [
       fix(30),
       fix(60, { lat: BASE.lat + 40 * NM }), // teleportacja
-      fix(90), // wraca na właściwą pozycję — musi być przyjęty
+      fix(90), // wraca na właściwą pozycję - musi być przyjęty
       fix(120),
     ];
     const track = buildFlightTrack(entries, WINDOW);
@@ -140,7 +140,7 @@ describe('buildFlightTrack — bramka jakości', () => {
     expect(track.usableCount).toBe(1);
   });
 
-  it('brak dokładności i prędkości nie dyskwalifikuje — odrzucamy tylko zły POMIAR', () => {
+  it('brak dokładności i prędkości nie dyskwalifikuje - odrzucamy tylko zły POMIAR', () => {
     const track = buildFlightTrack([fix(30, { accuracyM: null, gs: null })], WINDOW);
     expect(track.points[0]!.rejected).toBeNull();
   });
@@ -151,7 +151,7 @@ describe('buildFlightTrack — bramka jakości', () => {
   });
 });
 
-describe('rejectionReason — spójność z bramką detektora', () => {
+describe('rejectionReason - spójność z bramką detektora', () => {
   // Gdyby ktoś zmienił próg w jednym miejscu, a w drugim nie, ślad przestałby
   // pokazywać to, co widział algorytm. Test skoku pomijamy: detektor liczy go
   // z własnego bufora, a nie z pojedynczego odczytu.
@@ -180,15 +180,15 @@ describe('impliedSpeedKt', () => {
     expect(speed).toBeCloseTo(120, 0);
   });
 
-  it('zwraca null przy zerowym odstępie — dzielenie przez zero odrzuciłoby dobry punkt', () => {
+  it('zwraca null przy zerowym odstępie - dzielenie przez zero odrzuciłoby dobry punkt', () => {
     expect(impliedSpeedKt({ ...BASE, time: t(0) }, { ...BASE, time: t(0) })).toBeNull();
   });
 });
 
-describe('buildFlightTrack — metryki', () => {
+describe('buildFlightTrack - metryki', () => {
   it('liczy dystans z PEŁNEJ listy przyjętych punktów, nie z uproszczonej', () => {
     // Drobny zygzak: amplituda ~10 m jest PONIŻEJ tolerancji upraszczania (25 m),
-    // więc RDP zetnie go do odcinka — ale przebyta droga jest dłuższa od cięciwy
+    // więc RDP zetnie go do odcinka - ale przebyta droga jest dłuższa od cięciwy
     // i dystans musi to widzieć. Gdyby liczył się z uproszczonej linii, wyszłaby
     // dokładnie długość prostej.
     const stepLat = 100 / 111_132; // 100 m na północ
@@ -214,7 +214,7 @@ describe('buildFlightTrack — metryki', () => {
     expect(track.maxAltitudeFt).toBe(400 + 9 * 500);
   });
 
-  it('pomija wysokość z odrzuconego fixa — szpilka, której nie było', () => {
+  it('pomija wysokość z odrzuconego fixa - szpilka, której nie było', () => {
     const entries = [fix(30, { alt: 1000 }), fix(60, { alt: 9000, accuracyM: 300 }), fix(90, { alt: 1200 })];
     const track = buildFlightTrack(entries, WINDOW);
     expect(track.maxAltitudeFt).toBe(1200);
@@ -228,7 +228,7 @@ describe('buildFlightTrack — metryki', () => {
 });
 
 describe('simplifyTrack', () => {
-  it('zachowuje pierwszy i ostatni punkt — to start i lądowanie', () => {
+  it('zachowuje pierwszy i ostatni punkt - to start i lądowanie', () => {
     const points = straightClimb().map((e) => ({ lat: e.lat!, lon: e.lon! }));
     const simplified = simplifyTrack(points, 25);
 

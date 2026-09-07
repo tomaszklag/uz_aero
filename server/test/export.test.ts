@@ -1,9 +1,9 @@
 /**
- * UZ Aero (serwer) — testy eksportu dziennych arkuszy (§4.7).
+ * UZ Aero (serwer) - testy eksportu dziennych arkuszy (§4.7).
  *
  * Ta sama zasada co w `ingest.test.ts`: scenariusze jadą przez PRAWDZIWY `POST /events`
  * na PGlite, a jedyną atrapą jest `FakeSheets` (adaptera Google jeszcze nie ma).
- * Zawartość karty przybijamy liczbami KANONICZNEGO dnia — arkusz liczy ta sama
+ * Zawartość karty przybijamy liczbami KANONICZNEGO dnia - arkusz liczy ta sama
  * projekcja co ekran 10 telefonu, więc 150→88 L, 1234:30→1241:09 MH i block 02:22
  * nie mają prawa się różnić.
  */
@@ -14,7 +14,8 @@ import { projectSession, type Event } from '@uzaero/domain';
 
 import { buildDaySheet, sheetTabName } from '../src/application/common/export/daySheetContent.ts';
 import { FakeSheets } from './fakes/fakeSheets.ts';
-import { TEST_PASSWORD, testHarness } from './helpers.ts';
+import { testHarness } from './helpers.ts';
+import { googleTokenFor } from './testIdentityProvider.ts';
 
 const DAY = Date.UTC(2026, 5, 22);
 const at = (h: number, m: number): number => DAY + (h * 60 + m) * 60_000;
@@ -42,7 +43,7 @@ function event(
   };
 }
 
-/** Kanoniczny dzień z `ingest.test.ts` — te same liczby, co test projekcji telefonu. */
+/** Kanoniczny dzień z `ingest.test.ts` - te same liczby, co test projekcji telefonu. */
 function day(sessionUuid = 'sess-1', overrides: Record<string, unknown> = {}) {
   const base = { sessionUuid, ...overrides };
   return [
@@ -74,7 +75,7 @@ function day(sessionUuid = 'sess-1', overrides: Record<string, unknown> = {}) {
 }
 
 /**
- * Druga zmiana na TYM SAMYM samolocie tego samego dnia — wejście testów karty doby.
+ * Druga zmiana na TYM SAMYM samolocie tego samego dnia - wejście testów karty doby.
  *
  * Zaczyna się PO zamknięciu poprzedniej sesji i podejmuje jej odczyty (paliwo 88 L,
  * MH 1241.15), więc nie tworzy ani nakładki, ani dziury w łańcuchu MH: przedmiotem
@@ -122,8 +123,8 @@ type Harness = Awaited<ReturnType<typeof testHarness>>;
 async function login(app: Harness['app'], who = 'TMK') {
   const res = await app.inject({
     method: 'POST',
-    url: '/auth/login',
-    payload: { login: who, password: TEST_PASSWORD },
+    url: '/auth/google',
+    payload: { idToken: googleTokenFor(who) },
   });
   return res.json().token as string;
 }
@@ -174,17 +175,17 @@ describe('eksport dziennego arkusza (§4.7)', () => {
     const sheet = sheets.calls[0]!;
     expect(sheet.tab).toBe('2026-06-22_SP-AXA');
 
-    // Nagłówek doby — data UTC, samolot, ile zmian, czas blokowy doby.
-    expect(sheet.rows).toContainEqual(['UZ Aero — doba samolotu', '2026-06-22 (UTC)']);
+    // Nagłówek doby - data UTC, samolot, ile zmian, czas blokowy doby.
+    expect(sheet.rows).toContainEqual(['UZ Aero - doba samolotu', '2026-06-22 (UTC)']);
     expect(sheet.rows).toContainEqual(['Samolot', 'SP-AXA']);
-    expect(sheet.rows).toContainEqual(['Sesje', '1']);
+    expect(sheet.rows).toContainEqual(['Operacje', '1']);
     expect(sheet.rows).toContainEqual(['Czas blokowy doby', '02:22']);
 
     // Wiersz zmiany: załoga kodami, operacja, przejęcie → zdanie, block, stan.
     expect(sheet.rows).toContainEqual([
       'S1',
       'TMK',
-      '—',
+      '-',
       'skoki',
       '08:00',
       '16:45',
@@ -193,10 +194,10 @@ describe('eksport dziennego arkusza (§4.7)', () => {
     ]);
 
     // Tabela lotów: sesja, czasy UTC, czas lotu, metoda detekcji.
-    expect(sheet.rows).toContainEqual(['Sesja', '#', 'Takeoff', 'Landing', 'Block', 'Metoda']);
+    expect(sheet.rows).toContainEqual(['Operacja', '#', 'Takeoff', 'Landing', 'Block', 'Metoda']);
     expect(sheet.rows).toContainEqual(['S1', '1', '08:25', '09:18', '00:53', 'AUTO']);
 
-    // Bilans paliwa: 150 + 0 − 62 = 88 L — liczby z ekranu 10, nie własna arytmetyka.
+    // Bilans paliwa: 150 + 0 − 62 = 88 L - liczby z ekranu 10, nie własna arytmetyka.
     // Doba z jedną zmianą powtarza jej wiersz i to jest właściwe: suma jednego składnika.
     expect(sheet.rows).toContainEqual(['S1', '150', '0', '62', '88']);
     expect(sheet.rows).toContainEqual(['Doba', '150', '0', '62', '88']);
@@ -207,7 +208,7 @@ describe('eksport dziennego arkusza (§4.7)', () => {
 
     // Operacja skoki → sekcja zrzutów, choćby zerowa (strona przychodowa doby).
     expect(sheet.rows).toContainEqual(['S1', '0', '0']);
-    expect(sheet.rows).toContainEqual(['Klient', '—']);
+    expect(sheet.rows).toContainEqual(['Klient', '-']);
 
     // Dziennik: pierwszy eksport = rewizja 1, dzień i URL karty.
     expect(await exportRows(db)).toEqual([
@@ -220,7 +221,7 @@ describe('eksport dziennego arkusza (§4.7)', () => {
       },
     ]);
 
-    // Ekran 11 dostaje link — pudełko „Serwer zaktualizował arkusz".
+    // Ekran 11 dostaje link - pudełko „Serwer zaktualizował arkusz".
     const status = await syncStatus(app, token, 'sess-1');
     expect(status.exportUrl).toBe('https://sheets.example/2026-06-22_SP-AXA');
   });
@@ -231,7 +232,7 @@ describe('eksport dziennego arkusza (§4.7)', () => {
     const token = await login(app);
     await post(app, token, day());
 
-    // Zrzut zsynchronizowany PO eksporcie — dane dnia się zmieniły, arkusz musi dogonić.
+    // Zrzut zsynchronizowany PO eksporcie - dane dnia się zmieniły, arkusz musi dogonić.
     const late = await post(app, token, [
       event('drop', at(8, 48), {
         dropNumber: 1,
@@ -259,7 +260,7 @@ describe('eksport dziennego arkusza (§4.7)', () => {
     const tokenTmk = await login(app, 'TMK');
     const tokenKrz = await login(app, 'KRZ');
 
-    // TMK nie zamyka dnia… a KRZ przejmuje offline i wysyła własną otwartą sesję —
+    // TMK nie zamyka dnia… a KRZ przejmuje offline i wysyła własną otwartą sesję -
     // serwer flaguje nakładkę (obie sesje bez day_close).
     await post(app, tokenTmk, day('sess-1').slice(0, 6));
     const takeover = day('sess-2', { picId: 'KRZ' })
@@ -271,7 +272,7 @@ describe('eksport dziennego arkusza (§4.7)', () => {
       );
     await post(app, tokenKrz, takeover);
 
-    // KRZ zamyka SWÓJ dzień — sesja domknięta, ale sporna: do arkusza NIE trafia,
+    // KRZ zamyka SWÓJ dzień - sesja domknięta, ale sporna: do arkusza NIE trafia,
     // dopóki flaga nie zostanie rozwiązana (rozwiązuje administrator, nie kokpit).
     const close = await post(app, tokenKrz, [
       event(
@@ -290,13 +291,13 @@ describe('eksport dziennego arkusza (§4.7)', () => {
     expect(status.exportUrl).toBeNull();
   });
 
-  it('awaria Sheets NIE psuje przyjęcia zdarzeń — 200, accepted, export_log pusty', async () => {
+  it('awaria Sheets NIE psuje przyjęcia zdarzeń - 200, accepted, export_log pusty', async () => {
     const sheets = new FakeSheets();
     sheets.failWith = new Error('Google API 503');
     const { app, db } = await testHarness({ sheets });
     const token = await login(app);
 
-    // Telefon dostaje 200 za PRZYJĘCIE — eksport to skutek, nie warunek; awaria
+    // Telefon dostaje 200 za PRZYJĘCIE - eksport to skutek, nie warunek; awaria
     // ląduje w logu serwera, nie w odpowiedzi (inaczej outbox ponawiałby wiecznie
     // paczkę, która dawno weszła).
     const errorLog = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -343,9 +344,9 @@ describe('karta = doba samolotu (§4.7)', () => {
     const tmk = await login(app, 'TMK');
     const krz = await login(app, 'KRZ');
 
-    // Zmiana poranna — zamknięta, karta wychodzi po zdaniu samolotu.
+    // Zmiana poranna - zamknięta, karta wychodzi po zdaniu samolotu.
     await post(app, tmk, day('zmiana-am'));
-    // Zmiana popołudniowa — ten sam samolot, ta sama doba, inny pilot.
+    // Zmiana popołudniowa - ten sam samolot, ta sama doba, inny pilot.
     await post(
       app,
       krz,
@@ -364,16 +365,18 @@ describe('karta = doba samolotu (§4.7)', () => {
       '2026-06-22_SP-AXA',
     ]);
 
-    // Druga wersja karty niesie OBIE zmiany — pierwsza nie zniknęła pod drugą.
+    // Druga wersja karty niesie OBIE zmiany - pierwsza nie zniknęła pod drugą.
     const card = sheets.calls[1]!;
-    expect(card.rows).toContainEqual(['UZ Aero — doba samolotu', '2026-06-22 (UTC)']);
+    expect(card.rows).toContainEqual(['UZ Aero - doba samolotu', '2026-06-22 (UTC)']);
     expect(card.rows).toContainEqual(['Samolot', 'SP-AXA']);
-    expect(card.rows).toContainEqual(['Sesje', '2']);
+    expect(card.rows).toContainEqual(['Operacje', '2']);
+    // Kolumna spinająca nazywa się „Operacja" (issue #68), a rodzaj operacji -
+    // „Zadanie": dwie różne rzeczy nie mogą nosić jednej nazwy w jednym wierszu.
     expect(card.rows).toContainEqual([
-      'Sesja',
+      'Operacja',
       'PIC',
       'Dual',
-      'Operacja',
+      'Zadanie',
       'Przejęcie',
       'Zdanie',
       'Block',
@@ -382,7 +385,7 @@ describe('karta = doba samolotu (§4.7)', () => {
     expect(card.rows).toContainEqual([
       'S1',
       'TMK',
-      '—',
+      '-',
       'skoki',
       '08:00',
       '16:45',
@@ -392,7 +395,7 @@ describe('karta = doba samolotu (§4.7)', () => {
     expect(card.rows).toContainEqual([
       'S2',
       'KRZ',
-      '—',
+      '-',
       'skoki',
       '17:00',
       '18:10',
@@ -400,8 +403,8 @@ describe('karta = doba samolotu (§4.7)', () => {
       'zdany',
     ]);
 
-    // Wiersz lotu daje się przypisać do sesji — administrator ma wiedzieć, kto co latał.
-    expect(card.rows).toContainEqual(['Sesja', '#', 'Takeoff', 'Landing', 'Block', 'Metoda']);
+    // Wiersz lotu daje się przypisać do sesji - administrator ma wiedzieć, kto co latał.
+    expect(card.rows).toContainEqual(['Operacja', '#', 'Takeoff', 'Landing', 'Block', 'Metoda']);
     expect(card.rows).toContainEqual(['S1', '1', '08:25', '09:18', '00:53', 'AUTO']);
     expect(card.rows).toContainEqual(['S2', '1', '17:20', '17:50', '00:30', 'AUTO']);
 
@@ -435,7 +438,7 @@ describe('karta = doba samolotu (§4.7)', () => {
       },
     ]);
 
-    // Ekran 11 OBU pilotów prowadzi do tej samej karty — powiązanie sesja→karta
+    // Ekran 11 OBU pilotów prowadzi do tej samej karty - powiązanie sesja→karta
     // przeżyło zmianę jednostki.
     expect((await syncStatus(app, tmk, 'zmiana-am')).exportUrl).toBe(
       'https://sheets.example/2026-06-22_SP-AXA',
@@ -476,7 +479,7 @@ describe('karta = doba samolotu (§4.7)', () => {
 
 describe('daySheetContent (czysta funkcja)', () => {
   it('nazwa karty = konwencja aplikacji (§4.7), bajt w bajt', () => {
-    // Ten sam wynik co `sheetTabName` w `app/src/ui/screens/syncStatus.ts` — telefon
+    // Ten sam wynik co `sheetTabName` w `app/src/ui/screens/syncStatus.ts` - telefon
     // pokazuje cel eksportu na ekranie 11, zanim serwer cokolwiek zapisze.
     expect(sheetTabName(at(8, 0), 'SP-AXA')).toBe('2026-06-22_SP-AXA');
     // Data karty jest UTC: 23:30 Z to wciąż 22 czerwca, niezależnie od strefy serwera.
@@ -485,7 +488,7 @@ describe('daySheetContent (czysta funkcja)', () => {
 
   it('doba BEZ ani jednej sesji nie ma karty', () => {
     // Jedyny powód, dla którego karty nie da się zbudować. Do 2026-08-07 był nim brak
-    // MELDUNKU (`dutyStart`) — a po §3.6a meldunek jest opcjonalny i zwykle pusty, więc
+    // MELDUNKU (`dutyStart`) - a po §3.6a meldunek jest opcjonalny i zwykle pusty, więc
     // ta bramka odrzucałaby dziś każdą sesję z przebudowanego flow.
     expect(
       buildDaySheet({ day: '2026-06-22', aircraftId: 'SP-AXA', sessions: [], excluded: [] }),
@@ -493,7 +496,7 @@ describe('daySheetContent (czysta funkcja)', () => {
   });
 
   it('sesja z SAMYM claimem (bez preflightu) jest wierszem karty, a nie jej brakiem', () => {
-    // Pilot wziął samolot i nie dokończył przejęcia. Maszyna była zajęta — karta doby
+    // Pilot wziął samolot i nie dokończył przejęcia. Maszyna była zajęta - karta doby
     // ma to pokazać, bo to jest fakt o samolocie, a nie luka w danych do ukrycia.
     const state = projectSession([
       {
@@ -522,19 +525,19 @@ describe('daySheetContent (czysta funkcja)', () => {
     expect(sheet?.rows).toContainEqual([
       'S1',
       'TMK',
-      '—',
-      '—',
+      '-',
+      '-',
       '08:00',
-      '—',
+      '-',
       '00:00',
       'w toku',
     ]);
-    // Bez operacji Skoki sekcja zrzutów nie powstaje — zera byłyby szumem, nie informacją.
+    // Bez operacji Skoki sekcja zrzutów nie powstaje - zera byłyby szumem, nie informacją.
     expect(sheet?.rows.some((r) => r[0] === 'Zrzuty')).toBe(false);
   });
 
   it('sesja wstrzymana flagą wypada z karty, a karta MÓWI, że jest niekompletna', () => {
-    // §4.7: bramka obejmuje SESJĘ, nie kartę — jedna sporna zmiana nie kasuje doby
+    // §4.7: bramka obejmuje SESJĘ, nie kartę - jedna sporna zmiana nie kasuje doby
     // całej maszyny, ale też nie znika z dokumentu bez słowa.
     const state = projectSession([
       {
@@ -556,12 +559,89 @@ describe('daySheetContent (czysta funkcja)', () => {
       day: '2026-06-22',
       aircraftId: 'SP-AXA',
       sessions: [{ sessionUuid: 'sess-ok', state, crew: { pic: 'TMK', dual: null } }],
-      excluded: [{ sessionUuid: 'sess-sporna', flagIds: [12] }],
+      excluded: [
+        {
+          sessionUuid: 'sess-sporna',
+          engineStartAt: at(13, 5),
+          engineStopAt: at(14, 20),
+          pic: 'KRZ',
+          flagIds: [12],
+        },
+      ],
     });
 
+    // Adnotację czyta człowiek szukający brakującej zmiany - uuid nie pozwalał jej
+    // znaleźć ani na liście panelu, ani w pamięci (issue #68).
     expect(sheet?.rows).toContainEqual([
       'Niekompletna',
-      'sesja sess-sporna poza kartą — flaga #12',
+      'operacja 13:05 → 14:20 · KRZ poza kartą - flaga #12',
     ]);
+  });
+});
+
+// ── blok „Olej (L)" (issue #60, etap D) ─────────────────────────────────────────
+
+describe('blok oleju na karcie doby (issue #60)', () => {
+  const claimAnd = (extra: Event[]): Event[] => [
+    {
+      uuid: 'oil-claim-1',
+      sessionUuid: 'sess-oil',
+      aircraftId: 'SP-AXA',
+      picId: 'TMK',
+      dualId: null,
+      type: 'session_claim',
+      deviceTime: at(8, 0),
+      gpsTime: at(8, 0),
+      payload: { mode: 'free' },
+      schemaVersion: 1,
+      syncedAt: null,
+    } as Event,
+    ...extra,
+  ];
+
+  const preflight = (oil: { oilL?: number | null; oilAddedL?: number | null }): Event =>
+    ({
+      uuid: 'oil-pf-1',
+      sessionUuid: 'sess-oil',
+      aircraftId: 'SP-AXA',
+      picId: 'TMK',
+      dualId: null,
+      type: 'preflight_confirm',
+      deviceTime: at(8, 0),
+      gpsTime: at(8, 0),
+      payload: {
+        operation: 'ferry',
+        reading: { fuelL: 150, mh: 1234.5 },
+        mhFormat: 'hhmm',
+        ...oil,
+      },
+      schemaVersion: 1,
+      syncedAt: null,
+    }) as Event;
+
+  it('sesja z pomiarem i dolewką dostaje blok z wierszem sesji i „Dobą"', () => {
+    const state = projectSession(claimAnd([preflight({ oilL: 10.2, oilAddedL: 1.0 })]));
+    const sheet = buildDaySheet({
+      day: '2026-06-22',
+      aircraftId: 'SP-AXA',
+      sessions: [{ sessionUuid: 'sess-oil', state, crew: { pic: 'TMK', dual: null } }],
+      excluded: [],
+    });
+
+    expect(sheet?.rows.some((r) => r[0] === 'Olej (L)')).toBe(true);
+    expect(sheet?.rows).toContainEqual(['S1', '10,2', '1,0']);
+    expect(sheet?.rows).toContainEqual(['Doba', '10,2', '1,0']);
+  });
+
+  it('doba bez oleju NIE dostaje bloku - ponowny eksport starej karty nie podbija rewizji', () => {
+    const state = projectSession(claimAnd([preflight({})]));
+    const sheet = buildDaySheet({
+      day: '2026-06-22',
+      aircraftId: 'SP-AXA',
+      sessions: [{ sessionUuid: 'sess-oil', state, crew: { pic: 'TMK', dual: null } }],
+      excluded: [],
+    });
+
+    expect(sheet?.rows.some((r) => r[0] === 'Olej (L)')).toBe(false);
   });
 });

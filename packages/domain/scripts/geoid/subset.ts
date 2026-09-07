@@ -1,14 +1,14 @@
 /**
- * UZ Aero — wycinek siatki światowej pod pokrycie aplikacji.
+ * UZ Aero - wycinek siatki światowej pod pokrycie aplikacji.
  *
- * Cała siatka światowa to ~1 mln węzłów — do bundla aplikacji idzie wycinek.
+ * Cała siatka światowa to ~1 mln węzłów - do bundla aplikacji idzie wycinek.
  * Pokrycie dobrane pod realny zasięg klubowych maszyn: cała Polska z sąsiadami
- * oraz margines na przeloty — na północy południowa Skandynawia (Oslo, Helsinki),
+ * oraz margines na przeloty - na północy południowa Skandynawia (Oslo, Helsinki),
  * na południu Alpy z Rzymem, na zachodzie Londyn i prawie cała Francja, na
  * wschodzie Ukraina po Charków. Poza pokryciem korekta uczciwie znika
  * (`geoidUndulationM` → null), więc margines jest szeroki z rozmysłem.
  *
- * Zachodnia krawędź leży na ujemnej długości, a siatka światowa zaczyna się od 0°E —
+ * Zachodnia krawędź leży na ujemnej długości, a siatka światowa zaczyna się od 0°E -
  * kolumny źródłowe liczymy modulo 360 (Londyn czyta pasmo 355–360°).
  */
 

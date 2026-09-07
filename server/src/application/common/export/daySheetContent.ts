@@ -1,8 +1,8 @@
 /**
- * UZ Aero (serwer) — zawartość dziennej karty arkusza (§4.7).
+ * UZ Aero (serwer) - zawartość dziennej karty arkusza (§4.7).
  *
  * Czysta funkcja: projekcje sesji (`projectSession` z @uzaero/domain) + kody pilotów
- * → `DaySheet`. Zero bazy i zero Google — dzięki temu treść karty testuje się na
+ * → `DaySheet`. Zero bazy i zero Google - dzięki temu treść karty testuje się na
  * liczbach kanonicznego dnia bez jednej atrapy, a adapter Sheets (gdy powstanie)
  * dostanie gotowe wiersze do wklejenia.
  *
@@ -11,64 +11,70 @@
  * skróceniu sesji (§3.6a) ta nazwa przestała być kluczem unikalnym: w typowym dniu
  * skokowym tą samą maszyną lata dwóch pilotów, więc druga karta NADPISYWAŁA pierwszą
  * i podgląd porannej zmiany pokazywał treść popołudniowej. Klub czyta dzień per
- * samolot, nie per zmianę pilota — więc jednostką jest DOBA, a sesje są jej wierszami.
+ * samolot, nie per zmianę pilota - więc jednostką jest DOBA, a sesje są jej wierszami.
  *
  * ══ KSZTAŁT KOLUMN I DLACZEGO TAKI ══
- * Karta ma sześć bloków, a spina je JEDNA rzecz: kolumna `Sesja` z etykietą `S1`, `S2`…
- * Etykiety są PORZĄDKOWE w obrębie karty (chronologicznie po chwili przejęcia), nie
- * globalne — nazwa sesji to uuid, którego w dokumencie klubu nikt nie czyta, a numer
- * zmiany jest tym, czym człowiek się posługuje („pierwsza zmiana", „druga zmiana").
+ * Karta ma sześć bloków, a spina je JEDNA rzecz: kolumna `Operacja` z etykietą `S1`,
+ * `S2`… Etykiety są PORZĄDKOWE w obrębie TEJ karty (chronologicznie po chwili
+ * przejęcia) i nie są sygnaturą z issue #68 - ta numeruje dobę PILOTA, a karta jest
+ * dobą SAMOLOTU, więc jej ostatni człon nie zgadzałby się z kolejnością zmian
+ * w dokumencie. Krótka etykieta jest tu zresztą tym, po co ta kolumna istnieje:
+ * spina sześć bloków jednego dokumentu, a nie identyfikuje lotu na zewnątrz.
  *
- *  1. **Nagłówek** — samolot, doba, ile zmian, czas blokowy doby. Plus adnotacja
+ * Rodzaj operacji nazywa się w tej karcie `Zadanie` - jak na ekranie 02E telefonu
+ * i w gridzie panelu. Dwie różne rzeczy nie mogą nosić jednej nazwy w jednym wierszu
+ * nagłówka, a „operacja" znaczy od issue #68 sam lot.
+ *
+ *  1. **Nagłówek** - samolot, doba, ile zmian, czas blokowy doby. Plus adnotacja
  *     „Niekompletna", gdy któraś sesja jest wstrzymana flagą (§4.7: bramka obejmuje
- *     SESJĘ, nie całą kartę — inaczej jedna nakładka kasowałaby dzień całej maszyny).
- *  2. **Sesje doby** — kto, kiedy przejął i zdał, ile wylatał. To jest ten wiersz,
+ *     SESJĘ, nie całą kartę - inaczej jedna nakładka kasowałaby dzień całej maszyny).
+ *  2. **Sesje doby** - kto, kiedy przejął i zdał, ile wylatał. To jest ten wiersz,
  *     po którym administrator poznaje, czyja jest reszta karty.
- *  3. **Loty** — `Sesja` PRZED numerem lotu. Numer lotu jest liczony w obrębie sesji
+ *  3. **Loty** - `Sesja` PRZED numerem lotu. Numer lotu jest liczony w obrębie sesji
  *     (tak liczy go projekcja i tak widzi go pilot na ekranie 10), więc w dobie
- *     z dwiema zmianami powtórzy się — bez kolumny `Sesja` wiersz „1 · 08:25" i
+ *     z dwiema zmianami powtórzy się - bez kolumny `Sesja` wiersz „1 · 08:25" i
  *     „1 · 17:20" wyglądałyby na sprzeczność zamiast na dwie zmiany.
- *  4. **Paliwo**, 5. **Motogodziny** — per sesja + wiersz `Doba`. Sumy doby NIE są
- *     sumą wszystkiego: paliwo startowe doby to odczyt PIERWSZEJ zmiany, a końcowe —
+ *  4. **Paliwo**, 5. **Motogodziny** - per sesja + wiersz `Doba`. Sumy doby NIE są
+ *     sumą wszystkiego: paliwo startowe doby to odczyt PIERWSZEJ zmiany, a końcowe -
  *     OSTATNIEJ (poziom w zbiorniku nie jest wielkością addytywną), dolane i zużyte
  *     sumują się normalnie. MH tak samo: doba to RUCH LICZNIKA maszyny od pierwszego
  *     do ostatniego odczytu, a różnica między nim a sumą delt per sesja jest dokładnie
- *     tym, co ma zgłosić flaga `mh_gap` — karta nie ma prawa jej zamaskować sumowaniem.
- *  6. **Zrzuty** — wyłącznie gdy któraś zmiana była operacją Skoki (§3.7); dla ferry
+ *     tym, co ma zgłosić flaga `mh_gap` - karta nie ma prawa jej zamaskować sumowaniem.
+ *  6. **Zrzuty** - wyłącznie gdy któraś zmiana była operacją Skoki (§3.7); dla ferry
  *     czy egzaminu sekcja pełna zer byłaby szumem, nie informacją.
  *
  * Liczby w arkuszu NIE MAJĄ PRAWA różnić się od telefonu: wszystko pochodzi z tej samej
  * projekcji, a formatery są wspólne (`@uzaero/format`, ekran 10 liczy tym samym kodem).
  *
- * Czasy w UTC i tak podpisane — domyślna strefa całego systemu (CLAUDE.md).
+ * Czasy w UTC i tak podpisane - domyślna strefa całego systemu (CLAUDE.md).
  */
 
 import type { JumperCounts, SessionState } from '@uzaero/domain';
 // Formaty WSPÓLNE z telefonem (2026-07-31). Wcześniej stały tu ręczne kopie
-// z docblockami „lustro … z app/src/ui/format.ts" — czyli umowa utrzymywana
+// z docblockami „lustro … z app/src/ui/format.ts" - czyli umowa utrzymywana
 // dyscypliną, a nie kompilatorem. Karta arkusza musi pokazywać dokładnie te same
 // napisy co ekran 10, bo pilot porównuje jedno z drugim.
-import { hhmm, motoHours, timeUtc } from '@uzaero/format';
+import { hhmm, motoHours, oilLitres, timeUtc } from '@uzaero/format';
 
 import type { DaySheet } from '../ports.ts';
 
 const pad2 = (n: number): string => String(n).padStart(2, '0');
 
-/** Dzień karty jako `YYYY-MM-DD` (UTC) — prefiks nazwy karty i kolumna `export_log.day`. */
+/** Dzień karty jako `YYYY-MM-DD` (UTC) - prefiks nazwy karty i kolumna `export_log.day`. */
 export function sheetDay(t: number): string {
   const d = new Date(t);
   return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
 }
 
 /**
- * Zakres doby UTC w milisekundach — `[fromMs, toMs]`, granice DOMKNIĘTE.
+ * Zakres doby UTC w milisekundach - `[fromMs, toMs]`, granice DOMKNIĘTE.
  *
  * Odpowiada na pytanie „które sesje należą do tej karty" i jest odwrotnością
- * `sheetDay`: przynależność wyznacza chwila PRZEJĘCIA samolotu (`session_claim`) —
+ * `sheetDay`: przynależność wyznacza chwila PRZEJĘCIA samolotu (`session_claim`) -
  * doba maszyny musi dać się wyznaczyć zawsze. (Historyczny meldunek pilota odszedł
  * razem z klamrą służby, issue #23.)
  *
- * Sesja rozpoczęta o 23:50 i zdana po północy zostaje w dobie SWOJEGO przejęcia —
+ * Sesja rozpoczęta o 23:50 i zdana po północy zostaje w dobie SWOJEGO przejęcia -
  * ta sama reguła, co w projekcji dnia pilota (`projectPilotDay`: „przynależność sesji
  * do doby wyznacza czas uruchomienia silnika, nie zamknięcia").
  */
@@ -78,9 +84,9 @@ export function utcDayRange(day: string): { fromMs: number; toMs: number } {
 }
 
 /**
- * Nazwa karty wg konwencji §4.7: `YYYY-MM-DD_SP-XXX` — DOBA i SAMOLOT.
+ * Nazwa karty wg konwencji §4.7: `YYYY-MM-DD_SP-XXX` - DOBA i SAMOLOT.
  *
- * LUSTRO `sheetTabName` z `app/src/ui/screens/syncStatus.ts` — konwencja jest częścią
+ * LUSTRO `sheetTabName` z `app/src/ui/screens/syncStatus.ts` - konwencja jest częścią
  * specyfikacji i telefon liczy ją u siebie (ekran 11 pokazuje cel eksportu zanim serwer
  * cokolwiek zapisze), więc oba końce muszą wyprodukować ten SAM napis bajt w bajt.
  * Rozjazd = telefon obiecuje inną kartę, niż serwer zapisał.
@@ -102,7 +108,7 @@ export function sheetTabName(claimedAt: number, aircraftId: string): string {
 }
 
 /**
- * Litry bez jednostki — jedyny format, którego NIE bierzemy z `@uzaero/format`.
+ * Litry bez jednostki - jedyny format, którego NIE bierzemy z `@uzaero/format`.
  *
  * Aplikacja pokazuje „88 L", bo etykieta stoi obok liczby w jednym wierszu. Komórka
  * arkusza niesie jednostkę w NAGŁÓWKU kolumny, więc powtórzenie „L" w każdej komórce
@@ -110,10 +116,19 @@ export function sheetTabName(claimedAt: number, aircraftId: string): string {
  * Różnica jest zamierzona i dlatego ta funkcja została tu, zamiast udawać wspólną.
  */
 function litres(value: number | null): string {
-  return value == null ? '—' : String(Math.round(value));
+  return value == null ? '-' : String(Math.round(value));
 }
 
-/** „22 (12 tandem / 6 AFF / 4 solo)" — rozbicie jak w stopce mockupu 11; zera pomijamy. */
+/**
+ * Olej BEZ jednostki (nagłówek bloku ją niesie, jak przy paliwie), ale z jednym
+ * miejscem po przecinku - podziałka bagnetu, nie paliwomierza. Jedno źródło formatu:
+ * `oilLitres` z pakietu, tu tylko zdjęta jednostka.
+ */
+function oilNoUnit(value: number | null): string {
+  return oilLitres(value).replace(/\sL$/, '');
+}
+
+/** „22 (12 tandem / 6 AFF / 4 solo)" - rozbicie jak w stopce mockupu 11; zera pomijamy. */
 function jumpersCell(jumpers: JumperCounts, total: number): string {
   const parts = [
     jumpers.tandem > 0 ? `${jumpers.tandem} tandem` : null,
@@ -127,7 +142,7 @@ function jumpersCell(jumpers: JumperCounts, total: number): string {
  * Suma, która UMIE nie wiedzieć: `null` w którymkolwiek składniku daje `null`.
  *
  * Bilans doby złożony z sesji, w której odczytu zabrakło, nie jest bilansem tylko
- * mniejszym — jest nieznany. Zsumowanie znanych składników dałoby liczbę wyglądającą
+ * mniejszym - jest nieznany. Zsumowanie znanych składników dałoby liczbę wyglądającą
  * na kompletną i o połowę za małą, czyli najgorszy możliwy wynik w dokumencie klubu.
  */
 function sumOrNull(values: readonly (number | null)[]): number | null {
@@ -158,7 +173,7 @@ export interface DaySheetCrew {
 /** Jedna sesja jako WIERSZ karty doby. */
 export interface DaySheetSession {
   sessionUuid: string;
-  /** Projekcja tej sesji — te same liczby, które pilot widzi na ekranie 10. */
+  /** Projekcja tej sesji - te same liczby, które pilot widzi na ekranie 10. */
   state: SessionState;
   crew: DaySheetCrew;
 }
@@ -168,11 +183,33 @@ export interface DaySheetSession {
  *
  * Karta wychodzi bez niej i mówi o tym wprost, zamiast nie wychodzić wcale: przy
  * krótkich sesjach (§3.6a) nakładki są częstsze, więc blokowanie CAŁEJ doby uczyniłoby
- * z bramki stan domyślny — jedna sporna zmiana kasowałaby dzień pracy całej maszyny.
+ * z bramki stan domyślny - jedna sporna zmiana kasowałaby dzień pracy całej maszyny.
  */
 export interface DaySheetExclusion {
   sessionUuid: string;
+  /**
+   * Bieg silnika i kod PIC-a - tym nazywamy operację, której na karcie NIE MA
+   * (issue #68).
+   *
+   * Uuid był tu jedynym opisem i nie opisywał niczego: adnotację czyta człowiek
+   * szukający brakującej zmiany w dokumencie klubu, a `7c1e5a9b-…` nie pozwala jej
+   * znaleźć ani na liście panelu, ani w pamięci. Sygnatury użyć się tu nie da:
+   * jej numer należy do doby PILOTA, a karta zna dobę SAMOLOTU - godziny biegu
+   * i kod załogi mają ten sam skutek bez dodatkowego zapytania.
+   */
+  engineStartAt: number | null;
+  engineStopAt: number | null;
+  pic: string | null;
   flagIds: readonly number[];
+}
+
+/** „08:12 → 10:34 · TMK" - opis operacji wykluczonej z karty. */
+export function exclusionLabel(gap: DaySheetExclusion): string {
+  const run =
+    gap.engineStartAt == null
+      ? 'bez uruchomienia silnika'
+      : `${timeUtc(gap.engineStartAt)} → ${timeUtc(gap.engineStopAt)}`;
+  return gap.pic == null ? run : `${run} · ${gap.pic}`;
 }
 
 /** Wejście karty: doba jednej maszyny razem z jej sesjami. */
@@ -182,15 +219,15 @@ export interface DaySheetDay {
   aircraftId: string;
   /** Sesje wchodzące do karty, CHRONOLOGICZNIE po chwili przejęcia. */
   sessions: readonly DaySheetSession[];
-  /** Sesje pominięte przez flagę — adnotacja „Niekompletna" w nagłówku. */
+  /** Sesje pominięte przez flagę - adnotacja „Niekompletna" w nagłówku. */
   excluded: readonly DaySheetExclusion[];
 }
 
 /**
  * Buduje kartę doby samolotu. `null` = nie ma z czego (doba bez ani jednej sesji
- * wchodzącej do karty) — eksporter wtedy nic nie zapisuje.
+ * wchodzącej do karty) - eksporter wtedy nic nie zapisuje.
  *
- * Lot bez lądowania zostaje w tabeli z myślnikami — ukrycie go schowałoby dokładnie
+ * Lot bez lądowania zostaje w tabeli z myślnikami - ukrycie go schowałoby dokładnie
  * ten wiersz, który wymaga korekty (ta sama decyzja co na ekranie 10). Tak samo sesja
  * jeszcze niezdana: jest w karcie ze stanem „w toku", bo karta ma odzwierciedlać
  * AKTUALNY stan doby, a nie tylko jej domkniętą część.
@@ -203,33 +240,33 @@ export function buildDaySheet(input: DaySheetDay): DaySheet | null {
   const labelOf = (s: DaySheetSession): string => label.get(s.sessionUuid) ?? s.sessionUuid;
 
   // Format motogodzin jest własnością SAMOLOTU, więc dla wiersza „Doba" bierzemy
-  // pierwszy zadeklarowany przez którąkolwiek sesję — rozjazd między sesjami znaczyłby
+  // pierwszy zadeklarowany przez którąkolwiek sesję - rozjazd między sesjami znaczyłby
   // przekonfigurowanie maszyny w środku dnia i nie ma sensownej reprezentacji w karcie.
   const dayMhFormat = input.sessions.map((s) => s.state.mhFormat).find((f) => f != null) ?? null;
 
   const rows: string[][] = [
-    ['UZ Aero — doba samolotu', `${input.day} (UTC)`],
+    ['UZ Aero - doba samolotu', `${input.day} (UTC)`],
     ['Samolot', input.aircraftId],
-    ['Sesje', String(input.sessions.length)],
+    ['Operacje', String(input.sessions.length)],
     ['Czas blokowy doby', hhmm(input.sessions.reduce((sum, s) => sum + s.state.blockTimeMs, 0))],
   ];
 
   for (const gap of input.excluded) {
     rows.push([
       'Niekompletna',
-      `sesja ${gap.sessionUuid} poza kartą — ${gap.flagIds.map((id) => `flaga #${id}`).join(', ')}`,
+      `operacja ${exclusionLabel(gap)} poza kartą - ${gap.flagIds.map((id) => `flaga #${id}`).join(', ')}`,
     ]);
   }
 
   rows.push(
     [],
-    ['Sesje doby · czasy UTC'],
-    ['Sesja', 'PIC', 'Dual', 'Operacja', 'Przejęcie', 'Zdanie', 'Block', 'Stan'],
+    ['Operacje doby · czasy UTC'],
+    ['Operacja', 'PIC', 'Dual', 'Zadanie', 'Przejęcie', 'Zdanie', 'Block', 'Stan'],
     ...input.sessions.map((s) => [
       labelOf(s),
-      s.crew.pic ?? '—',
-      s.crew.dual ?? '—',
-      s.state.operation ?? '—',
+      s.crew.pic ?? '-',
+      s.crew.dual ?? '-',
+      s.state.operation ?? '-',
       timeUtc(s.state.claimedAt),
       timeUtc(s.state.closedAt),
       hhmm(s.state.blockTimeMs),
@@ -238,21 +275,21 @@ export function buildDaySheet(input: DaySheetDay): DaySheet | null {
 
     [],
     ['Loty · czasy UTC'],
-    ['Sesja', '#', 'Takeoff', 'Landing', 'Block', 'Metoda'],
+    ['Operacja', '#', 'Takeoff', 'Landing', 'Block', 'Metoda'],
     ...input.sessions.flatMap((s) =>
       s.state.flights.map((f) => [
         labelOf(s),
         String(f.index),
         timeUtc(f.takeoffAt),
-        f.landingAt != null ? timeUtc(f.landingAt) : '—',
-        f.landingAt != null ? hhmm(f.durationMs) : '—',
+        f.landingAt != null ? timeUtc(f.landingAt) : '-',
+        f.landingAt != null ? hhmm(f.durationMs) : '-',
         f.method === 'auto' ? 'AUTO' : 'RĘCZNIE',
       ]),
     ),
 
     [],
     ['Paliwo (L)'],
-    ['Sesja', 'Start', 'Dolane', 'Zużyte', 'Koniec'],
+    ['Operacja', 'Start', 'Dolane', 'Zużyte', 'Koniec'],
     ...input.sessions.map((s) => [
       labelOf(s),
       litres(s.state.fuel.startL),
@@ -270,7 +307,7 @@ export function buildDaySheet(input: DaySheetDay): DaySheet | null {
 
     [],
     ['Motogodziny'],
-    ['Sesja', 'Start', 'Koniec', 'Delta'],
+    ['Operacja', 'Start', 'Koniec', 'Delta'],
     ...input.sessions.map((s) => [
       labelOf(s),
       motoHours(s.state.mh.start, s.state.mhFormat),
@@ -280,7 +317,30 @@ export function buildDaySheet(input: DaySheetDay): DaySheet | null {
     mhDayRow(input.sessions, dayMhFormat),
   );
 
-  // Strona przychodowa doby — tylko gdy którakolwiek zmiana była operacją Skoki (§3.7).
+  // OLEJ (issue #60) - tylko gdy którakolwiek sesja niesie pomiar albo dolewkę.
+  // Warunkowo jak „Zrzuty": doby sprzed modułu (i bez oleju) zostają BEZ zmiany treści,
+  // więc ponowny eksport starej karty nie podbija rewizji pustym blokiem.
+  // Poziom nie jest wielkością addytywną - „Doba" niesie PIERWSZY pomiar i sumę
+  // dolanego (ta sama reguła, którą blok paliwa zapisał przy odczytach zbiorników).
+  if (input.sessions.some((s) => s.state.oil.levelL != null || s.state.oil.addedL > 0)) {
+    rows.push(
+      [],
+      ['Olej (L)'],
+      ['Operacja', 'Pomiar', 'Dolane'],
+      ...input.sessions.map((s) => [
+        labelOf(s),
+        oilNoUnit(s.state.oil.levelL),
+        oilNoUnit(s.state.oil.addedL > 0 ? s.state.oil.addedL : null),
+      ]),
+      [
+        'Doba',
+        oilNoUnit(firstKnown(input.sessions.map((s) => s.state.oil.levelL))),
+        oilNoUnit(input.sessions.reduce((sum, s) => sum + s.state.oil.addedL, 0)),
+      ],
+    );
+  }
+
+  // Strona przychodowa doby - tylko gdy którakolwiek zmiana była operacją Skoki (§3.7).
   if (input.sessions.some((s) => s.state.operation === 'skoki')) {
     rows.push(...dropRows(input.sessions, labelOf));
   }
@@ -289,11 +349,11 @@ export function buildDaySheet(input: DaySheetDay): DaySheet | null {
 }
 
 /**
- * Wiersz `Doba` motogodzin — RUCH LICZNIKA maszyny, nie suma delt per sesja.
+ * Wiersz `Doba` motogodzin - RUCH LICZNIKA maszyny, nie suma delt per sesja.
  *
  * Licznik jest fizycznym przyrządem samolotu (§4.5, łańcuch MH), więc doba to różnica
  * między pierwszym a ostatnim znanym odczytem. Rozjazd wobec sumy delt per sesja znaczy
- * dziurę w łańcuchu — czyli lot bez aplikacji albo błąd wpisu — i ma go zgłosić flaga
+ * dziurę w łańcuchu - czyli lot bez aplikacji albo błąd wpisu - i ma go zgłosić flaga
  * `mh_gap`, a nie zamaskować arytmetyka karty.
  */
 function mhDayRow(sessions: readonly DaySheetSession[], format: SessionState['mhFormat']): string[] {
@@ -325,7 +385,7 @@ function dropRows(
   return [
     [],
     ['Zrzuty'],
-    ['Sesja', 'Wyniesienia', 'Skoczkowie'],
+    ['Operacja', 'Wyniesienia', 'Skoczkowie'],
     ...jumping.map((s) => [
       labelOf(s),
       String(s.state.drops.count),
@@ -336,6 +396,6 @@ function dropRows(
       String(jumping.reduce((n, s) => n + s.state.drops.count, 0)),
       jumpersCell(totals, jumping.reduce((n, s) => n + s.state.drops.totalJumpers, 0)),
     ],
-    ['Klient', clients.length > 0 ? clients.join(' / ') : '—'],
+    ['Klient', clients.length > 0 ? clients.join(' / ') : '-'],
   ];
 }

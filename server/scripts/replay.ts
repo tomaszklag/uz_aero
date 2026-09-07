@@ -1,15 +1,15 @@
 /**
- * UZ Aero — replay śladu kalibracyjnego przez detektor (faza 5).
+ * UZ Aero - replay śladu kalibracyjnego przez detektor (faza 5).
  *
  *   npx tsx scripts/replay.ts traces/sess-1.ndjson [ELEWACJA_FT]
  *
  * Czyta NDJSON z `POST /traces`, puszcza surowe fixy przez TEN SAM `runDetector`,
  * który działa w telefonie, i zestawia wynik z markerami z lotu (detekcja pokazana /
- * COFNIJ pilota). Kalibracja progów = edycja `overrides` niżej i ponowny bieg —
+ * COFNIJ pilota). Kalibracja progów = edycja `overrides` niżej i ponowny bieg -
  * na prawdziwych nagraniach, nie na dyskusji.
  *
  * Elewacja pola: druga kolumna wywołania albo mediana wysokości z pierwszych fixów
- * na postoju (GS < próg kołowania) — tak samo „z ziemi", jak robi to ENGINE START.
+ * na postoju (GS < próg kołowania) - tak samo „z ziemi", jak robi to ENGINE START.
  */
 
 import { readFileSync } from 'node:fs';
@@ -37,7 +37,7 @@ interface TraceLine {
   lon?: number | null;
   accuracyM?: number | null;
   detail?: string | null;
-  // Kanały czujników pokładowych (kind: 'sensor'). Detektor ich NIE czyta — replay
+  // Kanały czujników pokładowych (kind: 'sensor'). Detektor ich NIE czyta - replay
   // tylko podsumowuje, co się nagrało, żeby było widać, czy materiał do strojenia
   // barometru i inercji w ogóle jest.
   pressureHpa?: number | null;
@@ -100,7 +100,7 @@ const hhmmss = (t: number) => new Date(t).toISOString().slice(11, 19);
 console.log(`plik: ${file}`);
 console.log(`fixy: ${fixes.length} · markery z lotu: ${markers.length} · elewacja: ${elevation ?? 'brak'} ft`);
 console.log(`progi nadpisane: ${Object.keys(overrides).length > 0 ? JSON.stringify(overrides) : 'brak (produkcyjne)'}`);
-console.log('\n— detekcje replayu —');
+console.log('\n- detekcje replayu -');
 // `at` = kiedy się WYDARZYŁO (retro-datowane), `confirmedAt` = kiedy algorytm się
 // dowiedział. Różnica to opóźnienie detekcji i przy kalibracji jest osobno interesująca:
 // to ona pokazuje, ile okna potwierdzenia da się jeszcze wydłużyć bez kosztu.
@@ -110,7 +110,7 @@ for (const d of detections) {
 }
 if (detections.length === 0) console.log('  (żadnych)');
 
-console.log('\n— markery z lotu (toast / COFNIJ pilota) —');
+console.log('\n- markery z lotu (toast / COFNIJ pilota) -');
 for (const m of markers) console.log(`  ${hhmmss(m.time)}  ${m.kind}  ${m.detail ?? ''}`);
 if (markers.length === 0) console.log('  (żadnych)');
 
@@ -126,7 +126,7 @@ if (sensors.length > 0) {
     return `${Math.min(...values).toFixed(2)} … ${Math.max(...values).toFixed(2)} (n=${values.length})`;
   };
 
-  console.log('\n— czujniki pokładowe (materiał na fazę 5, poza detekcją) —');
+  console.log('\n- czujniki pokładowe (materiał na fazę 5, poza detekcją) -');
   console.log(`  okien:            ${sensors.length}`);
   console.log(`  ciśnienie [hPa]:  ${span('pressureHpa')}`);
   console.log(`  |a_lin| śr [m/s²]: ${span('accelMean')}`);
@@ -139,7 +139,7 @@ if (sensors.length > 0) {
 // Porównujemy WYŁĄCZNIE start i lądowanie: markery powstają przy pokazaniu toastu, a
 // kołowanie toastu nie ma (zapisuje się od razu, bo nie wyznacza żadnego czasu w
 // dokumentach). Zestawianie kołowania z markerami dawało więc ostrzeżenie przy każdym
-// poprawnym nagraniu — czyli szum tam, gdzie narzędzie ma sygnalizować regresję.
+// poprawnym nagraniu - czyli szum tam, gdzie narzędzie ma sygnalizować regresję.
 const near = (a: number, b: number) => Math.abs(a - b) <= 15_000;
 const unmatched = detections.filter(
   (d) =>

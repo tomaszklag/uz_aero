@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UZ Aero - Panel 2.0 · Dziennik: operacje jednej maszyny</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="panel.css">
+</head>
+
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">DZIENNIK · SP-AXA</span>
+  <span class="slug">panel/dziennik-maszyna · #/dziennik/SP-AXA?od=&amp;do= · poziom 2</span>
+  <span class="canvas-meta"><span class="pulse"></span>Dziewięć kolumn danych · wyłącznie odczyty</span>
+</header>
+
+<aside class="variants-panel">
+  <div class="vp-title">Trzy poziomy dziennika</div>
+  <a class="vp-item" href="dziennik-flota.html">
+    <span class="vp-badge">L1</span>
+    <span class="vp-body">
+      <span class="vp-name">Cała flota w zakresie dat</span>
+      <span class="vp-when">Wyżej. Wracamy tam przyciskiem „← Dziennik" w nagłówku - zakres dat jedzie razem z linkiem.</span>
+    </span>
+  </a>
+  <a class="vp-item active" href="dziennik-maszyna.html">
+    <span class="vp-badge">L2</span>
+    <span class="vp-body">
+      <span class="vp-name">Operacje jednej maszyny</span>
+      <span class="vp-when">W adresie stoi ZNAK Z KADŁUBA, nie identyfikator: <code>#/dziennik/SP-AXA</code> człowiek przeczyta przez telefon i wpisze z pamięci. Kolumny „Samolot" tu nie ma - miałaby stałą wartość, więc stoi w tytule strony.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="dziennik-operacja.html">
+    <span class="vp-badge">L3</span>
+    <span class="vp-body">
+      <span class="vp-name">Jedna operacja</span>
+      <span class="vp-when">Przycisk „Szczegóły" w ostatniej kolumnie albo kliknięcie w dowolne miejsce wiersza. Link jest drogą właściwą: bez niego ginie „kopiuj adres linku".</span>
+    </span>
+  </a>
+  <a class="vp-item" href="SZABLON.html">
+    <span class="vp-badge amber">BAZA</span>
+    <span class="vp-body">
+      <span class="vp-name">Szablon i inwentarz komponentów</span>
+      <span class="vp-when">Rama okna, pasek górny i klasy do skopiowania.</span>
+    </span>
+  </a>
+</aside>
+
+<main class="browser" role="region" aria-label="Dziennik SP-AXA">
+
+  <div class="chrome">
+    <span class="chrome-dots"><i></i><i></i><i></i></span>
+    <span class="chrome-url">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <b>panel.uzaero.pl</b>/#/dziennik/SP-AXA?od=2026-09-01&amp;do=2026-09-07
+    </span>
+  </div>
+
+  <div class="shell">
+
+    <header class="topbar">
+      <span class="brand">
+        <span class="brand-mark">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+        </span>
+        <span class="brand-name">UZ AERO</span>
+      </span>
+
+      <nav class="tabs" aria-label="Sekcje panelu">
+        <a class="tab active" href="dziennik-flota.html">Dziennik</a>
+        <a class="tab" href="piloci-lista.html">Piloci</a>
+        <a class="tab" href="samoloty-lista.html">Samoloty</a>
+        <a class="tab" href="zgloszenia-lista.html">Zgłoszenia</a>
+      </nav>
+
+      <div class="topbar-right">
+        <span class="who-name">Tomasz Małkiewicz</span>
+        <button type="button" class="btn ghost sm">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="14 17 19 12 14 7"/><line x1="19" y1="12" x2="9" y2="12"/></svg>
+          Wyloguj
+        </button>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <!-- Podtytuł niesie TYP maszyny (z listy floty), a nie zdanie wyjaśniające.
+           Akcja powrotu jest linkiem, więc da się ją otworzyć w nowej karcie. -->
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">SP-AXA</h1>
+          <p class="page-sub">Cessna 182</p>
+        </div>
+        <div class="page-actions">
+          <a class="btn ghost" href="dziennik-flota.html">← Dziennik</a>
+        </div>
+      </div>
+
+      <div class="filters">
+        <label class="daterange">
+          <span class="visually-hidden">Od dnia</span>
+          <input type="date" value="2026-09-01">
+        </label>
+        <span class="daterange-sep" aria-hidden="true">→</span>
+        <label class="daterange">
+          <span class="visually-hidden">Do dnia</span>
+          <input type="date" value="2026-09-07">
+        </label>
+        <button type="button" class="chip" aria-pressed="false">Dzisiaj</button>
+        <button type="button" class="chip" aria-pressed="false">Weekend</button>
+        <button type="button" class="chip" aria-pressed="false">30 dni</button>
+        <button type="button" class="chip on" aria-pressed="true">Ten miesiąc</button>
+        <button type="button" class="chip" aria-pressed="false">Poprzedni miesiąc</button>
+      </div>
+
+      <!-- ══ GRID OPERACJI ══
+           Dziewięć kolumn danych na siedemnaście zamówionych wartości. Reguła układu:
+           wartości czytane JEDNYM SPOJRZENIEM stoją w jednej komórce, a kolumną jest
+           PYTANIE, nie liczba. Druga linia pary KWALIFIKUJE wartość nad sobą: przy
+           biegu silnika mówi jak długo, przy locie dokąd, przy paliwie ile dolano.
+
+           BRAK ODCZYTU JEST KRESKĄ, NIGDY ZEREM: `0 L` znaczy pusty zbiornik,
+           `—` znaczy „nikt nie zapisał". Przy parze kreska zostaje PRZY strzałce,
+           więc widać, którego odczytu brakuje. Szacunków tu nie ma - ani normy
+           zużycia, ani przewidywanego poziomu oleju. -->
+      <div class="table-wrap">
+        <table>
+          <caption class="visually-hidden">Operacje samolotu SP-AXA</caption>
+          <thead>
+            <tr>
+              <th>Operacja</th>
+              <th>Bieg silnika</th>
+              <th>Lot</th>
+              <th class="num">Loty</th>
+              <th>Pilot</th>
+              <th>Zadanie</th>
+              <th>Paliwo</th>
+              <th>Motogodziny</th>
+              <th>Olej do lotu</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+
+            <!-- OPERACJA W TOKU. „w toku" NIE JEST brakiem odczytu - to fakt, że
+                 wyłączenie silnika jeszcze nie nastąpiło. Odczyty końcowe są za to
+                 kreskami: ich naprawdę nie ma. -->
+            <tr class="clickable">
+              <td>
+                <span class="cell-strong">6 WRZEŚNIA</span>
+                <span class="cell-sub">SP-AXA/2026-09-06/AKO/1</span>
+              </td>
+              <td>
+                <span class="cell-pair">13:10<span class="cell-arrow" aria-hidden="true">→</span>w toku</span>
+              </td>
+              <td>
+                <span class="cell-pair">13:26<span class="cell-arrow" aria-hidden="true">→</span>—</span>
+                <span class="cell-sub">EPZG</span>
+              </td>
+              <td class="num">1</td>
+              <td>
+                <span class="cell-strong">A. Kowal</span>
+              </td>
+              <td><span class="pill dim">Przelot</span></td>
+              <td>
+                <span class="cell-pair">108 L<span class="cell-arrow" aria-hidden="true">→</span>—</span>
+              </td>
+              <td>
+                <span class="cell-pair">1238:52<span class="cell-arrow" aria-hidden="true">→</span>—</span>
+              </td>
+              <td>
+                <span class="cell-pair">8,4 L</span>
+              </td>
+              <td class="row-actions"><a class="btn ghost sm" href="dziennik-operacja.html">Szczegóły</a></td>
+            </tr>
+
+            <!-- DZIEŃ SKOKOWY. Trasa stoi RAZ, bez strzałki: skoki startują i lądują
+                 na tym samym placu, więc druga kopia kodu nie odpowiada na nic. -->
+            <tr class="clickable">
+              <td>
+                <span class="cell-strong">6 WRZEŚNIA</span>
+                <span class="cell-sub">SP-AXA/2026-09-06/TMA/1</span>
+              </td>
+              <td>
+                <span class="cell-pair">08:42<span class="cell-arrow" aria-hidden="true">→</span>11:04</span>
+                <span class="cell-sub">2:22</span>
+              </td>
+              <td>
+                <span class="cell-pair">09:01<span class="cell-arrow" aria-hidden="true">→</span>10:58</span>
+                <span class="cell-sub">EPZG</span>
+              </td>
+              <td class="num">6</td>
+              <td>
+                <span class="cell-strong">T. Małkiewicz</span>
+              </td>
+              <td><span class="pill dim">Skoki</span></td>
+              <td>
+                <span class="cell-pair">185 L<span class="cell-arrow" aria-hidden="true">→</span>108 L</span>
+              </td>
+              <td>
+                <span class="cell-pair">1236:30<span class="cell-arrow" aria-hidden="true">→</span>1238:52</span>
+              </td>
+              <td>
+                <span class="cell-pair">9,2 L</span>
+              </td>
+              <td class="row-actions"><a class="btn ghost sm" href="dziennik-operacja.html">Szczegóły</a></td>
+            </tr>
+
+            <tr class="clickable">
+              <td>
+                <span class="cell-strong">5 WRZEŚNIA</span>
+                <span class="cell-sub">SP-AXA/2026-09-05/AKO/1</span>
+              </td>
+              <td>
+                <span class="cell-pair">10:06<span class="cell-arrow" aria-hidden="true">→</span>12:09</span>
+                <span class="cell-sub">2:03</span>
+              </td>
+              <td>
+                <span class="cell-pair">10:18<span class="cell-arrow" aria-hidden="true">→</span>12:02</span>
+                <span class="cell-sub">EPZG</span>
+              </td>
+              <td class="num">5</td>
+              <td>
+                <span class="cell-strong">A. Kowal</span>
+              </td>
+              <td><span class="pill dim">Skoki</span></td>
+              <td>
+                <span class="cell-pair">136 L<span class="cell-arrow" aria-hidden="true">→</span>185 L</span>
+                <span class="cell-sub">dolano 123 L</span>
+              </td>
+              <td>
+                <span class="cell-pair">1234:27<span class="cell-arrow" aria-hidden="true">→</span>1236:30</span>
+              </td>
+              <td>
+                <span class="cell-pair">9,4 L</span>
+                <!-- Olej NIE MA pary: po locie się go nie mierzy. Druga linia rozbija
+                     sumę na pomiar i dolewkę, bo „do lotu" liczy DOMENA, nie panel. -->
+                <span class="cell-sub">8,9 L + 0,5 L</span>
+              </td>
+              <td class="row-actions"><a class="btn ghost sm" href="dziennik-operacja.html">Szczegóły</a></td>
+            </tr>
+
+            <!-- WPIS UNIEWAŻNIONY. Wiersz ZOSTAJE - rejestr jest append-only, a znikający
+                 wiersz byłby kłamstwem o dniu. Sygnatury NIE MA i to jest poprawne:
+                 numeruje się operacje nieunieważnione, więc wycofany wpis nie zabiera
+                 numeru sąsiadom (przez to następna operacja TMA tego dnia zostaje /1). -->
+            <tr class="clickable voided">
+              <td>
+                <span class="cell-strong">4 WRZEŚNIA</span>
+              </td>
+              <td>
+                <span class="cell-pair">16:02<span class="cell-arrow" aria-hidden="true">→</span>16:19</span>
+                <span class="cell-sub">0:17</span>
+              </td>
+              <td>
+                <span class="cell-pair">—<span class="cell-arrow" aria-hidden="true">→</span>—</span>
+              </td>
+              <td class="num">0</td>
+              <td>
+                <span class="cell-strong">T. Małkiewicz</span>
+              </td>
+              <td><span class="pill dim">Lot tech.</span></td>
+              <td>
+                <span class="cell-pair">140 L<span class="cell-arrow" aria-hidden="true">→</span>136 L</span>
+              </td>
+              <td>
+                <span class="cell-pair">1234:10<span class="cell-arrow" aria-hidden="true">→</span>1234:27</span>
+              </td>
+              <td>
+                <span class="cell-pair">9,0 L</span>
+              </td>
+              <td class="row-actions"><a class="btn ghost sm" href="dziennik-operacja.html">Szczegóły</a></td>
+            </tr>
+
+            <!-- EGZAMIN: druga linia kolumny „Pilot" niesie drugiego pilota. -->
+            <tr class="clickable">
+              <td>
+                <span class="cell-strong">4 WRZEŚNIA</span>
+                <span class="cell-sub">SP-AXA/2026-09-04/TMA/1</span>
+              </td>
+              <td>
+                <span class="cell-pair">08:20<span class="cell-arrow" aria-hidden="true">→</span>09:50</span>
+                <span class="cell-sub">1:30</span>
+              </td>
+              <td>
+                <span class="cell-pair">08:31<span class="cell-arrow" aria-hidden="true">→</span>09:43</span>
+                <span class="cell-sub">EPZG</span>
+              </td>
+              <td class="num">1</td>
+              <td>
+                <span class="cell-strong">T. Małkiewicz</span>
+                <span class="cell-sub">A. Kowal</span>
+              </td>
+              <td><span class="pill dim">Egzamin</span></td>
+              <td>
+                <span class="cell-pair">118 L<span class="cell-arrow" aria-hidden="true">→</span>140 L</span>
+                <span class="cell-sub">dolano 70 L</span>
+              </td>
+              <td>
+                <span class="cell-pair">1232:40<span class="cell-arrow" aria-hidden="true">→</span>1234:10</span>
+              </td>
+              <td>
+                <span class="cell-pair">9,4 L</span>
+              </td>
+              <td class="row-actions"><a class="btn ghost sm" href="dziennik-operacja.html">Szczegóły</a></td>
+            </tr>
+
+            <!-- WPIS RĘCZNY. Plakietka dotyczy CAŁEGO wiersza, nie żadnej pojedynczej
+                 liczby, więc stoi przy dacie - a nie przy odczytach. -->
+            <tr class="clickable">
+              <td>
+                <span class="cell-strong">3 WRZEŚNIA</span>
+                <span class="pill dim">ręcznie</span>
+                <span class="cell-sub">SP-AXA/2026-09-03/TMA/1</span>
+              </td>
+              <td>
+                <span class="cell-pair">11:20<span class="cell-arrow" aria-hidden="true">→</span>11:54</span>
+                <span class="cell-sub">0:34</span>
+              </td>
+              <td>
+                <span class="cell-pair">11:28<span class="cell-arrow" aria-hidden="true">→</span>11:48</span>
+                <span class="cell-sub">EPZG</span>
+              </td>
+              <td class="num">1</td>
+              <td>
+                <span class="cell-strong">T. Małkiewicz</span>
+              </td>
+              <td><span class="pill dim">Lot tech.</span></td>
+              <td>
+                <span class="cell-pair">130 L<span class="cell-arrow" aria-hidden="true">→</span>118 L</span>
+              </td>
+              <td>
+                <span class="cell-pair">1232:06<span class="cell-arrow" aria-hidden="true">→</span>1232:40</span>
+              </td>
+              <td>
+                <span class="cell-pair">9,6 L</span>
+              </td>
+              <td class="row-actions"><a class="btn ghost sm" href="dziennik-operacja.html">Szczegóły</a></td>
+            </tr>
+
+            <tr class="clickable">
+              <td>
+                <span class="cell-strong">2 WRZEŚNIA</span>
+                <span class="cell-sub">SP-AXA/2026-09-02/AKO/2</span>
+              </td>
+              <td>
+                <span class="cell-pair">15:02<span class="cell-arrow" aria-hidden="true">→</span>16:20</span>
+                <span class="cell-sub">1:18</span>
+              </td>
+              <td>
+                <span class="cell-pair">15:14<span class="cell-arrow" aria-hidden="true">→</span>16:14</span>
+                <span class="cell-sub">EPBC → EPZG</span>
+              </td>
+              <td class="num">1</td>
+              <td>
+                <span class="cell-strong">A. Kowal</span>
+              </td>
+              <td><span class="pill dim">Przelot</span></td>
+              <td>
+                <span class="cell-pair">54 L<span class="cell-arrow" aria-hidden="true">→</span>130 L</span>
+                <span class="cell-sub">dolano 116 L</span>
+              </td>
+              <td>
+                <span class="cell-pair">1230:48<span class="cell-arrow" aria-hidden="true">→</span>1232:06</span>
+              </td>
+              <td>
+                <span class="cell-pair">9,7 L</span>
+              </td>
+              <td class="row-actions"><a class="btn ghost sm" href="dziennik-operacja.html">Szczegóły</a></td>
+            </tr>
+
+            <tr class="clickable">
+              <td>
+                <span class="cell-strong">2 WRZEŚNIA</span>
+                <span class="cell-sub">SP-AXA/2026-09-02/AKO/1</span>
+              </td>
+              <td>
+                <span class="cell-pair">09:20<span class="cell-arrow" aria-hidden="true">→</span>10:34</span>
+                <span class="cell-sub">1:14</span>
+              </td>
+              <td>
+                <span class="cell-pair">09:31<span class="cell-arrow" aria-hidden="true">→</span>10:26</span>
+                <span class="cell-sub">EPZG → EPBC</span>
+              </td>
+              <td class="num">1</td>
+              <td>
+                <span class="cell-strong">A. Kowal</span>
+              </td>
+              <td><span class="pill dim">Przelot</span></td>
+              <td>
+                <span class="cell-pair">92 L<span class="cell-arrow" aria-hidden="true">→</span>54 L</span>
+              </td>
+              <td>
+                <span class="cell-pair">1229:34<span class="cell-arrow" aria-hidden="true">→</span>1230:48</span>
+              </td>
+              <td>
+                <span class="cell-pair">9,9 L</span>
+              </td>
+              <td class="row-actions"><a class="btn ghost sm" href="dziennik-operacja.html">Szczegóły</a></td>
+            </tr>
+
+            <tr class="clickable">
+              <td>
+                <span class="cell-strong">1 WRZEŚNIA</span>
+                <span class="cell-sub">SP-AXA/2026-09-01/TMA/1</span>
+              </td>
+              <td>
+                <span class="cell-pair">07:58<span class="cell-arrow" aria-hidden="true">→</span>11:12</span>
+                <span class="cell-sub">3:14</span>
+              </td>
+              <td>
+                <span class="cell-pair">08:11<span class="cell-arrow" aria-hidden="true">→</span>11:02</span>
+                <span class="cell-sub">EPZG</span>
+              </td>
+              <td class="num">7</td>
+              <td>
+                <span class="cell-strong">T. Małkiewicz</span>
+              </td>
+              <td><span class="pill dim">Skoki</span></td>
+              <td>
+                <span class="cell-pair">176 L<span class="cell-arrow" aria-hidden="true">→</span>92 L</span>
+                <span class="cell-sub">dolano 40 L</span>
+              </td>
+              <td>
+                <span class="cell-pair">1226:20<span class="cell-arrow" aria-hidden="true">→</span>1229:34</span>
+              </td>
+              <td>
+                <span class="cell-pair">10,4 L</span>
+                <span class="cell-sub">9,4 L + 1,0 L</span>
+              </td>
+              <td class="row-actions"><a class="btn ghost sm" href="dziennik-operacja.html">Szczegóły</a></td>
+            </tr>
+
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="00-logowanie.html">Logowanie</a>
+  <span>·</span>
+  <a href="dziennik-flota.html">← Dziennik · flota</a>
+  <span>·</span>
+  <a href="dziennik-maszyna.html" class="active">Dziennik · maszyna</a>
+  <span>·</span>
+  <a href="dziennik-operacja.html">Dziennik · operacja →</a>
+  <span>·</span>
+  <a href="piloci-lista.html">Piloci</a>
+  <span>·</span>
+  <a href="samoloty-lista.html">Samoloty</a>
+  <span>·</span>
+  <a href="zgloszenia-lista.html">Zgłoszenia</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+<section class="canvas-section">
+  <div class="canvas-section-title">Stany tego ekranu</div>
+  <div class="inv-grid">
+
+    <article class="inv full">
+      <div class="inv-head">
+        <span class="inv-name">Wczytywanie - dziesięć kolumn, osiem wierszy</span>
+        <span class="inv-when">Ten sam wzorzec, co na poziomie 1, tylko szerszy: plamki idą w geometrii DZIESIĘCIU kolumn, a nagłówki - które znamy lokalnie - stoją gotowe. Osiem wierszy, bo tyle operacji ma zwykle tydzień jednej maszyny; skeleton obiecuje część wspólną, nie maksimum.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="table-wrap" aria-busy="true">
+          <table>
+            <caption class="visually-hidden">Wczytywanie listy</caption>
+            <thead>
+              <tr>
+                <th>Operacja</th><th>Bieg silnika</th><th>Lot</th><th class="num">Loty</th><th>Pilot</th>
+                <th>Zadanie</th><th>Paliwo</th><th>Motogodziny</th><th>Olej do lotu</th><th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><span class="skeleton cell" style="width:150px"></span></td><td><span class="skeleton cell" style="width:96px"></span></td><td><span class="skeleton cell" style="width:96px"></span></td><td><span class="skeleton cell" style="width:20px"></span></td><td><span class="skeleton cell" style="width:82px"></span></td><td><span class="skeleton cell" style="width:54px"></span></td><td><span class="skeleton cell" style="width:92px"></span></td><td><span class="skeleton cell" style="width:110px"></span></td><td><span class="skeleton cell" style="width:52px"></span></td><td><span class="skeleton cell" style="width:60px"></span></td></tr>
+              <tr><td><span class="skeleton cell" style="width:150px"></span></td><td><span class="skeleton cell" style="width:96px"></span></td><td><span class="skeleton cell" style="width:96px"></span></td><td><span class="skeleton cell" style="width:20px"></span></td><td><span class="skeleton cell" style="width:82px"></span></td><td><span class="skeleton cell" style="width:54px"></span></td><td><span class="skeleton cell" style="width:92px"></span></td><td><span class="skeleton cell" style="width:110px"></span></td><td><span class="skeleton cell" style="width:52px"></span></td><td><span class="skeleton cell" style="width:60px"></span></td></tr>
+              <tr><td><span class="skeleton cell" style="width:150px"></span></td><td><span class="skeleton cell" style="width:96px"></span></td><td><span class="skeleton cell" style="width:96px"></span></td><td><span class="skeleton cell" style="width:20px"></span></td><td><span class="skeleton cell" style="width:82px"></span></td><td><span class="skeleton cell" style="width:54px"></span></td><td><span class="skeleton cell" style="width:92px"></span></td><td><span class="skeleton cell" style="width:110px"></span></td><td><span class="skeleton cell" style="width:52px"></span></td><td><span class="skeleton cell" style="width:60px"></span></td></tr>
+              <tr><td><span class="skeleton cell" style="width:150px"></span></td><td><span class="skeleton cell" style="width:96px"></span></td><td><span class="skeleton cell" style="width:96px"></span></td><td><span class="skeleton cell" style="width:20px"></span></td><td><span class="skeleton cell" style="width:82px"></span></td><td><span class="skeleton cell" style="width:54px"></span></td><td><span class="skeleton cell" style="width:92px"></span></td><td><span class="skeleton cell" style="width:110px"></span></td><td><span class="skeleton cell" style="width:52px"></span></td><td><span class="skeleton cell" style="width:60px"></span></td></tr>
+              <tr><td><span class="skeleton cell" style="width:150px"></span></td><td><span class="skeleton cell" style="width:96px"></span></td><td><span class="skeleton cell" style="width:96px"></span></td><td><span class="skeleton cell" style="width:20px"></span></td><td><span class="skeleton cell" style="width:82px"></span></td><td><span class="skeleton cell" style="width:54px"></span></td><td><span class="skeleton cell" style="width:92px"></span></td><td><span class="skeleton cell" style="width:110px"></span></td><td><span class="skeleton cell" style="width:52px"></span></td><td><span class="skeleton cell" style="width:60px"></span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Maszyna nie latała w tym zakresie</span>
+        <span class="inv-when">Pusto znaczy „w TYCH datach nic", nie „ta maszyna nic nie robi" - dlatego zdanie wskazuje obie drogi wyjścia: zmianę zakresu i powrót do floty. Przycisku akcji nie ma: zmienia się je kontrolką, która stoi wyżej na tym samym ekranie.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="empty">
+          <span class="empty-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg></span>
+          <span class="empty-title">SP-KLM nie latał w tym zakresie</span>
+          <span class="empty-note">Zmień zakres dat albo wróć do listy floty.</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Znak spoza floty w adresie</span>
+        <span class="inv-when">Adres wpisuje się z pamięci, więc literówka jest normalnym stanem, a nie awarią. Pusta tabela wyglądałaby jak „ta maszyna nic nie robiła" - i to jest jedyny powód, dla którego ten stan mówi coś innego niż stan obok. Tu przycisk JEST: z tego ekranu nie ma innego wyjścia.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="empty">
+          <span class="empty-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg></span>
+          <span class="empty-title">Nie ma samolotu SP-AXB</span>
+          <span class="empty-note">Sprawdź znaki na kadłubie albo wróć do listy floty.</span>
+          <a class="btn primary" href="dziennik-flota.html">Pokaż wszystkie</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Lista przycięta kursorem</span>
+        <span class="inv-when">Serwer stronicuje keysetem, więc szeroki zakres dat kończy się w połowie. Lista ucięta PO CICHU wyglądałaby na komplet - a to najgorszy tryb awarii narzędzia, które ma odpowiadać „co ta maszyna robiła". Stopka mówi ile z ilu i podaje drogę wyjścia, zamiast dokładać przycisk „więcej".</span>
+      </div>
+      <div class="inv-demo">
+        <p class="list-foot">Pokazano 50 z 214 operacji - zawęź zakres dat, żeby zobaczyć resztę.</p>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="dziennik-flota.html">← Dziennik · flota</a>
+  <span>·</span>
+  <a href="dziennik-maszyna.html" class="active">Dziennik · maszyna</a>
+  <span>·</span>
+  <a href="dziennik-operacja.html">Dziennik · operacja →</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+</body>
+</html>

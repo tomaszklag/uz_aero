@@ -1,9 +1,9 @@
 /**
- * UZ Aero (serwer) — runner migracji: TRANSAKCYJNOŚĆ (naprawa 2026-07-31).
+ * UZ Aero (serwer) - runner migracji: TRANSAKCYJNOŚĆ (naprawa 2026-07-31).
  *
  * Testujemy jedną właściwość, ale najważniejszą: **częściowa migracja jest niemożliwa**.
  * Wcześniej skrypt i wpis do `schema_migrations` szły osobno, więc śmierć procesu między
- * nimi zostawiała bazę zmigrowaną i nieodnotowaną — a ponowny start puszczał ten sam
+ * nimi zostawiała bazę zmigrowaną i nieodnotowaną - a ponowny start puszczał ten sam
  * skrypt drugi raz i wywracał się na migracji bez `IF NOT EXISTS` (3 i 6), blokując
  * wstanie serwera.
  *
@@ -59,7 +59,7 @@ describe('runner migracji', () => {
     const scripts = ['CREATE TABLE pierwsza (id INTEGER PRIMARY KEY);'];
 
     await migrate(db, scripts);
-    // Drugi bieg na tej samej liście MUSI przejść — gdyby runner powtórzył skrypt,
+    // Drugi bieg na tej samej liście MUSI przejść - gdyby runner powtórzył skrypt,
     // `CREATE TABLE` bez `IF NOT EXISTS` rzuciłby błędem.
     await migrate(db, scripts);
 
@@ -78,7 +78,7 @@ describe('runner migracji', () => {
       ]),
     ).rejects.toThrow();
 
-    // Pierwsza migracja zdążyła się domknąć własną transakcją — i ma zostać.
+    // Pierwsza migracja zdążyła się domknąć własną transakcją - i ma zostać.
     expect(await appliedVersions(db)).toEqual([1]);
     expect(await tableExists(db, 'pierwsza')).toBe(true);
     // Druga: ani śladu. To jest cała istota naprawy.
@@ -86,7 +86,7 @@ describe('runner migracji', () => {
   });
 
   /**
-   * BAZA NOWSZA NIŻ KOD — stan, który stworzyło zgniecenie migracji (2026-08-08).
+   * BAZA NOWSZA NIŻ KOD - stan, który stworzyło zgniecenie migracji (2026-08-08).
    *
    * Dwadzieścia trzy pozycje zwinęły się w jedną, więc każda baza deweloperska założona
    * wcześniej ma w `schema_migrations` numery do 23, a kod zna jeden skrypt. Sam w sobie
@@ -95,7 +95,7 @@ describe('runner migracji', () => {
    * `for (v = 23; v < 2; …)` nie ma iteracji. Serwer wstałby na bazie bez nowej kolumny
    * i pierwszym objawem byłby błąd zapytania w losowym miejscu.
    *
-   * Cisza jest tu więc gorsza niż odmowa startu — i to samo dotyczy wycofania wdrożenia
+   * Cisza jest tu więc gorsza niż odmowa startu - i to samo dotyczy wycofania wdrożenia
    * na starszy kod, gdzie ten sam warunek zachodzi z tego samego powodu.
    */
   it('ODMAWIA startu, gdy baza odnotowała więcej migracji, niż zna kod', async () => {
@@ -119,7 +119,7 @@ describe('runner migracji', () => {
       migrate(db, ['CREATE TABLE pierwsza (id INTEGER PRIMARY KEY);', zepsuta]),
     ).rejects.toThrow();
 
-    // Naprawiony skrypt wchodzi bez sprzątania ręką — baza stoi dokładnie tam,
+    // Naprawiony skrypt wchodzi bez sprzątania ręką - baza stoi dokładnie tam,
     // gdzie była przed nieudaną próbą.
     await migrate(db, ['CREATE TABLE pierwsza (id INTEGER PRIMARY KEY);', poprawiona]);
 

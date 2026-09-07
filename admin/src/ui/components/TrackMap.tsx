@@ -1,16 +1,21 @@
 /**
- * UZ Aero — panel: mapa śladu lotu (`A02c-slad.html`, sekcja „Trasa").
+ * UZ Aero - panel 2.0: mapa śladu sesji.
  *
  * Komponent jest CZYSTYM UKŁADEM: nie liczy nic, dostaje gotowe piksele z `mapPlot`
- * (`screens/track/trackChart.ts`). To ta sama zasada, co w karcie dnia — decyzja
+ * (`screens/logbook/trackChart.ts`). To ta sama zasada, co w reszcie panelu - decyzja
  * o treści mieszka w module testowalnym w Node, a `.tsx` odpowiada za rozmieszczenie.
  *
  * **Bez kafelków** (decyzja 2026-08-04): tłem jest siatka współrzędnych, a odniesienie
- * w terenie dają lotniska z katalogu — pas startowy z podpisem ICAO. Panel nie pobiera
+ * w terenie dają lotniska z katalogu - pas startowy z podpisem ICAO. Panel nie pobiera
  * więc niczego z zewnątrz, dokładnie tak samo jak telefon.
  *
+ * **Legenda opisuje RODZAJE, nie znaczniki.** Panel 1.0 wypisywał w niej każdy znacznik
+ * z osobna - przy locie treningowym to trzy wiersze, ale przy dniu skokowym trzydzieści,
+ * czyli legenda dłuższa od mapy. Numer lotu stoi przy samym znaczniku i tam jest
+ * potrzebny; legenda odpowiada wyłącznie „co znaczy ten kolor".
+ *
  * Typy kształtów mieszkają TUTAJ, a nie przy module liczącym, bo warstwa `ui/` nie zna
- * `screens/` (reguła `test/architecture.test.ts`) — kierunek zależności biegnie od
+ * `screens/` (reguła `test/architecture.test.ts`) - kierunek zależności biegnie od
  * ekranu do komponentu i tylko tak.
  */
 
@@ -29,15 +34,37 @@ export interface MarkerPlacement {
   color: string;
   x: number;
   y: number;
+  /** Miejsce NAPISU - liczy je `markerLabels.ts`, razem z decyzją o jego widoczności. */
+  labelX: number;
+  labelY: number;
+  /**
+   * Czy napis się mieści. Przy dniu skokowym kilkanaście znaczników wypada w tych
+   * samych czterdziestu pikselach i podpisy kładły się jeden na drugim - gasi je
+   * `visibleLabels`, a kropka zostaje zawsze (niesie miejsce i rodzaj zdarzenia).
+   */
+  labelled: boolean;
   ring: boolean;
 }
 
 export interface MapPlot {
-  /** Punkty łamanej w formacie atrybutu `points` SVG. */
-  polyline: string;
+  /**
+   * Trasa w FAZACH (issue #75 pkt 4): kołowanie rysuje się przerywaną szarą, loty
+   * pełną zieloną - jak na ekranie 14 telefonu. Każdy przebieg to punkty w formacie
+   * atrybutu `points` SVG; sąsiednie przebiegi dzielą punkt graniczny, więc łamane
+   * stykają się bez dziury.
+   */
+  route: { phase: 'taxi' | 'flight'; points: string }[];
   airfields: AirfieldPlacement[];
   markers: MarkerPlacement[];
-  scale: { label: string; pixels: number };
+  /**
+   * Podziałka jako UŁAMEK SZEROKOŚCI PŁÓTNA, nie w pikselach - i to jest cała treść
+   * usterki z 2026-09-07. Długość liczy się w jednostkach `viewBox` (1000 na szerokość),
+   * a pasek jest elementem HTML nad mapą: wstawiona wprost, liczba jednostek trafiała
+   * w CSS jako piksele i podziałka mówiła o ~9% mniejszej odległości, niż pokrywała.
+   * Ułamek jest odporny na rozmiar okna, bo `viewBox` i płótno są zawsze tej samej
+   * szerokości - a jednostki nie mają jak drugi raz udać pikseli.
+   */
+  scale: { label: string; widthPct: number };
 }
 
 interface TrackMapProps {
@@ -46,7 +73,7 @@ interface TrackMapProps {
   height: number;
 }
 
-/** Odstęp siatki (px) — ten sam co w aplikacji, żeby oba ekrany czytało się tak samo. */
+/** Odstęp siatki (px) - ten sam co w aplikacji, żeby oba ekrany czytało się tak samo. */
 const GRID_STEP = 60;
 
 export function TrackMap({ plot, width, height }: TrackMapProps) {
@@ -56,8 +83,15 @@ export function TrackMap({ plot, width, height }: TrackMapProps) {
   for (let y = GRID_STEP; y < height; y += GRID_STEP) horizontals.push(y);
 
   return (
-    <div className="map-canvas" style={{ height }}>
-      <svg className="map-overlay" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
+    /* ── PŁÓTNO TRZYMA PROPORCJE `viewBox`, NIE STAŁĄ WYSOKOŚĆ ─────────────────
+       Do 2026-09-07 karta miała `height: 430px`, a `viewBox` 1000×430 rozciągał się
+       na jej szerokość (~1100 px) z `preserveAspectRatio="none"`. Poziom rósł więc
+       o ~9% względem pionu i krąg nadlotniskowy rysował się ELIPSĄ - na mapie, której
+       jedynym zadaniem jest pokazać kształt lotu. `aspect-ratio` z tych samych stałych
+       zdejmuje problem u źródła: skala jest jedna dla obu osi przy każdej szerokości
+       okna, więc nie ma czego prostować ani czym kadrować. */
+    <div className="map-canvas" style={{ aspectRatio: `${width} / ${height}` }}>
+      <svg className="map-overlay" viewBox={`0 0 ${width} ${height}`}>
         {/* ── siatka współrzędnych: podkład, który zastąpił kafelki ──────── */}
         <g className="map-grid">
           {verticals.map((x) => (
@@ -95,15 +129,34 @@ export function TrackMap({ plot, width, height }: TrackMapProps) {
           </g>
         ))}
 
-        <polyline
-          points={plot.polyline}
-          fill="none"
-          stroke="var(--green)"
-          strokeWidth={3}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          opacity={0.92}
-        />
+        {/* Kołowanie przerywaną szarą, loty pełną zieloną (issue #75 pkt 4) -
+            ta sama konwencja, co ekran 14 telefonu i miniatura na 10. */}
+        {plot.route.map((run, i) =>
+          run.phase === 'flight' ? (
+            <polyline
+              key={i}
+              points={run.points}
+              fill="none"
+              stroke="var(--green)"
+              strokeWidth={3}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              opacity={0.92}
+            />
+          ) : (
+            <polyline
+              key={i}
+              points={run.points}
+              fill="none"
+              stroke="var(--text-muted)"
+              strokeWidth={2}
+              strokeDasharray="5 5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              opacity={0.9}
+            />
+          ),
+        )}
 
         {plot.markers.map((marker) => (
           <g key={marker.label}>
@@ -118,47 +171,48 @@ export function TrackMap({ plot, width, height }: TrackMapProps) {
                 opacity={0.4}
               />
             )}
-            <circle cx={marker.x} cy={marker.y} r={8} fill={marker.color} />
-            <text
-              x={marker.x + 13}
-              y={marker.y + 4}
-              className="axis-label"
-              fill={marker.color}
-              fontSize={11}
-            >
-              {marker.label}
-            </text>
+            <circle cx={marker.x} cy={marker.y} r={7} fill={marker.color} />
+            {marker.labelled && (
+              <text
+                x={marker.labelX}
+                y={marker.labelY}
+                className="axis-label"
+                fill={marker.color}
+                fontSize={10}
+              >
+                {marker.label}
+              </text>
+            )}
           </g>
         ))}
       </svg>
 
       <div className="map-legend">
-        <div className="map-legend-title">Legenda</div>
         <div className="legend-row">
           <span className="legend-dot line" style={{ background: 'var(--green)' }} />
-          Trasa lotu
+          Lot
         </div>
-        {plot.markers.map((marker) => (
-          <div className="legend-row" key={marker.label}>
-            <span className="legend-dot" style={{ background: marker.color }} />
-            {marker.label}
-          </div>
-        ))}
-        {plot.airfields.length > 0 && (
-          <div className="legend-row">
-            <span className="legend-dot line" style={{ background: 'var(--border-strong)' }} />
-            Pas startowy
-          </div>
-        )}
+        <div className="legend-row">
+          <span className="legend-dash" />
+          Kołowanie
+        </div>
+        <div className="legend-row">
+          <span className="legend-dot" style={{ background: 'var(--green)' }} />
+          Start
+        </div>
+        <div className="legend-row">
+          <span className="legend-dot" style={{ background: 'var(--blue)' }} />
+          Lądowanie
+        </div>
       </div>
 
       {/* Bez kafelków podziałka jest JEDYNYM odniesieniem odległości. */}
       <div className="map-scale">
         <span className="map-scale-label">{plot.scale.label}</span>
-        <span className="map-scale-bar" style={{ width: plot.scale.pixels }} />
+        <span className="map-scale-bar" style={{ width: `${plot.scale.widthPct}%` }} />
       </div>
 
-      {/* Atrybucja ODbL — część pasów w katalogu pochodzi z OpenStreetMap. */}
+      {/* Atrybucja ODbL - część pasów w katalogu pochodzi z OpenStreetMap. */}
       <div className="map-attrib">lotniska: OurAirports · © OpenStreetMap</div>
     </div>
   );

@@ -1,9 +1,9 @@
 /**
- * UZ Aero (serwer) — zakazy przy zmianach na kontach (`domain/accountGuards.ts`).
+ * UZ Aero (serwer) - zakazy przy zmianach na kontach (`domain/accountGuards.ts`).
  *
  * Testy bez bazy i bez HTTP, bo reguła jest czysta: wejściem jest „kto, komu, z jakiej
  * roli na jaką i ilu jest jeszcze administratorów". Wersja przez `app.inject` żyje
- * w `adminAccounts.test.ts` i sprawdza co innego — że brama naprawdę tych funkcji
+ * w `adminAccounts.test.ts` i sprawdza co innego - że brama naprawdę tych funkcji
  * używa i że odmowa dojeżdża do klienta z powodem.
  *
  * Scenariusz, dla którego to w ogóle istnieje, wydarzył się 2026-08-01: administrator
@@ -13,14 +13,10 @@
 
 import { describe, expect, it } from 'vitest';
 
-import {
-  refuseDeactivate,
-  refusePasswordReset,
-  refuseRoleChange,
-} from '../src/domain/accountGuards.ts';
+import { refuseDeactivate, refuseRoleChange } from '../src/domain/accountGuards.ts';
 
 describe('odebranie roli', () => {
-  it('administrator nie odbiera roli SOBIE — nawet gdy są inni administratorzy', () => {
+  it('administrator nie odbiera roli SOBIE - nawet gdy są inni administratorzy', () => {
     expect(
       refuseRoleChange({
         actorPilotId: 'TMK',
@@ -39,14 +35,14 @@ describe('odebranie roli', () => {
         actorPilotId: 'TMK',
         targetPilotId: 'AKO',
         currentRole: 'admin',
-        nextRole: 'training_lead',
+        nextRole: 'pilot',
         targetActive: true,
         activeAdmins: 1,
       }),
     ).toBe('last_admin');
   });
 
-  it('przedostatni administrator rolę traci — blokada dotyczy ostatniego, nie każdego', () => {
+  it('przedostatni administrator rolę traci - blokada dotyczy ostatniego, nie każdego', () => {
     expect(
       refuseRoleChange({
         actorPilotId: 'TMK',
@@ -59,7 +55,7 @@ describe('odebranie roli', () => {
     ).toBeNull();
   });
 
-  it('administrator NIEAKTYWNY nie liczy się do puli — jego degradacja nikogo nie odcina', () => {
+  it('administrator NIEAKTYWNY nie liczy się do puli - jego degradacja nikogo nie odcina', () => {
     expect(
       refuseRoleChange({
         actorPilotId: 'TMK',
@@ -72,7 +68,11 @@ describe('odebranie roli', () => {
     ).toBeNull();
   });
 
-  it('NADANIE roli nigdy nie jest blokowane — nie zmniejsza liczby naprawiających', () => {
+  // Przypadek degradacji roli pośredniej („traci rolę bez ceremonii, bo nie ma
+  // `accounts.manage`") wypadł razem z rolą `training_lead` 2026-08-30: `currentRole`
+  // inne niż `admin` znaczy dziś wyłącznie `pilot`, więc gałęzi „cel nie jest
+  // administratorem" pilnuje ten przypadek.
+  it('NADANIE roli nigdy nie jest blokowane - nie zmniejsza liczby naprawiających', () => {
     expect(
       refuseRoleChange({
         actorPilotId: 'TMK',
@@ -92,19 +92,6 @@ describe('odebranie roli', () => {
         targetPilotId: 'TMK',
         currentRole: 'admin',
         nextRole: 'admin',
-        targetActive: true,
-        activeAdmins: 1,
-      }),
-    ).toBeNull();
-  });
-
-  it('szef wyszkolenia traci rolę bez ceremonii — nie ma zdolności accounts.manage', () => {
-    expect(
-      refuseRoleChange({
-        actorPilotId: 'TMK',
-        targetPilotId: 'AKO',
-        currentRole: 'training_lead',
-        nextRole: 'pilot',
         targetActive: true,
         activeAdmins: 1,
       }),
@@ -135,7 +122,7 @@ describe('deaktywacja', () => {
     ).toBe('last_admin');
   });
 
-  it('zwykły pilot deaktywuje się bez przeszkód — to codzienna operacja klubu', () => {
+  it('zwykły pilot deaktywuje się bez przeszkód - to codzienna operacja klubu', () => {
     expect(
       refuseDeactivate({
         actorPilotId: 'TMK',
@@ -147,12 +134,3 @@ describe('deaktywacja', () => {
   });
 });
 
-describe('reset hasła', () => {
-  it('konta NIEAKTYWNEGO nie resetujemy — hasło i tak nie zaloguje', () => {
-    expect(refusePasswordReset(false)).toBe('inactive_account');
-  });
-
-  it('konto aktywne — bez przeszkód', () => {
-    expect(refusePasswordReset(true)).toBeNull();
-  });
-});

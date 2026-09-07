@@ -1,9 +1,9 @@
 /**
- * UZ Aero (serwer) — komendy cyklu życia flagi (panel, mockup `A03a-flaga.html`).
+ * UZ Aero (serwer) - komendy cyklu życia flagi (panel, mockup `A03a-flaga.html`).
  *
  * To pierwszy pionowy przekrój panelu i wzorzec dla następnych. Domyka też §4.7:
  * do dziś otwarta flaga `aircraft_overlap` (dawniej `session_overlap`) blokowała kartę dnia BEZTERMINOWO, bo
- * w całym `server/src` nie było kodu ustawiającego `status='resolved'` — jedynym
+ * w całym `server/src` nie było kodu ustawiającego `status='resolved'` - jedynym
  * odblokowaniem był ręczny `UPDATE` w bazie.
  *
  * **Rozwiązanie flagi to komentarz i zmiana statusu, nigdy edycja danych.** Rejestr
@@ -23,10 +23,10 @@ import type { Actor, AdminFlag, FlagsAdminPort, ResolvedFlag } from '../ports.ts
 /**
  * Próba re-eksportu karty jednej z sesji, których dotyczyła flaga.
  *
- * `outcome: null` znaczy „eksport rzucił" — awarię arkuszy łapiemy tak samo jak
+ * `outcome: null` znaczy „eksport rzucił" - awarię arkuszy łapiemy tak samo jak
  * ingest (§4.7: karta to SKUTEK, nie warunek). Flaga jest wtedy rozwiązana, a panel
  * musi to pokazać uczciwie: 500 sugerowałoby, że decyzja się nie zapisała, a milczące
- * `exports: []` — że karty w ogóle nie próbowano odblokować.
+ * `exports: []` - że karty w ogóle nie próbowano odblokować.
  */
 export interface ExportAttempt {
   sessionUuid: string;
@@ -52,7 +52,7 @@ export type ResolveFlagOutcome =
 
 /**
  * Sygnały przerwania transakcji. Muszą być WYJĄTKAMI, bo tylko wyjątek wycofuje
- * transakcję `AuditedWrite.run` — zwrócenie wartości zostawiłoby wpis audytu
+ * transakcję `AuditedWrite.run` - zwrócenie wartości zostawiłoby wpis audytu
  * o operacji, która się nie zdarzyła. Poza ten plik nie wychodzą: `resolve` łapie
  * je i zamienia na warianty `ResolveFlagOutcome`.
  */
@@ -77,7 +77,7 @@ export class AdminFlagCommands {
 
     let closed: ResolvedFlag;
     try {
-      // 1) TRANSAKCJA: zamknięcie flagi + ślad audytu. Nic więcej — żaden skutek
+      // 1) TRANSAKCJA: zamknięcie flagi + ślad audytu. Nic więcej - żaden skutek
       //    poza bazą nie ma prawa zależeć od tego, czy transakcja przejdzie.
       closed = await this.write.run(actor, async (tx) => {
         const done = await this.flags.resolve(tx, id, actor.pilotId, note, at);
@@ -113,7 +113,7 @@ export class AdminFlagCommands {
     }
 
     // 2) PO COMMICIE: karty, które ta flaga blokowała. Kolejność jest tu regułą,
-    //    nie stylem — eksport przed commitem utrwaliłby w dokumencie klubu dzień
+    //    nie stylem - eksport przed commitem utrwaliłby w dokumencie klubu dzień
     //    opisany stanem, który mógł się nie zapisać.
     return {
       ok: true,
@@ -122,7 +122,7 @@ export class AdminFlagCommands {
   }
 
   /**
-   * Re-eksport WYŁĄCZNIE dla `aircraft_overlap` — bo tylko ten typ jest bramką
+   * Re-eksport WYŁĄCZNIE dla `aircraft_overlap` - bo tylko ten typ jest bramką
    * w `DayExporter`. Rozwiązanie `mh_gap` czy `mh_regression` niczego nie odblokowuje
    * i udawanie inaczej myliłoby panel (odpowiedź z „rewizja 2" po akcji, która na
    * kartę nie wpłynęła, uczy nieufności do narzędzia).

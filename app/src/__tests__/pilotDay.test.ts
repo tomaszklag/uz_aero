@@ -1,5 +1,5 @@
 /**
- * UZ Aero — testy projekcji DNIA PILOTA (`docs/_main.md.txt` §3.6, model po issue #23).
+ * UZ Aero - testy projekcji DNIA PILOTA (`docs/_main.md.txt` §3.6, model po issue #23).
  *
  * Scenariusz odwzorowuje mockup `design/01-moj-dzien.html`, czyli te same liczby,
  * które widzi pilot:
@@ -51,7 +51,7 @@ function flight(from: string, to: string): Flight {
   };
 }
 
-/** Sesja samolotu — tylko pola, których projekcja dnia faktycznie używa. */
+/** Sesja samolotu - tylko pola, których projekcja dnia faktycznie używa. */
 function session(over: Partial<SessionState>): SessionState {
   return { ...emptySessionState(), sessionUuid: 's', sessionPicId: PIC, ...over };
 }
@@ -81,15 +81,15 @@ beforeEach(() => {
   flightSeq = 0;
 });
 
-describe('projectPilotDay — jeden dzień, dwa samoloty (scenariusz 01)', () => {
+describe('projectPilotDay - jeden dzień, dwa samoloty (scenariusz 01)', () => {
   const day = () => projectPilotDay([axa(), klm()], PIC, DAY0);
 
-  it('składa sesje z OBU maszyn w jedną płaską oś, uporządkowaną w czasie', () => {
+  it('składa operacje z OBU maszyn w jedną płaską oś, uporządkowaną w czasie', () => {
     const d = day();
 
     expect(d.sessions).toHaveLength(3);
     expect(d.sessions.map((x) => x.aircraftId)).toEqual(['sp-axa', 'sp-axa', 'sp-klm']);
-    // Numeracja biegnie ciągiem przez maszyny — tak, jak numeruje ekran 01.
+    // Numeracja biegnie ciągiem przez maszyny - tak, jak numeruje ekran 01.
     expect(d.sessions.map((x) => x.index)).toEqual([1, 2, 3]);
     expect(d.aircraftIds).toEqual(['sp-axa', 'sp-klm']);
   });
@@ -103,7 +103,7 @@ describe('projectPilotDay — jeden dzień, dwa samoloty (scenariusz 01)', () =>
     expect(d.landingCount).toBe(3);
   });
 
-  it('czas lotu przypisuje się do sesji, w której lot się zaczął', () => {
+  it('czas lotu przypisuje się do operacji, w której lot się zaczął', () => {
     const d = day();
 
     expect(d.sessions[0]!.flightMs).toBe(41 * MIN);
@@ -112,7 +112,7 @@ describe('projectPilotDay — jeden dzień, dwa samoloty (scenariusz 01)', () =>
   });
 });
 
-describe('projectPilotDay — sesja w toku i dzień pusty', () => {
+describe('projectPilotDay - operacja w toku i dzień pusty', () => {
   it('otwarty bieg jest wierszem z `stoppedAt: null`, nie dziurą na liście', () => {
     const s = session({ aircraftId: 'sp-axa', legs: [leg('08:12', null)] });
 
@@ -123,7 +123,7 @@ describe('projectPilotDay — sesja w toku i dzień pusty', () => {
     expect(d.sessions[0]!.blockMs).toBe(0);
   });
 
-  it('doba bez sesji jest pusta, a nie zerowa', () => {
+  it('doba bez operacji jest pusta, a nie zerowa', () => {
     const d = projectPilotDay([], PIC, DAY0);
 
     expect(d.sessions).toHaveLength(0);
@@ -132,8 +132,8 @@ describe('projectPilotDay — sesja w toku i dzień pusty', () => {
   });
 });
 
-describe('projectPilotDay — granice doby i cudze sesje', () => {
-  it('odrzuca sesje prowadzone przez INNEGO pilota', () => {
+describe('projectPilotDay - granice doby i cudze operacje', () => {
+  it('odrzuca operacje prowadzone przez INNEGO pilota', () => {
     const foreign = session({ sessionPicId: 'krz', aircraftId: 'sp-fgk', legs: [leg('08:12', '09:05')] });
 
     const d = projectPilotDay([axa(), foreign], PIC, DAY0);
@@ -141,9 +141,9 @@ describe('projectPilotDay — granice doby i cudze sesje', () => {
     expect(d.sessions.every((x) => x.aircraftId === 'sp-axa')).toBe(true);
   });
 
-  it('sesja rozpoczęta przed północą należy do doby, w której WYSTARTOWAŁA', () => {
+  it('operacja rozpoczęta przed północą należy do doby, w której WYSTARTOWAŁA', () => {
     // Bieg 23:50 → 00:20 następnej doby. Gdyby przynależność szła po czasie
-    // zamknięcia, jeden lot rozpadłby się na dwa dni — czyli dokładnie problem,
+    // zamknięcia, jeden lot rozpadłby się na dwa dni - czyli dokładnie problem,
     // który przebudowa flow usunęła.
     const s = session({
       aircraftId: 'sp-axa',
@@ -172,7 +172,7 @@ describe('projectPilotDay — granice doby i cudze sesje', () => {
   });
 });
 
-describe('projectPilotDay — liczba lotów sesji (kolumna „Loty" na 01)', () => {
+describe('projectPilotDay - liczba lotów operacji (kolumna „Loty" na 01)', () => {
   it('zlicza loty, które zaczęły się wewnątrz biegu', () => {
     const s = session({
       aircraftId: 'sp-axa',
@@ -184,5 +184,60 @@ describe('projectPilotDay — liczba lotów sesji (kolumna „Loty" na 01)', () 
 
     expect(d.sessions[0]!.flightCount).toBe(2);
     expect(d.blockTimeMs).toBe(53 * MIN);
+  });
+});
+
+describe('projectPilotDay - zapis bez biegu silnika (issue #75)', () => {
+  /** 09C ze ZMIENIONYM odczytem paliwa: treść jest, biegu nie ma. */
+  function changedNoRun(): SessionState {
+    return session({
+      sessionUuid: 's-changed',
+      aircraftId: 'sp-fgk',
+      claimedAt: at('06:45'),
+      closed: true,
+      closedAt: at('07:50'),
+      fuel: { startL: 240, addedL: 0, endL: 236, consumedL: 4, lastReadingL: 236 },
+      mh: { start: 2815.2, end: 2815.2, deltaH: 0 },
+    });
+  }
+
+  it('operacja z treścią dostaje wiersz: godziny zajęcia, zero bloku i lotów', () => {
+    const d = projectPilotDay([changedNoRun(), axa()], PIC, DAY0);
+
+    expect(d.sessions.map((s) => s.sessionUuid)).toEqual(['s-changed', 's-axa', 's-axa']);
+    const row = d.sessions[0]!;
+    expect(row.startedAt).toBe(at('06:45'));
+    expect(row.stoppedAt).toBe(at('07:50'));
+    expect(row.blockMs).toBe(0);
+    expect(row.flightCount).toBe(0);
+    // Zero bloku i lotu nie rusza sum doby, ale maszyna wchodzi na listę użytych.
+    expect(d.aircraftIds).toContain('sp-fgk');
+  });
+
+  it('zapis pusty (komplet równych odczytów) wiersza nie dostaje', () => {
+    const empty = session({
+      sessionUuid: 's-empty',
+      aircraftId: 'sp-fgk',
+      claimedAt: at('06:00'),
+      closed: true,
+      closedAt: at('06:30'),
+      fuel: { startL: 240, addedL: 0, endL: 240, consumedL: 0, lastReadingL: 240 },
+      mh: { start: 2815.2, end: 2815.2, deltaH: 0 },
+    });
+
+    const d = projectPilotDay([empty, axa()], PIC, DAY0);
+    expect(d.sessions.map((s) => s.sessionUuid)).toEqual(['s-axa', 's-axa']);
+  });
+
+  it('zapis trzymany (nieoddany) bez biegu wiersza jeszcze nie ma', () => {
+    const held = session({
+      sessionUuid: 's-held',
+      aircraftId: 'sp-fgk',
+      claimedAt: at('06:45'),
+      fuel: { startL: 240, addedL: 48, endL: null, consumedL: null, lastReadingL: 288 },
+    });
+
+    const d = projectPilotDay([held, axa()], PIC, DAY0);
+    expect(d.sessions.map((s) => s.sessionUuid)).toEqual(['s-axa', 's-axa']);
   });
 });

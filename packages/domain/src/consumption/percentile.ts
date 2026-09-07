@@ -1,5 +1,5 @@
 /**
- * UZ Aero — centyl z interpolacją liniową.
+ * UZ Aero - centyl z interpolacją liniową.
  *
  * Wydzielony z `summary.ts` (issue #38), bo pasmo centylowe przestało być sprawą jednego
  * modułu: tak samo liczy się rozrzut sesji wokół modelu fazowego (`ratio.ts`). Reguła
@@ -9,7 +9,7 @@
 
 /**
  * Centyl z interpolacją liniową między sąsiednimi obserwacjami (metoda domyślna
- * w większości narzędzi statystycznych). Przy jednej obserwacji zwraca ją samą —
+ * w większości narzędzi statystycznych). Przy jednej obserwacji zwraca ją samą -
  * pasmo jest wtedy punktem i taka jest prawda o tych danych.
  */
 export function percentile(values: readonly number[], fraction: number): number | null {

@@ -1,13 +1,13 @@
 /**
- * UZ Aero — spoina: `engineRunning` → tryb źródła GPS (`GpsPort.setBackgroundMode`).
+ * UZ Aero - spoina: `engineRunning` → tryb źródła GPS (`GpsPort.setBackgroundMode`).
  *
  * Okno usługi pierwszoplanowej = pracujący silnik (decyzja 2026-08-03): między lotami
- * zero GPS i zero powiadomienia. Hook jest GŁUPI — całą maszynę stanów (adopcja,
+ * zero GPS i zero powiadomienia. Hook jest GŁUPI - całą maszynę stanów (adopcja,
  * retry z tła, sprzątanie osieroconej usługi) ma adapter za portem.
  *
  * Stan początkowy TEŻ jest komendą, nie tylko zbocza: po powrocie z headless-restartu
  * adoptuje działającą usługę (silnik gra), a po zamkniętym dniu sprząta osieroconą.
- * Dlatego hook wolno zamontować dopiero, gdy store zna PRAWDZIWY stan dnia —
+ * Dlatego hook wolno zamontować dopiero, gdy store zna PRAWDZIWY stan dnia -
  * po `loadSession` (patrz binder przy wznowieniu, `navigation/resumeTarget.ts`),
  * nigdy przed nim.
  */
@@ -21,7 +21,7 @@ export function useBackgroundTracking(gps: GpsPort | null): void {
   useEffect(() => {
     if (gps == null) return;
 
-    // Kontrakt portu: nigdy nie odrzuca — void jest tu świadome, nie przeoczone.
+    // Kontrakt portu: nigdy nie odrzuca - void jest tu świadome, nie przeoczone.
     const apply = (engineOn: boolean): void => {
       // TYMCZASOWA DIAGNOSTYKA (do zdjęcia po weryfikacji na urządzeniu).
       console.log(`[bg-gps] hook apply(engineOn=${engineOn})`);

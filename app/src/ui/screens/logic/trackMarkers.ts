@@ -1,13 +1,13 @@
 /**
- * UZ Aero — ZNACZNIKI ŚLADU NA OBU WYKRESACH (issue #47 pkt 2).
+ * UZ Aero - ZNACZNIKI ŚLADU NA OBU WYKRESACH (issue #47 pkt 2).
  *
- * Jedno źródło (`SessionTrackMarker` z zapytania), dwie postacie — bo mapa i profil
+ * Jedno źródło (`SessionTrackMarker` z zapytania), dwie postacie - bo mapa i profil
  * odpowiadają na inne pytanie:
  *  • **mapa** ma osie przestrzenne, więc podpis musi powiedzieć, CO to za punkt
- *    („T/O 1 · 08:20") — inaczej cztery kropki nad jednym lotniskiem są nie do
+ *    („T/O 1 · 08:20") - inaczej cztery kropki nad jednym lotniskiem są nie do
  *    rozróżnienia,
  *  • **profil** ma oś czasu, a rodzaj niesie kolor, więc podpisem jest sama godzina.
- *    Pełne nazwy przy czterech znacznikach nie mieszczą się w szerokości telefonu —
+ *    Pełne nazwy przy czterech znacznikach nie mieszczą się w szerokości telefonu -
  *    sprawdzone na geometrii mockupu (`design/14-slad.html`), nie na oko.
  *
  * Wspólne dla obu jest scalanie MAKSIMUM z sąsiadem: w dniu skokowym szczyt wypada
@@ -38,7 +38,7 @@ export interface ProfileMarkerView {
   note?: string | null;
 }
 
-/** Znaczniki mapy — z podpisem „co i o której". */
+/** Znaczniki mapy - z podpisem „co i o której". */
 export function mapMarkers(
   markers: readonly SessionTrackMarker[],
   palette: MarkerPalette,
@@ -54,7 +54,7 @@ export function mapMarkers(
     }));
 }
 
-/** Znaczniki profilu — sama godzina; liczba stóp tylko przy maksimum. */
+/** Znaczniki profilu - sama godzina; liczba stóp tylko przy maksimum. */
 export function profileMarkers(
   markers: readonly SessionTrackMarker[],
   palette: MarkerPalette,
@@ -63,7 +63,7 @@ export function profileMarkers(
     at: marker.at,
     color: colorOf(marker, palette),
     // Zrzut i szczyt siedzą NA KRZYWEJ (wysokość jest ich treścią), start i lądowanie
-    // przy ziemi — bo tam właśnie były.
+    // przy ziemi - bo tam właśnie były.
     onCurve: marker.kind === 'drop' || marker.kind === 'peak',
     note: peakNote(marker),
   }));
@@ -79,7 +79,7 @@ function mapLabel(marker: SessionTrackMarker): string {
   return `MAX ${feet(marker.altitudeFt)} · ${time}`;
 }
 
-/** Podpis maksimum przy znaczniku na profilu — tam liczba stóp ma oś, na której stoi. */
+/** Podpis maksimum przy znaczniku na profilu - tam liczba stóp ma oś, na której stoi. */
 function peakNote(marker: SessionTrackMarker): string | null {
   if (marker.kind === 'peak') return `MAX ${feet(marker.altitudeFt)}`;
   if (marker.alsoPeak === true) return `MAX ${feet(marker.altitudeFt)}`;
@@ -93,5 +93,5 @@ function colorOf(marker: SessionTrackMarker, palette: MarkerPalette): string {
 }
 
 function feet(value: number | null | undefined): string {
-  return value == null ? '— —' : `${Math.round(value).toLocaleString('pl-PL')} ft`;
+  return value == null ? '- -' : `${Math.round(value).toLocaleString('pl-PL')} ft`;
 }

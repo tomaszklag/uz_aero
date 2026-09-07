@@ -1,5 +1,5 @@
 /**
- * UZ Aero — testy modułów pomocniczych detekcji: bufor historii, cechy trendowe,
+ * UZ Aero - testy modułów pomocniczych detekcji: bufor historii, cechy trendowe,
  * retro-datowanie.
  *
  * `flightDetector.test.ts` sprawdza je pośrednio, na całych scenariuszach lotu. Tutaj
@@ -47,7 +47,7 @@ describe('bufor historii', () => {
   });
 
   it('odrzuca fix starszy niż najnowszy (cofnięty zegar nie miesza kolejności)', () => {
-    // Chronologia jest niepisanym założeniem regresji i szukania onsetu — po przemieszaniu
+    // Chronologia jest niepisanym założeniem regresji i szukania onsetu - po przemieszaniu
     // zwracałyby liczbę, która wygląda sensownie i jest nieprawdziwa.
     const h = fill([
       { time: t(10), groundSpeedKt: 10, altitudeFt: null },
@@ -88,7 +88,7 @@ describe('prędkość z okna', () => {
     expect(speed.kt).toBeCloseTo(40, 0);
   });
 
-  it('bez dopplera i bez pozycji nie zmyślamy liczby — null', () => {
+  it('bez dopplera i bez pozycji nie zmyślamy liczby - null', () => {
     expect(groundSpeed([{ time: t(0), groundSpeedKt: null, altitudeFt: null }])).toBeNull();
   });
 });
@@ -104,7 +104,7 @@ describe('przyspieszenie podłużne', () => {
     expect(speedTrendKtPerSec(roll)).toBeCloseTo(10, 1);
   });
 
-  it('dobieg: ujemne nachylenie — to ta liczba odróżnia go od rozbiegu', () => {
+  it('dobieg: ujemne nachylenie - to ta liczba odróżnia go od rozbiegu', () => {
     const rollout: GpsFix[] = [70, 60, 50, 40, 30, 20].map((kt, i) => ({
       time: t(i),
       groundSpeedKt: kt,
@@ -150,7 +150,7 @@ describe('prędkość kątowa z kursu', () => {
     expect(turnRateDps(throughNorth)).toBeCloseTo(2, 1);
   });
 
-  it('szum wokół stałego kursu znosi się — lot prosty ma ~0 °/s', () => {
+  it('szum wokół stałego kursu znosi się - lot prosty ma ~0 °/s', () => {
     const straight: GpsFix[] = [270, 272, 269, 271, 270, 271].map((deg, i) => ({
       time: t(i),
       groundSpeedKt: 80,

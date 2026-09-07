@@ -1,14 +1,14 @@
 /**
- * UZ Aero (serwer) — trasa dziennika audytu (`GET /admin/api/audit`, mockup
+ * UZ Aero (serwer) - trasa dziennika audytu (`GET /admin/api/audit`, mockup
  * `A09-audyt.html`).
  *
- * Zdolność `audit.read` ma WYŁĄCZNIE administrator (`domain/roles.ts`) — szef
+ * Zdolność `audit.read` ma WYŁĄCZNIE administrator (`domain/roles.ts`) - szef
  * wyszkolenia rozstrzyga rozbieżności, ale nie czyta cudzych śladów. To nie jest
  * przeoczenie do naprawienia przy okazji: wyjaśnianie rozbieżności i nadzór nad
  * administratorami to dwie różne odpowiedzialności.
  *
  * Cienka jak reszta repo: zod → zapytanie → status. Trasa nie zna ani SQL-a, ani
- * porządku listy — tłumaczy query string na filtr i wynik na kod HTTP.
+ * porządku listy - tłumaczy query string na filtr i wynik na kod HTTP.
  */
 
 import type { FastifyInstance } from 'fastify';
@@ -21,15 +21,15 @@ import { adminRoute, type AdminGate } from './adminRoute.ts';
 import { dayParam, endOfDay } from './dayRange.ts';
 
 /**
- * Filtr po akcji przepuszcza WYŁĄCZNIE kody z katalogu — i po to `isAdminAction`
- * powstał (`domain/adminActions.ts`: „strażnik wejścia z zewnątrz — dla strony ODCZYTU
+ * Filtr po akcji przepuszcza WYŁĄCZNIE kody z katalogu - i po to `isAdminAction`
+ * powstał (`domain/adminActions.ts`: „strażnik wejścia z zewnątrz - dla strony ODCZYTU
  * dziennika i filtrów po akcji").
  *
  * ══ DLACZEGO STRAŻNIK NA WEJŚCIU, SKORO ODCZYT PRZEPUSZCZA NIEZNANE KODY ══
  * To nie jest sprzeczność, tylko dwa różne pytania. Wiersz w bazie może nieść kod
  * spoza katalogu (akcja przemianowana, wpis historyczny) i lista pokazuje go dosłownie.
  * Ale FILTR jest pytaniem zadanym przez klienta, a pytanie o akcję, której system nie
- * zna, nie ma poprawnej odpowiedzi — ciche zignorowanie takiego parametru pokazałoby
+ * zna, nie ma poprawnej odpowiedzi - ciche zignorowanie takiego parametru pokazałoby
  * PEŁNĄ listę pod etykietą zawężenia, czyli skłamałoby o tym, na co człowiek patrzy.
  * Stąd 400.
  *
@@ -44,7 +44,7 @@ const action = z
 /**
  * Parametr POWTARZALNY (`?action=pilot.create&action=pilot.update`), bo ekran filtruje
  * GRUPAMI („Konta", „Flota", „Konserwacja"), a grupa to kilka kodów katalogu. Fastify
- * oddaje powtórzony parametr tablicą, pojedynczy — napisem; unia obsługuje oba i oddaje
+ * oddaje powtórzony parametr tablicą, pojedynczy - napisem; unia obsługuje oba i oddaje
  * zawsze tablicę, żeby dalsza część kodu nie znała tej różnicy.
  */
 const actions = z
@@ -53,9 +53,9 @@ const actions = z
 
 const listQuery = z.object({
   action: actions.optional(),
-  /** Identyfikator konta działającego — dopasowanie DOKŁADNE, nie po nazwisku. */
+  /** Identyfikator konta działającego - dopasowanie DOKŁADNE, nie po nazwisku. */
   actor: z.string().min(1).max(50).optional(),
-  /** `flag` · `event` · `pilot` · `aircraft` … — wolny tekst, bo baza go nie zamyka. */
+  /** `flag` · `event` · `pilot` · `aircraft` … - wolny tekst, bo baza go nie zamyka. */
   targetType: z.string().min(1).max(50).optional(),
   /** Identyfikator obiektu: id flagi, uuid zdarzenia, kod pilota, rejestracja. */
   targetId: z.string().min(1).max(200).optional(),
@@ -94,7 +94,7 @@ export function registerAdminAuditRoutes(
 
       const outcome = await audit.list(filter);
       // 400, nie 500: kursor przychodzi z zewnątrz. Milczące zaczęcie od pierwszej
-      // strony byłoby gorsze — panel pokazałby początek dziennika, sądząc, że przewinął.
+      // strony byłoby gorsze - panel pokazałby początek dziennika, sądząc, że przewinął.
       if (!outcome.ok) return reply.code(400).send({ error: 'bad_cursor' });
 
       return reply.send(outcome.page);

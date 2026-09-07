@@ -1,13 +1,13 @@
 /**
- * UZ Aero — PODZIAŁKA CZASU profilu pionowego (issue #47, trzecia tura przeglądu).
+ * UZ Aero - PODZIAŁKA CZASU profilu pionowego (issue #47, trzecia tura przeglądu).
  *
  * Mapa ma podziałkę odległości i to ona jest jej wskaźnikiem przybliżenia: przy ×2,4
  * czyta „500 m" zamiast „2 km". Profil po dołożeniu zoomu poziomego został bez
- * odpowiednika — godziny stoją WYŁĄCZNIE przy znacznikach, więc po przybliżeniu między
+ * odpowiednika - godziny stoją WYŁĄCZNIE przy znacznikach, więc po przybliżeniu między
  * dwoma zdarzeniami nie było ani jednej liczby mówiącej, jaki wycinek czasu widać.
  *
  * Odpowiedź jest ta sama, co na mapie: krótki pasek z podpisem, w rogu wykresu.
- * Nie ma za to osi z regularnymi znacznikami czasu — te wpadłyby w rząd godzin przy
+ * Nie ma za to osi z regularnymi znacznikami czasu - te wpadłyby w rząd godzin przy
  * startach i lądowaniach, a dwa rzędy liczb pod wykresem to dokładnie ten problem,
  * który przegląd kazał usunąć.
  *
@@ -52,7 +52,7 @@ export function timeScaleBar(msPerPixel: number, maxPixels: number): TimeScale |
   if (!Number.isFinite(msPerPixel) || msPerPixel <= 0 || maxPixels <= 0) return null;
 
   // Największy krok mieszczący się w limicie; gdy nawet najmniejszy jest za szeroki
-  // (nagranie kilkusekundowe), bierzemy go mimo to — pasek krótszy niż limit jest
+  // (nagranie kilkusekundowe), bierzemy go mimo to - pasek krótszy niż limit jest
   // uczciwy, a jego brak nie mówi nic.
   let chosen = STEPS_MS[0]!;
   for (const step of STEPS_MS) {

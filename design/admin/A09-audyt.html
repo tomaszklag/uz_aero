@@ -3,20 +3,20 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — Panel admina · A09 Audyt</title>
+<title>UZ Aero - Panel admina · A09 Audyt</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   /* ══════════════════════════════════════════════════════════════════════
-     UZ AERO — PANEL ADMINA · SZABLON
+     UZ AERO - PANEL ADMINA · SZABLON
      Ten plik jest ŹRÓDŁEM dla wszystkich mockupów `design/admin/A*.html`.
      Kopiuj <head> w całości; nie zmieniaj tokenów ani ramy okna.
 
      Czym się różni od mockupów telefonu (`design/*.html`):
-     — ramka to OKNO PRZEGLĄDARKI 1440×900, nie telefon 393×852;
-     — skalowanie `--app-scale` działa identycznie jak `--phone-scale`;
-     — tokeny kolorów i czcionki są TE SAME, bo to ten sam produkt.
+     - ramka to OKNO PRZEGLĄDARKI 1440×900, nie telefon 393×852;
+     - skalowanie `--app-scale` działa identycznie jak `--phone-scale`;
+     - tokeny kolorów i czcionki są TE SAME, bo to ten sam produkt.
      ══════════════════════════════════════════════════════════════════════ */
   :root {
     --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
@@ -27,7 +27,7 @@
     --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28);
     --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
     --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
-    /* wymiary shellu — stałe, żeby wszystkie ekrany siadały w tej samej siatce */
+    /* wymiary shellu - stałe, żeby wszystkie ekrany siadały w tej samej siatce */
     --sidebar-w: 236px; --topbar-h: 56px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -42,7 +42,7 @@
     min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 44px 24px 80px; gap: 26px;
   }
 
-  /* ── canvas: etykieta, panel wariantów, nav-strip — jak w design/*.html, tylko szersze ── */
+  /* ── canvas: etykieta, panel wariantów, nav-strip - jak w design/*.html, tylko szersze ── */
   .canvas-label { width:100%; max-width:1440px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
   .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
   .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
@@ -67,7 +67,7 @@
   .nav-strip a:hover, .nav-strip a.active { color:var(--green); }
   .nav-strip span { color:var(--border-strong); }
 
-  /* ══ RAMA OKNA PRZEGLĄDARKI — desktopowy odpowiednik `.phone` ══ */
+  /* ══ RAMA OKNA PRZEGLĄDARKI - desktopowy odpowiednik `.phone` ══ */
   .browser {
     width:1440px; height:900px; border-radius:14px; background:var(--bg);
     border:1px solid #1C1E24;
@@ -103,7 +103,7 @@
   .nav-count { margin-left:auto; font-family:var(--font-mono); font-size:9.5px; font-weight:700; padding:1px 6px; border-radius:999px; background:var(--surface-raised); color:var(--text-muted); border:1px solid var(--border); }
   .nav-count.amber { background:var(--amber-muted); color:var(--amber); border-color:var(--amber-border); }
   .nav-count.red { background:var(--red-muted); color:var(--red); border-color:var(--red-border); }
-  /* pozycja niedostępna dla roli — widoczna, ale wyjaśniona (nie chowamy, żeby nie zgadywał) */
+  /* pozycja niedostępna dla roli - widoczna, ale wyjaśniona (nie chowamy, żeby nie zgadywał) */
   .nav-item.locked { opacity:0.4; cursor:not-allowed; }
   .nav-item.locked .nav-count { background:transparent; border-color:transparent; }
 
@@ -120,13 +120,13 @@
   .crumbs b { color:var(--text-primary); font-weight:500; }
   .crumbs span { color:var(--border-strong); }
   .topbar-right { display:flex; align-items:center; gap:10px; }
-  /* zegar UTC — w panelu, jak w aplikacji, czas nieoznaczony = UTC */
+  /* zegar UTC - w panelu, jak w aplikacji, czas nieoznaczony = UTC */
   .utc-clock { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); display:inline-flex; align-items:center; gap:7px; }
   .utc-clock b { color:var(--text-primary); font-weight:700; }
   .utc-clock i { font-style:normal; color:var(--blue); font-size:9px; letter-spacing:1.5px; }
 
   .content { flex:1; overflow-y:auto; padding:22px; display:flex; flex-direction:column; gap:18px; }
-  /* Kolumna scrollowana: dzieci NIE mogą się kurczyć — inaczej .table-wrap z overflow:hidden obcina wiersze, zamiast pozwolić .content przewinąć. */
+  /* Kolumna scrollowana: dzieci NIE mogą się kurczyć - inaczej .table-wrap z overflow:hidden obcina wiersze, zamiast pozwolić .content przewinąć. */
   .content > *, .drawer-body > * { flex-shrink:0; }
   .content::-webkit-scrollbar { width:10px; }
   .content::-webkit-scrollbar-thumb { background:var(--border-strong); border-radius:99px; border:3px solid var(--bg); }
@@ -154,7 +154,7 @@
   .card-title .spacer { margin-left:auto; }
 
   .tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
-  /* Kafel bywa linkiem w głąb (pulpit) i zwykłym pudełkiem (podsumowania) — jedna
+  /* Kafel bywa linkiem w głąb (pulpit) i zwykłym pudełkiem (podsumowania) - jedna
      definicja obsługuje oba, bo `text-decoration`/`color` na nie-linku nic nie robi. */
   .tile { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; display:flex; flex-direction:column; gap:6px; text-decoration:none; color:inherit; }
   .tile:hover { border-color:var(--border-strong); }
@@ -176,7 +176,7 @@
   .chip.on { background:var(--green-muted); border-color:var(--green-border); color:var(--green); }
   .chip.on.amber { background:var(--amber-muted); border-color:var(--amber-border); color:var(--amber); }
 
-  /* ── TABELA — kręgosłup panelu; liczby zawsze mono ── */
+  /* ── TABELA - kręgosłup panelu; liczby zawsze mono ── */
   .table-wrap { border:1px solid var(--border); border-radius:14px; overflow:hidden; background:var(--surface); }
   table { width:100%; border-collapse:collapse; }
   thead th { text-align:left; font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.8px; text-transform:uppercase; color:var(--text-muted); font-weight:500; padding:11px 14px; background:#101010; border-bottom:1px solid var(--border); white-space:nowrap; }
@@ -214,7 +214,7 @@
   .input::placeholder { color:var(--text-muted); }
   .hint { font-size:11px; color:var(--text-secondary); line-height:1.5; }
   .hint b { color:var(--amber); font-weight:600; }
-  /* ZAKAZ natywnego <select> (CLAUDE.md) — wybór to zawsze lista kart */
+  /* ZAKAZ natywnego <select> (CLAUDE.md) - wybór to zawsze lista kart */
   .opt-list { display:flex; flex-direction:column; gap:8px; }
   .opt { display:flex; align-items:center; gap:11px; background:var(--surface-raised); border:1px solid var(--border); border-radius:12px; padding:10px 13px; cursor:pointer; min-height:50px; }
   .opt:hover { background:var(--surface-hover); }
@@ -226,7 +226,7 @@
   .opt.selected .opt-check { opacity:1; }
   .opt-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:8px; }
 
-  /* ── banery (3 typy — docs/design-notes.md) ── */
+  /* ── banery (3 typy - docs/design-notes.md) ── */
   .banner { display:flex; align-items:flex-start; gap:10px; border-radius:12px; padding:11px 14px; font-size:12.5px; line-height:1.55; border:1px solid; }
   .banner svg { flex-shrink:0; margin-top:2px; }
   .banner b { font-weight:700; }
@@ -248,7 +248,7 @@
   @keyframes shimmer { 0% { background-position:200% 0; } 100% { background-position:-200% 0; } }
   .no-access { display:flex; flex-direction:column; align-items:center; gap:12px; padding:60px 20px; text-align:center; }
 
-  /* ── szuflada szczegółu (drawer) — otwiera wiersz tabeli bez utraty kontekstu listy ── */
+  /* ── szuflada szczegółu (drawer) - otwiera wiersz tabeli bez utraty kontekstu listy ── */
   .drawer-scrim { position:absolute; inset:0; background:rgba(0,0,0,0.55); z-index:60; }
   .drawer { position:absolute; top:0; right:0; bottom:0; width:520px; background:var(--surface); border-left:1px solid var(--border-strong); z-index:61; display:flex; flex-direction:column; box-shadow:-24px 0 60px rgba(0,0,0,0.5); }
   .drawer-head { flex-shrink:0; padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:flex-start; justify-content:space-between; gap:14px; }
@@ -266,7 +266,7 @@
   .kv-v.green { color:var(--green); } .kv-v.amber { color:var(--amber); } .kv-v.red { color:var(--red); }
   .kv-v small { font-size:9.5px; font-weight:400; color:var(--text-secondary); }
 
-  /* ── oś zdarzeń (log dnia w panelu — czyta się jak rejestr, nie jak lista) ── */
+  /* ── oś zdarzeń (log dnia w panelu - czyta się jak rejestr, nie jak lista) ── */
   .tl { display:flex; flex-direction:column; }
   .tl-row { display:grid; grid-template-columns:74px 20px 1fr auto; align-items:start; gap:10px; padding:8px 0; border-bottom:1px solid var(--hairline); }
   .tl-time { font-family:var(--font-mono); font-size:11.5px; font-weight:700; color:var(--text-primary); letter-spacing:0.5px; }
@@ -279,7 +279,7 @@
   .tl-row:last-child { border-bottom:none; }
   .tl-row.voided .tl-name { text-decoration:line-through; color:var(--text-muted); }
   .tl-row.voided .tl-time { color:var(--text-muted); text-decoration:line-through; }
-  /* Wariant KOMPAKTOWY — oś w wąskiej kolumnie bocznej (pulpit), bez plakietki
+  /* Wariant KOMPAKTOWY - oś w wąskiej kolumnie bocznej (pulpit), bez plakietki
      zamykającej wiersz. Pełna oś jest projektowana pod szeroką kolumnę karty dnia
      i w 400 px robi się rozstrzelona, stąd stopień mniejsze rozmiary i trzy tory
      siatki zamiast czterech. Modyfikator, nie osobny komponent: zachowanie, znaczenie
@@ -297,14 +297,14 @@
   /* Szersza kolumna boczna (400 px) tam, gdzie niesie ona własną treść, a nie
      przypis do lewej: puls systemu na pulpicie, dowód z replaya przy progach.
      Modyfikator zamiast zmiany bazy, bo szersza prawa = węższa lewa, a w lewej
-     stoją tabele — 20 px mniej potrafi przyciąć kolumnę w `.table-wrap`. */
+     stoją tabele - 20 px mniej potrafi przyciąć kolumnę w `.table-wrap`. */
   .cols.wide { grid-template-columns:1fr 400px; }
 
-  /* ══ FLOTA — wiersz samolotu niosący DWIE warstwy naraz ══
+  /* ══ FLOTA - wiersz samolotu niosący DWIE warstwy naraz ══
      Co samolot robi (faza) i SKĄD to wiemy (świeżość). Druga warstwa jest równie
      ważna jak pierwsza: „w locie" przy syncu sprzed 47 minut to nie jest wiedza
      o locie, tylko ostatnia znana pozycja. Klasa stanu na wierszu (`flying`/`stale`)
-     mówi o JAKOŚCI danych, nie o fazie lotu — `stale` nosi samolot, który leci,
+     mówi o JAKOŚCI danych, nie o fazie lotu - `stale` nosi samolot, który leci,
      ale którego telefon milczy. §4.8 stany świeżości. */
   .fleet { display:flex; flex-direction:column; gap:8px; }
   .fleet-row { display:grid; grid-template-columns:96px 1fr 132px 118px 150px; align-items:center; gap:14px; padding:12px 14px; border-radius:12px; background:var(--surface-raised); border:1px solid var(--border); text-decoration:none; color:inherit; }
@@ -320,7 +320,7 @@
   .fleet-nums .k { color:var(--text-muted); font-size:8.5px; letter-spacing:1.2px; }
   .fleet-state { display:flex; justify-content:flex-end; }
 
-  /* Świeżość — jedyne miejsce, w którym panel przyznaje się do NIEWIEDZY.
+  /* Świeżość - jedyne miejsce, w którym panel przyznaje się do NIEWIEDZY.
      Wiek podajemy względnie („3 min temu", „2 dni temu"), nie znacznikiem czasu:
      administrator ocenia, czy dane są aktualne, a nie o której dotarły. */
   .fresh { display:flex; flex-direction:column; align-items:flex-end; gap:3px; }
@@ -329,7 +329,7 @@
   .fresh-val.dim { color:var(--text-muted); }
   .fresh-note { font-family:var(--font-mono); font-size:8px; letter-spacing:0.8px; color:var(--text-muted); text-align:right; }
 
-  /* ══ KOLEJKA „WYMAGA UWAGI" — jedyne miejsce mówiące, co ZROBIĆ ══
+  /* ══ KOLEJKA „WYMAGA UWAGI" - jedyne miejsce mówiące, co ZROBIĆ ══
      Reszta panelu opisuje stan; ta lista stawia zadania. Dlatego wiersz jest linkiem
      w głąb, a wiek pozycji ma własną kolumnę: flaga leżąca trzeci dzień to inny
      problem niż ta sprzed godziny. */
@@ -347,7 +347,7 @@
   .todo-age { font-family:var(--font-mono); font-size:9.5px; font-weight:700; color:var(--text-secondary); flex-shrink:0; text-align:right; }
   .todo-age.old { color:var(--amber); }
 
-  /* ══ NAPŁYW ZDARZEŃ — puls systemu ══
+  /* ══ NAPŁYW ZDARZEŃ - puls systemu ══
      Słupek `zero` jest osobną klasą, a nie słupkiem o wysokości zero, bo cisza
      w rejestrze wymaga podpisu: nie znaczy „nikt nie latał", tylko „nic nie dotarło". */
   .spark { display:flex; align-items:flex-end; gap:3px; height:56px; }
@@ -356,10 +356,10 @@
   .spark i.zero { background:var(--surface-raised); border-color:var(--border); }
   .spark-axis { display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:8px; letter-spacing:1px; color:var(--text-muted); margin-top:6px; }
 
-  /* ══ PRÓG — wiersz w dwóch odmianach: przybity w kodzie vs. dana serwera ══
+  /* ══ PRÓG - wiersz w dwóch odmianach: przybity w kodzie vs. dana serwera ══
      Trzecia kolumna (`thr-src`) niesie różnicę, która jest tu najważniejsza: czy
      wartość da się w ogóle zmienić z panelu. Progi detekcji liczą się na telefonie
-     offline, więc są tylko do odczytu — pole `thr-input` pojawia się wyłącznie tam,
+     offline, więc są tylko do odczytu - pole `thr-input` pojawia się wyłącznie tam,
      gdzie zmiana ma skutek. */
   .thr { display:grid; grid-template-columns:1fr 128px 96px; align-items:center; gap:14px; padding:11px 0; border-bottom:1px solid var(--hairline); }
   .thr:last-of-type { border-bottom:none; }
@@ -373,7 +373,7 @@
   .thr-input:focus { border-color:var(--green-border); }
   .thr-input.changed { border-color:var(--amber-border); color:var(--amber); background:rgba(243,156,18,0.06); }
 
-  /* ══ DOWÓD ZMIANY — „przed → po" na danych historycznych ══
+  /* ══ DOWÓD ZMIANY - „przed → po" na danych historycznych ══
      Amber obramowanie nie jest ostrzeżeniem o błędzie, tylko sygnałem, że to blok
      WARUNKOWY: bez wypełnionego dowodu zapis nie ma prawa dojść do skutku. */
   .proof { border:1px solid var(--amber-border); background:rgba(243,156,18,0.05); border-radius:12px; padding:13px 15px; display:flex; flex-direction:column; gap:11px; }
@@ -385,7 +385,7 @@
   .diff-n { font-size:11px; color:var(--text-secondary); line-height:1.5; }
   .diff-arrow { color:var(--text-muted); font-family:var(--font-mono); font-size:16px; }
 
-  /* Odwołanie do pliku źródłowego — panel bywa czytany razem z repozytorium. */
+  /* Odwołanie do pliku źródłowego - panel bywa czytany razem z repozytorium. */
   .code-ref { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); background:var(--surface-raised); border:1px solid var(--border); border-radius:7px; padding:3px 8px; letter-spacing:0.3px; }
 
   /* ── sekcja demonstracyjna szablonu (TYLKO w tym pliku) ── */
@@ -395,12 +395,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — PANEL · A09 AUDYT</span>
+  <span class="film-strip">UZ AERO - PANEL · A09 AUDYT</span>
   <span class="slug">dziennik akcji administratorów · niezmienny · tabela wdrożona (migracja 9)</span>
   <span class="canvas-meta"><span class="pulse"></span>append-only · bez UPDATE i DELETE</span>
 </header>
 
-<main class="browser" role="region" aria-label="Panel administracyjny — dziennik audytu">
+<main class="browser" role="region" aria-label="Panel administracyjny - dziennik audytu">
 
   <div class="chrome">
     <span class="chrome-dots"><i></i><i></i><i></i></span>
@@ -503,7 +503,7 @@
         <div class="page-head">
           <div>
             <h1 class="page-title">DZIENNIK AUDYTU</h1>
-            <p class="page-sub">Każda akcja administratora i szefa wyszkolenia: kto, kiedy (UTC), co i na czym. Rejestr lotniczy jest append-only, więc panel, który go dotyka, musi być rozliczalny tak samo — inaczej „append-only" znaczy tylko tyle, że pilot nie może nic zmienić.</p>
+            <p class="page-sub">Każda akcja administratora i szefa wyszkolenia: kto, kiedy (UTC), co i na czym. Rejestr lotniczy jest append-only, więc panel, który go dotyka, musi być rozliczalny tak samo - inaczej „append-only" znaczy tylko tyle, że pilot nie może nic zmienić.</p>
           </div>
           <div class="page-actions">
             <a class="btn ghost" href="#slownik">Słownik akcji</a>
@@ -513,41 +513,41 @@
 
         <div class="banner danger">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-          <span><b>Wiersze audytu są niezmienne i nieusuwalne.</b> Nie ma tu edycji, kasowania, „archiwizuj", „wyczyść starsze niż" ani eksportu, który by coś pomijał. W całym <code>server/src</code> nie ma ani jednego <code>UPDATE admin_audit</code> ani <code>DELETE FROM admin_audit</code> — pilnuje tego <code>server/test/architecture.test.ts</code>, a docelowo dołoży się do niego <code>GRANT INSERT, SELECT</code> dla roli aplikacyjnej (wymaga drugiego connection stringa, decyzja wdrożeniowa). Administrator nie może usunąć własnego śladu i to jest cel, nie skutek uboczny.</span>
+          <span><b>Wiersze audytu są niezmienne i nieusuwalne.</b> Nie ma tu edycji, kasowania, „archiwizuj", „wyczyść starsze niż" ani eksportu, który by coś pomijał. W całym <code>server/src</code> nie ma ani jednego <code>UPDATE admin_audit</code> ani <code>DELETE FROM admin_audit</code> - pilnuje tego <code>server/test/architecture.test.ts</code>, a docelowo dołoży się do niego <code>GRANT INSERT, SELECT</code> dla roli aplikacyjnej (wymaga drugiego connection stringa, decyzja wdrożeniowa). Administrator nie może usunąć własnego śladu i to jest cel, nie skutek uboczny.</span>
         </div>
 
         <div class="banner warn">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          <span><b>Audyt nigdy nie zapisuje wartości hasła.</b> Przy resecie zostaje wyłącznie fakt „ustawiono hasło", kto to zrobił, komu i kiedy. Ani hasło, ani jego hash, ani token, ani PIN nie mają prawa trafić do kolumny <code>details</code> — hasło pokazujemy administratorowi raz, w oknie, w którym powstało, i nigdzie indziej nie zostaje.</span>
+          <span><b>Audyt nigdy nie zapisuje wartości hasła.</b> Przy resecie zostaje wyłącznie fakt „ustawiono hasło", kto to zrobił, komu i kiedy. Ani hasło, ani jego hash, ani token, ani PIN nie mają prawa trafić do kolumny <code>details</code> - hasło pokazujemy administratorowi raz, w oknie, w którym powstało, i nigdzie indziej nie zostaje.</span>
         </div>
 
         <div class="banner ok">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="8 12.5 11 15.5 16 9.5"/></svg>
-          <span><b>Sprostowanie z 2026-08-01: tabela istnieje i zapisuje się od przekroju 1.</b> Ten ekran nosił wcześniej ostrzeżenie „tej tabeli jeszcze nie ma" i nazywał się jej projektem — to jest już nieaktualne. <code>admin_audit</code> weszła <b>migracją 9</b> (razem z indeksami <code>idx_audit_created</code> i <code>idx_audit_actor</code>), a wiersz powstaje wyłącznie przez <code>AuditedWrite</code>, w tej samej transakcji co skutek. Kolumny w karcie na dole to <b>stan faktyczny</b>, nie propozycja; różnią się od pierwotnego projektu (<code>created_at</code> zamiast <code>at</code>, <code>actor_pilot_id NOT NULL</code> zamiast <code>actor_id</code> + <code>actor_login</code>, <code>target_*</code> zamiast <code>object_*</code>, <code>ip TEXT</code> zamiast <code>INET</code>). Odczyt: <code>GET /admin/api/audit</code>, zdolność <code>audit.read</code> — wyłącznie administrator.</span>
+          <span><b>Sprostowanie z 2026-08-01: tabela istnieje i zapisuje się od przekroju 1.</b> Ten ekran nosił wcześniej ostrzeżenie „tej tabeli jeszcze nie ma" i nazywał się jej projektem - to jest już nieaktualne. <code>admin_audit</code> weszła <b>migracją 9</b> (razem z indeksami <code>idx_audit_created</code> i <code>idx_audit_actor</code>), a wiersz powstaje wyłącznie przez <code>AuditedWrite</code>, w tej samej transakcji co skutek. Kolumny w karcie na dole to <b>stan faktyczny</b>, nie propozycja; różnią się od pierwotnego projektu (<code>created_at</code> zamiast <code>at</code>, <code>actor_pilot_id NOT NULL</code> zamiast <code>actor_id</code> + <code>actor_login</code>, <code>target_*</code> zamiast <code>object_*</code>, <code>ip TEXT</code> zamiast <code>INET</code>). Odczyt: <code>GET /admin/api/audit</code>, zdolność <code>audit.read</code> - wyłącznie administrator.</span>
         </div>
 
         <div class="banner status">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-          <span><b>Logowań do panelu w tym dzienniku NIE MA — i nie będzie tutaj.</b> Wcześniejsza wersja tego ekranu pokazywała wiersze <code>auth.login</code> i <code>auth.login_failed</code>; obu tych akcji nie ma w katalogu <code>ADMIN_ACTIONS</code> i nie da się ich dopisać bez zmiany konstrukcji dziennika. Wiersz powstaje wyłącznie przez <code>AuditedWrite</code>, czyli razem ze <b>skutkiem w danych</b> — udane logowanie takiego skutku nie ma, a nieudane nie ma nawet aktora (<code>actor_pilot_id NOT NULL</code>). Śledzenie prób logowania to <b>osobny dziennik bezpieczeństwa</b>, z własną tabelą, własnym cyklem życia i własną retencją. <span class="pill amber" style="margin-left:6px;">DECYZJA CZŁOWIEKA — POZA TYM EKRANEM</span></span>
+          <span><b>Logowań do panelu w tym dzienniku NIE MA - i nie będzie tutaj.</b> Wcześniejsza wersja tego ekranu pokazywała wiersze <code>auth.login</code> i <code>auth.login_failed</code>; obu tych akcji nie ma w katalogu <code>ADMIN_ACTIONS</code> i nie da się ich dopisać bez zmiany konstrukcji dziennika. Wiersz powstaje wyłącznie przez <code>AuditedWrite</code>, czyli razem ze <b>skutkiem w danych</b> - udane logowanie takiego skutku nie ma, a nieudane nie ma nawet aktora (<code>actor_pilot_id NOT NULL</code>). Śledzenie prób logowania to <b>osobny dziennik bezpieczeństwa</b>, z własną tabelą, własnym cyklem życia i własną retencją. <span class="pill amber" style="margin-left:6px;">DECYZJA CZŁOWIEKA - POZA TYM EKRANEM</span></span>
         </div>
 
         <div class="tiles">
           <div class="tile"><span class="tile-key">Wpisy w zawężeniu</span><span class="tile-val">13</span><span class="tile-note">Liczba z serwera (<code>total</code> całym filtrem), nie z pobranej strony.</span></div>
-          <div class="tile"><span class="tile-key">Wpisy dziś · UTC</span><span class="tile-val blue">7</span><span class="tile-note">Doba UTC, nie lokalna — przy zachowanym pozostałym zawężeniu.</span></div>
+          <div class="tile"><span class="tile-key">Wpisy dziś · UTC</span><span class="tile-val blue">7</span><span class="tile-note">Doba UTC, nie lokalna - przy zachowanym pozostałym zawężeniu.</span></div>
           <div class="tile"><span class="tile-key">Korekty rejestru · 30 dni</span><span class="tile-val amber">3</span><span class="tile-note">Dopisania <code>event_correction</code> z panelu. Wyłącznie administrator.</span></div>
-          <div class="tile"><span class="tile-key">Retencja</span><span class="tile-val green">∞</span><span class="tile-note">Bez limitu i bez czyszczenia — w kodzie nie ma <code>UPDATE</code> ani <code>DELETE</code> na tej tabeli.</span></div>
+          <div class="tile"><span class="tile-key">Retencja</span><span class="tile-val green">∞</span><span class="tile-note">Bez limitu i bez czyszczenia - w kodzie nie ma <code>UPDATE</code> ani <code>DELETE</code> na tej tabeli.</span></div>
         </div>
 
         <!-- Filtry jadą przez ADRES (`?akcje=&kto=&typ=&obiekt=&od=&do=&sort=`), bo linki
              „ślad w audycie" z karty dnia (A02a) i z korekty (A02b) muszą prowadzić do
              dziennika ODFILTROWANEGO po obiekcie, a nie do surowej listy wszystkiego.
-             Chipy zawężeń są ZDEJMOWALNE — pokazują to, co niesie adres. Wyszukiwarka
+             Chipy zawężeń są ZDEJMOWALNE - pokazują to, co niesie adres. Wyszukiwarka
              dopasowuje identyfikator obiektu DOKŁADNIE: trasa nie ma wyszukiwania
              pełnotekstowego po nazwisku, rejestracji ani po adresie IP. -->
         <div class="filters">
           <label class="search">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input placeholder="Identyfikator obiektu: uuid zdarzenia, numer flagi, kod pilota — Enter filtruje" />
+            <input placeholder="Identyfikator obiektu: uuid zdarzenia, numer flagi, kod pilota - Enter filtruje" />
           </label>
           <span class="chip on">typ: event · zdejmij</span>
           <span class="chip on">konto: TMK · zdejmij</span>
@@ -556,7 +556,7 @@
           <span class="pill dim">Pokazano 13 z 13.</span>
         </div>
 
-        <!-- Chip grupy to KILKA kodów katalogu naraz (`?action=` powtórzony) — grupy
+        <!-- Chip grupy to KILKA kodów katalogu naraz (`?action=` powtórzony) - grupy
              powstają z pola `group` w katalogu panelu, więc nowa akcja wpada do właściwego
              chipa bez drugiej listy. Liczników przy chipach NIE MA: serwer nie wystawia
              agregatu `GROUP BY action`, a liczba policzona z widocznej strony kłamałaby
@@ -608,7 +608,7 @@
                 <td class="mono"><a class="cell-link" href="#">1044</a><span class="cell-sub">flag</span></td>
                 <td>
                   <span class="det">
-                    <span class="det-row"><span class="det-k">komentarz</span><span class="det-v">Przeloty techniczne po przeglądzie 100 h — 0.4 h bez sesji, wpis w książce statku potwierdza. Bez korekty.</span></span>
+                    <span class="det-row"><span class="det-k">komentarz</span><span class="det-v">Przeloty techniczne po przeglądzie 100 h - 0.4 h bez sesji, wpis w książce statku potwierdza. Bez korekty.</span></span>
                     <span class="det-row"><span class="det-k">typ flagi</span><span class="det-v">mh_gap</span></span>
                     <span class="det-row"><span class="det-k">sesje</span><span class="det-v">c3b8…5a17 · 5d02…1f7a</span></span>
                   </span>
@@ -642,7 +642,7 @@
                   <span class="det">
                     <span class="det-row"><span class="det-k">revokedTokens</span><span class="det-v raw">1</span></span>
                   </span>
-                  <span class="hint" style="margin-top:6px;"><b>Wartości hasła nie ma i nie będzie</b> — ani jawnie, ani jako hash. W dzienniku zostaje fakt, komu i kiedy.</span>
+                  <span class="hint" style="margin-top:6px;"><b>Wartości hasła nie ma i nie będzie</b> - ani jawnie, ani jako hash. W dzienniku zostaje fakt, komu i kiedy.</span>
                 </td>
                 <td class="num mono dim">10.20.4.11</td>
               </tr>
@@ -673,7 +673,7 @@
                     <span class="det-row"><span class="det-k">to</span><span class="det-v raw">5</span></span>
                     <span class="det-row"><span class="det-k">powód</span><span class="det-v">Powrót do wartości z §4.5 po odtworzeniu nagrania kalibracyjnego.</span></span>
                   </span>
-                  <span class="hint" style="margin-top:6px;">Progi <b>detekcji</b> (kołowanie, start, lądowanie) są tylko do odczytu — liczy je telefon offline. Z panelu zmieniają się wyłącznie tolerancje flag.</span>
+                  <span class="hint" style="margin-top:6px;">Progi <b>detekcji</b> (kołowanie, start, lądowanie) są tylko do odczytu - liczy je telefon offline. Z panelu zmieniają się wyłącznie tolerancje flag.</span>
                 </td>
                 <td class="num mono dim">10.20.4.11</td>
               </tr>
@@ -715,7 +715,7 @@
                   <span class="det">
                     <span class="det-row"><span class="det-k">role</span><span class="det-v raw">{"from":"pilot","to":"training_lead"}</span></span>
                   </span>
-                  <span class="hint" style="margin-top:6px;">Zmiana roli <b>nie ma osobnego kodu</b> w katalogu — jest zwykłą edycją konta. Mockup pokazywał tu <code>pilot.role_change</code>; taka akcja nie istnieje.</span>
+                  <span class="hint" style="margin-top:6px;">Zmiana roli <b>nie ma osobnego kodu</b> w katalogu - jest zwykłą edycją konta. Mockup pokazywał tu <code>pilot.role_change</code>; taka akcja nie istnieje.</span>
                 </td>
                 <td class="num mono dim">10.20.4.11</td>
               </tr>
@@ -730,7 +730,7 @@
                     <span class="det-row"><span class="det-k">active</span><span class="det-v raw">{"from":true,"to":false}</span></span>
                     <span class="det-row"><span class="det-k">revokedTokens</span><span class="det-v raw">2</span></span>
                   </span>
-                  <span class="hint" style="margin-top:6px;">Konto <b>zostaje w bazie</b> — zdarzenia historyczne wskazują na <code>pic_id</code>, więc usunięcie pilota rozwaliłoby rejestr.</span>
+                  <span class="hint" style="margin-top:6px;">Konto <b>zostaje w bazie</b> - zdarzenia historyczne wskazują na <code>pic_id</code>, więc usunięcie pilota rozwaliłoby rejestr.</span>
                 </td>
                 <td class="num mono dim">10.20.4.11</td>
               </tr>
@@ -742,7 +742,7 @@
                 <td class="mono"><a class="cell-link" href="#">1038</a><span class="cell-sub">flag</span></td>
                 <td>
                   <span class="det">
-                    <span class="det-row"><span class="det-k">komentarz</span><span class="det-v">Telefon KRZ dosłał day_close o 07:58 — nakładka pozorna.</span></span>
+                    <span class="det-row"><span class="det-k">komentarz</span><span class="det-v">Telefon KRZ dosłał day_close o 07:58 - nakładka pozorna.</span></span>
                     <span class="det-row"><span class="det-k">typ flagi</span><span class="det-v">aircraft_overlap</span></span>
                     <span class="det-row"><span class="det-k">sesje</span><span class="det-v">9a11…77c4 · 2f60…01ab</span></span>
                   </span>
@@ -752,13 +752,13 @@
 
               <!-- WPIS HISTORYCZNY: kod akcji SPOZA katalogu `ADMIN_ACTIONS` i konto,
                    którego nie ma już w `pilots`. Kolumna `action` celowo nie ma `CHECK`-a
-                   (migracja 9), więc taki wiersz jest legalny — a ekran ma go pokazać
+                   (migracja 9), więc taki wiersz jest legalny - a ekran ma go pokazać
                    DOSŁOWNIE, zamiast się nim wywrócić albo go ukryć. Plakietka jest
                    wygaszona, kod zostaje surowy, wiersz zostaje na liście. -->
               <tr>
                 <td class="num">27 JUL 2026 12:31:09<span class="cell-sub">#8801</span></td>
                 <td class="cell-strong dim">ZZZ<span class="cell-sub">superadmin · konta nie ma już w rejestrze</span></td>
-                <td><span class="pill dim">pilot.merge</span><span class="cell-sub">kod spoza katalogu — wpis historyczny</span></td>
+                <td><span class="pill dim">pilot.merge</span><span class="cell-sub">kod spoza katalogu - wpis historyczny</span></td>
                 <td class="mono"><a class="cell-link" href="#">JSE</a><span class="cell-sub">pilot</span></td>
                 <td>
                   <span class="det">
@@ -766,7 +766,7 @@
                     <span class="det-row"><span class="det-k">note</span><span class="det-v raw">Akcja wycofana z katalogu 2026-05.</span></span>
                   </span>
                 </td>
-                <td class="num mono dim">—<span class="cell-sub">akcja spoza żądania HTTP</span></td>
+                <td class="num mono dim">-<span class="cell-sub">akcja spoza żądania HTTP</span></td>
               </tr>
 
               <tr>
@@ -804,7 +804,7 @@
                   <tr><td><span class="pill amber">event.correct</span></td><td class="dim">korekta administratora</td><td><span class="pill dim">admin</span></td><td class="dim">UUID poprawianego zdarzenia, rodzaj (<code>retime</code>/<code>void</code>), nowy czas i powód.</td></tr>
                   <tr><td><span class="pill blue">export.retry</span></td><td class="dim">ponowienie eksportu</td><td><span class="pill dim">admin</span></td><td class="dim">Nazwa karty, numer rewizji i próby, treść poprzedniego błędu.</td></tr>
                   <tr><td><span class="pill green">pilot.create</span></td><td class="dim">założenie konta</td><td><span class="pill dim">admin</span></td><td class="dim">Kod pilota, imię i nazwisko, e-mail, rola startowa.</td></tr>
-                  <tr><td><span class="pill blue">pilot.update</span></td><td class="dim">edycja konta</td><td><span class="pill dim">admin</span></td><td class="dim">Każde zmienione pole przed → po — razem ze <b>zmianą roli</b>, która nie ma osobnego kodu.</td></tr>
+                  <tr><td><span class="pill blue">pilot.update</span></td><td class="dim">edycja konta</td><td><span class="pill dim">admin</span></td><td class="dim">Każde zmienione pole przed → po - razem ze <b>zmianą roli</b>, która nie ma osobnego kodu.</td></tr>
                   <tr><td><span class="pill red">pilot.deactivate</span></td><td class="dim">deaktywacja konta</td><td><span class="pill dim">admin</span></td><td class="dim">Zmiana <code>active</code>, liczba unieważnionych tokenów. Konto zostaje w bazie.</td></tr>
                   <tr><td><span class="pill red">pilot.password_reset</span></td><td class="dim">reset hasła</td><td><span class="pill dim">admin</span></td><td style="color:var(--amber)">Wyłącznie fakt i komu. <b>Nigdy wartości, hashu, tokenu ani PIN-u.</b></td></tr>
                   <tr><td><span class="pill green">aircraft.create</span></td><td class="dim">dodanie samolotu</td><td><span class="pill dim">admin</span></td><td class="dim">Rejestracja, typ, pojemność, format licznika MH, wymóg dual.</td></tr>
@@ -813,12 +813,12 @@
                   <tr><td><span class="pill amber">thresholds.update</span></td><td class="dim">zmiana tolerancji flag</td><td><span class="pill dim">admin</span></td><td class="dim">Nazwa progu, wartość przed → po, uzasadnienie. Progi <b>detekcji</b> są tylko do odczytu.</td></tr>
                   <tr><td><span class="pill amber">maintenance.rebuild_projections</span></td><td class="dim">przebudowa projekcji</td><td><span class="pill dim">admin</span></td><td class="dim">Liczba przeliczonych sesji. Zmienia liczby w panelu, nie zmieniając ani jednego zdarzenia.</td></tr>
                   <tr><td><span class="pill blue">maintenance.retry_exports</span></td><td class="dim">ponowienie zaległych eksportów</td><td><span class="pill dim">admin</span></td><td class="dim">Liczba kart w kolejce i wynik każdej próby.</td></tr>
-                  <tr><td><span class="pill dim">maintenance.prune_tokens</span></td><td class="dim">czyszczenie wygasłych tokenów</td><td><span class="pill dim">admin</span></td><td class="dim">Liczba skasowanych wierszy i zakres dat wygaśnięcia — nigdy same tokeny.</td></tr>
+                  <tr><td><span class="pill dim">maintenance.prune_tokens</span></td><td class="dim">czyszczenie wygasłych tokenów</td><td><span class="pill dim">admin</span></td><td class="dim">Liczba skasowanych wierszy i zakres dat wygaśnięcia - nigdy same tokeny.</td></tr>
                 </tbody>
               </table>
             </div>
-            <span class="hint">Katalog jest <b>pełny od początku</b>, choć część akcji nie ma jeszcze ekranu, który by je wywoływał — odpowiada na pytanie o ZAKRES panelu, nie o stan wdrożenia (<span class="code-ref">server/src/domain/adminActions.ts</span>). Kody są surowe (<code>zasób.czynność</code>); nazwy po polsku, plakietki i grupy chipów są własnością panelu, bo <b>serwer nie zna języka interfejsu</b>. Ton plakietki mówi, jak głęboko akcja sięga: czerwony odbiera dostęp albo wyłącza byt, bursztynowy zmienia liczby dokumentu klubu, zielony powołuje byt do życia albo zamyka sprawę, niebieski to edycja opisowa i powtórzenie operacji.</span>
-            <span class="hint"><b>Rozjazd sprostowany 2026-08-01.</b> Wcześniejsza wersja tego słownika miała kody, których serwer nigdy nie znał: <code>event.correction</code> (jest <code>event.correct</code>), <code>threshold.change</code> (jest <code>thresholds.update</code>), <code>pilot.password_set</code> (jest <code>pilot.password_reset</code>), <code>aircraft.service_status</code> (jest <code>aircraft.disable</code>) i <code>pilot.role_change</code> (nie istnieje — zmiana roli to <code>pilot.update</code>). Brakowało też trzech akcji <code>maintenance.*</code>. Źródłem prawdy jest <code>ADMIN_ACTIONS</code>, a zgodność panelu z nim przybija test lustra.</span>
+            <span class="hint">Katalog jest <b>pełny od początku</b>, choć część akcji nie ma jeszcze ekranu, który by je wywoływał - odpowiada na pytanie o ZAKRES panelu, nie o stan wdrożenia (<span class="code-ref">server/src/domain/adminActions.ts</span>). Kody są surowe (<code>zasób.czynność</code>); nazwy po polsku, plakietki i grupy chipów są własnością panelu, bo <b>serwer nie zna języka interfejsu</b>. Ton plakietki mówi, jak głęboko akcja sięga: czerwony odbiera dostęp albo wyłącza byt, bursztynowy zmienia liczby dokumentu klubu, zielony powołuje byt do życia albo zamyka sprawę, niebieski to edycja opisowa i powtórzenie operacji.</span>
+            <span class="hint"><b>Rozjazd sprostowany 2026-08-01.</b> Wcześniejsza wersja tego słownika miała kody, których serwer nigdy nie znał: <code>event.correction</code> (jest <code>event.correct</code>), <code>threshold.change</code> (jest <code>thresholds.update</code>), <code>pilot.password_set</code> (jest <code>pilot.password_reset</code>), <code>aircraft.service_status</code> (jest <code>aircraft.disable</code>) i <code>pilot.role_change</code> (nie istnieje - zmiana roli to <code>pilot.update</code>). Brakowało też trzech akcji <code>maintenance.*</code>. Źródłem prawdy jest <code>ADMIN_ACTIONS</code>, a zgodność panelu z nim przybija test lustra.</span>
           </div>
 
           <div style="display:flex;flex-direction:column;gap:16px;">
@@ -826,22 +826,22 @@
             <!-- SPROSTOWANIE 2026-08-01: to nie jest już „projekt tabeli”. Kolumny niżej
                  są przepisane z `MIGRATION_9` w `server/src/infrastructure/pg/schema.ts`
                  i pilnuje ich `server/test/schema.test.ts`. Cztery nazwy różnią się od
-                 pierwotnego projektu — `at`→`created_at`, `actor_id`+`actor_login`→
+                 pierwotnego projektu - `at`→`created_at`, `actor_id`+`actor_login`→
                  `actor_pilot_id NOT NULL`, `object_*`→`target_*`, `INET`→`TEXT`. -->
             <div class="card" id="schemat">
               <div class="card-title">Tabela <code style="font-family:var(--font-mono);color:var(--text-primary);">admin_audit</code> <span class="spacer"></span><span class="pill green">MIGRACJA 9</span></div>
               <div class="kv"><span class="kv-k">id</span><span class="kv-v"><small>BIGSERIAL PRIMARY KEY</small></span></div>
-              <div class="kv"><span class="kv-k">created_at</span><span class="kv-v"><small>TIMESTAMPTZ NOT NULL<br />DEFAULT now() — UTC</small></span></div>
-              <div class="kv"><span class="kv-k">actor_pilot_id</span><span class="kv-v"><small>TEXT <b style="color:var(--amber)">NOT NULL</b><br />bez klucza obcego — wpis przeżywa konto</small></span></div>
-              <div class="kv"><span class="kv-k">actor_role</span><span class="kv-v"><small>TEXT NOT NULL — rola z chwili akcji</small></span></div>
-              <div class="kv"><span class="kv-k">action</span><span class="kv-v"><small>TEXT NOT NULL — <b>bez CHECK-a</b></small></span></div>
-              <div class="kv"><span class="kv-k">target_type</span><span class="kv-v"><small>TEXT — flag · event · pilot<br />aircraft · sheet · threshold</small></span></div>
+              <div class="kv"><span class="kv-k">created_at</span><span class="kv-v"><small>TIMESTAMPTZ NOT NULL<br />DEFAULT now() - UTC</small></span></div>
+              <div class="kv"><span class="kv-k">actor_pilot_id</span><span class="kv-v"><small>TEXT <b style="color:var(--amber)">NOT NULL</b><br />bez klucza obcego - wpis przeżywa konto</small></span></div>
+              <div class="kv"><span class="kv-k">actor_role</span><span class="kv-v"><small>TEXT NOT NULL - rola z chwili akcji</small></span></div>
+              <div class="kv"><span class="kv-k">action</span><span class="kv-v"><small>TEXT NOT NULL - <b>bez CHECK-a</b></small></span></div>
+              <div class="kv"><span class="kv-k">target_type</span><span class="kv-v"><small>TEXT - flag · event · pilot<br />aircraft · sheet · threshold</small></span></div>
               <div class="kv"><span class="kv-k">target_id</span><span class="kv-v"><small>TEXT</small></span></div>
               <div class="kv"><span class="kv-k">details</span><span class="kv-v"><small>JSONB NOT NULL DEFAULT '{}'</small></span></div>
-              <div class="kv"><span class="kv-k">ip</span><span class="kv-v"><small>TEXT — NULL przy akcji spoza HTTP</small></span></div>
+              <div class="kv"><span class="kv-k">ip</span><span class="kv-v"><small>TEXT - NULL przy akcji spoza HTTP</small></span></div>
               <span class="hint"><b>Bez <code>CHECK</code>-a na <code>action</code> i <code>actor_role</code>:</b> wiersz jest zapisem HISTORYCZNYM, więc przemianowanie akcji albo wycofanie roli z katalogu nie może unieważnić tego, co zdarzyło się rok temu. Dlatego ten ekran pokazuje nieznany kod <b>dosłownie</b> (wiersz #8801), zamiast się nim wywrócić albo go ukryć.</span>
-              <span class="hint"><b>Bez <code>UPDATE</code> i <code>DELETE</code>:</b> docelowo rola aplikacyjna dostaje <code>GRANT INSERT, SELECT</code> i nic więcej; do czasu rozdzielenia connection stringów pilnuje tego <code>server/test/architecture.test.ts</code> — żaden plik w <code>src/</code> nie ma prawa zawierać zapisu do tej tabeli. Bez unikalności: dwa identyczne wpisy z tej samej sekundy to dwie realne akcje. Bez retencji: dziennik nie ma daty ważności.</span>
-              <span class="hint">Odczyt: <code>GET /admin/api/audit</code>, paginacja <b>kursorem keyset</b> po <code>(created_at, id)</code> pod indeksem <code>idx_audit_created</code>. Nie <code>OFFSET</code> — dziennik rośnie w trakcie przeglądania, a offset na rosnącej tabeli gubi wiersze.</span>
+              <span class="hint"><b>Bez <code>UPDATE</code> i <code>DELETE</code>:</b> docelowo rola aplikacyjna dostaje <code>GRANT INSERT, SELECT</code> i nic więcej; do czasu rozdzielenia connection stringów pilnuje tego <code>server/test/architecture.test.ts</code> - żaden plik w <code>src/</code> nie ma prawa zawierać zapisu do tej tabeli. Bez unikalności: dwa identyczne wpisy z tej samej sekundy to dwie realne akcje. Bez retencji: dziennik nie ma daty ważności.</span>
+              <span class="hint">Odczyt: <code>GET /admin/api/audit</code>, paginacja <b>kursorem keyset</b> po <code>(created_at, id)</code> pod indeksem <code>idx_audit_created</code>. Nie <code>OFFSET</code> - dziennik rośnie w trakcie przeglądania, a offset na rosnącej tabeli gubi wiersze.</span>
             </div>
 
             <div class="card">
@@ -852,8 +852,8 @@
               <div class="kv"><span class="kv-k">Edycja wpisu</span><span class="kv-v red">nigdy</span></div>
               <div class="kv"><span class="kv-k">Logowania do panelu</span><span class="kv-v amber">nie powstają</span></div>
               <div class="kv"><span class="kv-k">Ślad pozycji GPS pilota</span><span class="kv-v dim">nie dotyczy</span></div>
-              <span class="hint"><b>Logowań nie ma i to jest granica konstrukcji, nie brak.</b> Wiersz powstaje wyłącznie przez <code>AuditedWrite</code>, w tej samej transakcji co skutek — a udane logowanie żadnego skutku w danych nie ma, nieudane nie ma zaś nawet aktora (<code>actor_pilot_id NOT NULL</code>). Gdyby te wpisy miały powstawać, musiałby to być <b>osobny dziennik bezpieczeństwa</b>, z własną tabelą i własnym cyklem życia. To decyzja do podjęcia, a nie poprawka do tego ekranu.</span>
-              <span class="hint">Audyt opisuje akcje <b>panelu</b>, nie ruch samolotów — to, co robił pilot, jest w <a href="A04-zdarzenia.html" style="color:var(--green)">rejestrze zdarzeń</a> i tam też zostaje na zawsze. Dwa różne dzienniki, dwie różne odpowiedzialności; żadnego z nich nie da się posprzątać.</span>
+              <span class="hint"><b>Logowań nie ma i to jest granica konstrukcji, nie brak.</b> Wiersz powstaje wyłącznie przez <code>AuditedWrite</code>, w tej samej transakcji co skutek - a udane logowanie żadnego skutku w danych nie ma, nieudane nie ma zaś nawet aktora (<code>actor_pilot_id NOT NULL</code>). Gdyby te wpisy miały powstawać, musiałby to być <b>osobny dziennik bezpieczeństwa</b>, z własną tabelą i własnym cyklem życia. To decyzja do podjęcia, a nie poprawka do tego ekranu.</span>
+              <span class="hint">Audyt opisuje akcje <b>panelu</b>, nie ruch samolotów - to, co robił pilot, jest w <a href="A04-zdarzenia.html" style="color:var(--green)">rejestrze zdarzeń</a> i tam też zostaje na zawsze. Dwa różne dzienniki, dwie różne odpowiedzialności; żadnego z nich nie da się posprzątać.</span>
             </div>
 
           </div>

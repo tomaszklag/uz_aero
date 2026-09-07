@@ -1,24 +1,24 @@
 /**
- * UZ Aero — dopasowanie z więzem nieujemności RAZEM z niepewnością wyniku.
+ * UZ Aero - dopasowanie z więzem nieujemności RAZEM z niepewnością wyniku.
  *
  * ══ DLACZEGO NIEPEWNOŚĆ JEST CZĘŚCIĄ WYNIKU, A NIE DODATKIEM ══
  * Stawka „51,3 L/h" policzona z pięciu interwałów i z dziewięćdziesięciu sześciu wygląda
  * na ekranie identycznie, a znaczy co innego. Ekran A10a pokazuje więc `±` przy KAŻDEJ
- * stawce, a ten moduł zwraca je w jednym obiekcie z wartością — żeby nie dało się pokazać
+ * stawce, a ten moduł zwraca je w jednym obiekcie z wartością - żeby nie dało się pokazać
  * jednego bez drugiego.
  *
  * ══ PRZEDZIAŁY ZE WZORU, NIE Z LOSOWANIA (decyzja 2026-08-05) ══
  * Mockup mówił pierwotnie o bootstrapie. Wybrana została metoda analityczna, bo:
- *  • domena jest deterministyczna i nie ma w niej generatora losowego — zaseedowany
+ *  • domena jest deterministyczna i nie ma w niej generatora losowego - zaseedowany
  *    bootstrap byłby powtarzalny, ale na pytanie „dlaczego ±2,1, a nie ±2,3" jedyną
  *    odpowiedzią byłoby „bo takie wyszło losowanie". Na ekranie, którego cała teza brzmi
  *    „każda liczba klika się w dół do źródła", to jest wada zasadnicza;
  *  • nie kosztuje nic: `gramInverse` liczymy i tak, do wykrywania współliniowości;
- *  • jedyną realną przewagę bootstrapu — ucięty rozkład przy stawce na więzie — obsługujemy
+ *  • jedyną realną przewagę bootstrapu - ucięty rozkład przy stawce na więzie - obsługujemy
  *    JAWNIE i lepiej: `pinned` mówi wprost „tej fazy nie dało się odróżnić od zera",
  *    zamiast maskować to symetrycznym `±` sięgającym poniżej zera.
  *
- * Ten moduł nie zna paliwa ani motogodzin — dostaje macierz i wektor.
+ * Ten moduł nie zna paliwa ani motogodzin - dostaje macierz i wektor.
  */
 
 import { solveNnls } from './nnls';
@@ -37,7 +37,7 @@ const T_TWO_SIDED_95: readonly number[] = [
   2.08, 2.074, 2.069, 2.064, 2.06, 2.056, 2.052, 2.048, 2.045, 2.042,
 ];
 
-/** Granica normalna — dla df ≥ 30. */
+/** Granica normalna - dla df ≥ 30. */
 const Z_TWO_SIDED_95 = 1.96;
 
 /** Kwantyl t dla zadanej liczby stopni swobody; `null` gdy stopni brak. */
@@ -52,7 +52,7 @@ export interface FittedCoefficient {
   value: number;
   /**
    * Połowa szerokości przedziału 95%. `null` = brak stopni swobody (równań tyle samo,
-   * co niewiadomych) — dopasowanie przechodzi wtedy przez punkty i nie ma z czego
+   * co niewiadomych) - dopasowanie przechodzi wtedy przez punkty i nie ma z czego
    * oszacować rozrzutu.
    */
   ciHalfWidth: number | null;
@@ -92,7 +92,7 @@ export interface Fit {
  * Dopasowuje `b ≈ A·x` przy `x ≥ 0` i opisuje niepewność wyniku.
  *
  * `null`, gdy układu nie da się rozwiązać (kolumny nierozróżnialne albo równań mniej
- * niż niewiadomych) — wywołujący schodzi wtedy na model o mniejszej liczbie kolumn.
+ * niż niewiadomych) - wywołujący schodzi wtedy na model o mniejszej liczbie kolumn.
  */
 export function fitNonNegative(
   a: readonly (readonly number[])[],
@@ -115,7 +115,7 @@ export function fitNonNegative(
   const coefficients: FittedCoefficient[] = solution.x.map((value, column) => {
     const position = solution.freeIndices.indexOf(column);
     const pinned = position < 0;
-    // Dla współczynnika przypiętego nie ma wpisu w odwróconym Gramie — jego niepewność
+    // Dla współczynnika przypiętego nie ma wpisu w odwróconym Gramie - jego niepewność
     // nie jest zresztą pytaniem, na które ten model odpowiada. Zamiast zmyślać liczbę,
     // oddajemy `null` i flagę `pinned`; UI napisze wtedy „≤ …" albo samą kreskę.
     const inflation = pinned ? Number.NaN : (solution.gramInverse[position]?.[position] ?? Number.NaN);

@@ -1,8 +1,8 @@
 /**
- * UZ Aero — fragment trasy w oknie czasu (issue #47, podświetlenie zamiast przeskoku).
+ * UZ Aero - fragment trasy w oknie czasu (issue #47, podświetlenie zamiast przeskoku).
  *
  * Profil przybliżony do wycinka czasu mówi mapie, który to wycinek. Pierwsza wersja tej
- * funkcji zwracała LISTĘ przebiegów, bo „nad polem samolot jest kilka razy" — i dopiero
+ * funkcji zwracała LISTĘ przebiegów, bo „nad polem samolot jest kilka razy" - i dopiero
  * test poniżej pokazał, że to nieporozumienie: linia jest uporządkowana czasem, więc
  * pasujące wierzchołki zawsze leżą obok siebie, a kilka przelotów nad tym samym placem
  * to jeden ciągły kawałek zawinięty w pętle.
@@ -28,7 +28,7 @@ describe('fragment trasy w oknie', () => {
   });
 
   it('kilka przelotów nad tym samym placem to JEDEN ciągły kawałek', () => {
-    // Trasa zawija się w pętle nad polem, ale w czasie biegnie liniowo — więc okno
+    // Trasa zawija się w pętle nad polem, ale w czasie biegnie liniowo - więc okno
     // wycina z niej jeden spójny fragment, który po prostu kilka razy tamtędy wraca.
     const ranges = highlightRange(everyMinute(60), { from: min(20), to: min(40) });
 

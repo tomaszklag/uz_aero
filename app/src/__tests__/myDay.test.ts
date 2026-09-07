@@ -1,17 +1,17 @@
 /**
- * UZ Aero — model widoku ekranu 01 „Mój dzień" (issue #23).
+ * UZ Aero - model widoku ekranu 01 „Mój dzień" (issue #23).
  *
  * Scenariusz jest ten sam, co w `pilotDay.test.ts` i w mockupie
  * `design/01-moj-dzien.html`: SP-AXA (2 sesje) → SP-KLM (1 sesja), sumy 3:05 / 2:37.
  * Tu sprawdzamy WARSTWĘ NAPISÓW: czy ekran dostanie to, co pilot ma przeczytać.
  *
- * Najważniejsza własność pilnowana niżej: **lista jest PŁASKĄ osią czasu** — kafelek
+ * Najważniejsza własność pilnowana niżej: **lista jest PŁASKĄ osią czasu** - kafelek
  * niesie rejestrację jako informację (issue #23 pkt 3), a nie żyje w grupie per maszyna.
  * Klamra służby (BracketVm, `closeDayBlocker`, suma „Służba") żyła w tym module do
  * 2026-08-11 i została usunięta razem z modelem.
  *
- * Od issue #42 (2026-08-13) sesja jest KAFELKIEM — tym samym, co na „Poprzednich
- * dniach" (12) — więc model widoku oddaje `SessionCardVm`, nie własny wiersz tabeli.
+ * Od issue #42 (2026-08-13) sesja jest KAFELKIEM - tym samym, co na „Poprzednich
+ * dniach" (12) - więc model widoku oddaje `SessionCardVm`, nie własny wiersz tabeli.
  */
 
 import { buildMyDay, myDayActions, totalLabel } from '../ui/screens/logic/myDay';
@@ -81,17 +81,52 @@ beforeEach(() => {
   flightSeq = 0;
 });
 
-describe('buildMyDay — scenariusz mockupu 01', () => {
-  const vm = () => buildMyDay(dayOf(axa(), klm()));
+describe('buildMyDay - scenariusz mockupu 01', () => {
+  /* Rezolwer znaku: w świecie testowym identyfikatorem JEST znak, więc mapowanie jest
+     tożsamością - i to właśnie dlatego bug z UUID-em przeżył wiele tur niezauważony
+     (zgłoszenie z urządzenia 2026-08-30). Podajemy go JAWNIE, żeby test mówił, że
+     kafelek bierze znak z cache'u floty, a nie z projekcji. */
+  const regOf = (id: string) => id.toUpperCase();
+  const vm = () => buildMyDay(dayOf(axa(), klm()), regOf);
 
-  it('lista jest płaską osią czasu z rejestracją na kafelku — bez grupowania', () => {
+  it('lista jest płaską osią czasu z rejestracją na kafelku - bez grupowania', () => {
     const cards = vm().sessions;
 
-    expect(cards.map((c) => c.title)).toEqual(['SESJA 1', 'SESJA 2', 'SESJA 3']);
+    expect(cards.map((c) => c.title)).toEqual(['OPERACJA 1', 'OPERACJA 2', 'OPERACJA 3']);
     expect(cards.map((c) => c.aircraft)).toEqual(['SP-AXA', 'SP-AXA', 'SP-KLM']);
   });
 
-  it('kafelek sesji niesie czasy, liczbę lotów i oba czasy trwania', () => {
+  /**
+   * SYGNATURA JEST WSTRZYKIWANA, NIE LICZONA TUTAJ (issue #68): numer operacji w dobie
+   * to jej miejsce wśród SĄSIADÓW, a ten model widzi już gotową listę. Test pilnuje
+   * granicy - kafelek ma przepisać to, co dostał, i nie składać napisu po swojemu.
+   */
+  it('przepisuje sygnaturę operacji ze wstrzykniętego rezolwera', () => {
+    const cards = buildMyDay(dayOf(axa(), klm()), regOf, (uuid) => `sig:${uuid}`).sessions;
+
+    expect(cards.map((c) => c.signature)).toEqual(['sig:s-axa', 'sig:s-axa', 'sig:s-klm']);
+  });
+
+  it('bez rezolwera sygnatury kafelek jej nie ma - i to jest stan poprawny', () => {
+    expect(vm().sessions.every((c) => c.signature === null)).toBe(true);
+  });
+
+  /**
+   * ZGŁOSZENIE Z URZĄDZENIA (2026-08-30): na kafelku stał UUID zamiast znaku maszyny.
+   *
+   * Projekcja zna wyłącznie IDENTYFIKATOR, a znak mieszka w cache referencyjnym -
+   * i przez wiele tur nikt tego nie zauważył, bo w świecie testowym identyfikatorem
+   * JEST znak. Dopiero flota założona w panelu dostaje identyfikatory UUID.
+   *
+   * Kreska, nie identyfikator: pilot nie ma co zrobić z UUID-em, a podstawiony
+   * identyfikator UDAJE znak - dokładnie tak, jak udawał go do tej pory.
+   */
+  it('maszyna spoza cache floty NIE pokazuje identyfikatora', () => {
+    const cards = buildMyDay(dayOf(axa()), () => null).sessions;
+    expect(cards[0]!.aircraft).not.toContain('sp-axa');
+    expect(cards[0]!.aircraft).toBe('- -');
+  });
+  it('kafelek operacji niesie czasy, liczbę lotów i oba czasy trwania', () => {
     const card = vm().sessions[0]!;
 
     expect(card.times).toBe('08:12 → 09:05 UTC');
@@ -105,25 +140,27 @@ describe('buildMyDay — scenariusz mockupu 01', () => {
   it('otwarty bieg pokazuje „→ …" zamiast udawać zakończony', () => {
     const open = session({ aircraftId: 'SP-KLM', legs: [leg('13:40', null)] });
 
-    const cards = buildMyDay(dayOf(open)).sessions;
+    const cards = buildMyDay(dayOf(open), regOf).sessions;
 
     expect(cards[0]!.times).toBe('13:40 → … UTC');
   });
 
   /**
    * Issue #42: „Mój dzień" i „Poprzednie dni" mają pokazywać sesję TAK SAMO.
-   * Test pilnuje umowy od strony modelu widoku — kafelek 01 wypełnia komplet pól
+   * Test pilnuje umowy od strony modelu widoku - kafelek 01 wypełnia komplet pól
    * `SessionCardVm`, więc `DayCard` dostaje z obu ekranów to samo. Gdyby ktoś dołożył
    * tu własne pole „bo na 01 wygodniej", rozjazd zacznie się dokładnie tak, jak
    * poprzednio: od jednej różnicy, o której nikt nie pamięta.
    */
-  it('kafelek ma kształt wspólny z „Poprzednimi dniami" — nic ponadto', () => {
+  it('kafelek ma kształt wspólny z „Poprzednimi dniami" - nic ponadto', () => {
     const card = vm().sessions[0]!;
 
     expect(Object.keys(card).sort()).toEqual(
-      // `manual` doszedł 2026-08-16 (plakietka „RĘCZNIE") — na OBU ekranach naraz,
+      // `manual` doszedł 2026-08-16 (plakietka „RĘCZNIE") - na OBU ekranach naraz,
       // bo niesie go wspólny `SessionCardVm`.
-      ['aircraft', 'manual', 'sessionUuid', 'stats', 'times', 'title'].sort(),
+      // 'signature' doszedł przy issue #68 - też na OBU ekranach naraz.
+      // 'adminClosed' doszedł przy issue #81 (plakietka „Zakończył administrator") - też.
+      ['adminClosed', 'aircraft', 'manual', 'sessionUuid', 'signature', 'stats', 'times', 'title'].sort(),
     );
     expect(card.stats.map((s) => s.k)).toEqual(['Loty', 'Blok', 'Lot']);
   });
@@ -142,7 +179,7 @@ describe('buildMyDay — scenariusz mockupu 01', () => {
   /**
    * SUMY MAJĄ TĘ SAMĄ TRÓJKĘ, CO KAFELEK (zgłoszenie z urządzenia, 2026-08-16).
    * Wcześniej rząd sum niósł parę „Blok / Loty", w której „Loty" znaczyło CZAS
-   * w powietrzu, a liczbę lotów spychało do podpisu „3 st / 3 ldg" — czyli tej samej
+   * w powietrzu, a liczbę lotów spychało do podpisu „3 st / 3 ldg" - czyli tej samej
    * trójki powiedzianej jeszcze dwa razy (lot to start i lądowanie). Test pilnuje
    * obu połówek naprawy naraz: liczba lotów jest WARTOŚCIĄ, a osobne liczniki startów
    * i lądowań z modelu widoku znikły.
@@ -155,7 +192,7 @@ describe('buildMyDay — scenariusz mockupu 01', () => {
   });
 
   /**
-   * Suma doby ma się zgadzać z tym, co pilot doda z kafelków nad nią — dlatego
+   * Suma doby ma się zgadzać z tym, co pilot doda z kafelków nad nią - dlatego
    * `flights` liczy się z SESJI, a nie z `takeoffCount` projekcji.
    */
   it('liczba lotów doby to suma lotów z kafelków', () => {
@@ -169,7 +206,7 @@ describe('buildMyDay — scenariusz mockupu 01', () => {
   });
 });
 
-describe('buildMyDay — dzień pusty (wariant 01A)', () => {
+describe('buildMyDay - dzień pusty (wariant 01A)', () => {
   it('pusta doba to `empty` z kreskami zamiast zer', () => {
     const vm = buildMyDay(dayOf());
 
@@ -178,10 +215,10 @@ describe('buildMyDay — dzień pusty (wariant 01A)', () => {
     expect(vm.totals.flights).toBeNull();
     expect(vm.totals.block).toBeNull();
     expect(vm.totals.flight).toBeNull();
-    expect(totalLabel(vm.totals.block)).toBe('— —');
+    expect(totalLabel(vm.totals.block)).toBe('- -');
   });
 
-  it('doba z sesją nie jest pusta', () => {
+  it('doba z operacją nie jest pusta', () => {
     const vm = buildMyDay(dayOf(axa()));
 
     expect(vm.empty).toBe(false);
@@ -194,16 +231,16 @@ describe('buildMyDay — dzień pusty (wariant 01A)', () => {
  *
  * Pierwsza wersja miała dziurę, której nie wyłapał żaden test, bo warunek siedział
  * w JSX: pusty dzień dostawał WYŁĄCZNIE „ROZPOCZNIJ LOT". Pilot, który przyleciał bez
- * telefonu i nie ma dziś ani jednej sesji, nie miał więc jak wpisać lotu — a to jest
+ * telefonu i nie ma dziś ani jednej sesji, nie miał więc jak wpisać lotu - a to jest
  * dokładnie sytuacja, dla której wpis ręczny istnieje (§3.8).
  *
  * Druga tura zdjęła z pasa akcji WSZYSTKO, co zależało od doby: „ROZPOCZNIJ LOT" ma
  * przez cały dzień ten sam wygląd i to samo miejsce, więc funkcja nie przyjmuje już
- * żadnego argumentu. Testy pilnują teraz tego braku — sygnatura bezargumentowa jest
+ * żadnego argumentu. Testy pilnują teraz tego braku - sygnatura bezargumentowa jest
  * jedyną formą, w której „zawsze tak samo" nie ma jak przestać być prawdą.
  */
-describe('myDayActions — co da się zrobić z poziomu 01', () => {
-  it('oba wejścia istnieją zawsze — wpis ręczny też', () => {
+describe('myDayActions - co da się zrobić z poziomu 01', () => {
+  it('oba wejścia istnieją zawsze - wpis ręczny też', () => {
     expect(myDayActions().map((a) => a.id)).toEqual(['start', 'manual']);
   });
 
@@ -219,11 +256,11 @@ describe('myDayActions — co da się zrobić z poziomu 01', () => {
     expect(myDayActions().map((a) => a.id)).toEqual(['start', 'manual']);
   });
 
-  it('akcji głównych jest dokładnie JEDNA — dwie zielone nie mówią, od czego zacząć', () => {
+  it('akcji głównych jest dokładnie JEDNA - dwie zielone nie mówią, od czego zacząć', () => {
     expect(myDayActions().filter((a) => a.primary)).toHaveLength(1);
   });
 
-  it('wpis ręczny NIGDY nie jest akcją główną — to droga awaryjna, nie codzienna', () => {
+  it('wpis ręczny NIGDY nie jest akcją główną - to droga awaryjna, nie codzienna', () => {
     expect(myDayActions().find((a) => a.id === 'manual')?.primary).toBe(false);
   });
 });

@@ -1,11 +1,11 @@
 /**
- * UZ Aero (serwer) — adapter normy zużycia (`ConsumptionNormPort`, `aircraft_consumption`).
+ * UZ Aero (serwer) - adapter normy zużycia (`ConsumptionNormPort`, `aircraft_consumption`).
  *
  * Tabela `aircraft_consumption` jest MATERIALIZACJĄ modelu, nie źródłem prawdy: każdy
  * jej wiersz da się odtworzyć ze strumienia zdarzeń, więc skasowanie tabeli jest
- * bezpieczne — odbuduje ją najbliższe zamknięcie dnia albo przeliczenie z panelu.
+ * bezpieczne - odbuduje ją najbliższe zamknięcie dnia albo przeliczenie z panelu.
  *
- * Model jedzie jako JSONB w jednej kolumnie, bo serwer go NIE filtruje ani nie sortuje —
+ * Model jedzie jako JSONB w jednej kolumnie, bo serwer go NIE filtruje ani nie sortuje -
  * zapisuje i oddaje. Rozbicie na kolumny oznaczałoby migrację przy każdej zmianie
  * kształtu `ConsumptionNorm` (a ten urośnie o fazy pionowe).
  */

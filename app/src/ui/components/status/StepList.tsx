@@ -1,12 +1,12 @@
 /**
- * UZ Aero — StepList (`.handover-steps` z mockupu 07)
+ * UZ Aero - StepList (`.handover-steps` z mockupu 07)
  *
  * Numerowana lista kroków procedury: kółko z numerem + zdanie. Fragmenty wymagające
- * uwagi (`emphasis`) są rozjaśnione — odpowiednik pogrubień z mockupu.
+ * uwagi (`emphasis`) są rozjaśnione - odpowiednik pogrubień z mockupu.
  *
  * Używana tam, gdzie aplikacja NIE prowadzi pilota za rękę, bo procedura wychodzi poza
  * ten telefon (przekazanie samolotu dzieje się na dwóch urządzeniach). Skoro nie możemy
- * poprowadzić — musimy przynajmniej dokładnie opisać drogę.
+ * poprowadzić - musimy przynajmniej dokładnie opisać drogę.
  */
 
 import React from 'react';
@@ -23,7 +23,7 @@ export interface StepListItem {
 
 export interface StepListProps {
   steps: StepListItem[];
-  /** Ton numerków — amber dla procedur „uwaga, to kończy sesję". */
+  /** Ton numerków - amber dla procedur „uwaga, to kończy sesję". */
   tone?: Tone;
   style?: ViewStyle;
 }

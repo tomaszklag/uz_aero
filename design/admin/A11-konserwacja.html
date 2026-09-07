@@ -3,20 +3,20 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — Panel admina · A11 Konserwacja</title>
+<title>UZ Aero - Panel admina · A11 Konserwacja</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   /* ══════════════════════════════════════════════════════════════════════
-     UZ AERO — PANEL ADMINA · SZABLON
+     UZ AERO - PANEL ADMINA · SZABLON
      Ten plik jest ŹRÓDŁEM dla wszystkich mockupów `design/admin/A*.html`.
      Kopiuj <head> w całości; nie zmieniaj tokenów ani ramy okna.
 
      Czym się różni od mockupów telefonu (`design/*.html`):
-     — ramka to OKNO PRZEGLĄDARKI 1440×900, nie telefon 393×852;
-     — skalowanie `--app-scale` działa identycznie jak `--phone-scale`;
-     — tokeny kolorów i czcionki są TE SAME, bo to ten sam produkt.
+     - ramka to OKNO PRZEGLĄDARKI 1440×900, nie telefon 393×852;
+     - skalowanie `--app-scale` działa identycznie jak `--phone-scale`;
+     - tokeny kolorów i czcionki są TE SAME, bo to ten sam produkt.
      ══════════════════════════════════════════════════════════════════════ */
   :root {
     --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
@@ -27,7 +27,7 @@
     --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28);
     --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
     --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
-    /* wymiary shellu — stałe, żeby wszystkie ekrany siadały w tej samej siatce */
+    /* wymiary shellu - stałe, żeby wszystkie ekrany siadały w tej samej siatce */
     --sidebar-w: 236px; --topbar-h: 56px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -42,7 +42,7 @@
     min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 44px 24px 80px; gap: 26px;
   }
 
-  /* ── canvas: etykieta, panel wariantów, nav-strip — jak w design/*.html, tylko szersze ── */
+  /* ── canvas: etykieta, panel wariantów, nav-strip - jak w design/*.html, tylko szersze ── */
   .canvas-label { width:100%; max-width:1440px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
   .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
   .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
@@ -67,7 +67,7 @@
   .nav-strip a:hover, .nav-strip a.active { color:var(--green); }
   .nav-strip span { color:var(--border-strong); }
 
-  /* ══ RAMA OKNA PRZEGLĄDARKI — desktopowy odpowiednik `.phone` ══ */
+  /* ══ RAMA OKNA PRZEGLĄDARKI - desktopowy odpowiednik `.phone` ══ */
   .browser {
     width:1440px; height:900px; border-radius:14px; background:var(--bg);
     border:1px solid #1C1E24;
@@ -103,7 +103,7 @@
   .nav-count { margin-left:auto; font-family:var(--font-mono); font-size:9.5px; font-weight:700; padding:1px 6px; border-radius:999px; background:var(--surface-raised); color:var(--text-muted); border:1px solid var(--border); }
   .nav-count.amber { background:var(--amber-muted); color:var(--amber); border-color:var(--amber-border); }
   .nav-count.red { background:var(--red-muted); color:var(--red); border-color:var(--red-border); }
-  /* pozycja niedostępna dla roli — widoczna, ale wyjaśniona (nie chowamy, żeby nie zgadywał) */
+  /* pozycja niedostępna dla roli - widoczna, ale wyjaśniona (nie chowamy, żeby nie zgadywał) */
   .nav-item.locked { opacity:0.4; cursor:not-allowed; }
   .nav-item.locked .nav-count { background:transparent; border-color:transparent; }
 
@@ -120,13 +120,13 @@
   .crumbs b { color:var(--text-primary); font-weight:500; }
   .crumbs span { color:var(--border-strong); }
   .topbar-right { display:flex; align-items:center; gap:10px; }
-  /* zegar UTC — w panelu, jak w aplikacji, czas nieoznaczony = UTC */
+  /* zegar UTC - w panelu, jak w aplikacji, czas nieoznaczony = UTC */
   .utc-clock { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); display:inline-flex; align-items:center; gap:7px; }
   .utc-clock b { color:var(--text-primary); font-weight:700; }
   .utc-clock i { font-style:normal; color:var(--blue); font-size:9px; letter-spacing:1.5px; }
 
   .content { flex:1; overflow-y:auto; padding:22px; display:flex; flex-direction:column; gap:18px; }
-  /* Kolumna scrollowana: dzieci NIE mogą się kurczyć — inaczej .table-wrap z overflow:hidden obcina wiersze, zamiast pozwolić .content przewinąć. */
+  /* Kolumna scrollowana: dzieci NIE mogą się kurczyć - inaczej .table-wrap z overflow:hidden obcina wiersze, zamiast pozwolić .content przewinąć. */
   .content > *, .drawer-body > * { flex-shrink:0; }
   .content::-webkit-scrollbar { width:10px; }
   .content::-webkit-scrollbar-thumb { background:var(--border-strong); border-radius:99px; border:3px solid var(--bg); }
@@ -154,7 +154,7 @@
   .card-title .spacer { margin-left:auto; }
 
   .tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
-  /* Kafel bywa linkiem w głąb (pulpit) i zwykłym pudełkiem (podsumowania) — jedna
+  /* Kafel bywa linkiem w głąb (pulpit) i zwykłym pudełkiem (podsumowania) - jedna
      definicja obsługuje oba, bo `text-decoration`/`color` na nie-linku nic nie robi. */
   .tile { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; display:flex; flex-direction:column; gap:6px; text-decoration:none; color:inherit; }
   .tile:hover { border-color:var(--border-strong); }
@@ -176,7 +176,7 @@
   .chip.on { background:var(--green-muted); border-color:var(--green-border); color:var(--green); }
   .chip.on.amber { background:var(--amber-muted); border-color:var(--amber-border); color:var(--amber); }
 
-  /* ── TABELA — kręgosłup panelu; liczby zawsze mono ── */
+  /* ── TABELA - kręgosłup panelu; liczby zawsze mono ── */
   .table-wrap { border:1px solid var(--border); border-radius:14px; overflow:hidden; background:var(--surface); }
   table { width:100%; border-collapse:collapse; }
   thead th { text-align:left; font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.8px; text-transform:uppercase; color:var(--text-muted); font-weight:500; padding:11px 14px; background:#101010; border-bottom:1px solid var(--border); white-space:nowrap; }
@@ -214,7 +214,7 @@
   .input::placeholder { color:var(--text-muted); }
   .hint { font-size:11px; color:var(--text-secondary); line-height:1.5; }
   .hint b { color:var(--amber); font-weight:600; }
-  /* ZAKAZ natywnego <select> (CLAUDE.md) — wybór to zawsze lista kart */
+  /* ZAKAZ natywnego <select> (CLAUDE.md) - wybór to zawsze lista kart */
   .opt-list { display:flex; flex-direction:column; gap:8px; }
   .opt { display:flex; align-items:center; gap:11px; background:var(--surface-raised); border:1px solid var(--border); border-radius:12px; padding:10px 13px; cursor:pointer; min-height:50px; }
   .opt:hover { background:var(--surface-hover); }
@@ -226,7 +226,7 @@
   .opt.selected .opt-check { opacity:1; }
   .opt-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:8px; }
 
-  /* ── banery (3 typy — docs/design-notes.md) ── */
+  /* ── banery (3 typy - docs/design-notes.md) ── */
   .banner { display:flex; align-items:flex-start; gap:10px; border-radius:12px; padding:11px 14px; font-size:12.5px; line-height:1.55; border:1px solid; }
   .banner svg { flex-shrink:0; margin-top:2px; }
   .banner b { font-weight:700; }
@@ -248,7 +248,7 @@
   @keyframes shimmer { 0% { background-position:200% 0; } 100% { background-position:-200% 0; } }
   .no-access { display:flex; flex-direction:column; align-items:center; gap:12px; padding:60px 20px; text-align:center; }
 
-  /* ── szuflada szczegółu (drawer) — otwiera wiersz tabeli bez utraty kontekstu listy ── */
+  /* ── szuflada szczegółu (drawer) - otwiera wiersz tabeli bez utraty kontekstu listy ── */
   .drawer-scrim { position:absolute; inset:0; background:rgba(0,0,0,0.55); z-index:60; }
   .drawer { position:absolute; top:0; right:0; bottom:0; width:520px; background:var(--surface); border-left:1px solid var(--border-strong); z-index:61; display:flex; flex-direction:column; box-shadow:-24px 0 60px rgba(0,0,0,0.5); }
   .drawer-head { flex-shrink:0; padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:flex-start; justify-content:space-between; gap:14px; }
@@ -266,7 +266,7 @@
   .kv-v.green { color:var(--green); } .kv-v.amber { color:var(--amber); } .kv-v.red { color:var(--red); }
   .kv-v small { font-size:9.5px; font-weight:400; color:var(--text-secondary); }
 
-  /* ── oś zdarzeń (log dnia w panelu — czyta się jak rejestr, nie jak lista) ── */
+  /* ── oś zdarzeń (log dnia w panelu - czyta się jak rejestr, nie jak lista) ── */
   .tl { display:flex; flex-direction:column; }
   .tl-row { display:grid; grid-template-columns:74px 20px 1fr auto; align-items:start; gap:10px; padding:8px 0; border-bottom:1px solid var(--hairline); }
   .tl-time { font-family:var(--font-mono); font-size:11.5px; font-weight:700; color:var(--text-primary); letter-spacing:0.5px; }
@@ -279,7 +279,7 @@
   .tl-row:last-child { border-bottom:none; }
   .tl-row.voided .tl-name { text-decoration:line-through; color:var(--text-muted); }
   .tl-row.voided .tl-time { color:var(--text-muted); text-decoration:line-through; }
-  /* Wariant KOMPAKTOWY — oś w wąskiej kolumnie bocznej (pulpit), bez plakietki
+  /* Wariant KOMPAKTOWY - oś w wąskiej kolumnie bocznej (pulpit), bez plakietki
      zamykającej wiersz. Pełna oś jest projektowana pod szeroką kolumnę karty dnia
      i w 400 px robi się rozstrzelona, stąd stopień mniejsze rozmiary i trzy tory
      siatki zamiast czterech. Modyfikator, nie osobny komponent: zachowanie, znaczenie
@@ -297,14 +297,14 @@
   /* Szersza kolumna boczna (400 px) tam, gdzie niesie ona własną treść, a nie
      przypis do lewej: puls systemu na pulpicie, dowód z replaya przy progach.
      Modyfikator zamiast zmiany bazy, bo szersza prawa = węższa lewa, a w lewej
-     stoją tabele — 20 px mniej potrafi przyciąć kolumnę w `.table-wrap`. */
+     stoją tabele - 20 px mniej potrafi przyciąć kolumnę w `.table-wrap`. */
   .cols.wide { grid-template-columns:1fr 400px; }
 
-  /* ══ FLOTA — wiersz samolotu niosący DWIE warstwy naraz ══
+  /* ══ FLOTA - wiersz samolotu niosący DWIE warstwy naraz ══
      Co samolot robi (faza) i SKĄD to wiemy (świeżość). Druga warstwa jest równie
      ważna jak pierwsza: „w locie" przy syncu sprzed 47 minut to nie jest wiedza
      o locie, tylko ostatnia znana pozycja. Klasa stanu na wierszu (`flying`/`stale`)
-     mówi o JAKOŚCI danych, nie o fazie lotu — `stale` nosi samolot, który leci,
+     mówi o JAKOŚCI danych, nie o fazie lotu - `stale` nosi samolot, który leci,
      ale którego telefon milczy. §4.8 stany świeżości. */
   .fleet { display:flex; flex-direction:column; gap:8px; }
   .fleet-row { display:grid; grid-template-columns:96px 1fr 132px 118px 150px; align-items:center; gap:14px; padding:12px 14px; border-radius:12px; background:var(--surface-raised); border:1px solid var(--border); text-decoration:none; color:inherit; }
@@ -320,7 +320,7 @@
   .fleet-nums .k { color:var(--text-muted); font-size:8.5px; letter-spacing:1.2px; }
   .fleet-state { display:flex; justify-content:flex-end; }
 
-  /* Świeżość — jedyne miejsce, w którym panel przyznaje się do NIEWIEDZY.
+  /* Świeżość - jedyne miejsce, w którym panel przyznaje się do NIEWIEDZY.
      Wiek podajemy względnie („3 min temu", „2 dni temu"), nie znacznikiem czasu:
      administrator ocenia, czy dane są aktualne, a nie o której dotarły. */
   .fresh { display:flex; flex-direction:column; align-items:flex-end; gap:3px; }
@@ -329,7 +329,7 @@
   .fresh-val.dim { color:var(--text-muted); }
   .fresh-note { font-family:var(--font-mono); font-size:8px; letter-spacing:0.8px; color:var(--text-muted); text-align:right; }
 
-  /* ══ KOLEJKA „WYMAGA UWAGI" — jedyne miejsce mówiące, co ZROBIĆ ══
+  /* ══ KOLEJKA „WYMAGA UWAGI" - jedyne miejsce mówiące, co ZROBIĆ ══
      Reszta panelu opisuje stan; ta lista stawia zadania. Dlatego wiersz jest linkiem
      w głąb, a wiek pozycji ma własną kolumnę: flaga leżąca trzeci dzień to inny
      problem niż ta sprzed godziny. */
@@ -347,7 +347,7 @@
   .todo-age { font-family:var(--font-mono); font-size:9.5px; font-weight:700; color:var(--text-secondary); flex-shrink:0; text-align:right; }
   .todo-age.old { color:var(--amber); }
 
-  /* ══ NAPŁYW ZDARZEŃ — puls systemu ══
+  /* ══ NAPŁYW ZDARZEŃ - puls systemu ══
      Słupek `zero` jest osobną klasą, a nie słupkiem o wysokości zero, bo cisza
      w rejestrze wymaga podpisu: nie znaczy „nikt nie latał", tylko „nic nie dotarło". */
   .spark { display:flex; align-items:flex-end; gap:3px; height:56px; }
@@ -356,10 +356,10 @@
   .spark i.zero { background:var(--surface-raised); border-color:var(--border); }
   .spark-axis { display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:8px; letter-spacing:1px; color:var(--text-muted); margin-top:6px; }
 
-  /* ══ PRÓG — wiersz w dwóch odmianach: przybity w kodzie vs. dana serwera ══
+  /* ══ PRÓG - wiersz w dwóch odmianach: przybity w kodzie vs. dana serwera ══
      Trzecia kolumna (`thr-src`) niesie różnicę, która jest tu najważniejsza: czy
      wartość da się w ogóle zmienić z panelu. Progi detekcji liczą się na telefonie
-     offline, więc są tylko do odczytu — pole `thr-input` pojawia się wyłącznie tam,
+     offline, więc są tylko do odczytu - pole `thr-input` pojawia się wyłącznie tam,
      gdzie zmiana ma skutek. */
   .thr { display:grid; grid-template-columns:1fr 128px 96px; align-items:center; gap:14px; padding:11px 0; border-bottom:1px solid var(--hairline); }
   .thr:last-of-type { border-bottom:none; }
@@ -373,7 +373,7 @@
   .thr-input:focus { border-color:var(--green-border); }
   .thr-input.changed { border-color:var(--amber-border); color:var(--amber); background:rgba(243,156,18,0.06); }
 
-  /* ══ DOWÓD ZMIANY — „przed → po" na danych historycznych ══
+  /* ══ DOWÓD ZMIANY - „przed → po" na danych historycznych ══
      Amber obramowanie nie jest ostrzeżeniem o błędzie, tylko sygnałem, że to blok
      WARUNKOWY: bez wypełnionego dowodu zapis nie ma prawa dojść do skutku. */
   .proof { border:1px solid var(--amber-border); background:rgba(243,156,18,0.05); border-radius:12px; padding:13px 15px; display:flex; flex-direction:column; gap:11px; }
@@ -385,7 +385,7 @@
   .diff-n { font-size:11px; color:var(--text-secondary); line-height:1.5; }
   .diff-arrow { color:var(--text-muted); font-family:var(--font-mono); font-size:16px; }
 
-  /* Odwołanie do pliku źródłowego — panel bywa czytany razem z repozytorium. */
+  /* Odwołanie do pliku źródłowego - panel bywa czytany razem z repozytorium. */
   .code-ref { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); background:var(--surface-raised); border:1px solid var(--border); border-radius:7px; padding:3px 8px; letter-spacing:0.3px; }
 
   /* ── sekcja demonstracyjna szablonu (TYLKO w tym pliku) ── */
@@ -395,7 +395,7 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — PANEL · A11 KONSERWACJA</span>
+  <span class="film-strip">UZ AERO - PANEL · A11 KONSERWACJA</span>
   <span class="slug">przebudowa projekcji · kolejka ponowień · wygasłe tokeny · migracje</span>
   <span class="canvas-meta"><span class="pulse"></span>Tylko administrator · rejestr zdarzeń nietykalny</span>
 </header>
@@ -405,7 +405,7 @@
   <a class="vp-item active" href="A11-konserwacja.html">
     <span class="vp-badge">A11</span>
     <span class="vp-body">
-      <span class="vp-name">Konserwacja — operacje na danych</span>
+      <span class="vp-name">Konserwacja - operacje na danych</span>
       <span class="vp-when">Wejście tylko z nawigacji, używane rzadko i świadomie. Cztery operacje serwisowe na tym, co w bazie <b>już jest</b>: przeliczenie projekcji ze zdarzeń, kolejka nieudanych eksportów, kasowanie martwych tokenów sesji, odczyt stanu migracji.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
@@ -413,27 +413,27 @@
   <a class="vp-item" href="A08-progi.html">
     <span class="vp-badge">A08</span>
     <span class="vp-body">
-      <span class="vp-name">Progi — konfiguracja zachowania</span>
+      <span class="vp-name">Progi - konfiguracja zachowania</span>
       <span class="vp-when">Tam ustawia się, <b>co system zrobi jutro</b> (kiedy postawi flagę, jak długo pilot poprawia dzień sam). Tu operuje się na tym, <b>co już policzył</b>. Zmiana progu niczego nie przelicza wstecz; przebudowa niczego nie konfiguruje.</span>
     </span>
   </a>
   <a class="vp-item" href="A05-eksporty.html">
     <span class="vp-badge">A05</span>
     <span class="vp-body">
-      <span class="vp-name">Eksporty — monitor per karta</span>
-      <span class="vp-when">Tam czyta się jedną kartę: status, historia rewizji, podgląd wierszy, różnica <code>export_log</code> vs <code>exported_sheets</code>. Tu jest wyłącznie kolejka i akcje zbiorcze — jeśli szukasz, co dokładnie stoi w karcie, idziesz na A05.</span>
+      <span class="vp-name">Eksporty - monitor per karta</span>
+      <span class="vp-when">Tam czyta się jedną kartę: status, historia rewizji, podgląd wierszy, różnica <code>export_log</code> vs <code>exported_sheets</code>. Tu jest wyłącznie kolejka i akcje zbiorcze - jeśli szukasz, co dokładnie stoi w karcie, idziesz na A05.</span>
     </span>
   </a>
   <a class="vp-item" href="A09-audyt.html">
     <span class="vp-badge">A09</span>
     <span class="vp-body">
-      <span class="vp-name">Audyt — druga strona każdej akcji stąd</span>
-      <span class="vp-when">Dwie akcje piszące z tego ekranu (<code>maintenance.rebuild_projections</code>, <code>maintenance.prune_tokens</code>) oraz ponowienie eksportu (<code>export.retry</code>, ta sama komenda co na A05) zostawiają wpis w <code>admin_audit</code>. Wpisu nie da się z panelu skasować — rola aplikacyjna ma na tej tabeli tylko INSERT i SELECT. <b>Sprostowanie 2026-08-02:</b> kody pochodzą z katalogu <code>server/src/domain/adminActions.ts</code>, który jest źródłem prawdy — wcześniejsze <code>projection_rebuild</code>/<code>export_retry</code>/<code>refresh_tokens_purge</code> nigdy nie istniały w kodzie.</span>
+      <span class="vp-name">Audyt - druga strona każdej akcji stąd</span>
+      <span class="vp-when">Dwie akcje piszące z tego ekranu (<code>maintenance.rebuild_projections</code>, <code>maintenance.prune_tokens</code>) oraz ponowienie eksportu (<code>export.retry</code>, ta sama komenda co na A05) zostawiają wpis w <code>admin_audit</code>. Wpisu nie da się z panelu skasować - rola aplikacyjna ma na tej tabeli tylko INSERT i SELECT. <b>Sprostowanie 2026-08-02:</b> kody pochodzą z katalogu <code>server/src/domain/adminActions.ts</code>, który jest źródłem prawdy - wcześniejsze <code>projection_rebuild</code>/<code>export_retry</code>/<code>refresh_tokens_purge</code> nigdy nie istniały w kodzie.</span>
     </span>
   </a>
 </aside>
 
-<main class="browser" role="region" aria-label="Panel administracyjny — konserwacja danych">
+<main class="browser" role="region" aria-label="Panel administracyjny - konserwacja danych">
 
   <div class="chrome">
     <span class="chrome-dots"><i></i><i></i><i></i></span>
@@ -536,7 +536,7 @@
         <div class="page-head">
           <div>
             <h1 class="page-title">KONSERWACJA</h1>
-            <p class="page-sub">Cztery operacje serwisowe na danych, które już są w bazie. Trzy z nich przeliczają albo powtarzają to, co da się odtworzyć ze strumienia zdarzeń; jedna — i tylko jedna — naprawdę coś kasuje, i dlatego stoi w osobnej strefie na dole.</p>
+            <p class="page-sub">Cztery operacje serwisowe na danych, które już są w bazie. Trzy z nich przeliczają albo powtarzają to, co da się odtworzyć ze strumienia zdarzeń; jedna - i tylko jedna - naprawdę coś kasuje, i dlatego stoi w osobnej strefie na dole.</p>
           </div>
           <div class="page-actions">
             <a class="btn ghost" href="A09-audyt.html">
@@ -548,7 +548,7 @@
 
         <div class="banner danger">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-          <span><b>Rejestr <code>events</code> jest append-only i żadna operacja na tym ekranie go nie dotyka.</b> Przebudowa <b>czyta</b> zdarzenia i nadpisuje wyłącznie projekcje; ponowienie eksportu buduje kartę od nowa z tego samego strumienia; sprzątanie tokenów działa na tabeli sesji. Zdarzenia nie da się z panelu zmienić ani skasować — korekta to zawsze <b>dopisanie</b> <code>event_correction</code> na <a href="A02b-korekta.html" style="color:var(--red);font-weight:700;">A02b</a>, a oryginalny odczyt zostaje w rejestrze na zawsze.</span>
+          <span><b>Rejestr <code>events</code> jest append-only i żadna operacja na tym ekranie go nie dotyka.</b> Przebudowa <b>czyta</b> zdarzenia i nadpisuje wyłącznie projekcje; ponowienie eksportu buduje kartę od nowa z tego samego strumienia; sprzątanie tokenów działa na tabeli sesji. Zdarzenia nie da się z panelu zmienić ani skasować - korekta to zawsze <b>dopisanie</b> <code>event_correction</code> na <a href="A02b-korekta.html" style="color:var(--red);font-weight:700;">A02b</a>, a oryginalny odczyt zostaje w rejestrze na zawsze.</span>
         </div>
 
         <div class="cols">
@@ -563,7 +563,7 @@
 
             <div class="banner status">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-              <span><b>Ta operacja jest bezpieczna z definicji.</b> <code>sessions</code> nie jest źródłem prawdy — to zrzut <code>projectSession(events)</code>, odświeżany w tej samej transakcji, w której przyjmujemy zdarzenia. Każdy jej wiersz da się odtworzyć ze strumienia, więc przebudowa nie może zniszczyć żadnej informacji: skasowanie całej tabeli też by jej nie zniszczyło. Ryzyko leży gdzie indziej — w tym, <b>co robimy z wynikiem porównania</b>.</span>
+              <span><b>Ta operacja jest bezpieczna z definicji.</b> <code>sessions</code> nie jest źródłem prawdy - to zrzut <code>projectSession(events)</code>, odświeżany w tej samej transakcji, w której przyjmujemy zdarzenia. Każdy jej wiersz da się odtworzyć ze strumienia, więc przebudowa nie może zniszczyć żadnej informacji: skasowanie całej tabeli też by jej nie zniszczyło. Ryzyko leży gdzie indziej - w tym, <b>co robimy z wynikiem porównania</b>.</span>
             </div>
 
             <div class="cols even" style="gap:14px;">
@@ -585,7 +585,7 @@
 
             <div class="banner warn">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-              <span><b>Dwa wiersze różnią się od przeliczenia — to incydent, nie zadanie do sprzątnięcia.</b> Projekcja jest odświeżana w tej samej transakcji co przyjęcie zdarzeń, więc w normalnej pracy różnicy być NIE MOŻE. Zapis wyrówna liczby i tym samym <b>skasuje jedyny ślad</b> po tym, co je rozjechało. Najpierw ustal przyczynę, dopiero potem nadpisuj.</span>
+              <span><b>Dwa wiersze różnią się od przeliczenia - to incydent, nie zadanie do sprzątnięcia.</b> Projekcja jest odświeżana w tej samej transakcji co przyjęcie zdarzeń, więc w normalnej pracy różnicy być NIE MOŻE. Zapis wyrówna liczby i tym samym <b>skasuje jedyny ślad</b> po tym, co je rozjechało. Najpierw ustal przyczynę, dopiero potem nadpisuj.</span>
             </div>
 
             <div class="table-wrap">
@@ -633,9 +633,9 @@
               </table>
             </div>
 
-            <span class="hint"><b>Hipoteza do sprawdzenia, zanim cokolwiek zapiszesz.</b> Obie sesje są z 24 JUL — z dnia, w którym weszło wydanie domeny zmieniające regułę liczenia bloku. Jeśli to ta zmiana, przebudowa jest dokładnie tym, czego trzeba: stare wiersze policzył stary kod, a strumień zdarzeń jest nietknięty. Jeśli jednak wydanie tego nie tłumaczy, zostają tylko możliwości spoza normalnej pracy serwera — <b>ręczny UPDATE w bazie</b>, import albo odtworzenie z kopii zrobionej w połowie strumienia. Wyścigu dwóch paczek tu nie ma: ingest szereguje sesje blokadą advisory i zapisuje zdarzenia razem z projekcją w jednej transakcji, więc przerwanie cofa oba zapisy naraz. W każdym z tych przypadków nadpisanie zatrze ślad, zamiast naprawić przyczynę. Rozstrzyga <a href="A09-audyt.html" style="color:var(--green);">audyt</a> i data wydania, nie sam przycisk.</span>
+            <span class="hint"><b>Hipoteza do sprawdzenia, zanim cokolwiek zapiszesz.</b> Obie sesje są z 24 JUL - z dnia, w którym weszło wydanie domeny zmieniające regułę liczenia bloku. Jeśli to ta zmiana, przebudowa jest dokładnie tym, czego trzeba: stare wiersze policzył stary kod, a strumień zdarzeń jest nietknięty. Jeśli jednak wydanie tego nie tłumaczy, zostają tylko możliwości spoza normalnej pracy serwera - <b>ręczny UPDATE w bazie</b>, import albo odtworzenie z kopii zrobionej w połowie strumienia. Wyścigu dwóch paczek tu nie ma: ingest szereguje sesje blokadą advisory i zapisuje zdarzenia razem z projekcją w jednej transakcji, więc przerwanie cofa oba zapisy naraz. W każdym z tych przypadków nadpisanie zatrze ślad, zamiast naprawić przyczynę. Rozstrzyga <a href="A09-audyt.html" style="color:var(--green);">audyt</a> i data wydania, nie sam przycisk.</span>
 
-            <span class="hint"><b>Czego przebudowa nie zrobi.</b> Nie doda kolumn, których projekcja nie ma. <code>operation</code> i <code>client</code> weszły migracją 11; klamra służby (<code>dutyStart</code> / <code>dutyEnd</code>) <b>nie istnieje w modelu w ogóle</b> — pola znikły z payloadów razem z pojęciem służby (issue #23, 2026-08-11). <code>claim_time</code> niesie czas zdarzenia <code>session_claim</code>, a nie dawny meldunek. Przebudowa liczy projekcję ze strumienia tym samym kodem co ingest — nowego pola nie wymyśli; to zmiana kodu i wydanie, nie akcja z panelu.</span>
+            <span class="hint"><b>Czego przebudowa nie zrobi.</b> Nie doda kolumn, których projekcja nie ma. <code>operation</code> i <code>client</code> weszły migracją 11; klamra służby (<code>dutyStart</code> / <code>dutyEnd</code>) <b>nie istnieje w modelu w ogóle</b> - pola znikły z payloadów razem z pojęciem służby (issue #23, 2026-08-11). <code>claim_time</code> niesie czas zdarzenia <code>session_claim</code>, a nie dawny meldunek. Przebudowa liczy projekcję ze strumienia tym samym kodem co ingest - nowego pola nie wymyśli; to zmiana kodu i wydanie, nie akcja z panelu.</span>
           </div>
 
           <div style="display:flex;flex-direction:column;gap:16px;">
@@ -647,7 +647,7 @@
                 <div class="opt-list">
                   <label class="opt selected">
                     <span class="opt-body">
-                      <span class="opt-name">Przelicz i porównaj — bez zapisu</span>
+                      <span class="opt-name">Przelicz i porównaj - bez zapisu</span>
                       <span class="opt-desc">Czyta strumień, liczy projekcję w pamięci, pokazuje różnice. Baza nietknięta.</span>
                     </span>
                     <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
@@ -655,7 +655,7 @@
                   <label class="opt">
                     <span class="opt-body">
                       <span class="opt-name">Przelicz i nadpisz projekcję</span>
-                      <span class="opt-desc">Krok drugi, dostępny po porównaniu. Wymaga powodu — trafia do audytu.</span>
+                      <span class="opt-desc">Krok drugi, dostępny po porównaniu. Wymaga powodu - trafia do audytu.</span>
                     </span>
                     <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
                   </label>
@@ -668,7 +668,7 @@
 
               <div class="field">
                 <span class="label">Powód nadpisania (trafia do audytu)</span>
-                <textarea class="input" rows="3" style="resize:none;font-family:var(--font-body);" placeholder="Np.: różnica wyjaśniona zmianą reguły liczenia bloku w wydaniu z 24 JUL — potwierdzone w audycie wydania."></textarea>
+                <textarea class="input" rows="3" style="resize:none;font-family:var(--font-body);" placeholder="Np.: różnica wyjaśniona zmianą reguły liczenia bloku w wydaniu z 24 JUL - potwierdzone w audycie wydania."></textarea>
               </div>
 
               <div style="display:flex;gap:9px;justify-content:flex-end;">
@@ -679,7 +679,7 @@
                 </button>
               </div>
 
-              <span class="hint">Domyślna jest ta bezpieczniejsza: porównanie niczego nie zapisuje, więc można je puścić w każdej chwili — także po to, żeby po prostu sprawdzić, czy projekcja nadal się zgadza. Nadpisanie odblokowuje się dopiero po świeżym porównaniu i podaniu powodu.</span>
+              <span class="hint">Domyślna jest ta bezpieczniejsza: porównanie niczego nie zapisuje, więc można je puścić w każdej chwili - także po to, żeby po prostu sprawdzić, czy projekcja nadal się zgadza. Nadpisanie odblokowuje się dopiero po świeżym porównaniu i podaniu powodu.</span>
             </div>
 
             <div class="card">
@@ -687,7 +687,7 @@
               <div class="kv"><span class="kv-k">Akcja</span><span class="kv-v"><small>maintenance.rebuild_projections</small></span></div>
               <div class="kv"><span class="kv-k">Zapisujemy</span><span class="kv-v"><small>zakres · liczba sesji<br />liczba różnic · powód</small></span></div>
               <div class="kv"><span class="kv-k">Kto</span><span class="kv-v"><small>Tomasz Małkiewicz</small></span></div>
-              <span class="hint"><b>Sprostowanie 2026-08-02: dry-run NIE zostawia wpisu.</b> Ten mockup obiecywał ślad także dla porównania („bo sama informacja »projekcja dryfowała o 2 wiersze« jest faktem"), ale <code>admin_audit</code> jest jedynym dokumentem odpowiadającym na pytanie „kto co ZMIENIŁ", a podgląd niczego nie zmienia. Wpis o nim rozmywałby tę odpowiedź — to ta sama decyzja, co przy podglądzie korekty na <a href="A02b-korekta.html" style="color:var(--green);">A02b</a>. Cena jest nazwana: informacja „ktoś sprawdził i się zgadzało" nie jest odtwarzalna z dziennika. Porównanie idzie więc ZAPYTANIEM (<code>GET …/maintenance/projections/compare</code>), a nie komendą; wpis powstaje wyłącznie przy nadpisaniu.</span>
+              <span class="hint"><b>Sprostowanie 2026-08-02: dry-run NIE zostawia wpisu.</b> Ten mockup obiecywał ślad także dla porównania („bo sama informacja »projekcja dryfowała o 2 wiersze« jest faktem"), ale <code>admin_audit</code> jest jedynym dokumentem odpowiadającym na pytanie „kto co ZMIENIŁ", a podgląd niczego nie zmienia. Wpis o nim rozmywałby tę odpowiedź - to ta sama decyzja, co przy podglądzie korekty na <a href="A02b-korekta.html" style="color:var(--green);">A02b</a>. Cena jest nazwana: informacja „ktoś sprawdził i się zgadzało" nie jest odtwarzalna z dziennika. Porównanie idzie więc ZAPYTANIEM (<code>GET …/maintenance/projections/compare</code>), a nie komendą; wpis powstaje wyłącznie przy nadpisaniu.</span>
             </div>
           </div>
         </div>
@@ -703,7 +703,7 @@
 
           <div class="banner warn">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <span><b>Historii porażek nie ma w <code>export_log</code> — żyje wyłącznie w tej kolejce.</b> Dziennik dostaje wiersz DOPIERO po udanym zapisie karty; odwrotna kolejność pokazywałaby na ekranie 11 telefonu link do arkusza, którego nie ma. Skutek uboczny tej (słusznej) decyzji: nieudana próba nie zostawia w bazie żadnego wiersza — dziś kończy się wyłącznie linią w logu serwera — więc <b>ten ekran jest jedynym miejscem, w którym widać, że eksport się nie udał</b>. Po udanym ponowieniu pozycja znika stąd bez śladu — zostaje tylko wpis w audycie ręcznej próby.</span>
+            <span><b>Historii porażek nie ma w <code>export_log</code> - żyje wyłącznie w tej kolejce.</b> Dziennik dostaje wiersz DOPIERO po udanym zapisie karty; odwrotna kolejność pokazywałaby na ekranie 11 telefonu link do arkusza, którego nie ma. Skutek uboczny tej (słusznej) decyzji: nieudana próba nie zostawia w bazie żadnego wiersza - dziś kończy się wyłącznie linią w logu serwera - więc <b>ten ekran jest jedynym miejscem, w którym widać, że eksport się nie udał</b>. Po udanym ponowieniu pozycja znika stąd bez śladu - zostaje tylko wpis w audycie ręcznej próby.</span>
           </div>
 
           <div class="table-wrap">
@@ -728,36 +728,36 @@
                   <td><div class="row-actions"><a class="btn sm ghost" href="A05-eksporty.html">Karta</a><button class="btn sm">Ponów teraz</button></div></td>
                 </tr>
                 <tr style="background:var(--red-muted);">
-                  <td class="mono">2026-07-30_SP-KLM<span class="cell-sub">niekompletna — 2 sesje wycięte</span></td>
+                  <td class="mono">2026-07-30_SP-KLM<span class="cell-sub">niekompletna - 2 sesje wycięte</span></td>
                   <td><span class="reg">SP-KLM</span><span class="cell-sub">Cessna 208 Caravan</span></td>
                   <td><span class="pill red"><span class="dot"></span>Zablokowana flagą</span><span class="cell-sub"><a href="A03a-flaga.html" style="color:var(--red);">#1046 · aircraft_overlap</a> · otwarta od 30 JUL 18:41</span></td>
-                  <td class="num dim">—</td>
-                  <td class="num dim">—<span class="cell-sub">bez ponowień</span></td>
-                  <td><div class="row-actions"><a class="btn sm ghost" href="A03a-flaga.html">Do flagi</a><button class="btn sm ghost disabled" disabled title="Bramka dayExporter — ponowienie odbije się o tę samą flagę">Ponów</button></div></td>
+                  <td class="num dim">-</td>
+                  <td class="num dim">-<span class="cell-sub">bez ponowień</span></td>
+                  <td><div class="row-actions"><a class="btn sm ghost" href="A03a-flaga.html">Do flagi</a><button class="btn sm ghost disabled" disabled title="Bramka dayExporter - ponowienie odbije się o tę samą flagę">Ponów</button></div></td>
                 </tr>
                 <tr style="background:var(--red-muted);">
-                  <td class="mono">2026-07-29_SP-XYZ<span class="cell-sub">niekompletna — 2 sesje wycięte</span></td>
+                  <td class="mono">2026-07-29_SP-XYZ<span class="cell-sub">niekompletna - 2 sesje wycięte</span></td>
                   <td><span class="reg">SP-XYZ</span><span class="cell-sub">Aero AT-3</span></td>
                   <td><span class="pill red"><span class="dot"></span>Zablokowana flagą</span><span class="cell-sub"><a href="A03-flagi.html" style="color:var(--red);">#1043 · aircraft_overlap</a> · otwarta od 29 JUL 13:50</span></td>
-                  <td class="num dim">—</td>
-                  <td class="num dim">—<span class="cell-sub">bez ponowień</span></td>
-                  <td><div class="row-actions"><a class="btn sm ghost" href="A03-flagi.html">Do flagi</a><button class="btn sm ghost disabled" disabled title="Bramka dayExporter — ponowienie odbije się o tę samą flagę">Ponów</button></div></td>
+                  <td class="num dim">-</td>
+                  <td class="num dim">-<span class="cell-sub">bez ponowień</span></td>
+                  <td><div class="row-actions"><a class="btn sm ghost" href="A03-flagi.html">Do flagi</a><button class="btn sm ghost disabled" disabled title="Bramka dayExporter - ponowienie odbije się o tę samą flagę">Ponów</button></div></td>
                 </tr>
               </tbody>
             </table>
           </div>
 
           <div class="cols even">
-            <span class="hint"><b>Dlaczego przy dwóch pozycjach „Ponów" jest wyszarzone.</b> <code>dayExporter</code> sprawdza otwarte flagi <b>przed</b> zapisem karty i przy <code>aircraft_overlap</code> pomija sporną sesję po cichu, bez błędu — sporna zmiana nie ma prawa utrwalić się w dokumencie klubu. Karta doby i tak powstaje, ale <b>niekompletna</b>: bramka obejmuje SESJE, nie cały dokument (§4.7). Ponowienie dostałoby dokładnie ten sam wynik i tylko podbiłoby licznik prób. Droga wiedzie przez <a href="A03-flagi.html" style="color:var(--green);">skrzynkę flag</a>: rozwiązanie flagi jest tu jedyną skuteczną „akcją naprawczą", a eksport rusza po niej sam.</span>
-            <span class="hint"><b>Zaległość, którą ten ekran zakładał za wykonaną — stan na 2026-08-02.</b> Dwie z trzech rzeczy są już zrobione: re-eksport po rozwiązaniu flagi działa (<a href="A03a-flaga.html" style="color:var(--green);">A03a</a>), a <code>export_log</code> ma <code>UNIQUE (session_uuid, revision)</code> razem z blokadą advisory (migracja 14). <b>Kolejki ponowień z backoffem nadal NIE MA</b> i to jest decyzja o schemacie, nie pole do wypełnienia: nieudana próba nie zostawia wiersza w żadnej tabeli, więc kolumny „Próba" i „Następna" nie mają skąd wziąć wartości. Wdrożony ekran ich nie rysuje i mówi o tym wprost, zamiast pokazywać liczby wzięte znikąd.</span>
+            <span class="hint"><b>Dlaczego przy dwóch pozycjach „Ponów" jest wyszarzone.</b> <code>dayExporter</code> sprawdza otwarte flagi <b>przed</b> zapisem karty i przy <code>aircraft_overlap</code> pomija sporną sesję po cichu, bez błędu - sporna zmiana nie ma prawa utrwalić się w dokumencie klubu. Karta doby i tak powstaje, ale <b>niekompletna</b>: bramka obejmuje SESJE, nie cały dokument (§4.7). Ponowienie dostałoby dokładnie ten sam wynik i tylko podbiłoby licznik prób. Droga wiedzie przez <a href="A03-flagi.html" style="color:var(--green);">skrzynkę flag</a>: rozwiązanie flagi jest tu jedyną skuteczną „akcją naprawczą", a eksport rusza po niej sam.</span>
+            <span class="hint"><b>Zaległość, którą ten ekran zakładał za wykonaną - stan na 2026-08-02.</b> Dwie z trzech rzeczy są już zrobione: re-eksport po rozwiązaniu flagi działa (<a href="A03a-flaga.html" style="color:var(--green);">A03a</a>), a <code>export_log</code> ma <code>UNIQUE (session_uuid, revision)</code> razem z blokadą advisory (migracja 14). <b>Kolejki ponowień z backoffem nadal NIE MA</b> i to jest decyzja o schemacie, nie pole do wypełnienia: nieudana próba nie zostawia wiersza w żadnej tabeli, więc kolumny „Próba" i „Następna" nie mają skąd wziąć wartości. Wdrożony ekran ich nie rysuje i mówi o tym wprost, zamiast pokazywać liczby wzięte znikąd.</span>
           </div>
 
-          <span class="hint">Ręczne „Ponów teraz" jest akcją administratora i zostawia w audycie nazwę karty, rewizję przed i po oraz wynik próby (<code>export.retry</code>) — <b>tą samą komendą, co przycisk na <a href="A05-eksporty.html" style="color:var(--green);">A05</a></b>, bo druga implementacja ponowienia byłaby gorsza niż brak drugiego przycisku. Szef wyszkolenia widzi tę tabelę w trybie odczytu. <a href="A09-audyt.html" style="color:var(--green);">Audyt →</a></span>
+          <span class="hint">Ręczne „Ponów teraz" jest akcją administratora i zostawia w audycie nazwę karty, rewizję przed i po oraz wynik próby (<code>export.retry</code>) - <b>tą samą komendą, co przycisk na <a href="A05-eksporty.html" style="color:var(--green);">A05</a></b>, bo druga implementacja ponowienia byłaby gorsza niż brak drugiego przycisku. Szef wyszkolenia widzi tę tabelę w trybie odczytu. <a href="A09-audyt.html" style="color:var(--green);">Audyt →</a></span>
         </div>
 
         <div class="card" style="border-color:var(--red-border);background:var(--red-muted);">
           <div class="card-title">
-            3 · Wygasłe refresh tokeny — jedyna operacja, która kasuje dane
+            3 · Wygasłe refresh tokeny - jedyna operacja, która kasuje dane
             <span class="spacer"></span>
             <span class="pill red">nieodwracalne</span>
             <span class="pill dim">infrastructure/pg/admin/maintenanceRepo.ts</span>
@@ -765,7 +765,7 @@
 
           <div class="banner danger">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>
-            <span><b>Czego dokładnie dotyczy ta operacja.</b> Kasujemy wiersze tabeli <code>refresh_tokens</code>, w których <code>expires_at</code> jest w przeszłości. To są <b>tokeny sesji</b> — nie konta pilotów, nie zdarzenia, nie sesje lotne i nie karty dnia. <b>Żaden pilot nie zostanie przez to wylogowany</b>: token, który wygasł, i tak nie odnowi dostępu. Tokenów ważnych ta akcja NIE rusza — ich skasowanie wymusiłoby ponowne logowanie, a to jedyna czynność w systemie, która wymaga sieci (§3.0), więc odcięłoby pilota w terenie.</span>
+            <span><b>Czego dokładnie dotyczy ta operacja.</b> Kasujemy wiersze tabeli <code>refresh_tokens</code>, w których <code>expires_at</code> jest w przeszłości. To są <b>tokeny sesji</b> - nie konta pilotów, nie zdarzenia, nie sesje lotne i nie karty dnia. <b>Żaden pilot nie zostanie przez to wylogowany</b>: token, który wygasł, i tak nie odnowi dostępu. Tokenów ważnych ta akcja NIE rusza - ich skasowanie wymusiłoby ponowne logowanie, a to jedyna czynność w systemie, która wymaga sieci (§3.0), więc odcięłoby pilota w terenie.</span>
           </div>
 
           <div class="cols">
@@ -774,7 +774,7 @@
                 <div>
                   <div class="kv"><span class="kv-k">Wierszy w tabeli</span><span class="kv-v">52</span></div>
                   <div class="kv"><span class="kv-k">Wygasłych</span><span class="kv-v red">37</span></div>
-                  <div class="kv"><span class="kv-k">Ważnych — bez zmian</span><span class="kv-v green">15</span></div>
+                  <div class="kv"><span class="kv-k">Ważnych - bez zmian</span><span class="kv-v green">15</span></div>
                 </div>
                 <div>
                   <div class="kv"><span class="kv-k">Najstarszy wygasł</span><span class="kv-v">12 MAR 03:41 <small>UTC · 4 mies. temu</small></span></div>
@@ -783,7 +783,7 @@
                 </div>
               </div>
 
-              <span class="hint" style="display:block;padding-top:10px;"><b>Dlaczego one się zbierają.</b> Rotacja kasuje wiersz tylko wtedy, gdy ktoś ten token <b>przedstawi</b> (<code>DELETE … RETURNING</code> przy odświeżeniu). Token porzucony — reinstalacja aplikacji, zgubiony telefon, wyłączone konto — nie zostanie przedstawiony nigdy i leży w tabeli bez końca. Crona nie ma, przy logowaniu też nic się nie kasuje; to pozycja z backlogu serwera i dopóki nie powstanie, sprząta się stąd ręcznie.</span>
+              <span class="hint" style="display:block;padding-top:10px;"><b>Dlaczego one się zbierają.</b> Rotacja kasuje wiersz tylko wtedy, gdy ktoś ten token <b>przedstawi</b> (<code>DELETE … RETURNING</code> przy odświeżeniu). Token porzucony - reinstalacja aplikacji, zgubiony telefon, wyłączone konto - nie zostanie przedstawiony nigdy i leży w tabeli bez końca. Crona nie ma, przy logowaniu też nic się nie kasuje; to pozycja z backlogu serwera i dopóki nie powstanie, sprząta się stąd ręcznie.</span>
             </div>
 
             <div class="card" style="background:var(--surface);border-color:var(--red-border);">
@@ -799,7 +799,7 @@
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 6h18"/><path d="M19 6l-1 14H6L5 6"/></svg>
                 Usuń 37 wygasłych tokenów
               </button>
-              <span class="hint">Do audytu trafia liczba skasowanych wierszy i zakres dat wygaśnięcia — nigdy same tokeny. Nie ma czego zapisać: w bazie leżą wyłącznie skróty SHA-256, a wartości tokenu nie zna nawet serwer. <a href="A09-audyt.html" style="color:var(--green);">Audyt →</a></span>
+              <span class="hint">Do audytu trafia liczba skasowanych wierszy i zakres dat wygaśnięcia - nigdy same tokeny. Nie ma czego zapisać: w bazie leżą wyłącznie skróty SHA-256, a wartości tokenu nie zna nawet serwer. <a href="A09-audyt.html" style="color:var(--green);">Audyt →</a></span>
             </div>
           </div>
         </div>
@@ -836,7 +836,7 @@
               <tbody>
                 <tr>
                   <td class="num">1</td>
-                  <td><span class="cell-strong">Fundament: <code>pilots</code>, <code>aircraft</code>, <code>refresh_tokens</code>, <code>events</code></span><span class="cell-sub">tokeny trzymane jako hash; rejestr zdarzeń append-only z uuid urządzenia jako kluczem — stąd idempotencja synca</span></td>
+                  <td><span class="cell-strong">Fundament: <code>pilots</code>, <code>aircraft</code>, <code>refresh_tokens</code>, <code>events</code></span><span class="cell-sub">tokeny trzymane jako hash; rejestr zdarzeń append-only z uuid urządzenia jako kluczem - stąd idempotencja synca</span></td>
                   <td class="num">12 MAY 2026</td>
                   <td><span class="pill green"><span class="dot"></span>zastosowana</span></td>
                 </tr>
@@ -848,25 +848,25 @@
                 </tr>
                 <tr>
                   <td class="num">3</td>
-                  <td><span class="cell-strong">Unikalność flag na poziomie bazy</span><span class="cell-sub"><code>UNIQUE (type, session_uuids)</code> — dedupe w adapterze przegrywa wyścig dwóch transakcji, constraintu nie da się ominąć timingiem</span></td>
+                  <td><span class="cell-strong">Unikalność flag na poziomie bazy</span><span class="cell-sub"><code>UNIQUE (type, session_uuids)</code> - dedupe w adapterze przegrywa wyścig dwóch transakcji, constraintu nie da się ominąć timingiem</span></td>
                   <td class="num">03 JUN 2026</td>
                   <td><span class="pill green"><span class="dot"></span>zastosowana</span></td>
                 </tr>
                 <tr>
                   <td class="num">4</td>
-                  <td><span class="cell-strong">Dziennik eksportu <code>export_log</code></span><span class="cell-sub">append-only: regeneracja karty dopisuje nowy wiersz z rewizją +1, nigdy nie nadpisuje — to jedyny ślad rozjazdu arkusz ↔ rejestr</span></td>
+                  <td><span class="cell-strong">Dziennik eksportu <code>export_log</code></span><span class="cell-sub">append-only: regeneracja karty dopisuje nowy wiersz z rewizją +1, nigdy nie nadpisuje - to jedyny ślad rozjazdu arkusz ↔ rejestr</span></td>
                   <td class="num">21 JUN 2026</td>
                   <td><span class="pill green"><span class="dot"></span>zastosowana</span></td>
                 </tr>
                 <tr>
                   <td class="num">5</td>
-                  <td><span class="cell-strong">Treść kart <code>exported_sheets</code></span><span class="cell-sub">bazodanowy adapter <code>SheetsPort</code> na czas bez klucza Google; UPSERT po <code>tab</code>, dokładnie jak zakładka w arkuszu — historii rewizji tu nie ma i nie wolno jej dodawać</span></td>
+                  <td><span class="cell-strong">Treść kart <code>exported_sheets</code></span><span class="cell-sub">bazodanowy adapter <code>SheetsPort</code> na czas bez klucza Google; UPSERT po <code>tab</code>, dokładnie jak zakładka w arkuszu - historii rewizji tu nie ma i nie wolno jej dodawać</span></td>
                   <td class="num">21 JUN 2026</td>
                   <td><span class="pill green"><span class="dot"></span>zastosowana</span></td>
                 </tr>
                 <tr>
                   <td class="num">6</td>
-                  <td><span class="cell-strong">Motyw jako preferencja pilota: <code>pilots.theme</code></span><span class="cell-sub">plus <code>theme_updated_at</code> — stempel decyzji pilota nadany przez telefon, oś rozstrzygania LWW; motyw wędruje między urządzeniami, nie zostaje na telefonie</span></td>
+                  <td><span class="cell-strong">Motyw jako preferencja pilota: <code>pilots.theme</code></span><span class="cell-sub">plus <code>theme_updated_at</code> - stempel decyzji pilota nadany przez telefon, oś rozstrzygania LWW; motyw wędruje między urządzeniami, nie zostaje na telefonie</span></td>
                   <td class="num">29 JUL 2026</td>
                   <td><span class="pill green"><span class="dot"></span>zastosowana</span></td>
                 </tr>
@@ -876,12 +876,12 @@
 
           <div class="banner warn">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <span><b>Sprostowanie 2026-08-02: ta zaległość jest ZAMKNIĘTA.</b> Mockup opisywał stan, w którym skrypt migracji i wpis do <code>schema_migrations</code> szły jako dwa osobne polecenia, więc przerwanie procesu między nimi zostawiało bazę PO zmianie, ale BEZ odnotowanego numeru — a powtórzona migracja 3 (<code>ADD CONSTRAINT</code>) blokowała start serwera. Od 2026-07-31 runner wykonuje skrypt i wpis <b>jedną transakcją</b> (<code>migrate.ts</code>), więc stan „zastosowana, ale nieodnotowana" jest niemożliwy, a `ADD CONSTRAINT` przestał być pułapką. Kolumna „Stan" niżej może więc pokazać wyłącznie dwie rzeczy: migrację odnotowaną albo taką, której runner jeszcze nie doszedł.</span>
+            <span><b>Sprostowanie 2026-08-02: ta zaległość jest ZAMKNIĘTA.</b> Mockup opisywał stan, w którym skrypt migracji i wpis do <code>schema_migrations</code> szły jako dwa osobne polecenia, więc przerwanie procesu między nimi zostawiało bazę PO zmianie, ale BEZ odnotowanego numeru - a powtórzona migracja 3 (<code>ADD CONSTRAINT</code>) blokowała start serwera. Od 2026-07-31 runner wykonuje skrypt i wpis <b>jedną transakcją</b> (<code>migrate.ts</code>), więc stan „zastosowana, ale nieodnotowana" jest niemożliwy, a `ADD CONSTRAINT` przestał być pułapką. Kolumna „Stan" niżej może więc pokazać wyłącznie dwie rzeczy: migrację odnotowaną albo taką, której runner jeszcze nie doszedł.</span>
           </div>
 
-          <span class="hint"><b>Sprostowanie 2026-08-02: liczby i lista wyżej to migawka sprzed roku panelu.</b> W chwili rysowania mockupu schemat miał sześć migracji; dziś ma ich siedemnaście (audyt, role, kolumny projekcji, indeksy rejestru). Panel <b>nie ma własnej listy</b> i mieć jej nie może — wiersze przychodzą z serwera razem z opisem stojącym przy DDL-u (<code>MIGRATION_TITLES</code> w <code>schema.ts</code>), a równości długości obu tablic pilnuje test. Lista opisów po stronie panelu rozjechałaby się przy pierwszej nowej migracji i wypisywała opis migracji 17 przy migracji 18.</span>
+          <span class="hint"><b>Sprostowanie 2026-08-02: liczby i lista wyżej to migawka sprzed roku panelu.</b> W chwili rysowania mockupu schemat miał sześć migracji; dziś ma ich siedemnaście (audyt, role, kolumny projekcji, indeksy rejestru). Panel <b>nie ma własnej listy</b> i mieć jej nie może - wiersze przychodzą z serwera razem z opisem stojącym przy DDL-u (<code>MIGRATION_TITLES</code> w <code>schema.ts</code>), a równości długości obu tablic pilnuje test. Lista opisów po stronie panelu rozjechałaby się przy pierwszej nowej migracji i wypisywała opis migracji 17 przy migracji 18.</span>
 
-          <span class="hint">Ten ekran <b>nie uruchamia migracji</b> i nie ma tu przycisku, który by to robił. Schemat wprowadza <code>migrate()</code> przy starcie serwera — wdrożenie schematu jest wydaniem, nie akcją administratora. Panel pokazuje wyłącznie, na czym baza stoi teraz, żeby przy diagnozie nie trzeba było zaglądać do SQL-a.</span>
+          <span class="hint">Ten ekran <b>nie uruchamia migracji</b> i nie ma tu przycisku, który by to robił. Schemat wprowadza <code>migrate()</code> przy starcie serwera - wdrożenie schematu jest wydaniem, nie akcją administratora. Panel pokazuje wyłącznie, na czym baza stoi teraz, żeby przy diagnozie nie trzeba było zaglądać do SQL-a.</span>
         </div>
 
       </div>

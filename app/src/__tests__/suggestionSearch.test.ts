@@ -1,14 +1,14 @@
 /**
- * UZ Aero — testy przeszukiwania historii wpisów (`ui/components/sheets/suggestionSearch.ts`).
+ * UZ Aero - testy przeszukiwania historii wpisów (`ui/components/sheets/suggestionSearch.ts`).
  *
  * Dwie rzeczy są tu treścią, nie szczegółem:
  *
- *  1. **dopasowanie po podciągu i bez ogonków** — pilot wpisuje „zagiel", a w historii
+ *  1. **dopasowanie po podciągu i bez ogonków** - pilot wpisuje „zagiel", a w historii
  *     stoi „Żagiel Skoki"; gdyby to się nie spotkało, lista byłaby gorsza niż jej brak;
- *  2. **krótkie spięcie** — po wpisie, który nic nie znalazł, każde kolejne DOPISANIE
+ *  2. **krótkie spięcie** - po wpisie, który nic nie znalazł, każde kolejne DOPISANIE
  *     znaku ma wracać pustką BEZ przechodzenia po liście (`skipped`). Test pilnuje też
  *     drugiej strony tej reguły: skasowanie znaku wychodzi spod prefiksu i szukanie
- *     wraca do pracy — inaczej pilot, który się pomylił i cofnął, zostałby z pustą listą
+ *     wraca do pracy - inaczej pilot, który się pomylił i cofnął, zostałby z pustą listą
  *     do końca edycji.
  */
 
@@ -29,7 +29,7 @@ const values = (result: { matches: { value: string }[] }): string[] =>
   result.matches.map((m) => m.value);
 
 describe('przeszukiwanie historii wpisów', () => {
-  it('pusty wpis oddaje całą historię — to jest stan spoczynku listy', () => {
+  it('pusty wpis oddaje całą historię - to jest stan spoczynku listy', () => {
     const result = searchSuggestions(ROWS, '   ');
 
     expect(result.matches).toHaveLength(ROWS.length);
@@ -66,7 +66,7 @@ describe('przeszukiwanie historii wpisów', () => {
 
     expect(back.skipped).toBe(false);
     expect(values(back)).toHaveLength(2);
-    // Trafienie kasuje pamięć — od tego miejsca w dół znowu może być co znaleźć.
+    // Trafienie kasuje pamięć - od tego miejsca w dół znowu może być co znaleźć.
     expect(back.state).toEqual(EMPTY_SEARCH);
   });
 

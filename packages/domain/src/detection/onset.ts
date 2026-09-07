@@ -1,23 +1,23 @@
 /**
- * UZ Aero — retro-datowanie: KIEDY zdarzenie naprawdę nastąpiło.
+ * UZ Aero - retro-datowanie: KIEDY zdarzenie naprawdę nastąpiło.
  *
  * TO JEST NAPRAWA BŁĘDU, KTÓRY ZAPISYWAŁ SIĘ DO DOKUMENTÓW. Detektor emitował czas
- * fixa, który POTWIERDZIŁ warunek — czyli moment przekroczenia progu plus okno
+ * fixa, który POTWIERDZIŁ warunek - czyli moment przekroczenia progu plus okno
  * potwierdzenia. Każde zdarzenie było systematycznie spóźnione: kołowanie o kilkanaście
  * sekund (czas rozpędzania się do progu + potwierdzenie), start o kilka, a lądowanie
- * wykryte gałęzią wysokościową nawet o dziesięć. Nikt tego później nie widział — w logu
+ * wykryte gałęzią wysokościową nawet o dziesięć. Nikt tego później nie widział - w logu
  * stała po prostu jakaś godzina.
  *
  * Rozwiązaniem jest rozdzielenie dwóch pytań, które wcześniej były jednym:
  *
- *   CZY  — decyzja może zapaść PÓŹNO i na mocnych przesłankach; opóźnienie nic nie kosztuje;
- *   KIEDY — odpowiedź odnajdujemy WSTECZ w buforze historii, po fakcie.
+ *   CZY  - decyzja może zapaść PÓŹNO i na mocnych przesłankach; opóźnienie nic nie kosztuje;
+ *   KIEDY - odpowiedź odnajdujemy WSTECZ w buforze historii, po fakcie.
  *
  * Skutek uboczny jest ważniejszy niż sama poprawka czasu: skoro późna decyzja nie
  * pogarsza już dokładności, okna potwierdzenia wolno WYDŁUŻYĆ. Wcześniej były
  * kompromisem między czułością a dokładnością i nie służyły żadnej ze stron.
  *
- * Każda funkcja zwraca `null`, gdy w zapisie nie ma na czym się oprzeć — wtedy automat
+ * Każda funkcja zwraca `null`, gdy w zapisie nie ma na czym się oprzeć - wtedy automat
  * zostaje przy czasie fixa potwierdzającego. Zgadywanie momentu jest gorsze niż
  * przyznanie, że znamy tylko ten późniejszy.
  */
@@ -38,7 +38,7 @@ function agl(altitudeFt: number | null, fieldElevationFt: number | null): number
  *
  * Szukamy wstecz od najnowszego, aż trafimy na pozycję w promieniu postoju. Przy 1 Hz
  * i prędkości kołowania fixy leżą kilka metrów od siebie, więc niepewność tak wyznaczonego
- * momentu to około sekundy — wobec kilkunastu sekund spóźnienia, które ta funkcja usuwa.
+ * momentu to około sekundy - wobec kilkunastu sekund spóźnienia, które ta funkcja usuwa.
  *
  * Celowo bierzemy OSTATNI fix wewnątrz promienia, a nie pierwszy na zewnątrz: „taxi"
  * w logu ma znaczyć zwolnienie hamulców, a nie chwilę, w której ruch stał się widoczny.
@@ -62,7 +62,7 @@ export function taxiOnset(
  * Moment oderwania: ostatni fix przy ziemi przed trwającym wznoszeniem.
  *
  * Idziemy wstecz przez fixy w powietrzu; pierwszy napotkany przy ziemi jest szukanym
- * momentem. Fixy bez wysokości POMIJAMY zamiast na nich przerywać — brak wysokości nie
+ * momentem. Fixy bez wysokości POMIJAMY zamiast na nich przerywać - brak wysokości nie
  * jest dowodem na nic, a przerwanie na nim dałoby moment przypadkowy.
  */
 export function liftoffOnset(

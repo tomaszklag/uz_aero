@@ -1,16 +1,16 @@
 /**
- * UZ Aero (serwer) — dziennik audytu: ZAPIS jako część komendy i ODCZYT dla `A09`.
+ * UZ Aero (serwer) - dziennik audytu: ZAPIS jako część komendy i ODCZYT dla `A09`.
  *
  * Pierwsza połowa pliku nie sprawdza, że coś się loguje. Sprawdza WŁASNOŚĆ, na której
  * stoi cały mechanizm `AuditedWrite`: skutek i jego ślad są tą samą transakcją, więc
  * zmiana bez śladu nie ma prawa się zapisać, a ślad bez zmiany nie ma prawa powstać.
  *
- * Druga połowa (`GET /admin/api/audit`) sprawdza stronę odczytu — dziennik zapisuje się
+ * Druga połowa (`GET /admin/api/audit`) sprawdza stronę odczytu - dziennik zapisuje się
  * od przekroju 1 i do tej pory nikt go nie przeczytał. Najważniejszy jest tam przypadek
  * NIEZNANEGO KODU AKCJI: kolumna `action` celowo nie ma `CHECK`-a, więc lista musi
  * pokazać taki wiersz dosłownie, zamiast się nim wywrócić albo go pominąć.
  *
- * Jedyna podmiana w całym pliku to port ZAPISU audytu, który RZUCA — bo awarii zapisu
+ * Jedyna podmiana w całym pliku to port ZAPISU audytu, który RZUCA - bo awarii zapisu
  * śladu nie da się wywołać inaczej niż awarią zapisu śladu.
  */
 
@@ -19,7 +19,8 @@ import { describe, expect, it } from 'vitest';
 import type { AdminAuditPort, AuditListFilter } from '../src/application/admin/ports.ts';
 import type { Queryable } from '../src/application/common/ports.ts';
 import { PgAdminAuditReadRepo } from '../src/infrastructure/pg/admin/auditReadRepo.ts';
-import { ADMIN_CSRF_HEADERS, TEST_PASSWORD, testHarness } from './helpers.ts';
+import { ADMIN_CSRF_HEADERS, testHarness } from './helpers.ts';
+import { googleTokenFor } from './testIdentityProvider.ts';
 
 const DAY = Date.UTC(2026, 5, 22);
 const at = (h: number, m: number): number => DAY + (h * 60 + m) * 60_000;
@@ -69,7 +70,7 @@ function openDay(sessionUuid: string, picId: string, mh: number) {
   ];
 }
 
-/** Port audytu, który zawsze rzuca — jedyny sposób na wymuszenie awarii ŚLADU. */
+/** Port audytu, który zawsze rzuca - jedyny sposób na wymuszenie awarii ŚLADU. */
 const failingAudit: AdminAuditPort = {
   append: () => Promise.reject(new Error('zapis do admin_audit nie powiódł się')),
 };
@@ -79,8 +80,8 @@ type Harness = Awaited<ReturnType<typeof testHarness>>;
 async function login(app: Harness['app'], who: string): Promise<string> {
   const res = await app.inject({
     method: 'POST',
-    url: '/auth/login',
-    payload: { login: who, password: TEST_PASSWORD },
+    url: '/auth/google',
+    payload: { idToken: googleTokenFor(who) },
   });
   return res.json().token as string;
 }
@@ -120,7 +121,7 @@ async function auditRows(db: Harness['db']) {
   return rows;
 }
 
-/** Nakładka sesji jak w `adminFlags.test.ts` — flaga blokująca kartę dnia. */
+/** Nakładka sesji jak w `adminFlags.test.ts` - flaga blokująca kartę dnia. */
 async function overlapping(options: Parameters<typeof testHarness>[0] = {}) {
   const harness = await testHarness(options);
   const { app, db } = harness;
@@ -148,7 +149,7 @@ async function flagStatus(db: Harness['db'], id: number): Promise<string> {
 }
 
 describe('audyt wymuszony typem, nie dyscypliną', () => {
-  it('AWARIA AUDYTU cofa skutek — flaga zostaje `open`, karta dnia nie powstaje', async () => {
+  it('AWARIA AUDYTU cofa skutek - flaga zostaje `open`, karta dnia nie powstaje', async () => {
     // To jest test, który dowodzi zdania „zmiana bez śladu nie ma prawa się zapisać".
     // Bez niego `AuditedWrite` byłby wyłącznie obietnicą złożoną w docblocku.
     const { app, db, flagId } = await overlapping({ audit: failingAudit });
@@ -165,13 +166,13 @@ describe('audyt wymuszony typem, nie dyscypliną', () => {
     expect(exports).toHaveLength(0);
   });
 
-  it('NIEUDANY SKUTEK nie zostawia śladu — odbita próba nie dopisuje wiersza', async () => {
+  it('NIEUDANY SKUTEK nie zostawia śladu - odbita próba nie dopisuje wiersza', async () => {
     const { app, db, flagId } = await overlapping();
     const admin = await login(app, 'TMK');
-    const trainingLead = await login(app, 'AKO');
+    const otherAdmin = await login(app, 'AKO');
 
     await resolve(app, flagId, admin, 'Pierwsze rozstrzygnięcie.');
-    const second = await resolve(app, flagId, trainingLead, 'Drugie rozstrzygnięcie.');
+    const second = await resolve(app, flagId, otherAdmin, 'Drugie rozstrzygnięcie.');
     expect(second.statusCode).toBe(409);
 
     // Dokładnie JEDEN wiersz: druga próba przerwała transakcję przed wpisem, więc
@@ -183,19 +184,21 @@ describe('audyt wymuszony typem, nie dyscypliną', () => {
 
   it('wpis niesie aktora, jego rolę, akcję i identyfikator flagi', async () => {
     const { app, db, flagId } = await overlapping();
-    const trainingLead = await login(app, 'AKO');
+    // Aktorem jest DRUGI administrator, nie TMK: wpis ma dowieść, że dziennik zapisuje
+    // tego, kto akcję wykonał, a nie tego, kim jest pierwsze konto ze świata testowego.
+    const otherAdmin = await login(app, 'AKO');
 
-    await resolve(app, flagId, trainingLead, 'Nakładka pozorna — dane dosłane z kopii.');
+    await resolve(app, flagId, otherAdmin, 'Nakładka pozorna - dane dosłane z kopii.');
 
     expect(await auditRows(db)).toMatchObject([
       {
         actor_pilot_id: 'AKO',
-        actor_role: 'training_lead',
+        actor_role: 'admin',
         action: 'flag.resolve',
         target_type: 'flag',
         target_id: String(flagId),
         details: {
-          note: 'Nakładka pozorna — dane dosłane z kopii.',
+          note: 'Nakładka pozorna - dane dosłane z kopii.',
           type: 'aircraft_overlap',
           sessionUuids: ['sess-1', 'sess-2'],
         },
@@ -203,10 +206,10 @@ describe('audyt wymuszony typem, nie dyscypliną', () => {
     ]);
   });
 
-  it('`actor_role` to rola Z CHWILI AKCJI — późniejsza zmiana konta jej nie przepisuje', async () => {
+  it('`actor_role` to rola Z CHWILI AKCJI - późniejsza zmiana konta jej nie przepisuje', async () => {
     // Dziennik jest zapisem historycznym, nie złączeniem z `pilots`. Gdyby rola szła
     // z konta przy odczycie, odebranie uprawnień zafałszowałoby odpowiedź na pytanie
-    // „kto miał wtedy prawo to zrobić" — czyli jedyne, po co ten dziennik istnieje.
+    // „kto miał wtedy prawo to zrobić" - czyli jedyne, po co ten dziennik istnieje.
     const { app, db, flagId } = await overlapping();
     const admin = await login(app, 'TMK');
 
@@ -235,10 +238,10 @@ interface AuditSeed {
 }
 
 /**
- * Wiersze wstawiamy WPROST do tabeli, a nie przez komendy panelu — i to jest właściwa
+ * Wiersze wstawiamy WPROST do tabeli, a nie przez komendy panelu - i to jest właściwa
  * droga dla testów ODCZYTU. Strona zapisu ma własne przypadki wyżej; tutaj potrzebny
- * jest dziennik o znanym kształcie, obejmujący kilka dni, kilku aktorów i — przede
- * wszystkim — kod akcji SPOZA katalogu, którego żadna komenda nie umie wyprodukować.
+ * jest dziennik o znanym kształcie, obejmujący kilka dni, kilku aktorów i - przede
+ * wszystkim - kod akcji SPOZA katalogu, którego żadna komenda nie umie wyprodukować.
  */
 async function seedAudit(db: Harness['db'], rows: readonly AuditSeed[]): Promise<void> {
   for (const row of rows) {
@@ -283,7 +286,7 @@ const JOURNAL: readonly AuditSeed[] = [
   },
   {
     actor: 'AKO',
-    role: 'training_lead',
+    role: 'admin',
     action: 'flag.resolve',
     targetType: 'flag',
     targetId: '1044',
@@ -314,20 +317,20 @@ const JOURNAL: readonly AuditSeed[] = [
     targetType: 'sheet',
     targetId: '2026-06-21_SP-KLM',
     details: { revision: 3 },
-    // Akcja spoza żądania HTTP (skrypt administracyjny) — `ip` jest NULL-owalne
+    // Akcja spoza żądania HTTP (skrypt administracyjny) - `ip` jest NULL-owalne
     // właśnie dla tego przypadku, a wymyślony adres byłby gorszy niż jego brak.
     ip: null,
     at: stamp(0, 14, 19),
   },
   {
-    // KOD SPOZA KATALOGU i konto, którego nie ma w `pilots` — jeden wiersz, dwie
+    // KOD SPOZA KATALOGU i konto, którego nie ma w `pilots` - jeden wiersz, dwie
     // rzeczy, które nie mają prawa wywrócić listy ani z niej zniknąć.
     actor: 'ZZZ',
     role: 'superadmin',
     action: 'pilot.merge',
     targetType: 'pilot',
     targetId: 'XYZ',
-    details: { note: 'Wpis historyczny — akcja wycofana z katalogu.' },
+    details: { note: 'Wpis historyczny - akcja wycofana z katalogu.' },
     ip: null,
     at: stamp(0, 15, 0),
   },
@@ -365,7 +368,7 @@ async function journal() {
 const actionsOf = (body: { items: AuditEntryWire[] }): string[] =>
   body.items.map((item) => item.action);
 
-describe('dziennik audytu — strona odczytu (A09)', () => {
+describe('dziennik audytu - strona odczytu (A09)', () => {
   it('domyślnie NAJNOWSZE na górze, z nazwiskiem aktora ze złączenia', async () => {
     const { app, admin } = await journal();
 
@@ -388,7 +391,7 @@ describe('dziennik audytu — strona odczytu (A09)', () => {
       actorPilotId: 'AKO',
       actorCode: 'AKO',
       actorName: 'Anna Kowalska',
-      actorRole: 'training_lead',
+      actorRole: 'admin',
       targetType: 'flag',
       targetId: '1044',
       ip: '10.20.4.63',
@@ -396,7 +399,7 @@ describe('dziennik audytu — strona odczytu (A09)', () => {
     });
   });
 
-  it('NIEZNANY KOD AKCJI nie wywraca odczytu — wiersz wraca dosłownie', async () => {
+  it('NIEZNANY KOD AKCJI nie wywraca odczytu - wiersz wraca dosłownie', async () => {
     // To jest przypadek, dla którego `admin_audit` świadomie nie ma `CHECK`-a na `action`
     // (komentarz nad `MIGRATION_9`). Strażnik przy odczycie znaczyłby, że dziennik
     // nadzoru przestaje się otwierać przez własną historię; ciche pominięcie wiersza
@@ -407,7 +410,7 @@ describe('dziennik audytu — strona odczytu (A09)', () => {
     expect(body.items[0]).toMatchObject({
       action: 'pilot.merge',
       actorPilotId: 'ZZZ',
-      // Konta nie ma w `pilots`, więc `LEFT JOIN` nie ma czego dołożyć — a wpis
+      // Konta nie ma w `pilots`, więc `LEFT JOIN` nie ma czego dołożyć - a wpis
       // zostaje widoczny z samym identyfikatorem, zamiast wypaść z listy.
       actorCode: null,
       actorName: null,
@@ -426,7 +429,7 @@ describe('dziennik audytu — strona odczytu (A09)', () => {
     expect(actionsOf(one)).toEqual(['flag.resolve']);
     expect(one.total).toBe(1);
 
-    // Chip „Konfiguracja" na ekranie to kilka kodów katalogu naraz — stąd parametr
+    // Chip „Konfiguracja" na ekranie to kilka kodów katalogu naraz - stąd parametr
     // powtarzalny, a nie pojedyncza wartość.
     const group = (
       await getAudit(app, admin, '?action=pilot.create&action=aircraft.update')
@@ -438,13 +441,13 @@ describe('dziennik audytu — strona odczytu (A09)', () => {
   it('NIEZNANA wartość filtra to 400, nie ciche zignorowanie', async () => {
     // Wiersz z akcją `pilot.merge` W BAZIE jest (poprzedni przypadek), ale PYTANIE
     // o kod spoza katalogu nie ma poprawnej odpowiedzi. Ciche pominięcie parametru
-    // pokazałoby pełny dziennik pod etykietą zawężenia — czyli skłamałoby o tym,
+    // pokazałoby pełny dziennik pod etykietą zawężenia - czyli skłamałoby o tym,
     // na co człowiek patrzy. Od tego istnieje `isAdminAction`.
     const { app, admin } = await journal();
 
     expect((await getAudit(app, admin, '?action=pilot.merge')).statusCode).toBe(400);
     expect((await getAudit(app, admin, '?action=cokolwiek')).statusCode).toBe(400);
-    // Jedna zła wartość w grupie wywraca CAŁE żądanie — częściowe zawężenie byłoby
+    // Jedna zła wartość w grupie wywraca CAŁE żądanie - częściowe zawężenie byłoby
     // odpowiedzią na pytanie, którego nikt nie zadał.
     expect((await getAudit(app, admin, '?action=flag.resolve&action=nie.ma')).statusCode).toBe(400);
   });
@@ -474,7 +477,7 @@ describe('dziennik audytu — strona odczytu (A09)', () => {
     expect(actionsOf(byType)).toEqual(['pilot.merge', 'pilot.create']);
   });
 
-  it('zakres dat jest obustronnie DOMKNIĘTY — `to` obejmuje całą dobę', async () => {
+  it('zakres dat jest obustronnie DOMKNIĘTY - `to` obejmuje całą dobę', async () => {
     const { app, admin } = await journal();
 
     const oneDay = (await getAudit(app, admin, '?from=2026-06-22&to=2026-06-22')).json() as {
@@ -507,7 +510,7 @@ describe('dziennik audytu — strona odczytu (A09)', () => {
     };
     expect(actionsOf(first)).toEqual(['pilot.merge', 'export.retry']);
     expect(first.nextCursor).not.toBeNull();
-    // `total` opisuje CAŁY wynik filtra, a nie stronę — inaczej licznik „pokazano 2
+    // `total` opisuje CAŁY wynik filtra, a nie stronę - inaczej licznik „pokazano 2
     // z 6" nie miałby skąd wziąć drugiej liczby.
     expect(first.total).toBe(6);
 
@@ -518,7 +521,7 @@ describe('dziennik audytu — strona odczytu (A09)', () => {
     )).json() as { items: AuditEntryWire[]; nextCursor: string | null; total: number | null };
     expect(actionsOf(second)).toEqual(['event.correct', 'flag.resolve']);
     // Licznika NIE MA na kolejnych stronach i to jest decyzja, nie brak: liczba wpisów
-    // w zawężeniu jest własnością ZAPYTANIA, nie strony, więc płacimy za nią raz —
+    // w zawężeniu jest własnością ZAPYTANIA, nie strony, więc płacimy za nią raz -
     // pełny `COUNT(*)` na dzienniku bez górnej granicy jest wielokrotnie droższy od
     // samej strony i rośnie liniowo, czyli odbiera kursorowi to, po co istnieje.
     // `null` to „nie pytaliśmy", nigdy „zero"; wartość z pierwszej strony niesie panel.
@@ -533,14 +536,14 @@ describe('dziennik audytu — strona odczytu (A09)', () => {
     // `null` znaczy „to był koniec", a nie „spróbuj jeszcze raz".
     expect(third.nextCursor).toBeNull();
 
-    // Identyfikatory nie powtarzają się i nie brakuje żadnego — to jest cała
+    // Identyfikatory nie powtarzają się i nie brakuje żadnego - to jest cała
     // odpowiedź na pytanie, po co kursor zamiast `OFFSET`.
     const ids = [...first.items, ...second.items, ...third.items].map((i) => i.id);
     expect(new Set(ids).size).toBe(6);
   });
 
   it('kursor DOPISANY w trakcie przeglądania nie przesuwa granicy strony', async () => {
-    // Dziennik rośnie, gdy się go czyta — administrator klika w panelu, a inny
+    // Dziennik rośnie, gdy się go czyta - administrator klika w panelu, a inny
     // administrator właśnie coś zmienia. `OFFSET 2` pokazałby wtedy drugą stronę
     // przesuniętą o jeden wiersz, czyli ZGUBIŁ jeden wpis. Kursor opisuje pozycję
     // w porządku, więc nowy wiersz na górze go nie dotyczy.
@@ -585,11 +588,11 @@ describe('dziennik audytu — strona odczytu (A09)', () => {
     expect(broken.json()).toMatchObject({ error: 'bad_cursor' });
   });
 
-  it('kursor SPARSOWANY, ale niezgodny z kolumnami, też daje 400 — nie 500 z SQL-a', async () => {
+  it('kursor SPARSOWANY, ale niezgodny z kolumnami, też daje 400 - nie 500 z SQL-a', async () => {
     // Napis niebędący base64/JSON-em to najłatwiejszy przypadek i sam w sobie nic nie
     // dowodzi: kursor jest JSON-em, więc dziury są W ŚRODKU. Każda z poniższych
     // wartości jest poprawnym JSON-em, przechodziła walidację „czy da się sparsować"
-    // i wywracała się dopiero w Postgresie — a administrator dostawał wtedy 500
+    // i wywracała się dopiero w Postgresie - a administrator dostawał wtedy 500
     // z treścią błędu SQL-a zamiast 400.
     const { app, admin } = await journal();
 
@@ -598,12 +601,12 @@ describe('dziennik audytu — strona odczytu (A09)', () => {
 
     const stamp = '2026-06-22T14:19:02.000Z';
     const cases: Record<string, string> = {
-      // `created_at` jest TIMESTAMPTZ — dowolny napis leciał wprost do bazy (22007).
+      // `created_at` jest TIMESTAMPTZ - dowolny napis leciał wprost do bazy (22007).
       'k1 nie jest stemplem czasu': cursor({ k1: 'wczoraj', k2: '3', d: 'desc' }),
       'k1 jest liczbą, nie stemplem': cursor({ k1: 1_780_000_000_000, k2: '3', d: 'desc' }),
       // `created_at` jest NOT NULL, a `keysetPredicate` na takim kluczu RZUCA.
       'k1 jest NULL-em na kolumnie NOT NULL': cursor({ k1: null, k2: '3', d: 'desc' }),
-      // `id` jest BIGSERIAL — „abc" kończyło się błędem 22P02.
+      // `id` jest BIGSERIAL - „abc" kończyło się błędem 22P02.
       'k2 nie jest liczbą': cursor({ k1: stamp, k2: 'abc', d: 'desc' }),
     };
 
@@ -630,7 +633,7 @@ describe('dziennik audytu — strona odczytu (A09)', () => {
 
   it('kursor wydany dla `desc` użyty przy `sort=asc` to 400, nie niespójna strona', async () => {
     // Kursor opisuje POZYCJĘ W PORZĄDKU. Ten sam klucz w porządku odwrotnym opisuje
-    // co innego niż mówi — strona wychodzi wewnętrznie niespójna, a niespójna strona
+    // co innego niż mówi - strona wychodzi wewnętrznie niespójna, a niespójna strona
     // wygląda jak dane, nie jak awaria. Dlatego kierunek jedzie W KURSORZE i jest
     // sprawdzany przy odczycie. Z panelu nieosiągalne; to dziura kontraktu HTTP.
     const { app, admin } = await journal();
@@ -645,13 +648,13 @@ describe('dziennik audytu — strona odczytu (A09)', () => {
     expect(flipped.json()).toMatchObject({ error: 'bad_cursor' });
   });
 
-  it('GRANICA STRONY przy IDENTYCZNYM `created_at` — bez luk i bez dubli', async () => {
+  it('GRANICA STRONY przy IDENTYCZNYM `created_at` - bez luk i bez dubli', async () => {
     // To jest własność, dla której kursor w ogóle jest PARĄ kluczy. Wpisy z jednej
     // sekundy nie są przypadkiem brzegowym: `AuditedWrite` stempluje wiersz zegarem
     // serwera, więc dwie akcje z jednego kliknięcia (albo z jednego skryptu) mają ten
     // sam `created_at` co do milisekundy. Bez tie-breakera `id` porządek między nimi
     // byłby nieokreślony, a kursor po pierwszej stronie albo GUBIŁBY wiersz, albo
-    // pokazywał go drugi raz — i jedno, i drugie wyglądałoby na poprawną listę.
+    // pokazywał go drugi raz - i jedno, i drugie wyglądałoby na poprawną listę.
     const harness = await testHarness();
     const admin = await login(harness.app, 'TMK');
 
@@ -686,7 +689,7 @@ describe('dziennik audytu — strona odczytu (A09)', () => {
       guard += 1;
     } while (cursor != null && guard < 10);
 
-    // Wszystkie wiersze, każdy dokładnie raz — i wszystkie mają ten sam stempel,
+    // Wszystkie wiersze, każdy dokładnie raz - i wszystkie mają ten sam stempel,
     // więc rozstrzygnął wyłącznie tie-breaker.
     expect(seen).toHaveLength(5);
     expect(new Set(seen).size).toBe(5);
@@ -698,20 +701,19 @@ describe('dziennik audytu — strona odczytu (A09)', () => {
     expect([...seen].sort((a, b) => a - b)).toEqual(rows.map((r) => Number(r.id)));
   });
 
-  it('audyt czyta WYŁĄCZNIE administrator — szef wyszkolenia dostaje 403', async () => {
-    // `domain/roles.ts` nie daje `audit.read` roli `training_lead` i to jest decyzja,
-    // nie luka: rozstrzyganie rozbieżności to inna odpowiedzialność niż nadzór nad
-    // administratorami. Panel ma tę pozycję nawigacji POKAZAĆ i zablokować z powodem,
-    // więc odpowiedź musi nieść, KTÓREJ zdolności zabrakło.
+  it('audyt czyta WYŁĄCZNIE `audit.read` - konto bez niej dostaje 403 z powodem', async () => {
+    // Do 2026-08-30 podmiotem była rola pośrednia: miała wejście do panelu, ale nie
+    // miała `audit.read`. Po jej wycofaniu tę samą odmowę - i tę samą zdolność
+    // w treści - dostaje token zwykłego pilota, bo brama pyta o ZDOLNOŚĆ, a nie
+    // o wejście do panelu. Panel ma tę pozycję nawigacji POKAZAĆ i zablokować
+    // z powodem, więc odpowiedź musi nieść, KTÓREJ zdolności zabrakło.
     const { app } = await journal();
-    const trainingLead = await login(app, 'AKO');
     const pilot = await login(app, 'PWI');
 
-    const lead = await getAudit(app, trainingLead);
-    expect(lead.statusCode).toBe(403);
-    expect(lead.json()).toMatchObject({ required: 'audit.read' });
+    const refused = await getAudit(app, pilot);
+    expect(refused.statusCode).toBe(403);
+    expect(refused.json()).toMatchObject({ required: 'audit.read' });
 
-    expect((await getAudit(app, pilot)).statusCode).toBe(403);
     expect((await getAudit(app, null)).statusCode).toBe(401);
   });
 });
@@ -720,7 +722,7 @@ describe('dziennik audytu — strona odczytu (A09)', () => {
 
 /**
  * Nagrywa SQL, który adapter FAKTYCZNIE wysyła do bazy. Plan sprawdzamy dla tego
- * zapytania, a nie dla przepisanego ręcznie w teście — inaczej test przybijałby własny
+ * zapytania, a nie dla przepisanego ręcznie w teście - inaczej test przybijałby własny
  * SQL, a zapytanie adaptera mogłoby się rozjechać z indeksem bez żadnego sygnału.
  */
 function recorder(db: Queryable): { spy: Queryable; sent: { text: string; params: unknown[] }[] } {
@@ -749,7 +751,7 @@ async function planOf(db: Queryable, filter: AuditListFilter): Promise<string> {
 
 describe('porządek dziennika daje INDEKS, nie sortowanie w pamięci', () => {
   /**
-   * Wsyp dużo wierszy i `ANALYZE` — bez jednego i drugiego planer wybiera `Seq Scan`
+   * Wsyp dużo wierszy i `ANALYZE` - bez jednego i drugiego planer wybiera `Seq Scan`
    * niezależnie od indeksów (na kilku wierszach jest po prostu tańszy), więc test
    * przechodziłby albo padał z powodu, który nie ma nic wspólnego z badaną własnością.
    */
@@ -775,17 +777,17 @@ describe('porządek dziennika daje INDEKS, nie sortowanie w pamięci', () => {
   });
 
   it.each(['desc', 'asc'] as const)(
-    'pierwsza strona BEZ filtra (`%s`) idzie indeksem — w planie nie ma węzła `Sort`',
+    'pierwsza strona BEZ filtra (`%s`) idzie indeksem - w planie nie ma węzła `Sort`',
     async (direction) => {
       // To jest wykonywalna postać reguły `NULLS` (§7.8). Dopóki istniało wyłącznie
       // w prozie, ta sama wada zdążyła się powielić na drugi indeks, a potem na rejestr
-      // zdarzeń — za każdym razem w postaci „naprawmy indeks pod `NULLS LAST`".
+      // zdarzeń - za każdym razem w postaci „naprawmy indeks pod `NULLS LAST`".
       //
       // OBA KIERUNKI, bo pierwsza naprawa działała tylko dla `desc`: indeks
       // `created_at DESC NULLS LAST` skanowany wstecz daje `ASC NULLS FIRST`, a zapytanie
       // prosiło o `ASC NULLS LAST`. Zmierzone na 4 000 wierszy: `?sort=asc` sortował CAŁY
       // dziennik przed `LIMIT`-em, koszt 527 zamiast 5,3. Migracja 17 zdejmuje `NULLS
-      // LAST` z indeksów kolumn `NOT NULL`, a `keysetOrderBy` przestaje go emitować —
+      // LAST` z indeksów kolumn `NOT NULL`, a `keysetOrderBy` przestaje go emitować -
       // wtedy jeden indeks obsługuje oba kierunki.
       const { db } = await bigJournal();
 
@@ -796,7 +798,7 @@ describe('porządek dziennika daje INDEKS, nie sortowanie w pamięci', () => {
   );
 
   it.each(['desc', 'asc'] as const)(
-    'zawężenie po AKTORZE (`%s`) idzie własnym indeksem — też bez `Sort`',
+    'zawężenie po AKTORZE (`%s`) idzie własnym indeksem - też bez `Sort`',
     async (direction) => {
       // Kolumna „Kto" na `A09` jest linkiem, więc to najczęstsze zawężenie ekranu.
       // pierwsza wersja `idx_audit_actor` nie miała ani `id`, ani porządku pasującego do
@@ -812,7 +814,7 @@ describe('porządek dziennika daje INDEKS, nie sortowanie w pamięci', () => {
 
   it('kontrola samego testu: `Sort` w planie faktycznie DA SIĘ zobaczyć', async () => {
     // Bez tego cztery asercje wyżej przechodziłyby także wtedy, gdyby wzorzec nigdy
-    // nie mógł trafić — a to jest test, który raz już przepuścił tę wadę.
+    // nie mógł trafić - a to jest test, który raz już przepuścił tę wadę.
     const { db } = await bigJournal();
     const { rows } = await db.query<Record<string, string>>(
       `EXPLAIN SELECT id FROM admin_audit ORDER BY details::text, id LIMIT 50`,
@@ -822,7 +824,7 @@ describe('porządek dziennika daje INDEKS, nie sortowanie w pamięci', () => {
 });
 
 describe('zakres dat: data NIEISTNIEJĄCA to 400, nie cichy inny okres', () => {
-  // `Date.UTC` nie waliduje, tylko PRZEWIJA — `Date.UTC(2026, 12, 45)` to 14 lutego
+  // `Date.UTC` nie waliduje, tylko PRZEWIJA - `Date.UTC(2026, 12, 45)` to 14 lutego
   // 2027. Kształt `YYYY-MM-DD` przepuszczał więc `2026-13-45`, a trasa odpowiadała 200
   // na zakres cofnięty o ponad pół roku. W narzędziu nadzoru to najgorszy tryb awarii:
   // nie ma komunikatu ani pustej listy, jest wiarygodnie wyglądająca odpowiedź
@@ -842,7 +844,7 @@ describe('zakres dat: data NIEISTNIEJĄCA to 400, nie cichy inny okres', () => {
     expect((await getAudit(app, admin, `?to=${day}`)).statusCode).toBe(400);
   });
 
-  it('data ISTNIEJĄCA nadal przechodzi — łącznie z 29 lutego roku przestępnego', async () => {
+  it('data ISTNIEJĄCA nadal przechodzi - łącznie z 29 lutego roku przestępnego', async () => {
     // Kontrola samego przypadku wyżej: gdyby round-trip odrzucał wszystko, cztery
     // asercje `400` przechodziłyby przy zepsutym parserze.
     const { app, admin } = await journal();
@@ -850,12 +852,12 @@ describe('zakres dat: data NIEISTNIEJĄCA to 400, nie cichy inny okres', () => {
     expect((await getAudit(app, admin, '?from=2026-07-01&to=2026-07-31')).statusCode).toBe(200);
   });
 
-  it('rok trzycyfrowy przechodzi tak samo jak w panelu — 400 tylko przy dacie NIEISTNIEJĄCEJ', async () => {
+  it('rok trzycyfrowy przechodzi tak samo jak w panelu - 400 tylko przy dacie NIEISTNIEJĄCEJ', async () => {
     // `Date.UTC(y, m-1, d)` mapuje lata 0–99 na 1900 + rok, więc `0099-01-01` wracało
     // czterysetką, choć panel ten sam napis PRZEPUSZCZAŁ (waliduje parsowaniem ISO).
     // Skutek na ekranie był mylący podwójnie: baner „Panel działa wyłącznie online",
     // czyli komunikat o SIECI przy błędzie walidacji zakresu dat. Obie strony liczą
-    // teraz tym samym mechanizmem — lustro: `admin/src/screens/events/eventsFilters.ts`.
+    // teraz tym samym mechanizmem - lustro: `admin/src/screens/events/eventsFilters.ts`.
     const { app, admin } = await journal();
     expect((await getAudit(app, admin, '?from=0099-01-01')).statusCode).toBe(200);
     expect((await getAudit(app, admin, '?from=0001-01-01&to=0001-12-31')).statusCode).toBe(200);

@@ -1,9 +1,9 @@
 /**
- * UZ Aero — panel: tabela (`.table-wrap` + `table` z `SZABLON.html`).
+ * UZ Aero - panel: tabela (`.table-wrap` + `table` z `SZABLON.html`).
  *
  * Kręgosłup panelu, więc kolumny deklaruje się DANYMI, a nie JSX-em: `{key, header,
  * align, render}`. Dzięki temu „która kolumna jest liczbowa" jest własnością definicji,
- * a nie klasą przepisywaną ręcznie w każdej komórce — a liczby w panelu zawsze są mono
+ * a nie klasą przepisywaną ręcznie w każdej komórce - a liczby w panelu zawsze są mono
  * i wyrównane do prawej.
  *
  * **Wiersz jest klikalny ORAZ ma prawdziwy link.** `tr.clickable` sam w sobie jest
@@ -19,7 +19,7 @@ import { Fragment, type ReactNode } from 'react';
  *
  * Nagłówek staje się wtedy `<button>` wewnątrz `<th>`, a nie klikalnym `<th>` jak
  * w mockupie: `th` z `onClick` jest nieosiągalny z klawiatury, a panel jest po niej
- * nawigowany. Wygląd zostaje ten sam — przycisk dziedziczy typografię nagłówka.
+ * nawigowany. Wygląd zostaje ten sam - przycisk dziedziczy typografię nagłówka.
  *
  * Kierunek jest STANEM EKRANU (mieszka w URL-u), więc przychodzi propsem; tabela
  * niczego nie sortuje sama, bo porządek listy należy do serwera.
@@ -34,7 +34,7 @@ export interface Column<Row> {
   header: ReactNode;
   /** `num` = mono, do prawej, `tabular-nums` (klasa `.num` z szablonu). */
   align?: 'num';
-  /** Dodatkowe klasy komórki — wyłącznie modyfikatory z szablonu (`mono`, `dim`). */
+  /** Dodatkowe klasy komórki - wyłącznie modyfikatory z szablonu (`mono`, `dim`). */
   cellClass?: string;
   /** Obecne wyłącznie na kolumnie, po której serwer FAKTYCZNIE umie sortować. */
   sort?: ColumnSort;
@@ -45,18 +45,18 @@ interface DataTableProps<Row> {
   columns: Column<Row>[];
   rows: Row[];
   rowKey: (row: Row) => string | number;
-  /** Skrót myszy — wiersz wykonuje tę samą akcję, co link w kolumnie akcji. */
+  /** Skrót myszy - wiersz wykonuje tę samą akcję, co link w kolumnie akcji. */
   onRowClick?: (row: Row) => void;
-  /** Wiersz wyróżniony (np. otwarty w szufladzie) — klasa modyfikatora. */
+  /** Wiersz wyróżniony (np. otwarty w szufladzie) - klasa modyfikatora. */
   rowClass?: (row: Row) => string | undefined;
   /**
-   * ROZWINIĘCIE wiersza — treść wypisana w wierszu-satelicie POD wierszem właściwym,
+   * ROZWINIĘCIE wiersza - treść wypisana w wierszu-satelicie POD wierszem właściwym,
    * przez całą szerokość tabeli. `null`/`undefined` = wiersz się nie rozwija.
    *
    * Doszło razem z rejestrem zdarzeń (`A04`), gdzie mockup pokazuje payload DOKŁADNIE
    * pod wierszem, którego dotyczy. Szuflada z boku (wzorzec `A03a`) tu nie pasuje:
    * przy dochodzeniu porównuje się SĄSIEDNIE zdarzenia, a szuflada zasłania listę.
-   * `A05` rozwija wiersz pod całą tabelą — tam treścią jest karta arkusza, czyli
+   * `A05` rozwija wiersz pod całą tabelą - tam treścią jest karta arkusza, czyli
    * dokument, a nie szczegół jednego wiersza.
    */
   expanded?: (row: Row) => ReactNode;
@@ -75,7 +75,7 @@ export function DataTable<Row>({
   return (
     <div className="table-wrap">
       <table>
-        {/* Podpis dla czytnika ekranu — w mockupie nagłówek stoi nad tabelą jako
+        {/* Podpis dla czytnika ekranu - w mockupie nagłówek stoi nad tabelą jako
             tytuł strony, ale czytnik potrzebuje go W tabeli, żeby ją nazwać. */}
         <caption className="visually-hidden">{caption}</caption>
         <thead>
@@ -88,7 +88,7 @@ export function DataTable<Row>({
                 <th
                   key={column.key}
                   className={classes === '' ? undefined : classes}
-                  // Czytnik ekranu ma usłyszeć, że tabela JEST posortowana i jak —
+                  // Czytnik ekranu ma usłyszeć, że tabela JEST posortowana i jak -
                   // sama strzałka jest informacją wyłącznie dla oka.
                   aria-sort={
                     column.sort == null

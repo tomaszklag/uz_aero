@@ -1,22 +1,22 @@
 /**
- * UZ Aero (serwer) — adapter podpowiedzi do zadania dnia (`TaskSuggestionsPort`).
+ * UZ Aero (serwer) - adapter podpowiedzi do zadania dnia (`TaskSuggestionsPort`).
  *
- * Czyta WYŁĄCZNIE kolumny projekcji `sessions` (`client`, `notes`, `operation`) —
+ * Czyta WYŁĄCZNIE kolumny projekcji `sessions` (`client`, `notes`, `operation`) -
  * rejestru `events` nie dotyka ani jednym zapytaniem. To ta sama reguła, co przy
  * listach panelu: agreguj wartości projekcji, nigdy nie odtwarzaj projekcji SQL-em.
  *
  * ══ SKĄD BIERZE SIĘ „NAJNOWSZE" ══
  * Znacznik dnia niesie `claim_time`, czyli chwilę PRZEJĘCIA samolotu (decyzja 2026-08-07).
  * Po tej migracji ma go każda sesja, bo `session_claim` jest pierwszym zdarzeniem
- * każdej z nich (§4.4) — `COALESCE` na `updated_at` zostaje jako zabezpieczenie dla
+ * każdej z nich (§4.4) - `COALESCE` na `updated_at` zostaje jako zabezpieczenie dla
  * rejestru niekompletnego (import, awaria), a nie jako gałąź obsługująca normalny dzień,
  * którym była do 2026-08-07 (kolumna niosła wtedy opcjonalny meldunek).
  * Sięgnięcie po `events.received_at` dałoby to samo dokładniej i kosztem złączenia
- * z rejestrem przy każdym otwarciu preflightu — cena nieproporcjonalna do różnicy.
+ * z rejestrem przy każdym otwarciu preflightu - cena nieproporcjonalna do różnicy.
  *
  * ══ DLACZEGO `DISTINCT ON` DLA KLIENTÓW, A `MAX` DLA NOTATEK ══
  * Obie listy są deduplikacją po wartości z porządkiem „najnowsze pierwsze", ale klient
- * niesie ze sobą RODZAJ OPERACJI z najnowszej swojej sesji — a `MAX(znacznik)` mówi
+ * niesie ze sobą RODZAJ OPERACJI z najnowszej swojej sesji - a `MAX(znacznik)` mówi
  * tylko, KIEDY to było, nie CZYM. `DISTINCT ON` wybiera cały wiersz zwycięzcy jednym
  * przejściem; grupowanie wymagałoby drugiego złączenia po tej samej tabeli.
  * Notatka nie ma takiego towarzysza, więc zostaje przy prostszym `GROUP BY` + `MAX`.
@@ -32,7 +32,7 @@ import type {
 } from '../../../application/mobile/ports.ts';
 
 /**
- * Znacznik dnia sesji: przejęcie, a gdy go nie ma — stempel projekcji. Wyrażenie stoi
+ * Znacznik dnia sesji: przejęcie, a gdy go nie ma - stempel projekcji. Wyrażenie stoi
  * w stałej, bo powtarza się w `SELECT` i w `ORDER BY` (PostgreSQL nie pozwala użyć
  * aliasu w `ORDER BY` gałęzi `DISTINCT ON`), a dwie ręcznie zsynchronizowane kopie
  * porządku to dokładnie ten rodzaj rozjazdu, którego nie widać w wyniku.
@@ -67,7 +67,7 @@ export class PgTaskSuggestionsRepo implements TaskSuggestionsPort {
     );
 
     return rows.map((r) => {
-      // Wartość spoza katalogu rzuca, a nie jest po cichu zerowana — ten sam argument,
+      // Wartość spoza katalogu rzuca, a nie jest po cichu zerowana - ten sam argument,
       // co w `toSessionRow`: pilnuje jej `sessions_operation_known` w bazie, więc inna
       // wartość znaczy, że ktoś zdjął ograniczenie albo grzebał ręcznie.
       if (r.operation != null && !isOperationType(r.operation)) {
@@ -88,7 +88,7 @@ export class PgTaskSuggestionsRepo implements TaskSuggestionsPort {
       [picId, limit],
     );
 
-    // `pg` zwraca TIMESTAMPTZ jako Date, PGlite potrafi jako string — normalizujemy.
+    // `pg` zwraca TIMESTAMPTZ jako Date, PGlite potrafi jako string - normalizujemy.
     return rows.map((r) => ({ value: r.value, lastUsedAt: new Date(r.last_used_at) }));
   }
 }

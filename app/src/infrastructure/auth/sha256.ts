@@ -1,5 +1,5 @@
 /**
- * UZ Aero — SHA-256 w czystym TypeScript (FIPS 180-4).
+ * UZ Aero - SHA-256 w czystym TypeScript (FIPS 180-4).
  *
  * Własna implementacja zamiast biblioteki, bo jedyny konsument (hash PIN-u) potrzebuje
  * jej także w Node/Jest: `node:crypto` nie istnieje w React Native, `expo-crypto` to
@@ -22,7 +22,7 @@ const K = [
 
 const rotr = (x: number, n: number): number => (x >>> n) | (x << (32 - n));
 
-/** UTF-8 bez `TextEncoder` — Hermes ma go dopiero od niedawna, a Jest w Node zawsze. */
+/** UTF-8 bez `TextEncoder` - Hermes ma go dopiero od niedawna, a Jest w Node zawsze. */
 function utf8Bytes(text: string): number[] {
   const out: number[] = [];
   for (const ch of text) {

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) — PULPIT (`A01`, `A01a`).
+ * UZ Aero (serwer) - PULPIT (`A01`, `A01a`).
  *
  * ══ TA KLASA NICZEGO NIE LICZY PO SWOJEMU ══
  * Pulpit jest ekranem-skrótem: każda jego liczba pochodzi z zapytania, które obsługuje
@@ -7,28 +7,28 @@
  * skrzynki `A03`, „Dni otwarte" to `total` z listy dni `A02` zawężonej `status=active`,
  * stan kart to `AdminExportCounts` z monitora `A05`, wiersz floty to
  * `AdminAircraftListItem` z `A07`. Kafel jest przejściem, więc jego liczba MUSI być
- * obietnicą „tyle wierszy tam zobaczysz" — a jedynym sposobem, żeby nią była, jest
+ * obietnicą „tyle wierszy tam zobaczysz" - a jedynym sposobem, żeby nią była, jest
  * policzenie jej tym samym kodem.
  *
  * Konsekwencja praktyczna: ta klasa ma pięciu współpracowników i prawie żadnej własnej
  * logiki. To jest cel, nie przypadek.
  *
  * ══ JEDYNE MIEJSCE, GDZIE PULPIT CZYTA STRUMIEŃ ══
- * Stan silnika („W locie" / „Na ziemi") nie stoi w żadnej kolumnie — projekcja
+ * Stan silnika („W locie" / „Na ziemi") nie stoi w żadnej kolumnie - projekcja
  * `sessions` go nie niesie. `A02` i `A07` z tego powodu plakietkę POMIJAŁY i było to
  * słuszne: obie listy są nieograniczone, więc odczyt strumienia na wiersz to N pełnych
  * strumieni na stronę.
  *
  * Tutaj zbiór jest inny i to zmienia rachunek: czytamy strumienie WYŁĄCZNIE tych
  * jednostek, które mają OTWARTĄ sesję. Górna granica to liczba samolotów w rejestrze
- * (klub ma kilka), a strumień jednej sesji to jeden dzień pracy — kilkadziesiąt zdarzeń,
+ * (klub ma kilka), a strumień jednej sesji to jeden dzień pracy - kilkadziesiąt zdarzeń,
  * niezależnie od tego, ile lat ma rejestr. Zapytanie NIE degraduje się z historią;
  * degraduje się z liczbą samolotów latających jednocześnie, a ta jest ograniczona
  * wielkością floty.
  *
  * Gdyby kiedyś flota urosła do rozmiaru, przy którym to boli, właściwym ruchem jest
  * kolumna stanu silnika w projekcji (jedna liczba dopisywana przy ingescie), a NIE
- * rezygnacja z plakietki — bo pytanie „co ten samolot teraz robi" jest jedynym pytaniem
+ * rezygnacja z plakietki - bo pytanie „co ten samolot teraz robi" jest jedynym pytaniem
  * tego ekranu.
  */
 
@@ -59,16 +59,16 @@ import type { AdminFleetQueries } from './fleet.ts';
  * Ile pozycji trafia do kolejki „Wymaga uwagi" z KAŻDEGO z trzech źródeł.
  *
  * Mockup pokazuje pięć wierszy razem, a pulpit ma kierować ruch, nie zastępować
- * skrzynki — pełne listy są pod kaflami i to one mówią, ile spraw jest naprawdę
+ * skrzynki - pełne listy są pod kaflami i to one mówią, ile spraw jest naprawdę
  * (`counts`). Limit per źródło, a nie na całość, bo inaczej dwadzieścia flag zepchnęłoby
  * z ekranu jedyny nieudany eksport.
  */
 const ATTENTION_PER_SOURCE = 5;
 
-/** Ile zdarzeń pokazuje karta „Ostatnio przyjęte" — tyle, ile wierszy ma mockup. */
+/** Ile zdarzeń pokazuje karta „Ostatnio przyjęte" - tyle, ile wierszy ma mockup. */
 const RECENT_EVENTS = 6;
 
-/** Okno wykresu „Napływ zdarzeń" i jego podziałka — 12 h w słupkach godzinnych (A01). */
+/** Okno wykresu „Napływ zdarzeń" i jego podziałka - 12 h w słupkach godzinnych (A01). */
 const INFLOW_WINDOW_MS = 12 * 60 * 60 * 1000;
 const INFLOW_BUCKET_MS = 60 * 60 * 1000;
 
@@ -88,7 +88,7 @@ export class AdminDashboardQueries {
     private readonly flags: FlagsAdminPort,
     private readonly exports: ExportsAdminPort,
     private readonly dashboard: DashboardAdminPort,
-    /** Strumień otwartej sesji — WYŁĄCZNIE do stanu silnika (patrz nagłówek pliku). */
+    /** Strumień otwartej sesji - WYŁĄCZNIE do stanu silnika (patrz nagłówek pliku). */
     private readonly events: EventsStorePort,
     /** Nazwisko drugiego pilota dnia; po `byId`, bo dotyczy najwyżej kilku kont. */
     private readonly pilots: PilotsAdminPort,
@@ -103,7 +103,7 @@ export class AdminDashboardQueries {
       await Promise.all([
         this.fleet.list({}),
         // Sam LICZNIK dni otwartych: `limit: 1`, liczy się wyłącznie `total`. To jest
-        // dokładnie to samo pytanie, co chip „Otwarte" na `A02` — i ta sama trasa.
+        // dokładnie to samo pytanie, co chip „Otwarte" na `A02` - i ta sama trasa.
         this.sessions.list(this.db, { status: 'active', direction: 'desc', limit: 1 }),
         // Dni otwarte DŁUŻEJ niż okno korekty, od najstarszego. Próg jest tu jedynym
         // miejscem, w którym pulpit rozstrzyga, co jest zadaniem, a co normalną pracą.
@@ -116,7 +116,7 @@ export class AdminDashboardQueries {
         this.flags.list(this.db, { status: 'open', limit: ATTENTION_PER_SOURCE }),
         // Jedno zapytanie, dwie odpowiedzi: `items` zawężone do kart, których NIE MA
         // (awaria eksportu), a `counts` policzone nad całym zakresem NIEZALEŻNIE od
-        // zawężenia stanem — tak stanowi kontrakt monitora.
+        // zawężenia stanem - tak stanowi kontrakt monitora.
         this.exports.list(this.db, { state: 'missing', limit: ATTENTION_PER_SOURCE }),
         this.dashboard.inflow(this.db, {
           fromMs: nowMs - INFLOW_WINDOW_MS,
@@ -141,7 +141,7 @@ export class AdminDashboardQueries {
         aircraftTotal: fleetPage.counts.total,
         aircraftActive: fleetPage.counts.active,
         aircraftClaimed: fleetPage.counts.claimed,
-        // `list` oddaje `null` wyłącznie przy nieczytelnym KURSORZE, a tu go nie ma —
+        // `list` oddaje `null` wyłącznie przy nieczytelnym KURSORZE, a tu go nie ma -
         // więc gałąź jest nieosiągalna. Zero byłoby jednak twierdzeniem o świecie,
         // dlatego przy braku odpowiedzi wolimy jawny błąd niż cichy licznik.
         openDays: openDays?.total ?? notCounted('dni otwarte'),
@@ -183,7 +183,7 @@ export class AdminDashboardQueries {
    *
    * Pętla, a nie `Promise.all`: strumień na jednostkę to jedno zapytanie plus jedna
    * projekcja, a jednostek z otwartym dniem jest w klubie kilka. Równoległość kupiłaby
-   * milisekundy kosztem N jednoczesnych połączeń — ta sama decyzja, co w `withState`
+   * milisekundy kosztem N jednoczesnych połączeń - ta sama decyzja, co w `withState`
    * zapytania floty.
    */
   private async withEngine(
@@ -199,7 +199,7 @@ export class AdminDashboardQueries {
 
       const stream = await this.events.sessionEvents(this.db, aircraft.claim.sessionUuid);
       const state = projectSession(stream);
-      // Nazwisko duala czytamy TYLKO wtedy, gdy dzień faktycznie jest szkolny —
+      // Nazwisko duala czytamy TYLKO wtedy, gdy dzień faktycznie jest szkolny -
       // większość dni ma `dualId: null`, więc to zwykle zero dodatkowych zapytań.
       const dual = state.dualId == null ? null : await this.pilots.byId(this.db, state.dualId);
 
@@ -240,8 +240,8 @@ function fillBuckets(rows: readonly { bucket: number; count: number }[], count: 
  *
  * „0 otwartych flag" przy nieudanym pobraniu to najgorszy możliwy komunikat w narzędziu
  * nadzoru: wygląda jak dobra wiadomość. Wolimy 500 i baner „nie udało się pobrać
- * pulpitu" — panel umie go pokazać, a administrator wie wtedy, że nic nie wie.
+ * pulpitu" - panel umie go pokazać, a administrator wie wtedy, że nic nie wie.
  */
 function notCounted(what: string): never {
-  throw new Error(`pulpit: nie udało się policzyć — ${what}`);
+  throw new Error(`pulpit: nie udało się policzyć - ${what}`);
 }

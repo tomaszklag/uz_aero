@@ -1,10 +1,10 @@
 /**
- * UZ Aero — IdentityStrip (`.pilot-strip` z mockupu 02)
+ * UZ Aero - IdentityStrip (`.pilot-strip` z mockupu 02)
  *
  * Pasek „kto jest zalogowany": awatar, nazwisko, druga linia, rola.
  *
- * To nie ozdoba. `CLAUDE.md` mówi: *tożsamość pilota jest znana w całej sesji — NIE pytamy
- * o kod pilota w formularzach*. Skoro nie pytamy, to musimy **pokazać** — inaczej pilot
+ * To nie ozdoba. `CLAUDE.md` mówi: *tożsamość pilota jest znana w całej sesji - NIE pytamy
+ * o kod pilota w formularzach*. Skoro nie pytamy, to musimy **pokazać** - inaczej pilot
  * nie ma jak sprawdzić, na czyje konto właśnie zapisuje dzień lotny. Ten pasek jest
  * odpowiedzią na pytanie, którego formularz celowo nie zadaje.
  */
@@ -20,7 +20,7 @@ import { toneColors, type Tone } from '../tone';
 
 export interface IdentityStripProps {
   name: string;
-  /** Druga linia — e-mail, kod pilota, godzina zalogowania. */
+  /** Druga linia - e-mail, kod pilota, godzina zalogowania. */
   subtitle?: string;
   /** Rola po prawej (np. „PIC"). */
   badge?: string;

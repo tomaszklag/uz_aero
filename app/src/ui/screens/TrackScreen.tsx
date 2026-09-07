@@ -1,8 +1,8 @@
 /**
- * UZ Aero — 14 ŚLAD SESJI (mockupy `design/14-slad.html`, `14b`, `14c`, `14d`).
+ * UZ Aero - 14 ŚLAD SESJI (mockupy `design/14-slad.html`, `14b`, `14c`, `14d`).
  *
  * Wejście MINIATURĄ z ekranu sesji (10). Ekran pokazuje cztery rzeczy z mockupu w tej
- * samej kolejności — trasę, profil pionowy, statystyki lotu i log przeliczonych punktów.
+ * samej kolejności - trasę, profil pionowy, statystyki lotu i log przeliczonych punktów.
  *
  * ══ CAŁY BIEG SILNIKA, NIE POJEDYNCZY LOT (issue #38) ══
  * Zapis GPS powstaje w jednym ciągu, od uruchomienia do zatrzymania silnika. Linia jest
@@ -10,22 +10,22 @@
  * pokazuje przez to kolejne wyniesienia obok siebie, z przerwą na ziemi między nimi.
  *
  * ══ GEOMETRIA Z SERWERA, CZASY Z TELEFONU (issue #47) ══
- * Trasa, profil, log i statystyki przychodzą gotowe z `GET /me/sessions/:uuid/track` —
+ * Trasa, profil, log i statystyki przychodzą gotowe z `GET /me/sessions/:uuid/track` -
  * telefon oddaje nagranie i kasuje swoją kopię. Wszystko inne (rejestracja, loty, czas
  * w powietrzu, godziny znaczników) liczy się dalej LOKALNIE, więc brak zasięgu zabiera
  * ekranowi rysunek, a nie wiedzę: wariant 14C pokazuje komplet czasów i mówi wprost,
  * czego brakuje.
  *
- * Mapa nadal nie pobiera KAFELKÓW (decyzja 2026-08-04) — tłem jest siatka współrzędnych
+ * Mapa nadal nie pobiera KAFELKÓW (decyzja 2026-08-04) - tłem jest siatka współrzędnych
  * z podziałką i lotniska z katalogu wbudowanego w aplikację.
  *
  * ══ GESTY (issue #47 pkt 7 i 8) ══
- * Palec na jednym wykresie stawia kursor na OBU (`cursorAt`) — to samo zdarzenie widziane
+ * Palec na jednym wykresie stawia kursor na OBU (`cursorAt`) - to samo zdarzenie widziane
  * z dwóch stron. Dwa palce przybliżają mapę, dwuklik wraca do całości.
  *
  * Ekran ich NIE OPISUJE i to jest decyzja: baner „dwa palce przybliżają mapę…" stał nad
  * profilem przez jeden przegląd i wyleciał. Szczypta i przeciągnięcie to gesty, których
- * nikt nie musi się uczyć z aplikacji lotniczej — a zdanie o nich zajmowało wiersz nad
+ * nikt nie musi się uczyć z aplikacji lotniczej - a zdanie o nich zajmowało wiersz nad
  * wykresem przy KAŻDYM otwarciu, żeby powiedzieć rzecz, którą palec odkrywa sam.
  */
 
@@ -36,7 +36,6 @@ import type { MissingTrackReason, SessionTrackView } from '../../application';
 import { dateUtcDayMonth, duration, formatLatLon, plural, timeUtc } from '../format';
 import {
   AppText,
-  Banner,
   Card,
   Screen,
   ScreenHeader,
@@ -48,17 +47,19 @@ import {
 } from '../components';
 import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
+import { useAircraft } from '../hooks/useAircraft';
+import { missingTrackCopy } from './logic/missingTrack';
 import { useSkeleton } from '../hooks/useSkeleton';
 import { buildDistanceLookup } from './logic/trackDistance';
 import { mapMarkers, profileMarkers } from './logic/trackMarkers';
 import { trackStatsView, type PhaseBarSegment } from './logic/trackStatsRows';
 
 /**
- * Wysokość mapy i profilu — proporcje z mockupu 14 przy szerokości telefonu.
+ * Wysokość mapy i profilu - proporcje z mockupu 14 przy szerokości telefonu.
  *
  * Profil urósł ze 172 px przy przeglądzie: pod linią ziemi mieszczą się teraz dwa rzędy
  * godzin przy znacznikach ORAZ podziałka czasu w lewym dolnym rogu (tam, gdzie mapa ma
- * swoją). Rozpis dolnego pasa jest w `VerticalProfile` — `AXIS_BOTTOM` liczy się
+ * swoją). Rozpis dolnego pasa jest w `VerticalProfile` - `AXIS_BOTTOM` liczy się
  * ze składników, żeby nikt nie musiał go sumować na oko.
  */
 const MAP_HEIGHT = 300;
@@ -78,16 +79,15 @@ export function TrackScreen({
   const { theme } = useTheme();
   const { width } = useWindowDimensions();
   const trackQueries = useSessionStore((s) => s.trackQueries);
-  const synced = useSessionStore((s) => s.synced);
-  const outboxCount = useSessionStore((s) => s.outboxCount);
-  const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
 
   const [view, setView] = useState<SessionTrackView | null>(null);
+  /** Znak maszyny do nagłówka - z cache floty, więc bez sieci (issue #84). */
+  const aircraft = useAircraft(view?.aircraftId ?? null);
   const [loaded, setLoaded] = useState(false);
   const [cursorAt, setCursorAt] = useState<number | null>(null);
   /**
    * Okno czasu widoczne na profilu po przybliżeniu; `null` = profil pokazuje całość.
-   * Mapa PODŚWIETLA odpowiadający fragment trasy zamiast na niego przeskakiwać —
+   * Mapa PODŚWIETLA odpowiadający fragment trasy zamiast na niego przeskakiwać -
    * uzasadnienie przy `TrackMapProps.highlight`.
    */
   const [profileWindow, setProfileWindow] = useState<{ from: number; to: number } | null>(null);
@@ -141,7 +141,7 @@ export function TrackScreen({
   const moveCursor = useCallback((at: number | null) => setCursorAt(at), []);
 
   /**
-   * Droga narastająco — z geometrii śladu, żeby podziałka profilu mogła podać dystans
+   * Droga narastająco - z geometrii śladu, żeby podziałka profilu mogła podać dystans
    * obok czasu. Liczona RAZ na sesję: odczyt woła się przy każdej klatce gestu.
    */
   const distanceAt = useMemo(
@@ -151,30 +151,30 @@ export function TrackScreen({
 
   const header = (
     <ScreenHeader
-      title="ŚLAD SESJI"
+      title="ŚLAD OPERACJI"
       // Podtytuł 1:1 z mockupu 14: rejestracja · dzień i miesiąc · liczba lotów.
-      // Bez „· UTC" (wzorzec nagłówków po issue #23) i bez godzin — te stoją przy
+      // Bez „· UTC" (wzorzec nagłówków po issue #23) i bez godzin - te stoją przy
       // znacznikach na mapie i w nagłówku karty trasy.
+      /* ZNAK, NIGDY SUROWY IDENTYFIKATOR (issue #84: „jak jest ekran ze śladem operacji,
+         to po co wyświetlasz tam guid w nagłówku?"). `aircraftId` jest w produkcji
+         uuid-em nadanym w panelu, a znak rozwiązuje cache floty - ta sama poprawka,
+         co w pasku kokpitu (2026-09-02) i przy kodach pilotów na 07. Surowy id zostaje
+         ostatnią deską ratunku: maszyna spoza cache'u nie ma znaku, a podtytuł nie może
+         zgubić informacji, której operacji ślad dotyczy. */
       subtitle={
         view != null
-          ? `${view.aircraftId ?? '—'} · ${dateUtcDayMonth(view.fromAt)} · ${flightsLabel(view.flights.length)}`
+          ? `${aircraft?.reg ?? view.aircraftId ?? '-'} · ${dateUtcDayMonth(view.fromAt)} · ${flightsLabel(view.flights.length)}`
           : undefined
       }
       size="md"
       onBack={navigation.goBack}
-      backLabel="Sesja"
-      right={
-        <SyncChip
-          status={synced ? 'synced' : 'offline'}
-          outboxCount={outboxCount}
-          lastSyncAt={lastSyncAt}
-        />
-      }
+      backLabel="Operacja"
+      right={<SyncChip />}
     />
   );
 
   if (!loaded) {
-    // Pełny ślad to najcięższy odczyt w aplikacji — mapa, profil pionowy, statystyki
+    // Pełny ślad to najcięższy odczyt w aplikacji - mapa, profil pionowy, statystyki
     // i log punktów, w dodatku zza sieci. Plamki trzymają te wysokości (issue #33).
     return (
       <Screen scroll padded={false} header={header}>
@@ -193,10 +193,10 @@ export function TrackScreen({
     return (
       <Screen scroll padded={false} header={header}>
         <View style={styles.content}>
-          <Card title="Nie ma takiej sesji">
+          <Card title="Nie ma takiej operacji">
             <AppText variant="body" tone="muted">
-              Tej sesji nie ma w rejestrze na tym telefonie. Wróć do „Mój dzień" i otwórz
-              sesję z listy.
+              Tej operacji nie ma w rejestrze na tym telefonie. Wróć do „Mój dzień" i otwórz
+              operację z listy.
             </AppText>
           </Card>
         </View>
@@ -223,7 +223,7 @@ export function TrackScreen({
           headerRight={
             <AppText variant="micro" tone="muted">
               {/* Zakres = BIEG SILNIKA, nie pojedynczy lot: tyle trwał zapis. */}
-              {timeUtc(view.fromAt)} → {view.toAt != null ? timeUtc(view.toAt) : '—'} UTC
+              {timeUtc(view.fromAt)} → {view.toAt != null ? timeUtc(view.toAt) : '-'} UTC
             </AppText>
           }
           flush
@@ -231,6 +231,9 @@ export function TrackScreen({
           <View>
             <TrackMap
               line={track.line}
+              // Okna lotów z LOKALNEGO rejestru (issue #75 pkt 4): kołowanie przerywaną
+              // szarą, loty pełną zieloną - koperta niesie samą geometrię (§4.10).
+              flights={view.flights}
               markers={onMap}
               width={contentWidth}
               height={MAP_HEIGHT}
@@ -251,7 +254,7 @@ export function TrackScreen({
 
           {/* POD MAPĄ NIE MA NIC: liczby zeszły do „Statystyk lotu", żeby profil
               przylegał do trasy. Kursor sprzęga oba wykresy, więc pilot patrzy na nie
-              na przemian — rząd metryk między nimi kazał za każdym razem przeskoczyć
+              na przemian - rząd metryk między nimi kazał za każdym razem przeskoczyć
               wzrokiem przez cztery liczby, których w tej chwili nie czyta. */}
         </Card>
 
@@ -260,6 +263,7 @@ export function TrackScreen({
           <View>
             <VerticalProfile
               profile={profile}
+              flights={view.flights}
               width={contentWidth}
               height={PROFILE_HEIGHT}
               markers={onProfile}
@@ -276,7 +280,7 @@ export function TrackScreen({
               background={theme.colors.overlay}
             />
           </View>
-          {/* Średnie wznoszenie i zejście stały tu jako podpis wykresu — od przeglądu
+          {/* Średnie wznoszenie i zejście stały tu jako podpis wykresu - od przeglądu
               issue #47 są w „Statystykach lotu", obok maksimów tych samych wielkości.
               To liczby o CAŁYM locie, a nie objaśnienie rysunku. */}
         </Card>
@@ -292,11 +296,11 @@ export function TrackScreen({
             }
             flush
           >
-            {/* Sumy CAŁEJ sesji: dwa loty to jeden zapis, więc dystans i czas liczą się
+            {/* Sumy CAŁEJ operacji: dwa loty to jeden zapis, więc dystans i czas liczą się
                 przez oba. Rozbicie per lot stoi na osi czasu ekranu 10. */}
             <StatBlock title="Podsumowanie" first>
               {/* Bez licznika punktów: „1 412 z 1 508" opisywało JAKOŚĆ NAGRANIA, czyli
-                  pracę bramki jakości — pytanie strojącego progi, nie pilota. Odeszło
+                  pracę bramki jakości - pytanie strojącego progi, nie pilota. Odeszło
                   razem z logiem punktów; obie rzeczy zostały w panelu i w replayu. */}
               <StatGrid
                 columns={3}
@@ -313,7 +317,7 @@ export function TrackScreen({
                     value:
                       track.maxAltitudeFt != null
                         ? Math.round(track.maxAltitudeFt).toLocaleString('pl-PL')
-                        : '— —',
+                        : '- -',
                     unit: 'ft',
                     tone: 'blue',
                   },
@@ -329,7 +333,7 @@ export function TrackScreen({
 
             {stats.phases != null && (
               <StatBlock title="Czasy faz" note={`bieg silnika ${duration(stats.phases.totalMs)}`}>
-                {/* Sumę mówi podpis nagłówka („bieg silnika 1:43") — druga taka liczba
+                {/* Sumę mówi podpis nagłówka („bieg silnika 1:43") - druga taka liczba
                     pod paskiem byłaby tą samą odpowiedzią dwa razy. */}
                 <PhaseBar segments={stats.phases.segments} />
               </StatBlock>
@@ -348,7 +352,7 @@ export function TrackScreen({
 
         {/* LOGU PUNKTÓW NIE MA (przegląd issue #47). Tabela surowych fixów ze stanem
             bramki jakości jest materiałem do STROJENIA PROGÓW, a nie odpowiedzią na
-            żadne pytanie pilota — i tam została: w panelu (A02c) oraz w nagraniu, które
+            żadne pytanie pilota - i tam została: w panelu (A02c) oraz w nagraniu, które
             czyta `server/scripts/replay.ts`. Liczba punktów przyjętych i odrzuconych
             zostaje w podsumowaniu, bo ona jedna mówi coś o jakości TEGO zapisu.
 
@@ -364,7 +368,7 @@ export function TrackScreen({
 /**
  * Blok statystyk: tytuł, opcjonalny podpis i treść.
  *
- * `first` gasi kreskę u góry — nagłówek karty ma własną i dwie linie jedna pod drugą
+ * `first` gasi kreskę u góry - nagłówek karty ma własną i dwie linie jedna pod drugą
  * czytają się jak usterka rysowania.
  */
 function StatBlock({
@@ -402,7 +406,7 @@ function StatBlock({
 }
 
 /**
- * Pasek faz — proporcja jest tu TREŚCIĄ: dzień skokowy to prawie samo wznoszenie
+ * Pasek faz - proporcja jest tu TREŚCIĄ: dzień skokowy to prawie samo wznoszenie
  * i zniżanie, i to widać jednym spojrzeniem. Kolory te same, co na profilu i mapie
  * (pełna zieleń = wznoszenie, jaśniejsza = zejście, szary = ziemia).
  */
@@ -443,7 +447,7 @@ function PhaseBar({ segments }: { segments: PhaseBarSegment[] }) {
   );
 }
 
-/** Odczyt pod palcem — znika razem z gestem, więc nie zajmuje miejsca na stałe. */
+/** Odczyt pod palcem - znika razem z gestem, więc nie zajmuje miejsca na stałe. */
 function CursorReadout({
   at,
   extra,
@@ -476,7 +480,7 @@ function CursorReadout({
   );
 }
 
-/** Prędkość w chwili kursora — z wierzchołka linii najbliższego tej chwili. */
+/** Prędkość w chwili kursora - z wierzchołka linii najbliższego tej chwili. */
 function speedAt(view: SessionTrackView, at: number | null): string | null {
   if (at == null) return null;
   let best: (typeof view.track.line)[number] | null = null;
@@ -493,7 +497,7 @@ function speedAt(view: SessionTrackView, at: number | null): string | null {
   return [speed, formatLatLon(best.lat, best.lon)].filter((part) => part != null).join(' · ');
 }
 
-/** Wysokość w chwili kursora — interpolacja między próbkami profilu. */
+/** Wysokość w chwili kursora - interpolacja między próbkami profilu. */
 function altitudeAt(view: SessionTrackView, at: number | null): string | null {
   if (at == null) return null;
   const samples = view.profile.samples;
@@ -521,17 +525,17 @@ function feet(value: number): string {
 }
 
 /**
- * Warianty 14B i 14C — nie ma czego rysować. Pokazujemy POWÓD i to, co mimo wszystko
+ * Warianty 14B i 14C - nie ma czego rysować. Pokazujemy POWÓD i to, co mimo wszystko
  * wiadomo: czasy sesji są pełnoprawne, bo liczą się z lokalnego rejestru. Brakuje
  * wyłącznie geometrii.
  *
  * Cztery powody znaczą CO INNEGO i zwinięcie ich do jednego „brak śladu" byłoby
- * kłamstwem o locie pilota — patrz `MissingTrackReason`.
+ * kłamstwem o locie pilota - patrz `MissingTrackReason`.
  */
 function MissingTrack({ view }: { view: SessionTrackView }) {
   const first = view.flights[0] ?? null;
   const last = view.flights[view.flights.length - 1] ?? null;
-  const copy = missingCopy(view.missing!, view.pendingFixes);
+  const copy = missingTrackCopy(view.missing!);
 
   return (
     <View style={styles.content}>
@@ -541,79 +545,29 @@ function MissingTrack({ view }: { view: SessionTrackView }) {
         </AppText>
       </Card>
 
-      <Card title="Co wiadomo o tej sesji" flush>
+      <Card title="Co wiadomo o tej operacji" flush>
         <StatGrid
           columns={2}
           cells={[
             { label: 'Uruchomienie', value: timeUtc(view.fromAt) },
-            { label: 'Wyłączenie', value: view.toAt != null ? timeUtc(view.toAt) : '— —' },
+            { label: 'Wyłączenie', value: view.toAt != null ? timeUtc(view.toAt) : '- -' },
             { label: 'W powietrzu', value: duration(view.flightTimeMs), tone: 'green' },
             {
               label: 'Loty',
               value: String(view.flights.length),
               unit:
                 first != null && last != null
-                  ? `${timeUtc(first.takeoffAt)} → ${last.landingAt != null ? timeUtc(last.landingAt) : '—'}`
+                  ? `${timeUtc(first.takeoffAt)} → ${last.landingAt != null ? timeUtc(last.landingAt) : '-'}`
                   : undefined,
             },
           ]}
         />
       </Card>
-
-      {copy.banner != null && <Banner kind="status" tone="amber" text={copy.banner} />}
     </View>
   );
 }
 
-function missingCopy(
-  reason: MissingTrackReason,
-  pendingFixes: number,
-): { title: string; text: string; banner: string | null } {
-  if (reason === 'offline') {
-    return {
-      title: 'Ślad jest na serwerze',
-      text:
-        'Telefon nagrał tę trasę i oddał ją serwerowi, ale nie ma teraz jak jej pobrać. ' +
-        'Wróć na ten ekran z zasięgiem — trasa, profil i statystyki wczytają się w całości.',
-      banner:
-        'Ślad nie zajmuje już pamięci telefonu: nagranie idzie na serwer i tam zostaje ' +
-        'na stałe, także po reinstalacji aplikacji i na nowym telefonie. Ceną jest ten ' +
-        'ekran — sama trasa wymaga zasięgu.',
-    };
-  }
-
-  if (reason === 'pending-upload') {
-    return {
-      title: 'Nagranie czeka na wysyłkę',
-      text:
-        `To nagranie jest jeszcze na tym telefonie — ${pendingFixes.toLocaleString('pl-PL')} ` +
-        `${plural(pendingFixes, 'punkt', 'punkty', 'punktów')} w kolejce. Pójdzie przy ` +
-        'najbliższej okazji i wtedy ten ekran narysuje trasę.',
-      banner: null,
-    };
-  }
-
-  if (reason === 'manual') {
-    return {
-      title: 'Bez zapisu GPS',
-      text:
-        'Ta sesja została wpisana ręcznie, więc nie ma z czego narysować trasy. Czasy są ' +
-        'prawdziwe — pochodzą z Twojego wpisu, nie z odbiornika.',
-      banner: null,
-    };
-  }
-
-  return {
-    title: 'Ślad niedostępny',
-    text:
-      'Serwer nie ma nagrania tej sesji. Nagranie mogło nie powstać (brak zgody na ' +
-      'lokalizację, wyczerpana bateria) albo nigdy nie dotarło z telefonu, na którym ' +
-      'powstało. Czasy i statystyki sesji są kompletne — brakuje wyłącznie trasy.',
-    banner: null,
-  };
-}
-
-/** „2 loty" — trzy formy polskiej liczby mnogiej; ten sam napis, co plakietka na 10. */
+/** „2 loty" - trzy formy polskiej liczby mnogiej; ten sam napis, co plakietka na 10. */
 function flightsLabel(count: number): string {
   return `${count} ${plural(count, 'lot', 'loty', 'lotów')}`;
 }

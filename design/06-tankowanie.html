@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 06 Tankowanie</title>
+<title>UZ Aero - 06 Tankowanie</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -11,7 +11,7 @@
   :root {
     --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
     --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
-    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A; --text-placeholder: #565656;
     --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
     --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
     --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
@@ -74,7 +74,7 @@
   .back-btn { display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); text-decoration: none; letter-spacing: 0.5px; }
   .back-btn:hover { color: var(--text-secondary); }
   .screen-title { font-family: var(--font-display); font-size: 22px; letter-spacing: 3px; color: var(--text-primary); }
-  /* Samolot raz, w nagłówku — zamiast „z konfiguracji SP-AXA" w podpisach niżej */
+  /* Samolot raz, w nagłówku - zamiast „z konfiguracji SP-AXA" w podpisach niżej */
   .app-header-center { text-align: center; }
   .screen-subtitle { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); letter-spacing: 1px; margin-top: 2px; }
   .header-icon { color: var(--amber); }
@@ -84,21 +84,41 @@
   .scroll { flex: 1; overflow-y: auto; padding: 14px 16px 24px; display: flex; flex-direction: column; gap: 12px; scrollbar-width: none; }
   .scroll::-webkit-scrollbar { display: none; }
 
-  /* FOB Indicator */
-  .fob-indicator {
-    background: var(--amber-muted); border: 1px solid var(--amber-border);
-    border-radius: 20px; padding: 20px 20px 16px;
-    display: flex; flex-direction: column; align-items: center; gap: 4px;
-    box-shadow: 0 0 30px rgba(243,156,18,0.08);
-  }
-  .fob-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--amber); opacity: 0.7; }
-  .fob-value { font-family: var(--font-mono); font-size: 64px; font-weight: 700; color: var(--amber); line-height: 1; letter-spacing: -2px; }
-  .fob-unit { font-family: var(--font-mono); font-size: 28px; font-weight: 400; color: var(--amber); opacity: 0.6; margin-left: -4px; }
-  .fob-row { display: flex; align-items: baseline; gap: 6px; }
-  .fob-subtext { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px; margin-top: 4px; text-align: center; }
-  .fob-bar { width: 100%; height: 8px; border-radius: 4px; background: rgba(0,0,0,0.35); border: 1px solid var(--amber-border); margin-top: 10px; position: relative; overflow: hidden; }
-  .fob-bar-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 34%; background: var(--amber); border-radius: 4px; box-shadow: 0 0 8px rgba(243,156,18,0.4); }
-  .fob-bar-labels { width: 100%; display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 9px; color: var(--text-muted); margin-top: 5px; }
+  /* SEKCJA ODCZYTU - BLIŹNIACZA Z KROKIEM 3 NOWEGO LOTU (issue #84, zgłoszenie
+     z urządzenia: „mam sekcje, które różnią się od tego, co już wypracowaliśmy.
+     Mamy już analogiczny ekran i tu powinien wyglądać bliźniaczo. Nie wyświetlasz
+     też miarek").
+
+     Do tej pory stała tu karta-przyrząd `.fob-indicator` z cyframi 64 px - kształt,
+     którego nie ma nigdzie indziej w aplikacji. Odczyt paliwa przed tankowaniem jest
+     DOKŁADNIE tym samym pytaniem, co „Paliwo na pokładzie" na 02A, więc klasy są
+     odtąd te same: `.section` / `.section-header` / `.value-big` / `.koryguj-btn`.
+
+     PODZIAŁKA POZIOMU WRACA i to jest świadome cofnięcie połowy decyzji z 2026-09-03
+     („usuń miarki przy FOB i dolewce"): tamten rachunek zakładał wielką liczbę na
+     własnej karcie, przy której druga oś pojemności byłaby powtórzeniem. W sekcji
+     `Readout` podziałka jest jedyną rzeczą mówiącą „ile to jest z pełnych zbiorników" -
+     a od tego zaczyna się decyzja, ile dolać. Miarka wyniku niżej zostaje: mierzy
+     STAN PO dolewce, czyli inną liczbę. */
+  /* `.section` i `.section-label` są już zdefiniowane niżej (karta „Dolano") - sekcja
+     odczytu używa DOKŁADNIE ich, bo to ten sam kształt karty. */
+  .section-header { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .section-left { flex:1; display:flex; flex-direction:column; gap:4px; }
+  .value-row { display:flex; align-items:baseline; gap:6px; }
+  .value-big { font-family:var(--font-mono); font-size:30px; font-weight:700; line-height:1; }
+  .value-big.amber { color:var(--amber); }
+  .value-none { font-family:var(--font-mono); font-size:30px; font-weight:700; line-height:1; color:var(--text-muted); }
+  .value-unit { font-family:var(--font-mono); font-size:15px; font-weight:400; color:var(--text-secondary); }
+  .value-caption { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; line-height:13px; color:var(--text-muted); }
+  /* Korekta odczytu to `.koryguj-btn` z 02A - ta sama afordancja i ten sam cel 44 px.
+     Ołówek w rogu karty (2026-09-02) był własnością karty-przyrządu i odchodzi razem
+     z nią: w sekcji przycisk stoi po prawej stronie wartości, jak przy paliwie,
+     motogodzinach i oleju na 02A. */
+  .koryguj-btn { display:flex; align-items:center; gap:6px; background:none; border:1px solid var(--border-strong); border-radius:10px; padding:0 14px; min-height:44px; color:var(--text-secondary); font-family:var(--font-mono); font-size:10px; letter-spacing:1px; cursor:pointer; text-transform:uppercase; flex-shrink:0; }
+  .koryguj-btn:hover { background:rgba(255,255,255,0.04); }
+  /* Podziałka poziomu - ta sama, co przy paliwie i oleju na 02A. */
+  .level-bar { margin-top:6px; width:130px; height:6px; border-radius:3px; background:var(--surface-raised); border:1px solid var(--amber-border); position:relative; overflow:hidden; }
+  .level-bar > span { position:absolute; inset:0; background:var(--amber); border-radius:3px; }
 
   /* Section */
   .section { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
@@ -114,36 +134,49 @@
     box-shadow: 0 0 0 3px rgba(243,156,18,0.06);
   }
 
-  /* Slider */
-  .slider-track { position: relative; height: 6px; background: var(--surface-raised); border-radius: 3px; margin: 2px 0; border: 1px solid var(--border); }
-  .slider-fill { position: absolute; left: 0; top: 0; height: 100%; width: 22%; background: var(--amber); border-radius: 3px; box-shadow: 0 0 8px rgba(243,156,18,0.4); }
-  .slider-thumb { position: absolute; top: 50%; transform: translate(-50%, -50%); left: 22%; width: 16px; height: 16px; background: var(--amber); border: 2px solid #0D0D0D; border-radius: 50%; box-shadow: 0 0 0 3px rgba(243,156,18,0.3); }
-  .slider-labels { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 9px; color: var(--text-muted); margin-top: 6px; }
+  /* Suwak-wskaźnik pod dolewką USUNIĘTY (uwaga z urządzenia, 2026-09-03: „skoro
+     mam miarkę na stanie po tankowaniu, usuń miarki przy FOB i dolano") - trzy
+     paski mówiły tę samą oś trzy razy. */
 
-  /* Result row */
+  /* Result row - BURSZTYN, nie zieleń (uwaga z urządzenia, 2026-09-03: „zielony
+     jest do czegoś innego raczej"): to liczba o paliwie, a zieleń jest akcentem
+     głównym (silnik, CTA) i robiła z wyniku rachunku osobny komunikat „OK". */
   .result-row {
-    background: var(--green-muted); border: 1px solid var(--green-border);
-    border-radius: 14px; padding: 14px 16px;
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .result-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--green); opacity: 0.8; }
-  .result-val { font-family: var(--font-mono); font-size: 28px; font-weight: 700; color: var(--green); letter-spacing: -0.5px; }
-  .result-formula { font-family: var(--font-mono); font-size: 10px; color: var(--green); opacity: 0.6; margin-top: 2px; }
-
-  /* Calc box */
-  .calc-box {
     background: var(--amber-muted); border: 1px solid var(--amber-border);
+    border-radius: 14px; padding: 14px 16px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .result-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .result-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--amber); opacity: 0.8; }
+  .result-val { font-family: var(--font-mono); font-size: 28px; font-weight: 700; color: var(--amber); letter-spacing: -0.5px; white-space: nowrap; }
+  .result-formula { font-family: var(--font-mono); font-size: 10px; color: var(--amber); opacity: 0.6; margin-top: 2px; }
+  /* Miarka wyniku (ta sama uwaga): zastane NEUTRALNĄ szarością, dolewka akcentem -
+     trzy liczby rachunku widziane na tle pojemności; bursztynowa część rośnie razem
+     z wpisem dolewki. Bez znanej pojemności miarki nie ma (jak przy FOB).
+     Rynienka CIEMNA (uwaga z urządzenia, 2026-09-03: „źle wygląda
+     żółty pasek na żółtym tle"), a zastane NIE jest przygaszonym bursztynem (druga
+     tura: „nadal żółty na żółtym") - dwa poziomy bursztynu na bursztynowej karcie
+     zlewały się w jedno; różne HUE czyta się z kąta oka, różna jasność nie. */
+  .result-bar { position: relative; height: 6px; background: rgba(0,0,0,0.35); border: 1px solid var(--amber-border); border-radius: 3px; overflow: hidden; }
+  .result-bar-base { position: absolute; left: 0; top: 0; height: 100%; background: rgba(255,255,255,0.4); }
+  .result-bar-add { position: absolute; top: 0; height: 100%; background: var(--amber); box-shadow: 0 0 8px rgba(243,156,18,0.4); }
+  .result-bar-labels { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 9px; color: var(--text-muted); }
+
+  /* Calc box - NEUTRALNY, nie bursztynowy (uwaga z urządzenia, 2026-09-03: „czemu
+     Kalkulacja zużycia jest na żółtym polu?"): rachunek jest informacją, nie
+     ostrzeżeniem, a amber przy każdym tankowaniu robił z normalnego stanu alarm. */
+  .calc-box {
+    background: var(--surface); border: 1px solid var(--border);
     border-radius: 14px; padding: 14px;
     display: flex; flex-direction: column; gap: 7px;
   }
-  .calc-title { font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--amber); opacity: 0.7; }
+  .calc-title { font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); }
   .calc-row { display: flex; justify-content: space-between; align-items: baseline; }
   .calc-row-label { font-family: var(--font-body); font-size: 12px; color: var(--text-secondary); }
   .calc-row-val { font-family: var(--font-mono); font-size: 13px; font-weight: 500; color: var(--text-secondary); }
-  .calc-highlight { font-family: var(--font-mono); font-size: 15px; font-weight: 700; color: var(--amber); }
-  .calc-divider { height: 1px; background: var(--amber-border); opacity: 0.4; margin: 2px 0; }
-  .calc-subtext { font-family: var(--font-body); font-size: 10px; color: var(--text-muted); line-height: 1.4; }
-  /* Norma z serwera — dana referencyjna z 3 stanami świeżości (§4.8): live bez
+  .calc-highlight { font-family: var(--font-mono); font-size: 15px; font-weight: 700; color: var(--text-primary); }
+  .calc-divider { height: 1px; background: var(--border); margin: 2px 0; }
+  /* Norma z serwera - dana referencyjna z 3 stanami świeżości (§4.8): live bez
      adnotacji, cache z amber „· z cache · sync …", brak = wiersza w ogóle nie ma
      (nigdy zero udające normę). Werdykt zielony/amber liczy się z przedziału. */
   .calc-row-val.ok { color: var(--green); font-weight: 700; }
@@ -160,17 +193,21 @@
     box-shadow: 0 0 24px rgba(243,156,18,0.3);
   }
   .btn-amber:hover { box-shadow: 0 0 40px rgba(243,156,18,0.5); }
+  /* Blokada z powodem W przycisku (issue #55): bez przygaszenia opacity -
+     wyszarzenie niosą kolory, bursztynowy powód musi zostać ostrzeżeniem. */
+  .btn-amber.disabled { background: var(--surface-hover); color: var(--text-muted); box-shadow: none; pointer-events: none; cursor: not-allowed; flex-direction: column; gap: 6px; }
+  .btn-reason { font-family: var(--font-mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--amber); text-align: center; line-height: 1.5; }
 </style>
 </head>
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 06</span>
+  <span class="film-strip">UZ AERO - 06</span>
   <span class="slug">tankowanie · fuel form</span>
   <span class="canvas-meta"><span class="pulse"></span>Ekran 6</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Tankowanie">
+<main class="phone" role="region" aria-label="Mockup - Tankowanie">
   <div class="status-bar">
     <span>10:48</span>
     <span class="status-right">
@@ -201,84 +238,154 @@
     <!-- Scroll Content -->
     <div class="scroll">
 
-      <!-- FOB Indicator -->
-      <div class="fob-indicator">
-        <div class="fob-label">FOB przed tankowaniem</div>
-        <div class="fob-row">
-          <div class="fob-value">112</div>
-          <div class="fob-unit">L</div>
+      <!-- SEKCJA FOB - DWA PRZYPADKI BIZNESOWE (opis użytkownika, 2026-09-03):
+
+           1. samolot NIE LATAŁ od ostatniego odczytu (tankowanie przed lotem -
+              przypadek CZĘSTSZY): wartość wychodzi z PRZEKAZANIA potwierdzonego
+              w preflighcie i pole wypełnia się samo - pilot tylko dolewa:
+
+              <span class="value-big amber">160</span><span class="value-unit">L</span>
+              <div class="value-caption">z przekazania · tankowanie 10:48 UTC</div>
+              <div class="level-bar"><span style="width:48%"></span></div>
+
+              (osobny akt „potwierdź" z wcześniejszej wersji dublował preflight
+              i został cofnięty tym samym opisem);
+
+           2. samolot LATAŁ (tankowanie między lotami - rzadkie; RENDEROWANE
+              NIŻEJ): pole WYMAGA pomiaru, więc stoi PUSTE („- -"), a szacunek
+              z normy (ostatni odczyt − zużycie z normy za czas pracy silnika;
+              stawki fazowe, gdy model je rozdzielił) jest SUGESTIĄ w podpisie.
+              Historię „ile miał · ile latał · ile mógł spalić" opowiada SZLAK
+              w arkuszu pomiaru (patrz komentarz przy Dolano). Ołówek wpisuje
+              odczyt rzeczywisty: pole pisze liczbę text-primary, podpis
+              „Twój pomiar ze zbiorników", pojawia się pudełko „Rzeczywiste zużycie"
+              i wynik z miarką.
+
+           Bez normy podpis pustego pola niesie sam ostatni odczyt
+           („Ostatni odczyt: preflight 08:00 UTC · 150 L"). -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-left">
+            <div class="section-label">FOB przed tankowaniem</div>
+            <div class="value-row">
+              <span class="value-none">- -</span>
+              <span class="value-unit">L</span>
+            </div>
+            <div class="value-caption">szacunek z normy samolotu: ~112 L</div>
+            <!-- Podziałka poziomu pojawia się z WARTOŚCIĄ; pusty stan jej nie ma,
+                 bo nie ma czego rysować:
+                 <div class="level-bar"><span style="width:48%"></span></div> -->
+          </div>
+          <button class="koryguj-btn">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Wpisz pomiar
+          </button>
         </div>
-        <div class="fob-bar"><div class="fob-bar-fill"></div></div>
-        <div class="fob-bar-labels"><span>0 L</span><span>pojemność: 330 L</span></div>
-        <div class="fob-subtext">Obliczone z ostatnich sesji silnika</div>
       </div>
+
+      <!-- HISTORIA SPRZED POMIARU = SZLAK W ARKUSZU „Stan przed tankowaniem"
+           (uwaga z urządzenia, 2026-09-03: „mamy już ciekawy komponent, który
+           obrazuje statystyki z ostatniego lotu [w preflighcie przy potwierdzaniu
+           paliwa] - użyj analogicznych, po co wymyślać na nowo"). Pudełko
+           „Szacunek z normy" na ekranie SKASOWANE - ogniwa `Trail` jak na 02B,
+           między ostrzeżeniem a wierszami odniesienia arkusza (rama `Sheet.trail`):
+
+             ● Ostatni odczyt · preflight 08:00 UTC
+               w zbiorniku 150 L
+             ● Latano · 2h 22 min
+               zużycie z normy ~38 L
+             ● Szacunkowo zostało ~112 L          (ogniwo ZIELONE, jak
+               z normy samolotu (90 dni) -         oczekiwanie oleju na 02I)
+               zweryfikuj z paliwomierza
+
+           Wiersz odniesienia arkusza nie powtarza wtedy odczytu (niesie go
+           pierwsze ogniwo); zostaje „Pojemność zbiorników · 330 L". -->
+
+      <!-- STAN PO POMIARZE (ołówek → „Stan przed tankowaniem"): na ekranie
+           pojawia się pudełko rachunku RZECZYWISTEGO - werdykt względem normy
+           istnieje tylko tu, bo szacunek wyprowadzony z normy „zgadzałby się"
+           z nią zawsze:
+
+           <div class="calc-box">
+             <div class="calc-title">Rzeczywiste zużycie</div>
+             <div class="calc-row">
+               <span class="calc-row-label">Ostatni odczyt · preflight 08:00 UTC</span>
+               <span class="calc-row-val">150 L</span>
+             </div>
+             <div class="calc-row">
+               <span class="calc-row-label">Czas pracy silnika (od odczytu)</span>
+               <span class="calc-row-val">2h 22 min</span>
+             </div>
+             <div class="calc-row">
+               <span class="calc-row-label">Zużycie w tym czasie</span>
+               <span class="calc-row-val">~38 L</span>
+             </div>
+             <div class="calc-divider"></div>
+             <div class="calc-row">
+               <span class="calc-row-label">Średnie zużycie</span>
+               <span class="calc-highlight">~16 L/h</span>
+             </div>
+             <div class="calc-row">
+               <span class="calc-norm-src">norma tego samolotu 15–17 L/h · 90 dni</span>
+               <span class="calc-row-val ok">✓ w normie</span>
+             </div>
+           </div>
+      -->
 
       <!-- Sekcja: Dolano -->
       <div class="section">
         <div class="section-label">Dolano</div>
 
         <div class="field">
-          <div class="field-label">Ilość dolana</div>
+          <!-- Bez etykiety „Ilość dolana" (uwaga z urządzenia, 2026-09-03):
+               powtarzała nagłówek sekcji „Dolano" słowo w słowo - ta sama reguła,
+               co „URUCHOMIENIE" nad polem „Uruchomienie (UTC)" w issue #62. -->
           <div class="field-input">
-            <span style="font-family: var(--font-mono); font-size: 32px; font-weight: 700; color: var(--amber); letter-spacing: -1px;">48</span>
+            <!-- WARTOŚĆ JEST TEŻ POLEM WPISU (uwaga z urządzenia, 2026-09-02): tap
+                 w liczbę otwiera klawiaturę numeryczną (`Stepper.edit`, decimal-pad) -
+                 przyciski ± są dobre do poprawki, ale odczyt z licznika dystrybutora
+                 bywa ułamkowy („48,7") i wpisuje się go, a nie odklikuje. Miejsca po
+                 przecinku ZOSTAJĄ w wartości i w rachunku niżej - zaokrąglenie
+                 okłamywałoby pilota o jego własnym wpisie. -->
+            <span style="font-family: var(--font-mono); font-size: 32px; font-weight: 700; color: var(--amber); letter-spacing: -1px;">48,7</span>
             <span style="font-family: var(--font-mono); font-size: 18px; color: var(--amber); opacity: 0.7;">L</span>
           </div>
           <div style="font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.5px; color: var(--text-muted);">maks. dolewka: 218 L (do pełna) · zbiorniki 330 L</div>
         </div>
 
-        <!-- Fake Slider -->
-        <div>
-          <div class="slider-track">
-            <div class="slider-fill"></div>
-            <div class="slider-thumb"></div>
-          </div>
-          <div class="slider-labels">
-            <span>0 L</span>
-            <span>55 L</span>
-            <span>110 L</span>
-            <span>165 L</span>
-            <span>218 L</span>
-          </div>
-        </div>
+        <!-- Suwak-wskaźnik USUNIĘTY (2026-09-03) - patrz nota przy dawnym
+             bloku `.slider-*` w CSS. -->
       </div>
 
-      <!-- Result -->
-      <div class="result-row">
-        <div>
-          <div class="result-label">Stan po tankowaniu</div>
-          <div class="result-formula">112 + 48 = 160 L · 48% pojemności</div>
-        </div>
-        <div class="result-val">160 L</div>
-      </div>
+      <!-- Result - DOPIERO Z POMIAREM: bez stanu przed tankowaniem suma nie
+           istnieje, a wiersz z kreską udawałby wynik (reguła issue #69).
+           Po wpisaniu odczytu (112 L) sekcja wygląda tak:
 
-      <!-- Calc Box -->
-      <div class="calc-box">
-        <div class="calc-title">Kalkulacja zużycia</div>
-        <div class="calc-row">
-          <span class="calc-row-label">Czas pracy silnika (dziś)</span>
-          <span class="calc-row-val">2h 22 min</span>
-        </div>
-        <div class="calc-row">
-          <span class="calc-row-label">Zużycie w tym czasie</span>
-          <span class="calc-row-val">~38 L</span>
-        </div>
-        <div class="calc-divider"></div>
-        <div class="calc-row">
-          <span class="calc-row-label">Średnie zużycie</span>
-          <span class="calc-highlight">~16 L/h</span>
-        </div>
-        <div class="calc-row">
-          <span class="calc-norm-src">norma tego samolotu 15–17 L/h · 90 dni</span>
-          <span class="calc-row-val ok">✓ w normie</span>
-        </div>
-        <div class="calc-subtext">Punkt kontrolny — zweryfikuj z dokumentacją samolotu. Norma SP-AXA z 90 dni historii (serwer; offline „z cache", bez danych — bez porównania). Wynik wyraźnie poza normą = sprawdź odczyt; paliwomierz wygrywa.</div>
-      </div>
+           <div class="result-row">
+             <div class="result-head">
+               <div>
+                 <div class="result-label">Stan po tankowaniu</div>
+                 <div class="result-formula">112 + 48,7 = 160,7 L · 49% pojemności</div>
+               </div>
+               <div class="result-val">160,7 L</div>
+             </div>
+             Miarka: zastane 112/330 = 34% szarością, dolane 48,7/330 = 15%
+             bursztynem - łącznie 160,7 L, czyli 49% pojemności. Podziałka ćwiartek
+             na osi POJEMNOŚCI - refuelScale(330). To JEDYNA miarka ekranu.
+             <div class="result-bar">
+               <div class="result-bar-base" style="width: 34%;"></div>
+               <div class="result-bar-add" style="left: 34%; width: 15%;"></div>
+             </div>
+             <div class="result-bar-labels"><span>0 L</span><span>85 L</span><span>165 L</span><span>250 L</span><span>330 L</span></div>
+           </div>
+      -->
 
-      <!-- Amber Button -->
-      <a href="04-cockpit-ground.html" class="btn-amber">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      <!-- Amber Button - zablokowany do czasu pomiaru, powód W przycisku
+           (issue #55); po pomiarze wraca pełny `.btn-amber` z „ZAPISZ TANKOWANIE". -->
+      <div class="btn-amber disabled">
         ZAPISZ TANKOWANIE
-      </a>
+        <span class="btn-reason">Wpisz stan paliwa w zbiornikach</span>
+      </div>
 
     </div>
   </div>
@@ -291,7 +398,7 @@
   <span>·</span>
   <a href="06-tankowanie.html" class="active">06 Tankowanie</a>
   <a href="07-zmiana-zalogi.html">07 Załoga</a>
-  <a href="10d-edycja.html">10D Edycja sesji</a>
+  <a href="10d-edycja.html">10D Edycja operacji</a>
   <span>·</span>
   <a href="04-cockpit-ground.html">→ Kokpit</a>
   <span>·</span>

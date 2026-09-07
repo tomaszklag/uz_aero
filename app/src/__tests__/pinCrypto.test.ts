@@ -1,15 +1,15 @@
 /**
- * UZ Aero — testy krypto PIN-u (`infrastructure/auth/sha256.ts`, `pinCrypto.ts`).
+ * UZ Aero - testy krypto PIN-u (`infrastructure/auth/sha256.ts`, `pinCrypto.ts`).
  *
  * Własna implementacja SHA-256 (powody w jej docblocku) MUSI być przybita wektorami
- * NIST FIPS 180-4 — ręcznie napisany hash, który „wygląda dobrze", to najgorszy rodzaj
+ * NIST FIPS 180-4 - ręcznie napisany hash, który „wygląda dobrze", to najgorszy rodzaj
  * błędu: zły skrót weryfikuje się sam ze sobą i test roundtrip niczego by nie wykrył.
  */
 
 import { sha256Hex } from '../infrastructure/auth/sha256';
 import { PinCrypto } from '../infrastructure/auth/pinCrypto';
 
-describe('sha256Hex — wektory NIST', () => {
+describe('sha256Hex - wektory NIST', () => {
   it('pusty łańcuch', () => {
     expect(sha256Hex('')).toBe(
       'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
@@ -45,7 +45,7 @@ describe('PinCrypto', () => {
     expect(await crypto.verify('4321', record)).toBe(false);
   });
 
-  it('sól różnicuje rekordy — ten sam PIN, dwa różne skróty', async () => {
+  it('sól różnicuje rekordy - ten sam PIN, dwa różne skróty', async () => {
     const crypto = new PinCrypto();
     const a = await crypto.create('1234');
     const b = await crypto.create('1234');

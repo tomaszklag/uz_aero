@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UZ Aero - ZGŁOSZENIA Zgłoszenie błędu (na czas testów)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A; --text-placeholder: #5A5A5A;
+    --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
+    --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
+    --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    --phone-scale: min(1, calc((100vh - 240px) / 852px), calc((100vw - 60px) / 393px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(243,156,18,0.05) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+  .canvas-label { width:100%; max-width:460px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+  .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
+  .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
+  .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
+  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--amber); box-shadow:0 0 0 4px var(--amber-muted); animation:pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--amber-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
+  .phone {
+    width:393px; height:852px; border-radius:54px; background:var(--bg);
+    border:10px solid #0D0E12;
+    box-shadow:0 0 0 1px #1C1E24, 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);
+    overflow:hidden; position:relative; isolation:isolate; flex-shrink:0;
+    transform:scale(var(--phone-scale)); transform-origin:top center;
+    margin-bottom:calc((var(--phone-scale) - 1) * 852px);
+  }
+  .phone::before { content:''; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:24px; background:#000; z-index:100; }
+  .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
+  .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
+  .status-right { display:inline-flex; align-items:center; gap:6px; }
+  .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
+  .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--amber); }
+  .nav-strip span { color:var(--border-strong); }
+
+  /* ══ NAGŁÓWEK EKRANU POD ARKUSZEM ══════════════════════════════════════════
+     Kopia `.app-header` z 10: tytuł do lewej, prawa krawędź niesie akcje.
+     PRZYCISK ZGŁOSZENIA STOI NA SAMYM SKRAJU - za zębatką, za pillem łączności.
+     Powód jest ten sam, dla którego zębatka ma stały adres (issue #23 pkt 7):
+     przez czas testów to JEDYNY element obecny na każdym ekranie i w każdym
+     arkuszu, więc ma być pod tym samym kciukiem niezależnie od tego, gdzie
+     pilot akurat jest. */
+  .app-header { display:flex; align-items:center; justify-content:space-between; padding:8px 10px 8px 14px; border-bottom:1px solid var(--border); flex-shrink:0; }
+  .app-header-left { display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .screen-title { font-family:var(--font-display); font-size:20px; letter-spacing:2px; color:var(--text-primary); }
+  .screen-sub { font-family:var(--font-mono); font-size:10px; letter-spacing:1px; color:var(--text-muted); }
+  .app-header-right { display:flex; align-items:center; gap:2px; }
+  .icon-btn { width:38px; height:38px; display:inline-flex; align-items:center; justify-content:center; color:var(--text-muted); border-radius:9px; }
+  /* Przycisk zgłoszenia jest CICHY: ta sama szarość, co zębatka. Amber przy każdym
+     nagłówku przez cały dzień testów uczyłby oko pomijać róg ekranu - dokładnie ten
+     błąd, który issue #12 wyrzuciło z SyncChipa. Kolor niesie dopiero ARKUSZ. */
+  .bug-btn { width:30px; height:30px; display:inline-flex; align-items:center; justify-content:center; color:var(--text-muted); }
+
+  .scroll { flex:1; overflow:hidden; padding:14px; display:flex; flex-direction:column; gap:12px; opacity:0.5; }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:8px; }
+  .card-head { font-family:var(--font-mono); font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
+  .ghost-line { height:10px; border-radius:5px; background:var(--surface-raised); }
+  .ghost-line.w70 { width:70%; } .ghost-line.w45 { width:45%; } .ghost-line.w88 { width:88%; }
+
+  /* ══ ARKUSZ ════════════════════════════════════════════════════════════════
+     Rama `SheetSurface`: pas przyciemnionego tła nad panelem (widać ekran pod
+     spodem), promień 24, akcentowana krawędź górna. Akcent AMBER, nie czerwony:
+     czerwień w tej aplikacji znaczy „stop" i „skasuj", a zgłoszenie niczego nie
+     niszczy - jest stanem odchylonym od normalnego, jak wpis ręczny. */
+  .modal-overlay { position:absolute; inset:0; background:rgba(0,0,0,0.72); display:flex; align-items:flex-end; z-index:80; }
+  .modal-sheet {
+    width:100%; max-height:calc(100% - 56px); overflow-y:auto; scrollbar-width:none;
+    background:var(--surface-raised); border-top:2px solid var(--amber);
+    border-radius:24px 24px 0 0; padding:16px 16px 32px; display:flex; flex-direction:column; gap:12px;
+  }
+  .modal-sheet::-webkit-scrollbar { display:none; }
+  .modal-handle-row { position:relative; height:8px; }
+  .modal-handle { width:36px; height:4px; border-radius:2px; background:var(--border-strong); margin:0 auto; }
+  /* W ARKUSZU PRZYCISK STOI W RZĘDZIE UCHWYTU, nie w linii tytułu (tam mieszka
+     kosz - akcja destrukcyjna, issue #43). Prawy górny róg panelu, nad tytułem:
+     jedno miejsce w ekranie, jedno w arkuszu i oba na tej samej krawędzi. */
+  .modal-handle-row .bug-btn { position:absolute; right:-4px; top:-8px; }
+  .modal-title { font-family:var(--font-display); font-size:22px; letter-spacing:2px; }
+
+  .field-label { display:flex; align-items:center; gap:7px; font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  /* OPCJONALNOŚĆ MÓWI PLAKIETKA, NIGDY SŁOWO DOKLEJONE DO NAZWY (issue #62). */
+  .tag-opt { font-family:var(--font-mono); font-size:8px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); border:1px solid var(--border-strong); border-radius:999px; padding:2px 6px; }
+
+  /* Waga - siatka kart z ikonami (`OptionGrid`), nigdy natywny select. Dwie kolumny,
+     bo taki jest komponent: opcje są krótkie i rozpoznawalne po ikonie. Nic nie jest
+     podstawione - wybór ma być świadomy, a arkusz i tak wysyła się bez niego.
+     Zaznaczenie jest ZIELONE, bo w tym systemie zieleń znaczy „wybrane" wszędzie;
+     bursztyn niesie akcent CAŁEGO arkusza, nie stan pojedynczej karty. */
+  .weight-grid { display:flex; flex-wrap:wrap; gap:7px; }
+  .weight-card { display:flex; align-items:center; gap:8px; width:48.5%; min-height:48px; padding:10px; border-radius:11px; border:1px solid var(--border); background:var(--surface-raised); }
+  .weight-card .wc-icon { width:28px; height:28px; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; border-radius:7px; border:1px solid var(--border); background:var(--surface); color:var(--text-muted); }
+  .weight-card .wc-name { font-family:var(--font-mono); font-size:10px; letter-spacing:0.5px; text-transform:uppercase; color:var(--text-secondary); }
+  .weight-card.sel { border-color:var(--green-border); background:var(--green-muted); }
+  .weight-card.sel .wc-icon { border-color:var(--green-border); background:var(--green-muted); color:var(--green); }
+  .weight-card.sel .wc-name { color:var(--green); }
+
+  /* Pole opisu - JEDYNE wymagane. Wielolinijkowe i wprost w arkuszu, bez
+     zagnieżdżonego arkusza wpisu: to jest treść tego arkusza, nie jego detal. */
+  .desc-box { background:var(--surface); border:1px solid var(--green-border); border-radius:12px; padding:11px 12px; min-height:96px; font-size:14px; line-height:1.55; color:var(--text-primary); }
+  .desc-box.empty { border-color:var(--border); color:var(--text-placeholder); }
+  .caret { display:inline-block; width:1.5px; height:16px; background:var(--green); vertical-align:-3px; animation:blink 1100ms steps(1) infinite; }
+  @keyframes blink { 0%,49% { opacity:1; } 50%,100% { opacity:0; } }
+
+  /* Kontekst - wiersze odniesienia arkusza (`Sheet.rows`). Pilot ma widzieć, co
+     dokładnie zostanie dołączone; to nie jest przypis o budowie aplikacji, tylko
+     lista faktów, które sam wysyła. */
+  .ctx-head { display:flex; align-items:center; gap:7px; padding-top:2px; border-top:1px solid var(--border); }
+  .ctx-row { display:flex; justify-content:space-between; gap:12px; font-family:var(--font-mono); font-size:10px; letter-spacing:0.5px; }
+  .ctx-row .k { color:var(--text-muted); flex-shrink:1; }
+  .ctx-row .v { color:var(--text-secondary); text-align:right; }
+
+  .modal-actions { display:grid; grid-template-columns:1fr 2fr; gap:9px; padding-top:2px; }
+  .btn-cancel { display:inline-flex; align-items:center; justify-content:center; min-height:46px; border-radius:12px; border:1px solid var(--border-strong); background:transparent; color:var(--text-secondary); font-family:var(--font-display); font-size:16px; letter-spacing:1.5px; text-decoration:none; }
+  .btn-send { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:46px; border-radius:12px; background:var(--amber); color:var(--bg); font-family:var(--font-display); font-size:16px; letter-spacing:1.5px; text-decoration:none; }
+  .btn-send.off { background:var(--surface); color:var(--text-muted); border:1px solid var(--border); }
+
+  /* Stan po wysłaniu - drugi STAN tego samego arkusza, nie osobny arkusz.
+     Zdanie jest jedno i mówi PRAWDĘ offline-first: zapisane, wyśle się samo. */
+  .done-mark { align-self:center; width:52px; height:52px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); margin-top:4px; }
+  .done-text { text-align:center; font-size:13px; line-height:1.6; color:var(--text-secondary); padding:0 8px; }
+
+  /* ══ PANELE NA KANWIE ══════════════════════════════════════════════════════ */
+  .board { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:8px; }
+  .board-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .b-row { display:grid; grid-template-columns:132px 1fr; gap:12px; align-items:start; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); }
+  .b-key { font-family:var(--font-mono); font-size:10px; letter-spacing:1px; color:var(--text-primary); }
+  .b-val { font-size:11px; line-height:1.5; color:var(--text-secondary); }
+  .b-val b { color:var(--text-primary); font-weight:600; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; }
+  .chip { font-family:var(--font-mono); font-size:9.5px; letter-spacing:1px; text-transform:uppercase; border-radius:999px; padding:4px 9px; border:1px solid var(--border-strong); color:var(--text-secondary); }
+  .chip.blue { color:var(--blue); background:var(--blue-muted); border-color:var(--blue-border); }
+  .chip.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .chip.green { color:var(--green); background:var(--green-muted); border-color:var(--green-border); }
+  .chip.muted { color:var(--text-muted); }
+  .note { font-size:11px; line-height:1.55; color:var(--text-secondary); padding:2px 2px 0; }
+  .note b { color:var(--text-primary); font-weight:600; }
+</style>
+</head>
+<body>
+
+<div class="canvas-label">
+  <div class="film-strip">ZGŁOSZENIE BŁĘDU</div>
+  <div class="slug">ZGLOSZENIA · arkusz dostępny z KAŻDEGO ekranu i KAŻDEGO arkusza · issue #87</div>
+  <div class="canvas-meta"><span class="pulse"></span>na czas testów</div>
+</div>
+
+<main class="phone" role="region" aria-label="Mockup - arkusz zgłoszenia błędu nad ekranem operacji">
+  <div class="status-bar">
+    <span>09:41</span>
+    <span class="status-right">
+      <svg width="17" height="12" viewBox="0 0 17 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="4.5" y="5.5" width="3" height="6.5" rx="1"/><rect x="9" y="3" width="3" height="9" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></svg>
+      <svg width="24" height="12" viewBox="0 0 24 12" fill="none"><rect x="0.5" y="0.5" width="20" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="15" height="8" rx="1.5" fill="currentColor"/><path d="M22 4v4a2 2 0 0 0 0-4z" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+
+    <!-- EKRAN POD SPODEM. Dowolny - arkusz wchodzi wszędzie; tu 10 (operacja),
+         bo na nim najczęściej coś się nie zgadza i tam zgłoszenie ma najwięcej
+         kontekstu do dołączenia. -->
+    <div class="app-header">
+      <div class="app-header-left">
+        <div class="screen-title">SP-AXA/2026-09-04/TMK/2</div>
+        <div class="screen-sub">UTC · OKNO KOREKTY DO JUTRA 11:20</div>
+      </div>
+      <div class="app-header-right">
+        <span class="icon-btn">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6h.09A1.65 1.65 0 0 0 10 3.09V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 15 4.6h.09a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </span>
+        <!-- PRZYCISK ZGŁOSZENIA - ostatni, na samym skraju. -->
+        <span class="bug-btn" title="Zgłoś błąd">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="6" width="8" height="14" rx="4"/><path d="M8 12H3M21 12h-5M8.5 7.5 6 5M15.5 7.5 18 5M8.5 17.5 6 20M15.5 17.5 18 20"/></svg>
+        </span>
+      </div>
+    </div>
+
+    <div class="scroll">
+      <div class="card">
+        <div class="card-head">Ślad operacji</div>
+        <div class="ghost-line w88"></div><div class="ghost-line w70"></div><div class="ghost-line w45"></div>
+      </div>
+      <div class="card">
+        <div class="card-head">Paliwo</div>
+        <div class="ghost-line w70"></div><div class="ghost-line w45"></div>
+      </div>
+    </div>
+
+    <!-- ══ ARKUSZ ZGŁOSZENIA - STAN DOMYŚLNY (wypełniony) ══════════════════ -->
+    <div class="modal-overlay">
+      <div class="modal-sheet">
+        <div class="modal-handle-row">
+          <div class="modal-handle"></div>
+        </div>
+        <div class="modal-title">ZGŁOŚ BŁĄD</div>
+
+        <div class="field-label">Waga <span class="tag-opt">opcjonalne</span></div>
+        <div class="weight-grid">
+          <div class="weight-card">
+            <span class="wc-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></span>
+            <span class="wc-name">Blokuje</span>
+          </div>
+          <div class="weight-card sel">
+            <span class="wc-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 20h20L12 2Z"/><line x1="12" y1="9" x2="12" y2="14"/><line x1="12" y1="17" x2="12" y2="17"/></svg></span>
+            <span class="wc-name">Utrudnia</span>
+          </div>
+          <div class="weight-card">
+            <span class="wc-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12" y2="16"/></svg></span>
+            <span class="wc-name">Drobiazg</span>
+          </div>
+        </div>
+
+        <div class="field-label">Co się stało</div>
+        <div class="desc-box">Po korekcie godziny lądowania czas lotu na stopce nie przeliczył
+        się - dopiero po wyjściu i wejściu na ekran<span class="caret"></span></div>
+
+        <!-- CO DOŁĄCZAMY. Wiersze odniesienia, tak jak w każdym innym arkuszu.
+             Zgłoszenie ma nieść kontekst okna (issue #87: „im więcej informacji tym
+             lepiej") - i pilot ma widzieć, CO wysyła, zanim tapnie. -->
+        <div class="ctx-head field-label">Dołączamy automatycznie</div>
+        <div class="ctx-row"><span class="k">Miejsce</span><span class="v">OPERACJA (10) · tryb edycji</span></div>
+        <div class="ctx-row"><span class="k">Operacja</span><span class="v">SP-AXA/2026-09-04/TMK/2</span></div>
+        <div class="ctx-row"><span class="k">Samolot · zadanie</span><span class="v">SP-AXA · SKOKI</span></div>
+        <div class="ctx-row"><span class="k">Pilot</span><span class="v">TMK · Tomasz Małkiewicz</span></div>
+        <div class="ctx-row"><span class="k">Aplikacja</span><span class="v">1.4.0 (58) · Android 14</span></div>
+        <div class="ctx-row"><span class="k">Telefon</span><span class="v">Pixel 7a · motyw NIGHT</span></div>
+        <div class="ctx-row"><span class="k">Synchronizacja</span><span class="v">kolejka 0 · ostatnia 09:38 UTC</span></div>
+        <div class="ctx-row"><span class="k">Czas zgłoszenia</span><span class="v">2026-09-04 09:41 UTC</span></div>
+
+        <div class="modal-actions">
+          <a href="#" class="btn-cancel">ANULUJ</a>
+          <a href="#" class="btn-send">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            WYŚLIJ ZGŁOSZENIE
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- ══ DRUGI STAN ARKUSZA ═════════════════════════════════════════════════════ -->
+<aside class="board">
+  <div class="board-title">Po tapnięciu „WYŚLIJ" - ten sam arkusz, drugi stan</div>
+  <div class="b-row">
+    <span class="b-key">ZGŁOSZENIE ZAPISANE</span>
+    <span class="b-val">Tytuł, jedno zdanie („Wyśle się samo przy najbliższym połączeniu")
+    i sam przycisk <b>ZAMKNIJ</b>. Nie „wysłane": w chwili tapnięcia telefon nie wie,
+    czy paczka dojdzie, a fałszywe potwierdzenie jest w narzędziu do zgłaszania błędów
+    najgorszym możliwym zdaniem.</span>
+  </div>
+  <div class="b-row">
+    <span class="b-key">Dlaczego w ogóle</span>
+    <span class="b-val">Zniknięcie arkusza bez słowa wygląda identycznie przy sukcesie
+    i przy awarii - reguła „każda akcja musi zostawić ślad" z arkusza SyncChipa.</span>
+  </div>
+</aside>
+
+<!-- ══ GDZIE STOI PRZYCISK ════════════════════════════════════════════════════ -->
+<aside class="board">
+  <div class="board-title">Gdzie stoi przycisk - trzy ramy, zero wyjątków</div>
+  <div class="b-row">
+    <span class="b-key">ScreenHeader</span>
+    <span class="b-val">Nagłówek formularza i listy (01, 02x, 06, 07, 09b, 10, 12, 13, 15). Ostatni element prawej krawędzi - <b>za</b> plakietką kroku, pillem łączności i zębatką.</span>
+  </div>
+  <div class="b-row">
+    <span class="b-key">AppBar</span>
+    <span class="b-val">Pasek kokpitu (04, 04a, 04b, 05x). Za <b>ThemeToggle</b>, który zajął miejsce zębatki przy issue #82. Kokpit zostaje modalny: arkusz nie prowadzi nigdzie.</span>
+  </div>
+  <div class="b-row">
+    <span class="b-key">SheetSurface</span>
+    <span class="b-val">Wszystkie arkusze naraz, bo rama jest jedna. Prawy górny róg panelu, w rzędzie uchwytu - linia tytułu należy do kosza (issue #43).</span>
+  </div>
+  <div class="b-row">
+    <span class="b-key">Gdzie GO NIE MA</span>
+    <span class="b-val">Logowanie i PIN: zgłoszenie jedzie z tożsamością pilota, a przed odblokowaniem jej nie ma. Ekrany skeletonu - trwają ułamek sekundy i nie mają czego opisać.</span>
+  </div>
+  <div class="note">Arkusz zgłoszenia otwiera się <b>tam, gdzie stoi przycisk</b> - także nad innym
+  arkuszem. Dzięki temu kontekst niesie OBIE warstwy („KOKPIT · arkusz TANKOWANIE"),
+  a stos okien nie ma jak się odwrócić.</div>
+</aside>
+
+<!-- ══ CO JEDZIE W KONTEKŚCIE ═════════════════════════════════════════════════ -->
+<aside class="board">
+  <div class="board-title">Kontekst zgłoszenia - zbierany bez pytania pilota</div>
+  <div class="b-row">
+    <span class="b-key">Miejsce</span>
+    <span class="b-val">Trasa nawigacji, tytuł ekranu i tytuł arkusza, jeśli któryś był otwarty. To jedyne pole, którego pilot nie umiałby podać sam.</span>
+  </div>
+  <div class="b-row">
+    <span class="b-key">Operacja</span>
+    <span class="b-val">Sygnatura, uuid, samolot, zadanie, stan biegu silnika i liczba lotów - z <b>lokalnego rejestru</b>, więc także bez zasięgu.</span>
+  </div>
+  <div class="b-row">
+    <span class="b-key">Pilot</span>
+    <span class="b-val">Identyfikator i kod. Nazwiska nie wpisuje się w formularzu - tożsamość jest znana w całej operacji.</span>
+  </div>
+  <div class="b-row">
+    <span class="b-key">Wydanie</span>
+    <span class="b-val">Wersja aplikacji i numer buildu, system, model telefonu, motyw, wersja lokalnego schematu bazy.</span>
+  </div>
+  <div class="b-row">
+    <span class="b-key">Łączność</span>
+    <span class="b-val">Stan wskaźnika, długość kolejki, ostatnia udana synchronizacja i ostatnia próba - żeby „nie zapisało się" dało się odróżnić od „nie wysłało się".</span>
+  </div>
+  <div class="note">Zrzutu ekranu <b>nie ma i nie będzie</b>: wymaga modułu natywnego, a projekt ich
+  unika (ta sama reguła, przez którą mapa śladu ma własny renderer). Zamiast obrazka
+  jedzie stan - z niego da się odtworzyć ekran, z obrazka nie da się odtworzyć danych.</div>
+</aside>
+
+<!-- ══ PANEL ADMINISTRATORA ═══════════════════════════════════════════════════ -->
+<aside class="board">
+  <div class="board-title">Panel - moduł „Zgłoszenia" i cztery statusy</div>
+  <div class="chips">
+    <span class="chip blue">Nowe</span>
+    <span class="chip amber">W toku</span>
+    <span class="chip green">Rozwiązane</span>
+    <span class="chip muted">Odrzucone</span>
+  </div>
+  <div class="b-row">
+    <span class="b-key">Lista</span>
+    <span class="b-val">Kiedy · pilot · miejsce · waga · początek opisu · status. Filtr statusem, domyślnie <b>nowe i w toku</b> - lista ma pokazywać robotę, nie archiwum.</span>
+  </div>
+  <div class="b-row">
+    <span class="b-key">Szuflada</span>
+    <span class="b-val">Pełny opis, komplet kontekstu i zmiana statusu z <b>komentarzem</b>. Komentarz jest opcjonalny wszędzie poza „Odrzucone" - odrzucenie bez powodu nie mówi zgłaszającemu nic.</span>
+  </div>
+  <div class="b-row">
+    <span class="b-key">Czego nie ma</span>
+    <span class="b-val">Kasowania zgłoszeń i odpowiedzi do pilota. Pierwsze byłoby jedyną w panelu operacją niszczącą dane, drugie - komunikatorem, którego testy nie potrzebują.</span>
+  </div>
+  <div class="note">Panel 2.0 <b>nie ma makiet</b> (`docs/panel-2.0.md` §3.7) - ekran powstaje wprost
+  w <code>admin/</code>. Ten panel opisuje decyzje, nie wygląd.</div>
+</aside>
+
+<aside class="board">
+  <div class="board-title">Po testach - jak to zdjąć</div>
+  <div class="b-row">
+    <span class="b-key">Jedna flaga</span>
+    <span class="b-val"><b>BUG_REPORTER_ENABLED</b> w <code>app/src/ui/components/bug/bugReporter.ts</code>: gasi przycisk we wszystkich trzech ramach naraz. Nic więcej nie trzeba dotykać, żeby aplikacja wyglądała jak przed testami.</span>
+  </div>
+  <div class="b-row">
+    <span class="b-key">Jeden katalog</span>
+    <span class="b-val">Cały mechanizm telefonu mieszka w <code>components/bug/</code> plus port, tabela i wysyłka. Usunięcie po testach jest wtedy decyzją, a nie archeologią.</span>
+  </div>
+</aside>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="01-moj-dzien.html">01 Mój dzień</a>
+  <a href="04a-cockpit-ground.html">04A Kokpit</a>
+  <a href="10-statystyki.html">10 Operacja</a>
+  <a href="13-ustawienia.html">13 Ustawienia</a>
+  <span>·</span>
+  <a href="LOADERY.html">LOADERY</a>
+  <a href="ZGLOSZENIA.html" class="active">ZGŁOSZENIA</a>
+</nav>
+
+</body>
+</html>

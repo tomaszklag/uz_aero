@@ -1,29 +1,40 @@
 /**
- * UZ Aero — AppBar
+ * UZ Aero - AppBar
  *
  * Górny pasek kontekstu, wspólny dla ekranów dnia lotnego (.app-bar / .compact-bar
  * w mockupach): po lewej samolot i trasa, po prawej wskaźnik łączności i akcje.
  *
  * Samolot jest wyróżniony kolorem, bo to jedyna informacja, która musi być czytelna
- * jednym spojrzeniem — pilot lata kilkoma maszynami i pomyłka kosztuje rozjazd danych.
+ * jednym spojrzeniem - pilot lata kilkoma maszynami i pomyłka kosztuje rozjazd danych.
  */
 
 import React from 'react';
-import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
-import { Icon } from '../foundation/Icon';
+import { BugButton } from '../bug/BugButton';
 
 export interface AppBarProps {
-  /** Znak samolotu (np. „SP-AXA"). */
+  /**
+   * Tytuł paska: SYGNATURA operacji („SP-AXA/2026-09-01/AKO/1"), a gdy operacja
+   * numeru jeszcze nie ma (przed uruchomieniem silnika) - sam znak samolotu.
+   * Sygnatura ZASTĘPUJE znak, bo się od niego zaczyna (issue #68, reguła z DayCard);
+   * surowego identyfikatora maszyny tu nie podajemy nigdy (uwaga z urządzenia,
+   * 2026-09-02: nagłówek kokpitu pokazywał guid z panelu).
+   */
   aircraft?: string | null;
   /** Druga linia: trasa i operacja (np. „EPKK → EPWA · SKOKI"). */
   subtitle?: string | null;
-  /** Prawa strona — zwykle `SyncChip`, ewentualnie akcje. */
+  /**
+   * Prawa strona - `SyncChip`, plakietka stanu i akcje paska.
+   *
+   * `onSettings` (koło zębate `.settings-btn` z mockupów kokpitu) USUNIĘTE przy
+   * issue #82: ustawienia mają odtąd JEDNO wejście, na „Mój dzień", a w miejscu
+   * zębatki w kokpicie stoi `ThemeToggle`. Nowej akcji nie dokładamy tu propem -
+   * pasek przyjmuje ją przez `right`, bo tylko wołający wie, co obok czego stoi.
+   */
   right?: React.ReactNode;
-  /** Koło zębate po prawej (`.settings-btn` z mockupów kokpitu). */
-  onSettings?: () => void;
   /** Kompaktowy wariant dla trybu w locie (mniej pionowego miejsca). */
   compact?: boolean;
   style?: ViewStyle;
@@ -33,7 +44,6 @@ export function AppBar({
   aircraft,
   subtitle,
   right,
-  onSettings,
   compact = false,
   style,
 }: AppBarProps) {
@@ -54,39 +64,31 @@ export function AppBar({
       ]}
     >
       <View style={styles.left}>
-        <AppText variant="mono" tone="green" style={styles.aircraft}>
-          {aircraft ?? '—'}
+        {/* Sygnatura dostaje węższy odstęp międzyliterowy niż goły znak (reguła
+            z DayCard): 23 znaki przy ls 1,5 rozpychały pasek i spychały chipy.
+            Bez `numberOfLines` - identyfikator ucięty wielokropkiem przestaje
+            identyfikować, więc w skrajnym wypadku ma się zawinąć, nie zniknąć. */}
+        <AppText
+          variant="mono"
+          tone="green"
+          style={[styles.aircraft, (aircraft?.length ?? 0) > 8 && styles.signature]}
+        >
+          {aircraft ?? '-'}
         </AppText>
         {subtitle != null && (
           // Druga linia niesie kody ICAO, a te wg `CLAUDE.md` należą do JetBrains Mono
-          // — nie do Archivo. Mockup `.route-line`: mono 11 px / ls 1.
+          // - nie do Archivo. Mockup `.route-line`: mono 11 px / ls 1.
           <AppText variant="mono" tone="muted" style={styles.subtitle}>
             {subtitle}
           </AppText>
         )}
       </View>
 
+      {/* Zgłoszenie na SAMYM SKRAJU - za `ThemeToggle`, który zajął miejsce zębatki
+          przy issue #82. Kokpit zostaje modalny: arkusz nie prowadzi nigdzie. */}
       <View style={styles.right}>
         {right}
-        {onSettings != null && (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Ustawienia"
-            onPress={onSettings}
-            hitSlop={10}
-            style={({ pressed }) => [
-              styles.settings,
-              {
-                borderRadius: 7,
-                borderWidth: theme.borderWidth,
-                borderColor: theme.colors.border,
-                opacity: pressed ? 0.6 : 1,
-              },
-            ]}
-          >
-            <Icon name="settings" size={16} color={theme.colors.textMuted} />
-          </Pressable>
-        )}
+        <BugButton />
       </View>
     </View>
   );
@@ -101,7 +103,7 @@ const styles = StyleSheet.create({
   },
   left: { flexShrink: 1, gap: 2 },
   aircraft: { letterSpacing: 1.5 },
+  signature: { fontSize: 12, lineHeight: 16, letterSpacing: 0.5 },
   subtitle: { fontSize: 11, lineHeight: 15, letterSpacing: 1 },
   right: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 0 },
-  settings: { width: 26, height: 26, alignItems: 'center', justifyContent: 'center' },
 });

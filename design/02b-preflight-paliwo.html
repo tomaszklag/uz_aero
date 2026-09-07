@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 02B Odczyt paliwa</title>
+<title>UZ Aero - 02B Odczyt paliwa</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -101,21 +101,24 @@
   .modal-title {
     font-family: var(--font-display); font-size: 24px; letter-spacing: 2px; color: var(--text-primary);
   }
+  /* Metryka pola zmniejszona ~30% (uwaga z urządzenia, 2026-09-02) - cyfry 22 px,
+     padding 8 px, min-height 46 px (cel dotykowy). Wspólna z arkuszem oleju 02I;
+     w kodzie: valueFieldMetrics.ts. */
   .modal-input-row {
     display: flex; align-items: center; gap: 10px;
     background: var(--surface); border: 2px solid var(--amber-border);
-    border-radius: 14px; padding: 14px 18px;
+    border-radius: 14px; padding: 8px 16px; min-height: 46px;
     box-shadow: 0 0 0 3px rgba(243,156,18,0.06);
   }
   .modal-input-val {
-    font-family: var(--font-mono); font-size: 36px; font-weight: 700;
-    letter-spacing: 3px; color: var(--amber); flex: 1;
+    font-family: var(--font-mono); font-size: 22px; font-weight: 700;
+    letter-spacing: 2px; color: var(--amber); flex: 1;
   }
   .modal-input-unit {
-    font-family: var(--font-mono); font-size: 18px; color: var(--text-secondary);
+    font-family: var(--font-mono); font-size: 14px; color: var(--text-secondary);
   }
   .modal-cursor {
-    display: inline-block; width: 2px; height: 36px; background: var(--amber);
+    display: inline-block; width: 2px; height: 24px; background: var(--amber);
     margin-left: 4px; vertical-align: middle;
     animation: blink 1s step-end infinite;
   }
@@ -126,11 +129,26 @@
     padding: 0 2px;
   }
   .modal-ref-val { color: var(--text-secondary); }
+  /* Szlak historii odczytu (uwaga z urządzenia, 2026-09-02: przeniesiony z sekcji
+     02A do arkusza) - te same klasy, co szlaki na 02A. */
+  .trail { display:flex; flex-direction:column; gap:0; border-top:1px solid var(--border); margin-top:2px; padding-top:10px; }
+  .trail-row { display:flex; align-items:flex-start; gap:10px; padding-bottom:10px; position:relative; }
+  .trail-row:last-child { padding-bottom:0; }
+  .trail-line { position:absolute; left:7px; top:16px; bottom:0; width:1px; background:var(--border); }
+  .trail-row:last-child .trail-line { display:none; }
+  .trail-dot { width:15px; height:15px; border-radius:50%; flex-shrink:0; margin-top:1px; }
+  .trail-dot.amber { background:var(--amber-muted); border:1px solid var(--amber-border); }
+  .trail-dot.neutral { background:var(--surface-raised); border:1px solid var(--border-strong); }
+  .trail-body { flex:1; }
+  .trail-title { font-family:var(--font-body); font-size:11px; font-weight:400; color:var(--text-secondary); }
+  .trail-title.amber { color:var(--amber); }
+  .trail-meta { font-family:var(--font-mono); font-size:9px; color:var(--text-muted); margin-top:2px; line-height:1.5; }
+  .trail-meta b { color:var(--text-secondary); font-weight:500; }
   .modal-warning {
     display: flex; align-items: flex-start; gap: 9px;
     background: var(--amber-muted); border: 1px solid var(--amber-border);
     border-radius: 12px; padding: 12px 14px;
-    font-family: var(--font-mono); font-size: 10px; color: var(--amber); line-height: 1.6;
+    font-family: var(--font-body); font-size: 12px; color: var(--amber); line-height: 1.5;
   }
   .modal-warning strong { color: var(--amber); }
   .modal-actions { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; }
@@ -149,17 +167,26 @@
     text-decoration: none; cursor: pointer;
     box-shadow: 0 0 24px rgba(46,204,113,0.3);
   }
+  /* Blokada zapisu = przycisk `disabled` z POWODEM W ŚRODKU (issue #55, tu rozciągnięte
+     na arkusze uwagą z urządzenia 2026-08-29). Kolumna, bo powód staje pod napisem.
+     Bez przygaszenia opacity - bursztyn pod 0.45 przestaje być ostrzeżeniem, a
+     wyszarzenie niosą już kolory tła i napisu. */
+  .modal-btn-confirm.disabled {
+    background: var(--surface-hover); color: var(--text-muted); box-shadow: none;
+    flex-direction: column; gap: 5px; cursor: not-allowed; pointer-events: none;
+  }
+  .btn-reason { font-family: var(--font-mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--amber); text-align: center; line-height: 1.5; }
 </style>
 </head>
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 02B</span>
+  <span class="film-strip">UZ AERO - 02B</span>
   <span class="slug">przejęcie · odczyt paliwa</span>
   <span class="canvas-meta">Modal · rozbieżność</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Odczyt paliwa modal">
+<main class="phone" role="region" aria-label="Mockup - Odczyt paliwa modal">
   <div class="status-bar">
     <span>9:41</span>
     <span class="status-right">
@@ -213,24 +240,92 @@
           <span class="modal-input-unit">L</span>
         </div>
 
+        <!-- BANER STOI ZARAZ POD POLEM WPISU, przed wierszami odniesienia (uwaga
+             z urządzenia, 2026-09-02, trzecia tura: na końcu treści ginął pod
+             wysuniętą klawiaturą - pilot patrzy tam, gdzie pisze, i tam ma dostać
+             odpowiedź; ostrzeżenie liczy się na każdą zmianę wartości).
+
+             BANER MÓWI O WARTOŚCI, PRZYCISK O TYM, CZEMU NIE DA SIĘ ZAPISAĆ
+             (uwaga z urządzenia, 2026-08-29). To są dwie różne rzeczy i mają dwa różne
+             miejsca - a arkusz odczytu mieszał je w jednym banerze:
+
+              • BANER (ten niżej, „Zanim potwierdzisz") = zdanie o LICZBIE, którą pilot
+                właśnie wpisał: różni się od szacunku, przekracza pojemność, schodzi
+                pod minimum. Wpis jest czytelny, zapis możliwy - pilot ma tylko wiedzieć,
+                na co patrzy. Ostrzeżenie, nie przeszkoda;
+
+              • PRZYCISK = powód, dla którego zapisu NIE MA: pole puste albo wpis
+                nieczytelny. Wtedy „Potwierdź" jest `disabled`, a powód stoi bursztynem
+                W JEGO ŚRODKU (`.btn-reason`, issue #55) - nigdy jako baner nad akcjami
+                i nigdy jako przycisk, który po tapnięciu po prostu nic nie robi.
+
+             Do 2026-08-29 puste pole dawało baner „Wpisz wartość, żeby zapisać", a
+             „Potwierdź" wyglądał na aktywny i milczał. Baner nie jest miejscem na
+             blokadę: pilot szuka odpowiedzi przy przycisku, w który właśnie tapnął.
+
+             PUSTE POLE NIE DOSTAJE JUŻ NAWET ZDANIA W PRZYCISKU (druga uwaga tego dnia:
+             „nie ma sensu pisać «wpisz wartość, żeby zapisać» - wiadomo, że jak pole
+             jest wymagane, to dlatego przycisk jest disabled"). To ten WĄSKI wyjątek,
+             który reguła issue #55 przewiduje: blokadę widać z kontrolki nad przyciskiem.
+             Wpis NIECZYTELNY zdanie zachowuje - czerwona ramka mówi, KTÓRE pole, ale
+             nie mówi, czemu zapisu nie ma.
+
+             CO MÓWI BANER PRZY PALIWIE (trzy przypadki, logic/readingSheetWarning.ts):
+              • „Odczyt 340 L przekracza pojemność zbiorników (330 L)";
+              • „Poprzednik (AKO) zdał maszynę z 140 L, a wpisujesz 100 L. Ktoś tankował
+                poza aplikacją?" - sąsiad z łańcucha wykryty po godzinach wpisu;
+              • „Po locie nie mogło zostać 200 L - w zbiornikach było najwyżej 148 L".
+             Ta sama zasada obowiązuje licznik (cofnięcie, rozjazd z sąsiadem) i olej
+             (zbiornik, minimum, przyrost bez dolewki). Żadne z nich nie blokuje: to
+             paliwomierz i licznik mają rację, a ktoś mógł dolać poza aplikacją. -->
+        <div class="modal-warning">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span>Odczyt różni się od szacunku o <strong>−30 L</strong>. Sprawdź stan zbiorników przed zatwierdzeniem.</span>
+        </div>
+
+        <!-- SZLAK HISTORII przeniesiony z sekcji 02A (uwaga z urządzenia, 2026-09-02:
+             „podobnie przenieśmy informacje o odczytach paliwa i motogodzin do
+             popupów", jak wcześniej olej) - domknięty od dołu taką samą kreską,
+             jaką się otwiera. -->
+        <div class="trail">
+          <div class="trail-row">
+            <div class="trail-line"></div>
+            <div class="trail-dot amber"></div>
+            <div class="trail-body">
+              <div class="trail-title amber">Tankowanie · 21 CZERWCA 09:15</div>
+              <div class="trail-meta">dolano <b>+45 L</b> · w zbiorniku <b>185 L</b></div>
+            </div>
+          </div>
+          <div class="trail-row">
+            <div class="trail-dot neutral"></div>
+            <div class="trail-body">
+              <div class="trail-title">J. Kowalski latał · 1h 30min</div>
+              <div class="trail-meta">śr. <b>17.5 L/h</b> · zostało <b>150 L</b></div>
+            </div>
+          </div>
+        </div>
+        <div style="border-top:1px solid var(--border);"></div>
+
         <div class="modal-ref">
           <span>Przekazane przez poprzednika</span>
           <span class="modal-ref-val">150 L</span>
         </div>
         <div class="modal-ref">
-          <span>Pojemność zbiorników · SP-AXA</span>
+          <span>Pojemność zbiorników</span>
           <span class="modal-ref-val">330 L</span>
-        </div>
-
-        <div class="modal-warning">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <span>Odczyt różni się od szacunku o <strong>−30 L</strong>. Sprawdź stan zbiorników przed zatwierdzeniem.</span>
         </div>
 
         <div class="modal-actions">
           <a href="02a-preflight.html" class="modal-btn-cancel">Anuluj</a>
           <a href="02a-preflight.html" class="modal-btn-confirm">Potwierdź</a>
         </div>
+        <!-- Stan zablokowany tego samego rzędu akcji (pole puste albo wpis nieczytelny):
+             <span class="modal-btn-confirm disabled">
+               Potwierdź
+               <span class="btn-reason">Wpisz wartość, żeby zapisać</span>
+             </span>
+             - kolumna, bursztynowy podpis, bez przygaszenia opacity (bursztyn pod 0.45
+             przestaje być ostrzeżeniem). Style niżej. -->
       </div>
     </div>
 
@@ -244,6 +339,7 @@
   <a href="02a-preflight.html">02A Paliwo/MH</a>
   <a href="02b-preflight-paliwo.html" class="active">02B Paliwo modal</a>
   <a href="02c-preflight-motogodziny.html">02C MH modal</a>
+  <a href="02i-preflight-olej.html">02I Olej modal</a>
   <span>·</span>
   <a href="04a-cockpit-ground.html">04A Kokpit →</a>
 </nav>

@@ -1,7 +1,7 @@
 /**
- * UZ Aero — testy geometrii unoszenia pola nad klawiaturę (`ui/hooks/keyboardGeometry`).
+ * UZ Aero - testy geometrii unoszenia pola nad klawiaturę (`ui/hooks/keyboardGeometry`).
  *
- * Samego zachowania klawiatury tu nie sprawdzimy — jest natywne, w Node nie istnieje.
+ * Samego zachowania klawiatury tu nie sprawdzimy - jest natywne, w Node nie istnieje.
  * Testowalna jest arytmetyka, i to ona psuła się trzy tury z rzędu: O ILE przewinąć listę
  * i ILE miejsca ustąpić klawiaturze. Wszystkie liczby w układzie OKNA (`measureInWindow`),
  * więc porównujemy krawędzie z jednego układu.
@@ -25,7 +25,7 @@ const VIEWPORT_BOTTOM = 500;
 const WINDOW = 873;
 
 describe('scrollDeltaForInput', () => {
-  it('pole „Oznaczenie klienta" wciśnięte pod klawiaturę — przewijamy o brakującą różnicę', () => {
+  it('pole „Oznaczenie klienta" wciśnięte pod klawiaturę - przewijamy o brakującą różnicę', () => {
     // Dół pola na 640, krawędź listy na 500: brakuje 140 plus zapas 24.
     expect(scrollDeltaForInput(640, VIEWPORT_BOTTOM)).toBe(164);
   });
@@ -34,16 +34,16 @@ describe('scrollDeltaForInput', () => {
     expect(scrollDeltaForInput(300, VIEWPORT_BOTTOM)).toBe(0);
   });
 
-  it('nigdy nie zwraca wartości ujemnej — przewinięcie „w minus" byłoby szarpnięciem', () => {
+  it('nigdy nie zwraca wartości ujemnej - przewinięcie „w minus" byłoby szarpnięciem', () => {
     expect(scrollDeltaForInput(0, VIEWPORT_BOTTOM)).toBe(0);
   });
 
-  it('pole dokładnie na krawędzi listy liczy się jako zakryte — o szerokość zapasu', () => {
+  it('pole dokładnie na krawędzi listy liczy się jako zakryte - o szerokość zapasu', () => {
     // Technicznie widoczne, wizualnie wciśnięte pod klawiaturę.
     expect(scrollDeltaForInput(VIEWPORT_BOTTOM, VIEWPORT_BOTTOM)).toBe(KEYBOARD_CLEARANCE);
   });
 
-  it('liczymy DOŁEM pola — wieloliniowe z górą nad krawędzią wciąż trzeba podnieść', () => {
+  it('liczymy DOŁEM pola - wieloliniowe z górą nad krawędzią wciąż trzeba podnieść', () => {
     // Pole 400–520 przy krawędzi 500: góra widoczna, dół nie. Sama góra uznałaby pole
     // za widoczne i to był błąd, który pilot widział jako „ucięty input".
     expect(scrollDeltaForInput(520, VIEWPORT_BOTTOM)).toBe(44);
@@ -71,22 +71,22 @@ describe('scrollDeltaForInput', () => {
 
 describe('keyboardBottomOffset', () => {
   it('Android edge-to-edge: bierze miarę do dołu okna, gdy „height" pomija pasek nawigacji', () => {
-    // Klawiatura 310 dp stoi nad paskiem 48 dp, a okno sięga pod pasek — arkusz musi
+    // Klawiatura 310 dp stoi nad paskiem 48 dp, a okno sięga pod pasek - arkusz musi
     // ustąpić 358 dp, inaczej przyciski kończą pod klawiaturą.
     expect(keyboardBottomOffset(310, WINDOW - 358, WINDOW)).toBe(358);
   });
 
-  it('iOS: obie miary zgodne — wynik bez zmian', () => {
+  it('iOS: obie miary zgodne - wynik bez zmian', () => {
     expect(keyboardBottomOffset(336, WINDOW - 336, WINDOW)).toBe(336);
   });
 
   it('nie schodzi poniżej zmierzonej wysokości klawiatury', () => {
-    // `screenY` niżej niż krawędź klawiatury (inny układ współrzędnych) — pomiar
+    // `screenY` niżej niż krawędź klawiatury (inny układ współrzędnych) - pomiar
     // z `height` zostaje, bo mniejsza wartość zasłoniłaby przyciski.
     expect(keyboardBottomOffset(310, WINDOW - 120, WINDOW)).toBe(310);
   });
 
-  it('odrzuca wynik nierealny — brak `screenY` nie wypycha arkusza za ekran', () => {
+  it('odrzuca wynik nierealny - brak `screenY` nie wypycha arkusza za ekran', () => {
     expect(keyboardBottomOffset(310, 0, WINDOW)).toBe(310);
   });
 
@@ -107,7 +107,7 @@ describe('sheetBottomPad', () => {
   const DESIGN = 32;
   const GAP = 16;
 
-  it('klawiatura wysunięta: sam odstęp — pasek nawigacji jest już w jej wysokości', () => {
+  it('klawiatura wysunięta: sam odstęp - pasek nawigacji jest już w jej wysokości', () => {
     expect(sheetBottomPad(DESIGN, NAV_BAR, 358, GAP)).toBe(GAP);
   });
 
@@ -119,23 +119,23 @@ describe('sheetBottomPad', () => {
 
   it('nawigacja gestami: zapas z mockupu zostaje podłogą', () => {
     // Inset 24 dp + 16 = 40 > 32, ale przy insecie zerowym arkusz nie może przykleić
-    // się do krawędzi — wtedy broni go wartość z mockupu.
+    // się do krawędzi - wtedy broni go wartość z mockupu.
     expect(sheetBottomPad(DESIGN, 24, 0, GAP)).toBe(40);
     expect(sheetBottomPad(DESIGN, 0, 0, GAP)).toBe(DESIGN);
   });
 
-  it('każdy arkusz wnosi własny zapas z mockupu — reguła go nie normalizuje', () => {
+  it('każdy arkusz wnosi własny zapas z mockupu - reguła go nie normalizuje', () => {
     expect(sheetBottomPad(26, 0, 0, GAP)).toBe(26);
     expect(sheetBottomPad(30, 0, 0, GAP)).toBe(30);
   });
 });
 
 /**
- * SUFIT ARKUSZA (zgłoszenie z urządzenia, 2026-08-14 — arkusz korekty zdarzenia).
+ * SUFIT ARKUSZA (zgłoszenie z urządzenia, 2026-08-14 - arkusz korekty zdarzenia).
  *
  * Arkusz z dużą treścią dobijał do samej góry telefonu i przestawał wyglądać jak wstawka
  * NAD ekranem. Reguła jest wspólna dla wszystkich arkuszy (`SheetSurface`), więc mieszka
- * tu razem z resztą geometrii — i tu jest sprawdzalna bez urządzenia.
+ * tu razem z resztą geometrii - i tu jest sprawdzalna bez urządzenia.
  */
 describe('sheetMaxHeight', () => {
   it('zostawia pas tła nad arkuszem, żeby było widać ekran pod spodem', () => {
@@ -153,7 +153,7 @@ describe('sheetMaxHeight', () => {
 
   it('nie schodzi poniżej 240 dp, choćby pomiary przyszły niespójne', () => {
     // Arkusz bez miejsca na rząd akcji jest gorszy niż arkusz zachodzący na pasek
-    // statusu — a klawiatura mierzona w złym układzie współrzędnych potrafi „zjeść"
+    // statusu - a klawiatura mierzona w złym układzie współrzędnych potrafi „zjeść"
     // całe okno (patrz `keyboardBottomOffset`).
     expect(sheetMaxHeight(WINDOW, 900, 47)).toBe(240);
   });

@@ -1,7 +1,7 @@
 /**
- * UZ Aero — lista podpowiedzi lotnisk (mockup `02f-preflight-lotnisko.html`).
+ * UZ Aero - lista podpowiedzi lotnisk (mockup `02f-preflight-lotnisko.html`).
  *
- * Lista KART, nie natywny dropdown — twarda reguła projektu (`CLAUDE.md`). Stoi
+ * Lista KART, nie natywny dropdown - twarda reguła projektu (`CLAUDE.md`). Stoi
  * w przepływie treści, a nie jako nakładka nad polem: przy podniesionej klawiaturze
  * nakładka i tak nie zmieściłaby się w widoku, a treść w przepływie zawsze daje się
  * doprzewijać (`docs/architektura-kodu.md` §2). Tapnięcie działa przy otwartej
@@ -14,7 +14,7 @@
  * Od issue #14 mieszka w arkuszu wyboru lotniska (`sheets/AirfieldSheet.tsx`), a nie pod
  * wierszem formularza: pole trasy jest przyciskiem, a szukanie dzieje się w arkuszu.
  *
- * Komponent jest CZYSTYM UKŁADEM — wiersze przychodzą gotowe z `airfieldRow`, razem
+ * Komponent jest CZYSTYM UKŁADEM - wiersze przychodzą gotowe z `airfieldRow`, razem
  * z decyzją, co wchodzi w drugą linię. Kształt wiersza mieszka TUTAJ, a nie przy module
  * liczącym (lustro reguły panelu w `TrackMap.tsx`).
  */
@@ -25,9 +25,10 @@ import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
 import { CheckIcon } from '../foundation/CheckIcon';
+import { IconAction } from '../data/IconAction';
 import { toneColors } from '../tone';
 
-/** Wiersz listy podpowiedzi — gotowy do narysowania, bez logiki w komponencie. */
+/** Wiersz listy podpowiedzi - gotowy do narysowania, bez logiki w komponencie. */
 export interface AirfieldRow {
   readonly icao: string;
   readonly name: string;
@@ -36,19 +37,31 @@ export interface AirfieldRow {
 }
 
 export interface AirfieldSuggestionsProps {
-  /** Nagłówek listy — mówi, CZYM jest ta lista („Wybrane", „Najbliżej Ciebie"). */
+  /** Nagłówek listy - mówi, CZYM jest ta lista („Wybrane", „Najbliżej Ciebie"). */
   label: string;
   rows: readonly AirfieldRow[];
   /**
-   * Kod, który pilot ma już w polu — wiersz z nim dostaje zielone obramowanie i ptaszek.
+   * Kod, który pilot ma już w polu - wiersz z nim dostaje zielone obramowanie i ptaszek.
    *
    * Bez tego arkusz otwarty ponownie wyglądał tak samo jak przy pierwszym wyborze:
    * lista propozycji, na której nic nie mówiło, że coś jest już wybrane (zgłoszenie
-   * z urządzenia). Znacznik jest KSZTAŁTEM, nie samym kolorem — działa w słońcu,
-   * w motywach jasnych i przy daltonizmie (ta sama zasada co w `CardPicker`).
+   * z urządzenia). Znacznik jest KSZTAŁTEM, nie samym kolorem - działa w słońcu,
+   * w motywie jasnym i przy daltonizmie (ta sama zasada co w `CardPicker`).
    */
   selectedIcao?: string | null;
   onPick: (icao: string) => void;
+  /**
+   * Zdjęcie wyboru - „×" na wybranym wierszu, W MIEJSCU ptaszka (issue #62).
+   *
+   * Do #62 rezygnacja z trasy była osobnym linkiem „Wyczyść lotnisko (EPKK)" na dnie
+   * arkusza: napis w miejscu, w którym nic innego nie stoi, opisujący wartość widoczną
+   * dwa centymetry wyżej. Akcja należy do WARTOŚCI, więc stoi przy niej.
+   *
+   * Ptaszek ustępuje bez straty tylko tam, gdzie sekcja i tak nazywa się „Wybrane" -
+   * w liście wyników znacznik zostaje, bo tam odróżnia jeden wiersz od kilku podobnych
+   * (kształt, nie sam kolor: słońce, motyw jasny, daltonizm).
+   */
+  onClear?: (icao: string) => void;
   style?: ViewStyle;
 }
 
@@ -57,6 +70,7 @@ export function AirfieldSuggestions({
   rows,
   selectedIcao = null,
   onPick,
+  onClear,
   style,
 }: AirfieldSuggestionsProps) {
   const { theme } = useTheme();
@@ -66,7 +80,7 @@ export function AirfieldSuggestions({
 
   return (
     <View style={[{ gap: theme.spacing.sm }, style]}>
-      {/* Sam nagłówek listy — bez adnotacji „katalog w telefonie" (issue #14).
+      {/* Sam nagłówek listy - bez adnotacji „katalog w telefonie" (issue #14).
           Skąd biorą się podpowiedzi, jest pytaniem PROGRAMISTY, nie pilota: dla niego
           liczy się, że lista jest i że działa; że nie zniknie bez zasięgu, przekona się
           w chwili, w której nie zniknie. */}
@@ -83,7 +97,7 @@ export function AirfieldSuggestions({
               key={row.icao}
               accessibilityRole="button"
               accessibilityState={{ selected }}
-              accessibilityLabel={`${row.icao} ${row.name}${selected ? ' — wybrane' : ''}`}
+              accessibilityLabel={`${row.icao} ${row.name}${selected ? ' - wybrane' : ''}`}
               onPress={() => onPick(row.icao)}
               style={({ pressed }) => [
                 styles.row,
@@ -120,9 +134,21 @@ export function AirfieldSuggestions({
                 )}
               </View>
 
-              {/* Ptaszek w kółku — ten sam znacznik wyboru co na liście samolotów (02).
-                  Kształt, nie sam kolor: działa w słońcu i przy daltonizmie. */}
-              {selected && (
+              {/* Ptaszek w kółku - ten sam znacznik wyboru co na liście samolotów (02).
+                  Kształt, nie sam kolor: działa w słońcu i przy daltonizmie.
+
+                  Z „×" (sekcja „Wybrane") ptaszek USTĘPUJE, zamiast stać obok: prawa
+                  krawędź wiersza niesie dokładnie jedną rzecz, a nazwa sekcji mówi już,
+                  że to jest wybrane - znacznik powtarzałby jej nagłówek. */}
+              {selected && onClear != null && (
+                <IconAction
+                  name="clear"
+                  accessibilityLabel={`Wyczyść lotnisko ${row.icao}`}
+                  onPress={() => onClear(row.icao)}
+                  size={15}
+                />
+              )}
+              {selected && onClear == null && (
                 <View style={[styles.check, { backgroundColor: green.accent }]}>
                   <CheckIcon size={12} color={theme.colors.bg} />
                 </View>

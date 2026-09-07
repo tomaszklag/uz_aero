@@ -1,14 +1,14 @@
 /**
- * UZ Aero (serwer) — kształt wiersza tabeli `sessions` i jego mapowanie na `SessionRow`.
+ * UZ Aero (serwer) - kształt wiersza tabeli `sessions` i jego mapowanie na `SessionRow`.
  *
  * Wydzielone z `sessionsProjection.ts`, bo od przekroju 2 panelu czyta tę tabelę DRUGI
- * adapter (`admin/sessionsRepo.ts` — lista dni ze złączeniami). Dwie kopie mapowania
+ * adapter (`admin/sessionsRepo.ts` - lista dni ze złączeniami). Dwie kopie mapowania
  * kolumn to dokładnie ta klasa błędu, przed którą broni `test/schema.test.ts`: literówka
- * w nazwie kolumny nie jest błędem typów, tylko `undefined` w runtime — a rozjazd dwóch
+ * w nazwie kolumny nie jest błędem typów, tylko `undefined` w runtime - a rozjazd dwóch
  * kopii byłby widoczny dopiero jako różnica między listą a szczegółem dnia.
  *
  * Model persystencji zostaje PRYWATNY dla `infrastructure/` (`docs/architektura-panelu-serwer.md`
- * §1.1): panel widzi wyłącznie DTO, warstwa aplikacji — `SessionRow`.
+ * §1.1): panel widzi wyłącznie DTO, warstwa aplikacji - `SessionRow`.
  */
 
 import { isOperationType } from '@uzaero/domain';
@@ -45,10 +45,22 @@ export interface SessionDbRow {
   jumpers_solo: number | null;
   drop_alt_sum_ft: number | null;
   drop_alt_count: number | null;
+  oil_level_l: number | null;
+  oil_added_l: number | null;
+  // Log dnia (panel 2.0). Kolumny BIGINT wracają z `pg` NAPISEM, stąd konwersja niżej.
+  engine_start_at: string | number | null;
+  engine_stop_at: string | number | null;
+  first_takeoff_at: string | number | null;
+  last_landing_at: string | number | null;
+  departure_icao: string | null;
+  arrival_icao: string | null;
+  fuel_added_l: number | null;
+  manual_entry: boolean | null;
+  oil_after_l: number | null;
 }
 
 /**
- * Lista kolumn projekcji z aliasem tabeli — żeby zapytanie ze złączeniami nie musiało
+ * Lista kolumn projekcji z aliasem tabeli - żeby zapytanie ze złączeniami nie musiało
  * jej przepisywać, a `SELECT *` nie wciągał kolumn dołączonych tabel o tych samych
  * nazwach (`updated_at` jest w `sessions`, `aircraft` i `pilots`).
  */
@@ -83,19 +95,33 @@ export const sessionColumns = (alias: string): string =>
     'jumpers_solo',
     'drop_alt_sum_ft',
     'drop_alt_count',
+    'oil_level_l',
+    'oil_added_l',
+    'engine_start_at',
+    'engine_stop_at',
+    'first_takeoff_at',
+    'last_landing_at',
+    'departure_icao',
+    'arrival_icao',
+    'fuel_added_l',
+    'manual_entry',
+    'oil_after_l',
   ]
     .map((column) => `${alias}.${column}`)
     .join(', ');
 
 /**
- * `BIGINT` wraca z `pg` jako string (nie mieści się w `number` bez straty) — konwersja
+ * `BIGINT` wraca z `pg` jako string (nie mieści się w `number` bez straty) - konwersja
  * jest tu jawna i w jednym miejscu.
  *
  * Wartość `operation` spoza katalogu rzuca, a nie jest po cichu zerowana:
  * `sessions_operation_known` pilnuje jej w bazie, więc obecność innej wartości znaczy, że ktoś zdjął
- * ograniczenie albo grzebał ręcznie — a wtedy cisza byłaby najgorszą z opcji (ten sam
+ * ograniczenie albo grzebał ręcznie - a wtedy cisza byłaby najgorszą z opcji (ten sam
  * argument, co przy `flags.type` w `flagsRepo.ts`).
  */
+/** Kolumna `BIGINT` wraca z `pg` NAPISEM - jedno miejsce konwersji dla kolumn logu dnia. */
+const ms = (v: string | number | null): number | null => (v == null ? null : Number(v));
+
 export function toSessionRow(r: SessionDbRow): SessionRow {
   if (r.operation != null && !isOperationType(r.operation)) {
     throw new Error(`Nieznany rodzaj operacji w bazie: ${r.operation} (sesja ${r.session_uuid})`);
@@ -105,7 +131,13 @@ export function toSessionRow(r: SessionDbRow): SessionRow {
     aircraftId: r.aircraft_id,
     picId: r.pic_id,
     dualId: r.dual_id,
-    status: r.status === 'closed' ? 'closed' : 'active',
+    /* TRZY statusy, nie dwa (poprawka 2026-08-31). Kolumna jest wolnym tekstem
+       z `DEFAULT 'active'`, więc zawężamy ją do znanych wartości - ale `voided`
+       JEST znaną wartością od 2026-08-30 i musi tędy przejść. Zwijanie jej do
+       `active` znaczyło, że unieważnienie widać wyłącznie w surowej kolumnie:
+       eksporter budował kartę z wycofaną sesją, a panel nie miał jak zapalić
+       plakietki „unieważniona". */
+    status: r.status === 'closed' ? 'closed' : r.status === 'voided' ? 'voided' : 'active',
     claimTime: r.claim_time != null ? Number(r.claim_time) : null,
     closeTime: r.close_time != null ? Number(r.close_time) : null,
     operation: r.operation,
@@ -120,7 +152,7 @@ export function toSessionRow(r: SessionDbRow): SessionRow {
     blockMs: Number(r.block_ms),
     flightMs: Number(r.flight_ms),
     flightsCount: r.flights_count,
-    // `NULL` w kolumnach kolumn statystyk zostaje `null` — to „wiersz sprzed migracji,
+    // `NULL` w kolumnach kolumn statystyk zostaje `null` - to „wiersz sprzed migracji,
     // nieprzeliczony", a nie zero. Zamiana na 0 zafałszowałaby agregaty `A10`.
     takeoffCount: r.takeoff_count,
     landingCount: r.landing_count,
@@ -132,5 +164,21 @@ export function toSessionRow(r: SessionDbRow): SessionRow {
     jumpersSolo: r.jumpers_solo,
     dropAltSumFt: r.drop_alt_sum_ft,
     dropAltCount: r.drop_alt_count,
+    // Olej (issue #60): `NULL` w poziomie = „pomiaru nie było" (stan zwykły dla sesji
+    // sprzed modułu i wpisów ręcznych bez oleju), nie brak przeliczenia. Suma dolanego
+    // bez pomiaru bywa niezerowa (dolewka w ciemno / `oil_add`).
+    oilLevelL: r.oil_level_l,
+    oilAddedL: r.oil_added_l,
+    // Log dnia: te same zasady, co wyżej - brak wartości zostaje brakiem (sesja bez
+    // lotu albo wiersz sprzed przebudowy projekcji), a kolumny czasu wracają napisem.
+    engineStartAt: ms(r.engine_start_at),
+    engineStopAt: ms(r.engine_stop_at),
+    firstTakeoffAt: ms(r.first_takeoff_at),
+    lastLandingAt: ms(r.last_landing_at),
+    departureIcao: r.departure_icao,
+    arrivalIcao: r.arrival_icao,
+    fuelAddedL: r.fuel_added_l,
+    manualEntry: r.manual_entry,
+    oilAfterL: r.oil_after_l,
   };
 }

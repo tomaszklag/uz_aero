@@ -1,13 +1,13 @@
 /**
- * UZ Aero — panel: generator czcionek self-hostowanych (`npm run fonts:fetch`).
+ * UZ Aero - panel: generator czcionek self-hostowanych (`npm run fonts:fetch`).
  *
- * Pobiera woff2 (subsety latin + latin-ext — polskie znaki) z Google Fonts
+ * Pobiera woff2 (subsety latin + latin-ext - polskie znaki) z Google Fonts
  * do `public/fonts/` razem z licencjami OFL i emituje `src/styles/fonts.css`
  * z deklaracjami @font-face 1:1 z odpowiedzią css2 (wagi, unicode-range,
  * font-display: swap). Ten sam wzorzec, co `tokens:css`: plik wynikowy jest
  * GENEROWANY, poprawki wchodzą przez ponowny bieg, nie ręczną edycję.
  *
- * Uruchamiać przy zmianie zestawu rodzin/wag w CSS2_URL — wymaga sieci.
+ * Uruchamiać przy zmianie zestawu rodzin/wag w CSS2_URL - wymaga sieci.
  */
 
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -21,7 +21,7 @@ const CSS_OUT = join(ADMIN, 'src', 'styles', 'fonts.css');
 const CSS2_URL =
   'https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap';
 
-// UA nowoczesnej przeglądarki — bez niego Google oddaje TTF zamiast woff2.
+// UA nowoczesnej przeglądarki - bez niego Google oddaje TTF zamiast woff2.
 const UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36';
 
@@ -56,7 +56,7 @@ for (const match of css.matchAll(blockRe)) {
     return m[1]!.trim();
   };
   const src = body!.match(/url\((https:[^)]+\.woff2)\)/);
-  if (src == null) throw new Error(`brak url woff2 w bloku ${subset} — zły User-Agent?`);
+  if (src == null) throw new Error(`brak url woff2 w bloku ${subset} - zły User-Agent?`);
   faces.push({
     subset: subset!,
     family: field('font-family').replace(/'/g, ''),
@@ -68,17 +68,17 @@ for (const match of css.matchAll(blockRe)) {
 }
 
 const wanted = faces.filter((f) => SUBSETS.has(f.subset));
-if (wanted.length === 0) throw new Error('nic nie sparsowano — format css2 się zmienił?');
+if (wanted.length === 0) throw new Error('nic nie sparsowano - format css2 się zmienił?');
 
 mkdirSync(FONTS_DIR, { recursive: true });
 
-// Jeden URL może obsługiwać kilka deklaracji (font zmienny) — pobieramy raz.
+// Jeden URL może obsługiwać kilka deklaracji (font zmienny) - pobieramy raz.
 const fileByUrl = new Map<string, string>();
 for (const face of wanted) {
   if (fileByUrl.has(face.url)) continue;
   const slug = SLUGS[face.family];
   if (slug == null) throw new Error(`nieznana rodzina: ${face.family}`);
-  // Bez wagi w nazwie: Google oddaje font ZMIENNY — jeden plik na rodzinę×subset
+  // Bez wagi w nazwie: Google oddaje font ZMIENNY - jeden plik na rodzinę×subset
   // obsługuje wszystkie wagi (dlatego deklaracji jest więcej niż plików).
   const name = `${slug}-${face.subset}.woff2`;
   const res = await fetch(face.url, { headers: { 'user-agent': UA } });
@@ -89,14 +89,14 @@ for (const face of wanted) {
 }
 
 const header = `/**
- * UZ Aero — panel: czcionki self-hostowane (§9 architektury frontendu).
+ * UZ Aero - panel: czcionki self-hostowane (§9 architektury frontendu).
  *
- * PLIK GENEROWANY skryptem (pobranie woff2 z Google Fonts + emisja @font-face) —
+ * PLIK GENEROWANY skryptem (pobranie woff2 z Google Fonts + emisja @font-face) -
  * poprawki wprowadzaj przez ponowne wygenerowanie, nie ręcznie. Subsety latin
  * + latin-ext (polskie znaki); wagi jak w dawnym linku CDN: Archivo 400–800,
  * Bebas Neue 400, JetBrains Mono 400/500/700. Licencje OFL: public/fonts/OFL-*.txt.
  *
- * Ścieżki /fonts/* są absolutne od korzenia serwisu — Vite przepisuje je pod
+ * Ścieżki /fonts/* są absolutne od korzenia serwisu - Vite przepisuje je pod
  * base '/admin/' przy buildzie (weryfikacja: grep dist/assets/*.css po '/admin/fonts/').
  */
 `;

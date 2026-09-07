@@ -1,14 +1,14 @@
 /**
- * UZ Aero (serwer) — test KONTRAKTU SCHEMATU na prawdziwym Postgresie (PGlite).
+ * UZ Aero (serwer) - test KONTRAKTU SCHEMATU na prawdziwym Postgresie (PGlite).
  *
  * Lustro `sqliteSchema.test.ts` z aplikacji i domknięcie tej samej luki: kolumny DDL
  * ↔ interfejsy wierszy ↔ mapowanie to trzy miejsca, które muszą się zgadzać, a literówka
- * w nazwie kolumny nie jest błędem typów — tylko `undefined` w runtime. Listy kolumn
+ * w nazwie kolumny nie jest błędem typów - tylko `undefined` w runtime. Listy kolumn
  * są tu przybite na sztywno; zmiana schematu bez zmiany testu ma NIE przejść.
  *
  * ══ TEN PLIK BYŁ DOWODEM ZGNIECENIA MIGRACJI (2026-08-08) ══
  * Dwadzieścia trzy migracje zwinęły się w jedną bazową. Listy niżej NIE ZMIENIŁY SIĘ ani
- * o kolumnę, ani o pozycję — i to jest cała weryfikacja tamtej zmiany: zgnieciony skrypt
+ * o kolumnę, ani o pozycję - i to jest cała weryfikacja tamtej zmiany: zgnieciony skrypt
  * produkuje ten sam schemat, który produkowała historia. Stąd też porządek kolumn wygląda,
  * jak wygląda (rzeczy dokładane `ALTER`-em siedzą na końcu tabel); jest zachowany
  * świadomie, żeby to porównanie dało się zrobić.
@@ -45,7 +45,7 @@ describe('schemat PostgreSQL (kontrakt)', () => {
     expect(SCHEMA_VERSION).toBe(MIGRATIONS.length);
   });
 
-  it('KAŻDA migracja ma opis — inaczej `A11` wypisuje cudzy przy nowej pozycji', () => {
+  it('KAŻDA migracja ma opis - inaczej `A11` wypisuje cudzy przy nowej pozycji', () => {
     // Ekran konserwacji sklejał do 2026-08-02 numer z bazy z opisem z kodu PO INDEKSIE.
     // Dopisanie migracji bez dopisania opisu przesunęłoby całą kolumnę „Co wprowadza"
     // o jeden i nikt by tego nie zauważył: tabela dalej wyglądałaby poprawnie.
@@ -53,7 +53,7 @@ describe('schemat PostgreSQL (kontrakt)', () => {
     for (const title of MIGRATION_TITLES) expect(title.trim().length).toBeGreaterThan(10);
   });
 
-  it('migracje są idempotentne — ponowne wołanie niczego nie psuje', async () => {
+  it('migracje są idempotentne - ponowne wołanie niczego nie psuje', async () => {
     const db = await migrated();
     await expect(migrate(db as Queryable)).resolves.toBeUndefined();
   });
@@ -62,12 +62,14 @@ describe('schemat PostgreSQL (kontrakt)', () => {
     [
       'pilots',
       // `theme`/`theme_updated_at`/`role`/`credentials_valid_from` na końcu: dołożone
-      // `ALTER`-em, w kolejności, w jakiej powstawały.
-      ['id', 'code', 'name', 'email', 'password_hash', 'active', 'updated_at', 'theme', 'theme_updated_at', 'role', 'credentials_valid_from'],
+      // `ALTER`-em, w kolejności, w jakiej powstawały. `password_hash` (między `email`
+      // a `active` w schemacie bazowym) ZNIKŁO migracją 7 - hasła nie mają już żadnej
+      // drogi logowania, a baza produkcyjna staje od zera (2026-09-05).
+      ['id', 'code', 'name', 'email', 'active', 'updated_at', 'theme', 'theme_updated_at', 'role', 'credentials_valid_from'],
     ],
     [
       'aircraft',
-      ['id', 'reg', 'type', 'year', 'capacity_l', 'mh_format', 'dual_required', 'service_status', 'updated_at'],
+      ['id', 'reg', 'type', 'year', 'capacity_l', 'mh_format', 'dual_required', 'service_status', 'updated_at', 'oil_min_l', 'oil_capacity_l', 'oil_norm_l_per_h', 'fuel_norm_l_per_h', 'initial_mh', 'initial_fuel_l', 'initial_oil_l'],
     ],
     ['refresh_tokens', ['token_hash', 'pilot_id', 'expires_at', 'created_at']],
     [
@@ -76,15 +78,15 @@ describe('schemat PostgreSQL (kontrakt)', () => {
     ],
     [
       'sessions',
-      // `operation`/`client`, kolumny statystyk (od `takeoff_count`) i `notes` na końcu —
+      // `operation`/`client`, kolumny statystyk (od `takeoff_count`) i `notes` na końcu -
       // dołożone `ALTER`-em. `claim_time` niesie CZAS PRZEJĘCIA maszyny (uzasadnienie:
       // `application/common/mappers/sessionRow.ts`), i dlatego kolumny `duty_start` tu
       // świadomie NIE MA: klamra służby należy do PILOTA, nie do sesji (§3.6a).
-      ['session_uuid', 'aircraft_id', 'pic_id', 'dual_id', 'status', 'claim_time', 'close_time', 'mh_start', 'mh_end', 'fuel_start_l', 'fuel_end_l', 'fuel_last_l', 'mh_last', 'block_ms', 'flight_ms', 'flights_count', 'updated_at', 'operation', 'client', 'takeoff_count', 'landing_count', 'mh_delta_h', 'fuel_consumed_l', 'drop_count', 'jumpers_tandem', 'jumpers_aff', 'jumpers_solo', 'drop_alt_sum_ft', 'drop_alt_count', 'notes'],
+      ['session_uuid', 'aircraft_id', 'pic_id', 'dual_id', 'status', 'claim_time', 'close_time', 'mh_start', 'mh_end', 'fuel_start_l', 'fuel_end_l', 'fuel_last_l', 'mh_last', 'block_ms', 'flight_ms', 'flights_count', 'updated_at', 'operation', 'client', 'takeoff_count', 'landing_count', 'mh_delta_h', 'fuel_consumed_l', 'drop_count', 'jumpers_tandem', 'jumpers_aff', 'jumpers_solo', 'drop_alt_sum_ft', 'drop_alt_count', 'notes', 'oil_level_l', 'oil_added_l', 'engine_start_at', 'engine_stop_at', 'first_takeoff_at', 'last_landing_at', 'departure_icao', 'arrival_icao', 'fuel_added_l', 'manual_entry', 'oil_after_l'],
     ],
     [
       'flags',
-      // `resolved_by`/`resolution_note` na końcu — dołożone `ALTER`-em.
+      // `resolved_by`/`resolution_note` na końcu - dołożone `ALTER`-em.
       ['id', 'type', 'aircraft_id', 'session_uuids', 'details', 'status', 'created_at', 'resolved_at', 'resolved_by', 'resolution_note'],
     ],
     [
@@ -97,9 +99,11 @@ describe('schemat PostgreSQL (kontrakt)', () => {
       ['id', 'actor_pilot_id', 'actor_role', 'action', 'target_type', 'target_id', 'details', 'ip', 'created_at'],
     ],
     // Dopisana przy zgnieceniu: tabela istniała od materializacji normy zużycia
-    // (2026-08-05), ale wypadła z tego kontraktu — czyli jedyna tabela schematu, której
+    // (2026-08-05), ale wypadła z tego kontraktu - czyli jedyna tabela schematu, której
     // literówka w nazwie kolumny nie zatrzymałaby żadnego testu.
     ['aircraft_consumption', ['aircraft_id', 'window_days', 'model', 'computed_at']],
+    // Odczyty wpisane ręką administratora (issue #81) - append-only, jak rejestr.
+    ['aircraft_readings', ['id', 'aircraft_id', 'mh', 'fuel_l', 'oil_l', 'note', 'by_pilot_id', 'created_at']],
   ])('tabela %s ma dokładnie uzgodnione kolumny', async (table, expected) => {
     const db = await migrated();
     expect(await columnsOf(db, table as string)).toEqual(expected);

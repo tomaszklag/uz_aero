@@ -1,5 +1,5 @@
 /**
- * UZ Aero — testy śladu kalibracyjnego (faza 5): rejestrator + wysyłka.
+ * UZ Aero - testy śladu kalibracyjnego (faza 5): rejestrator + wysyłka.
  *
  * Kontrakty warte pilnowania: księgowość wysyłki jak w outboksie (wysłane nie wraca),
  * retencja tnie po ZEGARZE URZĄDZENIA, a nieudana wysyłka zostawia wpisy na miejscu.
@@ -23,6 +23,10 @@ const PILOT = { id: 'TMK', code: 'TMK', name: 'Tomasz Małkiewicz' };
 const CREDS: StoredCredentials = { token: 'jwt-1', refreshToken: 'r1', pilot: PILOT };
 
 class MemoryCredentials {
+  // Zgłoszenie rejestracyjne (logowanie Google) - nieużywane w tych testach.
+  loadRegistration = async (): Promise<null> => null;
+  saveRegistration = async (_registration: unknown): Promise<void> => {};
+  clearRegistration = async (): Promise<void> => {};
   load = async () => CREDS;
   save = async (_c: StoredCredentials) => {};
   clear = async () => {};
@@ -30,6 +34,14 @@ class MemoryCredentials {
 
 /** Serwer śladu: rejestruje paczki; `fail = true` symuluje brak zasięgu. */
 class TraceServer implements ServerPort {
+  async loginWithGoogle(): Promise<never> {
+    throw new Error('nieużywane w tych testach');
+  }
+
+  async registrationStatus(): Promise<never> {
+    throw new Error('nieużywane w tych testach');
+  }
+
   pushed: unknown[][] = [];
   fail = false;
 
@@ -39,14 +51,19 @@ class TraceServer implements ServerPort {
     return { accepted: entries.length };
   }
 
+  pushBugReports = async (): Promise<never> => {
+    throw new Error('ta atrapa nie obsługuje zgłoszeń błędów');
+  };
+
   getSessionTrack = async (): Promise<never> => {
-    throw new Error('ta atrapa nie obsługuje śladu sesji');
+    throw new Error('ta atrapa nie obsługuje śladu operacji');
   };
 
   login = async (): Promise<AuthTokens> => ({ token: 'jwt-1', refreshToken: 'r1', pilot: PILOT });
   refresh = async (): Promise<AuthTokens> => ({ token: 'jwt-2', refreshToken: 'r2', pilot: PILOT });
   pushEvents = async () => ({ accepted: 0, duplicates: 0, flags: [] });
   getReference = async () => ({ data: { aircraft: [], pilots: [] }, etag: null });
+  getReadingsChain = async () => ({ before: null, after: null, oil: null });
   getAircraftState = async () => ({
     aircraftId: 'SP-AXA',
     claimPicId: null,
@@ -60,7 +77,7 @@ class TraceServer implements ServerPort {
   getTaskSuggestions = async () => {
     throw new Error('nieużywane');
   };
-  /** Droga powrotna (§4.9) ma własne testy — `eventRestore.test.ts`. */
+  /** Droga powrotna (§4.9) ma własne testy - `eventRestore.test.ts`. */
   pullEvents = async () => ({ events: [], nextCursor: null, hasMore: false });
   getPrefs = async () => {
     throw new Error('nieużywane');
@@ -95,7 +112,7 @@ const aFix = (sec: number) => ({
 });
 
 describe('TraceRecorder', () => {
-  it('zapisuje surowe fixy i markery z kontekstem sesji', async () => {
+  it('zapisuje surowe fixy i markery z kontekstem operacji', async () => {
     const { store, recorder } = harness();
 
     recorder.fix(aFix(0), 'sess-1');
@@ -108,7 +125,7 @@ describe('TraceRecorder', () => {
     expect(batch[1]).toMatchObject({ kind: 'undo', detail: 'landing' });
   });
 
-  it('retencja tnie po zegarze urządzenia — stare znikają, świeże zostają', async () => {
+  it('retencja tnie po zegarze urządzenia - stare znikają, świeże zostają', async () => {
     const { clock, store, recorder } = harness();
     recorder.fix(aFix(0), null);
     await flush();
@@ -123,7 +140,7 @@ describe('TraceRecorder', () => {
 });
 
 describe('TraceSync', () => {
-  it('wysyła paczkę i oznacza wysłane — druga okazja nie dubluje', async () => {
+  it('wysyła paczkę i oznacza wysłane - druga okazja nie dubluje', async () => {
     const { recorder, server, sync } = harness();
     recorder.fix(aFix(0), 'sess-1');
     recorder.fix(aFix(1), 'sess-1');

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) — adapter flag dla panelu (`FlagsAdminPort`).
+ * UZ Aero (serwer) - adapter flag dla panelu (`FlagsAdminPort`).
  *
  * Duplikat nazwy bazowej z `pg/flagsRepo.ts` jest CELOWY: rolą tego pliku jest
  * „adapter flag panelu", a kwalifikator niesie katalog. `adminFlagsRepo.ts` dałoby
@@ -68,22 +68,22 @@ const toFlag = (r: AdminFlagDbRow): AdminFlag => {
 
 export class PgAdminFlagsRepo implements FlagsAdminPort {
   /**
-   * Porządek skrzynki (`A03`) siedzi w `ORDER BY`, a nie w sortowaniu w pamięci —
+   * Porządek skrzynki (`A03`) siedzi w `ORDER BY`, a nie w sortowaniu w pamięci -
    * inaczej limit obcinałby listę po złej stronie porządku:
    *
    *  1. **Blokujące eksport na górze.** Lista typów jedzie PARAMETREM z
    *     `EXPORT_BLOCKING_FLAG_TYPES`, czyli z tego samego miejsca, co bramka
-   *     `DayExporter` i kolumna „Skutek" DTO — dopisanie tam nowego typu przestawia
+   *     `DayExporter` i kolumna „Skutek" DTO - dopisanie tam nowego typu przestawia
    *     skrzynkę samo, bez pamiętania o tym pliku.
    *  2. **Potem po wieku, od najstarszych.** Flaga leżąca trzeci dzień jest problemem
    *     sama w sobie, więc rośnie w górę listy, a nie spada z niej.
-   *  3. `id` jako rozstrzygnięcie remisów — porządek ma być deterministyczny.
+   *  3. `id` jako rozstrzygnięcie remisów - porządek ma być deterministyczny.
    */
   async list(
     db: Queryable,
     filter: FlagListFilter,
   ): Promise<{ items: AdminFlagJoin[]; total: number }> {
-    // Dwa akumulatory z tymi samymi warunkami: strona ma `LIMIT`, licznik nie —
+    // Dwa akumulatory z tymi samymi warunkami: strona ma `LIMIT`, licznik nie -
     // a `total` musi opisywać CAŁY wynik filtra („pokazano 50 z 127"), nie stronę.
     const conditions = this.conditionsOf(filter);
     const page = this.conditionsOf(filter);
@@ -114,10 +114,10 @@ export class PgAdminFlagsRepo implements FlagsAdminPort {
   }
 
   /**
-   * Warunki filtra — wszystkie OPCJONALNE, pomijane gdy nieustawione.
+   * Warunki filtra - wszystkie OPCJONALNE, pomijane gdy nieustawione.
    *
    * Zakres dat przychodzi w epoch ms (jedna jednostka czasu w całym kontrakcie panelu),
-   * a `flags.created_at` jest `TIMESTAMPTZ` — konwersję robi baza (`to_timestamp`),
+   * a `flags.created_at` jest `TIMESTAMPTZ` - konwersję robi baza (`to_timestamp`),
    * bo jest to konwersja MIĘDZY TYPAMI KOLUMNY a parametrem, a nie arytmetyka na czasie.
    */
   private conditionsOf(filter: FlagListFilter): SqlFilter {
@@ -146,7 +146,7 @@ export class PgAdminFlagsRepo implements FlagsAdminPort {
     note: string,
     at: Date,
   ): Promise<ResolvedFlag | null> {
-    // Warunek `status = 'open'` siedzi W SQL-u, a nie w odczycie przed zapisem —
+    // Warunek `status = 'open'` siedzi W SQL-u, a nie w odczycie przed zapisem -
     // dwie osoby klikające „Rozwiąż" nie prześcigną się timingiem. Druga dostaje
     // zero wierszy, czyli `null`, i to jest cała obsługa wyścigu.
     const { rows } = await db.query<{ type: string; session_uuids: string[] }>(

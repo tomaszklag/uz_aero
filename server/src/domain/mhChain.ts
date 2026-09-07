@@ -1,20 +1,20 @@
 /**
- * UZ Aero (serwer) — flagi łańcucha sesji samolotu (§4.5).
+ * UZ Aero (serwer) - flagi łańcucha sesji samolotu (§4.5).
  *
- * Serwer porządkuje sesje samolotu NIE po czasie, tylko po liczniku MH — licznik jest
+ * Serwer porządkuje sesje samolotu NIE po czasie, tylko po liczniku MH - licznik jest
  * monotoniczny i fizyczny, a zegary telefonów bywają przestawione. Sesje ustawione po
  * `mh_start` tworzą łańcuch: koniec jednej powinien być początkiem następnej.
  *
- * Cztery anomalie, każda jako MIĘKKA flaga (§4.5 — serwer nigdy nie blokuje, flaguje
+ * Cztery anomalie, każda jako MIĘKKA flaga (§4.5 - serwer nigdy nie blokuje, flaguje
  * post factum):
- *  • `mh_gap`        — dziura: ktoś latał bez aplikacji albo odczyt startowy zawyżony;
- *  • `mh_regression` — cofnięcie: odczyt startowy niższy niż koniec poprzednika — złe
+ *  • `mh_gap`        - dziura: ktoś latał bez aplikacji albo odczyt startowy zawyżony;
+ *  • `mh_regression` - cofnięcie: odczyt startowy niższy niż koniec poprzednika - złe
  *                      odczytanie licznika albo nakładające się dni;
- *  • `aircraft_overlap` — dwie NIEZAMKNIĘTE sesje jednego samolotu: przejęcie offline
- *                      (§4.4) — poprzednik ma niewysłane dane albo nie zdał maszyny.
+ *  • `aircraft_overlap` - dwie NIEZAMKNIĘTE sesje jednego samolotu: przejęcie offline
+ *                      (§4.4) - poprzednik ma niewysłane dane albo nie zdał maszyny.
  *                      Nakładka CZASU PILOTA jest osobnym zjawiskiem i mieszka
  *                      w `pilotOverlap.ts` (rozdzielenie 2026-08-07, §4.7);
- *  • `fuel_mismatch` — stan paliwa na starcie nie zgadza się z przekazaniem od
+ *  • `fuel_mismatch` - stan paliwa na starcie nie zgadza się z przekazaniem od
  *                      poprzednika (dodane 2026-07-31, patrz niżej).
  *
  * **Dlaczego paliwo mieszka w pliku o motogodzinach.** Bo to ten SAM łańcuch: te same
@@ -43,7 +43,7 @@ export interface ChainLink {
 }
 
 /**
- * Kandydat na flagę wykryty w łańcuchu — węższy niż katalog domeny, bo ten detektor
+ * Kandydat na flagę wykryty w łańcuchu - węższy niż katalog domeny, bo ten detektor
  * produkuje dokładnie cztery typy. `Extract` wiąże go z `FlagType`: przemianowanie
  * którejkolwiek pozycji w katalogu wywala kompilację tutaj, zamiast zostawić martwy
  * literał, który nigdy się nie dopasuje.
@@ -55,16 +55,16 @@ export interface ChainFlag {
 }
 
 /**
- * Tolerancja zgodności ogniw — WSPÓLNA z aplikacją (`MH_TOLERANCE_H`, §4.5).
+ * Tolerancja zgodności ogniw - WSPÓLNA z aplikacją (`MH_TOLERANCE_H`, §4.5).
  *
  * Audyt wyłapał forka (0.05 tu vs 0.1 w domenie): delta 0.06–0.1 h przechodziła
- * na telefonie bez ostrzeżenia, a serwer ją flagował — dokładnie ten rozjazd
+ * na telefonie bez ostrzeżenia, a serwer ją flagował - dokładnie ten rozjazd
  * klient/serwer, przed którym broni monorepo. Jeden próg, jedno źródło.
  */
 export const CHAIN_TOLERANCE_H = MH_TOLERANCE_H;
 
 /**
- * @param capacityL pojemność zbiorników samolotu — wchodzi w tolerancję paliwa
+ * @param capacityL pojemność zbiorników samolotu - wchodzi w tolerancję paliwa
  *   (`max(10 L, 5% pojemności)`, §4.5). `null` = konfiguracja nieznana, wtedy
  *   `fuelToleranceL` schodzi do wartości stałej.
  */
@@ -95,7 +95,7 @@ export function chainFlags(
     const prev = chain[i - 1]!;
     const next = chain[i]!;
 
-    // Motogodziny. Bez końca poprzednika nie ma czego porównywać — nakładkę łapie
+    // Motogodziny. Bez końca poprzednika nie ma czego porównywać - nakładkę łapie
     // warunek wyżej.
     if (prev.mhEnd != null) {
       const delta = next.mhStart - prev.mhEnd;
@@ -115,7 +115,7 @@ export function chainFlags(
     }
 
     // Paliwo. Porównujemy WARTOŚĆ BEZWZGLĘDNĄ różnicy, bo podejrzane są obie strony:
-    // wzrost znaczy tankowanie poza aplikacją, spadek — spuszczone paliwo albo błędny
+    // wzrost znaczy tankowanie poza aplikacją, spadek - spuszczone paliwo albo błędny
     // odczyt. Paliwomierz jest nieprecyzyjny, stąd tolerancja szersza niż przy MH
     // i zależna od pojemności zbiorników.
     if (prev.fuelEndL != null && next.fuelStartL != null) {
@@ -139,5 +139,5 @@ export function chainFlags(
 }
 
 const round2 = (n: number): number => Math.round(n * 100) / 100;
-/** Litry z jednym miejscem — paliwomierz i tak nie jest precyzyjniejszy. */
+/** Litry z jednym miejscem - paliwomierz i tak nie jest precyzyjniejszy. */
 const round1 = (n: number): number => Math.round(n * 10) / 10;

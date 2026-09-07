@@ -1,13 +1,13 @@
 /**
- * UZ Aero — SummaryStrip (`.summary-strip` z mockupu 09)
+ * UZ Aero - SummaryStrip (`.summary-strip` z mockupu 09)
  *
  * Wąski pasek pod nagłówkiem: kilka wartości dnia rozdzielonych pionowymi kreskami.
  *
  * Stoi POZA obszarem przewijania, bo na ekranie zakończenia dnia pilot wpisuje odczyty
- * końcowe i musi mieć bilans dnia przed oczami przez cały czas — inaczej sprawdzenie
+ * końcowe i musi mieć bilans dnia przed oczami przez cały czas - inaczej sprawdzenie
  * „czy te 6:39 się zgadza" wymagałoby przewijania w górę i z powrotem.
  *
- * Czym różni się od `StatGrid`: tam komórki w dwóch kolumnach, z jednostką słowem —
+ * Czym różni się od `StatGrid`: tam komórki w dwóch kolumnach, z jednostką słowem -
  * bilans do przepisania do dokumentów. Tu cztery liczby w jednej linii, do zerkania.
  */
 

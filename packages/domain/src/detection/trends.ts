@@ -1,15 +1,15 @@
 /**
- * UZ Aero — cechy trendowe liczone z okna fixów.
+ * UZ Aero - cechy trendowe liczone z okna fixów.
  *
  * SEDNO ZMIANY WZGLĘDEM PIERWSZEJ WERSJI DETEKCJI: progi nakładane na pojedynczy
  * odczyt biorą całą nieprecyzję odbiornika na siebie. Te same zjawiska widziane
- * w oknie czasu mają wielokrotnie lepszy stosunek sygnału do szumu — i dopiero to
+ * w oknie czasu mają wielokrotnie lepszy stosunek sygnału do szumu - i dopiero to
  * pozwala wykryć rzeczy, których chwilowa prędkość nie widzi.
  *
  * Rachunek dla kołowania, bo od niego wyszła cała przebudowa:
- *   • chwilowo — próg 4 kt ≈ 2 m/s przy dokładności dopplera ~0,3 m/s to ~7:1,
+ *   • chwilowo - próg 4 kt ≈ 2 m/s przy dokładności dopplera ~0,3 m/s to ~7:1,
  *     a filtr static-hold potrafi zbić sygnał do zera;
- *   • w oknie 30 s — samolot kołujący 8 kt przejeżdża ~120 m, stojący dryfuje ~5 m,
+ *   • w oknie 30 s - samolot kołujący 8 kt przejeżdża ~120 m, stojący dryfuje ~5 m,
  *     czyli ~24:1 na tym samym zjawisku.
  * Dlatego kanałem podstawowym kołowania jest PRZEMIESZCZENIE (`motion.ts`), a prędkość
  * chwilowa schodzi do roli wsparcia.
@@ -21,7 +21,7 @@ import { distanceNm, headingDeltaDeg } from './geo';
 import { fixPosition, type GpsFix } from './fix';
 import { slopePerSecond, type TimePoint } from './regression';
 
-/** Skąd wzięliśmy prędkość — diagnostyka i decyzja, ile jej ufać. */
+/** Skąd wzięliśmy prędkość - diagnostyka i decyzja, ile jej ufać. */
 export type SpeedSource = 'doppler' | 'position';
 
 export interface SpeedEstimate {
@@ -33,12 +33,12 @@ export interface SpeedEstimate {
 export const TREND_MIN_SPAN_SEC = 4;
 
 /**
- * Prędkość względem ziemi z okna — doppler, a gdy go brak, z przemieszczenia.
+ * Prędkość względem ziemi z okna - doppler, a gdy go brak, z przemieszczenia.
  *
  * Doppler bierzemy jako MEDIANĘ okna, nie ostatnią wartość: mediana odrzuca pojedynczą
  * szpilkę bez wygładzania narastania (średnia opóźniałaby rozbieg, mediana nie).
  *
- * Ścieżka pozycyjna to nie jest gorszy zamiennik — przy prędkościach kołowania bywa
+ * Ścieżka pozycyjna to nie jest gorszy zamiennik - przy prędkościach kołowania bywa
  * DOKŁADNIEJSZA od dopplera, bo mierzy przebytą drogę zamiast różnicy częstotliwości
  * na granicy czułości. Jest za to bezużyteczna w zakręcie (odległość po cięciwie,
  * nie po łuku), więc do decyzji w locie nadal służy doppler.
@@ -64,7 +64,7 @@ export function groundSpeed(fixes: readonly GpsFix[]): SpeedEstimate | null {
  * Przyspieszenie podłużne (kt/s) z nachylenia regresji prędkości.
  *
  * Rozbieg to trwałe +1,5…+3 kt/s. Ciasny zakręt, który do złudzenia przypomina
- * lądowanie po samej prędkości, ma przyspieszenie ujemne albo bliskie zeru — a więc
+ * lądowanie po samej prędkości, ma przyspieszenie ujemne albo bliskie zeru - a więc
  * ta jedna liczba rozdziela dwa zjawiska, których próg na prędkości rozdzielić nie umie.
  */
 export function speedTrendKtPerSec(
@@ -102,7 +102,7 @@ export function pathDisplacementNm(fixes: readonly GpsFix[]): number | null {
  *
  * DARMOWY CZUJNIK: `coords.heading` jest w każdym odczycie lokalizacji i do tej pory
  * był po prostu wyrzucany. Przy prędkościach lotu to wiarygodna prędkość kątowa bez
- * żadnego dodatkowego układu — i wprost lekarstwo na udokumentowane ryzyko „ciasny
+ * żadnego dodatkowego układu - i wprost lekarstwo na udokumentowane ryzyko „ciasny
  * zakręt udający lądowanie" (§8): przyziemienie ma kurs stabilny, zakręt w kręgu
  * nadlotniskowym trzyma 3–5 °/s przez kilkanaście sekund.
  *

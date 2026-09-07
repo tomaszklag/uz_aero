@@ -1,17 +1,17 @@
 /**
- * UZ Aero — przebieg analityki zużycia po REALNEJ historii (kalibracja progów).
+ * UZ Aero - przebieg analityki zużycia po REALNEJ historii (kalibracja progów).
  *
  *   DATABASE_URL=... npx tsx scripts/consumptionReplay.ts [REJESTRACJA]
  *
  * ══ PO CO ══
  * Progi w `packages/domain/src/consumption/policy.ts` pochodzą z rozumowania
  * o dokładności paliwomierza, nie z lotów. Testy jednostkowe dowodzą, że matematyka
- * odzyskuje stawki, które w nią włożono — i nic poza tym. Odpowiedź na pytanie „czy te
+ * odzyskuje stawki, które w nią włożono - i nic poza tym. Odpowiedź na pytanie „czy te
  * progi pasują do tego, jak ten klub NAPRAWDĘ lata" mogą dać wyłącznie prawdziwe dni.
  *
  * Ten skrypt jest do analityki tym, czym `replay.ts` do detekcji: puszcza dane przez
  * DOKŁADNIE TEN SAM kod, który wykonuje serwer, i wypisuje nie tylko wynik, ale też
- * materiał do oceny progów — rozkład długości interwałów, powody odrzuceń, względną
+ * materiał do oceny progów - rozkład długości interwałów, powody odrzuceń, względną
  * szerokość przedziałów. Kalibracja = zmiana progu i ponowny bieg, nigdy dyskusja.
  *
  * Czyta bazę WYŁĄCZNIE do odczytu; niczego nie zapisuje.
@@ -44,7 +44,7 @@ const only = process.argv[2]?.toUpperCase() ?? null;
 
 const connectionString = process.env.DATABASE_URL;
 if (connectionString == null) {
-  console.error('Brak DATABASE_URL — skrypt czyta bazę, którą wskażesz w środowisku.');
+  console.error('Brak DATABASE_URL - skrypt czyta bazę, którą wskażesz w środowisku.');
   process.exit(1);
 }
 
@@ -52,12 +52,12 @@ const pool = new Pool({ connectionString });
 const events = new PgEventsStore();
 const consumption = new PgAdminConsumptionRepo();
 
-// Osie faz pionowych ze śladów — bez nich model stoi na dwóch fazach. Katalog jak
+// Osie faz pionowych ze śladów - bez nich model stoi na dwóch fazach. Katalog jak
 // w produkcji; pliki poboczne powstaną przy pierwszym biegu i przyspieszą następne.
 const tracesDir = process.env.TRACES_DIR ?? './traces';
 const phases = new FsPhaseTimeline(tracesDir, new FsTraceSource(tracesDir));
 
-/** Okno: rok wstecz — kalibracja ma widzieć wszystko, co jest, a nie domyślne 90 dni. */
+/** Okno: rok wstecz - kalibracja ma widzieć wszystko, co jest, a nie domyślne 90 dni. */
 const now = Date.now();
 const range = { fromMs: now - YEAR_MS, toMs: now };
 
@@ -66,7 +66,7 @@ const fleet = await pool.query<{ id: string; reg: string; type: string }>(
 );
 
 console.log('═'.repeat(78));
-console.log('PRZEBIEG ANALITYKI ZUŻYCIA — okno 365 dni wstecz');
+console.log('PRZEBIEG ANALITYKI ZUŻYCIA - okno 365 dni wstecz');
 console.log(`progi: publikacja ≥ ${MIN_PUBLISH_INTERVALS} interwałów i ≥ ${MIN_PUBLISH_ENGINE_MS / HOUR_MS} h silnika`);
 console.log(`       interwał ≥ ${MIN_INTERVAL_ENGINE_MS / 60_000} min · rozdzielność faz ≤ ±${MAX_RELATIVE_CI * 100}%`);
 console.log('═'.repeat(78));
@@ -101,7 +101,7 @@ for (const aircraft of fleet.rows) {
   console.log(`  interwałów surowych:  ${intervals.length}`);
 
   if (intervals.length === 0) {
-    console.log('  (żadnego interwału — brak par odczytów paliwomierza)');
+    console.log('  (żadnego interwału - brak par odczytów paliwomierza)');
     continue;
   }
 
@@ -188,7 +188,7 @@ for (const aircraft of fleet.rows) {
 
 console.log(`\n${'═'.repeat(78)}`);
 if (!anyPublished) {
-  console.log('⚠ ŻADEN samolot nie przeszedł bramki publikacji — sprawdź, czy to brak');
+  console.log('⚠ ŻADEN samolot nie przeszedł bramki publikacji - sprawdź, czy to brak');
   console.log('  danych, czy progi ustawione za wysoko względem realnego tempa lotów.');
 }
 console.log('Kalibracja: zmień próg w packages/domain/src/consumption/policy.ts i powtórz bieg.');
@@ -196,10 +196,10 @@ console.log('Kalibracja: zmień próg w packages/domain/src/consumption/policy.t
 await pool.end();
 
 function fmt(value: number | null): string {
-  return value == null ? '—' : value.toFixed(2);
+  return value == null ? '-' : value.toFixed(2);
 }
 
-/** VIF bywa `NaN` dla stawki przypiętej — wtedy nie ma czego pokazać. */
+/** VIF bywa `NaN` dla stawki przypiętej - wtedy nie ma czego pokazać. */
 function fmtVif(value: number): string {
-  return Number.isFinite(value) ? value.toFixed(1) : '—';
+  return Number.isFinite(value) ? value.toFixed(1) : '-';
 }

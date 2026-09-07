@@ -1,13 +1,13 @@
 /**
- * UZ Aero — HistoryLink: wejście w historię zmian (issue #43, arkusz `design/10i`).
+ * UZ Aero - HistoryLink: wejście w historię zmian (issue #43, arkusz `design/10i`).
  *
  * Wiersz, nie rozwinięta lista: przy pierwszej korekcie historia ma jeden wpis i
  * rozwinięta zajmowałaby miejsce, nie dając nic.
  *
  * ══ BEZ HISTORII WIERSZA NIE MA W OGÓLE ══
- * Zerowy licznik nie jest informacją, tylko szumem — „Historia zmian · brak" to wiersz
- * o niczym, dokładnie jak „Notatki —" wyrzucone przy issue #40. Element widoczny
- * zawsze, a użyteczny rzadko, uczy oko go pomijać (reguła SyncChipa z issue #12) —
+ * Zerowy licznik nie jest informacją, tylko szumem - „Historia zmian · brak" to wiersz
+ * o niczym, dokładnie jak „Notatki -" wyrzucone przy issue #40. Element widoczny
+ * zawsze, a użyteczny rzadko, uczy oko go pomijać (reguła SyncChipa z issue #12) -
  * i to samo oko przegapi go wtedy, gdy w końcu coś w nim będzie.
  *
  * Renderowanie z pustym stanem trwało jedną iterację i zostało zdjęte po uwadze
@@ -53,7 +53,7 @@ export function HistoryLink({ count, onPress }: HistoryLinkProps) {
         Historia zmian
       </AppText>
       {/* `alignSelf` jawnie: bez tego plakietka rozciąga się na wysokość wiersza (44 px)
-          i jej napis siada wyżej niż etykieta obok — wygląda to jak przekrzywiony rząd. */}
+          i jej napis siada wyżej niż etykieta obok - wygląda to jak przekrzywiony rząd. */}
       <Tag label={String(count)} tone="blue" style={styles.count} />
       <Icon name="more" size={13} color={theme.colors.textMuted} />
     </Pressable>
@@ -61,7 +61,7 @@ export function HistoryLink({ count, onPress }: HistoryLinkProps) {
 }
 
 const styles = StyleSheet.create({
-  // 44 px — cel dotknięcia, ten sam próg co reszta arkusza.
+  // 44 px - cel dotknięcia, ten sam próg co reszta arkusza.
   row: { flexDirection: 'row', alignItems: 'center', gap: 9, minHeight: 44, paddingHorizontal: 13 },
   label: { flex: 1, fontSize: 12 },
   count: { alignSelf: 'center' },

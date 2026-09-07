@@ -1,10 +1,10 @@
 /**
- * UZ Aero — bramka skeletonu (issue #33, wzorzec `design/LOADERY.html` reguła 5).
+ * UZ Aero - bramka skeletonu (issue #33, wzorzec `design/LOADERY.html` reguła 5).
  *
  * Test pilnuje JEDNEJ własności: skeleton nigdy nie mruga. Znaczy to dwie rzeczy naraz,
- * pozornie sprzeczne — nie pokazuje się przy szybkim odczycie (a takich jest większość:
+ * pozornie sprzeczne - nie pokazuje się przy szybkim odczycie (a takich jest większość:
  * lokalne SQLite) i nie znika zaraz po tym, jak się pokazał. Progi same w sobie są
- * dowolne; łamanie którejkolwiek z tych własności — nie jest.
+ * dowolne; łamanie którejkolwiek z tych własności - nie jest.
  */
 
 import {
@@ -30,7 +30,7 @@ describe('szybki odczyt nie pokazuje niczego', () => {
 
   it('dane, które przyszły przed progiem, nie zostawiają po sobie skeletonu', () => {
     // Najczęstszy przypadek w aplikacji: doba pilota wczytana w 40 ms. Ekran ma wtedy
-    // pokazać treść, jakby nie było na co czekać — bo nie było.
+    // pokazać treść, jakby nie było na co czekać - bo nie było.
     expect(
       skeletonVisible({ pending: false, pendingSince: null, shownSince: null, now: T0 + 40 }),
     ).toBe(false);
@@ -55,7 +55,7 @@ describe('długi odczyt pokazuje plamki i ich nie urywa', () => {
     ).toBe(true);
   });
 
-  it('dane tuż po progu NIE kasują skeletonu — dotrzymuje minimum', () => {
+  it('dane tuż po progu NIE kasują skeletonu - dotrzymuje minimum', () => {
     const shownSince = T0 + SKELETON_DELAY_MS;
     expect(
       skeletonVisible({

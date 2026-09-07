@@ -1,5 +1,5 @@
 /**
- * UZ Aero — KOMENDY dnia lotnego (przypadki użycia strony zapisu).
+ * UZ Aero - KOMENDY dnia lotnego (przypadki użycia strony zapisu).
  *
  * Jedno miejsce, w którym intencja pilota („chcę wystartować", „tankuję 48 L") zamienia
  * się w zdarzenie. Każda komenda przechodzi tę samą, jedyną ścieżkę zapisu:
@@ -7,14 +7,14 @@
  *   1. wczytaj strumień sesji z magazynu       (stan trwały, nie ekranowy)
  *   2. zbuduj projekcję `projectSession`       (co wiemy o dniu)
  *   3. ostempluj kandydata `repo.stampEvent`   (uuid + oba zegary)
- *   4. sprawdź inwarianty `checkAppend`        (domena — czysta funkcja)
+ *   4. sprawdź inwarianty `checkAppend`        (domena - czysta funkcja)
  *   5. twarde naruszenie → wyjątek, NIC się nie zapisuje
  *   6. zapisz `repo.appendStamped` i zwróć miękkie ostrzeżenia
  *
  * DLACZEGO STAN CZYTAMY Z BAZY, a nie ze store'u: gwardia ma obowiązywać niezależnie od
- * tego, co akurat trzyma UI — po restarcie aplikacji, przy dwóch ekranach naraz i przy
+ * tego, co akurat trzyma UI - po restarcie aplikacji, przy dwóch ekranach naraz i przy
  * zdarzeniu z autodetekcji GPS. Kilkaset zdarzeń dziennie (§5.2) sprawia, że koszt
- * przeliczenia jest nieistotny, a niezależność od pamięci UI — nie.
+ * przeliczenia jest nieistotny, a niezależność od pamięci UI - nie.
  *
  * KOMENDY SĄ BEZSTANOWE: kontekst sesji (`SessionContext`) przychodzi argumentem.
  * Dzięki temu test komendy to jedno wywołanie, bez ceremonii „najpierw zaloguj".
@@ -43,6 +43,7 @@ import {
   type OperationType,
   type PreflightConfirmPayload,
   type EventCorrectionPayload,
+  type OilAddPayload,
   type RefuelPayload,
   type SessionClaimMode,
   type SessionState,
@@ -59,7 +60,7 @@ export interface SessionContext {
   dualId: string | null;
 }
 
-/** Wejście `claim` — rozpoczęcie lub przejęcie sesji (§4.4). */
+/** Wejście `claim` - rozpoczęcie lub przejęcie sesji (§4.4). */
 export interface ClaimInput extends SessionContext {
   mode: SessionClaimMode;
   previousPicId?: string | null;
@@ -67,13 +68,19 @@ export interface ClaimInput extends SessionContext {
   gpsTime?: EpochMillis | null;
 }
 
-/** Jeden lot wpisu ręcznego — para start → lądowanie wewnątrz biegu silnika. */
+/** Jeden lot wpisu ręcznego - para start → lądowanie wewnątrz biegu silnika. */
 export interface ManualFlightLeg {
   takeoff: EpochMillis;
+  /** OSTATNIE lądowanie lotu - przy kręgach zamyka całą serię, patrz `touchAndGo`. */
   landing: EpochMillis;
+  /**
+   * Kręgi (touch and go) wykonane MIĘDZY tymi godzinami; pominięte = zwykły lot.
+   * Wchodzi wprost do `LandingPayload.touchAndGo` i tam mieszka pełne uzasadnienie.
+   */
+  touchAndGo?: number;
 }
 
-/** Zrzut wpisu ręcznego — czas + opcjonalny skład (null = „niepodany", nie zero). */
+/** Zrzut wpisu ręcznego - czas + opcjonalny skład (null = „niepodany", nie zero). */
 export interface ManualFlightDrop {
   at: EpochMillis;
   jumpers: JumperCounts | null;
@@ -81,7 +88,7 @@ export interface ManualFlightDrop {
 }
 
 /**
- * Dolewka wpisu ręcznego. Trójka before/added/after jest spójna z `RefuelPayload` —
+ * Dolewka wpisu ręcznego. Trójka before/added/after jest spójna z `RefuelPayload` -
  * `refuel` nie ma korekty `amend` właśnie dlatego, że niesie trójkę, więc wpis ręczny
  * też nie może jej rozłamać na osobne pola.
  */
@@ -93,13 +100,13 @@ export interface ManualFlightRefuel {
 }
 
 /**
- * Wejście `manualFlight` (ekrany 15 → 15C) — kompletna sesja wpisana po fakcie.
+ * Wejście `manualFlight` (ekrany 15 → 15C) - kompletna sesja wpisana po fakcie.
  *
  * PARITA Z LOTEM AUTOMATYCZNYM (przebudowa 2026-08-16): wpis po fakcie opisuje ten
- * sam lot, co zapis z kokpitu, więc niesie ten sam komplet — rodzaj operacji,
+ * sam lot, co zapis z kokpitu, więc niesie ten sam komplet - rodzaj operacji,
  * lotniska, klienta, Duala, DOWOLNIE WIELE lotów w jednym biegu, zrzuty i dolewki.
  * Poprzednia wersja wpisywała twardo `operation: 'inne'`, jedną parę start–lądowanie
- * i zgadywała odczyt początkowy z cache — lot szkolny gubił Duala, dzień skokowy
+ * i zgadywała odczyt początkowy z cache - lot szkolny gubił Duala, dzień skokowy
  * wymagał dziesięciu korekt po zapisaniu, a sesja z dolewką nie dawała się wpisać
  * w ogóle.
  */
@@ -112,29 +119,35 @@ export interface ManualFlightInput {
   departureIcao?: string | null;
   arrivalIcao?: string | null;
   client?: string | null;
-  /** Bieg silnika — dokładnie jeden na sesję (SESSION_ALREADY_RAN). */
+  /** Bieg silnika - dokładnie jeden na sesję (SESSION_ALREADY_RAN). */
   engine: { start: EpochMillis; stop: EpochMillis };
-  /** Loty wewnątrz biegu, w dowolnej kolejności — komenda sortuje po czasie. */
+  /** Loty wewnątrz biegu, w dowolnej kolejności - komenda sortuje po czasie. */
   flights: ManualFlightLeg[];
   drops?: ManualFlightDrop[];
   /**
-   * Dolewki — wyłącznie PRZED uruchomieniem albo PO zatrzymaniu silnika: dolewa się
+   * Dolewki - wyłącznie PRZED uruchomieniem albo PO zatrzymaniu silnika: dolewa się
    * przy zatrzymanym śmigle (`REFUEL_ENGINE_RUNNING` jest twardym błędem). Dolewka
    * w środku biegu odbije się w próbie generalnej i wpis NIE zostanie zapisany.
    */
   refuels?: ManualFlightRefuel[];
   /**
-   * Odczyt PRZED uruchomieniem — od 2026-08-16 wpisywany przez pilota (krok 4),
+   * Odczyt PRZED uruchomieniem - od 2026-08-16 wpisywany przez pilota (krok 4),
    * nie zgadywany z cache: pilot ma go na kartce, a zgadnięte ogniwo psuło łańcuch
    * MH następnemu pilotowi.
    */
   initialReading: FuelMhReading;
-  /** Odczyt po locie — WYMAGANY, staje się przekazaniem (te same reguły co 09b). */
+  /** Odczyt po locie - WYMAGANY, staje się przekazaniem (te same reguły co 09b). */
   finalReading: FuelMhReading;
+  /**
+   * Pomiar / dolewka oleju przy przejęciu (issue #60). Na 02a pomiar jest krokiem
+   * wymaganym; wpis ręczny jest wyjątkiem (fakt lotu > kompletność formularza).
+   */
+  oilL?: number | null;
+  oilAddedL?: number | null;
   notes?: string | null;
 }
 
-/** Wejście `drop` — numer wyniesienia i klient dopełniane z projekcji. */
+/** Wejście `drop` - numer wyniesienia i klient dopełniane z projekcji. */
 export interface DropInput {
   /** Skład z liczników arkusza 05e; suma 0 = „skład niepodany" (normalizacja niżej). */
   jumpers: JumperCounts;
@@ -142,7 +155,7 @@ export interface DropInput {
   dropNumber?: number;
   position?: GpsPosition | null;
   /**
-   * Kiedy zdarzenie NAPRAWDĘ zaszło, jeśli różni się od chwili zapisu (§5.1) — tak samo
+   * Kiedy zdarzenie NAPRAWDĘ zaszło, jeśli różni się od chwili zapisu (§5.1) - tak samo
    * jak przy starcie i lądowaniu. Potrzebne od issue #43: zdarzenia dopisywane po fakcie
    * w trybie edycji sesji muszą wylądować na osi tam, gdzie się wydarzyły, a nie tam,
    * gdzie pilot je sobie przypomniał.
@@ -150,15 +163,15 @@ export interface DropInput {
   at?: EpochMillis;
 }
 
-/** Wejście `boarding` (załadunek, issue #21 pkt 7) — te same liczniki co zrzut. */
+/** Wejście `boarding` (załadunek, issue #21 pkt 7) - te same liczniki co zrzut. */
 export interface BoardingInput {
   jumpers: JumperCounts;
-  /** Czas rzeczywisty zdarzenia — patrz `DropInput.at`. */
+  /** Czas rzeczywisty zdarzenia - patrz `DropInput.at`. */
   at?: EpochMillis;
 }
 
 /**
- * Skład o sumie 0 zapisujemy jako `null` — „nie podano", nie „zero skoczków".
+ * Skład o sumie 0 zapisujemy jako `null` - „nie podano", nie „zero skoczków".
  * Arkusze nie mają pola „bez deklaracji": pilot po prostu nie rusza liczników, a znak
  * tej decyzji nie może zależeć od tego, który ekran zapisywał (zrzut i załadunek
  * normalizują identycznie).
@@ -170,7 +183,7 @@ function declaredJumpers(jumpers: JumperCounts): JumperCounts | null {
 export class SessionCommands {
   /**
    * Konfiguracje samolotów zmieniają się rzadko (§4.8 „wolnozmienne"), a czytamy je przy
-   * każdej komendzie paliwowej — pamięć podręczna na czas życia obiektu wystarczy.
+   * każdej komendzie paliwowej - pamięć podręczna na czas życia obiektu wystarczy.
    */
   private readonly limitsCache = new Map<string, AircraftLimits>();
 
@@ -179,7 +192,7 @@ export class SessionCommands {
   // ── sesja i preflight ───────────────────────────────────────────────────────
 
   /**
-   * Rozpoczyna lub przejmuje sesję (§4.4). Claim jest OPTYMISTYCZNY — lokalnie zawsze
+   * Rozpoczyna lub przejmuje sesję (§4.4). Claim jest OPTYMISTYCZNY - lokalnie zawsze
    * można zostać PIC-em; konflikt dwóch telefonów wykrywa serwer (flaga `DOUBLE_CLAIM`).
    * Lokalna gwardia pilnuje tylko tego, co widać z telefonu: jedna sesja = jeden claim.
    */
@@ -188,7 +201,7 @@ export class SessionCommands {
       payload: { mode: input.mode, previousPicId: input.previousPicId ?? null },
       gpsTime: input.gpsTime,
     }));
-    // Dopiero po udanym claimie zapamiętujemy sesję w `session_meta` — restart aplikacji
+    // Dopiero po udanym claimie zapamiętujemy sesję w `session_meta` - restart aplikacji
     // ma wrócić do dnia, który naprawdę się zaczął (§5.2).
     await this.repo.setCurrentSession({
       sessionUuid: input.sessionUuid,
@@ -196,7 +209,7 @@ export class SessionCommands {
       aircraftId: input.aircraftId,
     });
     // Osobny klucz dla usługi GPS w tle: writer headless przypisuje nim fixy po
-    // śmierci procesu. Żyje dokładnie tak długo, jak pilot trzyma samolot — czyści go
+    // śmierci procesu. Żyje dokładnie tak długo, jak pilot trzyma samolot - czyści go
     // `releaseAircraft` (zdanie maszyny), nie zamknięcie dnia: dzień pilota trwa dalej.
     await this.repo.setMeta(SESSION_META_KEYS.activeSessionUuid, input.sessionUuid);
     return result;
@@ -218,7 +231,7 @@ export class SessionCommands {
 
   /** Start: `auto` po upływie okna „Cofnij" w toaście, `manual` z przycisku korekty (§3.3). */
   /**
-   * Rozpoczęcie kołowania — otwiera lot w logu cyklu (mockup 05).
+   * Rozpoczęcie kołowania - otwiera lot w logu cyklu (mockup 05).
    *
    * Nie ma okna „COFNIJ": kołowanie nie wpływa ani na czas blokowy, ani na czas lotu,
    * więc pomyłka kosztuje jeden wiersz w logu, a nie błędny wpis w dokumentach.
@@ -238,8 +251,8 @@ export class SessionCommands {
   /**
    * `at` = kiedy zdarzenie NAPRAWDĘ zaszło, jeśli różni się od chwili zapisu (§5.1,
    * dwa zegary). Dwa realne przypadki:
-   *  • autodetekcja — zdarzenie ma czas fixa GPS, nie czas wyjścia z okna „COFNIJ";
-   *  • wpis ręczny (05f) — pilot cofa czas, bo zorientował się po fakcie.
+   *  • autodetekcja - zdarzenie ma czas fixa GPS, nie czas wyjścia z okna „COFNIJ";
+   *  • wpis ręczny (05f) - pilot cofa czas, bo zorientował się po fakcie.
    * Bez tego oba zapisywałyby się z opóźnieniem, o które nikt później nie zapyta.
    */
   takeoff(
@@ -268,7 +281,7 @@ export class SessionCommands {
 
   // ── akcje ground i rozliczenie ──────────────────────────────────────────────
 
-  /** `at` — tankowanie dopisane po fakcie (issue #43); domyślnie chwila zapisu. */
+  /** `at` - tankowanie dopisane po fakcie (issue #43); domyślnie chwila zapisu. */
   refuel(ctx: SessionContext, payload: RefuelPayload, at?: EpochMillis): Promise<CommandResult> {
     return this.execute(ctx, 'refuel', () => ({
       payload,
@@ -276,8 +289,16 @@ export class SessionCommands {
     }));
   }
 
+  /** Dolewka oleju z kokpitu (issue #60) - jak tankowanie: przy zatrzymanym śmigle. */
+  addOil(ctx: SessionContext, payload: OilAddPayload, at?: EpochMillis): Promise<CommandResult> {
+    return this.execute(ctx, 'oil_add', () => ({
+      payload,
+      ...(at !== undefined ? { gpsTime: at } : {}),
+    }));
+  }
+
   /**
-   * Korekta zdarzenia (04c): zmiana czasu albo unieważnienie — zawsze jako NOWE
+   * Korekta zdarzenia (04c): zmiana czasu albo unieważnienie - zawsze jako NOWE
    * zdarzenie, oryginał zostaje w rejestrze (append-only). Walidację celu i okna 24 h
    * po zamknięciu dnia robią reguły; tu tylko zapis.
    */
@@ -299,7 +320,7 @@ export class SessionCommands {
     }));
   }
 
-  /** Załadunek skoczków (issue #21 pkt 7) — znacznik faktu, skład opcjonalny. */
+  /** Załadunek skoczków (issue #21 pkt 7) - znacznik faktu, skład opcjonalny. */
   boarding(ctx: SessionContext, input: BoardingInput): Promise<CommandResult> {
     return this.execute(ctx, 'boarding', () => ({
       payload: { jumpers: declaredJumpers(input.jumpers) },
@@ -311,17 +332,17 @@ export class SessionCommands {
     return this.execute(ctx, 'crew_change', () => ({ payload }));
   }
 
-  /** Wpis ręczny (§3.8) — jedyny nośnik korekty historii, także po `day_close` (24 h). */
+  /** Wpis ręczny (§3.8) - jedyny nośnik korekty historii, także po `day_close` (24 h). */
   manualLogEntry(ctx: SessionContext, payload: ManualLogEntryPayload): Promise<CommandResult> {
     return this.execute(ctx, 'manual_log_entry', () => ({ payload }));
   }
 
   // `closeLeg` (potwierdzenie wzlotu, ekran 09) żyło tu między 2026-08-06 a 2026-08-10
-  // — usunięte razem z `leg_close`: sesję zatwierdza `releaseAircraft` (`day_close`).
+  // - usunięte razem z `leg_close`: sesję zatwierdza `releaseAircraft` (`day_close`).
 
   /**
    * ZDANIE SAMOLOTU (ekran 09B). Typ zdarzenia nazywa się historycznie `day_close`,
-   * ale od 2026-08-06 **nie kończy dnia pilota** — kończy jego pracę z tą maszyną.
+   * ale od 2026-08-06 **nie kończy dnia pilota** - kończy jego pracę z tą maszyną.
    * Kolejny samolot dopisze się do listy sesji tej samej doby (§3.6; klamra służby
    * i jej `dutyEnd` usunięte 2026-08-11 razem z issue #23).
    */
@@ -331,7 +352,29 @@ export class SessionCommands {
   ): Promise<CommandResult> {
     const result = await this.execute(ctx, 'day_close', () => ({ payload }));
     // Samolot zdany = usługa GPS w tle nie ma już do czego przypisywać fixów.
-    // Czyścimy dopiero PO udanym zapisie — odrzucone zdanie zostawia klucz.
+    // Czyścimy dopiero PO udanym zapisie - odrzucone zdanie zostawia klucz.
+    await this.repo.deleteMeta(SESSION_META_KEYS.activeSessionUuid);
+    return result;
+  }
+
+  /**
+   * UNIEWAŻNIA CAŁĄ SESJĘ (uwaga z urządzenia, 2026-08-30: „daj możliwość usunięcia
+   * całego lotu").
+   *
+   * Rejestr zostaje append-only - nic nie znika z bazy. Sesja przestaje się LICZYĆ:
+   * wypada z dnia pilota, z sum, z historii i z eksportu, a jej strumień zostaje razem
+   * z powodem. Pełne uzasadnienie (dlaczego osobne zdarzenie, a nie `void` na
+   * przejęciu) stoi przy `SessionVoidPayload` w domenie.
+   *
+   * Uprawnienie jest TO SAMO, co przy każdej innej korekcie: pilot ma 24 h od zdania
+   * samolotu, administrator nie jest blokowany nigdy (`CORRECTION_EVENT_TYPES`).
+   * Reguły odrzucą też unieważnienie sesji nieistniejącej i drugie z rzędu.
+   *
+   * Czyścimy klucz bieżącej sesji, jak przy zdaniu: pilot, który wycofał wpis, nie ma
+   * już czego prowadzić, a usługa GPS nie ma do czego przypisywać fixów.
+   */
+  async voidSession(ctx: SessionContext, reason: string | null): Promise<CommandResult> {
+    const result = await this.execute(ctx, 'session_void', () => ({ payload: { reason } }));
     await this.repo.deleteMeta(SESSION_META_KEYS.activeSessionUuid);
     return result;
   }
@@ -344,18 +387,18 @@ export class SessionCommands {
    * (papier, rozładowana bateria).
    *
    * Dwie rzeczy różnią tę ścieżkę od zwykłych komend:
-   *  • **czasy pilota jadą w `gpsTime`** (eventTime = gpsTime ?? deviceTime, §5.1) —
+   *  • **czasy pilota jadą w `gpsTime`** (eventTime = gpsTime ?? deviceTime, §5.1) -
    *    chwila zapisu zostaje w `deviceTime`, dokładnie jak przy wpisie ręcznym 05f.
    *    Wyjątkiem jest `day_close`: BEZ gpsTime, bo zatwierdzenie zapada TERAZ i od
-   *    „teraz" ma biec okno korekty — wpis sprzed dwóch dni z kotwicą w przeszłości
+   *    „teraz" ma biec okno korekty - wpis sprzed dwóch dni z kotwicą w przeszłości
    *    rodziłby się z oknem już wygasłym;
    *  • **próba generalna przed pierwszym zapisem**: strumień jest append-only i nie ma
    *    transakcji, więc odrzucone piąte zdarzenie zostawiłoby osieroconą, otwartą
    *    sesję. Wszystkie kandydaty przechodzą przez `checkAppend` na stanie liczonym
-   *    w pamięci — zapis rusza dopiero, gdy przejdzie KOMPLET.
+   *    w pamięci - zapis rusza dopiero, gdy przejdzie KOMPLET.
    *
    * Świadomie NIE dotykamy `session_meta` (bieżąca sesja, klucz usługi GPS): to wpis
-   * historyczny — restart aplikacji nie ma prawa „wznowić" pilota w cudzej przeszłości.
+   * historyczny - restart aplikacji nie ma prawa „wznowić" pilota w cudzej przeszłości.
    */
   async manualFlight(input: ManualFlightInput): Promise<CommandResult> {
     const ctx: SessionContext = {
@@ -371,10 +414,10 @@ export class SessionCommands {
     // Loty i zrzuty przychodzą listami; scalamy je po `gpsTime`, żeby strumień
     // czytał się jak prawdziwy dzień. Przy równym stemplu zrzut stoi MIĘDZY startem
     // a lądowaniem swojej pary (rank), tak jak w `sessionAxis.ts`.
-    // Dolewki dzielą się na PRZED biegiem i PO nim — w środku biegu dolewki nie ma,
+    // Dolewki dzielą się na PRZED biegiem i PO nim - w środku biegu dolewki nie ma,
     // bo dolewa się przy zatrzymanym śmigle (`REFUEL_ENGINE_RUNNING` to twardy błąd).
     // Dolewka z czasem ze ŚRODKA biegu świadomie wchodzi do sekwencji w swoim
-    // miejscu czasowym, żeby próba generalna odrzuciła ją tym nazwanym błędem —
+    // miejscu czasowym, żeby próba generalna odrzuciła ją tym nazwanym błędem -
     // przesunięcie jej za wyłączenie ukrywałoby błąd w danych pilota.
     const refuelDraft = (r: ManualFlightRefuel): Draft => ({
       type: 'refuel',
@@ -392,7 +435,19 @@ export class SessionCommands {
     const inRun: Draft[] = [
       ...input.flights.flatMap((f): Draft[] => [
         { type: 'takeoff', payload: { method: 'manual' }, gpsTime: f.takeoff },
-        { type: 'landing', payload: { method: 'manual' }, gpsTime: f.landing },
+        {
+          type: 'landing',
+          // Kręgi jadą na LĄDOWANIU, bo to ono zamyka serię i to ono niesie liczbę
+          // przyziemień - start otwierający lot jest jeden i o kręgach nie wie.
+          // Zero nie wchodzi do payloadu: „bez kręgów" ma być brakiem pola, nie zerem
+          // (serwer odrzuca `touchAndGo: 0` właśnie po to, żeby nie było dwóch zapisów
+          // jednego faktu).
+          payload: {
+            method: 'manual',
+            ...(f.touchAndGo != null && f.touchAndGo > 0 ? { touchAndGo: f.touchAndGo } : {}),
+          },
+          gpsTime: f.landing,
+        },
       ]),
       ...(input.drops ?? []).map(
         (d, i): Draft => ({
@@ -416,7 +471,7 @@ export class SessionCommands {
     const drafts: Draft[] = [
       {
         type: 'session_claim',
-        // `manualEntry` — jawny znacznik wpisu po fakcie (plakietka „RĘCZNIE");
+        // `manualEntry` - jawny znacznik wpisu po fakcie (plakietka „RĘCZNIE");
         // z metody zdarzeń nie da się go wywieść, bo `manual` niesie też zwykły
         // lot z ręcznymi przyciskami.
         payload: { mode: 'free', previousPicId: null, manualEntry: true },
@@ -425,7 +480,7 @@ export class SessionCommands {
       {
         type: 'preflight_confirm',
         // Ten sam komplet, co na 02E (parita z lotem automatycznym, 2026-08-16).
-        // `dualId` w PAYLOADZIE, nie tylko w nagłówku — payload jest faktem
+        // `dualId` w PAYLOADZIE, nie tylko w nagłówku - payload jest faktem
         // o składzie załogi i jego nośnikiem korekty (issue #43).
         payload: {
           operation: input.operation,
@@ -434,10 +489,27 @@ export class SessionCommands {
           client: input.client ?? null,
           dualId: input.dualId,
           reading: input.initialReading,
+          // Olej (issue #60) - pomiar żyje przy przejęciu, także we wpisie po fakcie.
+          ...(input.oilL != null ? { oilL: input.oilL } : {}),
           notes: input.notes ?? null,
         },
         gpsTime: input.engine.start,
       },
+      // Dolewka oleju przy przejęciu = to samo zdarzenie `oil_add`, co dolewka
+      // z kokpitu (uwaga z urządzenia, 2026-09-03) - jeden byt, jeden kształt:
+      // wiersz osi, droga korekty (unieważnij + dopisz), źródło sumy analityki.
+      // Pole `oilAddedL` w payloadzie przejęcia zostało TYLKO do czytania starych
+      // strumieni. Stempel = uruchomienie, jak reszta bloku przejęcia; silnik
+      // jeszcze nie działa, więc OIL_ADD_ENGINE_RUNNING nie ma jak odbić.
+      ...(input.oilAddedL != null && input.oilAddedL > 0
+        ? [
+            {
+              type: 'oil_add',
+              payload: { addedL: input.oilAddedL },
+              gpsTime: input.engine.start,
+            } satisfies Draft,
+          ]
+        : []),
       ...refuelsBefore,
       { type: 'engine_start', payload: {}, gpsTime: input.engine.start },
       ...inRun,
@@ -484,7 +556,7 @@ export class SessionCommands {
 
   /**
    * Jedyna droga zdarzenia do bazy. Wszystkie komendy przechodzą tędy, więc nowa reguła
-   * w `domain/rules` obowiązuje je automatycznie — nie ma „zapomnianej" ścieżki zapisu.
+   * w `domain/rules` obowiązuje je automatycznie - nie ma „zapomnianej" ścieżki zapisu.
    */
   private async execute<K extends EventType>(
     ctx: SessionContext,

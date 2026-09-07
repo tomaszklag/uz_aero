@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) — nakładka CZASU PILOTA (`pilot_overlap`, §4.7).
+ * UZ Aero (serwer) - nakładka CZASU PILOTA (`pilot_overlap`, §4.7).
  *
  * Sedno tego testu to przypadek, który po §3.6a przestał być anomalią: pilot zdaje jedną
  * maszynę i bierze drugą **co do minuty**. Stara flaga `session_overlap` nie umiała tego
@@ -19,7 +19,7 @@ const span = (o: Partial<PilotSpan> & { sessionUuid: string }): PilotSpan => ({
   ...o,
 });
 
-describe('pilot_overlap — grafik pilota, nie dane maszyny', () => {
+describe('pilot_overlap - grafik pilota, nie dane maszyny', () => {
   it('zdanie i przejęcie CO DO MINUTY nie jest nakładką', () => {
     // Dokładnie ten dzień, dla którego przebudowaliśmy model: SP-AXA do 11:20,
     // SP-KLM od 11:20. Jedna służba, dwie maszyny, zero anomalii.
@@ -79,11 +79,11 @@ describe('pilot_overlap — grafik pilota, nie dane maszyny', () => {
    * Znalezione 2026-08-07 przy przebudowie generatora demo (`scripts/demo/scenario.ts`).
    *
    * `sessionUuids` jest SORTOWANE alfabetycznie, bo to zbiór kanoniczny dla ograniczenia
-   * `uq_flags_type_sessions` — i tak ma zostać. Ingest brał jednak z niego element `[1]`
+   * `uq_flags_type_sessions` - i tak ma zostać. Ingest brał jednak z niego element `[1]`
    * jako „sesję późniejszą", żeby przypiąć flagę do maszyny, która została wzięta, gdy
    * poprzednia nie była zdana. Te dwa porządki nie mają ze sobą nic wspólnego.
    *
-   * Wada spała, bo KAŻDY przypadek w tym pliku nazywał sesje `a`, `b`, `c` — czyli tak,
+   * Wada spała, bo KAŻDY przypadek w tym pliku nazywał sesje `a`, `b`, `c` - czyli tak,
    * że porządek alfabetyczny pokrywał się z chronologicznym. Dopiero dane demo z prawdziwymi
    * identyfikatorami (`demo-kwa-…-ako` przejęte przed `demo-ank-…-ako`) pokazały flagę
    * przypiętą do maszyny ZDAWANEJ zamiast wziętej.
@@ -101,7 +101,7 @@ describe('pilot_overlap — grafik pilota, nie dane maszyny', () => {
     expect(flags[0]!.laterSessionUuid).toBe('alfa');
   });
 
-  it('trzy nachodzące sesje dają trzy PARY — flaga opisuje parę, nie zbiór', () => {
+  it('trzy nachodzące sesje dają trzy PARY - flaga opisuje parę, nie zbiór', () => {
     const flags = pilotOverlapFlags([
       span({ sessionUuid: 'a', aircraftId: 'SP-AXA', claimedAt: at(8), closedAt: null }),
       span({ sessionUuid: 'b', aircraftId: 'SP-KLM', claimedAt: at(9), closedAt: null }),

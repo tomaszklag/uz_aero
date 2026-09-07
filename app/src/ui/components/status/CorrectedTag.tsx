@@ -1,8 +1,8 @@
 /**
- * UZ Aero — plakietka „POPR." (issue #43).
+ * UZ Aero - plakietka „POPR." (issue #43).
  *
  * ══ CO ZNACZY ══
- * „Ta wartość nie jest tą, którą zapisał przyrząd" — fakt o danych, nie akcja. Dlatego
+ * „Ta wartość nie jest tą, którą zapisał przyrząd" - fakt o danych, nie akcja. Dlatego
  * widać ją w OBU trybach ekranu sesji: także w odczycie i w podglądzie po oknie 24 h,
  * gdzie niczego już nie da się zmienić. Zamknięte okno odbiera prawo do zmiany danych,
  * nie do ich zrozumienia.
@@ -16,7 +16,7 @@
  * Napis ma 7,5 px i taki ma zostać: „popr." jest przypisem do nazwy zdarzenia, a nie
  * przyciskiem. Powiększony do celu dotknięcia zacząłby konkurować z treścią wiersza,
  * a wiersz osi w trybie odczytu ma 28 px (issue #40) i rytmu 44 px nie odzyska.
- * `hitSlop` rozciąga sam obszar reakcji — wygląd zostaje, kciuk trafia.
+ * `hitSlop` rozciąga sam obszar reakcji - wygląd zostaje, kciuk trafia.
  */
 
 import React from 'react';
@@ -26,11 +26,11 @@ import { Tag } from './Tag';
 
 export interface CorrectedTagProps {
   /**
-   * Otwarcie historii zmian. Pominięte — plakietka jest samym napisem (tak stoi
+   * Otwarcie historii zmian. Pominięte - plakietka jest samym napisem (tak stoi
    * w arkuszach, gdzie wejście w historię ma już własny wiersz).
    */
   onPress?: () => void;
-  /** Co opisuje plakietka — do czytnika ekranu („Lądowanie 09:41"). */
+  /** Co opisuje plakietka - do czytnika ekranu („Lądowanie 09:41"). */
   accessibilityContext?: string;
 }
 

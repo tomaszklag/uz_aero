@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) — `AdminAircraftJoin` + stan z telefonów → kontrakt floty (`A07`).
+ * UZ Aero (serwer) - `AdminAircraftJoin` + stan z telefonów → kontrakt floty (`A07`).
  *
  * Czysta funkcja, jak `pilotListItem.ts` i `sessionListItem.ts`: port oddaje model
  * warstwy aplikacji, a kształt „na drucie" powstaje tutaj i testuje się bez bazy.
@@ -8,13 +8,15 @@
  * `fuelToleranceL(capacityL)` woła się DOKŁADNIE tu i tylko tu po stronie floty.
  * Panelowi wolno importować z `@uzaero/domain` wyłącznie typy, więc gdyby ta liczba
  * nie wyszła z serwera, ekran musiałby albo ją pominąć (tak było przez cztery
- * przekroje), albo policzyć własnym `Math.max` — czyli zacząć trzymać drugą kopię
+ * przekroje), albo policzyć własnym `Math.max` - czyli zacząć trzymać drugą kopię
  * reguły §4.5. Jedno wywołanie w mapperze zamyka obie te drogi.
  */
 
 import { fuelToleranceL } from '@uzaero/domain';
 
 import type { Handover } from '@uzaero/domain';
+
+import type { HandoverSource } from '../../common/aircraftStateView.ts';
 
 import type {
   AdminAircraftClaim,
@@ -33,7 +35,7 @@ export interface PilotLabel {
 /**
  * Wejście mappera poza samym wierszem konfiguracji.
  *
- * `claim` i `handover` przychodzą z `application/common/aircraftStateView.ts` — tych
+ * `claim` i `handover` przychodzą z `application/common/aircraftStateView.ts` - tych
  * samych funkcji, którymi liczy je `GET /reference` dla telefonu. Dublowanie tej
  * reguły w panelu dałoby drugi wybór przekazania (po `closeTime` zamiast po łańcuchu
  * MH) i dwie różne odpowiedzi na to samo pytanie na dwóch ekranach jednego produktu.
@@ -42,11 +44,22 @@ export interface AircraftStateInput {
   claim: { picId: string; since: number | null; sessionUuid: string } | null;
   handover: Handover | null;
   /**
-   * `true`, gdy `latestHandover` wziął odczyt z sesji NIEZAMKNIĘTEJ (np. po tankowaniu
-   * w trwającym dniu). Rozróżnienie jest treścią podpisu w tabeli i nie da się go
-   * odczytać z samego `Handover` — ten niesie wartości, nie ich pochodzenie.
+   * Skąd wzięty jest odczyt - `pickHandover().source`. Rozróżnienie jest treścią
+   * podpisu w tabeli i nie da się go odczytać z samego `Handover`: ten niesie
+   * wartości, nie ich pochodzenie. `null` = przekazania nie ma w ogóle.
+   *
+   * Do issue #66 był tu boolean `readingFromOpenSession`, bo warianty były DWA.
+   * Trzeci (`initial` - stan początkowy z panelu) nie mieści się w tak/nie, a dopisanie
+   * drugiego boolean-a obok pierwszego pozwoliłoby wyrazić stan „i to, i to".
    */
-  readingFromOpenSession: boolean;
+  readingSource: HandoverSource | null;
+  /**
+   * Konto administratora, które WPISAŁO odczyt, i jego komentarz (issue #81) -
+   * wyłącznie przy `readingSource: 'admin'`; `null` poza tym. Podpis pola „Aktualny
+   * stan" w karcie samolotu: kto zdecydował i dlaczego.
+   */
+  enteredBy: string | null;
+  note: string | null;
   /** Nazwiska do claimu i odczytu; klucz = `pilotId`. */
   labels: ReadonlyMap<string, PilotLabel>;
 }
@@ -67,6 +80,13 @@ export function aircraftListItem(
     mhFormat: aircraft.mhFormat,
     dualRequired: aircraft.dualRequired,
     serviceStatus: aircraft.serviceStatus,
+    oilMinL: aircraft.oilMinL,
+    oilCapacityL: aircraft.oilCapacityL,
+    oilNormLPerH: aircraft.oilNormLPerH,
+    fuelNormLPerH: aircraft.fuelNormLPerH,
+    initialMh: aircraft.initialMh,
+    initialFuelL: aircraft.initialFuelL,
+    initialOilL: aircraft.initialOilL,
     updatedAt: join.updatedAt.toISOString(),
     claim: claimOf(state),
     reading: readingOf(state),
@@ -91,13 +111,24 @@ function claimOf(state: AircraftStateInput): AdminAircraftClaim | null {
 function readingOf(state: AircraftStateInput): AdminAircraftReading | null {
   const handover = state.handover;
   if (handover == null) return null;
+  // Suma „pomiar + dolewki po nim" liczy się TUTAJ, nie w panelu - ta sama zasada,
+  // co przy `fuelToleranceL` wyżej i `oilAfterL` na liście operacji.
+  const oil = handover.oil ?? null;
+  // Podpis: pilot, który PRZEKAZAŁ, albo administrator, który WPISAŁ (issue #81) -
+  // `byPilotId` zostaje `null` przy wpisie z panelu (nikt maszyny nie przekazał),
+  // a nazwisko idzie z konta administratora, żeby karta mówiła, kto zdecydował.
+  const signer = handover.byPilotId ?? state.enteredBy;
   return {
     mh: handover.reading.mh,
     fuelL: handover.reading.fuelL,
     at: handover.at,
     byPilotId: handover.byPilotId,
-    byPilotName: state.labels.get(handover.byPilotId)?.name ?? null,
-    source: state.readingFromOpenSession ? 'open_session' : 'handover',
+    byPilotName: signer == null ? null : (state.labels.get(signer)?.name ?? null),
+    oilL: oil == null ? null : oil.levelL + oil.addedSinceL,
+    oilAddedSinceL: oil == null ? null : oil.addedSinceL,
+    oilAt: oil?.at ?? null,
+    source: state.readingSource ?? 'handover',
+    note: state.note,
   };
 }
 

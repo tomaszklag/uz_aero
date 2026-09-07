@@ -1,9 +1,9 @@
 /**
- * UZ Aero (serwer) — test KONTRAKTU zod ↔ typ domenowy i projekcja ↔ wiersz sesji.
+ * UZ Aero (serwer) - test KONTRAKTU zod ↔ typ domenowy i projekcja ↔ wiersz sesji.
  *
  * To jest odpowiedź na pytanie „czy z rozwojem nie pogubimy się w modelach": zamiast
  * generatora (code-first) spójność wymuszają testy na styku warstw. Zdarzenie zbudowane
- * z TYPU domenowego musi przechodzić przez kopertę zod — nowe pole w domenie bez zmiany
+ * z TYPU domenowego musi przechodzić przez kopertę zod - nowe pole w domenie bez zmiany
  * koperty wywali ten test, a nie produkcyjny sync.
  */
 
@@ -15,7 +15,8 @@ import { sessionRowFrom } from '../src/application/common/mappers/sessionRow.ts'
 import { sessionListItem } from '../src/application/admin/mappers/sessionListItem.ts';
 import type { AdminSessionJoin } from '../src/application/admin/ports.ts';
 import type { EventsStorePort } from '../src/application/common/ports.ts';
-import { TEST_PASSWORD, testHarness } from './helpers.ts';
+import { testHarness } from './helpers.ts';
+import { googleTokenFor } from './testIdentityProvider.ts';
 
 const DAY = Date.UTC(2026, 5, 22);
 const at = (h: number, m: number): number => DAY + (h * 60 + m) * 60_000;
@@ -129,7 +130,7 @@ describe('projekcja domenowa ↔ wiersz sesji', () => {
 
   it('kolumny WYMIARÓW panelu też są przepisane z projekcji, nie z payloadu', () => {
     // Migracja 11 dołożyła `operation` i `client` PO to, żeby lista dni miała po czym
-    // filtrować. Ich wartości muszą pochodzić z `projectSession` — sięgnięcie po
+    // filtrować. Ich wartości muszą pochodzić z `projectSession` - sięgnięcie po
     // `payload.operation` wprost byłoby drugą implementacją tej samej reguły
     // (a `client` ma własną: dziedziczenie z pierwszego `drop`, gdy preflight go nie podał).
     const stream = [
@@ -158,7 +159,7 @@ describe('projekcja domenowa ↔ wiersz sesji', () => {
 
   it('kolumny STATYSTYK (kolumny statystyk) też są przepisane z projekcji, nie policzone', () => {
     // Ta sama reguła, co przy `operation`/`client`: agregaty `A10` sumują wartości projekcji,
-    // więc każda z nich musi mieć kolumnę wypełnianą przez `sessionRowFrom` — razem
+    // więc każda z nich musi mieć kolumnę wypełnianą przez `sessionRowFrom` - razem
     // z regułami projekcji („bilans istnieje dopiero z `day_close`", „zrzut bez
     // wysokości nie wchodzi ani do sumy, ani do licznika fixów").
     const openStream = [
@@ -177,7 +178,7 @@ describe('projekcja domenowa ↔ wiersz sesji', () => {
       event('drop', at(9, 2), {
         dropNumber: 2,
         jumpers: { tandem: 0, aff: 0, solo: 4 },
-        // Celowo BEZ `altitudeFt` — nie może wejść ani do sumy, ani do licznika.
+        // Celowo BEZ `altitudeFt` - nie może wejść ani do sumy, ani do licznika.
       }),
       event('landing', at(9, 18), { method: 'auto' }),
       event('engine_stop', at(10, 34)),
@@ -193,7 +194,7 @@ describe('projekcja domenowa ↔ wiersz sesji', () => {
       jumpersSolo: open.drops.jumpers.solo,
       dropAltSumFt: open.drops.altitudeSumFt,
       dropAltCount: open.drops.altitudeFixCount,
-      // Dzień OTWARTY: bilansów NIE MA — null projekcji zostaje null-em wiersza.
+      // Dzień OTWARTY: bilansów NIE MA - null projekcji zostaje null-em wiersza.
       mhDeltaH: null,
       fuelConsumedL: null,
     });
@@ -230,6 +231,10 @@ describe('DTO listy dni ↔ wiersz projekcji', () => {
 
   const join: AdminSessionJoin = {
     row,
+    dayIndex: 2,
+    // Kotwica numeracji z zapytania (issue #75) - dla biegu silnika to chwila
+    // jego uruchomienia; mapper NIE liczy jej sam.
+    signatureAt: row.engineStartAt,
     reg: 'SP-AXA',
     aircraftType: 'Cessna 182',
     mhFormat: 'hhmm',
@@ -260,6 +265,22 @@ describe('DTO listy dni ↔ wiersz projekcji', () => {
       // Od 2026-08-07 nazwa kolumny i nazwa pola DTO znaczą to samo.
       claimedAt: row.claimTime,
     });
+  });
+
+  /**
+   * SYGNATURA (issue #68) - jedyne pole DTO, które POWSTAJE w mapperze, a nie jest
+   * przepisane. Nie jest to wyłom: składa je domena (`operationSignature`), a mapper
+   * dostarcza jej cztery gotowe fakty. Test pilnuje, że bierze je z właściwych miejsc -
+   * doba idzie z URUCHOMIENIA SILNIKA (08:12), a nie z przejęcia.
+   */
+  it('składa sygnaturę operacji ze złączeń i kolumn projekcji', () => {
+    expect(sessionListItem(join).signature).toBe('SP-AXA/2026-06-22/TMK/2');
+  });
+
+  it('nie ma sygnatury bez któregokolwiek członu - napis z kreską nie identyfikuje', () => {
+    expect(sessionListItem({ ...join, picCode: null }).signature).toBeNull();
+    expect(sessionListItem({ ...join, reg: null }).signature).toBeNull();
+    expect(sessionListItem({ ...join, dayIndex: null }).signature).toBeNull();
   });
 });
 
@@ -299,10 +320,10 @@ describe('granica: listy panelu nie odtwarzają projekcji ze strumienia', () => 
   ];
 
   /**
-   * Dekorator liczący odczyty strumienia — opakowuje PRAWDZIWY adapter, nie udaje go.
+   * Dekorator liczący odczyty strumienia - opakowuje PRAWDZIWY adapter, nie udaje go.
    *
    * Liczy OBIE drogi do rejestru osobno: `reads` to odczyty pojedynczej sesji, `bulkReads`
-   * to odczyty wielosesyjne (analityka zużycia, `A10a`). Rozdzielenie jest istotne — reguła
+   * to odczyty wielosesyjne (analityka zużycia, `A10a`). Rozdzielenie jest istotne - reguła
    * §7.5 mówi, że listy nie odtwarzają projekcji ze strumienia ŻADNĄ z tych dróg, a nowa
    * metoda portu byłaby inaczej furtką poza tym licznikiem.
    */
@@ -328,7 +349,7 @@ describe('granica: listy panelu nie odtwarzają projekcji ze strumienia', () => 
   it('lista NIE wczytuje strumienia ani razu, karta dnia wczytuje go DOKŁADNIE raz', async () => {
     // To jest wykonywalna wersja reguły z `docs/architektura-panelu-serwer.md` §7.5.
     // Wersja zapisana wyłącznie w dokumencie przestaje obowiązywać przy pierwszym
-    // „przecież tu wystarczy policzyć jedną rzecz ze zdarzeń" — a wtedy strona listy
+    // „przecież tu wystarczy policzyć jedną rzecz ze zdarzeń" - a wtedy strona listy
     // to N pełnych strumieni.
     let spy: ReturnType<typeof counting> | null = null;
     const { app } = await testHarness({
@@ -340,8 +361,8 @@ describe('granica: listy panelu nie odtwarzają projekcji ze strumienia', () => 
 
     const login = await app.inject({
       method: 'POST',
-      url: '/auth/login',
-      payload: { login: 'TMK', password: TEST_PASSWORD },
+      url: '/auth/google',
+      payload: { idToken: googleTokenFor('TMK') },
     });
     const token = login.json().token as string;
     const auth = { authorization: `Bearer ${token}` };
@@ -357,7 +378,7 @@ describe('granica: listy panelu nie odtwarzają projekcji ze strumienia', () => 
     expect(list.json().items).toHaveLength(1);
     expect(counter.reads).toBe(0);
     // Nowa droga do rejestru (`sessionStreams`) musi być tak samo zamknięta dla list
-    // jak stara — inaczej reguła §7.5 obowiązywałaby tylko jedną z nich.
+    // jak stara - inaczej reguła §7.5 obowiązywałaby tylko jedną z nich.
     expect(counter.bulkReads).toBe(0);
 
     const detail = await app.inject({
@@ -373,7 +394,7 @@ describe('granica: listy panelu nie odtwarzają projekcji ze strumienia', () => 
   it('analityka zużycia czyta strumienie JEDNYM zapytaniem, nie sesja po sesji', async () => {
     // Wykonywalna wersja §7.7: analityka wolno czytać rejestr, ale nie wolno jej robić
     // tego w pętli. Przy oknie rocznym byłoby to dwieście round-tripów na jedno wejście
-    // na ekran — dokładnie ten koszt, którego kursor i projekcje mają nie dopuszczać.
+    // na ekran - dokładnie ten koszt, którego kursor i projekcje mają nie dopuszczać.
     let spy: ReturnType<typeof counting> | null = null;
     const { app } = await testHarness({
       events: (real) => {
@@ -384,8 +405,8 @@ describe('granica: listy panelu nie odtwarzają projekcji ze strumienia', () => 
 
     const login = await app.inject({
       method: 'POST',
-      url: '/auth/login',
-      payload: { login: 'TMK', password: TEST_PASSWORD },
+      url: '/auth/google',
+      payload: { idToken: googleTokenFor('TMK') },
     });
     const token = login.json().token as string;
     const auth = { authorization: `Bearer ${token}` };
@@ -409,7 +430,7 @@ describe('granica: listy panelu nie odtwarzają projekcji ze strumienia', () => 
 });
 
 describe('agregat statystyk = suma projekcji (wykonywalna wersja „panel nie liczy po swojemu")', () => {
-  /** Zdarzenie w formacie DRUTU (`POST /events`) — bez `syncedAt`. */
+  /** Zdarzenie w formacie DRUTU (`POST /events`) - bez `syncedAt`. */
   let wireSeq = 0;
   function wire(
     sessionUuid: string,
@@ -462,8 +483,8 @@ describe('agregat statystyk = suma projekcji (wykonywalna wersja „panel nie li
     const { app } = await testHarness();
     const login = await app.inject({
       method: 'POST',
-      url: '/auth/login',
-      payload: { login: 'TMK', password: TEST_PASSWORD },
+      url: '/auth/google',
+      payload: { idToken: googleTokenFor('TMK') },
     });
     const auth = { authorization: `Bearer ${login.json().token as string}` };
 
@@ -497,7 +518,7 @@ describe('agregat statystyk = suma projekcji (wykonywalna wersja „panel nie li
     const drops = res.json().drops;
     expect(drops.lifts).toBe(sum((s) => s.drops.count));
     expect(drops.jumpers).toBe(sum((s) => s.drops.totalJumpers));
-    // Średnia zakresu z SUM wysokości i LICZNIKA fixów — nie ze średnich per sesja.
+    // Średnia zakresu z SUM wysokości i LICZNIKA fixów - nie ze średnich per sesja.
     expect(drops.avgAltitudeFt).toBeCloseTo(
       sum((s) => s.drops.altitudeSumFt) / sum((s) => s.drops.altitudeFixCount),
       9,

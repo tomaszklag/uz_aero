@@ -1,8 +1,8 @@
 /**
- * UZ Aero — PillButton (`.btn-add` z mockupu 08)
+ * UZ Aero - PillButton (`.btn-add` z mockupu 08)
  *
  * Mała akcja do nagłówka: wypełniona pigułka z ikoną i napisem mono. Rozmiar celowo
- * mniejszy niż `ActionButton` — w nagłówku pełnowymiarowy przycisk konkurowałby
+ * mniejszy niż `ActionButton` - w nagłówku pełnowymiarowy przycisk konkurowałby
  * z tytułem, a to akcja poboczna, nie główna ścieżka ekranu.
  *
  * Wysokość trzyma 34 px + `hitSlop` dociąga cel dotykowy do progu 44 px.

@@ -1,7 +1,7 @@
 /**
- * UZ Aero (serwer) — strona ODCZYTU monitora eksportu (`A05`).
+ * UZ Aero (serwer) - strona ODCZYTU monitora eksportu (`A05`).
  *
- * Odpowiada na jedno pytanie: czy każdy dzień lotny ma aktualny arkusz, a jeśli nie —
+ * Odpowiada na jedno pytanie: czy każdy dzień lotny ma aktualny arkusz, a jeśli nie -
  * dlaczego. Dlatego lista jedzie z projekcji sesji, a nie z `export_log`: dzień bez ani
  * jednego wpisu w dzienniku jest tu najważniejszym wierszem, a nie brakiem danych.
  *
@@ -15,8 +15,8 @@
  * („czy KAŻDY dzień ma arkusz") o dwustu dniach i milczał o reszcie.
  *
  * Ta klasa mapuje więc wiersze i przepisuje liczby, które adapter policzył nad całym
- * zakresem (`infrastructure/pg/admin/exportsRepo.ts`). Cena — dwa wyrażenia jednej
- * reguły — jest nazwana w obu plikach i pilnowana przez `test/adminExports.test.ts`.
+ * zakresem (`infrastructure/pg/admin/exportsRepo.ts`). Cena - dwa wyrażenia jednej
+ * reguły - jest nazwana w obu plikach i pilnowana przez `test/adminExports.test.ts`.
  */
 
 import type { Database, SheetsReadPort } from '../../common/ports.ts';
@@ -52,7 +52,7 @@ export class AdminExportQueries {
    * Pojedynczy wiersz monitora; `null` = nie ma takiej sesji w projekcji.
    *
    * Obsługuje DWA pytania trasy ponowienia: „czy ten adres w ogóle istnieje" (404 przed
-   * dotknięciem eksportera — inaczej nieznany uuid odpowiadałby `no_events`, czyli
+   * dotknięciem eksportera - inaczej nieznany uuid odpowiadałby `no_events`, czyli
    * zdaniem o świecie zamiast o adresie) i „jak wygląda wiersz PO próbie", żeby panel
    * odświeżył go bez drugiego żądania.
    */
@@ -70,7 +70,7 @@ export class AdminExportQueries {
     const revisions = await this.exports.history(this.db, sessionUuid);
 
     // `exported_sheets` trzyma WYŁĄCZNIE treść bieżącą (UPSERT po `tab`), więc ta liczba
-    // jest zawsze 0 albo 1 — i o to chodzi. Zestawiona z długością `revisions` jest
+    // jest zawsze 0 albo 1 - i o to chodzi. Zestawiona z długością `revisions` jest
     // jedynym miejscem, w którym widać, że dziennik i karta odpowiadają na dwa różne
     // pytania: „co i kiedy poszło" oraz „jak karta wygląda teraz".
     const sheet = item.tab == null ? null : await this.sheets.readDaySheet(item.tab);
@@ -94,12 +94,12 @@ export class AdminExportQueries {
   }
 
   /**
-   * Treść BIEŻĄCEJ karty sesji — podgląd `A05` bez opuszczania panelu.
+   * Treść BIEŻĄCEJ karty sesji - podgląd `A05` bez opuszczania panelu.
    *
    * Istnieje obok `GET /sheets/:tab`, a nie zamiast niej, i to nie jest duplikat trasy.
    * Tamta jest celem linków `export_log.sheet_url` czytanych Z TELEFONU (nagłówek
    * `Bearer`, ekran 11). Panel loguje się ciasteczkiem `uzaero_admin` o `Path=/admin`,
-   * które do `/sheets/*` po prostu NIE JEDZIE — poszerzenie ścieżki ciasteczka posłałoby
+   * które do `/sheets/*` po prostu NIE JEDZIE - poszerzenie ścieżki ciasteczka posłałoby
    * sesję panelu razem z każdym żądaniem telefonu, więc jest odwrotnością tego, co ma
    * osiągnąć. Panel pyta więc o kartę pod swoim prefiksem, a nazwę liczy serwer z sesji,
    * żeby nie było DRUGIEGO miejsca składającego `YYYY-MM-DD_SP-XXX`.

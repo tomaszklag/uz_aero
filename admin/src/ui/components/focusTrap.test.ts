@@ -1,8 +1,8 @@
 /**
- * UZ Aero — panel: reguła pułapki fokusu w szufladzie.
+ * UZ Aero - panel: reguła pułapki fokusu w szufladzie.
  *
  * Jedna własność: **fokus nie wychodzi z warstwy modalnej klawiszem `Tab`.** Przed
- * 2026-08-01 `Tab` z ostatniego pola szuflady schodził do tabeli pod przesłoną —
+ * 2026-08-01 `Tab` z ostatniego pola szuflady schodził do tabeli pod przesłoną -
  * czyli `aria-modal="true"` mówiło nieprawdę.
  */
 
@@ -11,7 +11,7 @@ import { describe, expect, it } from 'vitest';
 import { trapTarget } from './focusTrap';
 
 describe('pułapka fokusu', () => {
-  it('w środku pułapki NIE ingerujemy — przeglądarka radzi sobie lepiej', () => {
+  it('w środku pułapki NIE ingerujemy - przeglądarka radzi sobie lepiej', () => {
     // Kolejność `tabindex`, elementy ukryte, shadow DOM: własna arytmetyka pomyliłaby
     // się tam, gdzie natywne zachowanie jest poprawne. Reguła dotyczy krawędzi.
     expect(trapTarget(5, 1, false)).toBeNull();

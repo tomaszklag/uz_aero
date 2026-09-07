@@ -1,32 +1,47 @@
 /**
- * UZ Aero — 13 USTAWIENIA (mockup `design/13-ustawienia.html`).
+ * UZ Aero - 13 USTAWIENIA (mockup `design/13-ustawienia.html`).
  *
- * Sześć sekcji: motyw → bezpieczeństwo (PIN) → konto → synchronizacja → diagnostyka
- * GPS → o aplikacji.
+ * Pięć sekcji: motyw → synchronizacja → diagnostyka GPS → o aplikacji →
+ * bezpieczeństwo (PIN) → konto.
+ *
+ * ══ JEDNO WEJŚCIE I KOLEJNOŚĆ OD ISSUE #82 ══
+ * Zębatka stoi odtąd WYŁĄCZNIE na „Mój dzień" - z kokpitu zniknęła, a w jej miejscu
+ * pilot ma przełącznik jasności (`ThemeToggle`). Ustawienia były ostatnim wyjątkiem
+ * od modalności kokpitu (`CLAUDE.md`) i przestały nim być.
+ *
+ * PIN i wylogowanie zjechały NA KONIEC („daj wylogowanie na samym końcu, a przed nim
+ * zmianę PIN-u"): obie sekcje dotyczą DOSTĘPU do aplikacji, a wylogowanie jest jedyną
+ * rzeczą tutaj, której nie da się cofnąć bez internetu. Na górze stały na drodze
+ * każdego, kto przyszedł po cokolwiek innego.
  *
  * SEKCJA SYNCHRONIZACJI PRZEJĘŁA EKRAN 11 (2026-08-12). Tamten ekran był trzecim
- * widokiem tej samej sesji (tabela lotów i „dane dnia" = ekran 10) i drugim wskaźnikiem
- * sieci (kolejka i ostatnia wysyłka = arkusz pod SyncChipem), a jego „SYNCHRONIZUJ
- * TERAZ" przeczyło regule, którą sam arkusz zapisuje: outbox wysyła się sam. Zostały
- * tu dwie rzeczy, których naprawdę nie ma nigdzie indziej — **uwagi serwera** (§4.5)
- * i **awaryjne ponaglenie wysyłki**. Mieszkają w Ustawieniach, bo Ustawienia widać
- * ZAWSZE: SyncChip pojawia się wyłącznie offline, więc flaga wystawiona przez serwer
- * po udanej wysyłce nie miałaby się gdzie pokazać.
- * Wszystko, co tu można zrobić, DZIAŁA OFFLINE — jedyny wyjątek (ponowne logowanie po
+ * widokiem tej samej operacji (tabela lotów i „dane dnia" = ekran 10) i drugim
+ * wskaźnikiem sieci (kolejka i ostatnia wysyłka = arkusz pod SyncChipem), a jego
+ * „SYNCHRONIZUJ TERAZ" przeczyło regule, którą sam arkusz zapisuje: outbox wysyła się
+ * sam. Została z niego JEDNA rzecz, której nie ma nigdzie indziej - **awaryjne
+ * ponaglenie synchronizacji** (od issue #55 OBU kierunków: dopycha kolejkę wysyłki
+ * i pobiera dane referencyjne z pominięciem bramy wieku; pilot sięgający po ten
+ * przycisk pyta „co serwer wie teraz", nie „co wiedział kwadrans temu").
+ *
+ * Uwagi serwera (§4.5) ZNIKNĘŁY stąd przy issue #82: to narzędzie administratora,
+ * a pilot dostawał listę rzeczy, których nie naprawi. Dwa stemple czasu scaliły się
+ * w jeden - uzasadnienie obu decyzji w `logic/syncStatus.ts`.
+ *
+ * Wszystko, co tu można zrobić, DZIAŁA OFFLINE - jedyny wyjątek (ponowne logowanie po
  * wylogowaniu) jest opisany przy przycisku, a sam przycisk przy niepustym outboxie
  * stoi zablokowany Z POWODEM i amber-boxem (§3.0, wzorzec `.outbox-guard` z 00).
  *
- * Diagnostyka GPS to CZUJNIK, nie sieć — mockup celowo pokazuje zdrowy fix przy
+ * Diagnostyka GPS to CZUJNIK, nie sieć - mockup celowo pokazuje zdrowy fix przy
  * chipie `Offline · 3`: dwie niezależne osie. Utratę fixa w locie pokazuje kokpit
  * (wariant 05g); tu jest warsztat do sprawdzenia „czy GPS w ogóle żyje" na ziemi.
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import Constants from 'expo-constants';
 
 import { GPS_STALE_SEC, type GpsFix } from '../../domain';
 import { REFERENCE_META_CHECKED_AT } from '../../application';
+import { appRelease } from '../../infrastructure/release/nativeRelease';
 import {
   ActionButton,
   AppText,
@@ -37,19 +52,19 @@ import {
   OutboxGuard,
   PinChangeSheet,
   ProfileChip,
-  RefDataStamp,
   Screen,
   ScreenHeader,
   SettingsAction,
   SyncChip,
-  ThemePicker,
+  ThemeSwitch,
 } from '../components';
 import { useSessionStore } from '../store';
 import { useAuthStore } from '../store/authStore';
 import { useGps, useTrace } from '../bootstrap/servicesContext';
 import { formatLatLon, timeUtc } from '../format';
+import { versionRowValue } from './logic/appVersion';
 import { fixAge } from './logic/gpsLoss';
-import { eventsCount, flagLabel, plural, serverNoticeLabel } from './logic/syncStatus';
+import { eventsCount, lastContactAt, lastContactLabel } from './logic/syncStatus';
 
 export function SettingsScreen({
   navigation,
@@ -65,28 +80,45 @@ export function SettingsScreen({
   const outboxCount = useSessionStore((s) => s.outboxCount);
   const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
   const lastSync = useSessionStore((s) => s.lastSync);
-  const serverFlags = useSessionStore((s) => s.serverFlags);
   const syncNow = useSessionStore((s) => s.syncNow);
-  const synced = useSessionStore((s) => s.synced);
-  const projection = useSessionStore((s) => s.projection);
-  const queries = useSessionStore((s) => s.queries);
+  const refreshReferenceNow = useSessionStore((s) => s.refreshReferenceNow);
+  const restoreEventsNow = useSessionStore((s) => s.restoreEventsNow);
   const repo = useSessionStore((s) => s.repo);
   const sessionReset = useSessionStore((s) => s.reset);
 
   const [pinSheet, setPinSheet] = useState(false);
   const [pinChanged, setPinChanged] = useState(false);
 
-  // ── synchronizacja: awaryjne ponaglenie wysyłki ───────────────────────────
+  // ── stempel cache referencyjnego - czytany na wejściu i po ręcznym syncu ──
+  const [refCheckedAt, setRefCheckedAt] = useState<number | null>(null);
+  const readRefStamp = useCallback(async (): Promise<void> => {
+    if (repo == null) return;
+    const v = await repo.getMeta(REFERENCE_META_CHECKED_AT);
+    setRefCheckedAt(v != null ? Number(v) : null);
+  }, [repo]);
+
+  // ── synchronizacja: awaryjne ponaglenie OBU kierunków ─────────────────────
+  // „SYNCHRONIZUJ TERAZ" dopycha kolejkę wysyłki I pobiera świeże dane referencyjne
+  // ORAZ zdarzenia z rejestru serwera - wszystko z pominięciem bram wieku (issue #55,
+  // rozszerzone przy issue #75 pkt 1): pilot, który sięga po ten przycisk, pyta
+  // „co serwer wie teraz", a bez dosyłki zdarzeń unieważnienie wpisane przez
+  // administratora czekało na telefonie do kwadransa mimo ręcznego ponaglenia.
+  // Stempel wieku czytamy ponownie, żeby wiersz w „O aplikacji" pokazał skutek od razu.
   const [syncing, setSyncing] = useState(false);
   const runManualSync = useCallback(async (): Promise<void> => {
     setSyncing(true);
     try {
-      await syncNow();
+      // 'manual': ten przycisk jest awaryjnym ponagleniem, więc czeka dłużej
+      // niż pętla tła (patrz `SyncTrigger`).
+      await syncNow('manual');
+      await restoreEventsNow();
+      await refreshReferenceNow();
+      await readRefStamp();
     } finally {
       setSyncing(false);
     }
-  }, [syncNow]);
-  // „Offline" znamy wyłącznie z wyniku OSTATNIEJ próby (§4.3) — innego pojęcia o sieci
+  }, [readRefStamp, refreshReferenceNow, restoreEventsNow, syncNow]);
+  // „Offline" znamy wyłącznie z wyniku OSTATNIEJ próby (§4.3) - innego pojęcia o sieci
   // aplikacja nie ma i nie udaje, że ma.
   const offline = lastSync?.kind === 'offline';
 
@@ -125,46 +157,34 @@ export function SettingsScreen({
     };
   }, [subscribe]);
 
-  // ── stempel cache referencyjnego + typ samolotu sesji ─────────────────────
-  const [refCheckedAt, setRefCheckedAt] = useState<number | null>(null);
+  // ── stempel cache referencyjnego (deklaracja przy ręcznym syncu wyżej) ────
   useEffect(() => {
-    if (repo == null) return;
-    let alive = true;
-    void repo.getMeta(REFERENCE_META_CHECKED_AT).then((v) => {
-      if (alive) setRefCheckedAt(v != null ? Number(v) : null);
-    });
-    return () => {
-      alive = false;
-    };
-  }, [repo]);
+    void readRefStamp();
+  }, [readRefStamp]);
 
-  const [aircraftType, setAircraftType] = useState<string | null>(null);
-  useEffect(() => {
-    if (queries == null || projection.aircraftId == null) return;
-    let alive = true;
-    void queries.aircraftById(projection.aircraftId).then((a) => {
-      if (alive) setAircraftType(a?.type ?? null);
-    });
-    return () => {
-      alive = false;
-    };
-  }, [queries, projection.aircraftId]);
+  /*
+   * Odczyt typu maszyny odszedł razem z wierszem „Samolot operacji" (issue #82).
+   * Ustawienia nie mają nic wspólnego z operacją, którą pilot właśnie prowadzi -
+   * mówi o niej pasek kokpitu i kafelek na „Mój dzień".
+   */
 
   const [logoutError, setLogoutError] = useState<string | null>(null);
   const doLogout = useCallback(async () => {
     const block = await logout(outboxCount);
     if (block != null) {
-      setLogoutError('Wylogowanie zablokowane — kolejka wysyłki nie jest pusta.');
+      setLogoutError('Wylogowanie zablokowane - kolejka wysyłki nie jest pusta.');
       return;
     }
-    // Wylogowanie czyści też stan sesji w pamięci (dane w SQLite zostają — to rejestr
+    // Wylogowanie czyści też stan sesji w pamięci (dane w SQLite zostają - to rejestr
     // samolotu, nie pilota); bramka w App.tsx sama przełączy na 00a-login.
     sessionReset();
   }, [logout, outboxCount, sessionReset]);
 
   const gpsFresh = receivedAt != null && now - receivedAt <= GPS_STALE_SEC * 1000;
   const logoutBlocked = outboxCount > 0;
-  const version = Constants.expoConfig?.version;
+  // Wydanie ZAINSTALOWANEGO pakietu (`expo-application`) - to samo źródło, co
+  // w zgłoszeniu błędu; `null` = Expo Go albo brak danych, wiersz pokazuje kreskę.
+  const release = appRelease();
 
   return (
     <Screen
@@ -175,28 +195,116 @@ export function SettingsScreen({
           title="USTAWIENIA"
           size="md"
           onBack={navigation.goBack}
-          backLabel="Kokpit"
-          right={
-            <SyncChip
-              status={synced ? 'synced' : 'offline'}
-              outboxCount={outboxCount}
-              lastSyncAt={lastSyncAt}
-            />
-          }
+          backLabel="Mój dzień"
+          right={<SyncChip />}
         />
       }
     >
       <View style={styles.content}>
         {/* ── motyw ─────────────────────────────────────────────────────────── */}
+        {/* Motyw jest preferencją PILOTA (decyzja 2026-07-29): rekord per pilot
+            w AsyncStorage, sync przez /me/prefs (LWW). Ekran o tym MILCZY (issue #72) -
+            przypis „zapisuje się w profilu pilota … zmiana działa offline" opowiadał
+            o budowie aplikacji komuś, kto chce tylko przyciemnić ekran. */}
         <Card title="Motyw wyświetlacza" header="inline">
-          <ThemePicker detailed />
-          <GhostAction label="Podgląd motywów w kokpicie" onPress={() => navigation.navigate('StyleGuide')} />
-          {/* Decyzja 2026-07-29: motyw jest preferencją PILOTA — rekord per pilot
-              w AsyncStorage, sync przez /me/prefs (LWW). Mockup 13 mówi to samo. */}
-          <SectionNote text="Motyw zapisuje się w profilu pilota i wędruje między urządzeniami — zmiana działa offline." />
+          <ThemeSwitch />
         </Card>
 
-        {/* ── bezpieczeństwo ────────────────────────────────────────────────── */}
+        {/* ── synchronizacja: STAN, nie osobny ekran ────────────────────────
+            Ekran 11 usunięty (2026-08-12) - patrz docblock modułu. DWA wiersze
+            i jeden przycisk awaryjny; niczego tu nie ma o danych operacji, bo od tego
+            jest rozliczenie (10).
+
+            WIERSZ „UWAGI SERWERA" USUNIĘTY (issue #82): flagi §4.5 są narzędziem
+            administratora i pilot nie ma na nie żadnej reakcji - uzasadnienie
+            w `logic/syncStatus.ts`. */}
+        <Card title="Synchronizacja" header="inline">
+          <KeyValueRow
+            divider
+            label="Kolejka wysyłki"
+            value={outboxCount === 0 ? 'pusta' : `${eventsCount(outboxCount)} czeka`}
+            valueTone={outboxCount === 0 ? 'green' : 'amber'}
+          />
+          {/* JEDEN STEMPEL ZAMIAST DWÓCH (issue #82): wysyłka i pobranie danych
+              referencyjnych to dwa kierunki jednego mechanizmu, a osobne godziny
+              wyglądały jak dwa różne zegary. Do tego stempel wysyłki stał zamrożony
+              przy pustej kolejce - patrz `lastContactAt`. */}
+          <KeyValueRow
+            divider
+            label="Ostatnia synchronizacja"
+            value={lastContactLabel(lastContactAt(lastSyncAt, refCheckedAt), now)}
+          />
+          <ActionButton
+            label="SYNCHRONIZUJ TERAZ"
+            tone="neutral"
+            variant="secondary"
+            size="md"
+            icon="sync"
+            busy={syncing}
+            hint="Synchronizacja działa sama w tle - to awaryjne ponaglenie"
+            disabledReason={
+              offline ? 'Brak połączenia - synchronizacja ruszy sama, gdy wróci zasięg' : null
+            }
+            onPress={() => void runManualSync()}
+          />
+        </Card>
+
+        {/* ── diagnostyka GPS (czujnik - oś niezależna od sieci) ────────────── */}
+        <Card title="Diagnostyka GPS" header="inline">
+          {/* `.diag-row` - wiersze klucz/wartość z DS (KeyValueRow). */}
+          <KeyValueRow
+            divider
+            label="Status"
+            value={permission === 'denied' ? 'BRAK UPRAWNIEŃ' : gpsFresh ? 'FIX' : 'BRAK FIXA'}
+            valueTone={permission !== 'denied' && gpsFresh ? 'green' : 'red'}
+          />
+          <KeyValueRow
+            divider
+            label="Ostatni fix"
+            value={fix != null ? `${timeUtc(fix.time)} UTC · ${fixAge(fix.time, now)}` : '-'}
+          />
+          <KeyValueRow
+            divider
+            label="Dokładność"
+            value={fix?.accuracyM != null ? `± ${Math.round(fix.accuracyM)} m` : '-'}
+          />
+          <KeyValueRow
+            divider
+            label="Pozycja"
+            value={fix?.lat != null && fix.lon != null ? formatLatLon(fix.lat, fix.lon) : '-'}
+          />
+          <TraceRow />
+          <GhostAction label="Odśwież" onPress={() => void subscribe()} />
+        </Card>
+
+        {/* ── o aplikacji ─────────────────────────────────────────────────────
+            Wiersz „Samolot operacji" USUNIĘTY (issue #82: „nie pisz tam «samolot
+            operacji» - to jest do usunięcia"). Mówił, którą maszynę pilot ma w ręce,
+            czyli to, co pasek kokpitu i kafelek na 01 niosą w kółko - a przy okazji
+            pisał SUROWY identyfikator z panelu, ta sama klasa błędu, co guid
+            w nagłówku śladu (issue #84).
+
+            Stempel danych referencyjnych też stąd zszedł: jest częścią jednej godziny
+            synchronizacji wyżej (`lastContactAt`), a nie osobną wiadomością.
+
+            WIERSZ „WERSJA" (2026-09-06, faza testów): „1.0.0 (build 1)" - wersja i numer
+            builda z ZAINSTALOWANEGO pakietu (`infrastructure/release/nativeRelease.ts`),
+            nie z konfiguracji Expo, która numeru builda nie zna. Tym samym zdaniem
+            opisują się wydania w CHANGELOG i to samo jedzie w zgłoszeniu błędu - tester
+            ma umieć powiedzieć, co ma na telefonie. W Expo Go (pakiet nie nasz) i bez
+            danych stoi kreska. Wersja zeszła z wiersza „Aplikacja": jedna liczba stoi
+            na karcie raz. */}
+        <Card title="O aplikacji" header="inline">
+          <KeyValueRow divider label="Aplikacja" value="UZ Aero" />
+          <KeyValueRow label="Wersja" value={versionRowValue(release)} />
+        </Card>
+
+        {/* ══ NA KOŃCU: PIN, A POD NIM WYLOGOWANIE (issue #82) ══════════════
+            „W ustawieniach daj wylogowanie na samym końcu, a przed nim zmianę PIN-u."
+            Obie sekcje dotyczą DOSTĘPU do aplikacji, więc stoją razem, a wylogowanie -
+            jedyna rzecz w tych ustawieniach, której nie da się cofnąć bez internetu -
+            zamyka ekran. Wcześniej stały na górze, zaraz pod motywem, czyli na drodze
+            pilota, który przyszedł tu po cokolwiek innego. */}
         <Card title="Bezpieczeństwo" header="inline">
           <SettingsAction
             icon="settings"
@@ -208,9 +316,8 @@ export function SettingsScreen({
             }}
           />
           {pinChanged && (
-            <Banner kind="status" tone="green" icon="check" title="PIN zmieniony" text="Nowy PIN obowiązuje od teraz — stary przestał działać." />
+            <Banner kind="status" tone="green" icon="check" title="PIN zmieniony" text="Nowy PIN obowiązuje od teraz - stary przestał działać." />
           )}
-          <SectionNote text="PIN sprawdzany lokalnie na telefonie — zmiana działa w 100% offline." />
         </Card>
 
         {/* ── konto (§3.0: ochrona wylogowania) ─────────────────────────────── */}
@@ -221,7 +328,7 @@ export function SettingsScreen({
             name="Wyloguj i zmień konto"
             sub={
               logoutBlocked
-                ? `niedostępne — ${eventsCount(outboxCount)} czeka na wysyłkę`
+                ? `niedostępne - ${eventsCount(outboxCount)} czeka na wysyłkę`
                 : 'ponowne logowanie wymaga internetu'
             }
             disabled={logoutBlocked}
@@ -231,104 +338,7 @@ export function SettingsScreen({
           {logoutError != null && (
             <Banner kind="warning" tone="red" icon="warning" title="Nie wylogowano" text={logoutError} />
           )}
-          <SectionNote text="Ponowne logowanie wymaga internetu — konta zakłada administrator." />
-        </Card>
-
-        {/* ── synchronizacja: STAN, nie osobny ekran ────────────────────────
-            Ekran 11 usunięty (2026-08-12) — patrz docblock modułu. Trzy wiersze
-            i jeden przycisk awaryjny; niczego tu nie ma o danych sesji, bo od tego
-            jest rozliczenie (10). */}
-        <Card title="Synchronizacja" header="inline">
-          <KeyValueRow
-            divider
-            label="Kolejka wysyłki"
-            value={outboxCount === 0 ? 'pusta' : `${eventsCount(outboxCount)} czeka`}
-            valueTone={outboxCount === 0 ? 'green' : 'amber'}
-          />
-          <KeyValueRow
-            divider
-            label="Ostatnia udana wysyłka"
-            value={lastSyncAt != null ? `${timeUtc(lastSyncAt)} UTC` : 'jeszcze żadnej'}
-          />
-          {/* Wiersz stoi ZAWSZE, także z „brak uwag": inaczej pilot nie odróżni
-              „serwer nic nie zgłasza" od „serwer nic nie sprawdził" (§6 pkt 2 —
-              cisza nie może znaczyć dwóch rzeczy naraz). */}
-          <KeyValueRow
-            divider
-            label="Uwagi serwera"
-            value={serverNoticeLabel(serverFlags.length, lastSyncAt != null)}
-            valueTone={serverFlags.length > 0 ? 'amber' : 'green'}
-          />
-          {/* Jedna flaga potrafi objąć kilka sesji (§4.5), więc wiersz mówi ILE —
-              bez tego pilot nie wie, czy chodzi o dzisiejszy lot, czy o cały tydzień. */}
-          {serverFlags.map((flag) => (
-            <KeyValueRow
-              key={flag.type}
-              divider
-              label={flagLabel(flag.type)}
-              value={`${flag.sessionUuids.length} ${plural(flag.sessionUuids.length, 'sesja', 'sesje', 'sesji')}`}
-              valueTone="amber"
-            />
-          ))}
-          <ActionButton
-            label="SYNCHRONIZUJ TERAZ"
-            tone="neutral"
-            variant="secondary"
-            size="md"
-            icon="sync"
-            busy={syncing}
-            hint="Wysyłka działa sama w tle — to awaryjne ponaglenie"
-            disabledReason={
-              offline ? 'Brak połączenia — wysyłka ruszy sama, gdy wróci zasięg' : null
-            }
-            onPress={() => void runManualSync()}
-          />
-          <SectionNote text="Kolejka opróżnia się sama, gdy jest sieć — nie musisz jej pilnować. Uwagi serwera pochodzą z ostatniej wysyłki; rozwiązuje je administrator w panelu." />
-        </Card>
-
-        {/* ── diagnostyka GPS (czujnik — oś niezależna od sieci) ────────────── */}
-        <Card title="Diagnostyka GPS" header="inline">
-          {/* `.diag-row` — wiersze klucz/wartość z DS (KeyValueRow). */}
-          <KeyValueRow
-            divider
-            label="Status"
-            value={permission === 'denied' ? 'BRAK UPRAWNIEŃ' : gpsFresh ? 'FIX' : 'BRAK FIXA'}
-            valueTone={permission !== 'denied' && gpsFresh ? 'green' : 'red'}
-          />
-          <KeyValueRow
-            divider
-            label="Ostatni fix"
-            value={fix != null ? `${timeUtc(fix.time)} UTC · ${fixAge(fix.time, now)}` : '—'}
-          />
-          <KeyValueRow
-            divider
-            label="Dokładność"
-            value={fix?.accuracyM != null ? `± ${Math.round(fix.accuracyM)} m` : '—'}
-          />
-          <KeyValueRow
-            divider
-            label="Pozycja"
-            value={fix?.lat != null && fix.lon != null ? formatLatLon(fix.lat, fix.lon) : '—'}
-          />
-          <TraceRow />
-          <GhostAction label="Odśwież" onPress={() => void subscribe()} />
-          <SectionNote text="Czujnik lokalny — odczyt działa bez zasięgu. Brak fixa w locie zobaczysz w kokpicie jako czerwony baner." />
-        </Card>
-
-        {/* ── o aplikacji ───────────────────────────────────────────────────── */}
-        <Card title="O aplikacji" header="inline">
-          <KeyValueRow divider label="Aplikacja" value={`UZ Aero${version != null ? ` · v${version}` : ''}`} />
-          <KeyValueRow
-            divider
-            label="Samolot sesji"
-            value={
-              projection.aircraftId != null
-                ? `${projection.aircraftId}${aircraftType != null ? ` · ${aircraftType}` : ''}`
-                : '—'
-            }
-          />
-          <RefDataStamp checkedAt={refCheckedAt} style={styles.refRow} />
-          <SectionNote text="Dane referencyjne odświeżają się same przy każdym kontakcie z siecią." />
+          <SectionNote text="Ponowne logowanie wymaga internetu - konta zakłada administrator." />
         </Card>
       </View>
 
@@ -351,7 +361,7 @@ export function SettingsScreen({
 
 /**
  * Wiersz rejestratora śladu (faza 5): ile surowych fixów czeka i od kiedy.
- * Rejestrator jest zawsze włączony (decyzja 2026-07-29) — wiersz mówi, że działa,
+ * Rejestrator jest zawsze włączony (decyzja 2026-07-29) - wiersz mówi, że działa,
  * i uczciwie pokazuje zaległość wysyłki; retencja 14 dni sprząta sama.
  */
 function TraceRow() {
@@ -383,7 +393,17 @@ function TraceRow() {
   );
 }
 
-/** `.section-note` — przypis sekcji (mono, muted). */
+/**
+ * `.section-note` - przypis sekcji (mono, muted). ZOSTAŁ JEDEN, przy koncie (issue #72,
+ * uwaga z urządzenia): niesie POWÓD, dla którego wylogowanie jest decyzją - ponowne
+ * logowanie wymaga internetu, a konta zakłada administrator.
+ *
+ * Pięć pozostałych (motyw, PIN, synchronizacja, GPS, dane referencyjne) USUNIĘTYCH:
+ * opowiadały, JAK aplikacja jest zbudowana („zmiana działa offline", „kolejka opróżnia
+ * się sama"), komuś, kto przyszedł przyciemnić ekran albo zmienić PIN. Miejsce takich
+ * zdań jest w dokumentacji. Nowy przypis dokładamy WYŁĄCZNIE wtedy, gdy niesie blokadę
+ * z powodem albo instrukcję do wykonania.
+ */
 function SectionNote({ text }: { text: string }) {
   return (
     <AppText variant="mono" tone="muted" style={styles.note}>
@@ -395,6 +415,5 @@ function SectionNote({ text }: { text: string }) {
 const styles = StyleSheet.create({
   content: { padding: 14, gap: 12 },
   profile: { minWidth: 0, alignSelf: 'stretch' },
-  refRow: { paddingTop: 4 },
   note: { fontSize: 9, lineHeight: 14, letterSpacing: 0.5 },
 });

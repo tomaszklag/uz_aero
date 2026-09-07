@@ -1,7 +1,7 @@
 /**
- * UZ Aero — SKELETON LISTY: n plamek w geometrii wierszy, które za chwilę przyjdą.
+ * UZ Aero - SKELETON LISTY: n plamek w geometrii wierszy, które za chwilę przyjdą.
  *
- * Najczęstszy kształt czekania w tej aplikacji — karta dnia w historii (12), pozycja
+ * Najczęstszy kształt czekania w tej aplikacji - karta dnia w historii (12), pozycja
  * floty na 02, wiersz diagnostyki w ustawieniach. Ekran podaje wysokość wiersza
  * i ich liczbę; liczba mówi o KSZTAŁCIE listy, nie o jej długości (tej nikt jeszcze
  * nie zna), więc podaje się tyle, ile mieści się bez przewijania.
@@ -17,7 +17,7 @@ import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { Skeleton } from './Skeleton';
 
 export interface SkeletonRowsProps {
-  /** Ile wierszy — tyle, ile widać bez przewijania. */
+  /** Ile wierszy - tyle, ile widać bez przewijania. */
   rows?: number;
   /** Wysokość jednego wiersza w pikselach docelowego komponentu. */
   height?: number;

@@ -1,9 +1,9 @@
 /**
- * UZ Aero — test PRZESUNIĘCIA GODZINY PRZEJĘCIA (issue #43, uwaga z urządzenia).
+ * UZ Aero - test PRZESUNIĘCIA GODZINY PRZEJĘCIA (issue #43, uwaga z urządzenia).
  *
  * Najbardziej ryzykowna operacja całego trybu edycji: jedno pole potrafi przestawić
  * czasy wszystkich zdarzeń sesji. Dlatego plan liczy się OSOBNO od zapisu i ma testy
- * na każdą gałąź — pomyłka tutaj nie objawia się błędem, tylko cicho przepisaną historią.
+ * na każdą gałąź - pomyłka tutaj nie objawia się błędem, tylko cicho przepisaną historią.
  */
 
 import { projectSession, type Event, type EventOf, type EventType } from '../domain';
@@ -57,7 +57,7 @@ function sessionEvents(): Event[] {
 const plan = (events: Event[], newTime: number) =>
   claimRetimePlan(projectSession(events), events, 'claim', newTime);
 
-describe('godzina przejęcia — bez kaskady', () => {
+describe('godzina przejęcia - bez kaskady', () => {
   it('ta sama godzina nie jest zmianą', () => {
     expect(plan(sessionEvents(), at(8, 4)).kind).toBe('unchanged');
   });
@@ -73,7 +73,7 @@ describe('godzina przejęcia — bez kaskady', () => {
     expect(result.kind).toBe('simple');
   });
 
-  it('sesja bez pracy silnika (09C) nie ma czego ciągnąć', () => {
+  it('operacja bez pracy silnika (09C) nie ma czego ciągnąć', () => {
     const events = sessionEvents().filter(
       (e) => e.type !== 'engine_start' && e.type !== 'engine_stop' && e.type !== 'takeoff' && e.type !== 'landing',
     );
@@ -81,7 +81,7 @@ describe('godzina przejęcia — bez kaskady', () => {
   });
 });
 
-describe('godzina przejęcia — kaskada', () => {
+describe('godzina przejęcia - kaskada', () => {
   it('przejęcie ZA uruchomieniem przesuwa cały bieg tak, by uruchomienie było w tej godzinie', () => {
     const result = plan(sessionEvents(), at(9, 0));
     expect(result.kind).toBe('cascade');
@@ -91,7 +91,7 @@ describe('godzina przejęcia — kaskada', () => {
     expect(result.deltaMs).toBe(48 * 60_000);
     const byUuid = new Map(result.steps.map((s) => [s.uuid, s.newTime]));
     expect(byUuid.get('claim')).toBe(at(9, 0));
-    // Uruchomienie ląduje DOKŁADNIE w nowej godzinie przejęcia — o to prosił użytkownik.
+    // Uruchomienie ląduje DOKŁADNIE w nowej godzinie przejęcia - o to prosił użytkownik.
     expect(byUuid.get('engine-on')).toBe(at(9, 0));
     // Reszta jedzie za nim, zachowując odstępy.
     expect(byUuid.get('to-1')).toBe(at(9, 8));
@@ -99,7 +99,20 @@ describe('godzina przejęcia — kaskada', () => {
     expect(byUuid.get('engine-off')).toBe(at(10, 43));
   });
 
-  it('ZDANIA samolotu kaskada nie rusza — to ono zamyka okno korekty', () => {
+  it('dolewka oleju (oil_add) jedzie w kaskadzie jak tankowanie (issue #60)', () => {
+    const withOil = [
+      ...sessionEvents(),
+      event('oil_add', at(8, 6), { addedL: 1.0 }, 'oil-1'),
+    ];
+    const result = plan(withOil, at(9, 0));
+    if (result.kind !== 'cascade') throw new Error('spodziewano się kaskady');
+
+    const step = result.steps.find((s) => s.uuid === 'oil-1');
+    // 08:06 + 48 min = 08:54 - dolewka zostaje PRZED uruchomieniem, w swoim odstępie.
+    expect(step?.newTime).toBe(at(8, 54));
+  });
+
+  it('ZDANIA samolotu kaskada nie rusza - to ono zamyka okno korekty', () => {
     const result = plan(sessionEvents(), at(9, 0));
     if (result.kind !== 'cascade') throw new Error('spodziewano się kaskady');
     expect(result.steps.some((s) => s.uuid === 'close')).toBe(false);
@@ -112,7 +125,7 @@ describe('godzina przejęcia — kaskada', () => {
     expect(result.note).toContain('09:00');
   });
 
-  it('czas trwania lotu i bloku zostaje bez zmian — przesuwamy, nie skracamy', () => {
+  it('czas trwania lotu i bloku zostaje bez zmian - przesuwamy, nie skracamy', () => {
     const before = projectSession(sessionEvents());
     const result = plan(sessionEvents(), at(9, 0));
     if (result.kind !== 'cascade') throw new Error('spodziewano się kaskady');
@@ -128,9 +141,9 @@ describe('godzina przejęcia — kaskada', () => {
   });
 });
 
-describe('godzina przejęcia — odmowa', () => {
+describe('godzina przejęcia - odmowa', () => {
   it('bieg nie może wyjść poza zdanie samolotu', () => {
-    // Silnik stanął 09:55, zdanie 11:20 — zapas to 1 h 25 min. Przesunięcie o 2 h
+    // Silnik stanął 09:55, zdanie 11:20 - zapas to 1 h 25 min. Przesunięcie o 2 h
     // wypchnęłoby wyłączenie silnika za oddanie maszyny.
     const result = plan(sessionEvents(), at(10, 12));
     expect(result.kind).toBe('refused');
@@ -138,7 +151,7 @@ describe('godzina przejęcia — odmowa', () => {
     expect(result.note).toContain('11:20');
   });
 
-  it('odmowa nie produkuje ANI JEDNEGO kroku — nie ma częściowego przesunięcia', () => {
+  it('odmowa nie produkuje ANI JEDNEGO kroku - nie ma częściowego przesunięcia', () => {
     const result = plan(sessionEvents(), at(10, 12));
     expect(result).not.toHaveProperty('steps');
   });

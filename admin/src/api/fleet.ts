@@ -1,34 +1,28 @@
 /**
- * UZ Aero — panel: flota (`/admin/api/fleet*`).
+ * UZ Aero - panel 2.0: flota (`/admin/api/fleet*`).
  *
  * Jeden plik = jeden zasób = jeden prefiks trasy, jak `server/src/http/routes/`.
- * Warstwa `api/` nie zna Reacta ani cache'u — zwraca obietnice, a co z nimi zrobić,
+ * Warstwa `api/` nie zna Reacta ani cache'u - zwraca obietnice, a co z nimi zrobić,
  * decyduje `queries/`.
  *
- * ══ DLACZEGO PRÓG FLAGI JEST TU ŻĄDANIEM, A NIE FUNKCJĄ ══
- * Tolerancja `FUEL_MISMATCH` to `max(10 L, 5% pojemności)` — a panelowi wolno
- * importować z `@uzaero/domain` wyłącznie typy (`docs/architektura-panelu-frontend.md`
- * §5.1). Nie ma tu więc czym pomnożyć: liczba przychodzi z serwera, także dla
- * pojemności, która jeszcze nie została zapisana. To wygląda na okrężną drogę i nią
- * jest — ale krótsza droga zaczyna się od `capacityL * 0.05` w formularzu, czyli od
- * drugiej kopii reguły §4.5.
+ * == DLACZEGO PROG JEST TU ZADANIEM, A NIE FUNKCJA ==
+ * Próg rozjazdu paliwa to `max(10 L, 5% pojemności)` - a panelowi wolno importować
+ * z `@uzaero/domain` wyłącznie typy. Nie ma tu więc czym pomnożyć: liczba przychodzi
+ * z serwera, także dla pojemności, która jeszcze nie została zapisana. To wygląda na
+ * okrężną drogę i nią jest - ale krótsza droga zaczyna się od `capacityL * 0.05`
+ * w formularzu, czyli od drugiej kopii reguły, która za tydzień powie co innego.
  */
 
 import type { MhFormat } from '@uzaero/domain';
 
 import type { AircraftChangeDto, AircraftToleranceDto, FleetPageDto } from './dto';
-import { apiGet, apiPatch, apiPost } from './httpClient';
+import { apiDelete, apiGet, apiPatch, apiPost } from './httpClient';
 
 /** Filtr listy tak, jak przyjmuje go trasa. Brak filtra = cała flota. */
 export interface FleetListQuery {
   /** `active` / `disabled`; brak = obie grupy. */
   status?: 'active' | 'disabled';
-  /**
-   * `'true'`/`'false'` jako NAPIS: query string nie ma typu logicznego, a trasa czyta
-   * to enumem — `?claimed=false` znaczy „tylko wolne", nie „bez filtra".
-   */
-  claimed?: 'true' | 'false';
-  /** Fragment rejestracji albo typu — dopasowanie zawierające, nie dokładne. */
+  /** Fragment rejestracji albo typu - dopasowanie zawierające, nie dokładne. */
   q?: string;
 }
 
@@ -48,40 +42,83 @@ export function listFleet(query: FleetListQuery): Promise<FleetPageDto> {
 }
 
 /**
- * Próg flagi dla POJEMNOŚCI — pytanie formularza `A07a` („co się stanie, jeśli wpiszę
- * 1100"). Wariant po `aircraftId` obsługuje ta sama trasa; dokładamy go, gdy pojawi się
- * ekran, który zna samolot, a nie zna pojemności (`A02a`, `A02b`).
+ * Próg rozjazdu paliwa dla POJEMNOSCI wpisywanej w formularzu - odpowiedź na pytanie
+ * „co się stanie, jeśli wpiszę 1100".
+ *
+ * Trasa ma też wariant po `aircraftId`; panel 2.0 go nie potrzebuje, bo pyta zawsze
+ * o wartość, którą klient ma właśnie pod palcami.
  */
 export function getFuelTolerance(capacityL: number): Promise<AircraftToleranceDto> {
   return apiGet<AircraftToleranceDto>(`/fleet/tolerance?${queryString({ capacityL })}`);
 }
 
-/** Nowa jednostka. `year` pomijamy, gdy nieznany — kolumna jest `NULL`-owalna. */
+/**
+ * Nowa jednostka.
+ *
+ * Dwa różne sposoby powiedzenia „nie wiadomo" i to NIE jest niekonsekwencja panelu,
+ * tylko kształt schematów po stronie serwera (`routes/admin/fleet.ts`):
+ *  - `year` czyści się PUSTYM NAPISEM (`''`), bo schemat to unia liczby i `''`;
+ *    `null` odbiłby się o `400 bad_request`;
+ *  - trójka oleju czyści się `null`-em, bo jej schemat jest `nullable()`.
+ * Zero nie znaczy w żadnym z nich „brak" - w oleju serwer odrzuci je regułą
+ * (`oil_not_positive`), a rocznik zerowy nie mieści się w zakresie 1900-2100.
+ */
 export interface CreateAircraftBody {
   reg: string;
   type: string;
-  year?: number | '';
+  year: number | '';
   capacityL: number;
   mhFormat: MhFormat;
   dualRequired: boolean;
   serviceStatus: 'active' | 'disabled';
+  oilMinL: number | null;
+  oilCapacityL: number | null;
+  oilNormLPerH: number | null;
+  /** Norma nominalna spalania (issue #66) - czyści się `null`-em, jak olej. */
+  fuelNormLPerH: number | null;
+  /**
+   * Stan początkowy (issue #66) - też `null`-em, ale ZERO jest tu WARTOŚCIĄ, nie brakiem:
+   * nowy silnik ma 0 na liczniku, a maszyna przyjęta z pustymi zbiornikami - 0 litrów.
+   */
+  initialMh: number | null;
+  initialFuelL: number | null;
+  initialOilL: number | null;
 }
+
+/** `PATCH` opisuje ZMIANĘ, nie stan docelowy - pola nieustawione zostają bez zmian. */
+export type UpdateAircraftBody = Partial<CreateAircraftBody>;
 
 export function createAircraft(body: CreateAircraftBody): Promise<AircraftChangeDto> {
   return apiPost<AircraftChangeDto>('/fleet', body);
 }
 
-/** `PATCH` opisuje ZMIANĘ, nie stan docelowy — pola nieustawione zostają bez zmian. */
-export interface UpdateAircraftBody {
-  reg?: string;
-  type?: string;
-  year?: number | '';
-  capacityL?: number;
-  mhFormat?: MhFormat;
-  dualRequired?: boolean;
-  serviceStatus?: 'active' | 'disabled';
-}
-
 export function updateAircraft(id: string, body: UpdateAircraftBody): Promise<AircraftChangeDto> {
   return apiPatch<AircraftChangeDto>(`/fleet/${encodeURIComponent(id)}`, body);
+}
+
+/**
+ * TRWAŁE usunięcie jednostki - przechodzi WYŁĄCZNIE dla maszyny poza służbą i bez
+ * historii. Wszystko inne serwer odmawia z powodem (`aircraft_in_service`,
+ * `has_history`), więc panel nie zgaduje: lista nie niesie liczby lotów, a zgadywanie
+ * „chyba da się usunąć" byłoby obietnicą przy nieodwracalnej akcji.
+ */
+export function deleteAircraft(id: string): Promise<void> {
+  return apiDelete(`/fleet/${encodeURIComponent(id)}`);
+}
+
+/**
+ * ODCZYT WPISANY RĘKĄ ADMINISTRATORA (issue #81) - nadrzędny stan licznika, paliwa
+ * i oleju z komentarzem. `POST`, nie `PATCH`: nic w konfiguracji się nie zmienia,
+ * powstaje NOWY wpis w append-only tabeli odczytów. Komentarz WYMAGANY.
+ */
+export interface RecordReadingBody {
+  mh: number;
+  fuelL: number;
+  /** `null` = stan oleju nieznany; kotwica oleju zostaje przy dzienniku. */
+  oilL: number | null;
+  note: string;
+}
+
+export function recordReading(id: string, body: RecordReadingBody): Promise<AircraftChangeDto> {
+  return apiPost<AircraftChangeDto>(`/fleet/${encodeURIComponent(id)}/readings`, body);
 }

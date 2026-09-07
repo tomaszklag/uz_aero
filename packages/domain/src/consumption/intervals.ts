@@ -1,5 +1,5 @@
 /**
- * UZ Aero — ekstrakcja interwałów paliwowych i równania motogodzin z JEDNEJ sesji.
+ * UZ Aero - ekstrakcja interwałów paliwowych i równania motogodzin z JEDNEJ sesji.
  *
  * ══ JAK DZIEŃ DZIELI SIĘ NA INTERWAŁY ══
  * Odczyt paliwomierza pada w trzech momentach i każdy z nich znaczy co innego dla granic:
@@ -8,16 +8,16 @@
  *   `refuel`             →  ZAMYKA bieżący (`beforeL`) i OTWIERA następny (`afterL`)
  *   `day_close`          →  ZAMYKA ostatni (`finalReading.fuelL`)
  *
- * (`leg_close` bywał czwartą granicą między 2026-08-06 a 2026-08-10 — znikł razem
+ * (`leg_close` bywał czwartą granicą między 2026-08-06 a 2026-08-10 - znikł razem
  * z opcjonalnym odczytem per wzlot; sesję domykają odczyty przejęcia i zdania.)
  *
- * Dolewka nie jest więc składnikiem żadnego równania — jest GRANICĄ. To dlatego zużycie
+ * Dolewka nie jest więc składnikiem żadnego równania - jest GRANICĄ. To dlatego zużycie
  * w interwale liczy się jako różnica dwóch odczytów, bez żadnej arytmetyki dolewek.
  *
  * ══ RYZYKO §3.6b ZAMKNIĘTE PRZEZ PIVOT (2026-08-10) ══
- * Odczyty są obowiązkowe przy zdaniu, a sesja = jeden bieg silnika — każda sesja jest
+ * Odczyty są obowiązkowe przy zdaniu, a sesja = jeden bieg silnika - każda sesja jest
  * więc domknięta odczytami z OBU stron i interwały degeneracyjne „między ostatnim
- * odczytem wzlotu a zdaniem" znikają z konstrukcji. Progów nadal NIE stroimy tutaj —
+ * odczytem wzlotu a zdaniem" znikają z konstrukcji. Progów nadal NIE stroimy tutaj -
  * od tego jest `server/scripts/consumptionReplay.ts` na danych demo (etap E).
  *
  * ══ SESJA BEZ `day_close` NIE PRODUKUJE OSTATNIEGO INTERWAŁU ══
@@ -51,7 +51,7 @@ import { blockSpans, flightSpans, spanTimeInWindow, type Span } from './timeInPh
  * Punkt odczytu paliwomierza na osi dnia.
  *
  * Jedno zdarzenie potrafi nieść DWA odczyty (tankowanie: przed i po), dlatego pola
- * `closes` i `opens` są rozdzielone — a nie jedna wartość z flagą.
+ * `closes` i `opens` są rozdzielone - a nie jedna wartość z flagą.
  */
 interface FuelBound {
   at: EpochMillis;
@@ -66,13 +66,13 @@ interface FuelBound {
 /** Opcje ekstrakcji. */
 export interface FuelIntervalOptions {
   /**
-   * Oś faz pionowych ze śladu GPS (`buildPhaseTimeline`). Podana — interwały dostają
+   * Oś faz pionowych ze śladu GPS (`buildPhaseTimeline`). Podana - interwały dostają
    * rozbicie lotu na wznoszenie/przelot/zniżanie i model może pracować na czterech
-   * fazach. Pominięta — pola faz zostają `null`, czyli „nie wiem", a model schodzi
+   * fazach. Pominięta - pola faz zostają `null`, czyli „nie wiem", a model schodzi
    * na podział ziemia/powietrze.
    *
    * Oś jest parametrem, a nie czymś, co ta funkcja sama sobie policzy, bo pochodzi
-   * z INNEGO magazynu (pliki śladu) niż rejestr zdarzeń — a domena nie czyta plików.
+   * z INNEGO magazynu (pliki śladu) niż rejestr zdarzeń - a domena nie czyta plików.
    */
   phaseTimeline?: readonly PhaseSegment[];
 }
@@ -80,7 +80,7 @@ export interface FuelIntervalOptions {
 /**
  * Buduje interwały paliwowe i równanie motogodzin z sesji.
  *
- * @param events strumień JEDNEJ sesji — surowy (korekty nakładamy tutaj).
+ * @param events strumień JEDNEJ sesji - surowy (korekty nakładamy tutaj).
  */
 export function buildFuelIntervals(
   events: Event[],
@@ -163,7 +163,7 @@ function buildIntervals(
   for (const bound of bounds) {
     if (open != null && bound.closes != null) {
       // Granica o tym samym znaczniku czasu co otwarcie nie wyznacza żadnego okna
-      // (dwa odczyty w tej samej milisekundzie — korekta albo podwójny zapis).
+      // (dwa odczyty w tej samej milisekundzie - korekta albo podwójny zapis).
       if (bound.at > open.at) {
         intervals.push(
           measure(open, bound, state, block, flights, open.opens!, bound.closes),
@@ -207,7 +207,7 @@ function measure(
     flightMs,
     // Czas lotu większy niż czas pracy silnika jest fizycznie niemożliwy i znaczy
     // rozjazd w rejestrze (ręczny wpis nachodzący na cykl). Przycinamy do zera zamiast
-    // wpuszczać ujemny czas do regresji — a sam rozjazd zobaczy flaga, nie ten moduł.
+    // wpuszczać ujemny czas do regresji - a sam rozjazd zobaczy flaga, nie ten moduł.
     groundMs: Math.max(0, engineMs - flightMs),
     climbMs: null,
     cruiseMs: null,
@@ -221,7 +221,7 @@ function measure(
 }
 
 /**
- * Loty ZAWARTE w oknie — mianownik metryki „paliwo na lot".
+ * Loty ZAWARTE w oknie - mianownik metryki „paliwo na lot".
  *
  * Liczymy loty zamknięte w całości między granicami, a nie przecinające je: tankowanie
  * odbywa się na ziemi, więc lot rozcięty granicą interwału znaczy rozjazd w rejestrze,
@@ -238,7 +238,7 @@ function countFlights(state: SessionState, since: EpochMillis, until: EpochMilli
 }
 
 /**
- * Równanie motogodzin dnia — `null`, dopóki nie ma OBU odczytów licznika.
+ * Równanie motogodzin dnia - `null`, dopóki nie ma OBU odczytów licznika.
  *
  * Czasy bierzemy przez te same odcinki co interwały (więc ze scalaniem nakładek), a nie
  * z `state.blockTimeMs` / `state.flightTimeMs`. Powód jest ten sam, dla którego powstał

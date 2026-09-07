@@ -1,12 +1,12 @@
 /**
- * UZ Aero — StatusChip
+ * UZ Aero - StatusChip
  *
  * Uogólniony „pill" z mockupów: kropka + etykieta mono UPPERCASE w danym tonie.
  * Obsługuje wszystkie chipy poza wskaźnikiem łączności (ten ma własny `SyncChip`,
  * bo jest jedynym globalnym wskaźnikiem sieci i nie wolno go mnożyć):
  *   GROUND · SILNIK WYŁĄCZONY · RUNNING · PIC: KRZ od 07:10 · dane z cache · auto GPS
  *
- * `pulse` zapala kropkę na stałe (stan żywy) — animację dokładamy dopiero tam, gdzie
+ * `pulse` zapala kropkę na stałe (stan żywy) - animację dokładamy dopiero tam, gdzie
  * naprawdę pomaga; w kokpicie migotanie rozprasza.
  */
 
@@ -24,7 +24,7 @@ export interface StatusChipProps {
   dot?: boolean;
   /** Wypełnienie tłem tonu (domyślnie tak); false = sam kontur. */
   filled?: boolean;
-  /** Opis dla czytnika — domyślnie czytana jest sama etykieta. */
+  /** Opis dla czytnika - domyślnie czytana jest sama etykieta. */
   accessibilityLabel?: string;
   style?: ViewStyle;
 }
@@ -62,7 +62,7 @@ export function StatusChip({
       ]}
     >
       {dot && <View style={[styles.dot, { backgroundColor: c.accent }]} />}
-      {/* Chipy w mockupach (`.running-badge`, `.sync-chip`) to mono 9 px / WERSALIKI —
+      {/* Chipy w mockupach (`.running-badge`, `.sync-chip`) to mono 9 px / WERSALIKI -
           wariant `label` (Archivo 13 px) psuł ten język. `lineHeight` podany jawnie,
           bo odziedziczona wysokość linii tokenu mono rozpychała pill w pionie. */}
       <AppText variant="mono" style={[styles.label, { color: c.accent }]}>

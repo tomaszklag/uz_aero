@@ -1,19 +1,19 @@
 /**
- * UZ Aero — norma zużycia samolotu w aplikacji pilota (mockupy 04, 06, 10).
+ * UZ Aero - norma zużycia samolotu w aplikacji pilota (mockupy 04, 06, 10).
  *
- * Norma przychodzi z serwera policzona (analityka `A10a`) — ten moduł jej NIE LICZY.
+ * Norma przychodzi z serwera policzona (analityka `A10a`) - ten moduł jej NIE LICZY.
  * Zamienia ją na trzy rzeczy, których potrzebują ekrany: werdykt („w normie" / „powyżej"),
  * podpis z zakresem i szacunek, na ile jeszcze paliwa starczy.
  *
  * ══ ZASADA NADRZĘDNA: LICZNIK FIZYCZNY WYGRYWA ══
  * Wszystko tutaj jest PODPOWIEDZIĄ (`CLAUDE.md`: liczniki fizyczne > dane z serwera).
- * Szacunek wystarczalności nie jest przyrządem i nie ma prawa nim wyglądać — dlatego
+ * Szacunek wystarczalności nie jest przyrządem i nie ma prawa nim wyglądać - dlatego
  * ekran pokazuje go jako zdanie obok odczytu, a nie jako wskaźnik ze skalą.
  *
  * ══ `null` ZNACZY „NIE MA CZEGO POKAZAĆ" ══
  * I to jest w każdej funkcji tego modułu wynik pełnoprawny, nie awaria. Ekran ma wtedy
  * MILCZEĆ o normie. Liczba wzięta z sufitu przy planowaniu paliwa jest gorsza od jej
- * braku — pilot bez podpowiedzi policzy sam, pilot ze złą podpowiedzią może jej zaufać.
+ * braku - pilot bez podpowiedzi policzy sam, pilot ze złą podpowiedzią może jej zaufać.
  */
 
 import type { ConsumptionNorm } from '../../../domain';
@@ -29,7 +29,7 @@ export type NormVerdict = 'w-normie' | 'powyzej' | 'ponizej';
 /**
  * Porównuje zużycie z pasmem normy. `null`, gdy nie ma z czym porównać.
  *
- * Pasmo to 10.–90. centyl zaobserwowanych interwałów, a nie przedział ufności stawki —
+ * Pasmo to 10.–90. centyl zaobserwowanych interwałów, a nie przedział ufności stawki -
  * pytanie brzmi „czy dzisiejszy wynik mieści się w tym, co ta maszyna zwykle pokazuje",
  * a nie „jak dokładnie znamy jej średnią".
  */
@@ -43,7 +43,7 @@ export function compareToNorm(
   return 'w-normie';
 }
 
-/** Napis werdyktu — dosłownie z mockupu 06 („✓ w normie"). */
+/** Napis werdyktu - dosłownie z mockupu 06 („✓ w normie"). */
 export function verdictLabel(verdict: NormVerdict | null): string | null {
   switch (verdict) {
     case 'w-normie':
@@ -58,7 +58,7 @@ export function verdictLabel(verdict: NormVerdict | null): string | null {
 }
 
 /**
- * Samo PASMO normy — „15–17 L/h".
+ * Samo PASMO normy - „15–17 L/h".
  *
  * Zaokrąglenie do pełnych litrów jest celowe: pasmo pochodzi z par odczytów
  * paliwomierza, a ten nie ma dokładności uzasadniającej miejsce po przecinku.
@@ -76,7 +76,7 @@ export function normBandLabel(norm: ConsumptionNorm | null): string | null {
 }
 
 /**
- * Podpis normy — „norma tego samolotu 15–17 L/h · 90 dni".
+ * Podpis normy - „norma tego samolotu 15–17 L/h · 90 dni".
  */
 export function normLabel(norm: ConsumptionNorm | null): string | null {
   const band = normBandLabel(norm);
@@ -89,7 +89,7 @@ export function normLabel(norm: ConsumptionNorm | null): string | null {
  *
  * `null`, gdy nie ma normy, nie ma metryki „paliwo na lot" albo brakuje stawki lotu
  * do policzenia rezerwy. `0` znaczy co innego niż `null`: „paliwa starczy na rezerwę,
- * ale nie na kolejny lot" — i to jest informacja, którą pilot chce zobaczyć.
+ * ale nie na kolejny lot" - i to jest informacja, którą pilot chce zobaczyć.
  *
  * Rezerwę liczymy stawką LOTU, nie bloku: 45 minut rezerwy to 45 minut w powietrzu,
  * a stawka blokowa (rozcieńczona kołowaniem) zaniżyłaby jej wartość, czyli zawyżyła
@@ -106,7 +106,7 @@ export function liftsRemaining(
 
   const reserveL = (reserveMinutes / 60) * norm.airLPerH;
   const usableL = fobL - reserveL;
-  if (usableL < 0) return null; // poniżej rezerwy — to nie jest pytanie o wyniesienia
+  if (usableL < 0) return null; // poniżej rezerwy - to nie jest pytanie o wyniesienia
 
   return Math.floor(usableL / norm.litersPerFlight);
 }
@@ -157,24 +157,24 @@ export function enduranceLabel(
 /**
  * Ile minut lotu przed rezerwą zaczynamy ostrzegać kolorem (amber).
  *
- * Godzina zapasu nad rezerwą — tyle, żeby decyzja o tankowaniu zapadła na ziemi między
+ * Godzina zapasu nad rezerwą - tyle, żeby decyzja o tankowaniu zapadła na ziemi między
  * wyniesieniami, a nie w powietrzu przy ostatnim.
  */
 export const FUEL_WARN_MINUTES = RESERVE_MINUTES + 60;
 
 /**
  * Kolor odczytu paliwa: `red` przy rezerwie, `amber` godzinę przed nią, `neutral` wyżej.
- * `null` = nie ma normy, więc nie ma czym pokolorować — odczyt zostaje bez tonu.
+ * `null` = nie ma normy, więc nie ma czym pokolorować - odczyt zostaje bez tonu.
  *
  * ══ DLACZEGO PALIWO NIE JEST AMBER ZAWSZE ══
  * Do issue #19 komórka „Fuel on board" i pasek na ziemi były pomarańczowe niezależnie od
  * tego, ile tego paliwa jest. Kolor ostrzegawczy, który świeci przy pełnych zbiornikach,
- * przestaje cokolwiek znaczyć — a wtedy nie znaczy też wtedy, gdy zaczyna być groźnie.
+ * przestaje cokolwiek znaczyć - a wtedy nie znaczy też wtedy, gdy zaczyna być groźnie.
  * Ton wynika więc z SZACUNKU CZASU LOTU: pilot i tak myśli minutami, nie litrami.
  *
  * Liczymy CAŁY czas lotu z paliwa na pokładzie (rezerwa = 0), a progi ustawiamy na
  * rezerwie i godzinę przed nią. Wynik czyta się wprost: czerwony = zostało tyle, ile
- * wynosi rezerwa. Szacunek pozostaje szacunkiem — paliwomierz decyduje (`CLAUDE.md`).
+ * wynosi rezerwa. Szacunek pozostaje szacunkiem - paliwomierz decyduje (`CLAUDE.md`).
  */
 export function fuelTone(
   fobL: number | null,
@@ -189,7 +189,7 @@ export function fuelTone(
   return 'neutral';
 }
 
-/** Trzy formy polskiej liczby mnogiej — jak `flightsBadge` w statystykach dnia. */
+/** Trzy formy polskiej liczby mnogiej - jak `flightsBadge` w statystykach dnia. */
 function liftWord(count: number): string {
   if (count === 1) return 'wyniesienie';
   const tens = count % 100;

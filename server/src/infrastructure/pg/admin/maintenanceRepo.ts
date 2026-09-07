@@ -1,10 +1,10 @@
 /**
- * UZ Aero (serwer) — adapter operacji serwisowych panelu (`MaintenanceAdminPort`, `A11`).
+ * UZ Aero (serwer) - adapter operacji serwisowych panelu (`MaintenanceAdminPort`, `A11`).
  *
  * Trzy tematy, trzy tabele i jedna wspólna zasada: **żadna metoda nie oddaje wartości
  * ani skrótu tokenu.** Sprzątanie wygasłych sesji zwraca liczby i daty, bo tyle wchodzi
- * do `admin_audit.details` — a adapter, który „na wszelki wypadek" oddałby hashe, byłby
- * pierwszą okazją do wpisania ich do dziennika (`A09`: „Tokeny i refresh tokeny — nigdy").
+ * do `admin_audit.details` - a adapter, który „na wszelki wypadek" oddałby hashe, byłby
+ * pierwszą okazją do wpisania ich do dziennika (`A09`: „Tokeny i refresh tokeny - nigdy").
  */
 
 import type {
@@ -26,11 +26,11 @@ export class PgAdminMaintenanceRepo implements MaintenanceAdminPort {
   /**
    * `DISTINCT session_uuid` z rejestru `events`, nie z tabeli `sessions`, i w tym jest
    * cała treść tej metody. Lista budowana z projekcji nie umiałaby pokazać sesji, która
-   * jest w rejestrze, a wiersza projekcji nie ma — czyli najcięższego przypadku dryfu,
+   * jest w rejestrze, a wiersza projekcji nie ma - czyli najcięższego przypadku dryfu,
    * dla którego przebudowa w ogóle powstała.
    *
    * Porządek po `session_uuid` jest deterministyczny, żeby dwa przebiegi na tych samych
-   * danych dały ten sam raport — inaczej „różnice" zmieniałyby kolejność między biegami
+   * danych dały ten sam raport - inaczej „różnice" zmieniałyby kolejność między biegami
    * i nie dałoby się ich porównać wzrokiem.
    */
   async sessionUuids(db: Queryable): Promise<string[]> {
@@ -41,7 +41,7 @@ export class PgAdminMaintenanceRepo implements MaintenanceAdminPort {
   }
 
   /**
-   * Wszystkie cztery liczby JEDNYM zapytaniem — nie dla wydajności, tylko dlatego, że
+   * Wszystkie cztery liczby JEDNYM zapytaniem - nie dla wydajności, tylko dlatego, że
    * mają opisywać TĘ SAMĄ chwilę. „Ważnych 15" policzone osobno od „wygasłych 37" mogłoby
    * po sekundzie nie sumować się do liczby wierszy, a ekran twierdzi, że się sumuje.
    *
@@ -76,12 +76,12 @@ export class PgAdminMaintenanceRepo implements MaintenanceAdminPort {
   }
 
   /**
-   * Kasowanie z predykatem `expires_at <= $1` W SQL-U — i to jest cała ochrona pilotów
+   * Kasowanie z predykatem `expires_at <= $1` W SQL-U - i to jest cała ochrona pilotów
    * w terenie. Token WAŻNY skasowany przez pomyłkę wymusza ponowne logowanie, a to jedyna
    * czynność w systemie wymagająca sieci (§3.0). Wariant „pobierz kandydatów, potem skasuj
    * po kluczu" miałby dwie okazje do pomyłki i okno wyścigu między nimi.
    *
-   * `RETURNING expires_at` służy WYŁĄCZNIE do policzenia wierszy i zakresu dat — kolumny
+   * `RETURNING expires_at` służy WYŁĄCZNIE do policzenia wierszy i zakresu dat - kolumny
    * `token_hash` nie ma w tym zapytaniu i nie wolno jej dopisać.
    *
    * `remainingValid` czytamy PO skasowaniu, tą samą transakcją: to jest wykonywalna postać
@@ -118,7 +118,7 @@ export class PgAdminMaintenanceRepo implements MaintenanceAdminPort {
    *
    * Kierunek jest istotny: iterujemy po `MIGRATIONS`, a nie po wierszach
    * `schema_migrations`. Baza starsza niż kod ma pokazać brakujące pozycje jako
-   * niezastosowane (stan po awarii runnera w starcie), a nie zniknąć z tabeli —
+   * niezastosowane (stan po awarii runnera w starcie), a nie zniknąć z tabeli -
    * lista budowana z bazy nie umiałaby powiedzieć, czego brakuje.
    */
   async schemaMigrations(
@@ -133,7 +133,7 @@ export class PgAdminMaintenanceRepo implements MaintenanceAdminPort {
       version: SCHEMA_VERSION,
       rows: MIGRATIONS.map((_script, index) => ({
         version: index + 1,
-        // Brak opisu jest wadą KODU, nie danych — `test/schema.test.ts` wymusza równą
+        // Brak opisu jest wadą KODU, nie danych - `test/schema.test.ts` wymusza równą
         // długość obu tablic, więc ten wariant nie ma prawa dojść do ekranu.
         title: MIGRATION_TITLES[index] ?? `Migracja ${index + 1}`,
         appliedAt: appliedAt.get(index + 1) ?? null,

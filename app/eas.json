@@ -8,6 +8,9 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "633760986490-lo74qut9i9luj99fdaf9cuc47fbg1omd.apps.googleusercontent.com"
       }
     },
     "production": {
@@ -16,7 +19,8 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://uzaeroserver-production.up.railway.app"
+        "EXPO_PUBLIC_API_URL": "https://uzaeroserver-production.up.railway.app",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "633760986490-lo74qut9i9luj99fdaf9cuc47fbg1omd.apps.googleusercontent.com"
       }
     }
   }

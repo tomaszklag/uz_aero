@@ -3,20 +3,20 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — Panel admina · A02A Karta sesji</title>
+<title>UZ Aero - Panel admina · A02A Karta sesji</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   /* ══════════════════════════════════════════════════════════════════════
-     UZ AERO — PANEL ADMINA · SZABLON
+     UZ AERO - PANEL ADMINA · SZABLON
      Ten plik jest ŹRÓDŁEM dla wszystkich mockupów `design/admin/A*.html`.
      Kopiuj <head> w całości; nie zmieniaj tokenów ani ramy okna.
 
      Czym się różni od mockupów telefonu (`design/*.html`):
-     — ramka to OKNO PRZEGLĄDARKI 1440×900, nie telefon 393×852;
-     — skalowanie `--app-scale` działa identycznie jak `--phone-scale`;
-     — tokeny kolorów i czcionki są TE SAME, bo to ten sam produkt.
+     - ramka to OKNO PRZEGLĄDARKI 1440×900, nie telefon 393×852;
+     - skalowanie `--app-scale` działa identycznie jak `--phone-scale`;
+     - tokeny kolorów i czcionki są TE SAME, bo to ten sam produkt.
      ══════════════════════════════════════════════════════════════════════ */
   :root {
     --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
@@ -27,7 +27,7 @@
     --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28);
     --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
     --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
-    /* wymiary shellu — stałe, żeby wszystkie ekrany siadały w tej samej siatce */
+    /* wymiary shellu - stałe, żeby wszystkie ekrany siadały w tej samej siatce */
     --sidebar-w: 236px; --topbar-h: 56px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -42,7 +42,7 @@
     min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 44px 24px 80px; gap: 26px;
   }
 
-  /* ── canvas: etykieta, panel wariantów, nav-strip — jak w design/*.html, tylko szersze ── */
+  /* ── canvas: etykieta, panel wariantów, nav-strip - jak w design/*.html, tylko szersze ── */
   .canvas-label { width:100%; max-width:1440px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
   .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
   .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
@@ -67,7 +67,7 @@
   .nav-strip a:hover, .nav-strip a.active { color:var(--green); }
   .nav-strip span { color:var(--border-strong); }
 
-  /* ══ RAMA OKNA PRZEGLĄDARKI — desktopowy odpowiednik `.phone` ══ */
+  /* ══ RAMA OKNA PRZEGLĄDARKI - desktopowy odpowiednik `.phone` ══ */
   .browser {
     width:1440px; height:900px; border-radius:14px; background:var(--bg);
     border:1px solid #1C1E24;
@@ -103,7 +103,7 @@
   .nav-count { margin-left:auto; font-family:var(--font-mono); font-size:9.5px; font-weight:700; padding:1px 6px; border-radius:999px; background:var(--surface-raised); color:var(--text-muted); border:1px solid var(--border); }
   .nav-count.amber { background:var(--amber-muted); color:var(--amber); border-color:var(--amber-border); }
   .nav-count.red { background:var(--red-muted); color:var(--red); border-color:var(--red-border); }
-  /* pozycja niedostępna dla roli — widoczna, ale wyjaśniona (nie chowamy, żeby nie zgadywał) */
+  /* pozycja niedostępna dla roli - widoczna, ale wyjaśniona (nie chowamy, żeby nie zgadywał) */
   .nav-item.locked { opacity:0.4; cursor:not-allowed; }
   .nav-item.locked .nav-count { background:transparent; border-color:transparent; }
 
@@ -120,13 +120,13 @@
   .crumbs b { color:var(--text-primary); font-weight:500; }
   .crumbs span { color:var(--border-strong); }
   .topbar-right { display:flex; align-items:center; gap:10px; }
-  /* zegar UTC — w panelu, jak w aplikacji, czas nieoznaczony = UTC */
+  /* zegar UTC - w panelu, jak w aplikacji, czas nieoznaczony = UTC */
   .utc-clock { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); display:inline-flex; align-items:center; gap:7px; }
   .utc-clock b { color:var(--text-primary); font-weight:700; }
   .utc-clock i { font-style:normal; color:var(--blue); font-size:9px; letter-spacing:1.5px; }
 
   .content { flex:1; overflow-y:auto; padding:22px; display:flex; flex-direction:column; gap:18px; }
-  /* Kolumna scrollowana: dzieci NIE mogą się kurczyć — inaczej .table-wrap z overflow:hidden obcina wiersze, zamiast pozwolić .content przewinąć. */
+  /* Kolumna scrollowana: dzieci NIE mogą się kurczyć - inaczej .table-wrap z overflow:hidden obcina wiersze, zamiast pozwolić .content przewinąć. */
   .content > *, .drawer-body > * { flex-shrink:0; }
   .content::-webkit-scrollbar { width:10px; }
   .content::-webkit-scrollbar-thumb { background:var(--border-strong); border-radius:99px; border:3px solid var(--bg); }
@@ -154,7 +154,7 @@
   .card-title .spacer { margin-left:auto; }
 
   .tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
-  /* Kafel bywa linkiem w głąb (pulpit) i zwykłym pudełkiem (podsumowania) — jedna
+  /* Kafel bywa linkiem w głąb (pulpit) i zwykłym pudełkiem (podsumowania) - jedna
      definicja obsługuje oba, bo `text-decoration`/`color` na nie-linku nic nie robi. */
   .tile { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; display:flex; flex-direction:column; gap:6px; text-decoration:none; color:inherit; }
   .tile:hover { border-color:var(--border-strong); }
@@ -176,7 +176,7 @@
   .chip.on { background:var(--green-muted); border-color:var(--green-border); color:var(--green); }
   .chip.on.amber { background:var(--amber-muted); border-color:var(--amber-border); color:var(--amber); }
 
-  /* ── TABELA — kręgosłup panelu; liczby zawsze mono ── */
+  /* ── TABELA - kręgosłup panelu; liczby zawsze mono ── */
   .table-wrap { border:1px solid var(--border); border-radius:14px; overflow:hidden; background:var(--surface); }
   table { width:100%; border-collapse:collapse; }
   thead th { text-align:left; font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.8px; text-transform:uppercase; color:var(--text-muted); font-weight:500; padding:11px 14px; background:#101010; border-bottom:1px solid var(--border); white-space:nowrap; }
@@ -214,7 +214,7 @@
   .input::placeholder { color:var(--text-muted); }
   .hint { font-size:11px; color:var(--text-secondary); line-height:1.5; }
   .hint b { color:var(--amber); font-weight:600; }
-  /* ZAKAZ natywnego <select> (CLAUDE.md) — wybór to zawsze lista kart */
+  /* ZAKAZ natywnego <select> (CLAUDE.md) - wybór to zawsze lista kart */
   .opt-list { display:flex; flex-direction:column; gap:8px; }
   .opt { display:flex; align-items:center; gap:11px; background:var(--surface-raised); border:1px solid var(--border); border-radius:12px; padding:10px 13px; cursor:pointer; min-height:50px; }
   .opt:hover { background:var(--surface-hover); }
@@ -226,7 +226,7 @@
   .opt.selected .opt-check { opacity:1; }
   .opt-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:8px; }
 
-  /* ── banery (3 typy — docs/design-notes.md) ── */
+  /* ── banery (3 typy - docs/design-notes.md) ── */
   .banner { display:flex; align-items:flex-start; gap:10px; border-radius:12px; padding:11px 14px; font-size:12.5px; line-height:1.55; border:1px solid; }
   .banner svg { flex-shrink:0; margin-top:2px; }
   .banner b { font-weight:700; }
@@ -248,7 +248,7 @@
   @keyframes shimmer { 0% { background-position:200% 0; } 100% { background-position:-200% 0; } }
   .no-access { display:flex; flex-direction:column; align-items:center; gap:12px; padding:60px 20px; text-align:center; }
 
-  /* ── szuflada szczegółu (drawer) — otwiera wiersz tabeli bez utraty kontekstu listy ── */
+  /* ── szuflada szczegółu (drawer) - otwiera wiersz tabeli bez utraty kontekstu listy ── */
   .drawer-scrim { position:absolute; inset:0; background:rgba(0,0,0,0.55); z-index:60; }
   .drawer { position:absolute; top:0; right:0; bottom:0; width:520px; background:var(--surface); border-left:1px solid var(--border-strong); z-index:61; display:flex; flex-direction:column; box-shadow:-24px 0 60px rgba(0,0,0,0.5); }
   .drawer-head { flex-shrink:0; padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:flex-start; justify-content:space-between; gap:14px; }
@@ -266,7 +266,7 @@
   .kv-v.green { color:var(--green); } .kv-v.amber { color:var(--amber); } .kv-v.red { color:var(--red); }
   .kv-v small { font-size:9.5px; font-weight:400; color:var(--text-secondary); }
 
-  /* ── oś zdarzeń (log dnia w panelu — czyta się jak rejestr, nie jak lista) ── */
+  /* ── oś zdarzeń (log dnia w panelu - czyta się jak rejestr, nie jak lista) ── */
   .tl { display:flex; flex-direction:column; }
   .tl-row { display:grid; grid-template-columns:74px 20px 1fr auto; align-items:start; gap:10px; padding:8px 0; border-bottom:1px solid var(--hairline); }
   .tl-time { font-family:var(--font-mono); font-size:11.5px; font-weight:700; color:var(--text-primary); letter-spacing:0.5px; }
@@ -279,7 +279,7 @@
   .tl-row:last-child { border-bottom:none; }
   .tl-row.voided .tl-name { text-decoration:line-through; color:var(--text-muted); }
   .tl-row.voided .tl-time { color:var(--text-muted); text-decoration:line-through; }
-  /* Wariant KOMPAKTOWY — oś w wąskiej kolumnie bocznej (pulpit), bez plakietki
+  /* Wariant KOMPAKTOWY - oś w wąskiej kolumnie bocznej (pulpit), bez plakietki
      zamykającej wiersz. Pełna oś jest projektowana pod szeroką kolumnę karty dnia
      i w 400 px robi się rozstrzelona, stąd stopień mniejsze rozmiary i trzy tory
      siatki zamiast czterech. Modyfikator, nie osobny komponent: zachowanie, znaczenie
@@ -297,14 +297,14 @@
   /* Szersza kolumna boczna (400 px) tam, gdzie niesie ona własną treść, a nie
      przypis do lewej: puls systemu na pulpicie, dowód z replaya przy progach.
      Modyfikator zamiast zmiany bazy, bo szersza prawa = węższa lewa, a w lewej
-     stoją tabele — 20 px mniej potrafi przyciąć kolumnę w `.table-wrap`. */
+     stoją tabele - 20 px mniej potrafi przyciąć kolumnę w `.table-wrap`. */
   .cols.wide { grid-template-columns:1fr 400px; }
 
-  /* ══ FLOTA — wiersz samolotu niosący DWIE warstwy naraz ══
+  /* ══ FLOTA - wiersz samolotu niosący DWIE warstwy naraz ══
      Co samolot robi (faza) i SKĄD to wiemy (świeżość). Druga warstwa jest równie
      ważna jak pierwsza: „w locie" przy syncu sprzed 47 minut to nie jest wiedza
      o locie, tylko ostatnia znana pozycja. Klasa stanu na wierszu (`flying`/`stale`)
-     mówi o JAKOŚCI danych, nie o fazie lotu — `stale` nosi samolot, który leci,
+     mówi o JAKOŚCI danych, nie o fazie lotu - `stale` nosi samolot, który leci,
      ale którego telefon milczy. §4.8 stany świeżości. */
   .fleet { display:flex; flex-direction:column; gap:8px; }
   .fleet-row { display:grid; grid-template-columns:96px 1fr 132px 118px 150px; align-items:center; gap:14px; padding:12px 14px; border-radius:12px; background:var(--surface-raised); border:1px solid var(--border); text-decoration:none; color:inherit; }
@@ -320,7 +320,7 @@
   .fleet-nums .k { color:var(--text-muted); font-size:8.5px; letter-spacing:1.2px; }
   .fleet-state { display:flex; justify-content:flex-end; }
 
-  /* Świeżość — jedyne miejsce, w którym panel przyznaje się do NIEWIEDZY.
+  /* Świeżość - jedyne miejsce, w którym panel przyznaje się do NIEWIEDZY.
      Wiek podajemy względnie („3 min temu", „2 dni temu"), nie znacznikiem czasu:
      administrator ocenia, czy dane są aktualne, a nie o której dotarły. */
   .fresh { display:flex; flex-direction:column; align-items:flex-end; gap:3px; }
@@ -329,7 +329,7 @@
   .fresh-val.dim { color:var(--text-muted); }
   .fresh-note { font-family:var(--font-mono); font-size:8px; letter-spacing:0.8px; color:var(--text-muted); text-align:right; }
 
-  /* ══ KOLEJKA „WYMAGA UWAGI" — jedyne miejsce mówiące, co ZROBIĆ ══
+  /* ══ KOLEJKA „WYMAGA UWAGI" - jedyne miejsce mówiące, co ZROBIĆ ══
      Reszta panelu opisuje stan; ta lista stawia zadania. Dlatego wiersz jest linkiem
      w głąb, a wiek pozycji ma własną kolumnę: flaga leżąca trzeci dzień to inny
      problem niż ta sprzed godziny. */
@@ -347,7 +347,7 @@
   .todo-age { font-family:var(--font-mono); font-size:9.5px; font-weight:700; color:var(--text-secondary); flex-shrink:0; text-align:right; }
   .todo-age.old { color:var(--amber); }
 
-  /* ══ NAPŁYW ZDARZEŃ — puls systemu ══
+  /* ══ NAPŁYW ZDARZEŃ - puls systemu ══
      Słupek `zero` jest osobną klasą, a nie słupkiem o wysokości zero, bo cisza
      w rejestrze wymaga podpisu: nie znaczy „nikt nie latał", tylko „nic nie dotarło". */
   .spark { display:flex; align-items:flex-end; gap:3px; height:56px; }
@@ -356,10 +356,10 @@
   .spark i.zero { background:var(--surface-raised); border-color:var(--border); }
   .spark-axis { display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:8px; letter-spacing:1px; color:var(--text-muted); margin-top:6px; }
 
-  /* ══ PRÓG — wiersz w dwóch odmianach: przybity w kodzie vs. dana serwera ══
+  /* ══ PRÓG - wiersz w dwóch odmianach: przybity w kodzie vs. dana serwera ══
      Trzecia kolumna (`thr-src`) niesie różnicę, która jest tu najważniejsza: czy
      wartość da się w ogóle zmienić z panelu. Progi detekcji liczą się na telefonie
-     offline, więc są tylko do odczytu — pole `thr-input` pojawia się wyłącznie tam,
+     offline, więc są tylko do odczytu - pole `thr-input` pojawia się wyłącznie tam,
      gdzie zmiana ma skutek. */
   .thr { display:grid; grid-template-columns:1fr 128px 96px; align-items:center; gap:14px; padding:11px 0; border-bottom:1px solid var(--hairline); }
   .thr:last-of-type { border-bottom:none; }
@@ -373,7 +373,7 @@
   .thr-input:focus { border-color:var(--green-border); }
   .thr-input.changed { border-color:var(--amber-border); color:var(--amber); background:rgba(243,156,18,0.06); }
 
-  /* ══ DOWÓD ZMIANY — „przed → po" na danych historycznych ══
+  /* ══ DOWÓD ZMIANY - „przed → po" na danych historycznych ══
      Amber obramowanie nie jest ostrzeżeniem o błędzie, tylko sygnałem, że to blok
      WARUNKOWY: bez wypełnionego dowodu zapis nie ma prawa dojść do skutku. */
   .proof { border:1px solid var(--amber-border); background:rgba(243,156,18,0.05); border-radius:12px; padding:13px 15px; display:flex; flex-direction:column; gap:11px; }
@@ -385,7 +385,7 @@
   .diff-n { font-size:11px; color:var(--text-secondary); line-height:1.5; }
   .diff-arrow { color:var(--text-muted); font-family:var(--font-mono); font-size:16px; }
 
-  /* Odwołanie do pliku źródłowego — panel bywa czytany razem z repozytorium. */
+  /* Odwołanie do pliku źródłowego - panel bywa czytany razem z repozytorium. */
   .code-ref { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); background:var(--surface-raised); border:1px solid var(--border); border-radius:7px; padding:3px 8px; letter-spacing:0.3px; }
 
   /* ── sekcja demonstracyjna szablonu (TYLKO w tym pliku) ── */
@@ -395,13 +395,13 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — PANEL · A02A</span>
+  <span class="film-strip">UZ AERO - PANEL · A02A</span>
   <span class="slug">karta sesji samolotu · oś zdarzeń · czasy UTC</span>
   <span class="canvas-meta"><span class="pulse"></span>Rodzina A02 · A02a · A02b</span>
 </header>
 
 <aside class="variants-panel">
-  <div class="vp-title">Sesja samolotu — trzy ekrany, kiedy który?</div>
+  <div class="vp-title">Sesja samolotu - trzy ekrany, kiedy który?</div>
   <a class="vp-item" href="A02-dni.html">
     <span class="vp-badge">A02</span>
     <span class="vp-body">
@@ -413,7 +413,7 @@
     <span class="vp-badge">A02A</span>
     <span class="vp-body">
       <span class="vp-name">Karta sesji</span>
-      <span class="vp-when">Kliknięcie wiersza z A02. Kafle podsumowania, pełna oś zdarzeń ze wszystkimi typami, lista lotów i flagi sesji. Ma dwa stany — przełącznik pod spodem.</span>
+      <span class="vp-when">Kliknięcie wiersza z A02. Kafle podsumowania, pełna oś zdarzeń ze wszystkimi typami, lista lotów i flagi sesji. Ma dwa stany - przełącznik pod spodem.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -421,21 +421,21 @@
     <span class="vp-badge amber">A02B</span>
     <span class="vp-body">
       <span class="vp-name">Korekta administratora</span>
-      <span class="vp-when">Otwiera się z tego ekranu ZAWSZE — także przy sesji trwającej. Administrator nie jest nigdy blokowany (2026-08-07); kolizja z pilotem to baner nad formularzem, nie odmowa. Szuflada nad osią zdarzeń: <code>retime</code> albo <code>void</code>, zawsze z powodem.</span>
+      <span class="vp-when">Otwiera się z tego ekranu ZAWSZE - także przy sesji trwającej. Administrator nie jest nigdy blokowany (2026-08-07); kolizja z pilotem to baner nad formularzem, nie odmowa. Szuflada nad osią zdarzeń: <code>retime</code> albo <code>void</code>, zawsze z powodem.</span>
     </span>
   </a>
 </aside>
 
 <aside class="variants-panel">
-  <div class="vp-title">Stan tego ekranu — przełącz, żeby zobaczyć oba</div>
+  <div class="vp-title">Stan tego ekranu - przełącz, żeby zobaczyć oba</div>
   <div style="grid-column:1/-1;display:flex;gap:9px;align-items:center;flex-wrap:wrap;padding:2px;">
     <span class="chip on" id="swClosed" onclick="dayState('closed')">Samolot zdany · 30 JUL · SP-KLM</span>
     <span class="chip" id="swOpen" onclick="dayState('open')">Samolot nieoddany · telefon dosyła zdarzenia</span>
-    <span class="vp-when" style="flex:1;min-width:280px;">Ten sam ekran obsługuje sesję zdaną (komplet liczb, <code>day_close</code> w rejestrze) i sesję trwającą, w której sumy są stanem na ostatni sync. W stanie otwartym kolumny „koniec" nie istnieją — panel ich nie zgaduje i nie ekstrapoluje. <b>Korekta administratora jest czynna w OBU</b>.</span>
+    <span class="vp-when" style="flex:1;min-width:280px;">Ten sam ekran obsługuje sesję zdaną (komplet liczb, <code>day_close</code> w rejestrze) i sesję trwającą, w której sumy są stanem na ostatni sync. W stanie otwartym kolumny „koniec" nie istnieją - panel ich nie zgaduje i nie ekstrapoluje. <b>Korekta administratora jest czynna w OBU</b>.</span>
   </div>
 </aside>
 
-<main class="browser" role="region" aria-label="Panel administracyjny — karta sesji samolotu">
+<main class="browser" role="region" aria-label="Panel administracyjny - karta sesji samolotu">
 
   <div class="chrome">
     <span class="chrome-dots"><i></i><i></i><i></i></span>
@@ -539,13 +539,13 @@
             <h1 class="page-title">30 JUL 2026 · SP-KLM</h1>
             <p class="page-sub">
               Cessna 208B Caravan · <b>PIC Anna Wrzosek (AWR)</b> · operacja <b>SKOKI</b> · klient SKY CAMP · EPRA → EPRA.
-              Wszystkie liczby na tym ekranie pochodzą z <code>projectSession</code> — tej samej funkcji, którą telefon liczy rozliczenie sesji na ekranie 10. Czasy UTC.
+              Wszystkie liczby na tym ekranie pochodzą z <code>projectSession</code> - tej samej funkcji, którą telefon liczy rozliczenie sesji na ekranie 10. Czasy UTC.
             </p>
           </div>
           <div class="page-actions">
             <a class="btn ghost" href="A05-eksporty.html">Karta arkusza ↗</a>
             <!-- BRAMKI `400 day_open` JUŻ NIE MA (decyzja 2026-08-07). Stał tu drugi,
-                 wyszarzony przycisk „Korekta niedostępna" dla sesji trwającej — i był
+                 wyszarzony przycisk „Korekta niedostępna" dla sesji trwającej - i był
                  pomyłką: po §3.6a brak `day_close` nie znaczy „dzień trwa", bo zdanie
                  samolotu jest OPCJONALNE. Bramka odmawiałaby korekty przede wszystkim
                  tam, gdzie jest potrzebna. Przycisk jest jeden i czynny w obu stanach;
@@ -559,12 +559,12 @@
 
         <div class="banner status" id="openBanner" data-when="open" data-disp="flex" style="display:none;">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-          <span><b>Samolot nieoddany — telefon dosyła zdarzenia.</b> Sesja nie ma jeszcze <code>day_close</code>; ostatnie zdarzenie dotarło <b>13:58:21 UTC</b> (24 min temu). Liczby poniżej są <b>stanem na ostatni sync, nie stanem końcowym</b> — dojdą kolejne loty, tankowania i odczyt końcowy. Odczyty „koniec" (MH, FOB) wypełni dopiero <b>zdanie samolotu</b>; do tego czasu panel pokazuje „—" zamiast zgadywać, a wiersz tej zmiany w karcie doby zostaje otwarty.</span>
+          <span><b>Samolot nieoddany - telefon dosyła zdarzenia.</b> Sesja nie ma jeszcze <code>day_close</code>; ostatnie zdarzenie dotarło <b>13:58:21 UTC</b> (24 min temu). Liczby poniżej są <b>stanem na ostatni sync, nie stanem końcowym</b> - dojdą kolejne loty, tankowania i odczyt końcowy. Odczyty „koniec" (MH, FOB) wypełni dopiero <b>zdanie samolotu</b>; do tego czasu panel pokazuje „-" zamiast zgadywać, a wiersz tej zmiany w karcie doby zostaje otwarty.</span>
         </div>
 
         <div class="banner warn" data-when="closed" data-disp="flex">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <span><b>Samolot zdany 30 JUL 13:22:47 UTC</b> (dobę temu). <b style="color:var(--text-secondary)">Okno samodzielnej korekty pilota liczy się od ZDANIA SAMOLOTU</b> (<code>day_close</code>) — jest JEDNO na sesję i trwa 24 h (model 2026-08-10: zdanie = zatwierdzenie logu): tu do <b>31 JUL 13:22 UTC</b>. Anna Wrzosek zdążyła w swoim oknie unieważnić fałszywe lądowanie o 08:14:09. Administrator dopisuje zmianę <b>zawsze</b>, nowym zdarzeniem <code>event_correction</code> — rejestr jest append-only i nic się w nim nie nadpisuje. Panel nie odlicza tego okna za Ciebie: kolizję nazywa serwer w chwili podglądu korekty (<a href="A02b-korekta.html" style="color:var(--amber);">A02B</a>).</span>
+          <span><b>Samolot zdany 30 JUL 13:22:47 UTC</b> (dobę temu). <b style="color:var(--text-secondary)">Okno samodzielnej korekty pilota liczy się od ZDANIA SAMOLOTU</b> (<code>day_close</code>) - jest JEDNO na sesję i trwa 24 h (model 2026-08-10: zdanie = zatwierdzenie logu): tu do <b>31 JUL 13:22 UTC</b>. Anna Wrzosek zdążyła w swoim oknie unieważnić fałszywe lądowanie o 08:14:09. Administrator dopisuje zmianę <b>zawsze</b>, nowym zdarzeniem <code>event_correction</code> - rejestr jest append-only i nic się w nim nie nadpisuje. Panel nie odlicza tego okna za Ciebie: kolizję nazywa serwer w chwili podglądu korekty (<a href="A02b-korekta.html" style="color:var(--amber);">A02B</a>).</span>
         </div>
 
         <div class="tiles">
@@ -572,7 +572,7 @@
             <span class="tile-key">Czas blokowy</span>
             <span class="tile-val">06:42</span>
             <span class="tile-note" data-when="closed" data-disp="block">Jeden bieg silnika: <code>engine_start</code> → <code>engine_stop</code> (sesja = jeden bieg).</span>
-            <span class="tile-note" data-when="open" data-disp="block" style="display:none;">Bieg trwa — suma domknie się na <code>engine_stop</code>.</span>
+            <span class="tile-note" data-when="open" data-disp="block" style="display:none;">Bieg trwa - suma domknie się na <code>engine_stop</code>.</span>
           </div>
           <div class="tile">
             <span class="tile-key">Czas lotu</span>
@@ -587,33 +587,33 @@
           <div class="tile">
             <span class="tile-key">Paliwo zużyte</span>
             <span class="tile-val amber" data-when="closed" data-disp="block">1006<small> L</small></span>
-            <span class="tile-val amber" data-when="open" data-disp="block" style="display:none;">—</span>
+            <span class="tile-val amber" data-when="open" data-disp="block" style="display:none;">-</span>
             <span class="tile-note" data-when="closed" data-disp="block">780 startowe + 379 dolane − 153 końcowe.</span>
             <span class="tile-note" data-when="open" data-disp="block" style="display:none;">Bilans domknie odczyt końcowy z <code>day_close</code>.</span>
           </div>
           <div class="tile">
             <span class="tile-key">Średnie zużycie</span>
             <span class="tile-val amber" data-when="closed" data-disp="block">150<small> L/h</small></span>
-            <span class="tile-val amber" data-when="open" data-disp="block" style="display:none;">—</span>
+            <span class="tile-val amber" data-when="open" data-disp="block" style="display:none;">-</span>
             <span class="tile-note">Liczone na czas blokowy, nie na czas lotu.</span>
           </div>
           <div class="tile">
             <span class="tile-key">Δ motogodzin</span>
             <span class="tile-val" data-when="closed" data-disp="block">5.7<small> h</small></span>
-            <span class="tile-val" data-when="open" data-disp="block" style="display:none;">—</span>
-            <span class="tile-note" data-when="closed" data-disp="block" style="color:var(--amber);">Blok 06:42 = 6.71 h — rozjazd 1.0 h: licznik obrotomierzowy przyrasta na ziemi wolniej niż zegar, a dzień skokowy to dużo pracy na ziemi (por. przelicznik MH w A10b); swoje dokłada <code>clock_drift</code>.</span>
+            <span class="tile-val" data-when="open" data-disp="block" style="display:none;">-</span>
+            <span class="tile-note" data-when="closed" data-disp="block" style="color:var(--amber);">Blok 06:42 = 6.71 h - rozjazd 1.0 h: licznik obrotomierzowy przyrasta na ziemi wolniej niż zegar, a dzień skokowy to dużo pracy na ziemi (por. przelicznik MH w A10b); swoje dokłada <code>clock_drift</code>.</span>
             <span class="tile-note" data-when="open" data-disp="block" style="display:none;">Delta powstanie z odczytu końcowego licznika.</span>
           </div>
           <!-- STAŁ TU KAFEL „CZAS SŁUŻBY (DUTY)" I BYŁA TO POMYŁKA KATEGORII.
                Karta opisuje SESJĘ JEDNEGO SAMOLOTU, a służba należała do PILOTA
-               i potrafiła objąć kilka maszyn — jej upływu nie dało się z tej karty
+               i potrafiła objąć kilka maszyn - jej upływu nie dało się z tej karty
                uczciwie policzyć. Od issue #23 (2026-08-11) klamra służby nie istnieje
                w modelu w ogóle: payloady nie niosą `dutyStart`/`dutyEnd`, a oś zdarzeń
                nie ma czego pokazywać. -->
           <div class="tile">
             <span class="tile-key">Samolot zajęty</span>
             <span class="tile-val blue" data-when="closed" data-disp="block">07:30</span>
-            <span class="tile-val blue" data-when="open" data-disp="block" style="display:none;">—</span>
+            <span class="tile-val blue" data-when="open" data-disp="block" style="display:none;">-</span>
             <span class="tile-note" data-when="closed" data-disp="block">05:52:14 → 13:22:47 UTC · od przejęcia do zdania.</span>
             <span class="tile-note" data-when="open" data-disp="block" style="display:none;">Przejęty 05:52:14 UTC · maszyny jeszcze nie zdano.</span>
           </div>
@@ -637,7 +637,7 @@
                 <span class="tl-rail"><span class="tl-dot green"></span></span>
                 <span>
                   <span class="tl-name">session_claim</span>
-                  <span class="tl-meta">tryb: <b>free</b> — samolot był wolny · PIC: Anna Wrzosek (AWR) · dual: Marek Bąk (MBK)<br>poprzedni PIC: brak</span>
+                  <span class="tl-meta">tryb: <b>free</b> - samolot był wolny · PIC: Anna Wrzosek (AWR) · dual: Marek Bąk (MBK)<br>poprzedni PIC: brak</span>
                 </span>
                 <span class="pill green">claim</span>
               </div>
@@ -649,9 +649,9 @@
                   <span class="tl-name">preflight_confirm</span>
                   <span class="tl-meta">
                     operacja: skoki · EPRA → EPRA · klient: SKY CAMP (zlec. 2026/141)<br>
-                    <span style="color:var(--text-muted)">payload nie niesie godziny meldunku — klamra służby odeszła z modelu w całości (issue #23)</span><br>
+                    <span style="color:var(--text-muted)">payload nie niesie godziny meldunku - klamra służby odeszła z modelu w całości (issue #23)</span><br>
                     odczyt: FOB <b>780 L</b> · MH <b>3902.1</b> (format dziesiętny)<br>
-                    korekta odczytu: mh 3901.4 → 3902.1 — „licznik pokazuje więcej niż przekazanie z 29 JUL"
+                    korekta odczytu: mh 3901.4 → 3902.1 - „licznik pokazuje więcej niż przekazanie z 29 JUL"
                   </span>
                 </span>
                 <span class="pill blue">preflight</span>
@@ -662,7 +662,7 @@
                 <span class="tl-rail"><span class="tl-dot amber"></span></span>
                 <span>
                   <span class="tl-name">refuel</span>
-                  <span class="tl-meta">przed <b>780 L</b> · dolano <b>379 L</b> · po <b>1159 L</b> (pojemność 1250 L)<br>tankowanie PRZED uruchomieniem (kokpit 04a) — po pivocie nie ma przerwy w środku biegu, w której pilot stałby przy dystrybutorze<br>para odczytów przed/po = granica interwału paliwowego analityki (A10a)</span>
+                  <span class="tl-meta">przed <b>780 L</b> · dolano <b>379 L</b> · po <b>1159 L</b> (pojemność 1250 L)<br>tankowanie PRZED uruchomieniem (kokpit 04a) - po pivocie nie ma przerwy w środku biegu, w której pilot stałby przy dystrybutorze<br>para odczytów przed/po = granica interwału paliwowego analityki (A10a)</span>
                 </span>
                 <span class="pill amber">paliwo</span>
               </div>
@@ -672,7 +672,7 @@
                 <span class="tl-rail"><span class="tl-dot amber"></span></span>
                 <span>
                   <span class="tl-name">crew_change</span>
-                  <span class="tl-meta">rola: <b>dual</b> · schodzi Marek Bąk (MBK) · wchodzi Karolina Nowak (KNO)<br>zmiana załogi możliwa wyłącznie PRZED uruchomieniem — po biegu nowa załoga = nowe przejęcie<br>PIC bez zmian — sesję pisze jedno urządzenie (single-writer)</span>
+                  <span class="tl-meta">rola: <b>dual</b> · schodzi Marek Bąk (MBK) · wchodzi Karolina Nowak (KNO)<br>zmiana załogi możliwa wyłącznie PRZED uruchomieniem - po biegu nowa załoga = nowe przejęcie<br>PIC bez zmian - sesję pisze jedno urządzenie (single-writer)</span>
                 </span>
                 <span class="pill amber">załoga</span>
               </div>
@@ -682,7 +682,7 @@
                 <span class="tl-rail"><span class="tl-dot green"></span></span>
                 <span>
                   <span class="tl-name">engine_start</span>
-                  <span class="tl-meta">GPS 51.3892 N · 21.2133 E · dokł. 5 m<br>elewacja lotniska: <b>604 ft</b> (baza dla detekcji startu i lądowania)<br>JEDYNY bieg sesji — sesja = jeden bieg silnika (pivot 2026-08-10)</span>
+                  <span class="tl-meta">GPS 51.3892 N · 21.2133 E · dokł. 5 m<br>elewacja lotniska: <b>604 ft</b> (baza dla detekcji startu i lądowania)<br>JEDYNY bieg sesji - sesja = jeden bieg silnika (pivot 2026-08-10)</span>
                 </span>
                 <span class="pill green">silnik</span>
               </div>
@@ -692,7 +692,7 @@
                 <span class="tl-rail"><span class="tl-dot"></span></span>
                 <span>
                   <span class="tl-name">taxi</span>
-                  <span class="tl-meta">metoda: auto · GPS 51.3888 N · 21.2119 E · GS 11 kt<br>nie wpływa na czas blokowy ani na czas lotu — wpis opisowy</span>
+                  <span class="tl-meta">metoda: auto · GPS 51.3888 N · 21.2119 E · GS 11 kt<br>nie wpływa na czas blokowy ani na czas lotu - wpis opisowy</span>
                 </span>
                 <span class="pill dim">auto</span>
               </div>
@@ -783,9 +783,9 @@
                 <span>
                   <span class="tl-name">landing</span>
                   <span class="tl-meta">
-                    <b style="color:var(--red);">Unieważnione</b> — <code>event_correction</code> · <code>action: void</code> z 30 JUL 18:22:05 UTC<br>
+                    <b style="color:var(--red);">Unieważnione</b> - <code>event_correction</code> · <code>action: void</code> z 30 JUL 18:22:05 UTC<br>
                     unieważniła: <b>Anna Wrzosek (PIC)</b>, w swoim oknie korekty, z ekranu 04C aplikacji<br>
-                    powód: „zniżanie po zrzucie zaliczone jako lądowanie — samolot nie dotknął pasa"<br>
+                    powód: „zniżanie po zrzucie zaliczone jako lądowanie - samolot nie dotknął pasa"<br>
                     wiersz zostaje w rejestrze na zawsze; nie wchodzi do wyliczeń
                   </span>
                 </span>
@@ -813,7 +813,7 @@
               </div>
 
               <!-- STAŁY TU: `engine_stop · koniec cyklu 1`, `leg_close · wzlot 1`,
-                   tankowanie między cyklami i `engine_start · cykl 2` — model sprzed
+                   tankowanie między cyklami i `engine_start · cykl 2` - model sprzed
                    pivotu 2026-08-10. Sesja = JEDEN bieg silnika: dzień skokowy z gorącym
                    załadunkiem to jeden `engine_start` → `engine_stop` z wieloma lotami,
                    `leg_close` nie istnieje (zatwierdzeniem jest `day_close`), a tankowanie
@@ -834,12 +834,12 @@
                 <span class="tl-rail"><span class="tl-dot"></span></span>
                 <span>
                   <span class="tl-name" style="color:var(--text-secondary);">+ 22 zdarzenia · loty 4–7</span>
-                  <span class="tl-meta">kołowania, starty, zrzuty 4–7 (19 skoczków: 9 tandem · 3 aff · 7 solo) i lądowania — zwinięte, bo nic w nich nie odbiega od schematu<br><b style="color:var(--green);">rozwiń</b></span>
+                  <span class="tl-meta">kołowania, starty, zrzuty 4–7 (19 skoczków: 9 tandem · 3 aff · 7 solo) i lądowania - zwinięte, bo nic w nich nie odbiega od schematu<br><b style="color:var(--green);">rozwiń</b></span>
                 </span>
                 <span class="pill dim">zwinięte</span>
               </div>
 
-              <!-- STAŁA TU zmiana załogi 10:02 (w środku biegu) — po pivocie 2026-08-10
+              <!-- STAŁA TU zmiana załogi 10:02 (w środku biegu) - po pivocie 2026-08-10
                    `crew_change` jest legalny wyłącznie PRZED uruchomieniem; wiersz
                    przeniósł się na początek sesji (06:21:30). -->
 
@@ -854,7 +854,7 @@
               </div>
 
               <!-- STAŁY TU: `engine_stop · koniec cyklu 2`, `leg_close · wzlot 2` (bez
-                   odczytu) i `engine_start · cykl 3` — patrz komentarz-strażnik wyżej.
+                   odczytu) i `engine_start · cykl 3` - patrz komentarz-strażnik wyżej.
                    Nauka o CLOCK_DRIFT przeniosła się na start lotu 8 niżej. -->
 
               <div class="tl-row">
@@ -862,7 +862,7 @@
                 <span class="tl-rail"><span class="tl-dot amber"></span></span>
                 <span>
                   <span class="tl-name">takeoff · lot 8</span>
-                  <span class="tl-meta">metoda: auto<br><span style="color:var(--amber);">pierwsze przekroczenie progu <code>CLOCK_DRIFT</code>: device_time 12:15:41 vs gps_time 12:03:41 = <b>720 s</b> (próg 120 s) — od tej chwili zegar telefonu spieszy 12 min; czas zdarzeń bierzemy z GPS</span></span>
+                  <span class="tl-meta">metoda: auto<br><span style="color:var(--amber);">pierwsze przekroczenie progu <code>CLOCK_DRIFT</code>: device_time 12:15:41 vs gps_time 12:03:41 = <b>720 s</b> (próg 120 s) - od tej chwili zegar telefonu spieszy 12 min; czas zdarzeń bierzemy z GPS</span></span>
                 </span>
                 <span class="pill amber">drift</span>
               </div>
@@ -892,7 +892,7 @@
                 <span class="tl-rail"><span class="tl-dot blue"></span></span>
                 <span>
                   <span class="tl-name">drop · wyniesienie 9</span>
-                  <span class="tl-meta">wysokość: <b>brak</b> (bez fixa GPS) · 2 tandem · 1 aff · 2 solo = <b>5</b> · SKY CAMP<br>ten zrzut nie wchodzi do średniej wysokości — liczy się z 8 wyniesień, które ją mają</span>
+                  <span class="tl-meta">wysokość: <b>brak</b> (bez fixa GPS) · 2 tandem · 1 aff · 2 solo = <b>5</b> · SKY CAMP<br>ten zrzut nie wchodzi do średniej wysokości - liczy się z 8 wyniesień, które ją mają</span>
                 </span>
                 <span class="pill blue">zrzut</span>
               </div>
@@ -903,9 +903,9 @@
                 <span>
                   <span class="tl-name">manual_log_entry · lot 9</span>
                   <span class="tl-meta">
-                    takeoff 12:35:00 · landing 12:59:00 (czas lotu 00:24:00) · off/on block: <b>—</b><br>
-                    uwagi: „brak fixa GPS nad strefą — lot wpisany ręcznie po wylądowaniu"<br>
-                    wpis retro: zapisany o 13:02:11, ale niesie czasy sprzed 27 minut — projekcja sortuje po czasie zdarzenia, nie zapisu
+                    takeoff 12:35:00 · landing 12:59:00 (czas lotu 00:24:00) · off/on block: <b>-</b><br>
+                    uwagi: „brak fixa GPS nad strefą - lot wpisany ręcznie po wylądowaniu"<br>
+                    wpis retro: zapisany o 13:02:11, ale niesie czasy sprzed 27 minut - projekcja sortuje po czasie zdarzenia, nie zapisu
                   </span>
                 </span>
                 <span class="pill amber">ręcznie</span>
@@ -917,7 +917,7 @@
                 <span>
                   <span class="tl-name">engine_stop</span>
                   <span class="tl-meta" style="color:var(--amber);">
-                    <b>gps_time: brak fixa</b> — czas zdarzenia spadł na zegar urządzenia (device_time 13:13:33)<br>
+                    <b>gps_time: brak fixa</b> - czas zdarzenia spadł na zegar urządzenia (device_time 13:13:33)<br>
                     bieg: 06:31:02 → 13:13:33 = <b>06:42:31</b>; przy drifcie +720 s realne wyłączenie to ok. 13:01:33<br>
                     to jest cel korekty administratora → <a href="A02b-korekta.html" style="color:var(--amber);">A02B</a>
                   </span>
@@ -930,7 +930,7 @@
                 <span class="tl-rail"><span class="tl-dot red"></span></span>
                 <span>
                   <span class="tl-name">day_close</span>
-                  <span class="tl-meta">odczyt końcowy (przekazanie): FOB <b>153 L</b> · MH <b>3907.8</b><br><b>zdanie samolotu</b> — zatwierdzenie logu sesji; dzień pilota trwa dalej (nazwa typu zdarzenia jest historyczna, a klamra służby odeszła z modelu — issue #23)<br>od tej chwili liczy się okno korekty 24 h tej sesji</span>
+                  <span class="tl-meta">odczyt końcowy (przekazanie): FOB <b>153 L</b> · MH <b>3907.8</b><br><b>zdanie samolotu</b> - zatwierdzenie logu sesji; dzień pilota trwa dalej (nazwa typu zdarzenia jest historyczna, a klamra służby odeszła z modelu - issue #23)<br>od tej chwili liczy się okno korekty 24 h tej sesji</span>
                 </span>
                 <span class="pill red">zdanie</span>
               </div>
@@ -943,7 +943,7 @@
                   <span class="tl-meta">
                     <code>action: void</code> · <code>targetUuid: 5e2b91c7…ab34</code> (landing 08:14:09)<br>
                     autor: Anna Wrzosek (PIC), w swoim oknie korekty (do 31 JUL 13:22) · powód: „zniżanie po zrzucie zaliczone jako lądowanie"<br>
-                    korekta jest zdarzeniem jak każde inne — dopisuje się do rejestru, niczego nie nadpisuje
+                    korekta jest zdarzeniem jak każde inne - dopisuje się do rejestru, niczego nie nadpisuje
                   </span>
                 </span>
                 <span class="pill red">korekta</span>
@@ -954,7 +954,7 @@
                 <span class="tl-rail"><span class="tl-dot green"></span></span>
                 <span>
                   <span class="tl-name">Ostatnie zdarzenie przyjęte przez serwer</span>
-                  <span class="tl-meta">Sesja trwa: bieg silnika otwarty — brak <code>engine_stop</code> i <code>day_close</code>.<br>Kolejne zdarzenia dojdą, gdy telefon złapie zasięg — outbox pilota nigdy nie blokuje pracy.</span>
+                  <span class="tl-meta">Sesja trwa: bieg silnika otwarty - brak <code>engine_stop</code> i <code>day_close</code>.<br>Kolejne zdarzenia dojdą, gdy telefon złapie zasięg - outbox pilota nigdy nie blokuje pracy.</span>
                 </span>
                 <span class="pill green"><span class="dot live"></span>live</span>
               </div>
@@ -972,7 +972,7 @@
               <div class="kv" data-when="open" data-disp="flex" style="display:none;"><span class="kv-k">Zdanie samolotu</span><span class="kv-v amber"><small>maszyna wciąż zajęta</small></span></div>
               <!-- Okno korekty NIE jest wierszem tej karty: jest JEDNO na sesję, 24 h
                    od ZDANIA samolotu (issue #23), a jego termin pokazuje baner nagłówka.
-                   (Wiersz „Wzloty potwierdzone" stał tu do pivotu — `leg_close` nie
+                   (Wiersz „Wzloty potwierdzone" stał tu do pivotu - `leg_close` nie
                    istnieje, sesję zatwierdza `day_close`.) -->
               <div class="kv" data-when="closed" data-disp="flex"><span class="kv-k">Zdany przed</span><span class="kv-v"><small>25 godz.</small></span></div>
               <div class="kv"><span class="kv-k">Zdarzeń w rejestrze</span><span class="kv-v" data-when="closed" data-disp="inline">81 <small>w tym 1 korekta</small></span><span class="kv-v green" data-when="open" data-disp="inline" style="display:none;">59 <small>sync 24 min temu</small></span></div>
@@ -983,18 +983,18 @@
               <div class="card-title" style="color:var(--amber);">Paliwo <span class="spacer"></span><span class="pill dim">litry</span></div>
               <div class="kv"><span class="kv-k">Startowe</span><span class="kv-v">780</span></div>
               <div class="kv"><span class="kv-k">Dolane</span><span class="kv-v">379 <small>1 tankowanie</small></span></div>
-              <div class="kv"><span class="kv-k">Końcowe</span><span class="kv-v" data-when="closed" data-disp="inline">153</span><span class="kv-v" data-when="open" data-disp="inline" style="display:none;">—</span></div>
-              <div class="kv"><span class="kv-k">Zużyte</span><span class="kv-v amber" data-when="closed" data-disp="inline">1006</span><span class="kv-v amber" data-when="open" data-disp="inline" style="display:none;">—</span></div>
-              <div class="kv"><span class="kv-k">Średnie L/h</span><span class="kv-v amber" data-when="closed" data-disp="inline">171 <small>na blok</small></span><span class="kv-v amber" data-when="open" data-disp="inline" style="display:none;">—</span></div>
+              <div class="kv"><span class="kv-k">Końcowe</span><span class="kv-v" data-when="closed" data-disp="inline">153</span><span class="kv-v" data-when="open" data-disp="inline" style="display:none;">-</span></div>
+              <div class="kv"><span class="kv-k">Zużyte</span><span class="kv-v amber" data-when="closed" data-disp="inline">1006</span><span class="kv-v amber" data-when="open" data-disp="inline" style="display:none;">-</span></div>
+              <div class="kv"><span class="kv-k">Średnie L/h</span><span class="kv-v amber" data-when="closed" data-disp="inline">171 <small>na blok</small></span><span class="kv-v amber" data-when="open" data-disp="inline" style="display:none;">-</span></div>
               <div class="kv"><span class="kv-k">Ostatni odczyt</span><span class="kv-v" data-when="closed" data-disp="inline">153 <small>day_close</small></span><span class="kv-v" data-when="open" data-disp="inline" style="display:none;">1159 <small>po tankowaniu</small></span></div>
             </div>
 
             <div class="card">
               <div class="card-title">Motogodziny <span class="spacer"></span><span class="pill dim">format dziesiętny</span></div>
               <div class="kv"><span class="kv-k">Początek</span><span class="kv-v">3902.1</span></div>
-              <div class="kv"><span class="kv-k">Koniec</span><span class="kv-v" data-when="closed" data-disp="inline">3907.8</span><span class="kv-v" data-when="open" data-disp="inline" style="display:none;">—</span></div>
-              <div class="kv"><span class="kv-k">Delta</span><span class="kv-v green" data-when="closed" data-disp="inline">5.7 <small>h</small></span><span class="kv-v green" data-when="open" data-disp="inline" style="display:none;">—</span></div>
-              <div class="kv"><span class="kv-k">Blok vs Δ MH</span><span class="kv-v amber" data-when="closed" data-disp="inline">+1.0 <small>h — flaga</small></span><span class="kv-v" data-when="open" data-disp="inline" style="display:none;"><small>po zamknięciu</small></span></div>
+              <div class="kv"><span class="kv-k">Koniec</span><span class="kv-v" data-when="closed" data-disp="inline">3907.8</span><span class="kv-v" data-when="open" data-disp="inline" style="display:none;">-</span></div>
+              <div class="kv"><span class="kv-k">Delta</span><span class="kv-v green" data-when="closed" data-disp="inline">5.7 <small>h</small></span><span class="kv-v green" data-when="open" data-disp="inline" style="display:none;">-</span></div>
+              <div class="kv"><span class="kv-k">Blok vs Δ MH</span><span class="kv-v amber" data-when="closed" data-disp="inline">+1.0 <small>h - flaga</small></span><span class="kv-v" data-when="open" data-disp="inline" style="display:none;"><small>po zamknięciu</small></span></div>
               <div class="kv"><span class="kv-k">Poprzednie przekazanie</span><span class="kv-v amber">3901.4 <small>29 JUL · dziura 0.7 h</small></span></div>
             </div>
 
@@ -1026,15 +1026,15 @@
               </tr>
             </thead>
             <tbody>
-              <tr><td class="num">1</td><td class="num">06:38:10</td><td class="num">07:02:58</td><td class="num">00:24:48</td><td><span class="pill dim">auto</span></td><td class="num">1</td><td class="num">6 skoczków <span class="cell-sub">12 800 ft</span></td><td class="dim">—</td><td><div class="row-actions"><a class="btn sm ghost" href="A02c-slad.html">Ślad</a><a class="btn sm ghost" href="A04-zdarzenia.html">Zdarzenia</a></div></td></tr>
-              <tr><td class="num">2</td><td class="num">07:19:04</td><td class="num">07:43:51</td><td class="num">00:24:47</td><td><span class="pill dim">auto</span></td><td class="num">1</td><td class="num">5 skoczków <span class="cell-sub">13 000 ft</span></td><td class="dim">—</td><td><div class="row-actions"><a class="btn sm ghost" href="A02c-slad.html">Ślad</a><a class="btn sm ghost" href="A04-zdarzenia.html">Zdarzenia</a></div></td></tr>
+              <tr><td class="num">1</td><td class="num">06:38:10</td><td class="num">07:02:58</td><td class="num">00:24:48</td><td><span class="pill dim">auto</span></td><td class="num">1</td><td class="num">6 skoczków <span class="cell-sub">12 800 ft</span></td><td class="dim">-</td><td><div class="row-actions"><a class="btn sm ghost" href="A02c-slad.html">Ślad</a><a class="btn sm ghost" href="A04-zdarzenia.html">Zdarzenia</a></div></td></tr>
+              <tr><td class="num">2</td><td class="num">07:19:04</td><td class="num">07:43:51</td><td class="num">00:24:47</td><td><span class="pill dim">auto</span></td><td class="num">1</td><td class="num">5 skoczków <span class="cell-sub">13 000 ft</span></td><td class="dim">-</td><td><div class="row-actions"><a class="btn sm ghost" href="A02c-slad.html">Ślad</a><a class="btn sm ghost" href="A04-zdarzenia.html">Zdarzenia</a></div></td></tr>
               <tr><td class="num">3</td><td class="num">08:02:30</td><td class="num">08:26:12</td><td class="num">00:23:42</td><td><span class="pill dim">auto</span></td><td class="num">1</td><td class="num">6 skoczków <span class="cell-sub">12 600 ft</span></td><td><span class="pill red">1 korekta</span><span class="cell-sub">void fałszywego LDG 08:14:09</span></td><td><div class="row-actions"><a class="btn sm ghost" href="A02c-slad.html">Ślad</a><a class="btn sm ghost" href="A04-zdarzenia.html">Zdarzenia</a></div></td></tr>
-              <tr><td class="num">4</td><td class="num">09:20:15</td><td class="num">09:44:02</td><td class="num">00:23:47</td><td><span class="pill dim">auto</span></td><td class="num">2</td><td class="num">5 skoczków <span class="cell-sub">12 900 ft</span></td><td class="dim">—</td><td><div class="row-actions"><a class="btn sm ghost" href="A02c-slad.html">Ślad</a><a class="btn sm ghost" href="A04-zdarzenia.html">Zdarzenia</a></div></td></tr>
-              <tr><td class="num">5</td><td class="num">09:59:48</td><td class="num">10:24:31</td><td class="num">00:24:43</td><td><span class="pill dim">auto</span></td><td class="num">2</td><td class="num">4 skoczków <span class="cell-sub">12 700 ft</span></td><td class="dim">—</td><td><div class="row-actions"><a class="btn sm ghost" href="A02c-slad.html">Ślad</a><a class="btn sm ghost" href="A04-zdarzenia.html">Zdarzenia</a></div></td></tr>
+              <tr><td class="num">4</td><td class="num">09:20:15</td><td class="num">09:44:02</td><td class="num">00:23:47</td><td><span class="pill dim">auto</span></td><td class="num">2</td><td class="num">5 skoczków <span class="cell-sub">12 900 ft</span></td><td class="dim">-</td><td><div class="row-actions"><a class="btn sm ghost" href="A02c-slad.html">Ślad</a><a class="btn sm ghost" href="A04-zdarzenia.html">Zdarzenia</a></div></td></tr>
+              <tr><td class="num">5</td><td class="num">09:59:48</td><td class="num">10:24:31</td><td class="num">00:24:43</td><td><span class="pill dim">auto</span></td><td class="num">2</td><td class="num">4 skoczków <span class="cell-sub">12 700 ft</span></td><td class="dim">-</td><td><div class="row-actions"><a class="btn sm ghost" href="A02c-slad.html">Ślad</a><a class="btn sm ghost" href="A04-zdarzenia.html">Zdarzenia</a></div></td></tr>
               <tr><td class="num">6</td><td class="num">10:40:12</td><td class="num">11:04:58</td><td class="num">00:24:46</td><td><span class="pill dim">auto</span></td><td class="num">2</td><td class="num">6 skoczków <span class="cell-sub">13 000 ft</span></td><td class="dim">zmiana duala 10:02</td><td><div class="row-actions"><a class="btn sm ghost" href="A02c-slad.html">Ślad</a><a class="btn sm ghost" href="A04-zdarzenia.html">Zdarzenia</a></div></td></tr>
-              <tr><td class="num">7</td><td class="num">11:12:33</td><td class="num">11:33:20</td><td class="num">00:20:47</td><td><span class="pill dim">auto</span></td><td class="num">2</td><td class="num">4 skoczków <span class="cell-sub">12 750 ft</span></td><td class="dim">—</td><td><div class="row-actions"><a class="btn sm ghost" href="A02c-slad.html">Ślad</a><a class="btn sm ghost" href="A04-zdarzenia.html">Zdarzenia</a></div></td></tr>
-              <tr><td class="num">8</td><td class="num">12:03:41</td><td class="num">12:28:19</td><td class="num">00:24:38</td><td><span class="pill dim">auto</span></td><td class="num">3</td><td class="num">6 skoczków <span class="cell-sub">13 100 ft</span></td><td class="dim">—</td><td><div class="row-actions"><a class="btn sm ghost" href="A02c-slad.html">Ślad</a><a class="btn sm ghost" href="A04-zdarzenia.html">Zdarzenia</a></div></td></tr>
-              <tr><td class="num">9</td><td class="num">12:35:00</td><td class="num">12:59:00</td><td class="num">00:24:00</td><td><span class="pill amber">ręcznie</span></td><td class="num">3</td><td class="num">5 skoczków <span class="cell-sub">wysokość: brak</span></td><td class="dim">wpis <code>manual_log_entry</code> — brak fixa GPS</td><td><div class="row-actions"><span class="btn sm ghost" style="opacity:0.4;cursor:not-allowed;" title="Wpis ręczny — nie ma zapisu GPS, z którego dałoby się odtworzyć trasę">Ślad</span><a class="btn sm ghost" href="A04-zdarzenia.html">Zdarzenia</a></div></td></tr>
+              <tr><td class="num">7</td><td class="num">11:12:33</td><td class="num">11:33:20</td><td class="num">00:20:47</td><td><span class="pill dim">auto</span></td><td class="num">2</td><td class="num">4 skoczków <span class="cell-sub">12 750 ft</span></td><td class="dim">-</td><td><div class="row-actions"><a class="btn sm ghost" href="A02c-slad.html">Ślad</a><a class="btn sm ghost" href="A04-zdarzenia.html">Zdarzenia</a></div></td></tr>
+              <tr><td class="num">8</td><td class="num">12:03:41</td><td class="num">12:28:19</td><td class="num">00:24:38</td><td><span class="pill dim">auto</span></td><td class="num">3</td><td class="num">6 skoczków <span class="cell-sub">13 100 ft</span></td><td class="dim">-</td><td><div class="row-actions"><a class="btn sm ghost" href="A02c-slad.html">Ślad</a><a class="btn sm ghost" href="A04-zdarzenia.html">Zdarzenia</a></div></td></tr>
+              <tr><td class="num">9</td><td class="num">12:35:00</td><td class="num">12:59:00</td><td class="num">00:24:00</td><td><span class="pill amber">ręcznie</span></td><td class="num">3</td><td class="num">5 skoczków <span class="cell-sub">wysokość: brak</span></td><td class="dim">wpis <code>manual_log_entry</code> - brak fixa GPS</td><td><div class="row-actions"><span class="btn sm ghost" style="opacity:0.4;cursor:not-allowed;" title="Wpis ręczny - nie ma zapisu GPS, z którego dałoby się odtworzyć trasę">Ślad</span><a class="btn sm ghost" href="A04-zdarzenia.html">Zdarzenia</a></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -1073,7 +1073,7 @@
               </tbody>
             </table>
           </div>
-          <span class="hint">Żadna z tych dwóch flag nie zmienia liczb i nie trzyma karty poza arkuszem — opisują rozbieżność, którą ma obejrzeć człowiek. <b style="color:var(--text-secondary)">Bramką arkusza jest wyłącznie <code>aircraft_overlap</code></b> (dwa telefony przy jednej maszynie), i nawet ona wycina z karty tylko sesje objęte flagą, a nie całą dobę (§4.7). <code>clock_drift</code> z tej sesji jest bezpośrednim powodem korekty <code>engine_stop</code> na ekranie <a href="A02b-korekta.html" style="color:var(--green);">A02B</a>: przy zepsutym zegarze i braku fixa GPS czas ostatniego zdarzenia jest zawyżony o 12 minut, a razem z nim czas blokowy sesji.</span>
+          <span class="hint">Żadna z tych dwóch flag nie zmienia liczb i nie trzyma karty poza arkuszem - opisują rozbieżność, którą ma obejrzeć człowiek. <b style="color:var(--text-secondary)">Bramką arkusza jest wyłącznie <code>aircraft_overlap</code></b> (dwa telefony przy jednej maszynie), i nawet ona wycina z karty tylko sesje objęte flagą, a nie całą dobę (§4.7). <code>clock_drift</code> z tej sesji jest bezpośrednim powodem korekty <code>engine_stop</code> na ekranie <a href="A02b-korekta.html" style="color:var(--green);">A02B</a>: przy zepsutym zegarze i braku fixa GPS czas ostatniego zdarzenia jest zawyżony o 12 minut, a razem z nim czas blokowy sesji.</span>
         </div>
 
       </div>
@@ -1099,8 +1099,8 @@
 
 <script>
   // Przełącznik stanu mockupu: samolot ZDANY vs samolot NIEODDANY (telefon dosyła zdarzenia).
-  // To jeden ekran, nie dwa pliki — różnica jest w danych, nie w układzie: sesja bez
-  // `day_close` po prostu nie ma odczytów końcowych, więc panel pokazuje „—" zamiast
+  // To jeden ekran, nie dwa pliki - różnica jest w danych, nie w układzie: sesja bez
+  // `day_close` po prostu nie ma odczytów końcowych, więc panel pokazuje „-" zamiast
   // ekstrapolować. Elementy różniące się między stanami noszą `data-when="closed|open"`.
   function dayState(state) {
     document.querySelectorAll('[data-when]').forEach(function (el) {
