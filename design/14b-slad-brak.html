@@ -103,14 +103,6 @@
   .fallback-key { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
   .fallback-val { font-family:var(--font-mono); font-size:12px; color:var(--text-primary); }
 
-  .btn-secondary {
-    display:flex; align-items:center; justify-content:center; gap:8px;
-    width:100%; padding:13px; border-radius:12px;
-    background:var(--surface-raised); color:var(--text-secondary);
-    font-family:var(--font-mono); font-size:11px; letter-spacing:1.5px;
-    border:1px solid var(--border-strong); text-decoration:none; cursor:pointer;
-  }
-
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
   .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
   .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; }
@@ -178,32 +170,41 @@
         <div class="section-card-head">
           Co wiadomo o tej operacji
           <span class="spacer"></span>
-          <span class="head-note">czasy UTC</span>
+          <span class="head-note">z rejestru · czasy UTC</span>
         </div>
+        <!-- SŁOWNIK OSI, ten sam co na 14C i na osi operacji (issue #44): po polsku
+             i o BIEGU SILNIKA, bo kartę wypełnia rejestr, a nie zapis GPS. Wiersze
+             „Takeoff / Landing / Czas lotu" opisywały POJEDYNCZY lot i zostały tu po
+             modelu sprzed pivotu 2026-08-10 - operacja ma jeden bieg i WIELE lotów,
+             więc para godzin mieści się w wierszu „Loty", a klamrą są uruchomienie
+             i wyłączenie silnika.
+
+             Wiersza „Źródło: WPIS RĘCZNY" też nie ma: powód stoi w karcie wyżej
+             („Ta operacja została wpisana ręcznie"), a plakietka „RĘCZNIE" należy do
+             kafelka operacji i nagłówka rozliczenia, nie do każdego widoku z osobna. -->
         <div class="fallback-card">
           <div class="fallback-row">
-            <span class="fallback-key">Takeoff</span>
-            <span class="fallback-val">14:21</span>
+            <span class="fallback-key">Uruchomienie</span>
+            <span class="fallback-val">14:12</span>
           </div>
           <div class="fallback-row">
-            <span class="fallback-key">Landing</span>
-            <span class="fallback-val">15:03</span>
+            <span class="fallback-key">Wyłączenie</span>
+            <span class="fallback-val">15:20</span>
           </div>
           <div class="fallback-row">
-            <span class="fallback-key">Czas lotu</span>
-            <span class="fallback-val">00:42</span>
+            <span class="fallback-key">W powietrzu</span>
+            <span class="fallback-val" style="color:var(--green);">00:42</span>
           </div>
           <div class="fallback-row">
-            <span class="fallback-key">Źródło</span>
-            <span class="fallback-val" style="color:var(--amber);">WPIS RĘCZNY</span>
+            <span class="fallback-key">Loty</span>
+            <span class="fallback-val">2 · 14:21 → 15:03</span>
           </div>
         </div>
       </div>
 
-      <a href="10-statystyki.html" class="btn-secondary">
-        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 2.5L4 6.5l4 4"/></svg>
-        WRÓĆ DO OPERACJI
-      </a>
+      <!-- POWRÓT JEST JEDEN - W NAGŁÓWKU (issue #42). Pełnowymiarowy przycisk, który
+           wyłącznie wychodzi z ekranu, obiecuje czynność, której nie ma; wariant 14C
+           takiego nie ma i aplikacja go nie rysuje. -->
 
     </div>
   </div>

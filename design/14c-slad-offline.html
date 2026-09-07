@@ -104,21 +104,6 @@
   .empty-text { font-size:12px; color:var(--text-muted); line-height:1.6; max-width:286px; }
   .empty-text b { color:var(--text-secondary); font-weight:600; }
 
-  /* Akcja WYMAGAJĄCA SIECI: nieaktywna z podanym powodem, nigdy cichy błąd (§ offline-first
-     pkt 3). Powodu NIE widać z ekranu - pill w nagłówku mówi „offline", ale nie mówi,
-     czego ten przycisk od sieci chce - więc `disabledReason` zostaje (issue #43). */
-  .btn-primary-off {
-    display:flex; align-items:center; justify-content:center; gap:8px;
-    width:100%; padding:15px; border-radius:12px;
-    background:var(--surface-raised); border:1px solid var(--border-strong);
-    color:var(--text-muted); font-family:var(--font-display); font-size:22px; letter-spacing:2px;
-    cursor:not-allowed;
-  }
-  .btn-reason {
-    text-align:center; font-family:var(--font-mono); font-size:9px; letter-spacing:1px;
-    color:var(--text-muted); margin-top:-4px;
-  }
-
   .fallback-card { display:flex; flex-direction:column; gap:1px; background:var(--border); }
   .fallback-row { background:var(--surface); padding:10px 13px; display:flex; align-items:center; justify-content:space-between; }
   .fallback-key { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
@@ -194,8 +179,14 @@
         </div>
       </div>
 
-      <button class="btn-primary-off" disabled>POBIERZ ŚLAD</button>
-      <div class="btn-reason">wymaga zasięgu</div>
+      <!-- PRZYCISKU „POBIERZ ŚLAD" TU NIE MA i nie ma go po co dokładać (2026-09-07).
+           Ekran pobiera ślad SAM przy wejściu, więc jedyną drogą wyjścia jest wrócić tu
+           z zasięgiem - i dokładnie to mówi zdanie wyżej. Przycisk mógłby stać na tym
+           ekranie WYŁĄCZNIE wyszarzony (w zasięgu ekran rysuje mapę, a nie ten stan),
+           czyli obiecywałby akcję, której nigdy nie da się wykonać - a to jest zakazane
+           (issue #40, 10B). Powód `offline` jest jedynym z czterech, którego zdanie jest
+           INSTRUKCJĄ, bo jako jedyny ma drogę wyjścia (issue #47); instrukcja tę rolę
+           już pełni i drugiego nośnika nie potrzebuje. -->
 
       <!-- Co JEDNAK wiadomo - liczy się z rejestru na telefonie, więc jest zawsze.
            Ekran 14 stracił przez issue #47 wyłącznie GEOMETRIĘ; czasy operacji nigdy nie
