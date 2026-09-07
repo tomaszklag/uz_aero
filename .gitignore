@@ -1,5 +1,13 @@
-# Claude Code local settings
-.claude/
+# Claude Code local settings. Wykluczamy ZAWARTOŚĆ, nie sam katalog - git nie umie
+# odwrócić wykluczenia katalogu, a `.claude/skills/` ma jechać z repozytorium:
+# procedura wydania opisuje kroki, których pomylenie kosztuje testerów reinstalację,
+# więc nie może zależeć od tego, przy której maszynie ktoś siedzi.
+.claude/*
+!.claude/skills/
+# Wzorzec wyżej jest kotwiczony do korzenia (ma ukośnik w środku), więc `.claude/`
+# w podkatalogach trzeba wykluczyć osobno - inaczej wyjątek na skille odsłania cudze
+# ustawienia lokalne, np. `app/.claude/`.
+*/.claude/
 
 # Node / Expo (na przyszłość)
 node_modules/
