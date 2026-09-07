@@ -227,7 +227,7 @@ const adminFleetQueries = new AdminFleetQueries(
 // drugiej kopii.
 const sessionTrack = new SessionTrackQueries(db, events, new FsTraceSource(env.TRACES_DIR));
 
-const app = buildServer({
+const app = await buildServer({
   // Logowanie (2026-09-04): tożsamość dowodzi podpisany token Google, a `identities`
   // rozstrzyga, czy stoi za nim KONTO. `GoogleIdTokens` jest portem, więc testy
   // podstawiają weryfikator z kluczem w procesie zamiast chodzić do Google.

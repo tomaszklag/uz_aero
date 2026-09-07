@@ -243,7 +243,7 @@ export async function testHarness(
   // przez `POST /traces` i odbiera je obiema trasami, czyli przechodzi drogę produkcyjną.
   const sessionTrack = new SessionTrackQueries(db, events, new FsTraceSource(tracesDir));
 
-  const app = buildServer({
+  const app = await buildServer({
     // Logowanie: PRAWDZIWE tożsamości w bazie (`PgExternalIdentitiesRepo`) i prawdziwa
     // reguła podpięcia po e-mailu - atrapą jest wyłącznie weryfikacja podpisu Google,
     // bo to cudza kryptografia (uzasadnienie w `testIdentityProvider.ts`).

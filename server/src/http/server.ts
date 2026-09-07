@@ -6,6 +6,7 @@
  * z PGlite) - warstwa HTTP nie tworzy niczego sama.
  */
 
+import compress from '@fastify/compress';
 import cookie from '@fastify/cookie';
 import Fastify, { type FastifyInstance } from 'fastify';
 
@@ -243,12 +244,52 @@ export interface ServerOptions {
   trustProxy?: boolean;
 }
 
-export function buildServer(deps: ServerDeps, options: ServerOptions = {}): FastifyInstance {
+export async function buildServer(
+  deps: ServerDeps,
+  options: ServerOptions = {},
+): Promise<FastifyInstance> {
   const app = Fastify({ logger: false, trustProxy: options.trustProxy === true });
 
   // Przed trasami, żeby dziennik objął także żądania odbite przez strażnika CSRF
   // i te, które nie trafią w żadną trasę (404 też jest informacją o tym, co się dzieje).
   if (options.requestLog !== false) registerRequestLog(app);
+
+  // KOMPRESJA ODPOWIEDZI - jedna wtyczka na trzy powierzchnie naraz (2026-09-07).
+  //
+  // Powód nie jest rachunkiem za transfer (ten wychodzi w groszach), tylko CZASEM
+  // ŁADOWANIA na słabym łączu. Zmierzone na prawdziwych plikach: bundle panelu
+  // 425 → 134 kB, arkusz stylów strony 34 → 7 kB, landing 22 → 8 kB, wyszukiwarka
+  // podręcznika 174 → 56 kB. Po stronie API największy jest `GET /me/events` przy
+  // odtwarzaniu rejestru na nowym telefonie - i to jest dokładnie ta sytuacja,
+  // w której pilot stoi w hangarze z jedną kreską zasięgu.
+  //
+  // `global` (domyślne) obejmuje pliki statyczne I odpowiedzi API. Wtyczka sama
+  // pomija treści już skompresowane (PNG, woff2) - rozstrzyga typ MIME, nie entropia.
+  // Kodowanie wybiera z tego, co poda klient (zstd/br/gzip/deflate); brotli jedzie
+  // z jakością 4, czyli tanio - jakość 11 kosztowałaby sekundę CPU na większym pliku.
+  //
+  // **BREACH tu nie sięga** i to jest warunek, pod którym kompresja odpowiedzi
+  // uwierzytelnionych jest bezpieczna: ochrona CSRF panelu to STAŁY nagłówek
+  // `X-UZ-Admin` (`adminCsrf.ts`), a nie token w treści; serwer nie wysyła żadnych
+  // nagłówków CORS, więc obca strona nie odczyta odpowiedzi; żadna trasa nie odbija
+  // danych od atakującego obok sekretu. Gdyby kiedyś zaczęła - to jest miejsce,
+  // w którym trzeba tę trasę z kompresji wyjąć.
+  //
+  // **`await` NIE JEST OZDOBĄ - bez niego kompresja obejmuje same pliki statyczne.**
+  // Wtyczka podpina się pod KAŻDĄ TRASĘ hookiem `onRoute`, a `register()` jest
+  // odroczone do rozruchu. Trasy niżej dodają się synchronicznie, więc bez `await`
+  // powstają ZANIM hook zaczyna istnieć i `onRoute` ich nie widzi; łapały się tylko
+  // `admin/dist` i `site/dist`, bo one też idą przez `register()` i stoją w kolejce
+  // za wtyczką. Objaw był cichy: strona pakowana, `GET /reference` nie - i to jest
+  // dokładnie ten rodzaj usterki, którego nie widać w żadnej odpowiedzi z osobna.
+  // Dlatego `buildServer` jest asynchroniczne; ma to jeden test (`compression.test.ts`).
+  await app.register(compress, {
+    // Wartość domyślna wtyczki, podana JAWNIE, bo to ona rozstrzyga, czego NIE
+    // pakujemy: krótka odpowiedź API po spakowaniu bywa większa niż przed. Próg
+    // dotyczy WYŁĄCZNIE odpowiedzi zbuforowanych - pliku statycznego wtyczka nie
+    // umie zmierzyć przed wysłaniem (jedzie strumieniem), więc pakuje go zawsze.
+    threshold: 1024,
+  });
 
   // Ciasteczka: potrzebuje ich WYŁĄCZNIE sesja panelu, ale wtyczka musi stać przed
   // trasami, bo dokłada `req.cookies` czytane przez `tokenFromRequest`. Bez podpisu
