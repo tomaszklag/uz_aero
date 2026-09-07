@@ -25,6 +25,8 @@ const input = (over: Partial<BugContextInput> = {}): BugContextInput => ({
     osVersion: '14',
     deviceModel: 'Pixel 7a',
     schemaVersion: 8,
+    updateId: '3f2a1b90-7c44-4d2e-9a10-0b5e6d8c1f22',
+    updateChannel: 'production',
   },
   sync: { state: 'synced', outboxCount: 0, lastSyncAt: Date.UTC(2026, 8, 4, 9, 38), lastAttemptAt: null },
   operation: {
@@ -98,6 +100,34 @@ describe('kontekst zgłoszenia', () => {
       flights: 3,
       reportedAt: new Date(AT).toISOString(),
     });
+  });
+
+  it('WYDANIE JS jedzie obok wydania binarki, ale nie do wierszy dla pilota', () => {
+    // Po włączeniu EAS Update jedna binarka „1.4.0 (build 7)" obsługuje wiele wydań
+    // kodu, więc bez `updateId` zgłoszenie po aktualizacji jest nierozróżnialne od
+    // zgłoszenia sprzed niej. W WIERSZACH tego nie ma - identyfikator bundle'a jest
+    // faktem dla naprawiającego, nie odpowiedzią dla pilota (tak samo `schemaVersion`).
+    const view = buildBugContext(input());
+
+    expect(view.context).toMatchObject({
+      updateId: '3f2a1b90-7c44-4d2e-9a10-0b5e6d8c1f22',
+      updateChannel: 'production',
+    });
+    expect(rowOf(view, 'Aplikacja')).toBe('1.4.0 (build 7)');
+    expect(JSON.stringify(view.rows)).not.toContain('3f2a1b90');
+  });
+
+  it('bundle wbudowany w APK: pusty updateId JEST odpowiedzią, nie brakiem danych', () => {
+    // Świeżo zainstalowana binarka, w której nie weszła jeszcze żadna aktualizacja.
+    // Pole zostaje w kontekście z wartością `null` - „nic nie doszło" to informacja.
+    const view = buildBugContext(
+      input({
+        release: { ...input().release, updateId: null, updateChannel: 'production' },
+      }),
+    );
+
+    expect(view.context.updateId).toBeNull();
+    expect(view.context.updateChannel).toBe('production');
   });
 
   it('stan łączności ODCHYLONY nazywa się w wierszu, stan domyślny nie', () => {

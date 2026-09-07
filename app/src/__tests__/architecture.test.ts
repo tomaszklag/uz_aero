@@ -209,12 +209,23 @@ describe('granice warstw', () => {
     expect(users).toEqual(['infrastructure/release/nativeRelease.ts']);
   });
 
+  it('tylko czytnik aktualizacji dotyka expo-updates', () => {
+    // Które wydanie JS naprawdę działa, wie JEDEN moduł - tak samo jak wersję binarki
+    // zna wyłącznie `nativeRelease.ts`. Drugi import byłby drugim źródłem prawdy
+    // o tym, co stoi na telefonie.
+    const users = sourceFiles('.')
+      .filter((f) => importsOf(f).some((s) => s === 'expo-updates'))
+      .sort();
+    expect(users).toEqual(['infrastructure/release/otaUpdate.ts']);
+  });
+
   it('barrel infrastruktury nie wciąga modułów natywnych (testy w Node)', () => {
     const barrel = importsOf('infrastructure/index.ts');
     expect(barrel).not.toContain('./storage/expoSqliteAdapter');
     expect(barrel).not.toContain('./gps/expoLocationAdapter');
     expect(barrel).not.toContain('./sensors/expoSensorsAdapter');
     expect(barrel).not.toContain('./release/nativeRelease');
+    expect(barrel).not.toContain('./release/otaUpdate');
     // Moduły usługi GPS w tle: task (expo-task-manager), writer headless (wciąga
     // adapter SQLite) i prośba o uprawnienie powiadomień (react-native).
     expect(barrel).not.toContain('./gps/backgroundLocationTask');

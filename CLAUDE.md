@@ -2435,7 +2435,8 @@ decyzji: **`design/ZGLOSZENIA.html`**.
 - **KONTEKST ZBIERA SIĘ BEZ PYTANIA** (`bugContext.ts`, moduł czysty z testami):
   trasa nawigacji + tytuł arkusza, sygnatura i uuid operacji, samolot, zadanie, stan
   silnika i liczba lotów (z LOKALNEGO rejestru, więc też offline), pilot, wersja
-  aplikacji, system, model telefonu, motyw, wersja schematu bazy, stan łączności
+  aplikacji ORAZ wydanie JS (`updateId` - patrz sekcja o aktualizacjach OTA), system,
+  model telefonu, motyw, wersja schematu bazy, stan łączności
   z kolejką i stemplami, czas zgłoszenia i strefa telefonu. **`context` i wiersze
   pokazane pilotowi powstają z JEDNEGO wywołania** - napis „Dołączamy automatycznie"
   jest obietnicą, a lista pokazująca co innego, niż telefon wyśle, byłaby w narzędziu
@@ -2601,7 +2602,34 @@ bez `npm ci` - skrypty jadą na samej stdlib node).
   **Artefakty EAS wygasają po kilku tygodniach** (build z 2026-08-16 zwracał 404 już
   2026-09-06), więc na dłużej `--release`: APK jako GitHub Release w `tomaszklag/uz_aero`
   pod trwałym `releases/latest/download/uzaero.apk`
-- **plan wydań w tym samym pliku**: sekcja `## Plan wydań` z kamieniami milowymi
+- **AKTUALIZACJE OTA (EAS Update) od wydania 1.1.0** - `expo-updates` w aplikacji,
+  kanały `production`/`development` w `eas.json`. Odtąd „wydanie" znaczy DWIE różne
+  rzeczy, a pomylenie ich kosztuje reinstalację u wszystkich testerów:
+  - **`npm run update:prod -- -m "…"`** dowozi JS i assety do JUŻ ZAINSTALOWANYCH
+    aplikacji: ekrany, teksty, arkusze, reguły domeny, `packages/*`, a nawet zmianę
+    `EXPO_PUBLIC_API_URL` (te zmienne są wkompilowane w bundle, a `eas update` buduje
+    nowy bundle). Bez builda i bez rozsyłania APK;
+  - **`npm run build:prod`** jest konieczny przy zmianie NATYWNEJ: nowy moduł, inne
+    uprawnienia, `scheme`, pakiet. Wtedy podbija się `version` I `android.versionCode`
+    w `app/app.json` (`appVersionSource: local`, więc EAS czyta je stamtąd; „build N"
+    w changelogu to `versionCode`);
+  - **`runtimeVersion` = `fingerprint`** - Expo liczy odcisk warstwy natywnej i sam
+    odcina aktualizacje, które do niej nie pasują. Skutek do zapamiętania: dołożenie
+    modułu natywnego zmienia odcisk, więc STARE buildy przestają dostawać aktualizacje.
+    To jest poprawne - nie da się dowieźć JS-a wymagającego nieobecnego kodu natywnego -
+    ale znaczy, że trzeba wtedy rozesłać nowy APK;
+  - **`fallbackToCacheTimeout: 0` stoi JAWNIE**: start aplikacji nigdy nie czeka na
+    sieć (§4.1 - brak sieci NIGDY nie blokuje pracy pilota). Aktualizacja pobiera się
+    w tle i wchodzi przy NASTĘPNYM uruchomieniu, więc pilot bez zasięgu nie zauważy nic;
+  - **OTA potrafi zepsuć aplikację zdalnie.** Jest `eas update:rollback`, ale w narzędziu
+    używanym w locie aktualizacje wypuszcza się świadomie, nie przy każdym commicie;
+  - **wersja binarki PRZESTAŁA identyfikować działający kod**: `nativeRelease.ts` czyta
+    PAKIET, więc jedna binarka „1.1.0 (build 2)" obsługuje wiele wydań JS. Dlatego
+    zgłoszenie błędu niesie `updateId` z `infrastructure/release/otaUpdate.ts` (JEDYNY
+    import `expo-updates`, exact-list w teście architektury - ta sama reguła, co przy
+    `expo-application`). Na kartę „O aplikacji" to NIE wchodzi: identyfikator bundle'a
+    jest opisem wewnętrznej budowy aplikacji, a takie napisy issue #72 z ekranów wyrzuciło
+- **plan wydań w tym samym pliku**: sekcja `## Plan wydań` z kamieniami milowymi
   `### <wersja> · <termin>` i punktami `- [x]` (gotowe) / `- [~]` (w toku) / `- [ ]`
   (w planach). Pierwszy kamień milowy = następne wydanie: jego wersja i termin trafiają na
   tablicę stanu i do nagłówka „W przygotowaniu". Terminy są orientacyjne i podaje je
