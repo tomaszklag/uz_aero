@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero - 01 Mój dzień</title>
+<title>UZ Aero - 01E Mój dzień - pilot w dwóch klubach</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -119,6 +119,14 @@
      z ekranu 15. Neutralna ramka bez wypełnienia: fakt o POCHODZENIU całej operacji,
      nie ostrzeżenie. Przy tytule, bo mówi o operacji jako całości; wiersze osi na 10
      znaczników nie dostają (issue #40 pkt 6 zostaje w mocy). */
+  /* PLAKIETKA KLUBU (wielofirmowość, docs/wielofirmowosc.md §7) - WYŁĄCZNIE gdy pilot
+     ma więcej niż jedno członkostwo: przy jednym świeciłaby przy każdym kafelku
+     i niczego nie odróżniała (reguła SyncChipa, issue #12). Ten sam krój, co „RĘCZNIE"
+     - to fakt o PRZYNALEŻNOŚCI operacji, nie ostrzeżenie - ale stoi po PRAWEJ, w linii
+     tytułu: „RĘCZNIE" mówi o pochodzeniu i klei się do numeru, klub jest kontekstem
+     i siada na krawędzi. Sygnatura pod spodem NIE niesie klubu - kod pilota w niej
+     jest już kodem z tego klubu (TMK tu, TOM tam). */
+  .day-club { font-family:var(--font-mono); font-size:7.5px; letter-spacing:1px; text-transform:uppercase; color:var(--text-secondary); border:1px solid var(--border-strong); border-radius:5px; padding:2px 6px; white-space:nowrap; max-width:170px; overflow:hidden; text-overflow:ellipsis; }
   .day-tag { font-family:var(--font-mono); font-size:7.5px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); border:1px solid var(--border-strong); border-radius:5px; padding:2px 5px; }
   .day-ac { font-family:var(--font-mono); font-size:11px; letter-spacing:1.5px; color:var(--green); }
   /* SYGNATURA OPERACJI (issue #68) - „SP-AXA/2026-08-06/TMK/1". Zastępuje znak
@@ -216,9 +224,9 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO - 01</span>
-  <span class="slug">mój dzień · ekran domowy</span>
-  <span class="canvas-meta"><span class="pulse"></span>Ekran 1</span>
+  <span class="film-strip">UZ AERO - 01E</span>
+  <span class="slug">mój dzień · operacje z DWÓCH klubów · plakietka klubu</span>
+  <span class="canvas-meta"><span class="pulse"></span>Wariant 01</span>
 </header>
 
 <main class="phone" role="region" aria-label="Mockup - Mój dzień">
@@ -241,6 +249,7 @@
         <!-- Bez „UTC" w podtytule (uwaga użytkownika, issue #23): znacznik strefy
              niesie nagłówek karty „Log dnia · czasy UTC" - tam mówi coś o tabeli,
              w nagłówku ekranu był szumem. -->
+        <!-- Kod z AKTYWNEGO klubu (13A) - w drugim ten sam pilot ma inny. -->
         <span class="header-subtitle">TMK · 06 SIE 2026</span>
       </div>
       <div class="app-header-right">
@@ -272,6 +281,7 @@
       <a href="10-statystyki.html" class="day-card">
         <div class="day-top">
           <span class="day-title">OPERACJA 1</span>
+          <span class="day-club">Aeroklub Zielonogórski</span>
         </div>
         <div class="day-sig">SP-AXA/2026-08-06/TMK/1</div>
         <div class="day-times">08:12 → 09:05 UTC</div>
@@ -289,6 +299,7 @@
       <a href="10-statystyki.html" class="day-card">
         <div class="day-top">
           <span class="day-title">OPERACJA 2</span>
+          <span class="day-club">Aeroklub Zielonogórski</span>
         </div>
         <div class="day-sig">SP-AXA/2026-08-06/TMK/2</div>
         <div class="day-times">10:20 → 11:02 UTC</div>
@@ -310,8 +321,13 @@
             <!-- Operacja wpisana po fakcie z ekranu 15 (telefon został w hangarze). -->
             <span class="day-tag">RĘCZNIE</span>
           </span>
+          <!-- Trzecia operacja w DRUGIM klubie: numer w dobie pilota leci dalej (doba
+               pilota nie zna klubów), ale kod w sygnaturze jest kodem z Krakowa (TOM),
+               a numer w sygnaturze liczy się W TYM klubie - stąd „/1", nie „/3":
+               sygnatura jest jednoznaczna w klubie i tylko tam (§3.6). -->
+          <span class="day-club">Aeroklub Krakowski</span>
         </div>
-        <div class="day-sig">SP-KLM/2026-08-06/TMK/3</div>
+        <div class="day-sig">SP-KLM/2026-08-06/TOM/1</div>
         <div class="day-times">13:40 → 15:10 UTC</div>
         <div class="day-stats">
           <span class="stat"><span class="stat-k">Loty</span><span class="stat-v">2</span></span>
@@ -384,11 +400,18 @@
 
 <aside class="variants-panel">
   <div class="vp-title">Warianty tego ekranu - kiedy który?</div>
-  <a class="vp-item active" href="01-moj-dzien.html">
+  <a class="vp-item" href="01-moj-dzien.html">
     <span class="vp-badge">01</span>
     <span class="vp-body">
       <span class="vp-name">Dzień w toku</span>
       <span class="vp-when">Standard po pierwszej operacji: płaska oś czasu operacji doby (kafelek = jeden bieg silnika z lotami w środku, rejestracja jako informacja kafelka - bez grupowania po maszynie), sumy Blok / Loty. Kafelek jest TYM SAMYM komponentem, co na „Poprzednich dniach" (issue #42) - z numerem operacji zamiast daty, bo data stoi w nagłówku ekranu. Klamry służby i „Zamknij dzień" nie ma (issue #23) - dzień pilota to lista operacji, niczego się nie otwiera ani nie zamyka.</span>
+    </span>
+  </a>
+  <a class="vp-item active" href="01e-moj-dzien-dwa-kluby.html">
+    <span class="vp-badge">01E</span>
+    <span class="vp-body">
+      <span class="vp-name">Pilot w dwóch klubach - plakietka klubu</span>
+      <span class="vp-when">Ten sam log dnia, ale pilot ma więcej niż jedno członkostwo: każdy kafelek niesie nazwę klubu, a sygnatura kod pilota Z TEGO klubu. Lista pokazuje operacje WSZYSTKICH klubów niezależnie od tego, który jest aktywny w ustawieniach (13A - przełączenie wymaga internetu); sumy doby liczą wszystko. Przy jednym członkostwie plakietki nie ma - patrz 01.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -406,13 +429,6 @@
       <span class="vp-when">Brak sieci: w nagłówku amber pill „OFFLINE · n" (jedyny ślad sieci na ekranie), tapnięcie otwiera arkusz ze szczegółami - ostatnia udana synchronizacja, kolejka, stempel danych referencyjnych (issue #23 pkt 5).</span>
     </span>
   </a>
-  <a class="vp-item" href="01e-moj-dzien-dwa-kluby.html">
-    <span class="vp-badge">01E</span>
-    <span class="vp-body">
-      <span class="vp-name">Pilot w dwóch klubach</span>
-      <span class="vp-when">Przy więcej niż jednym członkostwie kafelek operacji dostaje plakietkę z nazwą klubu, a sygnatura kod pilota z tego klubu. Lista pokazuje operacje wszystkich klubów.</span>
-    </span>
-  </a>
 </aside>
 
 <nav class="nav-strip">
@@ -420,10 +436,11 @@
   <span>·</span>
   <a href="00-login.html">← 00 Login</a>
   <span>·</span>
-  <a href="01-moj-dzien.html" class="active">01 Mój dzień</a>
+  <a href="01-moj-dzien.html">01 Mój dzień</a>
   <a href="01a-moj-dzien-pusty.html">01A Zero operacji</a>
   <a href="01c-moj-dzien-offline.html">01C Offline</a>
-  <a href="01e-moj-dzien-dwa-kluby.html">01E Dwa kluby</a>
+  <a href="01e-moj-dzien-dwa-kluby.html" class="active">01E Dwa kluby</a>
+  <a href="13a-ustawienia-klub.html">13A Klub</a>
   <span>·</span>
   <a href="12-historia.html">12 Poprzednie dni</a>
   <span>·</span>

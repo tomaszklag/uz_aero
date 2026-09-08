@@ -2621,6 +2621,117 @@ body {
   color: var(--border-strong);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   WIELOFIRMOWOŚĆ (2.0.0, docs/wielofirmowosc.md) - komponenty dołożone przy
+   epiku A. Kolejność: najpierw tu, potem `admin/src/styles/` z TYMI SAMYMI nazwami.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ══ KONTEKST KLUBU W PASKU GÓRNYM ══
+   Stoi ZARAZ ZA znakiem i mówi, W KTÓRYM klubie jest ta sesja panelu - bo od 2.0.0
+   jedno konto Google bywa administratorem w dwóch klubach, a ekran „Dziennik" bez
+   nazwy klubu wyglądałby w obu identycznie. Jest linkiem: prowadzi na wybór klubu
+   (nowa sesja, bez ponownego logowania). Przy JEDNYM członkostwie też stoi - nazwa
+   klubu nie jest stanem domyślnym, którego nie warto pokazywać; jest odpowiedzią na
+   pytanie „czyj to dziennik", które pada przy każdym wklejonym linku. Nie ma go
+   wyłącznie w ramie superadministratora (moduł Organizacje nie jest w żadnym klubie). */
+.topbar-org {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 6px;
+  padding: 5px 10px 5px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  text-decoration: none;
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  font-weight: 600;
+  max-width: 280px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topbar-org:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-hover);
+}
+
+.topbar-org svg {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+/* Etykieta ramy superadministratora w pasku bez klubu - mono i przygaszona, jak
+   `.who-name`: to informacja o ramie, nie o treści. */
+.topbar-scope {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-left: 6px;
+}
+
+/* ══ LINKBOX - adres do skopiowania ══
+   Wynik wygenerowania linku osobistego: adres w jednej linii mono (ucięty
+   wielokropkiem) i przycisk „Kopiuj" obok. Zielona ramka mówi „to jest gotowe" -
+   jedyny moment, w którym panel pokazuje sekret w całości. Po zamknięciu szuflady
+   link widać już tylko jako WIERSZ w karcie ZAPROSZENIA, bez adresu: serwer trzyma
+   hash, więc adresu nie da się pokazać drugi raz. To nie jest przeoczenie - link
+   zgubiony unieważnia się i generuje nowy. */
+.linkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 10px 10px 13px;
+  border-radius: 10px;
+  border: 1px solid var(--green-border);
+  background: var(--green-muted);
+}
+
+.linkbox-val {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.linkbox .btn {
+  flex-shrink: 0;
+}
+
+/* ══ KOD KLUBU - do przeczytania przez telefon ══
+   Duży, mono, z odstępem: administrator dyktuje go pilotowi, który wpisuje go na
+   00E z klawiatury. Osiem znaków bez 0/O/1/I, myślnik w środku dzieli na dwie
+   czwórki - tak się czyta liczby przez radio. */
+.club-code {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 5px;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.club-code-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-raised);
+}
+
 /* ══ OKNO PRZEGLĄDARKI - desktopowy odpowiednik `.phone` ══
    `transform: scale()` robi tu DWIE rzeczy naraz i druga jest niewidoczna, dopóki
    się nie zepsuje: skaluje makietę do okna ORAZ czyni `.browser` blokiem

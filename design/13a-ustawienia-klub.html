@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero - 13 Ustawienia</title>
+<title>UZ Aero - 13A Ustawienia - przełącznik klubu</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -58,6 +58,35 @@
   .form-section-title::before { content:''; width:3px; height:10px; border-radius:2px; background:var(--border-strong); }
   .section-note { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.8px; color:var(--text-muted); line-height:1.6; }
   .section-note b { color:var(--green); font-weight:700; }
+
+  /* ── KLUB - lista kart, WYŁĄCZNIE przy więcej niż jednym członkostwie ──
+     (wielofirmowość, docs/wielofirmowosc.md §7). Karta = nazwa klubu + kod pilota
+     W TYM klubie (ten sam człowiek ma w dwóch klubach dwa kody). Wybrana zielona,
+     obie widoczne naraz - jak każdy wybór w tej aplikacji (nigdy select, nigdy
+     suwak). Przełączenie WYMAGA INTERNETU i pustej kolejki wysyłki (decyzja
+     właściciela 2026-09-08: offline-first dotyczy pracy w klubie, nie zmiany klubu)
+     - serwer wydaje nową parę tokenów dla wybranego klubu, jak przy logowaniu.
+     Bez sieci albo z zaległościami karty są zablokowane Z POWODEM pod listą
+     (kategoria 3 z sekcji Offline-first: nigdy cichy błąd) - patrz `.club-blocked`. */
+  .club-list { display:flex; flex-direction:column; gap:8px; }
+  .club-opt {
+    display:flex; align-items:center; gap:12px; width:100%;
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:11px 13px; cursor:pointer; min-height:56px; text-align:left;
+    color:var(--text-primary); font-family:var(--font-body);
+  }
+  .club-opt:hover { background:var(--surface-hover); }
+  .club-opt.selected { border:1.5px solid var(--green-border); background:var(--green-muted); }
+  .club-body { flex:1; display:flex; flex-direction:column; gap:3px; min-width:0; }
+  .club-name { font-size:13.5px; font-weight:600; color:var(--text-primary); }
+  .club-sub { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .club-check { width:20px; height:20px; border-radius:50%; border:1.5px solid var(--border-strong); flex-shrink:0; display:flex; align-items:center; justify-content:center; color:transparent; }
+  .club-opt.selected .club-check { background:var(--green); border-color:var(--green); color:#0D0D0D; }
+  /* Stan zablokowany (offline albo niepusta kolejka): karty przygaszone, a POWÓD
+     jednym zdaniem pod listą - wzorzec .outbox-guard z sekcji Konto. Nie pokazany
+     w ramce (ta jest online), opisany tu, żeby kod nie musiał zgadywać. */
+  .club-list.blocked .club-opt { opacity:0.45; pointer-events:none; }
+  .club-blocked { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.8px; color:var(--amber); line-height:1.6; }
 
   /* ── MOTYW - przełącznik jasności: dwie pozycje obok siebie (issue #72) ── */
   /* Obie odpowiedzi widoczne naraz, jak wszędzie w tej aplikacji (nigdy select,     */
@@ -165,18 +194,19 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO - 13</span>
-  <span class="slug">ustawienia · motyw · sync · gps · pin · konto</span>
-  <span class="canvas-meta"><span class="pulse"></span>Ekran 13</span>
+  <span class="film-strip">UZ AERO - 13A</span>
+  <span class="slug">ustawienia · pilot w DWÓCH klubach · przełącznik</span>
+  <span class="canvas-meta"><span class="pulse"></span>Wariant 13</span>
 </header>
 
 <main class="phone" role="region" aria-label="Mockup - Ustawienia">
   <div class="status-bar">
     <span>12:47</span>
     <span class="status-right">
-      <!-- sieć padła - wifi przekreślone; GPS ma się świetnie (sekcja Diagnostyka) -->
-      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5" opacity="0.4"/><rect x="10" y="2" width="3" height="10" rx="0.5" opacity="0.4"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
-      <svg class="wifi-off" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+      <!-- ONLINE (inaczej niż na 13): przełącznik klubu wymaga sieci, więc ramka
+           pokazuje stan, w którym działa. Wariant offline opisuje komentarz przy .club-blocked. -->
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
       <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="16" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
     </span>
   </div>
@@ -188,13 +218,44 @@
         Mój dzień
       </a>
       <span class="screen-title">USTAWIENIA</span>
-      <div class="offline-chip" title="Brak sieci - 3 zapisy czekają na wysyłkę; wyślą się same po powrocie zasięgu. Ustawienia działają w pełni offline.">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
-        Offline · 3
-      </div>
+      <!-- Online: SyncChip nie rysuje NIC (issue #12). -->
+      <span></span>
     </div>
 
     <div class="scroll">
+
+      <!-- ══ KLUB - tylko przy >1 członkostwie (decyzja właściciela, 2026-09-08) ══
+           Sekcja stoi PIERWSZA, bo zmienia to, co pokazuje cała aplikacja (flota na 02,
+           przekazania, normy), a nie jeden wiersz ustawień. Przy jednym członkostwie
+           sekcji NIE MA - patrz 13: przełącznik o jednej pozycji niczego by nie
+           przełączał. Z kokpitu tu nie ma wejścia (kokpit jest modalny), więc
+           przełączenie z maszyną w ręce jest niewyrażalne - operacja należy do klubu,
+           w którym ją zaczęto. „Mój dzień" pokazuje operacje OBU klubów niezależnie
+           od wyboru (01E).
+           WYMAGA INTERNETU I PUSTEJ KOLEJKI (jak wylogowanie): tapnięcie karty
+           pobiera nowe tokeny dla klubu. Offline: <div class="club-list blocked">
+           + <div class="club-blocked">Zmiana klubu wymaga internetu</div>; przy
+           zaległościach: „Najpierw wyślij 3 zapisy - należą do klubu, w którym
+           powstały". Bez sieci pilot pracuje dalej w klubie, w którym jest. -->
+      <div class="form-section">
+        <div class="form-section-title">Klub</div>
+        <div class="club-list">
+          <button class="club-opt selected" onclick="pickClub(this)">
+            <span class="club-body">
+              <span class="club-name">Aeroklub Zielonogórski</span>
+              <span class="club-sub">Twój kod: TMK · 4 samoloty</span>
+            </span>
+            <span class="club-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          </button>
+          <button class="club-opt" onclick="pickClub(this)">
+            <span class="club-body">
+              <span class="club-name">Aeroklub Krakowski</span>
+              <span class="club-sub">Twój kod: TOM · 2 samoloty</span>
+            </span>
+            <span class="club-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          </button>
+        </div>
+      </div>
 
       <!-- ══ MOTYW ══ -->
       <div class="form-section">
@@ -228,7 +289,7 @@
         <div>
           <div class="diag-row">
             <span class="diag-key">Kolejka wysyłki</span>
-            <span class="diag-val amber">3 zdarzenia czekają</span>
+            <span class="diag-val">pusta</span>
           </div>
           <!-- JEDEN STEMPEL ZAMIAST DWÓCH (issue #82): „czemu mam dwa czasy, które się
                różnią, czyli «ostatnia wysyłka» i «data synchronizacji»? To nie powinno
@@ -341,25 +402,21 @@
           <div class="avatar">TM</div>
           <div class="profile-text">
             <span class="profile-name">Tomasz Małkiewicz</span>
-            <span class="profile-sub">TMK · tomasz@uzaero.pl</span>
+            <!-- Kod pilota z AKTYWNEGO klubu - w drugim ten sam człowiek ma inny. -->
+            <span class="profile-sub">TMK · Aeroklub Zielonogórski · tomasz@uzaero.pl</span>
           </div>
         </div>
 
-        <!-- Wylogowanie zablokowane: niepusty outbox (3.0) - disabled Z POWODEM, nigdy cichy błąd -->
-        <button class="action-item disabled" title="Zablokowane: 3 zapisy z dzisiejszej operacji nie dotarły jeszcze na serwer" aria-disabled="true">
+        <!-- Online, pusta kolejka: wylogowanie odblokowane (stan zablokowany - patrz 13). -->
+        <button class="action-item">
           <span class="action-icon">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           </span>
           <span class="action-body">
             <span class="action-name">Wyloguj i zmień konto</span>
-            <span class="action-sub">niedostępne - 3 zapisy czekają na wysyłkę</span>
           </span>
+          <svg class="action-chevron" width="14" height="14" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5L7 5l-3.5 3.5"/></svg>
         </button>
-
-        <div class="outbox-guard">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <span><b>3 zapisy z dzisiejszej sesji</b> nie dotarły jeszcze na serwer - wylogowanie by je skasowało. Wróć do zasięgu: wyślą się same i przycisk się odblokuje.</span>
-        </div>
         <div class="section-note">Ponowne logowanie <b style="color:var(--amber)">wymaga internetu</b> - konta zakłada administrator.</div>
       </div>
 
@@ -402,20 +459,20 @@
 
 <aside class="variants-panel">
   <div class="vp-title">Dokąd stąd?</div>
-  <a class="vp-item active" href="13-ustawienia.html">
+  <a class="vp-item" href="13-ustawienia.html">
     <span class="vp-badge">13</span>
     <span class="vp-body">
-      <span class="vp-name">Ustawienia</span>
-      <span class="vp-when">Wejście zębatką z „Mój dzień" (01) - JEDYNE w całej aplikacji od issue #82; kokpit ma w tym miejscu przełącznik jasności. Wszystko tu działa offline - jedyna akcja wymagająca sieci (wylogowanie → ponowny login) jest disabled z podanym powodem, a przy niepustej kolejce wysyłki chroni ją amber-box (wzorzec z 00).</span>
+      <span class="vp-name">Ustawienia - jeden klub</span>
+      <span class="vp-when">Wejście zębatką z „Mój dzień" (01) - JEDYNE w całej aplikacji od issue #82; kokpit ma w tym miejscu przełącznik jasności. Standard: pilot z JEDNYM członkostwem - sekcji „Klub" nie ma wcale.</span>
+    </span>
+  </a>
+  <a class="vp-item active" href="13a-ustawienia-klub.html">
+    <span class="vp-badge">13A</span>
+    <span class="vp-body">
+      <span class="vp-name">Ustawienia - przełącznik klubu</span>
+      <span class="vp-when">Pilot z więcej niż jednym członkostwem: pierwsza sekcja to lista klubów z kodem pilota w każdym. Przełączenie wymaga internetu i pustej kolejki wysyłki (offline: karty zablokowane z powodem) i zmienia flotę na 02; „Mój dzień" i tak pokazuje operacje wszystkich klubów (01E).</span>
     </span>
     <span class="vp-tag">ten ekran</span>
-  </a>
-  <a class="vp-item" href="13a-ustawienia-klub.html">
-    <span class="vp-badge amber">13A</span>
-    <span class="vp-body">
-      <span class="vp-name">Przełącznik klubu</span>
-      <span class="vp-when">Pilot z więcej niż jednym członkostwem dostaje na górze sekcję „Klub" (lista kart z kodem pilota w każdym; przełączenie wymaga internetu i pustej kolejki). Przy jednym klubie - jak tu - sekcji nie ma.</span>
-    </span>
   </a>
   <a class="vp-item" href="01-moj-dzien.html">
     <span class="vp-badge">01</span>
@@ -432,11 +489,16 @@
   <a href="01-moj-dzien.html">← 01 Mój dzień</a>
   <a href="04-cockpit-ground.html">04 Kokpit ground</a>
   <a href="05-cockpit-running.html">05 Kokpit lot</a>
-  <a href="13-ustawienia.html" class="active">13 Ustawienia</a>
-  <a href="13a-ustawienia-klub.html">13A Klub</a>
+  <a href="13-ustawienia.html">13 Ustawienia</a>
+  <a href="13a-ustawienia-klub.html" class="active">13A Klub</a>
+  <a href="01e-moj-dzien-dwa-kluby.html">01E Dwa kluby</a>
 </nav>
 
 <script>
+  function pickClub(el) {
+    document.querySelectorAll(".club-opt").forEach(b => b.classList.remove("selected"));
+    el.classList.add("selected");
+  }
   // ── Motyw: dwie pozycje, zaznaczenie = zielona obramówka (issue #72) ──
   function pickTheme(t) {
     ['night','solar'].forEach(k =>

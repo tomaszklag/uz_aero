@@ -438,8 +438,16 @@
     <div class="card-num">00D</div>
     <div class="card-body">
       <div class="card-title">00d-odrzucone</div>
-      <div class="card-desc">Zgłoszenie odrzucone przez administratora - powód zacytowany na ekranie (dlatego w panelu jest wymagany). Jedyne wyjście: inne konto</div>
+      <div class="card-desc">Zgłoszenie do klubu odrzucone przez jego administratora - powód zacytowany na ekranie (dlatego w panelu jest wymagany). Dwa wyjścia: inny kod klubu (00E) albo inne konto</div>
       <div class="card-tags"><span class="tag">rejestracja</span><span class="tag">stan</span></div>
+    </div>
+  </a>
+  <a href="00e-bez-klubu.html" class="card amber">
+    <div class="card-num">00E</div>
+    <div class="card-body">
+      <div class="card-title">00e-bez-klubu</div>
+      <div class="card-desc">Konto Google potwierdzone, ale osoba nie należy do żadnego klubu: jedno pole na kod klubu (krótki, do wpisania) albo wklejony link z zaproszenia (długi, jednorazowy - dołącza od razu). Kod daje zgłoszenie (00C). Druga ramka: nieznany kod, błąd przy polu. Wielofirmowość 2.0.0</div>
+      <div class="card-tags"><span class="tag amber">rejestracja</span><span class="tag">stan</span><span class="tag">kluby</span></div>
     </div>
   </a>
   <a href="01a-moj-dzien-pusty.html" class="card">
@@ -464,6 +472,14 @@
       <div class="card-title">01d-sync-stoi</div>
       <div class="card-desc">Kolejka stoi, choć sieć JEST - serwer odpowiedział i odmówił (albo sesja wygasła). Czerwony pill „SYNC STOI · n" zamiast bursztynowego OFFLINE, bo ten stan sam nie przejdzie: baner nazywa powód i daje drogę wyjścia. Do 2026-08-30 wyświetlał się jako offline z obietnicą „wyślą się same, gdy wróci sieć"</div>
       <div class="card-tags"><span class="tag red">sync stoi</span><span class="tag">arkusz syncu</span></div>
+    </div>
+  </a>
+  <a href="01e-moj-dzien-dwa-kluby.html" class="card">
+    <div class="card-num">01E</div>
+    <div class="card-body">
+      <div class="card-title">01e-moj-dzien-dwa-kluby</div>
+      <div class="card-desc">Pilot z więcej niż jednym członkostwem: kafelek operacji niesie plakietkę z nazwą klubu, a sygnatura kod pilota z TEGO klubu (TMK w jednym, TOM w drugim). Lista pokazuje operacje wszystkich klubów niezależnie od klubu aktywnego w ustawieniach; przy jednym członkostwie plakietki nie ma. Wielofirmowość 2.0.0</div>
+      <div class="card-tags"><span class="tag">kluby</span><span class="tag">stan</span></div>
     </div>
   </a>
   <a href="02d-preflight-offline.html" class="card amber">
@@ -830,8 +846,16 @@
     <div class="card-num">13</div>
     <div class="card-body">
       <div class="card-title">13-ustawienia</div>
-      <div class="card-desc">Ustawienia (zębatka w app-barze kokpitu) - motyw (przełącznik ciemny/jasny), zmiana PIN offline, konto z ochroną wylogowania przy niewysłanych zapisach, status synchronizacji (wejście do 11), diagnostyka GPS, o aplikacji ze stemplem danych referencyjnych</div>
+      <div class="card-desc">Ustawienia (zębatka na „Mój dzień" - jedyne wejście od issue #82) - motyw (przełącznik ciemny/jasny), synchronizacja z jednym stemplem, diagnostyka GPS, o aplikacji, na końcu PIN i konto z ochroną wylogowania przy niewysłanych zapisach</div>
       <div class="card-tags"><span class="tag">ustawienia</span><span class="tag green">offline OK</span><span class="tag amber">ochrona wylogowania</span></div>
+    </div>
+  </a>
+  <a href="13a-ustawienia-klub.html" class="card">
+    <div class="card-num">13A</div>
+    <div class="card-body">
+      <div class="card-title">13a-ustawienia-klub</div>
+      <div class="card-desc">Ustawienia pilota z więcej niż jednym członkostwem: pierwsza sekcja „Klub" to lista kart z kodem pilota w każdym klubie. Przełączenie działa offline i zmienia flotę na 02; przy jednym klubie sekcji nie ma. Wielofirmowość 2.0.0</div>
+      <div class="card-tags"><span class="tag">ustawienia</span><span class="tag">kluby</span><span class="tag green">offline OK</span></div>
     </div>
   </a>
 </div>

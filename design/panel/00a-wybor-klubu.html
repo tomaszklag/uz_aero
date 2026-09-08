@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UZ Aero - Panel 2.0 · Wybór klubu po zalogowaniu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="panel.css">
+</head>
+
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">WYBÓR KLUBU</span>
+  <span class="slug">panel/00a-wybor-klubu · #/klub · po zalogowaniu</span>
+  <span class="canvas-meta"><span class="pulse"></span>Wielofirmowość 2.0.0 · epik A</span>
+</header>
+
+<aside class="variants-panel">
+  <div class="vp-title">Kiedy ten ekran się pokazuje</div>
+  <a class="vp-item active" href="00a-wybor-klubu.html">
+    <span class="vp-badge">00A</span>
+    <span class="vp-body">
+      <span class="vp-name">Administrator w więcej niż jednym klubie</span>
+      <span class="vp-when">Konto Google potwierdzone, a osoba ma członkostwo <b>admin</b> w kilku klubach. Sesja panelu pracuje w JEDNYM klubie (adres <code>#/dziennik</code> ma znaczyć to samo przez całą sesję), więc trzeba wybrać. Przy jednym członkostwie admin ekranu NIE MA - panel wchodzi od razu do dziennika.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="#superadmin">
+    <span class="vp-badge amber">00A′</span>
+    <span class="vp-body">
+      <span class="vp-name">Superadministrator z członkostwami</span>
+      <span class="vp-when">Superadministrator BEZ członkostw wchodzi wprost do modułu Organizacje. Gdy jest też administratorem klubu (operator, który pomaga klubowi), „Organizacje" stoi na tej liście jako pierwsza karta - druga ramka niżej.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="00-logowanie.html">
+    <span class="vp-badge">00</span>
+    <span class="vp-body">
+      <span class="vp-name">Logowanie - krok wcześniej</span>
+      <span class="vp-when">Ten sam ekran przed ramą, ten sam znak i ta sama karta - wybór klubu jest drugim krokiem logowania, nie osobnym miejscem.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="dziennik-flota.html">
+    <span class="vp-badge">L1</span>
+    <span class="vp-body">
+      <span class="vp-name">Po wyborze: DZIENNIK wybranego klubu</span>
+      <span class="vp-when">Nazwa klubu stoi odtąd w pasku górnym za znakiem (<code>.topbar-org</code>) i jest linkiem z powrotem tutaj - „Zmień klub" to nowa sesja bez ponownego logowania.</span>
+    </span>
+  </a>
+</aside>
+
+<!-- ══ EKRAN PRZED RAMĄ (jak 00-logowanie) ══
+     Bez paska górnego: klub nie jest jeszcze wybrany, więc nie ma czego w nim napisać.
+     Wybór to LISTA KART (`.opt-list`) - jak każdy wybór w tym produkcie: opcje widać
+     bez klikania, druga linia niesie SKUTEK (kod pilota w tym klubie, rola). Bez
+     przycisku „Dalej": karta jest akcją, bo wybór z dwóch nie potrzebuje potwierdzenia. -->
+<main class="browser" role="region" aria-label="Panel UZ Aero - wybór klubu">
+
+  <div class="chrome">
+    <span class="chrome-dots"><i></i><i></i><i></i></span>
+    <span class="chrome-url">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <b>panel.uzaero.pl</b>/#/klub
+    </span>
+  </div>
+
+  <div class="shell">
+    <div class="login">
+
+      <div class="login-mark">
+        <span class="login-badge">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+        </span>
+        <span class="login-title">UZ AERO</span>
+        <span class="login-note">Panel administracyjny · Tomasz Małkiewicz</span>
+      </div>
+
+      <div class="login-card">
+        <div class="field">
+          <span class="label">W którym klubie pracujesz?</span>
+        </div>
+        <div class="opt-list" role="listbox" aria-label="Wybierz klub">
+          <a class="opt" role="option" href="dziennik-flota.html">
+            <span class="opt-body">
+              <span class="opt-name">Aeroklub Zielonogórski</span>
+              <span class="opt-desc">administrator · Twój kod TMK</span>
+            </span>
+            <span class="opt-go" aria-hidden="true">›</span>
+          </a>
+          <a class="opt" role="option" href="dziennik-flota.html">
+            <span class="opt-body">
+              <span class="opt-name">Aeroklub Krakowski</span>
+              <span class="opt-desc">administrator · Twój kod TOM</span>
+            </span>
+            <span class="opt-go" aria-hidden="true">›</span>
+          </a>
+        </div>
+        <!-- Klub, w którym osoba jest tylko PILOTEM, na listę NIE wchodzi: panel jest
+             dla administratora, a karta „bez dostępu" obiecywałaby wejście, którego
+             reguły odmówią (zasada z 10B). O takim klubie mówi aplikacja, nie panel. -->
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="00-logowanie.html">← Logowanie</a>
+  <span>·</span>
+  <a href="00a-wybor-klubu.html" class="active">00A Wybór klubu</a>
+  <span>·</span>
+  <a href="dziennik-flota.html">Dziennik · flota →</a>
+  <span>·</span>
+  <a href="organizacje-lista.html">Organizacje</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+<!-- ══ DRUGA RAMKA: SUPERADMINISTRATOR, KTÓRY JEST TEŻ ADMINISTRATOREM KLUBU ══
+     „Organizacje" jako pierwsza karta - to nie jest klub, więc druga linia mówi
+     o ZAKRESIE (cały serwer), a nie o kodzie pilota. Kolor bursztynowy w opisie
+     nie jest ostrzeżeniem, tylko tym samym tonem, którym pasek superadministratora
+     (`.topbar-scope`) mówi „to jest rama poza klubem". -->
+<header class="canvas-label" id="superadmin">
+  <span class="film-strip">WYBÓR KLUBU · 00A′</span>
+  <span class="slug">superadministrator z członkostwem admin w jednym klubie</span>
+  <span class="canvas-meta">Organizacje pierwsze na liście</span>
+</header>
+
+<main class="browser" role="region" aria-label="Panel UZ Aero - wybór klubu superadministratora">
+
+  <div class="chrome">
+    <span class="chrome-dots"><i></i><i></i><i></i></span>
+    <span class="chrome-url">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <b>panel.uzaero.pl</b>/#/klub
+    </span>
+  </div>
+
+  <div class="shell">
+    <div class="login">
+
+      <div class="login-mark">
+        <span class="login-badge">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+        </span>
+        <span class="login-title">UZ AERO</span>
+        <span class="login-note">Panel administracyjny · Tomasz Klag</span>
+      </div>
+
+      <div class="login-card">
+        <div class="field">
+          <span class="label">Gdzie wchodzisz?</span>
+        </div>
+        <div class="opt-list" role="listbox" aria-label="Wybierz zakres">
+          <a class="opt" role="option" href="organizacje-lista.html">
+            <span class="opt-body">
+              <span class="opt-name">Organizacje</span>
+              <span class="opt-desc">superadministrator · wszystkie kluby na serwerze</span>
+            </span>
+            <span class="opt-go" aria-hidden="true">›</span>
+          </a>
+          <a class="opt" role="option" href="dziennik-flota.html">
+            <span class="opt-body">
+              <span class="opt-name">Aeroklub Zielonogórski</span>
+              <span class="opt-desc">administrator · Twój kod TKL</span>
+            </span>
+            <span class="opt-go" aria-hidden="true">›</span>
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="00a-wybor-klubu.html" class="active">00A Wybór klubu</a>
+  <span>·</span>
+  <a href="organizacje-lista.html">Organizacje →</a>
+</nav>
+
+</body>
+</html>

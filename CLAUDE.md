@@ -2554,6 +2554,69 @@ model danych, ryzyka i etapy: **`docs/logowanie-google.md`**.
   zatwierdzać" zostawiała człowieka w kolejce na zawsze. Nowy `LoginSurface` w portach;
   atrapa testowa ignoruje powierzchnię celowo (rozdział testuje prawdziwy weryfikator)
 
+## Wielofirmowość 2.0.0 - epik A: decyzje i makiety (issue #97, 2026-09-08, gałąź `feature-97-wielofirmowosc-projekt`)
+Jeden serwer dla wielu klubów, superadministrator zakłada kluby, **nic nie wycieka między
+klubami**. Dokument decyzji: **`docs/wielofirmowosc.md`** (model danych, przepływy, migracja
+z backfillem, ryzyka, etapy A–F ↔ issue #97–#102). Epik A wyprzedza kod: reguła
+design-first obowiązuje tu tak samo w aplikacji, jak w panelu.
+- **decyzje właściciela (2026-09-08), nie wracać do nich w dyskusji**: klub = `organizations`
+  (tenant) z `org_id` denormalizowanym na tabelach zależnych; pilot = OSOBA globalna,
+  a **kod pilota i rola żyją na CZŁONKOSTWIE** (`memberships` - `pilots.code` i
+  `pilots.role` znikają); superadmin = `pilots.platform_role` bez klubu; telefon
+  w kontekście JEDNEGO aktywnego klubu (przełącznik w 13 tylko przy >1 członkostwie,
+  „Mój dzień" pokazuje WSZYSTKIE operacje); produkcja = **migracja z backfillem**
+  (od 1.0.0 trwają testy w jednym klubie); trzy drogi dołączenia: e-mail od admina /
+  **link osobisty jednorazowy = członkostwo OD RAZU** / wielorazowy kod klubu →
+  `pending` + zatwierdzenie; bez wysyłki e-maili w 2.0.0; pakiet Android
+  `com.ninerdeck.app`
+- **ROZSTRZYGNIĘTE 2026-09-08: klub jest W TOKENIE** (`sub`, `org`, `code`, `role`;
+  `refresh_tokens.org_id`), a **przełączenie klubu i przyjęcie zaproszenia WYMAGAJĄ
+  SIECI** - offline-first dotyczy pracy w klubie, nie zmiany klubu. Przełączenie =
+  `POST /auth/switch` (nowa para tokenów) + PUSTA kolejka wysyłki, jak wylogowanie;
+  na 13A offline/zaległości = karty zablokowane z powodem. Propozycja nagłówka `X-Org`
+  (przełączanie offline) ODRZUCONA - nie proponować ponownie
+- **propozycje dokumentu DO POTWIERDZENIA przed epikami B–F** (§13 dokumentu): superadmin
+  NIE wchodzi do danych klubu; token odczytu kart arkusza; termin 14 dni linku
+  i kształt kodu klubu (`AZG-7K4M`); migracja 9 (`DROP` `pilots.code/role`) osobno od 8
+- **bramką jest BRAK CZŁONKOSTWA** - ta sama zasada, co „brak konta" z logowania Google,
+  piętro wyżej: osoba bez klubu ma wiersz w `pilots`, ale żadna trasa klubowa jej nie
+  wpuszcza. Statusy `pending`/`rejected` przenoszą się z `external_identities` na
+  `memberships.status`, bo dotyczą KLUBU, nie tożsamości
+- **makiety telefonu**: NOWE `00e-bez-klubu` (kod klubu albo wklejony link w JEDNYM polu;
+  druga ramka: nieznany kod - błąd przy polu), `01e-moj-dzien-dwa-kluby` (plakietka
+  klubu na kafelku TYLKO przy >1 członkostwie; sygnatura niesie kod z TEGO klubu),
+  `13a-ustawienia-klub` (sekcja „Klub" jako pierwsza, lista kart z kodem w każdym
+  klubie; ramka ONLINE, bo przełączenie wymaga sieci); ZMIENIONE `00c`/`00d` (klub nazwany w zdaniu; 00D ma drugie
+  wyjście „DOŁĄCZ INNYM KODEM" → 00E). Wpisy w `index.html` i panelach wariantów
+  całej rodziny 00/01/13
+- **makiety panelu** (`design/panel/`): NOWE `00a-wybor-klubu` (drugi krok logowania przy
+  >1 członkostwie admin; superadmin widzi „Organizacje" jako pierwszą kartę),
+  `organizacje-lista` + `organizacje-klub` (rama superadministratora: JEDNA zakładka,
+  `.topbar-scope` zamiast kontekstu klubu; nowy klub = nazwa + stały slug + pierwszy
+  administrator jako zaproszenie e-mail z kodem nadanym z góry), `piloci-zaproszenie`
+  (JEDNA akcja główna „Zaproś do klubu" z trzema kartami; link widoczny RAZ w
+  `.linkbox`); ZMIENIONE `piloci-lista` (karty ZGŁOSZENIA KODEM KLUBU i ZAPROSZENIA
+  nad listą, obie znikają puste; „Dodaj pilota" USUNIĘTE - było drogą e-mail w innym
+  ubraniu), `piloci-zgloszenie` („Zatwierdź i przyjmij do klubu"), `piloci-konto`
+  (szuflada CZŁONKOSTWA: osoba do odczytu, kod i rola w tym klubie, „Wyłącz
+  członkostwo" - inne kluby osoby bez zmian; bez `#/piloci/nowy`, nowy członek =
+  zaproszenie P4). **`.topbar-org`
+  (kontekst klubu za znakiem) stoi w KAŻDEJ ramie klubowej**, także przy jednym
+  członkostwie - nazwa klubu odpowiada na „czyj to dziennik" przy każdym wklejonym
+  linku. Komponenty (`.topbar-org`, `.topbar-scope`, `.linkbox`, `.club-code`)
+  dopisane do `panel.css` i inwentarza `SZABLON.html` - stamtąd idą do
+  `admin/src/styles/` pod tymi samymi nazwami
+- **strona `site/src/dolacz/index.html`**: dwa przyciski („Otwórz w aplikacji" →
+  `ninerdeck://dolacz/<token>`, „Pobierz"), ZERO wywołań serwera, token z adresu
+  wyłącznie do schematu; `noindex` + `no-referrer`, bo adres jest sekretem. Wymaga
+  JEDNEJ trasy `GET /dolacz/*` → ten plik w `staticSite.ts` (epik F) - świadomy
+  wyjątek od „bez fallbacku SPA", zawężony do prefiksu, bo App Links dopasowują ŚCIEŻKĘ.
+  Do czasu trasy działa `?t=<token>`. Schemat `ninerdeck` wchodzi do `app.json`
+  razem z pakietem (epik R) - zmiana natywna, nowy APK
+- **podręcznik**: rozdział `docs/podrecznik/kluby-i-zaproszenia.md` (szkic - opisuje
+  stan PO wdrożeniu epików B–F; przy każdym epiku sprawdzić stronę), osadza nowe makiety
+  przez `@screen` i `@panel`
+
 ## Obieg gałęzi (git-flow od 2026-09-08, milestone „Wielofirmowość + SaaS 2.0.0")
 ```
 feature-… → develop → ninerdeck_x_x_x → main        (wydanie planowe)
