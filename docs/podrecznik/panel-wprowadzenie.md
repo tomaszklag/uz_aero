@@ -20,7 +20,7 @@ Sesja panelu trwa osiem godzin od zalogowania; potem panel prosi o ponowne logow
 
 ## Moduły
 
-Nawigacja to jeden pasek u góry z czterema zakładkami. Ekranem startowym jest Dziennik: konta i flotę zakłada się raz na sezon, dziennik ogląda się co tydzień.
+Nawigacja to kolumna po lewej z czterema pozycjami; nad nimi stoi nazwa klubu, a pasek u góry niesie tylko znak i zalogowanego. Ekranem startowym jest Dziennik: konta i flotę zakłada się raz na sezon, dziennik ogląda się co tydzień.
 
 | Moduł | Do czego |
 |---|---|

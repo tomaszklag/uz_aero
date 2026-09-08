@@ -113,7 +113,7 @@ export function FleetScreen() {
   return (
     <>
       <PageHead
-        title="SAMOLOTY"
+        title="Samoloty"
         actions={
           manages ? (
             <LinkButton to="/samoloty/nowy" variant="primary">

@@ -11,11 +11,13 @@
 > **CZYTAJ RAZEM Z `panel-2.0.md` (2026-08-30).** Szkielet opisany niżej obowiązuje
 > dalej w całości - warstwy, kierunki zależności, jedne drzwi do sieci, własne DTO,
 > TanStack Query bez globalnego store'u, testy granic. Zmieniło się natomiast to, co
-> z tego szkieletu ZBUDOWANO: panel został przepisany do dwóch modułów (piloci, flota),
-> z paskiem górnym zamiast kolumny bocznej, bez banerów wyjaśniających i bez makiet
-> HTML jako specyfikacji. Gdzie ten dokument mówi co innego niż `panel-2.0.md` -
-> rozstrzyga `panel-2.0.md`; dotyczy to §3 (mapowanie z mockupów), §7 (kolumna boczna,
-> pozycje wyszarzone) i §10 (kolejność wdrażania jedenastu ekranów).
+> z tego szkieletu ZBUDOWANO: panel został przepisany do czterech modułów (dziennik,
+> piloci, flota, zgłoszenia), bez banerów wyjaśniających. Makiety HTML wróciły jako
+> specyfikacja 2026-09-07 (`design/panel/`, `panel-2.0.md` §3.7), a kolumna boczna
+> wróciła w stylu lekkim 2026-09-08 (issue #107, `panel-2.0.md` §3.8) - jako płaska
+> lista z ikonami, nie jedenaście pozycji w grupach. Gdzie ten dokument mówi co innego
+> niż `panel-2.0.md` - rozstrzyga `panel-2.0.md`; dotyczy to §3 (mapowanie z mockupów
+> panelu 1.0), §7 (pozycje wyszarzone) i §10 (kolejność wdrażania jedenastu ekranów).
 
 ---
 
@@ -202,6 +204,12 @@ z `CLAUDE.md`.
 packages/tokens/scripts/emitCss.ts   →  admin/src/styles/tokens.css   (nagłówek: „PLIK GENEROWANY")
 admin/test/tokens.generated.test.ts  →  zawartość pliku == themeCssBlock(THEMES.night)
 ```
+
+**Drugi generowany arkusz (issue #107, 2026-09-08): `design/panel/panel.css`.** Makiety
+panelu i panel mają JEDEN arkusz - `admin/scripts/panelCss.ts` skleja `admin/src/styles/`
+w kolejności kaskady z `main.tsx` i dopisuje `design/panel/rama.css` (klasy tylko makiety);
+`npm run panel:css` zapisuje wynik, `admin/test/panelCss.generated.test.ts` przybija
+równość. Ten sam wzorzec, co tokeny: plik commitowany, poprawki przez ponowny bieg.
 
 Dlaczego nie wstrzykiwanie w runtime (`document.documentElement.style.setProperty`):
 panel ma **jeden** motyw (§1.6), więc runtime dawałby wyłącznie migotanie przed

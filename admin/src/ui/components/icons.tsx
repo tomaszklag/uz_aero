@@ -7,7 +7,8 @@
  * plików utrudniłoby jedyną kontrolę, jaką mamy - porównanie z mockupem wzrokiem.
  *
  * Ścieżki są kopiami z plików HTML, nie własną interpretacją. Zmiana ikony zaczyna
- * się od zmiany w `design/admin/`, tak jak każda inna zmiana wyglądu.
+ * się od zmiany w makiecie (`design/panel/SZABLON.html`), tak jak każda inna zmiana
+ * wyglądu.
  */
 
 interface IconProps {
@@ -171,6 +172,55 @@ export function PlusIcon({ size = 13 }: IconProps) {
     <Stroke size={size} width={2.5}>
       <line x1="12" y1="5" x2="12" y2="19" />
       <line x1="5" y1="12" x2="19" y2="12" />
+    </Stroke>
+  );
+}
+
+/* ── ikony kolumny bocznej (styl lekki, issue #107) - 1:1 z `design/panel/SZABLON.html` ── */
+
+/** Książka - moduł Dziennik. */
+export function BookIcon({ size = 16 }: IconProps) {
+  return (
+    <Stroke size={size}>
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+    </Stroke>
+  );
+}
+
+/** Robak - moduł Zgłoszenia (na czas testów, issue #87). */
+export function BugIcon({ size = 16 }: IconProps) {
+  return (
+    <Stroke size={size}>
+      <path d="m8 2 1.88 1.88" />
+      <path d="M14.12 3.88 16 2" />
+      <path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1" />
+      <path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6" />
+      <path d="M12 20v-9" />
+      <path d="M6.53 9C4.6 8.8 3 7.1 3 5" />
+      <path d="M6 13H2" />
+      <path d="M3 21c0-2.1 1.7-3.9 3.8-4" />
+      <path d="M20.97 5c0 2.1-1.6 3.8-3.5 4" />
+      <path d="M22 13h-4" />
+      <path d="M17.2 17c2.1.1 3.8 1.9 3.8 4" />
+    </Stroke>
+  );
+}
+
+/** Budynek - klub w kolumnie i moduł Organizacje (wielofirmowość 2.0.0). */
+export function BuildingIcon({ size = 16 }: IconProps) {
+  return (
+    <Stroke size={size} width={2.2}>
+      <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" />
+    </Stroke>
+  );
+}
+
+/** Szewrony w górę i w dół - „zmień klub" przy kafelku kontekstu. */
+export function SwitchIcon({ size = 14 }: IconProps) {
+  return (
+    <Stroke size={size} width={2.2}>
+      <path d="m7 15 5 5 5-5M7 9l5-5 5 5" />
     </Stroke>
   );
 }

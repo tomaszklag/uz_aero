@@ -139,7 +139,7 @@ export function AccountsScreen() {
   return (
     <>
       <PageHead
-        title="PILOCI"
+        title="Piloci"
         // Brak uprawnień = BRAK przycisku, nie przycisk wyszarzony. Powód stoi raz,
         // w karcie konta („tylko podgląd") - a nie przy każdej akcji na ekranie.
         actions={
@@ -157,7 +157,7 @@ export function AccountsScreen() {
       )}
 
       {queue.length === 0 ? null : (
-        <Card title={`ZGŁOSZENIA · ${queue.length}`}>
+        <Card title={`Zgłoszenia · ${queue.length}`}>
           <DataTable
             caption="Zgłoszenia czekające na decyzję"
             columns={queueColumns}

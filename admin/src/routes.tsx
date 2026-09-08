@@ -20,7 +20,7 @@ import { LogbookScreen } from './screens/logbook/LogbookScreen';
 import { SessionScreen } from './screens/logbook/SessionScreen';
 import { FleetScreen } from './screens/fleet/FleetScreen';
 import { LoginScreen } from './screens/login/LoginScreen';
-import { HOME } from './ui/shell/tabs';
+import { HOME } from './ui/shell/nav';
 
 export const router = createHashRouter([
   { path: '/logowanie', element: <LoginScreen /> },

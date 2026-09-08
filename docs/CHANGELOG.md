@@ -34,6 +34,10 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 ## W przygotowaniu
 
+### Nowości
+
+- **Panel klubu w lżejszym stylu.** Nawigacja w kolumnie po lewej z nazwą klubu nad pozycjami, ścieżka nad nagłówkiem w dzienniku (flota → maszyna → operacja), tytuły i etykiety pisane jak na stronie, a nie jak na przyrządzie. Kolory bez zmian.
+
 ## 1.1.0 (build 2) · 7 września 2026
 
 > Wydanie otwierające testy z pilotami: logowanie kontem Google zamiast haseł, panel klubu 2.0 i porządki po pierwszych tygodniach testów. Wymaga ponownej instalacji aplikacji.

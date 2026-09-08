@@ -637,8 +637,10 @@ te wchodzą następnym przekrojem.
   ODCINA PANEL NATYCHMIAST"). (4) **Self-hostowanych czcionek i CSP** -
   `admin/index.html` ciągnie fonty z CDN jak mockupy; §9 wymaga `.woff2` w `public/fonts/`
   przed wdrożeniem (brak JetBrains Mono to inna szerokość każdej kolumny liczbowej).
-  (5) **`classInventory.test.ts`** - ma porównywać klasy panelu z `SZABLON.html`, a biblioteka
-  komponentów jest dopiero w budowie (8 z 24), więc dziś świeciłby na czerwono z definicji.
+  (5) **`classInventory.test.ts`** - miał porównywać klasy panelu z `SZABLON.html`; ZAMKNIĘTE
+  przy issue #107 (2026-09-08) inaczej, niż zapowiadano: arkusz makiet jest GENEROWANY
+  z arkuszy panelu (`admin/test/panelCss.generated.test.ts` przybija równość), a klasy
+  ramy wobec szablonu sprawdza test renderu `admin/test/appShell.test.tsx`.
 
 **Granulacja plików (reguła twarda, dotyczy całego repo):** jeden adapter / jedna klasa /
 jedna odpowiedzialność = jeden plik o nazwie równej roli; trasy HTTP per zasób;

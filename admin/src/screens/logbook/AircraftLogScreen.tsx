@@ -20,6 +20,7 @@ import { useFleet } from '../../queries/useFleet';
 import { useAircraftSessions } from '../../queries/useLog';
 import {
   Banner,
+  Breadcrumbs,
   DataTable,
   EmptyState,
   LinkButton,
@@ -100,7 +101,7 @@ export function AircraftLogScreen() {
       render: (row) => (
         <>
           <span className="cell-strong">{row.day}</span>
-          {row.manual ? <Pill tone="dim">ręcznie</Pill> : null}
+          {row.manual ? <Pill tone="dim">Ręcznie</Pill> : null}
           {row.signature == null ? null : <span className="cell-sub">{row.signature}</span>}
         </>
       ),
@@ -149,15 +150,17 @@ export function AircraftLogScreen() {
 
   return (
     <>
-      <PageHead
-        title={reg.toUpperCase()}
-        sub={aircraft?.type}
-        actions={
-          <LinkButton to={`/dziennik?od=${range.from}&do=${range.to}`} variant="ghost">
-            ← Dziennik
-          </LinkButton>
-        }
+      {/* OKRUSZKI (styl lekki, issue #107) zastąpiły przycisk „← Dziennik" z nagłówka:
+          ekran leży POD listą floty, więc droga powrotu jest ścieżką, nie akcją.
+          Link niesie zakres dat, z którego się przyszło. */}
+      <Breadcrumbs
+        items={[
+          { label: 'Dziennik', to: `/dziennik?od=${range.from}&do=${range.to}` },
+          { label: reg.toUpperCase() },
+        ]}
       />
+
+      <PageHead title={reg.toUpperCase()} sub={aircraft?.type} />
 
       <div className="filters">
         <DateRange range={range} now={Date.now()} onChange={setRange} />

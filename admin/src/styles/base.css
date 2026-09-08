@@ -1,11 +1,15 @@
 /**
  * UZ Aero - panel: reset, korzeń dokumentu i stany globalne.
  *
- * Odpowiednik `<style>` z `design/admin/SZABLON.html` w części, która w mockupie
- * dotyczy `body` i `.browser`. Różnica jest jedna i wynika z natury rzeczy: w mockupie
- * `body` jest KANWĄ wokół obrazka przeglądarki (stąd gradienty i `--app-scale`),
- * a w panelu `body` JEST tą przeglądarką. Dlatego tło korzenia to `var(--bg)`,
- * czyli tło `.browser`, a skalowania mockupu nie ma tu w ogóle.
+ * `body` JEST przeglądarką (w makiecie jest kanwą wokół obrazka okna - stąd tam
+ * gradienty i `--app-scale`, a tu ich nie ma). Tło korzenia to `--bg`, czyli CHROME
+ * panelu: od stylu lekkiego (issue #107) pasek górny i kolumna boczna stoją na `--bg`,
+ * a obszar treści leży NA NICH jako warstwa wyżej - na `--surface`, z zaokrąglonym
+ * rogiem (`layout.css`). Pasek i kolumna są PRZEZROCZYSTE: tło (kolor i lekki
+ * gradient) maluje korzeń, żeby chrome był jedną powierzchnią bez szwów.
+ *
+ * Stopień pisma 14 px i interlinia 1,45 na korzeniu: panel czyta się jak strona
+ * (GitLab, GitHub), nie jak kokpit, więc gęstość 12,5 px z panelu 2.0 zeszła.
  */
 
 * {
@@ -21,7 +25,14 @@ body {
 
 body {
   font-family: var(--font-body);
-  background: var(--bg);
+  font-size: 14px;
+  line-height: 1.45;
+  background-color: var(--bg);
+  /* Gradient chrome'u - definicja i uzasadnienie w `layout.css` (`--chrome-bg`).
+     `fixed`, bo body nie przewija się nigdy (przewija się kontener treści),
+     a gradient ma stać w miejscu jak tło okna. */
+  background-image: var(--chrome-bg);
+  background-attachment: fixed;
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
 }
@@ -34,9 +45,16 @@ body {
 }
 
 /**
- * Widoczny fokus klawiatury - DOCHODZI do design systemu razem z pierwszym ekranem
- * (`docs/architektura-panelu-frontend.md` §7). Szablon miał dotąd tylko `:focus-within`
- * na `.search` i `.input:focus`, a panel jest nawigowany klawiaturą: tabele, filtry,
+ * Link w treści jest błękitny, jak w każdej aplikacji web - to jedyny kolor, którego
+ * użytkownik przeglądarki nie musi się uczyć. Komponenty z własną barwą (`.btn`,
+ * `.nav-item`, `.crumbs a`) nadpisują to swoją klasą.
+ */
+a {
+  color: var(--blue);
+}
+
+/**
+ * Widoczny fokus klawiatury - panel jest nawigowany klawiaturą: tabele, filtry,
  * formularze. `:focus-visible`, nie `:focus`, żeby kliknięcie myszą nie rysowało
  * obwódki tam, gdzie nikt jej nie potrzebuje.
  */
@@ -46,7 +64,6 @@ body {
   border-radius: 6px;
 }
 
-/* Pasek przewijania treści - jak w szablonie (`.content::-webkit-scrollbar`). */
 ::selection {
   background: var(--selection);
 }
@@ -54,11 +71,9 @@ body {
 /**
  * Treść WYŁĄCZNIE dla czytnika ekranu - podpis tabeli (`<caption>`).
  *
- * DOCHODZI do design systemu razem z pierwszą tabelą, tak jak `:focus-visible`
- * doszedł razem z pierwszym formularzem. W mockupie tabelę nazywa nagłówek strony
- * stojący nad nią; czytnik ekranu potrzebuje tej nazwy WEWNĄTRZ tabeli, bo czyta ją
- * jako osobny obiekt i inaczej ogłasza „tabela, 8 kolumn" bez słowa o tym, czego
- * dotyczy. Widoczny `<caption>` zmieniłby wygląd, więc go chowamy - nie usuwamy.
+ * Czytnik ekranu potrzebuje nazwy tabeli WEWNĄTRZ tabeli, bo czyta ją jako osobny
+ * obiekt i inaczej ogłasza „tabela, 8 kolumn" bez słowa o tym, czego dotyczy.
+ * Widoczny `<caption>` zmieniłby wygląd, więc go chowamy - nie usuwamy.
  */
 .visually-hidden {
   position: absolute;

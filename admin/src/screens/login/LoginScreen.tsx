@@ -27,7 +27,7 @@ import { useSessionState } from '../../auth/sessionContext';
 import { useGoogleClient, useLogin } from '../../queries/useSession';
 import { Banner } from '../../ui/components';
 import { PlaneIcon } from '../../ui/components/icons';
-import { HOME } from '../../ui/shell/tabs';
+import { HOME } from '../../ui/shell/nav';
 import { loginMessage } from './loginMessage';
 
 export function LoginScreen() {

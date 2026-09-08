@@ -1,0 +1,687 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   RAMA MAKIETY - KANWA, OKNO PRZEGLĄDARKI, INWENTARZ, SPIS
+   ══════════════════════════════════════════════════════════════════════════════
+
+   WSZYSTKO W TYM PLIKU ISTNIEJE WYŁĄCZNIE W `design/panel/*.html`.
+   Panel jest CAŁĄ stroną w przeglądarce, więc nie ma ani kanwy, ani obrazka okna,
+   ani inwentarza komponentów - i nie ma ich mieć. Przeniesienie którejkolwiek z tych
+   klas do `admin/src/styles/` jest błędem, a nie porządkowaniem.
+
+   Plik jest DRUGĄ POŁOWĄ `panel.css`: generator (`npm run panel:css` w `admin/`)
+   skleja arkusze panelu z `admin/src/styles/` i dopisuje ten plik na końcu. Makieta
+   linkuje wyłącznie `panel.css`; tu się EDYTUJE, tam się nie dotyka.
+
+   Rama okna działa dokładnie tak, jak `--phone-scale` w makietach telefonu.
+   `.shell` jest KOLUMNĄ (pasek górny nad `.workspace`) - odpowiednikiem `#root`
+   z `base.css`; kolumnę boczną i treść układa `.workspace` z `layout.css`.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── kanwa ──
+   `base.css` maluje `body` na chrome panelu, bo tam `body` JEST przeglądarką. Tutaj
+   `body` jest KANWĄ wokół obrazka okna, więc dostaje gradienty i układ kolumnowy.
+   `height:100%` z `base.css` też schodzi: kanwa rośnie z inwentarzem. */
+html,
+body {
+  height: auto;
+  min-height: 100%;
+}
+
+body {
+  /* Dokładnie ten sam trik, co `--phone-scale` w makietach telefonu. */
+  --app-scale: min(1, calc((100vh - 250px) / 900px), calc((100vw - 60px) / 1440px));
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% 0%, var(--green-muted), transparent 60%),
+    linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+  background-attachment: fixed;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 44px 24px 80px;
+  gap: 26px;
+}
+
+/* ── etykieta ekranu na kanwie ── */
+.canvas-label {
+  width: 100%;
+  max-width: 1440px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: baseline;
+  gap: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.film-strip {
+  font-family: var(--font-display);
+  font-size: 34px;
+  letter-spacing: 3px;
+  line-height: 1;
+}
+
+.slug {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  border-left: 1px solid var(--border);
+  padding-left: 18px;
+}
+
+.canvas-meta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  letter-spacing: 1px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Kropka bierze `@keyframes pulse` z `surfaces.css` - ta sama animacja, co w `.pill
+   .dot.live`, co do wartości. */
+.canvas-meta .pulse {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 0 4px var(--green-muted);
+  animation: pulse 1800ms ease-in-out infinite;
+}
+
+/* ── panel „Warianty tego ekranu" ──
+   Reguła z `CLAUDE.md`: ekran mający warianty dostaje na kanwie panel z linkami do
+   całej rodziny I OPISEM, kiedy który wariant się wyświetla. */
+.variants-panel {
+  width: 100%;
+  max-width: 1440px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 12px 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 7px;
+}
+
+.vp-title {
+  grid-column: 1 / -1;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 0 2px 2px;
+}
+
+.vp-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 11px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-raised);
+  text-decoration: none;
+  color: var(--text-primary);
+}
+
+.vp-item:hover {
+  border-color: var(--green-border);
+}
+
+.vp-item.active {
+  border-color: var(--green-border);
+  background: rgba(46, 204, 113, 0.05);
+  pointer-events: none;
+}
+
+.vp-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--green);
+  background: var(--green-muted);
+  border: 1px solid var(--green-border);
+  border-radius: 6px;
+  padding: 3px 7px;
+  flex-shrink: 0;
+}
+
+.vp-badge.amber {
+  color: var(--amber);
+  background: var(--amber-muted);
+  border-color: var(--amber-border);
+}
+
+.vp-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.vp-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.vp-when {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.vp-tag {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--green);
+  margin-top: 3px;
+  white-space: nowrap;
+}
+
+/* ── pasek nawigacji między makietami ── */
+.nav-strip {
+  width: 100%;
+  max-width: 1440px;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.nav-strip a {
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 4px 8px;
+  border-radius: 5px;
+}
+
+.nav-strip a:hover,
+.nav-strip a.active {
+  color: var(--green);
+}
+
+.nav-strip span {
+  color: var(--border-strong);
+}
+
+/* ══ OKNO PRZEGLĄDARKI - desktopowy odpowiednik `.phone` ══
+   `transform: scale()` robi tu DWIE rzeczy naraz i druga jest niewidoczna, dopóki
+   się nie zepsuje: skaluje makietę do okna ORAZ czyni `.browser` blokiem
+   zawierającym dla potomków `position: fixed`. Dzięki temu szuflada (`.drawer`,
+   `.drawer-scrim`) - w panelu przypięta do okna przeglądarki - w makiecie przypina
+   się do RAMY, bez zmiany ani jednej właściwości w `drawer.css`. */
+.browser {
+  width: 1440px;
+  height: 900px;
+  border-radius: 12px;
+  /* Tło okna = chrome panelu (`body` w `base.css`): kolor i lekki gradient. */
+  background-color: var(--bg);
+  background-image: var(--chrome-bg);
+  /* Chrome okna: odcienie opisują OBRAZEK przeglądarki, którego panel nie ma. */
+  border: 1px solid #1c1e24;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.03),
+    0 40px 120px rgba(0, 0, 0, 0.7),
+    0 24px 48px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+  position: relative;
+  isolation: isolate;
+  flex-shrink: 0;
+  transform: scale(var(--app-scale));
+  transform-origin: top center;
+  margin-bottom: calc((var(--app-scale) - 1) * 900px);
+  display: flex;
+  flex-direction: column;
+}
+
+.chrome {
+  height: 40px;
+  flex-shrink: 0;
+  background: #0a0a0c;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 14px;
+}
+
+.chrome-dots {
+  display: flex;
+  gap: 7px;
+  flex-shrink: 0;
+}
+
+.chrome-dots i {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--border-strong);
+}
+
+.chrome-url {
+  flex: 1;
+  max-width: 460px;
+  height: 24px;
+  border-radius: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 10px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+.chrome-url svg {
+  color: var(--green);
+  flex-shrink: 0;
+}
+
+.chrome-url b {
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+/* Wnętrze okna = pasek górny + `.workspace` (kolumna boczna i treść). Odpowiednik
+   `#root` z `base.css`. */
+.shell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  /* SZUFLADA W RAMIE MAKIETY. `.drawer` i `.drawer-scrim` są `position: fixed`, więc
+     blokiem zawierającym jest najbliższy przodek z transformem - czyli `.browser`,
+     a warstwa przykrywałaby pasek chrome przeglądarki, którego panel nie ma. Własny
+     kontekst na `.shell` przesuwa granicę dokładnie tam, gdzie w panelu leży sama
+     z siebie (`top: 0` = góra OKNA). */
+  transform: translateZ(0);
+}
+
+/* ══ INWENTARZ KOMPONENTÓW ══
+   Stoi POD ramą, na kanwie: rama pokazuje ekran, inwentarz pokazuje CZĘŚCI, z których
+   się go składa. */
+.canvas-section {
+  width: 100%;
+  max-width: 1440px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.canvas-section-title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.canvas-section-title::before {
+  content: '';
+  width: 4px;
+  height: 22px;
+  border-radius: 2px;
+  background: var(--green);
+  flex-shrink: 0;
+}
+
+.inv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.inv {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Pozycja na całą szerokość siatki - tabela i szuflada nie mieszczą się w połowie. */
+.inv.full {
+  grid-column: 1 / -1;
+}
+
+.inv-head {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.inv-name {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+.inv-when {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.inv-classes {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.inv-classes b {
+  color: var(--green);
+  font-weight: 400;
+}
+
+/* Podłoże demonstracji jest TŁEM WARSTWY TREŚCI panelu (`--surface`), żeby komponent
+   wyglądał dokładnie tak, jak w ekranie: karta i tabela na tym tle rysują się samą
+   ramką, i tak ma być. Włos oddziela demonstrację od nagłówka pozycji. */
+.inv-demo {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Demonstracja RAMY (pasek i kolumna) stoi na chrome'ie (`--bg`), nie na warstwie
+   treści - inaczej kolumna zlewałaby się z podłożem, a panel treści nie miałby
+   się od czego odciąć. */
+.inv-demo.chrome-demo {
+  background: var(--bg);
+  padding: 0;
+}
+
+.inv-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+}
+
+/* Podpis stanu W demonstracji - „tak wygląda wiersz wyłączony". Mono i drobny,
+   żeby nie czytał się jak treść komponentu. */
+.inv-mark {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Szuflada w inwentarzu. `transform` robi to samo, co w `.browser`: zamienia
+   `position: fixed` szuflady w pozycjonowanie WZGLĘDEM TEGO PUDEŁKA. */
+.drawer-demo {
+  position: relative;
+  height: 430px;
+  overflow: hidden;
+  transform: translateZ(0);
+  background: var(--surface);
+}
+
+.drawer-demo .drawer {
+  width: 460px;
+}
+
+/* Kolumna boczna w inwentarzu - pudełko o wysokości kilku pozycji, nie całego okna. */
+.sidebar-demo {
+  display: flex;
+  height: 320px;
+}
+
+.sidebar-demo .sidebar {
+  height: 100%;
+}
+
+.sidebar-demo .content {
+  flex: 1;
+  padding: 20px 24px;
+}
+
+/**
+ * PRZYCISK GOOGLE - ATRAPA WYŁĄCZNIE DLA MAKIETY.
+ *
+ * W panelu ten przycisk rysuje SKRYPT GOOGLE we wnętrzu `.login-google`, więc
+ * `admin/src/styles/` nie ma dla niego ani jednej reguły i mieć nie może. Bez atrapy
+ * makieta jedynego ekranu logowania pokazywałaby szarą plamkę w miejscu jedynej
+ * akcji, jaką ten ekran ma.
+ *
+ * KOLORY SĄ GOOGLE'A i to jedyne miejsce w arkuszu z wartością spoza palety -
+ * znaku towarowego nie wolno przemalować na tokeny marki. Geometria trzyma się
+ * plamki (`.login-google-skeleton`): 44 px i pigułka.
+ */
+.login-google-mock {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  height: 44px;
+  width: 100%;
+  max-width: 336px;
+  padding: 0 20px;
+  border: 1px solid #747775;
+  border-radius: 22px;
+  background: #ffffff;
+  color: #1f1f1f;
+  font-family: 'Roboto', var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.15px;
+  cursor: pointer;
+}
+
+/* ══ WIELOFIRMOWOŚĆ (2.0.0, docs/wielofirmowosc.md) - komponenty, na które kod jeszcze
+   czeka. Klasy PRODUKTU, nie ramy: gdy epik B–F je zaimplementuje, przechodzą pod
+   TYMI SAMYMI nazwami do `admin/src/styles/components/` i znikają stąd. ══ */
+
+/* LINKBOX - adres do skopiowania. Wynik wygenerowania linku osobistego: adres w jednej
+   linii mono (ucięty wielokropkiem) i przycisk „Kopiuj" obok. Zielona ramka mówi
+   „to jest gotowe" - jedyny moment, w którym panel pokazuje sekret w całości. */
+.linkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 8px 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--green-border);
+  background: var(--green-muted);
+}
+
+.linkbox-val {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  letter-spacing: 0.3px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.linkbox .btn {
+  flex-shrink: 0;
+}
+
+/* KOD KLUBU - do przeczytania przez telefon. Duży, mono, z odstępem: administrator
+   dyktuje go pilotowi, który wpisuje go na 00E z klawiatury. */
+.club-code {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 5px;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.club-code-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-raised);
+}
+
+/* ══ SPIS MAKIET (`design/panel/index.html`) ══
+   Prefiks `idx-`, bo karta spisu jest INNYM bytem niż `.card` panelu. */
+.idx-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0 18px;
+}
+
+.idx-hero h1 {
+  font-family: var(--font-display);
+  font-size: 46px;
+  letter-spacing: 5px;
+  line-height: 1;
+  text-align: center;
+}
+
+.idx-hero h1 span {
+  color: var(--green);
+}
+
+.idx-hero-sub {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* Akapit o decyzjach - stoi RAZ, na górze spisu, bo dotyczy całego katalogu. */
+.idx-lead {
+  width: 100%;
+  max-width: 1000px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.idx-lead b {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.idx-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+}
+
+.idx-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+  text-decoration: none;
+  color: var(--text-primary);
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+}
+
+.idx-card:hover {
+  background: var(--surface-hover);
+  border-color: var(--green-border);
+}
+
+/* Makieta, której jeszcze nie ma. Przygaszona i BEZ reakcji na kursor. */
+.idx-card.soon {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.idx-badge {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--green);
+  background: var(--green-muted);
+  border: 1px solid var(--green-border);
+  border-radius: 8px;
+  min-width: 34px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 7px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.idx-card.soon .idx-badge {
+  color: var(--text-muted);
+  background: var(--surface-raised);
+  border-color: var(--border);
+}
+
+.idx-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.idx-name {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+/* Adres w panelu - po nim się ten ekran znajduje i o nim się rozmawia. */
+.idx-route {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.8px;
+  color: var(--green);
+}
+
+.idx-card.soon .idx-route {
+  color: var(--text-muted);
+}
+
+.idx-when {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}

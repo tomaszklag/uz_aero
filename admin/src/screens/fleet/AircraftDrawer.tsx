@@ -146,11 +146,11 @@ export function AircraftDrawer({ id, fleet, listPending, manages, onClose }: Air
 
   return (
     <Drawer
-      title={creating ? 'NOWY SAMOLOT' : (aircraft?.reg ?? 'SAMOLOT')}
+      title={creating ? 'Nowy samolot' : (aircraft?.reg ?? 'Samolot')}
       sub={
         <>
           {aircraft?.type ?? 'Nowa jednostka floty'}
-          {readOnly ? <Pill tone="dim">tylko podgląd</Pill> : null}
+          {readOnly ? <Pill tone="dim">Tylko podgląd</Pill> : null}
         </>
       }
       onClose={onClose}

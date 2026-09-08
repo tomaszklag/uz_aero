@@ -3,24 +3,24 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero - Panel 2.0 · szablon i inwentarz komponentów</title>
+<title>UZ Aero - Panel · szablon i inwentarz komponentów</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- Czcionki z Google Fonts, nie self-hostowane woff2 panelu: makieta ma się otwierać
-     z dysku dwuklikiem. Wagi = te, które deklarują reguły panelu; uzasadnienie stoi
-     w sekcji 02 arkusza `panel.css`. -->
+     z dysku dwuklikiem. Wagi = te, które deklarują reguły panelu. -->
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-<!-- JEDYNY arkusz makiety. Nie dopisuj tu bloku <style>: komponent, który powstał
-     w jednym pliku, nie trafi do pozostałych makiet ani do panelu. -->
+<!-- JEDYNY arkusz makiety - GENEROWANY z `admin/src/styles/` + `rama.css`
+     (`npm run panel:css` w `admin/`). Nie dopisuj tu bloku <style>: komponent, który
+     powstał w jednym pliku, nie trafi do pozostałych makiet ani do panelu. -->
 <link rel="stylesheet" href="panel.css">
 </head>
 
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO - PANEL 2.0 · SZABLON</span>
-  <span class="slug">panel/SZABLON · rama okna · pasek górny · inwentarz</span>
-  <span class="canvas-meta"><span class="pulse"></span>Baza dla wszystkich makiet panelu</span>
+  <span class="film-strip">UZ AERO - PANEL · SZABLON</span>
+  <span class="slug">panel/SZABLON · rama okna · pasek i kolumna · inwentarz</span>
+  <span class="canvas-meta"><span class="pulse"></span>Baza dla wszystkich makiet panelu · styl lekki (issue #107)</span>
 </header>
 
 <aside class="variants-panel">
@@ -29,7 +29,7 @@
     <span class="vp-badge">BAZA</span>
     <span class="vp-body">
       <span class="vp-name">Kopiuj &lt;head&gt; i ramę w całości</span>
-      <span class="vp-when">Nowa makieta panelu = ten <code>&lt;head&gt;</code> + ta rama + własna treść w <code>.content</code>. Nie definiuj własnych kolorów, wymiarów ramy ani bloku <code>&lt;style&gt;</code> - wszystko mieszka w <code>panel.css</code>.</span>
+      <span class="vp-when">Nowa makieta panelu = ten <code>&lt;head&gt;</code> + ta rama (pasek górny, kolumna boczna, <code>.content &gt; .page</code>) + własna treść w <code>.page</code>. Nie definiuj własnych kolorów, wymiarów ramy ani bloku <code>&lt;style&gt;</code> - wszystko mieszka w <code>panel.css</code>.</span>
     </span>
     <span class="vp-tag">ten plik</span>
   </a>
@@ -51,7 +51,7 @@
     <span class="vp-badge amber">1.0</span>
     <span class="vp-body">
       <span class="vp-name">design/admin/ - ARCHIWUM panelu 1.0</span>
-      <span class="vp-when">23 ekrany z kolumną boczną, kaflami liczników i banerami wyjaśniającymi. Zapis decyzji sprzed 2026-08-30, nie specyfikacja. Nie kopiuj stamtąd układów - kopiuj wyłącznie to, co ta makieta powtórzyła świadomie.</span>
+      <span class="vp-when">23 ekrany z kaflami liczników i banerami wyjaśniającymi. Zapis decyzji sprzed 2026-08-30, nie specyfikacja. Kolumna boczna wróciła w stylu lekkim, ale nie stamtąd - kopiuj wyłącznie to, co ta makieta powtórzyła świadomie.</span>
     </span>
   </a>
 </aside>
@@ -59,48 +59,36 @@
 <!-- ══ RAMA OKNA ══
      1440×900 ze skalą `--app-scale`, dokładnie jak `--phone-scale` w makietach
      telefonu. Wewnątrz: pasek chrome przeglądarki, a pod nim `.shell` - pasek górny
-     panelu i obszar treści. Kolumny bocznej NIE MA (docs/panel-2.0.md §3.2). -->
+     panelu i `.workspace` (kolumna boczna + treść). STYL LEKKI (issue #107): układ
+     jak w GitLabie, kolory te same, co w aplikacji pilota. -->
 <main class="browser" role="region" aria-label="Szablon panelu administracyjnego UZ Aero">
 
   <div class="chrome">
     <span class="chrome-dots"><i></i><i></i><i></i></span>
     <span class="chrome-url">
       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-      <b>panel.uzaero.pl</b>/#/dziennik
+      <b>panel.uzaero.pl</b>/#/dziennik/SP-AXA
     </span>
   </div>
 
   <div class="shell">
 
     <!-- ══ KANONICZNY PASEK GÓRNY ══
-         1:1 z `admin/src/ui/shell/AppShell.tsx`. Cztery zakładki z `ui/shell/tabs.ts`
-         w tej kolejności: Dziennik jest pierwszy, bo ekran startowy ma być tym, po
-         który się sięga; Zgłoszenia są ostatnie, bo znikną razem z fazą testów.
-         Czego tu NIE MA: okruszków, zegara UTC i liczników przy zakładkach.
-         OD 2.0.0 za znakiem stoi KONTEKST KLUBU (`.topbar-org`) - inwentarz niżej. -->
+         1:1 z `admin/src/ui/shell/AppShell.tsx`. Niesie WYŁĄCZNIE markę (link na ekran
+         startowy) i zalogowanego. Nawigacja zeszła do kolumny bocznej. -->
     <header class="topbar">
-      <span class="brand">
+      <a class="brand" href="dziennik-flota.html">
         <span class="brand-mark">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
         </span>
         <span class="brand-name">UZ AERO</span>
-      </span>
-      <!-- KONTEKST KLUBU (wielofirmowość 2.0.0): w którym klubie jest ta sesja.
-           Link prowadzi na wybór klubu (00A) - nowa sesja bez ponownego logowania. -->
-      <a class="topbar-org" href="00a-wybor-klubu.html" title="Zmień klub">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
-        Aeroklub Zielonogórski
       </a>
 
-      <nav class="tabs" aria-label="Sekcje panelu">
-        <a class="tab active" href="#">Dziennik</a>
-        <a class="tab" href="#">Piloci</a>
-        <a class="tab" href="#">Samoloty</a>
-        <a class="tab" href="#">Zgłoszenia</a>
-      </nav>
-
       <div class="topbar-right">
-        <span class="who-name">Tomasz Małkiewicz</span>
+        <span class="who">
+          <span class="avatar" aria-hidden="true">TM</span>
+          <span class="who-name">Tomasz Małkiewicz</span>
+        </span>
         <button type="button" class="btn ghost sm">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="14 17 19 12 14 7"/><line x1="19" y1="12" x2="9" y2="12"/></svg>
           Wyloguj
@@ -108,139 +96,185 @@
       </div>
     </header>
 
-    <!-- ══ OBSZAR TREŚCI ══
-         `.content` samo trzyma szerokość (1180 px) i marginesy - ekran wkłada do
-         niego karty w kolejności czytania i nic poza tym. Treść niżej to PRZYKŁAD
-         kompozycji (nagłówek → zawężenia → tabela → stopka listy), nie ekran. -->
-    <div class="content">
+    <div class="workspace">
 
-      <div class="page-head">
-        <div>
-          <h1 class="page-title">DZIENNIK · SP-AXA</h1>
-          <p class="page-sub">Operacje jednej maszyny w wybranym zakresie dat. Wyłącznie odczyty - brak odczytu widać jako kreskę.</p>
+      <!-- ══ KANONICZNA KOLUMNA BOCZNA ══
+           Kontekst klubu (wielofirmowość 2.0.0) nad pozycjami modułów z `ui/shell/nav.ts`
+           w tej kolejności: Dziennik jest pierwszy, bo ekran startowy ma być tym, po
+           który się sięga; Zgłoszenia są ostatnie, bo znikną razem z fazą testów.
+           Czego tu NIE MA: zegara UTC i liczników przy pozycjach. Rama
+           superadministratora - patrz inwentarz „Rama" niżej. -->
+      <aside class="sidebar" aria-label="Nawigacja panelu">
+        <a class="sidebar-context" href="00a-wybor-klubu.html" title="Zmień klub">
+          <span class="context-mark" aria-hidden="true">AZ</span>
+          <span class="context-body">
+            <span class="context-kind">Klub</span>
+            <span class="context-name">Aeroklub Zielonogórski</span>
+          </span>
+          <svg class="context-switch" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+        </a>
+        <nav class="sidebar-nav" aria-label="Sekcje panelu">
+          <a class="nav-item active" href="dziennik-flota.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            Dziennik
+          </a>
+          <a class="nav-item" href="piloci-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Piloci
+          </a>
+          <a class="nav-item" href="samoloty-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+            Samoloty
+          </a>
+          <a class="nav-item" href="zgloszenia-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"/><path d="M12 20v-9"/><path d="M6.53 9C4.6 8.8 3 7.1 3 5"/><path d="M6 13H2"/><path d="M3 21c0-2.1 1.7-3.9 3.8-4"/><path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/><path d="M22 13h-4"/><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/></svg>
+            Zgłoszenia
+          </a>
+        </nav>
+      </aside>
+
+      <!-- ══ OBSZAR TREŚCI ══
+           `.content` przewija się i niesie tło; `.page` trzyma szerokość (1200 px)
+           i rytm 16 px. Treść niżej to PRZYKŁAD kompozycji (okruszki → nagłówek →
+           zawężenia → tabela), nie ekran. -->
+      <div class="content">
+        <div class="page">
+
+          <!-- Okruszki WYŁĄCZNIE tam, gdzie ekran leży pod innym ekranem (dziennik:
+               flota → maszyna → operacja). Ostatni człon jest bieżącą stroną. -->
+          <nav class="crumbs" aria-label="Ścieżka">
+            <a href="dziennik-flota.html">Dziennik</a>
+            <span class="sep" aria-hidden="true">/</span>
+            <span class="current">SP-AXA</span>
+          </nav>
+
+          <div class="page-head">
+            <div>
+              <h1 class="page-title">SP-AXA</h1>
+              <p class="page-sub">Cessna 182</p>
+            </div>
+            <div class="page-actions">
+              <a class="btn" href="samoloty-karta.html">Karta samolotu</a>
+            </div>
+          </div>
+
+          <div class="filters">
+            <label class="search">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input value="" placeholder="Szukaj pilota lub sygnatury - klawisz /" aria-label="Szukaj w dzienniku">
+            </label>
+            <span class="daterange">
+              <input type="date" value="2026-09-01" aria-label="Data od">
+              <span class="daterange-sep">→</span>
+              <input type="date" value="2026-09-07" aria-label="Data do">
+            </span>
+            <button type="button" class="chip on" aria-pressed="true">Ten tydzień</button>
+            <button type="button" class="chip" aria-pressed="false">Ten miesiąc</button>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <caption class="visually-hidden">Operacje SP-AXA od 1 do 7 września 2026</caption>
+              <thead>
+                <tr>
+                  <th>Operacja</th>
+                  <th>Bieg silnika</th>
+                  <th>Lot</th>
+                  <th class="num">Loty</th>
+                  <th>Pilot</th>
+                  <th>Zadanie</th>
+                  <th class="num">Paliwo</th>
+                  <th class="num">Motogodziny</th>
+                  <th class="num">Olej do lotu</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="clickable">
+                  <td>
+                    <span class="cell-strong">6 września</span>
+                    <span class="cell-sub mono">SP-AXA/2026-09-06/TMA/1</span>
+                  </td>
+                  <td>
+                    <span class="cell-pair">08:42<span class="cell-arrow" aria-hidden="true">→</span>11:04</span>
+                    <span class="cell-sub">2:22</span>
+                  </td>
+                  <td>
+                    <span class="cell-pair">09:01<span class="cell-arrow" aria-hidden="true">→</span>10:58</span>
+                    <span class="cell-sub">EPZG → EPZG</span>
+                  </td>
+                  <td class="num">6</td>
+                  <td>Tomasz Małkiewicz</td>
+                  <td>Skoki</td>
+                  <td class="num">
+                    <span class="cell-pair">185<span class="cell-arrow" aria-hidden="true">→</span>108 L</span>
+                    <span class="cell-sub">dolano 60 L</span>
+                  </td>
+                  <td class="num">
+                    <span class="cell-pair">1236:30<span class="cell-arrow" aria-hidden="true">→</span>1238:52</span>
+                    <span class="cell-sub">+2:22</span>
+                  </td>
+                  <td class="num">9,2 L</td>
+                  <td><span class="cell-go" aria-hidden="true">›</span></td>
+                </tr>
+                <tr class="clickable">
+                  <td>
+                    <span class="cell-strong">6 września</span>
+                    <span class="cell-sub mono">SP-AXA/2026-09-06/AKO/1</span>
+                  </td>
+                  <td>
+                    <span class="cell-pair">13:10<span class="cell-arrow" aria-hidden="true">→</span></span>
+                    <span class="cell-sub warn">Samolot zajęty</span>
+                  </td>
+                  <td>
+                    <span class="cell-pair">13:26<span class="cell-arrow" aria-hidden="true">→</span>—</span>
+                    <span class="cell-sub">EPZG → —</span>
+                  </td>
+                  <td class="num">1</td>
+                  <td>Anna Kowal</td>
+                  <td>Przelot</td>
+                  <td class="num">
+                    <span class="cell-pair">108<span class="cell-arrow" aria-hidden="true">→</span>—</span>
+                    <span class="cell-sub">w toku</span>
+                  </td>
+                  <td class="num">
+                    <span class="cell-pair">1238:52<span class="cell-arrow" aria-hidden="true">→</span>—</span>
+                    <span class="cell-sub">w toku</span>
+                  </td>
+                  <td class="num">8,4 L</td>
+                  <td><span class="cell-go" aria-hidden="true">›</span></td>
+                </tr>
+                <tr class="clickable voided">
+                  <td>
+                    <span class="cell-strong">4 września</span>
+                    <span class="cell-sub mono">SP-AXA/2026-09-04/TMA/2</span>
+                  </td>
+                  <td>
+                    <span class="cell-pair">16:02<span class="cell-arrow" aria-hidden="true">→</span>16:19</span>
+                    <span class="cell-sub">0:17</span>
+                  </td>
+                  <td>—</td>
+                  <td class="num">0</td>
+                  <td>Tomasz Małkiewicz</td>
+                  <td>Lot tech.</td>
+                  <td class="num">
+                    <span class="cell-pair">140<span class="cell-arrow" aria-hidden="true">→</span>136 L</span>
+                  </td>
+                  <td class="num">
+                    <span class="cell-pair">1234:10<span class="cell-arrow" aria-hidden="true">→</span>1234:27</span>
+                  </td>
+                  <td class="num">9,0 L</td>
+                  <td><span class="cell-go" aria-hidden="true">›</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Stopki tu NIE MA i to jest jej reguła: `.list-foot` pojawia się WYŁĄCZNIE
+               przy liście przyciętej limitem. Ta ma trzy wiersze z trzech. -->
+
         </div>
-        <div class="page-actions">
-          <a class="btn ghost" href="#">Cała flota</a>
-        </div>
       </div>
-
-      <div class="filters">
-        <label class="search">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input value="" placeholder="Szukaj pilota lub sygnatury - klawisz /" aria-label="Szukaj w dzienniku">
-        </label>
-        <span class="daterange">
-          <input type="date" value="2026-09-01" aria-label="Data od">
-          <span class="daterange-sep">→</span>
-          <input type="date" value="2026-09-07" aria-label="Data do">
-        </span>
-        <button type="button" class="chip on" aria-pressed="true">Ten tydzień</button>
-        <button type="button" class="chip" aria-pressed="false">Ten miesiąc</button>
-      </div>
-
-      <div class="table-wrap">
-        <table>
-          <caption class="visually-hidden">Operacje SP-AXA od 1 do 7 września 2026</caption>
-          <thead>
-            <tr>
-              <th>Operacja</th>
-              <th>Bieg silnika</th>
-              <th>Lot</th>
-              <th class="num">Loty</th>
-              <th>Pilot</th>
-              <th>Zadanie</th>
-              <th class="num">Paliwo</th>
-              <th class="num">Motogodziny</th>
-              <th class="num">Olej do lotu</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr class="clickable">
-              <td>
-                <span class="cell-strong">6 WRZEŚNIA</span>
-                <span class="cell-sub">SP-AXA/2026-09-06/TMA/1</span>
-              </td>
-              <td>
-                <span class="cell-pair">08:42<span class="cell-arrow" aria-hidden="true">→</span>11:04</span>
-                <span class="cell-sub">2:22</span>
-              </td>
-              <td>
-                <span class="cell-pair">09:01<span class="cell-arrow" aria-hidden="true">→</span>10:58</span>
-                <span class="cell-sub">EPZG → EPZG</span>
-              </td>
-              <td class="num">6</td>
-              <td>Tomasz Małkiewicz</td>
-              <td>Skoki</td>
-              <td class="num">
-                <span class="cell-pair">185<span class="cell-arrow" aria-hidden="true">→</span>108 L</span>
-                <span class="cell-sub">dolano 60 L</span>
-              </td>
-              <td class="num">
-                <span class="cell-pair">1236:30<span class="cell-arrow" aria-hidden="true">→</span>1238:52</span>
-                <span class="cell-sub">+2:22</span>
-              </td>
-              <td class="num">9,2 L</td>
-              <td><span class="cell-go" aria-hidden="true">›</span></td>
-            </tr>
-            <tr class="clickable">
-              <td>
-                <span class="cell-strong">6 WRZEŚNIA</span>
-                <span class="cell-sub">SP-AXA/2026-09-06/AKO/1</span>
-              </td>
-              <td>
-                <span class="cell-pair">13:10<span class="cell-arrow" aria-hidden="true">→</span></span>
-                <span class="cell-sub warn">Samolot zajęty</span>
-              </td>
-              <td>
-                <span class="cell-pair">13:26<span class="cell-arrow" aria-hidden="true">→</span>—</span>
-                <span class="cell-sub">EPZG → —</span>
-              </td>
-              <td class="num">1</td>
-              <td>Anna Kowal</td>
-              <td>Przelot</td>
-              <td class="num">
-                <span class="cell-pair">108<span class="cell-arrow" aria-hidden="true">→</span>—</span>
-                <span class="cell-sub">w toku</span>
-              </td>
-              <td class="num">
-                <span class="cell-pair">1238:52<span class="cell-arrow" aria-hidden="true">→</span>—</span>
-                <span class="cell-sub">w toku</span>
-              </td>
-              <td class="num">8,4 L</td>
-              <td><span class="cell-go" aria-hidden="true">›</span></td>
-            </tr>
-            <tr class="clickable voided">
-              <td>
-                <span class="cell-strong">4 WRZEŚNIA</span>
-                <span class="cell-sub">SP-AXA/2026-09-04/TMA/2</span>
-              </td>
-              <td>
-                <span class="cell-pair">16:02<span class="cell-arrow" aria-hidden="true">→</span>16:19</span>
-                <span class="cell-sub">0:17</span>
-              </td>
-              <td>—</td>
-              <td class="num">0</td>
-              <td>Tomasz Małkiewicz</td>
-              <td>Lot tech.</td>
-              <td class="num">
-                <span class="cell-pair">140<span class="cell-arrow" aria-hidden="true">→</span>136 L</span>
-              </td>
-              <td class="num">
-                <span class="cell-pair">1234:10<span class="cell-arrow" aria-hidden="true">→</span>1234:27</span>
-              </td>
-              <td class="num">9,0 L</td>
-              <td><span class="cell-go" aria-hidden="true">›</span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Stopki tu NIE MA i to jest jej reguła (sprostowanie 2026-09-07): `.list-foot`
-           pojawia się WYŁĄCZNIE przy liście przyciętej limitem. Ta ma trzy wiersze z trzech,
-           więc podpis „Pokazano 3 z 3" mówiłby o niczym. Kształt stopki - patrz inwentarz
-           DataTable niżej i `dziennik-maszyna.html`. -->
-
     </div>
   </div>
 </main>
@@ -259,24 +293,124 @@
      INWENTARZ KOMPONENTÓW
      Najważniejsza część tego pliku. Każda pozycja niesie: nazwę komponentu
      z `admin/src/ui/components/`, zdanie „kiedy się go używa" i klasy do skopiowania.
-     Nazwy klas są DOSŁOWNIE te z `admin/src/styles/` - to warunek przenoszenia
-     w obie strony. Nowy komponent dokładamy TUTAJ, a potem do kodu panelu.
+     Nazwy klas są DOSŁOWNIE te z `admin/src/styles/` - arkusz jest jeden.
      ══════════════════════════════════════════════════════════════════════════════ -->
 
 <section class="canvas-section">
-  <div class="canvas-section-title">Nagłówek i akcje</div>
+  <div class="canvas-section-title">Rama · styl lekki</div>
   <div class="inv-grid">
+
+    <article class="inv full">
+      <div class="inv-head">
+        <span class="inv-name">AppShell · pasek górny i kolumna boczna</span>
+        <span class="inv-when">Układ jak w GitLabie (issue #107): pasek 48 px niesie WYŁĄCZNIE markę i zalogowanego; nawigacja stoi w kolumnie 240 px z kontekstem klubu nad pozycjami modułów. Pozycja aktywna jest ODWRÓCONA (jasne tło, ciemny napis) - ten sam sygnał, którym „wybrane" mówi chip filtra. Kolory bez zmian wobec panelu 2.0, zmienił się PODZIAŁ: pasek i kolumna NIE są sekcjami z liniami, tylko jednym tłem na <code>--bg</code>, a treść to KONTENER W WARSTWIE PONAD na <code>--surface</code> - oba górne rogi zaokrąglone, włos krawędzi, odstęp od prawej krawędzi okna, dół dociągnięty do krawędzi - jak panel treści w GitLabie. Tło chrome'u ma lekki gradient (<code>--chrome-bg</code> z samych tokenów: zielona poświata przy znaku, <code>--bg-tint</code> u góry), pasek i kolumna są przezroczyste. Lekkość ma wyjść z układu i typografii, nie z palety. Bebas Neue zostaje w znaku marki i na logowaniu; wszystko poniżej paska jedzie krojem tekstowym w pisowni zdaniowej.</span>
+        <span class="inv-classes"><b>.topbar</b> · .brand · .brand-mark · .brand-name · .topbar-right · .who · .avatar · .who-name · <b>.workspace</b> · <b>.sidebar</b> · .sidebar-context · .sidebar-context.scope · .context-mark · .context-body · .context-kind · .context-name · .context-switch · <b>.sidebar-nav</b> · .nav-item · .nav-item.active · <b>.content</b> · .page</span>
+      </div>
+      <div class="inv-demo chrome-demo">
+        <div class="sidebar-demo">
+          <aside class="sidebar" aria-label="Rama klubu - przykład">
+            <a class="sidebar-context" href="00a-wybor-klubu.html" title="Zmień klub">
+              <span class="context-mark" aria-hidden="true">AZ</span>
+              <span class="context-body">
+                <span class="context-kind">Klub</span>
+                <span class="context-name">Aeroklub Zielonogórski</span>
+              </span>
+              <svg class="context-switch" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+            </a>
+            <nav class="sidebar-nav" aria-label="Sekcje panelu - przykład">
+              <a class="nav-item" href="dziennik-flota.html">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                Dziennik
+              </a>
+              <a class="nav-item active" href="piloci-lista.html">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Piloci
+              </a>
+              <a class="nav-item" href="samoloty-lista.html">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+                Samoloty
+              </a>
+              <a class="nav-item" href="zgloszenia-lista.html">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"/><path d="M12 20v-9"/><path d="M6.53 9C4.6 8.8 3 7.1 3 5"/><path d="M6 13H2"/><path d="M3 21c0-2.1 1.7-3.9 3.8-4"/><path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/><path d="M22 13h-4"/><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/></svg>
+                Zgłoszenia
+              </a>
+            </nav>
+          </aside>
+          <!-- Rama SUPERADMINISTRATORA: ten sam kafel kontekstu z innym podpisem
+               (`.scope`) i JEDNA pozycja. Moduł Organizacje nie jest w żadnym klubie,
+               więc zamiast nazwy klubu stoi zakres, a „Zmień zakres" prowadzi na 00A. -->
+          <aside class="sidebar" aria-label="Rama superadministratora - przykład">
+            <a class="sidebar-context scope" href="00a-wybor-klubu.html" title="Zmień zakres">
+              <span class="context-mark" aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
+              </span>
+              <span class="context-body">
+                <span class="context-kind">Superadministrator</span>
+                <span class="context-name">Wszystkie kluby</span>
+              </span>
+              <svg class="context-switch" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+            </a>
+            <nav class="sidebar-nav" aria-label="Sekcje panelu superadministratora - przykład">
+              <a class="nav-item active" href="organizacje-lista.html">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
+                Organizacje
+              </a>
+            </nav>
+          </aside>
+          <div class="content">
+            <div class="page">
+              <span class="inv-mark">lewa kolumna = rama klubu · środkowa = rama superadministratora · po prawej obszar treści</span>
+              <nav class="crumbs" aria-label="Ścieżka - przykład">
+                <a href="dziennik-flota.html">Dziennik</a>
+                <span class="sep" aria-hidden="true">/</span>
+                <a href="dziennik-maszyna.html">SP-AXA</a>
+                <span class="sep" aria-hidden="true">/</span>
+                <span class="current">SP-AXA/2026-09-06/TMA/1</span>
+              </nav>
+              <div class="page-head">
+                <div>
+                  <h1 class="page-title">SP-AXA</h1>
+                  <p class="page-sub">SP-AXA/2026-09-06/TMA/1 · silnik 08:42 → 11:04 UTC</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Breadcrumbs · okruszki</span>
+        <span class="inv-when">WYŁĄCZNIE tam, gdzie ekran leży pod innym ekranem - dziś tylko w dzienniku (flota → maszyna → operacja), gdzie zastąpiły przyciski „← Dziennik" z nagłówka. Na liście modułu okruszek opisywałby jedno kliknięcie w kolumnie obok, czyli dokładnie to, za co panel 2.0 wyrzucił je z paska. Ostatni człon jest bieżącą stroną i nie jest linkiem; link „Dziennik" niesie zakres dat, z którego się przyszło.</span>
+        <span class="inv-classes"><b>.crumbs</b> · .sep · .current</span>
+      </div>
+      <div class="inv-demo">
+        <nav class="crumbs" aria-label="Ścieżka - przykład">
+          <a href="dziennik-flota.html">Dziennik</a>
+          <span class="sep" aria-hidden="true">/</span>
+          <span class="current">SP-AXA</span>
+        </nav>
+        <nav class="crumbs" aria-label="Ścieżka - przykład, poziom 3">
+          <a href="dziennik-flota.html">Dziennik</a>
+          <span class="sep" aria-hidden="true">/</span>
+          <a href="dziennik-maszyna.html">SP-AXA</a>
+          <span class="sep" aria-hidden="true">/</span>
+          <span class="current">SP-AXA/2026-09-06/TMA/1</span>
+        </nav>
+      </div>
+    </article>
 
     <article class="inv">
       <div class="inv-head">
         <span class="inv-name">PageHead</span>
-        <span class="inv-when">Pierwszy element każdego ekranu. Podtytuł jest OPCJONALNY: przy tabeli, której pierwszą kolumną jest nazwisko, a tytułem „PILOCI", zdanie wyjaśniające opisuje oczywistość - a każdy taki opis uczy pomijać miejsce, w którym kiedyś stanie coś ważnego.</span>
+        <span class="inv-when">Pierwszy element ekranu (po okruszkach, jeśli są). Tytuł w PISOWNI ZDANIOWEJ krojem tekstowym - „Dziennik", nie „DZIENNIK" - bo tytuł strony jest zdaniem, a nie znakiem. Podtytuł jest OPCJONALNY: przy tabeli, której pierwszą kolumną jest nazwisko, a tytułem „Piloci", zdanie wyjaśniające opisuje oczywistość. Włos pod nagłówkiem daje oku ten sam punkt startu na każdym ekranie.</span>
         <span class="inv-classes"><b>.page-head</b> · .page-title · .page-sub · .page-actions</span>
       </div>
       <div class="inv-demo">
         <div class="page-head">
           <div>
-            <h1 class="page-title">SAMOLOTY</h1>
+            <h1 class="page-title">Samoloty</h1>
             <p class="page-sub">Flota klubu: konfiguracja jednostki i jej aktualny stan.</p>
           </div>
           <div class="page-actions">
@@ -289,10 +423,17 @@
       </div>
     </article>
 
+  </div>
+</section>
+
+<section class="canvas-section">
+  <div class="canvas-section-title">Akcje</div>
+  <div class="inv-grid">
+
     <article class="inv">
       <div class="inv-head">
         <span class="inv-name">Button · LinkButton</span>
-        <span class="inv-when">Jedna akcja główna na ekran (<code>primary</code>) - w kolumnie tabeli byłoby jej kilkanaście naraz i żadna nie byłaby główna. <code>ok</code> to zielona obramówka, czyli akcja PRZYWRACAJĄCA; <code>danger</code> - odcinająca. Przycisk zablokowany NIGDY nie stoi bez powodu: powód jest widocznym tekstem, nie dymkiem.</span>
+        <span class="inv-when">Jedna akcja główna na ekran (<code>primary</code>) - w kolumnie tabeli byłoby jej kilkanaście naraz i żadna nie byłaby główna. <code>ok</code> to zielona obramówka, czyli akcja PRZYWRACAJĄCA; <code>danger</code> - odcinająca, też obramówką (wypełnienie dopiero pod kursorem); <code>ghost</code> - bez tła i ramki, akcja trzeciorzędna w wierszu tabeli i w stopce szuflady. Przycisk zablokowany NIGDY nie stoi bez powodu: powód jest widocznym tekstem, nie dymkiem.</span>
         <span class="inv-classes"><b>.btn</b> · .btn.primary · .btn.ghost · .btn.ok · .btn.danger · .btn.sm · .btn.block · .btn.disabled</span>
       </div>
       <div class="inv-demo">
@@ -305,6 +446,7 @@
         </div>
         <div class="inv-row">
           <button type="button" class="btn sm">Otwórz</button>
+          <button type="button" class="btn ghost sm">Edytuj</button>
           <button type="button" class="btn danger sm">Usuń</button>
           <span class="btn disabled" aria-disabled="true">Usuń - najpierw wyłącz jednostkę</span>
         </div>
@@ -313,26 +455,54 @@
       </div>
     </article>
 
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">SearchInput · FilterChip · DateRange</span>
+        <span class="inv-when">Pasek nad tabelą. Chip jest <code>&lt;button&gt;</code>, a wyszukiwarka <code>&lt;label&gt;</code> - filtr, którego nie da się ustawić bez myszy, psuje scenariusz „przygotuj link do tego wycinka". Chip WŁĄCZONY jest odwrócony, jak aktywna pozycja kolumny - jeden język zaznaczenia w całym panelu. BEZ LICZB przy chipach poza Zgłoszeniami, gdzie liczba jest treścią triażu.</span>
+        <span class="inv-classes"><b>.filters</b> · .search · .chip · .chip.on · .daterange · .daterange-sep</span>
+      </div>
+      <div class="inv-demo">
+        <div class="filters">
+          <label class="search">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input value="" placeholder="Nazwisko albo kod - klawisz /" aria-label="Szukaj pilota">
+          </label>
+          <button type="button" class="chip on" aria-pressed="true">Aktywne</button>
+          <button type="button" class="chip" aria-pressed="false">Wyłączone</button>
+          <span class="daterange">
+            <input type="date" value="2026-09-01" aria-label="Data od">
+            <span class="daterange-sep">→</span>
+            <input type="date" value="2026-09-07" aria-label="Data do">
+          </span>
+        </div>
+      </div>
+    </article>
+
   </div>
 </section>
 
 <section class="canvas-section">
-  <div class="canvas-section-title">Wielofirmowość · klub w pasku, link, kod klubu</div>
+  <div class="canvas-section-title">Wielofirmowość · klub w kolumnie, link, kod klubu</div>
   <div class="inv-grid">
 
     <article class="inv">
       <div class="inv-head">
-        <span class="inv-name">Kontekst klubu w pasku górnym</span>
-        <span class="inv-when">Zaraz za znakiem, w KAŻDEJ ramie klubowej - także przy jednym członkostwie, bo nazwa klubu odpowiada na pytanie „czyj to dziennik" przy każdym wklejonym linku. Jest linkiem na wybór klubu (<code>00a-wybor-klubu</code>): nowa sesja, bez ponownego logowania. Rama superadministratora ma zamiast tego etykietę <code>.topbar-scope</code> - moduł Organizacje nie jest w żadnym klubie.</span>
-        <span class="inv-classes"><b>.topbar-org</b> · .topbar-scope</span>
+        <span class="inv-name">Kontekst klubu w kolumnie bocznej</span>
+        <span class="inv-when">Pierwsza rzecz w kolumnie, w KAŻDEJ ramie klubowej - także przy jednym członkostwie, bo nazwa klubu odpowiada na pytanie „czyj to dziennik" przy każdym wklejonym linku. Jest linkiem na wybór klubu (<code>00a-wybor-klubu</code>): nowa sesja, bez ponownego logowania. Rama superadministratora ma ten sam kafel z podpisem zakresu (<code>.scope</code>) - moduł Organizacje nie jest w żadnym klubie.</span>
+        <span class="inv-classes"><b>.sidebar-context</b> · .sidebar-context.scope · .context-mark · .context-kind · .context-name · .context-switch</span>
       </div>
-      <div class="inv-demo">
-        <div class="inv-row">
-          <a class="topbar-org" href="00a-wybor-klubu.html">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
-            Aeroklub Zielonogórski
-          </a>
-          <span class="topbar-scope">Superadministrator</span>
+      <div class="inv-demo chrome-demo">
+        <div class="sidebar-demo" style="height:auto">
+          <aside class="sidebar">
+            <a class="sidebar-context" href="00a-wybor-klubu.html">
+              <span class="context-mark" aria-hidden="true">AK</span>
+              <span class="context-body">
+                <span class="context-kind">Klub</span>
+                <span class="context-name">Aeroklub Krakowski</span>
+              </span>
+              <svg class="context-switch" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+            </a>
+          </aside>
         </div>
       </div>
     </article>
@@ -365,8 +535,8 @@
     <article class="inv">
       <div class="inv-head">
         <span class="inv-name">Field · TextInput</span>
-        <span class="inv-when">Podpowiedź pod polem TYLKO wtedy, gdy pole wymaga wiedzy spoza tabliczki znamionowej - i daje wtedy PRZYKŁAD, nie wykład. Błąd stoi przy polu, którego dotyczy, nigdy w banerze nad formularzem: baner każe szukać, które z czterech pól poprawić.</span>
-        <span class="inv-classes"><b>.field</b> · .label · .input · .input.mono · .input.invalid · .input.area · .hint · .hint.danger · .field-pair</span>
+        <span class="inv-when">Etykieta krojem tekstowym, półgruba, jak w każdym formularzu web. Podpowiedź pod polem TYLKO wtedy, gdy pole wymaga wiedzy spoza tabliczki znamionowej - i daje wtedy PRZYKŁAD, nie wykład. Błąd stoi przy polu, którego dotyczy, nigdy w banerze nad formularzem.</span>
+        <span class="inv-classes"><b>.field</b> · .label · .input · .input.mono · .input.invalid · .input.area · .input:disabled · .hint · .hint.danger · .field-pair</span>
       </div>
       <div class="inv-demo">
         <div class="field-pair">
@@ -391,22 +561,22 @@
     <article class="inv">
       <div class="inv-head">
         <span class="inv-name">OptionButton - wybór jako lista kart</span>
-        <span class="inv-when">ZAKAZ natywnego <code>&lt;select&gt;</code>: wybór to zawsze widoczna lista kart, więc opcje widać bez klikania. Druga linia jest drobna i mono - niesie SKUTEK wyboru, a nie zdanie o nim. Ta sama karta prowadzi też w głąb (wtedy zamiast ptaszka stoi szewron <code>.opt-go</code>).</span>
-        <span class="inv-classes"><b>.opt-list</b> · .opt · .opt.selected · .opt-body · .opt-name · .opt-desc · .opt-check</span>
+        <span class="inv-when">ZAKAZ natywnego <code>&lt;select&gt;</code>: wybór to zawsze widoczna lista kart, więc opcje widać bez klikania. Druga linia niesie SKUTEK wyboru. Zaznaczona karta ma zieloną ramkę, nie zielone tło - kolor mówi „ta", a nie przemalowuje połowy formularza. Ta sama karta prowadzi też w głąb (wtedy zamiast ptaszka stoi szewron <code>.opt-go</code>).</span>
+        <span class="inv-classes"><b>.opt-list</b> · .opt · .opt.selected · .opt-body · .opt-name · .opt-desc · .opt-check · .opt-go</span>
       </div>
       <div class="inv-demo">
         <div class="opt-list" role="radiogroup" aria-label="Co zrobić z operacją">
           <button type="button" class="opt selected" role="radio" aria-checked="true">
             <span class="opt-body">
               <span class="opt-name">Zostaw w dzienniku</span>
-              <span class="opt-desc">operacja liczy się do nalotu i sum</span>
+              <span class="opt-desc">Operacja liczy się do nalotu i sum.</span>
             </span>
             <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
           </button>
           <button type="button" class="opt" role="radio" aria-checked="false">
             <span class="opt-body">
               <span class="opt-name">Od razu unieważnij</span>
-              <span class="opt-desc">wpis zostaje w rejestrze, wypada z rachunków</span>
+              <span class="opt-desc">Wpis zostaje w rejestrze, wypada z rachunków.</span>
             </span>
             <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
           </button>
@@ -426,40 +596,14 @@
           <button type="button" class="btn danger sm">Wyłącz konto</button>
         </div>
         <div class="confirm">
-          <!-- DWUKROPEK, nie dopełniacz (2026-09-07). Szablon pisał tu „konto Tomasza
-               Małkiewicza?", a panel składa napis z imienia i nazwiska pilota - odmiany
-               dowolnego nazwiska nie da się złożyć w kodzie („Kowal" → „Kowal", ale
-               „Małkiewicz" → „Małkiewicza"), więc szablon obiecywał brzmienie, którego
-               ekran nie umie wyprodukować. Dwukropek jest poprawny dla KAŻDEGO. -->
+          <!-- DWUKROPEK, nie dopełniacz: panel składa napis z imienia i nazwiska, a odmiany
+               dowolnego nazwiska nie da się złożyć w kodzie. -->
           <div class="confirm-q">Wyłączyć konto: Tomasz Małkiewicz?</div>
           <span class="hint">Telefon przestanie się synchronizować od razu. Loty i odczyty zostają w dzienniku - konto da się włączyć z powrotem.</span>
           <div class="confirm-actions">
             <button type="button" class="btn sm">Nie</button>
             <button type="button" class="btn danger sm">Wyłącz</button>
           </div>
-        </div>
-      </div>
-    </article>
-
-    <article class="inv">
-      <div class="inv-head">
-        <span class="inv-name">SearchInput · FilterChip · DateRange</span>
-        <span class="inv-when">Pasek nad tabelą. Chip jest <code>&lt;button&gt;</code>, a wyszukiwarka <code>&lt;label&gt;</code> - filtr, którego nie da się ustawić bez myszy, psuje scenariusz „przygotuj link do tego wycinka". BEZ LICZB przy chipach: dwie różne liczby o tym samym na jednym ekranie wymagają przypisu.</span>
-        <span class="inv-classes"><b>.filters</b> · .search · .chip · .chip.on · .daterange · .daterange-sep</span>
-      </div>
-      <div class="inv-demo">
-        <div class="filters">
-          <label class="search">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input value="" placeholder="Nazwisko albo kod - klawisz /" aria-label="Szukaj pilota">
-          </label>
-          <button type="button" class="chip on" aria-pressed="true">Aktywne</button>
-          <button type="button" class="chip" aria-pressed="false">Wyłączone</button>
-          <span class="daterange">
-            <input type="date" value="2026-09-01" aria-label="Data od">
-            <span class="daterange-sep">→</span>
-            <input type="date" value="2026-09-07" aria-label="Data do">
-          </span>
         </div>
       </div>
     </article>
@@ -474,7 +618,7 @@
     <article class="inv">
       <div class="inv-head">
         <span class="inv-name">Pill</span>
-        <span class="inv-when">Stan rzeczy w jednym słowie - przy tytule karty albo w komórce tabeli. Kropka pulsująca (<code>.dot.live</code>) WYŁĄCZNIE dla stanu trwającego (maszyna w powietrzu): ruch na ekranie ma znaczyć, że coś się właśnie dzieje.</span>
+        <span class="inv-when">Stan rzeczy w jednym słowie - przy tytule karty albo w komórce tabeli. Bez ramki i bez wersalików: kolor tła mówi ton, napis stan - pisany jak zdanie, z wielkiej litery. Kropka pulsująca (<code>.dot.live</code>) WYŁĄCZNIE dla stanu trwającego (maszyna w powietrzu): ruch na ekranie ma znaczyć, że coś się właśnie dzieje.</span>
         <span class="inv-classes"><b>.pill</b> · .pill.green · .pill.amber · .pill.red · .pill.blue · .pill.dim · .dot · .dot.live</span>
       </div>
       <div class="inv-demo">
@@ -495,7 +639,7 @@
     <article class="inv">
       <div class="inv-head">
         <span class="inv-name">Card · wiersz klucz-wartość</span>
-        <span class="inv-when">Karta grupuje to, co czyta się razem. Tytuł jest mono i drobny, bo nazywa sekcję, a nie konkuruje z liczbami pod nią; slot <code>.spacer</code> odsuwa plakietkę stanu na prawą krawędź. Wiersz <code>.kv</code> stawia wartość po prawej i wytłuszcza ją - kolumnę liczb czyta się w dół.</span>
+        <span class="inv-when">Karta grupuje to, co czyta się razem. Tytuł jest nagłówkiem sekcji krojem tekstowym - bez zielonej kreski i bez wersalików; slot <code>.spacer</code> odsuwa plakietkę stanu na prawą krawędź. Wiersz <code>.kv</code> stawia wartość po prawej, mono - kolumnę liczb czyta się w dół.</span>
         <span class="inv-classes"><b>.card</b> · .card-title · .spacer · .kv · .kv-k · .kv-v · .kv-v.green|amber|red|blue · .kv-v small · .kv-v .was</span>
       </div>
       <div class="inv-demo">
@@ -516,7 +660,7 @@
     <article class="inv full">
       <div class="inv-head">
         <span class="inv-name">Banner</span>
-        <span class="inv-when">Ikona wynika z TONU, nigdy z parametru: baner ostrzegawczy z ikoną informacji uczy, że kolor nic nie znaczy - a kolor jest jedyną rzeczą, którą w panelu widać kątem oka. Banery panelu NIE SĄ zamykalne i nie ma ich stale na ekranie: baner mówi o stanie, który zaraz minie, albo o odmowie, która właśnie padła. Panel 2.0 ma ZERO banerów stałych (1.0 miał dziewięć).</span>
+        <span class="inv-when">Ikona wynika z TONU, nigdy z parametru: baner ostrzegawczy z ikoną informacji uczy, że kolor nic nie znaczy - a kolor jest jedyną rzeczą, którą w panelu widać kątem oka. Banery panelu NIE SĄ zamykalne i nie ma ich stale na ekranie: baner mówi o stanie, który zaraz minie, albo o odmowie, która właśnie padła.</span>
         <span class="inv-classes"><b>.banner</b> · .banner.status · .banner.warn · .banner.danger · .banner.ok</span>
       </div>
       <div class="inv-demo">
@@ -549,8 +693,8 @@
     <article class="inv full">
       <div class="inv-head">
         <span class="inv-name">DataTable</span>
-        <span class="inv-when">Kręgosłup panelu. Reguła, której nie wolno zgubić: <b>liczby zawsze mono i do prawej</b> (<code>.num</code>) - panel czyta się kolumną, a czcionka proporcjonalna przesuwa cyfry względem siebie. Druga linia komórki (<code>.cell-sub</code>) KWALIFIKUJE wartość nad sobą; jej ton mówi o wieku danych (<code>fresh</code> / <code>stale</code> / <code>none</code>) albo ostrzega (<code>warn</code>). <b>Brakujący odczyt jest kreską, nigdy zerem</b>: <code>0 L</code> znaczy pusty zbiornik, <code>—</code> znaczy „nikt nie zapisał"; przy parze kreska zostaje PRZY strzałce, żeby widać było, którego odczytu brakuje. Wiersz jest klikalny, ale drogą właściwą jest link w kolumnie akcji - inaczej ginie „kopiuj adres linku".</span>
-        <span class="inv-classes"><b>.table-wrap</b> · thead th · th.num · <b>tbody td</b> · td.num · td.mono · td.dim · .cell-strong · .cell-sub · .cell-sub.fresh|stale|none|warn · .reg · .cell-pair · .cell-arrow · .cell-go · .cell-link · tr.clickable · tr.opened · tr.muted · tr.voided · .row-actions · .list-foot</span>
+        <span class="inv-when">Kręgosłup panelu. Reguła, której nie wolno zgubić: <b>liczby zawsze mono i do prawej</b> (<code>.num</code>) - panel czyta się kolumną, a czcionka proporcjonalna przesuwa cyfry względem siebie. Nagłówek krojem tekstowym, na tym samym tle, co wiersze. Druga linia komórki (<code>.cell-sub</code>) KWALIFIKUJE wartość nad sobą; wartość maszynowa (e-mail, sygnatura) dostaje do tego <code>.mono</code>; jej ton mówi o wieku danych (<code>fresh</code> / <code>stale</code> / <code>none</code>) albo ostrzega (<code>warn</code>). <b>Brakujący odczyt jest kreską, nigdy zerem.</b> Wiersz jest klikalny, ale drogą właściwą jest link w kolumnie akcji - inaczej ginie „kopiuj adres linku".</span>
+        <span class="inv-classes"><b>.table-wrap</b> · thead th · th.num · <b>tbody td</b> · td.num · td.mono · td.dim · .cell-strong · .cell-sub · .cell-sub.mono · .cell-sub.fresh|stale|none|warn · .reg · .cell-pair · .cell-arrow · .cell-go · .cell-link · tr.clickable · tr.opened · tr.muted · tr.voided · .row-actions · .list-foot</span>
       </div>
       <div class="inv-demo">
         <div class="table-wrap">
@@ -573,7 +717,7 @@
                 <td><span class="pill green">W służbie</span></td>
                 <td class="num">108 L<span class="cell-sub fresh">odczyt 6 WRZ 11:04</span></td>
                 <td class="num">1238:52<span class="cell-sub fresh">6 WRZ</span></td>
-                <td><span class="cell-go" aria-hidden="true">›</span></td>
+                <td class="row-actions"><a class="btn ghost sm" href="#">Edytuj</a></td>
               </tr>
               <tr class="clickable opened">
                 <td><span class="reg">SP-KLM</span></td>
@@ -581,7 +725,7 @@
                 <td><span class="pill amber"><span class="dot live"></span>Samolot zajęty</span></td>
                 <td class="num">—<span class="cell-sub none">brak odczytu</span></td>
                 <td class="num">645:06<span class="cell-sub stale">28 SIE</span></td>
-                <td><span class="cell-go" aria-hidden="true">›</span></td>
+                <td class="row-actions"><a class="btn ghost sm" href="#">Edytuj</a></td>
               </tr>
               <tr class="clickable muted">
                 <td><span class="reg">SP-TWG</span></td>
@@ -589,7 +733,7 @@
                 <td><span class="pill dim">Poza służbą</span></td>
                 <td class="num">40 L<span class="cell-sub warn">ktoś jeszcze na nim lata</span></td>
                 <td class="num">2104:18<span class="cell-sub stale">14 SIE</span></td>
-                <td><span class="cell-go" aria-hidden="true">›</span></td>
+                <td class="row-actions"><a class="btn ghost sm" href="#">Edytuj</a></td>
               </tr>
               <tr class="voided">
                 <td><span class="reg">SP-OLD</span></td>
@@ -602,11 +746,7 @@
             </tbody>
           </table>
         </div>
-        <!-- STOPKA MÓWI, ŻE LISTA JEST PRZYCIĘTA - i tylko wtedy istnieje (sprostowanie
-             2026-09-07). Szablon pokazywał tu „Pokazano 4 z 4" z przyciskiem „Pokaż więcej",
-             czyli komplet z dokładką i paginację, której nie ma ani jeden ekran panelu 2.0.
-             Ekran renderuje jedno zdanie i mówi w nim, CO ZROBIĆ z resztą - lista ucięta
-             po cichu wygląda jak komplet, a to najgorszy tryb awarii narzędzia nadzoru. -->
+        <!-- STOPKA MÓWI, ŻE LISTA JEST PRZYCIĘTA - i tylko wtedy istnieje. -->
         <p class="list-foot">Pokazano 50 z 214 operacji - zawęź zakres dat, żeby zobaczyć resztę.</p>
         <span class="inv-mark">wiersz 2 = otwarty w szufladzie · wiersz 3 = poza służbą (samo przygaszenie) · wiersz 4 = unieważniony (przekreślenie)</span>
       </div>
@@ -622,7 +762,7 @@
     <article class="inv">
       <div class="inv-head">
         <span class="inv-name">TableSkeleton · Loadable</span>
-        <span class="inv-when">Ekran czekający na odczyt rysuje plamki W GEOMETRII DOCELOWEJ - <b>nigdy spinnera i nigdy pustki</b>. Nagłówki tabeli znamy lokalnie, więc nie migoczą: migotanie ich byłoby kłamstwem o tym, czego jeszcze nie wiemy. Szerokości plamek podaje wywołujący (kod pilota jest krótki, nazwisko długie) - plamka jednakowa w każdej kolumnie wygląda jak siatka, a nie jak wiersze. Próg 180 ms, minimum 420 ms: odpowiedź w 90 ms nie ma prawa mrugnąć.</span>
+        <span class="inv-when">Ekran czekający na odczyt rysuje plamki W GEOMETRII DOCELOWEJ - <b>nigdy spinnera i nigdy pustki</b>. Nagłówki tabeli znamy lokalnie, więc nie migoczą. Szerokości plamek podaje wywołujący (kod pilota jest krótki, nazwisko długie). Próg 180 ms, minimum 420 ms: odpowiedź w 90 ms nie ma prawa mrugnąć.</span>
         <span class="inv-classes"><b>.skeleton</b> · .skeleton.cell · .table-wrap[aria-busy]</span>
       </div>
       <div class="inv-demo">
@@ -645,19 +785,19 @@
     <article class="inv">
       <div class="inv-head">
         <span class="inv-name">EmptyState · NoAccess</span>
-        <span class="inv-when">DWA różne komunikaty i dlatego dwie klasy. Pusto znaczy „nic się nie zdarzyło"; brak dostępu znaczy „coś tu jest, ale nie dla Ciebie". Jedna klasa na oba kazałaby zgadywać, czy to awaria, pusty system, czy własne uprawnienia - a to trzy różne rozmowy z administratorem. Opis (<code>.empty-note</code>) jest OBOWIĄZKOWY: pusty ekran bez wyjaśnienia to najgorsza odpowiedź narzędzia nadzoru.</span>
+        <span class="inv-when">DWA różne komunikaty i dlatego dwie klasy. Pusto znaczy „nic się nie zdarzyło"; brak dostępu znaczy „coś tu jest, ale nie dla Ciebie". Tytuł w pisowni zdaniowej, jak wszystko poza marką. Opis (<code>.empty-note</code>) jest OBOWIĄZKOWY: pusty ekran bez wyjaśnienia to najgorsza odpowiedź narzędzia nadzoru.</span>
         <span class="inv-classes"><b>.empty</b> · .empty-icon · .empty-title · .empty-note · <b>.no-access</b></span>
       </div>
       <div class="inv-demo">
         <div class="empty">
           <span class="empty-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg></span>
-          <span class="empty-title">ŻADNEJ OPERACJI</span>
+          <span class="empty-title">Żadnej operacji</span>
           <span class="empty-note">W tym zakresie dat nikt nie latał tą maszyną. Zmień daty albo wróć do widoku całej floty.</span>
           <a class="btn sm" href="#">Cała flota</a>
         </div>
         <div class="no-access">
           <span class="empty-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
-          <span class="empty-title">TEGO NIE OGLĄDASZ</span>
+          <span class="empty-title">Tego nie oglądasz</span>
           <span class="pill amber">Poproś administratora klubu</span>
           <span class="empty-note">Zgłoszenia rejestracyjne niosą adresy osób spoza klubu, więc widzi je tylko konto zakładające konta.</span>
         </div>
@@ -674,13 +814,12 @@
     <article class="inv full">
       <div class="inv-head">
         <span class="inv-name">Drawer</span>
-        <span class="inv-when">Wejście w sprawę NIE KOSZTUJE kontekstu listy: lista zostaje pod spodem (przesłona przyciemnia ją słabiej niż modal telefonu - ma być czytelna), a adres jest do wklejenia. Stopka trzyma akcje w kolejności „anuluj, potem akcja"; <code>.drawer.wide</code> (660 px) bierze szuflada będąca FORMULARZEM, nie podglądem. Esc zamyka, fokus wraca tam, skąd przyszedł - i nie wychodzi tabulatorem poza szufladę.</span>
+        <span class="inv-when">Wejście w sprawę NIE KOSZTUJE kontekstu listy: lista zostaje pod spodem (przesłona przyciemnia ją słabiej niż modal telefonu - ma być czytelna), a adres jest do wklejenia. Tytuł w pisowni zdaniowej („Anna Kowal", nie „ANNA KOWAL"). Stopka trzyma akcje w kolejności „anuluj, potem akcja"; <code>.drawer.wide</code> (660 px) bierze szuflada będąca FORMULARZEM. Esc zamyka, fokus wraca tam, skąd przyszedł - i nie wychodzi tabulatorem poza szufladę.</span>
         <span class="inv-classes"><b>.drawer-scrim</b> · <b>.drawer</b> · .drawer.wide · .drawer-head · .drawer-title · .drawer-sub · .drawer-body · .drawer-foot · .drawer-note · .x-btn</span>
       </div>
       <div class="inv-demo">
         <!-- `.drawer-demo` to pudełko WYŁĄCZNIE makiety: jego `transform` sprawia, że
-             `position: fixed` szuflady przypina się do tego prostokąta, a nie do całej
-             strony. W panelu tę samą rolę pełni okno przeglądarki. -->
+             `position: fixed` szuflady przypina się do tego prostokąta. -->
         <div class="drawer-demo">
           <button type="button" class="drawer-scrim" aria-label="Zamknij szufladę"></button>
           <div class="drawer" role="dialog" aria-modal="true" aria-label="SP-AXA">
@@ -713,34 +852,29 @@
                   <span class="spacer"></span>
                   <span class="pill dim">Z dziennika</span>
                 </div>
-                <!-- POLA DO ODCZYTU, nie wiersze klucz-wartość (sprostowanie 2026-09-07).
-                     Szablon pokazywał tu `.kv`, a ekran floty renderuje pola formularza
-                     wyłączone (`.field` + `.input:disabled` + `.hint`) - i tak ma zostać:
-                     „Aktualny stan" WCHODZI do formularza przy tworzeniu jednostki
-                     (zerowe ogniwo łańcucha odczytów, issue #66), a gaśnie dopiero, gdy
-                     liczbę przejmie dziennik. Pole, które raz jest polem, a raz wierszem
-                     tabeli, kazałoby czytać ten sam formularz dwa razy. Podpis pod polem
-                     mówi SKĄD jest liczba - `.kv` nie miało na to miejsca. -->
+                <!-- POLA DO ODCZYTU, nie wiersze klucz-wartość: „Aktualny stan" WCHODZI do
+                     formularza przy tworzeniu jednostki, a gaśnie dopiero, gdy liczbę
+                     przejmie dziennik. Podpis pod polem mówi SKĄD jest liczba. -->
                 <div class="field">
                   <label class="label" for="d-state-fuel">Paliwo (L)</label>
                   <input class="input mono" id="d-state-fuel" value="108" disabled>
-                  <span class="hint">Z dziennika · odczyt 6 WRZEŚNIA 11:04 UTC.</span>
+                  <span class="hint">Z dziennika · odczyt 6 września 11:04 UTC.</span>
                 </div>
                 <div class="field">
                   <label class="label" for="d-state-mh">Motogodziny</label>
                   <input class="input mono" id="d-state-mh" value="1238:52" disabled>
-                  <span class="hint">Z dziennika · odczyt 6 WRZEŚNIA 11:04 UTC.</span>
+                  <span class="hint">Z dziennika · odczyt 6 września 11:04 UTC.</span>
                 </div>
                 <div class="field">
                   <label class="label" for="d-state-oil">Olej (L)</label>
                   <input class="input mono" id="d-state-oil" value="9,2" disabled>
-                  <span class="hint">Z dziennika · pomiar 6 WRZEŚNIA 08:40.</span>
+                  <span class="hint">Z dziennika · pomiar 6 września 08:40.</span>
                 </div>
               </div>
             </div>
             <div class="drawer-foot">
               <span class="drawer-note">Odczyty prowadzi dziennik</span>
-              <button type="button" class="btn">Anuluj</button>
+              <button type="button" class="btn ghost">Anuluj</button>
               <button type="button" class="btn primary">Zapisz</button>
             </div>
           </div>
@@ -752,19 +886,19 @@
 </section>
 
 <section class="canvas-section">
-  <div class="canvas-section-title">Czego w panelu 2.0 nie ma</div>
+  <div class="canvas-section-title">Czego w panelu nie ma</div>
   <div class="inv-grid">
 
     <article class="inv full">
       <div class="inv-head">
         <span class="inv-name">Klasy w arkuszu, których żaden ekran nie używa</span>
-        <span class="inv-when">Arkusz jest wierną kopią <code>admin/src/styles/</code>, więc niesie także reguły po ekranach panelu 1.0. <b>Nie sięgaj po nie przy nowej makiecie</b> - każda z nich została wycofana z powodem, a odtworzenie jej wygląda jak spójność z resztą produktu, a nią nie jest. Gdy któraś ma wrócić, wraca razem z modułem, który jej potrzebuje - i wtedy jest to decyzja produktowa, nie sięgnięcie po gotowe.</span>
-        <span class="inv-classes">.tiles · .tile · .tile-key · .tile-val — kafle z licznikami (1.0 miał ich osiem, 2.0 ma zero: liczba wymagająca przypisu wypada razem z przypisem)<br>.secret · .secret-value — hasło pokazane jeden raz; haseł nie ma od 2026-09-04, wchodzi się kontem Google<br>.det · .det-row · .det-k · .det-v — rozwinięcie payloadu w rejestrze zdarzeń<br>.clock-val · .cell-age · tbody tr.flagged · .row-expand — skrzynka flag i rejestr zdarzeń<br>.code-ref — odwołanie do pliku źródłowego na ekranie (nazwy z kodu nie wychodzą do klienta)<br>.field-row · .opt-grid · .opt-go — bez ekranu, który by ich używał</span>
+        <span class="inv-when">Arkusz jest wierną kopią <code>admin/src/styles/</code>, więc niesie także reguły po ekranach panelu 1.0. <b>Nie sięgaj po nie przy nowej makiecie</b> - każda z nich została wycofana z powodem. Gdy któraś ma wrócić, wraca razem z modułem, który jej potrzebuje.</span>
+        <span class="inv-classes">.tiles · .tile · .tile-key · .tile-val — kafle z licznikami (1.0 miał ich osiem, 2.0 ma zero: liczba wymagająca przypisu wypada razem z przypisem)<br>.secret · .secret-value — wartość pokazana jeden raz; haseł nie ma od 2026-09-04, `.linkbox` robi to samo z adresem zaproszenia<br>.det · .det-row · .det-k · .det-v — rozwinięcie payloadu w rejestrze zdarzeń<br>.clock-val · .cell-age · tbody tr.flagged · .row-expand — skrzynka flag i rejestr zdarzeń<br>.code-ref — odwołanie do pliku źródłowego na ekranie<br>.field-row · .opt-grid — bez ekranu, który by ich używał</span>
       </div>
       <div class="inv-demo">
         <div class="banner status">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-          <span><b>Trzy rzeczy, które panel 2.0 robi inaczej niż 1.0.</b> Nawigacja to pasek górny, nie kolumna boczna. Brak uprawnień znaczy brak przycisku, a nie przycisk wyszarzony. Ekran ODPOWIADA zamiast tłumaczyć: zostały trzy rodzaje tekstu - podpowiedź pod polem, komunikat po akcji i powód blokady.</span>
+          <span><b>Trzy rzeczy, które panel robi inaczej niż 1.0.</b> Brak uprawnień znaczy brak przycisku, a nie przycisk wyszarzony. Ekran ODPOWIADA zamiast tłumaczyć: zostały trzy rodzaje tekstu - podpowiedź pod polem, komunikat po akcji i powód blokady. Kolumna boczna wróciła w stylu lekkim (issue #107), ale jako PŁASKA lista z ikonami i kontekstem klubu - nie jako jedenaście pozycji w czterech grupach.</span>
         </div>
       </div>
     </article>

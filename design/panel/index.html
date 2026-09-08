@@ -26,9 +26,12 @@
 </p>
 
 <p class="idx-lead">
-  Wspólny arkusz to <code>panel.css</code> - złożony z <code>admin/src/styles/</code> w kolejności kaskady, z tymi samymi
-  nazwami klas. To jest warunek przenoszenia w obie strony: grep po <code>cell-sub</code> ma znajdować jednocześnie makietę
-  i ekran. Nowy komponent dokładamy do <code>SZABLON.html</code>, nie do pojedynczej makiety.
+  Wspólny arkusz to <code>panel.css</code> - <b>generowany</b> (<code>npm run panel:css</code> w <code>admin/</code>)
+  z arkuszy <code>admin/src/styles/</code> w kolejności kaskady i z <code>rama.css</code> (kanwa, okno, inwentarz - klasy tylko makiety).
+  Nazwy klas są te same po obu stronach: grep po <code>cell-sub</code> ma znajdować jednocześnie makietę i ekran.
+  Nowy komponent dokładamy do arkusza w <code>admin/src/styles/components/</code> i do inwentarza w <code>SZABLON.html</code>,
+  nie do pojedynczej makiety. Od issue #107 (2026-09-08) panel jest w <b>stylu lekkim</b>: kolumna boczna z kontekstem klubu,
+  treść jako zaokrąglony kontener nad tłem, typografia zdaniowa - kolory bez zmian.
   <code>design/admin/</code> (23 pliki) opisuje panel 1.0 i jest <b>archiwum</b> - nie kopiuj stamtąd układów.
 </p>
 
@@ -39,8 +42,8 @@
       <span class="idx-badge">BAZA</span>
       <span class="idx-body">
         <span class="idx-name">SZABLON</span>
-        <span class="idx-route">rama okna · pasek górny · inwentarz</span>
-        <span class="idx-when">Od tego pliku zaczyna się każda nowa makieta panelu: gotowy <code>&lt;head&gt;</code>, okno przeglądarki 1440×900, kanoniczny pasek górny z czterema zakładkami i inwentarz komponentów z podpisem, kiedy którego używać.</span>
+        <span class="idx-route">rama okna · pasek i kolumna · inwentarz</span>
+        <span class="idx-when">Od tego pliku zaczyna się każda nowa makieta panelu: gotowy <code>&lt;head&gt;</code>, okno przeglądarki 1440×900, kanoniczna rama stylu lekkiego (pasek górny, kolumna boczna z kontekstem klubu, okruszki) i inwentarz komponentów z podpisem, kiedy którego używać.</span>
       </span>
     </a>
   </div>
@@ -176,7 +179,7 @@
       <span class="idx-body">
         <span class="idx-name">organizacje-lista</span>
         <span class="idx-route">#/organizacje</span>
-        <span class="idx-when">Jedyny ekran ramy superadministratora: wszystkie kluby na serwerze, same liczby (członkowie, samoloty), pierwszy administrator i stan. Pasek górny z jedną zakładką i bez kontekstu klubu - superadministrator nie wchodzi do danych klubu.</span>
+        <span class="idx-when">Jedyny ekran ramy superadministratora: wszystkie kluby na serwerze, same liczby (członkowie, samoloty), pierwszy administrator i stan. Kolumna boczna z jedną pozycją i kaflem zakresu zamiast klubu - superadministrator nie wchodzi do danych klubu.</span>
       </span>
     </a>
     <a class="idx-card" href="organizacje-klub.html">

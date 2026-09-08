@@ -341,7 +341,8 @@ Schemat `ninerdeck` wchodzi do `app.json` razem z pakietem `com.ninerdeck.app`
 
 ### 8.1 Superadministrator: moduł `#/organizacje` (mockupy `organizacje-lista`, `organizacje-klub`)
 
-Osobna rama: pasek górny z JEDNĄ zakładką „Organizacje" i bez kontekstu klubu.
+Osobna rama: kolumna boczna z JEDNĄ pozycją „Organizacje" i kaflem zakresu
+(`.sidebar-context.scope`) zamiast kontekstu klubu (styl lekki, issue #107).
 Lista klubów (nazwa, slug, liczba członków, liczba maszyn, stan), „Załóż klub"
 = szuflada: nazwa, slug (podpowiedziany z nazwy), **pierwszy administrator jako
 zaproszenie `email`** (adres Google + imię + kod pilota) - klub bez administratora nie

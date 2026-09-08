@@ -2,11 +2,12 @@
  * UZ Aero - panel 2.0: barrel biblioteki komponentów.
  *
  * Biblioteka rośnie PACZKAMI pod konkretne ekrany, nie „na zapas": komponent bez
- * ekranu to kod, którego nikt nie sprawdził w użyciu. Panel 2.0 ma pięć ekranów
- * i siedemnaście komponentów - i to jest cała lista.
+ * ekranu to kod, którego nikt nie sprawdził w użyciu. Panel ma pięć ekranów
+ * i osiemnaście komponentów - i to jest cała lista.
  */
 
 export { Banner, type BannerTone } from './Banner';
+export { Breadcrumbs, type Crumb } from './Breadcrumbs';
 export { Button } from './Button';
 export { Card } from './Card';
 export { DataTable, type Column, type ColumnSort } from './DataTable';
