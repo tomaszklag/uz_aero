@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero - Panel 2.0 · Piloci: szuflada konta</title>
+<title>UZ Aero - Panel 2.0 · Piloci: szuflada członkostwa</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -13,7 +13,7 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">PILOCI · SZUFLADA KONTA</span>
+  <span class="film-strip">PILOCI · SZUFLADA CZŁONKOSTWA</span>
   <span class="slug">panel/piloci-konto · #/piloci/&lt;id&gt; · P2</span>
   <span class="canvas-meta"><span class="pulse"></span>Odwzorowuje AccountDrawer.tsx</span>
 </header>
@@ -23,16 +23,23 @@
   <a class="vp-item active" href="piloci-konto.html">
     <span class="vp-badge">P2</span>
     <span class="vp-body">
-      <span class="vp-name">Konto istniejące, potwierdzenie wyłączenia otwarte</span>
-      <span class="vp-when">Stan pokazany niżej. Pytanie stoi W MIEJSCU, w którym kliknięto, i niesie obie rzeczy, po które człowiek sięga: co z dostępem i co z danymi. <b>Skutek mówi się PRZED akcją</b>, nie banerem po niej.</span>
+      <span class="vp-name">Członkostwo istniejące, potwierdzenie wyłączenia otwarte</span>
+      <span class="vp-when">Stan pokazany niżej. Od 2.0.0 szuflada edytuje CZŁONKOSTWO w tym klubie (kod, rola, dostęp), a osobę - imię, nazwisko, konto Google - tylko pokazuje. Pytanie o wyłączenie stoi W MIEJSCU, w którym kliknięto, i niesie obie rzeczy, po które człowiek sięga: co z dostępem i co z danymi. <b>Skutek mówi się PRZED akcją</b>, nie banerem po niej.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
-  <a class="vp-item" href="piloci-konto.html">
-    <span class="vp-badge">P2</span>
+  <a class="vp-item" href="#druga-przynaleznosc">
+    <span class="vp-badge">P2a</span>
     <span class="vp-body">
-      <span class="vp-name">Nowe konto (<code>#/piloci/nowy</code>)</span>
-      <span class="vp-when">Ta sama szuflada z pustym formularzem: tytuł „NOWY PILOT", podtytuł „Nowe konto", <b>e-mail WYMAGANY</b> (bez adresu Google konto nie ma jak wejść) i bez sekcji „Dostęp" - nie ma jeszcze czego wyłączać. Po zapisie karta zamienia się w JEDNO zdanie: kto i jakim kontem Google wejdzie.</span>
+      <span class="vp-name">Osoba należy też do innego klubu</span>
+      <span class="vp-when">Imię i nazwisko są WSPÓLNE dla wszystkich klubów tej osoby, więc pole jest zablokowane z powodem pod nim - inaczej klub A zmieniałby nazwisko widoczne w klubie B. Kod i rola zostają do edycji: są tego klubu. Opis niżej, pod ramką.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="piloci-zaproszenie.html">
+    <span class="vp-badge">P4</span>
+    <span class="vp-body">
+      <span class="vp-name">Nowy członek = zaproszenie, nie pusty formularz</span>
+      <span class="vp-when">Dawnej szuflady „NOWY PILOT" (<code>#/piloci/nowy</code>) nie ma: osoba powstaje z konta Google przy pierwszym logowaniu, a klub ją ZAPRASZA - linkiem, adresem e-mail albo kodem klubu. Kod pilota i rolę nadaje się w zaproszeniu.</span>
     </span>
   </a>
   <a class="vp-item" href="piloci-lista.html">
@@ -45,13 +52,13 @@
   <a class="vp-item" href="piloci-zgloszenie.html">
     <span class="vp-badge amber">P3</span>
     <span class="vp-body">
-      <span class="vp-name">Zgłoszenie rejestracyjne</span>
-      <span class="vp-when">Ten sam formularz konta, ale BEZ e-maila: przy zgłoszeniu adres jest tożsamością Google i administrator go nie wpisuje.</span>
+      <span class="vp-name">Zgłoszenie kodem klubu</span>
+      <span class="vp-when">Ta sama para pól „w tym klubie" (kod, rola), ale jako DECYZJA o przyjęciu: osoba już istnieje, członkostwa jeszcze nie ma.</span>
     </span>
   </a>
 </aside>
 
-<main class="browser" role="region" aria-label="Panel UZ Aero - konto pilota">
+<main class="browser" role="region" aria-label="Panel UZ Aero - członkostwo pilota">
 
   <div class="chrome">
     <span class="chrome-dots"><i></i><i></i><i></i></span>
@@ -100,9 +107,9 @@
           <h1 class="page-title">PILOCI</h1>
         </div>
         <div class="page-actions">
-          <a class="btn primary" href="piloci-konto.html">
+          <a class="btn primary" href="piloci-zaproszenie.html">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Dodaj pilota
+            Zaproś do klubu
           </a>
         </div>
       </div>
@@ -147,14 +154,6 @@
               <td class="row-actions"><a class="btn ghost sm" href="piloci-konto.html">Edytuj</a></td>
             </tr>
             <tr class="clickable">
-              <td class="reg">KLI</td>
-              <td class="cell-strong">Krzysztof Lis</td>
-              <td><span class="cell-sub">—</span></td>
-              <td><span class="pill dim">Pilot</span></td>
-              <td><span class="pill green"><span class="dot"></span>Aktywny</span></td>
-              <td class="row-actions"><a class="btn ghost sm" href="piloci-konto.html">Edytuj</a></td>
-            </tr>
-            <tr class="clickable">
               <td class="reg">MZI</td>
               <td class="cell-strong">Marta Zięba</td>
               <td><span class="cell-sub">marta.zieba@gmail.com</span></td>
@@ -184,18 +183,20 @@
 
     </div>
 
-    <!-- ══ SZUFLADA KONTA ══
-         Trzy sekcje i tyle: kim jest, co mu wolno, czy ma dostęp. Haseł NIE MA
-         (2026-09-04) - konto nie dostaje żadnego poświadczenia, a dostęp daje pierwsze
-         logowanie kontem Google o wpisanym adresie. Zerwanie sesji ma odtąd JEDNĄ
-         drogę: „Wyłącz konto" (i włączenie z powrotem). -->
+    <!-- ══ SZUFLADA CZŁONKOSTWA (wielofirmowość 2.0.0, docs/wielofirmowosc.md §8.3) ══
+         Trzy sekcje: KIM JEST (osoba - wspólna dla wszystkich klubów), KIM JEST W TYM
+         KLUBIE (kod, rola - własność członkostwa) i CZY MA DOSTĘP do klubu. Haseł NIE MA
+         (2026-09-04); e-mail jest odtąd adresem konta Google, którym osoba się loguje -
+         panel go pokazuje, nie wpisuje (adres do zaproszenia wpisuje się w P4).
+         Zerwanie sesji w klubie ma JEDNĄ drogę: „Wyłącz członkostwo" (i włączenie
+         z powrotem); inne kluby tej osoby tego nie widzą. -->
     <button type="button" class="drawer-scrim" aria-label="Zamknij szufladę"></button>
     <div class="drawer" role="dialog" aria-modal="true" aria-label="ANNA KOWAL">
 
       <div class="drawer-head">
         <div>
           <div class="drawer-title">ANNA KOWAL</div>
-          <div class="drawer-sub">AKO · anna.kowal@gmail.com</div>
+          <div class="drawer-sub">AKO · anna.kowal@gmail.com · w klubie od 26 SIE 2026</div>
         </div>
         <button type="button" class="x-btn" aria-label="Zamknij">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -204,8 +205,14 @@
 
       <div class="drawer-body">
 
+        <!-- OSOBA: to, co jest wspólne dla wszystkich klubów. Imię i nazwisko edytuje
+             się TYLKO, gdy ta osoba ma jedno członkostwo (propozycja, docs §8.3) - tu
+             Anna Kowal jest wyłącznie w tym klubie, więc pole jest czynne; wariant
+             z blokadą opisany pod ramką (P2a). E-mail jest DO ODCZYTU: to konto Google,
+             którym osoba się loguje, i klub nie ma nad nim władzy - pole wyłączone
+             z podpisem SKĄD jest wartość, jak „Aktualny stan" na karcie samolotu. -->
         <div class="card">
-          <div class="card-title">Dane pilota</div>
+          <div class="card-title">Osoba</div>
 
           <div class="field">
             <label class="label" for="name">Imię i nazwisko</label>
@@ -213,26 +220,29 @@
           </div>
 
           <div class="field">
+            <label class="label" for="email">Konto Google</label>
+            <input class="input mono" id="email" value="anna.kowal@gmail.com" disabled>
+            <span class="hint">Adres, którym się loguje. Nadaje go Google - klub go nie zmienia.</span>
+          </div>
+        </div>
+
+        <!-- W TYM KLUBIE: własność członkostwa. Kod jest jedyny W KLUBIE, nie na
+             serwerze - ta sama osoba w innym klubie ma inny. -->
+        <div class="card">
+          <div class="card-title">W tym klubie</div>
+
+          <div class="field">
             <label class="label" for="code">Kod pilota</label>
             <input class="input mono" id="code" value="AKO">
-            <span class="hint">Krótki skrót przy każdym locie, np. TMK.</span>
-          </div>
-
-          <!-- E-mail jest WYMAGANY przy zakładaniu konta, a przy edycji nie: wymóg
-               blokowałby niezwiązaną poprawkę na starym wierszu (ta sama reguła, co
-               „Aktualny stan" na karcie samolotu). Podpowiedź mówi o SKUTKU braku. -->
-          <div class="field">
-            <label class="label" for="email">E-mail konta Google</label>
-            <input class="input mono" id="email" value="anna.kowal@gmail.com">
-            <span class="hint">Tym adresem pilot loguje się do aplikacji - bez niego konto nie ma jak wejść.</span>
+            <span class="hint">Krótki skrót przy każdym locie, np. TMK. Jedyny w tym klubie - w innym klubie ta osoba może mieć inny.</span>
           </div>
         </div>
 
         <!-- Wybór jako lista kart, nigdy natywny `<select>`: obie role widać bez
              klikania, a druga linia mówi, co rola OTWIERA. Kolejność od najmniejszych
-             uprawnień - domyślna jest pierwsza. -->
+             uprawnień - domyślna jest pierwsza. Rola jest rolą W TYM KLUBIE. -->
         <div class="card">
-          <div class="card-title">Rola</div>
+          <div class="card-title">Rola w klubie</div>
           <div class="opt-list" role="radiogroup" aria-label="Rola konta">
             <button type="button" class="opt selected" role="radio" aria-checked="true">
               <span class="opt-body">
@@ -244,7 +254,7 @@
             <button type="button" class="opt" role="radio" aria-checked="false">
               <span class="opt-body">
                 <span class="opt-name">Administrator</span>
-                <span class="opt-desc">Panel w całości, razem z pilotami i samolotami.</span>
+                <span class="opt-desc">Panel tego klubu w całości, razem z pilotami i samolotami.</span>
               </span>
               <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
             </button>
@@ -255,8 +265,8 @@
           <div class="card-title">Dostęp</div>
 
           <div class="access-row">
-            <span class="kv-k">Konto</span>
-            <button type="button" class="btn danger sm">Wyłącz konto</button>
+            <span class="kv-k">Członkostwo w klubie</span>
+            <button type="button" class="btn danger sm">Wyłącz członkostwo</button>
           </div>
 
           <!-- JEDEN stan potwierdzenia na kartę, nie dwie flagi: dwa czerwone bloki
@@ -266,23 +276,29 @@
                  chciałaby tu dopełniacza („konto Anny Kowal"). Odmiany dowolnego
                  nazwiska nie da się złożyć w kodzie, więc dwukropek stawia je
                  w mianowniku i jest poprawny dla KAŻDEGO pilota. -->
-            <p class="confirm-q">Wyłączyć konto: Anna Kowal?</p>
-            <p class="hint">Przestanie się logować od razu - na telefonie i w panelu. Zapisane loty zostają w systemie.</p>
+            <p class="confirm-q">Wyłączyć członkostwo: Anna Kowal?</p>
+            <!-- Trzy rzeczy, po które sięga administrator: dostęp (od razu), dane
+                 (zostają) i INNE KLUBY tej osoby (bez zmian) - trzecia jest nowa
+                 i bez niej wyłączenie czytałoby się jak zablokowanie człowieka. -->
+            <p class="hint">Przestanie się logować w tym klubie od razu - na telefonie i w panelu. Loty zostają w dzienniku klubu; jej członkostwa w innych klubach bez zmian.</p>
             <div class="confirm-actions">
               <button type="button" class="btn ghost sm">Anuluj</button>
-              <button type="button" class="btn danger sm">Wyłącz konto</button>
+              <button type="button" class="btn danger sm">Wyłącz członkostwo</button>
             </div>
           </div>
 
-          <!-- Powód blokady stoi W PRZYCISKU, bo widać go z listy: konto ma plakietkę
-               „Aktywny". Drugiego warunku (brak zapisanych lotów) panel nie zna - lista
-               nie niesie liczby lotów - więc ten wraca dopiero odmową serwera. -->
+          <!-- Powód blokady stoi W PRZYCISKU, bo widać go z listy: członkostwo ma
+               plakietkę „Aktywny". Drugiego warunku (brak zapisanych lotów w tym klubie)
+               panel nie zna - lista nie niesie liczby lotów - więc ten wraca dopiero
+               odmową serwera. Usunięcie dotyczy CZŁONKOSTWA: osoba zostaje na serwerze
+               ze swoimi innymi klubami; osobę bez żadnego członkostwa sprząta
+               superadministrator, nie klub. -->
           <div class="access-row">
-            <span class="kv-k">Usuń trwale</span>
+            <span class="kv-k">Usuń z klubu</span>
             <!-- Powód doklejony do etykiety BEZ kropki zdaniowej (2026-09-07): napis na
                  przycisku jest nazwą czynności, a nie zdaniem - kropka lądowała w środku.
                  Pełne zdanie zostaje w `title`, bo tam jest zdaniem. -->
-            <button type="button" class="btn danger sm" disabled title="Najpierw wyłącz konto.">Usuń konto - najpierw wyłącz konto</button>
+            <button type="button" class="btn danger sm" disabled title="Najpierw wyłącz członkostwo.">Usuń z klubu - najpierw wyłącz członkostwo</button>
           </div>
         </div>
 
@@ -306,9 +322,11 @@
   <span>·</span>
   <a href="piloci-lista.html">P1 Piloci</a>
   <span>·</span>
-  <a href="piloci-konto.html" class="active">P2 Konto</a>
+  <a href="piloci-konto.html" class="active">P2 Członkostwo</a>
   <span>·</span>
   <a href="piloci-zgloszenie.html">P3 Zgłoszenie</a>
+  <span>·</span>
+  <a href="piloci-zaproszenie.html">P4 Zaproś</a>
   <span>·</span>
   <a href="samoloty-karta.html">S2 Karta samolotu</a>
   <span>·</span>
@@ -318,6 +336,40 @@
   <span>·</span>
   <a href="SZABLON.html">Szablon</a>
 </nav>
+
+<!-- ══ P2a: OSOBA NALEŻY TEŻ DO INNEGO KLUBU ══
+     Różnica względem ramki wyżej jest DOKŁADNIE JEDNA: pole „Imię i nazwisko" jest
+     wyłączone, a podpis mówi dlaczego i co zrobić. Kod i rola zostają czynne - są
+     tego klubu. Nie rysujemy drugiej ramki dla jednego wyłączonego pola. -->
+<section class="canvas-section" id="druga-przynaleznosc">
+  <div class="canvas-section-title">Wariant P2a · osoba w więcej niż jednym klubie</div>
+  <div class="inv-grid">
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Karta „Osoba" przy drugim członkostwie</span>
+        <span class="inv-when">Imię i nazwisko są własnością OSOBY i widzi je każdy jej klub, więc jeden klub nie zmienia ich drugiemu (propozycja z docs/wielofirmowosc.md §8.3 - do potwierdzenia). Pole wyłączone z powodem pod nim; podtytuł szuflady mówi, gdzie jeszcze ta osoba jest, bo to zmienia rozmowę o kodzie i o wyłączeniu.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="drawer-head">
+          <div>
+            <div class="drawer-title">EWA DĄBEK</div>
+            <div class="drawer-sub">EDA · ewa.dabek@gmail.com · także w Aeroklubie Krakowskim</div>
+          </div>
+        </div>
+        <div class="field">
+          <label class="label" for="name2">Imię i nazwisko</label>
+          <input class="input" id="name2" value="Ewa Dąbek" disabled>
+          <span class="hint">Wspólne dla wszystkich klubów tej osoby - zmienia je ona sama w aplikacji albo administrator klubu, w którym jest jedynym członkiem.</span>
+        </div>
+        <div class="field">
+          <label class="label" for="code2">Kod pilota w tym klubie</label>
+          <input class="input mono" id="code2" value="EDA">
+          <span class="hint">W Aeroklubie Krakowskim ma inny kod - to nie musi się zgadzać.</span>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
 
 </body>
 </html>

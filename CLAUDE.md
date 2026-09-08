@@ -2597,7 +2597,10 @@ design-first obowiązuje tu tak samo w aplikacji, jak w panelu.
   (JEDNA akcja główna „Zaproś do klubu" z trzema kartami; link widoczny RAZ w
   `.linkbox`); ZMIENIONE `piloci-lista` (karty ZGŁOSZENIA KODEM KLUBU i ZAPROSZENIA
   nad listą, obie znikają puste; „Dodaj pilota" USUNIĘTE - było drogą e-mail w innym
-  ubraniu), `piloci-zgloszenie` („Zatwierdź i przyjmij do klubu"). **`.topbar-org`
+  ubraniu), `piloci-zgloszenie` („Zatwierdź i przyjmij do klubu"), `piloci-konto`
+  (szuflada CZŁONKOSTWA: osoba do odczytu, kod i rola w tym klubie, „Wyłącz
+  członkostwo" - inne kluby osoby bez zmian; bez `#/piloci/nowy`, nowy członek =
+  zaproszenie P4). **`.topbar-org`
   (kontekst klubu za znakiem) stoi w KAŻDEJ ramie klubowej**, także przy jednym
   członkostwie - nazwa klubu odpowiada na „czyj to dziennik" przy każdym wklejonym
   linku. Komponenty (`.topbar-org`, `.topbar-scope`, `.linkbox`, `.club-code`)
