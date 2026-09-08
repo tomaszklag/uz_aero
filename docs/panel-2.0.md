@@ -428,8 +428,9 @@ W adresie stoi **rejestracja, nie identyfikator** - `#/dziennik/SP-KLM` człowie
 przeczyta i wpisze z pamięci, a o to w wymogu „do wklejenia" chodziło. Zakres dat jedzie
 w adresie ZAWSZE, także domyślny, żeby każdy adres z paska przeglądarki był kompletny.
 
-Dziennik jest PIERWSZĄ zakładką i przejmuje ekran startowy: konta i flotę zakłada się
-raz na sezon, dziennik ogląda się co tydzień.
+Dziennik jest PIERWSZĄ pozycją nawigacji (do issue #107 zakładką, odtąd pozycją kolumny)
+i przejmuje ekran startowy: konta i flotę zakłada się raz na sezon, dziennik ogląda się
+co tydzień.
 
 ### 9.2 Siedemnaście danych, dziewięć kolumn
 

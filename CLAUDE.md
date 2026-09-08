@@ -2493,7 +2493,7 @@ decyzji: **`design/ZGLOSZENIA.html`**.
 - **POTWIERDZENIE MÓWI „ZAPISANE", NIE „WYSŁANE"** - drugi stan tego samego arkusza.
   W chwili tapnięcia telefon nie wie, czy paczka dojdzie; zniknięcie arkusza bez słowa
   wygląda tak samo przy sukcesie i przy awarii (reguła „każda akcja zostawia ślad")
-- **PANEL: moduł „Zgłoszenia"** (`#/zgloszenia`, czwarta zakładka) - lista z licznikami
+- **PANEL: moduł „Zgłoszenia"** (`#/zgloszenia`, czwarta pozycja nawigacji) - lista z licznikami
   wszystkich statusów i szuflada z pełnym opisem, kontekstem i zmianą statusu.
   Cztery statusy: **nowe → w toku → rozwiązane / odrzucone**; widok domyślny to
   „do zrobienia", bo archiwum przykryłoby robotę. Odczyt na `panel.access`, zmiana
@@ -2509,7 +2509,7 @@ decyzji: **`design/ZGLOSZENIA.html`**.
   (`app/src/ui/components/bug/bugReporter.ts`) gasi przycisk we wszystkich trzech
   ramach naraz. Usunięcie w całości: katalog `components/bug/`, `bugReportPort.ts`,
   `bugReportSync.ts`, migracja SQLite 8, cztery wywołania w ramach, moduł
-  `admin/src/screens/bugs/` z arkuszem `styles/components/bugs.css` i zakładką,
+  `admin/src/screens/bugs/` z arkuszem `styles/components/bugs.css` i pozycją w `ui/shell/nav.ts`,
   po stronie serwera migracja 6 z trasami. Narzędzie fazy testów ma dać się usunąć
   decyzją, a nie archeologią
 
@@ -2633,7 +2633,7 @@ design-first obowiązuje tu tak samo w aplikacji, jak w panelu.
   całej rodziny 00/01/13
 - **makiety panelu** (`design/panel/`): NOWE `00a-wybor-klubu` (drugi krok logowania przy
   >1 członkostwie admin; superadmin widzi „Organizacje" jako pierwszą kartę),
-  `organizacje-lista` + `organizacje-klub` (rama superadministratora: JEDNA zakładka,
+  `organizacje-lista` + `organizacje-klub` (rama superadministratora: JEDNA pozycja w kolumnie,
   kafel zakresu `.sidebar-context.scope` zamiast kontekstu klubu; nowy klub = nazwa + stały slug + pierwszy
   administrator jako zaproszenie e-mail z kodem nadanym z góry), `piloci-zaproszenie`
   (JEDNA akcja główna „Zaproś do klubu" z trzema kartami; link widoczny RAZ w
@@ -2860,8 +2860,11 @@ Pełna architektura: `docs/_main.md.txt` (sekcje 4–6). Zasady twarde:
 Gdy tworzysz prompt dla agenta do tworzenia HTML mockupów, zawsze dołącz:
 1. Pełne design tokeny CSS z `:root` (z sekcji wyżej)
 2. Szablon ramki właściwej dla powierzchni: aplikacja pilota → phone frame (393×852px,
-   `--phone-scale`, Dynamic Island). **Dla panelu makiet nie zlecamy** - od 2.0 ekran
-   powstaje wprost w `admin/` i ogląda się go w przeglądarce (`docs/panel-2.0.md` §3.7)
+   `--phone-scale`, Dynamic Island); panel → kopia ramy z `design/panel/SZABLON.html`
+   (okno 1440×900, pasek górny, kolumna boczna z kontekstem klubu, `.content > .page`),
+   BEZ własnego bloku `<style>` - style panelu są jednym generowanym arkuszem
+   (`panel.css`), a nowy komponent wchodzi do `admin/src/styles/components/` i do
+   inwentarza szablonu (sekcje „Browser frame" i „Styl lekki panelu" wyżej)
 3. Informację że aplikacja = UZ Aero
 4. Linki nawigacyjne do sąsiednich ekranów w `nav-strip`
 5. Nazwy plików do stworzenia i docelowy katalog `d:\uz_areo\design\`

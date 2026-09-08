@@ -26,9 +26,12 @@
 </p>
 
 <p class="idx-lead">
-  Wspólny arkusz to <code>panel.css</code> - złożony z <code>admin/src/styles/</code> w kolejności kaskady, z tymi samymi
-  nazwami klas. To jest warunek przenoszenia w obie strony: grep po <code>cell-sub</code> ma znajdować jednocześnie makietę
-  i ekran. Nowy komponent dokładamy do <code>SZABLON.html</code>, nie do pojedynczej makiety.
+  Wspólny arkusz to <code>panel.css</code> - <b>generowany</b> (<code>npm run panel:css</code> w <code>admin/</code>)
+  z arkuszy <code>admin/src/styles/</code> w kolejności kaskady i z <code>rama.css</code> (kanwa, okno, inwentarz - klasy tylko makiety).
+  Nazwy klas są te same po obu stronach: grep po <code>cell-sub</code> ma znajdować jednocześnie makietę i ekran.
+  Nowy komponent dokładamy do arkusza w <code>admin/src/styles/components/</code> i do inwentarza w <code>SZABLON.html</code>,
+  nie do pojedynczej makiety. Od issue #107 (2026-09-08) panel jest w <b>stylu lekkim</b>: kolumna boczna z kontekstem klubu,
+  treść jako zaokrąglony kontener nad tłem, typografia zdaniowa - kolory bez zmian.
   <code>design/admin/</code> (23 pliki) opisuje panel 1.0 i jest <b>archiwum</b> - nie kopiuj stamtąd układów.
 </p>
 
