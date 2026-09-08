@@ -12,10 +12,41 @@ nie dojedzie — i nikt tego nie zauważy.
 
 Zacznij więc od rozstrzygnięcia, a nie od podnoszenia wersji.
 
+## Gałęzie: skąd wolno wydawać (obieg od 2026-09-08)
+
+```
+feature-… → develop → ninerdeck_x_x_x → main        (wydanie planowe)
+hotfix-…  → main → develop                          (poprawka dla obecnych telefonów)
+```
+
+- **`develop` to gałąź integracyjna**, a od milestone „Wielofirmowość + SaaS" leży na niej
+  niedokończona praca nad kolejną wersją. **Nigdy nie buduj APK ani nie wysyłaj OTA
+  z `develop`** - wypuściłbyś pilotom pół przebudowy.
+- **`ninerdeck_x_x_x` to gałąź wydaniowa**: dostaje zawartość `develop`, gdy zakres jest
+  domknięty, i od tej chwili przyjmuje wyłącznie stabilizację (podbicie wersji, changelog,
+  poprawki z testów wydania). Build produkcyjny robi się z NIEJ, po commicie z wersją.
+- **`main` = produkcja**: merge gałęzi wydaniowej do `main` wdraża serwer, panel i stronę
+  (Railway) i domyka wydanie. Zaraz po nim zmerguj `main` → `develop`, żeby poprawki ze
+  stabilizacji nie zginęły.
+- **Poprawka dla telefonów, które JUŻ mają aplikację**, nie może przejść przez `develop`.
+  Jedzie gałęzią `hotfix-…` odciętą od `main`, wraca do `main` PR-em, wychodzi jako OTA
+  (ścieżka A) z checkoutu `main`, a potem `main` merguje się do `develop`.
+- Sprawdzenie na początku każdego wydania: `git branch --show-current`. Jeśli stoisz na
+  `develop`, zatrzymaj się i zapytaj, czy to wydanie planowe (wtedy gałąź wydaniowa)
+  czy hotfix (wtedy gałąź od `main`).
+
+Nazwa gałęzi wydaniowej niesie numer wersji z podkreśleniami; numer i termin podaje
+właściciel projektu, jak w planie wydań. **Gałęzie wydaniowe zostają po wydaniu** jako
+zapis każdej wersji, nie kasuje się ich: `ninerdeck_1_0_0` = pierwsze wydanie (stan
+`main` z 2026-09-08, binarka „1.1.0 (build 2)"), `ninerdeck_2_0_0` = gałąź milestone
+„Wielofirmowość + SaaS 2.0.0". Gałąź milestone wolno założyć na początku prac; treść
+z `develop` dostaje przy stabilizacji.
+
 ## Krok 0: OTA czy nowy APK?
 
-Przejrzyj, co weszło od ostatniego wydania (`git log --oneline origin/main..HEAD`)
-i odpowiedz na JEDNO pytanie: czy zmieniła się warstwa natywna.
+Przejrzyj, co weszło od ostatniego wydania (`git log --oneline origin/main..HEAD`
+z gałęzi wydaniowej albo hotfixu) i odpowiedz na JEDNO pytanie: czy zmieniła się
+warstwa natywna.
 
 | Co się zmieniło | Droga |
 | --- | --- |
@@ -42,8 +73,15 @@ Najkrótsza droga i domyślna po rozpoczęciu testów z pilotami.
    dołóż `npx vitest run` i `npx tsc --noEmit` w `server/` oraz `admin/`.
 2. Dopisz punkt do sekcji `## W przygotowaniu` w `docs/CHANGELOG.md` — językiem korzyści
    dla pilota, nie opisem commita (patrz „Changelog" niżej).
-3. Zacommituj.
-4. `npm run update:prod -- -m "krótki opis zmiany"`
+3. Zacommituj i doprowadź zmianę do `main`: hotfix PR-em `hotfix-…` → `main`, wydanie
+   planowe przez gałąź wydaniową → `main` (sekcja „Gałęzie" wyżej).
+4. Z checkoutu `main` (`git checkout main && git pull`):
+   `npm run update:prod -- -m "krótki opis zmiany"`
+5. Zmerguj `main` → `develop`.
+
+OTA pakuje **lokalne drzewo** jak build, więc wysłana z `develop` zaniosłaby pilotom
+niedokończoną pracę nad następną wersją - i to bez reinstalacji, przy następnym
+uruchomieniu. Dlatego krok 4 stoi na `main`, nie „gdziekolwiek, byle zacommitowane".
 
 Aktualizacja dociera do telefonów o **tym samym numerze wersji**
 (`runtimeVersion: appVersion`, czyli `version` z `app/app.json`). Pobiera się w tle
@@ -65,6 +103,9 @@ linii APK, dla której powstała. Wtedy ścieżka B.
 ## Ścieżka B: nowy APK
 
 Dłuższa, wymaga uwagi w czterech miejscach. Kolejność ma znaczenie.
+
+Stań na gałęzi wydaniowej (`ninerdeck_x_x_x`) z wmergowanym `develop`, albo na gałęzi
+hotfixu od `main`, jeśli APK jest poprawką dla obecnej linii. Nie na `develop`.
 
 ### 1. Podnieś wersję
 
@@ -108,7 +149,9 @@ npm run build:prod
 ```
 
 EAS pakuje **lokalne drzewo**, nie gałąź — zacommituj przed buildem, inaczej łatwo
-zbudować stan sprzed podbicia wersji. Kilkanaście minut.
+zbudować stan sprzed podbicia wersji. Z tego samego powodu sprawdź `git branch
+--show-current`: drzewo z `develop` zbuduje się równie chętnie, tylko z niewłaściwą
+zawartością. Kilkanaście minut.
 
 Gdy build ma status **finished**:
 
@@ -132,7 +175,10 @@ npm run site
 ```
 
 Obejrzyj `site/dist/wydania/index.html`, zacommituj (podbicie wersji, changelog, nowy
-link) i zmerguj `develop` → `main`.
+link) na gałęzi wydaniowej i zmerguj ją do `main` PR-em; przy hotfixie - gałąź hotfixu
+do `main`. Po merge: `main` → `develop`, żeby podbita wersja, changelog i link do
+pobrania wróciły na gałąź integracyjną - inaczej następne wydanie zacznie się od
+starego numeru i nadpisze changelog.
 
 **Dopiero merge publikuje stronę pobierania.** Strona jedzie w obrazie serwera, więc sam
 GitHub Release jej nie zmienia — `/pobierz/` pokaże nowy plik po przebudowie na Railway.
@@ -170,6 +216,10 @@ przeinstalować — pilot nie ma skąd tego wiedzieć.
 
 ## Pułapki, które już raz kosztowały
 
+- **Build albo OTA z `develop` wysyła pilotom niedokończoną wersję.** Do 2026-09-08
+  `develop` był stanem gotowym do wydania i procedura kończyła się merge `develop` →
+  `main`; odkąd leży na nim przebudowa wielofirmowa, wydanie idzie przez gałąź wydaniową,
+  a poprawki dla obecnych telefonów przez hotfix od `main` (sekcja „Gałęzie").
 - **Serwer nie wstanie bez `GOOGLE_WEB_CLIENT_ID`** (walidacja `z.string().min(1)`
   w `server/src/index.ts`). Jeśli wydanie dotyka Railway, a zmiennej nie ma, padnie
   wszystko naraz: strona, panel i API.

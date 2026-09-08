@@ -2554,6 +2554,27 @@ model danych, ryzyka i etapy: **`docs/logowanie-google.md`**.
   zatwierdzać" zostawiała człowieka w kolejce na zawsze. Nowy `LoginSurface` w portach;
   atrapa testowa ignoruje powierzchnię celowo (rozdział testuje prawdziwy weryfikator)
 
+## Obieg gałęzi (git-flow od 2026-09-08, milestone „Wielofirmowość + SaaS 2.0.0")
+```
+feature-… → develop → ninerdeck_x_x_x → main        (wydanie planowe)
+hotfix-…  → main → develop                          (poprawka dla obecnych telefonów)
+```
+- **`develop` = gałąź integracyjna**. Od milestone 3 leży na niej niedokończona
+  przebudowa wielofirmowa, więc **nigdy nie buduje się z niej APK ani nie wysyła OTA** -
+  pilot dostałby pół przebudowy, przy OTA bez reinstalacji i bez ostrzeżenia
+- **`ninerdeck_x_x_x` = gałąź wydaniowa** o nazwie z numerem wersji: dostaje zawartość
+  `develop`, gdy zakres milestone jest domknięty, i odtąd przyjmuje wyłącznie
+  stabilizację (podbicie wersji, changelog, poprawki z testów wydania). Build produkcyjny
+  robi się z NIEJ. Gałęzie wydaniowe **ZOSTAJĄ po wydaniu** jako zapis każdej wersji:
+  `ninerdeck_1_0_0` = pierwsze wydanie (stan `main` z 2026-09-08, binarka „1.1.0
+  (build 2)"), `ninerdeck_2_0_0` = gałąź milestone 3 (issue #97–#106)
+- **`main` = produkcja**: merge gałęzi wydaniowej wdraża serwer, panel i stronę (Railway).
+  Zaraz po nim `main` → `develop`, żeby wersja, changelog i link do pobrania nie zginęły
+- **poprawka dla telefonów, które JUŻ mają aplikację, NIE idzie przez `develop`**:
+  gałąź `hotfix-…` od `main`, PR do `main`, OTA z checkoutu `main`, potem `main` → `develop`
+- procedurę wydania (OTA czy APK, wersja, changelog, APK na stronie) prowadzi skill
+  `wydanie` (`.claude/skills/wydanie/SKILL.md`) - tam sekcja „Gałęzie" z tym samym obiegiem
+
 ## Wydania, changelog i strona publiczna (2026-09-06; przeprowadzka 2026-09-07)
 Wchodzimy w fazę testów i wersjonowania. Punkt wejścia dla pilotów, testerów i klubów:
 landing sprzedażowy, `pobierz/` = adres APK, `wydania/` = changelog,
