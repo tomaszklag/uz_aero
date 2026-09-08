@@ -52,7 +52,9 @@
      zapowiedź, nie jak zepsuty odnośnik). Kolejność jest kolejnością zakładek panelu,
      a nie kolejnością powstawania. Robiąc makietę: usuń klasę `soon` z jej karty.
      Ekrany odwzorowują stan panelu na 2026-09-07 - inwentarz ekranów pochodzi
-     z `admin/src/screens/` i `admin/src/routes.tsx`. -->
+     z `admin/src/screens/` i `admin/src/routes.tsx`. Makiety WIELOFIRMOWOŚCI (2.0.0:
+     00A, O1, O2, P4 i zmiany w P1/P3) WYPRZEDZAJĄ kod - to pierwsze makiety panelu,
+     od których prowadzi implementacja (docs/wielofirmowosc.md §8). -->
 
 <section class="canvas-section">
   <div class="canvas-section-title">Dziennik</div>
@@ -92,7 +94,7 @@
       <span class="idx-body">
         <span class="idx-name">piloci-lista</span>
         <span class="idx-route">#/piloci</span>
-        <span class="idx-when">Konta klubu. Nad listą - i tylko wtedy, gdy ktoś czeka - stoi kolejka zgłoszeń rejestracyjnych: pusta kolejka nie dostaje karty z zerem.</span>
+        <span class="idx-when">Członkowie klubu (kod pilota jest kodem W TYM klubie). Nad listą - i tylko wtedy, gdy niepuste - karty ZGŁOSZENIA (kodem klubu) i ZAPROSZENIA (linki i adresy czekające na wejście). Jedna akcja główna: „Zaproś do klubu".</span>
       </span>
     </a>
     <a class="idx-card" href="piloci-konto.html">
@@ -108,7 +110,15 @@
       <span class="idx-body">
         <span class="idx-name">piloci-zgloszenie</span>
         <span class="idx-route">#/piloci/zgloszenia/&lt;subject&gt;</span>
-        <span class="idx-when">Decyzja o zgłoszeniu rejestracyjnym: formularz konta bez e-maila (adres jest tożsamością Google), dwa przyciski i żaden domyślny. Odrzucenie wymaga powodu - przeczyta go zgłaszający na swoim telefonie.</span>
+        <span class="idx-when">Decyzja o zgłoszeniu kodem klubu: przyjęcie do klubu z nadaniem kodu pilota i roli, bez e-maila (adres jest tożsamością Google), dwa przyciski i żaden domyślny. Odrzucenie wymaga powodu - przeczyta go zgłaszający na swoim telefonie.</span>
+      </span>
+    </a>
+    <a class="idx-card" href="piloci-zaproszenie.html">
+      <span class="idx-badge">P4</span>
+      <span class="idx-body">
+        <span class="idx-name">piloci-zaproszenie</span>
+        <span class="idx-route">#/piloci/zapros</span>
+        <span class="idx-when">Szuflada „Zaproś do klubu": trzy drogi jako trzy karty - link osobisty (jednorazowy, dołącza od razu, adres widoczny raz), adres e-mail konta Google (dołącza przy pierwszym logowaniu) i kod klubu (wielorazowy, daje zgłoszenie). Kod pilota i rola nadawane z góry tam, gdzie nie ma drugiego kroku.</span>
       </span>
     </a>
   </div>
@@ -159,6 +169,28 @@
 </section>
 
 <section class="canvas-section">
+  <div class="canvas-section-title">Organizacje · superadministrator</div>
+  <div class="idx-grid">
+    <a class="idx-card" href="organizacje-lista.html">
+      <span class="idx-badge">O1</span>
+      <span class="idx-body">
+        <span class="idx-name">organizacje-lista</span>
+        <span class="idx-route">#/organizacje</span>
+        <span class="idx-when">Jedyny ekran ramy superadministratora: wszystkie kluby na serwerze, same liczby (członkowie, samoloty), pierwszy administrator i stan. Pasek górny z jedną zakładką i bez kontekstu klubu - superadministrator nie wchodzi do danych klubu.</span>
+      </span>
+    </a>
+    <a class="idx-card" href="organizacje-klub.html">
+      <span class="idx-badge">O2</span>
+      <span class="idx-body">
+        <span class="idx-name">organizacje-klub</span>
+        <span class="idx-route">#/organizacje/nowy · #/organizacje/&lt;id&gt;</span>
+        <span class="idx-when">Nowy klub: nazwa, stały adres (slug) i pierwszy administrator jako zaproszenie e-mail z kodem pilota nadanym z góry. Karta istniejącego klubu: liczby, administratorzy, stan zaproszenia i wyłączenie klubu z potwierdzeniem.</span>
+      </span>
+    </a>
+  </div>
+</section>
+
+<section class="canvas-section">
   <div class="canvas-section-title">Logowanie</div>
   <div class="idx-grid">
     <a class="idx-card" href="00-logowanie.html">
@@ -167,6 +199,14 @@
         <span class="idx-name">00-logowanie</span>
         <span class="idx-route">#/logowanie</span>
         <span class="idx-when">Ekran przed ramą - nie ma paska górnego, bo nie wiadomo, kto patrzy. Jeden przycisk Google (rysuje go skrypt dostawcy, więc do czasu jego wjazdu stoi plamka w jego geometrii), znak marki z poświatą i - w razie odmowy - jedno zdanie mówiące, co zrobić. Jedyne miejsce w panelu z gradientem.</span>
+      </span>
+    </a>
+    <a class="idx-card" href="00a-wybor-klubu.html">
+      <span class="idx-badge">00A</span>
+      <span class="idx-body">
+        <span class="idx-name">00a-wybor-klubu</span>
+        <span class="idx-route">#/klub</span>
+        <span class="idx-when">Drugi krok logowania dla administratora w więcej niż jednym klubie: lista kart z nazwą klubu i kodem pilota w nim. Sesja panelu pracuje w jednym klubie; nazwa klubu stoi potem w pasku za znakiem i jest linkiem z powrotem tutaj. Superadministrator z członkostwami widzi „Organizacje" jako pierwszą kartę.</span>
       </span>
     </a>
   </div>

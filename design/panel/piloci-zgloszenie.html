@@ -13,7 +13,7 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">PILOCI · ZGŁOSZENIE REJESTRACYJNE</span>
+  <span class="film-strip">PILOCI · ZGŁOSZENIE KODEM KLUBU</span>
   <span class="slug">panel/piloci-zgloszenie · #/piloci/zgloszenia/&lt;subject&gt; · P3</span>
   <span class="canvas-meta"><span class="pulse"></span>Odwzorowuje RegistrationDrawer.tsx</span>
 </header>
@@ -24,7 +24,7 @@
     <span class="vp-badge">P3</span>
     <span class="vp-body">
       <span class="vp-name">Decyzja - formularz konta</span>
-      <span class="vp-when">Pierwsza rama niżej. Zatwierdzenie ZAKŁADA konto, więc to jest formularz konta <b>bez e-maila</b>: adres jest tożsamością Google i administrator go nie wpisuje. Dwa przyciski i <b>żaden domyślny</b>.</span>
+      <span class="vp-when">Pierwsza rama niżej. Zatwierdzenie PRZYJMUJE osobę do klubu i nadaje jej kod pilota W TYM klubie - formularz <b>bez e-maila</b>: adres jest tożsamością Google i administrator go nie wpisuje. Osoba już istnieje na serwerze (powstała przy logowaniu), więc decyzja dotyczy członkostwa, nie konta. Dwa przyciski i <b>żaden domyślny</b>.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -71,6 +71,12 @@
         </span>
         <span class="brand-name">UZ AERO</span>
       </span>
+      <!-- KONTEKST KLUBU (wielofirmowość 2.0.0): w którym klubie jest ta sesja.
+           Link prowadzi na wybór klubu (00A) - nowa sesja bez ponownego logowania. -->
+      <a class="topbar-org" href="00a-wybor-klubu.html" title="Zmień klub">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
+        Aeroklub Zielonogórski
+      </a>
 
       <nav class="tabs" aria-label="Sekcje panelu">
         <a class="tab" href="dziennik-flota.html">Dziennik</a>
@@ -103,7 +109,7 @@
       </div>
 
       <div class="card">
-        <div class="card-title">ZGŁOSZENIA · 2</div>
+        <div class="card-title">ZGŁOSZENIA KODEM KLUBU · 2</div>
         <div class="table-wrap">
           <table>
             <caption class="visually-hidden">Zgłoszenia czekające na decyzję</caption>
@@ -118,14 +124,14 @@
             <tbody>
               <tr class="clickable">
                 <td class="cell-strong">Michał Sowa</td>
-                <td class="cell-sub">michal.sowa@gmail.com</td>
-                <td class="cell-sub">6 WRZ 18:22 UTC</td>
+                <td><span class="cell-sub">michal.sowa@gmail.com</span></td>
+                <td><span class="cell-sub">6 WRZ 18:22 UTC</span></td>
                 <td class="row-actions"><a class="btn primary sm" href="piloci-zgloszenie.html">Rozpatrz</a></td>
               </tr>
               <tr class="clickable">
                 <td class="cell-strong">Ewa Dąbek</td>
-                <td class="cell-sub">ewa.dabek@gmail.com</td>
-                <td class="cell-sub">7 WRZ 07:05 UTC</td>
+                <td><span class="cell-sub">ewa.dabek@gmail.com</span></td>
+                <td><span class="cell-sub">7 WRZ 07:05 UTC</span></td>
                 <td class="row-actions"><a class="btn primary sm" href="piloci-zgloszenie.html">Rozpatrz</a></td>
               </tr>
             </tbody>
@@ -159,7 +165,7 @@
             <tr class="clickable">
               <td class="reg">AKO</td>
               <td class="cell-strong">Anna Kowal</td>
-              <td class="cell-sub">anna.kowal@gmail.com</td>
+              <td><span class="cell-sub">anna.kowal@gmail.com</span></td>
               <td><span class="pill dim">Pilot</span></td>
               <td><span class="pill green"><span class="dot"></span>Aktywny</span></td>
               <td class="row-actions"><a class="btn ghost sm" href="piloci-konto.html">Edytuj</a></td>
@@ -167,7 +173,7 @@
             <tr class="clickable">
               <td class="reg">JWR</td>
               <td class="cell-strong">Jakub Wrona</td>
-              <td class="cell-sub">jakub.wrona@gmail.com</td>
+              <td><span class="cell-sub">jakub.wrona@gmail.com</span></td>
               <td><span class="pill dim">Pilot</span></td>
               <td><span class="pill green"><span class="dot"></span>Aktywny</span></td>
               <td class="row-actions"><a class="btn ghost sm" href="piloci-konto.html">Edytuj</a></td>
@@ -175,7 +181,7 @@
             <tr class="clickable">
               <td class="reg">KLI</td>
               <td class="cell-strong">Krzysztof Lis</td>
-              <td class="cell-sub">—</td>
+              <td><span class="cell-sub">—</span></td>
               <td><span class="pill dim">Pilot</span></td>
               <td><span class="pill green"><span class="dot"></span>Aktywny</span></td>
               <td class="row-actions"><a class="btn ghost sm" href="piloci-konto.html">Edytuj</a></td>
@@ -183,7 +189,7 @@
             <tr class="clickable">
               <td class="reg">MZI</td>
               <td class="cell-strong">Marta Zięba</td>
-              <td class="cell-sub">marta.zieba@gmail.com</td>
+              <td><span class="cell-sub">marta.zieba@gmail.com</span></td>
               <td><span class="pill dim">Pilot</span></td>
               <td><span class="pill green"><span class="dot"></span>Aktywny</span></td>
               <td class="row-actions"><a class="btn ghost sm" href="piloci-konto.html">Edytuj</a></td>
@@ -204,7 +210,7 @@
       <div class="drawer-head">
         <div>
           <div class="drawer-title">MICHAŁ SOWA</div>
-          <div class="drawer-sub">michal.sowa@gmail.com <span class="pill amber">czeka od 6 WRZ 18:22 UTC</span></div>
+          <div class="drawer-sub">michal.sowa@gmail.com <span class="pill amber">zgłosił się kodem klubu · czeka od 6 WRZ 18:22 UTC</span></div>
         </div>
         <button type="button" class="x-btn" aria-label="Zamknij">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -216,7 +222,7 @@
         <!-- Tożsamość od dostawcy - do PRZECZYTANIA, nie do poprawiania. Imię i adres
              przyszły z Google i to jest to, na co administrator patrzy przy decyzji. -->
         <div class="card">
-          <div class="card-title">Konto Google</div>
+          <div class="card-title">Osoba</div>
           <div class="access-row">
             <span class="kv-k">Imię u Google</span>
             <span>Michał Sowa</span>
@@ -242,7 +248,7 @@
           <div class="field">
             <label class="label" for="code">Kod pilota</label>
             <input class="input mono" id="code" value="MS">
-            <span class="hint">Krótki skrót przy każdym locie, np. TMK. Podpowiedziany z inicjałów.</span>
+            <span class="hint">Krótki skrót przy każdym locie, np. TMK. Podpowiedziany z inicjałów; jedyny w TYM klubie - w innym klubie ta osoba może mieć inny.</span>
           </div>
         </div>
 
@@ -274,7 +280,7 @@
       <div class="drawer-foot">
         <button type="button" class="btn ghost">Anuluj</button>
         <button type="button" class="btn danger">Odrzuć</button>
-        <button type="button" class="btn primary">Zatwierdź i załóż konto</button>
+        <button type="button" class="btn primary">Zatwierdź i przyjmij do klubu</button>
       </div>
 
     </div>
@@ -308,6 +314,12 @@
         </span>
         <span class="brand-name">UZ AERO</span>
       </span>
+      <!-- KONTEKST KLUBU (wielofirmowość 2.0.0): w którym klubie jest ta sesja.
+           Link prowadzi na wybór klubu (00A) - nowa sesja bez ponownego logowania. -->
+      <a class="topbar-org" href="00a-wybor-klubu.html" title="Zmień klub">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
+        Aeroklub Zielonogórski
+      </a>
 
       <nav class="tabs" aria-label="Sekcje panelu">
         <a class="tab" href="dziennik-flota.html">Dziennik</a>
@@ -340,7 +352,7 @@
       </div>
 
       <div class="card">
-        <div class="card-title">ZGŁOSZENIA · 2</div>
+        <div class="card-title">ZGŁOSZENIA KODEM KLUBU · 2</div>
         <div class="table-wrap">
           <table>
             <caption class="visually-hidden">Zgłoszenia czekające na decyzję</caption>
@@ -355,14 +367,14 @@
             <tbody>
               <tr class="clickable">
                 <td class="cell-strong">Michał Sowa</td>
-                <td class="cell-sub">michal.sowa@gmail.com</td>
-                <td class="cell-sub">6 WRZ 18:22 UTC</td>
+                <td><span class="cell-sub">michal.sowa@gmail.com</span></td>
+                <td><span class="cell-sub">6 WRZ 18:22 UTC</span></td>
                 <td class="row-actions"><a class="btn primary sm" href="piloci-zgloszenie.html">Rozpatrz</a></td>
               </tr>
               <tr class="clickable">
                 <td class="cell-strong">Ewa Dąbek</td>
-                <td class="cell-sub">ewa.dabek@gmail.com</td>
-                <td class="cell-sub">7 WRZ 07:05 UTC</td>
+                <td><span class="cell-sub">ewa.dabek@gmail.com</span></td>
+                <td><span class="cell-sub">7 WRZ 07:05 UTC</span></td>
                 <td class="row-actions"><a class="btn primary sm" href="piloci-zgloszenie.html">Rozpatrz</a></td>
               </tr>
             </tbody>
@@ -396,7 +408,7 @@
             <tr class="clickable">
               <td class="reg">AKO</td>
               <td class="cell-strong">Anna Kowal</td>
-              <td class="cell-sub">anna.kowal@gmail.com</td>
+              <td><span class="cell-sub">anna.kowal@gmail.com</span></td>
               <td><span class="pill dim">Pilot</span></td>
               <td><span class="pill green"><span class="dot"></span>Aktywny</span></td>
               <td class="row-actions"><a class="btn ghost sm" href="piloci-konto.html">Edytuj</a></td>
@@ -404,7 +416,7 @@
             <tr class="clickable">
               <td class="reg">JWR</td>
               <td class="cell-strong">Jakub Wrona</td>
-              <td class="cell-sub">jakub.wrona@gmail.com</td>
+              <td><span class="cell-sub">jakub.wrona@gmail.com</span></td>
               <td><span class="pill dim">Pilot</span></td>
               <td><span class="pill green"><span class="dot"></span>Aktywny</span></td>
               <td class="row-actions"><a class="btn ghost sm" href="piloci-konto.html">Edytuj</a></td>
@@ -412,7 +424,7 @@
             <tr class="clickable">
               <td class="reg">KLI</td>
               <td class="cell-strong">Krzysztof Lis</td>
-              <td class="cell-sub">—</td>
+              <td><span class="cell-sub">—</span></td>
               <td><span class="pill dim">Pilot</span></td>
               <td><span class="pill green"><span class="dot"></span>Aktywny</span></td>
               <td class="row-actions"><a class="btn ghost sm" href="piloci-konto.html">Edytuj</a></td>
@@ -420,7 +432,7 @@
             <tr class="clickable">
               <td class="reg">MZI</td>
               <td class="cell-strong">Marta Zięba</td>
-              <td class="cell-sub">marta.zieba@gmail.com</td>
+              <td><span class="cell-sub">marta.zieba@gmail.com</span></td>
               <td><span class="pill dim">Pilot</span></td>
               <td><span class="pill green"><span class="dot"></span>Aktywny</span></td>
               <td class="row-actions"><a class="btn ghost sm" href="piloci-konto.html">Edytuj</a></td>
@@ -437,7 +449,7 @@
       <div class="drawer-head">
         <div>
           <div class="drawer-title">MICHAŁ SOWA</div>
-          <div class="drawer-sub">michal.sowa@gmail.com <span class="pill amber">czeka od 6 WRZ 18:22 UTC</span></div>
+          <div class="drawer-sub">michal.sowa@gmail.com <span class="pill amber">zgłosił się kodem klubu · czeka od 6 WRZ 18:22 UTC</span></div>
         </div>
         <button type="button" class="x-btn" aria-label="Zamknij">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -447,7 +459,7 @@
       <div class="drawer-body">
 
         <div class="card">
-          <div class="card-title">Konto Google</div>
+          <div class="card-title">Osoba</div>
           <div class="access-row">
             <span class="kv-k">Imię u Google</span>
             <span>Michał Sowa</span>

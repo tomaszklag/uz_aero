@@ -76,7 +76,8 @@
          1:1 z `admin/src/ui/shell/AppShell.tsx`. Cztery zakładki z `ui/shell/tabs.ts`
          w tej kolejności: Dziennik jest pierwszy, bo ekran startowy ma być tym, po
          który się sięga; Zgłoszenia są ostatnie, bo znikną razem z fazą testów.
-         Czego tu NIE MA: okruszków, zegara UTC i liczników przy zakładkach. -->
+         Czego tu NIE MA: okruszków, zegara UTC i liczników przy zakładkach.
+         OD 2.0.0 za znakiem stoi KONTEKST KLUBU (`.topbar-org`) - inwentarz niżej. -->
     <header class="topbar">
       <span class="brand">
         <span class="brand-mark">
@@ -84,6 +85,12 @@
         </span>
         <span class="brand-name">UZ AERO</span>
       </span>
+      <!-- KONTEKST KLUBU (wielofirmowość 2.0.0): w którym klubie jest ta sesja.
+           Link prowadzi na wybór klubu (00A) - nowa sesja bez ponownego logowania. -->
+      <a class="topbar-org" href="00a-wybor-klubu.html" title="Zmień klub">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
+        Aeroklub Zielonogórski
+      </a>
 
       <nav class="tabs" aria-label="Sekcje panelu">
         <a class="tab active" href="#">Dziennik</a>
@@ -303,6 +310,48 @@
         </div>
         <span class="inv-mark">.btn.block - przycisk na całą szerokość karty (logowanie)</span>
         <button type="button" class="btn primary block">Zaloguj się</button>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<section class="canvas-section">
+  <div class="canvas-section-title">Wielofirmowość · klub w pasku, link, kod klubu</div>
+  <div class="inv-grid">
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Kontekst klubu w pasku górnym</span>
+        <span class="inv-when">Zaraz za znakiem, w KAŻDEJ ramie klubowej - także przy jednym członkostwie, bo nazwa klubu odpowiada na pytanie „czyj to dziennik" przy każdym wklejonym linku. Jest linkiem na wybór klubu (<code>00a-wybor-klubu</code>): nowa sesja, bez ponownego logowania. Rama superadministratora ma zamiast tego etykietę <code>.topbar-scope</code> - moduł Organizacje nie jest w żadnym klubie.</span>
+        <span class="inv-classes"><b>.topbar-org</b> · .topbar-scope</span>
+      </div>
+      <div class="inv-demo">
+        <div class="inv-row">
+          <a class="topbar-org" href="00a-wybor-klubu.html">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
+            Aeroklub Zielonogórski
+          </a>
+          <span class="topbar-scope">Superadministrator</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">LinkBox · kod klubu</span>
+        <span class="inv-when">Adres zaproszenia pokazuje się W CAŁOŚCI dokładnie raz - w chwili wygenerowania - z przyciskiem „Kopiuj"; serwer trzyma hash, więc drugi raz nie da się go odczytać, tylko unieważnić i wygenerować nowy. Kod klubu jest duży i dzielony myślnikiem, bo dyktuje się go przez telefon, a pilot wpisuje na 00E.</span>
+        <span class="inv-classes"><b>.linkbox</b> · .linkbox-val · <b>.club-code-row</b> · .club-code</span>
+      </div>
+      <div class="inv-demo">
+        <div class="linkbox">
+          <span class="linkbox-val">https://uzaero.pl/dolacz/7c1e5a9bk3m2v8qx84bn0d5t2wz9yq6r</span>
+          <button type="button" class="btn primary sm">Kopiuj</button>
+        </div>
+        <div class="club-code-row">
+          <span class="club-code">AZG-7K4M</span>
+          <button type="button" class="btn ghost sm">Wygeneruj nowy</button>
+        </div>
       </div>
     </article>
 
