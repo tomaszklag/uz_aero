@@ -136,7 +136,7 @@ export function AccountDrawer({
     );
   };
 
-  const title = creating ? 'NOWY PILOT' : (pilot?.name ?? 'PILOT').toUpperCase();
+  const title = creating ? 'Nowy pilot' : (pilot?.name ?? 'Pilot');
   const sub = pilot == null ? 'Nowe konto' : subtitleOf(pilot);
 
   // Konto właśnie powstało: karta pokazuje, JAK ten człowiek wejdzie, i wyjście.
@@ -168,7 +168,7 @@ export function AccountDrawer({
       sub={
         <>
           {sub}
-          {readOnly ? <Pill tone="dim">tylko podgląd</Pill> : null}
+          {readOnly ? <Pill tone="dim">Tylko podgląd</Pill> : null}
         </>
       }
       onClose={onClose}

@@ -1,19 +1,19 @@
 /**
  * UZ Aero - panel: szuflada szczegółu.
  *
- * Klasy i wartości 1:1 z `design/admin/SZABLON.html` (sekcja „szuflada szczegółu").
- *
  * **Pozycjonowanie `fixed`, nie `absolute`.** Ekran renderuje się WEWNĄTRZ `.content`,
- * które ma `overflow-y:auto` - szuflada `absolute` przewijałaby się razem z listą
- * i kończyła na jej wysokości. `fixed` daje warstwę nad całym oknem i nie zależy
- * od przewinięcia.
+ * które ma `overflow-y:auto` - szuflada `absolute` przewijałaby się razem z listą.
+ * `fixed` daje warstwę nad całym oknem i nie zależy od przewinięcia.
  *
- * **Przesłona zaczyna się od LEWEJ KRAWEDZI OKNA.** Do panelu 2.0 stało tu
- * `left: var(--sidebar-w)`, bo warstwa miała omijać kolumnę boczną - a kolumna
- * zniknęła razem z całą zmienną. Deklaracja z nieistniejącą zmienną jest NIEWAZNA,
- * więc `left` schodziło do `auto` i przesłona traciła szerokość: tło się nie
- * przyciemniało, a kliknięcie obok szuflady jej nie zamykało. Awaria cicha - nic
- * nie krzyczy, tylko dwie rzeczy przestają działać.
+ * **Przesłona zaczyna się od LEWEJ KRAWĘDZI OKNA** - także nad kolumną boczną (styl
+ * lekki, issue #107). Szuflada jest oknem dialogowym nad całym panelem: kolumna
+ * z aktywną pozycją pod półprzezroczystą przesłoną dalej mówi, gdzie jesteśmy,
+ * a przesłona omijająca kolumnę zapraszałaby do kliknięcia w moduł z otwartym
+ * i niezapisanym formularzem.
+ *
+ * Styl lekki: tytuł krojem tekstowym w pisowni zdaniowej („Anna Kowal", nie
+ * „ANNA KOWAL"), cień lżejszy, przycisk zamknięcia bez ramki, tło w tonie warstwy
+ * treści (`--surface`).
  */
 
 .drawer-scrim {
@@ -23,9 +23,9 @@
   bottom: 0;
   left: 0;
   /* NIE `var(--overlay)`: token niesie 0,74 (przyciemnienie modala w aplikacji
-     pilota), a szuflada panelu przyciemnia listę słabiej - 0,55 z szablonu - bo
-     lista pod spodem ma dalej być czytelna. To jest sens szuflady: kontekst zostaje. */
-  background: rgba(0, 0, 0, 0.55);
+     pilota), a szuflada panelu przyciemnia listę słabiej, bo lista pod spodem ma
+     dalej być czytelna. To jest sens szuflady: kontekst zostaje. */
+  background: rgba(0, 0, 0, 0.5);
   z-index: 60;
   /* Przesłona jest `<button>` (kliknięcie w tło to akcja), więc zdejmujemy z niej
      wygląd przycisku - zostaje sama powierzchnia. */
@@ -40,25 +40,24 @@
   right: 0;
   bottom: 0;
   width: 520px;
+  /* Ten sam ton, co warstwa treści - szuflada jest jej częścią wysuniętą nad listę,
+     nie kawałkiem chrome'u. */
   background: var(--surface);
-  border-left: 1px solid var(--border-strong);
+  border-left: 1px solid var(--border);
   z-index: 61;
   display: flex;
   flex-direction: column;
-  box-shadow: -24px 0 60px rgba(0, 0, 0, 0.5);
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.45);
 }
 
-/* Szuflada SZERSZA - dla szuflady, która jest formularzem, a nie podglądem: korekta
-   administratora (`A02b`) niesie kartę „przed → po", pole powodu i pełny opis skutków,
-   a w 520 px każdy wiersz klucz–wartość łamie się na dwie linie. Modyfikator, bo
-   szerokość jest własnością TREŚCI szuflady, nie jednego ekranu. */
+/* Szuflada SZERSZA - dla szuflady, która jest formularzem, a nie podglądem. */
 .drawer.wide {
   width: 660px;
 }
 
 .drawer-head {
   flex-shrink: 0;
-  padding: 16px 20px;
+  padding: 14px 20px;
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: flex-start;
@@ -67,57 +66,51 @@
 }
 
 .drawer-title {
-  font-family: var(--font-display);
-  font-size: 22px;
-  letter-spacing: 1.5px;
-  line-height: 1;
+  font-family: var(--font-body);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.3;
 }
 
 .drawer-sub {
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  letter-spacing: 1px;
-  color: var(--text-muted);
-  margin-top: 6px;
-  line-height: 1.6;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  line-height: 1.5;
 }
 
 .drawer-body {
   flex: 1;
   overflow-y: auto;
-  padding: 18px 20px;
+  padding: 16px 20px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 .drawer-foot {
   flex-shrink: 0;
-  padding: 14px 20px;
+  padding: 12px 20px;
   border-top: 1px solid var(--border);
   display: flex;
-  gap: 9px;
+  gap: 8px;
   justify-content: flex-end;
 }
 
-/* Notatka po lewej stronie akcji stopki - stała własność szuflady, nie treść ekranu:
-   mówi, czego to okno NIE zrobi („brak edycji · brak kasowania" w `A02b`). */
+/* Notatka po lewej stronie akcji stopki - mówi, czego to okno NIE zrobi. */
 .drawer-note {
   margin-right: auto;
   align-self: center;
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 1.2px;
-  text-transform: uppercase;
+  font-size: 12px;
   color: var(--text-muted);
 }
 
 .x-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
-  border: 1px solid var(--border);
-  background: var(--surface-raised);
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
   color: var(--text-secondary);
   display: flex;
   align-items: center;
@@ -127,6 +120,6 @@
 }
 
 .x-btn:hover {
-  background: var(--surface-hover);
+  background: var(--surface-raised);
   color: var(--text-primary);
 }

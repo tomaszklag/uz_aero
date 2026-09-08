@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: DZIENNIK - komórki par, braki i kontrolka zakresu dat.
+ * UZ Aero - panel: DZIENNIK - komórki par, braki i kontrolka zakresu dat.
  *
  * Trzy rzeczy, których reszta panelu nie potrzebowała: para wartości w jednej komórce,
  * ton braku i pola daty. Wszystko inne (tabela, karta, plakietka, chip) grid bierze
@@ -10,7 +10,7 @@
    - to znak relacji między dwiema, które nią są. */
 .cell-pair {
   font-family: var(--font-mono);
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--text-primary);
   white-space: nowrap;
 }
@@ -23,7 +23,7 @@
 /* Wejście w głąb z wiersza poziomu 1 - sam znak, bo cały wiersz jest klikalny. */
 .cell-go {
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: 16px;
 }
 
 /* Wiersz UNIEWAŻNIONY: zostaje w tabeli, bo rejestr jest append-only, a znikający
@@ -36,28 +36,29 @@ tbody tr.voided td {
 
 /* Podpis pod tabelą przyciętą limitem - lista ucięta po cichu wygląda jak komplet. */
 .list-foot {
-  font-family: var(--font-body);
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-secondary);
   padding: 4px 2px;
 }
 
 /**
  * Pole daty. Natywne `input[type=date]` - panel jest stroną, więc kalendarz ma od
- * przeglądarki; `color-scheme` przestawia jej własny widżet na ciemny.
+ * przeglądarki; `color-scheme` przestawia jej własny widżet na ciemny. Wygląd jak
+ * `.input` i `.search`: ta sama wysokość, ramka i fokus.
  */
 .daterange {
   display: inline-flex;
   align-items: center;
-  height: 36px;
-  border-radius: 10px;
+  height: 34px;
+  border-radius: 6px;
   background: var(--surface-raised);
-  border: 1px solid var(--border);
-  padding: 0 10px;
+  border: 1px solid var(--border-strong);
+  padding: 0 8px;
 }
 
 .daterange:focus-within {
   border-color: var(--green-border);
+  box-shadow: 0 0 0 3px var(--green-muted);
 }
 
 .daterange input {
@@ -67,7 +68,7 @@ tbody tr.voided td {
   outline: none;
   color: var(--text-primary);
   font-family: var(--font-mono);
-  font-size: 12.5px;
+  font-size: 13px;
 }
 
 .daterange-sep {

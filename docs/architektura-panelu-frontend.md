@@ -203,6 +203,12 @@ packages/tokens/scripts/emitCss.ts   →  admin/src/styles/tokens.css   (nagłó
 admin/test/tokens.generated.test.ts  →  zawartość pliku == themeCssBlock(THEMES.night)
 ```
 
+**Drugi generowany arkusz (issue #107, 2026-09-08): `design/panel/panel.css`.** Makiety
+panelu i panel mają JEDEN arkusz - `admin/scripts/panelCss.ts` skleja `admin/src/styles/`
+w kolejności kaskady z `main.tsx` i dopisuje `design/panel/rama.css` (klasy tylko makiety);
+`npm run panel:css` zapisuje wynik, `admin/test/panelCss.generated.test.ts` przybija
+równość. Ten sam wzorzec, co tokeny: plik commitowany, poprawki przez ponowny bieg.
+
 Dlaczego nie wstrzykiwanie w runtime (`document.documentElement.style.setProperty`):
 panel ma **jeden** motyw (§1.6), więc runtime dawałby wyłącznie migotanie przed
 pierwszym paintem i zależność stylu od wykonania JS. Plik statyczny jest tańszy,

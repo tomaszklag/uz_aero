@@ -19,7 +19,7 @@ i `@uzaero/format` (czasy UTC, czas blokowy, motogodziny, litry). Wszystkie trzy
 z RN/DOM. `app/src/ui/theme/tokens.ts` i `app/src/ui/format.ts` są shimami zgodności -
 kod ekranów importuje po staremu.
 Fazy z `docs/_main.md.txt` §10: 1–4 ✅ **wobec modelu sprzed 2026-08-06** (ekrany 00–12 komplet; sync end-to-end z eksportem §4.7 na kartach W BAZIE - `exported_sheets` + `GET /sheets/:tab`; adapter Google Sheets = opcjonalna przyszła podmiana portu `SheetsPort`, gdy będzie klucz) · **faza 8 = przebudowa flow, WYPRZEDZA fazę 5** (patrz niżej) · potem: 5 testy z pilotami, 6 wdrożenie + backlog audytu.
-Faza 7 **panel administracyjny (web)** - backend wdrożony w całości (role, `/admin/*`, cykl życia flagi, audyt) i **nietknięty**; klient web przepisany na **PANEL 2.0** (2026-08-30, gałąź `panel-2.0`): dwa moduły - **PILOCI i SAMOLOTY** - zamiast jedenastu ekranów, bez banerów wyjaśniających, bez kafli z licznikami, z paskiem górnym zamiast kolumny bocznej. Trzeci moduł - **DZIENNIK** (2026-08-30): trzy poziomy (flota w zakresie dat → grid operacji jednej maszyny → jedna operacja z osią zdarzeń), dziewięć kolumn zamiast siedemnastu, wyłącznie ODCZYTY - zero szacunków i prognoz, brak odczytu widoczny jako kreska. Wymagał migracji 3 (osiem kolumn projekcji: bieg silnika, koperta lotów, lotniska, dolewka paliwa, wpis ręczny, olej do lotu) i **przebudowy projekcji na istniejących wierszach**. Decyzje, reguły redakcyjne i liczby: **`docs/panel-2.0.md`**; szkielet warstw dalej w `docs/architektura-panelu-frontend.md`. Pozostałe ekrany (pulpit, dni, flagi, zdarzenia, eksporty, audyt, statystyki, analityka, konserwacja) usunięte z kodu i odzyskiwalne z historii gita - wracają pojedynczo, każdy przepisany pod reguły 2.0. **`design/admin/` (23 ekrany, `SZABLON.html`, `ANALIZA.md`) jest odtąd ARCHIWUM panelu 1.0**, nie specyfikacją.
+Faza 7 **panel administracyjny (web)** - backend wdrożony w całości (role, `/admin/*`, cykl życia flagi, audyt) i **nietknięty**; klient web przepisany na **PANEL 2.0** (2026-08-30, gałąź `panel-2.0`): dwa moduły - **PILOCI i SAMOLOTY** - zamiast jedenastu ekranów, bez banerów wyjaśniających, bez kafli z licznikami; od issue #107 (2026-09-08) w STYLU LEKKIM: kolumna boczna z ikonami i kontekstem klubu, okruszki w dzienniku, typografia zdaniowa - sekcja „Styl lekki panelu". Trzeci moduł - **DZIENNIK** (2026-08-30): trzy poziomy (flota w zakresie dat → grid operacji jednej maszyny → jedna operacja z osią zdarzeń), dziewięć kolumn zamiast siedemnastu, wyłącznie ODCZYTY - zero szacunków i prognoz, brak odczytu widoczny jako kreska. Wymagał migracji 3 (osiem kolumn projekcji: bieg silnika, koperta lotów, lotniska, dolewka paliwa, wpis ręczny, olej do lotu) i **przebudowy projekcji na istniejących wierszach**. Decyzje, reguły redakcyjne i liczby: **`docs/panel-2.0.md`**; szkielet warstw dalej w `docs/architektura-panelu-frontend.md`. Pozostałe ekrany (pulpit, dni, flagi, zdarzenia, eksporty, audyt, statystyki, analityka, konserwacja) usunięte z kodu i odzyskiwalne z historii gita - wracają pojedynczo, każdy przepisany pod reguły 2.0. **`design/admin/` (23 ekrany, `SZABLON.html`, `ANALIZA.md`) jest odtąd ARCHIWUM panelu 1.0**, nie specyfikacją.
 **Analityka zużycia** (2026-08-05) - wdrożona end-to-end: domena `packages/domain/src/consumption/` (interwały paliwowe odczyt→odczyt, NNLS per faza, przelicznik MH z automatycznym rozpoznaniem obrotomierz/Hobbs, oś faz pionowych ze śladu), `GET /admin/api/fleet/:id/consumption` + ekran A10a/A10b w panelu, norma zużycia w aplikacji pilota (migracja serwera 19 + SQLite 4, ekrany 04/06/10). Reguła czytania strumienia poza listami: `docs/architektura-panelu-serwer.md` §7.7; przepis „nowa metryka analityki": `docs/architektura-kodu.md` §7.
 **Rozszerzona przy issue #38 (2026-08-12)**: norma telefonu niesie parę stawek fazowych
 (ziemia + powietrze) i przeliczniki MH, a `consumption/expectation.ts` liczy z nich
@@ -281,19 +281,61 @@ Struktura: `.canvas-label` → `.phone` (z Dynamic Island `::before`) → `.nav-
 
 Panel to **aplikacja web**, więc ramką jest okno przeglądarki 1440×900 z `--app-scale`
 (działa dokładnie jak `--phone-scale`) i paskiem chrome zamiast Dynamic Island.
-Struktura: `.canvas-label` → `.browser` (`.chrome` → treść) → `.nav-strip`. Panel 2.0 nie
-ma kolumny bocznej - całą ramą jest pasek górny z czterema zakładkami.
+Struktura: `.canvas-label` → `.browser` (`.chrome` → `.shell`: `.topbar` + `.workspace`
+= `.sidebar` + `.content > .page`) → `.nav-strip`. Od stylu lekkiego (issue #107, sekcja
+niżej) rama to pasek górny z marką i zalogowanym ORAZ kolumna boczna z kontekstem klubu
+i pozycjami modułów.
 - **nowy ekran panelu zaczyna się od skopiowania `design/panel/SZABLON.html`** - tam stoi
-  kanoniczny pasek górny i INWENTARZ komponentów (tabela, plakietki, chipy filtrów,
-  szuflada, karta, baner, stan pusty, plamki ładowania)
-- **style makiet mieszkają w `design/panel/panel.css`**, wspólnym dla wszystkich makiet
-  panelu (makiety telefonu trzymają je w `<head>`, ale panelowych będzie kilkanaście).
-  Nazwy klas są DOKŁADNIE te, co w `admin/src/styles/` - to warunek przenoszenia w obie
-  strony. Nowy komponent dokładamy do `panel.css`, potem do kodu panelu
+  kanoniczna rama (pasek, kolumna, okruszki) i INWENTARZ komponentów (tabela, plakietki,
+  chipy filtrów, szuflada, karta, baner, stan pusty, plamki ładowania)
+- **arkusz makiet `design/panel/panel.css` jest GENEROWANY** (`npm run panel:css`
+  w `admin/`): składa się z arkuszy `admin/src/styles/` w kolejności kaskady z `main.tsx`
+  plus `design/panel/rama.css` (kanwa, okno przeglądarki, inwentarz - klasy, których panel
+  nie ma). Nowy komponent dokłada się do `admin/src/styles/components/*.css` i uruchamia
+  generator - makieta i panel widzą go w tej samej chwili. Równość pilnuje
+  `admin/test/panelCss.generated.test.ts`. Ręczna poprawka w `panel.css` znika przy
+  najbliższym przebiegu - to nie jest miejsce na edycję
 - **makiety panelu ilustrują podręcznik**: strony panelu w `docs/podrecznik/` osadzają je
   dyrektywą `@panel` (ramka okna przeglądarki), tak jak strony aplikacji osadzają `@screen`
 - panel ma JEDEN motyw (`night`) i nie ma przełącznika - jasny istnieje dla kokpitu
   w słońcu, a administrator siedzi przy biurku
+
+### Styl lekki panelu (issue #107, 2026-09-08)
+Zgłoszenie: „migrować wygląd panelu admina do stylu lekkiego, jak ma GitLab; przepisać
+obecne widoki i pliki design; wszystkie późniejsze w zadanym stylu". Pełne decyzje
+i uzasadnienia: **`docs/panel-2.0.md` §3.8**. Reguły obowiązujące KAŻDY nowy ekran panelu:
+- **kolory bez zmian** (decyzja właściciela: „kolory możemy zachować te co mamy") -
+  tokeny `night`, zero nowych zmiennych, zero literałów koloru w `admin/src/styles/`.
+  Lekkość wychodzi z układu i typografii, nie z palety
+- **treść jest WARSTWĄ WYŻEJ** (uwaga właściciela: „główny kontent w oknie o zaokrąglonych
+  krawędziach, jakby warstwa wyżej"): pasek i kolumna NIE są sekcjami z liniami, tylko
+  jednym tłem na `--bg`; `.content` to kontener na `--surface` z oboma górnymi rogami
+  zaokrąglonymi, włosem na trzech krawędziach i odstępem od prawej krawędzi okna, dołem
+  dociągnięty do krawędzi (tam jest przewijanie). Karty i tabele na tej warstwie rysuje
+  sama ramka; szuflada w tonie treści. Tło chrome'u ma LEKKI GRADIENT (`--chrome-bg`
+  w `layout.css`: zielona poświata przy znaku + `--bg-tint` gasnące w `--bg`, same
+  tokeny) - pasek i kolumna są przezroczyste, maluje go korzeń; logowanie przepuszcza
+  ten sam gradient zamiast mieć własny
+- **rama = pasek 48 px (marka + zalogowany) i kolumna 240 px** (`.sidebar`: kontekst klubu
+  `.sidebar-context` nad płaską listą `.nav-item` z ikonami; pozycje w `ui/shell/nav.ts`,
+  ikony jako KLUCZE - moduł zostaje czysty). Rama superadministratora: `.sidebar-context.scope`
+  + jedna pozycja. Wyszukiwarki w pasku NIE MA - byłaby afordancją bez funkcji
+- **okruszki (`Breadcrumbs`) WYŁĄCZNIE pod innym ekranem** - dziś dziennik od poziomu
+  maszyny w dół, w miejsce „← Dziennik". Na liście modułu okruszek opisywałby jedno
+  kliknięcie w kolumnie obok
+- **Bebas Neue tylko w marce i na logowaniu.** Tytuły stron, kart i szuflad: Archivo 600
+  w PISOWNI ZDANIOWEJ („Dziennik", nie „DZIENNIK"). Etykiety, nagłówki tabel, `.kv-k`,
+  `.cell-sub`, `.opt-desc`: krój tekstowy, nie mono-wersaliki. Mono zostaje przy wartości
+  MASZYNOWEJ (liczby, kody, sygnatury, e-maile - `.cell-sub.mono`). Plakietki bez ramki,
+  bez wersalików, z wielkiej litery - napis w kodzie pisze się już z wielkiej
+- **zaznaczenie jest odwrócone** (jasne tło, ciemny napis): aktywna pozycja kolumny
+  i włączony chip. Zieleń = stan w normie, akcja główna, ramka zaznaczonej karty wyboru
+- **lżejsze komponenty**: promienie 6–8 px, przycisk 32 px (`ghost` bez ramki, `danger`/`ok`
+  obramówką), pole 34 px z pierścieniem fokusu, nagłówek tabeli na tle wierszy, szuflada
+  na `--bg` z lekkim cieniem, logowanie bez poświaty, stopień bazowy 14 px
+- **`td.cell-sub` ma `display: table-cell`** - klasa bywa klasą całej komórki (kolumny
+  „E-mail", „Kiedy") i `display: block` wyjmowało ją z wiersza (usterka z 2.0 naprawiona
+  przy okazji)
 
 Tokeny, czcionki i wszystkie reguły niżej obowiązują tak samo - inne urządzenie, ten sam produkt.
 
@@ -2592,7 +2634,7 @@ design-first obowiązuje tu tak samo w aplikacji, jak w panelu.
 - **makiety panelu** (`design/panel/`): NOWE `00a-wybor-klubu` (drugi krok logowania przy
   >1 członkostwie admin; superadmin widzi „Organizacje" jako pierwszą kartę),
   `organizacje-lista` + `organizacje-klub` (rama superadministratora: JEDNA zakładka,
-  `.topbar-scope` zamiast kontekstu klubu; nowy klub = nazwa + stały slug + pierwszy
+  kafel zakresu `.sidebar-context.scope` zamiast kontekstu klubu; nowy klub = nazwa + stały slug + pierwszy
   administrator jako zaproszenie e-mail z kodem nadanym z góry), `piloci-zaproszenie`
   (JEDNA akcja główna „Zaproś do klubu" z trzema kartami; link widoczny RAZ w
   `.linkbox`); ZMIENIONE `piloci-lista` (karty ZGŁOSZENIA KODEM KLUBU i ZAPROSZENIA
@@ -2600,12 +2642,12 @@ design-first obowiązuje tu tak samo w aplikacji, jak w panelu.
   ubraniu), `piloci-zgloszenie` („Zatwierdź i przyjmij do klubu"), `piloci-konto`
   (szuflada CZŁONKOSTWA: osoba do odczytu, kod i rola w tym klubie, „Wyłącz
   członkostwo" - inne kluby osoby bez zmian; bez `#/piloci/nowy`, nowy członek =
-  zaproszenie P4). **`.topbar-org`
-  (kontekst klubu za znakiem) stoi w KAŻDEJ ramie klubowej**, także przy jednym
+  zaproszenie P4). **`.sidebar-context`
+  (kontekst klubu na szczycie kolumny bocznej - do issue #107 `.topbar-org` za znakiem) stoi w KAŻDEJ ramie klubowej**, także przy jednym
   członkostwie - nazwa klubu odpowiada na „czyj to dziennik" przy każdym wklejonym
-  linku. Komponenty (`.topbar-org`, `.topbar-scope`, `.linkbox`, `.club-code`)
-  dopisane do `panel.css` i inwentarza `SZABLON.html` - stamtąd idą do
-  `admin/src/styles/` pod tymi samymi nazwami
+  linku. Komponenty `.linkbox` i `.club-code` czekają w `design/panel/rama.css`
+  (sekcja „wielofirmowość") na kod epików B–F - stamtąd idą do `admin/src/styles/`
+  pod tymi samymi nazwami; kontekst klubu (`.sidebar-context`) jest już w `shell.css`
 - **strona `site/src/dolacz/index.html`**: dwa przyciski („Otwórz w aplikacji" →
   `ninerdeck://dolacz/<token>`, „Pobierz"), ZERO wywołań serwera, token z adresu
   wyłącznie do schematu; `noindex` + `no-referrer`, bo adres jest sekretem. Wymaga

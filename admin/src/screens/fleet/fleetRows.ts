@@ -23,8 +23,8 @@ import { litres, NONE } from '../common/values';
  * „3907:48" widać na przyrządzie i nie trzeba nic tłumaczyć.
  */
 const MH_FORMATS: Record<MhFormat, { label: string; example: string; tone: PillTone }> = {
-  decimal: { label: 'dziesiętny', example: '3907.8', tone: 'dim' },
-  hhmm: { label: 'godziny i minuty', example: '3907:48', tone: 'blue' },
+  decimal: { label: 'Dziesiętny', example: '3907.8', tone: 'dim' },
+  hhmm: { label: 'Godziny i minuty', example: '3907:48', tone: 'blue' },
 };
 
 export const mhFormatLabel = (format: MhFormat): string => MH_FORMATS[format].label;
@@ -67,7 +67,7 @@ export function fleetRow(aircraft: AircraftListItemDto): FleetRow {
     capacity: litres(aircraft.capacityL),
     mhFormatLabel: mhFormatLabel(aircraft.mhFormat),
     mhFormatTone: mhFormatTone(aircraft.mhFormat),
-    dualLabel: aircraft.dualRequired ? 'wymagany' : null,
+    dualLabel: aircraft.dualRequired ? 'Wymagany' : null,
     inService,
     statusLabel: inService ? 'W służbie' : 'Wyłączony',
     warning: !inService && aircraft.openSessions > 0 ? 'ktoś jeszcze na nim lata' : null,

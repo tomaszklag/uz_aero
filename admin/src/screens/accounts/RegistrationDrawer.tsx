@@ -82,7 +82,7 @@ export function RegistrationDrawer({
   const generalError = error == null || refusal != null ? null : errorMessage(error);
 
   const row = registration == null ? null : registrationRow(registration);
-  const title = (registration?.name ?? 'ZGŁOSZENIE').toUpperCase();
+  const title = registration?.name ?? 'Zgłoszenie';
 
   if (decided != null) {
     return (
@@ -133,7 +133,7 @@ export function RegistrationDrawer({
         ) : (
           <>
             {row.email}
-            <Pill tone="amber">czeka od {row.sinceLabel}</Pill>
+            <Pill tone="amber">Czeka od {row.sinceLabel}</Pill>
           </>
         )
       }

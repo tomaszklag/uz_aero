@@ -56,6 +56,6 @@ export default defineConfig({
     // i czyste moduły ekranów (`docs/architektura-panelu-frontend.md` §8). Renderowania
     // całych drzew nie testujemy - specyfikacją jest mockup, nie migawka DOM-u.
     environment: 'node',
-    include: ['test/**/*.test.ts', 'src/**/*.test.ts'],
+    include: ['test/**/*.test.ts', 'test/**/*.test.tsx', 'src/**/*.test.ts'],
   },
 });

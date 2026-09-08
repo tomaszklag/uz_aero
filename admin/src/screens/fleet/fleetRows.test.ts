@@ -34,15 +34,15 @@ describe('komórki', () => {
   });
 
   it('format licznika mówi po polsku, nie kodem kontraktu', () => {
-    expect(mhFormatLabel('decimal')).toBe('dziesiętny');
-    expect(mhFormatLabel('hhmm')).toBe('godziny i minuty');
+    expect(mhFormatLabel('decimal')).toBe('Dziesiętny');
+    expect(mhFormatLabel('hhmm')).toBe('Godziny i minuty');
   });
 
   it('plakietka drugiego pilota pojawia się WYŁĄCZNIE przy wymogu', () => {
     // Plakietka przy każdym wierszu uczy oko pomijać kolumnę - a wymóg dotyczy
     // mniejszości floty i jest jedyną informacją, której się w niej szuka.
     expect(fleetRow(aircraft).dualLabel).toBeNull();
-    expect(fleetRow({ ...aircraft, dualRequired: true }).dualLabel).toBe('wymagany');
+    expect(fleetRow({ ...aircraft, dualRequired: true }).dualLabel).toBe('Wymagany');
   });
 });
 

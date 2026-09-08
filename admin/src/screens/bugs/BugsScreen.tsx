@@ -102,7 +102,7 @@ export function BugsScreen() {
   return (
     <>
       <PageHead
-        title="ZGŁOSZENIA"
+        title="Zgłoszenia"
         sub="Błędy zgłoszone z aplikacji pilota - razem z kontekstem okna, w którym powstały."
       />
 

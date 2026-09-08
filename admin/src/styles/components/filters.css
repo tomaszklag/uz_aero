@@ -1,38 +1,38 @@
 /**
- * UZ Aero - panel 2.0: pasek nad tabelą - wyszukiwanie i zawężenia.
+ * UZ Aero - panel: pasek nad tabelą - wyszukiwanie i zawężenia.
  *
- * Dwie różnice wobec zwykłego HTML-a i obie są tym samym: `.search` jest `<label>`,
- * a `.chip` - `<button>`. Zyskuje na tym klawiatura, bo filtr, którego nie da się
+ * `.search` jest `<label>`, a `.chip` - `<button>`: filtr, którego nie da się
  * ustawić bez myszy, psuje scenariusz „przygotuj link do tego wycinka".
  *
- * Czego tu nie ma: LICZB przy chipach. W panelu 1.0 chip niósł liczbę trafień, a kafel
- * nad nim - liczbę po całym klubie; dwie różne liczby o tym samym na jednym ekranie
- * wymagały przypisu wyjaśniającego różnicę.
+ * Chip WŁĄCZONY jest odwrócony (jasne tło, ciemny napis) - ten sam sygnał, którym
+ * kolumna boczna mówi „tu jesteś". Zielony chip z 2.0 znaczył kolorem to, co tutaj
+ * znaczy kontrast; zieleń zostaje dla stanu „w normie" i akcji głównej.
  */
 
 .filters {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .search {
   flex: 1;
-  min-width: 220px;
-  max-width: 340px;
-  height: 36px;
-  border-radius: 10px;
+  min-width: 240px;
+  max-width: 360px;
+  height: 34px;
+  border-radius: 6px;
   background: var(--surface-raised);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 0 12px;
+  gap: 8px;
+  padding: 0 10px;
 }
 
 .search:focus-within {
   border-color: var(--green-border);
+  box-shadow: 0 0 0 3px var(--green-muted);
 }
 
 .search svg {
@@ -47,7 +47,7 @@
   outline: none;
   color: var(--text-primary);
   font-family: var(--font-body);
-  font-size: 12.5px;
+  font-size: 13.5px;
   min-width: 0;
 }
 
@@ -59,26 +59,26 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 32px;
-  padding: 5px 12px;
+  min-height: 30px;
+  padding: 3px 12px;
   border-radius: 999px;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
   color: var(--text-secondary);
   cursor: pointer;
 }
 
 .chip:hover {
-  border-color: var(--border-strong);
+  background: var(--surface-raised);
   color: var(--text-primary);
 }
 
 .chip.on {
-  background: var(--green-muted);
-  border-color: var(--green-border);
-  color: var(--green);
+  background: var(--text-primary);
+  border-color: var(--text-primary);
+  color: var(--bg);
+  font-weight: 600;
 }

@@ -1,35 +1,86 @@
 /**
- * UZ Aero - panel 2.0: WYMIARY RAMY i szkielet układu.
+ * UZ Aero - panel: WYMIARY RAMY i szkielet układu.
  *
  * Osobny plik od `tokens.css` i to jest twarda linia: tokeny to wartości PRODUKTU,
- * wspólne z aplikacją pilota; `--topbar-h` to wymiar jednej powierzchni. Telefon nie
- * ma paska panelu, więc ta zmienna nie ma czego szukać w pakiecie tokenów.
+ * wspólne z aplikacją pilota; `--topbar-h` i `--sidebar-w` to wymiary jednej
+ * powierzchni. Telefon nie ma paska ani kolumny panelu, więc te zmienne nie mają
+ * czego szukać w pakiecie tokenów.
  *
- * `--sidebar-w` zniknęła razem z kolumną boczną (patrz `ui/shell/tabs.ts`).
+ * ══ UKŁAD OD STYLU LEKKIEGO (issue #107) ══
+ *
+ *     ┌──────────────── .topbar ────────────────┐   48 px, na --bg (chrome)
+ *     ├── .sidebar ──╭──────── .content ────────┤
+ *     │   240 px     │  na --surface, przewija  │   WARSTWA WYŻEJ: zaokrąglony górny
+ *     │   na --bg    │  ┌──── .page ────┐       │   lewy róg i włos krawędzi - jak
+ *     │              │  │  nagłówek…    │       │   panel treści w GitLabie
+ *     └──────────────┴──┴───────────────┴───────┘
+ *
+ * Treść jest WARSTWĄ NAD chrome'em (uwaga właściciela przy przeglądzie #107: „główny
+ * kontent powinien być tak jakby w oknie o zaokrąglonych krawędziach, tak jakby
+ * warstwa wyżej"): chrome ciemniejszy (`--bg`), treść jaśniejsza (`--surface`),
+ * oba górne rogi zaokrąglone i odstęp od prawej krawędzi okna, dół dociągnięty do
+ * krawędzi. Pasek i kolumna NIE są sekcjami z własnymi liniami - są tłem, na którym
+ * leży kontener. Karty i tabele na tym tle rysuje sama ramka `--border`; to jest
+ * sens stylu lekkiego - powierzchnia nie potrzebuje drugiego odcienia, żeby być kartą.
+ *
+ * `.workspace` to rząd (kolumna + treść) pod paskiem; `.page` jest wewnętrzną kolumną
+ * treści. Dwa pudełka zamiast jednego, bo `.content` jest OBSZAREM PRZEWIJANIA
+ * (i warstwą z tłem), a `.page` - szerokością czytania: gdyby jedno pudełko trzymało
+ * oba, tło kończyłoby się razem z kolumną 1200 px i na szerokim monitorze treść
+ * stałaby na wyspie.
  */
 
 :root {
-  --topbar-h: 56px;
+  --topbar-h: 48px;
+  --sidebar-w: 240px;
   /* Treść nie rozlewa się na pełną szerokość monitora: wiersz tabeli szerszy niż
      to oko przenosi między kolumnami, gubiąc wiersz w połowie drogi. */
-  --content-max: 1180px;
+  --content-max: 1200px;
+  /* TŁO CHROME'U - lekki gradient pod paskiem i kolumną (uwaga właściciela przy
+     przeglądzie #107: „tło z lekkim gradientem daje efekt nowoczesności"). Zielona
+     poświata przy znaku w lewym górnym rogu i chłodny ton `--bg-tint` u góry, oba
+     gasnące w `--bg`. Wyłącznie z tokenów - to nie jest nowy kolor, tylko rozłożenie
+     istniejących; kontener treści jest nieprzezroczysty, więc gradient widać tylko
+     tam, gdzie chrome jest tłem (i na logowaniu, gdzie tłem jest cały ekran).
+     Zmienna RAMY, nie tokenu produktu - telefon nie ma chrome'u. */
+  --chrome-bg:
+    radial-gradient(900px 480px at 0% 0%, var(--green-muted), transparent 70%),
+    linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 55%);
 }
 
+.workspace {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+/* Kontener treści: oba górne rogi zaokrąglone, odstęp od prawej krawędzi okna,
+   dół dociągnięty do krawędzi (tam jest przewijanie - zaokrąglony dół czytałby się
+   jak koniec strony). Włos na trzech krawędziach; dolnej nie ma z tego samego powodu. */
 .content {
   flex: 1;
+  min-width: 0;
   overflow-y: auto;
-  padding: 26px 22px 40px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  margin-right: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+  padding: 20px 32px 48px;
+}
+
+.page {
   width: 100%;
   max-width: var(--content-max);
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 /* Kolumna scrollowana: dzieci NIE mogą się kurczyć - inaczej `.table-wrap`
    z `overflow:hidden` obcina wiersze, zamiast pozwolić `.content` przewinąć. */
-.content > *,
+.page > *,
 .drawer-body > * {
   flex-shrink: 0;
 }
@@ -41,10 +92,10 @@
 .content::-webkit-scrollbar-thumb {
   background: var(--border-strong);
   border-radius: 99px;
-  border: 3px solid var(--bg);
+  border: 3px solid var(--surface);
 }
 
-/** Ekran PRZED ramą (logowanie) - kolumna wyśrodkowana w oknie. */
+/** Ekran PRZED ramą (plamka sesji) - kolumna wyśrodkowana w oknie. */
 .centered {
   flex: 1;
   display: flex;

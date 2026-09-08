@@ -99,7 +99,7 @@ export function LogbookScreen() {
 
   return (
     <>
-      <PageHead title="DZIENNIK" />
+      <PageHead title="Dziennik" />
 
       <div className="filters">
         <DateRange range={range} now={now} onChange={setRange} />

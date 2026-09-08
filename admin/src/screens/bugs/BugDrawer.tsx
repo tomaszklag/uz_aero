@@ -73,7 +73,7 @@ export function BugDrawer({ uuid, reports, listPending, onClose }: BugDrawerProp
   if (bug == null) {
     return (
       <Drawer
-        title="ZGŁOSZENIE"
+        title="Zgłoszenie"
         sub={uuid}
         onClose={onClose}
         footer={
@@ -97,7 +97,7 @@ export function BugDrawer({ uuid, reports, listPending, onClose }: BugDrawerProp
   return (
     <Drawer
       wide
-      title={`ZGŁOSZENIE · ${bug.pilotCode ?? bug.pilotId}`}
+      title={`Zgłoszenie · ${bug.pilotCode ?? bug.pilotId}`}
       sub={
         <>
           {bug.screen} · {stamp(bug.createdAt)}

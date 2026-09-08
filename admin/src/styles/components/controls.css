@@ -1,9 +1,9 @@
 /**
  * UZ Aero - panel: przyciski i pola formularza.
  *
- * Klasy i wartości 1:1 z `design/admin/SZABLON.html` (sekcje „przyciski"
- * i „formularze"). Wzorzec pól jest ten sam co w aplikacji pilota:
- * `--surface-raised`, promień 12, fokus zielony.
+ * Styl lekki (issue #107): przycisk 32 px z promieniem 6, pole 34 px z promieniem 6,
+ * etykieta krojem tekstowym zamiast mono-wersalików. Reguła z aplikacji pilota
+ * zostaje: zaznaczenie i fokus są zielone, wybór to lista kart, nigdy natywny `<select>`.
  */
 
 /* ── przyciski ── */
@@ -11,13 +11,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  min-height: 36px;
-  padding: 8px 15px;
-  border-radius: 10px;
+  gap: 6px;
+  min-height: 32px;
+  padding: 5px 12px;
+  border-radius: 6px;
   font-family: var(--font-body);
-  font-size: 12.5px;
-  font-weight: 600;
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.3;
   border: 1px solid var(--border-strong);
   background: var(--surface-raised);
   color: var(--text-primary);
@@ -33,64 +34,74 @@
 .btn.primary {
   background: var(--green);
   border-color: var(--green);
-  color: #0a0a0a;
+  color: var(--bg);
+  font-weight: 600;
 }
 
 .btn.primary:hover {
-  filter: brightness(1.08);
+  background: var(--green-hover);
+  border-color: var(--green-hover);
 }
 
+/* Czerwona OBRAMÓWKA, wypełnienie dopiero pod kursorem: akcja odcinająca ma być
+   widoczna, ale nie ma krzyczeć z każdego wiersza tabeli. */
 .btn.danger {
   color: var(--red);
   border-color: var(--red-border);
+  background: transparent;
+}
+
+.btn.danger:hover {
   background: var(--red-muted);
 }
 
+/* Bez tła i bez ramki - trzeciorzędna akcja („Edytuj" w kolumnie tabeli, „Anuluj"
+   w stopce szuflady). Jedna taka w wierszu nie robi z listy farmy guzików. */
 .btn.ghost {
   background: transparent;
-  border-color: var(--border);
+  border-color: transparent;
   color: var(--text-secondary);
 }
 
-/* Zielona OBRAMÓWKA, nie zielone wypełnienie - akcja PRZYWRACAJĄCA („Aktywuj" konta
-   na A06), czyli odwrotność `.btn.danger` i o tej samej wadze wizualnej. `.primary`
-   zostaje zarezerwowana dla akcji głównej ekranu; w kolumnie tabeli byłoby jej
-   kilkanaście naraz i żadna nie byłaby główna. */
+.btn.ghost:hover {
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+
+/* Zielona OBRAMÓWKA - akcja PRZYWRACAJĄCA („Włącz konto"), odwrotność `.btn.danger`
+   o tej samej wadze. `.primary` zostaje dla akcji głównej ekranu. */
 .btn.ok {
   color: var(--green);
   border-color: var(--green-border);
+  background: transparent;
+}
+
+.btn.ok:hover {
   background: var(--green-muted);
 }
 
-.btn:disabled,
 /**
- * Blokada przycisku - ATRYBUT i klasa, oba tak samo.
- *
- * `:disabled` doszło w panelu 2.0 i to nie było ozdobą: `.btn.disabled` opisywało
- * wyłącznie LINK zablokowany (`<span class="btn disabled">`), więc `<button disabled>`
- * wyglądał dokładnie tak samo jak czynny. Zielony przycisk „Zaloguj się", który nie
- * reaguje na kliknięcie, czyta się jak zawieszona aplikacja - a to jest pierwszy
- * przycisk, jaki człowiek w tym panelu widzi.
+ * Blokada przycisku - ATRYBUT i klasa, oba tak samo: `.btn.disabled` opisuje LINK
+ * zablokowany (`<span class="btn disabled">`), `:disabled` - `<button>`. Zielony
+ * przycisk, który nie reaguje na kliknięcie, czyta się jak zawieszona aplikacja.
  */
 .btn:disabled,
 .btn.disabled {
-  opacity: 0.4;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
 .btn.sm {
-  min-height: 30px;
-  padding: 5px 11px;
-  font-size: 11.5px;
-  border-radius: 8px;
+  min-height: 28px;
+  padding: 3px 10px;
+  font-size: 12.5px;
+  border-radius: 5px;
 }
 
-/* Przycisk na całą szerokość karty - A00: „Zaloguj się" ma `width:100%` i wyższy
-   cel niż standardowe 36 px. W mockupie stoi to inline; tutaj dostaje modyfikator,
-   bo jest własnością WZORCA formularza, a nie tego jednego ekranu. */
+/* Przycisk na całą szerokość karty (logowanie). */
 .btn.block {
   width: 100%;
-  min-height: 42px;
+  min-height: 40px;
 }
 
 /* ── pola ── */
@@ -100,60 +111,57 @@
   gap: 6px;
 }
 
+/* Etykieta krojem tekstowym, półgruba, w kolorze treści - jak w każdym formularzu web.
+   Mono-wersaliki 8,5 px z panelu 2.0 czytały się jak etykiety przyrządu, nie pola. */
 .label {
-  font-family: var(--font-mono);
-  font-size: 8.5px;
-  letter-spacing: 1.8px;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.4;
 }
 
 .input {
-  min-height: 40px;
-  border-radius: 12px;
+  min-height: 34px;
+  border-radius: 6px;
   background: var(--surface-raised);
-  border: 1px solid var(--border);
-  padding: 10px 13px;
+  border: 1px solid var(--border-strong);
+  padding: 6px 10px;
   color: var(--text-primary);
   font-family: var(--font-body);
-  font-size: 13px;
+  font-size: 14px;
   outline: none;
   width: 100%;
 }
 
 .input:focus {
   border-color: var(--green-border);
+  box-shadow: 0 0 0 3px var(--green-muted);
 }
 
 .input.mono {
   font-family: var(--font-mono);
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
 }
 
 .input::placeholder {
-  color: var(--text-muted);
+  color: var(--text-placeholder);
 }
 
-/* Pole odrzucone przez serwer (A00a: obramowanie i tło w czerwieni). Modyfikator,
-   nie styl inline - stan błędu pola wróci na każdym formularzu panelu. */
+/* Pole odrzucone przez serwer. Modyfikator, nie styl inline - stan błędu pola wraca
+   na każdym formularzu panelu. */
 .input.invalid {
   border-color: var(--red-border);
-  background: var(--red-muted);
+  box-shadow: 0 0 0 3px var(--red-muted);
 }
 
 /**
- * Pole DO ODCZYTU - „Aktualny stan" karty samolotu, gdy maszynę prowadzi już dziennik
- * (uwagi do issue #66), i każde inne pole, którego edycja nic by nie zmieniła.
- *
- * DOPISANE 2026-09-07 przy makietach panelu 2.0: reguły nie było w `admin/src/styles/`
- * wcale, więc `<TextInput disabled>` wyglądał DOKŁADNIE tak, jak pole czynne - a to jest
- * ta sama pomyłka, przed którą broni `currentState.ts` („polem, które przestało działać,
- * a nadal wygląda na czynne, nie da się nikim pokierować").
- *
- * Wartość zostaje pełnym kontrastem, bo to jest LICZBA, po którą się tu przyszło;
- * gaśnie POWIERZCHNIA i kursor - pole ma czytać się jak wiersz danych, a nie jak
- * formularz, który przestał odpowiadać. Tło `--surface` (a nie `--surface-raised`)
- * zrównuje je z tłem karty: nic nie zaprasza do kliknięcia.
+ * Pole DO ODCZYTU - „Aktualny stan" karty samolotu, gdy maszynę prowadzi już dziennik,
+ * i każde inne pole, którego edycja nic by nie zmieniła. Wartość zostaje pełnym
+ * kontrastem, bo to jest LICZBA, po którą się tu przyszło; gaśnie POWIERZCHNIA
+ * i kursor - pole ma czytać się jak wiersz danych, a nie jak formularz, który przestał
+ * odpowiadać. Tło karty (`--surface`) zrównuje je z otoczeniem: nic nie zaprasza
+ * do kliknięcia.
  */
 .input:disabled {
   background: var(--surface);
@@ -162,11 +170,7 @@
   cursor: default;
 }
 
-/* Pole wieloliniowe (komentarz rozstrzygnięcia flagi, A03a). Mockup używa na nim
-   klasy `.input`; modyfikator dokłada tylko to, czego `<input>` nie ma - pionową
-   zmianę rozmiaru i interlinię akapitu. Komentarz do flagi bywa dłuższy niż linijka,
-   a przycinanie go do czterech wierszy zniechęcałoby do napisania tego, co za pół
-   roku będzie jedynym śladem decyzji. */
+/* Pole wieloliniowe (komentarz do odczytu, powód odrzucenia). */
 .input.area {
   resize: vertical;
   line-height: 1.5;
@@ -174,7 +178,7 @@
 }
 
 .hint {
-  font-size: 11px;
+  font-size: 12.5px;
   color: var(--text-secondary);
   line-height: 1.5;
 }
@@ -184,10 +188,17 @@
   font-weight: 600;
 }
 
-/* Pole z przyciskami W JEDNEJ LINII - hasło startowe + „kopiuj" (A06a). Przyciski są
-   RODZEŃSTWEM pola, a nie jego zawartością, bo `<input>` nie ma dzieci; wysokości
-   równa `align-items: stretch`, żeby 40 px pola i 36 px przycisku nie rozjeżdżały się
-   w pionie. */
+/**
+ * Podpowiedź pod polem w tonie błędu - „ten kod ma już inny pilot". Stoi pod polem,
+ * którego dotyczy, a nie w banerze nad formularzem: baner każe szukać, które z czterech
+ * pól poprawić, a czerwona ramka bez zdania nie mówi dlaczego.
+ */
+.hint.danger {
+  color: var(--red);
+}
+
+/* Pole z przyciskami W JEDNEJ LINII (adres do skopiowania). Przyciski są RODZEŃSTWEM
+   pola, bo `<input>` nie ma dzieci; wysokości równa `align-items: stretch`. */
 .field-row {
   display: flex;
   gap: 8px;
@@ -199,40 +210,34 @@
 }
 
 /* ── wybór jako lista kart ──
-   ZAKAZ natywnego `<select>` (`CLAUDE.md`) - wybór to zawsze widoczna lista kart.
-   W szufladzie flagi ta sama lista służy do nawigacji w głąb (sesje objęte sprawą). */
+   ZAKAZ natywnego `<select>` (`CLAUDE.md`) - wybór to zawsze widoczna lista kart. */
 .opt-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
-/* Siatka zamiast kolumny - dwie karty wyboru obok siebie ALBO dwa pola formularza
-   w jednym rzędzie (`A07a`: „Rok produkcji" + „Pojemność zbiorników"). Klasa jest
-   w `SZABLON.html` przy wyborze kart, a mockup floty używa jej dla pól - bo to jest
-   ta sama rzecz: rząd, który zwija się na wąskim ekranie. `auto-fit` z minimum 200 px
-   robi to bez media query. */
+/* Siatka zamiast kolumny - dwie karty wyboru obok siebie ALBO dwa pola w rzędzie. */
 .opt-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 8px;
+  gap: 6px;
 }
 
-/* `font`, `text-align` i `width` obsługują wariant `<button>` (wybór akcji korekty,
-   A02b): przeglądarka narzuca przyciskowi własną czcionkę i wyśrodkowanie, a karta
-   ma wyglądać identycznie niezależnie od znacznika. `<label>` z mockupu nie jest
-   osiągalny z klawiatury, więc w panelu wybór jest przyciskiem - i to on dyktuje
-   te trzy właściwości. */
+/* `font`, `text-align` i `width` obsługują wariant `<button>`: przeglądarka narzuca
+   przyciskowi własną czcionkę i wyśrodkowanie, a karta ma wyglądać identycznie
+   niezależnie od znacznika. W panelu wybór JEST przyciskiem, bo `<label>` z mockupu
+   nie jest osiągalny z klawiatury. */
 .opt {
   display: flex;
   align-items: center;
-  gap: 11px;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 10px 13px;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 9px 12px;
   cursor: pointer;
-  min-height: 50px;
+  min-height: 46px;
   text-decoration: none;
   color: inherit;
   font: inherit;
@@ -241,18 +246,19 @@
 }
 
 .opt:disabled {
-  opacity: 0.4;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
 .opt:hover {
-  background: var(--surface-hover);
+  background: var(--surface-raised);
 }
 
+/* Zaznaczona karta: zielona ramka, a nie zielone tło - kolor ma mówić „ta", nie
+   przemalowywać połowy formularza. */
 .opt.selected {
-  border-color: var(--green-border);
-  background: rgba(46, 204, 113, 0.05);
-  box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.05);
+  border-color: var(--green);
+  box-shadow: 0 0 0 1px var(--green);
 }
 
 .opt-body {
@@ -264,17 +270,17 @@
 }
 
 .opt-name {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
 }
 
+/* Druga linia karty mówi o SKUTKU wyboru - krojem tekstowym, drobniej. Mono z 2.0
+   zostało przy wartościach maszynowych (`.mono`), a skutek jest zdaniem. */
 .opt-desc {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 0.5px;
-  color: var(--text-muted);
-  line-height: 1.5;
-  word-break: break-all;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .opt-check {
@@ -293,16 +299,6 @@
   color: var(--text-muted);
   flex-shrink: 0;
   display: flex;
-}
-
-/**
- * Podpowiedź pod polem w tonie błędu - „ten kod ma już inny pilot".
- *
- * Stoi pod polem, którego dotyczy, a nie w banerze nad formularzem: baner każe
- * szukać, które z czterech pól poprawić, a czerwona ramka bez zdania nie mówi dlaczego.
- */
-.hint.danger {
-  color: var(--red);
 }
 
 /**
@@ -326,16 +322,8 @@
 
 /**
  * Wartość maszynowa w zdaniu i w wierszu - e-mail konta Google, stempel zgłoszenia,
- * uuid wklejony w rozmowie.
- *
- * DOPISANE 2026-09-07 przy makietach panelu 2.0: `RegistrationDrawer.tsx` pisze
- * `<span className="mono">` przy adresie i przy chwili zgłoszenia, a w całym
- * `admin/src/styles/` była wyłącznie `.input.mono` i `td.mono` - adres jechał więc
- * krojem tekstowym wbrew regule „kody i wartości zawsze mono".
- *
- * Klasa jest UTYLITĄ jednej właściwości i tylko dlatego wolno jej być utylitą: nie
- * niesie ani koloru, ani rozmiaru, więc nie ma jak przemalować komponentu, w którym
- * się pojawi.
+ * uuid wklejony w rozmowie. Klasa jest UTYLITĄ jednej właściwości i tylko dlatego
+ * wolno jej być utylitą: nie niesie ani koloru, ani rozmiaru.
  */
 .mono {
   font-family: var(--font-mono);
