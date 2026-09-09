@@ -766,7 +766,7 @@ export const MIGRATION_7 = `
 
 /**
  * Migracja 8: WIELOFIRMOWOŚĆ - klub jako tenant (`organizations`), członkostwa
- * (`memberships`), zaproszenia (`invitations`), superadministrator (`pilots.platform_role`)
+ * (`memberships`), kod klubu (`organizations.join_code`), superadministrator (`pilots.platform_role`)
  * i `org_id` na każdej tabeli danych klubu (`docs/wielofirmowosc.md` §3, §10; issue #98).
  *
  * ══ CO SIĘ PRZESUWA Z KONTA NA CZŁONKOSTWO ══
@@ -846,7 +846,13 @@ export const MIGRATION_8 = `
     active     BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     -- Superadministrator, który klub założył; NULL przy klubie z backfillu i z seeda.
-    created_by TEXT REFERENCES pilots(id)
+    created_by TEXT REFERENCES pilots(id),
+    -- KOD KLUBU - jedyna droga dołączenia (docs/wielofirmowosc.md §3.8, decyzja 2026-09-09).
+    -- Jawny tekst, nie hash: administrator czyta go z panelu i podaje pilotom, a sam kod
+    -- nie daje dostępu - daje wyłącznie członkostwo 'pending'. Jedyny na SERWERZE, bo
+    -- pilot wpisuje sam kod, bez nazwy klubu. NULL = klub wyłączył dołączanie kodem.
+    join_code       TEXT UNIQUE,
+    join_code_since TIMESTAMPTZ
   );
 
   -- ═══ CZŁONKOSTWO: KIM PILOT JEST W TYM KLUBIE ═══════════════════════════════
@@ -864,9 +870,12 @@ export const MIGRATION_8 = `
     -- przez administratora klubu; rejected = odmowa z powodem (pilot czyta go na 00D).
     status   TEXT NOT NULL CHECK (status IN ('pending', 'active', 'disabled', 'rejected')),
     reject_reason TEXT,
-    -- Którą z trzech dróg dołączenia (docs/wielofirmowosc.md §3.8) ten wiersz powstał;
-    -- 'panel' = administrator dopisał wprost, 'backfill' = przepisany z konta 1.x.
-    joined_via TEXT NOT NULL CHECK (joined_via IN ('email', 'link', 'code', 'panel', 'backfill')),
+    -- Skąd wziął się ten wiersz: 'code' = pilot wpisał kod klubu (jedyna droga dołączenia,
+    -- docs/wielofirmowosc.md §3.8), 'panel' = administrator dopisał wprost (do epiku D -
+    -- potem zastępuje je 'platform' = pierwszy administrator założony przez
+    -- superadministratora), 'backfill' = przepisany z konta 1.x. Wartości 'email' i 'link'
+    -- odpadły 2026-09-09 razem z drogami, które opisywały.
+    joined_via TEXT NOT NULL CHECK (joined_via IN ('code', 'panel', 'platform', 'backfill')),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     decided_at TIMESTAMPTZ,
     decided_by TEXT REFERENCES pilots(id),
@@ -889,43 +898,11 @@ export const MIGRATION_8 = `
   -- Członkostwa jednej OSOBY - logowanie pyta „w których klubach jest ten człowiek".
   CREATE INDEX IF NOT EXISTS idx_memberships_pilot ON memberships (pilot_id);
 
-  -- ═══ ZAPROSZENIA: TRZY DROGI DOŁĄCZENIA, JEDNA TABELA (§3.8) ═════════════════
-  -- Kształt stoi tu w całości, choć wypełnia go dopiero epik D (POST /auth/join,
-  -- generowanie linków, kod klubu): schemat ma opisywać MODEL, a nie stan wdrożenia -
-  -- ta sama zasada, co przy katalogu akcji audytu.
-  CREATE TABLE IF NOT EXISTS invitations (
-    id         TEXT PRIMARY KEY,
-    org_id     TEXT NOT NULL REFERENCES organizations(id),
-    -- link = osobisty, jednorazowy sekret z adresu; email = zweryfikowany adres Google;
-    -- code = wielorazowy kod klubu wpisywany na 00E.
-    kind       TEXT NOT NULL CHECK (kind IN ('link', 'email', 'code')),
-    -- Hash sekretu (link) albo kodu klubu (code) - wartości nie przechowujemy, jak przy
-    -- refresh tokenach: wyciek tabeli nie daje zaproszenia.
-    token_hash TEXT UNIQUE,
-    email      TEXT,
-    -- Dla kogo (napis dla administratora); NIE jest to pilots.name.
-    name_hint  TEXT,
-    -- Kod pilota nadany Z GÓRY (link, email): przy wejściu nie ma już nikogo, kto by go nadał.
-    code       TEXT,
-    role       TEXT NOT NULL DEFAULT 'pilot' CHECK (role IN ('pilot', 'admin')),
-    created_by TEXT NOT NULL REFERENCES pilots(id),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    -- link: termin (propozycja 14 dni); code: NULL - odnawialny ręcznie.
-    expires_at TIMESTAMPTZ,
-    -- link i email są JEDNORAZOWE: wypełnione = zużyte.
-    used_at    TIMESTAMPTZ,
-    used_by    TEXT REFERENCES pilots(id),
-    revoked_at TIMESTAMPTZ,
-    -- Każda droga niesie DOKŁADNIE to, czego potrzebuje - nic więcej, nic mniej.
-    CONSTRAINT invitation_shape CHECK (
-      (kind = 'link'  AND token_hash IS NOT NULL AND code IS NOT NULL) OR
-      (kind = 'email' AND email IS NOT NULL AND code IS NOT NULL) OR
-      (kind = 'code'  AND token_hash IS NOT NULL AND code IS NULL)
-    )
-  );
-  -- Klub ma najwyżej JEDEN żywy kod klubu; „Wygeneruj nowy" unieważnia stary.
-  CREATE UNIQUE INDEX IF NOT EXISTS idx_invitations_club_code
-    ON invitations (org_id) WHERE kind = 'code' AND revoked_at IS NULL;
+  -- ═══ TABELI ZAPROSZEŃ NIE MA (decyzja 2026-09-09, docs/wielofirmowosc.md §3.8, §15) ═══
+  -- Jedyną drogą do klubu jest kod klubu: kolumna organizations.join_code wyżej, a historia
+  -- dołączeń to wiersze memberships (joined_via = 'code'). Pierwsza wersja tej migracji
+  -- (PR #110) miała tu tabelę invitations na trzy drogi; wycięta W MIEJSCU, bo migracja 8
+  -- nie dotarła na produkcję - baza dev do postawienia od nowa (issue #100, D0).
 
   -- ═══ SUPERADMINISTRATOR = OSOBA BEZ KLUBU (§3.3) ════════════════════════════
   -- Zakłada kluby i pierwszych administratorów, i to wszystko. Do danych klubu nie

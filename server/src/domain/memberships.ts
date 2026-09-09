@@ -43,9 +43,12 @@ export const membershipStatusOf = (value: unknown): MembershipStatus =>
   isMembershipStatus(value) ? value : 'pending';
 
 /**
- * Którą drogą członkostwo powstało (§3.8): trzy drogi dołączenia z decyzji właściciela,
- * dopisanie wprost z panelu oraz przepisanie z konta 1.x przy migracji 8.
+ * Skąd wzięło się członkostwo (§3.8): `code` = pilot wpisał kod klubu - od 2026-09-09
+ * JEDYNA droga dołączenia; `panel` = administrator dopisał wprost (do epiku D, potem
+ * zastępuje je `platform` = pierwszy administrator założony przez superadministratora);
+ * `backfill` = przepisane z konta 1.x przy migracji 8. `email` i `link` odpadły razem
+ * z drogami, które nazywały (docs/wielofirmowosc.md §15).
  */
-export const JOINED_VIA = ['email', 'link', 'code', 'panel', 'backfill'] as const;
+export const JOINED_VIA = ['code', 'panel', 'platform', 'backfill'] as const;
 
 export type JoinedVia = (typeof JOINED_VIA)[number];

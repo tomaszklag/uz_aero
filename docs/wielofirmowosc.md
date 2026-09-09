@@ -530,8 +530,10 @@ starym pakiecie - decyzja o tym w epiku W.
     §3.8): epik B wszedł do `develop` (PR #110, 2026-09-09), ale migracja 8 nie dotarła
     na produkcję (`main`), więc jej kształt nadal zmienia się W MIEJSCU, bez migracji 9 -
     bazę dev stawia się od nowa. Dochodzą `organizations.join_code` i `join_code_since`,
-    a `memberships.joined_via` zwęża się do `code | platform | backfill`; zadanie D0
-    w issue #100;
+    a `memberships.joined_via` traci `email` i `link` (zostaje `code | panel | platform |
+    backfill`; `panel` = dopisanie wprost z panelu klubu żyje do D3, gdzie `POST /pilots`
+    przechodzi do modułu Organizacje i wartość zamienia się w `platform`). Zadanie D0
+    w issue #100 - WYKONANE 2026-09-09;
   - **migracja 9 NIE istnieje** - `DROP COLUMN pilots.code, pilots.role` stoi na końcu
     migracji 8 (issue #98 tak kazało; serwer po 8 czyta wyłącznie członkostwa, więc okno
     z §10 pkt 6 nie występuje);
