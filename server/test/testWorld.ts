@@ -23,9 +23,16 @@ import type { Queryable } from '../src/application/common/ports.ts';
 export const ORG_A = 'org-a';
 export const ORG_B = 'org-b';
 
+/**
+ * KOD KLUBU Alfy w zapisie kanonicznym (`domain/clubCode.ts`) - testy dołączania wpisują
+ * go tak, jak pilot: z myślnikiem, bez myślnika, małymi literami. Beta ma dołączanie
+ * WYŁĄCZONE (`join_code = NULL`), żeby „kod wyłączony" miał w świecie testowym klub.
+ */
+export const ORG_A_CODE = 'AZG-7K4M';
+
 const ORGANIZATIONS = [
-  [ORG_A, 'Aeroklub Alfa', 'aeroklub-alfa'],
-  [ORG_B, 'Aeroklub Beta', 'aeroklub-beta'],
+  [ORG_A, 'Aeroklub Alfa', 'aeroklub-alfa', 'AZG7K4M'],
+  [ORG_B, 'Aeroklub Beta', 'aeroklub-beta', null],
 ] as const;
 
 /** Konfiguracje zgodne z §5.4 (pojemność, format MH, wymóg Duala) - flota klubu A. */
@@ -95,12 +102,12 @@ const MEMBERSHIPS = [
 ];
 
 export async function seedTestWorld(db: Queryable): Promise<void> {
-  for (const [id, name, slug] of ORGANIZATIONS) {
-    await db.query('INSERT INTO organizations (id, name, slug) VALUES ($1, $2, $3)', [
-      id,
-      name,
-      slug,
-    ]);
+  for (const [id, name, slug, joinCode] of ORGANIZATIONS) {
+    await db.query(
+      `INSERT INTO organizations (id, name, slug, join_code, join_code_since)
+       VALUES ($1, $2, $3, $4, CASE WHEN $4::text IS NULL THEN NULL ELSE now() END)`,
+      [id, name, slug, joinCode],
+    );
   }
 
   await insertAircraft(db, AIRCRAFT);

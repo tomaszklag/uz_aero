@@ -75,6 +75,10 @@ describe('schemat PostgreSQL (kontrakt)', () => {
       'memberships',
       ['org_id', 'pilot_id', 'code', 'role', 'status', 'reject_reason', 'joined_via', 'created_at', 'decided_at', 'decided_by', 'credentials_valid_from', 'updated_at'],
     ],
+    // Tożsamość Google ZAWSZE podpięta do osoby (epik D, issue #100): `status`,
+    // `reject_reason`, `decided_at`, `decided_by` ZNIKŁY migracją 8 - decyzja o zgłoszeniu
+    // jest wierszem `memberships`, nie stanem tożsamości.
+    ['external_identities', ['provider', 'subject', 'pilot_id', 'email', 'name', 'created_at', 'last_login_at']],
 
     [
       'aircraft',

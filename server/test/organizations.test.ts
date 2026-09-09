@@ -164,6 +164,23 @@ async function legacyClubDb() {
   return db;
 }
 
+/**
+ * Baza 1.x z KOLEJKĄ ZGŁOSZEŃ sprzed epiku D: tożsamość podpięta (admin), zgłoszenie
+ * czekające i odrzucone z powodem - dokładnie to, co migracja 8 może zastać na produkcji
+ * w środku sezonu. Osobno od `legacyClubDb`, żeby liczby w pozostałych testach backfillu
+ * nie zależały od kolejki.
+ */
+async function legacyClubDbWithRegistrations() {
+  const db = await legacyClubDb();
+  await db.query(
+    `INSERT INTO external_identities (provider, subject, pilot_id, email, name, status, reject_reason, created_at, decided_at, decided_by)
+     VALUES ('google', 'sub-admin', 'admin', 'szef@klub.pl', 'Szef', 'linked', NULL, '2026-08-01T10:00:00Z', NULL, NULL),
+            ('google', 'sub-czeka', NULL, 'czeka@gmail.com', 'Czekający Nowy', 'pending', NULL, '2026-09-01T10:00:00Z', NULL, NULL),
+            ('google', 'sub-odmowa', NULL, 'piotr@klub.pl', 'Podszywacz', 'rejected', 'nie z klubu', '2026-09-02T10:00:00Z', '2026-09-03T10:00:00Z', 'admin')`,
+  );
+  return db;
+}
+
 const CLUB_TABLES = [
   'aircraft',
   'events',
@@ -273,6 +290,55 @@ describe('migracja 8 - backfill jednego klubu z danych 1.x', () => {
     ).rejects.toThrow();
   });
 
+  it('zgłoszenia 1.x → OSOBY bez konta stają się osobami z członkostwem `pending`/`rejected` (epik D)', async () => {
+    // Nikt nie wypada z kolejki przez wdrożenie: czekający czeka dalej w klubie domyślnym,
+    // odrzucony czyta swój powód na 00D, a tożsamość Google jest odtąd ZAWSZE podpięta.
+    const db = await legacyClubDbWithRegistrations();
+    await migrate(db, MIGRATIONS, { seedOrg: { name: 'Klub', slug: 'klub' } });
+
+    const columns = await db.query<{ column_name: string }>(
+      `SELECT column_name FROM information_schema.columns
+        WHERE table_name = 'external_identities'
+          AND column_name IN ('status', 'reject_reason', 'decided_at', 'decided_by')`,
+    );
+    expect(columns.rows).toEqual([]);
+    expect(await count(db, 'external_identities', 'WHERE pilot_id IS NULL')).toBe(0);
+
+    const persons = await db.query<{ subject: string; name: string; email: string | null; active: boolean }>(
+      `SELECT e.subject, p.name, p.email, p.active
+         FROM external_identities e JOIN pilots p ON p.id = e.pilot_id
+        ORDER BY e.subject`,
+    );
+    expect(persons.rows).toEqual([
+      { subject: 'sub-admin', name: 'Administrator', email: 'szef@klub.pl', active: true },
+      { subject: 'sub-czeka', name: 'Czekający Nowy', email: 'czeka@gmail.com', active: true },
+      // Adres zajęty przez PWI zostaje pusty - `pilots.email` jest jedyny na serwerze.
+      { subject: 'sub-odmowa', name: 'Podszywacz', email: null, active: true },
+    ]);
+
+    const club = (await db.query<{ id: string }>('SELECT id FROM organizations')).rows[0]!.id;
+    const queue = await db.query<{
+      subject: string;
+      status: string;
+      code: string | null;
+      joined_via: string;
+      reject_reason: string | null;
+      decided_by: string | null;
+    }>(
+      `SELECT e.subject, m.status, m.code, m.joined_via, m.reject_reason, m.decided_by
+         FROM memberships m JOIN external_identities e ON e.pilot_id = m.pilot_id
+        WHERE m.org_id = $1 AND e.subject IN ('sub-czeka', 'sub-odmowa')
+        ORDER BY e.subject`,
+      [club],
+    );
+    expect(queue.rows).toEqual([
+      { subject: 'sub-czeka', status: 'pending', code: null, joined_via: 'backfill', reject_reason: null, decided_by: null },
+      { subject: 'sub-odmowa', status: 'rejected', code: null, joined_via: 'backfill', reject_reason: 'nie z klubu', decided_by: 'admin' },
+    ]);
+    // Konta 1.x bez zmian: dwa członkostwa z backfillu kont + dwa z kolejki.
+    expect(await count(db, 'memberships')).toBe(4);
+  });
+
   it('świeża baza przechodzi migrację 8 BEZ zmiennych klubu - nie ma czego przepisywać', async () => {
     const db = freshDb();
     await expect(migrate(db)).resolves.toBeUndefined();
@@ -351,15 +417,18 @@ describe('logowanie: klub aktywny w tokenie i w odpowiedzi', () => {
     expect(tokens.verify(rotated.json().token)?.orgId).toBe(ORG_A);
   });
 
-  it('osoba BEZ aktywnego członkostwa nie ma tokenów pilota - `403 no_membership`', async () => {
+  it('osoba BEZ aktywnego członkostwa nie ma tokenów pilota - 202 z tokenem OSOBY', async () => {
     // Bramką jest brak członkostwa (§4), piętro nad brakiem konta: osoba istnieje,
-    // tożsamość Google jest podpięta, a token do żadnego klubu nie powstaje.
+    // tożsamość Google jest podpięta, a token do żadnego klubu nie powstaje. Zamiast
+    // odmowy - token osoby (epik D), z którym da się wpisać kod innego klubu.
     const { app, db } = await testHarness();
     await db.query("UPDATE memberships SET status = 'disabled' WHERE pilot_id = 'JSE'");
 
     const res = await login(app, 'JSE');
-    expect(res.statusCode).toBe(403);
-    expect(res.json()).toEqual({ error: 'no_membership' });
+    expect(res.statusCode).toBe(202);
+    expect(res.json().status).toBe('none');
+    expect(res.json().memberships).toMatchObject([{ org: { id: ORG_A }, status: 'disabled' }]);
+    expect(typeof res.json().personToken).toBe('string');
     expect(res.json().token).toBeUndefined();
   });
 
@@ -374,11 +443,15 @@ describe('logowanie: klub aktywny w tokenie i w odpowiedzi', () => {
     expect(body.memberships).toHaveLength(1);
   });
 
-  it('klub WYŁĄCZONY nie wydaje tokenów - jego członkowie dostają `no_membership`', async () => {
+  it('klub WYŁĄCZONY nie wydaje tokenów - jego członkowie dostają token OSOBY', async () => {
     const { app, db } = await testHarness();
     await db.query('UPDATE organizations SET active = FALSE WHERE id = $1', [ORG_B]);
 
-    expect((await login(app, 'BAD')).statusCode).toBe(403);
+    const bad = await login(app, 'BAD');
+    expect(bad.statusCode).toBe(202);
+    // Członkostwo stoi, klub nie działa - lista mówi to wprost, a stan zbiorczy nie udaje aktywności.
+    expect(bad.json().status).toBe('none');
+    expect(bad.json().memberships).toMatchObject([{ org: { id: ORG_B }, status: 'active', clubActive: false }]);
     // PWI ma drugi klub, więc loguje się do Alfy jak zwykle.
     expect((await login(app, 'PWI')).json().org.id).toBe(ORG_A);
   });

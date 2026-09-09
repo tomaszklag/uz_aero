@@ -195,45 +195,9 @@ export interface PilotChangeDto {
   pilot: PilotListItemDto;
 }
 
-// -- zgłoszenia rejestracyjne (logowanie Google) ---------------------------------
-
-/**
- * Stan zgłoszenia. LUSTRO `RegistrationStatusWire` z kontraktu serwera
- * (`server/src/application/admin/contracts/registrations.ts`).
- */
-export type RegistrationStatusDto = 'pending' | 'linked' | 'rejected';
-
-/**
- * Jedno zgłoszenie - wiersz kolejki I treść karty w jednym kształcie.
- *
- * `email` i `name` pochodzą Z GOOGLE: to jest to, co administrator widzi przy decyzji.
- * Imię klubowe i kod nadaje dopiero zatwierdzenie; po nim `pilotCode` mówi, kim
- * ta osoba jest w klubie.
- */
-export interface RegistrationDto {
-  provider: string;
-  /** `sub` od dostawcy - identyfikator w adresie trasy decyzji i w adresie karty. */
-  subject: string;
-  email: string;
-  name: string;
-  status: RegistrationStatusDto;
-  /** Powód odrzucenia - pilot czyta go na ekranie `00d`, dlatego jest wymagany. */
-  rejectReason: string | null;
-  /** ISO 8601 UTC - pierwsze logowanie tym kontem Google. */
-  createdAt: string;
-  lastLoginAt: string | null;
-  decidedAt: string | null;
-  /** KOD administratora, który zdecydował; `null` = jeszcze bez decyzji. */
-  decidedBy: string | null;
-  pilotId: string | null;
-  pilotCode: string | null;
-}
-
-export interface RegistrationPageDto {
-  items: RegistrationDto[];
-  /** Liczniki po CAŁEJ tabeli - także statusów, których filtr nie pokazuje. */
-  counts: Record<RegistrationStatusDto, number>;
-}
+// Zgłoszeń rejestracyjnych TU NIE MA od epiku D wielofirmowości (issue #100): zgłoszenie
+// jest członkostwem `pending` klubu, a kolejka i decyzje o niej wracają do panelu
+// razem z kontraktem członkostw w epiku E (issue #101, makieta `piloci-lista`).
 
 // -- flota ----------------------------------------------------------------------
 

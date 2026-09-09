@@ -1,17 +1,16 @@
 /**
  * UZ Aero - panel 2.0: lista pilotów (`#/piloci`).
  *
- * Ekran ma jedną tabelę i - gdy ktoś czeka - KOLEJKĘ ZGŁOSZEŃ nad nią. Czego tu NIE MA
- * wobec panelu 1.0: czterech kafli z licznikami (i ich czterech przypisów), liczb przy
- * chipach, kolumny „Zmieniono", kolumny „Dni lotne" (statystyka na ekranie konfiguracji),
- * akcji w wierszach oraz dwóch banerów i trzech kart wyjaśniających pod tabelą.
+ * Ekran ma jedną tabelę. Czego tu NIE MA wobec panelu 1.0: czterech kafli z licznikami
+ * (i ich czterech przypisów), liczb przy chipach, kolumny „Zmieniono", kolumny „Dni lotne"
+ * (statystyka na ekranie konfiguracji), akcji w wierszach oraz dwóch banerów i trzech kart
+ * wyjaśniających pod tabelą.
  *
- * == KOLEJKA ZGŁOSZEŃ (logowanie Google, 2026-09-04) ==
- * Ludzie, którzy zalogowali się kontem Google i czekają na decyzję
- * (`docs/logowanie-google.md` §8). Stoi NAD listą, bo to jest zadanie do zrobienia,
- * a lista - stan; i stoi wyłącznie wtedy, gdy ktoś czeka. Pusta kolejka nie dostaje
- * karty z zerem: to stan domyślny, a stan domyślny nie zajmuje ekranu (reguła SyncChipa).
- * Widzi ją tylko konto z `accounts.manage` - to e-maile osób spoza klubu.
+ * == KOLEJKA ZGŁOSZEŃ WRACA W EPIKU E (wielofirmowość, issue #101) ==
+ * Do epiku D (issue #100) stała tu kolejka zgłoszeń rejestracyjnych z logowania Google.
+ * Zgłoszenie jest odtąd CZŁONKOSTWEM `pending` po kodzie klubu (`docs/wielofirmowosc.md`
+ * §3.8, §8.3), a karta ZGŁOSZENIA nad listą i karta „Kod klubu" wchodzą 1:1 z makiet
+ * `piloci-lista`, `piloci-zgloszenie` i `piloci-kod-klubu` razem z kontraktem członkostw.
  */
 
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -19,10 +18,8 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { can } from '../../auth/can';
 import { useSessionState } from '../../auth/sessionContext';
 import { usePilots } from '../../queries/usePilots';
-import { useRegistrations } from '../../queries/useRegistrations';
 import {
   Banner,
-  Card,
   DataTable,
   EmptyState,
   FilterChip,
@@ -38,17 +35,13 @@ import { PeopleIcon, PlusIcon } from '../../ui/components/icons';
 import { errorMessage } from '../common/apiMessage';
 import { AccountDrawer } from './AccountDrawer';
 import { accountRow, type AccountRow } from './accountRows';
-import { RegistrationDrawer } from './RegistrationDrawer';
-import { registrationRow, type RegistrationRow } from './registrationRows';
 
 const HEADERS = ['Kod', 'Imię i nazwisko', 'E-mail', 'Rola', 'Status', ''];
 
 export function AccountsScreen() {
   const { session } = useSessionState();
   const navigate = useNavigate();
-  // `id` pod `piloci/:id?`, `subject` pod `piloci/zgloszenia/:subject` - ten sam ekran
-  // pod dwiema trasami, bo obie karty otwierają się NAD tą samą listą.
-  const { id, subject } = useParams();
+  const { id } = useParams();
   const [params, setParams] = useSearchParams();
 
   // Filtry mieszkają w adresie, nie w stanie komponentu: link „pokaż mi to samo, co
@@ -71,8 +64,6 @@ export function AccountsScreen() {
   });
 
   const manages = can(session?.capabilities, 'accounts.manage');
-  const registrations = useRegistrations(['pending'], manages);
-  const queue = (registrations.data?.items ?? []).map(registrationRow);
 
   const rows = (pilots.data?.items ?? []).map(accountRow);
   const backToList = (): void => {
@@ -120,22 +111,6 @@ export function AccountsScreen() {
     },
   ];
 
-  const queueColumns: Column<RegistrationRow>[] = [
-    { key: 'name', header: 'Imię u Google', cellClass: 'cell-strong', render: (row) => row.name },
-    { key: 'email', header: 'E-mail', cellClass: 'cell-sub', render: (row) => row.email },
-    { key: 'since', header: 'Czeka od', cellClass: 'cell-sub', render: (row) => row.sinceLabel },
-    {
-      key: 'actions',
-      header: '',
-      cellClass: 'row-actions',
-      render: (row) => (
-        <LinkButton to={`/piloci/zgloszenia/${encodeURIComponent(row.subject)}`} size="sm" variant="primary">
-          Rozpatrz
-        </LinkButton>
-      ),
-    },
-  ];
-
   return (
     <>
       <PageHead
@@ -151,22 +126,6 @@ export function AccountsScreen() {
           ) : undefined
         }
       />
-
-      {registrations.error == null ? null : (
-        <Banner tone="danger">{errorMessage(registrations.error)}</Banner>
-      )}
-
-      {queue.length === 0 ? null : (
-        <Card title={`Zgłoszenia · ${queue.length}`}>
-          <DataTable
-            caption="Zgłoszenia czekające na decyzję"
-            columns={queueColumns}
-            rows={queue}
-            rowKey={(row) => `${row.provider}:${row.subject}`}
-            onRowClick={(row) => navigate(`/piloci/zgloszenia/${encodeURIComponent(row.subject)}`)}
-          />
-        </Card>
-      )}
 
       <div className="filters">
         <SearchInput
@@ -215,14 +174,6 @@ export function AccountsScreen() {
         />
       )}
 
-      {subject == null ? null : (
-        <RegistrationDrawer
-          subject={subject}
-          registrations={registrations.data?.items ?? null}
-          listPending={registrations.isPending}
-          onClose={backToList}
-        />
-      )}
     </>
   );
 }

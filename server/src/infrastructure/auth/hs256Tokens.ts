@@ -12,7 +12,8 @@
  * ══ TRZY RODZAJE TOKENÓW, ROZŁĄCZNE PRZEZ CLAIM `purpose` ══
  *  • token KLUBU (bez `purpose`): `sub` + `org` + `code` + `role` - tożsamość pilota
  *    W KLUBIE, jedyny token otwierający trasy telefonu i panelu klubu;
- *  • token REJESTRACYJNY (`purpose: 'registration'`): ktoś bez konta czeka na decyzję;
+ *  • token OSOBY (`purpose: 'person'`): osoba bez aktywnego członkostwa - czeka na
+ *    decyzję klubu albo dopiero wpisze kod klubu (wielofirmowość §4, epik D);
  *  • token PLATFORMOWY (`purpose: 'platform'`): superadministrator bez klubu.
  * Każda z trzech weryfikacji odrzuca dwa pozostałe rodzaje - inaczej poświadczenie
  * wystawione w jednym celu otwierałoby trasy innego.
@@ -23,12 +24,12 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import type {
   Clock,
   Identity,
+  PersonIdentity,
   PlatformIdentity,
-  RegistrationIdentity,
   TokenService,
   VerifiedIdentity,
+  VerifiedPersonIdentity,
   VerifiedPlatformIdentity,
-  VerifiedRegistration,
 } from '../../application/common/ports.ts';
 import { DEFAULT_ROLE, isPilotRole } from '../../domain/roles.ts';
 
@@ -39,7 +40,7 @@ const b64url = (data: Buffer | string): string =>
 const HEADER = b64url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
 
 /** Wartości claimu `purpose`, jakie ten serwer wydaje i rozpoznaje. */
-const REGISTRATION_PURPOSE = 'registration';
+const PERSON_PURPOSE = 'person';
 const PLATFORM_PURPOSE = 'platform';
 
 interface Claims {
@@ -53,18 +54,16 @@ interface Claims {
   org?: string;
   code?: string;
   /**
-   * PRZEZNACZENIE tokenu. Nieobecne = token klubu (pilota/panelu). `'registration'` =
-   * poświadczenie kogoś, kto NIE MA konta pilota i czeka na zatwierdzenie; `'platform'` =
-   * superadministrator bez klubu.
+   * PRZEZNACZENIE tokenu. Nieobecne = token klubu (pilota/panelu). `'person'` = osoba
+   * BEZ aktywnego członkostwa (czeka na decyzję klubu albo dopiero wpisze kod klubu);
+   * `'platform'` = superadministrator bez klubu.
    *
    * Claim istnieje wyłącznie po to, żeby trzy weryfikacje były ROZŁĄCZNE (patrz
-   * `TokenService` w portach). Kontrola nie może opierać się na tym, że token
-   * rejestracyjny nie niesie `code` ani `org` - to prawda przypadkowa, którą pierwsza
-   * zmiana kształtu claimów cicho unieważni.
+   * `TokenService` w portach). Kontrola nie może opierać się na tym, że token osoby
+   * nie niesie `code` ani `org` - to prawda przypadkowa, którą pierwsza zmiana
+   * kształtu claimów cicho unieważni.
    */
   purpose?: string;
-  /** Dostawca tożsamości - wyłącznie w tokenie rejestracyjnym. */
-  prv?: string;
   /** Rola panelu W KLUBIE. Nieobecna w tokenach wydanych przed wprowadzeniem ról - patrz `verify`. */
   role?: string;
   /**
@@ -150,12 +149,11 @@ export class Hs256Tokens implements TokenService {
     });
   }
 
-  signRegistration(claims: RegistrationIdentity, ttlSec: number): string {
+  signPerson(claims: PersonIdentity, ttlSec: number): string {
     const issuedAt = this.issuedNow();
     return this.seal({
-      sub: claims.subject,
-      prv: claims.provider,
-      purpose: REGISTRATION_PURPOSE,
+      sub: claims.pilotId,
+      purpose: PERSON_PURPOSE,
       iat: issuedAt,
       exp: issuedAt + ttlSec,
     });
@@ -171,16 +169,15 @@ export class Hs256Tokens implements TokenService {
     });
   }
 
-  verifyRegistration(token: string): VerifiedRegistration | null {
+  verifyPerson(token: string): VerifiedPersonIdentity | null {
     const claims = this.claimsOf(token);
     if (claims == null) return null;
-    // Odwrotna strona rozdziału: token PILOTA ani PLATFORMOWY nie otwiera trasy zgłoszenia.
-    if (claims.purpose !== REGISTRATION_PURPOSE) return null;
-    if (typeof claims.prv !== 'string' || claims.prv === '') return null;
+    // Odwrotna strona rozdziału: token KLUBU ani PLATFORMOWY nie jest tokenem osoby.
+    if (claims.purpose !== PERSON_PURPOSE) return null;
     // `iat` jak w `verify`: brak → 0, czyli „wydany przed czasem" - przegrywa z każdym
-    // unieważnieniem poświadczeń konta, które ten token miałby otworzyć.
+    // unieważnieniem poświadczeń, które ten token miałby otworzyć.
     const issuedAt = typeof claims.iat === 'number' ? claims.iat : 0;
-    return { provider: claims.prv, subject: claims.sub, issuedAt };
+    return { pilotId: claims.sub, issuedAt };
   }
 
   verifyPlatform(token: string): VerifiedPlatformIdentity | null {
@@ -196,10 +193,10 @@ export class Hs256Tokens implements TokenService {
     if (claims == null) return null;
 
     // ══ TOKEN O INNYM PRZEZNACZENIU NIE JEST TOŻSAMOŚCIĄ ══
-    // Token rejestracyjny i platformowy są podpisane naszym sekretem, więc HMAC je
-    // przepuszcza - odróżnia je wyłącznie ten claim. Bez tej linii poświadczenie kogoś
-    // BEZ konta pilota (albo superadministratora bez klubu) otwierałoby trasy telefonu,
-    // a `POST /events` pisałby zdarzenia z `pilot_id`, za którym nikt nie stoi.
+    // Token osoby i platformowy są podpisane naszym sekretem, więc HMAC je
+    // przepuszcza - odróżnia je wyłącznie ten claim. Bez tej linii poświadczenie osoby
+    // BEZ klubu (albo superadministratora bez klubu) otwierałoby trasy telefonu,
+    // a `POST /events` pisałby zdarzenia do klubu, którego w tokenie nie ma.
     if (claims.purpose != null) return null;
 
     if (typeof claims.code !== 'string') return null;

@@ -690,15 +690,18 @@ describe('POST /admin/api/pilots/:id/active - deaktywacja i aktywacja', () => {
 
   it('deaktywowane konto nie zaloguje się ani w aplikacji, ani w panelu', async () => {
     // Od wielofirmowości „wyłącz konto" w panelu klubu wyłącza CZŁONKOSTWO, nie osobę
-    // (`docs/wielofirmowosc.md` §3.2): telefon słyszy „brak aktywnego klubu", panel -
-    // „konto nie obejmuje panelu". Oba to 403 z nazwanym powodem i ZERO tokenów;
-    // 401 `account_disabled` zostało dla blokady platformowej osoby (`pilots.active`).
+    // (`docs/wielofirmowosc.md` §3.2): telefon dostaje 202 z tokenem OSOBY i wierszem
+    // `disabled` na liście klubów (z nim da się wpisać kod innego klubu - epik D), panel -
+    // 403 „konto nie obejmuje panelu". W obu ZERO tokenów klubu; 401 `account_disabled`
+    // zostało dla blokady platformowej osoby (`pilots.active`).
     const { app } = await testHarness();
     await setActive(app, await tokenOf(app, 'TMK'), 'AKO', false);
 
     const mobile = await login(app, 'AKO');
-    expect(mobile.statusCode).toBe(403);
-    expect(mobile.json()).toEqual({ error: 'no_membership' });
+    expect(mobile.statusCode).toBe(202);
+    expect(mobile.json().status).toBe('none');
+    expect(mobile.json().memberships).toMatchObject([{ status: 'disabled' }]);
+    expect(mobile.json().token).toBeUndefined();
     const panel = await app.inject({
       method: 'POST',
       url: '/admin/api/auth/login',

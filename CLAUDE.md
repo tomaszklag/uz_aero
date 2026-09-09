@@ -2785,6 +2785,69 @@ plik serwera:
   w aplikacji (F). Panel web dostał wyłącznie lustro: `platform.manage` w `dto.ts`
   i `can.ts`, `org` w `PanelSessionDto`
 
+## Wielofirmowość 2.0.0 - epik D, D1 + D4: dołączanie kodem klubu na serwerze (issue #100, 2026-09-09, gałąź `feature-100-dolaczanie-kodem`)
+Domyka B4 z issue #98: kolejka zgłoszeń żyje na CZŁONKOSTWACH, a moduł zgłoszeń
+rejestracyjnych z #89 (`registrations.ts` po obu stronach) jest SKASOWANY. Reguły
+obowiązujące odtąd:
+- **OSOBA POWSTAJE PRZY PIERWSZYM LOGOWANIU GOOGLEM, bez żadnego członkostwa**
+  (`docs/wielofirmowosc.md` §4). Nazwisko i adres idą z profilu; adres trafia na osobę
+  WYŁĄCZNIE potwierdzony przez dostawcę (`email_verified`) i wolny - `pilots.email` jest
+  listą, po której panel dopisuje członkostwo do istniejącej osoby, więc adres
+  niepotwierdzony byłby drogą do podszycia się. Podpięcie po adresie wpisanym zawczasu
+  (`claimByVerifiedEmail`) działa jak dotąd. `ExternalIdentitiesPort.createPerson` to
+  JEDNA transakcja (osoba + tożsamość); przegrany wyścig dwóch pierwszych logowań
+  oddaje `null` i wołający czyta wiersz zwycięzcy
+- **`external_identities` BEZ statusów**: `pilot_id NOT NULL`, kolumny `status`,
+  `reject_reason`, `decided_at`, `decided_by` skasowane migracją 8 W MIEJSCU (nie ma jej na
+  produkcji; baza dev od nowa). Backfill zgłoszeń 1.x → osoby + członkostwa
+  `pending`/`rejected` w klubie domyślnym; dwie pułapki (kolumny kasowane na końcu tej
+  samej migracji jeszcze stoją, pętla zamiast `INSERT…SELECT`) w `docs/architektura-
+  panelu-serwer.md` §7.9 (h)
+- **TOKEN OSOBY** (`purpose: 'person'`, `sub` = id osoby, 30 dni) zastępuje rejestracyjny.
+  Otwiera DOKŁADNIE DWIE trasy bez klubu: `GET /auth/memberships` i `POST /auth/join`.
+  Rozłączność `verify`/`verifyPerson`/`verifyPlatform` w obie strony, z testami.
+  `POST /auth/google` bez aktywnego członkostwa odpowiada **`202`** `{ status:
+  'pending' | 'rejected' | 'none', personToken, memberships }` - `403 no_membership`
+  ZNIKNĘŁO; panel: `not_registered` ZNIKNĘŁO (osoba bez klubu = `no_panel_access`)
+- **`GET /auth/memberships`** przyjmuje token osoby ALBO dowolnego klubu (13A pokazuje
+  z niej listę); tokeny klubu wydaje WYŁĄCZNIE tokenowi osoby i DOKŁADNIE RAZ - trzy
+  bramy z audytu #89 przeniesione 1:1: wejście do klubu (`last_login_at`) późniejsze niż
+  wydanie tokenu, `credentials_valid_from` osoby ALBO członkostwa, stempel przed wydaniem.
+  Stan zbiorczy: `active` > `pending` > `rejected` > `none` (`clubsView` w `commands/auth.ts`
+  - jedna funkcja dla logowania, stanu zgłoszeń i kodu klubu)
+- **`POST /auth/join { code }`** (`application/mobile/commands/join.ts`, adapter
+  `infrastructure/pg/mobile/clubJoinRepo.ts`, trasa `http/routes/mobile/join.ts`):
+  `202` pending (także przy powtórce - `ON CONFLICT (org_id, pilot_id) DO NOTHING`, bez
+  drugiego wiersza), `403 membership_rejected` z powodem, `409 already_member` /
+  `membership_disabled`, **`404 unknown_code` dla kodu nieznanego = wyłączonego (`join_code
+  NULL`) = klubu nieaktywnego = złego kształtu** (jedna odpowiedź co do bajtu),
+  `429 too_many_attempts` z `Retry-After` i `retryAfterSec`. Pilot pisze do `memberships`
+  SAM, poza panelem i bez audytu - ślad powstaje przy decyzji (D2)
+- **KOD KLUBU w bazie ZNORMALIZOWANY** (`domain/clubCode.ts`: 7 znaków z alfabetu 32,
+  wersaliki, bez myślnika - `AZG7K4M`); `XXX-XXXX` jest zapisem do wyświetlenia
+  (`formatClubCode`). Wpis pilota normalizuje `normalizeClubCode` (myślniki, spacje,
+  wielkość liter), zły kształt → `null` → to samo `404`. Generowanie kodu - D2
+- **OGRANICZENIE TEMPA W PAMIĘCI PROCESU** (`application/mobile/attemptLimiter.ts`, czysty,
+  na porcie `Clock`): okno przesuwne 15 min, 10 prób na osobę i 30 na adres IP naraz;
+  liczą się próby DOZWOLONE (udane i nieudane), odbita `429` nie przedłuża blokady;
+  `retryAfterMs` = do wygaśnięcia najstarszej z ostatnich `limit` prób. Jedna instancja
+  serwera (§8.8 architektury), więc tabela byłaby kosztem bez zysku
+- **`credentialsRevoked` przeniesione do `domain/credentials.ts`** - potrzebują go trzy
+  miejsca (brama panelu, token osoby, dołączanie), a warstwa aplikacji nie importuje
+  z `http/`. `PilotAccount` niesie odtąd `credentialsValidFrom`; `Membership` -
+  `rejectReason`, `createdAt`, `decidedAt`
+- **audyt**: `registration.approve/reject` → `membership.approve/reject` (emituje D2)
+- **panel stracił kolejkę zgłoszeń i szufladę zatwierdzania** (wracają 1:1 z makiet
+  `piloci-lista`/`piloci-zgloszenie`/`piloci-kod-klubu` w epiku E na kontrakcie
+  członkostw); lustro `RegistrationStatusDto` wycięte z `mirrors.test.ts`
+- **aplikacja pilota NIE jest tknięta** - woła stare `GET /auth/registration`
+  i `registrationToken` do epiku F; na `develop` nic się nie buduje, więc rozjazd jest
+  przyjęty. D9 (podręcznik, `docs/logowanie-google.md`, `_main.md.txt`, changelog) idzie
+  razem z resztą epiku
+- testy: `joinClub.test.ts` (cała tabela odpowiedzi z §5 + oba limity na sterowanym
+  zegarze), `attemptLimiter.test.ts`, `clubCode.test.ts`, blok „osoba BEZ klubu"
+  w `auth.test.ts`, backfill tożsamości w `organizations.test.ts`
+
 ## Obieg gałęzi (git-flow od 2026-09-08, milestone „Wielofirmowość + SaaS 2.0.0")
 ```
 feature-… → develop → ninerdeck_x_x_x → main        (wydanie planowe)

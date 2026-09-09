@@ -21,18 +21,13 @@ describe('nieudane logowanie (Google)', () => {
     expect(message.text).toContain('wyłączone');
   });
 
-  it('konto Google bez konta w klubie: droga prowadzi do administratora', () => {
-    const message = loginMessage(http(403, 'not_registered'));
-    expect(message.tone).toBe('warn');
-    expect(message.text).toContain('nie ma konta z tym adresem');
-    expect(message.text).toContain('administratora');
-  });
-
-  it('konto bez panelu brzmi INACZEJ niż konto nieznane - to dwie różne prośby', () => {
+  it('osoba bez roli panelu (także bez klubu): droga prowadzi do administratora klubu', () => {
+    // Od epiku D wielofirmowości osoba powstaje przy pierwszym logowaniu, więc „konta
+    // nie ma" przestało być stanem - nieznajomy i zwykły pilot dostają to samo zdanie.
     const panel = loginMessage(http(403, 'no_panel_access'));
     expect(panel.tone).toBe('warn');
     expect(panel.text).toContain('nie ma dostępu do panelu');
-    expect(panel.text).not.toBe(loginMessage(http(403, 'not_registered')).text);
+    expect(panel.text).toContain('administratora klubu');
   });
 
   it('brak sieci to inne zdanie niż odmowa serwera', () => {

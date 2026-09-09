@@ -13,6 +13,8 @@
 
 import type { Event, OperationType } from '@uzaero/domain';
 
+import type { MembershipStatus } from '../../domain/memberships.ts';
+import type { Organization } from '../../domain/organizations.ts';
 import type { Queryable } from '../common/ports.ts';
 
 /**
@@ -109,4 +111,42 @@ export interface TaskSuggestionsPort {
   clients(db: Queryable, limit: number): Promise<ClientSuggestion[]>;
   /** Różne niepuste `sessions.notes` sesji TEGO pilota, najnowsze pierwsze. */
   notes(db: Queryable, picId: string, limit: number): Promise<TaskSuggestion[]>;
+}
+
+// ── dołączanie do klubu kodem (wielofirmowość, epik D) ─────────────────────────
+
+/**
+ * Wynik zapisu członkostwa `pending` po kodzie klubu (`POST /auth/join`).
+ *
+ * `created` mówi, czy wiersz właśnie powstał; gdy osoba MA JUŻ członkostwo w tym klubie
+ * (klucz `(org_id, pilot_id)`), adapter oddaje jego stan bez drugiego wiersza - a komenda
+ * decyduje, co to znaczy: `pending` = to samo `202` co przy nowym zgłoszeniu, `rejected`
+ * = decyzja zapadła i kod jej nie obchodzi, `active`/`disabled` = „już jesteś w klubie".
+ */
+export interface JoinAttempt {
+  created: boolean;
+  status: MembershipStatus;
+  rejectReason: string | null;
+  decidedAt: Date | null;
+}
+
+/**
+ * Port DOŁĄCZANIA - odczyt klubu po kodzie i zapis zgłoszenia. Osobny od portów panelu
+ * (`PilotsAdminPort` decyduje o zgłoszeniach w transakcji audytu) i od portu logowania
+ * (`PilotsPort` czyta członkostwa): to jedyna droga, którą PILOT SAM pisze do
+ * `memberships`, i jedyna, która pyta o klub po kodzie. Adapter z własnym uchwytem do
+ * bazy, jak `PgPilotsRepo` - zgłoszenie nie jest akcją panelu i nie ma śladu w audycie.
+ */
+export interface ClubJoinPort {
+  /**
+   * Klub po ZNORMALIZOWANYM kodzie (`domain/clubCode.ts`); `null` = kod nieznany ALBO
+   * dołączanie wyłączone (`join_code = NULL` nie pasuje do niczego). Klub nieaktywny
+   * wraca z `active: false` - komenda odpowiada na niego tak samo, jak na nieznany.
+   */
+  findByCode(code: string): Promise<Organization | null>;
+  /**
+   * `INSERT … ON CONFLICT (org_id, pilot_id) DO NOTHING` + odczyt stanu: zgłoszenie
+   * `pending` z `joined_via = 'code'` albo istniejące członkostwo bez zmian.
+   */
+  join(orgId: string, pilotId: string, at: Date): Promise<JoinAttempt>;
 }

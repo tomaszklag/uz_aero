@@ -95,11 +95,11 @@ export function registerAdminAuthRoutes(
     const result = await auth.panelLoginWithProvider(parsed.data.idToken);
     if (!result.ok) {
       // 403 dla konta ROZPOZNANEGO, które nie ma wstępu: tożsamość jest poprawna
-      // i człowiek ma prawo wiedzieć, dlaczego go nie wpuszczamy - konto pilota nie
-      // obejmuje panelu (`no_panel_access`) albo konta jeszcze nie ma, bo zgłoszenie
-      // czeka na zatwierdzenie (`not_registered`). 401 zostaje dla tokenu, którego
-      // nie da się zweryfikować, i dla konta wyłączonego.
-      const known = result.reason === 'no_panel_access' || result.reason === 'not_registered';
+      // i człowiek ma prawo wiedzieć, dlaczego go nie wpuszczamy - w żadnym klubie nie
+      // jest administratorem (`no_panel_access`; od epiku D obejmuje też osobę, która
+      // dopiero zalogowała się pierwszy raz i nie ma klubu). 401 zostaje dla tokenu,
+      // którego nie da się zweryfikować, i dla osoby zablokowanej.
+      const known = result.reason === 'no_panel_access';
       return reply.code(known ? 403 : 401).send({ error: result.reason });
     }
 

@@ -54,9 +54,8 @@ import { registerPublicSiteStatic } from './routes/site/staticSite.ts';
 import type { AdminGate } from './routes/admin/adminRoute.ts';
 import { registerAdminAuditRoutes } from './routes/admin/audit.ts';
 import { registerAdminBugReportRoutes } from './routes/admin/bugReports.ts';
-import { registerAdminRegistrationRoutes } from './routes/admin/registrations.ts';
-import type { AdminRegistrationCommands } from '../application/admin/commands/registrations.ts';
-import type { AdminRegistrationQueries } from '../application/admin/queries/registrations.ts';
+import type { JoinCommands } from '../application/mobile/commands/join.ts';
+import { registerJoinRoutes } from './routes/mobile/join.ts';
 import { registerAdminAuthRoutes } from './routes/admin/auth.ts';
 import { registerAdminCorrectionRoutes } from './routes/admin/corrections.ts';
 import { registerAdminDashboardRoutes } from './routes/admin/dashboard.ts';
@@ -86,6 +85,12 @@ import { registerTracesRoutes } from './routes/mobile/traces.ts';
 
 export interface ServerDeps {
   auth: AuthCommands;
+  /**
+   * Dołączenie do klubu kodem (`POST /auth/join`, wielofirmowość §3.8) - jedyna droga,
+   * którą pilot SAM pisze do `memberships`; poza panelem, poza audytem, z ograniczeniem
+   * tempa w pamięci procesu.
+   */
+  join: JoinCommands;
   reference: ReferenceQueries;
   ingest: IngestCommands;
   /**
@@ -209,9 +214,6 @@ export interface ServerDeps {
    */
   adminBugReportQueries: AdminBugReportQueries;
   adminBugReports: AdminBugReportCommands;
-  /** Zgłoszenia rejestracyjne (logowanie Google) - lista, zatwierdzenie, odrzucenie. */
-  adminRegistrationQueries: AdminRegistrationQueries;
-  adminRegistrations: AdminRegistrationCommands;
   /**
    * Identyfikator klienta Google WEB - jedyna konfiguracja, jakiej panel potrzebuje
    * PRZED zalogowaniem (`GET /admin/api/auth/google-client`). Nie sekret: stoi
@@ -299,6 +301,7 @@ export async function buildServer(
   registerAdminCsrfGuard(app);
 
   registerAuthRoutes(app, deps.auth);
+  registerJoinRoutes(app, deps.auth, deps.join);
   registerReferenceRoutes(app, deps.reference, deps.tokens);
   registerEventsRoutes(app, deps.ingest, deps.myEvents, deps.tokens);
   registerStateRoutes(app, deps.state, deps.tokens);
@@ -342,12 +345,6 @@ export async function buildServer(
   registerAdminConsumptionRoutes(app, deps.adminConsumptionQueries, gate);
   registerAdminMaintenanceRoutes(app, deps.adminMaintenanceQueries, deps.adminMaintenance, gate);
   registerAdminBugReportRoutes(app, deps.adminBugReportQueries, deps.adminBugReports, gate);
-  registerAdminRegistrationRoutes(
-    app,
-    deps.adminRegistrationQueries,
-    deps.adminRegistrations,
-    gate,
-  );
 
   // Pliki statyczne - na końcu, żeby czytać ten plik w kolejności „API, potem pliki";
   // w routerze i tak wygrywają trasy konkretne, nie kolejność rejestracji. Panel idzie

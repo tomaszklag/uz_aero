@@ -117,14 +117,15 @@ describe('logowanie do panelu wydaje ciasteczko, nie token w ciele', () => {
     expect(setCookieHeader(badToken)).toBe('');
   });
 
-  it('konto Google BEZ konta pilota → 403 `not_registered`, nie „złe poświadczenia"', async () => {
-    // Odrębna wiadomość od `no_panel_access`: tam konto istnieje i nie obejmuje panelu,
-    // tu konta jeszcze nie ma, bo zgłoszenie czeka na zatwierdzenie.
+  it('konto Google BEZ klubu → 403 `no_panel_access`, nie „złe poświadczenia"', async () => {
+    // Od epiku D osoba powstaje przy pierwszym logowaniu, więc „konta nie ma" przestało
+    // istnieć jako stan: nieznajomy jest osobą bez członkostwa i dla panelu znaczy dokładnie
+    // to, co pilot bez roli - w żadnym klubie nie jest administratorem.
     const { app } = await testHarness();
     const res = await panelLogin(app, 'nieznajomy', googleTokenForStranger('obcy'));
 
     expect(res.statusCode).toBe(403);
-    expect(res.json()).toEqual({ error: 'not_registered' });
+    expect(res.json()).toEqual({ error: 'no_panel_access' });
     expect(setCookieHeader(res)).toBe('');
   });
 });

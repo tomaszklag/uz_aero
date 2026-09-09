@@ -561,7 +561,18 @@ starym pakiecie - decyzja o tym w epiku W.
   `GET /auth/memberships`, kolejka `pending` na członkostwach (zatwierdzenie z kodem
   i rolą, odrzucenie z powodem), kod klubu w panelu (generowanie, wyłączenie), pierwszy
   administrator z modułu Organizacje, kasacja `registrations.ts` z #89 i strony
-  `dolacz/`.
+  `dolacz/`. **D1 + D4 WDROŻONE 2026-09-09** (gałąź `feature-100-dolaczanie-kodem`):
+  osoba powstaje przy pierwszym logowaniu (§4), token `purpose: 'person'`, `202` ze
+  stanem `pending` / `rejected` / `none` zamiast `403 no_membership`, obie trasy bez klubu,
+  ograniczenie tempa w pamięci procesu (§8.8 architektury serwera), `external_identities`
+  bez statusów z backfillem zgłoszeń 1.x na członkostwa (pułapki: `docs/architektura-
+  panelu-serwer.md` §7.9 (h)), moduł zgłoszeń z #89 skasowany z serwera i panelu.
+  Odstępstwa od tego dokumentu: `GET /auth/memberships` przyjmuje TAKŻE token klubu
+  (lista klubów na 13A), ale tokeny klubu wydaje wyłącznie tokenowi osoby; stan zbiorczy
+  ma czwartą wartość `active` (tylko dla tokenu klubu); członkostwo `disabled` bez innego
+  aktywnego daje `202` ze stanem `none` i wierszem `disabled` na liście, nie odmowę -
+  z tokenem osoby da się wpisać kod innego klubu. D2 (komendy panelu), D3, D5–D7 i D9 -
+  następne PR-y.
 - **E - panel** (issue #101): moduł Organizacje, wybór klubu, kontekst klubu w kolumnie,
   członkowie, zgłoszenia i kod klubu 1:1 z makiet.
 - **F - aplikacja** (issue #102): klub w tokenie i `POST /auth/switch`, cache per klub,

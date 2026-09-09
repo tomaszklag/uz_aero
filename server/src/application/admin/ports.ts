@@ -22,7 +22,7 @@ import type {
 
 import type { AdminAction } from '../../domain/adminActions.ts';
 import type { PilotRole, PlatformRole } from '../../domain/roles.ts';
-import type { FlagRecord, IdentityStatus, Queryable, SessionRow } from '../common/ports.ts';
+import type { FlagRecord, Queryable, SessionRow } from '../common/ports.ts';
 import type { AdminEventCounts } from './contracts/events.ts';
 import type { AdminExportCounts, ExportState } from './contracts/exports.ts';
 
@@ -889,75 +889,9 @@ export interface RefreshTokensAdminPort {
   revokeAllFor(tx: Queryable, pilotId: string, orgId: string): Promise<number>;
 }
 
-// ── zgłoszenia rejestracyjne (logowanie Google, 2026-09-04) ─────────────────────
-
-/**
- * Zgłoszenie tak, jak widzi je PANEL: wiersz `external_identities` z dołączonymi
- * KODAMI - konta zatwierdzonego i administratora, który zdecydował. Kody, nie
- * identyfikatory, bo to lista dla człowieka.
- */
-export interface RegistrationRecord {
-  provider: string;
-  subject: string;
-  /** Z tokenu Google - do decyzji; po zatwierdzeniu staje się `pilots.email`. */
-  email: string;
-  /** Imię z profilu Google - NIE `pilots.name`, to nadaje administrator. */
-  name: string;
-  status: IdentityStatus;
-  rejectReason: string | null;
-  createdAt: Date;
-  lastLoginAt: Date | null;
-  decidedAt: Date | null;
-  decidedByCode: string | null;
-  pilotId: string | null;
-  pilotCode: string | null;
-}
-
-/**
- * Decyzje o zgłoszeniach - osobny port od `ExternalIdentitiesPort` (ścieżka logowania)
- * z tego samego powodu, dla którego konta mają `PilotsPort` i `PilotsAdminPort`: inne
- * pytanie, inny rytm (transakcja audytu), a logowanie nie ma jak zregresować od panelu.
- */
-export interface RegistrationsAdminPort {
-  /**
-   * Kolejka: najstarsze pierwsze. `statuses` puste = wszystkie. `orgId` = klub
-   * czytającego: kody pilota i decydenta na liście są kodami Z TEGO klubu
-   * (zgłoszenie rejestracyjne samo klubu nie zna - przenosi się na członkostwa w epiku D).
-   */
-  list(
-    db: Queryable,
-    orgId: string,
-    filter: { statuses: readonly IdentityStatus[]; limit: number },
-  ): Promise<RegistrationRecord[]>;
-  find(
-    db: Queryable,
-    orgId: string,
-    provider: string,
-    subject: string,
-  ): Promise<RegistrationRecord | null>;
-  /** Liczniki po CAŁEJ tabeli - plakietka przy zakładce PILOCI. */
-  countByStatus(db: Queryable): Promise<Record<IdentityStatus, number>>;
-  /**
-   * Przejście `pending → linked` z kontem `pilotId`. Zwraca `false`, gdy zgłoszenia nie
-   * ma ALBO ma już decyzję - warunek `status = 'pending'` siedzi w SQL-u i to ON
-   * rozstrzyga wyścig dwóch decyzji, nie odczyt przed zapisem.
-   */
-  link(
-    tx: Queryable,
-    key: { provider: string; subject: string },
-    pilotId: string,
-    by: string,
-    at: Date,
-  ): Promise<boolean>;
-  /** Przejście `pending → rejected` z powodem; ta sama semantyka `false`, co w `link`. */
-  reject(
-    tx: Queryable,
-    key: { provider: string; subject: string },
-    reason: string,
-    by: string,
-    at: Date,
-  ): Promise<boolean>;
-}
+// Kolejki zgłoszeń rejestracyjnych TU NIE MA od epiku D (issue #100): zgłoszenie jest
+// członkostwem `pending` (`memberships`), a decyzje o nim - zatwierdzenie z kodem i rolą,
+// odrzucenie z powodem - wchodzą do `PilotsAdminPort` razem z komendami epiku D2.
 
 // ── flota (A07, A07a) ───────────────────────────────────────────────────────────
 

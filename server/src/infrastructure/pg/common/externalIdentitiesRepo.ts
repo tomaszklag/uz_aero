@@ -1,35 +1,32 @@
 /**
  * UZ Aero (serwer) - adapter tożsamości zewnętrznych (`ExternalIdentitiesPort`).
  *
- * Obsługuje ŚCIEŻKĘ LOGOWANIA: odczyt zgłoszenia, założenie nowego i podpięcie do
- * istniejącego konta po zweryfikowanym e-mailu. Decyzje administratora (zatwierdzenie,
- * odrzucenie) mają własny adapter po stronie panelu - ta sama zasada, co przy kontach:
- * `PgPilotsRepo` czyta przy logowaniu, `PgAdminPilotsRepo` pisze w transakcji audytu,
- * więc ścieżka logowania nie ma jak zregresować od zmian w panelu.
+ * Obsługuje ŚCIEŻKĘ LOGOWANIA: odczyt tożsamości, założenie OSOBY przy pierwszym
+ * logowaniu i podpięcie do istniejącego konta po zweryfikowanym e-mailu. Decyzje
+ * administratora o zgłoszeniach nie dotykają już tej tabeli (wielofirmowość §4,
+ * epik D): zgłoszenie jest wierszem `memberships`, a tożsamość Google jest albo
+ * nieznana, albo podpięta do osoby - statusów tu nie ma.
+ *
+ * Adapter ma własny uchwyt do bazy jak `PgPilotsRepo` - logowanie jedzie poza
+ * transakcją audytu, bo nie jest akcją panelu.
  */
 
 import type {
+  Database,
   ExternalIdentitiesPort,
   ExternalIdentity,
-  IdentityStatus,
   ProviderProfile,
-  Queryable,
 } from '../../../application/common/ports.ts';
 
 interface IdentityRow {
   provider: string;
   subject: string;
-  pilot_id: string | null;
+  pilot_id: string;
   email: string;
   name: string;
-  status: string;
-  reject_reason: string | null;
   created_at: string | Date;
-  decided_at: string | Date | null;
   last_login_at: string | Date | null;
 }
-
-const STATUSES: readonly IdentityStatus[] = ['pending', 'linked', 'rejected'];
 
 const toIdentity = (r: IdentityRow): ExternalIdentity => ({
   provider: r.provider,
@@ -37,22 +34,17 @@ const toIdentity = (r: IdentityRow): ExternalIdentity => ({
   pilotId: r.pilot_id,
   email: r.email,
   name: r.name,
-  // Ta sama nieufność, co przy roli w `PgPilotsRepo`: nierozpoznany status schodzi
-  // do `pending`, czyli do stanu BEZ dostępu. Ten kierunek błędu jest bezpieczny.
-  status: (STATUSES as readonly string[]).includes(r.status)
-    ? (r.status as IdentityStatus)
-    : 'pending',
-  rejectReason: r.reject_reason,
   createdAt: new Date(r.created_at),
-  decidedAt: r.decided_at == null ? null : new Date(r.decided_at),
   lastLoginAt: r.last_login_at == null ? null : new Date(r.last_login_at),
 });
 
-const COLUMNS =
-  'provider, subject, pilot_id, email, name, status, reject_reason, created_at, decided_at, last_login_at';
+const COLUMNS = 'provider, subject, pilot_id, email, name, created_at, last_login_at';
+
+/** Sygnał wycofania transakcji `createPerson` - przegrany wyścig o tożsamość. */
+class IdentityRace extends Error {}
 
 export class PgExternalIdentitiesRepo implements ExternalIdentitiesPort {
-  constructor(private readonly db: Queryable) {}
+  constructor(private readonly db: Database) {}
 
   async find(provider: string, subject: string): Promise<ExternalIdentity | null> {
     const { rows } = await this.db.query<IdentityRow>(
@@ -62,20 +54,49 @@ export class PgExternalIdentitiesRepo implements ExternalIdentitiesPort {
     return rows[0] ? toIdentity(rows[0]) : null;
   }
 
-  async createPending(profile: ProviderProfile): Promise<ExternalIdentity> {
-    // `ON CONFLICT DO UPDATE` na e-mailu i nazwie, bo między pierwszym zgłoszeniem
-    // a decyzją administratora człowiek może zmienić jedno i drugie po stronie Google -
-    // a decyzja ma zapadać na danych aktualnych. Statusu NIE ruszamy: ponowne
-    // logowanie nie ma prawa cofnąć odrzucenia ani zerwać podpięcia.
+  async findByPilot(pilotId: string): Promise<ExternalIdentity | null> {
     const { rows } = await this.db.query<IdentityRow>(
-      `INSERT INTO external_identities (provider, subject, email, name, status)
-       VALUES ($1, $2, $3, $4, 'pending')
-       ON CONFLICT (provider, subject) DO UPDATE
-         SET email = EXCLUDED.email, name = EXCLUDED.name
-       RETURNING ${COLUMNS}`,
-      [profile.provider, profile.subject, profile.email, profile.name],
+      `SELECT ${COLUMNS} FROM external_identities WHERE pilot_id = $1`,
+      [pilotId],
     );
-    return toIdentity(rows[0]!);
+    return rows[0] ? toIdentity(rows[0]) : null;
+  }
+
+  async createPerson(profile: ProviderProfile, personId: string): Promise<ExternalIdentity | null> {
+    // JEDNA transakcja: osoba bez tożsamości byłaby wierszem, do którego nikt nigdy nie
+    // wejdzie - a właśnie taki zostawiłby przegrany wyścig dwóch pierwszych logowań tej
+    // samej tożsamości, gdyby osoba powstawała osobnym poleceniem. Przegrana kończy się
+    // wyjątkiem (rollback), a wołający czyta wiersz zwycięzcy.
+    //
+    // Adres z Google trafia na osobę WYŁĄCZNIE potwierdzony i wolny: `pilots.email` jest
+    // listą, po której panel dopisuje członkostwo do istniejącej osoby (`insert`
+    // w `PgAdminPilotsRepo`), więc adres niepotwierdzony byłby drogą do podszycia się
+    // pod kogoś, komu administrator dopiero wpisze ten adres.
+    try {
+      return await this.db.transaction(async (tx) => {
+        await tx.query(
+          `INSERT INTO pilots (id, name, email, active)
+           VALUES ($1, $2,
+                   CASE WHEN $4::boolean
+                         AND NOT EXISTS (SELECT 1 FROM pilots WHERE lower(email) = lower($3))
+                        THEN $3::text ELSE NULL END,
+                   TRUE)`,
+          [personId, profile.name, profile.email, profile.emailVerified],
+        );
+        const { rows } = await tx.query<IdentityRow>(
+          `INSERT INTO external_identities (provider, subject, pilot_id, email, name)
+           VALUES ($1, $2, $3, $4, $5)
+           ON CONFLICT (provider, subject) DO NOTHING
+           RETURNING ${COLUMNS}`,
+          [profile.provider, profile.subject, personId, profile.email, profile.name],
+        );
+        if (rows[0] == null) throw new IdentityRace();
+        return toIdentity(rows[0]);
+      });
+    } catch (err) {
+      if (err instanceof IdentityRace) return null;
+      throw err;
+    }
   }
 
   async claimByVerifiedEmail(profile: ProviderProfile): Promise<ExternalIdentity | null> {
@@ -88,31 +109,24 @@ export class PgExternalIdentitiesRepo implements ExternalIdentitiesPort {
     // niepodpiętego: bez tego cudze konto Google o tym samym e-mailu przejęłoby
     // konto już używane przez kogoś innego.
     //
-    // Konto WYŁĄCZONE też się podpina - i to jest poprawka po pierwszym przebiegu
-    // testów (2026-09-04). Z warunkiem `AND p.active` wyłączony pilot spadał do
-    // ścieżki „konto nieznane" i dostawał ŚWIEŻE ZGŁOSZENIE, które administrator
-    // mógłby zatwierdzić - zakładając osobie, którą właśnie wyłączył, drugie konto.
-    // Tożsamość Google JEST tego człowieka niezależnie od stanu konta; odmowę
-    // („account_disabled") orzeka komenda po podpięciu.
+    // Konto WYŁĄCZONE też się podpina - poprawka po pierwszym przebiegu testów
+    // (2026-09-04). Z warunkiem `AND p.active` wyłączony pilot spadał do ścieżki
+    // „konto nieznane" i dostawał ŚWIEŻĄ osobę, którą administrator mógłby przyjąć -
+    // zakładając człowiekowi, którego właśnie wyłączył, drugie konto. Tożsamość Google
+    // JEST tego człowieka niezależnie od stanu konta; odmowę („account_disabled")
+    // orzeka komenda po podpięciu.
     //
-    // ZGŁOSZENIE OCZEKUJĄCE też się podpina (`ON CONFLICT … DO UPDATE … WHERE
-    // status = 'pending'`) - poprawka po audycie 2026-09-05. Bez tego administrator,
-    // który zamiast zatwierdzać zgłoszenie wpisał adres w ISTNIEJĄCYM koncie (rada
-    // panelu przy konflikcie e-maila), zostawiał człowieka w kolejce na zawsze:
-    // wiersz `pending` już był, więc następne logowanie nigdy nie próbowało podpięcia.
-    // Odrzuconego NIE podpinamy - decyzja zapadła; `WHERE` przepuszcza wyłącznie `pending`.
+    // `ON CONFLICT DO NOTHING`: wyścig dwóch pierwszych logowań tej samej tożsamości
+    // kończy się jednym wierszem, a przegrany czyta go zwykłym `find`.
     const { rows } = await this.db.query<IdentityRow>(
-      `INSERT INTO external_identities (provider, subject, pilot_id, email, name, status)
-       SELECT $1, $2, p.id, $3, $4, 'linked'
+      `INSERT INTO external_identities (provider, subject, pilot_id, email, name)
+       SELECT $1, $2, p.id, $3, $4
          FROM pilots p
         WHERE lower(p.email) = lower($3)
           AND NOT EXISTS (
                 SELECT 1 FROM external_identities e WHERE e.pilot_id = p.id
               )
-       ON CONFLICT (provider, subject) DO UPDATE
-         SET pilot_id = EXCLUDED.pilot_id, status = 'linked',
-             email = EXCLUDED.email, name = EXCLUDED.name
-         WHERE external_identities.status = 'pending'
+       ON CONFLICT (provider, subject) DO NOTHING
        RETURNING ${COLUMNS}`,
       [profile.provider, profile.subject, profile.email, profile.name],
     );
