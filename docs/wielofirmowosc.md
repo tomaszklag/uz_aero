@@ -11,6 +11,8 @@ karta arkusza.
 Decyzje właściciela z 2026-09-08 (siedem punktów w issue #97) są tu utrwalone jako
 DANE, nie jako propozycje. Propozycje tego dokumentu są oznaczone „**propozycja**" -
 każda z nich wymaga potwierdzenia przed epikiem, w którym się materializuje.
+**Decyzja 6 (drogi dołączenia) została ZMIENIONA 2026-09-09**: zostaje JEDNA droga,
+kod klubu z zatwierdzeniem - §3.8 mówi, jak to działa, §15 - co odrzucono i dlaczego.
 
 ---
 
@@ -47,6 +49,8 @@ CREATE TABLE organizations (
   name        TEXT NOT NULL,               -- „Aeroklub Zielonogórski"
   slug        TEXT NOT NULL UNIQUE,        -- „aeroklub-zielonogorski": adres kart arkusza (§3.7)
   active      BOOLEAN NOT NULL DEFAULT TRUE,
+  join_code   TEXT UNIQUE,                 -- kod klubu (§3.8); NULL = dołączanie kodem wyłączone
+  join_code_since TIMESTAMPTZ,             -- od kiedy obowiązuje bieżący kod
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   created_by  TEXT REFERENCES pilots(id)   -- superadministrator
 );
@@ -65,7 +69,7 @@ CREATE TABLE memberships (
   role        TEXT NOT NULL DEFAULT 'pilot' CHECK (role IN ('pilot', 'admin')),
   status      TEXT NOT NULL CHECK (status IN ('pending', 'active', 'disabled', 'rejected')),
   reject_reason TEXT,                      -- widoczny dla pilota na 00D
-  joined_via  TEXT NOT NULL CHECK (joined_via IN ('email', 'link', 'code', 'panel', 'backfill')),
+  joined_via  TEXT NOT NULL CHECK (joined_via IN ('code', 'platform', 'backfill')),
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   decided_at  TIMESTAMPTZ,
   decided_by  TEXT REFERENCES pilots(id),
@@ -143,7 +147,7 @@ w ingeście i jest twarda: zapis do cudzego klubu nie ma miękkiej wersji.
 | dziś (globalnie) | po zmianie |
 |---|---|
 | `pilots.code UNIQUE` | `memberships (org_id, code)` - kod jedyny W KLUBIE; ta sama osoba może mieć `TMK` w jednym klubie i `TOM` w drugim |
-| `pilots.email UNIQUE` | bez zmian - osoba jest jedna na serwerze; e-mail to e-mail Google z pierwszego logowania |
+| `pilots.email UNIQUE` | bez zmian - osoba jest jedna na serwerze; e-mail to adres Google z pierwszego logowania albo wpisany przez superadministratora dla pierwszego administratora klubu (§3.8) |
 | `aircraft.reg UNIQUE` | `aircraft (org_id, reg)` - maszyna należy do JEDNEGO klubu; ta sama rejestracja w dwóch klubach jest dopuszczalna (maszyna sprzedana, przerejestrowana - historia zostaje u starego właściciela) |
 | `exported_sheets.tab UNIQUE` | `exported_sheets (org_id, tab)` |
 
@@ -163,60 +167,72 @@ Dziś nazwy kart są zgadywalne (znak + data), więc publiczność „po nazwie"
 akceptowalna przy jednym klubie i przestaje być przy wielu. Decyzja o tokenie wchodzi
 do epiku C razem z testem izolacji.
 
-### 3.8 `invitations` - trzy drogi dołączenia, jedna tabela
+### 3.8 Kod klubu - JEDNA droga dołączenia (decyzja 2026-09-09, zmienia decyzję 6)
+
+Pierwotna decyzja 6 z 2026-09-08 przewidywała trzy drogi (adres e-mail wpisany przez
+administratora, jednorazowy link osobisty, wielorazowy kod klubu) i tabelę
+`invitations`. **2026-09-09 właściciel zostawił JEDNĄ: kod klubu.** Historia
+i odrzucone alternatywy: §15.
 
 ```sql
-CREATE TABLE invitations (
-  id           TEXT PRIMARY KEY,
-  org_id       TEXT NOT NULL REFERENCES organizations(id),
-  kind         TEXT NOT NULL CHECK (kind IN ('link', 'email', 'code')),
-  token_hash   TEXT UNIQUE,               -- 'link' i 'code': hash sekretu z adresu / kodu klubu
-  email        TEXT,                      -- 'email': zweryfikowany adres Google, po którym dopasujemy osobę
-  name_hint    TEXT,                      -- dla kogo (napis dla administratora; nie jest `pilots.name`)
-  code         TEXT,                      -- proponowany kod pilota ('link' i 'email' - nadaje się z góry)
-  role         TEXT NOT NULL DEFAULT 'pilot' CHECK (role IN ('pilot', 'admin')),
-  created_by   TEXT NOT NULL REFERENCES pilots(id),
-  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
-  expires_at   TIMESTAMPTZ,               -- 'link': 14 dni (propozycja); 'code': NULL (odnawialny ręcznie)
-  used_at      TIMESTAMPTZ,               -- 'link' i 'email': jednorazowe - wypełnione = zużyte
-  used_by      TEXT REFERENCES pilots(id),
-  revoked_at   TIMESTAMPTZ,
-  CONSTRAINT invitation_shape CHECK (
-    (kind = 'link'  AND token_hash IS NOT NULL AND code IS NOT NULL) OR
-    (kind = 'email' AND email IS NOT NULL AND code IS NOT NULL) OR
-    (kind = 'code'  AND token_hash IS NOT NULL AND code IS NULL)
-  )
-);
-CREATE UNIQUE INDEX idx_invitations_club_code ON invitations (org_id) WHERE kind = 'code' AND revoked_at IS NULL;
+-- kolumny na organizations (§3.1):
+join_code       TEXT UNIQUE,      -- jawny tekst, jedyny na serwerze; NULL = dołączanie wyłączone
+join_code_since TIMESTAMPTZ       -- od kiedy obowiązuje bieżący kod
 ```
 
-Trzy drogi z decyzji 6 są trzema `kind` jednej tabeli, bo różnią się DWIEMA rzeczami:
-jak rozpoznajemy osobę (sekret z adresu / e-mail / kod klubu) i czy członkostwo
-powstaje od razu, czy jako `pending`:
+Tabeli `invitations` NIE MA: jeden kod na klub jest kolumną klubu, a historia dołączeń
+mieszka w `memberships` (`joined_via = 'code'`, `created_at`, `decided_at`, `decided_by`).
 
-| droga | kto tworzy | rozpoznanie | członkostwo | kod pilota |
-|---|---|---|---|---|
-| **e-mail** (a) | administrator wpisuje adres | zweryfikowany e-mail Google przy pierwszym logowaniu | `active` od razu | nadany z góry w panelu |
-| **link osobisty** (b) | administrator generuje | sekret z adresu, JEDNORAZOWY | `active` od razu | nadany z góry w panelu |
-| **kod klubu** (c) | jeden na klub, wielorazowy | kod wpisany na 00E | `pending` → zatwierdzenie | nadaje administrator przy zatwierdzeniu |
+Reguły:
 
-**Link osobisty daje członkostwo od razu (decyzja 6b)** - dlatego kod pilota i rola
-są nadawane PRZY GENEROWANIU linku, a nie po wejściu: w chwili wejścia nie ma już
-nikogo, kto by je nadał. Link jest osobisty w tym sensie, że administrator wie, komu
-go daje (`name_hint`), ale serwer NIE weryfikuje, kto go otworzył - to jest ta sama
-klasa zaufania, co przekazanie hasła kanałem poza aplikacją, i dlatego link jest
-jednorazowy z terminem. Link przekazany dalej dołączy kogoś innego pod tym kodem;
-naprawa to wyłączenie członkostwa w panelu, jak każdej pomyłki.
-
-**Bez wysyłki e-maili w 2.0.0 (decyzja 6)**: administrator kopiuje link z panelu
-i przekazuje go sam (wiadomość, komunikator). Droga e-mail działa bez wysyłki, bo
-dopasowanie robi serwer przy logowaniu.
+- **Klub ma najwyżej jeden żywy kod.** „Wygeneruj nowy" nadpisuje go od razu; stary
+  przestaje działać w tej samej chwili. Zgłoszeń już złożonych to nie dotyka - są
+  wierszami `memberships`, nie kodem.
+- **Kod jest krótki i czytelny przez telefon** (rozstrzygnięte 2026-09-09): 7 symboli
+  z alfabetu 32 znaków (litery bez `O` i `I`, cyfry bez `0` i `1`), zapisywane jako
+  `XXX-XXXX`, np. `AZG-7K4M`. Myślnik i wielkość liter są ZAPISEM, nie treścią: serwer
+  przyjmuje `azg7k4m` tak samo jak `AZG-7K4M`, a 00E pokazuje wpis w zapisie kanonicznym.
+  Wpisuje się go z klawiatury, więc długość jest granicą wygody, nie bezpieczeństwa -
+  32⁷ ≈ 3,4·10¹⁰ kombinacji przy ograniczeniu tempa niżej wystarcza z zapasem.
+- **Kod stoi w bazie jawnym tekstem, nie hashem**: administrator musi go ODCZYTAĆ
+  z panelu, żeby podać pilotom, a sam kod nie daje dostępu (niżej). Hash chroniłby
+  sekret, którego tu nie ma.
+- **Kod jest jedyny na SERWERZE** (`UNIQUE`), bo pilot wpisuje sam kod, bez nazwy
+  klubu. Zderzenie przy generowaniu = losuj ponownie.
+- **Kod daje WYŁĄCZNIE członkostwo `pending`.** Wejście do klubu jest zawsze decyzją
+  administratora klubu: zatwierdzenie z nadaniem kodu pilota i roli (P3) albo
+  odrzucenie z powodem, który pilot czyta na 00D. Człowiek decyduje PRZED wejściem,
+  nie po - to główna przewaga tej drogi nad linkiem, który wpuszczał od razu
+  i zostawiał administratorowi naprawę wyłączeniem członkostwa.
+- **Zgłoszenie `pending` nie wygasa samo** (decyzja właściciela 2026-09-09): kończy
+  je wyłącznie decyzja. Kolejka bez decyzji to sprawa klubu, nie serwera.
+- **Administrator klubu może wyłączyć dołączanie kodem** (decyzja właściciela
+  2026-09-09): kasuje kod (`join_code = NULL`), a serwer odpowiada na każdy kod tego
+  klubu „nie znam takiego kodu" - tak samo jak na kod zmyślony, bo klub wyłączony nie
+  ma powodu się ujawniać. Ponowne „Wygeneruj" włącza drogę z powrotem. Do tego czasu
+  do klubu nie dołączy nikt, bo innej drogi nie ma.
+- **Wyciek kodu jest tani i przewidziany**: kod wisi w hangarze i krąży po grupach,
+  więc wycieknie. Skutkiem jest najwyżej zgłoszenie do rozpatrzenia, a `POST /auth/join`
+  ma ograniczenie tempa (rozstrzygnięte 2026-09-09): **10 prób na osobę i 30 prób na
+  adres IP w oknie 15 minut**, udane i nieudane razem; przekroczenie → `429` z czasem
+  odczekania. Zgadywanie kodu kończy się więc najwyżej zgłoszeniem, a pilot, który
+  pomyli się kilka razy, nie zostaje odcięty.
+- **Pierwszego administratora klubu dodaje SUPERADMINISTRATOR** (decyzja właściciela
+  2026-09-09), nie kod: kodem nie miałby go kto zatwierdzić. Przy zakładaniu klubu
+  (§8.1) superadministrator podaje adres konta Google, imię i nazwisko oraz kod
+  pilota; powstaje osoba (albo dopisuje się do istniejącej po adresie) i członkostwo
+  `admin` `active` z `joined_via = 'platform'`, a tożsamość Google podpina się przy
+  pierwszym logowaniu tym adresem - dokładnie mechanizm z `docs/logowanie-google.md`
+  §6 (`claimByVerifiedEmail`), ten sam, którym wchodzi superadministrator
+  z `SEED_ADMIN_EMAIL`. To wyjątek klasy bootstrap, nie druga droga: z panelu KLUBU
+  nikogo nie da się dopisać adresem, a `POST /admin/api/pilots` (osoba z adresem
+  + członkostwo) przechodzi w całości do modułu Organizacje.
 
 ## 4. Bramką jest BRAK CZŁONKOSTWA - ta sama zasada, jedno piętro wyżej
 
 `docs/logowanie-google.md` §4: „bramką jest brak konta, nie rola". Ta zasada zostaje
 i dostaje drugie piętro. Osoba bez członkostwa w żadnym klubie ma wiersz w `pilots`
-(powstaje przy pierwszym logowaniu Googlem - inaczej nie ma komu przypisać zaproszenia),
+(powstaje przy pierwszym logowaniu Googlem - inaczej nie ma komu przypisać zgłoszenia),
 ale **nie ma tokenów pilota do żadnego klubu**: `authorize()` dla trasy klubowej pyta
 o aktywne członkostwo w klubie z żądania (§6) i odmawia bez niego. Jedna brama, jedno
 miejsce, test izolacji na każdej trasie (epik C).
@@ -227,13 +243,15 @@ i odrzucenie przenoszą się na `memberships.status`, bo dotyczą KLUBU, nie to�
 ta sama osoba może czekać w jednym klubie i być odrzucona w drugim. Token rejestracyjny
 (§5 logowania Google) zostaje jako **token osoby bez klubu**: `purpose: 'registration'`
 → `purpose: 'person'`, przyjmowany przez trasy `GET /auth/memberships` (stan zgłoszeń)
-i `POST /auth/join` (kod klubu / link). Rozłączność `verify()` / `verifyPerson()` zostaje
+i `POST /auth/join` (kod klubu). Rozłączność `verify()` / `verifyPerson()` zostaje
 z tym samym testem w obie strony.
 
 ## 5. Przepływ logowania i dołączania
 
 `POST /auth/google { idToken }` → weryfikacja jak dziś → osoba (`pilots`) istnieje albo
-powstaje → decyzja po członkostwach:
+powstaje → **podpięcie po zweryfikowanym adresie** (jak dziś, `docs/logowanie-google.md`
+§6 - obsługuje superadministratora z `SEED_ADMIN_EMAIL` i pierwszego administratora
+klubu wpisanego przez superadministratora, §3.8) → decyzja po członkostwach:
 
 | stan osoby | odpowiedź |
 |---|---|
@@ -243,29 +261,30 @@ powstaje → decyzja po członkostwach:
 | brak członkostw | `202` + token osoby; aplikacja: **00E** „nie należysz do żadnego klubu" |
 | osoba wyłączona platformowo | `401 account_disabled` |
 
-Przy logowaniu serwer robi jeszcze jedno: **dopasowuje zaproszenia `email`**
-(zweryfikowany adres Google = `invitations.email`, niezużyte, nieunieważnione) i zamienia
-je w członkostwa `active` z kodem z zaproszenia. To jest dzisiejszy „claim po e-mailu"
-z logowania Google (§6 tamtego dokumentu), przeniesiony z `pilots.email` na
-`invitations.email` - i dzięki temu przestaje być jedynym miejscem, w którym e-mail
-uwierzytelnia: adres wpisał administrator, a Google go zweryfikował. Bez zmian:
-wyłącznie Google, wyłącznie `email_verified`.
+`POST /auth/join { code }` (token osoby albo token dowolnego klubu - pilot z klubu A
+dołącza do B z ustawień, 13A):
 
-`POST /auth/join { token | code }` (token osoby):
+- kod pasuje do klubu z żywym kodem → członkostwo `pending` (`joined_via = 'code'`),
+  odpowiedź `202` → 00C. Osoba z członkostwem `pending` w tym klubie dostaje to samo
+  `202` bez drugiego wiersza (klucz `(org_id, pilot_id)`);
+- osoba z członkostwem `rejected` w tym klubie → `403` z powodem: ponowne zgłoszenie
+  nie obchodzi decyzji, cofnąć ją może wyłącznie administrator klubu (P3);
+- osoba z członkostwem `active` albo `disabled` w tym klubie → `409` „już jesteś
+  w tym klubie" / „członkostwo wyłączone - skontaktuj się z administratorem";
+- kod nieznany ALBO klub z wyłączonym dołączaniem ALBO klub nieaktywny → `404`
+  „Nie znam takiego kodu" - jedna odpowiedź na trzy stany, bo żaden z nich nie ma
+  powodu się ujawniać;
+- ograniczenie tempa: 10 prób na osobę i 30 na adres IP w 15 minut (§3.8); przekroczenie
+  → `429` z czasem odczekania, który aplikacja pisze jako powód w przycisku.
 
-- **link osobisty** (`kind='link'`, sekret z adresu `dolacz/<token>`): nieużyty,
-  nieunieważniony, w terminie → członkostwo `active` z kodem i rolą z zaproszenia,
-  `used_at`/`used_by`, odpowiedź `200` + tokeny pilota (aplikacja idzie do PIN-u).
-  Zużyty / po terminie / unieważniony → `410` z jednym z trzech zdań na 00E;
-- **kod klubu** (`kind='code'`): członkostwo `pending`, odpowiedź `202` → 00C.
-  Pilot z członkostwem `rejected` w tym klubie dostaje `403` i powód - ponowne
-  zgłoszenie nie obchodzi decyzji;
-- nieznany napis → `404` „Nie znam takiego kodu ani linku".
+Stan zgłoszenia odpytuje `GET /auth/memberships` (token osoby): 00C sprawdza go sam
+co kilkanaście sekund i pod „SPRAWDŹ PONOWNIE"; po zatwierdzeniu trasa wydaje tokeny
+klubu DOKŁADNIE RAZ i odmawia tokenowi starszemu niż `credentials_valid_from` - te
+same reguły, które audyt 2026-09-05 nałożył na `GET /auth/registration`
+(`docs/logowanie-google.md` §14).
 
-Kod klubu jest **krótki i czytelny przez telefon** (**propozycja**: 8 znaków bez
-`0/O/1/I`, np. `AZG-7K4M`), bo wpisuje się go z ekranu 00E z klawiatury. Link
-osobisty niesie sekret DŁUGI (nie do wpisania) - dlatego 00E przyjmuje w jednym polu
-zarówno kod, jak i wklejony adres, i sam rozpoznaje, co dostał.
+Kod klubu jest **krótki i czytelny przez telefon** (§3.8), bo wpisuje się go z ekranu
+00E z klawiatury. 00E przyjmuje wyłącznie kod - pola na link nie ma, bo linku nie ma.
 
 ## 6. Klub w TOKENIE; przełączenie i dołączenie wymagają sieci
 
@@ -277,7 +296,7 @@ dat unieważnienia (§3.4) - to samo, co dziś robi z `credentials_valid_from`.
 
 **Przełączenie klubu = nowa para tokenów** (`POST /auth/switch { orgId }` na refreshu)
 i **wymaga sieci** - decyzja właściciela (2026-09-08): reguła offline-first dotyczy
-PRACY w klubie, a nie zmiany klubu ani przyjęcia zaproszenia. Pilot pracuje bez zasięgu
+PRACY w klubie, a nie zmiany klubu ani dołączenia do klubu. Pilot pracuje bez zasięgu
 w klubie, w którym już jest; przełącza się tam, gdzie ma sieć. Ta sama kategoria, co
 pierwsze logowanie i wylogowanie (§4.1: akcje wymagające sieci - zablokowane
 z podanym powodem, nigdy cichy błąd). Alternatywa z klubem w nagłówku żądania
@@ -322,20 +341,20 @@ Decyzja 4 w trzech regułach:
    połączeniu, które wydało tokeny.
 
 **Ekran 00E** („nie należysz do żadnego klubu") to trzeci stan tej samej rodziny,
-co 00C i 00D: pole na kod klubu albo wklejony link, „DOŁĄCZ", wyjście „Zaloguj innym
-kontem Google". **Ma prawo tłumaczyć** (kategoria z issue #72: blokada z powodem):
-pilot nie może dalej i musi wiedzieć, skąd wziąć kod. Nie ma na nim natomiast ani
-słowa o tym, jak zbudowane są zaproszenia. **Dołączenie wymaga sieci** (decyzja
-właściciela, 2026-09-08) - jak cała rodzina 00A–00D, która i tak istnieje wyłącznie
-po zalogowaniu Googlem; bez zasięgu „DOŁĄCZ" jest zablokowane z powodem w przycisku.
+co 00C i 00D: pole na kod klubu, „DOŁĄCZ", wyjście „Zaloguj innym kontem Google".
+**Ma prawo tłumaczyć** (kategoria z issue #72: blokada z powodem): pilot nie może
+dalej i musi wiedzieć, skąd wziąć kod - od administratora klubu. Nie ma na nim
+natomiast ani słowa o tym, jak zbudowana jest kolejka zgłoszeń. **Dołączenie wymaga
+sieci** (decyzja właściciela, 2026-09-08) - jak cała rodzina 00A–00D, która i tak
+istnieje wyłącznie po zalogowaniu Googlem; bez zasięgu „DOŁĄCZ" jest zablokowane
+z powodem w przycisku. To samo pole, pod „Dołącz do innego klubu", stoi w sekcji Klub
+na 13A - dla pilota, który już lata w jednym klubie i do czasu zatwierdzenia pracuje
+w nim dalej.
 
-**Deep link `ninerdeck://dolacz/<token>`** (decyzja 7 + epik F): aplikacja
-zainstalowana przechwytuje adres, zapisuje token pod osobnym kluczem magazynu
-(jak `StoredRegistration`), a potem: bez profilu → 00A (Google) → `POST /auth/join`
-→ PIN; z profilem tej samej osoby → `join` od razu i przełączenie na nowy klub;
-z profilem INNEJ osoby → arkusz „Ten link jest dla kogoś innego / Wyloguj i dołącz".
-Schemat `ninerdeck` wchodzi do `app.json` razem z pakietem `com.ninerdeck.app`
-(epik R) - to zmiana natywna, nowy APK.
+**Deep linku dołączania NIE MA** (zmiana 2026-09-09, §15): kod przepisuje się z ręki,
+więc aplikacja nie przechwytuje żadnego adresu, strona `dolacz/` nie istnieje (§9),
+a schemat `ninerdeck` w `app.json` służy wyłącznie powrotowi z logowania Google
+(epik R).
 
 ## 8. Panel
 
@@ -344,9 +363,18 @@ Schemat `ninerdeck` wchodzi do `app.json` razem z pakietem `com.ninerdeck.app`
 Osobna rama: kolumna boczna z JEDNĄ pozycją „Organizacje" i kaflem zakresu
 (`.sidebar-context.scope`) zamiast kontekstu klubu (styl lekki, issue #107).
 Lista klubów (nazwa, slug, liczba członków, liczba maszyn, stan), „Załóż klub"
-= szuflada: nazwa, slug (podpowiedziany z nazwy), **pierwszy administrator jako
-zaproszenie `email`** (adres Google + imię + kod pilota) - klub bez administratora nie
-ma jak zacząć, więc pole jest wymagane. Wyłączenie klubu = `organizations.active =
+= szuflada: nazwa, slug (podpowiedziany z nazwy), **pierwszy administrator** (adres
+konta Google + imię i nazwisko + kod pilota w klubie) - klub bez administratora nie
+ma jak zacząć, więc pole jest wymagane. Powstaje osoba (albo dopisuje się do
+istniejącej po adresie) i członkostwo `admin` `active` (`joined_via = 'platform'`);
+tożsamość Google podpina się przy pierwszym logowaniu tym adresem (§3.8). Kod klubu
+generuje się przy założeniu klubu, żeby pierwszy administrator miał od razu co podać
+pilotom. **Superadministrator widzi kod klubu na karcie klubu DO ODCZYTU** (rozstrzygnięte
+2026-09-09): kod jest KONFIGURACJĄ klubu, jak nazwa i slug, a nie jego danymi (§3.3 mówi
+o dzienniku, flocie i pilotach) - bez tego nie miałby go jak przekazać pierwszemu
+administratorowi razem z dostępem. Nie generuje go i nie wyłącza: to należy do panelu
+klubu (§8.3). Makieta `organizacje-klub` przebudowana 2026-09-09.
+Wyłączenie klubu = `organizations.active =
 false`: logowanie do jego panelu i trasy klubowe odpowiadają `403 org_disabled`;
 danych nie kasujemy (dziennik jest dokumentem klubu, jak przy koncie z historią).
 
@@ -365,38 +393,34 @@ produkcie), a nazwa klubu stoi odtąd w pasku górnym obok znaku, z przełączni
 Superadministrator z członkostwami `admin` też wybiera: „Organizacje" jest na tej liście
 pierwszą kartą.
 
-### 8.3 Moduł Piloci: członkowie i zaproszenia (mockupy `piloci-lista`, `piloci-zaproszenie`, `piloci-zgloszenie`)
+### 8.3 Moduł Piloci: członkowie, zgłoszenia i kod klubu (mockupy `piloci-lista`, `piloci-zgloszenie`, `piloci-kod-klubu`)
 
 - Lista = **członkowie klubu** (kod w klubie, imię i nazwisko osoby, e-mail Google,
   rola, status członkostwa). Karta konta (P2) edytuje CZŁONKOSTWO: kod, rolę, dostęp.
   Imię i nazwisko należą do osoby - panel je pokazuje, a poprawia tylko wtedy, gdy osoba
   nie ma innych członkostw (**propozycja**; inaczej klub A zmieniałby nazwisko widoczne
   w klubie B).
-- **Jedna akcja główna: „Zaproś do klubu"** - szuflada z trzema kartami (§3.8):
-  link osobisty (wynik: adres do skopiowania + termin), adres e-mail, kod klubu (pokazany
-  na stałe, „Wygeneruj nowy" unieważnia stary). „Dodaj pilota" z P1 znika: było
-  drogą e-mail w innym ubraniu.
-- Nad listą, wyłącznie gdy niepuste: karta **ZGŁOSZENIA** (członkostwa `pending`
-  z kodu klubu - „Rozpatrz" → P3, gdzie nadaje się kod i rolę; odrzucenie z powodem
-  wymaganym, jak dziś) i karta **ZAPROSZENIA** (niezużyte linki i adresy e-mail:
-  dla kogo, kod, termin, „Unieważnij"). Puste karty nie istnieją.
+- **Nowy członek wchodzi WYŁĄCZNIE kodem klubu** (§3.8). Z panelu klubu nie da się
+  nikogo dopisać adresem ani linkiem: „Dodaj pilota" z panelu 1.0 zniknęło już
+  w epiku A, a szuflada „Zaproś do klubu" z trzema kartami (P4, P4a–c) kurczy się do
+  JEDNEJ karty **„Kod klubu"**: kod dużym monospace, od kiedy obowiązuje, ile zgłoszeń
+  nim czeka, „Wygeneruj nowy" i „Wyłącz dołączanie kodem" (kasuje kod; ta sama karta
+  pokazuje wtedy stan wyłączony z „Wygeneruj kod"). Makieta `piloci-kod-klubu`
+  (dawne `piloci-zaproszenie`, przebudowane 2026-09-09; stan wyłączony = P4a).
+- Nad listą, wyłącznie gdy niepuste: karta **ZGŁOSZENIA** (członkostwa `pending`:
+  imię i e-mail z Google, kiedy; „Rozpatrz" → P3, gdzie nadaje się kod i rolę;
+  odrzucenie z powodem wymaganym, jak dziś). Karty ZAPROSZENIA nie ma - nie ma czego
+  w niej pokazać.
 - Zdolności: `accounts.manage` dla wszystkiego powyżej - to nadal „zakładanie kont",
-  tylko klubowych. Audyt: `membership.invite`, `membership.approve`,
-  `membership.reject`, `membership.disable`, `invitation.revoke`.
+  tylko klubowych. Audyt: `membership.approve`, `membership.reject`,
+  `membership.disable`, `club_code.rotate`, `club_code.disable`.
 
-## 9. Strona: `dolacz/<token>`
+## 9. Strona `dolacz/<token>` - USUNIĘTA Z PROJEKTU (2026-09-09)
 
-`site/src/dolacz/index.html` - jedna strona bez menu z dwoma przyciskami: **„OTWÓRZ
-W APLIKACJI"** (`ninerdeck://dolacz/<token>`) i **„POBIERZ APLIKACJĘ"** (dziś: strona
-pobierania; po publikacji: Google Play). Token czyta skrypt z adresu; strona NIE woła
-serwera i nie pokazuje, czyj to link - adres jest sekretem i nie ma powodu go
-rozgłaszać. Na komputerze (bez Androida) strona mówi, żeby otworzyć link na telefonie.
-
-Serwer statyczny (`staticSite.ts`) dostaje **jedną trasę** `GET /dolacz/*` →
-`dolacz/index.html` - świadomy wyjątek od „bez fallbacku SPA", zawężony do jednego
-prefiksu, bo token w ścieżce jest częścią zaproszenia (adres `dolacz/?t=…` byłby
-czytelny dla ludzi, ale Android App Links dopasowują ŚCIEŻKĘ). Ta trasa jest jedyną
-zmianą w serwerze wymaganą przez stronę.
+Strona istniała dla linku osobistego (§15). Bez linku nie ma czego otwierać: pilot
+przepisuje kod z ręki na 00E. Plik `site/src/dolacz/index.html` (epik A) jest do
+skasowania w epiku D; trasa `GET /dolacz/*` w `staticSite.ts` NIE powstaje, więc reguła
+„bez fallbacku SPA" zostaje bez wyjątku.
 
 ## 10. Migracja produkcji z backfillem (decyzja 5)
 
@@ -448,12 +472,15 @@ starym pakiecie - decyzja o tym w epiku W.
   klubowa dostaje test „klub B nie widzi wiersza klubu A" - także `GET /sheets`,
   `readings-chain`, `consumption`, `track`, `bug-reports`. Trasa bez takiego testu
   nie wchodzi do 2.0.0.
-- **Link osobisty nie weryfikuje odbiorcy** (§3.8) - świadomie, na poziomie zaufania
-  „administrator wie, komu daje". Termin 14 dni i jednorazowość ograniczają szkodę;
-  wyłączenie członkostwa ją naprawia.
 - **Kod klubu jest wielorazowy i stały**, więc wycieknie prędzej czy później - dlatego
-  daje wyłącznie `pending`, a „Wygeneruj nowy" jest zawsze pod ręką. Klub, który nie
-  chce tej drogi, unieważnia kod i nie generuje nowego (00E przyjmuje wtedy tylko link).
+  daje wyłącznie `pending`, `POST /auth/join` ma ograniczenie tempa, a „Wygeneruj nowy"
+  jest zawsze pod ręką. Klub, który nie chce tej drogi, kasuje kod - i do czasu
+  wygenerowania nowego nikt do niego nie dołączy, bo innej drogi nie ma (§3.8).
+- **Pilot czeka na administratora.** Jedyna droga do klubu kończy się decyzją
+  człowieka, więc pilot bez zatwierdzenia nie poleci - także wtedy, gdy stoi już na
+  lotnisku. To cena za „człowiek decyduje przed wejściem" (§3.8), przyjęta świadomie;
+  zaproszenie e-mailem wpuszczające od razu jest możliwym rozszerzeniem po 2.0.0
+  (§15), nie częścią tego wydania.
 - **Sygnatura jednoznaczna tylko w klubie** (§3.6) - dwa kluby mogą mieć
   `SP-AXA/2026-09-01/AKO/1` naraz. Wszędzie, gdzie sygnatura opuszcza klub (zgłoszenie
   błędu w panelu superadministratora - dziś nie istnieje), musi iść z nazwą klubu.
@@ -472,25 +499,39 @@ starym pakiecie - decyzja o tym w epiku W.
 1. Nazwa i slug klubu produkcyjnego (`SEED_ORG_NAME`, `SEED_ORG_SLUG`) - PRZED
    wdrożeniem migracji 8; slug wchodzi do adresów kart arkusza.
 2. Potwierdzenie propozycji z tego dokumentu (oznaczone „**propozycja**"): superadmin
-   bez wstępu do klubu (§3.3), token odczytu kart arkusza (§3.7), termin 14 dni linku
-   i kształt kodu klubu (§5), zmiana nazwiska tylko przy jednym członkostwie (§8.3),
-   migracja 9 osobno (§10). **Rozstrzygnięte 2026-09-08**: klub W TOKENIE, przełączenie
-   i dołączenie wymagają sieci (§6) - propozycja nagłówka `X-Org` odrzucona.
+   bez wstępu do danych klubu (§3.3), token odczytu kart arkusza (§3.7), zmiana nazwiska
+   tylko przy jednym członkostwie (§8.3).
+   **Rozstrzygnięte 2026-09-08**: klub W TOKENIE, przełączenie i dołączenie wymagają
+   sieci (§6) - propozycja nagłówka `X-Org` odrzucona; migracja 9 nie istnieje (§14 B).
+   **Rozstrzygnięte 2026-09-09**: jedna droga dołączenia (§3.8, §15) - pierwszego
+   administratora klubu dodaje superadministrator, zgłoszenie `pending` kończy
+   wyłącznie decyzja, administrator klubu może wyłączyć dołączanie kodem; przy przebudowie
+   makiet tego samego dnia: kształt kodu `XXX-XXXX` z alfabetu 32 symboli, limity tempa
+   10/osoba i 30/adres na 15 minut, superadministrator widzi kod klubu do odczytu (§3.8, §8.1).
 3. Kopia bazy produkcyjnej przed migracją 8 (§10).
 4. Google Cloud: nowy klient Android dla pakietu `com.ninerdeck.app` z DWOMA odciskami
-   SHA-1 (EAS i Play App Signing) - epik R; domena i adres strony pod `dolacz/`.
+   SHA-1 (EAS i Play App Signing) - epik R.
 
 ## 14. Etapy
 
-- **A - decyzje, makiety telefonu i panelu, strona dołączania, szkic podręcznika**
-  (issue #97, ten dokument + `design/00e`, `00c`, `00d`, `01e`, `13a`,
-  `design/panel/00a-wybor-klubu`, `organizacje-*`, `piloci-*`, `site/src/dolacz/`,
-  `docs/podrecznik/kluby-i-zaproszenia.md`).
+- **A - decyzje, makiety telefonu i panelu, szkic podręcznika** (issue #97, ten
+  dokument + `design/00e`, `00c`, `00d`, `01e`, `13a`, `design/panel/00a-wybor-klubu`,
+  `organizacje-*`, `piloci-*`, `docs/podrecznik/kluby-i-dolaczanie.md`). Trzy drogi
+  dołączenia i strona `site/src/dolacz/` z tego etapu zostały WYCOFANE 2026-09-09
+  (§15); makiety `00e`, `13a`, `piloci-kod-klubu` (dawne `piloci-zaproszenie`),
+  `piloci-lista`, `piloci-konto`, `organizacje-*`, `00c`/`00d`, oba spisy i `SZABLON`
+  PRZEBUDOWANE 2026-09-09 pod §3.8; `.linkbox` wycięty z `rama.css`.
 - **B - serwer: model** (issue #98): migracja 8 (+9), `organizations`, `memberships`,
-  `invitations`, `platform_role`, backfill, brama członkostwa w `authorize()`.
+  `platform_role`, backfill, brama członkostwa w `authorize()`.
   **WDROŻONE 2026-09-08** (gałąź `feature-98-serwer-kluby`; pułapki migracji:
   `docs/architektura-panelu-serwer.md` §7.9). Odstępstwa od tego dokumentu, każde
   z powodem:
+  - **tabela `invitations` z pierwszej wersji migracji 8 WYLATUJE** (zmiana 2026-09-09,
+    §3.8): epik B wszedł do `develop` (PR #110, 2026-09-09), ale migracja 8 nie dotarła
+    na produkcję (`main`), więc jej kształt nadal zmienia się W MIEJSCU, bez migracji 9 -
+    bazę dev stawia się od nowa. Dochodzą `organizations.join_code` i `join_code_since`,
+    a `memberships.joined_via` zwęża się do `code | platform | backfill`; zadanie D0
+    w issue #100;
   - **migracja 9 NIE istnieje** - `DROP COLUMN pilots.code, pilots.role` stoi na końcu
     migracji 8 (issue #98 tak kazało; serwer po 8 czyta wyłącznie członkostwa, więc okno
     z §10 pkt 6 nie występuje);
@@ -514,12 +555,41 @@ starym pakiecie - decyzja o tym w epiku W.
   kodami) - warunek testu izolacji z epiku C jest spełniony.
 - **C - serwer: izolacja** (issue #99): `org_id` w każdym zapytaniu, adres kart
   arkusza, test izolacji każdej trasy.
-- **D - zaproszenia** (issue #100): `POST /auth/join`, dopasowanie e-mail przy
-  logowaniu, generowanie i unieważnianie linków, kod klubu, kolejka `pending`.
-- **E - panel** (issue #101): moduł Organizacje, wybór klubu, kontekst klubu w pasku,
-  członkowie i zaproszenia 1:1 z makiet.
+- **D - dołączanie kodem klubu** (issue #100): `POST /auth/join { code }`,
+  `GET /auth/memberships`, kolejka `pending` na członkostwach (zatwierdzenie z kodem
+  i rolą, odrzucenie z powodem), kod klubu w panelu (generowanie, wyłączenie), pierwszy
+  administrator z modułu Organizacje, kasacja `registrations.ts` z #89 i strony
+  `dolacz/`.
+- **E - panel** (issue #101): moduł Organizacje, wybór klubu, kontekst klubu w kolumnie,
+  członkowie, zgłoszenia i kod klubu 1:1 z makiet.
 - **F - aplikacja** (issue #102): klub w tokenie i `POST /auth/switch`, cache per klub,
-  00E/00C/00D, przełącznik 13a (sieć + pusta kolejka), plakietka klubu 01e, deep link
-  `ninerdeck://dolacz/<token>`.
+  00E/00C/00D, przełącznik 13a (sieć + pusta kolejka) z „Dołącz do innego klubu",
+  plakietka klubu 01e. Deep linku dołączania nie ma (§7).
 - **R - rebranding** (issue #103) i **W - wydanie** (issue #106): pakiet, schemat,
   kolejność wdrożenia (migracja → serwer → panel → APK), sunset starego pakietu.
+
+## 15. Zmiana z 2026-09-09: jedna droga dołączenia
+
+Issue #97 (decyzja 6) przewidywało trzy drogi. Przegląd 2026-09-09 zaczął się od
+pytania właściciela o zaproszenia e-mailem jako jedyną drogę, przeszedł przez hasła
+i dodatkowych dostawców logowania, a skończył na kodzie klubu. Zapis po to, żeby nikt
+nie proponował odrzuconych wariantów drugi raz:
+
+| wariant | decyzja | dlaczego |
+|---|---|---|
+| **kod klubu + zatwierdzenie** | **PRZYJĘTY jako jedyna droga** | zero infrastruktury poczty i linków; człowiek decyduje PRZED wejściem; administrator nie musi znać ani adresu, ani konta Google pilota; wyciek kodu daje tylko zgłoszenie; wszystko z tego jest zaprojektowane od logowania Google (00C/00D/P3, statusy `pending`/`rejected`) |
+| zaproszenie e-mailem z linkiem | odrzucone na 2.0.0 | wymaga dostawcy poczty, domeny nadawcy, DNS, obsługi niedostarczeń i głębokich linków z klientów poczty; jedyna przewaga - wejście bez czekania - nie waży tyle. Możliwe rozszerzenie po 2.0.0, gdy klub o to poprosi |
+| link osobisty kopiowany z panelu | odrzucony | wpuszczał od razu, a pomyłkę naprawiało się wyłączeniem członkostwa; bez poczty i tak szedł kanałem obok aplikacji, jak kod |
+| dopasowanie po adresie Google wpisanym przez administratora | zostaje WYŁĄCZNIE jako bootstrap (superadministrator z `SEED_ADMIN_EMAIL`, pierwszy administrator klubu) | jako droga dla pilotów wymagała znajomości konta Google i nie mówiła pilotowi nic; dla administratora klubu i tak wymaga kontaktu poza aplikacją |
+| e-mail + hasło | odrzucone, nie wraca | w tym produkcie hasło byłoby używane raz na urządzenie (codziennie PIN), więc reset stałby się główną drogą - a reset to i tak kod w e-mailu; do tego hash w bazie, ochrona przed zgadywaniem i „zapomniałem hasła" u administratora. Bezpieczeństwo hasła nie przekracza bezpieczeństwa skrzynki resetu |
+| logowanie kodem z e-maila (bez hasła) | po 2.0.0, gdy pojawi się pilot bez konta Google | jedyna metoda niezależna od Google bez hasła; wymaga dostawcy poczty; kod do przepisania, nie link (skanery poczty zużywają linki) |
+| Apple / Facebook | Apple wyłącznie razem z iOS (wymóg App Store), Facebook wcale | produkt jest na Androida, więc każdy telefon ma konto Google; kolejny dostawca mnoży pomyłki „zalogowałem się nie tym" bez wiarygodnego łączenia po adresie (Apple ukrywa adres, Facebook go nie potwierdza) |
+
+Z tego wynika §3.8 (kolumna `organizations.join_code` zamiast tabeli `invitations`),
+§5 (`POST /auth/join { code }`), §7 (00E bez pola na link, bez deep linku), §8.3 (karta
+„Kod klubu" zamiast szuflady z trzema kartami), §9 (strona `dolacz/` usunięta) i lista
+w §14. Trzy odpowiedzi właściciela z 2026-09-09: pierwszego administratora dodaje
+superadministrator; zgłoszenie `pending` kończy wyłącznie decyzja; administrator klubu
+może wyłączyć dołączanie kodem. Trzy pytania, które wyszły przy przebudowie makiet,
+rozstrzygnięte tego samego dnia: kształt kodu i jego zapis (§3.8), limity tempa
+dołączania (§3.8, §5), kod klubu do odczytu dla superadministratora (§8.1).

@@ -87,6 +87,20 @@
      w ramce (ta jest online), opisany tu, żeby kod nie musiał zgadywać. */
   .club-list.blocked .club-opt { opacity:0.45; pointer-events:none; }
   .club-blocked { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.8px; color:var(--amber); line-height:1.6; }
+  /* ── DOŁĄCZ DO INNEGO KLUBU (2026-09-09: kod klubu = JEDYNA droga) ──
+     Zgłoszenie stoi na liście jako wiersz `pending`: przygaszony, nieklikalny (członkostwa
+     jeszcze nie ma), podpis bursztynem. Arkusz z polem = pole z 00E, te same metryki. */
+  .club-opt.pending { opacity:0.75; pointer-events:none; }
+  .club-opt.pending .club-sub { color:var(--amber); }
+  .club-opt.pending .club-check { border-style:dashed; }
+  .join-field { width:100%; display:flex; flex-direction:column; gap:7px; }
+  .join-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-secondary); }
+  .join-input { width:100%; min-height:52px; padding:14px 15px; border-radius:12px; background:var(--surface); border:1.5px solid var(--border-strong); font-family:var(--font-mono); font-size:16px; letter-spacing:1.5px; color:var(--text-primary); }
+  .join-input:focus { outline:none; border-color:var(--green-border); }
+  .join-input::placeholder { font-family:var(--font-body); font-size:15px; letter-spacing:0; color:var(--text-placeholder, var(--text-muted)); }
+  .join-btn { display:flex; align-items:center; justify-content:center; width:100%; padding:16px; border-radius:14px; background:var(--green); color:#0D0D0D; font-family:var(--font-display); font-size:21px; letter-spacing:3px; border:none; cursor:pointer; box-shadow:0 0 20px rgba(46,204,113,0.28); }
+  /* Pusty wpis blokuje BEZ zdania (issue #55): blokadę widać z pola nad przyciskiem. */
+  .join-btn.disabled { background:var(--surface); color:var(--text-muted); box-shadow:none; border:1px solid var(--border-strong); pointer-events:none; }
 
   /* ── MOTYW - przełącznik jasności: dwie pozycje obok siebie (issue #72) ── */
   /* Obie odpowiedzi widoczne naraz, jak wszędzie w tej aplikacji (nigdy select,     */
@@ -195,7 +209,7 @@
 
 <header class="canvas-label">
   <span class="film-strip">UZ AERO - 13A</span>
-  <span class="slug">ustawienia · pilot w DWÓCH klubach · przełącznik</span>
+  <span class="slug">ustawienia · pilot w DWÓCH klubach · przełącznik i dołączenie</span>
   <span class="canvas-meta"><span class="pulse"></span>Wariant 13</span>
 </header>
 
@@ -255,6 +269,23 @@
             <span class="club-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
           </button>
         </div>
+
+        <!-- ══ DOŁĄCZ DO INNEGO KLUBU (2026-09-09: kod klubu jest JEDYNĄ drogą) ══
+             To samo pole, co na 00E, dla pilota, który już lata w innym klubie. Wejście
+             otwiera arkusz z kodem; zgłoszenie dopisuje się do listy wyżej jako wiersz
+             „czeka na zatwierdzenie" (nieklikalny - członkostwa jeszcze nie ma), a pilot
+             pracuje dalej w dotychczasowym klubie. WYMAGA INTERNETU jak przełączenie:
+             offline przycisk arkusza jest zablokowany z powodem w środku (issue #55). -->
+        <button class="action-item" onclick="openJoin()">
+          <span class="action-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </span>
+          <span class="action-body">
+            <span class="action-name">Dołącz do innego klubu</span>
+            <span class="action-sub">kod klubu od jego administratora</span>
+          </span>
+          <svg class="action-chevron" width="14" height="14" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5L7 5l-3.5 3.5"/></svg>
+        </button>
       </div>
 
       <!-- ══ MOTYW ══ -->
@@ -454,6 +485,23 @@
         <button class="sheet-cancel" onclick="closePin()">Anuluj</button>
       </div>
     </div>
+
+    <!-- ═══ ARKUSZ „DOŁĄCZ DO KLUBU" - pole na kod, jak 00E; wymaga sieci ═══
+         Bez placeholdera-instrukcji poza „np. AZG-7K4M": skąd wziąć kod, mówi podpis
+         wejścia na ekranie; arkusz ma jedno pytanie. Odmowy serwera jak na 00E
+         (nieznany kod - zdanie przy polu; 429 - powód w przycisku). -->
+    <div class="sheet-overlay" id="joinSheet">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">DOŁĄCZ DO KLUBU</div>
+        <div class="join-field">
+          <span class="join-label">Kod klubu</span>
+          <input class="join-input" id="joinCode" value="" placeholder="np. AZG-7K4M" aria-label="Kod klubu" oninput="joinChanged()">
+        </div>
+        <button class="join-btn disabled" id="joinBtn" onclick="join()">DOŁĄCZ</button>
+        <button class="sheet-cancel" onclick="closeJoin()">Anuluj</button>
+      </div>
+    </div>
   </div>
 </main>
 
@@ -470,7 +518,7 @@
     <span class="vp-badge">13A</span>
     <span class="vp-body">
       <span class="vp-name">Ustawienia - przełącznik klubu</span>
-      <span class="vp-when">Pilot z więcej niż jednym członkostwem: pierwsza sekcja to lista klubów z kodem pilota w każdym. Przełączenie wymaga internetu i pustej kolejki wysyłki (offline: karty zablokowane z powodem) i zmienia flotę na 02; „Mój dzień" i tak pokazuje operacje wszystkich klubów (01E).</span>
+      <span class="vp-when">Pilot z więcej niż jednym członkostwem: pierwsza sekcja to lista klubów z kodem pilota w każdym. Przełączenie wymaga internetu i pustej kolejki wysyłki (offline: karty zablokowane z powodem) i zmienia flotę na 02; „Mój dzień" i tak pokazuje operacje wszystkich klubów (01E). Pod listą: „Dołącz do innego klubu" - arkusz z polem na kod klubu (jedyna droga do klubu od 2026-09-09); zgłoszenie staje na liście jako wiersz „czeka na zatwierdzenie".</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -492,9 +540,24 @@
   <a href="13-ustawienia.html">13 Ustawienia</a>
   <a href="13a-ustawienia-klub.html" class="active">13A Klub</a>
   <a href="01e-moj-dzien-dwa-kluby.html">01E Dwa kluby</a>
+  <a href="00e-bez-klubu.html">00E Bez klubu</a>
 </nav>
 
 <script>
+  // ── Dołącz do innego klubu: arkusz z kodem → zgłoszenie jako wiersz `pending` na liście ──
+  function openJoin() { document.getElementById('joinSheet').classList.add('open'); document.getElementById('joinCode').focus(); }
+  function closeJoin() { document.getElementById('joinSheet').classList.remove('open'); }
+  function joinChanged() {
+    const v = document.getElementById('joinCode').value.trim();
+    document.getElementById('joinBtn').classList.toggle('disabled', v.length < 8);
+  }
+  function join() {
+    closeJoin();
+    const row = document.createElement('div');
+    row.className = 'club-opt pending';
+    row.innerHTML = '<span class="club-body"><span class="club-name">Aeroklub Gdański</span><span class="club-sub">Zgłoszenie czeka na zatwierdzenie</span></span><span class="club-check"></span>';
+    document.querySelector('.club-list').appendChild(row);
+  }
   function pickClub(el) {
     document.querySelectorAll(".club-opt").forEach(b => b.classList.remove("selected"));
     el.classList.add("selected");

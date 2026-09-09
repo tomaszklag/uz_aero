@@ -53,8 +53,8 @@ Strona: „# Tytuł", opcjonalnie „> jedno zdanie" tuż pod tytułem, dalej Ma
 - korekty-i-rejestr
 - konta-i-bezpieczenstwo
 
-## Kluby i zaproszenia
-- kluby-i-zaproszenia
+## Kluby i dołączanie
+- kluby-i-dolaczanie
 
 ## Panel klubu
 - panel-wprowadzenie

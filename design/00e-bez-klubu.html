@@ -91,7 +91,7 @@
   .acct-name { font-size:14.5px; font-weight:600; color:var(--text-primary); }
   .acct-mail { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
-  /* ===== POLE KODU / LINKU - wzorzec formularzy ===== */
+  /* ===== POLE KODU KLUBU - wzorzec formularzy ===== */
   .field { width:100%; display:flex; flex-direction:column; gap:7px; margin-bottom:12px; }
   .field-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-secondary); }
   .input {
@@ -149,7 +149,7 @@
 
 <header class="canvas-label">
   <span class="film-strip">UZ AERO - 00E</span>
-  <span class="slug">logowanie · bez klubu · kod albo link</span>
+  <span class="slug">logowanie · bez klubu · kod klubu</span>
   <span class="canvas-meta"><span class="pulse"></span>Wariant 00</span>
 </header>
 
@@ -180,7 +180,7 @@
         potwierdzone, osoba istnieje, ale nie należy do żadnego klubu - więc nie ma
         floty, kodu pilota ani czego zapisać. Ekran MA PRAWO TŁUMACZYĆ (blokada
         z powodem, issue #72): pilot musi wiedzieć, skąd wziąć kod. Nie mówi za to
-        ani słowa o tym, jak zbudowane są zaproszenia (tabela, token, statusy).
+        ani słowa o tym, jak zbudowana jest kolejka zgłoszeń (statusy członkostwa, tokeny).
       -->
       <div class="status-card">
         <div class="status-head">
@@ -190,8 +190,8 @@
           <span class="status-title">NIE NALEŻYSZ DO ŻADNEGO KLUBU</span>
         </div>
         <div class="status-body">
-          Wpisz kod klubu albo wklej link z zaproszenia - jedno i drugie dostaniesz od
-          administratora klubu, w którym latasz.
+          Wpisz kod klubu - dostaniesz go od administratora klubu, w którym latasz.
+          O przyjęciu zdecyduje administrator.
         </div>
       </div>
 
@@ -204,18 +204,19 @@
       </div>
 
       <!--
-        JEDNO POLE NA DWIE RZECZY: kod klubu jest krótki i wpisuje się go z klawiatury
-        (8 znaków bez 0/O/1/I), link osobisty jest długi i tylko się go wkleja.
-        Aplikacja rozpoznaje, co dostała - pilot nie ma wybierać „którego rodzaju
-        zaproszenie mam", bo tego nie wie i nie musi wiedzieć.
+        JEDNO POLE NA KOD KLUBU - od 2026-09-09 JEDYNA droga do klubu (docs/wielofirmowosc.md
+        §3.8, §15): 8 znaków bez 0/O/1/I, z myślnikiem po trzech, wpisywany z klawiatury.
+        Linku ani pola na link NIE MA. Kod nie jest sekretem: daje wyłącznie ZGŁOSZENIE,
+        a do klubu wpuszcza administrator (00C → P3). To samo pole stoi na 13A pod
+        „Dołącz do innego klubu" - dla pilota, który już lata w innym klubie.
       -->
       <div class="field">
-        <span class="field-label">Kod klubu albo link z zaproszenia</span>
-        <input class="input" value="AZG-7K4M" aria-label="Kod klubu albo link z zaproszenia" placeholder="np. AZG-7K4M albo wklejony link">
+        <span class="field-label">Kod klubu</span>
+        <input class="input" value="AZG-7K4M" aria-label="Kod klubu" placeholder="np. AZG-7K4M">
       </div>
 
-      <!-- Kod klubu → zgłoszenie (00C). Link osobisty → członkostwo od razu → PIN.
-           Mockup pokazuje drogę kodem: DOŁĄCZ prowadzi na 00C.
+      <!-- Kod klubu → zgłoszenie (00C) → decyzja administratora klubu (P3).
+           DOŁĄCZ prowadzi na 00C; pusty wpis blokuje bez zdania (issue #55).
            DOŁĄCZENIE WYMAGA INTERNETU (decyzja właściciela 2026-09-08) - jak cała rodzina
            00A–00D. Bez sieci przycisk jest zablokowany z powodem W ŚRODKU („Wymaga
            internetu", issue #55), a pole zostaje czynne: wpis nie ginie. -->
@@ -269,7 +270,7 @@
     <span class="vp-badge amber">00E</span>
     <span class="vp-body">
       <span class="vp-name">Nie należysz do żadnego klubu</span>
-      <span class="vp-when">Konto Google potwierdzone, ale osoba nie ma członkostwa w żadnym klubie - ani aktywnego, ani oczekującego. Pole na kod klubu albo link z zaproszenia. Tu też trafia link osobisty otwarty na telefonie bez profilu (po zalogowaniu Googlem).</span>
+      <span class="vp-when">Konto Google potwierdzone, ale osoba nie ma członkostwa w żadnym klubie - ani aktywnego, ani oczekującego. Jedno pole: kod klubu od administratora. Kod daje zgłoszenie (00C); o przyjęciu decyduje administrator klubu.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -288,10 +289,14 @@
 
 <!-- ══ DRUGA RAMKA: NIEZNANY KOD ══
      Błąd stoi PRZY POLU, którego dotyczy (czerwona ramka + zdanie), nie w banerze
-     nad formularzem. Trzy odmowy serwera, trzy zdania - każda ma inną drogę wyjścia:
-       404 nieznany kod/link    → „Nie znam takiego kodu ani linku. Sprawdź, czy przepisujesz go w całości."
-       410 link zużyty/po terminie → „Ten link został już użyty albo wygasł. Poproś administratora o nowy."
-       403 zgłoszenie odrzucone → „Ten klub odrzucił Twoje zgłoszenie." + powód (ekran 00D)
+     nad formularzem. Odpowiedzi serwera (docs/wielofirmowosc.md §5), każda z inną drogą wyjścia:
+       404 kod nieznany / wyłączony / klub nieaktywny → JEDNO zdanie: „Nie znam takiego kodu.
+           Sprawdź, czy przepisujesz go w całości." (trzy stany, jedna odpowiedź - klub, który
+           wyłączył dołączanie, nie ma powodu się ujawniać). Myślnik i wielkość liter to zapis:
+           serwer przyjmuje `azg7k4m`, a pole pokazuje wpis w zapisie kanonicznym `XXX-XXXX`.
+       403 zgłoszenie odrzucone → ekran 00D z powodem
+       409 już w tym klubie / członkostwo wyłączone → zdanie przy polu
+       429 za dużo prób → powód z czasem odczekania W PRZYCISKU (issue #55)
      Pola NIE czyścimy: pilot poprawia to, co wpisał, a nie pisze od nowa. -->
 <header class="canvas-label" id="nieznany">
   <span class="film-strip">UZ AERO - 00E</span>
@@ -329,8 +334,8 @@
           <span class="status-title">NIE NALEŻYSZ DO ŻADNEGO KLUBU</span>
         </div>
         <div class="status-body">
-          Wpisz kod klubu albo wklej link z zaproszenia - jedno i drugie dostaniesz od
-          administratora klubu, w którym latasz.
+          Wpisz kod klubu - dostaniesz go od administratora klubu, w którym latasz.
+          O przyjęciu zdecyduje administrator.
         </div>
       </div>
 
@@ -343,9 +348,9 @@
       </div>
 
       <div class="field">
-        <span class="field-label">Kod klubu albo link z zaproszenia</span>
-        <input class="input invalid" value="AZG-7K4" aria-invalid="true" aria-label="Kod klubu albo link z zaproszenia">
-        <span class="field-error">Nie znam takiego kodu ani linku. Sprawdź, czy przepisujesz go w całości.</span>
+        <span class="field-label">Kod klubu</span>
+        <input class="input invalid" value="AZG-7K4" aria-invalid="true" aria-label="Kod klubu">
+        <span class="field-error">Nie znam takiego kodu. Sprawdź, czy przepisujesz go w całości.</span>
       </div>
 
       <a href="00c-oczekiwanie.html" class="btn-primary">DOŁĄCZ</a>

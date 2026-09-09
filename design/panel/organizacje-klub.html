@@ -24,7 +24,7 @@
     <span class="vp-badge">O2</span>
     <span class="vp-body">
       <span class="vp-name">Nowy klub</span>
-      <span class="vp-when">Trzy rzeczy i nic więcej: nazwa, adres (slug - podpowiedziany z nazwy, potem stały) i PIERWSZY administrator jako zaproszenie e-mail z nadanym z góry kodem pilota. Bez floty, bez ustawień - to zakłada już administrator u siebie.</span>
+      <span class="vp-when">Trzy rzeczy i nic więcej: nazwa, adres (slug - podpowiedziany z nazwy, potem stały) i PIERWSZY administrator - adres konta Google, imię i nazwisko, kod pilota. Jego członkostwo powstaje OD RAZU, a konto podpina się przy pierwszym logowaniu tym adresem: jedyny wyjątek od kodu klubu, klasa bootstrap (2026-09-09). Razem z klubem powstaje kod klubu. Bez floty, bez ustawień - to zakłada już administrator u siebie.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -32,7 +32,7 @@
     <span class="vp-badge">O2a</span>
     <span class="vp-body">
       <span class="vp-name">Karta istniejącego klubu</span>
-      <span class="vp-when">Otwiera ją wiersz listy. Liczby, administratorzy (kto ma tam wstęp), stan zaproszenia pierwszego administratora i sekcja „Dostęp" z wyłączeniem klubu - druga ramka niżej.</span>
+      <span class="vp-when">Otwiera ją wiersz listy. Liczby, administratorzy (kto ma tam wstęp i czy już się zalogował), kod klubu do odczytu i sekcja „Dostęp" z wyłączeniem klubu - druga ramka niżej.</span>
     </span>
   </a>
   <a class="vp-item" href="organizacje-lista.html">
@@ -110,7 +110,7 @@
           </thead>
           <tbody>
             <tr class="clickable"><td><span class="cell-strong">Aeroklub Zielonogórski</span><span class="cell-sub mono">aeroklub-zielonogorski</span></td><td class="num">14</td><td class="num">4</td><td>Tomasz Małkiewicz <span class="cell-sub">+1</span></td><td><span class="pill green"><span class="dot"></span>Aktywny</span></td><td class="row-actions"><a class="btn ghost sm" href="#karta">Otwórz</a></td></tr>
-            <tr class="clickable opened"><td><span class="cell-strong">Klub Spadochronowy Gliwice</span><span class="cell-sub mono">ks-gliwice</span></td><td class="num">0</td><td class="num">0</td><td>Piotr Wróbel <span class="cell-sub warn">zaproszenie czeka</span></td><td><span class="pill amber"><span class="dot"></span>Bez administratora</span></td><td class="row-actions"><a class="btn ghost sm" href="#karta">Otwórz</a></td></tr>
+            <tr class="clickable opened"><td><span class="cell-strong">Klub Spadochronowy Gliwice</span><span class="cell-sub mono">ks-gliwice</span></td><td class="num">0</td><td class="num">0</td><td>Piotr Wróbel <span class="cell-sub warn">nie zalogował się</span></td><td><span class="pill amber"><span class="dot"></span>Administrator nie wszedł</span></td><td class="row-actions"><a class="btn ghost sm" href="#karta">Otwórz</a></td></tr>
           </tbody>
         </table>
       </div>
@@ -154,13 +154,26 @@
           <div class="card-title">
             Administratorzy
             <span class="spacer"></span>
-            <span class="pill amber">Zaproszenie czeka</span>
+            <span class="pill amber">Nie zalogował się</span>
           </div>
           <div class="access-row">
             <span>Piotr Wróbel <span class="cell-sub">piotr.wrobel@gmail.com · kod PWR</span></span>
             <span class="cell-sub warn">nie zalogował się jeszcze</span>
           </div>
-          <span class="hint">Członkostwo administratora powstanie przy jego pierwszym logowaniu kontem Google z tym adresem. Adres można poprawić, dopóki nie wszedł.</span>
+          <span class="hint">Członkostwo administratora już istnieje - konto Google podepnie się przy jego pierwszym logowaniu tym adresem. Adres można poprawić, dopóki nie wszedł.</span>
+        </div>
+
+        <!-- KOD KLUBU powstaje razem z klubem (2026-09-09, docs/wielofirmowosc.md §3.8):
+             administrator ma od pierwszego dnia co podać pilotom. Superadministrator
+             go CZYTA (żeby przekazać pierwszemu administratorowi razem z dostępem),
+             nie generuje - nowe kody i wyłączenie drogi należą do panelu klubu (P4). -->
+        <div class="card">
+          <div class="card-title">Kod klubu</div>
+          <div class="club-code-row">
+            <span class="club-code">GLW-3N8P</span>
+            <span class="cell-sub">od 8 WRZ 2026</span>
+          </div>
+          <span class="hint">Jedyna droga do klubu dla pilotów. Nowy kod generuje administrator klubu u siebie.</span>
         </div>
 
         <div class="card">

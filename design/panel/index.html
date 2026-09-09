@@ -97,7 +97,7 @@
       <span class="idx-body">
         <span class="idx-name">piloci-lista</span>
         <span class="idx-route">#/piloci</span>
-        <span class="idx-when">Członkowie klubu (kod pilota jest kodem W TYM klubie). Nad listą - i tylko wtedy, gdy niepuste - karty ZGŁOSZENIA (kodem klubu) i ZAPROSZENIA (linki i adresy czekające na wejście). Jedna akcja główna: „Zaproś do klubu".</span>
+        <span class="idx-when">Członkowie klubu (kod pilota jest kodem W TYM klubie). Nad listą - i tylko wtedy, gdy niepusta - karta ZGŁOSZENIA kodem klubu. Jedna akcja główna: „Kod klubu" (P4). Od 2026-09-09 kod klubu jest jedyną drogą do klubu.</span>
       </span>
     </a>
     <a class="idx-card" href="piloci-konto.html">
@@ -116,12 +116,12 @@
         <span class="idx-when">Decyzja o zgłoszeniu kodem klubu: przyjęcie do klubu z nadaniem kodu pilota i roli, bez e-maila (adres jest tożsamością Google), dwa przyciski i żaden domyślny. Odrzucenie wymaga powodu - przeczyta go zgłaszający na swoim telefonie.</span>
       </span>
     </a>
-    <a class="idx-card" href="piloci-zaproszenie.html">
+    <a class="idx-card" href="piloci-kod-klubu.html">
       <span class="idx-badge">P4</span>
       <span class="idx-body">
-        <span class="idx-name">piloci-zaproszenie</span>
-        <span class="idx-route">#/piloci/zapros</span>
-        <span class="idx-when">Szuflada „Zaproś do klubu": trzy drogi jako trzy karty - link osobisty (jednorazowy, dołącza od razu, adres widoczny raz), adres e-mail konta Google (dołącza przy pierwszym logowaniu) i kod klubu (wielorazowy, daje zgłoszenie). Kod pilota i rola nadawane z góry tam, gdzie nie ma drugiego kroku.</span>
+        <span class="idx-name">piloci-kod-klubu</span>
+        <span class="idx-route">#/piloci/kod</span>
+        <span class="idx-when">Szuflada „Kod klubu": jeden kod na klub, wielorazowy, do przeczytania przez telefon - kto go wpisze na 00E albo 13A, trafia do ZGŁOSZEŃ (P3). „Wygeneruj nowy" (stary gaśnie od razu, zgłoszenia zostają) i „Wyłącz dołączanie kodem" (do czasu nowego kodu nikt nie dołączy - innej drogi nie ma). Druga ramka: stan wyłączony. Dawne `piloci-zaproszenie` z trzema drogami zniknęło (2026-09-09).</span>
       </span>
     </a>
   </div>
@@ -187,7 +187,7 @@
       <span class="idx-body">
         <span class="idx-name">organizacje-klub</span>
         <span class="idx-route">#/organizacje/nowy · #/organizacje/&lt;id&gt;</span>
-        <span class="idx-when">Nowy klub: nazwa, stały adres (slug) i pierwszy administrator jako zaproszenie e-mail z kodem pilota nadanym z góry. Karta istniejącego klubu: liczby, administratorzy, stan zaproszenia i wyłączenie klubu z potwierdzeniem.</span>
+        <span class="idx-when">Nowy klub: nazwa, stały adres (slug) i pierwszy administrator (adres Google, imię, kod pilota - członkostwo od razu, konto podpina się przy pierwszym logowaniu); razem z klubem powstaje kod klubu. Karta istniejącego klubu: liczby, administratorzy i czy już weszli, kod klubu do odczytu, wyłączenie klubu z potwierdzeniem.</span>
       </span>
     </a>
   </div>
