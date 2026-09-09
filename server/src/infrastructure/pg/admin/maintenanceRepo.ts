@@ -33,11 +33,15 @@ export class PgAdminMaintenanceRepo implements MaintenanceAdminPort {
    * danych dały ten sam raport - inaczej „różnice" zmieniałyby kolejność między biegami
    * i nie dałoby się ich porównać wzrokiem.
    */
-  async sessionUuids(db: Queryable): Promise<string[]> {
-    const { rows } = await db.query<{ session_uuid: string }>(
-      'SELECT DISTINCT session_uuid FROM events ORDER BY session_uuid',
+  async sessionUuids(db: Queryable): Promise<{ sessionUuid: string; orgId: string }[]> {
+    // Klub jedzie razem z uuid-em, bo przebudowa pisze wiersz projekcji, a ten niesie
+    // `org_id` (wielofirmowość) - z samego strumienia zdarzeń domena klubu nie odczyta.
+    // Wszystkie zdarzenia jednej sesji mają ten sam klub (ingest tego pilnuje), więc
+    // `DISTINCT` po parze daje tyle wierszy, ile sesji.
+    const { rows } = await db.query<{ session_uuid: string; org_id: string }>(
+      'SELECT DISTINCT session_uuid, org_id FROM events ORDER BY session_uuid',
     );
-    return rows.map((r) => r.session_uuid);
+    return rows.map((r) => ({ sessionUuid: r.session_uuid, orgId: r.org_id }));
   }
 
   /**

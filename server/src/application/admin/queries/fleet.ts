@@ -129,7 +129,9 @@ export class AdminFleetQueries {
    */
   private async withState(joins: readonly AdminAircraftJoin[]): Promise<AdminAircraftListItem[]> {
     const states = new Map<string, ReturnType<typeof stateOf>>();
-    const pilotIds = new Set<string>();
+    // Osoba → klub MASZYNY, przy której ją spotkano: kod pilota jest kodem z członkostwa
+    // w klubie operacji (wielofirmowość), więc etykietę czyta się w tym klubie.
+    const pilotIds = new Map<string, string>();
     // Odczyty wpisane ręką administratora (issue #81) - całej floty jednym zapytaniem,
     // jak w `ReferenceQueries`: panel i telefon mają dostać TEN SAM wybór przekazania.
     const overrides = await this.readings.latestAll(this.db);
@@ -138,16 +140,18 @@ export class AdminFleetQueries {
       const rows = await this.sessions.listByAircraft(this.db, join.aircraft.id);
       const state = stateOf(rows, join, overrides.get(join.aircraft.id) ?? null);
       states.set(join.aircraft.id, state);
-      if (state.claim != null) pilotIds.add(state.claim.picId);
+      if (state.claim != null) pilotIds.set(state.claim.picId, join.aircraft.orgId);
       // `byPilotId === null` znaczy „stan początkowy z panelu" (issue #66) albo odczyt
       // administratora (issue #81) - podpisem tego drugiego jest konto, które go wpisało.
-      if (state.handover?.byPilotId != null) pilotIds.add(state.handover.byPilotId);
-      if (state.enteredBy != null) pilotIds.add(state.enteredBy);
+      if (state.handover?.byPilotId != null) {
+        pilotIds.set(state.handover.byPilotId, join.aircraft.orgId);
+      }
+      if (state.enteredBy != null) pilotIds.set(state.enteredBy, join.aircraft.orgId);
     }
 
     const labels = new Map<string, PilotLabel>();
-    for (const id of pilotIds) {
-      const account = await this.pilots.byId(this.db, id);
+    for (const [id, orgId] of pilotIds) {
+      const account = await this.pilots.byId(this.db, orgId, id);
       // Konto skasowane albo przepisane zostawia claim z samym identyfikatorem -
       // wiersz floty ma zostać widoczny, a nie zniknąć razem z nazwiskiem.
       if (account != null) labels.set(id, { code: account.code, name: account.name });

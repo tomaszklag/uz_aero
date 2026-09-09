@@ -21,7 +21,7 @@ import type {
 } from '@uzaero/domain';
 
 import type { AdminAction } from '../../domain/adminActions.ts';
-import type { PilotRole } from '../../domain/roles.ts';
+import type { PilotRole, PlatformRole } from '../../domain/roles.ts';
 import type { FlagRecord, IdentityStatus, Queryable, SessionRow } from '../common/ports.ts';
 import type { AdminEventCounts } from './contracts/events.ts';
 import type { AdminExportCounts, ExportState } from './contracts/exports.ts';
@@ -37,13 +37,37 @@ import type { AdminExportCounts, ExportState } from './contracts/exports.ts';
  * `role` jest rolą Z CHWILI AKCJI i tak trafia do `admin_audit`. Role się zmieniają;
  * odczytanie ich później z konta odpowiadałoby na inne pytanie niż „kto miał wtedy
  * prawo to zrobić".
+ *
+ * `orgId` to KLUB, w którym akcja zachodzi (wielofirmowość, issue #98) - z tokenu sesji
+ * panelu, po sprawdzeniu członkostwa. Każda komenda klubu pisze do tabel tego klubu
+ * i tylko jego; brak `orgId` w tym typie jest niemożliwy, bo panel klubu nie ma jak
+ * wpuścić kogoś bez klubu.
  */
 export interface Actor {
   pilotId: string;
+  orgId: string;
   role: PilotRole;
   /** `null` = akcja spoza żądania HTTP (skrypt administracyjny). */
   ip: string | null;
 }
+
+/**
+ * SUPERADMINISTRATOR działający NA PLATFORMIE, poza klubami (wielofirmowość §3.3) -
+ * zakłada klub, wyłącza klub, zaprasza pierwszego administratora (epik E).
+ *
+ * Osobny typ zamiast `orgId: string | null` w `Actor`: komendy klubu dostają `Actor`
+ * i nigdy nie muszą pytać, czy klub jest; komendy platformy dostają ten typ i nigdy
+ * nie muszą udawać, że jakiś klub mają. Wspólny mianownik obu (`AuditActor`) zna
+ * wyłącznie brama audytu, bo tylko ona pisze wpis dla obu.
+ */
+export interface PlatformActor {
+  pilotId: string;
+  platformRole: PlatformRole;
+  ip: string | null;
+}
+
+/** Kogo przyjmuje `AuditedWrite` - działający w klubie ALBO na platformie. */
+export type AuditActor = Actor | PlatformActor;
 
 // ── dziennik audytu ─────────────────────────────────────────────────────────────
 
@@ -60,10 +84,13 @@ export interface AuditEntry {
   details: Record<string, unknown>;
 }
 
-/** Kompletny wiersz dziennika: opis akcji + kto, kiedy i skąd. */
+/** Kompletny wiersz dziennika: opis akcji + kto, kiedy, skąd i W KTÓRYM KLUBIE. */
 export interface AuditRecord extends AuditEntry {
   actorPilotId: string;
-  actorRole: PilotRole;
+  /** Rola klubu albo rola platformowa - wpis historyczny, więc napis, nie unia. */
+  actorRole: PilotRole | PlatformRole;
+  /** `null` = akcja platformowa superadministratora (jedyna kolumna klubu bywająca pusta). */
+  orgId: string | null;
   ip: string | null;
   createdAt: Date;
 }
@@ -388,6 +415,8 @@ export interface ExportListFilter {
  */
 export interface AdminExportJoin {
   sessionUuid: string;
+  /** Klub operacji - karta jest dokumentem KLUBU, więc podgląd czyta się w jego kluczu. */
+  orgId: string;
   aircraftId: string;
   reg: string | null;
   aircraftType: string | null;
@@ -605,15 +634,21 @@ export interface AdminEventsReadPort {
 // ── konta pilotów (A06, A06a) ───────────────────────────────────────────────────
 
 /**
- * Konto tak, jak widzi je PANEL: bez `passwordHash`.
+ * CZŁONEK KLUBU tak, jak widzi go PANEL: osoba + jej członkostwo w klubie z tokenu.
  *
- * Osobny typ od `PilotAccount` (`application/common/ports.ts`) i to jest jego cała
- * treść. Tamten istnieje dla LOGOWANIA, więc niesie hash - a hash nie ma prawa wjechać
- * do komendy, która go nie weryfikuje, ani tym bardziej do mapowania na kontrakt.
- * Jeden brak pola jest tu tańszy niż dyscyplina „pamiętaj, żeby go nie serializować".
+ * Do wielofirmowości typ nazywał konto; dziś nazywa CZŁONKOSTWO (`id` zostaje
+ * identyfikatorem OSOBY, bo nim wiążą się zdarzenia; `code`, `role` i `active` są
+ * własnością klubu). `active` = członkostwo `active` - dawne „wyłącz konto" w panelu
+ * klubu jest wyłączeniem członkostwa, osoba w innym klubie lata dalej.
+ *
+ * Osobny typ od `PilotAccount` (`application/common/ports.ts`) i od `Membership`: tamte
+ * istnieją dla LOGOWANIA i niosą to, czego panel nie pokazuje (rola platformowa, klub
+ * w komplecie), a nie niosą tego, co panel pokazuje w jednym wierszu.
  */
 export interface AdminPilotAccount {
+  /** Identyfikator OSOBY - klucz zdarzeń, wspólny dla wszystkich jej klubów. */
   id: string;
+  orgId: string;
   code: string;
   name: string;
   email: string | null;
@@ -705,9 +740,17 @@ export interface PilotScopeCounts {
   panel: number;
 }
 
-/** Nowe konto - hash liczy komenda, adapter go wyłącznie zapisuje. */
+/**
+ * Nowy członek klubu - osoba (jeśli jej jeszcze nie ma) + członkostwo z kodem i rolą.
+ *
+ * `id` to identyfikator PROPONOWANY dla nowej osoby; gdy osoba o tym e-mailu już
+ * istnieje (lata w innym klubie), adapter dopisuje członkostwo DO NIEJ i oddaje jej
+ * identyfikator - `pilots.email` jest jedyny na serwerze, a druga osoba pod tym samym
+ * adresem rozdwoiłaby człowieka między klubami.
+ */
 export interface NewPilotAccount {
   id: string;
+  orgId: string;
   code: string;
   name: string;
   email: string | null;
@@ -716,32 +759,46 @@ export interface NewPilotAccount {
 
 /** Zmiana tożsamości albo roli. Pola nieustawione zostają bez zmian. */
 export interface PilotPatch {
+  /** Kod W TYM KLUBIE (członkostwo). */
   code?: string;
+  /** Imię i nazwisko OSOBY - widoczne we wszystkich jej klubach. */
   name?: string;
   email?: string | null;
+  /** Rola W TYM KLUBIE (członkostwo). */
   role?: PilotRole;
 }
 
 /**
- * Port kont po stronie PANELU - osobny od `PilotsPort`, nie jego rozszerzenie.
+ * Port członków klubu po stronie PANELU - osobny od `PilotsPort`, nie jego rozszerzenie.
  *
- * `PilotsPort` jest portem LOGOWANIA: dwie metody odczytu, adapter z własnym uchwytem
- * do bazy, wołany poza transakcją. Panel pisze i musi to robić W TRANSAKCJI śladu
- * audytu, więc każda metoda bierze `tx` z zewnątrz. Precedens i uzasadnienie takie
- * samo jak przy `FlagsAdminPort` vs `FlagsPort`: osobny port wtedy, gdy inny jest
- * POWÓD istnienia - a korzyścią uboczną jest to, że ścieżka logowania nie ma jak
- * zregresować od zmian w panelu kont.
+ * `PilotsPort` jest portem LOGOWANIA: metody odczytu, adapter z własnym uchwytem do bazy,
+ * wołany poza transakcją. Panel pisze i musi to robić W TRANSAKCJI śladu audytu, więc
+ * każda metoda bierze `tx` z zewnątrz. Precedens i uzasadnienie takie samo jak przy
+ * `FlagsAdminPort` vs `FlagsPort`: osobny port wtedy, gdy inny jest POWÓD istnienia -
+ * a korzyścią uboczną jest to, że ścieżka logowania nie ma jak zregresować od zmian
+ * w panelu kont.
+ *
+ * ══ KAŻDE PYTANIE NAZYWA KLUB (wielofirmowość) ══
+ * Lista, liczniki, kolizja kodu i „ostatni administrator" są pytaniami O KLUB
+ * z tokenu administratora - ten sam człowiek w drugim klubie jest innym wierszem
+ * tej listy, z innym kodem i inną rolą. `orgId` idzie parametrem, nie polem adaptera,
+ * bo adapter jest jeden dla wszystkich klubów.
  */
 export interface PilotsAdminPort {
-  list(db: Queryable, filter: PilotListFilter): Promise<{ items: AdminPilotJoin[]; total: number }>;
+  list(
+    db: Queryable,
+    orgId: string,
+    filter: PilotListFilter,
+  ): Promise<{ items: AdminPilotJoin[]; total: number }>;
   /** Liczniki po CAŁYM klubie; okno dotyczy wyłącznie `flyingDays`. */
-  counts(db: Queryable, window: { fromMs: number; toMs: number }): Promise<PilotCounts>;
+  counts(db: Queryable, orgId: string, window: { fromMs: number; toMs: number }): Promise<PilotCounts>;
   /**
    * Liczniki CHIPÓW - te same cztery zawężenia, ale w bieżącym wyszukiwaniu.
    * `search` nieustawione = po całym klubie (wtedy zgadzają się z `counts`).
    */
-  scopeCounts(db: Queryable, filter: { search?: string }): Promise<PilotScopeCounts>;
-  byId(db: Queryable, id: string): Promise<AdminPilotAccount | null>;
+  scopeCounts(db: Queryable, orgId: string, filter: { search?: string }): Promise<PilotScopeCounts>;
+  /** Członek klubu po identyfikatorze OSOBY; `null` = nie należy do tego klubu. */
+  byId(db: Queryable, orgId: string, id: string): Promise<AdminPilotAccount | null>;
   /**
    * Kolizja unikalności PRZED zapisem: `'code'` albo `'email'`, albo `null`.
    *
@@ -749,24 +806,33 @@ export interface PilotsAdminPort {
    * pole jest zajęte - komunikat „naruszenie unikalności" przy formularzu z trzema
    * polami nie jest odpowiedzią. Sprawdzenie i zapis jadą tą samą transakcją, więc
    * wyścig kończy się i tak błędem bazy, a nie cichym nadpisaniem.
+   *
+   * Kod jest zajęty, gdy ma go INNE członkostwo TEGO klubu; e-mail - gdy osoba o tym
+   * adresie JUŻ JEST członkiem tego klubu (osoba z innego klubu to nie kolizja, tylko
+   * dołączenie - patrz `insert`).
    */
   conflict(
     tx: Queryable,
+    orgId: string,
     values: { code: string; email: string | null; exceptId: string | null },
   ): Promise<'code' | 'email' | null>;
-  insert(tx: Queryable, account: NewPilotAccount): Promise<void>;
-  update(tx: Queryable, id: string, patch: PilotPatch): Promise<void>;
   /**
-   * `at` = chwila DEAKTYWACJI, zapisywana jako `pilots.credentials_valid_from`.
+   * Dopisuje członkostwo; osobę zakłada, gdy nie ma jej pod tym e-mailem. Zwraca
+   * identyfikator OSOBY, do której członkostwo przypięto (patrz `NewPilotAccount.id`).
+   */
+  insert(tx: Queryable, account: NewPilotAccount): Promise<string>;
+  update(tx: Queryable, orgId: string, id: string, patch: PilotPatch): Promise<void>;
+  /**
+   * `at` = chwila WYŁĄCZENIA, zapisywana jako `memberships.credentials_valid_from`.
    * Bez niej odebranie dostępu nie dotykałoby sesji PANELU, bo ta nie ma wiersza
    * w bazie - kasowanie `refresh_tokens` zrywa wyłącznie sesje telefonu.
    * Aktywacja znacznika NIE cofa: token sprzed odcięcia ma zostać martwy.
    */
-  setActive(tx: Queryable, id: string, active: boolean, at: Date): Promise<void>;
-  /** Ile kont AKTYWNYCH ma rolę `admin` - wejście do `domain/accountGuards.ts`. */
-  countActiveAdmins(tx: Queryable): Promise<number>;
+  setActive(tx: Queryable, orgId: string, id: string, active: boolean, at: Date): Promise<void>;
+  /** Ile członkostw AKTYWNYCH ma rolę `admin` W KLUBIE - wejście do `domain/accountGuards.ts`. */
+  countActiveAdmins(tx: Queryable, orgId: string): Promise<number>;
   /**
-   * Blokada advisory na STAŁYM kluczu „populacja administratorów", ważna do końca
+   * Blokada advisory na kluczu „populacja administratorów KLUBU", ważna do końca
    * transakcji. Wołana PRZED `countActiveAdmins` przez każdą mutację zmieniającą tę
    * populację.
    *
@@ -776,27 +842,30 @@ export interface PilotsAdminPort {
    * niczego widocznego, tylko cicho wyłącza szeregowanie. Nazwa klucza jest szczegółem
    * Postgresa i mieszka w adapterze, tak jak kształt kursora.
    */
-  lockAdminPopulation(tx: Queryable): Promise<void>;
+  lockAdminPopulation(tx: Queryable, orgId: string): Promise<void>;
   /**
-   * Czy cokolwiek odwołuje się do tego konta - wejście do `refuseDelete`.
+   * Czy cokolwiek odwołuje się do tej OSOBY - wejście do `refuseDelete`.
    *
    * **Zero znaczy „nic", każda wartość dodatnia znaczy „coś".** Liczba jest liczbą
    * ŹRÓDEŁ, nie wierszy: adapter pyta `EXISTS`, bo regule wystarczy zero/niezero,
    * a liczenie lotów konta z całym sezonem byłoby pełnym skanem po nic.
    *
    * Źródła: zdarzenia (jako PIC **i jako drugi pilot**, także po korekcie w payloadzie),
-   * sesje oraz wpisy dziennika audytu, w których konto jest SPRAWCĄ. NIE liczy
-   * `refresh_tokens`: to sesje telefonu, a nie historia - kasujemy je razem z kontem.
+   * sesje, wpisy dziennika audytu, w których konto jest SPRAWCĄ, oraz - od
+   * wielofirmowości - członkostwa w INNYCH klubach: osoby, która lata gdzie indziej,
+   * nie kasuje się z jej klubu. NIE liczy `refresh_tokens`: to sesje telefonu, a nie
+   * historia.
    *
    * Jedna liczba, nie rozbicie na tabele: reguła brzmi „cokolwiek się odwołuje - nie
    * kasujemy", więc panel nie ma czego zrobić z informacją, KTÓRA tabela trzyma wiersz.
    */
-  references(tx: Queryable, id: string): Promise<number>;
+  references(tx: Queryable, orgId: string, id: string): Promise<number>;
   /**
-   * TRWAŁE skasowanie wiersza konta. Wołane WYŁĄCZNIE po `refuseDelete`, w tej samej
-   * transakcji - port nie sprawdza niczego sam.
+   * TRWAŁE skasowanie członkostwa RAZEM z osobą. Wołane WYŁĄCZNIE po `refuseDelete`,
+   * w tej samej transakcji - port nie sprawdza niczego sam; `references` już
+   * zagwarantowało, że osoba nie ma innych klubów ani historii.
    */
-  delete(tx: Queryable, id: string): Promise<void>;
+  delete(tx: Queryable, orgId: string, id: string): Promise<void>;
 }
 
 /**
@@ -806,17 +875,18 @@ export interface PilotsAdminPort {
  * ══ DLACZEGO TO W OGÓLE ISTNIEJE ══
  * Bez tego „Deaktywuj" jest obietnicą bez pokrycia: konto przestaje się logować, ale
  * pilot z żywym refresh tokenem pracuje dalej przez 90 dni (`REFRESH_TTL_DAYS`).
- * `AuthCommands.refresh` sprawdza wprawdzie `account.active` i odmawia - ale dopiero
- * przy próbie rotacji, a JWT wydany wcześniej żyje jeszcze godzinę. Reset hasła też
- * musi zrywać sesje, inaczej stara sesja przeżywa zmianę poświadczeń, czyli dokładnie
- * to, przed czym reset ma chronić.
+ * `AuthCommands.refresh` sprawdza wprawdzie członkostwo i odmawia - ale dopiero
+ * przy próbie rotacji, a JWT wydany wcześniej żyje jeszcze godzinę.
  *
  * Liczba unieważnionych tokenów jedzie do audytu (mockup A06a: „Aktywne sesje pilota -
  * unieważnione"), bo odpowiada na pytanie, którego wpis bez niej nie zamyka: czy ktoś
  * jeszcze pracował na tym koncie w chwili odcięcia.
+ *
+ * PER KLUB (wielofirmowość §3.4): wyłączenie członkostwa w klubie A zrywa sesje wydane
+ * dla A i tylko je - w klubie B człowiek dalej jest członkiem.
  */
 export interface RefreshTokensAdminPort {
-  revokeAllFor(tx: Queryable, pilotId: string): Promise<number>;
+  revokeAllFor(tx: Queryable, pilotId: string, orgId: string): Promise<number>;
 }
 
 // ── zgłoszenia rejestracyjne (logowanie Google, 2026-09-04) ─────────────────────
@@ -849,12 +919,22 @@ export interface RegistrationRecord {
  * pytanie, inny rytm (transakcja audytu), a logowanie nie ma jak zregresować od panelu.
  */
 export interface RegistrationsAdminPort {
-  /** Kolejka: najstarsze pierwsze. `statuses` puste = wszystkie. */
+  /**
+   * Kolejka: najstarsze pierwsze. `statuses` puste = wszystkie. `orgId` = klub
+   * czytającego: kody pilota i decydenta na liście są kodami Z TEGO klubu
+   * (zgłoszenie rejestracyjne samo klubu nie zna - przenosi się na członkostwa w epiku D).
+   */
   list(
     db: Queryable,
+    orgId: string,
     filter: { statuses: readonly IdentityStatus[]; limit: number },
   ): Promise<RegistrationRecord[]>;
-  find(db: Queryable, provider: string, subject: string): Promise<RegistrationRecord | null>;
+  find(
+    db: Queryable,
+    orgId: string,
+    provider: string,
+    subject: string,
+  ): Promise<RegistrationRecord | null>;
   /** Liczniki po CAŁEJ tabeli - plakietka przy zakładce PILOCI. */
   countByStatus(db: Queryable): Promise<Record<IdentityStatus, number>>;
   /**
@@ -892,6 +972,8 @@ export interface RegistrationsAdminPort {
  */
 export interface AdminAircraft {
   id: string;
+  /** Klub właściciel (wielofirmowość §3.5) - z tokenu administratora przy założeniu. */
+  orgId: string;
   reg: string;
   type: string;
   year: number | null;
@@ -1022,8 +1104,14 @@ export interface FleetAdminPort {
    * Sprawdzenie zamiast samego łapania `23505`, dokładnie jak przy kontach: panel ma
    * dostać nazwę POLA do poprawienia, a nie „naruszenie unikalności". Wyścig i tak
    * kończy się błędem bazy i tam jest tłumaczony na ten sam wynik.
+   *
+   * Rejestracja jest jedyna W KLUBIE (wielofirmowość §3.6) - maszyna sprzedana do
+   * drugiego klubu nie jest kolizją, tylko drugim wierszem z własną historią.
    */
-  conflict(tx: Queryable, values: { reg: string; exceptId: string | null }): Promise<'reg' | null>;
+  conflict(
+    tx: Queryable,
+    values: { orgId: string; reg: string; exceptId: string | null },
+  ): Promise<'reg' | null>;
   insert(tx: Queryable, aircraft: AdminAircraft): Promise<void>;
   update(tx: Queryable, id: string, patch: AircraftPatch): Promise<void>;
   /**
@@ -1117,8 +1205,11 @@ export interface MaintenanceAdminPort {
    * nie tabela `sessions`, i to jest cały sens tej metody. Sesja, która jest
    * w rejestrze, a nie ma wiersza projekcji, to najcięższy przypadek dryfu; lista
    * budowana z projekcji nie umiałaby go zobaczyć.
+   *
+   * Razem z KLUBEM sesji (wielofirmowość): przebudowa pisze wiersz projekcji, a ten
+   * niesie `org_id`, którego z samego strumienia domena nie odczyta.
    */
-  sessionUuids(db: Queryable): Promise<string[]>;
+  sessionUuids(db: Queryable): Promise<{ sessionUuid: string; orgId: string }[]>;
 
   /**
    * Ile tokenów leży w tabeli i ile z nich jest MARTWYCH wobec podanej chwili.

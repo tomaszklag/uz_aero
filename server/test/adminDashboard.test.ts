@@ -38,6 +38,7 @@ import type { Queryable } from '../src/application/common/ports.ts';
 import { PgAdminDashboardRepo } from '../src/infrastructure/pg/admin/dashboardRepo.ts';
 import { testHarness } from './helpers.ts';
 import { googleTokenFor } from './testIdentityProvider.ts';
+import { ORG_A } from './testWorld.ts';
 
 type Harness = Awaited<ReturnType<typeof testHarness>>;
 
@@ -574,9 +575,9 @@ describe('pulpit - puls rejestru', () => {
     const { db } = await testHarness();
     await db.query(
       `INSERT INTO events
-         (uuid, session_uuid, aircraft_id, pic_id, type, device_time, gps_time,
+         (org_id, uuid, session_uuid, aircraft_id, pic_id, type, device_time, gps_time,
           payload, schema_version, received_at)
-       SELECT 'puls-' || g, 'sess-puls', 'SP-AXA', 'KRZ', 'taxi', 0, 0, '{}'::jsonb, 1,
+       SELECT '${ORG_A}', 'puls-' || g, 'sess-puls', 'SP-AXA', 'KRZ', 'taxi', 0, 0, '{}'::jsonb, 1,
               TIMESTAMPTZ '2026-01-01 00:00:00+00' + (g * INTERVAL '1 second')
          FROM generate_series(1, 5000) AS g`,
     );

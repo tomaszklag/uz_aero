@@ -93,10 +93,13 @@ const SELECT = `
          a.target_id,
          a.details,
          a.ip,
-         p.code AS actor_code,
-         p.name AS actor_name
+         -- Kod sprawcy Z CZŁONKOSTWA w klubie wpisu (wielofirmowość); wpis platformowy
+         -- (org_id NULL) nie ma kodu - superadministrator kodu nie ma z definicji.
+         m.code  AS actor_code,
+         p.name  AS actor_name
     FROM admin_audit a
-    LEFT JOIN pilots p ON p.id = a.actor_pilot_id`;
+    LEFT JOIN pilots      p ON p.id = a.actor_pilot_id
+    LEFT JOIN memberships m ON m.pilot_id = a.actor_pilot_id AND m.org_id = a.org_id`;
 
 const toJoin = (r: AuditDbRow): AdminAuditJoin => ({
   // `Number(...)` na `BIGSERIAL`: identyfikator dziennika mieści się w bezpiecznym

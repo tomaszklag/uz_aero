@@ -70,10 +70,15 @@ export class PgAircraftReadingsRepo implements AircraftReadingsPort {
     return at == null ? null : new Date(at);
   }
 
-  async insert(tx: Queryable, aircraftId: string, reading: AdminReading): Promise<void> {
+  async insert(
+    tx: Queryable,
+    orgId: string,
+    aircraftId: string,
+    reading: AdminReading,
+  ): Promise<void> {
     await tx.query(
-      `INSERT INTO aircraft_readings (aircraft_id, mh, fuel_l, oil_l, note, by_pilot_id, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      `INSERT INTO aircraft_readings (org_id, aircraft_id, mh, fuel_l, oil_l, note, by_pilot_id, created_at)
+       VALUES ($8, $1, $2, $3, $4, $5, $6, $7)`,
       [
         aircraftId,
         reading.mh,
@@ -82,6 +87,7 @@ export class PgAircraftReadingsRepo implements AircraftReadingsPort {
         reading.note,
         reading.byPilotId,
         new Date(reading.at),
+        orgId,
       ],
     );
   }

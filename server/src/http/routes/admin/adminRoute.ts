@@ -16,18 +16,24 @@
  * ciasteczko sesji panelu (przeglądarka). Trasa nie wie, który to kanał i wiedzieć
  * nie musi: brama uprawnień jest jedna (`http/authorize.ts`), a wejście do niej
  * rozstrzyga jeden plik (`http/tokenFromRequest.ts`).
+ *
+ * ══ TRASA KLUBU (wielofirmowość, issue #98) ══
+ * Każda trasa zarejestrowana tą funkcją jest trasą KLUBU: klub przychodzi z tokenu
+ * sesji, brama sprawdza członkostwo w nim, a handler dostaje `Actor` z `orgId`. Trasy
+ * PLATFORMOWE superadministratora (moduł Organizacje, epik E) dostaną własną deklarację
+ * na `authorizePlatform` - inny token, inny działający, inny wpis audytu.
  */
 
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 import type { Actor } from '../../../application/admin/ports.ts';
 import type {
-  PilotAuthSnapshot,
+  MembershipAuthSnapshot,
   PilotsPort,
   TokenService,
 } from '../../../application/common/ports.ts';
 import type { Capability } from '../../../domain/roles.ts';
-import { authorizeAccount } from '../../authorize.ts';
+import { authorizeOrg } from '../../authorize.ts';
 import { tokenFromRequest } from '../../tokenFromRequest.ts';
 
 /** Ścieżka API panelu. Statyczny build panelu stanie pod `/admin/*`. */
@@ -37,15 +43,15 @@ export const ADMIN_API_PREFIX = '/admin/api';
  * Zależności BRAMY, wspólne dla wszystkich tras panelu.
  *
  * Jeden obiekt zamiast dwóch parametrów w każdej funkcji `register*`: brama ma dziś
- * dwa wejścia (weryfikacja tokenu i odczyt konta), a trzecie - gdyby kiedyś doszło -
- * ma się dołożyć TUTAJ, a nie w sześciu sygnaturach naraz.
+ * dwa wejścia (weryfikacja tokenu i odczyt członkostwa), a trzecie - gdyby kiedyś
+ * doszło - ma się dołożyć TUTAJ, a nie w sześciu sygnaturach naraz.
  */
 export interface AdminGate {
   tokens: TokenService;
   /**
-   * Konta czytane PRZY KAŻDYM ŻĄDANIU panelu - patrz `authorizeAccount`. To ten sam
-   * port, którym loguje się telefon: panel i aplikacja mają jedną tabelę kont, bo to
-   * ci sami ludzie.
+   * Członkostwa czytane PRZY KAŻDYM ŻĄDANIU panelu - patrz `authorizeOrg`. To ten sam
+   * port, którym loguje się telefon: panel i aplikacja mają jedną tabelę osób i jedną
+   * tabelę członkostw, bo to ci sami ludzie.
    */
   accounts: PilotsPort;
 }
@@ -58,19 +64,21 @@ export interface AdminRouteSpec {
 }
 
 /**
- * Świeże konto (z bazy) + adres żądania → `Actor` (do audytu). Jedyne miejsce, w którym
- * to złączenie zachodzi.
+ * Świeże członkostwo (z bazy) + adres żądania → `Actor` (do audytu). Jedyne miejsce,
+ * w którym to złączenie zachodzi.
  *
- * Rola pochodzi z KONTA, nie z claimu tokenu (zmiana 2026-08-01, przekrój A06 -
- * uzasadnienie stoi przy `authorizeAccount`). Dzięki temu jeden odczyt obsługuje naraz
+ * Rola pochodzi z CZŁONKOSTWA, nie z claimu tokenu (zmiana 2026-08-01, przekrój A06 -
+ * uzasadnienie stoi przy `authorizeOrg`). Dzięki temu jeden odczyt obsługuje naraz
  * dwie rzeczy: bramę uprawnień i `admin_audit.actor_role`, czyli rolę Z CHWILI AKCJI.
- *
- * Wejściem jest PROJEKCJA konta bez hasha (`PilotAuthSnapshot`), nie pełne konto
- * logowania: warstwa HTTP nie ma powodu widzieć `password_hash`, a przy każdym żądaniu
- * panelu widziała go do 2026-08-01.
+ * Klub idzie z tego samego wiersza - to klub tokenu, potwierdzony członkostwem.
  */
-function actorFrom(account: PilotAuthSnapshot, req: FastifyRequest): Actor {
-  return { pilotId: account.id, role: account.role, ip: req.ip ?? null };
+function actorFrom(account: MembershipAuthSnapshot, req: FastifyRequest): Actor {
+  return {
+    pilotId: account.pilotId,
+    orgId: account.orgId,
+    role: account.role,
+    ip: req.ip ?? null,
+  };
 }
 
 export function adminRoute(
@@ -88,7 +96,7 @@ export function adminRoute(
       // nie ma wejścia do panelu, więc druga kontrola nie odrzuciłaby niczego,
       // co przeszło pierwszą. Dwupoziomowa brama z §8.6 ma sens dopiero przy
       // scope'ie z logowaniem panelu (wtedy niesie komunikat ekranu A00).
-      const outcome = await authorizeAccount(
+      const outcome = await authorizeOrg(
         gate.tokens,
         gate.accounts,
         tokenFromRequest(req),

@@ -20,11 +20,12 @@ export function registerSheetsRoutes(
   tokens: TokenService,
 ): void {
   app.get('/sheets/:tab', async (req, reply) => {
-    if (authorize(tokens, tokenFromRequest(req)) == null) {
-      return reply.code(401).send({ error: 'unauthorized' });
-    }
+    const who = authorize(tokens, tokenFromRequest(req));
+    if (who == null) return reply.code(401).send({ error: 'unauthorized' });
     const { tab } = req.params as { tab: string };
-    const sheet = await sheets.get(tab);
+    // Karta KLUBU z tokenu: ta sama nazwa w cudzym klubie jest dla czytającego
+    // nieistniejąca (wielofirmowość §3.7; adres ze slugiem dochodzi w epiku C).
+    const sheet = await sheets.get(who.orgId, tab);
     if (sheet == null) return reply.code(404).send({ error: 'not_found' });
     return reply.send({
       tab: sheet.tab,

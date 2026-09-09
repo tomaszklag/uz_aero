@@ -17,6 +17,7 @@ import { describe, expect, it } from 'vitest';
 
 import { ADMIN_CSRF_HEADERS, TEST_GOOGLE_WEB_CLIENT_ID, testHarness } from './helpers.ts';
 import { googleTokenFor, googleTokenForStranger } from './testIdentityProvider.ts';
+import { ORG_A } from './testWorld.ts';
 
 type Harness = Awaited<ReturnType<typeof testHarness>>;
 
@@ -54,6 +55,9 @@ describe('logowanie do panelu wydaje ciasteczko, nie token w ciele', () => {
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({
       pilot: { id: 'TMK', code: 'TMK', name: 'Tomasz Małkiewicz', role: 'admin' },
+      // Klub sesji (wielofirmowość): panel pisze go w kolumnie bocznej i pyta nim
+      // o każdą listę - kod i rola wyżej są kodem i rolą W TYM klubie.
+      org: { id: ORG_A, name: 'Aeroklub Alfa', slug: 'aeroklub-alfa' },
       capabilities: [
         'panel.access',
         'flags.resolve',

@@ -57,7 +57,22 @@ export interface IngestResult {
 
 export type IngestOutcome =
   | { ok: true; result: IngestResult }
-  | { ok: false; reason: 'not_session_pic' };
+  | { ok: false; reason: 'not_session_pic' }
+  /**
+   * Maszyna z paczki należy do INNEGO klubu niż token nadawcy (wielofirmowość §3.5).
+   * Jedyna nowa odmowa ingestu i twarda: zapis do cudzego klubu nie ma miękkiej wersji.
+   */
+  | { ok: false; reason: 'aircraft_not_in_org' };
+
+/**
+ * Nadawca paczki tak, jak zna go token: osoba I klub. Klub jest tu treścią, nie
+ * metadanymi - trafia do każdego wiersza rejestru i do projekcji (`org_id`), a maszyna
+ * z paczki musi do niego należeć.
+ */
+export interface IngestSender {
+  pilotId: string;
+  orgId: string;
+}
 
 export class IngestCommands {
   constructor(
@@ -79,10 +94,12 @@ export class IngestCommands {
   ) {}
 
   async ingest(
-    senderPilotId: string,
+    sender: IngestSender,
     batch: readonly Event[],
     sourceDevice: string | null,
   ): Promise<IngestOutcome> {
+    const senderPilotId = sender.pilotId;
+    const orgId = sender.orgId;
     // Samoloty dotknięte paczką - wypełniane w transakcji, używane PO commicie
     // (przeliczenie normy zużycia), więc muszą przeżyć jej zakres.
     const aircraftIds = new Set<string>();
@@ -99,10 +116,30 @@ export class IngestCommands {
     // zdarzeniem przejął sesję, unieważnił loty korektą albo zamknął cudzy dzień.
     // Dlatego nadawcę porównujemy z PIC-em sesji JUŻ ISTNIEJĄCEJ na serwerze; nowa
     // sesja należy do tego, kto ją pierwszy przyniósł.
+    //
+    // Warstwa 3 (wielofirmowość §3.5): sesja JUŻ ISTNIEJĄCA należy do klubu i ten klub
+    // musi być klubem tokenu - inaczej dosyłka po przełączeniu klubu (epik F) wpisałaby
+    // zdarzenia jednego klubu do operacji drugiego.
     for (const sessionUuid of new Set(batch.map((e) => e.sessionUuid))) {
       const existing = await this.sessions.get(this.db, sessionUuid);
       if (existing != null && existing.picId !== senderPilotId) {
         return { ok: false, reason: 'not_session_pic' };
+      }
+      if (existing != null && existing.orgId !== orgId) {
+        return { ok: false, reason: 'aircraft_not_in_org' };
+      }
+    }
+
+    // ══ MASZYNA MUSI NALEŻEĆ DO KLUBU Z TOKENU (wielofirmowość §3.5) ══
+    // Jedyna nowa odmowa ingestu i twarda: „serwer nie odrzuca, flaguje" (§4.5) dotyczy
+    // niezgodności DANYCH (łańcuch MH, nakładka), a to jest zapis do CUDZEGO klubu -
+    // nie ma miękkiej wersji, bo flaga w cudzym dzienniku byłaby już wyciekiem.
+    // Maszyna NIEZNANA rejestrowi floty przechodzi (rejestr przyjmuje to, co przyszło
+    // z terenu, a `aircraft_id` nie ma klucza obcego) i dostaje klub tokenu.
+    for (const aircraftId of new Set(batch.map((e) => e.aircraftId))) {
+      const owner = await this.aircraft.orgIdOf(this.db, aircraftId);
+      if (owner != null && owner !== orgId) {
+        return { ok: false, reason: 'aircraft_not_in_org' };
       }
     }
 
@@ -142,7 +179,12 @@ export class IngestCommands {
         toInsert = toInsert.filter((e) => e.sessionUuid !== sessionUuid);
       }
 
-      const { accepted, duplicates } = await this.events.insertBatch(tx, toInsert, sourceDevice);
+      const { accepted, duplicates } = await this.events.insertBatch(
+        tx,
+        orgId,
+        toInsert,
+        sourceDevice,
+      );
 
       // Projekcje przeliczamy per DOTKNIĘTA sesja - pełny strumień, nie przyrost.
       // Strumień dnia to dziesiątki zdarzeń; odtwarzalność > mikrooptymalizacja.
@@ -152,7 +194,7 @@ export class IngestCommands {
       for (const sessionUuid of sessionUuids) {
         const stream = await this.events.sessionEvents(tx, sessionUuid);
         if (stream.length === 0) continue;
-        const row = sessionRowFrom(sessionUuid, stream);
+        const row = sessionRowFrom(sessionUuid, stream, orgId);
         await this.sessions.upsert(tx, row);
         aircraftIds.add(row.aircraftId);
         picIds.add(row.picId);
@@ -162,7 +204,7 @@ export class IngestCommands {
         // więc liczy się tu - na pełnym strumieniu dnia, który i tak mamy wczytany.
         const drift = clockDriftFlag(sessionUuid, stream);
         if (drift != null) {
-          await this.flags.ensureOpen(tx, { ...drift, aircraftId: row.aircraftId });
+          await this.flags.ensureOpen(tx, { ...drift, orgId, aircraftId: row.aircraftId });
         }
       }
 
@@ -181,7 +223,7 @@ export class IngestCommands {
         );
         const capacityL = await this.aircraft.capacityL(tx, aircraftId);
         for (const flag of chainFlags(links, capacityL)) {
-          await this.flags.ensureOpen(tx, { ...flag, aircraftId });
+          await this.flags.ensureOpen(tx, { ...flag, orgId, aircraftId });
         }
       }
 
@@ -203,7 +245,7 @@ export class IngestCommands {
         for (const { laterSessionUuid, ...flag } of pilotOverlapFlags(spans)) {
           const later = spans.find((s) => s.sessionUuid === laterSessionUuid);
           if (later != null) {
-            await this.flags.ensureOpen(tx, { ...flag, aircraftId: later.aircraftId });
+            await this.flags.ensureOpen(tx, { ...flag, orgId, aircraftId: later.aircraftId });
           }
         }
       }
@@ -236,7 +278,7 @@ export class IngestCommands {
     if (this.norms != null && closedNow.length > 0) {
       for (const aircraftId of aircraftIds) {
         try {
-          await recomputeConsumptionNorm(this.db, aircraftId, this.norms, this.clock.now());
+          await recomputeConsumptionNorm(this.db, orgId, aircraftId, this.norms, this.clock.now());
         } catch (err) {
           console.error(`przeliczenie normy zużycia ${aircraftId} nie powiodło się:`, err);
         }

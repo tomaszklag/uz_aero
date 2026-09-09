@@ -36,7 +36,9 @@ export class BugReportCommands {
    * całości - telefon ponowi resztę przy następnej okazji, a idempotencja po uuid
    * pilnuje, żeby przyjęte nie zdublowały się przy ponowieniu.
    */
-  submit(pilotId: string, reports: NewBugReport[]): Promise<BugReportIntake> {
-    return this.reports.insertMany(this.db, pilotId, reports);
+  submit(orgId: string, pilotId: string, reports: NewBugReport[]): Promise<BugReportIntake> {
+    // Klub Z TOKENU, jak tożsamość: zgłoszenie dotyczy ekranu w konkretnym klubie
+    // i czyta je panel tego klubu (wielofirmowość §6).
+    return this.reports.insertMany(this.db, orgId, pilotId, reports);
   }
 }

@@ -24,14 +24,22 @@
 /** Lustro `PILOT_ROLES` z `domain/roles.ts` - patrz nagłówek pliku. */
 export type PilotRoleWire = 'pilot' | 'admin';
 
-/** Jedno konto na liście `A06`. */
+/**
+ * Jeden CZŁONEK klubu na liście `A06` (od wielofirmowości - wiersz to członkostwo,
+ * `docs/wielofirmowosc.md` §8.3).
+ */
 export interface AdminPilotListItem {
+  /** Identyfikator OSOBY - klucz zdarzeń, ten sam we wszystkich jej klubach. */
   id: string;
-  /** Etykieta widoczna w logu dnia i w kartach arkusza - NIE klucz zdarzeń. */
+  /** Klub, którego to członkostwo (klub sesji panelu). */
+  orgId: string;
+  /** Kod W TYM klubie - etykieta widoczna w logu dnia i w kartach arkusza, NIE klucz zdarzeń. */
   code: string;
   name: string;
   email: string | null;
+  /** Członkostwo `active`; `false` = wyłączone w tym klubie (osoba może latać w innym). */
   active: boolean;
+  /** Rola W TYM klubie. */
   role: PilotRoleWire;
   /** ISO 8601 UTC - ostatnia zmiana wiersza konta (nie: ostatnie logowanie). */
   updatedAt: string;

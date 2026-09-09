@@ -28,6 +28,7 @@ import { describe, expect, it } from 'vitest';
 
 import { ADMIN_CSRF_HEADERS, testHarness } from './helpers.ts';
 import { googleTokenFor } from './testIdentityProvider.ts';
+import { ORG_A } from './testWorld.ts';
 
 type Harness = Awaited<ReturnType<typeof testHarness>>;
 type Body = Record<string, unknown>;
@@ -298,8 +299,8 @@ describe('GET /admin/api/fleet - konfiguracja + stan z telefonów', () => {
     const tmk = await token(app, 'TMK');
 
     await db.query(
-      `INSERT INTO aircraft (id, reg, type, year, capacity_l, mh_format, dual_required, service_status)
-       VALUES ('ac-dziwny', 'SP-ZLE', 'Cessna 152', 1998, 120, 'decimal', false, 'w_remoncie')`,
+      `INSERT INTO aircraft (org_id, id, reg, type, year, capacity_l, mh_format, dual_required, service_status)
+       VALUES ('${ORG_A}', 'ac-dziwny', 'SP-ZLE', 'Cessna 152', 1998, 120, 'decimal', false, 'w_remoncie')`,
     );
 
     const body = (await listFleet(app, tmk)).json();
@@ -1149,9 +1150,9 @@ describe('usunięcie jednostki floty', () => {
     const tmk = await token(app, 'TMK');
     const id = await disposable(app, tmk);
     await db.query(
-      `INSERT INTO events (uuid, session_uuid, aircraft_id, pic_id, type, device_time,
+      `INSERT INTO events (org_id, uuid, session_uuid, aircraft_id, pic_id, type, device_time,
                            payload, schema_version)
-       VALUES ('e-1', 's-1', $1, 'TMK', 'engine_start', 1, '{}'::jsonb, 1)`,
+       VALUES ('${ORG_A}', 'e-1', 's-1', $1, 'TMK', 'engine_start', 1, '{}'::jsonb, 1)`,
       [id],
     );
 

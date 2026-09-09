@@ -17,4 +17,12 @@ export class PgAircraftConfigRepo implements AircraftConfigPort {
     );
     return rows[0] == null ? null : Number(rows[0].capacity_l);
   }
+
+  async orgIdOf(db: Queryable, aircraftId: string): Promise<string | null> {
+    const { rows } = await db.query<{ org_id: string }>(
+      'SELECT org_id FROM aircraft WHERE id = $1',
+      [aircraftId],
+    );
+    return rows[0]?.org_id ?? null;
+  }
 }

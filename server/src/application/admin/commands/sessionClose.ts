@@ -130,6 +130,12 @@ export class AdminSessionCloseCommands {
         // szereguje nas z paczką, którą właśnie dosyła telefon pilota.
         await tx.query('SELECT pg_advisory_xact_lock(hashtext($1))', [input.sessionUuid]);
 
+        // Klub operacji z wiersza projekcji; sesja cudzego klubu jest nieistniejąca
+        // dla tego administratora (wielofirmowość - jak w korekcie i unieważnieniu).
+        const row = await this.sessions.get(tx, input.sessionUuid);
+        if (row == null || row.orgId !== actor.orgId) throw new SessionNotFound();
+        const orgId = row.orgId;
+
         const stream = await this.events.sessionEvents(tx, input.sessionUuid);
         if (stream.length === 0) throw new SessionNotFound();
 
@@ -159,11 +165,11 @@ export class AdminSessionCloseCommands {
         }
 
         const batch = voided == null ? [close] : [close, voided];
-        await this.events.insertBatch(tx, batch, adminSourceDevice(actor.pilotId));
+        await this.events.insertBatch(tx, orgId, batch, adminSourceDevice(actor.pilotId));
 
         const after = await this.events.sessionEvents(tx, input.sessionUuid);
         const state = projectSession(after);
-        await this.sessions.upsert(tx, sessionRowFrom(input.sessionUuid, after));
+        await this.sessions.upsert(tx, sessionRowFrom(input.sessionUuid, after, orgId));
 
         return {
           result: { close, voided, state, warnings },

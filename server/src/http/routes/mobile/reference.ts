@@ -19,11 +19,11 @@ export function registerReferenceRoutes(
   tokens: TokenService,
 ): void {
   app.get('/reference', async (req, reply) => {
-    if (authorize(tokens, tokenFromRequest(req)) == null) {
-      return reply.code(401).send({ error: 'unauthorized' });
-    }
+    const who = authorize(tokens, tokenFromRequest(req));
+    if (who == null) return reply.code(401).send({ error: 'unauthorized' });
 
-    const view = await reference.get();
+    // Migawka KLUBU z tokenu (wielofirmowość §7.1) - flota i członkowie aktywnego klubu.
+    const view = await reference.get(who.orgId);
     if (req.headers['if-none-match'] === view.etag) {
       return reply.code(304).header('etag', view.etag).send();
     }

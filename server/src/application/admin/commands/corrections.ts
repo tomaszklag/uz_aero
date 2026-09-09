@@ -183,6 +183,13 @@ export class AdminCorrectionCommands {
         // - zdarzenie zostałoby w rejestrze, a liczby dnia cofnęłyby się po cichu.
         await tx.query('SELECT pg_advisory_xact_lock(hashtext($1))', [input.sessionUuid]);
 
+        // Klub operacji z WIERSZA PROJEKCJI (wielofirmowość): korekta dopisuje zdarzenie
+        // do klubu sesji, a sesja cudzego klubu jest dla tego administratora nieistniejąca
+        // (404, nie 403 - patrz `commands/fleet.ts`).
+        const row = await this.sessions.get(tx, input.sessionUuid);
+        if (row == null || row.orgId !== actor.orgId) throw new SessionNotFound();
+        const orgId = row.orgId;
+
         const stream = await this.events.sessionEvents(tx, input.sessionUuid);
         if (stream.length === 0) throw new SessionNotFound();
 
@@ -211,14 +218,14 @@ export class AdminCorrectionCommands {
         // Znacznik zapisu panelu jedzie ze wspólnego modułu, bo ma DRUGIEGO czytelnika:
         // po nim adapter osi zdarzeń poznaje, że korektę wykonał administrator, a nie
         // pilot w oknie 24 h (`application/admin/sourceDevice.ts`).
-        await this.events.insertBatch(tx, [candidate], adminSourceDevice(actor.pilotId));
+        await this.events.insertBatch(tx, orgId, [candidate], adminSourceDevice(actor.pilotId));
 
         // Projekcję przeliczamy z PEŁNEGO strumienia, nie przyrostowo - korekta zmienia
         // przeszłość dnia (czas cyklu, liczbę lotów), więc żadna arytmetyka „dodaj
         // różnicę" nie byłaby równoważna `projectSession`.
         const after = await this.events.sessionEvents(tx, input.sessionUuid);
         const state = projectSession(after);
-        await this.sessions.upsert(tx, sessionRowFrom(input.sessionUuid, after));
+        await this.sessions.upsert(tx, sessionRowFrom(input.sessionUuid, after, orgId));
 
         /*
          * FLAGI ŁAŃCUCHA PRZELICZAMY - ale tylko po korekcie, która ruszyła ODCZYTY.
@@ -251,7 +258,7 @@ export class AdminCorrectionCommands {
             }),
           );
           for (const flag of chainFlags(links, limits.capacityL)) {
-            await this.flags.ensureOpen(tx, { ...flag, aircraftId });
+            await this.flags.ensureOpen(tx, { ...flag, orgId, aircraftId });
           }
         }
         return {

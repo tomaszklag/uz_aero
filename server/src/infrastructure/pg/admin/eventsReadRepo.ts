@@ -98,11 +98,12 @@ const SELECT = `
          e.aircraft_id,
          a.reg,
          e.pic_id,
-         p.code AS pic_code,
-         p.name AS pic_name,
+         -- Kod Z CZŁONKOSTWA w klubie zdarzenia (wielofirmowość); nazwisko z osoby.
+         p.code  AS pic_code,
+         pp.name AS pic_name,
          e.dual_id,
-         d.code AS dual_code,
-         d.name AS dual_name,
+         d.code  AS dual_code,
+         dp.name AS dual_name,
          e.type,
          e.device_time,
          e.gps_time,
@@ -111,9 +112,11 @@ const SELECT = `
          e.received_at,
          e.source_device
     FROM events e
-    LEFT JOIN aircraft a ON a.id = e.aircraft_id
-    LEFT JOIN pilots   p ON p.id = e.pic_id
-    LEFT JOIN pilots   d ON d.id = e.dual_id`;
+    LEFT JOIN aircraft    a  ON a.id = e.aircraft_id
+    LEFT JOIN pilots      pp ON pp.id = e.pic_id
+    LEFT JOIN memberships p  ON p.pilot_id = e.pic_id AND p.org_id = e.org_id
+    LEFT JOIN pilots      dp ON dp.id = e.dual_id
+    LEFT JOIN memberships d  ON d.pilot_id = e.dual_id AND d.org_id = e.org_id`;
 
 const toRow = (r: EventDbRow): AdminEventRow => ({
   uuid: r.uuid,

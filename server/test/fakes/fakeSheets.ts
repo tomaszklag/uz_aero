@@ -12,12 +12,15 @@ import type { DaySheet, SheetsPort } from '../../src/application/common/ports.ts
 export class FakeSheets implements SheetsPort {
   /** Kolejne zapisane karty - ostatnia = aktualna zawartość arkusza. */
   readonly calls: DaySheet[] = [];
+  /** Klub każdego zapisu, równolegle do `calls` - karta jest dokumentem KLUBU. */
+  readonly orgIds: string[] = [];
   /** Ustawienie błędu psuje KAŻDE kolejne wywołanie (symulacja awarii Google API). */
   failWith: Error | null = null;
 
-  async writeDaySheet(sheet: DaySheet): Promise<{ url: string }> {
+  async writeDaySheet(orgId: string, sheet: DaySheet): Promise<{ url: string }> {
     if (this.failWith != null) throw this.failWith;
     this.calls.push(sheet);
+    this.orgIds.push(orgId);
     return { url: `https://sheets.example/${sheet.tab}` };
   }
 }

@@ -25,17 +25,20 @@ export class AdminRegistrationQueries {
     private readonly registrations: RegistrationsAdminPort,
   ) {}
 
-  /** `statuses` puste = wszystkie; liczniki są zawsze po CAŁEJ tabeli. */
-  async list(statuses: readonly IdentityStatus[]): Promise<AdminRegistrationList> {
+  /**
+   * `statuses` puste = wszystkie; liczniki są zawsze po CAŁEJ tabeli. `orgId` = klub
+   * czytającego - kody na liście są kodami z jego klubu (wielofirmowość).
+   */
+  async list(orgId: string, statuses: readonly IdentityStatus[]): Promise<AdminRegistrationList> {
     const [items, counts] = await Promise.all([
-      this.registrations.list(this.db, { statuses, limit: REGISTRATION_LIST_LIMIT }),
+      this.registrations.list(this.db, orgId, { statuses, limit: REGISTRATION_LIST_LIMIT }),
       this.registrations.countByStatus(this.db),
     ]);
     return { items: items.map(registration), counts };
   }
 
-  async byKey(provider: string, subject: string): Promise<AdminRegistration | null> {
-    const record = await this.registrations.find(this.db, provider, subject);
+  async byKey(orgId: string, provider: string, subject: string): Promise<AdminRegistration | null> {
+    const record = await this.registrations.find(this.db, orgId, provider, subject);
     return record == null ? null : registration(record);
   }
 }

@@ -108,7 +108,9 @@ export interface AdminAircraftReading {
 /** Jedna jednostka na liście `A07`. */
 export interface AdminAircraftListItem {
   id: string;
-  /** Znaki na kadłubie - UNIKALNE w całym systemie. Etykieta, nie klucz zdarzeń. */
+  /** Klub właściciel (wielofirmowość) - klub sesji panelu. */
+  orgId: string;
+  /** Znaki na kadłubie - UNIKALNE W KLUBIE (wielofirmowość §3.6). Etykieta, nie klucz zdarzeń. */
   reg: string;
   type: string;
   year: number | null;

@@ -25,6 +25,7 @@ import { PROJECTION_DIFF_LIMIT } from '../src/application/admin/projectionScan.t
 import { MIGRATIONS, SCHEMA_VERSION } from '../src/infrastructure/pg/schema.ts';
 import { ADMIN_CSRF_HEADERS, testHarness } from './helpers.ts';
 import { googleTokenFor } from './testIdentityProvider.ts';
+import { ORG_A } from './testWorld.ts';
 
 const DAY = Date.UTC(2026, 5, 22);
 const at = (h: number, m: number): number => DAY + (h * 60 + m) * 60_000;
@@ -375,7 +376,7 @@ describe('A11 · nadpisanie projekcji: komenda przez bramę audytu', () => {
     // przepadłyby po cichu - a wtedy `POST /events` nie zapisałby ani jednego zdarzenia
     // i test przeszedłby na pustej bazie, twierdząc, że sprawdził blokadę.
     const spy = (real: EventsStorePort): EventsStorePort => ({
-      insertBatch: (tx, events, sourceDevice) => real.insertBatch(tx, events, sourceDevice),
+      insertBatch: (tx, orgId, events, sourceDevice) => real.insertBatch(tx, orgId, events, sourceDevice),
       lastReceivedAt: (db, aircraftId) => real.lastReceivedAt(db, aircraftId),
       countForSession: (db, sessionUuid) => real.countForSession(db, sessionUuid),
       sessionStreams: (db, sessionUuids) => real.sessionStreams(db, sessionUuids),
@@ -511,10 +512,10 @@ describe('A11 · wygasłe refresh tokeny - jedyna operacja, która kasuje', () =
     // a nie scenariusz, o który pyta ekran.
     await harness.db.query('DELETE FROM refresh_tokens');
     await harness.db.query(
-      `INSERT INTO refresh_tokens (token_hash, pilot_id, expires_at) VALUES
-         ('hash-martwy-stary',  'TMK', '2026-03-12T03:41:00.000Z'),
-         ('hash-martwy-swiezy', 'TMK', '2026-06-20T09:02:00.000Z'),
-         ('hash-zywy',          'TMK', '2026-09-01T00:00:00.000Z')`,
+      `INSERT INTO refresh_tokens (org_id, token_hash, pilot_id, expires_at) VALUES
+         ('${ORG_A}', 'hash-martwy-stary',  'TMK', '2026-03-12T03:41:00.000Z'),
+         ('${ORG_A}', 'hash-martwy-swiezy', 'TMK', '2026-06-20T09:02:00.000Z'),
+         ('${ORG_A}', 'hash-zywy',          'TMK', '2026-09-01T00:00:00.000Z')`,
     );
   }
 

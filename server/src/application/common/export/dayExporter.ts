@@ -173,6 +173,11 @@ export class DayExporter {
    *
    * `requiredSession` (opcjonalna) = sesja, w imieniu której przyszło wywołanie; gdy jest
    * wstrzymana flagą, odmawiamy bez zapisu.
+   *
+   * KLUB karty bierzemy z wierszy projekcji doby (`SessionRow.orgId`) - wszystkie sesje
+   * jednej maszyny należą do jej klubu (niezmiennik ingestu), więc pierwszy wiersz
+   * mówi za wszystkie. Karta jest dokumentem KLUBU (wielofirmowość §3.7): jej zapis,
+   * dziennik rewizji i kody załogi są kodami z członkostw w tym klubie.
    */
   async exportDay(
     day: string,
@@ -181,6 +186,7 @@ export class DayExporter {
   ): Promise<ExportOutcome> {
     const all = await this.sessions.listByAircraftDay(this.db, aircraftId, utcDayRange(day));
     if (all.length === 0) return { exported: false, reason: 'no_events' };
+    const orgId = all[0]!.orgId;
 
     /*
      * SESJA UNIEWAŻNIONA NIE ISTNIEJE DLA KARTY (2026-08-30, dociągnięte 2026-08-31).
@@ -234,8 +240,8 @@ export class DayExporter {
         sessionUuid: row.sessionUuid,
         state,
         crew: {
-          pic: await this.codeOf(state.sessionPicId),
-          dual: await this.codeOf(state.dualId),
+          pic: await this.codeOf(orgId, state.sessionPicId),
+          dual: await this.codeOf(orgId, state.dualId),
         },
       });
     }
@@ -250,7 +256,7 @@ export class DayExporter {
         sessionUuid: row.sessionUuid,
         engineStartAt: row.engineStartAt,
         engineStopAt: row.engineStopAt,
-        pic: await this.codeOf(row.picId),
+        pic: await this.codeOf(orgId, row.picId),
         flagIds: blockedBy.get(row.sessionUuid) ?? [],
       });
     }
@@ -260,7 +266,7 @@ export class DayExporter {
     // pustej liście sesji) - zostaje jako zawężenie typu, nie gałąź do przetestowania.
     if (sheet == null) return { exported: false, reason: 'no_events' };
 
-    const url = await this.write(sheet);
+    const url = await this.write(orgId, sheet);
 
     // Wpis do dziennika DOPIERO po udanym zapisie karty - odwrotna kolejność
     // pokazałaby na ekranie 11 link do arkusza, którego nie ma.
@@ -276,6 +282,7 @@ export class DayExporter {
       await this.exportLog.lock(tx, day, aircraftId);
       const next = (await this.exportLog.latestRevision(tx, day, aircraftId)) + 1;
       await this.exportLog.appendCard(tx, {
+        orgId,
         day,
         aircraftId,
         sheetUrl: url,
@@ -297,9 +304,9 @@ export class DayExporter {
    * a wszystko inne, co może tu rzucić, jest błędem po naszej stronie i nie ma prawa
    * podawać się za tamto.
    */
-  private async write(sheet: DaySheet): Promise<string> {
+  private async write(orgId: string, sheet: DaySheet): Promise<string> {
     try {
-      return (await this.sheets.writeDaySheet(sheet)).url;
+      return (await this.sheets.writeDaySheet(orgId, sheet)).url;
     } catch (err) {
       throw new SheetsAdapterError(err);
     }
@@ -307,11 +314,13 @@ export class DayExporter {
 
   /**
    * Wiersz sesji pokazuje KODY pilotów (jak ekrany 10/11), a zdarzenia niosą id.
-   * Nieznany id wraca surowy - lepszy techniczny identyfikator niż pusta rubryka
-   * w dokumencie klubu.
+   * Kod jest kodem Z CZŁONKOSTWA w klubie karty (wielofirmowość) - ten sam człowiek
+   * w innym klubie ma inny kod i tamten do tego dokumentu nie należy. Nieznany id
+   * (osoba bez członkostwa tu, konto skasowane) wraca surowy - lepszy techniczny
+   * identyfikator niż pusta rubryka w dokumencie klubu.
    */
-  private async codeOf(pilotId: string | null): Promise<string | null> {
+  private async codeOf(orgId: string, pilotId: string | null): Promise<string | null> {
     if (pilotId == null) return null;
-    return (await this.pilots.findById(pilotId))?.code ?? pilotId;
+    return (await this.pilots.membership(pilotId, orgId))?.code ?? pilotId;
   }
 }

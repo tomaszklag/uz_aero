@@ -70,7 +70,8 @@ export class AdminAircraftReadingCommands {
         // mógł właśnie zmieniać w drugim oknie (ta sama tarcza, co przy `PATCH`).
         await this.fleet.lockAircraft(tx, input.aircraftId);
         const aircraft = await this.fleet.byId(tx, input.aircraftId);
-        if (aircraft == null) throw new AircraftNotFound();
+        // Maszyna cudzego klubu jest dla administratora nieistniejąca (wielofirmowość).
+        if (aircraft == null || aircraft.orgId !== actor.orgId) throw new AircraftNotFound();
 
         // TE SAME reguły, co dla stanu początkowego (issue #66): zero jest wartością,
         // minus i nieskończoność - literówką, a paliwo i olej mają sufit w zbiornikach.
@@ -91,7 +92,7 @@ export class AdminAircraftReadingCommands {
           byPilotId: actor.pilotId,
           at: at.getTime(),
         };
-        await this.readings.insert(tx, input.aircraftId, recorded);
+        await this.readings.insert(tx, aircraft.orgId, input.aircraftId, recorded);
 
         return {
           result: recorded,

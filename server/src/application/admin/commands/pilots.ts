@@ -1,45 +1,42 @@
 /**
- * UZ Aero (serwer) - konta pilotów: zakładanie, edycja, deaktywacja
- * (panel, mockupy `A06-piloci.html` i `A06a-konto.html`).
+ * UZ Aero (serwer) - członkowie klubu: dopisanie, edycja, wyłączenie, usunięcie
+ * (panel, mockupy `A06-piloci.html` i `A06a-konto.html`; od wielofirmowości - moduł
+ * PILOCI jako lista CZŁONKÓW klubu, `docs/wielofirmowosc.md` §8.3).
  *
  * ══ HASŁA ZNIKŁY (2026-09-04, `docs/logowanie-google.md`) ══
  * Plik powstał 2026-08-01, bo administrator zamknął się poza systemem i nie było żadnej
  * ścieżki zmiany hasła. Wejście Google zdejmuje tę klasę problemów u źródła: konto nie
- * ma poświadczenia, które dałoby się zgubić albo zresetować. Zniknęły stąd `resetPassword`
- * i generowanie hasła startowego; ZOSTAŁA cała reszta, bo konta nadal trzeba zakładać,
- * przemianowywać i wyłączać.
+ * ma poświadczenia, które dałoby się zgubić albo zresetować.
  *
- * **Zerwanie sesji ma odtąd jedną drogę: deaktywację** (a gdy dostęp ma wrócić -
- * deaktywację i ponowne włączenie). `credentials_valid_from` przesuwa `setActive`,
- * a aktywacja znacznika NIE cofa, więc para operacji unieważnia poświadczenia obu
- * powierzchni tak samo skutecznie, jak robił to reset hasła.
+ * ══ OD WIELOFIRMOWOŚCI (issue #98) KOMENDA ZMIENIA CZŁONKOSTWO, NIE OSOBĘ ══
+ * Kod, rola i „czy ma dostęp" należą do członkostwa w klubie administratora (`actor.orgId`).
+ * Nazwisko i e-mail należą do OSOBY i są widoczne we wszystkich jej klubach - ta komenda
+ * je zmienia, bo dziś nie ma innego miejsca (propozycja „tylko przy jednym członkostwie"
+ * czeka na potwierdzenie, §8.3). Dopisanie członka o e-mailu osoby z innego klubu
+ * dopisuje CZŁONKOSTWO do tej osoby, a nie zakłada drugiej (adapter, `insert`).
+ *
+ * **Zerwanie sesji ma jedną drogę: wyłączenie członkostwa** (a gdy dostęp ma wrócić -
+ * wyłączenie i ponowne włączenie). `memberships.credentials_valid_from` przesuwa
+ * `setActive`, a włączenie znacznika NIE cofa. Sesje kasujemy PER KLUB: w drugim klubie
+ * człowiek dalej jest członkiem (§3.4).
  *
  * ══ TRZY ZASADY, KTÓRE TA KOMENDA MUSI UTRZYMAĆ ══
  *
- *  1. **Deaktywacja ZRYWA sesje - OBU powierzchni.** Refresh tokeny telefonu
+ *  1. **Wyłączenie ZRYWA sesje - OBU powierzchni.** Refresh tokeny telefonu (tego klubu)
  *     kasujemy z tabeli; sesji panelu skasować się nie da, bo jest podpisanym JWT
  *     w ciasteczku i nie ma dla niej wiersza. Dlatego ta sama operacja przesuwa
- *     `credentials_valid_from` konta, a brama odrzuca token wydany
- *     wcześniej (`http/authorize.ts`). Bez tego „Deaktywuj" jest obietnicą bez pokrycia
- *     w obie strony: pilot z żywym refreshem pracuje dalej, a wykradzione poświadczenie
- *     panelu przeżywa odcięcie o osiem godzin. Liczba unieważnionych TOKENÓW jedzie
- *     do audytu i dotyczy wyłącznie telefonu - panel liczy się osobno, bo jego sesji
- *     nikt nie zliczał i zliczyć nie może.
- *  2. **Administrator nie odcina sam siebie** ani ostatniego administratora klubu -
+ *     `credentials_valid_from` członkostwa, a brama odrzuca token wydany wcześniej
+ *     (`http/authorize.ts`). Liczba unieważnionych TOKENÓW jedzie do audytu i dotyczy
+ *     wyłącznie telefonu - panel liczy się osobno.
+ *  2. **Administrator nie odcina sam siebie** ani ostatniego administratora KLUBU -
  *     odmowa jest jawna i z powodem (`AccountRefusal`), nigdy ciche ukrycie akcji.
- *     Populację administratorów chroni blokada advisory na stałym kluczu, wzięta
+ *     Populację administratorów klubu chroni blokada advisory na kluczu klubu, wzięta
  *     PRZED policzeniem ich (`PilotsAdminPort.lockAdminPopulation`) - patrz `update`.
- *  3. **Konta, KTORE LATALO, się nie kasuje.** Deaktywacja odbiera dostęp; zdarzenia
+ *  3. **Osoby, KTÓRA LATAŁA, się nie kasuje.** Wyłączenie odbiera dostęp; zdarzenia
  *     zostają w rejestrze (append-only) i dalej liczą się w statystykach, kartach dnia
- *     i łańcuchu motogodzin samolotu.
- *
- *     Od 2026-08-30 jest `remove` - i to NIE JEST odwrócenie tej zasady, tylko jej
- *     dopełnienie: `refuseDelete` przepuszcza wyłącznie konto, do którego NIC się nie
- *     odwołuje (zero zdarzeń jako PIC i jako Dual, zero sesji, zero wpisów audytu jako
- *     sprawca) i które jest już wyłączone. Usuwalne jest więc dokładnie to, co powstało
- *     pomyłką - literówka w kodzie, dubel, ktoś, kto nie dołączył. Wszystko, co ma
- *     historię, chroni ta sama zasada, co dotąd, tylko teraz wypowiedziana jako reguła
- *     domeny zamiast jako brak metody.
+ *     i łańcuchu motogodzin samolotu. `remove` przepuszcza wyłącznie osobę, do której
+ *     NIC się nie odwołuje - także w INNYCH klubach - i której członkostwo jest już
+ *     wyłączone. Usuwalne jest więc dokładnie to, co powstało pomyłką.
  *
  * Konstruktor bez `Database`/`Queryable` - komenda nie ma jak zapisać z pominięciem
  * śladu audytu, bo nie ma uchwytu do bazy (`auditedWrite.ts`, `test/architecture.test.ts`).
@@ -122,9 +119,15 @@ class Refused extends Error {
  * (rejestracja samolotu, `commands/fleet.ts`), a cała trudność tej funkcji siedzi
  * w jednej linii regexa, której nie wolno mieć w dwóch kopiach. Tutaj zostaje samo
  * PIERWSZEŃSTWO pól przy komunikacie wskazującym oba naraz - kolejność zachowana
- * dokładnie taka, jaka była przed wydzieleniem.
+ * dokładnie taka, jaka była przed wydzieleniem. Indeks kodu nazywa się dziś
+ * `idx_memberships_code` i regex go widzi, bo separatorem jest podkreślenie.
  */
 export function uniqueConflictField(err: unknown): 'code' | 'email' | null {
+  // Osoba znaleziona po e-mailu JUŻ JEST członkiem tego klubu (`memberships_pkey` =
+  // para klub+osoba): dla formularza zajętym polem jest e-mail - to on wskazał osobę.
+  // Bez tego przegrany wyścig dwóch „dodaj pilota" z tym samym adresem lądowałby
+  // jako 500, choć sprawdzenie przed zapisem nazywa tę samą sytuację `email`.
+  if (uniqueConflictOn(err, ['memberships_pkey'] as const) != null) return 'email';
   return uniqueConflictOn(err, ['email', 'code'] as const);
 }
 
@@ -140,15 +143,15 @@ export class AdminPilotCommands {
     private readonly pilots: PilotsAdminPort,
     private readonly sessions: RefreshTokensAdminPort,
     /**
-     * Identyfikator konta jako FUNKCJA w konstruktorze, nie port: nie ma tu adaptera
+     * Identyfikator OSOBY jako FUNKCJA w konstruktorze, nie port: nie ma tu adaptera
      * do podmiany (composition root podaje `randomUUID`), a port bez drugiej
      * implementacji to koszt bez zysku - ta sama decyzja, co przy `newId`
      * w `commands/corrections.ts`.
      *
      * `id` NIE jest kodem pilota i to jest reguła produktu, nie szczegół: zdarzenia
      * wiążą się z `id`, więc zmiana kodu nie przepisuje historii (mockup A06: „Kod
-     * pilota jest etykietą, nie kluczem"). Gdyby `id = code`, każda zmiana kodu
-     * odrywałaby konto od jego nalotu.
+     * pilota jest etykietą, nie kluczem"). Od wielofirmowości ten sam `id` niesie
+     * kilka kodów - po jednym na klub.
      */
     private readonly newId: () => string,
     /**
@@ -161,31 +164,31 @@ export class AdminPilotCommands {
   ) {}
 
   /**
-   * Założenie konta WPROST z panelu - droga równoległa do zatwierdzenia zgłoszenia.
+   * Dopisanie członka WPROST z panelu - droga równoległa do zatwierdzenia zgłoszenia
+   * (a docelowo, w epiku D, do trzech dróg zaproszenia).
    *
    * Po wejściu Google (2026-09-04) konto nie dostaje żadnego poświadczenia: logowanie
    * daje dopiero PODPIĘCIE konta Google, a warunkiem podpięcia jest `email` wpisany
    * tutaj przez administratora (`docs/logowanie-google.md` §6). Ta droga istnieje po to,
-   * żeby dało się przygotować konto ZANIM człowiek pierwszy raz się zaloguje - i to
-   * właśnie nią podpinają się dotychczasowi piloci razem z całą swoją historią lotów.
+   * żeby dało się przygotować konto ZANIM człowiek pierwszy raz się zaloguje.
    *
-   * Konto BEZ e-maila jest legalne i bezużyteczne do logowania - tak jak dotąd konto
-   * z hasłem, którego nikt nie przekazał. Formularz panelu pilnuje tego po swojej stronie.
+   * Osoba o tym e-mailu może już istnieć (lata w innym klubie) - wtedy powstaje samo
+   * członkostwo, a `result.id` jest identyfikatorem TEJ osoby, nie nowym uuid-em.
    */
   async create(actor: Actor, input: CreatePilotInput): Promise<PilotOutcome<AdminPilotAccount>> {
-    const id = this.newId();
+    const proposedId = this.newId();
 
     try {
       const account = await this.write.run(actor, async (tx) => {
-        const clash = await this.pilots.conflict(tx, {
+        const clash = await this.pilots.conflict(tx, actor.orgId, {
           code: input.code,
           email: input.email,
           exceptId: null,
         });
         if (clash != null) throw new Conflict(clash);
 
-        const created: AdminPilotAccount = { id, ...input, active: true };
-        await this.pilots.insert(tx, created);
+        const id = await this.pilots.insert(tx, { id: proposedId, orgId: actor.orgId, ...input });
+        const created: AdminPilotAccount = { id, orgId: actor.orgId, ...input, active: true };
 
         return {
           result: created,
@@ -200,6 +203,9 @@ export class AdminPilotCommands {
               // Google podepnie się pod ten wiersz przy pierwszym logowaniu.
               email: created.email,
               role: created.role,
+              // Czy dopisano członkostwo do OSOBY, która już była na serwerze (inny
+              // klub), czy założono nową - dziennik ma odróżniać te dwa fakty.
+              existingPerson: id !== proposedId,
             },
           },
         };
@@ -218,7 +224,7 @@ export class AdminPilotCommands {
   ): Promise<PilotOutcome<PilotChange>> {
     try {
       const account = await this.write.run(actor, async (tx) => {
-        const before = await this.pilots.byId(tx, id);
+        const before = await this.pilots.byId(tx, actor.orgId, id);
         if (before == null) throw new PilotNotFound();
 
         const changes = diffOf(before, input);
@@ -235,7 +241,7 @@ export class AdminPilotCommands {
           // dwóch", obie commitują i zostaje ZERO administratorów. Z blokadą druga
           // transakcja liczy dopiero po pierwszej, widzi jednego i odbija się
           // o `last_admin` - czyli gałąź, która dopiero tu staje się osiągalna.
-          await this.pilots.lockAdminPopulation(tx);
+          await this.pilots.lockAdminPopulation(tx, actor.orgId);
 
           const refusal = refuseRoleChange({
             actorPilotId: actor.pilotId,
@@ -243,13 +249,13 @@ export class AdminPilotCommands {
             currentRole: before.role,
             nextRole: input.role,
             targetActive: before.active,
-            activeAdmins: await this.pilots.countActiveAdmins(tx),
+            activeAdmins: await this.pilots.countActiveAdmins(tx, actor.orgId),
           });
           if (refusal != null) throw new Refused(refusal);
         }
 
         if (input.code !== undefined || input.email !== undefined) {
-          const clash = await this.pilots.conflict(tx, {
+          const clash = await this.pilots.conflict(tx, actor.orgId, {
             code: input.code ?? before.code,
             email: input.email === undefined ? before.email : input.email,
             exceptId: id,
@@ -257,7 +263,7 @@ export class AdminPilotCommands {
           if (clash != null) throw new Conflict(clash);
         }
 
-        await this.pilots.update(tx, id, input);
+        await this.pilots.update(tx, actor.orgId, id, input);
         const after: AdminPilotAccount = { ...before, ...stripUndefined(input) };
 
         return {
@@ -281,14 +287,15 @@ export class AdminPilotCommands {
   }
 
   /**
-   * Deaktywacja i aktywacja jedną komendą, bo to jest jedna decyzja („czy to konto ma
-   * dostęp"), tylko w dwie strony. Rozjeżdżają się w DWÓCH miejscach i oba są istotne:
+   * Wyłączenie i włączenie członkostwa jedną komendą, bo to jest jedna decyzja („czy
+   * ten człowiek ma dostęp do klubu"), tylko w dwie strony. Rozjeżdżają się w DWÓCH
+   * miejscach i oba są istotne:
    *
-   *  • **deaktywacja zrywa sesje**, aktywacja nie ma czego zrywać;
+   *  • **wyłączenie zrywa sesje** (tego klubu), włączenie nie ma czego zrywać;
    *  • **akcja w audycie** jest inna. `pilot.deactivate` istnieje w katalogu
    *    (`domain/adminActions.ts`), `pilot.activate` - NIE, i to jest świadoma treść
-   *    tego katalogu, a nie luka: przywrócenie dostępu jest zmianą pola `active`,
-   *    czyli zwykłą aktualizacją konta. Odebranie dostępu ma własny kod, bo jest
+   *    tego katalogu, a nie luka: przywrócenie dostępu jest zmianą stanu członkostwa,
+   *    czyli zwykłą aktualizacją. Odebranie dostępu ma własny kod, bo jest
    *    zdarzeniem, którego szuka się w dzienniku po nazwie.
    */
   async setActive(actor: Actor, id: string, active: boolean): Promise<PilotOutcome<PilotChange>> {
@@ -297,10 +304,10 @@ export class AdminPilotCommands {
         // Blokada PRZED odczytem stanu konta, a nie dopiero przed licznikiem:
         // aktywacja też zmienia populację administratorów (przywraca administratora),
         // więc obie strony tej operacji muszą stać w tej samej kolejce co zmiana roli.
-        // Klucz jest stały, więc kolejka jest jedna dla wszystkich trzech ścieżek.
-        await this.pilots.lockAdminPopulation(tx);
+        // Klucz jest per klub, więc kolejka jest jedna dla wszystkich trzech ścieżek.
+        await this.pilots.lockAdminPopulation(tx, actor.orgId);
 
-        const before = await this.pilots.byId(tx, id);
+        const before = await this.pilots.byId(tx, actor.orgId, id);
         if (before == null) throw new PilotNotFound();
         if (before.active === active) throw new NoChanges();
 
@@ -309,17 +316,19 @@ export class AdminPilotCommands {
             actorPilotId: actor.pilotId,
             targetPilotId: id,
             currentRole: before.role,
-            activeAdmins: await this.pilots.countActiveAdmins(tx),
+            activeAdmins: await this.pilots.countActiveAdmins(tx, actor.orgId),
           });
           if (refusal != null) throw new Refused(refusal);
         }
 
         // `at` stempluje unieważnienie poświadczeń - patrz `PilotsAdminPort.setActive`.
-        await this.pilots.setActive(tx, id, active, this.clock.now());
-        // Sesje zrywamy TĄ SAMĄ transakcją, co zmianę `active`. Rozdzielenie
-        // zostawiałoby okno, w którym konto jest już wyłączone, a token jeszcze
+        await this.pilots.setActive(tx, actor.orgId, id, active, this.clock.now());
+        // Sesje zrywamy TĄ SAMĄ transakcją, co zmianę statusu. Rozdzielenie
+        // zostawiałoby okno, w którym członkostwo jest już wyłączone, a token jeszcze
         // działa - czyli dokładnie stan, którego ta operacja ma nie dopuścić.
-        const revokedSessions = active ? 0 : await this.sessions.revokeAllFor(tx, id);
+        const revokedSessions = active
+          ? 0
+          : await this.sessions.revokeAllFor(tx, id, actor.orgId);
 
         return {
           result: { account: { ...before, active }, revokedSessions },
@@ -342,41 +351,40 @@ export class AdminPilotCommands {
     }
   }
 
-
   /**
-   * TRWAŁE usunięcie konta (2026-08-30).
+   * TRWAŁE usunięcie członkostwa RAZEM z osobą (2026-08-30).
    *
-   * ══ DLACZEGO TA OPERACJA W OGOLE ISTNIEJE, SKORO „KONTA SIE NIE KASUJE" ══
-   * Bo zasada 4 tego pliku mówiła o koncie, KTORE LATALO - i dla takiego zostaje
-   * w mocy: `refuseDelete` odbija wszystko, do czego cokolwiek się odwołuje. To, co
-   * zostaje usuwalne, to konto założone pomyłką: literówka w kodzie, dubel, ktoś, kto
-   * ostatecznie nie dołączył. Trzymanie takiego wiersza na zawsze („bo kont się nie
-   * kasuje") zamienia listę klubu w archiwum cudzych pomyłek, a wyłączenie go nie
-   * usuwa - tylko przenosi na dół listy.
+   * ══ DLACZEGO TA OPERACJA W OGOLE ISTNIEJE, SKORO „KONT SIE NIE KASUJE" ══
+   * Bo zasada 3 tego pliku mówi o osobie, KTÓRA LATAŁA - i dla takiej zostaje
+   * w mocy: `refuseDelete` odbija wszystko, do czego cokolwiek się odwołuje (a od
+   * wielofirmowości także osobę z członkostwem w innym klubie). To, co zostaje
+   * usuwalne, to konto założone pomyłką: literówka w kodzie, dubel, ktoś, kto
+   * ostatecznie nie dołączył. Trzymanie takiego wiersza na zawsze zamienia listę klubu
+   * w archiwum cudzych pomyłek, a wyłączenie go nie usuwa - tylko przenosi na dół listy.
    *
-   * ══ BLOKADA POPULACJI ADMINISTRATOROW ══
-   * Bierzemy ją jak przy deaktywacji i zmianie roli, mimo że usuwane konto MUSI już
+   * ══ BLOKADA POPULACJI ADMINISTRATORÓW ══
+   * Bierzemy ją jak przy wyłączeniu i zmianie roli, mimo że usuwane członkostwo MUSI już
    * być nieaktywne (więc do puli administratorów się nie liczy). Powód jest w wyścigu:
-   * bez blokady równoległa aktywacja tego samego konta mogłaby wejść między odczyt
+   * bez blokady równoległe włączenie tego samego członkostwa mogłoby wejść między odczyt
    * a `DELETE` - i skasowalibyśmy konto, które w tej samej chwili odzyskało dostęp.
    */
   async remove(actor: Actor, id: string): Promise<PilotOutcome<{ account: AdminPilotAccount }>> {
     try {
       const result = await this.write.run(actor, async (tx) => {
-        await this.pilots.lockAdminPopulation(tx);
+        await this.pilots.lockAdminPopulation(tx, actor.orgId);
 
-        const account = await this.pilots.byId(tx, id);
+        const account = await this.pilots.byId(tx, actor.orgId, id);
         if (account == null) throw new PilotNotFound();
 
         const refusal = refuseDelete({
           actorPilotId: actor.pilotId,
           targetPilotId: id,
           targetActive: account.active,
-          references: await this.pilots.references(tx, id),
+          references: await this.pilots.references(tx, actor.orgId, id),
         });
         if (refusal != null) throw new Refused(refusal);
 
-        await this.pilots.delete(tx, id);
+        await this.pilots.delete(tx, actor.orgId, id);
 
         return {
           result: { account },

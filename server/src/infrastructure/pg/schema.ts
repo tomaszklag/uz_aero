@@ -39,7 +39,7 @@
  * równoległym odtwarzaniem projekcji - czyli tym, co zaczyna kłamać, gdy zmieni się reguła.
  *
  * **3. `CHECK` na słowniku zakłada się tam, gdzie adapter wczytuje wartość z powrotem
- * do ZAMKNIĘTEJ unii TypeScriptu** (`flags.type`, `pilots.role`, `sessions.operation`) -
+ * do ZAMKNIĘTEJ unii TypeScriptu** (`flags.type`, `memberships.role`, `sessions.operation`) -
  * bez ograniczenia w bazie strażnik w adapterze byłby zgadywaniem, a z nim jest asercją,
  * która nigdy nie powinna wystąpić. Zapisy HISTORYCZNE (`admin_audit.action`,
  * `admin_audit.actor_role`) `CHECK`-a NIE mają i mieć nie mogą: przemianowanie akcji nie
@@ -64,7 +64,7 @@
  * nie kosztuje.
  */
 
-export const SCHEMA_VERSION = 7;
+export const SCHEMA_VERSION = 8;
 
 /**
  * Migracja bazowa - CAŁY schemat serwera.
@@ -764,6 +764,287 @@ export const MIGRATION_7 = `
   ALTER TABLE pilots DROP COLUMN IF EXISTS password_hash;
 `;
 
+/**
+ * Migracja 8: WIELOFIRMOWOŚĆ - klub jako tenant (`organizations`), członkostwa
+ * (`memberships`), zaproszenia (`invitations`), superadministrator (`pilots.platform_role`)
+ * i `org_id` na każdej tabeli danych klubu (`docs/wielofirmowosc.md` §3, §10; issue #98).
+ *
+ * ══ CO SIĘ PRZESUWA Z KONTA NA CZŁONKOSTWO ══
+ * `pilots.code` i `pilots.role` ZNIKAJĄ (`DROP COLUMN` na końcu tej migracji). Pilot
+ * pozostaje jedną OSOBĄ na serwerze (`id`, `name`, `email`, `theme`, `platform_role`,
+ * `active` w znaczeniu PLATFORMOWYM), a to, KIM jest w klubie - kod, rola, status,
+ * unieważnienie poświadczeń - mieszka w wierszu `memberships (org_id, pilot_id)`. Ten sam
+ * człowiek może latać w dwóch klubach pod dwoma kodami; kod jest jedyny W KLUBIE
+ * (`idx_memberships_code`), a nie na serwerze.
+ *
+ * `CHECK membership_active_has_code` jest odpowiednikiem `identity_linked_has_pilot`:
+ * aktywny ⟺ ma kod. Kodem pilot podpisuje operacje (sygnatura, karta arkusza), więc
+ * członkostwo bez kodu nie ma prawa być aktywne - a pilot z kodem, ale `pending`, nie ma
+ * prawa nic zapisać.
+ *
+ * ══ `org_id` DENORMALIZOWANY, NIE ZŁĄCZONY PRZEZ `aircraft` ══
+ * Każda trasa panelu i większość tras telefonu filtruje po klubie (epik C). Złączenie
+ * `events → sessions → aircraft → org` przy każdym odczycie to koszt w każdym zapytaniu
+ * i - ważniejsze - miejsce, w którym jedno przeoczone złączenie otwiera cudze dane.
+ * Kolumna na wierszu pozwala napisać filtr jako `WHERE org_id = $1` bez wyjątku i sprawdzić
+ * to mechanicznie. Niezmiennik `events.org_id = sessions.org_id = aircraft.org_id`
+ * egzekwuje ZAPIS (ingest odrzuca zdarzenie do maszyny cudzego klubu), nie CHECK.
+ *
+ * **`admin_audit.org_id` jest jedyną kolumną klubu, która bywa `NULL`**: akcja
+ * superadministratora na platformie (założenie klubu, wyłączenie klubu - epik E) nie
+ * dzieje się W ŻADNYM klubie i wpis o niej nie ma czego udawać. Dziennik klubu filtruje
+ * po `org_id = <klub>`, więc wpisy platformowe do niego nie wpadają.
+ *
+ * ══ BACKFILL: JEDEN KLUB Z DANYCH 1.x, W TEJ SAMEJ TRANSAKCJI ══
+ * Baza produkcyjna ma od 1.0.0 dane JEDNEGO klubu i te dane ZOSTAJĄ (decyzja właściciela
+ * 2026-09-08). Blok `DO` niżej: gdy w bazie jest cokolwiek, zakłada klub z nazwą i slugiem
+ * podanymi runnerowi (`SEED_ORG_NAME` / `SEED_ORG_SLUG` → `set_config`, `migrate.ts`),
+ * przepisuje każde konto na członkostwo `active`/`disabled` (kod, rola i znacznik
+ * unieważnienia przechodzą 1:1), a `org_id` każdego istniejącego wiersza wskazuje ten
+ * klub. **Bez nazwy klubu runner ODMAWIA** (`RAISE EXCEPTION`) zamiast wymyślać „Klub 1":
+ * slug wchodzi do adresów kart arkusza i nie da się go potem zmienić bez zmiany adresów.
+ * Świeża baza (testy, nowe wdrożenie) nie ma czego przepisywać i przechodzi bez zmiennych.
+ *
+ * `pilots.active` wraca na `TRUE` dla wszystkich: dotychczasowe „wyłącz konto" było decyzją
+ * KLUBU i przechodzi na `memberships.status = 'disabled'`; kolumna na osobie znaczy odtąd
+ * blokadę PLATFORMOWĄ, której nikt jeszcze nie nałożył. Zostawienie `FALSE` zamknęłoby
+ * człowieka na zawsze: ponowne włączenie członkostwa w panelu klubu nie ruszy osoby.
+ *
+ * ══ UNIKATY: CO JEST JEDYNE W KLUBIE, A CO NA SERWERZE ══
+ * `aircraft.reg` → `(org_id, reg)`: maszyna należy do JEDNEGO klubu, a ta sama rejestracja
+ * w dwóch klubach jest dopuszczalna (sprzedana, przerejestrowana - historia zostaje u starego
+ * właściciela). `exported_sheets.tab` → klucz `(org_id, tab)`: nazwa karty niesie znak i dobę,
+ * więc dwa kluby z tą samą rejestracją produkowałyby tę samą nazwę tego samego dnia i jeden
+ * nadpisywałby drugiemu dokument. `pilots.email` zostaje globalny: osoba jest jedna.
+ *
+ * ══ DLACZEGO `DROP COLUMN code, role` W TEJ SAMEJ MIGRACJI ══
+ * `docs/wielofirmowosc.md` §10 proponowało osobną migrację 9 („między 8 a 9 kod czyta obie
+ * kolumny"). Issue #98 kazało zrobić to razem i tak jest: serwer po tej migracji czyta
+ * WYŁĄCZNIE członkostwa, a migracja biegnie przy starcie procesu przed pierwszym żądaniem,
+ * więc okna, w którym sygnatura nie ma z czego się złożyć, nie ma. Trzy bezpieczniki
+ * `isPilotRole(...) ? role : DEFAULT_ROLE` znikły z kodu razem z kolumną, nie osobno.
+ *
+ * ══ NIEODWRACALNA SKRYPTEM ══
+ * Zdjęcie globalnych unikatów kasuje informację, której po dołożeniu drugiego klubu nie da
+ * się odtworzyć. Procedurą odwrotu jest kopia bazy PRZED migracją (Railway snapshot).
+ *
+ * Czego ta migracja NIE ROBI (świadomie, epik D): `external_identities` zostaje ze statusami
+ * `pending`/`linked`/`rejected` - kolejka zgłoszeń przenosi się na członkostwa razem
+ * z przebudową dołączania (`POST /auth/join`, zaproszenia), nie wcześniej.
+ */
+export const MIGRATION_8 = `
+  -- ═══ KLUB JAKO TENANT ═══════════════════════════════════════════════════════
+  -- slug jest jedynym PUBLICZNYM identyfikatorem klubu (adres kart arkusza, epik C),
+  -- nadawany raz przy założeniu: zmiana nazwy klubu nie zmienia sluga - nazwa jest
+  -- napisem, slug adresem.
+  CREATE TABLE IF NOT EXISTS organizations (
+    id         TEXT PRIMARY KEY,
+    name       TEXT NOT NULL,
+    slug       TEXT NOT NULL UNIQUE,
+    -- FALSE = klub wyłączony przez superadministratora: logowanie do jego panelu i trasy
+    -- klubowe odmawiają, danych nie kasujemy (dziennik jest dokumentem klubu).
+    active     BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    -- Superadministrator, który klub założył; NULL przy klubie z backfillu i z seeda.
+    created_by TEXT REFERENCES pilots(id)
+  );
+
+  -- ═══ CZŁONKOSTWO: KIM PILOT JEST W TYM KLUBIE ═══════════════════════════════
+  CREATE TABLE IF NOT EXISTS memberships (
+    org_id   TEXT NOT NULL REFERENCES organizations(id),
+    -- CASCADE, bo skasowanie OSOBY (konto założone pomyłką, bez historii) ma zabrać
+    -- jej członkostwa - inaczej DELETE odbijałby się o klucz obcy wyjątkiem bazy.
+    pilot_id TEXT NOT NULL REFERENCES pilots(id) ON DELETE CASCADE,
+    -- Kod pilota W TYM KLUBIE. NULL wyłącznie przy 'pending' - patrz CHECK niżej.
+    code     TEXT,
+    -- Rola panelu W TYM KLUBIE (src/domain/roles.ts). Ten sam CHECK i ten sam DEFAULT,
+    -- co miała kolumna pilots.role: podniesienie uprawnień ma być jawną decyzją.
+    role     TEXT NOT NULL DEFAULT 'pilot' CHECK (role IN ('pilot', 'admin')),
+    -- pending = zgłoszenie kodem klubu czeka; active = pracuje; disabled = wyłączone
+    -- przez administratora klubu; rejected = odmowa z powodem (pilot czyta go na 00D).
+    status   TEXT NOT NULL CHECK (status IN ('pending', 'active', 'disabled', 'rejected')),
+    reject_reason TEXT,
+    -- Którą z trzech dróg dołączenia (docs/wielofirmowosc.md §3.8) ten wiersz powstał;
+    -- 'panel' = administrator dopisał wprost, 'backfill' = przepisany z konta 1.x.
+    joined_via TEXT NOT NULL CHECK (joined_via IN ('email', 'link', 'code', 'panel', 'backfill')),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    decided_at TIMESTAMPTZ,
+    decided_by TEXT REFERENCES pilots(id),
+    -- Unieważnienie poświadczeń PER KLUB (§3.4): wyłączenie członkostwa w klubie A nie
+    -- wylogowuje z klubu B, a token wydany przed wyłączeniem w A jest w A martwy.
+    -- Brama sprawdza OBIE daty - tę i pilots.credentials_valid_from.
+    credentials_valid_from TIMESTAMPTZ,
+    -- Ostatnia zmiana wiersza: składnik ETagu GET /reference (kod pilota jedzie na
+    -- telefony z tego wiersza, więc jego zmiana musi zmienić znacznik).
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (org_id, pilot_id),
+    -- NIEZMIENNIK: aktywny <=> ma kod. Kodem pilot podpisuje operacje, więc członkostwo
+    -- bez kodu nie ma prawa być aktywne.
+    CONSTRAINT membership_active_has_code CHECK (status <> 'active' OR code IS NOT NULL)
+  );
+  -- Kod jedyny W KLUBIE, nie na serwerze: ta sama osoba może być TMK w jednym klubie
+  -- i TOM w drugim. Częściowy, bo 'pending' kodu nie ma.
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_memberships_code
+    ON memberships (org_id, code) WHERE code IS NOT NULL;
+  -- Członkostwa jednej OSOBY - logowanie pyta „w których klubach jest ten człowiek".
+  CREATE INDEX IF NOT EXISTS idx_memberships_pilot ON memberships (pilot_id);
+
+  -- ═══ ZAPROSZENIA: TRZY DROGI DOŁĄCZENIA, JEDNA TABELA (§3.8) ═════════════════
+  -- Kształt stoi tu w całości, choć wypełnia go dopiero epik D (POST /auth/join,
+  -- generowanie linków, kod klubu): schemat ma opisywać MODEL, a nie stan wdrożenia -
+  -- ta sama zasada, co przy katalogu akcji audytu.
+  CREATE TABLE IF NOT EXISTS invitations (
+    id         TEXT PRIMARY KEY,
+    org_id     TEXT NOT NULL REFERENCES organizations(id),
+    -- link = osobisty, jednorazowy sekret z adresu; email = zweryfikowany adres Google;
+    -- code = wielorazowy kod klubu wpisywany na 00E.
+    kind       TEXT NOT NULL CHECK (kind IN ('link', 'email', 'code')),
+    -- Hash sekretu (link) albo kodu klubu (code) - wartości nie przechowujemy, jak przy
+    -- refresh tokenach: wyciek tabeli nie daje zaproszenia.
+    token_hash TEXT UNIQUE,
+    email      TEXT,
+    -- Dla kogo (napis dla administratora); NIE jest to pilots.name.
+    name_hint  TEXT,
+    -- Kod pilota nadany Z GÓRY (link, email): przy wejściu nie ma już nikogo, kto by go nadał.
+    code       TEXT,
+    role       TEXT NOT NULL DEFAULT 'pilot' CHECK (role IN ('pilot', 'admin')),
+    created_by TEXT NOT NULL REFERENCES pilots(id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    -- link: termin (propozycja 14 dni); code: NULL - odnawialny ręcznie.
+    expires_at TIMESTAMPTZ,
+    -- link i email są JEDNORAZOWE: wypełnione = zużyte.
+    used_at    TIMESTAMPTZ,
+    used_by    TEXT REFERENCES pilots(id),
+    revoked_at TIMESTAMPTZ,
+    -- Każda droga niesie DOKŁADNIE to, czego potrzebuje - nic więcej, nic mniej.
+    CONSTRAINT invitation_shape CHECK (
+      (kind = 'link'  AND token_hash IS NOT NULL AND code IS NOT NULL) OR
+      (kind = 'email' AND email IS NOT NULL AND code IS NOT NULL) OR
+      (kind = 'code'  AND token_hash IS NOT NULL AND code IS NULL)
+    )
+  );
+  -- Klub ma najwyżej JEDEN żywy kod klubu; „Wygeneruj nowy" unieważnia stary.
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_invitations_club_code
+    ON invitations (org_id) WHERE kind = 'code' AND revoked_at IS NULL;
+
+  -- ═══ SUPERADMINISTRATOR = OSOBA BEZ KLUBU (§3.3) ════════════════════════════
+  -- Zakłada kluby i pierwszych administratorów, i to wszystko. Do danych klubu nie
+  -- wchodzi: panel klubu wymaga członkostwa 'admin', a superadministrator go nie ma.
+  ALTER TABLE pilots ADD COLUMN IF NOT EXISTS platform_role TEXT
+    CHECK (platform_role IN ('superadmin'));
+
+  -- ═══ org_id NA TABELACH DANYCH KLUBU - NAJPIERW NULLOWALNE ═════════════════
+  -- Backfill wypełnia je niżej; SET NOT NULL dopiero po nim.
+  ALTER TABLE aircraft             ADD COLUMN IF NOT EXISTS org_id TEXT REFERENCES organizations(id);
+  ALTER TABLE events               ADD COLUMN IF NOT EXISTS org_id TEXT REFERENCES organizations(id);
+  ALTER TABLE sessions             ADD COLUMN IF NOT EXISTS org_id TEXT REFERENCES organizations(id);
+  ALTER TABLE flags                ADD COLUMN IF NOT EXISTS org_id TEXT REFERENCES organizations(id);
+  ALTER TABLE export_log           ADD COLUMN IF NOT EXISTS org_id TEXT REFERENCES organizations(id);
+  ALTER TABLE exported_sheets      ADD COLUMN IF NOT EXISTS org_id TEXT REFERENCES organizations(id);
+  ALTER TABLE aircraft_readings    ADD COLUMN IF NOT EXISTS org_id TEXT REFERENCES organizations(id);
+  ALTER TABLE aircraft_consumption ADD COLUMN IF NOT EXISTS org_id TEXT REFERENCES organizations(id);
+  ALTER TABLE admin_audit          ADD COLUMN IF NOT EXISTS org_id TEXT REFERENCES organizations(id);
+  ALTER TABLE bug_reports          ADD COLUMN IF NOT EXISTS org_id TEXT REFERENCES organizations(id);
+  -- Para tokenów jest parą DLA KLUBU (§6): refresh niesie klub, dla którego ją wydano,
+  -- a /auth/refresh wydaje z niego kolejną parę dla TEGO SAMEGO klubu.
+  ALTER TABLE refresh_tokens       ADD COLUMN IF NOT EXISTS org_id TEXT REFERENCES organizations(id);
+
+  -- ═══ BACKFILL: DANE 1.x → JEDEN KLUB ═══════════════════════════════════════
+  DO $$
+  DECLARE
+    org_name TEXT := current_setting('uzaero.seed_org_name', true);
+    org_slug TEXT := current_setting('uzaero.seed_org_slug', true);
+    -- Nie "org_id": w PL/pgSQL nazwa zmiennej zderzyłaby się z kolumną w UPDATE-ach.
+    club     TEXT;
+  BEGIN
+    IF EXISTS (SELECT 1 FROM pilots)
+       OR EXISTS (SELECT 1 FROM aircraft)
+       OR EXISTS (SELECT 1 FROM events)
+       OR EXISTS (SELECT 1 FROM sessions)
+       OR EXISTS (SELECT 1 FROM flags)
+       OR EXISTS (SELECT 1 FROM export_log)
+       OR EXISTS (SELECT 1 FROM exported_sheets)
+       OR EXISTS (SELECT 1 FROM aircraft_readings)
+       OR EXISTS (SELECT 1 FROM aircraft_consumption)
+       OR EXISTS (SELECT 1 FROM admin_audit)
+       OR EXISTS (SELECT 1 FROM bug_reports)
+       OR EXISTS (SELECT 1 FROM refresh_tokens)
+    THEN
+      IF org_name IS NULL OR org_name = '' OR org_slug IS NULL OR org_slug = '' THEN
+        RAISE EXCEPTION 'Migracja 8: baza ma dane jednego klubu, a SEED_ORG_NAME / SEED_ORG_SLUG nie sa ustawione. Runner nie wymysla nazwy klubu - slug wchodzi do adresow kart arkusza. Ustaw obie zmienne i uruchom ponownie.';
+      END IF;
+
+      club := gen_random_uuid()::text;
+      INSERT INTO organizations (id, name, slug) VALUES (club, org_name, org_slug);
+
+      -- Każde konto → członkostwo w klubie domyślnym: kod, rola i znacznik unieważnienia
+      -- przechodzą 1:1; „wyłączone konto" staje się wyłączonym CZŁONKOSTWEM.
+      INSERT INTO memberships
+        (org_id, pilot_id, code, role, status, joined_via, created_at, credentials_valid_from, updated_at)
+      SELECT club, p.id, p.code, p.role,
+             CASE WHEN p.active THEN 'active' ELSE 'disabled' END,
+             'backfill', p.updated_at, p.credentials_valid_from, p.updated_at
+        FROM pilots p;
+
+      -- Blokada osoby jest odtąd PLATFORMOWA i nikt jej jeszcze nie nałożył.
+      UPDATE pilots SET active = TRUE WHERE active = FALSE;
+
+      UPDATE aircraft             SET org_id = club WHERE org_id IS NULL;
+      UPDATE events               SET org_id = club WHERE org_id IS NULL;
+      UPDATE sessions             SET org_id = club WHERE org_id IS NULL;
+      UPDATE flags                SET org_id = club WHERE org_id IS NULL;
+      UPDATE export_log           SET org_id = club WHERE org_id IS NULL;
+      UPDATE exported_sheets      SET org_id = club WHERE org_id IS NULL;
+      UPDATE aircraft_readings    SET org_id = club WHERE org_id IS NULL;
+      UPDATE aircraft_consumption SET org_id = club WHERE org_id IS NULL;
+      UPDATE admin_audit          SET org_id = club WHERE org_id IS NULL;
+      UPDATE bug_reports          SET org_id = club WHERE org_id IS NULL;
+      UPDATE refresh_tokens       SET org_id = club WHERE org_id IS NULL;
+    END IF;
+  END $$;
+
+  -- ═══ PO BACKFILLU: NOT NULL (admin_audit zostaje nullowalne - akcje platformowe) ══
+  ALTER TABLE aircraft             ALTER COLUMN org_id SET NOT NULL;
+  ALTER TABLE events               ALTER COLUMN org_id SET NOT NULL;
+  ALTER TABLE sessions             ALTER COLUMN org_id SET NOT NULL;
+  ALTER TABLE flags                ALTER COLUMN org_id SET NOT NULL;
+  ALTER TABLE export_log           ALTER COLUMN org_id SET NOT NULL;
+  ALTER TABLE exported_sheets      ALTER COLUMN org_id SET NOT NULL;
+  ALTER TABLE aircraft_readings    ALTER COLUMN org_id SET NOT NULL;
+  ALTER TABLE aircraft_consumption ALTER COLUMN org_id SET NOT NULL;
+  ALTER TABLE bug_reports          ALTER COLUMN org_id SET NOT NULL;
+  ALTER TABLE refresh_tokens       ALTER COLUMN org_id SET NOT NULL;
+
+  -- ═══ INDEKSY Z org_id NA CZELE - dla filtrów per klub (epik C) ═════════════
+  -- Bez NULLS LAST na kolumnach NOT NULL (reguła 4 w docblocku pliku); claim_time bywa
+  -- NULL, więc tam zostaje - jak w idx_sessions_day.
+  CREATE INDEX IF NOT EXISTS idx_aircraft_org ON aircraft (org_id);
+  CREATE INDEX IF NOT EXISTS idx_events_org_received ON events (org_id, received_at DESC, uuid DESC);
+  CREATE INDEX IF NOT EXISTS idx_sessions_org_day
+    ON sessions (org_id, claim_time DESC NULLS LAST, session_uuid DESC);
+  CREATE INDEX IF NOT EXISTS idx_flags_org_status_created
+    ON flags (org_id, status, created_at DESC, id DESC);
+  CREATE INDEX IF NOT EXISTS idx_export_log_org ON export_log (org_id, exported_at DESC, id DESC);
+  CREATE INDEX IF NOT EXISTS idx_audit_org_created ON admin_audit (org_id, created_at DESC, id DESC);
+  CREATE INDEX IF NOT EXISTS idx_bug_reports_org_list
+    ON bug_reports (org_id, status, created_at DESC, uuid DESC);
+  -- „Ostatnio używany klub" pilota przy logowaniu: najświeższy refresh tej osoby.
+  CREATE INDEX IF NOT EXISTS idx_refresh_pilot_org ON refresh_tokens (pilot_id, created_at DESC);
+
+  -- ═══ UNIKATY: Z SERWERA DO KLUBU (§3.6) ═════════════════════════════════════
+  ALTER TABLE aircraft DROP CONSTRAINT IF EXISTS aircraft_reg_key;
+  CREATE UNIQUE INDEX IF NOT EXISTS uq_aircraft_org_reg ON aircraft (org_id, reg);
+
+  ALTER TABLE exported_sheets DROP CONSTRAINT IF EXISTS exported_sheets_pkey;
+  ALTER TABLE exported_sheets ADD PRIMARY KEY (org_id, tab);
+
+  -- ═══ KONIEC: KOD I ROLA ZNIKAJĄ Z OSOBY ══════════════════════════════════════
+  -- DROP COLUMN code zabiera ze sobą pilots_code_key - globalny unikat kodu przestaje
+  -- istnieć razem z kolumną, której pilnował.
+  ALTER TABLE pilots DROP COLUMN IF EXISTS code;
+  ALTER TABLE pilots DROP COLUMN IF EXISTS role;
+`;
+
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
   MIGRATION_2,
@@ -772,6 +1053,7 @@ export const MIGRATIONS: readonly string[] = [
   MIGRATION_5,
   MIGRATION_6,
   MIGRATION_7,
+  MIGRATION_8,
 ];
 
 /**
@@ -800,4 +1082,5 @@ export const MIGRATION_TITLES: readonly string[] = [
   'Odczyty maszyny wpisane przez administratora (issue #81): nadrzędny stan licznika, paliwa i oleju z komentarzem, konkurent zdania w łańcuchu przekazania',
   'Zgłoszenia błędów z aplikacji pilota (issue #87): opis, waga, kontekst okna i status obsługi - kanał zwrotny na czas testów z pilotami',
   'Logowanie przez Google (2026-09-04): tożsamości zewnętrzne ze zgłoszeniem do zatwierdzenia przez administratora; hasło przestaje być wymagane',
+  'Wielofirmowość (issue #98): kluby jako tenant, członkostwa z kodem i rolą per klub, zaproszenia, superadministrator, org_id na danych klubu i backfill jednego klubu z danych 1.x',
 ];

@@ -37,6 +37,7 @@ import { SqlFilter } from '../sqlFilter.ts';
 
 interface AircraftDbRow {
   id: string;
+  org_id: string;
   reg: string;
   type: string;
   year: number | null;
@@ -82,6 +83,7 @@ const num = (v: string | number | null): number | null => (v != null ? Number(v)
 
 const toAircraft = (r: AircraftDbRow): AdminAircraft => ({
   id: r.id,
+  orgId: r.org_id,
   reg: r.reg,
   type: r.type,
   year: r.year,
@@ -224,12 +226,14 @@ export class PgAdminFleetRepo implements FleetAdminPort {
    */
   async conflict(
     tx: Queryable,
-    values: { reg: string; exceptId: string | null },
+    values: { orgId: string; reg: string; exceptId: string | null },
   ): Promise<'reg' | null> {
+    // Rejestracja jest jedyna W KLUBIE (`uq_aircraft_org_reg`, wielofirmowość §3.6):
+    // ta sama maszyna w drugim klubie (sprzedana, przerejestrowana) nie jest kolizją.
     const { rows } = await tx.query<{ id: string }>(
       `SELECT id FROM aircraft
-        WHERE lower(reg) = lower($1) AND ($2::text IS NULL OR id <> $2)`,
-      [values.reg, values.exceptId],
+        WHERE org_id = $3 AND lower(reg) = lower($1) AND ($2::text IS NULL OR id <> $2)`,
+      [values.reg, values.exceptId, values.orgId],
     );
     return rows.length > 0 ? 'reg' : null;
   }
@@ -238,8 +242,8 @@ export class PgAdminFleetRepo implements FleetAdminPort {
     await tx.query(
       `INSERT INTO aircraft (id, reg, type, year, capacity_l, mh_format, dual_required, service_status,
                              oil_min_l, oil_capacity_l, oil_norm_l_per_h,
-                             fuel_norm_l_per_h, initial_mh, initial_fuel_l, initial_oil_l)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+                             fuel_norm_l_per_h, initial_mh, initial_fuel_l, initial_oil_l, org_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
       [
         aircraft.id,
         aircraft.reg,
@@ -256,6 +260,7 @@ export class PgAdminFleetRepo implements FleetAdminPort {
         aircraft.initialMh,
         aircraft.initialFuelL,
         aircraft.initialOilL,
+        aircraft.orgId,
       ],
     );
   }

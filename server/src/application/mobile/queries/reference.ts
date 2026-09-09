@@ -48,8 +48,9 @@ export class ReferenceQueries {
     private readonly readings: AircraftReadingsPort,
   ) {}
 
-  async get(): Promise<ReferenceView> {
-    const snapshot = await this.reference.snapshot();
+  /** Migawka KLUBU z tokenu (wielofirmowość §7.1): flota, członkowie, przekazania. */
+  async get(orgId: string): Promise<ReferenceView> {
+    const snapshot = await this.reference.snapshot(orgId);
 
     // Sesje per samolot - jednym przebiegiem, nie zapytaniem per maszyna.
     const byAircraft = new Map<string, SessionRow[]>();
@@ -120,9 +121,11 @@ export class ReferenceQueries {
     // zamrażałoby na telefonach odczyty sprzed poprawki (issue #81).
     const readingStamp = (await this.readings.latestAt(this.db))?.getTime() ?? 0;
 
+    // Klub w ETagu, bo ten sam telefon po przełączeniu klubu (epik F) pyta o INNĄ
+    // migawkę - znacznik bez klubu mógłby przez przypadek zrównać dwie odpowiedzi.
     return {
       snapshot: { ...snapshot, aircraft },
-      etag: `W/"ref-${refStamp}-${sessStamp}-${normStamp}-${readingStamp}"`,
+      etag: `W/"ref-${orgId}-${refStamp}-${sessStamp}-${normStamp}-${readingStamp}"`,
     };
   }
 }

@@ -1,17 +1,27 @@
 /**
- * UZ Aero (serwer) - adapter kont pilotów po stronie PANELU (`PilotsAdminPort`, `A06`).
+ * UZ Aero (serwer) - adapter członków klubu po stronie PANELU (`PilotsAdminPort`, `A06`).
  *
- * Drugi adapter tej samej tabeli i to jest wzorzec, nie niedopatrzenie: `flags` ma
+ * Drugi adapter tych samych tabel i to jest wzorzec, nie niedopatrzenie: `flags` ma
  * dokładnie tak samo `common/flagsRepo.ts` (ingest) i `admin/flagsRepo.ts` (panel).
- * `common/pilotsRepo.ts` obsługuje LOGOWANIE - dwa `SELECT`-y, własny uchwyt do bazy,
- * hash w wyniku. Ten obsługuje ZARZĄDZANIE - pisze, liczy i bierze `tx` z zewnątrz,
- * bo każdy zapis panelu jedzie transakcją śladu audytu. Ścieżka logowania nie ma jak
- * zregresować od zmian w panelu kont.
+ * `common/pilotsRepo.ts` obsługuje LOGOWANIE - odczyty, własny uchwyt do bazy. Ten
+ * obsługuje ZARZĄDZANIE - pisze, liczy i bierze `tx` z zewnątrz, bo każdy zapis panelu
+ * jedzie transakcją śladu audytu. Ścieżka logowania nie ma jak zregresować od zmian
+ * w panelu kont.
+ *
+ * ══ OD WIELOFIRMOWOŚCI (issue #98): WIERSZ LISTY TO CZŁONKOSTWO ══
+ * `pilots` jest OSOBĄ (nazwisko, e-mail), `memberships` - tym, kim jest w klubie
+ * (kod, rola, status). Lista klubu to złączenie obu po `(org_id, pilot_id)`; kod
+ * i rola zapisują się do członkostwa, nazwisko i e-mail do osoby. Kolizja kodu jest
+ * pytaniem o KLUB, kolizja e-maila - o to, czy osoba o tym adresie już do klubu należy.
+ *
+ * Na liście stoją członkostwa `active` i `disabled`. `pending` i `rejected` (zgłoszenia
+ * kodem klubu) to kolejka z epiku D - mają własną kartę nad listą, nie wiersz w niej.
  *
  * ══ `flying_days` JEST AGREGATEM PROJEKCJI, NIE JEJ ODTWORZENIEM ══
  * Liczymy wiersze `sessions` (projekcja `projectSession`), a nie zdarzenia z `events` -
  * reguła twarda z `docs/architektura-panelu-serwer.md` §7.1. Sesja liczy się pilotowi,
  * gdy był PIC-em ALBO Dualem: dzień szkolny należy do obu, a nie tylko do dowodzącego.
+ * Sesje TEGO klubu - dni w drugim klubie są dniami drugiego klubu.
  */
 
 import type {
@@ -28,12 +38,13 @@ import type { Queryable } from '../../../application/common/ports.ts';
 import { DEFAULT_ROLE, isPilotRole, PILOT_ROLES } from '../../../domain/roles.ts';
 import { SqlFilter } from '../sqlFilter.ts';
 
-interface PilotDbRow {
+interface MemberDbRow {
   id: string;
+  org_id: string;
   code: string;
   name: string;
   email: string | null;
-  active: boolean;
+  status: string;
   role: string;
   updated_at: string | Date;
   /** `COUNT(*)` - sterownik oddaje `int8` NAPISEM, nie liczbą. */
@@ -42,31 +53,36 @@ interface PilotDbRow {
 
 const toAccount = (r: {
   id: string;
+  org_id: string;
   code: string;
   name: string;
   email: string | null;
-  active: boolean;
+  status: string;
   role: string;
 }): AdminPilotAccount => ({
   id: r.id,
+  orgId: r.org_id,
   code: r.code,
   name: r.name,
   email: r.email,
-  active: r.active,
-  // Ta sama nieufność, co w adapterze logowania: bazy pilnuje CHECK na `pilots.role`,
+  active: r.status === 'active',
+  // Ta sama nieufność, co w adapterze logowania: bazy pilnuje CHECK na `memberships.role`,
   // ale nierozpoznana rola schodzi do najmniejszej, nigdy nie awansuje.
   role: isPilotRole(r.role) ? r.role : DEFAULT_ROLE,
 });
 
-const toJoin = (r: PilotDbRow): AdminPilotJoin => ({
+const toJoin = (r: MemberDbRow): AdminPilotJoin => ({
   account: toAccount(r),
   updatedAt: new Date(r.updated_at),
   flyingDays: Number(r.flying_days),
 });
 
+/** Członkostwa, które SĄ na liście klubu - kolejka `pending`/`rejected` to osobna karta. */
+const LISTED = "m.status IN ('active', 'disabled')";
+
 /**
- * Dni lotne w oknie, per pilot. Podzapytanie zamiast dwóch `LEFT JOIN`-ów, bo dzień
- * szkolny ma w wierszu `sessions` DWA konta (`pic_id` i `dual_id`) - złączenie po
+ * Dni lotne w oknie, per pilot, W KLUBIE. Podzapytanie zamiast dwóch `LEFT JOIN`-ów, bo
+ * dzień szkolny ma w wierszu `sessions` DWA konta (`pic_id` i `dual_id`) - złączenie po
  * jednym z nich gubiłoby Duala, a po obu naraz liczyłoby wiersz dwa razy temu, kto
  * był w nim jednocześnie… czyli nikomu, ale kosztem warunku, który trzeba pamiętać.
  * `UNION ALL` z `GROUP BY` mówi to wprost: jedna sesja = jeden dzień dla każdego
@@ -75,73 +91,90 @@ const toJoin = (r: PilotDbRow): AdminPilotJoin => ({
  * `status = 'closed'` - mockup A06 liczy „dni z zamkniętymi sesjami". Dzień otwarty
  * jeszcze trwa i jego liczby nie są ostateczne.
  */
-const flyingDaysSql = (from: string, to: string): string => `
+const flyingDaysSql = (org: string, from: string, to: string): string => `
   SELECT pilot_id, COUNT(*) AS days FROM (
     SELECT pic_id AS pilot_id FROM sessions
-     WHERE status = 'closed' AND claim_time BETWEEN ${from} AND ${to}
+     WHERE org_id = ${org} AND status = 'closed' AND claim_time BETWEEN ${from} AND ${to}
     UNION ALL
     SELECT dual_id AS pilot_id FROM sessions
-     WHERE status = 'closed' AND dual_id IS NOT NULL AND claim_time BETWEEN ${from} AND ${to}
+     WHERE org_id = ${org} AND status = 'closed' AND dual_id IS NOT NULL
+       AND claim_time BETWEEN ${from} AND ${to}
   ) s GROUP BY pilot_id`;
+
+const MEMBER_COLUMNS = 'p.id, m.org_id, m.code, p.name, p.email, m.status, m.role';
 
 export class PgAdminPilotsRepo implements PilotsAdminPort {
   async list(
     db: Queryable,
+    orgId: string,
     filter: PilotListFilter,
   ): Promise<{ items: AdminPilotJoin[]; total: number }> {
-    // Okno dni lotnych rejestrujemy PRZEZ `SqlFilter`, mimo że stoi w podzapytaniu,
-    // a nie w `WHERE`: numeracja `$n` ma mieć jednego autora. Ręczne „okno to $1 i $2,
-    // reszta od $3" jest dokładnie tą księgowością, przed którą ten moduł broni.
+    // Klub i okno dni lotnych rejestrujemy PRZEZ `SqlFilter`, mimo że stoją w podzapytaniu,
+    // a nie w `WHERE`: numeracja `$n` ma mieć jednego autora. Ręczne „klub to $1,
+    // okno to $2 i $3, reszta od $4" jest dokładnie tą księgowością, przed którą ten
+    // moduł broni.
     const sql = new SqlFilter();
+    const orgParam = sql.bind(orgId);
     const fromParam = sql.bind(filter.fromMs);
     const toParam = sql.bind(filter.toMs);
+    sql.add(`m.org_id = ${orgParam}`);
+    sql.add(LISTED);
     applyFilters(sql, filter);
 
     const limitParam = sql.bind(filter.limit);
-    const { rows } = await db.query<PilotDbRow>(
-      `SELECT p.id, p.code, p.name, p.email, p.active, p.role, p.updated_at,
+    const { rows } = await db.query<MemberDbRow>(
+      `SELECT ${MEMBER_COLUMNS},
+              GREATEST(p.updated_at, m.updated_at) AS updated_at,
               COALESCE(d.days, 0) AS flying_days
-         FROM pilots p
-         LEFT JOIN (${flyingDaysSql(fromParam, toParam)}) d ON d.pilot_id = p.id
+         FROM memberships m
+         JOIN pilots p ON p.id = m.pilot_id
+         LEFT JOIN (${flyingDaysSql(orgParam, fromParam, toParam)}) d ON d.pilot_id = p.id
          ${sql.where()}
          ${orderBy(filter.direction)}
          LIMIT ${limitParam}`,
       sql.params(),
     );
 
-    // `COUNT` na tym samym zawężeniu, ale BEZ okna dni lotnych: liczba kont nie
-    // zależy od tego, kto latał. Lista kont klubu nie ma kursora i mieć go nie musi
+    // `COUNT` na tym samym zawężeniu, ale BEZ okna dni lotnych: liczba członków nie
+    // zależy od tego, kto latał. Lista klubu nie ma kursora i mieć go nie musi
     // (kilkanaście wierszy), więc `total` odpowiada wyłącznie na pytanie „czy limit
     // coś uciął".
     const counted = new SqlFilter();
+    counted.add('m.org_id = ?', orgId);
+    counted.add(LISTED);
     applyFilters(counted, filter);
     const total = await db.query<{ n: string }>(
-      `SELECT COUNT(*) AS n FROM pilots p ${counted.where()}`,
+      `SELECT COUNT(*) AS n FROM memberships m JOIN pilots p ON p.id = m.pilot_id ${counted.where()}`,
       counted.params(),
     );
 
     return { items: rows.map(toJoin), total: Number(total.rows[0]?.n ?? 0) };
   }
 
-  async counts(db: Queryable, window: { fromMs: number; toMs: number }): Promise<PilotCounts> {
+  async counts(
+    db: Queryable,
+    orgId: string,
+    window: { fromMs: number; toMs: number },
+  ): Promise<PilotCounts> {
     const { rows } = await db.query<Record<string, string>>(
       `SELECT COUNT(*) AS total,
-              COUNT(*) FILTER (WHERE active) AS active,
-              COUNT(*) FILTER (WHERE role = 'admin') AS admin,
+              COUNT(*) FILTER (WHERE m.status = 'active') AS active,
+              COUNT(*) FILTER (WHERE m.role = 'admin') AS admin,
               -- Wszystko, co NIE jest administratorem, liczy się jako pilot - także
-              -- wiersz z wycofaną rolą training_lead (2026-08-30). Tak samo czyta to
-              -- reszta serwera: isPilotRole(role) albo DEFAULT_ROLE. Liczenie go
-              -- osobno albo pomijanie dawałoby kafel, którego suma nie zgadza się
-              -- z total - czyli liczbę, przy której administrator zaczyna zgadywać.
-              COUNT(*) FILTER (WHERE role IS DISTINCT FROM 'admin') AS pilot
-         FROM pilots`,
+              -- wiersz z rolą spoza katalogu. Tak samo czyta to reszta serwera:
+              -- isPilotRole(role) albo DEFAULT_ROLE. Liczenie go osobno albo pomijanie
+              -- dawałoby kafel, którego suma nie zgadza się z total.
+              COUNT(*) FILTER (WHERE m.role IS DISTINCT FROM 'admin') AS pilot
+         FROM memberships m
+        WHERE m.org_id = $1 AND ${LISTED}`,
+      [orgId],
     );
     // Dni klubu liczymy SESJAMI, nie sumą kolumny z wierszy: dzień szkolny ma dwóch
     // pilotów, więc suma kolumny byłaby liczbą osobodni, a kafel mówi o dniach.
     const days = await db.query<{ n: string }>(
       `SELECT COUNT(*) AS n FROM sessions
-        WHERE status = 'closed' AND claim_time BETWEEN $1 AND $2`,
-      [window.fromMs, window.toMs],
+        WHERE org_id = $1 AND status = 'closed' AND claim_time BETWEEN $2 AND $3`,
+      [orgId, window.fromMs, window.toMs],
     );
     const row = rows[0] ?? {};
     const total = Number(row.total ?? 0);
@@ -166,28 +199,31 @@ export class PgAdminPilotsRepo implements PilotsAdminPort {
   /**
    * Liczniki CHIPÓW - te same cztery zawężenia, w bieżącym wyszukiwaniu.
    *
-   * Osobne zapytanie od `counts`, mimo podobieństwa SQL-a, bo odpowiada na inne
+   * Osobne zapytanie od `counts`, mimo podobnego SQL-a, bo odpowiada na inne
    * pytanie: `counts` opisuje klub (kafle), a to jest obietnica chipa („tyle
    * zobaczysz"). Sklejenie ich w jedno zmusiłoby kafle do zmieniania się przy
    * wpisywaniu w wyszukiwarkę, czyli odebrałoby im ich jedyną treść.
-   *
-   * `role IN (…)` wypisane wprost zamiast sumy dwóch `FILTER`-ów: chip „Z rolą panelu"
-   * pyta o KONTA MAJĄCE WEJŚCIE, a nie o sumę dwóch liczb - konto nie może mieć dwóch
-   * ról, ale to jest własność dzisiejszego modelu, a nie treść tego pytania.
    */
-  async scopeCounts(db: Queryable, filter: { search?: string }): Promise<PilotScopeCounts> {
+  async scopeCounts(
+    db: Queryable,
+    orgId: string,
+    filter: { search?: string },
+  ): Promise<PilotScopeCounts> {
     const sql = new SqlFilter();
+    sql.add('m.org_id = ?', orgId);
+    sql.add(LISTED);
     applySearch(sql, filter.search);
 
     const { rows } = await db.query<Record<string, string>>(
       `SELECT COUNT(*) AS total,
-              COUNT(*) FILTER (WHERE active) AS active,
-              COUNT(*) FILTER (WHERE NOT active) AS inactive,
+              COUNT(*) FILTER (WHERE m.status = 'active') AS active,
+              COUNT(*) FILTER (WHERE m.status <> 'active') AS inactive,
               -- „Z rolą panelu" = dziś dokładnie administratorzy: po wycofaniu
               -- training_lead (2026-08-30) nie ma innej roli, która wpuszcza do
               -- back-office'u. Chip zostaje, bo wraca razem z trzecią rolą.
-              COUNT(*) FILTER (WHERE role = 'admin') AS panel
-         FROM pilots p ${sql.where()}`,
+              COUNT(*) FILTER (WHERE m.role = 'admin') AS panel
+         FROM memberships m
+         JOIN pilots p ON p.id = m.pilot_id ${sql.where()}`,
       sql.params(),
     );
 
@@ -200,106 +236,143 @@ export class PgAdminPilotsRepo implements PilotsAdminPort {
     };
   }
 
-  async byId(db: Queryable, id: string): Promise<AdminPilotAccount | null> {
-    const { rows } = await db.query<{
-      id: string;
-      code: string;
-      name: string;
-      email: string | null;
-      active: boolean;
-      role: string;
-    }>('SELECT id, code, name, email, active, role FROM pilots WHERE id = $1', [id]);
+  async byId(db: Queryable, orgId: string, id: string): Promise<AdminPilotAccount | null> {
+    const { rows } = await db.query<MemberDbRow>(
+      `SELECT ${MEMBER_COLUMNS}
+         FROM memberships m JOIN pilots p ON p.id = m.pilot_id
+        WHERE m.org_id = $1 AND m.pilot_id = $2 AND ${LISTED}`,
+      [orgId, id],
+    );
     return rows[0] ? toAccount(rows[0]) : null;
   }
 
   async conflict(
     tx: Queryable,
+    orgId: string,
     values: { code: string; email: string | null; exceptId: string | null },
   ): Promise<'code' | 'email' | null> {
-    const { rows } = await tx.query<{ code: string; email: string | null }>(
-      `SELECT code, email FROM pilots
-        WHERE (lower(code) = lower($1) OR (email IS NOT NULL AND lower(email) = lower($2)))
-          AND ($3::text IS NULL OR id <> $3)`,
-      [values.code, values.email, values.exceptId],
-    );
-
     // Kolejność sprawdzania jest KOLEJNOŚCIĄ PÓL W FORMULARZU: kod stoi nad e-mailem,
     // więc przy podwójnej kolizji panel poprawia najpierw to, co widzi wyżej.
-    if (rows.some((r) => r.code.toLowerCase() === values.code.toLowerCase())) return 'code';
-    if (
-      values.email != null &&
-      rows.some((r) => r.email?.toLowerCase() === values.email?.toLowerCase())
-    ) {
-      return 'email';
+    const code = await tx.query<{ pilot_id: string }>(
+      `SELECT pilot_id FROM memberships
+        WHERE org_id = $1 AND lower(code) = lower($2)
+          AND ($3::text IS NULL OR pilot_id <> $3)`,
+      [orgId, values.code, values.exceptId],
+    );
+    if (code.rows.length > 0) return 'code';
+
+    if (values.email != null) {
+      // E-mail koliduje wyłącznie z osobą, która JUŻ JEST członkiem tego klubu: osoba
+      // z innego klubu pod tym adresem to nie kolizja, tylko dołączenie (`insert`).
+      const email = await tx.query<{ id: string }>(
+        `SELECT p.id FROM pilots p
+          JOIN memberships m ON m.pilot_id = p.id AND m.org_id = $1
+         WHERE lower(p.email) = lower($2) AND ($3::text IS NULL OR p.id <> $3)`,
+        [orgId, values.email, values.exceptId],
+      );
+      if (email.rows.length > 0) return 'email';
     }
     return null;
   }
 
-  async insert(tx: Queryable, account: NewPilotAccount): Promise<void> {
+  /**
+   * Osoba pod tym e-mailem może już istnieć (członek innego klubu): wtedy dopisujemy
+   * członkostwo DO NIEJ, nie zakładamy drugiej - `pilots.email` jest jedyny na serwerze
+   * i tak ma zostać, bo osoba jest jedna (wielofirmowość §3.6). Nazwiska istniejącej
+   * osoby NIE ruszamy: należy do niej, a nie do klubu, który ją właśnie dopisuje.
+   */
+  async insert(tx: Queryable, account: NewPilotAccount): Promise<string> {
+    let pilotId = account.id;
+    const existing =
+      account.email == null
+        ? { rows: [] as { id: string }[] }
+        : await tx.query<{ id: string }>('SELECT id FROM pilots WHERE lower(email) = lower($1)', [
+            account.email,
+          ]);
+    if (existing.rows[0] != null) {
+      pilotId = existing.rows[0].id;
+    } else {
+      await tx.query(
+        `INSERT INTO pilots (id, name, email, active) VALUES ($1, $2, $3, TRUE)`,
+        [pilotId, account.name, account.email],
+      );
+    }
+
     await tx.query(
-      `INSERT INTO pilots (id, code, name, email, active, role)
-       VALUES ($1, $2, $3, $4, TRUE, $5)`,
-      [account.id, account.code, account.name, account.email, account.role],
+      `INSERT INTO memberships (org_id, pilot_id, code, role, status, joined_via)
+       VALUES ($1, $2, $3, $4, 'active', 'panel')`,
+      [account.orgId, pilotId, account.code, account.role],
     );
+    return pilotId;
   }
 
-  async update(tx: Queryable, id: string, patch: PilotPatch): Promise<void> {
-    // `COALESCE` zamiast budowania `SET` z obecnych pól: `undefined` znaczy „bez
-    // zmian", a `null` przy e-mailu znaczy „wyczyść" - i te dwa przypadki muszą
-    // zostać rozróżnione aż do SQL-a. Stąd jawny znacznik `$5` dla e-maila.
-    await tx.query(
-      `UPDATE pilots
-          SET code = COALESCE($2, code),
-              name = COALESCE($3, name),
-              email = CASE WHEN $5 THEN $4 ELSE email END,
-              role = COALESCE($6, role),
-              updated_at = now()
-        WHERE id = $1`,
-      [
-        id,
-        patch.code ?? null,
-        patch.name ?? null,
-        patch.email ?? null,
-        patch.email !== undefined,
-        patch.role ?? null,
-      ],
-    );
+  async update(tx: Queryable, orgId: string, id: string, patch: PilotPatch): Promise<void> {
+    // Pola osoby i pola członkostwa idą dwoma `UPDATE`-ami, bo to dwie tabele -
+    // a `COALESCE` zamiast budowania `SET` z obecnych pól z tego samego powodu, co
+    // dotąd: `undefined` znaczy „bez zmian", `null` przy e-mailu znaczy „wyczyść".
+    if (patch.name !== undefined || patch.email !== undefined) {
+      await tx.query(
+        `UPDATE pilots
+            SET name = COALESCE($2, name),
+                email = CASE WHEN $4 THEN $3 ELSE email END,
+                updated_at = now()
+          WHERE id = $1`,
+        [id, patch.name ?? null, patch.email ?? null, patch.email !== undefined],
+      );
+    }
+    if (patch.code !== undefined || patch.role !== undefined) {
+      await tx.query(
+        `UPDATE memberships
+            SET code = COALESCE($3, code),
+                role = COALESCE($4, role),
+                updated_at = now()
+          WHERE org_id = $1 AND pilot_id = $2`,
+        [orgId, id, patch.code ?? null, patch.role ?? null],
+      );
+    }
   }
 
   /**
-   * Deaktywacja przesuwa `credentials_valid_from`; AKTYWACJA go nie rusza.
+   * Wyłączenie przesuwa `credentials_valid_from` CZŁONKOSTWA; włączenie go nie rusza.
    *
    * `GREATEST` zamiast przypisania: znacznik ma iść wyłącznie do przodu. Zegar
    * (a przy replayu - kolejność wołań) mógłby cofnąć datę, a cofnięty znacznik
    * OŻYWIŁBY tokeny, które ktoś świadomie unieważnił wcześniej.
    */
-  async setActive(tx: Queryable, id: string, active: boolean, at: Date): Promise<void> {
+  async setActive(
+    tx: Queryable,
+    orgId: string,
+    id: string,
+    active: boolean,
+    at: Date,
+  ): Promise<void> {
     await tx.query(
-      `UPDATE pilots
-          SET active = $2,
+      `UPDATE memberships
+          SET status = CASE WHEN $3 THEN 'active' ELSE 'disabled' END,
               credentials_valid_from = CASE
-                WHEN $2 THEN credentials_valid_from
-                ELSE GREATEST(credentials_valid_from, $3::timestamptz)
+                WHEN $3 THEN credentials_valid_from
+                ELSE GREATEST(credentials_valid_from, $4::timestamptz)
               END,
               updated_at = now()
-        WHERE id = $1`,
-      [id, active, at.toISOString()],
+        WHERE org_id = $1 AND pilot_id = $2`,
+      [orgId, id, active, at.toISOString()],
     );
   }
 
-
-  async countActiveAdmins(tx: Queryable): Promise<number> {
+  async countActiveAdmins(tx: Queryable, orgId: string): Promise<number> {
     const { rows } = await tx.query<{ n: string }>(
-      "SELECT COUNT(*) AS n FROM pilots WHERE active AND role = 'admin'",
+      `SELECT COUNT(*) AS n FROM memberships
+        WHERE org_id = $1 AND status = 'active' AND role = 'admin'`,
+      [orgId],
     );
     return Number(rows[0]?.n ?? 0);
   }
 
   /**
-   * Klucz jest STAŁY, bo chroniony zasób jest jeden na cały klub: „ilu jest aktywnych
-   * administratorów". Blokada per wiersz nie działa - dwie transakcje odbierające rolę
-   * DWÓM RÓŻNYM administratorom nie dotykają wspólnego wiersza, więc nic ich nie
-   * serializuje, obie odczytują „jest dwóch" i obie commitują. Zostaje zero.
+   * Klucz jest PER KLUB, bo chroniony zasób jest jeden na klub: „ilu jest aktywnych
+   * administratorów TEGO klubu". Blokada per wiersz nie działa - dwie transakcje
+   * odbierające rolę DWÓM RÓŻNYM administratorom nie dotykają wspólnego wiersza, więc
+   * nic ich nie serializuje, obie odczytują „jest dwóch" i obie commitują. Zostaje zero.
    *
    * `hashtext` na napisie zamiast liczby wpisanej wprost: tak samo powstaje klucz
    * blokady sesji w `IngestCommands` i `AdminCorrectionCommands`, a napis mówi, co
@@ -307,17 +380,19 @@ export class PgAdminPilotsRepo implements PilotsAdminPort {
    * kolizja z hashem uuid-a sesji dałaby najwyżej niepotrzebne czekanie, nigdy
    * pominiętą blokadę.
    */
-  async lockAdminPopulation(tx: Queryable): Promise<void> {
-    await tx.query('SELECT pg_advisory_xact_lock(hashtext($1))', [ADMIN_POPULATION_LOCK]);
+  async lockAdminPopulation(tx: Queryable, orgId: string): Promise<void> {
+    await tx.query('SELECT pg_advisory_xact_lock(hashtext($1))', [
+      `${ADMIN_POPULATION_LOCK}:${orgId}`,
+    ]);
   }
 
   /**
-   * Czy cokolwiek odwołuje się do tego konta - wejście do `refuseDelete`.
+   * Czy cokolwiek odwołuje się do tej OSOBY - wejście do `refuseDelete`.
    *
-   * ══ TRZY DECYZJE, KTORE TRZEBA ZNAC ══
+   * ══ CZTERY DECYZJE, KTORE TRZEBA ZNAC ══
    * 1. **`EXISTS`, nie `COUNT(*)`.** Regule wystarczy zero/niezero, a liczenie wierszy
    *    w `events` konta z tysiącem lotów jest pełnym skanem po nic. Wynik jest więc
-   *    liczbą ŹRÓDEŁ (0-3), nie wierszy - i tak opisuje go port.
+   *    liczbą ŹRÓDEŁ (0-4), nie wierszy - i tak opisuje go port.
    * 2. **Drugi pilot liczy się TAK SAMO jak PIC**, i to z dwóch miejsc: kolumny
    *    `dual_id` (nagłówek zdarzenia) oraz `payload->>'dualId'` (wartość PO korekcie
    *    administratora, issue #43). Sama kolumna przepuściłaby konto, które ktoś wpisał
@@ -327,28 +402,33 @@ export class PgAdminPilotsRepo implements PilotsAdminPort {
    *    usunięcie KAŻDEGO konta - reguła nie do spełnienia. Sprawca to co innego:
    *    administrator, który coś w klubie zrobił, zostaje w dzienniku, a dziennik bez
    *    tożsamości sprawcy przestaje być dziennikiem.
+   * 4. **Członkostwo w INNYM klubie jest odwołaniem** (wielofirmowość): klub A nie
+   *    kasuje osoby, która lata w klubie B - wyłącza u siebie członkostwo i tyle.
    */
-  async references(tx: Queryable, id: string): Promise<number> {
+  async references(tx: Queryable, orgId: string, id: string): Promise<number> {
     const { rows } = await tx.query<{ n: string }>(
       `SELECT (EXISTS (SELECT 1 FROM events
                         WHERE pic_id = $1 OR dual_id = $1 OR payload->>'dualId' = $1))::int
             + (EXISTS (SELECT 1 FROM sessions WHERE pic_id = $1))::int
-            + (EXISTS (SELECT 1 FROM admin_audit WHERE actor_pilot_id = $1))::int AS n`,
-      [id],
+            + (EXISTS (SELECT 1 FROM admin_audit WHERE actor_pilot_id = $1))::int
+            + (EXISTS (SELECT 1 FROM memberships WHERE pilot_id = $1 AND org_id <> $2))::int AS n`,
+      [id, orgId],
     );
     return Number(rows[0]?.n ?? 0);
   }
 
   /**
-   * Trwałe skasowanie wiersza konta.
+   * Trwałe skasowanie członkostwa i OSOBY.
    *
    * `refresh_tokens` kasujemy JAWNIE, mimo że mają klucz obcy: bez tego `DELETE`
    * odbiłby się o ograniczenie i wywrócił transakcję wyjątkiem bazy zamiast odmową
    * z powodem. To nie jest historia, tylko sesje telefonu - a te i tak zniknęły przy
-   * wyłączeniu konta, którego ta operacja wymaga.
+   * wyłączeniu członkostwa, którego ta operacja wymaga. Członkostwo znika kaskadą
+   * (`ON DELETE CASCADE`), ale piszemy to wprost - kolejność ma być czytelna z kodu.
    */
-  async delete(tx: Queryable, id: string): Promise<void> {
+  async delete(tx: Queryable, orgId: string, id: string): Promise<void> {
     await tx.query('DELETE FROM refresh_tokens WHERE pilot_id = $1', [id]);
+    await tx.query('DELETE FROM memberships WHERE org_id = $1 AND pilot_id = $2', [orgId, id]);
     await tx.query('DELETE FROM pilots WHERE id = $1', [id]);
   }
 }
@@ -357,24 +437,26 @@ export class PgAdminPilotsRepo implements PilotsAdminPort {
 const ADMIN_POPULATION_LOCK = 'pilots:admin-population';
 
 /**
- * Porządek listy jest CZĘŚCIĄ KONTRAKTU tego portu, jak przy skrzynce flag: konta
+ * Porządek listy jest CZĘŚCIĄ KONTRAKTU tego portu, jak przy skrzynce flag: członkostwa
  * NIEAKTYWNE lądują na końcu niezależnie od kierunku sortowania (mockup A06 rysuje
  * je tak), a w obrębie grupy sortujemy po nazwisku. Kod pilota jest tie-breakerem,
  * żeby kolejność była deterministyczna przy dwóch osobach o tym samym nazwisku.
  */
 function orderBy(direction: 'asc' | 'desc'): string {
   const dir = direction === 'asc' ? 'ASC' : 'DESC';
-  return `ORDER BY p.active DESC, p.name ${dir}, p.code ASC`;
+  return `ORDER BY (m.status = 'active') DESC, p.name ${dir}, m.code ASC`;
 }
 
 function applyFilters(sql: SqlFilter, filter: PilotListFilter): void {
-  sql.addOptional('p.active = ?', filter.active);
+  if (filter.active !== undefined) {
+    sql.add(filter.active ? "m.status = 'active'" : "m.status <> 'active'");
+  }
   if (filter.roles !== undefined && filter.roles.length > 0) {
     // `IN (…)` z osobnych miejsc na wartości, nie `= ANY ($n)` z tablicą: tablicę
     // trzeba by serializować do literału Postgresa, co jest zachowaniem STEROWNIKA,
     // a testy jadą na PGlite, produkcja na `pg`. Ta sama decyzja co w `auditReadRepo`.
     const holes = filter.roles.map(() => '?').join(', ');
-    sql.add(`p.role IN (${holes})`, ...filter.roles);
+    sql.add(`m.role IN (${holes})`, ...filter.roles);
   }
   applySearch(sql, filter.search);
 }
@@ -392,7 +474,7 @@ function applyFilters(sql: SqlFilter, filter: PilotListFilter): void {
 function applySearch(sql: SqlFilter, search: string | undefined): void {
   if (search === undefined || search === '') return;
   sql.add(
-    `(position(lower(?) in lower(p.code)) > 0
+    `(position(lower(?) in lower(m.code)) > 0
       OR position(lower(?) in lower(p.name)) > 0
       OR position(lower(?) in lower(coalesce(p.email, ''))) > 0)`,
     search,

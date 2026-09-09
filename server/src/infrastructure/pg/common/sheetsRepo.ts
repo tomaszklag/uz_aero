@@ -35,22 +35,25 @@ export class PgSheets implements SheetsPort, SheetsReadPort {
     private readonly clock: Clock,
   ) {}
 
-  async writeDaySheet(sheet: DaySheet): Promise<{ url: string }> {
+  async writeDaySheet(orgId: string, sheet: DaySheet): Promise<{ url: string }> {
     // JSONB jak w `flagsRepo`: goła tablica JS poszłaby sterownikiem jako literał
     // TABLICY Postgresa - stringify robi z niej dokument JSON.
+    //
+    // Klucz karty to `(org_id, tab)` (wielofirmowość §3.6): ta sama nazwa w dwóch klubach
+    // to DWA dokumenty, a nie jeden nadpisywany na przemian.
     await this.db.query(
-      `INSERT INTO exported_sheets (tab, rows, updated_at)
-       VALUES ($1, $2, $3)
-       ON CONFLICT (tab) DO UPDATE SET rows = EXCLUDED.rows, updated_at = EXCLUDED.updated_at`,
-      [sheet.tab, JSON.stringify(sheet.rows), this.clock.now()],
+      `INSERT INTO exported_sheets (org_id, tab, rows, updated_at)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (org_id, tab) DO UPDATE SET rows = EXCLUDED.rows, updated_at = EXCLUDED.updated_at`,
+      [orgId, sheet.tab, JSON.stringify(sheet.rows), this.clock.now()],
     );
     return { url: this.urlOf(sheet.tab) };
   }
 
-  async readDaySheet(tab: string): Promise<StoredDaySheet | null> {
+  async readDaySheet(orgId: string, tab: string): Promise<StoredDaySheet | null> {
     const { rows } = await this.db.query<SheetDbRow>(
-      'SELECT tab, rows, updated_at FROM exported_sheets WHERE tab = $1',
-      [tab],
+      'SELECT tab, rows, updated_at FROM exported_sheets WHERE org_id = $1 AND tab = $2',
+      [orgId, tab],
     );
     const r = rows[0];
     if (r == null) return null;

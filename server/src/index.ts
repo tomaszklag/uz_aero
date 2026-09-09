@@ -53,6 +53,7 @@ import { TaskSuggestionQueries } from './application/mobile/queries/taskSuggesti
 import { SessionTrackQueries } from './application/common/queries/sessionTrack.ts';
 import { SheetQueries } from './application/common/queries/sheets.ts';
 import { StateQueries } from './application/mobile/queries/aircraftState.ts';
+import { ORG_SLUG_PATTERN } from './domain/organizations.ts';
 import { GoogleIdTokens } from './infrastructure/auth/googleIdTokens.ts';
 import { Hs256Tokens } from './infrastructure/auth/hs256Tokens.ts';
 import { PgAdminAuditReadRepo } from './infrastructure/pg/admin/auditReadRepo.ts';
@@ -115,6 +116,16 @@ const env = z
      */
     SEED_ADMIN_EMAIL: z.string().email().optional(),
     /**
+     * Klub DOMYŚLNY dla backfillu migracji 8 (wielofirmowość, `docs/wielofirmowosc.md`
+     * §10): baza z danymi jednego klubu sprzed 2.0.0 dostaje przy tej migracji wiersz
+     * `organizations` o tej nazwie i slugu, a każdy istniejący wiersz - jego `org_id`.
+     * Wymagane WYŁĄCZNIE na takiej bazie (runner odmówi startu bez nich); świeża baza
+     * i baza już zmigrowana ich nie czytają. Slug wchodzi do adresów kart arkusza
+     * i nie zmienia się już nigdy - stąd walidacja kształtu, a nie tylko obecności.
+     */
+    SEED_ORG_NAME: z.string().trim().min(1).optional(),
+    SEED_ORG_SLUG: z.string().regex(ORG_SLUG_PATTERN).optional(),
+    /**
      * NASZE identyfikatory klienta Google - kontrola oddzielająca „ktoś zalogował się
      * do UZ Aero" od „ktoś ma dowolny token Google" (`aud` w weryfikacji tokenu).
      *
@@ -133,12 +144,19 @@ const clock = { now: () => new Date() };
 const pool = new Pool({ connectionString: env.DATABASE_URL });
 const db = new PgDatabase(pool);
 
-await migrate(db);
+await migrate(db, undefined, {
+  seedOrg:
+    env.SEED_ORG_NAME != null && env.SEED_ORG_SLUG != null
+      ? { name: env.SEED_ORG_NAME, slug: env.SEED_ORG_SLUG }
+      : null,
+});
 
-// Bootstrap konta administratora - patrz docblock SEED_ADMIN_EMAIL w schemacie env.
+// Bootstrap konta superadministratora - patrz docblock SEED_ADMIN_EMAIL w schemacie env.
 if (env.SEED_ADMIN_EMAIL != null) {
   await seed(db, { adminEmail: env.SEED_ADMIN_EMAIL });
-  console.log(`Seed: konto „admin" czeka na podpięcie konta Google ${env.SEED_ADMIN_EMAIL}.`);
+  console.log(
+    `Seed: konto superadministratora „admin" czeka na podpięcie konta Google ${env.SEED_ADMIN_EMAIL}.`,
+  );
 }
 
 const tokens = new Hs256Tokens(env.JWT_SECRET, clock);

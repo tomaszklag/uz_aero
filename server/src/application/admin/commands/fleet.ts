@@ -132,7 +132,11 @@ interface FieldDiff {
   to: unknown;
 }
 
-/** Pola konfiguracji, które w ogóle podlegają zmianie - jedna lista dla diffa i patcha. */
+/**
+ * Pola konfiguracji, które w ogóle podlegają zmianie - jedna lista dla diffa i patcha.
+ * `orgId` celowo poza listą: maszyna nie zmienia klubu przez `PATCH` (sprzedaż do drugiego
+ * klubu to NOWY wiersz z własną historią, wielofirmowość §3.6).
+ */
 const FIELDS = [
   'reg',
   'type',
@@ -185,10 +189,16 @@ export class AdminFleetCommands {
         const initial = refuseInitialState(input);
         if (initial != null) throw new Refused(initial);
 
-        const clash = await this.fleet.conflict(tx, { reg: input.reg, exceptId: null });
+        // Maszyna należy do klubu administratora, który ją zakłada (wielofirmowość §3.5);
+        // rejestracja jest jedyna W TYM klubie, nie na serwerze.
+        const clash = await this.fleet.conflict(tx, {
+          orgId: actor.orgId,
+          reg: input.reg,
+          exceptId: null,
+        });
         if (clash != null) throw new Conflict();
 
-        const created: AdminAircraft = { id, ...input };
+        const created: AdminAircraft = { id, orgId: actor.orgId, ...input };
         await this.fleet.insert(tx, created);
 
         return {
@@ -245,7 +255,10 @@ export class AdminFleetCommands {
         await this.fleet.lockAircraft(tx, id);
 
         const before = await this.fleet.byId(tx, id);
-        if (before == null) throw new AircraftNotFound();
+        // Maszyna cudzego klubu jest dla tego administratora NIEISTNIEJĄCA (wielofirmowość):
+        // 404, nie 403 - potwierdzenie „jest, ale nie twoja" byłoby odpowiedzią na pytanie,
+        // którego pytający nie ma prawa zadać.
+        if (before == null || before.orgId !== actor.orgId) throw new AircraftNotFound();
 
         const changes = diffOf(before, input);
         // Zapis bez zmiany zostawiłby w dzienniku wpis o niczym - a dziennik nadzoru,
@@ -300,7 +313,11 @@ export class AdminFleetCommands {
         }
 
         if (input.reg !== undefined) {
-          const clash = await this.fleet.conflict(tx, { reg: input.reg, exceptId: id });
+          const clash = await this.fleet.conflict(tx, {
+            orgId: before.orgId,
+            reg: input.reg,
+            exceptId: id,
+          });
           if (clash != null) throw new Conflict();
         }
 
@@ -359,7 +376,7 @@ export class AdminFleetCommands {
         await this.fleet.lockAircraft(tx, id);
 
         const before = await this.fleet.byId(tx, id);
-        if (before == null) throw new AircraftNotFound();
+        if (before == null || before.orgId !== actor.orgId) throw new AircraftNotFound();
 
         const refusal = refuseDeleteAircraft({
           inService: before.serviceStatus !== 'disabled',

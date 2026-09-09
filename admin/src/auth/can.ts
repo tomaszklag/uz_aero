@@ -46,6 +46,7 @@ const GRANTED_BY: Record<Capability, string> = {
   'audit.read': 'administrator',
   'maintenance.run': 'administrator',
   'bugs.triage': 'administrator',
+  'platform.manage': 'superadministrator',
 };
 
 /** „Wymaga roli: administrator" - dokładnie ten napis nosi `title` w `SZABLON.html`. */

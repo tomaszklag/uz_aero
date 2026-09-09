@@ -87,33 +87,43 @@ export class AdminRegistrationCommands {
     input: ApproveRegistrationInput,
   ): Promise<RegistrationOutcome<AdminPilotAccount>> {
     const at = this.clock.now();
-    const id = this.newId();
+    const proposedId = this.newId();
 
     try {
       const account = await this.write.run(actor, async (tx) => {
-        const pending = await this.registrations.find(tx, input.provider, input.subject);
+        const pending = await this.registrations.find(tx, actor.orgId, input.provider, input.subject);
         if (pending == null) throw new NotFound();
         if (pending.status !== 'pending') throw new AlreadyDecided(pending.status);
 
         // E-mail konta = e-mail z Google. To nie jest wygoda, tylko warunek spójności:
         // gdyby administrator wpisał inny adres, `pilots.email` przestałoby mówić,
         // którym kontem Google ten człowiek się loguje.
-        const clash = await this.pilots.conflict(tx, {
+        const clash = await this.pilots.conflict(tx, actor.orgId, {
           code: input.code,
           email: pending.email,
           exceptId: null,
         });
         if (clash != null) throw new Conflict(clash);
 
+        // Zatwierdzenie zakłada OSOBĘ i jej CZŁONKOSTWO w klubie administratora
+        // (wielofirmowość): kod i rola idą do członkostwa, nazwisko i e-mail do osoby.
+        const id = await this.pilots.insert(tx, {
+          id: proposedId,
+          orgId: actor.orgId,
+          code: input.code,
+          name: input.name,
+          email: pending.email,
+          role: input.role,
+        });
         const created: AdminPilotAccount = {
           id,
+          orgId: actor.orgId,
           code: input.code,
           name: input.name,
           email: pending.email,
           role: input.role,
           active: true,
         };
-        await this.pilots.insert(tx, created);
 
         // Warunkowe przejście `pending → linked`: przegrana w wyścigu z drugą decyzją
         // wycofuje także wstawione konto, bo lecimy w jednej transakcji.
@@ -136,6 +146,8 @@ export class AdminRegistrationCommands {
               // Imię z Google obok klubowego: za miesiąc to jedyny ślad, kim był
               // zgłaszający PRZED nadaniem kodu.
               googleName: pending.name,
+              // Osoba pod tym e-mailem już była (inny klub) - dopisano członkostwo.
+              existingPerson: id !== proposedId,
             },
           },
         };
@@ -152,7 +164,7 @@ export class AdminRegistrationCommands {
 
     try {
       await this.write.run(actor, async (tx) => {
-        const pending = await this.registrations.find(tx, input.provider, input.subject);
+        const pending = await this.registrations.find(tx, actor.orgId, input.provider, input.subject);
         if (pending == null) throw new NotFound();
         if (pending.status !== 'pending') throw new AlreadyDecided(pending.status);
 

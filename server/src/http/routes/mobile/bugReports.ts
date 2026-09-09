@@ -65,6 +65,7 @@ export function registerBugReportRoutes(
     if (!parsed.success) return reply.code(400).send({ error: 'bad_request' });
 
     const intake = await bugReports.submit(
+      claims.orgId,
       claims.pilotId,
       parsed.data.reports.map((r) => ({
         uuid: r.uuid,

@@ -16,7 +16,11 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
-import type { AuthCommands, PanelPilot } from '../../../application/common/commands/auth.ts';
+import type {
+  AuthCommands,
+  PanelPilot,
+  PanelSession,
+} from '../../../application/common/commands/auth.ts';
 import { capabilitiesOf } from '../../../domain/roles.ts';
 import { ADMIN_SESSION_COOKIE } from '../../tokenFromRequest.ts';
 import { ADMIN_API_PREFIX } from './adminRoute.ts';
@@ -39,10 +43,33 @@ const COOKIE_OPTIONS = {
   path: '/admin',
 } as const;
 
-/** Tożsamość + zdolności - ten sam kształt zwraca `GET /admin/api/me` (patrz `me.ts`). */
+/**
+ * Tożsamość + KLUB + zdolności - ten sam kształt zwraca `GET /admin/api/me` (patrz `me.ts`).
+ *
+ * `org` jest kontekstem całej sesji (wielofirmowość §8.2): panel rysuje z niego nazwę
+ * klubu w kolumnie bocznej i nie pyta o nią drugi raz. Kod i rola są kodem i rolą
+ * Z CZŁONKOSTWA w tym klubie.
+ */
 export const panelSessionToWire = (pilot: PanelPilot) => ({
   pilot: { id: pilot.id, code: pilot.code, name: pilot.name, role: pilot.role },
+  org: pilot.org,
   capabilities: capabilitiesOf(pilot.role),
+});
+
+/**
+ * Sesja PLATFORMOWA superadministratora: bez klubu (`org: null`) i bez kodu - kod jest
+ * własnością członkostwa, a superadministrator go nie ma. Panel po `org === null`
+ * poznaje, że ma narysować ramę superadministratora (epik E).
+ */
+const platformSessionToWire = (session: Extract<PanelSession, { kind: 'platform' }>) => ({
+  pilot: {
+    id: session.pilot.id,
+    code: null,
+    name: session.pilot.name,
+    role: session.pilot.platformRole,
+  },
+  org: null,
+  capabilities: session.capabilities,
 });
 
 export function registerAdminAuthRoutes(
@@ -76,12 +103,15 @@ export function registerAdminAuthRoutes(
       return reply.code(known ? 403 : 401).send({ error: result.reason });
     }
 
+    const { session } = result;
     return reply
-      .setCookie(ADMIN_SESSION_COOKIE, result.session.token, {
+      .setCookie(ADMIN_SESSION_COOKIE, session.token, {
         ...COOKIE_OPTIONS,
-        maxAge: result.session.ttlSec,
+        maxAge: session.ttlSec,
       })
-      .send(panelSessionToWire(result.session.pilot));
+      .send(
+        session.kind === 'org' ? panelSessionToWire(session.pilot) : platformSessionToWire(session),
+      );
   });
 
   /**

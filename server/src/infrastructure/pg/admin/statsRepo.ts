@@ -242,8 +242,8 @@ export class PgAdminStatsRepo implements StatsAdminPort {
     // (`docs/architektura-panelu-serwer.md` §10 poz. 8) - decyzja poza tym przekrojem.
     const { rows } = await db.query<Row>(
       `SELECT s.pic_id,
-              p.code AS code,
-              p.name AS name,
+              p.code  AS code,
+              pp.name AS name,
               COUNT(*)                                        AS sessions,
               COALESCE(SUM(s.block_ms), 0)                    AS block_ms,
               COALESCE(SUM(s.flight_ms), 0)                   AS flight_ms,
@@ -252,10 +252,11 @@ export class PgAdminStatsRepo implements StatsAdminPort {
               COUNT(*) FILTER (WHERE s.takeoff_count IS NULL) AS stale_rows,
               array_agg(DISTINCT a.reg ORDER BY a.reg)        AS regs
          FROM sessions s
-         LEFT JOIN pilots   p ON p.id = s.pic_id
-         LEFT JOIN aircraft a ON a.id = s.aircraft_id
+         LEFT JOIN pilots      pp ON pp.id = s.pic_id
+         LEFT JOIN memberships p  ON p.pilot_id = s.pic_id AND p.org_id = s.org_id
+         LEFT JOIN aircraft    a  ON a.id = s.aircraft_id
         WHERE ${CLOSED_IN_RANGE}
-        GROUP BY s.pic_id, p.code, p.name
+        GROUP BY s.pic_id, p.code, pp.name
         ORDER BY SUM(s.block_ms) DESC, s.pic_id ASC`,
       [range.fromMs, range.toMs],
     );

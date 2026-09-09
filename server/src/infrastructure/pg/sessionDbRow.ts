@@ -17,6 +17,7 @@ import type { SessionRow } from '../../application/common/ports.ts';
 
 export interface SessionDbRow {
   session_uuid: string;
+  org_id: string;
   aircraft_id: string;
   pic_id: string;
   dual_id: string | null;
@@ -67,6 +68,7 @@ export interface SessionDbRow {
 export const sessionColumns = (alias: string): string =>
   [
     'session_uuid',
+    'org_id',
     'aircraft_id',
     'pic_id',
     'dual_id',
@@ -128,6 +130,7 @@ export function toSessionRow(r: SessionDbRow): SessionRow {
   }
   return {
     sessionUuid: r.session_uuid,
+    orgId: r.org_id,
     aircraftId: r.aircraft_id,
     picId: r.pic_id,
     dualId: r.dual_id,

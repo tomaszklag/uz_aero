@@ -74,15 +74,17 @@ const SELECT_SQL = `
   SELECT b.uuid, b.pilot_id, b.created_at, b.received_at, b.severity, b.description,
          b.screen, b.app_version, b.session_uuid, b.context, b.status,
          b.status_note, b.status_by, b.status_at,
-         p.code AS pilot_code, p.name AS pilot_name, a.code AS status_by_code
+         pm.code AS pilot_code, p.name AS pilot_name, am.code AS status_by_code
     FROM bug_reports b
-    LEFT JOIN pilots p ON p.id = b.pilot_id
-    LEFT JOIN pilots a ON a.id = b.status_by
+    LEFT JOIN pilots      p  ON p.id = b.pilot_id
+    LEFT JOIN memberships pm ON pm.pilot_id = b.pilot_id AND pm.org_id = b.org_id
+    LEFT JOIN memberships am ON am.pilot_id = b.status_by AND am.org_id = b.org_id
 `;
 
 export class PgBugReportsRepo implements BugReportsPort {
   async insertMany(
     db: Queryable,
+    orgId: string,
     pilotId: string,
     reports: NewBugReport[],
   ): Promise<BugReportIntake> {
@@ -97,8 +99,8 @@ export class PgBugReportsRepo implements BugReportsPort {
       const { rows } = await db.query<{ uuid: string }>(
         `INSERT INTO bug_reports (uuid, pilot_id, created_at, received_at, severity,
                                   description, screen, app_version, session_uuid, context,
-                                  status, status_note, status_by, status_at)
-         VALUES ($1, $2, $3, now(), $4, $5, $6, $7, $8, $9, 'new', NULL, NULL, NULL)
+                                  status, status_note, status_by, status_at, org_id)
+         VALUES ($1, $2, $3, now(), $4, $5, $6, $7, $8, $9, 'new', NULL, NULL, NULL, $10)
          ON CONFLICT (uuid) DO NOTHING
          RETURNING uuid`,
         [
@@ -111,6 +113,7 @@ export class PgBugReportsRepo implements BugReportsPort {
           report.appVersion,
           report.sessionUuid,
           JSON.stringify(report.context),
+          orgId,
         ],
       );
       if (rows.length > 0) accepted += 1;

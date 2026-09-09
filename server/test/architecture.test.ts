@@ -121,9 +121,14 @@ describe('granice, których nie pilnuje kompilator', () => {
       false,
     );
 
-    // Zdejmowanie komentarzy nie zjada kodu i zjada prozę - obie strony naraz.
+    // Zdejmowanie komentarzy nie zjada kodu i zjada prozę - obie strony naraz. Prozą jest
+    // zdanie z docblocku `admin_audit` („żaden plik w src/ nie ma prawa zawierać UPDATE
+    // admin_audit ani DELETE FROM admin_audit"); kodem - DDL tabeli. Od migracji 8 kod
+    // ZAWIERA `UPDATE admin_audit` (backfill `org_id`), więc kontrola prozy idzie po
+    // frazie, która występuje WYŁĄCZNIE w komentarzu.
     expect(codeOf('infrastructure/pg/schema.ts')).toContain('CREATE TABLE IF NOT EXISTS admin_audit');
-    expect(codeOf('infrastructure/pg/schema.ts')).not.toContain('UPDATE admin_audit');
+    expect(read('infrastructure/pg/schema.ts')).toContain('ani DELETE FROM admin_audit');
+    expect(codeOf('infrastructure/pg/schema.ts')).not.toContain('ani DELETE FROM admin_audit');
 
     // Wyciąganie nazw z importów działa na pliku, który `Database` faktycznie bierze.
     expect(importedNames(read('application/mobile/commands/ingest.ts'))).toContain('Database');
@@ -141,15 +146,35 @@ describe('granice, których nie pilnuje kompilator', () => {
     expect(filesUnder('http/routes/admin')).toContain('http/routes/admin/auth.ts');
   });
 
+  /**
+   * JEDYNY plik, któremu wolno napisać `UPDATE` na tabelach append-only: skrypt migracji.
+   *
+   * Backfill migracji 8 (wielofirmowość, 2026-09-08) dopisuje `org_id` do KAŻDEGO
+   * istniejącego wiersza `events`, `admin_audit`, `export_log` i `exported_sheets` -
+   * raz, w tej samej transakcji co DDL, nie zmieniając ani jednej wartości, którą te
+   * tabele niosły. To nie jest „edycja rejestru", tylko nadanie wierszom przynależności,
+   * której schemat 1.x nie znał; bez niej kolumna nie mogłaby być `NOT NULL`, a filtr
+   * `WHERE org_id = $1` cicho pomijałby całą historię klubu.
+   *
+   * Wyjątek jest WYMIENIONY IMIENNIE, nie opisany wzorcem (jak `publicByDesign` niżej):
+   * dopisanie tu drugiego pliku ma być decyzją widoczną w diffie. Reguła dla całego
+   * kodu poza migracjami zostaje nietknięta.
+   */
+  const MIGRATION_SCRIPT = 'infrastructure/pg/schema.ts';
+  const appCode = (): string[] => filesUnder('.').filter((f) => f !== MIGRATION_SCRIPT);
+
   it('rejestr `events` jest append-only - nigdzie w src/ nie ma UPDATE ani DELETE', () => {
-    const offenders = filesUnder('.').filter((f) => writesTo('events').test(codeOf(f)));
+    const offenders = appCode().filter((f) => writesTo('events').test(codeOf(f)));
     expect(offenders).toEqual([]);
+    // Kontrola wyjątku: skrypt migracji NAPRAWDĘ zawiera backfill, więc wyłączenie go
+    // z listy nie jest martwe - i jedyne, co tam stoi, to dopisanie klubu.
+    expect(codeOf(MIGRATION_SCRIPT)).toMatch(/UPDATE events\s+SET org_id = club WHERE org_id IS NULL/);
   });
 
   it('dziennik `admin_audit` jest append-only - nigdzie w src/ nie ma UPDATE ani DELETE', () => {
     // Docelowo pilnuje tego GRANT bez UPDATE/DELETE dla roli aplikacyjnej; do czasu
     // rozdzielenia connection stringów to jest jedyna wykonywalna gwarancja.
-    const offenders = filesUnder('.').filter((f) => writesTo('admin_audit').test(codeOf(f)));
+    const offenders = appCode().filter((f) => writesTo('admin_audit').test(codeOf(f)));
     expect(offenders).toEqual([]);
   });
 
@@ -161,7 +186,7 @@ describe('granice, których nie pilnuje kompilator', () => {
     // Do 2026-08-01 inwariant był ZACHOWANY, ale niepilnowany: nic nie broniło następnej
     // osobie „naprawić" wyścigu rewizji przez `ON CONFLICT DO UPDATE`, a wtedy wszystkie
     // trzy zdania wyżej stałyby się nieprawdą po cichu.
-    const offenders = filesUnder('.').filter(
+    const offenders = appCode().filter(
       (f) => writesTo('export_log').test(codeOf(f)) || upsertsInto('export_log').test(codeOf(f)),
     );
     expect(offenders).toEqual([]);
@@ -182,7 +207,7 @@ describe('granice, których nie pilnuje kompilator', () => {
     );
     // …ale UPDATE i DELETE nie mają tu wstępu tak samo: treść nadpisuje wyłącznie
     // ścieżka eksportu, przez `writeDaySheet`, a nie zapytanie z boku.
-    const offenders = filesUnder('.').filter((f) => writesTo('exported_sheets').test(codeOf(f)));
+    const offenders = appCode().filter((f) => writesTo('exported_sheets').test(codeOf(f)));
     expect(offenders).toEqual([]);
   });
 

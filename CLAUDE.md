@@ -2659,6 +2659,78 @@ design-first obowiązuje tu tak samo w aplikacji, jak w panelu.
   stan PO wdrożeniu epików B–F; przy każdym epiku sprawdzić stronę), osadza nowe makiety
   przez `@screen` i `@panel`
 
+## Wielofirmowość 2.0.0 - epik B: serwer, model klubów (issue #98, 2026-09-08, gałąź `feature-98-serwer-kluby`)
+Migracja 8 + domena ról + porty + adaptery + komendy; **pierwsza migracja Z BACKFILLEM
+na bazie produkcyjnej** - pułapki w `docs/architektura-panelu-serwer.md` §7.9, odstępstwa
+od dokumentu decyzji w `docs/wielofirmowosc.md` §14 (B). Reguły obowiązujące odtąd KAŻDY
+plik serwera:
+- **osoba jest jedna, kod i rola są CZŁONKOSTWA** (`memberships (org_id, pilot_id)`):
+  `pilots.code` i `pilots.role` NIE ISTNIEJĄ. Każde złączenie po kodzie pilota to
+  `LEFT JOIN memberships m ON m.pilot_id = X AND m.org_id = <klub wiersza>` plus
+  `LEFT JOIN pilots` po nazwisko - nigdy sam `pilots.code`. `pilots.active` znaczy
+  blokadę PLATFORMOWĄ (superadministrator); „wyłącz konto" w panelu = `memberships.status
+  = 'disabled'` + `memberships.credentials_valid_from`, a brama sprawdza OBIE daty
+- **klub jest W TOKENIE** (`Identity.orgId`; claim `org`): token bez `org` - każdy sprzed
+  2.0.0 - jest NIEWAŻNY (`verify()` → `null`), telefon odświeża go refreshem, który klub
+  zna (`refresh_tokens.org_id`). Rotacja zostaje w tym samym klubie; przełączenie
+  (`POST /auth/switch`) i dołączanie (`POST /auth/join`) to epiki F i D. Logowanie wybiera
+  klub aktywny: ostatnio używany (najświeższy refresh) → pierwszy alfabetycznie;
+  osoba bez aktywnego członkostwa → `403 no_membership`
+- **TRZY rodzaje tokenów, rozłączne claimem `purpose`**: klubu (bez `purpose`),
+  rejestracyjny (`registration`), PLATFORMOWY (`platform` - superadministrator bez klubu,
+  `signPlatform`/`verifyPlatform`). Każda weryfikacja odrzuca dwa pozostałe rodzaje
+- **bramy**: `authorize` (token klubu, trasy telefonu - bez bazy), `authorizeOrg`
+  (dawne `authorizeAccount`: członkostwo `(org, sub)` czytane przy KAŻDYM żądaniu panelu -
+  osoba aktywna I klub aktywny I członkostwo `active`, obie daty unieważnienia),
+  `authorizePlatform` (`pilots.platform_role`, zdolność `platform.manage` - jedyna
+  zdolność platformowa, NIE MA jej żaden administrator klubu). `adminRoute` jest trasą
+  KLUBU i daje handlerowi `Actor` z `orgId`; `PlatformActor` (bez klubu) zna wyłącznie
+  `AuditedWrite`, który pisze wtedy `admin_audit.org_id = NULL`
+- **`org_id` NOT NULL na każdej tabeli klubu** (`aircraft`, `events`, `sessions`, `flags`,
+  `export_log`, `exported_sheets`, `aircraft_readings`, `aircraft_consumption`,
+  `bug_reports`, `refresh_tokens`), nullowalne WYŁĄCZNIE w `admin_audit`. Każdy zapis
+  podaje klub JAWNIE parametrem portu (`insertBatch(tx, orgId, …)`, `SessionRow.orgId`,
+  `FlagRecord.orgId`, `writeDaySheet(orgId, …)`, `insertMany(db, orgId, …)`), bo `Event`
+  i `SessionState` z domeny klubu nie znają i znać nie mają (§2 dokumentu). Klub
+  zdarzenia = klub tokenu telefonu; klub korekty/unieważnienia/zakończenia z panelu =
+  klub WIERSZA PROJEKCJI sesji (sesja cudzego klubu → 404, nie 403 - jak maszyna)
+- **jedyna nowa odmowa ingestu: `aircraft_not_in_org`** (403, cała paczka) - maszyna
+  z paczki należy do innego klubu niż token, albo sesja już istniejąca należy do innego
+  klubu. Twarda, bez miękkiej wersji: flaga w cudzym dzienniku byłaby już wyciekiem.
+  Maszyna NIEZNANA rejestrowi floty przechodzi (rejestr przyjmuje to, co przyszło)
+- **unikaty klubu**: `(org_id, reg)`, `(org_id, code)`, `(org_id, tab)` - ta sama wartość
+  w dwóch klubach to dwa byty. `uniqueConflictOn` widzi `idx_memberships_code`, bo
+  separatorem jest podkreślenie. Sygnatura numeruje dobę pilota W KLUBIE
+  (`AND x.org_id = s.org_id` w partycji `PgAdminSessionsRepo`)
+- **`/reference` = flota i CZŁONKOWIE klubu z tokenu** (kod z członkostwa, `active`
+  = członkostwo aktywne, ETag z klubem); `GET /sheets/:tab` czyta kartę w kluczu klubu
+  z tokenu (cudza o tej samej nazwie → 404). Panel: `AdminPilotListItem` to CZŁONKOSTWO
+  (`orgId`, kod i rola w klubie sesji), `POST /pilots` z e-mailem osoby z INNEGO klubu
+  dopisuje jej członkostwo zamiast zakładać drugą osobę (`insert` oddaje id osoby;
+  audyt `existingPerson`), `remove` odbija także osobę z członkostwem gdzie indziej
+- **seed = SUPERADMINISTRATOR bez klubu** (`pilots.platform_role`), zero klubów na świeżej
+  bazie; kluby zakłada moduł Organizacje (epik E). Backfill migracji 8 wymaga
+  `SEED_ORG_NAME`/`SEED_ORG_SLUG` WYŁĄCZNIE na bazie z danymi 1.x (`MigrationContext.seedOrg`
+  → `set_config`, `current_setting` w bloku `DO`); bez nich runner odmawia startu na
+  takiej bazie, świeża przechodzi bez zmiennych. Na bazie z backfillem `admin` zostaje
+  administratorem klubu domyślnego I dostaje rolę platformową - to dziś ta sama osoba
+- **panel bez klubu dla superadministratora**: `panelLoginWithProvider` daje sesję
+  PLATFORMOWĄ (`kind: 'platform'`, wire `{ pilot: { code: null, role: 'superadmin' },
+  org: null, capabilities: ['platform.manage'] }`), która NIE otwiera `GET /me` ani
+  żadnej trasy klubu - moduł Organizacje przychodzi w epiku E. Do tego czasu świeża baza
+  dev (superadmin, zero klubów) nie ma jak wejść do panelu klubu; testy stoją na
+  `test/testWorld.ts` z DWOMA klubami (Alfa: dotychczasowy świat; Beta: SP-BBB, BAD, BPI;
+  PWI w obu pod kodami `PWI`/`PWB` - klub aktywny PWI = Alfa alfabetycznie)
+- **test architektury ma imienny wyjątek** dla `infrastructure/pg/schema.ts` na `UPDATE`
+  tabel append-only (backfill `SET org_id = club WHERE org_id IS NULL`, z asercją treści) -
+  dopisanie drugiego pliku jest decyzją, nie refaktorem
+- **czego epik B świadomie NIE ROBI** (idzie dalej): filtr `WHERE org_id` w KAŻDYM
+  odczycie i test izolacji każdej trasy (C), adres kart ze slugiem i token odczytu (C),
+  kontrola członkostwa per żądanie telefonu (C), `POST /auth/join`, zaproszenia i kolejka
+  `pending` na członkostwach (D), moduł Organizacje i wybór klubu w panelu (E), klub
+  w aplikacji (F). Panel web dostał wyłącznie lustro: `platform.manage` w `dto.ts`
+  i `can.ts`, `org` w `PanelSessionDto`
+
 ## Obieg gałęzi (git-flow od 2026-09-08, milestone „Wielofirmowość + SaaS 2.0.0")
 ```
 feature-… → develop → ninerdeck_x_x_x → main        (wydanie planowe)
