@@ -25,7 +25,7 @@ export function registerAdminMeRoutes(
     gate,
     { method: 'GET', url: '/me', capability: 'panel.access' },
     async (_req, reply, actor) => {
-      const pilot = await me.get(actor.pilotId);
+      const pilot = await me.get(actor.pilotId, actor.orgId);
       // Token ważny, konto skasowane albo wyłączone → 401, nie 404: pytanie brzmi
       // „kim jestem", a odpowiedź „nikim" znaczy dla panelu dokładnie „zaloguj się".
       if (pilot == null) return reply.code(401).send({ error: 'unauthorized' });

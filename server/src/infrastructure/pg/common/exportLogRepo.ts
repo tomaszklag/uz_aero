@@ -96,10 +96,10 @@ export class PgExportLogRepo implements ExportLogPort {
   async appendCard(db: Queryable, card: ExportCardRecord): Promise<void> {
     if (card.sessionUuids.length === 0) return;
     const values = card.sessionUuids
-      .map((_, i) => `($${i + 6}, $1, $2, $3, $4, $5)`)
+      .map((_, i) => `($${i + 7}, $1, $2, $3, $4, $5, $6)`)
       .join(', ');
     await db.query(
-      `INSERT INTO export_log (session_uuid, day, aircraft_id, sheet_url, revision, exported_at)
+      `INSERT INTO export_log (session_uuid, day, aircraft_id, sheet_url, revision, exported_at, org_id)
        VALUES ${values}`,
       [
         card.day,
@@ -107,6 +107,7 @@ export class PgExportLogRepo implements ExportLogPort {
         card.sheetUrl,
         card.revision,
         card.exportedAt,
+        card.orgId,
         ...card.sessionUuids,
       ],
     );

@@ -488,6 +488,30 @@ starym pakiecie - decyzja o tym w epiku W.
   `docs/podrecznik/kluby-i-zaproszenia.md`).
 - **B - serwer: model** (issue #98): migracja 8 (+9), `organizations`, `memberships`,
   `invitations`, `platform_role`, backfill, brama członkostwa w `authorize()`.
+  **WDROŻONE 2026-09-08** (gałąź `feature-98-serwer-kluby`; pułapki migracji:
+  `docs/architektura-panelu-serwer.md` §7.9). Odstępstwa od tego dokumentu, każde
+  z powodem:
+  - **migracja 9 NIE istnieje** - `DROP COLUMN pilots.code, pilots.role` stoi na końcu
+    migracji 8 (issue #98 tak kazało; serwer po 8 czyta wyłącznie członkostwa, więc okno
+    z §10 pkt 6 nie występuje);
+  - **`admin_audit.org_id` jest nullowalne** - jedyna taka kolumna: akcja superadministratora
+    na platformie nie dzieje się w żadnym klubie (§3.5 mówiło „na wszystkich" i nie
+    przewidziało wpisu bez klubu);
+  - **`pilots.active` wraca na `TRUE` przy backfillu** - dawne „wyłącz konto" przechodzi
+    na członkostwo, a kolumna osoby znaczy odtąd blokadę platformową (§3.2), której nikt
+    jeszcze nie nałożył;
+  - **`external_identities` bez zmian** - kolejka `pending`/`rejected` przenosi się na
+    członkostwa razem z epikiem D (§4), nie wcześniej;
+  - **trasy telefonu nadal NIE pytają bazy o członkostwo przy każdym żądaniu** (§6
+    zapowiada tę kontrolę) - token klubu żyje godzinę, brama panelu pyta zawsze; kontrola
+    per żądanie telefonu wchodzi z testem izolacji w epiku C;
+  - **`GET /sheets/:tab` czyta kartę W KLUBIE Z TOKENU** (klucz `(org_id, tab)` już jest),
+    adres ze slugiem i token odczytu (§3.7) - epik C;
+  - **osoba bez aktywnego członkostwa dostaje `403 no_membership`**, a superadministrator
+    bez klubu - sesję PLATFORMOWĄ panelu (`org: null`, sama zdolność `platform.manage`);
+    trasy, które ta sesja otwiera, dochodzą w epiku E.
+  Świat testowy ma DWA kluby (`test/testWorld.ts`: Alfa i Beta, PWI w obu pod dwoma
+  kodami) - warunek testu izolacji z epiku C jest spełniony.
 - **C - serwer: izolacja** (issue #99): `org_id` w każdym zapytaniu, adres kart
   arkusza, test izolacji każdej trasy.
 - **D - zaproszenia** (issue #100): `POST /auth/join`, dopasowanie e-mail przy

@@ -28,6 +28,7 @@ import type { EventListFilter } from '../src/application/admin/ports.ts';
 import { PgAdminEventsReadRepo } from '../src/infrastructure/pg/admin/eventsReadRepo.ts';
 import { testHarness } from './helpers.ts';
 import { googleTokenFor } from './testIdentityProvider.ts';
+import { ORG_A } from './testWorld.ts';
 
 type Harness = Awaited<ReturnType<typeof testHarness>>;
 
@@ -152,9 +153,9 @@ async function rawEvent(
 ): Promise<void> {
   await db.query(
     `INSERT INTO events
-       (uuid, session_uuid, aircraft_id, pic_id, dual_id, type,
+       (org_id, uuid, session_uuid, aircraft_id, pic_id, dual_id, type,
         device_time, gps_time, payload, schema_version, source_device, received_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, COALESCE($12, now()))`,
+     VALUES ('${ORG_A}', $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, COALESCE($12, now()))`,
     [
       row.uuid,
       row.sessionUuid ?? BASE.sessionUuid,
@@ -844,9 +845,9 @@ describe('porządek rejestru daje INDEKS, nie sortowanie w pamięci', () => {
     const harness = await testHarness();
     await harness.db.query(
       `INSERT INTO events
-         (uuid, session_uuid, aircraft_id, pic_id, type, device_time, gps_time,
+         (org_id, uuid, session_uuid, aircraft_id, pic_id, type, device_time, gps_time,
           payload, schema_version, received_at)
-       SELECT 'big-' || g, 'sess-big', 'SP-AXA', 'KRZ', 'taxi', 0, 0, '{}'::jsonb, 1,
+       SELECT '${ORG_A}', 'big-' || g, 'sess-big', 'SP-AXA', 'KRZ', 'taxi', 0, 0, '{}'::jsonb, 1,
               TIMESTAMPTZ '2026-01-01 00:00:00+00' + (g * INTERVAL '1 second')
          FROM generate_series(1, 5000) AS g`,
     );

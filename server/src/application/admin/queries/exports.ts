@@ -73,7 +73,7 @@ export class AdminExportQueries {
     // jest zawsze 0 albo 1 - i o to chodzi. Zestawiona z długością `revisions` jest
     // jedynym miejscem, w którym widać, że dziennik i karta odpowiadają na dwa różne
     // pytania: „co i kiedy poszło" oraz „jak karta wygląda teraz".
-    const sheet = item.tab == null ? null : await this.sheets.readDaySheet(item.tab);
+    const sheet = item.tab == null ? null : await this.sheets.readDaySheet(join.orgId, item.tab);
 
     return {
       sessionUuid,
@@ -114,7 +114,9 @@ export class AdminExportQueries {
     const tab = exportListItem(join).tab;
     if (tab == null) return null;
 
-    const sheet = await this.sheets.readDaySheet(tab);
+    // Karta w kluczu KLUBU sesji (wielofirmowość §3.6) - ta sama nazwa w cudzym klubie
+    // to inny dokument.
+    const sheet = await this.sheets.readDaySheet(join.orgId, tab);
     if (sheet == null) return null;
 
     return { tab: sheet.tab, rows: sheet.rows, updatedAt: sheet.updatedAt.toISOString() };

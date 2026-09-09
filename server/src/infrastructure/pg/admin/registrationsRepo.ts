@@ -50,9 +50,13 @@ const toRecord = (r: Row): RegistrationRecord => ({
 });
 
 /**
- * Dwa złączenia z `pilots` pod dwoma aliasami: `p` = konto ZATWIERDZONE (kod pilota
+ * Dwa złączenia z `memberships` pod dwoma aliasami: `p` = KONTO ZATWIERDZONE (kod pilota
  * na liście), `d` = administrator, który ZDECYDOWAŁ. Oba `LEFT`, bo zgłoszenie
  * oczekujące nie ma ani jednego, ani drugiego.
+ *
+ * Kod pilota jest odtąd kodem W KLUBIE (wielofirmowość), więc oba złączenia dostają
+ * klub czytającego jako `$1`: zgłoszenie rejestracyjne klubu nie zna (przenosi się na
+ * członkostwa w epiku D), a panel klubu ma widzieć kody SWOJEGO klubu.
  */
 const SELECT = `
   SELECT e.provider, e.subject, e.email, e.name, e.status, e.reject_reason,
@@ -60,18 +64,19 @@ const SELECT = `
          d.code AS decided_by_code,
          e.pilot_id, p.code AS pilot_code
     FROM external_identities e
-    LEFT JOIN pilots p ON p.id = e.pilot_id
-    LEFT JOIN pilots d ON d.id = e.decided_by`;
+    LEFT JOIN memberships p ON p.pilot_id = e.pilot_id AND p.org_id = $1
+    LEFT JOIN memberships d ON d.pilot_id = e.decided_by AND d.org_id = $1`;
 
 export class PgAdminRegistrationsRepo implements RegistrationsAdminPort {
   async list(
     db: Queryable,
+    orgId: string,
     filter: { statuses: readonly IdentityStatus[]; limit: number },
   ): Promise<RegistrationRecord[]> {
     // Filtr składany z numerowanych parametrów zamiast `= ANY($1)`: lista statusów ma
     // trzy pozycje, a parametr tablicowy jest jedynym miejscem, w którym `pg` i PGlite
     // potrafią się różnić kodowaniem - nie warto.
-    const params: unknown[] = [];
+    const params: unknown[] = [orgId];
     const where =
       filter.statuses.length === 0
         ? ''
@@ -86,8 +91,14 @@ export class PgAdminRegistrationsRepo implements RegistrationsAdminPort {
     return rows.map(toRecord);
   }
 
-  async find(db: Queryable, provider: string, subject: string): Promise<RegistrationRecord | null> {
-    const { rows } = await db.query<Row>(`${SELECT} WHERE e.provider = $1 AND e.subject = $2`, [
+  async find(
+    db: Queryable,
+    orgId: string,
+    provider: string,
+    subject: string,
+  ): Promise<RegistrationRecord | null> {
+    const { rows } = await db.query<Row>(`${SELECT} WHERE e.provider = $2 AND e.subject = $3`, [
+      orgId,
       provider,
       subject,
     ]);

@@ -34,7 +34,7 @@ import type { Clock, EventsStorePort, SessionsProjectionPort } from '../../commo
 import { sessionRowFrom } from '../../common/mappers/sessionRow.ts';
 import type { RebuildReport, TokenPurgeReport } from '../contracts/maintenance.ts';
 import type { AuditedWrite } from '../auditedWrite.ts';
-import type { Actor, MaintenanceAdminPort } from '../ports.ts';
+import type { AuditActor, MaintenanceAdminPort } from '../ports.ts';
 import { scanProjections } from '../projectionScan.ts';
 
 /**
@@ -133,7 +133,13 @@ export class AdminMaintenanceCommands {
    * paczki. Raport z podglądu opisywałby wtedy świat sprzed kilku minut, a wpis w audycie
    * - nadpisanie, którego nie było. Wołający dostaje liczby z chwili ZAPISU.
    */
-  async rebuildProjections(actor: Actor, input: RebuildInput = {}): Promise<RebuildOutcome> {
+  /**
+   * `AuditActor`, nie `Actor`: przebudowa dotyczy CAŁEGO rejestru, wszystkich klubów
+   * naraz, więc woła ją także skrypt awaryjny bez klubu (`bin/rebuildProjectionsCli.ts`)
+   * i - docelowo - superadministrator. Wpis audytu dostaje klub działającego (albo NULL
+   * przy akcji platformowej), a nie klub przebudowanych wierszy, bo tych bywa wiele.
+   */
+  async rebuildProjections(actor: AuditActor, input: RebuildInput = {}): Promise<RebuildOutcome> {
     const reason = input.reason?.trim() ?? '';
     if (reason.length === 0) return { ok: false, reason: 'reason_required' };
 
@@ -195,7 +201,7 @@ export class AdminMaintenanceCommands {
 
     let written = 0;
     for (const diff of scan.diffs) {
-      if (await this.rewrite(tx, diff.sessionUuid)) written += 1;
+      if (await this.rewrite(tx, diff.sessionUuid, diff.orgId)) written += 1;
     }
 
     return {
@@ -232,11 +238,11 @@ export class AdminMaintenanceCommands {
    * wyścigu. Testowalna jest kolejność (blokada przed odczytem, oba w jednej transakcji)
    * i tyle test przybija - dokładnie jak przy `ExportLogPort.lock` i `uq_export_log_card_revision`.
    */
-  private async rewrite(tx: AuditedTx, sessionUuid: string): Promise<boolean> {
+  private async rewrite(tx: AuditedTx, sessionUuid: string, orgId: string): Promise<boolean> {
     await tx.query('SELECT pg_advisory_xact_lock(hashtext($1))', [sessionUuid]);
     const fresh = await this.events.sessionEvents(tx, sessionUuid);
     if (fresh.length === 0) return false;
-    await this.sessions.upsert(tx, sessionRowFrom(sessionUuid, fresh));
+    await this.sessions.upsert(tx, sessionRowFrom(sessionUuid, fresh, orgId));
     return true;
   }
 
@@ -254,7 +260,7 @@ export class AdminMaintenanceCommands {
    * postacią zdania z ekranu „żaden pilot nie zostanie przez to wylogowany".
    */
   async pruneRefreshTokens(
-    actor: Actor,
+    actor: AuditActor,
     input: PruneTokensInput = {},
   ): Promise<PruneTokensOutcome> {
     if (input.confirm !== PURGE_TOKENS_CONFIRMATION) {

@@ -16,6 +16,7 @@ import { sessionListItem } from '../src/application/admin/mappers/sessionListIte
 import type { AdminSessionJoin } from '../src/application/admin/ports.ts';
 import type { EventsStorePort } from '../src/application/common/ports.ts';
 import { testHarness } from './helpers.ts';
+import { ORG_A } from './testWorld.ts';
 import { googleTokenFor } from './testIdentityProvider.ts';
 
 const DAY = Date.UTC(2026, 5, 22);
@@ -92,7 +93,7 @@ describe('projekcja domenowa ↔ wiersz sesji', () => {
       event('engine_stop', at(10, 34)),
     ];
 
-    const row = sessionRowFrom('sess-1', stream);
+    const row = sessionRowFrom('sess-1', stream, ORG_A);
     const projection = projectSession(stream);
 
     expect(row).toMatchObject({
@@ -120,7 +121,7 @@ describe('projekcja domenowa ↔ wiersz sesji', () => {
       }),
     ];
 
-    expect(sessionRowFrom('sess-1', stream)).toMatchObject({
+    expect(sessionRowFrom('sess-1', stream, ORG_A)).toMatchObject({
       status: 'closed',
       mhEnd: 1241.15,
       fuelEndL: 88,
@@ -147,7 +148,7 @@ describe('projekcja domenowa ↔ wiersz sesji', () => {
     ];
 
     const projection = projectSession(stream);
-    expect(sessionRowFrom('sess-1', stream)).toMatchObject({
+    expect(sessionRowFrom('sess-1', stream, ORG_A)).toMatchObject({
       operation: projection.operation,
       client: projection.client,
       // `claim_time` niesie CHWILĘ PRZEJĘCIA (decyzja 2026-08-07). Klamry służby w `sessions`
@@ -185,7 +186,7 @@ describe('projekcja domenowa ↔ wiersz sesji', () => {
     ];
 
     const open = projectSession(openStream);
-    expect(sessionRowFrom('sess-1', openStream)).toMatchObject({
+    expect(sessionRowFrom('sess-1', openStream, ORG_A)).toMatchObject({
       takeoffCount: open.takeoffCount,
       landingCount: open.landingCount,
       dropCount: open.drops.count,
@@ -208,7 +209,7 @@ describe('projekcja domenowa ↔ wiersz sesji', () => {
       }),
     ];
     const closed = projectSession(closedStream);
-    expect(sessionRowFrom('sess-1', closedStream)).toMatchObject({
+    expect(sessionRowFrom('sess-1', closedStream, ORG_A)).toMatchObject({
       mhDeltaH: closed.mh.deltaH,
       fuelConsumedL: closed.fuel.consumedL,
     });
@@ -227,7 +228,7 @@ describe('DTO listy dni ↔ wiersz projekcji', () => {
     event('takeoff', at(8, 25), { method: 'auto' }),
     event('landing', at(9, 18), { method: 'auto' }),
     event('engine_stop', at(10, 34)),
-  ]);
+  ], ORG_A);
 
   const join: AdminSessionJoin = {
     row,

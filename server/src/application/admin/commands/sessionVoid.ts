@@ -128,6 +128,12 @@ export class AdminSessionVoidCommands {
         // `sessions` - zdarzenie zostałoby w rejestrze, a sesja wróciłaby do sum.
         await tx.query('SELECT pg_advisory_xact_lock(hashtext($1))', [input.sessionUuid]);
 
+        // Klub operacji z wiersza projekcji; sesja cudzego klubu jest nieistniejąca
+        // dla tego administratora (wielofirmowość - jak w korekcie).
+        const row = await this.sessions.get(tx, input.sessionUuid);
+        if (row == null || row.orgId !== actor.orgId) throw new SessionNotFound();
+        const orgId = row.orgId;
+
         const stream = await this.events.sessionEvents(tx, input.sessionUuid);
         if (stream.length === 0) throw new SessionNotFound();
 
@@ -153,13 +159,13 @@ export class AdminSessionVoidCommands {
 
         const warnings = correctionWarnings(before, candidate, limits);
 
-        await this.events.insertBatch(tx, [candidate], adminSourceDevice(actor.pilotId));
+        await this.events.insertBatch(tx, orgId, [candidate], adminSourceDevice(actor.pilotId));
 
         // Projekcję liczymy z PEŁNEGO strumienia - `status` sesji jest funkcją całości,
         // a nie różnicą do dołożenia.
         const after = await this.events.sessionEvents(tx, input.sessionUuid);
         const state = projectSession(after);
-        await this.sessions.upsert(tx, sessionRowFrom(input.sessionUuid, after));
+        await this.sessions.upsert(tx, sessionRowFrom(input.sessionUuid, after, orgId));
 
         return {
           result: { candidate, state, warnings },

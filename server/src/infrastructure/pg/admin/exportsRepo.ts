@@ -42,6 +42,7 @@ import { SqlFilter } from '../sqlFilter.ts';
 
 interface ExportJoinDbRow {
   session_uuid: string;
+  org_id: string;
   aircraft_id: string;
   reg: string | null;
   aircraft_type: string | null;
@@ -124,12 +125,13 @@ interface RevisionDbRow {
  */
 const selectSql = (blockingTypes: string): string => `
   SELECT s.session_uuid,
+         s.org_id,
          s.aircraft_id,
          a.reg,
          a.type       AS aircraft_type,
          s.pic_id,
          p.code       AS pic_code,
-         p.name       AS pic_name,
+         pp.name      AS pic_name,
          s.status,
          s.claim_time,
          s.updated_at,
@@ -147,8 +149,9 @@ const selectSql = (blockingTypes: string): string => `
          ow.session_uuid AS overwritten_by_session,
          ow.exported_at  AS overwritten_at
     FROM sessions s
-    LEFT JOIN aircraft a ON a.id = s.aircraft_id
-    LEFT JOIN pilots   p ON p.id = s.pic_id
+    LEFT JOIN aircraft    a  ON a.id = s.aircraft_id
+    LEFT JOIN pilots      pp ON pp.id = s.pic_id
+    LEFT JOIN memberships p  ON p.pilot_id = s.pic_id AND p.org_id = s.org_id
     LEFT JOIN LATERAL (
       SELECT el.revision, el.exported_at, el.sheet_url, el.day, el.aircraft_id, el.id
         FROM export_log el
@@ -200,6 +203,7 @@ const statedSql = (blockingTypes: string, where: string): string => `
 
 const toJoin = (r: ExportJoinDbRow): AdminExportJoin => ({
   sessionUuid: r.session_uuid,
+  orgId: r.org_id,
   aircraftId: r.aircraft_id,
   reg: r.reg,
   aircraftType: r.aircraft_type,

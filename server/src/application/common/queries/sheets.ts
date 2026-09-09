@@ -13,8 +13,12 @@ import type { SheetsReadPort, StoredDaySheet } from '../ports.ts';
 export class SheetQueries {
   constructor(private readonly sheets: SheetsReadPort) {}
 
-  /** Karta po nazwie (`YYYY-MM-DD_SP-XXX`); `null` = nie wyeksportowano. */
-  get(tab: string): Promise<StoredDaySheet | null> {
-    return this.sheets.readDaySheet(tab);
+  /**
+   * Karta KLUBU po nazwie (`YYYY-MM-DD_SP-XXX`); `null` = nie wyeksportowano.
+   * Klub z tokenu czytającego: karta cudzego klubu o tej samej nazwie nie istnieje
+   * dla niego (wielofirmowość §3.7; adres ze slugiem klubu dochodzi w epiku C).
+   */
+  get(orgId: string, tab: string): Promise<StoredDaySheet | null> {
+    return this.sheets.readDaySheet(orgId, tab);
   }
 }

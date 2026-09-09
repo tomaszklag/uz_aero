@@ -16,6 +16,7 @@ export function pilotListItem(join: AdminPilotJoin): AdminPilotListItem {
   const { account } = join;
   return {
     id: account.id,
+    orgId: account.orgId,
     code: account.code,
     name: account.name,
     email: account.email,

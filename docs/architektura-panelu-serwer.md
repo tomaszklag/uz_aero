@@ -1381,6 +1381,71 @@ Podobnie `exported_sheets.tab`: klucz `YYYY-MM-DD_SP-XXX` był od początku popr
 nie nazwa była za wąska, tylko TREŚĆ za wąska wobec nazwy (druga zmiana dnia nadpisywała
 pierwszą zamiast do niej dołączyć).
 
+### 7.9 Migracja 8 - wielofirmowość: pierwsza migracja Z BACKFILLEM na bazie produkcyjnej (2026-09-08)
+
+Migracje 2–7 były addytywne (nullowalne kolumny, nowe tabele, jeden `DROP COLUMN`
+kolumny, której nikt nie czytał). Migracja 8 (issue #98, `docs/wielofirmowosc.md` §10)
+jest pierwszą, która **przepisuje istniejące wiersze** i **zdejmuje globalne unikaty** -
+i to jedno zdanie tłumaczy każdą z pułapek niżej.
+
+**(a) Migracja czysto SQL-owa potrzebowała danych, których w bazie nie ma.** Backfill
+zakłada klub domyślny, a jego nazwę i slug zna wyłącznie właściciel. Skrypt zostaje
+napisem (`MIGRATIONS: readonly string[]`, runner niczego o pozycjach tablicy nie wie),
+a wartości jadą do transakcji jako **ustawienia sesji**: `migrate(db, MIGRATIONS,
+{ seedOrg })` dopisuje przed skryptem `SELECT set_config('uzaero.seed_org_name', '…', true)`
+(lokalne dla transakcji), a blok `DO $$ … $$` czyta je `current_setting(…, true)`. Wartości
+są wklejane jako literały - skrypt wieloczłonowy nie przyjmuje parametrów - z podwojeniem
+apostrofu jako jedyną ucieczką (`standard_conforming_strings = on`); test
+`organizations.test.ts` przepycha przez to „Aeroklub O'Neill". **Bez zmiennych na bazie
+Z DANYMI runner odmawia** (`RAISE EXCEPTION`) zamiast wymyślać „Klub 1": slug wchodzi do
+adresów kart arkusza i nie zmienia się już nigdy. Świeża baza (testy, nowe wdrożenie)
+nie ma czego przepisywać i przechodzi bez nich.
+
+**(b) W PL/pgSQL nazwa zmiennej nie może być nazwą kolumny.** Pierwsza wersja bloku
+deklarowała `org_id TEXT` i robiła `UPDATE aircraft SET org_id = org_id` - Postgres
+odmawia (`column reference "org_id" is ambiguous`, domyślne `plpgsql.variable_conflict =
+error`). Zmienna nazywa się `club` i tak ma zostać.
+
+**(c) `pilots.active` zmienia ZNACZENIE, więc backfill musi je przepisać, nie skopiować.**
+Do 2.0.0 „wyłącz konto" w panelu ustawiało `pilots.active = FALSE`. Po wielofirmowości
+kolumna na osobie znaczy blokadę PLATFORMOWĄ (nakłada ją wyłącznie superadministrator),
+a codzienne wyłączenie w klubie jest `memberships.status = 'disabled'`. Backfill przenosi
+stan na członkostwo **i przywraca osobie `TRUE`** - skopiowanie `FALSE` zamknęłoby człowieka
+na zawsze, bo ponowne włączenie członkostwa w panelu klubu nie rusza osoby. Znacznik
+`credentials_valid_from` przechodzi na członkostwo 1:1 (a na osobie zostaje: brama
+sprawdza OBIE daty).
+
+**(d) Cztery tabele append-only dostały `UPDATE` - raz, w skrypcie migracji.** Test
+architektury (`events`, `admin_audit`, `export_log`, `exported_sheets` bez `UPDATE`
+w całym `src/`) dostał JEDEN imienny wyjątek: `infrastructure/pg/schema.ts`, z asercją,
+że jedyne, co tam stoi, to `SET org_id = club WHERE org_id IS NULL`. Nadanie wierszom
+przynależności, której schemat 1.x nie znał, nie jest edycją rejestru - a bez niego
+kolumna nie mogłaby być `NOT NULL` i filtr `WHERE org_id = $1` cicho pomijałby całą
+historię klubu. Reguła dla kodu poza migracjami zostaje nietknięta.
+
+**(e) Zdjęcie globalnych unikatów jest NIEODWRACALNE skryptem.** Po dołożeniu drugiego
+klubu z tą samą rejestracją nie da się już odtworzyć `aircraft_reg_key`. Procedurą odwrotu
+jest kopia bazy PRZED migracją (Railway snapshot, `docs/wielofirmowosc.md` §13), a nie
+migracja w dół.
+
+**(f) `DROP COLUMN code, role` w TEJ SAMEJ migracji, nie w 9.** Dokument decyzji proponował
+osobną migrację 9 („między 8 a 9 kod czyta obie kolumny"); issue #98 kazało zrobić to
+razem. Serwer po migracji 8 czyta wyłącznie członkostwa, a migracja biegnie przy starcie
+procesu przed pierwszym żądaniem - okna, w którym sygnatura nie ma z czego się złożyć,
+nie ma. Trzy bezpieczniki `isPilotRole(...) ? role : DEFAULT_ROLE` znikły z kodu razem
+z kolumną, a ich odpowiednik pilnuje odtąd `memberships.role`.
+
+**(g) Kolumna `org_id` jest nullowalna DOKŁADNIE W JEDNEJ tabeli: `admin_audit`.** Akcja
+superadministratora na platformie (założenie klubu, epik E) nie dzieje się w żadnym klubie;
+wpis o niej nie ma czego udawać. Dziennik klubu filtruje po swoim `org_id`, więc wpisów
+platformowych nie widzi. Pilnuje tego `schema.test.ts` - lista tabel z `org_id` i lista
+nullowalnych są przybite na sztywno.
+
+**(h) Czego migracja 8 świadomie NIE ruszyła:** `external_identities` zostaje ze statusami
+`pending`/`linked`/`rejected`. Przeniesienie kolejki zgłoszeń na członkostwa (`docs/
+wielofirmowosc.md` §4) idzie razem z przebudową dołączania (`POST /auth/join`,
+zaproszenia - epik D), bo dopiero tam powstaje kod, który z niej korzysta.
+
 ---
 
 ## 8. Sesja przeglądarkowa - dwa źródła tokenu, jedna autoryzacja

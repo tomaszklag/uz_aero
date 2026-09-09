@@ -66,6 +66,8 @@ export interface ConsumptionNormPorts {
  */
 export async function recomputeConsumptionNorm(
   db: Queryable,
+  /** Klub maszyny - materializacja normy niesie go jak każda tabela klubu. */
+  orgId: string,
   aircraftId: string,
   ports: ConsumptionNormPorts,
   now: Date,
@@ -100,6 +102,6 @@ export async function recomputeConsumptionNorm(
     now.getTime(),
   );
 
-  await ports.norms.save(db, aircraftId, NORM_WINDOW_DAYS, norm, now);
+  await ports.norms.save(db, orgId, aircraftId, NORM_WINDOW_DAYS, norm, now);
   return norm;
 }

@@ -31,6 +31,7 @@ import { PgAdminPilotsRepo } from '../src/infrastructure/pg/admin/pilotsRepo.ts'
 import { PgAdminRefreshTokensRepo } from '../src/infrastructure/pg/admin/refreshTokensRepo.ts';
 import { ADMIN_CSRF_HEADERS, testHarness } from './helpers.ts';
 import { googleTokenFor } from './testIdentityProvider.ts';
+import { ORG_A, TEST_PILOTS, TEST_PILOTS_B } from './testWorld.ts';
 
 type Harness = Awaited<ReturnType<typeof testHarness>>;
 
@@ -140,7 +141,10 @@ function pilotCommands(
 }
 
 /** `Actor` administratora - komenda pyta o `pilotId`, resztę dokłada dziennik audytu. */
-const actor = (pilotId: string) => ({ pilotId, role: 'admin' as const, ip: null });
+const actor = (pilotId: string) => ({ pilotId, orgId: ORG_A, role: 'admin' as const, ip: null });
+
+/** Osoby w świecie bazowym (oba kluby) - „nic nie powstało" mierzy się wobec tej liczby. */
+const WORLD_PERSONS = TEST_PILOTS.length + TEST_PILOTS_B.length;
 
 async function auditRows(db: Harness['db']) {
   const { rows } = await db.query<{
@@ -197,6 +201,7 @@ describe('GET /admin/api/pilots - lista kont i dane referencyjne', () => {
         'flyingDays',
         'id',
         'name',
+        'orgId',
         'role',
         'updatedAt',
       ]);
@@ -365,7 +370,7 @@ describe('POST /admin/api/pilots - zakładanie konta', () => {
     });
 
     const { rows } = await db.query<{ n: string }>('SELECT COUNT(*) AS n FROM pilots');
-    expect(Number(rows[0]?.n)).toBe(5);
+    expect(Number(rows[0]?.n)).toBe(WORLD_PERSONS);
     expect(await auditRows(db)).toEqual([]);
   });
 
@@ -444,9 +449,10 @@ describe('PATCH /admin/api/pilots/:id - tożsamość i rola', () => {
     expect(res.json().pilot).toMatchObject({ id: 'PWI', code: 'PWN' });
 
     // Zdarzenia wiążą się z `id`, więc po zmianie kodu nadal wskazują to konto.
+    // Kod mieszka na CZŁONKOSTWIE (wielofirmowość), więc pytamy o nie w klubie aktora.
     const { rows } = await db.query<{ id: string; code: string }>(
-      'SELECT id, code FROM pilots WHERE id = $1',
-      ['PWI'],
+      'SELECT pilot_id AS id, code FROM memberships WHERE pilot_id = $1 AND org_id = $2',
+      ['PWI', ORG_A],
     );
     expect(rows[0]).toEqual({ id: 'PWI', code: 'PWN' });
   });
@@ -459,7 +465,7 @@ describe('PATCH /admin/api/pilots/:id - tożsamość i rola', () => {
     expect(res.json()).toEqual({ error: 'refused', reason: 'self_demote' });
 
     const { rows } = await db.query<{ role: string }>(
-      "SELECT role FROM pilots WHERE id = 'TMK'",
+      "SELECT role FROM memberships WHERE pilot_id = 'TMK' AND org_id = 'org-a'",
     );
     expect(rows[0]?.role).toBe('admin');
     expect(await auditRows(db)).toEqual([]);
@@ -477,7 +483,7 @@ describe('PATCH /admin/api/pilots/:id - tożsamość i rola', () => {
     // Świat testowy ma DWA konta administratorów (TMK, AKO), a ten przypadek opisuje
     // klub, w którym na końcu zostaje JEDEN - więc AKO schodzi do pilota, zanim ruch
     // się zacznie. Jawnie w teście, bo to warunek przypadku, a nie własność świata.
-    await db.query("UPDATE pilots SET role = 'pilot' WHERE id = 'AKO'");
+    await db.query("UPDATE memberships SET role = 'pilot' WHERE pilot_id = 'AKO' AND org_id = 'org-a'");
 
     // Drugi administrator, żeby dało się w ogóle wykonać ruch odbierający rolę…
     await patchPilot(app, token, 'PWI', { role: 'admin' });
@@ -492,7 +498,7 @@ describe('PATCH /admin/api/pilots/:id - tożsamość i rola', () => {
     expect(refused.json()).toEqual({ error: 'refused', reason: 'self_demote' });
 
     const { rows } = await db.query<{ n: string }>(
-      "SELECT COUNT(*) AS n FROM pilots WHERE active AND role = 'admin'",
+      "SELECT COUNT(*) AS n FROM memberships WHERE org_id = 'org-a' AND status = 'active' AND role = 'admin'",
     );
     expect(Number(rows[0]?.n)).toBe(1);
   });
@@ -547,7 +553,7 @@ describe('wyścig o populację administratorów', () => {
 
     // Wyścig ma być między DWOMA administratorami, a świat testowy ma trzeciego (AKO)
     // - z nim żadna z degradacji nie byłaby tą ostatnią i gałąź nigdy by nie zaszła.
-    await harness.db.query("UPDATE pilots SET role = 'pilot' WHERE id = 'AKO'");
+    await harness.db.query("UPDATE memberships SET role = 'pilot' WHERE pilot_id = 'AKO' AND org_id = 'org-a'");
 
     // Dwóch administratorów: TMK (seed) i PWI.
     expect((await commands.update(actor('TMK'), 'PWI', { role: 'admin' })).ok).toBe(true);
@@ -561,7 +567,7 @@ describe('wyścig o populację administratorów', () => {
 
     // I to jest cała stawka: klub NADAL ma administratora.
     const { rows } = await harness.db.query<{ n: string }>(
-      "SELECT COUNT(*) AS n FROM pilots WHERE active AND role = 'admin'",
+      "SELECT COUNT(*) AS n FROM memberships WHERE org_id = 'org-a' AND status = 'active' AND role = 'admin'",
     );
     expect(Number(rows[0]?.n)).toBe(1);
   });
@@ -572,7 +578,7 @@ describe('wyścig o populację administratorów', () => {
 
     // Jak wyżej: trzeci administrator ze świata testowego zdejmowałby z PWI status
     // ostatniego, a to jego dotyczy ten przypadek.
-    await harness.db.query("UPDATE pilots SET role = 'pilot' WHERE id = 'AKO'");
+    await harness.db.query("UPDATE memberships SET role = 'pilot' WHERE pilot_id = 'AKO' AND org_id = 'org-a'");
 
     expect((await commands.update(actor('TMK'), 'PWI', { role: 'admin' })).ok).toBe(true);
     expect((await commands.update(actor('PWI'), 'TMK', { role: 'pilot' })).ok).toBe(true);
@@ -581,7 +587,7 @@ describe('wyścig o populację administratorów', () => {
     expect(outcome).toEqual({ ok: false, reason: 'refused', refusal: 'last_admin' });
 
     const { rows } = await harness.db.query<{ active: boolean }>(
-      "SELECT active FROM pilots WHERE id = 'PWI'",
+      "SELECT (status = 'active') AS active FROM memberships WHERE pilot_id = 'PWI' AND org_id = 'org-a'",
     );
     expect(rows[0]?.active).toBe(true);
   });
@@ -620,7 +626,7 @@ describe('wyścig o unikalność kodu i e-maila', () => {
 
     // Odbita transakcja nie zostawia ani konta, ani wpisu w dzienniku.
     const { rows } = await harness.db.query<{ n: string }>('SELECT COUNT(*) AS n FROM pilots');
-    expect(Number(rows[0]?.n)).toBe(5);
+    expect(Number(rows[0]?.n)).toBe(WORLD_PERSONS);
     expect(await auditRows(harness.db)).toEqual([]);
   });
 
@@ -683,17 +689,25 @@ describe('POST /admin/api/pilots/:id/active - deaktywacja i aktywacja', () => {
   });
 
   it('deaktywowane konto nie zaloguje się ani w aplikacji, ani w panelu', async () => {
+    // Od wielofirmowości „wyłącz konto" w panelu klubu wyłącza CZŁONKOSTWO, nie osobę
+    // (`docs/wielofirmowosc.md` §3.2): telefon słyszy „brak aktywnego klubu", panel -
+    // „konto nie obejmuje panelu". Oba to 403 z nazwanym powodem i ZERO tokenów;
+    // 401 `account_disabled` zostało dla blokady platformowej osoby (`pilots.active`).
     const { app } = await testHarness();
     await setActive(app, await tokenOf(app, 'TMK'), 'AKO', false);
 
-    expect((await login(app, 'AKO')).statusCode).toBe(401);
+    const mobile = await login(app, 'AKO');
+    expect(mobile.statusCode).toBe(403);
+    expect(mobile.json()).toEqual({ error: 'no_membership' });
     const panel = await app.inject({
       method: 'POST',
       url: '/admin/api/auth/login',
       headers: ADMIN_CSRF_HEADERS,
       payload: { idToken: googleTokenFor('AKO') },
     });
-    expect(panel.statusCode).toBe(401);
+    expect(panel.statusCode).toBe(403);
+    expect(panel.json()).toEqual({ error: 'no_panel_access' });
+    expect(panel.headers['set-cookie']).toBeUndefined();
   });
 
   it('DEAKTYWACJA ODCINA PANEL NATYCHMIAST - nie po ośmiu godzinach sesji', async () => {
@@ -813,9 +827,9 @@ describe('usunięcie konta', () => {
     over: { uuid: string; picId: string; dualId?: string | null },
   ) =>
     db.query(
-      `INSERT INTO events (uuid, session_uuid, aircraft_id, pic_id, dual_id, type,
+      `INSERT INTO events (org_id, uuid, session_uuid, aircraft_id, pic_id, dual_id, type,
                            device_time, payload, schema_version)
-       VALUES ($1, 's-1', 'SP-AXA', $2, $3, 'engine_start', 1, '{}'::jsonb, 1)`,
+       VALUES ('${ORG_A}', $1, 's-1', 'SP-AXA', $2, $3, 'engine_start', 1, '{}'::jsonb, 1)`,
       [over.uuid, over.picId, over.dualId ?? null],
     );
 
@@ -895,8 +909,8 @@ describe('usunięcie konta', () => {
     const token = await tokenOf(app, 'TMK');
     const id = await disposable(app, token);
     await db.query(
-      `INSERT INTO admin_audit (actor_pilot_id, actor_role, action, target_type, target_id)
-       VALUES ($1, 'admin', 'flag.resolve', 'flag', '1')`,
+      `INSERT INTO admin_audit (org_id, actor_pilot_id, actor_role, action, target_type, target_id)
+       VALUES ('${ORG_A}', $1, 'admin', 'flag.resolve', 'flag', '1')`,
       [id],
     );
 

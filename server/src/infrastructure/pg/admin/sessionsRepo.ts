@@ -103,6 +103,9 @@ const SELECT = `
            SELECT COUNT(*)
              FROM sessions x
             WHERE x.pic_id = s.pic_id
+              -- Numer jest jednoznaczny W KLUBIE (wielofirmowość §3.6): ten sam pilot
+              -- w dwóch klubach jednej doby ma dwa niezależne numerowania.
+              AND x.org_id = s.org_id
               AND x.status <> 'voided'
               AND ${anchorSql('x')} IS NOT NULL
               AND ${anchorSql('x')} / 86400000 = ${anchorSql('s')} / 86400000
@@ -114,10 +117,12 @@ const SELECT = `
          a.reg                AS reg,
          a.type               AS aircraft_type,
          a.mh_format          AS mh_format,
+         -- Kod pilota Z CZŁONKOSTWA w klubie TEJ operacji (wielofirmowość): osoba jest
+         -- jedna, kod należy do klubu. Nazwisko zostaje własnością osoby.
          p.code               AS pic_code,
-         p.name               AS pic_name,
+         pp.name              AS pic_name,
          d.code               AS dual_code,
-         d.name               AS dual_name,
+         dp.name              AS dual_name,
          (SELECT array_agg(f.type ORDER BY f.id)
             FROM flags f
            WHERE f.status = 'open'
@@ -126,9 +131,11 @@ const SELECT = `
             FROM export_log e
            WHERE e.session_uuid = s.session_uuid)                 AS export_revision
     FROM sessions s
-    LEFT JOIN aircraft a ON a.id = s.aircraft_id
-    LEFT JOIN pilots   p ON p.id = s.pic_id
-    LEFT JOIN pilots   d ON d.id = s.dual_id`;
+    LEFT JOIN aircraft    a  ON a.id = s.aircraft_id
+    LEFT JOIN pilots      pp ON pp.id = s.pic_id
+    LEFT JOIN memberships p  ON p.pilot_id = s.pic_id AND p.org_id = s.org_id
+    LEFT JOIN pilots      dp ON dp.id = s.dual_id
+    LEFT JOIN memberships d  ON d.pilot_id = s.dual_id AND d.org_id = s.org_id`;
 
 const toMhFormat = (value: string | null): MhFormat | null =>
   value === 'decimal' || value === 'hhmm' ? value : null;

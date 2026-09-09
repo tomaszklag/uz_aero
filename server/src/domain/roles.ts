@@ -1,14 +1,21 @@
 /**
- * UZ Aero (serwer) - role kont i uprawnienia panelu administracyjnego.
+ * UZ Aero (serwer) - role i uprawnienia panelu administracyjnego.
  *
  * Decyzja 2026-07-31 (odwraca 2026-07-24): panel powstaje jako osobna aplikacja web,
  * z dwiema rolami. Projekt UI: `design/admin/`; analiza i mapowanie ekranów na
  * uprawnienia: `design/admin/ANALIZA.md`.
  *
- * **Rola siedzi na koncie pilota, nie w osobnej tabeli użytkowników panelu**, bo
- * administrator JEST pilotem - lata, ma telefon i dodatkowo wchodzi do back-office'u.
- * Osobny byt użytkownika rozdwoiłby tożsamość: ten sam człowiek miałby dwa
- * identyfikatory, a jego nalot rozjechałby się między nimi.
+ * **Rola siedzi na CZŁONKOSTWIE pilota w klubie, nie w osobnej tabeli użytkowników
+ * panelu** (od wielofirmowości, issue #98; do niej - na koncie). Administrator JEST
+ * pilotem - lata, ma telefon i dodatkowo wchodzi do back-office'u SWOJEGO klubu. Osobny
+ * byt użytkownika rozdwoiłby tożsamość: ten sam człowiek miałby dwa identyfikatory,
+ * a jego nalot rozjechałby się między nimi. Ten sam człowiek w dwóch klubach ma dwa
+ * członkostwa i dwie role - a zdolności liczy się PER KLUB, z roli w klubie z tokenu.
+ *
+ * **Obok ról klubu jest ROLA PLATFORMOWA** (`pilots.platform_role`): superadministrator
+ * zakłada kluby i pierwszych administratorów, i to wszystko. Nie ma żadnej zdolności
+ * klubowej - do dziennika klubu nie wchodzi (`docs/wielofirmowosc.md` §3.3), bo wyjątek
+ * wpisany w rolę byłby niewidoczny dla klubu, którego dotyczy.
  *
  * **Uprawnienia trzymamy jako mapę ról na zdolności**, a nie jako `if (role === 'admin')`
  * rozsiane po trasach. Powód jest ten sam, dla którego istnieje `http/authorize.ts`:
@@ -30,25 +37,39 @@
  * która przez jedną iterację nie odmawia nikomu, jest tańsza niż brama dopisywana
  * z powrotem do dwudziestu tras.
  *
- * **`CHECK` na kolumnie `pilots.role` poszedł za tą zmianą** (decyzja użytkownika:
- * „nic nie jest wdrożone, mamy kontrolę nad danymi") - kolumna dopuszcza dokładnie te
- * dwie role. Baza założona wcześniej ma starsze ograniczenie i to nie przeszkadza:
- * żaden wiersz go nie używa, a każdy odczyt przechodzi przez
- * `isPilotRole(...) ? role : DEFAULT_ROLE` (`infrastructure/pg/**\/pilotsRepo.ts`,
- * `infrastructure/auth/hs256Tokens.ts`), więc wartość spoza katalogu schodzi do
- * `pilot` - czyli do NAJMNIEJSZYCH uprawnień. Ten kierunek błędu jest bezpieczny;
- * odwrotny nie byłby.
+ * **`CHECK` na kolumnie roli poszedł za tą zmianą** (decyzja użytkownika: „nic nie jest
+ * wdrożone, mamy kontrolę nad danymi") - kolumna `memberships.role` dopuszcza dokładnie
+ * te dwie role. Adapter i tak nie ufa łańcuchowi znaków z zewnątrz: każdy odczyt
+ * przechodzi przez `isPilotRole(...) ? role : DEFAULT_ROLE`, więc wartość spoza katalogu
+ * schodzi do `pilot` - czyli do NAJMNIEJSZYCH uprawnień. Ten kierunek błędu jest
+ * bezpieczny; odwrotny nie byłby.
  */
 export const PILOT_ROLES = ['pilot', 'admin'] as const;
 
 export type PilotRole = (typeof PILOT_ROLES)[number];
 
 /**
- * Rola konta, którego rola jest nieznana (stary token, kolumna z domyślną wartością).
- * Zawsze najmniejsze uprawnienia: podniesienie musi być jawną decyzją administratora,
- * nigdy skutkiem ubocznym wdrożenia albo błędu odczytu.
+ * Rola członkostwa, którego rola jest nieznana (stary token, kolumna z domyślną
+ * wartością). Zawsze najmniejsze uprawnienia: podniesienie musi być jawną decyzją
+ * administratora, nigdy skutkiem ubocznym wdrożenia albo błędu odczytu.
  */
 export const DEFAULT_ROLE: PilotRole = 'pilot';
+
+/**
+ * Rola PLATFORMOWA - poza klubami (`pilots.platform_role`, wielofirmowość §3.3).
+ *
+ * Jedna pozycja i tak ma być: superadministrator jest OSOBĄ bez ani jednego członkostwa,
+ * której jedyną władzą jest zakładanie i wyłączanie klubów oraz zapraszanie ich
+ * pierwszych administratorów. `null` w kolumnie = zwykła osoba (stan każdego pilota).
+ */
+export const PLATFORM_ROLES = ['superadmin'] as const;
+
+export type PlatformRole = (typeof PLATFORM_ROLES)[number];
+
+/** Strażnik wejścia z zewnątrz (kolumna `pilots.platform_role`). */
+export function isPlatformRole(value: unknown): value is PlatformRole {
+  return typeof value === 'string' && (PLATFORM_ROLES as readonly string[]).includes(value);
+}
 
 export type Capability =
   /** Wejście do panelu w ogóle - bez tego logowanie do `admin/` jest odrzucane. */
@@ -116,7 +137,18 @@ export type Capability =
    * Wraca do rozważenia razem z trzecią rolą: „kto obsługuje zgłoszenia" to
    * naturalny kandydat na uprawnienie kogoś, kto nie zarządza flotą ani kontami.
    */
-  | 'bugs.triage';
+  | 'bugs.triage'
+  /**
+   * Zakładanie i wyłączanie KLUBÓW oraz zapraszanie ich pierwszych administratorów
+   * (moduł `#/organizacje`, wielofirmowość §8.1).
+   *
+   * ══ DLACZEGO NOWA POZYCJA I DLACZEGO NIE MA JEJ ŻADNA ROLA KLUBU ══
+   * Katalog nazywa ZASOBY, a klub jest zasobem, którego do issue #98 nie było. Wynika
+   * z ROLI PLATFORMOWEJ, nie z roli członkostwa - i celowo nie stoi na liście
+   * `admin`: administrator klubu nie zakłada klubów, a superadministrator nie ma
+   * `panel.access` do żadnego klubu (§3.3). To dwie rozłączne władze i tak ma zostać.
+   */
+  | 'platform.manage';
 
 const CAPABILITIES: Readonly<Record<PilotRole, readonly Capability[]>> = {
   // Pilot pracuje wyłącznie w aplikacji na telefonie. Panel go nie dotyczy -
@@ -138,14 +170,32 @@ const CAPABILITIES: Readonly<Record<PilotRole, readonly Capability[]>> = {
   ],
 };
 
+/**
+ * Zdolności ról PLATFORMOWYCH - osobna mapa, bo to osobna oś władzy. Wypisana jawnie
+ * z tego samego powodu, co lista administratora: dopisanie zdolności ma być decyzją.
+ */
+const PLATFORM_CAPABILITIES: Readonly<Record<PlatformRole, readonly Capability[]>> = {
+  superadmin: ['platform.manage'],
+};
+
 /** Strażnik wejścia z zewnątrz (kolumna w bazie, claim w tokenie, body żądania). */
 export function isPilotRole(value: unknown): value is PilotRole {
   return typeof value === 'string' && (PILOT_ROLES as readonly string[]).includes(value);
 }
 
-/** Jedyne miejsce, w którym system odpowiada na pytanie „czy wolno mu to zrobić". */
+/** Jedyne miejsce, w którym system odpowiada na pytanie „czy wolno mu to zrobić" W KLUBIE. */
 export function can(role: PilotRole, capability: Capability): boolean {
   return CAPABILITIES[role].includes(capability);
+}
+
+/** To samo pytanie dla roli PLATFORMOWEJ - `null` (zwykła osoba) nie może niczego. */
+export function platformCan(role: PlatformRole | null, capability: Capability): boolean {
+  return role != null && PLATFORM_CAPABILITIES[role].includes(capability);
+}
+
+/** Komplet zdolności platformowych - dla sesji panelu superadministratora. */
+export function platformCapabilitiesOf(role: PlatformRole): readonly Capability[] {
+  return PLATFORM_CAPABILITIES[role];
 }
 
 /**

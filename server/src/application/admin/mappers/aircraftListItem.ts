@@ -72,6 +72,7 @@ export function aircraftListItem(
 
   return {
     id: aircraft.id,
+    orgId: aircraft.orgId,
     reg: aircraft.reg,
     type: aircraft.type,
     year: aircraft.year,

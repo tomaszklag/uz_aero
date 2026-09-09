@@ -87,12 +87,13 @@ export class PgAdminDashboardRepo implements DashboardAdminPort {
     const { rows } = await db.query<RecentRow>(
       `SELECT e.uuid, e.session_uuid, e.aircraft_id, e.type,
               e.device_time, e.gps_time, e.received_at, e.pic_id,
-              a.reg  AS reg,
-              p.code AS pic_code,
-              p.name AS pic_name
+              a.reg   AS reg,
+              p.code  AS pic_code,
+              pp.name AS pic_name
          FROM events e
-         LEFT JOIN aircraft a ON a.id = e.aircraft_id
-         LEFT JOIN pilots   p ON p.id = e.pic_id
+         LEFT JOIN aircraft    a  ON a.id = e.aircraft_id
+         LEFT JOIN pilots      pp ON pp.id = e.pic_id
+         LEFT JOIN memberships p  ON p.pilot_id = e.pic_id AND p.org_id = e.org_id
         ORDER BY e.received_at DESC, e.uuid DESC
         LIMIT $1`,
       [limit],

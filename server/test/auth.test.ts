@@ -17,6 +17,7 @@ import { describe, expect, it } from 'vitest';
 import { ACCESS_TTL_SEC } from '../src/application/common/commands/auth.ts';
 import { testHarness } from './helpers.ts';
 import { googleTokenFor, googleTokenForStranger } from './testIdentityProvider.ts';
+import { ORG_A } from './testWorld.ts';
 
 const loginAs = (app: Awaited<ReturnType<typeof testHarness>>['app'], code: string) =>
   app.inject({ method: 'POST', url: '/auth/google', payload: { idToken: googleTokenFor(code) } });
@@ -38,6 +39,8 @@ describe('POST /auth/google - konto ZATWIERDZONE', () => {
     // JWT ma być od razu użyteczny…
     expect(tokens.verify(body.token)).toEqual({
       pilotId: 'TMK',
+      // KLUB w tokenie (wielofirmowość §6): trasy klubowe pracują w klubie z claimu.
+      orgId: ORG_A,
       code: 'TMK',
       role: 'admin',
       // CHWILA WYDANIA (`iat`, sekundy epoki) - bez niej brama panelu nie umiałaby
@@ -193,8 +196,11 @@ describe('POST /auth/google - konto NIEZNANE zakłada zgłoszenie', () => {
     // Zatwierdzenie „ręką administratora" - bezpośrednio w bazie, bo trasy panelu
     // testuje osobny plik; tu liczy się wyłącznie zachowanie tokenu rejestracyjnego.
     await db.query(
-      `INSERT INTO pilots (id, code, name, email, active, role)
-       VALUES ('n5', 'NW5', 'Nowy Piąty', 'nowy5@gmail.com', TRUE, 'pilot')`,
+      `INSERT INTO pilots (id, name, email, active) VALUES ('n5', 'Nowy Piąty', 'nowy5@gmail.com', TRUE)`,
+    );
+    await db.query(
+      `INSERT INTO memberships (org_id, pilot_id, code, role, status, joined_via)
+       VALUES ('org-a', 'n5', 'NW5', 'pilot', 'active', 'panel')`,
     );
     await db.query(
       `UPDATE external_identities SET status = 'linked', pilot_id = 'n5' WHERE subject = 'nowy5'`,
@@ -229,8 +235,11 @@ describe('POST /auth/google - konto NIEZNANE zakłada zgłoszenie', () => {
     const registrationToken = login.json().registrationToken as string;
 
     await db.query(
-      `INSERT INTO pilots (id, code, name, email, active, role)
-       VALUES ('n6', 'NW6', 'Nowy Szósty', 'nowy6@gmail.com', TRUE, 'pilot')`,
+      `INSERT INTO pilots (id, name, email, active) VALUES ('n6', 'Nowy Szósty', 'nowy6@gmail.com', TRUE)`,
+    );
+    await db.query(
+      `INSERT INTO memberships (org_id, pilot_id, code, role, status, joined_via)
+       VALUES ('org-a', 'n6', 'NW6', 'pilot', 'active', 'panel')`,
     );
     await db.query(
       `UPDATE external_identities SET status = 'linked', pilot_id = 'n6' WHERE subject = 'nowy6'`,
@@ -238,7 +247,12 @@ describe('POST /auth/google - konto NIEZNANE zakłada zgłoszenie', () => {
 
     // `iat` ma rozdzielczość sekundy - unieważnienie musi być od niego późniejsze.
     clock.advance(1000);
-    await db.query(`UPDATE pilots SET credentials_valid_from = $1 WHERE id = 'n6'`, [clock.now()]);
+    // Unieważnienie na CZŁONKOSTWIE - jedyny znacznik, który zatwierdzenie z panelu
+    // mogło zdążyć przesunąć (wyłącz → włącz przed pierwszym wejściem).
+    await db.query(
+      `UPDATE memberships SET credentials_valid_from = $1 WHERE pilot_id = 'n6' AND org_id = 'org-a'`,
+      [clock.now()],
+    );
 
     const res = await app.inject({
       method: 'GET',

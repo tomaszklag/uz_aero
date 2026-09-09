@@ -25,6 +25,7 @@ import { SqlFilter } from '../sqlFilter.ts';
 
 interface AdminFlagDbRow {
   id: number;
+  org_id: string;
   type: string;
   aircraft_id: string;
   session_uuids: string[];
@@ -41,7 +42,7 @@ interface JoinedFlagDbRow extends AdminFlagDbRow {
   aircraft_type: string | null;
 }
 
-const FLAG_COLUMNS = `f.id, f.type, f.aircraft_id, f.session_uuids, f.details, f.status,
+const FLAG_COLUMNS = `f.id, f.org_id, f.type, f.aircraft_id, f.session_uuids, f.details, f.status,
                       f.created_at, f.resolved_at, f.resolved_by, f.resolution_note`;
 
 const toFlag = (r: AdminFlagDbRow): AdminFlag => {
@@ -54,6 +55,7 @@ const toFlag = (r: AdminFlagDbRow): AdminFlag => {
   }
   return {
     id: r.id,
+    orgId: r.org_id,
     type: r.type,
     aircraftId: r.aircraft_id,
     sessionUuids: r.session_uuids,

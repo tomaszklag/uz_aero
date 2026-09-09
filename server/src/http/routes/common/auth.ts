@@ -46,6 +46,11 @@ export function registerAuthRoutes(app: FastifyInstance, auth: AuthCommands): vo
         .code(403)
         .send({ error: 'registration_rejected', registration: result.registration });
     }
+    // Osoba jest, klubu brak (wielofirmowość §4): 403, nie 401 - tożsamość jest
+    // poprawna, a odmowa ma powód, który aplikacja pokaże na 00E (epik F).
+    if (result.reason === 'no_membership') {
+      return reply.code(403).send({ error: 'no_membership' });
+    }
     return reply.code(401).send({ error: result.reason });
   });
 

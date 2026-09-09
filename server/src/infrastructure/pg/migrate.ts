@@ -43,12 +43,42 @@ async function runScript(db: Queryable, sql: string): Promise<void> {
 }
 
 /**
+ * Kontekst BACKFILLU - to, czego migracja nie umie wziąć z bazy, bo tego w bazie nie ma.
+ *
+ * Dziś jedna rzecz: klub domyślny dla migracji 8 (wielofirmowość). Baza z danymi 1.x
+ * ma dane JEDNEGO klubu bez nazwy, a nazwę i slug zna wyłącznie właściciel
+ * (`SEED_ORG_NAME`, `SEED_ORG_SLUG`). Wartości jadą do transakcji migracji jako
+ * ustawienia sesji (`set_config(…, true)` = lokalne dla transakcji) i skrypt czyta je
+ * `current_setting(…, true)` - dzięki temu migracja pozostaje CZYSTYM napisem SQL, a runner
+ * nie musi rozumieć, która pozycja tablicy czego potrzebuje. Na świeżej bazie (testy, nowe
+ * wdrożenie) nie ma czego przepisywać i kontekst jest pusty.
+ */
+export interface MigrationContext {
+  seedOrg?: { name: string; slug: string } | null;
+}
+
+/**
+ * `set_config` dla każdej pary; wartości WKLEJONE jako literały, bo skrypt wieloczłonowy
+ * nie przyjmuje parametrów. Ucieczka to podwojenie apostrofu - jedyny znak specjalny
+ * literału tekstowego przy `standard_conforming_strings = on` (domyślnym od PG 9.1).
+ */
+function settingsPreamble(context: MigrationContext): string {
+  if (context.seedOrg == null) return '';
+  const literal = (value: string): string => `'${value.replace(/'/g, "''")}'`;
+  return [
+    `SELECT set_config('uzaero.seed_org_name', ${literal(context.seedOrg.name)}, true);`,
+    `SELECT set_config('uzaero.seed_org_slug', ${literal(context.seedOrg.slug)}, true);`,
+  ].join('\n');
+}
+
+/**
  * `migrations` jest parametrem wyłącznie po to, żeby dało się przetestować zachowanie
  * przy NIEUDANEJ migracji - produkcja woła `migrate(db)` i dostaje `MIGRATIONS`.
  */
 export async function migrate(
   db: Queryable,
   migrations: readonly string[] = MIGRATIONS,
+  context: MigrationContext = {},
 ): Promise<void> {
   await db.query(
     'CREATE TABLE IF NOT EXISTS schema_migrations (version INTEGER PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())',
@@ -88,6 +118,7 @@ export async function migrate(
       await runScript(
         db,
         `BEGIN;
+${settingsPreamble(context)}
 ${migrations[v]!}
 INSERT INTO schema_migrations (version) VALUES (${version});
 COMMIT;`,

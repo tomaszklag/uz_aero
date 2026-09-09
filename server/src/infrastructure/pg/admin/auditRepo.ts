@@ -17,10 +17,12 @@ import type { Queryable } from '../../../application/common/ports.ts';
 
 export class PgAdminAuditRepo implements AdminAuditPort {
   async append(db: Queryable, record: AuditRecord): Promise<void> {
+    // `org_id` NULL = akcja platformowa superadministratora (wielofirmowość, migracja 8):
+    // jedyna kolumna klubu, która bywa pusta, bo założenie klubu nie dzieje się w żadnym.
     await db.query(
       `INSERT INTO admin_audit
-         (actor_pilot_id, actor_role, action, target_type, target_id, details, ip, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+         (actor_pilot_id, actor_role, action, target_type, target_id, details, ip, created_at, org_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
       [
         record.actorPilotId,
         record.actorRole,
@@ -30,6 +32,7 @@ export class PgAdminAuditRepo implements AdminAuditPort {
         JSON.stringify(record.details),
         record.ip,
         record.createdAt,
+        record.orgId,
       ],
     );
   }

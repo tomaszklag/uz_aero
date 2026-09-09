@@ -69,11 +69,11 @@ export function registerAdminRegistrationRoutes(
     app,
     gate,
     { method: 'GET', url: '/registrations', capability: 'accounts.manage' },
-    async (req, reply) => {
+    async (req, reply, actor) => {
       const parsed = listQuery.safeParse(req.query);
       if (!parsed.success) return reply.code(400).send({ error: 'bad_request' });
 
-      return reply.send(await queries.list(parsed.data.status));
+      return reply.send(await queries.list(actor.orgId, parsed.data.status));
     },
   );
 
@@ -93,7 +93,7 @@ export function registerAdminRegistrationRoutes(
 
       // 201 i STAN PO DECYZJI: panel przestawia wiersz bez drugiego żądania, a stempel
       // i autor decyzji pochodzą z serwera, nie z zegara przeglądarki.
-      const after = await queries.byKey(key.data.provider, key.data.subject);
+      const after = await queries.byKey(actor.orgId, key.data.provider, key.data.subject);
       return reply.code(201).send({ pilot: outcome.result, registration: after });
     },
   );
@@ -112,7 +112,7 @@ export function registerAdminRegistrationRoutes(
       const outcome = await commands.reject(actor, { ...key.data, reason: body.data.reason });
       if (!outcome.ok) return refusal(reply, outcome);
 
-      const after = await queries.byKey(key.data.provider, key.data.subject);
+      const after = await queries.byKey(actor.orgId, key.data.provider, key.data.subject);
       return reply.send({ registration: after });
     },
   );

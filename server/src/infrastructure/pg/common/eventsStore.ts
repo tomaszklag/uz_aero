@@ -42,16 +42,18 @@ const toEvent = (r: EventRow): Event =>
 export class PgEventsStore implements EventsStorePort {
   async insertBatch(
     tx: Queryable,
+    orgId: string,
     events: readonly Event[],
     sourceDevice: string | null,
   ): Promise<{ accepted: number; duplicates: number }> {
     let accepted = 0;
     for (const e of events) {
+      // `org_id` z wołającego, nie ze zdarzenia: `Event` klubu nie zna (wielofirmowość §2).
       const { rows } = await tx.query<{ uuid: string }>(
         `INSERT INTO events
            (uuid, session_uuid, aircraft_id, pic_id, dual_id, type,
-            device_time, gps_time, payload, schema_version, source_device)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            device_time, gps_time, payload, schema_version, source_device, org_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
          ON CONFLICT (uuid) DO NOTHING
          RETURNING uuid`,
         [
@@ -66,6 +68,7 @@ export class PgEventsStore implements EventsStorePort {
           JSON.stringify(e.payload),
           e.schemaVersion,
           sourceDevice,
+          orgId,
         ],
       );
       if (rows.length > 0) accepted += 1;

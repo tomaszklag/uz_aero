@@ -201,7 +201,12 @@ export class AdminDashboardQueries {
       const state = projectSession(stream);
       // Nazwisko duala czytamy TYLKO wtedy, gdy dzień faktycznie jest szkolny -
       // większość dni ma `dualId: null`, więc to zwykle zero dodatkowych zapytań.
-      const dual = state.dualId == null ? null : await this.pilots.byId(this.db, state.dualId);
+      // Nazwisko należy do OSOBY, więc członkostwo szukamy w klubie MASZYNY - to jej
+      // klub jest klubem operacji (wielofirmowość); pulpit jednego klubu przychodzi w C.
+      const dual =
+        state.dualId == null
+          ? null
+          : await this.pilots.byId(this.db, aircraft.orgId, state.dualId);
 
       out.push({
         aircraft,

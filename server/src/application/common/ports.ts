@@ -24,7 +24,8 @@ import type {
 } from '@uzaero/domain';
 
 import type { BugSeverity, BugStatus } from '../../domain/bugReports.ts';
-import type { PilotRole } from '../../domain/roles.ts';
+import type { MembershipStatus } from '../../domain/memberships.ts';
+import type { PilotRole, PlatformRole } from '../../domain/roles.ts';
 
 // ── magazyn ─────────────────────────────────────────────────────────────────────
 
@@ -49,16 +50,20 @@ export interface Database extends Queryable {
 // ── piloci i uwierzytelnienie ───────────────────────────────────────────────────
 
 /**
- * Konto pilota po stronie serwera.
+ * OSOBA po stronie serwera - jedna na cały serwer, wspólna dla klubów, w których lata
+ * (wielofirmowość, issue #98). Powstaje przez zatwierdzenie zgłoszenia albo wprost
+ * z panelu (administrator wpisuje wtedy e-mail, a konto podpina się przy pierwszym
+ * logowaniu Google - `docs/logowanie-google.md` §6). Hasha nie ma i mieć nie będzie:
+ * hasła znikły z produktu 2026-09-04.
  *
- * Powstaje przez ZATWIERDZENIE zgłoszenia rejestracyjnego albo wprost z panelu
- * (administrator wpisuje wtedy e-mail, a konto podpina się przy pierwszym logowaniu
- * Google - `docs/logowanie-google.md` §6). Hasha nie ma i mieć nie będzie: hasła znikły
- * z produktu 2026-09-04.
+ * ══ CZEGO TU NIE MA OD WIELOFIRMOWOŚCI: KODU I ROLI ══
+ * Kod pilota i rola panelu są własnością CZŁONKOSTWA w klubie (`Membership`), nie osoby:
+ * ten sam człowiek bywa `TMK` w jednym klubie i `TOM` w drugim, administratorem tu
+ * i zwykłym pilotem tam. `active` znaczy odtąd blokadę PLATFORMOWĄ (nakłada ją wyłącznie
+ * superadministrator); codzienne „wyłącz konto" w panelu klubu jest stanem członkostwa.
  */
 export interface PilotAccount {
   id: string;
-  code: string;
   name: string;
   /**
    * Adres konta Google, którym ten pilot się loguje - JEDYNE pole, przez które e-mail
@@ -67,39 +72,71 @@ export interface PilotAccount {
    */
   email: string | null;
   active: boolean;
-  /** Uprawnienia w panelu administracyjnym (`src/domain/roles.ts`). */
-  role: PilotRole;
+  /** Rola PLATFORMOWA (`src/domain/roles.ts`); `null` = zwykła osoba. */
+  platformRole: PlatformRole | null;
 }
 
 /**
- * Konto tak, jak widzi je BRAMA UPRAWNIEŃ panelu (`http/authorize.ts`) - bez hasha.
+ * CZŁONKOSTWO osoby w klubie - kim ten człowiek jest W TYM klubie
+ * (`docs/wielofirmowosc.md` §3.2).
  *
- * Osobny typ od `PilotAccount` i to jest cała jego treść. `PilotAccount` istnieje dla
- * LOGOWANIA, więc niosło `passwordHash` (do 2026-09-04); brama hasła nie weryfikuje, a mimo to czytała
- * go przy KAŻDYM żądaniu panelu i wnosiła aż do warstwy HTTP (`AuthOutcome.account`).
- * Hash, który wjeżdża tam, gdzie nie jest potrzebny, prędzej czy później gdzieś się
- * zserializuje - jeden brak pola jest tańszy niż dyscyplina „pamiętaj, żeby go nie
- * wypisać". Ta sama zasada, co przy `AdminPilotAccount` po stronie panelu.
+ * Niesie klub w komplecie (`orgName`, `orgSlug`, `orgActive`), bo każdy czytelnik
+ * członkostwa potrzebuje go zaraz potem: logowanie wybiera klub i wpisuje go do tokenu,
+ * odpowiedź logowania nazywa klub pilotowi, brama pyta, czy klub działa. Drugie zapytanie
+ * po klub przy każdym z tych miejsc byłoby N+1 na ścieżce, która ma być tania.
  */
-export interface PilotAuthSnapshot {
-  id: string;
+export interface Membership {
+  orgId: string;
+  orgName: string;
+  orgSlug: string;
+  orgActive: boolean;
+  /** Kod pilota W TYM klubie; `null` wyłącznie przy `pending` (CHECK w bazie). */
+  code: string | null;
+  role: PilotRole;
+  status: MembershipStatus;
+  /** Unieważnienie poświadczeń PER KLUB - druga z dwóch dat, które sprawdza brama. */
+  credentialsValidFrom: Date | null;
+}
+
+/**
+ * Członkostwo tak, jak widzi je BRAMA UPRAWNIEŃ panelu (`http/authorize.ts`): osoba
+ * + klub + rola, spłaszczone do jednego wiersza czytanego przy KAŻDYM żądaniu.
+ *
+ * Osobny typ od `Membership`, bo brama pyta o inny przekrój: nazwisko (do `Actor`
+ * i stopki panelu), DWIE daty unieważnienia (osoby i członkostwa) i aktywność jako
+ * KONIUNKCJĘ trzech rzeczy - osoba nie jest zablokowana platformowo, klub działa,
+ * członkostwo jest `active`. Każda z nich osobno odbiera dostęp i brama nie ma powodu
+ * rozróżniać, która (dla panelu wszystkie znaczą „zaloguj się").
+ */
+export interface MembershipAuthSnapshot {
+  pilotId: string;
+  orgId: string;
   code: string;
   name: string;
+  /** Osoba aktywna platformowo I klub działa I członkostwo `active`. */
   active: boolean;
   role: PilotRole;
   /**
-   * Od kiedy poświadczenia tego konta są ważne. `null` = nigdy ich nie
-   * unieważniano. Token wydany WCZEŚNIEJ nie przechodzi bramy - to jedyny sposób,
-   * w jaki reset hasła i deaktywacja zrywają sesję PANELU, która nie ma wiersza
-   * w bazie (podpisany JWT w ciasteczku `HttpOnly`).
+   * Od kiedy poświadczenia OSOBY są ważne (`pilots.credentials_valid_from`). `null` =
+   * nigdy ich nie unieważniano. Token wydany WCZEŚNIEJ nie przechodzi bramy - to jedyny
+   * sposób, w jaki deaktywacja zrywa sesję PANELU, która nie ma wiersza w bazie.
    */
   credentialsValidFrom: Date | null;
+  /** To samo dla CZŁONKOSTWA (`memberships.credentials_valid_from`, §3.4). */
+  membershipCredentialsValidFrom: Date | null;
 }
 
 export interface PilotsPort {
   findById(id: string): Promise<PilotAccount | null>;
-  /** Projekcja dla bramy panelu: rola, aktywność i znacznik unieważnienia - bez hasha. */
-  authSnapshot(id: string): Promise<PilotAuthSnapshot | null>;
+  /**
+   * Wszystkie członkostwa osoby, w porządku nazwy klubu - logowanie wybiera z nich
+   * klub aktywny, ekran 13a pokazuje przełącznik przy więcej niż jednym.
+   */
+  memberships(pilotId: string): Promise<Membership[]>;
+  /** Członkostwo w JEDNYM klubie; `null` = osoba nie należy do tego klubu. */
+  membership(pilotId: string, orgId: string): Promise<Membership | null>;
+  /** Projekcja dla bramy panelu: rola, aktywność i znaczniki unieważnienia w klubie z tokenu. */
+  authSnapshot(pilotId: string, orgId: string): Promise<MembershipAuthSnapshot | null>;
 }
 
 /**
@@ -129,9 +166,18 @@ export interface PilotPrefsPort {
 }
 
 /** Podpisywanie i weryfikacja JWT sesji (HS256). */
-/** Tożsamość odczytana z tokenu - to, na podstawie czego trasy podejmują decyzje. */
+/**
+ * Tożsamość odczytana z tokenu - to, na podstawie czego trasy podejmują decyzje.
+ *
+ * ══ TOKEN NIESIE OSOBĘ I KLUB (decyzja właściciela 2026-09-08, wielofirmowość §6) ══
+ * `orgId` jest kontekstem KAŻDEJ trasy klubowej: flota, przejęcie, rejestr, karta arkusza
+ * należą do klubu z tokenu. `code` i `role` są kodem i rolą Z CZŁONKOSTWA w tym klubie.
+ * Przełączenie klubu to NOWA para tokenów (`POST /auth/switch`, epik F), nie nagłówek -
+ * drugie źródło prawdy o klubie obok tokenu było rozważone i odrzucone.
+ */
 export interface Identity {
   pilotId: string;
+  orgId: string;
   code: string;
   role: PilotRole;
 }
@@ -174,11 +220,32 @@ export interface VerifiedRegistration extends RegistrationIdentity {
   issuedAt: number;
 }
 
+/**
+ * Tożsamość PLATFORMOWA - superadministrator bez klubu (wielofirmowość §3.3).
+ *
+ * Osobny rodzaj tokenu, nie token klubu z pustym `org`: trasy klubowe MUSZĄ dostać
+ * `orgId` zawsze (inaczej każda z nich musiałaby obsłużyć `null`), a superadministrator
+ * nie ma klubu z definicji. Rozłączność `verify()` / `verifyPlatform()` jest tą samą
+ * własnością bezpieczeństwa, co przy tokenie rejestracyjnym.
+ */
+export interface PlatformIdentity {
+  pilotId: string;
+}
+
+export interface VerifiedPlatformIdentity extends PlatformIdentity {
+  issuedAt: number;
+}
+
 export interface TokenService {
-  /** Zwraca podpisany token dostępu dla pilota. */
+  /** Zwraca podpisany token dostępu dla pilota W KLUBIE. */
   sign(claims: Identity, ttlSec: number): string;
-  /** Zwraca claims albo `null` - token zły/wygasły. Nigdy nie rzuca. */
+  /** Zwraca claims albo `null` - token zły/wygasły/bez klubu. Nigdy nie rzuca. */
   verify(token: string): VerifiedIdentity | null;
+
+  /** Token sesji panelu SUPERADMINISTRATORA - otwiera wyłącznie trasy `platform.manage`. */
+  signPlatform(claims: PlatformIdentity, ttlSec: number): string;
+  /** Rozłączny z `verify`: token klubu tu nie przechodzi, platformowy nie przechodzi tam. */
+  verifyPlatform(token: string): VerifiedPlatformIdentity | null;
 
   /**
    * Token ZGŁOSZENIA - jedyne poświadczenie, jakie dostaje ktoś bez konta pilota.
@@ -203,14 +270,25 @@ export interface TokenService {
  * unieważnić po stronie serwera; JWT z natury unieważnić się nie da.
  */
 export interface RefreshTokensPort {
-  issue(pilotId: string, expiresAt: Date): Promise<string>;
+  /** Para tokenów jest parą DLA KLUBU (§6) - refresh niesie klub, dla którego ją wydano. */
+  issue(pilotId: string, orgId: string, expiresAt: Date): Promise<string>;
   /**
    * ATOMOWA rotacja: unieważnia stary i wydaje nowy w jednej transakcji.
    * Rozdzielone consume+issue (audyt) zostawiały okno, w którym crash/zgubiona
    * odpowiedź kasowały stary token bez wydania nowego - a pełne ponowne logowanie
    * wymaga sieci, więc łamałoby obietnicę §3.0. `null` = token nieznany/wygasły.
+   * Nowy refresh zostaje w TYM SAMYM klubie - przełączenie klubu to osobna trasa.
    */
-  rotate(token: string, newExpiresAt: Date): Promise<{ pilotId: string; token: string } | null>;
+  rotate(
+    token: string,
+    newExpiresAt: Date,
+  ): Promise<{ pilotId: string; orgId: string; token: string } | null>;
+  /**
+   * Klub OSTATNIO używany przez osobę - z najświeższego refresha; `null` = nigdy nie
+   * logowała się na telefonie. Logowanie wybiera z tego klub aktywny przy więcej niż
+   * jednym członkostwie (§5), zamiast pytać pilota za każdym razem.
+   */
+  lastOrgFor(pilotId: string): Promise<string | null>;
 }
 
 // ── tożsamości zewnętrzne (logowanie Google) ────────────────────────────────────
@@ -367,7 +445,8 @@ export interface AircraftReadingsPort {
   latestAll(db: Queryable): Promise<Map<string, AdminReading>>;
   /** Najświeższy `created_at` w tabeli - składnik ETagu `/reference`. */
   latestAt(db: Queryable): Promise<Date | null>;
-  insert(tx: Queryable, aircraftId: string, reading: AdminReading): Promise<void>;
+  /** `orgId` = klub maszyny (wiersz niesie go denormalizowany, jak każda tabela klubu). */
+  insert(tx: Queryable, orgId: string, aircraftId: string, reading: AdminReading): Promise<void>;
 }
 
 // ── zgłoszenia błędów z aplikacji pilota (issue #87, na czas testów) ────────────
@@ -432,9 +511,15 @@ export interface BugReportsPort {
   /**
    * Wstawia paczkę, pomijając uuidy już znane. `db`, a nie `tx`: przyjęcie zgłoszenia
    * nie ma nic do zsynchronizowania z rejestrem ani z projekcjami - to zapis obok
-   * systemu, nie w nim.
+   * systemu, nie w nim. `orgId` = klub z tokenu telefonu: zgłoszenie dotyczy ekranu
+   * w konkretnym klubie i czyta je panel TEGO klubu.
    */
-  insertMany(db: Queryable, pilotId: string, reports: NewBugReport[]): Promise<BugReportIntake>;
+  insertMany(
+    db: Queryable,
+    orgId: string,
+    pilotId: string,
+    reports: NewBugReport[],
+  ): Promise<BugReportIntake>;
   /**
    * Lista dla panelu, od najnowszego zgłoszenia. `statuses` puste = wszystkie.
    *
@@ -481,7 +566,11 @@ export interface ReferenceSnapshot {
 }
 
 export interface ReferencePort {
-  snapshot(): Promise<ReferenceSnapshot>;
+  /**
+   * Flota i piloci JEDNEGO klubu (wielofirmowość §7.1): aktywny klub z tokenu jest
+   * kontekstem floty i przejęcia, a kod pilota na liście jest kodem Z CZŁONKOSTWA w nim.
+   */
+  snapshot(orgId: string): Promise<ReferenceSnapshot>;
 }
 
 /**
@@ -517,6 +606,7 @@ export interface ConsumptionNormPort {
    */
   save(
     db: Queryable,
+    orgId: string,
     aircraftId: string,
     windowDays: number,
     norm: ConsumptionNorm | null,
@@ -537,9 +627,17 @@ export interface ConsumptionNormPort {
 // ── zdarzenia, sesje, flagi (M2) ────────────────────────────────────────────────
 
 export interface EventsStorePort {
-  /** Wstawia paczkę; duplikaty po `uuid` pomija (idempotencja synca §4.3). */
+  /**
+   * Wstawia paczkę; duplikaty po `uuid` pomija (idempotencja synca §4.3).
+   *
+   * `orgId` przychodzi OSOBNO, bo `Event` z `@uzaero/domain` klubu nie zna i znać nie ma
+   * (wielofirmowość §2: żadna reguła domeny nie czyta `org_id`) - klub jest własnością
+   * WIERSZA rejestru, a rozstrzyga o nim wołający: token telefonu albo klub sesji
+   * przy zapisie z panelu.
+   */
   insertBatch(
     tx: Queryable,
+    orgId: string,
     events: readonly Event[],
     sourceDevice: string | null,
   ): Promise<{ accepted: number; duplicates: number }>;
@@ -570,6 +668,12 @@ export interface EventsStorePort {
 /** Wiersz projekcji `sessions` - zrzut `projectSession`, nigdy źródło prawdy. */
 export interface SessionRow {
   sessionUuid: string;
+  /**
+   * Klub operacji (wielofirmowość §3.5) - NIE z projekcji, bo `SessionState` klubu nie
+   * zna: przepisany z klubu zdarzeń, które ją zbudowały. Niezmiennik
+   * `events.org_id = sessions.org_id = aircraft.org_id` pilnuje ingest przy zapisie.
+   */
+  orgId: string;
   aircraftId: string;
   picId: string;
   dualId: string | null;
@@ -743,6 +847,14 @@ export interface SessionsProjectionPort {
 export interface AircraftConfigPort {
   /** `null` = samolot nieznany albo bez skonfigurowanej pojemności. */
   capacityL(db: Queryable, aircraftId: string): Promise<number | null>;
+  /**
+   * Klub, do którego maszyna należy; `null` = maszyna nieznana rejestrowi floty.
+   *
+   * Wejście JEDYNEJ nowej odmowy ingestu (wielofirmowość §3.5): zdarzenie z tokenu klubu A
+   * do maszyny klubu B nie ma miękkiej wersji - zapis do cudzego klubu jest odrzucany,
+   * nie flagowany.
+   */
+  orgIdOf(db: Queryable, aircraftId: string): Promise<string | null>;
 }
 
 /**
@@ -753,6 +865,8 @@ export interface AircraftConfigPort {
  */
 export interface FlagRecord {
   id: number;
+  /** Klub flagi = klub maszyny (wielofirmowość §3.5). Na telefon nie jedzie. */
+  orgId: string;
   type: FlagType;
   aircraftId: string;
   sessionUuids: string[];
@@ -767,7 +881,13 @@ export interface FlagsPort {
    */
   ensureOpen(
     tx: Queryable,
-    flag: { type: FlagType; aircraftId: string; sessionUuids: string[]; details: Record<string, unknown> },
+    flag: {
+      orgId: string;
+      type: FlagType;
+      aircraftId: string;
+      sessionUuids: string[];
+      details: Record<string, unknown>;
+    },
   ): Promise<void>;
   openForSession(db: Queryable, sessionUuid: string): Promise<FlagRecord[]>;
   openForAircraft(db: Queryable, aircraftId: string): Promise<FlagRecord[]>;
@@ -787,8 +907,15 @@ export interface DaySheet {
 }
 
 export interface SheetsPort {
-  /** Zapisuje/nadpisuje dzienną kartę arkusza; zwraca URL karty. */
-  writeDaySheet(sheet: DaySheet): Promise<{ url: string }>;
+  /**
+   * Zapisuje/nadpisuje dzienną kartę arkusza KLUBU; zwraca URL karty.
+   *
+   * `orgId` osobno od `DaySheet`, bo karta jest dokumentem klubu, a jej treść - czystą
+   * funkcją strumienia (`buildDaySheet` klubu nie zna). Nazwa karty (znak + doba) jest
+   * jedyna dopiero W KLUBIE (wielofirmowość §3.6): dwa kluby z tą samą rejestracją
+   * produkują tę samą nazwę tego samego dnia.
+   */
+  writeDaySheet(orgId: string, sheet: DaySheet): Promise<{ url: string }>;
 }
 
 /** Zapisana karta dzienna: dosłowna treść + stempel ostatniego nadpisania (rewizji). */
@@ -807,8 +934,12 @@ export interface StoredDaySheet {
  * `SheetsPort` zmuszałoby przyszły adapter do martwego kodu.
  */
 export interface SheetsReadPort {
-  /** Karta po nazwie (`YYYY-MM-DD_SP-XXX`); `null` = nigdy nie wyeksportowano. */
-  readDaySheet(tab: string): Promise<StoredDaySheet | null>;
+  /**
+   * Karta klubu po nazwie (`YYYY-MM-DD_SP-XXX`); `null` = nigdy nie wyeksportowano.
+   * Klub przychodzi z TOKENU czytającego - karta cudzego klubu o tej samej nazwie jest
+   * dla niego nieistniejąca. Adres ze slugiem klubu dochodzi w epiku C.
+   */
+  readDaySheet(orgId: string, tab: string): Promise<StoredDaySheet | null>;
 }
 
 /**
@@ -840,6 +971,8 @@ export interface ExportRecord {
  * dwie sesje jednej karty mają różny numer rewizji, i nic by tego nie zatrzymało.
  */
 export interface ExportCardRecord {
+  /** Klub karty = klub maszyny; wiersze dziennika niosą go jak każda tabela klubu. */
+  orgId: string;
   day: string;
   aircraftId: string;
   sheetUrl: string;

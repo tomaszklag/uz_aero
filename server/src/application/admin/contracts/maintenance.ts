@@ -34,6 +34,8 @@ export interface ProjectionFieldDiff {
 /** Jedna sesja, która nie zgadza się z przeliczeniem ze strumienia. */
 export interface ProjectionRowDiff {
   sessionUuid: string;
+  /** Klub sesji (wielofirmowość) - przebudowa pisze go do wiersza projekcji. */
+  orgId: string;
   aircraftId: string;
   /** Dzień karty (`YYYY-MM-DD`, UTC) z przeliczonego czasu przejęcia (`claim_time`); `null` = sesja bez daty. */
   day: string | null;

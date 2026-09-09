@@ -58,14 +58,29 @@ export type Capability =
   | 'thresholds.manage'
   | 'audit.read'
   | 'maintenance.run'
-  | 'bugs.triage';
+  | 'bugs.triage'
+  /** Zakładanie klubów - rola PLATFORMOWA superadministratora (wielofirmowość, epik E). */
+  | 'platform.manage';
 
-/** Konto zalogowane w panelu - stopka nawigacji i decyzje o widoczności akcji. */
+/**
+ * Konto zalogowane w panelu - stopka nawigacji i decyzje o widoczności akcji.
+ *
+ * Od wielofirmowości `code` i `role` są kodem i rolą Z CZŁONKOSTWA w klubie sesji
+ * (`PanelSessionDto.org`). Sesja superadministratora (epik E) niesie `code: null`
+ * i rolę platformową - panel 2.0 takiej sesji jeszcze nie rysuje.
+ */
 export interface PanelPilotDto {
   id: string;
-  code: string;
+  code: string | null;
   name: string;
-  role: PilotRole;
+  role: PilotRole | 'superadmin';
+}
+
+/** Klub sesji panelu (wielofirmowość §8.2) - nazwa do kolumny bocznej. */
+export interface OrganizationRefDto {
+  id: string;
+  slug: string;
+  name: string;
 }
 
 /**
@@ -76,6 +91,8 @@ export interface PanelPilotDto {
  */
 export interface PanelSessionDto {
   pilot: PanelPilotDto;
+  /** Klub sesji; `null` wyłącznie w sesji superadministratora (epik E). */
+  org: OrganizationRefDto | null;
   capabilities: Capability[];
 }
 

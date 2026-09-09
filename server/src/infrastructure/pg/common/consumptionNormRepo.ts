@@ -34,6 +34,7 @@ export class PgConsumptionNormRepo implements ConsumptionNormPort {
 
   async save(
     db: Queryable,
+    orgId: string,
     aircraftId: string,
     windowDays: number,
     norm: ConsumptionNorm | null,
@@ -45,13 +46,14 @@ export class PgConsumptionNormRepo implements ConsumptionNormPort {
     }
 
     await db.query(
-      `INSERT INTO aircraft_consumption (aircraft_id, window_days, model, computed_at)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO aircraft_consumption (aircraft_id, window_days, model, computed_at, org_id)
+       VALUES ($1, $2, $3, $4, $5)
        ON CONFLICT (aircraft_id) DO UPDATE SET
          window_days = EXCLUDED.window_days,
          model = EXCLUDED.model,
-         computed_at = EXCLUDED.computed_at`,
-      [aircraftId, windowDays, JSON.stringify(norm), computedAt],
+         computed_at = EXCLUDED.computed_at,
+         org_id = EXCLUDED.org_id`,
+      [aircraftId, windowDays, JSON.stringify(norm), computedAt, orgId],
     );
   }
 

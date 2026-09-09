@@ -84,12 +84,15 @@ export function registerEventsRoutes(
     }
 
     const outcome = await ingest.ingest(
-      who.pilotId,
+      { pilotId: who.pilotId, orgId: who.orgId },
       parsed.data.events as unknown as Event[],
       parsed.data.sourceDevice ?? null,
     );
     if (!outcome.ok) {
       // Single-writer (§4.4): zdarzenia sesji wysyła wyłącznie telefon jej PIC-a.
+      // Cudzy klub (`aircraft_not_in_org`, wielofirmowość §3.5) odbija tak samo:
+      // to nie jest konflikt danych, tylko zapis poza uprawnieniami - i tak samo
+      // w całości, bez rozjazdu księgowości outboxa.
       return reply.code(403).send({ error: outcome.reason });
     }
     return reply.send(outcome.result);

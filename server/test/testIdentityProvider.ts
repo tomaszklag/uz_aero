@@ -19,7 +19,7 @@ import type {
   LoginSurface,
   ProviderProfile,
 } from '../src/application/common/ports.ts';
-import { TEST_PILOTS } from './testWorld.ts';
+import { TEST_PILOTS, TEST_PILOTS_B } from './testWorld.ts';
 
 /**
  * Token testowy dla konta ze świata referencyjnego - „zaloguj się jako TMK".
@@ -50,7 +50,11 @@ export class TestIdentityProvider implements IdentityProviderPort {
     const own = this.extra.get(idToken);
     if (own != null) return own;
 
-    const known = TEST_PILOTS.find(([, code]) => googleTokenFor(code) === idToken);
+    // Osoby OBU klubów świata testowego - `googleTokenFor('BAD')` loguje administratorkę
+    // klubu B tą samą drogą, co TMK klubu A.
+    const known = [...TEST_PILOTS, ...TEST_PILOTS_B].find(
+      ([, code]) => googleTokenFor(code) === idToken,
+    );
     if (known != null) {
       const [, code, name, email] = known;
       return {

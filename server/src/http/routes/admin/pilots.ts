@@ -107,6 +107,7 @@ const idParams = z.object({ id: z.string().min(1).max(100) });
  */
 const accountToWire = (account: AdminPilotAccount, at: Date): AdminPilotListItem => ({
   id: account.id,
+  orgId: account.orgId,
   code: account.code,
   name: account.name,
   email: account.email,
@@ -128,13 +129,14 @@ export function registerAdminPilotRoutes(
     // `panel.access`, nie `accounts.manage`: listę CZYTA każdy, kto ma wejście do
     // panelu. Ta sama trasa jest słownikiem pilotów dla filtrów innych ekranów (`A02`).
     { method: 'GET', url: '/pilots', capability: 'panel.access' },
-    async (req, reply) => {
+    async (req, reply, actor) => {
       const query = listQuery.safeParse(req.query);
       if (!query.success) return reply.code(400).send({ error: 'bad_request' });
 
       const q = query.data;
+      // Lista CZŁONKÓW klubu z sesji (wielofirmowość) - nie wszystkich osób serwera.
       return reply.send(
-        await queries.list({
+        await queries.list(actor.orgId, {
           active: q.active === undefined ? undefined : q.active === 'true',
           roles: q.role,
           search: q.q,

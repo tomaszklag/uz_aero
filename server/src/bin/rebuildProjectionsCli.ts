@@ -17,10 +17,14 @@
  * nadpisanie wyrównuje liczby i tym samym kasuje jedyny ślad po tym, co je rozjechało.
  *
  * ── Kto to zrobił ───────────────────────────────────────────────────────────────
- * `REBUILD_ACTOR` musi wskazywać ISTNIEJĄCE konto - rola do dziennika audytu idzie
- * z konta, nie z env (`admin_audit.actor_role` ma być rolą Z CHWILI AKCJI). Wymyślona
- * tożsamość w dzienniku byłaby gorsza niż jej brak, a `ip` zostaje `null`, bo tu
- * naprawdę nie ma żądania HTTP.
+ * `REBUILD_ACTOR` musi wskazywać ISTNIEJĄCĄ osobę - tożsamość do dziennika audytu idzie
+ * z bazy, nie z env. Wymyślona tożsamość w dzienniku byłaby gorsza niż jej brak, a `ip`
+ * zostaje `null`, bo tu naprawdę nie ma żądania HTTP.
+ *
+ * Przebudowa dotyczy CAŁEGO rejestru, wszystkich klubów naraz (wielofirmowość), więc
+ * działający jest tu SUPERADMINISTRATOREM albo - gdy osoba roli platformowej nie ma -
+ * administratorem klubu podanego w `REBUILD_ORG`. Wpis audytu dostaje klub działającego
+ * (albo NULL przy akcji platformowej), a nie klub przebudowanych wierszy, bo tych bywa wiele.
  */
 
 import { Pool } from 'pg';
@@ -30,6 +34,8 @@ import { AdminMaintenanceCommands } from '../application/admin/commands/maintena
 import { AdminMaintenanceQueries } from '../application/admin/queries/maintenance.ts';
 import { AuditedWrite } from '../application/admin/auditedWrite.ts';
 import type { RebuildReport } from '../application/admin/contracts/maintenance.ts';
+import type { AuditActor } from '../application/admin/ports.ts';
+import { ORG_SLUG_PATTERN } from '../domain/organizations.ts';
 import { PgAdminAuditRepo } from '../infrastructure/pg/admin/auditRepo.ts';
 import { PgAdminMaintenanceRepo } from '../infrastructure/pg/admin/maintenanceRepo.ts';
 import { PgDatabase } from '../infrastructure/pg/database.ts';
@@ -41,10 +47,15 @@ import { migrate } from '../infrastructure/pg/migrate.ts';
 const env = z
   .object({
     DATABASE_URL: z.string().url(),
-    /** Id konta wykonującego operację - trafia do `admin_audit.actor_pilot_id`. */
+    /** Id osoby wykonującej operację - trafia do `admin_audit.actor_pilot_id`. */
     REBUILD_ACTOR: z.string().min(1, 'REBUILD_ACTOR: id konta administratora'),
+    /** Klub działającego, gdy osoba nie jest superadministratorem (wpis audytu klubu). */
+    REBUILD_ORG: z.string().min(1).optional(),
     REBUILD_MODE: z.enum(['dry_run', 'write']).default('dry_run'),
     REBUILD_REASON: z.string().optional(),
+    /** Klub domyślny dla backfillu migracji 8 - jak w `seedCli.ts`. */
+    SEED_ORG_NAME: z.string().trim().min(1).optional(),
+    SEED_ORG_SLUG: z.string().regex(ORG_SLUG_PATTERN).optional(),
   })
   .parse(process.env);
 
@@ -54,12 +65,35 @@ const db = new PgDatabase(pool);
 
 // Migracje przed przebudową i to jest kolejność, nie ozdoba: przebudowa jest sposobem
 // wypełnienia kolumn, które właśnie dołożyła migracja (11: `operation`, `client`).
-await migrate(db);
+await migrate(db, undefined, {
+  seedOrg:
+    env.SEED_ORG_NAME != null && env.SEED_ORG_SLUG != null
+      ? { name: env.SEED_ORG_NAME, slug: env.SEED_ORG_SLUG }
+      : null,
+});
 
 const pilots = new PgPilotsRepo(db);
-const actor = await pilots.findById(env.REBUILD_ACTOR);
-if (actor == null) {
+const person = await pilots.findById(env.REBUILD_ACTOR);
+if (person == null) {
   console.error(`REBUILD_ACTOR: nie ma konta o id ${env.REBUILD_ACTOR}.`);
+  await pool.end();
+  process.exit(1);
+}
+
+// Działający: superadministrator (akcja platformowa) albo administrator klubu z REBUILD_ORG.
+const actor: AuditActor | null =
+  person.platformRole != null
+    ? { pilotId: person.id, platformRole: person.platformRole, ip: null }
+    : await (async () => {
+        if (env.REBUILD_ORG == null) return null;
+        const membership = await pilots.membership(person.id, env.REBUILD_ORG);
+        if (membership == null || membership.status !== 'active') return null;
+        return { pilotId: person.id, orgId: membership.orgId, role: membership.role, ip: null };
+      })();
+if (actor == null) {
+  console.error(
+    'REBUILD_ACTOR nie jest superadministratorem - podaj REBUILD_ORG z klubem, w którym ma aktywne członkostwo.',
+  );
   await pool.end();
   process.exit(1);
 }
@@ -83,10 +117,7 @@ const commands = new AdminMaintenanceCommands(
 
 const outcome =
   env.REBUILD_MODE === 'write'
-    ? await commands.rebuildProjections(
-        { pilotId: actor.id, role: actor.role, ip: null },
-        { reason: env.REBUILD_REASON },
-      )
+    ? await commands.rebuildProjections(actor, { reason: env.REBUILD_REASON })
     : ({ ok: true, report: await queries.compareProjections() } as const);
 
 await pool.end();
