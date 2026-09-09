@@ -509,18 +509,18 @@
 
     <article class="inv">
       <div class="inv-head">
-        <span class="inv-name">LinkBox · kod klubu</span>
-        <span class="inv-when">Adres zaproszenia pokazuje się W CAŁOŚCI dokładnie raz - w chwili wygenerowania - z przyciskiem „Kopiuj"; serwer trzyma hash, więc drugi raz nie da się go odczytać, tylko unieważnić i wygenerować nowy. Kod klubu jest duży i dzielony myślnikiem, bo dyktuje się go przez telefon, a pilot wpisuje na 00E.</span>
-        <span class="inv-classes"><b>.linkbox</b> · .linkbox-val · <b>.club-code-row</b> · .club-code</span>
+        <span class="inv-name">Kod klubu</span>
+        <span class="inv-when">Jedyna droga do klubu (2026-09-09): kod jest duży i dzielony myślnikiem, bo dyktuje się go przez telefon, a pilot wpisuje na 00E albo 13A. Nie jest sekretem - daje wyłącznie zgłoszenie - więc stoi w panelu na stałe, z „Wygeneruj nowy" obok; stan wyłączony to kreski przygaszone i „Wygeneruj kod" jako akcja główna. Dawny LinkBox (adres linku osobistego) wycięty razem z linkiem.</span>
+        <span class="inv-classes"><b>.club-code-row</b> · .club-code · .club-code.off</span>
       </div>
       <div class="inv-demo">
-        <div class="linkbox">
-          <span class="linkbox-val">https://uzaero.pl/dolacz/7c1e5a9bk3m2v8qx84bn0d5t2wz9yq6r</span>
-          <button type="button" class="btn primary sm">Kopiuj</button>
-        </div>
         <div class="club-code-row">
           <span class="club-code">AZG-7K4M</span>
           <button type="button" class="btn ghost sm">Wygeneruj nowy</button>
+        </div>
+        <div class="club-code-row">
+          <span class="club-code off">— — —</span>
+          <button type="button" class="btn primary sm">Wygeneruj kod</button>
         </div>
       </div>
     </article>

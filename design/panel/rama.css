@@ -504,37 +504,9 @@ body {
    czeka. Klasy PRODUKTU, nie ramy: gdy epik B–F je zaimplementuje, przechodzą pod
    TYMI SAMYMI nazwami do `admin/src/styles/components/` i znikają stąd. ══ */
 
-/* LINKBOX - adres do skopiowania. Wynik wygenerowania linku osobistego: adres w jednej
-   linii mono (ucięty wielokropkiem) i przycisk „Kopiuj" obok. Zielona ramka mówi
-   „to jest gotowe" - jedyny moment, w którym panel pokazuje sekret w całości. */
-.linkbox {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 8px 8px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--green-border);
-  background: var(--green-muted);
-}
-
-.linkbox-val {
-  flex: 1;
-  min-width: 0;
-  font-family: var(--font-mono);
-  font-size: 12.5px;
-  letter-spacing: 0.3px;
-  color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.linkbox .btn {
-  flex-shrink: 0;
-}
-
-/* KOD KLUBU - do przeczytania przez telefon. Duży, mono, z odstępem: administrator
-   dyktuje go pilotowi, który wpisuje go na 00E z klawiatury. */
+/* KOD KLUBU - JEDYNA droga do klubu (2026-09-09, docs/wielofirmowosc.md §3.8). Duży, mono,
+   z odstępem: administrator dyktuje go pilotowi, który wpisuje go na 00E albo 13A
+   z klawiatury. `.linkbox` (adres linku osobistego) WYCIĘTY razem z linkiem. */
 .club-code {
   font-family: var(--font-mono);
   font-size: 24px;
@@ -553,6 +525,11 @@ body {
   border-radius: 8px;
   border: 1px solid var(--border-strong);
   background: var(--surface-raised);
+}
+
+/* Stan WYŁĄCZONY (klub skasował kod): kreski przygaszone zamiast kodu. */
+.club-code.off {
+  color: var(--text-muted);
 }
 
 /* ══ SPIS MAKIET (`design/panel/index.html`) ══

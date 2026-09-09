@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero - Panel 2.0 · Piloci: zaproszenie do klubu</title>
+<title>UZ Aero - Panel 2.0 · Piloci: kod klubu</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -13,51 +13,61 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">PILOCI · ZAPROŚ DO KLUBU</span>
-  <span class="slug">panel/piloci-zaproszenie · #/piloci/zapros · P4</span>
-  <span class="canvas-meta"><span class="pulse"></span>Trzy drogi dołączenia, jedna szuflada</span>
+  <span class="film-strip">PILOCI · KOD KLUBU</span>
+  <span class="slug">panel/piloci-kod-klubu · #/piloci/kod · P4</span>
+  <span class="canvas-meta"><span class="pulse"></span>Jedna droga do klubu</span>
 </header>
 
+<!-- ══ P4 = KARTA „KOD KLUBU" (2026-09-09, docs/wielofirmowosc.md §3.8, §8.3) ══
+     Dawna szuflada „Zaproś do klubu" z trzema kartami (link osobisty, adres e-mail,
+     kod klubu) skurczyła się do JEDNEJ: kod klubu jest jedyną drogą do klubu.
+     Kod nie jest sekretem (daje wyłącznie ZGŁOSZENIE, wpuszcza administrator na P3),
+     więc stoi tu na stałe, jawnym tekstem - administrator czyta go z ekranu i podaje
+     pilotom dowolnym kanałem. Dwie akcje, obie z potwierdzeniem INLINE (wzorzec
+     `.confirm` z karty samolotu): „Wygeneruj nowy" (stary gaśnie od razu, zgłoszenia
+     zostają) i „Wyłącz dołączanie kodem" (kasuje kod - nikt nie dołączy, innej drogi
+     nie ma). Bez banerów wyjaśniających: podpis pod kodem niesie DWIE liczby, które
+     tu coś znaczą - od kiedy obowiązuje i ile zgłoszeń nim czeka. -->
 <aside class="variants-panel">
   <div class="vp-title">Warianty tego ekranu</div>
-  <a class="vp-item active" href="piloci-zaproszenie.html">
+  <a class="vp-item active" href="piloci-kod-klubu.html">
     <span class="vp-badge">P4</span>
     <span class="vp-body">
-      <span class="vp-name">Link osobisty - formularz</span>
-      <span class="vp-when">Domyślna karta: dla kogo, kod pilota i rola nadawane Z GÓRY, bo link daje członkostwo od razu (decyzja właściciela 2026-09-08) - w chwili wejścia nie ma już nikogo, kto by je nadał. Jednorazowy, z terminem 14 dni.</span>
+      <span class="vp-name">Kod klubu - włączony</span>
+      <span class="vp-when">Stan domyślny: kod widoczny w całości, od kiedy obowiązuje, ile zgłoszeń nim czeka. Otwarte potwierdzenie „Wygeneruj nowy" pokazuje, że skutek nazywa się PRZED akcją. Kod pilota i rolę nadaje się dopiero przy zatwierdzeniu (P3) - tu nie ma nikogo konkretnego.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
-  <a class="vp-item" href="#wynik">
+  <a class="vp-item" href="#wylaczony">
     <span class="vp-badge">P4a</span>
     <span class="vp-body">
-      <span class="vp-name">Link wygenerowany</span>
-      <span class="vp-when">Adres w całości z „Kopiuj" - widoczny DOKŁADNIE RAZ. Wiadomości nie wysyłamy (bez e-maili w 2.0.0): administrator przekazuje link sam. Po zamknięciu link widać już tylko jako wiersz w karcie ZAPROSZENIA na P1.</span>
+      <span class="vp-name">Dołączanie kodem wyłączone</span>
+      <span class="vp-when">Klub skasował kod: kreski zamiast kodu, plakietka „Wyłączone", jedna akcja „Wygeneruj kod". Do czasu nowego kodu nikt nie dołączy - innej drogi nie ma, i karta mówi to wprost. Niżej, pod ramką.</span>
     </span>
   </a>
-  <a class="vp-item" href="#email-kod">
-    <span class="vp-badge">P4b · P4c</span>
+  <a class="vp-item" href="piloci-zgloszenie.html">
+    <span class="vp-badge">P3</span>
     <span class="vp-body">
-      <span class="vp-name">Adres e-mail · kod klubu</span>
-      <span class="vp-when">Druga karta: adres Google, po którym serwer sam dopasuje osobę przy pierwszym logowaniu (członkostwo od razu, kod z góry). Trzecia: kod klubu - jeden na klub, wielorazowy, daje ZGŁOSZENIE do zatwierdzenia (P3). Obie niżej.</span>
+      <span class="vp-name">Zgłoszenie - dokąd prowadzi kod</span>
+      <span class="vp-when">Kto wpisze kod na 00E albo 13A, trafia do karty ZGŁOSZENIA na P1; „Rozpatrz" nadaje kod pilota i rolę albo odrzuca z powodem.</span>
     </span>
   </a>
   <a class="vp-item" href="piloci-lista.html">
     <span class="vp-badge">P1</span>
     <span class="vp-body">
       <span class="vp-name">Lista pilotów - pod spodem</span>
-      <span class="vp-when">„Zaproś do klubu" jest JEDYNĄ akcją główną listy; dawne „Dodaj pilota" było drogą e-mail w innym ubraniu i zniknęło.</span>
+      <span class="vp-when">„Kod klubu" jest JEDYNĄ akcją główną listy; dawne „Dodaj pilota" i „Zaproś do klubu" zniknęły - z panelu klubu nie da się nikogo dopisać adresem ani linkiem.</span>
     </span>
   </a>
 </aside>
 
-<main class="browser" role="region" aria-label="Panel UZ Aero - zaproszenie do klubu">
+<main class="browser" role="region" aria-label="Panel UZ Aero - kod klubu">
 
   <div class="chrome">
     <span class="chrome-dots"><i></i><i></i><i></i></span>
     <span class="chrome-url">
       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-      <b>panel.uzaero.pl</b>/#/piloci/zapros
+      <b>panel.uzaero.pl</b>/#/piloci/kod
     </span>
   </div>
 
@@ -84,7 +94,6 @@
     </header>
 
     <div class="workspace">
-
       <!-- KOLUMNA BOCZNA (styl lekki, issue #107): kontekst klubu (wielofirmowość 2.0.0) - link prowadzi na wybór klubu (00A)
            nad pozycjami modułów. Kanoniczna postać: SZABLON.html. -->
       <aside class="sidebar" aria-label="Nawigacja panelu">
@@ -120,6 +129,12 @@
         <div class="page">
       <div class="page-head">
         <div><h1 class="page-title">Piloci</h1></div>
+        <div class="page-actions">
+          <a class="btn primary" href="piloci-kod-klubu.html">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+            Kod klubu
+          </a>
+        </div>
       </div>
       <div class="table-wrap">
         <table>
@@ -136,12 +151,12 @@
     </div>
 
     <button type="button" class="drawer-scrim" aria-label="Zamknij szufladę"></button>
-    <div class="drawer wide" role="dialog" aria-modal="true" aria-label="Link gotowy">
+    <div class="drawer" role="dialog" aria-modal="true" aria-label="Kod klubu">
 
       <div class="drawer-head">
         <div>
-          <div class="drawer-title">Link gotowy</div>
-          <div class="drawer-sub">Michał Sowa · kod MSO · pilot · ważny do 22 WRZ 2026</div>
+          <div class="drawer-title">Kod klubu</div>
+          <div class="drawer-sub">Aeroklub Zielonogórski · jedyna droga do klubu</div>
         </div>
         <button type="button" class="x-btn" aria-label="Zamknij">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -149,14 +164,40 @@
       </div>
 
       <div class="drawer-body">
+
+        <!-- KOD NA STAŁE, JAWNIE: nie jest sekretem, więc nie ma „pokaż raz" ani „Kopiuj"
+             z zieloną ramką - administrator czyta go z ekranu i dyktuje. Podpis niesie
+             dwie liczby, które coś tu znaczą: od kiedy obowiązuje i ile zgłoszeń nim czeka. -->
         <div class="card">
-          <div class="card-title">Link osobisty</div>
-          <div class="linkbox">
-            <span class="linkbox-val">https://uzaero.pl/dolacz/7c1e5a9bk3m2v8qx84bn0d5t2wz9yq6r</span>
-            <button type="button" class="btn primary sm">Kopiuj</button>
+          <div class="card-title">Aktualny kod</div>
+          <div class="club-code-row">
+            <span class="club-code">AZG-7K4M</span>
+            <button type="button" class="btn ghost sm">Wygeneruj nowy</button>
           </div>
-          <span class="hint">Przekaż go Michałowi Sowie. Po otwarciu na telefonie zaloguje się kontem Google i od razu jest w klubie pod kodem MSO. Link działa raz - <b>po zamknięciu tej karty nie da się go odczytać ponownie</b>, tylko unieważnić i wygenerować nowy.</span>
+          <span class="hint">Obowiązuje od 26 SIE 2026 · 2 zgłoszenia tym kodem czekają na decyzję.</span>
+          <!-- Potwierdzenie INLINE (wzorzec `.confirm` z karty samolotu i klubu): skutek
+               nazwany PRZED akcją. Rotacja nie rusza zgłoszeń - to wiersze członkostw. -->
+          <div class="confirm">
+            <div class="confirm-q">Wygenerować nowy kod?</div>
+            <span class="hint">Stary przestanie działać od razu. Zgłoszenia już złożone zostają i czekają na decyzję jak dotąd.</span>
+            <div class="confirm-actions">
+              <button type="button" class="btn sm">Nie</button>
+              <button type="button" class="btn primary sm">Wygeneruj</button>
+            </div>
+          </div>
         </div>
+
+        <!-- WYŁĄCZENIE = skasowanie kodu (docs/wielofirmowosc.md §3.8). Czerwona
+             obramówka, bo skutek jest dla klubu poważny: innej drogi nie ma.
+             Potwierdzenie ma ten sam kształt, co wyżej - stan pokazuje P4a niżej. -->
+        <div class="card">
+          <div class="card-title">Dołączanie kodem</div>
+          <div class="access-row">
+            <span>Kod przyjmuje zgłoszenia</span>
+            <button type="button" class="btn danger sm">Wyłącz</button>
+          </div>
+        </div>
+
       </div>
 
       <div class="drawer-foot">
@@ -171,57 +212,60 @@
 <nav class="nav-strip">
   <a href="index.html">↩ Spis makiet panelu</a>
   <span>·</span>
-  <a href="piloci-zaproszenie.html" class="active">P4 Zaproś</a>
+  <a href="piloci-lista.html">← P1 Piloci</a>
   <span>·</span>
-  <a href="piloci-lista.html">P1 Piloci →</a>
+  <a href="piloci-zgloszenie.html">P3 Zgłoszenie</a>
+  <span>·</span>
+  <a href="piloci-kod-klubu.html" class="active">P4 Kod klubu</a>
+  <span>·</span>
+  <a href="#wylaczony">↓ P4a wyłączone</a>
 </nav>
 
-<section class="canvas-section" id="email-kod">
-  <div class="canvas-section-title">Pozostałe dwie karty szuflady</div>
+<section class="canvas-section" id="wylaczony">
+  <div class="canvas-section-title">P4a · Dołączanie kodem wyłączone</div>
   <div class="inv-grid">
 
     <article class="inv">
       <div class="inv-head">
-        <span class="inv-name">P4b · Adres e-mail konta Google</span>
-        <span class="inv-when">To dzisiejsze „Dodaj pilota" z adresem: serwer dopasuje osobę przy jej pierwszym logowaniu kontem Google z TYM adresem i doda ją do klubu od razu, pod kodem nadanym tutaj. Wiadomości nie wysyłamy - adres panelu / strony pobierania przekazuje administrator. Jeśli osoba już ma konto na serwerze (jest w innym klubie), członkostwo powstaje natychmiast po zapisaniu.</span>
+        <span class="inv-name">Karta po skasowaniu kodu</span>
+        <span class="inv-when">Kodu nie ma, więc wiersz pokazuje kreski przygaszone, a jedyna akcja to „Wygeneruj kod" - zielona, bo to jedyne wyjście z tego stanu. Plakietka „Wyłączone" stoi w tytule karty; zdanie pod spodem mówi o SKUTKU dla klubu, nie o budowie mechanizmu. Zgłoszenia złożone przed wyłączeniem zostały w karcie ZGŁOSZENIA - wyłączenie ich nie kasuje.</span>
       </div>
       <div class="inv-demo">
-        <div class="field">
-          <label class="label" for="e-mail">E-mail konta Google</label>
-          <input class="input mono" id="e-mail" value="ewa.dabek@gmail.com">
-          <span class="hint">Liczy się tylko adres potwierdzony przez Google.</span>
-        </div>
-        <div class="field-pair">
-          <div class="field">
-            <label class="label" for="e-hint">Osoba</label>
-            <input class="input" id="e-hint" value="Ewa Dąbek">
+        <div class="card">
+          <div class="card-title">
+            Aktualny kod
+            <span class="spacer"></span>
+            <span class="pill amber">Wyłączone</span>
           </div>
-          <div class="field">
-            <label class="label" for="e-code">Kod pilota w klubie</label>
-            <input class="input mono" id="e-code" value="EDA">
+          <div class="club-code-row">
+            <span class="club-code off">— — —</span>
+            <button type="button" class="btn primary sm">Wygeneruj kod</button>
           </div>
-        </div>
-        <div class="inv-row">
-          <button type="button" class="btn">Anuluj</button>
-          <button type="button" class="btn primary">Zapisz zaproszenie</button>
+          <span class="hint">Dołączanie kodem wyłączone 3 WRZ 2026. Bez kodu nikt nie dołączy do klubu.</span>
         </div>
       </div>
     </article>
 
     <article class="inv">
       <div class="inv-head">
-        <span class="inv-name">P4c · Kod klubu</span>
-        <span class="inv-when">Jeden kod na klub, wielorazowy, do przeczytania przez telefon - pilot wpisuje go na ekranie „nie należysz do żadnego klubu" i trafia do kolejki ZGŁOSZENIA (P3), gdzie administrator nadaje kod pilota i rolę. Kodu klubu nie da się „skopiować" jak linku, bo nie jest sekretem: wycieknie prędzej czy później i dlatego daje wyłącznie zgłoszenie. „Wygeneruj nowy" unieważnia stary od razu; klub, który tej drogi nie chce, unieważnia kod i nie generuje nowego (00E przyjmuje wtedy tylko link).</span>
+        <span class="inv-name">Potwierdzenie wyłączenia</span>
+        <span class="inv-when">Po „Wyłącz" w karcie „Dołączanie kodem": ten sam wzorzec `.confirm`, co przy rotacji i przy wyłączeniu klubu. Zdanie nazywa jedyny skutek, który klub musi znać przed kliknięciem.</span>
       </div>
       <div class="inv-demo">
-        <div class="club-code-row">
-          <span class="club-code">AZG-7K4M</span>
-          <button type="button" class="btn ghost sm">Wygeneruj nowy</button>
-        </div>
-        <span class="hint">Aktualny od 26 SIE 2026 · 2 zgłoszenia tym kodem czekają na decyzję.</span>
-        <div class="access-row">
-          <span>Dołączanie kodem klubu</span>
-          <button type="button" class="btn danger sm">Unieważnij kod</button>
+        <div class="card">
+          <div class="card-title">Dołączanie kodem</div>
+          <div class="access-row">
+            <span>Kod przyjmuje zgłoszenia</span>
+            <button type="button" class="btn danger sm">Wyłącz</button>
+          </div>
+          <div class="confirm">
+            <div class="confirm-q">Wyłączyć dołączanie kodem?</div>
+            <span class="hint">Kod przestanie działać. Do czasu wygenerowania nowego nikt nie dołączy do klubu - innej drogi nie ma.</span>
+            <div class="confirm-actions">
+              <button type="button" class="btn sm">Nie</button>
+              <button type="button" class="btn danger sm">Wyłącz</button>
+            </div>
+          </div>
         </div>
       </div>
     </article>

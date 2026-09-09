@@ -1443,8 +1443,11 @@ nullowalnych są przybite na sztywno.
 
 **(h) Czego migracja 8 świadomie NIE ruszyła:** `external_identities` zostaje ze statusami
 `pending`/`linked`/`rejected`. Przeniesienie kolejki zgłoszeń na członkostwa (`docs/
-wielofirmowosc.md` §4) idzie razem z przebudową dołączania (`POST /auth/join`,
-zaproszenia - epik D), bo dopiero tam powstaje kod, który z niej korzysta.
+wielofirmowosc.md` §4) idzie razem z przebudową dołączania (`POST /auth/join { code }`,
+kod klubu - epik D; od 2026-09-09 jedyna droga, §3.8 tamtego dokumentu), bo dopiero tam
+powstaje kod, który z niej korzysta. Tabela `invitations` z pierwszej wersji migracji 8
+wylatuje (§3.8 i §14 B tamtego dokumentu; migracja 8 jest w `develop` po PR #110, nie na
+produkcji, więc zmienia się w miejscu) - zamiast niej `organizations.join_code`.
 
 ---
 

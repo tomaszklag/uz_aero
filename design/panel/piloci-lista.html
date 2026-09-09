@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero - Panel 2.0 · Piloci: członkowie klubu i zaproszenia</title>
+<title>UZ Aero - Panel 2.0 · Piloci: członkowie klubu i zgłoszenia</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -13,7 +13,7 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">PILOCI · CZŁONKOWIE I ZAPROSZENIA</span>
+  <span class="film-strip">PILOCI · CZŁONKOWIE I ZGŁOSZENIA</span>
   <span class="slug">panel/piloci-lista · #/piloci · P1</span>
   <span class="canvas-meta"><span class="pulse"></span>Odwzorowuje AccountsScreen.tsx</span>
 </header>
@@ -23,8 +23,8 @@
   <a class="vp-item active" href="piloci-lista.html">
     <span class="vp-badge">P1</span>
     <span class="vp-body">
-      <span class="vp-name">Członkowie klubu + zgłoszenia + zaproszenia</span>
-      <span class="vp-when">Stan pokazany niżej: dwie osoby zgłosiły się kodem klubu (karta <b>ZGŁOSZENIA</b>), a dwa zaproszenia czekają na wejście (karta <b>ZAPROSZENIA</b>) - obie stoją nad listą i <b>obie znikają, gdy są puste</b>. Lista to CZŁONKOSTWA w tym klubie: kod jest kodem w tym klubie, osoba może być też w innym (wielofirmowość 2.0.0).</span>
+      <span class="vp-name">Członkowie klubu + zgłoszenia kodem</span>
+      <span class="vp-when">Stan pokazany niżej: dwie osoby zgłosiły się kodem klubu (karta <b>ZGŁOSZENIA</b>) - stoi nad listą i <b>znika, gdy jest pusta</b>. Karty ZAPROSZENIA nie ma: od 2026-09-09 kod klubu jest JEDYNĄ drogą do klubu. Lista to CZŁONKOSTWA w tym klubie: kod jest kodem w tym klubie, osoba może być też w innym (wielofirmowość 2.0.0).</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -42,11 +42,11 @@
       <span class="vp-when">Otwiera ją „Rozpatrz" w kolejce. Decyzja PRZYJMUJE do klubu i nadaje kod pilota, więc kontekstem jest lista, na którą ta osoba trafi - osobnego modułu nie ma.</span>
     </span>
   </a>
-  <a class="vp-item" href="piloci-zaproszenie.html">
+  <a class="vp-item" href="piloci-kod-klubu.html">
     <span class="vp-badge">P4</span>
     <span class="vp-body">
-      <span class="vp-name">Szuflada „Zaproś do klubu"</span>
-      <span class="vp-when">Jedyna akcja główna listy. Trzy drogi jako trzy karty: link osobisty (od razu), adres e-mail (od razu, przy pierwszym logowaniu), kod klubu (zgłoszenie). Dawne „Dodaj pilota" było drogą e-mail w innym ubraniu.</span>
+      <span class="vp-name">Szuflada „Kod klubu"</span>
+      <span class="vp-when">Jedyna akcja główna listy. Kod klubu (jeden na klub, wielorazowy) podaje się pilotom dowolnym kanałem; kto go wpisze, trafia do ZGŁOSZEŃ. „Wygeneruj nowy" i „Wyłącz dołączanie kodem" - tam. Dawne „Dodaj pilota" i trzy drogi zaproszeń zniknęły (2026-09-09).</span>
     </span>
   </a>
   <a class="vp-item" href="samoloty-lista.html">
@@ -60,8 +60,9 @@
 
 <!-- ══ EKRAN: CZŁONKOWIE KLUBU ══
      Kompozycja jak w `AccountsScreen.tsx`, rozszerzona przy wielofirmowości (2.0.0):
-     PageHead → karta ZGŁOSZENIA (warunkowa) → karta ZAPROSZENIA (warunkowa)
-     → pasek zawężeń → tabela członkostw. Bez kafli z licznikami, bez liczb przy
+     PageHead → karta ZGŁOSZENIA (warunkowa) → pasek zawężeń → tabela członkostw.
+     Karty ZAPROSZENIA NIE MA (2026-09-09: kod klubu jest jedyną drogą do klubu,
+     docs/wielofirmowosc.md §3.8). Bez kafli z licznikami, bez liczb przy
      chipach, bez stopki „pokazano n z m" - tych rzeczy ekran nie ma.
      Zakładka dalej nazywa się „Piloci" - członkowie klubu SĄ pilotami, a „Członkowie"
      w pasku brzmiałoby jak stowarzyszenie, nie jak dziennik. -->
@@ -138,11 +139,11 @@
           <h1 class="page-title">Piloci</h1>
         </div>
         <div class="page-actions">
-          <!-- JEDNA akcja główna. „Dodaj pilota" (konto z adresem Google wpisanym
-               zawczasu) jest odtąd jedną z trzech kart w tej szufladzie. -->
-          <a class="btn primary" href="piloci-zaproszenie.html">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Zaproś do klubu
+          <!-- JEDNA akcja główna: karta „Kod klubu" (P4). Nowy członek wchodzi WYŁĄCZNIE
+               kodem - z panelu nie da się nikogo dopisać adresem ani linkiem. -->
+          <a class="btn primary" href="piloci-kod-klubu.html">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+            Kod klubu
           </a>
         </div>
       </div>
@@ -152,9 +153,10 @@
            WYŁĄCZNIE wtedy, gdy ktoś czeka. Pusta kolejka nie dostaje karty z zerem:
            stan domyślny nie zajmuje ekranu (reguła SyncChipa). Widzi ją tylko konto
            z `accounts.manage` - to są e-maile ludzi spoza klubu.
-           Od 2.0.0 zgłoszenie powstaje WYŁĄCZNIE z kodu klubu (00E): nieznane konto
+           Od 2.0.0 zgłoszenie powstaje WYŁĄCZNIE z kodu klubu (00E, 13A): nieznane konto
            Google bez kodu nie zgłasza się nigdzie - dostaje ekran „nie należysz do
-           żadnego klubu". Link osobisty i adres e-mail wchodzą BEZ tej kolejki. -->
+           żadnego klubu". Od 2026-09-09 to JEDYNA droga do klubu; tylko pierwszego
+           administratora zakłada superadministrator (O2). -->
       <div class="card">
         <div class="card-title">Zgłoszenia kodem klubu · 2</div>
         <div class="table-wrap">
@@ -189,48 +191,7 @@
         </div>
       </div>
 
-      <!-- ══ ZAPROSZENIA, KTÓRE JESZCZE NIE WESZŁY ══
-           Linki osobiste i adresy e-mail czekające na pierwsze logowanie. Wiersz
-           mówi: dla kogo (napis administratora), jaką drogą, pod jakim kodem, do kiedy
-           - i ma JEDNĄ akcję: unieważnić. Adresu linku tu NIE MA (serwer trzyma hash;
-           widać go raz, przy generowaniu - P4a). Karta znika, gdy nic nie czeka;
-           zaproszenie zużyte znika z niej samo, bo osoba jest już na liście niżej. -->
-      <div class="card">
-        <div class="card-title">Zaproszenia · 2</div>
-        <div class="table-wrap">
-          <table>
-            <caption class="visually-hidden">Zaproszenia czekające na wejście</caption>
-            <thead>
-              <tr>
-                <th>Dla kogo</th>
-                <th>Droga</th>
-                <th>Kod</th>
-                <th>Rola</th>
-                <th>Ważne do</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td class="cell-strong">Michał Sowa</td>
-                <td><span class="cell-sub">link osobisty</span></td>
-                <td class="reg">MSO</td>
-                <td><span class="pill dim">Pilot</span></td>
-                <td><span class="cell-sub">22 WRZ 2026</span></td>
-                <td class="row-actions"><button type="button" class="btn danger sm">Unieważnij</button></td>
-              </tr>
-              <tr>
-                <td class="cell-strong">Krzysztof Lis <span class="cell-sub mono">krzysztof.lis@gmail.com</span></td>
-                <td><span class="cell-sub">adres e-mail</span></td>
-                <td class="reg">KLI</td>
-                <td><span class="pill dim">Pilot</span></td>
-                <td><span class="cell-sub">—</span></td>
-                <td class="row-actions"><button type="button" class="btn danger sm">Unieważnij</button></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+
 
       <div class="filters">
         <label class="search">
@@ -323,7 +284,7 @@
   <span>·</span>
   <a href="piloci-zgloszenie.html">P3 Zgłoszenie</a>
   <span>·</span>
-  <a href="piloci-zaproszenie.html">P4 Zaproś</a>
+  <a href="piloci-kod-klubu.html">P4 Kod klubu</a>
   <span>·</span>
   <a href="samoloty-lista.html">S1 Samoloty</a>
   <span>·</span>
