@@ -8,12 +8,13 @@
  * == PO WEJSCIU GOOGLE (2026-09-04) NIE MA JUZ „ZLEGO HASLA" ==
  * Tożsamości dowodzi podpisany token Google, więc na poziomie poświadczeń zostaje
  * jedna odmowa: „tego tokenu nie umiem sprawdzić" (`401 invalid_token`). Wszystkie
- * pozostałe odmowy dotyczą KONTA, które serwer już rozpoznał - i każda z nich ma
+ * pozostałe odmowy dotyczą OSOBY, którą serwer już rozpoznał - i każda z nich ma
  * inną drogę wyjścia, więc każda ma własne zdanie:
- *  • `403 not_registered` - konto Google jest poprawne, ale w klubie nie ma konta
- *    z tym adresem: administrator musi je założyć (albo wpisać adres w istniejącym);
- *  • `403 no_panel_access` - konto jest, ale to konto pilota: panel go nie obejmuje;
- *  • `401 account_disabled` - konto wyłączone; próbowanie ponownie nic nie zmieni.
+ *  • `403 no_panel_access` - osoba jest, ale w żadnym klubie nie jest administratorem:
+ *    zwykły pilot albo ktoś, kto dopiero zalogował się pierwszy raz i nie ma klubu
+ *    (od epiku D wielofirmowości osoba powstaje przy pierwszym logowaniu, więc dawne
+ *    `not_registered` - „konta jeszcze nie ma" - przestało istnieć jako stan);
+ *  • `401 account_disabled` - osoba zablokowana; próbowanie ponownie nic nie zmieni.
  */
 
 import { isHttpError } from '../../api/httpClient';
@@ -30,17 +31,10 @@ export function loginMessage(error: unknown): LoginMessage {
     return { tone: 'danger', text: 'Nie ma połączenia z serwerem. Spróbuj za chwilę.' };
   }
 
-  if (error.status === 403 && error.body.error === 'not_registered') {
-    return {
-      tone: 'warn',
-      text: 'W klubie nie ma konta z tym adresem Google. Poproś administratora o jego dodanie.',
-    };
-  }
-
   if (error.status === 403) {
     return {
       tone: 'warn',
-      text: 'To konto nie ma dostępu do panelu. Poproś administratora o nadanie roli.',
+      text: 'To konto nie ma dostępu do panelu. Poproś administratora klubu o nadanie roli.',
     };
   }
 

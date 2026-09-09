@@ -99,16 +99,10 @@ const MIRRORS = [
     server: 'BUG_SEVERITIES',
     read: () => constIn(join(SERVER, 'bugReports.ts'), 'BUG_SEVERITIES'),
   },
-  // Zgłoszenia rejestracyjne (logowanie Google, 2026-09-04). Status jest `TEXT`-em
-  // z `CHECK`-iem w bazie, a jego definicja mieszka POZA `domain/` - w portach warstwy
-  // wspólnej - bo to kształt magazynu tożsamości, nie reguła klubu. Ścieżka jest
-  // przez to inna niż w pozostałych lustrach, ale powód lustra ten sam.
-  {
-    panel: 'RegistrationStatusDto',
-    server: 'IdentityStatus',
-    read: () =>
-      unionIn(join(SERVER, '..', 'application', 'common', 'ports.ts'), 'IdentityStatus'),
-  },
+  // Lustro statusu zgłoszenia rejestracyjnego (`RegistrationStatusDto` ↔ `IdentityStatus`)
+  // odeszło w epiku D wielofirmowości (issue #100): tożsamość Google nie ma już statusów,
+  // a stan zgłoszenia jest statusem CZŁONKOSTWA - jego lustro wraca z kontraktem
+  // członkostw w epiku E.
 ] as const;
 
 describe('lustra unii: panel <-> serwer', () => {

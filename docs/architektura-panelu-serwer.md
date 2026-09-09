@@ -1441,13 +1441,31 @@ wpis o niej nie ma czego udawać. Dziennik klubu filtruje po swoim `org_id`, wi�
 platformowych nie widzi. Pilnuje tego `schema.test.ts` - lista tabel z `org_id` i lista
 nullowalnych są przybite na sztywno.
 
-**(h) Czego migracja 8 świadomie NIE ruszyła:** `external_identities` zostaje ze statusami
-`pending`/`linked`/`rejected`. Przeniesienie kolejki zgłoszeń na członkostwa (`docs/
-wielofirmowosc.md` §4) idzie razem z przebudową dołączania (`POST /auth/join { code }`,
-kod klubu - epik D; od 2026-09-09 jedyna droga, §3.8 tamtego dokumentu), bo dopiero tam
-powstaje kod, który z niej korzysta. Tabela `invitations` z pierwszej wersji migracji 8
-wylatuje (§3.8 i §14 B tamtego dokumentu; migracja 8 jest w `develop` po PR #110, nie na
-produkcji, więc zmienia się w miejscu) - zamiast niej `organizations.join_code`.
+**(h) `external_identities` bez statusów - dopisane W MIEJSCU w epiku D (2026-09-09).**
+Pierwsza wersja migracji 8 zostawiała tożsamości Google ze statusami `pending`/`linked`/
+`rejected` „do epiku D". Epik D (issue #100, D1+D4) przeniósł kolejkę zgłoszeń na
+członkostwa (`docs/wielofirmowosc.md` §4) i zmienił migrację 8 w miejscu - wolno, bo
+migracja 8 jest w `develop` (PR #110), nie na produkcji. Tabela `invitations` z pierwszej
+wersji wyleciała już w D0 (zamiast niej `organizations.join_code`). Backfill tożsamości
+ma DWIE pułapki, obie złapane testem `organizations.test.ts` przy pierwszym przebiegu:
+- **kolumny, które ta sama migracja za chwilę skasuje, JESZCZE stoją.** Pętla zakładająca
+  osoby dla zgłoszeń `pending`/`rejected` biegnie w bloku `DO`, PRZED `DROP COLUMN
+  pilots.code, pilots.role` na końcu skryptu - więc `INSERT INTO pilots` bez `code` odbijał
+  się o `NOT NULL`. Osoba dostaje wartości ZASTĘPCZE (kod = jej identyfikator, jedyny;
+  rola domyślna), które znikają razem z kolumnami kilka poleceń dalej. Tak samo
+  `UPDATE external_identities SET pilot_id` musi ustawić `status = 'linked'`, bo CHECK
+  `identity_linked_has_pilot` (status ⟺ osoba) też jeszcze obowiązuje;
+- **pętla, nie `INSERT … SELECT`.** Adres z Google trafia na osobę wyłącznie, gdy nikt go
+  nie ma (`pilots.email` jest jedyny na serwerze); przy zbiorczym wstawieniu sprawdzenie
+  zajętości nie widziałoby wierszy z tego samego polecenia, a dwa zgłoszenia z tym samym
+  adresem wywróciłyby migrację unikatem. `FOR ident IN … LOOP` sprawdza każdy wiersz
+  wobec stanu po poprzednich.
+
+Po backfillu odchodzą `status`, `reject_reason`, `decided_at`, `decided_by`, CHECK i indeks
+kolejki, a `pilot_id` dostaje `NOT NULL`. Zgłoszenie 1.x staje się osobą z członkostwem
+`pending` albo `rejected` (z powodem, chwilą i autorem decyzji) w klubie domyślnym -
+nikt nie wypada z kolejki przez wdrożenie. Lista kolumn `external_identities` jest odtąd
+przybita w `schema.test.ts`.
 
 ---
 

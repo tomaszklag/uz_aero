@@ -28,7 +28,10 @@ interface PilotRow {
   email: string | null;
   active: boolean;
   platform_role: string | null;
+  credentials_valid_from: string | Date | null;
 }
+
+const at = (v: string | Date | null): Date | null => (v == null ? null : new Date(v));
 
 const toAccount = (r: PilotRow): PilotAccount => ({
   id: r.id,
@@ -38,6 +41,7 @@ const toAccount = (r: PilotRow): PilotAccount => ({
   // Bazy pilnuje CHECK, ale adapter i tak nie ufa łańcuchowi znaków z zewnątrz:
   // nierozpoznana rola platformowa schodzi do „zwykła osoba", nigdy nie awansuje.
   platformRole: isPlatformRole(r.platform_role) ? r.platform_role : null,
+  credentialsValidFrom: at(r.credentials_valid_from),
 });
 
 interface MembershipRow {
@@ -48,10 +52,11 @@ interface MembershipRow {
   code: string | null;
   role: string;
   status: string;
+  reject_reason: string | null;
+  created_at: string | Date;
+  decided_at: string | Date | null;
   credentials_valid_from: string | Date | null;
 }
-
-const at = (v: string | Date | null): Date | null => (v == null ? null : new Date(v));
 
 const toMembership = (r: MembershipRow): Membership => ({
   orgId: r.org_id,
@@ -64,6 +69,9 @@ const toMembership = (r: MembershipRow): Membership => ({
   role: isPilotRole(r.role) ? r.role : DEFAULT_ROLE,
   status: membershipStatusOf(r.status),
   credentialsValidFrom: at(r.credentials_valid_from),
+  rejectReason: r.reject_reason,
+  createdAt: new Date(r.created_at),
+  decidedAt: at(r.decided_at),
 });
 
 /**
@@ -73,7 +81,8 @@ const toMembership = (r: MembershipRow): Membership => ({
  */
 const MEMBERSHIP_SELECT = `
   SELECT m.org_id, o.name AS org_name, o.slug AS org_slug, o.active AS org_active,
-         m.code, m.role, m.status, m.credentials_valid_from
+         m.code, m.role, m.status, m.reject_reason, m.created_at, m.decided_at,
+         m.credentials_valid_from
     FROM memberships m
     JOIN organizations o ON o.id = m.org_id`;
 
@@ -82,7 +91,7 @@ export class PgPilotsRepo implements PilotsPort {
 
   async findById(id: string): Promise<PilotAccount | null> {
     const { rows } = await this.db.query<PilotRow>(
-      'SELECT id, name, email, active, platform_role FROM pilots WHERE id = $1',
+      'SELECT id, name, email, active, platform_role, credentials_valid_from FROM pilots WHERE id = $1',
       [id],
     );
     return rows[0] ? toAccount(rows[0]) : null;

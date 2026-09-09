@@ -96,11 +96,10 @@ describe('seed (bootstrap wdrożenia)', () => {
     const identities = new PgExternalIdentitiesRepo(db);
     const linked = await identities.claimByVerifiedEmail(googleProfile(ADMIN_EMAIL));
 
-    expect(linked?.status).toBe('linked');
     expect(linked?.pilotId).toBe('admin');
   });
 
-  it('e-mail SPOZA konta nie przejmuje niczego - dostaje zgłoszenie do zatwierdzenia', async () => {
+  it('e-mail SPOZA konta nie przejmuje niczego - logowanie zakłada wtedy NOWĄ osobę bez klubu', async () => {
     const db = await freshDb();
     await seed(db, { adminEmail: ADMIN_EMAIL });
 

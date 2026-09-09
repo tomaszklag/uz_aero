@@ -15,7 +15,8 @@
 import { createHmac } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 
-import { authorizeOrg, authorizePlatform, credentialsRevoked } from '../src/http/authorize.ts';
+import { credentialsRevoked } from '../src/domain/credentials.ts';
+import { authorizeOrg, authorizePlatform } from '../src/http/authorize.ts';
 import { PgPilotsRepo } from '../src/infrastructure/pg/common/pilotsRepo.ts';
 import { can, platformCan, platformCapabilitiesOf } from '../src/domain/roles.ts';
 import { TEST_SECRET, testHarness } from './helpers.ts';
@@ -392,7 +393,7 @@ describe('rola pochodzi z członkostwa, nie z tokenu', () => {
 
 describe('token PLATFORMOWY superadministratora', () => {
   it('jest ROZŁĄCZNY z tokenem klubu - w obie strony', async () => {
-    // Ta sama własność bezpieczeństwa, co przy tokenie rejestracyjnym: podpis HMAC
+    // Ta sama własność bezpieczeństwa, co przy tokenie osoby: podpis HMAC
     // przepuszcza oba, odróżnia je wyłącznie `purpose`. Bez tego rozdziału poświadczenie
     // kogoś bez klubu otwierałoby trasy telefonu, a `POST /events` pisałby zdarzenia
     // do klubu, którego w tokenie nie ma.
@@ -401,7 +402,7 @@ describe('token PLATFORMOWY superadministratora', () => {
     const club = tokens.sign(asAdmin('TMK'), 3600);
 
     expect(tokens.verify(platform)).toBeNull();
-    expect(tokens.verifyRegistration(platform)).toBeNull();
+    expect(tokens.verifyPerson(platform)).toBeNull();
     expect(tokens.verifyPlatform(platform)).toMatchObject({ pilotId: 'admin' });
 
     expect(tokens.verifyPlatform(club)).toBeNull();

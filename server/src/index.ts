@@ -19,12 +19,10 @@ import { AdminFlagCommands } from './application/admin/commands/flags.ts';
 import { AdminFleetCommands } from './application/admin/commands/fleet.ts';
 import { AdminAircraftReadingCommands } from './application/admin/commands/aircraftReadings.ts';
 import { AdminBugReportCommands } from './application/admin/commands/bugReports.ts';
-import { AdminRegistrationCommands } from './application/admin/commands/registrations.ts';
 import { AdminMaintenanceCommands } from './application/admin/commands/maintenance.ts';
 import { AdminPilotCommands } from './application/admin/commands/pilots.ts';
 import { AdminAuditQueries } from './application/admin/queries/audit.ts';
 import { AdminBugReportQueries } from './application/admin/queries/bugReports.ts';
-import { AdminRegistrationQueries } from './application/admin/queries/registrations.ts';
 import { AdminCorrectionQueries } from './application/admin/queries/corrections.ts';
 import { AdminDashboardQueries } from './application/admin/queries/dashboard.ts';
 import { AdminEventQueries } from './application/admin/queries/events.ts';
@@ -44,6 +42,8 @@ import { PgBugReportsRepo } from './infrastructure/pg/common/bugReportsRepo.ts';
 import { AuthCommands } from './application/common/commands/auth.ts';
 import { IngestCommands } from './application/mobile/commands/ingest.ts';
 import { BugReportCommands } from './application/mobile/commands/bugReports.ts';
+import { AttemptLimiter } from './application/mobile/attemptLimiter.ts';
+import { JOIN_WINDOW_MS, JoinCommands } from './application/mobile/commands/join.ts';
 import { PrefsCommands } from './application/mobile/commands/prefs.ts';
 import { DayExporter } from './application/common/export/dayExporter.ts';
 import { MyEventQueries } from './application/mobile/queries/myEvents.ts';
@@ -66,7 +66,6 @@ import { PgAdminFlagsRepo } from './infrastructure/pg/admin/flagsRepo.ts';
 import { PgAdminFleetRepo } from './infrastructure/pg/admin/fleetRepo.ts';
 import { PgAdminMaintenanceRepo } from './infrastructure/pg/admin/maintenanceRepo.ts';
 import { PgAdminPilotsRepo } from './infrastructure/pg/admin/pilotsRepo.ts';
-import { PgAdminRegistrationsRepo } from './infrastructure/pg/admin/registrationsRepo.ts';
 import { PgAdminRefreshTokensRepo } from './infrastructure/pg/admin/refreshTokensRepo.ts';
 import { PgAdminSessionsRepo } from './infrastructure/pg/admin/sessionsRepo.ts';
 import { PgAdminConsumptionRepo } from './infrastructure/pg/admin/consumptionRepo.ts';
@@ -81,6 +80,7 @@ import { PgFlagsRepo } from './infrastructure/pg/common/flagsRepo.ts';
 import { PgSessionsProjection } from './infrastructure/pg/common/sessionsProjection.ts';
 import { migrate } from './infrastructure/pg/migrate.ts';
 import { seed } from './infrastructure/pg/seed.ts';
+import { PgClubJoinRepo } from './infrastructure/pg/mobile/clubJoinRepo.ts';
 import { PgPilotPrefsRepo } from './infrastructure/pg/mobile/pilotPrefsRepo.ts';
 import { PgExternalIdentitiesRepo } from './infrastructure/pg/common/externalIdentitiesRepo.ts';
 import { PgPilotsRepo } from './infrastructure/pg/common/pilotsRepo.ts';
@@ -227,9 +227,6 @@ const aircraftReadings = new PgAircraftReadingsRepo();
 // panel czyta i przestawia status. Druga kopia zapytania byłaby pierwszym miejscem,
 // w którym lista zaczęłaby pokazywać co innego niż szuflada.
 const bugReports = new PgBugReportsRepo();
-  // Zgłoszenia rejestracyjne (logowanie Google) - adapter DECYZJI, osobny od adaptera
-  // ścieżki logowania (`PgExternalIdentitiesRepo`), jak przy kontach.
-  const adminRegistrationsRepo = new PgAdminRegistrationsRepo();
 const adminFleetQueries = new AdminFleetQueries(
   db,
   adminFleetRepo,
@@ -258,6 +255,16 @@ const app = await buildServer({
       clock,
     ),
     tokens,
+    clock,
+    // Identyfikator NOWEJ osoby przy pierwszym logowaniu (wielofirmowość §4).
+    randomUUID,
+  ),
+  // Dołączanie kodem klubu (§3.8): adapter z własnym uchwytem do bazy (pilot pisze sam,
+  // poza audytem) i licznik prób w pamięci procesu - instancja jest jedna (§8.8).
+  join: new JoinCommands(
+    pilots,
+    new PgClubJoinRepo(db),
+    new AttemptLimiter(clock, JOIN_WINDOW_MS),
     clock,
   ),
   reference: new ReferenceQueries(
@@ -440,16 +447,6 @@ const app = await buildServer({
   // komenda - bramę audytu: przestawienie statusu jest decyzją o CUDZYM zgłoszeniu.
   adminBugReportQueries: new AdminBugReportQueries(db, bugReports),
   adminBugReports: new AdminBugReportCommands(auditedWrite, bugReports, clock),
-  // Zgłoszenia rejestracyjne: zapytania czytają `db` wprost, komenda idzie przez bramę
-  // audytu i dostaje adapter KONT - zatwierdzenie zakłada konto tą samą drogą, co A06.
-  adminRegistrationQueries: new AdminRegistrationQueries(db, adminRegistrationsRepo),
-  adminRegistrations: new AdminRegistrationCommands(
-    auditedWrite,
-    adminRegistrationsRepo,
-    adminPilotsRepo,
-    randomUUID,
-    clock,
-  ),
   adminLogQueries: new AdminLogQueries(db, new PgAdminLogRepo(), clock),
   // Analityka zużycia (A10a/A10b) - bierze TEN SAM magazyn zdarzeń, co reszta serwera:
   // strumienie sesji są jej wejściem, a licznik odczytów w `contract.test.ts` pilnuje,

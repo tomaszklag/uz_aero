@@ -28,6 +28,7 @@ import type {
   VerifiedIdentity,
   VerifiedPlatformIdentity,
 } from '../application/common/ports.ts';
+import { credentialsRevoked } from '../domain/credentials.ts';
 import { can, platformCan, type Capability, type PlatformRole } from '../domain/roles.ts';
 
 export function authorize(tokens: TokenService, token: string | null): VerifiedIdentity | null {
@@ -45,25 +46,6 @@ export type PlatformAuthOutcome =
   | { ok: true; identity: VerifiedPlatformIdentity; platformRole: PlatformRole }
   | { ok: false; status: 401; body: { error: 'unauthorized' } }
   | { ok: false; status: 403; body: { error: 'forbidden'; required: Capability } };
-
-/**
- * Czy token wydany w chwili `issuedAt` (sekundy epoki) jest STARSZY niż unieważnienie
- * poświadczeń (`pilots.credentials_valid_from` albo `memberships.credentials_valid_from`).
- *
- * To jedyny sposób, w jaki deaktywacja zrywa sesję PANELU: ta sesja jest podpisanym JWT
- * w ciasteczku `HttpOnly` i NIE MA dla niej wiersza w bazie, więc `revokeAllFor`
- * (kasujące `refresh_tokens`) nie ma czego unieważnić. Bez tej kontroli wykradzione
- * poświadczenie panelu przeżywałoby odcięcie nawet o osiem godzin.
- *
- * Porównanie jest ŚCIŚLE mniejsze i po milisekundach, a `issuedAt` ma rozdzielczość
- * sekundy - więc token wydany w tej samej sekundzie, w której padło unieważnienie,
- * zostaje ODRZUCONY. Zaokrąglenie działa w stronę odebrania dostępu; koszt to co
- * najwyżej jedno powtórzone logowanie, a odwrotny błąd byłby luką.
- */
-export function credentialsRevoked(validFrom: Date | null, issuedAt: number): boolean {
-  if (validFrom == null) return false;
-  return issuedAt * 1000 < validFrom.getTime();
-}
 
 /**
  * Brama uprawnień dla tras panelu KLUBU. Zwraca gotowy status i ciało odpowiedzi, żeby

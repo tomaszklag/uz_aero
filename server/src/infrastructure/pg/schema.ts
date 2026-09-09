@@ -828,9 +828,16 @@ export const MIGRATION_7 = `
  * Zdjęcie globalnych unikatów kasuje informację, której po dołożeniu drugiego klubu nie da
  * się odtworzyć. Procedurą odwrotu jest kopia bazy PRZED migracją (Railway snapshot).
  *
- * Czego ta migracja NIE ROBI (świadomie, epik D): `external_identities` zostaje ze statusami
- * `pending`/`linked`/`rejected` - kolejka zgłoszeń przenosi się na członkostwa razem
- * z przebudową dołączania (`POST /auth/join`, zaproszenia), nie wcześniej.
+ * ══ TOŻSAMOŚĆ GOOGLE JEST ZAWSZE PODPIĘTA DO OSOBY (epik D, issue #100; §4) ══
+ * Pierwsza wersja tej migracji (PR #110) zostawiała `external_identities` ze statusami
+ * `pending`/`linked`/`rejected` „do epiku D". Epik D zmienił ją W MIEJSCU (migracja 8 nie
+ * dotarła na produkcję): kolejka zgłoszeń żyje odtąd na CZŁONKOSTWACH, bo oczekiwanie
+ * i odrzucenie dotyczą KLUBU, nie konta Google - ta sama osoba może czekać w jednym klubie
+ * i być odrzucona w drugim. Tożsamość jest więc albo nieznana, albo podpięta do osoby:
+ * `status`, `reject_reason`, `decided_at`, `decided_by` znikają, `pilot_id` staje się
+ * `NOT NULL`, a osoba powstaje przy PIERWSZYM logowaniu Googlem (bez żadnego członkostwa).
+ * Backfill niżej przepisuje zgłoszenia 1.x na osoby i członkostwa `pending`/`rejected`
+ * w klubie domyślnym, z powodem odrzucenia - nikt nie wypada z kolejki przez wdrożenie.
  */
 export const MIGRATION_8 = `
   -- ═══ KLUB JAKO TENANT ═══════════════════════════════════════════════════════
@@ -933,6 +940,9 @@ export const MIGRATION_8 = `
     org_slug TEXT := current_setting('uzaero.seed_org_slug', true);
     -- Nie "org_id": w PL/pgSQL nazwa zmiennej zderzyłaby się z kolumną w UPDATE-ach.
     club     TEXT;
+    -- Zgłoszenie rejestracyjne 1.x → osoba + członkostwo (pętla niżej).
+    ident    RECORD;
+    person   TEXT;
   BEGIN
     IF EXISTS (SELECT 1 FROM pilots)
        OR EXISTS (SELECT 1 FROM aircraft)
@@ -946,6 +956,7 @@ export const MIGRATION_8 = `
        OR EXISTS (SELECT 1 FROM admin_audit)
        OR EXISTS (SELECT 1 FROM bug_reports)
        OR EXISTS (SELECT 1 FROM refresh_tokens)
+       OR EXISTS (SELECT 1 FROM external_identities)
     THEN
       IF org_name IS NULL OR org_name = '' OR org_slug IS NULL OR org_slug = '' THEN
         RAISE EXCEPTION 'Migracja 8: baza ma dane jednego klubu, a SEED_ORG_NAME / SEED_ORG_SLUG nie sa ustawione. Runner nie wymysla nazwy klubu - slug wchodzi do adresow kart arkusza. Ustaw obie zmienne i uruchom ponownie.';
@@ -965,6 +976,39 @@ export const MIGRATION_8 = `
 
       -- Blokada osoby jest odtąd PLATFORMOWA i nikt jej jeszcze nie nałożył.
       UPDATE pilots SET active = TRUE WHERE active = FALSE;
+
+      -- Zgłoszenia rejestracyjne 1.x (tożsamość Google BEZ konta: status pending albo
+      -- rejected) → OSOBA + członkostwo o tym samym statusie w klubie domyślnym. Nazwisko
+      -- i adres idą z profilu Google; adres zajęty przez inną osobę zostaje pusty, bo
+      -- pilots.email jest jedyny na serwerze. Powód, chwila i autor decyzji przechodzą
+      -- 1:1 - odrzucony czyta powód na 00D także po wdrożeniu. Pętla, nie INSERT…SELECT:
+      -- sprawdzenie zajętości adresu ma widzieć osoby wstawione w poprzednich obrotach.
+      FOR ident IN
+        SELECT provider, subject, email, name, status, reject_reason, created_at, decided_at, decided_by
+          FROM external_identities
+         WHERE pilot_id IS NULL
+         ORDER BY created_at, subject
+      LOOP
+        person := gen_random_uuid()::text;
+        -- pilots.code i pilots.role JESZCZE istnieją (DROP COLUMN stoi na końcu tej
+        -- migracji), więc dostają wartości zastępcze: kod = identyfikator (jedyny),
+        -- rola = domyślna. Obie kolumny znikają za chwilę razem z tymi wartościami.
+        INSERT INTO pilots (id, code, role, name, email, active)
+        VALUES (person, person, 'pilot', ident.name,
+                CASE WHEN EXISTS (SELECT 1 FROM pilots WHERE lower(email) = lower(ident.email))
+                     THEN NULL ELSE ident.email END,
+                TRUE);
+        -- CHECK identity_linked_has_pilot (status = 'linked' <=> pilot_id) jeszcze stoi,
+        -- więc status idzie razem z osobą; obie rzeczy znikają na końcu tej migracji.
+        UPDATE external_identities SET pilot_id = person, status = 'linked'
+         WHERE provider = ident.provider AND subject = ident.subject;
+        INSERT INTO memberships
+          (org_id, pilot_id, role, status, reject_reason, joined_via, created_at, decided_at, decided_by, updated_at)
+        VALUES (club, person, 'pilot',
+                CASE WHEN ident.status = 'rejected' THEN 'rejected' ELSE 'pending' END,
+                ident.reject_reason, 'backfill', ident.created_at, ident.decided_at, ident.decided_by,
+                ident.created_at);
+      END LOOP;
 
       UPDATE aircraft             SET org_id = club WHERE org_id IS NULL;
       UPDATE events               SET org_id = club WHERE org_id IS NULL;
@@ -1020,6 +1064,17 @@ export const MIGRATION_8 = `
   -- istnieć razem z kolumną, której pilnował.
   ALTER TABLE pilots DROP COLUMN IF EXISTS code;
   ALTER TABLE pilots DROP COLUMN IF EXISTS role;
+
+  -- ═══ TOŻSAMOŚĆ GOOGLE ZAWSZE PODPIĘTA DO OSOBY (epik D, §4) ═══════════════════
+  -- Po backfillu żaden wiersz nie jest bez osoby, więc kolumny decyzji odchodzą razem
+  -- z CHECK-iem i indeksem kolejki: decyzja jest odtąd wierszem memberships.
+  ALTER TABLE external_identities DROP CONSTRAINT IF EXISTS identity_linked_has_pilot;
+  DROP INDEX IF EXISTS idx_external_identities_status;
+  ALTER TABLE external_identities DROP COLUMN IF EXISTS status;
+  ALTER TABLE external_identities DROP COLUMN IF EXISTS reject_reason;
+  ALTER TABLE external_identities DROP COLUMN IF EXISTS decided_at;
+  ALTER TABLE external_identities DROP COLUMN IF EXISTS decided_by;
+  ALTER TABLE external_identities ALTER COLUMN pilot_id SET NOT NULL;
 `;
 
 export const MIGRATIONS: readonly string[] = [
@@ -1059,5 +1114,5 @@ export const MIGRATION_TITLES: readonly string[] = [
   'Odczyty maszyny wpisane przez administratora (issue #81): nadrzędny stan licznika, paliwa i oleju z komentarzem, konkurent zdania w łańcuchu przekazania',
   'Zgłoszenia błędów z aplikacji pilota (issue #87): opis, waga, kontekst okna i status obsługi - kanał zwrotny na czas testów z pilotami',
   'Logowanie przez Google (2026-09-04): tożsamości zewnętrzne ze zgłoszeniem do zatwierdzenia przez administratora; hasło przestaje być wymagane',
-  'Wielofirmowość (issue #98): kluby jako tenant, członkostwa z kodem i rolą per klub, zaproszenia, superadministrator, org_id na danych klubu i backfill jednego klubu z danych 1.x',
+  'Wielofirmowość (issue #98, #100): kluby jako tenant, członkostwa z kodem i rolą per klub, kod klubu jako jedyna droga dołączenia, superadministrator, org_id na danych klubu, tożsamość Google zawsze podpięta do osoby i backfill jednego klubu z danych 1.x',
 ];

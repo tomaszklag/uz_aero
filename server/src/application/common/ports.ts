@@ -51,10 +51,11 @@ export interface Database extends Queryable {
 
 /**
  * OSOBA po stronie serwera - jedna na cały serwer, wspólna dla klubów, w których lata
- * (wielofirmowość, issue #98). Powstaje przez zatwierdzenie zgłoszenia albo wprost
- * z panelu (administrator wpisuje wtedy e-mail, a konto podpina się przy pierwszym
- * logowaniu Google - `docs/logowanie-google.md` §6). Hasha nie ma i mieć nie będzie:
- * hasła znikły z produktu 2026-09-04.
+ * (wielofirmowość, issue #98). Powstaje przy PIERWSZYM logowaniu Googlem - bez żadnego
+ * członkostwa (epik D, `docs/wielofirmowosc.md` §4) - albo wprost z panelu (administrator
+ * wpisuje wtedy e-mail, a konto Google podpina się przy pierwszym logowaniu -
+ * `docs/logowanie-google.md` §6). Hasha nie ma i mieć nie będzie: hasła znikły
+ * z produktu 2026-09-04.
  *
  * ══ CZEGO TU NIE MA OD WIELOFIRMOWOŚCI: KODU I ROLI ══
  * Kod pilota i rola panelu są własnością CZŁONKOSTWA w klubie (`Membership`), nie osoby:
@@ -74,6 +75,11 @@ export interface PilotAccount {
   active: boolean;
   /** Rola PLATFORMOWA (`src/domain/roles.ts`); `null` = zwykła osoba. */
   platformRole: PlatformRole | null;
+  /**
+   * Unieważnienie poświadczeń OSOBY (`pilots.credentials_valid_from`, §3.4) - dla tokenu
+   * OSOBY (bez klubu) to jedyna data, jaką ma sprawdzać: członkostwa on nie wskazuje.
+   */
+  credentialsValidFrom: Date | null;
 }
 
 /**
@@ -96,6 +102,15 @@ export interface Membership {
   status: MembershipStatus;
   /** Unieważnienie poświadczeń PER KLUB - druga z dwóch dat, które sprawdza brama. */
   credentialsValidFrom: Date | null;
+  /**
+   * Powód odrzucenia zgłoszenia (`rejected`) - pilot czyta go na 00D, więc jedzie w każdej
+   * liście klubów osoby; `null` w pozostałych stanach.
+   */
+  rejectReason: string | null;
+  /** Chwila zgłoszenia (kod klubu) albo dopisania; 00C pokazuje „czeka od". */
+  createdAt: Date;
+  /** Chwila decyzji administratora klubu; `null`, dopóki zgłoszenie czeka. */
+  decidedAt: Date | null;
 }
 
 /**
@@ -200,23 +215,25 @@ export interface VerifiedIdentity extends Identity {
 }
 
 /**
- * Kto zgłosił się przez dostawcę zewnętrznego, ale NIE MA jeszcze konta pilota -
- * adresat tokenu rejestracyjnego (`docs/logowanie-google.md` §5).
+ * OSOBA BEZ KLUBU - adresat tokenu OSOBY (`purpose: 'person'`; wielofirmowość §4,
+ * dawny token rejestracyjny z `docs/logowanie-google.md` §5).
  *
- * Para `(provider, subject)` jest kluczem głównym `external_identities`, więc token
- * nie potrzebuje żadnego surogatu: wskazuje wiersz wprost.
+ * Od epiku D osoba powstaje przy pierwszym logowaniu Googlem, więc token wskazuje
+ * wiersz `pilots` wprost (`sub` = identyfikator osoby), tak jak token platformowy.
+ * Otwiera dokładnie dwie trasy: `GET /auth/memberships` (stan zgłoszeń, ekran 00C)
+ * i `POST /auth/join` (kod klubu, ekran 00E). Żadnej trasy klubu - osoba bez klubu
+ * nie ma czego w klubie zapisać.
  */
-export interface RegistrationIdentity {
-  provider: string;
-  subject: string;
+export interface PersonIdentity {
+  pilotId: string;
 }
 
 /**
- * Tożsamość zgłoszenia ODCZYTANA z tokenu razem z chwilą wydania (jak `VerifiedIdentity`).
+ * Tożsamość osoby ODCZYTANA z tokenu razem z chwilą wydania (jak `VerifiedIdentity`).
  * `issuedAt` = `iat` w sekundach epoki; `0` = brak claimu, czyli „wydany przed czasem" -
  * domyślna wartość odbiera dostęp, nigdy go nie przyznaje.
  */
-export interface VerifiedRegistration extends RegistrationIdentity {
+export interface VerifiedPersonIdentity extends PersonIdentity {
   issuedAt: number;
 }
 
@@ -248,20 +265,20 @@ export interface TokenService {
   verifyPlatform(token: string): VerifiedPlatformIdentity | null;
 
   /**
-   * Token ZGŁOSZENIA - jedyne poświadczenie, jakie dostaje ktoś bez konta pilota.
-   * Otwiera dokładnie jedną trasę: `GET /auth/registration` (ekran `00c`).
+   * Token OSOBY - jedyne poświadczenie, jakie dostaje ktoś bez aktywnego członkostwa
+   * (wielofirmowość §4). Otwiera dokładnie dwie trasy: `GET /auth/memberships`
+   * (ekran 00C) i `POST /auth/join` (ekran 00E).
    */
-  signRegistration(claims: RegistrationIdentity, ttlSec: number): string;
+  signPerson(claims: PersonIdentity, ttlSec: number): string;
 
   /**
    * ══ TE DWIE PARY MUSZĄ BYĆ ROZŁĄCZNE I TO JEST WŁASNOŚĆ BEZPIECZEŃSTWA ══
-   * `verify` odrzuca każdy token rejestracyjny, a `verifyRegistration` każdy token
-   * pilota. Bez tego rozdziału token zgłoszenia byłby ważną TOŻSAMOŚCIĄ wskazującą
-   * nieistniejące konto - a wtedy `POST /events` zapisywałby zdarzenia z `pilot_id`,
-   * za którym nikt nie stoi. Podpis HMAC tego nie łapie: token jest nasz, tylko
-   * wystawiony w innym celu.
+   * `verify` odrzuca każdy token osoby, a `verifyPerson` każdy token klubu. Bez tego
+   * rozdziału token osoby bez klubu byłby ważną TOŻSAMOŚCIĄ bez `org` - a wtedy
+   * `POST /events` zapisywałby zdarzenia do klubu, którego w tokenie nie ma. Podpis
+   * HMAC tego nie łapie: token jest nasz, tylko wystawiony w innym celu.
    */
-  verifyRegistration(token: string): VerifiedRegistration | null;
+  verifyPerson(token: string): VerifiedPersonIdentity | null;
 }
 
 /**
@@ -293,32 +310,29 @@ export interface RefreshTokensPort {
 
 // ── tożsamości zewnętrzne (logowanie Google) ────────────────────────────────────
 
-/** Stan zgłoszenia: `docs/logowanie-google.md` §3.1. */
-export type IdentityStatus = 'pending' | 'linked' | 'rejected';
-
 /**
- * Konto U DOSTAWCY przez całe swoje życie: zgłoszenie → zatwierdzone albo odrzucone.
+ * Konto U DOSTAWCY - ZAWSZE podpięte do osoby (wielofirmowość §4, epik D). Statusów
+ * `pending`/`rejected` tu nie ma od 2.0.0: oczekiwanie i odrzucenie dotyczą KLUBU
+ * i mieszkają na członkostwie (`Membership.status`), bo ta sama osoba może czekać
+ * w jednym klubie i być odrzucona w drugim.
  *
- * `email` i `name` pochodzą Z TOKENU dostawcy i służą wyłącznie administratorowi przy
- * decyzji. To NIE są `pilots.email` ani `pilots.name`: tamte wpisuje administrator,
- * i tylko tamten e-mail cokolwiek znaczy przy podpinaniu konta.
+ * `email` i `name` pochodzą Z TOKENU dostawcy - panel pokazuje je w kolejce zgłoszeń
+ * obok nazwiska osoby. Nazwisko i adres OSOBY (`pilots`) zaczynają się od nich przy
+ * pierwszym logowaniu, ale potem należą do osoby i wolno je zmienić w panelu.
  */
 export interface ExternalIdentity {
   provider: string;
   subject: string;
-  /** `null` dopóki niezatwierdzone. Niepustość jest RÓWNOWAŻNA `status === 'linked'`. */
-  pilotId: string | null;
+  pilotId: string;
   email: string;
   name: string;
-  status: IdentityStatus;
-  rejectReason: string | null;
   createdAt: Date;
-  /** Chwila decyzji administratora; `null` dopóki zgłoszenie czeka. Ekran `00d` ją cytuje. */
-  decidedAt: Date | null;
   /**
-   * Pierwsze/ostatnie wejście na konto tą tożsamością. Dla tokenu rejestracyjnego to
-   * JEDNORAZOWOŚĆ: ustawione znaczy „ktoś już wszedł" (tym tokenem albo Googlem), więc
-   * skopiowany token nie może być fabryką kolejnych par tokenów (audyt 2026-09-05).
+   * Ostatnie wejście DO KLUBU tą tożsamością (tokeny klubu z logowania albo
+   * z `GET /auth/memberships`). Dla tokenu OSOBY to JEDNORAZOWOŚĆ: wejście późniejsze
+   * niż wydanie tokenu znaczy, że ten token już zrobił swoje - skopiowany nie może być
+   * fabryką kolejnych par tokenów (audyt 2026-09-05, reguła przeniesiona z tokenu
+   * rejestracyjnego).
    */
   lastLoginAt: Date | null;
 }
@@ -360,9 +374,23 @@ export interface IdentityProviderPort {
 
 export interface ExternalIdentitiesPort {
   find(provider: string, subject: string): Promise<ExternalIdentity | null>;
+  /** Tożsamość OSOBY - jedna na osobę (`idx_external_identities_pilot`); `null` = nigdy nie logowała się Googlem. */
+  findByPilot(pilotId: string): Promise<ExternalIdentity | null>;
 
-  /** Nowe zgłoszenie (`pending`) - konta pilota NIE tworzy. */
-  createPending(profile: ProviderProfile): Promise<ExternalIdentity>;
+  /**
+   * NOWA OSOBA z profilu dostawcy + tożsamość podpięta do niej - jedna transakcja
+   * (wielofirmowość §4: osoba powstaje przy pierwszym logowaniu, bez członkostwa).
+   *
+   * Adres z Google trafia na osobę WYŁĄCZNIE gdy dostawca go potwierdził
+   * (`emailVerified`) i gdy nikt go jeszcze nie ma: `pilots.email` jest listą, po której
+   * panel dopisuje członkostwo do istniejącej osoby, więc adres niepotwierdzony byłby
+   * drogą do podszycia się pod kogoś, komu administrator dopiero wpisze ten adres.
+   *
+   * `null` = przegrany wyścig dwóch pierwszych logowań tej samej tożsamości: wołający
+   * czyta wtedy wiersz założony przez zwycięzcę. Osoba z przegranej próby NIE zostaje
+   * w bazie - dlatego transakcja, a nie dwa polecenia.
+   */
+  createPerson(profile: ProviderProfile, personId: string): Promise<ExternalIdentity | null>;
 
   /**
    * PODPIĘCIE do istniejącego konta po zweryfikowanym e-mailu (§6) - `null`, gdy nie
@@ -374,7 +402,7 @@ export interface ExternalIdentitiesPort {
    */
   claimByVerifiedEmail(profile: ProviderProfile): Promise<ExternalIdentity | null>;
 
-  /** Stempel ostatniego wejścia - wyłącznie informacyjny, dla panelu. */
+  /** Stempel ostatniego wejścia do klubu - patrz `ExternalIdentity.lastLoginAt`. */
   markLogin(provider: string, subject: string, at: Date): Promise<void>;
 }
 

@@ -86,18 +86,20 @@ export const ADMIN_ACTIONS = [
    */
   'bug.status',
   /**
-   * ZATWIERDZENIE zgłoszenia rejestracyjnego (logowanie Google, 2026-09-04): powstaje
-   * konto pilota, a tożsamość zewnętrzna przechodzi w `linked`. To JEST założenie konta,
-   * tylko zaczęte z drugiej strony - `details` niosą to samo, co `pilot.create`, plus
-   * e-mail i imię z Google, żeby dało się odtworzyć, KOGO administrator wpuścił.
+   * ZATWIERDZENIE zgłoszenia kodem klubu (wielofirmowość §3.8, §8.3; epik D): członkostwo
+   * `pending` → `active` z kodem pilota i rolą. To JEST przyjęcie do klubu, tylko zaczęte
+   * od strony pilota - `details` niosą to samo, co `pilot.create`, plus imię i e-mail
+   * z Google, żeby dało się odtworzyć, KOGO administrator wpuścił. Dawne
+   * `registration.approve` (zgłoszenie na tożsamości, do 2.0.0) odeszło razem z bramą
+   * „brak konta".
    */
-  'registration.approve',
+  'membership.approve',
   /**
    * ODRZUCENIE zgłoszenia - z powodem, który pilot czyta na ekranie `00d`. Odrzucone
    * zgłoszenie wypada z domyślnego widoku listy, więc wpis w dzienniku jest miejscem,
    * w którym za miesiąc widać, kto i dlaczego komuś odmówił.
    */
-  'registration.reject',
+  'membership.reject',
 ] as const;
 
 export type AdminAction = (typeof ADMIN_ACTIONS)[number];

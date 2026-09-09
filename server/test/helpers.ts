@@ -32,14 +32,12 @@ import { AdminFlagCommands } from '../src/application/admin/commands/flags.ts';
 import { AdminFleetCommands } from '../src/application/admin/commands/fleet.ts';
 import { AdminAircraftReadingCommands } from '../src/application/admin/commands/aircraftReadings.ts';
 import { AdminBugReportCommands } from '../src/application/admin/commands/bugReports.ts';
-import { AdminRegistrationCommands } from '../src/application/admin/commands/registrations.ts';
 import { PgAircraftReadingsRepo } from '../src/infrastructure/pg/common/aircraftReadingsRepo.ts';
 import { PgBugReportsRepo } from '../src/infrastructure/pg/common/bugReportsRepo.ts';
 import { AdminMaintenanceCommands } from '../src/application/admin/commands/maintenance.ts';
 import { AdminPilotCommands } from '../src/application/admin/commands/pilots.ts';
 import { AdminAuditQueries } from '../src/application/admin/queries/audit.ts';
 import { AdminBugReportQueries } from '../src/application/admin/queries/bugReports.ts';
-import { AdminRegistrationQueries } from '../src/application/admin/queries/registrations.ts';
 import { AdminCorrectionQueries } from '../src/application/admin/queries/corrections.ts';
 import { AdminDashboardQueries } from '../src/application/admin/queries/dashboard.ts';
 import { AdminEventQueries } from '../src/application/admin/queries/events.ts';
@@ -77,7 +75,9 @@ import { PgAdminFlagsRepo } from '../src/infrastructure/pg/admin/flagsRepo.ts';
 import { PgAdminFleetRepo } from '../src/infrastructure/pg/admin/fleetRepo.ts';
 import { PgAdminMaintenanceRepo } from '../src/infrastructure/pg/admin/maintenanceRepo.ts';
 import { PgAdminPilotsRepo } from '../src/infrastructure/pg/admin/pilotsRepo.ts';
-import { PgAdminRegistrationsRepo } from '../src/infrastructure/pg/admin/registrationsRepo.ts';
+import { AttemptLimiter } from '../src/application/mobile/attemptLimiter.ts';
+import { JOIN_WINDOW_MS, JoinCommands } from '../src/application/mobile/commands/join.ts';
+import { PgClubJoinRepo } from '../src/infrastructure/pg/mobile/clubJoinRepo.ts';
 import { PgAdminRefreshTokensRepo } from '../src/infrastructure/pg/admin/refreshTokensRepo.ts';
 import { PgAdminSessionsRepo } from '../src/infrastructure/pg/admin/sessionsRepo.ts';
 import { PgAdminConsumptionRepo } from '../src/infrastructure/pg/admin/consumptionRepo.ts';
@@ -228,9 +228,6 @@ export async function testHarness(
   // Odczyty administratora (issue #81) - jeden adapter dla telefonu i panelu, jak w produkcji.
   const aircraftReadings = new PgAircraftReadingsRepo();
   const bugReportsRepo = new PgBugReportsRepo();
-  // Zgłoszenia rejestracyjne (logowanie Google) - adapter DECYZJI, osobny od adaptera
-  // ścieżki logowania (`PgExternalIdentitiesRepo`), jak przy kontach.
-  const adminRegistrationsRepo = new PgAdminRegistrationsRepo();
   const adminFleetQueries = new AdminFleetQueries(
     db,
     adminFleetRepo,
@@ -253,6 +250,15 @@ export async function testHarness(
       identities,
       identityProvider,
       tokens,
+      clock,
+      randomUUID,
+    ),
+    // Dołączanie kodem klubu - prawdziwy adapter i licznik prób na sterowanym zegarze,
+    // więc test okna ograniczenia tempa przesuwa czas jawnie, bez spania.
+    join: new JoinCommands(
+      pilots,
+      new PgClubJoinRepo(db),
+      new AttemptLimiter(clock, JOIN_WINDOW_MS),
       clock,
     ),
     reference: new ReferenceQueries(
@@ -415,16 +421,6 @@ export async function testHarness(
     adminStatsQueries: new AdminStatsQueries(db, new PgAdminStatsRepo(), clock),
     adminBugReportQueries: new AdminBugReportQueries(db, bugReportsRepo),
     adminBugReports: new AdminBugReportCommands(auditedWrite, bugReportsRepo, clock),
-    // Zgłoszenia rejestracyjne: zapytania czytają `db` wprost, komenda idzie przez bramę
-    // audytu i dostaje adapter KONT - zatwierdzenie zakłada konto tą samą drogą, co A06.
-    adminRegistrationQueries: new AdminRegistrationQueries(db, adminRegistrationsRepo),
-    adminRegistrations: new AdminRegistrationCommands(
-      auditedWrite,
-      adminRegistrationsRepo,
-      adminPilotsRepo,
-      randomUUID,
-      clock,
-    ),
     adminLogQueries: new AdminLogQueries(db, new PgAdminLogRepo(), clock),
     // Analityka zużycia (A10a/A10b) - dostaje TEN SAM `events`, co reszta harnessu,
     // więc dekorator liczący odczyty strumienia widzi też jej wywołania.
