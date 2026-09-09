@@ -2670,10 +2670,12 @@ Przegląd 2026-09-09 (pytanie właściciela o zaproszenia e-mailem → hasła �
   `UNIQUE` na serwerze, `NULL` = dołączanie wyłączone) + `join_code_since`; pilot loguje
   się Googlem, wpisuje kod na 00E (albo „Dołącz do innego klubu" na 13A) → członkostwo
   `pending` → 00C → administrator klubu zatwierdza z kodem pilota i rolą (P3) albo
-  odrzuca z powodem (00D). **Tabeli `invitations` NIE MA** - wylatuje z migracji 8
-  (epik B jest w `develop` po PR #110, ale nie na produkcji, więc migracja 8 zmienia
-  się W MIEJSCU, bez migracji 9; baza dev od nowa); `memberships.joined_via` =
-  `code | platform | backfill`
+  odrzuca z powodem (00D). **Tabeli `invitations` NIE MA** - WYCIĘTA z migracji 8
+  2026-09-09 (D0; epik B jest w `develop` po PR #110, ale nie na produkcji, więc migracja 8
+  zmieniła się W MIEJSCU, bez migracji 9; baza dev od nowa); `memberships.joined_via` =
+  `code | panel | platform | backfill` - `panel` (dopisanie wprost z panelu klubu) żyje
+  do D3, gdzie `POST /pilots` przechodzi do modułu Organizacje i wartość zamienia się
+  w `platform`; martwe klasy `.secret*` (po hasłach) wycięte z `surfaces.css` (D8)
 - **człowiek decyduje PRZED wejściem** - to główna przewaga nad linkiem, który wpuszczał
   od razu. Zgłoszenie `pending` NIE wygasa samo (kończy je decyzja); administrator klubu
   może wyłączyć dołączanie kodem (kasuje kod - wtedy nikt nie dołączy, bo innej drogi
@@ -2778,8 +2780,8 @@ plik serwera:
   odczycie i test izolacji każdej trasy (C), adres kart ze slugiem i token odczytu (C),
   kontrola członkostwa per żądanie telefonu (C), `POST /auth/join { code }` i kolejka
   `pending` na członkostwach (D - od 2026-09-09 jedyna droga, sekcja wyżej; tabela
-  `invitations` z migracji 8 do wycięcia W MIEJSCU - epik B jest w `develop`, PR #110,
-  ale nie na produkcji), moduł Organizacje i wybór klubu w panelu (E), klub
+  `invitations` WYCIĘTA z migracji 8 W MIEJSCU tego samego dnia - epik B jest w `develop`,
+  PR #110, ale nie na produkcji), moduł Organizacje i wybór klubu w panelu (E), klub
   w aplikacji (F). Panel web dostał wyłącznie lustro: `platform.manage` w `dto.ts`
   i `can.ts`, `org` w `PanelSessionDto`
 

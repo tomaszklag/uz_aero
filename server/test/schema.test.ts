@@ -68,16 +68,14 @@ describe('schemat PostgreSQL (kontrakt)', () => {
       // - kod i rola są własnością CZŁONKOSTWA w klubie, nie osoby (wielofirmowość).
       ['id', 'name', 'email', 'active', 'updated_at', 'theme', 'theme_updated_at', 'credentials_valid_from', 'platform_role'],
     ],
-    // Wielofirmowość (migracja 8, issue #98): klub jako tenant, członkostwo, zaproszenia.
-    ['organizations', ['id', 'name', 'slug', 'active', 'created_at', 'created_by']],
+    // Wielofirmowość (migracja 8, issue #98): klub jako tenant, członkostwo, kod klubu
+    // (`join_code` - jedyna droga dołączenia od 2026-09-09; tabeli `invitations` NIE MA).
+    ['organizations', ['id', 'name', 'slug', 'active', 'created_at', 'created_by', 'join_code', 'join_code_since']],
     [
       'memberships',
       ['org_id', 'pilot_id', 'code', 'role', 'status', 'reject_reason', 'joined_via', 'created_at', 'decided_at', 'decided_by', 'credentials_valid_from', 'updated_at'],
     ],
-    [
-      'invitations',
-      ['id', 'org_id', 'kind', 'token_hash', 'email', 'name_hint', 'code', 'role', 'created_by', 'created_at', 'expires_at', 'used_at', 'used_by', 'revoked_at'],
-    ],
+
     [
       'aircraft',
       // `org_id` na KOŃCU każdej tabeli klubu - dołożony `ALTER`-em migracją 8.
@@ -147,7 +145,6 @@ describe('schemat PostgreSQL (kontrakt)', () => {
       'export_log',
       'exported_sheets',
       'flags',
-      'invitations',
       'memberships',
       'refresh_tokens',
       'sessions',
