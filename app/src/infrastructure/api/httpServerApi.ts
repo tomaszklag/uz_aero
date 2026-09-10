@@ -22,10 +22,12 @@
 import type {
   AuthTokens,
   BugReportPushResult,
+  ClubsView,
   GoogleLoginResult,
-  RegistrationStatusResult,
+  JoinClubResult,
+  MembershipStatusResult,
+  OrgRef,
   RemoteBugReport,
-  RemoteRegistration,
   PushResult,
   ReferenceFetch,
   RemoteEventPage,
@@ -53,11 +55,12 @@ export class HttpServerApi implements ServerPort {
   constructor(private readonly baseUrl: string) {}
 
   /**
-   * Trzy odpowiedzi serwera, trzy stany - i to jest jedyne miejsce w aplikacji, które
-   * zna te kody. `202` NIE jest błędem (zgłoszenie przyjęte, czeka), a `403` z ciałem
-   * `registration_rejected` niesie POWÓD, który ekran `00d` cytuje - dlatego oba idą
-   * przez `send`, a nie `request`: `request` odrzuciłby je jako `ServerRejectedError`
-   * i zgubił treść. Limit jak przy ponowieniu z ręki: pilot stoi i patrzy.
+   * Dwie odpowiedzi serwera, dwa stany - i to jest jedyne miejsce w aplikacji, które
+   * zna te kody. `202` NIE jest błędem: osoba jest, aktywnego klubu nie ma (wielofirmowość
+   * §5), więc jedzie token OSOBY i komplet klubów - to `clubs.status` rozstrzyga, czy
+   * ekranem jest 00C, 00D czy 00E. Dlatego przez `send`, a nie `request`: `request`
+   * odrzuciłby 202 jako odmowę i zgubił treść. Limit jak przy ponowieniu z ręki:
+   * pilot stoi i patrzy.
    */
   async loginWithGoogle(idToken: string): Promise<GoogleLoginResult> {
     const response = await this.send('POST', '/auth/google', {
@@ -69,45 +72,87 @@ export class HttpServerApi implements ServerPort {
       return { kind: 'signed_in', tokens: (await response.json()) as AuthTokens };
     }
     if (response.status === 202) {
-      const body = (await response.json()) as {
-        registration: RemoteRegistration;
-        registrationToken: string;
-      };
-      return {
-        kind: 'pending',
-        registration: body.registration,
-        registrationToken: body.registrationToken,
-      };
-    }
-    if (response.status === 403) {
-      const body = (await response.json().catch(() => null)) as {
-        error?: string;
-        registration?: RemoteRegistration;
-      } | null;
-      if (body?.error === 'registration_rejected' && body.registration != null) {
-        return { kind: 'rejected', registration: body.registration };
-      }
-      throw new ServerRejectedError(403, body?.error ?? 'forbidden');
+      const body = (await response.json()) as ClubsWire & { personToken: string };
+      return { kind: 'no_club', personToken: body.personToken, clubs: clubsOf(body) };
     }
     throw new ServerRejectedError(response.status, await errorCode(response));
   }
 
-  async registrationStatus(registrationToken: string): Promise<RegistrationStatusResult> {
-    const body = await this.request<{
-      status: string;
-      tokens?: AuthTokens;
-      registration?: RemoteRegistration;
-    }>('GET', '/auth/registration', { token: registrationToken, timeoutMs: MANUAL_TIMEOUT_MS });
+  async membershipStatus(token: string): Promise<MembershipStatusResult> {
+    const body = await this.request<ClubsWire & { tokens?: AuthTokens }>(
+      'GET',
+      '/auth/memberships',
+      { token, timeoutMs: MANUAL_TIMEOUT_MS },
+    );
 
     if (body.status === 'approved' && body.tokens != null) {
       return { kind: 'approved', tokens: body.tokens };
     }
-    if ((body.status === 'pending' || body.status === 'rejected') && body.registration != null) {
-      return { kind: body.status, registration: body.registration };
-    }
+    if (body.memberships != null) return { kind: 'clubs', clubs: clubsOf(body) };
     // Kształt spoza kontraktu: serwer odpowiedział, ale nie tym, co zna aplikacja.
     // Głośno, nie cicho - inaczej ekran oczekiwania stałby w miejscu bez powodu.
     throw new ServerRejectedError(200, 'bad_response');
+  }
+
+  /**
+   * Kod klubu → zgłoszenie. Każda odmowa serwera jest tu WYNIKIEM, nie wyjątkiem, bo
+   * każda ma na ekranie 00E inną drogę wyjścia (patrz `JoinClubResult`) - stąd `send`
+   * zamiast `request`. Limit jak przy logowaniu: pilot właśnie przepisał kod z kartki.
+   */
+  async joinClub(token: string, code: string): Promise<JoinClubResult> {
+    const response = await this.send('POST', '/auth/join', {
+      token,
+      body: { code },
+      timeoutMs: MANUAL_TIMEOUT_MS,
+    });
+    const body = (await response.json().catch(() => null)) as
+      | (Partial<ClubsWire> & {
+          error?: string;
+          org?: OrgRef;
+          rejectReason?: string | null;
+          decidedAt?: string | null;
+          retryAfterSec?: number;
+        })
+      | null;
+
+    if (response.status === 202 && body?.org != null) {
+      return { kind: 'pending', org: body.org, clubs: clubsOf(body as ClubsWire) };
+    }
+    if (response.status === 403 && body?.org != null) {
+      return {
+        kind: 'rejected',
+        org: body.org,
+        rejectReason: body.rejectReason ?? null,
+        decidedAt: body.decidedAt ?? null,
+      };
+    }
+    if (response.status === 404) return { kind: 'unknown_code' };
+    if (response.status === 409 && body?.org != null) {
+      return body.error === 'membership_disabled'
+        ? { kind: 'membership_disabled', org: body.org }
+        : { kind: 'already_member', org: body.org };
+    }
+    if (response.status === 429) {
+      // Bez `retryAfterSec` w ciele zostaje nagłówek, a bez niego minuta: powód
+      // w przycisku ma podać czas, a nie powiedzieć „kiedyś".
+      const header = Number(response.headers.get('retry-after'));
+      const sec = body?.retryAfterSec ?? (Number.isFinite(header) ? header : 60);
+      return { kind: 'rate_limited', retryAfterSec: Math.max(1, Math.round(sec)) };
+    }
+    throw new ServerRejectedError(response.status, body?.error ?? (await errorCode(response)));
+  }
+
+  async switchClub(token: string, orgId: string): Promise<AuthTokens | null> {
+    const response = await this.send('POST', '/auth/switch', {
+      token,
+      body: { orgId },
+      timeoutMs: MANUAL_TIMEOUT_MS,
+    });
+    // 404 = klub, którego ta osoba nie ma; dla niej NIEISTNIEJĄCY (epik C), więc `null`,
+    // a nie wyjątek - ekran 13A pokazuje wtedy odmowę przy karcie, nie awarię.
+    if (response.status === 404) return null;
+    if (!response.ok) throw new ServerRejectedError(response.status, await errorCode(response));
+    return (await response.json()) as AuthTokens;
   }
 
   refresh(refreshToken: string): Promise<AuthTokens> {
@@ -272,6 +317,24 @@ export class HttpServerApi implements ServerPort {
     }
   }
 }
+
+/**
+ * Kluby na drucie - ten sam kształt wraca z logowania, ze stanu członkostw i z dołączenia
+ * kodem, bo serwer składa go JEDNĄ funkcją (`clubsView`). Osobny typ, żeby trzy miejsca
+ * w tym adapterze nie opisywały go na trzy sposoby.
+ */
+interface ClubsWire {
+  status: string;
+  memberships: ClubsView['memberships'];
+  person?: ClubsView['person'];
+}
+
+const clubsOf = (body: ClubsWire): ClubsView => ({
+  status: body.status as ClubsView['status'],
+  memberships: body.memberships ?? [],
+  // Starszy serwer plakietki konta nie zna - ekran pokazuje wtedy sam stan, bez chipa.
+  person: body.person ?? { name: '', email: null },
+});
 
 /** Kod błędu z ciała odpowiedzi; brak/nie-JSON → sam status wystarczy. */
 async function errorCode(response: Response): Promise<string> {

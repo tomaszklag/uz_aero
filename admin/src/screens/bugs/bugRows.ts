@@ -108,6 +108,10 @@ const KNOWN: readonly (readonly [string, string])[] = [
   ['pilotCode', 'Pilot'],
   ['pilotName', 'Nazwisko'],
   ['pilotId', 'Pilot (id)'],
+  // Klub aktywny telefonu w chwili zgłoszenia (wielofirmowość §7, issue #102) - inny
+  // niż klub zgłoszenia bywa wtedy, gdy pilot lata w dwóch i właśnie się przełączył.
+  ['orgName', 'Klub aktywny'],
+  ['orgId', 'Klub aktywny (id)'],
   ['appVersion', 'Wersja aplikacji'],
   ['platform', 'System'],
   ['osVersion', 'Wersja systemu'],

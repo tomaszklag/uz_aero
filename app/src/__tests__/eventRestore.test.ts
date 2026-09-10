@@ -40,6 +40,8 @@ import { FixedClock } from '../infrastructure/clock';
 
 const T0 = Date.UTC(2026, 5, 22, 8, 0, 0);
 const PILOT = { id: 'TMK', code: 'TMK', name: 'Tomasz Małkiewicz' };
+/** Klub, DLA KTÓREGO wydano parę tokenów (wielofirmowość §6). */
+const ORG = { id: 'org-a', slug: 'alfa', name: 'Aeroklub Alfa' };
 
 /** Zdarzenie „z serwera" - koperta §5.1 BEZ `syncedAt` (to pole telefonu). */
 function remote(uuid: string, over: Partial<Omit<Event, 'syncedAt'>> = {}) {
@@ -59,10 +61,10 @@ function remote(uuid: string, over: Partial<Omit<Event, 'syncedAt'>> = {}) {
 }
 
 class MemoryCredentials {
-  // Zgłoszenie rejestracyjne (logowanie Google) - nieużywane w tych testach.
-  loadRegistration = async (): Promise<null> => null;
-  saveRegistration = async (_registration: unknown): Promise<void> => {};
-  clearRegistration = async (): Promise<void> => {};
+  // Osoba bez klubu (wielofirmowość §4) - nieużywana w tych testach.
+  loadPerson = async (): Promise<null> => null;
+  savePerson = async (_person: unknown): Promise<void> => {};
+  clearPerson = async (): Promise<void> => {};
   constructor(private stored: StoredCredentials | null) {}
   load = async () => this.stored;
   save = async (c: StoredCredentials) => {
@@ -79,7 +81,16 @@ class PullServer implements ServerPort {
     throw new Error('nieużywane w tych testach');
   }
 
-  async registrationStatus(): Promise<never> {
+  // Trasy BEZ KLUBU (wielofirmowość §6) - te przekroje ich nie dotykają.
+  async membershipStatus(): Promise<never> {
+    throw new Error('nieużywane w tych testach');
+  }
+
+  async joinClub(): Promise<never> {
+    throw new Error('nieużywane w tych testach');
+  }
+
+  async switchClub(): Promise<never> {
     throw new Error('nieużywane w tych testach');
   }
 
@@ -97,8 +108,8 @@ class PullServer implements ServerPort {
     return next;
   }
 
-  login = async (): Promise<AuthTokens> => ({ token: 'jwt-1', refreshToken: 'r1', pilot: PILOT });
-  refresh = async (): Promise<AuthTokens> => ({ token: 'jwt-2', refreshToken: 'r2', pilot: PILOT });
+  login = async (): Promise<AuthTokens> => ({ token: 'jwt-1', refreshToken: 'r1', pilot: PILOT, org: ORG, memberships: [] });
+  refresh = async (): Promise<AuthTokens> => ({ token: 'jwt-2', refreshToken: 'r2', pilot: PILOT, org: ORG, memberships: [] });
   pushEvents = async (): Promise<PushResult> => ({ accepted: 0, duplicates: 0, flags: [] });
   pushTraces = async (_t: string, entries: unknown[]) => ({ accepted: entries.length });
   // Zgłoszenia błędów (issue #87) jadą OSOBNYM torem - te przekroje ich nie dotyczą.
@@ -271,7 +282,7 @@ describe('EventRestore', () => {
 
     const auth = new AuthService(
       server,
-      new MemoryCredentials({ token: 'jwt-1', refreshToken: 'r1', pilot: PILOT, pin: null }),
+      new MemoryCredentials({ token: 'jwt-1', refreshToken: 'r1', pilot: PILOT, pin: null, org: ORG, memberships: [] }),
       new PinCrypto(),
     );
     server.script = [page([remote('e-1')])];

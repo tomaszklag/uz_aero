@@ -21,7 +21,7 @@ import {
   type ServerPort,
   type SessionSyncStatus,
   type StoredCredentials,
-  type StoredRegistration,
+  type StoredPerson,
 } from '../application/ports';
 import type { SessionFlag } from '../domain';
 import { InMemoryAdapter } from '../infrastructure/storage/inMemoryAdapter';
@@ -43,14 +43,14 @@ class MemoryCredentials {
   clear = async () => {
     this.stored = null;
   };
-  // Zgłoszenie rejestracyjne (logowanie Google) - osobny klucz, jak w prawdziwym magazynie.
-  private registration: StoredRegistration | null = null;
-  loadRegistration = async () => this.registration;
-  saveRegistration = async (r: StoredRegistration) => {
-    this.registration = r;
+  // Osoba bez klubu (wielofirmowość §4) - osobny klucz, jak w prawdziwym magazynie.
+  private person: StoredPerson | null = null;
+  loadPerson = async () => this.person;
+  savePerson = async (p: StoredPerson) => {
+    this.person = p;
   };
-  clearRegistration = async () => {
-    this.registration = null;
+  clearPerson = async () => {
+    this.person = null;
   };
 }
 
@@ -67,14 +67,23 @@ class ScriptedServer implements ServerPort {
     this.script = script;
     this.refreshResult =
       refreshResult ??
-      ({ token: 'jwt-2', refreshToken: 'r2', pilot: PILOT } satisfies AuthTokens);
+      ({ token: 'jwt-2', refreshToken: 'r2', pilot: PILOT, org: ORG, memberships: [] } satisfies AuthTokens);
   }
 
   async loginWithGoogle() {
-    return { kind: 'signed_in' as const, tokens: { token: 'jwt-1', refreshToken: 'r1', pilot: PILOT } };
+    return { kind: 'signed_in' as const, tokens: { token: 'jwt-1', refreshToken: 'r1', pilot: PILOT, org: ORG, memberships: [] } };
   }
 
-  async registrationStatus(): Promise<never> {
+  // Trasy BEZ KLUBU (wielofirmowość §6) - te przekroje ich nie dotykają.
+  async membershipStatus(): Promise<never> {
+    throw new Error('nieużywane w tych testach');
+  }
+
+  async joinClub(): Promise<never> {
+    throw new Error('nieużywane w tych testach');
+  }
+
+  async switchClub(): Promise<never> {
     throw new Error('nieużywane w tych testach');
   }
 
@@ -156,7 +165,9 @@ class ScriptedServer implements ServerPort {
 }
 
 const PILOT = { id: 'TMK', code: 'TMK', name: 'Tomasz Małkiewicz' };
-const CREDS: StoredCredentials = { token: 'jwt-1', refreshToken: 'r1', pilot: PILOT };
+/** Klub, DLA KTÓREGO wydano parę tokenów (wielofirmowość §6). */
+const ORG = { id: 'org-a', slug: 'alfa', name: 'Aeroklub Alfa' };
+const CREDS: StoredCredentials = { token: 'jwt-1', refreshToken: 'r1', pilot: PILOT, org: ORG, memberships: [] };
 
 const ok = (accepted: number, duplicates = 0): PushResult => ({
   accepted,

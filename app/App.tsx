@@ -42,7 +42,7 @@ import { useSkeleton } from './src/ui/hooks/useSkeleton';
 import { useSyncLoop } from './src/ui/hooks/useSyncLoop';
 import { LoginScreen } from './src/ui/screens/LoginScreen';
 import { PinScreen } from './src/ui/screens/PinScreen';
-import { RegistrationPendingScreen } from './src/ui/screens/RegistrationPendingScreen';
+import { ClubGateScreen } from './src/ui/screens/ClubGateScreen';
 
 /**
  * Tło okna natywnego - jedyna warstwa, której nie da się pomalować widokiem RN.
@@ -184,7 +184,7 @@ function AuthGate() {
   // Konto Google potwierdzone, konta pilota jeszcze nie ma (logowanie Google,
   // 2026-09-04): zgłoszenie czeka na administratora albo zostało odrzucone. To NIE jest
   // profil - PIN-u nie ma czego chronić, więc bramka omija go w całości.
-  if (status === 'pending_approval') return <RegistrationPendingScreen />;
+  if (status === 'no_club') return <ClubGateScreen />;
   if (status === 'pin_setup' || status === 'locked') return <PinScreen />;
 
   return <ResumeGate />;

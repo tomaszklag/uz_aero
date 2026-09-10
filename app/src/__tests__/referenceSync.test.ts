@@ -32,8 +32,12 @@ import { PinCrypto } from '../infrastructure/auth/pinCrypto';
 import { FixedClock } from '../infrastructure/clock';
 
 const T0 = Date.UTC(2026, 5, 22, 8, 0, 0);
+/** Klub aktywny - cache referencyjny należy do KLUBU (wielofirmowość §7.1). */
+const ORG = 'org-a';
+/** Ten sam klub w kształcie, w jakim niosą go tokeny (wielofirmowość §6). */
+const ORG_REF = { id: ORG, slug: 'alfa', name: 'Aeroklub Alfa' };
 const PILOT = { id: 'TMK', code: 'TMK', name: 'Tomasz Małkiewicz' };
-const CREDS: StoredCredentials = { token: 'jwt-1', refreshToken: 'r1', pilot: PILOT };
+const CREDS: StoredCredentials = { token: 'jwt-1', refreshToken: 'r1', pilot: PILOT, org: ORG_REF, memberships: [] };
 
 /** Wiersz floty z serwera - `fetchedAt` serwera jest ignorowany (stemplujemy lokalnie). */
 const axa = (over: Partial<ReferenceAircraft> = {}): ReferenceAircraft => ({
@@ -56,10 +60,10 @@ const axa = (over: Partial<ReferenceAircraft> = {}): ReferenceAircraft => ({
 const tmk: ReferencePilot = { id: 'TMK', code: 'TMK', name: 'Tomasz Małkiewicz', active: true, fetchedAt: 0 };
 
 class MemoryCredentials {
-  // Zgłoszenie rejestracyjne (logowanie Google) - nieużywane w tych testach.
-  loadRegistration = async (): Promise<null> => null;
-  saveRegistration = async (_registration: unknown): Promise<void> => {};
-  clearRegistration = async (): Promise<void> => {};
+  // Osoba bez klubu (wielofirmowość §4) - nieużywana w tych testach.
+  loadPerson = async (): Promise<null> => null;
+  savePerson = async (_person: unknown): Promise<void> => {};
+  clearPerson = async (): Promise<void> => {};
   private stored: StoredCredentials | null = CREDS;
   load = async () => this.stored;
   save = async (c: StoredCredentials) => {
@@ -76,7 +80,16 @@ class RefServer implements ServerPort {
     throw new Error('nieużywane w tych testach');
   }
 
-  async registrationStatus(): Promise<never> {
+  // Trasy BEZ KLUBU (wielofirmowość §6) - te przekroje ich nie dotykają.
+  async membershipStatus(): Promise<never> {
+    throw new Error('nieużywane w tych testach');
+  }
+
+  async joinClub(): Promise<never> {
+    throw new Error('nieużywane w tych testach');
+  }
+
+  async switchClub(): Promise<never> {
     throw new Error('nieużywane w tych testach');
   }
 
@@ -94,10 +107,10 @@ class RefServer implements ServerPort {
 
   async refresh(): Promise<AuthTokens> {
     this.refreshCalls += 1;
-    return { token: 'jwt-2', refreshToken: 'r2', pilot: PILOT };
+    return { token: 'jwt-2', refreshToken: 'r2', pilot: PILOT, org: ORG_REF, memberships: [] };
   }
 
-  login = async (): Promise<AuthTokens> => ({ token: 'jwt-1', refreshToken: 'r1', pilot: PILOT });
+  login = async (): Promise<AuthTokens> => ({ token: 'jwt-1', refreshToken: 'r1', pilot: PILOT, org: ORG_REF, memberships: [] });
   pushEvents = async (): Promise<PushResult> => ({ accepted: 0, duplicates: 0, flags: [] });
   pushTraces = async (_t: string, entries: unknown[]) => ({ accepted: entries.length });
   // Zgłoszenia błędów (issue #87) jadą OSOBNYM torem - te przekroje ich nie dotyczą.
@@ -136,7 +149,12 @@ class RefServer implements ServerPort {
   };
 }
 
-function harness() {
+/**
+ * Harness jest ASYNCHRONICZNY, bo cache referencyjny należy od 2.0.0 do KLUBU:
+ * bez klubu aktywnego `ReferenceSync` nie ma o czyją flotę pytać i oddaje `no_club`
+ * (wielofirmowość §7.1). Klub ustawia w telefonie logowanie - tu robi to harness.
+ */
+async function harness() {
   const clock = new FixedClock(T0);
   const repo = new EventsRepo(new InMemoryAdapter(), { clock, generateId: () => 'id' });
   const server = new RefServer();
@@ -145,14 +163,15 @@ function harness() {
     server,
     new AuthService(server, new MemoryCredentials(), new PinCrypto()),
   );
+  await repo.setActiveOrg(ORG);
   return { clock, repo, server, sync };
 }
 
 describe('ReferenceSync', () => {
   it('pierwsze odświeżenie: prawda serwera nadpisuje seed, ETag zapamiętany', async () => {
-    const { repo, server, sync } = harness();
+    const { repo, server, sync } = await harness();
     // Stan sprzed kontaktu: seed twierdzi, że SP-AXA jest wolny.
-    await repo.upsertReference({ aircraft: [axa()], pilots: [tmk] });
+    await repo.upsertReference(ORG, { aircraft: [axa()], pilots: [tmk] });
     server.script = [
       {
         data: { aircraft: [axa({ claimPicId: 'KRZ', claimSince: T0 - 3_600_000 })], pilots: [tmk] },
@@ -165,11 +184,13 @@ describe('ReferenceSync', () => {
     const cached = await repo.getAircraftById('SP-AXA');
     expect(cached?.claimPicId).toBe('KRZ'); // claim z serwera widoczny dla preflightu
     expect(cached?.fetchedAt).toBe(T0); // stempel lokalny, nie serwerowy
-    expect(await repo.getMeta(REFERENCE_META_ETAG)).toBe('W/"ref-1-1"');
+    // Znacznik jest PER KLUB (§7.1) - cache drugiego klubu zostaje w telefonie razem
+    // ze swoim ETagiem, więc powrót do niego dostaje 304 zamiast pełnej odpowiedzi.
+    expect(await repo.getMeta(`${REFERENCE_META_ETAG}.${ORG}`)).toBe('W/"ref-1-1"');
   });
 
   it('w oknie świeżości nie pyta serwera wcale (puls co 60 s ≠ zapytanie co 60 s)', async () => {
-    const { clock, server, sync } = harness();
+    const { clock, server, sync } = await harness();
     server.script = [{ data: { aircraft: [axa()], pilots: [tmk] }, etag: 'e1' }];
 
     await sync.refreshIfStale();
@@ -179,7 +200,7 @@ describe('ReferenceSync', () => {
   });
 
   it('pusta flota omija bramę wieku - świeżo założony klub nie czeka kwadransa (issue #55)', async () => {
-    const { clock, repo, server, sync } = harness();
+    const { clock, repo, server, sync } = await harness();
     // Pierwsze logowanie PRZED założeniem floty w panelu (od issue #50 cache zasila
     // wyłącznie serwer): odpowiedź z pustą listą jest prawdziwa i stempluje „sprawdzone".
     server.script = [
@@ -197,7 +218,7 @@ describe('ReferenceSync', () => {
   });
 
   it('refresh() nie zna bramy wieku - droga „SYNCHRONIZUJ TERAZ" pyta zawsze (issue #55)', async () => {
-    const { clock, server, sync } = harness();
+    const { clock, server, sync } = await harness();
     server.script = [
       { data: { aircraft: [axa()], pilots: [tmk] }, etag: 'e1' },
       { data: { aircraft: [axa({ claimPicId: 'KRZ' })], pilots: [tmk] }, etag: 'e2' },
@@ -213,7 +234,7 @@ describe('ReferenceSync', () => {
   });
 
   it('po oknie wysyła If-None-Match; 304 podbija wiek danych bez zmiany treści', async () => {
-    const { clock, repo, server, sync } = harness();
+    const { clock, repo, server, sync } = await harness();
     server.script = [
       { data: { aircraft: [axa({ claimPicId: 'KRZ' })], pilots: [tmk] }, etag: 'e1' },
       { data: null, etag: 'e1' }, // 304
@@ -230,8 +251,8 @@ describe('ReferenceSync', () => {
   });
 
   it('offline: cache nietknięty, wynik `skipped`, następna okazja spróbuje znowu', async () => {
-    const { repo, server, sync } = harness();
-    await repo.upsertReference({ aircraft: [axa({ claimPicId: 'KRZ' })], pilots: [tmk] });
+    const { repo, server, sync } = await harness();
+    await repo.upsertReference(ORG, { aircraft: [axa({ claimPicId: 'KRZ' })], pilots: [tmk] });
     server.script = [new ServerUnreachableError()];
 
     expect(await sync.refreshIfStale()).toBe('skipped');
@@ -242,7 +263,7 @@ describe('ReferenceSync', () => {
   });
 
   it('401 → jedna rotacja tokenu i ponowienie (wzorzec §3.0)', async () => {
-    const { server, sync } = harness();
+    const { server, sync } = await harness();
     server.script = [
       new ServerRejectedError(401, 'unauthorized'),
       { data: { aircraft: [axa()], pilots: [tmk] }, etag: 'e1' },

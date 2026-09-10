@@ -35,9 +35,13 @@ function deepClone<T>(value: T): T {
 export class InMemoryAdapter implements StoragePort, TracePort, BugReportPort {
   private events = new Map<string, Event>();
   private order: string[] = [];
-  private aircraft = new Map<string, ReferenceAircraft>();
-  private pilots = new Map<string, ReferencePilot>();
+  /** Flota z klubem, do którego należy - lustro `reference_aircraft.org_id`. */
+  private aircraft = new Map<string, { orgId: string; row: ReferenceAircraft }>();
+  /** Klucz `org|id`, bo kod pilota należy do CZŁONKOSTWA (lustro klucza `(org_id, id)`). */
+  private pilots = new Map<string, { orgId: string; row: ReferencePilot }>();
   private meta = new Map<string, string>();
+  /** Klub operacji - lustro `session_orgs` (wielofirmowość §7). */
+  private sessionOrgs = new Map<string, string>();
   /** Zgłoszenia błędów (issue #87) - lustro `bug_reports`, w kolejności zapisu. */
   private bugs: BugReport[] = [];
   /** Zapisy wstrzymane decyzją administratora (issue #81) - lustro `withheld_events`. */
@@ -47,7 +51,13 @@ export class InMemoryAdapter implements StoragePort, TracePort, BugReportPort {
     // Nic do zrobienia - struktury istnieją od konstrukcji.
   }
 
-  async insertEvent(event: Event): Promise<boolean> {
+  async insertEvent(event: Event, orgId: string | null = null): Promise<boolean> {
+    // Klub stawia PIERWSZE zdarzenie operacji i nikt go potem nie zmienia - ten sam
+    // kontrakt, co `INSERT OR IGNORE` w adapterze SQLite. Dzieje się to także przy
+    // duplikacie zdarzenia: operacja mogła dostać klub później niż swoje pierwsze zapisy.
+    if (orgId != null && !this.sessionOrgs.has(event.sessionUuid)) {
+      this.sessionOrgs.set(event.sessionUuid, orgId);
+    }
     if (this.events.has(event.uuid)) return false;
     this.events.set(event.uuid, deepClone(event));
     this.order.push(event.uuid);
@@ -63,9 +73,15 @@ export class InMemoryAdapter implements StoragePort, TracePort, BugReportPort {
     return this.orderedEvents().filter((e) => e.sessionUuid === sessionUuid);
   }
 
-  async getUnsyncedEvents(): Promise<Event[]> {
+  async getUnsyncedEvents(orgId?: string | null): Promise<Event[]> {
     // Wstrzymane WYPADŁY z kolejki (issue #81), choć `syncedAt` mają dalej `null`.
-    return this.orderedEvents().filter((e) => e.syncedAt == null && !this.withheld.has(e.uuid));
+    // Zawężenie do klubu obejmuje operacje BEZ klubu (zapisy sprzed 2.0.0, §11).
+    return this.orderedEvents().filter(
+      (e) =>
+        e.syncedAt == null &&
+        !this.withheld.has(e.uuid) &&
+        (orgId == null || (this.sessionOrgs.get(e.sessionUuid) ?? orgId) === orgId),
+    );
   }
 
   async getAllEvents(): Promise<Event[]> {
@@ -97,25 +113,58 @@ export class InMemoryAdapter implements StoragePort, TracePort, BugReportPort {
     return [...this.withheld.values()].map(deepClone);
   }
 
-  async upsertAircraft(rows: ReferenceAircraft[]): Promise<void> {
-    for (const row of rows) this.aircraft.set(row.id, deepClone(row));
+  // ── klub operacji (wielofirmowość §7) ───────────────────────────────────────
+
+  async getSessionOrg(sessionUuid: string): Promise<string | null> {
+    return this.sessionOrgs.get(sessionUuid) ?? null;
   }
 
-  async getAircraft(): Promise<ReferenceAircraft[]> {
-    return [...this.aircraft.values()].map(deepClone);
+  async getSessionOrgs(): Promise<Record<string, string>> {
+    return Object.fromEntries(this.sessionOrgs);
+  }
+
+  async adoptSessionsWithoutOrg(orgId: string): Promise<number> {
+    let adopted = 0;
+    for (const event of this.events.values()) {
+      if (this.sessionOrgs.has(event.sessionUuid)) continue;
+      this.sessionOrgs.set(event.sessionUuid, orgId);
+      adopted += 1;
+    }
+    return adopted;
+  }
+
+  async upsertAircraft(rows: ReferenceAircraft[], orgId: string): Promise<void> {
+    for (const row of rows) this.aircraft.set(row.id, { orgId, row: deepClone(row) });
+  }
+
+  async getAircraft(orgId: string | null): Promise<ReferenceAircraft[]> {
+    if (orgId == null) return [];
+    return [...this.aircraft.values()].filter((a) => a.orgId === orgId).map((a) => deepClone(a.row));
+  }
+
+  async aircraftCountsByOrg(): Promise<Record<string, number>> {
+    const counts: Record<string, number> = {};
+    for (const { orgId } of this.aircraft.values()) counts[orgId] = (counts[orgId] ?? 0) + 1;
+    return counts;
+  }
+
+  async getAllAircraft(): Promise<ReferenceAircraft[]> {
+    return [...this.aircraft.values()].map((a) => deepClone(a.row));
   }
 
   async getAircraftById(id: string): Promise<ReferenceAircraft | null> {
+    // BEZ zawężenia do klubu - patrz `StoragePort.getAircraftById`.
     const found = this.aircraft.get(id);
-    return found ? deepClone(found) : null;
+    return found ? deepClone(found.row) : null;
   }
 
-  async upsertPilots(rows: ReferencePilot[]): Promise<void> {
-    for (const row of rows) this.pilots.set(row.id, deepClone(row));
+  async upsertPilots(rows: ReferencePilot[], orgId: string): Promise<void> {
+    for (const row of rows) this.pilots.set(`${orgId}|${row.id}`, { orgId, row: deepClone(row) });
   }
 
-  async getPilots(): Promise<ReferencePilot[]> {
-    return [...this.pilots.values()].map(deepClone);
+  async getPilots(orgId: string | null): Promise<ReferencePilot[]> {
+    if (orgId == null) return [];
+    return [...this.pilots.values()].filter((p) => p.orgId === orgId).map((p) => deepClone(p.row));
   }
 
   // ── ślad kalibracyjny GPS (faza 5) ──────────────────────────────────────────
@@ -219,6 +268,8 @@ export class InMemoryAdapter implements StoragePort, TracePort, BugReportPort {
   async clear(): Promise<void> {
     this.events.clear();
     this.order = [];
+    this.withheld.clear();
+    this.sessionOrgs.clear();
     this.aircraft.clear();
     this.pilots.clear();
     this.meta.clear();

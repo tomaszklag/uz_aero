@@ -57,6 +57,13 @@ export interface CurrentSession {
 export class EventsRepo {
   private readonly clock: ClockPort;
   private readonly generateId: IdPort;
+  /**
+   * KLUB AKTYWNY trzymany w pamięci, bo pyta o niego KAŻDY zapis zdarzenia (§7).
+   * Odczyt z `session_meta` przy `init()` i przy każdej zmianie - magazyn zostaje
+   * źródłem prawdy, a to jest podręczna kopia, żeby append nie robił zapytania.
+   * `null` = telefon nie zna jeszcze klubu (świeża instalacja, aktualizacja z 1.x).
+   */
+  private activeOrgId: string | null = null;
 
   constructor(
     private readonly adapter: StoragePort,
@@ -74,6 +81,40 @@ export class EventsRepo {
   /** Przygotowuje magazyn (schemat/migracje). Woła się raz przy starcie aplikacji. */
   async init(): Promise<void> {
     await this.adapter.init();
+    this.activeOrgId = await this.adapter.getMeta(SESSION_META_KEYS.activeOrgId);
+  }
+
+  // ── klub aktywny (wielofirmowość §7) ──────────────────────────────────────────
+
+  /** Klub, w którego kontekście telefon pracuje; `null` = jeszcze nieznany. */
+  get activeOrg(): string | null {
+    return this.activeOrgId;
+  }
+
+  /**
+   * Ustawia klub aktywny (logowanie, odświeżenie tokenów, przełączenie na 13A) i przy
+   * okazji PRZYGARNIA operacje bez klubu - zapisy sprzed 2.0.0 (§11: „klub z pierwszego
+   * odświeżenia tokenów po aktualizacji"). Zwraca liczbę przygarniętych operacji.
+   *
+   * Przygarnięcie jest bezpieczne także przy PRZEŁĄCZENIU do drugiego klubu, bo do tego
+   * czasu żadna operacja bez klubu już nie istnieje: pierwsze wejście do aplikacji po
+   * aktualizacji stempluje je wszystkie klubem, w którym ten telefon pracował - a przed
+   * 2.0.0 klub był dokładnie jeden.
+   */
+  async setActiveOrg(orgId: string): Promise<number> {
+    this.activeOrgId = orgId;
+    await this.adapter.setMeta(SESSION_META_KEYS.activeOrgId, orgId);
+    return this.adapter.adoptSessionsWithoutOrg(orgId);
+  }
+
+  /** Klub OPERACJI - `null` dla zapisu sprzed 2.0.0 i operacji nieznanej magazynowi. */
+  getSessionOrg(sessionUuid: string): Promise<string | null> {
+    return this.adapter.getSessionOrg(sessionUuid);
+  }
+
+  /** Mapa operacja → klub; z niej bierze się plakietka klubu na kafelku (01e, 12). */
+  getSessionOrgs(): Promise<Record<string, string>> {
+    return this.adapter.getSessionOrgs();
   }
 
   // ── zapis zdarzeń ─────────────────────────────────────────────────────────────
@@ -124,7 +165,7 @@ export class EventsRepo {
 
   /** Zapisuje gotowe (ostemplowane) zdarzenie. Idempotentne - patrz `appendEvent`. */
   async appendStamped(event: Event): Promise<Event> {
-    const inserted = await this.adapter.insertEvent(event);
+    const inserted = await this.adapter.insertEvent(event, this.activeOrgId);
     if (!inserted) {
       const existing = await this.adapter.getEventByUuid(event.uuid);
       return existing ?? event;
@@ -155,7 +196,11 @@ export class EventsRepo {
   ): Promise<number> {
     let inserted = 0;
     for (const event of events) {
-      if (await this.adapter.insertEvent({ ...event, syncedAt } as Event)) inserted += 1;
+      // Klub ten sam, co przy zapisie własnym: `GET /me/events` odtwarza rejestr KLUBU
+      // Z TOKENU (epik C), więc wszystko, co stąd przyszło, należy do klubu aktywnego.
+      if (await this.adapter.insertEvent({ ...event, syncedAt } as Event, this.activeOrgId)) {
+        inserted += 1;
+      }
     }
     return inserted;
   }
@@ -177,14 +222,39 @@ export class EventsRepo {
 
   // ── outbox (§4.3) ─────────────────────────────────────────────────────────────
 
-  /** Kolejka do wysłania: `syncedAt IS NULL`, w kolejności wstawienia. */
+  /**
+   * Kolejka DO WYSŁANIA TERAZ: `syncedAt IS NULL`, w kolejności wstawienia, zawężona do
+   * klubu aktywnego (§7) - bo tylko jego tokenem telefon dysponuje.
+   *
+   * Zapis do operacji z DRUGIEGO klubu jest stanem normalnym, nie usterką: korektę
+   * operacji sprzed przełączenia można zrobić z historii (ekran 10 pokazuje operacje
+   * wszystkich klubów). Taki zapis czeka na powrót do swojego klubu - wysłany tokenem
+   * bieżącego wróciłby jako WSTRZYMANY przez serwer (epik C waży członkostwo per
+   * zdarzenie), czyli przepadłby na zawsze.
+   */
   getOutbox(): Promise<Event[]> {
-    return this.adapter.getUnsyncedEvents();
+    return this.adapter.getUnsyncedEvents(this.activeOrgId);
   }
 
-  /** Ile zdarzeń czeka w outboxie - zasila SyncChip (`OFFLINE · n`). */
+  /**
+   * Ile zdarzeń czeka W CAŁYM rejestrze - zasila SyncChip (`OFFLINE · n`) i blokadę
+   * wylogowania. Bez zawężenia do klubu, bo to pytanie brzmi „czego serwer jeszcze nie
+   * ma", a nie „co da się wysłać tym tokenem".
+   */
   async getOutboxCount(): Promise<number> {
     return (await this.adapter.getUnsyncedEvents()).length;
+  }
+
+  /**
+   * Ile zapisów KLUBU AKTYWNEGO czeka w kolejce - blokada przełączenia klubu na 13A (§7.3).
+   *
+   * Pyta wyłącznie o klub, z którego pilot WYCHODZI, bo to jego zapisy zostałyby bez drogi
+   * wyjścia: token drugiego klubu ich nie wyśle. Zapisy INNYCH klubów przełączenia nie
+   * blokują - byłoby to zakleszczenie, w którym korekta z klubu A czeka na powrót do A,
+   * a powrót do A blokuje właśnie ta korekta.
+   */
+  async pendingInActiveOrg(): Promise<number> {
+    return (await this.adapter.getUnsyncedEvents(this.activeOrgId)).length;
   }
 
   /**
@@ -262,39 +332,70 @@ export class EventsRepo {
    */
   upsertAircraft(
     rows: Array<Omit<ReferenceAircraft, 'fetchedAt'>>,
+    orgId: string,
     fetchedAt: EpochMillis = this.clock.now(),
   ): Promise<void> {
-    return this.adapter.upsertAircraft(rows.map((r) => ({ ...r, fetchedAt })));
+    return this.adapter.upsertAircraft(
+      rows.map((r) => ({ ...r, fetchedAt })),
+      orgId,
+    );
   }
 
   upsertPilots(
     rows: Array<Omit<ReferencePilot, 'fetchedAt'>>,
+    orgId: string,
     fetchedAt: EpochMillis = this.clock.now(),
   ): Promise<void> {
-    return this.adapter.upsertPilots(rows.map((r) => ({ ...r, fetchedAt })));
+    return this.adapter.upsertPilots(
+      rows.map((r) => ({ ...r, fetchedAt })),
+      orgId,
+    );
   }
 
-  /** Zbiorczy zapis cache (typowo po odpowiedzi GET /reference). */
-  async upsertReference(input: {
-    aircraft?: Array<Omit<ReferenceAircraft, 'fetchedAt'>>;
-    pilots?: Array<Omit<ReferencePilot, 'fetchedAt'>>;
-    fetchedAt?: EpochMillis;
-  }): Promise<void> {
+  /**
+   * Zbiorczy zapis cache (typowo po odpowiedzi GET /reference).
+   *
+   * `orgId` jedzie JAWNIE, a nie z `activeOrg`, i to jest zabezpieczenie przed wyścigiem:
+   * pilot może przełączyć klub, gdy odpowiedź jest jeszcze w drodze, a wtedy flota klubu A
+   * wpisałaby się pod klub B - czyli cudza maszyna na liście przejęcia. Wołający pyta
+   * o klub PRZED zapytaniem do serwera i tym samym klubem zapisuje.
+   */
+  async upsertReference(
+    orgId: string,
+    input: {
+      aircraft?: Array<Omit<ReferenceAircraft, 'fetchedAt'>>;
+      pilots?: Array<Omit<ReferencePilot, 'fetchedAt'>>;
+      fetchedAt?: EpochMillis;
+    },
+  ): Promise<void> {
     const fetchedAt = input.fetchedAt ?? this.clock.now();
-    if (input.aircraft?.length) await this.upsertAircraft(input.aircraft, fetchedAt);
-    if (input.pilots?.length) await this.upsertPilots(input.pilots, fetchedAt);
+    if (input.aircraft?.length) await this.upsertAircraft(input.aircraft, orgId, fetchedAt);
+    if (input.pilots?.length) await this.upsertPilots(input.pilots, orgId, fetchedAt);
   }
 
+  /** Flota KLUBU AKTYWNEGO - bez klubu pusta (ekran 02 pokazuje wtedy 02G). */
   getAircraft(): Promise<ReferenceAircraft[]> {
-    return this.adapter.getAircraft();
+    return this.adapter.getAircraft(this.activeOrgId);
   }
 
+  /** Po identyfikatorze - BEZ zawężenia do klubu (historia pokazuje wszystkie kluby, §7.2). */
   getAircraftById(id: string): Promise<ReferenceAircraft | null> {
     return this.adapter.getAircraftById(id);
   }
 
+  /** Wszystkie znane maszyny - wyłącznie do rozwiązywania ZNAKU w historii (patrz port). */
+  getAllAircraft(): Promise<ReferenceAircraft[]> {
+    return this.adapter.getAllAircraft();
+  }
+
+  /** Liczba maszyn per klub - podpis karty klubu na 13A (patrz port). */
+  aircraftCountsByOrg(): Promise<Record<string, number>> {
+    return this.adapter.aircraftCountsByOrg();
+  }
+
+  /** Piloci KLUBU AKTYWNEGO - kod pilota jest własnością członkostwa (§3.2). */
   getPilots(): Promise<ReferencePilot[]> {
-    return this.adapter.getPilots();
+    return this.adapter.getPilots(this.activeOrgId);
   }
 
   // ── session_meta (§5.2) ──────────────────────────────────────────────────────

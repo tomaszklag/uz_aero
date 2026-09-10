@@ -458,6 +458,36 @@ const CASES: Record<string, Probe> = {
     expectClean(res, '/me/task-suggestions');
   },
 
+  /**
+   * PRZEŁĄCZENIE KLUBU W TELEFONIE (issue #102) - jedyna trasa telefonu, która przyjmuje
+   * CUDZY identyfikator klubu w ciele, więc jest naturalnym miejscem na próbę wejścia
+   * bokiem. Ta sama para sprawdzeń, co przy `POST /admin/api/auth/switch`.
+   *
+   * TMK lata wyłącznie w Alfie: klub Bety jest dla niego NIEISTNIEJĄCY (404, nie 403 -
+   * 403 potwierdzałoby, że taki klub jest), a odmowa nie może wydać ani jednego tokenu.
+   */
+  'POST /auth/switch': async ({ app, a }) => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/auth/switch',
+      headers: bearer(a),
+      payload: { orgId: ORG_B },
+    });
+    expect(res.statusCode).toBe(404);
+    expect(res.body).not.toContain('refreshToken');
+
+    // Kontrola pozytywna: własny klub przełącza się normalnie, więc 404 wyżej opisuje
+    // brak członkostwa, a nie zepsutą trasę.
+    const own = await app.inject({
+      method: 'POST',
+      url: '/auth/switch',
+      headers: bearer(a),
+      payload: { orgId: ORG_A },
+    });
+    expect(own.json().org.id).toBe(ORG_A);
+    expectClean(own, '/auth/switch');
+  },
+
   // ── panel klubu ──────────────────────────────────────────────────────────────
   'GET /admin/api/me': async ({ app, a }) => {
     expectClean(await app.inject({ method: 'GET', url: '/admin/api/me', headers: bearer(a) }), '/me');

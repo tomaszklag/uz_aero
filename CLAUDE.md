@@ -3058,6 +3058,70 @@ Organizacje, wybór klubu, członkowie, zgłoszenia i kod klubu. Decyzje i odst�
   prowadzi klub), edycji administratorów klubu z modułu Organizacje. Zostaje epik F
   (aplikacja pilota, issue #102).
 
+## Wielofirmowość 2.0.0 - epik F: aplikacja pilota w kontekście klubu (issue #102, 2026-09-10, gałąź `feature-102-aplikacja-kluby`)
+Telefon pracuje w JEDNYM aktywnym klubie, ale rejestr należy do PILOTA - i z tej asymetrii
+bierze się cały epik. Decyzje i odstępstwa: `docs/wielofirmowosc.md` §14 F. Reguły
+obowiązujące odtąd KAŻDY nowy ekran i KAŻDE nowe zapytanie do magazynu:
+- **KLUB JEST KONTEKSTEM FLOTY I WYSYŁKI, NIE REJESTRU**: `getAircraft()` i `getPilots()`
+  oddają dane KLUBU AKTYWNEGO (kod pilota należy do członkostwa - ten sam człowiek jest
+  w Alfie `TMK`, a w Becie `TMB`), a „Mój dzień", historia i sumy doby pokazują operacje
+  WSZYSTKICH klubów. Stąd `getAircraftById` i NOWE `getAllAircraft()` idą BEZ zawężenia:
+  kafelek operacji z drugiego klubu musi mieć czym się podpisać, inaczej wraca na ekran
+  surowy identyfikator z panelu. Do WYBORU maszyny służy `aircraft()` i tylko ono.
+- **KLUB OPERACJI STAWIA JEJ PIERWSZE ZDARZENIE I NIKT GO POTEM NIE ZMIENIA**
+  (`session_orgs`, `INSERT OR IGNORE`). Korekta operacji z klubu A, dopisana wtedy, gdy
+  aktywny jest klub B, ZOSTAJE zapisem klubu A - bo wysłana tokenem klubu B wróciłaby
+  jako `withheld` (epik C waży członkostwo per zdarzenie), czyli przepadłaby na zawsze.
+- **KOLEJKA WYSYŁKI JEST PER KLUB, LICZNIK - NIE**: `getOutbox()` oddaje wyłącznie zapisy
+  klubu aktywnego (plus operacje bez klubu, czyli sprzed 2.0.0), a `getOutboxCount()`
+  liczy WSZYSTKO, bo SyncChip i blokada wylogowania pytają „czego serwer jeszcze nie ma".
+  Trzeci licznik, `pendingInActiveOrg()`, obsługuje blokadę przełączenia klubu.
+- **PRZEŁĄCZENIE KLUBU BLOKUJE TYLKO KOLEJKA KLUBU BIEŻĄCEGO** (decyzja właściciela
+  2026-09-10, zawęża §6 dokumentu). Dosłowne „pusta kolejka" dawało ZAKLESZCZENIE:
+  korekta z klubu A czekałaby na powrót do A, a powrót do A blokowałaby właśnie ona.
+  Blokujemy tym, co osieroci WYJŚCIE z klubu. Kolejność powagi w `clubSwitchBlock`:
+  trzymana maszyna → zaległe zapisy → brak sieci.
+- **`GET /me/events` ZOSTAJE PER KLUB** (decyzja właściciela 2026-09-10): po reinstalacji
+  telefon odtwarza rejestr klubu aktywnego, historię drugiego dostaje po przełączeniu.
+- **SQLite 9 NIE RUSZA `events`**: `ALTER TABLE … ADD COLUMN` nie jest idempotentne
+  (`sqliteSchema.test.ts`), a rejestr jest jedyną tabelą, której nie wolno zgubić.
+  Klub operacji mieszka w `session_orgs`, cache referencyjny (pięć tabel) leci
+  `DROP` + `CREATE` z `org_id` - to materiał roboczy i wraca jednym `GET /reference`.
+  `reference_pilots` ma odtąd klucz `(org_id, id)`.
+- **KLUB MELDUJE SIĘ MAGAZYNOWI PRZY KAŻDYM WYDANIU PARY TOKENÓW** (`AuthService`
+  → `onActiveClub` → `EventsRepo.setActiveOrg`): logowanie, zatwierdzenie w międzyczasie,
+  przełączenie i ROTACJA. Ta ostatnia jest drogą telefonu aktualizowanego z 1.x (§11):
+  stary profil klubu nie zna, a pierwsze odświeżenie tokenów przynosi go razem z parą
+  i przygarnia wszystkie operacje bez klubu.
+- **PRZEŁĄCZENIE NIE ZERUJE PIN-u** - zmienia kontekst pracy, nie tożsamość urządzenia;
+  inaczej pilot dwóch klubów ustawiałby PIN po każdej zmianie. Zeruje go WYŁĄCZNIE
+  świadomy provisioning (§3.0).
+- **`POST /auth/switch` PRZYJMUJE WYŁĄCZNIE TOKEN KLUBU** (serwer): kto go ma, już raz
+  wszedł. Token OSOBY ma własną, JEDNORAZOWĄ drogę do tokenów klubu
+  (`GET /auth/memberships`, stempel `lastLoginAt`) - gdyby przechodził przełączeniem,
+  byłby fabryką par tokenów z pominięciem tamtej bramy (audyt 2026-09-05).
+- **NUMER SYGNATURY LICZY SIĘ W KLUBIE, NUMER KAFELKA - W DOBIE PILOTA**: to jedyne
+  miejsce, w którym rozjeżdżają się liczby, o których issue #68 mówiło „ten sam numer" -
+  i tak rysuje to makieta `01e` („OPERACJA 3" nad sygnaturą `…/TOM/1`). Klub przynosi
+  WOŁAJĄCY (`operationIndexes(states, picId, orgOf)`), bo domena klubu nie zna (§2) -
+  ta sama granica, co przy oknach lotów w `trackPhaseRuns`.
+- **PLAKIETKA KLUBU I PRZEŁĄCZNIK ISTNIEJĄ WYŁĄCZNIE PRZY >1 CZŁONKOSTWIE** (reguła
+  SyncChipa z issue #12); zgłoszenie `pending` liczy się do tej dwójki, bo pilot, który
+  właśnie wpisał kod, ma prawo zobaczyć, że czeka. Podpis karty klubu nie pisze
+  „0 samolotów" dla klubu, którego floty telefon nigdy nie widział - to byłoby zdanie
+  o flocie, a jest zdaniem o pustym cache'u.
+- **00C/00D/00E TO TRZY STANY JEDNEGO EKRANU** (`ClubGateScreen`, dawny
+  `RegistrationPendingScreen`): treść liczy `logic/clubGateView.ts`, kod klubu maskuje
+  `logic/clubCode.ts` (myślnik i wielkość liter są ZAPISEM). Maska NIE filtruje alfabetu
+  kodów - pole, które połyka wciśnięty klawisz, nie mówi dlaczego; kod spoza alfabetu
+  dostaje od serwera to samo „Nie znam takiego kodu", co kod nieznany.
+- **PLAKIETKA KONTA NA 00C/00D/00E JEDZIE Z SERWERA** (`ClubsView.person`): token osoby
+  niesie identyfikator, nie profil, a wyłuskiwanie imienia z tokenu Google byłoby drugim,
+  niesprawdzanym źródłem tych samych napisów.
+- **czego epik F świadomie NIE ROBI**: makiet stanów zablokowanej sekcji „Klub"
+  (mockup opisuje je komentarzem), odtwarzania rejestru wszystkich klubów naraz,
+  „opuść klub" z telefonu (D6: wychodzi się przez panel).
+
 ## Obieg gałęzi (git-flow od 2026-09-08, milestone „Wielofirmowość + SaaS 2.0.0")
 ```
 feature-… → develop → ninerdeck_x_x_x → main        (wydanie planowe)

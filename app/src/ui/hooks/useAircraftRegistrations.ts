@@ -34,7 +34,10 @@ export function useAircraftRegistrations(): RegistrationOf {
     if (queries == null) return;
 
     let alive = true;
-    void queries.aircraft().then((fleet) => {
+    // WSZYSTKIE kluby, nie tylko aktywny (wielofirmowość §7.2): „Mój dzień" i historia
+    // pokazują operacje każdego klubu pilota, więc kafelek z drugiego klubu też musi
+    // mieć czym się podpisać - inaczej wracałby na ekran surowy identyfikator z panelu.
+    void queries.allAircraft().then((fleet) => {
       if (!alive) return;
       setById(Object.fromEntries(fleet.map((a) => [a.id, a.reg])));
     });

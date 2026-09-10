@@ -36,7 +36,7 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { REFERENCE_META_CHECKED_AT } from '../../application';
+import { referenceCheckedAt } from '../../application';
 import {
   ActionButton,
   AppText,
@@ -65,6 +65,7 @@ import { utcDayStart } from '../../domain';
 import { dateUtcLong, plural } from '../format';
 import { useAircraftRegistrations } from '../hooks/useAircraftRegistrations';
 import { useOperationSignatures } from '../hooks/useOperationSignatures';
+import { useOperationClub } from '../hooks/useOperationClub';
 import { buildMyDay, myDayActions, totalLabel } from './logic/myDay';
 import { editableBadge } from './logic/historyDays';
 
@@ -116,6 +117,8 @@ export function MyDayScreen({
      bez tego kafelek pokazywał UUID (zgłoszenie z urządzenia 2026-08-30). */
   const regOf = useAircraftRegistrations();
   const signatureOf = useOperationSignatures();
+  // Plakietka klubu - wyłącznie przy więcej niż jednym członkostwie (mockup 01e).
+  const clubOf = useOperationClub();
   const vm = pilotDay != null ? buildMyDay(pilotDay, regOf) : null;
 
   // Decyzje administratora o moich operacjach (issue #81) - z lokalnego rejestru,
@@ -150,8 +153,8 @@ export function MyDayScreen({
   useEffect(() => {
     if (repo == null) return;
     let alive = true;
-    void repo.getMeta(REFERENCE_META_CHECKED_AT).then((value) => {
-      if (alive) setRefCheckedAt(value != null ? Number(value) : null);
+    void referenceCheckedAt(repo).then((value) => {
+      if (alive) setRefCheckedAt(value);
     });
     return () => {
       alive = false;
@@ -265,6 +268,7 @@ export function MyDayScreen({
                 <DayCard
                   key={session.sessionUuid}
                   title={session.title}
+                  club={clubOf(session.sessionUuid)}
                   aircraft={session.aircraft}
                   times={session.times}
                   stats={session.stats}

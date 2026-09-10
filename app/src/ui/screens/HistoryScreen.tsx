@@ -39,6 +39,7 @@ import {
 } from '../components';
 import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
+import { useOperationClub } from '../hooks/useOperationClub';
 import { useSkeleton } from '../hooks/useSkeleton';
 import { useAircraftRegistrations } from '../hooks/useAircraftRegistrations';
 import { useOperationSignatures } from '../hooks/useOperationSignatures';
@@ -57,6 +58,8 @@ export function HistoryScreen({
   const lastSync = useSessionStore((s) => s.lastSync);
   const streamRevision = useSessionStore((s) => s.streamRevision);
   const streamHydrated = useSessionStore((s) => s.streamHydrated);
+  // Plakietka klubu - wyłącznie przy więcej niż jednym członkostwie (mockup 01e).
+  const clubOf = useOperationClub();
 
   const [days, setDays] = useState<HistoryDay[] | null>(null);
 
@@ -166,6 +169,7 @@ export function HistoryScreen({
               <DayCard
                 key={day.sessionUuid}
                 title={day.title}
+                club={clubOf(day.sessionUuid)}
                 signature={day.signature}
                 aircraft={day.aircraft}
                 times={day.times}
@@ -197,6 +201,7 @@ export function HistoryScreen({
               <DayCard
                 key={day.sessionUuid}
                 title={day.title}
+                club={clubOf(day.sessionUuid)}
                 signature={day.signature}
                 aircraft={day.aircraft}
                 times={day.times}

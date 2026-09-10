@@ -34,7 +34,7 @@ Latasz już w jednym klubie i dołączasz do drugiego? To samo pole znajdziesz w
 
 ## Pilot w dwóch klubach
 
-Aplikacja pracuje w **jednym klubie naraz**: z jego floty wybierasz samolot, jego przekazania i normy widzisz przy przejęciu. Który to klub, wybierasz w ustawieniach - sekcja **Klub** pojawia się tylko wtedy, gdy masz więcej niż jedno członkostwo. Zmiana klubu **wymaga internetu i pustej kolejki wysyłki** - jak wylogowanie; bez zasięgu pracujesz dalej w klubie, w którym jesteś, a aplikacja mówi, dlaczego nie da się przełączyć.
+Aplikacja pracuje w **jednym klubie naraz**: z jego floty wybierasz samolot, jego przekazania i normy widzisz przy przejęciu. Który to klub, wybierasz w ustawieniach - sekcja **Klub** pojawia się tylko wtedy, gdy masz więcej niż jedno członkostwo. Zmiana klubu **wymaga internetu**, a wcześniej trzeba **wysłać zapisy z klubu, z którego wychodzisz** - powstały pod jego kluczem, więc tylko nim wyjdą na serwer. Nie da się jej też zrobić z maszyną w ręce: operację kończy zdanie samolotu. Bez zasięgu pracujesz dalej w klubie, w którym jesteś, a aplikacja mówi przy karcie klubu, dlaczego nie da się przełączyć.
 
 **„Mój dzień" i „Poprzednie dni" pokazują wszystkie Twoje operacje**, z obu klubów: każdy kafelek niesie nazwę klubu, a sumy doby liczą wszystko. Przełącznik zmienia tylko to, gdzie zaczniesz następny lot - nie chowa niczego, co już zapisałeś.
 
