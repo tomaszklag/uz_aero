@@ -119,7 +119,13 @@ export function MyDayScreen({
   const signatureOf = useOperationSignatures();
   // Plakietka klubu - wyłącznie przy więcej niż jednym członkostwie (mockup 01e).
   const clubOf = useOperationClub();
-  const vm = pilotDay != null ? buildMyDay(pilotDay, regOf) : null;
+  // SYGNATURA I KLUB WCHODZĄ DO MODELU, nie do propsów kafelka: „Mój dzień" i historia
+  // dzielą `SessionCardVm` (issue #42), więc wartość spoza projekcji wstrzykuje się
+  // funkcją - inaczej oba ekrany rozjeżdżają się przy pierwszej zmianie reguły.
+  // Sygnatura NIE DOCHODZIŁA tu wcale (kafelek 01 pokazywał sam numer operacji),
+  // choć `buildMyDay` umiał ją policzyć od issue #68, a mockupy 01/01e rysują ją
+  // na każdym kafelku.
+  const vm = pilotDay != null ? buildMyDay(pilotDay, regOf, signatureOf, clubOf) : null;
 
   // Decyzje administratora o moich operacjach (issue #81) - z lokalnego rejestru,
   // z pamięcią potwierdzeń; komunikat mówi kto, kiedy, dlaczego i co z zapisami.
@@ -268,7 +274,8 @@ export function MyDayScreen({
                 <DayCard
                   key={session.sessionUuid}
                   title={session.title}
-                  club={clubOf(session.sessionUuid)}
+                  signature={session.signature}
+                  club={session.club}
                   aircraft={session.aircraft}
                   times={session.times}
                   stats={session.stats}

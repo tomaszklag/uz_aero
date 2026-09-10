@@ -160,9 +160,35 @@ describe('buildMyDay - scenariusz mockupu 01', () => {
       // bo niesie go wspólny `SessionCardVm`.
       // 'signature' doszedł przy issue #68 - też na OBU ekranach naraz.
       // 'adminClosed' doszedł przy issue #81 (plakietka „Zakończył administrator") - też.
-      ['adminClosed', 'aircraft', 'manual', 'sessionUuid', 'signature', 'stats', 'times', 'title'].sort(),
+      // 'club' doszedł przy issue #102 (plakietka klubu na kafelku, mockup 01e) - też
+      // na obu ekranach naraz, i to ten test wymusił, żeby przeszedł przez wspólny model
+      // zamiast zostać propsem jednego ekranu.
+      ['adminClosed', 'aircraft', 'club', 'manual', 'sessionUuid', 'signature', 'stats', 'times', 'title'].sort(),
     );
     expect(card.stats.map((s) => s.k)).toEqual(['Loty', 'Blok', 'Lot']);
+  });
+
+  /**
+   * KLUB JEST WSTRZYKIWANY TĄ SAMĄ DROGĄ, CO SYGNATURA (issue #102): doba pilota
+   * obejmuje wszystkie jego kluby, więc kafelek musi powiedzieć, w którym z nich odbyła
+   * się operacja - a projekcja klubu nie zna. Regułę „plakietka wyłącznie przy >1
+   * członkostwie" trzyma `useOperationClub`, nie ten model: tu wchodzi to, co rezolwer
+   * powiedział, i nic ponadto.
+   */
+  it('przepisuje klub operacji ze wstrzykniętego rezolwera', () => {
+    const cards = buildMyDay(dayOf(axa(), klm()), regOf, () => null, (uuid) =>
+      uuid === 's-klm' ? 'Aeroklub Krakowski' : 'Aeroklub Zielonogórski',
+    ).sessions;
+
+    expect(cards.map((c) => c.club)).toEqual([
+      'Aeroklub Zielonogórski',
+      'Aeroklub Zielonogórski',
+      'Aeroklub Krakowski',
+    ]);
+  });
+
+  it('bez rezolwera klubu kafelek plakietki nie ma - tak wygląda pilot jednego klubu', () => {
+    expect(vm().sessions.every((c) => c.club === null)).toBe(true);
   });
 
   it('sumy zgadzają się z mockupem: Loty · Blok · Lot, bez sumy „Służba"', () => {

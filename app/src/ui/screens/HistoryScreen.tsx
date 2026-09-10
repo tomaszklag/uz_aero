@@ -100,7 +100,7 @@ export function HistoryScreen({
      (issue #42), więc i jego treść musi pochodzić z jednego rachunku. */
   const signatureOf = useOperationSignatures();
   const groups =
-    days != null ? buildHistory(days, Date.now(), pushing, regOf, signatureOf) : null;
+    days != null ? buildHistory(days, Date.now(), pushing, regOf, signatureOf, clubOf) : null;
   // Pustej historii wolno wierzyć dopiero po pierwszym uzgodnieniu rejestru z serwerem
   // (§4.9, issue #32): telefon zaraz po czyszczeniu pamięci pokazałby „BRAK POPRZEDNICH
   // DNI" komuś, kto ma za sobą sezon - a to jest dokładnie ten komunikat, który wygląda
@@ -169,7 +169,7 @@ export function HistoryScreen({
               <DayCard
                 key={day.sessionUuid}
                 title={day.title}
-                club={clubOf(day.sessionUuid)}
+                club={day.club}
                 signature={day.signature}
                 aircraft={day.aircraft}
                 times={day.times}
@@ -201,7 +201,7 @@ export function HistoryScreen({
               <DayCard
                 key={day.sessionUuid}
                 title={day.title}
-                club={clubOf(day.sessionUuid)}
+                club={day.club}
                 signature={day.signature}
                 aircraft={day.aircraft}
                 times={day.times}

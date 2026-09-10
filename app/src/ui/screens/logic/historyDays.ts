@@ -114,6 +114,7 @@ function cardSpec(
   pushing: boolean,
   regOf: (id: string) => string | null,
   signatureOf: (sessionUuid: string) => string | null,
+  clubOf: (sessionUuid: string) => string | null,
 ): DayCardSpec {
   const { state, pendingCount } = day;
   const leg = state.legs[0];
@@ -142,6 +143,8 @@ function cardSpec(
     stats: sessionStats(state.flights.length, state.blockTimeMs, state.flightTimeMs),
     manual: state.manualEntry,
     adminClosed: state.closedByAdmin,
+    // Klub operacji - to samo pole i ta sama droga, co na 01 (wspólny `SessionCardVm`).
+    club: state.sessionUuid == null ? null : clubOf(state.sessionUuid),
     upload: uploadSpec(pendingCount, pushing),
   };
 }
@@ -155,7 +158,9 @@ function cardSpec(
  * @param now      teraz (epoch ms) - wyznacza dobę dzisiejszą i stan okien korekty,
  * @param pushing  czy sync dosięga serwera (etykieta plakietki wysyłki),
  * @param regOf    identyfikator maszyny → jej ZNAK (patrz `buildMyDay`),
- * @param signatureOf identyfikator sesji → jej SYGNATURA (`useOperationSignatures`).
+ * @param signatureOf identyfikator sesji → jej SYGNATURA (`useOperationSignatures`),
+ * @param clubOf   identyfikator sesji → NAZWA KLUBU (`useOperationClub`; `null` przy
+ *   jednym członkostwie - regułę trzyma hook, nie ten builder).
  */
 export function buildHistory(
   days: HistoryDay[],
@@ -163,6 +168,7 @@ export function buildHistory(
   pushing = false,
   regOf: (id: string) => string | null = () => null,
   signatureOf: (sessionUuid: string) => string | null = () => null,
+  clubOf: (sessionUuid: string) => string | null = () => null,
 ): HistoryGroups {
   const groups: HistoryGroups = { editable: [], closed: [] };
   const today = utcDayStart(now);
@@ -186,12 +192,12 @@ export function buildHistory(
     const window = correctionWindow(day.state, now);
     if (window.open && window.closesAt != null) {
       groups.editable.push({
-        ...cardSpec(day, pushing, regOf, signatureOf),
+        ...cardSpec(day, pushing, regOf, signatureOf, clubOf),
         deadline: `Korekta do ${dateTimeUtcShort(window.closesAt)}`,
         remaining: remainingLabel(window.closesAt - now),
       });
     } else {
-      groups.closed.push(cardSpec(day, pushing, regOf, signatureOf));
+      groups.closed.push(cardSpec(day, pushing, regOf, signatureOf, clubOf));
     }
   }
   return groups;
