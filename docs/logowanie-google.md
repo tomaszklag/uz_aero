@@ -1,5 +1,22 @@
 # UZ Aero - logowanie przez Google (decyzje)
 
+> **CO SIĘ ZMIENIŁO W 2.0.0 (wielofirmowość, epik D - issue #100).** Samo logowanie
+> Googlem działa dokładnie tak, jak opisuje ten dokument; przeniosły się DWIE rzeczy
+> i trzeba o nich wiedzieć, czytając resztę:
+> 1. **Kolejka zgłoszeń żyje na CZŁONKOSTWACH**, nie na tożsamości. `external_identities`
+>    nie ma już statusów `pending`/`rejected` (zostaje sama para „tożsamość → osoba"),
+>    a „czeka na zatwierdzenie" i „odrzucono z powodem" to stany `memberships.status` -
+>    bo dotyczą KLUBU, nie tożsamości: ta sama osoba może czekać w jednym klubie
+>    i być odrzucona w drugim.
+> 2. **Osoba powstaje przy PIERWSZYM logowaniu**, bez żadnego klubu, a do klubu wchodzi
+>    się WYŁĄCZNIE kodem klubu (`POST /auth/join`). Token rejestracyjny nazywa się odtąd
+>    tokenem OSOBY (`purpose: 'person'`) i otwiera dwie trasy: `GET /auth/memberships`
+>    (dawne `GET /auth/registration`) oraz `POST /auth/join`.
+>
+> Wszystko inne - weryfikacja tokenu Google, `aud` per powierzchnia, podpięcie po
+> zweryfikowanym adresie, PIN, offline-first, trzy poprawki audytu z §14 - zostaje
+> w mocy. Szczegóły: `docs/wielofirmowosc.md` §4, §5 i §3.8.
+
 Dokument decyzji dla przebudowy uwierzytelnienia, gałąź `logowanie-google`.
 **Odwraca decyzję z 2026-07-22** („Rezygnacja z Google OAuth"), a wraz z nią zdanie
 „brak samodzielnej rejestracji", które od tamtej pory stoi w `CLAUDE.md`,

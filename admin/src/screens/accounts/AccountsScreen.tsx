@@ -31,7 +31,7 @@ import {
   TableSkeleton,
   type Column,
 } from '../../ui/components';
-import { PeopleIcon, PlusIcon } from '../../ui/components/icons';
+import { PeopleIcon } from '../../ui/components/icons';
 import { errorMessage } from '../common/apiMessage';
 import { AccountDrawer } from './AccountDrawer';
 import { accountRow, type AccountRow } from './accountRows';
@@ -113,19 +113,13 @@ export function AccountsScreen() {
 
   return (
     <>
-      <PageHead
-        title="Piloci"
-        // Brak uprawnień = BRAK przycisku, nie przycisk wyszarzony. Powód stoi raz,
-        // w karcie konta („tylko podgląd") - a nie przy każdej akcji na ekranie.
-        actions={
-          manages ? (
-            <LinkButton to="/piloci/nowy" variant="primary">
-              <PlusIcon size={13} />
-              Dodaj pilota
-            </LinkButton>
-          ) : undefined
-        }
-      />
+      {/*
+        Akcji głównej ekran NIE MA (issue #100, D3): dawne „Dodaj pilota" zniknęło razem
+        z `POST /pilots` - nowy członek wchodzi WYŁĄCZNIE kodem klubu. Jej miejsce zajmie
+        „Kod klubu" (makieta `piloci-kod-klubu`) razem z ekranami epiku E; wyszarzony
+        przycisk obiecywałby akcję, której serwer nie ma.
+      */}
+      <PageHead title="Piloci" />
 
       <div className="filters">
         <SearchInput
@@ -208,15 +202,9 @@ function EmptyAccounts({
     <EmptyState
       icon={<PeopleIcon size={20} />}
       title="Nie ma jeszcze żadnego pilota"
-      note="Dodaj konto z adresem Google pilota albo poczekaj na jego zgłoszenie z aplikacji."
-      action={
-        manages ? (
-          <LinkButton to="/piloci/nowy" variant="primary">
-            <PlusIcon size={13} />
-            Dodaj pilota
-          </LinkButton>
-        ) : undefined
-      }
+      // Jedyna droga do klubu to kod klubu (issue #100), więc pusta lista mówi, CO ma
+      // się stać, a nie oferuje akcji, której nie ma: karta „Kod klubu" dochodzi w epiku E.
+      note="Podaj pilotom kod klubu - po wpisaniu trafią do zgłoszeń, a Ty zdecydujesz."
     />
   );
 }

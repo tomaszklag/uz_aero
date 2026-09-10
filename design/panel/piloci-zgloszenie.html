@@ -125,9 +125,12 @@
           <h1 class="page-title">Piloci</h1>
         </div>
         <div class="page-actions">
-          <a class="btn primary" href="piloci-konto.html">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Dodaj pilota
+          <!-- JEDNA akcja główna listy, jak na P1: nowy członek wchodzi WYŁĄCZNIE kodem
+               klubu. Dawne „Dodaj pilota" zniknęło razem z drogą, którą opisywało
+               (2026-09-09; serwer stracił POST /pilots w issue #100, D3). -->
+          <a class="btn primary" href="piloci-kod-klubu.html">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+            Kod klubu
           </a>
         </div>
       </div>

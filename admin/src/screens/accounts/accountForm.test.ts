@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { PilotListItemDto } from '../../api/dto';
-import {
-  createBodyOf,
+import {
   deleteBlocker,
   draftKey,
   draftOf,
@@ -85,15 +84,6 @@ describe('werdykt', () => {
 });
 
 describe('ciało żądania', () => {
-  it('POST niesie kod wersalikami i przycięte pola', () => {
-    expect(createBodyOf({ code: ' tmk ', name: ' Anna Wrzosek ', email: ' a@b.pl ', role: 'admin' })).toEqual({
-      code: 'TMK',
-      name: 'Anna Wrzosek',
-      email: 'a@b.pl',
-      role: 'admin',
-    });
-  });
-
   it('PATCH niesie WYŁĄCZNIE to, co się zmieniło', () => {
     const draft = { ...draftOf(pilot), role: 'admin' as const };
     expect(updateBodyOf(pilot, draft)).toEqual({ role: 'admin' });
@@ -161,20 +151,16 @@ describe('kiedy wolno usunąć konto', () => {
 });
 
 describe('klucz synchronizacji szkicu', () => {
-  it('nowe konto ma klucz od razu', () => {
-    expect(draftKey(true, null)).toBe('nowy');
-  });
-
   it('BRAK klucza, dopóki konta nie ma na liście', () => {
     // To jest cała treść tej funkcji: przy wejściu z linku szuflada montuje się PRZED
     // listą. Bez tego formularz przestawiał się raz, na pusty, i taki zostawał -
     // z blokadą „wpisz kod pilota" nad kontem, które istnieje. Złapane w przeglądarce.
-    expect(draftKey(false, null)).toBeNull();
+    expect(draftKey(null)).toBeNull();
   });
 
   it('klucz to TOŻSAMOŚĆ konta, więc odświeżenie listy go nie rusza', () => {
     // Dzięki temu przeładowanie danych po zapisie nie kasuje wpisanych zmian.
-    expect(draftKey(false, pilot)).toBe('p-1');
-    expect(draftKey(false, { ...pilot, name: 'Inne nazwisko' })).toBe('p-1');
+    expect(draftKey(pilot)).toBe('p-1');
+    expect(draftKey({ ...pilot, name: 'Inne nazwisko' })).toBe('p-1');
   });
 });

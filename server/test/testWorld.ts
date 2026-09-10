@@ -31,6 +31,12 @@ export const ORG_B = 'org-b';
 export const ORG_A_CODE = 'AZG-7K4M';
 
 /**
+ * Od kiedy obowiązuje kod Alfy - chwila PRZED zegarem testowym (czerwiec 2026), żeby
+ * zgłoszenia stemplowane zegarem aplikacji liczyły się jako „złożone tym kodem".
+ */
+const JOIN_CODE_SINCE = '2026-01-01T00:00:00.000Z';
+
+/**
  * SEKRETY ADRESÓW KART ARKUSZA (issue #99, C5) - stałe, żeby test mógł napisać oczekiwany
  * URL karty co do znaku. W produkcji losuje je baza przy założeniu klubu.
  */
@@ -119,9 +125,13 @@ const MEMBERSHIPS = [
 export async function seedTestWorld(db: Queryable): Promise<void> {
   for (const [id, name, slug, joinCode, sheetsKey] of ORGANIZATIONS) {
     await db.query(
+      // `join_code_since` z USTALONEJ chwili, nie z `now()`: świat testowy żyje
+      // w czerwcu 2026 (`TestClock`), a zgłoszenia dostają stempel Z ZEGARA APLIKACJI.
+      // Stempel z zegara systemowego byłby od nich PÓŹNIEJSZY, więc „zgłoszenia tym
+      // kodem" wychodziłyby zerem przy niepustej kolejce.
       `INSERT INTO organizations (id, name, slug, join_code, join_code_since, sheets_key)
-       VALUES ($1, $2, $3, $4, CASE WHEN $4::text IS NULL THEN NULL ELSE now() END, $5)`,
-      [id, name, slug, joinCode, sheetsKey],
+       VALUES ($1, $2, $3, $4, CASE WHEN $4::text IS NULL THEN NULL ELSE $6::timestamptz END, $5)`,
+      [id, name, slug, joinCode, sheetsKey, JOIN_CODE_SINCE],
     );
   }
 
@@ -146,8 +156,11 @@ export async function seedTestWorld(db: Queryable): Promise<void> {
 
   for (const [orgId, pilotId, code, role] of MEMBERSHIPS) {
     await db.query(
+      // `platform` - tak jak w produkcji powstaje pierwszy administrator klubu: świat
+      // testowy zakłada superadministrator, nie kod klubu (`joined_via` nie ma już
+      // wartości `panel`, issue #100 D3).
       `INSERT INTO memberships (org_id, pilot_id, code, role, status, joined_via)
-       VALUES ($1, $2, $3, $4, 'active', 'panel')`,
+       VALUES ($1, $2, $3, $4, 'active', 'platform')`,
       [orgId, pilotId, code, role],
     );
   }

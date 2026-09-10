@@ -479,7 +479,7 @@ describe('CHECK na słownikach ról', () => {
     );
     await db.query(
       `INSERT INTO memberships (org_id, pilot_id, code, status, joined_via)
-       VALUES ('org-a', 'NEW', 'NEW', 'active', 'panel')`,
+       VALUES ('org-a', 'NEW', 'NEW', 'active', 'code')`,
     );
     const { rows } = await db.query<{ role: string }>(
       "SELECT role FROM memberships WHERE pilot_id = 'NEW'",

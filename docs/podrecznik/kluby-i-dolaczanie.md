@@ -2,10 +2,13 @@
 
 > Jeden serwer, wiele klubów: każdy klub widzi wyłącznie swoją flotę, swoich pilotów i swój dziennik. Do klubu dołącza się kodem klubu, a o przyjęciu decyduje administrator klubu.
 
-<!-- SZKIC ROZDZIAŁU (epik A wielofirmowości, 2026-09-08; przepisany 2026-09-09 pod JEDNĄ
-     drogę dołączenia - kod klubu). Opisuje działanie planowane na wydanie 2.0.0 - przed
-     wdrożeniem epików B–F zdania o aplikacji i panelu są specyfikacją, nie opisem stanu.
-     Przy wdrożeniu każdego epiku: sprawdzić tę stronę. -->
+<!-- STAN NA 2026-09-10 (epik A: 2026-09-08; przepisany 2026-09-09 pod JEDNĄ drogę
+     dołączenia - kod klubu; sprawdzony po epiku D). Serwer robi już wszystko, co opisuje
+     ta strona: kod klubu, zgłoszenia, decyzje, kod klubu w panelu, moduł Organizacje.
+     SPECYFIKACJĄ zostają jeszcze EKRANY: panel (epik E, issue #101) i aplikacja pilota
+     (epik F, issue #102) - do ich wdrożenia zdania o tym, gdzie co stoi i jak wygląda,
+     opisują makiety, nie działający produkt. Przy wdrożeniu każdego epiku: sprawdzić
+     tę stronę. -->
 
 ## Klub, osoba, członkostwo
 
@@ -15,13 +18,13 @@ Kluby są od siebie oddzielone całkowicie. Administrator jednego klubu nie zoba
 
 ## Jak dołączyć do klubu
 
-Do klubu wchodzi się **kodem klubu**. Kod ma osiem znaków, np. `AZG-7K4M`, jest jeden dla całego klubu i dostajesz go od administratora - z tablicy w hangarze, z grupy klubowej albo z ręki. Nie jest tajny: sam kod nikogo do klubu nie wpuszcza, tylko zgłasza Cię do rozpatrzenia.
+Do klubu wchodzi się **kodem klubu**. Kod to siedem znaków z myślnikiem w środku, np. `AZG-7K4M`; jest jeden dla całego klubu i dostajesz go od administratora - z tablicy w hangarze, z grupy klubowej albo z ręki. Wielkość liter i myślnik nie mają znaczenia: `azg7k4m` trafia w ten sam klub. Nie jest tajny: sam kod nikogo do klubu nie wpuszcza, tylko zgłasza Cię do rozpatrzenia - a zgadywanie go blokuje ograniczenie liczby prób.
 
 1. **Zaloguj się kontem Google.** Jeśli żaden klub Cię jeszcze nie zna, aplikacja pokazuje ekran **„Nie należysz do żadnego klubu"** z jednym polem.
 2. **Wpisz kod klubu.** Powstaje zgłoszenie i zobaczysz ekran „Czeka na zatwierdzenie" z nazwą klubu. Dołączenie wymaga internetu - tak jak samo logowanie.
 3. **Poczekaj na decyzję administratora.** Aplikacja sama sprawdza, czy zapadła; **SPRAWDŹ PONOWNIE** robi to od ręki. Po zatwierdzeniu poprosi o PIN i pokaże „Mój dzień" - od tej chwili jesteś w klubie pod kodem pilota, który nadał Ci administrator.
 
-Zgłoszenie **odrzucone** pokazuje powód wpisany przez administratora i nazwę klubu. Możesz dołączyć do innego klubu innym kodem albo zalogować się innym kontem Google. Zgłoszenie nie wygasa samo - kończy je wyłącznie decyzja w klubie.
+Zgłoszenie **odrzucone** pokazuje powód wpisany przez administratora i nazwę klubu. Możesz dołączyć do innego klubu innym kodem albo zalogować się innym kontem Google; ponowne wpisanie TEGO SAMEGO kodu decyzji nie obejdzie - cofnąć ją może wyłącznie klub. Zgłoszenie nie wygasa samo: kończy je wyłącznie decyzja w klubie.
 
 @screen 00e-bez-klubu "Kod klubu" | 00c-oczekiwanie "Zgłoszenie czeka w klubie" | 00d-odrzucone "Odrzucone z powodem"
 
@@ -43,7 +46,9 @@ Aplikacja pracuje w **jednym klubie naraz**: z jego floty wybierasz samolot, jeg
 
 Moduł **Piloci** to lista członków klubu: kod w tym klubie, imię i nazwisko, adres konta Google, rola i status. Nad listą - wyłącznie gdy ktoś czeka - stoi karta **Zgłoszenia**: osoby, które wpisały kod klubu, z imieniem i adresem z ich konta Google. **Rozpatrz** otwiera kartę z nadaniem kodu pilota i roli; odrzucenie wymaga powodu, bo pilot czyta go na swoim telefonie.
 
-**Kod klubu** ma własną kartę w module Piloci: widać go w całości, od kiedy obowiązuje i ile zgłoszeń nim czeka. **Wygeneruj nowy** unieważnia stary od razu - zgłoszeń już złożonych to nie dotyka. **Wyłącz dołączanie kodem** kasuje kod: do czasu wygenerowania nowego nikt do klubu nie dołączy, bo innej drogi nie ma. Nowego członka nie da się dopisać z panelu ręcznie - każdy wchodzi kodem i decyzją.
+**Kod klubu** ma własną kartę w module Piloci: widać go w całości, od kiedy obowiązuje i ile zgłoszeń nim czeka (zgłoszenia sprzed wymiany kodu zostają w kolejce - dlatego ta liczba bywa mniejsza niż liczba na karcie ZGŁOSZENIA). **Wygeneruj nowy** unieważnia stary od razu. **Wyłącz dołączanie kodem** kasuje kod: do czasu wygenerowania nowego nikt do klubu nie dołączy, bo innej drogi nie ma, a pilot z wyłączonym kodem dostaje tę samą odpowiedź, co z kodem zmyślonym. Nowego członka nie da się dopisać z panelu ręcznie - każdy wchodzi kodem i decyzją.
+
+Pilot, który **odchodzi z klubu**, nie kasuje się z listy: administrator wyłącza mu członkostwo („Wyłącz konto" w karcie). Dostęp gaśnie od razu - telefon przestaje wysyłać i pobierać cokolwiek z tego klubu - a jego loty zostają w dzienniku, w statystykach i w kartach arkusza, bo się zdarzyły. W innych swoich klubach ten człowiek lata dalej, pod ich kodami.
 
 @panel piloci-lista "Zgłoszenia nad listą członków" | piloci-zgloszenie "Rozpatrzenie zgłoszenia: kod pilota i rola" | piloci-kod-klubu "Kod klubu: wygeneruj nowy albo wyłącz"
 

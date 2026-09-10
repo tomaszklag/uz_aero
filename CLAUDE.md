@@ -2914,6 +2914,70 @@ naprawdę nie wycieka". Reguły obowiązujące odtąd KAŻDĄ nową trasę i KA�
   (`aircraft_overlap` liczy się w obrębie klubu), przełączania klubu w panelu (epik E)
   i klubu w aplikacji pilota (epik F)
 
+## Wielofirmowość 2.0.0 - epik D domknięty: kolejka zgłoszeń, kod klubu, Organizacje (issue #100, 2026-09-10, gałąź `feature-100-kolejka-i-organizacje`)
+D1+D4 dały drogę PILOTA (`POST /auth/join`, token osoby); ten PR daje drugą połowę -
+DECYZJĘ KLUBU i zakładanie klubów - oraz kasuje drogi, które zostały po 1.x. Decyzje
+i odstępstwa: `docs/wielofirmowosc.md` §14 D. Reguły obowiązujące odtąd:
+- **TRZY KOMENDY DECYZJI, KAŻDA W JEDNĄ STRONĘ** (`commands/memberships.ts`,
+  `accounts.manage`): `approve` (`pending` → `active` z kodem i rolą), `reject`
+  (`pending` → `rejected`, **powód WYMAGANY** - pilot czyta go na 00D), `reopen`
+  (`rejected` → `pending`, kasuje KOMPLET decyzji: powód, chwilę, autora - wiersz opisuje
+  STAN, historię trzyma audyt). **Zatwierdzenie NIE przyjmuje `rejected`**: wpuszczenie
+  odrzuconego jednym ruchem pomijałoby chwilę, w której ktoś świadomie zdejmuje cudzą
+  decyzję. Odmowa z innego stanu to `409 wrong_status` ZE STANEM - administrator z otwartą
+  szufladą nie wie, że drugi rozstrzygnął minutę temu, a „nie można" bez powodu wygląda
+  jak awaria
+- **KOLEJKA I KOD KLUBU MAJĄ WŁASNE TRASY**, nie pola w `GET /pilots`: tamta lista jedzie
+  na `panel.access` (czyta ją każdy z wejściem do panelu, jest też słownikiem pilotów dla
+  filtrów innych ekranów), a kolejka z adresami ludzi spoza klubu i włącznik drogi do
+  klubu - na `accounts.manage`. Zdolność jest ATRYBUTEM TRASY i doklejenie ich do tamtej
+  odpowiedzi oddałoby je każdemu, kto czyta listę
+- **„ILE ZGŁOSZEŃ CZEKA TYM KODEM" LICZY SIĘ OD `join_code_since`** - `memberships` nie
+  zapisuje, którym kodem ktoś wszedł, i zapisywać nie ma po co (kod jest jeden na klub,
+  a jego zmiana ma stempel). Stąd DWIE różne liczby na ekranie i to jest zamierzone: karta
+  kodu mówi o BIEŻĄCYM kodzie, karta ZGŁOSZENIA o całej kolejce. Rotacja zgłoszeń NIE RUSZA
+- **KODU NIE DA SIĘ WPISAĆ Z RĘKI - tylko wylosować** (`clubCodeFrom` w domenie, bajty
+  z `randomBytes` przez konstruktor): klub dobierający sobie kody wybierałby łatwe do
+  zgadnięcia. `% 32` nie ma obciążenia (256/32 = 8 dokładnie) i to jest powód długości
+  alfabetu. Zderzenie z kodem innego klubu (`UNIQUE` na serwerze) = LOSUJ PONOWNIE,
+  **nową transakcją**: po błędzie unikalności transakcja Postgresa jest odrzucona, więc
+  pętla stoi WOKÓŁ `write.run`, nie w jego wnętrzu; nieudana próba nie zostawia ani kodu,
+  ani wpisu w dzienniku
+- **MODUŁ ORGANIZACJE UMIE CZTERY RZECZY** (`platform.manage`, `platformRoute`): lista
+  (liczby członków i maszyn + administratorzy z flagą „nie zalogował się"), **założenie
+  klubu razem z kodem i PIERWSZYM administratorem** (jedno, nierozdzielne zamówienie -
+  klub bez administratora nie ma jak zacząć, bo kodem nie miałby kto zatwierdzić), zmiana
+  NAZWY i wyłączenie klubu. Czego NIE umie: kasowania klubu (dziennik jest jego
+  dokumentem), zmiany sluga (adres kart arkusza, nadawany raz), rotacji kodu (to panel
+  KLUBU) i wejścia w dane klubu (§3.3 - z wnętrza oddaje LICZBY i administratorów).
+  `sheets_key` losuje BAZA (`DEFAULT`), żeby sekret nie powstawał w dwóch miejscach
+- **SESJA KLUBU DOSTAJE NA TRASACH PLATFORMY 401, NIE 403** - to nie jest ten rodzaj
+  tokenu (`authorizePlatform`). Ta sama asymetria, co przy zgłoszeniach błędów (issue #99)
+- **`POST /admin/api/pilots` USUNIĘTE** razem z `joined_via = 'panel'` (CHECK w migracji 8
+  zmieniony W MIEJSCU - nie ma jej na produkcji) i ze ścieżką „Dodaj pilota" w panelu web
+  (przycisk, `#/piloci/nowy`, `useCreatePilot`, `createBodyOf`). Z panelu KLUBU nie da się
+  nikogo dopisać ani adresem, ani linkiem; jedyny wyjątek jest klasy bootstrap i należy do
+  platformy. Pusta lista pilotów mówi odtąd, CO ma się stać („podaj pilotom kod klubu"),
+  a nie oferuje akcji, której serwer nie ma - ekran „Kod klubu" wchodzi w epiku E
+- **`pilot.deactivate` → `membership.disable`** w katalogu audytu: od wielofirmowości
+  odcina się CZŁONKOSTWO, nie osobę (ta lata dalej w pozostałych klubach). Dawny kod
+  ZOSTAJE w katalogu dla wierszy 1.x - precedens `pilot.password_reset`. Przywrócenie
+  dostępu własnego kodu NIE MA (`pilot.update`) i to ta sama asymetria, co przy klubie
+  (`organization.disable` kontra `organization.update`)
+- **WYJŚCIE Z KLUBU TO WYŁĄCZENIE CZŁONKOSTWA i NIE MA własnego kodu** (D6): wszystkie
+  cztery skutki wynikają z bramy członkostwa (epik C) i z append-only rejestru - trasy
+  telefonu i refresh zamykają się natychmiast, rejestr i dziennik zostają nietknięte,
+  zaległe zapisy do tamtego klubu wracają we `withheld` pod tokenem drugiego klubu,
+  a okno korekty pilota gaśnie razem z dostępem. Dostały za to test (`test/leaveClub.test.ts`),
+  bo niepilnowana własność jest własnością do czasu. **„Opuść klub" z telefonu NIE
+  ISTNIEJE**: pilot mógłby wyjść z otwartą operacją i niewysłaną kolejką
+- **KAŻDA NOWA TRASA PŁACI ZA OBA STRAŻNIKI Z EPIKU C** (`tenantIsolation.test.ts`
+  z rejestru Fastify + `org_id` w SQL-u): dwanaście tras tego PR-a dostało przypadki
+  izolacji, a świat testowy - dwa nowe znaczniki klubu B (kandydat w kolejce Bety i kod
+  klubu Bety), bo bez danych po tamtej stronie „czysta" odpowiedź nie dowodzi niczego
+- pułapki SQL-a z tego epiku (`CASE` z `NULL` bierze typ z parametru; stempel „obowiązuje
+  od" musi iść z zegara APLIKACJI): `docs/architektura-panelu-serwer.md` §7.9 (i), (j)
+
 ## Obieg gałęzi (git-flow od 2026-09-08, milestone „Wielofirmowość + SaaS 2.0.0")
 ```
 feature-… → develop → ninerdeck_x_x_x → main        (wydanie planowe)
@@ -3047,7 +3111,7 @@ bez `npm ci` - skrypty jadą na samej stdlib node).
   w przycisku, nie ruszać ich
 
 ## Pilot i samolot - UX
-- Pierwsze logowanie: **wyłącznie Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22 - haseł nie ma nigdzie; wymaga sieci); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero zatwierdzenie w panelu - patrz sekcja „Logowanie przez Google" niżej
+- Pierwsze logowanie: **wyłącznie Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22 - haseł nie ma nigdzie; wymaga sieci); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej
 - **Rozpoczęcie lotu ma trwać kilka sekund** - trzy kroki (samolot+Dual → zadanie → liczniki) i „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej
 - **Nazewnictwo wejścia w lot** (decyzja 2026-08-12): główny przycisk na 01 i CTA kroku 3 to **„ROZPOCZNIJ LOT"**, a nagłówek kroków brzmi **„NOWY LOT · n/3"**. Słowa **„przejmij / przejęcie" używamy WYŁĄCZNIE tam, gdzie maszynę odbiera się INNEMU pilotowi** (podgląd 04B, modal claimu, `session_claim` w rejestrze) - pilot startujący na wolnym samolocie niczego nie przejmuje, tylko zaczyna latać. Identyfikatory w kodzie (`claim`, `takeover`, `Preflight*`) zostają: to nazwy techniczne, nie napisy
 - Tożsamość pilota jest znana w całej operacji - NIE pytamy o kod pilota w formularzach

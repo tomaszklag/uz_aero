@@ -437,9 +437,9 @@ pierwszą kartą.
 ## 9. Strona `dolacz/<token>` - USUNIĘTA Z PROJEKTU (2026-09-09)
 
 Strona istniała dla linku osobistego (§15). Bez linku nie ma czego otwierać: pilot
-przepisuje kod z ręki na 00E. Plik `site/src/dolacz/index.html` (epik A) jest do
-skasowania w epiku D; trasa `GET /dolacz/*` w `staticSite.ts` NIE powstaje, więc reguła
-„bez fallbacku SPA" zostaje bez wyjątku.
+przepisuje kod z ręki na 00E. **Plik `site/src/dolacz/index.html` SKASOWANY 2026-09-10**
+(epik D, D7); trasa `GET /dolacz/*` w `staticSite.ts` nie powstała, więc reguła „bez
+fallbacku SPA" zostaje bez wyjątku - ścieżka spoza buildu odpowiada 404 jak każda inna.
 
 ## 10. Migracja produkcji z backfillem (decyzja 5)
 
@@ -631,8 +631,54 @@ starym pakiecie - decyzja o tym w epiku W.
   (lista klubów na 13A), ale tokeny klubu wydaje wyłącznie tokenowi osoby; stan zbiorczy
   ma czwartą wartość `active` (tylko dla tokenu klubu); członkostwo `disabled` bez innego
   aktywnego daje `202` ze stanem `none` i wierszem `disabled` na liście, nie odmowę -
-  z tokenem osoby da się wpisać kod innego klubu. D2 (komendy panelu), D3, D5–D7 i D9 -
-  następne PR-y.
+  z tokenem osoby da się wpisać kod innego klubu.
+  **D2 + D3 + D5 + D6 + D7 + D9 WDROŻONE 2026-09-10** (gałąź
+  `feature-100-kolejka-i-organizacje`) - epik D domknięty po stronie serwera. Co weszło
+  i czego ten dokument nie przewidział:
+  - **trzy komendy decyzji, trzy przejścia w JEDNĄ stronę**: `POST /memberships/:id/approve`
+    (`pending` → `active` z kodem i rolą), `/reject` (`pending` → `rejected`, powód
+    WYMAGANY), `/reopen` (`rejected` → `pending`). Zatwierdzenie NIE przyjmuje
+    `rejected`: §3.2 mówiło „administrator może cofnąć odmowę (→ `pending` albo wprost
+    `active`)", ale wpuszczenie odrzuconego jednym ruchem pomijałoby chwilę, w której
+    ktoś świadomie zdejmuje cudzą decyzję - droga jest dwustopniowa i każda połowa ma
+    własny wpis w dzienniku (`membership.reopen` dołożone do katalogu akcji);
+  - **kolejka i kod klubu mają WŁASNE trasy** (`GET /memberships/pending`,
+    `GET|POST /club-code*`), nie pola w `GET /pilots`: tamta lista jedzie na
+    `panel.access` (czyta ją każdy z wejściem do panelu, jest też słownikiem pilotów dla
+    filtrów), a kolejka i kod - na `accounts.manage`. Zdolność jest atrybutem TRASY, więc
+    doklejenie ich do listy oddałoby adresy kandydatów każdemu, kto ją czyta;
+  - **„ile zgłoszeń czeka tym kodem" liczy się od `join_code_since`** - `memberships` nie
+    zapisuje, którym kodem ktoś wszedł, i zapisywać nie ma po co (kod jest jeden na klub,
+    a jego zmiana ma stempel). Stąd DWIE różne liczby na jednym ekranie i to jest
+    zamierzone: karta kodu mówi o bieżącym kodzie, karta ZGŁOSZENIA o całej kolejce;
+  - **rotacja kodu ponawia losowanie POZA transakcją** - kod jest jedyny na serwerze,
+    a po błędzie unikalności transakcja Postgresa jest odrzucona, więc druga próba musi
+    startować nową. Nieudana próba nie zostawia ani kodu, ani wpisu w dzienniku;
+  - **`joined_via` straciło `panel`** razem z `POST /admin/api/pilots` (D3): zostają trzy
+    wartości (`code`, `platform`, `backfill`) i CHECK w migracji 8 egzekwuje to, że
+    czwarta droga nie wróci tyłem. Panel web stracił przy tym „Dodaj pilota", ekran
+    `#/piloci/nowy` i mutację `useCreatePilot` - ekran „Kod klubu" wchodzi w epiku E;
+  - **moduł Organizacje umie cztery rzeczy i ani jednej więcej**: lista (liczby członków
+    i maszyn + administratorzy z flagą „nie zalogował się"), założenie klubu razem
+    z kodem i pierwszym administratorem, zmiana NAZWY (slug jest adresem - nadawany raz)
+    i wyłączenie klubu. Kasowania klubu nie ma; rotacja kodu należy do panelu klubu,
+    a `sheets_key` losuje baza (`DEFAULT`), żeby sekret nie powstawał w dwóch miejscach;
+  - **`organization.update` / `organization.disable` dołożone do katalogu audytu** obok
+    zapowiedzianego `organization.create` - karta klubu ma te dwie akcje w makiecie, a ta
+    sama asymetria, co przy członkostwie: odebranie dostępu ma własny kod, przywrócenie
+    jest zwykłą zmianą stanu;
+  - **`pilot.deactivate` → `membership.disable`** (D5). Dawny kod ZOSTAJE w katalogu dla
+    wierszy 1.x na produkcji - precedens `pilot.password_reset`;
+  - **D6 nie dołożyło ani linijki kodu produkcyjnego i to jest jego wynik**: wyjście
+    z klubu JEST wyłączeniem członkostwa, a wszystkie cztery skutki (trasy telefonu i
+    refresh zamknięte natychmiast, rejestr i dziennik nietknięte, zaległe zapisy do
+    tamtego klubu we `withheld` pod tokenem drugiego klubu, okno korekty pilota zamknięte)
+    wynikają z bramy członkostwa z epiku C i z append-only rejestru. Dostały za to test
+    (`test/leaveClub.test.ts`), bo niepilnowana własność jest własnością do czasu;
+  - **„opuść klub" z telefonu NIE ISTNIEJE** i nie jest to przeoczenie: wyjście jest
+    decyzją klubu (§8.3). Pilot, który mógłby wyjść sam, zrobiłby to z otwartą operacją
+    i niewysłaną kolejką.
+  Zostaje **D8** (wykonane wcześniej) i panel web - epik E.
 - **E - panel** (issue #101): moduł Organizacje, wybór klubu, kontekst klubu w kolumnie,
   członkowie, zgłoszenia i kod klubu 1:1 z makiet.
 - **F - aplikacja** (issue #102): klub w tokenie i `POST /auth/switch`, cache per klub,

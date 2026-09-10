@@ -27,7 +27,10 @@
 import type {
   AdminPilotAccount,
   AdminPilotJoin,
-  NewPilotAccount,
+  MembershipApproval,
+  MembershipDecisionTarget,
+  MembershipRejection,
+  MembershipRequest,
   PilotCounts,
   PilotListFilter,
   PilotPatch,
@@ -35,6 +38,7 @@ import type {
   PilotsAdminPort,
 } from '../../../application/admin/ports.ts';
 import type { Queryable } from '../../../application/common/ports.ts';
+import { membershipStatusOf } from '../../../domain/memberships.ts';
 import { DEFAULT_ROLE, isPilotRole, PILOT_ROLES } from '../../../domain/roles.ts';
 import { SqlFilter } from '../sqlFilter.ts';
 
@@ -49,6 +53,20 @@ interface MemberDbRow {
   updated_at: string | Date;
   /** `COUNT(*)` - sterownik oddaje `int8` NAPISEM, nie liczbą. */
   flying_days: string | number;
+}
+
+/** Wiersz kolejki zgłoszeń - członkostwo `pending` złączone z osobą. */
+interface RequestDbRow {
+  pilot_id: string;
+  name: string;
+  email: string | null;
+  created_at: string | Date;
+}
+
+/** Cel decyzji: stan członkostwa + tożsamość i aktywność PLATFORMOWA osoby. */
+interface TargetDbRow extends RequestDbRow {
+  status: string;
+  active: boolean;
 }
 
 const toAccount = (r: {
@@ -275,37 +293,6 @@ export class PgAdminPilotsRepo implements PilotsAdminPort {
     return null;
   }
 
-  /**
-   * Osoba pod tym e-mailem może już istnieć (członek innego klubu): wtedy dopisujemy
-   * członkostwo DO NIEJ, nie zakładamy drugiej - `pilots.email` jest jedyny na serwerze
-   * i tak ma zostać, bo osoba jest jedna (wielofirmowość §3.6). Nazwiska istniejącej
-   * osoby NIE ruszamy: należy do niej, a nie do klubu, który ją właśnie dopisuje.
-   */
-  async insert(tx: Queryable, account: NewPilotAccount): Promise<string> {
-    let pilotId = account.id;
-    const existing =
-      account.email == null
-        ? { rows: [] as { id: string }[] }
-        : await tx.query<{ id: string }>('SELECT id FROM pilots WHERE lower(email) = lower($1)', [
-            account.email,
-          ]);
-    if (existing.rows[0] != null) {
-      pilotId = existing.rows[0].id;
-    } else {
-      await tx.query(
-        `INSERT INTO pilots (id, name, email, active) VALUES ($1, $2, $3, TRUE)`,
-        [pilotId, account.name, account.email],
-      );
-    }
-
-    await tx.query(
-      `INSERT INTO memberships (org_id, pilot_id, code, role, status, joined_via)
-       VALUES ($1, $2, $3, $4, 'active', 'panel')`,
-      [account.orgId, pilotId, account.code, account.role],
-    );
-    return pilotId;
-  }
-
   async update(tx: Queryable, orgId: string, id: string, patch: PilotPatch): Promise<void> {
     // Pola osoby i pola członkostwa idą dwoma `UPDATE`-ami, bo to dwie tabele -
     // a `COALESCE` zamiast budowania `SET` z obecnych pól z tego samego powodu, co
@@ -430,6 +417,136 @@ export class PgAdminPilotsRepo implements PilotsAdminPort {
     await tx.query('DELETE FROM refresh_tokens WHERE pilot_id = $1', [id]);
     await tx.query('DELETE FROM memberships WHERE org_id = $1 AND pilot_id = $2', [orgId, id]);
     await tx.query('DELETE FROM pilots WHERE id = $1', [id]);
+  }
+
+  // ── kolejka zgłoszeń kodem klubu (issue #100, D2) ─────────────────────────────
+
+  /**
+   * Zgłoszenia czekające na decyzję, NAJDŁUŻEJ CZEKAJĄCE PIERWSZE.
+   *
+   * Kolejka, nie lista: porządek jest po `created_at`, więc zgłoszenie nie ma jak
+   * „utknąć na dole" po dopisaniu nowszych. `pilot_id` jako tie-breaker, żeby dwa
+   * zgłoszenia z tej samej sekundy miały deterministyczną kolejność.
+   */
+  async pending(db: Queryable, orgId: string): Promise<MembershipRequest[]> {
+    const { rows } = await db.query<RequestDbRow>(
+      `SELECT m.pilot_id, p.name, p.email, m.created_at
+         FROM memberships m
+         JOIN pilots p ON p.id = m.pilot_id
+        WHERE m.org_id = $1 AND m.status = 'pending'
+        ORDER BY m.created_at ASC, m.pilot_id ASC`,
+      [orgId],
+    );
+    return rows.map((row) => ({
+      pilotId: row.pilot_id,
+      name: row.name,
+      email: row.email,
+      requestedAt: new Date(row.created_at),
+    }));
+  }
+
+  /**
+   * Wiersz członkostwa w DOWOLNYM stanie - patrz `PilotsAdminPort.decisionTarget`.
+   *
+   * `p.active` jedzie razem z nim, bo `refuseApprove` pyta o blokadę PLATFORMOWĄ osoby:
+   * zatwierdzenie zablokowanego dałoby członkostwo `active`, którym i tak nie da się
+   * wejść - a administrator klubu nie ma jak tej blokady zdjąć, więc musi ją zobaczyć.
+   */
+  async decisionTarget(
+    tx: Queryable,
+    orgId: string,
+    pilotId: string,
+  ): Promise<MembershipDecisionTarget | null> {
+    const { rows } = await tx.query<TargetDbRow>(
+      `SELECT m.pilot_id, m.status, p.name, p.email, p.active, m.created_at
+         FROM memberships m
+         JOIN pilots p ON p.id = m.pilot_id
+        WHERE m.org_id = $1 AND m.pilot_id = $2`,
+      [orgId, pilotId],
+    );
+    const row = rows[0];
+    if (row == null) return null;
+
+    return {
+      pilotId: row.pilot_id,
+      // Ta sama nieufność, co przy roli: wartość spoza katalogu schodzi do `pending`,
+      // czyli do stanu BEZ DOSTĘPU - nigdy w stronę wpuszczenia (`domain/memberships.ts`).
+      status: membershipStatusOf(row.status),
+      name: row.name,
+      email: row.email,
+      personActive: row.active,
+      requestedAt: new Date(row.created_at),
+    };
+  }
+
+  /**
+   * `pending` → `active` z kodem i rolą.
+   *
+   * Warunek `status = 'pending'` stoi W ZAPYTANIU, mimo że komenda sprawdza stan przed
+   * zapisem: sprawdzenie i `UPDATE` to dwa kroki, a między nimi mieści się decyzja
+   * drugiego administratora. Bez tego warunku późniejszy zapis przemalowywałby wynik
+   * pierwszej decyzji - z `rejected` na `active` albo odwrotnie - i nikt by tego nie
+   * zobaczył. `credentials_valid_from` NIE ruszamy: nie było tokenów do unieważnienia.
+   */
+  async approve(
+    tx: Queryable,
+    orgId: string,
+    pilotId: string,
+    decision: MembershipApproval,
+  ): Promise<void> {
+    await tx.query(
+      `UPDATE memberships
+          SET status = 'active',
+              code = $3,
+              role = $4,
+              reject_reason = NULL,
+              decided_at = $5,
+              decided_by = $6,
+              updated_at = now()
+        WHERE org_id = $1 AND pilot_id = $2 AND status = 'pending'`,
+      [orgId, pilotId, decision.code, decision.role, decision.at.toISOString(), decision.by],
+    );
+  }
+
+  /** `pending` → `rejected` z powodem; kod zostaje pusty, bo członkostwa nie ma. */
+  async reject(
+    tx: Queryable,
+    orgId: string,
+    pilotId: string,
+    decision: MembershipRejection,
+  ): Promise<void> {
+    await tx.query(
+      `UPDATE memberships
+          SET status = 'rejected',
+              reject_reason = $3,
+              decided_at = $4,
+              decided_by = $5,
+              updated_at = now()
+        WHERE org_id = $1 AND pilot_id = $2 AND status = 'pending'`,
+      [orgId, pilotId, decision.reason, decision.at.toISOString(), decision.by],
+    );
+  }
+
+  /**
+   * `rejected` → `pending`: zgłoszenie wraca do kolejki, a wiersz do stanu „czeka".
+   *
+   * Kasujemy KOMPLET decyzji - powód, chwilę i autora - bo wiersz opisuje STAN, a nie
+   * historię: `decided_at` przy członkostwie `pending` znaczyłoby „rozstrzygnięte
+   * i czekające" naraz, a pilot czyta powód na 00D jako zdanie o tym, co jest teraz.
+   * Ślad odmowy i jej cofnięcia zostaje w dzienniku audytu (`membership.reject`,
+   * `membership.reopen`) - tam, gdzie historia decyzji należy.
+   */
+  async reopen(tx: Queryable, orgId: string, pilotId: string): Promise<void> {
+    await tx.query(
+      `UPDATE memberships
+          SET status = 'pending',
+              reject_reason = NULL,
+              decided_at = NULL,
+              decided_by = NULL,
+              updated_at = now()
+        WHERE org_id = $1 AND pilot_id = $2 AND status = 'rejected'`,
+      [orgId, pilotId],
+    );
   }
 }
 

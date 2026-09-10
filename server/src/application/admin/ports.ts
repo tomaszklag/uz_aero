@@ -21,6 +21,7 @@ import type {
 } from '@uzaero/domain';
 
 import type { AdminAction } from '../../domain/adminActions.ts';
+import type { MembershipStatus } from '../../domain/memberships.ts';
 import type { PilotRole, PlatformRole } from '../../domain/roles.ts';
 import type { FlagRecord, Queryable, SessionRow } from '../common/ports.ts';
 import type { AdminEventCounts } from './contracts/events.ts';
@@ -772,23 +773,6 @@ export interface PilotScopeCounts {
   panel: number;
 }
 
-/**
- * Nowy członek klubu - osoba (jeśli jej jeszcze nie ma) + członkostwo z kodem i rolą.
- *
- * `id` to identyfikator PROPONOWANY dla nowej osoby; gdy osoba o tym e-mailu już
- * istnieje (lata w innym klubie), adapter dopisuje członkostwo DO NIEJ i oddaje jej
- * identyfikator - `pilots.email` jest jedyny na serwerze, a druga osoba pod tym samym
- * adresem rozdwoiłaby człowieka między klubami.
- */
-export interface NewPilotAccount {
-  id: string;
-  orgId: string;
-  code: string;
-  name: string;
-  email: string | null;
-  role: PilotRole;
-}
-
 /** Zmiana tożsamości albo roli. Pola nieustawione zostają bez zmian. */
 export interface PilotPatch {
   /** Kod W TYM KLUBIE (członkostwo). */
@@ -848,11 +832,6 @@ export interface PilotsAdminPort {
     orgId: string,
     values: { code: string; email: string | null; exceptId: string | null },
   ): Promise<'code' | 'email' | null>;
-  /**
-   * Dopisuje członkostwo; osobę zakłada, gdy nie ma jej pod tym e-mailem. Zwraca
-   * identyfikator OSOBY, do której członkostwo przypięto (patrz `NewPilotAccount.id`).
-   */
-  insert(tx: Queryable, account: NewPilotAccount): Promise<string>;
   update(tx: Queryable, orgId: string, id: string, patch: PilotPatch): Promise<void>;
   /**
    * `at` = chwila WYŁĄCZENIA, zapisywana jako `memberships.credentials_valid_from`.
@@ -898,6 +877,88 @@ export interface PilotsAdminPort {
    * zagwarantowało, że osoba nie ma innych klubów ani historii.
    */
   delete(tx: Queryable, orgId: string, id: string): Promise<void>;
+
+  // ── kolejka zgłoszeń kodem klubu (issue #100, D2) ─────────────────────────────
+
+  /**
+   * Członkostwa `pending` klubu, najdłużej czekające pierwsze - karta ZGŁOSZENIA nad
+   * listą (mockup `piloci-lista`).
+   *
+   * Bez filtra i bez kursora, jak lista członków: kolejka klubu ma kilka wierszy,
+   * a karta nad listą nie ma gdzie pokazać strony drugiej.
+   */
+  pending(db: Queryable, orgId: string): Promise<MembershipRequest[]>;
+  /**
+   * Członkostwo W DOWOLNYM stanie - wejście do decyzji (zatwierdzenie, odrzucenie,
+   * cofnięcie odrzucenia).
+   *
+   * Osobna metoda od `byId`, choć obie czytają ten sam wiersz, i to jest jej jedyna
+   * treść: `byId` widzi WYŁĄCZNIE członkostwa z listy (`active`/`disabled`), bo lista
+   * ma nie mieszać kolejki z klubem. Decyzja pyta o dokładnie to, czego tamta metoda nie
+   * pokazuje - stan `pending`/`rejected` - więc współdzielenie jej wymagałoby parametru
+   * „a teraz pokaż też kolejkę", czyli bramki, którą wołający może zapomnieć ustawić.
+   */
+  decisionTarget(tx: Queryable, orgId: string, pilotId: string): Promise<MembershipDecisionTarget | null>;
+  /** `pending` → `active` z kodem i rolą; stempluje decyzję (`decided_at`, `decided_by`). */
+  approve(tx: Queryable, orgId: string, pilotId: string, decision: MembershipApproval): Promise<void>;
+  /** `pending` → `rejected` z powodem, który pilot czyta na 00D. */
+  reject(tx: Queryable, orgId: string, pilotId: string, decision: MembershipRejection): Promise<void>;
+  /**
+   * `rejected` → `pending`: zgłoszenie wraca do kolejki, a KOMPLET decyzji gaśnie
+   * (powód, chwila, autor).
+   *
+   * Powód kasujemy, bo pilot czyta go na 00D jako stan bieżący („nie wpuszczono cię,
+   * bo…"), a po cofnięciu to zdanie przestaje być prawdziwe - zgłoszenie czeka. Chwilę
+   * i autora z tego samego powodu: wiersz opisuje STAN, nie historię. Ślad odmowy
+   * i jej cofnięcia zostaje w dzienniku audytu, czyli tam, gdzie historia decyzji należy.
+   */
+  reopen(tx: Queryable, orgId: string, pilotId: string): Promise<void>;
+}
+
+/**
+ * Jedno ZGŁOSZENIE w kolejce klubu - wiersz `memberships` w stanie `pending` złączony
+ * z osobą.
+ *
+ * Niesie dokładnie to, co karta ZGŁOSZENIA pokazuje i na czym administrator opiera
+ * decyzję: imię i adres **z konta Google** (osoba założyła się sama przy pierwszym
+ * logowaniu, §4) oraz chwilę zgłoszenia. Kodu pilota tu nie ma i nie może być - kod
+ * nadaje się dopiero przy zatwierdzeniu.
+ */
+export interface MembershipRequest {
+  pilotId: string;
+  name: string;
+  email: string | null;
+  requestedAt: Date;
+}
+
+/**
+ * Cel decyzji: stan członkostwa + tożsamość osoby + jej aktywność PLATFORMOWA.
+ *
+ * `personActive` jest tu dlatego, że bez niego `refuseApprove` nie miałby czego pytać,
+ * a zatwierdzenie osoby zablokowanej na serwerze produkowałoby członkostwo `active`,
+ * którym i tak nie da się wejść (`docs/wielofirmowosc.md` §3.3).
+ */
+export interface MembershipDecisionTarget {
+  pilotId: string;
+  status: MembershipStatus;
+  name: string;
+  email: string | null;
+  personActive: boolean;
+  requestedAt: Date;
+}
+
+export interface MembershipApproval {
+  code: string;
+  role: PilotRole;
+  at: Date;
+  /** Administrator, który wpuścił - `memberships.decided_by`. */
+  by: string;
+}
+
+export interface MembershipRejection {
+  reason: string;
+  at: Date;
+  by: string;
 }
 
 /**
@@ -923,7 +984,161 @@ export interface RefreshTokensAdminPort {
 
 // Kolejki zgłoszeń rejestracyjnych TU NIE MA od epiku D (issue #100): zgłoszenie jest
 // członkostwem `pending` (`memberships`), a decyzje o nim - zatwierdzenie z kodem i rolą,
-// odrzucenie z powodem - wchodzą do `PilotsAdminPort` razem z komendami epiku D2.
+// odrzucenie z powodem - siedzą w `PilotsAdminPort` wyżej.
+
+// ── kod klubu (wielofirmowość §3.8; issue #100, D2) ─────────────────────────────
+
+/**
+ * KOD KLUBU tak, jak widzi go panel klubu: wartość, od kiedy obowiązuje i ile zgłoszeń
+ * nim czeka.
+ *
+ * `code: null` = dołączanie kodem WYŁĄCZONE (`join_code IS NULL`) - wtedy do klubu nie
+ * wchodzi nikt, bo innej drogi nie ma. `since` jest wtedy też `null`.
+ */
+export interface ClubCodeState {
+  code: string | null;
+  since: Date | null;
+  /**
+   * Zgłoszenia `pending` złożone OD CHWILI `since`, czyli tym kodem.
+   *
+   * Liczba jest z `created_at >= since`, bo `memberships` nie zapisuje, którym kodem
+   * ktoś wszedł - i zapisywać nie ma po co: kod jest jeden na klub, a jego zmiana ma
+   * w bazie stempel. Zgłoszenia sprzed rotacji zostają w kolejce (karta ZGŁOSZENIA
+   * pokazuje WSZYSTKIE) i to jest właśnie różnica między tymi dwiema liczbami.
+   */
+  pendingWithCode: number;
+}
+
+/**
+ * Port KODU KLUBU - osobny od `PilotsAdminPort`, choć obsługuje ten sam ekran.
+ *
+ * Powód jest ten sam, co zawsze w tym repozytorium: inna TABELA i inne pytanie. Kod
+ * klubu jest kolumną `organizations`, czyli konfiguracją KLUBU - a nie jego członków;
+ * dopisanie go do portu członków kazałoby tamtemu portowi mówić o dwóch różnych
+ * rzeczach, z których jedna nie ma nic wspólnego z nazwiskami na liście.
+ *
+ * Zapisy biorą `tx` z zewnątrz, bo każda zmiana kodu jest decyzją ze śladem audytu
+ * (`club_code.rotate`, `club_code.disable`).
+ */
+export interface ClubCodeAdminPort {
+  state(db: Queryable, orgId: string): Promise<ClubCodeState>;
+  /**
+   * Nowy kod (albo `null` = wyłączenie dołączania). Zderzenie z kodem innego klubu
+   * wychodzi z adaptera jako błąd unikalności bazy - komenda losuje wtedy ponownie
+   * (`organizations.join_code` jest jedyny na SERWERZE, §3.8).
+   */
+  setCode(tx: Queryable, orgId: string, code: string | null, at: Date): Promise<void>;
+}
+
+// ── moduł Organizacje: platforma (wielofirmowość §8.1; issue #100, D3) ──────────
+
+/**
+ * Klub na liście superadministratora - same LICZBY z wnętrza klubu i pierwsi
+ * administratorzy.
+ *
+ * „Nic nie wycieka między klubami" obejmuje także tę listę (§3.3): superadministrator
+ * widzi, ILE klub ma członków i maszyn, ale nie widzi ani jednego wiersza dziennika,
+ * floty czy kolejki. Administratorzy są wyjątkiem z jednego powodu - odpowiadają na
+ * pytanie „do kogo dzwonić", gdy klub prosi o pomoc.
+ */
+export interface OrganizationSummary {
+  id: string;
+  name: string;
+  slug: string;
+  active: boolean;
+  createdAt: Date;
+  members: number;
+  aircraft: number;
+  admins: OrganizationAdmin[];
+}
+
+/**
+ * Administrator klubu widziany z platformy. `signedIn` rozstrzyga jedyny stan, w którym
+ * superadministrator ma coś do zrobienia: klub założony, członkostwo `admin` gotowe,
+ * a człowiek jeszcze nie wszedł - czyli tożsamość Google nie podpięła się pod ten adres
+ * (mockup `organizacje-lista`: plakietka „Administrator nie wszedł").
+ */
+export interface OrganizationAdmin {
+  pilotId: string;
+  name: string;
+  email: string | null;
+  code: string;
+  signedIn: boolean;
+}
+
+/** Klub + jego kod, czytany DO ODCZYTU na karcie klubu (§8.1). */
+export interface OrganizationDetail extends OrganizationSummary {
+  joinCode: string | null;
+  joinCodeSince: Date | null;
+}
+
+/**
+ * Nowy klub razem z PIERWSZYM administratorem - jedno, nierozdzielne zamówienie.
+ *
+ * `sheetsKey` tu NIE MA: sekret adresu kart arkusza losuje BAZA (`DEFAULT` na kolumnie,
+ * epik C). Przeniesienie tego do warstwy aplikacji byłoby drugim miejscem, w którym
+ * powstaje ten sam sekret - a jedyny powód, dla którego warstwa aplikacji miałaby go
+ * znać, to pokazanie go w panelu, czego ta trasa nie robi.
+ */
+export interface NewOrganization {
+  id: string;
+  name: string;
+  slug: string;
+  joinCode: string;
+  /** Superadministrator, który klub założył (`organizations.created_by`). */
+  createdBy: string;
+  /**
+   * Chwila założenia - ta sama dla `created_at` i `join_code_since`.
+   *
+   * Z zegara aplikacji, nie z `now()` SQL-a: w testach stempel szedłby wtedy z zegara
+   * systemowego, a porównania z czasem sterowanym odpowiadałyby na pytanie o dwa różne
+   * czasy (ta sama decyzja, co przy `PilotsAdminPort.setActive`).
+   */
+  at: Date;
+  /**
+   * Pierwszy administrator: adres konta Google (WYMAGANY - tym adresem podepnie się
+   * tożsamość przy pierwszym logowaniu), nazwisko i kod pilota w tym klubie.
+   *
+   * `pilotId` to identyfikator PROPONOWANY: gdy osoba o tym adresie już jest na serwerze
+   * (lata w innym klubie), adapter dopisuje członkostwo DO NIEJ - `pilots.email` jest
+   * jedyny na serwerze, bo osoba jest jedna (§3.6).
+   */
+  admin: { pilotId: string; name: string; email: string; code: string };
+}
+
+/** Zmiana klubu z karty. Slug i kod klubu NIE są tu polami - patrz `OrganizationsPlatformPort`. */
+export interface OrganizationPatch {
+  name?: string;
+}
+
+/**
+ * Port modułu Organizacje - jedyny port, którego pytania NIE MAJĄ `orgId` w sensie
+ * „klub żądania": to on klubami zarządza.
+ *
+ * ══ CZEGO TEN PORT CELOWO NIE UMIE ══
+ *  • **zmienić sluga** - jest adresem kart arkusza, nadawanym raz (§3.1);
+ *  • **wygenerować kodu klubu po założeniu** - rotacja i wyłączenie należą do panelu
+ *    KLUBU (`ClubCodeAdminPort`, §8.1: „kod jest konfiguracją klubu, nie jego danymi");
+ *  • **skasować klubu** - dziennik jest dokumentem klubu, więc wyłączenie (`setActive`)
+ *    jest jedyną drogą, dokładnie jak przy koncie z historią.
+ */
+export interface OrganizationsPlatformPort {
+  list(db: Queryable, filter: { search?: string; active?: boolean }): Promise<OrganizationSummary[]>;
+  byId(db: Queryable, id: string): Promise<OrganizationDetail | null>;
+  /**
+   * Klub + osoba pierwszego administratora (albo dopisanie członkostwa do istniejącej)
+   * + członkostwo `admin` `active` z `joined_via = 'platform'`. Zwraca identyfikator
+   * OSOBY, pod którą podpięto członkostwo.
+   */
+  insert(tx: Queryable, org: NewOrganization): Promise<{ adminPilotId: string }>;
+  update(tx: Queryable, id: string, patch: OrganizationPatch): Promise<void>;
+  /**
+   * Wyłączenie klubu albo włączenie go z powrotem. Bez znacznika unieważnienia
+   * poświadczeń: brama czyta `organizations.active` przy KAŻDYM żądaniu (epik C), więc
+   * wyłączenie działa natychmiast i bez pomocy stempla.
+   */
+  setActive(tx: Queryable, id: string, active: boolean): Promise<void>;
+}
 
 // ── flota (A07, A07a) ───────────────────────────────────────────────────────────
 

@@ -1467,6 +1467,25 @@ kolejki, a `pilot_id` dostaje `NOT NULL`. Zgłoszenie 1.x staje się osobą z cz
 nikt nie wypada z kolejki przez wdrożenie. Lista kolumn `external_identities` jest odtąd
 przybita w `schema.test.ts`.
 
+**(i) `joined_via` bez `panel` - dopisane W MIEJSCU w epiku D (2026-09-10, D3).** Wartość
+opisywała dopisanie członka wprost z panelu klubu, czyli `POST /admin/api/pilots` - trasa
+zniknęła razem z drogą (nowy członek wchodzi WYŁĄCZNIE kodem klubu), więc CHECK zna odtąd
+trzy wartości: `code`, `platform`, `backfill`. Edycja w miejscu jest dozwolona z tego
+samego powodu, co w (h): migracja 8 nie dotarła na produkcję. **Odpowiednik po stronie
+danych testowych**: `testWorld.ts` zakłada członkostwa jako `platform` (tak powstaje
+pierwszy administrator klubu), a nie `panel`.
+
+**(j) `CASE` z gałęzią `NULL` bierze typ z PARAMETRU, nie z kolumny (2026-09-10, D2).**
+Rotacja kodu klubu pisze stempel warunkowo - `join_code_since = CASE WHEN $2::text IS NULL
+THEN NULL ELSE $3 END`. Bez rzutowania `$3::timestamptz` obie gałęzie mają typ `text`,
+a Postgres odrzuca zapis do kolumny `timestamptz` błędem `42804` - **w czasie działania**,
+bo kompilator ani typy tego nie widzą. To ta sama klasa pomyłki, co numeracja `$n` ręką
+(`sqlFilter.ts`): kod wygląda poprawnie i przestaje działać na pierwszym wywołaniu. Drugi
+wniosek z tej samej poprawki: stempel „obowiązuje od" ma iść Z ZEGARA APLIKACJI, nie
+z `now()` SQL-a, bo porównuje się go z `memberships.created_at`, który też idzie z zegara
+aplikacji - świat testowy na sterowanym zegarze mieszał te dwie osie i liczba „zgłoszeń
+tym kodem" wychodziła zerem przy niepustej kolejce.
+
 
 ### 7.10 Izolacja klubów - dwa strażniki na jedną regułę (epik C, 2026-09-10)
 
@@ -1528,6 +1547,16 @@ sessions` bez klubu) i wymaga, żeby go odbił; test izolacji sprawdza, że reje
 naprawdę czegoś widzi i że znaczniki klubu B są w bazie, zanim uzna „czystą" odpowiedź
 za dowód. Dodatkowo obie sondy mają KONTROLĘ POZYTYWNĄ - klub B widzi swoje dane, klub
 A swoje - bo test izolacji, który przechodzi na pustej bazie, nie dowodzi niczego.
+
+**Jak to wygląda przy dopisywaniu trasy** (epik D, 2026-09-10 - dwanaście nowych tras:
+kolejka zgłoszeń, kod klubu, moduł Organizacje): strażnik tras wywalił się od razu,
+z listą adresów bez przypadku, i to jest cały jego sens - lista nowych tras powstała
+z REJESTRU FASTIFY, a nie z pamięci autora. Dla tras PLATFORMOWYCH przypadek izolacji
+brzmi inaczej niż dla klubowych: dowodem nie jest „odpowiedź bez znaczników klubu B",
+tylko **`401` dla sesji klubu** - administrator klubu nie dostaje cudzych danych
+przefiltrowanych, on nie dostaje tej trasy wcale. Do świata testowego doszły przy okazji
+dwa znaczniki (adres kandydata czekającego w Becie i kod klubu Bety), bo bez danych
+po tamtej stronie „czysta" odpowiedź kolejki i karty kodu nie dowodziłaby niczego.
 
 ---
 

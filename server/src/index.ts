@@ -6,7 +6,7 @@
  * konstruktorem - dokładnie jak `bootstrap/` w aplikacji mobilnej.
  */
 
-import { randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 
 import { Pool } from 'pg';
 import { z } from 'zod';
@@ -19,10 +19,16 @@ import { AdminFlagCommands } from './application/admin/commands/flags.ts';
 import { AdminFleetCommands } from './application/admin/commands/fleet.ts';
 import { AdminAircraftReadingCommands } from './application/admin/commands/aircraftReadings.ts';
 import { AdminBugReportCommands } from './application/admin/commands/bugReports.ts';
+import { AdminClubCodeCommands } from './application/admin/commands/clubCode.ts';
+import { AdminMembershipCommands } from './application/admin/commands/memberships.ts';
+import { PlatformOrganizationCommands } from './application/admin/commands/organizations.ts';
 import { AdminMaintenanceCommands } from './application/admin/commands/maintenance.ts';
 import { AdminPilotCommands } from './application/admin/commands/pilots.ts';
 import { AdminAuditQueries } from './application/admin/queries/audit.ts';
 import { AdminBugReportQueries } from './application/admin/queries/bugReports.ts';
+import { AdminClubCodeQueries } from './application/admin/queries/clubCode.ts';
+import { AdminMembershipQueries } from './application/admin/queries/memberships.ts';
+import { PlatformOrganizationQueries } from './application/admin/queries/organizations.ts';
 import { AdminCorrectionQueries } from './application/admin/queries/corrections.ts';
 import { AdminDashboardQueries } from './application/admin/queries/dashboard.ts';
 import { AdminEventQueries } from './application/admin/queries/events.ts';
@@ -58,6 +64,8 @@ import { ORG_SLUG_PATTERN } from './domain/organizations.ts';
 import { GoogleIdTokens } from './infrastructure/auth/googleIdTokens.ts';
 import { Hs256Tokens } from './infrastructure/auth/hs256Tokens.ts';
 import { PgAdminAuditReadRepo } from './infrastructure/pg/admin/auditReadRepo.ts';
+import { PgClubCodeRepo } from './infrastructure/pg/admin/clubCodeRepo.ts';
+import { PgOrganizationsRepo } from './infrastructure/pg/admin/organizationsRepo.ts';
 import { PgAdminAuditRepo } from './infrastructure/pg/admin/auditRepo.ts';
 import { PgAdminDashboardRepo } from './infrastructure/pg/admin/dashboardRepo.ts';
 import { PgAdminEventsReadRepo } from './infrastructure/pg/admin/eventsReadRepo.ts';
@@ -202,6 +210,12 @@ const adminFlagsRepo = new PgAdminFlagsRepo();
 // `PgPilotsRepo` (hash, własny uchwyt do bazy), panel pisze `PgAdminPilotsRepo`
 // (transakcja śladu audytu). Ścieżka logowania nie ma jak zregresować od panelu kont.
 const adminPilotsRepo = new PgAdminPilotsRepo();
+// Kod klubu i moduł Organizacje mają własne adaptery tej samej tabeli `organizations`
+// i to jest ta sama decyzja, co przy kontach: inna władza, inne pytanie. Pierwszy
+// należy do panelu KLUBU (klub prowadzi swoją drogę dołączania, `accounts.manage`),
+// drugi do PLATFORMY (superadministrator zakłada i wyłącza kluby, `platform.manage`).
+const clubCodeRepo = new PgClubCodeRepo();
+const organizationsRepo = new PgOrganizationsRepo();
 // Flota ma TRZECI adapter tej samej tabeli i to jest ta sama decyzja, co przy kontach:
 // `PgReferenceRepo` buduje migawkę pod cache telefonów, `PgAircraftConfigRepo` oddaje
 // jedną liczbę w transakcji ingestu, a ten pisze konfigurację w transakcji audytu.
@@ -330,6 +344,25 @@ const app = await buildServer({
     clock,
   ),
   adminPilotQueries: new AdminPilotQueries(db, adminPilotsRepo, clock),
+  // Decyzje o zgłoszeniach kodem klubu (issue #100): ten sam adapter członkostw, co
+  // lista - kolejka i lista czytają jedną tabelę, a rozdziela je stan wiersza.
+  adminMemberships: new AdminMembershipCommands(auditedWrite, adminPilotsRepo, clock),
+  adminMembershipQueries: new AdminMembershipQueries(db, adminPilotsRepo),
+  // Kod klubu: `randomBytes` jako funkcja, nie port - losowość nie jest domeną, a kod
+  // musi być nieprzewidywalny, bo wisi w hangarze przez cały sezon.
+  adminClubCode: new AdminClubCodeCommands(auditedWrite, clubCodeRepo, randomBytes, clock),
+  adminClubCodeQueries: new AdminClubCodeQueries(db, clubCodeRepo),
+  // Moduł Organizacje - jedyna komenda panelu działająca POZA klubem (`PlatformActor`,
+  // wpis audytu z pustym `org_id`). Zakłada klub razem z pierwszym administratorem,
+  // bo klub bez niego nie ma jak zacząć (§8.1).
+  platformOrganizations: new PlatformOrganizationCommands(
+    auditedWrite,
+    organizationsRepo,
+    randomUUID,
+    randomBytes,
+    clock,
+  ),
+  platformOrganizationQueries: new PlatformOrganizationQueries(db, organizationsRepo),
   // Flota (A07/A07a). `randomUUID` jako identyfikator jednostki - rejestracja jest
   // etykietą, nie kluczem: zdarzenia wiążą się z `aircraft_id`, więc przemalowanie
   // znaków na kadłubie nie ma prawa oderwać samolotu od jego nalotu.

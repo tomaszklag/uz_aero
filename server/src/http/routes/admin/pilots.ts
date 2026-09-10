@@ -5,6 +5,12 @@
  * audytu, ani reguły „kto nie może odciąć kogo" - to wszystko jest w komendzie
  * i w `domain/accountGuards.ts`.
  *
+ * ══ DOPISANIA CZŁONKA TU NIE MA (issue #100, D3) ══
+ * `POST /pilots` zniknęło razem z drogą, którą opisywało: z panelu KLUBU nie da się
+ * nikogo dopisać adresem ani linkiem. Nowy członek wchodzi kodem klubu, a decyzję o nim
+ * podejmują trasy `/memberships/*`; pierwszego administratora klubu zakłada moduł
+ * Organizacje (`platform.manage`).
+ *
  * ══ ZDOLNOŚĆ JEST TU ROZSZCZEPIONA I TO JEST TREŚĆ EKRANU ══
  * `GET` wymaga `panel.access`, każda mutacja - `accounts.manage`. Mockup A06 mówi to
  * wprost: „Szef wyszkolenia widzi tę listę, ale bez przycisków - potrzebuje jej do
@@ -18,52 +24,20 @@ import { z } from 'zod';
 
 import type { AdminPilotCommands } from '../../../application/admin/commands/pilots.ts';
 import type { AdminPilotQueries } from '../../../application/admin/queries/pilots.ts';
-import { PAGE_LIMIT_MAX, type AdminPilotAccount } from '../../../application/admin/ports.ts';
-import type { AdminPilotListItem } from '../../../application/admin/contracts/pilots.ts';
-import { PILOT_ROLES } from '../../../domain/roles.ts';
+import { PAGE_LIMIT_MAX } from '../../../application/admin/ports.ts';
 import { adminRoute, type AdminGate } from './adminRoute.ts';
 import { dayParam, endOfDay } from './dayRange.ts';
+import {
+  accountToWire,
+  pilotCode,
+  pilotEmail,
+  pilotIdParams,
+  pilotName,
+  pilotRole,
+} from './pilotFields.ts';
 
-/**
- * Kod pilota: WERSALIKI, bez spacji, 2–10 znaków.
- *
- * Wielkość liter normalizujemy, a nie odrzucamy: „kza" i „KZA" to w intencji
- * administratora ten sam kod, a logowanie i tak dopasowuje bez rozróżniania wielkości
- * (`PgPilotsRepo.findByLogin`). Kod jedzie do kart arkusza i do logu dnia, więc krótki
- * i mono - dłuższy rozjechałby kolumnę w dokumencie klubu.
- */
-const code = z
-  .string()
-  .trim()
-  .min(2)
-  .max(10)
-  .transform((value) => value.toUpperCase())
-  .refine((value) => /^[A-Z0-9]+$/.test(value), {
-    message: 'kod pilota: wyłącznie litery i cyfry',
-  });
-
-const name = z.string().trim().min(2).max(100);
-
-/**
- * E-mail jest OPCJONALNY, bo kolumna `pilots.email` jest `NULL`-owalna od schematu bazowego,
- * a loginem bywa sam kod pilota. Pusty napis znaczy „bez e-maila" (`null`), a nie
- * „e-mail o zerowej długości" - inaczej wyczyszczone pole w formularzu wjechałoby do
- * bazy jako wartość i zajęło unikalny indeks.
- */
-const email = z
-  .union([z.string().trim().email().max(200), z.literal('')])
-  .transform((value) => (value === '' ? null : value));
-
-const role = z.enum(PILOT_ROLES);
-
-/**
- * Parametr POWTARZALNY (`?role=admin&role=training_lead`), bo chip „Z rolą panelu"
- * z mockupu A06 to DWIE role naraz. Fastify oddaje powtórzony parametr tablicą,
- * pojedynczy - napisem; unia obsługuje oba i oddaje zawsze tablicę, żeby dalsza część
- * kodu nie znała tej różnicy. Wzorzec z `?action=` w dzienniku audytu.
- */
 const roles = z
-  .union([role, z.array(role)])
+  .union([pilotRole, z.array(pilotRole)])
   .transform((value) => (Array.isArray(value) ? value : [value]));
 
 const listQuery = z.object({
@@ -78,44 +52,19 @@ const listQuery = z.object({
   to: dayParam.optional(),
 });
 
-const createBody = z.object({ code, name, email: email.optional(), role: role.default('pilot') });
-
 /**
  * Wszystkie pola opcjonalne, bo `PATCH` opisuje ZMIANĘ, nie stan docelowy. Pusty obiekt
  * przejdzie walidację i odbije się o `no_changes` w komendzie - i tak ma być: to jest
  * pytanie o świat („czy coś się zmienia"), a nie o kształt żądania.
  */
 const patchBody = z.object({
-  code: code.optional(),
-  name: name.optional(),
-  email: email.optional(),
-  role: role.optional(),
+  code: pilotCode.optional(),
+  name: pilotName.optional(),
+  email: pilotEmail.optional(),
+  role: pilotRole.optional(),
 });
 
 const activeBody = z.object({ active: z.boolean() });
-
-const idParams = z.object({ id: z.string().min(1).max(100) });
-
-/**
- * Konto → wiersz kontraktu w odpowiedzi MUTACJI.
- *
- * `flyingDays: 0` i `updatedAt` z chwili odpowiedzi są tu ŚWIADOMYM uproszczeniem:
- * mutacja oddaje tożsamość i status konta, którego dotyczyła, a nie jego statystyki.
- * Panel i tak unieważnia listę po każdej zmianie (`queries/usePilotCommands.ts`), więc
- * liczba dni lotnych przychodzi z odświeżonej listy, gdzie jest policzona w oknie.
- * Dokładanie tu drugiego zapytania po agregat byłoby kosztem bez odbiorcy.
- */
-const accountToWire = (account: AdminPilotAccount, at: Date): AdminPilotListItem => ({
-  id: account.id,
-  orgId: account.orgId,
-  code: account.code,
-  name: account.name,
-  email: account.email,
-  active: account.active,
-  role: account.role,
-  updatedAt: at.toISOString(),
-  flyingDays: 0,
-});
 
 export function registerAdminPilotRoutes(
   app: FastifyInstance,
@@ -152,31 +101,9 @@ export function registerAdminPilotRoutes(
   adminRoute(
     app,
     gate,
-    { method: 'POST', url: '/pilots', capability: 'accounts.manage' },
-    async (req, reply, actor) => {
-      const body = createBody.safeParse(req.body);
-      if (!body.success) return reply.code(400).send({ error: 'bad_request' });
-
-      const outcome = await pilots.create(actor, {
-        code: body.data.code,
-        name: body.data.name,
-        email: body.data.email ?? null,
-        role: body.data.role,
-      });
-      if (!outcome.ok) return refusal(reply, outcome);
-
-      // Samo konto - poświadczenia nie ma i mieć nie będzie. Dostęp daje dopiero
-      // podpięcie konta Google o tym `email` (`docs/logowanie-google.md` §6).
-      return reply.code(201).send({ pilot: accountToWire(outcome.result, new Date()) });
-    },
-  );
-
-  adminRoute(
-    app,
-    gate,
     { method: 'PATCH', url: '/pilots/:id', capability: 'accounts.manage' },
     async (req, reply, actor) => {
-      const params = idParams.safeParse(req.params);
+      const params = pilotIdParams.safeParse(req.params);
       if (!params.success) return reply.code(400).send({ error: 'bad_request' });
 
       const body = patchBody.safeParse(req.body);
@@ -197,7 +124,7 @@ export function registerAdminPilotRoutes(
     gate,
     { method: 'POST', url: '/pilots/:id/active', capability: 'accounts.manage' },
     async (req, reply, actor) => {
-      const params = idParams.safeParse(req.params);
+      const params = pilotIdParams.safeParse(req.params);
       if (!params.success) return reply.code(400).send({ error: 'bad_request' });
 
       const body = activeBody.safeParse(req.body);
@@ -221,7 +148,7 @@ export function registerAdminPilotRoutes(
     // jak reszta mutacji (`SAFE_METHODS` to wyłącznie GET/HEAD/OPTIONS).
     { method: 'DELETE', url: '/pilots/:id', capability: 'accounts.manage' },
     async (req, reply, actor) => {
-      const params = idParams.safeParse(req.params);
+      const params = pilotIdParams.safeParse(req.params);
       if (!params.success) return reply.code(400).send({ error: 'bad_request' });
 
       const outcome = await pilots.remove(actor, params.data.id);
