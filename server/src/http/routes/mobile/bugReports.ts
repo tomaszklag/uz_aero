@@ -23,10 +23,8 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
 import type { BugReportCommands } from '../../../application/mobile/commands/bugReports.ts';
-import type { TokenService } from '../../../application/common/ports.ts';
 import { BUG_SEVERITIES } from '../../../domain/bugReports.ts';
-import { authorize } from '../../authorize.ts';
-import { tokenFromRequest } from '../../tokenFromRequest.ts';
+import { memberFromRequest, type MemberGate } from '../../memberGate.ts';
 
 /**
  * Sufit opisu. 4000 znaków to około dwie strony maszynopisu - więcej niż ktokolwiek
@@ -55,10 +53,10 @@ const body = z.object({ reports: z.array(report).min(1).max(BATCH_MAX) });
 export function registerBugReportRoutes(
   app: FastifyInstance,
   bugReports: BugReportCommands,
-  tokens: TokenService,
+  gate: MemberGate,
 ): void {
   app.post('/me/bug-reports', async (req, reply) => {
-    const claims = authorize(tokens, tokenFromRequest(req));
+    const claims = await memberFromRequest(gate, req);
     if (claims == null) return reply.code(401).send({ error: 'unauthorized' });
 
     const parsed = body.safeParse(req.body);

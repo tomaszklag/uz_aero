@@ -18,23 +18,25 @@ import type { Queryable } from '../../../application/common/ports.ts';
 export class PgAdminEventsRepo implements EventsAdminPort {
   async sourceDeviceOf(
     db: Queryable,
+    orgId: string,
     eventUuid: string,
   ): Promise<{ sourceDevice: string | null } | null> {
     const { rows } = await db.query<{ source_device: string | null }>(
-      'SELECT source_device FROM events WHERE uuid = $1',
-      [eventUuid],
+      'SELECT source_device FROM events WHERE org_id = $1 AND uuid = $2',
+      [orgId, eventUuid],
     );
     const row = rows[0];
     return row === undefined ? null : { sourceDevice: row.source_device };
   }
 
-  async adminCorrectionUuids(db: Queryable, sessionUuid: string): Promise<string[]> {
+  async adminCorrectionUuids(db: Queryable, orgId: string, sessionUuid: string): Promise<string[]> {
     const { rows } = await db.query<{ uuid: string; source_device: string | null }>(
       `SELECT uuid, source_device
          FROM events
-        WHERE session_uuid = $1
+        WHERE org_id = $1
+          AND session_uuid = $2
           AND type = 'event_correction'`,
-      [sessionUuid],
+      [orgId, sessionUuid],
     );
     // Rozpoznanie znacznika zostaje po stronie TypeScriptu, a nie w `LIKE 'admin:%'`:
     // format znacznika ma jedno miejsce (`application/admin/sourceDevice.ts`), a korekt

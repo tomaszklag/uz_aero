@@ -59,13 +59,13 @@ export class AdminExportCommands {
    * wyłącznie po sukcesach zostawiałby to pytanie bez odpowiedzi.
    */
   async retry(actor: Actor, sessionUuid: string): Promise<AdminExportRetryResult> {
-    const { outcome, failure } = await this.attempt(sessionUuid);
+    const { outcome, failure } = await this.attempt(actor.orgId, sessionUuid);
     const at = this.clock.now();
 
     return this.write.run(actor, async (tx) => {
       // Stan PO próbie - czytany w transakcji śladu, więc opisuje dokładnie to, co
       // dziennik za chwilę utrwali.
-      const after = await this.exports.byUuid(tx, sessionUuid);
+      const after = await this.exports.byUuid(tx, actor.orgId, sessionUuid);
       const item = after == null ? null : exportListItem(after);
 
       // Rewizje są kolejne z konstrukcji (`previous + 1` w `DayExporter`), więc numer
@@ -144,10 +144,11 @@ export class AdminExportCommands {
    * co zostaje w `details`.
    */
   private async attempt(
+    orgId: string,
     sessionUuid: string,
   ): Promise<{ outcome: ExportOutcome | null; failure: ExportFailureDto | null }> {
     try {
-      return { outcome: await this.exporter.exportSession(sessionUuid), failure: null };
+      return { outcome: await this.exporter.exportSession(orgId, sessionUuid), failure: null };
     } catch (err) {
       const failure: ExportFailureDto =
         err instanceof SheetsAdapterError ? 'sheets_adapter' : 'unexpected';

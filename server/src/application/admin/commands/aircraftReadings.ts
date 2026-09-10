@@ -69,9 +69,10 @@ export class AdminAircraftReadingCommands {
         // Blokada konfiguracji jednostki: sufity liczą się na pojemnościach, które ktoś
         // mógł właśnie zmieniać w drugim oknie (ta sama tarcza, co przy `PATCH`).
         await this.fleet.lockAircraft(tx, input.aircraftId);
-        const aircraft = await this.fleet.byId(tx, input.aircraftId);
-        // Maszyna cudzego klubu jest dla administratora nieistniejąca (wielofirmowość).
-        if (aircraft == null || aircraft.orgId !== actor.orgId) throw new AircraftNotFound();
+        // Maszyna cudzego klubu jest dla administratora nieistniejąca (wielofirmowość) -
+        // port pyta o jednostkę W KLUBIE, więc `null` załatwia oba przypadki naraz.
+        const aircraft = await this.fleet.byId(tx, actor.orgId, input.aircraftId);
+        if (aircraft == null) throw new AircraftNotFound();
 
         // TE SAME reguły, co dla stanu początkowego (issue #66): zero jest wartością,
         // minus i nieskończoność - literówką, a paliwo i olej mają sufit w zbiornikach.

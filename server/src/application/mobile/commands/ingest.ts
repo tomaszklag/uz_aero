@@ -15,6 +15,20 @@
  *    (single-writer §4.4); cudze zdarzenia to nie konflikt danych, tylko brak
  *    uprawnień.
  *
+ * ══ KLUB (wielofirmowość, epik C - issue #99) ══
+ * Klub przychodzi Z TOKENU nadawcy (`IngestSender.orgId`) - brama trasy sprawdziła
+ * już, że nadawca jest AKTYWNYM członkiem tego klubu (`authorizeMember`). Każde
+ * zdarzenie ląduje w rejestrze pod tym klubem, pod warunkiem że maszyna i sesja
+ * do niego należą. Zdarzenie celujące w CUDZY klub (maszyna z rejestru floty innego
+ * klubu, sesja założona pod innym klubem) jest WSTRZYMYWANE - tym samym mechanizmem
+ * `withheld`, co zapis do operacji zakończonej przez administratora (issue #81):
+ * nie wchodzi do rejestru, telefon dostaje jego uuid i oznacza go u siebie, a reszta
+ * paczki przechodzi. Do epiku C taka paczka odbijała się w całości (`403
+ * aircraft_not_in_org`) - i blokowała wysyłkę WSZYSTKIEGO, co telefon miał w kolejce,
+ * mimo że pozostałe zapisy były do własnego klubu. Cudzy klub nie jest błędem
+ * nadawcy do naprawienia, tylko zapisem, który nigdy nie przejdzie - a to jest
+ * dokładnie definicja wstrzymania.
+ *
  * Projekcję liczy `projectSession` z `@uzaero/domain` - DOKŁADNIE ten sam kod, który
  * liczy ekran statystyk na telefonie. Korekty (04c) wchodzą w wynik automatycznie,
  * bo nakłada je sama projekcja.
@@ -46,8 +60,8 @@ export interface IngestResult {
   accepted: number;
   duplicates: number;
   /**
-   * Uuidy zdarzeń WSTRZYMANYCH (issue #81): sesja zakończona albo unieważniona przez
-   * administratora nie przyjmuje już nic z telefonu. Nie weszły do rejestru i nie
+   * Uuidy zdarzeń WSTRZYMANYCH: sesja zakończona albo unieważniona przez administratora
+   * (issue #81) ALBO zapis do cudzego klubu (issue #99). Nie weszły do rejestru i nie
    * wejdą - telefon ma je oznaczyć u siebie jako wstrzymane, nie ponawiać.
    */
   withheld: string[];
@@ -57,12 +71,8 @@ export interface IngestResult {
 
 export type IngestOutcome =
   | { ok: true; result: IngestResult }
-  | { ok: false; reason: 'not_session_pic' }
-  /**
-   * Maszyna z paczki należy do INNEGO klubu niż token nadawcy (wielofirmowość §3.5).
-   * Jedyna nowa odmowa ingestu i twarda: zapis do cudzego klubu nie ma miękkiej wersji.
-   */
-  | { ok: false; reason: 'aircraft_not_in_org' };
+  /** Nadawca nie jest PIC-em sesji, którą próbuje dopisać (single-writer §4.4). */
+  | { ok: false; reason: 'not_session_pic' };
 
 /**
  * Nadawca paczki tak, jak zna go token: osoba I klub. Klub jest tu treścią, nie
@@ -80,7 +90,7 @@ export class IngestCommands {
     private readonly events: EventsStorePort,
     private readonly sessions: SessionsProjectionPort,
     private readonly flags: FlagsPort,
-    /** Pojemność zbiorników → tolerancja `fuel_mismatch` (§4.5). */
+    /** Pojemność zbiorników → tolerancja `fuel_mismatch` (§4.5); klub maszyny → wstrzymanie. */
     private readonly aircraft: AircraftConfigPort,
     /** `null` = eksport §4.7 wyłączony (brak konfiguracji Sheets w composition root). */
     private readonly exporter: DayExporter | null,
@@ -111,35 +121,45 @@ export class IngestCommands {
       return { ok: false, reason: 'not_session_pic' };
     }
 
+    /*
+     * ══ CUDZY KLUB → WSTRZYMANIE (issue #99, C2) ══
+     * Najpierw KLUB, potem PIC - w tej kolejności, bo odpowiedź o cudzym klubie ma
+     * niczego nie zdradzać: gdyby sprawdzić PIC-a wcześniej, `403 not_session_pic`
+     * mówiłoby nadawcy „ta sesja istnieje i ma innego pilota" o operacji, której
+     * nie ma prawa zobaczyć. Wstrzymanie jest ciche z konstrukcji - telefon dostaje
+     * tylko listę uuidów, które nie weszły.
+     *
+     * Dwa źródła cudzości: maszyna z REJESTRU FLOTY innego klubu (`aircraft.org_id`)
+     * i sesja JUŻ ISTNIEJĄCA pod innym klubem (`sessions.org_id`) - drugie łapie
+     * dosyłkę po przełączeniu klubu (epik F), gdzie maszyna mogłaby nie być w rejestrze.
+     * Maszyna NIEZNANA rejestrowi przechodzi (rejestr przyjmuje to, co przyszło
+     * z terenu, `aircraft_id` nie ma klucza obcego) i dostaje klub tokenu.
+     */
+    const withheld = new Set<string>();
+    for (const aircraftId of new Set(batch.map((e) => e.aircraftId))) {
+      const owner = await this.aircraft.orgIdOf(this.db, aircraftId);
+      if (owner != null && owner !== orgId) {
+        for (const e of batch) if (e.aircraftId === aircraftId) withheld.add(e.uuid);
+      }
+    }
+    for (const sessionUuid of new Set(batch.map((e) => e.sessionUuid))) {
+      const owner = await this.sessions.ownerOf(this.db, sessionUuid);
+      if (owner != null && owner.orgId !== orgId) {
+        for (const e of batch) if (e.sessionUuid === sessionUuid) withheld.add(e.uuid);
+      }
+    }
+    const own = batch.filter((e) => !withheld.has(e.uuid));
+
     // Warstwa 2 (audyt: KRYTYCZNE): sam podpis w paczce nie wystarcza - napastnik
     // wpisałby WŁASNE picId w zdarzenia celujące w CUDZĄ sessionUuid i antydatowanym
     // zdarzeniem przejął sesję, unieważnił loty korektą albo zamknął cudzy dzień.
     // Dlatego nadawcę porównujemy z PIC-em sesji JUŻ ISTNIEJĄCEJ na serwerze; nowa
-    // sesja należy do tego, kto ją pierwszy przyniósł.
-    //
-    // Warstwa 3 (wielofirmowość §3.5): sesja JUŻ ISTNIEJĄCA należy do klubu i ten klub
-    // musi być klubem tokenu - inaczej dosyłka po przełączeniu klubu (epik F) wpisałaby
-    // zdarzenia jednego klubu do operacji drugiego.
-    for (const sessionUuid of new Set(batch.map((e) => e.sessionUuid))) {
-      const existing = await this.sessions.get(this.db, sessionUuid);
+    // sesja należy do tego, kto ją pierwszy przyniósł. Sprawdzamy WYŁĄCZNIE sesje
+    // własnego klubu - cudze zostały wstrzymane wyżej, zanim cokolwiek o nich powiemy.
+    for (const sessionUuid of new Set(own.map((e) => e.sessionUuid))) {
+      const existing = await this.sessions.ownerOf(this.db, sessionUuid);
       if (existing != null && existing.picId !== senderPilotId) {
         return { ok: false, reason: 'not_session_pic' };
-      }
-      if (existing != null && existing.orgId !== orgId) {
-        return { ok: false, reason: 'aircraft_not_in_org' };
-      }
-    }
-
-    // ══ MASZYNA MUSI NALEŻEĆ DO KLUBU Z TOKENU (wielofirmowość §3.5) ══
-    // Jedyna nowa odmowa ingestu i twarda: „serwer nie odrzuca, flaguje" (§4.5) dotyczy
-    // niezgodności DANYCH (łańcuch MH, nakładka), a to jest zapis do CUDZEGO klubu -
-    // nie ma miękkiej wersji, bo flaga w cudzym dzienniku byłaby już wyciekiem.
-    // Maszyna NIEZNANA rejestrowi floty przechodzi (rejestr przyjmuje to, co przyszło
-    // z terenu, a `aircraft_id` nie ma klucza obcego) i dostaje klub tokenu.
-    for (const aircraftId of new Set(batch.map((e) => e.aircraftId))) {
-      const owner = await this.aircraft.orgIdOf(this.db, aircraftId);
-      if (owner != null && owner !== orgId) {
-        return { ok: false, reason: 'aircraft_not_in_org' };
       }
     }
 
@@ -148,7 +168,7 @@ export class IngestCommands {
       // samej sesji liczyłyby projekcję każda bez zdarzeń drugiej i ostatni commit
       // nadpisałby `sessions` niekompletnym stanem. Lock szereguje ingest per sesja,
       // zwalnia się sam z końcem transakcji.
-      for (const sessionUuid of [...new Set(batch.map((e) => e.sessionUuid))].sort()) {
+      for (const sessionUuid of [...new Set(own.map((e) => e.sessionUuid))].sort()) {
         await tx.query('SELECT pg_advisory_xact_lock(hashtext($1))', [sessionUuid]);
       }
 
@@ -160,22 +180,21 @@ export class IngestCommands {
        * TU - zdarzenia wstrzymane nie wchodzą do rejestru, a telefon dostaje ich listę
        * (`withheld`) i oznacza je u siebie tak samo, jak te wstrzymane z własnej woli.
        *
-       * To jedyny wyjątek od „serwer nie odrzuca, flaguje" (§4.5) - i świadomy: decyzja
-       * administratora o zamknięciu jest ostatnim słowem o tej operacji, a zdanie
-       * dosłane po niej (albo lądowanie „po" zakończeniu) rozjechałoby rejestr
-       * z decyzją człowieka, który widział całą sytuację.
+       * To jeden z dwóch wyjątków od „serwer nie odrzuca, flaguje" (§4.5; drugim jest
+       * cudzy klub wyżej) - i świadomy: decyzja administratora o zamknięciu jest
+       * ostatnim słowem o tej operacji, a zdanie dosłane po niej (albo lądowanie „po"
+       * zakończeniu) rozjechałoby rejestr z decyzją człowieka, który widział całą sytuację.
        *
        * Sprawdzamy WYŁĄCZNIE sesje, których wiersz projekcji nie jest `active`: paczka
        * do sesji otwartej albo nowej to norma i nie ma za co płacić odczytem strumienia.
        */
-      const withheld: string[] = [];
-      let toInsert = batch;
-      for (const sessionUuid of new Set(batch.map((e) => e.sessionUuid))) {
-        const existing = await this.sessions.get(tx, sessionUuid);
+      let toInsert = own;
+      for (const sessionUuid of new Set(own.map((e) => e.sessionUuid))) {
+        const existing = await this.sessions.get(tx, orgId, sessionUuid);
         if (existing == null || existing.status === 'active') continue;
-        const state = projectSession(await this.events.sessionEvents(tx, sessionUuid));
+        const state = projectSession(await this.events.sessionEvents(tx, orgId, sessionUuid));
         if (!state.closedByAdmin && !state.voidedByAdmin) continue;
-        for (const e of batch) if (e.sessionUuid === sessionUuid) withheld.push(e.uuid);
+        for (const e of own) if (e.sessionUuid === sessionUuid) withheld.add(e.uuid);
         toInsert = toInsert.filter((e) => e.sessionUuid !== sessionUuid);
       }
 
@@ -192,7 +211,7 @@ export class IngestCommands {
       const closedNow: string[] = [];
 
       for (const sessionUuid of sessionUuids) {
-        const stream = await this.events.sessionEvents(tx, sessionUuid);
+        const stream = await this.events.sessionEvents(tx, orgId, sessionUuid);
         if (stream.length === 0) continue;
         const row = sessionRowFrom(sessionUuid, stream, orgId);
         await this.sessions.upsert(tx, row);
@@ -208,20 +227,20 @@ export class IngestCommands {
         }
       }
 
-      // Flagi liczymy per samolot, z CAŁEJ jego historii sesji - anomalia łańcucha
-      // z definicji dotyczy pary sesji, więc sama paczka nie wystarcza.
+      // Flagi liczymy per samolot, z CAŁEJ jego historii sesji W KLUBIE - anomalia
+      // łańcucha z definicji dotyczy pary sesji, więc sama paczka nie wystarcza.
       for (const aircraftId of aircraftIds) {
-        const links: ChainLink[] = (await this.sessions.listByAircraft(tx, aircraftId)).map(
-          (s) => ({
-            sessionUuid: s.sessionUuid,
-            mhStart: s.mhStart,
-            mhEnd: s.mhEnd,
-            fuelStartL: s.fuelStartL,
-            fuelEndL: s.fuelEndL,
-            closed: s.status === 'closed',
-          }),
-        );
-        const capacityL = await this.aircraft.capacityL(tx, aircraftId);
+        const links: ChainLink[] = (
+          await this.sessions.listByAircraft(tx, orgId, aircraftId)
+        ).map((s) => ({
+          sessionUuid: s.sessionUuid,
+          mhStart: s.mhStart,
+          mhEnd: s.mhEnd,
+          fuelStartL: s.fuelStartL,
+          fuelEndL: s.fuelEndL,
+          closed: s.status === 'closed',
+        }));
+        const capacityL = await this.aircraft.capacityL(tx, orgId, aircraftId);
         for (const flag of chainFlags(links, capacityL)) {
           await this.flags.ensureOpen(tx, { ...flag, orgId, aircraftId });
         }
@@ -235,8 +254,11 @@ export class IngestCommands {
       // `aircraft_id`, a to ta maszyna została wzięta, gdy poprzednia nie była zdana.
       // Wskazuje ją `laterSessionUuid`, NIE `sessionUuids[1]`: tamta tablica jest
       // posortowana alfabetycznie (zbiór kanoniczny dla `UNIQUE`) i o czasie nie mówi nic.
+      //
+      // Nakładka MIĘDZY klubami nie jest wykrywana (issue #99): flaga w dzienniku jednego
+      // klubu wskazywałaby operację drugiego, czyli byłaby wyciekiem.
       for (const picId of picIds) {
-        const spans = (await this.sessions.listByPilot(tx, picId)).map((s) => ({
+        const spans = (await this.sessions.listByPilot(tx, orgId, picId)).map((s) => ({
           sessionUuid: s.sessionUuid,
           aircraftId: s.aircraftId,
           claimedAt: s.claimTime,
@@ -250,8 +272,8 @@ export class IngestCommands {
         }
       }
 
-      const flags = await openFlagsFor(this.flags, tx, sessionUuids);
-      return { accepted, duplicates, flags, closedNow, withheld };
+      const flags = await openFlagsFor(this.flags, tx, orgId, sessionUuids);
+      return { accepted, duplicates, flags, closedNow, withheld: [...withheld] };
     });
 
     // Eksport §4.7 - PO commicie i poza gwarancjami odpowiedzi: telefon dostaje 200
@@ -263,7 +285,7 @@ export class IngestCommands {
     if (this.exporter != null) {
       for (const sessionUuid of closedNow) {
         try {
-          await this.exporter.exportSession(sessionUuid);
+          await this.exporter.exportSession(orgId, sessionUuid);
         } catch (err) {
           console.error(`eksport arkusza sesji ${sessionUuid} nie powiódł się:`, err);
         }
@@ -292,11 +314,12 @@ export class IngestCommands {
 async function openFlagsFor(
   flags: FlagsPort,
   db: Queryable,
+  orgId: string,
   sessionUuids: string[],
 ): Promise<FlagRecord[]> {
   const seen = new Map<number, FlagRecord>();
   for (const uuid of sessionUuids) {
-    for (const flag of await flags.openForSession(db, uuid)) {
+    for (const flag of await flags.openForSession(db, orgId, uuid)) {
       seen.set(flag.id, flag);
     }
   }

@@ -47,24 +47,27 @@ const LATEST_SQL = `
 `;
 
 export class PgAircraftReadingsRepo implements AircraftReadingsPort {
-  async latest(db: Queryable, aircraftId: string): Promise<AdminReading | null> {
+  async latest(db: Queryable, orgId: string, aircraftId: string): Promise<AdminReading | null> {
     const { rows } = await db.query<ReadingDbRow>(
-      `${LATEST_SQL} WHERE aircraft_id = $1 ORDER BY aircraft_id, created_at DESC, id DESC`,
-      [aircraftId],
+      `${LATEST_SQL} WHERE org_id = $1 AND aircraft_id = $2
+        ORDER BY aircraft_id, created_at DESC, id DESC`,
+      [orgId, aircraftId],
     );
     return rows[0] == null ? null : toReading(rows[0]);
   }
 
-  async latestAll(db: Queryable): Promise<Map<string, AdminReading>> {
+  async latestAll(db: Queryable, orgId: string): Promise<Map<string, AdminReading>> {
     const { rows } = await db.query<ReadingDbRow>(
-      `${LATEST_SQL} ORDER BY aircraft_id, created_at DESC, id DESC`,
+      `${LATEST_SQL} WHERE org_id = $1 ORDER BY aircraft_id, created_at DESC, id DESC`,
+      [orgId],
     );
     return new Map(rows.map((r) => [r.aircraft_id, toReading(r)]));
   }
 
-  async latestAt(db: Queryable): Promise<Date | null> {
+  async latestAt(db: Queryable, orgId: string): Promise<Date | null> {
     const { rows } = await db.query<{ at: string | Date | null }>(
-      'SELECT MAX(created_at) AS at FROM aircraft_readings',
+      'SELECT MAX(created_at) AS at FROM aircraft_readings WHERE org_id = $1',
+      [orgId],
     );
     const at = rows[0]?.at;
     return at == null ? null : new Date(at);

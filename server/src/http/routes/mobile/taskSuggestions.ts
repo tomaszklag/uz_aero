@@ -8,24 +8,25 @@
  * Pusta historia to `{ clients: [], notes: [] }` ze statusem 200, nie 404: nowy klub
  * i pierwszy dzień pilota są stanem normalnym, a błąd na ścieżce wygody zamieniłby
  * brak podpowiedzi w komunikat o awarii.
+ *
+ * Podpowiedzi KLUBU z tokenu (issue #99): kontrahent jednego klubu nie podpowiada się
+ * w drugim, a notatki pilota z drugiego klubu zostają tam, gdzie powstały.
  */
 
 import type { FastifyInstance } from 'fastify';
 
 import type { TaskSuggestionQueries } from '../../../application/mobile/queries/taskSuggestions.ts';
-import type { TokenService } from '../../../application/common/ports.ts';
-import { authorize } from '../../authorize.ts';
-import { tokenFromRequest } from '../../tokenFromRequest.ts';
+import { memberFromRequest, type MemberGate } from '../../memberGate.ts';
 
 export function registerTaskSuggestionRoutes(
   app: FastifyInstance,
   suggestions: TaskSuggestionQueries,
-  tokens: TokenService,
+  gate: MemberGate,
 ): void {
   app.get('/me/task-suggestions', async (req, reply) => {
-    const claims = authorize(tokens, tokenFromRequest(req));
-    if (claims == null) return reply.code(401).send({ error: 'unauthorized' });
+    const who = await memberFromRequest(gate, req);
+    if (who == null) return reply.code(401).send({ error: 'unauthorized' });
 
-    return reply.send(await suggestions.get(claims.pilotId));
+    return reply.send(await suggestions.get(who.orgId, who.pilotId));
   });
 }

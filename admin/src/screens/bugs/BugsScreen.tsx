@@ -35,7 +35,7 @@ import { BugDrawer } from './BugDrawer';
 import { bugRow, type BugRow } from './bugRows';
 import { BUG_STATUS_ORDER, BUG_WORKING_STATUSES, bugStatusLabel } from './bugStatus';
 
-const HEADERS = ['Kiedy', 'Pilot', 'Miejsce', 'Waga', 'Opis', 'Status'];
+const HEADERS = ['Kiedy', 'Klub', 'Pilot', 'Miejsce', 'Waga', 'Opis', 'Status'];
 
 /**
  * Zawężenie z adresu. `?status=` (pusty) znaczy WSZYSTKIE i jest stanem jawnym -
@@ -70,6 +70,9 @@ export function BugsScreen() {
 
   const columns: Column<BugRow>[] = [
     { key: 'when', header: 'Kiedy', cellClass: 'cell-sub', render: (row) => row.when },
+    // KLUB przed pilotem (issue #99 C6): kolejka jest wspólna dla serwera, a kod pilota
+    // jest jedyny w klubie - więc „czyj to pilot" jest pytaniem pierwszym, nie drugim.
+    { key: 'org', header: 'Klub', cellClass: 'cell-sub', render: (row) => row.org },
     {
       key: 'pilot',
       header: 'Pilot',

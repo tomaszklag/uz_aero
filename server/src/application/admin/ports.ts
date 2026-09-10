@@ -69,6 +69,16 @@ export interface PlatformActor {
 /** Kogo przyjmuje `AuditedWrite` - działający w klubie ALBO na platformie. */
 export type AuditActor = Actor | PlatformActor;
 
+/**
+ * ZAKRES danych działającego: klub administratora albo `null` = cały serwer
+ * (superadministrator). Jedyne miejsce, w którym z aktora wyprowadza się „bez klubu" -
+ * korzystają z niego wyłącznie operacje serwisowe (`A11`), które superadministrator
+ * uruchamia ze skryptu na całym rejestrze, a administrator z panelu na swoim klubie.
+ */
+export function orgScopeOf(actor: AuditActor): string | null {
+  return 'orgId' in actor ? actor.orgId : null;
+}
+
 // ── dziennik audytu ─────────────────────────────────────────────────────────────
 
 /**
@@ -179,8 +189,14 @@ export interface AdminAuditJoin {
  * oddają `null` i to klient niesie liczbę z pierwszej.
  */
 export interface AdminAuditReadPort {
+  /**
+   * Dziennik KLUBU (`admin_audit.org_id = orgId`). Wpisy platformowe superadministratora
+   * mają `org_id` pusty i do żadnego klubu nie wpadają - klub widzi wyłącznie to, co
+   * zrobiono w jego panelu (issue #99).
+   */
   list(
     db: Queryable,
+    orgId: string,
     filter: AuditListFilter,
   ): Promise<{ items: AdminAuditJoin[]; nextCursor: string | null; total: number | null } | null>;
 }
@@ -249,16 +265,25 @@ export interface FlagsAdminPort {
    * z wyniesieniem spraw blokujących na górę - flaga leżąca trzeci dzień jest
    * problemem sama w sobie, ale karta dnia stojąca poza arkuszem jest pilniejsza.
    */
-  list(db: Queryable, filter: FlagListFilter): Promise<{ items: AdminFlagJoin[]; total: number }>;
-  byId(db: Queryable, id: number): Promise<AdminFlag | null>;
+  list(
+    db: Queryable,
+    orgId: string,
+    filter: FlagListFilter,
+  ): Promise<{ items: AdminFlagJoin[]; total: number }>;
+  /** Flaga KLUBU po id; `null` także dla flagi cudzego klubu - dla panelu nie istnieje. */
+  byId(db: Queryable, orgId: string, id: number): Promise<AdminFlag | null>;
   /**
    * Zamknięcie flagi z OPTYMISTYCZNĄ współbieżnością: warunek `status='open'` siedzi
    * w SQL-u, więc dwie osoby klikające „Rozwiąż i odblokuj kartę" nie prześcigną się
    * timingiem - druga dostaje `null` i trasa odpowiada 409 z aktualnym stanem flagi.
    * Blokad pesymistycznych przy dwóch użytkownikach nie wprowadzamy.
+   *
+   * Klub jest częścią warunku `UPDATE`: flaga cudzego klubu daje `null` tak samo, jak
+   * już rozwiązana - a komenda odróżnia oba przypadki odczytem `byId` w tym samym klubie.
    */
   resolve(
     tx: Queryable,
+    orgId: string,
     id: number,
     by: string,
     note: string,
@@ -339,16 +364,17 @@ export interface AdminSessionJoin {
 
 export interface SessionsAdminPort {
   /**
-   * Strona listy dni. `null` = **kursor nieczytelny** - odmowa jest wariantem wyniku,
-   * nie wyjątkiem (wzorzec `FlagsAdminPort.resolve`): kursor przychodzi z zewnątrz,
-   * więc jego uszkodzenie to 400, a nie 500.
+   * Strona listy dni KLUBU. `null` = **kursor nieczytelny** - odmowa jest wariantem
+   * wyniku, nie wyjątkiem (wzorzec `FlagsAdminPort.resolve`): kursor przychodzi
+   * z zewnątrz, więc jego uszkodzenie to 400, a nie 500.
    */
   list(
     db: Queryable,
+    orgId: string,
     filter: SessionListFilter,
   ): Promise<{ items: AdminSessionJoin[]; nextCursor: string | null; total: number } | null>;
-  /** Pojedynczy dzień ze złączeniami; `null` = nie ma takiej sesji w projekcji. */
-  byUuid(db: Queryable, sessionUuid: string): Promise<AdminSessionJoin | null>;
+  /** Pojedynczy dzień klubu ze złączeniami; `null` = nie ma takiej sesji w tym klubie. */
+  byUuid(db: Queryable, orgId: string, sessionUuid: string): Promise<AdminSessionJoin | null>;
 }
 
 // ── eksport kart dziennych (A05) ────────────────────────────────────────────────
@@ -480,10 +506,11 @@ export interface ExportsAdminPort {
    */
   list(
     db: Queryable,
+    orgId: string,
     filter: ExportListFilter,
   ): Promise<{ items: AdminExportJoin[]; counts: AdminExportCounts; matched: number }>;
-  /** Pojedynczy dzień; `null` = nie ma takiej sesji w projekcji. */
-  byUuid(db: Queryable, sessionUuid: string): Promise<AdminExportJoin | null>;
+  /** Pojedynczy dzień klubu; `null` = nie ma takiej sesji w tym klubie. */
+  byUuid(db: Queryable, orgId: string, sessionUuid: string): Promise<AdminExportJoin | null>;
   /**
    * WSZYSTKIE wiersze dziennika tej sesji, od najstarszej rewizji.
    *
@@ -492,7 +519,7 @@ export interface ExportsAdminPort {
    * a rozwinięcie wiersza ma pokazać HISTORIĘ, nie jej początek. Stronicowanie czegoś,
    * czego sens polega na kompletności, byłoby wadą udającą ostrożność.
    */
-  history(db: Queryable, sessionUuid: string): Promise<AdminExportRevision[]>;
+  history(db: Queryable, orgId: string, sessionUuid: string): Promise<AdminExportRevision[]>;
 }
 
 // ── rejestr zdarzeń (metadane zapisu, panel) ────────────────────────────────────
@@ -516,7 +543,11 @@ export interface EventsAdminPort {
    * w rejestrze; wewnętrzne = zdarzenie jest, ale bez pola (wpisy sprzed kolumny).
    * Dwie różne odpowiedzi na dwa różne pytania, więc opakowane, a nie sklejone.
    */
-  sourceDeviceOf(db: Queryable, eventUuid: string): Promise<{ sourceDevice: string | null } | null>;
+  sourceDeviceOf(
+    db: Queryable,
+    orgId: string,
+    eventUuid: string,
+  ): Promise<{ sourceDevice: string | null } | null>;
 
   /**
    * Uuidy tych zdarzeń `event_correction` sesji, które zapisał PANEL.
@@ -529,7 +560,7 @@ export interface EventsAdminPort {
    * Rozróżnia je `source_device` (`application/admin/sourceDevice.ts`) i to jest jedyne
    * miejsce, w którym ten fakt jest zapisany.
    */
-  adminCorrectionUuids(db: Queryable, sessionUuid: string): Promise<string[]>;
+  adminCorrectionUuids(db: Queryable, orgId: string, sessionUuid: string): Promise<string[]>;
 }
 
 // ── rejestr zdarzeń (lista śledcza, A04) ────────────────────────────────────────
@@ -620,6 +651,7 @@ export interface AdminEventRow {
 export interface AdminEventsReadPort {
   list(
     db: Queryable,
+    orgId: string,
     filter: EventListFilter,
     /** Próg `CLOCK_DRIFT` (ms) - jedzie z domeny, żeby SQL nie miał własnej kopii. */
     driftThresholdMs: number,
@@ -1022,16 +1054,18 @@ export interface AircraftPatch {
  * mają jak zregresować od zmian w ekranie floty.
  */
 export interface FleetAdminPort {
-  list(db: Queryable, filter: FleetListFilter): Promise<AdminAircraftJoin[]>;
-  counts(db: Queryable): Promise<FleetCounts>;
+  /** Flota KLUBU - każde pytanie tego portu nazywa klub, jak `PilotsAdminPort`. */
+  list(db: Queryable, orgId: string, filter: FleetListFilter): Promise<AdminAircraftJoin[]>;
+  counts(db: Queryable, orgId: string): Promise<FleetCounts>;
   /**
    * Liczniki CHIPÓW - te same cztery zawężenia, ale w bieżącym wyszukiwaniu.
    * `search` nieustawione = po całej flocie (wtedy zgadzają się z `counts`).
    */
-  scopeCounts(db: Queryable, filter: { search?: string }): Promise<FleetCounts>;
-  byId(db: Queryable, id: string): Promise<AdminAircraft | null>;
+  scopeCounts(db: Queryable, orgId: string, filter: { search?: string }): Promise<FleetCounts>;
+  /** Jednostka KLUBU; `null` także dla maszyny cudzego klubu - dla panelu nie istnieje. */
+  byId(db: Queryable, orgId: string, id: string): Promise<AdminAircraft | null>;
   /** Wiersz listy dla POJEDYNCZEJ jednostki - odpowiedź mutacji bez drugiej listy. */
-  joinById(db: Queryable, id: string): Promise<AdminAircraftJoin | null>;
+  joinById(db: Queryable, orgId: string, id: string): Promise<AdminAircraftJoin | null>;
   /**
    * Kolizja unikalności rejestracji PRZED zapisem; `null` = wolna.
    *
@@ -1047,12 +1081,12 @@ export interface FleetAdminPort {
     values: { orgId: string; reg: string; exceptId: string | null },
   ): Promise<'reg' | null>;
   insert(tx: Queryable, aircraft: AdminAircraft): Promise<void>;
-  update(tx: Queryable, id: string, patch: AircraftPatch): Promise<void>;
+  update(tx: Queryable, orgId: string, id: string, patch: AircraftPatch): Promise<void>;
   /**
    * Ile sesji tego samolotu nie ma `day_close` - wejście do `domain/fleetGuards.ts`.
    * Czytane w TEJ SAMEJ transakcji co zapis, po wzięciu blokady niżej.
    */
-  openSessions(tx: Queryable, aircraftId: string): Promise<number>;
+  openSessions(tx: Queryable, orgId: string, aircraftId: string): Promise<number>;
   /**
    * Czy cokolwiek odwołuje się do tej jednostki - wejście do `refuseDeleteAircraft`.
    *
@@ -1063,12 +1097,12 @@ export interface FleetAdminPort {
    * Jedna liczba, nie rozbicie na tabele: reguła brzmi „cokolwiek się odwołuje - nie
    * kasujemy", więc panel nie ma czego zrobić z informacją, KTÓRA tabela trzyma wiersz.
    */
-  references(tx: Queryable, aircraftId: string): Promise<number>;
+  references(tx: Queryable, orgId: string, aircraftId: string): Promise<number>;
   /**
    * TRWAŁE skasowanie wiersza jednostki. Wołane WYŁĄCZNIE po `refuseDeleteAircraft`,
    * w tej samej transakcji - port nie sprawdza niczego sam.
    */
-  delete(tx: Queryable, aircraftId: string): Promise<void>;
+  delete(tx: Queryable, orgId: string, aircraftId: string): Promise<void>;
   /**
    * Blokada advisory na konfiguracji JEDNEJ jednostki, ważna do końca transakcji.
    *
@@ -1142,8 +1176,15 @@ export interface MaintenanceAdminPort {
    *
    * Razem z KLUBEM sesji (wielofirmowość): przebudowa pisze wiersz projekcji, a ten
    * niesie `org_id`, którego z samego strumienia domena nie odczyta.
+   *
+   * `orgId` = klub administratora (jego sesje) albo `null` = CAŁY rejestr - wyłącznie
+   * dla superadministratora ze skryptu `rebuild-projections`. To jedyne miejsce, w którym
+   * pytanie o dane bez klubu jest legalne, i jest nim dlatego, że działający nie ma klubu.
    */
-  sessionUuids(db: Queryable): Promise<{ sessionUuid: string; orgId: string }[]>;
+  sessionUuids(
+    db: Queryable,
+    orgId: string | null,
+  ): Promise<{ sessionUuid: string; orgId: string }[]>;
 
   /**
    * Ile tokenów leży w tabeli i ile z nich jest MARTWYCH wobec podanej chwili.
@@ -1151,11 +1192,15 @@ export interface MaintenanceAdminPort {
    * `at` jest parametrem, a nie `now()` w SQL-u, bo granica „wygasły" musi być tą samą
    * chwilą w podglądzie i w audycie skasowania - a zegar aplikacji jest sterowalny
    * (testy), zegar bazy nie.
+   *
+   * `orgId` jak w `sessionUuids`: tokeny KLUBU (`refresh_tokens.org_id`), `null` = wszystkie.
+   * Liczba sesji cudzego klubu jest informacją o cudzym klubie i do panelu nie wchodzi.
    */
-  scanRefreshTokens(db: Queryable, at: Date): Promise<RefreshTokenScan>;
+  scanRefreshTokens(db: Queryable, orgId: string | null, at: Date): Promise<RefreshTokenScan>;
 
   /**
-   * Kasuje WYŁĄCZNIE wiersze, których `expires_at` już minęło.
+   * Kasuje WYŁĄCZNIE wiersze, których `expires_at` już minęło - w klubie (`orgId`)
+   * albo w całej tabeli (`null`, superadministrator).
    *
    * ══ WARUNEK JEST W SQL-U I TAM MA ZOSTAĆ ══
    * Token WAŻNY skasowany przez pomyłkę wylogowuje pilota w terenie, a ponowne
@@ -1163,7 +1208,7 @@ export interface MaintenanceAdminPort {
    * wpisany po stronie aplikacji („pobierz i skasuj te, które…") miałby dwie okazje
    * do pomyłki i jedno okno wyścigu; tutaj jest jedno polecenie i jeden predykat.
    */
-  purgeExpiredRefreshTokens(tx: Queryable, at: Date): Promise<PurgedTokens>;
+  purgeExpiredRefreshTokens(tx: Queryable, orgId: string | null, at: Date): Promise<PurgedTokens>;
 
   /**
    * Migracje znane KODOWI, wzbogacone o chwilę zastosowania z `schema_migrations`.
@@ -1307,17 +1352,17 @@ export interface AdminStatsClientRow {
  * tego portu ma swoją kolumnę w `sessions`, a brak kolumny = brak liczby.
  */
 export interface StatsAdminPort {
-  totals(db: Queryable, range: StatsRange): Promise<AdminStatsTotalsRow>;
+  totals(db: Queryable, orgId: string, range: StatsRange): Promise<AdminStatsTotalsRow>;
   /** Dni OTWARTE - licznik pominiętych (w zakresie + bez daty), nie składnik sum. */
-  openSessions(db: Queryable, range: StatsRange): Promise<AdminStatsOpenSessionsRow>;
+  openSessions(db: Queryable, orgId: string, range: StatsRange): Promise<AdminStatsOpenSessionsRow>;
   /** Tylko doby NIEPUSTE - zer nie zmyśla baza, dopełnia je warstwa aplikacji. */
-  daily(db: Queryable, range: StatsRange): Promise<AdminStatsDailyRow[]>;
-  byAircraft(db: Queryable, range: StatsRange): Promise<AdminStatsAircraftRow[]>;
-  byPilot(db: Queryable, range: StatsRange): Promise<AdminStatsPilotRow[]>;
-  byOperation(db: Queryable, range: StatsRange): Promise<AdminStatsOperationRow[]>;
+  daily(db: Queryable, orgId: string, range: StatsRange): Promise<AdminStatsDailyRow[]>;
+  byAircraft(db: Queryable, orgId: string, range: StatsRange): Promise<AdminStatsAircraftRow[]>;
+  byPilot(db: Queryable, orgId: string, range: StatsRange): Promise<AdminStatsPilotRow[]>;
+  byOperation(db: Queryable, orgId: string, range: StatsRange): Promise<AdminStatsOperationRow[]>;
   /** Strona przychodowa - zakres zawężony do `operation = 'skoki'` (podpis mockupu). */
-  drops(db: Queryable, range: StatsRange): Promise<AdminStatsDropsRow>;
-  dropsByClient(db: Queryable, range: StatsRange): Promise<AdminStatsClientRow[]>;
+  drops(db: Queryable, orgId: string, range: StatsRange): Promise<AdminStatsDropsRow>;
+  dropsByClient(db: Queryable, orgId: string, range: StatsRange): Promise<AdminStatsClientRow[]>;
 }
 
 // ── pulpit (A01, A01a) ──────────────────────────────────────────────────────────
@@ -1380,24 +1425,29 @@ export interface DashboardAdminPort {
    */
   inflow(
     db: Queryable,
+    orgId: string,
     window: { fromMs: number; toMs: number; bucketMs: number },
   ): Promise<{ bucket: number; count: number }[]>;
 
-  /** Ostatnio przyjęte zdarzenia, od najnowszego. Pusta tablica = pusty rejestr. */
-  recent(db: Queryable, limit: number): Promise<AdminRecentEventRow[]>;
+  /** Ostatnio przyjęte zdarzenia klubu, od najnowszego. Pusta tablica = pusty rejestr. */
+  recent(db: Queryable, orgId: string, limit: number): Promise<AdminRecentEventRow[]>;
 
   /**
    * Sumy doby `[fromMs, toMs]` - dni lotne po czasie przejęcia, zdarzenia po przyjęciu.
    * Dwa różne zegary w jednym wyniku i to jest świadome: kontrakt nazywa je osobno.
    */
-  dayTotals(db: Queryable, range: { fromMs: number; toMs: number }): Promise<AdminDayTotalsRow>;
+  dayTotals(
+    db: Queryable,
+    orgId: string,
+    range: { fromMs: number; toMs: number },
+  ): Promise<AdminDayTotalsRow>;
 
   /**
-   * Czas przejęcia NAJNOWSZEGO dnia lotnego (epoch ms UTC); `null` = projekcja jest
+   * Czas przejęcia NAJNOWSZEGO dnia lotnego klubu (epoch ms UTC); `null` = projekcja jest
    * pusta albo żadna sesja nie ma daty. Po nim pulpit wskazuje „ostatni dzień lotny",
    * gdy dziś nic nie lata.
    */
-  lastFlyingDayStart(db: Queryable): Promise<number | null>;
+  lastFlyingDayStart(db: Queryable, orgId: string): Promise<number | null>;
 }
 
 // ── analityka zużycia (A10a, A10b) ──────────────────────────────────────────────
@@ -1442,8 +1492,8 @@ export interface ConsumptionSessionsPage {
 }
 
 export interface ConsumptionAdminPort {
-  /** Jednostka po identyfikatorze; `null` = nie ma takiej we flocie. */
-  aircraft(db: Queryable, aircraftId: string): Promise<ConsumptionAircraftRow | null>;
+  /** Jednostka klubu po identyfikatorze; `null` = nie ma takiej we flocie TEGO klubu. */
+  aircraft(db: Queryable, orgId: string, aircraftId: string): Promise<ConsumptionAircraftRow | null>;
 
   /**
    * Zamknięte dni samolotu w oknie, od najnowszego. `limit` jest bezpiecznikiem
@@ -1452,6 +1502,7 @@ export interface ConsumptionAdminPort {
    */
   closedSessions(
     db: Queryable,
+    orgId: string,
     aircraftId: string,
     range: StatsRange,
     limit: number,
@@ -1462,7 +1513,7 @@ export interface ConsumptionAdminPort {
    * nie ma `close_time`. Ich zużycia nie znamy (brak odczytu końcowego), więc do modelu
    * nie wchodzą; ekran mówi, ile ich pominął, zamiast milczeć o różnicy.
    */
-  openSessions(db: Queryable, aircraftId: string, range: StatsRange): Promise<number>;
+  openSessions(db: Queryable, orgId: string, aircraftId: string, range: StatsRange): Promise<number>;
 }
 
 /**
@@ -1502,5 +1553,9 @@ export interface LogAdminPort {
    * inną liczbę sesji, a narzędzie nadzoru, które samo ze sobą się nie zgadza,
    * przestaje być narzędziem.
    */
-  byAircraft(db: Queryable, range: { fromMs: number; toMs: number }): Promise<LogAircraftAggregate[]>;
+  byAircraft(
+    db: Queryable,
+    orgId: string,
+    range: { fromMs: number; toMs: number },
+  ): Promise<LogAircraftAggregate[]>;
 }

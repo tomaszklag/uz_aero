@@ -9,17 +9,15 @@
 import type { FastifyInstance } from 'fastify';
 
 import type { ReferenceQueries } from '../../../application/mobile/queries/reference.ts';
-import type { TokenService } from '../../../application/common/ports.ts';
-import { authorize } from '../../authorize.ts';
-import { tokenFromRequest } from '../../tokenFromRequest.ts';
+import { memberFromRequest, type MemberGate } from '../../memberGate.ts';
 
 export function registerReferenceRoutes(
   app: FastifyInstance,
   reference: ReferenceQueries,
-  tokens: TokenService,
+  gate: MemberGate,
 ): void {
   app.get('/reference', async (req, reply) => {
-    const who = authorize(tokens, tokenFromRequest(req));
+    const who = await memberFromRequest(gate, req);
     if (who == null) return reply.code(401).send({ error: 'unauthorized' });
 
     // Migawka KLUBU z tokenu (wielofirmowość §7.1) - flota i członkowie aktywnego klubu.

@@ -254,11 +254,12 @@ export class AdminFleetCommands {
         // przestaje być dowodem. Ta sama rola, co `lockAdminPopulation` przy kontach.
         await this.fleet.lockAircraft(tx, id);
 
-        const before = await this.fleet.byId(tx, id);
         // Maszyna cudzego klubu jest dla tego administratora NIEISTNIEJĄCA (wielofirmowość):
         // 404, nie 403 - potwierdzenie „jest, ale nie twoja" byłoby odpowiedzią na pytanie,
-        // którego pytający nie ma prawa zadać.
-        if (before == null || before.orgId !== actor.orgId) throw new AircraftNotFound();
+        // którego pytający nie ma prawa zadać. Port pyta o jednostkę W KLUBIE, więc `null`
+        // załatwia oba przypadki naraz.
+        const before = await this.fleet.byId(tx, actor.orgId, id);
+        if (before == null) throw new AircraftNotFound();
 
         const changes = diffOf(before, input);
         // Zapis bez zmiany zostawiłby w dzienniku wpis o niczym - a dziennik nadzoru,
@@ -307,7 +308,7 @@ export class AdminFleetCommands {
           // telefon otwierający dzień blokuje sesję, nie samolot.
           const refusal = refuseDisable({
             nextStatus: input.serviceStatus,
-            openSessions: await this.fleet.openSessions(tx, id),
+            openSessions: await this.fleet.openSessions(tx, actor.orgId, id),
           });
           if (refusal != null) throw new Refused(refusal);
         }
@@ -321,7 +322,7 @@ export class AdminFleetCommands {
           if (clash != null) throw new Conflict();
         }
 
-        await this.fleet.update(tx, id, input);
+        await this.fleet.update(tx, actor.orgId, id, input);
         const after: AdminAircraft = { ...before, ...stripUndefined(input) };
 
         return {
@@ -375,16 +376,16 @@ export class AdminFleetCommands {
       const aircraft = await this.write.run(actor, async (tx) => {
         await this.fleet.lockAircraft(tx, id);
 
-        const before = await this.fleet.byId(tx, id);
-        if (before == null || before.orgId !== actor.orgId) throw new AircraftNotFound();
+        const before = await this.fleet.byId(tx, actor.orgId, id);
+        if (before == null) throw new AircraftNotFound();
 
         const refusal = refuseDeleteAircraft({
           inService: before.serviceStatus !== 'disabled',
-          references: await this.fleet.references(tx, id),
+          references: await this.fleet.references(tx, actor.orgId, id),
         });
         if (refusal != null) throw new Refused(refusal);
 
-        await this.fleet.delete(tx, id);
+        await this.fleet.delete(tx, actor.orgId, id);
 
         return {
           result: before,

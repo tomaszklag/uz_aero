@@ -36,8 +36,8 @@ export class AdminExportQueries {
     private readonly sheets: SheetsReadPort,
   ) {}
 
-  async list(filter: ExportListFilter): Promise<AdminExportPage> {
-    const { items, counts, matched } = await this.exports.list(this.db, filter);
+  async list(orgId: string, filter: ExportListFilter): Promise<AdminExportPage> {
+    const { items, counts, matched } = await this.exports.list(this.db, orgId, filter);
     return {
       items: items.map(exportListItem),
       counts,
@@ -56,18 +56,18 @@ export class AdminExportQueries {
    * zdaniem o świecie zamiast o adresie) i „jak wygląda wiersz PO próbie", żeby panel
    * odświeżył go bez drugiego żądania.
    */
-  async item(sessionUuid: string): Promise<AdminExportListItem | null> {
-    const join = await this.exports.byUuid(this.db, sessionUuid);
+  async item(orgId: string, sessionUuid: string): Promise<AdminExportListItem | null> {
+    const join = await this.exports.byUuid(this.db, orgId, sessionUuid);
     return join == null ? null : exportListItem(join);
   }
 
   /** Historia rewizji jednej karty; `null` = nie ma takiej sesji w projekcji. */
-  async history(sessionUuid: string): Promise<AdminExportHistory | null> {
-    const join = await this.exports.byUuid(this.db, sessionUuid);
+  async history(orgId: string, sessionUuid: string): Promise<AdminExportHistory | null> {
+    const join = await this.exports.byUuid(this.db, orgId, sessionUuid);
     if (join == null) return null;
 
     const item = exportListItem(join);
-    const revisions = await this.exports.history(this.db, sessionUuid);
+    const revisions = await this.exports.history(this.db, orgId, sessionUuid);
 
     // `exported_sheets` trzyma WYŁĄCZNIE treść bieżącą (UPSERT po `tab`), więc ta liczba
     // jest zawsze 0 albo 1 - i o to chodzi. Zestawiona z długością `revisions` jest
@@ -107,8 +107,8 @@ export class AdminExportQueries {
    * `null` = nie ma takiej sesji ALBO karta nigdy nie powstała; trasa mapuje oba na 404,
    * bo z punktu widzenia czytelnika to jedna odpowiedź: tej karty nie ma.
    */
-  async sheet(sessionUuid: string): Promise<AdminSheetPreview | null> {
-    const join = await this.exports.byUuid(this.db, sessionUuid);
+  async sheet(orgId: string, sessionUuid: string): Promise<AdminSheetPreview | null> {
+    const join = await this.exports.byUuid(this.db, orgId, sessionUuid);
     if (join == null) return null;
 
     const tab = exportListItem(join).tab;

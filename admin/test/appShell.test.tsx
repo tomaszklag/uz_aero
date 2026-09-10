@@ -19,18 +19,37 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 
+import type { Capability } from '../src/api/dto';
 import { AppShell } from '../src/ui/shell/AppShell';
 import { HOME, NAV_ITEMS } from '../src/ui/shell/nav';
+
+/**
+ * Zdolności DWÓCH rodzajów sesji, jakie panel obsługuje od wielofirmowości: klub
+ * i platforma (issue #99 C6). Kolumna boczna nie jest stałą listą, więc każdy render
+ * musi powiedzieć, KTO patrzy - inaczej test opisywałby ramę, której nikt nie widzi.
+ */
+const CLUB: readonly Capability[] = ['panel.access', 'fleet.manage', 'accounts.manage'];
+const PLATFORM: readonly Capability[] = ['platform.manage', 'bugs.triage'];
 
 const TEMPLATE = readFileSync(
   join(__dirname, '..', '..', 'design', 'panel', 'SZABLON.html'),
   'utf8',
 );
 
-const render = (path: string, org?: { name: string; switchTo: string }): string =>
+const render = (
+  path: string,
+  org?: { name: string; switchTo: string },
+  capabilities: readonly Capability[] = CLUB,
+): string =>
   renderToStaticMarkup(
     <MemoryRouter initialEntries={[path]}>
-      <AppShell who="Tomasz Małkiewicz" org={org} onLogout={() => undefined} logoutPending={false}>
+      <AppShell
+        who="Tomasz Małkiewicz"
+        org={org}
+        capabilities={capabilities}
+        onLogout={() => undefined}
+        logoutPending={false}
+      >
         <p>treść</p>
       </AppShell>
     </MemoryRouter>,
@@ -61,10 +80,39 @@ describe('AppShell - rama stylu lekkiego', () => {
 
   it('zaznacza pozycję bieżącego modułu i tylko ją', () => {
     for (const item of NAV_ITEMS) {
-      const html = render(item.to);
+      // Render z DOKŁADNIE tą zdolnością, której wymaga pozycja: inaczej moduł
+      // platformowy nie miałby jak się w kolumnie pojawić.
+      const html = render(item.to, undefined, [item.capability]);
       expect(html.match(/class="nav-item active"/g)).toHaveLength(1);
       expect(html).toContain(`class="nav-item active" href="${item.to}"`);
     }
+  });
+
+  /**
+   * SESJA KLUBU NIE WIDZI MODUŁU PLATFORMY - ani jako pozycji, ani jako kłódki
+   * (issue #99 C6). Panel 1.0 zostawiał niedostępną pozycję wyszarzoną; tutaj byłaby
+   * obietnicą prawa, którego model ról nie zna, więc pozycji nie ma wcale.
+   */
+  it('kolumna niesie WYŁĄCZNIE moduły, na które sesja ma zdolność', () => {
+    const club = render(HOME, undefined, CLUB);
+    expect(club).toContain('href="/dziennik"');
+    expect(club).not.toContain('href="/zgloszenia"');
+    expect(club).not.toContain('locked');
+
+    const platform = render('/zgloszenia', undefined, PLATFORM);
+    expect(platform).toContain('class="nav-item active" href="/zgloszenia"');
+    for (const to of ['/dziennik', '/piloci', '/samoloty']) {
+      expect(platform).not.toContain(`href="${to}"`);
+    }
+  });
+
+  it('sesja bez ANI JEDNEJ zdolności dostaje pustą kolumnę, nie ramę bez adresu', () => {
+    // Rola bez zdolności dziś nie istnieje, ale model jej nie zabrania: rama ma się
+    // wtedy złożyć (marka musi mieć `href`), a odmowę powie serwer na trasie.
+    const html = render(HOME, undefined, []);
+    expect(html).toContain('class="sidebar-nav"');
+    expect(html).not.toContain('class="nav-item');
+    expect(html).toContain(`class="brand" href="${HOME}"`);
   });
 
   it('pisze inicjały zalogowanego w kółku i nazwisko obok', () => {
@@ -82,7 +130,12 @@ describe('AppShell - rama stylu lekkiego', () => {
     expect(withOrg).toContain('class="context-name">Aeroklub Krakowski<');
   });
 
-  it('marka jest linkiem na ekran startowy', () => {
+  it('marka prowadzi na PIERWSZY DOSTĘPNY ekran, nie na stały dziennik', () => {
     expect(render('/piloci')).toContain(`class="brand" href="${HOME}"`);
+    // Superadministrator: `#/dziennik` odpowiedziałby jego sesji 401, więc marka
+    // prowadzi tam, gdzie naprawdę może wejść.
+    expect(render('/zgloszenia', undefined, PLATFORM)).toContain(
+      'class="brand" href="/zgloszenia"',
+    );
   });
 });

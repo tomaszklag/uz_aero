@@ -33,8 +33,14 @@ const CLUB_CAPABILITIES = [
   'thresholds.manage',
   'audit.read',
   'maintenance.run',
-  'bugs.triage',
 ] as const;
+
+/**
+ * Zdolności PLATFORMOWE - superadministratora bez klubu. `bugs.triage` stoi tu,
+ * a nie wśród klubowych, od epiku C wielofirmowości (issue #99, C6): zgłoszenia
+ * błędów opisują aplikację, nie dziennik klubu, i obsługuje je platforma.
+ */
+const PLATFORM_CAPABILITIES = ['platform.manage', 'bugs.triage'] as const;
 
 const asAdmin = (pilotId: string, orgId = ORG_A) =>
   ({ pilotId, orgId, code: pilotId, role: 'admin' }) as const;
@@ -46,7 +52,7 @@ describe('mapa uprawnień', () => {
     // Lista wypisana w całości, a nie trzy przykłady: po wycofaniu roli pośredniej
     // (2026-08-30) to JEDYNY przypadek mówiący „tej zdolności się nie dostaje",
     // więc musi widzieć każdą nową pozycję katalogu - tak samo jak przypadek niżej.
-    for (const capability of [...CLUB_CAPABILITIES, 'platform.manage'] as const) {
+    for (const capability of [...CLUB_CAPABILITIES, ...PLATFORM_CAPABILITIES]) {
       expect(can('pilot', capability)).toBe(false);
     }
   });
@@ -59,17 +65,23 @@ describe('mapa uprawnień', () => {
     // Rozłączność dwóch osi władzy (wielofirmowość §3.3): administrator klubu nie
     // zakłada klubów. Dopisanie `platform.manage` do listy `admin` byłoby wyjątkiem
     // wpisanym w rolę, niewidocznym dla klubu, którego dotyczy.
-    expect(can('admin', 'platform.manage')).toBe(false);
+    for (const capability of PLATFORM_CAPABILITIES) {
+      expect(can('admin', capability)).toBe(false);
+    }
   });
 
-  it('superadministrator ma WYŁĄCZNIE `platform.manage` - do dziennika klubu nie wchodzi', () => {
-    expect(platformCan('superadmin', 'platform.manage')).toBe(true);
+  it('superadministrator ma WYŁĄCZNIE zdolności platformy - do dziennika klubu nie wchodzi', () => {
+    for (const capability of PLATFORM_CAPABILITIES) {
+      expect(platformCan('superadmin', capability)).toBe(true);
+    }
     for (const capability of CLUB_CAPABILITIES) {
       expect(platformCan('superadmin', capability)).toBe(false);
     }
-    expect([...platformCapabilitiesOf('superadmin')]).toEqual(['platform.manage']);
+    expect([...platformCapabilitiesOf('superadmin')]).toEqual([...PLATFORM_CAPABILITIES]);
     // Zwykła osoba (`platform_role IS NULL`) nie może na platformie niczego.
-    expect(platformCan(null, 'platform.manage')).toBe(false);
+    for (const capability of PLATFORM_CAPABILITIES) {
+      expect(platformCan(null, capability)).toBe(false);
+    }
   });
 });
 

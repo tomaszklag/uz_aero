@@ -550,6 +550,12 @@ export interface BugReportDto {
   /** `null` = konta już nie ma; zgłoszenie zostaje, bo opisuje aplikację. */
   pilotCode: string | null;
   pilotName: string | null;
+  /**
+   * KLUB zgłoszenia (wielofirmowość, issue #99 C6). Kolejka jest jedna dla całego
+   * serwera - czyta ją superadministrator - a kod pilota jest jedyny W KLUBIE, nie na
+   * serwerze: bez tego pola `TMA` z dwóch klubów byłoby nieodróżnialne.
+   */
+  org: OrganizationRefDto;
   severity: BugSeverityDto | null;
   description: string;
   /** Czytelna etykieta miejsca („KOKPIT (04/05) · arkusz TANKOWANIE"). */

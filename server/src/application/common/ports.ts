@@ -467,12 +467,12 @@ export interface AdminReading {
  * `GET /reference` (telefon) i karta samolotu w panelu; pisze wyłącznie komenda panelu.
  */
 export interface AircraftReadingsPort {
-  /** Ostatni wpis maszyny; `null` = nigdy nie wpisano. */
-  latest(db: Queryable, aircraftId: string): Promise<AdminReading | null>;
-  /** Ostatnie wpisy CAŁEJ floty jednym zapytaniem, klucz = `aircraft.id`. */
-  latestAll(db: Queryable): Promise<Map<string, AdminReading>>;
-  /** Najświeższy `created_at` w tabeli - składnik ETagu `/reference`. */
-  latestAt(db: Queryable): Promise<Date | null>;
+  /** Ostatni wpis maszyny KLUBU; `null` = nigdy nie wpisano (albo maszyna cudzego klubu). */
+  latest(db: Queryable, orgId: string, aircraftId: string): Promise<AdminReading | null>;
+  /** Ostatnie wpisy CAŁEJ floty klubu jednym zapytaniem, klucz = `aircraft.id`. */
+  latestAll(db: Queryable, orgId: string): Promise<Map<string, AdminReading>>;
+  /** Najświeższy `created_at` wpisów klubu - składnik ETagu `/reference`. */
+  latestAt(db: Queryable, orgId: string): Promise<Date | null>;
   /** `orgId` = klub maszyny (wiersz niesie go denormalizowany, jak każda tabela klubu). */
   insert(tx: Queryable, orgId: string, aircraftId: string, reading: AdminReading): Promise<void>;
 }
@@ -513,11 +513,16 @@ export interface NewBugReport {
  * Kod i nazwisko przychodzą ZŁĄCZENIEM w adapterze, nie osobnym odpytaniem kont -
  * ta sama decyzja, co w `AdminPilotJoin`. `null` znaczy „konta już nie ma": zgłoszenie
  * zostaje, bo opisuje aplikację, a nie człowieka.
+ *
+ * `org` jest KLUBEM, w którym pilot pracował, gdy zobaczył błąd (epik C wielofirmowości,
+ * issue #99): zgłoszenia czyta wyłącznie SUPERADMINISTRATOR, na jednej liście dla
+ * wszystkich klubów, więc każdy wiersz musi nazwać swój klub sam.
  */
 export interface BugReportRecord extends NewBugReport {
   pilotId: string;
   pilotCode: string | null;
   pilotName: string | null;
+  org: { id: string; slug: string; name: string };
   /** Zegar SERWERA - przy wysyłce po dwóch dniach bez zasięgu różnica jest treścią. */
   receivedAt: Date;
   status: BugStatus;
@@ -555,6 +560,11 @@ export interface BugReportsPort {
    * fazy testów, liczona w setkach wierszy, a nie rosnący bez końca rejestr klubu.
    * Stronicowanie dołożymy, gdy `limit` zacznie coś ucinać - dziś kosztowałoby
    * kursor w adresie i nie odpowiadałoby na żadne pytanie.
+   *
+   * ══ BEZ `orgId` - I TO JEST DECYZJA, NIE PRZEOCZENIE (issue #99, C6) ══
+   * Zgłoszenia opisują APLIKACJĘ, nie dziennik klubu, i czyta je wyłącznie
+   * superadministrator na platformie - dla wszystkich klubów naraz. Żadna trasa
+   * klubu tego portu nie woła; klub każdego wiersza jedzie w `BugReportRecord.org`.
    */
   list(
     db: Queryable,
@@ -621,9 +631,10 @@ export interface PhaseTimelinePort {
  * odpytuje każdy telefon co kwadrans, a model czyta strumienie kilkudziesięciu sesji.
  */
 export interface ConsumptionNormPort {
-  /** Uuidy zamkniętych dni samolotu w oknie - wejście przeliczenia. */
+  /** Uuidy zamkniętych dni samolotu KLUBU w oknie - wejście przeliczenia. */
   closedSessionUuids(
     db: Queryable,
+    orgId: string,
     aircraftId: string,
     range: { fromMs: number; toMs: number },
   ): Promise<string[]>;
@@ -641,15 +652,15 @@ export interface ConsumptionNormPort {
     computedAt: Date,
   ): Promise<void>;
 
-  /** Normy całej floty, po `aircraft_id` - wejście `GET /reference`. */
-  all(db: Queryable): Promise<Map<string, ConsumptionNorm>>;
+  /** Normy całej floty KLUBU, po `aircraft_id` - wejście `GET /reference`. */
+  all(db: Queryable, orgId: string): Promise<Map<string, ConsumptionNorm>>;
 
   /**
-   * Najświeższy stempel policzenia - trzeci składnik ETagu referencji. Bez niego
+   * Najświeższy stempel policzenia w klubie - trzeci składnik ETagu referencji. Bez niego
    * przeliczenie modeli (bez zmiany sesji ani konfiguracji) nie dotarłoby do telefonów,
    * bo `304` zamroziłoby poprzednią odpowiedź.
    */
-  latestComputedAt(db: Queryable): Promise<Date | null>;
+  latestComputedAt(db: Queryable, orgId: string): Promise<Date | null>;
 }
 
 // ── zdarzenia, sesje, flagi (M2) ────────────────────────────────────────────────
@@ -669,10 +680,18 @@ export interface EventsStorePort {
     events: readonly Event[],
     sourceDevice: string | null,
   ): Promise<{ accepted: number; duplicates: number }>;
-  /** Pełny strumień sesji - wejście `projectSession`. */
-  sessionEvents(db: Queryable, sessionUuid: string): Promise<Event[]>;
   /**
-   * Strumienie WIELU sesji jednym zapytaniem - wejście analityki zużycia (`A10a`).
+   * Pełny strumień sesji KLUBU - wejście `projectSession`.
+   *
+   * ══ KLUB JEST PARAMETREM KAŻDEGO ODCZYTU (epik C wielofirmowości, issue #99) ══
+   * Sesja cudzego klubu daje pusty strumień - dokładnie tak, jak nieistniejąca. Wołający
+   * zna klub zawsze: z tokenu (telefon), z aktora (panel) albo z wiersza projekcji
+   * (eksport, przebudowa). Odczyt „po samym uuid-zie" nie istnieje, bo uuid nie jest
+   * poświadczeniem - a nazwa karty arkusza pokazała, jak łatwo zgadnąć cudzy adres.
+   */
+  sessionEvents(db: Queryable, orgId: string, sessionUuid: string): Promise<Event[]>;
+  /**
+   * Strumienie WIELU sesji klubu jednym zapytaniem - wejście analityki zużycia (`A10a`).
    *
    * DLACZEGO OSOBNA METODA, A NIE `sessionEvents` W PĘTLI: okno 90 dni to ~50 sesji
    * na samolot, a rok - ponad 200. Pętla oznaczałaby tyleż round-tripów na jedno
@@ -685,12 +704,13 @@ export interface EventsStorePort {
    */
   sessionStreams(
     db: Queryable,
+    orgId: string,
     sessionUuids: readonly string[],
   ): Promise<Map<string, Event[]>>;
-  /** Znacznik ostatniego przyjęcia zdarzenia samolotu (do `last_sync_at`). */
-  lastReceivedAt(db: Queryable, aircraftId: string): Promise<Date | null>;
-  /** Liczba zdarzeń sesji przyjętych przez serwer (do `sync-status`). */
-  countForSession(db: Queryable, sessionUuid: string): Promise<number>;
+  /** Znacznik ostatniego przyjęcia zdarzenia samolotu klubu (do `last_sync_at`). */
+  lastReceivedAt(db: Queryable, orgId: string, aircraftId: string): Promise<Date | null>;
+  /** Liczba zdarzeń sesji klubu przyjętych przez serwer (do `sync-status`). */
+  countForSession(db: Queryable, orgId: string, sessionUuid: string): Promise<number>;
 }
 
 /** Wiersz projekcji `sessions` - zrzut `projectSession`, nigdy źródło prawdy. */
@@ -829,18 +849,39 @@ export interface SessionRow {
   oilAfterL: number | null;
 }
 
+/**
+ * KTO JEST WŁAŚCICIELEM sesji - jedyne pytanie o wiersz projekcji zadawane BEZ klubu.
+ *
+ * Istnieje dla ingestu (issue #99, C2): paczka z telefonu niesie uuid sesji, a serwer
+ * musi rozstrzygnąć, czy ta sesja już należy do KOGOŚ (innego pilota → `403`, innego
+ * klubu → wstrzymanie), ZANIM cokolwiek zapisze pod klubem z tokenu. Skopowany `get`
+ * odpowiedziałby „nie ma takiej sesji" i ingest założyłby DRUGĄ, w cudzym kluczu -
+ * dwa strumienie pod jednym uuid-em, każdy widoczny w innym klubie.
+ */
+export interface SessionOwner {
+  orgId: string;
+  picId: string;
+  status: SessionRow['status'];
+}
+
 export interface SessionsProjectionPort {
   upsert(tx: Queryable, row: SessionRow): Promise<void>;
-  get(db: Queryable, sessionUuid: string): Promise<SessionRow | null>;
-  listByAircraft(db: Queryable, aircraftId: string): Promise<SessionRow[]>;
+  /** Wiersz projekcji sesji KLUBU; `null` = nie ma jej w tym klubie (także: jest w cudzym). */
+  get(db: Queryable, orgId: string, sessionUuid: string): Promise<SessionRow | null>;
+  /** Właściciel sesji po samym uuid-zie - WYŁĄCZNIE dla ingestu i śladu, patrz `SessionOwner`. */
+  ownerOf(db: Queryable, sessionUuid: string): Promise<SessionOwner | null>;
+  listByAircraft(db: Queryable, orgId: string, aircraftId: string): Promise<SessionRow[]>;
   /**
-   * Sesje jednego PILOTA - do wykrywania nakładki jego czasu (`pilot_overlap`, §4.7).
+   * Sesje jednego PILOTA W KLUBIE - do wykrywania nakładki jego czasu (`pilot_overlap`, §4.7).
    *
    * Osobno od `listByAircraft`, bo to inna OŚ: nakładka grafiku idzie w poprzek maszyn,
    * więc nie da się jej zobaczyć, patrząc na jeden samolot. Filtrujemy po `pic_id`, czyli
    * po PIC-u sesji - Dual nie jest piszącym i nie odpowiada za jej istnienie (§4.1 pkt 3).
+   *
+   * Nakładka MIĘDZY klubami nie jest wykrywana - świadomie (issue #99): flaga stoi
+   * w dzienniku jednego klubu, a wskazywałaby operację drugiego, czyli byłaby wyciekiem.
    */
-  listByPilot(db: Queryable, picId: string): Promise<SessionRow[]>;
+  listByPilot(db: Queryable, orgId: string, picId: string): Promise<SessionRow[]>;
   /**
    * Sesje jednej maszyny przejęte w danym oknie czasu - SKŁAD KARTY DOBY (§4.7).
    *
@@ -859,6 +900,7 @@ export interface SessionsProjectionPort {
    */
   listByAircraftDay(
     db: Queryable,
+    orgId: string,
     aircraftId: string,
     range: { fromMs: number; toMs: number },
   ): Promise<SessionRow[]>;
@@ -873,8 +915,8 @@ export interface SessionsProjectionPort {
  * potrzebuje jednej liczby WEWNĄTRZ swojej transakcji.
  */
 export interface AircraftConfigPort {
-  /** `null` = samolot nieznany albo bez skonfigurowanej pojemności. */
-  capacityL(db: Queryable, aircraftId: string): Promise<number | null>;
+  /** `null` = samolot nieznany W TYM KLUBIE albo bez skonfigurowanej pojemności. */
+  capacityL(db: Queryable, orgId: string, aircraftId: string): Promise<number | null>;
   /**
    * Klub, do którego maszyna należy; `null` = maszyna nieznana rejestrowi floty.
    *
@@ -917,8 +959,8 @@ export interface FlagsPort {
       details: Record<string, unknown>;
     },
   ): Promise<void>;
-  openForSession(db: Queryable, sessionUuid: string): Promise<FlagRecord[]>;
-  openForAircraft(db: Queryable, aircraftId: string): Promise<FlagRecord[]>;
+  openForSession(db: Queryable, orgId: string, sessionUuid: string): Promise<FlagRecord[]>;
+  openForAircraft(db: Queryable, orgId: string, aircraftId: string): Promise<FlagRecord[]>;
 }
 
 // ── eksport dzienny (§4.7) ──────────────────────────────────────────────────────
@@ -961,13 +1003,27 @@ export interface StoredDaySheet {
  * U Google „odczytem" jest sam arkusz pod `sheet_url` - doklejenie tej metody do
  * `SheetsPort` zmuszałoby przyszły adapter do martwego kodu.
  */
+/**
+ * ADRES kart klubu (issue #99, C5): slug wchodzi do ścieżki, a SEKRET (`sheets_key`)
+ * do zapytania `?k=`. Sekret jest jedynym poświadczeniem czytelnika linku - skarbnik
+ * klubu otwiera kartę bez logowania, a klub, który sekret ujawnił, zmieni go w panelu
+ * (epik E). Kształt mieszka tu, bo składa go ten sam adapter, który karty pisze.
+ */
+export interface SheetAddress {
+  orgId: string;
+  slug: string;
+  sheetsKey: string;
+}
+
 export interface SheetsReadPort {
   /**
    * Karta klubu po nazwie (`YYYY-MM-DD_SP-XXX`); `null` = nigdy nie wyeksportowano.
-   * Klub przychodzi z TOKENU czytającego - karta cudzego klubu o tej samej nazwie jest
-   * dla niego nieistniejąca. Adres ze slugiem klubu dochodzi w epiku C.
+   * Klub przychodzi z TOKENU czytającego albo z adresu ze slugiem - karta cudzego klubu
+   * o tej samej nazwie jest dla czytającego nieistniejąca.
    */
   readDaySheet(orgId: string, tab: string): Promise<StoredDaySheet | null>;
+  /** Klub po slugu z adresu karty; `null` = nie ma takiego klubu (albo jest wyłączony). */
+  addressOf(slug: string): Promise<SheetAddress | null>;
 }
 
 /**
@@ -1020,16 +1076,17 @@ export interface ExportLogPort {
    * Ostatnia rewizja karty, w której ta sesja WYSTĄPIŁA; `null` = nigdy nie weszła
    * do żadnej karty. To jest odpowiedź dla ekranu 11: „gdzie leżą moje dane".
    */
-  latest(db: Queryable, sessionUuid: string): Promise<ExportRecord | null>;
+  latest(db: Queryable, orgId: string, sessionUuid: string): Promise<ExportRecord | null>;
   /**
-   * Numer ostatniej rewizji KARTY (pary doba+samolot); `0` = jeszcze nie eksportowano.
+   * Numer ostatniej rewizji KARTY (pary doba+samolot) w klubie; `0` = jeszcze nie
+   * eksportowano.
    *
    * Osobno od `latest`, bo pytania są dwa i mają różne klucze. Nowa sesja dołączająca
    * do już wyeksportowanej doby nie ma ANI JEDNEGO własnego wiersza - gdyby numer
    * kolejnej rewizji liczyć z `latest(jej uuid)`, karta zaczęłaby od jedynki po raz
    * drugi i dziennik przestałby być osią czasu jednego dokumentu.
    */
-  latestRevision(db: Queryable, day: string, aircraftId: string): Promise<number>;
+  latestRevision(db: Queryable, orgId: string, day: string, aircraftId: string): Promise<number>;
   /** Dopisuje CAŁĄ rewizję: po jednym wierszu na sesję, jednym zapytaniem. */
   appendCard(db: Queryable, card: ExportCardRecord): Promise<void>;
   /**

@@ -78,7 +78,7 @@ export function registerAdminEventRoutes(
     app,
     gate,
     { method: 'GET', url: '/events', capability: 'panel.access' },
-    async (req, reply) => {
+    async (req, reply, actor) => {
       const query = listQuery.safeParse(req.query);
       if (!query.success) return reply.code(400).send({ error: 'bad_request' });
 
@@ -97,7 +97,7 @@ export function registerAdminEventRoutes(
         limit: q.limit,
       };
 
-      const outcome = await events.list(filter);
+      const outcome = await events.list(actor.orgId, filter);
       // 400, nie 500: kursor przychodzi z zewnątrz. Milczące zaczęcie od pierwszej
       // strony byłoby gorsze - panel pokazałby początek rejestru, sądząc, że przewinął.
       if (!outcome.ok) return reply.code(400).send({ error: 'bad_cursor' });

@@ -10,10 +10,10 @@
 import type { AircraftConfigPort, Queryable } from '../../../application/common/ports.ts';
 
 export class PgAircraftConfigRepo implements AircraftConfigPort {
-  async capacityL(db: Queryable, aircraftId: string): Promise<number | null> {
+  async capacityL(db: Queryable, orgId: string, aircraftId: string): Promise<number | null> {
     const { rows } = await db.query<{ capacity_l: number }>(
-      'SELECT capacity_l FROM aircraft WHERE id = $1',
-      [aircraftId],
+      'SELECT capacity_l FROM aircraft WHERE org_id = $1 AND id = $2',
+      [orgId, aircraftId],
     );
     return rows[0] == null ? null : Number(rows[0].capacity_l);
   }

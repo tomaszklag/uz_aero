@@ -44,8 +44,12 @@ import type {
 /** Doba UTC w ms - mianownik numeru doby (`close_time / 86400000`, dzielenie całkowite). */
 const DAY_MS = 86_400_000;
 
-/** Wspólny predykat zakresu - jedna definicja, żeby ujęcia nie mogły się rozjechać. */
-const CLOSED_IN_RANGE = `s.status = 'closed' AND s.close_time BETWEEN $1 AND $2`;
+/**
+ * Wspólny predykat zakresu - jedna definicja, żeby ujęcia nie mogły się rozjechać.
+ * Klub (`$3`) jest jego częścią, nie osobnym warunkiem dopisywanym per ujęcie: statystyki
+ * są przekrojem dziennika JEDNEGO klubu i żadne ujęcie nie ma prawa o tym zapomnieć.
+ */
+const CLOSED_IN_RANGE = `s.org_id = $3 AND s.status = 'closed' AND s.close_time BETWEEN $1 AND $2`;
 
 /**
  * Wspólna część SELECT-a agregatów - te same wyrażenia w każdym ujęciu, bo sumy
@@ -106,8 +110,8 @@ const toRegs = (values: (string | null)[] | null): string[] =>
   (values ?? []).filter((reg): reg is string => reg != null);
 
 export class PgAdminStatsRepo implements StatsAdminPort {
-  async totals(db: Queryable, range: StatsRange): Promise<AdminStatsTotalsRow> {
-    const params = [range.fromMs, range.toMs];
+  async totals(db: Queryable, orgId: string, range: StatsRange): Promise<AdminStatsTotalsRow> {
+    const params = [range.fromMs, range.toMs, orgId];
     const { rows } = await db.query<GroupSumsDbRow & { aircraft: string }>(
       `SELECT ${GROUP_SUMS},
               COUNT(DISTINCT s.aircraft_id) AS aircraft
@@ -136,7 +140,11 @@ export class PgAdminStatsRepo implements StatsAdminPort {
     };
   }
 
-  async openSessions(db: Queryable, range: StatsRange): Promise<AdminStatsOpenSessionsRow> {
+  async openSessions(
+    db: Queryable,
+    orgId: string,
+    range: StatsRange,
+  ): Promise<AdminStatsOpenSessionsRow> {
     // Sesja niezdana nie ma `close_time`, więc jedyną jej datą jest CHWILA PRZEJĘCIA
     // (`claim_time`) - tak samo lokuje ją w czasie lista dni `A02`. Od 2026-08-07 ta
     // kolumna niesie czas `session_claim`, a NIE godzinę meldunku z preflightu; sesja
@@ -148,9 +156,10 @@ export class PgAdminStatsRepo implements StatsAdminPort {
       `SELECT COUNT(*) FILTER (WHERE s.claim_time IS NOT NULL) AS in_range,
               COUNT(*) FILTER (WHERE s.claim_time IS NULL)     AS undated
          FROM sessions s
-        WHERE s.status = 'active'
+        WHERE s.org_id = $3
+          AND s.status = 'active'
           AND (s.claim_time BETWEEN $1 AND $2 OR s.claim_time IS NULL)`,
-      [range.fromMs, range.toMs],
+      [range.fromMs, range.toMs, orgId],
     );
     return {
       inRange: Number(rows[0]?.in_range ?? 0),
@@ -158,7 +167,7 @@ export class PgAdminStatsRepo implements StatsAdminPort {
     };
   }
 
-  async daily(db: Queryable, range: StatsRange): Promise<AdminStatsDailyRow[]> {
+  async daily(db: Queryable, orgId: string, range: StatsRange): Promise<AdminStatsDailyRow[]> {
     // Numer doby to dzielenie CAŁKOWITE epoki przez długość doby - bez funkcji
     // kalendarzowych i stref: `close_time` jest w UTC, a `BIGINT / BIGINT` w Postgresie
     // obcina w stronę zera (epoka jest dodatnia, więc to jest podłoga).
@@ -168,12 +177,16 @@ export class PgAdminStatsRepo implements StatsAdminPort {
          FROM sessions s
         WHERE ${CLOSED_IN_RANGE}
         GROUP BY 1`,
-      [range.fromMs, range.toMs],
+      [range.fromMs, range.toMs, orgId],
     );
     return rows.map((r) => ({ dayIndex: Number(r.day_index), blockMs: Number(r.block_ms) }));
   }
 
-  async byAircraft(db: Queryable, range: StatsRange): Promise<AdminStatsAircraftRow[]> {
+  async byAircraft(
+    db: Queryable,
+    orgId: string,
+    range: StatsRange,
+  ): Promise<AdminStatsAircraftRow[]> {
     interface Row extends GroupSumsDbRow {
       aircraft_id: string;
       reg: string | null;
@@ -201,11 +214,11 @@ export class PgAdminStatsRepo implements StatsAdminPort {
               (array_agg(s.mh_start ORDER BY s.close_time ASC,  s.session_uuid ASC))[1]  AS mh_first_start,
               (array_agg(s.mh_end   ORDER BY s.close_time DESC, s.session_uuid DESC))[1] AS mh_last_end
          FROM sessions s
-         LEFT JOIN aircraft a ON a.id = s.aircraft_id
+         LEFT JOIN aircraft a ON a.id = s.aircraft_id AND a.org_id = s.org_id
         WHERE ${CLOSED_IN_RANGE}
         GROUP BY s.aircraft_id, a.reg, a.type, a.capacity_l, a.mh_format
         ORDER BY SUM(s.block_ms) DESC, s.aircraft_id ASC`,
-      [range.fromMs, range.toMs],
+      [range.fromMs, range.toMs, orgId],
     );
 
     return rows.map((r) => ({
@@ -221,7 +234,7 @@ export class PgAdminStatsRepo implements StatsAdminPort {
     }));
   }
 
-  async byPilot(db: Queryable, range: StatsRange): Promise<AdminStatsPilotRow[]> {
+  async byPilot(db: Queryable, orgId: string, range: StatsRange): Promise<AdminStatsPilotRow[]> {
     interface Row {
       pic_id: string;
       code: string | null;
@@ -254,11 +267,11 @@ export class PgAdminStatsRepo implements StatsAdminPort {
          FROM sessions s
          LEFT JOIN pilots      pp ON pp.id = s.pic_id
          LEFT JOIN memberships p  ON p.pilot_id = s.pic_id AND p.org_id = s.org_id
-         LEFT JOIN aircraft    a  ON a.id = s.aircraft_id
+         LEFT JOIN aircraft    a  ON a.id = s.aircraft_id AND a.org_id = s.org_id
         WHERE ${CLOSED_IN_RANGE}
         GROUP BY s.pic_id, p.code, pp.name
         ORDER BY SUM(s.block_ms) DESC, s.pic_id ASC`,
-      [range.fromMs, range.toMs],
+      [range.fromMs, range.toMs, orgId],
     );
 
     return rows.map((r) => ({
@@ -275,7 +288,11 @@ export class PgAdminStatsRepo implements StatsAdminPort {
     }));
   }
 
-  async byOperation(db: Queryable, range: StatsRange): Promise<AdminStatsOperationRow[]> {
+  async byOperation(
+    db: Queryable,
+    orgId: string,
+    range: StatsRange,
+  ): Promise<AdminStatsOperationRow[]> {
     interface Row extends GroupSumsDbRow {
       operation: string | null;
       regs: (string | null)[] | null;
@@ -288,11 +305,11 @@ export class PgAdminStatsRepo implements StatsAdminPort {
               array_agg(DISTINCT a.reg ORDER BY a.reg) AS regs,
               COUNT(DISTINCT s.client)                 AS clients
          FROM sessions s
-         LEFT JOIN aircraft a ON a.id = s.aircraft_id
+         LEFT JOIN aircraft a ON a.id = s.aircraft_id AND a.org_id = s.org_id
         WHERE ${CLOSED_IN_RANGE}
         GROUP BY s.operation
         ORDER BY SUM(s.block_ms) DESC, s.operation ASC NULLS LAST`,
-      [range.fromMs, range.toMs],
+      [range.fromMs, range.toMs, orgId],
     );
 
     return rows.map((r) => ({
@@ -303,7 +320,7 @@ export class PgAdminStatsRepo implements StatsAdminPort {
     }));
   }
 
-  async drops(db: Queryable, range: StatsRange): Promise<AdminStatsDropsRow> {
+  async drops(db: Queryable, orgId: string, range: StatsRange): Promise<AdminStatsDropsRow> {
     interface Row {
       sessions: string;
       flight_ms: string;
@@ -336,7 +353,7 @@ export class PgAdminStatsRepo implements StatsAdminPort {
                                                                                AS stale_rows
          FROM sessions s
         WHERE ${CLOSED_IN_RANGE}`,
-      [range.fromMs, range.toMs],
+      [range.fromMs, range.toMs, orgId],
     );
 
     const r = rows[0]!;
@@ -353,7 +370,11 @@ export class PgAdminStatsRepo implements StatsAdminPort {
     };
   }
 
-  async dropsByClient(db: Queryable, range: StatsRange): Promise<AdminStatsClientRow[]> {
+  async dropsByClient(
+    db: Queryable,
+    orgId: string,
+    range: StatsRange,
+  ): Promise<AdminStatsClientRow[]> {
     interface Row {
       client: string | null;
       lifts: string;
@@ -382,7 +403,7 @@ export class PgAdminStatsRepo implements StatsAdminPort {
         GROUP BY s.client
         ORDER BY COALESCE(SUM(s.jumpers_tandem + s.jumpers_aff + s.jumpers_solo), 0) DESC,
                  s.client ASC NULLS LAST`,
-      [range.fromMs, range.toMs],
+      [range.fromMs, range.toMs, orgId],
     );
 
     return rows.map((r) => ({

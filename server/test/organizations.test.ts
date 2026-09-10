@@ -483,6 +483,7 @@ describe('logowanie do panelu: sesja klubu albo sesja platformowa', () => {
     });
     expect(me.statusCode).toBe(200);
     expect(me.json().org).toEqual({ id: ORG_B, slug: 'aeroklub-beta', name: 'Aeroklub Beta' });
+    expect(me.json().capabilities).not.toContain('bugs.triage');
     expect(me.json().pilot.code).toBe('BAD');
   });
 
@@ -512,7 +513,9 @@ describe('logowanie do panelu: sesja klubu albo sesja platformowa', () => {
     expect(res.json()).toEqual({
       pilot: { id: 'admin', code: null, name: 'Operator', role: 'superadmin' },
       org: null,
-      capabilities: ['platform.manage'],
+      // `bugs.triage` jest odtąd zdolnością PLATFORMY (issue #99, C6): zgłoszenia
+      // błędów obsługuje superadministrator dla wszystkich klubów naraz.
+      capabilities: ['platform.manage', 'bugs.triage'],
     });
 
     // Sesja platformowa NIE otwiera tras klubu - `GET /me` jest trasą klubu (401,
@@ -644,16 +647,41 @@ describe('to samo w dwóch klubach to dwa byty', () => {
 
 // ══ 4. INGEST: MASZYNA MUSI NALEŻEĆ DO KLUBU Z TOKENU ═══════════════════════════════
 
-describe('ingest odrzuca zapis do cudzego klubu', () => {
-  it('paczka z tokenu klubu A do maszyny klubu B → 403 `aircraft_not_in_org`, zero wierszy', async () => {
+/**
+ * Od epiku C (issue #99, C2) zapis do cudzego klubu jest WSTRZYMYWANY, nie odbijany:
+ * odpowiedź 200 niesie uuidy w `withheld`, rejestr nie dostaje ani wiersza, a reszta
+ * paczki (do własnego klubu) przechodzi. Epik B odbijał całą paczkę `403
+ * aircraft_not_in_org` - i blokował tym samym wysyłkę wszystkiego, co telefon miał
+ * w kolejce do WŁASNEGO klubu.
+ */
+describe('ingest wstrzymuje zapis do cudzego klubu', () => {
+  it('paczka z tokenu klubu A do maszyny klubu B → 200 z kompletem uuidów w `withheld`, zero wierszy', async () => {
     const { app, db } = await testHarness();
     await seedBetaFleet(db);
     const a = await tokenOf(app, 'TMK');
 
-    const res = await post(app, a, day('sess-x', 'SP-BBB', 'TMK'));
-    expect(res.statusCode).toBe(403);
-    expect(res.json()).toEqual({ error: 'aircraft_not_in_org' });
+    const batch = day('sess-x', 'SP-BBB', 'TMK');
+    const res = await post(app, a, batch);
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({ accepted: 0, duplicates: 0 });
+    expect([...res.json().withheld].sort()).toEqual(batch.map((e) => e.uuid).sort());
     expect(await count(db, 'events')).toBe(0);
+    expect(await count(db, 'sessions')).toBe(0);
+  });
+
+  it('w JEDNEJ paczce zapisy do własnego klubu wchodzą, a do cudzego są wstrzymane', async () => {
+    const { app, db } = await testHarness();
+    await seedBetaFleet(db);
+    const a = await tokenOf(app, 'TMK');
+
+    const own = day('sess-own', 'SP-AXA', 'TMK');
+    const foreign = day('sess-foreign', 'SP-BBB', 'TMK');
+    const res = await post(app, a, [...own, ...foreign]);
+    expect(res.statusCode).toBe(200);
+    expect(res.json().accepted).toBe(own.length);
+    expect([...res.json().withheld].sort()).toEqual(foreign.map((e) => e.uuid).sort());
+    expect(await count(db, 'events', `WHERE org_id = '${ORG_A}'`)).toBe(own.length);
+    expect(await count(db, 'events', `WHERE org_id = '${ORG_B}'`)).toBe(0);
   });
 
   it('paczka do WŁASNEJ maszyny stempluje klub tokenu na zdarzeniach, projekcji i flagach', async () => {
@@ -670,7 +698,7 @@ describe('ingest odrzuca zapis do cudzego klubu', () => {
 
   it('PWI z tokenem Alfy nie dopisze zdarzeń do swojej operacji w Becie', async () => {
     // Ta sama osoba, dwa kluby: operacja należy do klubu, w którym ją zaczęto (§7.3).
-    // Dosyłka spod tokenu drugiego klubu jest odrzucana - inaczej przełączenie klubu
+    // Dosyłka spod tokenu drugiego klubu jest wstrzymywana - inaczej przełączenie klubu
     // przepisywałoby zdarzenia jednej operacji do drugiego dziennika.
     const { app, db, clock } = await testHarness();
     await seedBetaFleet(db);
@@ -696,8 +724,9 @@ describe('ingest odrzuca zapis do cudzego klubu', () => {
     expect(inAlfa.org.id).toBe(ORG_A);
 
     const res = await post(app, inAlfa.token, rest);
-    expect(res.statusCode).toBe(403);
-    expect(res.json()).toEqual({ error: 'aircraft_not_in_org' });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().accepted).toBe(0);
+    expect([...res.json().withheld].sort()).toEqual(rest.map((e) => e.uuid).sort());
     expect(await count(db, 'events')).toBe(1);
   });
 });

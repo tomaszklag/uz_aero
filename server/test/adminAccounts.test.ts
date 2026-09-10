@@ -369,7 +369,7 @@ describe('POST /admin/api/pilots - zakładanie konta', () => {
       email: 'ktos@uzaero.pl',
     });
 
-    const { rows } = await db.query<{ n: string }>('SELECT COUNT(*) AS n FROM pilots');
+    const { rows } = await db.query<{ n: string }>('SELECT COUNT(*) AS n FROM pilots WHERE platform_role IS NULL');
     expect(Number(rows[0]?.n)).toBe(WORLD_PERSONS);
     expect(await auditRows(db)).toEqual([]);
   });
@@ -625,7 +625,7 @@ describe('wyścig o unikalność kodu i e-maila', () => {
     expect(sameEmail).toEqual({ ok: false, reason: 'conflict', field: 'email' });
 
     // Odbita transakcja nie zostawia ani konta, ani wpisu w dzienniku.
-    const { rows } = await harness.db.query<{ n: string }>('SELECT COUNT(*) AS n FROM pilots');
+    const { rows } = await harness.db.query<{ n: string }>('SELECT COUNT(*) AS n FROM pilots WHERE platform_role IS NULL');
     expect(Number(rows[0]?.n)).toBe(WORLD_PERSONS);
     expect(await auditRows(harness.db)).toEqual([]);
   });

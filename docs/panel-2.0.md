@@ -924,3 +924,34 @@ z hasłami.
 ścieżką po stronie serwera (`application/common/ports.ts`, nie `domain/`), bo status
 tożsamości jest kształtem magazynu, nie regułą klubu. Powód lustra ten sam: status
 dodany na serwerze i nieznany panelowi wyciekłby na ekran surowym napisem.
+
+## 13. Dwa rodzaje sesji: klub i platforma (wielofirmowość, issue #99 C6, 2026-09-10)
+
+Do 2.0.0 panel miał JEDEN rodzaj sesji - administratora klubu - więc kolumna boczna
+mogła być stałą listą czterech modułów. Wielofirmowość dodała drugi: superadministrator
+platformy, który **nie wchodzi do danych żadnego klubu** (`docs/wielofirmowosc.md` §3.3).
+Nie ma dziennika, nie ma floty, nie ma pilotów; ma Zgłoszenia (i od epiku E Organizacje).
+
+- **kolumna jest LISTĄ PRZEFILTROWANĄ, nie stałą** (`navItemsFor(capabilities)`
+  w `ui/shell/nav.ts`). Zdolność stoi PRZY POZYCJI, nie w warunku w `AppShell`: pozycja
+  bez prawa wejścia i trasa bez prawa wejścia to jedna decyzja, a rozdzielone rozjadą
+  się przy piątym module
+- **pozycja bez zdolności jest UKRYTA, nie wyszarzona** - to §3.3 dociągnięte do końca,
+  z trzecim powodem. Kłódka mówi „istnieje ekran, do którego możesz dostać prawo";
+  triaż zgłoszeń to prawo, którego administrator klubu nie może dostać w ogóle, bo
+  `bugs.triage` jest zdolnością PLATFORMY. Kłódka byłaby więc obietnicą bez pokrycia
+- **ekran startowy liczy się z tych samych zdolności** (`homeFor`): stała `/dziennik`
+  odsyłała superadministratora na trasę, która odpowiada jego sesji `401`, czyli na
+  pustą tabelę z błędem. Ta sama funkcja obsługuje goły adres, adres spoza mapy tras
+  (`HomeRedirect`) i powrót po marce
+- **trasa modułu platformy pyta o zdolność** (`RequireCapability`) - wklejony adres
+  `#/zgloszenia` odsyła administratora klubu na jego ekran startowy, zamiast pokazać mu
+  ramę modułu z błędem 401 pod spodem. To nie jest zabezpieczenie (dane wydaje serwer),
+  tylko odpowiedź na pytanie „czy ja tu mam czego szukać"
+- **lista zgłoszeń ma kolumnę „Klub"** i klub w podtytule szuflady: kolejka jest jedna
+  dla całego serwera, a kod pilota jest jedyny W KLUBIE - bez tego dwa zgłoszenia od
+  dwóch różnych `TMA` czytałyby się jak dwa zgłoszenia jednej osoby. W szufladzie klub
+  stoi na końcu listy kontekstu, razem z chwilą przyjęcia: oba pola pochodzą od SERWERA,
+  a nie z kontekstu, który przysłał telefon - i lista ma tego nie mieszać
+- **filtra po klubie NIE MA** - kolejka fazy testów ma kilkanaście pozycji, a chip
+  dzielący robotę na kluby kazałby przeglądać ją tyle razy, ile jest klubów

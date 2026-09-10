@@ -17,6 +17,7 @@ import type { ConsumptionNormPort, Queryable } from '../../../application/common
 export class PgConsumptionNormRepo implements ConsumptionNormPort {
   async closedSessionUuids(
     db: Queryable,
+    orgId: string,
     aircraftId: string,
     range: { fromMs: number; toMs: number },
   ): Promise<string[]> {
@@ -25,9 +26,10 @@ export class PgConsumptionNormRepo implements ConsumptionNormPort {
     const { rows } = await db.query<{ session_uuid: string }>(
       `SELECT session_uuid
          FROM sessions
-        WHERE aircraft_id = $1 AND status = 'closed' AND close_time BETWEEN $2 AND $3
+        WHERE org_id = $1 AND aircraft_id = $2 AND status = 'closed'
+          AND close_time BETWEEN $3 AND $4
         ORDER BY close_time DESC`,
-      [aircraftId, range.fromMs, range.toMs],
+      [orgId, aircraftId, range.fromMs, range.toMs],
     );
     return rows.map((row) => row.session_uuid);
   }
@@ -41,7 +43,10 @@ export class PgConsumptionNormRepo implements ConsumptionNormPort {
     computedAt: Date,
   ): Promise<void> {
     if (norm == null) {
-      await db.query('DELETE FROM aircraft_consumption WHERE aircraft_id = $1', [aircraftId]);
+      await db.query('DELETE FROM aircraft_consumption WHERE org_id = $1 AND aircraft_id = $2', [
+        orgId,
+        aircraftId,
+      ]);
       return;
     }
 
@@ -57,16 +62,18 @@ export class PgConsumptionNormRepo implements ConsumptionNormPort {
     );
   }
 
-  async all(db: Queryable): Promise<Map<string, ConsumptionNorm>> {
+  async all(db: Queryable, orgId: string): Promise<Map<string, ConsumptionNorm>> {
     const { rows } = await db.query<{ aircraft_id: string; model: ConsumptionNorm }>(
-      'SELECT aircraft_id, model FROM aircraft_consumption',
+      'SELECT aircraft_id, model FROM aircraft_consumption WHERE org_id = $1',
+      [orgId],
     );
     return new Map(rows.map((row) => [row.aircraft_id, row.model]));
   }
 
-  async latestComputedAt(db: Queryable): Promise<Date | null> {
+  async latestComputedAt(db: Queryable, orgId: string): Promise<Date | null> {
     const { rows } = await db.query<{ last: string | null }>(
-      'SELECT MAX(computed_at) AS last FROM aircraft_consumption',
+      'SELECT MAX(computed_at) AS last FROM aircraft_consumption WHERE org_id = $1',
+      [orgId],
     );
     return rows[0]?.last != null ? new Date(rows[0].last) : null;
   }

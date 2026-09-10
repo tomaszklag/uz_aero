@@ -377,15 +377,15 @@ describe('A11 · nadpisanie projekcji: komenda przez bramę audytu', () => {
     // i test przeszedłby na pustej bazie, twierdząc, że sprawdził blokadę.
     const spy = (real: EventsStorePort): EventsStorePort => ({
       insertBatch: (tx, orgId, events, sourceDevice) => real.insertBatch(tx, orgId, events, sourceDevice),
-      lastReceivedAt: (db, aircraftId) => real.lastReceivedAt(db, aircraftId),
-      countForSession: (db, sessionUuid) => real.countForSession(db, sessionUuid),
-      sessionStreams: (db, sessionUuids) => real.sessionStreams(db, sessionUuids),
-      sessionEvents: async (db, sessionUuid) => {
+      lastReceivedAt: (db, orgId, aircraftId) => real.lastReceivedAt(db, orgId, aircraftId),
+      countForSession: (db, orgId, sessionUuid) => real.countForSession(db, orgId, sessionUuid),
+      sessionStreams: (db, orgId, sessionUuids) => real.sessionStreams(db, orgId, sessionUuids),
+      sessionEvents: async (db, orgId, sessionUuid) => {
         const { rows } = await db.query<{ n: number }>(
           "SELECT COUNT(*)::int AS n FROM pg_locks WHERE locktype = 'advisory'",
         );
         held.push(Number(rows[0]?.n ?? 0));
-        return real.sessionEvents(db, sessionUuid);
+        return real.sessionEvents(db, orgId, sessionUuid);
       },
     });
 

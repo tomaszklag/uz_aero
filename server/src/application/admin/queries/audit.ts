@@ -28,8 +28,8 @@ export class AdminAuditQueries {
     private readonly audit: AdminAuditReadPort,
   ) {}
 
-  async list(filter: AuditListFilter): Promise<AuditListOutcome> {
-    const result = await this.audit.list(this.db, filter);
+  async list(orgId: string, filter: AuditListFilter): Promise<AuditListOutcome> {
+    const result = await this.audit.list(this.db, orgId, filter);
     if (result == null) return { ok: false, reason: 'bad_cursor' };
 
     return {

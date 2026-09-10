@@ -138,7 +138,8 @@ const selectSql = (blockingTypes: string): string => `
          COALESCE(
            (SELECT array_agg(f.id ORDER BY f.id)
               FROM flags f
-             WHERE f.status = 'open'
+             WHERE f.org_id = s.org_id
+               AND f.status = 'open'
                AND f.type IN (${blockingTypes})
                AND s.session_uuid = ANY (f.session_uuids)),
            ARRAY[]::int[]
@@ -149,20 +150,22 @@ const selectSql = (blockingTypes: string): string => `
          ow.session_uuid AS overwritten_by_session,
          ow.exported_at  AS overwritten_at
     FROM sessions s
-    LEFT JOIN aircraft    a  ON a.id = s.aircraft_id
+    LEFT JOIN aircraft    a  ON a.id = s.aircraft_id AND a.org_id = s.org_id
     LEFT JOIN pilots      pp ON pp.id = s.pic_id
     LEFT JOIN memberships p  ON p.pilot_id = s.pic_id AND p.org_id = s.org_id
     LEFT JOIN LATERAL (
       SELECT el.revision, el.exported_at, el.sheet_url, el.day, el.aircraft_id, el.id
         FROM export_log el
-       WHERE el.session_uuid = s.session_uuid
+       WHERE el.org_id = s.org_id
+         AND el.session_uuid = s.session_uuid
        ORDER BY el.exported_at DESC, el.id DESC
        LIMIT 1
     ) e ON TRUE
     LEFT JOIN LATERAL (
       SELECT o.session_uuid, o.exported_at
         FROM export_log o
-       WHERE o.day = e.day
+       WHERE o.org_id = s.org_id
+         AND o.day = e.day
          AND o.aircraft_id = e.aircraft_id
          AND o.session_uuid <> s.session_uuid
          AND o.revision > e.revision
@@ -253,10 +256,12 @@ export class PgAdminExportsRepo implements ExportsAdminPort {
    */
   async list(
     db: Queryable,
+    orgId: string,
     filter: ExportListFilter,
   ): Promise<{ items: AdminExportJoin[]; counts: AdminExportCounts; matched: number }> {
     const page = new SqlFilter();
     const pageBlocking = bindBlockingTypes(page);
+    page.add('s.org_id = ?', orgId);
     applyFilters(page, filter);
     const pageWhere = page.where();
     const stateWhere =
@@ -272,7 +277,7 @@ export class PgAdminExportsRepo implements ExportsAdminPort {
       page.params(),
     );
 
-    const counts = await this.countByState(db, filter);
+    const counts = await this.countByState(db, orgId, filter);
     // `matched` opisuje zapytanie RAZEM z zawężeniem: bez chipa to cały zakres, z chipem
     // - ta jedna liczba, którą chip obiecuje. Stąd trasa wie, czy limit obciął listę.
     const matched = filter.state === undefined ? counts.total : counts[filter.state];
@@ -288,9 +293,14 @@ export class PgAdminExportsRepo implements ExportsAdminPort {
    * `revised` i `overwritten` są WYMIARAMI, nie stanami, więc jadą jako `FILTER` obok
    * grupowania, a nie jako kolejne gałęzie `CASE`.
    */
-  private async countByState(db: Queryable, filter: ExportListFilter): Promise<AdminExportCounts> {
+  private async countByState(
+    db: Queryable,
+    orgId: string,
+    filter: ExportListFilter,
+  ): Promise<AdminExportCounts> {
     const sql = new SqlFilter();
     const blocking = bindBlockingTypes(sql);
+    sql.add('s.org_id = ?', orgId);
     applyFilters(sql, filter);
 
     const { rows } = await db.query<StateCountDbRow>(
@@ -330,9 +340,10 @@ export class PgAdminExportsRepo implements ExportsAdminPort {
     return counts;
   }
 
-  async byUuid(db: Queryable, sessionUuid: string): Promise<AdminExportJoin | null> {
+  async byUuid(db: Queryable, orgId: string, sessionUuid: string): Promise<AdminExportJoin | null> {
     const sql = new SqlFilter();
     const blockingTypes = bindBlockingTypes(sql);
+    sql.add('s.org_id = ?', orgId);
     sql.add('s.session_uuid = ?', sessionUuid);
 
     const { rows } = await db.query<ExportJoinDbRow>(
@@ -342,7 +353,7 @@ export class PgAdminExportsRepo implements ExportsAdminPort {
     return rows[0] ? toJoin(rows[0]) : null;
   }
 
-  async history(db: Queryable, sessionUuid: string): Promise<AdminExportRevision[]> {
+  async history(db: Queryable, orgId: string, sessionUuid: string): Promise<AdminExportRevision[]> {
     // `day::text`, nie `day`: sterowniki parsują `DATE` do JS `Date` o północy LOKALNEJ,
     // a `toISOString()` na takiej dacie cofa dzień w każdej strefie na wschód od
     // Greenwich - czyli u nas. Ten sam powód, co w `pg/common/exportLogRepo.ts`.
@@ -353,9 +364,9 @@ export class PgAdminExportsRepo implements ExportsAdminPort {
     const { rows } = await db.query<RevisionDbRow>(
       `SELECT revision, day::text AS day, sheet_url, exported_at
          FROM export_log
-        WHERE session_uuid = $1
+        WHERE org_id = $1 AND session_uuid = $2
         ORDER BY revision ASC, id ASC`,
-      [sessionUuid],
+      [orgId, sessionUuid],
     );
     return rows.map((r) => ({
       revision: r.revision,

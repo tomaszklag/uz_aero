@@ -36,8 +36,8 @@ export class AdminEventQueries {
     private readonly events: AdminEventsReadPort,
   ) {}
 
-  async list(filter: EventListFilter): Promise<EventListOutcome> {
-    const result = await this.events.list(this.db, filter, CLOCK_DRIFT_MS);
+  async list(orgId: string, filter: EventListFilter): Promise<EventListOutcome> {
+    const result = await this.events.list(this.db, orgId, filter, CLOCK_DRIFT_MS);
     if (result == null) return { ok: false, reason: 'bad_cursor' };
 
     return {

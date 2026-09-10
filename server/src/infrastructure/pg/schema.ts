@@ -859,7 +859,13 @@ export const MIGRATION_8 = `
     -- nie daje dostępu - daje wyłącznie członkostwo 'pending'. Jedyny na SERWERZE, bo
     -- pilot wpisuje sam kod, bez nazwy klubu. NULL = klub wyłączył dołączanie kodem.
     join_code       TEXT UNIQUE,
-    join_code_since TIMESTAMPTZ
+    join_code_since TIMESTAMPTZ,
+    -- SEKRET ADRESU KART ARKUSZA (issue #99, C5): /sheets/<slug>/<tab>?k=<sheets_key>.
+    -- Jedyne poświadczenie czytelnika linku bez konta (skarbnik klubu); losowany przy
+    -- założeniu klubu (także w backfillu) i do zmiany w panelu klubu (epik E). Nie hash:
+    -- panel musi go pokazać, żeby administrator mógł podać adres. Jawny w bazie jak
+    -- join_code i z tego samego powodu: sekret daje ODCZYT dokumentu, nie dostęp do konta.
+    sheets_key      TEXT NOT NULL DEFAULT replace(gen_random_uuid()::text, '-', '')
   );
 
   -- ═══ CZŁONKOSTWO: KIM PILOT JEST W TYM KLUBIE ═══════════════════════════════

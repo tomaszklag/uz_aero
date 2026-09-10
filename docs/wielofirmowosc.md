@@ -167,6 +167,25 @@ Dziś nazwy kart są zgadywalne (znak + data), więc publiczność „po nazwie"
 akceptowalna przy jednym klubie i przestaje być przy wielu. Decyzja o tokenie wchodzi
 do epiku C razem z testem izolacji.
 
+**ROZSTRZYGNIĘTE w epiku C (2026-09-10)** - propozycja przyjęta, z trzema uściśleniami:
+- **kolumna nazywa się `organizations.sheets_key`** i jest SEKRETEM KLUBU, nie tokenem
+  per karta ani per odbiorca: karta jest dokumentem klubu, a klub decyduje, komu daje
+  adres. Sekret losuje baza przy założeniu klubu (`NOT NULL DEFAULT`), więc nie ma stanu
+  „klub bez sekretu", w którym trasa musiałaby wybierać między odmową a publicznością;
+- **adres to `GET /sheets/<slug>/<tab>?k=<sekret>`** - sekret w zapytaniu, nie
+  w ścieżce, żeby nie wyglądał na część nazwy dokumentu. Serwer wpisuje ten adres
+  do `export_log.sheet_url`, a telefon dostaje go w `sync-status`: JEDNO miejsce składa
+  ten link i nikt go nie skleja u siebie;
+- **jedna odmowa na wszystko** - zły sekret, zły slug, cudza karta, brak sekretu
+  i klub wyłączony dają identyczne `404 not_found`. Adres nie potwierdza więc ani
+  istnienia klubu o tym slugu, ani karty o tej nazwie. Porównanie sekretu jest
+  czasowo stałe (`timingSafeEqual` po sprawdzeniu długości).
+
+Trasa **nie ma sesji i mieć nie ma** - to jest cały jej sens: link musi otworzyć się
+skarbnikowi bez konta w aplikacji. Adres sprzed 2.0.0 (`/sheets/:tab`) zostaje dla
+linków zapisanych w dzienniku przed migracją 8 i czyta kartę w klubie Z TOKENU,
+więc dla członka innego klubu ta sama nazwa jest nieistniejąca.
+
 ### 3.8 Kod klubu - JEDNA droga dołączenia (decyzja 2026-09-09, zmienia decyzję 6)
 
 Pierwotna decyzja 6 z 2026-09-08 przewidywała trzy drogi (adres e-mail wpisany przez
@@ -556,7 +575,48 @@ starym pakiecie - decyzja o tym w epiku W.
   Świat testowy ma DWA kluby (`test/testWorld.ts`: Alfa i Beta, PWI w obu pod dwoma
   kodami) - warunek testu izolacji z epiku C jest spełniony.
 - **C - serwer: izolacja** (issue #99): `org_id` w każdym zapytaniu, adres kart
-  arkusza, test izolacji każdej trasy.
+  arkusza, test izolacji każdej trasy. **WDROŻONE 2026-09-10** (gałąź
+  `feature-99-izolacja-klubow`). Co weszło i czego dokument nie przewidział:
+  - **klub jest ARGUMENTEM PORTU, nie polem filtra** - `list(db, orgId, filter)`
+    w każdym repozytorium odczytu, a w predykacie stoi jako PIERWSZY warunek. Pole
+    filtra dałoby się pominąć i nikt by nie zauważył; argument wymusza kompilator;
+  - **cudza rzecz odpowiada 404, nie 403** - operacja, maszyna, flaga, karta i norma
+    innego klubu są dla tokenu nieistniejące (to samo rozstrzygnięcie, co w epiku B dla
+    korekt). `sync-status` cudzej operacji oddaje kształt „nieznana serwerowi"
+    (`received: 0`, `status: 'unknown'`), bo telefon musi umieć to przeczytać offline;
+  - **DWA strażniki, nie jeden** (kryterium wydania z §12): `server/test/tenantIsolation.test.ts`
+    bierze listę tras z REJESTRU FASTIFY (`app.routeCatalog`, hook `onRoute`) i wymaga,
+    by każda miała przypadek izolacji albo imienny wyjątek z powodem - nowa trasa bez
+    jednego z dwóch wywala test. Do tego strażnik w `test/architecture.test.ts`: każda
+    metoda adaptera, która dotyka tabeli skopowanej, musi mówić `org_id`
+    (`docs/architektura-panelu-serwer.md` §7.10);
+  - **ingest waży członkostwo PER ZDARZENIE** - zapis do maszyny albo operacji innego
+    klubu nie odbija już całej paczki (`aircraft_not_in_org` z epiku B), tylko wraca
+    w `withheld[]` mechanizmem z issue #81: reszta paczki wchodzi, telefon zdejmuje
+    wstrzymane z kolejki na zawsze. Cudza operacja nie ma jak zablokować synchronizacji
+    własnych zapisów;
+  - **brama telefonu pyta bazę o członkostwo przy KAŻDYM żądaniu** (`authorizeMember`,
+    zapowiedziane w §6): wyłączenie członkostwa zamyka trasy natychmiast, nie po
+    godzinie życia tokenu;
+  - **karta arkusza: `GET /sheets/<slug>/<tab>?k=<sekret>`** (§3.7) - poświadczeniem
+    jest `organizations.sheets_key`, porównywany czasowo stale; każda rozbieżność
+    (slug, sekret, nazwa karty, klub wyłączony) to TEN SAM 404. Adres sprzed 2.0.0
+    (`/sheets/:tab`) zostaje dla linków w dzienniku eksportu, na bramie członkostwa;
+  - **zgłoszenia błędów przeszły do PLATFORMY** - `bugs.triage` wyszło z roli `admin`
+    i weszło do `PLATFORM_CAPABILITIES` (§3.3). Konsekwencja w panelu: pozycji
+    „Zgłoszenia" w kolumnie klubu NIE MA WCALE (nie jest wyszarzona), a wiersz listy
+    niesie kolumnę „Klub", bo kolejka jest jedna dla serwera, a kod pilota jedyny
+    w klubie. Trasa panelu pyta o zdolność (`RequireCapability`), więc wklejony adres
+    odsyła na własny ekran startowy;
+  - **sygnatura numeruje dobę pilota W KLUBIE** - `AND x.org_id = s.org_id` w randze SQL
+    (epik B dodał ten warunek; epik C dołożył test krzyżowy dla osoby w dwóch klubach:
+    ta sama doba, dwa niezależne numery, kody `PWI` i `PWB`);
+  - **`/me/events` jedzie z klubu TOKENU** - osoba w dwóch klubach odtwarza rejestr
+    osobno w każdym z nich. Odtworzenie wszystkich klubów naraz wymagałoby, żeby telefon
+    trzymał operacje spoza klubu aktywnego - to jest decyzja epiku F, nie C;
+  - **czego epik C świadomie NIE ROBI**: nakładek na maszynę współdzieloną między
+    klubami (dwie osoby, dwa kluby, jedna maszyna fizyczna - `aircraft_overlap` liczy
+    się w obrębie klubu) i przełączania klubu w panelu (epik E).
 - **D - dołączanie kodem klubu** (issue #100): `POST /auth/join { code }`,
   `GET /auth/memberships`, kolejka `pending` na członkostwach (zatwierdzenie z kodem
   i rolą, odrzucenie z powodem), kod klubu w panelu (generowanie, wyłączenie), pierwszy

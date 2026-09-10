@@ -22,9 +22,10 @@
 
 import { Link, NavLink } from 'react-router-dom';
 
+import type { Capability } from '../../api/dto';
 import { BookIcon, BugIcon, PeopleIcon, PlaneIcon, SignOutIcon, SwitchIcon } from '../components/icons';
 import { initials } from './initials';
-import { HOME, NAV_ITEMS, type NavIcon } from './nav';
+import { homeFor, navItemsFor, type NavIcon } from './nav';
 
 const ICONS: Record<NavIcon, (props: { size?: number }) => React.ReactNode> = {
   logbook: BookIcon,
@@ -45,16 +46,30 @@ interface AppShellProps {
   who: string;
   /** Kontekst klubu w kolumnie - patrz nagłówek pliku. */
   org?: ShellOrg;
+  /**
+   * Zdolności sesji - decydują, KTÓRE pozycje ma kolumna (`navItemsFor`) i gdzie
+   * prowadzi marka. Sesja platformowa nie ma modułów klubu, więc jej kolumna jest
+   * inna, a nie ta sama z kłódkami (issue #99 C6).
+   */
+  capabilities: readonly Capability[];
   onLogout: () => void;
   logoutPending: boolean;
   children: React.ReactNode;
 }
 
-export function AppShell({ who, org, onLogout, logoutPending, children }: AppShellProps) {
+export function AppShell({
+  who,
+  org,
+  capabilities,
+  onLogout,
+  logoutPending,
+  children,
+}: AppShellProps) {
+  const items = navItemsFor(capabilities);
   return (
     <>
       <header className="topbar">
-        <Link className="brand" to={HOME}>
+        <Link className="brand" to={homeFor(capabilities)}>
           <span className="brand-mark">
             <PlaneIcon size={14} />
           </span>
@@ -91,7 +106,7 @@ export function AppShell({ who, org, onLogout, logoutPending, children }: AppShe
           )}
 
           <nav className="sidebar-nav" aria-label="Sekcje panelu">
-            {NAV_ITEMS.map((item) => {
+            {items.map((item) => {
               const Icon = ICONS[item.icon];
               return (
                 <NavLink

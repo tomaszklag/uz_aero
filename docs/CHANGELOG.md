@@ -37,6 +37,13 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 ### Nowości
 
 - **Panel klubu w lżejszym stylu.** Nawigacja w kolumnie po lewej z nazwą klubu nad pozycjami, ścieżka nad nagłówkiem w dzienniku (flota → maszyna → operacja), tytuły i etykiety pisane jak na stronie, a nie jak na przyrządzie. Kolory bez zmian.
+- **Jeden serwer obsługuje wiele klubów, a dane klubów są rozdzielone.** Każdy klub widzi wyłącznie swoje maszyny, pilotów, operacje i dokumenty - także wtedy, gdy ten sam pilot lata w dwóch klubach albo dwa kluby mają maszyny o tym samym znaku. Pilot podpisuje operacje kodem nadanym w danym klubie, a numeracja operacji w dobie biegnie w każdym klubie osobno.
+- **Link do karty arkusza dostaje adres klubu i własny sekret.** Kartę otwiera się bez konta w aplikacji - wystarczy link, który serwer zapisał przy eksporcie - a zgadnięcie samej nazwy karty niczego już nie otwiera.
+
+### Dla testerów
+
+- **Zgłoszenia błędów z aplikacji trafiają do jednej kolejki dla całego serwera**, z nazwą klubu przy każdym zgłoszeniu. Obsługuje ją konto opiekuna platformy; administrator klubu tej zakładki nie ma - poprawki i tak wchodzą w kolejnym wydaniu aplikacji, więc decyzja o zgłoszeniu nie należy do klubu.
+- **Zapisy do maszyny innego klubu nie blokują już wysyłki.** Telefon, który miał w kolejce zapis nie dla tego klubu, odkłada tylko ten jeden wpis i wysyła resztę.
 
 ## 1.1.0 (build 2) · 7 września 2026
 

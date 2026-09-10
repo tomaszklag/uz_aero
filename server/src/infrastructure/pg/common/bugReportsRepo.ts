@@ -40,6 +40,9 @@ interface BugDbRow {
   pilot_code: string | null;
   pilot_name: string | null;
   status_by_code: string | null;
+  org_id: string;
+  org_slug: string;
+  org_name: string;
 }
 
 const toRecord = (r: BugDbRow): BugReportRecord => ({
@@ -47,6 +50,7 @@ const toRecord = (r: BugDbRow): BugReportRecord => ({
   pilotId: r.pilot_id,
   pilotCode: r.pilot_code,
   pilotName: r.pilot_name,
+  org: { id: r.org_id, slug: r.org_slug, name: r.org_name },
   createdAt: new Date(r.created_at),
   receivedAt: new Date(r.received_at),
   // Waga spoza katalogu (starszy telefon, ręczna poprawka) schodzi do „nie podano",
@@ -69,13 +73,21 @@ const toRecord = (r: BugDbRow): BugReportRecord => ({
  * jego identyfikator (ta sama reguła, co w aplikacji - surowy uuid z panelu nie
  * identyfikuje nikogo dla człowieka). `LEFT JOIN`, bo konto może zniknąć, a
  * zgłoszenie zostaje.
+ *
+ * Klub wchodzi ZŁĄCZENIEM z `organizations` (issue #99, C6): listę czyta
+ * superadministrator dla wszystkich klubów naraz, więc wiersz nazywa swój klub sam.
+ * Kod pilota bierze się z członkostwa w klubie ZGŁOSZENIA - ta sama osoba w drugim
+ * klubie ma inny kod. Status przestawia superadministrator, który kodu nie ma,
+ * więc `status_by_code` bywa `NULL` także przy wpisanym `status_by`.
  */
 const SELECT_SQL = `
   SELECT b.uuid, b.pilot_id, b.created_at, b.received_at, b.severity, b.description,
          b.screen, b.app_version, b.session_uuid, b.context, b.status,
          b.status_note, b.status_by, b.status_at,
-         pm.code AS pilot_code, p.name AS pilot_name, am.code AS status_by_code
+         pm.code AS pilot_code, p.name AS pilot_name, am.code AS status_by_code,
+         b.org_id, o.slug AS org_slug, o.name AS org_name
     FROM bug_reports b
+    JOIN organizations    o  ON o.id = b.org_id
     LEFT JOIN pilots      p  ON p.id = b.pilot_id
     LEFT JOIN memberships pm ON pm.pilot_id = b.pilot_id AND pm.org_id = b.org_id
     LEFT JOIN memberships am ON am.pilot_id = b.status_by AND am.org_id = b.org_id
@@ -154,17 +166,22 @@ export class PgBugReportsRepo implements BugReportsPort {
     uuid: string,
     change: { status: BugStatus; note: string | null; by: string; at: Date },
   ): Promise<boolean> {
-    const { rows } = await tx.query<{ uuid: string }>(
+    // Bez klubu w warunku ŚWIADOMIE: status przestawia superadministrator, który klubu
+    // nie ma - a zgłoszenie nazywa swój klub w `RETURNING`, żeby audyt mógł go zapisać.
+    const { rows } = await tx.query<{ uuid: string; org_id: string }>(
       `UPDATE bug_reports
           SET status = $2, status_note = $3, status_by = $4, status_at = $5
         WHERE uuid = $1
-        RETURNING uuid`,
+        RETURNING uuid, org_id`,
       [uuid, change.status, change.note, change.by, change.at],
     );
     return rows.length > 0;
   }
 
   async countByStatus(db: Queryable): Promise<Record<BugStatus, number>> {
+    // Wszystkie kluby naraz - plakietka PLATFORMY, nie klubu. To jedyne zapytanie
+    // o tabelę klubu bez `org_id` w treści; strażnik w `architecture.test.ts` ma je
+    // wymienione imiennie, a każde następne takie zapytanie jest decyzją, nie refaktorem.
     const { rows } = await db.query<{ status: string; n: string | number }>(
       'SELECT status, COUNT(*) AS n FROM bug_reports GROUP BY status',
     );

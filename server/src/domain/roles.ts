@@ -120,7 +120,7 @@ export type Capability =
    */
   | 'maintenance.run'
   /**
-   * Zmiana statusu ZGŁOSZENIA BŁĘDU z aplikacji pilota (issue #87, moduł
+   * Odczyt i zmiana statusu ZGŁOSZEŃ BŁĘDÓW z aplikacji pilota (issue #87, moduł
    * „Zgłoszenia" panelu).
    *
    * ══ DLACZEGO NOWA POZYCJA ══
@@ -129,13 +129,12 @@ export type Capability =
    * rejestrem ani kontem. Wpisanie go pod `flags.resolve` dałoby fałszywą odpowiedź
    * na pytanie, po które ten plik istnieje - „co panel potrafi zmienić".
    *
-   * ODCZYT listy zdolności NIE WYMAGA: idzie na `panel.access`. Zgłoszenia są tym,
-   * po co w czasie testów wchodzi się do panelu, a zamykanie ich przed kimkolwiek,
-   * kto ma tam wstęp, nie chroni niczego. Zdolność bramkuje DECYZJĘ o cudzym
-   * zgłoszeniu, tak jak `events.correct` bramkuje zapis w cudzej operacji.
-   *
-   * Wraca do rozważenia razem z trzecią rolą: „kto obsługuje zgłoszenia" to
-   * naturalny kandydat na uprawnienie kogoś, kto nie zarządza flotą ani kontami.
+   * ══ ZDOLNOŚĆ PLATFORMOWA, NIE KLUBOWA (issue #99, C6 - decyzja właściciela) ══
+   * Do epiku C moduł był w panelu KLUBU (odczyt na `panel.access`). Zgłoszenie opisuje
+   * APLIKACJĘ, a nie dziennik klubu - obsługuje je ten, kto aplikację utrzymuje, czyli
+   * superadministrator, na jednej liście dla wszystkich klubów. Administrator klubu
+   * nie widzi ani zakładki, ani danych; do klubu wraca odpowiedź w aplikacji, nie w panelu.
+   * Dlatego zdolność stoi w mapie ról PLATFORMOWYCH, a żadna rola klubu jej nie ma.
    */
   | 'bugs.triage'
   /**
@@ -166,7 +165,6 @@ const CAPABILITIES: Readonly<Record<PilotRole, readonly Capability[]>> = {
     'thresholds.manage',
     'audit.read',
     'maintenance.run',
-    'bugs.triage',
   ],
 };
 
@@ -175,7 +173,8 @@ const CAPABILITIES: Readonly<Record<PilotRole, readonly Capability[]>> = {
  * z tego samego powodu, co lista administratora: dopisanie zdolności ma być decyzją.
  */
 const PLATFORM_CAPABILITIES: Readonly<Record<PlatformRole, readonly Capability[]>> = {
-  superadmin: ['platform.manage'],
+  // Zgłoszenia błędów obsługuje platforma (issue #99, C6) - patrz `bugs.triage` wyżej.
+  superadmin: ['platform.manage', 'bugs.triage'],
 };
 
 /** Strażnik wejścia z zewnątrz (kolumna w bazie, claim w tokenie, body żądania). */

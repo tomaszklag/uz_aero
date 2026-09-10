@@ -56,6 +56,7 @@ import { AuthCommands } from '../src/application/common/commands/auth.ts';
 import { IngestCommands } from '../src/application/mobile/commands/ingest.ts';
 import { BugReportCommands } from '../src/application/mobile/commands/bugReports.ts';
 import { PrefsCommands } from '../src/application/mobile/commands/prefs.ts';
+import { TraceCommands } from '../src/application/mobile/commands/traces.ts';
 import { DayExporter } from '../src/application/common/export/dayExporter.ts';
 import { MyEventQueries } from '../src/application/mobile/queries/myEvents.ts';
 import { MySessionTrackQueries } from '../src/application/mobile/queries/sessionTrack.ts';
@@ -274,9 +275,10 @@ export async function testHarness(
     // wysyła zdarzenia przez `POST /events` i odbiera je przez `GET /me/events`,
     // czyli przechodzi dokładnie drogę telefonu po czyszczeniu pamięci.
     myEvents: new MyEventQueries(db, new PgMyEventsRepo()),
-    state: new StateQueries(db, events, sessions, flags, exportLog),
+    state: new StateQueries(db, events, sessions, flags, exportLog, aircraftConfig),
     sheets: new SheetQueries(pgSheets),
-    traces: new FsTraceSink(tracesDir),
+    // Ślad przez komendę (issue #99): jak w produkcji, z tą samą projekcją sesji.
+    traces: new TraceCommands(db, sessions, new FsTraceSink(tracesDir)),
     // Droga POWROTNA nagrania (issue #47) - ten sam katalog co zapis, więc test wysyła
     // ślad przez `POST /traces` i odbiera go przez `GET /me/sessions/:uuid/track`,
     // czyli przechodzi dokładnie drogę telefonu po skasowaniu lokalnej kopii.

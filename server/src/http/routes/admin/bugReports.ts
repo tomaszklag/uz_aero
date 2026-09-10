@@ -16,7 +16,7 @@ import { z } from 'zod';
 import type { AdminBugReportCommands } from '../../../application/admin/commands/bugReports.ts';
 import type { AdminBugReportQueries } from '../../../application/admin/queries/bugReports.ts';
 import { BUG_STATUSES } from '../../../domain/bugReports.ts';
-import { adminRoute, type AdminGate } from './adminRoute.ts';
+import { platformRoute, type AdminGate } from './adminRoute.ts';
 
 /**
  * Filtr statusem w adresie: `?status=new,in_progress`. Pusty parametr = wszystkie.
@@ -47,10 +47,12 @@ export function registerAdminBugReportRoutes(
   commands: AdminBugReportCommands,
   gate: AdminGate,
 ): void {
-  adminRoute(
+  platformRoute(
     app,
     gate,
-    { method: 'GET', url: '/bug-reports', capability: 'panel.access' },
+    // Trasy PLATFORMOWE (issue #99, C6): zgłoszenia czyta i obsługuje superadministrator
+    // dla wszystkich klubów naraz; administrator klubu nie widzi ich wcale.
+    { method: 'GET', url: '/bug-reports', capability: 'bugs.triage' },
     async (req, reply) => {
       const parsed = listQuery.safeParse(req.query);
       if (!parsed.success) return reply.code(400).send({ error: 'bad_request' });
@@ -59,7 +61,7 @@ export function registerAdminBugReportRoutes(
     },
   );
 
-  adminRoute(
+  platformRoute(
     app,
     gate,
     { method: 'PATCH', url: '/bug-reports/:uuid', capability: 'bugs.triage' },

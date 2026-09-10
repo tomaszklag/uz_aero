@@ -30,10 +30,25 @@ export const ORG_B = 'org-b';
  */
 export const ORG_A_CODE = 'AZG-7K4M';
 
+/**
+ * SEKRETY ADRESÓW KART ARKUSZA (issue #99, C5) - stałe, żeby test mógł napisać oczekiwany
+ * URL karty co do znaku. W produkcji losuje je baza przy założeniu klubu.
+ */
+export const ORG_A_SHEETS_KEY = 'a'.repeat(32);
+export const ORG_B_SHEETS_KEY = 'b'.repeat(32);
+
 const ORGANIZATIONS = [
-  [ORG_A, 'Aeroklub Alfa', 'aeroklub-alfa', 'AZG7K4M'],
-  [ORG_B, 'Aeroklub Beta', 'aeroklub-beta', null],
+  [ORG_A, 'Aeroklub Alfa', 'aeroklub-alfa', 'AZG7K4M', ORG_A_SHEETS_KEY],
+  [ORG_B, 'Aeroklub Beta', 'aeroklub-beta', null, ORG_B_SHEETS_KEY],
 ] as const;
+
+/**
+ * SUPERADMINISTRATOR platformy - osoba BEZ członkostwa, z rolą platformową (issue #99, C6:
+ * zgłoszenia błędów czyta wyłącznie on). Ten sam kształt krotki, co konta klubów, żeby
+ * fałszywy dostawca tożsamości logował go tą samą drogą (`googleTokenFor('ROOT')`);
+ * „kod" jest tu kluczem tokenu testowego, nie kodem pilota - superadministrator kodu nie ma.
+ */
+export const TEST_PLATFORM_ADMIN = ['ROOT', 'ROOT', 'Operator Platformy', 'platform@ninerdeck.app', 'superadmin'] as const;
 
 /** Konfiguracje zgodne z §5.4 (pojemność, format MH, wymóg Duala) - flota klubu A. */
 const AIRCRAFT = [
@@ -102,13 +117,19 @@ const MEMBERSHIPS = [
 ];
 
 export async function seedTestWorld(db: Queryable): Promise<void> {
-  for (const [id, name, slug, joinCode] of ORGANIZATIONS) {
+  for (const [id, name, slug, joinCode, sheetsKey] of ORGANIZATIONS) {
     await db.query(
-      `INSERT INTO organizations (id, name, slug, join_code, join_code_since)
-       VALUES ($1, $2, $3, $4, CASE WHEN $4::text IS NULL THEN NULL ELSE now() END)`,
-      [id, name, slug, joinCode],
+      `INSERT INTO organizations (id, name, slug, join_code, join_code_since, sheets_key)
+       VALUES ($1, $2, $3, $4, CASE WHEN $4::text IS NULL THEN NULL ELSE now() END, $5)`,
+      [id, name, slug, joinCode, sheetsKey],
     );
   }
+
+  const [rootId, , rootName, rootEmail, platformRole] = TEST_PLATFORM_ADMIN;
+  await db.query(
+    `INSERT INTO pilots (id, name, email, active, platform_role) VALUES ($1, $2, $3, TRUE, $4)`,
+    [rootId, rootName, rootEmail, platformRole],
+  );
 
   await insertAircraft(db, AIRCRAFT);
 

@@ -7,15 +7,18 @@
  * ZAWSZE stanem autorytatywnym po operacji (LWW rozstrzyga komenda + SQL) - starszy
  * stempel dostaje 200 ze zwycięzcą w treści, nie błąd: przegrana w LWW to normalny
  * wynik uzgadniania, a nie wina żądania.
+ *
+ * Preferencje należą do OSOBY, nie do klubu (wielofirmowość): motyw jest ten sam
+ * w każdym klubie. Brama sprawdza jednak członkostwo jak wszędzie - bez aktywnego
+ * klubu telefon nie ma czego synchronizować, więc i preferencji nie ma z kim uzgadniać.
  */
 
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
 import type { PrefsCommands } from '../../../application/mobile/commands/prefs.ts';
-import type { PilotPrefs, TokenService } from '../../../application/common/ports.ts';
-import { authorize } from '../../authorize.ts';
-import { tokenFromRequest } from '../../tokenFromRequest.ts';
+import type { PilotPrefs } from '../../../application/common/ports.ts';
+import { memberFromRequest, type MemberGate } from '../../memberGate.ts';
 
 /**
  * Serwer nie zna listy motywów (tokeny UI aplikacji) - pilnuje tylko, żeby nazwa
@@ -34,26 +37,26 @@ const toWire = (p: PilotPrefs) => ({
 export function registerPrefsRoutes(
   app: FastifyInstance,
   prefs: PrefsCommands,
-  tokens: TokenService,
+  gate: MemberGate,
 ): void {
   app.get('/me/prefs', async (req, reply) => {
-    const claims = authorize(tokens, tokenFromRequest(req));
-    if (claims == null) return reply.code(401).send({ error: 'unauthorized' });
+    const who = await memberFromRequest(gate, req);
+    if (who == null) return reply.code(401).send({ error: 'unauthorized' });
 
-    const current = await prefs.get(claims.pilotId);
+    const current = await prefs.get(who.pilotId);
     if (current == null) return reply.code(404).send({ error: 'not_found' });
     return reply.send(toWire(current));
   });
 
   app.put('/me/prefs', async (req, reply) => {
-    const claims = authorize(tokens, tokenFromRequest(req));
-    if (claims == null) return reply.code(401).send({ error: 'unauthorized' });
+    const who = await memberFromRequest(gate, req);
+    if (who == null) return reply.code(401).send({ error: 'unauthorized' });
 
     const parsed = putBody.safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: 'bad_request' });
 
     const after = await prefs.put(
-      claims.pilotId,
+      who.pilotId,
       parsed.data.theme,
       new Date(parsed.data.themeUpdatedAt),
     );

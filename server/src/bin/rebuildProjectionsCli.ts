@@ -34,7 +34,7 @@ import { AdminMaintenanceCommands } from '../application/admin/commands/maintena
 import { AdminMaintenanceQueries } from '../application/admin/queries/maintenance.ts';
 import { AuditedWrite } from '../application/admin/auditedWrite.ts';
 import type { RebuildReport } from '../application/admin/contracts/maintenance.ts';
-import type { AuditActor } from '../application/admin/ports.ts';
+import { orgScopeOf, type AuditActor } from '../application/admin/ports.ts';
 import { ORG_SLUG_PATTERN } from '../domain/organizations.ts';
 import { PgAdminAuditRepo } from '../infrastructure/pg/admin/auditRepo.ts';
 import { PgAdminMaintenanceRepo } from '../infrastructure/pg/admin/maintenanceRepo.ts';
@@ -118,7 +118,7 @@ const commands = new AdminMaintenanceCommands(
 const outcome =
   env.REBUILD_MODE === 'write'
     ? await commands.rebuildProjections(actor, { reason: env.REBUILD_REASON })
-    : ({ ok: true, report: await queries.compareProjections() } as const);
+    : ({ ok: true, report: await queries.compareProjections(orgScopeOf(actor)) } as const);
 
 await pool.end();
 

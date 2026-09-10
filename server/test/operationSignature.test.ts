@@ -18,6 +18,7 @@ import { operationIndexes, projectSession, type Event } from '@uzaero/domain';
 import { describe, expect, it } from 'vitest';
 
 import { ADMIN_CSRF_HEADERS, testHarness } from './helpers.ts';
+import { ORG_A, ORG_B, seedBetaFleet } from './testWorld.ts';
 import { googleTokenFor } from './testIdentityProvider.ts';
 
 type Harness = Awaited<ReturnType<typeof testHarness>>;
@@ -327,5 +328,62 @@ describe('sygnatura operacji w panelu', () => {
       ['s-d', 4],
       ['s-e', 3],
     ]);
+  });
+
+  /**
+   * DWA KLUBY, JEDNA OSOBA, TA SAMA DOBA (wielofirmowość, issue #99).
+   *
+   * PWI lata w Alfie i w Becie. Numer operacji NIE JEST liczbą lotów tej osoby w dobie -
+   * jest liczbą jej lotów W TYM KLUBIE, bo dziennik jest dokumentem klubu i musi się
+   * zgadzać sam ze sobą. Bez partycji po klubie (`AND x.org_id = s.org_id` w randze SQL)
+   * jedna operacja w Alfie dostałaby numer 3, bo w Becie tego dnia były dwie wcześniejsze.
+   *
+   * Drugą połową jest KOD PIC: ta sama osoba podpisuje się `PWI` w Alfie i `PWB` w Becie,
+   * bo kod należy do CZŁONKOSTWA (epik B). Sygnatura bierze go z członkostwa w klubie
+   * OPERACJI - nie z klubu tokenu, którym ktoś właśnie patrzy.
+   */
+  it('numeruje i podpisuje operacje OSOBNO w każdym klubie tej samej osoby', async () => {
+    const { app, db, clock } = await testHarness();
+    await seedBetaFleet(db);
+
+    // Beta jest klubem aktywnym PWI, dopóki nie wjedzie świeższy refresh dla Alfy.
+    await db.query(
+      `INSERT INTO refresh_tokens (token_hash, pilot_id, org_id, expires_at, created_at)
+       VALUES ('sig-b', 'PWI', $1, $2, $3)`,
+      [ORG_B, new Date(clock.now().getTime() + 86_400_000), clock.now()],
+    );
+    const inBeta = await token(app, 'PWI');
+
+    // W Becie DWIE operacje tej doby, w Alfie jedna - i to ta w ŚRODKU (10:00), więc
+    // wspólne numerowanie nadałoby jej numer 2, a nie 1.
+    const beta = await post(app, inBeta, [
+      ...operation({ sessionUuid: 'sig-b1', aircraftId: 'SP-BBB', picId: 'PWI', engineStartH: 8 }),
+      ...operation({ sessionUuid: 'sig-b2', aircraftId: 'SP-BBB', picId: 'PWI', engineStartH: 13 }),
+    ]);
+    expect(beta.statusCode, JSON.stringify(beta.json())).toBe(200);
+
+    clock.advance(60_000);
+    await db.query(
+      `INSERT INTO refresh_tokens (token_hash, pilot_id, org_id, expires_at, created_at)
+       VALUES ('sig-a', 'PWI', $1, $2, $3)`,
+      [ORG_A, new Date(clock.now().getTime() + 86_400_000), clock.now()],
+    );
+    const inAlfa = await token(app, 'PWI');
+    const alfa = await post(app, inAlfa, [
+      ...operation({ sessionUuid: 'sig-a1', aircraftId: 'SP-AXA', picId: 'PWI', engineStartH: 10 }),
+    ]);
+    expect(alfa.statusCode, JSON.stringify(alfa.json())).toBe(200);
+
+    // Czyta ADMINISTRATOR każdego klubu - PWI jest pilotem, a panel wymaga `panel.access`.
+    // Kod PIC w sygnaturze pochodzi i tak z członkostwa w klubie OPERACJI, nie czytającego.
+    // Każdy klub liczy od jedynki i podpisuje SWOIM kodem.
+    const fromAlfa = await signatures(app, await token(app, 'TMK'));
+    expect([...fromAlfa.keys()]).toEqual(['sig-a1']);
+    expect(fromAlfa.get('sig-a1')).toBe('SP-AXA/2026-09-01/PWI/1');
+
+    const fromBeta = await signatures(app, await token(app, 'BAD'));
+    expect([...fromBeta.keys()].sort()).toEqual(['sig-b1', 'sig-b2']);
+    expect(fromBeta.get('sig-b1')).toBe('SP-BBB/2026-09-01/PWB/1');
+    expect(fromBeta.get('sig-b2')).toBe('SP-BBB/2026-09-01/PWB/2');
   });
 });

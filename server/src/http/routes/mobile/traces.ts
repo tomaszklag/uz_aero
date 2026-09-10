@@ -11,6 +11,8 @@
  * bo to materiał badawczy, nie rejestr; przyszły wpis barometru (nowy `kind`) nie może
  * wymagać zmiany serwera. Walidujemy tylko ramy: tablica obiektów, limit wielkości
  * paczki. Tożsamość z JWT dopisuje się do każdego wiersza (czyj telefon nagrał).
+ * Od epiku C (issue #99) sesja z paczki, jeśli serwer ją zna, musi należeć do klubu
+ * i pilota z tokenu - rozstrzyga `TraceCommands`, nie ta trasa.
  *
  * `GET /me/sessions/:uuid/track` - gotowa geometria po kompresji (RDP na linii
  * i na profilu, próbka logu, liczby przycięte do rozdzielczości): telefon nie dostaje
@@ -21,10 +23,9 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
+import type { TraceCommands } from '../../../application/mobile/commands/traces.ts';
 import type { MySessionTrackQueries } from '../../../application/mobile/queries/sessionTrack.ts';
-import type { TokenService, TraceSinkPort } from '../../../application/common/ports.ts';
-import { authorize } from '../../authorize.ts';
-import { tokenFromRequest } from '../../tokenFromRequest.ts';
+import { memberFromRequest, type MemberGate } from '../../memberGate.ts';
 
 const envelope = z.object({
   entries: z.array(z.record(z.unknown())).min(1).max(5000),
@@ -36,22 +37,20 @@ const trackParams = z.object({
 
 export function registerTracesRoutes(
   app: FastifyInstance,
-  traces: TraceSinkPort,
+  traces: TraceCommands,
   sessionTrack: MySessionTrackQueries,
-  tokens: TokenService,
+  gate: MemberGate,
 ): void {
   app.get('/me/sessions/:uuid/track', async (req, reply) => {
-    const identity = authorize(tokens, tokenFromRequest(req));
-    if (identity == null) {
-      return reply.code(401).send({ error: 'unauthorized' });
-    }
+    const who = await memberFromRequest(gate, req);
+    if (who == null) return reply.code(401).send({ error: 'unauthorized' });
 
     const parsed = trackParams.safeParse(req.params);
     if (!parsed.success) {
       return reply.code(400).send({ error: 'bad_request' });
     }
 
-    const outcome = await sessionTrack.bySession(identity.pilotId, parsed.data.uuid);
+    const outcome = await sessionTrack.bySession(who.orgId, who.pilotId, parsed.data.uuid);
     if (!outcome.ok) {
       // Cudza sesja dostaje 404, nie 403: potwierdzenie „istnieje, ale nie twoja"
       // byłoby odpowiedzią na pytanie, którego pytający nie ma prawa zadać.
@@ -62,17 +61,20 @@ export function registerTracesRoutes(
   });
 
   app.post('/traces', async (req, reply) => {
-    const identity = authorize(tokens, tokenFromRequest(req));
-    if (identity == null) {
-      return reply.code(401).send({ error: 'unauthorized' });
-    }
+    const who = await memberFromRequest(gate, req);
+    if (who == null) return reply.code(401).send({ error: 'unauthorized' });
 
     const parsed = envelope.safeParse(req.body);
     if (!parsed.success) {
       return reply.code(400).send({ error: 'bad_envelope' });
     }
 
-    await traces.append(identity.pilotId, parsed.data.entries);
-    return reply.send({ accepted: parsed.data.entries.length });
+    const outcome = await traces.append(
+      { pilotId: who.pilotId, orgId: who.orgId },
+      parsed.data.entries,
+    );
+    // Cała paczka albo nic - ślad nie ma księgowości per wpis (patrz `TraceCommands`).
+    if (!outcome.ok) return reply.code(403).send({ error: outcome.reason });
+    return reply.send({ accepted: outcome.accepted });
   });
 }

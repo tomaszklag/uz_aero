@@ -58,8 +58,9 @@ export class SessionTrackQueries {
     private readonly traces: TraceSourcePort,
   ) {}
 
-  async bySession(sessionUuid: string): Promise<SessionTrackOutcome> {
-    const events = await this.events.sessionEvents(this.db, sessionUuid);
+  /** Ślad sesji KLUBU - cudza sesja jest `no_session`, jak nieistniejąca (issue #99). */
+  async bySession(orgId: string, sessionUuid: string): Promise<SessionTrackOutcome> {
+    const events = await this.events.sessionEvents(this.db, orgId, sessionUuid);
     if (events.length === 0) return { ok: false, reason: 'no_session' };
 
     const state = projectSession(events);

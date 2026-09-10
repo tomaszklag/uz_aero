@@ -45,6 +45,7 @@ import { BugReportCommands } from './application/mobile/commands/bugReports.ts';
 import { AttemptLimiter } from './application/mobile/attemptLimiter.ts';
 import { JOIN_WINDOW_MS, JoinCommands } from './application/mobile/commands/join.ts';
 import { PrefsCommands } from './application/mobile/commands/prefs.ts';
+import { TraceCommands } from './application/mobile/commands/traces.ts';
 import { DayExporter } from './application/common/export/dayExporter.ts';
 import { MyEventQueries } from './application/mobile/queries/myEvents.ts';
 import { MySessionTrackQueries } from './application/mobile/queries/sessionTrack.ts';
@@ -280,9 +281,12 @@ const app = await buildServer({
   // bo to inne pytanie do tej samej tabeli: tamten czyta strumień JEDNEJ sesji przy
   // ingescie, ten stronicuje rejestr JEDNEGO PILOTA przez wszystkie jego sesje.
   myEvents: new MyEventQueries(db, new PgMyEventsRepo()),
-  state: new StateQueries(db, events, sessions, flags, exportLog),
+  // Stan maszyny pyta rejestr floty o KLUB maszyny (issue #99): cudza jest 404, nie pusta.
+  state: new StateQueries(db, events, sessions, flags, exportLog, aircraftConfig),
   sheets: new SheetQueries(sheets),
-  traces: new FsTraceSink(env.TRACES_DIR),
+  // Ślad kalibracyjny przechodzi przez komendę: sesja z paczki musi należeć do klubu
+  // i pilota z tokenu (issue #99), zanim adapter plikowy cokolwiek dopisze.
+  traces: new TraceCommands(db, sessions, new FsTraceSink(env.TRACES_DIR)),
   // Droga POWROTNA nagrania (issue #47) - telefon oddaje ślad i kasuje swoją kopię,
   // więc ekran 14 pobiera gotową geometrię stąd. Cienka warstwa nad wspólnym zapytaniem:
   // dokłada JEDNO zdanie o uprawnieniu („to nie jest twoja sesja") i nic poza tym.

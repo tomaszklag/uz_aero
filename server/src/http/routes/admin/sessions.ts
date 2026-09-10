@@ -50,7 +50,7 @@ export function registerAdminSessionRoutes(
     app,
     gate,
     { method: 'GET', url: '/sessions', capability: 'panel.access' },
-    async (req, reply) => {
+    async (req, reply, actor) => {
       const query = listQuery.safeParse(req.query);
       if (!query.success) return reply.code(400).send({ error: 'bad_request' });
 
@@ -70,7 +70,7 @@ export function registerAdminSessionRoutes(
         limit: q.limit,
       };
 
-      const outcome = await sessions.list(filter);
+      const outcome = await sessions.list(actor.orgId, filter);
       // 400, nie 500: kursor przychodzi z zewnątrz, więc jego uszkodzenie jest wadą
       // żądania. Milczące zaczęcie od pierwszej strony byłoby gorsze - panel
       // pokazałby początek listy, sądząc, że przewinął dalej.
@@ -84,11 +84,11 @@ export function registerAdminSessionRoutes(
     app,
     gate,
     { method: 'GET', url: '/sessions/:uuid', capability: 'panel.access' },
-    async (req, reply) => {
+    async (req, reply, actor) => {
       const params = detailParams.safeParse(req.params);
       if (!params.success) return reply.code(400).send({ error: 'bad_request' });
 
-      const detail = await sessions.detail(params.data.uuid);
+      const detail = await sessions.detail(actor.orgId, params.data.uuid);
       if (detail == null) return reply.code(404).send({ error: 'not_found' });
 
       return reply.send(detail);

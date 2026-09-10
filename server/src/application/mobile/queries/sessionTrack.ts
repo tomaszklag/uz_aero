@@ -38,8 +38,12 @@ export type MySessionTrackOutcome =
 export class MySessionTrackQueries {
   constructor(private readonly tracks: SessionTrackQueries) {}
 
-  async bySession(pilotId: string, sessionUuid: string): Promise<MySessionTrackOutcome> {
-    const outcome = await this.tracks.bySession(sessionUuid);
+  async bySession(
+    orgId: string,
+    pilotId: string,
+    sessionUuid: string,
+  ): Promise<MySessionTrackOutcome> {
+    const outcome = await this.tracks.bySession(orgId, sessionUuid);
     if (!outcome.ok) return outcome;
 
     // Właścicielem jest PIC z otwarcia sesji - ta sama tożsamość, którą reguła

@@ -71,12 +71,16 @@ export class AdminConsumptionQueries {
     private readonly phases: PhaseTimelinePort | null = null,
   ) {}
 
-  async load(aircraftId: string, filter: ConsumptionFilter = {}): Promise<ConsumptionOutcome> {
+  async load(
+    orgId: string,
+    aircraftId: string,
+    filter: ConsumptionFilter = {},
+  ): Promise<ConsumptionOutcome> {
     const at = this.clock.now();
     const range = rangeFrom(filter, at.getTime());
     if (range == null) return { ok: false, reason: 'bad_range' };
 
-    const aircraft = await this.consumption.aircraft(this.db, aircraftId);
+    const aircraft = await this.consumption.aircraft(this.db, orgId, aircraftId);
     // Jednostka spoza floty to wada ŻĄDANIA, nie pusty wynik: raport o samolocie,
     // którego nie ma, nie ma poprawnej treści (inaczej niż raport o samolocie, który
     // po prostu nie latał - ten jest legalnie pusty).
@@ -84,12 +88,12 @@ export class AdminConsumptionQueries {
 
     const scope = { fromMs: range.fromMs, toMs: range.toMs };
     const [page, openSessions] = await Promise.all([
-      this.consumption.closedSessions(this.db, aircraftId, scope, CONSUMPTION_SESSION_LIMIT),
-      this.consumption.openSessions(this.db, aircraftId, scope),
+      this.consumption.closedSessions(this.db, orgId, aircraftId, scope, CONSUMPTION_SESSION_LIMIT),
+      this.consumption.openSessions(this.db, orgId, aircraftId, scope),
     ]);
 
     const sessionUuids = page.sessions.map((session) => session.sessionUuid);
-    const streams = await this.events.sessionStreams(this.db, sessionUuids);
+    const streams = await this.events.sessionStreams(this.db, orgId, sessionUuids);
 
     // Osie faz pionowych ze śladów - każda z pliku pobocznego (kilkaset bajtów), więc
     // koszt jest liniowy i mały. Sesja bez nagrania oddaje pustą oś i jej interwały

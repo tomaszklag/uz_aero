@@ -1,6 +1,6 @@
 # Panel klubu: wprowadzenie
 
-> Panel to strona w przeglądarce dla administratora klubu: konta pilotów, karty samolotów, dziennik operacji i zgłoszenia z aplikacji. Loguje się do niego tym samym kontem Google, co do aplikacji pilota.
+> Panel to strona w przeglądarce dla administratora klubu: konta pilotów, karty samolotów i dziennik operacji. Loguje się do niego tym samym kontem Google, co do aplikacji pilota.
 
 ## Dostęp
 
@@ -20,18 +20,21 @@ Sesja panelu trwa osiem godzin od zalogowania; potem panel prosi o ponowne logow
 
 ## Moduły
 
-Nawigacja to kolumna po lewej z czterema pozycjami; nad nimi stoi nazwa klubu, a pasek u góry niesie tylko znak i zalogowanego. Ekranem startowym jest Dziennik: konta i flotę zakłada się raz na sezon, dziennik ogląda się co tydzień.
+Nawigacja to kolumna po lewej z pozycjami modułów; nad nimi stoi nazwa klubu, a pasek u góry niesie tylko znak i zalogowanego. Ekranem startowym jest Dziennik: konta i flotę zakłada się raz na sezon, dziennik ogląda się co tydzień. **Kolumna pokazuje to, do czego masz prawo** - moduł niedostępny dla Twojego konta nie stoi w niej wyszarzony, po prostu go nie ma.
 
 | Moduł | Do czego |
 |---|---|
 | [**Dziennik**](panel-dziennik) | cała flota w zakresie dat → operacje jednej maszyny → jedna operacja z osią zdarzeń i śladem GPS; zakończenie operacji, której pilot nie zdał, i unieważnienie wpisu |
 | [**Piloci**](panel-piloci) | kolejka zgłoszeń z aplikacji do zatwierdzenia, konta pilotów i administratorów, kody pilotów, wyłączanie kont |
 | [**Samoloty**](panel-samoloty) | karta każdej maszyny: pojemności, normy zużycia z dokumentacji, minimum oleju, format licznika, aktualny stan; poprawa odczytów |
-| **Zgłoszenia** | uwagi i błędy wysłane z aplikacji przez pilotów, razem z kontekstem ekranu, na którym powstały |
 
-### Zgłoszenia
+Czwarty moduł, **Zgłoszenia**, nie należy do klubu - patrz niżej.
 
-Moduł na czas testów z pilotami. Każdy ekran i arkusz aplikacji (poza logowaniem i PIN-em) ma w prawym górnym rogu przycisk zgłoszenia. Zgłoszenie zabiera ze sobą kontekst - ekran, operację (sygnaturę), samolot, zadanie, stan silnika, liczbę lotów, wersję aplikacji, model telefonu, stan łączności i kolejki wysyłki - i wychodzi z telefonu samo, gdy jest sieć; pilot widzi „zapisane", nie „wysłane", bo w chwili tapnięcia telefon nie wie, czy ma zasięg. W panelu lista pokazuje domyślnie robotę (**Do zrobienia** = nowe i w toku), a filtry z licznikami pozostałe statusy; wiersz otwiera kartę z opisem, obsługą i pełnym kontekstem. Cztery statusy: **Nowe → W toku → Rozwiązane / Odrzucone**. Odrzucenie wymaga komentarza, treści zgłoszenia nie zmienia nikt, kasowania nie ma - zgłoszenie nietrafione zamyka się odrzuceniem z powodem. Odpowiedzi do pilota z panelu nie ma: testy trwają krótko, a klub ma telefony.
+### Zgłoszenia błędów z aplikacji - moduł opiekuna platformy
+
+Moduł na czas testów z pilotami. **Nie ma go w panelu klubu**: kolejka zgłoszeń jest jedna dla całego serwera i obsługuje ją opiekun platformy - ta sama osoba, która zakłada kluby. Powód jest prosty: zgłoszenie opisuje aplikację, a nie klub, i naprawia je nowe wydanie aplikacji dla wszystkich klubów naraz. Administrator klubu tej zakładki więc nie widzi; jeśli chce coś zgłosić, robi to tak jak pilot - przyciskiem w aplikacji.
+
+Każdy ekran i arkusz aplikacji (poza logowaniem i PIN-em) ma w prawym górnym rogu przycisk zgłoszenia. Zgłoszenie zabiera ze sobą kontekst - ekran, operację (sygnaturę), samolot, zadanie, stan silnika, liczbę lotów, wersję aplikacji, model telefonu, stan łączności i kolejki wysyłki - i wychodzi z telefonu samo, gdy jest sieć; pilot widzi „zapisane", nie „wysłane", bo w chwili tapnięcia telefon nie wie, czy ma zasięg. W panelu lista pokazuje domyślnie robotę (**Do zrobienia** = nowe i w toku), a filtry z licznikami pozostałe statusy; przy każdym zgłoszeniu stoi nazwa klubu, z którego przyszło, bo kod pilota jest jedyny w klubie, nie na serwerze. Wiersz otwiera kartę z opisem, obsługą i pełnym kontekstem. Cztery statusy: **Nowe → W toku → Rozwiązane / Odrzucone**. Odrzucenie wymaga komentarza, treści zgłoszenia nie zmienia nikt, kasowania nie ma - zgłoszenie nietrafione zamyka się odrzuceniem z powodem. Odpowiedzi do pilota z panelu nie ma: testy trwają krótko, a klub ma telefony.
 
 @panel dziennik-flota "Dziennik · ekran startowy panelu"
 
@@ -43,7 +46,7 @@ Moduł na czas testów z pilotami. Każdy ekran i arkusz aplikacji (poza logowan
 - **Flota i piloci jadą na telefony jako kopia.** Zmiana na karcie samolotu (pojemność, norma, minimum oleju, wyłączenie ze służby) i na koncie pilota dociera do aplikacji tą samą drogą, w tym samym rytmie. Telefon bez zasięgu pracuje na kopii z ostatniego połączenia.
 - **Panel nie liczy niczego po swojemu.** Czas blokowy, sumy, sygnatura operacji, stan oleju „do lotu" - wszystko przychodzi policzone tym samym rachunkiem, który zasila aplikację pilota. Administrator i pilot patrzą na te same liczby, a rozmowa o locie ma jedną nazwę: sygnaturę.
 - **Adres z paska przeglądarki jest kompletny.** Zakres dat dziennika, filtr listy, otwarta karta konta albo operacji - wszystko stoi w adresie, więc link wklejony koledze pokazuje dokładnie to samo. Maszynę w dzienniku adresuje się znakami rejestracyjnymi, nie identyfikatorem.
-- **Brak uprawnień to brak przycisku.** Konto bez prawa do zmian widzi karty z plakietką „tylko podgląd", bez przycisków zapisu. Dziś obie role są proste: pilot nie wchodzi do panelu, administrator ma w nim wszystko; role pośrednie mogą dojść w kolejnych wydaniach.
+- **Brak uprawnień to brak przycisku.** Konto bez prawa do zmian widzi karty z plakietką „tylko podgląd", bez przycisków zapisu. Dziś role są proste: pilot nie wchodzi do panelu, administrator ma w nim wszystko, co należy do klubu, a kolejka zgłoszeń błędów należy do opiekuna platformy; role pośrednie mogą dojść w kolejnych wydaniach.
 
 ## Zasady w całym panelu
 

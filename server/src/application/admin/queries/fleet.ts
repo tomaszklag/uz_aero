@@ -58,21 +58,22 @@ export class AdminFleetQueries {
     private readonly readings: AircraftReadingsPort,
   ) {}
 
-  async list(filter: FleetListFilter): Promise<AdminFleetPage> {
+  async list(orgId: string, filter: FleetListFilter): Promise<AdminFleetPage> {
     // Trzy zapytania, trzy różne pytania - i dlatego nie da się ich skleić: wiersze
     // w bieżącym zawężeniu, liczby o CAŁEJ FLOCIE (kafle) i liczby o WYSZUKIWANIU
     // (chipy). Ta sama konstrukcja, co przy liście kont.
     const [joins, counts, scopes] = await Promise.all([
-      this.fleet.list(this.db, filter),
-      this.fleet.counts(this.db),
+      this.fleet.list(this.db, orgId, filter),
+      this.fleet.counts(this.db, orgId),
       this.fleet.scopeCounts(
         this.db,
+        orgId,
         filter.search === undefined ? {} : { search: filter.search },
       ),
     ]);
 
     return {
-      items: await this.withState(joins),
+      items: await this.withState(orgId, joins),
       counts: fleetCounts(counts),
       scopes: fleetCounts(scopes),
     };
@@ -88,10 +89,10 @@ export class AdminFleetQueries {
    * Jedno dodatkowe zapytanie po zapisie jest tańsze niż odpowiedź, której panel
    * nie może pokazać.
    */
-  async item(id: string): Promise<AdminAircraftListItem | null> {
-    const join = await this.fleet.joinById(this.db, id);
+  async item(orgId: string, id: string): Promise<AdminAircraftListItem | null> {
+    const join = await this.fleet.joinById(this.db, orgId, id);
     if (join == null) return null;
-    const [item] = await this.withState([join]);
+    const [item] = await this.withState(orgId, [join]);
     return item ?? null;
   }
 
@@ -103,12 +104,15 @@ export class AdminFleetQueries {
    * dzień", gdzie panel zna samolot, a nie jego pojemność). `null` = nie ma takiego
    * samolotu; to 404, a nie tolerancja z podłogi.
    */
-  async tolerance(input: {
-    capacityL?: number;
-    aircraftId?: string;
-  }): Promise<AircraftToleranceDto | null> {
+  async tolerance(
+    orgId: string,
+    input: {
+      capacityL?: number;
+      aircraftId?: string;
+    },
+  ): Promise<AircraftToleranceDto | null> {
     if (input.aircraftId !== undefined) {
-      const aircraft = await this.fleet.byId(this.db, input.aircraftId);
+      const aircraft = await this.fleet.byId(this.db, orgId, input.aircraftId);
       if (aircraft == null) return null;
       return {
         capacityL: aircraft.capacityL,
@@ -127,17 +131,20 @@ export class AdminFleetQueries {
    * zapytań punktowych; złączenie w SQL-u wymagałoby przeniesienia tam reguły wyboru
    * przekazania, czyli dokładnie tego, czego ten plik unika.
    */
-  private async withState(joins: readonly AdminAircraftJoin[]): Promise<AdminAircraftListItem[]> {
+  private async withState(
+    orgId: string,
+    joins: readonly AdminAircraftJoin[],
+  ): Promise<AdminAircraftListItem[]> {
     const states = new Map<string, ReturnType<typeof stateOf>>();
     // Osoba → klub MASZYNY, przy której ją spotkano: kod pilota jest kodem z członkostwa
     // w klubie operacji (wielofirmowość), więc etykietę czyta się w tym klubie.
     const pilotIds = new Map<string, string>();
     // Odczyty wpisane ręką administratora (issue #81) - całej floty jednym zapytaniem,
     // jak w `ReferenceQueries`: panel i telefon mają dostać TEN SAM wybór przekazania.
-    const overrides = await this.readings.latestAll(this.db);
+    const overrides = await this.readings.latestAll(this.db, orgId);
 
     for (const join of joins) {
-      const rows = await this.sessions.listByAircraft(this.db, join.aircraft.id);
+      const rows = await this.sessions.listByAircraft(this.db, join.aircraft.orgId, join.aircraft.id);
       const state = stateOf(rows, join, overrides.get(join.aircraft.id) ?? null);
       states.set(join.aircraft.id, state);
       if (state.claim != null) pilotIds.set(state.claim.picId, join.aircraft.orgId);

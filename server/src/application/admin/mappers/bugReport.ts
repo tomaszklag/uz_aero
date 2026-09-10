@@ -17,6 +17,7 @@ export const bugReport = (r: BugReportRecord): AdminBugReport => ({
   pilotId: r.pilotId,
   pilotCode: r.pilotCode,
   pilotName: r.pilotName,
+  org: { id: r.org.id, slug: r.org.slug, name: r.org.name },
   severity: r.severity,
   description: r.description,
   screen: r.screen,

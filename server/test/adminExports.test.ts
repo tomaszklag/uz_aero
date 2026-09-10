@@ -165,18 +165,22 @@ class ExplodingEvents implements EventsStorePort {
   insertBatch(tx: Queryable, orgId: string, events: readonly Event[], sourceDevice: string | null) {
     return this.real.insertBatch(tx, orgId, events, sourceDevice);
   }
-  sessionEvents(db: Queryable, sessionUuid: string): Promise<Event[]> {
+  sessionEvents(db: Queryable, orgId: string, sessionUuid: string): Promise<Event[]> {
     if (this.explode) throw new TypeError('projekcja: nie mogę odczytać właściwości „map"');
-    return this.real.sessionEvents(db, sessionUuid);
+    return this.real.sessionEvents(db, orgId, sessionUuid);
   }
-  sessionStreams(db: Queryable, sessionUuids: readonly string[]): Promise<Map<string, Event[]>> {
-    return this.real.sessionStreams(db, sessionUuids);
+  sessionStreams(
+    db: Queryable,
+    orgId: string,
+    sessionUuids: readonly string[],
+  ): Promise<Map<string, Event[]>> {
+    return this.real.sessionStreams(db, orgId, sessionUuids);
   }
-  lastReceivedAt(db: Queryable, aircraftId: string) {
-    return this.real.lastReceivedAt(db, aircraftId);
+  lastReceivedAt(db: Queryable, orgId: string, aircraftId: string) {
+    return this.real.lastReceivedAt(db, orgId, aircraftId);
   }
-  countForSession(db: Queryable, sessionUuid: string) {
-    return this.real.countForSession(db, sessionUuid);
+  countForSession(db: Queryable, orgId: string, sessionUuid: string) {
+    return this.real.countForSession(db, orgId, sessionUuid);
   }
 }
 
@@ -334,7 +338,7 @@ describe('monitor eksportu - lista (A05)', () => {
       reg: 'SP-AXA',
       picCode: 'TMK',
       sessionStatus: 'closed',
-      sheetUrl: 'http://uzaero.test/sheets/2026-06-22_SP-AXA',
+      sheetUrl: 'http://uzaero.test/sheets/aeroklub-alfa/2026-06-22_SP-AXA?k=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
       blockingFlagIds: [],
     });
     // Nazwa karty jedzie MIMO braku eksportu: pytanie ekranu brzmi „której karty
@@ -754,7 +758,7 @@ describe('historia rewizji i podgląd karty (A05)', () => {
     expect(history.revisions.map((r: { revision: number }) => r.revision)).toEqual([1, 2, 3]);
     expect(history.revisions[0]).toMatchObject({
       day: '2026-06-22',
-      sheetUrl: 'http://uzaero.test/sheets/2026-06-22_SP-AXA',
+      sheetUrl: 'http://uzaero.test/sheets/aeroklub-alfa/2026-06-22_SP-AXA?k=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
     });
     // …a karta trzyma WYŁĄCZNIE treść bieżącą. To jest cała treść tego ekranu.
     expect(history.sheetRows).toBe(1);

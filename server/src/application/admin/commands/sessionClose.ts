@@ -130,18 +130,22 @@ export class AdminSessionCloseCommands {
         // szereguje nas z paczką, którą właśnie dosyła telefon pilota.
         await tx.query('SELECT pg_advisory_xact_lock(hashtext($1))', [input.sessionUuid]);
 
-        // Klub operacji z wiersza projekcji; sesja cudzego klubu jest nieistniejąca
-        // dla tego administratora (wielofirmowość - jak w korekcie i unieważnieniu).
-        const row = await this.sessions.get(tx, input.sessionUuid);
-        if (row == null || row.orgId !== actor.orgId) throw new SessionNotFound();
-        const orgId = row.orgId;
+        // Klub operacji = klub administratora; projekcja pyta o sesję W KLUBIE, więc sesja
+        // cudzego klubu jest nieistniejąca (wielofirmowość - jak w korekcie i unieważnieniu).
+        const orgId = actor.orgId;
+        const row = await this.sessions.get(tx, orgId, input.sessionUuid);
+        if (row == null) throw new SessionNotFound();
 
-        const stream = await this.events.sessionEvents(tx, input.sessionUuid);
+        const stream = await this.events.sessionEvents(tx, orgId, input.sessionUuid);
         if (stream.length === 0) throw new SessionNotFound();
 
         const before = projectSession(stream);
         const limits: AircraftLimits = {
-          capacityL: await this.aircraft.capacityL(tx, before.aircraftId ?? stream[0]!.aircraftId),
+          capacityL: await this.aircraft.capacityL(
+            tx,
+            orgId,
+            before.aircraftId ?? stream[0]!.aircraftId,
+          ),
           oilMinL: null,
           oilCapacityL: null,
         };
@@ -167,7 +171,7 @@ export class AdminSessionCloseCommands {
         const batch = voided == null ? [close] : [close, voided];
         await this.events.insertBatch(tx, orgId, batch, adminSourceDevice(actor.pilotId));
 
-        const after = await this.events.sessionEvents(tx, input.sessionUuid);
+        const after = await this.events.sessionEvents(tx, orgId, input.sessionUuid);
         const state = projectSession(after);
         await this.sessions.upsert(tx, sessionRowFrom(input.sessionUuid, after, orgId));
 
@@ -213,15 +217,15 @@ export class AdminSessionCloseCommands {
         recordedAt: at,
         state: applied.state,
         warnings: applied.warnings,
-        reexport: await this.reexport(input.sessionUuid),
+        reexport: await this.reexport(actor.orgId, input.sessionUuid),
       },
     };
   }
 
   /** Karta doby PO COMMICIE - jak przy unieważnieniu: awaria arkusza nie cofa decyzji. */
-  private async reexport(sessionUuid: string): Promise<ExportOutcome | null> {
+  private async reexport(orgId: string, sessionUuid: string): Promise<ExportOutcome | null> {
     try {
-      return await this.exporter.exportSession(sessionUuid);
+      return await this.exporter.exportSession(orgId, sessionUuid);
     } catch (err) {
       console.error(`przebudowa karty po zakończeniu sesji ${sessionUuid} nie powiodła się:`, err);
       return null;

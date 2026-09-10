@@ -144,14 +144,14 @@ export function registerAdminCorrectionRoutes(
     app,
     gate,
     { method: 'POST', url: '/sessions/:uuid/corrections/preview', capability: 'events.correct' },
-    async (req, reply) => {
+    async (req, reply, actor) => {
       const params = correctionParams.safeParse(req.params);
       if (!params.success) return reply.code(400).send({ error: 'bad_request' });
 
       const body = correctionShape.safeParse(req.body);
       if (!body.success) return reply.code(400).send({ error: 'bad_request' });
 
-      const outcome = await preview.preview({
+      const outcome = await preview.preview(actor.orgId, {
         sessionUuid: params.data.uuid,
         correction: payloadOf(body.data),
       });

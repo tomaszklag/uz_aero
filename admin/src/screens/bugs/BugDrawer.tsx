@@ -98,9 +98,11 @@ export function BugDrawer({ uuid, reports, listPending, onClose }: BugDrawerProp
     <Drawer
       wide
       title={`Zgłoszenie · ${bug.pilotCode ?? bug.pilotId}`}
+      // KLUB pierwszy w podtytule (issue #99 C6): kod pilota w tytule jest jedyny
+      // W KLUBIE, więc `TMA` bez nazwy klubu może być dwiema różnymi osobami.
       sub={
         <>
-          {bug.screen} · {stamp(bug.createdAt)}
+          {bug.org.name} · {bug.screen} · {stamp(bug.createdAt)}
         </>
       }
       onClose={onClose}
@@ -199,9 +201,19 @@ export function BugDrawer({ uuid, reports, listPending, onClose }: BugDrawerProp
               <span className="kv-v">{row.value}</span>
             </div>
           ))}
+          {/*
+            Dwa pola od SERWERA, nie z kontekstu telefonu, więc stoją na końcu listy:
+            chwila przyjęcia (różnica względem czasu zgłoszenia mierzy, jak długo telefon
+            był offline) i KLUB zgłoszenia (issue #99 C6 - telefon go nie przysyła,
+            a kolejka jest wspólna dla całego serwera).
+          */}
           <div className="kv">
             <span className="kv-k">Przyjęte przez serwer</span>
             <span className="kv-v">{stamp(bug.receivedAt)}</span>
+          </div>
+          <div className="kv">
+            <span className="kv-k">Klub zgłoszenia</span>
+            <span className="kv-v">{bug.org.name}</span>
           </div>
         </div>
       </Card>

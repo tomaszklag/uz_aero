@@ -69,8 +69,13 @@ export class MyEventQueries {
    * i `task-suggestions.ts`) - pilot nie ma gdzie podać cudzej tożsamości, więc
    * endpoint odtwarzający własny rejestr nie może stać się czytnikiem cudzego.
    */
-  async page(picId: string, cursor: string | null, limit: number): Promise<MyEventsOutcome> {
-    const result = await this.events.page(this.db, picId, cursor, limit);
+  async page(
+    orgId: string,
+    picId: string,
+    cursor: string | null,
+    limit: number,
+  ): Promise<MyEventsOutcome> {
+    const result = await this.events.page(this.db, orgId, picId, cursor, limit);
     if (result == null) return { ok: false, reason: 'bad_cursor' };
 
     return {
