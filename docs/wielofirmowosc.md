@@ -778,9 +778,13 @@ starym pakiecie - decyzja o tym w epiku W.
   - **odpowiedzi o klubach niosą `person` (imię i adres z konta)**: ekrany 00C/00D/00E
     pokazują plakietkę konta, a token osoby niesie identyfikator, nie profil. Wyłuskanie
     tego z tokenu Google byłoby drugim, niesprawdzanym źródłem tych samych napisów;
-  - **czego epik F świadomie NIE ROBI**: makiet nowych stanów sekcji „Klub" przy
-    zaległej kolejce (mockup opisuje je komentarzem), odtwarzania rejestru wszystkich
-    klubów naraz i „opuść klub" z telefonu (D6: wychodzi się przez panel).
+  - **makieta `13a` dostała DWIE RAMKI**, które epik A opisał tylko komentarzem:
+    zgłoszenie czekające na liście klubów i przełączenie zablokowane z powodem pod listą
+    (ramka rysuje wariant „zaległe zapisy", bo tylko on niesie liczbę; offline zmienia
+    samo zdanie). Stanu „trzymasz maszynę" makiety NIE MA - z kokpitu do ustawień nie ma
+    wejścia, więc narysowany wyglądałby na osiągalny;
+  - **czego epik F świadomie NIE ROBI**: odtwarzania rejestru wszystkich klubów naraz
+    i „opuść klub" z telefonu (D6: wychodzi się przez panel).
 - **R - rebranding** (issue #103) i **W - wydanie** (issue #106): pakiet, schemat,
   kolejność wdrożenia (migracja → serwer → panel → APK), sunset starego pakietu.
 
