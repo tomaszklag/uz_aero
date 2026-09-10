@@ -48,6 +48,10 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 - **Do drugiego klubu dołącza się z ustawień, tym samym kodem klubu.** Zgłoszenie staje na liście klubów jako „czeka na zatwierdzenie", a pilot lata dalej tam, gdzie latał.
 - **Pilot bez klubu wpisuje kod klubu na ekranie logowania.** Nieznany kod dostaje odpowiedź przy polu bez kasowania wpisu, odmowa administratora - powód i drugie wyjście („dołącz innym kodem"), a zbyt wiele prób pod rząd mówi, ile trzeba odczekać.
 
+### Poprawki
+
+- **Sygnatura operacji wróciła na kafelek „Mojego dnia".** Nazwa, którą operacja ma poza telefonem - ta sama, którą widzi administrator w panelu - stała dotąd wyłącznie na kartach „Poprzednich dni" i na ekranie rozliczenia, choć makieta rysuje ją na każdym kafelku. Teraz pilot czyta ją tam, gdzie patrzy najczęściej.
+
 ### Dla testerów
 
 - **Zgłoszenia błędów z aplikacji trafiają do jednej kolejki dla całego serwera**, z nazwą klubu przy każdym zgłoszeniu. Obsługuje ją konto opiekuna platformy; administrator klubu tej zakładki nie ma - poprawki i tak wchodzą w kolejnym wydaniu aplikacji, więc decyzja o zgłoszeniu nie należy do klubu.

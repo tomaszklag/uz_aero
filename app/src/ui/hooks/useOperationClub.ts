@@ -16,6 +16,8 @@
  * z identyfikatora dałoby na ekranie surowy guid, czyli to, co ta plakietka ma zastąpić.
  */
 
+import { useCallback } from 'react';
+
 import { useAuthStore } from '../store/authStore';
 import { useSessionOrgs } from './useSessionOrgs';
 
@@ -26,10 +28,16 @@ export function useOperationClub(): ClubNameOf {
   const memberships = useAuthStore((s) => s.memberships);
   const orgOf = useSessionOrgs();
 
-  return (sessionUuid) => {
-    if (memberships.length < 2) return null;
-    const orgId = orgOf(sessionUuid);
-    if (orgId == null) return null;
-    return memberships.find((m) => m.org.id === orgId)?.org.name ?? null;
-  };
+  // `useCallback` z tego samego powodu, co w `useSessionOrgs`: rezolwer wchodzi do
+  // wspólnych builderów kafelka, a stamtąd łatwo trafia do listy zależności efektu.
+  // Nowa tożsamość przy każdym renderze zapętliłaby taki efekt na urządzeniu.
+  return useCallback(
+    (sessionUuid: string) => {
+      if (memberships.length < 2) return null;
+      const orgId = orgOf(sessionUuid);
+      if (orgId == null) return null;
+      return memberships.find((m) => m.org.id === orgId)?.org.name ?? null;
+    },
+    [memberships, orgOf],
+  );
 }

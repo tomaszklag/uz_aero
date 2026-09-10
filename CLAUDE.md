@@ -3110,6 +3110,16 @@ obowiązujące odtąd KAŻDY nowy ekran i KAŻDE nowe zapytanie do magazynu:
   właśnie wpisał kod, ma prawo zobaczyć, że czeka. Podpis karty klubu nie pisze
   „0 samolotów" dla klubu, którego floty telefon nigdy nie widział - to byłoby zdanie
   o flocie, a jest zdaniem o pustym cache'u.
+- **KLUB JEDZIE PRZEZ WSPÓLNY `SessionCardVm`, NIE PRZEZ PROPS EKRANU** - jak sygnatura:
+  kafelek ma na 01 i 12 JEDEN kształt (issue #42), a wartość spoza projekcji wstrzykuje
+  się funkcją (`clubOf`, `signatureOf`). Regułę „>1 członkostwo" trzyma `useOperationClub`,
+  więc oba ekrany nie mają jak jej powiedzieć inaczej. Pierwsza wersja przekazywała klub
+  propsem i **strażnik kształtu w `myDay.test.ts` tego nie widział** - to on wymusił
+  poprawkę, gdy pole weszło do modelu.
+- **SYGNATURA WRÓCIŁA NA KAFELEK 01** (dług sprzed 2.0.0, znaleziony przy tym epiku):
+  `buildMyDay` umiał ją policzyć od issue #68, ale ekran wołał go BEZ `signatureOf`,
+  więc kafelek „Mojego dnia" pokazywał sam numer operacji - wbrew mockupom 01/01e i wbrew
+  karcie w historii, gdzie stała od początku. Rachunek był, brakowało jednego argumentu.
 - **00C/00D/00E TO TRZY STANY JEDNEGO EKRANU** (`ClubGateScreen`, dawny
   `RegistrationPendingScreen`): treść liczy `logic/clubGateView.ts`, kod klubu maskuje
   `logic/clubCode.ts` (myślnik i wielkość liter są ZAPISEM). Maska NIE filtruje alfabetu
