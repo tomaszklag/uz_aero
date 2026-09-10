@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - PORTY warstwy aplikacji dla APLIKACJI PILOTA.
+ * Ninerdeck (serwer) - PORTY warstwy aplikacji dla APLIKACJI PILOTA.
  *
  * Trzeci plik portów po `common/ports.ts` i `admin/ports.ts`, z tego samego powodu co
  * tamten podział: jeden plik portów na POWIERZCHNIĘ, nie jeden na projekt. `common/`
@@ -11,7 +11,7 @@
  * implementacje (`infrastructure/pg/mobile/*`) wstrzykuje composition root.
  */
 
-import type { Event, OperationType } from '@uzaero/domain';
+import type { Event, OperationType } from '@ninerdeck/domain';
 
 import type { MembershipStatus } from '../../domain/memberships.ts';
 import type { Organization } from '../../domain/organizations.ts';

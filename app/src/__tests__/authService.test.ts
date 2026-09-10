@@ -1,5 +1,5 @@
 /**
- * UZ Aero - `AuthService` w świecie klubów (wielofirmowość §4-§7, issue #102), na
+ * Ninerdeck - `AuthService` w świecie klubów (wielofirmowość §4-§7, issue #102), na
  * atrapach portów (serwer, magazyn) - zero sieci, zero natywnych modułów.
  *
  * Własności, które muszą przetrwać każdą zmianę:

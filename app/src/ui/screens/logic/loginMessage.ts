@@ -1,5 +1,5 @@
 /**
- * UZ Aero - nieudane logowanie → ZDANIE dla pilota na ekranie `00a` (§6 pkt 3: powód,
+ * Ninerdeck - nieudane logowanie → ZDANIE dla pilota na ekranie `00a` (§6 pkt 3: powód,
  * nigdy kod błędu; nigdy cicha odmowa).
  *
  * Moduł czysty, wyniesiony z `authStore` przy wejściu Google (2026-09-04), bo lista

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - wybór adresu IP komputera w sieci lokalnej dla Metro/Expo.
+ * Ninerdeck - wybór adresu IP komputera w sieci lokalnej dla Metro/Expo.
  *
  * Czysta logika bez importów Node (testy: `src/__tests__/pickLanIp.test.ts`).
  * Kontekst: Expo ustala IP komputera raz, przy starcie serwera. Gdy router zmieni

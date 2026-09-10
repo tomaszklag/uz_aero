@@ -1,5 +1,5 @@
 /**
- * UZ Aero - arkusz czasów wpisu ręcznego (mockup `design/15d-reczny-czas-arkusz.html`).
+ * Ninerdeck - arkusz czasów wpisu ręcznego (mockup `design/15d-reczny-czas-arkusz.html`).
  *
  * Jedno wejście do KAŻDEJ godziny wpisu ręcznego: bieg silnika (para uruchomienie →
  * wyłączenie) i lot (para start → lądowanie). Kontrolką jest `TimeStepper` - ta sama,

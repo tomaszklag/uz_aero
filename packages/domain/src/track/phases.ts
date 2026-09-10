@@ -1,5 +1,5 @@
 /**
- * UZ Aero - PODZIAŁ ŚLADU NA FAZY: kołowanie kontra lot (issue #75 pkt 4).
+ * Ninerdeck - PODZIAŁ ŚLADU NA FAZY: kołowanie kontra lot (issue #75 pkt 4).
  *
  * Zapis GPS obejmuje CAŁY bieg silnika (issue #38), więc jedna linia na mapie mieszała
  * drogę kołowania z trasą w powietrzu - a mockupy 14 i miniatury na 10 od początku

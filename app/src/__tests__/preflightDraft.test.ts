@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy SZKICU PREFLIGHTU (`ui/store/preflightDraft.ts`).
+ * Ninerdeck - testy SZKICU PREFLIGHTU (`ui/store/preflightDraft.ts`).
  *
  * Reguła, którą szkic egzekwuje sam - bo da się ją zepsuć z dowolnego ekranu przejęcia,
  * a nie ma szansy przetrwać, jeśli pilnuje jej pamięć programisty: kształt trasy zależny

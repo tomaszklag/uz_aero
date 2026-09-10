@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - czy poświadczenie jest STARSZE niż unieważnienie poświadczeń.
+ * Ninerdeck (serwer) - czy poświadczenie jest STARSZE niż unieważnienie poświadczeń.
  *
  * Jedna reguła dla trzech miejsc: bramy panelu (`http/authorize.ts`), tokenu osoby
  * (`GET /auth/memberships`) i dołączania kodem (`POST /auth/join`). Do epiku D mieszkała

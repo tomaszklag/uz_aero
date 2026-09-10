@@ -1,5 +1,5 @@
 /**
- * UZ Aero - znak „G" Google przy przycisku logowania (mockup 00a).
+ * Ninerdeck - znak „G" Google przy przycisku logowania (mockup 00a).
  *
  * ══ JEDYNE MIEJSCE W APLIKACJI Z KOLORAMI SPOZA TOKENÓW ══
  * To jest ZNAK TOWAROWY Google i jego barwy są częścią znaku, a nie decyzją

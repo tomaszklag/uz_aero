@@ -1,5 +1,5 @@
 /**
- * UZ Aero - 10 SESJA (mockupy `design/10-statystyki.html`, `10a`, `10b`, `10c`).
+ * Ninerdeck - 10 SESJA (mockupy `design/10-statystyki.html`, `10a`, `10b`, `10c`).
  *
  * Opisuje JEDNĄ SESJĘ SAMOLOTU (przejęcie → zdanie), a nie dzień pilota: dzień pilota to
  * LISTA SESJI na różnych maszynach (issue #23) i mieszka na „Mój dzień" (01).

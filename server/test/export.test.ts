@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - testy eksportu dziennych arkuszy (§4.7).
+ * Ninerdeck (serwer) - testy eksportu dziennych arkuszy (§4.7).
  *
  * Ta sama zasada co w `ingest.test.ts`: scenariusze jadą przez PRAWDZIWY `POST /events`
  * na PGlite, a jedyną atrapą jest `FakeSheets` (adaptera Google jeszcze nie ma).
@@ -10,7 +10,7 @@
 
 import { describe, expect, it, vi } from 'vitest';
 
-import { projectSession, type Event } from '@uzaero/domain';
+import { projectSession, type Event } from '@ninerdeck/domain';
 
 import { buildDaySheet, sheetTabName } from '../src/application/common/export/daySheetContent.ts';
 import { FakeSheets } from './fakes/fakeSheets.ts';
@@ -176,7 +176,7 @@ describe('eksport dziennego arkusza (§4.7)', () => {
     expect(sheet.tab).toBe('2026-06-22_SP-AXA');
 
     // Nagłówek doby - data UTC, samolot, ile zmian, czas blokowy doby.
-    expect(sheet.rows).toContainEqual(['UZ Aero - doba samolotu', '2026-06-22 (UTC)']);
+    expect(sheet.rows).toContainEqual(['Ninerdeck - doba samolotu', '2026-06-22 (UTC)']);
     expect(sheet.rows).toContainEqual(['Samolot', 'SP-AXA']);
     expect(sheet.rows).toContainEqual(['Operacje', '1']);
     expect(sheet.rows).toContainEqual(['Czas blokowy doby', '02:22']);
@@ -367,7 +367,7 @@ describe('karta = doba samolotu (§4.7)', () => {
 
     // Druga wersja karty niesie OBIE zmiany - pierwsza nie zniknęła pod drugą.
     const card = sheets.calls[1]!;
-    expect(card.rows).toContainEqual(['UZ Aero - doba samolotu', '2026-06-22 (UTC)']);
+    expect(card.rows).toContainEqual(['Ninerdeck - doba samolotu', '2026-06-22 (UTC)']);
     expect(card.rows).toContainEqual(['Samolot', 'SP-AXA']);
     expect(card.rows).toContainEqual(['Operacje', '2']);
     // Kolumna spinająca nazywa się „Operacja" (issue #68), a rodzaj operacji -

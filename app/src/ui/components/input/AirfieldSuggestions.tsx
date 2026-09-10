@@ -1,5 +1,5 @@
 /**
- * UZ Aero - lista podpowiedzi lotnisk (mockup `02f-preflight-lotnisko.html`).
+ * Ninerdeck - lista podpowiedzi lotnisk (mockup `02f-preflight-lotnisko.html`).
  *
  * Lista KART, nie natywny dropdown - twarda reguła projektu (`CLAUDE.md`). Stoi
  * w przepływie treści, a nie jako nakładka nad polem: przy podniesionej klawiaturze

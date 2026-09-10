@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ThemeToggle: jednotapowa zmiana jasności w pasku kokpitu (issue #82).
+ * Ninerdeck - ThemeToggle: jednotapowa zmiana jasności w pasku kokpitu (issue #82).
  *
  * Stoi tam, gdzie do issue #82 stała zębatka - i to nie jest przypadek: ustawienia
  * mają odtąd JEDNO wejście, na „Mój dzień" (zgłoszenie z urządzenia). Z kokpitu nie

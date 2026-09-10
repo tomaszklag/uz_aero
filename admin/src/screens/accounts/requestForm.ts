@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: decyzja o zgłoszeniu - szkic i ocena (mockup `piloci-zgloszenie`;
+ * Ninerdeck - panel: decyzja o zgłoszeniu - szkic i ocena (mockup `piloci-zgloszenie`;
  * issue #101, E3).
  *
  * Moduł CZYSTY (bez Reacta, bez sieci) - decyzje o treści, nie o układzie.

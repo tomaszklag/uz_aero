@@ -1,5 +1,5 @@
 /**
- * UZ Aero - 00C CZEKA NA ZATWIERDZENIE, 00D ZGŁOSZENIE ODRZUCONE i 00E BEZ KLUBU.
+ * Ninerdeck - 00C CZEKA NA ZATWIERDZENIE, 00D ZGŁOSZENIE ODRZUCONE i 00E BEZ KLUBU.
  *
  * Jeden ekran w trzech stanach (mockupy `design/00c-oczekiwanie.html`, `00d-odrzucone.html`
  * i `00e-bez-klubu.html`): wariant to STAN wobec klubów, nie osobny ekran - ten sam

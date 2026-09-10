@@ -1,5 +1,5 @@
 /**
- * UZ Aero - pasek sesji cudzego samolotu (04B) i decyzja o wznowieniu po restarcie.
+ * Ninerdeck - pasek sesji cudzego samolotu (04B) i decyzja o wznowieniu po restarcie.
  *
  * Oba moduły pilnują tej samej granicy: **kokpit opisuje SAMOLOT, nie dzień pilota**.
  * Pasek mówi, czyja jest maszyna i ile zrobiła; bramka wznowienia pyta, czy pilot ją

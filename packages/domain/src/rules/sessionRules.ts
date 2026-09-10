@@ -1,5 +1,5 @@
 /**
- * UZ Aero - INWARIANTY SESJI (docs/_main.md.txt §3.2–§3.8, §4.1, §4.5).
+ * Ninerdeck - INWARIANTY SESJI (docs/_main.md.txt §3.2–§3.8, §4.1, §4.5).
  *
  * To jest miejsce, w którym mieszka odpowiedź na pytanie „czy to zdarzenie w ogóle
  * mogło się wydarzyć?". Jedna czysta funkcja `checkAppend(stan, kandydat, limity)`

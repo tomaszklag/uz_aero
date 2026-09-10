@@ -1,4 +1,4 @@
-# UZ Aero - architektura frontendu panelu i wspólnej biblioteki
+# Ninerdeck - architektura frontendu panelu i wspólnej biblioteki
 
 > Dotyczy fazy 7 (panel administracyjny, web). Wejście: `design/admin/` (20 ekranów,
 > `SZABLON.html`, `ANALIZA.md`), `docs/architektura-kodu.md` (warstwy, granulacja plików,
@@ -25,14 +25,14 @@
 
 | # | Pytanie | Rozstrzygnięcie | Gdzie |
 |---|---|---|---|
-| 1 | Wspólna biblioteka DS - jeden pakiet czy dwa? | **Dwa pakiety, oba nie-wizualne: `@uzaero/tokens` i `@uzaero/format`. Zero pakietów z komponentami.** | §1 |
+| 1 | Wspólna biblioteka DS - jeden pakiet czy dwa? | **Dwa pakiety, oba nie-wizualne: `@ninerdeck/tokens` i `@ninerdeck/format`. Zero pakietów z komponentami.** | §1 |
 | 2 | Komponenty wspólne RN ↔ web? | **Nie.** Komponenty per platforma; wspólne są wartości, funkcje i decyzje - nie widgety | §1.1–1.2 |
 | 3 | Wiele motywów w panelu? | **Nie.** Panel emituje jeden motyw (`night`); generator zostaje parametryczny | §1.6 |
 | 4 | Kierunek źródła prawdy `05-themes.html` ↔ `tokens.ts` | **Nieaktualne od issue #72**: mockup skasowany razem z ekranem podglądu motywów, palety mieszkają w `packages/tokens`, a równości z `SZABLON.html` pilnuje test | §1.7 |
 | 5 | Gdzie mieszka `format.ts` | `packages/format`, konsumowany przez `app/`, `admin/` **i `server/`** (dziś ma ręczną kopię) | §1.8, §6 |
 | 6 | Warstwy panelu | `screens/ → queries/ → api/`; `components/` nie zna żadnej z nich; czyste moduły ekranu obok ekranu | §2 |
 | 7 | TanStack Query bez globalnego store'u | **Potwierdzone**, z jednym warunkiem: filtry list żyją w URL-u, nie w stanie | §4 |
-| 8 | Typy | `@uzaero/domain` **tylko jako typy** (jeden imienny wyjątek: geometria wykresu w `trackChart.ts`); koperty HTTP jako własne DTO w `admin/src/api/dto.ts`; **nigdy import z `server/src`** | §5 |
+| 8 | Typy | `@ninerdeck/domain` **tylko jako typy** (jeden imienny wyjątek: geometria wykresu w `trackChart.ts`); koperty HTTP jako własne DTO w `admin/src/api/dto.ts`; **nigdy import z `server/src`** | §5 |
 | 9 | „Panel nie liczy po swojemu" | Egzekucja: zakaz importów wartościowych z domeny + jedno miejsce z `fetch` + kontrakt serwera | §5.3 |
 | 10 | Routing | **Hash (`#/dni/<uuid>`)** - zero fallbacku SPA na serwerze | §7, §9 |
 | 11 | Rozjazd mockup ↔ komponent | **Mockup wygrywa zawsze.** Wykrywa: test tokenów + test inwentarza klas | §3.3 |
@@ -86,9 +86,9 @@ warstwa emulująca CSS w JS to najkrótsza droga do „prawie tak samo".
 **Rekomendacja: (a) rozszerzone o drugi pakiet nie-wizualny.**
 
 ```
-packages/domain     @uzaero/domain   - istnieje: zdarzenia, reguły, projekcje, detekcja
-packages/tokens     @uzaero/tokens   - NOWY: wartości designu + emiter zmiennych CSS
-packages/format     @uzaero/format   - NOWY: prezentacja liczb domeny (czas, MH, litry, liczebniki)
+packages/domain     @ninerdeck/domain   - istnieje: zdarzenia, reguły, projekcje, detekcja
+packages/tokens     @ninerdeck/tokens   - NOWY: wartości designu + emiter zmiennych CSS
+packages/format     @ninerdeck/format   - NOWY: prezentacja liczb domeny (czas, MH, litry, liczebniki)
 app/                RN - komponenty własne (ui/components/, ~75 plików)
 admin/              web - komponenty własne (src/ui/components/, ~24 pliki)
 ```
@@ -104,7 +104,7 @@ granulacji („jedna odpowiedzialność = jeden plik", `architektura-kodu.md` §
 
 ```
 packages/tokens/
-  package.json          @uzaero/tokens · private · main/types = src/index.ts · zero zależności
+  package.json          @ninerdeck/tokens · private · main/types = src/index.ts · zero zależności
   src/index.ts          barrel
   src/themeColors.ts    interface ThemeColors (+ docblocki `overlay`/`selection` przenoszone 1:1)
   src/colors/night.ts   \
@@ -150,18 +150,18 @@ zmianę w każdym miejscu, gdzie aplikacja dziś podaje `fontFamily` wprost do s
 
 ### 1.4 Jak `app/` konsumuje tokeny bez regresu
 
-Mechanizm jest **już sprawdzony w produkcji** - tak działa `@uzaero/domain`:
+Mechanizm jest **już sprawdzony w produkcji** - tak działa `@ninerdeck/domain`:
 
 ```
-app/src/domain/index.ts    →  export * from '@uzaero/domain';   (shim zgodności, faza 2)
+app/src/domain/index.ts    →  export * from '@ninerdeck/domain';   (shim zgodności, faza 2)
 ```
 
 Powtarzamy go dla tokenów:
 
 ```
-app/src/ui/theme/tokens.ts  →  export * from '@uzaero/tokens';
+app/src/ui/theme/tokens.ts  →  export * from '@ninerdeck/tokens';
 app/src/ui/theme/index.ts   →  bez zmian (export * from './tokens'; export * from './ThemeProvider';)
-app/src/ui/components/tone.ts → export { toneColors, type Tone, type ToneColors } from '@uzaero/tokens';
+app/src/ui/components/tone.ts → export { toneColors, type Tone, type ToneColors } from '@ninerdeck/tokens';
 ```
 
 Skutek: **85 plików importujących `ui/theme` i 86 wywołań `useTheme()` nie zmienia się
@@ -172,9 +172,9 @@ Trzy rzeczy, o które trzeba zadbać przy przenoszeniu:
 
 1. **Jest transformuje pakiet warsztatowy, mimo `transformIgnorePatterns`** - bo Jest
    rozwiązuje symlink npm workspaces do prawdziwej ścieżki `packages/tokens/src/**`, która
-   nie zawiera `/node_modules/`. Tak samo działa dziś `@uzaero/domain`. Gdyby ktoś
+   nie zawiera `/node_modules/`. Tak samo działa dziś `@ninerdeck/domain`. Gdyby ktoś
    „naprawiał" to `transformIgnorePatterns`, popsuje coś, co działa.
-2. **`architecture.test.ts` dostaje pozycję**: `@uzaero/tokens` na liście dozwolonych
+2. **`architecture.test.ts` dostaje pozycję**: `@ninerdeck/tokens` na liście dozwolonych
    importów `ui/`, i **zakaz** importu tego pakietu w `domain/`, `application/`
    i `infrastructure/` - tokeny to warstwa UI i nie wolno im wyciec w głąb.
 3. `package.json` pakietu kopiujemy z `packages/domain` (`private`, `type: module`,
@@ -304,19 +304,19 @@ w całości (`timeUtc`, `timeLocal`, `dateUtcLong`, `duration`, `durationLong`, 
 to jedna odpowiedzialność („liczby domeny → napisy"), a dzielenie jej wg tego, kto
 akurat czego używa, jest tą samą spekulacją, którą repo odrzuca przy portach.
 
-`app/src/ui/format.ts` zostaje jako shim (`export * from '@uzaero/format';`) - 24 pliki
+`app/src/ui/format.ts` zostaje jako shim (`export * from '@ninerdeck/format';`) - 24 pliki
 importujące bez zmian. Serwer usuwa swoje lustra i importuje pakiet.
 
-**Dlaczego nie do `@uzaero/domain`:** domena ma docblock stawiający tę granicę
+**Dlaczego nie do `@ninerdeck/domain`:** domena ma docblock stawiający tę granicę
 (*„Formatowanie na LT/UTC do wyświetlenia robi warstwa UI - nie ten moduł"*), a
 `maskTimeUtcInput` i `parseMotoHours` to obsługa **wpisu z klawiatury** - nie ma powodu,
 by pakiet, od którego zależy ingest serwera, wiedział cokolwiek o maskach pól. Osobny
-pakiet trzyma linię widoczną. Zależność `@uzaero/format → @uzaero/domain` (jeden typ
+pakiet trzyma linię widoczną. Zależność `@ninerdeck/format → @ninerdeck/domain` (jeden typ
 `EpochMillis`) jest jednokierunkowa i w porządku.
 
 **Testy jadą z kodem, ale runner zostaje:** `app/src/__tests__/format.test.ts` zostaje
 tam, gdzie jest (Jest już go uruchamia przez shim, zero nowej infrastruktury - tak samo
-`@uzaero/domain` nie ma własnego runnera i jest testowany z obu stron). Po stronie serwera
+`@ninerdeck/domain` nie ma własnego runnera i jest testowany z obu stron). Po stronie serwera
 dochodzi asercja w `test/export.test.ts`, że komórki karty powstają z **funkcji pakietu**,
 a nie z lokalnej kopii.
 
@@ -324,7 +324,7 @@ a nie z lokalnej kopii.
 
 ## 2. Drzewo katalogów panelu i kierunek zależności
 
-Panel ma własny workspace `admin/` (`@uzaero/admin`), dopisany do `workspaces`
+Panel ma własny workspace `admin/` (`@ninerdeck/admin`), dopisany do `workspaces`
 w głównym `package.json`.
 
 > **Drzewo niżej opisuje stan po epiku E wielofirmowości (2026-09-10).** Pierwsza
@@ -337,7 +337,7 @@ w głównym `package.json`.
 
 ```
 admin/
-  package.json          @uzaero/admin · private
+  package.json          @ninerdeck/admin · private
   index.html            wejście Vite (<div id="root">)
   vite.config.ts        base:'/admin/' · proxy /admin/* → localhost:PORT w dev
   tsconfig.json         strict + noUncheckedIndexedAccess (jak server/)
@@ -412,7 +412,7 @@ admin/
       googleIdentity.ts     jedyne miejsce, które zna skrypt Google Identity Services
 
     styles/
-      tokens.css        GENEROWANY z @uzaero/tokens (§1.5)
+      tokens.css        GENEROWANY z @ninerdeck/tokens (§1.5)
       fonts.css · base.css · layout.css
       components/*.css  jeden plik na sekcję, klasy 1:1 z SZABLON
                         (źródło `design/panel/panel.css` - `npm run panel:css`)
@@ -439,7 +439,7 @@ admin/
        api/                          (jedyne miejsce z fetch; NIE zna Reacta)
          │
          ▼
-   @uzaero/domain (TYLKO typy) · @uzaero/format · @uzaero/tokens
+   @ninerdeck/domain (TYLKO typy) · @ninerdeck/format · @ninerdeck/tokens
 ```
 
 | Warstwa | Katalog | Czego NIE wolno importować |
@@ -472,7 +472,7 @@ Egzekucja, trzy warstwy (kolejność = malejąca siła):
    - `src/ui/**` nie importuje `api/` ani `queries/` - komponent dostaje dane propsami;
    - `fetch(` występuje wyłącznie w `src/api/httpClient.ts`;
    - `screens/**/*.ts` (moduły czyste) nie importują `react`.
-2. **Zakaz importów wartościowych z `@uzaero/domain`** (dozwolone tylko `import type`) -
+2. **Zakaz importów wartościowych z `@ninerdeck/domain`** (dozwolone tylko `import type`) -
    szczegóły i uzasadnienie w §5.3. Skutek uboczny jest tu najważniejszy: skoro panel
    nie może wywołać `projectSession`, to nie może przeliczyć niczego po swojemu.
    **Wyjątek jest DOKŁADNIE JEDEN i imienny**: `screens/logbook/trackChart.ts` importuje
@@ -483,7 +483,7 @@ Egzekucja, trzy warstwy (kolejność = malejąca siła):
    (`docs/panel-2.0.md` §9.4a).
 3. **Zakaz `toFixed` / `Math.round` / `Math.floor` / `Intl.NumberFormat`
    w `src/ui/**` i w `*.tsx`** - arytmetyka ma prawo istnieć wyłącznie w module czystym
-   z testem obok albo w `@uzaero/format`. To najtańszy sposób złapania momentu,
+   z testem obok albo w `@ninerdeck/format`. To najtańszy sposób złapania momentu,
    w którym „panel zaczyna liczyć po swojemu": zaczyna się od zaokrąglenia.
 
 ### 2.3 `.tsx` eksportuje wyłącznie komponenty
@@ -747,15 +747,15 @@ znanym stanie z adnotacją wieku.
 
 ## 5. Typy: co skąd
 
-### 5.1 `@uzaero/domain` - TAK, ale wyłącznie jako typy
+### 5.1 `@ninerdeck/domain` - TAK, ale wyłącznie jako typy
 
 Panel importuje: `EventType`, `EventPayloadMap`, `SessionState`, `Handover`, `MhFormat`,
 `Aircraft`, `Pilot`, `ServiceStatus`, kody naruszeń oraz - po przeniesieniu, §11 pkt 6 -
 `PilotRole` i `Capability`.
 
 ```ts
-import type { SessionState, MhFormat } from '@uzaero/domain';   // OK
-import { projectSession } from '@uzaero/domain';                // ZAKAZANE (test architektury)
+import type { SessionState, MhFormat } from '@ninerdeck/domain';   // OK
+import { projectSession } from '@ninerdeck/domain';                // ZAKAZANE (test architektury)
 ```
 
 Zakaz importów wartościowych ma jeden konkretny cel: **odciąć panelowi możliwość liczenia**.
@@ -806,7 +806,7 @@ Cztery mechanizmy, żaden nie jest apelem o staranność:
 
 ## 6. Formaty - gdzie mieszka ten kod
 
-**Odpowiedź: `packages/format` (`@uzaero/format`).** Pełne uzasadnienie i zawartość: §1.8.
+**Odpowiedź: `packages/format` (`@ninerdeck/format`).** Pełne uzasadnienie i zawartość: §1.8.
 
 Trzy konsekwencje warte powtórzenia w tym miejscu:
 
@@ -925,7 +925,7 @@ Konsekwencje, których nie widać z tego zdania:
   originem).
 - **Dev: `server.proxy` w Vite** dla `/admin/*` na port serwera. Inaczej pierwszego dnia ktoś
   zobaczy CORS w devie i „naprawi" go, dokładając CORS do serwera - a to pojedzie na produkcję.
-- **CSRF: własny nagłówek na mutacjach** (np. `X-UZ-Admin: 1`), wymagany przez trasy `/admin/*`
+- **CSRF: własny nagłówek na mutacjach** (np. `X-Ninerdeck-Admin: 1`), wymagany przez trasy `/admin/*`
   przy metodach innych niż `GET`. Nagłówka niestandardowego nie da się wysłać cross-origin bez
   preflightu, więc razem z `SameSite=Strict` to wystarczy; tabeli tokenów CSRF nie zakładamy.
 - **CSP `default-src 'self'`.** Panel renderuje payloady zdarzeń pochodzące z telefonów; build
@@ -980,7 +980,7 @@ Każdy krok zakłada poprzednie. Kroki 1–2 są niewidoczne dla użytkownika i 
    design już tak pisze linki). Jeśli estetyka adresu ma znaczenie dla właściciela produktu,
    koszt zmiany to `basename` + jedna trasa - ale decyzja powinna zapaść przed krokiem 3,
    bo potem migrują wszystkie wklejone linki.
-6. **Czy `server/src/domain/roles.ts` przenosimy do `@uzaero/domain`?** Panel potrzebuje typu
+6. **Czy `server/src/domain/roles.ts` przenosimy do `@ninerdeck/domain`?** Panel potrzebuje typu
    `Capability`, żeby wyszarzać pozycje nawigacji z podanym powodem. Wariant minimalny:
    `GET /admin/me` zwraca listę zdolności, a panel porównuje stringi (brak typowania).
    Wariant czysty: mapa ról przenosi się do wspólnej domeny (jest czysta, zero zależności),

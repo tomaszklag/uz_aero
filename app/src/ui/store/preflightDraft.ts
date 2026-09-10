@@ -1,5 +1,5 @@
 /**
- * UZ Aero - szkic preflightu (stan UI, nie domena).
+ * Ninerdeck - szkic preflightu (stan UI, nie domena).
  *
  * Przejęcie to trzy ekrany (02 → 02e → 02a), które wspólnie budują JEDNO zdarzenie
  * `preflight_confirm`. Dopóki pilot nie naciśnie „PRZEJMIJ I LEĆ" na kroku 3, **nic nie

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - SYGNATURA OPERACJI LOTNICZEJ (issue #68).
+ * Ninerdeck - SYGNATURA OPERACJI LOTNICZEJ (issue #68).
  *
  * ══ PO CO ══
  * Operacja miała dotąd jedną nazwę: uuid. Nadaje się on do adresowania (klucz w bazie,

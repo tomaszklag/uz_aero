@@ -1,5 +1,5 @@
 /**
- * UZ Aero - odwzorowanie Web Mercator i dobór kafelków mapy.
+ * Ninerdeck - odwzorowanie Web Mercator i dobór kafelków mapy.
  *
  * DLACZEGO WŁASNE, A NIE BIBLIOTEKA MAPOWA: aplikacja pilota unika modułów natywnych
  * z premedytacją (`ui/components/foundation/CheckIcon.tsx` - ptaszek rysowany layoutem,

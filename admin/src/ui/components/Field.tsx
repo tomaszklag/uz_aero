@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: pole formularza (`.field` + `.label` + `.hint` z `SZABLON.html`).
+ * Ninerdeck - panel: pole formularza (`.field` + `.label` + `.hint` z `SZABLON.html`).
  *
  * Etykieta jest `<label>` z `htmlFor`, a nie `<span>` jak w mockupie: mockup jest
  * specyfikacją WYGLĄDU, a wygląd jest tu identyczny (`.label` nie zmienia stylu wraz

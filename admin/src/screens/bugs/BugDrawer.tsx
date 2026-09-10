@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: karta ZGŁOSZENIA (`#/zgloszenia/:uuid`, issue #87).
+ * Ninerdeck - panel 2.0: karta ZGŁOSZENIA (`#/zgloszenia/:uuid`, issue #87).
  *
  * Trzy karty i jedna decyzja: co pilot napisał, co aplikacja dołączyła i co z tym
  * robimy. Szuflada jest SZEROKA (`wide`), bo kontekst to kilkanaście wierszy

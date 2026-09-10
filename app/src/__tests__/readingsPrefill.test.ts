@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test podstawiania odczytów startowych (issue #62, siódma i ósma tura).
+ * Ninerdeck - test podstawiania odczytów startowych (issue #62, siódma i ósma tura).
  *
  * Reguła „nie nadpisuj decyzji pilota" jest tu CAŁĄ treścią modułu, a warunek trzymany
  * w JSX już raz przeżył dziurę bez jednego czerwonego testu (`myDayActions`, issue #42).

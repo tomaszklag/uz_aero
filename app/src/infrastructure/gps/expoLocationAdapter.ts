@@ -1,11 +1,11 @@
 /**
- * UZ Aero - adapter GPS na `expo-location`.
+ * Ninerdeck - adapter GPS na `expo-location`.
  *
  * Jedyne miejsce w kodzie, które wie o `expo-location`. Ma DWA źródła fixów za tym
  * samym fanoutem, więc odbiorcy (kokpit, diagnostyka na 13) nie widzą różnicy:
  *  - `watch` - `watchPositionAsync`, ekran włączony (domyślne),
  *  - `service` - usługa pierwszoplanowa z powiadomieniem (`startLocationUpdatesAsync`
- *    + task `uzaero-location`), gdy silnik pracuje: fixy płyną też przy wygaszonym
+ *    + task `ninerdeck-location`), gdy silnik pracuje: fixy płyną też przy wygaszonym
  *    ekranie, a usługa przeżywa śmierć procesu (wtedy pisze writer headless).
  * Trybem steruje `setBackgroundMode` (spoina UI na zboczach `engineRunning`).
  *
@@ -41,7 +41,7 @@ const SERVICE_OPTIONS: Location.LocationTaskOptions = {
   timeInterval: INTERVAL_MS,
   distanceInterval: 0,
   foregroundService: {
-    notificationTitle: 'UZ Aero - rejestracja lotu',
+    notificationTitle: 'Ninerdeck - rejestracja lotu',
     notificationBody: 'Zapis śladu GPS trwa (silnik pracuje).',
     // `--green` z design systemu - powiadomienie to przyrząd stanu, nie ozdoba.
     notificationColor: '#2ECC71',

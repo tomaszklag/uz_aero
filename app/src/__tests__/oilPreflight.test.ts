@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test sekcji OLEJU na kroku liczników (02a, issue #60).
+ * Ninerdeck - test sekcji OLEJU na kroku liczników (02a, issue #60).
  *
  * Logika jest czysta i mieszka poza ekranem, bo niesie trzy rachunki, które muszą
  * być testowalne bez urządzenia:

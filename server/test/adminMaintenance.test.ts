@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - operacje serwisowe panelu (`A11-konserwacja.html`).
+ * Ninerdeck (serwer) - operacje serwisowe panelu (`A11-konserwacja.html`).
  *
  * Maszyneria przebudowy projekcji leżała w repozytorium od przekroju 2 z testami i BEZ
  * ANI JEDNEJ TRASY. Ten plik jest pierwszym wywołaniem jej drogą produkcyjną, więc

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - useSkeleton: „czy w tej chwili rysować plamki?".
+ * Ninerdeck - useSkeleton: „czy w tej chwili rysować plamki?".
  *
  * Jedno wejście dla całej aplikacji do wzorca ładowania (issue #33). Ekran mówi tylko,
  * czy dane są w drodze; próg pojawienia się i minimalny czas na ekranie liczy czysta

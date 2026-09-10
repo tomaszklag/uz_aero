@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: RAMA (`AppShell`) renderuje DOKŁADNIE te klasy, które ma szablon.
+ * Ninerdeck - panel: RAMA (`AppShell`) renderuje DOKŁADNIE te klasy, które ma szablon.
  *
  * Arkusz makiet i panelu jest jeden (`panelCss.generated.test.ts`), więc rozjazd może
  * powstać już tylko w ZNACZNIKACH: klasa użyta w JSX, której szablon nie zna, dostaje

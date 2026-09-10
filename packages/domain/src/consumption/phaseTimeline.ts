@@ -1,5 +1,5 @@
 /**
- * UZ Aero - oś faz pionowych lotu (wznoszenie / przelot / zniżanie) ze śladu GPS.
+ * Ninerdeck - oś faz pionowych lotu (wznoszenie / przelot / zniżanie) ze śladu GPS.
  *
  * ══ PO CO ══
  * Model zużycia rozdziela paliwo między fazy, ale ziemia/powietrze to podział zgrubny:

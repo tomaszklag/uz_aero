@@ -1,5 +1,5 @@
 /**
- * UZ Aero - flagi niespójności (§4.5): katalog typów i kształt „na drucie".
+ * Ninerdeck - flagi niespójności (§4.5): katalog typów i kształt „na drucie".
  *
  * **Dlaczego w domenie, a nie po którejś stronie.** Ten sam typ opisuje odpowiedź
  * `/sessions/:uuid/sync-status`: serwer go wysyła, aplikacja czyta i pokazuje na

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - KONTEKST ZGŁOSZENIA BŁĘDU (issue #87).
+ * Ninerdeck - KONTEKST ZGŁOSZENIA BŁĘDU (issue #87).
  *
  * Pod obserwacją jedna własność i jej konsekwencje: **`context` i `rows` powstają
  * z jednego wywołania**, bo napis „Dołączamy automatycznie" nad listą jest obietnicą.

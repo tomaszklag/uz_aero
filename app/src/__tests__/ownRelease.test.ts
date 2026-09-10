@@ -1,9 +1,9 @@
 /**
- * UZ Aero - CZYJA TO BINARKA (`infrastructure/release/ownRelease.ts`).
+ * Ninerdeck - CZYJA TO BINARKA (`infrastructure/release/ownRelease.ts`).
  *
  * `expo-application` opisuje aplikację, która NAPRAWDĘ działa - w Expo Go jest nią
  * Expo Go, nie my. Bez tej decyzji ekran 13 pisałby testerowi wersję klienta Expo
- * jako wersję UZ Aero, a zgłoszenie błędu jechałoby na serwer z tym samym kłamstwem.
+ * jako wersję Ninerdeck, a zgłoszenie błędu jechałoby na serwer z tym samym kłamstwem.
  */
 
 import { ownRelease, type NativeRelease } from '../infrastructure/release/ownRelease';

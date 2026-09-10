@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: sesja przeglądarkowa (`/admin/api/auth/*`, `/admin/api/me`).
+ * Ninerdeck - panel: sesja przeglądarkowa (`/admin/api/auth/*`, `/admin/api/me`).
  *
  * Jeden plik = jeden zasób = jeden prefiks trasy, tak jak `server/src/http/routes/`.
  * Warstwa `api/` nie zna Reacta i nie zna cache'u - zwraca obietnice, a co z nimi

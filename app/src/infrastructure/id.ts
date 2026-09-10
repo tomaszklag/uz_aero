@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ADAPTER `IdPort`: generator UUID v4 (klucz idempotencji zdarzeń, §4.1).
+ * Ninerdeck - ADAPTER `IdPort`: generator UUID v4 (klucz idempotencji zdarzeń, §4.1).
  *
  * Wymóg testowalności (CLAUDE.md, brief Fazy 1): warstwa danych musi działać w Node/Jest
  * bez modułów natywnych. Dlatego NIE zależymy od `expo-crypto`. Zamiast tego bierzemy

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: nagłówek strony (`.page-head`).
+ * Ninerdeck - panel 2.0: nagłówek strony (`.page-head`).
  *
  * `sub` jest OPCJONALNY i to jest zmiana wobec panelu 1.0, gdzie był wymagany
  * („ekran back-office'u, który nie tłumaczy, co pokazuje, zostawia człowieka z tabelą

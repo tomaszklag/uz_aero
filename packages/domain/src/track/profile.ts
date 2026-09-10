@@ -1,5 +1,5 @@
 /**
- * UZ Aero - profil pionowy lotu: wysokość w czasie plus liczby pod wykresem.
+ * Ninerdeck - profil pionowy lotu: wysokość w czasie plus liczby pod wykresem.
  *
  * Osobno od `flightTrack.ts`, bo to inne pytanie: tam chodzi o „którędy", tu o „jak
  * wysoko i jak szybko". Ekran pokazuje oba obok siebie, ale profil daje się policzyć

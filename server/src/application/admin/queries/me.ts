@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - kto jest zalogowany w panelu (`GET /admin/api/me`).
+ * Ninerdeck (serwer) - kto jest zalogowany w panelu (`GET /admin/api/me`).
  *
  * Osobne zapytanie, a nie pole w odpowiedzi logowania, bo ciasteczko sesji jest
  * `HttpOnly`: po odświeżeniu karty JavaScript panelu NIE MA jak odczytać, kim jest -

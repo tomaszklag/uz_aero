@@ -1,5 +1,5 @@
 /**
- * UZ Aero - podpis pod kontrolką czasu: O ILE przesunięto zdarzenie.
+ * Ninerdeck - podpis pod kontrolką czasu: O ILE przesunięto zdarzenie.
  *
  * Osobny plik, bo to jedyna część `TimeStepper` sprawdzalna bez urządzenia, a treść
  * pisały wcześniej dwa arkusze osobno i każdy trochę inaczej („zmiana o +2 min względem

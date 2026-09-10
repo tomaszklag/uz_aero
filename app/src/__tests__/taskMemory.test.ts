@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy PAMIĘCI ZADANIA (`infrastructure/prefs/taskMemoryStore.ts`).
+ * Ninerdeck - testy PAMIĘCI ZADANIA (`infrastructure/prefs/taskMemoryStore.ts`).
  *
  * Ten magazyn nie trzyma faktów z dnia lotnego, tylko podpowiedź do formularza - i ta
  * różnica wyznacza, czego pilnują testy. Zepsuty albo obcy zapis ma dać **brak
@@ -49,8 +49,8 @@ describe('TaskMemoryStore', () => {
 
   it('zepsuty zapis nie wywraca ekranu - po prostu nie ma czego podpowiedzieć', async () => {
     const kv = new MemoryKv();
-    kv.data.set('uzaero.task.TMK', '{to nie jest json');
-    kv.data.set('uzaero.route.SP-ANK', '[]');
+    kv.data.set('ninerdeck.task.TMK', '{to nie jest json');
+    kv.data.set('ninerdeck.route.SP-ANK', '[]');
 
     const store = new TaskMemoryStore(kv);
     expect(await store.readTask('TMK')).toBeNull();
@@ -61,7 +61,7 @@ describe('TaskMemoryStore', () => {
     // Wartość spoza słownika §3.1 nie miałaby czego zaznaczyć w siatce kart, a przy
     // potwierdzeniu poszłaby do rejestru - lepiej pusty formularz niż cichy śmieć.
     const kv = new MemoryKv();
-    kv.data.set('uzaero.task.TMK', JSON.stringify({ operation: 'kosmos', client: null }));
+    kv.data.set('ninerdeck.task.TMK', JSON.stringify({ operation: 'kosmos', client: null }));
 
     expect(await new TaskMemoryStore(kv).readTask('TMK')).toBeNull();
   });
@@ -76,7 +76,7 @@ describe('TaskMemoryStore', () => {
 
   it('trasa z niepełnymi polami = brak podpowiedzi (nie połowa trasy)', async () => {
     const kv = new MemoryKv();
-    kv.data.set('uzaero.route.SP-ANK', JSON.stringify({ departureIcao: 'EPKK' }));
+    kv.data.set('ninerdeck.route.SP-ANK', JSON.stringify({ departureIcao: 'EPKK' }));
 
     expect(await new TaskMemoryStore(kv).readRoute('SP-ANK')).toBeNull();
   });

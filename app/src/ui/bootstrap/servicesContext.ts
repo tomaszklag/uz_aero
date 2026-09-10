@@ -1,5 +1,5 @@
 /**
- * UZ Aero - kontekst usług platformy (GPS, czujniki, rejestrator śladu) i jego czytniki.
+ * Ninerdeck - kontekst usług platformy (GPS, czujniki, rejestrator śladu) i jego czytniki.
  *
  * Osobny plik od `ServicesProvider.tsx` z tego samego powodu co `ui/theme/themeContext.ts`:
  * **Fast Refresh podmienia moduł w miejscu tylko wtedy, gdy WSZYSTKIE jego eksporty są

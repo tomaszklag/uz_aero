@@ -6,7 +6,7 @@
 
 1. Na telefonie otwórz [stronę pobierania](~/pobierz/) i tapnij **Pobierz na Androida**. Strona podaje aktualną wersję i numer wydania, na przykład `1.0.0 (build 1)`.
 2. Otwórz pobrany plik. Android zapyta o zgodę na instalowanie aplikacji spoza sklepu Play dla tego źródła (przeglądarka albo menedżer plików) - zezwól.
-3. Uruchom UZ Aero i przejdź do [pierwszego logowania](pierwsze-logowanie).
+3. Uruchom Ninerdeck i przejdź do [pierwszego logowania](pierwsze-logowanie).
 
 @screen 00a-login-full "Pierwszy ekran po instalacji"
 
@@ -15,7 +15,7 @@
 ## Zgody, o które prosi aplikacja
 
 - **Lokalizacja** - aplikacja poprosi o nią przy rozpoczęciu lotu. Bez niej kokpit nie wykryje kołowania, startów ani lądowań i nie powstanie ślad na mapie. Wystarcza zgoda „podczas używania aplikacji".
-- **Powiadomienia** - podczas pracy silnika Android pokazuje powiadomienie „UZ Aero - rejestracja lotu". To ono utrzymuje zapis śladu przy wygaszonym ekranie i gaśnie samo po zatrzymaniu silnika.
+- **Powiadomienia** - podczas pracy silnika Android pokazuje powiadomienie „Ninerdeck - rejestracja lotu". To ono utrzymuje zapis śladu przy wygaszonym ekranie i gaśnie samo po zatrzymaniu silnika.
 
 @screen 05g-cockpit-no-gps "Kokpit bez sygnału GPS" | 05f-zdarzenie-reczne "Ręczny zapis startu"
 
@@ -37,7 +37,7 @@ Aplikacja trzyma na telefonie własny zapis Twoich operacji i wysyła go do klub
 
 ## Wymagania
 
-- Telefon z Androidem i konto Google - służy do pierwszego logowania; haseł w UZ Aero nie ma.
+- Telefon z Androidem i konto Google - służy do pierwszego logowania; haseł w Ninerdeck nie ma.
 - Zgoda na dostęp do lokalizacji i na powiadomienia.
 - Internet przy pierwszym logowaniu i do wysyłki danych - nie w locie.
 

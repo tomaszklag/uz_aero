@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test wspólnych napisów ekranu sesji (10).
+ * Ninerdeck - test wspólnych napisów ekranu sesji (10).
  *
  * Po przebudowie z issue #38 zostały tu dwie odmiany. Wyglądają na drobiazg, ale obie
  * stoją w miejscach, na które pilot patrzy pierwsze: plakietka nagłówka („6 lot"

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: przycisk „Kontynuuj z Google" (Google Identity Services).
+ * Ninerdeck - panel 2.0: przycisk „Kontynuuj z Google" (Google Identity Services).
  *
  * JEDYNE miejsce w panelu, które wie o skrypcie Google - ładuje go, inicjuje i renderuje
  * przycisk. Ekran logowania dostaje z tego modułu jedną funkcję i jeden callback

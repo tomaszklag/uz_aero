@@ -1,5 +1,5 @@
 /**
- * UZ Aero - 02 NOWY LOT · krok 1/3: kto i czym.
+ * Ninerdeck - 02 NOWY LOT · krok 1/3: kto i czym.
  *
  * Odwzorowanie mockupu `design/02-preflight.html` - kolejność i treść sekcji są stamtąd,
  * nie z improwizacji: pasek tożsamości → samolot → drugi pilot → DALEJ.

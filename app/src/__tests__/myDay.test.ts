@@ -1,5 +1,5 @@
 /**
- * UZ Aero - model widoku ekranu 01 „Mój dzień" (issue #23).
+ * Ninerdeck - model widoku ekranu 01 „Mój dzień" (issue #23).
  *
  * Scenariusz jest ten sam, co w `pilotDay.test.ts` i w mockupie
  * `design/01-moj-dzien.html`: SP-AXA (2 sesje) → SP-KLM (1 sesja), sumy 3:05 / 2:37.

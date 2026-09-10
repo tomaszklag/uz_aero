@@ -1,5 +1,5 @@
 /**
- * UZ Aero - TYPOGRAFIA.
+ * Ninerdeck - TYPOGRAFIA.
  *
  * Tu przebiega jedyny SZEW między platformami. Rodziny czcionek nazywają się inaczej
  * w React Native (eksporty `@expo-google-fonts`) i w CSS (rodziny z Google Fonts), więc

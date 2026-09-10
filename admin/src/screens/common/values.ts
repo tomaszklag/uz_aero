@@ -1,10 +1,10 @@
 /**
- * UZ Aero - panel 2.0: KRESKA BRAKU i formatery, które ją stawiają.
+ * Ninerdeck - panel 2.0: KRESKA BRAKU i formatery, które ją stawiają.
  *
  * ══ DWIE POWIERZCHNIE, DWIE KRESKI - I OBIE SĄ ZATWIERDZONE ══
  * Makiety telefonu (`design/*.html`) piszą brak DYWIZEM (`-`), makiety panelu
  * (`design/panel/*.html`) PÓŁPAUZĄ (`—`) i mówią to wprost: „`0 L` znaczy pusty
- * zbiornik, `—` znaczy »nikt nie zapisał«". Formatery w `@uzaero/format` są wspólne
+ * zbiornik, `—` znaczy »nikt nie zapisał«". Formatery w `@ninerdeck/format` są wspólne
  * dla obu stron, więc oddają kreskę TELEFONU - i tak ma zostać.
  *
  * Skutek do 2026-09-07: w jednym wierszu dziennika stały OBIE. Kolumna paliwa szła
@@ -14,7 +14,7 @@
  * miał rację osobno.
  *
  * ══ JEDNO MIEJSCE, W KTÓRYM BRAK DOSTAJE KSZTAŁT ══
- * Nazwy zostają TE SAME, co w `@uzaero/format`, bo to są te same wielkości - różni je
+ * Nazwy zostają TE SAME, co w `@ninerdeck/format`, bo to są te same wielkości - różni je
  * wyłącznie powierzchnia, a tę widać po ścieżce importu. Ekran panelu bierze `litres`
  * stąd i nie ma jak przypadkiem wziąć kreski telefonu.
  *
@@ -28,8 +28,8 @@ import {
   motoHours as motoHoursShared,
   oilLitres as oilLitresShared,
   timeUtc as timeUtcShared,
-} from '@uzaero/format';
-import type { MhFormat } from '@uzaero/domain';
+} from '@ninerdeck/format';
+import type { MhFormat } from '@ninerdeck/domain';
 
 /** Kreska braku PANELU - półpauza. JEDNO miejsce w całym `admin/`, w którym powstaje. */
 export const NONE = '—';
@@ -69,7 +69,7 @@ export const timeUtc = (t: number | null): string => panelDash(timeUtcShared(t))
  * a kolumna dat czyta się wzrokiem po równej krawędzi.
  *
  * Składamy z formatera wspólnego zamiast pisać drugą tablicę miesięcy: skrót musi
- * zostać prefiksem pełnej nazwy z `@uzaero/format`, inaczej panel i telefon zaczęłyby
+ * zostać prefiksem pełnej nazwy z `@ninerdeck/format`, inaczej panel i telefon zaczęłyby
  * skracać wrzesień na dwa sposoby.
  */
 export const dateWithYear = (iso: string | null): string => {

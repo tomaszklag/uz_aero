@@ -1,5 +1,5 @@
 /**
- * UZ Aero - fragment trasy w oknie czasu (issue #47, podświetlenie zamiast przeskoku).
+ * Ninerdeck - fragment trasy w oknie czasu (issue #47, podświetlenie zamiast przeskoku).
  *
  * Profil przybliżony do wycinka czasu mówi mapie, który to wycinek. Pierwsza wersja tej
  * funkcji zwracała LISTĘ przebiegów, bo „nad polem samolot jest kilka razy" - i dopiero

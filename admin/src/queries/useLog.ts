@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: dziennik - trzy poziomy jako trzy zapytania.
+ * Ninerdeck - panel 2.0: dziennik - trzy poziomy jako trzy zapytania.
  *
  * Wszystkie są ODCZYTEM, więc nie ma tu ani jednej mutacji i ani jednego unieważnienia:
  * dziennik czyta się po fakcie, a jedyne, co go zmienia, to nowa paczka zdarzeń

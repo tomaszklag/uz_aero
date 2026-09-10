@@ -1,5 +1,5 @@
 /**
- * UZ Aero - KeyValueRow (`.diag-row` z 13-ustawienia, `.row` karty „Dane dnia" z 11a)
+ * Ninerdeck - KeyValueRow (`.diag-row` z 13-ustawienia, `.row` karty „Dane dnia" z 11a)
  *
  * Wiersz „klucz - wartość": etykieta po lewej, wartość mono dociągnięta do prawej,
  * wyrównanie po linii bazowej. Jeden komponent zamiast wierszy kopiowanych po

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ZAPYTANIE o ŚLAD SESJI (ekran 14, miniatura na 10).
+ * Ninerdeck - ZAPYTANIE o ŚLAD SESJI (ekran 14, miniatura na 10).
  *
  * ══ ŚLAD OPISUJE SESJĘ, NIE LOT (issue #38) ══
  * Zapis GPS powstaje w jednym ciągu - od uruchomienia do zatrzymania silnika - więc

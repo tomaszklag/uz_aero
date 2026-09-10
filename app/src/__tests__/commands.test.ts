@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy WARSTWY KOMEND (`application/commands`).
+ * Ninerdeck - testy WARSTWY KOMEND (`application/commands`).
  *
  * Rules mówią „czy wolno", komendy - „co się faktycznie stało z bazą". Tu pilnujemy
  * rzeczy, których czysta funkcja nie pokaże:

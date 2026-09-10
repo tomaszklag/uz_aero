@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - trasy kart arkusza: `GET /sheets/:slug/:tab?k=…` i `GET /sheets/:tab`
+ * Ninerdeck (serwer) - trasy kart arkusza: `GET /sheets/:slug/:tab?k=…` i `GET /sheets/:tab`
  * (§4.7; adres z klubem - wielofirmowość §3.7, issue #99 C5).
  *
  * Cel linków `export_log.sheet_url` i pudełka arkusza na ekranie 11 - dopóki karty

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - regresja liniowa z więzem nieujemności (NNLS).
+ * Ninerdeck - regresja liniowa z więzem nieujemności (NNLS).
  *
  * ══ PO CO WIĘZ ══
  * Szukamy stawek zużycia per faza z równań „zużycie = Σ stawka · czas". Zwykła metoda

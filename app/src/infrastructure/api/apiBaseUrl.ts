@@ -1,5 +1,5 @@
 /**
- * UZ Aero - adres serwera synchronizacji.
+ * Ninerdeck - adres serwera synchronizacji.
  *
  * Kolejność źródeł:
  *  1. `EXPO_PUBLIC_API_URL` - jawna konfiguracja (staging/produkcja);

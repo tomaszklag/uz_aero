@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - SESJA PRZEGLĄDARKOWA panelu (`/admin/api/auth/*`, `GET /admin/api/me`).
+ * Ninerdeck (serwer) - SESJA PRZEGLĄDARKOWA panelu (`/admin/api/auth/*`, `GET /admin/api/me`).
  *
  * Cztery własności, których złamanie jest luką, a nie usterką:
  *  1. token wychodzi WYŁĄCZNIE ciasteczkiem `HttpOnly` - ciało odpowiedzi go nie niesie;
@@ -39,9 +39,9 @@ function setCookieHeader(res: { headers: Record<string, unknown> }): string {
 }
 
 function sessionCookie(res: { headers: Record<string, unknown> }): string {
-  const value = /uzaero_admin=([^;]*)/.exec(setCookieHeader(res))?.[1];
+  const value = /ninerdeck_admin=([^;]*)/.exec(setCookieHeader(res))?.[1];
   if (value == null) throw new Error('Odpowiedź nie ustawiła ciasteczka sesji panelu');
-  return `uzaero_admin=${value}`;
+  return `ninerdeck_admin=${value}`;
 }
 
 describe('logowanie do panelu wydaje ciasteczko, nie token w ciele', () => {
@@ -102,7 +102,7 @@ describe('logowanie do panelu wydaje ciasteczko, nie token w ciele', () => {
     return testHarness().then(async ({ app }) => {
       const header = setCookieHeader(await panelLogin(app, 'TMK'));
 
-      expect(header).toMatch(/^uzaero_admin=/);
+      expect(header).toMatch(/^ninerdeck_admin=/);
       expect(header).toMatch(/HttpOnly/i);
       expect(header).toMatch(/Secure/i);
       expect(header).toMatch(/SameSite=Strict/i);
@@ -416,7 +416,7 @@ describe('wylogowanie', () => {
 
     expect(out.statusCode).toBe(204);
     const header = setCookieHeader(out);
-    expect(header).toMatch(/uzaero_admin=;/);
+    expect(header).toMatch(/ninerdeck_admin=;/);
     expect(header).toMatch(/Path=\/admin/i);
     // Ta sama ścieżka co przy wydaniu - inaczej „wylogowanie" nie trafiłoby
     // w to ciasteczko i zostawiłoby żywą sesję przy zielonym komunikacie.
@@ -434,7 +434,7 @@ describe('wylogowanie', () => {
 });
 
 describe('CSRF: mutacje panelu wymagają własnego nagłówka', () => {
-  it('logowanie bez `X-UZ-Admin` jest odrzucane, choć poświadczenia są dobre', async () => {
+  it('logowanie bez `X-Ninerdeck-Admin` jest odrzucane, choć poświadczenia są dobre', async () => {
     const { app } = await testHarness();
     const res = await app.inject({
       method: 'POST',

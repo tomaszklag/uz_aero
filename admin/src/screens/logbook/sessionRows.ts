@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: DZIENNIK, poziom 2 - sesja na WIERSZ GRIDU.
+ * Ninerdeck - panel 2.0: DZIENNIK, poziom 2 - sesja na WIERSZ GRIDU.
  *
  * Moduł CZYSTY. Formatuje, nie liczy - z jednym wyjątkiem, który liczbą nie jest:
  * składa PARY wartości czytane jednym spojrzeniem („08:42 → 10:22").
@@ -17,8 +17,8 @@
  * żeby widać było, którego odczytu brakuje.
  */
 
-import { dateUtcShort, duration, shortName } from '@uzaero/format';
-import type { OperationType } from '@uzaero/domain';
+import { dateUtcShort, duration, shortName } from '@ninerdeck/format';
+import type { OperationType } from '@ninerdeck/domain';
 
 import type { SessionListItemDto } from '../../api/dto';
 import { litres, motoHours, NONE, oilLitres, timeUtc } from '../common/values';

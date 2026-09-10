@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - test KONTRAKTU zod ↔ typ domenowy i projekcja ↔ wiersz sesji.
+ * Ninerdeck (serwer) - test KONTRAKTU zod ↔ typ domenowy i projekcja ↔ wiersz sesji.
  *
  * To jest odpowiedź na pytanie „czy z rozwojem nie pogubimy się w modelach": zamiast
  * generatora (code-first) spójność wymuszają testy na styku warstw. Zdarzenie zbudowane
@@ -8,7 +8,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { EVENT_TYPES, projectSession, type Event } from '@uzaero/domain';
+import { EVENT_TYPES, projectSession, type Event } from '@ninerdeck/domain';
 
 import { eventEnvelope } from '../src/http/routes/mobile/events.ts';
 import { sessionRowFrom } from '../src/application/common/mappers/sessionRow.ts';

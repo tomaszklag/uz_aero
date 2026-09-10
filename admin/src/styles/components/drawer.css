@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: szuflada szczegółu.
+ * Ninerdeck - panel: szuflada szczegółu.
  *
  * **Pozycjonowanie `fixed`, nie `absolute`.** Ekran renderuje się WEWNĄTRZ `.content`,
  * które ma `overflow-y:auto` - szuflada `absolute` przewijałaby się razem z listą.

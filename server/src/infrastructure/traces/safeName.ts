@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - nazwa pliku śladu z identyfikatora sesji.
+ * Ninerdeck (serwer) - nazwa pliku śladu z identyfikatora sesji.
  *
  * Wydzielone z `fsTraceSink.ts`, gdy doszedł odczyt (`fsTraceSource.ts`): zapis i odczyt
  * MUSZĄ liczyć nazwę tym samym kodem. Dwie kopie tej funkcji to błąd, który nie daje

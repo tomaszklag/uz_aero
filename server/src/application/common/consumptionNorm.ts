@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - liczenie i zapis NORMY ZUŻYCIA samolotu.
+ * Ninerdeck (serwer) - liczenie i zapis NORMY ZUŻYCIA samolotu.
  *
  * ══ DLACZEGO W `common/`, A NIE W `admin/` ══
  * Normę produkuje analityka panelu, ale konsumuje ją aplikacja pilota (`GET /reference`,
@@ -25,7 +25,7 @@ import {
   type Event,
   type FuelInterval,
   type MhEquation,
-} from '@uzaero/domain';
+} from '@ninerdeck/domain';
 
 import type {
   ConsumptionNormPort,

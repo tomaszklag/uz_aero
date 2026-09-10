@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test treści „dlaczego nie ma śladu".
+ * Ninerdeck - test treści „dlaczego nie ma śladu".
  *
  * Dwa zgłoszenia z urządzenia, jeden plik. Pierwsze (2026-08-30): ekran operacji
  * tłumaczył brak trasy RETENCJĄ 14 dni - regułą, która zniknęła przy issue #47.

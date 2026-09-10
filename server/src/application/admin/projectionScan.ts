@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - PRZELICZENIE I PORÓWNANIE projekcji `sessions` ze strumieniem.
+ * Ninerdeck (serwer) - PRZELICZENIE I PORÓWNANIE projekcji `sessions` ze strumieniem.
  *
  * ══ DLACZEGO TO STOI OBOK KOMENDY, A NIE W NIEJ ══
  * Ekran `A11` opisuje przebudowę jako DWA KROKI: najpierw „Przelicz i porównaj - bez

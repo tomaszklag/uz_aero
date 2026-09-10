@@ -1,9 +1,9 @@
 /**
- * UZ Aero (serwer) - KONTRAKT kolejki zgłoszeń kodem klubu (mockupy `piloci-lista`
+ * Ninerdeck (serwer) - KONTRAKT kolejki zgłoszeń kodem klubu (mockupy `piloci-lista`
  * - karta ZGŁOSZENIA, `piloci-zgloszenie` - decyzja; `docs/wielofirmowosc.md` §8.3).
  *
  * Pliki w `contracts/` zawierają WYŁĄCZNIE typy i wolno im importować wyłącznie
- * `@uzaero/domain` oraz siebie nawzajem (pilnuje `test/architecture.test.ts`).
+ * `@ninerdeck/domain` oraz siebie nawzajem (pilnuje `test/architecture.test.ts`).
  *
  * ══ OSOBNY KONTRAKT OD `pilots.ts`, BO TO INNY BYT NA EKRANIE ══
  * `AdminPilotListItem` opisuje CZŁONKA klubu - ma kod pilota, rolę i dni lotne. Wiersz

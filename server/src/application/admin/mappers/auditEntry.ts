@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - wiersz dziennika + złączenie → DTO panelu (funkcja CZYSTA).
+ * Ninerdeck (serwer) - wiersz dziennika + złączenie → DTO panelu (funkcja CZYSTA).
  *
  * Ten sam wzorzec, co `sessionListItem` i `flagListItem`: mapowanie na kontrakt jest
  * czystą funkcją, żeby dało się je sprawdzić bez bazy, a adapter zajmował się wyłącznie

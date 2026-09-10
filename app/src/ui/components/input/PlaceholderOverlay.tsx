@@ -1,5 +1,5 @@
 /**
- * UZ Aero - placeholder rysowany NAD polem wpisu (issue #58, kolejna tura).
+ * Ninerdeck - placeholder rysowany NAD polem wpisu (issue #58, kolejna tura).
  *
  * Reguła design systemu: placeholder jest ZAWSZE składem tekstowym - body 15
  * w `textPlaceholder` - bo to instrukcja („Kod ICAO albo nazwa…"), nie wartość.

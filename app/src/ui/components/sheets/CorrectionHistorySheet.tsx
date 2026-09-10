@@ -1,5 +1,5 @@
 /**
- * UZ Aero - CorrectionHistorySheet (mockup `design/10i` „Historia zmian")
+ * Ninerdeck - CorrectionHistorySheet (mockup `design/10i` „Historia zmian")
  *
  * Lista poprawek jednego zdarzenia: „było → jest", kto, kiedy i z jakim powodem, a na
  * dole kotwica - zapis pierwotny. Arkusz jest WYŁĄCZNIE do czytania: cofnięcie korekty

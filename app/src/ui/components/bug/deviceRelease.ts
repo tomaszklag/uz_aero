@@ -1,5 +1,5 @@
 /**
- * UZ Aero - WYDANIE I URZĄDZENIE dla zgłoszenia błędu (issue #87).
+ * Ninerdeck - WYDANIE I URZĄDZENIE dla zgłoszenia błędu (issue #87).
  *
  * Jedyne miejsce w reporterze, które pyta React Native o cokolwiek - dzięki temu
  * `bugContext.ts` zostaje czysty i testowalny bez telefonu (testy aplikacji jadą

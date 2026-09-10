@@ -1,5 +1,5 @@
 /**
- * UZ Aero - PODPIS WIERSZA HISTORII ZMIAN (issue #43, arkusz `design/10i`).
+ * Ninerdeck - PODPIS WIERSZA HISTORII ZMIAN (issue #43, arkusz `design/10i`).
  *
  * Wpis historii mówi „było → jest" o jednym polu, a plakietka przy nim nazywa to pole.
  * Sęk w tym, że nazywa je PO CO INNEGO, niż się wydaje: nie po to, żeby powiedzieć,

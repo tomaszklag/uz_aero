@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test statystyk śladu (issue #47 pkt 3).
+ * Ninerdeck - test statystyk śladu (issue #47 pkt 3).
  *
  * Statystyki opisują lot liczbami, których nikt nie mierzył przyrządem i których nie da
  * się sprawdzić „na oko" - dokładnie tak jak oś faz. Test buduje więc ślady o ZNANYM

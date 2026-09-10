@@ -1,5 +1,5 @@
 /**
- * UZ Aero - OptionInput (`.option-input` z mockupu 11)
+ * Ninerdeck - OptionInput (`.option-input` z mockupu 11)
  *
  * Wartość konfiguracyjna w „ubraniu" pola formularza: podniesiona powierzchnia,
  * obramowanie akcentem, mono. To NIE jest input - niczego się tu nie wpisuje;

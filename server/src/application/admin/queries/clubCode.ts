@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - ODCZYT KODU KLUBU dla panelu klubu (karta „Kod klubu", mockup
+ * Ninerdeck (serwer) - ODCZYT KODU KLUBU dla panelu klubu (karta „Kod klubu", mockup
  * `piloci-kod-klubu`; `docs/wielofirmowosc.md` §3.8, §8.3).
  *
  * Zapis kanoniczny `XXX-XXXX` składa SERWER (`formatClubCode`), nie panel - ta sama

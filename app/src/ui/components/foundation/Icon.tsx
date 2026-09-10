@@ -1,5 +1,5 @@
 /**
- * UZ Aero - Icon (prymityw DS)
+ * Ninerdeck - Icon (prymityw DS)
  *
  * Mockupy rysują ikony wklejonymi SVG z zestawu **Feather** (`eye`, `alert-triangle`,
  * `check`, `arrow-right`, `settings`, `check-circle`, `edit-2` - to dosłownie te ścieżki).
@@ -36,8 +36,8 @@ const PHASE_GLYPHS = { 'plane-taxi': 0xe001, propeller: 0xe002 } as const;
 type PhaseName = keyof typeof PHASE_GLYPHS;
 const PhaseIcons = createIconSet(
   PHASE_GLYPHS,
-  'UZAeroPhases',
-  require('../../../../assets/fonts/UZAeroPhases.ttf'),
+  'NinerdeckPhases',
+  require('../../../../assets/fonts/NinerdeckPhases.ttf'),
 );
 
 type Glyph =

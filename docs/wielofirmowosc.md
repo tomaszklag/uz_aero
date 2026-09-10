@@ -1,4 +1,4 @@
-# UZ Aero - wielofirmowość (decyzje)
+# Ninerdeck - wielofirmowość (decyzje)
 
 Dokument decyzji dla milestone **„Wielofirmowość + SaaS 2.0.0"** (epik A, issue #97).
 Wzorzec: `docs/logowanie-google.md` - najpierw to, czego zmiana NIE dotyka, potem model

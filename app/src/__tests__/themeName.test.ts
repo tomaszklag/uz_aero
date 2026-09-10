@@ -1,5 +1,5 @@
 /**
- * UZ Aero - nazwa motywu z profilu pilota → motyw, który wolno pomalować
+ * Ninerdeck - nazwa motywu z profilu pilota → motyw, który wolno pomalować
  * (`packages/tokens/src/theme.ts`, issue #72).
  *
  * Motywy Paper, Sky i Amber zniknęły z aplikacji, ale NIE zniknęły z telefonów:

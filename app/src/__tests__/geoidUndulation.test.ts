@@ -1,5 +1,5 @@
 /**
- * UZ Aero - wkompilowana siatka undulacji EGM96 (`geoid/egm96Grid.ts` + API).
+ * Ninerdeck - wkompilowana siatka undulacji EGM96 (`geoid/egm96Grid.ts` + API).
  *
  * Tu sprawdzamy PRAWDZIWE dane, które jadą w bundlu: kotwicę empiryczną z EPNL
  * (zgłoszenie 2026-08-11: elewacja 830 ft, surowy GPS ~950 ft → undulacja ~37 m),

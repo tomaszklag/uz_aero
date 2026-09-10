@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: ZAKRESY DAT dziennika i szybkie filtry.
+ * Ninerdeck - panel 2.0: ZAKRESY DAT dziennika i szybkie filtry.
  *
  * Moduł CZYSTY: `now` przychodzi ARGUMENTEM, nie z zegara w środku. Powód jest ten
  * sam, dla którego serwer podaje `at` w odpowiedzi - „dziś" jest pytaniem o zegar,

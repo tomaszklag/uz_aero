@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * UZ Aero - budowanie strony publicznej (landing, pobieranie, wydania, dokumentacja).
+ * Ninerdeck - budowanie strony publicznej (landing, pobieranie, wydania, dokumentacja).
  *
  *   node site/tools/build.mjs [--out <katalog>]
  *   npm run site                                  (z korzenia repozytorium)

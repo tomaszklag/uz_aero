@@ -1,5 +1,5 @@
 /**
- * UZ Aero - SKELETON: plamka trzymająca miejsce po danej, której jeszcze nie ma.
+ * Ninerdeck - SKELETON: plamka trzymająca miejsce po danej, której jeszcze nie ma.
  *
  * Prymityw wzorca ładowania (`design/LOADERY.html`, issue #33). Zastępuje spinner
  * wszędzie tam, gdzie ekran czeka na odczyt: kręcące się kółko nie mówi, CO się pojawi,

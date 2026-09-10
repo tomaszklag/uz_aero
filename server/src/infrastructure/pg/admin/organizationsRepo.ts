@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter MODUŁU ORGANIZACJE (`OrganizationsPlatformPort`;
+ * Ninerdeck (serwer) - adapter MODUŁU ORGANIZACJE (`OrganizationsPlatformPort`;
  * wielofirmowość §8.1; issue #100, D3).
  *
  * Jedyny adapter panelu, który NIE dostaje `orgId` parametrem: to on klubami zarządza.

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: REGUŁA PUŁAPKI FOKUSU w szufladzie (moduł CZYSTY).
+ * Ninerdeck - panel: REGUŁA PUŁAPKI FOKUSU w szufladzie (moduł CZYSTY).
  *
  * ══ DLACZEGO SZUFLADA MUSI ŁAPAĆ FOKUS ══
  * `.drawer` jest warstwą modalną nad listą (`aria-modal="true"`), a lista pod spodem

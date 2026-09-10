@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: pozycja listy kart jako WYBÓR (`.opt` jako `<button>`).
+ * Ninerdeck - panel: pozycja listy kart jako WYBÓR (`.opt` jako `<button>`).
  *
  * Trzeci wariant tej samej karty: `OptionLink` prowadzi w głąb, a ten zaznacza opcję.
  * Mockup używa tu `<label class="opt">` z `onclick` - w panelu jest to `<button>`,

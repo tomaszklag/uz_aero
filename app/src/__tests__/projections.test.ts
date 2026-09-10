@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy projekcji sesji (§5.2: stan liczony w pamięci ze strumienia zdarzeń).
+ * Ninerdeck - testy projekcji sesji (§5.2: stan liczony w pamięci ze strumienia zdarzeń).
  *
  * Scenariusz odwzorowuje **kanoniczną oś czasu dnia 22 JUNE** z `docs/design-notes.md`.
  * Od 2026-08-10 (pivot: sesja = jeden bieg silnika) dzień to TRZY SESJE na SP-AXA,

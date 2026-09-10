@@ -1,5 +1,5 @@
 /**
- * UZ Aero - AppBar
+ * Ninerdeck - AppBar
  *
  * Górny pasek kontekstu, wspólny dla ekranów dnia lotnego (.app-bar / .compact-bar
  * w mockupach): po lewej samolot i trasa, po prawej wskaźnik łączności i akcje.

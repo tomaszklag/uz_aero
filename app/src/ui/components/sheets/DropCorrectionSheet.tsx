@@ -1,5 +1,5 @@
 /**
- * UZ Aero - DropCorrectionSheet (mockup `design/10g` „Korekta zrzutu")
+ * Ninerdeck - DropCorrectionSheet (mockup `design/10g` „Korekta zrzutu")
  *
  * Czas i skład wyniesienia w JEDNYM arkuszu, bo przy zrzucie obie rzeczy mylą się tak
  * samo często: GPS zapisał moment otwarcia drzwi minutę wcześniej, a skoczków wyszło

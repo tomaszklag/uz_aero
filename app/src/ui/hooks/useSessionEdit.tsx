@@ -1,5 +1,5 @@
 /**
- * UZ Aero - spoina TRYBU EDYCJI sesji (issue #43): oś → arkusz → komenda.
+ * Ninerdeck - spoina TRYBU EDYCJI sesji (issue #43): oś → arkusz → komenda.
  *
  * Zastąpiła `useEventCorrection`, która umiała jedno: otworzyć arkusz korekty czasu
  * z logu (04, 08). Po issue #43 wejście jest jedno (oś sesji w trybie edycji), ale

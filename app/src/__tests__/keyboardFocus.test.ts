@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy drabinki fokusu pola w arkuszu (issue #58 pkt 7/8, druga tura).
+ * Ninerdeck - testy drabinki fokusu pola w arkuszu (issue #58 pkt 7/8, druga tura).
  *
  * Kontrakt, który zawiódł już DWA RAZY (`autoFocus`, potem pojedyncze `focus()`
  * w `onShow`), więc jest przybity testem: pierwsza próba to czyste `focus()`,

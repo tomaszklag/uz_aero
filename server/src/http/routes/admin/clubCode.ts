@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - trasy KODU KLUBU (`/admin/api/club-code*`; mockup
+ * Ninerdeck (serwer) - trasy KODU KLUBU (`/admin/api/club-code*`; mockup
  * `piloci-kod-klubu`; `docs/wielofirmowosc.md` §3.8, §8.3; issue #100, D2).
  *
  * Trzy trasy, bo trzy pytania: jaki kod obowiązuje, nowy kod, koniec dołączania kodem.

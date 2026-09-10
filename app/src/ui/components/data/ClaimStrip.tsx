@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ClaimStrip (`.claim-strip` z mockupu 04B).
+ * Ninerdeck - ClaimStrip (`.claim-strip` z mockupu 04B).
  *
  * Pasek sesji CUDZEGO samolotu: ikona, czyja maszyna i od kiedy, licznik lotów, a po
  * prawej stan („zajęty"). Zastąpił `DutyStrip` - powód jest modelowy, nie wizualny: czas

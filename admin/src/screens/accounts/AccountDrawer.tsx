@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: karta pilota - zmiana członkostwa w klubie (`#/piloci/:id`).
+ * Ninerdeck - panel 2.0: karta pilota - zmiana członkostwa w klubie (`#/piloci/:id`).
  *
  * Trzy sekcje i tyle: kim jest, co mu wolno, czy ma dostęp. Panel 1.0 miał w tym miejscu
  * pięć sekcji, sześć banerów i 2 700 znaków prozy tłumaczącej budowę systemu - w tym

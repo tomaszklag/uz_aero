@@ -1,5 +1,5 @@
 /**
- * UZ Aero - spoina: `engineRunning` → tryb źródła GPS (`GpsPort.setBackgroundMode`).
+ * Ninerdeck - spoina: `engineRunning` → tryb źródła GPS (`GpsPort.setBackgroundMode`).
  *
  * Okno usługi pierwszoplanowej = pracujący silnik (decyzja 2026-08-03): między lotami
  * zero GPS i zero powiadomienia. Hook jest GŁUPI - całą maszynę stanów (adopcja,

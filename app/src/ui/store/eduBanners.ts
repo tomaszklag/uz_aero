@@ -1,5 +1,5 @@
 /**
- * UZ Aero - trwały stan banerów pouczających (typ `edu`).
+ * Ninerdeck - trwały stan banerów pouczających (typ `edu`).
  *
  * `CLAUDE.md` (sekcja „Banery - trzy typy") stawia twardy wymóg: stan schowania banera
  * pouczającego jest zapamiętany **NA STAŁE per pilot**. Powód jest praktyczny - baner
@@ -20,7 +20,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { useCurrentPilot } from './currentPilot';
 
-const key = (pilotId: string, bannerId: string): string => `uzaero.edu.${pilotId}.${bannerId}`;
+const key = (pilotId: string, bannerId: string): string => `ninerdeck.edu.${pilotId}.${bannerId}`;
 
 /**
  * Zwraca `[schowany, ustawSchowany]` dla banera o danym identyfikatorze.

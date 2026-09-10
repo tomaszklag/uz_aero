@@ -1,7 +1,7 @@
-# Wydania UZ Aero
+# Wydania Ninerdeck
 
 <!--
-Ten plik jest ŹRÓDŁEM strony „Wydania i zmiany" (/wydania/ na stronie UZ Aero).
+Ten plik jest ŹRÓDŁEM strony „Wydania i zmiany" (/wydania/ na stronie Ninerdeck).
 Piszemy go dla pilotów, testerów i klubów - językiem korzyści, bez nazw plików i identyfikatorów.
 
 Format (świadomie wąski, parsuje go site/tools/render-changelog.mjs):
@@ -36,6 +36,7 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 ### Nowości
 
+- **Aplikacja nazywa się Ninerdeck.** Nowa nazwa i nowy znak - monogram `9` - wchodzą wszędzie naraz: na ekran logowania, do panelu klubu, na stronę i na ikonę w telefonie. „UZ Aero" było nazwą roboczą; poza zmianą napisów i ikony nie zmienia się nic, czego pilot dotyka w locie.
 - **Panel klubu w lżejszym stylu.** Nawigacja w kolumnie po lewej z nazwą klubu nad pozycjami, ścieżka nad nagłówkiem w dzienniku (flota → maszyna → operacja), tytuły i etykiety pisane jak na stronie, a nie jak na przyrządzie. Kolory bez zmian.
 - **Jeden serwer obsługuje wiele klubów, a dane klubów są rozdzielone.** Każdy klub widzi wyłącznie swoje maszyny, pilotów, operacje i dokumenty - także wtedy, gdy ten sam pilot lata w dwóch klubach albo dwa kluby mają maszyny o tym samym znaku. Pilot podpisuje operacje kodem nadanym w danym klubie, a numeracja operacji w dobie biegnie w każdym klubie osobno.
 - **Link do karty arkusza dostaje adres klubu i własny sekret.** Kartę otwiera się bez konta w aplikacji - wystarczy link, który serwer zapisał przy eksporcie - a zgadnięcie samej nazwy karty niczego już nie otwiera.

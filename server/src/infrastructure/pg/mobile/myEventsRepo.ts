@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter odtworzenia rejestru telefonu (`MyEventsPort`, §4.9).
+ * Ninerdeck (serwer) - adapter odtworzenia rejestru telefonu (`MyEventsPort`, §4.9).
  *
  * Osobny plik od `common/eventsStore.ts` z tego samego powodu, dla którego port jest
  * osobny: tamten obsługuje INGEST i czyta strumień JEDNEJ sesji (albo garści sesji)
@@ -7,11 +7,11 @@
  * kursorem, w porządku przyjęcia - to inne pytanie i inny indeks.
  *
  * Czego tu NIE MA: `UPDATE`, `DELETE` i strażnika typów. Rejestr jest append-only,
- * a `events.type` celowo nie ma `CHECK`-a (katalog typów mieszka w `@uzaero/domain`) -
+ * a `events.type` celowo nie ma `CHECK`-a (katalog typów mieszka w `@ninerdeck/domain`) -
  * telefon ma odzyskać to, co kiedyś zapisał, także gdy katalog zdążył się zmienić.
  */
 
-import type { Event } from '@uzaero/domain';
+import type { Event } from '@ninerdeck/domain';
 
 import type { Queryable } from '../../../application/common/ports.ts';
 import type { MyEventsPort } from '../../../application/mobile/ports.ts';

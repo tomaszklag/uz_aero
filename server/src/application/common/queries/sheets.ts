@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - zapytanie o dzienną kartę arkusza (`GET /sheets/…`, §4.7).
+ * Ninerdeck (serwer) - zapytanie o dzienną kartę arkusza (`GET /sheets/…`, §4.7).
  *
  * Strona ODCZYTU eksportu: pod URL-em z `export_log.sheet_url` (link „Serwer
  * zaktualizował arkusz" na ekranie 11) leży karta z bazodanowego adaptera arkuszy.

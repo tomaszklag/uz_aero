@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - test przekroju ANALITYKI ZUŻYCIA (`A10a`, `A10b`).
+ * Ninerdeck (serwer) - test przekroju ANALITYKI ZUŻYCIA (`A10a`, `A10b`).
  *
  * Dane wjeżdżają PRAWDZIWYM ingestem (`POST /events`), jak w `adminStats.test.ts`:
  * analityka czyta rejestr, więc test, który wstawiałby wiersze wprost do bazy,

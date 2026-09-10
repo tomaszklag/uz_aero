@@ -1,5 +1,5 @@
 /**
- * UZ Aero - CZAS LOTU na przyrządzie kokpitu (mockup 05, kafelek „Flight time").
+ * Ninerdeck - CZAS LOTU na przyrządzie kokpitu (mockup 05, kafelek „Flight time").
  *
  * Kafelek pokazuje czas lotu **całej sesji**, a nie bieżącego wyniesienia: sumę lotów
  * zamkniętych plus lot otwarty liczony na żywo. Sesja = jeden bieg silnika (model

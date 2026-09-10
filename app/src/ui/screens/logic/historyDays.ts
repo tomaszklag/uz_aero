@@ -1,5 +1,5 @@
 /**
- * UZ Aero - sesje z lokalnego strumienia → treść ekranu 12 (mockup `design/12-historia.html`).
+ * Ninerdeck - sesje z lokalnego strumienia → treść ekranu 12 (mockup `design/12-historia.html`).
  *
  * Ten sam podział co `statsDay.ts`/`syncStatus.ts`: logika prezentacji w czystych
  * funkcjach, testowalnych bez React Native.

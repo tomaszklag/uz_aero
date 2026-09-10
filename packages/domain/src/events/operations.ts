@@ -1,5 +1,5 @@
 /**
- * UZ Aero - co RODZAJ OPERACJI mówi o kształcie dnia.
+ * Ninerdeck - co RODZAJ OPERACJI mówi o kształcie dnia.
  *
  * Operacja to nie jest sama etykieta w statystykach: przesądza, ile lotnisk ma ten dzień.
  * Skoki startują i lądują na tym samym placu - samolot krąży nad polem i wraca tam, skąd

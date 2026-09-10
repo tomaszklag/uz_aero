@@ -1,5 +1,5 @@
 /**
- * UZ Aero - KONTEKST ZGŁOSZENIA BŁĘDU (issue #87): „im więcej informacji tym lepiej".
+ * Ninerdeck - KONTEKST ZGŁOSZENIA BŁĘDU (issue #87): „im więcej informacji tym lepiej".
  *
  * Moduł CZYSTY - bez Reacta, bez React Native, bez store'ów. Wszystko, czego potrzebuje,
  * dostaje w argumencie, więc da się go przetestować bez telefonu; fakty o urządzeniu
@@ -17,7 +17,7 @@
  * odtworzyć ekran, z obrazka nie da się odtworzyć danych.
  */
 
-import { dateTimeUtc, timeUtc } from '@uzaero/format';
+import { dateTimeUtc, timeUtc } from '@ninerdeck/format';
 
 import type { EpochMillis } from '../../../domain';
 

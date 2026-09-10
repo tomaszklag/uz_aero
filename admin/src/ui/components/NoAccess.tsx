@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: „twoja rola tego nie obejmuje" (`.no-access` z `SZABLON.html`).
+ * Ninerdeck - panel: „twoja rola tego nie obejmuje" (`.no-access` z `SZABLON.html`).
  *
  * Osobny komponent od `EmptyState`, mimo podobnego układu - bo mówi coś innego.
  * Pusta lista znaczy „nic tu nie ma"; ten ekran znaczy „coś tu jest, ale nie dla

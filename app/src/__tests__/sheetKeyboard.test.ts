@@ -1,5 +1,5 @@
 /**
- * UZ Aero - KLAWIATURA ARKUSZA NIE JEST KLAWIATURĄ EKRANU.
+ * Ninerdeck - KLAWIATURA ARKUSZA NIE JEST KLAWIATURĄ EKRANU.
  *
  * Zgłoszenie z urządzenia (2026-09-04): „czasem jak mam na manualnym locie przejście
  * na ekran z przebiegiem operacji, to tak jakby dwa razy muszę kliknąć DALEJ".

@@ -1,15 +1,15 @@
 /**
- * UZ Aero - panel 2.0: samolot z serwera -> WIERSZ TABELI.
+ * Ninerdeck - panel 2.0: samolot z serwera -> WIERSZ TABELI.
  *
  * Moduł CZYSTY (bez Reacta): decyzje o treści komórek są tu, pod testem, a nie w JSX-ie.
  *
- * == LICZBY FORMATUJE `@uzaero/format`, NIE TEN PLIK ==
+ * == LICZBY FORMATUJE `@ninerdeck/format`, NIE TEN PLIK ==
  * `litres()` jest wspólne z aplikacją pilota, więc pojemność wygląda tak samo w panelu
  * i na telefonie. Panel nie zaokrągla po swojemu - od `toFixed` w komórce tabeli
  * zaczyna się back-office, który liczy inaczej niż produkt.
  */
 
-import type { MhFormat } from '@uzaero/domain';
+import type { MhFormat } from '@ninerdeck/domain';
 
 import type { AircraftListItemDto } from '../../api/dto';
 import type { PillTone } from '../../ui/components';

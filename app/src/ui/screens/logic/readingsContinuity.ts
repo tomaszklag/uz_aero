@@ -1,5 +1,5 @@
 /**
- * UZ Aero - CIĄGŁOŚĆ ODCZYTÓW W FORMULARZU (issue #62, piąta i szósta tura).
+ * Ninerdeck - CIĄGŁOŚĆ ODCZYTÓW W FORMULARZU (issue #62, piąta i szósta tura).
  *
  * „Chodzi o to, aby była ciągłość w ilości paliwa" - maszyna nie tankuje się sama
  * między sesjami, więc ile jeden pilot zostawił, tyle następny powinien zastać.

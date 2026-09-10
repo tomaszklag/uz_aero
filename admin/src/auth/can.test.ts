@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: brama widoczności pozycji nawigacji (moduł czysty).
+ * Ninerdeck - panel: brama widoczności pozycji nawigacji (moduł czysty).
  *
  * Testujemy DECYZJĘ, nie wygląd: czy pozycja jest klikalna i czy odmowa niesie powód.
  * Renderowania drzew nie ruszamy - specyfikacją wyglądu jest mockup.

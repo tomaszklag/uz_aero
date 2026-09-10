@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - PODGLĄD korekty administratora (`A02b`, karta „przed → po").
+ * Ninerdeck (serwer) - PODGLĄD korekty administratora (`A02b`, karta „przed → po").
  *
  * ══ TO JEST ZAPYTANIE, NIE KOMENDA - I TO JEST NAJWAŻNIEJSZE ZDANIE TEGO PLIKU ══
  * Podgląd NIE przechodzi przez `AuditedWrite`. Tamta brama z definicji typu wymusza
@@ -36,7 +36,7 @@ import {
   type AircraftLimits,
   type Event,
   type EventCorrectionPayload,
-} from '@uzaero/domain';
+} from '@ninerdeck/domain';
 
 import {
   correctionCandidate,

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - WPIS Z KLAWIATURY DLA LICZNIKA CAŁKOWITEGO (`Stepper`, uwaga z urządzenia
+ * Ninerdeck - WPIS Z KLAWIATURY DLA LICZNIKA CAŁKOWITEGO (`Stepper`, uwaga z urządzenia
  * 2026-08-29: kręgi w locie ręcznym).
  *
  * Odpowiednik `timeStepperEdit` dla liczby sztuk. Osobny plik z tego samego powodu:

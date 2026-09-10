@@ -1,5 +1,5 @@
 /**
- * UZ Aero - Caption (`.takeover-hint`, `.actions-reason`, `.start-engine-hint`)
+ * Ninerdeck - Caption (`.takeover-hint`, `.actions-reason`, `.start-engine-hint`)
  *
  * Wyśrodkowany podpis pod kontrolką: mono 9 px, WERSALIKI, ton przygaszony.
  *

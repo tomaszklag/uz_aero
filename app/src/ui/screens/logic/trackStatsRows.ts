@@ -1,7 +1,7 @@
 /**
- * UZ Aero - STATYSTYKI ŚLADU DO POKAZANIA (issue #47 pkt 3, mockup `14-slad.html`).
+ * Ninerdeck - STATYSTYKI ŚLADU DO POKAZANIA (issue #47 pkt 3, mockup `14-slad.html`).
  *
- * Domena liczy (`@uzaero/domain` → `track/stats.ts`), ten plik decyduje, co z tego
+ * Domena liczy (`@ninerdeck/domain` → `track/stats.ts`), ten plik decyduje, co z tego
  * WCHODZI NA EKRAN i w jakiej postaci. Rozdział jest ten sam, co przy rachunku normy
  * (`sessionBalance.ts`): warunek „blok milczy" to decyzja o ekranie, nie o liczbie,
  * a warunek w JSX byłby nie do przetestowania - dokładnie tak przeżyła dziurę reguła

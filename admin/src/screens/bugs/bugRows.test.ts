@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: wiersze modułu „Zgłoszenia" (issue #87).
+ * Ninerdeck - panel 2.0: wiersze modułu „Zgłoszenia" (issue #87).
  *
  * Pod obserwacją jedna własność i jej konsekwencje: **kontekst wypisuje się CAŁY**,
  * także w polach, o których panel nie wie. To jest cała treść zgłoszenia („im więcej

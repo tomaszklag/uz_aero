@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - trasa analityki zużycia (`GET /admin/api/fleet/:id/consumption`).
+ * Ninerdeck (serwer) - trasa analityki zużycia (`GET /admin/api/fleet/:id/consumption`).
  *
  * ══ DLACZEGO POD `/fleet`, A NIE `/aircraft` ══
  * Mockup `A10a` pokazuje w pasku adresu `/admin/api/aircraft/:id/consumption`, ale

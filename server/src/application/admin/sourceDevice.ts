@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - znacznik `events.source_device` dla zapisów PANELU.
+ * Ninerdeck (serwer) - znacznik `events.source_device` dla zapisów PANELU.
  *
  * Rejestr zdarzeń ma jedno pole mówiące, CZYM zdarzenie przyszło, i tylko jedną
  * wartość tego pola, która nie pochodzi z telefonu: `admin:<pilotId>`. Wpisuje ją

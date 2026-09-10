@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test podpisu kafelka „Dolej olej" (uwagi z urządzenia, 2026-09-03).
+ * Ninerdeck - test podpisu kafelka „Dolej olej" (uwagi z urządzenia, 2026-09-03).
  *
  * Przed uruchomieniem podpis jest STANEM („W silniku 9,2 L"), po biegu silnika
  * SZACUNKIEM z normy oleju („W silniku około …") - patrz `logic/cockpitOil.ts`.

@@ -1,4 +1,4 @@
-# UZ Aero - notatki projektowe
+# Ninerdeck - notatki projektowe
 
 > Ten dokument dotyczy **aplikacji pilota** (`design/*.html`, ramka telefonu).
 > Panel administracyjny to osobna powierzchnia w `design/admin/` (ramka okna 1440×900,

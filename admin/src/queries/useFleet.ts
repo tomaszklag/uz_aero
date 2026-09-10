@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: flota - lista, próg paliwa i zapisy konfiguracji.
+ * Ninerdeck - panel 2.0: flota - lista, próg paliwa i zapisy konfiguracji.
  *
  * Lista i próg mieszkają w jednym pliku, bo to jeden zasób; różnią się natomiast
  * czasem życia i dlatego mają osobne klucze (`queries/keys.ts`).

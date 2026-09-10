@@ -1,5 +1,5 @@
 /**
- * UZ Aero - 12 POPRZEDNIE DNI (mockup `design/12-historia.html`).
+ * Ninerdeck - 12 POPRZEDNIE DNI (mockup `design/12-historia.html`).
  *
  * Bez tego ekranu obietnica „możesz poprawić przez 24 h" nie miała drzwi (§ decyzja
  * 2026-07-23): sesja w oknie korekty stoi wyróżniona na górze i otwiera się w ekranie

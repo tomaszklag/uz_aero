@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter normy zużycia (`ConsumptionNormPort`, `aircraft_consumption`).
+ * Ninerdeck (serwer) - adapter normy zużycia (`ConsumptionNormPort`, `aircraft_consumption`).
  *
  * Tabela `aircraft_consumption` jest MATERIALIZACJĄ modelu, nie źródłem prawdy: każdy
  * jej wiersz da się odtworzyć ze strumienia zdarzeń, więc skasowanie tabeli jest
@@ -10,7 +10,7 @@
  * kształtu `ConsumptionNorm` (a ten urośnie o fazy pionowe).
  */
 
-import type { ConsumptionNorm } from '@uzaero/domain';
+import type { ConsumptionNorm } from '@ninerdeck/domain';
 
 import type { ConsumptionNormPort, Queryable } from '../../../application/common/ports.ts';
 

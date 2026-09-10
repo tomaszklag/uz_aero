@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - MODUŁ ORGANIZACJE: zakładanie i wyłączanie klubów
+ * Ninerdeck (serwer) - MODUŁ ORGANIZACJE: zakładanie i wyłączanie klubów
  * (`/admin/api/organizations*`, zdolność `platform.manage`; mockupy `organizacje-lista`,
  * `organizacje-klub`; wielofirmowość §8.1; issue #100, D3).
  *
@@ -33,8 +33,8 @@ async function panelCookie(app: Harness['app'], who: string): Promise<Session> {
     payload: { idToken: googleTokenFor(who) },
   });
   expect(res.statusCode, res.body).toBe(200);
-  const cookie = res.cookies.find((c) => c.name === 'uzaero_admin')!;
-  return { cookie: `uzaero_admin=${cookie.value}` };
+  const cookie = res.cookies.find((c) => c.name === 'ninerdeck_admin')!;
+  return { cookie: `ninerdeck_admin=${cookie.value}` };
 }
 
 const writer = (session: Session) => ({ ...session, ...ADMIN_CSRF_HEADERS });
@@ -281,13 +281,13 @@ describe('POST /admin/api/organizations - założenie klubu', () => {
 
     const res = await create(app, root, {
       ...NEW_CLUB,
-      admin: { name: 'Piotr Wiśniewski', email: 'piotr@uzaero.pl', code: 'PW2' },
+      admin: { name: 'Piotr Wiśniewski', email: 'piotr@ninerdeck.pl', code: 'PW2' },
     });
 
     expect(res.statusCode).toBe(201);
     expect(res.json().organization.admins[0].pilotId).toBe('PWI');
     const { rows } = await db.query<{ n: string }>(
-      `SELECT COUNT(*) AS n FROM pilots WHERE lower(email) = 'piotr@uzaero.pl'`,
+      `SELECT COUNT(*) AS n FROM pilots WHERE lower(email) = 'piotr@ninerdeck.pl'`,
     );
     expect(Number(rows[0]!.n)).toBe(1);
     // Nazwisko OSOBY zostaje jej - klub, który ją dopisuje, go nie przemalowuje.

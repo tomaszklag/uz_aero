@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: generator czcionek self-hostowanych (`npm run fonts:fetch`).
+ * Ninerdeck - panel: generator czcionek self-hostowanych (`npm run fonts:fetch`).
  *
  * Pobiera woff2 (subsety latin + latin-ext - polskie znaki) z Google Fonts
  * do `public/fonts/` razem z licencjami OFL i emituje `src/styles/fonts.css`
@@ -89,7 +89,7 @@ for (const face of wanted) {
 }
 
 const header = `/**
- * UZ Aero - panel: czcionki self-hostowane (§9 architektury frontendu).
+ * Ninerdeck - panel: czcionki self-hostowane (§9 architektury frontendu).
  *
  * PLIK GENEROWANY skryptem (pobranie woff2 z Google Fonts + emisja @font-face) -
  * poprawki wprowadzaj przez ponowne wygenerowanie, nie ręcznie. Subsety latin

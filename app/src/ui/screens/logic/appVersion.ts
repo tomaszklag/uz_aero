@@ -1,5 +1,5 @@
 /**
- * UZ Aero - napis wersji aplikacji: „1.0.0 (build 1)".
+ * Ninerdeck - napis wersji aplikacji: „1.0.0 (build 1)".
  *
  * Czysta logika karty „O aplikacji" (13) - i zgłoszenia błędu, bo oba mają mówić
  * TO SAMO: tester czyta wersję z Ustawień, administrator z kolumny „Wersja aplikacji"

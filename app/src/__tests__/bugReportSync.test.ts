@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ZGŁOSZENIA BŁĘDÓW: magazyn lokalny + wysyłka (issue #87).
+ * Ninerdeck - ZGŁOSZENIA BŁĘDÓW: magazyn lokalny + wysyłka (issue #87).
  *
  * Sedno kontraktu jest OFFLINE-FIRST i tylko o to chodzi w tym pliku: zgłoszenie
  * zapisuje się bez sieci i nie ginie, gdy sieci nie ma także później. Pilot zauważa

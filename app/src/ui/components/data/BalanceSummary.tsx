@@ -1,5 +1,5 @@
 /**
- * UZ Aero - PODSUMOWANIE RACHUNKU: suma, werdykt i arkusz szczegółów pod nim.
+ * Ninerdeck - PODSUMOWANIE RACHUNKU: suma, werdykt i arkusz szczegółów pod nim.
  *
  * Wyjęte z `BalanceCard` (uwaga z urządzenia, 2026-08-29: „trochę dublujemy to, co jest
  * w inputach - nie możesz dodać tylko tego podsumowania do sekcji PALIWO?").

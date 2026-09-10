@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - wiersz rejestru → pozycja karty „Ostatnio przyjęte" (`A01`).
+ * Ninerdeck (serwer) - wiersz rejestru → pozycja karty „Ostatnio przyjęte" (`A01`).
  *
  * ══ DWA CZASY W JEDNYM WIERSZU I OBA SĄ POTRZEBNE ══
  * `eventTime` odpowiada na pytanie „kiedy to się stało" i jest liczone TĄ SAMĄ regułą,
@@ -8,13 +8,13 @@
  * dowiedzieliśmy" i to on porządkuje listę. Paczka z zaległego outboxu ma te dwa czasy
  * odległe o godziny - i właśnie o tym jest ta karta.
  *
- * Reguły wyboru czasu NIE powtarzamy tu z pamięci: `eventTime` z `@uzaero/domain`
+ * Reguły wyboru czasu NIE powtarzamy tu z pamięci: `eventTime` z `@ninerdeck/domain`
  * przyjmuje `Event`, a tu mamy surowy wiersz, więc powielony byłby jednym `??`.
  * Zamiast tego test mappera trzyma go przy pakiecie - a gdyby domena kiedyś zmieniła
  * preferencję, rozjazd zobaczy `test/adminDashboard.test.ts`.
  */
 
-import type { EventType } from '@uzaero/domain';
+import type { EventType } from '@ninerdeck/domain';
 
 import type { AdminRecentEvent } from '../contracts/dashboard.ts';
 import type { AdminRecentEventRow } from '../ports.ts';

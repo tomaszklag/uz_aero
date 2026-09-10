@@ -1,20 +1,20 @@
 /**
- * UZ Aero (serwer) - `AdminAircraftJoin` + stan z telefonów → kontrakt floty (`A07`).
+ * Ninerdeck (serwer) - `AdminAircraftJoin` + stan z telefonów → kontrakt floty (`A07`).
  *
  * Czysta funkcja, jak `pilotListItem.ts` i `sessionListItem.ts`: port oddaje model
  * warstwy aplikacji, a kształt „na drucie" powstaje tutaj i testuje się bez bazy.
  *
  * ══ TO JEST MIEJSCE, W KTÓRYM TOLERANCJA STAJE SIĘ LICZBĄ ══
  * `fuelToleranceL(capacityL)` woła się DOKŁADNIE tu i tylko tu po stronie floty.
- * Panelowi wolno importować z `@uzaero/domain` wyłącznie typy, więc gdyby ta liczba
+ * Panelowi wolno importować z `@ninerdeck/domain` wyłącznie typy, więc gdyby ta liczba
  * nie wyszła z serwera, ekran musiałby albo ją pominąć (tak było przez cztery
  * przekroje), albo policzyć własnym `Math.max` - czyli zacząć trzymać drugą kopię
  * reguły §4.5. Jedno wywołanie w mapperze zamyka obie te drogi.
  */
 
-import { fuelToleranceL } from '@uzaero/domain';
+import { fuelToleranceL } from '@ninerdeck/domain';
 
-import type { Handover } from '@uzaero/domain';
+import type { Handover } from '@ninerdeck/domain';
 
 import type { HandoverSource } from '../../common/aircraftStateView.ts';
 

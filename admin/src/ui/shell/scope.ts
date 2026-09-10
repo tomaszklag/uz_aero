@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: kontekst sesji w kolumnie bocznej i to, czy da się go zmienić
+ * Ninerdeck - panel: kontekst sesji w kolumnie bocznej i to, czy da się go zmienić
  * (mockupy `SZABLON` - `.sidebar-context`, `organizacje-lista` - `.sidebar-context.scope`;
  * issue #101, E2).
  *

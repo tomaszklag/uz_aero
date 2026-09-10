@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - DZIENNIK ŻĄDAŃ na konsoli.
+ * Ninerdeck (serwer) - DZIENNIK ŻĄDAŃ na konsoli.
  *
  * Po co: klub uruchamia jeden serwer i chce widzieć, co się na nim dzieje - czy telefon
  * dowozi paczki zdarzeń, czy panel odpytuje to, co powinien, i czy coś nagle zaczęło

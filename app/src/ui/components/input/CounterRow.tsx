@@ -1,5 +1,5 @@
 /**
- * UZ Aero - CounterRow (`.type-row` z mockupu 05e)
+ * Ninerdeck - CounterRow (`.type-row` z mockupu 05e)
  *
  * Wiersz licznika: nazwa z podpowiedzią po lewej, para przycisków −/+ z wartością po prawej.
  *

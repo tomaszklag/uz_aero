@@ -1,5 +1,5 @@
 /**
- * UZ Aero - parser światowej siatki undulacji EGM96 („WW15MGH.GRD", NGA).
+ * Ninerdeck - parser światowej siatki undulacji EGM96 („WW15MGH.GRD", NGA).
  *
  * Format (readme.txt pakietu interpolacyjnego NGA): pierwsza linia to nagłówek
  * `-90 90 0 360 .25 .25` (południe, północ, zachód, wschód, krok N-S, krok E-W

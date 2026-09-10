@@ -1,5 +1,5 @@
 /**
- * UZ Aero - konfiguracja i norma samolotu z cache'u referencyjnego.
+ * Ninerdeck - konfiguracja i norma samolotu z cache'u referencyjnego.
  *
  * Wzorzec „useState + useEffect + strażnik `alive`" powtarzał się w dwóch ekranach
  * (tankowanie, preflight), a wraz z normą zużycia doszedł trzeci - kokpit. Trzecia kopia

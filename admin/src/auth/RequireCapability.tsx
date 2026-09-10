@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: trasa, na którą wolno wejść tylko z daną zdolnością.
+ * Ninerdeck - panel: trasa, na którą wolno wejść tylko z daną zdolnością.
  *
  * Kolumna boczna ukrywa pozycję bez zdolności (`ui/shell/nav.ts`), ale adres da się
  * wkleić z pamięci albo z cudzej rozmowy - i wtedy klub dostawał RAMĘ modułu platformy

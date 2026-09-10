@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - SYGNATURA OPERACJI LOTNICZEJ w panelu (issue #68).
+ * Ninerdeck (serwer) - SYGNATURA OPERACJI LOTNICZEJ w panelu (issue #68).
  *
  * ══ CO TU JEST NAPRAWDĘ SPRAWDZANE ══
  * Numer operacji w dobie liczą DWA kody: `operationIndexes` w domenie (telefon, offline)
@@ -14,7 +14,7 @@
  * TYLKO z treścią (zmieniony odczyt, dolewka) - pusty znika z list w całości.
  */
 
-import { operationIndexes, projectSession, type Event } from '@uzaero/domain';
+import { operationIndexes, projectSession, type Event } from '@ninerdeck/domain';
 import { describe, expect, it } from 'vitest';
 
 import { ADMIN_CSRF_HEADERS, testHarness } from './helpers.ts';

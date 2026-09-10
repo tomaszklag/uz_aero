@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy SYGNATURY OPERACJI LOTNICZEJ (issue #68).
+ * Ninerdeck - testy SYGNATURY OPERACJI LOTNICZEJ (issue #68).
  *
  * Dwie rzeczy pod obserwacją i obie są umowami między odległymi miejscami kodu:
  *  1. **numer w sygnaturze = numer na kafelku 01** - `operationIndexes` i

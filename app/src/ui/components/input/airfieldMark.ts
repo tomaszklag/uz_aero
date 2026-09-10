@@ -1,5 +1,5 @@
 /**
- * UZ Aero - jak POKAZAĆ wybrane lotnisko w kontrolce formularza (issue #62 pkt 1).
+ * Ninerdeck - jak POKAZAĆ wybrane lotnisko w kontrolce formularza (issue #62 pkt 1).
  *
  * Katalog obejmuje Polskę (106 lotnisk i lądowisk, `packages/domain/src/airfields.ts`),
  * a przelot potrafi skończyć się w Berlinie - więc kod spoza katalogu jest NORMALNYM

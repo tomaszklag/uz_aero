@@ -1,5 +1,5 @@
 /**
- * UZ Aero - STATYSTYKI ŚLADU (issue #47 pkt 3, mockup `design/14-slad.html`).
+ * Ninerdeck - STATYSTYKI ŚLADU (issue #47 pkt 3, mockup `design/14-slad.html`).
  *
  * Trzy bloki karty „Statystyki lotu" i nic ponadto: prędkość z pionem, czasy faz
  * i trzymanie wysokości w przelocie. To OPIS lotu, nie dokument - żadna z tych liczb

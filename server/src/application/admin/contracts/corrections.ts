@@ -1,8 +1,8 @@
 /**
- * UZ Aero (serwer) - KONTRAKT podglądu korekty administratora (`A02b`).
+ * Ninerdeck (serwer) - KONTRAKT podglądu korekty administratora (`A02b`).
  *
  * Pliki w `contracts/` zawierają WYŁĄCZNIE typy i wolno im importować wyłącznie
- * `@uzaero/domain` (pilnuje `test/architecture.test.ts`).
+ * `@ninerdeck/domain` (pilnuje `test/architecture.test.ts`).
  *
  * ══ PO CO W OGÓLE PODGLĄD ══
  * Mockup `A02b` pokazuje kartę „Wpływ na liczby dnia · przed → po" PRZED zapisem:
@@ -18,7 +18,7 @@
  * najpierw się rozumie, co się zmieni, potem tłumaczy dlaczego.
  */
 
-import type { Event, EventType, RuleViolation, SessionState } from '@uzaero/domain';
+import type { Event, EventType, RuleViolation, SessionState } from '@ninerdeck/domain';
 
 /**
  * Zdarzenie korygowane - ORYGINALNY ODCZYT, tak jak leży w rejestrze.

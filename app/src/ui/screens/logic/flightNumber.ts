@@ -1,5 +1,5 @@
 /**
- * UZ Aero - numer lotu, do którego należą zdarzenia dziejące się TERAZ (issue #21 pkt 1).
+ * Ninerdeck - numer lotu, do którego należą zdarzenia dziejące się TERAZ (issue #21 pkt 1).
  *
  * Projekcja dopisuje lot do `flights` już przy STARCIE (`landingAt: null` = lot
  * otwarty), więc W LOCIE bieżący numer to po prostu długość listy. Kokpit liczył

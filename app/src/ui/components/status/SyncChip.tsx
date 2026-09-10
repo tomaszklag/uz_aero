@@ -1,5 +1,5 @@
 /**
- * UZ Aero - SyncChip
+ * Ninerdeck - SyncChip
  *
  * Jedyny globalny wskaźnik łączności (offline-first, docs/_main.md.txt §4.3, §6).
  * Stany, ich znaczenia i cała treść arkusza mieszkają w `syncIndicator.ts` - tutaj

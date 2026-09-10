@@ -1,5 +1,5 @@
 /**
- * UZ Aero - 07 ZMIANA ZAŁOGI.
+ * Ninerdeck - 07 ZMIANA ZAŁOGI.
  *
  * Odwzorowanie mockupu `design/07-zmiana-zalogi.html`: aktualna załoga (z przyciskiem
  * zmiany Duala - ARKUSZ) → przekazanie samolotu innemu PIC.

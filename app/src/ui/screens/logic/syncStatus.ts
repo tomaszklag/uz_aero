@@ -1,5 +1,5 @@
 /**
- * UZ Aero - stan synchronizacji → sekcja „Synchronizacja" w Ustawieniach (13).
+ * Ninerdeck - stan synchronizacji → sekcja „Synchronizacja" w Ustawieniach (13).
  *
  * Ten sam podział co `statsDay.ts`: logika prezentacji w czystych funkcjach,
  * testowalnych bez React Native.

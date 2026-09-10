@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: POWÓD BLOKADY dopisany do etykiety przycisku (moduł CZYSTY).
+ * Ninerdeck - panel 2.0: POWÓD BLOKADY dopisany do etykiety przycisku (moduł CZYSTY).
  *
  * Reguła panelu brzmi: przycisk, którego nie da się kliknąć, MÓWI dlaczego - w napisie,
  * nie w dymku. Powód bierze się wtedy ze zdania odmowy (`aircraftRefusal.ts`,

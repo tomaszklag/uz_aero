@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: wybór zakresu sesji (`#/klub`, mockup `00a-wybor-klubu`).
+ * Ninerdeck - panel: wybór zakresu sesji (`#/klub`, mockup `00a-wybor-klubu`).
  *
  * DRUGI KROK LOGOWANIA, nie osobne miejsce - stąd ten sam układ, co ekran logowania
  * (znak, karta, lista kart) i ŻADNEJ RAMY: klub nie jest jeszcze wybrany, więc pasek
@@ -21,7 +21,7 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import { useSessionState } from '../../auth/sessionContext';
 import { useSwitchScope } from '../../queries/useSession';
 import { Banner } from '../../ui/components';
-import { PlaneIcon } from '../../ui/components/icons';
+import { BrandMark } from '../../ui/components/icons';
 import { homeFor } from '../../ui/shell/nav';
 import { scopeCount } from '../../ui/shell/scope';
 import { errorMessage } from '../common/apiMessage';
@@ -51,9 +51,9 @@ export function ScopePickScreen() {
     <div className="login">
       <div className="login-mark">
         <span className="login-badge">
-          <PlaneIcon size={28} />
+          <BrandMark size={28} />
         </span>
-        <span className="login-title">UZ AERO</span>
+        <span className="login-title">NINERDECK</span>
         <span className="login-note">Panel administracyjny · {session.pilot.name}</span>
       </div>
 

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test PODPISU WIERSZA HISTORII ZMIAN (issue #43, uwaga z urządzenia).
+ * Ninerdeck - test PODPISU WIERSZA HISTORII ZMIAN (issue #43, uwaga z urządzenia).
  *
  * Zgłoszenie brzmiało: „po co dajesz badge z typem pola »notatka«, przecież mam to
  * napisane w nagłówku". Plakietka nie jest jednak zbędna zawsze - w historii odczytu

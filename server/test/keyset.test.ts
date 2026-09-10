@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - kursor keyset: kodowanie i predykat „wiersze PO kursorze".
+ * Ninerdeck (serwer) - kursor keyset: kodowanie i predykat „wiersze PO kursorze".
  *
  * Predykat musi opisywać DOKŁADNIE ten sam porządek, co `ORDER BY` - rozjazd tych dwóch
  * nie jest błędem, który da się zobaczyć: strona po prostu gubi albo dubluje wiersze,

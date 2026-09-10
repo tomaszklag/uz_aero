@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ScaleBar (pasek poziomu z PODZIAŁKĄ, mockup 06)
+ * Ninerdeck - ScaleBar (pasek poziomu z PODZIAŁKĄ, mockup 06)
  *
  * `LevelBar` odpowiada na pytanie „dużo to czy mało" jednym spojrzeniem. Gdy pasek idzie
  * przez całą szerokość karty, samo wypełnienie przestaje wystarczać - trzeba wiedzieć,

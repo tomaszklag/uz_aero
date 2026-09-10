@@ -1,5 +1,5 @@
 /**
- * UZ Aero - PORT zegara: dwa niezależne czasy (docs/_main.md.txt §4.1 pkt 6, §4.5).
+ * Ninerdeck - PORT zegara: dwa niezależne czasy (docs/_main.md.txt §4.1 pkt 6, §4.5).
  *
  * Każde zdarzenie niesie `deviceTime` (zegar telefonu) i `gpsTime` (czas z fixa GPS).
  * GPS jest niezależny od sieci i ustawień telefonu - serwer po nim wykrywa przestawiony

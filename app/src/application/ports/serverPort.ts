@@ -1,5 +1,5 @@
 /**
- * UZ Aero - PORT serwera synchronizacji (§4.6).
+ * Ninerdeck - PORT serwera synchronizacji (§4.6).
  *
  * Jedyne miejsce, w którym aplikacja „wie", że istnieje serwer. Kontrakt odpowiada
  * 1:1 endpointom z §4.6; kształty danych idą z domeny, więc telefon i serwer nie mają

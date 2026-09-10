@@ -1,8 +1,8 @@
 /**
- * UZ Aero (serwer) - KONTRAKT modułu „Zgłoszenia" w panelu (issue #87).
+ * Ninerdeck (serwer) - KONTRAKT modułu „Zgłoszenia" w panelu (issue #87).
  *
  * Pliki w `contracts/` zawierają WYŁĄCZNIE typy i wolno im importować wyłącznie
- * `@uzaero/domain` (pilnuje `test/architecture.test.ts`). Zgłoszenie błędu nie jest
+ * `@ninerdeck/domain` (pilnuje `test/architecture.test.ts`). Zgłoszenie błędu nie jest
  * bytem domenowym - opisuje APLIKACJĘ, nie lot - więc ten plik nie importuje niczego,
  * a katalogi statusu i wagi mają tu LUSTRA, dokładnie jak `PilotRoleWire`
  * w `contracts/pilots.ts`: definicja mieszka w `server/src/domain/bugReports.ts`,

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - Design System: prymitywy i komponenty wielokrotnego użytku.
+ * Ninerdeck - Design System: prymitywy i komponenty wielokrotnego użytku.
  *
  * Zasada: ekran nie definiuje własnych „kart", „chipów" ani „przycisków" - jeśli
  * czegoś brakuje, dokładamy to TUTAJ i używamy wszędzie. Dzięki temu zmiana wzorca

@@ -1,12 +1,12 @@
 /**
- * UZ Aero - formatowanie do wyświetlenia (warstwa UI).
+ * Ninerdeck - formatowanie do wyświetlenia (warstwa UI).
  *
  * Domena trzyma liczby (ms, litry, godziny dziesiętne); tutaj zamieniamy je na napisy.
  * Czas pokazujemy w UTC - to domyślna strefa całej aplikacji (`CLAUDE.md`, sekcja
  * „Strefa czasowa"): czas nieoznaczony = UTC, LT tylko przy meldunku.
  */
 
-import type { EpochMillis } from '@uzaero/domain';
+import type { EpochMillis } from '@ninerdeck/domain';
 
 const pad2 = (n: number): string => String(n).padStart(2, '0');
 

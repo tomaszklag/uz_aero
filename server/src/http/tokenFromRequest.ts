@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - JEDYNE miejsce, które wie, SKĄD pochodzi token żądania.
+ * Ninerdeck (serwer) - JEDYNE miejsce, które wie, SKĄD pochodzi token żądania.
  *
  * Telefon nosi token w `Authorization: Bearer`, przeglądarka panelu - w ciasteczku
  * `HttpOnly` (§8.2 `docs/architektura-panelu-serwer.md`). To dwa różne kanały tego
@@ -18,7 +18,7 @@ import type { FastifyRequest } from 'fastify';
  * i strona wystawiająca (`routes/admin/auth.ts`), i strona sprawdzająca - a rozjazd
  * nazw byłby cichą awarią „zalogowany, ale wylogowany".
  */
-export const ADMIN_SESSION_COOKIE = 'uzaero_admin';
+export const ADMIN_SESSION_COOKIE = 'ninerdeck_admin';
 
 /**
  * Token żądania: **nagłówek WYGRYWA z ciasteczkiem**.

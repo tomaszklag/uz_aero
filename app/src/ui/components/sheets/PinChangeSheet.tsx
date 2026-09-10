@@ -1,5 +1,5 @@
 /**
- * UZ Aero - PinChangeSheet (arkusz „Zmień PIN" z mockupu 13)
+ * Ninerdeck - PinChangeSheet (arkusz „Zmień PIN" z mockupu 13)
  *
  * Trzy kroki w jednym arkuszu: obecny PIN → nowy → powtórz. W pełni OFFLINE (§3.0:
  * PIN sprawdzany lokalnie). Odmowa (zły obecny PIN albo rozjazd powtórki) mówi tym

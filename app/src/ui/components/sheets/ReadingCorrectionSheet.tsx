@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ReadingCorrectionSheet (mockup `design/10f` „Korekta odczytu")
+ * Ninerdeck - ReadingCorrectionSheet (mockup `design/10f` „Korekta odczytu")
  *
  * Poprawka paliwa i motogodzin przy PRZEJĘCIU albo ZDANIU samolotu. Dwa pola obok
  * siebie, bo spisuje się je jednym spojrzeniem na tablicę i poprawia zwykle razem -

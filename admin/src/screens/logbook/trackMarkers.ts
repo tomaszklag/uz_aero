@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: znaczniki startów i lądowań na śladzie sesji (moduł CZYSTY).
+ * Ninerdeck - panel 2.0: znaczniki startów i lądowań na śladzie sesji (moduł CZYSTY).
  *
  * ══ SKĄD BIORĄ SIĘ POZYCJE ══
  * Koperta śladu niesie WYŁĄCZNIE geometrię - nie ma w niej ani lotów, ani ich czasów

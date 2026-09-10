@@ -1,5 +1,5 @@
 /**
- * UZ Aero - BoardingSheet (mockup 05i „Załadunek", issue #21 pkt 7)
+ * Ninerdeck - BoardingSheet (mockup 05i „Załadunek", issue #21 pkt 7)
  *
  * Arkusz znacznika załadunku: skoczkowie weszli na pokład - na ziemi, po wykołowaniu
  * z pasa między lotami albo przed pierwszym startem serii. Te same liczniki co arkusz

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - ręczne ponowienie eksportu karty dnia (panel, mockup
+ * Ninerdeck (serwer) - ręczne ponowienie eksportu karty dnia (panel, mockup
  * `A05-eksporty.html`).
  *
  * ══ PO CO TA KOMENDA ISTNIEJE ══

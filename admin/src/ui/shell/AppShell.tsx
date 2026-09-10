@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: rama aplikacji - pasek górny, kolumna boczna i miejsce na treść.
+ * Ninerdeck - panel: rama aplikacji - pasek górny, kolumna boczna i miejsce na treść.
  *
  * Styl lekki (issue #107, 2026-09-08): układ jak w GitLabie. Pasek 48 px niesie
  * WYŁĄCZNIE markę (link na ekran startowy) i zalogowanego; nawigacja stoi w kolumnie
@@ -77,7 +77,7 @@ export function AppShell({
           <span className="brand-mark">
             <PlaneIcon size={14} />
           </span>
-          <span className="brand-name">UZ AERO</span>
+          <span className="brand-name">NINERDECK</span>
         </Link>
 
         <div className="topbar-right">

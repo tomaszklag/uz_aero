@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - komenda przyjęcia paczki zdarzeń (`POST /events`, §4.3–4.5).
+ * Ninerdeck (serwer) - komenda przyjęcia paczki zdarzeń (`POST /events`, §4.3–4.5).
  *
  * Cała operacja jest JEDNĄ transakcją: wstawienie zdarzeń → przeliczenie projekcji
  * dotkniętych sesji → flagi łańcucha MH. Telefon, który dostał odpowiedź, może
@@ -29,12 +29,12 @@
  * nadawcy do naprawienia, tylko zapisem, który nigdy nie przejdzie - a to jest
  * dokładnie definicja wstrzymania.
  *
- * Projekcję liczy `projectSession` z `@uzaero/domain` - DOKŁADNIE ten sam kod, który
+ * Projekcję liczy `projectSession` z `@ninerdeck/domain` - DOKŁADNIE ten sam kod, który
  * liczy ekran statystyk na telefonie. Korekty (04c) wchodzą w wynik automatycznie,
  * bo nakłada je sama projekcja.
  */
 
-import { projectSession, type Event } from '@uzaero/domain';
+import { projectSession, type Event } from '@ninerdeck/domain';
 
 import { clockDriftFlag } from '../../../domain/clockDrift.ts';
 import { chainFlags, type ChainLink } from '../../../domain/mhChain.ts';

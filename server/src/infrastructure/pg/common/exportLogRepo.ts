@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter dziennika eksportu (`ExportLogPort`).
+ * Ninerdeck (serwer) - adapter dziennika eksportu (`ExportLogPort`).
  *
  * `day` idzie w obie strony jako NAPIS `YYYY-MM-DD`: przy zapisie Postgres sam
  * rzutuje na DATE, przy odczycie bierzemy `day::text`. Sterowniki (pg, PGlite)

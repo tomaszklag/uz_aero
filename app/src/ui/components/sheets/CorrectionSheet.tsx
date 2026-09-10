@@ -1,5 +1,5 @@
 /**
- * UZ Aero - CorrectionSheet (mockup `design/10e` „Korekta zdarzenia"; wcześniej 04c)
+ * Ninerdeck - CorrectionSheet (mockup `design/10e` „Korekta zdarzenia"; wcześniej 04c)
  *
  * Arkusz korekty w trybie edycji sesji: nazwa korygowanego zdarzenia, czas, wiersze
  * odniesienia (metoda wykrycia, wpływ na czasy), opcjonalny powód i wejście w historię

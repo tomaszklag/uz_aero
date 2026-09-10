@@ -1,5 +1,5 @@
 /**
- * UZ Aero - KONTROLKA CZASU ZDARZENIA (mockupy `design/10e`, `10f`, `10g`, `10h`, `05f`).
+ * Ninerdeck - KONTROLKA CZASU ZDARZENIA (mockupy `design/10e`, `10f`, `10g`, `10h`, `05f`).
  *
  * ══ JEDNA CZYNNOŚĆ, JEDEN KSZTAŁT ══
  * Ustawienie godziny zdarza się w pięciu arkuszach - korekta czasu na osi, korekta

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - generator katalogu polskich lotnisk (`packages/domain/src/airfields.ts`).
+ * Ninerdeck - generator katalogu polskich lotnisk (`packages/domain/src/airfields.ts`).
  *
  * URUCHOMIENIE (z korzenia repo, pliki CSV pobrane wcześniej z ourairports.com):
  *

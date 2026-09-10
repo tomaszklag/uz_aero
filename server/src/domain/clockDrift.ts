@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - flaga rozjazdu zegarów (§4.5 `clock_drift`).
+ * Ninerdeck (serwer) - flaga rozjazdu zegarów (§4.5 `clock_drift`).
  *
  * Każde zdarzenie niesie DWA zegary: `deviceTime` (telefon) i `gpsTime` (z fixa, `null`
  * gdy brak). Projekcja liczy czasy z GPS, gdy tylko jest - ale gdy telefon rozjeżdża
@@ -19,7 +19,7 @@
  * ten sam przestawiony zegar nauczyłoby wyłącznie ignorowania skrzynki.
  */
 
-import { CLOCK_DRIFT_MS, type Event, type FlagType } from '@uzaero/domain';
+import { CLOCK_DRIFT_MS, type Event, type FlagType } from '@ninerdeck/domain';
 
 export interface DriftFlag {
   type: Extract<FlagType, 'clock_drift'>;

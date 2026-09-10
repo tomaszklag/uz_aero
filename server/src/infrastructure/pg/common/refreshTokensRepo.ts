@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter refresh tokenów (`RefreshTokensPort`).
+ * Ninerdeck (serwer) - adapter refresh tokenów (`RefreshTokensPort`).
  *
  * Wydajemy losowe 256 bitów, a w bazie trzymamy SHA-256 wartości - wyciek tabeli nie
  * daje działających sesji. Rotacja jest JEDNĄ transakcją (audyt): kasowanie starego

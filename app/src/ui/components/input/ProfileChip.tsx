@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ProfileChip (`.profile-chip` z mockupu 00)
+ * Ninerdeck - ProfileChip (`.profile-chip` z mockupu 00)
  *
  * Karta lokalnego profilu na zamku PIN: okrągły awatar z inicjałami, nazwisko, kod.
  * Mówi pilotowi, CZYJ profil odblokowuje - na wspólnym telefonie klubowym to nie

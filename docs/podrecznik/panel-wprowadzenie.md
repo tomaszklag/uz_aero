@@ -63,13 +63,13 @@ Każdy ekran i arkusz aplikacji (poza logowaniem i PIN-em) ma w prawym górnym r
 
 ## Czego w tym wydaniu nie ma
 
-Panel ma dziś cztery moduły. Ekrany znane z wcześniejszej wersji - pulpit, skrzynka rozjazdów (flag), eksporty kart, dziennik akcji administratorów, statystyki i analityka zużycia - nie są dostępne i wracają pojedynczo w kolejnych wydaniach. Rozjazdy łańcucha odczytów UZ Aero nadal wykrywa i zapisuje przy każdej wysyłce z telefonu, a każda decyzja administratora zostawia ślad w dzienniku akcji - brakuje wyłącznie ekranów do ich przeglądania.
+Panel ma dziś cztery moduły. Ekrany znane z wcześniejszej wersji - pulpit, skrzynka rozjazdów (flag), eksporty kart, dziennik akcji administratorów, statystyki i analityka zużycia - nie są dostępne i wracają pojedynczo w kolejnych wydaniach. Rozjazdy łańcucha odczytów Ninerdeck nadal wykrywa i zapisuje przy każdej wysyłce z telefonu, a każda decyzja administratora zostawia ślad w dzienniku akcji - brakuje wyłącznie ekranów do ich przeglądania.
 
 Nie ma też korekty pojedynczych zdarzeń z panelu (godzina startu, odczyt paliwa, skład zrzutu). Pilot poprawia własne wpisy przez 24 godziny od zdania w aplikacji ([ekran operacji i korekty](operacja-i-korekty)); administrator ma dziś trzy narzędzia: zakończenie i unieważnienie operacji w [dzienniku](panel-dziennik) oraz poprawę odczytów maszyny w [karcie samolotu](panel-samoloty).
 
 ## Częste problemy
 
-- **„Nie ma połączenia z serwerem" albo przycisk Google się nie pojawia** → przeglądarka nie dosięga klubu: sprawdź internet i adres panelu; jeśli problem trwa, skontaktuj się z osobą, która wdrażała UZ Aero.
+- **„Nie ma połączenia z serwerem" albo przycisk Google się nie pojawia** → przeglądarka nie dosięga klubu: sprawdź internet i adres panelu; jeśli problem trwa, skontaktuj się z osobą, która wdrażała Ninerdeck.
 - **„Sesja wygasła. Zaloguj się jeszcze raz" w środku pracy** → minęło osiem godzin od zalogowania. Zaloguj się ponownie i wróć do tego samego adresu - zakres dat i otwarta karta są w nim zapisane.
 - **Zmiana z panelu nie dotarła na telefon pilota** → telefon pobiera dane klubu przy najbliższym połączeniu, zwykle w ciągu kwadransa; bez zasięgu pracuje na kopii. Pilot może ponaglić pobranie przyciskiem **SYNCHRONIZUJ TERAZ** w ustawieniach aplikacji.
 - **Pilot chce wejść do panelu i widzi „To konto nie ma dostępu do panelu"** → ma rolę pilota. Rolę zmienia się w karcie konta w module Piloci; po zmianie loguje się do panelu jeszcze raz.

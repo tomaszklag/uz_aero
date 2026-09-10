@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - preferencje pilota `/me/prefs` (decyzja 2026-07-29: motyw jest
+ * Ninerdeck (serwer) - preferencje pilota `/me/prefs` (decyzja 2026-07-29: motyw jest
  * preferencją PILOTA i synchronizuje się przez serwer).
  *
  * Jedna klasa na odczyt i zapis, bo obie strony serwują TEN SAM kontrakt: `put`

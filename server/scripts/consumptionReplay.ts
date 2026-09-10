@@ -1,5 +1,5 @@
 /**
- * UZ Aero - przebieg analityki zużycia po REALNEJ historii (kalibracja progów).
+ * Ninerdeck - przebieg analityki zużycia po REALNEJ historii (kalibracja progów).
  *
  *   DATABASE_URL=... npx tsx scripts/consumptionReplay.ts [REJESTRACJA]
  *
@@ -30,7 +30,7 @@ import {
   fitMhModel,
   type FuelInterval,
   type MhEquation,
-} from '@uzaero/domain';
+} from '@ninerdeck/domain';
 
 import { PgEventsStore } from '../src/infrastructure/pg/common/eventsStore.ts';
 import { PgAdminConsumptionRepo } from '../src/infrastructure/pg/admin/consumptionRepo.ts';

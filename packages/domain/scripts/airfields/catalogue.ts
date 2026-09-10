@@ -1,5 +1,5 @@
 /**
- * UZ Aero - złożenie katalogu z dwóch źródeł.
+ * Ninerdeck - złożenie katalogu z dwóch źródeł.
  *
  * KOLEJNOŚĆ ŹRÓDEŁ jest decyzją, nie przypadkiem. Najpierw OurAirports (domena publiczna,
  * zero zobowiązań licencyjnych), a OSM tylko tam, gdzie OurAirports milczy - dzięki temu

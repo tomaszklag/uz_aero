@@ -1,8 +1,8 @@
 {
-  "name": "@uzaero/admin",
+  "name": "@ninerdeck/admin",
   "version": "0.0.0",
   "private": true,
-  "description": "UZ Aero - panel administracyjny (web): React + Vite. Klient serwera, zero własnej arytmetyki.",
+  "description": "Ninerdeck - panel administracyjny (web): React + Vite. Klient serwera, zero własnej arytmetyki.",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -16,9 +16,9 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.4",
-    "@uzaero/domain": "*",
-    "@uzaero/format": "*",
-    "@uzaero/tokens": "*",
+    "@ninerdeck/domain": "*",
+    "@ninerdeck/format": "*",
+    "@ninerdeck/tokens": "*",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-router-dom": "^7.18.2"

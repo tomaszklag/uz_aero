@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - weryfikacja tokenu tożsamości Google (RS256 + JWKS).
+ * Ninerdeck (serwer) - weryfikacja tokenu tożsamości Google (RS256 + JWKS).
  *
  * Ta sama zasada, co w `hs256Tokens.ts`: bez biblioteki JWT, bo potrzebujemy DOKŁADNIE
  * jednego wariantu (RS256, klucze Google, znany zbiór odbiorców), a kryptografię bierzemy
@@ -11,7 +11,7 @@
  *  • **podpis** kluczem o `kid` z nagłówka - pobranym z JWKS Google, nigdy z tokenu;
  *  • **`iss`** - jedna z dwóch form, które Google wydaje (z `https://` i bez);
  *  • **`aud`** - MUSI być jednym z NASZYCH identyfikatorów klienta. To jest kontrola,
- *    która oddziela „ktoś zalogował się do UZ Aero" od „ktoś ma dowolny token Google":
+ *    która oddziela „ktoś zalogował się do Ninerdeck" od „ktoś ma dowolny token Google":
  *    bez niej token wydany innej aplikacji otwierałby nasze konta;
  *  • **`exp`** (i `iat` z tolerancją) - token Google żyje godzinę.
  *

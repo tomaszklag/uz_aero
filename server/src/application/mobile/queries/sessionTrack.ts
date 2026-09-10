@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - ŚLAD SESJI DLA TELEFONU (`GET /me/sessions/:uuid/track`, issue #47).
+ * Ninerdeck (serwer) - ŚLAD SESJI DLA TELEFONU (`GET /me/sessions/:uuid/track`, issue #47).
  *
  * ══ SKĄD SIĘ WZIĘŁA TA TRASA ══
  * Do issue #47 ślad żył na telefonie: nagranie leżało w `gps_trace` przez 14 dni i stamtąd
@@ -22,7 +22,7 @@
  * pokazuje własny lot pilota, panel - dowolny, na zdolności `panel.access`.
  */
 
-import type { SessionTrackPayload } from '@uzaero/domain';
+import type { SessionTrackPayload } from '@ninerdeck/domain';
 
 import type { SessionTrackQueries } from '../../common/queries/sessionTrack.ts';
 

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - PORT magazynu lokalnego (docs/_main.md.txt §5.2).
+ * Ninerdeck - PORT magazynu lokalnego (docs/_main.md.txt §5.2).
  *
  * To jest port w rozumieniu architektury heksagonalnej: aplikacja mówi, czego potrzebuje
  * od magazynu; infrastruktura dostarcza implementację (`ExpoSqliteAdapter` w telefonie,

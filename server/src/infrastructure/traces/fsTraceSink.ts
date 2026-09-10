@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter zrzutu śladu kalibracyjnego na dysk (`TraceSinkPort`).
+ * Ninerdeck (serwer) - adapter zrzutu śladu kalibracyjnego na dysk (`TraceSinkPort`).
  *
  * NDJSON per sesja (`<dir>/<sessionUuid>.ndjson`; wpisy bez sesji → `_bez-sesji`):
  * jeden wiersz = jeden wpis, dopisywanie na końcu. Płaskie pliki zamiast Postgresa,

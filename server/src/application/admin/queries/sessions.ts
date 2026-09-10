@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - strona ODCZYTU dni lotnych panelu (`A02`, `A02a`).
+ * Ninerdeck (serwer) - strona ODCZYTU dni lotnych panelu (`A02`, `A02a`).
  *
  * **Reguła twarda, której pilnuje `test/contract.test.ts`:** listy NIE wołają
  * `projectSession`. Czytają wyłącznie kolumny projekcji `sessions` - bo wczytanie
@@ -13,7 +13,7 @@
  * niż ekran 10.
  */
 
-import { projectSession } from '@uzaero/domain';
+import { projectSession } from '@ninerdeck/domain';
 
 import type { Database, EventsStorePort } from '../../common/ports.ts';
 import type { AdminSessionDetail, AdminSessionPage } from '../contracts/sessions.ts';

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy SILNIKA SYNCHRONIZACJI (§4.3) i cyklu poświadczeń (§3.0).
+ * Ninerdeck - testy SILNIKA SYNCHRONIZACJI (§4.3) i cyklu poświadczeń (§3.0).
  *
  * Najważniejsze przypadki to te, których nie widać przy biurku z Wi-Fi: sieć znika
  * w połowie paczki, token wygasa między paczkami, serwer już ma połowę zdarzeń

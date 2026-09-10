@@ -1,5 +1,5 @@
 /**
- * UZ Aero - PORT kryptografii PIN-u (§3.0: „hash PIN-u w expo-secure-store").
+ * Ninerdeck - PORT kryptografii PIN-u (§3.0: „hash PIN-u w expo-secure-store").
  *
  * Warstwa aplikacji decyduje KIEDY PIN powstaje i kiedy jest sprawdzany; JAK się go
  * soli i skraca - to szczegół infrastruktury (adapter na czystym TS, bez modułów

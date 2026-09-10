@@ -1,5 +1,5 @@
 /**
- * UZ Aero - nieudane logowanie → zdanie (`ui/screens/logic/loginMessage.ts`).
+ * Ninerdeck - nieudane logowanie → zdanie (`ui/screens/logic/loginMessage.ts`).
  */
 
 import { ServerRejectedError, ServerUnreachableError } from '../application/ports';

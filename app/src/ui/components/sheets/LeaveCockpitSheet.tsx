@@ -1,5 +1,5 @@
 /**
- * UZ Aero - LeaveCockpitSheet (`design/04d-wyjscie-z-kokpitu.html`)
+ * Ninerdeck - LeaveCockpitSheet (`design/04d-wyjscie-z-kokpitu.html`)
  *
  * Arkusz, który wyjaśnia, dlaczego „wstecz" nie wyprowadził pilota z kokpitu: kokpit jest
  * stanem modalnym, a maszyna jest w jego rękach (decyzja 2026-08-10, `CLAUDE.md` →

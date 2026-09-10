@@ -1,5 +1,5 @@
 /**
- * UZ Aero - lotnisko z katalogu → wiersz listy podpowiedzi.
+ * Ninerdeck - lotnisko z katalogu → wiersz listy podpowiedzi.
  *
  * Mieszka PRZY komponencie, a nie w `ui/screens/logic/`, bo opisuje kształt wiersza
  * `AirfieldSuggestions` - a ten kształt jest własnością komponentu (patrz nagłówek

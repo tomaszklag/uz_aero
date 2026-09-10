@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test odsiewu miękkich flag na ekranie pilota (issue #84).
+ * Ninerdeck - test odsiewu miękkich flag na ekranie pilota (issue #84).
  *
  * Filtr jest maleńki, ale strzeże dwóch rzeczy naraz i obie łatwo zepsuć: rozjazd
  * zegara ma zniknąć pilotowi z oczu, a KAŻDE inne ostrzeżenie ma przejść - bo nowe

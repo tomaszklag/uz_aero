@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - konfiguracja floty: dodanie jednostki, edycja, wyłączenie ze
+ * Ninerdeck (serwer) - konfiguracja floty: dodanie jednostki, edycja, wyłączenie ze
  * służby (panel, mockupy `A07-flota.html` i `A07a-samolot.html`).
  *
  * ══ CO TA KOMENDA NAPRAWDĘ ZMIENIA ══
@@ -55,7 +55,7 @@
  * śladu audytu, bo nie ma uchwytu do bazy (`auditedWrite.ts`, `test/architecture.test.ts`).
  */
 
-import { fuelToleranceL, type MhFormat, type ServiceStatus } from '@uzaero/domain';
+import { fuelToleranceL, type MhFormat, type ServiceStatus } from '@ninerdeck/domain';
 
 import {
   refuseCapacity,

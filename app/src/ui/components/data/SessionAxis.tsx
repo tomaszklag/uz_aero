@@ -1,5 +1,5 @@
 /**
- * UZ Aero - SessionAxis (`.axis` z mockupów `10-statystyki.html`, `04` i `05`).
+ * Ninerdeck - SessionAxis (`.axis` z mockupów `10-statystyki.html`, `04` i `05`).
  *
  * Oś czasu jednej sesji: przejęcie → uruchomienie → starty, zrzuty i lądowania →
  * wyłączenie → zdanie, w jednej kolumnie, z pionową kreską łączącą punkty.

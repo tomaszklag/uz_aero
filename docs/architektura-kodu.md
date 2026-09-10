@@ -1,4 +1,4 @@
-# UZ Aero - architektura kodu
+# Ninerdeck - architektura kodu
 
 > Dotyczy monorepo: `app/` (React Native + Expo), `server/` (Fastify + PostgreSQL)
 > i `packages/domain` (wspólna domena). TypeScript strict wszędzie.
@@ -24,10 +24,10 @@
 ## 0. Monorepo (Faza 2)
 
 ```
-packages/domain    @uzaero/domain - zdarzenia, reguły, projekcje, detekcja, ślad lotu,
+packages/domain    @ninerdeck/domain - zdarzenia, reguły, projekcje, detekcja, ślad lotu,
                    analityka zużycia. Czysty TS, ZERO zależności (pilnowane testem
                    architektury - dlatego regresja i algebra są napisane ręcznie).
-app/               aplikacja; w `src/domain` został shim `export * from '@uzaero/domain'`
+app/               aplikacja; w `src/domain` został shim `export * from '@ninerdeck/domain'`
 server/            backend; importuje TĘ SAMĄ domenę
 ```
 
@@ -48,7 +48,7 @@ odświeżana w transakcji przyjęcia, flagi łańcucha MH (`mh_gap` / `mh_regres
 `session_overlap` - czysta funkcja `server/src/domain/mhChain.ts`, tolerancja
 `MH_TOLERANCE_H` z domeny), `GET /aircraft/:id/state`, `GET /sessions/:uuid/sync-status`
 i `GET /reference` wzbogacone o claim/przekazanie z projekcji operacji (ETag liczy też
-znacznik operacji). Serwer projektuje operacje `projectSession` z `@uzaero/domain` - liczby
+znacznik operacji). Serwer projektuje operacje `projectSession` z `@ninerdeck/domain` - liczby
 kanonicznego dnia wychodzą identyczne jak na ekranie 10 telefonu, co przybija test
 integracyjny.
 
@@ -73,7 +73,7 @@ decyzja to czysta funkcja `screens/claimMode.ts`.
 
 Motyw aplikacji jest preferencją PILOTA i wędruje między urządzeniami (decyzja
 2026-07-29, ostatnia pozycja audytu UI): lokalnie rekord per pilot
-(`infrastructure/prefs/themePrefsStore.ts` - klucz `uzaero.theme.<pilotId>` jak
+(`infrastructure/prefs/themePrefsStore.ts` - klucz `ninerdeck.theme.<pilotId>` jak
 banery edu; klasa dostaje magazyn KV konstruktorem, więc format i łagodna migracja
 starego klucza per telefon są testowane w Node), `ThemeProvider` nakłada motyw razem
 z tożsamością (subskrypcja store'u auth: odblokowanie/przelogowanie = motyw TEGO
@@ -324,13 +324,13 @@ na komponenty). Skrót wiążący dla tego dokumentu:
   `sessions` nadpisywane w całości), więc change tracking zaprasza do obejścia strumienia;
 - **panel nie widzi modelu persystencji** - wyłącznie DTO z `/admin/api/*` (nie `/admin/*`:
   kolizja z wildcardem `@fastify/static`); osobnego pakietu „modele z bazy" nie tworzymy;
-- **wspólne pakiety są nie-wizualne**: `@uzaero/tokens` i `@uzaero/format` (**wyciągnięte
+- **wspólne pakiety są nie-wizualne**: `@ninerdeck/tokens` i `@ninerdeck/format` (**wyciągnięte
   2026-07-31**, patrz niżej); komponentów
   między RN a webem nie dzielimy;
 - ~~kształt flagi przenieść do `packages/domain/src/flags.ts`~~ - **ZROBIONE 2026-07-31**
   (patrz niżej).
 
-**Wspólne pakiety `@uzaero/tokens` i `@uzaero/format` - zrobione 2026-07-31**, PRZED
+**Wspólne pakiety `@ninerdeck/tokens` i `@ninerdeck/format` - zrobione 2026-07-31**, PRZED
 pierwszym ekranem panelu i to jest cała istota terminu: gdyby panel wystartował pierwszy,
 dorobiłby sobie własne kopie palety i formatów, a kopie w działającym UI cofa się dużo
 drożej niż w pliku, którego nikt jeszcze nie renderuje.
@@ -510,7 +510,7 @@ pierwszy, w którym trzeba było rozstrzygnąć, skąd biorą się jego liczby.
   ma gałąź dla `NULLS LAST`, bo `claim_time` jest NULL-owalne (operacja bez preflightu).
 - **Migracja 11: `sessions.operation` i `sessions.client`** + `CHECK` na słowniku operacji
   (ten sam powód co przy `flags.type`: adapter wczytuje wartość do zamkniętej unii).
-  `OperationType` jest teraz wyprowadzony z tablicy `OPERATION_TYPES` w `@uzaero/domain`
+  `OperationType` jest teraz wyprowadzony z tablicy `OPERATION_TYPES` w `@ninerdeck/domain`
   - filtr panelu waliduje się katalogiem domeny zamiast trzecią ręczną kopią listy.
   **Kolumny `duty_start` NIE MA i nie będzie bez decyzji człowieka**: `claim_time` niesie
   `SessionState.dutyStart` od pierwszej wersji, więc druga kolumna byłaby duplikatem tej
@@ -538,7 +538,7 @@ pierwszy, w którym trzeba było rozstrzygnąć, skąd biorą się jego liczby.
   JEDEN. Nowa liczba w panelu = nowa kolumna projekcji wypełniana przez `sessionRowFrom`,
   nie nowe wyrażenie SQL.
 - **Panel nie widzi kształtu wierszy.** `application/admin/contracts/` zawiera wyłącznie
-  typy DTO i wolno mu importować jedynie `@uzaero/domain` (nowy przypadek w
+  typy DTO i wolno mu importować jedynie `@ninerdeck/domain` (nowy przypadek w
   `test/architecture.test.ts`). `AdminSessionListItem` jest PŁASKI, a nie `SessionRow & {…}`
   - projekcja ma rosnąć swobodnie, a nie łamać panel przy każdej migracji. Byty domenowe
   (`SessionState`, `Event`) jadą bez własnego DTO, zgodnie z regułą granicy typów.
@@ -587,7 +587,7 @@ te wchodzą następnym przekrojem.
   przy nieznanym loginie) ma jedną implementację w prywatnym `verifyCredentials`; druga
   kopia prędzej czy później zgubiłaby ten `else`, a różnicy czasów nie widać w żadnym
   teście funkcjonalnym.
-- **CSRF: nagłówek `X-UZ-Admin` na KAŻDEJ mutacji `/admin/api/*`** (`http/adminCsrf.ts`,
+- **CSRF: nagłówek `X-Ninerdeck-Admin` na KAŻDEJ mutacji `/admin/api/*`** (`http/adminCsrf.ts`,
   hook na całej instancji). `SameSite=Strict` jest polityką przeglądarki, więc stoi obok
   niego drugi, niezależny mechanizm: nagłówka niestandardowego nie da się wysłać
   cross-origin bez preflightu, a serwer nie wysyła żadnych nagłówków CORS. Hook, a nie
@@ -595,14 +595,14 @@ te wchodzą następnym przekrojem.
   `adminRoute`) - i to właśnie logowanie jest klasycznym celem login-CSRF.
 - **`GET /admin/api/me`** istnieje z jednego powodu: ciasteczko jest `HttpOnly`, więc po
   odświeżeniu karty JavaScript panelu nie ma jak odczytać własnej tożsamości.
-- **Workspace `admin/`** (`@uzaero/admin`, React 19 + Vite + TS strict + `noUncheckedIndexedAccess`):
+- **Workspace `admin/`** (`@ninerdeck/admin`, React 19 + Vite + TS strict + `noUncheckedIndexedAccess`):
   `api/` (jedyny `fetch`) → `queries/` (TanStack, zero globalnego store'u) → `screens/`,
   a `ui/` nie zna żadnej z nich. Granice są WYKONYWALNE (`admin/test/architecture.test.ts`,
   lustro serwerowego): jedno miejsce z `fetch`, zakaz importów WARTOŚCIOWYCH z
-  `@uzaero/domain` (panel nie ma czym policzyć), zakaz `toFixed`/`Math.round` w widoku,
+  `@ninerdeck/domain` (panel nie ma czym policzyć), zakaz `toFixed`/`Math.round` w widoku,
   zakaz hexów w kodzie, zakaz importu z `server/src`. Routing na **hashu** - zero
   fallbacku SPA po stronie serwera.
-- **`admin/src/styles/tokens.css` jest GENEROWANY** z `@uzaero/tokens`
+- **`admin/src/styles/tokens.css` jest GENEROWANY** z `@ninerdeck/tokens`
   (`packages/tokens/scripts/emitCss.ts`, `npm run tokens:css --workspace admin`), jeden
   blok `:root` z motywu `night` - panel nie ma przełącznika motywów. Równość pliku ze
   źródłem przybija `admin/test/tokens.generated.test.ts`, bo plik generowany leżący
@@ -614,7 +614,7 @@ te wchodzą następnym przekrojem.
   nazw ekranów rozjechałyby się przy pierwszym przemianowaniu). Pozycja niedostępna dla
   roli jest **widoczna, wyszarzona i przestaje być linkiem** (`<span aria-disabled>`,
   nie `<a>` z `preventDefault`), z powodem w `title`.
-- **`dateUtcShort` dołożone do `@uzaero/format`** („31 JUL 2026"). Obok `dateUtcLong`
+- **`dateUtcShort` dołożone do `@ninerdeck/format`** („31 JUL 2026"). Obok `dateUtcLong`
   („22 JUNE 2026"), bo to różnica POWIERZCHNI: telefon pokazuje datę raz, w plakietce
   dnia; panel powtarza ją w każdym wierszu tabeli, gdzie cztery znaki to inna szerokość
   kolumny. Własna kopia tablicy miesięcy w panelu byłaby dokładnie tym trzecim
@@ -710,7 +710,7 @@ przynależność adaptera jest POCHODNA (idzie za portem, którego używa) i byw
 `aircraftConfigRepo` obsługuje dziś ingest, a jutro ekran floty. Gdy się zmieni, przenosimy
 plik - to tańsze niż etykieta, która kłamie.
 
-**Spójność modeli bez ORM:** źródłem prawdy jest `@uzaero/domain`, a styki pilnują testy
+**Spójność modeli bez ORM:** źródłem prawdy jest `@ninerdeck/domain`, a styki pilnują testy
 kontraktowe - `test/schema.test.ts` (listy kolumn PG przybite na sztywno, na PGlite;
 lustro `sqliteSchema.test.ts` z aplikacji) i `test/contract.test.ts` (każdy typ zdarzenia
 domeny musi przechodzić przez kopertę zod `/events`; wiersz `sessions` musi odtwarzać
@@ -848,7 +848,7 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 |---|---|---|
 | `Screen` | tło, safe area, scroll, **przyklejony nagłówek**, akcja kończąca (`footer`) | wszystkie ekrany |
 | `AppText` | typografia z tokenów (`display`/`timer`/`param`/`body`/`label`/`mono`/`micro`) | wszystkie |
-| `Brand` | znak marki (kafel z ikoną, „UZ AERO", tagline), rozmiary `md`/`hero` | `.brand` (00/00a), `.app-icon` (01) |
+| `Brand` | znak marki (kafel z ikoną, „NINERDECK", tagline), rozmiary `md`/`hero` | `.brand` (00/00a), `.app-icon` (01) |
 | `Icon` | ikony po nazwie **znaczeniowej** (`peek`, `warning`, `op-skoki`) | wklejone SVG Feather |
 | `Skeleton` | plamka trzymająca miejsce po danej, której jeszcze nie ma; wymiary podaje się **wprost, w rozmiarze wartości**, którą zastąpi | `.skel` (`LOADERY.html`) |
 | `SkeletonRows` | n plamek w geometrii wiersza listy; tu mieszka komunikat „Ładowanie" dla czytnika ekranu | `LOADERY.html` |
@@ -1262,13 +1262,13 @@ Zapis lotu działa przy wygaszonym ekranie (ryzyko 🔴 z `_main.md.txt` §8 - b
 saver zabija proces). Konstrukcja, warstwa po warstwie:
 
 - **Okno usługi = `projection.engineRunning`** (start silnika = start usługi i
-  powiadomienia „UZ Aero - rejestracja lotu"; stop = koniec obu; między lotami zero
+  powiadomienia „Ninerdeck - rejestracja lotu"; stop = koniec obu; między lotami zero
   GPS). Spoiną jest `ui/hooks/useBackgroundTracking.ts` - subskrypcja store'u wołająca
   `GpsPort.setBackgroundMode(...)` na zboczach. Binder montuje się w `ResumeGate`
   **po** `loadSession`, bo pierwszy odczyt stanu też jest komendą: zamontowany wyżej
   gasiłby adoptowaną usługę przy każdym otwarciu aplikacji w locie.
 - **Adapter ma dwa źródła za jednym fanoutem**: `watchPositionAsync` (tryb `watch`,
-  ekran włączony) ↔ `startLocationUpdatesAsync` + task `uzaero-location` (tryb
+  ekran włączony) ↔ `startLocationUpdatesAsync` + task `ninerdeck-location` (tryb
   `service`). Odbiorcy (kokpit, 13, ślad) nie widzą różnicy. Kadencja obu źródeł
   identyczna (1 s, bez `deferredUpdates*` - inaczej watchdog `GPS_STALE_SEC`
   i `MAX_FIX_GAP_SEC` czytałyby dosyłkę paczkami jako utratę sygnału).

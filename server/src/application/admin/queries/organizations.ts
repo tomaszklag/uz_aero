@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - LISTA KLUBÓW i karta klubu dla superadministratora (moduł
+ * Ninerdeck (serwer) - LISTA KLUBÓW i karta klubu dla superadministratora (moduł
  * Organizacje, `platform.manage`; mockupy `organizacje-lista`, `organizacje-klub`;
  * `docs/wielofirmowosc.md` §8.1; issue #100, D3).
  *

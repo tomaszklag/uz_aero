@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test AKCJI `amend` (issue #43): korekta WARTOŚCI, nie czasu.
+ * Ninerdeck - test AKCJI `amend` (issue #43): korekta WARTOŚCI, nie czasu.
  *
  * Do issue #43 `event_correction` umiało dwie rzeczy: przesunąć zdarzenie w czasie
  * i uznać, że go nie było. Odczyt paliwa, licznik motogodzin i skład zrzutu były więc

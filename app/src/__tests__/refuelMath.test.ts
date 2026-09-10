@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test arytmetyki ekranu TANKOWANIE (mockup 06).
+ * Ninerdeck - test arytmetyki ekranu TANKOWANIE (mockup 06).
  *
  * Kalkulacja zużycia jest jedyną liczbą na tym ekranie, której pilot nie odczyta
  * z przyrządu - więc jedyną, której błędu nie ma jak zauważyć. Test odwzorowuje

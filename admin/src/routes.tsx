@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: mapa tras.
+ * Ninerdeck - panel 2.0: mapa tras.
  *
  * **Routing na hashu** (`#/piloci/<id>`), bo statyczny build panelu stoi za
  * `@fastify/static` i nie ma fallbacku SPA. Fallback „wszystko pod `/admin/*` →

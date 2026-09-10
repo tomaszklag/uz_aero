@@ -1,5 +1,5 @@
 /**
- * UZ Aero - KLUB OPERACJI po identyfikatorze (wielofirmowość §7, issue #102).
+ * Ninerdeck - KLUB OPERACJI po identyfikatorze (wielofirmowość §7, issue #102).
  *
  * „Mój dzień" i historia pokazują operacje WSZYSTKICH klubów pilota (§7.2), więc kafelek
  * musi umieć odpowiedzieć, do którego klubu należy - a rejestr zdarzeń tego nie niesie:

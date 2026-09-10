@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test jednotapowego przełącznika jasności (issue #82).
+ * Ninerdeck - test jednotapowego przełącznika jasności (issue #82).
  *
  * Sprawdzalna bez urządzenia jest tu jedna rzecz i to ta, którą najłatwiej odwrócić
  * przez pomyłkę: IKONA POKAZUJE SKUTEK TAPNIĘCIA, nie stan bieżący. Odwrócona wygląda

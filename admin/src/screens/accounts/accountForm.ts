@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: formularz konta - szkic, ocena i ZMIANA do wysłania.
+ * Ninerdeck - panel 2.0: formularz konta - szkic, ocena i ZMIANA do wysłania.
  *
  * Moduł CZYSTY (bez Reacta, bez sieci), bo to są decyzje o treści, a nie o układzie -
  * i dlatego ma test obok.

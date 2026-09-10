@@ -1,4 +1,4 @@
-# UZ Aero - obraz produkcyjny serwera (API + panel + strona publiczna; Railway/Docker).
+# Ninerdeck - obraz produkcyjny serwera (API + panel + strona publiczna; Railway/Docker).
 #
 # Monorepo npm workspaces, więc obie instalacje jadą `npm ci -w …` z JEDNEGO lockfile'a
 # w korzeniu - bez workspace'u `app/` (Expo to setki MB, których serwer nie potrzebuje).

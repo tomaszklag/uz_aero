@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - unieważnianie sesji pilota z panelu (`RefreshTokensAdminPort`).
+ * Ninerdeck (serwer) - unieważnianie sesji pilota z panelu (`RefreshTokensAdminPort`).
  *
  * Osobny plik od `common/refreshTokensRepo.ts`, choć tabela jest ta sama - ten sam
  * podział, co przy flagach i kontach. Tamten adapter obsługuje CYKL ŻYCIA sesji

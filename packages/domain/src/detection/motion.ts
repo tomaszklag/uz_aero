@@ -1,5 +1,5 @@
 /**
- * UZ Aero - „stoi czy jedzie": automat ruchu oparty na PRZEMIESZCZENIU.
+ * Ninerdeck - „stoi czy jedzie": automat ruchu oparty na PRZEMIESZCZENIU.
  *
  * DLACZEGO OSOBNY TOR: wykrycie początku kołowania było najsłabszym punktem detekcji
  * i nie dało się go naprawić przesuwaniem progu prędkości. Prędkość chwilowa jest

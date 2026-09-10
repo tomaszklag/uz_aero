@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test RACHUNKÓW paliwa i motogodzin (ekran 10, issue #38 pkt 4, 5 i 6;
+ * Ninerdeck - test RACHUNKÓW paliwa i motogodzin (ekran 10, issue #38 pkt 4, 5 i 6;
  * issue #40 pkt 7 i 8).
  *
  * Od issue #40 karta pokazuje SAMĄ plakietkę werdyktu, a pasmo, stawki i rozpisane

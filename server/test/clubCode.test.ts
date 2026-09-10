@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - kod klubu (`domain/clubCode.ts`): zapis kontra treść.
+ * Ninerdeck (serwer) - kod klubu (`domain/clubCode.ts`): zapis kontra treść.
  */
 
 import { describe, expect, it } from 'vitest';

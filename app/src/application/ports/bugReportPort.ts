@@ -1,5 +1,5 @@
 /**
- * UZ Aero - PORT ZGŁOSZEŃ BŁĘDÓW (issue #87, kanał zwrotny na czas testów z pilotami).
+ * Ninerdeck - PORT ZGŁOSZEŃ BŁĘDÓW (issue #87, kanał zwrotny na czas testów z pilotami).
  *
  * Przycisk w prawym górnym rogu każdego ekranu i każdego arkusza zapisuje zgłoszenie
  * LOKALNIE, a wysyła je pętla okazji. To nie jest ozdoba: pilot zauważa błąd tam, gdzie

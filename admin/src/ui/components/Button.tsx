@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: przycisk (`.btn` z `SZABLON.html`).
+ * Ninerdeck - panel: przycisk (`.btn` z `SZABLON.html`).
  *
  * `disabled` NIGDY nie występuje bez `disabledReason` - to ta sama reguła, którą
  * `ActionButton` egzekwuje w aplikacji pilota: **powód blokady jest widocznym tekstem,

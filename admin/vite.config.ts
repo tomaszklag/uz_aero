@@ -1,6 +1,6 @@
 /// <reference types="vitest" />
 /**
- * UZ Aero - panel administracyjny: konfiguracja Vite.
+ * Ninerdeck - panel administracyjny: konfiguracja Vite.
  *
  * Trzy rzeczy, z których każda ma powód zapisany na miejscu: `base`, `server.proxy`
  * i `test`. Poza nimi konfiguracja jest celowo pusta - panel to zwykła aplikacja
@@ -11,7 +11,7 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
 /**
- * Port serwera UZ Aero w devie (`server/.env`, domyślnie 3000). Stała, a nie zmienna
+ * Port serwera Ninerdeck w devie (`server/.env`, domyślnie 3000). Stała, a nie zmienna
  * środowiskowa: to jedyne miejsce, w którym panel w ogóle wie o adresie serwera,
  * bo na produkcji jedzie z TEGO SAMEGO originu (§9) i żadnego adresu nie zna.
  */

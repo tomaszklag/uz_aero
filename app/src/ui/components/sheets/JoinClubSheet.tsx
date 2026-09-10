@@ -1,5 +1,5 @@
 /**
- * UZ Aero - arkusz „DOŁĄCZ DO KLUBU" (mockup `13a`, wielofirmowość §3.8).
+ * Ninerdeck - arkusz „DOŁĄCZ DO KLUBU" (mockup `13a`, wielofirmowość §3.8).
  *
  * To samo pole, co na 00E, dla pilota, który już w jakimś klubie lata: zgłoszenie
  * dopisuje się do listy klubów jako wiersz „czeka na zatwierdzenie", a pilot pracuje

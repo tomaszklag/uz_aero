@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy generatora katalogu lotnisk (`packages/domain/scripts/airfields/`).
+ * Ninerdeck - testy generatora katalogu lotnisk (`packages/domain/scripts/airfields/`).
  *
  * Generator jest narzędziem, ale jego wynik jest DANYMI, które pilot ogląda na mapie
  * śladu i bierze za prawdę. Issue #3 pokazało, ile kosztuje brak tych testów: pusta

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy TREŚCI OPERACJI (issue #75 pkt 2 i 3).
+ * Ninerdeck - testy TREŚCI OPERACJI (issue #75 pkt 2 i 3).
  *
  * Granica pod obserwacją: zapis bez biegu silnika jest operacją TYLKO wtedy, gdy coś
  * się zmieniło (odczyt, dolewka) - a śmieciem tylko wtedy, gdy komplet odczytów

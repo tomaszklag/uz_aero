@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test kolejności wyjścia z formularza po rezygnacji (issue #84 pkt 7).
+ * Ninerdeck - test kolejności wyjścia z formularza po rezygnacji (issue #84 pkt 7).
  *
  * Wywrotki na Androidzie („IllegalStateException" po potwierdzeniu rezygnacji z wpisu
  * ręcznego) nie widać w żadnym teście jednostkowym - widać ją dopiero na urządzeniu.

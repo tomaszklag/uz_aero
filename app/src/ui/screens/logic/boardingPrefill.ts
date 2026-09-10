@@ -1,5 +1,5 @@
 /**
- * UZ Aero - skład, którym otwierają się liczniki arkuszy skokowych (issue #28).
+ * Ninerdeck - skład, którym otwierają się liczniki arkuszy skokowych (issue #28).
  *
  * Jeden załadunek CZEKAJĄCY na zrzut (`SessionState.boarding`) zasila DWA arkusze:
  *  • zrzut 05e - pilot w locie tylko potwierdza listę (issue #21 pkt 5),

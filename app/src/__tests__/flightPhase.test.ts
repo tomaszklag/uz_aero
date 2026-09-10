@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test FAZY LOTU i prędkości pionowej (mockup 05 `.phase-hero`).
+ * Ninerdeck - test FAZY LOTU i prędkości pionowej (mockup 05 `.phase-hero`).
  *
  * Faza jest najbardziej wyeksponowaną informacją w kokpicie w locie - napis 54 px,
  * który pilot czyta jednym spojrzeniem. Jeśli będzie migotał między „Climb" a „Descent"

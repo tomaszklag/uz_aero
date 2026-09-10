@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy INWARIANTÓW domenowych (`domain/rules`).
+ * Ninerdeck - testy INWARIANTÓW domenowych (`domain/rules`).
  *
  * Każda gwardia dostaje parę: przypadek DOZWOLONY i ODRZUCONY. To jest kontrakt
  * „stany, które nigdy nie powinny powstać" - paliwo rosnące bez tankowania, cofnięty

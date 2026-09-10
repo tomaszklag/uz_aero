@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy bramki wpisu lotniska (`ui/components/sheets/airfieldEntry.ts`).
+ * Ninerdeck - testy bramki wpisu lotniska (`ui/components/sheets/airfieldEntry.ts`).
  *
  * Arkusz wyboru lotniska przyjmuje kod ALBO nazwę, bo po nazwie się szuka - ale do
  * zdarzenia `preflight_confirm` wchodzi wyłącznie kod. Bez tej bramki pilot, który wpisał

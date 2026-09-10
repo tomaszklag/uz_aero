@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: TREŚĆ arkusza makiet `design/panel/panel.css` (czysta funkcja).
+ * Ninerdeck - panel: TREŚĆ arkusza makiet `design/panel/panel.css` (czysta funkcja).
  *
  * Makiety panelu i panel mają JEDEN arkusz stylów, złożony z tych samych plików:
  * `admin/src/styles/` w kolejności kaskady z `main.tsx` + rama makiety
@@ -53,7 +53,7 @@ const SHEETS: readonly { file: string; title: string }[] = [
 ];
 
 export const PANEL_CSS_HEADER = `/* ══════════════════════════════════════════════════════════════════════════════
-   UZ AERO - PANEL · WSPÓLNY ARKUSZ MAKIET
+   NINERDECK - PANEL · WSPÓLNY ARKUSZ MAKIET
    ══════════════════════════════════════════════════════════════════════════════
 
    PLIK GENEROWANY - NIE EDYTUJ RĘCZNIE.

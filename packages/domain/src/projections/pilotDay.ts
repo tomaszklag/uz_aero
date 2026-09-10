@@ -1,5 +1,5 @@
 /**
- * UZ Aero - projekcja DNIA PILOTA (docs/_main.md.txt §3.6, model po issue #23).
+ * Ninerdeck - projekcja DNIA PILOTA (docs/_main.md.txt §3.6, model po issue #23).
  *
  * Reguła, z której wynika cały ten moduł: **do pilota w danej dobie UTC przypisana
  * jest lista sesji** - i nic ponadto. Klamra służby (meldunek / koniec / czas „od

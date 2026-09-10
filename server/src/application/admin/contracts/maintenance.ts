@@ -1,7 +1,7 @@
 /**
- * UZ Aero (serwer) - KONTRAKT operacji serwisowych panelu (`A11-konserwacja.html`).
+ * Ninerdeck (serwer) - KONTRAKT operacji serwisowych panelu (`A11-konserwacja.html`).
  *
- * Wyłącznie typy; jedyny dozwolony import to `@uzaero/domain` (patrz `sessions.ts`).
+ * Wyłącznie typy; jedyny dozwolony import to `@ninerdeck/domain` (patrz `sessions.ts`).
  *
  * Ekran ma cztery sekcje i trzy z nich mieszkają tutaj: przebudowa projekcji,
  * sprzątanie wygasłych refresh tokenów i stan schematu. Czwarta (kolejka ponowień

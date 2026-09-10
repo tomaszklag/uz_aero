@@ -1,5 +1,5 @@
 /**
- * UZ Aero - StatusChip
+ * Ninerdeck - StatusChip
  *
  * Uogólniony „pill" z mockupów: kropka + etykieta mono UPPERCASE w danym tonie.
  * Obsługuje wszystkie chipy poza wskaźnikiem łączności (ten ma własny `SyncChip`,

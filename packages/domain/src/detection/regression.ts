@@ -1,5 +1,5 @@
 /**
- * UZ Aero - nachylenie prostej regresji po czasie.
+ * Ninerdeck - nachylenie prostej regresji po czasie.
  *
  * Wydzielone, bo ta sama metoda liczy teraz dwie różne rzeczy: prędkość pionową
  * (`flightPhase.ts`) i przyspieszenie podłużne (`trends.ts`). Powód, dla którego

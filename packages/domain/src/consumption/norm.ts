@@ -1,5 +1,5 @@
 /**
- * UZ Aero - norma zużycia dla APLIKACJI PILOTA (ekrany 04, 06, 10).
+ * Ninerdeck - norma zużycia dla APLIKACJI PILOTA (ekrany 04, 06, 10).
  *
  * ══ DLACZEGO OSOBNY WIDOK, A NIE CAŁY MODEL ══
  * Panel dostaje wszystko: stawki per faza, przedziały, reszty, interwały ze źródłami.

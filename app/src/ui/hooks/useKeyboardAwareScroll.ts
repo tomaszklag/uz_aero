@@ -1,5 +1,5 @@
 /**
- * UZ Aero - zogniskowane pole zawsze CAŁE nad klawiaturą.
+ * Ninerdeck - zogniskowane pole zawsze CAŁE nad klawiaturą.
  *
  * Skrócenie ekranu o wysokość klawiatury (`Screen` + `useKeyboardHeight`) samo nie
  * wystarcza. Natywny Android przewija zogniskowane pole do widoku w chwili OGNISKOWANIA,

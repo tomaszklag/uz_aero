@@ -1,5 +1,5 @@
 /**
- * UZ Aero - kiedy kontrolka otwiera się od razu do wpisu (uwaga z urządzenia, 2026-08-29).
+ * Ninerdeck - kiedy kontrolka otwiera się od razu do wpisu (uwaga z urządzenia, 2026-08-29).
  *
  * „Jak mam «dodaj lot», gdzie mam już wpisane default wartości, to nie otwieraj tutaj
  * klawiatury - tutaj raczej będę korzystał z przycisków ±1 min. Tak samo jak otwieram

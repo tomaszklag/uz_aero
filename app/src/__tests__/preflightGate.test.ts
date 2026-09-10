@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test BRAMKI kroku liczników (02a): co blokuje ROZPOCZNIJ LOT.
+ * Ninerdeck - test BRAMKI kroku liczników (02a): co blokuje ROZPOCZNIJ LOT.
  *
  * Decyzja użytkownika (2026-08-27, issue #60): pomiar oleju jest krokiem WYMAGANYM
  * przy przejęciu - jak odczyty paliwa i MH. Bramka mieszka w czystej logice, nie

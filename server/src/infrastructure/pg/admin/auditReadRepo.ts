@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter ODCZYTU dziennika audytu (`AdminAuditReadPort`, `A09`).
+ * Ninerdeck (serwer) - adapter ODCZYTU dziennika audytu (`AdminAuditReadPort`, `A09`).
  *
  * Osobny plik od `auditRepo.ts` z tego samego powodu, dla którego port jest osobny:
  * tamten ma jedną metodę i jeden `INSERT`, wołany z wnętrza `AuditedWrite` w gorącej

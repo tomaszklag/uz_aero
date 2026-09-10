@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy krypto PIN-u (`infrastructure/auth/sha256.ts`, `pinCrypto.ts`).
+ * Ninerdeck - testy krypto PIN-u (`infrastructure/auth/sha256.ts`, `pinCrypto.ts`).
  *
  * Własna implementacja SHA-256 (powody w jej docblocku) MUSI być przybita wektorami
  * NIST FIPS 180-4 - ręcznie napisany hash, który „wygląda dobrze", to najgorszy rodzaj

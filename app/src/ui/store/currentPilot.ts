@@ -1,5 +1,5 @@
 /**
- * UZ Aero - tożsamość zalogowanego pilota.
+ * Ninerdeck - tożsamość zalogowanego pilota.
  *
  * `CLAUDE.md`: *tożsamość pilota jest znana w całej sesji - NIE pytamy o kod pilota
  * w formularzach*. Wartość ustawia proces logowania / odtworzenie profilu

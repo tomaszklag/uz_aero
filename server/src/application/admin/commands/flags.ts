@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - komendy cyklu życia flagi (panel, mockup `A03a-flaga.html`).
+ * Ninerdeck (serwer) - komendy cyklu życia flagi (panel, mockup `A03a-flaga.html`).
  *
  * To pierwszy pionowy przekrój panelu i wzorzec dla następnych. Domyka też §4.7:
  * do dziś otwarta flaga `aircraft_overlap` (dawniej `session_overlap`) blokowała kartę dnia BEZTERMINOWO, bo

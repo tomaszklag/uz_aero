@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: odpowiedź serwera -> ZDANIE DLA CZŁOWIEKA.
+ * Ninerdeck - panel 2.0: odpowiedź serwera -> ZDANIE DLA CZŁOWIEKA.
  *
  * Moduł CZYSTY (bez Reacta), wspólny dla obu ekranów - bo „nie ma połączenia"
  * i „sesja wygasła" znaczą to samo przy koncie i przy samolocie, a dwie kopie tego

@@ -1,9 +1,9 @@
 ---
 name: wydanie
-description: Przeprowadza wydanie UZ Aero - rozstrzyga, czy wystarczy aktualizacja OTA, czy trzeba nowy APK, podnosi wersję, przepisuje changelog, publikuje APK na stronie pobierania i domyka merge do main. Używaj tego skilla ZAWSZE, gdy pada „wydanie", „nowa wersja", „podnieś wersję", „wypuść to", „zbuduj APK", „build produkcyjny", „aktualizacja OTA", „eas update", „nowy build dla testerów", a także gdy trzeba zaktualizować docs/CHANGELOG.md albo link do pobrania - również wtedy, gdy użytkownik nie nazywa tego wydaniem, tylko prosi o „wypuszczenie poprawki do pilotów".
+description: Przeprowadza wydanie Ninerdeck - rozstrzyga, czy wystarczy aktualizacja OTA, czy trzeba nowy APK, podnosi wersję, przepisuje changelog, publikuje APK na stronie pobierania i domyka merge do main. Używaj tego skilla ZAWSZE, gdy pada „wydanie", „nowa wersja", „podnieś wersję", „wypuść to", „zbuduj APK", „build produkcyjny", „aktualizacja OTA", „eas update", „nowy build dla testerów", a także gdy trzeba zaktualizować docs/CHANGELOG.md albo link do pobrania - również wtedy, gdy użytkownik nie nazywa tego wydaniem, tylko prosi o „wypuszczenie poprawki do pilotów".
 ---
 
-# Wydanie UZ Aero
+# Wydanie Ninerdeck
 
 Wydanie w tym projekcie ma **dwie zupełnie różne postacie**, a pomylenie ich jest
 najdroższym błędem w całej procedurze: niepotrzebny APK kosztuje wszystkich testerów
@@ -162,7 +162,7 @@ node site/tools/update-download.mjs --release
 Skrypt szuka skończonego builda produkcyjnego (bez niego rzuci błędem), ściąga APK,
 publikuje jako GitHub Release `android-v<wersja>-<build>` w `tomaszklag/uz_aero`
 i przepisuje `site/src/pobierz/index.html` na trwały adres
-`releases/latest/download/uzaero.apk`.
+`releases/latest/download/ninerdeck.apk`.
 
 **Flaga `--release` nie jest w praktyce opcjonalna.** Bez niej strona kieruje wprost na
 artefakt EAS, a te wygasają po kilku tygodniach — build z 16 sierpnia 2026 zwracał 404

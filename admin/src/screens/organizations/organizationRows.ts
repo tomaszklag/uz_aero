@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: klub z serwera -> WIERSZ TABELI (mockup `organizacje-lista`).
+ * Ninerdeck - panel: klub z serwera -> WIERSZ TABELI (mockup `organizacje-lista`).
  *
  * Moduł CZYSTY (bez Reacta), bo to są decyzje o treści komórek - a te chcemy mieć pod
  * testem, nie w JSX-ie. Komponent dostaje gotowy wiersz i wyłącznie go rysuje.

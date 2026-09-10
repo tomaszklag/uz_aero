@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - lista kont pilotów (`A06`) i DANE REFERENCYJNE dla filtrów.
+ * Ninerdeck (serwer) - lista kont pilotów (`A06`) i DANE REFERENCYJNE dla filtrów.
  *
  * Ta trasa ma dwóch odbiorców i to jest w niej najważniejsze. Pierwszy: ekran kont,
  * który potrzebuje statusu, roli i liczników. Drugi: filtry innych list panelu -

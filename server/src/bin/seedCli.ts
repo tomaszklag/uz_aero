@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - `npm run seed`: migracje + konto superadministratora.
+ * Ninerdeck (serwer) - `npm run seed`: migracje + konto superadministratora.
  *
  * `SEED_ADMIN_EMAIL` jest wymagane jawnie i jest to ADRES KONTA GOOGLE, którym
  * superadministrator się zaloguje: pierwsze logowanie tym kontem podpina je do wiersza

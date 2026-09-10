@@ -1,4 +1,4 @@
-# UZ Aero - plan wdrożenia architektury w mockupach
+# Ninerdeck - plan wdrożenia architektury w mockupach
 
 > ## ⚠ HISTORYCZNY (2026-08-07)
 >
@@ -39,7 +39,7 @@
 | Element | Wartość |
 |---------|---------|
 | Dzień scenariusza | 22 JUNE 2026 · EPKK · operacja: Skoki (skoki startują i lądują na tym samym lotnisku - jeden kod ICAO, nie para; issue #13) |
-| PIC zalogowany | Tomasz Małkiewicz · TMK · login `tmalkiewicz` · tomasz@uzaero.pl |
+| PIC zalogowany | Tomasz Małkiewicz · TMK · login `tmalkiewicz` · tomasz@ninerdeck.pl |
 | Dual | AKO |
 | Samolot operacji | SP-AXA · Cessna 182 · 2019 · zbiorniki 330 L · MH w formacie **hh:mm** (1 234:30) |
 | Samolot zajęty | SP-FGK · C182 2017 · aktywny PIC: KRZ od 07:10 |

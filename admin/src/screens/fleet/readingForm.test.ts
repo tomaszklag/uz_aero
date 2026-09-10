@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: formularz odczytu administratora (issue #81) - warstwa czysta.
+ * Ninerdeck - panel 2.0: formularz odczytu administratora (issue #81) - warstwa czysta.
  */
 
 import { describe, expect, it } from 'vitest';

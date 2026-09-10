@@ -1,5 +1,5 @@
 /**
- * UZ Aero - profil pionowy sesji (mockup `14-slad.html`, sekcja „Profil pionowy").
+ * Ninerdeck - profil pionowy sesji (mockup `14-slad.html`, sekcja „Profil pionowy").
  *
  * Wykres wysokości w czasie, rysowany tą samą techniką co ślad na mapie: łamana
  * z obróconych `<View>` (patrz `TrackPolyline`). Zero zależności natywnych.

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - SKELETON RAMY APLIKACJI: bramki startu, zanim wiadomo, jaki ekran przyjdzie.
+ * Ninerdeck - SKELETON RAMY APLIKACJI: bramki startu, zanim wiadomo, jaki ekran przyjdzie.
  *
  * Trzy momenty w `App.tsx` czekają, zanim jakikolwiek ekran ma prawo się narysować:
  * otwarcie bazy i wczytanie fontów, odczyt magazynu poświadczeń i wznowienie sesji.

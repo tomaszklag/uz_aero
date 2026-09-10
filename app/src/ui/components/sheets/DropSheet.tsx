@@ -1,5 +1,5 @@
 /**
- * UZ Aero - DropSheet (mockup 05e „Zrzut")
+ * Ninerdeck - DropSheet (mockup 05e „Zrzut")
  *
  * Arkusz zapisu wyniesienia: wysokość z GPS, trzy liczniki typów skoków, suma
  * i informacja, do jakiego klienta trafi rozliczenie.

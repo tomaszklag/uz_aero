@@ -1,7 +1,7 @@
 /**
- * UZ Aero (serwer) - KONTRAKT statystyk floty i pilotów (`A10`).
+ * Ninerdeck (serwer) - KONTRAKT statystyk floty i pilotów (`A10`).
  *
- * Pliki w `contracts/` zawierają WYŁĄCZNIE typy i wolno im importować `@uzaero/domain`
+ * Pliki w `contracts/` zawierają WYŁĄCZNIE typy i wolno im importować `@ninerdeck/domain`
  * oraz siebie nawzajem (pilnuje `test/architecture.test.ts`).
  *
  * ══ KONSTYTUCJA EKRANU (zdanie z góry mockupu) ══
@@ -23,7 +23,7 @@
  *     `null` - suma po części wierszy podana jako całość byłaby kłamstwem.
  */
 
-import type { MhFormat, OperationType } from '@uzaero/domain';
+import type { MhFormat, OperationType } from '@ninerdeck/domain';
 
 /** Zakres raportu - obustronnie domknięty, po DNIU ZAMKNIĘCIA sesji. */
 export interface AdminStatsRange {

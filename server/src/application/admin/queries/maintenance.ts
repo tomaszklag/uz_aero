@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - ODCZYTOWA strona ekranu konserwacji (`A11-konserwacja.html`).
+ * Ninerdeck (serwer) - ODCZYTOWA strona ekranu konserwacji (`A11-konserwacja.html`).
  *
  * ══ TO SĄ ZAPYTANIA, NIE KOMENDY - I TO JEST NAJWAŻNIEJSZE ZDANIE TEGO PLIKU ══
  * Żadne z nich nie przechodzi przez `AuditedWrite`, więc żadne nie ma jak zapisać ani

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - trasa pulpitu (`GET /admin/api/dashboard`, mockupy `A01`/`A01a`).
+ * Ninerdeck (serwer) - trasa pulpitu (`GET /admin/api/dashboard`, mockupy `A01`/`A01a`).
  *
  * Najcieńsza trasa panelu: bez parametrów, bez zoda, bez wariantów. Pulpit odpowiada
  * na jedno pytanie („czy coś wymaga mojej uwagi teraz") i nie ma go czym zawęzić -

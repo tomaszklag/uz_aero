@@ -1,5 +1,5 @@
 /**
- * UZ Aero - jak nazywamy RODZAJ OPERACJI w aplikacji pilota.
+ * Ninerdeck - jak nazywamy RODZAJ OPERACJI w aplikacji pilota.
  *
  * Wartość w rejestrze (`skoki`, `ferry`, `egzamin`, `techniczny`, `inne`) jest
  * IDENTYFIKATOREM: siedzi w zdarzeniach, w kolumnie `sessions.operation`, w ograniczeniu

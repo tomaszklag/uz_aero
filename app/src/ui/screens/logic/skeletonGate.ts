@@ -1,5 +1,5 @@
 /**
- * UZ Aero - BRAMKA SKELETONU: kiedy plamki wolno pokazać, a kiedy trzeba je utrzymać.
+ * Ninerdeck - BRAMKA SKELETONU: kiedy plamki wolno pokazać, a kiedy trzeba je utrzymać.
  *
  * Reguła 5 wzorca (`design/LOADERY.html`) i jedyny kawałek tego wzorca, który jest
  * logiką, a nie wyglądem - dlatego mieszka osobno i ma test.

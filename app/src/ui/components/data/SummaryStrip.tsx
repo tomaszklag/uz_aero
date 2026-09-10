@@ -1,5 +1,5 @@
 /**
- * UZ Aero - SummaryStrip (`.summary-strip` z mockupu 09)
+ * Ninerdeck - SummaryStrip (`.summary-strip` z mockupu 09)
  *
  * Wąski pasek pod nagłówkiem: kilka wartości dnia rozdzielonych pionowymi kreskami.
  *

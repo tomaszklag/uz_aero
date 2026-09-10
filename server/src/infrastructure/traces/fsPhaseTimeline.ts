@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - oś faz pionowych jako PLIK POBOCZNY przy śladzie (`PhaseTimelinePort`).
+ * Ninerdeck (serwer) - oś faz pionowych jako PLIK POBOCZNY przy śladzie (`PhaseTimelinePort`).
  *
  * ══ PROBLEM ══
  * Model czterofazowy potrzebuje, dla każdego interwału paliwowego, rozbicia lotu na
@@ -43,7 +43,7 @@ import {
   toTrackPoints,
   type PhaseSegment,
   type RawTrackEntry,
-} from '@uzaero/domain';
+} from '@ninerdeck/domain';
 
 import type { PhaseTimelinePort, TraceSourcePort } from '../../application/common/ports.ts';
 import { safeName } from './safeName.ts';

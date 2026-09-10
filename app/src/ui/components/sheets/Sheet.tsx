@@ -1,5 +1,5 @@
 /**
- * UZ Aero - Sheet (`.modal-overlay` / `.modal-sheet` z mockupów)
+ * Ninerdeck - Sheet (`.modal-overlay` / `.modal-sheet` z mockupów)
  *
  * Arkusz wysuwany od dołu: uchwyt, tytuł display, wiersze odniesienia, ostrzeżenie,
  * dwie akcje w proporcji 1:2 (anuluj węższy niż potwierdź).

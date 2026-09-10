@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test bramki kroku 4 i werdyktu normy (issue #62, piąta tura).
+ * Ninerdeck - test bramki kroku 4 i werdyktu normy (issue #62, piąta tura).
  *
  * ══ CO TU JEST SPRAWDZANE, A CO ŚWIADOMIE NIE ══
  * Zgłoszenie prosiło, żeby „nic nie blokowało - tylko ostrzeżenia wymagające reakcji".

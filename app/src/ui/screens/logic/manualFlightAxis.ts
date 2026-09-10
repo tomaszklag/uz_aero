@@ -1,5 +1,5 @@
 /**
- * UZ Aero - szkic wpisu ręcznego → OŚ SESJI (issue #62 pkt 8, 9 i 10; mockup `15b`).
+ * Ninerdeck - szkic wpisu ręcznego → OŚ SESJI (issue #62 pkt 8, 9 i 10; mockup `15b`).
  *
  * ══ DLACZEGO OŚ, A NIE DWIE LISTY ══
  * Do issue #62 krok 3 pokazywał dwie płaskie listy obok siebie: „Loty" i „Zrzuty".

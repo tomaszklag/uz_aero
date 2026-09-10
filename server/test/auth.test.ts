@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - testy uwierzytelnienia przez PRAWDZIWE endpointy.
+ * Ninerdeck (serwer) - testy uwierzytelnienia przez PRAWDZIWE endpointy.
  *
  * `app.inject()` przechodzi pełną ścieżkę Fastify (routing, walidacja, handler) bez
  * otwierania portu. Baza to PGlite, tożsamości i reguła podpięcia po e-mailu jadą
@@ -171,7 +171,7 @@ describe('POST /auth/google - osoba BEZ klubu (wielofirmowość §4, epik D)', (
     identityProvider.register('niepotwierdzony', {
       provider: 'google',
       subject: 'niepotw',
-      email: 'anna@uzaero.pl',
+      email: 'anna@ninerdeck.pl',
       emailVerified: false,
       name: 'Ktoś Podszywający',
     });

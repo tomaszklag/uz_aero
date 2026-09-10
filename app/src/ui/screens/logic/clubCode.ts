@@ -1,5 +1,5 @@
 /**
- * UZ Aero - KOD KLUBU po stronie telefonu (wielofirmowość §3.8, issue #102).
+ * Ninerdeck - KOD KLUBU po stronie telefonu (wielofirmowość §3.8, issue #102).
  *
  * Kod ma kształt `XXX-XXXX` - 7 znaków z alfabetu 32 (litery bez O/I, cyfry bez 0/1),
  * przepisywanych z ekranu administratora albo z kartki. Myślnik i wielkość liter są

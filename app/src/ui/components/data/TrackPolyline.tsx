@@ -1,5 +1,5 @@
 /**
- * UZ Aero - łamana rysowana layoutem RN (prymityw DS).
+ * Ninerdeck - łamana rysowana layoutem RN (prymityw DS).
  *
  * Każdy odcinek to `<View>` o wysokości równej grubości kreski, obrócony o kąt odcinka -
  * ta sama technika co `CheckIcon`, z tego samego powodu: `react-native-svg` jest modułem

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - FRAGMENT TRASY W OKNIE CZASU (issue #47, podświetlenie zamiast przeskoku).
+ * Ninerdeck - FRAGMENT TRASY W OKNIE CZASU (issue #47, podświetlenie zamiast przeskoku).
  *
  * Profil przybliżony do wycinka czasu mówi mapie, KTÓRY to wycinek; mapa przygasza całą
  * trasę i rozjaśnia tę część. Ta funkcja odpowiada na jedyne pytanie, jakie przy tym

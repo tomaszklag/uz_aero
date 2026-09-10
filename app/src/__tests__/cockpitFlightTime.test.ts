@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy kafelka „Flight time" w kokpicie (`logic/cockpitFlightTime.ts`).
+ * Ninerdeck - testy kafelka „Flight time" w kokpicie (`logic/cockpitFlightTime.ts`).
  *
  * Ten przyrząd czyta się w locie i nikt go nie weryfikuje kalkulatorem, więc każdy
  * zgubiony lot zostaje zgubiony na dobre. Sedno: kafelek mierzy SESJĘ, a nie bieżące

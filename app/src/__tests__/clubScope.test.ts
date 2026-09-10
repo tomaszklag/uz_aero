@@ -1,5 +1,5 @@
 /**
- * UZ Aero - KLUB jako kontekst pracy telefonu (wielofirmowość §7, issue #102 epik F).
+ * Ninerdeck - KLUB jako kontekst pracy telefonu (wielofirmowość §7, issue #102 epik F).
  *
  * Telefon pracuje w JEDNYM aktywnym klubie, ale rejestr pilota należy do NIEGO, nie do
  * klubu - stąd asymetria, którą te testy przybijają:

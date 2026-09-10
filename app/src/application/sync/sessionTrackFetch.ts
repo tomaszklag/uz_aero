@@ -1,5 +1,5 @@
 /**
- * UZ Aero - POBRANIE ŚLADU SESJI z serwera (`GET /me/sessions/:uuid/track`, issue #47).
+ * Ninerdeck - POBRANIE ŚLADU SESJI z serwera (`GET /me/sessions/:uuid/track`, issue #47).
  *
  * Kierunek powrotny `TraceSync`: tamten oddaje nagranie i kasuje lokalną kopię, ten
  * przynosi z powrotem gotową geometrię, gdy ekran 14 o nią pyta.

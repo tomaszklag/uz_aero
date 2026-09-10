@@ -1,5 +1,5 @@
 /**
- * UZ Aero - Readout (sekcja odczytu z mockupu 02a)
+ * Ninerdeck - Readout (sekcja odczytu z mockupu 02a)
  *
  * Blok „jedna wartość z licznika": etykieta, duża liczba z jednostką, adnotacja
  * świeżości, podpis konfiguracyjny i przycisk korekty po prawej; opcjonalna wstawka

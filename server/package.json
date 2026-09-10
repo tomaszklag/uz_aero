@@ -1,8 +1,8 @@
 {
-  "name": "@uzaero/server",
+  "name": "@ninerdeck/server",
   "version": "0.0.0",
   "private": true,
-  "description": "UZ Aero - backend: przyjmowanie zdarzeń, scalanie sesji, flagi, eksport do Sheets",
+  "description": "Ninerdeck - backend: przyjmowanie zdarzeń, scalanie sesji, flagi, eksport do Sheets",
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
@@ -17,8 +17,8 @@
     "@fastify/compress": "^9.2.0",
     "@fastify/cookie": "^11.0.2",
     "@fastify/static": "^8.0.4",
-    "@uzaero/domain": "*",
-    "@uzaero/format": "*",
+    "@ninerdeck/domain": "*",
+    "@ninerdeck/format": "*",
     "fastify": "^5.2.0",
     "pg": "^8.13.1",
     "tsx": "^4.19.2",

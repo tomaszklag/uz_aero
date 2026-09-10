@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - `POST /auth/join { code }`: dołączenie do klubu kodem
+ * Ninerdeck (serwer) - `POST /auth/join { code }`: dołączenie do klubu kodem
  * (wielofirmowość §3.8, §5; issue #100, ekrany 00E i 13A).
  *
  * Cienka jak reszta: zod → komenda → status. Tabela odpowiedzi jest w całości

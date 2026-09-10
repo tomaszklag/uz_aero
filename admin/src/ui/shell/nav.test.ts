@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: KTÓRE pozycje ma kolumna boczna i dokąd prowadzi goły adres
+ * Ninerdeck - panel: KTÓRE pozycje ma kolumna boczna i dokąd prowadzi goły adres
  * (wielofirmowość, issue #99 C6).
  *
  * Pod obserwacją jedna reguła i jej dwie konsekwencje: pozycja należy do ZDOLNOŚCI,

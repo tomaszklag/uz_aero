@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: karta (`.card` + `.card-title` z `SZABLON.html`).
+ * Ninerdeck - panel: karta (`.card` + `.card-title` z `SZABLON.html`).
  *
  * `actions` to slot po prawej stronie tytułu (`.spacer` w mockupie) - używa go
  * A00a, wstawiając tam plakietkę `401`.

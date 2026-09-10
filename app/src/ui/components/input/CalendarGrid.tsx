@@ -1,5 +1,5 @@
 /**
- * UZ Aero - kalendarz miesięczny (arkusz daty lotu 15E, issue #58).
+ * Ninerdeck - kalendarz miesięczny (arkusz daty lotu 15E, issue #58).
  *
  * Zastąpił stepper ±1 dzień z wpisem z klawiatury - zgłoszenie z urządzenia brzmiało
  * wprost: „powinien być date-picker z kalendarzem". Siatka odpowiada na pytanie

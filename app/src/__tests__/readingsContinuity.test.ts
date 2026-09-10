@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test ciągłości paliwa w formularzu (issue #62, piąta tura).
+ * Ninerdeck - test ciągłości paliwa w formularzu (issue #62, piąta tura).
  *
  * „Chodzi o to, aby była ciągłość w ilości paliwa" - a jednocześnie „nic nie może
  * blokować, to powinny być tylko ostrzeżenia wymagające reakcji". Test pilnuje obu

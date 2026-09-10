@@ -1,5 +1,5 @@
 /**
- * UZ Aero - 15 LOT RĘCZNY (mockupy `design/15-reczny-lot.html` → `15e`, przebudowa
+ * Ninerdeck - 15 LOT RĘCZNY (mockupy `design/15-reczny-lot.html` → `15e`, przebudowa
  * 2026-08-16).
  *
  * Wpis CAŁEGO lotu po fakcie - telefon został w kurtce, bateria padła, lot spisany

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: klucze zapytań TanStack Query, wszystkie w JEDNYM miejscu.
+ * Ninerdeck - panel 2.0: klucze zapytań TanStack Query, wszystkie w JEDNYM miejscu.
  *
  * Hierarchicznie, żeby unieważnianie prefiksem było jednolinijkowe: mutacja, która
  * zmienia skład listy, unieważnia korzeń zasobu i nie musi znać żadnego konkretnego
