@@ -42,6 +42,7 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 - **Do klubu dołącza się kodem klubu.** Klub ma jeden kod (w rodzaju `AZG-7K4M`), który administrator podaje pilotom dowolnym kanałem - z tablicy w hangarze, z grupy klubowej, z ręki. Pilot loguje się kontem Google, wpisuje kod i czeka na decyzję: administrator przyjmuje go z kodem pilota i rolą albo odmawia z powodem, który pilot czyta na swoim telefonie. Kod nie jest tajny i nikogo sam nie wpuszcza - wpuszcza człowiek. Nowy kod unieważnia stary od razu, a dołączanie kodem da się wyłączyć; złożone zgłoszenia zostają w kolejce.
 - **Klub zakłada opiekun platformy** razem z jego pierwszym administratorem i kodem klubu, żeby klub miał od pierwszego dnia kogo pytać i co podawać pilotom. Klub da się wyłączyć - jego ludzie tracą dostęp od razu, a dziennik, flota i konta zostają.
 - **Dopisywania pilota z panelu klubu już nie ma** - to była druga droga do klubu, obok kodu, i znikła razem z nią. Pilot, który odchodzi, ma wyłączane członkostwo: dostęp gaśnie natychmiast, a jego loty zostają w dzienniku i w dokumentach klubu.
+- **Administrator dwóch klubów wybiera klub po zalogowaniu** i przechodzi między nimi bez logowania się od nowa. Nazwa klubu stoi na szczycie kolumny z lewej, więc przy każdym wklejonym linku widać, czyj to dziennik. Przy jednym klubie nic się nie zmienia - wyboru nie ma, bo nie ma z czego wybierać.
 
 ### Dla testerów
 

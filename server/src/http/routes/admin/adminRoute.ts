@@ -119,6 +119,57 @@ export function adminRoute(
  * `org_id` pusty. Pierwszym użytkownikiem są zgłoszenia błędów - lista dla wszystkich
  * klubów naraz; moduł Organizacje (epik E) dochodzi tą samą deklaracją.
  */
+/**
+ * Trasa, na którą odpowiadają OBA rodzaje sesji panelu (issue #101, E2).
+ *
+ * Istnieje dla pytań, które zadaje sama SESJA, a nie moduł: „kim jestem" (`GET /me`)
+ * i „przełącz mnie" (`POST /auth/switch`). Administrator klubu i superadministrator
+ * zadają je tak samo, a odpowiadają na nie inne dane - więc trasa jest jedna, a handlery
+ * dwa. Sklejenie ich w jeden z gałęzią `if (actor.orgId == null)` kazałoby każdemu
+ * czytelnikowi rozstrzygać rodzaj sesji w środku, zamiast czytać go z sygnatury.
+ *
+ * Rodzaj rozstrzyga TOKEN, nie kolejność prób: token klubu i platformowy są rozłączne
+ * (`verify` / `verifyPlatform` odrzucają się nawzajem, `hs256Tokens.test.ts`). Gdy nie
+ * jest ani jednym, ani drugim, odpowiada brama KLUBU - bo to jej 401 znaczy dla panelu
+ * „zaloguj się", a zdecydowana większość sesji jest sesjami klubu.
+ */
+export function sessionRoute(
+  app: FastifyInstance,
+  gate: AdminGate,
+  spec: { method: AdminRouteSpec['method']; url: string },
+  handlers: {
+    org: (req: FastifyRequest, reply: FastifyReply, actor: Actor) => Promise<unknown>;
+    platform: (
+      req: FastifyRequest,
+      reply: FastifyReply,
+      actor: PlatformActor,
+    ) => Promise<unknown>;
+  },
+): void {
+  app.route({
+    method: spec.method,
+    url: `${ADMIN_API_PREFIX}${spec.url}`,
+    handler: async (req, reply) => {
+      const token = tokenFromRequest(req);
+      if (token != null && gate.tokens.verifyPlatform(token) != null) {
+        const outcome = await authorizePlatform(gate.tokens, gate.accounts, token, 'platform.manage');
+        if (!outcome.ok) return reply.code(outcome.status).send(outcome.body);
+
+        return handlers.platform(req, reply, {
+          pilotId: outcome.identity.pilotId,
+          platformRole: outcome.platformRole,
+          ip: req.ip ?? null,
+        });
+      }
+
+      const outcome = await authorizeOrg(gate.tokens, gate.accounts, token, 'panel.access');
+      if (!outcome.ok) return reply.code(outcome.status).send(outcome.body);
+
+      return handlers.org(req, reply, actorFrom(outcome.account, req));
+    },
+  });
+}
+
 export function platformRoute(
   app: FastifyInstance,
   gate: AdminGate,

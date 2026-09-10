@@ -163,20 +163,63 @@ export interface PanelPilot {
 }
 
 /**
+ * Klub, do którego ta osoba może PRZEŁĄCZYĆ sesję panelu (mockup `00a-wybor-klubu`).
+ *
+ * Kod i rola są tu po to, żeby karta wyboru mogła napisać drugą linię („administrator ·
+ * Twój kod TMK") - a nie po to, żeby panel cokolwiek z nich wnioskował: o tym, co wolno
+ * w klubie, rozstrzyga zdolność z sesji WYDANEJ dla tego klubu.
+ */
+export interface PanelScopeClub {
+  org: OrgRef;
+  code: string;
+  role: PilotRole;
+}
+
+/**
+ * Zakresy sesji panelu: kluby z rolą panelu i - osobno - platforma (issue #101, E2).
+ *
+ * ══ JEDZIE W KAŻDEJ ODPOWIEDZI O SESJI, A NIE OSOBNĄ TRASĄ ══
+ * Bo odpowiada na pytanie, które panel zadaje przy KAŻDYM wczytaniu: czy rysować
+ * przełącznik klubu i czy po zalogowaniu iść na ekran wyboru. Osobna trasa znaczyłaby
+ * drugie żądanie przy każdym starcie panelu po to samo, a przy jednym członkostwie -
+ * żądanie o odpowiedź, która nic nie zmienia.
+ *
+ * Koszt: jeden odczyt członkostw osoby przy `GET /me`. Panel to dwie osoby przy biurku
+ * (ten sam rachunek, co przy `authorizeOrg`), a lista jest WŁASNYMI członkostwami
+ * pytającego - nie wycieka z niej nic, czego on sam nie wie.
+ */
+export interface PanelScopes {
+  clubs: PanelScopeClub[];
+  /** Czy ta osoba ma zakres PLATFORMY (moduł Organizacje) - `pilots.platform_role`. */
+  platform: boolean;
+}
+
+/**
  * Sesja przeglądarkowa: token do CIASTECZKA (nie do ciała odpowiedzi) + kto się zalogował.
  *
  * DWA kształty, bo dwa rodzaje sesji (wielofirmowość §3.3): administrator KLUBU pracuje
  * w klubie z tokenu; SUPERADMINISTRATOR nie ma klubu i dostaje token platformowy, który
  * otwiera wyłącznie trasy `platform.manage` (moduł Organizacje, epik E).
+ *
+ * `scopes` niosą OBA kształty, bo przełącznik jest dwukierunkowy: superadministrator
+ * z członkostwem `admin` schodzi z platformy do klubu, a administrator klubu wraca.
  */
 export type PanelSession =
-  | { kind: 'org'; token: string; ttlSec: number; pilot: PanelPilot; capabilities: readonly Capability[] }
+  | {
+      kind: 'org';
+      token: string;
+      ttlSec: number;
+      pilot: PanelPilot;
+      capabilities: readonly Capability[];
+      scopes: PanelScopes;
+    }
   | {
       kind: 'platform';
       token: string;
       ttlSec: number;
       pilot: { id: string; name: string; platformRole: PlatformRole };
       capabilities: readonly Capability[];
+      scopes: PanelScopes;
     };
 
 export type PanelLoginResult =
@@ -204,6 +247,29 @@ export interface PersonRequest {
   issuedAt: number;
   kind: 'person' | 'club';
 }
+
+/**
+ * Kto stoi za CIASTECZKIEM sesji panelu - bez rozstrzygania, którego rodzaju jest.
+ *
+ * Przełączenie zakresu (`POST /admin/api/auth/switch`) zadaje pytanie o osobę, a nie
+ * o jej bieżący klub: administrator klubu A przechodzi do B, a superadministrator
+ * schodzi z platformy do klubu. Rodzaj tokenu, którym przyszedł, nie ma tu znaczenia -
+ * znaczenie ma to, czy w CELU jest aktywne członkostwo z rolą panelu.
+ */
+export interface PanelRequest {
+  pilotId: string;
+  issuedAt: number;
+}
+
+/**
+ * Wynik przełączenia zakresu. `not_found` dla celu, którego ta osoba nie ma - cudzy
+ * klub jest dla niej NIEISTNIEJĄCY, nie „zabroniony" (epik C, issue #99: 404 zamiast
+ * 403 nie potwierdza cudzego zasobu). `unauthorized` = za ciasteczkiem nikt już nie stoi.
+ */
+export type PanelSwitchResult =
+  | { ok: true; session: PanelSession }
+  | { ok: false; reason: 'unauthorized' }
+  | { ok: false; reason: 'not_found' };
 
 /**
  * Odpowiedź `GET /auth/memberships`. `approved` niesie TOKENY, bo pilot zatwierdzony
@@ -289,41 +355,93 @@ export class AuthCommands {
     const memberships = await this.pilots.memberships(account.id);
     const admin = await this.pickActive(account.id, memberships, (m) => can(m.role, 'panel.access'));
 
+    const scopes = panelScopesOf(memberships, account.platformRole);
+
     if (admin == null) {
       if (account.platformRole == null) return { ok: false, reason: 'no_panel_access' };
       await this.identities.markLogin(identity.provider, identity.subject, this.clock.now());
-      return {
-        ok: true,
-        session: {
-          kind: 'platform',
-          token: this.tokens.signPlatform({ pilotId: account.id }, ADMIN_SESSION_TTL_SEC),
-          ttlSec: ADMIN_SESSION_TTL_SEC,
-          pilot: { id: account.id, name: account.name, platformRole: account.platformRole },
-          capabilities: platformCapabilitiesOf(account.platformRole),
-        },
-      };
+      return { ok: true, session: platformSession(this.tokens, account, account.platformRole, scopes) };
     }
 
     await this.identities.markLogin(identity.provider, identity.subject, this.clock.now());
-    return {
-      ok: true,
-      session: {
-        kind: 'org',
-        token: this.tokens.sign(
-          { pilotId: account.id, orgId: admin.orgId, code: admin.code, role: admin.role },
-          ADMIN_SESSION_TTL_SEC,
-        ),
-        ttlSec: ADMIN_SESSION_TTL_SEC,
-        pilot: {
-          id: account.id,
-          code: admin.code,
-          name: account.name,
-          role: admin.role,
-          org: orgRefOf(admin),
-        },
-        capabilities: capabilitiesOf(admin.role),
-      },
-    };
+    return { ok: true, session: orgSession(this.tokens, account, admin, scopes) };
+  }
+
+  /**
+   * Zakresy sesji panelu dla osoby - kluby z rolą panelu i platforma.
+   *
+   * Czyta wyłącznie z BAZY, nigdy z claimów ciasteczka: sesja żyje osiem godzin, a lista
+   * klubów zmienia się decyzją innego administratora. Ta sama zasada, przez którą
+   * `authorizeOrg` pyta o członkostwo przy każdym żądaniu.
+   */
+  async panelScopes(pilotId: string): Promise<PanelScopes> {
+    const account = await this.pilots.findById(pilotId);
+    if (account == null || !account.active) return { clubs: [], platform: false };
+    return panelScopesOf(await this.pilots.memberships(pilotId), account.platformRole);
+  }
+
+  /**
+   * Kto stoi za ciasteczkiem panelu - token KLUBU albo PLATFORMOWY, bez rozstrzygania
+   * który. `null` = ani jeden, ani drugi (token osoby tu NIE przechodzi: osoba bez klubu
+   * nie ma czego przełączać).
+   *
+   * Metoda stoi tutaj, a nie w trasie z wstrzykniętym `TokenService`, z tego samego
+   * powodu, co `identifyPerson`: warstwa HTTP ma zostać cienka, a jedno miejsce ma
+   * pokazywać komplet - kto wydaje sesję panelu i kto ją przyjmuje.
+   */
+  identifyPanel(token: string | null): PanelRequest | null {
+    if (token == null) return null;
+    const club = this.tokens.verify(token);
+    if (club != null) return { pilotId: club.pilotId, issuedAt: club.issuedAt };
+    const platform = this.tokens.verifyPlatform(token);
+    if (platform != null) return { pilotId: platform.pilotId, issuedAt: platform.issuedAt };
+    return null;
+  }
+
+  /**
+   * Przełączenie zakresu panelu: `orgId` = klub, `null` = platforma (moduł Organizacje).
+   * Nowa para nie powstaje - sesja panelu to JEDEN token w ciasteczku (§8.4).
+   *
+   * ══ CEL SPRAWDZAMY OD ZERA, ŹRÓDŁA NIE PYTAMY O NIC POZA TOŻSAMOŚCIĄ ══
+   * Administrator wyłączony w klubie A ma prawo przejść do B - o wejściu rozstrzyga
+   * członkostwo w CELU. Sprawdzamy więc: osoba aktywna platformowo, w celu aktywne
+   * członkostwo z rolą panelu (a dla platformy - rola platformowa) i klub działa.
+   *
+   * ══ I TA SAMA BRAMA, CO PRZY TOKENIE OSOBY: UNIEWAŻNIENIE POŚWIADCZEŃ ══
+   * Ciasteczko starsze niż `credentials_valid_from` osoby ALBO celu nie mieni nowej
+   * sesji. Bez tego wyłączenie członkostwa dawałoby się obejść przełączeniem tam
+   * i z powrotem ciasteczkiem sprzed wyłączenia - a to jest dokładnie ten scenariusz,
+   * który audyt 2026-09-05 znalazł przy tokenie rejestracyjnym.
+   */
+  async panelSwitch(request: PanelRequest, target: string | null): Promise<PanelSwitchResult> {
+    const account = await this.pilots.findById(request.pilotId);
+    if (account == null || !account.active) return { ok: false, reason: 'unauthorized' };
+    if (credentialsRevoked(account.credentialsValidFrom, request.issuedAt)) {
+      return { ok: false, reason: 'unauthorized' };
+    }
+
+    const memberships = await this.pilots.memberships(account.id);
+    const scopes = panelScopesOf(memberships, account.platformRole);
+
+    if (target == null) {
+      if (account.platformRole == null) return { ok: false, reason: 'not_found' };
+      return {
+        ok: true,
+        session: platformSession(this.tokens, account, account.platformRole, scopes),
+      };
+    }
+
+    const membership = memberships.find((m) => m.orgId === target);
+    if (
+      membership == null ||
+      !isActive(membership) ||
+      !can(membership.role, 'panel.access') ||
+      credentialsRevoked(membership.credentialsValidFrom, request.issuedAt)
+    ) {
+      return { ok: false, reason: 'not_found' };
+    }
+
+    return { ok: true, session: orgSession(this.tokens, account, membership, scopes) };
   }
 
   /**
@@ -534,6 +652,75 @@ const enteredSince = (lastLoginAt: Date | null, issuedAt: number): boolean =>
  * dla logowania, `GET /auth/memberships` i `POST /auth/join`, żeby trzy odpowiedzi
  * nie mogły powiedzieć o tej samej osobie trzech różnych rzeczy.
  */
+/**
+ * Zakresy panelu z członkostw osoby - JEDNA definicja dla logowania, `GET /me`
+ * i przełączenia (issue #101, E2).
+ *
+ * Do klubów wchodzą wyłącznie członkostwa AKTYWNE Z ROLĄ PANELU: klub, w którym ta osoba
+ * jest tylko pilotem, na listę wyboru NIE wchodzi - karta „bez dostępu" obiecywałaby
+ * wejście, którego reguły odmówią (mockup `00a-wybor-klubu`; ta sama zasada, co przy
+ * wyszarzonym przycisku - patrz 10B w aplikacji pilota). O takim klubie mówi telefon.
+ */
+export function panelScopesOf(
+  memberships: readonly Membership[],
+  platformRole: PlatformRole | null,
+): PanelScopes {
+  return {
+    clubs: memberships
+      .filter((m): m is Membership & { code: string } => isActive(m) && can(m.role, 'panel.access'))
+      .map((m) => ({ org: orgRefOf(m), code: m.code, role: m.role })),
+    platform: platformRole != null,
+  };
+}
+
+/** Sesja KLUBU - ten sam kształt wydaje logowanie i przełączenie zakresu. */
+function orgSession(
+  tokens: TokenService,
+  account: PilotAccount,
+  membership: Membership & { code: string },
+  scopes: PanelScopes,
+): PanelSession {
+  return {
+    kind: 'org',
+    token: tokens.sign(
+      {
+        pilotId: account.id,
+        orgId: membership.orgId,
+        code: membership.code,
+        role: membership.role,
+      },
+      ADMIN_SESSION_TTL_SEC,
+    ),
+    ttlSec: ADMIN_SESSION_TTL_SEC,
+    pilot: {
+      id: account.id,
+      code: membership.code,
+      name: account.name,
+      role: membership.role,
+      org: orgRefOf(membership),
+    },
+    capabilities: capabilitiesOf(membership.role),
+    scopes,
+  };
+}
+
+/** Sesja PLATFORMY - bez klubu i bez kodu (kod jest własnością członkostwa). */
+function platformSession(
+  tokens: TokenService,
+  account: PilotAccount,
+  platformRole: PlatformRole,
+  scopes: PanelScopes,
+): PanelSession {
+  return {
+    kind: 'platform',
+    token: tokens.signPlatform({ pilotId: account.id }, ADMIN_SESSION_TTL_SEC),
+    ttlSec: ADMIN_SESSION_TTL_SEC,
+    pilot: { id: account.id, name: account.name, platformRole },
+    capabilities: platformCapabilitiesOf(platformRole),
+    scopes,
+  };
+}
+
 export function clubsView(memberships: readonly Membership[]): ClubsView {
   const status: ClubsStatus = memberships.some(isActive)
     ? 'active'

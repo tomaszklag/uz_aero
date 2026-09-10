@@ -24,10 +24,10 @@ describe('pozycje kolumny bocznej', () => {
     expect(routes(CLUB)).toEqual(['/dziennik', '/piloci', '/samoloty']);
   });
 
-  it('sesja PLATFORMY dostaje wyłącznie swój moduł', () => {
+  it('sesja PLATFORMY dostaje wyłącznie swoje moduły', () => {
     // Superadministrator nie wchodzi do danych klubu (docs/wielofirmowosc.md §3.3),
     // więc Dziennik, Piloci i Samoloty nie mają tu czego pokazać.
-    expect(routes(PLATFORM)).toEqual(['/zgloszenia']);
+    expect(routes(PLATFORM)).toEqual(['/organizacje', '/zgloszenia']);
   });
 
   it('kolejność jest kolejnością z NAV_ITEMS, nie kolejnością zdolności', () => {
@@ -46,7 +46,7 @@ describe('pozycje kolumny bocznej', () => {
 describe('ekran startowy', () => {
   it('to PIERWSZA DOSTĘPNA pozycja, osobno dla klubu i dla platformy', () => {
     expect(homeFor(CLUB)).toBe('/dziennik');
-    expect(homeFor(PLATFORM)).toBe('/zgloszenia');
+    expect(homeFor(PLATFORM)).toBe('/organizacje');
   });
 
   it('sesja bez pozycji dostaje ekran startowy klubu - adres musi być zawsze', () => {

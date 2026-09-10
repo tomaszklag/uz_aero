@@ -18,14 +18,20 @@ import { RequireCapability } from './auth/RequireCapability';
 import { ShellRoute } from './auth/ShellRoute';
 import { AccountsScreen } from './screens/accounts/AccountsScreen';
 import { BugsScreen } from './screens/bugs/BugsScreen';
+import { ScopePickScreen } from './screens/clubs/ScopePickScreen';
 import { AircraftLogScreen } from './screens/logbook/AircraftLogScreen';
 import { LogbookScreen } from './screens/logbook/LogbookScreen';
 import { SessionScreen } from './screens/logbook/SessionScreen';
 import { FleetScreen } from './screens/fleet/FleetScreen';
 import { LoginScreen } from './screens/login/LoginScreen';
+import { OrganizationsScreen } from './screens/organizations/OrganizationsScreen';
 
 export const router = createHashRouter([
   { path: '/logowanie', element: <LoginScreen /> },
+  // Wybór zakresu stoi POZA ramą, jak logowanie: klub nie jest jeszcze wybrany, więc
+  // pasek górny i kolumna boczna nie miałyby czego w sobie napisać. To drugi krok
+  // logowania (mockup `00a-wybor-klubu`), nie moduł.
+  { path: '/klub', element: <ScopePickScreen /> },
   {
     path: '/',
     element: <ShellRoute />,
@@ -47,10 +53,29 @@ export const router = createHashRouter([
       // przemontowywałaby ekran przy każdym otwarciu, czyli tabela migałaby dokładnie
       // wtedy, gdy jest potrzebna jako kontekst decyzji. `nowy` w miejscu identyfikatora
       // to ten sam widok z pustym formularzem.
-      // Karta ZGŁOSZENIA kodem klubu (członkostwo `pending`) wraca tu w epiku E
-      // wielofirmowości (issue #101) - do tego czasu kolejki na tym ekranie nie ma.
-      { path: 'piloci/:id?', element: <AccountsScreen /> },
+      //
+      // Piloci mają TRZY szuflady nad jedną listą i każda ma własny adres, bo każda
+      // opisuje inny byt: członka klubu (`:id`), KANDYDATA z kolejki zgłoszeń
+      // (`zgloszenia/:id` - osoba, która nie ma jeszcze kodu) i KOD KLUBU (`kod` -
+      // konfiguracja klubu, nie człowiek). Rozstrzyga to trasa, a nie ekran czytający
+      // adres w środku: `zgloszenia` i `kod` byłyby dla `:id?` zwykłym identyfikatorem.
+      { path: 'piloci/kod', element: <AccountsScreen drawer="club-code" /> },
+      { path: 'piloci/zgloszenia/:id', element: <AccountsScreen drawer="request" /> },
+      { path: 'piloci/:id?', element: <AccountsScreen drawer="account" /> },
       { path: 'samoloty/:id?', element: <FleetScreen /> },
+
+      // Moduł PLATFORMY (`docs/wielofirmowosc.md` §8.1), więc trasa pyta o zdolność -
+      // ta sama reguła, co przy Zgłoszeniach: wklejony adres odsyła administratora klubu
+      // na jego ekran startowy, a nie pokazuje mu ramy modułu, którego dane serwer
+      // i tak odmówi. `nowy` w miejscu identyfikatora to ten sam widok z pustą kartą.
+      {
+        path: 'organizacje/:id?',
+        element: (
+          <RequireCapability capability="platform.manage">
+            <OrganizationsScreen />
+          </RequireCapability>
+        ),
+      },
 
       // Zgłoszenia: lista i karta pod JEDNĄ trasą, jak konta i flota - karta
       // otwiera się NAD listą, więc lista ma zostać pod spodem jako kontekst.
@@ -67,8 +92,8 @@ export const router = createHashRouter([
       },
 
       // Adres spoza mapy prowadzi na ekran startowy. Osobnej strony „nie znaleziono"
-      // nie ma świadomie: panel ma trzy moduły, więc taka strona opisywałaby literówkę
-      // w pasku przeglądarki, a nie stan systemu.
+      // nie ma świadomie: modułów jest kilka i żaden nie ma podstron, więc taka strona
+      // opisywałaby literówkę w pasku przeglądarki, a nie stan systemu.
       { path: '*', element: <HomeRedirect /> },
     ],
   },

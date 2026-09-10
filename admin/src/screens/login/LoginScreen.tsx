@@ -28,6 +28,7 @@ import { useGoogleClient, useLogin } from '../../queries/useSession';
 import { Banner } from '../../ui/components';
 import { PlaneIcon } from '../../ui/components/icons';
 import { homeFor } from '../../ui/shell/nav';
+import { scopeCount, SCOPE_PICK } from '../../ui/shell/scope';
 import { loginMessage } from './loginMessage';
 
 export function LoginScreen() {
@@ -62,7 +63,14 @@ export function LoginScreen() {
 
   // Sesja żyje -> na ekranie logowania nie ma czego robić. Dotyczy też powrotu
   // „wstecz" po zalogowaniu, nie tylko wklejonego adresu.
-  if (session != null) return <Navigate to={homeFor(session.capabilities)} replace />;
+  //
+  // Kilka zakresów (kluby administratora, platforma) => DRUGI KROK logowania: wybór
+  // zakresu (issue #101, E2). Serwer wybrał już jeden deterministycznie, więc pominięcie
+  // tego ekranu wpuszczałoby administratora dwóch klubów zawsze do tego samego - i to
+  // bez powiedzenia mu, do którego.
+  if (session != null) {
+    return <Navigate to={scopeCount(session) > 1 ? SCOPE_PICK : homeFor(session.capabilities)} replace />;
+  }
 
   const message =
     login.error != null

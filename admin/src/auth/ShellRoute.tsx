@@ -21,6 +21,7 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { useLogout } from '../queries/useSession';
 import { Loadable } from '../ui/components';
 import { AppShell } from '../ui/shell/AppShell';
+import { shellScope } from '../ui/shell/scope';
 import { useSessionState } from './sessionContext';
 
 export function ShellRoute() {
@@ -47,6 +48,7 @@ export function ShellRoute() {
   return (
     <AppShell
       who={session.pilot.name}
+      scope={shellScope(session)}
       capabilities={session.capabilities}
       onLogout={() => logout.mutate()}
       logoutPending={logout.isPending}

@@ -955,3 +955,37 @@ Nie ma dziennika, nie ma floty, nie ma pilotów; ma Zgłoszenia (i od epiku E Or
   a nie z kontekstu, który przysłał telefon - i lista ma tego nie mieszać
 - **filtra po klubie NIE MA** - kolejka fazy testów ma kilkanaście pozycji, a chip
   dzielący robotę na kluby kazałby przeglądać ją tyle razy, ile jest klubów
+
+---
+
+## 14. Panel w kontekście klubu (issue #101, epik E wielofirmowości, 2026-09-10)
+
+Wielofirmowość dołożyła panelowi CZWARTY moduł (Organizacje - dla platformy), drugi
+rodzaj sesji i wybór klubu. Decyzje mieszkają w `docs/wielofirmowosc.md` (§8 przepływy,
+§14 E odstępstwa wdrożenia) i **nie są tu powtórzone**: jedno źródło prawdy dla milestone,
+żeby nie rozjechało się przy pierwszej poprawce jednej z kopii. Tutaj zostaje to, co
+zmienia się w REGUŁACH TEGO dokumentu:
+
+- **§3.2 (pasek zamiast kolumny) był już odwrócony przez §3.8**; kolumna dostaje teraz
+  nad pozycjami kafel kontekstu: klub albo zakres platformy. Stoi ZAWSZE - nazwa klubu
+  odpowiada na „czyj to dziennik" przy każdym wklejonym linku - ale LINKIEM jest dopiero
+  wtedy, gdy jest dokąd przełączyć. Ekran wyboru z jedną kartą obiecywałby wybór,
+  którego nie ma, więc kafel bez przełącznika nie jest klikalny (`ui/shell/scope.ts`).
+- **§3.3 (brak uprawnień = brak przycisku) obejmuje ekran wyboru klubu**: klub, w którym
+  ta osoba jest tylko pilotem, na liście się NIE POJAWIA. Karta „bez dostępu"
+  obiecywałaby wejście, którego reguły odmówią - a o takim klubie i tak mówi telefon.
+- **§3.4 (stan operacyjny osobno od konfiguracji) dostaje trzeci kształt szuflady
+  w module Piloci**: obok karty członka i karty kodu klubu stoi KOLEJKA zgłoszeń -
+  zadanie do zrobienia, więc nad listą, a nie w niej. Pusta kolejka nie dostaje karty
+  z zerem (reguła SyncChipa): stan domyślny nie zajmuje ekranu.
+- **§3.6 (jedna reguła, jedno zdanie) rozstrzyga słownik karty pilota**: „konto" ustąpiło
+  „członkostwu" wszędzie, gdzie zdanie dotyczy KLUBU („Wyłącz członkostwo", „Usuń
+  z klubu", „Najpierw wyłącz członkostwo"). Adres konta Google zszedł do odczytu - to
+  poświadczenie osoby, a nie klubu, i klub nie ma nad nim władzy.
+- **czego panel nie umie i nie obiecuje (§5)**: **superadministrator nie przegląda innych
+  klubów** - z ich wnętrza widzi liczby i administratorów, a wejścia do panelu klubu nie
+  ma i mieć nie będzie (decyzja właściciela 2026-09-10, `docs/wielofirmowosc.md` §3.3;
+  operator, który ma pomóc, dostaje od klubu członkostwo - jawnie i z audytem). Nie zmienia
+  też adresu klubu ani nie rotuje kodu klubu. Imienia osoby nie blokujemy przy drugim
+  członkostwie (propozycja z §8.3 czeka na kontrakt - lista członków nie niesie informacji
+  o innych klubach tej osoby).

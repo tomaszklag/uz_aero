@@ -104,10 +104,25 @@ ALTER TABLE pilots ADD COLUMN platform_role TEXT CHECK (platform_role IN ('super
 
 Superadministrator jest OSOBĄ bez ani jednego członkostwa (decyzja 3) - zakłada
 kluby i pierwszych administratorów, i to wszystko. **Nie wchodzi do danych klubu**
-(**propozycja**): panel klubu wymaga członkostwa `admin`, a superadministrator go nie
-ma. Gdy operator ma pomóc klubowi w dzienniku, administrator klubu dodaje go jako
-członka - jawnie, z audytem. Bez tej reguły „nic nie wycieka między klubami" miałoby
-wyjątek wpisany w rolę, a wyjątek w roli jest niewidoczny dla klubu.
+(**POTWIERDZONE 2026-09-10**, decyzja właściciela: „super-admin nie powinien móc
+przeglądać innych klubów" - do tej pory propozycja): panel klubu wymaga członkostwa
+`admin`, a superadministrator go nie ma. Gdy operator ma pomóc klubowi w dzienniku,
+administrator klubu dodaje go jako członka - jawnie, z audytem. Bez tej reguły „nic nie
+wycieka między klubami" miałoby wyjątek wpisany w rolę, a wyjątek w roli jest niewidoczny
+dla klubu.
+
+**Co wolno mu zobaczyć i to jest cała lista**: nazwa klubu, adres (slug), stan, data
+założenia, LICZBA członków, LICZBA maszyn, kod klubu i administratorzy klubu (imię,
+adres, kod, czy już się zalogował - odpowiedź na „do kogo dzwonić"). Ani jednego wiersza
+dziennika, ani jednej maszyny, ani jednego pilota poza administratorami, ani kolejki
+zgłoszeń klubu. Nie ma też trasy, którą sesja platformowa otwierałaby panel klubu:
+`authorizeOrg` pyta o członkostwo, a `POST /auth/switch` przełącza wyłącznie do klubu,
+w którym ta osoba ma aktywne członkostwo z rolą panelu (§8.2).
+
+**Wyjątkiem NIE jest kolejka zgłoszeń błędów** i to jest świadome: zgłoszenie opisuje
+APLIKACJĘ, a nie klub, powstaje z decyzji pilota o tym, co w nim napisze, i poprawia je
+jedna osoba dla całego serwera (issue #99, C6). Gdyby to miało się zmienić, zmienia się
+razem z modułem Zgłoszenia, a nie przy okazji tej reguły.
 
 `seed` zakłada superadministratora z `SEED_ADMIN_EMAIL` (jak dziś admina) i JEDEN klub
 z `SEED_ORG_NAME` **wyłącznie na bazie deweloperskiej** - produkcja dostaje klub
@@ -527,6 +542,11 @@ starym pakiecie - decyzja o tym w epiku W.
    wyłącznie decyzja, administrator klubu może wyłączyć dołączanie kodem; przy przebudowie
    makiet tego samego dnia: kształt kodu `XXX-XXXX` z alfabetu 32 symboli, limity tempa
    10/osoba i 30/adres na 15 minut, superadministrator widzi kod klubu do odczytu (§3.8, §8.1).
+   **Rozstrzygnięte 2026-09-10**: superadministrator **NIE przegląda innych klubów** (§3.3) -
+   propozycja potwierdzona, a punkt „wejście do panelu klubu" z listy zadań epiku E
+   (issue #101) wypada razem z nią; adres panelu zostaje płaski, klub siedzi w sesji (§8.2,
+   §14 E). Do potwierdzenia zostają: token odczytu kart arkusza (§3.7) i zmiana nazwiska
+   tylko przy jednym członkostwie (§8.3).
 3. Kopia bazy produkcyjnej przed migracją 8 (§10).
 4. Google Cloud: nowy klient Android dla pakietu `com.ninerdeck.app` z DWOMA odciskami
    SHA-1 (EAS i Play App Signing) - epik R.
@@ -680,7 +700,53 @@ starym pakiecie - decyzja o tym w epiku W.
     i niewysłaną kolejką.
   Zostaje **D8** (wykonane wcześniej) i panel web - epik E.
 - **E - panel** (issue #101): moduł Organizacje, wybór klubu, kontekst klubu w kolumnie,
-  członkowie, zgłoszenia i kod klubu 1:1 z makiet.
+  członkowie, zgłoszenia i kod klubu 1:1 z makiet. **WDROŻONE 2026-09-10** (gałąź
+  `feature-101-panel-kluby`). Co weszło i czego ten dokument nie przewidział:
+  - **`#/k/<slug>/…` z issue #101 ODRZUCONE, adres zostaje płaski** (decyzja właściciela
+    2026-09-10, potwierdza §8.2 wobec listy zadań epiku). Klub jest w SESJI: `#/dziennik`
+    znaczy to samo przez całą sesję, wybór stoi pod `#/klub`, a `.sidebar-context` prowadzi
+    tam z powrotem. Prefiks ze slugiem kupowałby link przenośny MIĘDZY klubami (przypadek
+    administratora dwóch klubów, czyli rzadkość) kosztem przepisania każdej trasy i każdego
+    linku panelu oraz drugiego źródła prawdy o klubie obok sesji;
+  - **trzy trasy sesji, których epiki B–D świadomie nie dokończyły**: `GET /me` odpowiada
+    odtąd OBU rodzajom sesji (`sessionRoute` - bez tego superadministrator po odświeżeniu
+    karty lądował na ekranie logowania, z którego przed chwilą wszedł), a `POST
+    /admin/api/auth/switch { orgId | null }` wydaje nową sesję dla klubu albo dla platformy;
+  - **zakresy jadą W ODPOWIEDZI O SESJI, a nie osobną trasą** (`PanelScopes`: kluby z rolą
+    panelu + flaga platformy). Panel pyta o to przy KAŻDYM wczytaniu (czy kafel jest linkiem,
+    czy po zalogowaniu iść na wybór), więc osobna trasa znaczyłaby drugie żądanie przy każdym
+    starcie - i to o odpowiedź, która przy jednym członkostwie nic nie zmienia;
+  - **przełączenie sprawdza CEL od zera, a źródła pyta wyłącznie o tożsamość**: administrator
+    wyłączony w klubie A ma prawo przejść do B. Ciasteczko starsze niż `credentials_valid_from`
+    osoby ALBO celu nie mieni nowej sesji - bez tego wyłączenie członkostwa dałoby się obejść
+    przełączeniem tam i z powrotem ciasteczkiem sprzed wyłączenia (ta sama reguła, którą audyt
+    2026-09-05 nałożył na token osoby). Cudzy klub to **404**, nie 403;
+  - **kafel kontekstu stoi zawsze, przełącznik - nie**: `.sidebar-context` jest linkiem
+    dopiero przy więcej niż jednym zakresie (`ui/shell/scope.ts`), a platforma liczy się
+    jako zakres - inaczej operator z jednym klubem nie miałby jak zejść do niego ani wrócić;
+  - **moduł Piloci ma TRZY szuflady nad jedną listą** i każda ma własny adres, bo każda
+    opisuje inny byt: członek (`#/piloci/:id`), kandydat z kolejki (`#/piloci/zgloszenia/:id`)
+    i kod klubu (`#/piloci/kod`). Który to, rozstrzyga TRASA, a nie ekran czytający adres
+    w środku - `zgloszenia` i `kod` byłyby dla `:id?` zwykłym identyfikatorem konta;
+  - **kolejka i kod klubu pytają serwer tylko z `accounts.manage`** (`enabled` na hookach):
+    bez tej zdolności odpowiedź byłaby 403, czyli baner błędu na ekranie, na którym nic
+    złego się nie stało;
+  - **przełączenie czyści cache DOKŁADNIE jak wylogowanie**: po zmianie klubu każda pobrana
+    lista opisuje inny świat, a wiersz cudzego dziennika, który mignąłby przed odświeżeniem,
+    byłby wyciekiem - tym samym, przed którym broni cały epik C;
+  - **makiety `organizacje-klub` i `piloci-zgloszenie` DOSTAŁY brakujące ramki** (O2 „nowy
+    klub", P3 zatwierdzenie, P3b po decyzji): panele wariantów obiecywały je od epiku A,
+    a kotwice prowadziły donikąd. Przy okazji z kolumny bocznej makiet KLUBOWYCH zeszła
+    pozycja „Zgłoszenia" - należy do platformy od epiku C (C6), a `SZABLON.html` miał już
+    postać właściwą. Komponent `.club-code` przeszedł z `design/panel/rama.css` do
+    `admin/src/styles/components/surfaces.css` pod tą samą nazwą, jak zapowiadał tamten plik;
+  - **„wejście superadministratora do panelu klubu" z listy zadań E1 WYPADŁO** (decyzja
+    właściciela 2026-09-10: „super-admin nie powinien móc przeglądać innych klubów").
+    Punkt stał w sprzeczności z §3.3, z bramą członkostwa i z makietą `organizacje-klub`,
+    która takiej akcji nie ma; §3.3 przestał być propozycją i jest odtąd decyzją. Kod nie
+    wymagał zmiany - wymagał jej dokument, bo reguła bez potwierdzenia jest życzeniem;
+  - **czego epik E świadomie NIE ROBI**: zmiany sluga i rotacji kodu z platformy (kod
+    prowadzi klub), edycji administratorów klubu z modułu Organizacje.
 - **F - aplikacja** (issue #102): klub w tokenie i `POST /auth/switch`, cache per klub,
   00E/00C/00D, przełącznik 13a (sieć + pusta kolejka) z „Dołącz do innego klubu",
   plakietka klubu 01e. Deep linku dołączania nie ma (§7).

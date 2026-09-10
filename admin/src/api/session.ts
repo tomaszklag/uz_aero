@@ -32,6 +32,17 @@ export function logout(): Promise<null> {
 }
 
 /**
+ * Przełączenie zakresu sesji: `orgId` = klub, `null` = platforma (moduł Organizacje).
+ *
+ * Nowe ciasteczko, ten sam token Google w tle - „Zmień klub" NIE każe logować się od
+ * nowa. Klub, którego ta osoba nie ma, odpowiada 404: cudzy klub jest dla niej
+ * nieistniejący, a 403 potwierdzałoby, że taki klub jest (issue #99).
+ */
+export function switchScope(orgId: string | null): Promise<PanelSessionDto> {
+  return apiPost<PanelSessionDto>('/auth/switch', { orgId });
+}
+
+/**
  * Kto jest zalogowany. Wołane przy każdym starcie panelu, bo ciasteczko jest
  * `HttpOnly`: po odświeżeniu karty JavaScript nie ma innej drogi, żeby się dowiedzieć,
  * czy sesja jeszcze żyje i czyja jest.

@@ -41,4 +41,19 @@ export class AdminMeQueries {
       org: { id: membership.orgId, slug: membership.orgSlug, name: membership.orgName },
     };
   }
+
+  /**
+   * To samo pytanie zadane przez sesję PLATFORMOWĄ (issue #101, E1) - bez klubu, więc
+   * bez kodu i bez roli członkostwa. Zostaje nazwisko: kolumna boczna pisze je tak samo
+   * w obu ramach, a w tokenie nazwisko nie siedzi i siedzieć nie powinno.
+   *
+   * `null` = osoba skasowana albo zablokowana platformowo po wydaniu sesji. Rolę
+   * platformową sprawdziła już brama (`authorizePlatform`), więc tu jej nie powtarzamy -
+   * dwa sprawdzenia tej samej rzeczy rozjeżdżają się przy pierwszej poprawce jednego.
+   */
+  async platform(pilotId: string): Promise<{ id: string; name: string } | null> {
+    const account = await this.pilots.findById(pilotId);
+    if (account == null || !account.active) return null;
+    return { id: account.id, name: account.name };
+  }
 }

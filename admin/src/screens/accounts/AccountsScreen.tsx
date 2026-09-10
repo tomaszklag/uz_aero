@@ -6,17 +6,24 @@
  * (statystyka na ekranie konfiguracji), akcji w wierszach oraz dwóch banerów i trzech kart
  * wyjaśniających pod tabelą.
  *
- * == KOLEJKA ZGŁOSZEŃ WRACA W EPIKU E (wielofirmowość, issue #101) ==
- * Do epiku D (issue #100) stała tu kolejka zgłoszeń rejestracyjnych z logowania Google.
- * Zgłoszenie jest odtąd CZŁONKOSTWEM `pending` po kodzie klubu (`docs/wielofirmowosc.md`
- * §3.8, §8.3), a karta ZGŁOSZENIA nad listą i karta „Kod klubu" wchodzą 1:1 z makiet
- * `piloci-lista`, `piloci-zgloszenie` i `piloci-kod-klubu` razem z kontraktem członkostw.
+ * == LISTA TO CZŁONKOSTWA, NIE OSOBY (wielofirmowość 2.0.0) ==
+ * Kod i rola należą do CZŁONKOSTWA w tym klubie: ta sama osoba w drugim klubie ma inny
+ * kod i może mieć inną rolę. Nad listą stoi kolejka zgłoszeń kodem klubu - zadanie do
+ * zrobienia nad stanem - a jedyną akcją główną jest „Kod klubu": nowy członek wchodzi
+ * WYŁĄCZNIE kodem, z panelu nie da się nikogo dopisać ani adresem, ani linkiem.
+ *
+ * == TRZY SZUFLADY NAD JEDNĄ LISTĄ ==
+ * Członek (`:id`), KANDYDAT z kolejki (`zgloszenia/:id`) i KOD KLUBU (`kod`) - każda ma
+ * własny adres, bo każda opisuje inny byt. Który to, mówi TRASA (`routes.tsx`), a nie
+ * ekran czytający adres w środku: `zgloszenia` i `kod` byłyby dla `:id?` zwykłym
+ * identyfikatorem konta.
  */
 
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { can } from '../../auth/can';
 import { useSessionState } from '../../auth/sessionContext';
+import { usePendingMemberships } from '../../queries/useMemberships';
 import { usePilots } from '../../queries/usePilots';
 import {
   Banner,
@@ -31,14 +38,20 @@ import {
   TableSkeleton,
   type Column,
 } from '../../ui/components';
-import { PeopleIcon } from '../../ui/components/icons';
+import { KeyIcon, PeopleIcon } from '../../ui/components/icons';
 import { errorMessage } from '../common/apiMessage';
 import { AccountDrawer } from './AccountDrawer';
 import { accountRow, type AccountRow } from './accountRows';
+import { ClubCodeDrawer } from './ClubCodeDrawer';
+import { PendingCard } from './PendingCard';
+import { RequestDrawer } from './RequestDrawer';
 
 const HEADERS = ['Kod', 'Imię i nazwisko', 'E-mail', 'Rola', 'Status', ''];
 
-export function AccountsScreen() {
+/** Która szuflada stoi nad listą - rozstrzyga TRASA, nie ekran (patrz nagłówek pliku). */
+export type AccountsDrawer = 'account' | 'request' | 'club-code';
+
+export function AccountsScreen({ drawer }: { drawer: AccountsDrawer }) {
   const { session } = useSessionState();
   const navigate = useNavigate();
   const { id } = useParams();
@@ -65,6 +78,13 @@ export function AccountsScreen() {
 
   const manages = can(session?.capabilities, 'accounts.manage');
 
+  // Kolejka i kod klubu jadą na `accounts.manage` TAKŻE NA ODCZYT: w kolejce stoją
+  // adresy ludzi spoza klubu, a kod jest włącznikiem jedynej drogi do niego. Pytanie
+  // zadane bez tej zdolności wróciłoby 403 i zapaliło baner błędu na ekranie, na
+  // którym nic złego się nie stało.
+  const queue = usePendingMemberships(manages);
+
+  const listError = pilots.error ?? queue.error;
   const rows = (pilots.data?.items ?? []).map(accountRow);
   const backToList = (): void => {
     void navigate({ pathname: '/piloci', search: params.toString() });
@@ -114,12 +134,24 @@ export function AccountsScreen() {
   return (
     <>
       {/*
-        Akcji głównej ekran NIE MA (issue #100, D3): dawne „Dodaj pilota" zniknęło razem
-        z `POST /pilots` - nowy członek wchodzi WYŁĄCZNIE kodem klubu. Jej miejsce zajmie
-        „Kod klubu" (makieta `piloci-kod-klubu`) razem z ekranami epiku E; wyszarzony
-        przycisk obiecywałby akcję, której serwer nie ma.
+        JEDNA akcja główna: „Kod klubu". Dawne „Dodaj pilota" zniknęło razem z drogą,
+        którą opisywało (issue #100, D3) - nowy członek wchodzi WYŁĄCZNIE kodem.
+        Bez `accounts.manage` przycisku nie ma wcale: wyszarzony obiecywałby akcję,
+        której reguły odmówią (zasada „brak uprawnień = brak przycisku").
       */}
-      <PageHead title="Piloci" />
+      <PageHead
+        title="Piloci"
+        actions={
+          manages ? (
+            <LinkButton to="/piloci/kod" variant="primary">
+              <KeyIcon size={13} />
+              Kod klubu
+            </LinkButton>
+          ) : undefined
+        }
+      />
+
+      <PendingCard queue={queue.data} />
 
       <div className="filters">
         <SearchInput
@@ -137,7 +169,10 @@ export function AccountsScreen() {
         />
       </div>
 
-      {pilots.error == null ? null : <Banner tone="danger">{errorMessage(pilots.error)}</Banner>}
+      {/* Nieudany odczyt KOLEJKI mówi o sobie tak samo jak nieudany odczyt listy: bez
+          tego karta zgłoszeń po prostu by nie wjechała, czyli awaria wyglądałaby jak
+          „nikt nie czeka" - a to jest gorsze niż komunikat o błędzie. */}
+      {listError == null ? null : <Banner tone="danger">{errorMessage(listError)}</Banner>}
 
       <Loadable
         pending={pilots.isPending}
@@ -157,7 +192,16 @@ export function AccountsScreen() {
         )}
       </Loadable>
 
-      {id == null ? null : (
+      {drawer === 'club-code' ? (
+        <ClubCodeDrawer orgName={session?.org?.name ?? 'Klub'} onClose={backToList} />
+      ) : drawer === 'request' && id != null ? (
+        <RequestDrawer
+          pilotId={id}
+          queue={queue.data?.items ?? null}
+          queuePending={queue.isPending}
+          onClose={backToList}
+        />
+      ) : drawer === 'account' && id != null ? (
         <AccountDrawer
           id={id}
           pilots={pilots.data?.items ?? null}
@@ -166,7 +210,7 @@ export function AccountsScreen() {
           selfId={session?.pilot.id ?? null}
           onClose={backToList}
         />
-      )}
+      ) : null}
 
     </>
   );
@@ -202,9 +246,17 @@ function EmptyAccounts({
     <EmptyState
       icon={<PeopleIcon size={20} />}
       title="Nie ma jeszcze żadnego pilota"
-      // Jedyna droga do klubu to kod klubu (issue #100), więc pusta lista mówi, CO ma
-      // się stać, a nie oferuje akcji, której nie ma: karta „Kod klubu" dochodzi w epiku E.
+      // Jedyna droga do klubu to kod klubu, więc pusta lista mówi, CO ma się stać,
+      // i prowadzi tam, gdzie ten kod stoi. Bez `accounts.manage` zostaje samo zdanie:
+      // przycisk do karty, której serwer nie odda, byłby obietnicą.
       note="Podaj pilotom kod klubu - po wpisaniu trafią do zgłoszeń, a Ty zdecydujesz."
+      action={
+        manages ? (
+          <LinkButton to="/piloci/kod" variant="primary" size="sm">
+            Kod klubu
+          </LinkButton>
+        ) : undefined
+      }
     />
   );
 }

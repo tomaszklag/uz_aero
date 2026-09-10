@@ -15,6 +15,7 @@
  */
 
 import type { FleetRefusalDto, PilotRefusalDto } from '../../api/dto';
+import type { ConflictField } from '../common/apiMessage';
 
 const REFUSALS: Record<FleetRefusalDto, string> = {
   capacity_not_positive: 'Podaj pojemność zbiorników większą od zera.',
@@ -67,8 +68,8 @@ export const AIRCRAFT_IN_USE = REFUSALS.open_session;
 export const AIRCRAFT_IN_SERVICE = REFUSALS.aircraft_in_service;
 
 /** Zajęta rejestracja (`409 conflict`) -> zdanie przy TYM polu. */
-export function aircraftConflictMessage(field: 'code' | 'email' | 'reg' | null): string | null {
-  // `code`/`email` przychodzą z kont i na tym ekranie nie mają prawa się pojawić -
+export function aircraftConflictMessage(field: ConflictField | null): string | null {
+  // `code`/`email` (konta) i `slug` (klub) na tym ekranie nie mają prawa się pojawić -
   // unia odmowy jest wspólna dla całego panelu, więc odpowiadamy milczeniem zamiast
   // rzucania wyjątku w formularzu, który klient właśnie wypełnia.
   if (field !== 'reg') return null;

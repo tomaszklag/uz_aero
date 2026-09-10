@@ -2978,6 +2978,86 @@ i odstępstwa: `docs/wielofirmowosc.md` §14 D. Reguły obowiązujące odtąd:
 - pułapki SQL-a z tego epiku (`CASE` z `NULL` bierze typ z parametru; stempel „obowiązuje
   od" musi iść z zegara APLIKACJI): `docs/architektura-panelu-serwer.md` §7.9 (i), (j)
 
+## Wielofirmowość 2.0.0 - epik E: panel w kontekście klubu (issue #101, 2026-09-10, gałąź `feature-101-panel-kluby`)
+Epiki B–D dały model, izolację i drogi wejścia; epik E daje POWIERZCHNIĘ: moduł
+Organizacje, wybór klubu, członkowie, zgłoszenia i kod klubu. Decyzje i odstępstwa:
+`docs/wielofirmowosc.md` §14 E. Reguły obowiązujące odtąd:
+- **ADRES PANELU JEST PŁASKI, KLUB SIEDZI W SESJI** (decyzja właściciela 2026-09-10 -
+  odrzuca `#/k/<slug>/…` z listy zadań issue #101, potwierdza §8.2). `#/dziennik` znaczy
+  to samo przez całą sesję, wybór zakresu stoi pod `#/klub`, a kafel kolumny bocznej
+  prowadzi tam z powrotem. Prefiks ze slugiem kupowałby link przenośny MIĘDZY klubami -
+  przypadek administratora dwóch klubów - kosztem przepisania każdej trasy i każdego
+  linku panelu oraz drugiego źródła prawdy o klubie obok sesji. **Nie proponować ponownie.**
+- **TRZY TRASY SESJI, KTÓRE EPIKI B–D ODŁOŻYŁY**: `GET /me` odpowiada odtąd OBU rodzajom
+  sesji (nowe `sessionRoute` w `adminRoute.ts`) - bez tego superadministrator po
+  odświeżeniu karty lądował na ekranie logowania, z którego przed chwilą wszedł;
+  `POST /admin/api/auth/switch { orgId | null }` wydaje NOWĄ sesję dla klubu albo dla
+  platformy (`null`), ten sam token Google w tle. `sessionRoute` jest deklaracją dla
+  pytań, które zadaje SAMA SESJA, a nie moduł - trzeciej takiej trasy nie dokładaj bez
+  tego rachunku.
+- **ZAKRESY JADĄ W KAŻDEJ ODPOWIEDZI O SESJI** (`PanelScopes`: kluby z rolą panelu +
+  flaga platformy), a nie osobną trasą: panel pyta o to przy KAŻDYM wczytaniu (czy kafel
+  jest linkiem, czy po zalogowaniu iść na wybór). Osobna trasa znaczyłaby drugie żądanie
+  przy każdym starcie panelu - i to o odpowiedź, która przy jednym członkostwie nic nie
+  zmienia. Koszt: jeden odczyt członkostw przy `GET /me`, czyli ten sam rachunek, co
+  `authorizeOrg`.
+- **PRZEŁĄCZENIE SPRAWDZA CEL OD ZERA, ŹRÓDŁA PYTA WYŁĄCZNIE O TOŻSAMOŚĆ**: administrator
+  wyłączony w klubie A ma prawo przejść do B - o wejściu rozstrzyga członkostwo w CELU.
+  Ciasteczko starsze niż `credentials_valid_from` OSOBY albo CELU nie mieni nowej sesji;
+  bez tego wyłączenie członkostwa dałoby się obejść przełączeniem tam i z powrotem
+  ciasteczkiem sprzed wyłączenia (ta sama reguła, którą audyt 2026-09-05 nałożył na token
+  osoby). Zakres, którego ta osoba nie ma - cudzy klub ALBO platforma bez roli
+  platformowej - to **404**, nie 403 (epik C: 403 potwierdzałoby, że taki klub jest).
+- **KAFEL KONTEKSTU STOI ZAWSZE, PRZEŁĄCZNIK - NIE** (`ui/shell/scope.ts`, z testami):
+  nazwa klubu odpowiada na „czyj to dziennik" przy każdym wklejonym linku, więc kafel jest
+  też przy jednym zakresie - ale wtedy jest `div`, nie linkiem. Ekran wyboru z jedną kartą
+  obiecywałby wybór, którego nie ma. **Platforma liczy się jako ZAKRES**, inaczej operator
+  z jednym klubem nie miałby jak zejść do niego ani wrócić (przypadek 00A′ z makiety).
+- **`homeFor` DECYDUJE O EKRANIE STARTOWYM I ZALEŻY OD KOLEJNOŚCI `NAV_ITEMS`**:
+  Organizacje stoją PRZED Zgłoszeniami, więc superadministrator ląduje w Organizacjach.
+  Dopisując moduł platformy, sprawdź, czy nie przestawiasz tym ekranu startowego.
+- **MODUŁ PILOCI MA TRZY SZUFLADY NAD JEDNĄ LISTĄ** i każda ma własny adres, bo każda
+  opisuje inny byt: członek (`#/piloci/:id`), KANDYDAT z kolejki (`#/piloci/zgloszenia/:id`
+  - osoba bez kodu) i KOD KLUBU (`#/piloci/kod` - konfiguracja klubu, nie człowiek).
+  Rozstrzyga TRASA (prop `drawer`), a nie ekran czytający adres w środku: `zgloszenia`
+  i `kod` byłyby dla `:id?` zwykłym identyfikatorem konta.
+- **KOLEJKA I KOD PYTAJĄ SERWER TYLKO Z `accounts.manage`** (`enabled` na hookach): to są
+  adresy ludzi spoza klubu i włącznik jedynej drogi do niego, więc bez tej zdolności
+  odpowiedź byłaby 403 - czyli baner błędu na ekranie, na którym nic złego się nie stało.
+  Nieudany odczyt KOLEJKI mówi o sobie tak samo jak nieudany odczyt listy: bez tego karta
+  po prostu by nie wjechała, a awaria wyglądałaby jak „nikt nie czeka".
+- **PRZEŁĄCZENIE CZYŚCI CACHE DOKŁADNIE JAK WYLOGOWANIE**: po zmianie klubu każda pobrana
+  lista opisuje inny świat, a wiersz cudzego dziennika, który mignąłby przed odświeżeniem,
+  byłby wyciekiem - tym samym, przed którym broni cały epik C. Kolejność też ta sama:
+  najpierw nowa sesja (to ona przestawia ramę), potem reszta do kosza.
+- **ZATWIERDZENIE NIE PRZYJMUJE ODRZUCONEGO** - w panelu tak samo jak na serwerze:
+  „Cofnij odrzucenie" jest OSOBNYM przyciskiem w karcie po decyzji (P3b), bo zdjęcie cudzej
+  odmowy i wpuszczenie do klubu to dwie decyzje i każda ma własny wpis w dzienniku.
+- **KOD KLUBU STOI JAWNIE I NA STAŁE**: nie jest sekretem (daje wyłącznie zgłoszenie do
+  rozpatrzenia), więc nie ma „pokaż raz", zasłony ani przycisku „Kopiuj" - administrator
+  czyta go z ekranu i dyktuje. Karta pokazuje DWIE różne liczby i to jest zamierzone: podpis
+  mówi, ile zgłoszeń czeka BIEŻĄCYM kodem (od jego wygenerowania), a karta ZGŁOSZENIA nad
+  listą - ile czeka w ogóle.
+- **MAKIETY DOSTAŁY BRAKUJĄCE RAMKI** (O2 „nowy klub", P3 zatwierdzenie, P3b po decyzji):
+  panele wariantów obiecywały je od epiku A, a kotwice prowadziły donikąd. Z kolumny
+  bocznej makiet KLUBOWYCH zeszła przy okazji pozycja „Zgłoszenia" - należy do platformy
+  od epiku C (C6), a `SZABLON.html` miał już postać właściwą. Komponent `.club-code`
+  przeszedł z `design/panel/rama.css` do `admin/src/styles/components/surfaces.css` pod
+  TĄ SAMĄ nazwą, jak zapowiadał tamten plik; `panel.css` przegenerowany.
+- **SUPERADMINISTRATOR NIE PRZEGLĄDA INNYCH KLUBÓW** (decyzja właściciela 2026-09-10;
+  §3.3 przestał być propozycją). Z wnętrza klubu widzi DOKŁADNIE: nazwę, adres, stan,
+  datę założenia, LICZBĘ członków, LICZBĘ maszyn, kod klubu i administratorów (do kogo
+  dzwonić). Ani wiersza dziennika, ani maszyny, ani pilota poza administratorami. Nie ma
+  też trasy, którą sesja platformowa otwierałaby panel klubu - `POST /auth/switch`
+  przełącza wyłącznie do klubu z AKTYWNYM członkostwem i rolą panelu. Operator, który ma
+  pomóc klubowi, dostaje od niego członkostwo - jawnie i z audytem. **Punkt „wejście do
+  panelu klubu" z listy zadań issue #101 wypadł razem z tą decyzją; nie proponuj go
+  ponownie.** Kolejka zgłoszeń błędów nie jest wyjątkiem: opisuje APLIKACJĘ, nie klub
+  (issue #99, C6).
+- **czego epik E świadomie NIE ROBI**: zmiany sluga i rotacji kodu z platformy (kod
+  prowadzi klub), edycji administratorów klubu z modułu Organizacje. Zostaje epik F
+  (aplikacja pilota, issue #102).
+
 ## Obieg gałęzi (git-flow od 2026-09-08, milestone „Wielofirmowość + SaaS 2.0.0")
 ```
 feature-… → develop → ninerdeck_x_x_x → main        (wydanie planowe)

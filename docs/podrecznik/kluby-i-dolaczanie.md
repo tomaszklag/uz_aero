@@ -48,7 +48,7 @@ Moduł **Piloci** to lista członków klubu: kod w tym klubie, imię i nazwisko,
 
 **Kod klubu** ma własną kartę w module Piloci: widać go w całości, od kiedy obowiązuje i ile zgłoszeń nim czeka (zgłoszenia sprzed wymiany kodu zostają w kolejce - dlatego ta liczba bywa mniejsza niż liczba na karcie ZGŁOSZENIA). **Wygeneruj nowy** unieważnia stary od razu. **Wyłącz dołączanie kodem** kasuje kod: do czasu wygenerowania nowego nikt do klubu nie dołączy, bo innej drogi nie ma, a pilot z wyłączonym kodem dostaje tę samą odpowiedź, co z kodem zmyślonym. Nowego członka nie da się dopisać z panelu ręcznie - każdy wchodzi kodem i decyzją.
 
-Pilot, który **odchodzi z klubu**, nie kasuje się z listy: administrator wyłącza mu członkostwo („Wyłącz konto" w karcie). Dostęp gaśnie od razu - telefon przestaje wysyłać i pobierać cokolwiek z tego klubu - a jego loty zostają w dzienniku, w statystykach i w kartach arkusza, bo się zdarzyły. W innych swoich klubach ten człowiek lata dalej, pod ich kodami.
+Pilot, który **odchodzi z klubu**, nie kasuje się z listy: administrator wyłącza mu członkostwo („Wyłącz członkostwo" w karcie). Dostęp gaśnie od razu - telefon przestaje wysyłać i pobierać cokolwiek z tego klubu - a jego loty zostają w dzienniku, w statystykach i w kartach arkusza, bo się zdarzyły. W innych swoich klubach ten człowiek lata dalej, pod ich kodami.
 
 @panel piloci-lista "Zgłoszenia nad listą członków" | piloci-zgloszenie "Rozpatrzenie zgłoszenia: kod pilota i rola" | piloci-kod-klubu "Kod klubu: wygeneruj nowy albo wyłącz"
 
