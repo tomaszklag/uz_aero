@@ -778,11 +778,12 @@ starym pakiecie - decyzja o tym w epiku W.
   - **odpowiedzi o klubach niosą `person` (imię i adres z konta)**: ekrany 00C/00D/00E
     pokazują plakietkę konta, a token osoby niesie identyfikator, nie profil. Wyłuskanie
     tego z tokenu Google byłoby drugim, niesprawdzanym źródłem tych samych napisów;
-  - **makieta `13a` dostała DWIE RAMKI**, które epik A opisał tylko komentarzem:
-    zgłoszenie czekające na liście klubów i przełączenie zablokowane z powodem pod listą
-    (ramka rysuje wariant „zaległe zapisy", bo tylko on niesie liczbę; offline zmienia
-    samo zdanie). Stanu „trzymasz maszynę" makiety NIE MA - z kokpitu do ustawień nie ma
-    wejścia, więc narysowany wyglądałby na osiągalny;
+  - **makieta `13a` dostała TRZY RAMKI**, których epik A nie narysował: zgłoszenie
+    czekające na liście klubów i dwa stany zablokowane - „zaległe zapisy klubu" oraz
+    „maszyna w ręce" (brak sieci zmienia w tej pierwszej samo zdanie, więc własnej ramki
+    nie dostał). Stan „maszyna w ręce" jest dziś NIEOSIĄGALNY - kokpit jest modalny,
+    a zębatka stoi tylko na 01 - i mimo to ma ramkę: brzmienie powodu jest decyzją
+    produktową, więc ma stać w specyfikacji, a nie tylko w kodzie;
   - **czego epik F świadomie NIE ROBI**: odtwarzania rejestru wszystkich klubów naraz
     i „opuść klub" z telefonu (D6: wychodzi się przez panel).
 - **R - rebranding** (issue #103) i **W - wydanie** (issue #106): pakiet, schemat,

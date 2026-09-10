@@ -3118,13 +3118,15 @@ obowiązujące odtąd KAŻDY nowy ekran i KAŻDE nowe zapytanie do magazynu:
 - **PLAKIETKA KONTA NA 00C/00D/00E JEDZIE Z SERWERA** (`ClubsView.person`): token osoby
   niesie identyfikator, nie profil, a wyłuskiwanie imienia z tokenu Google byłoby drugim,
   niesprawdzanym źródłem tych samych napisów.
-- **MAKIETA 13A MA TRZY RAMKI**: przełącznik (stan, w którym działa), zgłoszenie
+- **MAKIETA 13A MA CZTERY RAMKI**: przełącznik (stan, w którym działa), zgłoszenie
   czekające na liście (`.club-opt.pending` - przygaszony, nieklikalny, podpis
-  bursztynem) i przełączenie ZABLOKOWANE z powodem pod listą. Trzy powody blokady
-  mają jedno miejsce i jedną kolejność (maszyna w ręce → zaległe zapisy → brak sieci);
-  ramka rysuje ten ze środka, bo tylko on niesie liczbę. Stanu „trzymasz maszynę"
-  makiety NIE MA i to jest decyzja: z kokpitu do ustawień nie ma wejścia, więc
-  narysowana wyglądałaby na osiągalną.
+  bursztynem) i DWA stany zablokowane - zaległe zapisy klubu oraz maszyna w ręce.
+  Trzy powody blokady mają jedno miejsce i jedną kolejność: **maszyna w ręce → zaległe
+  zapisy → brak sieci**; brak sieci zmienia w tej ramce samo zdanie, więc własnej nie
+  dostał. Ramka „maszyna w ręce" rysuje stan DZIŚ NIEOSIĄGALNY (kokpit jest modalny,
+  a zębatka stoi tylko na 01) i to jest świadome: brzmienie powodu jest decyzją
+  produktową i ma stać w specyfikacji, a nie tylko w kodzie - inaczej pierwszy, kto
+  je zobaczy, napisze je drugi raz po swojemu.
 - **czego epik F świadomie NIE ROBI**: odtwarzania rejestru wszystkich klubów naraz,
   „opuść klub" z telefonu (D6: wychodzi się przez panel).
 
