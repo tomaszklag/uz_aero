@@ -34,7 +34,7 @@ export class AdminLogQueries {
     private readonly clock: Clock,
   ) {}
 
-  async load(filter: LogFilter = {}): Promise<LogLoadOutcome> {
+  async load(orgId: string, filter: LogFilter = {}): Promise<LogLoadOutcome> {
     // „Dziś" bierze się z zegara SERWERA, nie przeglądarki. Zegar przeglądarki jest
     // trzecim, niesprawdzonym zegarem w systemie, a od tego, co znaczy „dziś", zależy,
     // które wiersze człowiek zobaczy - i czy uzna je za komplet.
@@ -47,7 +47,7 @@ export class AdminLogQueries {
     // musiałaby znać reguły domyślne, żeby wiedzieć, co porównuje.
     if (fromMs > toMs) return { ok: false, reason: 'bad_range' };
 
-    const aircraft = await this.log.byAircraft(this.db, { fromMs, toMs });
+    const aircraft = await this.log.byAircraft(this.db, orgId, { fromMs, toMs });
 
     return {
       ok: true,

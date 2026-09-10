@@ -123,15 +123,22 @@ const SELECT = `
          pp.name              AS pic_name,
          d.code               AS dual_code,
          dp.name              AS dual_name,
+         -- Klub POWTARZA SIĘ w każdym podzapytaniu i w każdym złączeniu (issue #99 C4).
+         -- Uuid operacji jest dziś kluczem głównym, więc formalnie wystarczyłby on sam -
+         -- ale wtedy izolacja klubów wisi na globalnej jedyności identyfikatora
+         -- nadawanego przez TELEFON. Jawny predykat kosztuje jedną linijkę i nie
+         -- zależy od tego, kto nadaje uuidy.
          (SELECT array_agg(f.type ORDER BY f.id)
             FROM flags f
-           WHERE f.status = 'open'
+           WHERE f.org_id = s.org_id
+             AND f.status = 'open'
              AND s.session_uuid = ANY (f.session_uuids))          AS open_flags,
          (SELECT MAX(e.revision)
             FROM export_log e
-           WHERE e.session_uuid = s.session_uuid)                 AS export_revision
+           WHERE e.org_id = s.org_id
+             AND e.session_uuid = s.session_uuid)                 AS export_revision
     FROM sessions s
-    LEFT JOIN aircraft    a  ON a.id = s.aircraft_id
+    LEFT JOIN aircraft    a  ON a.id = s.aircraft_id AND a.org_id = s.org_id
     LEFT JOIN pilots      pp ON pp.id = s.pic_id
     LEFT JOIN memberships p  ON p.pilot_id = s.pic_id AND p.org_id = s.org_id
     LEFT JOIN pilots      dp ON dp.id = s.dual_id
@@ -172,6 +179,7 @@ const toJoin = (r: JoinedDbRow): AdminSessionJoin => ({
 export class PgAdminSessionsRepo implements SessionsAdminPort {
   async list(
     db: Queryable,
+    orgId: string,
     filter: SessionListFilter,
   ): Promise<{ items: AdminSessionJoin[]; nextCursor: string | null; total: number } | null> {
     const shape = shapeOf(filter.direction);
@@ -179,11 +187,14 @@ export class PgAdminSessionsRepo implements SessionsAdminPort {
     if (filter.cursor != null && cursor == null) return null;
 
     // Warunki BEZ kursora - te same jadą do `COUNT(*)`, żeby licznik „pokazano 50
-    // z ~1 291" opisywał cały wynik filtra, a nie resztę po kursorze.
+    // z ~1 291" opisywał cały wynik filtra, a nie resztę po kursorze. Klub stoi
+    // w obu jako PIERWSZY warunek - nie jest polem filtra, którego mogłoby nie być.
     const conditions = new SqlFilter();
+    conditions.add('s.org_id = ?', orgId);
     this.applyFilters(conditions, filter);
 
     const page = new SqlFilter();
+    page.add('s.org_id = ?', orgId);
     this.applyFilters(page, filter);
     keysetPredicate(KEY, cursor, page, shape);
 
@@ -214,10 +225,11 @@ export class PgAdminSessionsRepo implements SessionsAdminPort {
     return { items, nextCursor, total: Number(counted.rows[0]?.n ?? 0) };
   }
 
-  async byUuid(db: Queryable, sessionUuid: string): Promise<AdminSessionJoin | null> {
-    const { rows } = await db.query<JoinedDbRow>(`${SELECT} WHERE s.session_uuid = $1`, [
-      sessionUuid,
-    ]);
+  async byUuid(db: Queryable, orgId: string, sessionUuid: string): Promise<AdminSessionJoin | null> {
+    const { rows } = await db.query<JoinedDbRow>(
+      `${SELECT} WHERE s.org_id = $1 AND s.session_uuid = $2`,
+      [orgId, sessionUuid],
+    );
     return rows[0] == null ? null : toJoin(rows[0]);
   }
 
@@ -248,15 +260,20 @@ export class PgAdminSessionsRepo implements SessionsAdminPort {
       filter.add('(s.pic_id = ? OR s.dual_id = ?)', f.pilotId, f.pilotId);
     }
 
+    // Oba podzapytania niosą klub, choć zewnętrzne `WHERE` zawęziło już `s` do jednego
+    // (issue #99 C4): `NOT EXISTS` odwraca sens: bez predykatu cudza flaga na operacji
+    // o tym samym uuidzie wypychałaby WŁASNĄ operację z listy „bez uwag".
     if (f.flagged !== undefined) {
       const exists = `EXISTS (SELECT 1 FROM flags f
-                               WHERE f.status = 'open'
+                               WHERE f.org_id = s.org_id
+                                 AND f.status = 'open'
                                  AND s.session_uuid = ANY (f.session_uuids))`;
       filter.add(f.flagged ? exists : `NOT ${exists}`);
     }
 
     if (f.exported !== undefined) {
-      const exists = `EXISTS (SELECT 1 FROM export_log e WHERE e.session_uuid = s.session_uuid)`;
+      const exists = `EXISTS (SELECT 1 FROM export_log e
+                               WHERE e.org_id = s.org_id AND e.session_uuid = s.session_uuid)`;
       filter.add(f.exported ? exists : `NOT ${exists}`);
     }
   }

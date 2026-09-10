@@ -74,8 +74,8 @@ export async function recomputeConsumptionNorm(
 ): Promise<ConsumptionNorm | null> {
   const range = { fromMs: now.getTime() - NORM_WINDOW_DAYS * DAY_MS, toMs: now.getTime() };
 
-  const sessionUuids = await ports.norms.closedSessionUuids(db, aircraftId, range);
-  const streams = await ports.events.sessionStreams(db, sessionUuids);
+  const sessionUuids = await ports.norms.closedSessionUuids(db, orgId, aircraftId, range);
+  const streams = await ports.events.sessionStreams(db, orgId, sessionUuids);
 
   const intervals: FuelInterval[] = [];
   // Równania licznika - jedno na ZDANĄ sesję (`MhEquation`). Do issue #38 były tu

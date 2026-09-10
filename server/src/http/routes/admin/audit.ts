@@ -75,7 +75,7 @@ export function registerAdminAuditRoutes(
     app,
     gate,
     { method: 'GET', url: '/audit', capability: 'audit.read' },
-    async (req, reply) => {
+    async (req, reply, actor) => {
       const query = listQuery.safeParse(req.query);
       if (!query.success) return reply.code(400).send({ error: 'bad_request' });
 
@@ -92,7 +92,7 @@ export function registerAdminAuditRoutes(
         limit: q.limit,
       };
 
-      const outcome = await audit.list(filter);
+      const outcome = await audit.list(actor.orgId, filter);
       // 400, nie 500: kursor przychodzi z zewnątrz. Milczące zaczęcie od pierwszej
       // strony byłoby gorsze - panel pokazałby początek dziennika, sądząc, że przewinął.
       if (!outcome.ok) return reply.code(400).send({ error: 'bad_cursor' });

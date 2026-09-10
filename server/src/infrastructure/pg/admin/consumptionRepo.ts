@@ -25,8 +25,11 @@ import type {
   StatsRange,
 } from '../../../application/admin/ports.ts';
 
-/** Wspólny predykat okna - jedna definicja, żeby licznik i lista nie mogły się rozjechać. */
-const CLOSED_IN_RANGE = `s.aircraft_id = $1 AND s.status = 'closed' AND s.close_time BETWEEN $2 AND $3`;
+/**
+ * Wspólny predykat okna - jedna definicja, żeby licznik i lista nie mogły się rozjechać.
+ * Klub stoi w nim na pierwszym miejscu: analityka jest przekrojem dziennika KLUBU.
+ */
+const CLOSED_IN_RANGE = `s.org_id = $1 AND s.aircraft_id = $2 AND s.status = 'closed' AND s.close_time BETWEEN $3 AND $4`;
 
 interface SessionDbRow {
   session_uuid: string;
@@ -41,7 +44,11 @@ interface SessionDbRow {
 const toMhFormat = (value: string): MhFormat => (value === 'hhmm' ? 'hhmm' : 'decimal');
 
 export class PgAdminConsumptionRepo implements ConsumptionAdminPort {
-  async aircraft(db: Queryable, aircraftId: string): Promise<ConsumptionAircraftRow | null> {
+  async aircraft(
+    db: Queryable,
+    orgId: string,
+    aircraftId: string,
+  ): Promise<ConsumptionAircraftRow | null> {
     const { rows } = await db.query<{
       id: string;
       reg: string;
@@ -51,8 +58,8 @@ export class PgAdminConsumptionRepo implements ConsumptionAdminPort {
       service_status: string;
     }>(
       `SELECT id, reg, type, capacity_l, mh_format, service_status
-         FROM aircraft WHERE id = $1`,
-      [aircraftId],
+         FROM aircraft WHERE org_id = $1 AND id = $2`,
+      [orgId, aircraftId],
     );
 
     const row = rows[0];
@@ -70,11 +77,12 @@ export class PgAdminConsumptionRepo implements ConsumptionAdminPort {
 
   async closedSessions(
     db: Queryable,
+    orgId: string,
     aircraftId: string,
     range: StatsRange,
     limit: number,
   ): Promise<ConsumptionSessionsPage> {
-    const params = [aircraftId, range.fromMs, range.toMs];
+    const params = [orgId, aircraftId, range.fromMs, range.toMs];
 
     // Licznik JEST osobnym zapytaniem, choć kusi, żeby wyliczyć go z długości listy.
     // Przy przycięciu limitem długość mówiłaby tylko „tyle, ile pokazaliśmy", a ekran
@@ -94,7 +102,7 @@ export class PgAdminConsumptionRepo implements ConsumptionAdminPort {
          FROM sessions s
         WHERE ${CLOSED_IN_RANGE}
         ORDER BY s.close_time DESC, s.session_uuid DESC
-        LIMIT $4`,
+        LIMIT $5`,
       [...params, limit],
     );
 
@@ -112,16 +120,22 @@ export class PgAdminConsumptionRepo implements ConsumptionAdminPort {
     };
   }
 
-  async openSessions(db: Queryable, aircraftId: string, range: StatsRange): Promise<number> {
+  async openSessions(
+    db: Queryable,
+    orgId: string,
+    aircraftId: string,
+    range: StatsRange,
+  ): Promise<number> {
     // Dzień otwarty nie ma `close_time`, więc jedyną jego datą jest czas przejęcia (`claim_time`) - tak samo
     // lokuje go w czasie lista dni (`A02`) i licznik otwartych w statystykach (`A10`).
     const { rows } = await db.query<{ n: string }>(
       `SELECT COUNT(*) AS n
          FROM sessions s
-        WHERE s.aircraft_id = $1
+        WHERE s.org_id = $1
+          AND s.aircraft_id = $2
           AND s.status = 'active'
-          AND s.claim_time BETWEEN $2 AND $3`,
-      [aircraftId, range.fromMs, range.toMs],
+          AND s.claim_time BETWEEN $3 AND $4`,
+      [orgId, aircraftId, range.fromMs, range.toMs],
     );
     return Number(rows[0]?.n ?? 0);
   }

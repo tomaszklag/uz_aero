@@ -70,7 +70,8 @@ describe('schemat PostgreSQL (kontrakt)', () => {
     ],
     // Wielofirmowość (migracja 8, issue #98): klub jako tenant, członkostwo, kod klubu
     // (`join_code` - jedyna droga dołączenia od 2026-09-09; tabeli `invitations` NIE MA).
-    ['organizations', ['id', 'name', 'slug', 'active', 'created_at', 'created_by', 'join_code', 'join_code_since']],
+    // `sheets_key` (issue #99, C5): sekret adresu kart arkusza, losowany per klub.
+    ['organizations', ['id', 'name', 'slug', 'active', 'created_at', 'created_by', 'join_code', 'join_code_since', 'sheets_key']],
     [
       'memberships',
       ['org_id', 'pilot_id', 'code', 'role', 'status', 'reject_reason', 'joined_via', 'created_at', 'decided_at', 'decided_by', 'credentials_valid_from', 'updated_at'],

@@ -91,8 +91,8 @@ export class AdminCorrectionQueries {
     private readonly clock: Clock,
   ) {}
 
-  async preview(input: CorrectionPreviewInput): Promise<CorrectionPreviewOutcome> {
-    const stream = await this.events.sessionEvents(this.db, input.sessionUuid);
+  async preview(orgId: string, input: CorrectionPreviewInput): Promise<CorrectionPreviewOutcome> {
+    const stream = await this.events.sessionEvents(this.db, orgId, input.sessionUuid);
     if (stream.length === 0) return { ok: false, reason: 'session_not_found' };
 
     const before = projectSession(stream);
@@ -108,7 +108,7 @@ export class AdminCorrectionQueries {
       this.clock.now(),
     );
     const limits: AircraftLimits = {
-      capacityL: await this.aircraft.capacityL(this.db, candidate.aircraftId),
+      capacityL: await this.aircraft.capacityL(this.db, orgId, candidate.aircraftId),
       // Kolumny konfiguracji oleju dochodzą w Etapie D (issue #60) - do tego czasu
       // reguły olejowe przy korekcie administratora śpią, jak przy nieznanym samolocie.
       oilMinL: null,
@@ -119,7 +119,7 @@ export class AdminCorrectionQueries {
       ok: true,
       preview: {
         sessionUuid: input.sessionUuid,
-        target: await this.targetOf(stream, input.correction.targetUuid),
+        target: await this.targetOf(orgId, stream, input.correction.targetUuid),
         before,
         // Projekcja liczona z PEŁNEGO strumienia z doklejonym kandydatem - dokładnie
         // tak, jak zrobi to komenda po zapisie (`projectSession` na całości, nigdy
@@ -140,6 +140,7 @@ export class AdminCorrectionQueries {
    * kartę z zerami udającymi odczyt.
    */
   private async targetOf(
+    orgId: string,
     stream: readonly Event[],
     targetUuid: string,
   ): Promise<AdminCorrectionTarget | null> {
@@ -152,7 +153,7 @@ export class AdminCorrectionQueries {
     // przy pierwszej zmianie - i to na ekranie, który istnieje po to, żeby pokazywać
     // prawdę o rejestrze.
     const effective = applyCorrections(stream).find((event) => event.uuid === targetUuid);
-    const meta = await this.adminEvents.sourceDeviceOf(this.db, targetUuid);
+    const meta = await this.adminEvents.sourceDeviceOf(this.db, orgId, targetUuid);
 
     return {
       uuid: original.uuid,

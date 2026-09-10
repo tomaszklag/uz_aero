@@ -52,8 +52,13 @@ export class AdminMaintenanceQueries {
    * różnica, której już nie ma. Dlatego zapis liczy różnice PONOWNIE, pod blokadą
    * (`commands/maintenance.ts`), zamiast ufać liczbom z podglądu.
    */
-  async compareProjections(): Promise<RebuildReport> {
-    const scan = await scanProjections(this.db, {
+  /**
+   * `orgId` = klub administratora; `null` = cały rejestr, wyłącznie dla superadministratora
+   * ze skryptu `rebuild-projections` (issue #99: przebudowa jest operacją na dzienniku
+   * JEDNEGO klubu, gdy woła ją jego administrator).
+   */
+  async compareProjections(orgId: string | null): Promise<RebuildReport> {
+    const scan = await scanProjections(this.db, orgId, {
       maintenance: this.maintenance,
       events: this.events,
       sessions: this.sessions,
@@ -76,9 +81,9 @@ export class AdminMaintenanceQueries {
   }
 
   /** Stan tabeli `refresh_tokens` PRZED czyszczeniem - same liczby i daty. */
-  async refreshTokens(): Promise<RefreshTokenScanDto> {
+  async refreshTokens(orgId: string | null): Promise<RefreshTokenScanDto> {
     const at = this.clock.now();
-    const scan = await this.maintenance.scanRefreshTokens(this.db, at);
+    const scan = await this.maintenance.scanRefreshTokens(this.db, orgId, at);
 
     return {
       total: scan.total,

@@ -34,7 +34,7 @@ import type { Clock, EventsStorePort, SessionsProjectionPort } from '../../commo
 import { sessionRowFrom } from '../../common/mappers/sessionRow.ts';
 import type { RebuildReport, TokenPurgeReport } from '../contracts/maintenance.ts';
 import type { AuditedWrite } from '../auditedWrite.ts';
-import type { AuditActor, MaintenanceAdminPort } from '../ports.ts';
+import { orgScopeOf, type AuditActor, type MaintenanceAdminPort } from '../ports.ts';
 import { scanProjections } from '../projectionScan.ts';
 
 /**
@@ -146,7 +146,7 @@ export class AdminMaintenanceCommands {
     let report: RebuildReport;
     try {
       report = await this.write.run(actor, async (tx) => {
-        const result = await this.rewriteDiffering(tx);
+        const result = await this.rewriteDiffering(tx, orgScopeOf(actor));
         return {
           result,
           audit: {
@@ -188,8 +188,8 @@ export class AdminMaintenanceCommands {
    * raport nie wypisał" i „czego ten przebieg nie ruszył". Uzasadnienie samego
    * limitu stoi przy stałej (`../projectionScan.ts`).
    */
-  private async rewriteDiffering(tx: AuditedTx): Promise<RebuildReport> {
-    const scan = await scanProjections(tx, {
+  private async rewriteDiffering(tx: AuditedTx, orgId: string | null): Promise<RebuildReport> {
+    const scan = await scanProjections(tx, orgId, {
       maintenance: this.maintenance,
       events: this.events,
       sessions: this.sessions,
@@ -240,7 +240,7 @@ export class AdminMaintenanceCommands {
    */
   private async rewrite(tx: AuditedTx, sessionUuid: string, orgId: string): Promise<boolean> {
     await tx.query('SELECT pg_advisory_xact_lock(hashtext($1))', [sessionUuid]);
-    const fresh = await this.events.sessionEvents(tx, sessionUuid);
+    const fresh = await this.events.sessionEvents(tx, orgId, sessionUuid);
     if (fresh.length === 0) return false;
     await this.sessions.upsert(tx, sessionRowFrom(sessionUuid, fresh, orgId));
     return true;
@@ -269,7 +269,7 @@ export class AdminMaintenanceCommands {
 
     const at = this.clock.now();
     const report = await this.write.run(actor, async (tx) => {
-      const purged = await this.maintenance.purgeExpiredRefreshTokens(tx, at);
+      const purged = await this.maintenance.purgeExpiredRefreshTokens(tx, orgScopeOf(actor), at);
       const result: TokenPurgeReport = {
         deleted: purged.deleted,
         oldestExpiredAt: purged.oldestExpiredAt?.toISOString() ?? null,

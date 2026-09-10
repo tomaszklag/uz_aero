@@ -82,15 +82,17 @@ export interface ProjectionScan {
  */
 export async function scanProjections(
   db: Queryable,
+  /** Klub, którego dziennik porównujemy; `null` = cały rejestr (superadministrator). */
+  scope: string | null,
   ports: ProjectionScanPorts,
 ): Promise<ProjectionScan> {
-  const uuids = await ports.maintenance.sessionUuids(db);
+  const uuids = await ports.maintenance.sessionUuids(db, scope);
   const diffs: ProjectionRowDiff[] = [];
   let rowsDiffering = 0;
   let fieldsDiffering = 0;
 
   for (const { sessionUuid, orgId } of uuids) {
-    const stream = await ports.events.sessionEvents(db, sessionUuid);
+    const stream = await ports.events.sessionEvents(db, orgId, sessionUuid);
     // Rejestr jest źródłem listy, więc pusty strumień znaczy tylko tyle, że sesja
     // zniknęła między zapytaniami - nie ma z czego liczyć projekcji.
     if (stream.length === 0) continue;
@@ -98,7 +100,7 @@ export async function scanProjections(
     // Klub z kolumny rejestru (`events.org_id`) - jedynego miejsca, które go zna;
     // strumień domenowy klubu nie niesie (wielofirmowość §2).
     const computed = sessionRowFrom(sessionUuid, stream, orgId);
-    const stored = await ports.sessions.get(db, sessionUuid);
+    const stored = await ports.sessions.get(db, orgId, sessionUuid);
 
     const fields = stored == null ? [] : projectionDiff(stored, computed);
     if (stored != null && fields.length === 0) continue;

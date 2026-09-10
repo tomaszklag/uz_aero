@@ -870,7 +870,7 @@ describe('porządek rejestru daje INDEKS, nie sortowanie w pamięci', () => {
 
   async function planOf(db: Queryable, filter: EventListFilter): Promise<string> {
     const { spy, sent } = recorder(db);
-    await new PgAdminEventsReadRepo().list(spy, filter, 120_000);
+    await new PgAdminEventsReadRepo().list(spy, ORG_A, filter, 120_000);
 
     const page = sent.find((q) => q.text.includes('ORDER BY'));
     if (page == null) throw new Error('adapter nie wysłał zapytania strony');
@@ -905,7 +905,7 @@ describe('porządek rejestru daje INDEKS, nie sortowanie w pamięci', () => {
 
       let cursor: string | undefined;
       if (withCursor) {
-        const first = await repo.list(db, { direction, limit: 50 }, 120_000);
+        const first = await repo.list(db, ORG_A, { direction, limit: 50 }, 120_000);
         expect(first?.nextCursor).not.toBeNull();
         cursor = first!.nextCursor!;
       }

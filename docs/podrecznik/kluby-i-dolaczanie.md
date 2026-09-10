@@ -57,7 +57,11 @@ Kluby na serwerze zakłada **superadministrator** - osoba spoza klubów, z włas
 
 @panel organizacje-klub "Karta klubu: pierwszy administrator i kod klubu"
 
-> **Dlaczego tak.** „Nic nie wycieka między klubami" obejmuje także operatora serwera. Gdy klub potrzebuje pomocy w dzienniku, jego administrator dodaje operatora jako członka - jawnie i z wpisem w dzienniku akcji, jak każdego innego pilota.
+Superadministrator prowadzi też **kolejkę zgłoszeń błędów z aplikacji** - jedną dla całego serwera, z nazwą klubu przy każdym zgłoszeniu. Ta zakładka nie istnieje w panelu klubu: zgłoszenie opisuje aplikację, nie klub, a poprawka wchodzi nowym wydaniem dla wszystkich klubów naraz. Administrator klubu zgłasza więc błędy tak jak pilot - przyciskiem w aplikacji.
+
+@panel zgloszenia-lista "Zgłoszenia błędów ze wszystkich klubów"
+
+> **Dlaczego tak.** „Nic nie wycieka między klubami" obejmuje także operatora serwera. Gdy klub potrzebuje pomocy w dzienniku, jego administrator dodaje operatora jako członka - jawnie i z wpisem w dzienniku akcji, jak każdego innego pilota. Zgłoszenia błędów są jedynym wyjątkiem i to wyjątek wąski: opis błędu z założenia dotyczy aplikacji, a pilot decyduje, co w nim napisze.
 
 ## Częste problemy
 

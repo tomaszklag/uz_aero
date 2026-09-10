@@ -138,21 +138,33 @@ const SERVICE_STATUS_SQL: Record<ServiceStatus, string> = {
 const SELECT = `
   SELECT a.*,
          (SELECT COUNT(*) FROM sessions s
-           WHERE s.aircraft_id = a.id AND s.status = 'active')       AS open_sessions,
+           WHERE s.org_id = a.org_id
+             AND s.aircraft_id = a.id AND s.status = 'active')       AS open_sessions,
          (SELECT COUNT(*) FROM flags f
-           WHERE f.aircraft_id = a.id AND f.status = 'open')         AS open_flags,
+           WHERE f.org_id = a.org_id
+             AND f.aircraft_id = a.id AND f.status = 'open')         AS open_flags,
          (SELECT MAX(e.received_at) FROM events e
-           WHERE e.aircraft_id = a.id)                               AS last_event_at
+           WHERE e.org_id = a.org_id
+             AND e.aircraft_id = a.id)                               AS last_event_at
     FROM aircraft a`;
 
+/**
+ * „Maszyna JEST zajęta" - jeden literał na jedno pojęcie, bo pyta o to i filtr listy,
+ * i licznik kafla, a rozjazd między nimi byłby cichy (chip obiecywałby inną liczbę,
+ * niż pokazuje tabela pod nim). Klub jawnie, jak w każdym podzapytaniu (issue #99 C4).
+ */
+const CLAIMED_SQL = `EXISTS (SELECT 1 FROM sessions s
+                              WHERE s.org_id = a.org_id
+                                AND s.aircraft_id = a.id AND s.status = 'active')`;
+
 export class PgAdminFleetRepo implements FleetAdminPort {
-  async list(db: Queryable, filter: FleetListFilter): Promise<AdminAircraftJoin[]> {
+  async list(db: Queryable, orgId: string, filter: FleetListFilter): Promise<AdminAircraftJoin[]> {
+    // Klub jest pierwszym warunkiem każdej listy klubu - nie polem filtra (issue #99).
     const sql = new SqlFilter();
+    sql.add('a.org_id = ?', orgId);
     if (filter.serviceStatus !== undefined) sql.add(SERVICE_STATUS_SQL[filter.serviceStatus]);
     if (filter.claimed !== undefined) {
-      const exists = `EXISTS (SELECT 1 FROM sessions s
-                               WHERE s.aircraft_id = a.id AND s.status = 'active')`;
-      sql.add(filter.claimed ? exists : `NOT ${exists}`);
+      sql.add(filter.claimed ? CLAIMED_SQL : `NOT ${CLAIMED_SQL}`);
     }
     applySearch(sql, filter.search);
 
@@ -166,8 +178,8 @@ export class PgAdminFleetRepo implements FleetAdminPort {
     return rows.map(toJoin);
   }
 
-  async counts(db: Queryable): Promise<FleetCounts> {
-    return this.countBy(db, new SqlFilter());
+  async counts(db: Queryable, orgId: string): Promise<FleetCounts> {
+    return this.countBy(db, new SqlFilter().add('a.org_id = ?', orgId));
   }
 
   /**
@@ -178,8 +190,13 @@ export class PgAdminFleetRepo implements FleetAdminPort {
    * zobaczysz"). Sklejenie ich w jedno zmusiłoby kafle do drgania przy wpisywaniu
    * w wyszukiwarkę, czyli odebrałoby im ich jedyną treść.
    */
-  async scopeCounts(db: Queryable, filter: { search?: string }): Promise<FleetCounts> {
+  async scopeCounts(
+    db: Queryable,
+    orgId: string,
+    filter: { search?: string },
+  ): Promise<FleetCounts> {
     const sql = new SqlFilter();
+    sql.add('a.org_id = ?', orgId);
     applySearch(sql, filter.search);
     return this.countBy(db, sql);
   }
@@ -191,10 +208,7 @@ export class PgAdminFleetRepo implements FleetAdminPort {
       `SELECT COUNT(*) AS total,
               COUNT(*) FILTER (WHERE ${SERVICE_STATUS_SQL.active})   AS active,
               COUNT(*) FILTER (WHERE ${SERVICE_STATUS_SQL.disabled}) AS disabled,
-              COUNT(*) FILTER (
-                WHERE EXISTS (SELECT 1 FROM sessions s
-                               WHERE s.aircraft_id = a.id AND s.status = 'active')
-              ) AS claimed
+              COUNT(*) FILTER (WHERE ${CLAIMED_SQL}) AS claimed
          FROM aircraft a ${sql.where()}`,
       sql.params(),
     );
@@ -207,13 +221,19 @@ export class PgAdminFleetRepo implements FleetAdminPort {
     };
   }
 
-  async byId(db: Queryable, id: string): Promise<AdminAircraft | null> {
-    const { rows } = await db.query<AircraftDbRow>('SELECT * FROM aircraft WHERE id = $1', [id]);
+  async byId(db: Queryable, orgId: string, id: string): Promise<AdminAircraft | null> {
+    const { rows } = await db.query<AircraftDbRow>(
+      'SELECT * FROM aircraft WHERE org_id = $1 AND id = $2',
+      [orgId, id],
+    );
     return rows[0] == null ? null : toAircraft(rows[0]);
   }
 
-  async joinById(db: Queryable, id: string): Promise<AdminAircraftJoin | null> {
-    const { rows } = await db.query<JoinedDbRow>(`${SELECT} WHERE a.id = $1`, [id]);
+  async joinById(db: Queryable, orgId: string, id: string): Promise<AdminAircraftJoin | null> {
+    const { rows } = await db.query<JoinedDbRow>(`${SELECT} WHERE a.org_id = $1 AND a.id = $2`, [
+      orgId,
+      id,
+    ]);
     return rows[0] == null ? null : toJoin(rows[0]);
   }
 
@@ -274,7 +294,7 @@ export class PgAdminFleetRepo implements FleetAdminPort {
    * `updated_at = now()` jest tu ZAWSZE i to jest jedyny powód, dla którego zapis
    * z panelu dociera do telefonów - patrz nagłówek pliku.
    */
-  async update(tx: Queryable, id: string, patch: AircraftPatch): Promise<void> {
+  async update(tx: Queryable, orgId: string, id: string, patch: AircraftPatch): Promise<void> {
     await tx.query(
       `UPDATE aircraft
           SET reg            = COALESCE($2, reg),
@@ -296,7 +316,7 @@ export class PgAdminFleetRepo implements FleetAdminPort {
               initial_fuel_l    = CASE WHEN $21 THEN $20 ELSE initial_fuel_l END,
               initial_oil_l     = CASE WHEN $23 THEN $22 ELSE initial_oil_l END,
               updated_at     = now()
-        WHERE id = $1`,
+        WHERE id = $1 AND org_id = $24`,
       [
         id,
         patch.reg ?? null,
@@ -321,14 +341,16 @@ export class PgAdminFleetRepo implements FleetAdminPort {
         patch.initialFuelL !== undefined,
         patch.initialOilL ?? null,
         patch.initialOilL !== undefined,
+        orgId,
       ],
     );
   }
 
-  async openSessions(tx: Queryable, aircraftId: string): Promise<number> {
+  async openSessions(tx: Queryable, orgId: string, aircraftId: string): Promise<number> {
     const { rows } = await tx.query<{ n: string }>(
-      "SELECT COUNT(*) AS n FROM sessions WHERE aircraft_id = $1 AND status = 'active'",
-      [aircraftId],
+      `SELECT COUNT(*) AS n FROM sessions
+        WHERE org_id = $1 AND aircraft_id = $2 AND status = 'active'`,
+      [orgId, aircraftId],
     );
     return Number(rows[0]?.n ?? 0);
   }
@@ -349,21 +371,21 @@ export class PgAdminFleetRepo implements FleetAdminPort {
    * celem, więc liczenie celów zablokowałoby usunięcie KAŻDEJ maszyny. Sprawcą wpisu
    * jednostka być nie może (sprawcą jest konto), więc tabela nie ma tu czego wnieść.
    */
-  async references(tx: Queryable, aircraftId: string): Promise<number> {
+  async references(tx: Queryable, orgId: string, aircraftId: string): Promise<number> {
     const { rows } = await tx.query<{ n: string }>(
-      `SELECT (EXISTS (SELECT 1 FROM events WHERE aircraft_id = $1))::int
-            + (EXISTS (SELECT 1 FROM sessions WHERE aircraft_id = $1))::int
-            + (EXISTS (SELECT 1 FROM flags WHERE aircraft_id = $1))::int
-            + (EXISTS (SELECT 1 FROM export_log WHERE aircraft_id = $1))::int
-            + (EXISTS (SELECT 1 FROM aircraft_consumption WHERE aircraft_id = $1))::int AS n`,
-      [aircraftId],
+      `SELECT (EXISTS (SELECT 1 FROM events WHERE org_id = $2 AND aircraft_id = $1))::int
+            + (EXISTS (SELECT 1 FROM sessions WHERE org_id = $2 AND aircraft_id = $1))::int
+            + (EXISTS (SELECT 1 FROM flags WHERE org_id = $2 AND aircraft_id = $1))::int
+            + (EXISTS (SELECT 1 FROM export_log WHERE org_id = $2 AND aircraft_id = $1))::int
+            + (EXISTS (SELECT 1 FROM aircraft_consumption WHERE org_id = $2 AND aircraft_id = $1))::int AS n`,
+      [aircraftId, orgId],
     );
     return Number(rows[0]?.n ?? 0);
   }
 
   /** Trwałe skasowanie wiersza jednostki. Wołane wyłącznie po `refuseDeleteAircraft`. */
-  async delete(tx: Queryable, aircraftId: string): Promise<void> {
-    await tx.query('DELETE FROM aircraft WHERE id = $1', [aircraftId]);
+  async delete(tx: Queryable, orgId: string, aircraftId: string): Promise<void> {
+    await tx.query('DELETE FROM aircraft WHERE org_id = $1 AND id = $2', [orgId, aircraftId]);
   }
 
   /**

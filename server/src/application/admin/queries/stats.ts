@@ -43,7 +43,7 @@ export class AdminStatsQueries {
     private readonly clock: Clock,
   ) {}
 
-  async load(filter: StatsFilter = {}): Promise<StatsLoadOutcome> {
+  async load(orgId: string, filter: StatsFilter = {}): Promise<StatsLoadOutcome> {
     const at = this.clock.now();
     const range = rangeFrom(filter, at.getTime());
     if (range == null) return { ok: false, reason: 'bad_range' };
@@ -51,14 +51,14 @@ export class AdminStatsQueries {
 
     const [totals, openSessions, daily, aircraft, pilots, operations, drops, clients] =
       await Promise.all([
-        this.stats.totals(this.db, scope),
-        this.stats.openSessions(this.db, scope),
-        this.stats.daily(this.db, scope),
-        this.stats.byAircraft(this.db, scope),
-        this.stats.byPilot(this.db, scope),
-        this.stats.byOperation(this.db, scope),
-        this.stats.drops(this.db, scope),
-        this.stats.dropsByClient(this.db, scope),
+        this.stats.totals(this.db, orgId, scope),
+        this.stats.openSessions(this.db, orgId, scope),
+        this.stats.daily(this.db, orgId, scope),
+        this.stats.byAircraft(this.db, orgId, scope),
+        this.stats.byPilot(this.db, orgId, scope),
+        this.stats.byOperation(this.db, orgId, scope),
+        this.stats.drops(this.db, orgId, scope),
+        this.stats.dropsByClient(this.db, orgId, scope),
       ]);
 
     return {

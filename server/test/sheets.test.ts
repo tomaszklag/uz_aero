@@ -12,10 +12,15 @@ import { describe, expect, it } from 'vitest';
 
 import { TEST_BASE_URL, testHarness } from './helpers.ts';
 import { googleTokenFor } from './testIdentityProvider.ts';
+import { ORG_A_SHEETS_KEY, ORG_B_SHEETS_KEY } from './testWorld.ts';
 
 const DAY = Date.UTC(2026, 5, 22);
 const at = (h: number, m: number): number => DAY + (h * 60 + m) * 60_000;
-const TAB_URL = `${TEST_BASE_URL}/sheets/2026-06-22_SP-AXA`;
+/**
+ * Adres karty od 2.0.0 (issue #99, C5): slug klubu w ścieżce, SEKRET klubu w zapytaniu.
+ * Poświadczeniem czytelnika jest sekret, nie sesja - link ma działać skarbnikowi bez konta.
+ */
+const TAB_URL = `${TEST_BASE_URL}/sheets/aeroklub-alfa/2026-06-22_SP-AXA?k=${ORG_A_SHEETS_KEY}`;
 
 let seq = 0;
 function event(type: string, time: number, payload: Record<string, unknown> = {}) {
@@ -160,5 +165,86 @@ describe('bazodanowe karty arkusza (PgSheets + GET /sheets/:tab)', () => {
     });
     expect(res.statusCode).toBe(404);
     expect(res.json().error).toBe('not_found');
+  });
+});
+
+/**
+ * ADRES KARTY: slug klubu + SEKRET klubu (issue #99 C5).
+ *
+ * Karta jest dokumentem, który klub oddaje na zewnątrz - skarbnikowi, kontroli, ubezpieczycielowi -
+ * a żaden z nich nie ma konta w aplikacji. Poświadczeniem jest więc sekret w adresie, nie sesja;
+ * klub decyduje, komu link daje, i może go unieważnić, wymieniając sekret.
+ *
+ * Wszystkie odmowy są JEDNYM 404 co do bajtu: zły sekret, zły slug i nieistniejąca karta
+ * wyglądają identycznie, więc adres nie potwierdza, że klub o tym slugu istnieje ani że
+ * karta o tej nazwie gdzieś jest.
+ */
+describe('adres karty po slugu klubu (GET /sheets/:slug/:tab)', () => {
+  const address = (slug: string, tab: string, key: string): string =>
+    `/sheets/${slug}/${tab}?k=${key}`;
+
+  it('właściwy slug i sekret otwierają kartę BEZ tokenu', async () => {
+    const { app } = await testHarness();
+    await post(app, await login(app), day());
+
+    const res = await app.inject({
+      method: 'GET',
+      url: address('aeroklub-alfa', '2026-06-22_SP-AXA', ORG_A_SHEETS_KEY),
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().tab).toBe('2026-06-22_SP-AXA');
+    // Ta sama treść, co pod adresem z tokenem - to jeden dokument, nie dwa widoki.
+    expect(res.json().rows).toContainEqual(['UZ Aero - doba samolotu', '2026-06-22 (UTC)']);
+  });
+
+  it('sekret CUDZEGO klubu nie otwiera karty - i nie mówi, że istnieje', async () => {
+    const { app } = await testHarness();
+    await post(app, await login(app), day());
+
+    // Sekret Bety pod slugiem Alfy: klub jest, karta jest, poświadczenie nie pasuje.
+    const foreignKey = await app.inject({
+      method: 'GET',
+      url: address('aeroklub-alfa', '2026-06-22_SP-AXA', ORG_B_SHEETS_KEY),
+    });
+    expect(foreignKey.statusCode).toBe(404);
+    expect(foreignKey.json().error).toBe('not_found');
+
+    // Sekret Alfy pod slugiem Bety: to samo 404, choć tu nie pasuje klub.
+    const foreignSlug = await app.inject({
+      method: 'GET',
+      url: address('aeroklub-beta', '2026-06-22_SP-AXA', ORG_A_SHEETS_KEY),
+    });
+    expect(foreignSlug.statusCode).toBe(404);
+    expect(foreignSlug.json().error).toBe('not_found');
+  });
+
+  it('zgadywanie sekretu, slugu i braku sekretu kończy się TYM SAMYM 404', async () => {
+    const { app } = await testHarness();
+    await post(app, await login(app), day());
+
+    const cases = [
+      address('aeroklub-alfa', '2026-06-22_SP-AXA', 'x'.repeat(32)), // sekret zmyślony
+      address('klub-ktorego-nie-ma', '2026-06-22_SP-AXA', ORG_A_SHEETS_KEY), // slug nieznany
+      address('aeroklub-alfa', '2099-01-01_SP-XXX', ORG_A_SHEETS_KEY), // karty nie ma
+      `/sheets/aeroklub-alfa/2026-06-22_SP-AXA`, // bez sekretu w ogóle
+    ];
+    for (const url of cases) {
+      const res = await app.inject({ method: 'GET', url });
+      expect(res.statusCode, url).toBe(404);
+      expect(res.json().error, url).toBe('not_found');
+    }
+  });
+
+  it('klub WYŁĄCZONY zamyka swoje karty, choć sekret jest prawdziwy', async () => {
+    // Karta jest dokumentem klubu, a klub wyłączony na platformie nie wydaje dokumentów.
+    const { app, db } = await testHarness();
+    await post(app, await login(app), day());
+    await db.query(`UPDATE organizations SET active = FALSE WHERE slug = 'aeroklub-alfa'`);
+
+    const res = await app.inject({
+      method: 'GET',
+      url: address('aeroklub-alfa', '2026-06-22_SP-AXA', ORG_A_SHEETS_KEY),
+    });
+    expect(res.statusCode).toBe(404);
   });
 });

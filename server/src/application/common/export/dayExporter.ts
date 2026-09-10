@@ -160,12 +160,15 @@ export class DayExporter {
    * pytanie wołającego brzmi „czy dane tej zmiany są w arkuszu", a odpowiedź
    * „karta ma nową rewizję" byłaby na nie nieprawdziwa.
    */
-  async exportSession(sessionUuid: string): Promise<ExportOutcome> {
-    const row = await this.sessions.get(this.db, sessionUuid);
+  async exportSession(orgId: string, sessionUuid: string): Promise<ExportOutcome> {
+    // Klub OD WOŁAJĄCEGO (token telefonu, aktor panelu, wiersz projekcji) - eksporter
+    // nie wyprowadza go z uuid-a, bo uuid nie jest poświadczeniem (issue #99). Sesja
+    // spoza klubu jest dla niego nieistniejąca: `no_events`.
+    const row = await this.sessions.get(this.db, orgId, sessionUuid);
     if (row == null) return { exported: false, reason: 'no_events' };
     if (row.claimTime == null) return { exported: false, reason: 'no_preflight' };
 
-    return this.exportDay(sheetDay(row.claimTime), row.aircraftId, sessionUuid);
+    return this.exportDay(orgId, sheetDay(row.claimTime), row.aircraftId, sessionUuid);
   }
 
   /**
@@ -180,13 +183,18 @@ export class DayExporter {
    * dziennik rewizji i kody załogi są kodami z członkostw w tym klubie.
    */
   async exportDay(
+    orgId: string,
     day: string,
     aircraftId: string,
     requiredSession?: string,
   ): Promise<ExportOutcome> {
-    const all = await this.sessions.listByAircraftDay(this.db, aircraftId, utcDayRange(day));
+    const all = await this.sessions.listByAircraftDay(
+      this.db,
+      orgId,
+      aircraftId,
+      utcDayRange(day),
+    );
     if (all.length === 0) return { exported: false, reason: 'no_events' };
-    const orgId = all[0]!.orgId;
 
     /*
      * SESJA UNIEWAŻNIONA NIE ISTNIEJE DLA KARTY (2026-08-30, dociągnięte 2026-08-31).
@@ -214,7 +222,7 @@ export class DayExporter {
     // też status, choć adapter zwraca wyłącznie otwarte - dzięki temu jest TĄ SAMĄ
     // funkcją, co w skrzynce panelu, gdzie na liście stoją również flagi rozwiązane.
     const blockedBy = new Map<string, number[]>();
-    for (const flag of await this.flags.openForAircraft(this.db, aircraftId)) {
+    for (const flag of await this.flags.openForAircraft(this.db, orgId, aircraftId)) {
       if (!blocksExport(flag)) continue;
       for (const uuid of flag.sessionUuids) {
         blockedBy.set(uuid, [...(blockedBy.get(uuid) ?? []), flag.id]);
@@ -233,7 +241,7 @@ export class DayExporter {
 
     const sessions: DaySheetSession[] = [];
     for (const row of included) {
-      const stream = await this.events.sessionEvents(this.db, row.sessionUuid);
+      const stream = await this.events.sessionEvents(this.db, orgId, row.sessionUuid);
       if (stream.length === 0) continue;
       const state = projectSession(stream);
       sessions.push({
@@ -280,7 +288,7 @@ export class DayExporter {
     // session_uuid)`). Blokada obejmuje ten sam klucz co rewizja: parę (doba, samolot).
     const revision = await this.db.transaction(async (tx) => {
       await this.exportLog.lock(tx, day, aircraftId);
-      const next = (await this.exportLog.latestRevision(tx, day, aircraftId)) + 1;
+      const next = (await this.exportLog.latestRevision(tx, orgId, day, aircraftId)) + 1;
       await this.exportLog.appendCard(tx, {
         orgId,
         day,

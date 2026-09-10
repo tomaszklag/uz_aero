@@ -47,6 +47,7 @@ export function ShellRoute() {
   return (
     <AppShell
       who={session.pilot.name}
+      capabilities={session.capabilities}
       onLogout={() => logout.mutate()}
       logoutPending={logout.isPending}
     >

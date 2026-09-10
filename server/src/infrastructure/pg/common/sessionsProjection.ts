@@ -9,7 +9,12 @@
  * panelu czyta tę tabelę także `admin/sessionsRepo.ts`.
  */
 
-import type { Queryable, SessionRow, SessionsProjectionPort } from '../../../application/common/ports.ts';
+import type {
+  Queryable,
+  SessionOwner,
+  SessionRow,
+  SessionsProjectionPort,
+} from '../../../application/common/ports.ts';
 import { sessionColumns, toSessionRow, type SessionDbRow } from '../sessionDbRow.ts';
 
 export class PgSessionsProjection implements SessionsProjectionPort {
@@ -100,18 +105,39 @@ export class PgSessionsProjection implements SessionsProjectionPort {
     );
   }
 
-  async get(db: Queryable, sessionUuid: string): Promise<SessionRow | null> {
+  async get(db: Queryable, orgId: string, sessionUuid: string): Promise<SessionRow | null> {
     const { rows } = await db.query<SessionDbRow>(
-      `SELECT ${sessionColumns('s')} FROM sessions s WHERE s.session_uuid = $1`,
-      [sessionUuid],
+      `SELECT ${sessionColumns('s')} FROM sessions s
+        WHERE s.org_id = $1 AND s.session_uuid = $2`,
+      [orgId, sessionUuid],
     );
     return rows[0] ? toSessionRow(rows[0]) : null;
   }
 
-  async listByAircraft(db: Queryable, aircraftId: string): Promise<SessionRow[]> {
+  /**
+   * Właściciel po samym uuid-zie - JEDYNY odczyt tej tabeli bez klubu w warunku
+   * (`SessionOwner` w portach mówi, dlaczego ingest go potrzebuje). Oddaje trzy kolumny,
+   * nie wiersz: wołający ma rozstrzygnąć, CZYJA to sesja, a nie przeczytać jej treść.
+   */
+  async ownerOf(db: Queryable, sessionUuid: string): Promise<SessionOwner | null> {
+    const { rows } = await db.query<{ org_id: string; pic_id: string; status: string }>(
+      'SELECT org_id, pic_id, status FROM sessions WHERE session_uuid = $1',
+      [sessionUuid],
+    );
+    const row = rows[0];
+    if (row == null) return null;
+    return {
+      orgId: row.org_id,
+      picId: row.pic_id,
+      status: row.status === 'closed' ? 'closed' : row.status === 'voided' ? 'voided' : 'active',
+    };
+  }
+
+  async listByAircraft(db: Queryable, orgId: string, aircraftId: string): Promise<SessionRow[]> {
     const { rows } = await db.query<SessionDbRow>(
-      `SELECT ${sessionColumns('s')} FROM sessions s WHERE s.aircraft_id = $1`,
-      [aircraftId],
+      `SELECT ${sessionColumns('s')} FROM sessions s
+        WHERE s.org_id = $1 AND s.aircraft_id = $2`,
+      [orgId, aircraftId],
     );
     return rows.map(toSessionRow);
   }
@@ -128,22 +154,23 @@ export class PgSessionsProjection implements SessionsProjectionPort {
    */
   async listByAircraftDay(
     db: Queryable,
+    orgId: string,
     aircraftId: string,
     range: { fromMs: number; toMs: number },
   ): Promise<SessionRow[]> {
     const { rows } = await db.query<SessionDbRow>(
       `SELECT ${sessionColumns('s')} FROM sessions s
-        WHERE s.aircraft_id = $1 AND s.claim_time BETWEEN $2 AND $3
+        WHERE s.org_id = $1 AND s.aircraft_id = $2 AND s.claim_time BETWEEN $3 AND $4
         ORDER BY s.claim_time ASC, s.session_uuid ASC`,
-      [aircraftId, range.fromMs, range.toMs],
+      [orgId, aircraftId, range.fromMs, range.toMs],
     );
     return rows.map(toSessionRow);
   }
 
-  async listByPilot(db: Queryable, picId: string): Promise<SessionRow[]> {
+  async listByPilot(db: Queryable, orgId: string, picId: string): Promise<SessionRow[]> {
     const { rows } = await db.query<SessionDbRow>(
-      `SELECT ${sessionColumns('s')} FROM sessions s WHERE s.pic_id = $1`,
-      [picId],
+      `SELECT ${sessionColumns('s')} FROM sessions s WHERE s.org_id = $1 AND s.pic_id = $2`,
+      [orgId, picId],
     );
     return rows.map(toSessionRow);
   }

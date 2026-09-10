@@ -41,7 +41,7 @@ export function registerAdminConsumptionRoutes(
     app,
     gate,
     { method: 'GET', url: '/fleet/:id/consumption', capability: 'panel.access' },
-    async (req, reply) => {
+    async (req, reply, actor) => {
       const path = params.safeParse(req.params);
       if (!path.success) return reply.code(400).send({ error: 'bad_request' });
 
@@ -50,7 +50,10 @@ export function registerAdminConsumptionRoutes(
 
       const { from, to } = search.data;
       // Górna granica jako koniec DNIA, nie jego początek (patrz `dayRange.ts`).
-      const outcome = await consumption.load(path.data.id, { fromMs: from, toMs: endOfDay(to) });
+      const outcome = await consumption.load(actor.orgId, path.data.id, {
+        fromMs: from,
+        toMs: endOfDay(to),
+      });
 
       if (!outcome.ok) {
         return outcome.reason === 'no_aircraft'

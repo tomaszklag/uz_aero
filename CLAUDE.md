@@ -2848,6 +2848,72 @@ obowiązujące odtąd:
   zegarze), `attemptLimiter.test.ts`, `clubCode.test.ts`, blok „osoba BEZ klubu"
   w `auth.test.ts`, backfill tożsamości w `organizations.test.ts`
 
+## Wielofirmowość 2.0.0 - epik C: izolacja danych między klubami (issue #99, 2026-09-10, gałąź `feature-99-izolacja-klubow`)
+Epik B dał model (klub w tokenie, `org_id` na tabelach); epik C zamyka pytanie „czy to
+naprawdę nie wycieka". Reguły obowiązujące odtąd KAŻDĄ nową trasę i KAŻDE nowe zapytanie:
+- **klub jest ARGUMENTEM PORTU, nie polem filtra**: `list(db, orgId, filter)`,
+  `byId(db, orgId, id)`, `latest(db, orgId, uuid)`. Pole filtra dałoby się pominąć
+  i nikt by nie zauważył; argument wymusza kompilator. W predykacie klub stoi jako
+  PIERWSZY warunek (`filter.add('s.org_id = ?', orgId)` przed czymkolwiek innym)
+- **KLUB POWTARZA SIĘ W KAŻDYM PODZAPYTANIU I ZŁĄCZENIU**, nawet gdy zewnętrzne `WHERE`
+  zawęziło już wiersz nadrzędny (`AND f.org_id = s.org_id`, `LEFT JOIN aircraft a ON
+  a.id = s.aircraft_id AND a.org_id = s.org_id`). Bez tego izolacja wisi na GLOBALNEJ
+  jedyności identyfikatora - a uuid operacji nadaje TELEFON, nie serwer. Strażnik
+  z `architecture.test.ts` znalazł jedenaście takich miejsc przy pierwszym przebiegu;
+  wszystkie dostały jawny predykat po jednej linijce
+- **CUDZA RZECZ ODPOWIADA 404, NIE 403**: operacja, maszyna, flaga, karta i norma innego
+  klubu są dla tokenu NIEISTNIEJĄCE. `403` mówiłoby „to istnieje, ale nie dla ciebie",
+  czyli potwierdzałoby cudzy zasób. `sync-status` cudzej operacji oddaje kształt
+  „nieznana serwerowi" (`received: 0`, `status: 'unknown'`, `flags: []`), bo telefon
+  musi umieć to przeczytać bez wyjątku
+- **INGEST WAŻY CZŁONKOSTWO PER ZDARZENIE, nie per paczka**: zapis do maszyny albo
+  operacji innego klubu wraca w `withheld[]` (mechanizm z issue #81), a reszta paczki
+  wchodzi. Odmowa całej paczki (`aircraft_not_in_org` z epiku B) dawała cudzej operacji
+  władzę nad synchronizacją WŁASNYCH zapisów pilota. Jedyna twarda odmowa ingestu
+  zostaje `not_session_pic` (jeden piszący, §4.1)
+- **BRAMA TELEFONU PYTA BAZĘ O CZŁONKOSTWO PRZY KAŻDYM ŻĄDANIU** (`authorizeMember`
+  + `MemberGate`/`memberFromRequest` w `http/memberGate.ts`): wyłączenie członkostwa
+  zamyka trasy natychmiast, nie po godzinie życia tokenu. Panel miał to od epiku B
+  (`authorizeOrg`), a teraz obie bramy liczą to samo jednym kodem
+- **KARTA ARKUSZA MA ADRES Z KLUBEM I SEKRETEM**: `GET /sheets/<slug>/<tab>?k=<sekret>`,
+  gdzie sekretem jest `organizations.sheets_key` (losuje baza przy założeniu klubu).
+  Trasa NIE MA SESJI i to jest jej sens - link musi otworzyć się skarbnikowi bez konta.
+  Każda rozbieżność (slug, sekret, nazwa karty, klub wyłączony) to TEN SAM `404`, więc
+  adres nie potwierdza istnienia ani klubu, ani karty; porównanie sekretu czasowo stałe.
+  Adres sprzed 2.0.0 (`/sheets/:tab`) zostaje dla linków zapisanych w dzienniku eksportu
+  i czyta kartę w klubie Z TOKENU. Nazwa karty (`sheetTab`) bez zmian
+- **ZGŁOSZENIA BŁĘDÓW SĄ MODUŁEM PLATFORMY**: `bugs.triage` wyszło z roli klubowej
+  `admin` i weszło do `PLATFORM_CAPABILITIES` obok `platform.manage`. Opis błędu niesie
+  kontekst okna razem z danymi operacji, a poprawia go jedna osoba dla całego serwera -
+  więc decyzja o CUDZYM zgłoszeniu nie należy do klubu. W panelu: pozycji „Zgłoszenia"
+  w kolumnie klubu NIE MA WCALE (nie jest wyszarzona - `navItemsFor` w `ui/shell/nav.ts`
+  bramkuje pozycje ZDOLNOŚCIĄ), trasa pyta o zdolność (`RequireCapability`), a wiersz
+  listy niesie kolumnę „Klub", bo kolejka jest jedna dla serwera, a kod pilota jedyny
+  w klubie. Ekran startowy liczy `homeFor(capabilities)` - stała `/dziennik` odsyłałaby
+  superadministratora na trasę, która odpowie mu 401
+- **SYGNATURA NUMERUJE DOBĘ PILOTA W KLUBIE**: osoba w dwóch klubach ma tego samego dnia
+  dwa niezależne numerowania i dwa kody (`PWI` w Alfie, `PWB` w Becie) - kod pochodzi
+  z CZŁONKOSTWA w klubie OPERACJI, nie z klubu tokenu, którym ktoś patrzy
+- **`/me/events` JEDZIE Z KLUBU TOKENU**: osoba w dwóch klubach odtwarza rejestr osobno
+  w każdym z nich. Odtworzenie wszystkich naraz wymagałoby, żeby telefon trzymał
+  operacje spoza klubu aktywnego - to decyzja epiku F, nie C
+- **DWA STRAŻNIKI, KTÓRE TRZEBA ZNAĆ PRZED DOPISANIEM TRASY** (opis: `docs/architektura-
+  panelu-serwer.md` §7.10):
+  1. `server/test/tenantIsolation.test.ts` bierze listę tras z REJESTRU FASTIFY
+     (`app.routeCatalog`) i wymaga, żeby każda miała przypadek izolacji albo imienny
+     wyjątek z powodem. **Nowa trasa bez jednego z dwóch wywala ten test** - i to jest
+     zamierzone, bo dokument dezaktualizuje się po cichu, a rejestr tras nie;
+  2. strażnik w `server/test/architecture.test.ts`: każda metoda adaptera, która dotyka
+     tabeli skopowanej, musi mówić `org_id`. Jednostką jest METODA (nie plik, nie
+     literał - `SqlFilter` rozbija predykat na osobny napis), a szablony `${SELECT}`
+     z modułu wklejają się do wołającego. Sprawdzenie jest TEKSTOWE: gwarantuje, że
+     o klubie ktoś pomyślał, nie że pomyślał dobrze - poprawność bierze na siebie test
+     izolacji. Wyjątki są imienne i mają kontrolę „nie zgnij": metoda z listy musi
+     istnieć i nadal pomijać klub. Dziś jest jeden (`bugReportsRepo.countByStatus`)
+- **czego epik C świadomie NIE ROBI**: nakładek na maszynę współdzieloną między klubami
+  (`aircraft_overlap` liczy się w obrębie klubu), przełączania klubu w panelu (epik E)
+  i klubu w aplikacji pilota (epik F)
+
 ## Obieg gałęzi (git-flow od 2026-09-08, milestone „Wielofirmowość + SaaS 2.0.0")
 ```
 feature-… → develop → ninerdeck_x_x_x → main        (wydanie planowe)

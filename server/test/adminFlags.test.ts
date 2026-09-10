@@ -212,7 +212,7 @@ describe('rozwiązanie flagi (A03a)', () => {
           exported: true,
           tab: '2026-06-22_SP-AXA',
           revision: 1,
-          url: 'http://uzaero.test/sheets/2026-06-22_SP-AXA',
+          url: 'http://uzaero.test/sheets/aeroklub-alfa/2026-06-22_SP-AXA?k=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
         },
       },
       {
@@ -221,7 +221,7 @@ describe('rozwiązanie flagi (A03a)', () => {
           exported: true,
           tab: '2026-06-22_SP-AXA',
           revision: 2,
-          url: 'http://uzaero.test/sheets/2026-06-22_SP-AXA',
+          url: 'http://uzaero.test/sheets/aeroklub-alfa/2026-06-22_SP-AXA?k=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
         },
       },
     ]);

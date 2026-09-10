@@ -38,6 +38,6 @@ export function registerAdminDashboardRoutes(
     app,
     gate,
     { method: 'GET', url: '/dashboard', capability: 'panel.access' },
-    async (_req, reply) => reply.send(await queries.load()),
+    async (_req, reply, actor) => reply.send(await queries.load(actor.orgId)),
   );
 }

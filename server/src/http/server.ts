@@ -46,7 +46,9 @@ import type { ReferenceQueries } from '../application/mobile/queries/reference.t
 import type { TaskSuggestionQueries } from '../application/mobile/queries/taskSuggestions.ts';
 import type { SheetQueries } from '../application/common/queries/sheets.ts';
 import type { StateQueries } from '../application/mobile/queries/aircraftState.ts';
-import type { PilotsPort, TokenService, TraceSinkPort } from '../application/common/ports.ts';
+import type { TraceCommands } from '../application/mobile/commands/traces.ts';
+import type { PilotsPort, TokenService } from '../application/common/ports.ts';
+import type { MemberGate } from './memberGate.ts';
 import { registerAdminCsrfGuard } from './adminCsrf.ts';
 import { registerRequestLog } from './requestLog.ts';
 import { registerAdminPanelStatic } from './routes/admin/staticPanel.ts';
@@ -101,7 +103,11 @@ export interface ServerDeps {
   myEvents: MyEventQueries;
   state: StateQueries;
   sheets: SheetQueries;
-  traces: TraceSinkPort;
+  /**
+   * Przyjęcie śladu kalibracyjnego (`POST /traces`) - od epiku C wielofirmowości komenda,
+   * nie goły port zapisu: sesja z paczki musi należeć do klubu i pilota z tokenu.
+   */
+  traces: TraceCommands;
   /**
    * Ślad sesji do narysowania (`GET /me/sessions/:uuid/track`, issue #47) - kierunek
    * powrotny wysyłki nagrania. Telefon oddaje surowe fixy i kasuje swoją kopię, więc
@@ -222,6 +228,26 @@ export interface ServerDeps {
   googleWebClientId: string;
 }
 
+/**
+ * Jedna zarejestrowana trasa - wpis REJESTRU TRAS, który serwer prowadzi sam.
+ *
+ * Istnieje dla testu izolacji klubów (`test/tenantIsolation.test.ts`, issue #99 C3):
+ * test bierze listę tras Z FASTIFY, nie z własnej tablicy, więc nowa trasa bez
+ * przypadku izolacji wywala go, zamiast przejść niezauważona. Hook `onRoute` widzi
+ * także trasy wtyczek statycznych (dzieci kontekstu), więc lista jest kompletna.
+ */
+export interface RouteCatalogEntry {
+  method: string;
+  url: string;
+}
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    /** Wszystkie trasy tego serwera - patrz `RouteCatalogEntry`. */
+    routeCatalog: readonly RouteCatalogEntry[];
+  }
+}
+
 export interface ServerOptions {
   /**
    * Dziennik żądań na konsoli (`registerRequestLog`). Domyślnie WŁĄCZONY - serwer klubu
@@ -251,6 +277,15 @@ export async function buildServer(
   options: ServerOptions = {},
 ): Promise<FastifyInstance> {
   const app = Fastify({ logger: false, trustProxy: options.trustProxy === true });
+
+  // Rejestr tras - PRZED wszystkim, co rejestruje trasy (także wtyczkami), żeby żadna
+  // nie powstała poza nim. `onRoute` dziedziczą konteksty potomne, więc statyczny
+  // build panelu i strona też się tu wpisują.
+  const catalog: RouteCatalogEntry[] = [];
+  app.addHook('onRoute', (route) => {
+    for (const method of [route.method].flat()) catalog.push({ method, url: route.url });
+  });
+  app.decorate('routeCatalog', catalog);
 
   // Przed trasami, żeby dziennik objął także żądania odbite przez strażnika CSRF
   // i te, które nie trafią w żadną trasę (404 też jest informacją o tym, co się dzieje).
@@ -302,14 +337,20 @@ export async function buildServer(
 
   registerAuthRoutes(app, deps.auth);
   registerJoinRoutes(app, deps.auth, deps.join);
-  registerReferenceRoutes(app, deps.reference, deps.tokens);
-  registerEventsRoutes(app, deps.ingest, deps.myEvents, deps.tokens);
-  registerStateRoutes(app, deps.state, deps.tokens);
-  registerSheetsRoutes(app, deps.sheets, deps.tokens);
-  registerTracesRoutes(app, deps.traces, deps.sessionTrack, deps.tokens);
-  registerPrefsRoutes(app, deps.prefs, deps.tokens);
-  registerBugReportRoutes(app, deps.bugReports, deps.tokens);
-  registerTaskSuggestionRoutes(app, deps.taskSuggestions, deps.tokens);
+
+  // Trasy TELEFONU - jedna brama (`memberFromRequest`): token klubu I aktywne członkostwo
+  // czytane przy każdym żądaniu, jak w panelu (epik C wielofirmowości, issue #99).
+  // Ten sam `pilots`, co brama panelu niżej - to ci sami ludzie i ta sama tabela.
+  const memberGate: MemberGate = { tokens: deps.tokens, accounts: deps.pilots };
+
+  registerReferenceRoutes(app, deps.reference, memberGate);
+  registerEventsRoutes(app, deps.ingest, deps.myEvents, memberGate);
+  registerStateRoutes(app, deps.state, memberGate);
+  registerSheetsRoutes(app, deps.sheets, memberGate);
+  registerTracesRoutes(app, deps.traces, deps.sessionTrack, memberGate);
+  registerPrefsRoutes(app, deps.prefs, memberGate);
+  registerBugReportRoutes(app, deps.bugReports, memberGate);
+  registerTaskSuggestionRoutes(app, deps.taskSuggestions, memberGate);
 
   // Panel administracyjny - trasy per zasób, tak samo jak wyżej; prefiks `/admin/api`
   // pilnuje `adminRoute`, żeby nie rozjechał się między plikami.

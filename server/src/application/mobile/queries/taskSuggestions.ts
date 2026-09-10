@@ -40,10 +40,10 @@ export class TaskSuggestionQueries {
    * `picId` pochodzi WYŁĄCZNIE z tokenu (trasa `/me/*`) - pilot nie ma jak zapytać
    * o cudze notatki, bo nie ma gdzie podać cudzej tożsamości.
    */
-  async get(picId: string): Promise<TaskSuggestionsView> {
+  async get(orgId: string, picId: string): Promise<TaskSuggestionsView> {
     const [clients, notes] = await Promise.all([
-      this.suggestions.clients(this.db, TASK_SUGGESTION_LIMIT),
-      this.suggestions.notes(this.db, picId, TASK_SUGGESTION_LIMIT),
+      this.suggestions.clients(this.db, orgId, TASK_SUGGESTION_LIMIT),
+      this.suggestions.notes(this.db, orgId, picId, TASK_SUGGESTION_LIMIT),
     ]);
 
     return {

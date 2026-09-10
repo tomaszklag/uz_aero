@@ -40,13 +40,13 @@ export function registerAdminStatsRoutes(
     app,
     gate,
     { method: 'GET', url: '/stats', capability: 'panel.access' },
-    async (req, reply) => {
+    async (req, reply, actor) => {
       const query = statsQuery.safeParse(req.query);
       if (!query.success) return reply.code(400).send({ error: 'bad_request' });
 
       const { from, to } = query.data;
       // Górna granica jako koniec DNIA, nie jego początek (patrz `dayRange.ts`).
-      const outcome = await stats.load({ fromMs: from, toMs: endOfDay(to) });
+      const outcome = await stats.load(actor.orgId, { fromMs: from, toMs: endOfDay(to) });
       if (!outcome.ok) return reply.code(400).send({ error: 'bad_range' });
 
       return reply.send(outcome.report);

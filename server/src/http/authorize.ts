@@ -36,6 +36,56 @@ export function authorize(tokens: TokenService, token: string | null): VerifiedI
   return tokens.verify(token);
 }
 
+/**
+ * Brama tras TELEFONU (epik C wielofirmowości, issue #99): token klubu I aktywne
+ * członkostwo w tym klubie, czytane przy KAŻDYM żądaniu - dokładnie tak, jak panel
+ * (`authorizeOrg` niżej), z tego samego powodu i tą samą regułą.
+ *
+ * ══ DLACZEGO TELEFON PYTA BAZĘ, SKORO TOKEN ŻYJE GODZINĘ ══
+ * Do epiku C trasy telefonu wierzyły samemu podpisowi: token klubu = członek klubu.
+ * Wyłączenie członkostwa działało więc na telefonie dopiero po wygaśnięciu tokenu,
+ * a przez tę godzinę pilot wyłączony z klubu nadal wysyłał zdarzenia do jego dziennika
+ * i pobierał jego flotę. Jeden odczyt po kluczu głównym `(org_id, pilot_id)` na żądanie
+ * jest tańszy niż godzina cudzych zapisów - i jest tą samą kontrolą, którą issue #99
+ * nazywa „PIC aktywnym członkiem klubu maszyny": maszyna należy do klubu z tokenu
+ * (pilnuje ingest), a członkostwo w tym klubie pilnuje tu brama.
+ *
+ * `null` = 401 - „za tym poświadczeniem nikt już nie stoi": token zły, osoba
+ * zablokowana platformowo, klub wyłączony, członkostwo nieaktywne albo poświadczenie
+ * starsze niż jego unieważnienie. Telefon reaguje na 401 jak na wygaśnięcie: próbuje
+ * odświeżyć, a refresh odmawia z tego samego powodu - i sync staje z nazwanym stanem.
+ */
+export async function authorizeMember(
+  tokens: TokenService,
+  accounts: PilotsPort,
+  token: string | null,
+): Promise<MembershipAuthSnapshot | null> {
+  const identity = authorize(tokens, token);
+  if (identity == null) return null;
+  return activeMembership(accounts, identity);
+}
+
+/**
+ * Członkostwo AKTYWNE z bazy dla tożsamości z tokenu - wspólny rdzeń bramy telefonu
+ * i bramy panelu. Trzy warunki naraz: osoba, klub i członkostwo są aktywne (koniunkcja
+ * liczona w SQL-u, `authSnapshot`), a poświadczenie jest nowsze niż OBIE daty
+ * unieważnienia (osoby i członkostwa, §3.4).
+ */
+async function activeMembership(
+  accounts: PilotsPort,
+  identity: VerifiedIdentity,
+): Promise<MembershipAuthSnapshot | null> {
+  const account = await accounts.authSnapshot(identity.pilotId, identity.orgId);
+  if (account == null || !account.active) return null;
+  if (
+    credentialsRevoked(account.credentialsValidFrom, identity.issuedAt) ||
+    credentialsRevoked(account.membershipCredentialsValidFrom, identity.issuedAt)
+  ) {
+    return null;
+  }
+  return account;
+}
+
 export type AuthOutcome =
   | { ok: true; account: MembershipAuthSnapshot }
   | { ok: false; status: 401; body: { error: 'unauthorized' } }
@@ -81,19 +131,8 @@ export async function authorizeOrg(
   token: string | null,
   capability: Capability,
 ): Promise<AuthOutcome> {
-  const identity = authorize(tokens, token);
-  if (identity == null) return { ok: false, status: 401, body: { error: 'unauthorized' } };
-
-  const account = await accounts.authSnapshot(identity.pilotId, identity.orgId);
-  if (account == null || !account.active) {
-    return { ok: false, status: 401, body: { error: 'unauthorized' } };
-  }
-  if (
-    credentialsRevoked(account.credentialsValidFrom, identity.issuedAt) ||
-    credentialsRevoked(account.membershipCredentialsValidFrom, identity.issuedAt)
-  ) {
-    return { ok: false, status: 401, body: { error: 'unauthorized' } };
-  }
+  const account = await authorizeMember(tokens, accounts, token);
+  if (account == null) return { ok: false, status: 401, body: { error: 'unauthorized' } };
 
   if (!can(account.role, capability)) {
     return { ok: false, status: 403, body: { error: 'forbidden', required: capability } };

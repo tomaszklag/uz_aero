@@ -77,13 +77,13 @@ export function registerAdminFlagRoutes(
     // `panel.access`, nie `flags.resolve`: skrzynkę CZYTA każdy, kto ma wejście do
     // panelu - zamyka sprawę węższa zdolność, i to jest cały podział.
     { method: 'GET', url: '/flags', capability: 'panel.access' },
-    async (req, reply) => {
+    async (req, reply, actor) => {
       const query = listQuery.safeParse(req.query);
       if (!query.success) return reply.code(400).send({ error: 'bad_request' });
 
       const q = query.data;
       return reply.send(
-        await queries.list({
+        await queries.list(actor.orgId, {
           status: q.status,
           type: q.type,
           aircraftId: q.aircraftId,

@@ -58,7 +58,7 @@ export function registerAdminMaintenanceRoutes(
     app,
     gate,
     { method: 'GET', url: '/maintenance/projections/compare', capability: 'maintenance.run' },
-    async (_req, reply) => reply.send(await queries.compareProjections()),
+    async (_req, reply, actor) => reply.send(await queries.compareProjections(actor.orgId)),
   );
 
   adminRoute(
@@ -89,7 +89,7 @@ export function registerAdminMaintenanceRoutes(
     app,
     gate,
     { method: 'GET', url: '/maintenance/refresh-tokens', capability: 'accounts.manage' },
-    async (_req, reply) => reply.send(await queries.refreshTokens()),
+    async (_req, reply, actor) => reply.send(await queries.refreshTokens(actor.orgId)),
   );
 
   adminRoute(

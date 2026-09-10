@@ -744,7 +744,7 @@ const pageQuery = (sent: { text: string; params: unknown[] }[]) =>
 
 async function planOf(db: Queryable, filter: AuditListFilter): Promise<string> {
   const { spy, sent } = recorder(db);
-  await new PgAdminAuditReadRepo().list(spy, filter);
+  await new PgAdminAuditReadRepo().list(spy, ORG_A, filter);
 
   const page = pageQuery(sent);
   const { rows } = await db.query<Record<string, string>>(`EXPLAIN ${page.text}`, page.params);

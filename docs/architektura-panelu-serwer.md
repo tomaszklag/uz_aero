@@ -1467,6 +1467,68 @@ kolejki, a `pilot_id` dostaje `NOT NULL`. Zgłoszenie 1.x staje się osobą z cz
 nikt nie wypada z kolejki przez wdrożenie. Lista kolumn `external_identities` jest odtąd
 przybita w `schema.test.ts`.
 
+
+### 7.10 Izolacja klubów - dwa strażniki na jedną regułę (epik C, 2026-09-10)
+
+Reguła jest jednym zdaniem: **żadnemu zapytaniu nie wolno przepuścić wiersza innego
+klubu.** Jej złamanie jest za to najcichsze w całym serwerze - zapytanie bez `WHERE
+org_id` kompiluje się, przechodzi typy, zwraca wiersze i wygląda dobrze. Tylko zwraca
+ich za dużo. Dlatego nie pilnuje jej dokument, a dwa testy, i to na dwóch różnych
+poziomach.
+
+**1. `test/tenantIsolation.test.ts` - od strony TRASY.** Świat to dwa kluby z kompletem
+danych (operacja, flaga, odczyt administratora z wpisem audytu, norma, zgłoszenie
+błędu, karta arkusza; PWI jest w obu klubach i ma operację w Becie). Dane klubu B niosą
+ZNACZNIKI (`SP-BBB`, `sess-b`, `beta-flag`, nazwiska), których żadna odpowiedź dla
+klubu A nie ma prawa zawierać. Sondy są dwojakie: listy muszą być czyste ze znaczników,
+a adresy bezpośrednie do danych B muszą odpowiadać tak, jakby tych danych nie było.
+
+Kluczowa własność tego testu nie jest w sondach, tylko w tym, SKĄD BIERZE LISTĘ TRAS:
+z rejestru Fastify (`app.routeCatalog` - hook `onRoute` w `buildServer`, dekorowany na
+instancji). Test wymaga, żeby KAŻDA zarejestrowana trasa miała albo przypadek izolacji,
+albo imienny wpis w wyjątkach z powodem (`/health`, logowanie, statyk). Trasa dopisana
+bez jednego z dwóch wywala test - i to jest cała gwarancja, jaką da się dać regule
+„nic nie wycieka": lista w dokumencie dezaktualizuje się po cichu, rejestr tras nie.
+Sprawdzenie idzie w OBIE strony - przypadek bez trasy też wywala test, bo opisuje
+ochronę adresu, którego już nie ma.
+
+**2. `test/architecture.test.ts` - od strony ADAPTERA.** Każda metoda w `src/`, która
+dotyka tabeli skopowanej (`FROM`/`JOIN`/`INTO`/`UPDATE` + nazwa), musi w swoim ciele
+mówić `org_id`. Dwa szczegóły decydują o tym, że ten strażnik w ogóle działa:
+
+- **jednostką jest METODA, nie plik ani literał.** `SqlFilter` rozbija warunek klubu na
+  osobny napis (`filter.add('s.org_id = ?', orgId)`), więc w literale z `SELECT`-em
+  klubu nie ma i nigdy nie będzie. Cały plik z kolei przechodziłby dzięki jednej
+  skopowanej metodzie, choć obok stałaby dziesiąta nieskopowana;
+- **szablony SQL z modułu wklejają się do metody, która się na nie powołuje**
+  (`const SELECT = \`…\`` + `${SELECT}`): tabela bywa w szablonie, a klub w metodzie.
+
+Cena jest znana i zapisana przy teście: sprawdzenie jest TEKSTOWE, więc gwarantuje, że
+o klubie w tym zapytaniu ktoś pomyślał - nie że pomyślał dobrze. Poprawność predykatu
+bierze na siebie test izolacji tras. Wyjątki są imienne, z powodem, i mają własną
+kontrolę: metoda wymieniona w wyjątkach musi ISTNIEĆ i NADAL pomijać klub, inaczej
+test pada. Wpis o metodzie, która dawno się skopowała, uśpiłby strażnika na przyszłość.
+Dziś wyjątek jest jeden - `bugReportsRepo.countByStatus`, liczniki kolejki PLATFORMOWEJ.
+
+**Co ten strażnik znalazł przy pierwszym uruchomieniu** (i dlaczego warto było go
+napisać przed sprawdzeniem, czy przechodzi): jedenaście podzapytań i złączeń
+korelowanych, które opierały izolację na GLOBALNEJ JEDYNOŚCI identyfikatora, nie na
+kolumnie klubu - `EXISTS (… FROM sessions s WHERE s.aircraft_id = a.id)` w licznikach
+floty, agregaty flag i rewizji w liście operacji, `LEFT JOIN aircraft` w siedmiu
+adapterach, oba `LEFT JOIN LATERAL` monitora eksportu. Żadne z nich nie przeciekało
+DZIŚ: `aircraft.id` i `sessions.session_uuid` są kluczami głównymi całych tabel. Ale
+uuid operacji nadaje TELEFON, a nie serwer - więc izolacja klubów wisiała na tym, że
+dwa telefony nie wylosują tej samej wartości. Wszystkie jedenaście dostało jawny
+predykat (`AND x.org_id = s.org_id`); kosztowało to po jednej linijce i zdjęło całą
+klasę założeń.
+
+**Kontrola samych strażników.** Oba mają w sobie przypadek, który udowadnia, że widzą:
+test architektury podrzuca sobie syntetycznego winowajcę (metodę z `SELECT * FROM
+sessions` bez klubu) i wymaga, żeby go odbił; test izolacji sprawdza, że rejestr tras
+naprawdę czegoś widzi i że znaczniki klubu B są w bazie, zanim uzna „czystą" odpowiedź
+za dowód. Dodatkowo obie sondy mają KONTROLĘ POZYTYWNĄ - klub B widzi swoje dane, klub
+A swoje - bo test izolacji, który przechodzi na pustej bazie, nie dowodzi niczego.
+
 ---
 
 ## 8. Sesja przeglądarkowa - dwa źródła tokenu, jedna autoryzacja

@@ -41,6 +41,13 @@ export interface AdminBugReport {
   /** Kod i nazwisko z `pilots`; `null` = konta już nie ma, zgłoszenie zostaje. */
   pilotCode: string | null;
   pilotName: string | null;
+  /**
+   * Klub, w którym pilot pracował, gdy zobaczył błąd (issue #99, C6). Zgłoszenia czyta
+   * SUPERADMINISTRATOR na jednej liście dla wszystkich klubów, więc wiersz nazywa
+   * swój klub sam - bez tego dwa zgłoszenia o „SP-AXA" z dwóch klubów byłyby
+   * nieodróżnialne.
+   */
+  org: { id: string; slug: string; name: string };
 
   severity: BugSeverityWire | null;
   description: string;

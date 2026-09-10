@@ -49,7 +49,8 @@ interface ClientSuggestionDbRow extends SuggestionDbRow {
 }
 
 export class PgTaskSuggestionsRepo implements TaskSuggestionsPort {
-  async clients(db: Queryable, limit: number): Promise<ClientSuggestion[]> {
+  async clients(db: Queryable, orgId: string, limit: number): Promise<ClientSuggestion[]> {
+    // Klienci KLUBU z tokenu: kontrahent jednego klubu nie jest podpowiedzią dla drugiego.
     const { rows } = await db.query<ClientSuggestionDbRow>(
       `SELECT value, operation, last_used_at
          FROM (
@@ -58,12 +59,12 @@ export class PgTaskSuggestionsRepo implements TaskSuggestionsPort {
                   s.operation     AS operation,
                   ${LAST_USED}    AS last_used_at
              FROM sessions s
-            WHERE s.client IS NOT NULL AND btrim(s.client) <> ''
+            WHERE s.org_id = $1 AND s.client IS NOT NULL AND btrim(s.client) <> ''
             ORDER BY s.client, ${LAST_USED} DESC, s.session_uuid DESC
          ) newest
         ORDER BY last_used_at DESC, value ASC
-        LIMIT $1`,
-      [limit],
+        LIMIT $2`,
+      [orgId, limit],
     );
 
     return rows.map((r) => {
@@ -77,15 +78,20 @@ export class PgTaskSuggestionsRepo implements TaskSuggestionsPort {
     });
   }
 
-  async notes(db: Queryable, picId: string, limit: number): Promise<TaskSuggestion[]> {
+  async notes(
+    db: Queryable,
+    orgId: string,
+    picId: string,
+    limit: number,
+  ): Promise<TaskSuggestion[]> {
     const { rows } = await db.query<SuggestionDbRow>(
       `SELECT s.notes AS value, MAX(${LAST_USED}) AS last_used_at
          FROM sessions s
-        WHERE s.pic_id = $1 AND s.notes IS NOT NULL AND btrim(s.notes) <> ''
+        WHERE s.org_id = $1 AND s.pic_id = $2 AND s.notes IS NOT NULL AND btrim(s.notes) <> ''
         GROUP BY s.notes
         ORDER BY last_used_at DESC, s.notes ASC
-        LIMIT $2`,
-      [picId, limit],
+        LIMIT $3`,
+      [orgId, picId, limit],
     );
 
     // `pg` zwraca TIMESTAMPTZ jako Date, PGlite potrafi jako string - normalizujemy.

@@ -22,10 +22,8 @@ import {
   MY_EVENTS_PAGE_LIMIT,
   type MyEventQueries,
 } from '../../../application/mobile/queries/myEvents.ts';
-import type { TokenService } from '../../../application/common/ports.ts';
-import { authorize } from '../../authorize.ts';
-import { tokenFromRequest } from '../../tokenFromRequest.ts';
 import { ADMIN_ONLY_EVENT_TYPES, payloadValid } from './eventPayloads.ts';
+import { memberFromRequest, type MemberGate } from '../../memberGate.ts';
 
 /** Eksportowana dla testu kontraktowego zod ↔ typ domenowy. */
 export const eventEnvelope = z.object({
@@ -61,10 +59,10 @@ export function registerEventsRoutes(
   app: FastifyInstance,
   ingest: IngestCommands,
   myEvents: MyEventQueries,
-  tokens: TokenService,
+  gate: MemberGate,
 ): void {
   app.post('/events', async (req, reply) => {
-    const who = authorize(tokens, tokenFromRequest(req));
+    const who = await memberFromRequest(gate, req);
     if (who == null) return reply.code(401).send({ error: 'unauthorized' });
 
     const parsed = eventsBody.safeParse(req.body);
@@ -90,9 +88,9 @@ export function registerEventsRoutes(
     );
     if (!outcome.ok) {
       // Single-writer (§4.4): zdarzenia sesji wysyła wyłącznie telefon jej PIC-a.
-      // Cudzy klub (`aircraft_not_in_org`, wielofirmowość §3.5) odbija tak samo:
-      // to nie jest konflikt danych, tylko zapis poza uprawnieniami - i tak samo
-      // w całości, bez rozjazdu księgowości outboxa.
+      // To nie jest konflikt danych, tylko zapis poza uprawnieniami - i w całości,
+      // bez rozjazdu księgowości outboxa. Zapis do CUDZEGO klubu nie jest odmową:
+      // ląduje w `withheld` odpowiedzi 200 (issue #99, C2).
       return reply.code(403).send({ error: outcome.reason });
     }
     return reply.send(outcome.result);
@@ -105,15 +103,19 @@ export function registerEventsRoutes(
    *
    * Pusty rejestr to `{ events: [], nextCursor: null }` ze statusem 200, nie 404 -
    * pilot bez ani jednej sesji jest stanem normalnym (pierwszy dzień w klubie).
+   *
+   * Rejestr KLUBU z tokenu (issue #99): operacje drugiego klubu odtwarza się pod jego
+   * tokenem, własnym kursorem (epik F) - a nie jednym strumieniem przez wszystkie kluby.
    */
   app.get('/me/events', async (req, reply) => {
-    const who = authorize(tokens, tokenFromRequest(req));
+    const who = await memberFromRequest(gate, req);
     if (who == null) return reply.code(401).send({ error: 'unauthorized' });
 
     const query = myEventsQuery.safeParse(req.query);
     if (!query.success) return reply.code(400).send({ error: 'bad_request' });
 
     const outcome = await myEvents.page(
+      who.orgId,
       who.pilotId,
       query.data.cursor ?? null,
       query.data.limit,

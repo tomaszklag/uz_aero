@@ -6,12 +6,15 @@
  * index.html" musiałby uważać, żeby nie przesłonić zasobów i nie połknąć 404 z API -
  * a to realne źródło błędów, którego za jeden znak `#` w adresie nie kupujemy.
  *
- * Trasy wynikają z KANONICZNEJ nawigacji (`ui/shell/tabs.ts`), a nie z drugiej listy
- * obok niej: zakładka prowadząca w 404 jest awarią, której nikt nie zauważa.
+ * Trasy wynikają z KANONICZNEJ nawigacji (`ui/shell/nav.ts`), a nie z drugiej listy
+ * obok niej: pozycja prowadząca w 404 jest awarią, której nikt nie zauważa. Trasa modułu
+ * platformy pyta dodatkowo o zdolność (`RequireCapability`) - patrz issue #99 C6.
  */
 
-import { createHashRouter, Navigate } from 'react-router-dom';
+import { createHashRouter } from 'react-router-dom';
 
+import { HomeRedirect } from './auth/HomeRedirect';
+import { RequireCapability } from './auth/RequireCapability';
 import { ShellRoute } from './auth/ShellRoute';
 import { AccountsScreen } from './screens/accounts/AccountsScreen';
 import { BugsScreen } from './screens/bugs/BugsScreen';
@@ -20,7 +23,6 @@ import { LogbookScreen } from './screens/logbook/LogbookScreen';
 import { SessionScreen } from './screens/logbook/SessionScreen';
 import { FleetScreen } from './screens/fleet/FleetScreen';
 import { LoginScreen } from './screens/login/LoginScreen';
-import { HOME } from './ui/shell/nav';
 
 export const router = createHashRouter([
   { path: '/logowanie', element: <LoginScreen /> },
@@ -28,7 +30,7 @@ export const router = createHashRouter([
     path: '/',
     element: <ShellRoute />,
     children: [
-      { index: true, element: <Navigate to={HOME} replace /> },
+      { index: true, element: <HomeRedirect /> },
 
       // Dziennik ma TRZY osobne trasy, nie segment opcjonalny jak konta i flota:
       // poziom 3 nie jest warstwą nad listą, tylko dokumentem na pełnej stronie,
@@ -52,12 +54,22 @@ export const router = createHashRouter([
 
       // Zgłoszenia: lista i karta pod JEDNĄ trasą, jak konta i flota - karta
       // otwiera się NAD listą, więc lista ma zostać pod spodem jako kontekst.
-      { path: 'zgloszenia/:uuid?', element: <BugsScreen /> },
+      // Moduł PLATFORMY (issue #99 C6), więc trasa pyta o zdolność: wklejony adres
+      // ma odesłać administratora klubu na jego ekran startowy, a nie pokazać mu ramę
+      // modułu, którego dane serwer i tak odmówi.
+      {
+        path: 'zgloszenia/:uuid?',
+        element: (
+          <RequireCapability capability="bugs.triage">
+            <BugsScreen />
+          </RequireCapability>
+        ),
+      },
 
       // Adres spoza mapy prowadzi na ekran startowy. Osobnej strony „nie znaleziono"
       // nie ma świadomie: panel ma trzy moduły, więc taka strona opisywałaby literówkę
       // w pasku przeglądarki, a nie stan systemu.
-      { path: '*', element: <Navigate to={HOME} replace /> },
+      { path: '*', element: <HomeRedirect /> },
     ],
   },
 ]);

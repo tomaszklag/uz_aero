@@ -128,13 +128,13 @@ export class AdminSessionVoidCommands {
         // `sessions` - zdarzenie zostałoby w rejestrze, a sesja wróciłaby do sum.
         await tx.query('SELECT pg_advisory_xact_lock(hashtext($1))', [input.sessionUuid]);
 
-        // Klub operacji z wiersza projekcji; sesja cudzego klubu jest nieistniejąca
-        // dla tego administratora (wielofirmowość - jak w korekcie).
-        const row = await this.sessions.get(tx, input.sessionUuid);
-        if (row == null || row.orgId !== actor.orgId) throw new SessionNotFound();
-        const orgId = row.orgId;
+        // Klub operacji = klub administratora; projekcja pyta o sesję W KLUBIE, więc sesja
+        // cudzego klubu jest nieistniejąca (wielofirmowość - jak w korekcie).
+        const orgId = actor.orgId;
+        const row = await this.sessions.get(tx, orgId, input.sessionUuid);
+        if (row == null) throw new SessionNotFound();
 
-        const stream = await this.events.sessionEvents(tx, input.sessionUuid);
+        const stream = await this.events.sessionEvents(tx, orgId, input.sessionUuid);
         if (stream.length === 0) throw new SessionNotFound();
 
         const before = projectSession(stream);
@@ -147,7 +147,7 @@ export class AdminSessionVoidCommands {
           at,
         );
         const limits: AircraftLimits = {
-          capacityL: await this.aircraft.capacityL(tx, candidate.aircraftId),
+          capacityL: await this.aircraft.capacityL(tx, orgId, candidate.aircraftId),
           // Reguły paliwa i oleju nie dotyczą tego typu zdarzenia; limity jadą, bo
           // `checkAppend` ocenia KANDYDATA, a nie wybrany podzbiór reguł.
           oilMinL: null,
@@ -163,7 +163,7 @@ export class AdminSessionVoidCommands {
 
         // Projekcję liczymy z PEŁNEGO strumienia - `status` sesji jest funkcją całości,
         // a nie różnicą do dołożenia.
-        const after = await this.events.sessionEvents(tx, input.sessionUuid);
+        const after = await this.events.sessionEvents(tx, orgId, input.sessionUuid);
         const state = projectSession(after);
         await this.sessions.upsert(tx, sessionRowFrom(input.sessionUuid, after, orgId));
 
@@ -206,7 +206,7 @@ export class AdminSessionVoidCommands {
         recordedAt: at,
         state: applied.state,
         warnings: applied.warnings,
-        reexport: await this.reexport(input.sessionUuid),
+        reexport: await this.reexport(actor.orgId, input.sessionUuid),
       },
     };
   }
@@ -221,9 +221,9 @@ export class AdminSessionVoidCommands {
    * wołający wie, CO się zmieniło, a przełożenie sesji na dobę jest regułą eksportera.
    * On sam pomija wiersze `voided` przy budowie karty.
    */
-  private async reexport(sessionUuid: string): Promise<ExportOutcome | null> {
+  private async reexport(orgId: string, sessionUuid: string): Promise<ExportOutcome | null> {
     try {
-      return await this.exporter.exportSession(sessionUuid);
+      return await this.exporter.exportSession(orgId, sessionUuid);
     } catch (err) {
       console.error(`przebudowa karty po unieważnieniu sesji ${sessionUuid} nie powiodła się:`, err);
       return null;

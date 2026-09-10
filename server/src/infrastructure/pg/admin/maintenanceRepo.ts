@@ -33,13 +33,21 @@ export class PgAdminMaintenanceRepo implements MaintenanceAdminPort {
    * danych dały ten sam raport - inaczej „różnice" zmieniałyby kolejność między biegami
    * i nie dałoby się ich porównać wzrokiem.
    */
-  async sessionUuids(db: Queryable): Promise<{ sessionUuid: string; orgId: string }[]> {
+  async sessionUuids(
+    db: Queryable,
+    orgId: string | null,
+  ): Promise<{ sessionUuid: string; orgId: string }[]> {
     // Klub jedzie razem z uuid-em, bo przebudowa pisze wiersz projekcji, a ten niesie
     // `org_id` (wielofirmowość) - z samego strumienia zdarzeń domena klubu nie odczyta.
     // Wszystkie zdarzenia jednej sesji mają ten sam klub (ingest tego pilnuje), więc
     // `DISTINCT` po parze daje tyle wierszy, ile sesji.
+    //
+    // `$1` pusty = cały rejestr (superadministrator ze skryptu); klub = jego sesje.
     const { rows } = await db.query<{ session_uuid: string; org_id: string }>(
-      'SELECT DISTINCT session_uuid, org_id FROM events ORDER BY session_uuid',
+      `SELECT DISTINCT session_uuid, org_id FROM events
+        WHERE ($1::text IS NULL OR org_id = $1)
+        ORDER BY session_uuid`,
+      [orgId],
     );
     return rows.map((r) => ({ sessionUuid: r.session_uuid, orgId: r.org_id }));
   }
@@ -52,7 +60,13 @@ export class PgAdminMaintenanceRepo implements MaintenanceAdminPort {
    * Granica jest domknięta (`<=`): token, który wygasa dokładnie teraz, już nie odnowi
    * dostępu, więc trzymanie go byłoby zbieraniem martwych wierszy o sekundę dłużej.
    */
-  async scanRefreshTokens(db: Queryable, at: Date): Promise<RefreshTokenScan> {
+  async scanRefreshTokens(
+    db: Queryable,
+    orgId: string | null,
+    at: Date,
+  ): Promise<RefreshTokenScan> {
+    // Tokeny KLUBU (`$2`) albo wszystkie (`$2` pusty - superadministrator): liczba sesji
+    // cudzego klubu jest informacją o cudzym klubie i do panelu klubu nie wchodzi.
     const { rows } = await db.query<{
       total: string;
       expired: string;
@@ -65,8 +79,9 @@ export class PgAdminMaintenanceRepo implements MaintenanceAdminPort {
               COUNT(*) FILTER (WHERE expires_at >  $1)        AS valid,
               MIN(expires_at) FILTER (WHERE expires_at <= $1) AS oldest,
               MAX(expires_at) FILTER (WHERE expires_at <= $1) AS newest
-         FROM refresh_tokens`,
-      [at.toISOString()],
+         FROM refresh_tokens
+        WHERE ($2::text IS NULL OR org_id = $2)`,
+      [at.toISOString(), orgId],
     );
 
     const row = rows[0];
@@ -91,11 +106,17 @@ export class PgAdminMaintenanceRepo implements MaintenanceAdminPort {
    * `remainingValid` czytamy PO skasowaniu, tą samą transakcją: to jest wykonywalna postać
    * zdania z ekranu „żaden pilot nie zostanie przez to wylogowany".
    */
-  async purgeExpiredRefreshTokens(tx: Queryable, at: Date): Promise<PurgedTokens> {
+  async purgeExpiredRefreshTokens(
+    tx: Queryable,
+    orgId: string | null,
+    at: Date,
+  ): Promise<PurgedTokens> {
     const stamp = at.toISOString();
     const { rows } = await tx.query<{ expires_at: string | Date }>(
-      'DELETE FROM refresh_tokens WHERE expires_at <= $1 RETURNING expires_at',
-      [stamp],
+      `DELETE FROM refresh_tokens
+        WHERE expires_at <= $1 AND ($2::text IS NULL OR org_id = $2)
+        RETURNING expires_at`,
+      [stamp, orgId],
     );
 
     const times = rows
@@ -105,8 +126,9 @@ export class PgAdminMaintenanceRepo implements MaintenanceAdminPort {
       .sort((a, b) => a - b);
 
     const remaining = await tx.query<{ valid: string }>(
-      'SELECT COUNT(*) AS valid FROM refresh_tokens WHERE expires_at > $1',
-      [stamp],
+      `SELECT COUNT(*) AS valid FROM refresh_tokens
+        WHERE expires_at > $1 AND ($2::text IS NULL OR org_id = $2)`,
+      [stamp, orgId],
     );
 
     return {

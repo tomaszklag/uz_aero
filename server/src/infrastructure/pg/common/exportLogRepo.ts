@@ -52,12 +52,12 @@ export class PgExportLogRepo implements ExportLogPort {
    * numeracje biegną niezależnie. Wtedy „większy numer" nie znaczy „nowszy zapis",
    * a ekran 11 pyta właśnie o nowszy. `id` domyka remis w milisekundzie.
    */
-  async latest(db: Queryable, sessionUuid: string): Promise<ExportRecord | null> {
+  async latest(db: Queryable, orgId: string, sessionUuid: string): Promise<ExportRecord | null> {
     const { rows } = await db.query<ExportLogDbRow>(
       `SELECT session_uuid, day::text AS day, aircraft_id, sheet_url, revision, exported_at
-       FROM export_log WHERE session_uuid = $1
+       FROM export_log WHERE org_id = $1 AND session_uuid = $2
        ORDER BY exported_at DESC, id DESC LIMIT 1`,
-      [sessionUuid],
+      [orgId, sessionUuid],
     );
     const r = rows[0];
     if (r == null) return null;
@@ -77,11 +77,16 @@ export class PgExportLogRepo implements ExportLogPort {
    * `MAX`, a nie `ORDER BY … LIMIT 1`, bo pytamy o jedną liczbę, a nie o wiersz -
    * i bo wierszy o tym numerze jest tyle, ile sesji w karcie.
    */
-  async latestRevision(db: Queryable, day: string, aircraftId: string): Promise<number> {
+  async latestRevision(
+    db: Queryable,
+    orgId: string,
+    day: string,
+    aircraftId: string,
+  ): Promise<number> {
     const { rows } = await db.query<{ revision: number | string | null }>(
       `SELECT COALESCE(MAX(revision), 0) AS revision
-         FROM export_log WHERE day = $1 AND aircraft_id = $2`,
-      [day, aircraftId],
+         FROM export_log WHERE org_id = $1 AND day = $2 AND aircraft_id = $3`,
+      [orgId, day, aircraftId],
     );
     return Number(rows[0]?.revision ?? 0);
   }

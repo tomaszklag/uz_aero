@@ -21,7 +21,7 @@
 import type { BugReportsPort, Clock } from '../../common/ports.ts';
 import type { BugStatus } from '../../../domain/bugReports.ts';
 import type { AuditedWrite } from '../auditedWrite.ts';
-import type { Actor } from '../ports.ts';
+import type { PlatformActor } from '../ports.ts';
 
 export interface BugStatusInput {
   uuid: string;
@@ -46,7 +46,12 @@ export class AdminBugReportCommands {
     private readonly clock: Clock,
   ) {}
 
-  async setStatus(actor: Actor, input: BugStatusInput): Promise<BugStatusOutcome> {
+  /**
+   * Działającym jest SUPERADMINISTRATOR (issue #99, C6): zgłoszenia opisują aplikację,
+   * nie dziennik klubu, i obsługuje je platforma - wpis audytu ma `org_id` pusty,
+   * a klub zgłoszenia jedzie w szczegółach wpisu.
+   */
+  async setStatus(actor: PlatformActor, input: BugStatusInput): Promise<BugStatusOutcome> {
     const at = this.clock.now();
     try {
       await this.write.run(actor, async (tx) => {
@@ -73,6 +78,8 @@ export class AdminBugReportCommands {
               from: before.status,
               to: input.status,
               note: input.note,
+              orgId: before.org.id,
+              orgSlug: before.org.slug,
               // Tożsamość zgłoszenia w dzienniku, bo lista panelu filtruje statusem
               // i zamknięte zgłoszenie bywa trudniejsze do odnalezienia niż wpis audytu.
               screen: before.screen,

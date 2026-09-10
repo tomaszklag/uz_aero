@@ -95,43 +95,45 @@ export class AdminDashboardQueries {
     private readonly clock: Clock,
   ) {}
 
-  async load(): Promise<AdminDashboard> {
+  async load(orgId: string): Promise<AdminDashboard> {
     const now = this.clock.now();
     const nowMs = now.getTime();
 
     const [fleetPage, openDays, staleOpenDays, flagPage, exportPage, inflow, recent] =
       await Promise.all([
-        this.fleet.list({}),
+        this.fleet.list(orgId, {}),
         // Sam LICZNIK dni otwartych: `limit: 1`, liczy się wyłącznie `total`. To jest
         // dokładnie to samo pytanie, co chip „Otwarte" na `A02` - i ta sama trasa.
-        this.sessions.list(this.db, { status: 'active', direction: 'desc', limit: 1 }),
+        this.sessions.list(this.db, orgId, { status: 'active', direction: 'desc', limit: 1 }),
         // Dni otwarte DŁUŻEJ niż okno korekty, od najstarszego. Próg jest tu jedynym
         // miejscem, w którym pulpit rozstrzyga, co jest zadaniem, a co normalną pracą.
-        this.sessions.list(this.db, {
+        this.sessions.list(this.db, orgId, {
           status: 'active',
           toMs: nowMs - CORRECTION_WINDOW_MS,
           direction: 'asc',
           limit: ATTENTION_PER_SOURCE,
         }),
-        this.flags.list(this.db, { status: 'open', limit: ATTENTION_PER_SOURCE }),
+        this.flags.list(this.db, orgId, { status: 'open', limit: ATTENTION_PER_SOURCE }),
         // Jedno zapytanie, dwie odpowiedzi: `items` zawężone do kart, których NIE MA
         // (awaria eksportu), a `counts` policzone nad całym zakresem NIEZALEŻNIE od
         // zawężenia stanem - tak stanowi kontrakt monitora.
-        this.exports.list(this.db, { state: 'missing', limit: ATTENTION_PER_SOURCE }),
-        this.dashboard.inflow(this.db, {
+        this.exports.list(this.db, orgId, { state: 'missing', limit: ATTENTION_PER_SOURCE }),
+        this.dashboard.inflow(this.db, orgId, {
           fromMs: nowMs - INFLOW_WINDOW_MS,
           toMs: nowMs,
           bucketMs: INFLOW_BUCKET_MS,
         }),
-        this.dashboard.recent(this.db, RECENT_EVENTS),
+        this.dashboard.recent(this.db, orgId, RECENT_EVENTS),
       ]);
 
     const todayStart = startOfUtcDay(nowMs);
-    const lastFlyingStart = await this.dashboard.lastFlyingDayStart(this.db);
+    const lastFlyingStart = await this.dashboard.lastFlyingDayStart(this.db, orgId);
 
     const [today, lastFlyingDay] = await Promise.all([
-      this.dayTotals(todayStart),
-      lastFlyingStart == null ? Promise.resolve(null) : this.dayTotals(startOfUtcDay(lastFlyingStart)),
+      this.dayTotals(orgId, todayStart),
+      lastFlyingStart == null
+        ? Promise.resolve(null)
+        : this.dayTotals(orgId, startOfUtcDay(lastFlyingStart)),
     ]);
 
     return {
@@ -167,9 +169,9 @@ export class AdminDashboardQueries {
   }
 
   /** Sumy jednej doby UTC, zaczynającej się o `dayStartMs`. */
-  private async dayTotals(dayStartMs: number): Promise<AdminDayTotals> {
+  private async dayTotals(orgId: string, dayStartMs: number): Promise<AdminDayTotals> {
     const toMs = dayStartMs + DAY_MS - 1;
-    const row = await this.dashboard.dayTotals(this.db, { fromMs: dayStartMs, toMs });
+    const row = await this.dashboard.dayTotals(this.db, orgId, { fromMs: dayStartMs, toMs });
     return {
       day: new Date(dayStartMs).toISOString().slice(0, 10),
       fromMs: dayStartMs,
@@ -197,7 +199,11 @@ export class AdminDashboardQueries {
         continue;
       }
 
-      const stream = await this.events.sessionEvents(this.db, aircraft.claim.sessionUuid);
+      const stream = await this.events.sessionEvents(
+        this.db,
+        aircraft.orgId,
+        aircraft.claim.sessionUuid,
+      );
       const state = projectSession(stream);
       // Nazwisko duala czytamy TYLKO wtedy, gdy dzień faktycznie jest szkolny -
       // większość dni ma `dualId: null`, więc to zwykle zero dodatkowych zapytań.

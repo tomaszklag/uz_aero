@@ -26,14 +26,14 @@
 
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
-import type { Actor } from '../../../application/admin/ports.ts';
+import type { Actor, PlatformActor } from '../../../application/admin/ports.ts';
 import type {
   MembershipAuthSnapshot,
   PilotsPort,
   TokenService,
 } from '../../../application/common/ports.ts';
 import type { Capability } from '../../../domain/roles.ts';
-import { authorizeOrg } from '../../authorize.ts';
+import { authorizeOrg, authorizePlatform } from '../../authorize.ts';
 import { tokenFromRequest } from '../../tokenFromRequest.ts';
 
 /** Ścieżka API panelu. Statyczny build panelu stanie pod `/admin/*`. */
@@ -105,6 +105,43 @@ export function adminRoute(
       if (!outcome.ok) return reply.code(outcome.status).send(outcome.body);
 
       return handler(req, reply, actorFrom(outcome.account, req));
+    },
+  });
+}
+
+/**
+ * Trasa PLATFORMOWA - superadministrator bez klubu (wielofirmowość §3.3; issue #99, C6).
+ *
+ * Ten sam prefiks i ta sama deklaracja zdolności, co `adminRoute`, ale INNA brama
+ * (`authorizePlatform`: rodzaj tokenu `platform`, rola z `pilots.platform_role`) i inny
+ * działający: `PlatformActor` nie ma klubu, więc handler nie ma jak przypadkiem
+ * przefiltrować danych po klubie, którego nie ma. Wpis audytu takiej akcji dostaje
+ * `org_id` pusty. Pierwszym użytkownikiem są zgłoszenia błędów - lista dla wszystkich
+ * klubów naraz; moduł Organizacje (epik E) dochodzi tą samą deklaracją.
+ */
+export function platformRoute(
+  app: FastifyInstance,
+  gate: AdminGate,
+  spec: AdminRouteSpec,
+  handler: (req: FastifyRequest, reply: FastifyReply, actor: PlatformActor) => Promise<unknown>,
+): void {
+  app.route({
+    method: spec.method,
+    url: `${ADMIN_API_PREFIX}${spec.url}`,
+    handler: async (req, reply) => {
+      const outcome = await authorizePlatform(
+        gate.tokens,
+        gate.accounts,
+        tokenFromRequest(req),
+        spec.capability,
+      );
+      if (!outcome.ok) return reply.code(outcome.status).send(outcome.body);
+
+      return handler(req, reply, {
+        pilotId: outcome.identity.pilotId,
+        platformRole: outcome.platformRole,
+        ip: req.ip ?? null,
+      });
     },
   });
 }

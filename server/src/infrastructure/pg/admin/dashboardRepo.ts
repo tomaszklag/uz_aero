@@ -61,6 +61,7 @@ interface TotalsRow {
 export class PgAdminDashboardRepo implements DashboardAdminPort {
   async inflow(
     db: Queryable,
+    orgId: string,
     window: { fromMs: number; toMs: number; bucketMs: number },
   ): Promise<{ bucket: number; count: number }[]> {
     // Numer wiadra liczymy w SQL-u z milisekund epoki, a nie funkcjami kalendarzowymi
@@ -72,15 +73,16 @@ export class PgAdminDashboardRepo implements DashboardAdminPort {
       `SELECT floor((EXTRACT(EPOCH FROM received_at) * 1000 - $1) / $3)::bigint AS bucket,
               COUNT(*) AS n
          FROM events
-        WHERE received_at >= to_timestamp($1::double precision / 1000)
+        WHERE org_id = $4
+          AND received_at >= to_timestamp($1::double precision / 1000)
           AND received_at <  to_timestamp($2::double precision / 1000)
         GROUP BY 1`,
-      [window.fromMs, window.toMs, window.bucketMs],
+      [window.fromMs, window.toMs, window.bucketMs, orgId],
     );
     return rows.map((row) => ({ bucket: Number(row.bucket), count: Number(row.n) }));
   }
 
-  async recent(db: Queryable, limit: number): Promise<AdminRecentEventRow[]> {
+  async recent(db: Queryable, orgId: string, limit: number): Promise<AdminRecentEventRow[]> {
     // `LEFT JOIN`, nie `JOIN`: zdarzenie samolotu wykreślonego z rejestru albo pilota
     // z usuniętym kontem MUSI zostać widoczne. Rejestr jest append-only i to on jest
     // prawdą - brak wiersza w tabeli referencyjnej odbiera nazwę, nie fakt.
@@ -91,12 +93,13 @@ export class PgAdminDashboardRepo implements DashboardAdminPort {
               p.code  AS pic_code,
               pp.name AS pic_name
          FROM events e
-         LEFT JOIN aircraft    a  ON a.id = e.aircraft_id
+         LEFT JOIN aircraft    a  ON a.id = e.aircraft_id AND a.org_id = e.org_id
          LEFT JOIN pilots      pp ON pp.id = e.pic_id
          LEFT JOIN memberships p  ON p.pilot_id = e.pic_id AND p.org_id = e.org_id
+        WHERE e.org_id = $2
         ORDER BY e.received_at DESC, e.uuid DESC
         LIMIT $1`,
-      [limit],
+      [limit, orgId],
     );
 
     return rows.map((row) => ({
@@ -116,6 +119,7 @@ export class PgAdminDashboardRepo implements DashboardAdminPort {
 
   async dayTotals(
     db: Queryable,
+    orgId: string,
     range: { fromMs: number; toMs: number },
   ): Promise<AdminDayTotalsRow> {
     // Sumy jadą z KOLUMN PROJEKCJI, nigdy z ponownego liczenia po zdarzeniach - to ta
@@ -129,9 +133,10 @@ export class PgAdminDashboardRepo implements DashboardAdminPort {
               COALESCE(SUM(flights_count), 0)           AS flights,
               COALESCE(SUM(block_ms), 0)                AS block_ms
          FROM sessions
-        WHERE claim_time IS NOT NULL
+        WHERE org_id = $3
+          AND claim_time IS NOT NULL
           AND claim_time BETWEEN $1 AND $2`,
-      [range.fromMs, range.toMs],
+      [range.fromMs, range.toMs, orgId],
     );
 
     // Zdarzenia liczymy DRUGIM zapytaniem, bo mierzą co innego: dni lotne po czasie
@@ -140,9 +145,10 @@ export class PgAdminDashboardRepo implements DashboardAdminPort {
     const accepted = await db.query<{ n: string }>(
       `SELECT COUNT(*) AS n
          FROM events
-        WHERE received_at >= to_timestamp($1::double precision / 1000)
+        WHERE org_id = $3
+          AND received_at >= to_timestamp($1::double precision / 1000)
           AND received_at <= to_timestamp($2::double precision / 1000)`,
-      [range.fromMs, range.toMs],
+      [range.fromMs, range.toMs, orgId],
     );
 
     const row = rows[0];
@@ -155,9 +161,10 @@ export class PgAdminDashboardRepo implements DashboardAdminPort {
     };
   }
 
-  async lastFlyingDayStart(db: Queryable): Promise<number | null> {
+  async lastFlyingDayStart(db: Queryable, orgId: string): Promise<number | null> {
     const { rows } = await db.query<{ last: string | null }>(
-      'SELECT MAX(claim_time) AS last FROM sessions WHERE claim_time IS NOT NULL',
+      'SELECT MAX(claim_time) AS last FROM sessions WHERE org_id = $1 AND claim_time IS NOT NULL',
+      [orgId],
     );
     const last = rows[0]?.last;
     return last == null ? null : Number(last);

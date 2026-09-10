@@ -60,6 +60,7 @@ export interface MyEventsPort {
    */
   page(
     db: Queryable,
+    orgId: string,
     picId: string,
     cursor: string | null,
     limit: number,
@@ -107,10 +108,10 @@ export interface ClientSuggestion extends TaskSuggestion {
  * tabeli i dla jednego endpointu.
  */
 export interface TaskSuggestionsPort {
-  /** Różne niepuste `sessions.client` z CAŁEGO klubu, najnowsze pierwsze. */
-  clients(db: Queryable, limit: number): Promise<ClientSuggestion[]>;
-  /** Różne niepuste `sessions.notes` sesji TEGO pilota, najnowsze pierwsze. */
-  notes(db: Queryable, picId: string, limit: number): Promise<TaskSuggestion[]>;
+  /** Różne niepuste `sessions.client` z CAŁEGO klubu z tokenu, najnowsze pierwsze. */
+  clients(db: Queryable, orgId: string, limit: number): Promise<ClientSuggestion[]>;
+  /** Różne niepuste `sessions.notes` sesji TEGO pilota w klubie z tokenu, najnowsze pierwsze. */
+  notes(db: Queryable, orgId: string, picId: string, limit: number): Promise<TaskSuggestion[]>;
 }
 
 // ── dołączanie do klubu kodem (wielofirmowość, epik D) ─────────────────────────

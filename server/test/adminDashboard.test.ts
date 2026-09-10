@@ -590,7 +590,7 @@ describe('pulpit - puls rejestru', () => {
         return db.query<R>(text, params);
       },
     };
-    await new PgAdminDashboardRepo().recent(spy, 6);
+    await new PgAdminDashboardRepo().recent(spy, ORG_A, 6);
 
     const query = sent.find((q) => q.text.includes('ORDER BY'));
     if (query == null) throw new Error('adapter nie wysłał zapytania „ostatnio przyjęte"');

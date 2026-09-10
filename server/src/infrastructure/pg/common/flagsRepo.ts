@@ -64,18 +64,22 @@ export class PgFlagsRepo implements FlagsPort {
     );
   }
 
-  async openForSession(db: Queryable, sessionUuid: string): Promise<FlagRecord[]> {
+  async openForSession(db: Queryable, orgId: string, sessionUuid: string): Promise<FlagRecord[]> {
     const { rows } = await db.query<FlagDbRow>(
-      `SELECT * FROM flags WHERE status = 'open' AND $1 = ANY(session_uuids) ORDER BY id`,
-      [sessionUuid],
+      `SELECT * FROM flags
+        WHERE org_id = $1 AND status = 'open' AND $2 = ANY(session_uuids)
+        ORDER BY id`,
+      [orgId, sessionUuid],
     );
     return rows.map(toFlag);
   }
 
-  async openForAircraft(db: Queryable, aircraftId: string): Promise<FlagRecord[]> {
+  async openForAircraft(db: Queryable, orgId: string, aircraftId: string): Promise<FlagRecord[]> {
     const { rows } = await db.query<FlagDbRow>(
-      `SELECT * FROM flags WHERE status = 'open' AND aircraft_id = $1 ORDER BY id`,
-      [aircraftId],
+      `SELECT * FROM flags
+        WHERE org_id = $1 AND status = 'open' AND aircraft_id = $2
+        ORDER BY id`,
+      [orgId, aircraftId],
     );
     return rows.map(toFlag);
   }

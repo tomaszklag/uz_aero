@@ -52,6 +52,7 @@ const nullableInt = (v: string | null): number | null => (v == null ? null : Num
 export class PgAdminLogRepo implements LogAdminPort {
   async byAircraft(
     db: Queryable,
+    orgId: string,
     range: { fromMs: number; toMs: number },
   ): Promise<LogAircraftAggregate[]> {
     const { rows } = await db.query<Row>(
@@ -82,6 +83,7 @@ export class PgAdminLogRepo implements LogAdminPort {
          FROM aircraft a
          LEFT JOIN sessions s
            ON s.aircraft_id = a.id
+          AND s.org_id = a.org_id
           AND s.claim_time BETWEEN $1 AND $2
           -- Operacja UNIEWAŻNIONA nie liczy się do sum floty (issue #75 pkt 1):
           -- baner na ekranie operacji obiecuje „nie liczy się do sum dziennika",
@@ -89,11 +91,13 @@ export class PgAdminLogRepo implements LogAdminPort {
           -- (zdanie bez biegu i bez zmian) odpada z tego samego powodu, co z list.
           AND s.status <> 'voided'
           AND NOT ${emptySessionSql('s')}
+        -- Flota KLUBU: dziennik jest dokumentem jednego klubu (issue #99).
+        WHERE a.org_id = $4
         GROUP BY a.id, a.reg, a.type, a.mh_format
         -- Alfabetycznie po znakach na kadłubie: pytanie brzmi „gdzie jest SP-KLM",
         -- nie „która maszyna wygrała". Jednostki poza służbą i tak wyróżnia panel.
         ORDER BY a.reg ASC`,
-      [range.fromMs, range.toMs, DAY_MS],
+      [range.fromMs, range.toMs, DAY_MS, orgId],
     );
 
     return rows.map((r) => {

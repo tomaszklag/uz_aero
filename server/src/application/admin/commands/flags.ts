@@ -80,14 +80,15 @@ export class AdminFlagCommands {
       // 1) TRANSAKCJA: zamknięcie flagi + ślad audytu. Nic więcej - żaden skutek
       //    poza bazą nie ma prawa zależeć od tego, czy transakcja przejdzie.
       closed = await this.write.run(actor, async (tx) => {
-        const done = await this.flags.resolve(tx, id, actor.pilotId, note, at);
+        const done = await this.flags.resolve(tx, actor.orgId, id, actor.pilotId, note, at);
         if (done == null) {
           // `resolve` zwraca `null` z dwóch powodów naraz (nie ma flagi / nie jest
           // otwarta), a panel potrzebuje ich rozróżnić: 404 to pomyłka w adresie,
           // 409 to przegrany wyścig, po którym warto pokazać CZYJE rozstrzygnięcie
           // było pierwsze. Odczyt siedzi w tej samej transakcji, więc widzi stan,
           // o który właśnie się potknął `UPDATE`.
-          const current = await this.flags.byId(tx, id);
+          // Flaga cudzego klubu jest tu `null` tak samo, jak nieistniejąca → 404.
+          const current = await this.flags.byId(tx, actor.orgId, id);
           throw current == null ? new FlagNotFound() : new FlagAlreadyResolved(current);
         }
         return {
@@ -117,7 +118,12 @@ export class AdminFlagCommands {
     //    opisany stanem, który mógł się nie zapisać.
     return {
       ok: true,
-      result: { flagId: id, type: closed.type, resolvedAt: at, exports: await this.reexport(closed) },
+      result: {
+        flagId: id,
+        type: closed.type,
+        resolvedAt: at,
+        exports: await this.reexport(actor.orgId, closed),
+      },
     };
   }
 
@@ -130,13 +136,16 @@ export class AdminFlagCommands {
    * Sesja objęta DWIEMA nakładkami nie wymaga tu żadnej logiki: druga, wciąż otwarta
    * flaga zatrzyma eksportera na jego własnej bramce i wróci `overlap_flag`.
    */
-  private async reexport(closed: ResolvedFlag): Promise<ExportAttempt[]> {
+  private async reexport(orgId: string, closed: ResolvedFlag): Promise<ExportAttempt[]> {
     if (closed.type !== 'aircraft_overlap') return [];
 
     const attempts: ExportAttempt[] = [];
     for (const sessionUuid of closed.sessionUuids) {
       try {
-        attempts.push({ sessionUuid, outcome: await this.exporter.exportSession(sessionUuid) });
+        attempts.push({
+          sessionUuid,
+          outcome: await this.exporter.exportSession(orgId, sessionUuid),
+        });
       } catch (err) {
         console.error(`re-eksport karty sesji ${sessionUuid} nie powiódł się:`, err);
         attempts.push({ sessionUuid, outcome: null });

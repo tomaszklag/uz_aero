@@ -18,8 +18,8 @@ export class AdminFlagQueries {
     private readonly flags: FlagsAdminPort,
   ) {}
 
-  async list(filter: FlagListFilter): Promise<AdminFlagPage> {
-    const { items, total } = await this.flags.list(this.db, filter);
+  async list(orgId: string, filter: FlagListFilter): Promise<AdminFlagPage> {
+    const { items, total } = await this.flags.list(this.db, orgId, filter);
     return { items: items.map(flagListItem), total };
   }
 }

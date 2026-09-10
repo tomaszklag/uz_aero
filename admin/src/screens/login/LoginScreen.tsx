@@ -27,7 +27,7 @@ import { useSessionState } from '../../auth/sessionContext';
 import { useGoogleClient, useLogin } from '../../queries/useSession';
 import { Banner } from '../../ui/components';
 import { PlaneIcon } from '../../ui/components/icons';
-import { HOME } from '../../ui/shell/nav';
+import { homeFor } from '../../ui/shell/nav';
 import { loginMessage } from './loginMessage';
 
 export function LoginScreen() {
@@ -62,7 +62,7 @@ export function LoginScreen() {
 
   // Sesja żyje -> na ekranie logowania nie ma czego robić. Dotyczy też powrotu
   // „wstecz" po zalogowaniu, nie tylko wklejonego adresu.
-  if (session != null) return <Navigate to={HOME} replace />;
+  if (session != null) return <Navigate to={homeFor(session.capabilities)} replace />;
 
   const message =
     login.error != null

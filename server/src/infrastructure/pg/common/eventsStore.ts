@@ -76,16 +76,21 @@ export class PgEventsStore implements EventsStorePort {
     return { accepted, duplicates: events.length - accepted };
   }
 
-  async sessionEvents(db: Queryable, sessionUuid: string): Promise<Event[]> {
+  async sessionEvents(db: Queryable, orgId: string, sessionUuid: string): Promise<Event[]> {
+    // Klub w warunku, nie tylko uuid (issue #99): strumień cudzego klubu jest dla
+    // wołającego pusty, dokładnie jak nieistniejący.
     const { rows } = await db.query<EventRow>(
-      'SELECT * FROM events WHERE session_uuid = $1 ORDER BY received_at, uuid',
-      [sessionUuid],
+      `SELECT * FROM events
+        WHERE org_id = $1 AND session_uuid = $2
+        ORDER BY received_at, uuid`,
+      [orgId, sessionUuid],
     );
     return rows.map(toEvent);
   }
 
   async sessionStreams(
     db: Queryable,
+    orgId: string,
     sessionUuids: readonly string[],
   ): Promise<Map<string, Event[]>> {
     const streams = new Map<string, Event[]>();
@@ -96,9 +101,9 @@ export class PgEventsStore implements EventsStorePort {
     // kolejność WSTAWIENIA, dokładnie jak przy `sessionEvents`.
     const { rows } = await db.query<EventRow>(
       `SELECT * FROM events
-        WHERE session_uuid = ANY($1)
+        WHERE org_id = $1 AND session_uuid = ANY($2)
         ORDER BY session_uuid, received_at, uuid`,
-      [[...sessionUuids]],
+      [orgId, [...sessionUuids]],
     );
 
     // Klucze zakładamy z góry, żeby sesja BEZ zdarzeń miała pustą tablicę zamiast
@@ -109,18 +114,18 @@ export class PgEventsStore implements EventsStorePort {
     return streams;
   }
 
-  async lastReceivedAt(db: Queryable, aircraftId: string): Promise<Date | null> {
+  async lastReceivedAt(db: Queryable, orgId: string, aircraftId: string): Promise<Date | null> {
     const { rows } = await db.query<{ last: string | null }>(
-      'SELECT MAX(received_at) AS last FROM events WHERE aircraft_id = $1',
-      [aircraftId],
+      'SELECT MAX(received_at) AS last FROM events WHERE org_id = $1 AND aircraft_id = $2',
+      [orgId, aircraftId],
     );
     return rows[0]?.last != null ? new Date(rows[0].last) : null;
   }
 
-  async countForSession(db: Queryable, sessionUuid: string): Promise<number> {
+  async countForSession(db: Queryable, orgId: string, sessionUuid: string): Promise<number> {
     const { rows } = await db.query<{ n: string }>(
-      'SELECT COUNT(*) AS n FROM events WHERE session_uuid = $1',
-      [sessionUuid],
+      'SELECT COUNT(*) AS n FROM events WHERE org_id = $1 AND session_uuid = $2',
+      [orgId, sessionUuid],
     );
     return Number(rows[0]?.n ?? 0);
   }

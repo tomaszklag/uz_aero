@@ -9,10 +9,13 @@
  * jest klikalna i co napisać obok kłódki. Ukrycie przycisku nigdy nie było ochroną
  * i tym się nie staje.
  *
- * Reguła z mockupu jest twarda: pozycja niedostępna dla roli zostaje **WIDOCZNA
- * i wyszarzona** (`.nav-item.locked`), nigdy ukryta. Ukrywanie zmusza człowieka do
- * zgadywania, czy funkcji nie ma, czy nie ma jej ON - a to dwie różne rozmowy
- * z administratorem.
+ * ══ POZYCJA BEZ UPRAWNIENIA JEST UKRYTA, NIE WYSZARZONA (od 2.0.0) ══
+ * Panel 1.0 zostawiał ją widoczną z kłódką, żeby człowiek nie zgadywał, czy funkcji
+ * nie ma, czy nie ma jej ON. Panel 2.0 odwrócił tę regułę (`docs/panel-2.0.md` §3.3:
+ * brak uprawnień = brak przycisku), a wielofirmowość dała jej trzeci powód: modułu
+ * Zgłoszenia w klubie NIE MA WCALE - to kolejka PLATFORMY (issue #99 C6). Kłódka
+ * mówiłaby administratorowi klubu, że istnieje ekran, na który mógłby dostać prawo,
+ * a takiego prawa nie ma w modelu ról. Pozycje wybiera `navItemsFor` w `ui/shell/nav.ts`.
  */
 
 import type { Capability } from '../api/dto';
@@ -45,7 +48,10 @@ const GRANTED_BY: Record<Capability, string> = {
   'thresholds.manage': 'administrator',
   'audit.read': 'administrator',
   'maintenance.run': 'administrator',
-  'bugs.triage': 'administrator',
+  // Triaż zgłoszeń przeszedł do PLATFORMY przy issue #99 (C6): opis błędu niesie
+  // kontekst okna razem z danymi operacji, a poprawia go jedna osoba dla całego
+  // serwera - więc decyzja o cudzym zgłoszeniu nie należy do klubu.
+  'bugs.triage': 'superadministrator',
   'platform.manage': 'superadministrator',
 };
 
