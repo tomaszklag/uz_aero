@@ -40,14 +40,16 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 
 import { GPS_STALE_SEC, type GpsFix } from '../../domain';
-import { REFERENCE_META_CHECKED_AT } from '../../application';
+import { referenceCheckedAt } from '../../application';
 import { appRelease } from '../../infrastructure/release/nativeRelease';
 import {
   ActionButton,
   AppText,
   Banner,
   Card,
+  CardPicker,
   GhostAction,
+  JoinClubSheet,
   KeyValueRow,
   OutboxGuard,
   PinChangeSheet,
@@ -65,6 +67,8 @@ import { formatLatLon, timeUtc } from '../format';
 import { versionRowValue } from './logic/appVersion';
 import { fixAge } from './logic/gpsLoss';
 import { eventsCount, lastContactAt, lastContactLabel } from './logic/syncStatus';
+import { clubCards, clubSwitchBlock, showsClubSection } from './logic/clubSwitch';
+import { holdsAircraft } from '../navigation/resumeTarget';
 
 export function SettingsScreen({
   navigation,
@@ -74,6 +78,12 @@ export function SettingsScreen({
   const gps = useGps();
 
   const pilot = useAuthStore((s) => s.pilot);
+  // ── KLUB (wielofirmowość §7.3): sekcja istnieje wyłącznie przy >1 członkostwie ──
+  const org = useAuthStore((s) => s.org);
+  const memberships = useAuthStore((s) => s.memberships);
+  const clubs = useAuthStore((s) => s.clubs);
+  const checkClubs = useAuthStore((s) => s.checkClubs);
+  const switchClub = useAuthStore((s) => s.switchClub);
   const verifyPin = useAuthStore((s) => s.verifyPin);
   const changePin = useAuthStore((s) => s.changePin);
   const logout = useAuthStore((s) => s.logout);
@@ -83,18 +93,40 @@ export function SettingsScreen({
   const syncNow = useSessionStore((s) => s.syncNow);
   const refreshReferenceNow = useSessionStore((s) => s.refreshReferenceNow);
   const restoreEventsNow = useSessionStore((s) => s.restoreEventsNow);
+  const projection = useSessionStore((s) => s.projection);
   const repo = useSessionStore((s) => s.repo);
   const sessionReset = useSessionStore((s) => s.reset);
 
   const [pinSheet, setPinSheet] = useState(false);
   const [pinChanged, setPinChanged] = useState(false);
 
+  // ── sekcja „Klub" (13A) ───────────────────────────────────────────────────
+  const [joinSheet, setJoinSheet] = useState(false);
+  const [fleetCounts, setFleetCounts] = useState<Record<string, number>>({});
+  // Kolejka KLUBU BIEŻĄCEGO - to ona blokuje wyjście z niego (§7.3); zapisy innych
+  // klubów nie blokują, bo przełączenie jest drogą do ich wysłania.
+  const [pendingHere, setPendingHere] = useState(0);
+  const [switchError, setSwitchError] = useState<string | null>(null);
+
+  const readClubs = useCallback(async (): Promise<void> => {
+    if (repo == null) return;
+    setFleetCounts(await repo.aircraftCountsByOrg());
+    setPendingHere(await repo.pendingInActiveOrg());
+  }, [repo]);
+
+  useEffect(() => {
+    void readClubs();
+    // Lista klubów jedzie z serwera (`GET /auth/memberships`) - to jedyne miejsce,
+    // w którym pilot widzi własne zgłoszenie do drugiego klubu. Bez sieci zostaje
+    // to, co przyszło z logowania: sekcja działa, po prostu nie zna nowych zgłoszeń.
+    void checkClubs();
+  }, [readClubs, checkClubs]);
+
   // ── stempel cache referencyjnego - czytany na wejściu i po ręcznym syncu ──
   const [refCheckedAt, setRefCheckedAt] = useState<number | null>(null);
   const readRefStamp = useCallback(async (): Promise<void> => {
     if (repo == null) return;
-    const v = await repo.getMeta(REFERENCE_META_CHECKED_AT);
-    setRefCheckedAt(v != null ? Number(v) : null);
+    setRefCheckedAt(await referenceCheckedAt(repo));
   }, [repo]);
 
   // ── synchronizacja: awaryjne ponaglenie OBU kierunków ─────────────────────
@@ -121,6 +153,9 @@ export function SettingsScreen({
   // „Offline" znamy wyłącznie z wyniku OSTATNIEJ próby (§4.3) - innego pojęcia o sieci
   // aplikacja nie ma i nie udaje, że ma.
   const offline = lastSync?.kind === 'offline';
+  // Powód, dla którego przełączenie jest teraz zablokowane - stoi PRZY karcie klubu,
+  // bo tam pilot go napotyka (issue #55).
+  const switchBlock = clubSwitchBlock(pendingHere, offline, holdsAircraft(projection));
 
   // ── diagnostyka GPS: żywa subskrypcja na czas otwarcia ekranu ─────────────
   const [fix, setFix] = useState<GpsFix | null>(null);
@@ -201,6 +236,63 @@ export function SettingsScreen({
       }
     >
       <View style={styles.content}>
+        {/* ── klub: PIERWSZA sekcja (mockup 13a) ────────────────────────────
+            Istnieje wyłącznie przy więcej niż jednym członkostwie - przełącznik
+            o jednej pozycji niczego by nie przełączał (patrz `showsClubSection`).
+            Z kokpitu nie ma tu wejścia (kokpit jest modalny), więc przełączenie
+            z maszyną w ręce jest NIEWYRAŻALNE: operacja należy do klubu, w którym
+            ją zaczęto. „Mój dzień" pokazuje operacje OBU klubów niezależnie od
+            wyboru (01e). */}
+        {showsClubSection(memberships, clubs?.memberships ?? []) && (
+          <Card title="Klub" header="inline">
+            <CardPicker
+              options={clubCards(
+                memberships,
+                clubs?.memberships ?? [],
+                org?.id ?? null,
+                fleetCounts,
+              ).map((c) => ({
+                value: c.orgId,
+                label: c.name,
+                ...(c.pending ? { note: c.sub, disabledReason: c.sub, disabledTagged: true } : { sub: c.sub }),
+                ...(switchBlock != null && !c.selected && !c.pending
+                  ? { disabledReason: switchBlock, disabledTagged: false }
+                  : {}),
+              }))}
+              value={org?.id ?? null}
+              onChange={(orgId) => {
+                setSwitchError(null);
+                void switchClub(orgId, pendingHere).then((result) => {
+                  if (result.kind === 'error') setSwitchError(result.message);
+                  else if (result.kind === 'blocked') setSwitchError(result.reason);
+                  else {
+                    // Cache drugiego klubu ZOSTAŁ w telefonie (§7.1), więc ekran 02 ma
+                    // flotę od razu - ale świeżą bierzemy przy TYM SAMYM połączeniu,
+                    // które przed chwilą wydało tokeny: skoro sieć jest, nie ma po co
+                    // czekać na bramę wieku.
+                    void refreshReferenceNow();
+                    void readClubs();
+                  }
+                });
+              }}
+            />
+            {switchError != null && (
+              <AppText variant="mono" tone="amber" style={styles.clubNote}>
+                {switchError}
+              </AppText>
+            )}
+            {/* DOŁĄCZ DO INNEGO KLUBU - to samo pole, co na 00E (§3.8: kod klubu
+                jest JEDYNĄ drogą). Zgłoszenie dopisuje się do listy wyżej jako
+                wiersz „czeka na zatwierdzenie", a pilot pracuje dalej u siebie. */}
+            <SettingsAction
+              icon="add"
+              name="Dołącz do innego klubu"
+              sub="kod klubu od jego administratora"
+              onPress={() => setJoinSheet(true)}
+            />
+          </Card>
+        )}
+
         {/* ── motyw ─────────────────────────────────────────────────────────── */}
         {/* Motyw jest preferencją PILOTA (decyzja 2026-07-29): rekord per pilot
             w AsyncStorage, sync przez /me/prefs (LWW). Ekran o tym MILCZY (issue #72) -
@@ -322,7 +414,16 @@ export function SettingsScreen({
 
         {/* ── konto (§3.0: ochrona wylogowania) ─────────────────────────────── */}
         <Card title="Konto" header="inline">
-          {pilot != null && <ProfileChip name={pilot.name} code={pilot.code} style={styles.profile} />}
+          {pilot != null && (
+            <ProfileChip
+              name={pilot.name}
+              code={pilot.code}
+              // Klub przy kodzie WYŁĄCZNIE przy więcej niż jednym członkostwie (13a):
+              // kod należy do klubu, więc przy dwóch trzeba wiedzieć, którego dotyczy.
+              club={memberships.length > 1 ? (org?.name ?? null) : null}
+              style={styles.profile}
+            />
+          )}
           <SettingsAction
             icon="offline"
             name="Wyloguj i zmień konto"
@@ -343,6 +444,12 @@ export function SettingsScreen({
       </View>
 
       {/* ── arkusz zmiany PIN (obecny → nowy → powtórz, w pełni offline) ────── */}
+      <JoinClubSheet
+        visible={joinSheet}
+        onClose={() => setJoinSheet(false)}
+        onJoined={() => void checkClubs()}
+      />
+
       <PinChangeSheet
         visible={pinSheet}
         verifyCurrent={verifyPin}
@@ -415,5 +522,6 @@ function SectionNote({ text }: { text: string }) {
 const styles = StyleSheet.create({
   content: { padding: 14, gap: 12 },
   profile: { minWidth: 0, alignSelf: 'stretch' },
+  clubNote: { fontSize: 9, lineHeight: 14, letterSpacing: 0.5 },
   note: { fontSize: 9, lineHeight: 14, letterSpacing: 0.5 },
 });

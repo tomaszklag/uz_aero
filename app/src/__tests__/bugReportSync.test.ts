@@ -25,13 +25,15 @@ import { PinCrypto } from '../infrastructure/auth/pinCrypto';
 
 const T0 = Date.UTC(2026, 8, 4, 9, 41, 0);
 const PILOT = { id: 'TMK', code: 'TMK', name: 'Tomasz Małkiewicz' };
-const CREDS: StoredCredentials = { token: 'jwt-1', refreshToken: 'r1', pilot: PILOT };
+/** Klub, DLA KTÓREGO wydano parę tokenów (wielofirmowość §6). */
+const ORG = { id: 'org-a', slug: 'alfa', name: 'Aeroklub Alfa' };
+const CREDS: StoredCredentials = { token: 'jwt-1', refreshToken: 'r1', pilot: PILOT, org: ORG, memberships: [] };
 
 class MemoryCredentials {
-  // Zgłoszenie rejestracyjne (logowanie Google) - nieużywane w tych testach.
-  loadRegistration = async (): Promise<null> => null;
-  saveRegistration = async (_registration: unknown): Promise<void> => {};
-  clearRegistration = async (): Promise<void> => {};
+  // Osoba bez klubu (wielofirmowość §4) - nieużywana w tych testach.
+  loadPerson = async (): Promise<null> => null;
+  savePerson = async (_person: unknown): Promise<void> => {};
+  clearPerson = async (): Promise<void> => {};
   load = async () => CREDS;
   save = async (_c: StoredCredentials) => {};
   clear = async () => {};
@@ -42,7 +44,16 @@ class BugServer implements ServerPort {
     throw new Error('nieużywane');
   }
 
-  async registrationStatus(): Promise<never> {
+  // Trasy BEZ KLUBU (wielofirmowość §6) - te przekroje ich nie dotykają.
+  async membershipStatus(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async joinClub(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async switchClub(): Promise<never> {
     throw new Error('nieużywane');
   }
 
@@ -55,8 +66,8 @@ class BugServer implements ServerPort {
     return { accepted: reports.length, duplicates: 0 };
   };
 
-  login = async (): Promise<AuthTokens> => ({ token: 'jwt-1', refreshToken: 'r1', pilot: PILOT });
-  refresh = async (): Promise<AuthTokens> => ({ token: 'jwt-2', refreshToken: 'r2', pilot: PILOT });
+  login = async (): Promise<AuthTokens> => ({ token: 'jwt-1', refreshToken: 'r1', pilot: PILOT, org: ORG, memberships: [] });
+  refresh = async (): Promise<AuthTokens> => ({ token: 'jwt-2', refreshToken: 'r2', pilot: PILOT, org: ORG, memberships: [] });
   pushEvents = async () => ({ accepted: 0, duplicates: 0, flags: [] });
   pushTraces = async () => ({ accepted: 0 });
   getReference = async () => ({ data: { aircraft: [], pilots: [] }, etag: null });

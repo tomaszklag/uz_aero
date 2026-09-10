@@ -64,6 +64,7 @@ import { registerAdminAuditRoutes } from './routes/admin/audit.ts';
 import { registerAdminBugReportRoutes } from './routes/admin/bugReports.ts';
 import type { JoinCommands } from '../application/mobile/commands/join.ts';
 import { registerJoinRoutes } from './routes/mobile/join.ts';
+import { registerSwitchRoutes } from './routes/mobile/switch.ts';
 import { registerAdminAuthRoutes } from './routes/admin/auth.ts';
 import { registerAdminCorrectionRoutes } from './routes/admin/corrections.ts';
 import { registerAdminDashboardRoutes } from './routes/admin/dashboard.ts';
@@ -369,6 +370,7 @@ export async function buildServer(
 
   registerAuthRoutes(app, deps.auth);
   registerJoinRoutes(app, deps.auth, deps.join);
+  registerSwitchRoutes(app, deps.auth);
 
   // Trasy TELEFONU - jedna brama (`memberFromRequest`): token klubu I aktywne członkostwo
   // czytane przy każdym żądaniu, jak w panelu (epik C wielofirmowości, issue #99).

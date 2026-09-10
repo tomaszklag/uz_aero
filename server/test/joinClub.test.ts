@@ -163,6 +163,7 @@ describe('POST /auth/join - kod klubu daje wyłącznie zgłoszenie', () => {
           decidedAt: null,
         },
       ],
+      person: { name: 'Nieznajomy kandydat4', email: 'kandydat4@gmail.com' },
     });
   });
 

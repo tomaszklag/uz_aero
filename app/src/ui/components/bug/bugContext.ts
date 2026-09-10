@@ -86,6 +86,15 @@ export interface BugPilot {
   id: string;
   code: string | null;
   name: string | null;
+  /**
+   * KLUB AKTYWNY w chwili zgłoszenia (wielofirmowość §7, issue #102).
+   *
+   * Bez niego zgłoszenie „nie widzę swojej floty" jest nie do rozstrzygnięcia: ten sam
+   * pilot ma w drugim klubie inny kod, inną flotę i inne przekazania. `null` = telefon
+   * jeszcze nie zna klubu (aktualizacja z 1.x przed pierwszym odświeżeniem tokenów).
+   */
+  orgId: string | null;
+  orgName: string | null;
 }
 
 export interface BugContextInput {
@@ -194,6 +203,8 @@ export function buildBugContext(input: BugContextInput): BugContextView {
     pilotId: pilot.id,
     pilotCode: pilot.code,
     pilotName: pilot.name,
+    orgId: pilot.orgId,
+    orgName: pilot.orgName,
     // ── wydanie i urządzenie ──
     appVersion: release.appVersion,
     platform: release.platform,
@@ -240,6 +251,9 @@ export function buildBugContext(input: BugContextInput): BugContextView {
     label: 'Pilot',
     value: [pilot.code ?? pilot.id, pilot.name].filter((p) => p != null && p !== '').join(' · '),
   });
+  // Klub W WIERSZU, nie tylko w kontekście: pilot ma zobaczyć, o którym klubie zgłasza -
+  // ta sama zasada, co przy operacji i samolocie. Bez klubu wiersza nie ma.
+  if (pilot.orgName != null) rows.push({ label: 'Klub', value: pilot.orgName });
   if (release.appVersion != null) rows.push({ label: 'Aplikacja', value: release.appVersion });
   rows.push({ label: 'Telefon', value: `${deviceLine(release)} · motyw ${theme.toUpperCase()}` });
   rows.push({ label: 'Synchronizacja', value: syncLine(sync) });

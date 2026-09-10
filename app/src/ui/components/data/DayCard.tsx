@@ -54,6 +54,15 @@ export interface DayCardProps {
    * znaczników nie dostają (issue #40 pkt 6).
    */
   titleTag?: string;
+  /**
+   * KLUB, w którym odbyła się operacja (`.day-club` z mockupu 01e) - plakietka na prawej
+   * krawędzi nagłówka.
+   *
+   * Istnieje WYŁĄCZNIE przy więcej niż jednym członkostwie pilota (wielofirmowość §7.2):
+   * przy jednym świeciłaby przy każdym kafelku i niczego by nie odróżniała - ta sama
+   * reguła, przez którą SyncChip online nie rysuje nic (issue #12).
+   */
+  club?: string | null;
   /** Stopka: tagi stanu i przypisy. Pominięta = karta kończy się na statystykach. */
   foot?: React.ReactNode;
   /** Sesja w oknie korekty - niebieska ramka i niebieski pas akcji. */
@@ -73,6 +82,7 @@ export function DayCard({
   times = null,
   stats,
   titleTag,
+  club = null,
   foot,
   editable = false,
   ctaLabel,
@@ -127,16 +137,29 @@ export function DayCard({
             rysowania. Wywołało to co innego (identyfikator zamiast znaku, patrz
             `buildMyDay`), ale rama ma być odporna na DŁUGĄ wartość niezależnie od
             tego, skąd się wzięła: jedna linia i skracanie. */}
-        {signature == null && (
-          <AppText
-            variant="mono"
-            numberOfLines={1}
-            ellipsizeMode="tail"
-            style={[styles.aircraft, { color: theme.colors.green }]}
-          >
-            {aircraft}
-          </AppText>
-        )}
+        <View style={styles.topRight}>
+          {signature == null && (
+            <AppText
+              variant="mono"
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              style={[styles.aircraft, { color: theme.colors.green }]}
+            >
+              {aircraft}
+            </AppText>
+          )}
+          {club != null && (
+            <AppText
+              variant="mono"
+              tone="secondary"
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              style={[styles.club, { borderColor: theme.colors.borderStrong }]}
+            >
+              {club}
+            </AppText>
+          )}
+        </View>
       </View>
 
       {signature != null && (
@@ -214,6 +237,19 @@ const styles = StyleSheet.create({
   card: { paddingVertical: 13, paddingHorizontal: 14, gap: 9 },
   top: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 10 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 },
+  topRight: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 },
+  // `.day-club`: plakietka bez wypełnienia, jak znacznik „RĘCZNIE" - to fakt
+  // o przynależności operacji, nie stan ostrzegawczy. Skracana, bo nazwa klubu bywa
+  // dłuższa niż pół szerokości telefonu, a tytuł nie ma prawa przez to zniknąć.
+  club: {
+    fontSize: 7.5,
+    letterSpacing: 1,
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    maxWidth: 170,
+  },
   title: { fontSize: 21, lineHeight: 22, letterSpacing: 1.5 },
   // Plakietka-przypis: mały mono w ramce, bez wypełnienia - fakt o pochodzeniu
   // zapisu, nie stan ostrzegawczy, więc bez amber.

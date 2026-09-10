@@ -13,44 +13,81 @@
  *
  * ══ LOGOWANIE GOOGLE (2026-09-04, `docs/logowanie-google.md` §9) ══
  * Google podmienia WYŁĄCZNIE sposób weryfikacji tożsamości w kroku provisioningu.
- * Dochodzi za to stan, którego dotąd nie było: konto Google potwierdzone, ale konta
- * pilota jeszcze nie ma - ZGŁOSZENIE czeka na administratora. Serwis trzyma je osobno
- * od poświadczeń (`StoredRegistration`), bo to nie jest tożsamość: token rejestracyjny
- * otwiera jedną trasę i niczego nie podpisuje w rejestrze.
+ *
+ * ══ KLUB (wielofirmowość 2.0.0, §4-§7; issue #102) ══
+ * Konto Google potwierdzone nie znaczy jeszcze „wpuszczony": bramką jest brak
+ * CZŁONKOSTWA w klubie. Serwis trzyma ten stan osobno od poświadczeń (`StoredPerson`),
+ * bo to nie jest tożsamość - token osoby otwiera dwie trasy bez klubu i niczego nie
+ * podpisuje w rejestrze.
+ *
+ * Para tokenów jest parą DLA KLUBU, więc każda jej zmiana (logowanie, zatwierdzenie
+ * w międzyczasie, przełączenie, rotacja) melduje klub przez `onActiveClub` - to nim
+ * magazyn stempluje nowe operacje i po nim zawęża flotę. Funkcja, nie repozytorium:
+ * serwis poświadczeń nie ma prawa wiedzieć, że istnieje SQLite.
+ *
+ * DWIE czynności WYMAGAJĄ SIECI ponad logowanie: dołączenie do klubu i przełączenie
+ * klubu (§6). Offline-first dotyczy PRACY w klubie, nie zmiany klubu - bez zasięgu
+ * pilot pracuje dalej tam, gdzie już jest.
  */
 
 import type {
   CredentialsPort,
   StoredCredentials,
-  StoredRegistration,
+  StoredPerson,
 } from '../ports/credentialsPort';
 import type { PinCryptoPort } from '../ports/pinCryptoPort';
 import {
   ServerRejectedError,
   type AuthTokens,
-  type RemoteRegistration,
+  type ClubsView,
+  type JoinClubResult,
+  type OrgRef,
   type ServerPort,
 } from '../ports/serverPort';
 
 export type LogoutBlock = 'outbox_not_empty' | null;
 
+/**
+ * Meldunek o KLUBIE AKTYWNYM - woła się przy każdym wydaniu pary tokenów. Funkcja,
+ * a nie port: jedynym odbiorcą jest magazyn (`EventsRepo.setActiveOrg`), a kierunek
+ * zależności ma zostać taki, jaki jest.
+ */
+export type ActiveClubSink = (org: OrgRef) => Promise<void>;
+
 /** Wynik logowania Google - tylko `signed_in` jest tożsamością. */
 export type GoogleLoginOutcome =
   | { kind: 'signed_in'; stored: StoredCredentials }
-  | { kind: 'pending' | 'rejected'; registration: RemoteRegistration };
+  | { kind: 'no_club'; clubs: ClubsView };
 
 /**
- * Wynik sprawdzenia zgłoszenia (ekran `00c`).
- *  • `signed_in` - zatwierdzono w międzyczasie; profil już zapisany, PIN do ustawienia;
- *  • `pending` / `rejected` - stan zgłoszenia (odrzucenie niesie powód);
- *  • `gone` - serwer zgłoszenia nie zna (wygasło, konto skasowane) - magazyn wyczyszczony,
- *    droga wraca na ekran logowania;
- *  • `unreachable` - brak sieci; zapisane zgłoszenie zostaje nietknięte.
+ * Wynik sprawdzenia stanu wobec klubów (ekran `00c`).
+ *  • `signed_in`   - zatwierdzono w międzyczasie; profil już zapisany, PIN do ustawienia;
+ *  • `clubs`       - nadal bez aktywnego klubu (czeka albo odrzucono - treść w `clubs`);
+ *  • `gone`        - serwer za tym tokenem nikogo nie widzi (osoba wyłączona, token
+ *                    już zrealizowany) - magazyn wyczyszczony, droga wraca na logowanie;
+ *  • `unreachable` - brak sieci; zapisany stan zostaje nietknięty.
  */
-export type RegistrationCheck =
+export type MembershipCheck =
   | { kind: 'signed_in'; stored: StoredCredentials }
-  | { kind: 'pending' | 'rejected'; registration: RemoteRegistration }
+  | { kind: 'clubs'; clubs: ClubsView }
   | { kind: 'gone' }
+  | { kind: 'unreachable' };
+
+/**
+ * Wynik dołączenia kodem (00E, 13A). `unreachable` wychodzi tu jako WYNIK, nie wyjątek,
+ * bo brak sieci ma na tym ekranie własne zdanie: dołączenie wymaga internetu (§6).
+ */
+export type JoinOutcome = JoinClubResult | { kind: 'unreachable' };
+
+/**
+ * Wynik przełączenia klubu (13A).
+ *  • `switched`    - nowa para tokenów zapisana, klub aktywny przestawiony;
+ *  • `not_found`   - klubu nie ma albo pilot już w nim nie lata (członkostwo wyłączone);
+ *  • `unreachable` - brak sieci; nic się nie zmieniło, pilot pracuje dalej w swoim klubie.
+ */
+export type SwitchOutcome =
+  | { kind: 'switched'; stored: StoredCredentials }
+  | { kind: 'not_found' }
   | { kind: 'unreachable' };
 
 export class AuthService {
@@ -58,6 +95,8 @@ export class AuthService {
     private readonly server: ServerPort,
     private readonly credentials: CredentialsPort,
     private readonly pinCrypto: PinCryptoPort,
+    /** Domyślnie nic - testy warstwy poświadczeń nie mają magazynu i nie muszą mieć. */
+    private readonly onActiveClub: ActiveClubSink = async () => {},
   ) {}
 
   /** Profil z magazynu - `null` = urządzenie bez provisioning (droga do 00-login). */
@@ -65,50 +104,49 @@ export class AuthService {
     return this.credentials.load();
   }
 
-  /** Zgłoszenie z magazynu - `null` = nikt na tym telefonie nie czeka na decyzję. */
-  registration(): Promise<StoredRegistration | null> {
-    return this.credentials.loadRegistration();
+  /** Osoba bez klubu z magazynu - `null` = nikt na tym telefonie nie czeka na decyzję. */
+  person(): Promise<StoredPerson | null> {
+    return this.credentials.loadPerson();
   }
 
   /**
-   * Logowanie Google (online). Trzy wyjścia i żadne nie jest cichym błędem:
-   * konto zatwierdzone → provisioning jak dotąd; zgłoszenie → zapis do magazynu,
-   * żeby restart wrócił na ekran oczekiwania; odrzucenie → zapis BEZ tokenu (serwer go
-   * nie wydaje), bo `00d` ma pokazać powód także po restarcie.
+   * Logowanie Google (online). Dwa wyjścia i żadne nie jest cichym błędem: aktywne
+   * członkostwo → provisioning jak dotąd; brak klubu → zapis stanu do magazynu, żeby
+   * restart wrócił na ekran oczekiwania (00C) albo na pole kodu klubu (00E), a nie
+   * kazał przechodzić przez Google od nowa.
    */
   async loginWithGoogle(idToken: string): Promise<GoogleLoginOutcome> {
     const result = await this.server.loginWithGoogle(idToken);
     if (result.kind === 'signed_in') {
       return { kind: 'signed_in', stored: await this.provision(result.tokens) };
     }
-    await this.credentials.saveRegistration({
-      registrationToken: result.kind === 'pending' ? result.registrationToken : null,
-      registration: result.registration,
+    await this.credentials.savePerson({
+      personToken: result.personToken,
+      clubs: result.clubs,
     });
-    return { kind: result.kind, registration: result.registration };
+    return { kind: 'no_club', clubs: result.clubs };
   }
 
   /**
-   * Sprawdzenie zgłoszenia u serwera - „SPRAWDŹ PONOWNIE" i pętla ekranu `00c`.
+   * Stan wobec klubów u serwera - „SPRAWDŹ PONOWNIE" i pętla ekranu `00c`.
    *
    * Brak sieci NIE rusza magazynu (§4.1: sieć to okazja, nie warunek), a odmowa
-   * 401/404 czyści go - zgłoszenia już nie ma i udawanie, że czeka, byłoby kłamstwem
-   * na ekranie, którego cała treść to „na co czekasz".
+   * 401/404 czyści go - za tym tokenem nikt już nie stoi i udawanie, że ktoś czeka,
+   * byłoby kłamstwem na ekranie, którego cała treść to „na co czekasz".
    */
-  async checkRegistration(): Promise<RegistrationCheck> {
-    const stored = await this.credentials.loadRegistration();
-    if (stored == null) return { kind: 'gone' };
-    if (stored.registrationToken == null) {
-      // Odrzucone przy logowaniu: nie ma tokenu, nie ma o co pytać - stan jest znany.
-      return { kind: 'rejected', registration: stored.registration };
-    }
+  async checkMemberships(): Promise<MembershipCheck> {
+    // Token OSOBY (00C) albo token KLUBU: listę klubów czyta też pilot, który już
+    // gdzieś lata - na 13A widzi z niej własne zgłoszenie do drugiego klubu. Tokenów
+    // klubu ta trasa mu nie wyda i nie ma po co: on już wszedł.
+    const token = await this.tokenForClubless();
+    if (token == null) return { kind: 'gone' };
 
     let result;
     try {
-      result = await this.server.registrationStatus(stored.registrationToken);
+      result = await this.server.membershipStatus(token.value);
     } catch (error) {
       if (error instanceof ServerRejectedError && (error.status === 401 || error.status === 404)) {
-        await this.credentials.clearRegistration();
+        await this.credentials.clearPerson();
         return { kind: 'gone' };
       }
       if (error instanceof ServerRejectedError) throw error;
@@ -118,16 +156,82 @@ export class AuthService {
     if (result.kind === 'approved') {
       return { kind: 'signed_in', stored: await this.provision(result.tokens) };
     }
-    await this.credentials.saveRegistration({
-      registrationToken: stored.registrationToken,
-      registration: result.registration,
-    });
-    return { kind: result.kind, registration: result.registration };
+    // Magazyn OSOBY zapisuje wyłącznie droga osoby: u pilota z profilem znaczyłby
+    // „nie należysz do żadnego klubu" i bramka startu wyrzuciłaby go na 00C.
+    if (token.person != null) {
+      await this.credentials.savePerson({ personToken: token.value, clubs: result.clubs });
+    }
+    return { kind: 'clubs', clubs: result.clubs };
   }
 
-  /** „Zaloguj innym kontem" - porzucenie zgłoszenia na TYM telefonie; serwer nic o tym nie wie. */
-  async abandonRegistration(): Promise<void> {
-    await this.credentials.clearRegistration();
+  /**
+   * Dołączenie do klubu kodem (00E i arkusz na 13A) - JEDYNA droga do klubu.
+   *
+   * Jedzie tokenem OSOBY, a gdy pilot już w jakimś klubie lata - jego tokenem klubu
+   * (13A: „Dołącz do innego klubu"). Zgłoszenie `pending` zapisuje się w magazynie osoby,
+   * żeby ekran 00C przeżył restart; pilot z własnym profilem magazynu osoby nie dostaje -
+   * on pracuje dalej w swoim klubie, a zgłoszenie widzi jako wiersz na liście klubów.
+   */
+  async joinClub(code: string): Promise<JoinOutcome> {
+    const token = await this.tokenForClubless();
+    if (token == null) return { kind: 'unreachable' };
+
+    let result: JoinClubResult;
+    try {
+      result = await this.server.joinClub(token.value, code);
+    } catch (error) {
+      if (error instanceof ServerRejectedError) throw error;
+      return { kind: 'unreachable' };
+    }
+
+    if (token.person != null && (result.kind === 'pending' || result.kind === 'rejected')) {
+      const clubs =
+        result.kind === 'pending'
+          ? result.clubs
+          : // Odmowa nie niesie kompletu klubów, ale ekran 00D ma po restarcie pokazać
+            // ten sam powód - składamy więc widok z jednego, właśnie rozstrzygniętego.
+            rejectedClubs(result, token.person.clubs.person);
+      await this.credentials.savePerson({ personToken: token.value, clubs });
+    }
+    return result;
+  }
+
+  /**
+   * Przełączenie klubu (13A) - nowa para tokenów DLA KLUBU DOCELOWEGO.
+   *
+   * Warunek pustej kolejki sprawdza WOŁAJĄCY (store sesji zna licznik), bo to decyzja
+   * ekranu, a nie poświadczeń: blokada ma podać powód przy karcie klubu, a nie wywalić
+   * się wyjątkiem. Tutaj zostaje reguła twarda: bez sieci nie ma przełączenia.
+   */
+  async switchClub(orgId: string): Promise<SwitchOutcome> {
+    const stored = await this.credentials.load();
+    if (stored == null) return { kind: 'not_found' };
+
+    let tokens: AuthTokens | null;
+    try {
+      tokens = await this.server.switchClub(stored.token, orgId);
+    } catch (error) {
+      if (error instanceof ServerRejectedError && error.status === 401) {
+        // Token dostępu wygasł w trakcie - jedna rotacja i ponowienie, jak w syncu.
+        const rotated = await this.rotate();
+        if (rotated == null) return { kind: 'not_found' };
+        tokens = await this.server.switchClub(rotated, orgId);
+      } else if (error instanceof ServerRejectedError) {
+        throw error;
+      } else {
+        return { kind: 'unreachable' };
+      }
+    }
+    if (tokens == null) return { kind: 'not_found' };
+
+    // PIN PRZEŻYWA przełączenie: klub zmienia kontekst pracy, nie tożsamość urządzenia.
+    // Świeży provisioning zerowałby go i kazał ustawiać PIN po każdej zmianie klubu.
+    return { kind: 'switched', stored: await this.store({ ...tokens }, stored.pin ?? null) };
+  }
+
+  /** „Zaloguj innym kontem" - porzucenie stanu na TYM telefonie; serwer nic o tym nie wie. */
+  async abandonPerson(): Promise<void> {
+    await this.credentials.clearPerson();
   }
 
   // ── PIN (§3.0: codzienne wejście = odblokowanie offline) ─────────────────────
@@ -170,6 +274,9 @@ export class AuthService {
    * Magazyn trzyma komplet pod jednym kluczem, więc pominięcie `pin` skasowałoby go
    * przy pierwszym wygaśnięciu tokenu (ACCESS_TTL = 1 h) i bramka wołałaby „Ustaw PIN"
    * co dzień. Skrót PIN-u zeruje WYŁĄCZNIE świadomy provisioning (§3.0).
+   *
+   * TU TEŻ MELDUJE SIĘ KLUB i to jest droga telefonu aktualizowanego z 1.x (§11): stary
+   * profil klubu nie zna, a pierwsze odświeżenie tokenów przynosi go razem z parą.
    */
   async rotate(): Promise<string | null> {
     const stored = await this.credentials.load();
@@ -177,13 +284,7 @@ export class AuthService {
 
     try {
       const tokens = await this.server.refresh(stored.refreshToken);
-      const next: StoredCredentials = {
-        ...stored,
-        token: tokens.token,
-        refreshToken: tokens.refreshToken,
-        pilot: tokens.pilot,
-      };
-      await this.credentials.save(next);
+      const next = await this.store({ ...tokens }, stored.pin ?? null);
       return next.token;
     } catch (error) {
       if (error instanceof ServerRejectedError) return null; // refresh martwy - bez paniki
@@ -198,23 +299,77 @@ export class AuthService {
   async logout(outboxCount: number): Promise<LogoutBlock> {
     if (outboxCount > 0) return 'outbox_not_empty';
     await this.credentials.clear();
+    await this.credentials.clearPerson();
     return null;
   }
 
   /**
-   * Provisioning urządzenia: komplet poświadczeń do magazynu, zgłoszenie (jeśli było)
-   * wyczyszczone. PIN jest jawnie ZEROWANY - świeży provisioning (także po „Nie pamiętam
+   * Provisioning urządzenia: komplet poświadczeń do magazynu, stan osoby (jeśli był)
+   * wyczyszczony. PIN jest jawnie ZEROWANY - świeży provisioning (także po „Nie pamiętam
    * PIN") przechodzi przez krok „Ustaw PIN", stary skrót nie ma prawa przeżyć.
    */
   private async provision(tokens: AuthTokens): Promise<StoredCredentials> {
+    const stored = await this.store(tokens, null);
+    await this.credentials.clearPerson();
+    return stored;
+  }
+
+  /** Zapis pary tokenów + meldunek klubu. Jedno miejsce, bo dróg wydania jest cztery. */
+  private async store(
+    tokens: AuthTokens,
+    pin: StoredCredentials['pin'],
+  ): Promise<StoredCredentials> {
     const stored: StoredCredentials = {
       token: tokens.token,
       refreshToken: tokens.refreshToken,
       pilot: tokens.pilot,
-      pin: null,
+      pin,
+      ...(tokens.org != null ? { org: tokens.org } : {}),
+      ...(tokens.memberships != null ? { memberships: tokens.memberships } : {}),
     };
     await this.credentials.save(stored);
-    await this.credentials.clearRegistration();
+    // Klub PO zapisie poświadczeń: gdyby magazyn zdążył ostemplować zdarzenie klubem,
+    // dla którego nie ma jeszcze tokenu, zapis nie miałby czym wyjechać.
+    if (tokens.org != null) await this.onActiveClub(tokens.org);
     return stored;
   }
+
+  /**
+   * Token do trasy BEZ KLUBU: osoby (00E) albo dowolnego klubu (13A). `null` = telefon
+   * nie ma czym się przedstawić, czyli nie ma też jak dołączyć.
+   *
+   * Zapis osoby wraca razem z tokenem, bo wołający potrzebuje z niego plakietki konta -
+   * drugi odczyt magazynu odpowiadałby na to samo pytanie.
+   */
+  private async tokenForClubless(): Promise<{
+    value: string;
+    /** Niepuste = to jest droga OSOBY (00E); `null` = pilot z własnym profilem (13A). */
+    person: StoredPerson | null;
+  } | null> {
+    const person = await this.credentials.loadPerson();
+    if (person != null) return { value: person.personToken, person };
+    const stored = await this.credentials.load();
+    return stored == null ? null : { value: stored.token, person: null };
+  }
 }
+
+/** Widok jednego, właśnie odrzuconego członkostwa - żeby 00D przeżyło restart. */
+const rejectedClubs = (
+  rejected: { org: OrgRef; rejectReason: string | null; decidedAt: string | null },
+  person: ClubsView['person'],
+): ClubsView => ({
+  person,
+  status: 'rejected',
+  memberships: [
+    {
+      org: rejected.org,
+      clubActive: true,
+      status: 'rejected',
+      code: null,
+      role: 'pilot',
+      rejectReason: rejected.rejectReason,
+      createdAt: new Date().toISOString(),
+      decidedAt: rejected.decidedAt,
+    },
+  ],
+});

@@ -20,13 +20,15 @@ import { FixedClock } from '../infrastructure/clock';
 
 const T0 = Date.UTC(2026, 5, 22, 8, 0, 0);
 const PILOT = { id: 'TMK', code: 'TMK', name: 'Tomasz Małkiewicz' };
-const CREDS: StoredCredentials = { token: 'jwt-1', refreshToken: 'r1', pilot: PILOT };
+/** Klub, DLA KTÓREGO wydano parę tokenów (wielofirmowość §6). */
+const ORG = { id: 'org-a', slug: 'alfa', name: 'Aeroklub Alfa' };
+const CREDS: StoredCredentials = { token: 'jwt-1', refreshToken: 'r1', pilot: PILOT, org: ORG, memberships: [] };
 
 class MemoryCredentials {
-  // Zgłoszenie rejestracyjne (logowanie Google) - nieużywane w tych testach.
-  loadRegistration = async (): Promise<null> => null;
-  saveRegistration = async (_registration: unknown): Promise<void> => {};
-  clearRegistration = async (): Promise<void> => {};
+  // Osoba bez klubu (wielofirmowość §4) - nieużywana w tych testach.
+  loadPerson = async (): Promise<null> => null;
+  savePerson = async (_person: unknown): Promise<void> => {};
+  clearPerson = async (): Promise<void> => {};
   load = async () => CREDS;
   save = async (_c: StoredCredentials) => {};
   clear = async () => {};
@@ -38,7 +40,16 @@ class TraceServer implements ServerPort {
     throw new Error('nieużywane w tych testach');
   }
 
-  async registrationStatus(): Promise<never> {
+  // Trasy BEZ KLUBU (wielofirmowość §6) - te przekroje ich nie dotykają.
+  async membershipStatus(): Promise<never> {
+    throw new Error('nieużywane w tych testach');
+  }
+
+  async joinClub(): Promise<never> {
+    throw new Error('nieużywane w tych testach');
+  }
+
+  async switchClub(): Promise<never> {
     throw new Error('nieużywane w tych testach');
   }
 
@@ -59,8 +70,8 @@ class TraceServer implements ServerPort {
     throw new Error('ta atrapa nie obsługuje śladu operacji');
   };
 
-  login = async (): Promise<AuthTokens> => ({ token: 'jwt-1', refreshToken: 'r1', pilot: PILOT });
-  refresh = async (): Promise<AuthTokens> => ({ token: 'jwt-2', refreshToken: 'r2', pilot: PILOT });
+  login = async (): Promise<AuthTokens> => ({ token: 'jwt-1', refreshToken: 'r1', pilot: PILOT, org: ORG, memberships: [] });
+  refresh = async (): Promise<AuthTokens> => ({ token: 'jwt-2', refreshToken: 'r2', pilot: PILOT, org: ORG, memberships: [] });
   pushEvents = async () => ({ accepted: 0, duplicates: 0, flags: [] });
   getReference = async () => ({ data: { aircraft: [], pilots: [] }, etag: null });
   getReadingsChain = async () => ({ before: null, after: null, oil: null });

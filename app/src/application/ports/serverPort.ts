@@ -29,48 +29,115 @@ import type {
   SessionTrackPayload,
 } from '../../domain';
 
-/** Para tokenów + tożsamość - wynik logowania i odświeżenia (§3.0). */
+/** Klub tak, jak nazywa go serwer - tyle, ile trzeba, żeby go NAPISAĆ na ekranie. */
+export interface OrgRef {
+  id: string;
+  slug: string;
+  name: string;
+}
+
+/**
+ * Para tokenów + tożsamość W KLUBIE (§3.0, wielofirmowość §6).
+ *
+ * `org` mówi, DLA KTÓREGO klubu wydano tę parę - token jest tokenem klubu, więc flota,
+ * przejęcie i wysyłka dzieją się w nim. `memberships` niesie komplet klubów osoby: z tego
+ * telefon wie, czy w ogóle rysować przełącznik na 13A i plakietkę klubu na kafelku (01E) -
+ * przy jednym członkostwie nie rysuje żadnego (reguła SyncChipa z issue #12).
+ */
 export interface AuthTokens {
   token: string;
   refreshToken: string;
   pilot: { id: string; code: string; name: string };
+  org: OrgRef;
+  memberships: ClubMembership[];
+}
+
+/** Kod pilota i rola w JEDNYM klubie - jedno i drugie należy do CZŁONKOSTWA (§3.2). */
+export interface ClubMembership {
+  org: OrgRef;
+  code: string;
+  role: string;
 }
 
 /**
- * Zgłoszenie rejestracyjne tak, jak oddaje je serwer (`docs/logowanie-google.md` §7):
- * imię i e-mail Z GOOGLE, nie z konta pilota - konta jeszcze nie ma. Ekrany `00c`/`00d`
- * pokazują dokładnie to i nic więcej.
+ * Członkostwo tak, jak widzą je ekrany 00C/00D/00E i lista klubów na 13A: klub nazwany,
+ * stan, powód odrzucenia i chwile.
+ *
+ * To NIE jest już „zgłoszenie rejestracyjne" (`docs/logowanie-google.md` §7): od
+ * wielofirmowości oczekiwanie i odmowa dotyczą KLUBU, nie tożsamości Google - ta sama
+ * osoba może czekać w jednym klubie i latać w drugim (wielofirmowość §4).
  */
-export interface RemoteRegistration {
-  provider: string;
-  name: string;
-  email: string;
-  status: 'pending' | 'rejected';
+export interface ClubMembershipView {
+  org: OrgRef;
+  /** Klub wyłączony przez superadministratora nie wpuszcza nikogo, choć członkostwo stoi. */
+  clubActive: boolean;
+  status: 'active' | 'pending' | 'rejected' | 'disabled';
+  /** Kod pilota W TYM klubie; `null`, dopóki administrator go nie nadał. */
+  code: string | null;
+  role: string;
   /** Powód administratora - `00d` cytuje go dosłownie; `null` dopóki zgłoszenie czeka. */
   rejectReason: string | null;
-  /** ISO 8601 UTC - pierwsze logowanie tym kontem Google. */
+  /** ISO 8601 UTC - kiedy zgłoszenie trafiło do klubu. */
   createdAt: string;
   /** ISO 8601 UTC - chwila decyzji; `null` dopóki czeka. */
   decidedAt: string | null;
 }
 
 /**
- * Wynik `POST /auth/google` - TRZY stany, z których tylko pierwszy jest tożsamością.
- * Token rejestracyjny otwiera wyłącznie `registrationStatus`; dostać go można TYLKO
- * przy zgłoszeniu oczekującym (odrzucenie tokenu nie niesie).
+ * Stan osoby wobec klubów - to, co rozstrzyga, który ekran rodziny 00 pokazać (§5):
+ * `pending` → 00C, `rejected` → 00D, `none` → 00E. Pierwszeństwo ustala serwer:
+ * osoba czekająca w jednym klubie i odrzucona w drugim ma na ekranie CZEKANIE.
+ */
+export type ClubsStatus = 'active' | 'pending' | 'rejected' | 'none';
+
+/** Komplet klubów osoby razem ze stanem zbiorczym. */
+export interface ClubsView {
+  status: ClubsStatus;
+  memberships: ClubMembershipView[];
+  /**
+   * Kim jest pytający - imię i adres Z KONTA, do plakietki na ekranach 00C/00D/00E.
+   * Serwer podaje je w tej samej odpowiedzi, bo „na co czekam" ma sens dopiero razem
+   * z „pod którym kontem"; telefon nie ma skąd wziąć tego sam.
+   */
+  person: { name: string; email: string | null };
+}
+
+/**
+ * Wynik `POST /auth/google` - DWA stany, z których tylko pierwszy jest tożsamością.
+ *
+ * `no_club` niesie token OSOBY, który otwiera dokładnie dwie trasy bez klubu
+ * (`GET /auth/memberships`, `POST /auth/join`) i niczego nie podpisuje w rejestrze.
+ * Który z ekranów 00C/00D/00E z tego wynika, mówi `clubs.status`.
  */
 export type GoogleLoginResult =
   | { kind: 'signed_in'; tokens: AuthTokens }
-  | { kind: 'pending'; registration: RemoteRegistration; registrationToken: string }
-  | { kind: 'rejected'; registration: RemoteRegistration };
+  | { kind: 'no_club'; personToken: string; clubs: ClubsView };
 
 /**
- * Wynik `GET /auth/registration`. `approved` niesie TOKENY - pilot zatwierdzony
+ * Wynik `GET /auth/memberships`. `approved` niesie TOKENY - pilot zatwierdzony
  * w międzyczasie wchodzi bez ponownego przechodzenia przez Google.
  */
-export type RegistrationStatusResult =
+export type MembershipStatusResult =
   | { kind: 'approved'; tokens: AuthTokens }
-  | { kind: 'pending' | 'rejected'; registration: RemoteRegistration };
+  | { kind: 'clubs'; clubs: ClubsView };
+
+/**
+ * Wynik `POST /auth/join { code }` (wielofirmowość §5) - tabela odpowiedzi serwera
+ * przełożona na decyzje ekranu 00E i arkusza na 13A:
+ *  • `pending` (202) → 00C z nazwą klubu;
+ *  • `rejected` (403) → 00D z powodem;
+ *  • `unknown_code` (404) → zdanie PRZY POLU, bez czyszczenia wpisu (kod nieznany,
+ *    dołączanie wyłączone i klub nieaktywny to JEDNA odpowiedź - nic się nie ujawnia);
+ *  • `already_member` / `membership_disabled` (409) → zdanie przy polu;
+ *  • `rate_limited` (429) → powód z czasem odczekania W PRZYCISKU (issue #55).
+ */
+export type JoinClubResult =
+  | { kind: 'pending'; org: OrgRef; clubs: ClubsView }
+  | { kind: 'rejected'; org: OrgRef; rejectReason: string | null; decidedAt: string | null }
+  | { kind: 'unknown_code' }
+  | { kind: 'already_member'; org: OrgRef }
+  | { kind: 'membership_disabled'; org: OrgRef }
+  | { kind: 'rate_limited'; retryAfterSec: number };
 
 /** Wynik przyjęcia paczki przez serwer (§4.3, §4.5). */
 export interface PushResult {
@@ -274,11 +341,29 @@ export interface ServerPort {
    */
   loginWithGoogle(idToken: string): Promise<GoogleLoginResult>;
   /**
-   * Stan zgłoszenia dla ekranu `00c` - TOKENEM REJESTRACYJNYM, nie tokenem pilota.
-   * `ServerRejectedError` 401/404 znaczy „zgłoszenia już nie ma" (wygasło, konto
-   * skasowane) - wołający wraca na ekran logowania.
+   * Stan osoby wobec klubów (`GET /auth/memberships`) - ekran `00c` pyta o to co
+   * kilkanaście sekund i pod „SPRAWDŹ PONOWNIE", a 13A raz przy otwarciu.
+   *
+   * Przyjmuje token OSOBY (droga 00C) albo token DOWOLNEGO klubu (13A: pilot klubu A
+   * ogląda stan zgłoszenia do B). Tokeny klubu wraca WYŁĄCZNIE tokenowi osoby i
+   * dokładnie raz - `ServerRejectedError` 401/404 znaczy „za tym tokenem nikt już nie
+   * stoi", więc wołający wraca na ekran logowania.
    */
-  registrationStatus(registrationToken: string): Promise<RegistrationStatusResult>;
+  membershipStatus(token: string): Promise<MembershipStatusResult>;
+  /**
+   * Dołączenie do klubu kodem (`POST /auth/join`, wielofirmowość §3.8) - JEDYNA droga
+   * do klubu. Kod daje wyłącznie ZGŁOSZENIE; o przyjęciu decyduje administrator klubu.
+   *
+   * Token osoby (00E) albo dowolnego klubu (13A). Odmowy serwera NIE są tu wyjątkami,
+   * tylko wynikami: każda ma na ekranie inną drogę wyjścia (patrz `JoinClubResult`).
+   */
+  joinClub(token: string, code: string): Promise<JoinClubResult>;
+  /**
+   * Przełączenie klubu (`POST /auth/switch`, wielofirmowość §6) - NOWA para tokenów dla
+   * klubu docelowego. WYMAGA SIECI: offline-first dotyczy pracy w klubie, nie zmiany
+   * klubu. `null` = klub, którego ta osoba nie ma (404) - dla niej NIEISTNIEJĄCY.
+   */
+  switchClub(token: string, orgId: string): Promise<AuthTokens | null>;
   refresh(refreshToken: string): Promise<AuthTokens>;
   pushEvents(
     token: string,

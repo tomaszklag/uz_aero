@@ -32,13 +32,15 @@ const T0 = Date.UTC(2026, 6, 29, 8, 0, 0);
 const iso = (ms: number): string => new Date(ms).toISOString();
 
 const PILOT = { id: 'TMK', code: 'TMK', name: 'Tomasz Małkiewicz' };
-const CREDS: StoredCredentials = { token: 'jwt-1', refreshToken: 'r1', pilot: PILOT };
+/** Klub, DLA KTÓREGO wydano parę tokenów (wielofirmowość §6). */
+const ORG = { id: 'org-a', slug: 'alfa', name: 'Aeroklub Alfa' };
+const CREDS: StoredCredentials = { token: 'jwt-1', refreshToken: 'r1', pilot: PILOT, org: ORG, memberships: [] };
 
 class MemoryCredentials {
-  // Zgłoszenie rejestracyjne (logowanie Google) - nieużywane w tych testach.
-  loadRegistration = async (): Promise<null> => null;
-  saveRegistration = async (_registration: unknown): Promise<void> => {};
-  clearRegistration = async (): Promise<void> => {};
+  // Osoba bez klubu (wielofirmowość §4) - nieużywana w tych testach.
+  loadPerson = async (): Promise<null> => null;
+  savePerson = async (_person: unknown): Promise<void> => {};
+  clearPerson = async (): Promise<void> => {};
   constructor(private stored: StoredCredentials | null = CREDS) {}
   load = async () => this.stored;
   save = async (c: StoredCredentials) => {
@@ -64,7 +66,16 @@ class PrefsServer implements ServerPort {
     throw new Error('nieużywane w tych testach');
   }
 
-  async registrationStatus(): Promise<never> {
+  // Trasy BEZ KLUBU (wielofirmowość §6) - te przekroje ich nie dotykają.
+  async membershipStatus(): Promise<never> {
+    throw new Error('nieużywane w tych testach');
+  }
+
+  async joinClub(): Promise<never> {
+    throw new Error('nieużywane w tych testach');
+  }
+
+  async switchClub(): Promise<never> {
     throw new Error('nieużywane w tych testach');
   }
 
@@ -104,10 +115,10 @@ class PrefsServer implements ServerPort {
 
   async refresh(): Promise<AuthTokens> {
     this.refreshCalls += 1;
-    return { token: 'jwt-2', refreshToken: 'r2', pilot: PILOT };
+    return { token: 'jwt-2', refreshToken: 'r2', pilot: PILOT, org: ORG, memberships: [] };
   }
 
-  login = async (): Promise<AuthTokens> => CREDS;
+  login = async (): Promise<AuthTokens> => ({ ...CREDS, org: ORG, memberships: [] });
   pushEvents = async (): Promise<PushResult> => ({ accepted: 0, duplicates: 0, flags: [] });
   pushTraces = async () => {
     throw new Error('nieużywane w tych testach');

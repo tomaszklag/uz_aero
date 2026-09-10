@@ -18,10 +18,17 @@ export interface ProfileChipProps {
   name: string;
   /** Kod pilota (TMK) - mono, pod nazwiskiem. */
   code: string;
+  /**
+   * Klub, w którym ten kod obowiązuje - dopisek po kodzie (mockup 13a). Podaje się go
+   * WYŁĄCZNIE przy więcej niż jednym członkostwie: przy jednym klub jest oczywisty,
+   * a nazwa przy każdym wejściu w ustawienia niczego by nie odróżniała (reguła
+   * SyncChipa z issue #12) - dlatego mockup 13 (jeden klub) go nie ma.
+   */
+  club?: string | null;
   style?: ViewStyle;
 }
 
-export function ProfileChip({ name, code, style }: ProfileChipProps) {
+export function ProfileChip({ name, code, club = null, style }: ProfileChipProps) {
   const { theme } = useTheme();
   const green = toneColors(theme, 'green');
   const initials = name
@@ -64,8 +71,8 @@ export function ProfileChip({ name, code, style }: ProfileChipProps) {
         </AppText>
         <View style={styles.subRow}>
           <View style={[styles.dot, { backgroundColor: green.accent }]} />
-          <AppText variant="mono" tone="muted" style={styles.code}>
-            {code}
+          <AppText variant="mono" tone="muted" numberOfLines={1} style={styles.code}>
+            {club == null ? code : `${code} · ${club}`}
           </AppText>
         </View>
       </View>

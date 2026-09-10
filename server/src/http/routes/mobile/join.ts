@@ -44,6 +44,7 @@ export function registerJoinRoutes(app: FastifyInstance, auth: AuthCommands, joi
         status: 'pending',
         org: outcome.org,
         memberships: outcome.clubs.memberships.map(membershipToWire),
+        person: outcome.clubs.person,
       });
     }
 

@@ -43,6 +43,10 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 - **Klub zakłada opiekun platformy** razem z jego pierwszym administratorem i kodem klubu, żeby klub miał od pierwszego dnia kogo pytać i co podawać pilotom. Klub da się wyłączyć - jego ludzie tracą dostęp od razu, a dziennik, flota i konta zostają.
 - **Dopisywania pilota z panelu klubu już nie ma** - to była druga droga do klubu, obok kodu, i znikła razem z nią. Pilot, który odchodzi, ma wyłączane członkostwo: dostęp gaśnie natychmiast, a jego loty zostają w dzienniku i w dokumentach klubu.
 - **Administrator dwóch klubów wybiera klub po zalogowaniu** i przechodzi między nimi bez logowania się od nowa. Nazwa klubu stoi na szczycie kolumny z lewej, więc przy każdym wklejonym linku widać, czyj to dziennik. Przy jednym klubie nic się nie zmienia - wyboru nie ma, bo nie ma z czego wybierać.
+- **Pilot dwóch klubów przełącza klub w ustawieniach aplikacji.** Wybrany klub decyduje, jaką flotę i jakich drugich pilotów widać przy rozpoczęciu lotu; „Mój dzień" i „Poprzednie dni" pokazują za to operacje ze WSZYSTKICH klubów, a każdy kafelek mówi, w którym klubie odbyła się operacja. Przy jednym klubie sekcji nie ma - nie ma czego przełączać.
+- **Zmiana klubu wymaga internetu i wysłanej kolejki**, i mówi o tym przy karcie klubu: zapisy powstałe w klubie wychodzą wyłącznie jego kluczem, więc najpierw jadą na serwer. Bez zasięgu pilot pracuje dalej w klubie, w którym jest - tak samo jak dotąd.
+- **Do drugiego klubu dołącza się z ustawień, tym samym kodem klubu.** Zgłoszenie staje na liście klubów jako „czeka na zatwierdzenie", a pilot lata dalej tam, gdzie latał.
+- **Pilot bez klubu wpisuje kod klubu na ekranie logowania.** Nieznany kod dostaje odpowiedź przy polu bez kasowania wpisu, odmowa administratora - powód i drugie wyjście („dołącz innym kodem"), a zbyt wiele prób pod rząd mówi, ile trzeba odczekać.
 
 ### Dla testerów
 

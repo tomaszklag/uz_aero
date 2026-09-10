@@ -16,7 +16,7 @@
  */
 
 /** Wersja schematu - sterowana `PRAGMA user_version`. Podnieś przy każdej migracji. */
-export const SCHEMA_VERSION = 8;
+export const SCHEMA_VERSION = 9;
 
 /**
  * Migracja 0 → 1: pełny schemat początkowy.
@@ -281,6 +281,109 @@ export const MIGRATION_8 = `
   CREATE INDEX IF NOT EXISTS idx_bug_reports_outbox ON bug_reports (sent_at);
 `;
 
+/**
+ * Migracja 8 → 9: KLUB (wielofirmowość 2.0.0, issue #102 - epik F).
+ *
+ * Telefon pracuje w kontekście JEDNEGO aktywnego klubu (`docs/wielofirmowosc.md` §7):
+ * flota, piloci i normy należą do klubu, a operacje pilota - do niego samego, więc
+ * „Mój dzień" pokazuje je ze wszystkich klubów naraz. Stąd dwie różne zmiany w jednej
+ * migracji.
+ *
+ * ══ KLUB OPERACJI SIEDZI W OSOBNEJ TABELI, A `events` ZOSTAJE NIETKNIĘTE ══
+ * Issue #102 mówiło „`org_id` na `events`", ale kolumny nie da się dołożyć bez złamania
+ * jednej z dwóch rzeczy: `ALTER TABLE … ADD COLUMN` nie jest w SQLite idempotentne
+ * (komplet migracji MUSI przejść ponownie bez błędu - `sqliteSchema.test.ts`), a
+ * przebudowa tabeli przez kopię wymagałaby czytania kolumny, której na pierwszym
+ * przebiegu jeszcze nie ma. `events` jest przy tym JEDYNĄ tabelą, której nie wolno
+ * zgubić (rejestr jest wieczny i append-only) - przepisywanie jej przy aktualizacji
+ * aplikacji to ostatnia rzecz, jakiej chcemy.
+ *
+ * Właściwym ZIARNEM jest zresztą operacja, nie zdarzenie: operacja dzieje się w jednym
+ * klubie z mocy modelu (jedna maszyna, jeden pilot, jeden klub), więc klub per zdarzenie
+ * byłby denormalizacją, która potrafi sama sobie zaprzeczyć. Wiersz stawia PIERWSZE
+ * zapisane zdarzenie operacji i nikt go potem nie zmienia (`INSERT OR IGNORE`) - dzięki
+ * temu korekta operacji z klubu A, robiona wtedy, gdy aktywny jest klub B, zostaje
+ * zapisem KLUBU A i nie wyjedzie tokenem klubu B.
+ *
+ * Operacja bez wiersza = zapis sprzed 2.0.0: klub nieznany, dopóki telefon nie pozna
+ * pierwszego klubu aktywnego (§11 - `EventsRepo.setActiveOrg` dopisuje je jednym ruchem).
+ *
+ * ══ CACHE REFERENCYJNY ZAKŁADAMY OD NOWA ══
+ * Pięć tabel cache'u leci `DROP` + `CREATE` z `org_id`, dokładnie jak `gps_trace`
+ * w migracji 3 i z tego samego powodu: to jest MATERIAŁ ROBOCZY, nigdy źródło prawdy.
+ * Wraca jednym `GET /reference`, a telefon i tak musi o niego zapytać, żeby w ogóle
+ * poznać swój klub aktywny. Zachowanie wierszy niczego by nie kupiło: klub, do którego
+ * należą, nie jest telefonowi znany w chwili migracji, a flota z nieznanego klubu jest
+ * dla ekranu 02 nie do odróżnienia od jej braku (issue #55: pusta flota nie ma bramy
+ * wieku, więc pierwszy puls synchronizacji pyta naprawdę).
+ *
+ * `reference_pilots` dostaje przy okazji klucz `(org_id, id)`, bo ten sam człowiek ma
+ * w każdym klubie INNY kod pilota (§3.2) - jeden wiersz na osobę mówiłby o niej
+ * w drugim klubie nieprawdę.
+ */
+export const MIGRATION_9 = `
+  CREATE TABLE IF NOT EXISTS session_orgs (
+    session_uuid TEXT PRIMARY KEY NOT NULL,
+    org_id       TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_session_orgs_org ON session_orgs (org_id);
+
+  DROP TABLE IF EXISTS reference_aircraft;
+  CREATE TABLE reference_aircraft (
+    id             TEXT PRIMARY KEY NOT NULL,
+    org_id         TEXT NOT NULL,
+    reg            TEXT NOT NULL,
+    type           TEXT NOT NULL,
+    year           INTEGER,
+    capacity_l     REAL NOT NULL,
+    mh_format      TEXT NOT NULL,
+    dual_required  INTEGER NOT NULL,
+    service_status TEXT NOT NULL,
+    claim_pic      TEXT,
+    claim_since    INTEGER,
+    handover       TEXT,
+    fetched_at     INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_reference_aircraft_org ON reference_aircraft (org_id);
+
+  DROP TABLE IF EXISTS reference_pilots;
+  CREATE TABLE reference_pilots (
+    org_id     TEXT NOT NULL,
+    id         TEXT NOT NULL,
+    code       TEXT NOT NULL,
+    name       TEXT NOT NULL,
+    active     INTEGER NOT NULL,
+    fetched_at INTEGER NOT NULL,
+    PRIMARY KEY (org_id, id)
+  );
+
+  DROP TABLE IF EXISTS reference_consumption;
+  CREATE TABLE reference_consumption (
+    aircraft_id TEXT PRIMARY KEY NOT NULL,
+    org_id      TEXT NOT NULL,
+    model       TEXT NOT NULL,
+    fetched_at  INTEGER NOT NULL
+  );
+
+  DROP TABLE IF EXISTS reference_oil;
+  CREATE TABLE reference_oil (
+    aircraft_id  TEXT PRIMARY KEY NOT NULL,
+    org_id       TEXT NOT NULL,
+    min_l        REAL,
+    capacity_l   REAL,
+    norm_l_per_h REAL,
+    fetched_at   INTEGER NOT NULL
+  );
+
+  DROP TABLE IF EXISTS reference_fuel;
+  CREATE TABLE reference_fuel (
+    aircraft_id  TEXT PRIMARY KEY NOT NULL,
+    org_id       TEXT NOT NULL,
+    norm_l_per_h REAL,
+    fetched_at   INTEGER NOT NULL
+  );
+`;
+
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
   MIGRATION_2,
@@ -290,4 +393,5 @@ export const MIGRATIONS: readonly string[] = [
   MIGRATION_6,
   MIGRATION_7,
   MIGRATION_8,
+  MIGRATION_9,
 ];

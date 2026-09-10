@@ -63,7 +63,7 @@
      (wielofirmowość, docs/wielofirmowosc.md §7). Karta = nazwa klubu + kod pilota
      W TYM klubie (ten sam człowiek ma w dwóch klubach dwa kody). Wybrana zielona,
      obie widoczne naraz - jak każdy wybór w tej aplikacji (nigdy select, nigdy
-     suwak). Przełączenie WYMAGA INTERNETU i pustej kolejki wysyłki (decyzja
+     suwak). Przełączenie WYMAGA INTERNETU i wysłanych zapisów KLUBU BIEŻĄCEGO (decyzja
      właściciela 2026-09-08: offline-first dotyczy pracy w klubie, nie zmiany klubu)
      - serwer wydaje nową parę tokenów dla wybranego klubu, jak przy logowaniu.
      Bez sieci albo z zaległościami karty są zablokowane Z POWODEM pod listą
@@ -82,7 +82,7 @@
   .club-sub { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
   .club-check { width:20px; height:20px; border-radius:50%; border:1.5px solid var(--border-strong); flex-shrink:0; display:flex; align-items:center; justify-content:center; color:transparent; }
   .club-opt.selected .club-check { background:var(--green); border-color:var(--green); color:#0D0D0D; }
-  /* Stan zablokowany (offline albo niepusta kolejka): karty przygaszone, a POWÓD
+  /* Stan zablokowany (offline albo zaległe zapisy tego klubu): karty przygaszone, a POWÓD
      jednym zdaniem pod listą - wzorzec .outbox-guard z sekcji Konto. Nie pokazany
      w ramce (ta jest online), opisany tu, żeby kod nie musiał zgadywać. */
   .club-list.blocked .club-opt { opacity:0.45; pointer-events:none; }
@@ -217,8 +217,9 @@
   <div class="status-bar">
     <span>12:47</span>
     <span class="status-right">
-      <!-- ONLINE (inaczej niż na 13): przełącznik klubu wymaga sieci, więc ramka
-           pokazuje stan, w którym działa. Wariant offline opisuje komentarz przy .club-blocked. -->
+      <!-- ONLINE (inaczej niż na 13): przełącznik klubu wymaga sieci, więc pierwsza
+           ramka pokazuje stan, w którym działa. Stany, w których NIE działa, mają własne
+           ramki niżej: zgłoszenie czekające na liście i przełączenie zablokowane. -->
       <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
       <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
       <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="16" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
@@ -505,6 +506,299 @@
   </div>
 </main>
 
+<!-- ═══ DRUGA RAMKA: ZGŁOSZENIE DO TRZECIEGO KLUBU CZEKA ═══
+     Pilot wpisał kod w arkuszu wyżej. Zgłoszenie dopisuje się do TEJ SAMEJ listy jako
+     wiersz `pending`: przygaszony, NIEKLIKALNY (członkostwa jeszcze nie ma, więc nie ma
+     dokąd przełączać), podpis bursztynem, kółko wyboru przerywane. Pilot pracuje dalej
+     w klubie, który miał - zgłoszenie nie zmienia ani ekranu, ani floty.
+     Decyzję klubu widać dopiero wtedy, gdy administrator ją podejmie (P3); do tego czasu
+     wiersz wygląda tak samo po każdym wejściu w ustawienia. -->
+<header class="canvas-label" id="zgloszenie">
+  <span class="film-strip">UZ AERO - 13A</span>
+  <span class="slug">stan: zgłoszenie do trzeciego klubu czeka</span>
+  <span class="canvas-meta">Wiersz `pending` · nieklikalny</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Zgłoszenie do klubu czeka">
+  <div class="status-bar">
+    <span>12:49</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="16" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+    <div class="app-header">
+      <a href="01-moj-dzien.html" class="back-btn">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.5 1.5L3 5l3.5 3.5"/></svg>
+        Mój dzień
+      </a>
+      <span class="screen-title">USTAWIENIA</span>
+      <span></span>
+    </div>
+
+    <div class="scroll">
+      <div class="form-section">
+        <div class="form-section-title">Klub</div>
+        <div class="club-list">
+          <button class="club-opt selected">
+            <span class="club-body">
+              <span class="club-name">Aeroklub Zielonogórski</span>
+              <span class="club-sub">Twój kod: TMK · 4 samoloty</span>
+            </span>
+            <span class="club-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          </button>
+          <button class="club-opt">
+            <span class="club-body">
+              <span class="club-name">Aeroklub Krakowski</span>
+              <span class="club-sub">Twój kod: TOM · 2 samoloty</span>
+            </span>
+            <span class="club-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          </button>
+          <!-- Bez kodu pilota i bez liczby maszyn: jednego nie nadał jeszcze administrator,
+               drugiej telefon nie zna, bo floty tego klubu nigdy nie widział. „0 samolotów"
+               byłoby zdaniem o flocie, a jest zdaniem o pustym cache'u. -->
+          <button class="club-opt pending">
+            <span class="club-body">
+              <span class="club-name">Aeroklub Gamma</span>
+              <span class="club-sub">Czeka na zatwierdzenie</span>
+            </span>
+            <span class="club-check"></span>
+          </button>
+        </div>
+
+        <button class="action-item">
+          <span class="action-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </span>
+          <span class="action-body">
+            <span class="action-name">Dołącz do innego klubu</span>
+            <span class="action-sub">kod klubu od jego administratora</span>
+          </span>
+          <svg class="action-chevron" width="14" height="14" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5L7 5l-3.5 3.5"/></svg>
+        </button>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Motyw wyświetlacza</div>
+        <div class="theme-switch">
+          <button class="theme-opt selected">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            Ciemny
+          </button>
+          <button class="theme-opt">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+            Jasny
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ═══ TRZECIA RAMKA: PRZEŁĄCZENIE ZABLOKOWANE ═══
+     Karty klubów są przygaszone i nieklikalne, a POWÓD stoi POD listą - tam, gdzie pilot
+     go napotyka (issue #55: nigdy cichy błąd, §4.1 kategoria 3 - akcja wymagająca sieci
+     jest zablokowana z podanym powodem).
+
+     TRZY POWODY, JEDNO MIEJSCE. Kolejność jest kolejnością POWAGI, bo pilot ma widzieć
+     ten, który musi naprawić NAJPIERW:
+       1. „Najpierw zdaj samolot - operacja należy do klubu, w którym ją zaczęto"
+          Powód NAJWYŻSZY - wygrywa z dwoma pozostałymi; ma własną ramkę niżej
+          (#maszyna), bo brzmienie powodu jest decyzją produktową i ma stać
+          w specyfikacji, a nie tylko w kodzie.
+       2. „Najpierw wyślij 3 zapisy - należą do klubu, w którym powstały" - TA RAMKA.
+          Zapisy powstałe w klubie wyjdą WYŁĄCZNIE jego kluczem; wysłane kluczem
+          drugiego klubu wróciłyby odrzucone i przepadły. Blokują zapisy KLUBU
+          BIEŻĄCEGO - zapisy innych klubów nie blokują, bo przełączenie jest właśnie
+          drogą do ich wysłania (decyzja właściciela 2026-09-10).
+       3. „Zmiana klubu wymaga internetu" - bez zasięgu; ten sam układ, sam napis inny.
+     Wpis „Dołącz do innego klubu" ZOSTAJE czynny: arkusz ma własną blokadę w przycisku,
+     a pilot ma prawo wpisać kod, nawet gdy kolejka stoi. -->
+<header class="canvas-label" id="zablokowane">
+  <span class="film-strip">UZ AERO - 13A</span>
+  <span class="slug">stan: przełączenie zablokowane - kolejka wysyłki stoi</span>
+  <span class="canvas-meta">Powód pod listą · karty nieklikalne</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Przełączenie klubu zablokowane">
+  <div class="status-bar">
+    <span>12:51</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="16" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+    <div class="app-header">
+      <a href="01-moj-dzien.html" class="back-btn">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.5 1.5L3 5l3.5 3.5"/></svg>
+        Mój dzień
+      </a>
+      <span class="screen-title">USTAWIENIA</span>
+      <!-- Sieć JEST (zapisy stoją z innego powodu), więc SyncChip nie rysuje nic -
+           kolejka, która opróżni się sama przy najbliższej okazji, jest stanem
+           domyślnym (issue #12). O zaległości mówi wiersz „Kolejka wysyłki" niżej. -->
+      <span></span>
+    </div>
+
+    <div class="scroll">
+      <div class="form-section">
+        <div class="form-section-title">Klub</div>
+        <div class="club-list blocked">
+          <button class="club-opt selected">
+            <span class="club-body">
+              <span class="club-name">Aeroklub Zielonogórski</span>
+              <span class="club-sub">Twój kod: TMK · 4 samoloty</span>
+            </span>
+            <span class="club-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          </button>
+          <button class="club-opt">
+            <span class="club-body">
+              <span class="club-name">Aeroklub Krakowski</span>
+              <span class="club-sub">Twój kod: TOM · 2 samoloty</span>
+            </span>
+            <span class="club-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          </button>
+        </div>
+        <div class="club-blocked">Najpierw wyślij 3 zapisy - należą do klubu, w którym powstały</div>
+
+        <button class="action-item">
+          <span class="action-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </span>
+          <span class="action-body">
+            <span class="action-name">Dołącz do innego klubu</span>
+            <span class="action-sub">kod klubu od jego administratora</span>
+          </span>
+          <svg class="action-chevron" width="14" height="14" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5L7 5l-3.5 3.5"/></svg>
+        </button>
+      </div>
+
+      <!-- Sekcja synchronizacji stoi tu dla kontekstu: to ona mówi, ILE zapisów czeka
+           i to z niej pilot wysyła je ręcznie, zamiast czekać na okazję. -->
+      <div class="form-section">
+        <div class="form-section-title">Synchronizacja</div>
+        <div>
+          <div class="diag-row">
+            <span class="diag-key">Kolejka wysyłki</span>
+            <span class="diag-val amber">3 zdarzenia czekają</span>
+          </div>
+          <div class="diag-row">
+            <span class="diag-key">Ostatnia synchronizacja</span>
+            <span class="diag-val">09:41 UTC</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ═══ CZWARTA RAMKA: MASZYNA W RĘCE ═══
+     Trzeci - i NAJWYŻSZY - powód blokady przełączenia. Wygrywa z dwoma pozostałymi
+     i dlatego ma własną ramkę: sieć jest, kolejka pusta, a przełączyć się i tak nie da.
+
+     DLACZEGO TAK: operacja należy do klubu, w którym ją ZACZĘTO - maszyna jest w jego
+     flocie, a kod pilota w sygnaturze jest kodem z tego klubu. Przełączenie w połowie
+     operacji zostawiłoby jej zapisy bez klucza, którym mogą wyjść na serwer. Droga
+     wyjścia jest jedna i pilot zna ją z flow: ZDAJ SAMOLOT (09B).
+
+     TEN EKRAN JEST DZIŚ NIEOSIĄGALNY I TO JEST ZAMIERZONE. Kokpit jest stanem modalnym
+     (`CLAUDE.md`): dopóki pilot trzyma maszynę, nie ma z niego drogi bokiem, a zębatka
+     stoi wyłącznie na 01 (issue #82). Restart w środku operacji też wraca do kokpitu,
+     nie na 01 (`resumeTarget`). Ramka istnieje mimo to z dwóch powodów:
+       1. BRZMIENIE POWODU jest decyzją produktową i ma stać w specyfikacji, a nie tylko
+          w kodzie - inaczej pierwszy, kto go zobaczy, napisze je drugi raz po swojemu;
+       2. gdyby kiedykolwiek powstała DRUGA droga do ustawień, reguła jest już narysowana
+          i nie trzeba jej wymyślać pod presją.
+     W kodzie ten warunek stoi jako pas bezpieczeństwa z tym samym uzasadnieniem. -->
+<header class="canvas-label" id="maszyna">
+  <span class="film-strip">UZ AERO - 13A</span>
+  <span class="slug">stan: maszyna w ręce - przełączenie niewyrażalne</span>
+  <span class="canvas-meta">Powód najwyższy · dziś nieosiągalny</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Przełączenie klubu z maszyną w ręce">
+  <div class="status-bar">
+    <span>12:53</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="16" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+    <div class="app-header">
+      <a href="01-moj-dzien.html" class="back-btn">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.5 1.5L3 5l3.5 3.5"/></svg>
+        Mój dzień
+      </a>
+      <span class="screen-title">USTAWIENIA</span>
+      <!-- Sieć jest i kolejka pusta - SyncChip nie rysuje nic (issue #12). Blokada nie
+           ma z siecią nic wspólnego: to stan OPERACJI, nie łączności. -->
+      <span></span>
+    </div>
+
+    <div class="scroll">
+      <div class="form-section">
+        <div class="form-section-title">Klub</div>
+        <div class="club-list blocked">
+          <button class="club-opt selected">
+            <span class="club-body">
+              <span class="club-name">Aeroklub Zielonogórski</span>
+              <span class="club-sub">Twój kod: TMK · 4 samoloty</span>
+            </span>
+            <span class="club-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          </button>
+          <button class="club-opt">
+            <span class="club-body">
+              <span class="club-name">Aeroklub Krakowski</span>
+              <span class="club-sub">Twój kod: TOM · 2 samoloty</span>
+            </span>
+            <span class="club-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          </button>
+        </div>
+        <!-- POWÓD NAZYWA CZYNNOŚĆ, nie stan aplikacji: „zdaj samolot" pilot zna z flow
+             i wie, gdzie ją zrobić (09B). „Operacja w toku" opisywałoby to samo słowami,
+             z których nie wynika, co teraz zrobić. -->
+        <div class="club-blocked">Najpierw zdaj samolot - operacja należy do klubu, w którym ją zaczęto</div>
+
+        <button class="action-item">
+          <span class="action-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </span>
+          <span class="action-body">
+            <span class="action-name">Dołącz do innego klubu</span>
+            <span class="action-sub">kod klubu od jego administratora</span>
+          </span>
+          <svg class="action-chevron" width="14" height="14" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5L7 5l-3.5 3.5"/></svg>
+        </button>
+      </div>
+
+      <!-- Kolejka PUSTA i stempel świeży - i to jest cała treść tej ramki: blokada nie
+           mówi o sieci ani o zaległościach, tylko o maszynie, którą pilot ma w ręce. -->
+      <div class="form-section">
+        <div class="form-section-title">Synchronizacja</div>
+        <div>
+          <div class="diag-row">
+            <span class="diag-key">Kolejka wysyłki</span>
+            <span class="diag-val green">pusta</span>
+          </div>
+          <div class="diag-row">
+            <span class="diag-key">Ostatnia synchronizacja</span>
+            <span class="diag-val">12:52 UTC</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
 <aside class="variants-panel">
   <div class="vp-title">Dokąd stąd?</div>
   <a class="vp-item" href="13-ustawienia.html">
@@ -518,7 +812,7 @@
     <span class="vp-badge">13A</span>
     <span class="vp-body">
       <span class="vp-name">Ustawienia - przełącznik klubu</span>
-      <span class="vp-when">Pilot z więcej niż jednym członkostwem: pierwsza sekcja to lista klubów z kodem pilota w każdym. Przełączenie wymaga internetu i pustej kolejki wysyłki (offline: karty zablokowane z powodem) i zmienia flotę na 02; „Mój dzień" i tak pokazuje operacje wszystkich klubów (01E). Pod listą: „Dołącz do innego klubu" - arkusz z polem na kod klubu (jedyna droga do klubu od 2026-09-09); zgłoszenie staje na liście jako wiersz „czeka na zatwierdzenie".</span>
+      <span class="vp-when">Pilot z więcej niż jednym członkostwem: pierwsza sekcja to lista klubów z kodem pilota w każdym. Przełączenie wymaga internetu i wysłanych zapisów klubu, z którego się wychodzi - zapisy INNYCH klubów nie blokują, bo przełączenie jest właśnie drogą do ich wysłania (stan zablokowany: ramka niżej) i zmienia flotę na 02; „Mój dzień" i tak pokazuje operacje wszystkich klubów (01E). Pod listą: „Dołącz do innego klubu" - arkusz z polem na kod klubu (jedyna droga do klubu od 2026-09-09); zgłoszenie staje na liście jako wiersz „czeka na zatwierdzenie". Cztery ramki: przełącznik, zgłoszenie na liście i dwa stany zablokowane (zaległe zapisy, maszyna w ręce).</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -541,6 +835,9 @@
   <a href="13a-ustawienia-klub.html" class="active">13A Klub</a>
   <a href="01e-moj-dzien-dwa-kluby.html">01E Dwa kluby</a>
   <a href="00e-bez-klubu.html">00E Bez klubu</a>
+  <a href="#zgloszenie">↓ zgłoszenie czeka</a>
+  <a href="#zablokowane">↓ zablokowane</a>
+  <a href="#maszyna">↓ maszyna w ręce</a>
 </nav>
 
 <script>

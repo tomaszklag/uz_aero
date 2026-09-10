@@ -10,7 +10,7 @@
  * o cyklu życia poświadczeń podejmuje warstwa aplikacji, magazyn tylko przechowuje.
  */
 
-import type { RemoteRegistration } from './serverPort';
+import type { ClubMembership, ClubsView, OrgRef } from './serverPort';
 
 /** Solony skrót PIN-u (§3.0) - nigdy sam PIN; weryfikację robi `PinCryptoPort`. */
 export interface PinRecord {
@@ -28,24 +28,38 @@ export interface StoredCredentials {
    * Brak pola = profil sprzed ustawienia PIN-u → bramka kieruje do konfiguracji.
    */
   pin?: PinRecord | null;
+  /**
+   * KLUB, DLA KTÓREGO wydano tę parę tokenów (wielofirmowość §6) - kontekst floty,
+   * przejęcia i wysyłki. Brak pola = profil sprzed 2.0.0: aplikacja pracuje wtedy jak
+   * dotąd, dopóki pierwsze odświeżenie tokenów nie przyniesie klubu (§11).
+   */
+  org?: OrgRef;
+  /**
+   * Komplet klubów pilota - z niego bierze się przełącznik na 13A i plakietka klubu na
+   * kafelku operacji (01E). Jedno i drugie istnieje WYŁĄCZNIE przy więcej niż jednym
+   * członkostwie: przy jednym plakietka świeciłaby przy każdym kafelku i niczego nie
+   * odróżniała (reguła SyncChipa z issue #12).
+   */
+  memberships?: ClubMembership[];
 }
 
 /**
- * Zgłoszenie rejestracyjne czekające na decyzję administratora (logowanie Google,
- * `docs/logowanie-google.md` §9) - OSOBNO od poświadczeń i pod osobnym kluczem.
+ * OSOBA BEZ AKTYWNEGO KLUBU (wielofirmowość §4) - stan między zweryfikowanym kontem
+ * Google a wejściem do klubu. OSOBNO od poświadczeń i pod osobnym kluczem.
  *
- * To NIE jest tożsamość: token rejestracyjny otwiera jedną trasę (stan zgłoszenia)
- * i nie da się nim zapisać ani odczytać niczego z rejestru. Wpisany do
- * `StoredCredentials` udawałby profil, a bramka startu kierowałaby do PIN-u. Trzymamy
- * je mimo to w bezpiecznym magazynie: po restarcie aplikacja ma wrócić na ekran
- * oczekiwania, a nie kazać przechodzić przez Google od nowa.
+ * To NIE jest tożsamość: token osoby otwiera dokładnie dwie trasy bez klubu (stan
+ * członkostw, kod klubu) i nie da się nim zapisać ani odczytać niczego z rejestru.
+ * Wpisany do `StoredCredentials` udawałby profil, a bramka startu kierowałaby do PIN-u.
+ * Trzymamy go mimo to w bezpiecznym magazynie: po restarcie aplikacja ma wrócić na ekran
+ * oczekiwania (00C) albo na pole kodu klubu (00E), a nie kazać przechodzić przez Google
+ * od nowa.
  *
- * `registrationToken: null` = odrzucenie: serwer nie wydaje wtedy tokenu, a ekran `00d`
- * i tak nie ma o co pytać - jedyne wyjście to inne konto.
+ * `clubs` niesie komplet członkostw, bo to on rozstrzyga ekran: `pending` → 00C
+ * (z nazwą klubu, który ma zdecydować), `rejected` → 00D (z powodem), `none` → 00E.
  */
-export interface StoredRegistration {
-  registrationToken: string | null;
-  registration: RemoteRegistration;
+export interface StoredPerson {
+  personToken: string;
+  clubs: ClubsView;
 }
 
 export interface CredentialsPort {
@@ -54,7 +68,7 @@ export interface CredentialsPort {
   /** Czyszczenie przy wylogowaniu - wołający MUSI wcześniej sprawdzić pusty outbox. */
   clear(): Promise<void>;
 
-  loadRegistration(): Promise<StoredRegistration | null>;
-  saveRegistration(registration: StoredRegistration): Promise<void>;
-  clearRegistration(): Promise<void>;
+  loadPerson(): Promise<StoredPerson | null>;
+  savePerson(person: StoredPerson): Promise<void>;
+  clearPerson(): Promise<void>;
 }

@@ -72,8 +72,25 @@ export class SessionQueries {
     return aircraftLimitsFrom(await this.repo.getAircraftById(aircraftId));
   }
 
+  /** Flota KLUBU AKTYWNEGO - to z niej wybiera się maszynę na 02 (wielofirmowość §7.1). */
   aircraft(): Promise<ReferenceAircraft[]> {
     return this.repo.getAircraft();
+  }
+
+  /**
+   * WSZYSTKIE znane maszyny, niezależnie od klubu - wyłącznie do rozwiązywania ZNAKU
+   * w historii. „Mój dzień" i „Poprzednie dni" pokazują operacje wszystkich klubów
+   * pilota (§7.2), więc kafelek z drugiego klubu musi mieć czym się podpisać; bez tego
+   * wracałby na ekran surowy identyfikator z panelu (ta sama klasa błędu, co guid
+   * w pasku kokpitu). Do WYBORU maszyny służy `aircraft()` - i tylko ono.
+   */
+  allAircraft(): Promise<ReferenceAircraft[]> {
+    return this.repo.getAllAircraft();
+  }
+
+  /** Liczba maszyn per klub - podpis karty klubu na 13A („· 4 samoloty"). */
+  aircraftCountsByOrg(): Promise<Record<string, number>> {
+    return this.repo.aircraftCountsByOrg();
   }
 
   aircraftById(id: string): Promise<ReferenceAircraft | null> {

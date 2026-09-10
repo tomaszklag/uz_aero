@@ -77,6 +77,29 @@ describe('schemat lokalnej bazy (node:sqlite)', () => {
     db.close();
   });
 
+  it('ponowna migracja nie rusza rejestru ani przynależności operacji do klubu', () => {
+    // Migracja 9 (wielofirmowość) zakłada cache referencyjny OD NOWA - wolno jej, bo to
+    // materiał roboczy. Nie wolno jej za to tknąć `events` ani `session_orgs`: rejestr
+    // jest wieczny, a klub operacji rozstrzyga, którym tokenem wyjdą jej zaległe zapisy.
+    const db = migratedDb();
+    db.prepare(
+      `INSERT INTO events (uuid, session_uuid, aircraft_id, pic_id, dual_id, type,
+                           device_time, gps_time, payload, schema_version, synced_at)
+       VALUES ('e1', 's1', 'AC', 'TMK', NULL, 'takeoff', 1000, NULL, '{}', 1, NULL)`,
+    ).run();
+    db.prepare(`INSERT INTO session_orgs (session_uuid, org_id) VALUES ('s1', 'org-a')`).run();
+
+    for (const migration of MIGRATIONS) db.exec(migration);
+
+    const event = db.prepare(`SELECT uuid FROM events`).get() as { uuid: string } | undefined;
+    expect(event?.uuid).toBe('e1');
+    const org = db.prepare(`SELECT org_id FROM session_orgs WHERE session_uuid = 's1'`).get() as
+      | { org_id: string }
+      | undefined;
+    expect(org?.org_id).toBe('org-a');
+    db.close();
+  });
+
   // Listy kolumn są KONTRAKTEM z interfejsami wierszy w `expoSqliteAdapter.ts`
   // (`EventRow`, `AircraftRow`, `PilotRow`). Adapter mapuje snake_case → camelCase ręcznie,
   // więc literówka w nazwie kolumny nie jest błędem typów - tylko `undefined` w runtime.
@@ -101,6 +124,7 @@ describe('schemat lokalnej bazy (node:sqlite)', () => {
       'reference_aircraft',
       [
         'id',
+        'org_id',
         'reg',
         'type',
         'year',
@@ -114,7 +138,9 @@ describe('schemat lokalnej bazy (node:sqlite)', () => {
         'fetched_at',
       ],
     ],
-    ['reference_pilots', ['id', 'code', 'name', 'active', 'fetched_at']],
+    // Klucz `(org_id, id)`: ten sam człowiek ma w każdym klubie INNY kod pilota (§3.2).
+    ['reference_pilots', ['org_id', 'id', 'code', 'name', 'active', 'fetched_at']],
+    ['session_orgs', ['session_uuid', 'org_id']],
     ['session_meta', ['key', 'value']],
   ])('tabela %s ma dokładnie uzgodnione kolumny', (table, expected) => {
     const db = migratedDb();

@@ -39,7 +39,13 @@ const input = (over: Partial<BugContextInput> = {}): BugContextInput => ({
     flights: 3,
     closed: false,
   },
-  pilot: { id: 'p-uuid', code: 'TMK', name: 'Tomasz Małkiewicz' },
+  pilot: {
+    id: 'p-uuid',
+    code: 'TMK',
+    name: 'Tomasz Małkiewicz',
+    orgId: 'org-a',
+    orgName: 'Aeroklub Zielonogórski',
+  },
   theme: 'night',
   at: AT,
   ...over,
@@ -194,10 +200,27 @@ describe('kontekst zgłoszenia', () => {
   });
 
   it('pilot bez profilu z cache jedzie samym kodem, a bez kodu - identyfikatorem', () => {
-    const noName = buildBugContext(input({ pilot: { id: 'p-uuid', code: 'TMK', name: null } }));
+    const noName = buildBugContext(
+      input({ pilot: { id: 'p-uuid', code: 'TMK', name: null, orgId: null, orgName: null } }),
+    );
     expect(rowOf(noName, 'Pilot')).toBe('TMK');
 
-    const raw = buildBugContext(input({ pilot: { id: 'p-uuid', code: null, name: null } }));
+    const raw = buildBugContext(
+      input({ pilot: { id: 'p-uuid', code: null, name: null, orgId: null, orgName: null } }),
+    );
     expect(rowOf(raw, 'Pilot')).toBe('p-uuid');
+  });
+
+  it('KLUB jedzie w kontekście i stoi wierszem - bez niego „nie widzę floty" jest nie do rozstrzygnięcia', () => {
+    const view = buildBugContext(input());
+    expect(view.context.orgId).toBe('org-a');
+    expect(rowOf(view, 'Klub')).toBe('Aeroklub Zielonogórski');
+  });
+
+  it('bez klubu (aktualizacja z 1.x przed pierwszym odświeżeniem tokenów) wiersza nie ma', () => {
+    const view = buildBugContext(
+      input({ pilot: { id: 'p-uuid', code: 'TMK', name: 'Tomasz', orgId: null, orgName: null } }),
+    );
+    expect(view.rows.find((r) => r.label === 'Klub')).toBeUndefined();
   });
 });

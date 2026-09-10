@@ -86,7 +86,7 @@ export class JoinCommands {
     const attempt = await this.clubs.join(club.id, account.id, this.clock.now());
     switch (attempt.status) {
       case 'pending':
-        return { ok: true, org, clubs: clubsView(await this.pilots.memberships(account.id)) };
+        return { ok: true, org, clubs: clubsView(await this.pilots.memberships(account.id), { name: account.name, email: account.email }) };
       case 'rejected':
         return {
           ok: false,

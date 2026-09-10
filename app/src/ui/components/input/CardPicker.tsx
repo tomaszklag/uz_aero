@@ -58,9 +58,15 @@ export interface PickerOption<T extends string> {
   disabledReason?: string;
   /**
    * Druga linia pod etykietą - kontekst, który nie mieści się w tagu
-   * („Prowadzi PIC: KRZ · od 07:10"). Amber, bo tyle dziś potrzebuje ta lista.
+   * („Prowadzi PIC: KRZ · od 07:10"). Amber, bo mówi o stanie WYMAGAJĄCYM uwagi.
    */
   note?: string;
+  /**
+   * Druga linia NEUTRALNA - opis pozycji, nie ostrzeżenie („Twój kod: TMK · 4 samoloty"
+   * na liście klubów, 13A). Osobna od `note`, bo tam bursztyn jest znaczeniem, a nie
+   * stylem: opis przy KAŻDEJ pozycji listy w kolorze uwagi uczy oko go pomijać.
+   */
+  sub?: string;
   /**
    * Pozycja do PODGLĄDU, nie do wyboru: cały wiersz woła `onSecondary`, a w miejscu
    * kółka wyboru stoi ikona oka. Patrz nota na górze pliku.
@@ -188,6 +194,12 @@ export function CardPicker<T extends string>({
                 </View>
               )}
             </View>
+
+            {opt.sub != null && (
+              <AppText variant="mono" tone="muted" style={styles.note}>
+                {opt.sub}
+              </AppText>
+            )}
 
             {opt.note != null && (
               <AppText variant="mono" tone="amber" style={styles.note}>

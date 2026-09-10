@@ -12,6 +12,8 @@ import type { AppendEventInput } from '../domain';
 const SESSION = 'sess-1';
 const AC = 'ac-1';
 const PIC = 'pic-1';
+/** Klub aktywny - od 2.0.0 kontekst floty i wysyłki (wielofirmowość §7). */
+const ORG = 'org-a';
 
 function makeRepo(clock: FixedClock = new FixedClock(1_000)) {
   const adapter = new InMemoryAdapter();
@@ -115,30 +117,34 @@ describe('EventsRepo + InMemoryAdapter', () => {
   it('cache referencyjny: upsert stempluje fetchedAt, getAircraft/getAircraftById zwraca dane', async () => {
     const clock = new FixedClock(12_345);
     const { repo } = makeRepo(clock);
+    await repo.setActiveOrg(ORG);
 
-    await repo.upsertAircraft([
-      {
-        id: 'ac-1',
-        reg: 'SP-AXA',
-        type: 'C182',
-        year: 1998,
-        capacityL: 330,
-        mhFormat: 'decimal',
-        dualRequired: false,
-        serviceStatus: 'active',
-        claimPicId: null,
-        claimSince: null,
-        handover: null,
-        consumption: null,
-        // Konfiguracja oleju (issue #60) - musi przeżyć rundę zapis→odczyt.
-        oilMinL: 8.5,
-        oilCapacityL: 11.4,
-        oilNormLPerH: 0.12,
-        // Norma nominalna spalania (issue #66) - siostra normy oleju, ta sama runda.
-        fuelNormLPerH: 18.5,
-      },
-    ]);
-    await repo.upsertPilots([{ id: 'pic-1', code: 'KRZ', name: 'Jan Kowalski', active: true }]);
+    await repo.upsertAircraft(
+      [
+        {
+          id: 'ac-1',
+          reg: 'SP-AXA',
+          type: 'C182',
+          year: 1998,
+          capacityL: 330,
+          mhFormat: 'decimal',
+          dualRequired: false,
+          serviceStatus: 'active',
+          claimPicId: null,
+          claimSince: null,
+          handover: null,
+          consumption: null,
+          // Konfiguracja oleju (issue #60) - musi przeżyć rundę zapis→odczyt.
+          oilMinL: 8.5,
+          oilCapacityL: 11.4,
+          oilNormLPerH: 0.12,
+          // Norma nominalna spalania (issue #66) - siostra normy oleju, ta sama runda.
+          fuelNormLPerH: 18.5,
+        },
+      ],
+      ORG,
+    );
+    await repo.upsertPilots([{ id: 'pic-1', code: 'KRZ', name: 'Jan Kowalski', active: true }], ORG);
 
     const aircraft = await repo.getAircraft();
     expect(aircraft).toHaveLength(1);

@@ -156,28 +156,43 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort, BugReportPort 
 
   // ── events ──────────────────────────────────────────────────────────────────
 
-  async insertEvent(event: Event): Promise<boolean> {
-    const result = await this.getDb().runAsync(
-      `INSERT OR IGNORE INTO events
-         (uuid, session_uuid, aircraft_id, pic_id, dual_id, type,
-          device_time, gps_time, payload, schema_version, synced_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        event.uuid,
-        event.sessionUuid,
-        event.aircraftId,
-        event.picId,
-        event.dualId,
-        event.type,
-        event.deviceTime,
-        event.gpsTime,
-        JSON.stringify(event.payload),
-        event.schemaVersion,
-        event.syncedAt,
-      ],
-    );
-    // changes === 0 → wiersz już istniał (duplikat uuid zignorowany).
-    return result.changes > 0;
+  async insertEvent(event: Event, orgId: string | null): Promise<boolean> {
+    const db = this.getDb();
+    // Klub operacji stawia PIERWSZE jej zdarzenie i nikt go potem nie zmienia
+    // (`INSERT OR IGNORE`) - korekta operacji z klubu A, dopisana w klubie B, zostaje
+    // zapisem klubu A. Poza transakcją zapisu zdarzenia być nie może: wiersz bez
+    // zdarzenia i zdarzenie bez klubu to dwa różne rodzaje kłamstwa o rejestrze.
+    let inserted = false;
+    await db.withTransactionAsync(async () => {
+      const result = await db.runAsync(
+        `INSERT OR IGNORE INTO events
+           (uuid, session_uuid, aircraft_id, pic_id, dual_id, type,
+            device_time, gps_time, payload, schema_version, synced_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          event.uuid,
+          event.sessionUuid,
+          event.aircraftId,
+          event.picId,
+          event.dualId,
+          event.type,
+          event.deviceTime,
+          event.gpsTime,
+          JSON.stringify(event.payload),
+          event.schemaVersion,
+          event.syncedAt,
+        ],
+      );
+      // changes === 0 → wiersz już istniał (duplikat uuid zignorowany).
+      inserted = result.changes > 0;
+      if (orgId != null) {
+        await db.runAsync('INSERT OR IGNORE INTO session_orgs (session_uuid, org_id) VALUES (?, ?)', [
+          event.sessionUuid,
+          orgId,
+        ]);
+      }
+    });
+    return inserted;
   }
 
   async getEventByUuid(uuid: string): Promise<Event | null> {
@@ -196,13 +211,21 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort, BugReportPort 
     return rows.map(rowToEvent);
   }
 
-  async getUnsyncedEvents(): Promise<Event[]> {
+  async getUnsyncedEvents(orgId?: string | null): Promise<Event[]> {
+    // Wstrzymane WYPADŁY z kolejki (issue #81), choć `synced_at` mają dalej NULL.
+    // Zawężenie do klubu (wielofirmowość §7) obejmuje też operacje BEZ klubu: to zapisy
+    // sprzed 2.0.0, a pierwszy klub aktywny i tak zaraz je przygarnie (§11).
+    const where =
+      orgId == null
+        ? ''
+        : `AND COALESCE((SELECT org_id FROM session_orgs o WHERE o.session_uuid = events.session_uuid), ?) = ?`;
     const rows = await this.getDb().getAllAsync<EventRow>(
-      // Wstrzymane WYPADŁY z kolejki (issue #81), choć `synced_at` mają dalej NULL.
       `SELECT * FROM events
         WHERE synced_at IS NULL
           AND uuid NOT IN (SELECT uuid FROM withheld_events)
+          ${where}
         ORDER BY rowid ASC`,
+      orgId == null ? [] : [orgId, orgId],
     );
     return rows.map(rowToEvent);
   }
@@ -259,14 +282,43 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort, BugReportPort 
     }));
   }
 
+  // ── klub operacji (wielofirmowość §7) ───────────────────────────────────────
+
+  async getSessionOrg(sessionUuid: string): Promise<string | null> {
+    const row = await this.getDb().getFirstAsync<{ org_id: string }>(
+      'SELECT org_id FROM session_orgs WHERE session_uuid = ?',
+      [sessionUuid],
+    );
+    return row ? row.org_id : null;
+  }
+
+  async getSessionOrgs(): Promise<Record<string, string>> {
+    const rows = await this.getDb().getAllAsync<{ session_uuid: string; org_id: string }>(
+      'SELECT session_uuid, org_id FROM session_orgs',
+    );
+    return Object.fromEntries(rows.map((r) => [r.session_uuid, r.org_id]));
+  }
+
+  async adoptSessionsWithoutOrg(orgId: string): Promise<number> {
+    // `SELECT DISTINCT` z rejestru, a nie lista z pamięci: operacji sprzed 2.0.0 bywa
+    // kilkaset, a to jest jedno zapytanie wykonywane raz w życiu telefonu.
+    const result = await this.getDb().runAsync(
+      `INSERT OR IGNORE INTO session_orgs (session_uuid, org_id)
+       SELECT DISTINCT session_uuid, ? FROM events`,
+      [orgId],
+    );
+    return result.changes;
+  }
+
   // ── reference cache ─────────────────────────────────────────────────────────
 
-  async upsertAircraft(rows: ReferenceAircraft[]): Promise<void> {
+  async upsertAircraft(rows: ReferenceAircraft[], orgId: string): Promise<void> {
     const db = this.getDb();
     await db.withTransactionAsync(async () => {
       for (const a of rows) {
         const params: SQLiteBindValue[] = [
           a.id,
+          orgId,
           a.reg,
           a.type,
           a.year,
@@ -281,10 +333,11 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort, BugReportPort 
         ];
         await db.runAsync(
           `INSERT INTO reference_aircraft
-             (id, reg, type, year, capacity_l, mh_format, dual_required,
+             (id, org_id, reg, type, year, capacity_l, mh_format, dual_required,
               service_status, claim_pic, claim_since, handover, fetched_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
            ON CONFLICT(id) DO UPDATE SET
+             org_id=excluded.org_id,
              reg=excluded.reg, type=excluded.type, year=excluded.year,
              capacity_l=excluded.capacity_l, mh_format=excluded.mh_format,
              dual_required=excluded.dual_required, service_status=excluded.service_status,
@@ -301,11 +354,11 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort, BugReportPort 
           await db.runAsync('DELETE FROM reference_consumption WHERE aircraft_id = ?', [a.id]);
         } else {
           await db.runAsync(
-            `INSERT INTO reference_consumption (aircraft_id, model, fetched_at)
-             VALUES (?, ?, ?)
+            `INSERT INTO reference_consumption (aircraft_id, org_id, model, fetched_at)
+             VALUES (?, ?, ?, ?)
              ON CONFLICT(aircraft_id) DO UPDATE SET
-               model=excluded.model, fetched_at=excluded.fetched_at`,
-            [a.id, JSON.stringify(a.consumption), a.fetchedAt],
+               org_id=excluded.org_id, model=excluded.model, fetched_at=excluded.fetched_at`,
+            [a.id, orgId, JSON.stringify(a.consumption), a.fetchedAt],
           );
         }
 
@@ -317,12 +370,12 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort, BugReportPort 
           await db.runAsync('DELETE FROM reference_oil WHERE aircraft_id = ?', [a.id]);
         } else {
           await db.runAsync(
-            `INSERT INTO reference_oil (aircraft_id, min_l, capacity_l, norm_l_per_h, fetched_at)
-             VALUES (?, ?, ?, ?, ?)
+            `INSERT INTO reference_oil (aircraft_id, org_id, min_l, capacity_l, norm_l_per_h, fetched_at)
+             VALUES (?, ?, ?, ?, ?, ?)
              ON CONFLICT(aircraft_id) DO UPDATE SET
-               min_l=excluded.min_l, capacity_l=excluded.capacity_l,
+               org_id=excluded.org_id, min_l=excluded.min_l, capacity_l=excluded.capacity_l,
                norm_l_per_h=excluded.norm_l_per_h, fetched_at=excluded.fetched_at`,
-            [a.id, a.oilMinL ?? null, a.oilCapacityL ?? null, a.oilNormLPerH ?? null, a.fetchedAt],
+            [a.id, orgId, a.oilMinL ?? null, a.oilCapacityL ?? null, a.oilNormLPerH ?? null, a.fetchedAt],
           );
         }
 
@@ -333,18 +386,20 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort, BugReportPort 
           await db.runAsync('DELETE FROM reference_fuel WHERE aircraft_id = ?', [a.id]);
         } else {
           await db.runAsync(
-            `INSERT INTO reference_fuel (aircraft_id, norm_l_per_h, fetched_at)
-             VALUES (?, ?, ?)
+            `INSERT INTO reference_fuel (aircraft_id, org_id, norm_l_per_h, fetched_at)
+             VALUES (?, ?, ?, ?)
              ON CONFLICT(aircraft_id) DO UPDATE SET
-               norm_l_per_h=excluded.norm_l_per_h, fetched_at=excluded.fetched_at`,
-            [a.id, a.fuelNormLPerH, a.fetchedAt],
+               org_id=excluded.org_id, norm_l_per_h=excluded.norm_l_per_h,
+               fetched_at=excluded.fetched_at`,
+            [a.id, orgId, a.fuelNormLPerH, a.fetchedAt],
           );
         }
       }
     });
   }
 
-  async getAircraft(): Promise<ReferenceAircraft[]> {
+  async getAircraft(orgId: string | null): Promise<ReferenceAircraft[]> {
+    if (orgId == null) return [];
     const rows = await this.getDb().getAllAsync<AircraftRow>(
       `SELECT a.*, c.model AS consumption,
               o.min_l AS oil_min_l, o.capacity_l AS oil_capacity_l,
@@ -354,7 +409,25 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort, BugReportPort 
          LEFT JOIN reference_consumption c ON c.aircraft_id = a.id
          LEFT JOIN reference_oil o ON o.aircraft_id = a.id
          LEFT JOIN reference_fuel f ON f.aircraft_id = a.id
+        WHERE a.org_id = ?
         ORDER BY a.reg ASC`,
+      [orgId],
+    );
+    return rows.map(rowToAircraft);
+  }
+
+  async aircraftCountsByOrg(): Promise<Record<string, number>> {
+    const rows = await this.getDb().getAllAsync<{ org_id: string; n: number }>(
+      'SELECT org_id, COUNT(*) AS n FROM reference_aircraft GROUP BY org_id',
+    );
+    return Object.fromEntries(rows.map((r) => [r.org_id, Number(r.n)]));
+  }
+
+  async getAllAircraft(): Promise<ReferenceAircraft[]> {
+    // BEZ zawężenia do klubu - patrz `StoragePort.getAllAircraft`. Konfiguracji nie
+    // doczytujemy: wołający pyta wyłącznie o ZNAK, a złączenia trzech tabel kosztują.
+    const rows = await this.getDb().getAllAsync<AircraftRow>(
+      'SELECT * FROM reference_aircraft ORDER BY reg ASC',
     );
     return rows.map(rowToAircraft);
   }
@@ -375,25 +448,27 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort, BugReportPort 
     return row ? rowToAircraft(row) : null;
   }
 
-  async upsertPilots(rows: ReferencePilot[]): Promise<void> {
+  async upsertPilots(rows: ReferencePilot[], orgId: string): Promise<void> {
     const db = this.getDb();
     await db.withTransactionAsync(async () => {
       for (const p of rows) {
         await db.runAsync(
-          `INSERT INTO reference_pilots (id, code, name, active, fetched_at)
-           VALUES (?, ?, ?, ?, ?)
-           ON CONFLICT(id) DO UPDATE SET
+          `INSERT INTO reference_pilots (org_id, id, code, name, active, fetched_at)
+           VALUES (?, ?, ?, ?, ?, ?)
+           ON CONFLICT(org_id, id) DO UPDATE SET
              code=excluded.code, name=excluded.name,
              active=excluded.active, fetched_at=excluded.fetched_at`,
-          [p.id, p.code, p.name, p.active ? 1 : 0, p.fetchedAt],
+          [orgId, p.id, p.code, p.name, p.active ? 1 : 0, p.fetchedAt],
         );
       }
     });
   }
 
-  async getPilots(): Promise<ReferencePilot[]> {
+  async getPilots(orgId: string | null): Promise<ReferencePilot[]> {
+    if (orgId == null) return [];
     const rows = await this.getDb().getAllAsync<PilotRow>(
-      'SELECT * FROM reference_pilots ORDER BY code ASC',
+      'SELECT * FROM reference_pilots WHERE org_id = ? ORDER BY code ASC',
+      [orgId],
     );
     return rows.map(rowToPilot);
   }
@@ -572,9 +647,12 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort, BugReportPort 
   async clear(): Promise<void> {
     await this.getDb().execAsync(`
       DELETE FROM events;
+      DELETE FROM withheld_events;
+      DELETE FROM session_orgs;
       DELETE FROM reference_aircraft;
       DELETE FROM reference_consumption;
       DELETE FROM reference_oil;
+      DELETE FROM reference_fuel;
       DELETE FROM reference_pilots;
       DELETE FROM session_meta;
       DELETE FROM gps_trace;

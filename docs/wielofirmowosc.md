@@ -750,6 +750,42 @@ starym pakiecie - decyzja o tym w epiku W.
 - **F - aplikacja** (issue #102): klub w tokenie i `POST /auth/switch`, cache per klub,
   00E/00C/00D, przełącznik 13a (sieć + pusta kolejka) z „Dołącz do innego klubu",
   plakietka klubu 01e. Deep linku dołączania nie ma (§7).
+  **WDROŻONE 2026-09-10** (gałąź `feature-102-aplikacja-kluby`). Co weszło inaczej, niż
+  zapowiadał ten dokument, i dlaczego:
+  - **`GET /me/events` ZOSTAJE PER KLUB** (decyzja właściciela 2026-09-10, zawęża §6
+    i §7.2): telefon odtwarza po reinstalacji rejestr KLUBU AKTYWNEGO, a historię
+    drugiego dostaje po przełączeniu się do niego. Bieżąca praca i tak zapisuje oba
+    kluby lokalnie, więc luka dotyczy wyłącznie świeżej instalacji - a zdejmowanie
+    filtru klubu z tej trasy kosztowałoby wyjątek w teście izolacji epiku C;
+  - **KOLEJKA BLOKUJE PRZEŁĄCZENIE TYLKO ZAPISAMI KLUBU BIEŻĄCEGO** (decyzja właściciela
+    2026-09-10, zawęża §6). Dosłowne „pusta kolejka" tworzyło ZAKLESZCZENIE, którego
+    dokument nie przewidział: korektę operacji z klubu A wolno zrobić z historii, gdy
+    aktywny jest klub B (§7.2), a taki zapis wyjdzie WYŁĄCZNIE tokenem klubu A - więc
+    czekałby na powrót do A, a powrót do A blokowałby właśnie on. Blokujemy tym, co
+    osieroci WYJŚCIE z klubu; zapisy innych klubów nie blokują, bo przełączenie jest
+    drogą do ich wysłania. Dochodzi warunek „nie trzymasz maszyny" jako pas
+    bezpieczeństwa (z kokpitu do ustawień i tak nie ma wejścia);
+  - **`org_id` NIE trafia na `events`, tylko na `session_orgs`** (issue #102 mówiło
+    o kolumnie): `ALTER TABLE … ADD COLUMN` nie jest w SQLite idempotentne, a przepisanie
+    tabeli rejestru przy aktualizacji aplikacji to ostatnia rzecz, jakiej chcemy.
+    Właściwym ziarnem jest zresztą OPERACJA - dzieje się w jednym klubie z mocy modelu.
+    Cache referencyjny (pięć tabel) leci `DROP` + `CREATE` z `org_id`, bo jest materiałem
+    roboczym i wraca jednym `GET /reference`;
+  - **numer w sygnaturze liczy się W KLUBIE, a numer na kafelku - w dobie pilota**:
+    `operationIndexes` przyjmuje `orgOf` od wołającego (domena klubu nie zna, §2). To
+    jedyne miejsce, w którym numer sygnatury rozjeżdża się z „OPERACJA n" - i tak
+    rysuje to makieta `01e`;
+  - **odpowiedzi o klubach niosą `person` (imię i adres z konta)**: ekrany 00C/00D/00E
+    pokazują plakietkę konta, a token osoby niesie identyfikator, nie profil. Wyłuskanie
+    tego z tokenu Google byłoby drugim, niesprawdzanym źródłem tych samych napisów;
+  - **makieta `13a` dostała TRZY RAMKI**, których epik A nie narysował: zgłoszenie
+    czekające na liście klubów i dwa stany zablokowane - „zaległe zapisy klubu" oraz
+    „maszyna w ręce" (brak sieci zmienia w tej pierwszej samo zdanie, więc własnej ramki
+    nie dostał). Stan „maszyna w ręce" jest dziś NIEOSIĄGALNY - kokpit jest modalny,
+    a zębatka stoi tylko na 01 - i mimo to ma ramkę: brzmienie powodu jest decyzją
+    produktową, więc ma stać w specyfikacji, a nie tylko w kodzie;
+  - **czego epik F świadomie NIE ROBI**: odtwarzania rejestru wszystkich klubów naraz
+    i „opuść klub" z telefonu (D6: wychodzi się przez panel).
 - **R - rebranding** (issue #103) i **W - wydanie** (issue #106): pakiet, schemat,
   kolejność wdrożenia (migracja → serwer → panel → APK), sunset starego pakietu.
 

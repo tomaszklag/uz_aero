@@ -61,6 +61,7 @@ export function registerAuthRoutes(app: FastifyInstance, auth: AuthCommands): vo
         status: result.clubs.status,
         personToken: result.personToken,
         memberships: result.clubs.memberships.map(membershipToWire),
+        person: result.clubs.person,
       });
     }
     return reply.code(401).send({ error: result.reason });
@@ -88,6 +89,7 @@ export function registerAuthRoutes(app: FastifyInstance, auth: AuthCommands): vo
     return reply.send({
       status: status.clubs.status,
       memberships: status.clubs.memberships.map(membershipToWire),
+      person: status.clubs.person,
     });
   });
 

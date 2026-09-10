@@ -53,11 +53,19 @@ export interface FieldProps {
   labelNote?: string;
   /** Podpowiedź pod polem - do czego ta wartość służy. */
   hint?: string;
+  /**
+   * Zdanie o BŁĘDNEJ wartości, czerwone, PRZY POLU (`.field-error` z mockupów; 00E).
+   *
+   * Stoi tam, gdzie błąd - nie w banerze nad formularzem: pilot poprawia to, co
+   * wpisał, więc odpowiedź ma być pod jego wpisem. Wypiera `hint`, bo podpowiedź
+   * „do czego to pole" przestaje być pytaniem w chwili, gdy wartość została odrzucona.
+   */
+  error?: string | null;
   children: React.ReactNode;
   style?: ViewStyle;
 }
 
-export function Field({ label, tag, labelNote, hint, children, style }: FieldProps) {
+export function Field({ label, tag, labelNote, hint, error, children, style }: FieldProps) {
   return (
     <View style={[{ gap: 5 }, style]}>
       {(label != null || labelNote != null || tag != null) && (
@@ -78,10 +86,16 @@ export function Field({ label, tag, labelNote, hint, children, style }: FieldPro
 
       {children}
 
-      {hint != null && (
-        <AppText variant="mono" tone="muted" style={styles.hint}>
-          {hint}
+      {error != null ? (
+        <AppText variant="body" tone="red" style={styles.error}>
+          {error}
         </AppText>
+      ) : (
+        hint != null && (
+          <AppText variant="mono" tone="muted" style={styles.hint}>
+            {hint}
+          </AppText>
+        )
       )}
     </View>
   );
@@ -91,18 +105,21 @@ export interface TextFieldProps extends Omit<TextInputProps, 'style'> {
   label: string;
   tag?: FieldProps['tag'];
   hint?: string;
+  /** Zdanie o błędnej wartości - patrz `FieldProps.error`; czerwoni też obramówkę pola. */
+  error?: string | null;
   /** Pola kodowe (ICAO, kod pilota) - mono, rozstrzelone, wersaliki. */
   mono?: boolean;
   style?: ViewStyle;
 }
 
-export function TextField({ label, tag, hint, mono = false, style, ...input }: TextFieldProps) {
+export function TextField({ label, tag, hint, error, mono = false, style, ...input }: TextFieldProps) {
   const { theme } = useTheme();
   const green = toneColors(theme, 'green');
+  const red = toneColors(theme, 'red');
   const [focused, setFocused] = useState(false);
 
   return (
-    <Field label={label} tag={tag} hint={hint} style={style}>
+    <Field label={label} tag={tag} hint={hint} error={error} style={style}>
       <TextInput
         placeholderTextColor={theme.colors.textPlaceholder}
         selectionColor={green.accent}
@@ -121,7 +138,9 @@ export function TextField({ label, tag, hint, mono = false, style, ...input }: T
           paddingVertical: 11,
           borderRadius: theme.radius.md,
           borderWidth: theme.borderWidth,
-          borderColor: focused ? green.border : theme.colors.border,
+          // Czerwień wygrywa z fokusem: wartość jest odrzucona także wtedy, gdy pilot
+          // wrócił do pola - dopóki jej nie zmieni, obramówka ma o tym mówić.
+          borderColor: error != null ? red.border : focused ? green.border : theme.colors.border,
           backgroundColor: theme.colors.surfaceRaised,
           color: theme.colors.textPrimary,
           fontFamily: mono ? theme.fontFamily.monoBold : theme.fontFamily.body,
@@ -342,6 +361,8 @@ const styles = StyleSheet.create({
   // z godziny drugą etykietę.
   labelNote: { fontSize: 9, letterSpacing: 0.5 },
   hint: { fontSize: 9, letterSpacing: 0.5, lineHeight: 13 },
+  // `.field-error`: skład tekstowy, nie mono - to zdanie do przeczytania, nie wartość.
+  error: { fontSize: 12.5, lineHeight: 18 },
   box: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   boxSide: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   // Wariant tekstowy zabiera resztę wiersza: zdanie ma się łamać, a nie wypychać ołówek.

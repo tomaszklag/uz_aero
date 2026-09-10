@@ -113,12 +113,24 @@ export function operationSignature(parts: OperationSignatureParts): string | nul
  *
  * Liczy WSZYSTKIE doby naraz, bo wołający (ekran 12, hook sygnatur) i tak trzyma cały
  * lokalny strumień, a numer jednej operacji nie da się policzyć bez jej sąsiadów.
+ *
+ * ══ NUMER JEST JEDNOZNACZNY W KLUBIE (wielofirmowość §3.6, issue #102) ══
+ * Ten sam pilot w dwóch klubach jednej doby ma DWA niezależne numerowania: sygnatura
+ * niesie kod z tamtego klubu, więc jej numer musi liczyć się wśród operacji TAMTEGO
+ * klubu (mockup `01e`: kafelek pisze „OPERACJA 3", a sygnatura kończy się na „/1").
+ * To jedyne miejsce, w którym numer sygnatury rozjeżdża się z numerem z ekranu 01 -
+ * i rozjeżdża się celowo, bo tamten opisuje DOBĘ PILOTA, a ten operację W KLUBIE.
+ *
+ * Klub przynosi WOŁAJĄCY (`orgOf`), a nie `SessionState`: domena klubu nie zna i znać
+ * nie ma (§2) - ta sama granica, co przy oknach lotów w `trackPhaseRuns`. Bez `orgOf`
+ * numerowanie jest jak przed 2.0.0, czyli poprawne dla pilota jednego klubu.
  */
 export function operationIndexes(
   sessions: readonly SessionState[],
   picId: string,
+  orgOf?: (sessionUuid: string) => string | null,
 ): Map<string, number> {
-  const byDay = new Map<number, { uuid: string; startedAt: EpochMillis }[]>();
+  const byDay = new Map<string, { uuid: string; startedAt: EpochMillis }[]>();
 
   for (const session of sessions) {
     const uuid = session.sessionUuid;
@@ -126,9 +138,11 @@ export function operationIndexes(
     if (uuid == null || startedAt == null) continue;
     if (session.voided || session.sessionPicId !== picId) continue;
 
-    const day = utcDayStart(startedAt);
-    const sameDay = byDay.get(day);
-    if (sameDay == null) byDay.set(day, [{ uuid, startedAt }]);
+    // Kubełkiem jest para (doba, klub) - patrz docblock. Bez `orgOf` klub jest pusty
+    // i kubełkiem zostaje sama doba, dokładnie jak przed wielofirmowością.
+    const bucket = `${utcDayStart(startedAt)}|${orgOf?.(uuid) ?? ''}`;
+    const sameDay = byDay.get(bucket);
+    if (sameDay == null) byDay.set(bucket, [{ uuid, startedAt }]);
     else sameDay.push({ uuid, startedAt });
   }
 

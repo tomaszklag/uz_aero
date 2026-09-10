@@ -93,6 +93,8 @@ export function BugReportSheet({ visible, sheet, onClose }: BugReportSheetProps)
 
   const pilotId = useCurrentPilot((s) => s.id);
   const account = useAuthStore((s) => s.pilot);
+  // Klub aktywny - bez niego zgłoszenie o flocie jest nie do rozstrzygnięcia (§7).
+  const org = useAuthStore((s) => s.org);
   const aircraft = useAircraft(projection.aircraftId);
   const signatureOf = useOperationSignatures();
 
@@ -123,7 +125,13 @@ export function BugReportSheet({ visible, sheet, onClose }: BugReportSheetProps)
         flights: projection.flights.length,
         closed: projection.closed,
       },
-      pilot: { id: pilotId, code: account?.code ?? null, name: account?.name ?? null },
+      pilot: {
+        id: pilotId,
+        code: account?.code ?? null,
+        name: account?.name ?? null,
+        orgId: org?.id ?? null,
+        orgName: org?.name ?? null,
+      },
       theme: themeName,
       // Chwila OTWARCIA arkusza, nie zapisu: pilot widzi ją w wierszach i ma prawo
       // oczekiwać, że wyśle dokładnie to, co przeczytał. Różnica to sekundy pisania.
@@ -143,6 +151,7 @@ export function BugReportSheet({ visible, sheet, onClose }: BugReportSheetProps)
     aircraft,
     pilotId,
     account,
+    org,
     themeName,
     signatureOf,
   ]);

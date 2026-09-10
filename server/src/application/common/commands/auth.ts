@@ -138,6 +138,15 @@ export type ClubsStatus = 'active' | 'pending' | 'rejected' | 'none';
 export interface ClubsView {
   status: ClubsStatus;
   memberships: ClubMembershipView[];
+  /**
+   * Kim jest pytający - imię i adres Z KONTA, do plakietki na ekranach 00C/00D/00E.
+   *
+   * Jedzie w tej samej odpowiedzi, bo odpowiada na pytanie zadawane razem z tamtym:
+   * „na co czekam" ma sens dopiero z „pod którym kontem". Aplikacja nie ma skąd wziąć
+   * tego sama - token osoby niesie identyfikator, a nie profil, a wyłuskiwanie danych
+   * z tokenu Google byłoby drugim, niesprawdzanym źródłem tych samych napisów.
+   */
+  person: { name: string; email: string | null };
 }
 
 export type ProviderLoginResult =
@@ -272,6 +281,18 @@ export type PanelSwitchResult =
   | { ok: false; reason: 'not_found' };
 
 /**
+ * Wynik przełączenia klubu w TELEFONIE (`POST /auth/switch`, wielofirmowość §6).
+ *
+ * `not_found` dla klubu, którego ta osoba nie ma albo w którym nie jest aktywna - cudzy
+ * klub jest dla niej NIEISTNIEJĄCY, nie „zabroniony" (epik C, issue #99: 403 potwierdzałoby
+ * cudzy zasób). `unauthorized` = za tokenem nikt już nie stoi albo to nie jest token klubu.
+ */
+export type ClubSwitchResult =
+  | { ok: true; tokens: AuthTokens }
+  | { ok: false; reason: 'unauthorized' }
+  | { ok: false; reason: 'not_found' };
+
+/**
  * Odpowiedź `GET /auth/memberships`. `approved` niesie TOKENY, bo pilot zatwierdzony
  * w międzyczasie ma wejść do aplikacji bez ponownego przechodzenia przez Google.
  * `unknown` = za tym tokenem nikt już nie stoi (osoba zablokowana, poświadczenie
@@ -315,7 +336,7 @@ export class AuthCommands {
         ok: false,
         reason: 'no_club',
         personToken: this.tokens.signPerson({ pilotId: account.id }, PERSON_TTL_DAYS * 24 * 3600),
-        clubs: clubsView(memberships),
+        clubs: clubsView(memberships, personOf(account)),
       };
     }
 
@@ -492,7 +513,7 @@ export class AuthCommands {
     const memberships = await this.pilots.memberships(account.id);
     const active = await this.pickActive(account.id, memberships);
     if (active == null || request.kind === 'club') {
-      return { kind: 'clubs', clubs: clubsView(memberships) };
+      return { kind: 'clubs', clubs: clubsView(memberships, personOf(account)) };
     }
 
     const identity = await this.identities.findByPilot(account.id);
@@ -504,6 +525,50 @@ export class AuthCommands {
 
     await this.identities.markLogin(identity.provider, identity.subject, this.clock.now());
     return { kind: 'approved', tokens: await this.issueFor(account, active) };
+  }
+
+  /**
+   * Przełączenie klubu w TELEFONIE (`POST /auth/switch { orgId }`; wielofirmowość §6,
+   * epik F) - NOWA PARA TOKENÓW dla klubu docelowego, nie nagłówek w żądaniu.
+   *
+   * ══ WYŁĄCZNIE TOKEN KLUBU, NIGDY TOKEN OSOBY ══
+   * Kto ma token klubu, już raz wszedł - przełączenie niczego nie otwiera po raz
+   * pierwszy. Token OSOBY ma własną, jednorazową drogę do tokenów klubu
+   * (`membershipStatus`: stempel `lastLoginAt` zamyka ją po pierwszym wywołaniu);
+   * gdyby przechodził tędy, byłby fabryką par tokenów z pominięciem tej bramy -
+   * dokładnie ten scenariusz, który audyt 2026-09-05 zamknął przy tokenie rejestracyjnym.
+   *
+   * ══ CEL SPRAWDZAMY OD ZERA, ŹRÓDŁA PYTAMY WYŁĄCZNIE O TOŻSAMOŚĆ (jak `panelSwitch`) ══
+   * Pilot wyłączony w klubie A ma prawo przejść do B: o wejściu rozstrzyga członkostwo
+   * w CELU. Reguła unieważnienia poświadczeń jest ta sama - token starszy niż
+   * `credentials_valid_from` osoby ALBO celu nie mieni nowej pary, inaczej wyłączenie
+   * członkostwa dałoby się obejść przełączeniem tam i z powrotem starym tokenem.
+   *
+   * ══ STARY REFRESH ZOSTAJE WAŻNY I TO JEST ŚWIADOME ══
+   * Trasa uwierzytelnia się tokenem DOSTĘPU, więc refresha porzucanego klubu nie zna
+   * i nie ma czego skasować. Nic to nie kupuje atakującemu (to ta sama osoba i to samo
+   * konto), a klub aktywny przy następnym logowaniu i tak jest ten, na który
+   * przełączono: `lastOrgFor` czyta NAJŚWIEŻSZY wiersz, a ten powstał przed chwilą tutaj.
+   */
+  async switchClub(request: PersonRequest, orgId: string): Promise<ClubSwitchResult> {
+    if (request.kind !== 'club') return { ok: false, reason: 'unauthorized' };
+
+    const account = await this.pilots.findById(request.pilotId);
+    if (account == null || !account.active) return { ok: false, reason: 'unauthorized' };
+    if (credentialsRevoked(account.credentialsValidFrom, request.issuedAt)) {
+      return { ok: false, reason: 'unauthorized' };
+    }
+
+    const membership = await this.pilots.membership(account.id, orgId);
+    if (
+      membership == null ||
+      !isActive(membership) ||
+      credentialsRevoked(membership.credentialsValidFrom, request.issuedAt)
+    ) {
+      return { ok: false, reason: 'not_found' };
+    }
+
+    return { ok: true, tokens: await this.issueFor(account, membership) };
   }
 
   /**
@@ -639,6 +704,12 @@ const isActive = (m: Membership): m is Membership & { code: string } =>
 
 const orgRefOf = (m: Membership): OrgRef => ({ id: m.orgId, slug: m.orgSlug, name: m.orgName });
 
+/** Kto pyta - do plakietki konta na 00C/00D/00E; nic ponad imię i adres. */
+const personOf = (account: PilotAccount): { name: string; email: string | null } => ({
+  name: account.name,
+  email: account.email,
+});
+
 /**
  * Czy ktoś WSZEDŁ do klubu tą tożsamością od chwili wydania tokenu osoby (`issuedAt`
  * w sekundach). `lastLoginAt` ma milisekundy, token sekundy - porównanie po sekundach
@@ -721,7 +792,10 @@ function platformSession(
   };
 }
 
-export function clubsView(memberships: readonly Membership[]): ClubsView {
+export function clubsView(
+  memberships: readonly Membership[],
+  person: { name: string; email: string | null },
+): ClubsView {
   const status: ClubsStatus = memberships.some(isActive)
     ? 'active'
     : memberships.some((m) => m.status === 'pending')
@@ -741,5 +815,6 @@ export function clubsView(memberships: readonly Membership[]): ClubsView {
       createdAt: m.createdAt,
       decidedAt: m.decidedAt,
     })),
+    person,
   };
 }

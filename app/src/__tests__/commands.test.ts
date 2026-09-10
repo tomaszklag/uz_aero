@@ -22,6 +22,8 @@ import { FixedClock } from '../infrastructure/clock';
 const SESSION = 'sess-22jun';
 const AC = 'sp-axa';
 const PIC = 'tmk';
+/** Klub aktywny - od 2.0.0 kontekst floty i wysyłki (wielofirmowość §7). */
+const ORG = 'org-a';
 
 const T0 = Date.UTC(2026, 5, 22, 8, 0, 0);
 const min = (m: number): number => T0 + m * 60_000;
@@ -43,23 +45,27 @@ function setup(withAircraftCache = true) {
   const queries = new SessionQueries(repo);
 
   const seedCache = async (): Promise<void> => {
+    await repo.setActiveOrg(ORG);
     if (!withAircraftCache) return;
-    await repo.upsertAircraft([
-      {
-        id: AC,
-        reg: 'SP-AXA',
-        type: 'C182',
-        year: 2019,
-        capacityL: 330,
-        mhFormat: 'hhmm',
-        dualRequired: false,
-        serviceStatus: 'active',
-        claimPicId: null,
-        claimSince: null,
-        handover: null,
-        consumption: null,
-      },
-    ]);
+    await repo.upsertAircraft(
+      [
+        {
+          id: AC,
+          reg: 'SP-AXA',
+          type: 'C182',
+          year: 2019,
+          capacityL: 330,
+          mhFormat: 'hhmm',
+          dualRequired: false,
+          serviceStatus: 'active',
+          claimPicId: null,
+          claimSince: null,
+          handover: null,
+          consumption: null,
+        },
+      ],
+      ORG,
+    );
   };
 
   return { adapter, repo, commands, queries, clock, seedCache };

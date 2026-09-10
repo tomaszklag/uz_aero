@@ -36,6 +36,7 @@ import {
 import { useAuthStore } from '../store/authStore';
 import { useCurrentPilot, useSessionStore } from '../store';
 import { useAircraftRegistrations } from './useAircraftRegistrations';
+import { useSessionOrgs } from './useSessionOrgs';
 
 /** Sygnatura operacji („SP-AXA/2026-09-01/AKO/1"); `null` = nie ma jej z czego złożyć. */
 export type OperationSignatureOf = (sessionUuid: string) => string | null;
@@ -55,8 +56,13 @@ export function useOperationSignatures(): OperationSignatureOf {
   const streamRevision = useSessionStore((s) => s.streamRevision);
 
   const pilotId = useCurrentPilot((s) => s.id);
-  // Kod pilota z profilu logowania - nigdzie o niego nie pytamy (CLAUDE.md).
-  const picCode = useAuthStore((s) => s.pilot?.code) ?? null;
+  // Kod pilota z profilu logowania - nigdzie o niego nie pytamy (CLAUDE.md). Od 2.0.0
+  // kod należy do CZŁONKOSTWA, więc bierze się z klubu OPERACJI, nie z klubu aktywnego:
+  // ten sam człowiek lata w Alfie jako TMK, a w Becie jako TMB (mockup 01e).
+  const activeCode = useAuthStore((s) => s.pilot?.code) ?? null;
+  const activeOrg = useAuthStore((s) => s.org?.id) ?? null;
+  const memberships = useAuthStore((s) => s.memberships);
+  const orgOf = useSessionOrgs();
   const regOf = useAircraftRegistrations();
 
   const [facts, setFacts] = useState<Map<string, OperationFacts>>(new Map());
@@ -69,7 +75,9 @@ export function useOperationSignatures(): OperationSignatureOf {
       if (!alive) return;
 
       const states = days.map((d) => d.state);
-      const indexes = operationIndexes(states, pilotId);
+      // Numer jest jednoznaczny W KLUBIE (§3.6): pilot dwóch klubów ma tego samego dnia
+      // dwa niezależne numerowania, a serwer liczy je tak samo (SQL z `org_id`).
+      const indexes = operationIndexes(states, pilotId, orgOf);
       const next = new Map<string, OperationFacts>();
 
       for (const state of states) {
@@ -92,11 +100,19 @@ export function useOperationSignatures(): OperationSignatureOf {
     return () => {
       alive = false;
     };
-  }, [queries, pilotId, eventCount, streamRevision]);
+  }, [queries, pilotId, eventCount, streamRevision, orgOf]);
 
   return (sessionUuid) => {
     const operation = facts.get(sessionUuid);
     if (operation == null) return null;
+
+    // Klub operacji → kod pilota Z TEGO członkostwa. Operacja bez klubu (zapis sprzed
+    // 2.0.0) i klub aktywny idą po kodzie z profilu - tam jest to ten sam kod.
+    const org = orgOf(sessionUuid);
+    const picCode =
+      org == null || org === activeOrg
+        ? activeCode
+        : (memberships.find((m) => m.org.id === org)?.code ?? null);
 
     return operationSignature({
       reg: operation.aircraftId == null ? null : regOf(operation.aircraftId),

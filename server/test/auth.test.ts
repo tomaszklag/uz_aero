@@ -223,7 +223,12 @@ describe('POST /auth/google - osoba BEZ klubu (wielofirmowość §4, epik D)', (
     });
 
     expect(res.statusCode).toBe(200);
-    expect(res.json()).toEqual({ status: 'none', memberships: [] });
+    expect(res.json()).toEqual({
+      status: 'none',
+      memberships: [],
+      // Plakietka konta na 00E: pod którym adresem człowiek czeka (issue #102).
+      person: { name: 'Nieznajomy nowy4', email: 'nowy4@gmail.com' },
+    });
   });
 
   it('osoba, która CZEKA w klubie, dostaje przy logowaniu 202 ze stanem `pending` i nazwą klubu', async () => {
