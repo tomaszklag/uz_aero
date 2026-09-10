@@ -14,7 +14,7 @@
  */
 
 import type { PilotListItemDto, PilotRole } from '../../api/dto';
-import type { CreatePilotBody, UpdatePilotBody } from '../../api/pilots';
+import type { UpdatePilotBody } from '../../api/pilots';
 import { ACCOUNT_ACTIVE, SELF_ACCOUNT } from './accountRefusal';
 
 /** Stan pól formularza. Wszystko napisami - tak, jak wychodzi z `<input>`. */
@@ -44,8 +44,7 @@ export function draftOf(pilot: PilotListItemDto): AccountDraft {
  * nie przy każdym odświeżeniu listy. Dzięki temu przeładowanie danych po zapisie nie
  * kasuje tego, co człowiek właśnie wpisał.
  */
-export function draftKey(creating: boolean, pilot: PilotListItemDto | null): string | null {
-  if (creating) return 'nowy';
+export function draftKey(pilot: PilotListItemDto | null): string | null {
   return pilot?.id ?? null;
 }
 
@@ -120,16 +119,6 @@ export function verdictOf(draft: AccountDraft): AccountVerdict {
   if (email !== '' && !EMAIL_PATTERN.test(email)) fail('email', 'To nie wygląda na adres e-mail.');
 
   return { invalid, complete, blocker };
-}
-
-/** Szkic -> ciało `POST`. Pusty e-mail wysyłamy jako `''` - serwer zapisze `null`. */
-export function createBodyOf(draft: AccountDraft): CreatePilotBody {
-  return {
-    code: normalizeCode(draft.code),
-    name: draft.name.trim(),
-    email: draft.email.trim(),
-    role: draft.role,
-  };
 }
 
 /**

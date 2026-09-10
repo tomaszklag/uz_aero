@@ -128,6 +128,10 @@ const B_MARKERS = [
   'aeroklub-beta',
   'Aeroklub Beta',
   ORG_B_SHEETS_KEY,
+  // Kolejka zgłoszeń i kod klubu (issue #100): adres kandydata do Bety i kod Bety nie mają
+  // prawa pokazać się w żadnej odpowiedzi dla Alfy.
+  'kandydat@beta.pl',
+  'BETAKDE',
 ] as const;
 
 interface World {
@@ -143,6 +147,8 @@ interface World {
   flagB: number;
   /** Flaga klubu A - kontrola pozytywna (własne dane widać). */
   flagA: number;
+  /** Osoba ze zgłoszeniem `pending` do klubu B - cel sond „po adresie" dla decyzji. */
+  pendingB: string;
 }
 
 /**
@@ -244,7 +250,19 @@ async function twoClubs(): Promise<World> {
     );
   }
 
-  return { app, db, a, b, pwiA, flagA, flagB };
+  // Zgłoszenie kodem klubu do BETY + kod klubu Bety (issue #100, D2). Wprost do bazy,
+  // bo drogę pilota ma `joinClub.test.ts` - tu liczy się wyłącznie to, że klub A tego
+  // wiersza nie widzi i nie rozstrzygnie.
+  await db.query(
+    `INSERT INTO pilots (id, name, email, active) VALUES ('kandydat-b', 'Kandydat Beta', 'kandydat@beta.pl', TRUE)`,
+  );
+  await db.query(
+    `INSERT INTO memberships (org_id, pilot_id, status, joined_via) VALUES ($1, 'kandydat-b', 'pending', 'code')`,
+    [ORG_B],
+  );
+  await db.query(`UPDATE organizations SET join_code = 'BETAKDE', join_code_since = now() WHERE id = $1`, [ORG_B]);
+
+  return { app, db, a, b, pwiA, flagA, flagB, pendingB: 'kandydat-b' };
 }
 
 /** Odpowiedź bez ani jednego znacznika klubu B. */
@@ -667,18 +685,6 @@ const CASES: Record<string, Probe> = {
     expect(res.json().items.map((i: { code: string }) => i.code)).not.toContain('PWB');
   },
 
-  'POST /admin/api/pilots': async ({ app, db, a }) => {
-    const res = await app.inject({
-      method: 'POST',
-      url: '/admin/api/pilots',
-      headers: writer(a),
-      payload: { code: 'NOW', name: 'Nowy Pilot', email: 'nowy@alfa.pl', role: 'pilot' },
-    });
-    expect(res.statusCode).toBe(201);
-    const { rows } = await db.query<{ org_id: string }>(`SELECT org_id FROM memberships WHERE code = 'NOW'`);
-    expect(rows.map((r) => r.org_id)).toEqual([ORG_A]);
-  },
-
   'PATCH /admin/api/pilots/:id': async ({ app, a }) => {
     expect(
       (await app.inject({ method: 'PATCH', url: '/admin/api/pilots/BPI', headers: writer(a), payload: { name: 'X Y' } }))
@@ -744,7 +750,169 @@ const CASES: Record<string, Probe> = {
     expect(res.json().totals.sessions).toBe(1);
   },
 
+  // ── kolejka zgłoszeń i kod klubu (issue #100, D2) ────────────────────────────
+  'GET /admin/api/memberships/pending': async ({ app, a }) => {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/admin/api/memberships/pending',
+      headers: bearer(a),
+    });
+    expectClean(res, '/memberships/pending');
+    // Kolejka Alfy jest PUSTA, choć w Becie ktoś czeka - zgłoszenie należy do klubu.
+    expect(res.json().items).toEqual([]);
+  },
+
+  'POST /admin/api/memberships/:id/approve': async ({ app, db, a, pendingB }) => {
+    const res = await app.inject({
+      method: 'POST',
+      url: `/admin/api/memberships/${pendingB}/approve`,
+      headers: writer(a),
+      payload: { code: 'KAN', role: 'pilot' },
+    });
+    expect(res.statusCode).toBe(404);
+    const { rows } = await db.query<{ status: string; code: string | null }>(
+      'SELECT status, code FROM memberships WHERE pilot_id = $1',
+      [pendingB],
+    );
+    expect(rows[0]).toEqual({ status: 'pending', code: null });
+  },
+
+  'POST /admin/api/memberships/:id/reject': async ({ app, db, a, pendingB }) => {
+    const res = await app.inject({
+      method: 'POST',
+      url: `/admin/api/memberships/${pendingB}/reject`,
+      headers: writer(a),
+      payload: { reason: 'nie nasz klub' },
+    });
+    expect(res.statusCode).toBe(404);
+    const { rows } = await db.query<{ status: string }>(
+      'SELECT status FROM memberships WHERE pilot_id = $1',
+      [pendingB],
+    );
+    expect(rows[0]?.status).toBe('pending');
+  },
+
+  'POST /admin/api/memberships/:id/reopen': async ({ app, a, pendingB }) => {
+    const res = await app.inject({
+      method: 'POST',
+      url: `/admin/api/memberships/${pendingB}/reopen`,
+      headers: writer(a),
+      payload: {},
+    });
+    expect(res.statusCode).toBe(404);
+  },
+
+  // STOI PRZED dwoma mutacjami niżej i musi tak zostać: sondy jadą w kolejności wpisów
+  // po jednym świecie, a rotacja i wyłączenie zmieniają kod KLUBU A. Przeniesiony za nie
+  // sprawdzałby kod, którego żaden administrator nigdy nie widział.
+  'GET /admin/api/club-code': async ({ app, a }) => {
+    const res = await app.inject({ method: 'GET', url: '/admin/api/club-code', headers: bearer(a) });
+    expectClean(res, '/club-code');
+    // Kod WŁASNEGO klubu widać - skopowanie nie znaczy „nikt nic nie widzi".
+    expect(res.json().code).toBe('AZG7K4M');
+  },
+
+  'POST /admin/api/club-code/rotate': async ({ app, db, a }) => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/admin/api/club-code/rotate',
+      headers: writer(a),
+    });
+    expect(res.statusCode).toBe(200);
+    // Rotacja w Alfie nie rusza kolumny Bety ani jej stempla.
+    const { rows } = await db.query<{ join_code: string }>(
+      'SELECT join_code FROM organizations WHERE id = $1',
+      [ORG_B],
+    );
+    expect(rows[0]?.join_code).toBe('BETAKDE');
+  },
+
+  'POST /admin/api/club-code/disable': async ({ app, db, a }) => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/admin/api/club-code/disable',
+      headers: writer(a),
+    });
+    expect(res.statusCode).toBe(200);
+    const { rows } = await db.query<{ id: string; join_code: string | null }>(
+      'SELECT id, join_code FROM organizations ORDER BY id',
+    );
+    expect(rows).toEqual([
+      { id: ORG_A, join_code: null },
+      { id: ORG_B, join_code: 'BETAKDE' },
+    ]);
+  },
+
   // ── platforma (superadministrator) ───────────────────────────────────────────
+  'GET /admin/api/organizations': async ({ app, a }) => {
+    // Trasa PLATFORMY: sesja klubu jej nie otwiera, więc lista klubów nie jest drogą
+    // do zobaczenia, kto jeszcze jest na tym serwerze.
+    expect(
+      (await app.inject({ method: 'GET', url: '/admin/api/organizations', headers: bearer(a) }))
+        .statusCode,
+    ).toBe(401);
+  },
+
+  'POST /admin/api/organizations': async ({ app, db, a }) => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/admin/api/organizations',
+      headers: writer(a),
+      payload: {
+        name: 'Klub z Alfy',
+        slug: 'klub-z-alfy',
+        admin: { name: 'Ktoś Nowy', email: 'ktos@alfa.pl', code: 'KTO' },
+      },
+    });
+    expect(res.statusCode).toBe(401);
+    const { rows } = await db.query<{ n: string }>('SELECT COUNT(*) AS n FROM organizations');
+    expect(Number(rows[0]!.n)).toBe(2);
+  },
+
+  'GET /admin/api/organizations/:id': async ({ app, a }) => {
+    // Także o WŁASNY klub: administrator klubu czyta go przez `GET /admin/api/me`,
+    // a nie przez moduł platformy.
+    expect(
+      (
+        await app.inject({
+          method: 'GET',
+          url: `/admin/api/organizations/${ORG_B}`,
+          headers: bearer(a),
+        })
+      ).statusCode,
+    ).toBe(401);
+  },
+
+  'PATCH /admin/api/organizations/:id': async ({ app, db, a }) => {
+    const res = await app.inject({
+      method: 'PATCH',
+      url: `/admin/api/organizations/${ORG_B}`,
+      headers: writer(a),
+      payload: { name: 'Przejęte przez Alfę' },
+    });
+    expect(res.statusCode).toBe(401);
+    const { rows } = await db.query<{ name: string }>(
+      'SELECT name FROM organizations WHERE id = $1',
+      [ORG_B],
+    );
+    expect(rows[0]?.name).toBe('Aeroklub Beta');
+  },
+
+  'POST /admin/api/organizations/:id/active': async ({ app, db, a }) => {
+    const res = await app.inject({
+      method: 'POST',
+      url: `/admin/api/organizations/${ORG_B}/active`,
+      headers: writer(a),
+      payload: { active: false },
+    });
+    expect(res.statusCode).toBe(401);
+    const { rows } = await db.query<{ active: boolean }>(
+      'SELECT active FROM organizations WHERE id = $1',
+      [ORG_B],
+    );
+    expect(rows[0]?.active).toBe(true);
+  },
+
   'GET /admin/api/bug-reports': async ({ app, a }) => {
     // Trasa PLATFORMY: sesja klubu jej nie otwiera - dla klubu zgłoszeń nie ma wcale.
     expect((await app.inject({ method: 'GET', url: '/admin/api/bug-reports', headers: bearer(a) })).statusCode).toBe(401);

@@ -19,6 +19,9 @@ import type { AdminExportCommands } from '../application/admin/commands/exports.
 import type { AdminFlagCommands } from '../application/admin/commands/flags.ts';
 import type { AdminFleetCommands } from '../application/admin/commands/fleet.ts';
 import type { AdminMaintenanceCommands } from '../application/admin/commands/maintenance.ts';
+import type { AdminClubCodeCommands } from '../application/admin/commands/clubCode.ts';
+import type { AdminMembershipCommands } from '../application/admin/commands/memberships.ts';
+import type { PlatformOrganizationCommands } from '../application/admin/commands/organizations.ts';
 import type { AdminPilotCommands } from '../application/admin/commands/pilots.ts';
 import type { AdminAuditQueries } from '../application/admin/queries/audit.ts';
 import type { AdminBugReportQueries } from '../application/admin/queries/bugReports.ts';
@@ -30,6 +33,9 @@ import type { AdminFlagQueries } from '../application/admin/queries/flags.ts';
 import type { AdminFleetQueries } from '../application/admin/queries/fleet.ts';
 import type { AdminMaintenanceQueries } from '../application/admin/queries/maintenance.ts';
 import type { AdminMeQueries } from '../application/admin/queries/me.ts';
+import type { AdminClubCodeQueries } from '../application/admin/queries/clubCode.ts';
+import type { AdminMembershipQueries } from '../application/admin/queries/memberships.ts';
+import type { PlatformOrganizationQueries } from '../application/admin/queries/organizations.ts';
 import type { AdminPilotQueries } from '../application/admin/queries/pilots.ts';
 import type { AdminSessionQueries } from '../application/admin/queries/sessions.ts';
 import type { AdminConsumptionQueries } from '../application/admin/queries/consumption.ts';
@@ -67,6 +73,9 @@ import { registerAdminFlagRoutes } from './routes/admin/flags.ts';
 import { registerAdminFleetRoutes } from './routes/admin/fleet.ts';
 import { registerAdminMaintenanceRoutes } from './routes/admin/maintenance.ts';
 import { registerAdminMeRoutes } from './routes/admin/me.ts';
+import { registerAdminClubCodeRoutes } from './routes/admin/clubCode.ts';
+import { registerAdminMembershipRoutes } from './routes/admin/memberships.ts';
+import { registerPlatformOrganizationRoutes } from './routes/admin/organizations.ts';
 import { registerAdminPilotRoutes } from './routes/admin/pilots.ts';
 import { registerAdminSessionRoutes } from './routes/admin/sessions.ts';
 import { registerAdminSessionVoidRoutes } from './routes/admin/sessionVoid.ts';
@@ -150,6 +159,23 @@ export interface ServerDeps {
   adminSessionClose: AdminSessionCloseCommands;
   adminPilots: AdminPilotCommands;
   /**
+   * Decyzje o zgłoszeniach kodem klubu (issue #100, D2): zatwierdzenie z kodem i rolą,
+   * odrzucenie z powodem, cofnięcie odrzucenia. Osobna komenda od `adminPilots`, bo
+   * kolejka i lista to dwa byty na ekranie - kandydat nie ma jeszcze kodu pilota.
+   */
+  adminMemberships: AdminMembershipCommands;
+  /**
+   * Kod klubu - włącznik i wyłącznik JEDYNEJ drogi do klubu (§3.8). Osobna komenda, bo
+   * osobna tabela: kod jest konfiguracją klubu, nie własnością jego członków.
+   */
+  adminClubCode: AdminClubCodeCommands;
+  /**
+   * Moduł Organizacje (`platform.manage`, §8.1): założenie klubu razem z pierwszym
+   * administratorem, zmiana nazwy, wyłączenie klubu. Jedyna komenda panelu działająca
+   * POZA klubem - jej wpis audytu ma puste `org_id`.
+   */
+  platformOrganizations: PlatformOrganizationCommands;
+  /**
    * Konfiguracja floty (`A07`, `A07a`) - jedyna droga zmiany WEJŚĆ REGUŁ §4.5:
    * pojemności zbiorników (próg `FUEL_MISMATCH`), formatu motogodzin, wymogu Duala
    * i stanu służby. Zmiana wychodzi do telefonów wyłącznie przez ETag `GET /reference`.
@@ -178,6 +204,12 @@ export interface ServerDeps {
   adminFlagQueries: AdminFlagQueries;
   adminMeQueries: AdminMeQueries;
   adminPilotQueries: AdminPilotQueries;
+  /** Kolejka zgłoszeń kodem klubu - karta ZGŁOSZENIA nad listą pilotów (`accounts.manage`). */
+  adminMembershipQueries: AdminMembershipQueries;
+  /** Kod klubu do odczytu: wartość, od kiedy obowiązuje, ile zgłoszeń nim czeka. */
+  adminClubCodeQueries: AdminClubCodeQueries;
+  /** Lista klubów i karta klubu dla superadministratora - same liczby z wnętrza klubu. */
+  platformOrganizationQueries: PlatformOrganizationQueries;
   adminFleetQueries: AdminFleetQueries;
   /** Monitor eksportu (`A05`) - lista dni od strony arkusza, historia rewizji, podgląd karty. */
   adminExportQueries: AdminExportQueries;
@@ -371,6 +403,15 @@ export async function buildServer(
   registerAdminTrackRoutes(app, deps.adminSessionTrack, gate);
   registerAdminAuditRoutes(app, deps.adminAuditQueries, gate);
   registerAdminPilotRoutes(app, deps.adminPilots, deps.adminPilotQueries, gate);
+  registerAdminMembershipRoutes(app, deps.adminMemberships, deps.adminMembershipQueries, gate);
+  registerAdminClubCodeRoutes(app, deps.adminClubCode, deps.adminClubCodeQueries, gate);
+  // Moduł PLATFORMY - `platformRoute` z inną bramą i innym działającym (bez klubu).
+  registerPlatformOrganizationRoutes(
+    app,
+    deps.platformOrganizations,
+    deps.platformOrganizationQueries,
+    gate,
+  );
   registerAdminFleetRoutes(
     app,
     deps.adminFleet,

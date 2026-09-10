@@ -23,8 +23,19 @@ export const ADMIN_ACTIONS = [
   'event.correct',
   /** Ręczne ponowienie eksportu karty dnia (przekrój 5, `A05`). */
   'export.retry',
+  /**
+   * DOPISANIE CZŁONKA WPROST Z PANELU KLUBU - akcja HISTORYCZNA (do 2.0.0).
+   *
+   * Od epiku D wielofirmowości (issue #100) nowy członek wchodzi WYŁĄCZNIE kodem klubu
+   * (`membership.approve`), a osobę z adresem Google zakłada superadministrator razem
+   * z klubem (`organization.create`). Kod zostaje w katalogu, bo zostają WIERSZE, które
+   * go niosą: filtr po akcji musi je przepuszczać. Ta sama decyzja, co przy
+   * `pilot.password_reset` - katalog opisuje dziennik, a dziennik ma przeszłość.
+   */
   'pilot.create',
+  /** Zmiana wiersza członka: kod, rola, nazwisko, e-mail - oraz przywrócenie dostępu. */
   'pilot.update',
+  /** Odebranie dostępu - akcja HISTORYCZNA (do 2.0.0; dziś `membership.disable`). */
   'pilot.deactivate',
   'pilot.password_reset',
   /**
@@ -100,6 +111,62 @@ export const ADMIN_ACTIONS = [
    * w którym za miesiąc widać, kto i dlaczego komuś odmówił.
    */
   'membership.reject',
+  /**
+   * COFNIĘCIE ODRZUCENIA - `rejected` → `pending`, czyli powrót zgłoszenia do kolejki
+   * (issue #100, D2).
+   *
+   * Osobna pozycja obok `membership.approve`, choć obie zdejmują odmowę: zatwierdzenie
+   * WPUSZCZA do klubu (nadaje kod i rolę), a to cofnięcie mówi wyłącznie „decyzja była
+   * pomyłką, rozstrzygniemy jeszcze raz". Wspólny kod kazałby czytającemu dziennik
+   * otwierać `details`, żeby odróżnić przyjęcie od wycofania odmowy - a to dwie różne
+   * odpowiedzi na pytanie, czy ten człowiek lata w klubie.
+   */
+  'membership.reopen',
+  /**
+   * ODEBRANIE DOSTĘPU DO KLUBU (dawne `pilot.deactivate`, przemianowane w issue #100).
+   *
+   * Kod niesie DECYZJĘ, której szuka się w dzienniku po nazwie: „kto i kiedy odciął tego
+   * człowieka od tego klubu". Nazwa mówi `membership`, bo od wielofirmowości odcina się
+   * członkostwo, a nie osobę - ta lata dalej w pozostałych swoich klubach. Przywrócenie
+   * dostępu własnego kodu NIE MA (zostaje `pilot.update`) i to jest ta sama asymetria,
+   * co przed zmianą: odebranie dostępu jest zdarzeniem, przywrócenie - zmianą stanu.
+   * `details` niosą kod pilota i liczbę zerwanych sesji telefonu.
+   */
+  'membership.disable',
+  /**
+   * NOWY KOD KLUBU (`organizations.join_code`, wielofirmowość §3.8; issue #100, D2).
+   *
+   * Rotacja unieważnia poprzedni kod w tej samej chwili, więc jest decyzją o dostępie do
+   * klubu dla wszystkich, którzy starego kodu jeszcze nie użyli - a pytanie „dlaczego
+   * kod, który mi podali, nie działa" ma mieć odpowiedź w dzienniku. `details` niosą
+   * NOWY kod (administrator i tak czyta go z ekranu) i poprzedni, żeby dało się
+   * odtworzyć, który kod obowiązywał kiedy. Zgłoszeń już złożonych rotacja nie rusza.
+   */
+  'club_code.rotate',
+  /**
+   * WYŁĄCZENIE DOŁĄCZANIA KODEM (`join_code = NULL`) - po tej akcji do klubu nie wchodzi
+   * NIKT, bo innej drogi nie ma (§3.8). Osobny kod od rotacji właśnie dlatego: rotacja
+   * wymienia drogę, to ją zamyka.
+   */
+  'club_code.disable',
+  /**
+   * ZAŁOŻENIE KLUBU przez superadministratora (moduł Organizacje, §8.1; issue #100, D3).
+   *
+   * Wpis PLATFORMOWY - `admin_audit.org_id` jest przy nim pusty, bo akcja nie dzieje się
+   * w żadnym klubie, tylko go tworzy (`auditedWrite.ts`). `details` niosą nazwę, slug
+   * i PIERWSZEGO administratora (adres Google, nazwisko, kod pilota): to jedyny wiersz
+   * w systemie, z którego widać, komu oddano klub w chwili jego powstania.
+   */
+  'organization.create',
+  /** Zmiana nazwy klubu (slug jest stały od założenia - jest adresem, nie napisem). */
+  'organization.update',
+  /**
+   * WYŁĄCZENIE KLUBU (`organizations.active = false`): panel i aplikacja przestają
+   * wpuszczać jego członków, danych nie kasujemy. Jak przy `membership.disable` - własny
+   * kod ma odebranie dostępu, a przywrócenie jest zwykłą zmianą stanu
+   * (`organization.update`).
+   */
+  'organization.disable',
 ] as const;
 
 export type AdminAction = (typeof ADMIN_ACTIONS)[number];

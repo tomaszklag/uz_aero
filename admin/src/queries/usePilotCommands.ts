@@ -17,26 +17,19 @@
 import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 
 import {
-  createPilot,
   deletePilot,
   setPilotActive,
   updatePilot,
-  type CreatePilotBody,
   type UpdatePilotBody,
 } from '../api/pilots';
 import { keys } from './keys';
 
-/** Jedno unieważnienie dla wszystkich czterech mutacji - patrz nagłówek pliku. */
+/** Jedno unieważnienie dla wszystkich trzech mutacji - patrz nagłówek pliku. */
 const invalidatePilots = (qc: QueryClient): Promise<void> =>
   qc.invalidateQueries({ queryKey: keys.pilots.all });
 
-export function useCreatePilot() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (body: CreatePilotBody) => createPilot(body),
-    onSuccess: () => invalidatePilots(qc),
-  });
-}
+// `useCreatePilot` odeszło razem z `POST /pilots` (issue #100, D3): z panelu klubu nie
+// da się nikogo dopisać. Mutacje zatwierdzenia i odrzucenia zgłoszenia dochodzą w epiku E.
 
 export function useUpdatePilot() {
   const qc = useQueryClient();

@@ -57,17 +57,10 @@ export function listPilots(query: PilotListQuery): Promise<PilotPageDto> {
   return apiGet<PilotPageDto>(`/pilots?${queryString(query)}`);
 }
 
-/** Tożsamość i rola nowego konta; `email` = adres konta Google, którym pilot wejdzie. */
-export interface CreatePilotBody {
-  code: string;
-  name: string;
-  email?: string;
-  role: PilotRole;
-}
-
-export function createPilot(body: CreatePilotBody): Promise<PilotChangeDto> {
-  return apiPost<PilotChangeDto>('/pilots', body);
-}
+// DOPISANIA PILOTA TU NIE MA (issue #100, D3): `POST /pilots` zniknęło z serwera razem
+// z drogą, którą opisywało. Nowy członek wchodzi WYŁĄCZNIE kodem klubu, a zatwierdza go
+// administrator w karcie ZGŁOSZENIA; pierwszego administratora klubu zakłada moduł
+// Organizacje. Klient tych tras dochodzi w epiku E (issue #101), razem z ekranami.
 
 /** `PATCH` opisuje ZMIANĘ, nie stan docelowy - pola nieustawione zostają bez zmian. */
 export interface UpdatePilotBody {

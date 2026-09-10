@@ -39,6 +39,9 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 - **Panel klubu w lżejszym stylu.** Nawigacja w kolumnie po lewej z nazwą klubu nad pozycjami, ścieżka nad nagłówkiem w dzienniku (flota → maszyna → operacja), tytuły i etykiety pisane jak na stronie, a nie jak na przyrządzie. Kolory bez zmian.
 - **Jeden serwer obsługuje wiele klubów, a dane klubów są rozdzielone.** Każdy klub widzi wyłącznie swoje maszyny, pilotów, operacje i dokumenty - także wtedy, gdy ten sam pilot lata w dwóch klubach albo dwa kluby mają maszyny o tym samym znaku. Pilot podpisuje operacje kodem nadanym w danym klubie, a numeracja operacji w dobie biegnie w każdym klubie osobno.
 - **Link do karty arkusza dostaje adres klubu i własny sekret.** Kartę otwiera się bez konta w aplikacji - wystarczy link, który serwer zapisał przy eksporcie - a zgadnięcie samej nazwy karty niczego już nie otwiera.
+- **Do klubu dołącza się kodem klubu.** Klub ma jeden kod (w rodzaju `AZG-7K4M`), który administrator podaje pilotom dowolnym kanałem - z tablicy w hangarze, z grupy klubowej, z ręki. Pilot loguje się kontem Google, wpisuje kod i czeka na decyzję: administrator przyjmuje go z kodem pilota i rolą albo odmawia z powodem, który pilot czyta na swoim telefonie. Kod nie jest tajny i nikogo sam nie wpuszcza - wpuszcza człowiek. Nowy kod unieważnia stary od razu, a dołączanie kodem da się wyłączyć; złożone zgłoszenia zostają w kolejce.
+- **Klub zakłada opiekun platformy** razem z jego pierwszym administratorem i kodem klubu, żeby klub miał od pierwszego dnia kogo pytać i co podawać pilotom. Klub da się wyłączyć - jego ludzie tracą dostęp od razu, a dziennik, flota i konta zostają.
+- **Dopisywania pilota z panelu klubu już nie ma** - to była druga droga do klubu, obok kodu, i znikła razem z nią. Pilot, który odchodzi, ma wyłączane członkostwo: dostęp gaśnie natychmiast, a jego loty zostają w dzienniku i w dokumentach klubu.
 
 ### Dla testerów
 

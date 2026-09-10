@@ -884,11 +884,13 @@ export const MIGRATION_8 = `
     status   TEXT NOT NULL CHECK (status IN ('pending', 'active', 'disabled', 'rejected')),
     reject_reason TEXT,
     -- Skąd wziął się ten wiersz: 'code' = pilot wpisał kod klubu (jedyna droga dołączenia,
-    -- docs/wielofirmowosc.md §3.8), 'panel' = administrator dopisał wprost (do epiku D -
-    -- potem zastępuje je 'platform' = pierwszy administrator założony przez
-    -- superadministratora), 'backfill' = przepisany z konta 1.x. Wartości 'email' i 'link'
-    -- odpadły 2026-09-09 razem z drogami, które opisywały.
-    joined_via TEXT NOT NULL CHECK (joined_via IN ('code', 'panel', 'platform', 'backfill')),
+    -- docs/wielofirmowosc.md §3.8), 'platform' = PIERWSZY administrator klubu, założony
+    -- przez superadministratora razem z klubem (bootstrap z §3.8 - kodem nie miałby go
+    -- kto zatwierdzić), 'backfill' = przepisany z konta 1.x. Wartości 'email' i 'link'
+    -- odpadły 2026-09-09 razem z drogami, które opisywały; 'panel' (administrator
+    -- dopisywał członka wprost) odeszło w epiku D razem z POST /admin/api/pilots -
+    -- z panelu KLUBU nie da się nikogo dopisać ani adresem, ani linkiem (issue #100, D3).
+    joined_via TEXT NOT NULL CHECK (joined_via IN ('code', 'platform', 'backfill')),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     decided_at TIMESTAMPTZ,
     decided_by TEXT REFERENCES pilots(id),

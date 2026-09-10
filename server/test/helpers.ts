@@ -9,7 +9,7 @@
  * Zegar jest sterowany ręcznie - bez tego testy wygasania tokenów musiałyby spać.
  */
 
-import { randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -35,6 +35,9 @@ import { AdminBugReportCommands } from '../src/application/admin/commands/bugRep
 import { PgAircraftReadingsRepo } from '../src/infrastructure/pg/common/aircraftReadingsRepo.ts';
 import { PgBugReportsRepo } from '../src/infrastructure/pg/common/bugReportsRepo.ts';
 import { AdminMaintenanceCommands } from '../src/application/admin/commands/maintenance.ts';
+import { AdminClubCodeCommands } from '../src/application/admin/commands/clubCode.ts';
+import { AdminMembershipCommands } from '../src/application/admin/commands/memberships.ts';
+import { PlatformOrganizationCommands } from '../src/application/admin/commands/organizations.ts';
 import { AdminPilotCommands } from '../src/application/admin/commands/pilots.ts';
 import { AdminAuditQueries } from '../src/application/admin/queries/audit.ts';
 import { AdminBugReportQueries } from '../src/application/admin/queries/bugReports.ts';
@@ -46,6 +49,9 @@ import { AdminFlagQueries } from '../src/application/admin/queries/flags.ts';
 import { AdminFleetQueries } from '../src/application/admin/queries/fleet.ts';
 import { AdminMaintenanceQueries } from '../src/application/admin/queries/maintenance.ts';
 import { AdminMeQueries } from '../src/application/admin/queries/me.ts';
+import { AdminClubCodeQueries } from '../src/application/admin/queries/clubCode.ts';
+import { AdminMembershipQueries } from '../src/application/admin/queries/memberships.ts';
+import { PlatformOrganizationQueries } from '../src/application/admin/queries/organizations.ts';
 import { AdminPilotQueries } from '../src/application/admin/queries/pilots.ts';
 import { AdminSessionQueries } from '../src/application/admin/queries/sessions.ts';
 import { AdminConsumptionQueries } from '../src/application/admin/queries/consumption.ts';
@@ -76,6 +82,8 @@ import { PgAdminFlagsRepo } from '../src/infrastructure/pg/admin/flagsRepo.ts';
 import { PgAdminFleetRepo } from '../src/infrastructure/pg/admin/fleetRepo.ts';
 import { PgAdminMaintenanceRepo } from '../src/infrastructure/pg/admin/maintenanceRepo.ts';
 import { PgAdminPilotsRepo } from '../src/infrastructure/pg/admin/pilotsRepo.ts';
+import { PgClubCodeRepo } from '../src/infrastructure/pg/admin/clubCodeRepo.ts';
+import { PgOrganizationsRepo } from '../src/infrastructure/pg/admin/organizationsRepo.ts';
 import { AttemptLimiter } from '../src/application/mobile/attemptLimiter.ts';
 import { JOIN_WINDOW_MS, JoinCommands } from '../src/application/mobile/commands/join.ts';
 import { PgClubJoinRepo } from '../src/infrastructure/pg/mobile/clubJoinRepo.ts';
@@ -145,6 +153,13 @@ export async function testHarness(
     sheets?: SheetsPort;
     audit?: AdminAuditPort;
     events?: (real: EventsStorePort) => EventsStorePort;
+    /**
+     * Losowe bajty KODU KLUBU (issue #100, D2) - podmieniane tam, gdzie test musi znać
+     * wygenerowany kod co do znaku (rotacja, zderzenie z kodem innego klubu). Bez
+     * podmiany jedzie PRAWDZIWY generator, jak w produkcji: kod ma być nieprzewidywalny,
+     * a test bez podmiany sprawdza KSZTAŁT kodu, nie jego wartość.
+     */
+    clubCodeBytes?: (count: number) => Uint8Array;
     /**
      * Podmiana katalogu buildu panelu - wyłącznie `adminStatic.test.ts`. Bez podmiany
      * rejestracja (bezwarunkowa od 2026-08-26) wskazuje realne `admin/dist`, którego
@@ -216,6 +231,10 @@ export async function testHarness(
   // Konta mają DWA adaptery, jak w produkcji: logowanie czyta `PgPilotsRepo` (hash),
   // panel pisze `PgAdminPilotsRepo` (transakcja śladu audytu).
   const adminPilotsRepo = new PgAdminPilotsRepo();
+  // Kod klubu i kluby mają własne adaptery `organizations`, jak w produkcyjnym
+  // composition root: pierwszy należy do panelu klubu, drugi do platformy.
+  const clubCodeRepo = new PgClubCodeRepo();
+  const organizationsRepo = new PgOrganizationsRepo();
   // Flota ma własny adapter obok `PgReferenceRepo` i `PgAircraftConfigRepo` - jak
   // w produkcyjnym composition root.
   const adminFleetRepo = new PgAdminFleetRepo();
@@ -319,6 +338,26 @@ export async function testHarness(
       clock,
     ),
     adminPilotQueries: new AdminPilotQueries(db, adminPilotsRepo, clock),
+    // Kolejka zgłoszeń kodem klubu (issue #100) - ten sam adapter członkostw, co lista.
+    adminMemberships: new AdminMembershipCommands(auditedWrite, adminPilotsRepo, clock),
+    adminMembershipQueries: new AdminMembershipQueries(db, adminPilotsRepo),
+    adminClubCode: new AdminClubCodeCommands(
+      auditedWrite,
+      clubCodeRepo,
+      options.clubCodeBytes ?? randomBytes,
+      clock,
+    ),
+    adminClubCodeQueries: new AdminClubCodeQueries(db, clubCodeRepo),
+    // Moduł Organizacje - `randomUUID` i losowe bajty jak w produkcji; test czyta
+    // identyfikator klubu z odpowiedzi, więc udawany generator kupiłby wyłącznie rozjazd.
+    platformOrganizations: new PlatformOrganizationCommands(
+      auditedWrite,
+      organizationsRepo,
+      randomUUID,
+      options.clubCodeBytes ?? randomBytes,
+      clock,
+    ),
+    platformOrganizationQueries: new PlatformOrganizationQueries(db, organizationsRepo),
     // Flota (A07/A07a) - `randomUUID` jak w produkcji: identyfikator jednostki testy
     // czytają z odpowiedzi, więc udawany generator kupiłby wyłącznie rozjazd
     // z composition rootem.

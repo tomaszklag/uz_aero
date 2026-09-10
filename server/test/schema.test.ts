@@ -169,4 +169,29 @@ describe('schemat PostgreSQL (kontrakt)', () => {
     expect(byName.get('idx_memberships_code')).toMatch(/UNIQUE.*\(org_id, code\)/);
     expect(byName.get('exported_sheets_pkey')).toMatch(/\(org_id, tab\)/);
   });
+
+  it('`joined_via` zna TRZY drogi do klubu - `panel` odeszło razem z dopisywaniem członka', async () => {
+    // Od issue #100 (D3) z panelu KLUBU nie da się nikogo dopisać: nowy członek wchodzi
+    // kodem (`code`), pierwszy administrator klubu z modułu Organizacje (`platform`),
+    // a `backfill` to przepisane konta 1.x. CHECK jest tu jedyną gwarancją, że czwarta
+    // droga nie wróci tyłem - przez `INSERT` z boku.
+    const db = await migrated();
+    await db.query(
+      `INSERT INTO organizations (id, name, slug) VALUES ('o-check', 'Klub CHECK', 'klub-check')`,
+    );
+    await db.query(`INSERT INTO pilots (id, name, active) VALUES ('p-check', 'Ktoś', TRUE)`);
+
+    const membership = (via: string): Promise<unknown> =>
+      db.query(
+        `INSERT INTO memberships (org_id, pilot_id, code, status, joined_via)
+         VALUES ('o-check', 'p-check', 'CHK', 'active', $1)
+         ON CONFLICT (org_id, pilot_id) DO UPDATE SET joined_via = $1`,
+        [via],
+      );
+
+    for (const via of ['code', 'platform', 'backfill']) {
+      await expect(membership(via), via).resolves.toBeDefined();
+    }
+    await expect(membership('panel')).rejects.toThrow();
+  });
 });

@@ -38,3 +38,29 @@ export function normalizeClubCode(input: string): string | null {
 export function formatClubCode(code: string): string {
   return `${code.slice(0, 3)}-${code.slice(3)}`;
 }
+
+/**
+ * Losowy kod z bajtów dostarczonych przez wołającego (issue #100, D2 - generowanie
+ * i rotacja kodu w panelu klubu).
+ *
+ * ══ BAJTY IDĄ Z ZEWNĄTRZ, BO LOSOWOŚĆ NIE JEST DOMENĄ ══
+ * Ta funkcja jest czysta i dlatego daje się przetestować co do znaku: produkcja podaje
+ * `randomBytes` z `node:crypto`, test - tablicę ustaloną ręką. `Math.random` nie wchodzi
+ * tu nawet jako domyślna wartość, bo kod wisi w hangarze przez cały sezon i przewidywalny
+ * generator byłby jedyną rzeczą, która daje z niego coś więcej niż zgłoszenie.
+ *
+ * ══ `% 32` NIE MA OBCIĄŻENIA I TO JEST POWÓD DŁUGOŚCI ALFABETU ══
+ * 256 / 32 = 8 dokładnie, więc reszta z dzielenia bajtu jednostajnego jest jednostajna.
+ * Alfabet o innej liczności (np. 33 znaki) wymagałby odrzucania części bajtów - pętli,
+ * której liczba obrotów zależy od wylosowanych wartości.
+ */
+export function clubCodeFrom(bytes: Uint8Array): string {
+  if (bytes.length < CLUB_CODE_LENGTH) {
+    throw new Error(`kod klubu potrzebuje ${CLUB_CODE_LENGTH} bajtów, dostał ${bytes.length}`);
+  }
+  let code = '';
+  for (let i = 0; i < CLUB_CODE_LENGTH; i += 1) {
+    code += CLUB_CODE_ALPHABET[bytes[i]! % CLUB_CODE_ALPHABET.length];
+  }
+  return code;
+}

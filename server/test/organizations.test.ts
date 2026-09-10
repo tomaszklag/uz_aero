@@ -582,7 +582,7 @@ describe('to samo w dwóch klubach to dwa byty', () => {
     await expect(
       db.query(
         `INSERT INTO memberships (org_id, pilot_id, code, role, status, joined_via)
-         VALUES ($1, 'X', 'TMK', 'pilot', 'active', 'panel')`,
+         VALUES ($1, 'X', 'TMK', 'pilot', 'active', 'platform')`,
         [ORG_A],
       ),
     ).rejects.toThrow();
@@ -590,7 +590,7 @@ describe('to samo w dwóch klubach to dwa byty', () => {
     await expect(
       db.query(
         `INSERT INTO memberships (org_id, pilot_id, code, role, status, joined_via)
-         VALUES ($1, 'X', 'TMK', 'pilot', 'active', 'panel')`,
+         VALUES ($1, 'X', 'TMK', 'pilot', 'active', 'platform')`,
         [ORG_B],
       ),
     ).resolves.toBeDefined();

@@ -1,15 +1,18 @@
 /**
- * UZ Aero - panel 2.0: karta pilota - nowe konto i zmiana istniejącego (`#/piloci/:id`).
+ * UZ Aero - panel 2.0: karta pilota - zmiana członkostwa w klubie (`#/piloci/:id`).
  *
  * Trzy sekcje i tyle: kim jest, co mu wolno, czy ma dostęp. Panel 1.0 miał w tym miejscu
  * pięć sekcji, sześć banerów i 2 700 znaków prozy tłumaczącej budowę systemu - w tym
  * cztery wiersze o rodzajach sesji, których pilot nigdy nie zobaczy.
  *
+ * == ZAKLADANIA KONTA TU NIE MA (issue #100, D3) ==
+ * Karta zmienia CZŁONKOSTWO, które już istnieje. Nowy członek wchodzi WYŁĄCZNIE kodem
+ * klubu, a zatwierdza go administrator w karcie ZGŁOSZENIA (ekran dochodzi w epiku E);
+ * z panelu klubu nie da się nikogo dopisać ani adresem, ani linkiem.
+ *
  * == HASLA ZNIKLY (2026-09-04, `docs/logowanie-google.md`) ==
- * Karta nie pokazuje już hasła i nie ma „Ustaw nowe hasło": konto nie dostaje żadnego
- * poświadczenia. Dostęp daje PIERWSZE logowanie kontem Google o wpisanym e-mailu -
- * dlatego przy zakładaniu konta e-mail jest wymagany (konto bez niego nie ma jak
- * wejść), a podsumowanie po założeniu mówi dokładnie to jedno zdanie.
+ * Karta nie pokazuje hasła i nie ma „Ustaw nowe hasło": konto nie dostaje żadnego
+ * poświadczenia. Dostęp daje logowanie kontem Google o wpisanym e-mailu.
  *
  * == SKUTEK MOWIMY PRZED AKCJA, NIE PO NIEJ ==
  * Wyłączenie konta pyta o potwierdzenie i w pytaniu mówi obie rzeczy, które trzeba
@@ -23,7 +26,6 @@ import { Link } from 'react-router-dom';
 
 import type { PilotListItemDto } from '../../api/dto';
 import {
-  useCreatePilot,
   useDeletePilot,
   useSetPilotActive,
   useUpdatePilot,
@@ -31,7 +33,6 @@ import {
 import { Banner, Button, Card, Drawer, Field, OptionButton, Pill, TextInput } from '../../ui/components';
 import { conflictField, errorMessage, refusalOf } from '../common/apiMessage';
 import {
-  createBodyOf,
   deleteBlocker,
   draftKey,
   draftOf,
@@ -46,7 +47,7 @@ import { accountConflictMessage, accountRefusalMessage } from './accountRefusal'
 import { roleLabel, roleNote, ROLE_ORDER } from './accountRows';
 
 interface AccountDrawerProps {
-  /** `nowy` albo identyfikator konta z listy. */
+  /** Identyfikator OSOBY z listy członków klubu. */
   id: string;
   /** `null` = lista jeszcze nie przyszła; pusta tablica = przyszła i jest pusta. */
   pilots: PilotListItemDto[] | null;
@@ -64,15 +65,9 @@ export function AccountDrawer({
   selfId,
   onClose,
 }: AccountDrawerProps) {
-  const creating = id === 'nowy';
-  const pilot = creating ? null : (pilots?.find((item) => item.id === id) ?? null);
+  const pilot = pilots?.find((item) => item.id === id) ?? null;
 
   const [draft, setDraft] = useState<AccountDraft>(EMPTY_ACCOUNT);
-  /**
-   * Konto właśnie powstało - karta zamienia się w podsumowanie: formularz znika, bo
-   * drugie kliknięcie „Utwórz konto" założyłoby drugie konto o tym samym nazwisku.
-   */
-  const [created, setCreated] = useState<PilotListItemDto | null>(null);
   /**
    * Które potwierdzenie jest otwarte. JEDEN stan, nie dwie flagi: dwa pytania „czy na
    * pewno" naraz w jednej karcie to dwa czerwone bloki, z których człowiek odpowiada
@@ -87,27 +82,27 @@ export function AccountDrawer({
   // zapisie klucza nie zmienia, więc nie kasuje wpisanych zmian.
   const synced = useRef<string | null>(null);
   useEffect(() => {
-    const key = draftKey(creating, pilot);
-    if (key == null || synced.current === key) return;
+    const key = draftKey(pilot);
+    // `key == null` znaczy dokładnie `pilot == null`; warunek na obiekcie stoi obok,
+    // żeby kompilator widział zawężenie bez wykrzyknika.
+    if (pilot == null || synced.current === key) return;
     synced.current = key;
-    setDraft(pilot == null ? EMPTY_ACCOUNT : draftOf(pilot));
+    setDraft(draftOf(pilot));
     setConfirm(null);
     setDone(null);
-  }, [creating, pilot]);
+  }, [pilot]);
 
-  const create = useCreatePilot();
   const update = useUpdatePilot();
   const setActive = useSetPilotActive();
   const remove = useDeletePilot();
 
-  const pending = create.isPending || update.isPending || setActive.isPending || remove.isPending;
-  const error = create.error ?? update.error ?? setActive.error ?? remove.error;
+  const pending = update.isPending || setActive.isPending || remove.isPending;
+  const error = update.error ?? setActive.error ?? remove.error;
 
   const verdict = verdictOf(draft);
-  // Przy ZAKŁADANIU e-mail jest wymagany: bez adresu Google konto nie ma jak wejść.
-  // Przy edycji nie - wymóg blokowałby niezwiązaną poprawkę na starym wierszu.
-  const missingEmail = creating && draft.email.trim() === '';
-  const changed = pilot == null ? true : hasChanges(pilot, draft);
+  // `pilot == null` znaczy tu „wklejony link do konta spoza bieżącego zawężenia" -
+  // nie ma czego zapisać, więc zapis jest nieczynny (karta mówi to niżej osobno).
+  const changed = pilot != null && hasChanges(pilot, draft);
   const readOnly = !manages;
 
   const field = conflictField(error);
@@ -121,46 +116,15 @@ export function AccountDrawer({
     error == null || conflict != null || refusalText != null ? null : errorMessage(error);
 
   const save = (): void => {
-    if (pilot == null) {
-      create.mutate(createBodyOf(draft), {
-        onSuccess: (result) => {
-          setCreated(result.pilot);
-          setDone(null);
-        },
-      });
-      return;
-    }
+    if (pilot == null) return;
     update.mutate(
       { id: pilot.id, body: updateBodyOf(pilot, draft) },
       { onSuccess: () => setDone('Zapisano.') },
     );
   };
 
-  const title = creating ? 'Nowy pilot' : (pilot?.name ?? 'Pilot');
-  const sub = pilot == null ? 'Nowe konto' : subtitleOf(pilot);
-
-  // Konto właśnie powstało: karta pokazuje, JAK ten człowiek wejdzie, i wyjście.
-  // Formularz pod spodem obiecywałby drugi zapis, a on założyłby drugie konto.
-  if (created != null) {
-    return (
-      <Drawer
-        title={title}
-        sub={`${created.name} · konto założone`}
-        onClose={onClose}
-        footer={
-          <Button variant="primary" onClick={onClose}>
-            Zamknij
-          </Button>
-        }
-      >
-        <Banner tone="ok" live>
-          Konto {created.code} założone. {created.name} wchodzi do aplikacji i panelu
-          kontem Google {created.email ?? ''} - przy pierwszym logowaniu konto podepnie
-          się samo.
-        </Banner>
-      </Drawer>
-    );
-  }
+  const title = pilot?.name ?? 'Pilot';
+  const sub = pilot == null ? 'Konto spoza listy' : subtitleOf(pilot);
 
   return (
     <Drawer
@@ -181,19 +145,17 @@ export function AccountDrawer({
             <Button
               variant="primary"
               onClick={save}
-              disabled={
-                pending || !verdict.complete || missingEmail || verdict.blocker != null || !changed
-              }
+              disabled={pending || !verdict.complete || verdict.blocker != null || !changed}
               reason={verdict.blocker ?? undefined}
             >
-              {pending ? 'Zapisuję…' : creating ? 'Utwórz konto' : 'Zapisz'}
+              {pending ? 'Zapisuję…' : 'Zapisz'}
             </Button>
           </>
         )
       }
     >
       {/* Konto spoza listy: wklejony link do kogoś, kogo bieżące zawężenie nie pokazuje. */}
-      {!creating && pilot == null && !listPending ? (
+      {pilot == null && !listPending ? (
         <Card title="Nie ma go na liście">
           <p className="hint">
             Wyszukiwanie albo zawężenie ukrywa to konto.{' '}

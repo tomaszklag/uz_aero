@@ -43,12 +43,16 @@ export const membershipStatusOf = (value: unknown): MembershipStatus =>
   isMembershipStatus(value) ? value : 'pending';
 
 /**
- * Skąd wzięło się członkostwo (§3.8): `code` = pilot wpisał kod klubu - od 2026-09-09
- * JEDYNA droga dołączenia; `panel` = administrator dopisał wprost (do epiku D, potem
- * zastępuje je `platform` = pierwszy administrator założony przez superadministratora);
- * `backfill` = przepisane z konta 1.x przy migracji 8. `email` i `link` odpadły razem
- * z drogami, które nazywały (docs/wielofirmowosc.md §15).
+ * Skąd wzięło się członkostwo (§3.8): `code` = pilot wpisał kod klubu (od 2026-09-09
+ * JEDYNA droga dla pilotów); `platform` = PIERWSZY administrator klubu, założony przez
+ * superadministratora razem z klubem - wyjątek klasy bootstrap, bo kodem nie miałby go
+ * kto zatwierdzić; `backfill` = przepisane z konta 1.x przy migracji 8.
+ *
+ * `email` i `link` odpadły razem z drogami, które nazywały (§15), a `panel` (administrator
+ * dopisywał członka wprost z panelu klubu) - w epiku D razem z `POST /admin/api/pilots`
+ * (issue #100, D3). Lista jest więc dziś PEŁNĄ odpowiedzią na pytanie „jak ten człowiek
+ * trafił do tego klubu" i ma trzy pozycje, bo są trzy sposoby.
  */
-export const JOINED_VIA = ['code', 'panel', 'platform', 'backfill'] as const;
+export const JOINED_VIA = ['code', 'platform', 'backfill'] as const;
 
 export type JoinedVia = (typeof JOINED_VIA)[number];

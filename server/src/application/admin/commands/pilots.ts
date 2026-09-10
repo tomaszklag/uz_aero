@@ -1,7 +1,15 @@
 /**
- * UZ Aero (serwer) - członkowie klubu: dopisanie, edycja, wyłączenie, usunięcie
- * (panel, mockupy `A06-piloci.html` i `A06a-konto.html`; od wielofirmowości - moduł
- * PILOCI jako lista CZŁONKÓW klubu, `docs/wielofirmowosc.md` §8.3).
+ * UZ Aero (serwer) - członkowie klubu: edycja, wyłączenie, usunięcie (panel, mockupy
+ * `A06-piloci.html` i `A06a-konto.html`; od wielofirmowości - moduł PILOCI jako lista
+ * CZŁONKÓW klubu, `docs/wielofirmowosc.md` §8.3).
+ *
+ * ══ DOPISANIA CZŁONKA TU JUŻ NIE MA (issue #100, D3) ══
+ * `create` odeszło razem z `POST /admin/api/pilots`: z panelu KLUBU nie da się nikogo
+ * dopisać ani adresem, ani linkiem. Nowy członek wchodzi WYŁĄCZNIE kodem klubu, a decyzja
+ * o jego zgłoszeniu mieszka w `commands/memberships.ts`. Jedyny wyjątek jest klasy
+ * bootstrap i należy do platformy: pierwszego administratora klubu zakłada
+ * superadministrator razem z klubem (`commands/organizations.ts`, §3.8) - bo kodem klubu
+ * nie miałby go kto zatwierdzić.
  *
  * ══ HASŁA ZNIKŁY (2026-09-04, `docs/logowanie-google.md`) ══
  * Plik powstał 2026-08-01, bo administrator zamknął się poza systemem i nie było żadnej
@@ -12,8 +20,7 @@
  * Kod, rola i „czy ma dostęp" należą do członkostwa w klubie administratora (`actor.orgId`).
  * Nazwisko i e-mail należą do OSOBY i są widoczne we wszystkich jej klubach - ta komenda
  * je zmienia, bo dziś nie ma innego miejsca (propozycja „tylko przy jednym członkostwie"
- * czeka na potwierdzenie, §8.3). Dopisanie członka o e-mailu osoby z innego klubu
- * dopisuje CZŁONKOSTWO do tej osoby, a nie zakłada drugiej (adapter, `insert`).
+ * czeka na potwierdzenie, §8.3).
  *
  * **Zerwanie sesji ma jedną drogę: wyłączenie członkostwa** (a gdy dostęp ma wrócić -
  * wyłączenie i ponowne włączenie). `memberships.credentials_valid_from` przesuwa
@@ -58,13 +65,6 @@ import type {
   PilotsAdminPort,
   RefreshTokensAdminPort,
 } from '../ports.ts';
-
-export interface CreatePilotInput {
-  code: string;
-  name: string;
-  email: string | null;
-  role: PilotRole;
-}
 
 /** Zmiana tożsamości albo roli. Pola nieustawione zostają bez zmian. */
 export interface UpdatePilotInput {
@@ -123,11 +123,10 @@ class Refused extends Error {
  * `idx_memberships_code` i regex go widzi, bo separatorem jest podkreślenie.
  */
 export function uniqueConflictField(err: unknown): 'code' | 'email' | null {
-  // Osoba znaleziona po e-mailu JUŻ JEST członkiem tego klubu (`memberships_pkey` =
-  // para klub+osoba): dla formularza zajętym polem jest e-mail - to on wskazał osobę.
-  // Bez tego przegrany wyścig dwóch „dodaj pilota" z tym samym adresem lądowałby
-  // jako 500, choć sprawdzenie przed zapisem nazywa tę samą sytuację `email`.
-  if (uniqueConflictOn(err, ['memberships_pkey'] as const) != null) return 'email';
+  // Gałąź na `memberships_pkey` (przegrany wyścig dwóch „dodaj pilota" z tym samym
+  // adresem) odeszła razem z `POST /pilots` w epiku D: z panelu klubu nie da się już
+  // nikogo dopisać, więc wiersz członkostwa nie powstaje tu nigdy - zostaje `UPDATE`,
+  // który może zderzyć się wyłącznie o kod albo e-mail.
   return uniqueConflictOn(err, ['email', 'code'] as const);
 }
 
@@ -162,60 +161,6 @@ export class AdminPilotCommands {
      */
     private readonly clock: Clock,
   ) {}
-
-  /**
-   * Dopisanie członka WPROST z panelu - droga równoległa do zatwierdzenia zgłoszenia
-   * (a docelowo, w epiku D, do trzech dróg zaproszenia).
-   *
-   * Po wejściu Google (2026-09-04) konto nie dostaje żadnego poświadczenia: logowanie
-   * daje dopiero PODPIĘCIE konta Google, a warunkiem podpięcia jest `email` wpisany
-   * tutaj przez administratora (`docs/logowanie-google.md` §6). Ta droga istnieje po to,
-   * żeby dało się przygotować konto ZANIM człowiek pierwszy raz się zaloguje.
-   *
-   * Osoba o tym e-mailu może już istnieć (lata w innym klubie) - wtedy powstaje samo
-   * członkostwo, a `result.id` jest identyfikatorem TEJ osoby, nie nowym uuid-em.
-   */
-  async create(actor: Actor, input: CreatePilotInput): Promise<PilotOutcome<AdminPilotAccount>> {
-    const proposedId = this.newId();
-
-    try {
-      const account = await this.write.run(actor, async (tx) => {
-        const clash = await this.pilots.conflict(tx, actor.orgId, {
-          code: input.code,
-          email: input.email,
-          exceptId: null,
-        });
-        if (clash != null) throw new Conflict(clash);
-
-        const id = await this.pilots.insert(tx, { id: proposedId, orgId: actor.orgId, ...input });
-        const created: AdminPilotAccount = { id, orgId: actor.orgId, ...input, active: true };
-
-        return {
-          result: created,
-          audit: {
-            action: 'pilot.create',
-            targetType: 'pilot',
-            targetId: id,
-            details: {
-              code: created.code,
-              name: created.name,
-              // E-mail jest w tym wpisie NAJWAŻNIEJSZY: to on rozstrzyga, czyje konto
-              // Google podepnie się pod ten wiersz przy pierwszym logowaniu.
-              email: created.email,
-              role: created.role,
-              // Czy dopisano członkostwo do OSOBY, która już była na serwerze (inny
-              // klub), czy założono nową - dziennik ma odróżniać te dwa fakty.
-              existingPerson: id !== proposedId,
-            },
-          },
-        };
-      });
-
-      return { ok: true, result: account };
-    } catch (err) {
-      return this.asOutcome(err);
-    }
-  }
 
   async update(
     actor: Actor,
@@ -292,11 +237,14 @@ export class AdminPilotCommands {
    * miejscach i oba są istotne:
    *
    *  • **wyłączenie zrywa sesje** (tego klubu), włączenie nie ma czego zrywać;
-   *  • **akcja w audycie** jest inna. `pilot.deactivate` istnieje w katalogu
-   *    (`domain/adminActions.ts`), `pilot.activate` - NIE, i to jest świadoma treść
+   *  • **akcja w audycie** jest inna. `membership.disable` istnieje w katalogu
+   *    (`domain/adminActions.ts`), `membership.enable` - NIE, i to jest świadoma treść
    *    tego katalogu, a nie luka: przywrócenie dostępu jest zmianą stanu członkostwa,
-   *    czyli zwykłą aktualizacją. Odebranie dostępu ma własny kod, bo jest
-   *    zdarzeniem, którego szuka się w dzienniku po nazwie.
+   *    czyli zwykłą aktualizacją (`pilot.update`). Odebranie dostępu ma własny kod,
+   *    bo jest zdarzeniem, którego szuka się w dzienniku po nazwie. Nazwa mówi
+   *    `membership`, bo od wielofirmowości odcina się CZŁONKOSTWO, a nie osobę - ta lata
+   *    dalej w pozostałych swoich klubach (dawne `pilot.deactivate` zostało w katalogu
+   *    dla wierszy sprzed 2.0.0).
    */
   async setActive(actor: Actor, id: string, active: boolean): Promise<PilotOutcome<PilotChange>> {
     try {
@@ -333,7 +281,7 @@ export class AdminPilotCommands {
         return {
           result: { account: { ...before, active }, revokedSessions },
           audit: {
-            action: active ? ('pilot.update' as const) : ('pilot.deactivate' as const),
+            action: active ? ('pilot.update' as const) : ('membership.disable' as const),
             targetType: 'pilot',
             targetId: id,
             details: {

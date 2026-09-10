@@ -110,10 +110,13 @@ Logowanie (jednorazowe provisioning urządzenia) jest rozdzielone od wejścia do
   weryfikacja tokenu na serwerze tworzy lokalny profil pilota: tożsamość, JWT + refresh
   (`expo-secure-store`), PIN, cache referencyjny
 - **rejestracja jest otwarta, dostęp nie**: pierwsze logowanie nieznanym kontem Google
-  zakłada ZGŁOSZENIE, a konto pilota (wiersz w `pilots`, kod pilota, rola) tworzy
-  dopiero administrator w panelu. Do tej chwili nie ma konta, więc nie ma tokenu i nie
-  ma dostępu do żadnej trasy - **bramką jest brak konta, nie rola**. Pilot widzi wtedy
-  ekran `00c` („czeka na zatwierdzenie") albo `00d` (odrzucone, z powodem)
+  zakłada OSOBĘ bez ani jednego klubu - **bramką jest brak członkostwa, nie rola**
+  (od 2.0.0; wcześniej: brak konta, `docs/logowanie-google.md` §4). Do klubu wchodzi się
+  **WYŁĄCZNIE kodem klubu** (`docs/wielofirmowosc.md` §3.8, decyzja 2026-09-09): pilot
+  wpisuje kod na ekranie `00e`, powstaje członkostwo `pending`, a wpuszcza je
+  administrator klubu - z kodem pilota i rolą - albo odrzuca z powodem. Pilot widzi
+  w tym czasie `00e` (nie należy do żadnego klubu), `00c` („czeka na zatwierdzenie")
+  albo `00d` (odrzucone, z powodem, z wyjściem „DOŁĄCZ INNYM KODEM")
 - konto istniejące podpina się do Google przez **zweryfikowany e-mail**: gdy
   `pilots.email` (wpisany przez administratora) zgadza się z adresem z tokenu, pierwsze
   logowanie przejmuje to konto razem z całą historią lotów. To jedyne miejsce w systemie,
@@ -629,8 +632,9 @@ administratora/szefa wyszkolenia, nie w kokpicie).
 
 | Metoda | Endpoint | Cel |
 |--------|----------|-----|
-| POST | `/auth/google` | token Google → JWT sesji + refresh token; nieznane konto = zgłoszenie do zatwierdzenia (202) |
-| GET | `/auth/registration` | stan zgłoszenia dla ekranu `00c` (token rejestracyjny, NIE token pilota - patrz 3.0); po zatwierdzeniu wydaje tokeny pilota DOKŁADNIE RAZ i odmawia tokenowi starszemu niż `credentials_valid_from` konta (`docs/logowanie-google.md` §5, §14) |
+| POST | `/auth/google` | token Google → JWT sesji + refresh token KLUBU; osoba bez aktywnego członkostwa = `202` z tokenem OSOBY i stanem (`pending` → ekran `00c`, `rejected` → `00d`, `none` → `00e`) |
+| GET | `/auth/memberships` | kluby OSOBY z tokenu (ekran `00c` co kilkanaście sekund, lista klubów na `13a`); po zatwierdzeniu wydaje tokeny klubu DOKŁADNIE RAZ i odmawia tokenowi starszemu niż `credentials_valid_from` (`docs/wielofirmowosc.md` §5, `docs/logowanie-google.md` §14) |
+| POST | `/auth/join` | **kod klubu - jedyna droga do klubu** (§3.8 wielofirmowości): `202` zgłoszenie czeka / `403` odrzucone z powodem / `409` już w klubie / `404` kod nieznany = wyłączony = klub nieaktywny / `429` za dużo prób (10 na osobę, 30 na adres, okno 15 min) |
 | POST | `/auth/refresh` | odświeżenie JWT (refresh długożyciowy - patrz 3.0) |
 | GET | `/reference` | samoloty + konfiguracje + piloci + claim/przekazanie per samolot; ETag (flota **i** operacje) do cache |
 | GET | `/aircraft/:id/state` | aktywny claim (kto, od kiedy), najświeższy znany stan FOB + MH - wyliczony z ostatnich zsynchronizowanych zdarzeń (przekazanie ze **zdania samolotu**, opcjonalny odczyt z `leg_close`, lub zdarzenia w trakcie operacji, np. tankowanie), `last_sync_at` |
@@ -894,13 +898,21 @@ ze strumienia zdarzeń - przy kilkuset zdarzeniach dziennie tabele agregujące s
 ### 5.3 PostgreSQL (serwer)
 
 ```
-pilots       - id, kod, imię i nazwisko, e-mail, active, role (bez hasła - kolumna usunięta migracją 7)
-               (konto zakłada administrator, zatwierdzając zgłoszenie rejestracyjne)
-external_identities - (provider, subject) → pilot_id; status pending|linked|rejected
-               (rejestracja Google; BRAK wiersza w pilots = brak dostępu do czegokolwiek)
-               role: pilot | training_lead | admin (decyzja 2026-07-31) -
-               uprawnienia panelu siedzą na koncie pilota, bo szef wyszkolenia
-               i administrator SĄ pilotami; mapa ról na zdolności: server/src/domain/roles.ts
+organizations - id, nazwa, slug (adres kart arkusza), active, join_code (KOD KLUBU -
+               jedyna droga dołączenia) + join_code_since, sheets_key (sekret adresu kart)
+               (wielofirmowość 2.0.0, `docs/wielofirmowosc.md` §3.1)
+pilots       - id, imię i nazwisko, e-mail, active (blokada PLATFORMOWA), platform_role
+               (OSOBA - jedna na serwerze; osoba powstaje przy pierwszym logowaniu Googlem.
+               Kodu pilota ani roli tu NIE MA od 2.0.0 - niesie je członkostwo niżej)
+memberships  - (org_id, pilot_id) PK, kod pilota W KLUBIE, rola, status
+               (pending|active|disabled|rejected), powód odrzucenia, joined_via
+               (code|platform|backfill), daty decyzji, credentials_valid_from
+               (KIM pilot jest w tym klubie; aktywny ⟺ ma kod. Ten sam człowiek lata
+               w dwóch klubach pod dwoma kodami. Rola: pilot | admin - mapa ról
+               na zdolności: server/src/domain/roles.ts)
+external_identities - (provider, subject) → pilot_id, e-mail i imię z Google, last_login_at
+               (tożsamość Google ZAWSZE podpięta do osoby; statusy zgłoszenia przeniosły
+               się na `memberships` w epiku D wielofirmowości)
 aircraft     - id, reg, typ, rok, capacity_l, mh_format, dual_required, service_status
 events       - uuid PK, session_uuid, aircraft_id, pic_id, dual_id, type,
                device_time, gps_time, payload JSONB, received_at, source_device
@@ -1069,7 +1081,8 @@ jasność ekranu na max.
 ```
 [00 Login]  profil na telefonie → odblokowanie PIN-em (offline OK)
             brak profilu → logowanie Google (wymaga sieci; offline: komunikat 00b)
-            konto niezatwierdzone → 00c „czeka na zatwierdzenie" / 00d odrzucone
+            bez klubu → 00e „wpisz kod klubu"; zgłoszenie złożone → 00c „czeka na
+            zatwierdzenie"; odrzucone → 00d (z powodem i wyjściem „DOŁĄCZ INNYM KODEM")
     ↓
 [01 Mój dzień]  EKRAN DOMOWY - płaski log OPERACJI dnia (kafelek = jeden bieg silnika
     │           z lotami w środku; rejestracja jako informacja kafelka), przekrojowo
