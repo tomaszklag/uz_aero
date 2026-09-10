@@ -15,11 +15,19 @@
  * a nazwanie go po polsku jest sprawą `accountRefusal.ts` / `aircraftRefusal.ts`.
  */
 
-import type { FleetRefusalDto, PilotRefusalDto } from '../../api/dto';
+import type { ApiErrorDto, FleetRefusalDto, PilotRefusalDto } from '../../api/dto';
 import { isHttpError } from '../../api/httpClient';
 
-/** Pole zajęte przez inny wiersz (`409 conflict`); `null` = to nie ten przypadek. */
-export function conflictField(error: unknown): 'code' | 'email' | 'reg' | null {
+/**
+ * Pole zajęte przez inny wiersz (`409 conflict`); `null` = to nie ten przypadek.
+ *
+ * Zbiór pól jest UNIĄ Z KONTRAKTU (`ApiErrorDto['field']`), a nie drugą listą obok:
+ * pole dopisane na serwerze i pominięte tutaj wypadałoby z mapy komunikatów po cichu,
+ * czyli formularz nie wiedziałby, co poprawić.
+ */
+export type ConflictField = NonNullable<ApiErrorDto['field']>;
+
+export function conflictField(error: unknown): ConflictField | null {
   if (!isHttpError(error)) return null;
   if (error.status !== 409 || error.body.error !== 'conflict') return null;
   return error.body.field ?? null;

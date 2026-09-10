@@ -516,17 +516,22 @@ describe('logowanie do panelu: sesja klubu albo sesja platformowa', () => {
       // `bugs.triage` jest odtąd zdolnością PLATFORMY (issue #99, C6): zgłoszenia
       // błędów obsługuje superadministrator dla wszystkich klubów naraz.
       capabilities: ['platform.manage', 'bugs.triage'],
+      // Zakresy (issue #101, E2): ta osoba nie ma ani jednego członkostwa `admin`,
+      // więc przełącznik w kolumnie bocznej nie ma dokąd prowadzić.
+      scopes: { clubs: [], platform: true },
     });
 
-    // Sesja platformowa NIE otwiera tras klubu - `GET /me` jest trasą klubu (401,
-    // „zaloguj się"), a moduł Organizacje na tej sesji dochodzi w epiku E.
+    // Od epiku E `GET /me` odpowiada OBU rodzajom sesji (issue #101, E1): bez tego
+    // superadministrator po odświeżeniu karty lądował na ekranie logowania, z którego
+    // przed chwilą wszedł.
     const cookie = res.cookies.find((c) => c.name === 'uzaero_admin')!;
     const me = await app.inject({
       method: 'GET',
       url: '/admin/api/me',
       headers: { cookie: `uzaero_admin=${cookie.value}` },
     });
-    expect(me.statusCode).toBe(401);
+    expect(me.statusCode).toBe(200);
+    expect(me.json()).toEqual(res.json());
   });
 });
 

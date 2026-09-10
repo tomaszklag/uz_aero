@@ -23,6 +23,7 @@
  */
 
 import {
+  dateUtcDayMonth,
   litres as litresShared,
   motoHours as motoHoursShared,
   oilLitres as oilLitresShared,
@@ -57,3 +58,23 @@ export const motoHours = (value: number | null, format: MhFormat | null): string
 
 /** Godzina zdarzenia „HH:MM" UTC. */
 export const timeUtc = (t: number | null): string => panelDash(timeUtcShared(t));
+
+/**
+ * Data ze stempla ISO jako „26 SIE 2026" (UTC) - założenie klubu, obowiązywanie kodu
+ * klubu (issue #101).
+ *
+ * ROK JEST TU KONIECZNY, a nie ozdobny: te daty żyją latami, więc samo „26 SIE"
+ * czytałoby się jak „w tym roku" niezależnie od tego, ile ma naprawdę. Dzień jest
+ * dopełniony zerem (`dateUtcDayMonth`), bo obie te daty stoją w KOLUMNACH tabeli,
+ * a kolumna dat czyta się wzrokiem po równej krawędzi.
+ *
+ * Składamy z formatera wspólnego zamiast pisać drugą tablicę miesięcy: skrót musi
+ * zostać prefiksem pełnej nazwy z `@uzaero/format`, inaczej panel i telefon zaczęłyby
+ * skracać wrzesień na dwa sposoby.
+ */
+export const dateWithYear = (iso: string | null): string => {
+  if (iso == null) return NONE;
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return NONE;
+  return `${dateUtcDayMonth(t)} ${new Date(t).getUTCFullYear()}`;
+};

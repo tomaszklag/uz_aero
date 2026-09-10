@@ -500,38 +500,6 @@ body {
   cursor: pointer;
 }
 
-/* ══ WIELOFIRMOWOŚĆ (2.0.0, docs/wielofirmowosc.md) - komponenty, na które kod jeszcze
-   czeka. Klasy PRODUKTU, nie ramy: gdy epik B–F je zaimplementuje, przechodzą pod
-   TYMI SAMYMI nazwami do `admin/src/styles/components/` i znikają stąd. ══ */
-
-/* KOD KLUBU - JEDYNA droga do klubu (2026-09-09, docs/wielofirmowosc.md §3.8). Duży, mono,
-   z odstępem: administrator dyktuje go pilotowi, który wpisuje go na 00E albo 13A
-   z klawiatury. `.linkbox` (adres linku osobistego) WYCIĘTY razem z linkiem. */
-.club-code {
-  font-family: var(--font-mono);
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: 5px;
-  color: var(--text-primary);
-  line-height: 1;
-}
-
-.club-code-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 12px 14px;
-  border-radius: 8px;
-  border: 1px solid var(--border-strong);
-  background: var(--surface-raised);
-}
-
-/* Stan WYŁĄCZONY (klub skasował kod): kreski przygaszone zamiast kodu. */
-.club-code.off {
-  color: var(--text-muted);
-}
-
 /* ══ SPIS MAKIET (`design/panel/index.html`) ══
    Prefiks `idx-`, bo karta spisu jest INNYM bytem niż `.card` panelu. */
 .idx-hero {

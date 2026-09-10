@@ -9,6 +9,7 @@
 import type { FleetListQuery } from '../api/fleet';
 import type { LogRangeQuery, SessionListQuery } from '../api/log';
 import type { BugListQuery } from '../api/bugReports';
+import type { OrganizationListQuery } from '../api/organizations';
 import type { PilotListQuery } from '../api/pilots';
 
 export const keys = {
@@ -27,6 +28,36 @@ export const keys = {
   pilots: {
     all: ['pilots'] as const,
     list: (query: PilotListQuery) => ['pilots', 'list', query] as const,
+  },
+
+  /**
+   * Kolejka zgłoszeń kodem klubu (issue #101, E3).
+   *
+   * OSOBNY korzeń od `pilots`, choć oba ekrany stoją na jednej stronie: to inna trasa,
+   * inna zdolność i inny byt (kandydat kontra członek). Decyzja unieważnia OBA - i to
+   * jest jedyne miejsce, w którym się spotykają.
+   */
+  memberships: {
+    all: ['memberships'] as const,
+    pending: ['memberships', 'pending'] as const,
+  },
+
+  /**
+   * Kod klubu. Bez parametru, bo klub bierze się z SESJI, nie z adresu - panel klubu
+   * prowadzi swój kod i tylko swój.
+   */
+  clubCode: ['clubCode'] as const,
+
+  /**
+   * Kluby na serwerze (moduł PLATFORMY, issue #101, E1).
+   *
+   * `detail` istnieje, inaczej niż przy kontach: karta klubu niesie KOD KLUBU, którego
+   * wiersz listy nie ma, więc otwarcie karty naprawdę pyta serwer o coś nowego.
+   */
+  organizations: {
+    all: ['organizations'] as const,
+    list: (query: OrganizationListQuery) => ['organizations', 'list', query] as const,
+    detail: (id: string) => ['organizations', 'detail', id] as const,
   },
 
   fleet: {

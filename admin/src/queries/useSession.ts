@@ -11,7 +11,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type { PanelSessionDto } from '../api/dto';
 import { isHttpError } from '../api/httpClient';
-import { googleClient, login, logout, me, type LoginInput } from '../api/session';
+import {
+  googleClient,
+  login,
+  logout,
+  me,
+  switchScope,
+  type LoginInput,
+} from '../api/session';
 import { keys } from './keys';
 
 /**
@@ -60,6 +67,26 @@ export function useLogin() {
       // Odpowiedź logowania JEST sesją - wpisujemy ją wprost, zamiast dokładać
       // drugie żądanie `/me` i migotanie ekranu tuż po wejściu.
       qc.setQueryData(keys.me, session);
+    },
+  });
+}
+
+/**
+ * Przełączenie zakresu sesji (issue #101, E2): `orgId` = klub, `null` = platforma.
+ *
+ * Czyści cache DOKŁADNIE tak samo jak wylogowanie i z tego samego powodu: po zmianie
+ * klubu każda pobrana lista opisuje inny świat, a wiersz cudzego dziennika, który
+ * mignąłby przed odświeżeniem, byłby wyciekiem między klubami - tym samym, przed którym
+ * broni cały epik C. Kolejność też jest ta sama: najpierw nowa sesja (to ona przestawia
+ * ramę), potem reszta do kosza.
+ */
+export function useSwitchScope() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (orgId: string | null) => switchScope(orgId),
+    onSuccess: (session) => {
+      qc.setQueryData(keys.me, session);
+      qc.removeQueries({ predicate: (query) => query.queryKey[0] !== keys.me[0] });
     },
   });
 }

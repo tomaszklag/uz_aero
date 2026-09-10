@@ -13,28 +13,29 @@
  */
 
 import type { FleetRefusalDto, PilotRefusalDto } from '../../api/dto';
+import type { ConflictField } from '../common/apiMessage';
 
 const REFUSALS: Record<PilotRefusalDto, string> = {
-  self_deactivate: 'To Twoje konto - nie możesz wyłączyć sobie dostępu.',
-  self_demote: 'To Twoje konto - nie możesz odebrać sobie roli administratora.',
+  self_deactivate: 'To Twoje członkostwo - nie możesz wyłączyć sobie dostępu.',
+  self_demote: 'To Twoje członkostwo - nie możesz odebrać sobie roli administratora.',
   last_admin: 'To jedyny administrator w klubie. Nadaj tę rolę komuś jeszcze.',
-  inactive_account: 'Konto jest wyłączone - najpierw je włącz.',
-  self_delete: 'To Twoje konto - nie możesz go usunąć.',
-  account_active: 'Najpierw wyłącz konto.',
-  has_history: 'To konto ma zapisane loty - możesz je tylko wyłączyć.',
+  inactive_account: 'Członkostwo jest wyłączone - najpierw je włącz.',
+  self_delete: 'To Twoje członkostwo - nie możesz go usunąć.',
+  account_active: 'Najpierw wyłącz członkostwo.',
+  has_history: 'Ten pilot ma w klubie zapisane loty - możesz go tylko wyłączyć.',
 };
 
 /**
  * Powody blokujące USUNIĘCIE, które ekran zna sam - bez pytania serwera.
  *
- * `account_active` widać z listy (konto ma plakietkę „Aktywny"), więc stoi w przycisku
+ * `account_active` widać z listy (członkostwo ma plakietkę „Aktywny"), więc stoi w przycisku
  * jako powód, zanim ktokolwiek go naciśnie. `has_history` jest faktem o bazie i wraca
  * dopiero odmową - panel nie ma jak go przewidzieć, a lista nie niesie liczby lotów.
  */
 export const ACCOUNT_ACTIVE = REFUSALS.account_active;
 
-/** Własne konto - ten sam powód, co odmowa `self_delete`, tylko krótszy w przycisku. */
-export const SELF_ACCOUNT = 'To Twoje konto.';
+/** Własne członkostwo - ten sam powód, co odmowa `self_delete`, tylko krótszy w przycisku. */
+export const SELF_ACCOUNT = 'To Twoje członkostwo.';
 
 /**
  * `null` dla powodów, które na tym ekranie nie mają prawa się pojawić (odmowy floty).
@@ -53,10 +54,10 @@ const CONFLICTS: Record<'code' | 'email', string> = {
   email: 'Ten e-mail należy do innego konta.',
 };
 
-export function accountConflictMessage(field: 'code' | 'email' | 'reg' | null): string | null {
-  // `reg` przychodzi z floty i na tym ekranie nie ma prawa się pojawić - ale unia
+export function accountConflictMessage(field: ConflictField | null): string | null {
+  // `reg` (flota) i `slug` (klub) na tym ekranie nie mają prawa się pojawić - ale unia
   // odmowy jest wspólna dla całego panelu, więc obsługujemy to milczeniem zamiast
   // rzucania wyjątku w formularzu, który klient właśnie wypełnia.
-  if (field == null || field === 'reg') return null;
+  if (field == null || field === 'reg' || field === 'slug') return null;
   return CONFLICTS[field];
 }

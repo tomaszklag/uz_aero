@@ -30,7 +30,9 @@ export const roleTone = (role: PilotRole): PillTone => ROLES[role].tone;
 /** Jedno zdanie o tym, co rola OTWIERA - do kart wyboru w formularzu. */
 const ROLE_NOTES: Record<PilotRole, string> = {
   pilot: 'Tylko aplikacja na telefonie.',
-  admin: 'Panel w całości, razem z pilotami i samolotami.',
+  // „tego klubu" nie jest ozdobą: rola należy do CZŁONKOSTWA, więc administrator
+  // jednego klubu nie widzi drugiego (wielofirmowość 2.0.0).
+  admin: 'Panel tego klubu w całości, razem z pilotami i samolotami.',
 };
 
 export const roleNote = (role: PilotRole): string => ROLE_NOTES[role];

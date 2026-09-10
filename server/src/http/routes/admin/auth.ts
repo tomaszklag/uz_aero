@@ -1,10 +1,11 @@
 /**
- * UZ Aero (serwer) - sesja przeglądarkowa panelu (`/admin/api/auth/*`, mockupy A00/A00a).
+ * UZ Aero (serwer) - sesja przeglądarkowa panelu (`/admin/api/auth/*`, mockupy
+ * `00-logowanie`, `00a-wybor-klubu`).
  *
- * JEDYNE trasy panelu, które nie przechodzą przez `adminRoute` - i muszą takie być,
- * bo logowanie jest z definicji publiczne (test architektury wymienia ten plik
- * imiennie, żeby wyjątek był decyzją, a nie luką). Wszystko poza logowaniem
- * i wylogowaniem rejestruje się z bramą uprawnień.
+ * Logowanie i wylogowanie NIE przechodzą przez `adminRoute` - i muszą takie być, bo
+ * logowanie jest z definicji publiczne (test architektury wymienia ten plik imiennie,
+ * żeby wyjątek był decyzją, a nie luką). Przełączenie zakresu (issue #101, E2) już bramę
+ * ma - to trasa dla ZALOGOWANEGO, tylko obu rodzajów sesji naraz (`sessionRoute`).
  *
  * **Token jedzie WYŁĄCZNIE do ciasteczka `HttpOnly`, nigdy do ciała odpowiedzi.**
  * Gdyby ciało niosło token, panel mógłby go odłożyć „na chwilę" do `localStorage`,
@@ -13,19 +14,28 @@
  * do narysowania sidebara.
  */
 
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 
 import type {
   AuthCommands,
   PanelPilot,
+  PanelScopes,
   PanelSession,
 } from '../../../application/common/commands/auth.ts';
-import { capabilitiesOf } from '../../../domain/roles.ts';
-import { ADMIN_SESSION_COOKIE } from '../../tokenFromRequest.ts';
-import { ADMIN_API_PREFIX } from './adminRoute.ts';
+import { capabilitiesOf, platformCapabilitiesOf } from '../../../domain/roles.ts';
+import { ADMIN_SESSION_COOKIE, tokenFromRequest } from '../../tokenFromRequest.ts';
+import { sessionRoute, ADMIN_API_PREFIX, type AdminGate } from './adminRoute.ts';
 
 const loginBody = z.object({ idToken: z.string().min(1).max(4096) });
+
+/**
+ * Cel przełączenia: identyfikator klubu albo `null` = platforma.
+ *
+ * `null` jest WARTOŚCIĄ, nie brakiem pola (`.nullable()`, nie `.optional()`): zejście na
+ * platformę to wybór, a puste ciało byłoby żądaniem bez celu. Stąd pole wymagane.
+ */
+const switchBody = z.object({ orgId: z.string().min(1).max(100).nullable() });
 
 /**
  * Atrybuty ciasteczka sesji panelu (§8.2). Stoją w JEDNEJ stałej, bo `clearCookie`
@@ -50,33 +60,88 @@ const COOKIE_OPTIONS = {
  * klubu w kolumnie bocznej i nie pyta o nią drugi raz. Kod i rola są kodem i rolą
  * Z CZŁONKOSTWA w tym klubie.
  */
-export const panelSessionToWire = (pilot: PanelPilot) => ({
+export const panelSessionToWire = (pilot: PanelPilot, scopes: PanelScopes) => ({
   pilot: { id: pilot.id, code: pilot.code, name: pilot.name, role: pilot.role },
   org: pilot.org,
   capabilities: capabilitiesOf(pilot.role),
+  scopes,
 });
 
 /**
  * Sesja PLATFORMOWA superadministratora: bez klubu (`org: null`) i bez kodu - kod jest
  * własnością członkostwa, a superadministrator go nie ma. Panel po `org === null`
- * poznaje, że ma narysować ramę superadministratora (epik E).
+ * poznaje, że ma narysować ramę superadministratora (issue #101, E1).
  */
-const platformSessionToWire = (session: Extract<PanelSession, { kind: 'platform' }>) => ({
+export const platformSessionToWire = (
+  pilot: Extract<PanelSession, { kind: 'platform' }>['pilot'],
+  scopes: PanelScopes,
+) => ({
   pilot: {
-    id: session.pilot.id,
+    id: pilot.id,
     code: null,
-    name: session.pilot.name,
-    role: session.pilot.platformRole,
+    name: pilot.name,
+    role: pilot.platformRole,
   },
   org: null,
-  capabilities: session.capabilities,
+  capabilities: platformCapabilitiesOf(pilot.platformRole),
+  scopes,
 });
+
+/** Sesja → ciało odpowiedzi. Jedno miejsce, bo logowanie i przełączenie oddają to samo. */
+const sessionToWire = (session: PanelSession) =>
+  session.kind === 'org'
+    ? panelSessionToWire(session.pilot, session.scopes)
+    : platformSessionToWire(session.pilot, session.scopes);
+
+/** Ciasteczko + ciało - jedno miejsce, bo logowanie i przełączenie kończą się tak samo. */
+function sendSession(reply: FastifyReply, session: PanelSession): unknown {
+  return reply
+    .setCookie(ADMIN_SESSION_COOKIE, session.token, {
+      ...COOKIE_OPTIONS,
+      maxAge: session.ttlSec,
+    })
+    .send(sessionToWire(session));
+}
+
+/**
+ * Wspólne ciało obu gałęzi przełączenia: rodzaj sesji ŹRÓDŁOWEJ nie ma tu znaczenia -
+ * liczy się tożsamość i cel.
+ *
+ * Chwilę wydania ciasteczka bierzemy z TOKENU, a nie od bramy: to ona rozstrzyga, czy
+ * poświadczenie jest starsze niż unieważnienie członkostwa (patrz `panelSwitch`).
+ * Porównanie `pilotId` z bramą jest asercją spójności - obie drogi czytają ten sam
+ * token, więc rozjazd znaczyłby błąd złożenia, nie cudzą sesję.
+ */
+async function switchScope(
+  auth: AuthCommands,
+  req: FastifyRequest,
+  reply: FastifyReply,
+  pilotId: string,
+): Promise<unknown> {
+  const body = switchBody.safeParse(req.body);
+  if (!body.success) return reply.code(400).send({ error: 'bad_request' });
+
+  const request = auth.identifyPanel(tokenFromRequest(req));
+  if (request == null || request.pilotId !== pilotId) {
+    return reply.code(401).send({ error: 'unauthorized' });
+  }
+
+  const outcome = await auth.panelSwitch(request, body.data.orgId);
+  if (!outcome.ok) {
+    return reply
+      .code(outcome.reason === 'not_found' ? 404 : 401)
+      .send({ error: outcome.reason });
+  }
+
+  return sendSession(reply, outcome.session);
+}
 
 export function registerAdminAuthRoutes(
   app: FastifyInstance,
   auth: AuthCommands,
   /** Identyfikator klienta Google WEB - panel pobiera go stąd, żeby narysować przycisk. */
   googleWebClientId: string,
+  gate: AdminGate,
 ): void {
   /**
    * Konfiguracja przycisku Google - PUBLICZNA, bo pyta o nią ekran logowania, czyli
@@ -103,15 +168,27 @@ export function registerAdminAuthRoutes(
       return reply.code(known ? 403 : 401).send({ error: result.reason });
     }
 
-    const { session } = result;
-    return reply
-      .setCookie(ADMIN_SESSION_COOKIE, session.token, {
-        ...COOKIE_OPTIONS,
-        maxAge: session.ttlSec,
-      })
-      .send(
-        session.kind === 'org' ? panelSessionToWire(session.pilot) : platformSessionToWire(session),
-      );
+    return sendSession(reply, result.session);
+  });
+
+  /**
+   * PRZEŁĄCZENIE ZAKRESU sesji panelu (mockup `00a-wybor-klubu`; issue #101, E2).
+   *
+   * `orgId` = klub, `null` = platforma (moduł Organizacje). Nowe ciasteczko, ten sam
+   * token Google w tle - „Zmień klub" nie każe logować się od nowa.
+   *
+   * ══ DLACZEGO TO NIE JEST TRASA MODUŁU, TYLKO TRASA SESJI ══
+   * Bo zadaje ją zarówno administrator klubu (A → B), jak i superadministrator
+   * (platforma → klub i z powrotem), a żaden z nich nie pyta o dane modułu. Stąd
+   * `sessionRoute`: brama przepuszcza oba rodzaje sesji, a o tym, czy cel jest
+   * osiągalny, rozstrzyga komenda - z BAZY, nie z claimów ciasteczka.
+   *
+   * Klub, którego ta osoba nie ma, odpowiada **404**, nie 403: cudzy klub jest dla niej
+   * nieistniejący (epik C, issue #99 - 403 potwierdzałoby, że taki klub jest).
+   */
+  sessionRoute(app, gate, { method: 'POST', url: '/auth/switch' }, {
+    org: (req, reply, actor) => switchScope(auth, req, reply, actor.pilotId),
+    platform: (req, reply, actor) => switchScope(auth, req, reply, actor.pilotId),
   });
 
   /**

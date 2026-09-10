@@ -349,3 +349,38 @@
   gap: 8px;
   margin-top: 10px;
 }
+
+/**
+ * KOD KLUBU - jedyna droga do klubu (`docs/wielofirmowosc.md` §3.8; issue #101, E3).
+ *
+ * Duży, mono, z odstępem między znakami: administrator odczytuje go z ekranu i DYKTUJE
+ * pilotowi, który wpisuje go z klawiatury telefonu. Nie jest sekretem (daje wyłącznie
+ * zgłoszenie do rozpatrzenia), więc nie ma „pokaż raz" ani zasłony - stoi jawnie.
+ *
+ * Do issue #101 klasa czekała w `design/panel/rama.css`; przeszła tu pod TĄ SAMĄ nazwą
+ * w chwili, w której panel zaczął ją rysować.
+ */
+.club-code {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 5px;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.club-code-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-raised);
+}
+
+/* Stan WYŁĄCZONY (klub skasował kod): kreski przygaszone zamiast kodu. */
+.club-code.off {
+  color: var(--text-muted);
+}

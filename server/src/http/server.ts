@@ -393,8 +393,8 @@ export async function buildServer(
   // i nikt by tego nie zauważył, bo wyglądałoby to jak działający panel.
   const gate: AdminGate = { tokens: deps.tokens, accounts: deps.pilots };
 
-  registerAdminAuthRoutes(app, deps.auth, deps.googleWebClientId);
-  registerAdminMeRoutes(app, deps.adminMeQueries, gate);
+  registerAdminAuthRoutes(app, deps.auth, deps.googleWebClientId, gate);
+  registerAdminMeRoutes(app, deps.adminMeQueries, deps.auth, gate);
   registerAdminFlagRoutes(app, deps.adminFlags, deps.adminFlagQueries, gate);
   registerAdminCorrectionRoutes(app, deps.adminCorrections, deps.adminCorrectionQueries, gate);
   registerAdminSessionRoutes(app, deps.adminSessionQueries, gate);

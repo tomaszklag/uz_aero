@@ -913,6 +913,38 @@ const CASES: Record<string, Probe> = {
     expect(rows[0]?.active).toBe(true);
   },
 
+  /**
+   * PRZEŁĄCZENIE ZAKRESU (issue #101, E2) - jedyna trasa panelu, która przyjmuje CUDZY
+   * identyfikator klubu w ciele, więc jest naturalnym miejscem na próbę wejścia bokiem.
+   *
+   * TMK jest administratorem wyłącznie w Alfie: klub Bety jest dla niego NIEISTNIEJĄCY
+   * (404, nie 403 - 403 potwierdzałoby, że taki klub jest), a odmowa nie może zostawić
+   * ciasteczka. To ostatnie sprawdzamy wprost: sesja wydana mimo odmowy byłaby wejściem
+   * do cudzego dziennika przez każdą kolejną trasę panelu.
+   */
+  'POST /admin/api/auth/switch': async ({ app, a }) => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/admin/api/auth/switch',
+      headers: writer(a),
+      payload: { orgId: ORG_B },
+    });
+    expect(res.statusCode).toBe(404);
+    expect(res.cookies.find((c) => c.name === 'uzaero_admin')).toBeUndefined();
+
+    // Kontrola pozytywna: własny klub przełącza się normalnie, więc 404 wyżej opisuje
+    // brak członkostwa, a nie zepsutą trasę.
+    const own = await app.inject({
+      method: 'POST',
+      url: '/admin/api/auth/switch',
+      headers: writer(a),
+      payload: { orgId: ORG_A },
+    });
+    expect(own.statusCode).toBe(200);
+    expect(own.json().org.id).toBe(ORG_A);
+    expectClean(own, '/admin/api/auth/switch');
+  },
+
   'GET /admin/api/bug-reports': async ({ app, a }) => {
     // Trasa PLATFORMY: sesja klubu jej nie otwiera - dla klubu zgłoszeń nie ma wcale.
     expect((await app.inject({ method: 'GET', url: '/admin/api/bug-reports', headers: bearer(a) })).statusCode).toBe(401);

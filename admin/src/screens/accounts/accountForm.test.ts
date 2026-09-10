@@ -123,24 +123,24 @@ describe('ciało żądania', () => {
   });
 });
 
-describe('kiedy wolno usunąć konto', () => {
+describe('kiedy wolno usunąć z klubu', () => {
   const off = { ...pilot, active: false };
 
-  it('konto wyłączone i cudze - próba ma sens', () => {
+  it('członkostwo wyłączone i cudze - próba ma sens', () => {
     expect(deleteBlocker(off, 'inny-admin')).toBeNull();
   });
 
-  it('konto Z DOSTĘPEM blokuje, bo usuwanie jest dwustopniowe', () => {
-    // Telefon nie kasuje wierszy, więc konto usunięte „na gorąco" zostałoby na nim
+  it('członkostwo Z DOSTĘPEM blokuje, bo usuwanie jest dwustopniowe', () => {
+    // Telefon nie kasuje wierszy, więc członek usunięty „na gorąco" zostałby na nim
     // jako aktywne. Wyłączenie dociera normalną drogą i dopiero po nim wolno kasować.
-    expect(deleteBlocker(pilot, 'inny-admin')).toBe('Najpierw wyłącz konto.');
+    expect(deleteBlocker(pilot, 'inny-admin')).toBe('Najpierw wyłącz członkostwo.');
   });
 
-  it('WŁASNE konto blokuje, nawet gdy jest już wyłączone', () => {
-    // Kolejność sprawdzeń ma znaczenie: „to Twoje konto" jest odpowiedzią trafniejszą
-    // niż „najpierw wyłącz", bo wyłączenie własnego konta i tak jest zabronione.
-    expect(deleteBlocker(off, off.id)).toBe('To Twoje konto.');
-    expect(deleteBlocker(pilot, pilot.id)).toBe('To Twoje konto.');
+  it('WŁASNE członkostwo blokuje, nawet gdy jest już wyłączone', () => {
+    // Kolejność sprawdzeń ma znaczenie: „to Twoje członkostwo" jest odpowiedzią trafniejszą
+    // niż „najpierw wyłącz", bo wyłączenie własnego członkostwa i tak jest zabronione.
+    expect(deleteBlocker(off, off.id)).toBe('To Twoje członkostwo.');
+    expect(deleteBlocker(pilot, pilot.id)).toBe('To Twoje członkostwo.');
   });
 
   it('nie orzeka o HISTORII - tego panel nie wie', () => {

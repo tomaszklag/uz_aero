@@ -680,7 +680,49 @@ starym pakiecie - decyzja o tym w epiku W.
     i niewysłaną kolejką.
   Zostaje **D8** (wykonane wcześniej) i panel web - epik E.
 - **E - panel** (issue #101): moduł Organizacje, wybór klubu, kontekst klubu w kolumnie,
-  członkowie, zgłoszenia i kod klubu 1:1 z makiet.
+  członkowie, zgłoszenia i kod klubu 1:1 z makiet. **WDROŻONE 2026-09-10** (gałąź
+  `feature-101-panel-kluby`). Co weszło i czego ten dokument nie przewidział:
+  - **`#/k/<slug>/…` z issue #101 ODRZUCONE, adres zostaje płaski** (decyzja właściciela
+    2026-09-10, potwierdza §8.2 wobec listy zadań epiku). Klub jest w SESJI: `#/dziennik`
+    znaczy to samo przez całą sesję, wybór stoi pod `#/klub`, a `.sidebar-context` prowadzi
+    tam z powrotem. Prefiks ze slugiem kupowałby link przenośny MIĘDZY klubami (przypadek
+    administratora dwóch klubów, czyli rzadkość) kosztem przepisania każdej trasy i każdego
+    linku panelu oraz drugiego źródła prawdy o klubie obok sesji;
+  - **trzy trasy sesji, których epiki B–D świadomie nie dokończyły**: `GET /me` odpowiada
+    odtąd OBU rodzajom sesji (`sessionRoute` - bez tego superadministrator po odświeżeniu
+    karty lądował na ekranie logowania, z którego przed chwilą wszedł), a `POST
+    /admin/api/auth/switch { orgId | null }` wydaje nową sesję dla klubu albo dla platformy;
+  - **zakresy jadą W ODPOWIEDZI O SESJI, a nie osobną trasą** (`PanelScopes`: kluby z rolą
+    panelu + flaga platformy). Panel pyta o to przy KAŻDYM wczytaniu (czy kafel jest linkiem,
+    czy po zalogowaniu iść na wybór), więc osobna trasa znaczyłaby drugie żądanie przy każdym
+    starcie - i to o odpowiedź, która przy jednym członkostwie nic nie zmienia;
+  - **przełączenie sprawdza CEL od zera, a źródła pyta wyłącznie o tożsamość**: administrator
+    wyłączony w klubie A ma prawo przejść do B. Ciasteczko starsze niż `credentials_valid_from`
+    osoby ALBO celu nie mieni nowej sesji - bez tego wyłączenie członkostwa dałoby się obejść
+    przełączeniem tam i z powrotem ciasteczkiem sprzed wyłączenia (ta sama reguła, którą audyt
+    2026-09-05 nałożył na token osoby). Cudzy klub to **404**, nie 403;
+  - **kafel kontekstu stoi zawsze, przełącznik - nie**: `.sidebar-context` jest linkiem
+    dopiero przy więcej niż jednym zakresie (`ui/shell/scope.ts`), a platforma liczy się
+    jako zakres - inaczej operator z jednym klubem nie miałby jak zejść do niego ani wrócić;
+  - **moduł Piloci ma TRZY szuflady nad jedną listą** i każda ma własny adres, bo każda
+    opisuje inny byt: członek (`#/piloci/:id`), kandydat z kolejki (`#/piloci/zgloszenia/:id`)
+    i kod klubu (`#/piloci/kod`). Który to, rozstrzyga TRASA, a nie ekran czytający adres
+    w środku - `zgloszenia` i `kod` byłyby dla `:id?` zwykłym identyfikatorem konta;
+  - **kolejka i kod klubu pytają serwer tylko z `accounts.manage`** (`enabled` na hookach):
+    bez tej zdolności odpowiedź byłaby 403, czyli baner błędu na ekranie, na którym nic
+    złego się nie stało;
+  - **przełączenie czyści cache DOKŁADNIE jak wylogowanie**: po zmianie klubu każda pobrana
+    lista opisuje inny świat, a wiersz cudzego dziennika, który mignąłby przed odświeżeniem,
+    byłby wyciekiem - tym samym, przed którym broni cały epik C;
+  - **makiety `organizacje-klub` i `piloci-zgloszenie` DOSTAŁY brakujące ramki** (O2 „nowy
+    klub", P3 zatwierdzenie, P3b po decyzji): panele wariantów obiecywały je od epiku A,
+    a kotwice prowadziły donikąd. Przy okazji z kolumny bocznej makiet KLUBOWYCH zeszła
+    pozycja „Zgłoszenia" - należy do platformy od epiku C (C6), a `SZABLON.html` miał już
+    postać właściwą. Komponent `.club-code` przeszedł z `design/panel/rama.css` do
+    `admin/src/styles/components/surfaces.css` pod tą samą nazwą, jak zapowiadał tamten plik;
+  - **czego epik E świadomie NIE ROBI**: wejścia superadministratora w dane klubu (§3.3 -
+    z wnętrza widzi liczby i administratorów), zmiany sluga i rotacji kodu z platformy
+    (kod prowadzi klub), edycji administratorów klubu z modułu Organizacje.
 - **F - aplikacja** (issue #102): klub w tokenie i `POST /auth/switch`, cache per klub,
   00E/00C/00D, przełącznik 13a (sieć + pusta kolejka) z „Dołącz do innego klubu",
   plakietka klubu 01e. Deep linku dołączania nie ma (§7).

@@ -21,7 +21,8 @@ import { describe, expect, it } from 'vitest';
 
 import type { Capability } from '../src/api/dto';
 import { AppShell } from '../src/ui/shell/AppShell';
-import { HOME, NAV_ITEMS } from '../src/ui/shell/nav';
+import { homeFor, HOME, NAV_ITEMS } from '../src/ui/shell/nav';
+import type { ShellScope } from '../src/ui/shell/scope';
 
 /**
  * Zdolności DWÓCH rodzajów sesji, jakie panel obsługuje od wielofirmowości: klub
@@ -36,16 +37,24 @@ const TEMPLATE = readFileSync(
   'utf8',
 );
 
+/** Kafel klubu z przełącznikiem - najbogatszy wariant, więc domyślny w renderach. */
+const clubScope = (name: string, switchTo: string | null = '/klub'): ShellScope => ({
+  kind: 'org',
+  label: 'Klub',
+  name,
+  switchTo,
+});
+
 const render = (
   path: string,
-  org?: { name: string; switchTo: string },
+  scope?: ShellScope,
   capabilities: readonly Capability[] = CLUB,
 ): string =>
   renderToStaticMarkup(
     <MemoryRouter initialEntries={[path]}>
       <AppShell
         who="Tomasz Małkiewicz"
-        org={org}
+        scope={scope}
         capabilities={capabilities}
         onLogout={() => undefined}
         logoutPending={false}
@@ -73,9 +82,21 @@ describe('AppShell - rama stylu lekkiego', () => {
 
   it('każda klasa ramy istnieje w SZABLON.html - znacznik bez reguły nie ma prawa powstać', () => {
     const inTemplate = classesOf(TEMPLATE);
-    const rendered = classesOf(render(HOME, { name: 'Aeroklub Zielonogórski', switchTo: '/klub' }));
+    const rendered = classesOf(render(HOME, clubScope('Aeroklub Zielonogórski')));
     const unknown = [...rendered].filter((cls) => !inTemplate.has(cls));
     expect(unknown).toEqual([]);
+  });
+
+  it('rama SUPERADMINISTRATORA też stoi na klasach z szablonu (`.sidebar-context.scope`)', () => {
+    const inTemplate = classesOf(TEMPLATE);
+    const scope: ShellScope = {
+      kind: 'platform',
+      label: 'Superadministrator',
+      name: 'Wszystkie kluby',
+      switchTo: null,
+    };
+    const rendered = classesOf(render('/organizacje', scope, PLATFORM));
+    expect([...rendered].filter((cls) => !inTemplate.has(cls))).toEqual([]);
   });
 
   it('zaznacza pozycję bieżącego modułu i tylko ją', () => {
@@ -101,6 +122,7 @@ describe('AppShell - rama stylu lekkiego', () => {
 
     const platform = render('/zgloszenia', undefined, PLATFORM);
     expect(platform).toContain('class="nav-item active" href="/zgloszenia"');
+    expect(platform).toContain('href="/organizacje"');
     for (const to of ['/dziennik', '/piloci', '/samoloty']) {
       expect(platform).not.toContain(`href="${to}"`);
     }
@@ -123,19 +145,33 @@ describe('AppShell - rama stylu lekkiego', () => {
 
   it('kafel klubu stoi WYŁĄCZNIE, gdy sesja zna klub', () => {
     expect(render(HOME)).not.toContain('sidebar-context');
-    const withOrg = render(HOME, { name: 'Aeroklub Krakowski', switchTo: '/klub' });
+    const withOrg = render(HOME, clubScope('Aeroklub Krakowski'));
     // Atrybuty linku nie mają gwarantowanej kolejności - sprawdzamy je osobno.
     expect(withOrg).toMatch(/<a class="sidebar-context"[^>]*href="\/klub"/);
     expect(withOrg).toContain('class="context-mark" aria-hidden="true">AK<');
     expect(withOrg).toContain('class="context-name">Aeroklub Krakowski<');
   });
 
+  /**
+   * BEZ CZEGO PRZEŁĄCZAĆ - KAFEL NIE JEST LINKIEM (issue #101, E2). `<a>` prowadzące
+   * na ekran wyboru z jedną kartą wygląda jak akcja i nią nie jest, a przy okazji łapie
+   * kliknięcie, które miało trafić w nazwę klubu.
+   */
+  it('kafel bez przełącznika jest `div`, nie linkiem - i nie ma szewronu', () => {
+    const single = render(HOME, clubScope('Aeroklub Krakowski', null));
+    expect(single).toContain('<div class="sidebar-context">');
+    expect(single).not.toMatch(/<a class="sidebar-context"/);
+    expect(single).toContain('class="context-name">Aeroklub Krakowski<');
+  });
+
   it('marka prowadzi na PIERWSZY DOSTĘPNY ekran, nie na stały dziennik', () => {
     expect(render('/piloci')).toContain(`class="brand" href="${HOME}"`);
     // Superadministrator: `#/dziennik` odpowiedziałby jego sesji 401, więc marka
-    // prowadzi tam, gdzie naprawdę może wejść.
+    // prowadzi tam, gdzie naprawdę może wejść - a to jest Organizacje, bo stoją
+    // w `NAV_ITEMS` przed Zgłoszeniami.
     expect(render('/zgloszenia', undefined, PLATFORM)).toContain(
-      'class="brand" href="/zgloszenia"',
+      `class="brand" href="${homeFor(PLATFORM)}"`,
     );
+    expect(homeFor(PLATFORM)).toBe('/organizacje');
   });
 });
