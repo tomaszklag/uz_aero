@@ -187,6 +187,357 @@
       </div>
     </div>
 
+
+    <button type="button" class="drawer-scrim" aria-label="Zamknij szufladę"></button>
+    <div class="drawer" role="dialog" aria-modal="true" aria-label="SP-AXA">
+
+      <div class="drawer-head">
+        <div>
+          <div class="drawer-title">SP-AXA</div>
+          <div class="drawer-sub">Cessna 182 · 1998 · w służbie</div>
+        </div>
+        <button type="button" class="x-btn" aria-label="Zamknij">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="drawer-body">
+
+        <!-- Rejestracja jest DO ODCZYTU po założeniu: to znak z kadłuba i klucz maszyny
+             w dzienniku. Typ i rok wolno poprawić - to opis, nie tożsamość. -->
+        <div class="card">
+          <div class="card-title">Samolot</div>
+          <div class="field">
+            <label class="label" for="e-reg">Rejestracja</label>
+            <input class="input mono" id="e-reg" value="SP-AXA" disabled>
+            <span class="hint">Stała od założenia - stoi w dzienniku i w kartach arkusza.</span>
+          </div>
+          <div class="field-pair">
+            <div class="field">
+              <label class="label" for="e-type">Typ</label>
+              <input class="input" id="e-type" value="Cessna 182">
+            </div>
+            <div class="field">
+              <label class="label" for="e-year">Rok produkcji</label>
+              <input class="input mono" id="e-year" inputmode="numeric" value="1998">
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Ustawienia dla pilota</div>
+
+          <span class="label">Drugi pilot</span>
+          <div class="opt-list" role="radiogroup" aria-label="Wymóg drugiego pilota">
+            <button type="button" class="opt selected" role="radio" aria-checked="true">
+              <span class="opt-body">
+                <span class="opt-name">Nieobowiązkowy</span>
+                <span class="opt-desc">Pilot może lecieć sam.</span>
+              </span>
+            </button>
+            <button type="button" class="opt" role="radio" aria-checked="false">
+              <span class="opt-body">
+                <span class="opt-name">Wymagany</span>
+                <span class="opt-desc">Bez drugiego pilota aplikacja nie pozwoli zacząć lotu.</span>
+              </span>
+            </button>
+          </div>
+
+          <span class="label">Stan</span>
+          <div class="opt-list" role="radiogroup" aria-label="Stan służby">
+            <button type="button" class="opt selected" role="radio" aria-checked="true">
+              <span class="opt-body">
+                <span class="opt-name">W służbie</span>
+                <span class="opt-desc">Pilot widzi go na liście samolotów.</span>
+              </span>
+            </button>
+            <button type="button" class="opt" role="radio" aria-checked="false">
+              <span class="opt-body">
+                <span class="opt-name">Wyłączony</span>
+                <span class="opt-desc">Znika z listy. Zapisane loty zostają.</span>
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <!-- ══ „AKTUALNY STAN" DO ODCZYTU ══
+             Odkąd maszyna lata, tę samą liczbę prowadzi DZIENNIK - ostatnie zdanie
+             samolotu albo operacja w toku - a wpis z panelu przestaje cokolwiek znaczyć.
+             Pole edytowalne nad liczbą, której edycja nic nie zmienia, było treścią
+             zgłoszenia, więc pola są wyłączone, a podpis mówi, SKĄD jest wartość.
+             Konfiguracja obok (pojemność, norma, minimum) zostaje czynna: to liczby
+             z dokumentacji jednostki, których dziennik nie prowadzi. -->
+        <div class="card">
+          <div class="card-title">Paliwo</div>
+          <div class="field-pair">
+            <div class="field">
+              <label class="label" for="e-capacity">Pojemność zbiorników (L)</label>
+              <input class="input mono" id="e-capacity" inputmode="decimal" value="155">
+            </div>
+            <div class="field">
+              <label class="label" for="e-fuel-norm">Zużycie z dokumentacji (L/h)</label>
+              <input class="input mono" id="e-fuel-norm" inputmode="decimal" value="30,0">
+              <span class="hint">Na godzinę pracy silnika.</span>
+            </div>
+          </div>
+          <div class="field">
+            <label class="label" for="e-fuel">Aktualny stan (L)</label>
+            <input class="input mono" id="e-fuel" value="112" disabled>
+            <span class="hint">Z dziennika · odczyt 8 WRZ 2026 14:02 UTC.</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Olej</div>
+          <div class="field-pair">
+            <div class="field">
+              <label class="label" for="e-oil-capacity">Zbiornik oleju (L)</label>
+              <input class="input mono" id="e-oil-capacity" inputmode="decimal" value="8">
+            </div>
+            <div class="field">
+              <label class="label" for="e-oil-min">Minimum przed lotem (L)</label>
+              <input class="input mono" id="e-oil-min" inputmode="decimal" value="5">
+            </div>
+          </div>
+          <div class="field">
+            <label class="label" for="e-oil-norm">Zużycie z dokumentacji (L/h)</label>
+            <input class="input mono" id="e-oil-norm" inputmode="decimal" value="0,3">
+            <span class="hint">Na godzinę pracy silnika - jak przy paliwie.</span>
+          </div>
+          <!-- OLEJ MA WŁASNY STEMPEL i bywa dużo starszy niż odczyt paliwa: idzie osią
+               pomiar→pomiar przez wiele operacji, bo zdanie samolotu oleju NIE MIERZY.
+               Dolewki po pomiarze wchodzą do wartości, a podpis mówi to tylko wtedy, gdy
+               jakieś były - inaczej suma udawałaby odczyt z bagnetu. -->
+          <div class="field">
+            <label class="label" for="e-oil">Aktualny stan (L)</label>
+            <input class="input mono" id="e-oil" value="7,2" disabled>
+            <span class="hint">Z dziennika · pomiar 2 WRZ 2026 07:14 UTC + dolewki 1,0 L.</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Motogodziny</div>
+          <span class="label">Format licznika</span>
+          <div class="opt-list" role="radiogroup" aria-label="Format licznika motogodzin">
+            <button type="button" class="opt selected" role="radio" aria-checked="true">
+              <span class="opt-body">
+                <span class="opt-name">dziesiętny - 3907.8</span>
+                <span class="opt-desc">Pilot wpisuje jedną liczbę.</span>
+              </span>
+            </button>
+            <button type="button" class="opt" role="radio" aria-checked="false">
+              <span class="opt-body">
+                <span class="opt-name">godziny i minuty - 3907:48</span>
+                <span class="opt-desc">Pilot wpisuje godziny i minuty.</span>
+              </span>
+            </button>
+          </div>
+          <div class="field">
+            <label class="label" for="e-mh">Aktualny stan</label>
+            <input class="input mono" id="e-mh" value="1236.5" disabled>
+            <span class="hint">Z dziennika · odczyt 8 WRZ 2026 14:02 UTC.</span>
+          </div>
+        </div>
+
+        <!-- ══ S2b: POPRAWA ODCZYTÓW - JEDYNA DROGA NADPISANIA ══
+             Osobna karta, a nie odblokowanie pól wyżej: to INNA operacja niż poprawienie
+             konfiguracji. Wpis jest nadrzędny wobec ostatniego zdania, dopóki kolejne
+             zdanie nie pokaże wyższego licznika - i dlatego komentarz jest WYMAGANY:
+             liczba wpisana z ręki bez powodu byłaby w dzienniku faktem znikąd. -->
+        <div class="card">
+          <div class="card-title">Poprawa odczytów</div>
+          <div class="field-pair">
+            <div class="field">
+              <label class="label" for="e-r-mh">Motogodziny</label>
+              <input class="input mono" id="e-r-mh" inputmode="decimal" value="">
+            </div>
+            <div class="field">
+              <label class="label" for="e-r-fuel">Paliwo (L)</label>
+              <input class="input mono" id="e-r-fuel" inputmode="decimal" value="">
+            </div>
+          </div>
+          <div class="field">
+            <label class="label" for="e-r-oil">Olej (L)</label>
+            <input class="input mono" id="e-r-oil" inputmode="decimal" value="">
+            <span class="hint">Puste = stan oleju nieznany.</span>
+          </div>
+          <div class="field">
+            <label class="label" for="e-r-note">Komentarz</label>
+            <input class="input" id="e-r-note" value="" placeholder="np. odczyt z tarczy po zakończeniu operacji z 3 września">
+            <span class="hint">Skąd te liczby - zostaje w dzienniku przy wpisie.</span>
+          </div>
+          <div class="confirm-actions">
+            <button type="button" class="btn primary sm" disabled>Zapisz odczyty</button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="drawer-foot">
+        <button type="button" class="btn ghost">Anuluj</button>
+        <button type="button" class="btn primary" disabled>Zapisz</button>
+      </div>
+
+    </div>
+
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="samoloty-lista.html">← S1 Samoloty</a>
+  <span>·</span>
+  <a href="samoloty-karta.html" class="active">S2 Karta samolotu</a>
+  <span>·</span>
+  <a href="#nowy">↓ S2a Nowy samolot</a>
+  <span>·</span>
+  <a href="dziennik-maszyna.html">L2 Dziennik maszyny →</a>
+</nav>
+
+<!-- ══ RAMA 2: NOWA JEDNOSTKA (S2a) ══
+     Różnica wobec ramy wyżej: rejestracja jest polem, „Aktualny stan" WPISUJE
+     administrator (zerowe ogniwo łańcucha - pierwszy pilot dostanie te liczby jako
+     przekazanie), a karty „Poprawa odczytów" nie ma, bo nie ma jeszcze czego poprawiać. -->
+<header class="canvas-label" id="nowy">
+  <span class="film-strip">SAMOLOTY · NOWA JEDNOSTKA</span>
+  <span class="slug">panel/samoloty-karta · #/samoloty/nowy · S2a</span>
+  <span class="canvas-meta">„Aktualny stan" DO WPISANIA</span>
+</header>
+<main class="browser" role="region" aria-label="Panel UZ Aero - nowy samolot">
+
+  <div class="chrome">
+    <span class="chrome-dots"><i></i><i></i><i></i></span>
+    <span class="chrome-url">
+      <b>panel.uzaero.pl</b>/#/samoloty/nowy
+    </span>
+  </div>
+
+  <div class="shell">
+
+    <header class="topbar">
+      <a class="brand" href="dziennik-flota.html">
+        <span class="brand-mark">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+        </span>
+        <span class="brand-name">UZ AERO</span>
+      </a>
+
+      <div class="topbar-right">
+        <span class="who">
+          <span class="avatar" aria-hidden="true">TM</span>
+          <span class="who-name">Tomasz Małkiewicz</span>
+        </span>
+        <button type="button" class="btn ghost sm">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="14 17 19 12 14 7"/><line x1="19" y1="12" x2="9" y2="12"/></svg>
+          Wyloguj
+        </button>
+      </div>
+    </header>
+
+    <div class="workspace">
+
+      <!-- KOLUMNA BOCZNA (styl lekki, issue #107): kontekst klubu (wielofirmowość 2.0.0) - link prowadzi na wybór klubu (00A)
+           nad pozycjami modułów. Kanoniczna postać: SZABLON.html. -->
+      <aside class="sidebar" aria-label="Nawigacja panelu">
+        <a class="sidebar-context" href="00a-wybor-klubu.html" title="Zmień klub">
+          <span class="context-mark" aria-hidden="true">AZ</span>
+          <span class="context-body">
+            <span class="context-kind">Klub</span>
+            <span class="context-name">Aeroklub Zielonogórski</span>
+          </span>
+          <svg class="context-switch" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+        </a>
+        <nav class="sidebar-nav" aria-label="Sekcje panelu">
+          <a class="nav-item" href="dziennik-flota.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            Dziennik
+          </a>
+          <a class="nav-item" href="piloci-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Piloci
+          </a>
+          <a class="nav-item active" href="samoloty-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+            Samoloty
+          </a>
+        </nav>
+      </aside>
+
+      <div class="content">
+        <div class="page">
+
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">Samoloty</h1>
+        </div>
+        <div class="page-actions">
+          <a class="btn primary" href="samoloty-karta.html#nowy">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Dodaj samolot
+          </a>
+        </div>
+      </div>
+
+      <div class="filters">
+        <label class="search">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input value="" placeholder="Szukaj: rejestracja, typ" aria-label="Szukaj samolotu">
+        </label>
+        <button type="button" class="chip on" aria-pressed="true">Wszystkie</button>
+        <button type="button" class="chip" aria-pressed="false">W służbie</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <caption class="visually-hidden">Samoloty</caption>
+          <thead>
+            <tr>
+              <th>Rejestracja</th>
+              <th class="num">Rok</th>
+              <th class="num">Paliwo</th>
+              <th>Licznik</th>
+              <th>Drugi pilot</th>
+              <th>Stan</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="clickable">
+              <td><span class="reg">SP-AXA</span><span class="cell-sub">Cessna 182</span></td>
+              <td class="num cell-sub">1979</td>
+              <td class="num">185 L</td>
+              <td><span class="pill blue">Godziny i minuty</span></td>
+              <td>—</td>
+              <td><span class="pill green"><span class="dot"></span>W służbie</span></td>
+              <td class="row-actions"><a class="btn ghost sm" href="samoloty-karta.html">Edytuj</a></td>
+            </tr>
+            <tr class="clickable">
+              <td><span class="reg">SP-GTX</span><span class="cell-sub">Cessna 152</span></td>
+              <td class="num cell-sub">—</td>
+              <td class="num">98 L</td>
+              <td><span class="pill dim">Dziesiętny</span></td>
+              <td>—</td>
+              <td><span class="pill green"><span class="dot"></span>W służbie</span></td>
+              <td class="row-actions"><a class="btn ghost sm" href="samoloty-karta.html">Edytuj</a></td>
+            </tr>
+            <tr class="clickable">
+              <td><span class="reg">SP-KLM</span><span class="cell-sub">An-2</span></td>
+              <td class="num cell-sub">1978</td>
+              <td class="num">1200 L</td>
+              <td><span class="pill blue">Godziny i minuty</span></td>
+              <td><span class="pill amber">Wymagany</span></td>
+              <td><span class="pill green"><span class="dot"></span>W służbie</span></td>
+              <td class="row-actions"><a class="btn ghost sm" href="samoloty-karta.html">Edytuj</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+            </div>
+      </div>
+    </div>
+
     <button type="button" class="drawer-scrim" aria-label="Zamknij szufladę"></button>
     <div class="drawer" role="dialog" aria-modal="true" aria-label="Nowy samolot">
 
@@ -351,7 +702,9 @@
   <span>·</span>
   <a href="samoloty-lista.html">S1 Samoloty</a>
   <span>·</span>
-  <a href="samoloty-karta.html" class="active">S2 Karta samolotu</a>
+  <a href="samoloty-karta.html">↑ S2 Karta samolotu</a>
+  <span>·</span>
+  <a href="#nowy" class="active">S2a Nowy samolot</a>
   <span>·</span>
   <a href="piloci-konto.html">P2 Konto pilota</a>
   <span>·</span>

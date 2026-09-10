@@ -324,8 +324,16 @@ a nie z lokalnej kopii.
 
 ## 2. Drzewo katalogów panelu i kierunek zależności
 
-Panel dostaje własny workspace `admin/` (`@uzaero/admin`), dopisany do `workspaces`
-w głównym `package.json` - jak przewiduje ANALIZA §8.
+Panel ma własny workspace `admin/` (`@uzaero/admin`), dopisany do `workspaces`
+w głównym `package.json`.
+
+> **Drzewo niżej opisuje stan po epiku E wielofirmowości (2026-09-10).** Pierwsza
+> wersja tej sekcji opisywała panel 1.0 (jedenaście ekranów `A*`: `dni/`, `flagi/`,
+> `eksporty/`, `progi/`, `audyt/`, `konserwacja/`…) i przeżyła w tym kształcie całą
+> przebudowę na 2.0 - czyli dokument mówił o katalogach, których nie ma, i milczał
+> o tych, które są. **Reguły kierunku zależności (§2.1) i modułów czystych (§2.2) są
+> od tego niezależne i obowiązywały nieprzerwanie** - to po nie sięga się do tego
+> rozdziału. Jeśli drzewo znów się rozjedzie, pierwszeństwo ma `admin/src/`.
 
 ```
 admin/
@@ -334,59 +342,88 @@ admin/
   vite.config.ts        base:'/admin/' · proxy /admin/* → localhost:PORT w dev
   tsconfig.json         strict + noUncheckedIndexedAccess (jak server/)
   public/fonts/         Bebas Neue · Archivo · JetBrains Mono (woff2) - patrz §9
+  scripts/              emitPanelCss.mts (design/panel/panel.css) · fetchFonts.mts
   src/
     main.tsx            COMPOSITION ROOT: QueryClient, HashRouter, SessionProvider, <App/>
-    routes.tsx          mapa tras → ekrany (deep linki, §7)
+    routes.tsx          mapa tras → ekrany; wynika z ui/shell/nav.ts, nie z drugiej listy
 
     api/                ── JEDYNE miejsce z fetch ──────────────────────────────
       httpClient.ts     fetch + nagłówek CSRF na mutacjach + 401/403 → typowane wyjątki
-      dto.ts            koperty odpowiedzi (§5.2)
-      sessions.ts       listSessions · getSession · postCorrection
-      flags.ts          listFlags · getFlag · resolveFlag
-      events.ts         listEvents
-      exports.ts        listExports · retryExport
-      pilots.ts · fleet.ts · stats.ts · audit.ts · maintenance.ts · me.ts
+      dto.ts            koperty odpowiedzi (§5.2) + LUSTRA unii z serwera
+      session.ts        login · logout · me · switchScope · googleClient
+      pilots.ts · fleet.ts · log.ts · bugReports.ts
+      memberships.ts    kolejka zgłoszeń kodem klubu i trzy decyzje (issue #101)
+      clubCode.ts       kod klubu: odczyt, rotacja, wyłączenie
+      organizations.ts  moduł PLATFORMY - kluby na serwerze
                         (jeden plik = jeden zasób = jeden prefiks trasy - jak server/src/http/routes/)
 
     queries/            ── klucze i hooki TanStack ──────────────────────────────
       keys.ts           JEDNO miejsce z kształtem kluczy (§4.2)
       client.ts         QueryClient + domyślne (staleTime, refetchOnWindowFocus, retry)
-      useSessions.ts · useFlags.ts · useResolveFlag.ts · …
+      useSession.ts · usePilots.ts · usePilotCommands.ts · useFleet.ts
+      useLog.ts · useLogCommands.ts · useBugReports.ts
+      useMemberships.ts · useClubCode.ts · useOrganizations.ts
                         mutacja deklaruje SWOJE unieważnienia tutaj, nie na ekranie
 
-    screens/            ── jeden katalog na ekran A* ────────────────────────────
-      dni/
-        DniScreen.tsx       widok: układ + komponenty; zero arytmetyki
-        dniFilters.ts       CZYSTY: filtry ↔ query string (testowany w Node)
-        dniRows.ts          CZYSTY: DTO → wiersze tabeli (plakietki, „-" zamiast zera)
-      dzien/
-        DzienScreen.tsx
-        dzienTimeline.ts    CZYSTY: zdarzenia → wiersze osi (kolejność, voided, metoda)
-      flagi/ · zdarzenia/ · eksporty/ · statystyki/ · piloci/ · flota/ · progi/ · audyt/ · konserwacja/ · login/
+    screens/            ── jeden katalog na MODUŁ ──────────────────────────────
+      logbook/          DZIENNIK, trzy poziomy: flota → maszyna → operacja
+        LogbookScreen.tsx · AircraftLogScreen.tsx · SessionScreen.tsx · DateRange.tsx
+        dateRanges.ts · logbookRows.ts · sessionRows.ts · timelineRows.ts
+        trackChart.ts · trackFacts.ts · trackMarkers.ts · markerLabels.ts · sessionVoid.ts
+      accounts/         PILOCI = członkowie klubu (+ kolejka zgłoszeń i kod klubu)
+        AccountsScreen.tsx  lista + JEDNA z trzech szuflad (którą - mówi trasa)
+        AccountDrawer.tsx · RequestDrawer.tsx · ClubCodeDrawer.tsx · PendingCard.tsx
+        accountForm.ts · accountRows.ts · accountRefusal.ts
+        requestForm.ts · requestRows.ts
+      fleet/            SAMOLOTY: karta jednostki + poprawa odczytów
+        FleetScreen.tsx · AircraftDrawer.tsx · AircraftReadingsCard.tsx
+        aircraftForm.ts · aircraftRefusal.ts · fleetRows.ts · currentState.ts · readingForm.ts
+      organizations/    moduł PLATFORMY: kluby na serwerze (issue #101, E1)
+        OrganizationsScreen.tsx · OrganizationDrawer.tsx
+        organizationForm.ts · organizationRows.ts
+      clubs/            wybór zakresu sesji - POZA ramą, jak logowanie (issue #101, E2)
+        ScopePickScreen.tsx · scopeOptions.ts
+      bugs/             ZGŁOSZENIA błędów - moduł PLATFORMY, na czas testów (issue #87)
+        BugsScreen.tsx · BugDrawer.tsx · bugRows.ts · bugStatus.ts
+      login/            LoginScreen.tsx · loginMessage.ts
+      common/           wspólne dla ekranów: apiMessage.ts (odmowy) · values.ts (kreska braku)
 
     ui/
       components/       DESIGN SYSTEM PANELU - 1:1 z SZABLON.html (§3)
-        Button.tsx · Card.tsx · Tile.tsx · DataTable.tsx · Pill.tsx · Banner.tsx
-        Drawer.tsx · KeyValue.tsx · Timeline.tsx · EmptyState.tsx · Skeleton.tsx
-        NoAccess.tsx · Field.tsx · TextInput.tsx · OptionList.tsx · FilterBar.tsx
-        SearchInput.tsx · FilterChip.tsx · PageHead.tsx · Columns.tsx · index.ts
+        Button.tsx · LinkButton.tsx · Card.tsx · DataTable.tsx · Pill.tsx · Banner.tsx
+        Drawer.tsx · EmptyState.tsx · TableSkeleton.tsx · Loadable.tsx · NoAccess.tsx
+        Field.tsx · TextInput.tsx · OptionButton.tsx · SearchInput.tsx · FilterChip.tsx
+        PageHead.tsx · Breadcrumbs.tsx · TrackMap.tsx · VerticalProfile.tsx
+        icons.tsx · index.ts
+        focusTrap.ts · reasonSuffix.ts · skeletonGate.ts   (czyste, z testami obok)
       shell/            rama aplikacji (nie ekran)
-        AppShell.tsx · Sidebar.tsx · NavItem.tsx · navItems.ts · Topbar.tsx
-        Breadcrumbs.tsx · UtcClock.tsx · WhoBox.tsx
+        AppShell.tsx      pasek górny + kolumna boczna + treść (styl lekki, issue #107)
+        nav.ts            KANONICZNA nawigacja: pozycja NALEŻY DO ZDOLNOŚCI
+        scope.ts          kontekst sesji w kolumnie: klub albo platforma (issue #101)
+        initials.ts
 
-    auth/
-      SessionProvider.tsx   tożsamość + rola z GET /admin/me (cienko nad Query, §4.3)
+    auth/               ── brama i tożsamość ───────────────────────────────────
+      SessionProvider.tsx   sesja z GET /admin/api/me (cienko nad Query, §4.3)
+      sessionContext.ts     kontekst + hook (osobno - granica Fast Refresh)
+      ShellRoute.tsx        brama sesji: bez niej ekran logowania, nie pusta rama
+      RequireCapability.tsx trasa modułu platformy pyta o zdolność
+      HomeRedirect.tsx      goły adres → PIERWSZY DOSTĘPNY ekran (homeFor)
       can.ts                CZYSTY: capability → boolean + POWÓD odmowy do UI
+      googleIdentity.ts     jedyne miejsce, które zna skrypt Google Identity Services
 
     styles/
       tokens.css        GENEROWANY z @uzaero/tokens (§1.5)
-      base.css          reset, @font-face, scrollbary, :focus-visible
-      layout.css        --sidebar-w/--topbar-h, .shell/.main/.content
-      components/*.css  jeden plik na komponent, klasy 1:1 z SZABLON
+      fonts.css · base.css · layout.css
+      components/*.css  jeden plik na sekcję, klasy 1:1 z SZABLON
+                        (źródło `design/panel/panel.css` - `npm run panel:css`)
 
   test/
-    architecture.test.ts · tokens.generated.test.ts · classInventory.test.ts
-    (testy modułów czystych leżą przy nich: screens/days/daysFilters.test.ts)
+    architecture.test.ts    granice warstw, których nie pilnuje kompilator
+    appShell.test.tsx       klasy ramy wobec design/panel/SZABLON.html
+    copy.test.ts            napisy bez żargonu systemu, krótkie
+    mirrors.test.ts         lustra unii: panel ↔ serwer
+    panelCss.generated.test.ts · tokens.generated.test.ts
+    (testy modułów czystych leżą PRZY NICH: src/screens/accounts/accountForm.test.ts)
 ```
 
 ### 2.1 Kierunek zależności
@@ -505,6 +542,16 @@ implementacją, nie w jej trakcie (§11 pkt 3).
 Z 126 klas powstają **24 komponenty + 8 elementów ramy (`shell/`)**; reszta to modyfikatory
 (`.on`, `.selected`, `.voided`, `.locked`, `.green`) i klasy wyłącznie mockupowe.
 
+> **Tabela niżej jest PLANEM z 2.0, nie spisem stanu.** Część wierszy opisuje rzeczy,
+> których panel dziś nie ma (`Tile`, `Timeline`, `Columns`, `KeyValueList`, `UtcClock`,
+> pozycja `.locked` z kłódką) albo ma inaczej złożone (rama to jeden `AppShell`, a nie
+> `Sidebar` + `Topbar` + `WhoBox`; zegara UTC nie ma, bo w panelu nie ma kolumny z czasem).
+> **Prawdę o mapowaniu przybija odtąd `admin/test/appShell.test.tsx`** - renderuje ramę
+> i sprawdza każdą jej klasę wobec `design/panel/SZABLON.html`, a `panelCss.generated.test.ts`
+> pilnuje, że arkusz makiet powstaje z arkuszy panelu. Tabela zostaje jako zapis DECYZJI
+> („klasy zostają dosłowne", „modyfikator nie staje się komponentem"), bo te obowiązują
+> nadal - zmienił się inwentarz, nie reguła.
+
 | Klasy z `SZABLON.html` | Komponent | Uwagi do API |
 |---|---|---|
 | `.btn` `.primary` `.ghost` `.danger` `.sm` `.disabled` | `Button` | `variant`, `size`, `disabled` **z powodem** (wzorzec `ActionButton`: powód jest widocznym tekstem, nie tooltipem) |
@@ -535,7 +582,7 @@ zahaszowaną nazwę z CSS Modules. Powód nie jest estetyczny: dopóki nazwa kla
 po obu stronach, **grep po `pill` znajduje jednocześnie mockup i komponent**, a recenzent
 może porównać DOM z plikiem HTML linia w linię. CSS Modules, Tailwind i styled-components
 tę własność kasują - a to ona jest technicznym znaczeniem reguły „wdrażamy 1:1".
-Ryzyko kolizji globalnych zamyka `classInventory.test.ts` (§3.3) plus reguła „jedna klasa
+Ryzyko kolizji globalnych zamyka `panelCss.generated.test.ts` (§3.3) plus reguła „jedna klasa
 zdefiniowana w dokładnie jednym pliku CSS".
 
 ### 3.3 Gdy mockup i komponent się rozjadą
@@ -545,23 +592,29 @@ zdefiniowana w dokładnie jednym pliku CSS".
 Panel niczego w tej zasadzie nie zmienia - zmienia tylko to, że rozjazd trzeba umieć **wykryć**,
 bo 20 plików × 126 klas to za dużo na oko.
 
-Trzy detektory, wszystkie wykonywalne:
+Cztery detektory, wszystkie wykonywalne:
 
 1. **`tokens.generated.test.ts`** - `admin/src/styles/tokens.css` == `themeCssBlock(THEMES.night)`.
    Łapie dryf kolorów w kodzie.
 2. **`mockupTokens.test.ts`** (§1.7) - zmienne w `design/**/*.html` == `THEMES`.
    Łapie dryf kolorów w designie.
-3. **`classInventory.test.ts`** - zbiór klas zdefiniowanych w `admin/src/styles/components/*.css`
-   == zbiór klas z `<style>` w `design/admin/SZABLON.html` **minus** lista klas ramy mockupu
-   (spisana jawnie w teście, z komentarzem dlaczego każda tam jest).
-   - Klasa dodana do mockupu, a nieobecna w panelu → czerwony test. To jest „ekran
-     zaimplementowany z pominięciem sekcji", złapany maszynowo.
-   - Komponent wymyślony w kodzie bez mockupu → też czerwony. To jest „upraszczam sobie ekran",
-     złapane z drugiej strony.
+3. **`panelCss.generated.test.ts`** - następca planowanego `classInventory.test.ts`
+   i rozstrzygnięcie MOCNIEJSZE od niego: arkusz makiet `design/panel/panel.css` nie jest
+   PORÓWNYWANY z arkuszami panelu, tylko z nich GENEROWANY (`npm run panel:css` w `admin/`,
+   plus `design/panel/rama.css` z klasami, których panel nie ma - kanwa, okno przeglądarki,
+   inwentarz). Zbiory nie mają jak się rozjechać, bo jest jeden.
+   - Nowy komponent dokłada się do `admin/src/styles/components/*.css` i uruchamia generator -
+     makieta i panel widzą go w tej samej chwili.
+   - Ręczna poprawka w `panel.css` znika przy najbliższym przebiegu i test to zgłasza.
+4. **`appShell.test.tsx`** - każda klasa wyrenderowanej RAMY istnieje w `design/panel/SZABLON.html`.
+   Arkusz jest wspólny, więc rozjazd może powstać już tylko w ZNACZNIKACH: klasa użyta w JSX,
+   której szablon nie zna, dostaje zero reguł i wygląda jak brak stylu - a tego nikt nie zobaczy
+   bez zalogowania do panelu z działającym serwerem.
 
 Procedura przy rozjeździe (do `architektura-kodu.md` §7 jako przepis „Nowy ekran panelu"):
 
-1. Otwórz `design/admin/A0x.html` obok edytora i przejdź **sekcja po sekcji**.
+1. Otwórz makietę z `design/panel/` obok edytora i przejdź **sekcja po sekcji**.
+   (`design/admin/` to ARCHIWUM panelu 1.0 od 2026-08-30, nie specyfikacja.)
 2. Brakuje wzorca w bibliotece → **dodaj komponent**, nie upraszczaj ekranu.
 3. Mockup wygląda na błędny → **rozmowa**, potem poprawka mockupu, potem kod.
 4. Poprawka wizualna wychodzi z implementacji → wraca do `SZABLON.html` **w tym samym commicie**,
@@ -672,9 +725,11 @@ export function useResolveFlag() {
 `ANALIZA` §3 nazywa deep linki podstawowym scenariuszem współpracy („wklej mi link do tego
 dnia"). Filtr trzymany w Zustandzie albo w `useState` to filtr, którego nie da się wkleić,
 i lista, która gubi się po `F5`. Dlatego: **`useSearchParams` jest magazynem filtrów**,
-a `screens/days/daysFilters.ts` (moduł czysty, testowany) tłumaczy query string na obiekt
-filtra i z powrotem. Bonus, który wychodzi za darmo: klucz zapytania `keys.sessions.list(f)`
-jest funkcją tego samego obiektu, więc powrót „wstecz" trafia w cache.
+a ekran czyta go wprost (`AccountsScreen`, `FleetScreen`, `OrganizationsScreen`: `szukaj`,
+`stan`, `kolejnosc`); tam, gdzie tłumaczenie query stringu ma własne reguły, robi to moduł
+CZYSTY obok ekranu - `screens/logbook/dateRanges.ts` dla zakresu dat dziennika. Bonus, który
+wychodzi za darmo: klucz zapytania jest funkcją tego samego obiektu filtra, więc powrót
+„wstecz" trafia w cache.
 
 ### 4.5 Ustawienia domyślne QueryClienta
 
@@ -813,14 +868,14 @@ z `projectSession`, paginacja kursorowa, re-eksport po `resolve`, `409` przy wy�
 **Panel nie testuje żadnej z tych rzeczy** - testowanie autoryzacji przez UI sprawdza atrapę,
 a nie serwer.
 
-**Panel (vitest + jsdom + Testing Library) - cztery rodziny i nic poza nimi:**
+**Panel (vitest, w Node - bez jsdom i bez Testing Library) - cztery rodziny i nic poza nimi:**
 
 | Rodzina | Zawartość | Dlaczego to jest wartościowe |
 |---|---|---|
 | **Granice warstw** | `admin/test/architecture.test.ts` - tabela z §2.1 + reguły z §2.2, z testem kontrolnym skanera | Reguła bez egzekucji jest życzeniem - doktryna z `architektura-kodu.md` §2 |
-| **Moduły czyste ekranów** | `dniFilters` (filtry ↔ query string, w obie strony), `dniRows` (DTO → wiersz, „-" zamiast zera przy dniu otwartym), `dzienTimeline` (kolejność, `voided`, metoda), `can` (zdolność → dostęp + powód) | **Tu leży większość testów panelu, z założenia** - dokładnie jak `statsDay.test.ts`/`cockpitLog.test.ts`/`historyDays.test.ts` w aplikacji. Node, bez DOM, bez sieci |
-| **Kontrakt z mockupem** | `tokens.generated.test.ts`, `mockupTokens.test.ts`, `classInventory.test.ts` (§3.3) | Wykonywalna postać reguły „wdrażamy 1:1" |
-| **Zachowanie komponentów o realnym ryzyku** | `Drawer` (Esc, powrót fokusu), `DataTable` (sort + link osiągalny z klawiatury), `NavItem.locked` (nieklikalny, **z powodem**), `Banner`/`Timeline` (**payload renderowany jako tekst, nigdy jako HTML**) | Cztery zachowania, których serwer nie może wymusić. Ostatnie jest testem bezpieczeństwa |
+| **Moduły czyste ekranów** | `accountForm`/`requestForm` (ocena wpisu: co blokuje BEZ zdania, a co ze zdaniem), `accountRows`/`organizationRows`/`bugRows` (DTO → wiersz, plakietki, kreska braku), `dateRanges` (zakres dat ↔ query string, w obie strony), `currentState` (kiedy pola stanu są do odczytu), `scope`/`scopeOptions` (kontekst sesji i karty wyboru zakresu), `can` (zdolność → dostęp + powód) | **Tu leży większość testów panelu, z założenia** - dokładnie jak `statsDay.test.ts`/`cockpitLog.test.ts`/`historyDays.test.ts` w aplikacji. Node, bez DOM, bez sieci |
+| **Kontrakt z mockupem** | `tokens.generated.test.ts` (palety), `panelCss.generated.test.ts` (arkusz makiet POWSTAJE z arkuszy panelu), `appShell.test.tsx` (każda klasa ramy istnieje w `SZABLON.html`), `copy.test.ts` (napisy bez żargonu systemu), `mirrors.test.ts` (lustra unii panel ↔ serwer) | Wykonywalna postać reguły „wdrażamy 1:1" |
+| **Zachowanie komponentów o realnym ryzyku** | `focusTrap` (pułapka fokusu szuflady i powrót na element, który ją otworzył), `skeletonGate` (próg i minimum plamki), `reasonSuffix` (powód blokady doklejony do etykiety - kropka schodzi, wielka litera zostaje) | Zachowania, których serwer nie może wymusić, a których nie widać bez zalogowania do panelu. Wszystkie mają postać modułu CZYSTEGO obok komponentu - to jest cena za to, żeby dało się je przetestować w Node |
 
 **Czego świadomie nie ma:** testów hooków Query na zamockowanym `fetch` (sprawdzają mock),
 testów migawkowych ekranów (utrwalają DOM, a specyfikacją jest mockup - pokrywa go rodzina 3),
