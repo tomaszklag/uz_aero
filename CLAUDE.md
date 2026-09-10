@@ -2606,8 +2606,9 @@ design-first obowiązuje tu tak samo w aplikacji, jak w panelu.
   a **kod pilota i rola żyją na CZŁONKOSTWIE** (`memberships` - `pilots.code` i
   `pilots.role` znikają); superadmin = `pilots.platform_role` bez klubu; telefon
   w kontekście JEDNEGO aktywnego klubu (przełącznik w 13 tylko przy >1 członkostwie,
-  „Mój dzień" pokazuje WSZYSTKIE operacje); produkcja = **migracja z backfillem**
-  (od 1.0.0 trwają testy w jednym klubie); drogi dołączenia: pierwotnie trzy - **ZMIENIONE
+  „Mój dzień" pokazuje WSZYSTKIE operacje); produkcja = pierwotnie **migracja
+  z backfillem**, **ZMIENIONE 2026-09-10 na NOWĄ INSTANCJĘ** (sekcja „Nowa instancja
+  zamiast migracji" niżej); drogi dołączenia: pierwotnie trzy - **ZMIENIONE
   2026-09-09 na JEDNĄ: kod klubu z zatwierdzeniem** (sekcja „JEDNA droga dołączenia"
   niżej; link osobisty i adres e-mail WYCOFANE); bez wysyłki e-maili w 2.0.0; pakiet
   Android `com.ninerdeck.app`
@@ -3139,6 +3140,30 @@ obowiązujące odtąd KAŻDY nowy ekran i KAŻDE nowe zapytanie do magazynu:
   je zobaczy, napisze je drugi raz po swojemu.
 - **czego epik F świadomie NIE ROBI**: odtwarzania rejestru wszystkich klubów naraz,
   „opuść klub" z telefonu (D6: wychodzi się przez panel).
+
+## Wielofirmowość 2.0.0 - NOWA INSTANCJA zamiast migracji produkcji (decyzja 2026-09-10)
+**2.0.0 startuje na PUSTEJ bazie w nowym projekcie, a stara instancja dożywa.** Odwraca
+decyzję 5 z issue #97 („produkcja = migracja z backfillem"). Pełny zapis i konsekwencje:
+`docs/wielofirmowosc.md` §10; zadania: issue #106 i #120.
+- **argument za migracją był fałszywy**: backfill `org_id` to operacja JEDNORAZOWA dla jednej
+  bazy 1.x i nigdy się nie powtórzy - przyszły klub zakłada superadministrator w module
+  Organizacje, na bazie już wielofirmowej. Migracja testowała ścieżkę martwą; pusta baza
+  testuje TĘ, którą przejdzie każdy klient (seed → Organizacje → klub → kod klubu → piloci)
+- **dwie instancje przez okres przejściowy**: stara (`uzaeroserver-production`, pakiet
+  `com.tomekklag.uzaero`, stary klient OAuth) stoi nietknięta, dopóki testerzy nie przejdą
+  na 2.0.0; nowa na `app.ninerdeck.pl`. **Nowy serwer nie musi rozumieć tokenu bez `org`** -
+  kompatybilność wsteczną z §11 zdejmuje sam fakt, że stary serwer dalej odpowiada
+- **migracja 8 zostaje w kodzie nietknięta**, tylko nigdy nie zobaczy danych; `SEED_ORG_NAME`
+  i `SEED_ORG_SLUG` przestają być potrzebne na produkcji. W1 z epiku W (próba generalna
+  `pg_dump` → migracja na kopii → sumy kontrolne) ODPADA - istniał, żeby obronić backfill
+- **zrzut starej bazy idzie do ARCHIWUM, nie do nowej instancji**: to jedyne prawdziwe dane
+  z lotu, jakie projekt ma, i materiał kalibracyjny (§3.6b) - `consumptionReplay.ts`
+  i `replay.ts` czytają go bez żywej bazy
+- **cena jest jedna i realna**: flotę wpisuje się od nowa (normy paliwa i oleju, pojemności,
+  minima, format licznika, stany początkowe), piloci rejestrują się ponownie, a dokumenty
+  klubu z okresu testów zostają po starej stronie
+- **do rozstrzygnięcia po wygaszeniu starej instancji**: czy wyciąć backfill z migracji 8
+  razem z imiennym wyjątkiem na `UPDATE` w `architecture.test.ts`
 
 ## Obieg gałęzi (git-flow od 2026-09-08, milestone „Wielofirmowość + SaaS 2.0.0")
 ```
