@@ -3044,8 +3044,17 @@ Organizacje, wybór klubu, członkowie, zgłoszenia i kod klubu. Decyzje i odst�
   od epiku C (C6), a `SZABLON.html` miał już postać właściwą. Komponent `.club-code`
   przeszedł z `design/panel/rama.css` do `admin/src/styles/components/surfaces.css` pod
   TĄ SAMĄ nazwą, jak zapowiadał tamten plik; `panel.css` przegenerowany.
-- **czego epik E świadomie NIE ROBI**: wejścia superadministratora w dane klubu (§3.3 -
-  z wnętrza widzi liczby i administratorów), zmiany sluga i rotacji kodu z platformy (kod
+- **SUPERADMINISTRATOR NIE PRZEGLĄDA INNYCH KLUBÓW** (decyzja właściciela 2026-09-10;
+  §3.3 przestał być propozycją). Z wnętrza klubu widzi DOKŁADNIE: nazwę, adres, stan,
+  datę założenia, LICZBĘ członków, LICZBĘ maszyn, kod klubu i administratorów (do kogo
+  dzwonić). Ani wiersza dziennika, ani maszyny, ani pilota poza administratorami. Nie ma
+  też trasy, którą sesja platformowa otwierałaby panel klubu - `POST /auth/switch`
+  przełącza wyłącznie do klubu z AKTYWNYM członkostwem i rolą panelu. Operator, który ma
+  pomóc klubowi, dostaje od niego członkostwo - jawnie i z audytem. **Punkt „wejście do
+  panelu klubu" z listy zadań issue #101 wypadł razem z tą decyzją; nie proponuj go
+  ponownie.** Kolejka zgłoszeń błędów nie jest wyjątkiem: opisuje APLIKACJĘ, nie klub
+  (issue #99, C6).
+- **czego epik E świadomie NIE ROBI**: zmiany sluga i rotacji kodu z platformy (kod
   prowadzi klub), edycji administratorów klubu z modułu Organizacje. Zostaje epik F
   (aplikacja pilota, issue #102).
 

@@ -533,6 +533,64 @@ describe('logowanie do panelu: sesja klubu albo sesja platformowa', () => {
     expect(me.statusCode).toBe(200);
     expect(me.json()).toEqual(res.json());
   });
+
+  /**
+   * SUPERADMINISTRATOR NIE PRZEGLĄDA KLUBÓW (decyzja właściciela 2026-09-10,
+   * `docs/wielofirmowosc.md` §3.3 - do tej pory propozycja).
+   *
+   * ══ DLACZEGO TEN PRZYPADEK ISTNIEJE OSOBNO ══
+   * Do epiku E własność „sesja platformowa nie otwiera tras klubu" wisiała na jednej
+   * asercji: `GET /me` odpowiadał jej 401. Epik E zmienił `/me` w trasę OBU rodzajów
+   * sesji (pytanie „kim jestem" zadają obie) - i razem z tą zmianą własność straciła
+   * jedynego strażnika, choć sama się nie zmieniła. Stąd przypadek na trasach, które
+   * naprawdę niosą dane klubu: dziennik, flota i piloci.
+   *
+   * 401, nie 403: to nie jest „twoja rola tego nie obejmuje", tylko „to nie jest ten
+   * rodzaj tokenu" - ta sama asymetria, co przy zgłoszeniach błędów w drugą stronę
+   * (issue #99, C6).
+   */
+  it('sesja PLATFORMOWA nie otwiera ani jednej trasy z danymi klubu', async () => {
+    const { app, db, identityProvider } = await testHarness();
+    await db.query(
+      `INSERT INTO pilots (id, name, email, active, platform_role)
+       VALUES ('admin', 'Operator', 'operator@ninerdeck.app', TRUE, 'superadmin')`,
+    );
+    identityProvider.register('google:operator', {
+      provider: 'google',
+      subject: 'sub-operator',
+      email: 'operator@ninerdeck.app',
+      emailVerified: true,
+      name: 'Operator',
+    });
+
+    const login = await panelLogin(app, 'google:operator');
+    const cookie = `uzaero_admin=${login.cookies.find((c) => c.name === 'uzaero_admin')!.value}`;
+
+    // Dziennik, flota, piloci, kolejka zgłoszeń klubu i kod klubu - komplet tego, co
+    // „wejście do panelu klubu" musiałoby otworzyć.
+    for (const url of [
+      '/admin/api/sessions',
+      '/admin/api/fleet',
+      '/admin/api/pilots?limit=50',
+      '/admin/api/memberships/pending',
+      '/admin/api/club-code',
+    ]) {
+      const res = await app.inject({ method: 'GET', url, headers: { cookie } });
+      expect(res.statusCode, `${url}: ${res.body}`).toBe(401);
+    }
+
+    // I nie da się tam wejść przełączeniem: cel musi mieć AKTYWNE członkostwo z rolą
+    // panelu, a superadministrator nie ma żadnego. Klub Alfa istnieje - odpowiedź 404
+    // opisuje więc brak członkostwa, a nie brak klubu.
+    const jump = await app.inject({
+      method: 'POST',
+      url: '/admin/api/auth/switch',
+      headers: { cookie, ...ADMIN_CSRF_HEADERS },
+      payload: { orgId: ORG_A },
+    });
+    expect(jump.statusCode).toBe(404);
+    expect(jump.cookies.find((c) => c.name === 'uzaero_admin')).toBeUndefined();
+  });
 });
 
 // ══ 3. JEDYNE W KLUBIE, NIE NA SERWERZE ═══════════════════════════════════════════

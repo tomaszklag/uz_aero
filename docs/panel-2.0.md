@@ -982,7 +982,10 @@ zmienia się w REGUŁACH TEGO dokumentu:
   „członkostwu" wszędzie, gdzie zdanie dotyczy KLUBU („Wyłącz członkostwo", „Usuń
   z klubu", „Najpierw wyłącz członkostwo"). Adres konta Google zszedł do odczytu - to
   poświadczenie osoby, a nie klubu, i klub nie ma nad nim władzy.
-- **czego panel nie umie i nie obiecuje (§5)**: superadministrator nie wchodzi do danych
-  klubu, nie zmienia jego adresu i nie rotuje kodu klubu; imienia osoby nie blokujemy
-  przy drugim członkostwie (propozycja z `docs/wielofirmowosc.md` §8.3 czeka na kontrakt -
-  lista członków nie niesie informacji o innych klubach tej osoby).
+- **czego panel nie umie i nie obiecuje (§5)**: **superadministrator nie przegląda innych
+  klubów** - z ich wnętrza widzi liczby i administratorów, a wejścia do panelu klubu nie
+  ma i mieć nie będzie (decyzja właściciela 2026-09-10, `docs/wielofirmowosc.md` §3.3;
+  operator, który ma pomóc, dostaje od klubu członkostwo - jawnie i z audytem). Nie zmienia
+  też adresu klubu ani nie rotuje kodu klubu. Imienia osoby nie blokujemy przy drugim
+  członkostwie (propozycja z §8.3 czeka na kontrakt - lista członków nie niesie informacji
+  o innych klubach tej osoby).
