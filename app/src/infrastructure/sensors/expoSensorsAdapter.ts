@@ -1,5 +1,5 @@
 /**
- * UZ Aero - adapter czujników na `expo-sensors`.
+ * Ninerdeck - adapter czujników na `expo-sensors`.
  *
  * Jedyne miejsce w kodzie, które wie o `expo-sensors`. Robi trzy rzeczy i ani jednej
  * więcej: przelicza jednostki platformy na jednostki domeny, spina trzy niezależne

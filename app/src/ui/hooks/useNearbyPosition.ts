@@ -1,5 +1,5 @@
 /**
- * UZ Aero - pozycja pilota do listy „najbliżej Ciebie" w wyborze lotniska (issue #14).
+ * Ninerdeck - pozycja pilota do listy „najbliżej Ciebie" w wyborze lotniska (issue #14).
  *
  * Puste pole wyszukiwarki nie ma czego podpowiadać po tekście, ale ma to zrobić po
  * położeniu: pilot stoi zwykle na tym lotnisku, z którego zaraz wystartuje.

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - zaznaczenie pola wpisu przy otwarciu arkusza (`ReadingSheet`, `OilSheet`).
+ * Ninerdeck - zaznaczenie pola wpisu przy otwarciu arkusza (`ReadingSheet`, `OilSheet`).
  *
  * Historia w DWÓCH zgłoszeniach z urządzenia:
  *  1. (2026-07-30) `selectTextOnFocus` na polu sterowanym odnawia zaznaczenie przy

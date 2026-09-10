@@ -1,5 +1,5 @@
 /**
- * UZ Aero - treść ekranów 00c/00d/00e (`ui/screens/logic/clubGateView.ts`) i maska kodu
+ * Ninerdeck - treść ekranów 00c/00d/00e (`ui/screens/logic/clubGateView.ts`) i maska kodu
  * klubu (`logic/clubCode.ts`). Wielofirmowość §7, issue #102.
  */
 

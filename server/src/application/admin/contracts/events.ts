@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - KONTRAKT rejestru zdarzeń panelu (`A04`).
+ * Ninerdeck (serwer) - KONTRAKT rejestru zdarzeń panelu (`A04`).
  *
  * Wszystkie inne ekrany panelu pokazują PROJEKCJE. Ten jeden pokazuje SUROWY FAKT,
  * z którego projekcje powstały - i z tego wynika reguła nadrzędna całego kontraktu:

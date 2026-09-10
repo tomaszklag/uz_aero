@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - JEDYNA droga zapisu panelu administracyjnego.
+ * Ninerdeck (serwer) - JEDYNA droga zapisu panelu administracyjnego.
  *
  * Wymaganie brzmi: wpis do `admin_audit` powstaje w TEJ SAMEJ transakcji co skutek,
  * a napisanie komendy panelu BEZ śladu ma być niemożliwe - nie „odradzane".

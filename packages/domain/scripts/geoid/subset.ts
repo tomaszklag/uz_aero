@@ -1,5 +1,5 @@
 /**
- * UZ Aero - wycinek siatki światowej pod pokrycie aplikacji.
+ * Ninerdeck - wycinek siatki światowej pod pokrycie aplikacji.
  *
  * Cała siatka światowa to ~1 mln węzłów - do bundla aplikacji idzie wycinek.
  * Pokrycie dobrane pod realny zasięg klubowych maszyn: cała Polska z sąsiadami

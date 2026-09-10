@@ -1,5 +1,5 @@
 /**
- * UZ Aero - pętla okazji synchronizacji (§4.3: „sieć to okazja, nie warunek").
+ * Ninerdeck - pętla okazji synchronizacji (§4.3: „sieć to okazja, nie warunek").
  *
  * Sam silnik (`SyncEngine`) niczego nie nasłuchuje - ten hook dostarcza mu OKAZJE:
  *  • start aplikacji,

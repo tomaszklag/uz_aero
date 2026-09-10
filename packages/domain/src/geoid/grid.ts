@@ -1,5 +1,5 @@
 /**
- * UZ Aero - siatka undulacji geoidy i czysta interpolacja dwuliniowa.
+ * Ninerdeck - siatka undulacji geoidy i czysta interpolacja dwuliniowa.
  *
  * PO CO: GPS na Androidzie podaje wysokość nad ELIPSOIDĄ WGS84, a lotnictwo mierzy
  * wysokości AMSL (nad geoidą, czyli poziomem morza). Różnica tych powierzchni -

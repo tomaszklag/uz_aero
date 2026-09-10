@@ -1,14 +1,14 @@
 /**
- * UZ Aero (serwer) - wiersz projekcji `sessions` → fakty treści operacji (issue #75).
+ * Ninerdeck (serwer) - wiersz projekcji `sessions` → fakty treści operacji (issue #75).
  *
  * Domena rozstrzyga, co jest operacją, a co pustym zapisem (`operationSubstance`
- * w @uzaero/domain); ten mapper tylko TŁUMACZY kolumny wiersza na jej fakty, żeby
+ * w @ninerdeck/domain); ten mapper tylko TŁUMACZY kolumny wiersza na jej fakty, żeby
  * czytelnicy wiersza (eksporter karty doby) pytali TĘ SAMĄ regułę, którą liczy telefon
  * i którą listy panelu mają w SQL-u (`pg/substanceSql.ts`). Zero arytmetyki - same
  * przepisania i koalescencje, jak w każdym mapperze tej warstwy.
  */
 
-import { isEmptyOperation, type OperationSubstanceFacts } from '@uzaero/domain';
+import { isEmptyOperation, type OperationSubstanceFacts } from '@ninerdeck/domain';
 
 import type { SessionRow } from '../ports.ts';
 

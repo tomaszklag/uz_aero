@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: kod klubu (`/admin/api/club-code*`).
+ * Ninerdeck - panel: kod klubu (`/admin/api/club-code*`).
  *
  * Trzy trasy, bo trzy pytania: jaki kod obowiązuje, nowy kod, koniec dołączania kodem.
  *

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - punkt wejścia aplikacji.
+ * Ninerdeck - punkt wejścia aplikacji.
  *
  * Odpowiada za rzeczy poziomu aplikacji, i tylko za nie:
  *   • dostawcy kontekstu (safe area, motyw),

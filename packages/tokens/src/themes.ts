@@ -1,5 +1,5 @@
 /**
- * UZ Aero - PALETY MOTYWÓW.
+ * Ninerdeck - PALETY MOTYWÓW.
  *
  * DWA MOTYWY (issue #72, 2026-09-01): **Night** - ciemny, domyślny - i **Solar** -
  * jasny, o maksymalnym kontraście, do pracy w pełnym słońcu. Paper, Sky i Amber/NVG

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - barrel warstwy DOMENY (czysty TypeScript).
+ * Ninerdeck - barrel warstwy DOMENY (czysty TypeScript).
  *
  * Reguła twarda: w `src/domain/**` NIE MA importów Reacta, React Native, Expo, SQLite
  * ani Zustanda. Domena to typy zdarzeń, reguły i projekcje - musi dać się uruchomić

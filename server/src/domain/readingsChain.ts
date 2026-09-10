@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - CIĄGŁOŚĆ ODCZYTÓW WOKÓŁ DANEJ CHWILI (issue #62, piąta i szósta tura).
+ * Ninerdeck (serwer) - CIĄGŁOŚĆ ODCZYTÓW WOKÓŁ DANEJ CHWILI (issue #62, piąta i szósta tura).
  *
  * ══ PO CO ══
  * Wpis ręczny opisuje lot, który JUŻ się odbył - często kilka dni temu, na maszynie,
@@ -34,7 +34,7 @@
  * przetestować na tablicy.
  */
 
-import type { OilHandover } from '@uzaero/domain';
+import type { OilHandover } from '@ninerdeck/domain';
 
 import { latestOilHandover } from '../application/common/aircraftStateView.ts';
 import type { SessionRow } from '../application/common/ports.ts';

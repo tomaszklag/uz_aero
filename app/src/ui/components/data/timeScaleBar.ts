@@ -1,5 +1,5 @@
 /**
- * UZ Aero - PODZIAŁKA CZASU profilu pionowego (issue #47, trzecia tura przeglądu).
+ * Ninerdeck - PODZIAŁKA CZASU profilu pionowego (issue #47, trzecia tura przeglądu).
  *
  * Mapa ma podziałkę odległości i to ona jest jej wskaźnikiem przybliżenia: przy ×2,4
  * czyta „500 m" zamiast „2 km". Profil po dołożeniu zoomu poziomego został bez

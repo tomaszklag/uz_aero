@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - statyczny build panelu pod `/admin/` (§9 architektury frontendu).
+ * Ninerdeck (serwer) - statyczny build panelu pod `/admin/` (§9 architektury frontendu).
  *
  * Testowane są DECYZJE z §9, nie sama wtyczka: (1) serwer serwuje panel ZAWSZE -
  * przełącznika env nie ma (`ADMIN_DIST_DIR` usunięta 2026-08-26), a brakujący katalog
@@ -19,8 +19,8 @@ import { testHarness } from './helpers.ts';
 
 /** Namiastka `admin/dist` - kształt buildu Vite z `base: '/admin/'`. */
 function fakeDist(): string {
-  const dir = mkdtempSync(join(tmpdir(), 'uzaero-admin-dist-'));
-  writeFileSync(join(dir, 'index.html'), '<!doctype html><title>UZ AERO panel</title>');
+  const dir = mkdtempSync(join(tmpdir(), 'ninerdeck-admin-dist-'));
+  writeFileSync(join(dir, 'index.html'), '<!doctype html><title>NINERDECK panel</title>');
   mkdirSync(join(dir, 'assets'));
   writeFileSync(join(dir, 'assets', 'app.js'), 'console.log("panel")');
   return dir;
@@ -32,7 +32,7 @@ describe('statyczny build panelu', () => {
 
     const index = await app.inject({ method: 'GET', url: '/admin/' });
     expect(index.statusCode).toBe(200);
-    expect(index.body).toContain('UZ AERO panel');
+    expect(index.body).toContain('NINERDECK panel');
     // CSP wchodzi razem z self-hostem czcionek: panel nie sięga poza własny origin.
     expect(index.headers['content-security-policy']).toContain("default-src 'self'");
 
@@ -79,7 +79,7 @@ describe('statyczny build panelu', () => {
     // Ścieżka na pewno nieistniejąca: świeży katalog tymczasowy + podkatalog,
     // którego nikt nie utworzył. `@fastify/static` ma to przyjąć ostrzeżeniem,
     // nie wyjątkiem - dev bez buildu panelu musi wystartować.
-    const missingDist = join(mkdtempSync(join(tmpdir(), 'uzaero-admin-dist-')), 'brak');
+    const missingDist = join(mkdtempSync(join(tmpdir(), 'ninerdeck-admin-dist-')), 'brak');
     const { app } = await testHarness({ adminDistDir: missingDist });
 
     expect((await app.inject({ method: 'GET', url: '/admin/' })).statusCode).toBe(404);

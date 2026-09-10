@@ -1,5 +1,5 @@
 /**
- * UZ Aero - arytmetyka stanu paliwa: TANKOWANIE (06) i ZDANIE SAMOLOTU (09B).
+ * Ninerdeck - arytmetyka stanu paliwa: TANKOWANIE (06) i ZDANIE SAMOLOTU (09B).
  *
  * Osobny moduł bez importów React Native, bo to jedyna nietrywialna logika tych ekranów
  * i jedyna, której pomyłka nie objawi się niczym widocznym - zła średnia L/h wygląda

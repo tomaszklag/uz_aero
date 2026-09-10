@@ -1,5 +1,5 @@
 /**
- * UZ Aero - model widoku ekranu 09B/09C „Zdaj samolot".
+ * Ninerdeck - model widoku ekranu 09B/09C „Zdaj samolot".
  *
  * Test pilnuje czterech rzeczy, na których stoi ten ekran: rozpoznania wariantu
  * (są wzloty czy nie), podpowiedzi liczonych z wartości WPISYWANEJ (projekcja nie zna

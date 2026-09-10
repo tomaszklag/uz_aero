@@ -1,5 +1,5 @@
 /**
- * UZ Aero - Trail (`.trail` z mockupu 02a)
+ * Ninerdeck - Trail (`.trail` z mockupu 02a)
  *
  * Oś czasu pod wartością przekazania: kropka, tytuł, jedna linia szczegółów, pionowa
  * kreska łącząca kolejne ogniwa.

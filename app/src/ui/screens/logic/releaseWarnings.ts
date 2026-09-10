@@ -1,5 +1,5 @@
 /**
- * UZ Aero - OSTRZEŻENIA ZDANIA SAMOLOTU (ekran 09B/09C, issue #75 pkt 2).
+ * Ninerdeck - OSTRZEŻENIA ZDANIA SAMOLOTU (ekran 09B/09C, issue #75 pkt 2).
  *
  * Ta sama granica, co w `manualFlightWarnings.ts`: ostrzeżenie NIGDY nie blokuje.
  * Zdanie maszyny, w której nic się nie zmieniło, jest legalne i potrzebne (samolot

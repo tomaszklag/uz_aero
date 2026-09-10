@@ -1,5 +1,5 @@
 /**
- * UZ Aero - Card
+ * Ninerdeck - Card
  *
  * Powtarzalny pojemnik z mockupów (.section / .card / .day-log / .form-card):
  * powierzchnia, obramowanie, zaokrąglenie, opcjonalny nagłówek z etykietą mono

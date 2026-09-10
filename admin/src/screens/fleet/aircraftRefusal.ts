@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: odmowa serwera na samolocie -> zdanie po polsku.
+ * Ninerdeck - panel 2.0: odmowa serwera na samolocie -> zdanie po polsku.
  *
  * `Record<FleetRefusalDto, …>` jest tu KLUCZOWY: powód odmowy dopisany na serwerze
  * (`server/src/domain/fleetGuards.ts`) wywala kompilację panelu, zamiast pokazać

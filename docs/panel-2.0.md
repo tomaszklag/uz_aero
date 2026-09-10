@@ -1,4 +1,4 @@
-# UZ Aero - panel administracyjny 2.0
+# Ninerdeck - panel administracyjny 2.0
 
 Dokument decyzji. Szczegóły warstw, zależności i wzorców danych zostają
 w `architektura-panelu-frontend.md` - tam opisany jest ten sam szkielet, na którym
@@ -41,9 +41,9 @@ Szkielet okazał się dobry i nie ma powodu go ruszać:
 - **jedne drzwi do sieci** - `api/httpClient.ts` jako jedyne miejsce z `fetch`,
   nagłówek CSRF przy każdej mutacji, odpowiedzi spoza 2xx jako `HttpError` ze statusem;
 - **własne DTO** zamiast importu z `server/src` (panel nie widzi wnętrza serwera);
-- **z `@uzaero/domain` wolno brać wyłącznie TYPY** - panel nie liczy po swojemu.
+- **z `@ninerdeck/domain` wolno brać wyłącznie TYPY** - panel nie liczy po swojemu.
   W 2.0 ta reguła nie ma już ani jednego wyjątku;
-- **tokeny, kroje i tło** - `@uzaero/tokens`, motyw `night`, `tokens.css` generowany;
+- **tokeny, kroje i tło** - `@ninerdeck/tokens`, motyw `night`, `tokens.css` generowany;
 - **testy granic** (`test/architecture.test.ts`) - kierunki zależności, `.tsx`
   eksportuje wyłącznie komponenty, zero arytmetyki w widoku, nazwa klasy CSS nie
   powstaje przez sklejenie;

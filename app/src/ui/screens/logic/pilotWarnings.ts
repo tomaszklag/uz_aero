@@ -1,5 +1,5 @@
 /**
- * UZ Aero - CO Z MIĘKKICH FLAG TRAFIA NA EKRAN PILOTA (issue #84).
+ * Ninerdeck - CO Z MIĘKKICH FLAG TRAFIA NA EKRAN PILOTA (issue #84).
  *
  * Zgłoszenie z urządzenia: „system […] daje ostrzeżenie «Zegar telefonu rozjeżdża się
  * z GPS o 121 s - czasy liczymy z GPS» - nie bardzo wiem, co z tym mogę zrobić. Krzyczy

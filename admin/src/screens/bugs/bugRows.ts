@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: zgłoszenie z serwera → WIERSZ TABELI i wiersze szuflady
+ * Ninerdeck - panel 2.0: zgłoszenie z serwera → WIERSZ TABELI i wiersze szuflady
  * (issue #87).
  *
  * Moduł CZYSTY (bez Reacta): decyzje o treści komórek są tu, pod testem, a nie w JSX-ie.
@@ -12,7 +12,7 @@
  * lepiej"), a lista dozwolonych pól zamieniłaby ją w listę pól, o których panel już wie.
  */
 
-import { dateTimeUtcShort } from '@uzaero/format';
+import { dateTimeUtcShort } from '@ninerdeck/format';
 
 import type { BugReportDto } from '../../api/dto';
 import type { PillTone } from '../../ui/components';

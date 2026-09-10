@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - `BugReportRecord` (port) → `AdminBugReport` (kontrakt panelu).
+ * Ninerdeck (serwer) - `BugReportRecord` (port) → `AdminBugReport` (kontrakt panelu).
  *
  * Czysta funkcja, jak reszta katalogu: cała różnica między jednym a drugim to daty
  * zamienione na ISO. Granica typów istnieje mimo to i nie jest ozdobą - port opisuje,

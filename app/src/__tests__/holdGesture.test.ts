@@ -1,5 +1,5 @@
 /**
- * UZ Aero - podpisy gestu przytrzymania (issue #67).
+ * Ninerdeck - podpisy gestu przytrzymania (issue #67).
  *
  * Odmiana jest tu całą treścią modułu: stary `accessibilityHint` w `ActionButton`
  * składał „Przytrzymaj ${s} sekundy" na sztywno, więc zejście z 2 s na 1 s

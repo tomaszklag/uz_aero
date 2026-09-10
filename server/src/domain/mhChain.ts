@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - flagi łańcucha sesji samolotu (§4.5).
+ * Ninerdeck (serwer) - flagi łańcucha sesji samolotu (§4.5).
  *
  * Serwer porządkuje sesje samolotu NIE po czasie, tylko po liczniku MH - licznik jest
  * monotoniczny i fizyczny, a zegary telefonów bywają przestawione. Sesje ustawione po
@@ -27,7 +27,7 @@
  * życia flag należą do warstwy aplikacji.
  */
 
-import { MH_TOLERANCE_H, fuelToleranceL, type FlagType } from '@uzaero/domain';
+import { MH_TOLERANCE_H, fuelToleranceL, type FlagType } from '@ninerdeck/domain';
 
 export interface ChainLink {
   sessionUuid: string;

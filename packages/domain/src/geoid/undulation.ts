@@ -1,5 +1,5 @@
 /**
- * UZ Aero - undulacja geoidy EGM96 dla pozycji z GPS.
+ * Ninerdeck - undulacja geoidy EGM96 dla pozycji z GPS.
  *
  * Publiczne API korekty elipsoida→AMSL: adapter GPS aplikacji
  * (`app/src/infrastructure/gps/locationToFix.ts`) odejmuje tę wartość od wysokości

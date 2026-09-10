@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - role i uprawnienia panelu administracyjnego.
+ * Ninerdeck (serwer) - role i uprawnienia panelu administracyjnego.
  *
  * Decyzja 2026-07-31 (odwraca 2026-07-24): panel powstaje jako osobna aplikacja web,
  * z dwiema rolami. Projekt UI: `design/admin/`; analiza i mapowanie ekranów na

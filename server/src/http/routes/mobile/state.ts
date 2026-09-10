@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - trasy stanu floty: `GET /aircraft/:id/state`
+ * Ninerdeck (serwer) - trasy stanu floty: `GET /aircraft/:id/state`
  * i `GET /sessions/:uuid/sync-status` (§4.6).
  *
  * Oba czyste odczyty projekcji - telefon odpytuje je przy starcie, po opróżnieniu

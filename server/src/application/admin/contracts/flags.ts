@@ -1,10 +1,10 @@
 /**
- * UZ Aero (serwer) - KONTRAKT skrzynki flag (`A03`).
+ * Ninerdeck (serwer) - KONTRAKT skrzynki flag (`A03`).
  *
- * Wyłącznie typy; jedyny dozwolony import to `@uzaero/domain` (patrz `sessions.ts`).
+ * Wyłącznie typy; jedyny dozwolony import to `@ninerdeck/domain` (patrz `sessions.ts`).
  */
 
-import type { FlagStatus, FlagType } from '@uzaero/domain';
+import type { FlagStatus, FlagType } from '@ninerdeck/domain';
 
 /** Jedna sprawa w skrzynce. Rozbieżność (`details`) niesie adapter - kształt zależy od typu. */
 export interface AdminFlagListItem {

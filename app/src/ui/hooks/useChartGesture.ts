@@ -1,5 +1,5 @@
 /**
- * UZ Aero - GESTY WYKRESÓW ŚLADU (issue #47 pkt 7 i 8).
+ * Ninerdeck - GESTY WYKRESÓW ŚLADU (issue #47 pkt 7 i 8).
  *
  * Jeden hook dla mapy i dla profilu, bo oba odpowiadają na te same dotknięcia:
  *  • **jeden palec** - kursor: pokazuje, co działo się w tej chwili, i podaje ją wyżej,

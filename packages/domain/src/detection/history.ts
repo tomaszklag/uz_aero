@@ -1,5 +1,5 @@
 /**
- * UZ Aero - bufor historii fixów (okno obserwacji detektora).
+ * Ninerdeck - bufor historii fixów (okno obserwacji detektora).
  *
  * DLACZEGO ISTNIEJE: pierwsza wersja detektora decydowała z JEDNEGO fixa, a okno
  * dziesięciu sekund żyło w hooku UI wyłącznie na potrzeby prędkości pionowej. To

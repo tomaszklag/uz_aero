@@ -1,5 +1,5 @@
 /**
- * UZ Aero - czujniki inercyjne: usunięcie grawitacji i agregaty sekundowe.
+ * Ninerdeck - czujniki inercyjne: usunięcie grawitacji i agregaty sekundowe.
  *
  * ── DLACZEGO SAM MODUŁ PRZYSPIESZENIA NIE WYSTARCZA ──────────────────────────
  * Naturalny pomysł brzmi: „weźmy moduł wektora przyspieszenia, będzie niezależny od tego,

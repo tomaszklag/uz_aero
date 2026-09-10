@@ -1,5 +1,5 @@
 /**
- * UZ Aero - InlineNote (`.certified-row` / `.none-box` z mockupu 02a)
+ * Ninerdeck - InlineNote (`.certified-row` / `.none-box` z mockupu 02a)
  *
  * Zwięzła adnotacja w kolorowym pudełku: ikona + jedna–trzy linie tekstu mono 10 px.
  *

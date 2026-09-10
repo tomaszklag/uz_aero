@@ -1,5 +1,5 @@
 /**
- * UZ Aero - pojedynczy odczyt GPS w postaci, jakiej potrzebuje detekcja.
+ * Ninerdeck - pojedynczy odczyt GPS w postaci, jakiej potrzebuje detekcja.
  *
  * Wydzielony z automatu, bo czytają go teraz wszystkie moduły detekcji, a automat
  * czyta je wszystkie - wspólny typ w pliku automatu robił cykl importów.

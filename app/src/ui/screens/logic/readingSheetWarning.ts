@@ -1,5 +1,5 @@
 /**
- * UZ Aero - OSTRZEŻENIA W ARKUSZU ODCZYTU (uwaga z urządzenia, 2026-08-29).
+ * Ninerdeck - OSTRZEŻENIA W ARKUSZU ODCZYTU (uwaga z urządzenia, 2026-08-29).
  *
  * Zgłoszenie: „brakuje tam walidacji. Przykładowo jak podam paliwa więcej niż jest
  * zadeklarowana pojemność zbiorników samolotu, to powinien być warning. Dodatkowo

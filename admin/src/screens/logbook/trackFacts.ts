@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: liczby pod śladem sesji (moduł CZYSTY).
+ * Ninerdeck - panel 2.0: liczby pod śladem sesji (moduł CZYSTY).
  *
  * ══ TRZY LICZBY, NIE TRZYNAŚCIE ══
  * Koperta śladu niesie komplet statystyk (prędkości, czasy pięciu faz, jakość trzymania
@@ -12,7 +12,7 @@
  * wygląda jak usterka zapisu, a tu znaczy „nagranie tego nie obejmuje".
  */
 
-import { thousands } from '@uzaero/format';
+import { thousands } from '@ninerdeck/format';
 
 import type { SessionTrackDto } from '../../api/dto';
 

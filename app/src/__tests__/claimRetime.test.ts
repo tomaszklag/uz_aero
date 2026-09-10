@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test PRZESUNIĘCIA GODZINY PRZEJĘCIA (issue #43, uwaga z urządzenia).
+ * Ninerdeck - test PRZESUNIĘCIA GODZINY PRZEJĘCIA (issue #43, uwaga z urządzenia).
  *
  * Najbardziej ryzykowna operacja całego trybu edycji: jedno pole potrafi przestawić
  * czasy wszystkich zdarzeń sesji. Dlatego plan liczy się OSOBNO od zapisu i ma testy

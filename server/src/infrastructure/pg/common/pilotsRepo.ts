@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter osób i członkostw na ścieżce LOGOWANIA (`PilotsPort`).
+ * Ninerdeck (serwer) - adapter osób i członkostw na ścieżce LOGOWANIA (`PilotsPort`).
  *
  * Konta powstają przez zatwierdzenie zgłoszenia albo w panelu, więc adapter jest
  * czystym ODCZYTEM ścieżki logowania i bramy; zapis mieszka w seedzie

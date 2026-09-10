@@ -1,5 +1,5 @@
 /**
- * UZ Aero - odczyt lotnisk i pasów z plików OurAirports.
+ * Ninerdeck - odczyt lotnisk i pasów z plików OurAirports.
  *
  * Zbiór jest w DOMENIE PUBLICZNEJ (bez klucza, bez limitów, bez wymogu atrybucji, choć
  * ją podajemy) i to on daje szkielet katalogu: kod ICAO, nazwę, pozycję i elewację.

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test FORMATOWANIA I PARSOWANIA odczytów.
+ * Ninerdeck - test FORMATOWANIA I PARSOWANIA odczytów.
  *
  * `parseMotoHours` jest jedynym miejscem, w którym napis wpisany przez pilota staje się
  * liczbą trafiającą do rejestru zdarzeń - a odczyt MH porządkuje sesje samolotu (§4.5).

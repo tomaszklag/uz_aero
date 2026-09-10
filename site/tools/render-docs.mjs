@@ -178,7 +178,7 @@ for (const name of (opt('extra') ?? '').split(',').map((s) => s.trim()).filter(B
 
 // ── żywe ekrany ────────────────────────────────────────────────────────────
 const OVERRIDE = `<style id="embed-override">
-  /* Osadzenie w stronie uzaero: sama rama telefonu, bez etykiet i nawigacji makiety. */
+  /* Osadzenie w stronie publicznej: sama rama telefonu, bez etykiet i nawigacji makiety. */
   :root, body { --phone-scale: 1 !important; }
   html, body { height: auto !important; min-height: 0 !important; }
   body { margin: 0 !important; padding: 0 !important; gap: 0 !important; display: block !important;
@@ -236,7 +236,7 @@ const shell = ({ root, docroot, title, desc, bodyClass, current, main, toc }) =>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${esc(title)} - Dokumentacja UZ Aero</title>
+<title>${esc(title)} - Dokumentacja Ninerdeck</title>
 <meta name="description" content="${esc(desc)}">
 <link rel="icon" href="${root}favicon.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -249,9 +249,9 @@ const shell = ({ root, docroot, title, desc, bodyClass, current, main, toc }) =>
 <body class="${bodyClass}">
 <div class="backdrop" aria-hidden="true"></div>
 <header class="top"><div class="wrap">
-  <a class="brand" href="${root}" aria-label="UZ Aero - strona główna">
-    <span class="mark"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg></span>
-    <span class="brand-name">UZ <em>AERO</em></span>
+  <a class="brand" href="${root}" aria-label="Ninerdeck - strona główna">
+    <span class="mark"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.1 8.1A6.1 6.1 0 1 0 14.8 13.52L14.8 22H18.1ZM14.8 8.1A2.8 2.8 0 0 1 9.2 8.1A2.8 2.8 0 0 1 14.8 8.1Z"/></svg></span>
+    <span class="brand-name">NINER<em>DECK</em></span>
   </a>
   <nav aria-label="Nawigacja"><a href="${root}">Strona główna</a><a href="${root}wydania/">Wydania</a><a class="on" href="${docroot}">Dokumentacja</a><a class="cta dl" href="${root}pobierz/"><span class="dl-ico"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85a.63.63 0 0 0-.83.22l-1.88 3.24a11.43 11.43 0 0 0-8.94 0L5.65 5.67a.63.63 0 0 0-.83-.22c-.3.16-.42.54-.26.85L6.4 9.48A10.81 10.81 0 0 0 1 18h22a10.81 10.81 0 0 0-5.4-8.52zM7 15.25a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5zm10 0a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5z"/></svg></span><span class="dl-txt"><b>Pobierz</b></span><span class="dl-arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 11 5 5 5-5"/><path d="M5 20h14"/></svg></span></a></nav>
 </div></header>
@@ -274,7 +274,7 @@ ${main}
 </div>
 
 <footer class="wrap">
-  <span>UZ Aero · 2026</span>
+  <span>Ninerdeck · 2026</span>
   <nav><a href="${root}">Strona główna</a><a href="${root}wydania/">Wydania i zmiany</a><a href="${root}pobierz/">Pobierz aplikację</a><a href="${root}prywatnosc.html">Polityka prywatności</a><a href="${root}regulamin.html">Regulamin</a></nav>
 </footer>
 <script src="${root}dokumentacja.js" defer></script>
@@ -297,12 +297,12 @@ ${p.html}
   </main>`;
   const toc = p.toc.length ? `<p class="doc-toc-title">Na tej stronie</p><ul>${p.toc.map((t) => `<li><a href="#${t.id}">${esc(t.text)}</a></li>`).join('')}</ul>` : '';
   mkdirSync(join(outDir, p.slug), { recursive: true });
-  writeFileSync(join(outDir, p.slug, 'index.html'), shell({ root: '../../', docroot: '../', title: p.title, desc: p.lead ?? `${p.title} - podręcznik UZ Aero`, bodyClass: 'doc-page', current: p.slug, main, toc }));
+  writeFileSync(join(outDir, p.slug, 'index.html'), shell({ root: '../../', docroot: '../', title: p.title, desc: p.lead ?? `${p.title} - podręcznik Ninerdeck`, bodyClass: 'doc-page', current: p.slug, main, toc }));
 });
 
 const homeMain = `  <main class="doc-main doc-home">
     <p class="kicker">Dokumentacja</p>
-    <h1 class="h-display">Podręcznik<br>UZ Aero</h1>
+    <h1 class="h-display">Podręcznik<br>Ninerdeck</h1>
     <p class="doc-lead">${esc(siteLead)}</p>
     ${searchBox('./', true)}
     <p class="doc-start"><span>Zacznij tutaj</span>${START.filter((s) => known.has(s)).map((s) => `<a href="${s}/">${esc(pages.find((p) => p.slug === s).title)}</a>`).join('')}</p>

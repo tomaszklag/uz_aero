@@ -1,5 +1,5 @@
 /**
- * UZ Aero - DROGA PRZEBYTA DO DANEJ CHWILI (issue #47, trzecia tura przeglądu).
+ * Ninerdeck - DROGA PRZEBYTA DO DANEJ CHWILI (issue #47, trzecia tura przeglądu).
  *
  * Profil ma oś CZASU, więc podziałka mówi „15 min". Pilot pyta jednak też o dystans -
  * a ten na osi czasu NIE JEST proporcjonalny: pięć minut wznoszenia po 70 kt to inna

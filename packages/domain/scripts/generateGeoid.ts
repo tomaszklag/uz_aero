@@ -1,5 +1,5 @@
 /**
- * UZ Aero - generator wycinka siatki undulacji geoidy EGM96
+ * Ninerdeck - generator wycinka siatki undulacji geoidy EGM96
  * (`packages/domain/src/geoid/egm96Grid.ts`).
  *
  * URUCHOMIENIE (z korzenia repo, plik siatki pobrany wcześniej z NGA):

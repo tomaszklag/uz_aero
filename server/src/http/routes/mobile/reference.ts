@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - trasa `GET /reference` (§4.6, §4.8).
+ * Ninerdeck (serwer) - trasa `GET /reference` (§4.6, §4.8).
  *
  * ETag/304: flota zmienia się kilka razy w sezonie, a telefony odpytują przy każdym
  * starcie - zgodny znacznik oszczędza pełnej odpowiedzi na łączu, które w terenie

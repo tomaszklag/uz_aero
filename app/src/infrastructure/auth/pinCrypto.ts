@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ADAPTER `PinCryptoPort`: solony SHA-256 (§3.0).
+ * Ninerdeck - ADAPTER `PinCryptoPort`: solony SHA-256 (§3.0).
  *
  * Model zagrożeń opisuje port: 4-cyfrowego PIN-u nie obroni żaden KDF przy wycieku
  * magazynu (10 000 kombinacji), a magazyn i tak trzyma refresh token. Hash z solą

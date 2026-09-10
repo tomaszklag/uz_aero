@@ -1,5 +1,5 @@
 /**
- * UZ Aero - wysokość zrzutu: średnia z okna, nie ostatni fix (issue #21 pkt 2).
+ * Ninerdeck - wysokość zrzutu: średnia z okna, nie ostatni fix (issue #21 pkt 2).
  *
  * Kontrakt: okno liczone wstecz od NAJNOWSZEGO fixa (`DROP_ALT_WINDOW_SEC`), fixy bez
  * wysokości i spoza okna pomijane, brak danych = `null` (nigdy zero). Przypadek

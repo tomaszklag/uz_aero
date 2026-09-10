@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy ODTWORZENIA REJESTRU (§4.9, issue #32,
+ * Ninerdeck - testy ODTWORZENIA REJESTRU (§4.9, issue #32,
  * `application/sync/eventRestore.ts`).
  *
  * Scenariusz źródłowy jest jeden: pilot wyczyścił pamięć aplikacji i „nagle wszystko

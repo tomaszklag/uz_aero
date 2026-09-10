@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - atrapa `SheetsPort` do testów eksportu (§4.7).
+ * Ninerdeck (serwer) - atrapa `SheetsPort` do testów eksportu (§4.7).
  *
  * Jedyna atrapa w zestawie testowym serwera - i celowo: adaptera Google jeszcze nie ma
  * (brak klucza serwisowego), a testy eksportu sprawdzają NASZĄ logikę (bramki, rewizje,

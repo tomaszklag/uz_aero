@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - OGRANICZENIE TEMPA prób w oknie czasu (wielofirmowość §3.8, §5:
+ * Ninerdeck (serwer) - OGRANICZENIE TEMPA prób w oknie czasu (wielofirmowość §3.8, §5:
  * `POST /auth/join` - 10 prób na osobę i 30 na adres IP w 15 minut).
  *
  * ══ LICZNIK W PAMIĘCI PROCESU I TO JEST DECYZJA ══

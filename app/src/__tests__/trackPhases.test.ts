@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy PODZIAŁU ŚLADU NA FAZY (issue #75 pkt 4).
+ * Ninerdeck - testy PODZIAŁU ŚLADU NA FAZY (issue #75 pkt 4).
  *
  * Reguły pod obserwacją: faza należy do ODCINKA (oba końce w oknie lotu), przebiegi
  * DZIELĄ wierzchołek graniczny (łamane stykają się bez dziury), a bieg bez lotów jest

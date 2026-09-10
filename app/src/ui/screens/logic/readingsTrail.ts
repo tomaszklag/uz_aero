@@ -1,5 +1,5 @@
 /**
- * UZ Aero - SZLAK ODCZYTU W ARKUSZU WPISU RĘCZNEGO (issue #84 pkt 1, 2 i 4).
+ * Ninerdeck - SZLAK ODCZYTU W ARKUSZU WPISU RĘCZNEGO (issue #84 pkt 1, 2 i 4).
  *
  * Zgłoszenie: „jak jest odczyt paliwa zastanego, to czemu tam nie wyświetlisz tego
  * samego komponentu obrazującego, jaki był ostatni lot? Ten sam komponent co podczas

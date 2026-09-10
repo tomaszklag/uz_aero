@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy deklinacji magnetycznej.
+ * Ninerdeck - testy deklinacji magnetycznej.
  *
  * Sprawdzamy trzy rzeczy: że model daje dla Polski wartości z właściwego przedziału,
  * że kurs magnetyczny jest MNIEJSZY od geograficznego (deklinacja wschodnia) i że

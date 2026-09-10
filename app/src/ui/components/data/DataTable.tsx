@@ -1,5 +1,5 @@
 /**
- * UZ Aero - DataTable (`.data-table` z mockupu 10)
+ * Ninerdeck - DataTable (`.data-table` z mockupu 10)
  *
  * Tabela wierszy danych: nagłówek kolumn, wiersze rozdzielone włosową linią, opcjonalny
  * **cel korekty** na końcu każdego wiersza.

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ManualEventSheet (mockup 05f „Zapisz ręcznie")
+ * Ninerdeck - ManualEventSheet (mockup 05f „Zapisz ręcznie")
  *
  * Arkusz ręcznego zapisu startu albo lądowania: wybór typu, czas z krokiem minutowym
  * i informacja, że wpis zostanie oznaczony jako ręczny.

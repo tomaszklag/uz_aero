@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - schemat PostgreSQL jako czysty tekst (§5.3).
+ * Ninerdeck (serwer) - schemat PostgreSQL jako czysty tekst (§5.3).
  *
  * Ten sam wzorzec co `app/src/infrastructure/storage/schema.ts` i z tego samego powodu:
  * DDL trzymany osobno da się uruchomić na prawdziwym silniku w testach (tu: PGlite,
@@ -34,7 +34,7 @@
  *
  * **2. Nowa liczba w panelu = nowa KOLUMNA PROJEKCJI, nigdy nowe wyrażenie SQL**
  * (`docs/architektura-panelu-serwer.md` §7.2). Wszystkie kolumny liczbowe `sessions` są
- * PRZEPISANIEM wartości policzonej przez `projectSession` (`@uzaero/domain`) razem z jej
+ * PRZEPISANIEM wartości policzonej przez `projectSession` (`@ninerdeck/domain`) razem z jej
  * regułą. Wyciąganie tych samych rzeczy w locie z `events.payload` byłoby drugim,
  * równoległym odtwarzaniem projekcji - czyli tym, co zaczyna kłamać, gdy zmieni się reguła.
  *
@@ -117,7 +117,7 @@ export const MIGRATION_1 = `
 
     -- Znacznik UNIEWAŻNIENIA POŚWIADCZEŃ konta (przekrój A06).
     --
-    -- Sesja panelu to podpisany JWT w ciasteczku uzaero_admin z TTL 8 h i NIE MA dla
+    -- Sesja panelu to podpisany JWT w ciasteczku ninerdeck_admin z TTL 8 h i NIE MA dla
     -- niej wiersza w bazie - revokeAllFor kasuje refresh_tokens, czyli sesje TELEFONU.
     -- Bez tej kolumny wykradzione poświadczenie panelu przeżywało reset hasła nawet o osiem
     -- godzin, a ekran A06a pisał „Aktywne sesje pilota - unieważnione": obietnica bez
@@ -169,7 +169,7 @@ export const MIGRATION_1 = `
   -- paczki wraca jako duplicates, nie jako podwójne wiersze.
   --
   -- Tabela jest APPEND-ONLY. type celowo BEZ CHECK-a: katalog typów zdarzeń jest
-  -- w @uzaero/domain, a walidacja zachodzi na WEJŚCIU (POST /events, zod) - rejestr
+  -- w @ninerdeck/domain, a walidacja zachodzi na WEJŚCIU (POST /events, zod) - rejestr
   -- ma przyjąć i zachować to, co przyszło z terenu, także gdy katalog się zmieni.
   -- source_device jest NULL-owalny: null znaczy „paczka sprzed wprowadzenia tego pola
   -- albo zapis spoza telefonu" (korekta z panelu podaje tu własną wartość).
@@ -566,7 +566,7 @@ export const MIGRATION_3 = `
  * wyłącznie DOPÓKI analityka nie policzy własnej stawki z lotów (`aircraft_consumption`).
  *
  * `initial_*` opisują JEDNĄ CHWILĘ: co pokazywały przyrządy, gdy jednostkę wprowadzono
- * do UZ Aero. To zerowe ogniwo łańcucha - pierwszy pilot dostaje je jako podpowiedź na
+ * do Ninerdeck. To zerowe ogniwo łańcucha - pierwszy pilot dostaje je jako podpowiedź na
  * kroku liczników, a od pierwszej zdanej sesji przestają cokolwiek znaczyć, bo łańcuch
  * prowadzą odczyty z lotów (`aircraftStateView.pickHandover`). Zlanie ich w jedną grupę
  * z normami byłoby pomyłką kategorii: jedno jest właściwością maszyny, drugie datą.
@@ -944,8 +944,8 @@ export const MIGRATION_8 = `
   -- ═══ BACKFILL: DANE 1.x → JEDEN KLUB ═══════════════════════════════════════
   DO $$
   DECLARE
-    org_name TEXT := current_setting('uzaero.seed_org_name', true);
-    org_slug TEXT := current_setting('uzaero.seed_org_slug', true);
+    org_name TEXT := current_setting('ninerdeck.seed_org_name', true);
+    org_slug TEXT := current_setting('ninerdeck.seed_org_slug', true);
     -- Nie "org_id": w PL/pgSQL nazwa zmiennej zderzyłaby się z kolumną w UPDATE-ach.
     club     TEXT;
     -- Zgłoszenie rejestracyjne 1.x → osoba + członkostwo (pętla niżej).

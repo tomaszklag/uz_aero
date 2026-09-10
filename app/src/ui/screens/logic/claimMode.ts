@@ -1,5 +1,5 @@
 /**
- * UZ Aero - decyzja o trybie `session_claim` przy przejęciu samolotu (§4.4).
+ * Ninerdeck - decyzja o trybie `session_claim` przy przejęciu samolotu (§4.4).
  *
  * §4.4 rozróżnia trzy tryby claimu i to rozróżnienie czyta później serwer przy
  * scalaniu nakładających się sesji:

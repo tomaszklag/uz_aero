@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: GRANICE, KTÓRYCH NIE PILNUJE KOMPILATOR.
+ * Ninerdeck - panel: GRANICE, KTÓRYCH NIE PILNUJE KOMPILATOR.
  *
  * Lustro `server/test/architecture.test.ts` i `app/src/__tests__/architecture.test.ts`,
  * z tą samą doktryną: reguła architektury jest warta tyle, ile jej egzekucja.
@@ -214,7 +214,7 @@ describe('granice warstw panelu', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('z `@uzaero/domain` wolno importować WYŁĄCZNIE typy - poza JEDNYM plikiem', () => {
+  it('z `@ninerdeck/domain` wolno importować WYŁĄCZNIE typy - poza JEDNYM plikiem', () => {
     // Zakaz ma jeden konkretny cel: odciąć panelowi możliwość liczenia. Skoro
     // `projectSession` jest nieosiągalne, jedynym źródłem liczby jest odpowiedź
     // serwera (`docs/architektura-panelu-frontend.md` §5.1).
@@ -237,7 +237,7 @@ describe('granice warstw panelu', () => {
     const allowed = 'screens/logbook/trackChart.ts';
 
     const offenders = filesUnder('.')
-      .filter((f) => valueImportsFrom(codeOf(f), '@uzaero/domain'))
+      .filter((f) => valueImportsFrom(codeOf(f), '@ninerdeck/domain'))
       .filter((f) => f !== allowed);
     expect(offenders).toEqual([]);
 
@@ -261,7 +261,7 @@ describe('granice warstw panelu', () => {
 
   it('nigdzie nie importujemy z `server/src` - panel nie widzi wnętrza serwera', () => {
     const offenders = filesUnder('.').filter((f) =>
-      importedFrom(codeOf(f)).some((from) => from.includes('server/src') || from.includes('@uzaero/server')),
+      importedFrom(codeOf(f)).some((from) => from.includes('server/src') || from.includes('@ninerdeck/server')),
     );
     expect(offenders).toEqual([]);
   });
@@ -269,7 +269,7 @@ describe('granice warstw panelu', () => {
   it('arytmetyka NIE mieszka w widoku - `toFixed`, `Math.round`, `Intl.NumberFormat`', () => {
     // Najtańszy sposób złapania momentu, w którym panel zaczyna liczyć po swojemu:
     // zaczyna się od zaokrąglenia w komórce tabeli. Liczby przychodzą z serwera,
-    // formaty z `@uzaero/format`.
+    // formaty z `@ninerdeck/format`.
     const banned = /\.toFixed\(|Math\.round\(|Math\.floor\(|Math\.ceil\(|Intl\.NumberFormat/;
     const offenders = filesUnder('.')
       .filter((f) => f.endsWith('.tsx') || f.startsWith('ui/'))

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - eksporter karty arkusza (§4.7).
+ * Ninerdeck (serwer) - eksporter karty arkusza (§4.7).
  *
  * ══ JEDNOSTKĄ KARTY JEST DOBA SAMOLOTU (decyzja 2026-08-07) ══
  * Do 2026-08-07 kartę budowała JEDNA sesja. Po skróceniu sesji (§3.6a) nazwa
@@ -47,7 +47,7 @@
  * czy zdał), bo tabelę lotów i tak trzeba zbudować ze zdarzeń.
  */
 
-import { projectSession, type FlagStatus, type FlagType } from '@uzaero/domain';
+import { projectSession, type FlagStatus, type FlagType } from '@ninerdeck/domain';
 
 import { isEmptySessionRow } from '../mappers/operationFacts.ts';
 

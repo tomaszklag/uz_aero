@@ -1,5 +1,5 @@
 /**
- * UZ Aero - KOMUNIKAT O OPERACJI ZAKOŃCZONEJ PRZEZ ADMINISTRATORA (issue #81) - warstwa czysta.
+ * Ninerdeck - KOMUNIKAT O OPERACJI ZAKOŃCZONEJ PRZEZ ADMINISTRATORA (issue #81) - warstwa czysta.
  *
  * ══ PO CO ══
  * Administrator zakończył albo unieważnił z panelu operację, którą prowadził TEN

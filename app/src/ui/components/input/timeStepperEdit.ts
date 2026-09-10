@@ -1,5 +1,5 @@
 /**
- * UZ Aero - wpis GODZINY z klawiatury w `Stepper` (zgłoszenie z urządzenia, 2026-08-14).
+ * Ninerdeck - wpis GODZINY z klawiatury w `Stepper` (zgłoszenie z urządzenia, 2026-08-14).
  *
  * Steppery czasu stoją w trzech arkuszach (korekta odczytu, korekta zrzutu, dopisanie
  * wpisu) i wszystkie potrzebują tej samej umowy: maska stawiająca dwukropek, parser

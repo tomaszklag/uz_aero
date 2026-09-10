@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - komendy uwierzytelnienia (§3.0, §4.6).
+ * Ninerdeck (serwer) - komendy uwierzytelnienia (§3.0, §4.6).
  *
  * Logowanie to jedyna operacja w systemie, która WYMAGA sieci po stronie telefonu
  * (jednorazowe provisioning) - dlatego jej wynik niesie wszystko, czego aplikacja

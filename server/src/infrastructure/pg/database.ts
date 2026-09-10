@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - `Database` na puli `pg`.
+ * Ninerdeck (serwer) - `Database` na puli `pg`.
  *
  * KLUCZOWE: transakcja musi jechać na JEDNYM połączeniu. `pool.query` bierze za każdym
  * razem losowego klienta, więc `BEGIN` i `COMMIT` przez pulę trafiałyby w różne

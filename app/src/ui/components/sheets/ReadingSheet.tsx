@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ReadingSheet (mockupy 02b „Odczyt paliwa" i 02c „Odczyt motogodzin")
+ * Ninerdeck - ReadingSheet (mockupy 02b „Odczyt paliwa" i 02c „Odczyt motogodzin")
  *
  * Arkusz świadomej korekty odczytu: duża wartość do wpisania, pod nią wiersze
  * odniesienia (co przekazał poprzednik, jaka jest pojemność / format licznika),

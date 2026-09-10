@@ -1,5 +1,5 @@
 /**
- * UZ Aero - pobranie pasów startowych z Overpass API.
+ * Ninerdeck - pobranie pasów startowych z Overpass API.
  *
  * Jedno zapytanie o cały kraj zamiast promienia wokół każdego lotniska: publiczny serwer
  * Overpassa jest darmowy i współdzielony, więc sto małych zapytań byłoby zwyczajnie
@@ -26,7 +26,7 @@ const ENDPOINTS = [
 /** Nagłówek z kontaktem - Overpass odrzuca ruch bez rozpoznawalnego klienta (406). */
 const HEADERS = {
   'Content-Type': 'application/x-www-form-urlencoded',
-  'User-Agent': 'uzaero-airfield-generator (https://github.com/tomaszklag/uz_aero)',
+  'User-Agent': 'ninerdeck-airfield-generator (https://github.com/tomaszklag/uz_aero)',
   Accept: 'application/json',
 };
 

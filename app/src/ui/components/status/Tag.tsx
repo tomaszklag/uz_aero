@@ -1,5 +1,5 @@
 /**
- * UZ Aero - Tag
+ * Ninerdeck - Tag
  *
  * Mała etykieta mono UPPERCASE z mockupów: `.optional-tag`, `.required-tag`,
  * `.grounded-tag`, `.pic-lock-tag`, `.step-badge`, `.role-badge`. Wszystkie mają ten sam

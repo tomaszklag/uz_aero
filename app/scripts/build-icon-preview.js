@@ -1,5 +1,5 @@
 /**
- * UZ Aero - PODGLĄD IKONY W LAUNCHERZE (`design/IKONA.html`).
+ * Ninerdeck - PODGLĄD IKONY W LAUNCHERZE (`design/IKONA.html`).
  *
  * Ikony rysuje `build-icons.js`, ale plik PNG nie odpowiada na pytanie, które naprawdę pada:
  * jak to wygląda na ekranie telefonu, obok innych ikon, po przycięciu maską launchera.
@@ -91,14 +91,14 @@ const neighbour = ([label, bg, art]) =>
   );
 
 const ours = () =>
-  tile('<b>UZ Aero</b>', '<span class="app-icon ours" role="img" aria-label="UZ Aero"></span>');
+  tile('<b>Ninerdeck</b>', '<span class="app-icon ours" role="img" aria-label="Ninerdeck"></span>');
 
 const html = `<!DOCTYPE html>
 <html lang="pl">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero - IKONA aplikacji · podgląd w launcherze</title>
+<title>Ninerdeck - IKONA aplikacji · podgląd w launcherze</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">

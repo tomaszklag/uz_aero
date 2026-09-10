@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy tablicy decyzji dla kołowania z automatu (issue #30).
+ * Ninerdeck - testy tablicy decyzji dla kołowania z automatu (issue #30).
  *
  * Sedno tych testów: kołowanie zapisuje się od razu, ale rejestr bywa o krok z tyłu.
  * Pomyłka w tej tablicy albo pokazuje pilotowi czerwony baner „Nie zapisano" za coś,

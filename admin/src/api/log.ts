@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: DZIENNIK (`/admin/api/log`, `/admin/api/sessions*`).
+ * Ninerdeck - panel 2.0: DZIENNIK (`/admin/api/log`, `/admin/api/sessions*`).
  *
  * Jeden plik = jeden moduł, mimo dwóch prefiksów tras - bo to jest jedna droga
  * czytelnika: flota w zakresie → sesje jednej maszyny → jedna sesja. Rozbicie tego

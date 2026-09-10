@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: lista kont pilotów.
+ * Ninerdeck - panel 2.0: lista kont pilotów.
  *
  * Warstwa `queries/` zna sieć (`api/`) i cache, ale nie zna ekranu: hook oddaje dane,
  * a co z nich narysować, decyduje `screens/`.

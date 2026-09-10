@@ -1,5 +1,5 @@
 /**
- * UZ Aero - translacja odczytu platformy na fix domeny.
+ * Ninerdeck - translacja odczytu platformy na fix domeny.
  *
  * Strażnik kontraktu null-nie-zero (poprawka 2026-07-30): Android przy małych
  * prędkościach nie podaje prędkości albo zeruje ją filtrem static-hold, a `-1`

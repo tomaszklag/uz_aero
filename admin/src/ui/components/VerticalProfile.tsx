@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: profil pionowy sesji.
+ * Ninerdeck - panel 2.0: profil pionowy sesji.
  *
  * Jak `TrackMap`: CZYSTY UKŁAD, zero arytmetyki. Współrzędne, siatkę i podpisy liczy
  * `profilePlot` (`screens/logbook/trackChart.ts`), tutaj zostaje rozmieszczenie.
@@ -12,7 +12,7 @@
  * czytany obok dokumentów pilota.
  */
 
-import { timeUtc } from '@uzaero/format';
+import { timeUtc } from '@ninerdeck/format';
 
 /** Poziom siatki profilu: linia i podpis wysokości. */
 export interface ProfileGridRow {

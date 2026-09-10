@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: DZIENNIK, unieważnienie CAŁEGO wpisu - warstwa czysta.
+ * Ninerdeck - panel 2.0: DZIENNIK, unieważnienie CAŁEGO wpisu - warstwa czysta.
  *
  * ══ PYTANIE NIE MOŻE BRZMIEĆ „UNIEWAŻNIĆ TĘ SESJĘ?" ══
  * Dwa wpisy tej samej maszyny w jednej dobie różnią się WYŁĄCZNIE godzinami, a wejście

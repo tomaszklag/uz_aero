@@ -1,12 +1,12 @@
 /**
- * UZ Aero (serwer) - walidacja PAYLOADÓW per typ zdarzenia (audyt: WAŻNE).
+ * Ninerdeck (serwer) - walidacja PAYLOADÓW per typ zdarzenia (audyt: WAŻNE).
  *
  * Koperta chroni bazę; te schematy chronią PROJEKCJĘ. `projectSession` czyta pola bez
  * gard (`payload.reading.fuelL`, `payload.jumpers.tandem`) - zepsuty payload to
  * TypeError w transakcji, czyli 500 i wieczny retry telefonu, albo NaN, które Postgres
  * grzecznie przyjmie do DOUBLE PRECISION i zatruje `sessions` na stałe.
  *
- * Kształty przepisane 1:1 z `EventPayloadMap` w `@uzaero/domain` - a że przepisanie
+ * Kształty przepisane 1:1 z `EventPayloadMap` w `@ninerdeck/domain` - a że przepisanie
  * może się rozjechać, kontrakt trzyma test: każdy typ z `EVENT_TYPES` musi mieć tu
  * schemat, a poprawny payload domenowy musi przechodzić.
  *

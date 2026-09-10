@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - surowy strumień → oś zdarzeń karty dnia (`A02a`).
+ * Ninerdeck (serwer) - surowy strumień → oś zdarzeń karty dnia (`A02a`).
  *
  * Oś pokazuje rejestr TAKI, JAKI JEST: append-only, ze zdarzeniami unieważnionymi
  * włącznie. Ukrycie ich byłoby najgorszą możliwą uprzejmością - to właśnie te wiersze
@@ -21,7 +21,7 @@
  * Czysta funkcja: testowana bez bazy, jak `sessionRow.ts`.
  */
 
-import { applyCorrections, type Event } from '@uzaero/domain';
+import { applyCorrections, type Event } from '@ninerdeck/domain';
 
 import type { AdminTimelineEntry } from '../contracts/sessions.ts';
 

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - COMPOSITION ROOT aplikacji.
+ * Ninerdeck - COMPOSITION ROOT aplikacji.
  *
  * Jedyne miejsce, w którym warstwy schodzą się w całość: adapter natywny (SQLite)
  * → repozytorium → komendy/zapytania → store UI. Reszta kodu nie wie, skąd biorą się

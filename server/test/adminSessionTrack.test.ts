@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - ślad sesji w panelu (`GET /admin/api/sessions/:uuid/track`).
+ * Ninerdeck (serwer) - ślad sesji w panelu (`GET /admin/api/sessions/:uuid/track`).
  *
  * Ta trasa zastąpiła `/track/:flight` z panelu 1.0. Różnica nie jest kosmetyczna:
  * ślad należy do SESJI, nie do lotu (issue #38), więc administrator ogląda cały bieg

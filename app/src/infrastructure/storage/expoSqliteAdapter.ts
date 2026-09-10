@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ADAPTER `StoragePort` na `expo-sqlite` (docs/_main.md.txt §5.2).
+ * Ninerdeck - ADAPTER `StoragePort` na `expo-sqlite` (docs/_main.md.txt §5.2).
  *
  * Schemat: `events` (append-only + `synced_at` NULL = outbox), `reference_aircraft`,
  * `reference_pilots`, `session_meta`. Payloady i `handover` trzymamy jako JSON w TEXT,
@@ -47,7 +47,7 @@ import type {
 // na prawdziwym silniku SQLite - patrz `schema.ts` i `sqliteSchema.test.ts`.
 import { MIGRATIONS, SCHEMA_VERSION } from './schema';
 
-const DB_NAME = 'uzaero.db';
+const DB_NAME = 'ninerdeck.db';
 
 // ── kształty wierszy tak, jak wracają z SQLite ──────────────────────────────────
 

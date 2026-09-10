@@ -1,5 +1,5 @@
 /**
- * UZ Aero - podziałka ODLEGŁOŚCI na profilu (issue #47, trzecia tura przeglądu).
+ * Ninerdeck - podziałka ODLEGŁOŚCI na profilu (issue #47, trzecia tura przeglądu).
  *
  * Profil ma oś czasu, a podziałka pokazuje drogę - więc łatwo tu o liczbę, która nie
  * opisuje niczego. Test pilnuje, że pasek jest prawdziwy DLA MIEJSCA, w którym stoi:

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - testy bazodanowego adaptera arkuszy i `GET /sheets/:tab` (§4.7).
+ * Ninerdeck (serwer) - testy bazodanowego adaptera arkuszy i `GET /sheets/:tab` (§4.7).
  *
  * Eksport działa tu END-TO-END bez żadnej atrapy: `POST /events` z `day_close`
  * → `PgSheets` zapisuje kartę do `exported_sheets` → `export_log` dostaje rewizję
@@ -97,7 +97,7 @@ describe('bazodanowe karty arkusza (PgSheets + GET /sheets/:tab)', () => {
     expect(sheet.tab).toBe('2026-06-22_SP-AXA');
 
     // Kanoniczne liczby - ta sama projekcja co ekran 10 telefonu.
-    expect(sheet.rows).toContainEqual(['UZ Aero - doba samolotu', '2026-06-22 (UTC)']);
+    expect(sheet.rows).toContainEqual(['Ninerdeck - doba samolotu', '2026-06-22 (UTC)']);
     expect(sheet.rows).toContainEqual(['S1', '1', '08:25', '09:18', '00:53', 'AUTO']);
     expect(sheet.rows).toContainEqual(['Doba', '1234:30', '1241:09', '6:39']);
     expect(sheet.rows).toContainEqual(['Czas blokowy doby', '02:22']);
@@ -194,7 +194,7 @@ describe('adres karty po slugu klubu (GET /sheets/:slug/:tab)', () => {
     expect(res.statusCode).toBe(200);
     expect(res.json().tab).toBe('2026-06-22_SP-AXA');
     // Ta sama treść, co pod adresem z tokenem - to jeden dokument, nie dwa widoki.
-    expect(res.json().rows).toContainEqual(['UZ Aero - doba samolotu', '2026-06-22 (UTC)']);
+    expect(res.json().rows).toContainEqual(['Ninerdeck - doba samolotu', '2026-06-22 (UTC)']);
   });
 
   it('sekret CUDZEGO klubu nie otwiera karty - i nie mówi, że istnieje', async () => {

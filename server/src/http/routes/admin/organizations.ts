@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - trasy MODUŁU ORGANIZACJE (`/admin/api/organizations*`; mockupy
+ * Ninerdeck (serwer) - trasy MODUŁU ORGANIZACJE (`/admin/api/organizations*`; mockupy
  * `organizacje-lista`, `organizacje-klub`; `docs/wielofirmowosc.md` §8.1; issue #100, D3).
  *
  * Jedyne trasy panelu rejestrowane przez `platformRoute`, a nie `adminRoute`: brama pyta

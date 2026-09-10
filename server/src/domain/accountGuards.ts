@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - kiedy panel MUSI odmówić zmiany na koncie.
+ * Ninerdeck (serwer) - kiedy panel MUSI odmówić zmiany na koncie.
  *
  * Ten plik istnieje z powodu, który zdarzył się naprawdę: 2026-08-01 administrator nie
  * mógł wejść do systemu, bo w całym produkcie nie było ŻADNEJ ścieżki zmiany hasła -

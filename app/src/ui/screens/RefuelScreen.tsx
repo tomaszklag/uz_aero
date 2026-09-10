@@ -1,5 +1,5 @@
 /**
- * UZ Aero - 06 TANKOWANIE
+ * Ninerdeck - 06 TANKOWANIE
  *
  * Odwzorowanie mockupu `design/06-tankowanie.html`, sekcja po sekcji:
  * [nagłówek TANKOWANIE + SyncChip] → [sekcja FOB przed tankowaniem - WYMAGANY pomiar]

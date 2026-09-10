@@ -1,5 +1,5 @@
 /**
- * UZ Aero - przelicznik motogodzin na godzinę zegara, wyznaczony z danych.
+ * Ninerdeck - przelicznik motogodzin na godzinę zegara, wyznaczony z danych.
  *
  * ══ PROBLEM, KTÓRY TEN MODEL ROZWIĄZUJE ══
  * Przyrost licznika motogodzin w dniu NIE równa się czasowi blokowemu i nie ma prawa

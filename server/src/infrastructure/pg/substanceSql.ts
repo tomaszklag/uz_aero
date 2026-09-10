@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - TREŚĆ OPERACJI w SQL: lustro `operationSubstance` z @uzaero/domain
+ * Ninerdeck (serwer) - TREŚĆ OPERACJI w SQL: lustro `operationSubstance` z @ninerdeck/domain
  * (issue #75).
  *
  * Telefon liczy treść, pustość i kotwicę numeracji na projekcji (`SessionState`);

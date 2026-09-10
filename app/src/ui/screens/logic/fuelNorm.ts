@@ -1,5 +1,5 @@
 /**
- * UZ Aero - norma zużycia samolotu w aplikacji pilota (mockupy 04, 06, 10).
+ * Ninerdeck - norma zużycia samolotu w aplikacji pilota (mockupy 04, 06, 10).
  *
  * Norma przychodzi z serwera policzona (analityka `A10a`) - ten moduł jej NIE LICZY.
  * Zamienia ją na trzy rzeczy, których potrzebują ekrany: werdykt („w normie" / „powyżej"),

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ThemeProvider
+ * Ninerdeck - ThemeProvider
  *
  * Context + Provider trzymający aktywny motyw. Od decyzji 2026-07-29 motyw jest
  * preferencją PILOTA, nie telefonu: rekord żyje per pilot (`ThemePrefsStore`,

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test blokady arkusza czasów (issue #62 pkt 5 i 7).
+ * Ninerdeck - test blokady arkusza czasów (issue #62 pkt 5 i 7).
  *
  * Arkusz jest JEDEN dla biegu silnika i dla lotu, więc i blokada jest jedna - test
  * pilnuje, żeby zdanie było gramatyczne w obu rolach (nazwy pól są w mianowniku,

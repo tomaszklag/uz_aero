@@ -1,5 +1,5 @@
 /**
- * UZ Aero - DROBNA AKCJA IKONĄ (issue #43, uwaga z urządzenia 2026-08-14).
+ * Ninerdeck - DROBNA AKCJA IKONĄ (issue #43, uwaga z urządzenia 2026-08-14).
  *
  * ══ PO CO ══
  * Bo nie każda akcja zasługuje na przycisk. Unieważnienie zdarzenia stało w arkuszu

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - statyczny build panelu pod `/admin/`
+ * Ninerdeck (serwer) - statyczny build panelu pod `/admin/`
  * (`docs/architektura-panelu-frontend.md` §9, wdrożone przy hostingu 2026-08-26).
  *
  * Serwuje katalog `admin/dist` (Vite z `base: '/admin/'`) spod ścieżki WBUDOWANEJ -

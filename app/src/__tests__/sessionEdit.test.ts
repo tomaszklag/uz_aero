@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test LOGIKI TRYBU EDYCJI (issue #43, mockupy `design/10d`–`10h`).
+ * Ninerdeck - test LOGIKI TRYBU EDYCJI (issue #43, mockupy `design/10d`–`10h`).
  *
  * Trzy rozstrzygnięcia, z których każde jest regułą, a nie wyglądem - i dlatego każde
  * ma tu swój test:

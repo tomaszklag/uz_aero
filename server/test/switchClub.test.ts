@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - PRZEŁĄCZENIE KLUBU W TELEFONIE (`POST /auth/switch`;
+ * Ninerdeck (serwer) - PRZEŁĄCZENIE KLUBU W TELEFONIE (`POST /auth/switch`;
  * wielofirmowość §6, §7.3; issue #102, epik F).
  *
  * Pilot w dwóch klubach pracuje w JEDNYM naraz, a zmiana kontekstu to nowa para tokenów -

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - słownik akcji zapisywanych do dziennika audytu (`admin_audit`).
+ * Ninerdeck (serwer) - słownik akcji zapisywanych do dziennika audytu (`admin_audit`).
  *
  * Ten sam powód, dla którego istnieje `domain/roles.ts`: pytanie „co panel w ogóle
  * potrafi ZMIENIĆ" ma mieć JEDNĄ odpowiedź, w jednym pliku, który da się przeczytać

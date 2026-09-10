@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: kod klubu - odczyt i dwie czynności (issue #101, E3).
+ * Ninerdeck - panel: kod klubu - odczyt i dwie czynności (issue #101, E3).
  *
  * Rotacja i wyłączenie oddają NOWY STAN karty, więc tu - inaczej niż przy kontach -
  * wstawiamy odpowiedź do cache'u zamiast unieważniać: kod jest całą treścią odpowiedzi

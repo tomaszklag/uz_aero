@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - licznik prób w oknie przesuwnym (`application/mobile/attemptLimiter.ts`).
+ * Ninerdeck (serwer) - licznik prób w oknie przesuwnym (`application/mobile/attemptLimiter.ts`).
  *
  * Jednostkowo, na sterowanym zegarze: trasa `POST /auth/join` ma własny przekrój
  * w `joinClub.test.ts`, a tu stoją własności SAMEGO licznika, które trudno pokazać

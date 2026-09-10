@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - operacje serwisowe, które ZMIENIAJĄ stan (`A11-konserwacja.html`).
+ * Ninerdeck (serwer) - operacje serwisowe, które ZMIENIAJĄ stan (`A11-konserwacja.html`).
  *
  * Dwie komendy i dwie różne natury ryzyka:
  *

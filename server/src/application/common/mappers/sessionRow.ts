@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - strumień zdarzeń → wiersz projekcji `sessions`.
+ * Ninerdeck (serwer) - strumień zdarzeń → wiersz projekcji `sessions`.
  *
  * Jedyne mapowanie domena→magazyn w warstwie aplikacji, w jedną stronę (w drugą nie ma
  * potrzeby: projekcja jest zawsze odtwarzalna ze strumienia). Wydzielone z komendy
@@ -30,7 +30,7 @@
  *    w modelu w ogóle: dzień pilota to lista sesji (`projectPilotDay`).
  */
 
-import { projectSession, type Event } from '@uzaero/domain';
+import { projectSession, type Event } from '@ninerdeck/domain';
 
 import type { SessionRow } from '../ports.ts';
 

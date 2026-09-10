@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy projekcji DNIA PILOTA (`docs/_main.md.txt` §3.6, model po issue #23).
+ * Ninerdeck - testy projekcji DNIA PILOTA (`docs/_main.md.txt` §3.6, model po issue #23).
  *
  * Scenariusz odwzorowuje mockup `design/01-moj-dzien.html`, czyli te same liczby,
  * które widzi pilot:

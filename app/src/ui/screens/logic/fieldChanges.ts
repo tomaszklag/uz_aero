@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ILE RAZY POPRAWIANO JEDNO POLE zdarzenia (issue #43).
+ * Ninerdeck - ILE RAZY POPRAWIANO JEDNO POLE zdarzenia (issue #43).
  *
  * ══ PO CO OSOBNY MODUŁ ══
  * Bo pytają o to trzy miejsca i wszystkie muszą dostać TĘ SAMĄ liczbę: plakietka „popr."

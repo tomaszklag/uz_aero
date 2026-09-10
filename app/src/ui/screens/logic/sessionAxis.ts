@@ -1,5 +1,5 @@
 /**
- * UZ Aero - sesja → OŚ CZASU ekranu 10 (mockup `design/10-statystyki.html`).
+ * Ninerdeck - sesja → OŚ CZASU ekranu 10 (mockup `design/10-statystyki.html`).
  *
  * ══ CO ZASTĄPIŁA (issue #38 pkt 7 i 8) ══
  * Tabelę lotów: pięć kolumn, z których dwie mówiły to samo (para godzin obok czasu lotu),

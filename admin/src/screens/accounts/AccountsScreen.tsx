@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: lista pilotów (`#/piloci`).
+ * Ninerdeck - panel 2.0: lista pilotów (`#/piloci`).
  *
  * Ekran ma jedną tabelę. Czego tu NIE MA wobec panelu 1.0: czterech kafli z licznikami
  * (i ich czterech przypisów), liczb przy chipach, kolumny „Zmieniono", kolumny „Dni lotne"

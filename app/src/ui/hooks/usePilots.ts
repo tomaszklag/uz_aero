@@ -1,5 +1,5 @@
 /**
- * UZ Aero - lista pilotów z cache'u referencyjnego + rozwiązywanie kodu.
+ * Ninerdeck - lista pilotów z cache'u referencyjnego + rozwiązywanie kodu.
  *
  * Ten sam wzorzec „useState + useEffect + strażnik `alive`", co `useAircraft` -
  * i ta sama historia: `queries.pilots()` ładowało sobie już SZEŚĆ ekranów, każdy

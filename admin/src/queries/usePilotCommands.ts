@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: zapisy na kontach pilotów.
+ * Ninerdeck - panel 2.0: zapisy na kontach pilotów.
  *
  * Mutacja deklaruje SWOJE unieważnienia tutaj, a nie na ekranie: dwa ekrany wołające
  * tę samą mutację nie mogą pamiętać dwóch różnych list.

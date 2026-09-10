@@ -1,5 +1,5 @@
 /**
- * UZ Aero - AKCENTY MUSZĄ BYĆ CZYTELNE NA SWOIM TLE (oba motywy).
+ * Ninerdeck - AKCENTY MUSZĄ BYĆ CZYTELNE NA SWOIM TLE (oba motywy).
  *
  * Test powstał przy uwadze z urządzenia (2026-09-04: „w jasnym motywie czerwony i zielony
  * wyglądają raczej jak czarny"). Poprawka polegała na ROZJAŚNIENIU akcentów Solar aż do
@@ -17,7 +17,7 @@
  * zeszło pod próg.
  */
 
-import { THEMES, type Theme } from '@uzaero/tokens';
+import { THEMES, type Theme } from '@ninerdeck/tokens';
 
 /** Względna luminancja wg WCAG 2.1 (kanały sRGB po linearyzacji). */
 function luminance(hex: string): number {

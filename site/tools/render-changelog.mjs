@@ -183,8 +183,8 @@ const html = `<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Wydania i zmiany - UZ Aero</title>
-<meta name="description" content="Co nowego w kolejnych wydaniach UZ Aero: aktualna wersja, plan kolejnych wydań, nowości, poprawki i uwagi dla testerów.">
+<title>Wydania i zmiany - Ninerdeck</title>
+<meta name="description" content="Co nowego w kolejnych wydaniach Ninerdeck: aktualna wersja, plan kolejnych wydań, nowości, poprawki i uwagi dla testerów.">
 <link rel="icon" href="../favicon.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -196,9 +196,9 @@ const html = `<!doctype html>
 <body>
 <div class="backdrop" aria-hidden="true"></div>
 <header class="top"><div class="wrap">
-  <a class="brand" href="../" aria-label="UZ Aero - strona główna">
-    <span class="mark"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg></span>
-    <span class="brand-name">UZ <em>AERO</em></span>
+  <a class="brand" href="../" aria-label="Ninerdeck - strona główna">
+    <span class="mark"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.1 8.1A6.1 6.1 0 1 0 14.8 13.52L14.8 22H18.1ZM14.8 8.1A2.8 2.8 0 0 1 9.2 8.1A2.8 2.8 0 0 1 14.8 8.1Z"/></svg></span>
+    <span class="brand-name">NINER<em>DECK</em></span>
   </a>
   <nav aria-label="Nawigacja"><a href="../">Strona główna</a><a class="on" href="./">Wydania</a><a href="../dokumentacja/">Dokumentacja</a><a class="cta dl" href="../pobierz/"><span class="dl-ico"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85a.63.63 0 0 0-.83.22l-1.88 3.24a11.43 11.43 0 0 0-8.94 0L5.65 5.67a.63.63 0 0 0-.83-.22c-.3.16-.42.54-.26.85L6.4 9.48A10.81 10.81 0 0 0 1 18h22a10.81 10.81 0 0 0-5.4-8.52zM7 15.25a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5zm10 0a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5z"/></svg></span><span class="dl-txt"><b>Pobierz</b></span><span class="dl-arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 11 5 5 5-5"/><path d="M5 20h14"/></svg></span></a></nav>
 </div></header>
@@ -206,7 +206,7 @@ const html = `<!doctype html>
 <main class="wrap releases">
   <section class="rel-hero">
     <p class="kicker">Wydania i zmiany</p>
-    <h1 class="h-display">Co nowego<br>w UZ Aero</h1>
+    <h1 class="h-display">Co nowego<br>w Ninerdeck</h1>
     <p class="sub">Strona dla pilotów, testerów i klubów: aktualna wersja aplikacji, co się zmieniło, co planujemy dalej i na co zwrócić uwagę w testach. Nowe wydanie pojawia się tu razem z buildem.</p>
     ${intro.length ? `<div class="rel-intro">${renderBlocks(intro)}</div>` : ''}
   </section>
@@ -227,7 +227,7 @@ ${releases.map(article).join('\n')}
 </main>
 
 <footer class="wrap">
-  <span>UZ Aero · 2026</span>
+  <span>Ninerdeck · 2026</span>
   <nav><a href="../">Strona główna</a><a href="../pobierz/">Pobierz aplikację</a><a href="../dokumentacja/">Dokumentacja</a><a href="../prywatnosc.html">Polityka prywatności</a><a href="../regulamin.html">Regulamin</a></nav>
 </footer>
 

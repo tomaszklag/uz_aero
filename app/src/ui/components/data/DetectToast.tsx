@@ -1,5 +1,5 @@
 /**
- * UZ Aero - DetectToast (autodetekcja startu / lądowania)
+ * Ninerdeck - DetectToast (autodetekcja startu / lądowania)
  *
  * Arkusz od dołu, który pojawia się, gdy GPS wykryje zdarzenie. Hierarchia jest
  * **odwrotna niż podpowiada intuicja** i wynika wprost z §3.2:

@@ -1,8 +1,8 @@
 /**
- * UZ Aero (serwer) - KONTRAKT kont pilotów (`A06`, `A06a`).
+ * Ninerdeck (serwer) - KONTRAKT kont pilotów (`A06`, `A06a`).
  *
  * Pliki w `contracts/` zawierają WYŁĄCZNIE typy i wolno im importować wyłącznie
- * `@uzaero/domain` (pilnuje `test/architecture.test.ts`). Ten importuje `PilotRole`
+ * `@ninerdeck/domain` (pilnuje `test/architecture.test.ts`). Ten importuje `PilotRole`
  * z… no właśnie: rola mieszka dziś w `server/src/domain/roles.ts`, a nie we wspólnej
  * domenie (przeniesienie jest otwartą decyzją człowieka -
  * `docs/architektura-panelu-frontend.md` §11 pkt 6). Do czasu tej decyzji kontrakt

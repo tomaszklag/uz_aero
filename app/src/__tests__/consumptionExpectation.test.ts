@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test oczekiwania fazowego (issue #38 pkt 4 i 6).
+ * Ninerdeck - test oczekiwania fazowego (issue #38 pkt 4 i 6).
  *
  * Ekran 10 pyta „czy 27 litrów i +1:35 na liczniku to normalne PO TAKIEJ sesji", więc
  * test pilnuje trzech rzeczy w tej kolejności: że przewidywanie reaguje na PROPORCJĘ faz

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - composition root warstwy danych.
+ * Ninerdeck - composition root warstwy danych.
  *
  * Tu (i tylko tu) produkcyjne implementacje portów spotykają się z aplikacją:
  * `defaultClock` jako `ClockPort`, `uuidv4` jako `IdPort`. Warstwa aplikacji tego nie robi,

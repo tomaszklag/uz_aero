@@ -1,5 +1,5 @@
 /**
- * UZ Aero - wypisanie katalogu lotnisk jako moduł TypeScript.
+ * Ninerdeck - wypisanie katalogu lotnisk jako moduł TypeScript.
  *
  * Katalog jest STATYCZNY (wkompilowany), a nie pobierany z serwera, bo ekran śladu ma
  * działać bez sieci - pobieranie lotnisk dokładałoby zależność sieciową dokładnie tam,
@@ -25,7 +25,7 @@ export function renderAirfieldsModule(records: readonly AirfieldRecord[]): strin
   const fromOsm = withRunway.filter((r) => r.runway?.source === 'osm');
 
   return `/**
- * UZ Aero - katalog polskich lotnisk (dane statyczne).
+ * Ninerdeck - katalog polskich lotnisk (dane statyczne).
  *
  * PO CO: mapa śladu rysuje trasę na siatce współrzędnych, bez kafelków (decyzja
  * 2026-08-04). Sama linia w pustce nie mówi jednak, GDZIE lot się odbył - dopiero

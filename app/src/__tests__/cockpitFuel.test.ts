@@ -1,5 +1,5 @@
 /**
- * UZ Aero - paliwo na ekranie 04: jedna liczba, jedno miejsce.
+ * Ninerdeck - paliwo na ekranie 04: jedna liczba, jedno miejsce.
  *
  * Test pilnuje reguły, a nie napisów: **litry nie mają prawa pojawić się dwa razy na
  * jednym ekranie, ale nie mają też prawa zniknąć**. Pasek paliwa istnieje tylko wtedy,

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - progi auto-detekcji startu i lądowania (docs/_main.md.txt §3.3).
+ * Ninerdeck - progi auto-detekcji startu i lądowania (docs/_main.md.txt §3.3).
  *
  * ⚠️ WSZYSTKIE WARTOŚCI SĄ DO KALIBRACJI podczas testów z pilotami (§3.3, §5 planu).
  * GPS consumer-grade bywa nieprecyzyjny - progi, histerezy i podwójne warunki chronią

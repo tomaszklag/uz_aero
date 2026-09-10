@@ -1,5 +1,5 @@
 /**
- * UZ Aero - spoina: GPS → automat detekcji → toast → komenda.
+ * Ninerdeck - spoina: GPS → automat detekcji → toast → komenda.
  *
  * Rozdział ról jest tu celowy i wynika z §3.2:
  *   • `GpsPort`         daje fixy (urządzenie albo odtworzenie trasy),

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - TREŚĆ OPERACJI: co czyni zapis operacją, a co czyni go pustym (issue #75).
+ * Ninerdeck - TREŚĆ OPERACJI: co czyni zapis operacją, a co czyni go pustym (issue #75).
  *
  * ══ SKĄD TO PYTANIE ══
  * Operacja rodzi się przejęciem samolotu, a przejęcie bywa odwoływane: pogoda siada,

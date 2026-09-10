@@ -1,5 +1,5 @@
 /**
- * UZ Aero - NORMA ZUŻYCIA DLA WPISU RĘCZNEGO (issue #62, piąta tura z urządzenia).
+ * Ninerdeck - NORMA ZUŻYCIA DLA WPISU RĘCZNEGO (issue #62, piąta tura z urządzenia).
  *
  * „W oparciu o te dane oraz dane z czasu lotu powinniśmy przeliczyć normę i sprawdzić,
  * czy się zgadza" - do tej tury krok 4 pokazywał samo zużycie („76 L") i nie mówił

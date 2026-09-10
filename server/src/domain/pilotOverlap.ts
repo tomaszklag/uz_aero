@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - nakładka CZASU PILOTA (§4.7, decyzja 2026-08-07).
+ * Ninerdeck (serwer) - nakładka CZASU PILOTA (§4.7, decyzja 2026-08-07).
  *
  * Druga połowa rozdzielonego `session_overlap`. Pierwsza (`aircraft_overlap`) pyta, kto
  * pisze do MASZYNY, i mieszka w `mhChain.ts`, bo porządkuje ją licznik motogodzin. Ta
@@ -23,7 +23,7 @@
  * flag należą do warstwy aplikacji - tak samo jak przy `chainFlags`.
  */
 
-import type { FlagType } from '@uzaero/domain';
+import type { FlagType } from '@ninerdeck/domain';
 
 /** Odcinek zajętości: od przejęcia maszyny do jej zdania. */
 export interface PilotSpan {

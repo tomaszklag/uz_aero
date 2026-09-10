@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: GEOMETRIA EKRANOWA śladu i profilu (moduł CZYSTY).
+ * Ninerdeck - panel 2.0: GEOMETRIA EKRANOWA śladu i profilu (moduł CZYSTY).
  *
  * Cała arytmetyka mapy i wykresu mieszka tutaj, a nie w `.tsx`, i to nie jest kaprys
  * porządkowy: reguła panelu („arytmetyka NIE mieszka w widoku", `test/architecture.test.ts`)
@@ -9,7 +9,7 @@
  * na powierzchni o znanym rozmiarze.
  *
  * ══ JEDYNY WYJĄTEK OD „Z DOMENY TYLKO TYPY" ══
- * Ten plik importuje z `@uzaero/domain` pięć WARTOŚCI (odwzorowanie Web Mercator,
+ * Ten plik importuje z `@ninerdeck/domain` pięć WARTOŚCI (odwzorowanie Web Mercator,
  * kadrowanie, podziałka, katalog lotnisk w kadrze). Wyjątek jest wpisany imiennie do
  * `test/architecture.test.ts` i ma jeden powód: alternatywą jest kopia tej matematyki
  * obok, a kopia oznacza, że ten sam lot narysuje się w panelu inaczej niż w telefonie.
@@ -31,7 +31,7 @@ import {
   type LatLon,
   type TrackFlightWindow,
   type TrackVertex,
-} from '@uzaero/domain';
+} from '@ninerdeck/domain';
 
 // Kształty wyników mieszkają PRZY komponentach, które je konsumują - warstwa `ui/`
 // nie zna `screens/`, więc kierunek zależności biegnie tędy, a nie odwrotnie.

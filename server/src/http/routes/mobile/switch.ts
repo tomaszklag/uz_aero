@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - `POST /auth/switch { orgId }`: przełączenie klubu w telefonie
+ * Ninerdeck (serwer) - `POST /auth/switch { orgId }`: przełączenie klubu w telefonie
  * (wielofirmowość §6, §7.3; issue #102, ekran 13A).
  *
  * Cienka jak reszta warstwy HTTP: zod → komenda → status. Cała decyzja o tym, KTO może

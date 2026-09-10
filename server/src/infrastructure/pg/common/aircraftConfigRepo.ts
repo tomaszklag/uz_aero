@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter konfiguracji samolotu (`AircraftConfigPort`).
+ * Ninerdeck (serwer) - adapter konfiguracji samolotu (`AircraftConfigPort`).
  *
  * Czysty odczyt jednej wartości: flota zmienia się kilka razy w sezonie i zmienia ją
  * administrator, nie ingest. Czytamy `Queryable` podanym przez wołającego, więc

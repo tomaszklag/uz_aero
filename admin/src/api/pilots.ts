@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: konta pilotów (`/admin/api/pilots*`).
+ * Ninerdeck - panel 2.0: konta pilotów (`/admin/api/pilots*`).
  *
  * Jeden plik = jeden zasób = jeden prefiks trasy, jak `server/src/http/routes/`.
  * Warstwa `api/` nie zna Reacta ani cache'u - zwraca obietnice, a co z nimi zrobić,

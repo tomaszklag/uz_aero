@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter metadanych rejestru dla panelu (`EventsAdminPort`).
+ * Ninerdeck (serwer) - adapter metadanych rejestru dla panelu (`EventsAdminPort`).
  *
  * Osobny plik od `pg/common/eventsStore.ts`, bo osobny jest POWÓD istnienia: tamten
  * obsługuje ingest (wstawianie paczki, odczyt strumienia do projekcji) i zwraca byty

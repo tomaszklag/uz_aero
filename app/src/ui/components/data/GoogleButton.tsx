@@ -1,5 +1,5 @@
 /**
- * UZ Aero - przycisk „Kontynuuj z Google" (mockup 00a, `.btn-google`).
+ * Ninerdeck - przycisk „Kontynuuj z Google" (mockup 00a, `.btn-google`).
  *
  * NIE jest `ActionButton`: tamten jest zielonym CTA w Bebas, a przycisk dostawcy ma
  * być neutralny - ciemne tło, jasny napis, znak w oryginalnych barwach - czyli ciemny

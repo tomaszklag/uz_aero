@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - komenda przyjęcia ŚLADU kalibracyjnego (`POST /traces`, faza 5).
+ * Ninerdeck (serwer) - komenda przyjęcia ŚLADU kalibracyjnego (`POST /traces`, faza 5).
  *
  * Do epiku C wielofirmowości (issue #99) trasa dopisywała wpisy do pliku sesji wprost,
  * bez pytania, CZYJA to sesja: ślad nie jest rejestrem, więc nie miał bramek. Przy

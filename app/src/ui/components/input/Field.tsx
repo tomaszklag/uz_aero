@@ -1,5 +1,5 @@
 /**
- * UZ Aero - Field i TextField (`.field` / `.field-input` z mockupów)
+ * Ninerdeck - Field i TextField (`.field` / `.field-input` z mockupów)
  *
  * Wzorzec formularza z `CLAUDE.md`: tło `surface-raised`, promień 12, fokus na zielonej
  * obramówce. `Field` to sama oprawa (etykieta mono UPPERCASE, znacznik „opcjonalne",

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test logiki prezentacji korekty (04c).
+ * Ninerdeck - test logiki prezentacji korekty (04c).
  *
  * Wiersz „Wpływ na czas lotu" jest obietnicą: pokazuje pilotowi, co korekta zrobi,
  * ZANIM ją zapisze. Liczymy go tą samą projekcją, którą liczy cała aplikacja - ten test

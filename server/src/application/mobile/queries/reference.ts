@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - zapytanie `GET /reference` (§4.6, §4.8).
+ * Ninerdeck (serwer) - zapytanie `GET /reference` (§4.6, §4.8).
  *
  * Strona ODCZYTU: migawka floty i pilotów + stan claim/przekazanie z projekcji sesji.
  * To domknięcie zaległości z audytu - cache referencyjny telefonu (§5.2) ma kolumny
@@ -12,7 +12,7 @@
  * świeżo policzoną normę (przeliczenie z panelu nie rusza ani floty, ani sesji).
  */
 
-import type { ConsumptionNorm, Event, ReferenceAircraft } from '@uzaero/domain';
+import type { ConsumptionNorm, Event, ReferenceAircraft } from '@ninerdeck/domain';
 
 import {
   activeClaim,

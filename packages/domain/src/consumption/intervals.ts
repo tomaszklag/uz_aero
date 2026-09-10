@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ekstrakcja interwałów paliwowych i równania motogodzin z JEDNEJ sesji.
+ * Ninerdeck - ekstrakcja interwałów paliwowych i równania motogodzin z JEDNEJ sesji.
  *
  * ══ JAK DZIEŃ DZIELI SIĘ NA INTERWAŁY ══
  * Odczyt paliwomierza pada w trzech momentach i każdy z nich znaczy co innego dla granic:

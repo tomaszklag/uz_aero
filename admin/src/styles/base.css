@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: reset, korzeń dokumentu i stany globalne.
+ * Ninerdeck - panel: reset, korzeń dokumentu i stany globalne.
  *
  * `body` JEST przeglądarką (w makiecie jest kanwą wokół obrazka okna - stąd tam
  * gradienty i `--app-scale`, a tu ich nie ma). Tło korzenia to `--bg`, czyli CHROME

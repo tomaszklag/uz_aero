@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - strona ODCZYTU skrzynki flag (`A03`).
+ * Ninerdeck (serwer) - strona ODCZYTU skrzynki flag (`A03`).
  *
  * Cienka warstwa: port oddaje flagi ze złączeniami w porządku skrzynki, ta klasa mapuje
  * je na kontrakt panelu. Porządek („blokujące eksport → najstarsze") jest własnością

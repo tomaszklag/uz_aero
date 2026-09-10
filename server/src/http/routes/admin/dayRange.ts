@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - zakres DAT w query stringu tras panelu.
+ * Ninerdeck (serwer) - zakres DAT w query stringu tras panelu.
  *
  * Panel filtruje po DNIACH, nie po stemplach, bo tak wygląda kalendarz na `A02`
  * i pasek zakresu na `A09`. Parser stoi w osobnym pliku, bo używają go co najmniej

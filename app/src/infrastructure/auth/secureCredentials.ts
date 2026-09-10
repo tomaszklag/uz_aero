@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ADAPTER `CredentialsPort` na `expo-secure-store` (§3.0, §5.2).
+ * Ninerdeck - ADAPTER `CredentialsPort` na `expo-secure-store` (§3.0, §5.2).
  *
  * Tokeny i profil idą do Keystore Androida - wyciągnięcie plików aplikacji z urządzenia
  * nie daje sesji. Wszystko pod JEDNYM kluczem jako JSON: komplet poświadczeń jest
@@ -20,7 +20,7 @@ import type {
   StoredPerson,
 } from '../../application/ports';
 
-const KEY = 'uzaero.credentials.v1';
+const KEY = 'ninerdeck.credentials.v1';
 /**
  * Osoba bez aktywnego klubu - OSOBNY klucz, bo to nie jest tożsamość (patrz port).
  *
@@ -28,7 +28,7 @@ const KEY = 'uzaero.credentials.v1';
  * z tokenem, którego serwer 2.0.0 już nie zna. Nowy klucz sprawia, że taki telefon wraca
  * na ekran logowania zamiast pytać w kółko o stan zgłoszenia, którego nie ma.
  */
-const PERSON_KEY = 'uzaero.person.v2';
+const PERSON_KEY = 'ninerdeck.person.v2';
 
 export class SecureCredentials implements CredentialsPort {
   async loadPerson(): Promise<StoredPerson | null> {

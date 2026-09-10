@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - `OrganizationSummary`/`OrganizationDetail` → kontrakt modułu
+ * Ninerdeck (serwer) - `OrganizationSummary`/`OrganizationDetail` → kontrakt modułu
  * Organizacje (mockupy `organizacje-lista`, `organizacje-klub`; issue #100, D3).
  *
  * Czysta funkcja, jak `pilotListItem.ts`: stemple na ISO 8601 i zapis kanoniczny kodu

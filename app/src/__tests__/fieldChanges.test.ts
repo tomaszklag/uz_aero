@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test LICZNIKA POPRAWEK PER POLE (issue #43, uwagi z urządzenia).
+ * Ninerdeck - test LICZNIKA POPRAWEK PER POLE (issue #43, uwagi z urządzenia).
  *
  * Ta jedna liczba zapala plakietkę „popr." przy wierszu osi, przy notatce i przy drugim
  * pilocie, a potem podpisuje wejście w historię zmian. Cały jej sens jest w zawężeniu:

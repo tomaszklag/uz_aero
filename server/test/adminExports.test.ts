@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - monitor eksportu i ponowienie (`/admin/api/exports*`, mockup `A05`).
+ * Ninerdeck (serwer) - monitor eksportu i ponowienie (`/admin/api/exports*`, mockup `A05`).
  *
  * Ten sam wzorzec co reszta: PGlite w procesie, prawdziwe klasy, `app.inject`, zero
  * atrap poza JEDNĄ - adapterem arkuszy, który potrafi na żądanie paść. Bez niego stan
@@ -13,7 +13,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import type { Event } from '@uzaero/domain';
+import type { Event } from '@ninerdeck/domain';
 
 import { exportState } from '../src/application/admin/mappers/exportListItem.ts';
 import type { AdminExportJoin } from '../src/application/admin/ports.ts';
@@ -206,7 +206,7 @@ async function flakyHarness() {
   const harness = await testHarness({ sheets });
   // Odtwarzamy dokładnie tego samego `PgSheets`, którego składa harness dla odczytu.
   const { PgSheets } = await import('../src/infrastructure/pg/common/sheetsRepo.ts');
-  const real = new PgSheets(harness.db, 'http://uzaero.test', harness.clock);
+  const real = new PgSheets(harness.db, 'http://ninerdeck.test', harness.clock);
   delegate = (orgId, sheet) => real.writeDaySheet(orgId, sheet);
   return { ...harness, sheets };
 }
@@ -338,7 +338,7 @@ describe('monitor eksportu - lista (A05)', () => {
       reg: 'SP-AXA',
       picCode: 'TMK',
       sessionStatus: 'closed',
-      sheetUrl: 'http://uzaero.test/sheets/aeroklub-alfa/2026-06-22_SP-AXA?k=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      sheetUrl: 'http://ninerdeck.test/sheets/aeroklub-alfa/2026-06-22_SP-AXA?k=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
       blockingFlagIds: [],
     });
     // Nazwa karty jedzie MIMO braku eksportu: pytanie ekranu brzmi „której karty
@@ -758,7 +758,7 @@ describe('historia rewizji i podgląd karty (A05)', () => {
     expect(history.revisions.map((r: { revision: number }) => r.revision)).toEqual([1, 2, 3]);
     expect(history.revisions[0]).toMatchObject({
       day: '2026-06-22',
-      sheetUrl: 'http://uzaero.test/sheets/aeroklub-alfa/2026-06-22_SP-AXA?k=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      sheetUrl: 'http://ninerdeck.test/sheets/aeroklub-alfa/2026-06-22_SP-AXA?k=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
     });
     // …a karta trzyma WYŁĄCZNIE treść bieżącą. To jest cała treść tego ekranu.
     expect(history.sheetRows).toBe(1);
@@ -1022,7 +1022,7 @@ describe('rewizje są jednoznaczne (uq_export_log_card_revision)', () => {
     // ten sam `session_uuid`, ten sam numer rewizji.
     const duplicate = db.query(
       `INSERT INTO export_log (org_id, session_uuid, day, aircraft_id, sheet_url, revision, exported_at)
-       VALUES ('${ORG_A}', 'u-1', '2026-06-22', 'SP-AXA', 'http://uzaero.test/x', 1, now())`,
+       VALUES ('${ORG_A}', 'u-1', '2026-06-22', 'SP-AXA', 'http://ninerdeck.test/x', 1, now())`,
     );
 
     await expect(duplicate).rejects.toMatchObject({ code: '23505' });

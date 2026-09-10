@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: LUSTRA UNII TYPOW muszą być tym, co zna serwer.
+ * Ninerdeck - panel 2.0: LUSTRA UNII TYPOW muszą być tym, co zna serwer.
  *
  * Panel nigdy nie importuje z wnętrza serwera, więc trzy unie z `server/src/domain/`
  * mają w `api/dto.ts` swoją kopię. Kopia bez testu rozjeżdża się przy pierwszej nowej

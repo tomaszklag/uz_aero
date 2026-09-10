@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy automatu detekcji startu i lądowania (§3.3).
+ * Ninerdeck - testy automatu detekcji startu i lądowania (§3.3).
  *
  * Sens tych testów: consumer-grade GPS kłamie. Dokumentacja (§8) klasyfikuje fałszywe
  * detekcje jako ryzyko 🔴, a scenariusze, które je wywołują - ciasny zakręt, turbulencje,

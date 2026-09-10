@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: ZAKRES DAT dziennika.
+ * Ninerdeck - panel 2.0: ZAKRES DAT dziennika.
  *
  * ══ NATYWNE POLA DATY, BEZ WŁASNEGO KALENDARZA ══
  * Panel jest STRONĄ, więc kalendarz ma za darmo od przeglądarki - i wartość natywnego

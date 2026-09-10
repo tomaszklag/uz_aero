@@ -1,5 +1,5 @@
 /**
- * UZ Aero - StepList (`.handover-steps` z mockupu 07)
+ * Ninerdeck - StepList (`.handover-steps` z mockupu 07)
  *
  * Numerowana lista kroków procedury: kółko z numerem + zdanie. Fragmenty wymagające
  * uwagi (`emphasis`) są rozjaśnione - odpowiednik pogrubień z mockupu.

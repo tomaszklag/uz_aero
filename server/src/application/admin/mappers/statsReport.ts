@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - wiersze agregatów → raport statystyk (`A10`), funkcja CZYSTA.
+ * Ninerdeck (serwer) - wiersze agregatów → raport statystyk (`A10`), funkcja CZYSTA.
  *
  * Tu - i tylko tu - powstają ILORAZY ekranu: średnie L/h, udział w nalocie,
  * wykorzystanie floty, skoczkowie na godzinę lotu, średnia wysokość zrzutu. Mapper

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy sekcji „Synchronizacja" w Ustawieniach (`screens/logic/syncStatus.ts`).
+ * Ninerdeck - testy sekcji „Synchronizacja" w Ustawieniach (`screens/logic/syncStatus.ts`).
  *
  * Plik schudł dwa razy. Raz razem z ekranem 11 (2026-08-12): licznik „wysłane /
  * wszystkie", nazwa karty arkusza, równanie paliwa i podsumowanie zrzutów opisywały

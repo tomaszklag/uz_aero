@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: hooki sesji (kto jestem, zaloguj, wyloguj).
+ * Ninerdeck - panel: hooki sesji (kto jestem, zaloguj, wyloguj).
  *
  * Mutacje deklarują SWOJE unieważnienia tutaj, a nie na ekranie
  * (`docs/architektura-panelu-frontend.md` §4.3): dwa ekrany wołające tę samą mutację

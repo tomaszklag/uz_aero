@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter monitora eksportu (`ExportsAdminPort`, `A05`).
+ * Ninerdeck (serwer) - adapter monitora eksportu (`ExportsAdminPort`, `A05`).
  *
  * Osobny plik od `pg/common/exportLogRepo.ts` z tego samego powodu, dla którego port
  * jest osobny: tamten obsługuje ŚCIEŻKĘ EKSPORTU (`latest`, `append`, blokada rewizji)

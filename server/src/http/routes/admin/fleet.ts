@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - trasy floty (`/admin/api/fleet*`, mockupy `A07` i `A07a`).
+ * Ninerdeck (serwer) - trasy floty (`/admin/api/fleet*`, mockupy `A07` i `A07a`).
  *
  * Cienkie jak reszta repo: zod → komenda/zapytanie → status. Trasa nie zna ani
  * transakcji, ani audytu, ani reguły „czego nie wolno wyłączyć" - to wszystko jest
@@ -14,7 +14,7 @@
  *
  * ══ DLACZEGO `GET /fleet/tolerance` W OGÓLE ISTNIEJE ══
  * Bo tolerancja `FUEL_MISMATCH` nie jest stałą, tylko `max(10 L, 5% pojemności)` -
- * a panelowi wolno importować z `@uzaero/domain` wyłącznie typy
+ * a panelowi wolno importować z `@ninerdeck/domain` wyłącznie typy
  * (`docs/architektura-panelu-frontend.md` §5.1). Bez tej trasy karta „Skutki zmiany"
  * z `A07a` musiałaby albo pominąć wiersz „Próg `FUEL_MISMATCH`: ±62.9 → ±55.0 L"
  * (tak było przez cztery przekroje), albo policzyć go własną arytmetyką - czyli zacząć

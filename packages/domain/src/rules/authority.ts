@@ -1,5 +1,5 @@
 /**
- * UZ Aero - UPRAWNIENIE ZAPISU widziane przez REGUŁY (`docs/architektura-panelu-serwer.md` §6).
+ * Ninerdeck - UPRAWNIENIE ZAPISU widziane przez REGUŁY (`docs/architektura-panelu-serwer.md` §6).
  *
  * Domena nie zna ról, kont, tokenów ani panelu - i nie ma ich poznać. To jest odpowiedź
  * na jedno, wąskie pytanie: **czy 24-godzinne okno samodzielnej korekty pilota obowiązuje

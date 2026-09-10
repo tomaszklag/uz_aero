@@ -1,5 +1,5 @@
 /**
- * UZ Aero - CardPicker (`.aircraft-option` / `.crew-option` z mockupu 02)
+ * Ninerdeck - CardPicker (`.aircraft-option` / `.crew-option` z mockupu 02)
  *
  * Wybór z listy **kart**, nigdy natywnego selecta - twarda reguła projektu (`CLAUDE.md`):
  * na telefonie karty pokazują wszystkie opcje naraz wraz z kontekstem (typ samolotu,

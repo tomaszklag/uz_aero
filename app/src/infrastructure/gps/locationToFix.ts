@@ -1,5 +1,5 @@
 /**
- * UZ Aero - czysta translacja odczytu platformy na `GpsFix` domeny.
+ * Ninerdeck - czysta translacja odczytu platformy na `GpsFix` domeny.
  *
  * Typ parametru jest STRUKTURALNY (nie `Location.LocationObject`), bo moduł musi być
  * widoczny dla testów RN-free (jest nie wciąga expo) i dla modułu taska tła, który

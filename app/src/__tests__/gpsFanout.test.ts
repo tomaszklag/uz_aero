@@ -1,5 +1,5 @@
 /**
- * UZ Aero - GPS z DWOMA odbiorcami naraz.
+ * Ninerdeck - GPS z DWOMA odbiorcami naraz.
  *
  * Regresja z urządzenia (2026-07-29): kokpit i diagnostyka GPS na ekranie 13 słuchają
  * tego samego odbiornika jednocześnie. Gdy adapter trzymał jednego słuchacza, wejście

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test GRANIC WARSTW.
+ * Ninerdeck - test GRANIC WARSTW.
  *
  * Reguła architektury jest warta tyle, ile jej egzekucja. Projekt nie ma jeszcze ESLinta
  * (patrz `docs/architektura-kodu.md` - gotowa konfiguracja `no-restricted-imports` czeka
@@ -22,7 +22,7 @@ const SRC = join(__dirname, '..');
 
 /**
  * Domena mieszka od Fazy 2 w `packages/domain` (współdzielona z serwerem) - skanujemy
- * ją tam. W `app/src/domain` został wyłącznie shim zgodności (`export * from '@uzaero/domain'`).
+ * ją tam. W `app/src/domain` został wyłącznie shim zgodności (`export * from '@ninerdeck/domain'`).
  */
 const DOMAIN_SRC = join(__dirname, '..', '..', '..', 'packages', 'domain', 'src');
 
@@ -103,7 +103,7 @@ describe('granice warstw', () => {
 
     // Shim w `app/src/domain` ma być JEDYNYM plikiem i tylko re-eksportem pakietu.
     expect(sourceFiles('domain')).toEqual(['domain/index.ts']);
-    expect(importsOf('domain/index.ts')).toEqual(['@uzaero/domain']);
+    expect(importsOf('domain/index.ts')).toEqual(['@ninerdeck/domain']);
   });
 
   it('domain (packages/domain) nie importuje Reacta, RN, Expo, SQLite ani Zustanda', () => {

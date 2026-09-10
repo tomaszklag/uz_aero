@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy wyboru IP LAN dla runnera `npm start` (`scripts/pick-lan-ip.js`).
+ * Ninerdeck - testy wyboru IP LAN dla runnera `npm start` (`scripts/pick-lan-ip.js`).
  *
  * Kontekst: po zmianie dzierżawy DHCP telefon dostawał QR z martwym adresem
  * („invalid URL host: \"\""). Wybór karty musi omijać adaptery wirtualne

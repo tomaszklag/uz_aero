@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: pole wyszukiwania w pasku filtrów (`.search` z `SZABLON.html`).
+ * Ninerdeck - panel: pole wyszukiwania w pasku filtrów (`.search` z `SZABLON.html`).
  *
  * Cała etykieta jest `<label>` - kliknięcie w lupę ustawia fokus w polu, dokładnie
  * jak w mockupie, i bez własnej obsługi zdarzeń.

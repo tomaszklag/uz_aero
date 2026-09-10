@@ -1,5 +1,5 @@
 /**
- * UZ Aero - typy punktu śladu lotu.
+ * Ninerdeck - typy punktu śladu lotu.
  *
  * DLACZEGO OSOBNO OD `detection/fix.ts`: `GpsFix` opisuje odczyt, który WŁAŚNIE
  * przyszedł do detektora i o którym trzeba coś zdecydować. Tutaj mówimy o czymś

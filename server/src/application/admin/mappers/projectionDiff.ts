@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - porównanie wiersza projekcji z przeliczeniem ze strumienia.
+ * Ninerdeck (serwer) - porównanie wiersza projekcji z przeliczeniem ze strumienia.
  *
  * Czysta funkcja (wzorzec `application/sessionRow.ts`), bo to jest sedno przebudowy:
  * raport różnic musi dać się przetestować na dwóch wierszach, bez bazy i bez CLI.

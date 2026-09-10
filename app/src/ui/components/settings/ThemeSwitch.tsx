@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ThemeSwitch (sekcja „Motyw wyświetlacza" na 13, issue #72)
+ * Ninerdeck - ThemeSwitch (sekcja „Motyw wyświetlacza" na 13, issue #72)
  *
  * Przełącznik JASNOŚCI: ciemny ↔ jasny. Zastąpił `ThemePicker` - listę pięciu kart
  * z nazwami palet („Night", „Paper", „Solar", „Sky", „Amber") i opisami, kiedy która

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - NoGpsBanner (`.no-gps` z mockupu 05g-cockpit-no-gps)
+ * Ninerdeck - NoGpsBanner (`.no-gps` z mockupu 05g-cockpit-no-gps)
  *
  * Baner typu STATUS (przyrząd): nie zamyka się ręcznie, znika sam z pierwszym
  * świeżym fixem.

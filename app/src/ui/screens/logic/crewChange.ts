@@ -1,5 +1,5 @@
 /**
- * UZ Aero - logika ekranu 07 (zmiana załogi), czysta i testowalna bez React Native.
+ * Ninerdeck - logika ekranu 07 (zmiana załogi), czysta i testowalna bez React Native.
  *
  * Najtrudniejsze pytanie tego ekranu brzmi: „od kiedy i ile block time ma KAŻDY członek
  * załogi z osobna". Mockup pokazuje przy obu wierszach „od 08:00 · block: 2:22", ale

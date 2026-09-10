@@ -1,5 +1,5 @@
 /**
- * UZ Aero - bramka skeletonu (issue #33, wzorzec `design/LOADERY.html` reguła 5).
+ * Ninerdeck - bramka skeletonu (issue #33, wzorzec `design/LOADERY.html` reguła 5).
  *
  * Test pilnuje JEDNEJ własności: skeleton nigdy nie mruga. Znaczy to dwie rzeczy naraz,
  * pozornie sprzeczne - nie pokazuje się przy szybkim odczycie (a takich jest większość:

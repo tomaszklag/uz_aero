@@ -1,5 +1,5 @@
 /**
- * UZ Aero - kadr mapy śladu: przybliżenie i przesunięcie (issue #47 pkt 8).
+ * Ninerdeck - kadr mapy śladu: przybliżenie i przesunięcie (issue #47 pkt 8).
  *
  * Trzy reguły, które na urządzeniu psują się najciszej i najbardziej wkurzająco:
  * ognisko szczypty ucieka spod palców, mapa daje się odsunąć w pustkę, a powrót do

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter tożsamości zewnętrznych (`ExternalIdentitiesPort`).
+ * Ninerdeck (serwer) - adapter tożsamości zewnętrznych (`ExternalIdentitiesPort`).
  *
  * Obsługuje ŚCIEŻKĘ LOGOWANIA: odczyt tożsamości, założenie OSOBY przy pierwszym
  * logowaniu i podpięcie do istniejącego konta po zweryfikowanym e-mailu. Decyzje

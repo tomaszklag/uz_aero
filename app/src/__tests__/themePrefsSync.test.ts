@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy uzgadniania MOTYWU PILOTA (`application/sync/themePrefsSync.ts`,
+ * Ninerdeck - testy uzgadniania MOTYWU PILOTA (`application/sync/themePrefsSync.ts`,
  * decyzja 2026-07-29: motyw jest preferencją pilota i wędruje między urządzeniami).
  *
  * Sedno: LWW po stemplu DECYZJI działa w OBIE strony (nasz nowszy wygrywa na serwerze,

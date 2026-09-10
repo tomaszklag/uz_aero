@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test normy zużycia w aplikacji pilota.
+ * Ninerdeck - test normy zużycia w aplikacji pilota.
  *
  * Norma jest podpowiedzią, na której pilot może oprzeć decyzję o paliwie - więc każdy
  * przypadek „nie wiem" musi kończyć się `null`, a nie liczbą. Test pilnuje przede

@@ -1,4 +1,4 @@
-# UZ Aero - Design changelog
+# Ninerdeck - Design changelog
 
 Format: `[data] Ekran - co zmieniono i DLACZEGO`
 
@@ -16,7 +16,7 @@ Flow: splash → login → preflight → cockpit (ground/running) → akcje → 
 **01-splash** - usunięto loader/spinner
 > Powód: loader bez określonego celu jest mylący. Ekran splash = tylko logo + CTA.
 
-**Rename aplikacji** → "UZ Aero" / "UZ AERO" (było: e-Chronometraż / e-CHRONO)
+**Rename aplikacji** → "Ninerdeck" / "NINERDECK" (było: e-Chronometraż / e-CHRONO)
 
 ---
 
@@ -1642,7 +1642,7 @@ użytkownika po przeglądzie).
 **14 - podtytuł śladu 1:1 z mockupem** (decyzja: „obowiązują najnowsze ustalenia").
 > Aplikacja pokazywała „Lot 1 · 08:20 UTC"; mockup mówi „Lot 3 · 06 SIE · SP-KLM".
 > Ustępuje aplikacja: numer lotu · dzień i miesiąc (`dateUtcDayMonth`, nowy format
-> w @uzaero/format) · rejestracja (dołożona do `FlightTrackView`). Bez „· UTC"
+> w @ninerdeck/format) · rejestracja (dołożona do `FlightTrackView`). Bez „· UTC"
 > w podtytule - zgodnie z wzorcem nagłówków.
 
 **10/10a - „czas blokowy" zamiast „block time"** (decyzja: „czas blokowy").

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: tożsamość zalogowanego udostępniona drzewu.
+ * Ninerdeck - panel: tożsamość zalogowanego udostępniona drzewu.
  *
  * CIENKA wygoda nad cache'em Query, nie drugie źródło prawdy
  * (`docs/architektura-panelu-frontend.md` §4.1): jedynym magazynem sesji zostaje

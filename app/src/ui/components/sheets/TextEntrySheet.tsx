@@ -1,5 +1,5 @@
 /**
- * UZ Aero - arkusz wpisu tekstowego z podpowiedziami (oznaczenie klienta, notatka dnia).
+ * Ninerdeck - arkusz wpisu tekstowego z podpowiedziami (oznaczenie klienta, notatka dnia).
  *
  * Ten sam ruch, co przy trasie (issue #14): pole w formularzu jest PRZYCISKIEM
  * z wartością, a wpisywanie dzieje się w arkuszu.

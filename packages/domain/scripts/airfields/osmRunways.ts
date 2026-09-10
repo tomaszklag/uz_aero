@@ -1,5 +1,5 @@
 /**
- * UZ Aero - pasy startowe z OpenStreetMap (`aeroway=runway`).
+ * Ninerdeck - pasy startowe z OpenStreetMap (`aeroway=runway`).
  *
  * PO CO: OurAirports nie ma ani jednego wiersza pasa dla 37 polskich lotnisk - akurat
  * tych aeroklubowych i lądowisk, z których lata lotnictwo ogólne (EPJG, EPOP, EPZR, EPJS…).

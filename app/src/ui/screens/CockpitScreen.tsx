@@ -1,5 +1,5 @@
 /**
- * UZ Aero - KOKPIT (mockupy 04: ziemia · 05: lot)
+ * Ninerdeck - KOKPIT (mockupy 04: ziemia · 05: lot)
  *
  * Jeden ekran, dwa tryby - zgodnie z §6: aplikacja **sama** przełącza tryb na podstawie
  * stanu silnika, pilot niczego nie wybiera.

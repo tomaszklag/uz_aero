@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: lista samolotów (`#/samoloty`).
+ * Ninerdeck - panel 2.0: lista samolotów (`#/samoloty`).
  *
  * Ekran KONFIGURACJI floty i nic więcej. Czego tu NIE MA wobec panelu 1.0: czterech
  * kafli, liczb przy chipach, trzech kolumn ze stanem przysyłanym przez telefony

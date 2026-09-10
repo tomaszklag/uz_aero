@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - testy przyjmowania zdarzeń i łańcucha MH (M2, §4.3–4.5).
+ * Ninerdeck (serwer) - testy przyjmowania zdarzeń i łańcucha MH (M2, §4.3–4.5).
  *
  * Scenariusze jadą przez PRAWDZIWY endpoint na PRAWDZIWYM Postgresie (PGlite),
  * a projekcję liczy ten sam `projectSession`, co telefon - więc liczby kanonicznego

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - PORT lokalnego zapisu preferencji motywu (decyzja 2026-07-29: motyw
+ * Ninerdeck - PORT lokalnego zapisu preferencji motywu (decyzja 2026-07-29: motyw
  * jest preferencją PILOTA, nie telefonu).
  *
  * Rekord żyje PER PILOT (na wspólnym telefonie po przelogowaniu wchodzi motyw

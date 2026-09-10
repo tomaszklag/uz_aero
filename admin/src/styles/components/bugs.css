@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: moduł „Zgłoszenia" (issue #87).
+ * Ninerdeck - panel: moduł „Zgłoszenia" (issue #87).
  *
  * Trzy klasy, bo tyle brakowało bibliotece - reszta ekranu jedzie na tym, co już jest
  * (`.card`, `.kv`, `.opt-list`, `.filters`, tabela). Arkusz istnieje osobno, a nie

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - tokeny kontra mockupy: zmienne CSS emitowane z `@uzaero/tokens` muszą
+ * Ninerdeck - tokeny kontra mockupy: zmienne CSS emitowane z `@ninerdeck/tokens` muszą
  * zgadzać się z blokiem `:root` w `design/admin/SZABLON.html`.
  *
  * Po co ten test. Tokeny są kodem, ale ŹRÓDŁEM PRAWDY jest mockup (`CLAUDE.md`:
@@ -16,7 +16,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { THEMES, themeCssVars } from '@uzaero/tokens';
+import { THEMES, themeCssVars } from '@ninerdeck/tokens';
 
 const SZABLON = join(__dirname, '..', '..', '..', 'design', 'admin', 'SZABLON.html');
 

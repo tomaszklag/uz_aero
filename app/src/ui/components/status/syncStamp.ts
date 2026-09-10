@@ -1,5 +1,5 @@
 /**
- * UZ Aero - napis „kiedy ostatnio rozmawialiśmy z serwerem" dla `SyncChip`.
+ * Ninerdeck - napis „kiedy ostatnio rozmawialiśmy z serwerem" dla `SyncChip`.
  *
  * Osobny moduł, bo `.tsx` w tej aplikacji eksportuje WYŁĄCZNIE komponenty
  * (`docs/architektura-kodu.md` §2), a to jest jedyna nietrywialna decyzja wskaźnika

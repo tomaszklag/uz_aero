@@ -1,5 +1,5 @@
 /**
- * UZ Aero - awaryjny zapis fixów do `gps_trace` w starcie headless.
+ * Ninerdeck - awaryjny zapis fixów do `gps_trace` w starcie headless.
  *
  * Działa wyłącznie, gdy proces wskrzesił się bez Reacta (usługa GPS przeżyła śmierć
  * aplikacji): bootstrap nie wstał, więc nie ma ani `TraceRecorder` z composition

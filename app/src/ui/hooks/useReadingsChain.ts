@@ -1,5 +1,5 @@
 /**
- * UZ Aero - CIĄGŁOŚĆ ODCZYTÓW dla wpisu ręcznego (issue #62, piąta tura z urządzenia).
+ * Ninerdeck - CIĄGŁOŚĆ ODCZYTÓW dla wpisu ręcznego (issue #62, piąta tura z urządzenia).
  *
  * „Jeśli podałem już godziny i mam połączenie do API, to możemy pobrać poprzedzający
  * i kolejny lot" - hook pyta serwer o to, czym maszyna została zdana PRZED tym lotem

@@ -1,6 +1,6 @@
 # Korekty, historia zmian i rejestr, który nic nie gubi
 
-> Rejestr UZ Aero dopisuje, nigdy nie nadpisuje: korekta to nowy wpis obok starego, z autorem, godziną i powodem. Pilot poprawia własne zapisy przez 24 godziny od zdania samolotu, a administratora nie ogranicza żadne okno - twarde reguły obowiązują obu tak samo.
+> Rejestr Ninerdeck dopisuje, nigdy nie nadpisuje: korekta to nowy wpis obok starego, z autorem, godziną i powodem. Pilot poprawia własne zapisy przez 24 godziny od zdania samolotu, a administratora nie ogranicza żadne okno - twarde reguły obowiązują obu tak samo.
 
 ## Rejestr dopisuje, nie nadpisuje
 

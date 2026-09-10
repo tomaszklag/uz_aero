@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy modułów pomocniczych detekcji: bufor historii, cechy trendowe,
+ * Ninerdeck - testy modułów pomocniczych detekcji: bufor historii, cechy trendowe,
  * retro-datowanie.
  *
  * `flightDetector.test.ts` sprawdza je pośrednio, na całych scenariuszach lotu. Tutaj

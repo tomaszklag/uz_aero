@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - wspólna autoryzacja tras: token → claims.
+ * Ninerdeck (serwer) - wspólna autoryzacja tras: token → claims.
  *
  * Osobny moduł, bo używa go każda trasa poza `/auth/*` i `/health` - a wspólny kod
  * autoryzacji ma mieć jedno miejsce, w którym audyt czyta, co dokładnie przepuszczamy.

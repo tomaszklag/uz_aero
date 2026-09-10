@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: flota (`/admin/api/fleet*`).
+ * Ninerdeck - panel 2.0: flota (`/admin/api/fleet*`).
  *
  * Jeden plik = jeden zasób = jeden prefiks trasy, jak `server/src/http/routes/`.
  * Warstwa `api/` nie zna Reacta ani cache'u - zwraca obietnice, a co z nimi zrobić,
@@ -7,13 +7,13 @@
  *
  * == DLACZEGO PROG JEST TU ZADANIEM, A NIE FUNKCJA ==
  * Próg rozjazdu paliwa to `max(10 L, 5% pojemności)` - a panelowi wolno importować
- * z `@uzaero/domain` wyłącznie typy. Nie ma tu więc czym pomnożyć: liczba przychodzi
+ * z `@ninerdeck/domain` wyłącznie typy. Nie ma tu więc czym pomnożyć: liczba przychodzi
  * z serwera, także dla pojemności, która jeszcze nie została zapisana. To wygląda na
  * okrężną drogę i nią jest - ale krótsza droga zaczyna się od `capacityL * 0.05`
  * w formularzu, czyli od drugiej kopii reguły, która za tydzień powie co innego.
  */
 
-import type { MhFormat } from '@uzaero/domain';
+import type { MhFormat } from '@ninerdeck/domain';
 
 import type { AircraftChangeDto, AircraftToleranceDto, FleetPageDto } from './dto';
 import { apiDelete, apiGet, apiPatch, apiPost } from './httpClient';

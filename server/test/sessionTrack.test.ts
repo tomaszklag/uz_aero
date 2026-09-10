@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - ślad sesji dla telefonu (`GET /me/sessions/:uuid/track`, issue #47).
+ * Ninerdeck (serwer) - ślad sesji dla telefonu (`GET /me/sessions/:uuid/track`, issue #47).
  *
  * Ta trasa jest drogą POWROTNĄ nagrania: telefon oddaje surowe fixy przez `POST /traces`,
  * kasuje swoją kopię i odtąd rysuje ekran 14 z tego, co odda serwer. Test przechodzi

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: co stoi na ekranie wyboru zakresu (mockup `00a-wybor-klubu`;
+ * Ninerdeck - panel: co stoi na ekranie wyboru zakresu (mockup `00a-wybor-klubu`;
  * issue #101, E2).
  *
  * Moduł CZYSTY (bez Reacta), bo to jest decyzja o TREŚCI ekranu - które karty, w jakiej

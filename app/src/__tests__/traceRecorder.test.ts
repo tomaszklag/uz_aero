@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy śladu kalibracyjnego (faza 5): rejestrator + wysyłka.
+ * Ninerdeck - testy śladu kalibracyjnego (faza 5): rejestrator + wysyłka.
  *
  * Kontrakty warte pilnowania: księgowość wysyłki jak w outboksie (wysłane nie wraca),
  * retencja tnie po ZEGARZE URZĄDZENIA, a nieudana wysyłka zostawia wpisy na miejscu.

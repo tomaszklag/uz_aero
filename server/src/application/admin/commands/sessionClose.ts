@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - ZAKOŃCZENIE ADMINISTRACYJNE OPERACJI z panelu (issue #81,
+ * Ninerdeck (serwer) - ZAKOŃCZENIE ADMINISTRACYJNE OPERACJI z panelu (issue #81,
  * 2026-09-03: „admin powinien móc zakończyć rozpoczęty dowolny lot przez panel. Taki
  * lot mógłby od razu opcjonalnie oznaczyć jako usunięty").
  *
@@ -46,7 +46,7 @@ import {
   type Event,
   type RuleViolation,
   type SessionState,
-} from '@uzaero/domain';
+} from '@ninerdeck/domain';
 
 import {
   correctionViolations,

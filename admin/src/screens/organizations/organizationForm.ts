@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: formularz klubu - szkic, podpowiedź adresu i ocena (issue #101, E1).
+ * Ninerdeck - panel: formularz klubu - szkic, podpowiedź adresu i ocena (issue #101, E1).
  *
  * Moduł CZYSTY (bez Reacta, bez sieci), bo to są decyzje o treści, a nie o układzie -
  * i dlatego ma test obok.

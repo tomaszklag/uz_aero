@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter tabeli `aircraft_readings` (odczyty wpisane ręką
+ * Ninerdeck (serwer) - adapter tabeli `aircraft_readings` (odczyty wpisane ręką
  * administratora, issue #81).
  *
  * W `common/`, bo port ma dwóch czytelników po obu stronach systemu: `GET /reference`

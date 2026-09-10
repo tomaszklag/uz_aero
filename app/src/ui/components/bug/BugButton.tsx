@@ -1,5 +1,5 @@
 /**
- * UZ Aero - PRZYCISK ZGŁOSZENIA BŁĘDU (issue #87, na czas testów z pilotami).
+ * Ninerdeck - PRZYCISK ZGŁOSZENIA BŁĘDU (issue #87, na czas testów z pilotami).
  *
  * „Na każdym ekranie i w każdym popup, w prawym górnym rogu" - a że ekranów jest
  * kilkanaście, a arkuszy dwadzieścia, przycisk mieszka w RAMACH, nie w ekranach:

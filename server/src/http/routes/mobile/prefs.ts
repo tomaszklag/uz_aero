@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - trasy preferencji pilota: `GET /me/prefs` i `PUT /me/prefs`
+ * Ninerdeck (serwer) - trasy preferencji pilota: `GET /me/prefs` i `PUT /me/prefs`
  * (decyzja 2026-07-29: motyw wędruje za pilotem między urządzeniami).
  *
  * Cienkie jak reszta: zod → komenda → status. Tożsamość WYŁĄCZNIE z tokenu (`/me`),

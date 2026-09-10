@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - STATYSTYKI floty i pilotów (`A10`), strona odczytu.
+ * Ninerdeck (serwer) - STATYSTYKI floty i pilotów (`A10`), strona odczytu.
  *
  * Jedno zapytanie → trzy ujęcia naraz (per samolot / pilot / operacja) plus szereg
  * dzienny i strona przychodowa. Celowo JEDNA odpowiedź, nie pięć tras: mockup

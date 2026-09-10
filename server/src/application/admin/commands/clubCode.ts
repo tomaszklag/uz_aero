@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - KOD KLUBU: generowanie, rotacja i wyłączenie dołączania
+ * Ninerdeck (serwer) - KOD KLUBU: generowanie, rotacja i wyłączenie dołączania
  * (panel klubu, mockup `piloci-kod-klubu`; `docs/wielofirmowosc.md` §3.8, §8.3;
  * issue #100, D2).
  *

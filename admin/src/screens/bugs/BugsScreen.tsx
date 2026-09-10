@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: lista ZGŁOSZEŃ BŁĘDÓW (`#/zgloszenia`, issue #87).
+ * Ninerdeck - panel 2.0: lista ZGŁOSZEŃ BŁĘDÓW (`#/zgloszenia`, issue #87).
  *
  * Moduł NA CZAS TESTÓW z pilotami. Odpowiada na jedno pytanie: co jest jeszcze do
  * zrobienia i przy którym ekranie. Stąd domyślny widok - NOWE i W TOKU, a nie wszystko:

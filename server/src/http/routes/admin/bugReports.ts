@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - trasy modułu „Zgłoszenia" (`/admin/api/bug-reports`, issue #87).
+ * Ninerdeck (serwer) - trasy modułu „Zgłoszenia" (`/admin/api/bug-reports`, issue #87).
  *
  * Cienkie jak reszta: zod → zapytanie/komenda → status.
  *

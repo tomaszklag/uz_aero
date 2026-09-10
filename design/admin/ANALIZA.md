@@ -463,7 +463,7 @@ z `export_log` + link do karty A07a), licznik „zdarzeń przyjętych: N", `last
 
 **Skąd dane.** DOROBIĆ: `GET /admin/sessions/:uuid` →
 `{row: SessionRow, state: SessionState, events: Event[], flags: FlagRecord[], exports: ExportRecord[], crew: {picCode, picName, dualCode, dualName}, aircraft: ReferenceAircraft, chain: {prev, next}}`.
-`state` liczy **serwer** przez `projectSession` z `@uzaero/domain` - panel nie liczy nic
+`state` liczy **serwer** przez `projectSession` z `@ninerdeck/domain` - panel nie liczy nic
 sam (ta sama gwarancja co `test/contract.test.ts`, który pilnuje, że wiersz `sessions`
 odtwarza liczby projekcji). Strumień: istniejące `EventsStorePort.sessionEvents`.
 Flagi: `FlagsPort.openForSession` - **rozszerzyć o rozwiązane**, bo karta dnia ma pokazywać
@@ -1125,7 +1125,7 @@ Pod spodem: **wersja aplikacji, z której pochodzą wartości**, liczba nagrań 
 
 **Skąd dane.** DOROBIĆ: `GET /admin/detection/thresholds` → `{thresholds: GPS_THRESHOLDS,
 tolerances: {...}, appVersion, traces: {sessions, lastAt}}`. Serwer po prostu serializuje
-stałe z `@uzaero/domain` - panel nie trzyma ich kopii.
+stałe z `@ninerdeck/domain` - panel nie trzyma ich kopii.
 
 **Akcje.** „Kopiuj jako JSON" (materiał do promptu/zgłoszenia) · „Procedura kalibracji" -
 rozwijana sekcja z krokami: nagraj ślad → `npx tsx scripts/replay.ts traces/<plik>.ndjson` →
@@ -1137,7 +1137,7 @@ porównaj z markerami pilota → zmień `overrides` → commit z aktualizacją d
 - *ładowanie / błąd* - standard.
 
 > **Do decyzji (ważne).** Zakres v1 wymienia „edycję progów detekcji". Progi są dziś **stałymi
-> kompilacyjnymi** w `@uzaero/domain`, zaszytymi w bundle aplikacji - ich edycja z panelu
+> kompilacyjnymi** w `@ninerdeck/domain`, zaszytymi w bundle aplikacji - ich edycja z panelu
 > wymagałaby tabeli konfiguracyjnej, dostarczania wartości przez `/reference` i przepisania
 > detektora tak, żeby czytał progi z cache referencyjnego zamiast z importu (szacunek: **L**,
 > ryzyko: **wysokie** - patrz §6, ryzyko 6). **Rekomendacja: w v1 ekran jest tylko do odczytu.**
@@ -1201,7 +1201,7 @@ z listy **„Zaległości audytu serwera (2026-07-28)"** w `docs/architektura-ko
 | 6 | **Zapis floty.** `PgReferenceRepo` czyta migawkę; brak `create`/`update` z podbiciem `updated_at` (składnik ETagu `/reference` - bez podbicia telefony dostaną `304` i nie zobaczą zmiany). | Nowe | **S** |
 | 7 | **Korekta administracyjna.** Trasa `POST /admin/sessions/:uuid/corrections` + komenda, która: stempluje zdarzenie `picId = sessionPicId` (inaczej `WRITER_MISMATCH`), przechodzi `checkAppend` z **pominięciem wyłącznie `CORRECTION_WINDOW_EXPIRED`**, przelicza projekcję w transakcji, dopisuje audyt i wywołuje `DayExporter`. Wymaga rozszerzenia `checkAppend` o jawny tryb administracyjny - **nie o obejście reguł w warstwie HTTP**; reguła omijana z zewnątrz przestaje być regułą. | Nowe | **L** |
 | 8 | **Listy i filtry po sesjach.** `SessionsProjectionPort` ma `get` i `listByAircraft`. Brak: `list(filter, cursor)`. Dodatkowo projekcja **nie trzyma** `operation`, `dutyStart` ani `client` - a lista dni bez rodzaju operacji i daty jest bezużyteczna. Migracja 9: trzy kolumny do `sessions` + uzupełnienie `sessionRowFrom` (`application/sessionRow.ts`) + przebudowa istniejących wierszy (patrz #14). | Nowe | **M** |
-| 9 | **Atrybucja block time per pilot.** §4.1 pkt 3: „godziny Duala wylicza serwer" - dziś nie wylicza. Aplikacja ma tę logikę (`crewChange.test.ts`), serwer nie. Bez niej A09 nie ma kolumny „Block jako Dual". Właściwe miejsce: funkcja w `@uzaero/domain` (wspólna z aplikacją), użyta przez zapytanie statystyk. | Nowe | **M** |
+| 9 | **Atrybucja block time per pilot.** §4.1 pkt 3: „godziny Duala wylicza serwer" - dziś nie wylicza. Aplikacja ma tę logikę (`crewChange.test.ts`), serwer nie. Bez niej A09 nie ma kolumny „Block jako Dual". Właściwe miejsce: funkcja w `@ninerdeck/domain` (wspólna z aplikacją), użyta przez zapytanie statystyk. | Nowe | **M** |
 | 10 | **Cykl życia flag.** Brak `resolve` (w całym `server/src` nie ma kodu ustawiającego `status='resolved'`), brak listy globalnej, brak kolumn `resolved_by` i `resolution_note` (migracja 10). **Re-eksport po rozwiązaniu flagi** jest wprost w zaległościach audytu i musi wejść razem z `resolve` - inaczej odblokowanie flagi nie odblokuje arkusza. | Częściowo zaległość (re-eksport), reszta nowe | **M** |
 | 11 | **Przeglądarka zdarzeń.** `EventsStorePort.sessionEvents` to jedyny odczyt strumienia. Potrzebne `listEvents(filter, cursor)` z paginacją kursorową po `(received_at, uuid)` i indeksami pod filtry (`received_at`, `type`, `pic_id`). | Nowe | **M** |
 | 12 | **Flagi, których serwer nie produkuje.** §4.5 obiecuje `DOUBLE_CLAIM`, `TIME_OVERLAP`, `FUEL_MISMATCH`, `CLOCK_DRIFT`; `mhChain.ts` liczy trzy inne. `FUEL_MISMATCH` i `CLOCK_DRIFT` telefon wykrywa lokalnie i **nigdzie nie zgłasza**. Do decyzji: albo serwer liczy je sam przy ingescie (ma wszystkie dane: oba zegary w każdym zdarzeniu, `capacity_l` w `aircraft`), albo dokumentacja przestaje ich obiecywać. **Rekomendacja: policzyć na serwerze przy ingescie** - to kilkadziesiąt linii obok `chainFlags`, a skrzynka flag bez nich pomija dwie najczęstsze usterki terenowe. | Nowe (rozjazd dokumentacji z kodem) | **M** |
@@ -1312,7 +1312,7 @@ Miesiąc później arkusz mówi 6:39, panel 6:41 i nikt nie wie który kłamie.
 `SessionState` policzony na serwerze, statystyki (A08/A09) liczą się z projekcji `sessions`,
 która jest zrzutem tej samej funkcji (pilnuje tego `test/contract.test.ts`: „wiersz `sessions`
 musi odtwarzać liczby `projectSession`, nie liczyć własnych"). Panel importuje
-`@uzaero/domain` do **formatowania** (MH wg `mh_format`, block HH:MM), nie do liczenia.
+`@ninerdeck/domain` do **formatowania** (MH wg `mh_format`, block HH:MM), nie do liczenia.
 Ten test należy rozszerzyć o nowe endpointy statystyk przy ich powstaniu.
 
 **10. Wyścig o flagę i o eksport.**
@@ -1368,17 +1368,17 @@ dokumentacji. **To wymaga decyzji przed rozpoczęciem mockupów A05/A06.**
 
 | Warstwa | Wybór | Uzasadnienie |
 |---|---|---|
-| **Framework** | React 19 + Vite, TypeScript strict | Ten sam język i te same typy co `app/` i `server/`; `@uzaero/domain` importuje się bez żadnego mostu. Vite daje statyczny build bez konfiguracji - panel to kilkanaście ekranów, nie aplikacja SSR |
+| **Framework** | React 19 + Vite, TypeScript strict | Ten sam język i te same typy co `app/` i `server/`; `@ninerdeck/domain` importuje się bez żadnego mostu. Vite daje statyczny build bez konfiguracji - panel to kilkanaście ekranów, nie aplikacja SSR |
 | **Routing** | React Router (data router), hash lub history | Back-office żyje deep linkami: `#/dni/<uuid>`, `#/flagi/14`. „Wklej mi link do tego dnia" to podstawowy scenariusz współpracy administratora z szefem wyszkolenia |
 | **Dane** | TanStack Query nad `fetch` | Serwer jest jedynym źródłem prawdy; Query daje cache, unieważnianie po mutacji i stany `loading`/`error` bez pisania ich ręcznie na 20 ekranach. **Zero globalnego store'u** - panel nie ma stanu, który przeżywa odświeżenie strony (odwrotnie niż aplikacja, gdzie Zustand trzyma projekcję dnia) |
-| **Domena** | `@uzaero/domain` jako zależność workspace | Warunek twardy: liczby z `projectSession`, formaty MH z tego samego kodu, typy `Event`/`SessionState`/`FlagRecord` bez przepisywania. Ten sam powód, dla którego pakiet powstał (`docs/architektura-kodu.md` §0) |
+| **Domena** | `@ninerdeck/domain` jako zależność workspace | Warunek twardy: liczby z `projectSession`, formaty MH z tego samego kodu, typy `Event`/`SessionState`/`FlagRecord` bez przepisywania. Ten sam powód, dla którego pakiet powstał (`docs/architektura-kodu.md` §0) |
 | **Auth** | `POST /admin/auth/login` → JWT w cookie `HttpOnly; Secure; SameSite=Strict`; krótki refresh; rola w claims | Przeglądarka to nie telefon: token w `localStorage` jest łupem dla XSS, a 90-dniowy refresh (`REFRESH_TTL_DAYS`) na biurkowej sesji jest nieuzasadniony. Tożsamość i komenda logowania - istniejące `AuthCommands` |
 | **Style** | Zwykły CSS z tokenami z `design/admin/SZABLON.html` (te same zmienne `:root`), bez frameworka UI | Panel ma wyglądać jak UZ Aero, a nie jak Material. Szablon zawiera już komplet komponentów (tabela, plakietki, szuflada, banery, stany puste); framework UI trzeba by z nich obdzierać |
 | **Testy** | Vitest + Testing Library w `admin/`; testy tras `/admin/*` po stronie serwera na PGlite (`app.inject`) | Wzorzec z `server/test/` - prawdziwe endpointy, prawdziwy silnik SQL, zero atrap. Najważniejsze testy są **serwerowe**: rola, append-only, audyt w transakcji |
 | **Deploy** | Statyczny build serwowany przez `@fastify/static` pod `/admin` z tego samego kontenera | Jeden kontener + Postgres (§8 „Utrzymanie własnego backendu": mały serwis, Docker). Wspólny origin usuwa CORS i pozwala na cookie bez `SameSite=None` |
 
 **Gdzie w repo:** nowy workspace **`admin/`** obok `app/` i `server/` (dopisany do
-`workspaces` w głównym `package.json`, nazwa pakietu `@uzaero/admin`), z tą samą wewnętrzną
+`workspaces` w głównym `package.json`, nazwa pakietu `@ninerdeck/admin`), z tą samą wewnętrzną
 strukturą warstw co reszta monorepo. Mockupy zostają w **`design/admin/`** - jak wszystkie
 mockupy w tym projekcie.
 

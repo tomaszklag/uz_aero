@@ -24,7 +24,7 @@ Lista liczy się na telefonie, z lokalnego rejestru - ekran nigdy nie pyta o ni�
 
 ## Doba liczy się w UTC
 
-Wszystkie czasy w UZ Aero są w UTC - w logu operacji, przy startach i lądowaniach, na karcie dnia. Doba zaczyna się o północy UTC, a operacja należy do doby, w której uruchomiono silnik. Operacja z późnego wieczoru może więc stać na liście pod inną datą niż w kalendarzu na ścianie.
+Wszystkie czasy w Ninerdeck są w UTC - w logu operacji, przy startach i lądowaniach, na karcie dnia. Doba zaczyna się o północy UTC, a operacja należy do doby, w której uruchomiono silnik. Operacja z późnego wieczoru może więc stać na liście pod inną datą niż w kalendarzu na ścianie.
 
 > **Dlaczego tak.** Jedna godzina dla pilota, panelu i karty dnia - bez przeliczania stref i bez skoku przy zmianie czasu. Czas lokalny pojawia się tylko jako podpis przy wpisywanej godzinie.
 

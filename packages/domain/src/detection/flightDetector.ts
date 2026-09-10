@@ -1,5 +1,5 @@
 /**
- * UZ Aero - automat detekcji startu i lądowania (§3.3).
+ * Ninerdeck - automat detekcji startu i lądowania (§3.3).
  *
  * CZYSTA DOMENA: żadnego `expo-location`, żadnych timerów, żadnego Reacta. Dostaje
  * kolejne fixy i zwraca nowy stan + ewentualną detekcję. Dzięki temu cały algorytm -

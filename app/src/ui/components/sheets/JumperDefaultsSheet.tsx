@@ -1,5 +1,5 @@
 /**
- * UZ Aero - JumperDefaultsSheet (arkusz „Domyślny skład skoczków", 02e)
+ * Ninerdeck - JumperDefaultsSheet (arkusz „Domyślny skład skoczków", 02e)
  *
  * Skład ustawiony TU staje się wartością startową każdego załadunku bez własnej
  * deklaracji w tej sesji (`boardingInitialJumpers`, `logic/boardingPrefill.ts`) -

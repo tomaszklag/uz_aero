@@ -1,5 +1,5 @@
 /**
- * UZ Aero - czysta decyzja adaptera GPS: co zrobić z usługą pierwszoplanową.
+ * Ninerdeck - czysta decyzja adaptera GPS: co zrobić z usługą pierwszoplanową.
  *
  * Wołana przy każdym uzbrajaniu/rozbrajaniu i przy watchdogowej odbudowie nasłuchu.
  * Kluczowe rozstrzygnięcia:

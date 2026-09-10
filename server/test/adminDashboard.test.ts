@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - PULPIT (`GET /admin/api/dashboard`, mockupy `A01` i `A01a`).
+ * Ninerdeck (serwer) - PULPIT (`GET /admin/api/dashboard`, mockupy `A01` i `A01a`).
  *
  * Pulpit jest jedynym ekranem panelu z gwarantowaną publicznością - każdy zalogowany
  * ląduje tu pierwszy. Dlatego ten plik pilnuje pięciu własności, których złamanie

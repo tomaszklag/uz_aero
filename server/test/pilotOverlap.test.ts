@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - nakładka CZASU PILOTA (`pilot_overlap`, §4.7).
+ * Ninerdeck (serwer) - nakładka CZASU PILOTA (`pilot_overlap`, §4.7).
  *
  * Sedno tego testu to przypadek, który po §3.6a przestał być anomalią: pilot zdaje jedną
  * maszynę i bierze drugą **co do minuty**. Stara flaga `session_overlap` nie umiała tego

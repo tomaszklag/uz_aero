@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test modelu zużycia paliwa per faza.
+ * Ninerdeck - test modelu zużycia paliwa per faza.
  *
  * Model odpowiada na pytanie, którego nikt nie zmierzył: ile samolot pali na ziemi,
  * a ile w powietrzu. Odpowiedź jest wnioskiem z wielu interwałów, więc test buduje dane

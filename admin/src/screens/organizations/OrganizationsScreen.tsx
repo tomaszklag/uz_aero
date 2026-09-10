@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: kluby na serwerze (`#/organizacje`, mockup `organizacje-lista`).
+ * Ninerdeck - panel: kluby na serwerze (`#/organizacje`, mockup `organizacje-lista`).
  *
  * Moduł PLATFORMY - jedyny ekran panelu, który widzi więcej niż jeden klub. Widzi przy
  * tym SAME LICZBY i administratorów: „nic nie wycieka między klubami" obejmuje także tę

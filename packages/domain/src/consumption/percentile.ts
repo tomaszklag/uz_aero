@@ -1,5 +1,5 @@
 /**
- * UZ Aero - centyl z interpolacją liniową.
+ * Ninerdeck - centyl z interpolacją liniową.
  *
  * Wydzielony z `summary.ts` (issue #38), bo pasmo centylowe przestało być sprawą jednego
  * modułu: tak samo liczy się rozrzut sesji wokół modelu fazowego (`ratio.ts`). Reguła

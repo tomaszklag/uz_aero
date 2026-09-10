@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - weryfikacja tokenu tożsamości Google (`GoogleIdTokens`).
+ * Ninerdeck (serwer) - weryfikacja tokenu tożsamości Google (`GoogleIdTokens`).
  *
  * ══ TO JEST TEN PLIK, KTÓREGO ATRAPA DOSTAWCY NIE ZASTĘPUJE ══
  * Wszystkie pozostałe testy logowania biorą `TestIdentityProvider` i sprawdzają, co
@@ -17,8 +17,8 @@ import { describe, expect, it } from 'vitest';
 import { GoogleIdTokens, type JwksFetch } from '../src/infrastructure/auth/googleIdTokens.ts';
 import { TestClock } from './helpers.ts';
 
-const WEB_CLIENT_ID = '1234567890-uzaero-web.apps.googleusercontent.com';
-const ANDROID_CLIENT_ID = '1234567890-uzaero-android.apps.googleusercontent.com';
+const WEB_CLIENT_ID = '1234567890-ninerdeck-web.apps.googleusercontent.com';
+const ANDROID_CLIENT_ID = '1234567890-ninerdeck-android.apps.googleusercontent.com';
 const KID = 'test-key-1';
 
 const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
@@ -130,7 +130,7 @@ describe('GoogleIdTokens - odbiorca PER POWIERZCHNIA (audyt 2026-09-05)', () => 
 describe('GoogleIdTokens - odmowy', () => {
   it('ODRZUCA token dla CUDZEJ aplikacji - to jest ta kontrola, na której stoi wszystko', async () => {
     // Bez sprawdzenia `aud` każdy token Google z dowolnej aplikacji na świecie
-    // otwierałby konta w UZ Aero.
+    // otwierałby konta w Ninerdeck.
     const obcy = signToken({ ...validClaims, aud: 'inna-aplikacja.apps.googleusercontent.com' });
     expect(await check(obcy)).toBeNull();
   });

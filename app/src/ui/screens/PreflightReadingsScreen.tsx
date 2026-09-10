@@ -1,5 +1,5 @@
 /**
- * UZ Aero - 02A NOWY LOT · krok 3/3: paliwo i motogodziny.
+ * Ninerdeck - 02A NOWY LOT · krok 3/3: paliwo i motogodziny.
  *
  * Odwzorowanie mockupu `design/02a-preflight.html` wraz z arkuszami korekty z 02b/02c.
  * Struktura stamtąd: [box „brak danych"] → sekcja PALIWO → sekcja MOTOGODZINY →
@@ -76,7 +76,7 @@ import type { HandoverTrailEntry, ReferencePilot } from '../../domain';
 const FUEL_WARN_L = 10;
 const MH_WARN_H = 0.5;
 
-/** Datownik osi czasu (mockup 02a) mieszka od issue #60 w `@uzaero/format` (`stampUtc`). */
+/** Datownik osi czasu (mockup 02a) mieszka od issue #60 w `@ninerdeck/format` (`stampUtc`). */
 const stamp = stampUtc;
 
 /**
@@ -446,7 +446,7 @@ export function PreflightReadingsScreen({
             // `title`/`text` komponentu, nie własny skład.
             title={
               // `byPilotId === null` znaczy „nikt tego nie przekazał": STAN POCZĄTKOWY
-              // wpisany w panelu (issue #66) - pierwszy lot tej maszyny w UZ Aero -
+              // wpisany w panelu (issue #66) - pierwszy lot tej maszyny w Ninerdeck -
               // albo ODCZYT ADMINISTRATORA (issue #81, `origin: 'admin'`): ktoś
               // ZDECYDOWAŁ, co pokazują przyrządy, np. po zakończeniu operacji osieroconej.
               handover.byPilotId == null
@@ -459,7 +459,7 @@ export function PreflightReadingsScreen({
               handover.byPilotId == null
                 ? handover.origin === 'admin'
                   ? `Aktualny stan ${aircraft.reg} ustawiono w panelu - nadrzędnie wobec ostatniego zdania.`
-                  : `To pierwszy lot ${aircraft.reg} w UZ Aero - odczyty wpisał administrator.`
+                  : `To pierwszy lot ${aircraft.reg} w Ninerdeck - odczyty wpisał administrator.`
                 : handover.byPilotId === pilotId
                   ? `To Twoje własne odczyty z ostatniego dnia na ${aircraft.reg}.`
                   : `${aircraft.reg} przekazał ${pilotName(handover.byPilotId)}.`,

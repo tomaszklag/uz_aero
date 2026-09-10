@@ -1,5 +1,5 @@
 /**
- * UZ Aero - 14 ŚLAD SESJI (mockupy `design/14-slad.html`, `14b`, `14c`, `14d`).
+ * Ninerdeck - 14 ŚLAD SESJI (mockupy `design/14-slad.html`, `14b`, `14c`, `14d`).
  *
  * Wejście MINIATURĄ z ekranu sesji (10). Ekran pokazuje cztery rzeczy z mockupu w tej
  * samej kolejności - trasę, profil pionowy, statystyki lotu i log przeliczonych punktów.

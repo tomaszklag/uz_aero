@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - trasa dziennika audytu (`GET /admin/api/audit`, mockup
+ * Ninerdeck (serwer) - trasa dziennika audytu (`GET /admin/api/audit`, mockup
  * `A09-audyt.html`).
  *
  * Zdolność `audit.read` ma WYŁĄCZNIE administrator (`domain/roles.ts`) - szef

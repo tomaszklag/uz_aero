@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - DECYZJE o zgłoszeniach kodem klubu (`/admin/api/memberships*`;
+ * Ninerdeck (serwer) - DECYZJE o zgłoszeniach kodem klubu (`/admin/api/memberships*`;
  * wielofirmowość §8.3; issue #100, D2).
  *
  * Druga połowa jedynej drogi do klubu: `joinClub.test.ts` dowodzi, że kod klubu daje

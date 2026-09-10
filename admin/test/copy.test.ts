@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: TEKST NA EKRANIE NIE JEST DOKUMENTACJĄ SYSTEMU.
+ * Ninerdeck - panel 2.0: TEKST NA EKRANIE NIE JEST DOKUMENTACJĄ SYSTEMU.
  *
  * Ten test istnieje z powodu jednego zdania właściciela produktu o panelu 1.0:
  * „nie może być tyle bannerów i tłumaczeń jak teraz - to przypomina projekt techniczny,

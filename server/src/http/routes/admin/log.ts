@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - LOG DNIA, poziom 1 (`GET /admin/api/log`).
+ * Ninerdeck (serwer) - LOG DNIA, poziom 1 (`GET /admin/api/log`).
  *
  * Cienka jak reszta repo: zod -> zapytanie -> status. Poziomu 2 i 3 nie ma tutaj i to
  * jest świadome - grid sesji jednej maszyny obsługuje `GET /sessions?aircraftId=…`,

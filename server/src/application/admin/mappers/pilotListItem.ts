@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - `AdminPilotJoin` → kontrakt listy kont (`A06`).
+ * Ninerdeck (serwer) - `AdminPilotJoin` → kontrakt listy kont (`A06`).
  *
  * Czysta funkcja, jak `sessionListItem.ts` i `auditEntry.ts`: port oddaje model
  * warstwy aplikacji, a mapowanie na kształt „na drucie" jest testowalne bez bazy.

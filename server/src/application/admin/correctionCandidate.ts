@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - KANDYDAT KOREKTY: jak go zbudować i czy wolno go dopisać.
+ * Ninerdeck (serwer) - KANDYDAT KOREKTY: jak go zbudować i czy wolno go dopisać.
  *
  * Ten plik istnieje z jednego powodu i warto go zapisać wprost: **korektę
  * administratora ocenia się w DWÓCH miejscach - przy zapisie (`commands/corrections.ts`)
@@ -34,7 +34,7 @@ import {
   type RuleViolation,
   type SessionState,
   warningsOf,
-} from '@uzaero/domain';
+} from '@ninerdeck/domain';
 
 /**
  * Kandydat do zapisu - nagłówek bierzemy z SESJI, nie od administratora.

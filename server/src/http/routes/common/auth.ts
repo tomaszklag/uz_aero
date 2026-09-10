@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - trasy `/auth/*` (§3.0, §4.6).
+ * Ninerdeck (serwer) - trasy `/auth/*` (§3.0, §4.6).
  *
  * Cienkie jak cała warstwa HTTP: zod → komenda → status. Jedyna „logika" to mapowanie
  * wyniku komendy na kod odpowiedzi, a i ono jest w całości wypisane w tabelach

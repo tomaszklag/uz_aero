@@ -1,5 +1,5 @@
 /**
- * UZ Aero - DayCard (`.day-card` z mockupów 12 i 01)
+ * Ninerdeck - DayCard (`.day-card` z mockupów 12 i 01)
  *
  * Karta SESJI: nagłówek display + samolot, godziny biegu silnika, rząd statystyk,
  * opcjonalna stopka z tagami i pas akcji.

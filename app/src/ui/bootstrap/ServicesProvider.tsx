@@ -1,5 +1,5 @@
 /**
- * UZ Aero - dostęp do usług platformy (GPS, rejestrator śladu) dla drzewa ekranów.
+ * Ninerdeck - dostęp do usług platformy (GPS, rejestrator śladu) dla drzewa ekranów.
  *
  * Warstwy danych ekrany dostają przez store (`attachRepo` w composition root), ale GPS
  * jest usługą strumieniową i wygodniej podać go kontekstem. Kluczowe: ekran widzi

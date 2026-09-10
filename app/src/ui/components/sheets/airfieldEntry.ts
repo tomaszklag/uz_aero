@@ -1,5 +1,5 @@
 /**
- * UZ Aero - co wolno zapisać z arkusza wyboru lotniska.
+ * Ninerdeck - co wolno zapisać z arkusza wyboru lotniska.
  *
  * Pole arkusza przyjmuje DWIE rzeczy: kod ICAO i nazwę (żeby dało się szukać „zielona").
  * Do rejestru wchodzi wyłącznie pierwsza z nich - bez tej bramki wpis „zielona" wylądowałby

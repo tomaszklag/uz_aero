@@ -1,5 +1,5 @@
 /**
- * UZ Aero - sekcja „Klub" w ustawieniach (`ui/screens/logic/clubSwitch.ts`, mockup 13a).
+ * Ninerdeck - sekcja „Klub" w ustawieniach (`ui/screens/logic/clubSwitch.ts`, mockup 13a).
  *
  * Trzy własności, których złamanie widać dopiero na urządzeniu:
  *  1. sekcja istnieje WYŁĄCZNIE przy więcej niż jednym klubie (razem ze zgłoszeniami);

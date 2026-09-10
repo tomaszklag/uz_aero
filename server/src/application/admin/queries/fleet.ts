@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - flota panelu (`A07`) i DANE REFERENCYJNE dla filtrów.
+ * Ninerdeck (serwer) - flota panelu (`A07`) i DANE REFERENCYJNE dla filtrów.
  *
  * Ta trasa ma dwóch odbiorców, dokładnie jak lista kont. Pierwszy: ekran floty, który
  * potrzebuje konfiguracji, progu flagi i stanu bieżącego z telefonów. Drugi: filtry
@@ -20,7 +20,7 @@
  * a zmienia wyłącznie `fleet.manage`. Egzekwuje to trasa, nie ta klasa.
  */
 
-import { fuelToleranceL } from '@uzaero/domain';
+import { fuelToleranceL } from '@ninerdeck/domain';
 
 import { activeClaim, pickHandover } from '../../common/aircraftStateView.ts';
 import type {
