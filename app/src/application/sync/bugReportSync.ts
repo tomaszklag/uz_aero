@@ -1,5 +1,5 @@
 /**
- * UZ Aero - wysyłka ZGŁOSZEŃ BŁĘDÓW (issue #87, na czas testów z pilotami).
+ * Ninerdeck - wysyłka ZGŁOSZEŃ BŁĘDÓW (issue #87, na czas testów z pilotami).
  *
  * Osobny, NISKOPRIORYTETOWY tor obok outboxa zdarzeń - dokładnie jak ślad kalibracyjny
  * (`traceSync.ts`) i z tego samego powodu: rejestr dnia jedzie pierwszy, bo od niego

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer, testy) - świat referencyjny harnessu: DWA kluby, 5 samolotów, 7 osób.
+ * Ninerdeck (serwer, testy) - świat referencyjny harnessu: DWA kluby, 5 samolotów, 7 osób.
  *
  * Do issue #50 ten scenariusz zakładał produkcyjny seed (`infrastructure/pg/seed.ts`)
  * i był wspólny z zaślepką telefonu. Produkcyjny seed stawia odtąd wyłącznie konto
@@ -94,11 +94,11 @@ const AIRCRAFT_B = [
  * równe historycznie i to jest wygoda testów, nie reguła produktu.
  */
 export const TEST_PILOTS = [
-  ['TMK', 'TMK', 'Tomasz Małkiewicz', 'tomasz@uzaero.pl', 'admin'],
-  ['AKO', 'AKO', 'Anna Kowalska', 'anna@uzaero.pl', 'admin'],
-  ['PWI', 'PWI', 'Piotr Wiśniewski', 'piotr@uzaero.pl', 'pilot'],
-  ['JSE', 'JSE', 'Jan Serafin', 'jan@uzaero.pl', 'pilot'],
-  ['KRZ', 'KRZ', 'Krzysztof Zieliński', 'krzysztof@uzaero.pl', 'pilot'],
+  ['TMK', 'TMK', 'Tomasz Małkiewicz', 'tomasz@ninerdeck.pl', 'admin'],
+  ['AKO', 'AKO', 'Anna Kowalska', 'anna@ninerdeck.pl', 'admin'],
+  ['PWI', 'PWI', 'Piotr Wiśniewski', 'piotr@ninerdeck.pl', 'pilot'],
+  ['JSE', 'JSE', 'Jan Serafin', 'jan@ninerdeck.pl', 'pilot'],
+  ['KRZ', 'KRZ', 'Krzysztof Zieliński', 'krzysztof@ninerdeck.pl', 'pilot'],
 ] as const;
 
 /**

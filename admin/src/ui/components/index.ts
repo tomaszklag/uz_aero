@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: barrel biblioteki komponentów.
+ * Ninerdeck - panel 2.0: barrel biblioteki komponentów.
  *
  * Biblioteka rośnie PACZKAMI pod konkretne ekrany, nie „na zapas": komponent bez
  * ekranu to kod, którego nikt nie sprawdził w użyciu. Panel ma pięć ekranów

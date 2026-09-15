@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test WPISU GODZINY z klawiatury w stepperze (zgłoszenie z urządzenia,
+ * Ninerdeck - test WPISU GODZINY z klawiatury w stepperze (zgłoszenie z urządzenia,
  * 2026-08-14: „powinienem móc kliknąć w czas i przez klawiaturę zmienić wartość").
  *
  * Same maska i parser mają własne testy w `format.test.ts`. Tutaj sprawdzamy to, co

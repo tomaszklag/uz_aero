@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - test ciągłości odczytów wokół chwili (issue #62, piąta tura).
+ * Ninerdeck (serwer) - test ciągłości odczytów wokół chwili (issue #62, piąta tura).
  *
  * Czysta funkcja na wierszach projekcji, więc test nie potrzebuje bazy ani serwera.
  */

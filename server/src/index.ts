@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - composition root.
+ * Ninerdeck (serwer) - composition root.
  *
  * Jedyne miejsce, które zna WSZYSTKIE konkrety naraz: config z env, pulę Postgresa,
  * adaptery i złożenie ich w komendy/zapytania. Reszta kodu dostaje zależności
@@ -136,7 +136,7 @@ const env = z
     SEED_ORG_SLUG: z.string().regex(ORG_SLUG_PATTERN).optional(),
     /**
      * NASZE identyfikatory klienta Google - kontrola oddzielająca „ktoś zalogował się
-     * do UZ Aero" od „ktoś ma dowolny token Google" (`aud` w weryfikacji tokenu).
+     * do Ninerdeck" od „ktoś ma dowolny token Google" (`aud` w weryfikacji tokenu).
      *
      * **Web jest WYMAGANY**: to nim loguje się panel i to jego panel pobiera z serwera,
      * żeby narysować przycisk (`GET /admin/api/auth/google-client`). Android jest
@@ -500,4 +500,4 @@ const app = await buildServer({
 });
 
 await app.listen({ port: env.PORT, host: '0.0.0.0' });
-console.log(`UZ Aero server: http://localhost:${env.PORT}`);
+console.log(`Ninerdeck server: http://localhost:${env.PORT}`);

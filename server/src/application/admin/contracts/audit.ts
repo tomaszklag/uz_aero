@@ -1,8 +1,8 @@
 /**
- * UZ Aero (serwer) - KONTRAKT dziennika audytu panelu (`A09`).
+ * Ninerdeck (serwer) - KONTRAKT dziennika audytu panelu (`A09`).
  *
  * Pliki w `contracts/` zawierają WYŁĄCZNIE typy i wolno im importować wyłącznie
- * `@uzaero/domain` (pilnuje `test/architecture.test.ts`). Ten akurat nie importuje
+ * `@ninerdeck/domain` (pilnuje `test/architecture.test.ts`). Ten akurat nie importuje
  * niczego: dziennik audytu nie opisuje bytu domenowego. Opisuje AKCJĘ CZŁOWIEKA przy
  * biurku - a domena nie zna ani panelu, ani ról, ani adresów IP.
  *

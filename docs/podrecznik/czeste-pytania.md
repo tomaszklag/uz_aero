@@ -1,6 +1,6 @@
 # Częste pytania
 
-> Krótkie odpowiedzi na pytania, które padają najczęściej w pierwszych tygodniach z UZ Aero - pilota i administratora klubu.
+> Krótkie odpowiedzi na pytania, które padają najczęściej w pierwszych tygodniach z Ninerdeck - pilota i administratora klubu.
 
 ## Logowanie i konto
 
@@ -58,7 +58,7 @@ Jeśli masz odczyty paliwa i motogodzin (zdjęcie, notatka), zdaj samolot z miej
 
 ### Dlaczego wczorajszy wieczorny lot stoi pod dzisiejszą datą?
 
-Bo doba w UZ Aero liczy się w UTC, a operacja należy do doby, w której uruchomiono silnik. Latem lot po godzinie 02:00 czasu polskiego jest już w następnej dobie UTC, a lot o 01:30 - w poprzedniej ([model operacji](model-operacji)).
+Bo doba w Ninerdeck liczy się w UTC, a operacja należy do doby, w której uruchomiono silnik. Latem lot po godzinie 02:00 czasu polskiego jest już w następnej dobie UTC, a lot o 01:30 - w poprzedniej ([model operacji](model-operacji)).
 
 ### Nie widzę śladu na mapie
 

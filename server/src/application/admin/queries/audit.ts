@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - strona ODCZYTU dziennika audytu (`A09`).
+ * Ninerdeck (serwer) - strona ODCZYTU dziennika audytu (`A09`).
  *
  * Dziennik zapisuje się od przekroju 1 i do tej pory nikt go nie przeczytał - to jest
  * pierwszy czytelnik. Scenariusz, dla którego powstaje: administrator patrzy na dzień

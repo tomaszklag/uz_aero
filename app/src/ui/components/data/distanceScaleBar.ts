@@ -1,5 +1,5 @@
 /**
- * UZ Aero - PODZIAŁKA ODLEGŁOŚCI profilu pionowego (issue #47, trzecia tura przeglądu).
+ * Ninerdeck - PODZIAŁKA ODLEGŁOŚCI profilu pionowego (issue #47, trzecia tura przeglądu).
  *
  * Profil ma oś CZASU, a podziałka pokazuje DROGĘ - i to jest cała trudność tego pliku.
  * Na osi czasu nie ma stałego przelicznika „NM na piksel": pięć minut wznoszenia po

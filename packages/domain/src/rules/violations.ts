@@ -1,5 +1,5 @@
 /**
- * UZ Aero - słownik naruszeń reguł domenowych.
+ * Ninerdeck - słownik naruszeń reguł domenowych.
  *
  * Każda gwardia z `sessionRules.ts` zwraca `RuleViolation` o jednej z dwóch wag:
  *

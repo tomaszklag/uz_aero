@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - strona ODCZYTU modułu „Zgłoszenia" (issue #87).
+ * Ninerdeck (serwer) - strona ODCZYTU modułu „Zgłoszenia" (issue #87).
  *
  * Scenariusz, dla którego powstaje: trwają testy z pilotami, na biurku leży lista
  * rzeczy, które nie działają, i trzeba odpowiedzieć na pytanie „co jest jeszcze do

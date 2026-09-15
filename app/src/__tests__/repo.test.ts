@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy repozytorium + InMemoryAdapter (warstwa danych, §4.1/§4.3/§4.8).
+ * Ninerdeck - testy repozytorium + InMemoryAdapter (warstwa danych, §4.1/§4.3/§4.8).
  * Rdzeń: append→odczyt, outbox (`synced_at IS NULL`), markSynced, dedup po uuid,
  * dwa zegary (deviceTime + gpsTime), cache referencyjny z fetchedAt.
  */

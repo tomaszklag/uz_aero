@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - zapytanie `GET /me/events` (§4.9, issue #32).
+ * Ninerdeck (serwer) - zapytanie `GET /me/events` (§4.9, issue #32).
  *
  * ODTWORZENIE REJESTRU TELEFONU: strona własnych zdarzeń pilota, stronicowana kursorem
  * po czasie przyjęcia. To jest druga połowa outboxa - `POST /events` wysyła, ta trasa
@@ -21,7 +21,7 @@
  * znaczy, że aplikacja nie ma drugiej definicji zdarzenia dla drogi powrotnej.
  */
 
-import type { Event } from '@uzaero/domain';
+import type { Event } from '@ninerdeck/domain';
 
 import type { Database } from '../../common/ports.ts';
 import type { MyEventsPort } from '../ports.ts';

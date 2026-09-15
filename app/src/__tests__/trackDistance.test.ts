@@ -1,5 +1,5 @@
 /**
- * UZ Aero - droga przebyta do danej chwili (issue #47, trzecia tura przeglądu).
+ * Ninerdeck - droga przebyta do danej chwili (issue #47, trzecia tura przeglądu).
  *
  * Podziałka profilu podaje obok czasu DYSTANS - i to jest miejsce, w którym najłatwiej
  * skłamać: na osi czasu droga nie jest proporcjonalna (pięć minut wznoszenia to inna

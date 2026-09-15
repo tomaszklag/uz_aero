@@ -1,5 +1,5 @@
 /**
- * UZ Aero - adapter GPS odtwarzający zadaną serię fixów.
+ * Ninerdeck - adapter GPS odtwarzający zadaną serię fixów.
  *
  * Po co: pozwala przejść cały lot - start, zrzut, lądowanie - bez samolotu i bez
  * czekania w czasie rzeczywistym. Używany w testach oraz do ręcznego sprawdzenia

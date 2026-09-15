@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - dziennik audytu: ZAPIS jako część komendy i ODCZYT dla `A09`.
+ * Ninerdeck (serwer) - dziennik audytu: ZAPIS jako część komendy i ODCZYT dla `A09`.
  *
  * Pierwsza połowa pliku nie sprawdza, że coś się loguje. Sprawdza WŁASNOŚĆ, na której
  * stoi cały mechanizm `AuditedWrite`: skutek i jego ślad są tą samą transakcją, więc

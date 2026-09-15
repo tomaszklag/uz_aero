@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: INICJAŁY do kółka przy nazwisku zalogowanego (`.avatar`).
+ * Ninerdeck - panel: INICJAŁY do kółka przy nazwisku zalogowanego (`.avatar`).
  *
  * Panel nie ma zdjęć i nie ciągnie awatarów z Google; kółko istnieje po to, żeby oko
  * znalazło „kto" w tym samym rogu, co w każdej innej aplikacji web. Dwie litery

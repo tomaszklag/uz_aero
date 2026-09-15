@@ -1,5 +1,5 @@
 /**
- * UZ Aero - retro-datowanie: KIEDY zdarzenie naprawdę nastąpiło.
+ * Ninerdeck - retro-datowanie: KIEDY zdarzenie naprawdę nastąpiło.
  *
  * TO JEST NAPRAWA BŁĘDU, KTÓRY ZAPISYWAŁ SIĘ DO DOKUMENTÓW. Detektor emitował czas
  * fixa, który POTWIERDZIŁ warunek - czyli moment przekroczenia progu plus okno

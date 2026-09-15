@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ResultBar (`.result-row` z mockupu 06)
+ * Ninerdeck - ResultBar (`.result-row` z mockupu 06)
  *
  * Samodzielny pasek WYNIKU: po lewej etykieta i rachunek, który do niego doprowadził,
  * po prawej jedna duża liczba na tonowanym tle. To nie jest kolejne pole formularza -

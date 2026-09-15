@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - cykl życia flagi i re-eksport (`POST /admin/api/flags/:id/resolve`).
+ * Ninerdeck (serwer) - cykl życia flagi i re-eksport (`POST /admin/api/flags/:id/resolve`).
  *
  * Ten sam wzorzec co reszta: PGlite w procesie, prawdziwe klasy, `app.inject`, zero
  * atrap. Flagi powstają tak, jak powstają w produkcji - z PRAWDZIWEGO `POST /events`,
@@ -212,7 +212,7 @@ describe('rozwiązanie flagi (A03a)', () => {
           exported: true,
           tab: '2026-06-22_SP-AXA',
           revision: 1,
-          url: 'http://uzaero.test/sheets/aeroklub-alfa/2026-06-22_SP-AXA?k=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          url: 'http://ninerdeck.test/sheets/aeroklub-alfa/2026-06-22_SP-AXA?k=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
         },
       },
       {
@@ -221,7 +221,7 @@ describe('rozwiązanie flagi (A03a)', () => {
           exported: true,
           tab: '2026-06-22_SP-AXA',
           revision: 2,
-          url: 'http://uzaero.test/sheets/aeroklub-alfa/2026-06-22_SP-AXA?k=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          url: 'http://ninerdeck.test/sheets/aeroklub-alfa/2026-06-22_SP-AXA?k=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
         },
       },
     ]);

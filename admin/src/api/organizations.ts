@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: moduł ORGANIZACJE (`/admin/api/organizations*`).
+ * Ninerdeck - panel: moduł ORGANIZACJE (`/admin/api/organizations*`).
  *
  * Jedyny zasób panelu na sesji PLATFORMOWEJ: administrator klubu tych tras nie otwiera
  * i nie dostaje 403, tylko 401 - jego sesja jest sesją klubu, a to nie jest ten rodzaj

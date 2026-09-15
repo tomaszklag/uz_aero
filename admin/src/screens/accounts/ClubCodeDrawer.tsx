@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: kod klubu (`#/piloci/kod`, mockup `piloci-kod-klubu` - P4 i P4a).
+ * Ninerdeck - panel: kod klubu (`#/piloci/kod`, mockup `piloci-kod-klubu` - P4 i P4a).
  *
  * ══ KOD STOI JAWNIE I NA STAŁE ══
  * Nie jest sekretem: daje WYŁĄCZNIE zgłoszenie do rozpatrzenia, a wpuszcza człowiek

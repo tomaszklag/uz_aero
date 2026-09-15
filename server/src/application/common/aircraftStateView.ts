@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - wybór claimu i przekazania z listy sesji samolotu (§4.4–4.5).
+ * Ninerdeck (serwer) - wybór claimu i przekazania z listy sesji samolotu (§4.4–4.5).
  *
  * Wydzielone z zapytania `aircraftState`, bo TE SAME reguły potrzebuje `GET /reference`
  * (audyt: cache referencyjny telefonu ma kolumny `claim_*`/`handover`, które bez tego
@@ -19,7 +19,7 @@
  * a zegar telefonu bywa przestawiony (audyt wyłapał wybór po `closeTime`).
  */
 
-import type { Event, EventOf, Handover, HandoverTrailEntry, OilHandover } from '@uzaero/domain';
+import type { Event, EventOf, Handover, HandoverTrailEntry, OilHandover } from '@ninerdeck/domain';
 
 import type { AdminReading, AircraftSeed, SessionRow } from './ports.ts';
 

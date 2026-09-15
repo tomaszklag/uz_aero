@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - testy `GET /reference` (§4.6, §4.8).
+ * Ninerdeck (serwer) - testy `GET /reference` (§4.6, §4.8).
  *
  * Kontrakt z aplikacją: kształty `ReferenceAircraft`/`ReferencePilot` idą z pakietu
  * domeny, więc test sprawdza dokładnie to, co telefon włoży do cache. ETag/304 to

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - wspólny zestaw testowy: PGlite + prawdziwe warstwy.
+ * Ninerdeck (serwer) - wspólny zestaw testowy: PGlite + prawdziwe warstwy.
  *
  * PGlite to Postgres skompilowany do WASM, działający W PROCESIE testu - ten sam trik,
  * co `node:sqlite` w aplikacji: prawdziwy silnik (parser, planner, JSONB), zero Dockera
@@ -129,14 +129,14 @@ export class TestClock implements Clock {
  * Stoi tu, a nie w każdym teście z osobna, żeby zmiana nazwy nagłówka była jedną
  * poprawką, a nie polowaniem po plikach.
  */
-export const ADMIN_CSRF_HEADERS = { 'x-uz-admin': '1' } as const;
+export const ADMIN_CSRF_HEADERS = { 'x-ninerdeck-admin': '1' } as const;
 
 /** Identyfikator klienta Google WEB w testach - panel pobiera go z `GET /admin/api/auth/google-client`. */
 export const TEST_GOOGLE_WEB_CLIENT_ID = 'test-web-client.apps.googleusercontent.com';
 
 export const TEST_SECRET = 'test-secret-o-dlugosci-co-najmniej-32-znakow';
 /** Celowo sztuczny host - nic tu nie nasłuchuje; testy przybijają PEŁNE URL-e kart. */
-export const TEST_BASE_URL = 'http://uzaero.test';
+export const TEST_BASE_URL = 'http://ninerdeck.test';
 
 /**
  * `audit` podmienia się z jednego powodu: żeby WYMUSIĆ awarię zapisu śladu i pokazać,
@@ -219,7 +219,7 @@ export async function testHarness(
 
   // Zrzut śladu (faza 5) - prawdziwy adapter plikowy na katalogu tymczasowym;
   // testy trasy zaglądają do NDJSON dokładnie tak, jak zrobi to skrypt replay.
-  const tracesDir = mkdtempSync(join(tmpdir(), 'uzaero-traces-'));
+  const tracesDir = mkdtempSync(join(tmpdir(), 'ninerdeck-traces-'));
   // Osie faz pionowych czytają ślady z TEGO SAMEGO katalogu, co ich zapis - pliki
   // poboczne lądują obok nagrań i znikają razem z katalogiem tymczasowym testu.
   const phaseTimeline = new FsPhaseTimeline(tracesDir, new FsTraceSource(tracesDir));

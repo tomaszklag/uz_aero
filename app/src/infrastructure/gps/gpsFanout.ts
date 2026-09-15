@@ -1,5 +1,5 @@
 /**
- * UZ Aero - rozgałęźnik fixów GPS (jedno źródło, wielu odbiorców).
+ * Ninerdeck - rozgałęźnik fixów GPS (jedno źródło, wielu odbiorców).
  *
  * Powód istnienia jest praktyczny i kosztował lot: odbiornik w telefonie jest JEDEN,
  * a chętnych na jego odczyty dwóch - kokpit (autodetekcja startu i lądowania) oraz

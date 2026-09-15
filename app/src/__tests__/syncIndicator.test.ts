@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy wskaźnika łączności (`components/status/syncIndicator.ts`).
+ * Ninerdeck - testy wskaźnika łączności (`components/status/syncIndicator.ts`).
  *
  * Blok pierwszy jest testem REGRESYJNYM do zgłoszenia z urządzenia (2026-08-30):
  * „w logach api widzę, że udało się połączenie, ale UI nadal mówi, że jest offline".

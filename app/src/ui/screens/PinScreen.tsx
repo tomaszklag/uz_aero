@@ -1,5 +1,5 @@
 /**
- * UZ Aero - 00 ODBLOKOWANIE PIN (+ krok „Ustaw PIN" po logowaniu).
+ * Ninerdeck - 00 ODBLOKOWANIE PIN (+ krok „Ustaw PIN" po logowaniu).
  *
  * Odwzorowanie mockupu `design/00-login.html`: znak marki → karta profilu → etykieta
  * i kropki → klawiatura → linki. Działa w 100% OFFLINE (§3.0: codzienne wejście nie

@@ -1,12 +1,12 @@
 /**
- * UZ Aero (serwer) - adapter flag (`FlagsPort`).
+ * Ninerdeck (serwer) - adapter flag (`FlagsPort`).
  *
  * Flagi żyją dłużej niż dzień lotny (open → resolved u administratora) i bywają
  * przypięte do PARY sesji (nakładka po przejęciu offline) - stąd osobna tabela,
  * a nie kolumna w `sessions`.
  */
 
-import { isFlagType, type FlagType } from '@uzaero/domain';
+import { isFlagType, type FlagType } from '@ninerdeck/domain';
 
 import type { FlagRecord, FlagsPort, Queryable } from '../../../application/common/ports.ts';
 

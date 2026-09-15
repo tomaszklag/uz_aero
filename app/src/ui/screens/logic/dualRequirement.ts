@@ -1,5 +1,5 @@
 /**
- * UZ Aero - WYMÓG ZAŁOGI DWUOSOBOWEJ JAKO BLOKADA Z POWODEM (uwaga z urządzenia,
+ * Ninerdeck - WYMÓG ZAŁOGI DWUOSOBOWEJ JAKO BLOKADA Z POWODEM (uwaga z urządzenia,
  * 2026-08-29).
  *
  * Wymóg Duala jest właściwością SAMOLOTU (§3.1, konfiguracja §5.4) i obowiązuje na

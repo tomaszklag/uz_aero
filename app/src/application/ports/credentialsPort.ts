@@ -1,5 +1,5 @@
 /**
- * UZ Aero - PORT bezpiecznego magazynu poświadczeń (§3.0, §5.2).
+ * Ninerdeck - PORT bezpiecznego magazynu poświadczeń (§3.0, §5.2).
  *
  * Trzyma to, czego NIE wolno położyć w zwykłym storage: parę tokenów i profil pilota
  * z provisioning. Sekrety mieszkają w `expo-secure-store` (Keystore Androida), nie

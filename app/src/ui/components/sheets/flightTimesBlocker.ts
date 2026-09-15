@@ -1,5 +1,5 @@
 /**
- * UZ Aero - powód, dla którego arkusz czasów nie da się zapisać (issue #62 pkt 5).
+ * Ninerdeck - powód, dla którego arkusz czasów nie da się zapisać (issue #62 pkt 5).
  *
  * Arkusz `FlightTimesSheet` opisuje PARĘ godzin - bieg silnika (uruchomienie →
  * wyłączenie) albo lot (start → lądowanie) - i do issue #62 pozwalał zapisać parę

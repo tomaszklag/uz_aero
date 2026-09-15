@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy matematyki czujników inercyjnych (`domain/detection/imu.ts`).
+ * Ninerdeck - testy matematyki czujników inercyjnych (`domain/detection/imu.ts`).
  *
  * Ten moduł istnieje, bo naturalny pomysł „weźmy moduł przyspieszenia, będzie niezależny
  * od ułożenia telefonu" jest jednocześnie SŁUSZNY i BEZUŻYTECZNY: moduł faktycznie nie

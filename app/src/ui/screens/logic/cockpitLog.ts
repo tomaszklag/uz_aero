@@ -1,5 +1,5 @@
 /**
- * UZ Aero - LOG KOKPITU (mockupy 04, 04B, 05) jako oś sesji.
+ * Ninerdeck - LOG KOKPITU (mockupy 04, 04B, 05) jako oś sesji.
  *
  * ══ CO SIĘ TU STAŁO PRZY ISSUE #44 ══
  * Ten moduł budował wcześniej `EventLogRow[]` - własny kształt wiersza dla własnego

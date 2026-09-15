@@ -1,5 +1,5 @@
 /**
- * UZ Aero - sekcja OLEJU na kroku liczników (02a, issue #60): czysta logika.
+ * Ninerdeck - sekcja OLEJU na kroku liczników (02a, issue #60): czysta logika.
  *
  * Olej różni się od paliwa i MH jedną rzeczą, z której wynika cała reszta: nikt go
  * pilotowi NIE PRZEKAZUJE. Paliwo i licznik pilot POTWIERDZA (wartości przekazane stoją

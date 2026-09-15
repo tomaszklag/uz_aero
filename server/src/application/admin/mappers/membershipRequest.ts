@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - `MembershipRequest` → kontrakt kolejki zgłoszeń (karta ZGŁOSZENIA
+ * Ninerdeck (serwer) - `MembershipRequest` → kontrakt kolejki zgłoszeń (karta ZGŁOSZENIA
  * nad listą pilotów; issue #100, D2).
  *
  * Czysta funkcja, jak `pilotListItem.ts`: port oddaje model warstwy aplikacji, a kształt

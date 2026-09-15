@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: OŚ ZDARZEŃ jednej sesji (poziom 3).
+ * Ninerdeck - panel 2.0: OŚ ZDARZEŃ jednej sesji (poziom 3).
  *
  * Moduł CZYSTY. Robi dokładnie dwie rzeczy: nazywa zdarzenie PO POLSKU i wyciąga
  * z niego JEDNO zdanie szczegółu. Niczego nie liczy i niczego nie ukrywa - rejestr
@@ -11,8 +11,8 @@
  * a `landing 08:14:52` rozstrzyga, KTÓRE zdarzenie unieważniła korekta.
  */
 
-import { litres, oilLitres, timeUtcSeconds } from '@uzaero/format';
-import type { Event, EventType } from '@uzaero/domain';
+import { litres, oilLitres, timeUtcSeconds } from '@ninerdeck/format';
+import type { Event, EventType } from '@ninerdeck/domain';
 
 import type { TimelineEntryDto } from '../../api/dto';
 

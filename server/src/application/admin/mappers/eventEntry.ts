@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - wiersz `events` → pozycja rejestru zdarzeń (`A04`).
+ * Ninerdeck (serwer) - wiersz `events` → pozycja rejestru zdarzeń (`A04`).
  *
  * Czysta funkcja, testowana bez bazy - jak `sessionListItem` i `eventTimeline`.
  * Robi dokładnie trzy rzeczy i żadna z nich nie jest interpretacją treści zdarzenia:
@@ -11,7 +11,7 @@
  *
  * ══ DLACZEGO `applyCorrections`, A NIE WŁASNE CZYTANIE KOREKT ══
  * Reguła „gdy jedno zdarzenie ma kilka korekt, wygrywa ostatnia" (razem z parą
- * `void` → `retime`, która przywraca zdarzenie do życia) mieszka w `@uzaero/domain`
+ * `void` → `retime`, która przywraca zdarzenie do życia) mieszka w `@ninerdeck/domain`
  * i ma tam mieć JEDNĄ implementację. Druga kopia w rejestrze rozjechałaby się przy
  * pierwszej zmianie reguły - i to w miejscu, które istnieje po to, żeby pokazywać
  * prawdę o rejestrze. Ta sama decyzja, co w `mappers/eventTimeline.ts`.
@@ -25,7 +25,7 @@
  * `type` przepisujemy napisem, `payload` - referencją. Rejestr pokazuje to, co przyszło.
  */
 
-import { applyCorrections, type Event } from '@uzaero/domain';
+import { applyCorrections, type Event } from '@ninerdeck/domain';
 
 import type { AdminEventEntry } from '../contracts/events.ts';
 import type { AdminEventRow } from '../ports.ts';

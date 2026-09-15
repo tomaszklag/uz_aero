@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - trasa ZAKOŃCZENIA ADMINISTRACYJNEGO operacji
+ * Ninerdeck (serwer) - trasa ZAKOŃCZENIA ADMINISTRACYJNEGO operacji
  * (`POST /admin/api/sessions/:uuid/close`, issue #81).
  *
  * Cienka jak `sessionVoid.ts`: zod → komenda → status. Osobny plik z tych samych

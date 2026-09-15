@@ -1,5 +1,5 @@
 /**
- * UZ Aero - PhaseHero (`.phase-hero` z mockupu 05)
+ * Ninerdeck - PhaseHero (`.phase-hero` z mockupu 05)
  *
  * Główny display kokpitu w locie: kwadratowa plakietka z ikoną fazy przy lewej
  * krawędzi i obok nazwa fazy ogromną czcionką (54 px / ls 6) z linią kontekstu.

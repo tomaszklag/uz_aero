@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - aplikowanie migracji.
+ * Ninerdeck (serwer) - aplikowanie migracji.
  *
  * `schema_migrations` trzyma numer ostatniej zastosowanej - ten sam mechanizm co
  * `PRAGMA user_version` w aplikacji, tylko tabelą, bo Postgres nie ma pragm.
@@ -66,8 +66,8 @@ function settingsPreamble(context: MigrationContext): string {
   if (context.seedOrg == null) return '';
   const literal = (value: string): string => `'${value.replace(/'/g, "''")}'`;
   return [
-    `SELECT set_config('uzaero.seed_org_name', ${literal(context.seedOrg.name)}, true);`,
-    `SELECT set_config('uzaero.seed_org_slug', ${literal(context.seedOrg.slug)}, true);`,
+    `SELECT set_config('ninerdeck.seed_org_name', ${literal(context.seedOrg.name)}, true);`,
+    `SELECT set_config('ninerdeck.seed_org_slug', ${literal(context.seedOrg.slug)}, true);`,
   ].join('\n');
 }
 

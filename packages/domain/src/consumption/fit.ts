@@ -1,5 +1,5 @@
 /**
- * UZ Aero - dopasowanie z więzem nieujemności RAZEM z niepewnością wyniku.
+ * Ninerdeck - dopasowanie z więzem nieujemności RAZEM z niepewnością wyniku.
  *
  * ══ DLACZEGO NIEPEWNOŚĆ JEST CZĘŚCIĄ WYNIKU, A NIE DODATKIEM ══
  * Stawka „51,3 L/h" policzona z pięciu interwałów i z dziewięćdziesięciu sześciu wygląda

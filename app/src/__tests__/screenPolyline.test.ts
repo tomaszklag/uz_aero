@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ciągłość łamanej śladu (issue #47 pkt 1).
+ * Ninerdeck - ciągłość łamanej śladu (issue #47 pkt 1).
  *
  * Test istnieje, bo błąd, który naprawia, był NIEWIDOCZNY w kodzie i bardzo widoczny na
  * urządzeniu: stara wersja `TrackPolyline` pomijała odcinki krótsze niż pół piksela,

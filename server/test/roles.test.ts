@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - role członkostw, rola platformowa i brama uprawnień panelu
+ * Ninerdeck (serwer) - role członkostw, rola platformowa i brama uprawnień panelu
  * (decyzja 2026-07-31; wielofirmowość 2026-09-08, issue #98).
  *
  * Cztery rzeczy, które MUSZĄ trzymać, bo ich złamanie jest luką, a nie usterką:
@@ -475,7 +475,7 @@ describe('CHECK na słownikach ról', () => {
   it('członkostwo założone bez podanej roli dostaje `pilot`', async () => {
     const { db } = await testHarness();
     await db.query(
-      `INSERT INTO pilots (id, name, email, active) VALUES ('NEW', 'Nowe Konto', 'nowe@uzaero.pl', TRUE)`,
+      `INSERT INTO pilots (id, name, email, active) VALUES ('NEW', 'Nowe Konto', 'nowe@ninerdeck.pl', TRUE)`,
     );
     await db.query(
       `INSERT INTO memberships (org_id, pilot_id, code, status, joined_via)
@@ -492,7 +492,7 @@ describe('CHECK na słownikach ról', () => {
     // nie ma prawa być aktywne, a `pending` bez kodu jest stanem zwykłym.
     const { db } = await testHarness();
     await db.query(
-      `INSERT INTO pilots (id, name, email, active) VALUES ('NEW', 'Nowe Konto', 'nowe@uzaero.pl', TRUE)`,
+      `INSERT INTO pilots (id, name, email, active) VALUES ('NEW', 'Nowe Konto', 'nowe@ninerdeck.pl', TRUE)`,
     );
     await expect(
       db.query(

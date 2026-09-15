@@ -1,5 +1,5 @@
 /**
- * UZ Aero - geometria na potrzeby generatora katalogu lotnisk.
+ * Ninerdeck - geometria na potrzeby generatora katalogu lotnisk.
  *
  * Skala jest tu lokalna (pojedyncze lotnisko, kilka kilometrów), więc płaskie
  * przybliżenie wystarcza z zapasem: błąd rzutowania na tym dystansie jest mniejszy

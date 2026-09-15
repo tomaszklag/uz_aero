@@ -1,5 +1,5 @@
 /**
- * UZ Aero - RAMA ARKUSZA wysuwanego od dołu (`.modal-overlay` + `.modal-sheet`).
+ * Ninerdeck - RAMA ARKUSZA wysuwanego od dołu (`.modal-overlay` + `.modal-sheet`).
  *
  * ══ PO CO OSOBNY KOMPONENT ══
  * Bo arkuszy jest osiem, a rama była kopiowana: `Modal`, przyciemnione tło z tapnięciem

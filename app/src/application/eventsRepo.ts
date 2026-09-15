@@ -1,5 +1,5 @@
 /**
- * UZ Aero - repozytorium zdarzeń (docs/_main.md.txt §4.1, §4.3, §4.8, §5.2).
+ * Ninerdeck - repozytorium zdarzeń (docs/_main.md.txt §4.1, §4.3, §4.8, §5.2).
  *
  * Serwis APLIKACYJNY nad portami: nadaje `uuid`, stempluje dwa zegary, egzekwuje
  * idempotencję i wystawia outbox oraz cache referencyjny. Zależy wyłącznie od portów

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy katalogu lotnisk i wyboru tych widocznych na mapie.
+ * Ninerdeck - testy katalogu lotnisk i wyboru tych widocznych na mapie.
  *
  * Sedno: mapa śladu nie ma kafelków, więc lotniska są JEDYNYM odniesieniem w terenie.
  * Dwie rzeczy mogą to zepsuć i obie są tu sprawdzone - pokazanie zbyt wielu lądowisk

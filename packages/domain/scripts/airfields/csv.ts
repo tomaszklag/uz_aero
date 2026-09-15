@@ -1,5 +1,5 @@
 /**
- * UZ Aero - parser CSV dla generatora katalogu lotnisk.
+ * Ninerdeck - parser CSV dla generatora katalogu lotnisk.
  *
  * Własny, bo pliki OurAirports mają przecinki i cudzysłowy WEWNĄTRZ pól (nazwy w rodzaju
  * `"Zielona Góra-Babimost Airport, EPZG"`), a generator jest jedynym miejscem w repo,

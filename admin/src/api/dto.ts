@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: KOPERTY ODPOWIEDZI `/admin/api/*` jako własne typy.
+ * Ninerdeck - panel 2.0: KOPERTY ODPOWIEDZI `/admin/api/*` jako własne typy.
  *
  * Dlaczego własne, a nie importowane z serwera: `server/` to workspace z `type: module`,
  * rozszerzeniami `.ts` w importach, typami Fastify i `pg`. Import stamtąd wciągnąłby
@@ -7,7 +7,7 @@
  * warstw serwera. **Nigdy nie importujemy z `server/src`** - a kształty odpowiedzi
  * po stronie serwera przybijają jego własne testy tras.
  *
- * Byty domenowe biorzemy jako TYPY z `@uzaero/domain` (`import type`, nigdy wartości).
+ * Byty domenowe biorzemy jako TYPY z `@ninerdeck/domain` (`import type`, nigdy wartości).
  *
  * == TEN PLIK OPISUJE TO, CZEGO PANEL 2.0 UZYWA ==
  * Serwer przysyła w tych samych kopertach WIĘCEJ, niż jest tu wymienione: przy kontach
@@ -25,7 +25,7 @@ import type {
   ServiceStatus,
   SessionState,
   SessionTrackPayload,
-} from '@uzaero/domain';
+} from '@ninerdeck/domain';
 
 // -- sesja panelu (logowanie, `GET /me`) ----------------------------------------
 
@@ -374,7 +374,7 @@ export interface OrganizationDraftBody {
  * Jedna jednostka - wiersz `GET /admin/api/fleet`.
  *
  * `fuelToleranceL` LICZY SERWER i to jest treść tej trasy: próg flagi rozjazdu paliwa
- * to `max(10 L, 5% pojemności)`, a panelowi wolno importować z `@uzaero/domain` wyłącznie
+ * to `max(10 L, 5% pojemności)`, a panelowi wolno importować z `@ninerdeck/domain` wyłącznie
  * TYPY. Gdyby serwer nie podawał wyniku, panel musiałby trzymać drugą kopię reguły.
  */
 export interface AircraftListItemDto {

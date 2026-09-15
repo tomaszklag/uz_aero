@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - produkcyjny seed po issue #50, po wejściu Google (2026-09-04)
+ * Ninerdeck (serwer) - produkcyjny seed po issue #50, po wejściu Google (2026-09-04)
  * i po wielofirmowości (issue #98).
  *
  * Seed przestał być danymi scenariusza (te mieszkają w `test/testWorld.ts`) i został

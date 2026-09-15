@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter dziennika audytu panelu (`AdminAuditPort`).
+ * Ninerdeck (serwer) - adapter dziennika audytu panelu (`AdminAuditPort`).
  *
  * Jedna metoda i jeden `INSERT`. To nie jest zalążek do rozbudowy: `admin_audit` jest
  * append-only, więc `UPDATE` i `DELETE` nie mają się tu z czego wziąć - a ich BRAK

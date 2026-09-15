@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test wymogu załogi dwuosobowej jako blokady z powodem (uwaga z urządzenia,
+ * Ninerdeck - test wymogu załogi dwuosobowej jako blokady z powodem (uwaga z urządzenia,
  * 2026-08-29).
  *
  * Sedno zgłoszenia brzmiało „trzeba to ujednolicić": ten sam wymóg na 02 mówił banerem,

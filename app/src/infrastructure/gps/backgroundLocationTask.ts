@@ -1,5 +1,5 @@
 /**
- * UZ Aero - task lokalizacji usługi pierwszoplanowej (`expo-task-manager`).
+ * Ninerdeck - task lokalizacji usługi pierwszoplanowej (`expo-task-manager`).
  *
  * `defineTask` MUSI wykonać się na poziomie modułu: w starcie headless (Android
  * wskrzesza proces po jego śmierci, bo usługa ma `killServiceOnDestroy: false`)
@@ -23,7 +23,7 @@ import { locationToFix, type RawLocation } from './locationToFix';
  * Nazwa jest trwałym kontraktem z SYSTEMEM - Android trzyma zarejestrowany task
  * pod tą nazwą także po aktualizacji aplikacji. Zmiana nazwy osierociłaby usługę.
  */
-export const BACKGROUND_LOCATION_TASK = 'uzaero-location';
+export const BACKGROUND_LOCATION_TASK = 'ninerdeck-location';
 
 export type BackgroundFixSink = (fixes: readonly GpsFix[]) => void;
 

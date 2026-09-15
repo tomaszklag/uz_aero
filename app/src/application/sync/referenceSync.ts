@@ -1,5 +1,5 @@
 /**
- * UZ Aero - odświeżanie CACHE REFERENCYJNEGO z `GET /reference` (§4.8, §5.2).
+ * Ninerdeck - odświeżanie CACHE REFERENCYJNEGO z `GET /reference` (§4.8, §5.2).
  *
  * Cache (flota, konfiguracje, piloci, claim/przekazanie per samolot) zasila preflight
  * i ekran odczytów. Do M3 wypełniał go wyłącznie seed - od teraz źródłem prawdy jest

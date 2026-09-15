@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - trasa `GET /me/task-suggestions` (issue #14, ekran 02e).
+ * Ninerdeck (serwer) - trasa `GET /me/task-suggestions` (issue #14, ekran 02e).
  *
  * Cienka jak reszta `/me/*`: token → zapytanie → treść. Tożsamość WYŁĄCZNIE z tokenu
  * (wzorzec `prefs.ts`) - gdyby pilot mógł podać `picId` w zapytaniu, endpoint

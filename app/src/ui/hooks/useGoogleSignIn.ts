@@ -1,5 +1,5 @@
 /**
- * UZ Aero - „Kontynuuj z Google" na telefonie (`docs/logowanie-google.md` §9).
+ * Ninerdeck - „Kontynuuj z Google" na telefonie (`docs/logowanie-google.md` §9).
  *
  * JEDYNE miejsce aplikacji, które zna `expo-auth-session` i `expo-web-browser`.
  * Ekran logowania dostaje trzy rzeczy: czy przepływ jest w ogóle skonfigurowany, czy

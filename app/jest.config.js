@@ -1,5 +1,5 @@
 /**
- * UZ Aero - konfiguracja Jest dla testów WARSTWY DANYCH (Faza 1).
+ * Ninerdeck - konfiguracja Jest dla testów WARSTWY DANYCH (Faza 1).
  *
  * Świadomy wybór: testy rdzenia (czyste projekcje + `InMemoryAdapter` + repo + store)
  * są RN-free - nie importują react-native, expo-* ani `expo-sqlite`. Dlatego zamiast

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - WYDANIE JS: która aktualizacja OTA naprawdę działa (2026-09-07).
+ * Ninerdeck - WYDANIE JS: która aktualizacja OTA naprawdę działa (2026-09-07).
  *
  * JEDYNE miejsce, które importuje `expo-updates` (exact-list w `architecture.test.ts`) -
  * ta sama reguła, co przy `expo-application` w `nativeRelease.ts` i z tego samego

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - PRZESUNIĘCIE GODZINY PRZEJĘCIA (issue #43, uwaga z urządzenia).
+ * Ninerdeck - PRZESUNIĘCIE GODZINY PRZEJĘCIA (issue #43, uwaga z urządzenia).
  *
  * ══ PROBLEM ══
  * Godzina przejęcia jest zwykłym faktem („wziąłem samolot o 9:00, nie o 8:04") i pilot

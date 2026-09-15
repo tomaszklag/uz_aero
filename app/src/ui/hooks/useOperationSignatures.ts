@@ -1,5 +1,5 @@
 /**
- * UZ Aero - SYGNATURY OPERACJI po identyfikatorze sesji (issue #68).
+ * Ninerdeck - SYGNATURY OPERACJI po identyfikatorze sesji (issue #68).
  *
  * ══ DLACZEGO CAŁY STRUMIEŃ, A NIE JEDNA SESJA ══
  * Numeru operacji w dobie nie da się policzyć z niej samej - to jej miejsce wśród

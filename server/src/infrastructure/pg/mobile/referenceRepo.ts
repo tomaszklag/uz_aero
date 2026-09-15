@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter `ReferencePort` na Postgres.
+ * Ninerdeck (serwer) - adapter `ReferencePort` na Postgres.
  *
  * Zwraca flotę i pilotów w KSZTAŁTACH DOMENY (`ReferenceAircraft`, `ReferencePilot`) -
  * tych samych, które aplikacja trzyma w cache referencyjnym. Serwer i telefon mówią
@@ -9,7 +9,7 @@
  * świadomie `null`: brak przekazania to pełnoprawny stan §4.8 („brak"), nie błąd.
  */
 
-import type { MhFormat, ReferenceAircraft, ReferencePilot, ServiceStatus } from '@uzaero/domain';
+import type { MhFormat, ReferenceAircraft, ReferencePilot, ServiceStatus } from '@ninerdeck/domain';
 
 import type {
   AircraftSeed,

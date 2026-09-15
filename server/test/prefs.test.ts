@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - testy `/me/prefs` (decyzja 2026-07-29: motyw jest preferencją
+ * Ninerdeck (serwer) - testy `/me/prefs` (decyzja 2026-07-29: motyw jest preferencją
  * PILOTA i wędruje między urządzeniami przez serwer).
  *
  * Sedno kontraktu: LWW po stemplu DECYZJI z telefonu (`themeUpdatedAt`) - starszy

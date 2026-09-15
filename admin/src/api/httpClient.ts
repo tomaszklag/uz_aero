@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: JEDYNE miejsce w kodzie, w którym występuje `fetch`.
+ * Ninerdeck - panel: JEDYNE miejsce w kodzie, w którym występuje `fetch`.
  *
  * Reguła jest wykonywalna (`test/architecture.test.ts`), a jej cel nie jest
  * porządkowy: dopóki sieć ma jedne drzwi, „skąd wzięła się ta liczba" ma zawsze
@@ -10,7 +10,7 @@
  *  • ścieżki są WZGLĘDNE (`/admin/api/…`) - panel jedzie z tego samego originu co API,
  *    więc nie ma `apiBaseUrl`, nie ma CORS-u i ciasteczko `SameSite=Strict` działa.
  *    W `app/` taki plik istnieje właśnie dlatego, że telefon jest INNYM originem;
- *  • mutacje niosą nagłówek CSRF (`X-UZ-Admin`), którego przeglądarka nie wyśle
+ *  • mutacje niosą nagłówek CSRF (`X-Ninerdeck-Admin`), którego przeglądarka nie wyśle
  *    cross-origin bez preflightu - serwer go WYMAGA (`server/src/http/adminCsrf.ts`);
  *  • odpowiedzi spoza 2xx stają się `HttpError`, a nie `undefined` w komórce tabeli.
  */
@@ -21,7 +21,7 @@ import type { ApiErrorDto } from './dto';
 const API_PREFIX = '/admin/api';
 
 /** Nagłówek CSRF wymagany przez serwer przy każdej metodzie innej niż GET. */
-const CSRF_HEADER = 'X-UZ-Admin';
+const CSRF_HEADER = 'X-Ninerdeck-Admin';
 
 /**
  * Odpowiedź serwera spoza 2xx jako wyjątek NIOSĄCY STATUS I CIAŁO.

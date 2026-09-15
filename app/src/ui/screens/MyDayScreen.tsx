@@ -1,5 +1,5 @@
 /**
- * UZ Aero - 01 MÓJ DZIEŃ (mockupy `design/01-moj-dzien.html` + `01a` + `01c`).
+ * Ninerdeck - 01 MÓJ DZIEŃ (mockupy `design/01-moj-dzien.html` + `01a` + `01c`).
  *
  * EKRAN DOMOWY po issue #23: do pilota w danej dobie przypisana jest LISTA SESJI
  * i nic ponadto. Log dnia jest płaską osią czasu (kafelek = jedna sesja, rejestracja

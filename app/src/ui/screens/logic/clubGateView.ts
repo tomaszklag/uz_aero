@@ -1,5 +1,5 @@
 /**
- * UZ Aero - stan osoby wobec klubów → treść ekranów `00c` (czeka), `00d` (odrzucone)
+ * Ninerdeck - stan osoby wobec klubów → treść ekranów `00c` (czeka), `00d` (odrzucone)
  * i `00e` (bez klubu). Wielofirmowość §7, issue #102.
  *
  * Moduł czysty: to są decyzje o TREŚCI (co ekran mówi, KTÓRY klub nazywa, kiedy pisze
@@ -16,7 +16,7 @@
  * rejected > none), a tutaj wybiera się KTÓRY klub ekran nazywa.
  */
 
-import { dateTimeUtcShort } from '@uzaero/format';
+import { dateTimeUtcShort } from '@ninerdeck/format';
 
 import type { ClubMembershipView, ClubsView } from '../../../application/ports';
 

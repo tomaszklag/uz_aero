@@ -1,5 +1,5 @@
 /**
- * UZ Aero - BalanceCard (karta rachunku z mockupu `10-statystyki.html`).
+ * Ninerdeck - BalanceCard (karta rachunku z mockupu `10-statystyki.html`).
  *
  * Rachunek jednej wielkości: przesłanki („odczyt przy przejęciu", „dolane"), kreska,
  * wynik dużą cyfrą, a pod nim oczekiwanie i werdykt. Ten sam komponent obsługuje paliwo

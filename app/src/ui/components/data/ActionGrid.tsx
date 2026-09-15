@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ActionGrid (`.action-grid` z mockupu 04)
+ * Ninerdeck - ActionGrid (`.action-grid` z mockupu 04)
  *
  * Siatka 2×2 akcji naziemnych: tankowanie, zmiana załogi, lista ręczna, zakończenie dnia.
  *

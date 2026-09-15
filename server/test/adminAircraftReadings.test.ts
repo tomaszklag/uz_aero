@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - ODCZYTY MASZYNY WPISANE RĘKĄ ADMINISTRATORA
+ * Ninerdeck (serwer) - ODCZYTY MASZYNY WPISANE RĘKĄ ADMINISTRATORA
  * (`POST /admin/api/fleet/:id/readings`, issue #81).
  *
  * Pod obserwacją:

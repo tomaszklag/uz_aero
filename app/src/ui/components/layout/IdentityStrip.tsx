@@ -1,5 +1,5 @@
 /**
- * UZ Aero - IdentityStrip (`.pilot-strip` z mockupu 02)
+ * Ninerdeck - IdentityStrip (`.pilot-strip` z mockupu 02)
  *
  * Pasek „kto jest zalogowany": awatar, nazwisko, druga linia, rola.
  *

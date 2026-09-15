@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: klub - założenie i karta (`#/organizacje/nowy`, `#/organizacje/:id`;
+ * Ninerdeck - panel: klub - założenie i karta (`#/organizacje/nowy`, `#/organizacje/:id`;
  * mockup `organizacje-klub`).
  *
  * DWA TRYBY W JEDNEJ SZUFLADZIE, bo to ten sam byt na dwóch etapach życia. Różnice są

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (testy) - fałszywy dostawca tożsamości (`IdentityProviderPort`).
+ * Ninerdeck (testy) - fałszywy dostawca tożsamości (`IdentityProviderPort`).
  *
  * ══ DLACZEGO ATRAPA, SKORO REGUŁA PROJEKTU MÓWI „PRAWDZIWE ADAPTERY" ══
  * Bo prawdziwym adapterem jest tu KRYPTOGRAFIA GOOGLE, a nie nasz kod: `GoogleIdTokens`

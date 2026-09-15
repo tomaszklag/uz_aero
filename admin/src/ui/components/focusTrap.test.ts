@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: reguła pułapki fokusu w szufladzie.
+ * Ninerdeck - panel: reguła pułapki fokusu w szufladzie.
  *
  * Jedna własność: **fokus nie wychodzi z warstwy modalnej klawiszem `Tab`.** Przed
  * 2026-08-01 `Tab` z ostatniego pola szuflady schodził do tabeli pod przesłoną -

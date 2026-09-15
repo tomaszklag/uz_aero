@@ -1,5 +1,5 @@
 /**
- * UZ Aero - tony akcentu wspólne dla komponentów Design Systemu.
+ * Ninerdeck - tony akcentu wspólne dla komponentów Design Systemu.
  *
  * W mockupach akcent zawsze występuje jako trójka: kolor tekstu/ikony, tło `-muted`
  * i obramowanie `-border`. Zamiast powtarzać ten `switch` w każdym komponencie,

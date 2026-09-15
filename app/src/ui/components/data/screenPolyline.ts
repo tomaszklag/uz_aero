@@ -1,5 +1,5 @@
 /**
- * UZ Aero - PUNKTY ŁAMANEJ W PRZESTRZENI EKRANU (issue #47 pkt 1).
+ * Ninerdeck - PUNKTY ŁAMANEJ W PRZESTRZENI EKRANU (issue #47 pkt 1).
  *
  * ══ BŁĄD, KTÓRY TEN PLIK NAPRAWIA ══
  * `TrackPolyline` rysowało odcinek między każdą parą sąsiednich punktów, a odcinki

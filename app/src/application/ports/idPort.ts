@@ -1,5 +1,5 @@
 /**
- * UZ Aero - PORT generatora identyfikatorów (docs/_main.md.txt §4.1).
+ * Ninerdeck - PORT generatora identyfikatorów (docs/_main.md.txt §4.1).
  *
  * `uuid` zdarzenia jest kluczem idempotencji (dedup po UUID na serwerze), więc musi być
  * unikalny - ale w testach musi być PRZEWIDYWALNY, inaczej asercje na kolejności i dedupie

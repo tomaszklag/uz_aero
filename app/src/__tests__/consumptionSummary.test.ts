@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test metryk zbiorczych zużycia.
+ * Ninerdeck - test metryk zbiorczych zużycia.
  *
  * Najważniejsza rzecz, której ten plik pilnuje, mieści się w jednym zdaniu: średnią okna
  * liczymy jako iloraz sum, a nie jako średnią z dziennych L/h. Różnica bywa kilkukrotna

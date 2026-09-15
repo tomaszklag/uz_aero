@@ -1,5 +1,5 @@
 /**
- * UZ Aero - numer lotu w kokpicie (issue #21 pkt 1).
+ * Ninerdeck - numer lotu w kokpicie (issue #21 pkt 1).
  *
  * Zgłoszenie z urządzenia: arkusz zrzutu w PIERWSZYM locie tytułował się „ZRZUT · LOT 2".
  * Przyczyna: projekcja dopisuje lot do `flights` już przy starcie (lot otwarty), a ekran

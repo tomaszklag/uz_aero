@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - deklaracja trasy panelu administracyjnego.
+ * Ninerdeck (serwer) - deklaracja trasy panelu administracyjnego.
  *
  * **Zdolność jest ATRYBUTEM trasy, a nie zdaniem w ciele handlera.** Dzięki temu
  * odpowiedź na pytanie „czego wymaga ten endpoint" da się wyczytać z jednej linii

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ADAPTER `ServerPort` na fetch (kontrakt §4.6).
+ * Ninerdeck - ADAPTER `ServerPort` na fetch (kontrakt §4.6).
  *
  * Tłumaczy świat HTTP na dwa rodzaje niepowodzeń portu:
  *  • wyjątek fetch / timeout → `ServerUnreachableError` - normalny stan pracy w terenie,

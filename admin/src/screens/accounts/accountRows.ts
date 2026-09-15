@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: konto z serwera -> WIERSZ TABELI.
+ * Ninerdeck - panel 2.0: konto z serwera -> WIERSZ TABELI.
  *
  * Moduł CZYSTY (bez Reacta), bo to są decyzje o treści komórek - a te chcemy mieć
  * pod testem, nie w JSX-ie. Komponent dostaje gotowy wiersz i wyłącznie go rysuje.

@@ -1,4 +1,4 @@
-# UZ Aero - dokumentacja projektu
+# Ninerdeck - dokumentacja projektu
 
 > Aplikacja Android (React Native + Expo) do elektronicznego chronometrażu lotów.
 > Offline-first: telefon pilota rejestruje wszystko lokalnie, własny backend scala dane floty
@@ -25,7 +25,7 @@
 
 ## 1. Kontekst i cel
 
-Aplikacja UZ Aero zastępuje papierowy chronometraż używany przez pilotów podczas dnia lotnego. Rejestruje:
+Aplikacja Ninerdeck zastępuje papierowy chronometraż używany przez pilotów podczas dnia lotnego. Rejestruje:
 
 - czasy blokowe (off-block / on-block) dla każdego pilota
 - czasy lotów (takeoff / landing)
@@ -43,7 +43,7 @@ i zdaniu samolotu (zdanie zatwierdza log całej operacji).
 
 | Data | Decyzja |
 |------|---------|
-| 2026-06-22 | Nazwa aplikacji: **UZ Aero** (stare nazwy e-Chronometraż / e-CHRONO - błędne) |
+| 2026-06-22 | Nazwa aplikacji: **Ninerdeck** (stare nazwy e-Chronometraż / e-CHRONO - błędne) |
 | 2026-06-22 | Logowanie: Google OAuth (primary) + e-mail/hasło (fallback); tożsamość pilota znana w całej sesji |
 | 2026-07-03 | Role załogi: **PIC** (zalogowany, prowadzi aplikację) + **Dual** (drugi pilot); zastępuje CDR/SIC |
 | 2026-07-03 | Format MH (dziesiętny / hh:mm) i pojemność zbiorników = konfiguracja samolotu na serwerze |
@@ -65,8 +65,8 @@ i zdaniu samolotu (zdanie zatwierdza log całej operacji).
 | 2026-07-31 | **Podział kodu: warstwa jako oś główna, powierzchnia jako druga** (`admin` / `mobile` / `common` wewnątrz `application/`, `http/routes/`, `infrastructure/pg/`). ODRZUCONE: dwie gałęzie najwyższego poziomu ADMIN/MOBILE - te powierzchnie nie są dwoma systemami (jedna baza, jeden strumień zdarzeń, jedna projekcja, jedno logowanie), więc trzecia gałąź na kod wspólny wchłonęłaby większość plików, a granica byłaby przekraczana przy każdym żądaniu. ODRZUCONE: spłaszczenie - `admin/` jest granicą sprawdzaną maszynowo przez `test/architecture.test.ts`. Oś powierzchni obowiązuje TYLKO tam, gdzie plik istnieje dla kogoś: schemat bazy, punkty wejścia i mapowania mają własne miejsca. Szczegóły: `docs/architektura-kodu.md` |
 | 2026-07-31 | **Katalog flag: kod dogania §4.5, nie odwrotnie.** `FUEL_MISMATCH` i `CLOCK_DRIFT` doliczamy przy ingescie (dziś żyją wyłącznie jako lokalne ostrzeżenia w telefonie i nigdy nie docierają na serwer); `session_overlap` zostaje następcą `DOUBLE_CLAIM` + `TIME_OVERLAP`. Powód: obie kontrole mają komplet danych po stronie serwera (`checkClocks` już porównuje oba zegary), a rozbieżność dokumentacji z kodem jest droższa niż ich dopisanie. Determinuje kształt `FlagType`, więc decyzja zapadła PRZED cyklem życia flagi |
 | 2026-07-31 | **Bez ORM-a i bez query buildera** (podtrzymuje „Spójność modeli bez ORM"). Powód mocniejszy niż poprzedni: ten system nie ma encji, którymi ORM miałby zarządzać - `events` jest append-only, a wiersz `sessions` to zrzut `projectSession` nadpisywany w całości, więc change tracking i unit of work zapraszają do „poprawienia jednego pola projekcji", czyli do obejścia strumienia. Zamiast tego `infrastructure/pg/sqlFilter.ts` + `keyset.ts` (~120 linii z testami) i naprawa runnera migracji (`BEGIN`/`COMMIT` jednym `exec`), która domyka też wadę migracji z `ADD CONSTRAINT`/`ADD COLUMN` |
-| 2026-07-31 | **Panel dzieli wyłącznie model DOMENOWY** (`@uzaero/domain`); modelu persystencji nie widzi nigdy - między nim a bazą stoi DTO z `/admin/api/*`. Osobnego pakietu „modele z bazy" NIE tworzymy: uczyniłby schemat kontraktem publicznym i pozwolił panelowi liczyć po swojemu zamiast przez `projectSession`. API pod `/admin/api/*`, nie `/admin/*` - kolizja z wildcardem `@fastify/static` (tryb awarii: żądanie API dostaje plik HTML) |
-| 2026-07-31 | **Wspólne biblioteki frontendu: dwa pakiety nie-wizualne** - `@uzaero/tokens` (5 motywów + emiter zmiennych CSS) i `@uzaero/format` (czas blokowy, MH, UTC). **Zero pakietu z komponentami**: RN i web to inne przyciski, nie ta sama skórka (kokpitowy `ActionButton` ma przytrzymanie 2 s i 44 px pod rękawice, `.btn` panelu 36 px z `:hover`), a `react-native-web` nie wyrenderuje zatwierdzonego `SZABLON.html`. Komponenty webowe zostają w `admin/src/ui/components/` |
+| 2026-07-31 | **Panel dzieli wyłącznie model DOMENOWY** (`@ninerdeck/domain`); modelu persystencji nie widzi nigdy - między nim a bazą stoi DTO z `/admin/api/*`. Osobnego pakietu „modele z bazy" NIE tworzymy: uczyniłby schemat kontraktem publicznym i pozwolił panelowi liczyć po swojemu zamiast przez `projectSession`. API pod `/admin/api/*`, nie `/admin/*` - kolizja z wildcardem `@fastify/static` (tryb awarii: żądanie API dostaje plik HTML) |
+| 2026-07-31 | **Wspólne biblioteki frontendu: dwa pakiety nie-wizualne** - `@ninerdeck/tokens` (5 motywów + emiter zmiennych CSS) i `@ninerdeck/format` (czas blokowy, MH, UTC). **Zero pakietu z komponentami**: RN i web to inne przyciski, nie ta sama skórka (kokpitowy `ActionButton` ma przytrzymanie 2 s i 44 px pod rękawice, `.btn` panelu 36 px z `:hover`), a `react-native-web` nie wyrenderuje zatwierdzonego `SZABLON.html`. Komponenty webowe zostają w `admin/src/ui/components/` |
 | 2026-08-06 | **Dzień służby przestaje być kontenerem na loty - ODWRACA „jeden samolot = jeden dzień" z 2026-07-23.** Flow był zbudowany wokół dnia służby: żeby zapisać jeden lot, pilot musiał otworzyć i zamknąć służbę, a przesiadka na drugi samolot dawała dwie służby. W rzeczywistości typowy dzień to JEDEN lot i przekazanie maszyny - służba trwająca cały dzień jest rzadkością. Nowa reguła: **loty są zapisywane, służba jest deklarowana i zawsze stanowi klamrę wokół lotów** (duty ⊇ suma wzlotów). Klamra należy do pilota, nie do samolotu, i domyślnie bierze się z pierwszego i ostatniego wzlotu doby UTC; deklaracja jest korektą po fakcie, nie warunkiem startu. Jednostką potwierdzenia danych staje się **wzlot** (09), a zdanie samolotu (09b) nie kończy dnia. Znika czas meldowania z przejęcia i ekran podsumowania `03`; ekranem domowym jest `01 Mój dzień` (dawny splash). Trade-off z lipca („powstają dwie służby") tym samym przestaje istnieć |
 | 2026-08-07 | **Trzy jednostki, dwa byty i jedna projekcja** (konsekwencja 2026-08-06). Model rozróżnia WZLOT (jednostka potwierdzenia), OPERACJĘ SAMOLOTU (claim → zdanie, ogniwo łańcucha MH) i SŁUŻBĘ PILOTA (klamra per pilot per doba UTC). Byt w danych dostają tylko dwie pierwsze: `leg_close` jest zdarzeniem, operacja zostaje jak dziś. **Służba jest CZYSTĄ PROJEKCJĄ** (`packages/domain/src/projections/duty.ts`) czytającą strumienie kilku operacji - poza `SessionState`, bo obejmuje maszyny, których pojedyncza operacja nie zna. Powód, dla którego nie tworzymy dla niej osi zdarzeń: nagłówek wymaga `session_uuid` i `aircraft_id`, więc „meldunek" nie miałby gdzie mieszkać |
 | 2026-08-07 | **`claim_time` przestaje nieść `dutyStart`** - od teraz to czas zdarzenia `session_claim`. Powód: kolumna była jednocześnie datą operacji i klamrą służby, a po usunięciu meldowania z przejęcia (2026-08-06) `dutyStart` bywa `null`, co wyzerowałoby sortowanie listy dni, kursor keyset, indeks `idx_sessions_day`, filtr zakresu dat i `openSessionsUndated`. `session_claim` istnieje zawsze i jest pierwszym zdarzeniem operacji, więc jest naturalnym czasem operacji; przy okazji znika trójgałęziowy predykat `NULLS LAST` zaprojektowany pod przypadek brzegowy, który stałby się większościowy. Wymaga migracji z backfillem i `rebuild-projections` (różnica będzie ogromna i OCZEKIWANA - to wyjątek od reguły „niezerowy dry-run = incydent") |
@@ -309,7 +309,7 @@ Operacja ma nazwę czytelną dla człowieka - obok uuid, który zostaje kluczem 
     └ znak  └ doba     └ PIC └ numer operacji tego pilota w tej dobie
 
 **Liczy się, nie zapisuje.** Sygnatura jest projekcją - składa ją `operationSignature`
-z `@uzaero/domain` przy każdym wyświetleniu, jak czas blokowy. Zapisana w `session_claim`
+z `@ninerdeck/domain` przy każdym wyświetleniu, jak czas blokowy. Zapisana w `session_claim`
 byłaby drugą kopią na drucie: wpis ręczny dopisany PRZED istniejącą operacją tej samej
 doby przenumerowuje ją, a zapisany numer wskazywałby po tym dwie operacje naraz.
 
@@ -966,7 +966,7 @@ policzonym zostaje WARTOŚCIĄ REFERENCYJNĄ - arkusz normy pokazuje odchyłkę 
 
 **Nie jest konfiguracją: STAN POCZĄTKOWY** (`initial_mh`, `initial_fuel_l`,
 `initial_oil_l`, issue #66). Opisuje jedną chwilę - co pokazywały przyrządy, gdy
-jednostkę wprowadzono do UZ Aero - i jest ZEROWYM OGNIWEM łańcucha odczytów: serwer
+jednostkę wprowadzono do Ninerdeck - i jest ZEROWYM OGNIWEM łańcucha odczytów: serwer
 składa z niego przekazanie (§4.5) wyłącznie dla maszyny bez ani jednej zdanej operacji,
 z `Handover.byPilotId = null` („nikt nie przekazał"). Od pierwszego zdania samolotu
 przestaje cokolwiek znaczyć. Zero jest tu WARTOŚCIĄ (nowy silnik, puste zbiorniki),
@@ -1248,7 +1248,7 @@ Prompty utrzymywane razem z dokumentem - **odwołują się do sekcji zamiast dup
 schematy** (duplikaty były przyczyną rozjazdów w wersji 0.1). Przed użyciem w fazach 1–2
 zweryfikować z zatwierdzonym designem (`design/`, `docs/design-notes.md`).
 
-Każdy prompt uzupełnij o kontekst: **aplikacja nazywa się UZ Aero**, dokumentacja
+Każdy prompt uzupełnij o kontekst: **aplikacja nazywa się Ninerdeck**, dokumentacja
 w `docs/_main.md.txt`, design tokens i phone frame w `design/` (patrz `CLAUDE.md`).
 
 > **Status (2026-08-07): CAŁA SEKCJA 11 JEST HISTORYCZNA - nie używaj tych promptów.**
@@ -1269,7 +1269,7 @@ w `docs/_main.md.txt`, design tokens i phone frame w `design/` (patrz `CLAUDE.md
 ### AGENT 1 - Inicjalizacja projektu React Native
 
 ```
-Jesteś seniorem React Native. Zainicjalizuj projekt UZ Aero - elektroniczny chronometraż
+Jesteś seniorem React Native. Zainicjalizuj projekt Ninerdeck - elektroniczny chronometraż
 lotów, offline-first, GPS w tle, sync z własnym backendem (NIE bezpośrednio do Sheets).
 
 STACK: sekcja 9 dokumentacji (RN + Expo, React Navigation v6, Zustand, expo-sqlite,
@@ -1290,7 +1290,7 @@ DELIVERABLE: projekt się kompiluje, nawigacja z placeholderami wszystkich ekran
 ### AGENT 2 - Design system i komponenty bazowe
 
 ```
-Jesteś senior RN UI developerem. Przenieś design system UZ Aero z mockupów do RN.
+Jesteś senior RN UI developerem. Przenieś design system Ninerdeck z mockupów do RN.
 
 ŹRÓDŁO PRAWDY: design/05-themes.html - motywy Night (domyślny), Amber/NVG, Paper, Solar,
 Sky; tokeny kolorów, typografia (Bebas Neue / Archivo / JetBrains Mono), spacing, radiusy.
@@ -1312,7 +1312,7 @@ Wymagania: TypeScript z pełnymi typami, StyleSheet.create, obsługa wszystkich 
 ### AGENT 3 - Ekran cockpit view
 
 ```
-Jesteś senior RN developerem. Zbuduj główny ekran roboczy UZ Aero.
+Jesteś senior RN developerem. Zbuduj główny ekran roboczy Ninerdeck.
 
 WZORCE WIZUALNE: design/04-cockpit-ground.html, 04a, 05-cockpit-running.html, 05a–05d.
 Stany i zawartość: sekcja 3.2 dokumentacji. Dwa warianty: GROUND (start engine, log dnia,
@@ -1326,7 +1326,7 @@ Każda akcja emituje zdarzenie do SQLite (sekcja 5.1) przez warstwę sync - nigd
 ### AGENT 4 - Algorytm detekcji startów i lądowań
 
 ```
-Jesteś ekspertem od algorytmów. Zaimplementuj useFlightDetection() dla UZ Aero.
+Jesteś ekspertem od algorytmów. Zaimplementuj useFlightDetection() dla Ninerdeck.
 
 ALGORYTM I PROGI: sekcja 3.3 dokumentacji (progi w constants/gps.ts, do kalibracji):
 TAKEOFF_SPEED_KT 50 · LANDING_SPEED_KT 35 · TAKEOFF_ALT_DIFF_FT 50 · LANDING_ALT_DIFF_FT 30
@@ -1343,7 +1343,7 @@ turbulencje ±30 ft, poprawny cykl).
 ### AGENT 5 - Klient synchronizacji (telefon)
 
 ```
-Jesteś ekspertem od offline-first sync. Zaimplementuj warstwę sync UZ Aero po stronie RN.
+Jesteś ekspertem od offline-first sync. Zaimplementuj warstwę sync Ninerdeck po stronie RN.
 
 KONTRAKT API: sekcja 4.6. ZASADY: sekcje 4.1, 4.3, 4.8.
 - outbox: events WHERE synced_at IS NULL → POST /events paczkami, retry z backoffem,
@@ -1362,7 +1362,7 @@ DELIVERABLE: moduł src/sync z testami (kolejka, retry, dedup odpowiedzi, ETag).
 ### AGENT 6 - Statystyki i zakończenie dnia
 
 ```
-Jesteś senior RN developerem. Zbuduj ekrany końca dnia UZ Aero (sekcje 3.6–3.7, 3.9).
+Jesteś senior RN developerem. Zbuduj ekrany końca dnia Ninerdeck (sekcje 3.6–3.7, 3.9).
 
 EndOfDayScreen: końcowy FOB + odczyt MH (format wg konfiguracji samolotu - to przekazanie
 dla następnego pilota), duty end, przerwa vs zakończenie. Emituje day_close.
@@ -1379,7 +1379,7 @@ Cały ten blok „AGENT n" opisuje model sprzed pivotu (duty, day_close) i jest 
 ### AGENT 7 - Backend
 
 ```
-Jesteś senior backend developerem (Node.js/TypeScript). Zbuduj serwis UZ Aero.
+Jesteś senior backend developerem (Node.js/TypeScript). Zbuduj serwis Ninerdeck.
 
 STACK: Fastify + PostgreSQL + Docker (sekcja 9). SCHEMAT: sekcja 5.3.
 ENDPOINTY: sekcja 4.6 (auth Google → JWT, reference z ETag, aircraft state,

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: `design/panel/panel.css` MUSI być tym, co składa generator.
+ * Ninerdeck - panel: `design/panel/panel.css` MUSI być tym, co składa generator.
  *
  * Makiety i panel mają jeden arkusz - złożony z `admin/src/styles/` i ramy makiety
  * (`design/panel/rama.css`). Plik leżący w repozytorium da się „poprawić na szybko"

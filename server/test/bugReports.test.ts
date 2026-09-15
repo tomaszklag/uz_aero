@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - ZGŁOSZENIA BŁĘDÓW Z APLIKACJI PILOTA (issue #87; platforma - issue #99 C6).
+ * Ninerdeck (serwer) - ZGŁOSZENIA BŁĘDÓW Z APLIKACJI PILOTA (issue #87; platforma - issue #99 C6).
  *
  * Pod obserwacją:
  *  1. telefon zgłasza z tożsamością Z TOKENU, a ponowienie tej samej paczki (uuid) nie
@@ -44,8 +44,8 @@ async function panelCookie(app: App, who: string): Promise<{ cookie: string }> {
     payload: { idToken: googleTokenFor(who) },
   });
   expect(res.statusCode).toBe(200);
-  const cookie = res.cookies.find((c) => c.name === 'uzaero_admin')!;
-  return { cookie: `uzaero_admin=${cookie.value}` };
+  const cookie = res.cookies.find((c) => c.name === 'ninerdeck_admin')!;
+  return { cookie: `ninerdeck_admin=${cookie.value}` };
 }
 
 const bearer = (t: string) => ({ authorization: `Bearer ${t}` });

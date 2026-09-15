@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - członkowie klubu: edycja, wyłączenie, usunięcie (panel, mockupy
+ * Ninerdeck (serwer) - członkowie klubu: edycja, wyłączenie, usunięcie (panel, mockupy
  * `A06-piloci.html` i `A06a-konto.html`; od wielofirmowości - moduł PILOCI jako lista
  * CZŁONKÓW klubu, `docs/wielofirmowosc.md` §8.3).
  *

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - trasa korekty administracyjnej (`/admin/api/sessions/:uuid/corrections`,
+ * Ninerdeck (serwer) - trasa korekty administracyjnej (`/admin/api/sessions/:uuid/corrections`,
  * mockup `A02b-korekta.html`).
  *
  * Cienka jak reszta repo: zod → komenda → status. Trasa nie zna ani transakcji, ani
@@ -16,7 +16,7 @@
 
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import type { EventCorrectionPayload } from '@uzaero/domain';
+import type { EventCorrectionPayload } from '@ninerdeck/domain';
 
 import type {
   AdminCorrectionCommands,

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - rozrzut obserwacji wokół przewidywania (issue #38).
+ * Ninerdeck - rozrzut obserwacji wokół przewidywania (issue #38).
  *
  * ══ PO CO OSOBNA LICZBA, SKORO MODEL MA PRZEDZIAŁY ══
  * Bo odpowiadają na różne pytania - to ta sama uwaga, którą niesie `summary.ts`, tylko

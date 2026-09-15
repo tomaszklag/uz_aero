@@ -1,5 +1,5 @@
 /**
- * UZ Aero - AddEventSheet (mockup `design/10h` „Dodaj wpis")
+ * Ninerdeck - AddEventSheet (mockup `design/10h` „Dodaj wpis")
  *
  * Dopisanie zdarzenia, którego w logu NIE MA: GPS zgubił lądowanie, zrzut nie został
  * zapisany, tankowanie umknęło. Różni się tym od `CorrectionSheet`, który poprawia

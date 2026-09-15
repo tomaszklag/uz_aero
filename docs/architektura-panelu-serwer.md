@@ -1,4 +1,4 @@
-# UZ Aero - architektura warstwy serwerowej panelu administracyjnego
+# Ninerdeck - architektura warstwy serwerowej panelu administracyjnego
 
 > Faza 7. Dokument **decyzyjny**: każde rozwidlenie kończy się rekomendacją i powodem;
 > tam, gdzie coś odradzam, jest napisane wprost, czego NIE robić.
@@ -67,7 +67,7 @@
 >
 > **Aktualizacja 2026-07-31 - przekrój 2 WDROŻONY** (§7): `infrastructure/pg/{sqlFilter,keyset}.ts`
 > z testami, migracja **11** (`sessions.operation` + `client` + `CHECK` + `idx_sessions_day`),
-> `OPERATION_TYPES`/`isOperationType` w `@uzaero/domain`, `application/admin/contracts/`,
+> `OPERATION_TYPES`/`isOperationType` w `@ninerdeck/domain`, `application/admin/contracts/`,
 > mappery `sessionListItem`/`flagListItem`/`eventTimeline`/`projectionDiff`,
 > `Admin{Session,Flag}Queries`, `AdminMaintenanceCommands.rebuildProjections` + CLI
 > `npm run rebuild-projections`, `PgAdmin{Sessions,Maintenance}Repo` i `FlagsAdminPort.list`,
@@ -285,7 +285,7 @@
 > (1) §7.2 lokował `mh_delta_h`/`fuel_consumed_l` w migracji projekcji przekroju 2 -
 > weszły dopiero TERAZ (migracja 18), bo dopiero statystyki mają je czym sumować
 > (dokładnie wg zastrzeżenia z aktualizacji przekroju 2);
-> (2) **atrybucja block time per pilot w `@uzaero/domain` (§10 poz. 8) NIE powstała** -
+> (2) **atrybucja block time per pilot w `@ninerdeck/domain` (§10 poz. 8) NIE powstała** -
 > to decyzja o nowej projekcji domenowej (dotyka aplikacji pilota) i czeka na człowieka.
 > Ujęcie „per pilot" jedzie po PIC-u (jedynym pewnym dla całej operacji - single-writer);
 > kolumny „Blok jako Dual" z mockupu NIE MA, bo `sessions.dual_id` niesie OSTATNIEGO
@@ -300,7 +300,7 @@
 
 ## 0. Trzy odpowiedzi w skrócie
 
-1. **Modele.** Panel dzieli z aplikacją i serwerem **model domenowy** (`@uzaero/domain`) -
+1. **Modele.** Panel dzieli z aplikacją i serwerem **model domenowy** (`@ninerdeck/domain`) -
    i tylko jego. Modelu **persystencji** (kształt wiersza `sessions`, `flags`, `events`)
    panel nie widzi nigdy: między nim a bazą stoi **DTO** wystawiane przez `/admin/api/*`.
    Trzy modele istnieją dziś i mają istnieć dalej; błędem byłoby zlepienie ich w jeden,
@@ -348,7 +348,7 @@ Z jednym, precyzyjnie zakreślonym wyjątkiem:
 
 > **Reguła granicy typów.** Jeśli wartość na drucie **jest** bytem domenowym
 > (`Event`, `SessionState`, `ReferenceAircraft`, flaga serwera) - jedzie jako typ
-> z `@uzaero/domain` i **nie dostaje DTO**. Jeśli jest złączeniem, agregatem albo
+> z `@ninerdeck/domain` i **nie dostaje DTO**. Jeśli jest złączeniem, agregatem albo
 > wygodą panelu (wiersz listy dni z `reg`, `picName`, `exportRevision`) - dostaje
 > **własny, jawny DTO**.
 
@@ -367,7 +367,7 @@ To jest korekta do `ANALIZA.md` - pełna lista sprostowań w §12.
 
 ### 1.3 „Biblioteka modeli z bazy w oddzielnym projekcie" - odrzucone, oto dlaczego
 
-Wariant: wydzielić kształty wierszy do pakietu (np. `@uzaero/db`), importowanego przez
+Wariant: wydzielić kształty wierszy do pakietu (np. `@ninerdeck/db`), importowanego przez
 serwer i panel.
 
 **Co byśmy zyskali:** jedno miejsce z deklaracją wiersza - dziś kształt wiersza jest
@@ -421,7 +421,7 @@ który by o niej przypomniał.
 
 To jest **konkretna, mierzalna odpowiedź na pytanie „czy modele mogą być wspólne"**:
 tak - wtedy, gdy ten sam byt przechodzi przez więcej niż jedną powierzchnię.
-`@uzaero/domain` jest już tym miejscem (`ReferenceAircraft` mieszka tam z dokładnie
+`@ninerdeck/domain` jest już tym miejscem (`ReferenceAircraft` mieszka tam z dokładnie
 tego powodu - docblock `referenceRepo.ts`: „kontrakt `GET /reference` nie ma osobnej,
 trzeciej definicji").
 
@@ -439,15 +439,15 @@ z wnętrza serwera (to byłby pobór `pg` do przeglądarki). Rozwiązanie:
 ```
 
 - `server/src/application/admin/contracts/*.ts` zawierają **wyłącznie** `export interface`
-  i `export type`; jedyny dozwolony import to `@uzaero/domain`.
-- Panel: `import type { AdminSessionListItem } from '@uzaero/server/admin-contracts';`
+  i `export type`; jedyny dozwolony import to `@ninerdeck/domain`.
+- Panel: `import type { AdminSessionListItem } from '@ninerdeck/server/admin-contracts';`
 - Dwa niezależne bezpieczniki: (a) mapa `exports` sprawia, że
-  `@uzaero/server/src/infrastructure/pg/...` **nie da się** zaimportować - to nie
+  `@ninerdeck/server/src/infrastructure/pg/...` **nie da się** zaimportować - to nie
   konwencja, to rozdzielczość modułów; (b) test architektury serwera (§9) wywala się,
   gdy plik w `contracts/` zaimportuje cokolwiek poza domeną.
 - Zero runtime: `import type` + `verbatimModuleSyntax` znikają przy transpilacji.
 
-Alternatywa „czwarty pakiet `@uzaero/admin-api`" - **odrzucona**: dokładałaby workspace
+Alternatywa „czwarty pakiet `@ninerdeck/admin-api`" - **odrzucona**: dokładałaby workspace
 i jego wersjonowanie po to, żeby przenieść pliki o dwa katalogi. Mapa `exports` daje
 tę samą granicę za jedną wklejkę w `package.json`.
 
@@ -629,7 +629,7 @@ server/src/
     + ports.ts                     porty panelu: Actor, *AdminPort, AdminAuditPort
     + auditedWrite.ts              JEDYNA droga zapisu panelu; wymusza ślad (§4)
     + contracts/                   WYŁĄCZNIE typy DTO - powierzchnia dla panelu (§1.5)
-      + index.ts                   barrel = `@uzaero/server/admin-contracts`
+      + index.ts                   barrel = `@ninerdeck/server/admin-contracts`
       + {actor,sessions,flags,events,exports,pilots,fleet,stats,audit,
          dashboard,maintenance,thresholds,corrections}.ts
     + commands/                    strona ZAPISU
@@ -1259,7 +1259,7 @@ w aplikacji.
 - **`GET /admin/api/sessions/:uuid` woła je raz**, na jednym strumieniu (dziesiątki
   zdarzeń - ułamek milisekundy), i zwraca `state: SessionState` w całości. Karta dnia
   (A02a) dostaje tabelę lotów, bilanse i oś zdarzeń **policzone przez serwer tym samym
-  kodem, co telefon**. Panel formatuje (`mhFormat`, block HH:MM przez `@uzaero/domain`)
+  kodem, co telefon**. Panel formatuje (`mhFormat`, block HH:MM przez `@ninerdeck/domain`)
   i nic więcej.
 - **`GET /admin/api/stats/*` czyta wyłącznie kolumny `sessions`**, z `WHERE status =
   'closed'` - operacje otwarte wypadają z sum (nie mają `mh_end` ani `fuel_end_l`, więc
@@ -1305,7 +1305,7 @@ SQL-em, przed którym ostrzega §7.1. Co więcej, wynik modelu (`r_przelot = 40,
 pod trzema warunkami:
 
 1. **Zero arytmetyki w SQL.** Zapytanie wykonuje `SELECT` (kolumny projekcji + wiersze
-   rejestru); wszystkie liczby produkuje `@uzaero/domain`, a ilorazy - mapper. Reguła
+   rejestru); wszystkie liczby produkuje `@ninerdeck/domain`, a ilorazy - mapper. Reguła
    §7.1 obowiązuje bez zmian: agreguj wartości projekcji, nigdy nie odtwarzaj projekcji.
 2. **Jedno zapytanie, nie pętla.** Strumienie pobiera `EventsStorePort.sessionStreams`
    (`WHERE session_uuid = ANY($1)`). Pętla po `sessionEvents` przy oknie rocznym to
@@ -1392,7 +1392,7 @@ i to jedno zdanie tłumaczy każdą z pułapek niżej.
 zakłada klub domyślny, a jego nazwę i slug zna wyłącznie właściciel. Skrypt zostaje
 napisem (`MIGRATIONS: readonly string[]`, runner niczego o pozycjach tablicy nie wie),
 a wartości jadą do transakcji jako **ustawienia sesji**: `migrate(db, MIGRATIONS,
-{ seedOrg })` dopisuje przed skryptem `SELECT set_config('uzaero.seed_org_name', '…', true)`
+{ seedOrg })` dopisuje przed skryptem `SELECT set_config('ninerdeck.seed_org_name', '…', true)`
 (lokalne dla transakcji), a blok `DO $$ … $$` czyta je `current_setting(…, true)`. Wartości
 są wklejane jako literały - skrypt wieloczłonowy nie przyjmuje parametrów - z podwojeniem
 apostrofu jako jedyną ucieczką (`standard_conforming_strings = on`); test
@@ -1593,7 +1593,7 @@ Trasy telefonu (`/events`, `/reference`, `/me/prefs`, …) zmieniają się o jed
 ### 8.2 Ciasteczko
 
 ```
-Set-Cookie: uzaero_admin=<jwt>; HttpOnly; Secure; SameSite=Strict; Path=/admin; Max-Age=28800
+Set-Cookie: ninerdeck_admin=<jwt>; HttpOnly; Secure; SameSite=Strict; Path=/admin; Max-Age=28800
 ```
 
 `Path=/admin` - ciasteczko nie jedzie z żądaniami telefonu. `HttpOnly` - token poza
@@ -1612,7 +1612,7 @@ nie decyzją.
 Dwa niezależne mechanizmy, bo `SameSite` sam w sobie jest polityką przeglądarki:
 
 1. `SameSite=Strict` na ciasteczku;
-2. **każda mutacja `/admin/api/*` wymaga nagłówka `X-UZ-Admin: 1`.** Przeglądarka nie
+2. **każda mutacja `/admin/api/*` wymaga nagłówka `X-Ninerdeck-Admin: 1`.** Przeglądarka nie
    ustawi własnego nagłówka w żądaniu cross-origin bez preflightu, a serwer nie wysyła
    żadnych nagłówków CORS - więc preflight nie przechodzi. Trzy linie w jednym
    `preHandler`, taniej i mniej ruchomych części niż token CSRF w operacji.
@@ -1708,7 +1708,7 @@ kompilator:
 3. pliki w `application/admin/commands/` nie importują `Database` - zapis wyłącznie
    przez `AuditedWrite` (§4.2);
 4. literał `'administrative'` występuje w **dokładnie jednym** pliku (§6.3);
-5. pliki w `application/admin/contracts/` importują wyłącznie `@uzaero/domain` (§1.5);
+5. pliki w `application/admin/contracts/` importują wyłącznie `@ninerdeck/domain` (§1.5);
 6. trasy w `routes/admin/` rejestrują się wyłącznie przez `adminRoute` (§8.6);
 7. **test kontrolny** - skaner faktycznie widzi pliki i treści (bez niego test
    przechodziłby dlatego, że niczego nie znalazł).
@@ -1734,12 +1734,12 @@ niczego, co da się pokazać).
 | **0** | **Fundament panelu** | naprawa `migrate.ts` (§2.3) · migracja 8 `admin_audit` · `AdminAuditPort` + `PgAdminAuditRepo` · `AuditedWrite` · `domain/adminActions.ts` · `tokenFromRequest` + zmiana `authorize` · `adminCookie` · `requireAdminActor` · `adminRoute` · scope `/admin/api` · `POST auth/login`, `POST auth/logout`, `GET me` · rate-limit · `@fastify/static` pod `/admin` · `test/architecture.test.ts` | A00, A00a | nic nie wolno zapisać bez śladu, a bez operacji panel jest nieosiągalny. **Naprawa runnera migracji musi być pierwsza** - bez niej migracje 12–13 (`ADD CONSTRAINT`) nie są bezpiecznie zapisywalne |
 | **1** | **Flaga → re-eksport** (wzorzec, §5) | migracja 9 · `FlagsAdminPort` + `PgAdminFlagsRepo` · `AdminFlagCommands.resolve` · `ExportOutcome` z `DayExporter` · `GET/POST /admin/api/flags*` | A03, A03a, A03b | **jedyny powód, dla którego panel powstaje teraz**: otwiera bramkę §4.7, której dziś nikt nie może otworzyć |
 | **2** | **Czytanie dni** | migracja 10 (5 kolumn + indeks) · rozszerzenie `sessionRowFrom` · `POST maintenance/rebuild-projections` · `SqlFilter` + `keyset` · `SessionsAdminPort.list` · `GET /admin/api/sessions`, `/sessions/:uuid` · rozszerzenie `contract.test.ts` | A02, A02a | przebudowa projekcji **musi** wejść w tym samym przekroju co migracja 10 - inaczej nowe kolumny są puste |
-| **3** | **Korekta administracyjna** | `WriteAuthority` w `@uzaero/domain` · `AdminCorrectionCommands` · `POST /admin/api/sessions/:uuid/corrections` | A02b | wymaga #2 (wybór celu na karcie dnia) i #0 (audyt) |
+| **3** | **Korekta administracyjna** | `WriteAuthority` w `@ninerdeck/domain` · `AdminCorrectionCommands` · `POST /admin/api/sessions/:uuid/corrections` | A02b | wymaga #2 (wybór celu na karcie dnia) i #0 (audyt) |
 | **4** | **Rejestr zdarzeń** | migracja 11 (indeksy) · `EventsAdminPort.list` · `GET /admin/api/events` | A04 | narzędzie diagnostyczne; po #2, bo dzieli `SqlFilter`/`keyset` |
 | **5** | **Eksporty** | migracja **14** `UNIQUE (session_uuid, revision)` → **23** `UNIQUE (day, aircraft_id, revision, session_uuid)` + `ExportLogPort.lock` (advisory; od 23 na parze doba+samolot) · `ExportsAdminPort` (list/byUuid/history) · `AdminExportCommands.retry` · `GET /admin/api/exports`, `/exports/:uuid`, `/exports/:uuid/sheet` · `POST /exports/:uuid/retry` | A05 | ponowienie to `ExportOutcome` z #1 wystawiony trasą |
 | **6** | **Konta** | `PilotsAdminPort` · `AdminPilotCommands` (create/update/reset/deactivate, hasło generowane, kasowanie `refresh_tokens`, blokada „ostatni administrator") · trasy | A06, A06a | pierwszy przekrój czysto CRUD-owy - po nim widać, czy §2.4 się broni w praktyce |
 | **7** | **Flota** | `FleetAdminPort` · `AdminFleetCommands` (z podbiciem `aircraft.updated_at` → ETag `/reference`) · trasy | A07, A07a | test regresji: zmiana `capacity_l` musi dojechać na telefon (ETag) |
-| **8** | **Statystyki** | atrybucja block time per pilot **w `@uzaero/domain`** (wspólna z aplikacją, dziś tylko w `crewChange.test.ts`) · `AdminStatsQueries` z kolumn `sessions` · rozszerzenie `contract.test.ts` | A10 | wymaga kolumn z #2 |
+| **8** | **Statystyki** | atrybucja block time per pilot **w `@ninerdeck/domain`** (wspólna z aplikacją, dziś tylko w `crewChange.test.ts`) · `AdminStatsQueries` z kolumn `sessions` · rozszerzenie `contract.test.ts` | A10 | wymaga kolumn z #2 |
 | **9** | **Pulpit, progi, audyt, konserwacja** | `AdminDashboardQueries` · `GET /admin/api/thresholds` (serializacja stałych domeny) · `GET /admin/api/audit` · `maintenance/*` | A01, A01a, A08, A09, A11 | pulpit jest kompozycją tego, co już istnieje - dlatego na końcu, nie na początku |
 | **10** | **Domknięcie zaległości** | migracja 13: klucze obce `events`/`sessions` → `pilots`/`aircraft` · sprzątanie wygasłych `refresh_tokens` · odświeżanie `details` istniejącej flagi · kolejka ponowień eksportu | - | zaległości audytu, które panel czyni widocznymi |
 

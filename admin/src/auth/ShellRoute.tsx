@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: brama sesji dla wszystkiego, co jest ZA logowaniem.
+ * Ninerdeck - panel 2.0: brama sesji dla wszystkiego, co jest ZA logowaniem.
  *
  * Jedno miejsce, w którym panel odpowiada na pytanie „czy wolno tu wejść" - i jedno,
  * w którym składa ramę. Rozsianie tego po ekranach dałoby konstrukcję, w której nikt

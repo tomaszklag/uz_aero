@@ -1,5 +1,5 @@
 /**
- * UZ Aero - geometria unoszenia pola nad klawiaturę.
+ * Ninerdeck - geometria unoszenia pola nad klawiaturę.
  *
  * Osobny plik, bo osobny powód istnienia: to jedyna DECYZJA, jaką podejmuje
  * `useKeyboardAwareScroll`, i jedyna jego część sprawdzalna bez urządzenia. Hook obok

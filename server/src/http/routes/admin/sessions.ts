@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - trasy dni lotnych panelu (`GET /admin/api/sessions*`,
+ * Ninerdeck (serwer) - trasy dni lotnych panelu (`GET /admin/api/sessions*`,
  * mockupy `A02-dni.html` i `A02a-dzien.html`).
  *
  * Cienkie jak reszta repo: zod → zapytanie → status. Trasa nie zna ani SQL-a, ani
@@ -13,7 +13,7 @@
 
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { OPERATION_TYPES } from '@uzaero/domain';
+import { OPERATION_TYPES } from '@ninerdeck/domain';
 
 import type { AdminSessionQueries } from '../../../application/admin/queries/sessions.ts';
 import { PAGE_LIMIT_MAX, type SessionListFilter } from '../../../application/admin/ports.ts';

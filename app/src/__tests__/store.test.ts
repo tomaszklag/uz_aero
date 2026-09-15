@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy store'u sesji (cienka warstwa nad `application`).
+ * Ninerdeck - testy store'u sesji (cienka warstwa nad `application`).
  *
  * Store nie ma własnej logiki dnia - sprawdzamy dokładnie to, za co odpowiada:
  * przekazanie kontekstu do komend, odświeżenie projekcji po zapisie, wystawienie

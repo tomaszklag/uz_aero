@@ -1,10 +1,10 @@
 /**
- * UZ Aero (serwer) - ANALITYKA ZUŻYCIA jednego samolotu (`A10a`, `A10b`), strona odczytu.
+ * Ninerdeck (serwer) - ANALITYKA ZUŻYCIA jednego samolotu (`A10a`, `A10b`), strona odczytu.
  *
  * ══ DLACZEGO TO ZAPYTANIE CZYTA STRUMIEŃ ZDARZEŃ ══
  * Reguła §7.2 mówi: „nowa liczba w panelu = nowa kolumna projekcji, nigdy nowe wyrażenie
  * SQL". Trzyma się jej i to zapytanie - nie liczymy TU niczego SQL-em, całą arytmetykę
- * wykonuje `@uzaero/domain`. Czytamy natomiast rejestr, bo granice interwałów paliwowych
+ * wykonuje `@ninerdeck/domain`. Czytamy natomiast rejestr, bo granice interwałów paliwowych
  * wyznaczają odczyty z payloadów (`preflight_confirm`, `refuel`, `day_close`), a tych
  * projekcja nie niesie i nieść nie powinna: jest ich kilka na sesję, więc nie są
  * wartością wiersza. Stawka `r_przelot` też nie należy do żadnego dnia - opisuje OKNO.
@@ -25,7 +25,7 @@ import type {
   EventsStorePort,
   PhaseTimelinePort,
 } from '../../common/ports.ts';
-import type { PhaseSegment } from '@uzaero/domain';
+import type { PhaseSegment } from '@ninerdeck/domain';
 
 import type { AdminConsumptionReport } from '../contracts/consumption.ts';
 import type { AdminStatsRange } from '../contracts/stats.ts';

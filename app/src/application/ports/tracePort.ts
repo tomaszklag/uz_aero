@@ -1,5 +1,5 @@
 /**
- * UZ Aero - PORT śladu kalibracyjnego GPS (faza 5).
+ * Ninerdeck - PORT śladu kalibracyjnego GPS (faza 5).
  *
  * Ślad to SUROWIEC: fixy sprzed kwarantanny jakości + markery pracy detektora
  * (detekcja zgłoszona, COFNIJ). „Detektor strzelił, pilot anulował" to fałszywa

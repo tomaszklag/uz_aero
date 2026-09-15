@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - korekta zdarzenia po oknie 24 h (panel, mockup `A02b-korekta.html`).
+ * Ninerdeck (serwer) - korekta zdarzenia po oknie 24 h (panel, mockup `A02b-korekta.html`).
  *
  * Trzeci pionowy przekrój panelu. Jedyne miejsce w całym systemie, w którym zdarzenie
  * trafia do rejestru NIE z telefonu pilota - i dlatego jedyne, które wolno wołać
@@ -44,7 +44,7 @@ import {
   type EventCorrectionPayload,
   type RuleViolation,
   type SessionState,
-} from '@uzaero/domain';
+} from '@ninerdeck/domain';
 
 import {
   correctionCandidate,

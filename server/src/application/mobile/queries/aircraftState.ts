@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - zapytania strony odczytu (M2): stan samolotu i status synca.
+ * Ninerdeck (serwer) - zapytania strony odczytu (M2): stan samolotu i status synca.
  *
  * `GET /aircraft/:id/state` (§4.6) odpowiada na dwa pytania preflightu:
  * „kto teraz prowadzi ten samolot" (claim z sesji NIEZAMKNIĘTEJ) i „jakie są ostatnie
@@ -15,7 +15,7 @@
  * telefon spodziewa się po uuid-zie, którego serwer nie ma, i niczego nie zdradza.
  */
 
-import type { Handover } from '@uzaero/domain';
+import type { Handover } from '@ninerdeck/domain';
 
 import { activeClaim, latestHandover } from '../../common/aircraftStateView.ts';
 import {

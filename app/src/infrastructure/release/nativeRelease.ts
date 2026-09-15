@@ -1,5 +1,5 @@
 /**
- * UZ Aero - WYDANIE BINARKI: wersja i numer builda z zainstalowanego pakietu.
+ * Ninerdeck - WYDANIE BINARKI: wersja i numer builda z zainstalowanego pakietu.
  *
  * JEDYNE miejsce, które importuje `expo-application` (exact-list w `architecture.test.ts`),
  * i JEDYNE źródło wersji w aplikacji: czyta z niego karta „O aplikacji" (13) i zgłoszenie

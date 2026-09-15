@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter flag dla panelu (`FlagsAdminPort`).
+ * Ninerdeck (serwer) - adapter flag dla panelu (`FlagsAdminPort`).
  *
  * Duplikat nazwy bazowej z `pg/flagsRepo.ts` jest CELOWY: rolą tego pliku jest
  * „adapter flag panelu", a kwalifikator niesie katalog. `adminFlagsRepo.ts` dałoby
@@ -10,7 +10,7 @@
  * życia flagi. Ingest przez to nie ma jak zregresować od zmian w panelu.
  */
 
-import { isFlagType } from '@uzaero/domain';
+import { isFlagType } from '@ninerdeck/domain';
 
 import type {
   AdminFlag,

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: DZIENNIK, poziom 2 - sesje JEDNEJ maszyny (`#/dziennik/SP-KLM`).
+ * Ninerdeck - panel 2.0: DZIENNIK, poziom 2 - sesje JEDNEJ maszyny (`#/dziennik/SP-KLM`).
  *
  * ══ W ADRESIE STOI REJESTRACJA, NIE IDENTYFIKATOR ══
  * `#/dziennik/SP-KLM` człowiek przeczyta i wpisze z pamięci, a o to w wymogu

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - zmiana STATUSU zgłoszenia błędu (issue #87).
+ * Ninerdeck (serwer) - zmiana STATUSU zgłoszenia błędu (issue #87).
  *
  * Jedyna operacja zapisu panelu na `bug_reports` i jedyna zmiana, jakiej wiersz w ogóle
  * doznaje po przyjęciu z telefonu. Treści zgłoszenia nie poprawia nikt: to cudza relacja

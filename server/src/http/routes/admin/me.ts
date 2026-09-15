@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - `GET /admin/api/me`: kto jest zalogowany w panelu.
+ * Ninerdeck (serwer) - `GET /admin/api/me`: kto jest zalogowany w panelu.
  *
  * Istnieje wyłącznie dlatego, że ciasteczko sesji jest `HttpOnly`: po odświeżeniu
  * karty panel nie ma jak odczytać własnej tożsamości i musi o nią zapytać.

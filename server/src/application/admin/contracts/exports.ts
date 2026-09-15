@@ -1,7 +1,7 @@
 /**
- * UZ Aero (serwer) - KONTRAKT monitora eksportu kart dziennych (`A05`).
+ * Ninerdeck (serwer) - KONTRAKT monitora eksportu kart dziennych (`A05`).
  *
- * Wyłącznie typy; jedyny dozwolony import to `@uzaero/domain` (pilnuje
+ * Wyłącznie typy; jedyny dozwolony import to `@ninerdeck/domain` (pilnuje
  * `test/architecture.test.ts`). Stąd `ExportOutcomeDto` niżej jest osobną deklaracją,
  * a nie reeksportem `ExportOutcome` z `application/common/export/dayExporter.ts` -
  * kontrakt nie ma prawa sięgnąć do wnętrza serwera, a kształt jest identyczny i przybija

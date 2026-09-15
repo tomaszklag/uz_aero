@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: nieudane logowanie -> zdanie i ton banera.
+ * Ninerdeck - panel 2.0: nieudane logowanie -> zdanie i ton banera.
  *
  * Moduł CZYSTY (bez Reacta): to jest decyzja o treści, a treść tego ekranu ma
  * dokładnie jedno zadanie - powiedzieć, czy człowiek ma spróbować jeszcze raz,

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ZAPYTANIA (strona odczytu).
+ * Ninerdeck - ZAPYTANIA (strona odczytu).
  *
  * Strona zapisu to zdarzenia (`commands`), strona odczytu to projekcje - CQRS w wersji
  * dla tej aplikacji: **jedna baza, jeden strumień, dwa wejścia**. Świadomie NIE ma

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - podpis kafelka „Dolej olej" w kokpicie (mockupy 04/04a).
+ * Ninerdeck - podpis kafelka „Dolej olej" w kokpicie (mockupy 04/04a).
  *
  * Przed pierwszym uruchomieniem podpis niesie STAN silnika (pomiar z przejęcia
  * + dolewki) - „W silniku 9,2 L", jak „Na pokładzie" przy paliwie. Po biegu

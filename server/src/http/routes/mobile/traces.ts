@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - ŚLAD GPS w obie strony: `POST /traces` (wysyłka nagrania, faza 5)
+ * Ninerdeck (serwer) - ŚLAD GPS w obie strony: `POST /traces` (wysyłka nagrania, faza 5)
  * i `GET /me/sessions/:uuid/track` (ślad sesji do narysowania, issue #47).
  *
  * Obie trasy w jednym pliku, bo to JEDEN materiał z dwoma kierunkami - dokładnie jak

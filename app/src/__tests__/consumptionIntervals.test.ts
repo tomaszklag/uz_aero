@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test ekstrakcji interwałów paliwowych i równania motogodzin.
+ * Ninerdeck - test ekstrakcji interwałów paliwowych i równania motogodzin.
  *
  * Interwał jest jednostką, na której stoi cała analityka: jeśli granice wypadną w złym
  * miejscu albo czas pracy silnika policzy się nie z tego okna, model dostanie liczby

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - OutboxGuard (`.outbox-guard` z mockupów 00 i 13)
+ * Ninerdeck - OutboxGuard (`.outbox-guard` z mockupów 00 i 13)
  *
  * Amber-box ochrony konta (§3.0): tłumaczy, DLACZEGO zmiana konta jest zablokowana
  * przy niepustym outboxie i co się stanie samo (wysyłka po powrocie zasięgu).

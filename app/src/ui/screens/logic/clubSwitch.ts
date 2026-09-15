@@ -1,5 +1,5 @@
 /**
- * UZ Aero - SEKCJA „KLUB" w ustawieniach (mockup `13a`, wielofirmowość §7.3, issue #102).
+ * Ninerdeck - SEKCJA „KLUB" w ustawieniach (mockup `13a`, wielofirmowość §7.3, issue #102).
  *
  * Moduł czysty: decyduje, jakie karty stoją na liście, co mówi ich podpis i CZY wolno
  * teraz przełączyć klub - a nie jak to wygląda.

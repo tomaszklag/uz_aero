@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - GRANICE, KTÓRYCH NIE PILNUJE KOMPILATOR.
+ * Ninerdeck (serwer) - GRANICE, KTÓRYCH NIE PILNUJE KOMPILATOR.
  *
  * Lustro `app/src/__tests__/architecture.test.ts` i ta sama zasada: reguła architektury
  * jest warta tyle, ile jej egzekucja. Trzy własności niżej są w kodzie niewidoczne -
@@ -237,7 +237,7 @@ describe('granice, których nie pilnuje kompilator', () => {
     // przypadek „kontrakty importują wyłącznie domenę" przechodziłby na pustej liście.
     expect(filesUnder('application/admin/contracts').length).toBeGreaterThan(2);
     expect(importedFrom(read('application/admin/contracts/sessions.ts'))).toContain(
-      '@uzaero/domain',
+      '@ninerdeck/domain',
     );
 
     // Skaner nagłówka `Authorization` faktycznie coś widzi - w JEDYNYM pliku, który
@@ -381,7 +381,7 @@ describe('granice, których nie pilnuje kompilator', () => {
   });
 
   it('kontrakty panelu importują wyłącznie domenę i siebie nawzajem', () => {
-    // `contracts/` to POWIERZCHNIA dla klienta panelu (docelowo `@uzaero/server/admin-contracts`).
+    // `contracts/` to POWIERZCHNIA dla klienta panelu (docelowo `@ninerdeck/server/admin-contracts`).
     // Import czegokolwiek spoza domeny wciągnąłby tam wnętrze serwera - w skrajnym
     // przypadku `pg` do przeglądarki - a przy okazji przywiązałby panel do kształtu
     // projekcji, czyli do rzeczy, która ma się swobodnie zmieniać.
@@ -389,7 +389,7 @@ describe('granice, których nie pilnuje kompilator', () => {
     for (const file of filesUnder('application/admin/contracts')) {
       for (const from of importedFrom(codeOf(file))) {
         const ownFamily = from.startsWith('./');
-        if (from !== '@uzaero/domain' && !ownFamily) offenders.push(`${file} → ${from}`);
+        if (from !== '@ninerdeck/domain' && !ownFamily) offenders.push(`${file} → ${from}`);
       }
     }
     expect(offenders).toEqual([]);

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: kluby na serwerze (moduł PLATFORMY, issue #101, E1).
+ * Ninerdeck - panel: kluby na serwerze (moduł PLATFORMY, issue #101, E1).
  *
  * Warstwa `queries/` zna sieć i cache, ale nie zna ekranu.
  *

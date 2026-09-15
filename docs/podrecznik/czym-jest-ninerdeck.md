@@ -1,10 +1,10 @@
-# Czym jest UZ Aero
+# Czym jest Ninerdeck
 
 > Elektroniczny chronometraż dla aeroklubów, stref zrzutu i szkół latania: pilot odczytuje liczniki przy przejęciu i zdaniu samolotu, resztę zapisuje telefon, a klub widzi flotę w panelu.
 
 ## Dwie powierzchnie, jeden dziennik
 
-UZ Aero składa się z **aplikacji pilota** na Androida i **panelu klubu** w przeglądarce. Obie pracują na tym samym dzienniku operacji.
+Ninerdeck składa się z **aplikacji pilota** na Androida i **panelu klubu** w przeglądarce. Obie pracują na tym samym dzienniku operacji.
 
 - **Aplikacja pilota** prowadzi przez dzień lotny: przejęcie samolotu z odczytami, kokpit z automatycznym wykrywaniem startów i lądowań, tankowanie, zdanie samolotu. Działa bez zasięgu - zapis zostaje na telefonie i wysyła się sam, gdy wróci sieć.
 - **[Panel klubu](panel-wprowadzenie)** to miejsce administratora: konta pilotów do zatwierdzenia, karty samolotów z normami zużycia, dziennik operacji z osią zdarzeń i śladem GPS, a na czas testów także zgłoszenia wysłane z aplikacji.

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test karty OLEJU na ekranie operacji (issue #70).
+ * Ninerdeck - test karty OLEJU na ekranie operacji (issue #70).
  *
  * Karta niesie SAME FAKTY (odczyt przy przejęciu, dolane, stan po nich) - zużycia
  * jednej operacji nie da się policzyć, bo zdanie samolotu oleju nie mierzy (issue #60).

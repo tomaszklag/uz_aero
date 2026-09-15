@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - IZOLACJA KLUBÓW: każda trasa z tokenem klubu A nie widzi danych klubu B
+ * Ninerdeck (serwer) - IZOLACJA KLUBÓW: każda trasa z tokenem klubu A nie widzi danych klubu B
  * (wielofirmowość, epik C - issue #99 C3; `docs/wielofirmowosc.md` §12: „test izolacji jest
  * warunkiem wydania, nie dodatkiem").
  *
@@ -960,7 +960,7 @@ const CASES: Record<string, Probe> = {
       payload: { orgId: ORG_B },
     });
     expect(res.statusCode).toBe(404);
-    expect(res.cookies.find((c) => c.name === 'uzaero_admin')).toBeUndefined();
+    expect(res.cookies.find((c) => c.name === 'ninerdeck_admin')).toBeUndefined();
 
     // Kontrola pozytywna: własny klub przełącza się normalnie, więc 404 wyżej opisuje
     // brak członkostwa, a nie zepsutą trasę.

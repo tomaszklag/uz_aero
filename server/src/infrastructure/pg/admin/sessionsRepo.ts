@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter listy dni lotnych panelu (`SessionsAdminPort`, `A02`).
+ * Ninerdeck (serwer) - adapter listy dni lotnych panelu (`SessionsAdminPort`, `A02`).
  *
  * Osobny adapter od `pg/sessionsProjection.ts` z tego samego powodu, co osobny port:
  * tamten obsługuje ZAPIS projekcji w gorącej transakcji ingestu (`upsert` + odczyty
@@ -22,7 +22,7 @@
  * może, bo ingest widzi JEDNĄ operację, a numer zależy od pozostałych operacji doby.
  */
 
-import { isFlagType, type FlagType, type MhFormat } from '@uzaero/domain';
+import { isFlagType, type FlagType, type MhFormat } from '@ninerdeck/domain';
 
 import type { Queryable } from '../../../application/common/ports.ts';
 import type {
@@ -87,7 +87,7 @@ const SELECT = `
          -- projekcji ze strumienia. Nie da się jej też wypełnić przy zapisie, bo numer
          -- jest miejscem wiersza wśród SĄSIADÓW, a ingest widzi jedną operację.
          --
-         -- Reguła musi zgadzać się co do znaku z operationIndexes (@uzaero/domain),
+         -- Reguła musi zgadzać się co do znaku z operationIndexes (@ninerdeck/domain),
          -- bo telefon liczy ten sam numer u siebie, offline. Stąd te same warunki:
          -- ten sam pilot, bez unieważnionych, wyłącznie operacje z KOTWICĄ
          -- (issue #75: uruchomienie silnika, a bez biegu - przejęcie zapisu zdanego

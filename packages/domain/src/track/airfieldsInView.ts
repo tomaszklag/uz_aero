@@ -1,5 +1,5 @@
 /**
- * UZ Aero - które lotniska pokazać na mapie śladu.
+ * Ninerdeck - które lotniska pokazać na mapie śladu.
  *
  * Ekran rysuje trasę na siatce współrzędnych, bez kafelków (decyzja 2026-08-04), więc
  * lotniska są JEDYNYM odniesieniem w terenie. Tym ważniejsze, żeby nie było ich za dużo:

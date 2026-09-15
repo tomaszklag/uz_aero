@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter magazynu zdarzeń (`EventsStorePort`).
+ * Ninerdeck (serwer) - adapter magazynu zdarzeń (`EventsStorePort`).
  *
  * Idempotencja synca (§4.3) mieszka w JEDNYM miejscu: `ON CONFLICT (uuid) DO NOTHING`.
  * Telefon może wysłać tę samą paczkę pięć razy (urwane połączenie, retry) - liczba
@@ -7,7 +7,7 @@
  * `duplicates`, bo to od niej zależy księgowość outboxa po stronie aplikacji.
  */
 
-import type { Event } from '@uzaero/domain';
+import type { Event } from '@ninerdeck/domain';
 
 import type { EventsStorePort, Queryable } from '../../../application/common/ports.ts';
 

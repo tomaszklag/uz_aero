@@ -1,54 +1,80 @@
 /**
- * UZ Aero - GENERATOR IKON APLIKACJI ze znaku panelu (uwaga z urządzenia, 2026-09-04:
+ * Ninerdeck - GENERATOR IKON APLIKACJI ze znaku panelu (uwaga z urządzenia, 2026-09-04:
  * „chciałbym mieć ten [znak], co jest na stronie do logowania do panelu admina").
  *
- * Znakiem marki jest `PlaneIcon` z `admin/src/ui/components/icons.tsx` - ten sam samolot,
+ * Znakiem marki jest `BrandMark` z `admin/src/ui/components/icons.tsx` - monogram `9`,
  * który stoi w plakietce ekranu logowania panelu. Ikony są PLIKAMI GENEROWANYMI: poprawki
  * wchodzą przez ten skrypt i regenerację (`npm run icons` w `app/`), nie ręczną edycją PNG -
  * ta sama reguła, co przy katalogu lotnisk (`packages/domain/scripts/`).
  *
  * Bez zależności i bez modułu natywnego (projekt ich unika): rasteryzacja wielokąta
  * z antyaliasingiem (poziomo analitycznie, pionowo 8 podwierszy) i koder PNG na `zlib`
- * ze standardowej biblioteki. Ścieżkę SVG rozwija `planePath()` - łuk nosa jest jedynym
- * odcinkiem krzywym i idzie 64 segmentami.
+ * ze standardowej biblioteki. Znak rozwija `digitNineContours()` na DWA kontury - obrys
+ * i oczko - więc wypełnienie idzie regułą NIEZEROWEGO NAWINIĘCIA, nie parzystością
+ * przecięć: parzystość wycina każdy obszar objęty dwoma konturami, a tu drugi kontur ma
+ * wyciąć TYLKO oczko. Kierunek oczka jest przeciwny do obrysu i to on robi z niego dziurę.
  *
  * Wynik (`app/assets/`): `icon.png` 1024 (iOS i uniwersalna), para adaptive dla Androida
  * (`foreground` w bezpiecznej strefie 40% boku, `background` = sam gradient),
- * `monochrome` 432 białą sylwetką (system barwi ją sam) i `favicon.png` 48.
+ * `monochrome` 432 białą sylwetką (system barwi ją sam), `favicon.png` 48 oraz
+ * `brand-mark.png` 256 - znak dla komponentu `Brand` w aplikacji. Ten ostatni jest BIAŁY
+ * i barwi go `tintColor`, bo zieleń jest inna w każdym motywie (`#2ECC71` w ciemnym,
+ * `#027E2B` w jasnym), a znak zapieczony w kolorze ciemnego motywu zniknąłby w słońcu.
+ * Aplikacja nie ma renderera SVG (projekt nie dokłada modułów natywnych), więc znak
+ * jedzie do niej obrazkiem - i dzięki temu jest DOKŁADNIE tym samym kształtem, co ikona
+ * w launcherze; cyfra złożona drugi raz krojem display byłaby drugim znakiem marki.
  */
 const fs = require('fs');
 const zlib = require('zlib');
 const path = require('path');
 
-// ── znak: `admin/src/ui/components/icons.tsx` → PlaneIcon, viewBox 24×24 ────────
-// M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z
-function planePath() {
-  const pts = [
-    [21, 16],
-    [21, 14],
-    [13, 9],
-    [13, 3.5],
-  ];
-  // Nos: półokrąg r=1.5 ze środkiem (11.5, 3.5), od (13,3.5) górą do (10,3.5).
-  const STEPS = 64;
-  for (let i = 1; i < STEPS; i += 1) {
-    const a = (Math.PI * i) / STEPS;
-    pts.push([11.5 + 1.5 * Math.cos(a), 3.5 - 1.5 * Math.sin(a)]);
+// ── znak: `admin/src/ui/components/icons.tsx` → BrandMark, viewBox 24×24 ──────
+// M18.8 8.8A6.8 6.8 0 1 0 15.2 14.8L15.2 22H18.8ZM15.2 8.8a3.2 3.2 0 0 1-6.4 0 3.2 3.2 0 0 1 6.4 0Z
+//
+// Cyfra jest geometryczna: oczko o promieniu `R` z obwodem grubości `R - r` i ogon, którego
+// szerokość równa się tej grubości. Dzięki temu lewa krawędź ogona siada dokładnie na okręgu
+// wewnętrznym, a prawa jest pionową styczną do zewnętrznego - łuk urywa się pod kątem
+// `acos(r/R)` i nie ma tam ani schodka, ani zgrubienia.
+const NINE = { cx: 12, cy: 8.1, R: 6.1, r: 2.8, yBot: 22 };
+
+/** Znak jako dwa kontury: obrys (z ogonem) i oczko poprowadzone W DRUGĄ STRONĘ. */
+function digitNineContours() {
+  const { cx, cy, R, r, yBot } = NINE;
+  // Gęstość kroku dobrana pod `icon.png` 1024: cięciwa schodzi tam poniżej 3 px, czyli
+  // pod próg, na którym antyaliasing przestaje ukrywać kanty.
+  const OUTER_STEPS = 360;
+  const EYE_STEPS = 240;
+
+  const span = 2 * Math.PI - Math.acos(r / R);
+  const outer = [];
+  for (let i = 0; i <= OUTER_STEPS; i += 1) {
+    const t = -(span * i) / OUTER_STEPS;
+    outer.push([cx + R * Math.cos(t), cy + R * Math.sin(t)]);
   }
-  pts.push([10, 3.5], [10, 9], [2, 14], [2, 16], [10, 13.5], [10, 19], [8, 20.5], [8, 22]);
-  pts.push([11.5, 21], [15, 22], [15, 20.5], [13, 19], [13, 13.5]);
-  return pts;
+  outer.push([cx + r, yBot], [cx + R, yBot]);
+
+  const eye = [];
+  for (let i = 0; i < EYE_STEPS; i += 1) {
+    const t = (2 * Math.PI * i) / EYE_STEPS;
+    eye.push([cx + r * Math.cos(t), cy + r * Math.sin(t)]);
+  }
+  return [outer, eye];
 }
 
-/** Pokrycie [0..1] wielokąta na siatce W×H. Poziomo analitycznie, pionowo 8 podwierszy. */
-function coverage(points, W, H) {
+/**
+ * Pokrycie [0..1] konturów na siatce W×H. Poziomo analitycznie, pionowo 8 podwierszy,
+ * wypełnienie regułą niezerowego nawinięcia (kontur przeciwny = dziura).
+ */
+function coverage(contours, W, H) {
   const SS = 8;
   const cov = new Float32Array(W * H);
   const edges = [];
-  for (let i = 0; i < points.length; i += 1) {
-    const [x0, y0] = points[i];
-    const [x1, y1] = points[(i + 1) % points.length];
-    if (y0 !== y1) edges.push([x0, y0, x1, y1]);
+  for (const points of contours) {
+    for (let i = 0; i < points.length; i += 1) {
+      const [x0, y0] = points[i];
+      const [x1, y1] = points[(i + 1) % points.length];
+      if (y0 !== y1) edges.push([x0, y0, x1, y1, y1 > y0 ? 1 : -1]);
+    }
   }
 
   const addSpan = (row, xa, xb, weight) => {
@@ -61,19 +87,26 @@ function coverage(points, W, H) {
     }
   };
 
-  const xs = [];
+  const hits = [];
   for (let sy = 0; sy < H * SS; sy += 1) {
     const y = (sy + 0.5) / SS;
-    xs.length = 0;
-    for (const [x0, y0, x1, y1] of edges) {
+    hits.length = 0;
+    for (const [x0, y0, x1, y1, dir] of edges) {
       if ((y >= y0 && y < y1) || (y >= y1 && y < y0)) {
-        xs.push(x0 + ((y - y0) / (y1 - y0)) * (x1 - x0));
+        hits.push([x0 + ((y - y0) / (y1 - y0)) * (x1 - x0), dir]);
       }
     }
-    if (xs.length < 2) continue;
-    xs.sort((a, b) => a - b);
+    if (hits.length < 2) continue;
+    hits.sort((a, b) => a[0] - b[0]);
     const row = Math.floor(sy / SS);
-    for (let i = 0; i + 1 < xs.length; i += 2) addSpan(row, xs[i], xs[i + 1], 1 / SS);
+    let winding = 0;
+    let start = 0;
+    for (const [x, dir] of hits) {
+      const before = winding;
+      winding += dir;
+      if (before === 0 && winding !== 0) start = x;
+      else if (before !== 0 && winding === 0) addSpan(row, start, x, 1 / SS);
+    }
   }
   return cov;
 }
@@ -153,7 +186,8 @@ function render({ size, markRatio, background, markColor, glow = 0 }) {
   }
 
   // ── znak: skala i wyśrodkowanie w płótnie ────────────────────────────────────
-  const pts = planePath();
+  const contours = digitNineContours();
+  const pts = contours.flat();
   const xsAll = pts.map((p) => p[0]);
   const ysAll = pts.map((p) => p[1]);
   const minX = Math.min(...xsAll);
@@ -163,7 +197,7 @@ function render({ size, markRatio, background, markColor, glow = 0 }) {
   const scale = (size * markRatio) / (maxY - minY);
   const offX = (size - (maxX - minX) * scale) / 2 - minX * scale;
   const offY = (size - (maxY - minY) * scale) / 2 - minY * scale;
-  const placed = pts.map(([x, y]) => [x * scale + offX, y * scale + offY]);
+  const placed = contours.map((c) => c.map(([x, y]) => [x * scale + offX, y * scale + offY]));
 
   if (glow > 0) {
     const cx = size / 2;
@@ -224,6 +258,18 @@ fs.writeFileSync(
 );
 fs.writeFileSync(
   OUT + 'favicon.png',
+  render({ size: 48, markRatio: 0.62, background: BG, markColor: '#2ECC71' }),
+);
+fs.writeFileSync(
+  OUT + 'brand-mark.png',
+  render({ size: 256, markRatio: 0.86, background: null, markColor: '#FFFFFF' }),
+);
+
+/* Favicon strony publicznej to TEN SAM plik, co favicon aplikacji - do 2026-09-10 leżał
+   w `site/src/` jako ręczna kopia, czyli jako drugi znak czekający na rozjechanie się
+   z pierwszym. Generator pisze go wprost, bo znaku marki nie rysujemy dwa razy. */
+fs.writeFileSync(
+  path.join(__dirname, '..', '..', 'site', 'src', 'favicon.png'),
   render({ size: 48, markRatio: 0.62, background: BG, markColor: '#2ECC71' }),
 );
 console.log('ikony zapisane');

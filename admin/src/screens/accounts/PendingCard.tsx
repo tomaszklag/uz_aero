@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: kolejka zgłoszeń kodem klubu nad listą pilotów (mockup `piloci-lista`,
+ * Ninerdeck - panel: kolejka zgłoszeń kodem klubu nad listą pilotów (mockup `piloci-lista`,
  * karta ZGŁOSZENIA; issue #101, E3).
  *
  * ══ STOI NAD LISTĄ I ZNIKA, GDY JEST PUSTA ══

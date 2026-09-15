@@ -1,5 +1,5 @@
 /**
- * UZ Aero - klucz składu w zależnościach prefillu (issue #28).
+ * Ninerdeck - klucz składu w zależnościach prefillu (issue #28).
  *
  * Arkusze skokowe dostają skład z PROJEKCJI, a ta wraca ze strumienia po każdym
  * zdarzeniu sesji - więc te same liczby przychodzą jako nowy obiekt. Gdyby effect

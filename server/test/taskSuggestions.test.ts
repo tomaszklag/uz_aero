@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - testy `GET /me/task-suggestions` (issue #14, ekran 02e).
+ * Ninerdeck (serwer) - testy `GET /me/task-suggestions` (issue #14, ekran 02e).
  *
  * Sedno kontraktu to DWA RÓŻNE ZAKRESY w jednej odpowiedzi: oznaczenia klientów
  * pochodzą z sesji CAŁEGO klubu (kontrahent jest wspólny - nowy pilot lecący dla

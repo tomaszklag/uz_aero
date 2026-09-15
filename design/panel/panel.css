@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════════════════════
-   UZ AERO - PANEL · WSPÓLNY ARKUSZ MAKIET
+   NINERDECK - PANEL · WSPÓLNY ARKUSZ MAKIET
    ══════════════════════════════════════════════════════════════════════════════
 
    PLIK GENEROWANY - NIE EDYTUJ RĘCZNIE.
@@ -90,7 +90,7 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /**
- * UZ Aero - panel: reset, korzeń dokumentu i stany globalne.
+ * Ninerdeck - panel: reset, korzeń dokumentu i stany globalne.
  *
  * `body` JEST przeglądarką (w makiecie jest kanwą wokół obrazka okna - stąd tam
  * gradienty i `--app-scale`, a tu ich nie ma). Tło korzenia to `--bg`, czyli CHROME
@@ -184,7 +184,7 @@ a {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /**
- * UZ Aero - panel: WYMIARY RAMY i szkielet układu.
+ * Ninerdeck - panel: WYMIARY RAMY i szkielet układu.
  *
  * Osobny plik od `tokens.css` i to jest twarda linia: tokeny to wartości PRODUKTU,
  * wspólne z aplikacją pilota; `--topbar-h` i `--sidebar-w` to wymiary jednej
@@ -305,7 +305,7 @@ a {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /**
- * UZ Aero - panel: RAMA - pasek górny, kolumna boczna, okruszki.
+ * Ninerdeck - panel: RAMA - pasek górny, kolumna boczna, okruszki.
  *
  * Od stylu lekkiego (issue #107, 2026-09-08) nawigacja wraca do KOLUMNY BOCZNEJ, jak
  * w GitLabie: pasek górny niesie wyłącznie markę i zalogowanego, kolumna - kontekst
@@ -571,7 +571,7 @@ a {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /**
- * UZ Aero - panel: przyciski i pola formularza.
+ * Ninerdeck - panel: przyciski i pola formularza.
  *
  * Styl lekki (issue #107): przycisk 32 px z promieniem 6, pole 34 px z promieniem 6,
  * etykieta krojem tekstowym zamiast mono-wersalików. Reguła z aplikacji pilota
@@ -908,7 +908,7 @@ a {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /**
- * UZ Aero - panel: karty, plakietki, banery i stany puste.
+ * Ninerdeck - panel: karty, plakietki, banery i stany puste.
  *
  * Jeden plik dla całej rodziny „powierzchni i etykiet", bo to jedna warstwa wizualna
  * i jeden zestaw tonów. Styl lekki (issue #107): promień 8 zamiast 14, tytuł karty
@@ -1300,7 +1300,7 @@ a {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /**
- * UZ Aero - panel: nagłówek strony i kafle podsumowań.
+ * Ninerdeck - panel: nagłówek strony i kafle podsumowań.
  *
  * Styl lekki (issue #107): tytuł strony krojem tekstowym, półgruby, w pisowni
  * zdaniowej („Dziennik", nie „DZIENNIK") - Bebas Neue zostaje w marce i na logowaniu.
@@ -1418,7 +1418,7 @@ a {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /**
- * UZ Aero - panel: pasek nad tabelą - wyszukiwanie i zawężenia.
+ * Ninerdeck - panel: pasek nad tabelą - wyszukiwanie i zawężenia.
  *
  * `.search` jest `<label>`, a `.chip` - `<button>`: filtr, którego nie da się
  * ustawić bez myszy, psuje scenariusz „przygotuj link do tego wycinka".
@@ -1508,7 +1508,7 @@ a {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /**
- * UZ Aero - panel: TABELA, kręgosłup back-office'u.
+ * Ninerdeck - panel: TABELA, kręgosłup back-office'u.
  *
  * Reguła, której nie wolno tu zgubić: **liczby zawsze mono i do prawej** (`.num`),
  * bo panel czyta się kolumną, a proporcjonalna czcionka przesuwa cyfry względem siebie.
@@ -1781,7 +1781,7 @@ tbody tr.muted .cell-strong {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /**
- * UZ Aero - panel: szuflada szczegółu.
+ * Ninerdeck - panel: szuflada szczegółu.
  *
  * **Pozycjonowanie `fixed`, nie `absolute`.** Ekran renderuje się WEWNĄTRZ `.content`,
  * które ma `overflow-y:auto` - szuflada `absolute` przewijałaby się razem z listą.
@@ -1912,7 +1912,7 @@ tbody tr.muted .cell-strong {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /**
- * UZ Aero - panel: PLAMKI ŁADOWANIA.
+ * Ninerdeck - panel: PLAMKI ŁADOWANIA.
  *
  * Reguła produktu (CLAUDE.md, issue #33): ekran czekający na odczyt rysuje plamki
  * W GEOMETRII DOCELOWEJ - nigdy spinnera i nigdy pustki.
@@ -1957,7 +1957,7 @@ tbody tr.muted .cell-strong {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /**
- * UZ Aero - panel: EKRAN LOGOWANIA.
+ * Ninerdeck - panel: EKRAN LOGOWANIA.
  *
  * Osobny arkusz, bo to jedyny ekran panelu, który nie jest tabelą ani formularzem
  * w szufladzie - i jedyny poza znakiem w pasku, na którym marka ma prawo być duża.
@@ -2100,7 +2100,7 @@ tbody tr.muted .cell-strong {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /**
- * UZ Aero - panel: DZIENNIK - komórki par, braki i kontrolka zakresu dat.
+ * Ninerdeck - panel: DZIENNIK - komórki par, braki i kontrolka zakresu dat.
  *
  * Trzy rzeczy, których reszta panelu nie potrzebowała: para wartości w jednej komórce,
  * ton braku i pola daty. Wszystko inne (tabela, karta, plakietka, chip) grid bierze
@@ -2183,7 +2183,7 @@ tbody tr.voided td {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /**
- * UZ Aero - panel: mapa śladu i profil pionowy (ekran operacji, poziom 3).
+ * Ninerdeck - panel: mapa śladu i profil pionowy (ekran operacji, poziom 3).
  *
  * Kolory wyłącznie z tokenów. Płótno mapy stoi na `--bg` - ciemniejszym od karty
  * (`--surface`), żeby ślad miał na czym leżeć; literał `#0f1216` z panelu 2.0 zniknął
@@ -2361,7 +2361,7 @@ tbody tr.voided td {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /**
- * UZ Aero - panel: moduł „Zgłoszenia" (issue #87).
+ * Ninerdeck - panel: moduł „Zgłoszenia" (issue #87).
  *
  * Trzy klasy, bo tyle brakowało bibliotece - reszta ekranu jedzie na tym, co już jest
  * (`.card`, `.kv`, `.opt-list`, `.filters`, tabela). Arkusz istnieje osobno, a nie

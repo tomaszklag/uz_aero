@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ROZSUWANIE PODPISÓW pod osią czasu profilu (issue #47 pkt 2).
+ * Ninerdeck - ROZSUWANIE PODPISÓW pod osią czasu profilu (issue #47 pkt 2).
  *
  * Profil dostał podpisy przy każdym starcie i lądowaniu, a te potrafią wypaść blisko
  * siebie: dzień skokowy to lądowanie i kolejny start w odstępie kilkunastu minut, czyli

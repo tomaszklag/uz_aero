@@ -1,5 +1,5 @@
 /**
- * UZ Aero - DZIEŃ PILOTA w bieżącej dobie UTC (ekran 01 „Mój dzień").
+ * Ninerdeck - DZIEŃ PILOTA w bieżącej dobie UTC (ekran 01 „Mój dzień").
  *
  * Listy sesji doby NIE DA SIĘ wyczytać z projekcji jednej sesji i to jest własność
  * modelu, nie brak danych: dzień należy do PILOTA, a `SessionState` opisuje jeden

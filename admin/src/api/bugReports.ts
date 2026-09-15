@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: ZGŁOSZENIA BŁĘDÓW (`/admin/api/bug-reports`, issue #87).
+ * Ninerdeck - panel 2.0: ZGŁOSZENIA BŁĘDÓW (`/admin/api/bug-reports`, issue #87).
  *
  * Warstwa `api/` nie zna Reacta ani cache'u - zwraca obietnice.
  *

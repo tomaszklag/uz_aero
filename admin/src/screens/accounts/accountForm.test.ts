@@ -16,7 +16,7 @@ const pilot: PilotListItemDto = {
   id: 'p-1',
   code: 'TMK',
   name: 'Tomasz Małkiewicz',
-  email: 't.malkiewicz@uzaero.pl',
+  email: 't.malkiewicz@ninerdeck.pl',
   active: true,
   role: 'pilot',
 };

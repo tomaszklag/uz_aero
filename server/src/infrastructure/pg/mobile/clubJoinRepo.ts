@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter DOŁĄCZANIA kodem klubu (`ClubJoinPort`, wielofirmowość
+ * Ninerdeck (serwer) - adapter DOŁĄCZANIA kodem klubu (`ClubJoinPort`, wielofirmowość
  * epik D, `docs/wielofirmowosc.md` §3.8, §5).
  *
  * Drugi adapter tabeli `memberships` obok `PgPilotsRepo` (odczyt przy logowaniu)

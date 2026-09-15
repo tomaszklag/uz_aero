@@ -1,5 +1,5 @@
 /**
- * UZ Aero - czas i podpisy gestu przytrzymania (issue #67).
+ * Ninerdeck - czas i podpisy gestu przytrzymania (issue #67).
  *
  * Akcje kokpitu, które ZAPISUJĄ zdarzenie (START ENGINE, STOP, zapis ręczny paska
  * akcji), wymagają przytrzymania zamiast tapnięcia - „na klik mogą zdarzyć się

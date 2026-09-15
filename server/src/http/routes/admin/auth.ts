@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - sesja przeglądarkowa panelu (`/admin/api/auth/*`, mockupy
+ * Ninerdeck (serwer) - sesja przeglądarkowa panelu (`/admin/api/auth/*`, mockupy
  * `00-logowanie`, `00a-wybor-klubu`).
  *
  * Logowanie i wylogowanie NIE przechodzą przez `adminRoute` - i muszą takie być, bo

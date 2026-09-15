@@ -1,5 +1,5 @@
 /**
- * UZ Aero - SZLAK ODCZYTU PRZY ZDANIU SAMOLOTU (issue #84, ekran 09B).
+ * Ninerdeck - SZLAK ODCZYTU PRZY ZDANIU SAMOLOTU (issue #84, ekran 09B).
  *
  * Zgłoszenie z urządzenia: „kliknięcie w przycisk powinno otwierać popup, który już
  * gdzieś mamy - taki co pokazuje, ile było przy przejęciu, ile dolano i ile latano"

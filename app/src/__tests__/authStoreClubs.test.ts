@@ -1,5 +1,5 @@
 /**
- * UZ Aero - BRAMKA KLUBU w store uwierzytelnienia (wielofirmowość §7, issue #102).
+ * Ninerdeck - BRAMKA KLUBU w store uwierzytelnienia (wielofirmowość §7, issue #102).
  *
  * Ten sam kod klubu wpisuje się w DWÓCH miejscach i wynik znaczy tam co innego:
  *  • na 00E (osoba bez klubu) zgłoszenie i odmowa PRZEŁĄCZAJĄ EKRAN - to jest cała

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter ODCZYTU rejestru zdarzeń (`AdminEventsReadPort`, `A04`).
+ * Ninerdeck (serwer) - adapter ODCZYTU rejestru zdarzeń (`AdminEventsReadPort`, `A04`).
  *
  * Osobny plik od `eventsRepo.ts` z tego samego powodu, dla którego port jest osobny:
  * tamten odpowiada na dwa wąskie pytania o kolumny techniczne pojedynczego zdarzenia
@@ -263,7 +263,7 @@ export class PgAdminEventsReadRepo implements AdminEventsReadPort {
     const conditions = new SqlFilter();
     conditions.add('e.org_id = ?', orgId);
     applyFilters(conditions, filter);
-    // Próg jedzie PARAMETREM z `@uzaero/domain` - wpisany w tekst zapytania byłby drugą
+    // Próg jedzie PARAMETREM z `@ninerdeck/domain` - wpisany w tekst zapytania byłby drugą
     // definicją tolerancji obok tej, którą liczy flagę `CLOCK_DRIFT` przy ingescie.
     const threshold = conditions.bind(driftThresholdMs);
 

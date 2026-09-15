@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: INWENTARZ IKON, przepisany 1:1 z `design/admin/*.html`.
+ * Ninerdeck - panel: INWENTARZ IKON, przepisany 1:1 z `design/admin/*.html`.
  *
  * Jeden plik na całą rodzinę, wbrew regule „jedna odpowiedzialność = jeden plik",
  * i to jest świadomy wyjątek: to nie są komponenty z zachowaniem, tylko kilkanaście
@@ -32,7 +32,27 @@ function Stroke({ size = 15, width = 2, children }: IconProps & { width?: number
   );
 }
 
-/** Samolot - znak marki i ikona floty. Jedyna ikona wypełniona, jak w mockupach. */
+/**
+ * Monogram `9` - ZNAK MARKI Ninerdeck (plakietka logowania, wybór klubu, ikona aplikacji).
+ *
+ * Cyfra jest geometryczna: oczko o promieniu 6,1 z obwodem grubości 3,3 i ogon tej samej
+ * szerokości, więc jego lewa krawędź siada na okręgu wewnętrznym, a prawa jest pionową
+ * styczną do zewnętrznego. Oczko biegnie W DRUGĄ STRONĘ niż obrys - to ono, przez regułę
+ * niezerowego nawinięcia, robi z niego dziurę.
+ *
+ * Ta sama geometria stoi w `app/scripts/build-icons.js` (stała `NINE`) i to ona generuje
+ * ikony aplikacji. Skrypt musi działać gołym `node`, więc ścieżki stąd NIE IMPORTUJE -
+ * poprawka znaku wchodzi w OBU miejscach naraz albo rozjeżdża markę.
+ */
+export function BrandMark({ size = 14 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M18.1 8.1A6.1 6.1 0 1 0 14.8 13.52L14.8 22H18.1ZM14.8 8.1A2.8 2.8 0 0 1 9.2 8.1A2.8 2.8 0 0 1 14.8 8.1Z" />
+    </svg>
+  );
+}
+
+/** Samolot - ikona floty. Jedyna ikona wypełniona, jak w mockupach. */
 export function PlaneIcon({ size = 14 }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">

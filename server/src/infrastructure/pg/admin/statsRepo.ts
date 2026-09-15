@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter statystyk zakresu (`StatsAdminPort`, mockup `A10`).
+ * Ninerdeck (serwer) - adapter statystyk zakresu (`StatsAdminPort`, mockup `A10`).
  *
  * ══ CO TU WOLNO, A CZEGO NIE ══
  * Każde zapytanie tego pliku AGREGUJE kolumny projekcji `sessions` - wartości, które
@@ -24,7 +24,7 @@
  * z tych liczników wyciąga mapper - tu są wyłącznie fakty.
  */
 
-import { isOperationType, type MhFormat, type OperationType } from '@uzaero/domain';
+import { isOperationType, type MhFormat, type OperationType } from '@ninerdeck/domain';
 
 import type { Queryable } from '../../../application/common/ports.ts';
 import type {

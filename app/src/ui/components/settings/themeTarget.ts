@@ -1,5 +1,5 @@
 /**
- * UZ Aero - JEDNOTAPOWA ZMIANA JASNOŚCI (issue #82).
+ * Ninerdeck - JEDNOTAPOWA ZMIANA JASNOŚCI (issue #82).
  *
  * Zgłoszenie z urządzenia: „dodajmy na ekranie kokpitu przełącznik, za pomocą którego
  * zmienię mode z ciemnego na jasny i odwrotnie".

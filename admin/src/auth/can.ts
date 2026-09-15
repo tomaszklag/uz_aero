@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: czy zalogowany ma daną zdolność, a jeśli nie - POWÓD do pokazania.
+ * Ninerdeck - panel: czy zalogowany ma daną zdolność, a jeśli nie - POWÓD do pokazania.
  *
  * Moduł CZYSTY (bez Reacta, bez sieci), bo to jest decyzja o treści ekranu, a nie
  * o jego układzie - i dlatego ma test obok.
@@ -37,7 +37,7 @@ export function can(
  * Lustro mapy z serwera - świadome i opisane w `api/dto.ts` przy typie `Capability`.
  * Rozjazd nie może niczego otworzyć ani zamknąć: najgorszy możliwy skutek to zdanie
  * wskazujące złą rolę, i taką cenę płacimy do czasu decyzji z §11 pkt 6 o przeniesieniu
- * `roles.ts` do `@uzaero/domain`.
+ * `roles.ts` do `@ninerdeck/domain`.
  */
 const GRANTED_BY: Record<Capability, string> = {
   'panel.access': 'administrator',

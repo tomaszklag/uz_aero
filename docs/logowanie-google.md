@@ -1,4 +1,4 @@
-# UZ Aero - logowanie przez Google (decyzje)
+# Ninerdeck - logowanie przez Google (decyzje)
 
 > **CO SIĘ ZMIENIŁO W 2.0.0 (wielofirmowość, epik D - issue #100).** Samo logowanie
 > Googlem działa dokładnie tak, jak opisuje ten dokument; przeniosły się DWIE rzeczy
@@ -301,7 +301,7 @@ Audyt: `registration.approve` / `registration.reject`.
 
 Skoro hasła znikają wszędzie, ekran logowania panelu (`admin/`) dostaje ten sam
 przycisk - przepływ webowy Google, osobny client ID, sesja dalej w ciasteczku
-`uzaero_admin` z TTL 8 h i BEZ refresh tokenu (§8.4 architektury panelu - to zostaje).
+`ninerdeck_admin` z TTL 8 h i BEZ refresh tokenu (§8.4 architektury panelu - to zostaje).
 Brama `panel.access` działa jak dotąd: konto pilota loguje się poprawnie i odbija
 o rolę z osobnym komunikatem.
 

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - wyszukiwanie lotniska w katalogu (podpowiedzi do pola ICAO).
+ * Ninerdeck - wyszukiwanie lotniska w katalogu (podpowiedzi do pola ICAO).
  *
  * PO CO: pilot wpisywał kod ICAO z pamięci, w cztery znaki, bez żadnego potwierdzenia,
  * że trafił. Katalog i tak siedzi w aplikacji (mapa śladu rysuje z niego pasy), więc

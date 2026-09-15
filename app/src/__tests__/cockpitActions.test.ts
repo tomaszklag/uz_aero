@@ -1,5 +1,5 @@
 /**
- * UZ Aero - pasek akcji kokpitu: przycisk główny podpowiada NASTĘPNE zdarzenie
+ * Ninerdeck - pasek akcji kokpitu: przycisk główny podpowiada NASTĘPNE zdarzenie
  * sekwencji lotu (decyzja 2026-08-11), a zrzut żyje tylko tam, gdzie może się wydarzyć.
  *
  * Testy pilnują dwóch reguł, które przed poprawką były złamane na urządzeniu:

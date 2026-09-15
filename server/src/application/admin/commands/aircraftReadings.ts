@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - ODCZYTY MASZYNY WPISANE RĘKĄ ADMINISTRATORA (issue #81, 2026-09-03:
+ * Ninerdeck (serwer) - ODCZYTY MASZYNY WPISANE RĘKĄ ADMINISTRATORA (issue #81, 2026-09-03:
  * „jako admin przez panel powinienem móc modyfikować odczyty, które będą nadrzędne,
  * czyli motogodziny, ilość paliwa oraz ilość oleju […] powinna to być oddzielna akcja
  * i powinna mieć możliwość dopisania komentarza").

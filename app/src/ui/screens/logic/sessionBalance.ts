@@ -1,5 +1,5 @@
 /**
- * UZ Aero - RACHUNKI paliwa i motogodzin na ekranie sesji (mockup `design/10-statystyki.html`).
+ * Ninerdeck - RACHUNKI paliwa i motogodzin na ekranie sesji (mockup `design/10-statystyki.html`).
  *
  * ══ DLACZEGO JEDEN MODUŁ NA DWIE WIELKOŚCI (issue #38 pkt 5) ══
  * Bo to jedno pytanie zadane dwa razy: „ile ubyło i czy tyle powinno". Do issue #38

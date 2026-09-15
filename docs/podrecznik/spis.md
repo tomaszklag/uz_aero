@@ -1,7 +1,7 @@
-# Dokumentacja UZ Aero
+# Dokumentacja Ninerdeck
 
 <!--
-Ten katalog jest ŹRÓDŁEM modułu „Dokumentacja" strony UZ Aero (/dokumentacja/).
+Ten katalog jest ŹRÓDŁEM modułu „Dokumentacja" strony Ninerdeck (/dokumentacja/).
 Piszemy dla pilotów i administratorów klubu - instrukcja obsługi, bez nazw plików,
 identyfikatorów i opisu budowy aplikacji.
 
@@ -23,7 +23,7 @@ Strona: „# Tytuł", opcjonalnie „> jedno zdanie" tuż pod tytułem, dalej Ma
 > Podręcznik pilota i administratora klubu: od instalacji i pierwszego logowania, przez dzień lotny w kokpicie, po panel klubu. Szukaj po słowie albo idź rozdziałami.
 
 ## Start
-- czym-jest-uz-aero
+- czym-jest-ninerdeck
 - instalacja
 - pierwsze-logowanie
 

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - wypisanie wycinka siatki undulacji jako moduł TypeScript.
+ * Ninerdeck - wypisanie wycinka siatki undulacji jako moduł TypeScript.
  *
  * Siatka jest STATYCZNA (wkompilowana), z tych samych powodów co katalog lotnisk:
  * korekta wysokości ma działać bez sieci, w samolocie, od pierwszego fixa.
@@ -27,7 +27,7 @@ export function renderGeoidModule(grid: GeoidGrid): string {
   const maxM = Math.max(...grid.valuesCm) / 100;
 
   return `/**
- * UZ Aero - undulacja geoidy EGM96: wycinek siatki światowej dla Europy (dane statyczne).
+ * Ninerdeck - undulacja geoidy EGM96: wycinek siatki światowej dla Europy (dane statyczne).
  *
  * PO CO: GPS na Androidzie podaje wysokość nad elipsoidą WGS84; wysokości lotnicze
  * są AMSL. Ta siatka niesie różnicę obu powierzchni - adapter GPS odejmuje ją od

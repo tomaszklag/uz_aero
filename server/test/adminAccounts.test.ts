@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - konta pilotów w panelu (`/admin/api/pilots*`, `A06` i `A06a`).
+ * Ninerdeck (serwer) - konta pilotów w panelu (`/admin/api/pilots*`, `A06` i `A06a`).
  *
  * Przekrój, który powstał z awarii: 2026-08-01 administrator nie mógł się zalogować,
  * bo w produkcie nie było ŻADNEJ ścieżki zmiany hasła. Ten plik pilnuje, żeby ścieżka
@@ -115,9 +115,9 @@ async function panelSession(app: Harness['app'], who: string): Promise<{ cookie:
     headers: ADMIN_CSRF_HEADERS,
     payload: { idToken: googleTokenFor(who) },
   });
-  const cookie = res.cookies.find((c) => c.name === 'uzaero_admin');
+  const cookie = res.cookies.find((c) => c.name === 'ninerdeck_admin');
   if (cookie == null) throw new Error(`logowanie do panelu nie wydało ciasteczka (${who})`);
-  return { cookie: `uzaero_admin=${cookie.value}` };
+  return { cookie: `ninerdeck_admin=${cookie.value}` };
 }
 
 const panelMe = (app: Harness['app'], session: { cookie: string }) =>
@@ -508,7 +508,7 @@ describe('wyścig o unikalność kodu i e-maila', () => {
     expect(sameCode).toEqual({ ok: false, reason: 'conflict', field: 'code' });
 
     const sameEmail = await commands.update(actor('TMK'), 'PWI', {
-      email: 'tomasz@uzaero.pl',
+      email: 'tomasz@ninerdeck.pl',
     });
     expect(sameEmail).toEqual({ ok: false, reason: 'conflict', field: 'email' });
 
@@ -688,13 +688,13 @@ describe('unieważnianie sesji - po wejściu Google jedyną drogą jest deaktywa
 });
 
 describe('CSRF i sesja przeglądarkowa', () => {
-  it('mutacja bez nagłówka `X-UZ-Admin` nie przechodzi', async () => {
+  it('mutacja bez nagłówka `X-Ninerdeck-Admin` nie przechodzi', async () => {
     const { app, db } = await testHarness();
     const res = await app.inject({
       method: 'POST',
       url: '/admin/api/pilots',
       headers: { authorization: `Bearer ${await tokenOf(app, 'TMK')}` },
-      payload: { code: 'NEW', name: 'Nowe Konto', email: 'nowe@uzaero.pl' },
+      payload: { code: 'NEW', name: 'Nowe Konto', email: 'nowe@ninerdeck.pl' },
     });
 
     expect(res.statusCode).toBe(403);

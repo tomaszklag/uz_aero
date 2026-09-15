@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - mapper raportu analityki zużycia (`A10a`, `A10b`).
+ * Ninerdeck (serwer) - mapper raportu analityki zużycia (`A10a`, `A10b`).
  *
  * Funkcja CZYSTA: dostaje wiersze i strumienie, oddaje DTO. Bez bazy, bez zegara -
  * dzięki temu każdy iloraz da się przetestować bez stawiania Postgresa, tak samo jak
@@ -22,7 +22,7 @@ import {
   type FuelInterval,
   type MhEquation,
   type PhaseSegment,
-} from '@uzaero/domain';
+} from '@ninerdeck/domain';
 
 import type {
   ConsumptionAircraftRow,

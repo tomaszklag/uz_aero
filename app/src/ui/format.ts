@@ -1,5 +1,5 @@
 /**
- * UZ Aero - formatowanie mieszka w `packages/format` (workspace `@uzaero/format`).
+ * Ninerdeck - formatowanie mieszka w `packages/format` (workspace `@ninerdeck/format`).
  *
  * Wyniesione 2026-07-31. Powód nie jest teoretyczny: `server/src/application/export/
  * daySheetContent.ts` trzymał ręczne KOPIE tych funkcji z docblockami „lustro … z
@@ -11,4 +11,4 @@
  * ma zostać.
  */
 
-export * from '@uzaero/format';
+export * from '@ninerdeck/format';

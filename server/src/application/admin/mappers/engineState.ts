@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - `SessionState` → stan silnika jednostki na pulpicie (`A01`).
+ * Ninerdeck (serwer) - `SessionState` → stan silnika jednostki na pulpicie (`A01`).
  *
  * Czysta funkcja bez bazy i bez zegara: wejściem jest projekcja policzona
  * `projectSession` na strumieniu JEDNEJ otwartej sesji, wyjściem - tyle, ile potrzebuje
@@ -19,7 +19,7 @@
  *     tak samo jak przy claimie na liście floty.
  */
 
-import type { SessionState } from '@uzaero/domain';
+import type { SessionState } from '@ninerdeck/domain';
 
 import type { AdminEngineState } from '../contracts/dashboard.ts';
 

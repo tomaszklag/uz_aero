@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - trasa statystyk (`GET /admin/api/stats`, mockup `A10`).
+ * Ninerdeck (serwer) - trasa statystyk (`GET /admin/api/stats`, mockup `A10`).
  *
  * Cienka jak reszta: zod → zapytanie → status. Trasa nie zna ani SQL-a, ani reguły
  * „tylko dni zamknięte" - tłumaczy wyłącznie query string na filtr.

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - trasa unieważnienia całej sesji
+ * Ninerdeck (serwer) - trasa unieważnienia całej sesji
  * (`POST /admin/api/sessions/:uuid/void`).
  *
  * Cienka jak reszta repo: zod → komenda → status.
