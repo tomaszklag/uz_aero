@@ -55,6 +55,7 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 ### Dla testerów
 
+- **To wydanie jest NOWĄ INSTALACJĄ, nie aktualizacją.** Ninerdeck startuje na własnym serwerze i jako osobna aplikacja: instaluje się ją od nowa, loguje kontem Google i wpisuje kod klubu. Dotychczasowa aplikacja - stara nazwa i stara ikona - działa dalej ze swoim serwerem, dopóki wszyscy nie przejdą, ale **historia lotów z testów nie przenosi się**: klub wpisuje flotę od nowa, a piloci rejestrują się ponownie.
 - **Zgłoszenia błędów z aplikacji trafiają do jednej kolejki dla całego serwera**, z nazwą klubu przy każdym zgłoszeniu. Obsługuje ją konto opiekuna platformy; administrator klubu tej zakładki nie ma - poprawki i tak wchodzą w kolejnym wydaniu aplikacji, więc decyzja o zgłoszeniu nie należy do klubu.
 - **Zapisy do maszyny innego klubu nie blokują już wysyłki.** Telefon, który miał w kolejce zapis nie dla tego klubu, odkłada tylko ten jeden wpis i wysyła resztę.
 
@@ -118,15 +119,32 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 <!-- Terminy są orientacyjne i zostają na stronie do potwierdzenia przez właściciela projektu. -->
 
-### 1.2.0 · po pierwszych tygodniach testów
+### 2.0.0 · wrzesień 2026
+
+> Jeden serwer dla wielu klubów, nowa nazwa i nowa instalacja.
+
+- [x] Kluby: każdy widzi wyłącznie swoje maszyny, pilotów, operacje i dokumenty
+- [x] Dołączanie do klubu kodem klubu, z decyzją administratora
+- [x] Nowa nazwa i nowy znak: Ninerdeck
+- [ ] Nowy serwer i nowa aplikacja postawione od zera
+- [ ] Klub wpisuje flotę i wydaje pilotom kod klubu
+
+### 2.1.0 · po pierwszych tygodniach testów
 
 > Poprawki z testów i kalibracja normy zużycia na prawdziwych lotach.
 
-- [~] Publikacja aplikacji u Google - logowanie dowolnym kontem, bez listy testerów
 - [ ] Kalibracja progów normy paliwa i motogodzin na danych z testów
 - [ ] Analityka oleju: zużycie między pomiarami i norma z lotów maszyny
 - [ ] Panel: pulpit floty, skrzynka flag i eksporty kart dnia w regułach 2.0
 - [ ] Poprawki zgłoszone przez pilotów w testach
+
+### 4.0.0 · termin do ustalenia
+
+> Aplikacja w sklepie Google Play i własny adres Ninerdeck.
+
+- [ ] Publikacja u Google - instalacja ze sklepu i logowanie dowolnym kontem, bez listy testerów
+- [ ] Wymagane przez sklep: karta bezpieczeństwa danych i ścieżka usunięcia konta
+- [ ] Własna domena: strona pod `ninerdeck.pl`, panel i aplikacja pod `app.ninerdeck.pl`
 
 ### Dalej
 
