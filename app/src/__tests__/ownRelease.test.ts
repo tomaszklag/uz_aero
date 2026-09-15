@@ -8,7 +8,7 @@
 
 import { ownRelease, type NativeRelease } from '../infrastructure/release/ownRelease';
 
-const OWN = 'com.tomekklag.uzaero';
+const OWN = 'com.ninerdeck.app';
 
 const facts = (over: Partial<NativeRelease> = {}): NativeRelease => ({
   version: '1.0.0',

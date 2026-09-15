@@ -80,7 +80,7 @@ dokumentacja; od 2026-09-07 - wcześniej GitHub Pages w osobnym repozytorium, pa
    `PUBLIC_BASE_URL` (krok 3).
 6. **Logowanie Google** (`docs/logowanie-google.md`): w Google Cloud załóż projekt,
    ekran zgody OAuth i identyfikatory klienta - **Web** (panel + weryfikacja `aud`)
-   oraz **Android** (package `com.tomekklag.uzaero` + odcisk SHA-1 z poświadczeń EAS).
+   oraz **Android** (package `com.ninerdeck.app` + odcisk SHA-1 z poświadczeń EAS).
    Wpisz je jako `GOOGLE_WEB_CLIENT_ID` (WYMAGANY - loguje się nim panel) i
    `GOOGLE_ANDROID_CLIENT_ID` (od builda aplikacji z Google); **bez pierwszego serwer
    nie wstanie** (pusty zbiór odbiorców przepuszczałby każdy token Google).

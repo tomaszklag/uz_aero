@@ -136,7 +136,7 @@ cd app && npx eas-cli credentials
 ```
 
 Android → profil `production` → Keystore → **SHA-1 Fingerprint**. Musi zgadzać się
-z klientem **Android** w Google Cloud (przy pakiecie `com.tomekklag.uzaero`).
+z klientem **Android** w Google Cloud (przy pakiecie `com.ninerdeck.app`).
 
 To jedyna rzecz w tej procedurze, która psuje się cicho: build przechodzi, APK się
 instaluje, a logowanie Google odbija dopiero na telefonie pilota. Klient OAuth wiąże
