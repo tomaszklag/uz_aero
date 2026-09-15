@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ARKUSZ ZGŁOSZENIA BŁĘDU (issue #87, makieta `design/ZGLOSZENIA.html`).
+ * Ninerdeck - ARKUSZ ZGŁOSZENIA BŁĘDU (issue #87, makieta `design/ZGLOSZENIA.html`).
  *
  * Jedno pytanie do pilota („co się stało"), jeden wybór opcjonalny (waga) i lista tego,
  * co aplikacja dołączy sama. Reszta - miejsce, operacja, wydanie, telefon, łączność -

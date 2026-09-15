@@ -1,5 +1,5 @@
 /**
- * UZ Aero - SettingsAction (`.action-item` z mockupu 13-ustawienia)
+ * Ninerdeck - SettingsAction (`.action-item` z mockupu 13-ustawienia)
  *
  * Wiersz akcji sekcji ustawień: ikona, nazwa, podpis, strzałka. Podpis nie jest
  * ozdobnikiem - przy zablokowanej akcji niesie POWÓD blokady (ton amber), zgodnie

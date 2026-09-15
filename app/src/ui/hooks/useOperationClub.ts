@@ -1,5 +1,5 @@
 /**
- * UZ Aero - NAZWA KLUBU na kafelku operacji (mockup `01e`, wielofirmowość §7.2).
+ * Ninerdeck - NAZWA KLUBU na kafelku operacji (mockup `01e`, wielofirmowość §7.2).
  *
  * „Mój dzień" i historia pokazują operacje WSZYSTKICH klubów pilota, więc kafelek musi
  * powiedzieć, w którym klubie odbyła się ta operacja. Nazwę składa się z dwóch rzeczy,

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter poziomu 1 logu dnia: FLOTA W ZAKRESIE DAT.
+ * Ninerdeck (serwer) - adapter poziomu 1 logu dnia: FLOTA W ZAKRESIE DAT.
  *
  * ══ JEDNO ZAPYTANIE, SAME AGREGATY KOLUMN PROJEKCJI ══
  * Reguła §7.1 zabrania liczyć cokolwiek z `events.payload` w SQL-u - i nic tu tego nie

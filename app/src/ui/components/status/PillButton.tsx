@@ -1,5 +1,5 @@
 /**
- * UZ Aero - PillButton (`.btn-add` z mockupu 08)
+ * Ninerdeck - PillButton (`.btn-add` z mockupu 08)
  *
  * Mała akcja do nagłówka: wypełniona pigułka z ikoną i napisem mono. Rozmiar celowo
  * mniejszy niż `ActionButton` - w nagłówku pełnowymiarowy przycisk konkurowałby

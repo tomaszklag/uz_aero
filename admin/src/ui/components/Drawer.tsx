@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: szuflada szczegółu (`.drawer` z `SZABLON.html`).
+ * Ninerdeck - panel: szuflada szczegółu (`.drawer` z `SZABLON.html`).
  *
  * Szuflada istnieje po to, żeby wejście w sprawę NIE KOSZTOWAŁO kontekstu listy -
  * lista zostaje pod spodem, a adres jest deep-linkowalny (`#/flagi/1046`). Stąd dwa

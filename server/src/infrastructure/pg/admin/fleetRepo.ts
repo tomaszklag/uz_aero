@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter floty po stronie PANELU (`FleetAdminPort`, `A07`, `A07a`).
+ * Ninerdeck (serwer) - adapter floty po stronie PANELU (`FleetAdminPort`, `A07`, `A07a`).
  *
  * Trzeci adapter tabeli `aircraft` i to jest wzorzec, nie niedopatrzenie - dokładnie
  * jak przy `pilots` i `flags`. `mobile/referenceRepo.ts` buduje CAŁĄ migawkę floty pod
@@ -22,7 +22,7 @@
  * także wtedy, gdy samolot dawno stoi w hangarze.
  */
 
-import type { MhFormat, ServiceStatus } from '@uzaero/domain';
+import type { MhFormat, ServiceStatus } from '@ninerdeck/domain';
 
 import type {
   AdminAircraft,

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - KOD KLUBU w panelu klubu (`/admin/api/club-code*`; mockup
+ * Ninerdeck (serwer) - KOD KLUBU w panelu klubu (`/admin/api/club-code*`; mockup
  * `piloci-kod-klubu`; wielofirmowość §3.8, §8.3; issue #100, D2).
  *
  * Przekrój jest END-TO-END i to jest jego sens: kod klubu nie jest polem w formularzu,

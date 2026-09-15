@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - trasy monitora eksportu (`/admin/api/exports*`, mockup `A05`).
+ * Ninerdeck (serwer) - trasy monitora eksportu (`/admin/api/exports*`, mockup `A05`).
  *
  * Cienkie jak reszta repo: zod → zapytanie/komenda → status. Trasa nie zna ani stanu
  * karty, ani bramek eksportera - jedno mieszka w mapperze, drugie w `DayExporter`.
@@ -106,7 +106,7 @@ export function registerAdminExportRoutes(
    *
    * Tamta trasa jest celem linków `export_log.sheet_url` czytanych z TELEFONU (ekran 11,
    * nagłówek `Bearer`) i zostaje nietknięta. Panel loguje się ciasteczkiem
-   * `uzaero_admin` o `Path=/admin`, które do `/sheets/*` po prostu NIE JEDZIE -
+   * `ninerdeck_admin` o `Path=/admin`, które do `/sheets/*` po prostu NIE JEDZIE -
    * poszerzenie ścieżki ciasteczka posłałoby sesję panelu razem z każdym żądaniem
    * telefonu, więc byłoby odwrotnością tego, co ma osiągnąć.
    */

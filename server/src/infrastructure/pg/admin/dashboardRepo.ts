@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter PULSU SYSTEMU (`DashboardAdminPort`, mockupy `A01`/`A01a`).
+ * Ninerdeck (serwer) - adapter PULSU SYSTEMU (`DashboardAdminPort`, mockupy `A01`/`A01a`).
  *
  * Trzy pytania, których nie zadaje żadna inna powierzchnia, i wszystkie chodzą po
  * `events.received_at` - czyli po ZEGARZE SERWERA. To jest jedyna uczciwa oś dla

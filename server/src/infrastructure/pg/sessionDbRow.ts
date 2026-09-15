@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - kształt wiersza tabeli `sessions` i jego mapowanie na `SessionRow`.
+ * Ninerdeck (serwer) - kształt wiersza tabeli `sessions` i jego mapowanie na `SessionRow`.
  *
  * Wydzielone z `sessionsProjection.ts`, bo od przekroju 2 panelu czyta tę tabelę DRUGI
  * adapter (`admin/sessionsRepo.ts` - lista dni ze złączeniami). Dwie kopie mapowania
@@ -11,7 +11,7 @@
  * §1.1): panel widzi wyłącznie DTO, warstwa aplikacji - `SessionRow`.
  */
 
-import { isOperationType } from '@uzaero/domain';
+import { isOperationType } from '@ninerdeck/domain';
 
 import type { SessionRow } from '../../application/common/ports.ts';
 

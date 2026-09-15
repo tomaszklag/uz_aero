@@ -1,5 +1,5 @@
 /**
- * UZ Aero - pamięć OSTATNIEGO ZADANIA: rodzaj operacji i klient per pilot, trasa per
+ * Ninerdeck - pamięć OSTATNIEGO ZADANIA: rodzaj operacji i klient per pilot, trasa per
  * samolot (magazyn klucz→wartość, produkcyjnie AsyncStorage).
  *
  * Po co to istnieje: krok „co dziś robimy" (02e) opisuje rzeczy, które z dnia na dzień
@@ -39,8 +39,8 @@ export interface RememberedRoute {
 
 const OPERATIONS: readonly OperationType[] = ['skoki', 'ferry', 'egzamin', 'techniczny', 'inne'];
 
-const taskKey = (pilotId: string): string => `uzaero.task.${pilotId}`;
-const routeKey = (aircraftId: string): string => `uzaero.route.${aircraftId}`;
+const taskKey = (pilotId: string): string => `ninerdeck.task.${pilotId}`;
+const routeKey = (aircraftId: string): string => `ninerdeck.route.${aircraftId}`;
 
 export class TaskMemoryStore {
   constructor(private readonly kv: KeyValueStorage) {}

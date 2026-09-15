@@ -1,4 +1,4 @@
-# UZ Aero - katalog lotnisk: źródła danych, licencje i progi
+# Ninerdeck - katalog lotnisk: źródła danych, licencje i progi
 
 > Dokumentacja referencyjna katalogu polskich lotnisk, którym mapa śladu opisuje teren.
 > Odpowiada na trzy pytania: **skąd bierzemy dane**, **czego nam z nich wolno** i **jak
@@ -77,7 +77,7 @@ Licencja to ODbL 1.0. Obowiązki, które z niej bierzemy na siebie:
   **Przywrócenie napisu na mapę wymaga rozmowy**: to była zamiana miejsca, nie
   przeoczenie, i tak samo nie jest przeoczeniem jego brak w panelu.
 
-  > **Źródła katalogu lotnisk UZ Aero:** dane lotnisk pochodzą z **OurAirports**
+  > **Źródła katalogu lotnisk Ninerdeck:** dane lotnisk pochodzą z **OurAirports**
   > (domena publiczna) oraz z **OpenStreetMap** - © współtwórcy OpenStreetMap,
   > udostępnione na licencji **ODbL 1.0** (<https://opendatacommons.org/licenses/odbl/>).
   > Plik `packages/domain/src/airfields.ts` jest bazą pochodną i podlega ODbL.

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - port GPS.
+ * Ninerdeck - port GPS.
  *
  * Aplikacja potrzebuje strumienia fixów; nie obchodzi jej, czy pochodzą z `expo-location`,
  * z odtworzenia zapisu lotu, czy z testu. Dzięki temu detekcję i ekrany da się sprawdzić

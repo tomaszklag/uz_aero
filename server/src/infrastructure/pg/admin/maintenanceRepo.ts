@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter operacji serwisowych panelu (`MaintenanceAdminPort`, `A11`).
+ * Ninerdeck (serwer) - adapter operacji serwisowych panelu (`MaintenanceAdminPort`, `A11`).
  *
  * Trzy tematy, trzy tabele i jedna wspólna zasada: **żadna metoda nie oddaje wartości
  * ani skrótu tokenu.** Sprzątanie wygasłych sesji zwraca liczby i daty, bo tyle wchodzi

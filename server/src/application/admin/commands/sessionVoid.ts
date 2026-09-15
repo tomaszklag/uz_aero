@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - UNIEWAŻNIENIE CAŁEJ SESJI z panelu (zamówienie właściciela
+ * Ninerdeck (serwer) - UNIEWAŻNIENIE CAŁEJ SESJI z panelu (zamówienie właściciela
  * produktu, 2026-08-31: „z poziomu admina powinienem mieć możliwość w dowolnym momencie
  * usunięcia sesji (cyklu silnika)").
  *
@@ -28,7 +28,7 @@
  * `Database`/`Queryable`: jedyną drogą zapisu jest `AuditedWrite`.
  */
 
-import { projectSession, type AircraftLimits, type Event, type RuleViolation, type SessionState } from '@uzaero/domain';
+import { projectSession, type AircraftLimits, type Event, type RuleViolation, type SessionState } from '@ninerdeck/domain';
 
 import { correctionViolations, correctionWarnings, sessionVoidCandidate } from '../correctionCandidate.ts';
 import { adminSourceDevice } from '../sourceDevice.ts';

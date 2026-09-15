@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: dokąd prowadzi goły adres i adres spoza mapy tras.
+ * Ninerdeck - panel: dokąd prowadzi goły adres i adres spoza mapy tras.
  *
  * Do wielofirmowości był to stały `#/dziennik` - jedna linijka w `routes.tsx`. Odkąd
  * panel obsługuje DWA rodzaje sesji (klub i platforma), stała odsyłałaby

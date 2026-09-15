@@ -1,5 +1,5 @@
 /**
- * UZ Aero - niepowodzenie PO STRONIE TELEFONU, zanim token dojechał do serwera.
+ * Ninerdeck - niepowodzenie PO STRONIE TELEFONU, zanim token dojechał do serwera.
  *
  * Moduł czysty i osobny od hooka, który go rzuca (`ui/hooks/useGoogleSignIn.ts`),
  * bo klasę musi znać także `loginMessage.ts` - a ten jest testowany w Node bez

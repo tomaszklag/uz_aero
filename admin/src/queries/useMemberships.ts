@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: kolejka zgłoszeń kodem klubu i decyzje o nich (issue #101, E3).
+ * Ninerdeck - panel: kolejka zgłoszeń kodem klubu i decyzje o nich (issue #101, E3).
  *
  * Warstwa `queries/` zna sieć (`api/`) i cache, ale nie zna ekranu.
  *

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - flota w panelu (`/admin/api/fleet*`, `A07` i `A07a`).
+ * Ninerdeck (serwer) - flota w panelu (`/admin/api/fleet*`, `A07` i `A07a`).
  *
  * Flota jest jedynym miejscem, w którym administrator przestawia WEJŚCIA REGUŁ, więc
  * ten plik pilnuje sześciu własności, których złamanie jest usterką produktu, a nie

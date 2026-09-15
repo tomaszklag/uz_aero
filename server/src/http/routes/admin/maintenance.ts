@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - trasy operacji serwisowych (`/admin/api/maintenance/*`, mockup `A11`).
+ * Ninerdeck (serwer) - trasy operacji serwisowych (`/admin/api/maintenance/*`, mockup `A11`).
  *
  * Cienkie jak reszta repo: zod → zapytanie/komenda → status.
  *

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - unieważnienie CAŁEJ sesji z panelu
+ * Ninerdeck (serwer) - unieważnienie CAŁEJ sesji z panelu
  * (`POST /admin/api/sessions/:uuid/void`, zamówienie właściciela produktu 2026-08-31:
  * „z poziomu admina powinienem mieć możliwość w dowolnym momencie usunięcia sesji").
  *

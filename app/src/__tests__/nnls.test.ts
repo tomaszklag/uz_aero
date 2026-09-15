@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy regresji z więzem nieujemności (analityka zużycia).
+ * Ninerdeck - testy regresji z więzem nieujemności (analityka zużycia).
  *
  * Ta matematyka nie ma testu „na oko" - dokładnie jak odwzorowanie mapy: błąd w niej
  * nie wywala aplikacji, tylko podaje stawkę spalania o kilka litrów obok, a taka liczba

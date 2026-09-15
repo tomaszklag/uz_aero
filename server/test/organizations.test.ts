@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - MODEL KLUBÓW i członkostw (wielofirmowość, epik B, issue #98;
+ * Ninerdeck (serwer) - MODEL KLUBÓW i członkostw (wielofirmowość, epik B, issue #98;
  * `docs/wielofirmowosc.md` §3–§6, §10).
  *
  * Trzy rzeczy, których ten plik pilnuje i których złamanie jest luką, a nie usterką:
@@ -475,11 +475,11 @@ describe('logowanie do panelu: sesja klubu albo sesja platformowa', () => {
       org: { id: ORG_B, slug: 'aeroklub-beta', name: 'Aeroklub Beta' },
     });
 
-    const cookie = res.cookies.find((c) => c.name === 'uzaero_admin')!;
+    const cookie = res.cookies.find((c) => c.name === 'ninerdeck_admin')!;
     const me = await app.inject({
       method: 'GET',
       url: '/admin/api/me',
-      headers: { cookie: `uzaero_admin=${cookie.value}` },
+      headers: { cookie: `ninerdeck_admin=${cookie.value}` },
     });
     expect(me.statusCode).toBe(200);
     expect(me.json().org).toEqual({ id: ORG_B, slug: 'aeroklub-beta', name: 'Aeroklub Beta' });
@@ -524,11 +524,11 @@ describe('logowanie do panelu: sesja klubu albo sesja platformowa', () => {
     // Od epiku E `GET /me` odpowiada OBU rodzajom sesji (issue #101, E1): bez tego
     // superadministrator po odświeżeniu karty lądował na ekranie logowania, z którego
     // przed chwilą wszedł.
-    const cookie = res.cookies.find((c) => c.name === 'uzaero_admin')!;
+    const cookie = res.cookies.find((c) => c.name === 'ninerdeck_admin')!;
     const me = await app.inject({
       method: 'GET',
       url: '/admin/api/me',
-      headers: { cookie: `uzaero_admin=${cookie.value}` },
+      headers: { cookie: `ninerdeck_admin=${cookie.value}` },
     });
     expect(me.statusCode).toBe(200);
     expect(me.json()).toEqual(res.json());
@@ -564,7 +564,7 @@ describe('logowanie do panelu: sesja klubu albo sesja platformowa', () => {
     });
 
     const login = await panelLogin(app, 'google:operator');
-    const cookie = `uzaero_admin=${login.cookies.find((c) => c.name === 'uzaero_admin')!.value}`;
+    const cookie = `ninerdeck_admin=${login.cookies.find((c) => c.name === 'ninerdeck_admin')!.value}`;
 
     // Dziennik, flota, piloci, kolejka zgłoszeń klubu i kod klubu - komplet tego, co
     // „wejście do panelu klubu" musiałoby otworzyć.
@@ -589,7 +589,7 @@ describe('logowanie do panelu: sesja klubu albo sesja platformowa', () => {
       payload: { orgId: ORG_A },
     });
     expect(jump.statusCode).toBe(404);
-    expect(jump.cookies.find((c) => c.name === 'uzaero_admin')).toBeUndefined();
+    expect(jump.cookies.find((c) => c.name === 'ninerdeck_admin')).toBeUndefined();
   });
 });
 

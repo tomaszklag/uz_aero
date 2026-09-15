@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: tabela (`.table-wrap` + `table` z `SZABLON.html`).
+ * Ninerdeck - panel: tabela (`.table-wrap` + `table` z `SZABLON.html`).
  *
  * Kręgosłup panelu, więc kolumny deklaruje się DANYMI, a nie JSX-em: `{key, header,
  * align, render}`. Dzięki temu „która kolumna jest liczbowa" jest własnością definicji,

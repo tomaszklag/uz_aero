@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: KIEDY pokazać plamki ładowania, a kiedy nie.
+ * Ninerdeck - panel 2.0: KIEDY pokazać plamki ładowania, a kiedy nie.
  *
  * Moduł CZYSTY (bez Reacta), bo to jedyna część stanu ładowania sprawdzalna bez
  * przeglądarki - i ta, która psuje się najciszej.

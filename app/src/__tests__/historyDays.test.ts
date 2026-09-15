@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy „Poprzednich dni" (ekran 12: `queries.historyDays` + `screens/historyDays`).
+ * Ninerdeck - testy „Poprzednich dni" (ekran 12: `queries.historyDays` + `screens/historyDays`).
  *
  * Sedno po issue #35: ekran pokazuje sesje z dni WCZEŚNIEJSZYCH (dzisiejsze mieszkają
  * na 01), kafelek niesie te same trzy wielkości co kafelek sesji na „Mój dzień"

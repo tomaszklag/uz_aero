@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test przelicznika motogodzin.
+ * Ninerdeck - test przelicznika motogodzin.
  *
  * Model odpowiada na pytanie, które w dokumentacji nie ma odpowiedzi: czy licznik tego
  * samolotu chodzi z zegarem (Hobbs), czy zlicza obroty (obrotomierzowy, na ziemi wolniej).

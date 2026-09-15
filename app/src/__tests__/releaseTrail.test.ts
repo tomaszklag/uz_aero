@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test szlaku odczytu przy zdaniu samolotu (issue #84, ekran 09B).
+ * Ninerdeck - test szlaku odczytu przy zdaniu samolotu (issue #84, ekran 09B).
  *
  * Zgłoszenie prosiło o popup pokazujący, „ile było przy przejęciu, ile dolano i ile
  * latano". Kluczowe jest tu jedno: te trzy rzeczy to FAKTY z rejestru, więc muszą

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - domena mieszka w `packages/domain` (workspace `@uzaero/domain`).
+ * Ninerdeck - domena mieszka w `packages/domain` (workspace `@ninerdeck/domain`).
  *
  * Wyniesiona z aplikacji w Fazie 2, bo serwer liczy sesje TĄ SAMĄ projekcją i sprawdza
  * TE SAME inwarianty - dwie implementacje rozjechałyby się przy pierwszej zmianie.
@@ -9,4 +9,4 @@
  * Granic pilnuje `architecture.test.ts` (skanuje teraz `packages/domain/src`).
  */
 
-export * from '@uzaero/domain';
+export * from '@ninerdeck/domain';

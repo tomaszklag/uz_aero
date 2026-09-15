@@ -1,5 +1,5 @@
 /**
- * UZ Aero - komunikaty o operacjach zakończonych / unieważnionych przez administratora
+ * Ninerdeck - komunikaty o operacjach zakończonych / unieważnionych przez administratora
  * (issue #81) na ekranie domowym.
  *
  * Czyta LOKALNY rejestr (`queries.historyDays`), jak każdy ekran dnia - decyzja panelu

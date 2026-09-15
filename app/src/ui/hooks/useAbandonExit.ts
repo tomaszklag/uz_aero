@@ -1,5 +1,5 @@
 /**
- * UZ Aero - BRAMKA REZYGNACJI Z FORMULARZA (issue #55, poprawiona przy issue #84 pkt 7).
+ * Ninerdeck - BRAMKA REZYGNACJI Z FORMULARZA (issue #55, poprawiona przy issue #84 pkt 7).
  *
  * Jeden hook na dwie drogi do lotu - preflight (02) i wpis ręczny (15) - bo obie robią
  * DOKŁADNIE to samo: łapią „wstecz" nad niepustym formularzem, pytają arkuszem

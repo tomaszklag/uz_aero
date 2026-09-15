@@ -1,5 +1,5 @@
 /**
- * UZ Aero - SHA-256 w czystym TypeScript (FIPS 180-4).
+ * Ninerdeck - SHA-256 w czystym TypeScript (FIPS 180-4).
  *
  * Własna implementacja zamiast biblioteki, bo jedyny konsument (hash PIN-u) potrzebuje
  * jej także w Node/Jest: `node:crypto` nie istnieje w React Native, `expo-crypto` to

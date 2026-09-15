@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - bazodanowy adapter arkuszy (`SheetsPort` + `SheetsReadPort`).
+ * Ninerdeck (serwer) - bazodanowy adapter arkuszy (`SheetsPort` + `SheetsReadPort`).
  *
  * Dzienne karty §4.7 lądują w tabeli `exported_sheets` zamiast u Google: dosłowne
  * wiersze karty (jak w Excelu), jedna karta = jeden rekord, rewizja NADPISUJE treść

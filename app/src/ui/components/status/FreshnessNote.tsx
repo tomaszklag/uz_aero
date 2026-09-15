@@ -1,5 +1,5 @@
 /**
- * UZ Aero - FreshnessNote (`.fresh-note` z mockupu 02a)
+ * Ninerdeck - FreshnessNote (`.fresh-note` z mockupu 02a)
  *
  * Adnotacja wieku danych z serwera. §4.8 i `CLAUDE.md` dzielą takie wartości na trzy stany:
  *

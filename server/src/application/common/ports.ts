@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - PORTY warstwy aplikacji.
+ * Ninerdeck (serwer) - PORTY warstwy aplikacji.
  *
  * Ta sama zasada co w aplikacji mobilnej: komendy i zapytania znają WYŁĄCZNIE te
  * interfejsy; implementacje (Postgres, zegar systemowy, krypto) wstrzykuje composition
@@ -21,7 +21,7 @@ import type {
   PhaseSegment,
   ReferenceAircraft,
   ReferencePilot,
-} from '@uzaero/domain';
+} from '@ninerdeck/domain';
 
 import type { BugSeverity, BugStatus } from '../../domain/bugReports.ts';
 import type { MembershipStatus } from '../../domain/memberships.ts';
@@ -411,7 +411,7 @@ export interface ExternalIdentitiesPort {
 /**
  * STAN POCZĄTKOWY jednostki (issue #66) - zerowe ogniwo łańcucha odczytów.
  *
- * Co pokazywały przyrządy, gdy maszynę wprowadzono do UZ Aero. Każde pole osobno
+ * Co pokazywały przyrządy, gdy maszynę wprowadzono do Ninerdeck. Każde pole osobno
  * `null` („administrator nie wpisał"), bo klub potrafi znać licznik i nie znać oleju.
  *
  * ══ TO NIE JEST PRZEKAZANIE I DLATEGO MA WŁASNY TYP ══
@@ -669,7 +669,7 @@ export interface EventsStorePort {
   /**
    * Wstawia paczkę; duplikaty po `uuid` pomija (idempotencja synca §4.3).
    *
-   * `orgId` przychodzi OSOBNO, bo `Event` z `@uzaero/domain` klubu nie zna i znać nie ma
+   * `orgId` przychodzi OSOBNO, bo `Event` z `@ninerdeck/domain` klubu nie zna i znać nie ma
    * (wielofirmowość §2: żadna reguła domeny nie czyta `org_id`) - klub jest własnością
    * WIERSZA rejestru, a rozstrzyga o nim wołający: token telefonu albo klub sesji
    * przy zapisie z panelu.
@@ -929,7 +929,7 @@ export interface AircraftConfigPort {
 
 /**
  * Wiersz flagi po stronie serwera. Kształt „na drucie" (`type`, `sessionUuids`) idzie
- * z domeny - `SessionFlag` w `@uzaero/domain` - bo telefon czyta dokładnie te pola
+ * z domeny - `SessionFlag` w `@ninerdeck/domain` - bo telefon czyta dokładnie te pola
  * z `/sessions/:uuid/sync-status`. Reszta (`id`, `details`, `status`) jest sprawą
  * panelu i na telefon nie jedzie.
  */

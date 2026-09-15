@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - JWT HS256 na `node:crypto`.
+ * Ninerdeck (serwer) - JWT HS256 na `node:crypto`.
  *
  * Świadomie bez biblioteki: potrzebujemy DOKŁADNIE jednego wariantu (HS256, jeden
  * sekret, kilka claims), a historyczne CVE bibliotek JWT to w większości confusion

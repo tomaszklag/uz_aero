@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - REJESTR ZDARZEŃ (`GET /admin/api/events`, mockup `A04`).
+ * Ninerdeck (serwer) - REJESTR ZDARZEŃ (`GET /admin/api/events`, mockup `A04`).
  *
  * Ekran jest narzędziem śledczym: sięga się po niego wtedy, gdy liczby się nie zgadzają
  * i trzeba odpowiedzieć na pytanie „skąd się wzięła ta wartość", „co dokładnie przyszło

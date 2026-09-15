@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy podpowiedzi lotnisk (`searchAirfields`).
+ * Ninerdeck - testy podpowiedzi lotnisk (`searchAirfields`).
  *
  * Dwie rzeczy mogą zepsuć to pole i obie są tu sprawdzone: podpowiedź, która NIE pokazuje
  * kodu wpisanego przez pilota (bo nazwa przepchnęła go poza listę), oraz podpowiedź, która

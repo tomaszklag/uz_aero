@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - LOG DNIA: projekcja i agregat floty (2026-08-30).
+ * Ninerdeck (serwer) - LOG DNIA: projekcja i agregat floty (2026-08-30).
  *
  * Dwie rzeczy do udowodnienia i obie są nowe:
  *  1. **projekcja zapisuje kolumny, których dotąd nie było** - bieg silnika, koperta

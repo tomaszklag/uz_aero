@@ -1,5 +1,5 @@
 /**
- * UZ Aero - tokeny designu mieszkają w `packages/tokens` (workspace `@uzaero/tokens`).
+ * Ninerdeck - tokeny designu mieszkają w `packages/tokens` (workspace `@ninerdeck/tokens`).
  *
  * Wyniesione stąd 2026-07-31, bo trzecim konsumentem został panel administracyjny
  * (`design/admin/`) - a token skopiowany do drugiego projektu przestaje być tokenem
@@ -12,4 +12,4 @@
  * `design/05-themes.html`, skasowany razem z ekranem podglądu motywów).
  */
 
-export * from '@uzaero/tokens';
+export * from '@ninerdeck/tokens';

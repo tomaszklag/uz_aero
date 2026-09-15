@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - KOLEJKA ZGŁOSZEŃ kodem klubu (karta ZGŁOSZENIA nad listą pilotów,
+ * Ninerdeck (serwer) - KOLEJKA ZGŁOSZEŃ kodem klubu (karta ZGŁOSZENIA nad listą pilotów,
  * mockup `piloci-lista`; issue #100, D2).
  *
  * ══ OSOBNA TRASA, NIE POLE W `GET /pilots` ══

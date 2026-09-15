@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - przyjęcie ZGŁOSZEŃ BŁĘDÓW z telefonu (issue #87).
+ * Ninerdeck (serwer) - przyjęcie ZGŁOSZEŃ BŁĘDÓW z telefonu (issue #87).
  *
  * Cienka jak `PrefsCommands` i to jest właściwy rozmiar: zgłoszenie nie ma reguł
  * domenowych do sprawdzenia, projekcji do odświeżenia ani flagi do otwarcia. Jedyna

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: KANONICZNA nawigacja - pozycje kolumny bocznej.
+ * Ninerdeck - panel: KANONICZNA nawigacja - pozycje kolumny bocznej.
  *
  * Moduł czysty - lista, nie komponent. Trasy w `routes.tsx` wynikają z TEJ listy,
  * a nie z drugiej obok niej: pozycja prowadząca w 404 jest awarią, której nikt nie

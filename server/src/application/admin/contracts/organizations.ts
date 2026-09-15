@@ -1,9 +1,9 @@
 /**
- * UZ Aero (serwer) - KONTRAKT klubu w odpowiedziach panelu (wielofirmowość, issue #98;
+ * Ninerdeck (serwer) - KONTRAKT klubu w odpowiedziach panelu (wielofirmowość, issue #98;
  * `docs/wielofirmowosc.md` §8).
  *
  * Pliki w `contracts/` zawierają WYŁĄCZNIE typy i wolno im importować wyłącznie
- * `@uzaero/domain` i siebie nawzajem (pilnuje `test/architecture.test.ts`).
+ * `@ninerdeck/domain` i siebie nawzajem (pilnuje `test/architecture.test.ts`).
  *
  * Klub w odpowiedziach panelu to trzy pola: identyfikator (klucz w adresach tras),
  * slug (jedyny identyfikator PUBLICZNY - adres kart arkusza, nadawany raz) i nazwa

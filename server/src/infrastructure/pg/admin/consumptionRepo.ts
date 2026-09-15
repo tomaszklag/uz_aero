@@ -1,10 +1,10 @@
 /**
- * UZ Aero (serwer) - adapter analityki zużycia (`ConsumptionAdminPort`, mockup `A10a`).
+ * Ninerdeck (serwer) - adapter analityki zużycia (`ConsumptionAdminPort`, mockup `A10a`).
  *
  * ══ CO TU WOLNO, A CZEGO NIE ══
  * Ten plik NIE LICZY NICZEGO. Oddaje wiersze: konfigurację jednostki, kolumny projekcji
  * zamkniętych dni okna i licznik dni otwartych. Cała arytmetyka - interwały paliwowe,
- * regresja, przeliczniki motogodzin - mieszka w `@uzaero/domain`, a ilorazy w mapperze.
+ * regresja, przeliczniki motogodzin - mieszka w `@ninerdeck/domain`, a ilorazy w mapperze.
  * Reguła jest ta sama, co przy `statsRepo.ts`: SQL oddaje FAKTY, wnioski wyciąga warstwa
  * wyżej (`docs/architektura-panelu-serwer.md` §7.1).
  *
@@ -15,7 +15,7 @@
  * `idx_sessions_closed_day`.
  */
 
-import { type MhFormat } from '@uzaero/domain';
+import { type MhFormat } from '@ninerdeck/domain';
 
 import type { Queryable } from '../../../application/common/ports.ts';
 import type {

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test oznaczenia kodu spoza katalogu (issue #62 pkt 1).
+ * Ninerdeck - test oznaczenia kodu spoza katalogu (issue #62 pkt 1).
  *
  * Pilnuje jednej rzeczy, którą łatwo zgubić przy następnej zmianie: nazwa i plakietka
  * WYKLUCZAJĄ SIĘ. Kod z katalogu ma nazwę i nie ma plakietki, kod spoza - odwrotnie.

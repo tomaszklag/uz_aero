@@ -1,5 +1,5 @@
 /**
- * UZ Aero - GhostAction (`.block-add` z mockupu 08)
+ * Ninerdeck - GhostAction (`.block-add` z mockupu 08)
  *
  * Dyskretna akcja w stopce karty: kreskowana linia u góry, wyśrodkowany napis mono
  * z ikoną. Celowo NIE wygląda jak przycisk - to zaproszenie („Dodaj zdarzenie ręcznie"),

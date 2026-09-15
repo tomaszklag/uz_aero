@@ -1,5 +1,5 @@
 /**
- * UZ Aero - undulacja geoidy EGM96: wycinek siatki światowej dla Europy (dane statyczne).
+ * Ninerdeck - undulacja geoidy EGM96: wycinek siatki światowej dla Europy (dane statyczne).
  *
  * PO CO: GPS na Androidzie podaje wysokość nad elipsoidą WGS84; wysokości lotnicze
  * są AMSL. Ta siatka niesie różnicę obu powierzchni - adapter GPS odejmuje ją od

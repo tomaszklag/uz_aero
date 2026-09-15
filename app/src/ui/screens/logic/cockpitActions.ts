@@ -1,5 +1,5 @@
 /**
- * UZ Aero - pasek akcji kokpitu w locie (mockupy 05h/05a/05/05b): CO jest następne.
+ * Ninerdeck - pasek akcji kokpitu w locie (mockupy 05h/05a/05/05b): CO jest następne.
  *
  * Przycisk główny podpowiada NASTĘPNE zdarzenie sekwencji lotu (decyzja 2026-08-11):
  *

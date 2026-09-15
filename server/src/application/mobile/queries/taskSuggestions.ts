@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - zapytanie `GET /me/task-suggestions` (issue #14, ekran 02e).
+ * Ninerdeck (serwer) - zapytanie `GET /me/task-suggestions` (issue #14, ekran 02e).
  *
  * Preflight pyta o dwie rzeczy naraz, bo wypełnia się je w jednym miejscu i w jednej
  * chwili: czym pilot oznaczał klienta i co wpisywał w notatce dnia. Dwa endpointy
@@ -11,7 +11,7 @@
  * jest - po prostu historia jeszcze nic nie zawiera.
  */
 
-import type { OperationType } from '@uzaero/domain';
+import type { OperationType } from '@ninerdeck/domain';
 
 import type { Database } from '../../common/ports.ts';
 import type { TaskSuggestionsPort } from '../ports.ts';

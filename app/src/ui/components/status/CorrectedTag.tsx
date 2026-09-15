@@ -1,5 +1,5 @@
 /**
- * UZ Aero - plakietka „POPR." (issue #43).
+ * Ninerdeck - plakietka „POPR." (issue #43).
  *
  * ══ CO ZNACZY ══
  * „Ta wartość nie jest tą, którą zapisał przyrząd" - fakt o danych, nie akcja. Dlatego

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - PULPIT (`A01`, `A01a`).
+ * Ninerdeck (serwer) - PULPIT (`A01`, `A01a`).
  *
  * ══ TA KLASA NICZEGO NIE LICZY PO SWOJEMU ══
  * Pulpit jest ekranem-skrótem: każda jego liczba pochodzi z zapytania, które obsługuje
@@ -32,7 +32,7 @@
  * tego ekranu.
  */
 
-import { CORRECTION_WINDOW_MS, projectSession } from '@uzaero/domain';
+import { CORRECTION_WINDOW_MS, projectSession } from '@ninerdeck/domain';
 
 import type { Clock, Database, EventsStorePort } from '../../common/ports.ts';
 import type {

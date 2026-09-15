@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - DECYZJE o zgłoszeniach kodem klubu: zatwierdzenie, odrzucenie,
+ * Ninerdeck (serwer) - DECYZJE o zgłoszeniach kodem klubu: zatwierdzenie, odrzucenie,
  * cofnięcie odrzucenia (panel klubu, mockup `piloci-zgloszenie`;
  * `docs/wielofirmowosc.md` §3.8, §8.3; issue #100, D2).
  *

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - próbkowanie logu punktów do wyświetlenia.
+ * Ninerdeck - próbkowanie logu punktów do wyświetlenia.
  *
  * Lot ma ~1 500 punktów, a log na ekranie ma być czytelny i lekki (telefon rysuje go
  * w liście, panel wysyła przez sieć). Pokazujemy więc co N sekund - ale z jednym

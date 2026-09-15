@@ -1,5 +1,5 @@
 /**
- * UZ Aero - silnik synchronizacji outboxa (§4.3).
+ * Ninerdeck - silnik synchronizacji outboxa (§4.3).
  *
  * Jedna odpowiedzialność: opróżnić outbox, gdy jest okazja. „Okazja" przychodzi
  * z zewnątrz (start aplikacji, powrót sieci, nowe zdarzenie) - silnik sam niczego

@@ -1,4 +1,4 @@
-# UZ Aero
+# Ninerdeck
 
 Elektroniczny chronometraż lotów: aplikacja Android (React Native + Expo), backend
 (Fastify + PostgreSQL) i wspólna domena. Monorepo npm workspaces.
@@ -43,7 +43,7 @@ Kolejność przy pracy z serwerem: `db:up` → `seed` (raz) → `server`.
 
 Seed zakłada wyłącznie konto administratora (issue #50 - przygotowanie testów
 z pilotami): flotę i konta pilotów zakłada administrator w panelu (`npm run admin`,
-ekrany A06/A07). Świeży świat = `docker rm -f uzaero-pg` → `db:up` → `seed`.
+ekrany A06/A07). Świeży świat = `docker rm -f ninerdeck-pg` → `db:up` → `seed`.
 Dane demo zostały usunięte w całości; generator (`server/scripts/demo/`) jest
 w historii gita, gdyby kiedyś wrócił temat syntetycznych danych do kalibracji.
 

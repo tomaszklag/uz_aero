@@ -1,8 +1,14 @@
-# UZ Aero - instrukcje dla Claude Code
+# Ninerdeck - instrukcje dla Claude Code
 
 ## Nazwa aplikacji
-Aplikacja nazywa się zawsze **UZ Aero** (mixed case w tekście, **UZ AERO** w nagłówkach display/Bebas Neue).
-Stare nazwy - `e-Chronometraż`, `e-CHRONO`, `CHRONO` - są błędne, nigdy ich nie używaj.
+Aplikacja nazywa się zawsze **Ninerdeck** (mixed case w tekście, **NINERDECK** w nagłówkach
+display/Bebas Neue). Nigdy `NinerDeck`, `Niner Deck` ani `9DECK` - domena jest jednym słowem,
+a `9DECK` czyta się „nine deck". Monogram `9` służy za znak w ikonie i faviconie; obok niego
+stoi zawsze pełne `NINERDECK`.
+Stare nazwy - `UZ Aero`, `UZ AERO`, `e-Chronometraż`, `e-CHRONO`, `CHRONO` - są błędne,
+nigdy ich nie używaj. „UZ Aero" było nazwą roboczą do 2026-09-08 i zostaje wyłącznie
+w narracji historycznej (nazwa repozytorium `tomaszklag/uz_aero`, pierwotna specyfikacja
+`docs/Aplikacja UZ AERO.pdf`).
 
 ## Projekt
 Aplikacja Android (React Native + Expo) - elektroniczny system lotniczy dla pilotów.
@@ -13,9 +19,9 @@ Stack: React Native + Expo · Zustand · expo-sqlite · expo-location · własny
 
 ## Faza aktualna
 **Monorepo: aplikacja RN w `app/`, backend w `server/`, wspólne pakiety w `packages/`** -
-`@uzaero/domain` (zdarzenia, reguły, projekcje, detekcja), `@uzaero/tokens` (palety
+`@ninerdeck/domain` (zdarzenia, reguły, projekcje, detekcja), `@ninerdeck/tokens` (palety
 dwóch motywów: ciemnego i jasnego, skale, typografia, emiter zmiennych CSS)
-i `@uzaero/format` (czasy UTC, czas blokowy, motogodziny, litry). Wszystkie trzy to czysty TypeScript bez importów
+i `@ninerdeck/format` (czasy UTC, czas blokowy, motogodziny, litry). Wszystkie trzy to czysty TypeScript bez importów
 z RN/DOM. `app/src/ui/theme/tokens.ts` i `app/src/ui/format.ts` są shimami zgodności -
 kod ekranów importuje po staremu.
 Fazy z `docs/_main.md.txt` §10: 1–4 ✅ **wobec modelu sprzed 2026-08-06** (ekrany 00–12 komplet; sync end-to-end z eksportem §4.7 na kartach W BAZIE - `exported_sheets` + `GET /sheets/:tab`; adapter Google Sheets = opcjonalna przyszła podmiana portu `SheetsPort`, gdy będzie klucz) · **faza 8 = przebudowa flow, WYPRZEDZA fazę 5** (patrz niżej) · potem: 5 testy z pilotami, 6 wdrożenie + backlog audytu.
@@ -246,21 +252,40 @@ błąd, bursztyn = uwaga), a przy jasności 22-30% wszystkie cztery czytały si�
 - `Archivo` - body text, etykiety, przyciski
 - `JetBrains Mono` - cyfry timerów, kody ICAO, wartości GPS, kody pilotów
 
-### Ikona aplikacji = ZNAK Z EKRANU LOGOWANIA PANELU (2026-09-04)
-Wypełniony samolot `PlaneIcon` (`admin/src/ui/components/icons.tsx`) w `--green` na
+### Ikona aplikacji = ZNAK Z EKRANU LOGOWANIA PANELU (2026-09-04, monogram od 2026-09-10)
+Monogram `9` (`BrandMark` w `admin/src/ui/components/icons.tsx`) w `--green` na
 ciemnozielonym tle z poświatą - ten sam znak, który stoi w plakietce `.login-badge`
 panelu. Jedna marka na dwóch powierzchniach, więc znaku NIE rysujemy drugi raz.
+- **`BrandMark` to ZNAK, `PlaneIcon` to IKONA FLOTY** i od issue #103 są to dwie różne
+  rzeczy. Do 2026-09-10 samolot był jednym i drugim naraz, więc podmiana znaku zabrałaby
+  samolot listom maszyn i dziennikowi
+- **cyfra jest geometryczna, nie wzięta z kroju**: oczko o promieniu 6,1 z obwodem
+  grubości 3,3 i ogon tej samej szerokości, więc jego lewa krawędź siada na okręgu
+  wewnętrznym, a prawa jest pionową styczną do zewnętrznego. Bebas Neue jest za wąska na
+  monogram - w 48 px faviconu oczko zlewałoby się z obwodem
+- **znak ma DZIURĘ, więc generator wypełnia regułą niezerowego nawinięcia**: parzystość
+  przecięć (którą rysowało się samolot) wycina każdy obszar objęty dwoma konturami, a tu
+  drugi kontur ma wyciąć TYLKO oczko. Dziurę robi jego przeciwny kierunek
 - **pliki w `app/assets/` są GENEROWANE** (`npm run icons` → `app/scripts/build-icons.js`):
   `icon.png` 1024, para adaptive Androida (`foreground` na 40% boku - bezpieczna strefa,
-  `background` = sam gradient), `monochrome` 432 BIAŁĄ sylwetką (system barwi ją sam)
-  i `favicon.png` 48. Poprawka wchodzi przez generator i regenerację, nie ręczną edycją
-  PNG - ta sama reguła, co przy katalogu lotnisk (`packages/domain/scripts/`)
+  `background` = sam gradient), `monochrome` 432 BIAŁĄ sylwetką (system barwi ją sam),
+  `favicon.png` 48, `brand-mark.png` 256 dla komponentu `Brand` ORAZ `site/src/favicon.png`
+  (jedyny plik pisany poza `app/assets/` - do 2026-09-10 był ręczną kopią, czyli drugim
+  znakiem czekającym na rozjechanie się z pierwszym). Poprawka wchodzi przez generator
+  i regenerację, nie ręczną edycją PNG - ta sama reguła, co przy katalogu lotnisk
+  (`packages/domain/scripts/`)
+- **znak w aplikacji jedzie OBRAZKIEM, nie cyfrą złożoną krojem display**: RN nie ma
+  renderera SVG (projekt nie dokłada modułów natywnych), a cyfra napisana drugi raz
+  byłaby drugim znakiem marki. `brand-mark.png` jest BIAŁY i barwi go `tintColor`, bo
+  zieleń różni się między motywami (`#2ECC71` w ciemnym, `#027E2B` w jasnym) - znak
+  zapieczony w kolorze ciemnego motywu zniknąłby w słońcu
 - **bez zależności i bez modułu natywnego**: rasteryzacja wielokąta z antyaliasingiem
   (poziomo analitycznie, pionowo 8 podwierszy) i koder PNG na `zlib` ze stdlib. Sharpa
-  ani ImageMagicka w tym repozytorium nie ma i nie dokładamy ich dla pięciu plików
+  ani ImageMagicka w tym repozytorium nie ma i nie dokładamy ich dla siedmiu plików
 - **ścieżkę SVG trzyma generator, nie import z panelu**: `admin/` jest osobnym modułem
-  z TSX, a skrypt ma działać gołym `node`. Zmiana `PlaneIcon` w panelu wymaga więc
-  przeniesienia ścieżki ręcznie - jedyny koszt tego rozwiązania i dlatego stoi tu zapisany
+  z TSX, a skrypt ma działać gołym `node`. Zmiana `BrandMark` w panelu wymaga więc
+  przeniesienia geometrii ręcznie (stała `NINE` w generatorze) - jedyny koszt tego
+  rozwiązania i dlatego stoi tu zapisany
 - **ikona zapieka się w APK**: podmiana widać dopiero w nowym buildzie EAS, w Expo Go
   nie zmieni się wcale
 - **podgląd `design/IKONA.html` też jest GENEROWANY** (`app/scripts/build-icon-preview.js`):
@@ -664,7 +689,7 @@ i dokumentacja.
   mechaniczna i dlatego wymagała jednego strażnika - patrz niżej
 - **„SESJA" MA W TYM PROJEKCIE DRUGIE ZNACZENIE i ono ZOSTAJE**: sesja logowania
   (panelu, przeglądarki, telefonu). „Sesja wygasła. Zaloguj się jeszcze raz",
-  `ADMIN_SESSION_TTL_SEC`, `refresh_tokens`, ciasteczko `uzaero_admin` - tam „sesja"
+  `ADMIN_SESSION_TTL_SEC`, `refresh_tokens`, ciasteczko `ninerdeck_admin` - tam „sesja"
   znaczy dostęp, nie lot. Przemianowanie ich byłoby błędem rzeczowym
 - **`design/admin/` (archiwum panelu 1.0) NIE zostało przemianowane** - to zamrożony
   zapis decyzji sprzed 2026-08-30, nie specyfikacja
@@ -972,7 +997,7 @@ kiedykolwiek zmieniana, pilot nie dowiadywał się znikąd.
 - **licznik motogodzin wpisuje się z klawiatury NUMERYCZNEJ** (uwaga z urządzenia,
   2026-08-14). Format hh:mm wymuszał dotąd pełną QWERTY, bo dwukropka nie ma na
   numerycznej - a QWERTY zajmuje pół ekranu i podsuwa podpowiedzi słownikowe pod liczbę
-  z tarczy. Separator stawia odtąd MASKA (`maskMotoHoursInput` w `@uzaero/format`):
+  z tarczy. Separator stawia odtąd MASKA (`maskMotoHoursInput` w `@ninerdeck/format`):
   kropka, przecinek i dwukropek znaczą TO SAMO, maska zamienia je na znak właściwy dla
   formatu licznika i pilnuje, żeby był dokładnie jeden. Tryb `text` w `ReadingSheet`
   został usunięty - nie ma go do czego przywracać
@@ -1079,7 +1104,7 @@ kroków (jak 02 → 02E → 02A): data+samolot+Dual → zadanie → czasy → li
     da się POPRAWIĆ, to ten sam błąd, który issue #43 nazwało regułą „wejście nie może
     znikać razem z rzeczą, której dotyczy". Podpis pod polem mówi, ile z tego wychodzi
     LĄDOWAŃ - zamiana „4" na „5" w głowie jest rachunkiem, którego formularz ma oszczędzić.
-    Odmiana idzie przez `landingsCount` w `@uzaero/format`, wspólną z osią
+    Odmiana idzie przez `landingsCount` w `@ninerdeck/format`, wspólną z osią
 - **wpis bez ani jednego lotu OSTRZEGA, nie blokuje** (uwaga z urządzenia, 2026-08-29 -
   odwraca decyzję z przebudowy 15). Blokada „Dodaj przynajmniej jeden lot" stała na
   uzasadnieniu „wpis nazywa się LOT RĘCZNY, więc lot jest jego treścią", a ono było
@@ -1232,7 +1257,7 @@ Dziesięć uwag z urządzenia wokół wpisu ręcznego (15) i design systemu:
   musiał się uczyć. Skróty „Wczoraj"/„Dzisiaj" zostają NAD siatką (obsługują niemal
   każdy wpis); tydzień od PONIEDZIAŁKU, doby = północe UTC, dni przyszłe wygaszone,
   dni sąsiednich miesięcy nierysowane, strzałka „nowszy" gaśnie na bieżącym miesiącu.
-  Nagłówek miesiąca w MIANOWNIKU (`monthYearUtc` w `@uzaero/format`)
+  Nagłówek miesiąca w MIANOWNIKU (`monthYearUtc` w `@ninerdeck/format`)
 - **wymóg Duala działa TAKŻE we wpisie ręcznym**: An-2 z kartki podlega temu samemu
   prawu, co na preflightcie - bursztynowa plakietka „wymagany · załoga 2-os." przy
   nagłówku i powód W PRZYCISKU (`logic/dualRequirement.ts` - patrz sekcja niżej;
@@ -1625,7 +1650,7 @@ i minimum oleju) **były wdrożone przy issue #60** - doszły punkty 1 i 4.
 - **TO SĄ DWA RODZAJE LICZB** - `fuelNormLPerH` jest KONFIGURACJĄ: liczbą z instrukcji
   użytkowania, prawdziwą póki silnik ten sam, siostrą `oilNormLPerH`. `initialMh` /
   `initialFuelL` / `initialOilL` opisują JEDNĄ CHWILĘ - co pokazywały przyrządy, gdy
-  jednostka trafiła do UZ Aero. **Zero znaczy w nich co innego**: norma zerowa jest
+  jednostka trafiła do Ninerdeck. **Zero znaczy w nich co innego**: norma zerowa jest
   literówką (silnik bez paliwa nie istnieje), startowe zero - zwyczajnym faktem (nowy
   silnik, puste zbiorniki). Rozróżnienie żyje w WALIDACJI; „dwie karty w panelu"
   (2026-09-01) przeżyły jeden dzień - patrz „uwagi z przeglądu" niżej
@@ -3191,8 +3216,8 @@ bez `npm ci` - skrypty jadą na samej stdlib node).
 - **CSP strony jest LUŹNIEJSZA niż panelu w dwóch miejscach** (`script-src`
   `'unsafe-inline'` - makiety mają skrypty w treści pliku; fonty z Google). Strona nie ma
   sesji ani pola do wpisywania, ale stoi na TYM SAMYM origin co panel, więc właściwym
-  domknięciem jest osobna nazwa hosta po podpięciu własnej domeny (`uzaero.pl` strona,
-  `app.uzaero.pl` panel i API) - powód stoi w docblocku `staticSite.ts`
+  domknięciem jest osobna nazwa hosta po podpięciu własnej domeny (`ninerdeck.pl` strona,
+  `app.ninerdeck.pl` panel i API) - powód stoi w docblocku `staticSite.ts`
 - **`docs/CHANGELOG.md` jest ŹRÓDŁEM strony wydań** - pisany dla pilotów i klubów językiem
   korzyści, bez nazw plików i identyfikatorów. Sekcja „W przygotowaniu" rośnie razem
   z PR-ami (każdy PR, który zmienia coś widocznego, dopisuje punkt); przy buildzie
@@ -3208,7 +3233,7 @@ bez `npm ci` - skrypty jadą na samej stdlib node).
   ani drugiego wdrożenia nie ma.
   **Artefakty EAS wygasają po kilku tygodniach** (build z 2026-08-16 zwracał 404 już
   2026-09-06), więc na dłużej `--release`: APK jako GitHub Release w `tomaszklag/uz_aero`
-  pod trwałym `releases/latest/download/uzaero.apk`
+  pod trwałym `releases/latest/download/ninerdeck.apk`
 - **AKTUALIZACJE OTA (EAS Update) od wydania 1.1.0** - `expo-updates` w aplikacji,
   kanały `production`/`development` w `eas.json`. Odtąd „wydanie" znaczy DWIE różne
   rzeczy, a pomylenie ich kosztuje reinstalację u wszystkich testerów:
@@ -3346,7 +3371,7 @@ Gdy tworzysz prompt dla agenta do tworzenia HTML mockupów, zawsze dołącz:
    BEZ własnego bloku `<style>` - style panelu są jednym generowanym arkuszem
    (`panel.css`), a nowy komponent wchodzi do `admin/src/styles/components/` i do
    inwentarza szablonu (sekcje „Browser frame" i „Styl lekki panelu" wyżej)
-3. Informację że aplikacja = UZ Aero
+3. Informację że aplikacja = Ninerdeck
 4. Linki nawigacyjne do sąsiednich ekranów w `nav-strip`
 5. Nazwy plików do stworzenia i docelowy katalog `d:\uz_areo\design\`
 6. Gdy ekran pokazuje dane z serwera - stany świeżości `live`/`cache`/`brak` i SyncChip (sekcja Offline-first wyżej). **Online SyncChip nie rysuje NIC** - plakietka istnieje wyłącznie offline

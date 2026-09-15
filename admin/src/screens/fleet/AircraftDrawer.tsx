@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: karta samolotu (`#/samoloty/:id`).
+ * Ninerdeck - panel 2.0: karta samolotu (`#/samoloty/:id`).
  *
  * Sekcje idą MEDIAMI, nie rodzajami liczb (uwagi do issue #66): Samolot → Ustawienia
  * dla pilota → Paliwo → Olej → Motogodziny → Usuwanie. Karty „Zużycie z dokumentacji"
@@ -20,7 +20,7 @@
  * pojemności po swojemu - druga kopia tej reguły rozjechałaby się z pierwszą.
  */
 
-import { litres } from '@uzaero/format';
+import { litres } from '@ninerdeck/format';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 

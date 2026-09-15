@@ -1,5 +1,5 @@
 /**
- * UZ Aero - szkielet nawigacji.
+ * Ninerdeck - szkielet nawigacji.
  *
  * Flow (docs `_main.md.txt` §7, model 2026-08-10): 00 login → **01 „Mój dzień"
  * (EKRAN DOMOWY)** → 02/02e/02a przejęcie → 04a kokpit PRZED uruchomieniem →

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - DLACZEGO NIE MA ŚLADU: jedno KRÓTKIE zdanie na jeden powód.
+ * Ninerdeck - DLACZEGO NIE MA ŚLADU: jedno KRÓTKIE zdanie na jeden powód.
  *
  * ══ CO BYŁO NIE TAK (zgłoszenie z urządzenia, 2026-09-04) ══
  * „Jak mam przeglądanie zapisanych śladów, to po co pisać »telefon nagrał tę trasę

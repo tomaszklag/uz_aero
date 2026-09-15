@@ -1,5 +1,5 @@
 /**
- * UZ Aero - miękka prośba o uprawnienie powiadomień (Android 13+).
+ * Ninerdeck - miękka prośba o uprawnienie powiadomień (Android 13+).
  *
  * Powiadomienie usługi GPS w tle to przyrząd stanu („rejestracja lotu trwa"), ale
  * jego widoczność NIE warunkuje działania: bez zgody system chowa pasek, a usługa

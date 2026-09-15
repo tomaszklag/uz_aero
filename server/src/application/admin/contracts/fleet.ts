@@ -1,8 +1,8 @@
 /**
- * UZ Aero (serwer) - KONTRAKT floty (`A07`, `A07a`).
+ * Ninerdeck (serwer) - KONTRAKT floty (`A07`, `A07a`).
  *
  * Pliki w `contracts/` zawierają WYŁĄCZNIE typy i wolno im importować wyłącznie
- * `@uzaero/domain` (pilnuje `test/architecture.test.ts`). `MhFormat` i `ServiceStatus`
+ * `@ninerdeck/domain` (pilnuje `test/architecture.test.ts`). `MhFormat` i `ServiceStatus`
  * są tam - flota jest wejściem REGUŁ domenowych, więc jej słowniki mieszkają
  * w domenie, a nie w kopii jak przy rolach.
  *
@@ -26,7 +26,7 @@
  *     `A10` z projekcji sesji i ma własną trasę.
  */
 
-import type { MhFormat, ServiceStatus } from '@uzaero/domain';
+import type { MhFormat, ServiceStatus } from '@ninerdeck/domain';
 
 /**
  * Kto trzyma samolot TERAZ - sesja bez `day_close`.
@@ -134,7 +134,7 @@ export interface AdminAircraftListItem {
   fuelNormLPerH: number | null;
   /**
    * STAN POCZĄTKOWY jednostki (issue #66) - co pokazywały przyrządy, gdy maszyna
-   * trafiła do UZ Aero. Zerowe ogniwo łańcucha: podpowiedź dla PIERWSZEGO pilota,
+   * trafiła do Ninerdeck. Zerowe ogniwo łańcucha: podpowiedź dla PIERWSZEGO pilota,
    * nieużywana od pierwszej zdanej sesji. Panel poznaje po `reading.source`, czy
    * jeszcze cokolwiek znaczy.
    */

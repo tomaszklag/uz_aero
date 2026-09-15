@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test SCHEMATU lokalnej bazy na PRAWDZIWYM silniku SQLite.
+ * Ninerdeck - test SCHEMATU lokalnej bazy na PRAWDZIWYM silniku SQLite.
  *
  * DLACZEGO ten plik istnieje: DDL był jedyną warstwą bez testów, bo adapter importuje
  * `expo-sqlite` (moduł natywny, niedostępny w Node). Efekt: błąd `no such column: rowid`

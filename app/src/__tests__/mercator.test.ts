@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy odwzorowania Web Mercator i doboru kafelków.
+ * Ninerdeck - testy odwzorowania Web Mercator i doboru kafelków.
  *
  * Ta matematyka nie ma testu „na oko": błąd w niej nie wywala aplikacji, tylko przesuwa
  * ślad o kilometr względem mapy - a to jest dokładnie ten rodzaj wady, którą łatwo

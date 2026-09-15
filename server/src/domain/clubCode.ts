@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - KOD KLUBU: jedyna droga dołączenia do klubu (wielofirmowość,
+ * Ninerdeck (serwer) - KOD KLUBU: jedyna droga dołączenia do klubu (wielofirmowość,
  * issue #100; `docs/wielofirmowosc.md` §3.8, decyzja właściciela 2026-09-09).
  *
  * Kod jest krótki i czytelny przez telefon: 7 symboli z alfabetu 32 znaków - litery

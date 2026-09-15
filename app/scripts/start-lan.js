@@ -1,5 +1,5 @@
 /**
- * UZ Aero - `npm start`: serwer deweloperski z wymuszonym AKTUALNYM IP LAN.
+ * Ninerdeck - `npm start`: serwer deweloperski z wymuszonym AKTUALNYM IP LAN.
  *
  * Zwykłe `expo start` ustala IP komputera raz i trzyma je do końca życia procesu;
  * po zmianie dzierżawy DHCP telefon dostaje QR z martwym adresem („invalid URL

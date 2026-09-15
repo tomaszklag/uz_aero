@@ -1,5 +1,5 @@
 /**
- * UZ Aero - 09B ZDAJ SAMOLOT (mockupy `design/09b-zdaj-samolot.html` + `09c-zdaj-bez-lotu.html`).
+ * Ninerdeck - 09B ZDAJ SAMOLOT (mockupy `design/09b-zdaj-samolot.html` + `09c-zdaj-bez-lotu.html`).
  *
  * Koniec pracy z TĄ maszyną - i **nie koniec dnia pilota** (§3.6a). Loty zostają
  * w „Mój dzień", a kolejny samolot dopisze się do listy operacji tej samej doby.

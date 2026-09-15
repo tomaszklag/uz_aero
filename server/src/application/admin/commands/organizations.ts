@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - MODUŁ ORGANIZACJE: zakładanie klubów i ich wyłączanie
+ * Ninerdeck (serwer) - MODUŁ ORGANIZACJE: zakładanie klubów i ich wyłączanie
  * (superadministrator, zdolność `platform.manage`; mockupy `organizacje-lista`,
  * `organizacje-klub`; `docs/wielofirmowosc.md` §8.1; issue #100, D3).
  *

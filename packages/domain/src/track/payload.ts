@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ŚLAD SESJI PRZEZ SIEĆ: jeden kształt dla serwera i telefonu (issue #47).
+ * Ninerdeck - ŚLAD SESJI PRZEZ SIEĆ: jeden kształt dla serwera i telefonu (issue #47).
  *
  * ══ CO TU JEST, A CZEGO NIE MA ══
  * Payload niesie WYŁĄCZNIE to, czego rejestr na telefonie nie wie: geometrię i liczby

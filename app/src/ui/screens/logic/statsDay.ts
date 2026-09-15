@@ -1,5 +1,5 @@
 /**
- * UZ Aero - wspólne napisy ekranu sesji (mockup `design/10-statystyki.html`).
+ * Ninerdeck - wspólne napisy ekranu sesji (mockup `design/10-statystyki.html`).
  *
  * ══ CO ZOSTAŁO PO ISSUE #38 ══
  * Moduł miał kiedyś pięć funkcji: tabelę lotów, karty załogi, podtytuł z zakresem godzin
@@ -13,7 +13,7 @@ import type { JumperCounts } from '../../../domain';
 import { dateTimeUtcShort, hhmm } from '../../format';
 
 /**
- * `hhmm` przeniesione do `@uzaero/format` (2026-07-31) - ten sam napis musi produkować
+ * `hhmm` przeniesione do `@ninerdeck/format` (2026-07-31) - ten sam napis musi produkować
  * karta arkusza po stronie serwera, więc format przestał być sprawą jednego ekranu.
  * Re-eksport zostaje, żeby `StatsScreen` i `CockpitReadonlyScreen` nie zmieniały importu.
  *

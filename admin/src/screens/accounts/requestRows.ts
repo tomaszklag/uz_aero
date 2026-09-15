@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: zgłoszenie kodem klubu -> WIERSZ KOLEJKI (mockup `piloci-lista`,
+ * Ninerdeck - panel: zgłoszenie kodem klubu -> WIERSZ KOLEJKI (mockup `piloci-lista`,
  * karta ZGŁOSZENIA; issue #101, E3).
  *
  * Moduł CZYSTY (bez Reacta), bo to są decyzje o treści komórek.
@@ -12,7 +12,7 @@
  */
 
 import type { MembershipRequestDto } from '../../api/dto';
-import { dateTimeUtcShort } from '@uzaero/format';
+import { dateTimeUtcShort } from '@ninerdeck/format';
 import { NONE } from '../common/values';
 
 export interface RequestRow {

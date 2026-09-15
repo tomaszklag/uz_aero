@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - DOŁĄCZANIE DO KLUBU KODEM (`POST /auth/join`; wielofirmowość
+ * Ninerdeck (serwer) - DOŁĄCZANIE DO KLUBU KODEM (`POST /auth/join`; wielofirmowość
  * §3.8, §5; issue #100, epik D).
  *
  * Przekrój END-TO-END, bo jego wartością jest CIĄG zdarzeń, a nie pojedyncza trasa:

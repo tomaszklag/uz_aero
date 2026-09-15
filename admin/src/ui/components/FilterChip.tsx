@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: zawężenie listy (`.chip`).
+ * Ninerdeck - panel 2.0: zawężenie listy (`.chip`).
  *
  * `<button>` z `aria-pressed`, a nie `<span onClick>`: filtr, którego nie da się
  * ustawić z klawiatury, psuje scenariusz „przygotuj link do tego wycinka".

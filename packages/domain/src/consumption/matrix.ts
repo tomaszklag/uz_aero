@@ -1,7 +1,7 @@
 /**
- * UZ Aero - mała gęsta algebra dla regresji zużycia (najwyżej cztery niewiadome).
+ * Ninerdeck - mała gęsta algebra dla regresji zużycia (najwyżej cztery niewiadome).
  *
- * DLACZEGO WŁASNA, A NIE BIBLIOTEKA: `@uzaero/domain` ma zero zależności i jest to
+ * DLACZEGO WŁASNA, A NIE BIBLIOTEKA: `@ninerdeck/domain` ma zero zależności i jest to
  * egzekwowane testem architektury (`app/src/__tests__/architecture.test.ts`) - domenę
  * dzielą aplikacja i serwer, więc każdy import wiązałby OBIE strony z jego obecnością.
  * Przy `n ≤ 4` cała potrzebna algebra to sto linii bez pętli iteracyjnych.

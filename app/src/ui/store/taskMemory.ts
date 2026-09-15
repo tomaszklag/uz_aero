@@ -1,5 +1,5 @@
 /**
- * UZ Aero - hak nad `TaskMemoryStore`: podpowiedź zadania z ostatniego dnia.
+ * Ninerdeck - hak nad `TaskMemoryStore`: podpowiedź zadania z ostatniego dnia.
  *
  * Dzieli się na dwie czynności, bo dzieją się w innych momentach:
  *  • `remembered` - odczyt przy wejściu na krok „co dziś robimy" (02e), zanim pilot

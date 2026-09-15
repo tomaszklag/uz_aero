@@ -1,5 +1,5 @@
 /**
- * UZ Aero - TREŚĆ arkusza `admin/src/styles/tokens.css` (czysta funkcja).
+ * Ninerdeck - TREŚĆ arkusza `admin/src/styles/tokens.css` (czysta funkcja).
  *
  * Osobno od pisania pliku (`emitCss.ts`), bo dokładnie tę treść porównuje test panelu
  * (`admin/test/tokens.generated.test.ts`). Gdyby renderowanie siedziało w skrypcie CLI,

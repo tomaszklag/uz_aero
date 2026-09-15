@@ -1,4 +1,4 @@
-# UZ Aero - algorytm detekcji stanów lotu i progi
+# Ninerdeck - algorytm detekcji stanów lotu i progi
 
 > Dokumentacja referencyjna automatu, który z odczytów GPS wyznacza **kołowanie, start
 > i lądowanie**. Opisuje stan, kolejność decyzji, każdy próg i skutek jego zmiany.

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: SŁOWNIK zgłoszeń błędów (issue #87).
+ * Ninerdeck - panel 2.0: SŁOWNIK zgłoszeń błędów (issue #87).
  *
  * Moduł CZYSTY (bez Reacta, bez sieci), bo to jest decyzja o TREŚCI ekranu, a nie
  * o jego układzie - i dlatego ma test obok. Serwer nie zna języka interfejsu

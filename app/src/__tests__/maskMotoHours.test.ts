@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test MASKI LICZNIKA MOTOGODZIN (zgłoszenie z urządzenia, 2026-08-14:
+ * Ninerdeck - test MASKI LICZNIKA MOTOGODZIN (zgłoszenie z urządzenia, 2026-08-14:
  * „czemu nie nakładamy maski? dowolny separator powinien być znakiem dla maski.
  * Można też tam otworzyć klawiaturę numeryczną zamiast pełnej").
  *

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - progi analityki zużycia: co wchodzi do modelu i kiedy wolno go pokazać.
+ * Ninerdeck - progi analityki zużycia: co wchodzi do modelu i kiedy wolno go pokazać.
  *
  * ══ WSZYSTKIE WARTOŚCI SĄ DO KALIBRACJI ══
  * Bazowe pochodzą z rozumowania o dokładności paliwomierza i o tym, ile równań

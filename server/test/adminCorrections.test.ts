@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - korekta administratora po oknie 24 h
+ * Ninerdeck (serwer) - korekta administratora po oknie 24 h
  * (`POST /admin/api/sessions/:uuid/corrections`, mockup `A02b-korekta.html`).
  *
  * Ten sam wzorzec co reszta: PGlite w procesie, prawdziwe klasy, `app.inject`, zero

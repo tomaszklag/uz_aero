@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - WYJŚCIE Z KLUBU (wielofirmowość; issue #100, D6).
+ * Ninerdeck (serwer) - WYJŚCIE Z KLUBU (wielofirmowość; issue #100, D6).
  *
  * Wyjście z klubu nie jest osobną operacją i to jest cała treść tego pliku: jest nim
  * WYŁĄCZENIE CZŁONKOSTWA, które panel klubu umie od epiku B. Ten przekrój pilnuje

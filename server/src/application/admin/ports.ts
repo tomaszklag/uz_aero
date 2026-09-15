@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - PORTY warstwy aplikacji dla panelu administracyjnego.
+ * Ninerdeck (serwer) - PORTY warstwy aplikacji dla panelu administracyjnego.
  *
  * Osobny plik od `application/ports.ts`, i to nie dla symetrii: tamten ma docblock
  * mówiący, czym jest - kontraktem powierzchni TELEFONU. Panel jest drugą powierzchnią,
@@ -18,7 +18,7 @@ import type {
   MhFormat,
   OperationType,
   ServiceStatus,
-} from '@uzaero/domain';
+} from '@ninerdeck/domain';
 
 import type { AdminAction } from '../../domain/adminActions.ts';
 import type { MembershipStatus } from '../../domain/memberships.ts';
@@ -633,7 +633,7 @@ export interface AdminEventRow {
  * Strona rejestru RAZEM z korektami celującymi w jej wiersze.
  *
  * ══ DLACZEGO KOREKTY JADĄ OSOBNO, A NIE JAKO GOTOWA FLAGA `voided` ══
- * Bo o tym, czy zdarzenie zaszło, rozstrzyga `applyCorrections` z `@uzaero/domain`
+ * Bo o tym, czy zdarzenie zaszło, rozstrzyga `applyCorrections` z `@ninerdeck/domain`
  * - razem z regułą „gdy jedno zdarzenie ma kilka korekt, wygrywa ostatnia" i z parą
  * `void` → `retime`, która przywraca zdarzenie do życia. Ta reguła ma mieć JEDNĄ
  * implementację; `CASE` w SQL-u byłby jej drugą i rozjechałby się przy pierwszej
@@ -1145,7 +1145,7 @@ export interface OrganizationsPlatformPort {
 /**
  * Samolot tak, jak widzi go PANEL - czysta konfiguracja, bez stanu z telefonów.
  *
- * Osobny typ od `ReferenceAircraft` (`@uzaero/domain`) i to jest jego treść: tamten
+ * Osobny typ od `ReferenceAircraft` (`@ninerdeck/domain`) i to jest jego treść: tamten
  * jest KSZTAŁTEM CACHE'U telefonu, więc niesie `claimPicId`, `handover` i `fetchedAt`
  * - pola, które przy zapisie konfiguracji nie znaczą nic i których komenda nie ma prawa
  * dotknąć. Wpuszczenie tamtego typu do komendy dałoby `update`, który potrafi „zapisać"
@@ -1177,7 +1177,7 @@ export interface AdminAircraft {
    */
   fuelNormLPerH: number | null;
   /**
-   * STAN POCZĄTKOWY - co pokazywały przyrządy, gdy jednostkę wprowadzono do UZ Aero
+   * STAN POCZĄTKOWY - co pokazywały przyrządy, gdy jednostkę wprowadzono do Ninerdeck
    * (issue #66). To NIE jest konfiguracja, tylko zerowe ogniwo łańcucha odczytów:
    * pierwszy pilot dostaje je jako podpowiedź, a od pierwszej zdanej sesji przestają
    * cokolwiek znaczyć (`aircraftStateView.pickHandover`). Każde pole osobno `null`,

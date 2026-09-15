@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy projekcji śladu lotu (mapa, profil, log punktów).
+ * Ninerdeck - testy projekcji śladu lotu (mapa, profil, log punktów).
  *
  * Sens tych testów jest ten sam co przy detektorze: consumer-grade GPS kłamie, a ślad
  * rysujemy Z TEGO SAMEGO zapisu, który kłamał. Różnica jest taka, że detektor kłamstwo

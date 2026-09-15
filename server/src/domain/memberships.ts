@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - słownik CZŁONKOSTWA pilota w klubie (wielofirmowość, issue #98;
+ * Ninerdeck (serwer) - słownik CZŁONKOSTWA pilota w klubie (wielofirmowość, issue #98;
  * `docs/wielofirmowosc.md` §3.2).
  *
  * Członkostwo jest tym, czym do 2.0.0 było konto: niesie kod pilota, rolę panelu

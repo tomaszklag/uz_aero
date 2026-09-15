@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - trasy KOLEJKI ZGŁOSZEŃ kodem klubu (`/admin/api/memberships*`;
+ * Ninerdeck (serwer) - trasy KOLEJKI ZGŁOSZEŃ kodem klubu (`/admin/api/memberships*`;
  * mockupy `piloci-lista` - karta ZGŁOSZENIA, `piloci-zgloszenie` - decyzja;
  * `docs/wielofirmowosc.md` §8.3; issue #100, D2).
  *

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: decyzja o zgłoszeniu kodem klubu (`#/piloci/zgloszenia/:id`;
+ * Ninerdeck - panel: decyzja o zgłoszeniu kodem klubu (`#/piloci/zgloszenia/:id`;
  * mockup `piloci-zgloszenie` - P3, P3a, P3b).
  *
  * TRZY STANY JEDNEJ SZUFLADY, bo to jedna decyzja oglądana na trzech etapach:

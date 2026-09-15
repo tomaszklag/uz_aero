@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test treści podglądu cudzej sesji (ekran 04b).
+ * Ninerdeck - test treści podglądu cudzej sesji (ekran 04b).
  *
  * Ten ekran jest jedynym miejscem, w którym pilot ocenia CUDZY samolot przed decyzją
  * o przejęciu - a przejęcie odbiera poprzednikowi prawo zapisu (§4.4). Jedyne

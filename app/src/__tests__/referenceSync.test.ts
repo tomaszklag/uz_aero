@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy odświeżania cache referencyjnego (§4.8, `application/sync/referenceSync.ts`).
+ * Ninerdeck - testy odświeżania cache referencyjnego (§4.8, `application/sync/referenceSync.ts`).
  *
  * Sedno: cache ma być nadpisywany prawdą serwera przy okazji, ale NIGDY psuty przez
  * brak sieci; 304 ma zerować wiek danych (adnotacja „· z cache · sync …" mówi o czasie

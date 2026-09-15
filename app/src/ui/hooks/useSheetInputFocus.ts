@@ -1,5 +1,5 @@
 /**
- * UZ Aero - fokus pola wpisu w arkuszu, Z klawiaturą (issue #58 pkt 7/8).
+ * Ninerdeck - fokus pola wpisu w arkuszu, Z klawiaturą (issue #58 pkt 7/8).
  *
  * Dlaczego drabinka prób i dlaczego rusza dopiero, gdy okno modala JEST pokazane
  * ORAZ pole JEST zamontowane - historia trzech tur zgłoszenia w docblockach

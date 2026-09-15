@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: formularz samolotu - szkic, ocena i ZMIANA do wysłania.
+ * Ninerdeck - panel 2.0: formularz samolotu - szkic, ocena i ZMIANA do wysłania.
  *
  * Moduł CZYSTY (bez Reacta, bez sieci) - decyzje o treści, nie o układzie.
  *
@@ -17,8 +17,8 @@
  * z listy, i tak samo pyta serwer, bo tylko on wie, jak jest naprawdę.
  */
 
-import { motoHours, parseLitres, parseMotoHours } from '@uzaero/format';
-import type { MhFormat } from '@uzaero/domain';
+import { motoHours, parseLitres, parseMotoHours } from '@ninerdeck/format';
+import type { MhFormat } from '@ninerdeck/domain';
 
 import type { AircraftListItemDto } from '../../api/dto';
 import type { CreateAircraftBody, UpdateAircraftBody } from '../../api/fleet';
@@ -178,7 +178,7 @@ export interface AircraftVerdict {
 const REG_PATTERN = /^[A-Z0-9-]+$/;
 
 /**
- * Litry z pola tekstowego. `parseLitres` z `@uzaero/format` - ten sam parser, którego
+ * Litry z pola tekstowego. `parseLitres` z `@ninerdeck/format` - ten sam parser, którego
  * używa aplikacja pilota, więc przecinek i kropka znaczą to samo po obu stronach.
  */
 const litresOf = (text: string): number | null => parseLitres(text.trim());

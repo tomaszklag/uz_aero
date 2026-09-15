@@ -1,5 +1,5 @@
 /**
- * UZ Aero - Avatar
+ * Ninerdeck - Avatar
  *
  * Kafelek z inicjałami (`.pilot-avatar` 40 px, `.crew-avatar` 32 px w mockupach).
  * Zaokrąglony kwadrat, nie koło - tak jest w designie i tak odróżnia się od kółka

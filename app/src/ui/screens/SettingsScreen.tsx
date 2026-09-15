@@ -1,5 +1,5 @@
 /**
- * UZ Aero - 13 USTAWIENIA (mockup `design/13-ustawienia.html`).
+ * Ninerdeck - 13 USTAWIENIA (mockup `design/13-ustawienia.html`).
  *
  * Pięć sekcji: motyw → synchronizacja → diagnostyka GPS → o aplikacji →
  * bezpieczeństwo (PIN) → konto.
@@ -387,7 +387,7 @@ export function SettingsScreen({
             danych stoi kreska. Wersja zeszła z wiersza „Aplikacja": jedna liczba stoi
             na karcie raz. */}
         <Card title="O aplikacji" header="inline">
-          <KeyValueRow divider label="Aplikacja" value="UZ Aero" />
+          <KeyValueRow divider label="Aplikacja" value="Ninerdeck" />
           <KeyValueRow label="Wersja" value={versionRowValue(release)} />
         </Card>
 

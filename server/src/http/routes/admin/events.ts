@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - trasa rejestru zdarzeń (`GET /admin/api/events`, mockup
+ * Ninerdeck (serwer) - trasa rejestru zdarzeń (`GET /admin/api/events`, mockup
  * `A04-zdarzenia.html`).
  *
  * ══ ZDOLNOŚĆ: `panel.access`, A NIE NOWA ══
@@ -16,7 +16,7 @@
  */
 
 import type { FastifyInstance } from 'fastify';
-import { EVENT_TYPES, type EventType } from '@uzaero/domain';
+import { EVENT_TYPES, type EventType } from '@ninerdeck/domain';
 import { z } from 'zod';
 
 import type { AdminEventQueries } from '../../../application/admin/queries/events.ts';

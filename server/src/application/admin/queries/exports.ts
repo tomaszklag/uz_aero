@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - strona ODCZYTU monitora eksportu (`A05`).
+ * Ninerdeck (serwer) - strona ODCZYTU monitora eksportu (`A05`).
  *
  * Odpowiada na jedno pytanie: czy każdy dzień lotny ma aktualny arkusz, a jeśli nie -
  * dlaczego. Dlatego lista jedzie z projekcji sesji, a nie z `export_log`: dzień bez ani
@@ -98,7 +98,7 @@ export class AdminExportQueries {
    *
    * Istnieje obok `GET /sheets/:tab`, a nie zamiast niej, i to nie jest duplikat trasy.
    * Tamta jest celem linków `export_log.sheet_url` czytanych Z TELEFONU (nagłówek
-   * `Bearer`, ekran 11). Panel loguje się ciasteczkiem `uzaero_admin` o `Path=/admin`,
+   * `Bearer`, ekran 11). Panel loguje się ciasteczkiem `ninerdeck_admin` o `Path=/admin`,
    * które do `/sheets/*` po prostu NIE JEDZIE - poszerzenie ścieżki ciasteczka posłałoby
    * sesję panelu razem z każdym żądaniem telefonu, więc jest odwrotnością tego, co ma
    * osiągnąć. Panel pyta więc o kartę pod swoim prefiksem, a nazwę liczy serwer z sesji,

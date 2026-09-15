@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: znaczniki na śladzie sesji.
+ * Ninerdeck - panel 2.0: znaczniki na śladzie sesji.
  *
  * Sedno: znacznik ma stać tam, gdzie samolot BYŁ, albo nie stać wcale. Test pilnuje obu
  * połówek tego zdania - dopasowania po czasie i milczenia, gdy nagranie chwili nie

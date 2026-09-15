@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - trasy rejestru zdarzeń telefonu: `POST /events` (§4.3–4.5)
+ * Ninerdeck (serwer) - trasy rejestru zdarzeń telefonu: `POST /events` (§4.3–4.5)
  * i `GET /me/events` (§4.9, issue #32).
  *
  * Koperta zdarzenia (§5.1) waliduje to, co chroni BAZĘ (typy kolumn, limity długości),
@@ -14,7 +14,7 @@
 
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { EVENT_TYPES, type Event } from '@uzaero/domain';
+import { EVENT_TYPES, type Event } from '@ninerdeck/domain';
 
 import type { IngestCommands } from '../../../application/mobile/commands/ingest.ts';
 import {

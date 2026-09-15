@@ -1,5 +1,5 @@
 /**
- * UZ Aero - PeekBanner (`.ro-banner` z mockupu 04b)
+ * Ninerdeck - PeekBanner (`.ro-banner` z mockupu 04b)
  *
  * Baner podglądu cudzej sesji: ikona oka, nagłówek display, zdanie o tym, kto prowadzi
  * samolot, opcjonalne ostrzeżenie o wieku danych i **stopka z pochodzeniem danych**.

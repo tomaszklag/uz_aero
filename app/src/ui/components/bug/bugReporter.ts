@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ZAPLECZE ZGŁASZANIA BŁĘDÓW (issue #87, na czas testów z pilotami).
+ * Ninerdeck - ZAPLECZE ZGŁASZANIA BŁĘDÓW (issue #87, na czas testów z pilotami).
  *
  * Moduł, a nie store Zustanda, i to jest cała jego treść: przycisk zgłoszenia stoi
  * w RAMACH (`ScreenHeader`, `AppBar`, `SheetSurface`), czyli w miejscach, których nie

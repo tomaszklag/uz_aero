@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter tabeli `bug_reports` (zgłoszenia z aplikacji pilota,
+ * Ninerdeck (serwer) - adapter tabeli `bug_reports` (zgłoszenia z aplikacji pilota,
  * issue #87).
  *
  * W `common/`, bo port ma dwóch czytelników po obu stronach systemu: `POST /me/bug-reports`

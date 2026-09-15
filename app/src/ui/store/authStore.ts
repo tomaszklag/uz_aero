@@ -1,5 +1,5 @@
 /**
- * UZ Aero - stan uwierzytelnienia w UI (cienka warstwa nad `AuthService`, §3.0).
+ * Ninerdeck - stan uwierzytelnienia w UI (cienka warstwa nad `AuthService`, §3.0).
  *
  * `status` steruje bramką nawigacji:
  *  • `loading`    - czytamy magazyn poświadczeń (moment startu);

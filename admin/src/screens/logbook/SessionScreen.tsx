@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: DZIENNIK, poziom 3 - jedna operacja (`#/dziennik/SP-KLM/<uuid>`).
+ * Ninerdeck - panel 2.0: DZIENNIK, poziom 3 - jedna operacja (`#/dziennik/SP-KLM/<uuid>`).
  *
  * ══ PEŁNA STRONA, NIE SZUFLADA ══
  * Szuflady panelu 2.0 (konto, samolot) są formularzami JEDNEGO rekordu; tutaj treścią
@@ -11,7 +11,7 @@
  * wklejony komuś, kto poziomu 2 nigdy nie widział.
  */
 
-import { dateUtcShort } from '@uzaero/format';
+import { dateUtcShort } from '@ninerdeck/format';
 import { useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 

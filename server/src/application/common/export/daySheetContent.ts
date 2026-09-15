@@ -1,7 +1,7 @@
 /**
- * UZ Aero (serwer) - zawartość dziennej karty arkusza (§4.7).
+ * Ninerdeck (serwer) - zawartość dziennej karty arkusza (§4.7).
  *
- * Czysta funkcja: projekcje sesji (`projectSession` z @uzaero/domain) + kody pilotów
+ * Czysta funkcja: projekcje sesji (`projectSession` z @ninerdeck/domain) + kody pilotów
  * → `DaySheet`. Zero bazy i zero Google - dzięki temu treść karty testuje się na
  * liczbach kanonicznego dnia bez jednej atrapy, a adapter Sheets (gdy powstanie)
  * dostanie gotowe wiersze do wklejenia.
@@ -44,17 +44,17 @@
  *     czy egzaminu sekcja pełna zer byłaby szumem, nie informacją.
  *
  * Liczby w arkuszu NIE MAJĄ PRAWA różnić się od telefonu: wszystko pochodzi z tej samej
- * projekcji, a formatery są wspólne (`@uzaero/format`, ekran 10 liczy tym samym kodem).
+ * projekcji, a formatery są wspólne (`@ninerdeck/format`, ekran 10 liczy tym samym kodem).
  *
  * Czasy w UTC i tak podpisane - domyślna strefa całego systemu (CLAUDE.md).
  */
 
-import type { JumperCounts, SessionState } from '@uzaero/domain';
+import type { JumperCounts, SessionState } from '@ninerdeck/domain';
 // Formaty WSPÓLNE z telefonem (2026-07-31). Wcześniej stały tu ręczne kopie
 // z docblockami „lustro … z app/src/ui/format.ts" - czyli umowa utrzymywana
 // dyscypliną, a nie kompilatorem. Karta arkusza musi pokazywać dokładnie te same
 // napisy co ekran 10, bo pilot porównuje jedno z drugim.
-import { hhmm, motoHours, oilLitres, timeUtc } from '@uzaero/format';
+import { hhmm, motoHours, oilLitres, timeUtc } from '@ninerdeck/format';
 
 import type { DaySheet } from '../ports.ts';
 
@@ -108,7 +108,7 @@ export function sheetTabName(claimedAt: number, aircraftId: string): string {
 }
 
 /**
- * Litry bez jednostki - jedyny format, którego NIE bierzemy z `@uzaero/format`.
+ * Litry bez jednostki - jedyny format, którego NIE bierzemy z `@ninerdeck/format`.
  *
  * Aplikacja pokazuje „88 L", bo etykieta stoi obok liczby w jednym wierszu. Komórka
  * arkusza niesie jednostkę w NAGŁÓWKU kolumny, więc powtórzenie „L" w każdej komórce
@@ -245,7 +245,7 @@ export function buildDaySheet(input: DaySheetDay): DaySheet | null {
   const dayMhFormat = input.sessions.map((s) => s.state.mhFormat).find((f) => f != null) ?? null;
 
   const rows: string[][] = [
-    ['UZ Aero - doba samolotu', `${input.day} (UTC)`],
+    ['Ninerdeck - doba samolotu', `${input.day} (UTC)`],
     ['Samolot', input.aircraftId],
     ['Operacje', String(input.sessions.length)],
     ['Czas blokowy doby', hhmm(input.sessions.reduce((sum, s) => sum + s.state.blockTimeMs, 0))],

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - generator fontu ikon faz lotu (assets/fonts/UZAeroPhases.ttf).
+ * Ninerdeck - generator fontu ikon faz lotu (assets/fonts/NinerdeckPhases.ttf).
  *
  * Dlaczego font, a nie react-native-svg: projekt świadomie nie dokłada modułów
  * natywnych ponad expo-font (nagłówek `Icon.tsx`), a font ładuje się przez Metro
@@ -30,7 +30,7 @@ const GLYPHS = [
 ];
 
 const fontStream = new SVGIcons2SVGFontStream({
-  fontName: 'UZAeroPhases',
+  fontName: 'NinerdeckPhases',
   fontHeight: 1000,
   normalize: true,
   log: () => {},
@@ -42,7 +42,7 @@ fontStream.on('end', () => {
   const svgFont = Buffer.concat(chunks).toString('utf8');
   const ttf = svg2ttf(svgFont, {});
   mkdirSync(outDir, { recursive: true });
-  const out = join(outDir, 'UZAeroPhases.ttf');
+  const out = join(outDir, 'NinerdeckPhases.ttf');
   writeFileSync(out, Buffer.from(ttf.buffer));
   console.log(`OK → ${out} (${ttf.buffer.length} B)`);
 });

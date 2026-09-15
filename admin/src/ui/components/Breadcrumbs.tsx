@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: OKRUSZKI (`.crumbs`) - ścieżka nad nagłówkiem strony.
+ * Ninerdeck - panel: OKRUSZKI (`.crumbs`) - ścieżka nad nagłówkiem strony.
  *
  * Styl lekki (issue #107). WYŁĄCZNIE tam, gdzie ekran leży POD innym ekranem - dziś
  * tylko w dzienniku (flota → maszyna → operacja), gdzie zastąpiły przyciski „← Dziennik"

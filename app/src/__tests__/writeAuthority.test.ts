@@ -1,5 +1,5 @@
 /**
- * UZ Aero - UPRAWNIENIE ZAPISU: `checkAppend(…, 'administrative')` vs `'pilot'`.
+ * Ninerdeck - UPRAWNIENIE ZAPISU: `checkAppend(…, 'administrative')` vs `'pilot'`.
  *
  * Ten plik nie testuje „czy administrator może poprawić dzień po 24 h" - to sprawdza
  * przekrój serwerowy (`server/test/adminCorrections.test.ts`). Tu przybijamy własność

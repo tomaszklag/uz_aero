@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: plamki w geometrii TABELI.
+ * Ninerdeck - panel 2.0: plamki w geometrii TABELI.
  *
  * Skeleton ma udawać to, co za chwilę przyjdzie - więc rysuje prawdziwą tabelę
  * z prawdziwymi nagłówkami, a plamki stawia wyłącznie tam, gdzie będą DANE. Nagłówki

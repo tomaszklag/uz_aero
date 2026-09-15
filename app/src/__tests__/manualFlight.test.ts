@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy logiki wpisu ręcznego (ekrany 15 → 15C, przebudowa 2026-08-16).
+ * Ninerdeck - testy logiki wpisu ręcznego (ekrany 15 → 15C, przebudowa 2026-08-16).
  *
  * Dwa moduły, dwa pytania:
  *  • `manualFlight.ts` - „czy zapis w ogóle przejdzie przez domenę" (blokada

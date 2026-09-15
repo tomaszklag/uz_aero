@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - seed SUPERADMINISTRATORA (bootstrap wdrożenia).
+ * Ninerdeck (serwer) - seed SUPERADMINISTRATORA (bootstrap wdrożenia).
  *
  * Od issue #50 (2026-08-26, przygotowanie testów z pilotami) seed zakłada WYŁĄCZNIE
  * jedno konto. Od wielofirmowości (issue #98) jest to konto SUPERADMINISTRATORA - osoby

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ZNAKI REJESTRACYJNE FLOTY, po identyfikatorze (zgłoszenie z urządzenia,
+ * Ninerdeck - ZNAKI REJESTRACYJNE FLOTY, po identyfikatorze (zgłoszenie z urządzenia,
  * 2026-08-30).
  *
  * ══ SKĄD SIĘ WZIĄŁ TEN HOOK ══

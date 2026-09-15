@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - złożenie warstwy HTTP (Fastify).
+ * Ninerdeck (serwer) - złożenie warstwy HTTP (Fastify).
  *
  * Trasy mieszkają w `routes/` per zasób; ten plik tylko je rejestruje. Zależności
  * przychodzą z zewnątrz (composition root w `index.ts`, testy składają własne
@@ -340,7 +340,7 @@ export async function buildServer(
   //
   // **BREACH tu nie sięga** i to jest warunek, pod którym kompresja odpowiedzi
   // uwierzytelnionych jest bezpieczna: ochrona CSRF panelu to STAŁY nagłówek
-  // `X-UZ-Admin` (`adminCsrf.ts`), a nie token w treści; serwer nie wysyła żadnych
+  // `X-Ninerdeck-Admin` (`adminCsrf.ts`), a nie token w treści; serwer nie wysyła żadnych
   // nagłówków CORS, więc obca strona nie odczyta odpowiedzi; żadna trasa nie odbija
   // danych od atakującego obok sekretu. Gdyby kiedyś zaczęła - to jest miejsce,
   // w którym trzeba tę trasę z kompresji wyjąć.

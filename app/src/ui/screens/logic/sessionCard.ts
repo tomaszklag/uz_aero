@@ -1,5 +1,5 @@
 /**
- * UZ Aero - KAFELEK SESJI: jeden model widoku dla „Mój dzień" (01) i „Poprzednich
+ * Ninerdeck - KAFELEK SESJI: jeden model widoku dla „Mój dzień" (01) i „Poprzednich
  * dni" (12).
  *
  * DLACZEGO WSPÓLNY (issue #42, 2026-08-13): oba ekrany opisują to samo - jeden bieg

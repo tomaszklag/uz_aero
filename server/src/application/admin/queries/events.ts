@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - strona ODCZYTU rejestru zdarzeń (`A04`).
+ * Ninerdeck (serwer) - strona ODCZYTU rejestru zdarzeń (`A04`).
  *
  * Scenariusz, dla którego ten ekran istnieje: liczby się nie zgadzają i trzeba
  * odpowiedzieć na pytanie „skąd się wzięła ta wartość", „co dokładnie przyszło
@@ -19,7 +19,7 @@
  *    mówiłyby o dwóch różnych progach pod jedną nazwą.
  */
 
-import { CLOCK_DRIFT_MS } from '@uzaero/domain';
+import { CLOCK_DRIFT_MS } from '@ninerdeck/domain';
 
 import type { Database } from '../../common/ports.ts';
 import type { AdminEventsPage } from '../contracts/events.ts';

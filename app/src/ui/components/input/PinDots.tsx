@@ -1,5 +1,5 @@
 /**
- * UZ Aero - PinDots (`.pin-dots` z mockupu 00)
+ * Ninerdeck - PinDots (`.pin-dots` z mockupu 00)
  *
  * Wskaźnik postępu wpisywania PIN-u: cztery kropki, wypełnione zielono. Zły PIN
  * barwi kropki czerwono i potrząsa rzędem - to jedyny komunikat odmowy (mockup nie

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - DOŁĄCZANIE DO KLUBU KODEM (`POST /auth/join`; wielofirmowość
+ * Ninerdeck (serwer) - DOŁĄCZANIE DO KLUBU KODEM (`POST /auth/join`; wielofirmowość
  * §3.8 i §5, decyzja właściciela 2026-09-09, issue #100).
  *
  * Jedyna droga do klubu: pilot loguje się Googlem, wpisuje kod klubu (00E, albo 13A

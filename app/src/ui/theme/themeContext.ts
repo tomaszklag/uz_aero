@@ -1,5 +1,5 @@
 /**
- * UZ Aero - kontekst motywu i jego JEDYNY czytnik.
+ * Ninerdeck - kontekst motywu i jego JEDYNY czytnik.
  *
  * Osobny plik od `ThemeProvider.tsx` z powodu narzędziowego: **Fast Refresh podmienia
  * moduł w miejscu tylko wtedy, gdy WSZYSTKIE jego eksporty są komponentami**. Hook

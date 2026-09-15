@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - KLUB jako tenant (wielofirmowość, issue #98;
+ * Ninerdeck (serwer) - KLUB jako tenant (wielofirmowość, issue #98;
  * `docs/wielofirmowosc.md` §3.1).
  *
  * Jeden serwer obsługuje wiele klubów; wszystko, co należy do klubu (flota, piloci jako

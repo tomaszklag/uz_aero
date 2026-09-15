@@ -1,5 +1,5 @@
 /**
- * UZ Aero - klucz składu skoczków do zależności effectów prefillu (issue #28).
+ * Ninerdeck - klucz składu skoczków do zależności effectów prefillu (issue #28).
  *
  * Arkusze skokowe (05e zrzut, 05i załadunek) przeładowują liczniki, gdy zmieni się
  * skład CZEKAJĄCY na zrzut. „Zmieni się" musi tu znaczyć INNE LICZBY, nie inny obiekt:

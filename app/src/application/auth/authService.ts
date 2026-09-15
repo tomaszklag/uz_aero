@@ -1,5 +1,5 @@
 /**
- * UZ Aero - cykl życia poświadczeń (§3.0).
+ * Ninerdeck - cykl życia poświadczeń (§3.0).
  *
  * Trzy twarde zasady z dokumentacji, które ten serwis egzekwuje:
  *

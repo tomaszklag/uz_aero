@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: mapa śladu sesji.
+ * Ninerdeck - panel 2.0: mapa śladu sesji.
  *
  * Komponent jest CZYSTYM UKŁADEM: nie liczy nic, dostaje gotowe piksele z `mapPlot`
  * (`screens/logbook/trackChart.ts`). To ta sama zasada, co w reszcie panelu - decyzja

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - schemat lokalnej bazy (DDL) jako czysty tekst.
+ * Ninerdeck - schemat lokalnej bazy (DDL) jako czysty tekst.
  *
  * DLACZEGO OSOBNY MODUŁ: adapter importuje `expo-sqlite`, którego nie ma w Node, więc
  * schemat był jedyną warstwą bez testów - i to właśnie w nim ukrył się błąd, który

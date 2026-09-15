@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ScreenHeader (`.app-header` z mockupów formularzy)
+ * Ninerdeck - ScreenHeader (`.app-header` z mockupów formularzy)
  *
  * Nagłówek ekranu **poza obszarem przewijania**: tytuł display, podtytuł mono, a po prawej
  * badge kroku i wskaźnik łączności. W mockupach ten pasek jest przyklejony u góry - i to

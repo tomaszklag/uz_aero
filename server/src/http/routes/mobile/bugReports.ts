@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - trasa zgłoszeń błędów z telefonu: `POST /me/bug-reports`
+ * Ninerdeck (serwer) - trasa zgłoszeń błędów z telefonu: `POST /me/bug-reports`
  * (issue #87, kanał zwrotny na czas testów z pilotami).
  *
  * Cienka jak reszta: zod → komenda → status. Tożsamość WYŁĄCZNIE z tokenu (`/me`),

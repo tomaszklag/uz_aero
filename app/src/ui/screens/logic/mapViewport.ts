@@ -1,5 +1,5 @@
 /**
- * UZ Aero - KADR MAPY ŚLADU: przybliżenie i przesunięcie (issue #47 pkt 8).
+ * Ninerdeck - KADR MAPY ŚLADU: przybliżenie i przesunięcie (issue #47 pkt 8).
  *
  * Czysta matematyka, osobno od `PanResponder`: gest jest wejściem, kadr wyjściem,
  * a między nimi nie ma nic do zgadywania. Dzięki temu reguły, które na urządzeniu

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test składania NORMY dla telefonu (issue #38).
+ * Ninerdeck - test składania NORMY dla telefonu (issue #38).
  *
  * Norma jest jedynym kanałem, którym analityka dociera do pilota, więc test idzie tą
  * samą drogą, co serwer: syntetyczne interwały → `consumptionSummary` → `fitConsumptionModel`

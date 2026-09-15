@@ -1,5 +1,5 @@
 /**
- * UZ Aero - CrewCorrectionSheet: poprawka DRUGIEGO PILOTA całej sesji (issue #43).
+ * Ninerdeck - CrewCorrectionSheet: poprawka DRUGIEGO PILOTA całej sesji (issue #43).
  *
  * ══ CO TO ZNACZY „POPRAWIĆ DUALA" ══
  * „Wpisałem złego drugiego pilota" - poprawka działa WSTECZ na całą sesję, więc czas

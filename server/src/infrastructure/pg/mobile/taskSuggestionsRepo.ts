@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter podpowiedzi do zadania dnia (`TaskSuggestionsPort`).
+ * Ninerdeck (serwer) - adapter podpowiedzi do zadania dnia (`TaskSuggestionsPort`).
  *
  * Czyta WYŁĄCZNIE kolumny projekcji `sessions` (`client`, `notes`, `operation`) -
  * rejestru `events` nie dotyka ani jednym zapytaniem. To ta sama reguła, co przy
@@ -22,7 +22,7 @@
  * Notatka nie ma takiego towarzysza, więc zostaje przy prostszym `GROUP BY` + `MAX`.
  */
 
-import { isOperationType } from '@uzaero/domain';
+import { isOperationType } from '@ninerdeck/domain';
 
 import type { Queryable } from '../../../application/common/ports.ts';
 import type {

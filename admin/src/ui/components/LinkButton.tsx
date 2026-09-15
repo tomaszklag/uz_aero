@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: przycisk, który jest LINKIEM (`<a class="btn">` z `SZABLON.html`).
+ * Ninerdeck - panel: przycisk, który jest LINKIEM (`<a class="btn">` z `SZABLON.html`).
  *
  * Osobny komponent od `Button`, bo to inny element i inne zachowanie: link można
  * otworzyć w nowej karcie, skopiować i wkleić - a `Button` z `navigate()` w `onClick`

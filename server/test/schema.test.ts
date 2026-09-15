@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - test KONTRAKTU SCHEMATU na prawdziwym Postgresie (PGlite).
+ * Ninerdeck (serwer) - test KONTRAKTU SCHEMATU na prawdziwym Postgresie (PGlite).
  *
  * Lustro `sqliteSchema.test.ts` z aplikacji i domknięcie tej samej luki: kolumny DDL
  * ↔ interfejsy wierszy ↔ mapowanie to trzy miejsca, które muszą się zgadzać, a literówka

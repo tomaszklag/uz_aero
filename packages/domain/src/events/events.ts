@@ -1,5 +1,5 @@
 /**
- * UZ Aero - model zdarzenia (docs/_main.md.txt §5.1).
+ * Ninerdeck - model zdarzenia (docs/_main.md.txt §5.1).
  *
  * Wszystko, co dzieje się w dniu lotnym, jest **zdarzeniem append-only** o wspólnym
  * nagłówku (§5.1) i payloadzie specyficznym dla typu. Payload jest modelowany jako

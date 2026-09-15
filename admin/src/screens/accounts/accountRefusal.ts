@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: odmowa serwera na koncie -> zdanie po polsku.
+ * Ninerdeck - panel 2.0: odmowa serwera na koncie -> zdanie po polsku.
  *
  * `Record<PilotRefusalDto, …>` jest tu KLUCZOWY: powód odmowy dopisany na serwerze
  * (`server/src/domain/accountGuards.ts`) wywala kompilację panelu, zamiast pokazać

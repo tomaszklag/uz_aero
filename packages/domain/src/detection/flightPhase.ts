@@ -1,5 +1,5 @@
 /**
- * UZ Aero - faza lotu i prędkość pionowa (mockup 05 `.phase-hero`).
+ * Ninerdeck - faza lotu i prędkość pionowa (mockup 05 `.phase-hero`).
  *
  * Mockup pokazuje w kokpicie ogromny napis fazy („Climb") i pod nim prędkość pionową
  * („+1 200 FT/MIN"). To nie jest ozdobnik: w powietrzu pilot ma jednym spojrzeniem

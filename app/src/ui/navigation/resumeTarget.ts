@@ -1,5 +1,5 @@
 /**
- * UZ Aero - dokąd wracamy po restarcie aplikacji (§5.2).
+ * Ninerdeck - dokąd wracamy po restarcie aplikacji (§5.2).
  *
  * Czysta decyzja wyjęta z `App.tsx`, bo jest regułą flow, a nie szczegółem montowania
  * komponentów - i bo w tej właśnie regule dwa razy pod rząd okazało się, że pytamy

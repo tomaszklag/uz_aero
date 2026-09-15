@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: kolejka zgłoszeń kodem klubu (`/admin/api/memberships*`).
+ * Ninerdeck - panel: kolejka zgłoszeń kodem klubu (`/admin/api/memberships*`).
  *
  * Jeden plik = jeden zasób = jeden prefiks trasy, jak `server/src/http/routes/`.
  * Warstwa `api/` nie zna Reacta ani cache'u - zwraca obietnice, a co z nimi zrobić,

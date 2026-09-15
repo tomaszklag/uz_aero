@@ -1,5 +1,5 @@
 /**
- * UZ Aero - wysokość zrzutu: średnia z okna czasu, nie pojedynczy fix (issue #21 pkt 2).
+ * Ninerdeck - wysokość zrzutu: średnia z okna czasu, nie pojedynczy fix (issue #21 pkt 2).
  *
  * Wysokość z GPS klasy konsumenckiej skacze z fixa na fix o kilkadziesiąt stóp -
  * arkusz zrzutu (05e) brał dotąd ostatni odczyt i wpisywał ten szum wprost do

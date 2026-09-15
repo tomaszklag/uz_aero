@@ -1,5 +1,5 @@
 /**
- * UZ Aero - progi tolerancji reguł domenowych (docs/_main.md.txt §4.5).
+ * Ninerdeck - progi tolerancji reguł domenowych (docs/_main.md.txt §4.5).
  *
  * ⚠️ WSZYSTKIE WARTOŚCI SĄ DO KALIBRACJI (§4.5: „Progi (do kalibracji)"). Trzymamy je
  * w jednym miejscu, żeby zmiana progu była jedną linią, a nie polowaniem po `if`-ach.

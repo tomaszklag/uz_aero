@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter KODU KLUBU (`ClubCodeAdminPort`; wielofirmowość §3.8;
+ * Ninerdeck (serwer) - adapter KODU KLUBU (`ClubCodeAdminPort`; wielofirmowość §3.8;
  * issue #100, D2).
  *
  * Kod mieszka w kolumnie `organizations.join_code` - jawnym tekstem, nie hashem, bo

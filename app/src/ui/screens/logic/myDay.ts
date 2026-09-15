@@ -1,5 +1,5 @@
 /**
- * UZ Aero - model widoku ekranu 01 „Mój dzień" (`design/01-moj-dzien.html`, issue #23).
+ * Ninerdeck - model widoku ekranu 01 „Mój dzień" (`design/01-moj-dzien.html`, issue #23).
  *
  * Czysta warstwa między projekcją dnia pilota (`projectPilotDay`) a widokiem: bierze
  * `PilotDay` i oddaje gotowe napisy oraz stany, których ekran nie musi już wyliczać.

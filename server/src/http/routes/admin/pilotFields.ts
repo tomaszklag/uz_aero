@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - WSPÓLNE pola wejściowe modułu Piloci i mapowanie członka na drut.
+ * Ninerdeck (serwer) - WSPÓLNE pola wejściowe modułu Piloci i mapowanie członka na drut.
  *
  * Istnieje, bo od issue #100 kod pilota i rolę przyjmują DWIE trasy: edycja członka
  * (`PATCH /pilots/:id`) i zatwierdzenie zgłoszenia (`POST /memberships/:id/approve`).

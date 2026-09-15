@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - trasy kont pilotów (`/admin/api/pilots*`, mockupy `A06`, `A06a`).
+ * Ninerdeck (serwer) - trasy kont pilotów (`/admin/api/pilots*`, mockupy `A06`, `A06a`).
  *
  * Cienkie jak reszta repo: zod → komenda → status. Trasa nie zna ani transakcji, ani
  * audytu, ani reguły „kto nie może odciąć kogo" - to wszystko jest w komendzie

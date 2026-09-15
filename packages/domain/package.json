@@ -1,8 +1,8 @@
 {
-  "name": "@uzaero/domain",
+  "name": "@ninerdeck/domain",
   "version": "0.0.0",
   "private": true,
-  "description": "UZ Aero - wspólna domena aplikacji i serwera: zdarzenia, reguły, projekcje, detekcja lotu. Czysty TypeScript, zero zależności.",
+  "description": "Ninerdeck - wspólna domena aplikacji i serwera: zdarzenia, reguły, projekcje, detekcja lotu. Czysty TypeScript, zero zależności.",
   "main": "src/index.ts",
   "types": "src/index.ts",
   "type": "module",

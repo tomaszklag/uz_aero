@@ -1,5 +1,5 @@
 /**
- * UZ Aero - deklinacja magnetyczna i przeliczanie kursów na magnetyczne.
+ * Ninerdeck - deklinacja magnetyczna i przeliczanie kursów na magnetyczne.
  *
  * PO CO: w lotnictwie kurs bez oznaczenia jest MAGNETYCZNY - tak są opisane progi pasów,
  * tak podaje je wieża i tak czyta je pilot z busoli. Nasze dane źródłowe (OurAirports,

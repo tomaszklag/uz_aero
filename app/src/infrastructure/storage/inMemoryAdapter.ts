@@ -1,5 +1,5 @@
 /**
- * UZ Aero - magazyn w pamięci: implementacja referencyjna i testowa `StoragePort`.
+ * Ninerdeck - magazyn w pamięci: implementacja referencyjna i testowa `StoragePort`.
  *
  * Dzięki niemu CAŁY rdzeń (repo, komendy, reguły, projekcje, outbox, dedup) testuje się
  * w Node/Jest bez natywnego `expo-sqlite` - to jest powód istnienia portu.

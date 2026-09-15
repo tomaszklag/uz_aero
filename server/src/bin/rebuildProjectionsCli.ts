@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - `npm run rebuild-projections`: przebudowa projekcji `sessions`
+ * Ninerdeck (serwer) - `npm run rebuild-projections`: przebudowa projekcji `sessions`
  * ze strumienia zdarzeń (mockup `A11-konserwacja.html`).
  *
  * Wzorzec `seedCli.ts`: własna pula, walidacja env przez `zod`, jeden przebieg, koniec.

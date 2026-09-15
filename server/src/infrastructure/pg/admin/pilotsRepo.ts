@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter członków klubu po stronie PANELU (`PilotsAdminPort`, `A06`).
+ * Ninerdeck (serwer) - adapter członków klubu po stronie PANELU (`PilotsAdminPort`, `A06`).
  *
  * Drugi adapter tych samych tabel i to jest wzorzec, nie niedopatrzenie: `flags` ma
  * dokładnie tak samo `common/flagsRepo.ts` (ingest) i `admin/flagsRepo.ts` (panel).

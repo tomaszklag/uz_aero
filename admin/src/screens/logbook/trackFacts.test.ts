@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: liczby pod śladem sesji.
+ * Ninerdeck - panel 2.0: liczby pod śladem sesji.
  */
 
 import { describe, expect, it } from 'vitest';

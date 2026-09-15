@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - złączenie projekcji z dziennikiem eksportu → wiersz `A05`.
+ * Ninerdeck (serwer) - złączenie projekcji z dziennikiem eksportu → wiersz `A05`.
  *
  * Czysta funkcja, testowana bez bazy - ten sam wzorzec, co `sessionRowFrom` po stronie
  * zapisu i `sessionListItem` po stronie odczytu.

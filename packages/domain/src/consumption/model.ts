@@ -1,5 +1,5 @@
 /**
- * UZ Aero - model zużycia paliwa per faza lotu.
+ * Ninerdeck - model zużycia paliwa per faza lotu.
  *
  * ══ CO TU SIĘ DZIEJE ══
  * Każdy przyjęty interwał daje równanie „zużycie = Σ stawka_fazy · czas_fazy". Stawek

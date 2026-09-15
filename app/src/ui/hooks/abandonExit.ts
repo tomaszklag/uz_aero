@@ -1,5 +1,5 @@
 /**
- * UZ Aero - KOLEJNOŚĆ WYJŚCIA Z FORMULARZA PO REZYGNACJI (issue #84 pkt 7).
+ * Ninerdeck - KOLEJNOŚĆ WYJŚCIA Z FORMULARZA PO REZYGNACJI (issue #84 pkt 7).
  *
  * Zgłoszenie z urządzenia: „jak się cofam z lotu ręcznego tak, że rezygnuję
  * i potwierdzam rezygnację, to leci wyjątek IllegalStateException".

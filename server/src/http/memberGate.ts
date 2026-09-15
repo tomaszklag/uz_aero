@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - brama tras TELEFONU: token klubu + aktywne członkostwo.
+ * Ninerdeck (serwer) - brama tras TELEFONU: token klubu + aktywne członkostwo.
  *
  * Odpowiednik `AdminGate` z `routes/admin/adminRoute.ts` dla powierzchni pilota
  * (epik C wielofirmowości, issue #99). Jeden obiekt zamiast dwóch parametrów w każdej

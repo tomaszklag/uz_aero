@@ -1,5 +1,5 @@
 /**
- * UZ Aero - logika TRYBU EDYCJI sesji (issue #43, mockupy `design/10d`–`10h`).
+ * Ninerdeck - logika TRYBU EDYCJI sesji (issue #43, mockupy `design/10d`–`10h`).
  *
  * Ekran 10 ma dwa stany: odczyt i edycję. Ten moduł odpowiada na wszystkie pytania,
  * które w edycji trzeba rozstrzygnąć, i robi to POZA JSX - bo każde z nich ma regułę,

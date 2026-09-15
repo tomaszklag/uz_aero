@@ -1,5 +1,5 @@
 /**
- * UZ Aero - migawka cudzej sesji → treść ekranu 04b (`design/04b-cockpit-readonly.html`).
+ * Ninerdeck - migawka cudzej sesji → treść ekranu 04b (`design/04b-cockpit-readonly.html`).
  *
  * Osobny moduł z tego samego powodu co `cockpitLog.ts` i `statsDay.ts`: to jedyna
  * nietrywialna logika prezentacji tego ekranu i jedyna, którą da się sprawdzić bez

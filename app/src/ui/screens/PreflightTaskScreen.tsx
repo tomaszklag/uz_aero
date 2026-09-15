@@ -1,5 +1,5 @@
 /**
- * UZ Aero - 02E NOWY LOT · krok 2/3: zadanie dnia.
+ * Ninerdeck - 02E NOWY LOT · krok 2/3: zadanie dnia.
  *
  * Rodzaj operacji, trasa i oznaczenie klienta - czyli „co dziś robimy". Wydzielone
  * z kroku 1 (decyzja 2026-07-30), bo tamten stał się najdłuższym formularzem aplikacji

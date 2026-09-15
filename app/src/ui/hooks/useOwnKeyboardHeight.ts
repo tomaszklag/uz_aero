@@ -1,5 +1,5 @@
 /**
- * UZ Aero - wysokość klawiatury NALEŻĄCEJ DO TEGO EKRANU.
+ * Ninerdeck - wysokość klawiatury NALEŻĄCEJ DO TEGO EKRANU.
  *
  * `useKeyboardHeight` mówi, czy klawiatura jest w ogóle wysunięta - i to jest właściwa
  * miara dla arkusza, który ma nad nią stanąć. Ekran potrzebuje odpowiedzi węższej:

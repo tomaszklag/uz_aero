@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy STEMPLA OSTATNIEJ SYNCHRONIZACJI (`ui/components/status/syncStamp.ts`).
+ * Ninerdeck - testy STEMPLA OSTATNIEJ SYNCHRONIZACJI (`ui/components/status/syncStamp.ts`).
  *
  * Od issue #12 chip łączności pokazuje się WYŁĄCZNIE offline i wtedy ten napis jest
  * jedyną odpowiedzią na pytanie „jak stare jest to, co widzę". Data znika, gdy sync był

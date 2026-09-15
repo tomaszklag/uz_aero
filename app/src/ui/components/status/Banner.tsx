@@ -1,5 +1,5 @@
 /**
- * UZ Aero - Banner (trzy typy, jeden zamykalny)
+ * Ninerdeck - Banner (trzy typy, jeden zamykalny)
  *
  * Taksonomia z `docs/design-notes.md` - od typu zależy, czy wolno go zamknąć:
  *

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - LOG DNIA, poziom 1: flota w zakresie dat.
+ * Ninerdeck (serwer) - LOG DNIA, poziom 1: flota w zakresie dat.
  *
  * Warstwa cienka z zawodu: rozstrzyga ZAKRES, woła adapter i przepisuje agregat na
  * kontrakt. Arytmetyki nie ma tu ani jednej - sumy policzył Postgres z kolumn

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - nakładanie korekt na strumień zdarzeń (tryb edycji sesji, model §5.1).
+ * Ninerdeck - nakładanie korekt na strumień zdarzeń (tryb edycji sesji, model §5.1).
  *
  * Rejestr jest append-only: korekta to osobne zdarzenie `event_correction`, oryginał
  * zostaje. Ten moduł zamienia strumień SUROWY na strumień EFEKTYWNY - taki, jakby

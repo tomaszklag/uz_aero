@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter projekcji sesji (`SessionsProjectionPort`).
+ * Ninerdeck (serwer) - adapter projekcji sesji (`SessionsProjectionPort`).
  *
  * `sessions` NIE jest źródłem prawdy - to zrzut `projectSession(events)`, w całości
  * odtwarzalny ze strumienia. Upsert nadpisuje wszystko poza kluczem: projekcja nie ma
