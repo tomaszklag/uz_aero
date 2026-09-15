@@ -456,10 +456,48 @@ przepisuje kod z ręki na 00E. **Plik `site/src/dolacz/index.html` SKASOWANY 202
 (epik D, D7); trasa `GET /dolacz/*` w `staticSite.ts` nie powstała, więc reguła „bez
 fallbacku SPA" zostaje bez wyjątku - ścieżka spoza buildu odpowiada 404 jak każda inna.
 
-## 10. Migracja produkcji z backfillem (decyzja 5)
+## 10. NOWA INSTANCJA zamiast migracji produkcji (decyzja z 2026-09-10, odwraca decyzję 5)
 
-Baza produkcyjna ma od 1.0.0 dane JEDNEGO klubu i te dane zostają. Migracja 8 (epik B)
-w jednej transakcji:
+**2.0.0 startuje na pustej bazie w nowym projekcie, a stara instancja dożywa.** Decyzja 5
+(„migracja z backfillem, bo od 1.0.0 trwają testy w jednym klubie") przestała obowiązywać.
+
+Uzasadnienie, które ją obaliło: **backfill `org_id` jest operacją JEDNORAZOWĄ dla jednej
+bazy 1.x i nigdy się nie powtórzy.** Argument z epiku W - „migracja jest jednocześnie próbą
+ścieżki, którą przejdzie każdy przyszły klub" - był fałszywy: przyszły klub zakłada
+superadministrator w module Organizacje, na bazie już wielofirmowej. Migracja testowała więc
+ścieżkę martwą, a pusta baza testuje TĘ, którą przejdzie każdy klient:
+
+    pusta baza → migracje → `seed` (superadmin z SEED_ADMIN_EMAIL) → moduł Organizacje
+    → klub + pierwszy administrator → kod klubu → piloci dołączają
+
+Co z tego wynika:
+- **dwie instancje przez okres przejściowy**: stara (`uzaeroserver-production`, pakiet
+  `com.tomekklag.uzaero`, stary klient OAuth) dożywa nietknięta, dopóki testerzy nie przejdą
+  na 2.0.0; nowa stoi na `app.ninerdeck.pl` z pustą bazą. Nowy serwer **nie musi rozumieć
+  tokenu bez `org`** - to jedyny powód, dla którego §11 przewidywał kompatybilność wsteczną;
+- **migracja 8 zostaje w kodzie nietknięta**, tylko nigdy nie zobaczy danych: na świeżej bazie
+  backfill się nie uruchamia, a `SEED_ORG_NAME`/`SEED_ORG_SLUG` przestają być potrzebne
+  na produkcji (dalej działają na bazie z danymi 1.x i mają testy);
+- **W1 z epiku W odpada** - próba generalna `pg_dump` → migracja na kopii → sumy kontrolne
+  istniała wyłącznie po to, żeby obronić backfill na żywych danych;
+- **zrzut starej bazy idzie do archiwum**, nie do nowej instancji: to jedyne prawdziwe dane
+  z lotu, jakie projekt ma, i materiał do kalibracji progów analityki (§3.6b `_main.md.txt`)
+  oraz detekcji. Do `consumptionReplay.ts` i `replay.ts` żywa baza nie jest potrzebna;
+- **cena jest jedna i realna**: flotę trzeba wpisać od nowa (normy paliwa i oleju, pojemności,
+  minima, format licznika, stany początkowe), a piloci rejestrują się ponownie. Przy nowym
+  pakiecie i tak instalują aplikację od zera, więc dokłada im to jeden krok - wpisanie kodu klubu;
+- **dokumenty klubu z okresu testów zostają w starej instancji** i nie przenoszą się.
+
+Do rozstrzygnięcia osobno: czy po wygaszeniu starej instancji **wyciąć backfill z migracji 8**
+(razem z imiennym wyjątkiem na `UPDATE` w `architecture.test.ts`), czy zostawić go jako
+przetestowaną ścieżkę dla ewentualnego klubu przenoszonego z 1.x.
+
+---
+
+Poniżej zostaje opis tego, **co migracja 8 robi na bazie z danymi 1.x** - kod jej nie stracił,
+a testy (`organizations.test.ts`) dalej go pilnują. Produkcja 2.0.0 tej ścieżki nie przejdzie.
+
+Migracja 8 (epik B) w jednej transakcji:
 
 1. `organizations` + wiersz klubu z `SEED_ORG_NAME`/`SEED_ORG_SLUG` (zmienne
    WYMAGANE przy tej migracji - bez nazwy klubu runner odmawia startu, zamiast
@@ -483,11 +521,18 @@ Superadministrator: `SEED_ADMIN_EMAIL` → jeśli osoba z tym e-mailem istnieje,
 `platform_role` (i ZOSTAJE administratorem klubu - to jest dziś ta sama osoba);
 inaczej powstaje z pustymi członkostwami.
 
-**Procedura odwrotu**: kopia bazy przed migracją (Railway snapshot) - migracja 8
-nie jest odwracalna skryptem, bo `DROP CONSTRAINT` globalnych unikatów kasuje
-informację, której nie da się odtworzyć po dołożeniu drugiego klubu.
+**Procedura odwrotu** (dotyczy już tylko bazy z danymi 1.x): kopia bazy przed migracją
+(Railway snapshot) - migracja 8 nie jest odwracalna skryptem, bo `DROP CONSTRAINT` globalnych
+unikatów kasuje informację, której nie da się odtworzyć po dołożeniu drugiego klubu. Przy
+nowej instancji odwrotem jest po prostu **stara instancja, która dalej stoi**.
 
 ## 11. Telefon po aktualizacji: co z lokalnym rejestrem
+
+> **Od decyzji z 2026-09-10 ta sekcja jest bezprzedmiotowa dla 2.0.0.** Nowy pakiet Androida
+> (epik R) znaczy nową instalację, nowa instancja znaczy pustą bazę po drugiej stronie, a epik R
+> zmienił przy okazji klucze lokalne (`ninerdeck.db`, poświadczenia, PIN, motyw, zadanie GPS) -
+> więc telefonu z rejestrem 1.x rozmawiającego z serwerem 2.0.0 po prostu nie będzie. Opis niżej
+> zostaje jako zapis rozwiązania, gdyby kiedyś przyszło aktualizować rejestr w miejscu.
 
 Aplikacja 2.0.0 na telefonie z rejestrem 1.x: migracja SQLite dokłada `org_id` do
 zdarzeń, cache referencyjnego i `bug_reports` i wypełnia go **klubem z pierwszego
