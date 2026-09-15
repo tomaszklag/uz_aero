@@ -3190,6 +3190,45 @@ decyzję 5 z issue #97 („produkcja = migracja z backfillem"). Pełny zapis i k
 - **do rozstrzygnięcia po wygaszeniu starej instancji**: czy wyciąć backfill z migracji 8
   razem z imiennym wyjątkiem na `UPDATE` w `architecture.test.ts`
 
+## Nowa instancja dotyczy TEŻ APLIKACJI, Play schodzi do 4.0.0 (decyzje 2026-09-15)
+Rebranding stawiamy od zera po OBU stronach naraz - serwer i aplikacja. Rozstrzyga to
+pytanie „nowy projekt EAS czy przemianowanie obecnego" (#120 §5) i zdejmuje Play z drogi
+krytycznej 2.0.0.
+- **nowy projekt EAS**, nie przemianowanie: własny `projectId`, własny adres aktualizacji
+  i własne kanały `production`/`development`
+- **nowy pakiet** `com.ninerdeck.app` = osobna instalacja, osobne dane lokalne, osobna
+  ikona. To jest ta sama ochrona, o którą prosiło R7: klucze magazynu, PIN, poświadczenia
+  i zadanie GPS zmieniły nazwy, więc aktualizacja istniejącej instalacji zostawiłaby
+  osieroconą usługę `uzaero-location` i pusty rejestr na telefonie
+- **2.0.0 NIE JEST aktualizacją niczego** - to pierwsze wydanie nowej linii. OTA z niej
+  do telefonów z 1.1.0 nie dojdzie i nie ma dojść; stara linia (projekt EAS, pakiet,
+  instancja, klient OAuth) dożywa równolegle do W4
+- **PUBLIKACJA W PLAY SCHODZI DO 4.0.0**: 2.0.0 rozchodzi się jak 1.1.0 - plikiem APK ze
+  strony pobierania. Dzięki temu **R3 potrzebuje JEDNEGO odcisku SHA-1** (klucz EAS);
+  drugi odcisk, Play App Signing, był jedyną pozycją wiążącą wydanie z kontem organizacji
+  w Play i procedurą D-U-N-S (do 30 dni)
+- **„klient Android z dwoma SHA-1" będzie przy 4.0.0 ZMIANĄ W KODZIE, nie wpisem
+  w konsoli**: aplikacja woła `Google.useAuthRequest({ androidClientId })`, więc `aud`
+  tokenu to identyfikator klienta ANDROID, a konsola wiąże jeden klient z jednym odciskiem.
+  Klucz EAS i klucz Play dają dwa różne `aud`, a serwer przyjmuje dziś dokładnie jeden
+  (`mobile: string | null` w `GoogleIdTokens`). Do sprawdzenia i domknięcia przy 4.0.0
+
+- **WŁASNA DOMENA TEŻ SCHODZI DO 4.0.0** (ta sama decyzja): 2.0.0 stoi na adresie nadanym
+  przez Railway, a `ninerdeck.pl` (strona) i `app.ninerdeck.pl` (panel + API) przychodzą
+  razem ze sklepem. `PUBLIC_BASE_URL`, `EXPO_PUBLIC_API_URL`, origin klienta Web i adres
+  polityki w ekranie zgody wskazują do tego czasu adres Railway. **R2 wypada z drogi
+  krytycznej 2.0.0**: zostają na niej nowy projekt Railway z pustą bazą, nowy projekt Google
+  Cloud (klient Web + klient Android na JEDNYM odcisku, kluczu EAS) i nowy projekt EAS -
+  ani domen, ani D-U-N-S, ani konta Play
+- **przeniesienie będzie OTA, nie nowym APK**: `EXPO_PUBLIC_API_URL` jest wkompilowany
+  w bundle, a `eas update` buduje nowy bundle (krok 0 skilla `wydanie`)
+- **co przeniesienie zostawia otwarte do 4.0.0**: (1) luka CSP z docblocka `staticSite.ts` -
+  strona ma luźniejszą politykę niż panel WYŁĄCZNIE dlatego, że dzielą origin, a rozdział
+  hostów był jej jedynym domknięciem; (2) **linki do kart arkusza zapisane w dzienniku
+  eksportu niosą adres BEZWZGLĘDNY** (`dayExporter` zapisuje `sheetUrl` złożony
+  z `PUBLIC_BASE_URL`), więc po zmianie domeny stary host musi odpowiadać albo linki trzeba
+  przepisać - rozstrzygnięcie należy do 4.0.0
+
 ## Obieg gałęzi (git-flow od 2026-09-08, milestone „Wielofirmowość + SaaS 2.0.0")
 ```
 feature-… → develop → ninerdeck_x_x_x → main        (wydanie planowe)
