@@ -7,9 +7,13 @@
       "policy": "appVersion"
     },
     "updates": {
-      "fallbackToCacheTimeout": 0
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/9f4f9d40-8b76-4e49-a4d1-35ad99247f64"
     },
-    "scheme": ["com.ninerdeck.app", "ninerdeck"],
+    "scheme": [
+      "com.ninerdeck.app",
+      "ninerdeck"
+    ],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -50,6 +54,11 @@
       ],
       "expo-web-browser"
     ],
-    "owner": "tomekklag"
+    "owner": "tomekklag",
+    "extra": {
+      "eas": {
+        "projectId": "9f4f9d40-8b76-4e49-a4d1-35ad99247f64"
+      }
+    }
   }
 }
