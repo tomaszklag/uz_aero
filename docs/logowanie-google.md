@@ -335,13 +335,16 @@ To jest druga powierzchnia i osobna konfiguracja w Google Cloud - nie „przy ok
 2. Identyfikatory klienta: **Web** (weryfikacja `aud` na serwerze i logowanie do
    panelu - zmienna `GOOGLE_WEB_CLIENT_ID`, WYMAGANA: serwer bez niej nie wstaje, a panel
    pobiera ją z publicznej trasy `GET /admin/api/auth/google-client`, żeby narysować
-   przycisk) oraz **Android** (package `com.tomekklag.uzaero` + odcisk SHA-1
+   przycisk) oraz **Android** (package `com.ninerdeck.app` + odcisk SHA-1
    z poświadczeń EAS - `GOOGLE_ANDROID_CLIENT_ID`, opcjonalna do builda aplikacji);
    **iOS** dopiero gdy pojawi się ta platforma. Dwie zmienne zamiast listy po przecinku,
    bo identyfikator Web ma ROLĘ (jedzie do panelu), a pozycja na liście roli nie niesie.
-   W ekranie zgody OAuth trzeba dodać origin panelu (domenę Railway) do
-   „Authorized JavaScript origins" - bez tego skrypt Google odmówi narysowania przycisku.
-3. Publiczny adres polityki prywatności - wymagany przez ekran zgody.
+   W kliencie Web trzeba dodać origin panelu - od issue #124 `https://app.ninerdeck.pl`
+   (do tego czasu domenę nadaną przez hosting) - do „Authorized JavaScript origins";
+   bez tego skrypt Google odmówi narysowania przycisku.
+3. Publiczny adres polityki prywatności - wymagany przez ekran zgody. Od issue #124 to
+   `https://ninerdeck.pl/prywatnosc.html` (regulamin: `https://ninerdeck.pl/regulamin.html`),
+   a `ninerdeck.pl` stoi na liście „Authorized domains" po weryfikacji w Search Console.
 4. `SEED_ADMIN_EMAIL` na Railway przed uruchomieniem seeda.
 5. **Pusta baza** (decyzja 2026-09-05): nowa usługa Postgres albo wyczyszczona
    dotychczasowa - migracje 1–7 i seed wchodzą na czysto, jedynym kontem jest `admin`,

@@ -533,6 +533,27 @@ Web i adres polityki prywatności w ekranie zgody wskazują adres Railway.
   zapisuje `sheetUrl` jako adres bezwzględny złożony z `PUBLIC_BASE_URL`. Po zmianie domeny
   stary host musi odpowiadać albo trzeba przepisać zapisane linki.
 
+**Przeniesienie wykonane w kodzie 2026-09-16 (issue #124), wcześniej niż 4.0.0** - domena
+kupiona, a hostowana instancja 2.0.0 nie miała jeszcze użytkowników, więc adres dało się
+zmienić bez żadnej zgodności wstecz (decyzja właściciela z tego dnia: „możemy bezpiecznie
+zmienić adres"). Trzy rzeczy z listy wyżej rozstrzygnęły się tak:
+
+- **rozdział hostów NIE bierze się z DNS** - dwie domeny na jednej usłudze podają wszystko
+  pod obydwoma. Domyka go serwer: `PUBLIC_SITE_URL` (`https://ninerdeck.pl`) obok
+  `PUBLIC_BASE_URL` (`https://app.ninerdeck.pl`) włącza `http/hostSplit.ts` - na hoście
+  strony wyłącznie strona (`GET /admin` odsyła na host aplikacji, API odpowiada 404), na
+  każdym innym hoście strony nie ma (`GET /` odsyła na stronę). Bez zmiennej jeden host,
+  jak dotąd; połowiczna konfiguracja = odmowa startu. Luka CSP z `staticSite.ts` jest tym
+  zamknięta (`docs/architektura-panelu-serwer.md` §8.9);
+- **linków do kart nikt nie przepisuje i stary host nie musi odpowiadać** - w dzienniku
+  eksportu nowej instancji nie było kart, o które warto dbać. Rejestr zostaje append-only;
+- **adres w aplikacji zmienia się od razu**: `EXPO_PUBLIC_API_URL=https://app.ninerdeck.pl`
+  w `eas.json`. Przy okazji wyszła usterka ścieżki OTA: `eas update` nie czyta
+  `build.<profil>.env` z `eas.json` i brało zmienne z lokalnego `app/.env`, gdzie adres
+  serwera jest w dev zakomentowany - aktualizacja wysłałaby telefonom bundle z fallbackiem
+  na localhost. Odtąd `npm run update:prod` idzie przez `app/scripts/eas-update.js`, który
+  wstrzykuje profil `production` z `eas.json` do środowiska `eas-cli`.
+
 Do rozstrzygnięcia osobno: czy po wygaszeniu starej instancji **wyciąć backfill z migracji 8**
 (razem z imiennym wyjątkiem na `UPDATE` w `architecture.test.ts`), czy zostawić go jako
 przetestowaną ścieżkę dla ewentualnego klubu przenoszonego z 1.x.

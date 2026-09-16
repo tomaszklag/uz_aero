@@ -34,6 +34,14 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 ## W przygotowaniu
 
+### Nowości
+
+- **Własny adres Ninerdeck**: strona pod `ninerdeck.pl`, panel i aplikacja pod `app.ninerdeck.pl`. Adres nadany przez hosting przestaje obowiązywać.
+
+### Dla testerów
+
+- Aplikacja dostaje nowy adres serwera aktualizacją w tle - przy następnym uruchomieniu z internetem. Nowa instalacja nie jest potrzebna.
+
 ## 2.0.0 (build 3) · 16 września 2026
 
 ### Nowości
@@ -132,11 +140,10 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 ### 4.0.0 · termin do ustalenia
 
-> Aplikacja w sklepie Google Play i własny adres Ninerdeck.
+> Aplikacja w sklepie Google Play.
 
 - [ ] Publikacja u Google - instalacja ze sklepu i logowanie dowolnym kontem, bez listy testerów
 - [ ] Wymagane przez sklep: karta bezpieczeństwa danych i ścieżka usunięcia konta
-- [ ] Własna domena: strona pod `ninerdeck.pl`, panel i aplikacja pod `app.ninerdeck.pl`
 
 ### Dalej
 

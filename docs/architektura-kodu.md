@@ -148,7 +148,9 @@ czytelnik widzi wyłącznie aktualny stan, historię rewizji trzyma `export_log`
 a `GET /sheets/:tab` (autoryzowane, `SheetQueries` + osobny `SheetsReadPort` -
 odczyt po nazwie istnieje tylko przy własnej bazie, Google „czyta się" samym
 `sheet_url`) serwuje je pod linkiem z `export_log`. Eksport jest WŁĄCZONY
-domyślnie; `PUBLIC_BASE_URL` w env ustawia bazę linków widzianą z telefonu.
+domyślnie; `PUBLIC_BASE_URL` w env ustawia bazę linków widzianą z telefonu - od issue #124
+jest to adres PANELU I API (`https://app.ninerdeck.pl`), bo strona stoi na osobnym hoście
+(`PUBLIC_SITE_URL`, rozdział w `http/hostSplit.ts`; `docs/architektura-panelu-serwer.md` §8.9).
 Adapter Google pozostaje przyszłą podmianą `SheetsPort` w composition root -
 eksporter, treść kart i dziennik nie drgną. Zastrzeżenie: link z ekranu 11 otwarty
 w przeglądarce telefonu dostanie 401 (zasób autoryzowany) - klikalny „na

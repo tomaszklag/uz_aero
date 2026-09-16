@@ -44,12 +44,15 @@ const SITE_DIST = fileURLToPath(new URL('../../../../../site/dist', import.meta.
  * bo administrator loguje się do niego z konta - strona nie ma sesji, ciasteczka ani pola,
  * w które ktokolwiek cokolwiek wpisuje).
  *
- * **Zostaje jedno ryzyko i jest nazwane**: strona stoi na TYM SAMYM origin co panel, więc
- * `'unsafe-inline'` jest tu warte tyle, ile pewność, że w `site/dist` nie ma cudzej treści.
- * Dziś jej nie ma - wszystko wchodzi z `site/src`, `docs/` i `design/`. Właściwym
- * domknięciem jest osobna nazwa hosta dla strony po podpięciu własnej domeny
- * (`ninerdeck.pl` dla strony, `app.ninerdeck.pl` dla panelu i API); ciasteczko panelu jest
- * `httpOnly` i `SameSite=Strict`, co ryzyko ogranicza, ale go nie kasuje.
+ * **Ryzyko tej luźniejszej polityki jest nazwane i ma domknięcie.** Dopóki strona stoi na
+ * TYM SAMYM origin co panel, `'unsafe-inline'` jest tu warte tyle, ile pewność, że
+ * w `site/dist` nie ma cudzej treści (dziś jej nie ma - wszystko wchodzi z `site/src`,
+ * `docs/` i `design/`), a ciasteczko panelu `httpOnly` + `SameSite=Strict` ryzyko ogranicza,
+ * lecz nie kasuje. Domknięciem jest OSOBNY HOST strony - i to serwer musi go wyegzekwować,
+ * bo dwie domeny na jednej usłudze same niczego nie rozdzielają: `PUBLIC_SITE_URL`
+ * (`https://ninerdeck.pl`) obok `PUBLIC_BASE_URL` (`https://app.ninerdeck.pl`) włącza
+ * `http/hostSplit.ts`, który na hoście strony podaje wyłącznie stronę, a na każdym innym
+ * strony nie podaje wcale (issue #124). Bez tej zmiennej ryzyko stoi, jak opisane wyżej.
  */
 const SITE_CSP =
   "default-src 'self'; " +

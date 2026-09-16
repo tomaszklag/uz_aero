@@ -101,6 +101,7 @@ import { PgSheets } from './infrastructure/pg/common/sheetsRepo.ts';
 import { FsPhaseTimeline } from './infrastructure/traces/fsPhaseTimeline.ts';
 import { FsTraceSink } from './infrastructure/traces/fsTraceSink.ts';
 import { FsTraceSource } from './infrastructure/traces/fsTraceSource.ts';
+import { hostSplitFrom } from './http/hostSplit.ts';
 import { buildServer } from './http/server.ts';
 
 const env = z
@@ -108,8 +109,20 @@ const env = z
     DATABASE_URL: z.string().url(),
     JWT_SECRET: z.string().min(32),
     PORT: z.coerce.number().int().positive().default(3000),
-    /** Adres serwera widziany Z TELEFONU - baza linków do kart (`GET /sheets/:tab`). */
+    /**
+     * Adres PANELU I API widziany z zewnątrz (produkcja: `https://app.ninerdeck.pl`) -
+     * baza linków do kart arkusza klikanych z telefonu, a przy rozdziale hostów także
+     * cel przekierowania `/admin` z hosta strony.
+     */
     PUBLIC_BASE_URL: z.string().url().optional(),
+    /**
+     * Adres STRONY PUBLICZNEJ, gdy stoi na innym hoście niż panel i API (produkcja:
+     * `https://ninerdeck.pl`; issue #124). Włącza rozdział hostów (`http/hostSplit.ts`):
+     * strona wyłącznie tu, panel i API wyłącznie pod `PUBLIC_BASE_URL`. Nieustawiona =
+     * jeden host dla wszystkiego (dev, usługa bez własnej domeny). Relację obu adresów
+     * sprawdza `hostSplitFrom` niżej i to ona odmawia startu przy połowicznej konfiguracji.
+     */
+    PUBLIC_SITE_URL: z.string().url().optional(),
     /** Katalog zrzutu śladu kalibracyjnego (faza 5) - NDJSON per sesja. */
     TRACES_DIR: z.string().default('./traces'),
     /** `1` = serwer stoi ZA proxy TLS (Railway itp.) i wierzy `X-Forwarded-*`. */
@@ -190,8 +203,9 @@ const identities = new PgExternalIdentitiesRepo(db);
 // w `exported_sheets` → wpis w `export_log` → link w sync-status, serwowany pod
 // `GET /sheets/:tab`. Adapter Google (konto serwisowe, zmienne `GOOGLE_*`
 // w `.env.example`) będzie podmianą TEGO SAMEGO portu w tym miejscu.
-// `PUBLIC_BASE_URL` = adres, pod którym telefony widzą serwer - linki do kart
-// muszą być klikalne z telefonu, nie z localhosta serwera.
+// `PUBLIC_BASE_URL` = adres panelu i API widziany z zewnątrz - linki do kart muszą być
+// klikalne z telefonu, nie z localhosta serwera. Przy rozdziale hostów (issue #124) to
+// jest host APLIKACJI, nie strony: trasa `/sheets/…` na hoście strony nie istnieje.
 const sheets = new PgSheets(db, env.PUBLIC_BASE_URL ?? `http://localhost:${env.PORT}`, clock);
 // Eksporter dostaje projekcję sesji, bo karta jest DOBĄ SAMOLOTU (§4.7): jej skład -
 // które zmiany przejęły maszynę tego dnia i czy zostały zdane - czyta się z `sessions`,
@@ -497,6 +511,9 @@ const app = await buildServer({
   ),
 }, {
   trustProxy: env.TRUST_PROXY === '1',
+  // Rozdział hostów strona ↔ panel+API (issue #124). Rzuca - czyli serwer nie wstaje -
+  // gdy `PUBLIC_SITE_URL` stoi bez `PUBLIC_BASE_URL` albo oba wskazują ten sam host.
+  hostSplit: hostSplitFrom(env.PUBLIC_SITE_URL, env.PUBLIC_BASE_URL),
 });
 
 await app.listen({ port: env.PORT, host: '0.0.0.0' });

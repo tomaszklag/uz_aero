@@ -3229,6 +3229,48 @@ krytycznej 2.0.0.
   z `PUBLIC_BASE_URL`), więc po zmianie domeny stary host musi odpowiadać albo linki trzeba
   przepisać - rozstrzygnięcie należy do 4.0.0
 
+## Własna domena WYKONANA W KODZIE (issue #124, 2026-09-16, gałąź `feature-124-wlasna-domena`)
+Domena kupiona 2026-09-16, a hostowana instancja 2.0.0 nie miała jeszcze użytkowników -
+decyzja właściciela: „możemy bezpiecznie zmienić adres". Przeniesienie zeszło więc z 4.0.0
+i odbyło się BEZ żadnej zgodności wstecz: bez trzymania domeny Railway, bez przepisywania
+linków do kart, bez czekania z adresem w `eas.json`. Reguły obowiązujące odtąd:
+- **ROZDZIAŁ HOSTÓW ROBI SERWER, NIE DNS**: dwie domeny wskazujące na jedną usługę podają
+  wszystko pod obydwoma, więc `ninerdeck.pl/admin/` otwierałoby panel na origin strony
+  z `'unsafe-inline'` - luka CSP z docblocka `staticSite.ts` NIE zamyka się sama.
+  Zamyka ją `server/src/http/hostSplit.ts`: `PUBLIC_SITE_URL` (`https://ninerdeck.pl`)
+  obok `PUBLIC_BASE_URL` (`https://app.ninerdeck.pl`) włącza hook `onRequest` na całej
+  instancji (przed trasami, jak strażnik CSRF). Host STRONY: pliki strony przechodzą,
+  `GET /admin*` → 301 na host aplikacji, API i trasy telefonu → **404, nie 401** (401
+  potwierdzałoby, że trasa istnieje - ta sama zasada, co przy cudzym klubie). KAŻDY INNY
+  host (aplikacja, domena hostingu, localhost): pliki strony → 301 na stronę, reszta
+  przechodzi. `/health` przechodzi wszędzie (sonda hostingu nie zna własnej domeny)
+- **rodzaj trasy czyta się z WZORCA routera** (`request.routeOptions.url`: `/*` strona,
+  `/admin` + `/admin/*` panel), nie z prefiksu ścieżki - `/admin/api/…` zaczyna się od
+  `/admin/`, a jest API. Hook nie rejestruje tras, więc `tenantIsolation.test.ts` go nie
+  widzi; własne testy: `server/test/hostSplit.test.ts` (czysta tabela + `inject` z `Host`)
+- **bez `PUBLIC_SITE_URL` jeden host, jak dotąd** (dev, testy). `PUBLIC_SITE_URL` bez
+  `PUBLIC_BASE_URL` albo o tym samym hoście = ODMOWA STARTU (`hostSplitFrom` rzuca):
+  połowiczny rozdział wyglądałby jak działający serwer
+- **`PUBLIC_BASE_URL` znaczy odtąd „adres PANELU I API"**, nie „adres serwera widziany
+  z telefonu": to host aplikacji jest bazą linków do kart, bo `/sheets/…` na hoście strony
+  nie istnieje
+- **`eas update` NIE CZYTA `build.<profil>.env` z `eas.json`** - to pole obsługuje tylko
+  `eas build`. Do #124 `npm run update:prod` brało `EXPO_PUBLIC_*` z lokalnego `app/.env`
+  (adres serwera ZAKOMENTOWANY, klient Google ze starego projektu) i wysłałoby telefonom
+  bundle z fallbackiem `apiBaseUrl()` na `http://localhost:3000`. Odtąd skrypt idzie przez
+  `app/scripts/eas-update.js`: czyta profil `production` z `eas.json`, odmawia bez adresu
+  `https://` i bez klienta Google (`eas-profile-env.js`, z testami) i wstrzykuje komplet do
+  środowiska `eas-cli` - zmienne procesu wygrywają z plikami `.env` Expo. `eas.json` jest
+  JEDYNYM źródłem adresu dla builda I OTA; `app/.env` służy wyłącznie Metro
+- **adres produkcyjny aplikacji: `https://app.ninerdeck.pl`** (`eas.json`, przybite
+  testem `easProfileEnv.test.ts`). Zmiana adresu = OTA (bundle), nie nowy APK
+- po stronie właściciela: dwie domeny na usłudze Railway (CNAME + TXT dla każdej, apex
+  przez CNAME flattening/ALIAS albo Cloudflare z SSL „Full"; Hobby = limit 2 domen),
+  zmienne `PUBLIC_SITE_URL`/`PUBLIC_BASE_URL`, w Google Cloud origin
+  `https://app.ninerdeck.pl` w kliencie Web, `ninerdeck.pl` w Authorized domains
+  (Search Console) i polityka pod `https://ninerdeck.pl/prywatnosc.html` - komplet
+  w README „Wdrożenie: Railway"
+
 ## Obieg gałęzi (git-flow od 2026-09-08, milestone „Wielofirmowość + SaaS 2.0.0")
 ```
 feature-… → develop → ninerdeck_x_x_x → main        (wydanie planowe)

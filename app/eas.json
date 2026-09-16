@@ -21,7 +21,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://uzaeroserver-production-a84b.up.railway.app",
+        "EXPO_PUBLIC_API_URL": "https://app.ninerdeck.pl",
         "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "552018567053-d1kvqatkc1mh5mg5kkdssg1cr20tv6ha.apps.googleusercontent.com"
       }
     }
