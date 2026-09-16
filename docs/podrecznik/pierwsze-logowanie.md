@@ -15,7 +15,7 @@
 
 ## Gdy zgłoszenie zostało odrzucone
 
-Aplikacja pokazuje powód wpisany przez administratora i chwilę decyzji - powód jest w panelu wymagany właśnie dlatego, że czytasz go tutaj. Skontaktuj się z klubem. **DOŁĄCZ INNYM KODEM** pozwala zgłosić się do innego klubu, a **ZALOGUJ INNYM KONTEM** - tym samym kodem z innego adresu, na przykład klubowego, jeśli tego dotyczył powód. Ponowne wpisanie tego samego kodu decyzji nie obejdzie - cofnąć ją może wyłącznie klub.
+Aplikacja pokazuje powód wpisany przez administratora i chwilę decyzji - powód jest w panelu wymagany właśnie dlatego, że czytasz go tutaj. Skontaktuj się z klubem. **DOŁĄCZ INNYM KODEM** pozwala zgłosić się do innego klubu, a **Zaloguj innym kontem Google** - tym samym kodem z innego adresu, na przykład klubowego, jeśli tego dotyczył powód. Ponowne wpisanie tego samego kodu decyzji nie obejdzie - cofnąć ją może wyłącznie klub.
 
 @screen 00d-odrzucone "Powód wpisany przez administratora"
 
@@ -48,5 +48,5 @@ Wylogowanie jest w [ustawieniach](ustawienia), na samym końcu. Nie zadziała, d
 - **Ekran „czeka na zatwierdzenie" nie zmienia się od dawna** → zgłoszenie jest już u administratora i nie trzeba go wysyłać drugi raz; przypomnij się w klubie. Zgłoszenie nie wygasa samo. Jeśli po dłuższym czasie wróci ekran logowania, zaloguj się ponownie kontem Google - po zatwierdzeniu wejdziesz od razu.
 - **„Nie znam takiego kodu"** → kod jest przepisany z błędem, został wymieniony albo klub wyłączył dołączanie kodem. Poproś administratora o aktualny; serwer odpowiada tak samo w każdym z tych przypadków, więc z samej odpowiedzi nie wynika, który to.
 - **„Za dużo prób"** → kodu nie da się zgadywać: po kilku nieudanych próbach aplikacja każe odczekać kilkanaście minut i mówi, ile.
-- **Aplikacja mówi, że konto jest wyłączone** → administrator dezaktywował konto w panelu; sprawa do wyjaśnienia w klubie.
+- **Aplikacja mówi, że konto jest wyłączone** → administrator wyłączył Twoje członkostwo w tym klubie; sprawa do wyjaśnienia w klubie. W pozostałych swoich klubach latasz dalej.
 - **Nie mogę się wylogować ani użyć „Nie pamiętam PIN"** → na telefonie czekają niewysłane zapisy. Wróć do zasięgu, poczekaj, aż plakietka OFFLINE zniknie, i spróbuj ponownie.

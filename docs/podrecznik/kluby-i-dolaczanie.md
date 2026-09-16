@@ -2,13 +2,11 @@
 
 > Jeden serwer, wiele klubów: każdy klub widzi wyłącznie swoją flotę, swoich pilotów i swój dziennik. Do klubu dołącza się kodem klubu, a o przyjęciu decyduje administrator klubu.
 
-<!-- STAN NA 2026-09-10 (epik A: 2026-09-08; przepisany 2026-09-09 pod JEDNĄ drogę
-     dołączenia - kod klubu; sprawdzony po epiku D). Serwer robi już wszystko, co opisuje
-     ta strona: kod klubu, zgłoszenia, decyzje, kod klubu w panelu, moduł Organizacje.
-     SPECYFIKACJĄ zostają jeszcze EKRANY: panel (epik E, issue #101) i aplikacja pilota
-     (epik F, issue #102) - do ich wdrożenia zdania o tym, gdzie co stoi i jak wygląda,
-     opisują makiety, nie działający produkt. Przy wdrożeniu każdego epiku: sprawdzić
-     tę stronę. -->
+<!-- STAN NA 2026-09-16. Epiki A-F wdrożone i zmergowane, więc ta strona opisuje
+     DZIAŁAJĄCY produkt, nie makiety: kod klubu, zgłoszenia i decyzje, kolejka i kod
+     klubu w panelu, wybór klubu, moduł Organizacje oraz przełącznik klubu w aplikacji.
+     Napisy przycisków sprawdzone w kodzie 2026-09-16 (DOŁĄCZ, SPRAWDŹ PONOWNIE,
+     DOŁĄCZ INNYM KODEM). Przy każdej zmianie tych ekranów: sprawdzić tę stronę. -->
 
 ## Klub, osoba, członkostwo
 
@@ -52,7 +50,7 @@ Pilot, który **odchodzi z klubu**, nie kasuje się z listy: administrator wył�
 
 @panel piloci-lista "Zgłoszenia nad listą członków" | piloci-zgloszenie "Rozpatrzenie zgłoszenia: kod pilota i rola" | piloci-kod-klubu "Kod klubu: wygeneruj nowy albo wyłącz"
 
-Administrator w więcej niż jednym klubie po zalogowaniu do panelu wybiera klub z listy; nazwa klubu stoi potem w kolumnie bocznej i jest przyciskiem zmiany klubu. Panel pracuje w jednym klubie na jedno okno przeglądarki.
+Administrator w więcej niż jednym klubie po zalogowaniu do panelu wybiera klub z listy; nazwa klubu stoi potem na szczycie kolumny bocznej i jest przyciskiem zmiany klubu. Przy jednym klubie nazwa też tam stoi - odpowiada na „czyj to dziennik" przy każdym wklejonym linku - ale nie jest linkiem, bo nie ma z czego wybierać. Panel pracuje w jednym klubie na jedno okno przeglądarki.
 
 @panel 00a-wybor-klubu "Wybór klubu po zalogowaniu do panelu"
 
