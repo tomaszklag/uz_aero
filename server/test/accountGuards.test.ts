@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - zakazy przy zmianach na kontach (`domain/accountGuards.ts`).
+ * Ninerdeck (serwer) - zakazy przy zmianach na kontach (`domain/accountGuards.ts`).
  *
  * Testy bez bazy i bez HTTP, bo reguła jest czysta: wejściem jest „kto, komu, z jakiej
  * roli na jaką i ilu jest jeszcze administratorów". Wersja przez `app.inject` żyje

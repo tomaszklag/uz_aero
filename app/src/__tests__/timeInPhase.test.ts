@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test czasu pracy silnika i czasu lotu w oknie.
+ * Ninerdeck - test czasu pracy silnika i czasu lotu w oknie.
  *
  * Ten plik istnieje przez konkretną awarię (2026-08-05). Ekran 06 liczył czas pracy
  * silnika wyłącznie z `state.legs`, a `projectSession` obsługuje `manual_log_entry`

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - NOTATKI SESJI na ekranie 10 (mockup `design/10-statystyki.html`, karta
+ * Ninerdeck - NOTATKI SESJI na ekranie 10 (mockup `design/10-statystyki.html`, karta
  * „Notatki"; issue #40 pkt 5).
  *
  * ══ PO CO TO ISTNIEJE ══

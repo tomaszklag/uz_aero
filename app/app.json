@@ -1,16 +1,19 @@
 {
   "expo": {
-    "name": "UZ Aero",
-    "slug": "uz-aero",
-    "version": "1.1.0",
+    "name": "Ninerdeck",
+    "slug": "ninerdeck",
+    "version": "2.0.0",
     "runtimeVersion": {
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/7f130401-7aa0-48bf-87a0-0841f3f0231d",
-      "fallbackToCacheTimeout": 0
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/9f4f9d40-8b76-4e49-a4d1-35ad99247f64"
     },
-    "scheme": ["com.tomekklag.uzaero", "uzaero"],
+    "scheme": [
+      "com.ninerdeck.app",
+      "ninerdeck"
+    ],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -27,8 +30,8 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.tomekklag.uzaero",
-      "versionCode": 2,
+      "package": "com.ninerdeck.app",
+      "versionCode": 3,
       "permissions": [
         "android.permission.POST_NOTIFICATIONS",
         "android.permission.ACCESS_COARSE_LOCATION",
@@ -51,11 +54,11 @@
       ],
       "expo-web-browser"
     ],
+    "owner": "tomekklag",
     "extra": {
       "eas": {
-        "projectId": "7f130401-7aa0-48bf-87a0-0841f3f0231d"
+        "projectId": "9f4f9d40-8b76-4e49-a4d1-35ad99247f64"
       }
-    },
-    "owner": "tomekklag"
+    }
   }
 }

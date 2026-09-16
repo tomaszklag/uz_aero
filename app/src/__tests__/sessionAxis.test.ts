@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test OSI CZASU sesji (ekran 10, issue #38 pkt 7 i 8; issue #40 pkt 1, 3, 4, 6).
+ * Ninerdeck - test OSI CZASU sesji (ekran 10, issue #38 pkt 7 i 8; issue #40 pkt 1, 3, 4, 6).
  *
  * Oś zastąpiła tabelę lotów i opisuje CAŁY bieg silnika - od issue #40 razem
  * z kołowaniem, bez kolumny ołówka i bez plakietki „RĘCZNIE".

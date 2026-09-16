@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - paginacja KEYSET (kursorowa), nigdy `OFFSET`.
+ * Ninerdeck (serwer) - paginacja KEYSET (kursorowa), nigdy `OFFSET`.
  *
  * **Powód jest operacyjny, nie estetyczny.** Tabele, po których chodzi panel, rosną
  * W TRAKCIE przeglądania - telefony dosyłają outboxy, a serwer odświeża projekcje.

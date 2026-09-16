@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * UZ Aero - mechaniczna część wydania: podbicie wersji i przepisanie changeloga.
+ * Ninerdeck - mechaniczna część wydania: podbicie wersji i przepisanie changeloga.
  *
  *   node .claude/skills/wydanie/scripts/bump-release.mjs [--dry-run] [--version 1.2.0]
  *

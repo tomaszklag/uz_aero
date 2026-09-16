@@ -1,8 +1,8 @@
 /**
- * UZ Aero - AppText
+ * Ninerdeck - AppText
  *
  * Typografia oparta wyłącznie na tokenach motywu; warianty pokrywają całą skalę
- * `@uzaero/tokens`. Reguła §6 (docs/_main.md.txt): w motywie jasnym podbijamy
+ * `@ninerdeck/tokens`. Reguła §6 (docs/_main.md.txt): w motywie jasnym podbijamy
  * wagę cyfr - realizujemy to zamianą rodziny JetBrains Mono na cięższą dla
  * wariantów "cyfrowych" (timer / param / mono).
  */

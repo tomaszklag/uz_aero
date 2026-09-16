@@ -1,5 +1,5 @@
 /**
- * UZ Aero - KAFELEK SESJI: jeden model widoku dla „Mój dzień" (01) i „Poprzednich
+ * Ninerdeck - KAFELEK SESJI: jeden model widoku dla „Mój dzień" (01) i „Poprzednich
  * dni" (12).
  *
  * DLACZEGO WSPÓLNY (issue #42, 2026-08-13): oba ekrany opisują to samo - jeden bieg
@@ -57,6 +57,16 @@ export interface SessionCardVm {
    * bez prawa do poprawek, z zaległymi zapisami wstrzymanymi w telefonie.
    */
   adminClosed: boolean;
+  /**
+   * KLUB, w którym odbyła się operacja (mockup 01e) - plakietka na prawej krawędzi
+   * nagłówka kafelka. `null` = pilot ma jedno członkostwo albo klub jest nieznany.
+   *
+   * Pole stoi TUTAJ, a nie w propsie ekranu, z tego samego powodu, co `signature`:
+   * kafelek ma na 01 i 12 jeden kształt (issue #42), a wartość spoza projekcji
+   * wstrzykuje się funkcją (`clubOf`). Przekazana obok modelu rozjechałaby oba ekrany
+   * przy pierwszej zmianie reguły - a regułą jest tu „wyłącznie przy >1 członkostwie".
+   */
+  club: string | null;
 }
 
 /**

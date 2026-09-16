@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy wiersza listy lotnisk (`ui/components/input/airfieldRow.ts`).
+ * Ninerdeck - testy wiersza listy lotnisk (`ui/components/input/airfieldRow.ts`).
  *
  * Wiersz niesie jedną rzecz, którą łatwo pokazać źle: KURS PASA. Katalog trzyma kurs
  * geograficzny (mapa śladu obraca nim pas na siatce zorientowanej na północ geograficzną),

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - lista kont pilotów (`A06`) i DANE REFERENCYJNE dla filtrów.
+ * Ninerdeck (serwer) - lista kont pilotów (`A06`) i DANE REFERENCYJNE dla filtrów.
  *
  * Ta trasa ma dwóch odbiorców i to jest w niej najważniejsze. Pierwszy: ekran kont,
  * który potrzebuje statusu, roli i liczników. Drugi: filtry innych list panelu -
@@ -50,7 +50,8 @@ export class AdminPilotQueries {
     private readonly clock: Clock,
   ) {}
 
-  async list(query: PilotQuery): Promise<AdminPilotPage> {
+  /** `orgId` = klub z sesji panelu (wielofirmowość): lista, kafle i chipy opisują TEN klub. */
+  async list(orgId: string, query: PilotQuery): Promise<AdminPilotPage> {
     const month = monthOf(this.clock.now());
     const fromMs = query.fromMs ?? month.fromMs;
     const toMs = query.toMs ?? month.toMs;
@@ -60,9 +61,11 @@ export class AdminPilotQueries {
     // Chip z liczbą jest obietnicą „tyle zobaczysz", więc nie wolno mu nosić liczby
     // kafla; kafel opisuje klub, więc nie wolno mu drgać przy wpisywaniu frazy.
     const [page, counts, scopes] = await Promise.all([
-      this.pilots.list(this.db, { ...query, fromMs, toMs }),
-      this.pilots.counts(this.db, { fromMs, toMs }),
-      this.pilots.scopeCounts(this.db, { ...(query.search === undefined ? {} : { search: query.search }) }),
+      this.pilots.list(this.db, orgId, { ...query, fromMs, toMs }),
+      this.pilots.counts(this.db, orgId, { fromMs, toMs }),
+      this.pilots.scopeCounts(this.db, orgId, {
+        ...(query.search === undefined ? {} : { search: query.search }),
+      }),
     ]);
 
     return {

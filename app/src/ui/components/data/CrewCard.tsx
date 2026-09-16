@@ -1,5 +1,5 @@
 /**
- * UZ Aero - CrewCard i CrewGrid (`.crew-card` / `.crew-grid` z mockupu 10)
+ * Ninerdeck - CrewCard i CrewGrid (`.crew-card` / `.crew-grid` z mockupu 10)
  *
  * Kto latał i z jakim wynikiem - jedna karta na rolę, dwie obok siebie.
  *

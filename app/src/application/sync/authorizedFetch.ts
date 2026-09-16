@@ -1,5 +1,5 @@
 /**
- * UZ Aero - wspólny wzorzec ODCZYTU z serwera pod tokenem (§3.0).
+ * Ninerdeck - wspólny wzorzec ODCZYTU z serwera pod tokenem (§3.0).
  *
  * Świeży token → wywołanie → przy 401 JEDNA rotacja i ponowienie. Każdy inny
  * nieszczęśliwy koniec (offline, martwy refresh, odmowa merytoryczna) zwija się

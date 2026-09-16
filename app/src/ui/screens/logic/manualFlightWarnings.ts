@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ostrzeżenia o nieścisłościach wpisu ręcznego (krok 4, ekran 15C).
+ * Ninerdeck - ostrzeżenia o nieścisłościach wpisu ręcznego (krok 4, ekran 15C).
  *
  * Ostrzeżenie odpowiada na pytanie „czy te dane wyglądają na prawdziwe", nie „czy
  * wolno je zapisać" - na to drugie odpowiada `manualFlightStepBlocker`. Stąd twarda

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: DZIENNIK, poziom 1 - flota w zakresie dat (`#/dziennik`).
+ * Ninerdeck - panel 2.0: DZIENNIK, poziom 1 - flota w zakresie dat (`#/dziennik`).
  *
  * Lista obejmuje CAŁĄ flotę, także maszyny, które w zakresie nie latały: wiersz zer
  * jest odpowiedzią, po którą się przyszło („czy SP-KLM w ogóle ruszył w sierpniu").
@@ -99,7 +99,7 @@ export function LogbookScreen() {
 
   return (
     <>
-      <PageHead title="DZIENNIK" />
+      <PageHead title="Dziennik" />
 
       <div className="filters">
         <DateRange range={range} now={now} onChange={setRange} />

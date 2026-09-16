@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - trasy operacji serwisowych (`/admin/api/maintenance/*`, mockup `A11`).
+ * Ninerdeck (serwer) - trasy operacji serwisowych (`/admin/api/maintenance/*`, mockup `A11`).
  *
  * Cienkie jak reszta repo: zod → zapytanie/komenda → status.
  *
@@ -58,7 +58,7 @@ export function registerAdminMaintenanceRoutes(
     app,
     gate,
     { method: 'GET', url: '/maintenance/projections/compare', capability: 'maintenance.run' },
-    async (_req, reply) => reply.send(await queries.compareProjections()),
+    async (_req, reply, actor) => reply.send(await queries.compareProjections(actor.orgId)),
   );
 
   adminRoute(
@@ -89,7 +89,7 @@ export function registerAdminMaintenanceRoutes(
     app,
     gate,
     { method: 'GET', url: '/maintenance/refresh-tokens', capability: 'accounts.manage' },
-    async (_req, reply) => reply.send(await queries.refreshTokens()),
+    async (_req, reply, actor) => reply.send(await queries.refreshTokens(actor.orgId)),
   );
 
   adminRoute(

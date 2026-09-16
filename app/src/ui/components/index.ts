@@ -1,5 +1,5 @@
 /**
- * UZ Aero - Design System: prymitywy i komponenty wielokrotnego użytku.
+ * Ninerdeck - Design System: prymitywy i komponenty wielokrotnego użytku.
  *
  * Zasada: ekran nie definiuje własnych „kart", „chipów" ani „przycisków" - jeśli
  * czegoś brakuje, dokładamy to TUTAJ i używamy wszędzie. Dzięki temu zmiana wzorca
@@ -77,6 +77,7 @@ export * from './sheets/OilSheet';
 export * from './sheets/DropSheet';
 export * from './sheets/BoardingSheet';
 export * from './sheets/JumperDefaultsSheet';
+export * from './sheets/JoinClubSheet';
 export * from './sheets/ManualEventSheet';
 // `ManualEntrySheet` SKASOWANY (przebudowa 15, 2026-08-16) - komponent po usuniętym
 // ekranie 08, z krokiem 10 minut i bez wpisu godziny z klawiatury. Czasy wpisu

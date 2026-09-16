@@ -1,5 +1,5 @@
 /**
- * UZ Aero - model widoku ekranu 09B/09C „Zdaj samolot"
+ * Ninerdeck - model widoku ekranu 09B/09C „Zdaj samolot"
  * (`design/09b-zdaj-samolot.html`, `design/09c-zdaj-bez-lotu.html`, §3.6).
  *
  * Ekran kończy pracę z JEDNĄ maszyną - i to jest jedyne miejsce w nowym flow, w którym

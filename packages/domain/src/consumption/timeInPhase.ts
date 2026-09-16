@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ile silnik pracował, a ile samolot leciał, w DOWOLNYM oknie czasu.
+ * Ninerdeck - ile silnik pracował, a ile samolot leciał, w DOWOLNYM oknie czasu.
  *
  * ══ DLACZEGO TEN MODUŁ POWSTAŁ ══
  * Analityka zużycia potrzebuje mianownika: „ile silnik pracował między dwoma odczytami

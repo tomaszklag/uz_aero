@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ActionButton
+ * Ninerdeck - ActionButton
  *
  * Jeden przycisk na wszystkie akcje z mockupów, z trzema rzeczami, które w kokpicie
  * nie są ozdobnikiem:

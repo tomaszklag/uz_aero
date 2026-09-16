@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - kształt wiersza tabeli `sessions` i jego mapowanie na `SessionRow`.
+ * Ninerdeck (serwer) - kształt wiersza tabeli `sessions` i jego mapowanie na `SessionRow`.
  *
  * Wydzielone z `sessionsProjection.ts`, bo od przekroju 2 panelu czyta tę tabelę DRUGI
  * adapter (`admin/sessionsRepo.ts` - lista dni ze złączeniami). Dwie kopie mapowania
@@ -11,12 +11,13 @@
  * §1.1): panel widzi wyłącznie DTO, warstwa aplikacji - `SessionRow`.
  */
 
-import { isOperationType } from '@uzaero/domain';
+import { isOperationType } from '@ninerdeck/domain';
 
 import type { SessionRow } from '../../application/common/ports.ts';
 
 export interface SessionDbRow {
   session_uuid: string;
+  org_id: string;
   aircraft_id: string;
   pic_id: string;
   dual_id: string | null;
@@ -67,6 +68,7 @@ export interface SessionDbRow {
 export const sessionColumns = (alias: string): string =>
   [
     'session_uuid',
+    'org_id',
     'aircraft_id',
     'pic_id',
     'dual_id',
@@ -128,6 +130,7 @@ export function toSessionRow(r: SessionDbRow): SessionRow {
   }
   return {
     sessionUuid: r.session_uuid,
+    orgId: r.org_id,
     aircraftId: r.aircraft_id,
     picId: r.pic_id,
     dualId: r.dual_id,

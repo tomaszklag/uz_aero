@@ -1,5 +1,5 @@
 /**
- * UZ Aero - prefill arkuszy skokowych (issue #28).
+ * Ninerdeck - prefill arkuszy skokowych (issue #28).
  *
  * Zgłoszenie z urządzenia: pilot zapisał załadunek przed uruchomieniem silnika, po
  * uruchomieniu otworzył „Załadunek" jeszcze raz i zobaczył same zera. Arkusz 05i

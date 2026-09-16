@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - naruszenie UNIKALNOŚCI zgłoszone przez bazę (SQLSTATE `23505`)
+ * Ninerdeck (serwer) - naruszenie UNIKALNOŚCI zgłoszone przez bazę (SQLSTATE `23505`)
  * → nazwa pola formularza.
  *
  * ══ DLACZEGO TO ISTNIEJE OBOK SPRAWDZENIA PRZED ZAPISEM ══

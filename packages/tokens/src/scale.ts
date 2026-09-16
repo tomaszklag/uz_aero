@@ -1,5 +1,5 @@
 /**
- * UZ Aero - SKALE NIEZALEŻNE OD MOTYWU.
+ * Ninerdeck - SKALE NIEZALEŻNE OD MOTYWU.
  *
  * Odstępy i promienie nie zmieniają się między motywami: motyw zmienia kolory, nie
  * geometrię. Trzymanie ich osobno od palet sprawia, że dodanie szóstego motywu nie

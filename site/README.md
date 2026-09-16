@@ -1,4 +1,4 @@
-# Strona publiczna UZ Aero
+# Strona publiczna Ninerdeck
 
 Landing, strona pobierania, wydania i podręcznik - to, co widzi pilot, klub i tester,
 zanim zaloguje się do aplikacji. Do 2026-09-07 mieszkało to na GitHub Pages w osobnym

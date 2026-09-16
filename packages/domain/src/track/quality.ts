@@ -1,5 +1,5 @@
 /**
- * UZ Aero - bramka jakości śladu: KTÓRY punkt wchodzi do trasy i dlaczego nie.
+ * Ninerdeck - bramka jakości śladu: KTÓRY punkt wchodzi do trasy i dlaczego nie.
  *
  * Detektor ma już `fixUsable` i ono jest tu źródłem prawdy - ten moduł nie wprowadza
  * własnych progów, tylko NAZYWA powód. Różnica jest wyłącznie w bogactwie odpowiedzi:

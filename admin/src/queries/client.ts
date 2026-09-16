@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: `QueryClient` i jego ustawienia domyślne.
+ * Ninerdeck - panel: `QueryClient` i jego ustawienia domyślne.
  *
  * Panel NIE MA globalnego store'u i to jest decyzja, nie przeoczenie
  * (`docs/architektura-panelu-frontend.md` §4.1): aplikacja pilota trzyma Zustanda,

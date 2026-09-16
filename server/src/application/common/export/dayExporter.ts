@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - eksporter karty arkusza (§4.7).
+ * Ninerdeck (serwer) - eksporter karty arkusza (§4.7).
  *
  * ══ JEDNOSTKĄ KARTY JEST DOBA SAMOLOTU (decyzja 2026-08-07) ══
  * Do 2026-08-07 kartę budowała JEDNA sesja. Po skróceniu sesji (§3.6a) nazwa
@@ -47,7 +47,7 @@
  * czy zdał), bo tabelę lotów i tak trzeba zbudować ze zdarzeń.
  */
 
-import { projectSession, type FlagStatus, type FlagType } from '@uzaero/domain';
+import { projectSession, type FlagStatus, type FlagType } from '@ninerdeck/domain';
 
 import { isEmptySessionRow } from '../mappers/operationFacts.ts';
 
@@ -160,12 +160,15 @@ export class DayExporter {
    * pytanie wołającego brzmi „czy dane tej zmiany są w arkuszu", a odpowiedź
    * „karta ma nową rewizję" byłaby na nie nieprawdziwa.
    */
-  async exportSession(sessionUuid: string): Promise<ExportOutcome> {
-    const row = await this.sessions.get(this.db, sessionUuid);
+  async exportSession(orgId: string, sessionUuid: string): Promise<ExportOutcome> {
+    // Klub OD WOŁAJĄCEGO (token telefonu, aktor panelu, wiersz projekcji) - eksporter
+    // nie wyprowadza go z uuid-a, bo uuid nie jest poświadczeniem (issue #99). Sesja
+    // spoza klubu jest dla niego nieistniejąca: `no_events`.
+    const row = await this.sessions.get(this.db, orgId, sessionUuid);
     if (row == null) return { exported: false, reason: 'no_events' };
     if (row.claimTime == null) return { exported: false, reason: 'no_preflight' };
 
-    return this.exportDay(sheetDay(row.claimTime), row.aircraftId, sessionUuid);
+    return this.exportDay(orgId, sheetDay(row.claimTime), row.aircraftId, sessionUuid);
   }
 
   /**
@@ -173,13 +176,24 @@ export class DayExporter {
    *
    * `requiredSession` (opcjonalna) = sesja, w imieniu której przyszło wywołanie; gdy jest
    * wstrzymana flagą, odmawiamy bez zapisu.
+   *
+   * KLUB karty bierzemy z wierszy projekcji doby (`SessionRow.orgId`) - wszystkie sesje
+   * jednej maszyny należą do jej klubu (niezmiennik ingestu), więc pierwszy wiersz
+   * mówi za wszystkie. Karta jest dokumentem KLUBU (wielofirmowość §3.7): jej zapis,
+   * dziennik rewizji i kody załogi są kodami z członkostw w tym klubie.
    */
   async exportDay(
+    orgId: string,
     day: string,
     aircraftId: string,
     requiredSession?: string,
   ): Promise<ExportOutcome> {
-    const all = await this.sessions.listByAircraftDay(this.db, aircraftId, utcDayRange(day));
+    const all = await this.sessions.listByAircraftDay(
+      this.db,
+      orgId,
+      aircraftId,
+      utcDayRange(day),
+    );
     if (all.length === 0) return { exported: false, reason: 'no_events' };
 
     /*
@@ -208,7 +222,7 @@ export class DayExporter {
     // też status, choć adapter zwraca wyłącznie otwarte - dzięki temu jest TĄ SAMĄ
     // funkcją, co w skrzynce panelu, gdzie na liście stoją również flagi rozwiązane.
     const blockedBy = new Map<string, number[]>();
-    for (const flag of await this.flags.openForAircraft(this.db, aircraftId)) {
+    for (const flag of await this.flags.openForAircraft(this.db, orgId, aircraftId)) {
       if (!blocksExport(flag)) continue;
       for (const uuid of flag.sessionUuids) {
         blockedBy.set(uuid, [...(blockedBy.get(uuid) ?? []), flag.id]);
@@ -227,15 +241,15 @@ export class DayExporter {
 
     const sessions: DaySheetSession[] = [];
     for (const row of included) {
-      const stream = await this.events.sessionEvents(this.db, row.sessionUuid);
+      const stream = await this.events.sessionEvents(this.db, orgId, row.sessionUuid);
       if (stream.length === 0) continue;
       const state = projectSession(stream);
       sessions.push({
         sessionUuid: row.sessionUuid,
         state,
         crew: {
-          pic: await this.codeOf(state.sessionPicId),
-          dual: await this.codeOf(state.dualId),
+          pic: await this.codeOf(orgId, state.sessionPicId),
+          dual: await this.codeOf(orgId, state.dualId),
         },
       });
     }
@@ -250,7 +264,7 @@ export class DayExporter {
         sessionUuid: row.sessionUuid,
         engineStartAt: row.engineStartAt,
         engineStopAt: row.engineStopAt,
-        pic: await this.codeOf(row.picId),
+        pic: await this.codeOf(orgId, row.picId),
         flagIds: blockedBy.get(row.sessionUuid) ?? [],
       });
     }
@@ -260,7 +274,7 @@ export class DayExporter {
     // pustej liście sesji) - zostaje jako zawężenie typu, nie gałąź do przetestowania.
     if (sheet == null) return { exported: false, reason: 'no_events' };
 
-    const url = await this.write(sheet);
+    const url = await this.write(orgId, sheet);
 
     // Wpis do dziennika DOPIERO po udanym zapisie karty - odwrotna kolejność
     // pokazałaby na ekranie 11 link do arkusza, którego nie ma.
@@ -274,8 +288,9 @@ export class DayExporter {
     // session_uuid)`). Blokada obejmuje ten sam klucz co rewizja: parę (doba, samolot).
     const revision = await this.db.transaction(async (tx) => {
       await this.exportLog.lock(tx, day, aircraftId);
-      const next = (await this.exportLog.latestRevision(tx, day, aircraftId)) + 1;
+      const next = (await this.exportLog.latestRevision(tx, orgId, day, aircraftId)) + 1;
       await this.exportLog.appendCard(tx, {
+        orgId,
         day,
         aircraftId,
         sheetUrl: url,
@@ -297,9 +312,9 @@ export class DayExporter {
    * a wszystko inne, co może tu rzucić, jest błędem po naszej stronie i nie ma prawa
    * podawać się za tamto.
    */
-  private async write(sheet: DaySheet): Promise<string> {
+  private async write(orgId: string, sheet: DaySheet): Promise<string> {
     try {
-      return (await this.sheets.writeDaySheet(sheet)).url;
+      return (await this.sheets.writeDaySheet(orgId, sheet)).url;
     } catch (err) {
       throw new SheetsAdapterError(err);
     }
@@ -307,11 +322,13 @@ export class DayExporter {
 
   /**
    * Wiersz sesji pokazuje KODY pilotów (jak ekrany 10/11), a zdarzenia niosą id.
-   * Nieznany id wraca surowy - lepszy techniczny identyfikator niż pusta rubryka
-   * w dokumencie klubu.
+   * Kod jest kodem Z CZŁONKOSTWA w klubie karty (wielofirmowość) - ten sam człowiek
+   * w innym klubie ma inny kod i tamten do tego dokumentu nie należy. Nieznany id
+   * (osoba bez członkostwa tu, konto skasowane) wraca surowy - lepszy techniczny
+   * identyfikator niż pusta rubryka w dokumencie klubu.
    */
-  private async codeOf(pilotId: string | null): Promise<string | null> {
+  private async codeOf(orgId: string, pilotId: string | null): Promise<string | null> {
     if (pilotId == null) return null;
-    return (await this.pilots.findById(pilotId))?.code ?? pilotId;
+    return (await this.pilots.membership(pilotId, orgId))?.code ?? pilotId;
   }
 }

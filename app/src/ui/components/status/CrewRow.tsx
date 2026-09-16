@@ -1,5 +1,5 @@
 /**
- * UZ Aero - CrewRow (`.crew-row` z mockupu 07)
+ * Ninerdeck - CrewRow (`.crew-row` z mockupu 07)
  *
  * Wiersz aktualnej załogi: badge roli, kod pilota dużym mono, opcjonalny znacznik
  * „zalogowany · Ty" i metadane po prawej (od kiedy, block time).

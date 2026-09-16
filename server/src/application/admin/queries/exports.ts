@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - strona ODCZYTU monitora eksportu (`A05`).
+ * Ninerdeck (serwer) - strona ODCZYTU monitora eksportu (`A05`).
  *
  * Odpowiada na jedno pytanie: czy każdy dzień lotny ma aktualny arkusz, a jeśli nie -
  * dlaczego. Dlatego lista jedzie z projekcji sesji, a nie z `export_log`: dzień bez ani
@@ -36,8 +36,8 @@ export class AdminExportQueries {
     private readonly sheets: SheetsReadPort,
   ) {}
 
-  async list(filter: ExportListFilter): Promise<AdminExportPage> {
-    const { items, counts, matched } = await this.exports.list(this.db, filter);
+  async list(orgId: string, filter: ExportListFilter): Promise<AdminExportPage> {
+    const { items, counts, matched } = await this.exports.list(this.db, orgId, filter);
     return {
       items: items.map(exportListItem),
       counts,
@@ -56,24 +56,24 @@ export class AdminExportQueries {
    * zdaniem o świecie zamiast o adresie) i „jak wygląda wiersz PO próbie", żeby panel
    * odświeżył go bez drugiego żądania.
    */
-  async item(sessionUuid: string): Promise<AdminExportListItem | null> {
-    const join = await this.exports.byUuid(this.db, sessionUuid);
+  async item(orgId: string, sessionUuid: string): Promise<AdminExportListItem | null> {
+    const join = await this.exports.byUuid(this.db, orgId, sessionUuid);
     return join == null ? null : exportListItem(join);
   }
 
   /** Historia rewizji jednej karty; `null` = nie ma takiej sesji w projekcji. */
-  async history(sessionUuid: string): Promise<AdminExportHistory | null> {
-    const join = await this.exports.byUuid(this.db, sessionUuid);
+  async history(orgId: string, sessionUuid: string): Promise<AdminExportHistory | null> {
+    const join = await this.exports.byUuid(this.db, orgId, sessionUuid);
     if (join == null) return null;
 
     const item = exportListItem(join);
-    const revisions = await this.exports.history(this.db, sessionUuid);
+    const revisions = await this.exports.history(this.db, orgId, sessionUuid);
 
     // `exported_sheets` trzyma WYŁĄCZNIE treść bieżącą (UPSERT po `tab`), więc ta liczba
     // jest zawsze 0 albo 1 - i o to chodzi. Zestawiona z długością `revisions` jest
     // jedynym miejscem, w którym widać, że dziennik i karta odpowiadają na dwa różne
     // pytania: „co i kiedy poszło" oraz „jak karta wygląda teraz".
-    const sheet = item.tab == null ? null : await this.sheets.readDaySheet(item.tab);
+    const sheet = item.tab == null ? null : await this.sheets.readDaySheet(join.orgId, item.tab);
 
     return {
       sessionUuid,
@@ -98,7 +98,7 @@ export class AdminExportQueries {
    *
    * Istnieje obok `GET /sheets/:tab`, a nie zamiast niej, i to nie jest duplikat trasy.
    * Tamta jest celem linków `export_log.sheet_url` czytanych Z TELEFONU (nagłówek
-   * `Bearer`, ekran 11). Panel loguje się ciasteczkiem `uzaero_admin` o `Path=/admin`,
+   * `Bearer`, ekran 11). Panel loguje się ciasteczkiem `ninerdeck_admin` o `Path=/admin`,
    * które do `/sheets/*` po prostu NIE JEDZIE - poszerzenie ścieżki ciasteczka posłałoby
    * sesję panelu razem z każdym żądaniem telefonu, więc jest odwrotnością tego, co ma
    * osiągnąć. Panel pyta więc o kartę pod swoim prefiksem, a nazwę liczy serwer z sesji,
@@ -107,14 +107,16 @@ export class AdminExportQueries {
    * `null` = nie ma takiej sesji ALBO karta nigdy nie powstała; trasa mapuje oba na 404,
    * bo z punktu widzenia czytelnika to jedna odpowiedź: tej karty nie ma.
    */
-  async sheet(sessionUuid: string): Promise<AdminSheetPreview | null> {
-    const join = await this.exports.byUuid(this.db, sessionUuid);
+  async sheet(orgId: string, sessionUuid: string): Promise<AdminSheetPreview | null> {
+    const join = await this.exports.byUuid(this.db, orgId, sessionUuid);
     if (join == null) return null;
 
     const tab = exportListItem(join).tab;
     if (tab == null) return null;
 
-    const sheet = await this.sheets.readDaySheet(tab);
+    // Karta w kluczu KLUBU sesji (wielofirmowość §3.6) - ta sama nazwa w cudzym klubie
+    // to inny dokument.
+    const sheet = await this.sheets.readDaySheet(join.orgId, tab);
     if (sheet == null) return null;
 
     return { tab: sheet.tab, rows: sheet.rows, updatedAt: sheet.updatedAt.toISOString() };

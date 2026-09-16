@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ile TA sesja POWINNA była spalić i o ile powinien pójść licznik (issue #38).
+ * Ninerdeck - ile TA sesja POWINNA była spalić i o ile powinien pójść licznik (issue #38).
  *
  * ══ PYTANIE, NA KTÓRE TO ODPOWIADA ══
  * „Wpisałem 27 litrów i +1:35 na liczniku - czy to normalne dla tej maszyny po TAKIM

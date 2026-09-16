@@ -1,5 +1,5 @@
 /**
- * UZ Aero - StatGrid (`.fuel-grid-2x2` / `.fuel-cell` z mockupu 10)
+ * Ninerdeck - StatGrid (`.fuel-grid-2x2` / `.fuel-cell` z mockupu 10)
  *
  * Siatka bilansowa: dwie kolumny komórek „etykieta → wielka liczba → jednostka",
  * rozdzielonych włosową linią i dociągniętych do krawędzi karty.

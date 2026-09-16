@@ -1,5 +1,5 @@
 /**
- * UZ Aero - napis wersji w karcie „O aplikacji" (13) - `screens/logic/appVersion.ts`.
+ * Ninerdeck - napis wersji w karcie „O aplikacji" (13) - `screens/logic/appVersion.ts`.
  *
  * Tester ma umieć powiedzieć, którą wersję ma na telefonie, TYM SAMYM zdaniem,
  * którym opisuje wydania `docs/CHANGELOG.md`: „wersja (build N)". Ten sam napis jedzie

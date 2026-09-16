@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - trasy monitora eksportu (`/admin/api/exports*`, mockup `A05`).
+ * Ninerdeck (serwer) - trasy monitora eksportu (`/admin/api/exports*`, mockup `A05`).
  *
  * Cienkie jak reszta repo: zod → zapytanie/komenda → status. Trasa nie zna ani stanu
  * karty, ani bramek eksportera - jedno mieszka w mapperze, drugie w `DayExporter`.
@@ -63,13 +63,13 @@ export function registerAdminExportRoutes(
     app,
     gate,
     { method: 'GET', url: '/exports', capability: 'panel.access' },
-    async (req, reply) => {
+    async (req, reply, actor) => {
       const query = listQuery.safeParse(req.query);
       if (!query.success) return reply.code(400).send({ error: 'bad_request' });
 
       const q = query.data;
       return reply.send(
-        await queries.list({
+        await queries.list(actor.orgId, {
           fromMs: q.from,
           // Zakres obustronnie DOMKNIĘTY: `do=2026-07-31` obejmuje cały 31 lipca.
           // Inaczej „od 25 do 31" gubiłoby ostatni dzień - czyli zwykle ten, o który
@@ -90,11 +90,11 @@ export function registerAdminExportRoutes(
     app,
     gate,
     { method: 'GET', url: '/exports/:sessionUuid', capability: 'panel.access' },
-    async (req, reply) => {
+    async (req, reply, actor) => {
       const params = uuidParams.safeParse(req.params);
       if (!params.success) return reply.code(400).send({ error: 'bad_request' });
 
-      const history = await queries.history(params.data.sessionUuid);
+      const history = await queries.history(actor.orgId, params.data.sessionUuid);
       if (history == null) return reply.code(404).send({ error: 'not_found' });
 
       return reply.send(history);
@@ -106,7 +106,7 @@ export function registerAdminExportRoutes(
    *
    * Tamta trasa jest celem linków `export_log.sheet_url` czytanych z TELEFONU (ekran 11,
    * nagłówek `Bearer`) i zostaje nietknięta. Panel loguje się ciasteczkiem
-   * `uzaero_admin` o `Path=/admin`, które do `/sheets/*` po prostu NIE JEDZIE -
+   * `ninerdeck_admin` o `Path=/admin`, które do `/sheets/*` po prostu NIE JEDZIE -
    * poszerzenie ścieżki ciasteczka posłałoby sesję panelu razem z każdym żądaniem
    * telefonu, więc byłoby odwrotnością tego, co ma osiągnąć.
    */
@@ -114,11 +114,11 @@ export function registerAdminExportRoutes(
     app,
     gate,
     { method: 'GET', url: '/exports/:sessionUuid/sheet', capability: 'panel.access' },
-    async (req, reply) => {
+    async (req, reply, actor) => {
       const params = uuidParams.safeParse(req.params);
       if (!params.success) return reply.code(400).send({ error: 'bad_request' });
 
-      const sheet = await queries.sheet(params.data.sessionUuid);
+      const sheet = await queries.sheet(actor.orgId, params.data.sessionUuid);
       // 404 obejmuje trzy przypadki naraz (nie ma sesji / nie da się nazwać karty /
       // karta nigdy nie powstała) i to jest właściwe: z punktu widzenia czytelnika
       // wszystkie znaczą „tej karty nie ma". Który to przypadek, mówi wiersz listy.
@@ -142,7 +142,7 @@ export function registerAdminExportRoutes(
       // o adresie („nie ma takiej sesji"). Panel pokazuje powód dosłownie, więc
       // sklejenie tych dwóch odpowiedzi kazałoby administratorowi szukać zdarzeń
       // sesji, której nigdy nie było.
-      if ((await queries.item(sessionUuid)) == null) {
+      if ((await queries.item(actor.orgId, sessionUuid)) == null) {
         return reply.code(404).send({ error: 'not_found' });
       }
 
@@ -152,7 +152,7 @@ export function registerAdminExportRoutes(
       // eksportera („dzień jeszcze otwarty", „flaga trzyma kartę") jest poprawną
       // odpowiedzią o stanie świata; 500 kazałoby administratorowi zgadywać, czy to
       // awaria, czy zasada - czyli dokładnie w tej chwili sięgnąć po `psql`.
-      return reply.send({ retry: result, row: await queries.item(sessionUuid) });
+      return reply.send({ retry: result, row: await queries.item(actor.orgId, sessionUuid) });
     },
   );
 }

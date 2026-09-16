@@ -1,5 +1,5 @@
 /**
- * UZ Aero - dane referencyjne (docs/_main.md.txt §5.2, §5.4, §4.8).
+ * Ninerdeck - dane referencyjne (docs/_main.md.txt §5.2, §5.4, §4.8).
  *
  * Dane „wolnozmienne" z serwera: lista samolotów z konfiguracją i lista pilotów.
  * Każdy rekord niesie `fetchedAt` - UI dokleja adnotację wieku („· z cache · sync
@@ -79,7 +79,7 @@ export interface Handover {
    * Kto przekazał (pilot id).
    *
    * `null` = **NIKT** - to jest STAN POCZĄTKOWY jednostki wpisany w panelu (issue #66),
-   * czyli zerowe ogniwo łańcucha, od którego zaczyna się pierwszy lot maszyny w UZ Aero.
+   * czyli zerowe ogniwo łańcucha, od którego zaczyna się pierwszy lot maszyny w Ninerdeck.
    * Ekran musi to rozróżnić: „przekazał J. Kowalski" przy liczbie, której nie przekazał
    * żaden pilot, jest zdaniem nieprawdziwym w miejscu, gdzie zaufanie do liczb jest całą
    * treścią. Nullowalność ma tu ten sam sens, co w `HandoverTrailEntry.pilotId`

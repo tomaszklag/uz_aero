@@ -1,5 +1,5 @@
 /**
- * UZ Aero - „Kontynuuj z Google" na telefonie (`docs/logowanie-google.md` §9).
+ * Ninerdeck - „Kontynuuj z Google" na telefonie (`docs/logowanie-google.md` §9).
  *
  * JEDYNE miejsce aplikacji, które zna `expo-auth-session` i `expo-web-browser`.
  * Ekran logowania dostaje trzy rzeczy: czy przepływ jest w ogóle skonfigurowany, czy
@@ -9,7 +9,7 @@
  * ══ PRZEZ PRZEGLĄDARKĘ SYSTEMOWĄ, BEZ NATYWNEGO SDK GOOGLE ══
  * `expo-auth-session` otwiera Custom Tab i wraca własnym schematem adresu. Dla klienta
  * Google typu ANDROID ten schemat MUSI być pakietem aplikacji
- * (`com.tomekklag.uzaero:/oauthredirect` - dostawca składa go z `Application.applicationId`),
+ * (`com.ninerdeck.app:/oauthredirect` - dostawca składa go z `Application.applicationId`),
  * dlatego `scheme` w `app.json` niesie pakiet. Kontrakt serwera jest ten sam, co przy
  * natywnym SDK (token tożsamości Google), więc podmiana to później decyzja o UX.
  *

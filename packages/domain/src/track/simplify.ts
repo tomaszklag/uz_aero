@@ -1,5 +1,5 @@
 /**
- * UZ Aero - upraszczanie linii śladu (Ramer–Douglas–Peucker).
+ * Ninerdeck - upraszczanie linii śladu (Ramer–Douglas–Peucker).
  *
  * PO CO: lot ze zrzutem to ~1 500 fixów, dzień lotny - kilkadziesiąt tysięcy. Rysowanie
  * ich wprost zabija mapę na telefonie, a różnicy nie widać: przy zoomie, w jakim ogląda

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - strona ODCZYTU dni lotnych panelu (`A02`, `A02a`).
+ * Ninerdeck (serwer) - strona ODCZYTU dni lotnych panelu (`A02`, `A02a`).
  *
  * **Reguła twarda, której pilnuje `test/contract.test.ts`:** listy NIE wołają
  * `projectSession`. Czytają wyłącznie kolumny projekcji `sessions` - bo wczytanie
@@ -13,7 +13,7 @@
  * niż ekran 10.
  */
 
-import { projectSession } from '@uzaero/domain';
+import { projectSession } from '@ninerdeck/domain';
 
 import type { Database, EventsStorePort } from '../../common/ports.ts';
 import type { AdminSessionDetail, AdminSessionPage } from '../contracts/sessions.ts';
@@ -57,8 +57,8 @@ export class AdminSessionQueries {
     private readonly eventsMeta: EventsAdminPort,
   ) {}
 
-  async list(filter: SessionListFilter): Promise<SessionListOutcome> {
-    const result = await this.sessions.list(this.db, filter);
+  async list(orgId: string, filter: SessionListFilter): Promise<SessionListOutcome> {
+    const result = await this.sessions.list(this.db, orgId, filter);
     if (result == null) return { ok: false, reason: 'bad_cursor' };
 
     return {
@@ -72,15 +72,15 @@ export class AdminSessionQueries {
   }
 
   /** `null` = nie ma takiej sesji w projekcji (czyli i w rejestrze) → 404. */
-  async detail(sessionUuid: string): Promise<AdminSessionDetail | null> {
-    const join = await this.sessions.byUuid(this.db, sessionUuid);
+  async detail(orgId: string, sessionUuid: string): Promise<AdminSessionDetail | null> {
+    const join = await this.sessions.byUuid(this.db, orgId, sessionUuid);
     if (join == null) return null;
 
-    const stream = await this.events.sessionEvents(this.db, sessionUuid);
+    const stream = await this.events.sessionEvents(this.db, orgId, sessionUuid);
     // Flagi TEJ sesji razem z rozwiązanymi: karta dnia ma pokazywać także decyzje już
     // podjęte, inaczej historia rozstrzygnięć znika dokładnie tam, gdzie jest potrzebna.
-    const { items } = await this.flags.list(this.db, { sessionUuid, limit: FLAGS_PER_DAY });
-    const byAdmin = await this.eventsMeta.adminCorrectionUuids(this.db, sessionUuid);
+    const { items } = await this.flags.list(this.db, orgId, { sessionUuid, limit: FLAGS_PER_DAY });
+    const byAdmin = await this.eventsMeta.adminCorrectionUuids(this.db, orgId, sessionUuid);
 
     return {
       session: sessionListItem(join),

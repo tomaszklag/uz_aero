@@ -1,5 +1,5 @@
 /**
- * UZ Aero - paliwo na ekranie 04: JEDNO miejsce na litry (decyzja 2026-08-10).
+ * Ninerdeck - paliwo na ekranie 04: JEDNO miejsce na litry (decyzja 2026-08-10).
  *
  * Kokpit ground mówił o paliwie dwa razy: pasek-przyrząd („Paliwo · ostatni odczyt ·
  * 111 L") i podpis kafelka „Tankowanie" („Na pokładzie: 111 L"). Ta sama liczba w dwóch

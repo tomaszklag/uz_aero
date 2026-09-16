@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - strona ODCZYTU skrzynki flag (`A03`).
+ * Ninerdeck (serwer) - strona ODCZYTU skrzynki flag (`A03`).
  *
  * Cienka warstwa: port oddaje flagi ze złączeniami w porządku skrzynki, ta klasa mapuje
  * je na kontrakt panelu. Porządek („blokujące eksport → najstarsze") jest własnością
@@ -18,8 +18,8 @@ export class AdminFlagQueries {
     private readonly flags: FlagsAdminPort,
   ) {}
 
-  async list(filter: FlagListFilter): Promise<AdminFlagPage> {
-    const { items, total } = await this.flags.list(this.db, filter);
+  async list(orgId: string, filter: FlagListFilter): Promise<AdminFlagPage> {
+    const { items, total } = await this.flags.list(this.db, orgId, filter);
     return { items: items.map(flagListItem), total };
   }
 }

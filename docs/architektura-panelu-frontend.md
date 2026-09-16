@@ -1,4 +1,4 @@
-# UZ Aero - architektura frontendu panelu i wspólnej biblioteki
+# Ninerdeck - architektura frontendu panelu i wspólnej biblioteki
 
 > Dotyczy fazy 7 (panel administracyjny, web). Wejście: `design/admin/` (20 ekranów,
 > `SZABLON.html`, `ANALIZA.md`), `docs/architektura-kodu.md` (warstwy, granulacja plików,
@@ -11,11 +11,13 @@
 > **CZYTAJ RAZEM Z `panel-2.0.md` (2026-08-30).** Szkielet opisany niżej obowiązuje
 > dalej w całości - warstwy, kierunki zależności, jedne drzwi do sieci, własne DTO,
 > TanStack Query bez globalnego store'u, testy granic. Zmieniło się natomiast to, co
-> z tego szkieletu ZBUDOWANO: panel został przepisany do dwóch modułów (piloci, flota),
-> z paskiem górnym zamiast kolumny bocznej, bez banerów wyjaśniających i bez makiet
-> HTML jako specyfikacji. Gdzie ten dokument mówi co innego niż `panel-2.0.md` -
-> rozstrzyga `panel-2.0.md`; dotyczy to §3 (mapowanie z mockupów), §7 (kolumna boczna,
-> pozycje wyszarzone) i §10 (kolejność wdrażania jedenastu ekranów).
+> z tego szkieletu ZBUDOWANO: panel został przepisany do czterech modułów (dziennik,
+> piloci, flota, zgłoszenia), bez banerów wyjaśniających. Makiety HTML wróciły jako
+> specyfikacja 2026-09-07 (`design/panel/`, `panel-2.0.md` §3.7), a kolumna boczna
+> wróciła w stylu lekkim 2026-09-08 (issue #107, `panel-2.0.md` §3.8) - jako płaska
+> lista z ikonami, nie jedenaście pozycji w grupach. Gdzie ten dokument mówi co innego
+> niż `panel-2.0.md` - rozstrzyga `panel-2.0.md`; dotyczy to §3 (mapowanie z mockupów
+> panelu 1.0), §7 (pozycje wyszarzone) i §10 (kolejność wdrażania jedenastu ekranów).
 
 ---
 
@@ -23,14 +25,14 @@
 
 | # | Pytanie | Rozstrzygnięcie | Gdzie |
 |---|---|---|---|
-| 1 | Wspólna biblioteka DS - jeden pakiet czy dwa? | **Dwa pakiety, oba nie-wizualne: `@uzaero/tokens` i `@uzaero/format`. Zero pakietów z komponentami.** | §1 |
+| 1 | Wspólna biblioteka DS - jeden pakiet czy dwa? | **Dwa pakiety, oba nie-wizualne: `@ninerdeck/tokens` i `@ninerdeck/format`. Zero pakietów z komponentami.** | §1 |
 | 2 | Komponenty wspólne RN ↔ web? | **Nie.** Komponenty per platforma; wspólne są wartości, funkcje i decyzje - nie widgety | §1.1–1.2 |
 | 3 | Wiele motywów w panelu? | **Nie.** Panel emituje jeden motyw (`night`); generator zostaje parametryczny | §1.6 |
 | 4 | Kierunek źródła prawdy `05-themes.html` ↔ `tokens.ts` | **Nieaktualne od issue #72**: mockup skasowany razem z ekranem podglądu motywów, palety mieszkają w `packages/tokens`, a równości z `SZABLON.html` pilnuje test | §1.7 |
 | 5 | Gdzie mieszka `format.ts` | `packages/format`, konsumowany przez `app/`, `admin/` **i `server/`** (dziś ma ręczną kopię) | §1.8, §6 |
 | 6 | Warstwy panelu | `screens/ → queries/ → api/`; `components/` nie zna żadnej z nich; czyste moduły ekranu obok ekranu | §2 |
 | 7 | TanStack Query bez globalnego store'u | **Potwierdzone**, z jednym warunkiem: filtry list żyją w URL-u, nie w stanie | §4 |
-| 8 | Typy | `@uzaero/domain` **tylko jako typy** (jeden imienny wyjątek: geometria wykresu w `trackChart.ts`); koperty HTTP jako własne DTO w `admin/src/api/dto.ts`; **nigdy import z `server/src`** | §5 |
+| 8 | Typy | `@ninerdeck/domain` **tylko jako typy** (jeden imienny wyjątek: geometria wykresu w `trackChart.ts`); koperty HTTP jako własne DTO w `admin/src/api/dto.ts`; **nigdy import z `server/src`** | §5 |
 | 9 | „Panel nie liczy po swojemu" | Egzekucja: zakaz importów wartościowych z domeny + jedno miejsce z `fetch` + kontrakt serwera | §5.3 |
 | 10 | Routing | **Hash (`#/dni/<uuid>`)** - zero fallbacku SPA na serwerze | §7, §9 |
 | 11 | Rozjazd mockup ↔ komponent | **Mockup wygrywa zawsze.** Wykrywa: test tokenów + test inwentarza klas | §3.3 |
@@ -84,9 +86,9 @@ warstwa emulująca CSS w JS to najkrótsza droga do „prawie tak samo".
 **Rekomendacja: (a) rozszerzone o drugi pakiet nie-wizualny.**
 
 ```
-packages/domain     @uzaero/domain   - istnieje: zdarzenia, reguły, projekcje, detekcja
-packages/tokens     @uzaero/tokens   - NOWY: wartości designu + emiter zmiennych CSS
-packages/format     @uzaero/format   - NOWY: prezentacja liczb domeny (czas, MH, litry, liczebniki)
+packages/domain     @ninerdeck/domain   - istnieje: zdarzenia, reguły, projekcje, detekcja
+packages/tokens     @ninerdeck/tokens   - NOWY: wartości designu + emiter zmiennych CSS
+packages/format     @ninerdeck/format   - NOWY: prezentacja liczb domeny (czas, MH, litry, liczebniki)
 app/                RN - komponenty własne (ui/components/, ~75 plików)
 admin/              web - komponenty własne (src/ui/components/, ~24 pliki)
 ```
@@ -102,7 +104,7 @@ granulacji („jedna odpowiedzialność = jeden plik", `architektura-kodu.md` §
 
 ```
 packages/tokens/
-  package.json          @uzaero/tokens · private · main/types = src/index.ts · zero zależności
+  package.json          @ninerdeck/tokens · private · main/types = src/index.ts · zero zależności
   src/index.ts          barrel
   src/themeColors.ts    interface ThemeColors (+ docblocki `overlay`/`selection` przenoszone 1:1)
   src/colors/night.ts   \
@@ -148,18 +150,18 @@ zmianę w każdym miejscu, gdzie aplikacja dziś podaje `fontFamily` wprost do s
 
 ### 1.4 Jak `app/` konsumuje tokeny bez regresu
 
-Mechanizm jest **już sprawdzony w produkcji** - tak działa `@uzaero/domain`:
+Mechanizm jest **już sprawdzony w produkcji** - tak działa `@ninerdeck/domain`:
 
 ```
-app/src/domain/index.ts    →  export * from '@uzaero/domain';   (shim zgodności, faza 2)
+app/src/domain/index.ts    →  export * from '@ninerdeck/domain';   (shim zgodności, faza 2)
 ```
 
 Powtarzamy go dla tokenów:
 
 ```
-app/src/ui/theme/tokens.ts  →  export * from '@uzaero/tokens';
+app/src/ui/theme/tokens.ts  →  export * from '@ninerdeck/tokens';
 app/src/ui/theme/index.ts   →  bez zmian (export * from './tokens'; export * from './ThemeProvider';)
-app/src/ui/components/tone.ts → export { toneColors, type Tone, type ToneColors } from '@uzaero/tokens';
+app/src/ui/components/tone.ts → export { toneColors, type Tone, type ToneColors } from '@ninerdeck/tokens';
 ```
 
 Skutek: **85 plików importujących `ui/theme` i 86 wywołań `useTheme()` nie zmienia się
@@ -170,9 +172,9 @@ Trzy rzeczy, o które trzeba zadbać przy przenoszeniu:
 
 1. **Jest transformuje pakiet warsztatowy, mimo `transformIgnorePatterns`** - bo Jest
    rozwiązuje symlink npm workspaces do prawdziwej ścieżki `packages/tokens/src/**`, która
-   nie zawiera `/node_modules/`. Tak samo działa dziś `@uzaero/domain`. Gdyby ktoś
+   nie zawiera `/node_modules/`. Tak samo działa dziś `@ninerdeck/domain`. Gdyby ktoś
    „naprawiał" to `transformIgnorePatterns`, popsuje coś, co działa.
-2. **`architecture.test.ts` dostaje pozycję**: `@uzaero/tokens` na liście dozwolonych
+2. **`architecture.test.ts` dostaje pozycję**: `@ninerdeck/tokens` na liście dozwolonych
    importów `ui/`, i **zakaz** importu tego pakietu w `domain/`, `application/`
    i `infrastructure/` - tokeny to warstwa UI i nie wolno im wyciec w głąb.
 3. `package.json` pakietu kopiujemy z `packages/domain` (`private`, `type: module`,
@@ -202,6 +204,12 @@ z `CLAUDE.md`.
 packages/tokens/scripts/emitCss.ts   →  admin/src/styles/tokens.css   (nagłówek: „PLIK GENEROWANY")
 admin/test/tokens.generated.test.ts  →  zawartość pliku == themeCssBlock(THEMES.night)
 ```
+
+**Drugi generowany arkusz (issue #107, 2026-09-08): `design/panel/panel.css`.** Makiety
+panelu i panel mają JEDEN arkusz - `admin/scripts/panelCss.ts` skleja `admin/src/styles/`
+w kolejności kaskady z `main.tsx` i dopisuje `design/panel/rama.css` (klasy tylko makiety);
+`npm run panel:css` zapisuje wynik, `admin/test/panelCss.generated.test.ts` przybija
+równość. Ten sam wzorzec, co tokeny: plik commitowany, poprawki przez ponowny bieg.
 
 Dlaczego nie wstrzykiwanie w runtime (`document.documentElement.style.setProperty`):
 panel ma **jeden** motyw (§1.6), więc runtime dawałby wyłącznie migotanie przed
@@ -296,19 +304,19 @@ w całości (`timeUtc`, `timeLocal`, `dateUtcLong`, `duration`, `durationLong`, 
 to jedna odpowiedzialność („liczby domeny → napisy"), a dzielenie jej wg tego, kto
 akurat czego używa, jest tą samą spekulacją, którą repo odrzuca przy portach.
 
-`app/src/ui/format.ts` zostaje jako shim (`export * from '@uzaero/format';`) - 24 pliki
+`app/src/ui/format.ts` zostaje jako shim (`export * from '@ninerdeck/format';`) - 24 pliki
 importujące bez zmian. Serwer usuwa swoje lustra i importuje pakiet.
 
-**Dlaczego nie do `@uzaero/domain`:** domena ma docblock stawiający tę granicę
+**Dlaczego nie do `@ninerdeck/domain`:** domena ma docblock stawiający tę granicę
 (*„Formatowanie na LT/UTC do wyświetlenia robi warstwa UI - nie ten moduł"*), a
 `maskTimeUtcInput` i `parseMotoHours` to obsługa **wpisu z klawiatury** - nie ma powodu,
 by pakiet, od którego zależy ingest serwera, wiedział cokolwiek o maskach pól. Osobny
-pakiet trzyma linię widoczną. Zależność `@uzaero/format → @uzaero/domain` (jeden typ
+pakiet trzyma linię widoczną. Zależność `@ninerdeck/format → @ninerdeck/domain` (jeden typ
 `EpochMillis`) jest jednokierunkowa i w porządku.
 
 **Testy jadą z kodem, ale runner zostaje:** `app/src/__tests__/format.test.ts` zostaje
 tam, gdzie jest (Jest już go uruchamia przez shim, zero nowej infrastruktury - tak samo
-`@uzaero/domain` nie ma własnego runnera i jest testowany z obu stron). Po stronie serwera
+`@ninerdeck/domain` nie ma własnego runnera i jest testowany z obu stron). Po stronie serwera
 dochodzi asercja w `test/export.test.ts`, że komórki karty powstają z **funkcji pakietu**,
 a nie z lokalnej kopii.
 
@@ -316,69 +324,106 @@ a nie z lokalnej kopii.
 
 ## 2. Drzewo katalogów panelu i kierunek zależności
 
-Panel dostaje własny workspace `admin/` (`@uzaero/admin`), dopisany do `workspaces`
-w głównym `package.json` - jak przewiduje ANALIZA §8.
+Panel ma własny workspace `admin/` (`@ninerdeck/admin`), dopisany do `workspaces`
+w głównym `package.json`.
+
+> **Drzewo niżej opisuje stan po epiku E wielofirmowości (2026-09-10).** Pierwsza
+> wersja tej sekcji opisywała panel 1.0 (jedenaście ekranów `A*`: `dni/`, `flagi/`,
+> `eksporty/`, `progi/`, `audyt/`, `konserwacja/`…) i przeżyła w tym kształcie całą
+> przebudowę na 2.0 - czyli dokument mówił o katalogach, których nie ma, i milczał
+> o tych, które są. **Reguły kierunku zależności (§2.1) i modułów czystych (§2.2) są
+> od tego niezależne i obowiązywały nieprzerwanie** - to po nie sięga się do tego
+> rozdziału. Jeśli drzewo znów się rozjedzie, pierwszeństwo ma `admin/src/`.
 
 ```
 admin/
-  package.json          @uzaero/admin · private
+  package.json          @ninerdeck/admin · private
   index.html            wejście Vite (<div id="root">)
   vite.config.ts        base:'/admin/' · proxy /admin/* → localhost:PORT w dev
   tsconfig.json         strict + noUncheckedIndexedAccess (jak server/)
   public/fonts/         Bebas Neue · Archivo · JetBrains Mono (woff2) - patrz §9
+  scripts/              emitPanelCss.mts (design/panel/panel.css) · fetchFonts.mts
   src/
     main.tsx            COMPOSITION ROOT: QueryClient, HashRouter, SessionProvider, <App/>
-    routes.tsx          mapa tras → ekrany (deep linki, §7)
+    routes.tsx          mapa tras → ekrany; wynika z ui/shell/nav.ts, nie z drugiej listy
 
     api/                ── JEDYNE miejsce z fetch ──────────────────────────────
       httpClient.ts     fetch + nagłówek CSRF na mutacjach + 401/403 → typowane wyjątki
-      dto.ts            koperty odpowiedzi (§5.2)
-      sessions.ts       listSessions · getSession · postCorrection
-      flags.ts          listFlags · getFlag · resolveFlag
-      events.ts         listEvents
-      exports.ts        listExports · retryExport
-      pilots.ts · fleet.ts · stats.ts · audit.ts · maintenance.ts · me.ts
+      dto.ts            koperty odpowiedzi (§5.2) + LUSTRA unii z serwera
+      session.ts        login · logout · me · switchScope · googleClient
+      pilots.ts · fleet.ts · log.ts · bugReports.ts
+      memberships.ts    kolejka zgłoszeń kodem klubu i trzy decyzje (issue #101)
+      clubCode.ts       kod klubu: odczyt, rotacja, wyłączenie
+      organizations.ts  moduł PLATFORMY - kluby na serwerze
                         (jeden plik = jeden zasób = jeden prefiks trasy - jak server/src/http/routes/)
 
     queries/            ── klucze i hooki TanStack ──────────────────────────────
       keys.ts           JEDNO miejsce z kształtem kluczy (§4.2)
       client.ts         QueryClient + domyślne (staleTime, refetchOnWindowFocus, retry)
-      useSessions.ts · useFlags.ts · useResolveFlag.ts · …
+      useSession.ts · usePilots.ts · usePilotCommands.ts · useFleet.ts
+      useLog.ts · useLogCommands.ts · useBugReports.ts
+      useMemberships.ts · useClubCode.ts · useOrganizations.ts
                         mutacja deklaruje SWOJE unieważnienia tutaj, nie na ekranie
 
-    screens/            ── jeden katalog na ekran A* ────────────────────────────
-      dni/
-        DniScreen.tsx       widok: układ + komponenty; zero arytmetyki
-        dniFilters.ts       CZYSTY: filtry ↔ query string (testowany w Node)
-        dniRows.ts          CZYSTY: DTO → wiersze tabeli (plakietki, „-" zamiast zera)
-      dzien/
-        DzienScreen.tsx
-        dzienTimeline.ts    CZYSTY: zdarzenia → wiersze osi (kolejność, voided, metoda)
-      flagi/ · zdarzenia/ · eksporty/ · statystyki/ · piloci/ · flota/ · progi/ · audyt/ · konserwacja/ · login/
+    screens/            ── jeden katalog na MODUŁ ──────────────────────────────
+      logbook/          DZIENNIK, trzy poziomy: flota → maszyna → operacja
+        LogbookScreen.tsx · AircraftLogScreen.tsx · SessionScreen.tsx · DateRange.tsx
+        dateRanges.ts · logbookRows.ts · sessionRows.ts · timelineRows.ts
+        trackChart.ts · trackFacts.ts · trackMarkers.ts · markerLabels.ts · sessionVoid.ts
+      accounts/         PILOCI = członkowie klubu (+ kolejka zgłoszeń i kod klubu)
+        AccountsScreen.tsx  lista + JEDNA z trzech szuflad (którą - mówi trasa)
+        AccountDrawer.tsx · RequestDrawer.tsx · ClubCodeDrawer.tsx · PendingCard.tsx
+        accountForm.ts · accountRows.ts · accountRefusal.ts
+        requestForm.ts · requestRows.ts
+      fleet/            SAMOLOTY: karta jednostki + poprawa odczytów
+        FleetScreen.tsx · AircraftDrawer.tsx · AircraftReadingsCard.tsx
+        aircraftForm.ts · aircraftRefusal.ts · fleetRows.ts · currentState.ts · readingForm.ts
+      organizations/    moduł PLATFORMY: kluby na serwerze (issue #101, E1)
+        OrganizationsScreen.tsx · OrganizationDrawer.tsx
+        organizationForm.ts · organizationRows.ts
+      clubs/            wybór zakresu sesji - POZA ramą, jak logowanie (issue #101, E2)
+        ScopePickScreen.tsx · scopeOptions.ts
+      bugs/             ZGŁOSZENIA błędów - moduł PLATFORMY, na czas testów (issue #87)
+        BugsScreen.tsx · BugDrawer.tsx · bugRows.ts · bugStatus.ts
+      login/            LoginScreen.tsx · loginMessage.ts
+      common/           wspólne dla ekranów: apiMessage.ts (odmowy) · values.ts (kreska braku)
 
     ui/
       components/       DESIGN SYSTEM PANELU - 1:1 z SZABLON.html (§3)
-        Button.tsx · Card.tsx · Tile.tsx · DataTable.tsx · Pill.tsx · Banner.tsx
-        Drawer.tsx · KeyValue.tsx · Timeline.tsx · EmptyState.tsx · Skeleton.tsx
-        NoAccess.tsx · Field.tsx · TextInput.tsx · OptionList.tsx · FilterBar.tsx
-        SearchInput.tsx · FilterChip.tsx · PageHead.tsx · Columns.tsx · index.ts
+        Button.tsx · LinkButton.tsx · Card.tsx · DataTable.tsx · Pill.tsx · Banner.tsx
+        Drawer.tsx · EmptyState.tsx · TableSkeleton.tsx · Loadable.tsx · NoAccess.tsx
+        Field.tsx · TextInput.tsx · OptionButton.tsx · SearchInput.tsx · FilterChip.tsx
+        PageHead.tsx · Breadcrumbs.tsx · TrackMap.tsx · VerticalProfile.tsx
+        icons.tsx · index.ts
+        focusTrap.ts · reasonSuffix.ts · skeletonGate.ts   (czyste, z testami obok)
       shell/            rama aplikacji (nie ekran)
-        AppShell.tsx · Sidebar.tsx · NavItem.tsx · navItems.ts · Topbar.tsx
-        Breadcrumbs.tsx · UtcClock.tsx · WhoBox.tsx
+        AppShell.tsx      pasek górny + kolumna boczna + treść (styl lekki, issue #107)
+        nav.ts            KANONICZNA nawigacja: pozycja NALEŻY DO ZDOLNOŚCI
+        scope.ts          kontekst sesji w kolumnie: klub albo platforma (issue #101)
+        initials.ts
 
-    auth/
-      SessionProvider.tsx   tożsamość + rola z GET /admin/me (cienko nad Query, §4.3)
+    auth/               ── brama i tożsamość ───────────────────────────────────
+      SessionProvider.tsx   sesja z GET /admin/api/me (cienko nad Query, §4.3)
+      sessionContext.ts     kontekst + hook (osobno - granica Fast Refresh)
+      ShellRoute.tsx        brama sesji: bez niej ekran logowania, nie pusta rama
+      RequireCapability.tsx trasa modułu platformy pyta o zdolność
+      HomeRedirect.tsx      goły adres → PIERWSZY DOSTĘPNY ekran (homeFor)
       can.ts                CZYSTY: capability → boolean + POWÓD odmowy do UI
+      googleIdentity.ts     jedyne miejsce, które zna skrypt Google Identity Services
 
     styles/
-      tokens.css        GENEROWANY z @uzaero/tokens (§1.5)
-      base.css          reset, @font-face, scrollbary, :focus-visible
-      layout.css        --sidebar-w/--topbar-h, .shell/.main/.content
-      components/*.css  jeden plik na komponent, klasy 1:1 z SZABLON
+      tokens.css        GENEROWANY z @ninerdeck/tokens (§1.5)
+      fonts.css · base.css · layout.css
+      components/*.css  jeden plik na sekcję, klasy 1:1 z SZABLON
+                        (źródło `design/panel/panel.css` - `npm run panel:css`)
 
   test/
-    architecture.test.ts · tokens.generated.test.ts · classInventory.test.ts
-    (testy modułów czystych leżą przy nich: screens/days/daysFilters.test.ts)
+    architecture.test.ts    granice warstw, których nie pilnuje kompilator
+    appShell.test.tsx       klasy ramy wobec design/panel/SZABLON.html
+    copy.test.ts            napisy bez żargonu systemu, krótkie
+    mirrors.test.ts         lustra unii: panel ↔ serwer
+    panelCss.generated.test.ts · tokens.generated.test.ts
+    (testy modułów czystych leżą PRZY NICH: src/screens/accounts/accountForm.test.ts)
 ```
 
 ### 2.1 Kierunek zależności
@@ -394,7 +439,7 @@ admin/
        api/                          (jedyne miejsce z fetch; NIE zna Reacta)
          │
          ▼
-   @uzaero/domain (TYLKO typy) · @uzaero/format · @uzaero/tokens
+   @ninerdeck/domain (TYLKO typy) · @ninerdeck/format · @ninerdeck/tokens
 ```
 
 | Warstwa | Katalog | Czego NIE wolno importować |
@@ -427,7 +472,7 @@ Egzekucja, trzy warstwy (kolejność = malejąca siła):
    - `src/ui/**` nie importuje `api/` ani `queries/` - komponent dostaje dane propsami;
    - `fetch(` występuje wyłącznie w `src/api/httpClient.ts`;
    - `screens/**/*.ts` (moduły czyste) nie importują `react`.
-2. **Zakaz importów wartościowych z `@uzaero/domain`** (dozwolone tylko `import type`) -
+2. **Zakaz importów wartościowych z `@ninerdeck/domain`** (dozwolone tylko `import type`) -
    szczegóły i uzasadnienie w §5.3. Skutek uboczny jest tu najważniejszy: skoro panel
    nie może wywołać `projectSession`, to nie może przeliczyć niczego po swojemu.
    **Wyjątek jest DOKŁADNIE JEDEN i imienny**: `screens/logbook/trackChart.ts` importuje
@@ -438,7 +483,7 @@ Egzekucja, trzy warstwy (kolejność = malejąca siła):
    (`docs/panel-2.0.md` §9.4a).
 3. **Zakaz `toFixed` / `Math.round` / `Math.floor` / `Intl.NumberFormat`
    w `src/ui/**` i w `*.tsx`** - arytmetyka ma prawo istnieć wyłącznie w module czystym
-   z testem obok albo w `@uzaero/format`. To najtańszy sposób złapania momentu,
+   z testem obok albo w `@ninerdeck/format`. To najtańszy sposób złapania momentu,
    w którym „panel zaczyna liczyć po swojemu": zaczyna się od zaokrąglenia.
 
 ### 2.3 `.tsx` eksportuje wyłącznie komponenty
@@ -497,6 +542,16 @@ implementacją, nie w jej trakcie (§11 pkt 3).
 Z 126 klas powstają **24 komponenty + 8 elementów ramy (`shell/`)**; reszta to modyfikatory
 (`.on`, `.selected`, `.voided`, `.locked`, `.green`) i klasy wyłącznie mockupowe.
 
+> **Tabela niżej jest PLANEM z 2.0, nie spisem stanu.** Część wierszy opisuje rzeczy,
+> których panel dziś nie ma (`Tile`, `Timeline`, `Columns`, `KeyValueList`, `UtcClock`,
+> pozycja `.locked` z kłódką) albo ma inaczej złożone (rama to jeden `AppShell`, a nie
+> `Sidebar` + `Topbar` + `WhoBox`; zegara UTC nie ma, bo w panelu nie ma kolumny z czasem).
+> **Prawdę o mapowaniu przybija odtąd `admin/test/appShell.test.tsx`** - renderuje ramę
+> i sprawdza każdą jej klasę wobec `design/panel/SZABLON.html`, a `panelCss.generated.test.ts`
+> pilnuje, że arkusz makiet powstaje z arkuszy panelu. Tabela zostaje jako zapis DECYZJI
+> („klasy zostają dosłowne", „modyfikator nie staje się komponentem"), bo te obowiązują
+> nadal - zmienił się inwentarz, nie reguła.
+
 | Klasy z `SZABLON.html` | Komponent | Uwagi do API |
 |---|---|---|
 | `.btn` `.primary` `.ghost` `.danger` `.sm` `.disabled` | `Button` | `variant`, `size`, `disabled` **z powodem** (wzorzec `ActionButton`: powód jest widocznym tekstem, nie tooltipem) |
@@ -527,7 +582,7 @@ zahaszowaną nazwę z CSS Modules. Powód nie jest estetyczny: dopóki nazwa kla
 po obu stronach, **grep po `pill` znajduje jednocześnie mockup i komponent**, a recenzent
 może porównać DOM z plikiem HTML linia w linię. CSS Modules, Tailwind i styled-components
 tę własność kasują - a to ona jest technicznym znaczeniem reguły „wdrażamy 1:1".
-Ryzyko kolizji globalnych zamyka `classInventory.test.ts` (§3.3) plus reguła „jedna klasa
+Ryzyko kolizji globalnych zamyka `panelCss.generated.test.ts` (§3.3) plus reguła „jedna klasa
 zdefiniowana w dokładnie jednym pliku CSS".
 
 ### 3.3 Gdy mockup i komponent się rozjadą
@@ -537,23 +592,29 @@ zdefiniowana w dokładnie jednym pliku CSS".
 Panel niczego w tej zasadzie nie zmienia - zmienia tylko to, że rozjazd trzeba umieć **wykryć**,
 bo 20 plików × 126 klas to za dużo na oko.
 
-Trzy detektory, wszystkie wykonywalne:
+Cztery detektory, wszystkie wykonywalne:
 
 1. **`tokens.generated.test.ts`** - `admin/src/styles/tokens.css` == `themeCssBlock(THEMES.night)`.
    Łapie dryf kolorów w kodzie.
 2. **`mockupTokens.test.ts`** (§1.7) - zmienne w `design/**/*.html` == `THEMES`.
    Łapie dryf kolorów w designie.
-3. **`classInventory.test.ts`** - zbiór klas zdefiniowanych w `admin/src/styles/components/*.css`
-   == zbiór klas z `<style>` w `design/admin/SZABLON.html` **minus** lista klas ramy mockupu
-   (spisana jawnie w teście, z komentarzem dlaczego każda tam jest).
-   - Klasa dodana do mockupu, a nieobecna w panelu → czerwony test. To jest „ekran
-     zaimplementowany z pominięciem sekcji", złapany maszynowo.
-   - Komponent wymyślony w kodzie bez mockupu → też czerwony. To jest „upraszczam sobie ekran",
-     złapane z drugiej strony.
+3. **`panelCss.generated.test.ts`** - następca planowanego `classInventory.test.ts`
+   i rozstrzygnięcie MOCNIEJSZE od niego: arkusz makiet `design/panel/panel.css` nie jest
+   PORÓWNYWANY z arkuszami panelu, tylko z nich GENEROWANY (`npm run panel:css` w `admin/`,
+   plus `design/panel/rama.css` z klasami, których panel nie ma - kanwa, okno przeglądarki,
+   inwentarz). Zbiory nie mają jak się rozjechać, bo jest jeden.
+   - Nowy komponent dokłada się do `admin/src/styles/components/*.css` i uruchamia generator -
+     makieta i panel widzą go w tej samej chwili.
+   - Ręczna poprawka w `panel.css` znika przy najbliższym przebiegu i test to zgłasza.
+4. **`appShell.test.tsx`** - każda klasa wyrenderowanej RAMY istnieje w `design/panel/SZABLON.html`.
+   Arkusz jest wspólny, więc rozjazd może powstać już tylko w ZNACZNIKACH: klasa użyta w JSX,
+   której szablon nie zna, dostaje zero reguł i wygląda jak brak stylu - a tego nikt nie zobaczy
+   bez zalogowania do panelu z działającym serwerem.
 
 Procedura przy rozjeździe (do `architektura-kodu.md` §7 jako przepis „Nowy ekran panelu"):
 
-1. Otwórz `design/admin/A0x.html` obok edytora i przejdź **sekcja po sekcji**.
+1. Otwórz makietę z `design/panel/` obok edytora i przejdź **sekcja po sekcji**.
+   (`design/admin/` to ARCHIWUM panelu 1.0 od 2026-08-30, nie specyfikacja.)
 2. Brakuje wzorca w bibliotece → **dodaj komponent**, nie upraszczaj ekranu.
 3. Mockup wygląda na błędny → **rozmowa**, potem poprawka mockupu, potem kod.
 4. Poprawka wizualna wychodzi z implementacji → wraca do `SZABLON.html` **w tym samym commicie**,
@@ -664,9 +725,11 @@ export function useResolveFlag() {
 `ANALIZA` §3 nazywa deep linki podstawowym scenariuszem współpracy („wklej mi link do tego
 dnia"). Filtr trzymany w Zustandzie albo w `useState` to filtr, którego nie da się wkleić,
 i lista, która gubi się po `F5`. Dlatego: **`useSearchParams` jest magazynem filtrów**,
-a `screens/days/daysFilters.ts` (moduł czysty, testowany) tłumaczy query string na obiekt
-filtra i z powrotem. Bonus, który wychodzi za darmo: klucz zapytania `keys.sessions.list(f)`
-jest funkcją tego samego obiektu, więc powrót „wstecz" trafia w cache.
+a ekran czyta go wprost (`AccountsScreen`, `FleetScreen`, `OrganizationsScreen`: `szukaj`,
+`stan`, `kolejnosc`); tam, gdzie tłumaczenie query stringu ma własne reguły, robi to moduł
+CZYSTY obok ekranu - `screens/logbook/dateRanges.ts` dla zakresu dat dziennika. Bonus, który
+wychodzi za darmo: klucz zapytania jest funkcją tego samego obiektu filtra, więc powrót
+„wstecz" trafia w cache.
 
 ### 4.5 Ustawienia domyślne QueryClienta
 
@@ -684,15 +747,15 @@ znanym stanie z adnotacją wieku.
 
 ## 5. Typy: co skąd
 
-### 5.1 `@uzaero/domain` - TAK, ale wyłącznie jako typy
+### 5.1 `@ninerdeck/domain` - TAK, ale wyłącznie jako typy
 
 Panel importuje: `EventType`, `EventPayloadMap`, `SessionState`, `Handover`, `MhFormat`,
 `Aircraft`, `Pilot`, `ServiceStatus`, kody naruszeń oraz - po przeniesieniu, §11 pkt 6 -
 `PilotRole` i `Capability`.
 
 ```ts
-import type { SessionState, MhFormat } from '@uzaero/domain';   // OK
-import { projectSession } from '@uzaero/domain';                // ZAKAZANE (test architektury)
+import type { SessionState, MhFormat } from '@ninerdeck/domain';   // OK
+import { projectSession } from '@ninerdeck/domain';                // ZAKAZANE (test architektury)
 ```
 
 Zakaz importów wartościowych ma jeden konkretny cel: **odciąć panelowi możliwość liczenia**.
@@ -743,7 +806,7 @@ Cztery mechanizmy, żaden nie jest apelem o staranność:
 
 ## 6. Formaty - gdzie mieszka ten kod
 
-**Odpowiedź: `packages/format` (`@uzaero/format`).** Pełne uzasadnienie i zawartość: §1.8.
+**Odpowiedź: `packages/format` (`@ninerdeck/format`).** Pełne uzasadnienie i zawartość: §1.8.
 
 Trzy konsekwencje warte powtórzenia w tym miejscu:
 
@@ -805,14 +868,14 @@ z `projectSession`, paginacja kursorowa, re-eksport po `resolve`, `409` przy wy�
 **Panel nie testuje żadnej z tych rzeczy** - testowanie autoryzacji przez UI sprawdza atrapę,
 a nie serwer.
 
-**Panel (vitest + jsdom + Testing Library) - cztery rodziny i nic poza nimi:**
+**Panel (vitest, w Node - bez jsdom i bez Testing Library) - cztery rodziny i nic poza nimi:**
 
 | Rodzina | Zawartość | Dlaczego to jest wartościowe |
 |---|---|---|
 | **Granice warstw** | `admin/test/architecture.test.ts` - tabela z §2.1 + reguły z §2.2, z testem kontrolnym skanera | Reguła bez egzekucji jest życzeniem - doktryna z `architektura-kodu.md` §2 |
-| **Moduły czyste ekranów** | `dniFilters` (filtry ↔ query string, w obie strony), `dniRows` (DTO → wiersz, „-" zamiast zera przy dniu otwartym), `dzienTimeline` (kolejność, `voided`, metoda), `can` (zdolność → dostęp + powód) | **Tu leży większość testów panelu, z założenia** - dokładnie jak `statsDay.test.ts`/`cockpitLog.test.ts`/`historyDays.test.ts` w aplikacji. Node, bez DOM, bez sieci |
-| **Kontrakt z mockupem** | `tokens.generated.test.ts`, `mockupTokens.test.ts`, `classInventory.test.ts` (§3.3) | Wykonywalna postać reguły „wdrażamy 1:1" |
-| **Zachowanie komponentów o realnym ryzyku** | `Drawer` (Esc, powrót fokusu), `DataTable` (sort + link osiągalny z klawiatury), `NavItem.locked` (nieklikalny, **z powodem**), `Banner`/`Timeline` (**payload renderowany jako tekst, nigdy jako HTML**) | Cztery zachowania, których serwer nie może wymusić. Ostatnie jest testem bezpieczeństwa |
+| **Moduły czyste ekranów** | `accountForm`/`requestForm` (ocena wpisu: co blokuje BEZ zdania, a co ze zdaniem), `accountRows`/`organizationRows`/`bugRows` (DTO → wiersz, plakietki, kreska braku), `dateRanges` (zakres dat ↔ query string, w obie strony), `currentState` (kiedy pola stanu są do odczytu), `scope`/`scopeOptions` (kontekst sesji i karty wyboru zakresu), `can` (zdolność → dostęp + powód) | **Tu leży większość testów panelu, z założenia** - dokładnie jak `statsDay.test.ts`/`cockpitLog.test.ts`/`historyDays.test.ts` w aplikacji. Node, bez DOM, bez sieci |
+| **Kontrakt z mockupem** | `tokens.generated.test.ts` (palety), `panelCss.generated.test.ts` (arkusz makiet POWSTAJE z arkuszy panelu), `appShell.test.tsx` (każda klasa ramy istnieje w `SZABLON.html`), `copy.test.ts` (napisy bez żargonu systemu), `mirrors.test.ts` (lustra unii panel ↔ serwer) | Wykonywalna postać reguły „wdrażamy 1:1" |
+| **Zachowanie komponentów o realnym ryzyku** | `focusTrap` (pułapka fokusu szuflady i powrót na element, który ją otworzył), `skeletonGate` (próg i minimum plamki), `reasonSuffix` (powód blokady doklejony do etykiety - kropka schodzi, wielka litera zostaje) | Zachowania, których serwer nie może wymusić, a których nie widać bez zalogowania do panelu. Wszystkie mają postać modułu CZYSTEGO obok komponentu - to jest cena za to, żeby dało się je przetestować w Node |
 
 **Czego świadomie nie ma:** testów hooków Query na zamockowanym `fetch` (sprawdzają mock),
 testów migawkowych ekranów (utrwalają DOM, a specyfikacją jest mockup - pokrywa go rodzina 3),
@@ -862,7 +925,7 @@ Konsekwencje, których nie widać z tego zdania:
   originem).
 - **Dev: `server.proxy` w Vite** dla `/admin/*` na port serwera. Inaczej pierwszego dnia ktoś
   zobaczy CORS w devie i „naprawi" go, dokładając CORS do serwera - a to pojedzie na produkcję.
-- **CSRF: własny nagłówek na mutacjach** (np. `X-UZ-Admin: 1`), wymagany przez trasy `/admin/*`
+- **CSRF: własny nagłówek na mutacjach** (np. `X-Ninerdeck-Admin: 1`), wymagany przez trasy `/admin/*`
   przy metodach innych niż `GET`. Nagłówka niestandardowego nie da się wysłać cross-origin bez
   preflightu, więc razem z `SameSite=Strict` to wystarczy; tabeli tokenów CSRF nie zakładamy.
 - **CSP `default-src 'self'`.** Panel renderuje payloady zdarzeń pochodzące z telefonów; build
@@ -917,7 +980,7 @@ Każdy krok zakłada poprzednie. Kroki 1–2 są niewidoczne dla użytkownika i 
    design już tak pisze linki). Jeśli estetyka adresu ma znaczenie dla właściciela produktu,
    koszt zmiany to `basename` + jedna trasa - ale decyzja powinna zapaść przed krokiem 3,
    bo potem migrują wszystkie wklejone linki.
-6. **Czy `server/src/domain/roles.ts` przenosimy do `@uzaero/domain`?** Panel potrzebuje typu
+6. **Czy `server/src/domain/roles.ts` przenosimy do `@ninerdeck/domain`?** Panel potrzebuje typu
    `Capability`, żeby wyszarzać pozycje nawigacji z podanym powodem. Wariant minimalny:
    `GET /admin/me` zwraca listę zdolności, a panel porównuje stringi (brak typowania).
    Wariant czysty: mapa ról przenosi się do wspólnej domeny (jest czysta, zero zależności),

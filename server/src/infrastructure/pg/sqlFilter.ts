@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - składanie `WHERE` z filtrów OPCJONALNYCH.
+ * Ninerdeck (serwer) - składanie `WHERE` z filtrów OPCJONALNYCH.
  *
  * Ten plik (razem z `keyset.ts`) jest tym, co wchodzi ZAMIAST query buildera - decyzja
  * „bez ORM-a i bez query buildera" (`docs/architektura-panelu-serwer.md` §2.4) zostawia

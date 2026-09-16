@@ -1,5 +1,5 @@
 /**
- * UZ Aero - Stepper
+ * Ninerdeck - Stepper
  *
  * Wprowadzanie wartości liczbowej przyciskami ±, nie suwakiem.
  *

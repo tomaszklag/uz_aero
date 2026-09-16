@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: INWENTARZ IKON, przepisany 1:1 z `design/admin/*.html`.
+ * Ninerdeck - panel: INWENTARZ IKON, przepisany 1:1 z `design/admin/*.html`.
  *
  * Jeden plik na całą rodzinę, wbrew regule „jedna odpowiedzialność = jeden plik",
  * i to jest świadomy wyjątek: to nie są komponenty z zachowaniem, tylko kilkanaście
@@ -7,7 +7,8 @@
  * plików utrudniłoby jedyną kontrolę, jaką mamy - porównanie z mockupem wzrokiem.
  *
  * Ścieżki są kopiami z plików HTML, nie własną interpretacją. Zmiana ikony zaczyna
- * się od zmiany w `design/admin/`, tak jak każda inna zmiana wyglądu.
+ * się od zmiany w makiecie (`design/panel/SZABLON.html`), tak jak każda inna zmiana
+ * wyglądu.
  */
 
 interface IconProps {
@@ -31,7 +32,27 @@ function Stroke({ size = 15, width = 2, children }: IconProps & { width?: number
   );
 }
 
-/** Samolot - znak marki i ikona floty. Jedyna ikona wypełniona, jak w mockupach. */
+/**
+ * Monogram `9` - ZNAK MARKI Ninerdeck (plakietka logowania, wybór klubu, ikona aplikacji).
+ *
+ * Cyfra jest geometryczna: oczko o promieniu 6,1 z obwodem grubości 3,3 i ogon tej samej
+ * szerokości, więc jego lewa krawędź siada na okręgu wewnętrznym, a prawa jest pionową
+ * styczną do zewnętrznego. Oczko biegnie W DRUGĄ STRONĘ niż obrys - to ono, przez regułę
+ * niezerowego nawinięcia, robi z niego dziurę.
+ *
+ * Ta sama geometria stoi w `app/scripts/build-icons.js` (stała `NINE`) i to ona generuje
+ * ikony aplikacji. Skrypt musi działać gołym `node`, więc ścieżki stąd NIE IMPORTUJE -
+ * poprawka znaku wchodzi w OBU miejscach naraz albo rozjeżdża markę.
+ */
+export function BrandMark({ size = 14 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M18.1 8.1A6.1 6.1 0 1 0 14.8 13.52L14.8 22H18.1ZM14.8 8.1A2.8 2.8 0 0 1 9.2 8.1A2.8 2.8 0 0 1 14.8 8.1Z" />
+    </svg>
+  );
+}
+
+/** Samolot - ikona floty. Jedyna ikona wypełniona, jak w mockupach. */
 export function PlaneIcon({ size = 14 }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -171,6 +192,69 @@ export function PlusIcon({ size = 13 }: IconProps) {
     <Stroke size={size} width={2.5}>
       <line x1="12" y1="5" x2="12" y2="19" />
       <line x1="5" y1="12" x2="19" y2="12" />
+    </Stroke>
+  );
+}
+
+/* ── ikony kolumny bocznej (styl lekki, issue #107) - 1:1 z `design/panel/SZABLON.html` ── */
+
+/** Książka - moduł Dziennik. */
+export function BookIcon({ size = 16 }: IconProps) {
+  return (
+    <Stroke size={size}>
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+    </Stroke>
+  );
+}
+
+/** Robak - moduł Zgłoszenia (na czas testów, issue #87). */
+export function BugIcon({ size = 16 }: IconProps) {
+  return (
+    <Stroke size={size}>
+      <path d="m8 2 1.88 1.88" />
+      <path d="M14.12 3.88 16 2" />
+      <path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1" />
+      <path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6" />
+      <path d="M12 20v-9" />
+      <path d="M6.53 9C4.6 8.8 3 7.1 3 5" />
+      <path d="M6 13H2" />
+      <path d="M3 21c0-2.1 1.7-3.9 3.8-4" />
+      <path d="M20.97 5c0 2.1-1.6 3.8-3.5 4" />
+      <path d="M22 13h-4" />
+      <path d="M17.2 17c2.1.1 3.8 1.9 3.8 4" />
+    </Stroke>
+  );
+}
+
+/** Budynek - klub w kolumnie i moduł Organizacje (wielofirmowość 2.0.0). */
+export function BuildingIcon({ size = 16 }: IconProps) {
+  return (
+    <Stroke size={size} width={2.2}>
+      <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" />
+    </Stroke>
+  );
+}
+
+/** Szewrony w górę i w dół - „zmień klub" przy kafelku kontekstu. */
+export function SwitchIcon({ size = 14 }: IconProps) {
+  return (
+    <Stroke size={size} width={2.2}>
+      <path d="m7 15 5 5 5-5M7 9l5-5 5 5" />
+    </Stroke>
+  );
+}
+
+/**
+ * Klucz - KOD KLUBU (mockup `piloci-kod-klubu`; issue #101, E3).
+ *
+ * Nie kłódka: kłódka w tym panelu znaczy BRAK UPRAWNIENIA (`can.ts`), a kod klubu jest
+ * dokładnie odwrotnością - tym, co drzwi otwiera.
+ */
+export function KeyIcon({ size = 13 }: IconProps) {
+  return (
+    <Stroke size={size} width={2.5}>
+      <path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4" />
     </Stroke>
   );
 }

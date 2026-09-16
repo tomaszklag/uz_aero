@@ -1,7 +1,7 @@
-# Wydania UZ Aero
+# Wydania Ninerdeck
 
 <!--
-Ten plik jest ŹRÓDŁEM strony „Wydania i zmiany" (/wydania/ na stronie UZ Aero).
+Ten plik jest ŹRÓDŁEM strony „Wydania i zmiany" (/wydania/ na stronie Ninerdeck).
 Piszemy go dla pilotów, testerów i klubów - językiem korzyści, bez nazw plików i identyfikatorów.
 
 Format (świadomie wąski, parsuje go site/tools/render-changelog.mjs):
@@ -33,6 +33,33 @@ Wersja aplikacji to `wersja (build)` - wersję podnosimy przy wydaniu, numer bui
 z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 ## W przygotowaniu
+
+## 2.0.0 (build 3) · 16 września 2026
+
+### Nowości
+
+- **Aplikacja nazywa się Ninerdeck.** Nowa nazwa i nowy znak - monogram `9` - wchodzą wszędzie naraz: na ekran logowania, do panelu klubu, na stronę i na ikonę w telefonie. „UZ Aero" było nazwą roboczą; poza zmianą napisów i ikony nie zmienia się nic, czego pilot dotyka w locie.
+- **Panel klubu w lżejszym stylu.** Nawigacja w kolumnie po lewej z nazwą klubu nad pozycjami, ścieżka nad nagłówkiem w dzienniku (flota → maszyna → operacja), tytuły i etykiety pisane jak na stronie, a nie jak na przyrządzie. Kolory bez zmian.
+- **Jeden serwer obsługuje wiele klubów, a dane klubów są rozdzielone.** Każdy klub widzi wyłącznie swoje maszyny, pilotów, operacje i dokumenty - także wtedy, gdy ten sam pilot lata w dwóch klubach albo dwa kluby mają maszyny o tym samym znaku. Pilot podpisuje operacje kodem nadanym w danym klubie, a numeracja operacji w dobie biegnie w każdym klubie osobno.
+- **Link do karty arkusza dostaje adres klubu i własny sekret.** Kartę otwiera się bez konta w aplikacji - wystarczy link, który serwer zapisał przy eksporcie - a zgadnięcie samej nazwy karty niczego już nie otwiera.
+- **Do klubu dołącza się kodem klubu.** Klub ma jeden kod (w rodzaju `AZG-7K4M`), który administrator podaje pilotom dowolnym kanałem - z tablicy w hangarze, z grupy klubowej, z ręki. Pilot loguje się kontem Google, wpisuje kod i czeka na decyzję: administrator przyjmuje go z kodem pilota i rolą albo odmawia z powodem, który pilot czyta na swoim telefonie. Kod nie jest tajny i nikogo sam nie wpuszcza - wpuszcza człowiek. Nowy kod unieważnia stary od razu, a dołączanie kodem da się wyłączyć; złożone zgłoszenia zostają w kolejce.
+- **Klub zakłada opiekun platformy** razem z jego pierwszym administratorem i kodem klubu, żeby klub miał od pierwszego dnia kogo pytać i co podawać pilotom. Klub da się wyłączyć - jego ludzie tracą dostęp od razu, a dziennik, flota i konta zostają.
+- **Dopisywania pilota z panelu klubu już nie ma** - to była druga droga do klubu, obok kodu, i znikła razem z nią. Pilot, który odchodzi, ma wyłączane członkostwo: dostęp gaśnie natychmiast, a jego loty zostają w dzienniku i w dokumentach klubu.
+- **Administrator dwóch klubów wybiera klub po zalogowaniu** i przechodzi między nimi bez logowania się od nowa. Nazwa klubu stoi na szczycie kolumny z lewej, więc przy każdym wklejonym linku widać, czyj to dziennik. Przy jednym klubie nic się nie zmienia - wyboru nie ma, bo nie ma z czego wybierać.
+- **Pilot dwóch klubów przełącza klub w ustawieniach aplikacji.** Wybrany klub decyduje, jaką flotę i jakich drugich pilotów widać przy rozpoczęciu lotu; „Mój dzień" i „Poprzednie dni" pokazują za to operacje ze WSZYSTKICH klubów, a każdy kafelek mówi, w którym klubie odbyła się operacja. Przy jednym klubie sekcji nie ma - nie ma czego przełączać.
+- **Zmiana klubu wymaga internetu i wysłanej kolejki**, i mówi o tym przy karcie klubu: zapisy powstałe w klubie wychodzą wyłącznie jego kluczem, więc najpierw jadą na serwer. Bez zasięgu pilot pracuje dalej w klubie, w którym jest - tak samo jak dotąd.
+- **Do drugiego klubu dołącza się z ustawień, tym samym kodem klubu.** Zgłoszenie staje na liście klubów jako „czeka na zatwierdzenie", a pilot lata dalej tam, gdzie latał.
+- **Pilot bez klubu wpisuje kod klubu na ekranie logowania.** Nieznany kod dostaje odpowiedź przy polu bez kasowania wpisu, odmowa administratora - powód i drugie wyjście („dołącz innym kodem"), a zbyt wiele prób pod rząd mówi, ile trzeba odczekać.
+
+### Poprawki
+
+- **Sygnatura operacji wróciła na kafelek „Mojego dnia".** Nazwa, którą operacja ma poza telefonem - ta sama, którą widzi administrator w panelu - stała dotąd wyłącznie na kartach „Poprzednich dni" i na ekranie rozliczenia, choć makieta rysuje ją na każdym kafelku. Teraz pilot czyta ją tam, gdzie patrzy najczęściej.
+
+### Dla testerów
+
+- **To wydanie jest NOWĄ INSTALACJĄ, nie aktualizacją.** Ninerdeck startuje na własnym serwerze i jako osobna aplikacja: instaluje się ją od nowa, loguje kontem Google i wpisuje kod klubu. Dotychczasowa aplikacja - stara nazwa i stara ikona - działa dalej ze swoim serwerem, dopóki wszyscy nie przejdą, ale **historia lotów z testów nie przenosi się**: klub wpisuje flotę od nowa, a piloci rejestrują się ponownie.
+- **Zgłoszenia błędów z aplikacji trafiają do jednej kolejki dla całego serwera**, z nazwą klubu przy każdym zgłoszeniu. Obsługuje ją konto opiekuna platformy; administrator klubu tej zakładki nie ma - poprawki i tak wchodzą w kolejnym wydaniu aplikacji, więc decyzja o zgłoszeniu nie należy do klubu.
+- **Zapisy do maszyny innego klubu nie blokują już wysyłki.** Telefon, który miał w kolejce zapis nie dla tego klubu, odkłada tylko ten jeden wpis i wysyła resztę.
 
 ## 1.1.0 (build 2) · 7 września 2026
 
@@ -94,15 +121,22 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 <!-- Terminy są orientacyjne i zostają na stronie do potwierdzenia przez właściciela projektu. -->
 
-### 1.2.0 · po pierwszych tygodniach testów
+### 2.1.0 · po pierwszych tygodniach testów
 
 > Poprawki z testów i kalibracja normy zużycia na prawdziwych lotach.
 
-- [~] Publikacja aplikacji u Google - logowanie dowolnym kontem, bez listy testerów
 - [ ] Kalibracja progów normy paliwa i motogodzin na danych z testów
 - [ ] Analityka oleju: zużycie między pomiarami i norma z lotów maszyny
 - [ ] Panel: pulpit floty, skrzynka flag i eksporty kart dnia w regułach 2.0
 - [ ] Poprawki zgłoszone przez pilotów w testach
+
+### 4.0.0 · termin do ustalenia
+
+> Aplikacja w sklepie Google Play i własny adres Ninerdeck.
+
+- [ ] Publikacja u Google - instalacja ze sklepu i logowanie dowolnym kontem, bez listy testerów
+- [ ] Wymagane przez sklep: karta bezpieczeństwa danych i ścieżka usunięcia konta
+- [ ] Własna domena: strona pod `ninerdeck.pl`, panel i aplikacja pod `app.ninerdeck.pl`
 
 ### Dalej
 

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - ŚLAD SESJI: geometria biegu silnika dla OBU powierzchni.
+ * Ninerdeck (serwer) - ŚLAD SESJI: geometria biegu silnika dla OBU powierzchni.
  *
  * ══ DLACZEGO `common/`, A NIE DWA ZAPYTANIA ══
  * Ślad należy do SESJI, nie do lotu (issue #38): powstaje w jednym ciągu od uruchomienia
@@ -38,7 +38,7 @@ import {
   projectSession,
   type RawTrackEntry,
   type SessionTrackPayload,
-} from '@uzaero/domain';
+} from '@ninerdeck/domain';
 
 import type { Database, EventsStorePort, TraceSourcePort } from '../ports.ts';
 
@@ -58,8 +58,9 @@ export class SessionTrackQueries {
     private readonly traces: TraceSourcePort,
   ) {}
 
-  async bySession(sessionUuid: string): Promise<SessionTrackOutcome> {
-    const events = await this.events.sessionEvents(this.db, sessionUuid);
+  /** Ślad sesji KLUBU - cudza sesja jest `no_session`, jak nieistniejąca (issue #99). */
+  async bySession(orgId: string, sessionUuid: string): Promise<SessionTrackOutcome> {
+    const events = await this.events.sessionEvents(this.db, orgId, sessionUuid);
     if (events.length === 0) return { ok: false, reason: 'no_session' };
 
     const state = projectSession(events);

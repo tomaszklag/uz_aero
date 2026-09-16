@@ -1,5 +1,5 @@
 /**
- * UZ Aero - SZLAK TEJ OPERACJI w arkuszach wpisu ręcznego (uwaga z urządzenia,
+ * Ninerdeck - SZLAK TEJ OPERACJI w arkuszach wpisu ręcznego (uwaga z urządzenia,
  * 2026-09-04: „w manualnym locie z paliwem zastanym czemu nie dasz też info, ile
  * użytkownik przejął, ile dolał, ile latał i ile wpisał, że zostało").
  *

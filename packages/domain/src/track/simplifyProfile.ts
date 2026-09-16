@@ -1,5 +1,5 @@
 /**
- * UZ Aero - upraszczanie PROFILU PIONOWEGO (Ramer–Douglas–Peucker w osi wysokości).
+ * Ninerdeck - upraszczanie PROFILU PIONOWEGO (Ramer–Douglas–Peucker w osi wysokości).
  *
  * Osobno od `simplify.ts`, bo mierzy co innego. Tam odległość punktu od cięciwy liczy
  * się w METRACH na płaszczyźnie - tutaj punkt ma czas i wysokość, czyli dwie wielkości

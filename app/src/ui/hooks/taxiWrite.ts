@@ -1,5 +1,5 @@
 /**
- * UZ Aero - co zrobić z KOŁOWANIEM wykrytym przez automat (issue #30).
+ * Ninerdeck - co zrobić z KOŁOWANIEM wykrytym przez automat (issue #30).
  *
  * Kołowanie jest jedyną detekcją zapisywaną NATYCHMIAST, bez okna „COFNIJ" (§1
  * `docs/algorytm-detekcji.md`): nie wyznacza żadnego czasu rozliczeniowego, więc pytanie

@@ -3,7 +3,7 @@ import {
   motoHours as motoHoursShared,
   oilLitres as oilLitresShared,
   timeUtc as timeUtcShared,
-} from '@uzaero/format';
+} from '@ninerdeck/format';
 import { describe, expect, it } from 'vitest';
 
 import { litres, motoHours, NONE, oilLitres, timeUtc } from './values';
@@ -17,7 +17,7 @@ describe('kreska braku panelu', () => {
   });
 
   it('wspólne formatery nadal oddają dywiz - kreskę TELEFONU', () => {
-    // Gdyby ktoś „naprawił" to w `@uzaero/format`, zmieniłby zapis w aplikacji pilota,
+    // Gdyby ktoś „naprawił" to w `@ninerdeck/format`, zmieniłby zapis w aplikacji pilota,
     // której makiety piszą brak dywizem. Ten test broni tamtej strony.
     expect(litresShared(null)).toBe('-');
     expect(oilLitresShared(null)).toBe('-');

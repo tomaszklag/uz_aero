@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter konfiguracji samolotu (`AircraftConfigPort`).
+ * Ninerdeck (serwer) - adapter konfiguracji samolotu (`AircraftConfigPort`).
  *
  * Czysty odczyt jednej wartości: flota zmienia się kilka razy w sezonie i zmienia ją
  * administrator, nie ingest. Czytamy `Queryable` podanym przez wołającego, więc
@@ -10,11 +10,19 @@
 import type { AircraftConfigPort, Queryable } from '../../../application/common/ports.ts';
 
 export class PgAircraftConfigRepo implements AircraftConfigPort {
-  async capacityL(db: Queryable, aircraftId: string): Promise<number | null> {
+  async capacityL(db: Queryable, orgId: string, aircraftId: string): Promise<number | null> {
     const { rows } = await db.query<{ capacity_l: number }>(
-      'SELECT capacity_l FROM aircraft WHERE id = $1',
-      [aircraftId],
+      'SELECT capacity_l FROM aircraft WHERE org_id = $1 AND id = $2',
+      [orgId, aircraftId],
     );
     return rows[0] == null ? null : Number(rows[0].capacity_l);
+  }
+
+  async orgIdOf(db: Queryable, aircraftId: string): Promise<string | null> {
+    const { rows } = await db.query<{ org_id: string }>(
+      'SELECT org_id FROM aircraft WHERE id = $1',
+      [aircraftId],
+    );
+    return rows[0]?.org_id ?? null;
   }
 }

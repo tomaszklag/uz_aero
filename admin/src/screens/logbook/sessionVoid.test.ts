@@ -52,9 +52,12 @@ describe('potwierdzenie nazywa KONKRETNY wpis', () => {
     // Dwa wpisy tej samej maszyny w dobie różnią się wyłącznie godzinami - bez nich
     // pytanie „unieważnić?" nie ma jak odróżnić porannej zmiany od popołudniowej.
     // Od issue #68 odróżnia je JEDEN napis i dlatego stoi pierwszy.
+    // Dzień w tym samym zapisie, co kolumna „Operacja" gridu (`dateUtcShort`:
+    // po polsku, bez roku - od 2026-09-07). Potwierdzenie składa fakty z `sessionRow`,
+    // więc nie ma prawa mówić datą w innym dialekcie niż lista, z której się przyszło.
     expect(voidFacts(session)).toEqual([
       { label: 'Operacja', value: 'SP-KLM/2026-08-12/TMK/1' },
-      { label: 'Dzień', value: '12 AUG 2026' },
+      { label: 'Dzień', value: '12 SIERPNIA' },
       { label: 'Silnik', value: '08:42 → 10:22' },
       { label: 'Pilot', value: 'T. Małkiewicz' },
       { label: 'Loty', value: '3' },

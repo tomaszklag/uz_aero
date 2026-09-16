@@ -1,5 +1,5 @@
 /**
- * UZ Aero - polityka usługi pierwszoplanowej GPS.
+ * Ninerdeck - polityka usługi pierwszoplanowej GPS.
  *
  * Dwa przypadki są tu obroną przed realnymi awariami:
  *  - adopcja (`none` przy działającej usłudze) - restart po powrocie z headless

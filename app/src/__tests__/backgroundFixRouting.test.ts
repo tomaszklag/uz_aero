@@ -1,5 +1,5 @@
 /**
- * UZ Aero - routing paczek fixów z taska usługi w tle.
+ * Ninerdeck - routing paczek fixów z taska usługi w tle.
  *
  * Kontrakt: żywy sink > zapis headless > kosz. Fix bez atrybucji sesji NIE trafia
  * do `gps_trace` - przy następnym claimie mógłby wylądować w cudzej sesji, a bez

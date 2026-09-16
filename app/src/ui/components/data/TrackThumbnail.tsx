@@ -1,5 +1,5 @@
 /**
- * UZ Aero - miniatura śladu SESJI (mockup `10-statystyki.html`, `.track-thumb`).
+ * Ninerdeck - miniatura śladu SESJI (mockup `10-statystyki.html`, `.track-thumb`).
  *
  * Uproszczony zapis całego biegu silnika na ekranie sesji: linia i znaczniki startów,
  * lądowań oraz zrzutów. To jest szkic kształtu - „zapis istnieje, tyle było wyniesień

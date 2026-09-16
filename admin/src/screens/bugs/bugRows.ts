@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: zgłoszenie z serwera → WIERSZ TABELI i wiersze szuflady
+ * Ninerdeck - panel 2.0: zgłoszenie z serwera → WIERSZ TABELI i wiersze szuflady
  * (issue #87).
  *
  * Moduł CZYSTY (bez Reacta): decyzje o treści komórek są tu, pod testem, a nie w JSX-ie.
@@ -12,7 +12,7 @@
  * lepiej"), a lista dozwolonych pól zamieniłaby ją w listę pól, o których panel już wie.
  */
 
-import { dateTimeUtcShort } from '@uzaero/format';
+import { dateTimeUtcShort } from '@ninerdeck/format';
 
 import type { BugReportDto } from '../../api/dto';
 import type { PillTone } from '../../ui/components';
@@ -31,6 +31,12 @@ export interface BugRow {
   uuid: string;
   /** „4 WRZ 09:41" - zegar TELEFONU, czyli chwila, w której pilot to widział. */
   when: string;
+  /**
+   * Nazwa KLUBU zgłoszenia (issue #99 C6). Kolejka jest jedna dla całego serwera,
+   * a kod pilota jest jedyny w klubie, nie na serwerze - więc bez tej kolumny dwa
+   * zgłoszenia od dwóch różnych `TMA` czytałyby się jak dwa zgłoszenia jednej osoby.
+   */
+  org: string;
   /** Kod pilota; nazwisko schodzi do drugiej linii komórki. */
   pilot: string;
   pilotName: string | null;
@@ -48,6 +54,7 @@ export function bugRow(bug: BugReportDto): BugRow {
   return {
     uuid: bug.uuid,
     when: dateTimeUtcShort(new Date(bug.createdAt).getTime()),
+    org: bug.org.name,
     pilot: bug.pilotCode ?? bug.pilotId,
     pilotName: bug.pilotName,
     screen: bug.screen,
@@ -101,6 +108,10 @@ const KNOWN: readonly (readonly [string, string])[] = [
   ['pilotCode', 'Pilot'],
   ['pilotName', 'Nazwisko'],
   ['pilotId', 'Pilot (id)'],
+  // Klub aktywny telefonu w chwili zgłoszenia (wielofirmowość §7, issue #102) - inny
+  // niż klub zgłoszenia bywa wtedy, gdy pilot lata w dwóch i właśnie się przełączył.
+  ['orgName', 'Klub aktywny'],
+  ['orgId', 'Klub aktywny (id)'],
   ['appVersion', 'Wersja aplikacji'],
   ['platform', 'System'],
   ['osVersion', 'Wersja systemu'],

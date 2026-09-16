@@ -1,5 +1,5 @@
 /**
- * UZ Aero - pasek sesji CUDZEGO samolotu (`.claim-strip` z mockupu 04B).
+ * Ninerdeck - pasek sesji CUDZEGO samolotu (`.claim-strip` z mockupu 04B).
  *
  * Zastąpił duty timer i to jest zmiana MODELU, nie układu (§3.6a). Czas pracy pilota
  * jest wielkością PILOTA: obejmuje też inne maszyny i mieszka w „Mój dzień" (01).

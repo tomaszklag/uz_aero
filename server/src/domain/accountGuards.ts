@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - kiedy panel MUSI odmówić zmiany na koncie.
+ * Ninerdeck (serwer) - kiedy panel MUSI odmówić zmiany na koncie.
  *
  * Ten plik istnieje z powodu, który zdarzył się naprawdę: 2026-08-01 administrator nie
  * mógł wejść do systemu, bo w całym produkcie nie było ŻADNEJ ścieżki zmiany hasła -
@@ -148,4 +148,22 @@ export function refuseDelete(deletion: AccountDeletion): AccountRefusal | null {
   if (deletion.targetActive) return 'account_active';
   if (deletion.references > 0) return 'has_history';
   return null;
+}
+
+/**
+ * ZATWIERDZENIE ZGŁOSZENIA kodem klubu (issue #100, D2) - odmowa albo `null`.
+ *
+ * Jeden warunek i jest nim blokada PLATFORMOWA osoby (`pilots.active = false`), nałożona
+ * przez superadministratora. Zatwierdzenie zgłoszenia takiej osoby dałoby członkostwo
+ * `active`, którego brama i tak nie przepuści (`authorizeOrg` pyta o koniunkcję: osoba,
+ * klub, członkostwo) - czyli wiersz wyglądający na wpuszczony i człowiek, który nie
+ * wchodzi. Administrator klubu nie ma jak tej blokady zdjąć, więc musi ją ZOBACZYĆ
+ * jako odmowę z powodem, a nie domyślić się z nieudanego logowania pilota.
+ *
+ * Populacji administratorów ta operacja nie pilnuje i pilnować nie ma czego: zatwierdzenie
+ * wyłącznie DODAJE członka (także administratora), a `refuseRoleChange` i `refuseDeactivate`
+ * bronią przed odejmowaniem.
+ */
+export function refuseApprove(person: { active: boolean }): AccountRefusal | null {
+  return person.active ? null : 'inactive_account';
 }

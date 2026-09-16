@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - przyjęcie ZGŁOSZEŃ BŁĘDÓW z telefonu (issue #87).
+ * Ninerdeck (serwer) - przyjęcie ZGŁOSZEŃ BŁĘDÓW z telefonu (issue #87).
  *
  * Cienka jak `PrefsCommands` i to jest właściwy rozmiar: zgłoszenie nie ma reguł
  * domenowych do sprawdzenia, projekcji do odświeżenia ani flagi do otwarcia. Jedyna
@@ -36,7 +36,9 @@ export class BugReportCommands {
    * całości - telefon ponowi resztę przy następnej okazji, a idempotencja po uuid
    * pilnuje, żeby przyjęte nie zdublowały się przy ponowieniu.
    */
-  submit(pilotId: string, reports: NewBugReport[]): Promise<BugReportIntake> {
-    return this.reports.insertMany(this.db, pilotId, reports);
+  submit(orgId: string, pilotId: string, reports: NewBugReport[]): Promise<BugReportIntake> {
+    // Klub Z TOKENU, jak tożsamość: zgłoszenie dotyczy ekranu w konkretnym klubie
+    // i czyta je panel tego klubu (wielofirmowość §6).
+    return this.reports.insertMany(this.db, orgId, pilotId, reports);
   }
 }

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - strona ODCZYTU rejestru zdarzeń (`A04`).
+ * Ninerdeck (serwer) - strona ODCZYTU rejestru zdarzeń (`A04`).
  *
  * Scenariusz, dla którego ten ekran istnieje: liczby się nie zgadzają i trzeba
  * odpowiedzieć na pytanie „skąd się wzięła ta wartość", „co dokładnie przyszło
@@ -19,7 +19,7 @@
  *    mówiłyby o dwóch różnych progach pod jedną nazwą.
  */
 
-import { CLOCK_DRIFT_MS } from '@uzaero/domain';
+import { CLOCK_DRIFT_MS } from '@ninerdeck/domain';
 
 import type { Database } from '../../common/ports.ts';
 import type { AdminEventsPage } from '../contracts/events.ts';
@@ -36,8 +36,8 @@ export class AdminEventQueries {
     private readonly events: AdminEventsReadPort,
   ) {}
 
-  async list(filter: EventListFilter): Promise<EventListOutcome> {
-    const result = await this.events.list(this.db, filter, CLOCK_DRIFT_MS);
+  async list(orgId: string, filter: EventListFilter): Promise<EventListOutcome> {
+    const result = await this.events.list(this.db, orgId, filter, CLOCK_DRIFT_MS);
     if (result == null) return { ok: false, reason: 'bad_cursor' };
 
     return {

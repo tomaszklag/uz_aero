@@ -1,5 +1,5 @@
 /**
- * UZ Aero - generator `admin/src/styles/tokens.css` z `@uzaero/tokens`.
+ * Ninerdeck - generator `admin/src/styles/tokens.css` z `@ninerdeck/tokens`.
  *
  * Uruchomienie (z katalogu `admin/`):
  *     npm run tokens:css --workspace admin

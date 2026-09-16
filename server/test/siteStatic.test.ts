@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - strona publiczna pod `/` (`http/routes/site/staticSite.ts`).
+ * Ninerdeck (serwer) - strona publiczna pod `/` (`http/routes/site/staticSite.ts`).
  *
  * Testowane są DECYZJE, nie wtyczka. Najważniejsza jest ostatnia grupa: strona rejestruje
  * wildcard na `/`, więc gdyby wygrywał z panelem albo z API, żądanie `/admin/api/...`
@@ -17,8 +17,8 @@ import { testHarness } from './helpers.ts';
 
 /** Namiastka `site/dist` - kształt wyniku `npm run site`. */
 function fakeSite(): string {
-  const dir = mkdtempSync(join(tmpdir(), 'uzaero-site-dist-'));
-  writeFileSync(join(dir, 'index.html'), '<!doctype html><title>UZ AERO</title>');
+  const dir = mkdtempSync(join(tmpdir(), 'ninerdeck-site-dist-'));
+  writeFileSync(join(dir, 'index.html'), '<!doctype html><title>NINERDECK</title>');
   writeFileSync(join(dir, 'site.css'), 'body{}');
   mkdirSync(join(dir, 'dokumentacja', 'instalacja'), { recursive: true });
   writeFileSync(join(dir, 'dokumentacja', 'index.html'), '<!doctype html><title>Podręcznik</title>');
@@ -31,8 +31,8 @@ function fakeSite(): string {
 
 /** Namiastka `admin/dist` - żeby dało się sprawdzić, że wildcard strony jej nie zjada. */
 function fakePanel(): string {
-  const dir = mkdtempSync(join(tmpdir(), 'uzaero-admin-dist-'));
-  writeFileSync(join(dir, 'index.html'), '<!doctype html><title>UZ AERO panel</title>');
+  const dir = mkdtempSync(join(tmpdir(), 'ninerdeck-admin-dist-'));
+  writeFileSync(join(dir, 'index.html'), '<!doctype html><title>NINERDECK panel</title>');
   return dir;
 }
 
@@ -42,7 +42,7 @@ describe('strona publiczna', () => {
 
     const index = await app.inject({ method: 'GET', url: '/' });
     expect(index.statusCode).toBe(200);
-    expect(index.body).toContain('UZ AERO');
+    expect(index.body).toContain('NINERDECK');
 
     const css = await app.inject({ method: 'GET', url: '/site.css' });
     expect(css.statusCode).toBe(200);
@@ -85,7 +85,7 @@ describe('strona publiczna', () => {
 
     const panel = await app.inject({ method: 'GET', url: '/admin/' });
     expect(panel.statusCode).toBe(200);
-    expect(panel.body).toContain('UZ AERO panel');
+    expect(panel.body).toContain('NINERDECK panel');
 
     const redirect = await app.inject({ method: 'GET', url: '/admin' });
     expect(redirect.statusCode).toBe(302);
@@ -109,7 +109,7 @@ describe('strona publiczna', () => {
   });
 
   it('brak katalogu strony (dev bez `npm run site`) nie przewraca serwera', async () => {
-    const missing = join(mkdtempSync(join(tmpdir(), 'uzaero-site-dist-')), 'brak');
+    const missing = join(mkdtempSync(join(tmpdir(), 'ninerdeck-site-dist-')), 'brak');
     const { app } = await testHarness({ siteDistDir: missing, adminDistDir: fakePanel() });
 
     expect((await app.inject({ method: 'GET', url: '/' })).statusCode).toBe(404);

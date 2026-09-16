@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - ODCZYTY MASZYNY WPISANE RĘKĄ ADMINISTRATORA (issue #81, 2026-09-03:
+ * Ninerdeck (serwer) - ODCZYTY MASZYNY WPISANE RĘKĄ ADMINISTRATORA (issue #81, 2026-09-03:
  * „jako admin przez panel powinienem móc modyfikować odczyty, które będą nadrzędne,
  * czyli motogodziny, ilość paliwa oraz ilość oleju […] powinna to być oddzielna akcja
  * i powinna mieć możliwość dopisania komentarza").
@@ -69,7 +69,9 @@ export class AdminAircraftReadingCommands {
         // Blokada konfiguracji jednostki: sufity liczą się na pojemnościach, które ktoś
         // mógł właśnie zmieniać w drugim oknie (ta sama tarcza, co przy `PATCH`).
         await this.fleet.lockAircraft(tx, input.aircraftId);
-        const aircraft = await this.fleet.byId(tx, input.aircraftId);
+        // Maszyna cudzego klubu jest dla administratora nieistniejąca (wielofirmowość) -
+        // port pyta o jednostkę W KLUBIE, więc `null` załatwia oba przypadki naraz.
+        const aircraft = await this.fleet.byId(tx, actor.orgId, input.aircraftId);
         if (aircraft == null) throw new AircraftNotFound();
 
         // TE SAME reguły, co dla stanu początkowego (issue #66): zero jest wartością,
@@ -91,7 +93,7 @@ export class AdminAircraftReadingCommands {
           byPilotId: actor.pilotId,
           at: at.getTime(),
         };
-        await this.readings.insert(tx, input.aircraftId, recorded);
+        await this.readings.insert(tx, aircraft.orgId, input.aircraftId, recorded);
 
         return {
           result: recorded,

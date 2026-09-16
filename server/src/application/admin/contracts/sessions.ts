@@ -1,8 +1,8 @@
 /**
- * UZ Aero (serwer) - KONTRAKT listy i karty dnia panelu (`A02`, `A02a`).
+ * Ninerdeck (serwer) - KONTRAKT listy i karty dnia panelu (`A02`, `A02a`).
  *
  * Pliki w `contracts/` zawierają WYŁĄCZNIE typy i wolno im importować wyłącznie
- * `@uzaero/domain` (pilnuje `test/architecture.test.ts`). To jest powierzchnia, którą
+ * `@ninerdeck/domain` (pilnuje `test/architecture.test.ts`). To jest powierzchnia, którą
  * kiedyś zobaczy klient panelu - a granica działa tylko dlatego, że wskazuje na
  * katalog, do którego nie da się wciągnąć `pg`.
  *
@@ -17,7 +17,7 @@
  * więc każda taka zmiana stawałaby się zmianą łamiącą panel.
  */
 
-import type { Event, FlagType, MhFormat, OperationType, SessionState } from '@uzaero/domain';
+import type { Event, FlagType, MhFormat, OperationType, SessionState } from '@ninerdeck/domain';
 
 import type { AdminFlagListItem } from './flags.ts';
 

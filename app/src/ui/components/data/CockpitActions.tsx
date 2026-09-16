@@ -1,5 +1,5 @@
 /**
- * UZ Aero - CockpitActions (`.action-row` z mockupów 05, 05a–05d)
+ * Ninerdeck - CockpitActions (`.action-row` z mockupów 05, 05a–05d)
  *
  * Pasek trzech akcji przyklejony do dołu ekranu w locie: zapis ręczny (szeroki),
  * zrzut (wąski, niebieski) i STOP ENGINE (wąski, czerwony).

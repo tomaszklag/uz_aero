@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ReasonField: powód korekty (issue #43, arkusze `design/10e`–`10g`).
+ * Ninerdeck - ReasonField: powód korekty (issue #43, arkusze `design/10e`–`10g`).
  *
  * Jedno pole, OPCJONALNE, w każdym arkuszu korekty. Wymagane byłoby tarciem w polu -
  * pilot poprawia literówkę w minucie, a nie pisze uzasadnienia do protokołu - ale gdy

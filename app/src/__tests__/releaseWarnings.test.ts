@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ostrzeżenie „nic się nie zmieniło" przy zdaniu samolotu (issue #75 pkt 2).
+ * Ninerdeck - ostrzeżenie „nic się nie zmieniło" przy zdaniu samolotu (issue #75 pkt 2).
  *
  * Granica pod obserwacją: ostrzeżenie mówi PRZED zapisem, że zdanie bez żadnej zmiany
  * nie utworzy operacji - i gaśnie samo, gdy pilot poprawi odczyt albo gdy w sesji jest

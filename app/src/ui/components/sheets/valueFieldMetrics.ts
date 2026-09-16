@@ -1,5 +1,5 @@
 /**
- * UZ Aero - metryka pola DUŻEJ WARTOŚCI w arkuszach odczytu (`ReadingSheet`,
+ * Ninerdeck - metryka pola DUŻEJ WARTOŚCI w arkuszach odczytu (`ReadingSheet`,
  * `OilSheet`).
  *
  * JEDNO miejsce, bo to bliźniacze pola i już raz się rozjechały (30 px / padding 12

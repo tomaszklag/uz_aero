@@ -1,7 +1,7 @@
 /**
- * UZ Aero (serwer) - KONTRAKT operacji serwisowych panelu (`A11-konserwacja.html`).
+ * Ninerdeck (serwer) - KONTRAKT operacji serwisowych panelu (`A11-konserwacja.html`).
  *
- * Wyłącznie typy; jedyny dozwolony import to `@uzaero/domain` (patrz `sessions.ts`).
+ * Wyłącznie typy; jedyny dozwolony import to `@ninerdeck/domain` (patrz `sessions.ts`).
  *
  * Ekran ma cztery sekcje i trzy z nich mieszkają tutaj: przebudowa projekcji,
  * sprzątanie wygasłych refresh tokenów i stan schematu. Czwarta (kolejka ponowień
@@ -34,6 +34,8 @@ export interface ProjectionFieldDiff {
 /** Jedna sesja, która nie zgadza się z przeliczeniem ze strumienia. */
 export interface ProjectionRowDiff {
   sessionUuid: string;
+  /** Klub sesji (wielofirmowość) - przebudowa pisze go do wiersza projekcji. */
+  orgId: string;
   aircraftId: string;
   /** Dzień karty (`YYYY-MM-DD`, UTC) z przeliczonego czasu przejęcia (`claim_time`); `null` = sesja bez daty. */
   day: string | null;

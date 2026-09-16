@@ -1,5 +1,5 @@
 /**
- * UZ Aero - FuelStrip (`.fuel-strip` z mockupu 04)
+ * Ninerdeck - FuelStrip (`.fuel-strip` z mockupu 04)
  *
  * Pasek paliwa w kokpicie ground: ostatni odczyt po lewej, szacunek wystarczalności
  * po prawej.

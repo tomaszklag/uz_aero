@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - reguły, które BRONIĄ konfiguracji floty (`A07`, `A07a`).
+ * Ninerdeck (serwer) - reguły, które BRONIĄ konfiguracji floty (`A07`, `A07a`).
  *
  * Lustro `accountGuards.ts` i ta sama zasada: reguła „czego nie wolno zrobić" mieszka
  * w `domain/`, jest czysta i ma test, a komenda wyłącznie ją woła. Rozsianie tych
@@ -124,7 +124,7 @@ export function refuseFuelNorm(fuelNormLPerH: number | null): FleetRefusal | nul
 
 /**
  * STAN POCZĄTKOWY jednostki (issue #66) - co pokazywały przyrządy, gdy maszyna trafiła
- * do UZ Aero. Ocena na wartościach EFEKTYWNYCH po zmianie, jak przy oleju.
+ * do Ninerdeck. Ocena na wartościach EFEKTYWNYCH po zmianie, jak przy oleju.
  *
  * ══ DLACZEGO ZERO JEST TU LEGALNE, A PRZY NORMACH NIE ══
  * Bo to są dwa różne rodzaje liczb. Norma zerowa jest niemożliwa - silnik pracujący

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - słownik ZGŁOSZEŃ BŁĘDÓW z aplikacji pilota (issue #87).
+ * Ninerdeck (serwer) - słownik ZGŁOSZEŃ BŁĘDÓW z aplikacji pilota (issue #87).
  *
  * Ten sam powód, dla którego istnieją `roles.ts` i `adminActions.ts`: pytanie „jakie
  * stany może mieć zgłoszenie" ma mieć JEDNĄ odpowiedź, w jednym pliku, który da się

@@ -1,15 +1,15 @@
 /**
- * UZ Aero - panel 2.0: samolot z serwera -> WIERSZ TABELI.
+ * Ninerdeck - panel 2.0: samolot z serwera -> WIERSZ TABELI.
  *
  * Moduł CZYSTY (bez Reacta): decyzje o treści komórek są tu, pod testem, a nie w JSX-ie.
  *
- * == LICZBY FORMATUJE `@uzaero/format`, NIE TEN PLIK ==
+ * == LICZBY FORMATUJE `@ninerdeck/format`, NIE TEN PLIK ==
  * `litres()` jest wspólne z aplikacją pilota, więc pojemność wygląda tak samo w panelu
  * i na telefonie. Panel nie zaokrągla po swojemu - od `toFixed` w komórce tabeli
  * zaczyna się back-office, który liczy inaczej niż produkt.
  */
 
-import type { MhFormat } from '@uzaero/domain';
+import type { MhFormat } from '@ninerdeck/domain';
 
 import type { AircraftListItemDto } from '../../api/dto';
 import type { PillTone } from '../../ui/components';
@@ -23,8 +23,8 @@ import { litres, NONE } from '../common/values';
  * „3907:48" widać na przyrządzie i nie trzeba nic tłumaczyć.
  */
 const MH_FORMATS: Record<MhFormat, { label: string; example: string; tone: PillTone }> = {
-  decimal: { label: 'dziesiętny', example: '3907.8', tone: 'dim' },
-  hhmm: { label: 'godziny i minuty', example: '3907:48', tone: 'blue' },
+  decimal: { label: 'Dziesiętny', example: '3907.8', tone: 'dim' },
+  hhmm: { label: 'Godziny i minuty', example: '3907:48', tone: 'blue' },
 };
 
 export const mhFormatLabel = (format: MhFormat): string => MH_FORMATS[format].label;
@@ -67,7 +67,7 @@ export function fleetRow(aircraft: AircraftListItemDto): FleetRow {
     capacity: litres(aircraft.capacityL),
     mhFormatLabel: mhFormatLabel(aircraft.mhFormat),
     mhFormatTone: mhFormatTone(aircraft.mhFormat),
-    dualLabel: aircraft.dualRequired ? 'wymagany' : null,
+    dualLabel: aircraft.dualRequired ? 'Wymagany' : null,
     inService,
     statusLabel: inService ? 'W służbie' : 'Wyłączony',
     warning: !inService && aircraft.openSessions > 0 ? 'ktoś jeszcze na nim lata' : null,

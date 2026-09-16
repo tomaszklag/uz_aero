@@ -1,4 +1,4 @@
-/* UZ Aero - dokumentacja: wyszukiwarka (search.json w przeglądarce), szuflada spisu treści
+/* Ninerdeck - dokumentacja: wyszukiwarka (search.json w przeglądarce), szuflada spisu treści
    na telefonie i podświetlanie „na tej stronie". Bez zależności. */
 (function () {
   'use strict';

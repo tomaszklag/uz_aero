@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - ŚLAD SESJI DLA TELEFONU (`GET /me/sessions/:uuid/track`, issue #47).
+ * Ninerdeck (serwer) - ŚLAD SESJI DLA TELEFONU (`GET /me/sessions/:uuid/track`, issue #47).
  *
  * ══ SKĄD SIĘ WZIĘŁA TA TRASA ══
  * Do issue #47 ślad żył na telefonie: nagranie leżało w `gps_trace` przez 14 dni i stamtąd
@@ -22,7 +22,7 @@
  * pokazuje własny lot pilota, panel - dowolny, na zdolności `panel.access`.
  */
 
-import type { SessionTrackPayload } from '@uzaero/domain';
+import type { SessionTrackPayload } from '@ninerdeck/domain';
 
 import type { SessionTrackQueries } from '../../common/queries/sessionTrack.ts';
 
@@ -38,8 +38,12 @@ export type MySessionTrackOutcome =
 export class MySessionTrackQueries {
   constructor(private readonly tracks: SessionTrackQueries) {}
 
-  async bySession(pilotId: string, sessionUuid: string): Promise<MySessionTrackOutcome> {
-    const outcome = await this.tracks.bySession(sessionUuid);
+  async bySession(
+    orgId: string,
+    pilotId: string,
+    sessionUuid: string,
+  ): Promise<MySessionTrackOutcome> {
+    const outcome = await this.tracks.bySession(orgId, sessionUuid);
     if (!outcome.ok) return outcome;
 
     // Właścicielem jest PIC z otwarcia sesji - ta sama tożsamość, którą reguła

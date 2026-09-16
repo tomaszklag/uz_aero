@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter flag dla panelu (`FlagsAdminPort`).
+ * Ninerdeck (serwer) - adapter flag dla panelu (`FlagsAdminPort`).
  *
  * Duplikat nazwy bazowej z `pg/flagsRepo.ts` jest CELOWY: rolą tego pliku jest
  * „adapter flag panelu", a kwalifikator niesie katalog. `adminFlagsRepo.ts` dałoby
@@ -10,7 +10,7 @@
  * życia flagi. Ingest przez to nie ma jak zregresować od zmian w panelu.
  */
 
-import { isFlagType } from '@uzaero/domain';
+import { isFlagType } from '@ninerdeck/domain';
 
 import type {
   AdminFlag,
@@ -25,6 +25,7 @@ import { SqlFilter } from '../sqlFilter.ts';
 
 interface AdminFlagDbRow {
   id: number;
+  org_id: string;
   type: string;
   aircraft_id: string;
   session_uuids: string[];
@@ -41,7 +42,7 @@ interface JoinedFlagDbRow extends AdminFlagDbRow {
   aircraft_type: string | null;
 }
 
-const FLAG_COLUMNS = `f.id, f.type, f.aircraft_id, f.session_uuids, f.details, f.status,
+const FLAG_COLUMNS = `f.id, f.org_id, f.type, f.aircraft_id, f.session_uuids, f.details, f.status,
                       f.created_at, f.resolved_at, f.resolved_by, f.resolution_note`;
 
 const toFlag = (r: AdminFlagDbRow): AdminFlag => {
@@ -54,6 +55,7 @@ const toFlag = (r: AdminFlagDbRow): AdminFlag => {
   }
   return {
     id: r.id,
+    orgId: r.org_id,
     type: r.type,
     aircraftId: r.aircraft_id,
     sessionUuids: r.session_uuids,
@@ -81,19 +83,20 @@ export class PgAdminFlagsRepo implements FlagsAdminPort {
    */
   async list(
     db: Queryable,
+    orgId: string,
     filter: FlagListFilter,
   ): Promise<{ items: AdminFlagJoin[]; total: number }> {
     // Dwa akumulatory z tymi samymi warunkami: strona ma `LIMIT`, licznik nie -
     // a `total` musi opisywać CAŁY wynik filtra („pokazano 50 z 127"), nie stronę.
-    const conditions = this.conditionsOf(filter);
-    const page = this.conditionsOf(filter);
+    const conditions = this.conditionsOf(orgId, filter);
+    const page = this.conditionsOf(orgId, filter);
     const blocking = page.bind([...EXPORT_BLOCKING_FLAG_TYPES]);
     const limitParam = page.bind(filter.limit);
 
     const { rows } = await db.query<JoinedFlagDbRow>(
       `SELECT ${FLAG_COLUMNS}, a.reg AS reg, a.type AS aircraft_type
          FROM flags f
-         LEFT JOIN aircraft a ON a.id = f.aircraft_id
+         LEFT JOIN aircraft a ON a.id = f.aircraft_id AND a.org_id = f.org_id
         ${page.where()}
         ORDER BY (f.status = 'open' AND f.type = ANY (${blocking})) DESC,
                  f.created_at ASC,
@@ -120,8 +123,10 @@ export class PgAdminFlagsRepo implements FlagsAdminPort {
    * a `flags.created_at` jest `TIMESTAMPTZ` - konwersję robi baza (`to_timestamp`),
    * bo jest to konwersja MIĘDZY TYPAMI KOLUMNY a parametrem, a nie arytmetyka na czasie.
    */
-  private conditionsOf(filter: FlagListFilter): SqlFilter {
+  private conditionsOf(orgId: string, filter: FlagListFilter): SqlFilter {
+    // Klub jest pierwszym warunkiem każdej listy klubu - nie polem filtra.
     return new SqlFilter()
+      .add('f.org_id = ?', orgId)
       .addOptional('f.status = ?', filter.status)
       .addOptional('f.type = ?', filter.type)
       .addOptional('f.aircraft_id = ?', filter.aircraftId)
@@ -130,10 +135,10 @@ export class PgAdminFlagsRepo implements FlagsAdminPort {
       .addOptional('f.created_at <= to_timestamp(? / 1000.0)', filter.toMs);
   }
 
-  async byId(db: Queryable, id: number): Promise<AdminFlag | null> {
+  async byId(db: Queryable, orgId: string, id: number): Promise<AdminFlag | null> {
     const { rows } = await db.query<AdminFlagDbRow>(
-      `SELECT ${FLAG_COLUMNS} FROM flags f WHERE f.id = $1`,
-      [id],
+      `SELECT ${FLAG_COLUMNS} FROM flags f WHERE f.org_id = $1 AND f.id = $2`,
+      [orgId, id],
     );
     const row = rows[0];
     return row == null ? null : toFlag(row);
@@ -141,6 +146,7 @@ export class PgAdminFlagsRepo implements FlagsAdminPort {
 
   async resolve(
     db: Queryable,
+    orgId: string,
     id: number,
     by: string,
     note: string,
@@ -148,13 +154,14 @@ export class PgAdminFlagsRepo implements FlagsAdminPort {
   ): Promise<ResolvedFlag | null> {
     // Warunek `status = 'open'` siedzi W SQL-u, a nie w odczycie przed zapisem -
     // dwie osoby klikające „Rozwiąż" nie prześcigną się timingiem. Druga dostaje
-    // zero wierszy, czyli `null`, i to jest cała obsługa wyścigu.
+    // zero wierszy, czyli `null`, i to jest cała obsługa wyścigu. Klub w tym samym
+    // warunku: flaga cudzego klubu jest dla tego panelu nieistniejąca.
     const { rows } = await db.query<{ type: string; session_uuids: string[] }>(
       `UPDATE flags
           SET status = 'resolved', resolved_at = $4, resolved_by = $2, resolution_note = $3
-        WHERE id = $1 AND status = 'open'
+        WHERE id = $1 AND org_id = $5 AND status = 'open'
         RETURNING type, session_uuids`,
-      [id, by, note, at],
+      [id, by, note, at, orgId],
     );
 
     const row = rows[0];

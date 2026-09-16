@@ -1,5 +1,5 @@
 /**
- * UZ Aero - spoina: czujniki pokładowe → ślad kalibracyjny.
+ * Ninerdeck - spoina: czujniki pokładowe → ślad kalibracyjny.
  *
  * Osobny hook obok `useFlightDetection`, bo robi coś zupełnie innego: NIC nie decyduje.
  * Czujniki są tu wyłącznie NAGRYWANE - barometr i inercja nie mają żadnego wpływu na

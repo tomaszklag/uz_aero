@@ -1,5 +1,5 @@
 /**
- * UZ Aero - OilSheet (mockup 02i „Pomiar oleju", issue #60)
+ * Ninerdeck - OilSheet (mockup 02i „Pomiar oleju", issue #60)
  *
  * Arkusz DWÓCH pól, bo pomiar i dolewka to jedna czynność przy bagnecie: zmierz →
  * jeśli mało, dolej. Stan po dolewce jest RACHUNKIEM (wiersz „Po dolewce"), nie trzecim

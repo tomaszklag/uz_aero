@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - monitor eksportu i ponowienie (`/admin/api/exports*`, mockup `A05`).
+ * Ninerdeck (serwer) - monitor eksportu i ponowienie (`/admin/api/exports*`, mockup `A05`).
  *
  * Ten sam wzorzec co reszta: PGlite w procesie, prawdziwe klasy, `app.inject`, zero
  * atrap poza JEDNĄ - adapterem arkuszy, który potrafi na żądanie paść. Bez niego stan
@@ -13,7 +13,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import type { Event } from '@uzaero/domain';
+import type { Event } from '@ninerdeck/domain';
 
 import { exportState } from '../src/application/admin/mappers/exportListItem.ts';
 import type { AdminExportJoin } from '../src/application/admin/ports.ts';
@@ -25,6 +25,7 @@ import type {
 } from '../src/application/common/ports.ts';
 import { ADMIN_CSRF_HEADERS, testHarness } from './helpers.ts';
 import { googleTokenFor } from './testIdentityProvider.ts';
+import { ORG_A } from './testWorld.ts';
 
 const DAY = Date.UTC(2026, 5, 22);
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -143,9 +144,9 @@ type Harness = Awaited<ReturnType<typeof testHarness>>;
 class FlakySheets implements SheetsPort {
   failing = false;
   constructor(private readonly write: SheetsPort['writeDaySheet']) {}
-  async writeDaySheet(sheet: DaySheet): Promise<{ url: string }> {
+  async writeDaySheet(orgId: string, sheet: DaySheet): Promise<{ url: string }> {
     if (this.failing) throw new Error('sheets_write_timeout');
-    return this.write(sheet);
+    return this.write(orgId, sheet);
   }
 }
 
@@ -161,21 +162,25 @@ class FlakySheets implements SheetsPort {
 class ExplodingEvents implements EventsStorePort {
   explode = false;
   constructor(private readonly real: EventsStorePort) {}
-  insertBatch(tx: Queryable, events: readonly Event[], sourceDevice: string | null) {
-    return this.real.insertBatch(tx, events, sourceDevice);
+  insertBatch(tx: Queryable, orgId: string, events: readonly Event[], sourceDevice: string | null) {
+    return this.real.insertBatch(tx, orgId, events, sourceDevice);
   }
-  sessionEvents(db: Queryable, sessionUuid: string): Promise<Event[]> {
+  sessionEvents(db: Queryable, orgId: string, sessionUuid: string): Promise<Event[]> {
     if (this.explode) throw new TypeError('projekcja: nie mogę odczytać właściwości „map"');
-    return this.real.sessionEvents(db, sessionUuid);
+    return this.real.sessionEvents(db, orgId, sessionUuid);
   }
-  sessionStreams(db: Queryable, sessionUuids: readonly string[]): Promise<Map<string, Event[]>> {
-    return this.real.sessionStreams(db, sessionUuids);
+  sessionStreams(
+    db: Queryable,
+    orgId: string,
+    sessionUuids: readonly string[],
+  ): Promise<Map<string, Event[]>> {
+    return this.real.sessionStreams(db, orgId, sessionUuids);
   }
-  lastReceivedAt(db: Queryable, aircraftId: string) {
-    return this.real.lastReceivedAt(db, aircraftId);
+  lastReceivedAt(db: Queryable, orgId: string, aircraftId: string) {
+    return this.real.lastReceivedAt(db, orgId, aircraftId);
   }
-  countForSession(db: Queryable, sessionUuid: string) {
-    return this.real.countForSession(db, sessionUuid);
+  countForSession(db: Queryable, orgId: string, sessionUuid: string) {
+    return this.real.countForSession(db, orgId, sessionUuid);
   }
 }
 
@@ -194,15 +199,15 @@ async function flakyHarness() {
   // `PgSheets` potrzebuje bazy, więc atrapa dostaje delegata dopiero po złożeniu
   // harnessu - stąd pośrednik, a nie gotowa instancja w argumencie.
   let delegate: SheetsPort['writeDaySheet'] | null = null;
-  const sheets = new FlakySheets((sheet) => {
+  const sheets = new FlakySheets((orgId, sheet) => {
     if (delegate == null) throw new Error('delegat arkuszy nie został ustawiony');
-    return delegate(sheet);
+    return delegate(orgId, sheet);
   });
   const harness = await testHarness({ sheets });
   // Odtwarzamy dokładnie tego samego `PgSheets`, którego składa harness dla odczytu.
   const { PgSheets } = await import('../src/infrastructure/pg/common/sheetsRepo.ts');
-  const real = new PgSheets(harness.db, 'http://uzaero.test', harness.clock);
-  delegate = (sheet) => real.writeDaySheet(sheet);
+  const real = new PgSheets(harness.db, 'http://ninerdeck.test', harness.clock);
+  delegate = (orgId, sheet) => real.writeDaySheet(orgId, sheet);
   return { ...harness, sheets };
 }
 
@@ -333,7 +338,7 @@ describe('monitor eksportu - lista (A05)', () => {
       reg: 'SP-AXA',
       picCode: 'TMK',
       sessionStatus: 'closed',
-      sheetUrl: 'http://uzaero.test/sheets/2026-06-22_SP-AXA',
+      sheetUrl: 'http://ninerdeck.test/sheets/aeroklub-alfa/2026-06-22_SP-AXA?k=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
       blockingFlagIds: [],
     });
     // Nazwa karty jedzie MIMO braku eksportu: pytanie ekranu brzmi „której karty
@@ -753,7 +758,7 @@ describe('historia rewizji i podgląd karty (A05)', () => {
     expect(history.revisions.map((r: { revision: number }) => r.revision)).toEqual([1, 2, 3]);
     expect(history.revisions[0]).toMatchObject({
       day: '2026-06-22',
-      sheetUrl: 'http://uzaero.test/sheets/2026-06-22_SP-AXA',
+      sheetUrl: 'http://ninerdeck.test/sheets/aeroklub-alfa/2026-06-22_SP-AXA?k=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
     });
     // …a karta trzyma WYŁĄCZNIE treść bieżącą. To jest cała treść tego ekranu.
     expect(history.sheetRows).toBe(1);
@@ -1016,8 +1021,8 @@ describe('rewizje są jednoznaczne (uq_export_log_card_revision)', () => {
     // Dokładnie ten wiersz, który powstałby przy przegranym wyścigu dwóch eksportów:
     // ten sam `session_uuid`, ten sam numer rewizji.
     const duplicate = db.query(
-      `INSERT INTO export_log (session_uuid, day, aircraft_id, sheet_url, revision, exported_at)
-       VALUES ('u-1', '2026-06-22', 'SP-AXA', 'http://uzaero.test/x', 1, now())`,
+      `INSERT INTO export_log (org_id, session_uuid, day, aircraft_id, sheet_url, revision, exported_at)
+       VALUES ('${ORG_A}', 'u-1', '2026-06-22', 'SP-AXA', 'http://ninerdeck.test/x', 1, now())`,
     );
 
     await expect(duplicate).rejects.toMatchObject({ code: '23505' });
@@ -1067,6 +1072,7 @@ describe('rewizje są jednoznaczne (uq_export_log_card_revision)', () => {
 describe('pierwszeństwo stanów karty', () => {
   const join = (patch: Partial<AdminExportJoin>): AdminExportJoin => ({
     sessionUuid: 's',
+    orgId: ORG_A,
     aircraftId: 'SP-AXA',
     reg: 'SP-AXA',
     aircraftType: 'Cessna 182',

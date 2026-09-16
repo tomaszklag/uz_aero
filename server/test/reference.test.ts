@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - testy `GET /reference` (§4.6, §4.8).
+ * Ninerdeck (serwer) - testy `GET /reference` (§4.6, §4.8).
  *
  * Kontrakt z aplikacją: kształty `ReferenceAircraft`/`ReferencePilot` idą z pakietu
  * domeny, więc test sprawdza dokładnie to, co telefon włoży do cache. ETag/304 to
@@ -194,8 +194,8 @@ describe('norma zużycia w kanale referencyjnym (etap 3, 2026-08-05)', () => {
     });
 
     await db.query(
-      `INSERT INTO aircraft_consumption (aircraft_id, window_days, model, computed_at)
-       VALUES ('SP-AXA', 90, $1, now())`,
+      `INSERT INTO aircraft_consumption (aircraft_id, window_days, model, computed_at, org_id)
+       VALUES ('SP-AXA', 90, $1, now(), 'org-a')`,
       [
         JSON.stringify({
           windowDays: 90,

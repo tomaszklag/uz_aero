@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test NIESPÓJNOŚCI LOGU (issue #43, baner trybu edycji `design/10d`).
+ * Ninerdeck - test NIESPÓJNOŚCI LOGU (issue #43, baner trybu edycji `design/10d`).
  *
  * Reguła nadrzędna: ten moduł niczego nie odrzuca. Sesja z lotem bez lądowania jest
  * faktem, który się WYDARZYŁ - GPS zgubił lądowanie - i aplikacja ma o nim powiedzieć,

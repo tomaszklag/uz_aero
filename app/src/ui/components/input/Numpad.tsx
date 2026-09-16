@@ -1,5 +1,5 @@
 /**
- * UZ Aero - Numpad (`.numpad` z mockupu 00)
+ * Ninerdeck - Numpad (`.numpad` z mockupu 00)
  *
  * Klawiatura PIN: siatka 3×4, przyciski 58 px (rękawice), cyfry mono. Dolny rząd:
  * pusty slot-duch (w mockupie biometria - opcja odłożona, patrz docblock ekranu),

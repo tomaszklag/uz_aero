@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: pola „Aktualny stan" karty samolotu (uwagi do issue #66).
+ * Ninerdeck - panel 2.0: pola „Aktualny stan" karty samolotu (uwagi do issue #66).
  *
  * Moduł CZYSTY (bez Reacta): decyduje, KIEDY pola stanu są do odczytu i CO wtedy
  * pokazują - a nie jak wyglądają.
@@ -19,8 +19,8 @@
  * `fuelToleranceL`.
  */
 
-import { stampUtc } from '@uzaero/format';
-import type { MhFormat } from '@uzaero/domain';
+import { stampUtc } from '@ninerdeck/format';
+import type { MhFormat } from '@ninerdeck/domain';
 
 import type { AircraftListItemDto, AircraftReadingDto } from '../../api/dto';
 import { litres, motoHours, NONE, oilLitres } from '../common/values';

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ADAPTER `CredentialsPort` na `expo-secure-store` (§3.0, §5.2).
+ * Ninerdeck - ADAPTER `CredentialsPort` na `expo-secure-store` (§3.0, §5.2).
  *
  * Tokeny i profil idą do Keystore Androida - wyciągnięcie plików aplikacji z urządzenia
  * nie daje sesji. Wszystko pod JEDNYM kluczem jako JSON: komplet poświadczeń jest
@@ -17,30 +17,36 @@ import * as SecureStore from 'expo-secure-store';
 import type {
   CredentialsPort,
   StoredCredentials,
-  StoredRegistration,
+  StoredPerson,
 } from '../../application/ports';
 
-const KEY = 'uzaero.credentials.v1';
-/** Zgłoszenie rejestracyjne - OSOBNY klucz, bo to nie jest tożsamość (patrz port). */
-const REGISTRATION_KEY = 'uzaero.registration.v1';
+const KEY = 'ninerdeck.credentials.v1';
+/**
+ * Osoba bez aktywnego klubu - OSOBNY klucz, bo to nie jest tożsamość (patrz port).
+ *
+ * Wersja `v2` odcina zapis sprzed wielofirmowości: `v1` trzymał zgłoszenie rejestracyjne
+ * z tokenem, którego serwer 2.0.0 już nie zna. Nowy klucz sprawia, że taki telefon wraca
+ * na ekran logowania zamiast pytać w kółko o stan zgłoszenia, którego nie ma.
+ */
+const PERSON_KEY = 'ninerdeck.person.v2';
 
 export class SecureCredentials implements CredentialsPort {
-  async loadRegistration(): Promise<StoredRegistration | null> {
-    const raw = await SecureStore.getItemAsync(REGISTRATION_KEY);
+  async loadPerson(): Promise<StoredPerson | null> {
+    const raw = await SecureStore.getItemAsync(PERSON_KEY);
     if (raw == null) return null;
     try {
-      return JSON.parse(raw) as StoredRegistration;
+      return JSON.parse(raw) as StoredPerson;
     } catch {
       return null;
     }
   }
 
-  async saveRegistration(registration: StoredRegistration): Promise<void> {
-    await SecureStore.setItemAsync(REGISTRATION_KEY, JSON.stringify(registration));
+  async savePerson(person: StoredPerson): Promise<void> {
+    await SecureStore.setItemAsync(PERSON_KEY, JSON.stringify(person));
   }
 
-  async clearRegistration(): Promise<void> {
-    await SecureStore.deleteItemAsync(REGISTRATION_KEY);
+  async clearPerson(): Promise<void> {
+    await SecureStore.deleteItemAsync(PERSON_KEY);
   }
 
   async load(): Promise<StoredCredentials | null> {

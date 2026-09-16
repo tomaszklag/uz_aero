@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: wiersze modułu „Zgłoszenia" (issue #87).
+ * Ninerdeck - panel 2.0: wiersze modułu „Zgłoszenia" (issue #87).
  *
  * Pod obserwacją jedna własność i jej konsekwencje: **kontekst wypisuje się CAŁY**,
  * także w polach, o których panel nie wie. To jest cała treść zgłoszenia („im więcej
@@ -20,6 +20,7 @@ const bug = (over: Partial<BugReportDto> = {}): BugReportDto => ({
   pilotId: 'p-uuid',
   pilotCode: 'TMK',
   pilotName: 'Tomasz Małkiewicz',
+  org: { id: 'org-1', slug: 'aeroklub-zielonogorski', name: 'Aeroklub Zielonogórski' },
   severity: 'annoying',
   description: 'Czas lotu nie przeliczył się po korekcie lądowania.',
   screen: 'OPERACJA (10) · tryb edycji',
@@ -44,6 +45,16 @@ describe('wiersz listy', () => {
     expect(row.pilot).toBe('TMK');
     expect(row.excerpt).toBe('Czas lotu nie przeliczył się po korekcie lądowania.');
     expect(row.muted).toBe(false);
+  });
+
+  it('niesie NAZWĘ KLUBU, bo kod pilota jest jedyny w klubie, nie na serwerze', () => {
+    // Kolejka zgłoszeń jest wspólna dla całego serwera (issue #99 C6), więc dwa
+    // zgłoszenia od dwóch różnych `TMK` muszą się na liście różnić.
+    expect(bugRow(bug()).org).toBe('Aeroklub Zielonogórski');
+    const other = bugRow(
+      bug({ org: { id: 'org-2', slug: 'aeroklub-beta', name: 'Aeroklub Beta' } }),
+    );
+    expect(other.org).toBe('Aeroklub Beta');
   });
 
   it('opis pisany akapitami spłaszcza się przed przycięciem', () => {

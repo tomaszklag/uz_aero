@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: zapisy w dzienniku.
+ * Ninerdeck - panel 2.0: zapisy w dzienniku.
  *
  * Osobny plik od `useLog.ts`, którego nagłówek deklaruje „wszystkie są ODCZYTEM,
  * więc nie ma tu ani jednej mutacji" - i to zdanie zostaje prawdziwe. Dziennik dalej

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - OptionGrid (`.op-grid` z mockupu 02)
+ * Ninerdeck - OptionGrid (`.op-grid` z mockupu 02)
  *
  * Siatka kart z ikonami - obowiązkowa forma wyboru rodzaju operacji. `CLAUDE.md` mówi
  * wprost: *Rodzaj operacji - siatka kart z ikonami, NIE select*. Powód jest praktyczny:

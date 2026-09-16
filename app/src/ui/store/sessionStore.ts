@@ -1,5 +1,5 @@
 /**
- * UZ Aero - store sesji (Zustand) - CIENKA warstwa nad `application`.
+ * Ninerdeck - store sesji (Zustand) - CIENKA warstwa nad `application`.
  *
  * Store nie zna reguł ani bazy. Robi trzy rzeczy:
  *  1. trzyma tożsamość bieżącej sesji (`context`) i podaje ją komendom,

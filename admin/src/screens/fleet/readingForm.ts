@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: formularz ODCZYTU WPISANEGO RĘKĄ ADMINISTRATORA (issue #81).
+ * Ninerdeck - panel 2.0: formularz ODCZYTU WPISANEGO RĘKĄ ADMINISTRATORA (issue #81).
  *
  * Moduł CZYSTY (bez Reacta): co administrator wpisał → co pójdzie na serwer, albo
  * które pole jest nie do przyjęcia. Ta sama zasada, co `aircraftForm.ts`: formularz
@@ -12,8 +12,8 @@
  * stanie początkowym (§10.4) - a przyjmuje oba zapisy naraz (`parseMotoHours`).
  */
 
-import { motoHours, parseLitres, parseMotoHours } from '@uzaero/format';
-import type { MhFormat } from '@uzaero/domain';
+import { motoHours, parseLitres, parseMotoHours } from '@ninerdeck/format';
+import type { MhFormat } from '@ninerdeck/domain';
 
 import type { AircraftReadingDto } from '../../api/dto';
 import type { RecordReadingBody } from '../../api/fleet';

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - LevelBar (pasek poziomu z mockupu 02a)
+ * Ninerdeck - LevelBar (pasek poziomu z mockupu 02a)
  *
  * Wąski pasek pokazujący wypełnienie w stosunku do pojemności - przy paliwie i oleju
  * stoi pod wartością i odpowiada na pytanie „dużo to czy mało", którego same litry nie

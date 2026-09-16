@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter projekcji sesji (`SessionsProjectionPort`).
+ * Ninerdeck (serwer) - adapter projekcji sesji (`SessionsProjectionPort`).
  *
  * `sessions` NIE jest źródłem prawdy - to zrzut `projectSession(events)`, w całości
  * odtwarzalny ze strumienia. Upsert nadpisuje wszystko poza kluczem: projekcja nie ma
@@ -9,7 +9,12 @@
  * panelu czyta tę tabelę także `admin/sessionsRepo.ts`.
  */
 
-import type { Queryable, SessionRow, SessionsProjectionPort } from '../../../application/common/ports.ts';
+import type {
+  Queryable,
+  SessionOwner,
+  SessionRow,
+  SessionsProjectionPort,
+} from '../../../application/common/ports.ts';
 import { sessionColumns, toSessionRow, type SessionDbRow } from '../sessionDbRow.ts';
 
 export class PgSessionsProjection implements SessionsProjectionPort {
@@ -24,12 +29,14 @@ export class PgSessionsProjection implements SessionsProjectionPort {
           drop_count, jumpers_tandem, jumpers_aff, jumpers_solo,
           drop_alt_sum_ft, drop_alt_count, oil_level_l, oil_added_l,
           engine_start_at, engine_stop_at, first_takeoff_at, last_landing_at,
-          departure_icao, arrival_icao, fuel_added_l, manual_entry, oil_after_l, updated_at)
+          departure_icao, arrival_icao, fuel_added_l, manual_entry, oil_after_l, org_id,
+          updated_at)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,
                $19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,
-               $32,$33,$34,$35,$36,$37,$38,$39,$40, now())
+               $32,$33,$34,$35,$36,$37,$38,$39,$40,$41, now())
        ON CONFLICT (session_uuid) DO UPDATE SET
          aircraft_id = EXCLUDED.aircraft_id, pic_id = EXCLUDED.pic_id,
+         org_id = EXCLUDED.org_id,
          dual_id = EXCLUDED.dual_id, status = EXCLUDED.status,
          claim_time = EXCLUDED.claim_time, close_time = EXCLUDED.close_time,
          operation = EXCLUDED.operation, client = EXCLUDED.client,
@@ -93,22 +100,44 @@ export class PgSessionsProjection implements SessionsProjectionPort {
         row.fuelAddedL,
         row.manualEntry,
         row.oilAfterL,
+        row.orgId,
       ],
     );
   }
 
-  async get(db: Queryable, sessionUuid: string): Promise<SessionRow | null> {
+  async get(db: Queryable, orgId: string, sessionUuid: string): Promise<SessionRow | null> {
     const { rows } = await db.query<SessionDbRow>(
-      `SELECT ${sessionColumns('s')} FROM sessions s WHERE s.session_uuid = $1`,
-      [sessionUuid],
+      `SELECT ${sessionColumns('s')} FROM sessions s
+        WHERE s.org_id = $1 AND s.session_uuid = $2`,
+      [orgId, sessionUuid],
     );
     return rows[0] ? toSessionRow(rows[0]) : null;
   }
 
-  async listByAircraft(db: Queryable, aircraftId: string): Promise<SessionRow[]> {
+  /**
+   * Właściciel po samym uuid-zie - JEDYNY odczyt tej tabeli bez klubu w warunku
+   * (`SessionOwner` w portach mówi, dlaczego ingest go potrzebuje). Oddaje trzy kolumny,
+   * nie wiersz: wołający ma rozstrzygnąć, CZYJA to sesja, a nie przeczytać jej treść.
+   */
+  async ownerOf(db: Queryable, sessionUuid: string): Promise<SessionOwner | null> {
+    const { rows } = await db.query<{ org_id: string; pic_id: string; status: string }>(
+      'SELECT org_id, pic_id, status FROM sessions WHERE session_uuid = $1',
+      [sessionUuid],
+    );
+    const row = rows[0];
+    if (row == null) return null;
+    return {
+      orgId: row.org_id,
+      picId: row.pic_id,
+      status: row.status === 'closed' ? 'closed' : row.status === 'voided' ? 'voided' : 'active',
+    };
+  }
+
+  async listByAircraft(db: Queryable, orgId: string, aircraftId: string): Promise<SessionRow[]> {
     const { rows } = await db.query<SessionDbRow>(
-      `SELECT ${sessionColumns('s')} FROM sessions s WHERE s.aircraft_id = $1`,
-      [aircraftId],
+      `SELECT ${sessionColumns('s')} FROM sessions s
+        WHERE s.org_id = $1 AND s.aircraft_id = $2`,
+      [orgId, aircraftId],
     );
     return rows.map(toSessionRow);
   }
@@ -125,22 +154,23 @@ export class PgSessionsProjection implements SessionsProjectionPort {
    */
   async listByAircraftDay(
     db: Queryable,
+    orgId: string,
     aircraftId: string,
     range: { fromMs: number; toMs: number },
   ): Promise<SessionRow[]> {
     const { rows } = await db.query<SessionDbRow>(
       `SELECT ${sessionColumns('s')} FROM sessions s
-        WHERE s.aircraft_id = $1 AND s.claim_time BETWEEN $2 AND $3
+        WHERE s.org_id = $1 AND s.aircraft_id = $2 AND s.claim_time BETWEEN $3 AND $4
         ORDER BY s.claim_time ASC, s.session_uuid ASC`,
-      [aircraftId, range.fromMs, range.toMs],
+      [orgId, aircraftId, range.fromMs, range.toMs],
     );
     return rows.map(toSessionRow);
   }
 
-  async listByPilot(db: Queryable, picId: string): Promise<SessionRow[]> {
+  async listByPilot(db: Queryable, orgId: string, picId: string): Promise<SessionRow[]> {
     const { rows } = await db.query<SessionDbRow>(
-      `SELECT ${sessionColumns('s')} FROM sessions s WHERE s.pic_id = $1`,
-      [picId],
+      `SELECT ${sessionColumns('s')} FROM sessions s WHERE s.org_id = $1 AND s.pic_id = $2`,
+      [orgId, picId],
     );
     return rows.map(toSessionRow);
   }

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test osi faz pionowych ze śladu GPS.
+ * Ninerdeck - test osi faz pionowych ze śladu GPS.
  *
  * Ta oś decyduje, ile paliwa model przypisze wznoszeniu, a ile przelotowi - czyli
  * o liczbach, których nikt nie zmierzył i nie ma jak sprawdzić „na oko". Test buduje

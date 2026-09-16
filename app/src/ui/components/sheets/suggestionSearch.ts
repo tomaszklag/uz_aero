@@ -1,5 +1,5 @@
 /**
- * UZ Aero - przeszukiwanie historii wpisów (oznaczenia klienta, notatki) w arkuszu.
+ * Ninerdeck - przeszukiwanie historii wpisów (oznaczenia klienta, notatki) w arkuszu.
  *
  * Lista „ostatnio używane" przychodzi z serwera raz, przy wejściu na ekran (`/me/task-suggestions`),
  * i od tej chwili filtrujemy ją LOKALNIE, przy każdej literze - bez ani jednego dodatkowego

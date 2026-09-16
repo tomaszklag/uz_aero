@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: `src/styles/tokens.css` MUSI być tym, co emituje `@uzaero/tokens`.
+ * Ninerdeck - panel: `src/styles/tokens.css` MUSI być tym, co emituje `@ninerdeck/tokens`.
  *
  * Po co ten test, skoro plik jest generowany: bo generowany plik leżący w repozytorium
  * jest plikiem - da się go otworzyć i „poprawić kolor na szybko". Taka poprawka wygląda
@@ -15,7 +15,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { THEMES, themeCssBlock } from '@uzaero/tokens';
+import { THEMES, themeCssBlock } from '@ninerdeck/tokens';
 import { describe, expect, it } from 'vitest';
 
 import { renderTokensCss, TOKENS_CSS_HEADER } from '../../packages/tokens/scripts/tokensCss';

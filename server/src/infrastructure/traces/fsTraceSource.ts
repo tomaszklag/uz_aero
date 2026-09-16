@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - odczyt śladu jednej sesji z plików NDJSON (`TraceSourcePort`).
+ * Ninerdeck (serwer) - odczyt śladu jednej sesji z plików NDJSON (`TraceSourcePort`).
  *
  * Bliźniak `FsTraceSink`: ten sam katalog, ta sama konwencja nazw, przeciwny kierunek.
  * Nazwa pliku powstaje TĄ SAMĄ funkcją `safeName` co przy zapisie - gdyby te dwie

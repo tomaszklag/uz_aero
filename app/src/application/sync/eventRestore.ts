@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ODTWORZENIE REJESTRU z `GET /me/events` (§4.9, issue #32).
+ * Ninerdeck - ODTWORZENIE REJESTRU z `GET /me/events` (§4.9, issue #32).
  *
  * Do tej pory synchronizacja miała jeden kierunek: outbox wypychał zdarzenia na serwer
  * i nic nigdy nie wracało. Konsekwencja wyszła w terenie - pilot wyczyścił pamięć

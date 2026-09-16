@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter ODCZYTU rejestru zdarzeń (`AdminEventsReadPort`, `A04`).
+ * Ninerdeck (serwer) - adapter ODCZYTU rejestru zdarzeń (`AdminEventsReadPort`, `A04`).
  *
  * Osobny plik od `eventsRepo.ts` z tego samego powodu, dla którego port jest osobny:
  * tamten odpowiada na dwa wąskie pytania o kolumny techniczne pojedynczego zdarzenia
@@ -98,11 +98,12 @@ const SELECT = `
          e.aircraft_id,
          a.reg,
          e.pic_id,
-         p.code AS pic_code,
-         p.name AS pic_name,
+         -- Kod Z CZŁONKOSTWA w klubie zdarzenia (wielofirmowość); nazwisko z osoby.
+         p.code  AS pic_code,
+         pp.name AS pic_name,
          e.dual_id,
-         d.code AS dual_code,
-         d.name AS dual_name,
+         d.code  AS dual_code,
+         dp.name AS dual_name,
          e.type,
          e.device_time,
          e.gps_time,
@@ -111,9 +112,11 @@ const SELECT = `
          e.received_at,
          e.source_device
     FROM events e
-    LEFT JOIN aircraft a ON a.id = e.aircraft_id
-    LEFT JOIN pilots   p ON p.id = e.pic_id
-    LEFT JOIN pilots   d ON d.id = e.dual_id`;
+    LEFT JOIN aircraft    a  ON a.id = e.aircraft_id AND a.org_id = e.org_id
+    LEFT JOIN pilots      pp ON pp.id = e.pic_id
+    LEFT JOIN memberships p  ON p.pilot_id = e.pic_id AND p.org_id = e.org_id
+    LEFT JOIN pilots      dp ON dp.id = e.dual_id
+    LEFT JOIN memberships d  ON d.pilot_id = e.dual_id AND d.org_id = e.org_id`;
 
 const toRow = (r: EventDbRow): AdminEventRow => ({
   uuid: r.uuid,
@@ -141,6 +144,7 @@ const toRow = (r: EventDbRow): AdminEventRow => ({
 export class PgAdminEventsReadRepo implements AdminEventsReadPort {
   async list(
     db: Queryable,
+    orgId: string,
     filter: EventListFilter,
     driftThresholdMs: number,
   ): Promise<{
@@ -153,7 +157,9 @@ export class PgAdminEventsReadRepo implements AdminEventsReadPort {
     const cursor = filter.cursor == null ? null : decodeCursor(filter.cursor, shape);
     if (filter.cursor != null && cursor == null) return null;
 
+    // Klub jako PIERWSZY warunek, nie pole filtra: rejestr klubu nie ma opcji „bez klubu".
     const page = new SqlFilter();
+    page.add('e.org_id = ?', orgId);
     applyFilters(page, filter);
     keysetPredicate(KEY, cursor, page, shape);
 
@@ -174,9 +180,9 @@ export class PgAdminEventsReadRepo implements AdminEventsReadPort {
 
     return {
       items,
-      corrections: await this.correctionsFor(db, items),
+      corrections: await this.correctionsFor(db, orgId, items),
       nextCursor,
-      counts: await this.counts(db, filter, driftThresholdMs, cursor != null),
+      counts: await this.counts(db, orgId, filter, driftThresholdMs, cursor != null),
     };
   }
 
@@ -209,12 +215,14 @@ export class PgAdminEventsReadRepo implements AdminEventsReadPort {
    */
   private async correctionsFor(
     db: Queryable,
+    orgId: string,
     items: readonly AdminEventRow[],
   ): Promise<AdminEventRow[]> {
     if (items.length === 0) return [];
 
     const filter = new SqlFilter();
     const holes = items.map(() => '?').join(', ');
+    filter.add('e.org_id = ?', orgId);
     filter.add(`e.type = 'event_correction'`);
     filter.add(`e.payload->>'targetUuid' IN (${holes})`, ...items.map((i) => i.uuid));
 
@@ -245,6 +253,7 @@ export class PgAdminEventsReadRepo implements AdminEventsReadPort {
    */
   private async counts(
     db: Queryable,
+    orgId: string,
     filter: EventListFilter,
     driftThresholdMs: number,
     paged: boolean,
@@ -252,8 +261,9 @@ export class PgAdminEventsReadRepo implements AdminEventsReadPort {
     if (paged) return null;
 
     const conditions = new SqlFilter();
+    conditions.add('e.org_id = ?', orgId);
     applyFilters(conditions, filter);
-    // Próg jedzie PARAMETREM z `@uzaero/domain` - wpisany w tekst zapytania byłby drugą
+    // Próg jedzie PARAMETREM z `@ninerdeck/domain` - wpisany w tekst zapytania byłby drugą
     // definicją tolerancji obok tej, którą liczy flagę `CLOCK_DRIFT` przy ingescie.
     const threshold = conditions.bind(driftThresholdMs);
 

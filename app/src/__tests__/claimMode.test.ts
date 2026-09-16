@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy decyzji o trybie `session_claim` (§4.4, `screens/claimMode.ts`).
+ * Ninerdeck - testy decyzji o trybie `session_claim` (§4.4, `screens/claimMode.ts`).
  *
  * Tryb czyta później serwer przy scalaniu nakładających się sesji, więc pomyłka tutaj
  * nie psuje ekranu, tylko HISTORIĘ: zawyżenie do `takeover_online` bez odpowiedzi

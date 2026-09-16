@@ -1,7 +1,7 @@
 /**
- * UZ Aero (serwer) - KONTRAKT pulpitu (`A01`, `A01a`).
+ * Ninerdeck (serwer) - KONTRAKT pulpitu (`A01`, `A01a`).
  *
- * Pliki w `contracts/` zawierają WYŁĄCZNIE typy i wolno im importować `@uzaero/domain`
+ * Pliki w `contracts/` zawierają WYŁĄCZNIE typy i wolno im importować `@ninerdeck/domain`
  * oraz siebie nawzajem (pilnuje `test/architecture.test.ts`).
  *
  * ══ PULPIT AGREGUJE, NIE LICZY DRUGI RAZ ══
@@ -30,7 +30,7 @@
  *     i nie ma prawa różnić się między klientami, bo jest jeden.
  */
 
-import type { EventType } from '@uzaero/domain';
+import type { EventType } from '@ninerdeck/domain';
 
 import type { AdminExportCounts, AdminExportListItem } from './exports.ts';
 import type { AdminFlagListItem } from './flags.ts';
@@ -232,7 +232,7 @@ export interface AdminDashboard {
   /** Chwila zbudowania odpowiedzi wg zegara SERWERA (ISO 8601 UTC). */
   at: string;
   /**
-   * Długość okna samodzielnej korekty pilota (ms) - z `@uzaero/domain`.
+   * Długość okna samodzielnej korekty pilota (ms) - z `@ninerdeck/domain`.
    *
    * Jedzie z serwera, bo panelowi wolno importować z domeny wyłącznie typy, a ta
    * liczba rozstrzyga treść dwóch rzeczy naraz: progu „dzień otwarty za długo"

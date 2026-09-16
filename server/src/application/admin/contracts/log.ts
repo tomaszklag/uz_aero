@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - LOG DNIA: kontrakt poziomu pierwszego (2026-08-30).
+ * Ninerdeck (serwer) - LOG DNIA: kontrakt poziomu pierwszego (2026-08-30).
  *
  * Moduł ma trzy poziomy: zbiorcza lista SAMOLOTÓW w zakresie dat (ten plik), grid
  * sesji jednej maszyny (`AdminSessionListItem`, trasa `/sessions?aircraftId=…`)
@@ -26,7 +26,7 @@
  * samego z `events` byłoby drugą, równoległą projekcją.
  */
 
-import type { MhFormat } from '@uzaero/domain';
+import type { MhFormat } from '@ninerdeck/domain';
 
 /** Jedna maszyna w zakresie dat - wiersz poziomu 1. */
 export interface AdminLogAircraftItem {

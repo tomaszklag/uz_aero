@@ -1,6 +1,6 @@
 # Słownik pojęć
 
-> Słowa, którymi mówi aplikacja i panel - w tym znaczeniu, w jakim używa ich UZ Aero. Układ jest tematyczny: od operacji przez liczniki po panel klubu.
+> Słowa, którymi mówi aplikacja i panel - w tym znaczeniu, w jakim używa ich Ninerdeck. Układ jest tematyczny: od operacji przez liczniki po panel klubu.
 
 ## Operacja i lot
 

@@ -1,4 +1,4 @@
-# UZ Aero - architektura warstwy serwerowej panelu administracyjnego
+# Ninerdeck - architektura warstwy serwerowej panelu administracyjnego
 
 > Faza 7. Dokument **decyzyjny**: każde rozwidlenie kończy się rekomendacją i powodem;
 > tam, gdzie coś odradzam, jest napisane wprost, czego NIE robić.
@@ -67,7 +67,7 @@
 >
 > **Aktualizacja 2026-07-31 - przekrój 2 WDROŻONY** (§7): `infrastructure/pg/{sqlFilter,keyset}.ts`
 > z testami, migracja **11** (`sessions.operation` + `client` + `CHECK` + `idx_sessions_day`),
-> `OPERATION_TYPES`/`isOperationType` w `@uzaero/domain`, `application/admin/contracts/`,
+> `OPERATION_TYPES`/`isOperationType` w `@ninerdeck/domain`, `application/admin/contracts/`,
 > mappery `sessionListItem`/`flagListItem`/`eventTimeline`/`projectionDiff`,
 > `Admin{Session,Flag}Queries`, `AdminMaintenanceCommands.rebuildProjections` + CLI
 > `npm run rebuild-projections`, `PgAdmin{Sessions,Maintenance}Repo` i `FlagsAdminPort.list`,
@@ -285,7 +285,7 @@
 > (1) §7.2 lokował `mh_delta_h`/`fuel_consumed_l` w migracji projekcji przekroju 2 -
 > weszły dopiero TERAZ (migracja 18), bo dopiero statystyki mają je czym sumować
 > (dokładnie wg zastrzeżenia z aktualizacji przekroju 2);
-> (2) **atrybucja block time per pilot w `@uzaero/domain` (§10 poz. 8) NIE powstała** -
+> (2) **atrybucja block time per pilot w `@ninerdeck/domain` (§10 poz. 8) NIE powstała** -
 > to decyzja o nowej projekcji domenowej (dotyka aplikacji pilota) i czeka na człowieka.
 > Ujęcie „per pilot" jedzie po PIC-u (jedynym pewnym dla całej operacji - single-writer);
 > kolumny „Blok jako Dual" z mockupu NIE MA, bo `sessions.dual_id` niesie OSTATNIEGO
@@ -300,7 +300,7 @@
 
 ## 0. Trzy odpowiedzi w skrócie
 
-1. **Modele.** Panel dzieli z aplikacją i serwerem **model domenowy** (`@uzaero/domain`) -
+1. **Modele.** Panel dzieli z aplikacją i serwerem **model domenowy** (`@ninerdeck/domain`) -
    i tylko jego. Modelu **persystencji** (kształt wiersza `sessions`, `flags`, `events`)
    panel nie widzi nigdy: między nim a bazą stoi **DTO** wystawiane przez `/admin/api/*`.
    Trzy modele istnieją dziś i mają istnieć dalej; błędem byłoby zlepienie ich w jeden,
@@ -348,7 +348,7 @@ Z jednym, precyzyjnie zakreślonym wyjątkiem:
 
 > **Reguła granicy typów.** Jeśli wartość na drucie **jest** bytem domenowym
 > (`Event`, `SessionState`, `ReferenceAircraft`, flaga serwera) - jedzie jako typ
-> z `@uzaero/domain` i **nie dostaje DTO**. Jeśli jest złączeniem, agregatem albo
+> z `@ninerdeck/domain` i **nie dostaje DTO**. Jeśli jest złączeniem, agregatem albo
 > wygodą panelu (wiersz listy dni z `reg`, `picName`, `exportRevision`) - dostaje
 > **własny, jawny DTO**.
 
@@ -367,7 +367,7 @@ To jest korekta do `ANALIZA.md` - pełna lista sprostowań w §12.
 
 ### 1.3 „Biblioteka modeli z bazy w oddzielnym projekcie" - odrzucone, oto dlaczego
 
-Wariant: wydzielić kształty wierszy do pakietu (np. `@uzaero/db`), importowanego przez
+Wariant: wydzielić kształty wierszy do pakietu (np. `@ninerdeck/db`), importowanego przez
 serwer i panel.
 
 **Co byśmy zyskali:** jedno miejsce z deklaracją wiersza - dziś kształt wiersza jest
@@ -421,7 +421,7 @@ który by o niej przypomniał.
 
 To jest **konkretna, mierzalna odpowiedź na pytanie „czy modele mogą być wspólne"**:
 tak - wtedy, gdy ten sam byt przechodzi przez więcej niż jedną powierzchnię.
-`@uzaero/domain` jest już tym miejscem (`ReferenceAircraft` mieszka tam z dokładnie
+`@ninerdeck/domain` jest już tym miejscem (`ReferenceAircraft` mieszka tam z dokładnie
 tego powodu - docblock `referenceRepo.ts`: „kontrakt `GET /reference` nie ma osobnej,
 trzeciej definicji").
 
@@ -439,15 +439,15 @@ z wnętrza serwera (to byłby pobór `pg` do przeglądarki). Rozwiązanie:
 ```
 
 - `server/src/application/admin/contracts/*.ts` zawierają **wyłącznie** `export interface`
-  i `export type`; jedyny dozwolony import to `@uzaero/domain`.
-- Panel: `import type { AdminSessionListItem } from '@uzaero/server/admin-contracts';`
+  i `export type`; jedyny dozwolony import to `@ninerdeck/domain`.
+- Panel: `import type { AdminSessionListItem } from '@ninerdeck/server/admin-contracts';`
 - Dwa niezależne bezpieczniki: (a) mapa `exports` sprawia, że
-  `@uzaero/server/src/infrastructure/pg/...` **nie da się** zaimportować - to nie
+  `@ninerdeck/server/src/infrastructure/pg/...` **nie da się** zaimportować - to nie
   konwencja, to rozdzielczość modułów; (b) test architektury serwera (§9) wywala się,
   gdy plik w `contracts/` zaimportuje cokolwiek poza domeną.
 - Zero runtime: `import type` + `verbatimModuleSyntax` znikają przy transpilacji.
 
-Alternatywa „czwarty pakiet `@uzaero/admin-api`" - **odrzucona**: dokładałaby workspace
+Alternatywa „czwarty pakiet `@ninerdeck/admin-api`" - **odrzucona**: dokładałaby workspace
 i jego wersjonowanie po to, żeby przenieść pliki o dwa katalogi. Mapa `exports` daje
 tę samą granicę za jedną wklejkę w `package.json`.
 
@@ -629,7 +629,7 @@ server/src/
     + ports.ts                     porty panelu: Actor, *AdminPort, AdminAuditPort
     + auditedWrite.ts              JEDYNA droga zapisu panelu; wymusza ślad (§4)
     + contracts/                   WYŁĄCZNIE typy DTO - powierzchnia dla panelu (§1.5)
-      + index.ts                   barrel = `@uzaero/server/admin-contracts`
+      + index.ts                   barrel = `@ninerdeck/server/admin-contracts`
       + {actor,sessions,flags,events,exports,pilots,fleet,stats,audit,
          dashboard,maintenance,thresholds,corrections}.ts
     + commands/                    strona ZAPISU
@@ -1259,7 +1259,7 @@ w aplikacji.
 - **`GET /admin/api/sessions/:uuid` woła je raz**, na jednym strumieniu (dziesiątki
   zdarzeń - ułamek milisekundy), i zwraca `state: SessionState` w całości. Karta dnia
   (A02a) dostaje tabelę lotów, bilanse i oś zdarzeń **policzone przez serwer tym samym
-  kodem, co telefon**. Panel formatuje (`mhFormat`, block HH:MM przez `@uzaero/domain`)
+  kodem, co telefon**. Panel formatuje (`mhFormat`, block HH:MM przez `@ninerdeck/domain`)
   i nic więcej.
 - **`GET /admin/api/stats/*` czyta wyłącznie kolumny `sessions`**, z `WHERE status =
   'closed'` - operacje otwarte wypadają z sum (nie mają `mh_end` ani `fuel_end_l`, więc
@@ -1305,7 +1305,7 @@ SQL-em, przed którym ostrzega §7.1. Co więcej, wynik modelu (`r_przelot = 40,
 pod trzema warunkami:
 
 1. **Zero arytmetyki w SQL.** Zapytanie wykonuje `SELECT` (kolumny projekcji + wiersze
-   rejestru); wszystkie liczby produkuje `@uzaero/domain`, a ilorazy - mapper. Reguła
+   rejestru); wszystkie liczby produkuje `@ninerdeck/domain`, a ilorazy - mapper. Reguła
    §7.1 obowiązuje bez zmian: agreguj wartości projekcji, nigdy nie odtwarzaj projekcji.
 2. **Jedno zapytanie, nie pętla.** Strumienie pobiera `EventsStorePort.sessionStreams`
    (`WHERE session_uuid = ANY($1)`). Pętla po `sessionEvents` przy oknie rocznym to
@@ -1381,6 +1381,183 @@ Podobnie `exported_sheets.tab`: klucz `YYYY-MM-DD_SP-XXX` był od początku popr
 nie nazwa była za wąska, tylko TREŚĆ za wąska wobec nazwy (druga zmiana dnia nadpisywała
 pierwszą zamiast do niej dołączyć).
 
+### 7.9 Migracja 8 - wielofirmowość: pierwsza migracja Z BACKFILLEM na bazie produkcyjnej (2026-09-08)
+
+Migracje 2–7 były addytywne (nullowalne kolumny, nowe tabele, jeden `DROP COLUMN`
+kolumny, której nikt nie czytał). Migracja 8 (issue #98, `docs/wielofirmowosc.md` §10)
+jest pierwszą, która **przepisuje istniejące wiersze** i **zdejmuje globalne unikaty** -
+i to jedno zdanie tłumaczy każdą z pułapek niżej.
+
+**(a) Migracja czysto SQL-owa potrzebowała danych, których w bazie nie ma.** Backfill
+zakłada klub domyślny, a jego nazwę i slug zna wyłącznie właściciel. Skrypt zostaje
+napisem (`MIGRATIONS: readonly string[]`, runner niczego o pozycjach tablicy nie wie),
+a wartości jadą do transakcji jako **ustawienia sesji**: `migrate(db, MIGRATIONS,
+{ seedOrg })` dopisuje przed skryptem `SELECT set_config('ninerdeck.seed_org_name', '…', true)`
+(lokalne dla transakcji), a blok `DO $$ … $$` czyta je `current_setting(…, true)`. Wartości
+są wklejane jako literały - skrypt wieloczłonowy nie przyjmuje parametrów - z podwojeniem
+apostrofu jako jedyną ucieczką (`standard_conforming_strings = on`); test
+`organizations.test.ts` przepycha przez to „Aeroklub O'Neill". **Bez zmiennych na bazie
+Z DANYMI runner odmawia** (`RAISE EXCEPTION`) zamiast wymyślać „Klub 1": slug wchodzi do
+adresów kart arkusza i nie zmienia się już nigdy. Świeża baza (testy, nowe wdrożenie)
+nie ma czego przepisywać i przechodzi bez nich.
+
+**(b) W PL/pgSQL nazwa zmiennej nie może być nazwą kolumny.** Pierwsza wersja bloku
+deklarowała `org_id TEXT` i robiła `UPDATE aircraft SET org_id = org_id` - Postgres
+odmawia (`column reference "org_id" is ambiguous`, domyślne `plpgsql.variable_conflict =
+error`). Zmienna nazywa się `club` i tak ma zostać.
+
+**(c) `pilots.active` zmienia ZNACZENIE, więc backfill musi je przepisać, nie skopiować.**
+Do 2.0.0 „wyłącz konto" w panelu ustawiało `pilots.active = FALSE`. Po wielofirmowości
+kolumna na osobie znaczy blokadę PLATFORMOWĄ (nakłada ją wyłącznie superadministrator),
+a codzienne wyłączenie w klubie jest `memberships.status = 'disabled'`. Backfill przenosi
+stan na członkostwo **i przywraca osobie `TRUE`** - skopiowanie `FALSE` zamknęłoby człowieka
+na zawsze, bo ponowne włączenie członkostwa w panelu klubu nie rusza osoby. Znacznik
+`credentials_valid_from` przechodzi na członkostwo 1:1 (a na osobie zostaje: brama
+sprawdza OBIE daty).
+
+**(d) Cztery tabele append-only dostały `UPDATE` - raz, w skrypcie migracji.** Test
+architektury (`events`, `admin_audit`, `export_log`, `exported_sheets` bez `UPDATE`
+w całym `src/`) dostał JEDEN imienny wyjątek: `infrastructure/pg/schema.ts`, z asercją,
+że jedyne, co tam stoi, to `SET org_id = club WHERE org_id IS NULL`. Nadanie wierszom
+przynależności, której schemat 1.x nie znał, nie jest edycją rejestru - a bez niego
+kolumna nie mogłaby być `NOT NULL` i filtr `WHERE org_id = $1` cicho pomijałby całą
+historię klubu. Reguła dla kodu poza migracjami zostaje nietknięta.
+
+**(e) Zdjęcie globalnych unikatów jest NIEODWRACALNE skryptem.** Po dołożeniu drugiego
+klubu z tą samą rejestracją nie da się już odtworzyć `aircraft_reg_key`. Procedurą odwrotu
+jest kopia bazy PRZED migracją (Railway snapshot, `docs/wielofirmowosc.md` §13), a nie
+migracja w dół.
+
+**(f) `DROP COLUMN code, role` w TEJ SAMEJ migracji, nie w 9.** Dokument decyzji proponował
+osobną migrację 9 („między 8 a 9 kod czyta obie kolumny"); issue #98 kazało zrobić to
+razem. Serwer po migracji 8 czyta wyłącznie członkostwa, a migracja biegnie przy starcie
+procesu przed pierwszym żądaniem - okna, w którym sygnatura nie ma z czego się złożyć,
+nie ma. Trzy bezpieczniki `isPilotRole(...) ? role : DEFAULT_ROLE` znikły z kodu razem
+z kolumną, a ich odpowiednik pilnuje odtąd `memberships.role`.
+
+**(g) Kolumna `org_id` jest nullowalna DOKŁADNIE W JEDNEJ tabeli: `admin_audit`.** Akcja
+superadministratora na platformie (założenie klubu, epik E) nie dzieje się w żadnym klubie;
+wpis o niej nie ma czego udawać. Dziennik klubu filtruje po swoim `org_id`, więc wpisów
+platformowych nie widzi. Pilnuje tego `schema.test.ts` - lista tabel z `org_id` i lista
+nullowalnych są przybite na sztywno.
+
+**(h) `external_identities` bez statusów - dopisane W MIEJSCU w epiku D (2026-09-09).**
+Pierwsza wersja migracji 8 zostawiała tożsamości Google ze statusami `pending`/`linked`/
+`rejected` „do epiku D". Epik D (issue #100, D1+D4) przeniósł kolejkę zgłoszeń na
+członkostwa (`docs/wielofirmowosc.md` §4) i zmienił migrację 8 w miejscu - wolno, bo
+migracja 8 jest w `develop` (PR #110), nie na produkcji. Tabela `invitations` z pierwszej
+wersji wyleciała już w D0 (zamiast niej `organizations.join_code`). Backfill tożsamości
+ma DWIE pułapki, obie złapane testem `organizations.test.ts` przy pierwszym przebiegu:
+- **kolumny, które ta sama migracja za chwilę skasuje, JESZCZE stoją.** Pętla zakładająca
+  osoby dla zgłoszeń `pending`/`rejected` biegnie w bloku `DO`, PRZED `DROP COLUMN
+  pilots.code, pilots.role` na końcu skryptu - więc `INSERT INTO pilots` bez `code` odbijał
+  się o `NOT NULL`. Osoba dostaje wartości ZASTĘPCZE (kod = jej identyfikator, jedyny;
+  rola domyślna), które znikają razem z kolumnami kilka poleceń dalej. Tak samo
+  `UPDATE external_identities SET pilot_id` musi ustawić `status = 'linked'`, bo CHECK
+  `identity_linked_has_pilot` (status ⟺ osoba) też jeszcze obowiązuje;
+- **pętla, nie `INSERT … SELECT`.** Adres z Google trafia na osobę wyłącznie, gdy nikt go
+  nie ma (`pilots.email` jest jedyny na serwerze); przy zbiorczym wstawieniu sprawdzenie
+  zajętości nie widziałoby wierszy z tego samego polecenia, a dwa zgłoszenia z tym samym
+  adresem wywróciłyby migrację unikatem. `FOR ident IN … LOOP` sprawdza każdy wiersz
+  wobec stanu po poprzednich.
+
+Po backfillu odchodzą `status`, `reject_reason`, `decided_at`, `decided_by`, CHECK i indeks
+kolejki, a `pilot_id` dostaje `NOT NULL`. Zgłoszenie 1.x staje się osobą z członkostwem
+`pending` albo `rejected` (z powodem, chwilą i autorem decyzji) w klubie domyślnym -
+nikt nie wypada z kolejki przez wdrożenie. Lista kolumn `external_identities` jest odtąd
+przybita w `schema.test.ts`.
+
+**(i) `joined_via` bez `panel` - dopisane W MIEJSCU w epiku D (2026-09-10, D3).** Wartość
+opisywała dopisanie członka wprost z panelu klubu, czyli `POST /admin/api/pilots` - trasa
+zniknęła razem z drogą (nowy członek wchodzi WYŁĄCZNIE kodem klubu), więc CHECK zna odtąd
+trzy wartości: `code`, `platform`, `backfill`. Edycja w miejscu jest dozwolona z tego
+samego powodu, co w (h): migracja 8 nie dotarła na produkcję. **Odpowiednik po stronie
+danych testowych**: `testWorld.ts` zakłada członkostwa jako `platform` (tak powstaje
+pierwszy administrator klubu), a nie `panel`.
+
+**(j) `CASE` z gałęzią `NULL` bierze typ z PARAMETRU, nie z kolumny (2026-09-10, D2).**
+Rotacja kodu klubu pisze stempel warunkowo - `join_code_since = CASE WHEN $2::text IS NULL
+THEN NULL ELSE $3 END`. Bez rzutowania `$3::timestamptz` obie gałęzie mają typ `text`,
+a Postgres odrzuca zapis do kolumny `timestamptz` błędem `42804` - **w czasie działania**,
+bo kompilator ani typy tego nie widzą. To ta sama klasa pomyłki, co numeracja `$n` ręką
+(`sqlFilter.ts`): kod wygląda poprawnie i przestaje działać na pierwszym wywołaniu. Drugi
+wniosek z tej samej poprawki: stempel „obowiązuje od" ma iść Z ZEGARA APLIKACJI, nie
+z `now()` SQL-a, bo porównuje się go z `memberships.created_at`, który też idzie z zegara
+aplikacji - świat testowy na sterowanym zegarze mieszał te dwie osie i liczba „zgłoszeń
+tym kodem" wychodziła zerem przy niepustej kolejce.
+
+
+### 7.10 Izolacja klubów - dwa strażniki na jedną regułę (epik C, 2026-09-10)
+
+Reguła jest jednym zdaniem: **żadnemu zapytaniu nie wolno przepuścić wiersza innego
+klubu.** Jej złamanie jest za to najcichsze w całym serwerze - zapytanie bez `WHERE
+org_id` kompiluje się, przechodzi typy, zwraca wiersze i wygląda dobrze. Tylko zwraca
+ich za dużo. Dlatego nie pilnuje jej dokument, a dwa testy, i to na dwóch różnych
+poziomach.
+
+**1. `test/tenantIsolation.test.ts` - od strony TRASY.** Świat to dwa kluby z kompletem
+danych (operacja, flaga, odczyt administratora z wpisem audytu, norma, zgłoszenie
+błędu, karta arkusza; PWI jest w obu klubach i ma operację w Becie). Dane klubu B niosą
+ZNACZNIKI (`SP-BBB`, `sess-b`, `beta-flag`, nazwiska), których żadna odpowiedź dla
+klubu A nie ma prawa zawierać. Sondy są dwojakie: listy muszą być czyste ze znaczników,
+a adresy bezpośrednie do danych B muszą odpowiadać tak, jakby tych danych nie było.
+
+Kluczowa własność tego testu nie jest w sondach, tylko w tym, SKĄD BIERZE LISTĘ TRAS:
+z rejestru Fastify (`app.routeCatalog` - hook `onRoute` w `buildServer`, dekorowany na
+instancji). Test wymaga, żeby KAŻDA zarejestrowana trasa miała albo przypadek izolacji,
+albo imienny wpis w wyjątkach z powodem (`/health`, logowanie, statyk). Trasa dopisana
+bez jednego z dwóch wywala test - i to jest cała gwarancja, jaką da się dać regule
+„nic nie wycieka": lista w dokumencie dezaktualizuje się po cichu, rejestr tras nie.
+Sprawdzenie idzie w OBIE strony - przypadek bez trasy też wywala test, bo opisuje
+ochronę adresu, którego już nie ma.
+
+**2. `test/architecture.test.ts` - od strony ADAPTERA.** Każda metoda w `src/`, która
+dotyka tabeli skopowanej (`FROM`/`JOIN`/`INTO`/`UPDATE` + nazwa), musi w swoim ciele
+mówić `org_id`. Dwa szczegóły decydują o tym, że ten strażnik w ogóle działa:
+
+- **jednostką jest METODA, nie plik ani literał.** `SqlFilter` rozbija warunek klubu na
+  osobny napis (`filter.add('s.org_id = ?', orgId)`), więc w literale z `SELECT`-em
+  klubu nie ma i nigdy nie będzie. Cały plik z kolei przechodziłby dzięki jednej
+  skopowanej metodzie, choć obok stałaby dziesiąta nieskopowana;
+- **szablony SQL z modułu wklejają się do metody, która się na nie powołuje**
+  (`const SELECT = \`…\`` + `${SELECT}`): tabela bywa w szablonie, a klub w metodzie.
+
+Cena jest znana i zapisana przy teście: sprawdzenie jest TEKSTOWE, więc gwarantuje, że
+o klubie w tym zapytaniu ktoś pomyślał - nie że pomyślał dobrze. Poprawność predykatu
+bierze na siebie test izolacji tras. Wyjątki są imienne, z powodem, i mają własną
+kontrolę: metoda wymieniona w wyjątkach musi ISTNIEĆ i NADAL pomijać klub, inaczej
+test pada. Wpis o metodzie, która dawno się skopowała, uśpiłby strażnika na przyszłość.
+Dziś wyjątek jest jeden - `bugReportsRepo.countByStatus`, liczniki kolejki PLATFORMOWEJ.
+
+**Co ten strażnik znalazł przy pierwszym uruchomieniu** (i dlaczego warto było go
+napisać przed sprawdzeniem, czy przechodzi): jedenaście podzapytań i złączeń
+korelowanych, które opierały izolację na GLOBALNEJ JEDYNOŚCI identyfikatora, nie na
+kolumnie klubu - `EXISTS (… FROM sessions s WHERE s.aircraft_id = a.id)` w licznikach
+floty, agregaty flag i rewizji w liście operacji, `LEFT JOIN aircraft` w siedmiu
+adapterach, oba `LEFT JOIN LATERAL` monitora eksportu. Żadne z nich nie przeciekało
+DZIŚ: `aircraft.id` i `sessions.session_uuid` są kluczami głównymi całych tabel. Ale
+uuid operacji nadaje TELEFON, a nie serwer - więc izolacja klubów wisiała na tym, że
+dwa telefony nie wylosują tej samej wartości. Wszystkie jedenaście dostało jawny
+predykat (`AND x.org_id = s.org_id`); kosztowało to po jednej linijce i zdjęło całą
+klasę założeń.
+
+**Kontrola samych strażników.** Oba mają w sobie przypadek, który udowadnia, że widzą:
+test architektury podrzuca sobie syntetycznego winowajcę (metodę z `SELECT * FROM
+sessions` bez klubu) i wymaga, żeby go odbił; test izolacji sprawdza, że rejestr tras
+naprawdę czegoś widzi i że znaczniki klubu B są w bazie, zanim uzna „czystą" odpowiedź
+za dowód. Dodatkowo obie sondy mają KONTROLĘ POZYTYWNĄ - klub B widzi swoje dane, klub
+A swoje - bo test izolacji, który przechodzi na pustej bazie, nie dowodzi niczego.
+
+**Jak to wygląda przy dopisywaniu trasy** (epik D, 2026-09-10 - dwanaście nowych tras:
+kolejka zgłoszeń, kod klubu, moduł Organizacje): strażnik tras wywalił się od razu,
+z listą adresów bez przypadku, i to jest cały jego sens - lista nowych tras powstała
+z REJESTRU FASTIFY, a nie z pamięci autora. Dla tras PLATFORMOWYCH przypadek izolacji
+brzmi inaczej niż dla klubowych: dowodem nie jest „odpowiedź bez znaczników klubu B",
+tylko **`401` dla sesji klubu** - administrator klubu nie dostaje cudzych danych
+przefiltrowanych, on nie dostaje tej trasy wcale. Do świata testowego doszły przy okazji
+dwa znaczniki (adres kandydata czekającego w Becie i kod klubu Bety), bo bez danych
+po tamtej stronie „czysta" odpowiedź kolejki i karty kodu nie dowodziłaby niczego.
+
 ---
 
 ## 8. Sesja przeglądarkowa - dwa źródła tokenu, jedna autoryzacja
@@ -1416,7 +1593,7 @@ Trasy telefonu (`/events`, `/reference`, `/me/prefs`, …) zmieniają się o jed
 ### 8.2 Ciasteczko
 
 ```
-Set-Cookie: uzaero_admin=<jwt>; HttpOnly; Secure; SameSite=Strict; Path=/admin; Max-Age=28800
+Set-Cookie: ninerdeck_admin=<jwt>; HttpOnly; Secure; SameSite=Strict; Path=/admin; Max-Age=28800
 ```
 
 `Path=/admin` - ciasteczko nie jedzie z żądaniami telefonu. `HttpOnly` - token poza
@@ -1435,7 +1612,7 @@ nie decyzją.
 Dwa niezależne mechanizmy, bo `SameSite` sam w sobie jest polityką przeglądarki:
 
 1. `SameSite=Strict` na ciasteczku;
-2. **każda mutacja `/admin/api/*` wymaga nagłówka `X-UZ-Admin: 1`.** Przeglądarka nie
+2. **każda mutacja `/admin/api/*` wymaga nagłówka `X-Ninerdeck-Admin: 1`.** Przeglądarka nie
    ustawi własnego nagłówka w żądaniu cross-origin bez preflightu, a serwer nie wysyła
    żadnych nagłówków CORS - więc preflight nie przechodzi. Trzy linie w jednym
    `preHandler`, taniej i mniej ruchomych części niż token CSRF w operacji.
@@ -1531,7 +1708,7 @@ kompilator:
 3. pliki w `application/admin/commands/` nie importują `Database` - zapis wyłącznie
    przez `AuditedWrite` (§4.2);
 4. literał `'administrative'` występuje w **dokładnie jednym** pliku (§6.3);
-5. pliki w `application/admin/contracts/` importują wyłącznie `@uzaero/domain` (§1.5);
+5. pliki w `application/admin/contracts/` importują wyłącznie `@ninerdeck/domain` (§1.5);
 6. trasy w `routes/admin/` rejestrują się wyłącznie przez `adminRoute` (§8.6);
 7. **test kontrolny** - skaner faktycznie widzi pliki i treści (bez niego test
    przechodziłby dlatego, że niczego nie znalazł).
@@ -1557,12 +1734,12 @@ niczego, co da się pokazać).
 | **0** | **Fundament panelu** | naprawa `migrate.ts` (§2.3) · migracja 8 `admin_audit` · `AdminAuditPort` + `PgAdminAuditRepo` · `AuditedWrite` · `domain/adminActions.ts` · `tokenFromRequest` + zmiana `authorize` · `adminCookie` · `requireAdminActor` · `adminRoute` · scope `/admin/api` · `POST auth/login`, `POST auth/logout`, `GET me` · rate-limit · `@fastify/static` pod `/admin` · `test/architecture.test.ts` | A00, A00a | nic nie wolno zapisać bez śladu, a bez operacji panel jest nieosiągalny. **Naprawa runnera migracji musi być pierwsza** - bez niej migracje 12–13 (`ADD CONSTRAINT`) nie są bezpiecznie zapisywalne |
 | **1** | **Flaga → re-eksport** (wzorzec, §5) | migracja 9 · `FlagsAdminPort` + `PgAdminFlagsRepo` · `AdminFlagCommands.resolve` · `ExportOutcome` z `DayExporter` · `GET/POST /admin/api/flags*` | A03, A03a, A03b | **jedyny powód, dla którego panel powstaje teraz**: otwiera bramkę §4.7, której dziś nikt nie może otworzyć |
 | **2** | **Czytanie dni** | migracja 10 (5 kolumn + indeks) · rozszerzenie `sessionRowFrom` · `POST maintenance/rebuild-projections` · `SqlFilter` + `keyset` · `SessionsAdminPort.list` · `GET /admin/api/sessions`, `/sessions/:uuid` · rozszerzenie `contract.test.ts` | A02, A02a | przebudowa projekcji **musi** wejść w tym samym przekroju co migracja 10 - inaczej nowe kolumny są puste |
-| **3** | **Korekta administracyjna** | `WriteAuthority` w `@uzaero/domain` · `AdminCorrectionCommands` · `POST /admin/api/sessions/:uuid/corrections` | A02b | wymaga #2 (wybór celu na karcie dnia) i #0 (audyt) |
+| **3** | **Korekta administracyjna** | `WriteAuthority` w `@ninerdeck/domain` · `AdminCorrectionCommands` · `POST /admin/api/sessions/:uuid/corrections` | A02b | wymaga #2 (wybór celu na karcie dnia) i #0 (audyt) |
 | **4** | **Rejestr zdarzeń** | migracja 11 (indeksy) · `EventsAdminPort.list` · `GET /admin/api/events` | A04 | narzędzie diagnostyczne; po #2, bo dzieli `SqlFilter`/`keyset` |
 | **5** | **Eksporty** | migracja **14** `UNIQUE (session_uuid, revision)` → **23** `UNIQUE (day, aircraft_id, revision, session_uuid)` + `ExportLogPort.lock` (advisory; od 23 na parze doba+samolot) · `ExportsAdminPort` (list/byUuid/history) · `AdminExportCommands.retry` · `GET /admin/api/exports`, `/exports/:uuid`, `/exports/:uuid/sheet` · `POST /exports/:uuid/retry` | A05 | ponowienie to `ExportOutcome` z #1 wystawiony trasą |
 | **6** | **Konta** | `PilotsAdminPort` · `AdminPilotCommands` (create/update/reset/deactivate, hasło generowane, kasowanie `refresh_tokens`, blokada „ostatni administrator") · trasy | A06, A06a | pierwszy przekrój czysto CRUD-owy - po nim widać, czy §2.4 się broni w praktyce |
 | **7** | **Flota** | `FleetAdminPort` · `AdminFleetCommands` (z podbiciem `aircraft.updated_at` → ETag `/reference`) · trasy | A07, A07a | test regresji: zmiana `capacity_l` musi dojechać na telefon (ETag) |
-| **8** | **Statystyki** | atrybucja block time per pilot **w `@uzaero/domain`** (wspólna z aplikacją, dziś tylko w `crewChange.test.ts`) · `AdminStatsQueries` z kolumn `sessions` · rozszerzenie `contract.test.ts` | A10 | wymaga kolumn z #2 |
+| **8** | **Statystyki** | atrybucja block time per pilot **w `@ninerdeck/domain`** (wspólna z aplikacją, dziś tylko w `crewChange.test.ts`) · `AdminStatsQueries` z kolumn `sessions` · rozszerzenie `contract.test.ts` | A10 | wymaga kolumn z #2 |
 | **9** | **Pulpit, progi, audyt, konserwacja** | `AdminDashboardQueries` · `GET /admin/api/thresholds` (serializacja stałych domeny) · `GET /admin/api/audit` · `maintenance/*` | A01, A01a, A08, A09, A11 | pulpit jest kompozycją tego, co już istnieje - dlatego na końcu, nie na początku |
 | **10** | **Domknięcie zaległości** | migracja 13: klucze obce `events`/`sessions` → `pilots`/`aircraft` · sprzątanie wygasłych `refresh_tokens` · odświeżanie `details` istniejącej flagi · kolejka ponowień eksportu | - | zaległości audytu, które panel czyni widocznymi |
 

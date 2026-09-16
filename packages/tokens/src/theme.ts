@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ZŁOŻENIE MOTYWU: palety + skale + typografia w jeden obiekt.
+ * Ninerdeck - ZŁOŻENIE MOTYWU: palety + skale + typografia w jeden obiekt.
  *
  * `Theme` jest tym, co dostaje `ThemeProvider` aplikacji i (po zamianie na zmienne
  * CSS przez `cssVars.ts`) panel webowy. Rejestr `THEMES` trzyma OBA motywy -

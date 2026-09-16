@@ -30,7 +30,7 @@ Plakietka w nagłówku pojawia się tylko wtedy, gdy coś stoi - stan „wszystk
 
 @screen 01c-moj-dzien-offline "OFFLINE · kolejka czeka" | 01d-sync-stoi "SYNC STOI · serwer odmówił"
 
-> **Dlaczego tak.** Bursztyn znaczy w UZ Aero „poczekaj, samo przejdzie", więc odmowy serwera nie wolno nazwać „offline": sieć jest, a kolejka mimo to stoi. Czerwony baner nazywa powód, uspokaja („Twoje zapisy są bezpieczne w telefonie"), podaje kod odmowy do przeczytania administratorowi i kończy się drogą wyjścia: przy odmowie „Zgłoś to administratorowi", przy wygasłej sesji „Zaloguj się ponownie".
+> **Dlaczego tak.** Bursztyn znaczy w Ninerdeck „poczekaj, samo przejdzie", więc odmowy serwera nie wolno nazwać „offline": sieć jest, a kolejka mimo to stoi. Czerwony baner nazywa powód, uspokaja („Twoje zapisy są bezpieczne w telefonie"), podaje kod odmowy do przeczytania administratorowi i kończy się drogą wyjścia: przy odmowie „Zgłoś to administratorowi", przy wygasłej sesji „Zaloguj się ponownie".
 
 ### Arkusz pod plakietką
 

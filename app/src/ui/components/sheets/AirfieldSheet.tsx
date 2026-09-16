@@ -1,5 +1,5 @@
 /**
- * UZ Aero - arkusz wyboru lotniska (krok 2 preflightu, issue #14).
+ * Ninerdeck - arkusz wyboru lotniska (krok 2 preflightu, issue #14).
  *
  * DLACZEGO ARKUSZ, A NIE POLE W FORMULARZU. Wcześniej trasa była zwykłym `TextField`,
  * a katalog podpowiadał listą pod wierszem. Zgłoszenie z urządzenia brzmiało: „trochę

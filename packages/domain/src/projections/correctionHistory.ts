@@ -1,5 +1,5 @@
 /**
- * UZ Aero - HISTORIA ZMIAN jednego zdarzenia (issue #43, mockup `design/10i`).
+ * Ninerdeck - HISTORIA ZMIAN jednego zdarzenia (issue #43, mockup `design/10i`).
  *
  * ══ DLACZEGO TO W OGÓLE JEST MOŻLIWE ══
  * Bo rejestr jest append-only. Korekta nie edytuje celu - dopisuje `event_correction`,

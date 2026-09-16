@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy geometrii unoszenia pola nad klawiaturę (`ui/hooks/keyboardGeometry`).
+ * Ninerdeck - testy geometrii unoszenia pola nad klawiaturę (`ui/hooks/keyboardGeometry`).
  *
  * Samego zachowania klawiatury tu nie sprawdzimy - jest natywne, w Node nie istnieje.
  * Testowalna jest arytmetyka, i to ona psuła się trzy tury z rzędu: O ILE przewinąć listę

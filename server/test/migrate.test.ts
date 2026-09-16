@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - runner migracji: TRANSAKCYJNOŚĆ (naprawa 2026-07-31).
+ * Ninerdeck (serwer) - runner migracji: TRANSAKCYJNOŚĆ (naprawa 2026-07-31).
  *
  * Testujemy jedną właściwość, ale najważniejszą: **częściowa migracja jest niemożliwa**.
  * Wcześniej skrypt i wpis do `schema_migrations` szły osobno, więc śmierć procesu między

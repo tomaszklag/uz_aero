@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy napisów stanu „GPS: brak sygnału" (mockup 05g, `screens/gpsLoss.ts`)
+ * Ninerdeck - testy napisów stanu „GPS: brak sygnału" (mockup 05g, `screens/gpsLoss.ts`)
  * i formatu pozycji DDM (ekran 13, `format.formatLatLon`).
  *
  * Te zdania czyta pilot W LOCIE - pomyłka w wieku fixa albo w półkuli to nie literówka.

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy magazynu motywu PER PILOT (`infrastructure/prefs/themePrefsStore.ts`,
+ * Ninerdeck - testy magazynu motywu PER PILOT (`infrastructure/prefs/themePrefsStore.ts`,
  * decyzja 2026-07-29: motyw jest preferencją pilota, nie telefonu).
  *
  * Klasa dostaje magazyn klucz→wartość konstruktorem (produkcyjnie AsyncStorage),

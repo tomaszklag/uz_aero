@@ -1,5 +1,5 @@
 /**
- * UZ Aero - karta OLEJU na ekranie operacji (issue #70, mockup `design/10-statystyki.html`).
+ * Ninerdeck - karta OLEJU na ekranie operacji (issue #70, mockup `design/10-statystyki.html`).
  *
  * ══ DLACZEGO OSOBNA KARTA, A NIE TRZECI RACHUNEK Z WERDYKTEM ══
  * Paliwo i motogodziny mają odczyt z OBU stron biegu, więc ich karty liczą zużycie

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - 12 POPRZEDNIE DNI (mockup `design/12-historia.html`).
+ * Ninerdeck - 12 POPRZEDNIE DNI (mockup `design/12-historia.html`).
  *
  * Bez tego ekranu obietnica „możesz poprawić przez 24 h" nie miała drzwi (§ decyzja
  * 2026-07-23): sesja w oknie korekty stoi wyróżniona na górze i otwiera się w ekranie
@@ -39,6 +39,7 @@ import {
 } from '../components';
 import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
+import { useOperationClub } from '../hooks/useOperationClub';
 import { useSkeleton } from '../hooks/useSkeleton';
 import { useAircraftRegistrations } from '../hooks/useAircraftRegistrations';
 import { useOperationSignatures } from '../hooks/useOperationSignatures';
@@ -57,6 +58,8 @@ export function HistoryScreen({
   const lastSync = useSessionStore((s) => s.lastSync);
   const streamRevision = useSessionStore((s) => s.streamRevision);
   const streamHydrated = useSessionStore((s) => s.streamHydrated);
+  // Plakietka klubu - wyłącznie przy więcej niż jednym członkostwie (mockup 01e).
+  const clubOf = useOperationClub();
 
   const [days, setDays] = useState<HistoryDay[] | null>(null);
 
@@ -97,7 +100,7 @@ export function HistoryScreen({
      (issue #42), więc i jego treść musi pochodzić z jednego rachunku. */
   const signatureOf = useOperationSignatures();
   const groups =
-    days != null ? buildHistory(days, Date.now(), pushing, regOf, signatureOf) : null;
+    days != null ? buildHistory(days, Date.now(), pushing, regOf, signatureOf, clubOf) : null;
   // Pustej historii wolno wierzyć dopiero po pierwszym uzgodnieniu rejestru z serwerem
   // (§4.9, issue #32): telefon zaraz po czyszczeniu pamięci pokazałby „BRAK POPRZEDNICH
   // DNI" komuś, kto ma za sobą sezon - a to jest dokładnie ten komunikat, który wygląda
@@ -166,6 +169,7 @@ export function HistoryScreen({
               <DayCard
                 key={day.sessionUuid}
                 title={day.title}
+                club={day.club}
                 signature={day.signature}
                 aircraft={day.aircraft}
                 times={day.times}
@@ -197,6 +201,7 @@ export function HistoryScreen({
               <DayCard
                 key={day.sessionUuid}
                 title={day.title}
+                club={day.club}
                 signature={day.signature}
                 aircraft={day.aircraft}
                 times={day.times}

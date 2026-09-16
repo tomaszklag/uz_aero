@@ -1,8 +1,8 @@
 /**
- * UZ Aero (serwer) - KONTRAKT kont pilotów (`A06`, `A06a`).
+ * Ninerdeck (serwer) - KONTRAKT kont pilotów (`A06`, `A06a`).
  *
  * Pliki w `contracts/` zawierają WYŁĄCZNIE typy i wolno im importować wyłącznie
- * `@uzaero/domain` (pilnuje `test/architecture.test.ts`). Ten importuje `PilotRole`
+ * `@ninerdeck/domain` (pilnuje `test/architecture.test.ts`). Ten importuje `PilotRole`
  * z… no właśnie: rola mieszka dziś w `server/src/domain/roles.ts`, a nie we wspólnej
  * domenie (przeniesienie jest otwartą decyzją człowieka -
  * `docs/architektura-panelu-frontend.md` §11 pkt 6). Do czasu tej decyzji kontrakt
@@ -24,14 +24,22 @@
 /** Lustro `PILOT_ROLES` z `domain/roles.ts` - patrz nagłówek pliku. */
 export type PilotRoleWire = 'pilot' | 'admin';
 
-/** Jedno konto na liście `A06`. */
+/**
+ * Jeden CZŁONEK klubu na liście `A06` (od wielofirmowości - wiersz to członkostwo,
+ * `docs/wielofirmowosc.md` §8.3).
+ */
 export interface AdminPilotListItem {
+  /** Identyfikator OSOBY - klucz zdarzeń, ten sam we wszystkich jej klubach. */
   id: string;
-  /** Etykieta widoczna w logu dnia i w kartach arkusza - NIE klucz zdarzeń. */
+  /** Klub, którego to członkostwo (klub sesji panelu). */
+  orgId: string;
+  /** Kod W TYM klubie - etykieta widoczna w logu dnia i w kartach arkusza, NIE klucz zdarzeń. */
   code: string;
   name: string;
   email: string | null;
+  /** Członkostwo `active`; `false` = wyłączone w tym klubie (osoba może latać w innym). */
   active: boolean;
+  /** Rola W TYM klubie. */
   role: PilotRoleWire;
   /** ISO 8601 UTC - ostatnia zmiana wiersza konta (nie: ostatnie logowanie). */
   updatedAt: string;

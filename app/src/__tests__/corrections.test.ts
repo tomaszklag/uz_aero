@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test KOREKT ZDARZEŃ (04c) w modelu append-only.
+ * Ninerdeck - test KOREKT ZDARZEŃ (04c) w modelu append-only.
  *
  * Korekta to jedyne miejsce, gdzie „prawda" projekcji odkleja się od surowego rejestru
  * - i właśnie dlatego musi być żelazna: unieważnione lądowanie, które dalej liczyłoby

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - Screen
+ * Ninerdeck - Screen
  *
  * Wrapper ekranu: tło z tokenu motywu, obszar bezpieczny (safe area) i padding.
  * Opcjonalnie przewijalny. Kolory wyłącznie z motywu.

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - ZAKOŃCZENIE ADMINISTRACYJNE operacji osieroconej
+ * Ninerdeck (serwer) - ZAKOŃCZENIE ADMINISTRACYJNE operacji osieroconej
  * (`POST /admin/api/sessions/:uuid/close`, issue #81).
  *
  * Ten sam wzorzec, co `adminSessionVoid.test.ts`: PGlite, prawdziwe klasy, `app.inject`.

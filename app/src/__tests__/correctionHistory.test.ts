@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test HISTORII ZMIAN zdarzenia (issue #43, arkusz `design/10i`).
+ * Ninerdeck - test HISTORII ZMIAN zdarzenia (issue #43, arkusz `design/10i`).
  *
  * Historia nie jest osobnym dziennikiem, tylko odczytem rejestru - i to jest cała
  * odpowiedź na pytanie z issue („czy architektura nam na to pozwala?"). Testy pilnują,

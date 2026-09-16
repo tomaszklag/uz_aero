@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - trasy floty (`/admin/api/fleet*`, mockupy `A07` i `A07a`).
+ * Ninerdeck (serwer) - trasy floty (`/admin/api/fleet*`, mockupy `A07` i `A07a`).
  *
  * Cienkie jak reszta repo: zod → komenda/zapytanie → status. Trasa nie zna ani
  * transakcji, ani audytu, ani reguły „czego nie wolno wyłączyć" - to wszystko jest
@@ -14,7 +14,7 @@
  *
  * ══ DLACZEGO `GET /fleet/tolerance` W OGÓLE ISTNIEJE ══
  * Bo tolerancja `FUEL_MISMATCH` nie jest stałą, tylko `max(10 L, 5% pojemności)` -
- * a panelowi wolno importować z `@uzaero/domain` wyłącznie typy
+ * a panelowi wolno importować z `@ninerdeck/domain` wyłącznie typy
  * (`docs/architektura-panelu-frontend.md` §5.1). Bez tej trasy karta „Skutki zmiany"
  * z `A07a` musiałaby albo pominąć wiersz „Próg `FUEL_MISMATCH`: ±62.9 → ±55.0 L"
  * (tak było przez cztery przekroje), albo policzyć go własną arytmetyką - czyli zacząć
@@ -187,12 +187,12 @@ export function registerAdminFleetRoutes(
     // `panel.access`, nie `fleet.manage`: listę CZYTA każdy, kto ma wejście do panelu.
     // Ta sama trasa jest słownikiem samolotów dla filtrów listy dni (`A02`).
     { method: 'GET', url: '/fleet', capability: 'panel.access' },
-    async (req, reply) => {
+    async (req, reply, actor) => {
       const query = listQuery.safeParse(req.query);
       if (!query.success) return reply.code(400).send({ error: 'bad_request' });
 
       return reply.send(
-        await queries.list({
+        await queries.list(actor.orgId, {
           serviceStatus: query.data.status,
           claimed: query.data.claimed === undefined ? undefined : query.data.claimed === 'true',
           search: query.data.q,
@@ -205,7 +205,7 @@ export function registerAdminFleetRoutes(
     app,
     gate,
     { method: 'GET', url: '/fleet/tolerance', capability: 'panel.access' },
-    async (req, reply) => {
+    async (req, reply, actor) => {
       const query = toleranceQuery.safeParse(req.query);
       if (!query.success) return reply.code(400).send({ error: 'bad_request' });
 
@@ -215,7 +215,7 @@ export function registerAdminFleetRoutes(
       const refusal = refuseCapacity(query.data.capacityL ?? null);
       if (refusal != null) return reply.code(409).send({ error: 'refused', reason: refusal });
 
-      const tolerance = await queries.tolerance(query.data);
+      const tolerance = await queries.tolerance(actor.orgId, query.data);
       // 404 dotyczy WYŁĄCZNIE wariantu z `aircraftId`: pytanie o próg dla samolotu,
       // którego nie ma, nie ma odpowiedzi. Wariant z samą liczbą odpowiada zawsze.
       if (tolerance == null) return reply.code(404).send({ error: 'not_found' });
@@ -250,7 +250,7 @@ export function registerAdminFleetRoutes(
       });
       if (!outcome.ok) return refusal(reply, outcome);
 
-      return reply.code(201).send({ aircraft: await queries.item(outcome.result.id) });
+      return reply.code(201).send({ aircraft: await queries.item(actor.orgId, outcome.result.id) });
     },
   );
 
@@ -268,7 +268,7 @@ export function registerAdminFleetRoutes(
       const outcome = await fleet.update(actor, params.data.id, body.data);
       if (!outcome.ok) return refusal(reply, outcome);
 
-      return reply.send({ aircraft: await queries.item(outcome.result.id) });
+      return reply.send({ aircraft: await queries.item(actor.orgId, outcome.result.id) });
     },
   );
 
@@ -313,7 +313,7 @@ export function registerAdminFleetRoutes(
 
       // Odpowiedź = świeży wiersz listy, jak po `PATCH`: karta samolotu ma od razu
       // zobaczyć nowy odczyt z podpisem administratora, bez drugiego pobrania listy.
-      return reply.code(201).send({ aircraft: await queries.item(params.data.id) });
+      return reply.code(201).send({ aircraft: await queries.item(actor.orgId, params.data.id) });
     },
   );
 }

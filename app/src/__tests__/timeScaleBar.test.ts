@@ -1,5 +1,5 @@
 /**
- * UZ Aero - podziałka czasu profilu (issue #47, trzecia tura przeglądu).
+ * Ninerdeck - podziałka czasu profilu (issue #47, trzecia tura przeglądu).
  *
  * Podziałka jest WSKAŹNIKIEM PRZYBLIŻENIA: ma zmieniać podpis razem z zoomem, tak jak
  * podziałka odległości na mapie („500 m" zamiast „2 km"). Test pilnuje trzech rzeczy,

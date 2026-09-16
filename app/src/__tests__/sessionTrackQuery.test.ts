@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ślad sesji na telefonie po odwróceniu źródła (issue #47).
+ * Ninerdeck - ślad sesji na telefonie po odwróceniu źródła (issue #47).
  *
  * Ekran 14 rysuje odtąd z danych SERWERA, ale czasy i loty liczy dalej z LOKALNEGO
  * rejestru - i to rozdzielenie jest tu najważniejsze. Test pilnuje trzech rzeczy:

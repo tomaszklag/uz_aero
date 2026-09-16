@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - dziennik audytu: ZAPIS jako część komendy i ODCZYT dla `A09`.
+ * Ninerdeck (serwer) - dziennik audytu: ZAPIS jako część komendy i ODCZYT dla `A09`.
  *
  * Pierwsza połowa pliku nie sprawdza, że coś się loguje. Sprawdza WŁASNOŚĆ, na której
  * stoi cały mechanizm `AuditedWrite`: skutek i jego ślad są tą samą transakcją, więc
@@ -21,6 +21,7 @@ import type { Queryable } from '../src/application/common/ports.ts';
 import { PgAdminAuditReadRepo } from '../src/infrastructure/pg/admin/auditReadRepo.ts';
 import { ADMIN_CSRF_HEADERS, testHarness } from './helpers.ts';
 import { googleTokenFor } from './testIdentityProvider.ts';
+import { ORG_A } from './testWorld.ts';
 
 const DAY = Date.UTC(2026, 5, 22);
 const at = (h: number, m: number): number => DAY + (h * 60 + m) * 60_000;
@@ -214,7 +215,7 @@ describe('audyt wymuszony typem, nie dyscypliną', () => {
     const admin = await login(app, 'TMK');
 
     await resolve(app, flagId, admin, 'Rozstrzygnięte przez administratora.');
-    await db.query("UPDATE pilots SET role = 'pilot' WHERE id = 'TMK'");
+    await db.query("UPDATE memberships SET role = 'pilot' WHERE pilot_id = 'TMK' AND org_id = 'org-a'");
 
     expect((await auditRows(db))[0]).toMatchObject({ actor_pilot_id: 'TMK', actor_role: 'admin' });
   });
@@ -247,8 +248,8 @@ async function seedAudit(db: Harness['db'], rows: readonly AuditSeed[]): Promise
   for (const row of rows) {
     await db.query(
       `INSERT INTO admin_audit
-         (actor_pilot_id, actor_role, action, target_type, target_id, details, ip, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+         (org_id, actor_pilot_id, actor_role, action, target_type, target_id, details, ip, created_at)
+       VALUES ($9, $1, $2, $3, $4, $5, $6, $7, $8)`,
       [
         row.actor,
         row.role,
@@ -258,6 +259,7 @@ async function seedAudit(db: Harness['db'], rows: readonly AuditSeed[]): Promise
         JSON.stringify(row.details),
         row.ip,
         row.at,
+        ORG_A,
       ],
     );
   }
@@ -742,7 +744,7 @@ const pageQuery = (sent: { text: string; params: unknown[] }[]) =>
 
 async function planOf(db: Queryable, filter: AuditListFilter): Promise<string> {
   const { spy, sent } = recorder(db);
-  await new PgAdminAuditReadRepo().list(spy, filter);
+  await new PgAdminAuditReadRepo().list(spy, ORG_A, filter);
 
   const page = pageQuery(sent);
   const { rows } = await db.query<Record<string, string>>(`EXPLAIN ${page.text}`, page.params);
@@ -759,8 +761,8 @@ describe('porządek dziennika daje INDEKS, nie sortowanie w pamięci', () => {
     const harness = await testHarness();
     await harness.db.query(
       `INSERT INTO admin_audit
-         (actor_pilot_id, actor_role, action, target_type, target_id, details, ip, created_at)
-       SELECT CASE WHEN g % 4 = 0 THEN 'TMK' ELSE 'AKO' END,
+         (org_id, actor_pilot_id, actor_role, action, target_type, target_id, details, ip, created_at)
+       SELECT '${ORG_A}', CASE WHEN g % 4 = 0 THEN 'TMK' ELSE 'AKO' END,
               'admin', 'flag.resolve', 'flag', g::text, '{}'::jsonb, NULL,
               TIMESTAMPTZ '2026-01-01 00:00:00+00' + (g * INTERVAL '1 second')
          FROM generate_series(1, 4000) AS g`,

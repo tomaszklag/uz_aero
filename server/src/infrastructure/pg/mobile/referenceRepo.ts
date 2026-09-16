@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter `ReferencePort` na Postgres.
+ * Ninerdeck (serwer) - adapter `ReferencePort` na Postgres.
  *
  * Zwraca flotę i pilotów w KSZTAŁTACH DOMENY (`ReferenceAircraft`, `ReferencePilot`) -
  * tych samych, które aplikacja trzyma w cache referencyjnym. Serwer i telefon mówią
@@ -9,7 +9,7 @@
  * świadomie `null`: brak przekazania to pełnoprawny stan §4.8 („brak"), nie błąd.
  */
 
-import type { MhFormat, ReferenceAircraft, ReferencePilot, ServiceStatus } from '@uzaero/domain';
+import type { MhFormat, ReferenceAircraft, ReferencePilot, ServiceStatus } from '@ninerdeck/domain';
 
 import type {
   AircraftSeed,
@@ -51,10 +51,24 @@ interface PilotRefRow {
 export class PgReferenceRepo implements ReferencePort {
   constructor(private readonly db: Queryable) {}
 
-  async snapshot(): Promise<ReferenceSnapshot> {
+  async snapshot(orgId: string): Promise<ReferenceSnapshot> {
+    // Flota KLUBU i jego CZŁONKOWIE (wielofirmowość §7.1). Kod pilota jest kodem
+    // z członkostwa w tym klubie; `active` = członkostwo `active` (osoba wyłączona
+    // w klubie nie ma być na liście Duali, choć w innym klubie może dalej latać).
+    // `updated_at` to PÓŹNIEJSZA z dwóch zmian (osoby i członkostwa), bo obie zmieniają
+    // to, co telefon widzi - a z tej kolumny powstaje ETag.
     const [aircraftRes, pilotsRes] = await Promise.all([
-      this.db.query<AircraftRow>('SELECT * FROM aircraft ORDER BY reg'),
-      this.db.query<PilotRefRow>('SELECT id, code, name, active, updated_at FROM pilots ORDER BY code'),
+      this.db.query<AircraftRow>('SELECT * FROM aircraft WHERE org_id = $1 ORDER BY reg', [orgId]),
+      this.db.query<PilotRefRow>(
+        `SELECT p.id, m.code, p.name,
+                (m.status = 'active') AS active,
+                GREATEST(p.updated_at, m.updated_at) AS updated_at
+           FROM memberships m
+           JOIN pilots p ON p.id = m.pilot_id
+          WHERE m.org_id = $1 AND m.code IS NOT NULL
+          ORDER BY m.code`,
+        [orgId],
+      ),
     ]);
 
     let newest = 0;
